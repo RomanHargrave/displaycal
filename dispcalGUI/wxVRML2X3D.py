@@ -10,10 +10,75 @@ from util_str import safe_unicode
 from worker import Worker, show_result_dialog
 from wxaddons import wx
 from wxfixes import GenBitmapButton as BitmapButton
-from wxwindows import FileDrop
+from wxwindows import BaseFrame, FileDrop
 import config
 import localization as lang
 import x3dom
+
+
+class VRML2X3DFrame(BaseFrame):
+
+	def __init__(self, html, embed, force, cache):
+		BaseFrame.__init__(self, None, wx.ID_ANY,
+						   lang.getstr("vrml_to_x3d_converter"),
+						   style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX |
+															wx.RESIZE_BORDER))
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
+											  appname +
+											  "-VRML-to-X3D-converter"))
+		self.cache = cache
+		self.embed = embed
+		self.force = force
+		self.html = html
+		self.worker = Worker(self)
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.SetSizer(sizer)
+		panel = wx.Panel(self)
+		sizer.Add(panel)
+		panelsizer = wx.BoxSizer(wx.HORIZONTAL)
+		panel.SetSizer(panelsizer)
+		self.btn = BitmapButton(panel, wx.ID_ANY,
+								config.geticon(256, "document-open"), 
+								style=wx.NO_BORDER)
+		self.btn.SetToolTipString(lang.getstr("file.select"))
+		self.btn.Bind(wx.EVT_BUTTON, lambda event:
+									  vrmlfile2x3dfile(None,
+													   html=html,
+													   embed=embed,
+													   view=True,
+													   force=force,
+													   cache=cache,
+													   worker=self.worker))
+		self.droptarget = FileDrop(self)
+		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
+															  html=html,
+															  embed=embed,
+															  view=True,
+															  force=force,
+															  cache=cache,
+															  worker=self.worker)
+		self.droptarget.drophandlers = {
+			".vrml": vrml_drop_handler,
+			".vrml.gz": vrml_drop_handler,
+			".wrl": vrml_drop_handler,
+			".wrl.gz": vrml_drop_handler,
+			".wrz": vrml_drop_handler
+		}
+		self.btn.SetDropTarget(self.droptarget)
+		panelsizer.Add(self.btn, flag=wx.ALL, border=12)
+		self.Fit()
+		self.SetMinSize(self.GetSize())
+		self.SetMaxSize(self.GetSize())
+
+	def process_data(self, data):
+		if data[0] == "VRML-to-X3D-converter":
+			if self.IsIconized():
+				self.Restore()
+			self.Raise()
+			if len(data) == 2:
+				self.droptarget.OnDropFiles(0, 0, data[1:])
+			return "ok"
+		return "invalid"
 
 
 def main(vrmlpath=None):
@@ -34,7 +99,7 @@ def main(vrmlpath=None):
 		safe_print("  --view       View the generated file (if --no-gui)")
 		safe_print("  FILE         Filename of VRML file to convert")
 		return
-	config.initcfg()
+	config.initcfg("%s-VRML-to-X3D-converter" % appname)
 	lang.init()
 	cache = not "--no-cache" in sys.argv[1:]
 	embed = "--embed" in sys.argv
@@ -46,55 +111,13 @@ def main(vrmlpath=None):
 						 force=force, cache=cache)
 	else:
 		app = wx.App(0)
-		frame = wx.Frame(None, wx.ID_ANY, lang.getstr("vrml_to_x3d_converter"),
-						 style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX |
-														  wx.RESIZE_BORDER))
-		frame.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
-											  appname +
-											  "-VRML-to-X3D-converter"))
-		worker = Worker(frame)
-		sizer = wx.BoxSizer(wx.HORIZONTAL)
-		frame.SetSizer(sizer)
-		panel = wx.Panel(frame)
-		sizer.Add(panel)
-		panelsizer = wx.BoxSizer(wx.HORIZONTAL)
-		panel.SetSizer(panelsizer)
-		btn = BitmapButton(panel, wx.ID_ANY,
-						   config.geticon(256, "document-open"), 
-						   style=wx.NO_BORDER)
-		btn.SetToolTipString(lang.getstr("file.select"))
-		btn.Bind(wx.EVT_BUTTON, lambda event:
-								vrmlfile2x3dfile(None,
-												 html=html,
-												 embed=embed,
-												 view=True,
-												 force=force,
-												 cache=cache,
-												 worker=worker))
-		droptarget = FileDrop(frame)
-		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
-															  html=html,
-															  embed=embed,
-															  view=True,
-															  force=force,
-															  cache=cache,
-															  worker=worker)
-		droptarget.drophandlers = {
-			".vrml": vrml_drop_handler,
-			".vrml.gz": vrml_drop_handler,
-			".wrl": vrml_drop_handler,
-			".wrl.gz": vrml_drop_handler,
-			".wrz": vrml_drop_handler
-		}
-		btn.SetDropTarget(droptarget)
-		panelsizer.Add(btn, flag=wx.ALL, border=12)
-		frame.Fit()
-		frame.SetMinSize(frame.GetSize())
-		frame.SetMaxSize(frame.GetSize())
+		frame = VRML2X3DFrame(html, embed, force, cache)
+		frame.listen()
 		frame.Show()
 		if vrmlpath:
 			wx.CallAfter(vrmlfile2x3dfile, vrmlpath, html=html, embed=embed,
-						 view=True, force=force, cache=cache, worker=worker)
+						 view=True, force=force, cache=cache,
+						 worker=frame.worker)
 		app.MainLoop()
 
 
@@ -126,7 +149,7 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 		vrmlpath = dlg.GetPath()
 		dlg.Destroy()
 		config.setcfg("last_vrml_path", vrmlpath)
-		config.writecfg()
+		config.writecfg(module="VRML-to-X3D-converter")
 	filename, ext = os.path.splitext(vrmlpath)
 	if x3dpath is None:
 		x3dpath = filename + ".x3d"

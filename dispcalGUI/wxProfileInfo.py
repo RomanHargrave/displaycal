@@ -25,8 +25,8 @@ from worker import (Error, UnloggedError, UnloggedInfo, check_set_argyll_bin,
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
 from wxVRML2X3D import vrmlfile2x3dfile
-from wxwindows import (BitmapBackgroundPanelText, CustomCheckBox, CustomGrid,
-					   CustomRowLabelRenderer, ConfirmDialog,
+from wxwindows import (BaseFrame, BitmapBackgroundPanelText, CustomCheckBox,
+					   CustomGrid, CustomRowLabelRenderer, ConfirmDialog,
 					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
@@ -969,7 +969,7 @@ class ProfileInfoFrame(LUTFrame):
 		if len(args) < 3 and not "title" in kwargs:
 			kwargs["title"] = lang.getstr("profile.info")
 		
-		wx.Frame.__init__(self, *args, **kwargs)
+		BaseFrame.__init__(self, *args, **kwargs)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-profile-info"))
@@ -1646,6 +1646,16 @@ class ProfileInfoFrame(LUTFrame):
 		if not reset:
 			wx.CallAfter(self.client.center)
 		self.Thaw()
+
+	def process_data(self, data):
+		if data[0] == "profile-info":
+			if self.IsIconized():
+				self.Restore()
+			self.Raise()
+			if len(data) == 2:
+				self.drop_handler(data[1])
+			return "ok"
+		return "invalid"
 	
 	def redraw(self):
 		if self.plot_mode_select.GetSelection() == self.plot_mode_select.GetCount() - 1 and self.client.last_draw:
@@ -1866,15 +1876,20 @@ class ProfileInfoViewer(wx.App):
 
 
 def main(profile=None):
-	config.initcfg()
+	config.initcfg("profile-info")
 	lang.init()
 	lang.update_defaults()
 	app = ProfileInfoViewer(0)
 	display_no = get_argyll_display_number(app.frame.get_display()[1])
 	app.frame.LoadProfile(profile or get_display_profile(display_no))
+	app.frame.listen()
 	app.frame.Show()
 	app.MainLoop()
-	writecfg()
+	writecfg(module="profile-info", options=("3d.format",
+											 "last_cal_or_icc_path",
+											 "last_icc_path",
+											 "position.profile_info",
+											 "size.profile_info"))
 
 if __name__ == "__main__":
 	main(*sys.argv[max(len(sys.argv) - 1, 1):])

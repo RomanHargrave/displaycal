@@ -74,6 +74,14 @@ Files: theme/jquery.scrollTo.js
 Copyright: 2007-${YEAR}, Ariel Flesler
 License: MIT-style
 
+Files: theme/prism.css
+Copyright: 2012-${YEAR}, Tim Shedor
+License: MIT-style
+
+Files: theme/prism.js
+Copyright: 2012-${YEAR}, Lea Verou
+License: MIT-style
+
 Files: theme/slimbox2/*
 Copyright: 2007-2010, Christophe Beyls
 License: MIT-style

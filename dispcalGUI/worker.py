@@ -131,6 +131,8 @@ technology_strings = JSONDict()
 technology_strings["u"] = "Unknown"
 technology_strings.path = "technology_strings.json"
 
+workers = []
+
 
 def Property(func):
 	return property(**func())
@@ -1376,6 +1378,7 @@ class Worker(object):
 		self.clear_cmd_output()
 		self._progress_wnd = None
 		self._pwdstr = ""
+		workers.append(self)
 	
 	def add_measurement_features(self, args, display=True):
 		""" Add common options and to dispcal, dispread and spotread arguments """
@@ -1803,6 +1806,14 @@ class Worker(object):
 		self.progress_wnd.Pulse(lang.getstr("please_wait"))
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
+
+	def abort_all(self, confirm=False):
+		aborted = False
+		for worker in workers:
+			if not getattr(worker, "finished", True):
+				worker.abort_subprocess(confirm)
+				aborted = True
+		return aborted
 	
 	def abort_subprocess(self, confirm=False):
 		""" Abort the current subprocess or thread """
@@ -5290,8 +5301,11 @@ usage: spotread [-options] [logfile]
 				  subprocess.isalive())))
 
 	def is_working(self):
-		""" Check if the Worker instance is busy. Return True or False. """
-		return not getattr(self, "finished", True)
+		""" Check if any Worker instance is busy. Return True or False. """
+		for worker in workers:
+			if not getattr(worker, "finished", True):
+				return True
+		return False
 	
 	def log(self, msg, fn=safe_print):
 		msg = safe_basestring(msg)

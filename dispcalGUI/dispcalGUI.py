@@ -1752,7 +1752,7 @@ class MainFrame(BaseFrame):
 
 		self.menuitem_import_colorimeter_correction = tools.FindItemById(
 			tools.FindItem("colorimeter_correction.import"))
-		self.Bind(wx.EVT_MENU, self.import_colorimeter_correction_handler, 
+		self.Bind(wx.EVT_MENU, self.import_colorimeter_corrections_handler, 
 				  self.menuitem_import_colorimeter_correction)
 		self.menuitem_create_colorimeter_correction = tools.FindItemById(
 			tools.FindItem("colorimeter_correction.create"))
@@ -2382,10 +2382,6 @@ class MainFrame(BaseFrame):
 			self.update_displays()
 			self.update_controls()
 			self.update_menus()
-			if hasattr(self, "extra_args"):
-				self.extra_args.update_controls()
-			if hasattr(self, "gamapframe"):
-				self.gamapframe.update_controls()
 			if hasattr(self, "tcframe"):
 				self.tcframe.tc_update_controls()
 
@@ -3132,10 +3128,10 @@ class MainFrame(BaseFrame):
 			self.gamapframe.update_controls()
 
 		if getattr(self, "lut3dframe", None):
-			self.lut3dframe.set_profile("output")
+			self.lut3dframe.update_controls()
 
 		if getattr(self, "reportframe", None):
-			self.reportframe.set_profile("output")
+			self.reportframe.update_controls()
 
 		if update_profile_name:
 			self.profile_name_textctrl.ChangeValue(getcfg("profile.name"))
@@ -3307,11 +3303,14 @@ class MainFrame(BaseFrame):
 						   border=4)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
-			choice = dlg.ShowModal()
-			if choice == wx.ID_CANCEL:
-				return
+			if event:
+				choice = dlg.ShowModal()
+			else:
+				choice = wx.ID_OK
 			asroot = dlg.install_systemwide.GetValue()
 			dlg.Destroy()
+			if choice == wx.ID_CANCEL:
+				return
 			if choice == wx.ID_OK:
 				# Auto
 				path = None
@@ -3400,7 +3399,7 @@ class MainFrame(BaseFrame):
 		if result:
 			show_result_dialog(result, self)
 		if import_colorimeter_corrections:
-			self.import_colorimeter_correction_handler(None)
+			self.import_colorimeter_corrections_handler(None)
 
 	def extra_args_handler(self, event):
 		if not hasattr(self, "extra_args"):
@@ -3555,6 +3554,8 @@ class MainFrame(BaseFrame):
 		if not getattr(self, "lut3dframe", None):
 			self.init_lut3dframe()
 		if self.lut3dframe.IsShownOnScreen():
+			if self.lut3dframe.IsIconized():
+				self.lut3dframe.Restore()
 			self.lut3dframe.Raise()
 		else:
 			self.lut3dframe.Show(not self.lut3dframe.IsShownOnScreen())
@@ -5148,7 +5149,7 @@ class MainFrame(BaseFrame):
 		else:
 			self.reportframe.Show(not self.reportframe.IsShownOnScreen())
 
-	def measurement_report_handler(self, event):
+	def measurement_report_handler(self, event, path=None):
 		if not check_set_argyll_bin():
 			return
 			
@@ -5180,12 +5181,12 @@ class MainFrame(BaseFrame):
 		sim_profile = None
 		devlink = None
 		oprof = None
-		for i, path in enumerate(paths):
+		for i, profilepath in enumerate(paths):
 			try:
-				profile = ICCP.ICCProfile(path)
+				profile = ICCP.ICCProfile(profilepath)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				InfoDialog(self.reportframe, msg=lang.getstr("profile.invalid") + 
-								 "\n" + path, 
+								 "\n" + profilepath, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
@@ -5309,27 +5310,28 @@ class MainFrame(BaseFrame):
 														   lang.getstr("display.primary"),
 														   "")),
 			strftime("%Y-%m-%d %H-%M.html"))
-		defaultDir = get_verified_path(None, 
-									   os.path.join(getcfg("profile.save_path"), 
-									   defaultFile))[0]
-		dlg = wx.FileDialog(self.reportframe, lang.getstr("save_as"), 
-							defaultDir, defaultFile, 
-							wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
-							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
-		dlg.Center(wx.BOTH)
-		result = dlg.ShowModal()
-		if result == wx.ID_OK:
-			path = dlg.GetPath()
-			if not waccess(path, os.W_OK):
-				show_result_dialog(Error(lang.getstr("error.access_denied.write",
-													 path)),
-								   self.reportframe)
+		if not path:
+			defaultDir = get_verified_path(None, 
+										   os.path.join(getcfg("profile.save_path"), 
+										   defaultFile))[0]
+			dlg = wx.FileDialog(self.reportframe, lang.getstr("save_as"), 
+								defaultDir, defaultFile, 
+								wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
+								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				path = dlg.GetPath()
+				if not waccess(path, os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 path)),
+									   self.reportframe)
+					return
+			dlg.Destroy()
+			if result != wx.ID_OK:
 				return
-			save_path = os.path.splitext(path)[0] + ".html"
-			setcfg("last_filedialog_path", save_path)
-		dlg.Destroy()
-		if result != wx.ID_OK:
-			return
+		save_path = os.path.splitext(path)[0] + ".html"
+		setcfg("last_filedialog_path", save_path)
 		# check if file(s) already exist
 		if os.path.exists(save_path):
 				dlg = ConfirmDialog(
@@ -5829,8 +5831,9 @@ class MainFrame(BaseFrame):
 
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
-		if not getcfg("profile.update") and (not getcfg("calibration.update") or 
-											 is_profile()) and getcfg("trc"):
+		if (not isinstance(event, CustomEvent) and
+			not getcfg("profile.update") and (not getcfg("calibration.update") or 
+											  is_profile()) and getcfg("trc")):
 			update_profile = getcfg("calibration.update") and is_profile()
 			if update_profile:
 				msg = lang.getstr("calibration.update_profile_choice")
@@ -5975,7 +5978,9 @@ class MainFrame(BaseFrame):
 		except Exception, exception:
 			stderr = safe_str(exception)
 		else:
+			self._measureframe_subprocess = p
 			stdout, stderr = p.communicate()
+			del self._measureframe_subprocess
 			returncode = p.returncode
 			config.initcfg()
 			self.get_set_display()
@@ -6130,7 +6135,7 @@ class MainFrame(BaseFrame):
 											 100))
 			self.gamapframe.Show(not self.gamapframe.IsShownOnScreen())
 	
-	def current_cal_choice(self):
+	def current_cal_choice(self, silent=False):
 		""" Prompt user to either keep or clear the current calibration,
 		with option to embed or not embed
 		
@@ -6211,7 +6216,10 @@ class MainFrame(BaseFrame):
 					   border=border)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
-		result = dlg.ShowModal()
+		if silent:
+			result = wx.ID_OK
+		else:
+			result = dlg.ShowModal()
 		if can_use_current_cal or cal:
 			reset_cal = dlg.reset_cal_ctrl.GetValue()
 		embed_cal = dlg.embed_cal_ctrl.GetValue()
@@ -6375,7 +6383,7 @@ class MainFrame(BaseFrame):
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3") and \
 		   self.check_overwrite(profile_ext):
-			apply_calibration = self.current_cal_choice()
+			apply_calibration = self.current_cal_choice(silent=isinstance(event, CustomEvent))
 			if apply_calibration != wx.ID_CANCEL:
 				self.setup_measurement(self.just_profile, apply_calibration)
 		else:
@@ -6888,15 +6896,20 @@ class MainFrame(BaseFrame):
 			# Closes the window
 			event.Skip()
 	
-	def profile_info_handler(self, event):
-		if event.GetEventObject() == getattr(self, "show_profile_info", None):
+	def profile_info_handler(self, event=None, profile=None):
+		if profile:
+			pass
+		elif (event and
+			  event.GetEventObject() == getattr(self, "show_profile_info",
+												None)):
 			# Use the profile that was requested to be installed
 			profile = self.modaldlg.profile
 		else:
 			profile = self.select_profile(title=lang.getstr("profile.info"),
 										  check_profile_class=False,
 										  prefer_current_profile=True,
-										  ignore_current_profile=event.GetEventObject()
+										  ignore_current_profile=event and
+																 event.GetEventObject()
 																 is not self.profile_info_btn)
 		if not profile:
 			return
@@ -6919,9 +6932,175 @@ class MainFrame(BaseFrame):
 				self.profile_info[id].profileID = id
 				self.profile_info[id].LoadProfile(profile)
 		if self.profile_info.get(id):
-			self.profile_info[id].Show(show)
+			if self.profile_info[id].IsIconized() and show:
+				self.profile_info[id].Restore()
+			else:
+				self.profile_info[id].Show(show)
 			if show:
 				self.profile_info[id].Raise()
+
+	def process_data(self, data):
+		""" Process data """
+		response = "ok"
+		if data[0] == "3DLUT-maker":
+			# 3D LUT maker
+			self.lut3d_create_handler(None)
+			if len(data) == 2:
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					response = "fail"
+				else:
+					self.lut3dframe.lut3d_create_handler(None, path=path)
+		elif data[0] == "curve-viewer":
+			# Curve viewer
+			profile = None
+			if len(data) == 2:
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					return "fail"
+				try:
+					profile = ICCP.ICCProfile(path)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					return "fail"
+			self.init_lut_viewer(profile=profile, show=True)
+		elif data[0] == "profile-info":
+			# Profile info
+			profile = None
+			if len(data) == 2:
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					return "fail"
+				try:
+					profile = ICCP.ICCProfile(path)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					return "fail"
+			self.profile_info_handler(profile=profile)
+		elif data[0] == "synthprofile":
+			# Synthetic profile creator
+			self.synthicc_create_handler(None)
+			if len(data) == 2:
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					response = "fail"
+				else:
+					self.synthiccframe.drop_handler(path)
+		elif data[0] == "testchart-editor":
+			# Testchart editor
+			if len(data) == 2:
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					return "fail"
+			else:
+				path = None
+			if not hasattr(self, "tcframe"):
+				self.init_tcframe(path=path)
+				setcfg("tc.show", 1)
+				self.tcframe.Show()
+			else:
+				if self.tcframe.IsIconized():
+					self.tcframe.Restore()
+				else:
+					self.tcframe.Show()
+				if path:
+					self.tcframe.tc_load_cfg_from_ti1(path=path)
+			self.tcframe.Raise()
+		elif data[0] == appname:
+			# Main window
+			self.Restore()
+			self.Raise()
+		elif data[0] == "calibrate":
+			# Calibrate
+			self.calibrate_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
+												   self.calibrate_btn))
+		elif data[0] == "calibrate-profile":
+			# Calibrate & profile
+			self.calibrate_and_profile_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
+															   self.calibrate_and_profile_btn))
+		elif data[0] == "create-profile":
+			if len(data) == 2:
+				profile_path = data[1]
+			else:
+				profile_path = None
+			self.create_profile_handler(None, path=profile_path)
+		elif data[0] == "getcfg" and len(data) == 2:
+			response = getcfg(data[1])
+		elif data[0] == "import-colorimeter-corrections":
+			self.import_colorimeter_corrections_handler(None, paths=data[1:])
+		elif data[0] == "install-profile":
+			if len(data) == 2:
+				profile_path = data[1]
+			else:
+				profile_path = None
+			self.install_profile_handler(profile_path=profile_path)
+		elif data[0] == "load" and len(data) == 2:
+			# Load settings from file
+			path = data[1]
+			if not os.path.isfile(path) and not os.path.isabs(path):
+				path = get_data_path(path)
+			if path:
+				self.load_cal_handler(None, path)
+			else:
+				response = "fail"
+		elif data[0] == "measure":
+			# Start measurement
+			if getattr(self, "pending_function", None):
+				if hasattr(self, "_measureframe_subprocess"):
+					self._measureframe_subprocess.terminate()
+				else:
+					self.worker.wrapup(False)
+					self.HideAll()
+				self.call_pending_function()
+			else:
+				response = "fail"
+		elif data[0] == "measurement-report":
+			# Measurement report
+			if len(data) == 2:
+				self.measurement_report_handler(None, path=data[1])
+			else:
+				self.measurement_report_create_handler(None)
+		elif data[0] == "profile":
+			# Profile
+			self.profile_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
+												 self.profile_btn))
+		elif data[0] == "refresh":
+			# Refresh main window
+			self.update_displays()
+			self.update_controls()
+			self.update_menus()
+			if hasattr(self, "tcframe"):
+				self.tcframe.tc_update_controls()
+		elif data[0] == "restore-defaults":
+			# Restore defaults
+			self.restore_defaults_handler(include=data[1:])
+		elif data[0] == "set-language" and len(data) == 2:
+			setcfg("lang", data[1])
+			menuitem = self.menubar.FindItemById(lang.ldict[lang.getcode()].menuitem_id)
+			event = CustomEvent(wx.EVT_MENU.typeId, menuitem)
+			self.set_language_handler(event)
+		elif data[0] == "setcfg" and len(data) == 3:
+			# Set configuration option
+			value = data[2]
+			if value == "None":
+				value = None
+			setcfg(data[1], value)
+		elif (data[0] in ("enable-spyder2",
+						  "measure-uniformity",
+						  "report-calibrated", "report-uncalibrated",
+						  "verify-calibration")):
+			getattr(self, data[0].replace("-", "_") + "_handler")(None)
+		else:
+			response = "invalid"
+		return response
 	
 	def modaldlg_raise_handler(self, event):
 		""" Prevent modal dialog from being lowered (keep on top) """
@@ -6995,7 +7174,10 @@ class MainFrame(BaseFrame):
 			self.lut_viewer_load_lut(event, profile, force_draw=True)
 		if getattr(self, "lut_viewer", None):
 			self.menuitem_show_lut.Check(show)
-			self.lut_viewer.Show(show)
+			if self.lut_viewer.IsIconized() and show:
+				self.lut_viewer.Restore()
+			else:
+				self.lut_viewer.Show(show)
 			if show:
 				self.lut_viewer.Raise()
 	
@@ -7064,6 +7246,8 @@ class MainFrame(BaseFrame):
 		if not getattr(self, "synthiccframe", None):
 			self.init_synthiccframe()
 		if self.synthiccframe.IsShownOnScreen():
+			if self.synthiccframe.IsIconized():
+				self.synthiccframe.Restore()
 			self.synthiccframe.Raise()
 		else:
 			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
@@ -7645,7 +7829,7 @@ class MainFrame(BaseFrame):
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items()
 	
-	def import_colorimeter_correction_handler(self, event):
+	def import_colorimeter_corrections_handler(self, event, paths=None):
 		"""
 		Convert correction matrices from other profiling softwares to Argyll's
 		CCMX or CCSS format (or to spyd4cal.bin in case of the Spyder4)
@@ -7720,7 +7904,12 @@ class MainFrame(BaseFrame):
 					   border=4)
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
-		choice = dlg.ShowModal()
+		if event:
+			choice = dlg.ShowModal()
+		elif paths:
+			choice = wx.ID_ANY
+		else:
+			choice = wx.ID_OK
 		for name, importer in [("i1d3", i1d3ccss or oeminst),
 							   ("spyd4", spyd4en or oeminst),
 							   ("icd", True)]:
@@ -7776,7 +7965,7 @@ class MainFrame(BaseFrame):
 					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
 													"Datacolor_ISO", "Data",
 													"setup.exe"))
-		else:
+		elif not paths:
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction.import.choose"),
 								wildcard=lang.getstr("filetype.any") + 
@@ -7820,8 +8009,8 @@ class MainFrame(BaseFrame):
 				if importer == oeminst:
 					break
 		self.worker.interactive = False
-		self.worker.start(self.import_colorimeter_correction_consumer,
-						  self.import_colorimeter_correction_producer,
+		self.worker.start(self.import_colorimeter_corrections_consumer,
+						  self.import_colorimeter_corrections_producer,
 						  wargs=(result, i1d3, i1d3ccss, spyd4, spyd4en, icd,
 								 oeminst, paths, choice == wx.ID_OK, asroot,
 								 importers),
@@ -7966,7 +8155,7 @@ class MainFrame(BaseFrame):
 							   "\n" + path)
 		return result, i1d3, spyd4, icd
 	
-	def import_colorimeter_correction_producer(self, result, i1d3, i1d3ccss,
+	def import_colorimeter_corrections_producer(self, result, i1d3, i1d3ccss,
 											   spyd4, spyd4en, icd, oeminst,
 											   paths, auto, asroot, importers):
 		""" Import colorimetercorrections from paths """
@@ -8008,7 +8197,7 @@ class MainFrame(BaseFrame):
 														   asroot)
 		return result, i1d3, spyd4, icd
 	
-	def import_colorimeter_correction_consumer(self, results):
+	def import_colorimeter_corrections_consumer(self, results):
 		result, i1d3, spyd4, icd = results
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
@@ -9423,8 +9612,8 @@ class MainFrame(BaseFrame):
 		self.tcframe.Raise()
 		return
 
-	def init_tcframe(self):
-		self.tcframe = TestchartEditor(self)
+	def init_tcframe(self, path=None):
+		self.tcframe = TestchartEditor(self, path=path)
 
 	def set_default_testchart(self, alert=True, force=False):
 		path = getcfg("testchart.file")
@@ -9742,7 +9931,7 @@ class MainFrame(BaseFrame):
 					spyd2 = self.enable_spyder2_handler(None,
 														i1d3 or icd or spyd4)
 				if not spyd2 and (i1d3 or icd or spyd4):
-					self.import_colorimeter_correction_handler(None)
+					self.import_colorimeter_corrections_handler(None)
 		if displays != self.worker.displays or \
 		   comports != self.worker.instruments:
 			if self.IsShownOnScreen():
@@ -10653,6 +10842,7 @@ class MainFrame(BaseFrame):
 				if debug:
 					safe_print("Waiting for child thread to exit...")
 				self.thread.join()
+			self.listening = False
 			self.HideAll()
 			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 				self.worker.wrapup(False)
@@ -10791,6 +10981,7 @@ class StartupFrame(wx.Frame):
 			wx.CallLater(1, self.setup_frame_finish, app)
 			return
 		app.SetTopWindow(app.frame)
+		app.frame.listen()
 		app.frame.Show()
 		wx.CallAfter(app.frame.Raise)
 		self.Close()

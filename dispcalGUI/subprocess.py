@@ -7,6 +7,7 @@ import os
 import sys
 
 from subprocess26 import *
+from subprocess26 import list2cmdline
 
 if sys.platform == "win32":
 	from subprocess26 import (CREATE_NEW_CONSOLE, DUPLICATE_SAME_ACCESS, 

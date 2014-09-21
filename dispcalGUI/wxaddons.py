@@ -184,7 +184,7 @@ def get_platform_window_decoration_size():
 class CustomEvent(wx.PyEvent):
 
 	def __init__(self, typeId, object, window=None):
-		wx.PyEvent.__init__(self, typeId, object.GetId())
+		wx.PyEvent.__init__(self, object.GetId(), typeId)
 		self.evtType = [typeId]
 		self.typeId = typeId
 		self.object = object

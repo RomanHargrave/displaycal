@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
+from time import sleep
+import errno
 import logging
 import os
 import platform
+import socket
 import sys
+import subprocess as sp
+import threading
 import traceback
 if sys.platform == "darwin":
 	from platform import mac_ver
@@ -20,13 +26,14 @@ if pyver < py_minversion or pyver > py_maxversion:
 					    sys.version.split()[0]))
 
 from config import (autostart_home, confighome, datahome, enc, exe, exe_ext,
-					exedir, exename, get_data_path,fs_enc, isapp, isexe,
-					logdir, pydir, pyname, pypath, resfiles, runtype)
+					exedir, exename, get_data_path, getcfg, fs_enc, initcfg,
+					isapp, isexe, logdir, pydir, pyname, pypath, resfiles,
+					runtype)
 from debughelpers import ResourceError, handle_error
 from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
 from options import debug, verbose
-from util_str import safe_unicode
+from util_str import safe_str, safe_unicode
 from wxaddons import wx
 
 def _excepthook(etype, value, tb):
@@ -36,6 +43,108 @@ sys.excepthook = _excepthook
 
 
 def main(module=None):
+	if module:
+		name = "%s-%s" % (appname, module)
+	else:
+		name = appname
+	initcfg()
+	lockfilebasenames = []
+	# Allow multiple instances for curve viewer, profile info, synthetic icc
+	# and testchart editor
+	if module not in ("curve-viewer", "profile-info", "synthprofile",
+					  "testchart-editor"):
+		if module != "VRML-to-X3D-converter":
+			lockfilebasenames.append(appname)
+		if module:
+			lockfilebasenames.append(module)
+		for lockfilebasename in lockfilebasenames:
+			lockfilename = os.path.join(confighome, "%s.lock" %
+													lockfilebasename)
+			if os.path.isfile(lockfilename):
+				incoming = "?"
+				with open(lockfilename) as lockfile:
+					port = lockfile.read().strip()
+				try:
+					port = int(port)
+				except ValueError:
+					# This shouldn't happen
+					pass
+				else:
+					try:
+						appsocket = socket.socket(socket.AF_INET,
+												  socket.SOCK_STREAM)
+					except socket.error:
+						# This shouldn't happen
+						pass
+					else:
+						try:
+							appsocket.connect(("127.0.0.1", port))
+						except socket.error:
+							# Other instance probably died
+							incoming = None
+						else:
+							# Other instance already running?
+							# Send module/appname and args as UTF-8
+							data = [module or appname]
+							if module != "3DLUT-maker":
+								for arg in sys.argv[1:]:
+									data.append(safe_str(safe_unicode(arg), "UTF-8"))
+							try:
+								appsocket.sendall("%s\n" % sp.list2cmdline(data))
+							except socket.error:
+								# Connection lost?
+								pass
+							else:
+								while True:
+									try:
+										incoming = appsocket.recv(1024)
+									except socket.error, exception:
+										if exception.errno == errno.EWOULDBLOCK:
+											sleep(.05)
+											continue
+									break
+							appsocket.close()
+				if incoming is None:
+					# Ok to start new instance
+					pass
+				elif incoming.strip() == "ok":
+					# Successfully sent our request, exit
+					return
+				else:
+					# Other instance busy?
+					import localization as lang
+					lang.init()
+					handle_error(lang.getstr("app.otherinstance.busy",
+											 lockfilebasename))
+					return
+		# Create lockfile.
+		with open(lockfilename, "w") as lockfile:
+			try:
+				sys._appsocket = socket.socket(socket.AF_INET,
+											   socket.SOCK_STREAM)
+			except socket.error:
+				# This shouldn't happen
+				pass
+			else:
+				if getcfg("app.allow_network_clients"):
+					host = ""
+				else:
+					host = "127.0.0.1"
+				port = getcfg("app.port")
+				while True:
+					try:
+						sys._appsocket.bind((host, port))
+					except socket.error:
+						if port == 0:
+							del sys._appsocket
+							break
+						# Try unused port
+						port = 0
+					else:
+						sys._appsocket.settimeout(1)
+						sys._appsocket.listen(1)
+						lockfile.write("%s\n" % sys._appsocket.getsockname()[1])
+						break
 	log("=" * 80)
 	if verbose >= 1:
 		version = VERSION_STRING
@@ -82,7 +191,6 @@ def main(module=None):
 									"\n" + filename)
 		# Force to run inside tty with the --terminal option
 		if "--terminal" in sys.argv[1:]:
-			import subprocess as sp
 			if sys.platform == "win32":
 				import win32api
 			from util_os import which
@@ -182,7 +290,6 @@ def main(module=None):
 						not os.access(directory, os.W_OK)):
 						script.append("chown -R '%s' '%s'" % (user, directory))
 				if script:
-					import subprocess as sp
 					sp.call(['osascript', '-e', 
 							 'do shell script "%s" with administrator privileges' 
 							 % ";".join(script).encode(fs_enc)])
@@ -236,6 +343,7 @@ def main(module=None):
 				accepts_filename_argument = True
 			elif module == "synthprofile":
 				from wxSynthICCFrame import main as main
+				accepts_filename_argument = True
 			elif module == "testchart-editor":
 				from wxTestchartEditor import main as main
 				accepts_filename_argument = True
@@ -255,13 +363,19 @@ def main(module=None):
 		else:
 			error = u"Fatal error: " + safe_unicode(traceback.format_exc())
 		handle_error(error)
-	try:
-		logger = logging.getLogger(appname)
-		for handler in logger.handlers:
-			logger.removeHandler(handler)
-		logging.shutdown()
-	except Exception, exception:
-		pass
+	finally:
+		for thread in threading.enumerate():
+			if thread.isAlive() and thread is not threading.currentThread():
+				thread.join()
+		try:
+			logger = logging.getLogger(name)
+			for handler in logger.handlers:
+				logger.removeHandler(handler)
+			logging.shutdown()
+			if lockfilebasenames:
+				os.remove(lockfilename)
+		except Exception, exception:
+			pass
 
 
 def main_3dlut_maker():

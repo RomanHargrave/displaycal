@@ -410,7 +410,7 @@ def runtimeconfig(pyfile):
 	
 	"""
 	from log import setup_logging
-	setup_logging(logdir)
+	setup_logging(logdir, os.path.basename(os.path.splitext(pyfile)[0]))
 	if debug or verbose >= 1:
 		from log import safe_print
 	if debug:
@@ -565,6 +565,8 @@ defaults = {
 	"3dlut.use_abstract_profile": 0,
 	"3dlut.size": 17,
 	"allow_skip_sensor_cal": 0,
+	"app.allow_network_clients": 0,
+	"app.port": 15411,
 	"argyll.debug": 0,
 	"argyll.dir": None,
 	"argyll.version": "0.0.0",
@@ -1190,7 +1192,7 @@ def makecfgdir(which="user", worker=None):
 	return True
 
 
-def initcfg():
+def initcfg(module=None):
 	"""
 	Initialize the configuration.
 	
@@ -1198,6 +1200,10 @@ def initcfg():
 	settings directory if nonexistent.
 	
 	"""
+	if module:
+		cfgbasename = "%s-%s" % (appname, module)
+	else:
+		cfgbasename = appname
 	# read pre-v0.2.2b configuration if present
 	if sys.platform == "darwin":
 		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", 
@@ -1206,13 +1212,13 @@ def initcfg():
 		oldcfg = os.path.join(expanduseru("~"), "." + appname)
 	makecfgdir()
 	if os.path.exists(confighome) and \
-	   not os.path.exists(os.path.join(confighome, appname + ".ini")):
+	   not os.path.exists(os.path.join(confighome, cfgbasename + ".ini")):
 		try:
 			if os.path.isfile(oldcfg):
 				oldcfg_file = open(oldcfg, "rb")
 				oldcfg_contents = oldcfg_file.read()
 				oldcfg_file.close()
-				cfg_file = open(os.path.join(confighome, appname + ".ini"), 
+				cfg_file = open(os.path.join(confighome, cfgbasename + ".ini"), 
 								"wb")
 				cfg_file.write("[Default]\n" + oldcfg_contents)
 				cfg_file.close()
@@ -1220,7 +1226,7 @@ def initcfg():
 				key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, 
 									  "Software\\" + appname)
 				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-				cfg_file = open(os.path.join(confighome, appname + ".ini"), 
+				cfg_file = open(os.path.join(confighome, cfgbasename + ".ini"), 
 								"wb")
 				cfg_file.write("[Default]\n")
 				for i in range(numvalues):
@@ -1241,15 +1247,19 @@ def initcfg():
 		setcfg("gamap_src_viewcond", "mt")
 		setcfg("gamap_out_viewcond", "mt")
 	# Read cfg
-	try:
-		cfg.read([os.path.join(config_sys, appname + ".ini")])
-		cfg.read([os.path.join(confighome, appname + ".ini")])
-		# This won't raise an exception if the file does not exist, only if it
-		# can't be parsed
-	except Exception, exception:
-		from log import safe_print
-		safe_print("Warning - could not parse configuration file '%s'" % 
-				   appname + ".ini")
+	cfgnames = [appname]
+	if module:
+		cfgnames.append(cfgbasename)
+	for cfgname in cfgnames:
+		for configroot in (config_sys, confighome):
+			try:
+				cfg.read([os.path.join(configroot, cfgname + ".ini")])
+				# This won't raise an exception if the file does not exist, only
+				# if it can't be parsed
+			except Exception, exception:
+				from log import safe_print
+				safe_print("Warning - could not parse configuration file '%s'" %
+						   (module or appname) + ".ini")
 
 
 def setcfg(name, value):
@@ -1260,7 +1270,7 @@ def setcfg(name, value):
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
-def writecfg(which="user", worker=None):
+def writecfg(which="user", worker=None, module=None, options=()):
 	"""
 	Write configuration file.
 	
@@ -1268,16 +1278,28 @@ def writecfg(which="user", worker=None):
 	worker: worker instance if which == 'system'
 	
 	"""
+	if module:
+		cfgbasename = "%s-%s" % (appname, module)
+	else:
+		cfgbasename = appname
 	if which == "user":
 		# user config - stores everything and overrides system-wide config
-		cfgfilename = os.path.join(confighome, appname + ".ini")
+		cfgfilename = os.path.join(confighome, cfgbasename + ".ini")
 		try:
 			io = StringIO()
 			cfg.write(io)
 			io.seek(0)
 			lines = io.read().strip("\n").split("\n")
+			if options:
+				optionlines = []
+				for optionline in lines[1:]:
+					for option in options:
+						if optionline.startswith(option):
+							optionlines.append(optionline)
+			else:
+				optionlines = lines[1:]
 			# Sorting works as long as config has only one section
-			lines = [lines[0]] + sorted(lines[1:])
+			lines = lines[:1] + sorted(optionlines)
 			cfgfile = open(cfgfilename, "wb")
 			cfgfile.write("\n".join(lines))
 			cfgfile.close()
@@ -1288,8 +1310,8 @@ def writecfg(which="user", worker=None):
 			return False
 	else:
 		# system-wide config - only stores essentials ie. Argyll directory
-		cfgfilename1 = os.path.join(confighome, appname + ".local.ini")
-		cfgfilename2 = os.path.join(config_sys, appname + ".ini")
+		cfgfilename1 = os.path.join(confighome, cfgbasename + ".local.ini")
+		cfgfilename2 = os.path.join(config_sys, cfgbasename + ".ini")
 		if sys.platform == "win32":
 			cfgfilename = cfgfilename2
 		else:

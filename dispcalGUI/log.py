@@ -51,9 +51,10 @@ class Log():
 		Optionally use function 'fn' instead of logging.info.
 		
 		"""
+		global logger
 		msg = msg.replace("\r\n", "\n").replace("\r", "")
-		if fn is None and logging.getLogger(appname).handlers:
-			fn = logging.getLogger(appname).info
+		if fn is None and logger.handlers:
+			fn = logger.info
 		if fn:
 			for line in msg.split("\n"):
 				fn(line)
@@ -222,13 +223,14 @@ def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
 	return logger
 
 
-def setup_logging(logdir):
+def setup_logging(logdir, name=appname):
 	"""
 	Setup the logging facility.
 	"""
-	global _logdir
+	global _logdir, logger
 	_logdir = logdir
-	logger = get_file_logger(appname, logging.DEBUG, "midnight", 5)
+	logger = get_file_logger(name, logging.DEBUG, "midnight",
+							 5 if name == appname else 0)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
 	streamhandler.setFormatter(streamformatter)

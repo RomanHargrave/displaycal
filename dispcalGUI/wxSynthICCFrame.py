@@ -123,7 +123,13 @@ class SynthICCFrame(BaseFrame):
 			setcfg("position.synthiccframe.y", y)
 			setcfg("size.synthiccframe.w", self.GetSize()[0])
 			setcfg("size.synthiccframe.h", self.GetSize()[1])
-		config.writecfg()
+		if self.Parent:
+			config.writecfg()
+		else:
+			config.writecfg(module="synthprofile",
+							options=("synthprofile.", "last_icc_path",
+									 "position.synthiccframe",
+									 "size.synthiccframe"))
 		if event:
 			event.Skip()
 	
@@ -408,6 +414,16 @@ class SynthICCFrame(BaseFrame):
 			self.set_trc(gamma)
 			self._updating_ctrls = False
 
+	def process_data(self, data):
+		if data[0] == "synthprofile":
+			if self.IsIconized():
+				self.Restore()
+			self.Raise()
+			if len(data) == 2:
+				self.drop_handler(data[1])
+			return "ok"
+		return "invalid"
+
 	def set_trc(self, gamma):
 		if gamma == -1023:
 			# DICOM
@@ -562,7 +578,6 @@ class SynthICCFrame(BaseFrame):
 								   self)
 				return
 			setcfg("last_icc_path", path)
-			config.writecfg()
 			profile.setDescription(os.path.splitext(os.path.basename(path))[0])
 			profile.calculateID()
 			try:
@@ -593,14 +608,12 @@ class SynthICCFrame(BaseFrame):
 			setcfg("synthprofile.trc_gamma", 2.4)
 			setcfg("synthprofile.trc_gamma_type", "G")
 			setcfg("synthprofile.trc_output_offset", 0.0)
-			config.writecfg()
 		if not self._updating_ctrls:
 			self.update_trc_controls()
 
 	def trc_gamma_type_ctrl_handler(self, event):
 		setcfg("synthprofile.trc_gamma_type",
 			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
-		config.writecfg()
 		self.update_trc_control()
 	
 	def trc_gamma_ctrl_handler(self, event):
@@ -618,7 +631,6 @@ class SynthICCFrame(BaseFrame):
 					self.trc_gamma_ctrl.SetValue(str(v))
 				setcfg("synthprofile.trc_gamma",
 					   float(self.trc_gamma_ctrl.GetValue()))
-				config.writecfg()
 				self.preset_ctrl.SetSelection(0)
 				self.update_trc_control()
 		event.Skip()
@@ -665,14 +677,17 @@ class SynthICCFrame(BaseFrame):
 		
 
 
-def main():
-	config.initcfg()
+def main(profile=None):
+	config.initcfg("synthprofile")
 	lang.init()
 	lang.update_defaults()
 	app = wx.App(0)
 	app.synthiccframe = SynthICCFrame()
+	if profile:
+		app.synthiccframe.drop_handler(profile)
+	app.synthiccframe.listen()
 	app.synthiccframe.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":
-	main()
+	main(*sys.argv[max(len(sys.argv) - 1, 1):])

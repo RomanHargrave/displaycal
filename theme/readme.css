@@ -584,6 +584,7 @@ sup {
 #install-windows-driver h5,
 #requirements-source > div,
 #install > div,
+#scripting > div,
 #issues dt.collapsed,
 #issues dt.collapsed + dd {
 	background: #e5f9ff; /* Old browsers */
@@ -606,6 +607,7 @@ sup {
 .ie_lte_8 #install-windows-driver h5,
 .ie_lte_8 #requirements-source > div,
 .ie_lte_8 #install > div,
+.ie_lte_8 #scripting > div,
 .ie_lte_8 #issues dt.collapsed,
 .ie_lte_8 #issues dt.collapsed + dd {
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bfe5f9ff', endColorstr='#bfcde9f2',GradientType=0 ); /* IE6-9 */
@@ -615,6 +617,7 @@ sup {
 #quickstart > ol > li,
 #requirements-source > div,
 #install > div,
+#scripting > div,
 #issues dt,
 #issues dd {
 	padding: 1em;
@@ -631,7 +634,8 @@ sup {
 	margin: 0;
 }
 #requirements-source > div h3,
-#install > div h3 {
+#install > div h3,
+#scripting > div h3 {
 	margin: 0;
 }
 #quickstart > ol > li p.info,
@@ -760,13 +764,15 @@ sup {
 
 /* Install */
 
-#install-src dt {
+#install-src dt,
+#scripting dt {
 	font: normal 14px/22px Arial, sans-serif;
 	font-style: normal;
 	text-shadow: 1px 1px 1px rgba(0, 0, 0, .25);
 	white-space: nowrap;
 }
-#install-src dt code {
+#install-src dt code,
+#scripting dt code {
 	background: transparent none;
 	padding: 0;
 }
@@ -918,6 +924,7 @@ sup {
 	clear: both;
 }
 #install-src dd,
+#scripting dd,
 #usage dd,
 #menu dd {
 	padding-left: 16px;

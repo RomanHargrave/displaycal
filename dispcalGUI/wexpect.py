@@ -2920,7 +2920,7 @@ def split_command_line(command_line):
 
     for c in command_line:
         if state == state_basic or state == state_whitespace:
-            if c == '\\': # Escape the next character
+            if c == '\\' and sys.platform != "win32": # Escape the next character
                 state = state_esc
             elif c == r"'": # Handle single quote
                 state = state_singlequote

@@ -49,8 +49,9 @@ def handle_error(error, parent=None, silent=False):
 		error = error[1]
 	else:
 		tbstr = traceback.format_exc()
-	if (debug or not isinstance(error, EnvironmentError) or
-				 not getattr(error, "filename", None)):
+	if (isinstance(error, Exception) and
+		(debug or not isinstance(error, EnvironmentError) or
+				 not getattr(error, "filename", None))):
 		# Print a traceback if in debug mode, for non environment errors, and
 		# for environment errors not related to files
 		safe_print(tbstr)

@@ -142,14 +142,13 @@ class ReportFrame(BaseFrame):
 			setcfg("position.reportframe.y", y)
 			setcfg("size.reportframe.w", self.GetSize()[0])
 			setcfg("size.reportframe.h", self.GetSize()[1])
-			config.writecfg()
+		config.writecfg()
 		if event:
 			event.Skip()
 	
 	def apply_trc_ctrl_handler(self, event):
 		v = self.apply_trc_cb.GetValue()
 		setcfg("measurement_report.apply_trc", int(v))
-		config.writecfg()
 		self.update_main_controls()
 
 	def black_output_offset_ctrl_handler(self, event):
@@ -176,7 +175,6 @@ class ReportFrame(BaseFrame):
 			if str(v) != self.trc_gamma_ctrl.GetValue():
 				self.trc_gamma_ctrl.SetValue(str(v))
 			setcfg("measurement_report.trc_gamma", v)
-			config.writecfg()
 			self.update_trc_control()
 		event.Skip()
 
@@ -186,13 +184,11 @@ class ReportFrame(BaseFrame):
 			setcfg("measurement_report.trc_gamma", 2.4)
 			setcfg("measurement_report.trc_gamma_type", "B")
 			setcfg("measurement_report.trc_output_offset", 0.0)
-			config.writecfg()
 			self.update_trc_controls()
 
 	def trc_gamma_type_ctrl_handler(self, event):
 		setcfg("measurement_report.trc_gamma_type",
 			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
-		config.writecfg()
 		self.update_trc_control()
 	
 	def chart_btn_handler(self, event):
@@ -241,7 +237,6 @@ class ReportFrame(BaseFrame):
 						index = 0
 					self.fields_ctrl.SetSelection(index)
 					setcfg("measurement_report.chart", chart)
-					config.writecfg()
 					self.chart_patches_amount.Freeze()
 					self.chart_patches_amount.SetLabel(
 						str(cgats.queryv1("NUMBER_OF_SETS") or ""))
@@ -280,7 +275,6 @@ class ReportFrame(BaseFrame):
 	def enable_3dlut_handler(self, event):
 		setcfg("3dlut.madVR.enable", int(self.enable_3dlut_cb.GetValue()))
 		setcfg("measurement_report.use_devlink_profile", 0)
-		config.writecfg()
 		self.update_main_controls()
 	
 	def fields_ctrl_handler(self, event):
@@ -390,14 +384,12 @@ class ReportFrame(BaseFrame):
 	def simulate_whitepoint_ctrl_handler(self, event):
 		v = self.simulate_whitepoint_cb.GetValue()
 		setcfg("measurement_report.whitepoint.simulate", int(v))
-		config.writecfg()
 		self.update_main_controls()
 		
 	
 	def simulate_whitepoint_relative_ctrl_handler(self, event):
 		setcfg("measurement_report.whitepoint.simulate.relative",
 			   int(self.simulate_whitepoint_relative_cb.GetValue()))
-		config.writecfg()
 	
 	def simulation_profile_ctrl_handler(self, event):
 		self.set_profile("simulation")
@@ -532,7 +524,6 @@ class ReportFrame(BaseFrame):
 		setcfg("3dlut.madVR.enable", 0)
 		setcfg("measurement_report.use_devlink_profile",
 			   int(self.devlink_profile_cb.GetValue()))
-		config.writecfg()
 		self.update_main_controls()
 	
 	def use_simulation_profile_ctrl_handler(self, event):
@@ -552,13 +543,11 @@ class ReportFrame(BaseFrame):
 				tf = sim_profile.tags.rTRC.get_transfer_function()
 				setcfg("measurement_report.apply_trc",
 					  int(tf[0][1] in (-240, -709)))
-		config.writecfg()
 		self.update_main_controls()
 
 	def use_simulation_profile_as_output_handler(self, event):
 		setcfg("measurement_report.use_simulation_profile_as_output",
 			   int(self.use_simulation_profile_as_output_cb.GetValue()))
-		config.writecfg()
 		self.update_main_controls()
 
 

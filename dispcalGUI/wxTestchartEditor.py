@@ -28,7 +28,7 @@ from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_util, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, wx
-from wxwindows import (CustomGrid, ConfirmDialog,
+from wxwindows import (BaseFrame, CustomGrid, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, FileDrop,
 					   InfoDialog, get_gradient_panel)
 from wxfixes import GenBitmapButton as BitmapButton
@@ -40,10 +40,10 @@ def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
 
-class TestchartEditor(wx.Frame):
+class TestchartEditor(BaseFrame):
 	def __init__(self, parent = None, id = -1, path=None,
 				 cfg=None, target=None):
-		wx.Frame.__init__(self, parent, id, lang.getstr("testchart.edit"))
+		BaseFrame.__init__(self, parent, id, lang.getstr("testchart.edit"))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-testchart-editor"))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
@@ -683,6 +683,16 @@ class TestchartEditor(wx.Frame):
 	def precond_profile_drop_handler(self, path):
 		self.tc_precond_profile.SetPath(path)
 		self.tc_precond_profile_handler()
+
+	def process_data(self, data):
+		if data[0] == "testchart-editor":
+			if self.IsIconized():
+				self.Restore()
+			self.Raise()
+			if len(data) == 2:
+				self.ti1_drop_handler(data[1])
+			return "ok"
+		return "invalid"
 
 	def ti1_drop_handler(self, path):
 		self.tc_load_cfg_from_ti1(None, path)
@@ -1866,7 +1876,7 @@ class TestchartEditor(wx.Frame):
 			return
 		setcfg("tc_export_repeat_patch_max", repeatmax)
 		setcfg("tc_export_repeat_patch_min", repeatmin)
-		writecfg()
+		self.writecfg()
 		path = None
 		(defaultDir,
 		 defaultFile) = (get_verified_path("last_testchart_export_path")[0],
@@ -1890,7 +1900,7 @@ class TestchartEditor(wx.Frame):
 													 path)), self)
 				return
 			setcfg("last_testchart_export_path", path)
-			writecfg()
+			self.writecfg()
 			if sys.platform not in ("darwin", "win32"):
 				# Linux segfaults if running the export threaded
 				self.tc_export(path, filter_index)
@@ -2000,7 +2010,7 @@ class TestchartEditor(wx.Frame):
 					dlg.Destroy()
 					if result == wx.ID_OK:
 						setcfg(self.cfg, path)
-						writecfg()
+						self.writecfg()
 				if path == getcfg(self.cfg) and self.target and hasattr(self.target, "set_testchart"):
 					self.target.set_testchart(path)
 				if not self.IsBeingDeleted():
@@ -2182,7 +2192,7 @@ class TestchartEditor(wx.Frame):
 				setcfg("tc.show", 0)
 				return True
 			else:
-				writecfg()
+				self.writecfg()
 				self.Destroy()
 
 	def tc_move_handler(self, event = None):
@@ -2603,7 +2613,7 @@ class TestchartEditor(wx.Frame):
 			if gamma != None: setcfg("tc_gamma", gamma)
 			if dark_emphasis != None: setcfg("tc_dark_emphasis", dark_emphasis)
 			if algo != None: setcfg("tc_algo", algo)
-			writecfg()
+			self.writecfg()
 
 			self.tc_update_controls()
 			self.tc_preview(True)
@@ -2637,7 +2647,7 @@ class TestchartEditor(wx.Frame):
 		generated as well.
 		
 		"""
-		writecfg()
+		self.writecfg()
 		fullspread_patches = getcfg("tc_fullspread_patches")
 		white_patches = getcfg("tc_white_patches")
 		black_patches = getcfg("tc_black_patches")
@@ -3067,15 +3077,26 @@ class TestchartEditor(wx.Frame):
 
 		self.tc_view_3d(None)
 
+	def writecfg(self):
+		if self.Parent:
+			writecfg()
+		else:
+			writecfg(module="testchart-editor",
+					 options=("3d_format", "last_ti1_path",
+							  "last_testchart_export_path",
+							  "last_vrml_path", "position.tcgen", "size.tcgen",
+							  "tc.", "tc_"))
+
 
 def main(testchart=None):
-	config.initcfg()
+	config.initcfg("testchart-editor")
 	lang.init()
 	lang.update_defaults()
 	app = wx.App(0)
 	if testchart and testchart.startswith("-"):
 		testchart = None
 	app.tcframe = TestchartEditor(path=testchart)
+	app.tcframe.listen()
 	app.tcframe.Show()
 	app.MainLoop()
 

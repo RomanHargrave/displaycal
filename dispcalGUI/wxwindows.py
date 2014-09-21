@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from time import gmtime, strftime, time
+from time import gmtime, sleep, strftime, time
+import errno
 import math
 import os
 import re
+import socket
 import string
 import sys
+import threading
 
 import config
 from config import (defaults, getbitmap, getcfg, geticon, 
@@ -408,6 +411,103 @@ class BaseFrame(wx.Frame):
 	
 	def __init__(self, *args, **kwargs):
 		wx.Frame.__init__(self, *args, **kwargs)
+
+	def listen(self):
+		if isinstance(getattr(sys, "_appsocket", None), socket.socket):
+			addr, port = sys._appsocket.getsockname()
+			if addr == "0.0.0.0":
+				try:
+					addr = socket.gethostbyname(socket.gethostname())
+				except socket.error:
+					pass
+			safe_print(lang.getstr("app.listening", (addr, port)))
+			self.listening = True
+			self.listener = threading.Thread(target=self.connection_handler)
+			self.listener.start()
+
+	def connection_handler(self):
+		""" Handle socket connections """
+		while self and self.listening:
+			try:
+				# Wait for connection
+				conn, addrport = sys._appsocket.accept()
+			except socket.timeout:
+				continue
+			conn.settimeout(1)
+			if (addrport[0] != "127.0.0.1" and
+				not getcfg("app.allow_network_clients")):
+				# Network client disallowed
+				conn.close()
+				safe_print(lang.getstr("app.client.network.disallowed", addrport))
+				sleep(.1)
+				continue
+			safe_print(lang.getstr("app.client.connect", addrport))
+			threading.Thread(target=self.message_handler, args=(conn, )).start()
+
+	def message_handler(self, conn):
+		""" Handle messages sent via socket """
+		from wexpect import split_command_line
+		while self and self.listening:
+			# Wait for incoming message
+			try:
+				incoming = conn.recv(1024)
+			except socket.timeout:
+				continue
+			except socket.error, exception:
+				if exception.errno == errno.EWOULDBLOCK:
+					continue
+				break
+			else:
+				responses = []
+				for line in incoming.splitlines():
+					if self and self.listening:
+						if (hasattr(self, "worker") and
+							self.worker.is_working() and line != "abort"):
+							responses.append("busy")
+						elif line:
+							line = safe_unicode(line, "UTF-8")
+							self._processmsg = True
+							safe_print(lang.getstr("app.incoming_message",
+												   conn.getpeername() +
+												   (line, )))
+							data = split_command_line(line)
+							wx.CallAfter(self.finish_processing, data, conn)
+							while self and self._processmsg:
+								sleep(.001)
+					else:
+						break
+				if responses:
+					try:
+						conn.sendall("%s\n" % "\n".join(responses))
+					except socket.error, exception:
+						safe_print(exception)
+				if not incoming:
+					break
+		safe_print(lang.getstr("app.client.disconnect", conn.getpeername()))
+		conn.close()
+
+	def process_data(self, data):
+		return "busy\n"
+
+	def finish_processing(self, data, conn):
+		response = "ok"
+		if data[0] == "abort":
+			if not self.worker.abort_all():
+				response = "fail"
+		else:
+			try:
+				response = self.process_data(data)
+			except Exception, exception:
+				safe_print(exception)
+				response = repr(exception)
+			else:
+				if response == "invalid":
+					safe_print(lang.getstr("app.incoming_message.invalid"))
+		try:
+			conn.sendall("%s\n" % response)
+		except socket.error, exception:
+			safe_print(exception)
+		self._processmsg = False
 
 	def focus_handler(self, event):
 		if debug and hasattr(self, "last_focused_ctrl"):

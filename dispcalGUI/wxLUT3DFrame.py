@@ -126,14 +126,18 @@ class LUT3DFrame(BaseFrame):
 			setcfg("position.lut3dframe.y", y)
 			setcfg("size.lut3dframe.w", self.GetSize()[0])
 			setcfg("size.lut3dframe.h", self.GetSize()[1])
+		if self.Parent:
 			config.writecfg()
+		else:
+			config.writecfg(module="3DLUT-maker",
+							options=("3dlut.", "last_3dlut_path",
+									 "position.lut3dframe", "size.lut3dframe"))
 		if event:
 			event.Skip()
 	
 	def use_abstract_profile_ctrl_handler(self, event):
 		setcfg("3dlut.use_abstract_profile",
 			   int(self.abstract_profile_cb.GetValue()))
-		config.writecfg()
 		enable = bool(getcfg("3dlut.use_abstract_profile"))
 		self.abstract_profile_ctrl.Enable(enable)
 		self.abstract_profile_desc.Enable(enable)
@@ -146,7 +150,6 @@ class LUT3DFrame(BaseFrame):
 		self.trc_gamma_type_ctrl.Enable(v)
 		if event:
 			setcfg("3dlut.apply_trc", int(v))
-			config.writecfg()
 		self.black_output_offset_label.Enable(v)
 		self.black_output_offset_ctrl.Enable(v)
 		self.black_output_offset_intctrl.Enable(v)
@@ -155,7 +158,6 @@ class LUT3DFrame(BaseFrame):
 	def apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
 			   int(self.apply_cal_cb.GetValue()))
-		config.writecfg()
 
 	def black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.black_output_offset_intctrl.GetId():
@@ -183,7 +185,6 @@ class LUT3DFrame(BaseFrame):
 			if str(v) != self.trc_gamma_ctrl.GetValue():
 				self.trc_gamma_ctrl.SetValue(str(v))
 			setcfg("3dlut.trc_gamma", v)
-			config.writecfg()
 			self.update_trc_control()
 		event.Skip()
 
@@ -193,13 +194,11 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.trc_gamma", 2.4)
 			setcfg("3dlut.trc_gamma_type", "B")
 			setcfg("3dlut.trc_output_offset", 0.0)
-			config.writecfg()
 			self.update_trc_controls()
 
 	def trc_gamma_type_ctrl_handler(self, event):
 		setcfg("3dlut.trc_gamma_type",
 			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
-		config.writecfg()
 		self.update_trc_control()
 
 	def abstract_drop_handler(self, path):
@@ -213,7 +212,6 @@ class LUT3DFrame(BaseFrame):
 		if getcfg("3dlut.format") == "eeColor":
 			self.encoding_output_ctrl.SetSelection(self.encoding_ba[encoding])
 			setcfg("3dlut.encoding.output", encoding)
-		config.writecfg()
 	
 	def encoding_output_ctrl_handler(self, event):
 		encoding = self.encoding_ab[self.encoding_output_ctrl.GetSelection()]
@@ -239,7 +237,6 @@ class LUT3DFrame(BaseFrame):
 					self.encoding_ba[getcfg("3dlut.encoding.output")])
 				return False
 		setcfg("3dlut.encoding.output", encoding)
-		config.writecfg()
 
 	def input_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -260,12 +257,10 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_bitdepth_input_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.input",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_input_ctrl.GetSelection()])
-		config.writecfg()
 	
 	def lut3d_bitdepth_output_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.output",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
-		config.writecfg()
 	
 	def lut3d_create_consumer(self, result=None):
 		if isinstance(result, Exception) and result:
@@ -273,7 +268,7 @@ class LUT3DFrame(BaseFrame):
 		# Remove temporary files
 		self.worker.wrapup(False)
 	
-	def lut3d_create_handler(self, event):
+	def lut3d_create_handler(self, event, path=None):
 		if not check_set_argyll_bin():
 			return
 		profile_in = self.set_profile("input")
@@ -289,25 +284,25 @@ class LUT3DFrame(BaseFrame):
 				show_result_dialog(Error(lang.getstr("error.source_dest_same")),
 								   self)
 				return
-			path = None
-			defaultDir, defaultFile = get_verified_path("last_3dlut_path")
-			ext = getcfg("3dlut.format")
-			if ext == "eeColor":
-				ext = "txt"
-			elif ext == "madVR":
-				ext = "3dlut"
-			defaultFile = os.path.splitext(defaultFile or
-										   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + ext
-			dlg = wx.FileDialog(self, 
-								lang.getstr("3dlut.create"),
-								defaultDir=defaultDir,
-								defaultFile=defaultFile,
-								wildcard="*." + ext, 
-								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
-			dlg.Center(wx.BOTH)
-			if dlg.ShowModal() == wx.ID_OK:
-				path = dlg.GetPath()
-			dlg.Destroy()
+			if not path:
+				defaultDir, defaultFile = get_verified_path("last_3dlut_path")
+				ext = getcfg("3dlut.format")
+				if ext == "eeColor":
+					ext = "txt"
+				elif ext == "madVR":
+					ext = "3dlut"
+				defaultFile = os.path.splitext(defaultFile or
+											   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + ext
+				dlg = wx.FileDialog(self, 
+									lang.getstr("3dlut.create"),
+									defaultDir=defaultDir,
+									defaultFile=defaultFile,
+									wildcard="*." + ext, 
+									style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+				dlg.Center(wx.BOTH)
+				if dlg.ShowModal() == wx.ID_OK:
+					path = dlg.GetPath()
+				dlg.Destroy()
 			if path:
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
@@ -315,7 +310,13 @@ class LUT3DFrame(BaseFrame):
 									   self)
 					return
 				setcfg("last_3dlut_path", path)
-				config.writecfg()
+				if self.Parent:
+					config.writecfg()
+				else:
+					config.writecfg(module="3DLUT-maker",
+									options=("3dlut.", "last_3dlut_path",
+											 "position.lut3dframe",
+											 "size.lut3dframe"))
 				self.worker.interactive = False
 				self.worker.start(self.lut3d_create_consumer,
 								  self.lut3d_create_producer,
@@ -391,7 +392,6 @@ class LUT3DFrame(BaseFrame):
 			# collink says madVR works best with 65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
-		config.writecfg()
 		self.setup_encoding_ctrl(format)
 		self.update_encoding_controls()
 		self.enable_size_controls()
@@ -402,7 +402,6 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_size_ctrl_handler(self, event):
 		setcfg("3dlut.size",
 			   self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()])
-		config.writecfg()
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output", silent=not event)
@@ -412,11 +411,20 @@ class LUT3DFrame(BaseFrame):
 		if profile_path and os.path.isfile(profile_path):
 			self.output_profile_ctrl.SetPath(profile_path)
 			self.set_profile("output", profile_path or False, silent=not event)
+
+	def process_data(self, data):
+		if data[0] == "3DLUT-maker":
+			if self.IsIconized():
+				self.Restore()
+			self.Raise()
+			if len(data) == 2:
+				self.lut3d_create_handler(None, path=data[1])
+			return "ok"
+		return "invalid"
 	
 	def rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
 			   self.rendering_intents_ab[self.rendering_intent_ctrl.GetSelection()])
-		config.writecfg()
 	
 	def set_profile(self, which, profile_path=None, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
@@ -528,7 +536,6 @@ class LUT3DFrame(BaseFrame):
 					if which == "output" and not self.output_profile_ctrl.IsShown():
 						return
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
-					config.writecfg()
 					self.lut3d_create_btn.Enable(bool(getcfg("3dlut.input.profile")) and
 												 os.path.isfile(getcfg("3dlut.input.profile")) and
 												 ((bool(getcfg("3dlut.output.profile")) and
@@ -730,11 +737,12 @@ class LUT3DFrame(BaseFrame):
 
 
 def main():
-	config.initcfg()
+	config.initcfg("3DLUT-maker")
 	lang.init()
 	lang.update_defaults()
 	app = wx.App(0)
 	app.lut3dframe = LUT3DFrame()
+	app.lut3dframe.listen()
 	app.lut3dframe.Show()
 	app.MainLoop()
 

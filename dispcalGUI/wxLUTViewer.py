@@ -22,8 +22,8 @@ from worker import (Error, UnloggedError, UnloggedInfo, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
-from wxwindows import (BitmapBackgroundPanelText, CustomCheckBox, FileDrop,
-					   InfoDialog, TooltipWindow)
+from wxwindows import (BaseFrame, BitmapBackgroundPanelText, CustomCheckBox,
+					   FileDrop, InfoDialog, TooltipWindow)
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -687,14 +687,14 @@ class LUTCanvas(plot.PlotCanvas):
 			self._DrawCanvas(self.last_draw[0])
 
 
-class LUTFrame(wx.Frame):
+class LUTFrame(BaseFrame):
 
 	def __init__(self, *args, **kwargs):
 	
 		if len(args) < 3 and not "title" in kwargs:
 			kwargs["title"] = lang.getstr("calibration.lut_viewer.title")
 		
-		wx.Frame.__init__(self, *args, **kwargs)
+		BaseFrame.__init__(self, *args, **kwargs)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-curve-viewer"))
@@ -1318,6 +1318,16 @@ class LUTFrame(wx.Frame):
 		self.client.resetzoom()
 		self.DrawLUT()
 		wx.CallAfter(self.client.center)
+
+	def process_data(self, data):
+		if data[0] == "curve-viewer":
+			if self.IsIconized():
+				self.Restore()
+			self.Raise()
+			if len(data) == 2:
+				self.drop_handler(data[1])
+			return "ok"
+		return "invalid"
 	
 	def reload_vcgt_handler(self, event):
 		cmd, args = self.worker.prepare_dispwin(True)
@@ -1614,6 +1624,7 @@ class LUTFrame(wx.Frame):
 		self.Thaw()
 
 	def OnClose(self, event):
+		self.listening = False
 		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 			self.worker.wrapup(False)
 		wx.GetApp().ExitMainLoop()
@@ -1823,7 +1834,7 @@ class LUTViewer(wx.App):
 
 
 def main(profile=None):
-	config.initcfg()
+	config.initcfg("curve-viewer")
 	# Backup display config
 	cfg_display = getcfg("display.number")
 	lang.init()
@@ -1842,10 +1853,10 @@ def main(profile=None):
 		app.frame.drop_handler(profile)
 	else:
 		app.frame.load_lut(get_display_profile(display_no))
+	app.frame.listen()
 	app.frame.Show()
 	app.MainLoop()
-	setcfg("display.number", cfg_display)
-	config.writecfg()
+	config.writecfg(module="curve-viewer", options=("display.number", ))
 
 if __name__ == '__main__':
 	main(*sys.argv[max(len(sys.argv) - 1, 1):])
