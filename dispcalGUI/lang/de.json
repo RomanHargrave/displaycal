@@ -44,6 +44,7 @@
 	"ambient.set": "Möchten sie auch die Umgebungshelligkeit auf den gemessenen Wert setzen?",
 	"app.client.connect": "Scripting-Client %s:%s hat Verbindung hergestellt",
 	"app.client.disconnect": "Scripting-Client %s:%s hat Verbindung getrennt",
+	"app.client.ignored": "Verbindungsversuch von Scripting-Client %s:%s abgewiesen: %s",
 	"app.client.network.disallowed": "Verbindungsversuch von Scripting-Client %s:%s abgewiesen: Netzwerkclients sind nicht zugelassen.",
 	"app.confirm_restore_defaults": "Wollen Sie wirklich Ihre Einstellungen verwerfen und die Standardeinstellungen wiederherstellen?",
 	"app.incoming_message": "Scripting-Anfrage erhalten von %s:%s: %s",

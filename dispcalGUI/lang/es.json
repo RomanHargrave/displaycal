@@ -44,6 +44,7 @@
 	"ambient.set": "¿Desea tambien ajustar la luz ambiente a los niveles medidos?",
 		"*app.client.connect": "Scripting client %s:%s connected",
 		"*app.client.disconnect": "Scripting client %s:%s disconnected",
+		"*app.client.ignored": "Refused connection attempt of scripting client %s:%s: %s",
 		"*app.client.network.disallowed": "Refused connection attempt of scripting client %s:%s: Network clients are not allowed.",
 	"app.confirm_restore_defaults": "¿Desea descartar sus cambios y restaurar los valores por defecto?",
 		"*app.incoming_message": "Received scripting request from %s:%s: %s",

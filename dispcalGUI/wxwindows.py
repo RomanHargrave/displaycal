@@ -438,13 +438,19 @@ class BaseFrame(wx.Frame):
 					sleep(.05)
 					continue
 				break
-			conn.settimeout(.2)
 			if (addrport[0] != "127.0.0.1" and
 				not getcfg("app.allow_network_clients")):
 				# Network client disallowed
 				conn.close()
 				safe_print(lang.getstr("app.client.network.disallowed", addrport))
-				sleep(.1)
+				sleep(.2)
+				continue
+			try:
+				conn.settimeout(.2)
+			except socket.error, exception:
+				conn.close()
+				safe_print(lang.getstr("app.client.ignored", exception))
+				sleep(.2)
 				continue
 			safe_print(lang.getstr("app.client.connect", addrport))
 			threading.Thread(target=self.message_handler,
