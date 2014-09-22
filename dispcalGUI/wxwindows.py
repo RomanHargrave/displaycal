@@ -433,7 +433,12 @@ class BaseFrame(wx.Frame):
 				conn, addrport = sys._appsocket.accept()
 			except socket.timeout:
 				continue
-			conn.settimeout(1)
+			except socket.error, exception:
+				if exception.errno == errno.EWOULDBLOCK:
+					sleep(.05)
+					continue
+				break
+			conn.settimeout(.2)
 			if (addrport[0] != "127.0.0.1" and
 				not getcfg("app.allow_network_clients")):
 				# Network client disallowed
@@ -456,6 +461,7 @@ class BaseFrame(wx.Frame):
 				continue
 			except socket.error, exception:
 				if exception.errno == errno.EWOULDBLOCK:
+					sleep(.05)
 					continue
 				break
 			else:

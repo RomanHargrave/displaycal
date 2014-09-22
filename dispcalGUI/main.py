@@ -78,10 +78,10 @@ def main(module=None):
 		initcfg()
 		# Allow multiple instances only for curve viewer, profile info,
 		# synthetic profile creator and testchart editor
+		host = "127.0.0.1"
 		if module not in ("curve-viewer", "profile-info", "synthprofile",
 						  "testchart-editor"):
 			# Check lockfile(s) and probe port(s)
-			host = "127.0.0.1"
 			incoming = None
 			lockfilebasenames = []
 			if module:
@@ -166,73 +166,6 @@ def main(module=None):
 					handle_error(lang.getstr("app.otherinstance.busy", name))
 				# Exit
 				return
-			lockfilename = os.path.join(confighome, "%s.lock" % name)
-			# Create listening socket
-			try:
-				sys._appsocket = socket.socket(socket.AF_INET,
-											   socket.SOCK_STREAM)
-			except socket.error, exception:
-				# This shouldn't happen
-				safe_print("Warning - could not create TCP socket:", exception)
-			else:
-				if getcfg("app.allow_network_clients"):
-					host = ""
-				for port in (getcfg("app.port"), 0):
-					try:
-						sys._appsocket.bind((host, port))
-					except socket.error, exception:
-						safe_print("Warning - could not bind to %s:%s:" %
-								   (host, port), exception)
-						if port == 0:
-							del sys._appsocket
-							break
-					else:
-						try:
-							sys._appsocket.settimeout(1)
-						except socket.error, exception:
-							safe_print("Warning - could not set socket "
-									   "timeout:", exception)
-						try:
-							sys._appsocket.listen(1)
-						except socket.error, exception:
-							safe_print("Warning - could not listen on "
-									   "socket:", exception)
-							del sys._appsocket
-							break
-						try:
-							port = sys._appsocket.getsockname()[1]
-						except socket.error, exception:
-							safe_print("Warning - could not get socket "
-									   "address:", exception)
-							del sys._appsocket
-							break
-						try:
-							# Create lockfile
-							with open(lockfilename, "w") as lockfile:
-								lockfile.write("%s\n" % port)
-						except EnvironmentError, exception:
-							# This shouldn't happen
-							safe_print("Warning - could not write "
-									   "lockfile %s:" % lockfilename,
-									   exception)
-						break
-		# Check for required resource files
-		mod2res = {None: resfiles,
-				   "3DLUT-maker": ["xrc/3dlut.xrc"],
-				   "curve-viewer": [],
-				   "profile-info": [],
-				   "synthprofile": ["xrc/synthicc.xrc"],
-				   "testchart-editor": [],
-				   "VRML-to-X3D-converter": []}
-		if module not in mod2res:
-			module = None
-		for filename in mod2res[module]:
-			path = get_data_path(os.path.sep.join(filename.split("/")))
-			if not path or not os.path.isfile(path):
-				import localization as lang
-				lang.init()
-				raise ResourceError(lang.getstr("resources.notfound.error") + 
-									"\n" + filename)
 		# Force to run inside tty with the --terminal option
 		if "--terminal" in sys.argv[1:]:
 			if sys.platform == "win32":
@@ -317,6 +250,72 @@ def main(module=None):
 							   % unicode(stdout.read(), enc, "replace"))
 				handle_error(Error(msg))
 		else:
+			lockfilename = os.path.join(confighome, "%s.lock" % name)
+			# Create listening socket
+			try:
+				sys._appsocket = socket.socket(socket.AF_INET,
+											   socket.SOCK_STREAM)
+			except socket.error, exception:
+				# This shouldn't happen
+				safe_print("Warning - could not create TCP socket:", exception)
+			else:
+				if getcfg("app.allow_network_clients"):
+					host = ""
+				for port in (getcfg("app.port"), 0):
+					try:
+						sys._appsocket.bind((host, port))
+					except socket.error, exception:
+						safe_print("Warning - could not bind to %s:%s:" %
+								   (host, port), exception)
+						if port == 0:
+							del sys._appsocket
+							break
+					else:
+						try:
+							sys._appsocket.settimeout(.2)
+						except socket.error, exception:
+							safe_print("Warning - could not set socket "
+									   "timeout:", exception)
+							del sys._appsocket
+							break
+						try:
+							sys._appsocket.listen(1)
+						except socket.error, exception:
+							safe_print("Warning - could not listen on "
+									   "socket:", exception)
+							del sys._appsocket
+							break
+						try:
+							port = sys._appsocket.getsockname()[1]
+						except socket.error, exception:
+							safe_print("Warning - could not get socket "
+									   "address:", exception)
+							del sys._appsocket
+							break
+						try:
+							# Create lockfile
+							with open(lockfilename, "w") as lockfile:
+								lockfile.write("%s\n" % port)
+						except EnvironmentError, exception:
+							# This shouldn't happen
+							safe_print("Warning - could not write "
+									   "lockfile %s:" % lockfilename,
+									   exception)
+						break
+			# Check for required resource files
+			mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
+					   "curve-viewer": [],
+					   "profile-info": [],
+					   "synthprofile": ["xrc/synthicc.xrc"],
+					   "testchart-editor": [],
+					   "VRML-to-X3D-converter": []}
+			for filename in mod2res.get(module, resfiles):
+				path = get_data_path(os.path.sep.join(filename.split("/")))
+				if not path or not os.path.isfile(path):
+					import localization as lang
+					lang.init()
+					raise ResourceError(lang.getstr("resources.notfound.error") + 
+										"\n" + filename)
 			# Create main data dir if it does not exist
 			if not os.path.exists(datahome):
 				try:
