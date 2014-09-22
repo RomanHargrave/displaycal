@@ -11,6 +11,7 @@ import os
 import re
 import struct
 import sys
+import warnings
 import zlib
 from itertools import izip, imap
 from time import localtime, mktime, strftime
@@ -31,10 +32,13 @@ if sys.platform == "win32":
 try:
 	import colord
 except ImportError:
-	class colord:
+	class Colord:
 		Colord = None
 		def quirk_manufacturer(self, manufacturer):
 			return manufacturer
+		def which(self, executable, paths=None):
+			return None
+	colord = Colord()
 import colormath
 import edid
 from colormath import NumberTuple
@@ -382,8 +386,11 @@ def _colord_get_display_profile(display_no=0):
 				except colord.CDObjectQueryError:
 					# Device ID was not found, try next one
 					continue
-				if profile_path:
-					return ICCProfile(profile_path)
+				except colord.CDError, exception:
+					warnings.warn(exception, Warning)
+				else:
+					if profile_path:
+						return ICCProfile(profile_path)
 				break
 	return None
 
@@ -456,10 +463,11 @@ def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0,
 		property = xrandr.get_output_property(display_no, "_ICC_PROFILE", 
 											  xrandr.XA_CARDINAL, x_hostname, 
 											  x_display, x_screen)
-	except ValueError:
-		return None
-	if property:
-		return ICCProfile("".join(chr(i) for i in property))
+	except ValueError, exception:
+		warnings.warn(exception, Warning)
+	else:
+		if property:
+			return ICCProfile("".join(chr(i) for i in property))
 	return None
 
 
@@ -470,10 +478,11 @@ def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0,
 													 "_%s" % display_no), 
 							   xrandr.XA_CARDINAL, x_hostname, x_display, 
 							   x_screen)
-	except ValueError:
-		return None
-	if atom:
-		return ICCProfile("".join(chr(i) for i in atom))
+	except ValueError, exception:
+		warnings.warn(exception, Warning)
+	else:
+		if atom:
+			return ICCProfile("".join(chr(i) for i in atom))
 	return None
 
 
@@ -543,11 +552,8 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			else:
 				# Linux
 				# Try colord
-				if colord:
-					try:
-						profile = _colord_get_display_profile(display_no)
-					except colord.CDError, exception:
-						safe_print(exception)
+				if colord.which("colormgr"):
+					profile = _colord_get_display_profile(display_no)
 					if profile:
 						return profile
 				# Try XrandR
