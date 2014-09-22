@@ -1148,13 +1148,6 @@ class MainFrame(BaseFrame):
 			safe_print(lang.getstr("ready"))
 		
 		self.log()
-		
-		# Check for updates if configured
-		if getcfg("update_check"):
-			# Give time for the main window to gain focus before checking for
-			# update, otherwise the main window may steal the update
-			# confirmation dialog's focus which looks weird
-			wx.CallLater(50, self.app_update_check_handler, None, silent=True)
 	
 	def log(self):
 		""" Put log buffer contents into the log window. """
@@ -10998,6 +10991,12 @@ class StartupFrame(wx.Frame):
 		app.frame.listen()
 		app.frame.Show()
 		wx.CallAfter(app.frame.Raise)
+		# Check for updates if configured
+		if getcfg("update_check"):
+			# Give time for the main window to gain focus before checking for
+			# update, otherwise the main window may steal the update
+			# confirmation dialog's focus which looks weird
+			wx.CallAfter(app.frame.app_update_check_handler, None, silent=True)
 		self.Close()
 
 	def OnPaint(self, event):
