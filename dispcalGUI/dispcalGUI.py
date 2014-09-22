@@ -6955,6 +6955,7 @@ class MainFrame(BaseFrame):
 
 	def process_data(self, data):
 		""" Process data """
+		hidden = not self.IsShownOnScreen()
 		response = "ok"
 		if data[0] == "3DLUT-maker":
 			# 3D LUT maker
@@ -7118,6 +7119,14 @@ class MainFrame(BaseFrame):
 			getattr(self, data[0].replace("-", "_") + "_handler")(None)
 		else:
 			response = "invalid"
+		if response == "ok" and hidden and data[0] != "measure":
+			# If we were hidden, perform necessary cleanup in case the
+			# measurement window is shown and we're not starting measurements
+			if isinstance(getattr(self, "_measureframe_subprocess", None),
+						  sp.Popen):
+				self._measureframe_subprocess.terminate()
+			elif hasattr(self, "measureframe"):
+				self.measureframe.close_handler(None)
 		return response
 	
 	def modaldlg_raise_handler(self, event):
