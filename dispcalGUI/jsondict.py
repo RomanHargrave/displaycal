@@ -146,8 +146,8 @@ class JSONDict(dict):
 				if errors:
 					self.errors = errors
 			else:
-				handle_error(u"Warning - JSON file '%s' not found" % 
-							 safe_unicode(path))
+				handle_error(UserWarning(u"Warning - JSON file '%s' not found" % 
+										 safe_unicode(path)))
 				return
 			try:
 				jsonfile = codecs.open(path, "rU", self.encoding, self.errors)
@@ -155,17 +155,17 @@ class JSONDict(dict):
 					dict.update(self, demjson.decode(jsonfile.read()))
 				except (UnicodeDecodeError, 
 						demjson.JSONDecodeError), exception:
-					handle_error(
+					handle_error(UserWarning(
 						u"Warning - JSON file '%s': %s" % 
 						tuple(safe_unicode(s) for s in 
 							  (path, safe_unicode(exception).capitalize() if 
 									 isinstance(exception, 
 												demjson.JSONDecodeError)
-									 else exception)))
+									 else exception))))
 			except Exception, exception:
-				handle_error(u"Warning - JSON file '%s': %s" % 
-							 tuple(safe_unicode(s) for s in (path, 
-															 exception)))
+				handle_error(UserWarning(u"Warning - JSON file '%s': %s" % 
+										 tuple(safe_unicode(s) for s in
+											   (path, exception))))
 			else:
 				jsonfile.close()
 	

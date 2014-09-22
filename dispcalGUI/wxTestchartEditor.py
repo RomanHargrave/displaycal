@@ -2008,7 +2008,8 @@ class TestchartEditor(BaseFrame):
 					safe_print("")
 					self.SetTitle(lang.getstr("testchart.edit").rstrip(".") + ": " + os.path.basename(path))
 			except Exception, exception:
-				handle_error(u"Error - testchart could not be saved: " + safe_unicode(exception), parent = self)
+				handle_error(Error(u"Error - testchart could not be saved: " +
+								   safe_unicode(exception)), parent=self)
 			else:
 				if path != getcfg(self.cfg):
 					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
@@ -2133,8 +2134,10 @@ class TestchartEditor(BaseFrame):
 										  compress=formatext == ".wrz",
 										  format=view_3d_format)
 				except Exception, exception:
-					handle_error(u"Warning - 3D file could not be saved: " +
-								 safe_unicode(exception), parent=self)
+					handle_error(UserWarning(u"Warning - 3D file could not be "
+											 "saved: " +
+											 safe_unicode(exception)),
+								 parent=self)
 				else:
 					paths.append(path)
 		return paths

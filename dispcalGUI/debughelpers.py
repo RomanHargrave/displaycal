@@ -71,10 +71,15 @@ def handle_error(error, parent=None, silent=False):
 				except:
 					# If the parent is still being constructed, we can't use it
 					parent = None
+			if isinstance(error, Warning):
+				icon = wx.ICON_WARNING
+			elif isinstance(error, Exception):
+				icon = wx.ICON_ERROR
+			else:
+				icon = wx.ICON_INFORMATION
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
-								   safe_unicode(error), appname, wx.OK |
-																 wx.ICON_ERROR)
+								   safe_unicode(error), appname, wx.OK | icon)
 			dlg.ShowModal()
 			dlg.Destroy()
 		except Exception, exception:

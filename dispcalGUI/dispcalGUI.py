@@ -9029,8 +9029,9 @@ class MainFrame(BaseFrame):
 					   ti3.queryv1("COLOR_REP")[:3] == "RGB":
 						self.worker.options_targen = ["-d3"]
 				except Exception, exception:
-					handle_error(u"Error - temporary .ti3 file could not be "
-								 u"created: " + safe_unicode(exception), parent=self)
+					handle_error(Error(u"Error - temporary .ti3 file could not "
+									   u"be created: " + safe_unicode(exception)),
+								 parent=self)
 					self.worker.wrapup(False)
 					return
 				setcfg("calibration.file.previous", None)

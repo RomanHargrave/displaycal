@@ -39,8 +39,9 @@ def init(set_wx_locale=False):
 						path = os.path.join(langdir, filename)
 						ldict[name.lower()] = JSONDict(path)
 	if len(ldict) == 0:
-		handle_error("Warning: No language files found. The following "
-					 "places have been searched:\n%s" % "\n".join(langdirs))
+		handle_error(UserWarning("Warning: No language files found. The "
+								 "following places have been searched:\n%s" %
+								 "\n".join(langdirs)))
 
 
 def update_defaults():

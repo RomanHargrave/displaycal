@@ -315,15 +315,15 @@ def main(module=None):
 					else:
 						msg = (u'An attempt to launch a terminal failed:\n\n%s'
 							   % unicode(stdout.read(), enc, "replace"))
-				handle_error(msg)
+				handle_error(Error(msg))
 		else:
 			# Create main data dir if it does not exist
 			if not os.path.exists(datahome):
 				try:
 					os.makedirs(datahome)
 				except Exception, exception:
-					handle_error("Warning - could not create directory '%s'" % 
-								 datahome)
+					handle_error(UserWarning("Warning - could not create "
+											 "directory '%s'" % datahome))
 			elif sys.platform == "darwin":
 				# Check & fix permissions if necessary
 				import getpass
@@ -405,7 +405,8 @@ def main(module=None):
 		if isinstance(exception, ResourceError):
 			error = exception
 		else:
-			error = u"Fatal error: " + safe_unicode(traceback.format_exc())
+			error = Error(u"Fatal error: " +
+						  safe_unicode(traceback.format_exc()))
 		handle_error(error)
 	for thread in threading.enumerate():
 		if thread.isAlive() and thread is not threading.currentThread():
@@ -443,6 +444,10 @@ def main_synthprofile():
 
 def main_testchart_editor():
 	main("testchart-editor")
+
+
+class Error(Exception):
+	pass
 
 if __name__ == "__main__":
 	main()
