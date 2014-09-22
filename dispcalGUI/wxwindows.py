@@ -463,7 +463,8 @@ class BaseFrame(wx.Frame):
 				for line in incoming.splitlines():
 					if self and self.listening:
 						if (hasattr(self, "worker") and
-							self.worker.is_working() and line != "abort"):
+							self.worker.is_working() and line != "abort" and
+							not line.startswith("getcfg ")):
 							responses.append("busy")
 						elif line:
 							line = safe_unicode(line, "UTF-8")
@@ -494,15 +495,19 @@ class BaseFrame(wx.Frame):
 		if data[0] == "abort":
 			if not self.worker.abort_all():
 				response = "fail"
+		elif data[0] == "getcfg" and len(data) == 2:
+			if data[1] in defaults:
+				response = getcfg(data[1])
+			else:
+				response = "invalid"
 		else:
 			try:
 				response = self.process_data(data)
 			except Exception, exception:
 				safe_print(exception)
-				response = repr(exception)
-			else:
-				if response == "invalid":
-					safe_print(lang.getstr("app.incoming_message.invalid"))
+				response = exception
+		if response == "invalid":
+			safe_print(lang.getstr("app.incoming_message.invalid"))
 		try:
 			conn.sendall("%s\n" % safe_str(response, "UTF-8"))
 		except socket.error, exception:

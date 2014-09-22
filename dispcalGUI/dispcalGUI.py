@@ -7035,8 +7035,6 @@ class MainFrame(BaseFrame):
 			else:
 				profile_path = None
 			self.create_profile_handler(None, path=profile_path)
-		elif data[0] == "getcfg" and len(data) == 2:
-			response = getcfg(data[1])
 		elif data[0] == "import-colorimeter-corrections":
 			self.import_colorimeter_corrections_handler(None, paths=data[1:])
 		elif data[0] == "install-profile":
