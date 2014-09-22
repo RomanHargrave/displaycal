@@ -690,7 +690,13 @@ class TestchartEditor(BaseFrame):
 				self.Restore()
 			self.Raise()
 			if len(data) == 2:
-				self.ti1_drop_handler(data[1])
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					return "fail"
+				else:
+					self.ti1_drop_handler(path)
 			return "ok"
 		return "invalid"
 

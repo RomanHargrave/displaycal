@@ -9,9 +9,9 @@ import tempfile
 
 from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
 from colormath import interp
-from config import (fs_enc, get_argyll_display_number, get_display_profile,
-					get_display_rects, getcfg, geticon, get_verified_path,
-					setcfg)
+from config import (fs_enc, get_argyll_display_number, get_data_path,
+					get_display_profile, get_display_rects, getcfg, geticon,
+					get_verified_path, setcfg)
 from log import safe_print
 from meta import name as appname
 from options import debug
@@ -1325,7 +1325,13 @@ class LUTFrame(BaseFrame):
 				self.Restore()
 			self.Raise()
 			if len(data) == 2:
-				self.drop_handler(data[1])
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					return "fail"
+				else:
+					self.drop_handler(path)
 			return "ok"
 		return "invalid"
 	

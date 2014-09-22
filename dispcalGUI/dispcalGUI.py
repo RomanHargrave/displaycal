@@ -6961,13 +6961,7 @@ class MainFrame(BaseFrame):
 			# 3D LUT maker
 			self.lut3d_create_handler(None)
 			if len(data) == 2:
-				path = data[1]
-				if not os.path.isfile(path) and not os.path.isabs(path):
-					path = get_data_path(path)
-				if not path:
-					response = "fail"
-				else:
-					self.lut3dframe.lut3d_create_handler(None, path=path)
+				response = self.lut3dframe.process_data(data)
 		elif data[0] == "curve-viewer":
 			# Curve viewer
 			profile = None
@@ -7000,13 +6994,7 @@ class MainFrame(BaseFrame):
 			# Synthetic profile creator
 			self.synthicc_create_handler(None)
 			if len(data) == 2:
-				path = data[1]
-				if not os.path.isfile(path) and not os.path.isabs(path):
-					path = get_data_path(path)
-				if not path:
-					response = "fail"
-				else:
-					self.synthiccframe.drop_handler(path)
+				response = self.synthiccframe.process_data(data)
 		elif data[0] == "testchart-editor":
 			# Testchart editor
 			if len(data) == 2:
