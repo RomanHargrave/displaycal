@@ -75,7 +75,7 @@ class VRML2X3DFrame(BaseFrame):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()
-			if len(data) == 2:
+			if len(data) > 1:
 				self.droptarget.OnDropFiles(0, 0, data[1:])
 			return "ok"
 		return "invalid"
