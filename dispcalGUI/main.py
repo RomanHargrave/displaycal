@@ -417,7 +417,7 @@ def main(module=None):
 			safe_print("Warning - could not remove lockfile %s: %r" %
 					   (lockfilename, exception))
 	try:
-		logger = logging.getLogger(name)
+		logger = logging.getLogger(pyname)
 		for handler in logger.handlers:
 			logger.removeHandler(handler)
 		logging.shutdown()
