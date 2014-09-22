@@ -19,7 +19,7 @@ from meta import name as appname
 from options import debug
 from util_io import StringIOu as StringIO
 from util_os import waccess
-from util_str import safe_unicode, wrap
+from util_str import safe_str, safe_unicode, wrap
 from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  adjust_font_size_for_gcdc, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
@@ -504,7 +504,7 @@ class BaseFrame(wx.Frame):
 				if response == "invalid":
 					safe_print(lang.getstr("app.incoming_message.invalid"))
 		try:
-			conn.sendall("%s\n" % response)
+			conn.sendall("%s\n" % safe_str(response, "UTF-8"))
 		except socket.error, exception:
 			safe_print(exception)
 		self._processmsg = False
