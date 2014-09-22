@@ -50,6 +50,7 @@
 	"app.incoming_message.invalid": "Scripting-Anfrage ungültig!",
 	"app.listening": "Starte Scripting-Host unter %s:%s",
 	"app.otherinstance.busy": "%s läuft bereits und ist beschäftigt.",
+	"app.otherinstance.notified": "Bereits laufende Instanz wurde benachrichtigt.",
 	"app.restart_request": "Bitte starten Sie die Anwendung neu.",
 	"apply": "Anwenden",
 	"apply_cal": "Kalibrierung (vcgt) anwenden",

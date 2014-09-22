@@ -50,6 +50,7 @@
 	"app.incoming_message.invalid": "Scripting request invalid!",
 	"app.listening": "Setting up scripting host at %s:%s",
 	"app.otherinstance.busy": "%s is already running and busy.",
+	"app.otherinstance.notified": "Already running instance has been notified.",
 	"app.restart_request": "Please restart the application.",
 	"apply": "Apply",
 	"apply_cal": "Apply calibration (vcgt)",

@@ -47,104 +47,6 @@ def main(module=None):
 		name = "%s-%s" % (appname, module)
 	else:
 		name = appname
-	initcfg()
-	lockfilebasenames = []
-	# Allow multiple instances for curve viewer, profile info, synthetic icc
-	# and testchart editor
-	if module not in ("curve-viewer", "profile-info", "synthprofile",
-					  "testchart-editor"):
-		if module != "VRML-to-X3D-converter":
-			lockfilebasenames.append(appname)
-		if module:
-			lockfilebasenames.append(module)
-		for lockfilebasename in lockfilebasenames:
-			lockfilename = os.path.join(confighome, "%s.lock" %
-													lockfilebasename)
-			if os.path.isfile(lockfilename):
-				incoming = "?"
-				with open(lockfilename) as lockfile:
-					port = lockfile.read().strip()
-				try:
-					port = int(port)
-				except ValueError:
-					# This shouldn't happen
-					pass
-				else:
-					try:
-						appsocket = socket.socket(socket.AF_INET,
-												  socket.SOCK_STREAM)
-					except socket.error:
-						# This shouldn't happen
-						pass
-					else:
-						try:
-							appsocket.connect(("127.0.0.1", port))
-						except socket.error:
-							# Other instance probably died
-							incoming = None
-						else:
-							# Other instance already running?
-							# Send module/appname and args as UTF-8
-							data = [module or appname]
-							if module != "3DLUT-maker":
-								for arg in sys.argv[1:]:
-									data.append(safe_str(safe_unicode(arg), "UTF-8"))
-							try:
-								appsocket.sendall("%s\n" % sp.list2cmdline(data))
-							except socket.error:
-								# Connection lost?
-								pass
-							else:
-								while True:
-									try:
-										incoming = appsocket.recv(1024)
-									except socket.error, exception:
-										if exception.errno == errno.EWOULDBLOCK:
-											sleep(.05)
-											continue
-									break
-							appsocket.close()
-				if incoming is None:
-					# Ok to start new instance
-					pass
-				elif incoming.strip() == "ok":
-					# Successfully sent our request, exit
-					return
-				else:
-					# Other instance busy?
-					import localization as lang
-					lang.init()
-					handle_error(lang.getstr("app.otherinstance.busy",
-											 lockfilebasename))
-					return
-		# Create lockfile.
-		with open(lockfilename, "w") as lockfile:
-			try:
-				sys._appsocket = socket.socket(socket.AF_INET,
-											   socket.SOCK_STREAM)
-			except socket.error:
-				# This shouldn't happen
-				pass
-			else:
-				if getcfg("app.allow_network_clients"):
-					host = ""
-				else:
-					host = "127.0.0.1"
-				port = getcfg("app.port")
-				while True:
-					try:
-						sys._appsocket.bind((host, port))
-					except socket.error:
-						if port == 0:
-							del sys._appsocket
-							break
-						# Try unused port
-						port = 0
-					else:
-						sys._appsocket.settimeout(1)
-						sys._appsocket.listen(1)
-						lockfile.write("%s\n" % sys._appsocket.getsockname()[1])
-						break
 	log("=" * 80)
 	if verbose >= 1:
 		version = VERSION_STRING
@@ -171,7 +73,149 @@ def main(module=None):
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
 	safe_print("File system encoding: " + fs_enc)
+	lockfilename = None
 	try:
+		initcfg()
+		# Allow multiple instances only for curve viewer, profile info,
+		# synthetic profile creator and testchart editor
+		if module not in ("curve-viewer", "profile-info", "synthprofile",
+						  "testchart-editor"):
+			# Check lockfile(s) and probe port(s)
+			host = "127.0.0.1"
+			incoming = None
+			lockfilebasenames = []
+			if module:
+				lockfilebasenames.append(name)
+			if module not in ("3DLUT-maker", "VRML-to-X3D-converter"):
+				lockfilebasenames.append(appname)
+			for lockfilebasename in lockfilebasenames:
+				lockfilename = os.path.join(confighome, "%s.lock" %
+														lockfilebasename)
+				if os.path.isfile(lockfilename):
+					try:
+						with open(lockfilename) as lockfile:
+							port = lockfile.read().strip()
+					except EnvironmentError, exception:
+						# This shouldn't happen
+						safe_print("Warning - could not read lockfile %s:" %
+								   lockfilename, exception)
+						port = getcfg("app.port")
+					else:
+						try:
+							port = int(port)
+						except ValueError:
+							# This shouldn't happen
+							safe_print("Warning - invalid port number:", port)
+							port = getcfg("app.port")
+					try:
+						appsocket = socket.socket(socket.AF_INET,
+												  socket.SOCK_STREAM)
+					except socket.error, exception:
+						# This shouldn't happen
+						safe_print("Warning - could not create TCP socket:",
+								   exception)
+						break
+					else:
+						try:
+							appsocket.connect((host, port))
+						except socket.error, exception:
+							# Other instance probably died
+							safe_print("Connection to %s:%s failed:" %
+									   (host, port), exception)
+							incoming = None
+						else:
+							# Other instance already running?
+							incoming = "?"
+							# Send module/appname and args as UTF-8
+							data = [module or appname]
+							if module != "3DLUT-maker":
+								for arg in sys.argv[1:]:
+									data.append(safe_str(safe_unicode(arg),
+														 "UTF-8"))
+							data = sp.list2cmdline(data)
+							try:
+								appsocket.sendall(data)
+							except socket.error, exception:
+								# Connection lost?
+								safe_print("Warning - could not send data %r:" %
+										   data, exception)
+							else:
+								while True:
+									try:
+										incoming = appsocket.recv(1024)
+									except socket.error, exception:
+										if exception.errno == errno.EWOULDBLOCK:
+											sleep(.05)
+											continue
+										safe_print("Warning - could not receive "
+												   "data:", exception)
+									break
+						appsocket.close()
+						if incoming and incoming.strip() == "ok":
+							# Successfully sent our request
+							break
+			if incoming is not None:
+				# Other instance running?
+				import localization as lang
+				lang.init()
+				if incoming.strip() == "ok":
+					# Successfully sent our request
+					safe_print(lang.getstr("app.otherinstance.notified"))
+				else:
+					# Other instance busy?
+					handle_error(lang.getstr("app.otherinstance.busy", name))
+				# Exit
+				return
+			lockfilename = os.path.join(confighome, "%s.lock" % name)
+			# Create listening socket
+			try:
+				sys._appsocket = socket.socket(socket.AF_INET,
+											   socket.SOCK_STREAM)
+			except socket.error, exception:
+				# This shouldn't happen
+				safe_print("Warning - could not create TCP socket:", exception)
+			else:
+				if getcfg("app.allow_network_clients"):
+					host = ""
+				for port in (getcfg("app.port"), 0):
+					try:
+						sys._appsocket.bind((host, port))
+					except socket.error, exception:
+						safe_print("Warning - could not bind to %s:%s:" %
+								   (host, port), exception)
+						if port == 0:
+							del sys._appsocket
+							break
+					else:
+						try:
+							sys._appsocket.settimeout(1)
+						except socket.error, exception:
+							safe_print("Warning - could not set socket "
+									   "timeout:", exception)
+						try:
+							sys._appsocket.listen(1)
+						except socket.error, exception:
+							safe_print("Warning - could not listen on "
+									   "socket:", exception)
+							del sys._appsocket
+							break
+						try:
+							port = sys._appsocket.getsockname()[1]
+						except socket.error, exception:
+							safe_print("Warning - could not get socket "
+									   "address:", exception)
+							del sys._appsocket
+							break
+						try:
+							# Create lockfile
+							with open(lockfilename, "w") as lockfile:
+								lockfile.write("%s\n" % port)
+						except EnvironmentError, exception:
+							# This shouldn't happen
+							safe_print("Warning - could not write "
+									   "lockfile %s:" % lockfilename,
+									   exception)
+						break
 		# Check for required resource files
 		mod2res = {None: resfiles,
 				   "3DLUT-maker": ["xrc/3dlut.xrc"],
@@ -363,19 +407,22 @@ def main(module=None):
 		else:
 			error = u"Fatal error: " + safe_unicode(traceback.format_exc())
 		handle_error(error)
-	finally:
-		for thread in threading.enumerate():
-			if thread.isAlive() and thread is not threading.currentThread():
-				thread.join()
+	for thread in threading.enumerate():
+		if thread.isAlive() and thread is not threading.currentThread():
+			thread.join()
+	if lockfilename and os.path.isfile(lockfilename):
 		try:
-			logger = logging.getLogger(name)
-			for handler in logger.handlers:
-				logger.removeHandler(handler)
-			logging.shutdown()
-			if lockfilebasenames:
-				os.remove(lockfilename)
-		except Exception, exception:
-			pass
+			os.remove(lockfilename)
+		except EnvironmentError, exception:
+			safe_print("Warning - could not remove lockfile %s: %r" %
+					   (lockfilename, exception))
+	try:
+		logger = logging.getLogger(name)
+		for handler in logger.handlers:
+			logger.removeHandler(handler)
+		logging.shutdown()
+	except Exception, exception:
+		pass
 
 
 def main_3dlut_maker():
