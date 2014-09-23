@@ -2565,6 +2565,9 @@ class LogWindow(InvincibleFrame):
 													   wx.FONTWEIGHT_NORMAL)
 		self.log_txt.SetFont(font)
 		self.sizer.Add(self.log_txt, 1, flag=wx.ALL | wx.EXPAND, border=4)
+		self.log_txt.MinSize = (self.log_txt.GetTextExtent("=" * 82)[0] +
+								wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+								-1)
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.btnsizer)
 		self.save_as_btn = GenBitmapButton(self.panel, -1, 
@@ -2579,7 +2582,9 @@ class LogWindow(InvincibleFrame):
 		self.clear_btn.Bind(wx.EVT_BUTTON, self.OnClear)
 		self.clear_btn.SetToolTipString(lang.getstr("clear"))
 		self.btnsizer.Add(self.clear_btn, flag=wx.ALL, border=4)
-		self.SetMinSize((defaults["size.info.w"], defaults["size.info.h"]))
+		borders_lr = self.Size[0] - self.ClientSize[0]
+		self.SetMinSize((self.sizer.MinSize[0] + borders_lr,
+						 defaults["size.info.h"]))
 		self.SetSaneGeometry(int(getcfg("position.info.x")), 
 							 int(getcfg("position.info.y")), 
 							 int(getcfg("size.info.w")), 
