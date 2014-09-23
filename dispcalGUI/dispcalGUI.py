@@ -1155,8 +1155,8 @@ class MainFrame(BaseFrame):
 		# expects the window to be fully created and accessible via 
 		# wx.GetApp().frame.infoframe
 		logbuffer.seek(0)
-		self.infoframe.Log("".join(line.decode("UTF-8", "replace") 
-								   for line in logbuffer).strip())
+		self.infoframe.Log("".join([line.decode("UTF-8", "replace") 
+								    for line in logbuffer][1:]).strip())
 
 	def init_defaults(self):
 		""" Initialize GUI-specific defaults. """
