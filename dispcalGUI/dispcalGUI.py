@@ -7012,7 +7012,8 @@ class MainFrame(BaseFrame):
 			self.tcframe.Raise()
 		elif data[0] == appname:
 			# Main window
-			self.Restore()
+			if self.IsIconized():
+				self.Restore()
 			self.Raise()
 		elif data[0] == "calibrate":
 			# Calibrate
