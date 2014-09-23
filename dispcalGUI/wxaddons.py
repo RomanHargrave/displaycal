@@ -297,27 +297,28 @@ class FileDrop(wx.FileDropTarget):
 		self.unsupported_handler = None
 
 	def OnDropFiles(self, x, y, filenames):
-		self._filenames = []
+		self._files = []
+		self._filenames = filenames
 
 		for filename in filenames:
 			name, ext = os.path.splitext(filename)
 			if ext.lower() in self.drophandlers:
-				self._filenames.append((ext.lower(), filename))
+				self._files.append((ext.lower(), filename))
 
-		if self._filenames:
-			self._filenames.reverse()
+		if self._files:
+			self._files.reverse()
 			wx.CallAfter(self.process)
 		elif self.unsupported_handler:
 			wx.CallAfter(self.unsupported_handler)
 
 	def process(self):
 		ms = 1.0 / 60
-		while self._filenames:
+		while self._files:
 			if hasattr(self, "parent") and hasattr(self.parent, "worker"):
 				while self.parent.worker.is_working():
 					wx.Yield()
 					sleep(ms)
 					if self.parent.worker.thread_abort:
 						return
-			ext, filename = self._filenames.pop()
+			ext, filename = self._files.pop()
 			self.drophandlers[ext](filename)

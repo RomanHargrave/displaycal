@@ -412,8 +412,6 @@ class BaseApp(wx.App):
 	def OnActivate(self, event):
 		if event.GetActive():
 			self.MacReopenApp()
-			if self.TopWindow and self.TopWindow.IsShownOnScreen():
-				self.TopWindow.RequestUserAttention()
 		event.Skip()
 
 	def OnInit(self):
@@ -1292,9 +1290,8 @@ class FileDrop(_FileDrop):
 		"""
 		if (not hasattr(self.parent, "worker") or
 			not self.parent.worker.is_working()):
-			filenames = sorted(self._filenames.values())
 			InfoDialog(self.parent, msg=lang.getstr("error.file_type_unsupported") +
-										"\n\n" + "\n".join(filenames), 
+										"\n\n" + "\n".join(self._filenames), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 
