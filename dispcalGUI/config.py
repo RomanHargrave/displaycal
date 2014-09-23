@@ -1250,16 +1250,26 @@ def initcfg(module=None):
 	cfgnames = [appname]
 	if module:
 		cfgnames.append(cfgbasename)
+	cfgroots = [confighome]
+	if module == "apply-profiles":
+		cfgroots.append(config_sys)
+	cfgfiles = []
 	for cfgname in cfgnames:
-		for configroot in (config_sys, confighome):
-			try:
-				cfg.read([os.path.join(configroot, cfgname + ".ini")])
-				# This won't raise an exception if the file does not exist, only
-				# if it can't be parsed
-			except Exception, exception:
-				from log import safe_print
-				safe_print("Warning - could not parse configuration file '%s'" %
-						   (module or appname) + ".ini")
+		for cfgroot in cfgroots:
+			cfgfile = os.path.join(cfgroot, cfgname + ".ini")
+			if os.path.isfile(cfgfile):
+				cfgfiles.append(cfgfile)
+				# Make user config take precedence
+				break
+	cfgfiles.sort(key=lambda cfgfile: os.stat(cfgfile).st_mtime)
+	try:
+		cfg.read(cfgfiles)
+		# This won't raise an exception if the file does not exist, only
+		# if it can't be parsed
+	except Exception, exception:
+		from log import safe_print
+		safe_print("Warning - could not parse configuration files:\n%s" %
+				   "\n".join(cfgfiles))
 
 
 def setcfg(name, value):
