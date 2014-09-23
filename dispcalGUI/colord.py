@@ -75,14 +75,12 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 		device_id = device_ids.get(edid["hash"])
 		if device_id:
 			return device_id
-		elif sys.platform not in ("darwin", "win32"):
+		elif sys.platform not in ("darwin", "win32") and which("colormgr"):
 			try:
 				device = find("device-by-property", ["OutputEdidMd5",
 													 edid["hash"]])
-			except CDObjectQueryError, exception:
-				warnings.warn(safe_str(exception), Warning)
 			except CDError, exception:
-				pass
+				warnings.warn(safe_str(exception), Warning)
 			else:
 				device_id = re.search(r":\s*(xrandr-[^\r\n]+)", device)
 				if device_id:
@@ -244,7 +242,7 @@ def install_profile(device_id, profile, profile_installname=None,
 				profile = client.find_profile_sync(profile_id, cancellable)
 			else:
 				profile = get_object_path(profile_id, "profile")
-		except Exception, exception:
+		except CDObjectQueryError, exception:
 			# Profile not found
 			pass
 		if profile:
@@ -272,7 +270,7 @@ def install_profile(device_id, profile, profile_installname=None,
 			device.add_profile_sync(Colord.DeviceRelation.HARD, profile, cancellable)
 		except Exception, exception:
 			# Profile may already have been added
-			pass
+			warnings.warn(safe_str(exception), Warning)
 
 		# Make profile default for device
 		if not device.make_profile_default_sync(profile, cancellable):
