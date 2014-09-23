@@ -18,7 +18,7 @@ import x3dom
 
 class VRML2X3DFrame(BaseFrame):
 
-	def __init__(self, html, embed, force, cache):
+	def __init__(self, html, embed, view, force, cache):
 		BaseFrame.__init__(self, None, wx.ID_ANY,
 						   lang.getstr("vrml_to_x3d_converter"),
 						   style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX |
@@ -45,7 +45,7 @@ class VRML2X3DFrame(BaseFrame):
 									  vrmlfile2x3dfile(None,
 													   html=html,
 													   embed=embed,
-													   view=True,
+													   view=view,
 													   force=force,
 													   cache=cache,
 													   worker=self.worker))
@@ -53,7 +53,7 @@ class VRML2X3DFrame(BaseFrame):
 		vrml_drop_handler = lambda vrmlpath: vrmlfile2x3dfile(vrmlpath,
 															  html=html,
 															  embed=embed,
-															  view=True,
+															  view=view,
 															  force=force,
 															  cache=cache,
 															  worker=self.worker)
@@ -81,7 +81,7 @@ class VRML2X3DFrame(BaseFrame):
 		return "invalid"
 
 
-def main(vrmlpath=None):
+def main():
 	if "--help" in sys.argv[1:]:
 		safe_print("Usage: %s [--embed] [--no-gui] [--view] [FILE]" % sys.argv[0])
 		safe_print("Convert VRML file to X3D")
@@ -105,19 +105,19 @@ def main(vrmlpath=None):
 	embed = "--embed" in sys.argv
 	force = "--force" in sys.argv
 	html = not "--no-html" in sys.argv[1:]
-	view = "--view" in sys.argv[1:]
 	if "--no-gui" in sys.argv[1:]:
-		vrmlfile2x3dfile(vrmlpath, html=html, embed=embed, view=view,
-						 force=force, cache=cache)
+		view = "--view" in sys.argv[1:]
+		for arg in sys.argv[1:]:
+			if os.path.isfile(arg):
+				vrmlfile2x3dfile(safe_unicode(arg), html=html, embed=embed,
+								 view=view, force=force, cache=cache)
 	else:
+		view = not "--no-view" in sys.argv[1:]
 		app = BaseApp(0)
-		app.TopWindow = VRML2X3DFrame(html, embed, force, cache)
+		app.TopWindow = VRML2X3DFrame(html, embed, view, force, cache)
+		app.process_argv()
 		app.TopWindow.listen()
 		app.TopWindow.Show()
-		if vrmlpath:
-			wx.CallAfter(vrmlfile2x3dfile, vrmlpath, html=html, embed=embed,
-						 view=True, force=force, cache=cache,
-						 worker=app.TopWindow.worker)
 		app.MainLoop()
 
 
@@ -203,6 +203,7 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 					 wargs=(vrmlpath, x3dpath, html, embed, force, cache,
 							worker),
 					 progress_title=lang.getstr("vrml_to_x3d_converter"),
+					 progress_start=1,
 					 resume=worker.progress_wnd and
 							worker.progress_wnd.IsShownOnScreen())
 	else:
@@ -215,4 +216,4 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 
 
 if __name__ == "__main__":
-	main(*sys.argv[max(len(sys.argv) - 1, 1):])
+	main()

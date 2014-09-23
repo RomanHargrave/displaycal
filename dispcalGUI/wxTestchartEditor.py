@@ -678,7 +678,8 @@ class TestchartEditor(BaseFrame):
 
 		self.tc_update_controls()
 		self.tc_check()
-		wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
+		if path is not False:
+			wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
 
 	def precond_profile_drop_handler(self, path):
 		self.tc_precond_profile.SetPath(path)
@@ -3097,17 +3098,16 @@ class TestchartEditor(BaseFrame):
 							  "tc.", "tc_"))
 
 
-def main(testchart=None):
+def main():
 	config.initcfg("testchart-editor")
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
-	if testchart and testchart.startswith("-"):
-		testchart = None
-	app.TopWindow = TestchartEditor(path=testchart)
+	app.TopWindow = TestchartEditor(path=False)
+	app.process_argv(1) or app.TopWindow.tc_load_cfg_from_ti1()
 	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":
-	main(*sys.argv[max(len(sys.argv) - 1, 1):])
+	main()

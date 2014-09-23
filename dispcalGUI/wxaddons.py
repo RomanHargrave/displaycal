@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from time import sleep
 import os
 import sys
 import types
@@ -296,16 +297,27 @@ class FileDrop(wx.FileDropTarget):
 		self.unsupported_handler = None
 
 	def OnDropFiles(self, x, y, filenames):
-		self._files = {}
-		self._filenames = filenames
+		self._filenames = []
 
 		for filename in filenames:
 			name, ext = os.path.splitext(filename)
 			if ext.lower() in self.drophandlers:
-				self._files[ext.lower()] = filename
+				self._filenames.append((ext.lower(), filename))
 
-		if len(self._files):
-			for key in self._files:
-				wx.CallAfter(self.drophandlers[key], self._files[key])
+		if self._filenames:
+			self._filenames.reverse()
+			wx.CallAfter(self.process)
 		elif self.unsupported_handler:
 			wx.CallAfter(self.unsupported_handler)
+
+	def process(self):
+		ms = 1.0 / 60
+		while self._filenames:
+			if hasattr(self, "parent") and hasattr(self.parent, "worker"):
+				while self.parent.worker.is_working():
+					wx.Yield()
+					sleep(ms)
+					if self.parent.worker.thread_abort:
+						return
+			ext, filename = self._filenames.pop()
+			self.drophandlers[ext](filename)

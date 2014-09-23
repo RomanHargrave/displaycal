@@ -683,17 +683,16 @@ class SynthICCFrame(BaseFrame):
 		
 
 
-def main(profile=None):
+def main():
 	config.initcfg("synthprofile")
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
 	app.TopWindow = SynthICCFrame()
-	if profile:
-		app.TopWindow.drop_handler(profile)
+	app.process_argv(1)
 	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":
-	main(*sys.argv[max(len(sys.argv) - 1, 1):])
+	main()

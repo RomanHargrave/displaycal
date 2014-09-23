@@ -430,6 +430,17 @@ class BaseApp(wx.App):
 		if self.TopWindow and self.TopWindow.IsShownOnScreen():
 			self.TopWindow.Raise()
 
+	def process_argv(self, count=0):
+		paths = []
+		for arg in sys.argv[1:]:
+			if os.path.isfile(arg):
+				paths.append(safe_unicode(arg))
+				if len(paths) == count:
+					break
+		if paths:
+			self.MacOpenFiles(paths)
+			return paths
+
 
 class BaseFrame(wx.Frame):
 
@@ -1281,9 +1292,9 @@ class FileDrop(_FileDrop):
 		"""
 		if (not hasattr(self.parent, "worker") or
 			not self.parent.worker.is_working()):
-			files = self._filenames
+			filenames = sorted(self._filenames.values())
 			InfoDialog(self.parent, msg=lang.getstr("error.file_type_unsupported") +
-										"\n\n" + "\n".join(files), 
+										"\n\n" + "\n".join(filenames), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 

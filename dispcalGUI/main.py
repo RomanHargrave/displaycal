@@ -375,31 +375,21 @@ def main(module=None):
 										   "calibration loader:", 
 										   safe_unicode(exception))
 			# Initialize & run
-			accepts_filename_argument = False
 			if module == "3DLUT-maker":
-				from wxLUT3DFrame import main as main
+				from wxLUT3DFrame import main
 			elif module == "curve-viewer":
-				from wxLUTViewer import main as main
-				accepts_filename_argument = True
+				from wxLUTViewer import main
 			elif module == "profile-info":
-				from wxProfileInfo import main as main
-				accepts_filename_argument = True
+				from wxProfileInfo import main
 			elif module == "synthprofile":
-				from wxSynthICCFrame import main as main
-				accepts_filename_argument = True
+				from wxSynthICCFrame import main
 			elif module == "testchart-editor":
-				from wxTestchartEditor import main as main
-				accepts_filename_argument = True
+				from wxTestchartEditor import main
 			elif module == "VRML-to-X3D-converter":
-				from wxVRML2X3D import main as main
-				accepts_filename_argument = True
+				from wxVRML2X3D import main
 			else:
-				from dispcalGUI import main as main
-			if accepts_filename_argument:
-				main(*[safe_unicode(arg) for arg in
-					   sys.argv[max(len(sys.argv) - 1, 1):]])
-			else:
-				main()
+				from dispcalGUI import main
+			main()
 	except Exception, exception:
 		if isinstance(exception, ResourceError):
 			error = exception

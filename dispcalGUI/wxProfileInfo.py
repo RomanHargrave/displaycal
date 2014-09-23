@@ -417,7 +417,7 @@ class GamutCanvas(LUTCanvas):
 										 width=w))
 
 		xy_range = max(abs(min_x), abs(min_y)) + max(max_x, max_y)
-		if center:
+		if center or not self.last_draw:
 			self.axis_x = self.axis_y = (min(min_x, min_y), max(max_x, max_y))
 			self.spec_x = xy_range / step
 			self.spec_y = xy_range / step
@@ -432,7 +432,7 @@ class GamutCanvas(LUTCanvas):
 									  colour=wx.Colour(0x33, 0x33, 0x33),
 									  size=0)
 			graphics.objects.append(spacer)
-			if center:
+			if center or not self.last_draw:
 				boundingbox = spacer.boundingBox()
 				self.resetzoom(boundingbox)
 				self.center(boundingbox)
@@ -1192,8 +1192,8 @@ class ProfileInfoFrame(LUTFrame):
 			".icc": self.drop_handler,
 			".icm": self.drop_handler
 		}
-		droptarget = FileDrop(self, drophandlers)
-		self.client.SetDropTarget(droptarget)
+		self.droptarget = FileDrop(self, drophandlers)
+		self.client.SetDropTarget(self.droptarget)
 		droptarget = FileDrop(self, drophandlers)
 		self.grid.SetDropTarget(droptarget)
 
@@ -1874,7 +1874,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.view_3d(None)
 
 
-def main(profile=None):
+def main():
 	config.initcfg("profile-info")
 	lang.init()
 	lang.update_defaults()
@@ -1882,7 +1882,12 @@ def main(profile=None):
 	check_set_argyll_bin()
 	app.TopWindow = ProfileInfoFrame(None, -1)
 	display_no = get_argyll_display_number(app.TopWindow.get_display()[1])
-	app.TopWindow.LoadProfile(profile or get_display_profile(display_no))
+	for arg in sys.argv[1:]:
+		if os.path.isfile(arg):
+			app.TopWindow.drop_handler(safe_unicode(arg))
+			break
+	else:
+		app.TopWindow.LoadProfile(get_display_profile(display_no))
 	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()
@@ -1893,4 +1898,4 @@ def main(profile=None):
 											 "size.profile_info"))
 
 if __name__ == "__main__":
-	main(*sys.argv[max(len(sys.argv) - 1, 1):])
+	main()

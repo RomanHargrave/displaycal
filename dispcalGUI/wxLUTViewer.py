@@ -1831,7 +1831,7 @@ class LUTFrame(BaseFrame):
 		return self.client.worker
 
 
-def main(profile=None):
+def main():
 	config.initcfg("curve-viewer")
 	# Backup display config
 	cfg_display = getcfg("display.number")
@@ -1842,15 +1842,15 @@ def main(profile=None):
 	app.TopWindow.Bind(wx.EVT_CLOSE, app.TopWindow.OnClose, app.TopWindow)
 	app.TopWindow.worker.enumerate_displays_and_ports(check_lut_access=False,
 													  enumerate_ports=False)
-	if profile and profile.startswith("-"):
-		profile = None
 	app.TopWindow.display_no, geometry, client_area = app.TopWindow.get_display()
 	app.TopWindow.Bind(wx.EVT_MOVE, app.TopWindow.move_handler, app.TopWindow)
 	display_no = get_argyll_display_number(geometry)
 	setcfg("display.number", display_no + 1)
 	app.TopWindow.update_controls()
-	if profile:
-		app.TopWindow.drop_handler(profile)
+	for arg in sys.argv[1:]:
+		if os.path.isfile(arg):
+			app.TopWindow.drop_handler(safe_unicode(arg))
+			break
 	else:
 		app.TopWindow.load_lut(get_display_profile(display_no))
 	app.TopWindow.listen()
@@ -1859,4 +1859,4 @@ def main(profile=None):
 	config.writecfg(module="curve-viewer", options=("display.number", ))
 
 if __name__ == '__main__':
-	main(*sys.argv[max(len(sys.argv) - 1, 1):])
+	main()
