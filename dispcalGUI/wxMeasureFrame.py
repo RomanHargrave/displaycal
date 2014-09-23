@@ -17,7 +17,7 @@ from options import debug
 from util_list import floatlist, strlist
 from util_str import safe_unicode
 from wxaddons import wx
-from wxwindows import ConfirmDialog, InfoDialog, InvincibleFrame
+from wxwindows import BaseApp, ConfirmDialog, InfoDialog, InvincibleFrame
 from wxfixes import GenBitmapButton as BitmapButton
 try:
 	import RealDisplaySizeMM as RDSMM
@@ -538,9 +538,9 @@ class MeasureFrame(InvincibleFrame):
 def main():
 	config.initcfg()
 	lang.init()
-	app = wx.App(0)
-	app.measureframe = MeasureFrame()
-	app.measureframe.Show()
+	app = BaseApp(0)
+	app.TopWindow = MeasureFrame()
+	app.TopWindow.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":

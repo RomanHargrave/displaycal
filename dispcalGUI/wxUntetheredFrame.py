@@ -19,8 +19,8 @@ from config import (getbitmap, getcfg, geticon, get_data_path, get_icon_bundle,
 from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug, test, verbose
-from wxwindows import (BitmapBackgroundPanel, CustomCheckBox, CustomGrid,
-					   FlatShadedButton, numpad_keycodes)
+from wxwindows import (BaseApp, BitmapBackgroundPanel, CustomCheckBox,
+					   CustomGrid, FlatShadedButton, numpad_keycodes)
 import CGATS
 import colormath
 import config
@@ -698,8 +698,8 @@ if __name__ == "__main__":
 	print "untethered.max_delta.chroma", getcfg("untethered.max_delta.chroma")
 	lang.init()
 	lang.update_defaults()
-	app = wx.App(0)
-	frame = UntetheredFrame(start_timer=False)
+	app = BaseApp(0)
+	app.TopWindow = UntetheredFrame(start_timer=False)
 	testchart = getcfg("testchart.file")
 	if os.path.splitext(testchart)[1].lower() in (".icc", ".icm"):
 		try:
@@ -707,9 +707,9 @@ if __name__ == "__main__":
 		except:
 			pass
 	try:
-		frame.cgats = CGATS.CGATS(testchart)
+		app.TopWindow.cgats = CGATS.CGATS(testchart)
 	except:
-		frame.cgats = CGATS.CGATS("""TI1    
+		app.TopWindow.cgats = CGATS.CGATS("""TI1    
 BEGIN_DATA_FORMAT
 SAMPLE_ID RGB_R RGB_G RGB_B XYZ_X XYZ_Y XYZ_Z
 END_DATA_FORMAT
@@ -717,10 +717,10 @@ BEGIN_DATA
 1 0 0 0 0 0 0
 END_DATA
 """)
-	frame.worker = Worker()
-	frame.worker.progress_wnd = frame
-	frame.Show()
-	files = Files([frame.worker, frame])
+	app.TopWindow.worker = Worker()
+	app.TopWindow.worker.progress_wnd = app.TopWindow
+	app.TopWindow.Show()
+	files = Files([app.TopWindow.worker, app.TopWindow])
 	def test(bytes=None):
 		print "*** Received %r" % bytes
 		menu = r"""Place instrument on spot to be measured,
@@ -732,8 +732,8 @@ Hit ESC or Q to exit, any other key to take a reading:"""
 		if not bytes:
 			txt = menu
 		elif bytes == " ":
-			i = frame.index
-			row = frame.cgats[0].DATA[i]
+			i = app.TopWindow.index
+			row = app.TopWindow.cgats[0].DATA[i]
 			txt = ["""
  Result is XYZ: %.6f %.6f %.6f
 
@@ -756,13 +756,13 @@ or place on the white calibration reference,
 								 row.XYZ_Y,
 								 row.XYZ_Z)][random.choice([0, 1])]
 		elif bytes in ("Q", "q"):
-			wx.CallAfter(frame.Close)
+			wx.CallAfter(app.TopWindow.Close)
 			return
 		else:
 			return
 		for line in txt.split("\n"):
 			sleep(.03125)
-			if frame:
+			if app.TopWindow:
 				wx.CallAfter(files.write, line)
 				print line
 	start_new_thread(test, tuple())

@@ -22,7 +22,7 @@ from meta import name as appname, version as appversion
 from util_os import launch_file, waccess
 from wxaddons import CustomEvent
 from wxMeasureFrame import MeasureFrame
-from wxwindows import FlatShadedButton, numpad_keycodes
+from wxwindows import BaseApp, FlatShadedButton, numpad_keycodes
 import colormath
 import config
 import localization as lang
@@ -403,10 +403,10 @@ if __name__ == "__main__":
 	config.initcfg()
 	lang.init()
 	lang.update_defaults()
-	app = wx.App(0)
-	frame = DisplayUniformityFrame(start_timer=False, cols=3)
-	frame.worker = Worker()
-	frame.Show()
+	app = BaseApp(0)
+	app.TopWindow = DisplayUniformityFrame(start_timer=False, cols=3)
+	app.TopWindow.worker = Worker()
+	app.TopWindow.Show()
 	i = 0
 	def test(bytes=None):
 		global i
@@ -914,19 +914,19 @@ and hit [A-Z] to read white and setup FWA compensation (keyed to letter)
 [a-z] to read and make FWA compensated reading from keyed reference
 'r' to set reference, 's' to save spectrum,
 'h' to toggle high res., 'k' to do a calibration
-Hit ESC or Q to exit, any other key to take a reading:"""]][frame.index][i]
+Hit ESC or Q to exit, any other key to take a reading:"""]][app.TopWindow.index][i]
 			if i < 3:
 				i += 1
 			else:
 				i -= 3
 		elif bytes in ("Q", "q"):
-			wx.CallAfter(frame.Close)
+			wx.CallAfter(app.TopWindow.Close)
 			return
 		else:
 			return
 		for line in txt.split("\n"):
 			sleep(.03125)
-			wx.CallAfter(frame.write, line)
+			wx.CallAfter(app.TopWindow.write, line)
 			print line
 	start_new_thread(test, tuple())
 	app.MainLoop()

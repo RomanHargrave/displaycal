@@ -22,8 +22,8 @@ from worker import (Error, UnloggedError, UnloggedInfo, Worker, get_argyll_util,
 					make_argyll_compatible_path, show_result_dialog)
 from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
-from wxwindows import (BaseFrame, BitmapBackgroundPanelText, CustomCheckBox,
-					   FileDrop, InfoDialog, TooltipWindow)
+from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanelText,
+					   CustomCheckBox, FileDrop, InfoDialog, TooltipWindow)
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -1831,36 +1831,30 @@ class LUTFrame(BaseFrame):
 		return self.client.worker
 
 
-class LUTViewer(wx.App):
-
-	def OnInit(self):
-		self.frame = LUTFrame(None, -1)
-		self.frame.Bind(wx.EVT_CLOSE, self.frame.OnClose, self.frame)
-		return True
-
-
 def main(profile=None):
 	config.initcfg("curve-viewer")
 	# Backup display config
 	cfg_display = getcfg("display.number")
 	lang.init()
 	lang.update_defaults()
-	app = LUTViewer(0)
-	app.frame.worker.enumerate_displays_and_ports(check_lut_access=False,
-												  enumerate_ports=False)
+	app = BaseApp(0)
+	app.TopWindow = LUTFrame(None, -1)
+	app.TopWindow.Bind(wx.EVT_CLOSE, app.TopWindow.OnClose, app.TopWindow)
+	app.TopWindow.worker.enumerate_displays_and_ports(check_lut_access=False,
+													  enumerate_ports=False)
 	if profile and profile.startswith("-"):
 		profile = None
-	app.frame.display_no, geometry, client_area = app.frame.get_display()
-	app.frame.Bind(wx.EVT_MOVE, app.frame.move_handler, app.frame)
+	app.TopWindow.display_no, geometry, client_area = app.TopWindow.get_display()
+	app.TopWindow.Bind(wx.EVT_MOVE, app.TopWindow.move_handler, app.TopWindow)
 	display_no = get_argyll_display_number(geometry)
 	setcfg("display.number", display_no + 1)
-	app.frame.update_controls()
+	app.TopWindow.update_controls()
 	if profile:
-		app.frame.drop_handler(profile)
+		app.TopWindow.drop_handler(profile)
 	else:
-		app.frame.load_lut(get_display_profile(display_no))
-	app.frame.listen()
-	app.frame.Show()
+		app.TopWindow.load_lut(get_display_profile(display_no))
+	app.TopWindow.listen()
+	app.TopWindow.Show()
 	app.MainLoop()
 	config.writecfg(module="curve-viewer", options=("display.number", ))
 

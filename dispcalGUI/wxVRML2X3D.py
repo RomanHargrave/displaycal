@@ -10,7 +10,7 @@ from util_str import safe_unicode
 from worker import Worker, show_result_dialog
 from wxaddons import wx
 from wxfixes import GenBitmapButton as BitmapButton
-from wxwindows import BaseFrame, FileDrop
+from wxwindows import BaseApp, BaseFrame, FileDrop
 import config
 import localization as lang
 import x3dom
@@ -110,14 +110,14 @@ def main(vrmlpath=None):
 		vrmlfile2x3dfile(vrmlpath, html=html, embed=embed, view=view,
 						 force=force, cache=cache)
 	else:
-		app = wx.App(0)
-		frame = VRML2X3DFrame(html, embed, force, cache)
-		frame.listen()
-		frame.Show()
+		app = BaseApp(0)
+		app.TopWindow = VRML2X3DFrame(html, embed, force, cache)
+		app.TopWindow.listen()
+		app.TopWindow.Show()
 		if vrmlpath:
 			wx.CallAfter(vrmlfile2x3dfile, vrmlpath, html=html, embed=embed,
 						 view=True, force=force, cache=cache,
-						 worker=frame.worker)
+						 worker=app.TopWindow.worker)
 		app.MainLoop()
 
 
@@ -134,7 +134,7 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 				safe_print("%r is not a file." % vrmlpath)
 			sys.exit(1)
 		if not wx.GetApp():
-			app = wx.App(0)
+			app = BaseApp(0)
 		defaultDir, defaultFile = config.get_verified_path("last_vrml_path")
 		dlg = wx.FileDialog(None, lang.getstr("file.select"),
 							defaultDir=defaultDir, 
@@ -163,7 +163,7 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 				safe_print("%r is not writable." % dirname)
 			sys.exit(1)
 		if not wx.GetApp():
-			app = wx.App(0)
+			app = BaseApp(0)
 		if x3dpath:
 			defaultDir, defaultFile = os.path.split(x3dpath)
 		else:

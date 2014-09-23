@@ -15,7 +15,7 @@ import colormath
 import config
 import localization as lang
 import worker
-from wxwindows import BaseFrame, FileDrop, InfoDialog, wx
+from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
 import floatspin
 import xh_floatspin
 
@@ -687,12 +687,12 @@ def main(profile=None):
 	config.initcfg("synthprofile")
 	lang.init()
 	lang.update_defaults()
-	app = wx.App(0)
-	app.synthiccframe = SynthICCFrame()
+	app = BaseApp(0)
+	app.TopWindow = SynthICCFrame()
 	if profile:
-		app.synthiccframe.drop_handler(profile)
-	app.synthiccframe.listen()
-	app.synthiccframe.Show()
+		app.TopWindow.drop_handler(profile)
+	app.TopWindow.listen()
+	app.TopWindow.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":

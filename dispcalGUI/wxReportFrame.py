@@ -14,7 +14,7 @@ import config
 import localization as lang
 import worker
 from wxTestchartEditor import TestchartEditor
-from wxwindows import (BaseFrame, FileDrop, InfoDialog, wx)
+from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
 import xh_filebrowsebutton
 
 from wx import xrc
@@ -555,7 +555,7 @@ if __name__ == "__main__":
 	config.initcfg()
 	lang.init()
 	lang.update_defaults()
-	app = wx.App(0)
-	frame = ReportFrame()
-	frame.Show()
+	app = BaseApp(0)
+	app.TopWindow = ReportFrame()
+	app.TopWindow.Show()
 	app.MainLoop()

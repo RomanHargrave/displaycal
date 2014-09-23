@@ -14,7 +14,8 @@ import config
 import localization as lang
 import worker
 from worker import check_set_argyll_bin
-from wxwindows import (BaseFrame, ConfirmDialog, FileDrop, InfoDialog, wx)
+from wxwindows import (BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog,
+					   wx)
 import xh_filebrowsebutton
 
 from wx import xrc
@@ -740,10 +741,10 @@ def main():
 	config.initcfg("3DLUT-maker")
 	lang.init()
 	lang.update_defaults()
-	app = wx.App(0)
-	app.lut3dframe = LUT3DFrame()
-	app.lut3dframe.listen()
-	app.lut3dframe.Show()
+	app = BaseApp(0)
+	app.TopWindow = LUT3DFrame()
+	app.TopWindow.listen()
+	app.TopWindow.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":

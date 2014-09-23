@@ -126,7 +126,7 @@ from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
 from wxfixes import ThemedGenButton, set_bitmap_labels
-from wxwindows import (AboutDialog, AuiBetterTabArt, BaseFrame,
+from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileDrop, InfoDialog, LogWindow, ProgressDialog,
@@ -10856,18 +10856,6 @@ class MainFrame(BaseFrame):
 				self.worker.wrapup(False)
 			wx.GetApp().ExitMainLoop()
 
-class MainApp(wx.App):
-	def OnInit(self):
-		self.SetAppName(appname)
-		##wx_lang = getattr(wx, "LANGUAGE_" + lang.getstr("!language_name"), 
-						  ##wx.LANGUAGE_ENGLISH)
-		##self.locale = wx.Locale(wx_lang)
-		##if debug:
-			##safe_print("[D]", lang.getstr("!language_name"), wx_lang, 
-					   ##self.locale.GetLocale())
-		self.progress_dlg = StartupFrame()
-		return True
-
 
 class StartupFrame(wx.Frame):
 
@@ -11374,7 +11362,8 @@ def main():
 			safe_print(lang.getstr("warning.autostart_system"))
 		if not autostart_home:
 			safe_print(lang.getstr("warning.autostart_user"))
-	app = MainApp(redirect=False)  # Don't redirect stdin/stdout
+	app = BaseApp(0)  # Don't redirect stdin/stdout
+	app.TopWindow = StartupFrame()
 	app.MainLoop()
 
 if __name__ == "__main__":

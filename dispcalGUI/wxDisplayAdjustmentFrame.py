@@ -23,7 +23,7 @@ from log import get_file_logger
 from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import safe_unicode, wrap
-from wxwindows import FlatShadedButton, numpad_keycodes
+from wxwindows import BaseApp, FlatShadedButton, numpad_keycodes
 import config
 import localization as lang
 
@@ -1305,14 +1305,14 @@ if __name__ == "__main__":
 			return True
 	config.initcfg()
 	lang.init()
-	app = wx.App(0)
+	app = BaseApp(0)
 	if "--crt" in sys.argv[1:]:
 		setcfg("measurement_mode", "c")
 	else:
 		setcfg("measurement_mode", "l")
-	frame = DisplayAdjustmentFrame(start_timer=False)
-	frame.worker = Worker()
-	frame.Show()
+	app.TopWindow = DisplayAdjustmentFrame(start_timer=False)
+	app.TopWindow.worker = Worker()
+	app.TopWindow.Show()
 	i = 0
 	def test(bytes=None):
 		global i
@@ -1570,7 +1570,7 @@ Press 1 .. 7"""][i]
 					i += 1
 				else:
 					i -= 4
-				wx.CallAfter(frame.reset)
+				wx.CallAfter(app.TopWindow.reset)
 			txt = [r"""Setting up the instrument
 Place instrument on test window.
 Hit Esc or Q to give up, any other key to continue:
@@ -1614,13 +1614,13 @@ Target advertised gamma = 2.400000"""][i] + r"""
 
 Display adjustment menu:""" + menu
 		elif bytes == "8":
-			wx.CallAfter(frame.Close)
+			wx.CallAfter(app.TopWindow.Close)
 			return
 		else:
 			return
 		for line in txt.split("\n"):
 			sleep(.0625)
-			wx.CallAfter(frame.write, line)
+			wx.CallAfter(app.TopWindow.write, line)
 			print line
 	start_new_thread(test, tuple())
 	app.MainLoop()

@@ -12,7 +12,7 @@ import threading
 
 import config
 from config import (defaults, getbitmap, getcfg, geticon, 
-					get_verified_path, setcfg)
+					get_verified_path, pyname, setcfg)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
@@ -403,6 +403,32 @@ class AuiBetterTabArt(AuiDefaultTabArt):
 		
 		self._tab_text_colour = lambda page: page.text_colour
 		self._tab_disabled_text_colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+
+
+class BaseApp(wx.App):
+
+	""" Application base class implementing common functionality. """
+
+	def OnActivate(self, event):
+		if event.GetActive():
+			self.MacReopenApp()
+			if self.TopWindow and self.TopWindow.IsShownOnScreen():
+				self.TopWindow.RequestUserAttention()
+		event.Skip()
+
+	def OnInit(self):
+		self.AppName = pyname
+		self.Bind(wx.EVT_ACTIVATE_APP, self.OnActivate)
+		return True
+
+	def MacOpenFiles(self, paths):
+		if (self.TopWindow and
+			isinstance(getattr(self.TopWindow, "droptarget", None), FileDrop)):
+			self.TopWindow.OnDropFiles(0, 0, paths)
+
+	def MacReopenApp(self):
+		if self.TopWindow and self.TopWindow.IsShownOnScreen():
+			self.TopWindow.Raise()
 
 
 class BaseFrame(wx.Frame):
@@ -3493,7 +3519,7 @@ def test():
 	ProgressDialog.key_handler = key_handler
 	SimpleTerminal.key_handler = key_handler
 	
-	app = wx.App(0)
+	app = BaseApp(0)
 	p = ProgressDialog(msg="".join(("Test " * 5)))
 	t = SimpleTerminal(start_timer=False)
 	app.MainLoop()

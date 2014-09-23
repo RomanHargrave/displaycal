@@ -25,9 +25,10 @@ from worker import (Error, UnloggedError, UnloggedInfo, check_set_argyll_bin,
 from wxaddons import get_platform_window_decoration_size, wx
 from wxLUTViewer import LUTCanvas, LUTFrame
 from wxVRML2X3D import vrmlfile2x3dfile
-from wxwindows import (BaseFrame, BitmapBackgroundPanelText, CustomCheckBox,
-					   CustomGrid, CustomRowLabelRenderer, ConfirmDialog,
-					   FileDrop, InfoDialog, SimpleBook, TwoWaySplitter)
+from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanelText,
+					   CustomCheckBox, CustomGrid, CustomRowLabelRenderer,
+					   ConfirmDialog, FileDrop, InfoDialog, SimpleBook,
+					   TwoWaySplitter)
 from wxfixes import GenBitmapButton as BitmapButton
 import colormath
 import config
@@ -1873,23 +1874,17 @@ class ProfileInfoFrame(LUTFrame):
 		self.view_3d(None)
 
 
-class ProfileInfoViewer(wx.App):
-
-	def OnInit(self):
-		check_set_argyll_bin()
-		self.frame = ProfileInfoFrame(None, -1)
-		return True
-
-
 def main(profile=None):
 	config.initcfg("profile-info")
 	lang.init()
 	lang.update_defaults()
-	app = ProfileInfoViewer(0)
-	display_no = get_argyll_display_number(app.frame.get_display()[1])
-	app.frame.LoadProfile(profile or get_display_profile(display_no))
-	app.frame.listen()
-	app.frame.Show()
+	app = BaseApp(0)
+	check_set_argyll_bin()
+	app.TopWindow = ProfileInfoFrame(None, -1)
+	display_no = get_argyll_display_number(app.TopWindow.get_display()[1])
+	app.TopWindow.LoadProfile(profile or get_display_profile(display_no))
+	app.TopWindow.listen()
+	app.TopWindow.Show()
 	app.MainLoop()
 	writecfg(module="profile-info", options=("3d.format",
 											 "last_cal_or_icc_path",

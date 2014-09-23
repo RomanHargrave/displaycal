@@ -28,7 +28,7 @@ from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_util, show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, wx
-from wxwindows import (BaseFrame, CustomGrid, ConfirmDialog,
+from wxwindows import (BaseApp, BaseFrame, CustomGrid, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, FileDrop,
 					   InfoDialog, get_gradient_panel)
 from wxfixes import GenBitmapButton as BitmapButton
@@ -3101,12 +3101,12 @@ def main(testchart=None):
 	config.initcfg("testchart-editor")
 	lang.init()
 	lang.update_defaults()
-	app = wx.App(0)
+	app = BaseApp(0)
 	if testchart and testchart.startswith("-"):
 		testchart = None
-	app.tcframe = TestchartEditor(path=testchart)
-	app.tcframe.listen()
-	app.tcframe.Show()
+	app.TopWindow = TestchartEditor(path=testchart)
+	app.TopWindow.listen()
+	app.TopWindow.Show()
 	app.MainLoop()
 
 if __name__ == "__main__":
