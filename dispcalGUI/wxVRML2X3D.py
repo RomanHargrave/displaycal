@@ -101,6 +101,7 @@ def main():
 		return
 	config.initcfg("%s-VRML-to-X3D-converter" % appname)
 	lang.init()
+	lang.update_defaults()
 	cache = not "--no-cache" in sys.argv[1:]
 	embed = "--embed" in sys.argv
 	force = "--force" in sys.argv
