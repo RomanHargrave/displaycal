@@ -49,9 +49,9 @@ def handle_error(error, parent=None, silent=False):
 		error = error[1]
 	else:
 		tbstr = traceback.format_exc()
-	if (isinstance(error, Exception) and
+	if (tbstr.strip() != "None" and isinstance(error, Exception) and
 		(debug or not isinstance(error, EnvironmentError) or
-				 not getattr(error, "filename", None))):
+		 not getattr(error, "filename", None))):
 		# Print a traceback if in debug mode, for non environment errors, and
 		# for environment errors not related to files
 		safe_print(tbstr)
@@ -63,6 +63,11 @@ def handle_error(error, parent=None, silent=False):
 			app = wx.GetApp()
 			if app is None and parent is None:
 				app = wx.App(redirect=False)
+				# wxPython 3 bugfix: We also need a toplevel window
+				frame = wx.Frame(None)
+				parent = False
+			else:
+				frame = None
 			if parent is None:
 				parent = app.GetTopWindow()
 			if parent:
@@ -80,8 +85,14 @@ def handle_error(error, parent=None, silent=False):
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
 								   safe_unicode(error), appname, wx.OK | icon)
-			dlg.ShowModal()
-			dlg.Destroy()
+			if frame:
+				# wxPython 3 bugfix: We need to use CallLater and MainLoop
+				wx.CallLater(1, dlg.ShowModal)
+				wx.CallLater(1, frame.Close)
+				app.MainLoop()
+			else:
+				dlg.ShowModal()
+				dlg.Destroy()
 		except Exception, exception:
 			safe_print("Warning: handle_error():", safe_unicode(exception))
 

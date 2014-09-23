@@ -235,7 +235,6 @@ def main(module=None):
 						break
 				stdout.seek(0)
 			if retcode != 0:
-				app = wx.App(redirect=False)
 				if sys.platform == "win32":
 					msg = (u'An attempt to launch a command prompt failed.')
 				elif sys.platform == "darwin":
