@@ -116,8 +116,8 @@ def main():
 		view = not "--no-view" in sys.argv[1:]
 		app = BaseApp(0)
 		app.TopWindow = VRML2X3DFrame(html, embed, view, force, cache)
-		app.process_argv()
 		app.TopWindow.listen()
+		app.process_argv()
 		app.TopWindow.Show()
 		app.MainLoop()
 

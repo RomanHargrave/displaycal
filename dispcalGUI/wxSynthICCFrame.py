@@ -689,8 +689,8 @@ def main():
 	lang.update_defaults()
 	app = BaseApp(0)
 	app.TopWindow = SynthICCFrame()
-	app.process_argv(1)
 	app.TopWindow.listen()
+	app.process_argv(1)
 	app.TopWindow.Show()
 	app.MainLoop()
 

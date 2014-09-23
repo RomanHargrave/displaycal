@@ -1847,13 +1847,13 @@ def main():
 	display_no = get_argyll_display_number(geometry)
 	setcfg("display.number", display_no + 1)
 	app.TopWindow.update_controls()
+	app.TopWindow.listen()
 	for arg in sys.argv[1:]:
 		if os.path.isfile(arg):
 			app.TopWindow.drop_handler(safe_unicode(arg))
 			break
 	else:
 		app.TopWindow.load_lut(get_display_profile(display_no))
-	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()
 	config.writecfg(module="curve-viewer", options=("display.number", ))

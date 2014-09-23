@@ -1881,6 +1881,7 @@ def main():
 	app = BaseApp(0)
 	check_set_argyll_bin()
 	app.TopWindow = ProfileInfoFrame(None, -1)
+	app.TopWindow.listen()
 	display_no = get_argyll_display_number(app.TopWindow.get_display()[1])
 	for arg in sys.argv[1:]:
 		if os.path.isfile(arg):
@@ -1888,7 +1889,6 @@ def main():
 			break
 	else:
 		app.TopWindow.LoadProfile(get_display_profile(display_no))
-	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()
 	writecfg(module="profile-info", options=("3d.format",
