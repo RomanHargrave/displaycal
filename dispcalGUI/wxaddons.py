@@ -307,9 +307,9 @@ class FileDrop(wx.FileDropTarget):
 
 		if self._files:
 			self._files.reverse()
-			wx.CallAfter(self.process)
+			wx.CallLater(1, self.process)
 		elif self.unsupported_handler:
-			wx.CallAfter(self.unsupported_handler)
+			wx.CallLater(1, self.unsupported_handler)
 
 	def process(self):
 		ms = 1.0 / 60
