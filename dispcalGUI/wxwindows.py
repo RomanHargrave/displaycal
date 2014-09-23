@@ -409,14 +409,8 @@ class BaseApp(wx.App):
 
 	""" Application base class implementing common functionality. """
 
-	def OnActivate(self, event):
-		if event.GetActive():
-			self.MacReopenApp()
-		event.Skip()
-
 	def OnInit(self):
 		self.AppName = pyname
-		self.Bind(wx.EVT_ACTIVATE_APP, self.OnActivate)
 		return True
 
 	def MacOpenFiles(self, paths):
