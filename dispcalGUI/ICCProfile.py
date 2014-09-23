@@ -387,7 +387,7 @@ def _colord_get_display_profile(display_no=0):
 					# Device ID was not found, try next one
 					continue
 				except colord.CDError, exception:
-					warnings.warn(safe_str(exception, enc), Warning, 2)
+					warnings.warn(safe_str(exception, enc), Warning)
 				else:
 					if profile_path:
 						return ICCProfile(profile_path)
@@ -464,7 +464,7 @@ def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0,
 											  xrandr.XA_CARDINAL, x_hostname, 
 											  x_display, x_screen)
 	except ValueError, exception:
-		warnings.warn(safe_str(exception, enc), Warning, 2)
+		warnings.warn(safe_str(exception, enc), Warning)
 	else:
 		if property:
 			return ICCProfile("".join(chr(i) for i in property))
@@ -479,7 +479,7 @@ def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0,
 							   xrandr.XA_CARDINAL, x_hostname, x_display, 
 							   x_screen)
 	except ValueError, exception:
-		warnings.warn(safe_str(exception, enc), Warning, 2)
+		warnings.warn(safe_str(exception, enc), Warning)
 	else:
 		if atom:
 			return ICCProfile("".join(chr(i) for i in atom))

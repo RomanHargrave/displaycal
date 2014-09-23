@@ -7,6 +7,7 @@ import logging.handlers
 import os
 import re
 import sys
+import warnings
 from time import localtime, strftime, time
 
 from meta import name as appname
@@ -15,7 +16,36 @@ from util_io import StringIOu as StringIO
 from util_str import safe_str, safe_unicode
 
 logging.raiseExceptions = 0
-logging.captureWarnings(True)
+
+logging._warnings_showwarning = warnings.showwarning
+
+def showwarning(message, category, filename, lineno, file=None, line=""):
+	"""
+	Implementation of showwarnings which redirects to logging, which will first
+	check to see if the file parameter is None. If a file is specified, it will
+	delegate to the original warnings implementation of showwarning. Otherwise,
+	it will call warnings.formatwarning and will log the resulting string to a
+	warnings logger named "py.warnings" with level logging.WARNING.
+	
+	UNlike the default implementation, the line is omitted from the warning,
+	and the warning does not end with a newline.
+	"""
+	if file is not None:
+		if logging._warnings_showwarning is not None:
+			logging._warnings_showwarning(message, category, filename, lineno,
+										  file, line)
+	else:
+		s = warnings.formatwarning(message, category, filename, lineno, line)
+		logger = logging.getLogger("py.warnings")
+		if not logger.handlers:
+			if hasattr(sys.stderr, "isatty") and sys.stderr.isatty():
+				handler = logging.StreamHandler()
+			else:
+				handler = logging.NullHandler()
+			logger.addHandler(handler)
+		logger.warning("%s", s.strip())
+
+warnings.showwarning = showwarning
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 

@@ -80,7 +80,7 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 				device = find("device-by-property", ["OutputEdidMd5",
 													 edid["hash"]])
 			except CDObjectQueryError, exception:
-				warnings.warn(safe_str(exception), Warning, 2)
+				warnings.warn(safe_str(exception), Warning)
 			except CDError, exception:
 				pass
 			else:
