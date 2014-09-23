@@ -51,7 +51,7 @@ except ImportError:
 	from safe_print import safe_print
 from util_decimal import float2dec
 from util_list import intlist
-from util_str import hexunescape, safe_unicode
+from util_str import hexunescape, safe_str, safe_unicode
 
 if sys.platform not in ("darwin", "win32"):
 	from edid import get_edid
@@ -71,7 +71,7 @@ GAMUT_VOLUME_ADOBERGB = 1209986.014983  # rel. col.
 
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
 
-fs_enc = get_encodings()[1]
+enc, fs_enc = get_encodings()
 
 cmms = {"argl": "Argyll CMS",
 		"ADBE": "Adobe",
@@ -387,7 +387,7 @@ def _colord_get_display_profile(display_no=0):
 					# Device ID was not found, try next one
 					continue
 				except colord.CDError, exception:
-					warnings.warn(exception, Warning)
+					warnings.warn(safe_str(exception, enc), Warning, 2)
 				else:
 					if profile_path:
 						return ICCProfile(profile_path)
@@ -464,7 +464,7 @@ def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0,
 											  xrandr.XA_CARDINAL, x_hostname, 
 											  x_display, x_screen)
 	except ValueError, exception:
-		warnings.warn(exception, Warning)
+		warnings.warn(safe_str(exception, enc), Warning, 2)
 	else:
 		if property:
 			return ICCProfile("".join(chr(i) for i in property))
@@ -479,7 +479,7 @@ def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0,
 							   xrandr.XA_CARDINAL, x_hostname, x_display, 
 							   x_screen)
 	except ValueError, exception:
-		warnings.warn(exception, Warning)
+		warnings.warn(safe_str(exception, enc), Warning, 2)
 	else:
 		if atom:
 			return ICCProfile("".join(chr(i) for i in atom))
