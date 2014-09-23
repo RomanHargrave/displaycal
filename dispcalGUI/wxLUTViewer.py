@@ -820,7 +820,7 @@ class LUTFrame(BaseFrame):
 		
 		self.box_sizer.Add((0, 0))
 		
-		self.cbox_sizer.Add((16, 0))
+		self.cbox_sizer.Add((10, 0))
 
 		self.reload_vcgt_btn = BitmapButton(self.box_panel, -1,
 											geticon(16, "stock_refresh"),
