@@ -420,7 +420,10 @@ class BaseApp(wx.App):
 		return True
 
 	def MacOpenFiles(self, paths):
-		if (self.TopWindow and
+		# Work-around Mac OS X wxPython quirk:
+		# Under Mac OS X, wxPython apps sometimes receive sys.argv[0] as first
+		# path to MacOpenFiles at aplication launch
+		if (paths and paths[:1] != sys.argv[:1] and self.TopWindow and
 			isinstance(getattr(self.TopWindow, "droptarget", None), FileDrop)):
 			self.TopWindow.droptarget.OnDropFiles(0, 0, paths)
 
