@@ -6,6 +6,7 @@ import os
 import re
 import subprocess as sp
 import sys
+import warnings
 from time import sleep
 
 try:
@@ -22,7 +23,6 @@ else:
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
 
-from log import safe_print
 from util_os import which
 from util_str import safe_str, safe_unicode
 import localization as lang
@@ -80,7 +80,7 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 				device = find("device-by-property", ["OutputEdidMd5",
 													 edid["hash"]])
 			except CDObjectQueryError, exception:
-				safe_print(exception)
+				warnings.warn(safe_str(exception), Warning, 2)
 			except CDError, exception:
 				pass
 			else:
