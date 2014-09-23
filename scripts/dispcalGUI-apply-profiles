@@ -185,7 +185,7 @@ def main():
 
 		from dispcalGUI import config
 
-		config.initcfg()
+		config.initcfg("apply-profiles")
 
 		if (not "--force" in sys.argv[1:] and
 			not config.getcfg("profile.load_on_login")):
