@@ -287,6 +287,8 @@ def ti3_to_ti1(ti3_data):
 	
 	"""
 	ti3 = CGATS.CGATS(ti3_data)
+	if not ti3:
+		return ""
 	ti3[0].type = "CTI1"
 	ti3[0].DESCRIPTOR = "Argyll Calibration Target chart information 1"
 	ti3[0].ORIGINATOR = "Argyll targen"
