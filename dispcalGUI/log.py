@@ -15,6 +15,7 @@ from util_io import StringIOu as StringIO
 from util_str import safe_str, safe_unicode
 
 logging.raiseExceptions = 0
+logging.captureWarnings(True)
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
@@ -229,8 +230,8 @@ def setup_logging(logdir, name=appname):
 	"""
 	global _logdir, logger
 	_logdir = logdir
-	logger = get_file_logger(name, logging.DEBUG, "midnight",
-							 5 if name == appname else 0)
+	logger = get_file_logger(None, logging.DEBUG, "midnight",
+							 5 if name == appname else 0, filename=name)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
 	streamhandler.setFormatter(streamformatter)
