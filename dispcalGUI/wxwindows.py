@@ -424,7 +424,7 @@ class BaseApp(wx.App):
 	def MacOpenFiles(self, paths):
 		if (self.TopWindow and
 			isinstance(getattr(self.TopWindow, "droptarget", None), FileDrop)):
-			self.TopWindow.OnDropFiles(0, 0, paths)
+			self.TopWindow.droptarget.OnDropFiles(0, 0, paths)
 
 	def MacReopenApp(self):
 		if self.TopWindow and self.TopWindow.IsShownOnScreen():
