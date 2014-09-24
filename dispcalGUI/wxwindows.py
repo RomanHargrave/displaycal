@@ -40,20 +40,11 @@ try:
 except ImportError:
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
-try:
-	from wx.lib.hyperlink import HyperLinkCtrl
-except ImportError:
-	# Phoenix
-
-	from wx.adv import HyperlinkCtrl
-
-	class HyperLinkCtrl(HyperlinkCtrl):
-		def __init__(self, parent, id=wx.ID_ANY, label="",
-					 pos=wx.DefaultPosition, size=wx.DefaultSize,
-					 style=wx.adv.HL_DEFAULT_STYLE,
-					 name=wx.adv.HyperlinkCtrlNameStr, URL=""):
-			HyperlinkCtrl.__init__(self, parent, id, label, URL, pos, size,
-								   style, name)
+if u"phoenix" in wx.PlatformInfo:
+	import wx.adv
+	wx.HL_DEFAULT_STYLE = wx.adv.HL_DEFAULT_STYLE
+	wx.HyperlinkCtrl = wx.adv.HyperlinkCtrl
+	wx.HyperlinkCtrlNameStr = wx.adv.HyperlinkCtrlNameStr
 
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
@@ -2540,6 +2531,15 @@ class CustomRowLabelRenderer(object):
 				align = align[0], wx.ALIGN_CENTER_VERTICAL
 			dc.DrawLabel(" %s " % grid.GetRowLabelValue(row), rect,
 						 align[0] | align[1])
+
+
+class HyperLinkCtrl(wx.HyperlinkCtrl):
+
+	def __init__(self, parent, id=wx.ID_ANY, label="",
+				 pos=wx.DefaultPosition, size=wx.DefaultSize,
+				 style=wx.HL_DEFAULT_STYLE, name=wx.HyperlinkCtrlNameStr, URL=""):
+		wx.HyperlinkCtrl.__init__(self, parent, id, label, URL, pos, size,
+								  style, name)
 
 
 class InfoDialog(BaseInteractiveDialog):
