@@ -104,6 +104,8 @@ class AboutDialog(wx.Dialog):
 					font.SetPointSize(pointsize)
 					item.SetFont(font)
 			self.sizer.Add(item, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 0)
+		self.closebtn.SetDefault()
+		self.closebtn.SetFocus()
 
 
 class AuiBetterTabArt(AuiDefaultTabArt):
