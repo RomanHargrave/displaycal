@@ -27,15 +27,48 @@ from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
 
 if u"phoenix" in wx.PlatformInfo:
 	# Phoenix compatibility
+
+	from wx.lib.agw import aui
+	from wx.lib import embeddedimage
 	import wx.adv
-	import wx.lib.embeddedimage as embeddedimage
 
 	# Deprecated items
+
+	wx.DEFAULT    = wx.FONTFAMILY_DEFAULT
+	wx.DECORATIVE = wx.FONTFAMILY_DECORATIVE
+	wx.ROMAN      = wx.FONTFAMILY_ROMAN
+	wx.SCRIPT     = wx.FONTFAMILY_SCRIPT
+	wx.SWISS      = wx.FONTFAMILY_SWISS
+	wx.MODERN     = wx.FONTFAMILY_MODERN
+	wx.TELETYPE   = wx.FONTFAMILY_TELETYPE
+
+	wx.NORMAL = wx.FONTWEIGHT_NORMAL | wx.FONTSTYLE_NORMAL
+	wx.LIGHT  = wx.FONTWEIGHT_LIGHT
+	wx.BOLD   = wx.FONTWEIGHT_BOLD
+
+	wx.ITALIC = wx.FONTSTYLE_ITALIC
+	wx.SLANT  = wx.FONTSTYLE_SLANT
+
+	wx.SOLID       = wx.PENSTYLE_SOLID | wx.BRUSHSTYLE_SOLID
+	wx.DOT         = wx.PENSTYLE_DOT
+	wx.LONG_DASH   = wx.PENSTYLE_LONG_DASH
+	wx.SHORT_DASH  = wx.PENSTYLE_SHORT_DASH
+	wx.DOT_DASH    = wx.PENSTYLE_DOT_DASH
+	wx.USER_DASH   = wx.PENSTYLE_USER_DASH
+	wx.TRANSPARENT = wx.PENSTYLE_TRANSPARENT | wx.BRUSHSTYLE_TRANSPARENT
+
+	wx.STIPPLE_MASK_OPAQUE = wx.BRUSHSTYLE_STIPPLE_MASK_OPAQUE
+	wx.STIPPLE_MASK        = wx.BRUSHSTYLE_STIPPLE_MASK
+	wx.STIPPLE             = wx.BRUSHSTYLE_STIPPLE
+	wx.BDIAGONAL_HATCH     = wx.BRUSHSTYLE_BDIAGONAL_HATCH
+	wx.CROSSDIAG_HATCH     = wx.BRUSHSTYLE_CROSSDIAG_HATCH
+	wx.FDIAGONAL_HATCH     = wx.BRUSHSTYLE_FDIAGONAL_HATCH
+	wx.CROSS_HATCH         = wx.BRUSHSTYLE_CROSS_HATCH
+	wx.HORIZONTAL_HATCH    = wx.BRUSHSTYLE_HORIZONTAL_HATCH
+	wx.VERTICAL_HATCH      = wx.BRUSHSTYLE_VERTICAL_HATCH
+
 	embeddedimage.PyEmbeddedImage.getBitmap = embeddedimage.PyEmbeddedImage.GetBitmap
 	wx.CursorFromImage = wx.Cursor
-	wx.DC.BeginDrawing = lambda self: None
-	wx.DC.EndDrawing = lambda self: None
-	wx.DC.DrawRectangleRect = lambda dc, rect: dc.DrawRectangle(rect)
 	wx.EmptyBitmap = wx.Bitmap
 	wx.EmptyIcon = wx.Icon
 	wx.ImageFromStream = wx.Image
@@ -45,27 +78,22 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.PyControl = wx.Control
 	wx.PyWindow = wx.Window
 	wx.PyPanel = wx.Panel
-	wx.RectPS = wx.Rect
+	wx.StockCursor = wx.Cursor
+	wx.Window.SetToolTipString = wx.Window.SetToolTip
 
-	def GetItemIndex(self, window):
-		for index, sizeritem in enumerate(self.Children):
-			if sizeritem.Window == window:
-				return index
+	# Moved items
 
-	wx.Sizer.GetItemIndex = GetItemIndex
+	wx.HL_DEFAULT_STYLE = wx.adv.HL_DEFAULT_STYLE
+	wx.HyperlinkCtrl = wx.adv.HyperlinkCtrl
+	wx.HyperlinkCtrlNameStr = wx.adv.HyperlinkCtrlNameStr
 	wx.SOUND_ASYNC = wx.adv.SOUND_ASYNC
 	wx.Sound = wx.adv.Sound
-	wx.StockCursor = wx.Cursor
-	wx.SystemSettings_GetFont = wx.SystemSettings.GetFont
-	wx.SystemSettings_GetMetric = wx.SystemSettings.GetMetric
-	wx.Window.SetToolTipString = wx.Window.SetToolTip
-	wx.grid.EVT_GRID_CELL_CHANGE = wx.grid.EVT_GRID_CELL_CHANGED
-	wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.GridSelectRows
-	if not hasattr(wx.grid.GridEvent, "CmdDown"):
-		# This may be a bug in the current development version of Phoenix
-		wx.grid.GridEvent.CmdDown = lambda self: False
-	wx.grid.PyGridCellEditor = wx.grid.GridCellEditor
-	wx.grid.PyGridCellRenderer = wx.grid.GridCellRenderer
+
+	# Removed items
+
+	wx.DC.BeginDrawing = lambda self: None
+	wx.DC.DrawRectangleRect = lambda dc, rect: dc.DrawRectangle(rect)
+	wx.DC.EndDrawing = lambda self: None
 
 	def ContainsRect(self, *args):
 		if len(args) > 1:
@@ -76,6 +104,47 @@ if u"phoenix" in wx.PlatformInfo:
 
 	wx.Rect.ContainsRect = ContainsRect
 	wx.Rect.ContainsXY = lambda self, x, y: self.Contains((x, y))
+	wx.RectPS = wx.Rect
+
+	def GetItemIndex(self, window):
+		for index, sizeritem in enumerate(self.Children):
+			if sizeritem.Window == window:
+				return index
+
+	wx.Sizer.GetItemIndex = GetItemIndex
+
+	# Renamed items
+
+	wx.SystemSettings_GetFont = wx.SystemSettings.GetFont
+	wx.SystemSettings_GetMetric = wx.SystemSettings.GetMetric
+	wx.grid.EVT_GRID_CELL_CHANGE = wx.grid.EVT_GRID_CELL_CHANGED
+	wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.GridSelectRows
+	wx.grid.PyGridCellEditor = wx.grid.GridCellEditor
+	wx.grid.PyGridCellRenderer = wx.grid.GridCellRenderer
+
+	# Bugfixes
+
+	if not hasattr(wx.grid.GridEvent, "CmdDown"):
+		# This may be a bug in the current development version of Phoenix
+		wx.grid.GridEvent.CmdDown = lambda self: False
+
+	def TabFrame__init__(self, parent):
+		pre = wx.Window.__init__(self)
+
+		self._tabs = None
+		self._rect = wx.Rect(0, 0, 200, 200)
+		self._tab_ctrl_height = 20
+		self._tab_rect = wx.Rect()
+		self._parent = parent
+
+		# With Phoenix, the TabFrame is unintentionally visible in the top left
+		# corner (horizontal and vertical lines with a length of 20px each that
+		# are lighter than the border color if tabs are at the top, or a
+		# 20x20px square if tabs are at the bottom). Setting its size to 0, 0
+		# prevents this. Also see https://github.com/RobinD42/Phoenix/pull/91
+		self.Create(parent, size=(0, 0))
+
+	aui.TabFrame.__init__ = TabFrame__init__
 
 
 def Property(func):

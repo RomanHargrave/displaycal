@@ -40,11 +40,6 @@ try:
 except ImportError:
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
-if u"phoenix" in wx.PlatformInfo:
-	import wx.adv
-	wx.HL_DEFAULT_STYLE = wx.adv.HL_DEFAULT_STYLE
-	wx.HyperlinkCtrl = wx.adv.HyperlinkCtrl
-	wx.HyperlinkCtrlNameStr = wx.adv.HyperlinkCtrlNameStr
 
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
