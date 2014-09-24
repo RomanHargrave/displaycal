@@ -124,13 +124,12 @@ class MeasureFrame(InvincibleFrame):
 		InvincibleFrame.__init__(self, parent, id, 
 								 lang.getstr("measureframe.title"), 
 								 style=wx.DEFAULT_FRAME_STYLE & 
-									   ~(wx.RESIZE_BORDER | wx.RESIZE_BOX | 
-									     wx.MAXIMIZE_BOX))
+									   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
 		self.Bind(wx.EVT_MOVE, self.move_handler, self)
 		self.panel = wx.Panel(self, -1)
-		self.sizer = wx.GridSizer(3, 1)
+		self.sizer = wx.GridSizer(3, 1, 0, 0)
 		self.panel.SetSizer(self.sizer)
 
 		self.hsizer = wx.BoxSizer(wx.HORIZONTAL)

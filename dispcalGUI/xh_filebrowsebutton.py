@@ -34,7 +34,7 @@ class FileBrowseButtonXmlHandler(xrc.XmlResourceHandler):
 						startDirectory=self.GetText('startDirectory') or '.',
 						initialValue=self.GetText('initialValue') or '',
 						fileMask=self.GetText('wildcard') or '*.*',
-						fileMode=self.GetLong('fileMode') or wx.OPEN,
+						fileMode=self.GetLong('fileMode') or wx.FD_OPEN,
 						labelWidth=self.GetLong('labelWidth') or 0,
 						name=self.GetName())
 		self.SetupWindow(w)

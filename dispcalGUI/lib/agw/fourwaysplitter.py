@@ -811,8 +811,9 @@ class FourWaySplitter(wx.PyPanel):
         :param `event`: a `wx.PaintEvent` event to be processed.
         """
 
-        dc = wx.PaintDC(self)
-        self.DrawSplitter(dc)
+        if self:
+            dc = wx.PaintDC(self)
+            self.DrawSplitter(dc)
 
 
     def OnSize(self, event):

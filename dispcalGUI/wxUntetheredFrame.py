@@ -38,7 +38,7 @@ class UntetheredFrame(wx.Frame):
 						  lang.getstr("measurement.untethered"),
 						  style=wx.DEFAULT_FRAME_STYLE)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
-		self.sizer = wx.FlexGridSizer(2, 1)
+		self.sizer = wx.FlexGridSizer(2, 1, 0, 0)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableRow(0)
 		self.sizer.AddGrowableRow(1)

@@ -106,7 +106,7 @@ class TestchartEditor(BaseFrame):
 
 		border = 4
 
-		sizer = wx.FlexGridSizer(0, 4)
+		sizer = wx.FlexGridSizer(0, 4, 0, 0)
 		self.sizer.Add(sizer, flag = (wx.ALL & ~wx.BOTTOM), border = 12)
 
 		# white patches
@@ -187,7 +187,7 @@ class TestchartEditor(BaseFrame):
 		self.Bind(wx.EVT_TEXT, self.tc_adaption_handler, id = self.tc_adaption_intctrl.GetId())
 		sizer.Add(self.tc_adaption_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
-		hsizer = wx.GridSizer(0, 2)
+		hsizer = wx.GridSizer(0, 2, 0, 0)
 		sizer.Add(hsizer, 1, flag = wx.EXPAND)
 		hsizer.Add(wx.StaticText(panel, -1, "%"), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.angle")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
@@ -632,7 +632,12 @@ class TestchartEditor(BaseFrame):
 
 		# status
 		status = wx.StatusBar(self, -1)
-		status.SetStatusStyles([wx.SB_FLAT])
+		if u"phoenix" in wx.PlatformInfo:
+			# Phoenix
+			status.SetStatusStyles(1, wx.SB_FLAT)
+		else:
+			# Classic
+			status.SetStatusStyles([wx.SB_FLAT])
 		self.SetStatusBar(status)
 
 		# layout
@@ -2912,7 +2917,8 @@ class TestchartEditor(BaseFrame):
 
 	def tc_getcolorlabel(self, sample):
 		scale = 2.55
-		colour = wx.Colour(*[round(value * scale) for value in (sample.RGB_R, sample.RGB_G, sample.RGB_B)])
+		colour = wx.Colour(*[int(round(value * scale)) for value in
+							 (sample.RGB_R, sample.RGB_G, sample.RGB_B)])
 		# mark patches:
 		# W = white (R/G/B == 100)
 		# K = black (R/G/B == 0)

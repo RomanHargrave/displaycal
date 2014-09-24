@@ -25,6 +25,48 @@ import wx.grid
 from wx.lib.buttons import GenBitmapButton as _GenBitmapButton
 from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
 
+if u"phoenix" in wx.PlatformInfo:
+	# Phoenix compatibility
+	import wx.adv
+	import wx.lib.embeddedimage as embeddedimage
+
+	# Deprecated items
+	embeddedimage.PyEmbeddedImage.getBitmap = embeddedimage.PyEmbeddedImage.GetBitmap
+	wx.CursorFromImage = wx.Cursor
+	wx.DC.BeginDrawing = lambda self: None
+	wx.DC.EndDrawing = lambda self: None
+	wx.DC.DrawRectangleRect = lambda dc, rect: dc.DrawRectangle(rect)
+	wx.EmptyBitmap = wx.Bitmap
+	wx.EmptyIcon = wx.Icon
+	wx.ImageFromStream = wx.Image
+	wx.NamedColour = wx.Colour
+	wx.PyControl = wx.Control
+	wx.PyPanel = wx.Panel
+	wx.RectPS = wx.Rect
+	wx.SOUND_ASYNC = wx.adv.SOUND_ASYNC
+	wx.Sound = wx.adv.Sound
+	wx.StockCursor = wx.Cursor
+	wx.SystemSettings_GetFont = wx.SystemSettings.GetFont
+	wx.SystemSettings_GetMetric = wx.SystemSettings.GetMetric
+	wx.Window.SetToolTipString = wx.Window.SetToolTip
+	wx.grid.EVT_GRID_CELL_CHANGE = wx.grid.EVT_GRID_CELL_CHANGED
+	wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.GridSelectRows
+	if not hasattr(wx.grid.GridEvent, "CmdDown"):
+		# This may be a bug in the current development version of Phoenix
+		wx.grid.GridEvent.CmdDown = lambda self: False
+	wx.grid.PyGridCellEditor = wx.grid.GridCellEditor
+	wx.grid.PyGridCellRenderer = wx.grid.GridCellRenderer
+
+	def ContainsRect(self, *args):
+		if len(args) > 1:
+			rect = wx.Rect(*args)
+		else:
+			rect = args[0]
+		return self.Contains(rect)
+
+	wx.Rect.ContainsRect = ContainsRect
+	wx.Rect.ContainsXY = lambda self, x, y: self.Contains((x, y))
+
 
 def Property(func):
 	return property(**func())
@@ -53,10 +95,10 @@ def BitmapButtonEnable(self, enable = True):
 	if not hasattr(self, "_bitmapdisabled"):
 		self._bitmapdisabled = self.GetBitmapDisabled()
 	if enable:
-		if not self._bitmaplabel.IsNull():
+		if self._bitmaplabel.IsOk():
 			self.SetBitmapLabel(self._bitmaplabel)
 	else:
-		if not self._bitmapdisabled.IsNull():
+		if self._bitmapdisabled.IsOk():
 			self.SetBitmapLabel(self._bitmapdisabled)
 
 def BitmapButtonDisable(self):
@@ -68,8 +110,9 @@ def BitmapButtonDisable(self):
 	"""
 	self.Enable(False)
 
-wx.BitmapButton.Enable = BitmapButtonEnable
-wx.BitmapButton.Disable = BitmapButtonDisable
+if not u"phoenix" in wx.PlatformInfo:
+	wx.BitmapButton.Enable = BitmapButtonEnable
+	wx.BitmapButton.Disable = BitmapButtonDisable
 
 
 def FindMenuItem(self, label):
@@ -163,7 +206,12 @@ def set_bitmap_labels(btn):
 				databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
 		bmp = image.ConvertToBitmap()
 		btn.SetBitmapFocus(bmp)
-		btn.SetBitmapHover(bmp)
+		if hasattr(btn, "SetBitmapCurrent"):
+			# Phoenix
+			btn.SetBitmapCurrent(bmp)
+		else:
+			# Classic
+			btn.SetBitmapHover(bmp)
 
 	# Selected
 	image = bitmap.ConvertToImage()
@@ -173,7 +221,13 @@ def set_bitmap_labels(btn):
 	for i, byte in enumerate(databuffer):
 		if byte > "\0":
 			databuffer[i] = chr(int(round(ord(byte) * .6)))
-	btn.SetBitmapSelected(image.ConvertToBitmap())
+	bmp = image.ConvertToBitmap()
+	if hasattr(btn, "SetBitmapPressed"):
+		# Phoenix
+		btn.SetBitmapPressed(bmp)
+	else:
+		# Classic
+		btn.SetBitmapSelected(bmp)
 
 
 wx._ScrolledWindow = wx.ScrolledWindow
@@ -260,7 +314,7 @@ class GenButton(object):
 		self.useFocusInd = True
 
 	def OnPaint(self, event):
-		(width, height) = self.GetClientSizeTuple()
+		(width, height) = self.ClientSize
 		x1 = y1 = 0
 		x2 = width-1
 		y2 = height-1

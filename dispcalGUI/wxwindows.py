@@ -40,6 +40,21 @@ try:
 except ImportError:
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
+try:
+	from wx.lib.hyperlink import HyperLinkCtrl
+except ImportError:
+	# Phoenix
+
+	from wx.adv import HyperlinkCtrl
+
+	class HyperLinkCtrl(HyperlinkCtrl):
+		def __init__(self, parent, id=wx.ID_ANY, label="",
+					 pos=wx.DefaultPosition, size=wx.DefaultSize,
+					 style=wx.adv.HL_DEFAULT_STYLE,
+					 name=wx.adv.HyperlinkCtrlNameStr, URL=""):
+			HyperlinkCtrl.__init__(self, parent, id, label, URL, pos, size,
+								   style, name)
+
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD1,
@@ -67,7 +82,7 @@ class AboutDialog(wx.Dialog):
 
 	def __init__(self, *args, **kwargs):
 		kwargs["style"] = wx.DEFAULT_DIALOG_STYLE & ~(wx.RESIZE_BORDER | 
-		   wx.RESIZE_BOX | wx.MAXIMIZE_BOX)
+													  wx.MAXIMIZE_BOX)
 		wx.Dialog.__init__(self, *args, **kwargs)
 
 		self.set_properties()
@@ -120,10 +135,20 @@ class AuiBetterTabArt(AuiDefaultTabArt):
 			caption = "Xj"
 
 		dc.SetFont(self._selected_font)
-		selected_textx, selected_texty, dummy = dc.GetMultiLineTextExtent(caption)
+		if hasattr(dc, "GetFullMultiLineTextExtent"):
+			# Phoenix
+			selected_textx, selected_texty = dc.GetMultiLineTextExtent(caption)
+		else:
+			# Classic
+			selected_textx, selected_texty, dummy = dc.GetMultiLineTextExtent(caption)
 
 		dc.SetFont(self._normal_font)
-		normal_textx, normal_texty, dummy = dc.GetMultiLineTextExtent(caption)
+		if hasattr(dc, "GetFullMultiLineTextExtent"):
+			# Phoenix
+			normal_textx, normal_texty = dc.GetMultiLineTextExtent(caption)
+		else:
+			# Classic
+			normal_textx, normal_texty, dummy = dc.GetMultiLineTextExtent(caption)
 
 		control = page.control
 
@@ -331,7 +356,12 @@ class AuiBetterTabArt(AuiDefaultTabArt):
 				pass
 			
 		# draw tab text
-		rectx, recty, dummy = dc.GetMultiLineTextExtent(draw_text)
+		if hasattr(dc, "GetFullMultiLineTextExtent"):
+			# Phoenix
+			rectx, recty = dc.GetMultiLineTextExtent(draw_text)
+		else:
+			# Classic
+			rectx, recty, dummy = dc.GetMultiLineTextExtent(draw_text)
 		textfg = dc.GetTextForeground()
 		shadow = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 		dc.SetTextForeground(shadow)
@@ -790,11 +820,11 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer0)
 		if bitmap:
-			self.sizer1 = wx.FlexGridSizer(1, 2)
+			self.sizer1 = wx.FlexGridSizer(1, 2, 0, 0)
 		else:
 			self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer3 = wx.FlexGridSizer(0, 1)
+		self.sizer3 = wx.FlexGridSizer(0, 1, 0, 0)
 		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
 		   wx.RIGHT | wx.LEFT, border = margin)
 		self.buttonpanel = wx.Panel(self)
@@ -2208,7 +2238,7 @@ class CustomCellEditor(wx.grid.PyGridCellEditor):
 class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 
 	def __init__(self, *args, **kwargs):
-		wx.grid.PyGridCellRenderer.__init__(self, *args, **kwargs)
+		wx.grid.PyGridCellRenderer.__init__(self)
 		self.specialbitmap = getbitmap("theme/checkerboard-10x10x2-333-444")
 		self._selectionbitmaps = {}
 
@@ -2385,7 +2415,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 class CustomCellBoolRenderer(CustomCellRenderer):
 
 	def __init__(self, *args, **kwargs):
-		CustomCellRenderer.__init__(self, *args, **kwargs)
+		CustomCellRenderer.__init__(self)
 		self._bitmap = geticon(16, "checkmark")
 		self._bitmap_unchecked = geticon(16, "x")
 
@@ -2527,8 +2557,8 @@ class InvincibleFrame(wx.Frame):
 
 	""" A frame that won't be destroyed when closed """
 
-	def __init__(self, parent=None, id=-1, title="", pos=None, size=None, 
-				 style=wx.DEFAULT_FRAME_STYLE):
+	def __init__(self, parent=None, id=-1, title="", pos=wx.DefaultPosition,
+				 size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
 		wx.Frame.__init__(self, parent, id, title, pos, size, style)
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
@@ -2552,14 +2582,18 @@ class LogWindow(InvincibleFrame):
 		self.panel.SetSizer(self.sizer)
 		self.log_txt = wx.TextCtrl(self.panel, -1, "", style=wx.TE_MULTILINE | 
 															 wx.TE_READONLY)
+		if u"phoenix" in wx.PlatformInfo:
+			kwarg = "faceName"
+		else:
+			kwarg = "face"
 		if sys.platform == "win32":
 			font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													  wx.FONTWEIGHT_NORMAL,
-													  face="Consolas")
+													  **{kwarg: "Consolas"})
 		elif sys.platform == "darwin":
 			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL,
-													   face="Monaco")
+													   **{kwarg: "Monaco"})
 		else:
 			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
@@ -2995,14 +3029,18 @@ class SimpleTerminal(InvincibleFrame):
 															 wx.NO_BORDER)
 		self.console.SetBackgroundColour(wx.BLACK)
 		self.console.SetForegroundColour("#808080")
+		if u"phoenix" in wx.PlatformInfo:
+			kwarg = "faceName"
+		else:
+			kwarg = "face"
 		if sys.platform == "win32":
 			font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													  wx.FONTWEIGHT_NORMAL,
-													  face="Terminal")
+													  **{kwarg: "Terminal"})
 		elif sys.platform == "darwin":
 			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL,
-													   face="Monaco")
+													   **{kwarg: "Monaco"})
 		else:
 			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
@@ -3147,7 +3185,7 @@ class TooltipWindow(InvincibleFrame):
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer0)
 		if bitmap:
-			self.sizer1 = wx.FlexGridSizer(1, 2)
+			self.sizer1 = wx.FlexGridSizer(1, 2, 0, 0)
 		else:
 			self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_CENTER | wx.ALL, 
@@ -3214,10 +3252,12 @@ class TwoWaySplitter(FourWaySplitter):
 			self._splity = height
 			rightw = max(totw - self._splitx, 0)
 			if win0:
-				win0.SetDimensions(0, 0, self._splitx, self._splity)
+				win0.SetPosition((0, 0))
+				win0.SetSize((self._splitx, self._splity))
 				win0.Show()
 			if win1:
-				win1.SetDimensions(self._splitx + barSize, 0, rightw, self._splity)
+				win1.SetPosition((self._splitx + barSize, 0))
+				win1.SetSize((rightw, self._splity))
 				win1.Show()
 
 		else:

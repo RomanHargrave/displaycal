@@ -28,9 +28,15 @@ class ReportFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "report.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
-		pre = wx.PreFrame()
-		self.res.LoadOnFrame(pre, parent, "reportframe")
-		self.PostCreate(pre)
+		if hasattr(wx, "PreFrame"):
+			# Classic
+			pre = wx.PreFrame()
+			self.res.LoadOnFrame(pre, parent, "reportframe")
+			self.PostCreate(pre)
+		else:
+			# Phoenix
+			wx.Frame.__init__(self)
+			self.res.LoadFrame(self, parent, "reportframe")
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))

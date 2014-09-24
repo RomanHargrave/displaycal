@@ -528,9 +528,11 @@ class FloatSpin(wx.PyControl):
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
         self.Bind(wx.EVT_SIZE, self.OnSize)
 
-        # start Philip Semanchuk move
-        self.SetBestSize((width, height))
-        # end Philip Semanchuk move
+        if hasattr(self, "SetBestSize"):
+            # Not Phoenix
+            # start Philip Semanchuk move
+            self.SetBestSize((width, height))
+            # end Philip Semanchuk move
 
 
     def OnDestroy(self, event):
@@ -867,9 +869,9 @@ class FloatSpin(wx.PyControl):
         
         self._textctrl.SetPosition((self._text_left, self._text_top))
         
-        text_width, text_height = self._textctrl.GetSizeTuple()
+        text_width, text_height = self._textctrl.Size
         
-        spin_width, _ = self._spinbutton.GetSizeTuple()
+        spin_width, _ = self._spinbutton.Size
         
         text_width = event_width - (spin_width + self._gap + self._text_left)
 

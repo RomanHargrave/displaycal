@@ -57,7 +57,7 @@ class DisplayUniformityFrame(wx.Frame):
 						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.SetBackgroundColour(BGCOLOUR)
-		self.sizer = wx.GridSizer(rows, cols)
+		self.sizer = wx.GridSizer(rows, cols, 0, 0)
 		self.SetSizer(self.sizer)
 		
 		self.rows = rows

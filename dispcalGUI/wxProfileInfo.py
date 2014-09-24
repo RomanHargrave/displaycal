@@ -17,6 +17,7 @@ from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
 from util_io import GzipFileProper
+from util_list import intlist
 from util_os import launch_file, make_win32_compatible_long_path, waccess
 from util_str import safe_unicode, strtr, universal_newlines, wrap
 from worker import (Error, UnloggedError, UnloggedInfo, check_set_argyll_bin,
@@ -353,7 +354,7 @@ class GamutCanvas(LUTCanvas):
 					RGBA = colormath.XYZ2RGB(*pcs_triplets[j],
 											 **kwargs)
 					polys.append(plot.PolyMarker([(x, y)],
-												 colour=wx.Colour(*RGBA),
+												 colour=wx.Colour(*intlist(RGBA)),
 												 size=2,
 												 marker="plus",
 												 width=1.75))
@@ -389,7 +390,7 @@ class GamutCanvas(LUTCanvas):
 															 **kwargs)
 									w = 3
 								polys.append(poly(list(xy3),
-												  colour=wx.Colour(*RGBA),
+												  colour=wx.Colour(*intlist(RGBA)),
 												  width=w))
 								if i == 1:
 									xy3 = []
@@ -411,7 +412,7 @@ class GamutCanvas(LUTCanvas):
 				s = 2
 				w = 1.75
 			polys.append(plot.PolyMarker([(x, y)],
-										 colour=wx.Colour(*RGBA),
+										 colour=wx.Colour(*intlist(RGBA)),
 										 size=s,
 										 marker=marker,
 										 width=w))
@@ -637,7 +638,7 @@ class GamutViewOptions(wx.Panel):
 		wx.Panel.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.SetForegroundColour(FGCOLOUR)
-		self.sizer = wx.FlexGridSizer(0, 3, 4)
+		self.sizer = wx.FlexGridSizer(0, 3, 4, 0)
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(2)
 		self.SetSizer(self.sizer)

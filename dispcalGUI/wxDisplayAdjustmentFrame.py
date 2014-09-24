@@ -431,7 +431,7 @@ class DisplayAdjustmentFlatImageBook(labelbook.FlatImageBook):
 			self.ResizeTabArea()
 			
 		self._mainSizer.Layout()
-		dummy = wx.SizeEvent()
+		dummy = wx.SizeEvent(wx.DefaultSize)
 		wx.PostEvent(self, dummy)
 		self._pages.Refresh()
 
@@ -547,9 +547,8 @@ class DisplayAdjustmentPanel(wx.Panel):
 
 	def add_marker(self, direction="top"):
 		self.sizer.Add((1, 1))
-		self.sizer.Add(wx.StaticBitmap(self,
-									   bitmap=getbitmap("theme/marker_%s" %
-														direction),
+		self.sizer.Add(wx.StaticBitmap(self, -1,
+									   getbitmap("theme/marker_%s" % direction),
 									   size=(200, 10)))
 	
 	def add_txt(self, name, spacer=None, border=8):
@@ -603,7 +602,7 @@ class DisplayAdjustmentFrame(wx.Frame):
 						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.SetBackgroundColour(BGCOLOUR)
-		self.sizer = wx.FlexGridSizer(0, 3)
+		self.sizer = wx.FlexGridSizer(0, 3, 0, 0)
 		self.sizer.AddGrowableCol(1)
 		self.sizer.AddGrowableRow(2)
 		self.SetSizer(self.sizer)

@@ -129,8 +129,8 @@ from wxfixes import ThemedGenButton, set_bitmap_labels
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
-					   FileDrop, InfoDialog, LogWindow, ProgressDialog,
-					   TooltipWindow, get_gradient_panel)
+					   FileDrop, HyperLinkCtrl, InfoDialog, LogWindow,
+					   ProgressDialog, TooltipWindow, get_gradient_panel)
 import floatspin
 import xh_filebrowsebutton
 import xh_floatspin
@@ -149,7 +149,6 @@ from wx import xrc
 from wx.lib import delayedresult
 from wx.lib.art import flagart
 import wx.html
-import wx.lib.hyperlink
 
 
 def swap_dict_keys_values(mydict):
@@ -658,9 +657,15 @@ class ExtraArgsFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "extra.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
-		pre = wx.PreFrame()
-		self.res.LoadOnFrame(pre, parent, "extra_args")
-		self.PostCreate(pre)
+		if hasattr(wx, "PreFrame"):
+			# Classic
+			pre = wx.PreFrame()
+			self.res.LoadOnFrame(pre, parent, "extra_args")
+			self.PostCreate(pre)
+		else:
+			# Phoenix
+			wx.Frame.__init__(self)
+			self.res.LoadFrame(self, parent, "extra_args")
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -773,9 +778,15 @@ class GamapFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "gamap.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
-		pre = wx.PreFrame()
-		self.res.LoadOnFrame(pre, parent, "gamapframe")
-		self.PostCreate(pre)
+		if hasattr(wx, "PreFrame"):
+			# Classic
+			pre = wx.PreFrame()
+			self.res.LoadOnFrame(pre, parent, "gamapframe")
+			self.PostCreate(pre)
+		else:
+			# Phoenix
+			wx.Frame.__init__(self)
+			self.res.LoadFrame(self, parent, "gamapframe")
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -1100,9 +1111,15 @@ class MainFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "main.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
-		pre = wx.PreFrame()
-		self.res.LoadOnFrame(pre, None, "mainframe")
-		self.PostCreate(pre)
+		if hasattr(wx, "PreFrame"):
+			# Classic
+			pre = wx.PreFrame()
+			self.res.LoadOnFrame(pre, None, "mainframe")
+			self.PostCreate(pre)
+		else:
+			# Phoenix
+			wx.Frame.__init__(self)
+			self.res.LoadFrame(self, None, "mainframe")
 		self.worker = worker
 		self.worker.owner = self
 		result = self.worker.create_tempdir()
@@ -4483,7 +4500,7 @@ class MainFrame(BaseFrame):
 		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 		if sys.platform not in ("darwin", "win32"):
 			boxsizer.Add((1, 4))
-		box_gridsizer = wx.FlexGridSizer(0, 1)
+		box_gridsizer = wx.FlexGridSizer(0, 1, 0, 0)
 		boxsizer.Add(box_gridsizer, 1, flag=wx.ALL, border=4)
 		# Display panel surface type, connection
 		gridsizer = wx.FlexGridSizer(0, 4, 4, 8)
@@ -4652,7 +4669,7 @@ class MainFrame(BaseFrame):
 		##sizer4.Add(dlg.license_link_ctrl, flag=wx.ALIGN_LEFT |
 				   ##wx.ALIGN_CENTER_VERTICAL)
 		# Link to ICC Profile Taxi service
-		hyperlink = wx.lib.hyperlink.HyperLinkCtrl(dlg.buttonpanel, -1,
+		hyperlink = HyperLinkCtrl(dlg.buttonpanel, -1,
 												   label="icc.opensuse.org", 
 												   URL="http://icc.opensuse.org")
 		dlg.sizer2.Insert(0, hyperlink, flag=wx.ALIGN_LEFT |
@@ -4733,7 +4750,7 @@ class MainFrame(BaseFrame):
 							 bitmap=geticon(32, "dialog-information"),
 							 show=False)
 			# Link to ICC Profile Taxi service
-			hyperlink = wx.lib.hyperlink.HyperLinkCtrl(dlg.buttonpanel, -1,
+			hyperlink = HyperLinkCtrl(dlg.buttonpanel, -1,
 													   label="icc.opensuse.org", 
 													   URL="http://icc.opensuse.org")
 			border = (dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
@@ -6876,7 +6893,7 @@ class MainFrame(BaseFrame):
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy(self.modaldlg)
 		# Unbind automatic lowering
-		self.Unbind(wx.EVT_ACTIVATE, handler=self.modaldlg_raise_handler)
+		self.Unbind(wx.EVT_ACTIVATE)
 		self.Raise()
 		del self.modaldlg._disabler
 		self.modaldlg.Destroy()
@@ -10699,7 +10716,7 @@ class MainFrame(BaseFrame):
 																	   author)))
 		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
 																	 build)))
-		items.append(wx.lib.hyperlink.HyperLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label=domain, 
 			URL="http://%s" % domain))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -10708,7 +10725,7 @@ class MainFrame(BaseFrame):
 		items.append(wx.StaticText(
 			self.aboutdialog, -1, u"%s" % 
 								  self.worker.argyll_version_string))
-		items.append(wx.lib.hyperlink.HyperLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="ArgyllCMS.com", 
 			URL="http://www.argyllcms.com"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -10739,13 +10756,13 @@ class MainFrame(BaseFrame):
 			for part in pyver_long[1:]:
 				if part:
 					items.append(wx.StaticText(self.aboutdialog, -1, part))
-		items.append(wx.lib.hyperlink.HyperLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="python.org", 
 			URL="http://www.python.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1, "wxPython " + 
 														 wx.version()))
-		items.append(wx.lib.hyperlink.HyperLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -11055,7 +11072,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 
 		dlg = self
 		
-		dlg.sizer3.Remove(dlg.message)
+		dlg.sizer3.Remove(0)  # Remove message textbox
 		dlg.message.Destroy()
 		dlg.sizer4 = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Add(dlg.sizer4)

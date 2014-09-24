@@ -29,9 +29,15 @@ class LUT3DFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "3dlut.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
-		pre = wx.PreFrame()
-		self.res.LoadOnFrame(pre, parent, "lut3dframe")
-		self.PostCreate(pre)
+		if hasattr(wx, "PreFrame"):
+			# Classic
+			pre = wx.PreFrame()
+			self.res.LoadOnFrame(pre, parent, "lut3dframe")
+			self.PostCreate(pre)
+		else:
+			# Phoenix
+			wx.Frame.__init__(self)
+			self.res.LoadFrame(self, parent, "lut3dframe")
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
