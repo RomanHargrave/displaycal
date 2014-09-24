@@ -10830,9 +10830,12 @@ class MainFrame(BaseFrame):
 				self.tcframe.Show(getcfg("tc.show"))
 			self.infoframe.Show(getcfg("log.show"))
 			if LUTFrame and getcfg("lut_viewer.show"):
-				# Using wx.CallAfter fixes wrong positioning under wxGTK
-				# with wxPython 3
-				wx.CallAfter(self.init_lut_viewer, show=True)
+				if getattr(self, "lut_viewer", None):
+					self.init_lut_viewer(show=True)
+				else:
+					# Using wx.CallAfter fixes wrong positioning under wxGTK
+					# with wxPython 3 on first initialization
+					wx.CallAfter(self.init_lut_viewer, show=True)
 			for profile_info in reversed(self.profile_info.values()):
 				profile_info.Show()
 		if start_timers:
