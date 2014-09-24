@@ -39,10 +39,20 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.EmptyBitmap = wx.Bitmap
 	wx.EmptyIcon = wx.Icon
 	wx.ImageFromStream = wx.Image
+	wx.ListCtrl.InsertStringItem = lambda self, index, label: self.InsertItem(index, label)
+	wx.ListCtrl.SetStringItem = lambda self, index, col, label: self.SetItem(index, col, label)
 	wx.NamedColour = wx.Colour
 	wx.PyControl = wx.Control
+	wx.PyWindow = wx.Window
 	wx.PyPanel = wx.Panel
 	wx.RectPS = wx.Rect
+
+	def GetItemIndex(self, window):
+		for index, sizeritem in enumerate(self.Children):
+			if sizeritem.Window == window:
+				return index
+
+	wx.Sizer.GetItemIndex = GetItemIndex
 	wx.SOUND_ASYNC = wx.adv.SOUND_ASYNC
 	wx.Sound = wx.adv.Sound
 	wx.StockCursor = wx.Cursor
