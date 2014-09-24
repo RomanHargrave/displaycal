@@ -529,7 +529,7 @@ class BaseFrame(wx.Frame):
 		conn.close()
 
 	def process_data(self, data):
-		return "busy\n"
+		return "busy"
 
 	def finish_processing(self, data, conn):
 		response = "ok"
