@@ -636,6 +636,10 @@ class BaseFrame(wx.Frame):
 		Substitute translated strings for menus, controls, labels and tooltips.
 		
 		"""
+		if not hasattr(self, "_menulabels"):
+			# Needed for Phoenix because custom attributes attached to menus
+			# are not retained
+			self._menulabels = {}
 		
 		# Title
 		if not hasattr(self, "_Title"):
@@ -653,11 +657,11 @@ class BaseFrame(wx.Frame):
 		if menubar:
 			for menu, label in menubar.GetMenus():
 				menu_pos = menubar.FindMenu(label)
-				if not hasattr(menu, "_Label"):
+				if not menu in self._menulabels:
 					# Backup un-translated label
-					menu._Label = label
+					self._menulabels[menu] = label
 				menubar.SetMenuLabel(menu_pos, "&" + lang.getstr(
-									 GTKMenuItemGetFixedLabel(menu._Label)))
+									 GTKMenuItemGetFixedLabel(self._menulabels[menu])))
 				if not hasattr(menu, "_Items"):
 					# Backup un-translated labels
 					menu._Items = [(item, item.Label) for item in 
