@@ -74,6 +74,7 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.ImageFromStream = wx.Image
 	wx.ListCtrl.InsertStringItem = lambda self, index, label: self.InsertItem(index, label)
 	wx.ListCtrl.SetStringItem = lambda self, index, col, label: self.SetItem(index, col, label)
+	wx.Menu.RemoveItem = lambda self, item: self.Remove(item)
 	wx.NamedColour = wx.Colour
 	wx.PyControl = wx.Control
 	wx.PyWindow = wx.Window
@@ -105,6 +106,7 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.Rect.ContainsRect = ContainsRect
 	wx.Rect.ContainsXY = lambda self, x, y: self.Contains((x, y))
 	wx.RectPS = wx.Rect
+	wx.RegionFromBitmap = wx.Region
 
 	def GetItemIndex(self, window):
 		for index, sizeritem in enumerate(self.Children):
@@ -112,6 +114,7 @@ if u"phoenix" in wx.PlatformInfo:
 				return index
 
 	wx.Sizer.GetItemIndex = GetItemIndex
+	wx.TopLevelWindow.Restore = lambda self: self.Raise()
 
 	# Renamed items
 
