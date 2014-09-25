@@ -328,7 +328,7 @@ class DisplayUniformityFrame(wx.Frame):
 						show_result_dialog(exception, self)
 					else:
 						launch_file(save_path)
-				if getcfg("measurement.continuous"):
+				if getcfg("uniformity.measure.continuous"):
 					self.measure(event=Event(self.buttons[self.index]))
 	
 	def reset(self):
