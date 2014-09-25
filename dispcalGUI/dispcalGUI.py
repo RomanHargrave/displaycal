@@ -2239,7 +2239,9 @@ class MainFrame(BaseFrame):
 					self.lut_viewer.Destroy()
 					del self.lut_viewer
 					if getcfg("lut_viewer.show"):
-						self.init_lut_viewer(show=True)
+						# Using wx.CallAfter fixes wrong positioning under wxGTK
+						# with wxPython 3
+						wx.CallAfter(self.init_lut_viewer, show=True)
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
