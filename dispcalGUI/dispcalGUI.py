@@ -7489,14 +7489,15 @@ class MainFrame(BaseFrame):
 			dlg.correction_type_matrix = wx.RadioButton(dlg, -1,
 														lang.getstr("matrix"), 
 														style=wx.RB_GROUP)
-			boxsizer.Add(dlg.correction_type_matrix, flag=wx.EXPAND)
+			boxsizer.Add(dlg.correction_type_matrix, flag=wx.ALL | wx.EXPAND,
+						 border=4)
 			dlg.correction_type_spectral = wx.RadioButton(dlg, -1,
 														  lang.getstr("spectral") +
 														  " (i1 DisplayPro, "
 														  "ColorMunki "
 														  "Display, Spyder 4)")
-			boxsizer.Add(dlg.correction_type_spectral, flag=wx.TOP | wx.BOTTOM |
-						 wx.EXPAND, border=4)
+			boxsizer.Add(dlg.correction_type_spectral, flag=wx.ALL | wx.EXPAND,
+						 border=4)
 			{"matrix": dlg.correction_type_matrix,
 			 "spectral": dlg.correction_type_spectral}[getcfg("colorimeter_correction.type")].SetValue(True)
 			# Get instruments
@@ -7520,13 +7521,15 @@ class MainFrame(BaseFrame):
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 			dlg.reference_instrument = wx.Choice(dlg, -1,
 												 choices=reference_instruments)
-			boxsizer.Add(dlg.reference_instrument, 1)
+			boxsizer.Add(dlg.reference_instrument, 1, flag=wx.LEFT | wx.TOP |
+														   wx.BOTTOM, border=4)
 			boxsizer.Add(wx.StaticText(dlg, -1,
 									   lang.getstr("measurement_mode")),
 						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 						 border=8)
 			dlg.measurement_mode_reference = wx.Choice(dlg, -1, choices=[])
-			boxsizer.Add(dlg.measurement_mode_reference)
+			boxsizer.Add(dlg.measurement_mode_reference, flag=wx.RIGHT | wx.TOP |
+														   wx.BOTTOM, border=4)
 			def reference_instrument_handler(event):
 				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
 					dlg.reference_instrument.GetStringSelection(), "spect",
@@ -7558,13 +7561,15 @@ class MainFrame(BaseFrame):
 			if sys.platform not in ("darwin", "win32"):
 				boxsizer.Add((1, 4))
 			dlg.instrument = wx.Choice(dlg, -1, choices=colorimeters)
-			boxsizer.Add(dlg.instrument, 1)
+			boxsizer.Add(dlg.instrument, 1, flag=wx.LEFT | wx.TOP |  wx.BOTTOM,
+						 border=4)
 			boxsizer.Add(wx.StaticText(dlg, -1,
 									   lang.getstr("measurement_mode")),
 						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 						 border=8)
 			dlg.measurement_mode = wx.Choice(dlg, -1, choices=[])
-			boxsizer.Add(dlg.measurement_mode)
+			boxsizer.Add(dlg.measurement_mode, flag=wx.RIGHT | wx.TOP |
+													wx.BOTTOM, border=4)
 			def instrument_handler(event):
 				modes = self.get_ccxx_measurement_modes(
 					dlg.instrument.GetStringSelection())
@@ -7580,9 +7585,9 @@ class MainFrame(BaseFrame):
 				dlg.instrument.SetSelection(0)
 			else:
 				dlg.measurement_mode.Disable()
-			if instruments:
+			if colorimeters:
 				instrument_handler(None)
-			if len(instruments) < 2:
+			if len(colorimeters) < 2:
 				dlg.instrument.Disable()
 			else:
 				dlg.instrument.Bind(wx.EVT_CHOICE, instrument_handler)
@@ -7594,8 +7599,9 @@ class MainFrame(BaseFrame):
 						ctrl = item.Window
 					else:
 						ctrl = item
-					ctrl.Show(len(instruments) > 1 and
-							  dlg.correction_type_matrix.GetValue())
+					if ctrl:
+						ctrl.Show(len(instruments) > 1 and
+								  dlg.correction_type_matrix.GetValue())
 				dlg.ok.Enable(bool(self.worker.displays and 
 								   reference_instruments and
 								   (instruments or
@@ -7948,7 +7954,7 @@ class MainFrame(BaseFrame):
 												   description, 
 												   size=(400, -1))
 			boxsizer.Add(dlg.description_txt_ctrl, 1, 
-						 flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+						 flag=wx.ALL | wx.ALIGN_LEFT, border=4)
 			if not display:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display")),
@@ -7961,7 +7967,7 @@ class MainFrame(BaseFrame):
 																				True), 
 												   size=(400, -1))
 				boxsizer.Add(dlg.display_txt_ctrl, 1, 
-							 flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+							 flag=wx.ALL | wx.ALIGN_LEFT, border=4)
 			if not manufacturer:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display.manufacturer")),
@@ -7973,7 +7979,7 @@ class MainFrame(BaseFrame):
 														self.worker.get_display_edid().get("manufacturer", ""), 
 														size=(400, -1))
 				boxsizer.Add(dlg.manufacturer_txt_ctrl, 1, 
-							 flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+							 flag=wx.ALL | wx.ALIGN_LEFT, border=4)
 			# Display technology
 			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 													  lang.getstr("display.tech")),
@@ -7994,7 +8000,7 @@ class MainFrame(BaseFrame):
 											  choices=sorted(loctech.keys()))
 			dlg.display_tech_ctrl.SetStringSelection(techloc[tech])
 			boxsizer.Add(dlg.display_tech_ctrl,
-						 flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			dlg.description_txt_ctrl.SetFocus()
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
