@@ -7522,7 +7522,7 @@ class MainFrame(BaseFrame):
 			reference_instruments = []
 			colorimeters = []
 			for instrument in self.worker.instruments:
-				if instruments[instrument].get("spectral"):
+				if instruments.get(instrument, {}).get("spectral"):
 					reference_instruments.append(instrument)
 				else:
 					colorimeters.append(instrument)
