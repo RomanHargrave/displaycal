@@ -2436,7 +2436,7 @@ class Worker(object):
 												 safe_unicode(safe_str(match[0], enc),
 															  "UTF-8")))
 						elif arg == "-c":
-							if ((re.match("/dev/tty\w?\d+$", value) or
+							if ((re.match("/dev(?:/[\w.]+)*$", value) or
 								 re.match("COM\d+$", value)) and 
 								getcfg("skip_legacy_serial_ports")):
 								# Skip all legacy serial ports (this means we 
