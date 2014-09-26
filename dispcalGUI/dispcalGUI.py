@@ -4523,7 +4523,7 @@ class MainFrame(BaseFrame):
 									 wx.VERTICAL)
 		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 		if sys.platform not in ("darwin", "win32"):
-			boxsizer.Add((1, 4))
+			boxsizer.Add((1, 8))
 		dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
 											   description)
 		boxsizer.Add(dlg.description_txt_ctrl, 1, flag=wx.ALL | wx.EXPAND,
@@ -4534,7 +4534,7 @@ class MainFrame(BaseFrame):
 									 wx.VERTICAL)
 		dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 		if sys.platform not in ("darwin", "win32"):
-			boxsizer.Add((1, 4))
+			boxsizer.Add((1, 8))
 		box_gridsizer = wx.FlexGridSizer(0, 1, 0, 0)
 		boxsizer.Add(box_gridsizer, 1, flag=wx.ALL, border=4)
 		# Display panel surface type, connection
@@ -7503,7 +7503,7 @@ class MainFrame(BaseFrame):
 										 wx.VERTICAL)
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 			if sys.platform not in ("darwin", "win32"):
-				boxsizer.Add((1, 4))
+				boxsizer.Add((1, 8))
 			dlg.correction_type_matrix = wx.RadioButton(dlg, -1,
 														lang.getstr("matrix"), 
 														style=wx.RB_GROUP)
@@ -7533,21 +7533,23 @@ class MainFrame(BaseFrame):
 													  "%s (%s)" %
 													  (lang.getstr("instrument"),
 													   lang.getstr("reference"))),
-										 wx.HORIZONTAL)
-			if sys.platform not in ("darwin", "win32"):
-				boxsizer.Add((1, 4))
+										 wx.VERTICAL)
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			if sys.platform not in ("darwin", "win32"):
+				boxsizer.Add((1, 8))
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			boxsizer.Add(hsizer, flag=wx.EXPAND)
 			dlg.reference_instrument = wx.Choice(dlg, -1,
 												 choices=reference_instruments)
-			boxsizer.Add(dlg.reference_instrument, 1, flag=wx.LEFT | wx.TOP |
-														   wx.BOTTOM, border=4)
-			boxsizer.Add(wx.StaticText(dlg, -1,
+			hsizer.Add(dlg.reference_instrument, 1, flag=wx.LEFT | wx.TOP |
+														 wx.BOTTOM, border=4)
+			hsizer.Add(wx.StaticText(dlg, -1,
 									   lang.getstr("measurement_mode")),
 						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 						 border=8)
 			dlg.measurement_mode_reference = wx.Choice(dlg, -1, choices=[])
-			boxsizer.Add(dlg.measurement_mode_reference, flag=wx.RIGHT | wx.TOP |
-														   wx.BOTTOM, border=4)
+			hsizer.Add(dlg.measurement_mode_reference, flag=wx.RIGHT | wx.TOP |
+															wx.BOTTOM, border=4)
 			def reference_instrument_handler(event):
 				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
 					dlg.reference_instrument.GetStringSelection(), "spect",
@@ -7575,19 +7577,21 @@ class MainFrame(BaseFrame):
 			# Instrument
 			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 													  lang.getstr("instrument")),
-										 wx.HORIZONTAL)
+										 wx.VERTICAL)
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 			if sys.platform not in ("darwin", "win32"):
-				boxsizer.Add((1, 4))
+				boxsizer.Add((1, 8))
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			boxsizer.Add(hsizer, flag=wx.EXPAND)
 			dlg.instrument = wx.Choice(dlg, -1, choices=colorimeters)
-			boxsizer.Add(dlg.instrument, 1, flag=wx.LEFT | wx.TOP |  wx.BOTTOM,
-						 border=4)
-			boxsizer.Add(wx.StaticText(dlg, -1,
-									   lang.getstr("measurement_mode")),
-						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-						 border=8)
+			hsizer.Add(dlg.instrument, 1, flag=wx.LEFT | wx.TOP |  wx.BOTTOM,
+					   border=4)
+			hsizer.Add(wx.StaticText(dlg, -1,
+									 lang.getstr("measurement_mode")),
+					   flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+					   border=8)
 			dlg.measurement_mode = wx.Choice(dlg, -1, choices=[])
-			boxsizer.Add(dlg.measurement_mode, flag=wx.RIGHT | wx.TOP |
+			hsizer.Add(dlg.measurement_mode, flag=wx.RIGHT | wx.TOP |
 													wx.BOTTOM, border=4)
 			def instrument_handler(event):
 				modes = self.get_ccxx_measurement_modes(
@@ -7615,12 +7619,8 @@ class MainFrame(BaseFrame):
 			def correction_type_handler(event):
 				dlg.Freeze()
 				for item in list(boxsizer.Children) + [boxsizer.StaticBox]:
-					if isinstance(item, wx.SizerItem):
-						ctrl = item.Window
-					else:
-						ctrl = item
-					if ctrl:
-						ctrl.Show(len(instruments) > 1 and
+					if isinstance(item, (wx.SizerItem, wx.Window)):
+						item.Show(len(instruments) > 1 and
 								  dlg.correction_type_matrix.GetValue())
 				dlg.ok.Enable(bool(self.worker.displays and 
 								   reference_instruments and
@@ -7979,7 +7979,7 @@ class MainFrame(BaseFrame):
 										 wx.VERTICAL)
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 			if sys.platform not in ("darwin", "win32"):
-				boxsizer.Add((1, 4))
+				boxsizer.Add((1, 8))
 			dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
 												   description, 
 												   size=(400, -1))
@@ -7991,7 +7991,7 @@ class MainFrame(BaseFrame):
 											 wx.VERTICAL)
 				dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 				if sys.platform not in ("darwin", "win32"):
-					boxsizer.Add((1, 4))
+					boxsizer.Add((1, 8))
 				dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
 												   self.worker.get_display_name(True,
 																				True), 
@@ -8004,7 +8004,7 @@ class MainFrame(BaseFrame):
 											 wx.VERTICAL)
 				dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 				if sys.platform not in ("darwin", "win32"):
-					boxsizer.Add((1, 4))
+					boxsizer.Add((1, 8))
 				dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
 														self.worker.get_display_edid().get("manufacturer", ""), 
 														size=(400, -1))
@@ -8016,7 +8016,7 @@ class MainFrame(BaseFrame):
 										 wx.VERTICAL)
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 			if sys.platform not in ("darwin", "win32"):
-				boxsizer.Add((1, 4))
+				boxsizer.Add((1, 8))
 			loctech = {}
 			techloc = {}
 			for technology_string in technology_strings.values():
