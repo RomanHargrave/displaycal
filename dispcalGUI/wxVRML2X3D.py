@@ -150,7 +150,8 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 		vrmlpath = dlg.GetPath()
 		dlg.Destroy()
 		config.setcfg("last_vrml_path", vrmlpath)
-		config.writecfg(module="VRML-to-X3D-converter")
+		config.writecfg(module="VRML-to-X3D-converter",
+						options=("last_vrml_path", ))
 	filename, ext = os.path.splitext(vrmlpath)
 	if x3dpath is None:
 		x3dpath = filename + ".x3d"
