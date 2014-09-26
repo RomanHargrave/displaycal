@@ -226,7 +226,7 @@
 		"*colorimeter_correction.create": "Create colorimeter correction...",
 		"*colorimeter_correction.create.details": "Please check the fields below and change them when necessary. The description should also contain important details (e.g. specific display settings, non-default CIE observer or the like).",
 		"*colorimeter_correction.create.failure": "Correction creation failed.",
-		"*colorimeter_correction.create.info": "To create a colorimeter correction, you first need to measure the required test colors with a spectrometer, and in case you want to create correction matrix instead of a spectral calibration, also with the colorimeter.\nTo do this, choose “Measure testchart”. Alternatively you can also use existing measurements by choosing “Browse...”.",
+		"*colorimeter_correction.create.info": "To create a colorimeter correction, you first need to measure the required test colors with a spectrometer, and in case you want to create a correction matrix instead of a spectral correction, also with the colorimeter.\nTo do this, choose “Measure testchart”. Alternatively you can also use existing measurements by choosing “Browse...”.",
 		"*colorimeter_correction.create.success": "Correction successfully created.",
 		"*colorimeter_correction.file.none": "None",
 		"*colorimeter_correction.import": "Import colorimeter corrections from other display profiling software...",
