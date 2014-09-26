@@ -6071,9 +6071,11 @@ class MainFrame(BaseFrame):
 				 "ColorMunki Smile":
 				 {"f": lang.getstr("measurement_mode.lcd.ccfl")},
 				 "Colorimtre HCFR":
-				 {"R": lang.getstr("measurement_mode.raw")}}.get(
+				 {"R": lang.getstr("measurement_mode.raw")},
+				 "K-10":
+				 {"F": lang.getstr("measurement_mode.factory")}}.get(
 					 instrument_name, {"c": lang.getstr("measurement_mode.refresh"),
-								  "l": lang.getstr("measurement_mode.lcd")})
+									   "l": lang.getstr("measurement_mode.lcd")})
 		if swap:
 			modes = swap_dict_keys_values(modes)
 		return modes
@@ -6085,7 +6087,11 @@ class MainFrame(BaseFrame):
 		"""
 		measurement_mode = None
 		if getcfg("measurement_mode") == "auto":
-			pass
+			# Make changes in worker.Worker.add_instrument_features too!
+			if self.worker.get_instrument_name() == "ColorHug":
+				measurement_mode = "R"
+			else:
+				measurement_mode = "l"
 		elif (self.worker.get_instrument_name() == "ColorHug"
 			and getcfg("measurement_mode") not in ("F", "R")):
 			# Automatically set factory measurement mode if not already
@@ -7532,6 +7538,7 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode_reference.SetSelection(
 					min(modes_ba["spect"].get(mode, 1),
 						len(modes["spect"]) - 1))
+				dlg.measurement_mode_reference.Enable(len(modes["spect"]) > 1)
 				boxsizer.Layout()
 			instrument = getcfg("colorimeter_correction.instrument.reference")
 			if instrument in reference_instruments:
@@ -7570,7 +7577,8 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode.SetItems(modes.values())
 				dlg.measurement_mode.SetStringSelection(
 					modes.get(getcfg("colorimeter_correction.measurement_mode"),
-					modes.values()[0]))
+					modes.values()[-1]))
+				dlg.measurement_mode.Enable(len(modes) > 1)
 				boxsizer.Layout()
 			instrument = getcfg("colorimeter_correction.instrument")
 			if instrument in colorimeters:
@@ -7804,6 +7812,10 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			return
+		if event:
+			cfgname = "colorimeter_correction.measurement_mode"
+		else:
+			cfgname = "measurement_mode"
 		if len(cgats_list) == 2:
 			if not colorimeter_ti3:
 				# If 2 files, check if atleast one file has NOT been measured 
@@ -7879,7 +7891,7 @@ class MainFrame(BaseFrame):
 												"R": 2,
 												"F": 1,
 												"f": 1,
-												"g": 3}.get(getcfg("measurement_mode"),
+												"g": 3}.get(getcfg(cfgname),
 															1))
 				safe_print("Added DISPLAY_TYPE_BASE_ID %r" %
 						   colorimeter_ti3[0].DISPLAY_TYPE_BASE_ID)
@@ -7898,7 +7910,7 @@ class MainFrame(BaseFrame):
 			if not cgats.queryv1("DISPLAY_TYPE_REFRESH"):
 				cgats[0].add_keyword("DISPLAY_TYPE_REFRESH",
 									 {"c": "YES",
-									  "l": "NO"}.get(getcfg("measurement_mode"),
+									  "l": "NO"}.get(getcfg(cfgname),
 													 "NO"))
 				safe_print("Added DISPLAY_TYPE_REFRESH %r" %
 						   cgats[0].DISPLAY_TYPE_REFRESH)

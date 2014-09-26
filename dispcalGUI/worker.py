@@ -1389,6 +1389,7 @@ class Worker(object):
 			args.append("-c%s" % getcfg("comport.number"))
 		measurement_mode = getcfg("measurement_mode")
 		if measurement_mode == "auto":
+			# Make changes in dispcalGUI.MainFrame.set_ccxx_measurement_mode too!
 			if self.get_instrument_name() == "ColorHug":
 				measurement_mode = "R"
 			else:
