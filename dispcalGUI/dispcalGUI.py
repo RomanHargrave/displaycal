@@ -2870,6 +2870,12 @@ class MainFrame(BaseFrame):
 				mode = None
 				if base_id:
 					# Set measurement mode according to base ID
+
+					# IMPORTANT: Make changes aswell in the following locations:
+					# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
+					# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
+					# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
+					# - worker.Worker.instrument_can_use_ccxx
 					if self.worker.get_instrument_name() == "ColorHug":
 						mode = {1: "F",
 								2: "R"}.get(base_id)
@@ -2877,6 +2883,8 @@ class MainFrame(BaseFrame):
 						mode = {1: "f"}.get(base_id)
 					elif self.worker.get_instrument_name() == "Colorimtre HCFR":
 						mode = {1: "R"}.get(base_id)
+					elif self.worker.get_instrument_name() == "K-10":
+						mode = {1: "F"}.get(base_id)
 					else:
 						mode = {1: "l",
 								2: "c",
@@ -6065,6 +6073,11 @@ class MainFrame(BaseFrame):
 		Get measurement modes suitable for colorimeter correction creation
 		
 		"""
+		# IMPORTANT: Make changes aswell in the following locations:
+		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
+		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
+		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+		# - worker.Worker.instrument_can_use_ccxx
 		modes = {"ColorHug":
 				 {"F": lang.getstr("measurement_mode.factory"),
 				  "R": lang.getstr("measurement_mode.raw")},
@@ -6085,6 +6098,11 @@ class MainFrame(BaseFrame):
 		Set measurement mode suitable for colorimeter correction creation
 		
 		"""
+		# IMPORTANT: Make changes aswell in the following locations:
+		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
+		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
+		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+		# - worker.Worker.instrument_can_use_ccxx
 		measurement_mode = None
 		if getcfg("measurement_mode") == "auto":
 			# Make changes in worker.Worker.add_instrument_features too!
@@ -7885,6 +7903,12 @@ class MainFrame(BaseFrame):
 				# F (ColorHug)
 				# f (ColorMunki Smile)
 				# g (DTP94)
+
+				# IMPORTANT: Make changes aswell in the following locations:
+				# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
+				# - dispcalGUI.MainFrame.set_ccxx_measurement_modes
+				# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+				# - worker.Worker.instrument_can_use_ccxx
 				colorimeter_ti3[0].add_keyword("DISPLAY_TYPE_BASE_ID",
 											   {"c": 2,
 												"l": 1,

@@ -1605,6 +1605,13 @@ class Worker(object):
 		# Colorimétre HCFR (only raw measurement mode),
 		# DTP94 (only LCD, refresh and generic measurement modes)
 		# Spyder 4 (only generic LCD and refresh measurement modes)
+		# K-10 (only factory measurement mode)
+
+		# IMPORTANT: Make changes aswell in the following locations:
+		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
+		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
+		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
+		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
 		return (self.argyll_version >= [1, 3, 0] and
 				not self.get_instrument_features().get("spectral") and
 				(getcfg("measurement_mode") == "auto" or
@@ -1617,7 +1624,9 @@ class Worker(object):
 				  (self.get_instrument_name() != "DTP94" or
 				   getcfg("measurement_mode") in ("l", "c", "g")) and
 				  (self.get_instrument_name() != "Spyder4" or
-				   getcfg("measurement_mode") in ("l", "c")))))
+				   getcfg("measurement_mode") in ("l", "c")) and
+				  (self.get_instrument_name() != "K-10" or
+				   getcfg("measurement_mode") == "F"))))
 	
 	@Property
 	def progress_wnd():
