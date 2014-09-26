@@ -429,7 +429,8 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	colorimeter_correction_check_overwrite(parent, cgats[index])
 
 
-def colorimeter_correction_check_overwrite(parent=None, cgats=None):
+def colorimeter_correction_check_overwrite(parent=None, cgats=None,
+										   update_comports=False):
 	""" Check if a colorimeter correction file will be overwritten and 
 	present a dialog to confirm or cancel the operation. Write the file. """
 	result = check_create_dir(config.get_argyll_data_dir())
@@ -456,7 +457,14 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None):
 		return False
 	if getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO":
 		setcfg("colorimeter_correction_matrix_file", ":" + path)
-	parent.update_colorimeter_correction_matrix_ctrl_items(True)
+	if update_comports:
+		setcfg("comport.number", parent.worker.instruments.index(
+			getcfg("colorimeter_correction.instrument")) + 1)
+		setcfg("measurement_mode",
+			getcfg("colorimeter_correction.measurement_mode"))
+		parent.update_comports(force=True)
+	else:
+		parent.update_colorimeter_correction_matrix_ctrl_items(True)
 	return True
 
 
@@ -2486,7 +2494,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.SetVirtualSize(self.calpanel.GetBestVirtualSize())
 		self.Thaw()
 
-	def update_comports(self):
+	def update_comports(self, force=False):
 		""" Update the comport selector control. """
 		self.comport_ctrl.Freeze()
 		self.comport_ctrl.SetItems(self.worker.instruments)
@@ -2496,7 +2504,7 @@ class MainFrame(BaseFrame):
 					max(0, int(getcfg("comport.number")) - 1)))
 		self.comport_ctrl.Enable(len(self.worker.instruments) > 1)
 		self.comport_ctrl.Thaw()
-		self.comport_ctrl_handler()
+		self.comport_ctrl_handler(force=force)
 
 	def update_measurement_mode(self):
 		""" Update the measurement mode control. """
@@ -2518,11 +2526,9 @@ class MainFrame(BaseFrame):
 					measurement_mode, 1), 
 				len(self.measurement_mode_ctrl.GetItems()) - 1))
 	
-	def update_measurement_modes(self):
-		""" Populate the measurement mode control. """
-		instrument_name = self.worker.get_instrument_name()
-		instrument_type = self.get_instrument_type()
-		measurement_mode = getcfg("measurement_mode")
+	def get_measurement_modes(self, instrument_name, instrument_type,
+							  cfgname="measurement_mode"):
+		measurement_mode = getcfg(cfgname)
 		#if self.get_instrument_type() == "spect":
 			#measurement_mode = strtr(measurement_mode, {"c": "", "l": ""})
 		if instrument_name != "DTP92":
@@ -2580,12 +2586,17 @@ class MainFrame(BaseFrame):
 				measurement_modes_ab[instrument_type].append(mode)
 			if not measurement_mode in measurement_modes_ab[instrument_type]:
 				measurement_mode = "F"
-		instrument_features = self.worker.get_instrument_features()
+		instrument_features = self.worker.get_instrument_features(instrument_name)
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			# Projector mode introduced in Argyll 1.1.0 Beta
 			measurement_modes[instrument_type].append(lang.getstr("projector"))
 			measurement_modes_ab[instrument_type].append("p")
+		if not measurement_mode in measurement_modes_ab[instrument_type]:
+			if measurement_modes_ab[instrument_type]:
+				measurement_mode = measurement_modes_ab[instrument_type][0]
+			else:
+				measurement_mode = defaults["measurement_mode"]
 		if instrument_features.get("adaptive_mode") and (
 		   self.worker.argyll_version[0:3] > [1, 1, 0] or (
 		   self.worker.argyll_version[0:3] == [1, 1, 0] and
@@ -2605,7 +2616,7 @@ class MainFrame(BaseFrame):
 					measurement_modes[key].insert(i + 1, mode)
 					modesig = measurement_modes_ab[key][i]
 					measurement_modes_ab[key].insert(i + 1, (modesig or "") + "V")
-			if getcfg("measurement_mode.adaptive"):
+			if getcfg(cfgname + ".adaptive"):
 				measurement_mode += "V"
 		if instrument_features.get("highres_mode"):
 			for key in iter(measurement_modes):
@@ -2620,15 +2631,29 @@ class MainFrame(BaseFrame):
 					measurement_modes[key].insert(i + 1, mode)
 					modesig = measurement_modes_ab[key][i]
 					measurement_modes_ab[key].insert(i + 1, (modesig or "") + "H")
-			if getcfg("measurement_mode.highres"):
+			if getcfg(cfgname + ".highres"):
 				measurement_mode += "H"
-		self.measurement_modes_ab = dict(zip(measurement_modes_ab.keys(), 
-											 [dict(zip(range(len(measurement_modes_ab[key])), 
-													   measurement_modes_ab[key])) 
-													   for key in measurement_modes_ab]))
-		self.measurement_modes_ba = dict(zip(measurement_modes_ab.keys(), 
-											 [swap_dict_keys_values(self.measurement_modes_ab[key]) 
-											  for key in measurement_modes_ab]))
+		measurement_modes_ab = dict(zip(measurement_modes_ab.keys(), 
+										[dict(zip(range(len(measurement_modes_ab[key])), 
+												  measurement_modes_ab[key])) 
+												  for key in measurement_modes_ab]))
+		measurement_modes_ba = dict(zip(measurement_modes_ab.keys(), 
+										[swap_dict_keys_values(measurement_modes_ab[key]) 
+										 for key in measurement_modes_ab]))
+		return (measurement_mode, measurement_modes, measurement_modes_ab,
+				measurement_modes_ba)
+	
+	def update_measurement_modes(self):
+		""" Populate the measurement mode control. """
+		instrument_name = self.worker.get_instrument_name()
+		instrument_type = self.get_instrument_type()
+		(measurement_mode,
+		 measurement_modes,
+		 measurement_modes_ab,
+		 measurement_modes_ba) = self.get_measurement_modes(instrument_name,
+															instrument_type)
+		self.measurement_modes_ab = measurement_modes_ab
+		self.measurement_modes_ba = measurement_modes_ba
 		self.measurement_mode_ctrl.Freeze()
 		self.measurement_mode_ctrl.SetItems(measurement_modes[instrument_type])
 		self.measurement_mode_ctrl.SetSelection(
@@ -6035,6 +6060,58 @@ class MainFrame(BaseFrame):
 						self.display_ctrl), load_lut=False,
 						update_ccmx_items=update_ccmx_items)
 
+	def get_ccxx_measurement_modes(self, instrument_name, swap=False):
+		"""
+		Get measurement modes suitable for colorimeter correction creation
+		
+		"""
+		modes = {"ColorHug":
+				 {"F": lang.getstr("measurement_mode.factory"),
+				  "R": lang.getstr("measurement_mode.raw")},
+				 "ColorMunki Smile":
+				 {"f": lang.getstr("measurement_mode.lcd.ccfl")},
+				 "Colorimtre HCFR":
+				 {"R": lang.getstr("measurement_mode.raw")}}.get(
+					 instrument_name, {"c": lang.getstr("measurement_mode.refresh"),
+								  "l": lang.getstr("measurement_mode.lcd")})
+		if swap:
+			modes = swap_dict_keys_values(modes)
+		return modes
+
+	def set_ccxx_measurement_mode(self):
+		"""
+		Set measurement mode suitable for colorimeter correction creation
+		
+		"""
+		measurement_mode = None
+		if getcfg("measurement_mode") == "auto":
+			pass
+		elif (self.worker.get_instrument_name() == "ColorHug"
+			and getcfg("measurement_mode") not in ("F", "R")):
+			# Automatically set factory measurement mode if not already
+			# factory or raw measurement mode
+			measurement_mode = "F"
+		elif (self.worker.get_instrument_name() == "ColorMunki Smile"
+			and getcfg("measurement_mode") != "f"):
+			# Automatically set LCD measurement mode if not already
+			# LCD CCFL measurement mode
+			measurement_mode = "f"
+		elif (self.worker.get_instrument_name() == "Colorimtre HCFR"
+			and getcfg("measurement_mode") != "R"):
+			# Automatically set raw measurement mode if not already
+			# raw measurement mode
+			measurement_mode = "R"
+		elif (self.worker.get_instrument_name() == "Spyder4"
+			and getcfg("measurement_mode") not in ("l", "c")):
+			# Automatically set LCD measurement mode if not already
+			# LCD or refresh measurement mode
+			measurement_mode = "l"
+		if not getcfg("measurement_mode.backup", False):
+			setcfg("measurement_mode.backup", getcfg("measurement_mode"))
+		if measurement_mode:
+			setcfg("measurement_mode", measurement_mode)
+			self.update_measurement_mode()
+
 	def set_pending_function(self, pending_function, *pending_function_args, 
 							 **pending_function_kwargs):
 		self.pending_function = pending_function
@@ -6266,7 +6343,12 @@ class MainFrame(BaseFrame):
 		if getcfg("measurement_mode.backup", False):
 			setcfg("measurement_mode", getcfg("measurement_mode.backup"))
 			setcfg("measurement_mode.backup", None)
-			self.update_measurement_mode()
+			if getcfg("comport.number.backup", False):
+				setcfg("comport.number", getcfg("comport.number.backup"))
+				setcfg("comport.number.backup", None)
+				self.update_comports()
+			else:
+				self.update_measurement_mode()
 
 	def restore_testchart(self):
 		if getcfg("testchart.file.backup", False):
@@ -6371,20 +6453,18 @@ class MainFrame(BaseFrame):
 	def measure_handler(self, event=None):
 		if is_ccxx_testchart():
 			# Allow different location to store measurements
-			path = None
-			defaultPath = os.path.join(*get_verified_path("measurement.save_path"))
-			dlg = wx.DirDialog(self, lang.getstr("measurement.set_save_path"), 
-							   defaultPath=defaultPath)
-			dlg.Center(wx.BOTH)
-			if dlg.ShowModal() == wx.ID_OK:
-				path = dlg.GetPath()
-			dlg.Destroy()
+			path = getcfg("profile.save_path")
 			if path:
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
 														 path)), self)
 					return
 				setcfg("measurement.save_path", path)
+				# Spectrometer measurement
+				setcfg("measurement.name.expanded", "%s & %s %s" %
+													(self.worker.get_instrument_name(),
+													 self.worker.get_display_name(),
+													 strftime("%Y-%m-%d %H-%M-%S")))
 			else:
 				self.restore_measurement_mode()
 				self.restore_testchart()
@@ -6423,15 +6503,31 @@ class MainFrame(BaseFrame):
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = config.get_display_name() == "Untethered"
 		setcfg("calibration.file.previous", None)
-		continue_next = bool(consumer)
+		continue_next = ((is_ccxx_testchart() and
+						  getcfg("comport.number.backup", False) and
+						  getcfg("colorimeter_correction.type") == "matrix" and
+						  self.worker.get_instrument_name() ==
+						  getcfg("colorimeter_correction.instrument.reference")) or
+						 bool(consumer))
+		if (is_ccxx_testchart() and
+			getcfg("comport.number.backup", False) and
+			getcfg("colorimeter_correction.type") == "matrix" and
+			self.worker.get_instrument_name() ==
+			getcfg("colorimeter_correction.instrument")):
+			# Colorimeter measurement
+			setcfg("measurement.name.expanded", "%s & %s %s" %
+												(self.worker.get_instrument_name(),
+												 self.worker.get_display_name(),
+												 strftime("%Y-%m-%d %H-%M-%S")))
+			resume = True
+		else:
+			resume = bool(getattr(self, "measure_auto_after", None))
 		if not consumer:
 			consumer = self.just_measure_finish
 		self.worker.start_measurement(consumer, apply_calibration,
 									  progress_msg=lang.getstr("measuring.characterization"), 
 									  continue_next=continue_next,
-									  resume=bool(getattr(self,
-														  "measure_auto_after",
-														  None)))
+									  resume=resume)
 	
 	def just_measure_finish(self, result):
 		if not isinstance(result, Exception) and result:
@@ -6452,7 +6548,28 @@ class MainFrame(BaseFrame):
 					setcfg("last_reference_ti3_path", cgats.filename)
 				else:
 					setcfg("last_colorimeter_ti3_path", cgats.filename)
-				wx.CallAfter(self.create_colorimeter_correction_handler)
+				if getcfg("comport.number.backup", False):
+					# Measurements were started from colorimeter correction
+					# creation dialog
+					if (getcfg("colorimeter_correction.type") == "matrix" and
+						self.worker.get_instrument_name() ==
+						getcfg("colorimeter_correction.instrument.reference")):
+						# Done spectrometer measurements for CCMX, do
+						# colorimeter measurements
+						setcfg("comport.number", self.worker.instruments.index(
+							getcfg("colorimeter_correction.instrument")) + 1)
+						setcfg("measurement_mode",
+							getcfg("colorimeter_correction.measurement_mode"))
+						wx.CallAfter(self.just_measure,
+									 get_data_path("linear.cal"))
+						return
+					else:
+						# Finished colorimeter correction measurements
+						paths = [getcfg("last_reference_ti3_path")]
+						if getcfg("colorimeter_correction.type") == "matrix":
+							paths.append(getcfg("last_colorimeter_ti3_path"))
+						wx.CallAfter(self.create_colorimeter_correction_handler,
+									 True, paths=paths)
 		else:
 			wx.CallAfter(self.just_measure_show_result, 
 						 os.path.join(getcfg("profile.save_path"), 
@@ -7351,23 +7468,201 @@ class MainFrame(BaseFrame):
 		parent = self if not paths else None
 		if not paths:
 			dlg = ConfirmDialog(parent,
+								title=lang.getstr("colorimeter_correction.create"),
 								msg=lang.getstr("colorimeter_correction.create.info"), 
-								ok=lang.getstr("colorimeter_correction.create"), 
+								ok=lang.getstr("measure.testchart"), 
 								cancel=lang.getstr("cancel"), 
-								alt=lang.getstr("measure.testchart"), 
-								bitmap=geticon(32, "dialog-information"))
-			dlg.alt.Enable(bool(self.worker.displays) and 
-						   bool(self.worker.instruments))
+								alt=lang.getstr("browse"), 
+								bitmap=geticon(32, "dialog-information"),
+								wrap=80)
+			# Colorimeter correction type
+			# We deliberately don't use RadioBox because there's no way to
+			# set the correct background color (this matters under MSWindows
+			# where the dialog background is usually white) unless you use
+			# Phoenix.
+			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+													  lang.getstr("type")),
+										 wx.VERTICAL)
+			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			if sys.platform not in ("darwin", "win32"):
+				boxsizer.Add((1, 4))
+			dlg.correction_type_matrix = wx.RadioButton(dlg, -1,
+														lang.getstr("matrix"), 
+														style=wx.RB_GROUP)
+			boxsizer.Add(dlg.correction_type_matrix, flag=wx.EXPAND)
+			dlg.correction_type_spectral = wx.RadioButton(dlg, -1,
+														  lang.getstr("spectral") +
+														  " (i1 DisplayPro, "
+														  "ColorMunki "
+														  "Display, Spyder 4)")
+			boxsizer.Add(dlg.correction_type_spectral, flag=wx.TOP | wx.BOTTOM |
+						 wx.EXPAND, border=4)
+			{"matrix": dlg.correction_type_matrix,
+			 "spectral": dlg.correction_type_spectral}[getcfg("colorimeter_correction.type")].SetValue(True)
+			# Get instruments
+			reference_instruments = []
+			colorimeters = []
+			for instrument in self.worker.instruments:
+				if instruments[instrument].get("spectral"):
+					reference_instruments.append(instrument)
+				else:
+					colorimeters.append(instrument)
+					if instrument == self.worker.get_instrument_name():
+						setcfg("colorimeter_correction.instrument", instrument)
+			# Reference instrument
+			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+													  "%s (%s)" %
+													  (lang.getstr("instrument"),
+													   lang.getstr("reference"))),
+										 wx.HORIZONTAL)
+			if sys.platform not in ("darwin", "win32"):
+				boxsizer.Add((1, 4))
+			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			dlg.reference_instrument = wx.Choice(dlg, -1,
+												 choices=reference_instruments)
+			boxsizer.Add(dlg.reference_instrument, 1)
+			boxsizer.Add(wx.StaticText(dlg, -1,
+									   lang.getstr("measurement_mode")),
+						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+						 border=8)
+			dlg.measurement_mode_reference = wx.Choice(dlg, -1, choices=[])
+			boxsizer.Add(dlg.measurement_mode_reference)
+			def reference_instrument_handler(event):
+				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
+					dlg.reference_instrument.GetStringSelection(), "spect",
+					"colorimeter_correction.measurement_mode.reference")
+				dlg.measurement_mode_reference.SetItems(modes["spect"])
+				dlg.measurement_mode_reference.SetSelection(
+					min(modes_ba["spect"].get(mode, 1),
+						len(modes["spect"]) - 1))
+				boxsizer.Layout()
+			instrument = getcfg("colorimeter_correction.instrument.reference")
+			if instrument in reference_instruments:
+				dlg.reference_instrument.SetStringSelection(instrument)
+			elif reference_instruments:
+				dlg.reference_instrument.SetSelection(0)
+			else:
+				dlg.measurement_mode_reference.Disable()
+			if reference_instruments:
+				reference_instrument_handler(None)
+			if len(reference_instruments) < 2:
+				dlg.reference_instrument.Disable()
+			else:
+				dlg.reference_instrument.Bind(wx.EVT_CHOICE,
+											  reference_instrument_handler)
+			# Instrument
+			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+													  lang.getstr("instrument")),
+										 wx.HORIZONTAL)
+			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			if sys.platform not in ("darwin", "win32"):
+				boxsizer.Add((1, 4))
+			dlg.instrument = wx.Choice(dlg, -1, choices=colorimeters)
+			boxsizer.Add(dlg.instrument, 1)
+			boxsizer.Add(wx.StaticText(dlg, -1,
+									   lang.getstr("measurement_mode")),
+						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+						 border=8)
+			dlg.measurement_mode = wx.Choice(dlg, -1, choices=[])
+			boxsizer.Add(dlg.measurement_mode)
+			def instrument_handler(event):
+				modes = self.get_ccxx_measurement_modes(
+					dlg.instrument.GetStringSelection())
+				dlg.measurement_mode.SetItems(modes.values())
+				dlg.measurement_mode.SetStringSelection(
+					modes.get(getcfg("colorimeter_correction.measurement_mode"),
+					modes.values()[0]))
+				boxsizer.Layout()
+			instrument = getcfg("colorimeter_correction.instrument")
+			if instrument in colorimeters:
+				dlg.instrument.SetStringSelection(instrument)
+			elif colorimeters:
+				dlg.instrument.SetSelection(0)
+			else:
+				dlg.measurement_mode.Disable()
+			if instruments:
+				instrument_handler(None)
+			if len(instruments) < 2:
+				dlg.instrument.Disable()
+			else:
+				dlg.instrument.Bind(wx.EVT_CHOICE, instrument_handler)
+			# Bind event handlers
+			def correction_type_handler(event):
+				dlg.Freeze()
+				for item in list(boxsizer.Children) + [boxsizer.StaticBox]:
+					if isinstance(item, wx.SizerItem):
+						ctrl = item.Window
+					else:
+						ctrl = item
+					ctrl.Show(len(instruments) > 1 and
+							  dlg.correction_type_matrix.GetValue())
+				dlg.ok.Enable(bool(self.worker.displays and 
+								   reference_instruments and
+								   (instruments or
+									dlg.correction_type_spectral.GetValue())))
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+				dlg.Refresh()
+				dlg.Thaw()
+			dlg.correction_type_matrix.Bind(wx.EVT_RADIOBUTTON,
+											correction_type_handler)
+			dlg.correction_type_spectral.Bind(wx.EVT_RADIOBUTTON,
+											  correction_type_handler)
+			# Layout
+			correction_type_handler(None)
 			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				setcfg("colorimeter_correction.instrument.reference",
+					   dlg.reference_instrument.GetStringSelection())
+				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
+					dlg.reference_instrument.GetStringSelection(), "spect",
+					"colorimeter_correction.measurement_mode.reference")
+				mode = modes_ab.get("spect", {}).get(
+					dlg.measurement_mode_reference.GetSelection()) or "l"
+				setcfg("colorimeter_correction.measurement_mode.reference",
+					   (strtr(mode, {"V": "", 
+									 "H": ""}) if mode else None) or None)
+				setcfg("colorimeter_correction.measurement_mode.reference.adaptive",
+					   1 if mode and "V" in mode else 0)
+				setcfg("colorimeter_correction.measurement_mode.reference.highres",
+					   1 if mode and "H" in mode else 0)
+				setcfg("colorimeter_correction.measurement_mode.reference.projector",
+					   1 if mode and "p" in mode else None)
+				setcfg("colorimeter_correction.instrument",
+					   dlg.instrument.GetStringSelection())
+				modes = self.get_ccxx_measurement_modes(
+					dlg.instrument.GetStringSelection(), True)
+				setcfg("colorimeter_correction.measurement_mode",
+					   modes[dlg.measurement_mode.GetStringSelection()])
+			if result != wx.ID_CANCEL:
+				setcfg("colorimeter_correction.type",
+					   {True: "matrix",
+						False: "spectral"}[dlg.correction_type_matrix.GetValue()])
 			dlg.Destroy()
 		else:
-			result = wx.ID_OK
+			result = -1
 		if result == wx.ID_CANCEL:
 			return
-		elif result != wx.ID_OK:
+		elif result == wx.ID_OK:
+			# Select CCXX testchart
 			if not is_ccxx_testchart():
+				# Backup testchart selection
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
 			self.set_testchart(get_ccxx_testchart())
+			# Backup instrument selection
+			setcfg("comport.number.backup", getcfg("comport.number"))
+			# Switch to reference instrument
+			setcfg("comport.number", self.worker.instruments.index(
+				getcfg("colorimeter_correction.instrument.reference")) + 1)
+			# Set measurement mode
+			setcfg("measurement_mode",
+				   getcfg("colorimeter_correction.measurement_mode.reference"))
+			setcfg("measurement_mode.adaptive",
+				   getcfg("colorimeter_correction.measurement_mode.reference.adaptive"))
+			setcfg("measurement_mode.highres",
+				   getcfg("colorimeter_correction.measurement_mode.reference.highres"))
+			setcfg("measurement_mode.projector",
+				   getcfg("colorimeter_correction.measurement_mode.reference.projector"))
 			self.measure_handler()
 			return
 		try:
@@ -7379,7 +7674,7 @@ class MainFrame(BaseFrame):
 		reference_ti3 = None
 		colorimeter_ti3 = None
 		spectral = False
-		for n in (0, 1):
+		for n in xrange(len(paths or (0, 1))):
 			path = None
 			if not paths:
 				if reference_ti3:
@@ -7456,6 +7751,7 @@ class MainFrame(BaseFrame):
 				except Exception, exception:
 					safe_print(exception)
 					InfoDialog(self,
+							   title=lang.getstr("colorimeter_correction.create"),
 							   msg=lang.getstr("error.measurement.file_invalid", path), 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
@@ -7474,16 +7770,9 @@ class MainFrame(BaseFrame):
 						setcfg("last_reference_ti3_path", path)
 						if cgats.queryv1("SPECTRAL_BANDS"):
 							spectral = True
-							if not paths:
-								# Ask if user wants to create CCSS
-								dlg = ConfirmDialog(parent, 
-													msg=lang.getstr("create_ccss_or_ccmx"), 
-													ok=lang.getstr("CCSS"), 
-													cancel=lang.getstr("cancel"), 
-													alt=lang.getstr("CCMX"),
-													bitmap=geticon(32, "dialog-question"))
-								result = dlg.ShowModal()
-								dlg.Destroy()
+							if (event and
+								getcfg("colorimeter_correction.type") == "matrix"):
+								result = -1
 							else:
 								result = wx.ID_OK
 							if result == wx.ID_OK:
@@ -7510,6 +7799,7 @@ class MainFrame(BaseFrame):
 		# Check if atleast one file has been measured with a reference
 		if not reference_ti3:
 			InfoDialog(self,
+					   title=lang.getstr("colorimeter_correction.create"),
 					   msg=lang.getstr("error.measurement.one_reference"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
@@ -7519,6 +7809,7 @@ class MainFrame(BaseFrame):
 				# If 2 files, check if atleast one file has NOT been measured 
 				# with a spectro (CCMX creation)
 				InfoDialog(self,
+						   title=lang.getstr("colorimeter_correction.create"),
 						   msg=lang.getstr("error.measurement.one_colorimeter"), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
@@ -7595,6 +7886,7 @@ class MainFrame(BaseFrame):
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
+					   title=lang.getstr("colorimeter_correction.create"),
 					   msg=lang.getstr("error.measurement.missing_spectral"), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
@@ -7608,6 +7900,8 @@ class MainFrame(BaseFrame):
 									 {"c": "YES",
 									  "l": "NO"}.get(getcfg("measurement_mode"),
 													 "NO"))
+				safe_print("Added DISPLAY_TYPE_REFRESH %r" %
+						   cgats[0].DISPLAY_TYPE_REFRESH)
 		options_dispcal, options_colprof = get_options_from_ti3(reference_ti3)
 		display = None
 		manufacturer = None
@@ -7634,47 +7928,73 @@ class MainFrame(BaseFrame):
 		if target_instrument:
 			description = "%s (%s)" % (description, target_instrument)
 		args = []
-		tech = {"NO": "LCD"}.get(reference_ti3.queryv1("DISPLAY_TYPE_REFRESH"),
-								"Unknown")
-		if not paths:
-			# Allow use to alter description, display and instrument
+		tech = {"YES": "Unknown"}.get(reference_ti3.queryv1("DISPLAY_TYPE_REFRESH"),
+									  "LCD")
+		if event:
+			# Allow user to alter description, display and instrument
 			dlg = ConfirmDialog(
 				parent, 
+				title=lang.getstr("colorimeter_correction.create"),
 				msg=lang.getstr("colorimeter_correction.create.details"), 
 				ok=lang.getstr("ok"), cancel=lang.getstr("cancel"), 
 				bitmap=geticon(32, "dialog-information"))
-			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("description")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+													  lang.getstr("description")),
+										 wx.VERTICAL)
+			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			if sys.platform not in ("darwin", "win32"):
+				boxsizer.Add((1, 4))
 			dlg.description_txt_ctrl = wx.TextCtrl(dlg, -1, 
 												   description, 
 												   size=(400, -1))
-			dlg.sizer3.Add(dlg.description_txt_ctrl, 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+			boxsizer.Add(dlg.description_txt_ctrl, 1, 
+						 flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 			if not display:
-				dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display")), 1, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+														  lang.getstr("display")),
+											 wx.VERTICAL)
+				dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+				if sys.platform not in ("darwin", "win32"):
+					boxsizer.Add((1, 4))
 				dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
 												   self.worker.get_display_name(True,
 																				True), 
 												   size=(400, -1))
-				dlg.sizer3.Add(dlg.display_txt_ctrl, 1, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+				boxsizer.Add(dlg.display_txt_ctrl, 1, 
+							 flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 			if not manufacturer:
-				dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display.manufacturer")), 1, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+														  lang.getstr("display.manufacturer")),
+											 wx.VERTICAL)
+				dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+				if sys.platform not in ("darwin", "win32"):
+					boxsizer.Add((1, 4))
 				dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
 														self.worker.get_display_edid().get("manufacturer", ""), 
 														size=(400, -1))
-				dlg.sizer3.Add(dlg.manufacturer_txt_ctrl, 1, 
-							   flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-			dlg.sizer3.Add(wx.StaticText(dlg, -1, lang.getstr("display.tech")), 1, 
-						   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+				boxsizer.Add(dlg.manufacturer_txt_ctrl, 1, 
+							 flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 			# Display technology
+			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
+													  lang.getstr("display.tech")),
+										 wx.VERTICAL)
+			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			if sys.platform not in ("darwin", "win32"):
+				boxsizer.Add((1, 4))
+			loctech = {}
+			techloc = {}
+			for technology_string in technology_strings.values():
+				key = technology_string.lower().replace(" ", "_")
+				loc = lang.getstr(key)
+				if loc == key:
+					loc = technology_string
+				loctech[loc] = technology_string
+				techloc[technology_string] = loc
 			dlg.display_tech_ctrl = wx.Choice(dlg, -1,
-											  choices=sorted(technology_strings.values()))
-			dlg.display_tech_ctrl.SetStringSelection(tech)
-			dlg.sizer3.Add(dlg.display_tech_ctrl,
-						   flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+											  choices=sorted(loctech.keys()))
+			dlg.display_tech_ctrl.SetStringSelection(techloc[tech])
+			boxsizer.Add(dlg.display_tech_ctrl,
+						 flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			dlg.description_txt_ctrl.SetFocus()
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
@@ -7686,7 +8006,7 @@ class MainFrame(BaseFrame):
 				display = dlg.display_txt_ctrl.GetValue()
 			if (dlg.display_tech_ctrl.IsEnabled() and
 				dlg.display_tech_ctrl.GetStringSelection()):
-				tech = dlg.display_tech_ctrl.GetStringSelection()
+				tech = loctech[dlg.display_tech_ctrl.GetStringSelection()]
 			if not manufacturer:
 				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
 			dlg.Destroy()
@@ -7774,8 +8094,8 @@ class MainFrame(BaseFrame):
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 				return
-			if not paths:
-				if (colorimeter_correction_check_overwrite(self, cgats)):
+			if event:
+				if colorimeter_correction_check_overwrite(self, cgats, True):
 					self.upload_colorimeter_correction(cgats)
 			else:
 				path = get_cgats_path(cgats)
@@ -7784,6 +8104,7 @@ class MainFrame(BaseFrame):
 				setcfg("colorimeter_correction_matrix_file", ":" + path)
 		elif result is not None:
 			InfoDialog(self,
+					   title=lang.getstr("colorimeter_correction.create"),
 					   msg=lang.getstr("colorimeter_correction.create.failure") +
 						   "\n" + "\n".join(self.worker.errors), 
 					   ok=lang.getstr("cancel"), 
@@ -7843,7 +8164,7 @@ class MainFrame(BaseFrame):
 			else:
 				self.upload_colorimeter_correction(cgats)
 
-	def comport_ctrl_handler(self, event=None):
+	def comport_ctrl_handler(self, event=None, force=False):
 		if debug and event:
 			safe_print("[D] comport_ctrl_handler called for ID %s %s event "
 					   "type %s %s" % (event.GetId(), 
@@ -7854,7 +8175,7 @@ class MainFrame(BaseFrame):
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
-		self.update_colorimeter_correction_matrix_ctrl_items()
+		self.update_colorimeter_correction_matrix_ctrl_items(force)
 	
 	def import_colorimeter_corrections_handler(self, event, paths=None):
 		"""
@@ -9759,33 +10080,7 @@ class MainFrame(BaseFrame):
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
 		if is_ccxx_testchart():
-			measurement_mode = None
-			if getcfg("measurement_mode") == "auto":
-				pass
-			elif (self.worker.get_instrument_name() == "ColorHug"
-				and getcfg("measurement_mode") not in ("F", "R")):
-				# Automatically set factory measurement mode if not already
-				# factory or raw measurement mode
-				measurement_mode = "F"
-			elif (self.worker.get_instrument_name() == "ColorMunki Smile"
-				and getcfg("measurement_mode") != "f"):
-				# Automatically set LCD measurement mode if not already
-				# LCD CCFL measurement mode
-				measurement_mode = "f"
-			elif (self.worker.get_instrument_name() == "Colorimtre HCFR"
-				and getcfg("measurement_mode") != "R"):
-				# Automatically set raw measurement mode if not already
-				# raw measurement mode
-				measurement_mode = "R"
-			elif (self.worker.get_instrument_name() == "Spyder4"
-				and getcfg("measurement_mode") not in ("l", "c")):
-				# Automatically set LCD measurement mode if not already
-				# LCD or refresh measurement mode
-				measurement_mode = "l"
-			if measurement_mode:
-				setcfg("measurement_mode.backup", getcfg("measurement_mode"))
-				setcfg("measurement_mode", measurement_mode)
-				self.update_measurement_mode()
+			self.set_ccxx_measurement_mode()
 		else:
 			self.restore_measurement_mode()
 		self.update_colorimeter_correction_matrix_ctrl()

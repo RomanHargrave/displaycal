@@ -595,9 +595,18 @@ defaults = {
 	"calibration.update": 0,
 	"calibration.use_video_lut": 1,
 	"calibration.use_video_lut.backup": 1,
+	"colorimeter_correction.instrument": None,
+	"colorimeter_correction.instrument.reference": None,
+	"colorimeter_correction.measurement_mode": "l",
+	"colorimeter_correction.measurement_mode.reference.adaptive": 1,
+	"colorimeter_correction.measurement_mode.reference.highres": 0,
+	"colorimeter_correction.measurement_mode.reference.projector": 0,
+	"colorimeter_correction.measurement_mode.reference": "l",
 	"colorimeter_correction.testchart": "ccxx.ti1",
 	"colorimeter_correction_matrix_file": "AUTO:",
+	"colorimeter_correction.type": "matrix",
 	"comport.number": 1,
+	"comport.number.backup": 1,
 	# Note: worker.Worker.enumerate_displays_and_ports() overwrites copyright
 	"copyright": "No copyright. Created with %s %s and Argyll CMS" % (appname, 
 																	  version),
@@ -834,12 +843,8 @@ def getcfg(name, fallback=True):
 	return its default value.
 	
 	"""
-	if (name in ("profile.save_path", "profile.name.expanded") and
-		is_ccxx_testchart()):
-		name = {"profile.save_path": "measurement.save_path",
-				"profile.name.expanded": "measurement.name.expanded"}[name]
-		setcfg("measurement.name.expanded", "%s & %s" % (get_instrument_name(),
-													     get_display_name()))
+	if name == "profile.name.expanded" and is_ccxx_testchart():
+		name = "measurement.name.expanded"
 	hasdef = name in defaults
 	if hasdef:
 		defval = defaults[name]

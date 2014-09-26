@@ -102,6 +102,7 @@ INST_CAL_MSGS = ["Do a reflective white calibration",
 				 "Click the instrument on its reflective white reference",
 				 "Place the instrument in the dark",
 				 "Place cap on the instrument",  # i1 Pro
+				 "or place on the calibration reference", # i1 Pro
 				 "Place ambient adapter and cap on the instrument",
 				 "Set instrument sensor to calibration position",  # ColorMunki
 				 "Place the instrument on its transmissive white source",
@@ -1734,7 +1735,8 @@ class Worker(object):
 				((config.is_untethered_display() or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
-				  self.cmdname == "dispcal"))):
+				  self.cmdname == "dispcal")) or
+				getcfg("comport.number.backup", False)):
 				# Show a dialog asking user to place the instrument on the
 				# screen if the instrument calibration was completed,
 				# or if we measure a remote ("Web") display,
@@ -1791,7 +1793,8 @@ class Worker(object):
 			lstr ="instrument.calibrate.colormunki"
 		else:
 			lstr = "instrument.calibrate"
-		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr(lstr), 
+		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr(lstr) +
+							"\n\n" + self.get_instrument_name(), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
@@ -1878,7 +1881,8 @@ class Worker(object):
 			return
 		self.progress_wnd.Pulse(" " * 4)
 		dlg = ConfirmDialog(self.progress_wnd,
-							msg=lang.getstr("instrument.place_on_screen"), 
+							msg=lang.getstr("instrument.place_on_screen") +
+							"\n\n" + self.get_instrument_name(), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
@@ -3936,14 +3940,19 @@ class Worker(object):
 			options_colprof.append(display_manufacturer)
 		if write:
 			# Add dispcal and colprof arguments to ti3
-			ti3 = add_options_to_ti3(ti3, self.options_dispcal, options_colprof)
+			if is_ccxx_testchart():
+				options_dispcal = []
+			else:
+				options_dispcal = self.options_dispcal
+			ti3 = add_options_to_ti3(ti3, options_dispcal, options_colprof)
 			if ti3:
 				ti3.write()
 		return options_colprof
 	
-	def get_instrument_features(self):
+	def get_instrument_features(self, instrument_name=None):
 		""" Return features of currently configured instrument """
-		features = all_instruments.get(self.get_instrument_name(), {})
+		features = all_instruments.get(instrument_name or
+									   self.get_instrument_name(), {})
 		if test_require_sensor_cal:
 			features["sensor_cal"] = True
 			features["skip_sensor_cal"] = False

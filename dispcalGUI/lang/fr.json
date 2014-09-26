@@ -226,7 +226,7 @@
 	"colorimeter_correction.create": "Créer une correction du colorimètre...",
 	"colorimeter_correction.create.details": "Veuillez vérifier les champs ci-dessous et les changer si nécessaire. La description peut également contenir des détails importants (p. ex. des réglages spécifiques à l'écran, un observateur CIE non-standard ou ce genre de chose).",
 	"colorimeter_correction.create.failure": "Échec de la création de la correction.",
-	"colorimeter_correction.create.info": "Pour créer une matrice de correction du colorimètre (CCMX) ou un fichier d'échantillons de spectre de calibrage (CCSS), vous devez d'abord mesurer la « Grille de test pour la correction du colorimètre » à l'aide d'un spectromètre, et au cas où vous voulez créer une CCMX, également avec le colorimètre.\nPour cela, choisissez « Grille de test de mesure ». Ensuite, choisissez « Créer une correction du colorimètre... » et sélectionnez le(s) fichier(s) mesuré(s).",
+	"colorimeter_correction.create.info": "Pour créer une matrice de correction du colorimètre (CCMX) ou un fichier d'échantillons de spectre de calibrage (CCSS), vous devez d'abord mesurer la « Grille de test pour la correction du colorimètre » à l'aide d'un spectromètre, et au cas où vous voulez créer une CCMX, également avec le colorimètre.\nPour cela, choisissez « Grille de test de mesure ».",
 	"colorimeter_correction.create.success": "Correction créée.",
 	"colorimeter_correction.file.none": "Aucune",
 	"colorimeter_correction.import": "Importer les corrections du colorimètre d'un autre logiciel de profilage d'écrans...",
