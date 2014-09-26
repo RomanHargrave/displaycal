@@ -522,7 +522,8 @@ class BaseFrame(wx.Frame):
 				for line in incoming.splitlines():
 					if self and self.listening:
 						if (hasattr(self, "worker") and
-							self.worker.is_working() and line != "abort" and
+							self.worker.is_working() and
+							line not in ("abort", "close") and
 							not line.startswith("getcfg ")):
 							responses.append("busy")
 						elif line:
@@ -573,6 +574,8 @@ class BaseFrame(wx.Frame):
 					return "fail"
 			else:
 				response = "invalid"
+		elif data[0] == "state":
+			response = "idle"
 		else:
 			try:
 				response = self.process_data(data)
