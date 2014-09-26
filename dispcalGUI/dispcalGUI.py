@@ -7231,12 +7231,6 @@ class MainFrame(BaseFrame):
 			menuitem = self.menubar.FindItemById(lang.ldict[lang.getcode()].menuitem_id)
 			event = CustomEvent(wx.EVT_MENU.typeId, menuitem)
 			self.set_language_handler(event)
-		elif data[0] == "setcfg" and len(data) == 3:
-			# Set configuration option
-			value = data[2]
-			if value == "None":
-				value = None
-			setcfg(data[1], value)
 		elif (data[0] in ("enable-spyder2",
 						  "measure-uniformity",
 						  "report-calibrated", "report-uncalibrated",

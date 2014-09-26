@@ -551,12 +551,26 @@ class BaseFrame(wx.Frame):
 
 	def finish_processing(self, data, conn):
 		response = "ok"
-		if data[0] == "abort":
-			if not self.worker.abort_all():
+		if data[0] in ("abort", "close"):
+			if (hasattr(self, "worker") and self.worker.is_working() and
+				not self.worker.abort_all()):
 				response = "fail"
+			elif data[0] == "close":
+				self.Close()
 		elif data[0] == "getcfg" and len(data) == 2:
 			if data[1] in defaults:
 				response = getcfg(data[1])
+			else:
+				response = "invalid"
+		elif data[0] == "setcfg" and len(data) == 3:
+			# Set configuration option
+			if data[1] in defaults:
+				value = data[2]
+				if value == "None":
+					value = None
+				setcfg(data[1], value)
+				if getcfg(data[1]) != value:
+					return "fail"
 			else:
 				response = "invalid"
 		else:
