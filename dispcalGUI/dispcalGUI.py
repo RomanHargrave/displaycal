@@ -11313,7 +11313,8 @@ class StartupFrame(wx.Frame):
 		delayedresult.startWorker(self.setup_frame, 
 								  self.worker.enumerate_displays_and_ports,
 								  wkwargs={"enumerate_ports":
-										   getcfg("enumerate_ports.auto"),
+										   getcfg("enumerate_ports.auto") or
+										   not getcfg("instruments"),
 										   "silent": True})
 
 	def setup_frame(self, result):
