@@ -114,9 +114,13 @@ if u"phoenix" in wx.PlatformInfo:
 				return index
 
 	wx.Sizer.GetItemIndex = GetItemIndex
-	wx.TopLevelWindow.Restore = lambda self: self.Raise()
+	wx.TopLevelWindow.Restore = lambda self: self.Iconize(False)
 
 	# Renamed items
+
+	wx.OPEN = wx.FD_OPEN
+	wx.OVERWRITE_PROMPT = wx.FD_OVERWRITE_PROMPT
+	wx.SAVE = wx.FD_SAVE
 
 	wx.SystemSettings_GetFont = wx.SystemSettings.GetFont
 	wx.SystemSettings_GetMetric = wx.SystemSettings.GetMetric
