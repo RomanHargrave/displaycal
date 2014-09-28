@@ -970,6 +970,8 @@ class ProfileInfoFrame(LUTFrame):
 	
 		if len(args) < 3 and not "title" in kwargs:
 			kwargs["title"] = lang.getstr("profile.info")
+		if not "name" in kwargs:
+			kwargs["name"] = "profile_info"
 		
 		BaseFrame.__init__(self, *args, **kwargs)
 		
@@ -1650,7 +1652,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.Thaw()
 
 	def process_data(self, data):
-		if data[0] == "profile-info":
+		if data[0] == "profile-info" or (data[0] == "load" and len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()

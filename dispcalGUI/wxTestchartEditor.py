@@ -43,7 +43,8 @@ def swap_dict_keys_values(mydict):
 class TestchartEditor(BaseFrame):
 	def __init__(self, parent = None, id = -1, path=None,
 				 cfg=None, target=None):
-		BaseFrame.__init__(self, parent, id, lang.getstr("testchart.edit"))
+		BaseFrame.__init__(self, parent, id, lang.getstr("testchart.edit"),
+						   name="tcgen")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-testchart-editor"))
 		self.Bind(wx.EVT_CLOSE, self.tc_close_handler)
@@ -691,7 +692,8 @@ class TestchartEditor(BaseFrame):
 		self.tc_precond_profile_handler()
 
 	def process_data(self, data):
-		if data[0] == "testchart-editor":
+		if data[0] == "testchart-editor" or (data[0] == "load" and
+											 len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()

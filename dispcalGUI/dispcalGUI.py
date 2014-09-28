@@ -674,6 +674,7 @@ class ExtraArgsFrame(BaseFrame):
 			# Phoenix
 			wx.Frame.__init__(self)
 			self.res.LoadFrame(self, parent, "extra_args")
+		self.init()
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -795,6 +796,7 @@ class GamapFrame(BaseFrame):
 			# Phoenix
 			wx.Frame.__init__(self)
 			self.res.LoadFrame(self, parent, "gamapframe")
+		self.init()
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -1128,6 +1130,7 @@ class MainFrame(BaseFrame):
 			# Phoenix
 			wx.Frame.__init__(self)
 			self.res.LoadFrame(self, None, "mainframe")
+		self.init()
 		self.worker = worker
 		self.worker.owner = self
 		result = self.worker.create_tempdir()
@@ -1139,6 +1142,7 @@ class MainFrame(BaseFrame):
 			self.maxprofilenamelength = 255
 		self.init_frame()
 		self.init_defaults()
+		self.set_child_ctrls_as_attrs(self)
 		self.init_infoframe()
 		if sys.platform in ("darwin", "win32") or isexe:
 			self.init_measureframe()
@@ -1968,8 +1972,6 @@ class MainFrame(BaseFrame):
 		Initialize the main window controls and their event handlers.
 		
 		"""
-		
-		self.set_child_ctrls_as_attrs(self)
 
 		for child in (self.display_box_label, self.instrument_box_label,
 					  self.calibration_settings_label,
@@ -7179,11 +7181,19 @@ class MainFrame(BaseFrame):
 				if path:
 					self.tcframe.tc_load_cfg_from_ti1(path=path)
 			self.tcframe.Raise()
-		elif data[0] == appname:
+		elif data[0] == appname or (data[0] == "load" and len(data) == 2):
 			# Main window
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()
+			if len(data) == 2:
+				path = data[1]
+				if not os.path.isfile(path) and not os.path.isabs(path):
+					path = get_data_path(path)
+				if not path:
+					return "fail"
+				else:
+					self.load_cal_handler(None, path)
 		elif data[0] == "calibrate":
 			# Calibrate
 			self.calibrate_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
@@ -7202,19 +7212,9 @@ class MainFrame(BaseFrame):
 			self.import_colorimeter_corrections_handler(None, paths=data[1:])
 		elif data[0] == "install-profile":
 			if len(data) == 2:
-				profile_path = data[1]
+				self.install_profile_handler(profile_path=data[1])
 			else:
-				profile_path = None
-			self.install_profile_handler(profile_path=profile_path)
-		elif data[0] == "load" and len(data) == 2:
-			# Load settings from file
-			path = data[1]
-			if not os.path.isfile(path) and not os.path.isabs(path):
-				path = get_data_path(path)
-			if path:
-				self.load_cal_handler(None, path)
-			else:
-				response = "fail"
+				self.select_install_profile_handler(None)
 		elif data[0] == "measure":
 			# Start measurement
 			if getattr(self, "pending_function", None):
@@ -7255,11 +7255,12 @@ class MainFrame(BaseFrame):
 			menuitem = self.menubar.FindItemById(lang.ldict[lang.getcode()].menuitem_id)
 			event = CustomEvent(wx.EVT_MENU.typeId, menuitem)
 			self.set_language_handler(event)
-		elif (data[0] in ("enable-spyder2",
+		elif (data[0] in ("create-colorimeter-correction",
+						  "enable-spyder2",
 						  "measure-uniformity",
 						  "report-calibrated", "report-uncalibrated",
 						  "verify-calibration")):
-			getattr(self, data[0].replace("-", "_") + "_handler")(None)
+			getattr(self, data[0].replace("-", "_") + "_handler")(True)
 		else:
 			response = "invalid"
 		return response
@@ -11336,6 +11337,7 @@ class StartupFrame(wx.Frame):
 		app.SetTopWindow(app.frame)
 		app.frame.listen()
 		app.frame.Show()
+		app.process_argv(1)
 		wx.CallAfter(app.frame.Raise)
 		# Check for updates if configured
 		if getcfg("update_check"):

@@ -22,7 +22,7 @@ from meta import name as appname, version as appversion
 from util_os import launch_file, waccess
 from wxaddons import CustomEvent
 from wxMeasureFrame import MeasureFrame
-from wxwindows import BaseApp, FlatShadedButton, numpad_keycodes
+from wxwindows import BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes
 import colormath
 import config
 import localization as lang
@@ -48,13 +48,14 @@ class FlatShadedNumberedButton(FlatShadedButton):
 		self.index = index
 
 
-class DisplayUniformityFrame(wx.Frame):
+class DisplayUniformityFrame(BaseFrame):
 
 	def __init__(self, parent=None, handler=None,
 				 keyhandler=None, start_timer=True, rows=3, cols=5):
-		wx.Frame.__init__(self, parent, wx.ID_ANY,
+		BaseFrame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("report.uniformity"),
-						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
+						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
+						  name="displayuniformityframe")
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.GridSizer(rows, cols, 0, 0)

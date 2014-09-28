@@ -312,6 +312,94 @@ def set_bitmap_labels(btn):
 		btn.SetBitmapSelected(bmp)
 
 
+# wx.DirDialog and wx.FileDialog are normally not returned by
+# wx.GetTopLevelWindows, do some trickery to add them
+_toplevelwindows = []
+
+wx._DirDialog = wx.DirDialog
+wx._FileDialog = wx.FileDialog
+
+class DirDialog(wx._DirDialog):
+
+	def __init__(self, *args, **kwargs):
+		wx._DirDialog.__init__(self, *args, **kwargs)
+		self._ismodal = False
+		self._name = "dirdialog"
+		_toplevelwindows.append(self)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+
+	def IsModal(self):
+		return self._ismodal
+
+	def IsShown(self):
+		return self._ismodal
+
+	@Property
+	def Name():
+		def fget(self):
+			return self._name
+		
+		def fset(self, name):
+			self._name = name
+		
+		return locals()
+
+	def OnDestroy(self, event):
+		_toplevelwindows.remove(self)
+		event.Skip()
+
+	def ShowModal(self):
+		self._ismodal = True
+		returncode = wx._DirDialog.ShowModal(self)
+		self._ismodal = False
+		return returncode
+
+class FileDialog(wx._FileDialog):
+
+	def __init__(self, *args, **kwargs):
+		wx._FileDialog.__init__(self, *args, **kwargs)
+		self._ismodal = False
+		self._name = "filedialog"
+		_toplevelwindows.append(self)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+
+	def IsModal(self):
+		return self._ismodal
+
+	def IsShown(self):
+		return self._ismodal
+
+	@Property
+	def Name():
+		def fget(self):
+			return self._name
+		
+		def fset(self, name):
+			self._name = name
+		
+		return locals()
+
+	def OnDestroy(self, event):
+		_toplevelwindows.remove(self)
+		event.Skip()
+
+	def ShowModal(self):
+		self._ismodal = True
+		returncode = wx._FileDialog.ShowModal(self)
+		self._ismodal = False
+		return returncode
+
+wx.DirDialog = DirDialog
+wx.FileDialog = FileDialog
+
+wx._GetTopLevelWindows = wx.GetTopLevelWindows
+
+def GetTopLevelWindows():
+	return list(wx._GetTopLevelWindows()) + _toplevelwindows
+
+wx.GetTopLevelWindows = GetTopLevelWindows
+
+
 wx._ScrolledWindow = wx.ScrolledWindow
 
 class ScrolledWindow(wx._ScrolledWindow):

@@ -10,6 +10,8 @@ import string
 import sys
 import threading
 
+import demjson
+
 import config
 from config import (defaults, getbitmap, getcfg, geticon, 
 					get_verified_path, pyname, setcfg)
@@ -24,7 +26,9 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  adjust_font_size_for_gcdc, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
-from wxfixes import GenBitmapButton, GTKMenuItemGetFixedLabel, set_bitmap_labels
+from wexpect import split_command_line
+from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
+					 set_bitmap_labels)
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -452,12 +456,22 @@ class BaseApp(wx.App):
 			return paths
 
 
+active_window = None
+
 class BaseFrame(wx.Frame):
 
 	""" Main frame base class. """
 	
 	def __init__(self, *args, **kwargs):
 		wx.Frame.__init__(self, *args, **kwargs)
+		self.init()
+
+	def init(self):
+		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
+
+	def activate_handler(self, event):
+		global active_window
+		active_window = self
 
 	def listen(self):
 		if isinstance(getattr(sys, "_appsocket", None), socket.socket):
@@ -505,7 +519,6 @@ class BaseFrame(wx.Frame):
 
 	def message_handler(self, conn, addrport):
 		""" Handle messages sent via socket """
-		from wexpect import split_command_line
 		while self and self.listening:
 			# Wait for incoming message
 			try:
@@ -521,25 +534,36 @@ class BaseFrame(wx.Frame):
 				responses = []
 				for line in incoming.splitlines():
 					if self and self.listening:
-						if (hasattr(self, "worker") and
-							self.worker.is_working() and
-							line not in ("abort", "close") and
-							not line.startswith("getcfg ")):
-							responses.append("busy")
+						line = safe_unicode(line, "UTF-8")
+						safe_print(lang.getstr("app.incoming_message",
+											   addrport + (line, )))
+						state = self.get_app_state()
+						if ((state in ("blocked", "busy") or
+							 state.startswith("dialog") or
+							 state.startswith("dirdialog") or
+							 state.startswith("filedialog")) and
+							line not in ("abort", "alt", "cancel", "close",
+										 "ok") and
+							not line.startswith("ok ") and
+							not line.startswith("getcfg ") and
+							not line.startswith("getdefault") and
+							not line.startswith("getmenu") and
+							not line.startswith("getuielement") and
+							not line.startswith("interact") and
+							line != "getactivewindow" and
+							line != "getvalid" and
+							line != "getwindows"):
+							responses.append(state)
 						elif line:
-							line = safe_unicode(line, "UTF-8")
 							self._processmsg = True
-							safe_print(lang.getstr("app.incoming_message",
-												   addrport + (line, )))
 							data = split_command_line(line)
 							wx.CallAfter(self.finish_processing, data, conn)
-							while self and self._processmsg:
-								sleep(.001)
 					else:
 						break
 				if responses:
 					try:
-						conn.sendall("%s\n" % "\n".join(responses))
+						conn.sendall("%s\n" % safe_str("\n".join(responses),
+													   "UTF-8"))
 					except socket.error, exception:
 						safe_print(exception)
 				if not incoming:
@@ -547,22 +571,272 @@ class BaseFrame(wx.Frame):
 		safe_print(lang.getstr("app.client.disconnect", addrport))
 		conn.close()
 
+	def get_app_state(self):
+		win = self.get_top_window()
+		if isinstance(win, wx.Dialog) and win.IsModal():
+			if isinstance(win, (DirDialog, FileDialog)):
+				return " ".join([win.Name,
+								 demjson.encode(win.Message),
+								 demjson.encode(win.Path), "ok", "cancel"])
+			elif isinstance(win, (AboutDialog, BaseInteractiveDialog)):
+				response = ["dialog"]
+				if hasattr(win, "message"):
+					response.append(demjson.encode(win.message.Label))
+				if hasattr(win, "ok"):
+					response.append("ok")
+				if hasattr(win, "cancel"):
+					response.append("cancel")
+				if hasattr(win, "alt"):
+					response.append("alt")
+				return " ".join(response)
+			else:
+				return "blocked"
+		if hasattr(self, "worker") and self.worker.is_working():
+			return "busy"
+		return "idle"
+
+	def get_top_window(self):
+		windows = [active_window or self] + list(wx.GetTopLevelWindows())
+		while windows:
+			win = windows.pop()
+			if win and isinstance(win, wx.Dialog) and win.IsShown():
+				break
+		return (win and win.IsShown() and win) or self
+
 	def process_data(self, data):
-		return "busy"
+		""" Override this method in derived classes """
+		return "indeterminate"
 
 	def finish_processing(self, data, conn):
 		response = "ok"
 		if data[0] in ("abort", "close"):
-			if (hasattr(self, "worker") and self.worker.is_working() and
-				not self.worker.abort_all()):
+			if (hasattr(self, "worker") and not self.worker.abort_all() and
+				self.worker.is_working()):
 				response = "fail"
 			elif data[0] == "close":
-				self.Close()
-		elif data[0] == "getcfg" and len(data) == 2:
-			if data[1] in defaults:
-				response = getcfg(data[1])
+				win = self.get_top_window()
+				if (isinstance(win, (AboutDialog, BaseInteractiveDialog)) and
+					win.IsModal()):
+					win.EndModal(wx.ID_CANCEL)
+				elif isinstance(win, (AboutDialog, ProgressDialog)):
+					win.Close()
+				else:
+					response = "fail"
+		elif data[0] == "activate" and len(data) == 2:
+			response = "ok"
+			for win in wx.GetTopLevelWindows():
+				if win.Name == data[1] and win.IsShown():
+					if win.IsIconized():
+						win.Restore()
+					win.Raise()
+					break
 			else:
 				response = "invalid"
+		elif data[0] in ("alt", "cancel", "ok"):
+			response = "fail"
+			for win in wx.GetTopLevelWindows():
+				if win and isinstance(win, wx.Dialog) and win.IsModal():
+					if isinstance(win, (DirDialog, FileDialog)):
+						if data[0] not in ("ok", "cancel"):
+							break
+						if len(data) > 1:
+							# Path
+							win.SetPath(data[1])
+						win.EndModal({"ok": wx.ID_OK,
+									  "cancel": wx.ID_CANCEL}[data[0]])
+						response = "ok"
+						break
+					elif isinstance(win, BaseInteractiveDialog):
+						if hasattr(win, data[0]):
+							win.EndModal(getattr(win, data[0]).Id)
+							response = "ok"
+							break
+		elif data[0] == "invokemenu" and len(data) == 3:
+			response = "invalid"
+			win = self.get_top_window()
+			menubar = win.GetMenuBar()
+			if menubar:
+				menu_pos = menubar.FindMenu(data[1])
+				if (menu_pos not in (wx.NOT_FOUND, None) and
+					menubar.IsEnabledTop(menu_pos)):
+					menu = menubar.GetMenu(menu_pos)
+					menuitem_id = menu.FindItem(data[2])
+					if menuitem_id not in (wx.NOT_FOUND, None):
+						menuitem = menu.FindItemById(menuitem_id)
+						if menuitem.IsEnabled():
+							win.ProcessEvent(wx.PyCommandEvent(wx.EVT_MENU.typeId,
+															   menuitem_id))
+							response = "ok"
+						else:
+							response = "forbidden"
+		elif data[0] == "getactivewindow":
+			response = self.get_top_window().Name
+		elif data[0] == "getcfg":
+			if len(data) == 2:
+				# Return cfg value
+				if data[1] in defaults:
+					response = getcfg(data[1])
+				else:
+					response = "invalid"
+			else:
+				# Return whole cfg
+				cfg = []
+				for name in defaults:
+					value = getcfg(name, False)
+					if value is not None:
+						cfg.append("%s = %s" % (name, value))
+				response = "\n".join(sorted(cfg))
+		elif data[0] == "getdefault" and len(data) == 2:
+			if data[1] in defaults:
+				response = defaults[data[1]]
+			else:
+				response = "invalid"
+		elif data[0] == "getdefaults":
+			response = "\n".join(sorted("%s = %s" % (name, value)
+										for name, value in
+										defaults.iteritems()))
+		elif data[0] == "getmenus":
+			menus = []
+			win = self.get_top_window()
+			menubar = win.GetMenuBar()
+			if menubar:
+				for i, (menu, label) in enumerate(menubar.GetMenus()):
+					label = label.lstrip("&_")
+					menus.append("%s %s" % (demjson.encode(label),
+											"enabled" if menubar.IsEnabledTop(i)
+											else "disabled"))
+			response = "\n".join(menus)
+		elif data[0] == "getmenuitems":
+			menuitems = []
+			win = self.get_top_window()
+			menubar = win.GetMenuBar()
+			if menubar:
+				for i, (menu, label) in enumerate(menubar.GetMenus()):
+					label = label.lstrip("&_")
+					if len(data) == 2 and label != data[1]:
+						continue
+					for menuitem in menu.GetMenuItems():
+						if menuitem.IsSeparator():
+							continue
+						menuitems.append("%s %s %s%s%s" %
+										 (demjson.encode(label),
+										  demjson.encode(menuitem.Label),
+										  "enabled"
+										  if menubar.IsEnabledTop(i) and
+										  menuitem.IsEnabled()
+										  else "disabled",
+										  " checkable" if menuitem.IsCheckable()
+										  else "",
+										  " checked" if menuitem.IsChecked()
+										  else ""))
+			response = "\n".join(menuitems)
+		elif data[0] == "getstate":
+			response = self.get_app_state()
+		elif data[0] == "getuielement" and len(data) == 2:
+			win = self.get_top_window()
+			if hasattr(win, data[1]):
+				try:
+					# Trying to access some attributes of wx widgets may
+					# raise an exception
+					attr = getattr(self, data[1])
+				except:
+					response = "fail"
+				else:
+					if attr.IsShownOnScreen():
+						response = format_ui_element(attr, data[1])
+					else:
+						response = "forbidden"
+			else:
+				response = "invalid"
+		elif data[0] == "getuielements":
+			uielements = []
+			win = self.get_top_window()
+			attrs = {}
+			for attrname in dir(win):
+				try:
+					# Trying to access some attributes of wx widgets may
+					# raise an exception
+					attr = getattr(win, attrname)
+				except:
+					continue
+				if (isinstance(attr, (CustomCheckBox, wx.Control)) and
+					not isinstance(attr, wx.StaticBitmap) and
+					attr.IsShownOnScreen()):
+					attrs[attr] = attrname
+			# Ordering in tab order
+			for child in win.GetAllChildren():
+				if child in attrs:
+					uielements.append(format_ui_element(child, attrs[child]))
+			response = "\n".join(uielements)
+		elif data[0] == "getvalid":
+			response = demjson.encode({"ranges": config.valid_ranges,
+									   "values": config.valid_values})
+		elif data[0] == "getwindows":
+			response = "\n".join(win.Name for win in
+								 filter(lambda win: win.IsShown(),
+										wx.GetTopLevelWindows()))
+		elif data[0] == "interact" and len(data) > 1:
+			win = self.get_top_window()
+			try:
+				# Trying to access some attributes of wx widgets may
+				# raise an exception
+				attr = getattr(win, data[1])
+			except:
+				response = "fail"
+			else:
+				event = None
+				if not attr.IsShownOnScreen() or not attr.IsEnabled():
+					response = "forbidden"
+				elif len(data) == 3:
+					# Set value
+					if isinstance(attr, floatspin.FloatSpin):
+						try:
+							attr.SetValue(float(data[2]))
+						except:
+							response = "fail"
+						else:
+							event = floatspin.EVT_FLOATSPIN
+					elif isinstance(attr, (CustomCheckBox, wx.CheckBox)):
+						attr.SetValue(bool(data[2]))
+						event = wx.EVT_CHECKBOX
+					elif isinstance(attr, wx.Choice):
+						if data[2] in attr.Items:
+							attr.SetStringSelection(data[2])
+							event = wx.EVT_CHOICE
+					elif isinstance(attr, wx.ComboBox):
+						attr.SetValue(data[2])
+						event = wx.EVT_TEXT
+					elif isinstance(attr, wx.RadioButton):
+						attr.SetValue(bool(data[2]))
+						event = wx.EVT_RADIOBUTTON
+					elif isinstance(attr, wx.Slider):
+						try:
+							attr.SetValue(int(data[2]))
+						except:
+							response = "fail"
+						else:
+							event = wx.EVT_SLIDER
+					elif isinstance(attr, wx.SpinCtrl):
+						try:
+							attr.SetValue(int(data[2]))
+						except:
+							response = "fail"
+						else:
+							event = wx.EVT_SPINCTRL
+					elif isinstance(attr, wx.TextCtrl):
+						attr.ChangeValue(data[2])
+						event = wx.EVT_TEXT
+				elif isinstance(attr, (FlatShadedButton,
+									   GenButton, wx.Button)):
+					event = wx.EVT_BUTTON
+				else:
+					safe_print(attr.__class__)
+				if event:
+					attr.ProcessEvent(wx.PyCommandEvent(event.typeId,
+														attr.Id))
+					attr.Refresh()
+				elif response == "ok":
+					response = "invalid"
 		elif data[0] == "setcfg" and len(data) == 3:
 			# Set configuration option
 			if data[1] in defaults:
@@ -571,17 +845,50 @@ class BaseFrame(wx.Frame):
 					value = None
 				setcfg(data[1], value)
 				if getcfg(data[1]) != value:
-					return "fail"
+					response = "fail"
 			else:
 				response = "invalid"
-		elif data[0] == "state":
-			response = "idle"
 		else:
+			wx.DirDialog = DirDialog
+			wx.FileDialog = FileDialog
 			try:
 				response = self.process_data(data)
 			except Exception, exception:
 				safe_print(exception)
-				response = exception
+				response = "error " + safe_str(exception, "UTF-8")
+			else:
+				# Some commands can be overriden, check response
+				if response == "invalid":
+					if (data[0] == "refresh" and
+						hasattr(self, "update_controls")):
+						self.update_controls()
+						self.update_layout()
+						response = "ok"
+					elif data[0] == "restore-defaults":
+						for name in defaults:
+							if len(data) > 1:
+								include = False
+								for category in data[1:]:
+									if name.startswith(data[1]):
+										include = True
+										break
+								if not include:
+									continue
+							setcfg(name, None)
+						response = "ok"
+					elif (data[0] == "set-language" and len(data) == 2 and
+						  hasattr(self, "panel") and
+						  hasattr(self, "update_controls")):
+						setcfg("lang", data[1])
+						self.panel.Freeze()
+						self.setup_language()
+						self.update_controls()
+						self.update_layout()
+						self.panel.Thaw()
+						response = "ok"
+			finally:
+				wx.DirDialog = _DirDialog
+				wx.FileDialog = _FileDialog
 		if response == "invalid":
 			safe_print(lang.getstr("app.incoming_message.invalid"))
 		try:
@@ -801,7 +1108,8 @@ class BaseInteractiveDialog(wx.Dialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 show=True, log=True, 
-				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70):
+				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
+				 name=wx.DialogNameStr):
 		if log:
 			safe_print(msg)
 		if parent:
@@ -812,7 +1120,7 @@ class BaseInteractiveDialog(wx.Dialog):
 					pos[i] += parent.GetScreenPosition()[i]
 				i += 1
 			pos = tuple(pos)
-		wx.Dialog.__init__(self, parent, id, title, pos, size, style)
+		wx.Dialog.__init__(self, parent, id, title, pos, size, style, name)
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
 			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
@@ -1114,11 +1422,13 @@ class ConfirmDialog(BaseInteractiveDialog):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
 				 size=(400, -1), alt=None, log=False, 
-				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70):
+				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
+				 name=wx.DialogNameStr):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
 									   log=log, style=style,
-									   nowrap=nowrap, wrap=wrap)
+									   nowrap=nowrap, wrap=wrap,
+									   name=name)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
@@ -1305,6 +1615,45 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 				   self.toolTip)
 		control.SetToolTipString(toolTip)
 		control.Enable(self.browseButton.Enabled and self.history != [""])
+
+
+class PathDialog(ConfirmDialog):
+
+	def __init__(self, parent, msg, name):
+		ConfirmDialog.__init__(self, parent, msg=msg,
+							   ok=lang.getstr("browse"),
+							   cancel=lang.getstr("cancel"), name=name)
+		self.ok.Bind(wx.EVT_BUTTON, self.filedialog_handler)
+
+	def __getattr__(self, name):
+		return getattr(self.filedialog, name)
+
+	def filedialog_handler(self, event):
+		self.EndModal(self.filedialog.ShowModal())
+
+
+_DirDialog = wx.DirDialog
+
+class DirDialog(PathDialog):
+
+	""" wx.DirDialog cannot be interacted with programmatically after
+	ShowModal(), a functionality we need for scripting. """
+
+	def __init__(self, *args, **kwargs):
+		self.filedialog = _DirDialog(*args, **kwargs)
+		PathDialog.__init__(self, args[0], args[1], "dirdialog")
+
+
+_FileDialog = wx.FileDialog
+
+class FileDialog(PathDialog):
+
+	""" wx.FileDialog cannot be interacted with programmatically after
+	ShowModal(), a functionality we need for scripting. """
+
+	def __init__(self, *args, **kwargs):
+		self.filedialog = _FileDialog(*args, **kwargs)
+		PathDialog.__init__(self, args[0], args[1], "filedialog")
 
 
 class FileDrop(_FileDrop):
@@ -2571,13 +2920,14 @@ class InfoDialog(BaseInteractiveDialog):
 									   bitmap, pos, size, show, log)
 
 
-class InvincibleFrame(wx.Frame):
+class InvincibleFrame(BaseFrame):
 
 	""" A frame that won't be destroyed when closed """
 
 	def __init__(self, parent=None, id=-1, title="", pos=wx.DefaultPosition,
-				 size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
-		wx.Frame.__init__(self, parent, id, title, pos, size, style)
+				 size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE,
+				 name=wx.FrameNameStr):
+		BaseFrame.__init__(self, parent, id, title, pos, size, style, name)
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
 	def OnClose(self, event):
@@ -2593,7 +2943,8 @@ class LogWindow(InvincibleFrame):
 								 lang.getstr("infoframe.title"), 
 								 pos=(int(getcfg("position.info.x")), 
 									  int(getcfg("position.info.y"))), 
-								 style=wx.DEFAULT_FRAME_STYLE)
+								 style=wx.DEFAULT_FRAME_STYLE,
+								 name="info")
 		self.last_visible = False
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -3569,6 +3920,24 @@ def get_gradient_panel(parent, label, x=16):
 	gradientpanel.Font = font
 	gradientpanel.SetLabel(label)
 	return gradientpanel
+
+
+def format_ui_element(child, name):
+	return "%s %s %s%s%s" % (child.__class__.__name__, name,
+							 "enabled" if child.IsEnabled() else "disabled",
+							 (isinstance(child, (CustomCheckBox, wx.CheckBox,
+												 wx.RadioButton)) and
+							  child.GetValue() and " checked") or
+							 (getattr(child, "GetValue", "") and
+							  not isinstance(child, (CustomCheckBox, wx.CheckBox,
+													 wx.RadioButton)) and
+							  " " + demjson.encode(child.GetValue())) or
+							 (getattr(child, "GetStringSelection", "") and
+							  " " + demjson.encode(child.GetStringSelection())) or
+							 (child.Label and
+							  " " + demjson.encode(child.Label)),
+							 (getattr(child, "Items", "") and
+							  " " + demjson.encode(child.Items)))
 
 
 def test():

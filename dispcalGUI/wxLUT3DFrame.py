@@ -38,6 +38,7 @@ class LUT3DFrame(BaseFrame):
 			# Phoenix
 			wx.Frame.__init__(self)
 			self.res.LoadFrame(self, parent, "lut3dframe")
+		self.init()
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],

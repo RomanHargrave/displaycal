@@ -19,7 +19,7 @@ from config import (getbitmap, getcfg, geticon, get_data_path, get_icon_bundle,
 from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug, test, verbose
-from wxwindows import (BaseApp, BitmapBackgroundPanel, CustomCheckBox,
+from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanel, CustomCheckBox,
 					   CustomGrid, FlatShadedButton, numpad_keycodes)
 import CGATS
 import colormath
@@ -30,13 +30,14 @@ BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
 FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 
 
-class UntetheredFrame(wx.Frame):
+class UntetheredFrame(BaseFrame):
 
 	def __init__(self, parent=None, handler=None,
 				 keyhandler=None, start_timer=True):
-		wx.Frame.__init__(self, parent, wx.ID_ANY,
+		BaseFrame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("measurement.untethered"),
-						  style=wx.DEFAULT_FRAME_STYLE)
+						  style=wx.DEFAULT_FRAME_STYLE,
+						  name="untetheredframe")
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.sizer = wx.FlexGridSizer(2, 1, 0, 0)
 		self.sizer.AddGrowableCol(0)

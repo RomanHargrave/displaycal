@@ -124,7 +124,8 @@ class MeasureFrame(InvincibleFrame):
 		InvincibleFrame.__init__(self, parent, id, 
 								 lang.getstr("measureframe.title"), 
 								 style=wx.DEFAULT_FRAME_STYLE & 
-									   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
+									   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX),
+								 name="measureframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
 		self.Bind(wx.EVT_MOVE, self.move_handler, self)

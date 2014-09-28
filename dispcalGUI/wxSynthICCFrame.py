@@ -39,6 +39,7 @@ class SynthICCFrame(BaseFrame):
 			# Phoenix
 			wx.Frame.__init__(self)
 			self.res.LoadFrame(self, parent, "synthiccframe")
+		self.init()
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
@@ -421,7 +422,7 @@ class SynthICCFrame(BaseFrame):
 			self._updating_ctrls = False
 
 	def process_data(self, data):
-		if data[0] == "synthprofile":
+		if data[0] == "synthprofile" or (data[0] == "load" and len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()

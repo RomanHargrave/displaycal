@@ -23,7 +23,7 @@ from log import get_file_logger
 from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import safe_unicode, wrap
-from wxwindows import BaseApp, FlatShadedButton, numpad_keycodes
+from wxwindows import BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes
 import config
 import localization as lang
 
@@ -593,13 +593,14 @@ class DisplayAdjustmentPanel(wx.Panel):
 							   lang.getstr("calibration.interactive_display_adjustment.generic_hint.singular"))
 			self.desc.Wrap(250)
 
-class DisplayAdjustmentFrame(wx.Frame):
+class DisplayAdjustmentFrame(BaseFrame):
 
 	def __init__(self, parent=None, handler=None,
 				 keyhandler=None, start_timer=True):
-		wx.Frame.__init__(self, parent, wx.ID_ANY,
+		BaseFrame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("calibration.interactive_display_adjustment"),
-						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
+						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
+						  name="displayadjustmentframe")
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.FlexGridSizer(0, 3, 0, 0)

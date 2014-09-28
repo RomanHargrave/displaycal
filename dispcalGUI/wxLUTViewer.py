@@ -693,6 +693,8 @@ class LUTFrame(BaseFrame):
 	
 		if len(args) < 3 and not "title" in kwargs:
 			kwargs["title"] = lang.getstr("calibration.lut_viewer.title")
+		if not "name" in kwargs:
+			kwargs["name"] = "lut_viewer"
 		
 		BaseFrame.__init__(self, *args, **kwargs)
 		
@@ -1320,7 +1322,7 @@ class LUTFrame(BaseFrame):
 		wx.CallAfter(self.client.center)
 
 	def process_data(self, data):
-		if data[0] == "curve-viewer":
+		if data[0] == "curve-viewer" or (data[0] == "load" and len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()
