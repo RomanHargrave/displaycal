@@ -618,7 +618,7 @@ class BaseFrame(wx.Frame):
 				if (isinstance(win, (AboutDialog, BaseInteractiveDialog)) and
 					win.IsModal()):
 					win.EndModal(wx.ID_CANCEL)
-				elif isinstance(win, (AboutDialog, ProgressDialog)):
+				elif isinstance(win, (AboutDialog, ProgressDialog, wx.Frame)):
 					win.Close()
 				else:
 					response = "fail"
