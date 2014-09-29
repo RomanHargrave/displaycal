@@ -568,7 +568,8 @@ class BaseFrame(wx.Frame):
 					response = [win.__class__.__name__, win.Name,
 								demjson.encode(win.Message),
 								"path", demjson.encode(win.Path)]
-			elif isinstance(win, (AboutDialog, BaseInteractiveDialog)):
+			elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
+								  ProgressDialog)):
 				if format.startswith("json"):
 					response = {"class": win.__class__.__name__,
 								"name": win.Name}
@@ -654,7 +655,7 @@ class BaseFrame(wx.Frame):
 					response = "invalid"
 		elif data[0] == "activate" and len(data) == 2:
 			response = "ok"
-			for win in wx.GetTopLevelWindows():
+			for win in reversed(wx.GetTopLevelWindows()):
 				if win.Name == data[1] and win.IsShown():
 					if win.IsIconized():
 						win.Restore()
@@ -4068,7 +4069,7 @@ def get_widget(win, name):
 
 
 def get_toplevel_window(name):
-	for win in wx.GetTopLevelWindows():
+	for win in reversed(wx.GetTopLevelWindows()):
 		if win.Name == name:
 			return win
 
