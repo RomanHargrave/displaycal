@@ -163,7 +163,7 @@ def main(module=None):
 					safe_print(lang.getstr("app.otherinstance.notified"))
 				else:
 					# Other instance busy?
-					handle_error(lang.getstr("app.otherinstance.busy", name))
+					handle_error(lang.getstr("app.otherinstance", name))
 				# Exit
 				return
 		# Force to run inside tty with the --terminal option
