@@ -7629,7 +7629,7 @@ class MainFrame(BaseFrame):
 				dlg.Freeze()
 				for item in list(boxsizer.Children) + [boxsizer.StaticBox]:
 					if isinstance(item, (wx.SizerItem, wx.Window)):
-						item.Show(len(colorimeters) > 1 and
+						item.Show(bool(colorimeters) and
 								  dlg.correction_type_matrix.GetValue())
 				dlg.ok.Enable(bool(self.worker.displays and 
 								   reference_instruments and
