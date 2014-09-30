@@ -1354,6 +1354,9 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.Destroy()
 
 	def OnShow(self, event):
+		event.Skip()
+		if not getattr(event, "IsShown", getattr(event, "GetShow", bool))():
+			return
 		if not wx.GetApp().IsActive() and wx.GetApp().GetTopWindow():
 			wx.GetApp().GetTopWindow().RequestUserAttention()
 
@@ -1365,7 +1368,8 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.EndModal(id)
 
 	def Show(self, show=True):
-		self.set_position()
+		if show:
+			self.set_position()
 		return wx.Dialog.Show(self, show)
 
 	def ShowModal(self):
