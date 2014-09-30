@@ -7492,7 +7492,7 @@ class MainFrame(BaseFrame):
 		Atleast one of the ti3 files must be a measured with a spectrometer.
 		
 		"""
-		parent = self if not paths else None
+		parent = self if event else None
 		if not paths:
 			dlg = ConfirmDialog(parent,
 								title=lang.getstr("colorimeter_correction.create"),
