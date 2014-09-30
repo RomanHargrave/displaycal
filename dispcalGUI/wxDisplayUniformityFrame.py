@@ -74,8 +74,8 @@ class DisplayUniformityFrame(BaseFrame):
 			sizer = wx.BoxSizer(wx.VERTICAL)
 			panel.SetSizer(sizer)
 			self.panels.append(panel)
-			button = FlatShadedNumberedButton(panel, label=" %s " %
-													 lang.getstr("measure"),
+			button = FlatShadedNumberedButton(panel,
+											  label=lang.getstr("measure"),
 											  bitmap=getbitmap("theme/icons/10x10/record"),
 											  bgcolour=LIGHTGRAY,
 											  fgcolour=BLACK, index=index)

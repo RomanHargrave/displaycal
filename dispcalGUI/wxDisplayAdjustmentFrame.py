@@ -852,11 +852,11 @@ class DisplayAdjustmentFrame(BaseFrame):
 			self.lb.disabled_pages = (0, 3)
 			self.lb.SetSelection(1)
 		if getcfg("trc"):
-			self.calibration_btn.SetLabel(" " + lang.getstr("calibration.start"))
+			self.calibration_btn.SetLabel(lang.getstr("calibration.start"))
 		elif getcfg("calibration.continue_next"):
-			self.calibration_btn.SetLabel(" " + lang.getstr("calibration.skip"))
+			self.calibration_btn.SetLabel(lang.getstr("calibration.skip"))
 		else:
-			self.calibration_btn.SetLabel(" " + lang.getstr("finish"))
+			self.calibration_btn.SetLabel(lang.getstr("finish"))
 		for btn in (self.adjustment_btn, self.sound_on_off_btn,
 					self.calibration_btn):
 			if hasattr(btn, "_lastBestSize"):
@@ -949,14 +949,12 @@ class DisplayAdjustmentFrame(BaseFrame):
 		if getattr(self, "adjustment_btn", None):
 			self.adjustment_btn._bitmap = getbitmap("theme/icons/10x10/%s" %
 													icon)
-			self.adjustment_btn.SetLabel(" " +
-										 lang.getstr("calibration.interactive_display_adjustment.%s" %
+			self.adjustment_btn.SetLabel(lang.getstr("calibration.interactive_display_adjustment.%s" %
 													 startstop))
 			self.adjustment_btn.Enable(enable)
 			return
 		self.adjustment_btn = self.create_gradient_button(getbitmap("theme/icons/10x10/%s" %
 																	icon),
-														  " " +
 														  lang.getstr("calibration.interactive_display_adjustment.%s" %
 																	  startstop),
 														  name="adjustment_btn")

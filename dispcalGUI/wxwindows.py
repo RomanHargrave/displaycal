@@ -2000,6 +2000,8 @@ class FlatShadedButton(GradientButton):
 		font = gc.CreateFont(self.GetFont(), self.GetForegroundColour())
 		gc.SetFont(font)
 		label = self.GetLabel()
+		if label and self._bitmap:
+			label = " " + label
 		tw, th = gc.GetTextExtent(label)
 
 		if self._bitmap:

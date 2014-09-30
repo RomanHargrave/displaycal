@@ -99,7 +99,7 @@ class UntetheredFrame(BaseFrame):
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.measure_btn = FlatShadedButton(self.panel,
 											bitmap=geticon(10, "play"),
-											label=" " + lang.getstr("measure"),
+											label=lang.getstr("measure"),
 											fgcolour=FGCOLOUR)
 		self.measure_btn.Bind(wx.EVT_BUTTON, self.measure_btn_handler)
 		sizer.Add(self.measure_btn, 0, wx.RIGHT, border=6)
