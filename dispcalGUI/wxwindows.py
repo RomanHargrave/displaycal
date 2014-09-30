@@ -1805,8 +1805,8 @@ class DirDialog(PathDialog):
 	ShowModal(), a functionality we need for scripting. """
 
 	def __init__(self, *args, **kwargs):
-		self.filedialog = _DirDialog(*args, **kwargs)
 		PathDialog.__init__(self, args[0], args[1], "dirdialog")
+		self.filedialog = _DirDialog(*args, **kwargs)
 
 
 _FileDialog = wx.FileDialog
@@ -1817,8 +1817,8 @@ class FileDialog(PathDialog):
 	ShowModal(), a functionality we need for scripting. """
 
 	def __init__(self, *args, **kwargs):
-		self.filedialog = _FileDialog(*args, **kwargs)
 		PathDialog.__init__(self, args[0], args[1], "filedialog")
+		self.filedialog = _FileDialog(*args, **kwargs)
 
 
 class FileDrop(_FileDrop):

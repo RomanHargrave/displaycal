@@ -317,91 +317,53 @@ def set_bitmap_labels(btn):
 
 
 # wx.DirDialog and wx.FileDialog are normally not returned by
-# wx.GetTopLevelWindows, do some trickery to add them
-_toplevelwindows = []
+# wx.GetTopLevelWindows, do some trickery to work around
 
-wx._DirDialog = wx.DirDialog
-wx._FileDialog = wx.FileDialog
+_DirDialog = wx.DirDialog
+_FileDialog = wx.FileDialog
 
-class DirDialog(wx._DirDialog):
+class PathDialogBase(wx.Dialog):
 
-	def __init__(self, *args, **kwargs):
-		wx._DirDialog.__init__(self, *args, **kwargs)
+	def __init__(self, name):
+		wx.Dialog.__init__(self, None, -1, name=name)
 		self._ismodal = False
-		self._name = "dirdialog"
-		_toplevelwindows.append(self)
-		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+		self._isshown = False
+
+	def __getattr__(self, name):
+		return getattr(self.filedialog, name)
 
 	def IsModal(self):
 		return self._ismodal
 
 	def IsShown(self):
-		return self._ismodal
+		return self._isshown
 
-	@Property
-	def Name():
-		def fget(self):
-			return self._name
-		
-		def fset(self, name):
-			self._name = name
-		
-		return locals()
-
-	def OnDestroy(self, event):
-		_toplevelwindows.remove(self)
-		event.Skip()
+	def Show(self, show=True):
+		self._isshown = show
+		self.filedialog.Show(show)
 
 	def ShowModal(self):
+		self._isshown = True
 		self._ismodal = True
-		returncode = wx._DirDialog.ShowModal(self)
+		returncode = self.filedialog.ShowModal()
 		self._ismodal = False
+		self._isshown = False
 		return returncode
 
-class FileDialog(wx._FileDialog):
+class DirDialog(PathDialogBase):
 
 	def __init__(self, *args, **kwargs):
-		wx._FileDialog.__init__(self, *args, **kwargs)
-		self._ismodal = False
-		self._name = "filedialog"
-		_toplevelwindows.append(self)
-		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+		PathDialogBase.__init__(self, name="dirdialog")
+		self.filedialog = _DirDialog(*args, **kwargs)
 
-	def IsModal(self):
-		return self._ismodal
+class FileDialog(PathDialogBase):
 
-	def IsShown(self):
-		return self._ismodal
-
-	@Property
-	def Name():
-		def fget(self):
-			return self._name
-		
-		def fset(self, name):
-			self._name = name
-		
-		return locals()
-
-	def OnDestroy(self, event):
-		_toplevelwindows.remove(self)
-		event.Skip()
-
-	def ShowModal(self):
-		self._ismodal = True
-		returncode = wx._FileDialog.ShowModal(self)
-		self._ismodal = False
-		return returncode
+	def __init__(self, *args, **kwargs):
+		PathDialogBase.__init__(self, name="filedialog")
+		self.filedialog = _FileDialog(*args, **kwargs)
 
 wx.DirDialog = DirDialog
 wx.FileDialog = FileDialog
-
-wx._GetTopLevelWindows = wx.GetTopLevelWindows
-
-def GetTopLevelWindows():
-	return list(wx._GetTopLevelWindows()) + _toplevelwindows
-
-wx.GetTopLevelWindows = GetTopLevelWindows
 
 
 wx._ScrolledWindow = wx.ScrolledWindow
