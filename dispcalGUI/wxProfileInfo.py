@@ -1652,7 +1652,8 @@ class ProfileInfoFrame(LUTFrame):
 		self.Thaw()
 
 	def process_data(self, data):
-		if data[0] == "profile-info" or (data[0] == "load" and len(data) == 2):
+		if (data[0] == "profile-info" and
+			len(data) < 3) or (data[0] == "load" and len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()

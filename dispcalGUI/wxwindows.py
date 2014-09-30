@@ -559,22 +559,17 @@ class BaseFrame(wx.Frame):
 			if format is None:
 				format = self.responseformat
 			if isinstance(win, (DirDialog, FileDialog)):
+				response = format_ui_element(win, format)
 				if format.startswith("json"):
-					response = {"class": win.__class__.__name__,
-								"name": win.Name,
-								"message": win.Message,
-								"path": win.Path}
+					response.update({"message": win.Message, "path": win.Path})
 				else:
-					response = [win.__class__.__name__, win.Name,
-								demjson.encode(win.Message),
+					response = [response, demjson.encode(win.Message),
 								"path", demjson.encode(win.Path)]
 			elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
 								  ProgressDialog)):
-				if format.startswith("json"):
-					response = {"class": win.__class__.__name__,
-								"name": win.Name}
-				else:
-					response = [win.__class__.__name__, win.Name]
+				response = format_ui_element(win, format)
+				if not format.startswith("json"):
+					response = [response]
 				if hasattr(win, "message"):
 					if format.startswith("json"):
 						response["message"] = win.message.Label
@@ -584,6 +579,7 @@ class BaseFrame(wx.Frame):
 				for child in win.GetAllChildren():
 					if (child and isinstance(child, (FlatShadedButton,
 													 GenButton, wx.Button)) and
+						child.TopLevelParent is win and
 						child.IsShownOnScreen() and child.IsEnabled()):
 						if format.startswith("json"):
 							if not "buttons" in response:
@@ -612,7 +608,7 @@ class BaseFrame(wx.Frame):
 
 	def process_data(self, data):
 		""" Override this method in derived classes """
-		return "indeterminate"
+		return "invalid"
 
 	def finish_processing(self, data, conn, command_timestamp):
 		state = self.get_app_state("plain")
@@ -655,15 +651,22 @@ class BaseFrame(wx.Frame):
 					response = "invalid"
 		elif data[0] == "activate" and len(data) == 2:
 			response = "ok"
+			try:
+				id_name_label = int(data[1])
+			except ValueError:
+				id_name_label = data[1]
 			for win in reversed(wx.GetTopLevelWindows()):
-				if win.Name == data[1] and win.IsShown():
+				if (win.Id == id_name_label or win.Name == id_name_label or
+					win.Label == id_name_label) and win.IsShown():
 					if win.IsIconized():
 						win.Restore()
 					win.Raise()
 					break
 			else:
 				response = "invalid"
-		elif data[0] in ("alt", "cancel", "ok"):
+		elif data[0] in ("alt", "cancel", "ok") and (len(data) == 1 or
+													 (data[0] == "ok" and
+													  len(data) == 2)):
 			response = "invalid"
 			win = self.get_top_window()
 			if isinstance(win, (DirDialog, FileDialog)):
@@ -702,27 +705,33 @@ class BaseFrame(wx.Frame):
 				menubar = None
 				response = "forbidden"
 			if menubar:
-				menu_pos = menubar.FindMenu(data[1])
+				try:
+					menu_pos = int(data[1])
+				except ValueError:
+					menu_pos = menubar.FindMenu(data[1])
 				if (menu_pos not in (wx.NOT_FOUND, None) and
+					menu_pos > -1 and menu_pos < menubar.GetMenuCount() and
 					menubar.IsEnabledTop(menu_pos)):
 					menu = menubar.GetMenu(menu_pos)
-					menuitem_id = menu.FindItem(data[2])
+					try:
+						menuitem_id = int(data[2])
+					except ValueError:
+						menuitem_id = menu.FindItem(data[2])
 					if menuitem_id not in (wx.NOT_FOUND, None):
 						menuitem = menu.FindItemById(menuitem_id)
 						if menuitem.IsEnabled():
-							self.ProcessEvent(wx.CommandEvent(wx.EVT_MENU.typeId,
-															  menuitem_id))
+							event = wx.CommandEvent(wx.EVT_MENU.typeId,
+													menuitem_id)
+							event.SetEventObject(menu)
+							self.ProcessEvent(event)
 							response = "ok"
 						else:
 							response = "forbidden"
-		elif data[0] == "getactivewindow":
+		elif data[0] == "getactivewindow" and len(data) == 1:
 			win = self.get_top_window()
-			if self.responseformat.startswith("json"):
-				response = format_ui_element(win, self.responseformat)
-			else:
-				response = win.Name
+			response = format_ui_element(win, self.responseformat)
 			win = None
-		elif data[0] == "getcfg":
+		elif data[0] == "getcfg" and len(data) == 2:
 			if len(data) == 2:
 				# Return cfg value
 				if data[1] in defaults:
@@ -741,40 +750,47 @@ class BaseFrame(wx.Frame):
 				response = {data[1]: defaults[data[1]]}
 			else:
 				response = "invalid"
-		elif data[0] == "getdefaults":
+		elif data[0] == "getdefaults" and len(data) == 1:
 			response = OrderedDict()
 			for name in sorted(defaults):
 				response[name] = defaults[name]
-		elif data[0] == "getmenus":
+		elif data[0] == "getmenus" and len(data) == 1:
 			menus = []
 			menubar = self.GetMenuBar()
 			if menubar:
 				for i, (menu, label) in enumerate(menubar.GetMenus()):
 					label = label.lstrip("&_")
 					if self.responseformat.startswith("json"):
-						menus.append({"label": label,
+						menus.append({"label": label, "position": i,
 									  "enabled": menubar.IsEnabledTop(i)})
 					else:
-						menus.append("%s %s" % (demjson.encode(label),
-												"enabled"
-												if menubar.IsEnabledTop(i)
-												else "disabled"))
+						menus.append("%s %s %s" % (i,
+												   demjson.encode(label),
+												   "enabled"
+												   if menubar.IsEnabledTop(i)
+												   else "disabled"))
 			response = menus
-		elif data[0] == "getmenuitems":
+		elif data[0] == "getmenuitems" and len(data) < 3:
 			menuitems = []
 			menulabels = []
 			menus = []
 			menubar = self.GetMenuBar()
 			if menubar:
+				if len(data) == 2:
+					try:
+						menu_pos_label = int(data[1])
+					except ValueError:
+						menu_pos_label = data[1]
 				for i, (menu, label) in enumerate(menubar.GetMenus()):
 					label = label.lstrip("&_")
-					if len(data) == 2 and label != data[1]:
+					if (len(data) == 2 and label != menu_pos_label and
+						i != menu_pos_label):
 						continue
 					if (self.responseformat.startswith("json") and
 						not label in menulabels):
 						menuitems = []
 						menulabels.append(label)
-						menus.append({"label": label,
+						menus.append({"label": label, "position": i,
 									  "enabled": menubar.IsEnabledTop(i),
 									  "menuitems": menuitems})
 					for menuitem in menu.GetMenuItems():
@@ -782,13 +798,15 @@ class BaseFrame(wx.Frame):
 							continue
 						if self.responseformat.startswith("json"):
 							menuitems.append({"label": menuitem.Label,
+											  "id": menuitem.Id,
 											  "enabled": menubar.IsEnabledTop(i) and
 														 menuitem.IsEnabled(),
 											  "checkable": menuitem.IsCheckable(),
 											  "checked": menuitem.IsChecked()})
 						else:
-							menuitems.append("%s %s %s%s%s" %
-											 (demjson.encode(label),
+							menuitems.append("%s %s %s %s %s%s%s" %
+											 (i, demjson.encode(label),
+											  menuitem.Id,
 											  demjson.encode(menuitem.Label),
 											  "enabled"
 											  if menubar.IsEnabledTop(i) and
@@ -802,7 +820,7 @@ class BaseFrame(wx.Frame):
 				response = menus
 			else:
 				response = menuitems
-		elif data[0] == "getstate":
+		elif data[0] == "getstate" and len(data) == 1:
 			response = self.get_app_state()
 		elif data[0] == "getuielement" and len(data) in (2, 3):
 			response = "invalid"
@@ -818,49 +836,44 @@ class BaseFrame(wx.Frame):
 				elif child is False:
 					response = "forbidden"
 				child = None
-		elif data[0] == "getuielements":
+		elif data[0] == "getuielements" and len(data) < 3:
 			uielements = []
 			if len(data) == 2:
 				win = get_toplevel_window(data[1])
 			else:
 				win = self.get_top_window()
 			if win:
-				attrs = {}
-				for attrname in dir(win):
-					try:
-						# Trying to access some attributes of wx widgets may
-						# raise an exception
-						attr = getattr(win, attrname)
-					except:
-						continue
-					if (attr and isinstance(attr, (CustomCheckBox,
-												   wx.Control)) and
-						not isinstance(attr, wx.StaticBitmap) and
-						attr.IsShownOnScreen()):
-						attrs[attr] = attrname
 				# Ordering in tab order
 				for child in win.GetAllChildren():
-					if child in attrs:
+					if (child and isinstance(child, (CustomCheckBox,
+													 wx.Control)) and
+						not isinstance(child, wx.StaticBitmap) and
+						child.TopLevelParent is win and
+						child.IsShownOnScreen()):
 						uielements.append(format_ui_element(child,
 															self.responseformat))
 				child = None
 				response = uielements
 			else:
 				response = "invalid"
-		elif data[0] == "getvalid":
+		elif data[0] == "getvalid" and len(data) == 1:
 			response = {"ranges": config.valid_ranges,
 						"values": config.valid_values}
 			if not self.responseformat.startswith("json"):
-				response = demjson.encode(response)
-		elif data[0] == "getwindows":
+				valid = []
+				for section, options in response.iteritems():
+					valid.append("[%s]" % section)
+					for key, values in options.iteritems():
+						valid.append("%s = %s" %
+									 (key, " ".join(demjson.encode(value)
+													for value in values)))
+				response = valid
+		elif data[0] == "getwindows" and len(data) == 1:
 			windows = filter(lambda win: win.IsShown(), wx.GetTopLevelWindows())
-			if self.responseformat.startswith("json"):
-				response = [format_ui_element(win, self.responseformat)
-							for win in windows]
-			else:
-				response = [win.Name for win in windows]
+			response = [format_ui_element(win, self.responseformat)
+						for win in windows]
 			win = None
-		elif data[0] == "interact" and len(data) > 1:
+		elif data[0] == "interact" and len(data) > 1 and len(data) < 6:
 			response = "invalid"
 			value = None
 			args = data[1:]
@@ -938,6 +951,9 @@ class BaseFrame(wx.Frame):
 						else:
 							ctrl = child
 						event = wx.CommandEvent(event.typeId, ctrl.Id)
+						if isinstance(child, (CustomCheckBox, wx.CheckBox,
+											  wx.RadioButton)):
+							event.SetInt(int(ctrl.Value))
 						event.SetEventObject(ctrl)
 						ctrl.ProcessEvent(event)
 						child.Refresh()
@@ -946,10 +962,19 @@ class BaseFrame(wx.Frame):
 			# Set configuration option
 			if data[1] in defaults:
 				value = data[2]
-				if value == "None":
+				if value == "null":
 					value = None
+				elif value == "false":
+					value = 0
+				elif value == "true":
+					value = 1
+				else:
+					try:
+						value = type(defaults[data[1]])(value)
+					except (UnicodeEncodeError, ValueError):
+						pass
 				setcfg(data[1], value)
-				if getcfg(data[1]) != value:
+				if getcfg(data[1], False) != value:
 					response = "failed"
 			else:
 				response = "invalid"
@@ -971,7 +996,7 @@ class BaseFrame(wx.Frame):
 			else:
 				# Some commands can be overriden, check response
 				if response == "invalid":
-					if (data[0] == "refresh" and
+					if (data[0] == "refresh" and len(data) == 1 and
 						hasattr(self, "update_controls")):
 						self.update_controls()
 						self.update_layout()
@@ -4052,25 +4077,38 @@ def get_gradient_panel(parent, label, x=16):
 	return gradientpanel
 
 
-def get_widget(win, name):
-	if hasattr(win, name):
+def get_widget(win, id_name_label):
+	# hasattr, getattr, setattr silently convert attribute names to byte strings,
+	# we have to make sure there's no UnicodeEncodeError
+	if (id_name_label == safe_str(safe_unicode(id_name_label), "ascii") and
+		hasattr(win, id_name_label)):
 		# Attribute name
 		try:
 			# Trying to access some attributes of wx widgets may
 			# raise an exception
-			return getattr(win, name)
+			return getattr(win, id_name_label)
 		except:
 			return False
 	else:
-		# Label
+		# ID or label
+		try:
+			id_name_label = int(id_name_label)
+		except ValueError:
+			pass
 		for child in win.GetAllChildren():
-			if child.Label == name:
+			if (child.Id == id_name_label or child.Name == id_name_label or
+				child.Label == id_name_label):
 				return child
 
 
-def get_toplevel_window(name):
+def get_toplevel_window(id_name_label):
+	try:
+		id_name_label = int(id_name_label)
+	except ValueError:
+		pass
 	for win in reversed(wx.GetTopLevelWindows()):
-		if win.Name == name:
+		if (win.Id == id_name_label or win.Name == id_name_label or
+			win.Label == id_name_label):
 			return win
 
 
@@ -4088,7 +4126,7 @@ def format_ui_element(child, format):
 		name = child.Name
 	if format.startswith("json"):
 		uielement = {"class": child.__class__.__name__, "name": name,
-					 "enabled": child.IsEnabled()}
+					 "enabled": child.IsEnabled(), "id": child.Id}
 		if child.Label:
 			uielement["label"] = child.Label
 		if isinstance(child, (CustomCheckBox, wx.CheckBox, wx.RadioButton)):
@@ -4100,22 +4138,22 @@ def format_ui_element(child, format):
 		if hasattr(child, "Items"):
 			uielement["items"] = child.Items
 		return uielement
-	return "%s %s%s %s%s%s" % (child.__class__.__name__, name,
-							   (child.Label and
-								" " + demjson.encode(child.Label)),
-							   "enabled" if child.IsEnabled() else "disabled",
-							   (isinstance(child, (CustomCheckBox, wx.CheckBox,
-												   wx.RadioButton)) and
-								child.GetValue() and " checked") or
-							   (getattr(child, "GetValue", "") and
-							    not isinstance(child, (CustomCheckBox, wx.CheckBox,
-													   wx.RadioButton)) and
-								" value " + demjson.encode(child.GetValue())) or
-							   (getattr(child, "GetStringSelection", "") and
-								" value " + demjson.encode(child.GetStringSelection())),
-							   (getattr(child, "Items", "") and
-								" items " +
-								demjson.encode(child.Items).strip("[]").replace(",", " ")))
+	return "%s %s %s%s %s%s%s" % (child.__class__.__name__, child.Id, name,
+								  (child.Label and
+								   " " + demjson.encode(child.Label)),
+								  "enabled" if child.IsEnabled() else "disabled",
+								  (isinstance(child, (CustomCheckBox, wx.CheckBox,
+													  wx.RadioButton)) and
+								   child.GetValue() and " checked") or
+								  (getattr(child, "GetValue", "") and
+								   not isinstance(child, (CustomCheckBox, wx.CheckBox,
+														  wx.RadioButton)) and
+								   " value " + demjson.encode(child.GetValue())) or
+								  (getattr(child, "GetStringSelection", "") and
+								   " value " + demjson.encode(child.GetStringSelection())),
+								  (getattr(child, "Items", "") and
+								   " items " +
+								   demjson.encode(child.Items).strip("[]").replace(",", " ")))
                                
 
 def test():

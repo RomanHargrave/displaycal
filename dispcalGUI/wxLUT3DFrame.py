@@ -292,6 +292,7 @@ class LUT3DFrame(BaseFrame):
 				show_result_dialog(Error(lang.getstr("error.source_dest_same")),
 								   self)
 				return
+			checkoverwrite = True
 			if not path:
 				defaultDir, defaultFile = get_verified_path("last_3dlut_path")
 				ext = getcfg("3dlut.format")
@@ -311,6 +312,7 @@ class LUT3DFrame(BaseFrame):
 				if dlg.ShowModal() == wx.ID_OK:
 					path = dlg.GetPath()
 				dlg.Destroy()
+				checkoverwrite = False
 			if path:
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
@@ -318,6 +320,18 @@ class LUT3DFrame(BaseFrame):
 									   self)
 					return
 				setcfg("last_3dlut_path", path)
+				if checkoverwrite and os.path.isfile(path):
+					dlg = ConfirmDialog(self,
+										msg=lang.getstr("dialog.confirm_overwrite",
+														(path)),
+										ok=lang.getstr("overwrite"),
+										cancel=lang.getstr("cancel"),
+										bitmap
+										=geticon(32, "dialog-warning"))
+					result = dlg.ShowModal()
+					dlg.Destroy()
+					if result != wx.ID_OK:
+						return
 				if self.Parent:
 					config.writecfg()
 				else:
@@ -421,12 +435,14 @@ class LUT3DFrame(BaseFrame):
 			self.set_profile("output", profile_path or False, silent=not event)
 
 	def process_data(self, data):
-		if data[0] == "3DLUT-maker":
+		if data[0] == "3DLUT-maker" and (len(data) == 1 or
+										 (len(data) == 3 and
+										  data[1] == "create")):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()
-			if len(data) == 2:
-				self.lut3d_create_handler(None, path=data[1])
+			if len(data) == 3:
+				self.lut3d_create_handler(None, path=data[2])
 			return "ok"
 		return "invalid"
 	

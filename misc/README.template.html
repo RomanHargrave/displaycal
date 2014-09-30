@@ -1330,7 +1330,7 @@
 
 							<h4>Generating diagnostic 3D views of testcharts</h4>
 							
-							<p>You can generate 3D views in several formats. The default HTML format should be viewable in a modern WebGL-enabled browser. You can choose the colorspace(s) you want to view the results in and also control wether to use RGB black offset (which will lighten up dark colors so they are better visible) and wether you want white to be neutral. All of these options are purely visual and will not influence the actual test patches.</p>
+							<p>You can generate 3D views in several formats. The default HTML format should be viewable in a modern WebGL-enabled browser. You can choose the colorspace(s) you want to view the results in and also control whether to use RGB black offset (which will lighten up dark colors so they are better visible) and whether you want white to be neutral. All of these options are purely visual and will not influence the actual test patches.</p>
 
 							<h4>Other functions</h4>
 							
@@ -1749,7 +1749,7 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 		<div id="scripting">
 			<h2>Scripting</h2>
 			
-			<p>dispcalGUI supports scripting locally and over the network (the latter must be explicitly enabled by setting <code>app.allow_network_clients = 1</code> in dispcalGUI.ini) via TCP sockets. dispcalGUI must be already running on the target machine for this to work. Below is an example written in <a href="http://www.python.org/">Python</a>.</p>
+			<p>dispcalGUI supports scripting locally and over the network (the latter must be explicitly enabled by setting <code>app.allow_network_clients = 1</code> in dispcalGUI.ini) via TCP sockets. dispcalGUI must be already running on the target machine for this to work. Below is an example connecting to a running instance on the default port <code>15411</code> (configurable in dispcalGUI.ini as <code>app.port</code>, although if the port is not available an unused one will be chosen automatically. You can read the actual used port from the file dispcalGUI.lock in the <a href="#configuration">configuration</a> file folder of dispcalGUI while it is running) and starting calibration measurements. The example is written in <a href="http://www.python.org/">Python</a>.</p>
 			
 			<pre class="language-python"><code>#!/usr/bin/env python2
 			
@@ -1768,7 +1768,7 @@ if s.recv(1024) == 'ok\n':
 	# Start actual measurements
 	s.sendall('measure')</code></pre>
 			
-			<p>Note that data sent must be UTF-8 encoded, and if parameters contain spaces they should be encased in double or single quotes. It is possible to send multiple commands by delimiting them with newline characters (currently limited to 1024 bytes per request including newline characters). You should check the response after each send (usually one line will be returned for each processed command), although keep in mind that commands which run in the main GUI thread (and e.g. display modal dialogs) may not trigger a response immediately, in which case you should check the <a href="#scripting.commands:getstate">application state</a> with the <code>getstate</code> command. The common return values for commands are either <code>ok</code> in case the command was understood (note that this does not indicate if the command finished processing), <code>busy</code> or <code>block</code> in case the command was ignored because another operation was running or a modal dialog blocks the UI, <code>failed</code> in case the command or a parameter could not be processed successfully, <code>forbidden</code> in case the command was not allowed (this may be a temporary condition depending on the circumstances, e.g. when trying to interact with an UI element that is currently disabled), <code>invalid</code> in case the command (or one of its parameters) was invalid, or <code>error</code> followed by an error message in case of an unhandled exception. Other return values are possible depending on the command. All values returned are UTF-8 encoded.</p>
+			<p>Note that data sent must be UTF-8 encoded, and if parameters contain spaces they should be encased in double or single quotes. It is possible to send multiple commands by delimiting them with newline characters (currently limited to 1024 bytes per request including newline characters). You should check the response after each send (usually one line will be returned for each processed command), although keep in mind that commands which run in the main GUI thread (and e.g. display modal dialogs) may not trigger a response immediately, in which case you should check the <a href="#scripting.commands:getstate">application state</a> with the <code>getstate</code> command. The common return values for commands are either <code>ok</code> in case the command was understood (note that this does not indicate if the command finished processing), <code>busy</code> or <code>blocked</code> in case the command was ignored because another operation was running or a modal dialog blocks the UI, <code>failed</code> in case the command or a parameter could not be processed successfully, <code>forbidden</code> in case the command was not allowed (this may be a temporary condition depending on the circumstances, e.g. when trying to interact with an UI element that is currently disabled), <code>invalid</code> in case the command (or one of its parameters) was invalid, or <code>error</code> followed by an error message in case of an unhandled exception. Other return values are possible depending on the command. All values returned are UTF-8 encoded.</p>
 			
 			<div>
 				<h3>List of supported commands</h3>
@@ -1777,32 +1777,32 @@ if s.recv(1024) == 'ok\n':
 				<p>Commands that don't trigger a response immediately (e.g. because they display a modal dialog) are marked as “will defer” or “may defer”. “May defer” means the command may not trigger a response until a certain point in its execution is reached, but it's dependent on the circumstances (e.g. if an operation would result in overwriting an existing file, a modal confirmation dialog will be displayed and the response will be deferred until the dialog is dealt with). It is generally a good idea to check the response immediately after sending commands, but to do so with a timeout in case there is no immediate response, and then check the <a href="#scripting.commands:getstate">application state</a>.</p>
 				<div class="info">
 					<dl>
-						<dt><code>3DLUT-maker [&lt;filename&gt;]</code></dt>
+						<dt><code>3DLUT-maker [create &lt;filename&gt;]</code></dt>
 							<dd>Show 3D LUT creation window, optionally create 3D LUT <code>&lt;filename&gt;</code>.</dd>
 						<dt><code>abort</code></dt>
 							<dd>Try to abort a currently running operation.</dd>
-						<dt><code>activate &lt;windowname&gt;</code></dt>
-							<dd>Activate window <code>&lt;windowname&gt;</code> (bring it to the front). If it is minimized, restore it.</dd>
+						<dt><code>activate &lt;window ID | name | label&gt;</code></dt>
+							<dd>Activate window <code>&lt;window&gt;</code> (bring it to the front). If it is minimized, restore it.</dd>
 						<dt><code>alt | cancel | ok [&lt;filename&gt;]</code></dt>
 							<dd>If a modal dialog is shown, call the default action (ok), the alternate action (if applicable), or cancel it. If a file dialog is shown, using <code>ok &lt;filename&gt;</code> chooses that file.</dd>
 						<dt><code>calibrate</code></dt>
-							<dd>Setup calibration measurements. May defer response. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
+							<dd>Setup calibration measurements (note that this won't give a choice whether to create a fast curves + matrix profile as well, if you want that use <code>interact mainframe calibrate_btn</code> instead). May defer response. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
 						<dt><code>calibrate-profile</code></dt>
 							<dd>Setup calibration &amp; profiling measurements. May defer response. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
-						<dt><code>close [&lt;windowname&gt;]</code></dt>
-							<dd>Close window <code>&lt;windowname&gt;</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code>getstate</code> command.</dd>
+						<dt><code>close [&lt;window ID | name | label&gt;]</code></dt>
+							<dd>Close window <code>&lt;window&gt;</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code>getstate</code> command.</dd>
 						<dt><code>create-colorimeter-correction</code></dt>
 							<dd>Create colorimeter correction. Will defer response.</dd>
 						<dt><code>create-profile [&lt;filename&gt;]</code></dt>
 							<dd>Create profile from existing measurements (profile or measurement file). May defer response.</dd>
 						<dt><code>curve-viewer [&lt;filename&gt;]</code></dt>
-							<dd>Show curves, optionally loading <code>filename</code>. Relative paths are possible e.g. for presets: <code>curve-viewer presets/photo.icc</code></dd>
+							<dd>Show curves, optionally loading <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>curve-viewer presets/photo.icc</code></dd>
 						<dt><code>dispcalGUI [&lt;filename&gt;]</code></dt>
 							<dd>Bring the main window to the front. If it is minimized, restore it. Optionally, load <code>&lt;filename&gt;</code>. May defer response.</dd>
 						<dt><code>enable-spyder2</code></dt>
 							<dd>Enable the spyder 2. Will defer response.</dd>
 						<dt><code>getactivewindow</code></dt>
-							<dd>Get the name of the current active window.</dd>
+							<dd>Get the current active window. The returned format is <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
 						<dt><code>getcfg [&lt;option&gt;]</code></dt>
 							<dd>Get configuration <code>&lt;option&gt;</code>, or whole configuration (key-value pairs in INI format).</dd>
 						<dt><code>getdefault &lt;option&gt;</code></dt>
@@ -1810,25 +1810,25 @@ if s.recv(1024) == 'ok\n':
 						<dt><code>getdefaults</code></dt>
 							<dd>Get all defaults (key-value pairs in INI format).</dd>
 						<dt><code>getmenus</code></dt>
-							<dd>Get available menus in the format <code>"&lt;menulabel&gt;" &lt;state&gt;</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
-						<dt><code>getmenuitems [&lt;menulabel&gt;]</code></dt>
-							<dd>Get available menu items in the format <code>"&lt;menulabel&gt;"</code> <code>"&lt;menuitemlabel&gt;"</code> <code>&lt;state&gt;</code> <code>[checkable]</code> <code>[checked]</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+							<dd>Get available menus in the format <code>&lt;ID&gt; "&lt;label&gt;" &lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt><code>getmenuitems [&lt;menuposition | label&gt;]</code></dt>
+							<dd>Get available menu items in the format <code>&lt;menuposition&gt;</code> <code>"&lt;menulabel&gt;"</code> <code>&lt;menuitemID&gt;</code> <code>"&lt;menuitemlabel&gt;"</code> <code>&lt;state&gt;</code> <code>[checkable]</code> <code>[checked]</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
 						<dt id="scripting.commands:getstate"><code>getstate</code></dt>
-							<dd>Get application state. Return value will be either <code>idle</code>, <code>busy</code>, <code>&lt;dialogclassname&gt;</code> <code>&lt;dialogname&gt;</code> <code>"&lt;messagetext&gt;"</code> <code>[path "&lt;path&gt;"]</code> <code>[buttons "&lt;buttonlabel&gt;"...]</code> if a modal dialog is shown or <code>blocked</code> in case the UI is currently blocked. Most commands will not work if the UI is blocked—the only way to resolve the block is to non-programmatically interact with the actual UI elements of the application or closing it. Note that a state of <code>blocked</code> should normally only occur if an actual file dialog is shown. If using the scripting interface exclusively, this should never happen because it uses a replacement file dialog that supports the same actions as a real file dialog, but doesn't block. Also note that a return value of <code>blocked</code> for any of the other commands just means that a modal dialog is currently waiting to be interacted with, only if <code>getstate</code> also returns <code>blocked</code> you cannot resolve the situation with scripting alone.</dd>
-						<dt><code>getuielement [&lt;windowname&gt;] &lt;element-name-or-label&gt;</code></dt>
-						<dt><code>getuielements [&lt;windowname&gt;]</code></dt>
-							<dd>Get a single UI element or a list of the visible UI elements of window <code>&lt;windowname&gt;</code> or the current active window. Each returned line represents an UI element and has the format <code>&lt;classname&gt;</code> <code>&lt;elementname&gt;</code> <code>["&lt;label&gt;"]</code> <code>&lt;state&gt;</code> <code>[checked]</code> <code>[value "&lt;value&gt;"]</code> <code>[items "&lt;item&gt;"...]</code>. <code>&lt;classname&gt;</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>&lt;elementname&gt;</code> is the name of the UI element. <code>"&lt;label&gt;"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter two with the <code>interact</code> command. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "&lt;item&gt;"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
+							<dd>Get application state. Return value will be either <code>idle</code>, <code>busy</code>, <code>&lt;dialogclassname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;dialogname&gt;</code> <code>[&lt;dialoglabel&gt;]</code> <code>&lt;state&gt;</code> <code>"&lt;messagetext&gt;"</code> <code>[path "&lt;path&gt;"]</code> <code>[buttons "&lt;buttonlabel&gt;"...]</code> if a modal dialog is shown or <code>blocked</code> in case the UI is currently blocked. Most commands will not work if the UI is blocked—the only way to resolve the block is to non-programmatically interact with the actual UI elements of the application or closing it. Note that a state of <code>blocked</code> should normally only occur if an actual file dialog is shown. If using the scripting interface exclusively, this should never happen because it uses a replacement file dialog that supports the same actions as a real file dialog, but doesn't block. Also note that a return value of <code>blocked</code> for any of the other commands just means that a modal dialog is currently waiting to be interacted with, only if <code>getstate</code> also returns <code>blocked</code> you cannot resolve the situation with scripting alone.</dd>
+						<dt><code>getuielement [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt;</code></dt>
+						<dt><code>getuielements [&lt;window ID | name | label&gt;]</code></dt>
+							<dd>Get a single UI element or a list of the visible UI elements of window <code>&lt;window&gt;</code> or the current active window. Each returned line represents an UI element and has the format <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>["&lt;label&gt;"]</code> <code>&lt;state&gt;</code> <code>[checked]</code> <code>[value "&lt;value&gt;"]</code> <code>[items "&lt;item&gt;"...]</code>. <code>&lt;classname&gt;</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>&lt;ID&gt;</code> is a numeric identifier. <code>&lt;name&gt;</code> is the name of the UI element. <code>"&lt;label&gt;"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter three with the <code>interact</code> command. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "&lt;item&gt;"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
 						<dt><code>getvalid</code></dt>
-							<dd>Get valid values for options with constraints (key-value pairs in JSON format). The root object has two keys, <code>ranges</code> and <code>values</code>. <code>ranges</code> are the valid ranges for options that accept numeric values (note that integer options not covered by <code>ranges</code> are typically boolean types). <code>values</code> are the valid values for options that only accept certain values. Options not covered by <code>ranges</code> and <code>values</code> are limited to their data type (you can't set a numeric option to a string and vice versa).</dd>
+							<dd>Get valid values for options that have constraints (key-value pairs in INI format). There are two sections, <code>ranges</code> and <code>values</code>. <code>ranges</code> are the valid ranges for options that accept numeric values (note that integer options not covered by <code>ranges</code> are typically boolean types). <code>values</code> are the valid values for options that only accept certain values. Options not covered by <code>ranges</code> and <code>values</code> are limited to their data type (you can't set a numeric option to a string and vice versa).</dd>
 						<dt><code>getwindows</code></dt>
-							<dd>Get a list of visible windows.</dd>
+							<dd>Get a list of visible windows. The returned format is a list of <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
 						<dt><code>import-colorimeter-corrections [&lt;filename&gt;...]</code></dt>
 							<dd>Import colorimeter corrections. May defer response.</dd>
 						<dt><code>install-profile [&lt;filename&gt;]</code></dt>
 							<dd>Install a profile. Will defer response.</dd>
-						<dt><code>interact [&lt;windowname&gt;] &lt;element-name-or-label&gt; [setvalue &lt;value&gt;]</code></dt>
-							<dd>Interact with the UI element <code>&lt;element-name-or-label&gt;</code> of window <code>&lt;windowname&gt;</code> or the current active window, e.g. invoke a button or set a control to a value. May defer response.</dd>
-						<dt><code>invokemenu &lt;menulabel&gt; &lt;menuitemlabel&gt;</code></dt>
+						<dt><code>interact [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt; [setvalue &lt;value&gt;]</code></dt>
+							<dd>Interact with the UI element <code>&lt;element&gt;</code> of window <code>&lt;window&gt;</code> or the current active window, e.g. invoke a button or set a control to a value. May defer response.</dd>
+						<dt><code>invokemenu &lt;menuposition | menulabel&gt; &lt;menuitemID | menuitemlabel&gt;</code></dt>
 							<dd>Invoke a menu item. May defer response.</dd>
 						<dt><code>load &lt;filename&gt;</code></dt>
 							<dd>Load <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>load presets/photo.icc</code></dd>
@@ -1839,7 +1839,7 @@ if s.recv(1024) == 'ok\n':
 						<dt><code>measurement-report [&lt;filename&gt;]</code></dt>
 							<dd>If no filename given, show measurement report window. Otherwise, setup measurement to create the HTML report <code>&lt;filename&gt;</code>. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
 						<dt><code>profile</code></dt>
-							<dd>Setup profiling measurements. May defer response. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
+							<dd>Setup profiling measurements (note that this will always use the current calibration if applicable, if you want to use linear calibration instead call <code>load linear.cal</code> prior to calling <code>profile</code>). May defer response. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
 						<dt><code>profile-info [&lt;filename&gt;]</code></dt>
 							<dd>Show profile information, optionally loading profile <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>profile-info presets/photo.icc</code></dd>
 						<dt><code>refresh</code></dt>
@@ -1853,18 +1853,67 @@ if s.recv(1024) == 'ok\n':
 						<dt><code>set-language &lt;languagecode&gt;</code></dt>
 							<dd>Set language.</dd>
 						<dt><code>setcfg &lt;option&gt; &lt;value&gt;</code></dt>
-							<dd>Set configuration &lt;option&gt; to &lt;value&gt;. The special value <code>None</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code>getdefaults</code> and <code>getvalid</code>.</dd>
+							<dd>Set configuration <code>&lt;option&gt;</code> to <code>&lt;value&gt;</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code>getdefaults</code> and <code>getvalid</code>.</dd>
 						<dt><code>setresponseformat &lt;format&gt;</code></dt>
 							<dd>Set the format for responses. The default <code>plain</code> is a text format that is easy to read, but not necessarily the best for parsing programmatically. The other possible formats are <code>json</code> and <code>json.pretty</code>, a JSON format. The only diffference between <code>json</code> and <code>json.pretty</code> is that the latter will be formatted with whitespace and indentation to make it easier to read.</dd>
 						<dt><code>synthprofile [&lt;filename&gt;]</code></dt>
 							<dd>Show synthetic profile creation window, optionally loading profile <code>&lt;filename&gt;</code>.</dd>
-						<dt><code>testchart-editor [&lt;filename&gt;]</code></dt>
-							<dd>Show testchart editor window, optionally loading testchart <code>&lt;filename&gt;</code>. May defer response. Relative paths are possible e.g. for default testcharts: <code>testchart-editor ti1/d3-e4-s17-g49-m5-b5-f0.ti1</code></dd>
+						<dt><code>testchart-editor [&lt;filename&gt; | create &lt;filename&gt;]</code></dt>
+							<dd>Show testchart editor window, optionally loading or creating testchart <code>&lt;filename&gt;</code>. May defer response. Relative paths are possible e.g. for loading a default testchart: <code>testchart-editor ti1/d3-e4-s17-g49-m5-b5-f0.ti1</code></dd>
 						<dt><code>verify-calibration</code></dt>
 							<dd>Verify calibration. For non-virtual displays as well as pattern generators (except madVR), call the <code>measure</code> command afterwards to commence measurements.</dd>
 					</dl>
 				</div>
 			</div>
+			
+			<h3>Caveats and limitations</h3>
+			
+			<p>There are a few things to be aware of when using commands that interact with the UI directly (i.e. <code>close</code>, <code>interact</code> and <code>invokemenu</code>). If an object's ID is negative, it means that it has been automatically assigned at object creation time and is only valid during the lifetime of the object (i.e. for modal dialogs, only while the dialog is displayed). For this reason, using an object's name instead is easier, but names (aswell as non automatically assigned IDs) are not guaranteed to be unique, even for objects which share the same parent window. Another possibility is to use an object's label, which while also not guaranteed to be unique, still has a fairly high likelihood of being unique for controls that share the same parent window, but has the drawback that it is localized (although you can ensure a specific UI language by calling <code>set-language</code>) and is subject to change when the localization is updated.</p>
+			
+			<p>Also, not all controls may offer a comprehensive scripting interface. I'm open to suggestions though.</p>
+		</div>
+
+		<div id="userdata">
+			<h2>User data and configuration files</h2>
+			
+			<p>dispcalGUI uses the following folders for configuration, logfiles and storage (the storage directory is configurable).</p>
+			
+			<h3 id="configuration">Configuration</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.config/dispcalGUI</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Preferences/dispcalGUI</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI</samp></li>
+			</ul>
+			
+			<h3 id="logs">Logs</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/logs</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Logs/dispcalGUI</samp><br />
+					<samp>/Users/<var>Your Username</var>/Library/Logs/0install</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI\logs</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\logs</samp></li>
+			</ul>
+			
+			<h3 id="storage">Storage</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/storage</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Application Support/dispcalGUI/storage</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI\storage</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\storage</samp></li>
+			</ul>
 		</div>
 
 		<div id="issues">
@@ -1974,9 +2023,10 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<li>Linux:
 							<samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/logs</samp></li>
 						<li>Mac OS X:
-							<samp>/Users/<var>Your Username</var>/Library/Logs/dispcalGUI</samp></li>
+							<samp>/Users/<var>Your Username</var>/Library/Logs/dispcalGUI</samp><br />
+							<samp>/Users/<var>Your Username</var>/Library/Logs/0install</samp></li>
 						<li>Windows Vista and newer:
-							<samp>C:\Users\<var>Your Username</var>\AppData\dispcalGUI\logs</samp></li>
+							<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI\logs</samp></li>
 						<li>Windows XP:
 							<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\logs</samp></li>
 					</ul>

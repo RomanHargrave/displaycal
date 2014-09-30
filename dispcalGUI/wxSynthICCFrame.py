@@ -422,7 +422,8 @@ class SynthICCFrame(BaseFrame):
 			self._updating_ctrls = False
 
 	def process_data(self, data):
-		if data[0] == "synthprofile" or (data[0] == "load" and len(data) == 2):
+		if (data[0] == "synthprofile" and
+			len(data) < 3) or (data[0] == "load" and len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()

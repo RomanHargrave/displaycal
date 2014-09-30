@@ -7069,8 +7069,8 @@ class MainFrame(BaseFrame):
 		if profile:
 			pass
 		elif (event and
-			  event.GetEventObject() == getattr(self, "show_profile_info",
-												None)):
+			  event.GetEventObject() is getattr(self, "show_profile_info",
+												False)):
 			# Use the profile that was requested to be installed
 			profile = self.modaldlg.profile
 		else:
@@ -7121,12 +7121,14 @@ class MainFrame(BaseFrame):
 			else:
 				return "busy"
 		response = "ok"
-		if data[0] == "3DLUT-maker":
+		if data[0] == "3DLUT-maker" and (len(data) == 1 or
+										 (len(data) == 3 and
+										  data[1] == "create")):
 			# 3D LUT maker
 			self.lut3d_create_handler(None)
-			if len(data) == 2:
+			if len(data) == 3:
 				response = self.lut3dframe.process_data(data)
-		elif data[0] == "curve-viewer":
+		elif data[0] == "curve-viewer" and len(data) < 3:
 			# Curve viewer
 			profile = None
 			if len(data) == 2:
@@ -7140,7 +7142,7 @@ class MainFrame(BaseFrame):
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					return "fail"
 			self.init_lut_viewer(profile=profile, show=True)
-		elif data[0] == "profile-info":
+		elif data[0] == "profile-info" and len(data) < 3:
 			# Profile info
 			profile = None
 			if len(data) == 2:
@@ -7154,12 +7156,14 @@ class MainFrame(BaseFrame):
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					return "fail"
 			self.profile_info_handler(profile=profile)
-		elif data[0] == "synthprofile":
+		elif data[0] == "synthprofile" and len(data) < 3:
 			# Synthetic profile creator
 			self.synthicc_create_handler(None)
 			if len(data) == 2:
 				response = self.synthiccframe.process_data(data)
-		elif data[0] == "testchart-editor":
+		elif data[0] == "testchart-editor" and (len(data) < 3 or
+												(len(data) == 3 and
+												 data[1] == "create")):
 			# Testchart editor
 			if len(data) == 2:
 				path = data[1]
@@ -7181,7 +7185,11 @@ class MainFrame(BaseFrame):
 				if path:
 					self.tcframe.tc_load_cfg_from_ti1(path=path)
 			self.tcframe.Raise()
-		elif data[0] == appname or (data[0] == "load" and len(data) == 2):
+			if len(data) == 3:
+				# Create testchart
+				response = self.tcframe.process_data(data)
+		elif (data[0] == appname and len(data) < 3) or (data[0] == "load" and
+														len(data) == 2):
 			# Main window
 			if self.IsIconized():
 				self.Restore()
@@ -7194,15 +7202,15 @@ class MainFrame(BaseFrame):
 					return "fail"
 				else:
 					self.load_cal_handler(None, path)
-		elif data[0] == "calibrate":
+		elif data[0] == "calibrate" and len(data) == 1:
 			# Calibrate
 			self.calibrate_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
 												   self.calibrate_btn))
-		elif data[0] == "calibrate-profile":
+		elif data[0] == "calibrate-profile" and len(data) == 1:
 			# Calibrate & profile
 			self.calibrate_and_profile_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
 															   self.calibrate_and_profile_btn))
-		elif data[0] == "create-profile":
+		elif data[0] == "create-profile" and len(data) < 3:
 			if len(data) == 2:
 				profile_path = data[1]
 			else:
@@ -7210,12 +7218,12 @@ class MainFrame(BaseFrame):
 			self.create_profile_handler(None, path=profile_path)
 		elif data[0] == "import-colorimeter-corrections":
 			self.import_colorimeter_corrections_handler(None, paths=data[1:])
-		elif data[0] == "install-profile":
+		elif data[0] == "install-profile" and len(data) < 3:
 			if len(data) == 2:
 				self.install_profile_handler(profile_path=data[1])
 			else:
 				self.select_install_profile_handler(None)
-		elif data[0] == "measure":
+		elif data[0] == "measure" and len(data) == 1:
 			# Start measurement
 			if getattr(self, "pending_function", None):
 				if isinstance(getattr(self, "_measureframe_subprocess", None),
@@ -7230,17 +7238,17 @@ class MainFrame(BaseFrame):
 					self.call_pending_function()
 			else:
 				response = "fail"
-		elif data[0] == "measurement-report":
+		elif data[0] == "measurement-report" and len(data) < 3:
 			# Measurement report
 			if len(data) == 2:
 				self.measurement_report_handler(None, path=data[1])
 			else:
 				self.measurement_report_create_handler(None)
-		elif data[0] == "profile":
+		elif data[0] == "profile" and len(data) == 1:
 			# Profile
 			self.profile_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
 												 self.profile_btn))
-		elif data[0] == "refresh":
+		elif data[0] == "refresh" and len(data) == 1:
 			# Refresh main window
 			self.update_displays()
 			self.update_controls()
@@ -7259,7 +7267,7 @@ class MainFrame(BaseFrame):
 						  "enable-spyder2",
 						  "measure-uniformity",
 						  "report-calibrated", "report-uncalibrated",
-						  "verify-calibration")):
+						  "verify-calibration")) and len(data) == 1:
 			getattr(self, data[0].replace("-", "_") + "_handler")(True)
 		else:
 			response = "invalid"

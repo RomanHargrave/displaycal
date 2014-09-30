@@ -692,8 +692,9 @@ class TestchartEditor(BaseFrame):
 		self.tc_precond_profile_handler()
 
 	def process_data(self, data):
-		if data[0] == "testchart-editor" or (data[0] == "load" and
-											 len(data) == 2):
+		if (data[0] == "testchart-editor" and
+			(len(data) < 3 or (len(data) == 3 and
+			 data[1] == "create"))) or (data[0] == "load" and len(data) == 2):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()
@@ -705,6 +706,9 @@ class TestchartEditor(BaseFrame):
 					return "fail"
 				else:
 					self.ti1_drop_handler(path)
+			elif len(data) == 3:
+				# Create testchart
+				self.tc_preview_handler(path=data[2])
 			return "ok"
 		return "invalid"
 
@@ -818,7 +822,7 @@ class TestchartEditor(BaseFrame):
 					if event.ShiftDown() or event.AltDown() or not os.path.exists(self.ti1.filename):
 						self.tc_save_as_handler()
 					elif self.ti1.modified:
-						self.tc_save_handler()
+						self.tc_save_handler(True)
 				return
 			else:
 				event.Skip()
@@ -1741,7 +1745,7 @@ class TestchartEditor(BaseFrame):
 		setcfg("tc_vrml_cie", int(self.tc_vrml_cie.GetValue()))
 		setcfg("tc_vrml_device", int(self.tc_vrml_device.GetValue()))
 
-	def tc_preview_handler(self, event = None):
+	def tc_preview_handler(self, event=None, path=None):
 		if self.worker.is_working():
 			return
 
@@ -1785,7 +1789,10 @@ class TestchartEditor(BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("testchart.create"))
 		self.worker.interactive = False
-		self.worker.start(self.tc_preview, self.tc_create, wargs = (), wkwargs = wkwargs, progress_msg = lang.getstr("testchart.create"), parent = self, progress_start = 500)
+		self.worker.start(self.tc_preview, self.tc_create, cargs=(path, ),
+						  wargs=(), wkwargs=wkwargs,
+						  progress_msg=lang.getstr("testchart.create"),
+						  parent=self, progress_start=500)
 
 	def tc_preview_update(self, startindex):
 		if not hasattr(self, "preview"):
@@ -1974,7 +1981,8 @@ class TestchartEditor(BaseFrame):
 		self.tc_save_as_handler(event, path = self.ti1.filename)
 
 	def tc_save_as_handler(self, event = None, path = None):
-		if path is None or not os.path.exists(path):
+		checkoverwrite = True
+		if path is None or (event and not os.path.isfile(path)):
 			path = None
 			if (hasattr(self, "ti1") and self.ti1.filename and
 				os.path.isfile(self.ti1.filename)):
@@ -1988,21 +1996,29 @@ class TestchartEditor(BaseFrame):
 			if dlg.ShowModal() == wx.ID_OK:
 				path = dlg.GetPath()
 			dlg.Destroy()
+			if path:
+				filename, ext = os.path.splitext(path)
+				if ext.lower() != ".ti1":
+					path += ".ti1"
+				else:
+					checkoverwrite = False
 		if path:
 			if not waccess(path, os.W_OK):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
 													 path)),
 								   self)
 				return
-			filename, ext = os.path.splitext(path)
-			if ext.lower() != ".ti1":
-				path += ".ti1"
-				if os.path.exists(path):
-					dlg = ConfirmDialog(self, msg = lang.getstr("dialog.confirm_overwrite", (path)), ok = lang.getstr("overwrite"), cancel = lang.getstr("cancel"), bitmap = geticon(32, "dialog-warning"))
-					result = dlg.ShowModal()
-					dlg.Destroy()
-					if result != wx.ID_OK:
-						return
+			if checkoverwrite and os.path.isfile(path):
+				dlg = ConfirmDialog(self,
+									msg=lang.getstr("dialog.confirm_overwrite",
+													(path)),
+									ok=lang.getstr("overwrite"),
+									cancel=lang.getstr("cancel"),
+									bitmap=geticon(32, "dialog-warning"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result != wx.ID_OK:
+					return
 			setcfg("last_ti1_path", path)
 			try:
 				file_ = open(path, "w")
@@ -2183,7 +2199,7 @@ class TestchartEditor(BaseFrame):
 						path = None
 					else:
 						path = self.ti1.filename
-					if not self.tc_save_as_handler(event = None, path = path):
+					if not self.tc_save_as_handler(True, path):
 						return False
 				elif result == wx.ID_CANCEL:
 					return False
@@ -2783,7 +2799,7 @@ class TestchartEditor(BaseFrame):
 		self.worker.wrapup(False)
 		return result
 
-	def tc_preview(self, result):
+	def tc_preview(self, result, path=None):
 		self.tc_check()
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
@@ -2855,6 +2871,8 @@ class TestchartEditor(BaseFrame):
 			if verbose >= 1: safe_print(lang.getstr("success"))
 			self.resize_grid()
 			grid.EndBatch()
+			if path:
+				wx.CallAfter(self.tc_save_as_handler, path=path)
 		if self.Parent and hasattr(self.Parent, "start_timers"):
 			self.Parent.start_timers()
 	
