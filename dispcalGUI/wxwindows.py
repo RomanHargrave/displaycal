@@ -637,7 +637,13 @@ class BaseFrame(wx.Frame):
 				else:
 					win = self.get_top_window()
 				if win:
-					if isinstance(win, (AboutDialog, BaseInteractiveDialog,
+					state = self.get_app_state("plain")
+					if state == "blocked":
+						response = state
+					elif (state not in ("busy", "idle") and
+						  win is not self.get_top_window()):
+						response = "blocked"
+					elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
 										ProgressDialog)):
 						if win.IsModal():
 							win.EndModal(wx.ID_CANCEL)
@@ -888,7 +894,8 @@ class BaseFrame(wx.Frame):
 			elif args:
 				# Window name specified
 				win = get_toplevel_window(args[0])
-				if state != "idle" and win is not self.get_top_window():
+				if state not in ("busy",
+								 "idle") and win is not self.get_top_window():
 					win = None
 					response = "blocked"
 			else:
