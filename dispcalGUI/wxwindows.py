@@ -528,10 +528,11 @@ class BaseFrame(wx.Frame):
 
 	def message_handler(self, conn, addrport):
 		""" Handle messages sent via socket """
+		buffer = ""
 		while self and self.listening:
 			# Wait for incoming message
 			try:
-				incoming = conn.recv(1024)
+				incoming = conn.recv(4096)
 			except socket.timeout:
 				continue
 			except socket.error, exception:
@@ -542,18 +543,18 @@ class BaseFrame(wx.Frame):
 			else:
 				if not incoming:
 					break
-				command_timestamp = datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")
-				for line in incoming.splitlines():
-					if self and self.listening:
-						if line:
-							line = safe_unicode(line, "UTF-8")
-							safe_print(lang.getstr("app.incoming_message",
-												   addrport + (line, )))
-							data = split_command_line(line)
-							wx.CallAfter(self.finish_processing, data, conn,
-										 command_timestamp)
-					else:
-						break
+				buffer += incoming
+				while "\n" in buffer and self and self.listening:
+					end = buffer.find("\n")
+					line = buffer[:end]
+					buffer = buffer[end + 1:]
+					if line:
+						line = safe_unicode(line, "UTF-8")
+						safe_print(lang.getstr("app.incoming_message",
+											   addrport + (line, )))
+						data = split_command_line(line)
+						wx.CallAfter(self.finish_processing, data, conn,
+									 datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f"))
 		try:
 			conn.shutdown(socket.SHUT_RDWR)
 		except socket.error, exception:
@@ -1138,7 +1139,7 @@ class BaseFrame(wx.Frame):
 			if isinstance(response, list):
 				response = "\n".join(response)
 		try:
-			conn.sendall("%s\n" % safe_str(response, "UTF-8"))
+			conn.sendall("%s\4" % safe_str(response, "UTF-8"))
 		except socket.error, exception:
 			safe_print(exception)
 
