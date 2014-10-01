@@ -524,6 +524,7 @@ class BaseFrame(wx.Frame):
 			safe_print(lang.getstr("app.client.connect", addrport))
 			threading.Thread(target=self.message_handler,
 							 args=(conn, addrport)).start()
+		sys._appsocket.close()
 
 	def message_handler(self, conn, addrport):
 		""" Handle messages sent via socket """
@@ -553,6 +554,10 @@ class BaseFrame(wx.Frame):
 										 command_timestamp)
 					else:
 						break
+		try:
+			conn.shutdown(socket.SHUT_RDWR)
+		except socket.error, exception:
+			safe_print("Warning - could not shutdown connection:", exception)
 		safe_print(lang.getstr("app.client.disconnect", addrport))
 		conn.close()
 
