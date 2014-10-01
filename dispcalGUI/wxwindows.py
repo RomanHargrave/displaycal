@@ -690,23 +690,21 @@ class BaseFrame(wx.Frame):
 					elif data[0] == "cancel":
 						win.Close()
 					response = "ok"
-			elif isinstance(win, (AboutDialog, BaseInteractiveDialog)):
+			elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
+								  ProgressDialog)):
 				if hasattr(win, data[0]):
 					ctrl = getattr(win, data[0])
-					if win.IsModal():
-						win.EndModal(ctrl.Id)
-					elif isinstance(ctrl, (FlatShadedButton, GenButton,
-										   wx.Button)):
-						event = wx.CommandEvent(wx.EVT_BUTTON.typeId, ctrl.Id)
-						event.SetEventObject(ctrl)
-						ctrl.ProcessEvent(event)
-					response = "ok"
-			elif isinstance(win, ProgressDialog) and data[0] == "cancel":
-				if win.IsModal():
-					win.EndModal(wx.ID_CANCEL)
-				else:
-					win.Close()
-				response = "ok"
+					if ctrl.IsEnabled():
+						if win.IsModal():
+							win.EndModal(ctrl.Id)
+						elif isinstance(ctrl, (FlatShadedButton, GenButton,
+											   wx.Button)):
+							event = wx.CommandEvent(wx.EVT_BUTTON.typeId, ctrl.Id)
+							event.SetEventObject(ctrl)
+							ctrl.ProcessEvent(event)
+						response = "ok"
+					else:
+						response = "forbidden"
 		elif data[0] == "invokemenu" and len(data) == 3:
 			if self.get_app_state("plain") == "idle":
 				menubar = self.GetMenuBar()
