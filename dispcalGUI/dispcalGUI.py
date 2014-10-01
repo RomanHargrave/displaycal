@@ -342,34 +342,36 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	else:
 		return
 	dlg = ConfirmDialog(parent,
+						title=lang.getstr("colorimeter_correction.web_check"),
 						msg=lang.getstr("colorimeter_correction.web_check.choose"), 
 						ok=lang.getstr("ok"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), nowrap=True)
-	dlg.list_ctrl = wx.ListCtrl(dlg, -1, size=(640, 150), style=wx.LC_REPORT | 
-																wx.LC_SINGLE_SEL)
-	dlg.list_ctrl.InsertColumn(0, lang.getstr("type"))
-	dlg.list_ctrl.InsertColumn(1, lang.getstr("description"))
-	dlg.list_ctrl.InsertColumn(2, lang.getstr("display.manufacturer"))
-	dlg.list_ctrl.InsertColumn(3, lang.getstr("display"))
-	dlg.list_ctrl.InsertColumn(4, lang.getstr("instrument"))
-	dlg.list_ctrl.InsertColumn(5, lang.getstr("reference"))
-	dlg.list_ctrl.InsertColumn(6, lang.getstr("created"))
-	dlg.list_ctrl.SetColumnWidth(0, 50)
-	dlg.list_ctrl.SetColumnWidth(1, 250)
-	dlg.list_ctrl.SetColumnWidth(2, 150)
-	dlg.list_ctrl.SetColumnWidth(3, 100)
-	dlg.list_ctrl.SetColumnWidth(4, 75)
-	dlg.list_ctrl.SetColumnWidth(5, 75)
-	dlg.list_ctrl.SetColumnWidth(6, 150)
+	dlg_list_ctrl = wx.ListCtrl(dlg, -1, size=(640, 150), style=wx.LC_REPORT | 
+																wx.LC_SINGLE_SEL,
+								name="colorimeter_corrections")
+	dlg_list_ctrl.InsertColumn(0, lang.getstr("type"))
+	dlg_list_ctrl.InsertColumn(1, lang.getstr("description"))
+	dlg_list_ctrl.InsertColumn(2, lang.getstr("display.manufacturer"))
+	dlg_list_ctrl.InsertColumn(3, lang.getstr("display"))
+	dlg_list_ctrl.InsertColumn(4, lang.getstr("instrument"))
+	dlg_list_ctrl.InsertColumn(5, lang.getstr("reference"))
+	dlg_list_ctrl.InsertColumn(6, lang.getstr("created"))
+	dlg_list_ctrl.SetColumnWidth(0, 50)
+	dlg_list_ctrl.SetColumnWidth(1, 250)
+	dlg_list_ctrl.SetColumnWidth(2, 150)
+	dlg_list_ctrl.SetColumnWidth(3, 100)
+	dlg_list_ctrl.SetColumnWidth(4, 75)
+	dlg_list_ctrl.SetColumnWidth(5, 75)
+	dlg_list_ctrl.SetColumnWidth(6, 150)
 	for i in cgats:
-		index = dlg.list_ctrl.InsertStringItem(i, "")
-		dlg.list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
-		dlg.list_ctrl.SetStringItem(index, 1, get_canonical_instrument_name(cgats[i].queryv1("DESCRIPTOR") or ""))
-		dlg.list_ctrl.SetStringItem(index, 2, cgats[i].queryv1("MANUFACTURER") or "")
-		dlg.list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
-		dlg.list_ctrl.SetStringItem(index, 4, get_canonical_instrument_name(cgats[i].queryv1("INSTRUMENT") or ""))
-		dlg.list_ctrl.SetStringItem(index, 5, get_canonical_instrument_name(cgats[i].queryv1("REFERENCE") or ""))
+		index = dlg_list_ctrl.InsertStringItem(i, "")
+		dlg_list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
+		dlg_list_ctrl.SetStringItem(index, 1, get_canonical_instrument_name(cgats[i].queryv1("DESCRIPTOR") or ""))
+		dlg_list_ctrl.SetStringItem(index, 2, cgats[i].queryv1("MANUFACTURER") or "")
+		dlg_list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
+		dlg_list_ctrl.SetStringItem(index, 4, get_canonical_instrument_name(cgats[i].queryv1("INSTRUMENT") or ""))
+		dlg_list_ctrl.SetStringItem(index, 5, get_canonical_instrument_name(cgats[i].queryv1("REFERENCE") or ""))
 		created = cgats[i].queryv1("CREATED")
 		if created:
 			try:
@@ -399,26 +401,26 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						pass
 			if isinstance(created, struct_time):
 				created = strftime("%Y-%m-%d %H:%M:%S", created)
-		dlg.list_ctrl.SetStringItem(index, 6, created or "")
+		dlg_list_ctrl.SetStringItem(index, 6, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
-			 dlg.list_ctrl)
+			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
-			 dlg.list_ctrl)
+			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda event: dlg.EndModal(wx.ID_OK),
-			 dlg.list_ctrl)
-	dlg.sizer3.Add(dlg.list_ctrl, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			 dlg_list_ctrl)
+	dlg.sizer3.Add(dlg_list_ctrl, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 	if len(cgats) > 1:
 		# We got several matches
 		dlg.ok.Disable()
 	else:
-		item = dlg.list_ctrl.GetItem(0)
-		dlg.list_ctrl.SetItemState(item.GetId(), wx.LIST_STATE_SELECTED, 
+		item = dlg_list_ctrl.GetItem(0)
+		dlg_list_ctrl.SetItemState(item.GetId(), wx.LIST_STATE_SELECTED, 
 								   wx.LIST_STATE_SELECTED)
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
 	dlg.Center()
 	result = dlg.ShowModal()
-	index = dlg.list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+	index = dlg_list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 										  wx.LIST_STATE_SELECTED)
 	dlg.Destroy()
 	if result != wx.ID_OK:
@@ -4589,6 +4591,7 @@ class MainFrame(BaseFrame):
 			except Exception, exception:
 				safe_print(exception)
 				pass
+		dlg.display_settings = display_settings_tabs
 		# Column layout
 		display_settings = ((# 1st tab
 							 lang.getstr("osd") + ": " +
