@@ -971,14 +971,17 @@ class BaseFrame(wx.Frame):
 								row, col = -1, -1
 							if (row > -1 and col > -1 and
 								row < child.GetNumberRows() and
-								col < child.GetNumberCols() and
-								not child.IsReadOnly(row, col)):
-								child.SetCellValue(row, col, values[2])
-								event = wx.grid.GridEvent(-1,
-														  wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
-														  child,
-														  row,
-														  col)
+								col < child.GetNumberCols()):
+								if (child.IsEditable() and
+									not child.IsReadOnly(row, col)):
+									child.SetCellValue(row, col, values[2])
+									event = wx.grid.GridEvent(-1,
+															  wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
+															  child,
+															  row,
+															  col)
+								else:
+									response = "forbidden"
 						elif isinstance(child, wx.ListCtrl):
 							for row in xrange(child.GetItemCount()):
 								item = []
