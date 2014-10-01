@@ -1031,7 +1031,9 @@ class BaseFrame(wx.Frame):
 													  wx.RadioButton)):
 									event.SetInt(int(ctrl.Value))
 								event.SetEventObject(ctrl)
-							ctrl.ProcessEvent(event)
+							if not isinstance(ctrl, wx.Notebook):
+								# Bus error under Mac OS X
+								ctrl.ProcessEvent(event)
 						child.Refresh()
 						response = "ok"
 		elif data[0] == "setcfg" and len(data) == 3:
