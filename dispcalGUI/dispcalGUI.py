@@ -4624,6 +4624,7 @@ class MainFrame(BaseFrame):
 			panel.GetSizer().Add(gridsizer, 1, wx.ALL | wx.EXPAND, border=8)
 			display_settings_tabs.AddPage(panel, settings[0])
 			ctrls = []
+			texts = []
 			for column in settings[2]:
 				for name, width in column:
 					if name in ("whitepoint", ):
@@ -4637,15 +4638,26 @@ class MainFrame(BaseFrame):
 					nameprefix = name
 					for component in components:
 						if component:
-							name = nameprefix + " " + component
+							name = nameprefix + "_" + component
 						if name:
+							label = name
+							if ("_" in label):
+								label = label.split("_")
+								for i, part in enumerate(label):
+									label[i] = lang.getstr(part)
+								label = " ".join(label)
+							else:
+								label = lang.getstr(label)
+							text = wx.StaticText(panel, -1, label)
 							ctrl = wx.TextCtrl(panel, -1,
 											   metadata.getvalue("OSD_settings_%s" %
 																 re.sub("[ .]", "_", name), ""),
 											   size=(width, -1),
 											   name=name)
 						else:
+							text = (0, 0)
 							ctrl = (0, 0)
+						texts.append(text)
 						ctrls.append(ctrl)
 						display_settings_ctrls.append(ctrl)
 			# Add the controls to the sizer
@@ -4654,19 +4666,7 @@ class MainFrame(BaseFrame):
 				for column_num in range(settings[1]):
 					ctrl_index = row_num + column_num * rows
 					if ctrl_index < len(ctrls):
-						if isinstance(ctrls[ctrl_index], wx.Window):
-							label = ctrls[ctrl_index].Name
-							if (" " in label):
-								label = label.split(" ")
-								for i, part in enumerate(label):
-									label[i] = lang.getstr(part)
-								label = " ".join(label)
-							else:
-								label = lang.getstr(label)
-							text = wx.StaticText(panel, -1, label)
-						else:
-							text = (0, 0)
-						gridsizer.Add(text,
+						gridsizer.Add(texts[ctrl_index],
 									  1, flag=wx.ALIGN_CENTER_VERTICAL |
 											  wx.ALIGN_LEFT)
 						gridsizer.Add(ctrls[ctrl_index], 1, 
@@ -11404,7 +11404,8 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 	def __init__(self, parent, ti3, suspicious, force=False):
 		ConfirmDialog.__init__(self, parent,
 							   title=os.path.basename(ti3.filename)
-									 if ti3.filename else appname,
+									 if ti3.filename
+									 else lang.getstr("measurement_file.check_sanity"),
 							   ok=lang.getstr("ok"),
 							   cancel=lang.getstr("cancel"),
 							   alt=lang.getstr("invert_selection"),
@@ -11482,7 +11483,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 								   u"\u0394H*00\nRGB-XYZ"]):
 			grid.SetColLabelValue(i, label)
 		attr = wx.grid.GridCellAttr()
-		attr.SetReadOnly(True)
+		#attr.SetReadOnly(True)
 		attr.SetRenderer(CustomCellBoolRenderer())
 		grid.SetColAttr(0, attr)
 		font = grid.GetDefaultCellFont()
@@ -11616,6 +11617,8 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				grid.ClearSelection()
 				for row, col in cells:
 					grid.SelectBlock(row, col, row, col, True)
+		else:
+			dlg.check_select_status()
 
 	def cell_click_handler(self, event):
 		if event.Col == 0:
@@ -11631,7 +11634,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg = self
 		if None in (has_false_values, has_true_values):
 			for index in xrange(dlg.grid.GetNumberRows()):
-				if dlg.grid.GetCellValue(index, 0) == "":
+				if dlg.grid.GetCellValue(index, 0) != "1":
 					has_false_values = True
 				else:
 					has_true_values = True

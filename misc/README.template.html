@@ -1803,6 +1803,8 @@ if s.recv(1024) == 'ok\n':
 							<dd>Enable the spyder 2. Will defer response.</dd>
 						<dt><code>getactivewindow</code></dt>
 							<dd>Get the current active window. The returned format is <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt><code>getcellvalues [&lt;window ID | name | label&gt;] &lt;grid ID | name | label&gt;</code></dt>
+							<dd>Get cell values from grid <code>&lt;grid&gt;</code> of window <code>&lt;window&gt;</code> or the current active window.</dd>
 						<dt><code>getcfg [&lt;option&gt;]</code></dt>
 							<dd>Get configuration <code>&lt;option&gt;</code>, or whole configuration (key-value pairs in INI format).</dd>
 						<dt><code>getdefault &lt;option&gt;</code></dt>
@@ -1855,7 +1857,7 @@ if s.recv(1024) == 'ok\n':
 						<dt><code>setcfg &lt;option&gt; &lt;value&gt;</code></dt>
 							<dd>Set configuration <code>&lt;option&gt;</code> to <code>&lt;value&gt;</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code>getdefaults</code> and <code>getvalid</code>.</dd>
 						<dt><code>setresponseformat &lt;format&gt;</code></dt>
-							<dd>Set the format for responses. The default <code>plain</code> is a text format that is easy to read, but not necessarily the best for parsing programmatically. The other possible formats are <code>json</code> and <code>json.pretty</code>, a JSON format. The only diffference between <code>json</code> and <code>json.pretty</code> is that the latter will be formatted with whitespace and indentation to make it easier to read.</dd>
+							<dd>Set the format for responses. The default <code>plain</code> is a text format that is easy to read, but not necessarily the best for parsing programmatically. The other possible formats are <code>json</code>, <code>json.pretty</code>, <code>xml</code> and <code>xml.pretty</code>. The <code>*.pretty</code> formats use newlines and indentation to make them easier to read.</dd>
 						<dt><code>synthprofile [&lt;filename&gt;]</code></dt>
 							<dd>Show synthetic profile creation window, optionally loading profile <code>&lt;filename&gt;</code>.</dd>
 						<dt><code>testchart-editor [&lt;filename&gt; | create &lt;filename&gt;]</code></dt>
@@ -1866,9 +1868,19 @@ if s.recv(1024) == 'ok\n':
 				</div>
 			</div>
 			
+			<h3>Interacting with UI elements</h3>
+			
+			<ul>
+				<li>Invoking a button: <code>interact [window] &lt;button&gt;</code> e.g. setup calibration measurements: <code>interact mainframe calibrate_and_profile_btn</code></li>
+				<li>Setting a value on a dropdown, text field, or slider: <code>interact [window] &lt;element&gt; setvalue "&lt;value&gt;"</code> e.g. set calibration gamma to 2.4: <code>interact mainframe trc_textctrl setvalue 2.4</code></li>
+				<li>Setting a cell value on a grid: <code>interact [window] &lt;grid&gt; setvalue "&lt;row&gt;,&lt;col&gt;,&lt;value&gt;"</code> e.g. while the testchart editor is shown, set the cell at the second column of the first row to 33: <code>interact tcgen grid setvalue "0,1,33"</code></li>
+			</ul>
+			
 			<h3>Caveats and limitations</h3>
 			
 			<p>There are a few things to be aware of when using commands that interact with the UI directly (i.e. <code>close</code>, <code>interact</code> and <code>invokemenu</code>). If an object's ID is negative, it means that it has been automatically assigned at object creation time and is only valid during the lifetime of the object (i.e. for modal dialogs, only while the dialog is displayed). For this reason, using an object's name instead is easier, but names (aswell as non automatically assigned IDs) are not guaranteed to be unique, even for objects which share the same parent window. Another possibility is to use an object's label, which while also not guaranteed to be unique, still has a fairly high likelihood of being unique for controls that share the same parent window, but has the drawback that it is localized (although you can ensure a specific UI language by calling <code>set-language</code>) and is subject to change when the localization is updated.</p>
+			
+			<p>Note that if setting a value returns <code>ok</code>, this is not always an indication that the value was actually changed, but only that the attempt to set the value has not failed. If you want to make sure that the correct value is set, use <code>getuielement</code> on the affected element(s) and check the value.</p>
 			
 			<p>Also, not all controls may offer a comprehensive scripting interface. I'm open to suggestions though.</p>
 		</div>

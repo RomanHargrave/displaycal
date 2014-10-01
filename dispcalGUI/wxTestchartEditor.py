@@ -888,7 +888,7 @@ class TestchartEditor(BaseFrame):
 			if not self.grid.GetBatchCount():
 				wx.Bell()
 			if label in self.ti1[0]["DATA_FORMAT"].values():
-				strval = "%.6f" % sample[label]
+				strval = str(sample[label])
 				if "." in strval:
 					strval = strval.rstrip("0").rstrip(".")
 			else:

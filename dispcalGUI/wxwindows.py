@@ -8,6 +8,7 @@ import os
 import re
 import socket
 import string
+import subprocess as sp
 import sys
 import threading
 
@@ -24,6 +25,7 @@ from ordereddict import OrderedDict
 from util_io import StringIOu as StringIO
 from util_os import waccess
 from util_str import safe_str, safe_unicode, wrap
+from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  adjust_font_size_for_gcdc, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
@@ -44,6 +46,7 @@ try:
 	from wx.lib.agw import aui
 	from wx.lib.agw.aui import AuiDefaultTabArt
 except ImportError:
+	from wx import aui
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
 
@@ -560,7 +563,7 @@ class BaseFrame(wx.Frame):
 				format = self.responseformat
 			if isinstance(win, (DirDialog, FileDialog)):
 				response = format_ui_element(win, format)
-				if format.startswith("json"):
+				if format != "plain":
 					response.update({"message": win.Message, "path": win.Path})
 				else:
 					response = [response, demjson.encode(win.Message),
@@ -568,10 +571,10 @@ class BaseFrame(wx.Frame):
 			elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
 								  ProgressDialog)):
 				response = format_ui_element(win, format)
-				if not format.startswith("json"):
+				if format == "plain":
 					response = [response]
-				if hasattr(win, "message"):
-					if format.startswith("json"):
+				if hasattr(win, "message") and win.message:
+					if format != "plain":
 						response["message"] = win.message.Label
 					else:
 						response.append(demjson.encode(win.message.Label))
@@ -581,7 +584,7 @@ class BaseFrame(wx.Frame):
 													 GenButton, wx.Button)) and
 						child.TopLevelParent is win and
 						child.IsShownOnScreen() and child.IsEnabled()):
-						if format.startswith("json"):
+						if format != "plain":
 							if not "buttons" in response:
 								response["buttons"] = []
 							response["buttons"].append(child.Label)
@@ -591,7 +594,7 @@ class BaseFrame(wx.Frame):
 							response.append(demjson.encode(child.Label))
 			else:
 				return "blocked"
-			if not format.startswith("json"):
+			if format == "plain":
 				response = " ".join(response)
 			return response
 		if hasattr(self, "worker") and self.worker.is_working():
@@ -615,7 +618,8 @@ class BaseFrame(wx.Frame):
 		dialog = isinstance(self.get_top_window(), wx.Dialog)
 		if ((state in ("blocked", "busy") or dialog) and
 			data[0] not in ("abort", "alt", "cancel", "close",
-							"getactivewindow", "getcfg", "getdefault",
+							"getactivewindow", "getcellvalues",
+							"getcfg", "getdefault",
 							"getdefaults", "getmenus", "getmenuitems",
 							"getstate", "getuielement", "getuielements",
 							"getvalid", "getwindows", "interact", "ok",
@@ -644,7 +648,7 @@ class BaseFrame(wx.Frame):
 						  win is not self.get_top_window()):
 						response = "blocked"
 					elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
-										ProgressDialog)):
+										  ProgressDialog)):
 						if win.IsModal():
 							win.EndModal(wx.ID_CANCEL)
 						else:
@@ -737,6 +741,28 @@ class BaseFrame(wx.Frame):
 			win = self.get_top_window()
 			response = format_ui_element(win, self.responseformat)
 			win = None
+		elif data[0] == "getcellvalues" and len(data) in (2, 3):
+			response = "invalid"
+			if len(data) == 3:
+				win = get_toplevel_window(data[1])
+			else:
+				win = self.get_top_window()
+			if win:
+				name = data[-1]
+				child = get_widget(win, name)
+				if (child and isinstance(child, wx.grid.Grid) and
+					child.IsShownOnScreen()):
+					response = []
+					for row in xrange(child.GetNumberRows()):
+						values = []
+						for col in xrange(child.GetNumberCols()):
+							values.append(child.GetCellValue(row, col))
+						if self.responseformat == "plain":
+							values = demjson.encode(values).strip("[]").replace('","', '" "')
+						response.append(values)
+				elif child is False:
+					response = "forbidden"
+				child = None
 		elif data[0] == "getcfg" and len(data) == 2:
 			if len(data) == 2:
 				# Return cfg value
@@ -766,7 +792,7 @@ class BaseFrame(wx.Frame):
 			if menubar:
 				for i, (menu, label) in enumerate(menubar.GetMenus()):
 					label = label.lstrip("&_")
-					if self.responseformat.startswith("json"):
+					if self.responseformat != "plain":
 						menus.append({"label": label, "position": i,
 									  "enabled": menubar.IsEnabledTop(i)})
 					else:
@@ -792,7 +818,7 @@ class BaseFrame(wx.Frame):
 					if (len(data) == 2 and label != menu_pos_label and
 						i != menu_pos_label):
 						continue
-					if (self.responseformat.startswith("json") and
+					if (self.responseformat != "plain" and
 						not label in menulabels):
 						menuitems = []
 						menulabels.append(label)
@@ -802,7 +828,7 @@ class BaseFrame(wx.Frame):
 					for menuitem in menu.GetMenuItems():
 						if menuitem.IsSeparator():
 							continue
-						if self.responseformat.startswith("json"):
+						if self.responseformat != "plain":
 							menuitems.append({"label": menuitem.Label,
 											  "id": menuitem.Id,
 											  "enabled": menubar.IsEnabledTop(i) and
@@ -822,7 +848,7 @@ class BaseFrame(wx.Frame):
 											  else "",
 											  " checked" if menuitem.IsChecked()
 											  else ""))
-			if self.responseformat.startswith("json"):
+			if self.responseformat != "plain":
 				response = menus
 			else:
 				response = menuitems
@@ -851,11 +877,7 @@ class BaseFrame(wx.Frame):
 			if win:
 				# Ordering in tab order
 				for child in win.GetAllChildren():
-					if (child and isinstance(child, (CustomCheckBox,
-													 wx.Control)) and
-						not isinstance(child, wx.StaticBitmap) and
-						child.TopLevelParent is win and
-						child.IsShownOnScreen()):
+					if is_scripting_allowed(win, child):
 						uielements.append(format_ui_element(child,
 															self.responseformat))
 				child = None
@@ -865,7 +887,7 @@ class BaseFrame(wx.Frame):
 		elif data[0] == "getvalid" and len(data) == 1:
 			response = {"ranges": config.valid_ranges,
 						"values": config.valid_values}
-			if not self.responseformat.startswith("json"):
+			if self.responseformat == "plain":
 				valid = []
 				for section, options in response.iteritems():
 					valid.append("[%s]" % section)
@@ -909,6 +931,7 @@ class BaseFrame(wx.Frame):
 					event = None
 					if value is not None:
 						# Set value
+						values = value.split(",", 2)
 						if isinstance(child, floatspin.FloatSpin):
 							try:
 								child.SetValue(float(value))
@@ -921,13 +944,52 @@ class BaseFrame(wx.Frame):
 							  value in ("0", "1", "false", "true")):
 							child.SetValue(bool(demjson.decode(value)))
 							event = wx.EVT_CHECKBOX
-						elif isinstance(child, wx.Choice):
-							if value in child.Items:
-								child.SetStringSelection(value)
-								event = wx.EVT_CHOICE
 						elif isinstance(child, wx.ComboBox):
 							child.SetValue(value)
 							event = wx.EVT_TEXT
+						elif isinstance(child, wx.Choice):
+							# NOTE: Check for wx.ComboBox first because it is a
+							# subclass of wx.Choice!
+							if value in child.Items:
+								child.SetStringSelection(value)
+								event = wx.EVT_CHOICE
+						elif isinstance(child, (aui.AuiNotebook,
+												labelbook.FlatBookBase,
+												wx.Notebook)):
+							for page_idx in xrange(child.GetPageCount()):
+								if child.GetPageText(page_idx) == value:
+									child.SetSelection(page_idx)
+									event = wx.EVT_NOTEBOOK_PAGE_CHANGED
+									break
+						elif isinstance(child, wx.grid.Grid) and len(values) == 3:
+							try:
+								row, col = (int(v) for v in values[:2])
+							except ValueError:
+								row, col = -1, -1
+							if (row > -1 and col > -1 and
+								row < child.GetNumberRows() and
+								col < child.GetNumberCols() and
+								not child.IsReadOnly(row, col)):
+								child.SetCellValue(row, col, values[2])
+								event = wx.grid.GridEvent(-1,
+														  wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
+														  child,
+														  row,
+														  col)
+						elif isinstance(child, wx.ListCtrl):
+							for row in xrange(child.GetItemCount()):
+								item = []
+								for col in xrange(child.GetColumnCount()):
+									item.append(child.GetItem(row, col).GetText())
+								if " ".join(item) == value:
+									state = child.GetItemState(row, wx.LIST_STATE_SELECTED)
+									child.Select(row, not state &
+													  wx.LIST_STATE_SELECTED)
+									if state & wx.LIST_STATE_SELECTED:
+										event = wx.EVT_LIST_ITEM_DESELECTED
+									else:
+										event = wx.EVT_LIST_ITEM_SELECTED
+									break
 						elif (isinstance(child, wx.RadioButton) and
 							  value in ("0", "1", "false", "true")):
 							child.SetValue(bool(demjson.decode(value)))
@@ -957,12 +1019,19 @@ class BaseFrame(wx.Frame):
 							ctrl = child._cb
 						else:
 							ctrl = child
-						event = wx.CommandEvent(event.typeId, ctrl.Id)
-						if isinstance(child, (CustomCheckBox, wx.CheckBox,
-											  wx.RadioButton)):
-							event.SetInt(int(ctrl.Value))
-						event.SetEventObject(ctrl)
-						ctrl.ProcessEvent(event)
+						events = [event]
+						if event is wx.EVT_SPINCTRL:
+							events.append(wx.EVT_TEXT)
+						elif event is wx.EVT_TEXT and win.FindFocus() != ctrl:
+							events.append(wx.EVT_KILL_FOCUS)
+						for event in events:
+							if not isinstance(event, wx.Event):
+								event = wx.CommandEvent(event.typeId, ctrl.Id)
+								if isinstance(child, (CustomCheckBox, wx.CheckBox,
+													  wx.RadioButton)):
+									event.SetInt(int(ctrl.Value))
+								event.SetEventObject(ctrl)
+							ctrl.ProcessEvent(event)
 						child.Refresh()
 						response = "ok"
 		elif data[0] == "setcfg" and len(data) == 3:
@@ -986,7 +1055,7 @@ class BaseFrame(wx.Frame):
 			else:
 				response = "invalid"
 		elif (data[0] == "setresponseformat" and len(data) == 2 and
-			  data[1] in ("json", "json.pretty", "plain")):
+			  data[1] in ("json", "json.pretty", "plain", "xml", "xml.pretty")):
 			self.responseformat = data[1]
 		else:
 			wx.DirDialog = DirDialog
@@ -995,7 +1064,7 @@ class BaseFrame(wx.Frame):
 				response = self.process_data(data)
 			except Exception, exception:
 				safe_print(exception)
-				if self.responseformat.startswith("json"):
+				if self.responseformat != "plain":
 					response = {"class": exception.__class__.__name__,
 								"error": safe_unicode(exception)}
 				else:
@@ -1038,15 +1107,22 @@ class BaseFrame(wx.Frame):
 		self.send_response(response, data, conn, command_timestamp, child or win)
 
 	def send_response(self, response, data, conn, command_timestamp, win=None):
-		if self.responseformat.startswith("json"):
+		if self.responseformat != "plain":
 			response = {"command": data,
 						"command_timestamp": command_timestamp,
 						"result": response,
 						"result_timestamp": datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")}
 			if win:
 				response["object"] = format_ui_element(win, self.responseformat)
+		if self.responseformat.startswith("json"):
 			response = demjson.encode(response,
 									  compactly=self.responseformat == "json")
+		elif self.responseformat.startswith("xml"):
+			response = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+						(self.responseformat == "xml.pretty" and "\n" or "") +
+						dict2xml(response, "response",
+								 pretty=self.responseformat == "xml.pretty",
+								 allow_attributes=False))
 		else:
 			if isinstance(response, dict):
 				response = ["%s = %s" % (name, value) for name, value in
@@ -2945,7 +3021,7 @@ class CustomCellBoolRenderer(CustomCellRenderer):
 		self._bitmap_unchecked = geticon(16, "x")
 
 	def DrawLabel(self, grid, dc, rect, row, col):
-		if grid.GetCellValue(row, col):
+		if grid.GetCellValue(row, col) == "1":
 			bitmap = self._bitmap
 		else:
 			bitmap = self._bitmap_unchecked
@@ -4099,9 +4175,11 @@ def get_widget(win, id_name_label):
 		try:
 			# Trying to access some attributes of wx widgets may
 			# raise an exception
-			return getattr(win, id_name_label)
+			child = getattr(win, id_name_label)
 		except:
 			return False
+		if is_scripting_allowed(win, child):
+			return child
 	else:
 		# ID or label
 		try:
@@ -4109,8 +4187,9 @@ def get_widget(win, id_name_label):
 		except ValueError:
 			pass
 		for child in win.GetAllChildren():
-			if (child.Id == id_name_label or child.Name == id_name_label or
-				child.Label == id_name_label):
+			if (is_scripting_allowed(win, child) and
+				(child.Id == id_name_label or child.Name == id_name_label or
+				 child.Label == id_name_label)):
 				return child
 
 
@@ -4125,9 +4204,19 @@ def get_toplevel_window(id_name_label):
 			return win
 
 
+def is_scripting_allowed(win, child):
+	return (child and child.TopLevelParent is win and
+			child.IsShownOnScreen() and
+		    isinstance(child, (CustomCheckBox, aui.AuiNotebook,
+							   labelbook.FlatBookBase,  wx.Control, wx.Notebook,
+							   wx.grid.Grid)) and
+			not isinstance(child, (SimpleBook, aui.AuiTabCtrl,
+								   wx.StaticBitmap)))
+
+
 _elementtable = {}
 
-def format_ui_element(child, format):
+def format_ui_element(child, format="plain"):
 	if child.TopLevelParent:
 		if not hasattr(child.TopLevelParent, "_win2name"):
 			child.TopLevelParent._win2name = {}
@@ -4137,7 +4226,29 @@ def format_ui_element(child, format):
 		name = child.TopLevelParent._win2name.get(child, child.Name)
 	else:
 		name = child.Name
-	if format.startswith("json"):
+	items = getattr(child, "Items", [])
+	value = None
+	if not items and isinstance(child, wx.ListCtrl):
+		for row in xrange(child.GetItemCount()):
+			item = []
+			for col in xrange(child.GetColumnCount()):
+				item.append(child.GetItem(row, col).GetText())
+			items.append(" ".join(item))
+		row = child.GetFirstSelected()
+		if row != wx.NOT_FOUND:
+			value = items[row]
+	elif isinstance(child, (aui.AuiNotebook, labelbook.FlatBookBase,
+							wx.Notebook)):
+		for page_idx in xrange(child.GetPageCount()):
+			items.append(child.GetPageText(page_idx))
+		page_idx = child.GetSelection()
+		if page_idx != wx.NOT_FOUND:
+			value = child.GetPageText(page_idx)
+	cols = []
+	if isinstance(child, wx.grid.Grid):
+		for col in xrange(child.GetNumberCols()):
+			cols.append(child.GetColLabelValue(col))
+	if format != "plain":
 		uielement = {"class": child.__class__.__name__, "name": name,
 					 "enabled": child.IsEnabled(), "id": child.Id}
 		if child.Label:
@@ -4148,25 +4259,37 @@ def format_ui_element(child, format):
 			uielement["value"] = child.GetValue()
 		elif hasattr(child, "GetStringSelection"):
 			uielement["value"] = child.GetStringSelection()
-		if hasattr(child, "Items"):
-			uielement["items"] = child.Items
+		elif value is not None:
+			uielement["value"] = value
+		if items:
+			uielement["items"] = items
+		if cols:
+			uielement["cols"] = cols
+			uielement["rows"] = child.GetNumberRows()
 		return uielement
-	return "%s %s %s%s %s%s%s" % (child.__class__.__name__, child.Id, name,
-								  (child.Label and
-								   " " + demjson.encode(child.Label)),
-								  "enabled" if child.IsEnabled() else "disabled",
-								  (isinstance(child, (CustomCheckBox, wx.CheckBox,
+	return "%s %s %s%s %s%s%s%s" % (child.__class__.__name__, child.Id,
+									sp.list2cmdline([name]),
+									(child.Label and
+									 " " + demjson.encode(child.Label)),
+									"enabled" if child.IsEnabled() else "disabled",
+									(isinstance(child, (CustomCheckBox, wx.CheckBox,
+														wx.RadioButton)) and
+									 child.GetValue() and " checked") or
+									(getattr(child, "GetValue", "") and
+									 not isinstance(child, (CustomCheckBox, wx.CheckBox,
 													  wx.RadioButton)) and
-								   child.GetValue() and " checked") or
-								  (getattr(child, "GetValue", "") and
-								   not isinstance(child, (CustomCheckBox, wx.CheckBox,
-														  wx.RadioButton)) and
-								   " value " + demjson.encode(child.GetValue())) or
-								  (getattr(child, "GetStringSelection", "") and
-								   " value " + demjson.encode(child.GetStringSelection())),
-								  (getattr(child, "Items", "") and
-								   " items " +
-								   demjson.encode(child.Items).strip("[]").replace(",", " ")))
+									 " value " + demjson.encode(child.GetValue())) or
+									(getattr(child, "GetStringSelection", "") and
+									 " value " + demjson.encode(child.GetStringSelection())) or
+									(value is not None and " value " +
+									 demjson.encode(value) or ""),
+									(items and " items " +
+									 demjson.encode(items).strip("[]").replace('","', '" "') or
+									 ""),
+									(cols and " rows %s cols %s" %
+									 (child.GetNumberRows(),
+									  demjson.encode(cols).strip("[]").replace('","', '" "')) or
+									 ""))
                                
 
 def test():
