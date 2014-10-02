@@ -549,13 +549,14 @@ class BaseFrame(wx.Frame):
 					line = buffer[:end]
 					buffer = buffer[end + 1:]
 					if line:
+						command_timestamp = datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")
 						line = safe_unicode(line, "UTF-8")
 						safe_print(lang.getstr("app.incoming_message",
 											   addrport + (line, )))
 						data = split_command_line(line)
 						response = None
 						# Non-UI commands
-						if data[0] == "getcfg" and len(data) == 2:
+						if data[0] == "getcfg" and len(data) < 3:
 							if len(data) == 2:
 								# Return cfg value
 								if data[1] in defaults:
@@ -598,10 +599,12 @@ class BaseFrame(wx.Frame):
 							self.responseformat = data[1]
 							response = "ok"
 						if response is not None:
+							self.send_response(response, data, conn,
+											   command_timestamp)
 							continue
 						# UI commands
 						wx.CallAfter(self.finish_processing, data, conn,
-									 datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f"))
+									 command_timestamp)
 		try:
 			conn.shutdown(socket.SHUT_RDWR)
 		except socket.error, exception:
