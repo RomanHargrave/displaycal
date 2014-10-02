@@ -421,6 +421,10 @@ class SynthICCFrame(BaseFrame):
 			self.set_trc(gamma)
 			self._updating_ctrls = False
 
+	def get_commands(self):
+		return self.get_common_commands() + ["synthprofile [<filename>]",
+											 "load <filename>"]
+
 	def process_data(self, data):
 		if (data[0] == "synthprofile" and
 			len(data) < 3) or (data[0] == "load" and len(data) == 2):

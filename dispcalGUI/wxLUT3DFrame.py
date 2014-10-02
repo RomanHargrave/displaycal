@@ -434,6 +434,9 @@ class LUT3DFrame(BaseFrame):
 			self.output_profile_ctrl.SetPath(profile_path)
 			self.set_profile("output", profile_path or False, silent=not event)
 
+	def get_commands(self):
+		return self.get_common_commands() + ["3DLUT-maker [create <filename>]"]
+
 	def process_data(self, data):
 		if data[0] == "3DLUT-maker" and (len(data) == 1 or
 										 (len(data) == 3 and

@@ -70,8 +70,13 @@ class VRML2X3DFrame(BaseFrame):
 		self.SetMinSize(self.GetSize())
 		self.SetMaxSize(self.GetSize())
 
+	def get_commands(self):
+		return (self.get_common_commands() +
+			    ["VRML-to-X3D-converter [<filename...>]",
+				 "load <filename...>"])
+
 	def process_data(self, data):
-		if data[0] == "VRML-to-X3D-converter":
+		if data[0] in ("VRML-to-X3D-converter", "load"):
 			if self.IsIconized():
 				self.Restore()
 			self.Raise()

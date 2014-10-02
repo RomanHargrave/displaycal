@@ -1651,6 +1651,10 @@ class ProfileInfoFrame(LUTFrame):
 			wx.CallAfter(self.client.center)
 		self.Thaw()
 
+	def get_commands(self):
+		return self.get_common_commands() + ["profile-info [<filename>]",
+											 "load <filename>"]
+
 	def process_data(self, data):
 		if (data[0] == "profile-info" and
 			len(data) < 3) or (data[0] == "load" and len(data) == 2):

@@ -463,12 +463,11 @@ class BaseApp(wx.App):
 
 
 active_window = None
+responseformats = {}
 
 class BaseFrame(wx.Frame):
 
 	""" Main frame base class. """
-	
-	responseformat = "plain"
 	
 	def __init__(self, *args, **kwargs):
 		wx.Frame.__init__(self, *args, **kwargs)
@@ -528,6 +527,7 @@ class BaseFrame(wx.Frame):
 
 	def message_handler(self, conn, addrport):
 		""" Handle messages sent via socket """
+		responseformats[conn] = "plain"
 		buffer = ""
 		while self and self.listening:
 			# Wait for incoming message
@@ -556,7 +556,9 @@ class BaseFrame(wx.Frame):
 						data = split_command_line(line)
 						response = None
 						# Non-UI commands
-						if data[0] == "getcfg" and len(data) < 3:
+						if data[0] == "getappname" and len(data) == 1:
+							response = pyname
+						elif data[0] == "getcfg" and len(data) < 3:
 							if len(data) == 2:
 								# Return cfg value
 								if data[1] in defaults:
@@ -570,6 +572,8 @@ class BaseFrame(wx.Frame):
 									value = getcfg(name, False)
 									if value is not None:
 										response[name] = value
+						elif data[0] == "getcommands" and len(data) == 1:
+							response = sorted(self.get_commands())
 						elif data[0] == "getdefault" and len(data) == 2:
 							if data[1] in defaults:
 								response = {data[1]: defaults[data[1]]}
@@ -582,7 +586,7 @@ class BaseFrame(wx.Frame):
 						elif data[0] == "getvalid" and len(data) == 1:
 							response = {"ranges": config.valid_ranges,
 										"values": config.valid_values}
-							if self.responseformat == "plain":
+							if responseformats[conn] == "plain":
 								valid = []
 								for section, options in response.iteritems():
 									valid.append("[%s]" % section)
@@ -596,7 +600,7 @@ class BaseFrame(wx.Frame):
 							  len(data) == 2 and
 							  data[1] in ("json", "json.pretty", "plain", "xml",
 										  "xml.pretty")):
-							self.responseformat = data[1]
+							responseformats[conn] = data[1]
 							response = "ok"
 						if response is not None:
 							self.send_response(response, data, conn,
@@ -611,12 +615,11 @@ class BaseFrame(wx.Frame):
 			safe_print("Warning - could not shutdown connection:", exception)
 		safe_print(lang.getstr("app.client.disconnect", addrport))
 		conn.close()
+		responseformats.pop(conn)
 
-	def get_app_state(self, format=None):
+	def get_app_state(self, format):
 		win = self.get_top_window()
 		if isinstance(win, wx.Dialog) and win.IsShown():
-			if format is None:
-				format = self.responseformat
 			if isinstance(win, (DirDialog, FileDialog)):
 				response = format_ui_element(win, format)
 				if format != "plain":
@@ -656,6 +659,28 @@ class BaseFrame(wx.Frame):
 		if hasattr(self, "worker") and self.worker.is_working():
 			return "busy"
 		return "idle"
+
+	def get_commands(self):
+		return self.get_common_commands()
+
+	def get_common_commands(self):
+		cmds = ["abort", "activate [<window>]",
+				"alt | cancel | ok [<filename>]", "close [<window>]",
+				"getactivewindow", "getappname",
+				"getcellvalues [<window>] <grid>", "getcommands",
+				"getcfg [<option>]", "getdefault <option>", "getdefaults",
+				"getmenus", "getmenuitems [<menu>]", "getstate",
+				"getuielement [<window>] <element>", "getuielements [<window>]",
+				"getvalid", "getwindows",
+				"interact [<window>] <element> [setvalue <value>]",
+				"invokemenu <menu> <menuitem>",
+				"restore-defaults [<category>...]",
+				"setcfg <option> <value>", "setresponseformat <format>"]
+		if hasattr(self, "update_controls"):
+			cmds.append("refresh")
+			if hasattr(self, "panel"):
+				cmds.append("set-language <languagecode>")
+		return cmds
 
 	def get_top_window(self):
 		windows = [active_window or self] + list(wx.GetTopLevelWindows())
@@ -713,19 +738,25 @@ class BaseFrame(wx.Frame):
 						response = "failed"
 				else:
 					response = "invalid"
-		elif data[0] == "activate" and len(data) == 2:
+		elif data[0] == "activate" and len(data) < 3:
 			response = "ok"
-			try:
-				id_name_label = int(data[1])
-			except ValueError:
-				id_name_label = data[1]
-			for win in reversed(wx.GetTopLevelWindows()):
-				if (win.Id == id_name_label or win.Name == id_name_label or
-					win.Label == id_name_label) and win.IsShown():
-					if win.IsIconized():
-						win.Restore()
-					win.Raise()
-					break
+			if len(data) < 2:
+				win = wx.GetApp().TopWindow
+			else:
+				try:
+					id_name_label = int(data[1])
+				except ValueError:
+					id_name_label = data[1]
+				for win in reversed(wx.GetTopLevelWindows()):
+					if (win.Id == id_name_label or win.Name == id_name_label or
+						win.Label == id_name_label) and win.IsShown():
+						break
+				else:
+					win = None
+			if win and win.IsShown():
+				if win.IsIconized():
+					win.Restore()
+				win.Raise()
 			else:
 				response = "invalid"
 		elif data[0] in ("alt", "cancel", "ok") and (len(data) == 1 or
@@ -793,7 +824,7 @@ class BaseFrame(wx.Frame):
 							response = "forbidden"
 		elif data[0] == "getactivewindow" and len(data) == 1:
 			win = self.get_top_window()
-			response = format_ui_element(win, self.responseformat)
+			response = format_ui_element(win, responseformats[conn])
 			win = None
 		elif data[0] == "getcellvalues" and len(data) in (2, 3):
 			response = "invalid"
@@ -811,7 +842,7 @@ class BaseFrame(wx.Frame):
 						values = []
 						for col in xrange(child.GetNumberCols()):
 							values.append(child.GetCellValue(row, col))
-						if self.responseformat == "plain":
+						if responseformats[conn] == "plain":
 							values = demjson.encode(values).strip("[]").replace('","', '" "')
 						response.append(values)
 				elif child is False:
@@ -823,7 +854,7 @@ class BaseFrame(wx.Frame):
 			if menubar:
 				for i, (menu, label) in enumerate(menubar.GetMenus()):
 					label = label.lstrip("&_")
-					if self.responseformat != "plain":
+					if responseformats[conn] != "plain":
 						menus.append({"label": label, "position": i,
 									  "enabled": menubar.IsEnabledTop(i)})
 					else:
@@ -849,7 +880,7 @@ class BaseFrame(wx.Frame):
 					if (len(data) == 2 and label != menu_pos_label and
 						i != menu_pos_label):
 						continue
-					if (self.responseformat != "plain" and
+					if (responseformats[conn] != "plain" and
 						not label in menulabels):
 						menuitems = []
 						menulabels.append(label)
@@ -859,7 +890,7 @@ class BaseFrame(wx.Frame):
 					for menuitem in menu.GetMenuItems():
 						if menuitem.IsSeparator():
 							continue
-						if self.responseformat != "plain":
+						if responseformats[conn] != "plain":
 							menuitems.append({"label": menuitem.Label,
 											  "id": menuitem.Id,
 											  "enabled": menubar.IsEnabledTop(i) and
@@ -879,12 +910,12 @@ class BaseFrame(wx.Frame):
 											  else "",
 											  " checked" if menuitem.IsChecked()
 											  else ""))
-			if self.responseformat != "plain":
+			if responseformats[conn] != "plain":
 				response = menus
 			else:
 				response = menuitems
 		elif data[0] == "getstate" and len(data) == 1:
-			response = self.get_app_state()
+			response = self.get_app_state(responseformats[conn])
 		elif data[0] == "getuielement" and len(data) in (2, 3):
 			response = "invalid"
 			if len(data) == 3:
@@ -895,7 +926,7 @@ class BaseFrame(wx.Frame):
 				name = data[-1]
 				child = get_widget(win, name)
 				if child and child.IsShownOnScreen():
-					response = format_ui_element(child, self.responseformat)
+					response = format_ui_element(child, responseformats[conn])
 				elif child is False:
 					response = "forbidden"
 				child = None
@@ -910,14 +941,14 @@ class BaseFrame(wx.Frame):
 				for child in win.GetAllChildren():
 					if is_scripting_allowed(win, child):
 						uielements.append(format_ui_element(child,
-															self.responseformat))
+															responseformats[conn]))
 				child = None
 				response = uielements
 			else:
 				response = "invalid"
 		elif data[0] == "getwindows" and len(data) == 1:
 			windows = filter(lambda win: win.IsShown(), wx.GetTopLevelWindows())
-			response = [format_ui_element(win, self.responseformat)
+			response = [format_ui_element(win, responseformats[conn])
 						for win in windows]
 			win = None
 		elif data[0] == "interact" and len(data) > 1 and len(data) < 6:
@@ -1083,7 +1114,7 @@ class BaseFrame(wx.Frame):
 				response = self.process_data(data)
 			except Exception, exception:
 				safe_print(exception)
-				if self.responseformat != "plain":
+				if responseformats[conn] != "plain":
 					response = {"class": exception.__class__.__name__,
 								"error": safe_unicode(exception)}
 				else:
@@ -1137,21 +1168,21 @@ class BaseFrame(wx.Frame):
 	def send_response(self, response, data, conn, command_timestamp, win=None):
 		if response == "invalid":
 			safe_print(lang.getstr("app.incoming_message.invalid"))
-		if self.responseformat != "plain":
+		if responseformats[conn] != "plain":
 			response = {"command": data,
 						"command_timestamp": command_timestamp,
 						"result": response,
 						"result_timestamp": datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")}
 			if win:
-				response["object"] = format_ui_element(win, self.responseformat)
-		if self.responseformat.startswith("json"):
+				response["object"] = format_ui_element(win, responseformats[conn])
+		if responseformats[conn].startswith("json"):
 			response = demjson.encode(response,
-									  compactly=self.responseformat == "json")
-		elif self.responseformat.startswith("xml"):
+									  compactly=responseformats[conn] == "json")
+		elif responseformats[conn].startswith("xml"):
 			response = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-						(self.responseformat == "xml.pretty" and "\n" or "") +
+						(responseformats[conn] == "xml.pretty" and "\n" or "") +
 						dict2xml(response, "response",
-								 pretty=self.responseformat == "xml.pretty",
+								 pretty=responseformats[conn] == "xml.pretty",
 								 allow_attributes=False))
 		else:
 			if isinstance(response, dict):

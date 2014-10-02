@@ -134,31 +134,32 @@ def main(module=None):
 														 "UTF-8"))
 							data = sp.list2cmdline(data)
 							try:
-								appsocket.sendall(data)
+								appsocket.sendall(data + "\n")
 							except socket.error, exception:
 								# Connection lost?
 								safe_print("Warning - could not send data %r:" %
 										   data, exception)
 							else:
-								while True:
+								incoming = ""
+								while not "\4" in incoming:
 									try:
-										incoming = appsocket.recv(1024)
+										incoming += appsocket.recv(1024)
 									except socket.error, exception:
 										if exception.errno == errno.EWOULDBLOCK:
 											sleep(.05)
 											continue
 										safe_print("Warning - could not receive "
 												   "data:", exception)
-									break
+										break
 						appsocket.close()
-						if incoming and incoming.strip() == "ok":
+						if incoming and incoming.rstrip("\4") == "ok":
 							# Successfully sent our request
 							break
 			if incoming is not None:
 				# Other instance running?
 				import localization as lang
 				lang.init()
-				if incoming.strip() == "ok":
+				if incoming.rstrip("\4") == "ok":
 					# Successfully sent our request
 					safe_print(lang.getstr("app.otherinstance.notified"))
 				else:

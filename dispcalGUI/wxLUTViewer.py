@@ -1321,6 +1321,10 @@ class LUTFrame(BaseFrame):
 		self.DrawLUT()
 		wx.CallAfter(self.client.center)
 
+	def get_commands(self):
+		return self.get_common_commands() + ["curve-viewer [<filename>]",
+											 "load <filename>"]
+
 	def process_data(self, data):
 		if (data[0] == "curve-viewer" and
 			len(data) < 3) or (data[0] == "load" and len(data) == 2):

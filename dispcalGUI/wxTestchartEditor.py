@@ -691,6 +691,11 @@ class TestchartEditor(BaseFrame):
 		self.tc_precond_profile.SetPath(path)
 		self.tc_precond_profile_handler()
 
+	def get_commands(self):
+		return (self.get_common_commands() +
+				["testchart-editor [<filename> | create <filename>]",
+				 "load <filename>"])
+
 	def process_data(self, data):
 		if (data[0] == "testchart-editor" and
 			(len(data) < 3 or (len(data) == 3 and
