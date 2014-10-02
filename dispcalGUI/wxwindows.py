@@ -3242,11 +3242,17 @@ class LogWindow(InvincibleFrame):
 
 	""" A log-type window with Clear and Save As buttons """
 
-	def __init__(self, parent=None, id=-1):
+	def __init__(self, parent=None, id=-1, title=None, pos=wx.DefaultPosition,
+				 size=wx.DefaultSize):
+		if not title:
+			title = lang.getstr("infoframe.title")
+		if pos == wx.DefaultPosition:
+			pos = getcfg("position.info.x"), getcfg("position.info.y")
+		if size == wx.DefaultSize:
+			size = getcfg("size.info.w"), getcfg("size.info.h")
 		InvincibleFrame.__init__(self, parent, id, 
-								 lang.getstr("infoframe.title"), 
-								 pos=(int(getcfg("position.info.x")), 
-									  int(getcfg("position.info.y"))), 
+								 title,
+								 pos=pos,
 								 style=wx.DEFAULT_FRAME_STYLE,
 								 name="info")
 		self.last_visible = False
@@ -3271,7 +3277,8 @@ class LogWindow(InvincibleFrame):
 			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
 		self.log_txt.SetFont(font)
-		self.sizer.Add(self.log_txt, 1, flag=wx.ALL | wx.EXPAND, border=4)
+		self.sizer.Add(self.log_txt, 1, flag=wx.TOP | wx.LEFT | wx.RIGHT |
+											 wx.EXPAND, border=4)
 		self.log_txt.MinSize = (self.log_txt.GetTextExtent("=" * 82)[0] +
 								wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 								-1)
@@ -3292,10 +3299,7 @@ class LogWindow(InvincibleFrame):
 		borders_lr = self.Size[0] - self.ClientSize[0]
 		self.SetMinSize((self.sizer.MinSize[0] + borders_lr,
 						 defaults["size.info.h"]))
-		self.SetSaneGeometry(int(getcfg("position.info.x")), 
-							 int(getcfg("position.info.y")), 
-							 int(getcfg("size.info.w")), 
-							 int(getcfg("size.info.h")))
+		self.SetSaneGeometry(*pos + size)
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)

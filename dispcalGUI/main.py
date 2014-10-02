@@ -77,10 +77,10 @@ def main(module=None):
 	try:
 		initcfg()
 		# Allow multiple instances only for curve viewer, profile info,
-		# synthetic profile creator and testchart editor
+		# scripting client, synthetic profile creator and testchart editor
 		host = "127.0.0.1"
-		if module not in ("curve-viewer", "profile-info", "synthprofile",
-						  "testchart-editor"):
+		if module not in ("curve-viewer", "profile-info", "scripting-client",
+						  "synthprofile", "testchart-editor"):
 			# Check lockfile(s) and probe port(s)
 			incoming = None
 			lockfilebasenames = []
@@ -306,6 +306,7 @@ def main(module=None):
 			mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
 					   "curve-viewer": [],
 					   "profile-info": [],
+					   "scripting-client": [],
 					   "synthprofile": ["xrc/synthicc.xrc"],
 					   "testchart-editor": [],
 					   "VRML-to-X3D-converter": []}
@@ -381,6 +382,8 @@ def main(module=None):
 				from wxLUTViewer import main
 			elif module == "profile-info":
 				from wxProfileInfo import main
+			elif module == "scripting-client":
+				from wxScriptingClient import main
 			elif module == "synthprofile":
 				from wxSynthICCFrame import main
 			elif module == "testchart-editor":

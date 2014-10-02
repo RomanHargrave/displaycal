@@ -1749,7 +1749,7 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 		<div id="scripting">
 			<h2>Scripting</h2>
 			
-			<p>dispcalGUI supports scripting locally and over the network (the latter must be explicitly enabled by setting <code>app.allow_network_clients = 1</code> in dispcalGUI.ini) via sockets. dispcalGUI must be already running on the target machine for this to work. Below is an example connecting to a running instance on the default port <code>15411</code> (configurable in dispcalGUI.ini as <code>app.port</code>, although if the port is not available an unused one will be chosen automatically. You can read the actual used port from the file dispcalGUI.lock in the <a href="#configuration">configuration</a> file folder of dispcalGUI while it is running) and starting calibration measurements. The example is written in <a href="http://www.python.org/">Python</a> and deals with some of the intricacies of sockets as well.</p>
+			<p>dispcalGUI supports scripting locally and over the network (the latter must be explicitly enabled by setting <code>app.allow_network_clients = 1</code> in dispcalGUI.ini) via sockets. dispcalGUI must be already running on the target machine for this to work. Below is an example connecting to a running instance on the default port <code>15411</code> and starting calibration measurements (the port is configurable in dispcalGUI.ini as <code>app.port</code>, although if the desired port is not available an unused one will be chosen automatically. You can read the actual used port from the file dispcalGUI.lock in the <a href="#configuration">configuration</a> file folder of dispcalGUI while it is running). The example is written in <a href="http://www.python.org/">Python</a> and deals with some of the intricacies of sockets as well.</p>
 			
 			<pre class="language-python"><code>#!/usr/bin/env python2
 
@@ -1761,7 +1761,7 @@ class DCGScriptingClientSocket(socket.socket):
 		return self
 
 	def __exit__(self, etype, value, tb):
-		# Clean up
+		# Disconnect
 		try:
 			# Will fail if the socket isn't connected, i.e. if there was an
 			# error during the call to connect()
@@ -1834,27 +1834,27 @@ with DCGScriptingClientSocket() as client:
 
 </code></pre>
 			
-			<p>Each command needs to be terminated with a newline character (after any parameters the command may accept). Note that data sent must be UTF-8 encoded, and if parameters contain spaces they should be encased in double or single quotes. You should check the response for each command sent (the response end marker is ASCII 0x4 EOT). The common return values for commands are either <code>ok</code> in case the command was understood (note that this does not indicate if the command finished processing), <code>busy</code> or <code>blocked</code> in case the command was ignored because another operation was running or a modal dialog blocks the UI, <code>failed</code> in case the command or a parameter could not be processed successfully, <code>forbidden</code> in case the command was not allowed (this may be a temporary condition depending on the circumstances, e.g. when trying to interact with an UI element that is currently disabled), <code>invalid</code> in case the command (or one of its parameters) was invalid, or <code>error</code> followed by an error message in case of an unhandled exception. Other return values are possible depending on the command. All values returned are UTF-8 encoded. If the return value is <code>blocked</code> (e.g. because a modal dialog is displayed) you should check the <a href="#scripting.commands:getstate">application state</a> with the <code><a href="#scripting.commands:getstate">getstate</a></code> command to determine the further course of action.</p>
+			<p>Each command needs to be terminated with a newline character (after any parameters the command may accept). Note that data sent must be UTF-8 encoded, and if parameters contain spaces they should be encased in double or single quotes. You should check the response for each command sent (the response end marker is ASCII 0x4 EOT, and the default <a href="#scripting.commands.setresponseformat">response format</a> is a plain text format, but JSON and XML are also available). The common return values for commands are either <code>ok</code> in case the command was understood (note that this does not indicate if the command finished processing), <code>busy</code> or <code>blocked</code> in case the command was ignored because another operation was running or a modal dialog blocks the UI, <code>failed</code> in case the command or a parameter could not be processed successfully, <code>forbidden</code> in case the command was not allowed (this may be a temporary condition depending on the circumstances, e.g. when trying to interact with an UI element that is currently disabled), <code>invalid</code> in case the command (or one of its parameters) was invalid, or <code>error</code> followed by an error message in case of an unhandled exception. Other return values are possible depending on the command. All values returned are UTF-8 encoded. If the return value is <code>blocked</code> (e.g. because a modal dialog is displayed) you should check the <a href="#scripting.commands.getstate">application state</a> with the <code><a href="#scripting.commands.getstate">getstate</a></code> command to determine the further course of action.</p>
 			
 			<div>
 				<h3>List of supported commands</h3>
-				<p>Below is a list of the currently supported commands (the list contains all valid commands for the main application, the standalone tools will typically just support a smaller subset). Note that filename parameters must refer to files present on the target machine running dispcalGUI.</p>
+				<p>Below is a list of the currently supported commands (the list contains all valid commands for the main application, the standalone tools will typically just support a smaller subset. You can use the “dispcalGUI Scripting Client” standalone tool to learn about and experiment with commands). Note that filename parameters must refer to files present on the target machine running dispcalGUI.</p>
 				<div class="info">
 					<dl>
 						<dt><code>3DLUT-maker [create &lt;filename&gt;]</code></dt>
 							<dd>Show 3D LUT creation window, optionally create 3D LUT <code>&lt;filename&gt;</code>.</dd>
 						<dt><code>abort</code></dt>
 							<dd>Try to abort a currently running operation.</dd>
-						<dt id="scripting.commands:activate"><code>activate &lt;window ID | name | label&gt;</code></dt>
-							<dd>Activate window <code>&lt;window&gt;</code> (bring it to the front). If it is minimized, restore it.</dd>
-						<dt id="scripting.commands:dialogactions"><code>alt | cancel | ok [&lt;filename&gt;]</code></dt>
+						<dt id="scripting.commands.activate"><code>activate [&lt;window ID | name | label&gt;]</code></dt>
+							<dd>Activate window <code>&lt;window&gt;</code> or the main application window (bring it to the front). If it is minimized, restore it.</dd>
+						<dt id="scripting.commands.dialogactions"><code>alt | cancel | ok [&lt;filename&gt;]</code></dt>
 							<dd>If a modal dialog is shown, call the default action (ok), the alternate action (if applicable), or cancel it. If a file dialog is shown, using <code>ok &lt;filename&gt;</code> chooses that file.</dd>
 						<dt><code>calibrate</code></dt>
-							<dd>Setup calibration measurements (note that this won't give a choice whether to create a fast curves + matrix profile as well, if you want that use <code><a href="#scripting.commands:interact">interact</a> mainframe calibrate_btn</code> instead). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
+							<dd>Setup calibration measurements (note that this won't give a choice whether to create a fast curves + matrix profile as well, if you want that use <code><a href="#scripting.commands.interact">interact</a> mainframe calibrate_btn</code> instead). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>calibrate-profile</code></dt>
-							<dd>Setup calibration &amp; profiling measurements. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
-						<dt id="scripting.commands:close"><code>close [&lt;window ID | name | label&gt;]</code></dt>
-							<dd>Close window <code>&lt;window&gt;</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code><a href="#scripting.commands:getstate">getstate</a></code> command.</dd>
+							<dd>Setup calibration &amp; profiling measurements. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt id="scripting.commands.close"><code>close [&lt;window ID | name | label&gt;]</code></dt>
+							<dd>Close window <code>&lt;window&gt;</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code><a href="#scripting.commands.getstate">getstate</a></code> command.</dd>
 						<dt><code>create-colorimeter-correction</code></dt>
 							<dd>Create colorimeter correction.</dd>
 						<dt><code>create-profile [&lt;filename&gt;]</code></dt>
@@ -1869,65 +1869,69 @@ with DCGScriptingClientSocket() as client:
 							<dd>Get the current active window. The returned format is <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
 						<dt><code>getcellvalues [&lt;window ID | name | label&gt;] &lt;grid ID | name | label&gt;</code></dt>
 							<dd>Get cell values from grid <code>&lt;grid&gt;</code> of window <code>&lt;window&gt;</code> or the current active window.</dd>
+						<dt><code>getappname</code></dt>
+							<dd>Get the name of the application you're connected to.</dd>
 						<dt><code>getcfg [&lt;option&gt;]</code></dt>
 							<dd>Get configuration <code>&lt;option&gt;</code>, or whole configuration (key-value pairs in INI format).</dd>
+						<dt><code>getcommands</code></dt>
+							<dd>Get list of commands supported by this application.</dd>
 						<dt><code>getdefault &lt;option&gt;</code></dt>
 							<dd>Get default <code>&lt;option&gt;</code> (key-value pair in INI format).</dd>
-						<dt id="scripting.commands:getdefaults"><code>getdefaults</code></dt>
+						<dt id="scripting.commands.getdefaults"><code>getdefaults</code></dt>
 							<dd>Get all defaults (key-value pairs in INI format).</dd>
-						<dt><code>getmenus</code></dt>
+						<dt id="scripting.commands.getmenus"><code>getmenus</code></dt>
 							<dd>Get available menus in the format <code>&lt;ID&gt; "&lt;label&gt;" &lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
-						<dt><code>getmenuitems [&lt;menuposition | label&gt;]</code></dt>
+						<dt id="scripting.commands.getmenuitems"><code>getmenuitems [&lt;menuposition | label&gt;]</code></dt>
 							<dd>Get available menu items in the format <code>&lt;menuposition&gt;</code> <code>"&lt;menulabel&gt;"</code> <code>&lt;menuitemID&gt;</code> <code>"&lt;menuitemlabel&gt;"</code> <code>&lt;state&gt;</code> <code>[checkable]</code> <code>[checked]</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
-						<dt id="scripting.commands:getstate"><code>getstate</code></dt>
+						<dt id="scripting.commands.getstate"><code>getstate</code></dt>
 							<dd>Get application state. Return value will be either <code>idle</code>, <code>busy</code>, <code>&lt;dialogclassname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;dialogname&gt;</code> <code>[&lt;dialoglabel&gt;]</code> <code>&lt;state&gt;</code> <code>"&lt;messagetext&gt;"</code> <code>[path "&lt;path&gt;"]</code> <code>[buttons "&lt;buttonlabel&gt;"...]</code> if a modal dialog is shown or <code>blocked</code> in case the UI is currently blocked. Most commands will not work if the UI is blocked—the only way to resolve the block is to non-programmatically interact with the actual UI elements of the application or closing it. Note that a state of <code>blocked</code> should normally only occur if an actual file dialog is shown. If using the scripting interface exclusively, this should never happen because it uses a replacement file dialog that supports the same actions as a real file dialog, but doesn't block. Also note that a return value of <code>blocked</code> for any of the other commands just means that a modal dialog is currently waiting to be interacted with, only if <code>getstate</code> also returns <code>blocked</code> you cannot resolve the situation with scripting alone.</dd>
-						<dt id="scripting.commands:getuielement"><code>getuielement [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt;</code></dt>
-						<dt><code>getuielements [&lt;window ID | name | label&gt;]</code></dt>
-							<dd>Get a single UI element or a list of the visible UI elements of window <code>&lt;window&gt;</code> or the current active window. Each returned line represents an UI element and has the format <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>["&lt;label&gt;"]</code> <code>&lt;state&gt;</code> <code>[checked]</code> <code>[value "&lt;value&gt;"]</code> <code>[items "&lt;item&gt;"...]</code>. <code>&lt;classname&gt;</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>&lt;ID&gt;</code> is a numeric identifier. <code>&lt;name&gt;</code> is the name of the UI element. <code>"&lt;label&gt;"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter three with the <code><a href="#scripting.commands:interact">interact</a></code> command. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "&lt;item&gt;"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
-						<dt id="scripting.commands:getvalid"><code>getvalid</code></dt>
+						<dt id="scripting.commands.getuielement"><code>getuielement [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt;</code></dt>
+						<dt id="scripting.commands.getuielements"><code>getuielements [&lt;window ID | name | label&gt;]</code></dt>
+							<dd>Get a single UI element or a list of the visible UI elements of window <code>&lt;window&gt;</code> or the current active window. Each returned line represents an UI element and has the format <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>["&lt;label&gt;"]</code> <code>&lt;state&gt;</code> <code>[checked]</code> <code>[value "&lt;value&gt;"]</code> <code>[items "&lt;item&gt;"...]</code>. <code>&lt;classname&gt;</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>&lt;ID&gt;</code> is a numeric identifier. <code>&lt;name&gt;</code> is the name of the UI element. <code>"&lt;label&gt;"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter three with the <code><a href="#scripting.commands.interact">interact</a></code> command. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "&lt;item&gt;"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
+						<dt id="scripting.commands.getvalid"><code>getvalid</code></dt>
 							<dd>Get valid values for options that have constraints (key-value pairs in INI format). There are two sections, <code>ranges</code> and <code>values</code>. <code>ranges</code> are the valid ranges for options that accept numeric values (note that integer options not covered by <code>ranges</code> are typically boolean types). <code>values</code> are the valid values for options that only accept certain values. Options not covered by <code>ranges</code> and <code>values</code> are limited to their data type (you can't set a numeric option to a string and vice versa).</dd>
-						<dt><code>getwindows</code></dt>
+						<dt id="scripting.commands.getwindows"><code>getwindows</code></dt>
 							<dd>Get a list of visible windows. The returned format is a list of <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
 						<dt><code>import-colorimeter-corrections [&lt;filename&gt;...]</code></dt>
 							<dd>Import colorimeter corrections.</dd>
 						<dt><code>install-profile [&lt;filename&gt;]</code></dt>
 							<dd>Install a profile.</dd>
-						<dt id="scripting.commands:interact"><code>interact [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt; [setvalue &lt;value&gt;]</code></dt>
+						<dt id="scripting.commands.interact"><code>interact [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt; [setvalue &lt;value&gt;]</code></dt>
 							<dd>Interact with the UI element <code>&lt;element&gt;</code> of window <code>&lt;window&gt;</code> or the current active window, e.g. invoke a button or set a control to a value.</dd>
-						<dt id="scripting.commands:invokemenu"><code>invokemenu &lt;menuposition | menulabel&gt; &lt;menuitemID | menuitemlabel&gt;</code></dt>
+						<dt id="scripting.commands.invokemenu"><code>invokemenu &lt;menuposition | menulabel&gt; &lt;menuitemID | menuitemlabel&gt;</code></dt>
 							<dd>Invoke a menu item.</dd>
-						<dt id="scripting.commands:load"><code>load &lt;filename&gt;</code></dt>
+						<dt id="scripting.commands.load"><code>load &lt;filename&gt;</code></dt>
 							<dd>Load <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>load presets/photo.icc</code></dd>
-						<dt id="scripting.commands:measure"><code>measure</code></dt>
+						<dt id="scripting.commands.measure"><code>measure</code></dt>
 							<dd>Start measurements (must be setup first!).</dd>
 						<dt><code>measure-uniformity</code></dt>
 							<dd>Measure screen uniformity.</dd>
 						<dt><code>measurement-report [&lt;filename&gt;]</code></dt>
-							<dd>If no filename given, show measurement report window. Otherwise, setup measurement to create the HTML report <code>&lt;filename&gt;</code>. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
+							<dd>If no filename given, show measurement report window. Otherwise, setup measurement to create the HTML report <code>&lt;filename&gt;</code>. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>profile</code></dt>
-							<dd>Setup profiling measurements (note that this will always use the current calibration if applicable, if you want to use linear calibration instead call <code>load linear.cal</code> prior to calling <code>profile</code>). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
+							<dd>Setup profiling measurements (note that this will always use the current calibration if applicable, if you want to use linear calibration instead call <code>load linear.cal</code> prior to calling <code>profile</code>). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>profile-info [&lt;filename&gt;]</code></dt>
 							<dd>Show profile information, optionally loading profile <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>profile-info presets/photo.icc</code></dd>
-						<dt id="scripting.commands:refresh"><code>refresh</code></dt>
-							<dd>Update the GUI after configuration changes via <code><a href="#scripting.commands:setcfg">setcfg</a></code> or <code><a href="#scripting.commands:restore-defaults">restore-defaults</a></code>.</dd>
+						<dt id="scripting.commands.refresh"><code>refresh</code></dt>
+							<dd>Update the GUI after configuration changes via <code><a href="#scripting.commands.setcfg">setcfg</a></code> or <code><a href="#scripting.commands.restore-defaults">restore-defaults</a></code>.</dd>
 						<dt><code>report-calibrated</code></dt>
-							<dd>Report on calibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
+							<dd>Report on calibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>report-uncalibrated</code></dt>
-							<dd>Report on uncalibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
-						<dt id="scripting.commands:restore-defaults"><code>restore-defaults [&lt;category&gt;...]</code></dt>
-							<dd>Restore defaults globally or just for <code>&lt;category&gt;</code>. Call <code><a href="#scripting.commands:refresh">refresh</a></code> after changing the configuration to update the GUI.</dd>
-						<dt id="scripting.commands:set-language"><code>set-language &lt;languagecode&gt;</code></dt>
+							<dd>Report on uncalibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt id="scripting.commands.restore-defaults"><code>restore-defaults [&lt;category&gt;...]</code></dt>
+							<dd>Restore defaults globally or just for <code>&lt;category&gt;</code>. Call <code><a href="#scripting.commands.refresh">refresh</a></code> after changing the configuration to update the GUI.</dd>
+						<dt id="scripting.commands.set-language"><code>set-language &lt;languagecode&gt;</code></dt>
 							<dd>Set language.</dd>
-						<dt id="scripting.commands:setcfg"><code>setcfg &lt;option&gt; &lt;value&gt;</code></dt>
-							<dd>Set configuration <code>&lt;option&gt;</code> to <code>&lt;value&gt;</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code><a href="#scripting.commands:getdefaults">getdefaults</a></code> and <code><a href="#scripting.commands:getvalid">getvalid</a></code>.</dd>
-						<dt id="scripting.commands:setresponseformat"><code>setresponseformat &lt;format&gt;</code></dt>
+						<dt id="scripting.commands.setcfg"><code>setcfg &lt;option&gt; &lt;value&gt;</code></dt>
+							<dd>Set configuration <code>&lt;option&gt;</code> to <code>&lt;value&gt;</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code><a href="#scripting.commands.getdefaults">getdefaults</a></code> and <code><a href="#scripting.commands.getvalid">getvalid</a></code>.</dd>
+						<dt id="scripting.commands.setresponseformat"><code>setresponseformat &lt;format&gt;</code></dt>
 							<dd>Set the format for responses. The default <code>plain</code> is a text format that is easy to read, but not necessarily the best for parsing programmatically. The other possible formats are <code>json</code>, <code>json.pretty</code>, <code>xml</code> and <code>xml.pretty</code>. The <code>*.pretty</code> formats use newlines and indentation to make them easier to read.</dd>
 						<dt><code>synthprofile [&lt;filename&gt;]</code></dt>
 							<dd>Show synthetic profile creation window, optionally loading profile <code>&lt;filename&gt;</code>.</dd>
 						<dt><code>testchart-editor [&lt;filename&gt; | create &lt;filename&gt;]</code></dt>
 							<dd>Show testchart editor window, optionally loading or creating testchart <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for loading a default testchart: <code>testchart-editor ti1/d3-e4-s17-g49-m5-b5-f0.ti1</code></dd>
 						<dt><code>verify-calibration</code></dt>
-							<dd>Verify calibration. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands:measure">measure</a></code> command afterwards to commence measurements.</dd>
+							<dd>Verify calibration. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 					</dl>
 				</div>
 			</div>
@@ -1935,20 +1939,20 @@ with DCGScriptingClientSocket() as client:
 			<h3>Interacting with UI elements</h3>
 			
 			<ul>
-				<li>Invoking a button: <code><a href="#scripting.commands:interact">interact</a> [window] &lt;button&gt;</code> e.g. setup calibration measurements: <code><a href="#scripting.commands:interact">interact</a> mainframe calibrate_and_profile_btn</code></li>
-				<li>Setting a value on a dropdown, text field, or slider: <code><a href="#scripting.commands:interact">interact</a> [window] &lt;element&gt; setvalue "&lt;value&gt;"</code> e.g. set calibration gamma to 2.4: <code><a href="#scripting.commands:interact">interact</a> mainframe trc_textctrl setvalue 2.4</code></li>
-				<li>Setting a cell value on a grid: <code><a href="#scripting.commands:interact">interact</a> [window] &lt;grid&gt; setvalue "&lt;row&gt;,&lt;col&gt;,&lt;value&gt;"</code> e.g. while the testchart editor is shown, set the cell at the second column of the first row to 33: <code><a href="#scripting.commands:interact">interact</a> tcgen grid setvalue "0,1,33"</code></li>
+				<li>Invoking a button: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;button&gt;</code> e.g. show profile name placeholders information: <code><a href="#scripting.commands.interact">interact</a> mainframe profile_name_info_btn</code></li>
+				<li>Setting a value on a dropdown, text field, or slider: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;element&gt; setvalue "&lt;value&gt;"</code> e.g. set calibration gamma to 2.4: <code><a href="#scripting.commands.interact">interact</a> mainframe trc_textctrl setvalue 2.4</code> (note that for changing multiple options at once it is generally preferable to call <code><a href="#scripting.commands.setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> for each option you want to set followed by a single <code><a href="#scripting.commands.refresh">refresh</a></code> instead)</li>
+				<li>Setting a cell value on a grid: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;grid&gt; setvalue "&lt;row&gt;,&lt;col&gt;,&lt;value&gt;"</code> e.g. while the testchart editor is shown, set the cell at the second column of the first row to 33: <code><a href="#scripting.commands.interact">interact</a> tcgen grid setvalue "0,1,33"</code></li>
 			</ul>
 			
 			<h3>Caveats and limitations</h3>
 			
-			<p>There are a few things to be aware of when using commands that interact with the UI directly (i.e. <code><a href="#scripting.commands:activate">activate</a></code>, <code><a href="#scripting.commands:dialogactions">alt | cancel | ok</a></code>, <code><a href="#scripting.commands:close">close</a></code>, <code><a href="#scripting.commands:interact">interact</a></code> and <code><a href="#scripting.commands:invokemenu">invokemenu</a></code>).</p>
+			<p>There are a few things to be aware of when using commands that interact with the UI directly (i.e. <code><a href="#scripting.commands.activate">activate</a></code>, <code><a href="#scripting.commands.dialogactions">alt | cancel | ok</a></code>, <code><a href="#scripting.commands.close">close</a></code>, <code><a href="#scripting.commands.interact">interact</a></code> and <code><a href="#scripting.commands.invokemenu">invokemenu</a></code>).</p>
 			
-			<p>Referring to windows and UI elements: You can refer to windows and UI elements by their ID, name or label. If an object's ID is negative, it means that it has been automatically assigned at object creation time and is only valid during the lifetime of the object (i.e. for modal dialogs, only while the dialog is displayed). For this reason, using an object's name instead is easier, but names (aswell as non automatically assigned IDs) are not guaranteed to be unique, even for objects which share the same parent window (although most of the “important” controls as well as application windows will have unique names). Another possibility is to use an object's label, which while also not guaranteed to be unique, still has a fairly high likelihood of being unique for controls that share the same parent window, but has the drawback that it is localized (although you can ensure a specific UI language by calling <code><a href="#scripting.commands:set-language">set-language</a></code>) and is subject to change when the localization is updated.</p>
+			<p><strong>Referring to windows and UI elements:</strong> You can refer to windows and UI elements by their ID, name or label (you can find out about windows and UI elements with the <code><a href="#scripting.commands.getmenus">getmenus</a></code>/<code><a href="#scripting.commands.getmenuitems">getmenuitems</a></code>, <code><a href="#scripting.commands.getuielement">getuielement</a></code>/<code><a href="#scripting.commands.getuielements">getuielements</a></code>, and <code><a href="#scripting.commands.getwindows">getwindows</a></code> commands). If an object's ID is negative, it means that it has been automatically assigned at object creation time and is only valid during the lifetime of the object (i.e. for modal dialogs, only while the dialog is displayed). For this reason, using an object's name instead is easier, but names (aswell as non automatically assigned IDs) are not guaranteed to be unique, even for objects which share the same parent window (although most of the “important” controls as well as application windows will have unique names). Another possibility is to use an object's label, which while also not guaranteed to be unique, still has a fairly high likelihood of being unique for controls that share the same parent window, but has the drawback that it is localized (although you can ensure a specific UI language by calling <code><a href="#scripting.commands.set-language">set-language</a></code>) and is subject to change when the localization is updated.</p>
 			
-			<p>Sequential operations: Calling commands that interact with the UI in rapid succession may require the use of additional delays between send and receive to allow the GUI to react (so <code><a href="#scripting.commands:getstate">getstate</a></code> will return the actual UI state after a specific command), although there is a default delay of atleast 55 ms. A good rule of thumb for sending commands is to use a “send command” → “optionally wait a few extra ms” → “read response” → “get application state (send <code><a href="#scripting.commands:getstate">getstate</a></code> command)” → “read response” cycle.</p>
+			<p><strong>Sequential operations:</strong> Calling commands that interact with the UI in rapid succession may require the use of additional delays between sending commands to allow the GUI to react (so <code><a href="#scripting.commands.getstate">getstate</a></code> will return the actual UI state after a specific command), although there is a default delay for commands that interact with the UI of atleast 55 ms. A good rule of thumb for sending commands is to use a “send command” → “read response” → “optionally wait a few extra ms” → “get application state (send <code><a href="#scripting.commands.getstate">getstate</a></code> command)” → “read response” cycle.</p>
 			
-			<p>Setting values: If setting a value on an UI element returns <code>ok</code>, this is not always an indication that the value was actually changed, but only that the attempt to set the value has not failed, i.e. the event handler of the element may still do error checking and change the value to something sane if it was not valid. If you want to make sure that the intended value is set, use <code><a href="#scripting.commands:getuielement">getuielement</a></code> on the affected element(s) and check the value (or even better, if you use <a href="#scripting.commands:setresponseformat">JSON or XML response format</a>, you can check the <code>object</code> property/element of the response instead which will reflect the current value and saves you one request). In general it is preferable to use <code><a href="#scripting.commands:interact">interact</a> &lt;elementname&gt; setvalue &lt;value&gt;</code> only on dialogs, and in all other cases use a sequence of <code><a href="#scripting.commands:setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> (repeat as necessary, optionally call <code><a href="#scripting.commands:load">load</a> &lt;filename&gt;</code> or <code><a href="#scripting.commands:restore-defaults">restore-defaults</a></code> first to minimize the amount of configuration options that you need to change) followed by a call to <code><a href="#scripting.commands:refresh">refresh</a></code> to update the UI.</p>
+			<p><strong>Setting values:</strong> If setting a value on an UI element returns <code>ok</code>, this is not always an indication that the value was actually changed, but only that the attempt to set the value has not failed, i.e. the event handler of the element may still do error checking and change the value to something sane if it was not valid. If you want to make sure that the intended value is set, use <code><a href="#scripting.commands.getuielement">getuielement</a></code> on the affected element(s) and check the value (or even better, if you use <a href="#scripting.commands.setresponseformat">JSON or XML response format</a>, you can check the <code>object</code> property/element of the response instead which will reflect the object's current state and saves you one request). In general it is preferable to use <code><a href="#scripting.commands.interact">interact</a> &lt;elementname&gt; setvalue &lt;value&gt;</code> only on dialogs, and in all other cases use a sequence of <code><a href="#scripting.commands.setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> (repeat as necessary, optionally call <code><a href="#scripting.commands.load">load</a> &lt;filename&gt;</code> or <code><a href="#scripting.commands.restore-defaults">restore-defaults</a></code> first to minimize the amount of configuration options that you need to change) followed by a call to <code><a href="#scripting.commands.refresh">refresh</a></code> to update the UI.</p>
 			
 			<p>Also, not all controls may offer a comprehensive scripting interface. I'm open to suggestions though.</p>
 		</div>
@@ -2222,7 +2226,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Calibration curve plot was not working anymore for profiles with formula-type vcgt tags (regression of r2384, did not affect Argyll-generated profiles).</li>
-							<li>Linux (only if Argyll CMS was installed via Zero Install)/Mac OS X/Windows: If the Argyll CMS directory was not explicitly configured, Argyll CMS reference profiles (e.g. Rec709.icm) were not added automatically to file dropdown lists (this impacted convenience, not functionality).</li>
+							<li>Linux (only if Argyll CMS was installed via Zero Install)/Mac OS X/Windows: If the Argyll CMS directory was not explicitly configured, Argyll CMS reference profiles (e.g. Rec709.icm) were not added automatically to file dropdown lists and the “Install Argyll CMS instrument drivers...” menu item (Windows only) was grayed out (this impacted convenience, not functionality).</li>
 							<li>Cosmetic, Mac OS X 10.8 and earlier: Splash screen had a light gray border instead of being semi-transparent.</li>
 						</ul>
 					</dd>
