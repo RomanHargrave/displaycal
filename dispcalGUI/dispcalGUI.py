@@ -7205,7 +7205,7 @@ class MainFrame(BaseFrame):
 				if not path:
 					return "fail"
 				else:
-					wx.CallAfter(self.load_cal_handler, None, path)
+					self.droptarget.OnDropFiles(0, 0, [path])
 		elif data[0] == "calibrate" and len(data) == 1:
 			# Calibrate
 			wx.CallAfter(self.calibrate_btn_handler,

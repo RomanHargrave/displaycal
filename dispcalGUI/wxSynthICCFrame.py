@@ -434,7 +434,7 @@ class SynthICCFrame(BaseFrame):
 				if not path:
 					return "fail"
 				else:
-					wx.CallAfter(self.drop_handler, path)
+					self.droptarget.OnDropFiles(0, 0, [path])
 			return "ok"
 		return "invalid"
 

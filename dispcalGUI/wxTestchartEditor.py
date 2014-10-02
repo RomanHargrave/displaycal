@@ -705,7 +705,7 @@ class TestchartEditor(BaseFrame):
 				if not path:
 					return "fail"
 				else:
-					wx.CallAfter(self.ti1_drop_handler, path)
+					self.droptarget.OnDropFiles(0, 0, [path])
 			elif len(data) == 3:
 				# Create testchart
 				wx.CallAfter(self.tc_preview_handler, path=data[2])
