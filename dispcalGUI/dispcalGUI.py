@@ -2906,8 +2906,10 @@ class MainFrame(BaseFrame):
 						ccmx = ["", ""]
 						index = 0
 		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
+		self.colorimeter_correction_matrix_ctrl.Freeze()
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
 		self.colorimeter_correction_matrix_ctrl.SetSelection(index)
+		self.colorimeter_correction_matrix_ctrl.Thaw()
 		if use_ccmx:
 			tooltip = ccmx[1]
 		else:
