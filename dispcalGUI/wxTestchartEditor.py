@@ -705,10 +705,10 @@ class TestchartEditor(BaseFrame):
 				if not path:
 					return "fail"
 				else:
-					self.ti1_drop_handler(path)
+					wx.CallAfter(self.ti1_drop_handler, path)
 			elif len(data) == 3:
 				# Create testchart
-				self.tc_preview_handler(path=data[2])
+				wx.CallAfter(self.tc_preview_handler, path=data[2])
 			return "ok"
 		return "invalid"
 

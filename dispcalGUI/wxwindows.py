@@ -553,6 +553,53 @@ class BaseFrame(wx.Frame):
 						safe_print(lang.getstr("app.incoming_message",
 											   addrport + (line, )))
 						data = split_command_line(line)
+						response = None
+						# Non-UI commands
+						if data[0] == "getcfg" and len(data) == 2:
+							if len(data) == 2:
+								# Return cfg value
+								if data[1] in defaults:
+									response = {data[1]: getcfg(data[1])}
+								else:
+									response = "invalid"
+							else:
+								# Return whole cfg
+								response = OrderedDict()
+								for name in sorted(defaults):
+									value = getcfg(name, False)
+									if value is not None:
+										response[name] = value
+						elif data[0] == "getdefault" and len(data) == 2:
+							if data[1] in defaults:
+								response = {data[1]: defaults[data[1]]}
+							else:
+								response = "invalid"
+						elif data[0] == "getdefaults" and len(data) == 1:
+							response = OrderedDict()
+							for name in sorted(defaults):
+								response[name] = defaults[name]
+						elif data[0] == "getvalid" and len(data) == 1:
+							response = {"ranges": config.valid_ranges,
+										"values": config.valid_values}
+							if self.responseformat == "plain":
+								valid = []
+								for section, options in response.iteritems():
+									valid.append("[%s]" % section)
+									for key, values in options.iteritems():
+										valid.append("%s = %s" %
+													 (key,
+													  " ".join(demjson.encode(value)
+															   for value in values)))
+								response = valid
+						elif (data[0] == "setresponseformat" and
+							  len(data) == 2 and
+							  data[1] in ("json", "json.pretty", "plain", "xml",
+										  "xml.pretty")):
+							self.responseformat = data[1]
+							response = "ok"
+						if response is not None:
+							continue
+						# UI commands
 						wx.CallAfter(self.finish_processing, data, conn,
 									 datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f"))
 		try:
@@ -625,11 +672,9 @@ class BaseFrame(wx.Frame):
 		if ((state in ("blocked", "busy") or dialog) and
 			data[0] not in ("abort", "alt", "cancel", "close",
 							"getactivewindow", "getcellvalues",
-							"getcfg", "getdefault",
-							"getdefaults", "getmenus", "getmenuitems",
+							"getmenus", "getmenuitems",
 							"getstate", "getuielement", "getuielements",
-							"getvalid", "getwindows", "interact", "ok",
-							"setresponseformat")):
+							"getwindows", "interact", "ok")):
 			if dialog:
 				state = "blocked"
 			self.send_response(state, data, conn, command_timestamp)
@@ -656,11 +701,11 @@ class BaseFrame(wx.Frame):
 					elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
 										  ProgressDialog)):
 						if win.IsModal():
-							win.EndModal(wx.ID_CANCEL)
+							wx.CallAfter(win.EndModal, wx.ID_CANCEL)
 						else:
-							win.Close()
+							wx.CallAfter(win.Close)
 					elif isinstance(win, wx.Frame):
-						win.Close()
+						wx.CallAfter(win.Close)
 					else:
 						response = "failed"
 				else:
@@ -691,10 +736,11 @@ class BaseFrame(wx.Frame):
 						# Path
 						win.SetPath(data[1])
 					if win.IsModal():
-						win.EndModal({"ok": wx.ID_OK,
+						wx.CallAfter(win.EndModal,
+									 {"ok": wx.ID_OK,
 									  "cancel": wx.ID_CANCEL}[data[0]])
 					elif data[0] == "cancel":
-						win.Close()
+						wx.CallAfter(win.Close)
 					response = "ok"
 			elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
 								  ProgressDialog)):
@@ -702,12 +748,13 @@ class BaseFrame(wx.Frame):
 					ctrl = getattr(win, data[0])
 					if ctrl.IsEnabled():
 						if win.IsModal():
-							win.EndModal(ctrl.Id)
+							wx.CallAfter(win.EndModal, ctrl.Id)
 						elif isinstance(ctrl, (FlatShadedButton, GenButton,
 											   wx.Button)):
-							event = wx.CommandEvent(wx.EVT_BUTTON.typeId, ctrl.Id)
+							event = wx.CommandEvent(wx.EVT_BUTTON.typeId,
+													ctrl.Id)
 							event.SetEventObject(ctrl)
-							ctrl.ProcessEvent(event)
+							wx.CallAfter(ctrl.ProcessEvent, event)
 						response = "ok"
 					else:
 						response = "forbidden"
@@ -737,7 +784,7 @@ class BaseFrame(wx.Frame):
 							event = wx.CommandEvent(wx.EVT_MENU.typeId,
 													menuitem_id)
 							event.SetEventObject(menu)
-							self.ProcessEvent(event)
+							wx.CallAfter(self.ProcessEvent, event)
 							response = "ok"
 						else:
 							response = "forbidden"
@@ -767,29 +814,6 @@ class BaseFrame(wx.Frame):
 				elif child is False:
 					response = "forbidden"
 				child = None
-		elif data[0] == "getcfg" and len(data) == 2:
-			if len(data) == 2:
-				# Return cfg value
-				if data[1] in defaults:
-					response = {data[1]: getcfg(data[1])}
-				else:
-					response = "invalid"
-			else:
-				# Return whole cfg
-				response = OrderedDict()
-				for name in sorted(defaults):
-					value = getcfg(name, False)
-					if value is not None:
-						response[name] = value
-		elif data[0] == "getdefault" and len(data) == 2:
-			if data[1] in defaults:
-				response = {data[1]: defaults[data[1]]}
-			else:
-				response = "invalid"
-		elif data[0] == "getdefaults" and len(data) == 1:
-			response = OrderedDict()
-			for name in sorted(defaults):
-				response[name] = defaults[name]
 		elif data[0] == "getmenus" and len(data) == 1:
 			menus = []
 			menubar = self.GetMenuBar()
@@ -888,18 +912,6 @@ class BaseFrame(wx.Frame):
 				response = uielements
 			else:
 				response = "invalid"
-		elif data[0] == "getvalid" and len(data) == 1:
-			response = {"ranges": config.valid_ranges,
-						"values": config.valid_values}
-			if self.responseformat == "plain":
-				valid = []
-				for section, options in response.iteritems():
-					valid.append("[%s]" % section)
-					for key, values in options.iteritems():
-						valid.append("%s = %s" %
-									 (key, " ".join(demjson.encode(value)
-													for value in values)))
-				response = valid
 		elif data[0] == "getwindows" and len(data) == 1:
 			windows = filter(lambda win: win.IsShown(), wx.GetTopLevelWindows())
 			response = [format_ui_element(win, self.responseformat)
@@ -1040,8 +1052,8 @@ class BaseFrame(wx.Frame):
 								event.SetEventObject(ctrl)
 							if not isinstance(ctrl, wx.Notebook):
 								# Bus error under Mac OS X
-								ctrl.ProcessEvent(event)
-						child.Refresh()
+								wx.CallAfter(ctrl.ProcessEvent, event)
+						wx.CallLater(1, child.Refresh)
 						response = "ok"
 		elif data[0] == "setcfg" and len(data) == 3:
 			# Set configuration option
@@ -1063,12 +1075,7 @@ class BaseFrame(wx.Frame):
 					response = "failed"
 			else:
 				response = "invalid"
-		elif (data[0] == "setresponseformat" and len(data) == 2 and
-			  data[1] in ("json", "json.pretty", "plain", "xml", "xml.pretty")):
-			self.responseformat = data[1]
 		else:
-			wx.DirDialog = DirDialog
-			wx.FileDialog = FileDialog
 			try:
 				response = self.process_data(data)
 			except Exception, exception:
@@ -1108,14 +1115,25 @@ class BaseFrame(wx.Frame):
 						self.update_layout()
 						self.panel.Thaw()
 						response = "ok"
-			finally:
-				wx.DirDialog = _DirDialog
-				wx.FileDialog = _FileDialog
-		if response == "invalid":
-			safe_print(lang.getstr("app.incoming_message.invalid"))
-		self.send_response(response, data, conn, command_timestamp, child or win)
+		if data[0].startswith("get") or data[0] == "setcfg" or response != "ok":
+			# No interaction with UI
+			relayfunc = lambda func, *args: func(*args)
+		else:
+			# Interaction with UI
+			# Prevent actual file dialogs blocking the UI - need to restore
+			# original values after processing
+			wx.DirDialog = DirDialog
+			wx.FileDialog = FileDialog
+			# Use CallLater so GUI methods have a chance to run before we send
+			# our response
+			relayfunc = lambda func, *args: wx.CallLater(55, func, *args)
+			relayfunc(restore_path_dialog_classes)
+		relayfunc(self.send_response, response, data, conn, command_timestamp,
+				  child or win)
 
 	def send_response(self, response, data, conn, command_timestamp, win=None):
+		if response == "invalid":
+			safe_print(lang.getstr("app.incoming_message.invalid"))
 		if self.responseformat != "plain":
 			response = {"command": data,
 						"command_timestamp": command_timestamp,
@@ -4208,8 +4226,8 @@ def get_toplevel_window(id_name_label):
 	except ValueError:
 		pass
 	for win in reversed(wx.GetTopLevelWindows()):
-		if (win.Id == id_name_label or win.Name == id_name_label or
-			win.Label == id_name_label):
+		if win and (win.Id == id_name_label or win.Name == id_name_label or
+					win.Label == id_name_label) and win.IsShown():
 			return win
 
 
@@ -4299,7 +4317,12 @@ def format_ui_element(child, format="plain"):
 									 (child.GetNumberRows(),
 									  demjson.encode(cols).strip("[]").replace('","', '" "')) or
 									 ""))
-                               
+
+
+def restore_path_dialog_classes():
+	wx.DirDialog = _DirDialog
+	wx.FileDialog = _FileDialog
+
 
 def test():
 	def key_handler(self, event):

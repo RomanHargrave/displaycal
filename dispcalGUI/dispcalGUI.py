@@ -2693,7 +2693,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 		if self.IsShown():
 			wx.CallAfter(self.set_size, True)
-			wx.CallAfter(self.update_scrollbars)
+			wx.CallLater(1, self.update_scrollbars)
 	
 	def delete_colorimeter_correction_matrix_ctrl_item(self, path):
 		if path in self.ccmx_cached_paths:
@@ -4307,7 +4307,7 @@ class MainFrame(BaseFrame):
 				# Have to use CallAfter, otherwise only part of the text will
 				# be selected (wxPython bug?)
 				wx.CallAfter(self.trc_textctrl.SetFocus)
-				wx.CallAfter(self.trc_textctrl.SelectAll)
+				wx.CallLater(1, self.trc_textctrl.SelectAll)
 		trc = self.get_trc()
 		if cal_changed:
 			if trc != str(getcfg("trc")):
@@ -7144,7 +7144,7 @@ class MainFrame(BaseFrame):
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					return "fail"
-			self.init_lut_viewer(profile=profile, show=True)
+			wx.CallAfter(self.init_lut_viewer, profile=profile, show=True)
 		elif data[0] == "profile-info" and len(data) < 3:
 			# Profile info
 			profile = None
@@ -7158,7 +7158,7 @@ class MainFrame(BaseFrame):
 					profile = ICCP.ICCProfile(path)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					return "fail"
-			self.profile_info_handler(profile=profile)
+			wx.CallAfter(self.profile_info_handler, profile=profile)
 		elif data[0] == "synthprofile" and len(data) < 3:
 			# Synthetic profile creator
 			self.synthicc_create_handler(None)
@@ -7204,28 +7204,31 @@ class MainFrame(BaseFrame):
 				if not path:
 					return "fail"
 				else:
-					self.load_cal_handler(None, path)
+					wx.CallAfter(self.load_cal_handler, None, path)
 		elif data[0] == "calibrate" and len(data) == 1:
 			# Calibrate
-			self.calibrate_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
-												   self.calibrate_btn))
+			wx.CallAfter(self.calibrate_btn_handler,
+						 CustomEvent(wx.EVT_BUTTON.evtType[0], 
+									 self.calibrate_btn))
 		elif data[0] == "calibrate-profile" and len(data) == 1:
 			# Calibrate & profile
-			self.calibrate_and_profile_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
-															   self.calibrate_and_profile_btn))
+			wx.CallAfter(self.calibrate_and_profile_btn_handler,
+						 CustomEvent(wx.EVT_BUTTON.evtType[0], 
+						 self.calibrate_and_profile_btn))
 		elif data[0] == "create-profile" and len(data) < 3:
 			if len(data) == 2:
 				profile_path = data[1]
 			else:
 				profile_path = None
-			self.create_profile_handler(None, path=profile_path)
+			wx.CallAfter(self.create_profile_handler, None, path=profile_path)
 		elif data[0] == "import-colorimeter-corrections":
-			self.import_colorimeter_corrections_handler(None, paths=data[1:])
+			wx.CallAfter(self.import_colorimeter_corrections_handler, None,
+						 paths=data[1:])
 		elif data[0] == "install-profile" and len(data) < 3:
 			if len(data) == 2:
-				self.install_profile_handler(profile_path=data[1])
+				wx.CallAfter(self.install_profile_handler, profile_path=data[1])
 			else:
-				self.select_install_profile_handler(None)
+				wx.CallAfter(self.select_install_profile_handler, None)
 		elif data[0] == "measure" and len(data) == 1:
 			# Start measurement
 			if getattr(self, "pending_function", None):
@@ -7244,13 +7247,14 @@ class MainFrame(BaseFrame):
 		elif data[0] == "measurement-report" and len(data) < 3:
 			# Measurement report
 			if len(data) == 2:
-				self.measurement_report_handler(None, path=data[1])
+				wx.CallAfter(self.measurement_report_handler, None, path=data[1])
 			else:
 				self.measurement_report_create_handler(None)
 		elif data[0] == "profile" and len(data) == 1:
 			# Profile
-			self.profile_btn_handler(CustomEvent(wx.EVT_BUTTON.evtType[0], 
-												 self.profile_btn))
+			wx.CallAfter(self.profile_btn_handler,
+						 CustomEvent(wx.EVT_BUTTON.evtType[0], 
+									 self.profile_btn))
 		elif data[0] == "refresh" and len(data) == 1:
 			# Refresh main window
 			self.update_displays()
@@ -7260,18 +7264,19 @@ class MainFrame(BaseFrame):
 				self.tcframe.tc_update_controls()
 		elif data[0] == "restore-defaults":
 			# Restore defaults
-			self.restore_defaults_handler(include=data[1:])
+			wx.CallAfter(self.restore_defaults_handler, include=data[1:])
 		elif data[0] == "set-language" and len(data) == 2:
 			setcfg("lang", data[1])
 			menuitem = self.menubar.FindItemById(lang.ldict[lang.getcode()].menuitem_id)
 			event = CustomEvent(wx.EVT_MENU.typeId, menuitem)
-			self.set_language_handler(event)
+			wx.CallAfter(self.set_language_handler, event)
 		elif (data[0] in ("create-colorimeter-correction",
 						  "enable-spyder2",
 						  "measure-uniformity",
 						  "report-calibrated", "report-uncalibrated",
 						  "verify-calibration")) and len(data) == 1:
-			getattr(self, data[0].replace("-", "_") + "_handler")(True)
+			wx.CallAfter(getattr(self, data[0].replace("-", "_") + "_handler"),
+						 True)
 		else:
 			response = "invalid"
 		return response

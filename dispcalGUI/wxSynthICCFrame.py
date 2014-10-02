@@ -434,7 +434,7 @@ class SynthICCFrame(BaseFrame):
 				if not path:
 					return "fail"
 				else:
-					self.drop_handler(path)
+					wx.CallAfter(self.drop_handler, path)
 			return "ok"
 		return "invalid"
 
