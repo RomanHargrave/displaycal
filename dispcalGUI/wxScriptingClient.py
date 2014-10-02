@@ -87,9 +87,8 @@ class ScriptingClientFrame(LogWindow):
 														 "UTF-8").rstrip("\n"))
 			except EnvironmentError, exception:
 				safe_print("Warning - couldn't read history file:", exception)
-		if self.history:
-			# Always have empty selection at bottom
-			self.history.append("")
+		# Always have empty selection at bottom
+		self.history.append("")
 
 		# Determine which application we should connect to by default (if any)
 		self.conn = None
