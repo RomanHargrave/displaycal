@@ -546,7 +546,7 @@ class BaseFrame(wx.Frame):
 				buffer += incoming
 				while "\n" in buffer and self and self.listening:
 					end = buffer.find("\n")
-					line = buffer[:end]
+					line = buffer[:end].strip()
 					buffer = buffer[end + 1:]
 					if line:
 						command_timestamp = datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")
