@@ -6157,6 +6157,7 @@ class MainFrame(BaseFrame):
 					   self.pending_function_args)
 		wx.CallLater(100, self.pending_function, *self.pending_function_args, 
 					 **self.pending_function_kwargs)
+		self.pending_function = None
 
 	def calibrate_and_profile_btn_handler(self, event):
 		""" Setup calibration and characterization measurements """
