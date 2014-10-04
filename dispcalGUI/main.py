@@ -75,13 +75,14 @@ def main(module=None):
 	safe_print("File system encoding: " + fs_enc)
 	lockfilename = None
 	port = 0
+	# Allow multiple instances only for curve viewer, profile info,
+	# scripting client, synthetic profile creator and testchart editor
+	multi_instance = ("curve-viewer", "profile-info", "scripting-client",
+					  "synthprofile", "testchart-editor")
 	try:
 		initcfg()
-		# Allow multiple instances only for curve viewer, profile info,
-		# scripting client, synthetic profile creator and testchart editor
 		host = "127.0.0.1"
-		if module not in ("curve-viewer", "profile-info", "scripting-client",
-						  "synthprofile", "testchart-editor"):
+		if module not in multi_instance:
 			# Check lockfile(s) and probe port(s)
 			incoming = None
 			lockfilebasenames = []
@@ -293,7 +294,11 @@ def main(module=None):
 									   "address:", exception)
 							del sys._appsocket
 							break
-						write_lockfile(lockfilename, "a", str(port))
+						if module in multi_instance:
+							mode = "a"
+						else:
+							mode = "w"
+						write_lockfile(lockfilename, mode, str(port))
 						break
 			# Check for required resource files
 			mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],

@@ -647,7 +647,8 @@ class BaseFrame(wx.Frame):
 		try:
 			conn.shutdown(socket.SHUT_RDWR)
 		except socket.error, exception:
-			safe_print("Warning - could not shutdown connection:", exception)
+			if exception.errno != errno.ENOTCONN:
+				safe_print("Warning - could not shutdown connection:", exception)
 		safe_print(lang.getstr("app.client.disconnect", addrport))
 		conn.close()
 		responseformats.pop(conn)

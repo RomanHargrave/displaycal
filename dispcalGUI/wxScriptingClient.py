@@ -2,6 +2,7 @@
 
 from __future__ import with_statement
 from time import sleep
+import errno
 import os
 import socket
 import sys
@@ -46,8 +47,9 @@ class ScriptingClientSocket(socket.socket):
 			# Will fail if the socket isn't connected, i.e. if there was an
 			# error during the call to connect()
 			self.shutdown(socket.SHUT_RDWR)
-		except socket.error:
-			pass
+		except socket.error, exception:
+			if exception.errno != errno.ENOTCONN:
+				safe_print(exception)
 		self.close()
 
 	def get_single_response(self):
@@ -257,8 +259,9 @@ class ScriptingClientFrame(SimpleTerminal):
 			try:
 				peer = self.conn.getpeername()
 				self.conn.shutdown(socket.SHUT_RDWR)
-			except:
-				pass
+			except socket.error, exception:
+				if exception.errno != errno.ENOTCONN:
+					self.add_text(safe_unicode(exception) + "\n")
 			else:
 				self.add_text(lang.getstr("disconnected.from", peer) + "\n")
 			self.conn.close()
