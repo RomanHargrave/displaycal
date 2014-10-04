@@ -1322,7 +1322,7 @@ class LUTFrame(BaseFrame):
 		wx.CallAfter(self.client.center)
 
 	def get_commands(self):
-		return self.get_common_commands() + ["curve-viewer [<filename>]",
+		return self.get_common_commands() + ["curve-viewer [filename]",
 											 "load <filename>"]
 
 	def process_data(self, data):

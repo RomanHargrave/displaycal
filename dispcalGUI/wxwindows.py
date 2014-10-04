@@ -704,17 +704,17 @@ class BaseFrame(wx.Frame):
 		return self.get_common_commands()
 
 	def get_common_commands(self):
-		cmds = ["abort", "activate [<window>]",
-				"alt | cancel | ok [<filename>]", "close [<window>]",
+		cmds = ["abort", "activate [window]",
+				"alt", "cancel", "ok [filename]", "close [window]",
 				"getactivewindow", "getappname",
-				"getcellvalues [<window>] <grid>", "getcommands",
-				"getcfg [<option>]", "getdefault <option>", "getdefaults",
-				"getmenus", "getmenuitems [<menu>]", "getstate",
-				"getuielement [<window>] <element>", "getuielements [<window>]",
+				"getcellvalues [window] <grid>", "getcommands",
+				"getcfg [option]", "getdefault <option>", "getdefaults",
+				"getmenus", "getmenuitems [menu]", "getstate",
+				"getuielement [window] <element>", "getuielements [window]",
 				"getvalid", "getwindows",
-				"interact [<window>] <element> [setvalue <value>]",
+				"interact [window] <element> [setvalue value]",
 				"invokemenu <menu> <menuitem>",
-				"restore-defaults [<category>...]",
+				"restore-defaults [category...]",
 				"setcfg <option> <value>", "setresponseformat <format>"]
 		if hasattr(self, "update_controls"):
 			cmds.append("refresh")

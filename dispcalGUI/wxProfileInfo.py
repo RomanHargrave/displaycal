@@ -1652,7 +1652,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.Thaw()
 
 	def get_commands(self):
-		return self.get_common_commands() + ["profile-info [<filename>]",
+		return self.get_common_commands() + ["profile-info [filename]",
 											 "load <filename>"]
 
 	def process_data(self, data):

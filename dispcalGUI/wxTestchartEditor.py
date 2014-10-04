@@ -693,7 +693,7 @@ class TestchartEditor(BaseFrame):
 
 	def get_commands(self):
 		return (self.get_common_commands() +
-				["testchart-editor [<filename> | create <filename>]",
+				["testchart-editor [filename | create filename]",
 				 "load <filename>"])
 
 	def process_data(self, data):

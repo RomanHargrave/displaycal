@@ -7128,19 +7128,19 @@ class MainFrame(BaseFrame):
 
 	def get_commands(self):
 		return (self.get_common_commands() +
-				["3DLUT-maker [create <filename>]", "calibrate",
+				["3DLUT-maker [create filename]", "calibrate",
 				 "calibrate-profile",
 				 "create-colorimeter-correction",
-				 "create-profile [<filename>]",
-				 "curve-viewer [<filename>]",
-				 "dispcalGUI [<filename>]", "enable-spyder2",
-				 "import-colorimeter-corrections [<filename>...]",
-				 "install-profile [<filename>]", "load <filename>",
+				 "create-profile [filename]",
+				 "curve-viewer [filename]",
+				 "dispcalGUI [filename]", "enable-spyder2",
+				 "import-colorimeter-corrections [filename...]",
+				 "install-profile [filename]", "load <filename>",
 				 "measure", "measure-uniformity",
-				 "measurement-report [<filename>]", "profile",
-				 "profile-info [<filename>]", "report-calibrated",
-				 "report-uncalibrated", "synthprofile [<filename>]",
-				 "testchart-editor [<filename> | create <filename>]",
+				 "measurement-report [filename]", "profile",
+				 "profile-info [filename]", "report-calibrated",
+				 "report-uncalibrated", "synthprofile [filename]",
+				 "testchart-editor [filename | create filename]",
 				 "verify-calibration"])
 
 	def process_data(self, data):

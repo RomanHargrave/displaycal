@@ -72,7 +72,7 @@ class VRML2X3DFrame(BaseFrame):
 
 	def get_commands(self):
 		return (self.get_common_commands() +
-			    ["VRML-to-X3D-converter [<filename...>]",
+			    ["VRML-to-X3D-converter [filename...]",
 				 "load <filename...>"])
 
 	def process_data(self, data):

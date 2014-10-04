@@ -422,7 +422,7 @@ class SynthICCFrame(BaseFrame):
 			self._updating_ctrls = False
 
 	def get_commands(self):
-		return self.get_common_commands() + ["synthprofile [<filename>]",
+		return self.get_common_commands() + ["synthprofile [filename]",
 											 "load <filename>"]
 
 	def process_data(self, data):

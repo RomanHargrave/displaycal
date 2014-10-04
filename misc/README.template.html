@@ -1841,95 +1841,95 @@ with DCGScriptingClientSocket() as client:
 				<p>Below is a list of the currently supported commands (the list contains all valid commands for the main application, the standalone tools will typically just support a smaller subset. You can use the “dispcalGUI Scripting Client” standalone tool to learn about and experiment with commands). Note that filename parameters must refer to files present on the target machine running dispcalGUI.</p>
 				<div class="info">
 					<dl>
-						<dt><code>3DLUT-maker [create &lt;filename&gt;]</code></dt>
-							<dd>Show 3D LUT creation window, optionally create 3D LUT <code>&lt;filename&gt;</code>.</dd>
+						<dt><code>3DLUT-maker [create filename]</code></dt>
+							<dd>Show 3D LUT creation window, optionally create 3D LUT <code>filename</code>.</dd>
 						<dt><code>abort</code></dt>
 							<dd>Try to abort a currently running operation.</dd>
-						<dt id="scripting.commands.activate"><code>activate [&lt;window ID | name | label&gt;]</code></dt>
-							<dd>Activate window <code>&lt;window&gt;</code> or the main application window (bring it to the front). If it is minimized, restore it.</dd>
-						<dt id="scripting.commands.dialogactions"><code>alt | cancel | ok [&lt;filename&gt;]</code></dt>
-							<dd>If a modal dialog is shown, call the default action (ok), the alternate action (if applicable), or cancel it. If a file dialog is shown, using <code>ok &lt;filename&gt;</code> chooses that file.</dd>
+						<dt id="scripting.commands.activate"><code>activate [window ID | name | label]</code></dt>
+							<dd>Activate window <code>window</code> or the main application window (bring it to the front). If it is minimized, restore it.</dd>
+						<dt id="scripting.commands.dialogactions"><code>alt | cancel | ok [filename]</code></dt>
+							<dd>If a modal dialog is shown, call the default action (ok), the alternate action (if applicable), or cancel it. If a file dialog is shown, using <code>ok filename</code> chooses that file.</dd>
 						<dt><code>calibrate</code></dt>
 							<dd>Setup calibration measurements (note that this won't give a choice whether to create a fast curves + matrix profile as well, if you want that use <code><a href="#scripting.commands.interact">interact</a> mainframe calibrate_btn</code> instead). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>calibrate-profile</code></dt>
 							<dd>Setup calibration &amp; profiling measurements. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
-						<dt id="scripting.commands.close"><code>close [&lt;window ID | name | label&gt;]</code></dt>
-							<dd>Close window <code>&lt;window&gt;</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code><a href="#scripting.commands.getstate">getstate</a></code> command.</dd>
+						<dt id="scripting.commands.close"><code>close [window ID | name | label]</code></dt>
+							<dd>Close window <code>window</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code><a href="#scripting.commands.getstate">getstate</a></code> command.</dd>
 						<dt><code>create-colorimeter-correction</code></dt>
 							<dd>Create colorimeter correction.</dd>
-						<dt><code>create-profile [&lt;filename&gt;]</code></dt>
+						<dt><code>create-profile [filename]</code></dt>
 							<dd>Create profile from existing measurements (profile or measurement file).</dd>
-						<dt><code>curve-viewer [&lt;filename&gt;]</code></dt>
-							<dd>Show curves, optionally loading <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>curve-viewer presets/photo.icc</code></dd>
-						<dt><code>dispcalGUI [&lt;filename&gt;]</code></dt>
-							<dd>Bring the main window to the front. If it is minimized, restore it. Optionally, load <code>&lt;filename&gt;</code>.</dd>
+						<dt><code>curve-viewer [filename]</code></dt>
+							<dd>Show curves, optionally loading <code>filename</code>. Relative paths are possible e.g. for presets: <code>curve-viewer presets/photo.icc</code></dd>
+						<dt><code>dispcalGUI [filename]</code></dt>
+							<dd>Bring the main window to the front. If it is minimized, restore it. Optionally, load <code>filename</code>.</dd>
 						<dt><code>enable-spyder2</code></dt>
 							<dd>Enable the spyder 2.</dd>
 						<dt><code>getactivewindow</code></dt>
-							<dd>Get the current active window. The returned format is <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
-						<dt><code>getcellvalues [&lt;window ID | name | label&gt;] &lt;grid ID | name | label&gt;</code></dt>
-							<dd>Get cell values from grid <code>&lt;grid&gt;</code> of window <code>&lt;window&gt;</code> or the current active window.</dd>
+							<dd>Get the current active window. The returned format is <code>classname</code> <code>ID</code> <code>name</code> <code>label</code> <code>state</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt><code>getcellvalues [window ID | name | label] &lt;grid ID | name | label&gt;</code></dt>
+							<dd>Get cell values from grid <code>grid</code> of window <code>window</code> or the current active window.</dd>
 						<dt><code>getappname</code></dt>
 							<dd>Get the name of the application you're connected to.</dd>
-						<dt><code>getcfg [&lt;option&gt;]</code></dt>
-							<dd>Get configuration <code>&lt;option&gt;</code>, or whole configuration (key-value pairs in INI format).</dd>
+						<dt><code>getcfg [option]</code></dt>
+							<dd>Get configuration <code>option</code>, or whole configuration (key-value pairs in INI format).</dd>
 						<dt><code>getcommands</code></dt>
 							<dd>Get list of commands supported by this application.</dd>
 						<dt><code>getdefault &lt;option&gt;</code></dt>
-							<dd>Get default <code>&lt;option&gt;</code> (key-value pair in INI format).</dd>
+							<dd>Get default <code>option</code> (key-value pair in INI format).</dd>
 						<dt id="scripting.commands.getdefaults"><code>getdefaults</code></dt>
 							<dd>Get all defaults (key-value pairs in INI format).</dd>
 						<dt id="scripting.commands.getmenus"><code>getmenus</code></dt>
-							<dd>Get available menus in the format <code>&lt;ID&gt; "&lt;label&gt;" &lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
-						<dt id="scripting.commands.getmenuitems"><code>getmenuitems [&lt;menuposition | label&gt;]</code></dt>
-							<dd>Get available menu items in the format <code>&lt;menuposition&gt;</code> <code>"&lt;menulabel&gt;"</code> <code>&lt;menuitemID&gt;</code> <code>"&lt;menuitemlabel&gt;"</code> <code>&lt;state&gt;</code> <code>[checkable]</code> <code>[checked]</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+							<dd>Get available menus in the format <code>ID "label" state</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt id="scripting.commands.getmenuitems"><code>getmenuitems [menuposition | label]</code></dt>
+							<dd>Get available menu items in the format <code>menuposition</code> <code>"menulabel"</code> <code>menuitemID</code> <code>"menuitemlabel"</code> <code>state</code> <code>[checkable]</code> <code>[checked]</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
 						<dt id="scripting.commands.getstate"><code>getstate</code></dt>
-							<dd>Get application state. Return value will be either <code>idle</code>, <code>busy</code>, <code>&lt;dialogclassname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;dialogname&gt;</code> <code>[&lt;dialoglabel&gt;]</code> <code>&lt;state&gt;</code> <code>"&lt;messagetext&gt;"</code> <code>[path "&lt;path&gt;"]</code> <code>[buttons "&lt;buttonlabel&gt;"...]</code> if a modal dialog is shown or <code>blocked</code> in case the UI is currently blocked. Most commands will not work if the UI is blocked—the only way to resolve the block is to non-programmatically interact with the actual UI elements of the application or closing it. Note that a state of <code>blocked</code> should normally only occur if an actual file dialog is shown. If using the scripting interface exclusively, this should never happen because it uses a replacement file dialog that supports the same actions as a real file dialog, but doesn't block. Also note that a return value of <code>blocked</code> for any of the other commands just means that a modal dialog is currently waiting to be interacted with, only if <code>getstate</code> also returns <code>blocked</code> you cannot resolve the situation with scripting alone.</dd>
-						<dt id="scripting.commands.getuielement"><code>getuielement [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt;</code></dt>
-						<dt id="scripting.commands.getuielements"><code>getuielements [&lt;window ID | name | label&gt;]</code></dt>
-							<dd>Get a single UI element or a list of the visible UI elements of window <code>&lt;window&gt;</code> or the current active window. Each returned line represents an UI element and has the format <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>["&lt;label&gt;"]</code> <code>&lt;state&gt;</code> <code>[checked]</code> <code>[value "&lt;value&gt;"]</code> <code>[items "&lt;item&gt;"...]</code>. <code>&lt;classname&gt;</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>&lt;ID&gt;</code> is a numeric identifier. <code>&lt;name&gt;</code> is the name of the UI element. <code>"&lt;label&gt;"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter three with the <code><a href="#scripting.commands.interact">interact</a></code> command. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "&lt;item&gt;"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
+							<dd>Get application state. Return value will be either <code>idle</code>, <code>busy</code>, <code>dialogclassname</code> <code>ID</code> <code>dialogname</code> <code>[dialoglabel]</code> <code>state</code> <code>"messagetext"</code> <code>[path "path"]</code> <code>[buttons "buttonlabel"...]</code> if a modal dialog is shown or <code>blocked</code> in case the UI is currently blocked. Most commands will not work if the UI is blocked—the only way to resolve the block is to non-programmatically interact with the actual UI elements of the application or closing it. Note that a state of <code>blocked</code> should normally only occur if an actual file dialog is shown. If using the scripting interface exclusively, this should never happen because it uses a replacement file dialog that supports the same actions as a real file dialog, but doesn't block. Also note that a return value of <code>blocked</code> for any of the other commands just means that a modal dialog is currently waiting to be interacted with, only if <code>getstate</code> also returns <code>blocked</code> you cannot resolve the situation with scripting alone.</dd>
+						<dt id="scripting.commands.getuielement"><code>getuielement [window ID | name | label] &lt;element ID | name | label&gt;</code></dt>
+						<dt id="scripting.commands.getuielements"><code>getuielements [window ID | name | label]</code></dt>
+							<dd>Get a single UI element or a list of the visible UI elements of window <code>window</code> or the current active window. Each returned line represents an UI element and has the format <code>classname</code> <code>ID</code> <code>name</code> <code>["label"]</code> <code>state</code> <code>[checked]</code> <code>[value "value"]</code> <code>[items "item"...]</code>. <code>classname</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>ID</code> is a numeric identifier. <code>name</code> is the name of the UI element. <code>"label"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter three with the <code><a href="#scripting.commands.interact">interact</a></code> command. <code>state</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "item"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
 						<dt id="scripting.commands.getvalid"><code>getvalid</code></dt>
 							<dd>Get valid values for options that have constraints (key-value pairs in INI format). There are two sections, <code>ranges</code> and <code>values</code>. <code>ranges</code> are the valid ranges for options that accept numeric values (note that integer options not covered by <code>ranges</code> are typically boolean types). <code>values</code> are the valid values for options that only accept certain values. Options not covered by <code>ranges</code> and <code>values</code> are limited to their data type (you can't set a numeric option to a string and vice versa).</dd>
 						<dt id="scripting.commands.getwindows"><code>getwindows</code></dt>
-							<dd>Get a list of visible windows. The returned format is a list of <code>&lt;classname&gt;</code> <code>&lt;ID&gt;</code> <code>&lt;name&gt;</code> <code>&lt;label&gt;</code> <code>&lt;state&gt;</code>. <code>&lt;state&gt;</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
-						<dt><code>import-colorimeter-corrections [&lt;filename&gt;...]</code></dt>
+							<dd>Get a list of visible windows. The returned format is a list of <code>classname</code> <code>ID</code> <code>name</code> <code>label</code> <code>state</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt><code>import-colorimeter-corrections [filename...]</code></dt>
 							<dd>Import colorimeter corrections.</dd>
-						<dt><code>install-profile [&lt;filename&gt;]</code></dt>
+						<dt><code>install-profile [filename]</code></dt>
 							<dd>Install a profile.</dd>
-						<dt id="scripting.commands.interact"><code>interact [&lt;window ID | name | label&gt;] &lt;element ID | name | label&gt; [setvalue &lt;value&gt;]</code></dt>
-							<dd>Interact with the UI element <code>&lt;element&gt;</code> of window <code>&lt;window&gt;</code> or the current active window, e.g. invoke a button or set a control to a value.</dd>
+						<dt id="scripting.commands.interact"><code>interact [window ID | name | label] &lt;element ID | name | label&gt; [setvalue value]</code></dt>
+							<dd>Interact with the UI element <code>element</code> of window <code>window</code> or the current active window, e.g. invoke a button or set a control to a value.</dd>
 						<dt id="scripting.commands.invokemenu"><code>invokemenu &lt;menuposition | menulabel&gt; &lt;menuitemID | menuitemlabel&gt;</code></dt>
 							<dd>Invoke a menu item.</dd>
 						<dt id="scripting.commands.load"><code>load &lt;filename&gt;</code></dt>
-							<dd>Load <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>load presets/photo.icc</code></dd>
+							<dd>Load <code>filename</code>. Relative paths are possible e.g. for presets: <code>load presets/photo.icc</code></dd>
 						<dt id="scripting.commands.measure"><code>measure</code></dt>
 							<dd>Start measurements (must be setup first!).</dd>
 						<dt><code>measure-uniformity</code></dt>
 							<dd>Measure screen uniformity.</dd>
-						<dt><code>measurement-report [&lt;filename&gt;]</code></dt>
-							<dd>If no filename given, show measurement report window. Otherwise, setup measurement to create the HTML report <code>&lt;filename&gt;</code>. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt><code>measurement-report [filename]</code></dt>
+							<dd>If no filename given, show measurement report window. Otherwise, setup measurement to create the HTML report <code>filename</code>. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>profile</code></dt>
 							<dd>Setup profiling measurements (note that this will always use the current calibration if applicable, if you want to use linear calibration instead call <code>load linear.cal</code> prior to calling <code>profile</code>). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
-						<dt><code>profile-info [&lt;filename&gt;]</code></dt>
-							<dd>Show profile information, optionally loading profile <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for presets: <code>profile-info presets/photo.icc</code></dd>
+						<dt><code>profile-info [filename]</code></dt>
+							<dd>Show profile information, optionally loading profile <code>filename</code>. Relative paths are possible e.g. for presets: <code>profile-info presets/photo.icc</code></dd>
 						<dt id="scripting.commands.refresh"><code>refresh</code></dt>
 							<dd>Update the GUI after configuration changes via <code><a href="#scripting.commands.setcfg">setcfg</a></code> or <code><a href="#scripting.commands.restore-defaults">restore-defaults</a></code>.</dd>
 						<dt><code>report-calibrated</code></dt>
 							<dd>Report on calibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 						<dt><code>report-uncalibrated</code></dt>
 							<dd>Report on uncalibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
-						<dt id="scripting.commands.restore-defaults"><code>restore-defaults [&lt;category&gt;...]</code></dt>
-							<dd>Restore defaults globally or just for <code>&lt;category&gt;</code>. Call <code><a href="#scripting.commands.refresh">refresh</a></code> after changing the configuration to update the GUI.</dd>
+						<dt id="scripting.commands.restore-defaults"><code>restore-defaults [category...]</code></dt>
+							<dd>Restore defaults globally or just for <code>category</code>. Call <code><a href="#scripting.commands.refresh">refresh</a></code> after changing the configuration to update the GUI.</dd>
 						<dt id="scripting.commands.set-language"><code>set-language &lt;languagecode&gt;</code></dt>
 							<dd>Set language.</dd>
 						<dt id="scripting.commands.setcfg"><code>setcfg &lt;option&gt; &lt;value&gt;</code></dt>
-							<dd>Set configuration <code>&lt;option&gt;</code> to <code>&lt;value&gt;</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code><a href="#scripting.commands.getdefaults">getdefaults</a></code> and <code><a href="#scripting.commands.getvalid">getvalid</a></code>.</dd>
+							<dd>Set configuration <code>option</code> to <code>value</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code><a href="#scripting.commands.getdefaults">getdefaults</a></code> and <code><a href="#scripting.commands.getvalid">getvalid</a></code>.</dd>
 						<dt id="scripting.commands.setresponseformat"><code>setresponseformat &lt;format&gt;</code></dt>
 							<dd>Set the format for responses. The default <code>plain</code> is a text format that is easy to read, but not necessarily the best for parsing programmatically. The other possible formats are <code>json</code>, <code>json.pretty</code>, <code>xml</code> and <code>xml.pretty</code>. The <code>*.pretty</code> formats use newlines and indentation to make them easier to read.</dd>
-						<dt><code>synthprofile [&lt;filename&gt;]</code></dt>
-							<dd>Show synthetic profile creation window, optionally loading profile <code>&lt;filename&gt;</code>.</dd>
-						<dt><code>testchart-editor [&lt;filename&gt; | create &lt;filename&gt;]</code></dt>
-							<dd>Show testchart editor window, optionally loading or creating testchart <code>&lt;filename&gt;</code>. Relative paths are possible e.g. for loading a default testchart: <code>testchart-editor ti1/d3-e4-s17-g49-m5-b5-f0.ti1</code></dd>
+						<dt><code>synthprofile [filename]</code></dt>
+							<dd>Show synthetic profile creation window, optionally loading profile <code>filename</code>.</dd>
+						<dt><code>testchart-editor [filename | create filename]</code></dt>
+							<dd>Show testchart editor window, optionally loading or creating testchart <code>filename</code>. Relative paths are possible e.g. for loading a default testchart: <code>testchart-editor ti1/d3-e4-s17-g49-m5-b5-f0.ti1</code></dd>
 						<dt><code>verify-calibration</code></dt>
 							<dd>Verify calibration. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
 					</dl>
@@ -1940,8 +1940,8 @@ with DCGScriptingClientSocket() as client:
 			
 			<ul>
 				<li>Invoking a button: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;button&gt;</code> e.g. show profile name placeholders information: <code><a href="#scripting.commands.interact">interact</a> mainframe profile_name_info_btn</code></li>
-				<li>Setting a value on a dropdown, text field, or slider: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;element&gt; setvalue "&lt;value&gt;"</code> e.g. set calibration gamma to 2.4: <code><a href="#scripting.commands.interact">interact</a> mainframe trc_textctrl setvalue 2.4</code> (note that for changing multiple options at once it is generally preferable to call <code><a href="#scripting.commands.setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> for each option you want to set followed by a single <code><a href="#scripting.commands.refresh">refresh</a></code> instead)</li>
-				<li>Setting a cell value on a grid: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;grid&gt; setvalue "&lt;row&gt;,&lt;col&gt;,&lt;value&gt;"</code> e.g. while the testchart editor is shown, set the cell at the second column of the first row to 33: <code><a href="#scripting.commands.interact">interact</a> tcgen grid setvalue "0,1,33"</code></li>
+				<li>Setting a value on a dropdown, text field, or slider: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;element&gt; setvalue "value"</code> e.g. set calibration gamma to 2.4: <code><a href="#scripting.commands.interact">interact</a> mainframe trc_textctrl setvalue 2.4</code> (note that for changing multiple options at once it is generally preferable to call <code><a href="#scripting.commands.setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> for each option you want to set followed by a single <code><a href="#scripting.commands.refresh">refresh</a></code> instead)</li>
+				<li>Setting a cell value on a grid: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;grid&gt; setvalue "row,col,value"</code> e.g. while the testchart editor is shown, set the cell at the second column of the first row to 33: <code><a href="#scripting.commands.interact">interact</a> tcgen grid setvalue "0,1,33"</code></li>
 			</ul>
 			
 			<h3>Caveats and limitations</h3>
