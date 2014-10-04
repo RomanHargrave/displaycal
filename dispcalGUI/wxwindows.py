@@ -686,6 +686,10 @@ class BaseFrame(wx.Frame):
 							if not "buttons" in response:
 								response.append("buttons")
 							response.append(demjson.encode(child.Label))
+			elif win.__class__ is wx.Dialog:
+				response = format_ui_element(win, format)
+				if format == "plain":
+					response = [response]
 			else:
 				return "blocked"
 			if format == "plain":
@@ -764,8 +768,9 @@ class BaseFrame(wx.Frame):
 					elif (state not in ("busy", "idle") and
 						  win is not self.get_top_window()):
 						response = "blocked"
-					elif isinstance(win, (AboutDialog, BaseInteractiveDialog,
-										  ProgressDialog)):
+					elif (isinstance(win, (AboutDialog, BaseInteractiveDialog,
+										   ProgressDialog)) or
+						  win.__class__ is wx.Dialog):
 						if win.IsModal():
 							wx.CallAfter(win.EndModal, wx.ID_CANCEL)
 						else:
@@ -1669,7 +1674,9 @@ class BitmapBackgroundPanel(wx.PyPanel):
 							else img.GetSize()[1], quality=self.scalequality)
 				bmp = img.ConvertToBitmap()
 			dc.DrawBitmap(bmp, 0, 0)
-			if self.repeat_sub_bitmap_h and self.Size[0] > bmp.Size[0]:
+			if (self.repeat_sub_bitmap_h and self.Size[0] > bmp.Size[0] and
+				bmp.Size[0] >= self.repeat_sub_bitmap_h[0] and
+				bmp.Size[1] >= self.repeat_sub_bitmap_h[1]):
 				sub_bmp = bmp.GetSubBitmap(self.repeat_sub_bitmap_h)
 				sub_img = sub_bmp.ConvertToImage()
 				sub_img.Rescale(self.GetSize()[0] -

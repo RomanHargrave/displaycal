@@ -268,10 +268,16 @@ wx.grid.Grid.GetSelection = GridGetSelection
 
 def set_bitmap_labels(btn):
 	bitmap = btn.BitmapLabel
+	if not bitmap.IsOk():
+		size = btn.MinSize
+		if -1 in size:
+			size = (16, 16)
+		bitmap = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE,
+										  size=size)
 
 	# Disabled
 	image = bitmap.ConvertToImage()
-	if image.HasMask():
+	if image.HasMask() and not image.HasAlpha():
 		image.InitAlpha()
 	if image.HasAlpha():
 		alphabuffer = image.GetAlphaBuffer()
@@ -284,7 +290,7 @@ def set_bitmap_labels(btn):
 	if sys.platform != "darwin":
 		# wxMac applies hover state also to disabled buttons...
 		image = bitmap.ConvertToImage()
-		if image.HasMask():
+		if image.HasMask() and not image.HasAlpha():
 			image.InitAlpha()
 		databuffer = image.GetDataBuffer()
 		for i, byte in enumerate(databuffer):
@@ -301,7 +307,7 @@ def set_bitmap_labels(btn):
 
 	# Selected
 	image = bitmap.ConvertToImage()
-	if image.HasMask():
+	if image.HasMask() and not image.HasAlpha():
 		image.InitAlpha()
 	databuffer = image.GetDataBuffer()
 	for i, byte in enumerate(databuffer):

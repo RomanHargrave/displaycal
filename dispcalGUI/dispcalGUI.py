@@ -525,7 +525,11 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.textshadow = False
 	header.SetBackgroundColour("#336699")
 	header.SetForegroundColour("#FFFFFF")
-	header.SetBitmap(bitmap or getbitmap("theme/header").GetSubBitmap((0, 0, 222, 60)))
+	if not bitmap:
+		bitmap = getbitmap("theme/header", False)
+		if bitmap.Size[0] >= 220 and bitmap.Size[1] >= 60:
+			bitmap = bitmap.GetSubBitmap((0, 0, 222, 60))
+	header.SetBitmap(bitmap)
 	header.SetMaxFontSize(11)
 	header.SetLabel(label or lang.getstr("header"))
 	return header
@@ -644,7 +648,7 @@ def resize_bmp(event):
 		ctrl.MinSize = ctrl._bmp.GetSize()
 		ctrl.ContainingSizer.Layout()
 		w = ctrl.ContainingSizer.Size[0]
-		if getattr(ctrl, "_width", -1) != w:
+		if getattr(ctrl, "_width", -1) != w and bmp.IsOk():
 			img = bmp.ConvertToImage()
 			img.Rescale(w, img.GetSize()[1])
 			bmp = img.ConvertToBitmap()
@@ -1326,7 +1330,12 @@ class MainFrame(BaseFrame):
 		self.headerpanel = self.FindWindowByName("headerpanel")
 		self.headerpanel.ContainingSizer.Insert(0, self.header, flag=wx.EXPAND)
 		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(80, -1))
-		self.header_btm.SetBitmap(getbitmap("theme/header").GetSubBitmap((0, 60, 80, 120)))
+		self.header_btm.BackgroundColour = "#336699"
+		self.header_btm.scalebitmap = False, False
+		header_bmp = getbitmap("theme/header", False)
+		if header_bmp.Size[0] >= 80 and header_bmp.Size[1] >= 180:
+			header_bmp = header_bmp.GetSubBitmap((0, 60, 80, 120))
+			self.header_btm.SetBitmap(header_bmp)
 		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP |
 															   wx.EXPAND)
 		separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
@@ -1347,14 +1356,17 @@ class MainFrame(BaseFrame):
 						 flag=wx.EXPAND)
 			self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
 														   size=(-1, 15))
-			bmp = getbitmap("theme/gradient").GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
-			image = bmp.ConvertToImage()
-			databuffer = image.GetDataBuffer()
-			for i, byte in enumerate(databuffer):
-				if byte > "\0":
-					databuffer[i] = chr(int(round(ord(byte) * (255.0 / 223.0))))
-			bmp = image.ConvertToBitmap()
-			self.buttonpanelheader.SetBitmap(bmp)
+			bmp = getbitmap("theme/gradient", False)
+			if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
+				bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+				image = bmp.ConvertToImage()
+				databuffer = image.GetDataBuffer()
+				for i, byte in enumerate(databuffer):
+					if byte > "\0":
+						databuffer[i] = chr(int(min(round(ord(byte) *
+														  (255.0 / 223.0)), 255)))
+				bmp = image.ConvertToBitmap()
+				self.buttonpanelheader.SetBitmap(bmp)
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel),
 						 self.buttonpanelheader, flag=wx.EXPAND)
 			bgcolor = self.buttonpanel.BackgroundColour
@@ -11078,7 +11090,7 @@ class MainFrame(BaseFrame):
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
 		items = []
-		items.append(get_header(self.aboutdialog, getbitmap("theme/header"),
+		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
 								size=(320, 120), repeat_sub_bitmap_h=(214, 0, 8, 180)))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -11237,6 +11249,15 @@ class MainFrame(BaseFrame):
 			return
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not hasattr(self, "tcframe") or self.tcframe.tc_close_handler():
+			# If resources are missing, XRC shows an error dialog.
+			# If the user never closees that dialog before he quits the
+			# application, this dialog will hinder exiting the main loop.
+			win = self.get_top_window()
+			if isinstance(win, wx.Dialog):
+				win.EndModal(wx.ID_CANCEL)
+				# Give time for the dialog to be destroyed
+				wx.CallLater(55, self.Close)
+				return
 			writecfg()
 			if getattr(self, "thread", None) and self.thread.isAlive():
 				self.Disable()
@@ -11381,7 +11402,14 @@ class StartupFrame(wx.Frame):
 			# update, otherwise the main window may steal the update
 			# confirmation dialog's focus which looks weird
 			wx.CallAfter(app.frame.app_update_check_handler, None, silent=True)
-		self.Close()
+		# If resources are missing, XRC shows an error dialog which immediately
+		# gets hidden when we close ourselves because we are the parent.
+		# Hide instead.
+		win = app.frame.get_top_window()
+		if isinstance(win, wx.Dialog):
+			self.Hide()
+		else:
+			self.Close()
 
 	def OnPaint(self, event):
 		self.Draw(wx.BufferedPaintDC(self))

@@ -187,7 +187,7 @@ def is_virtual_display(display_no=None):
 	return is_special_display(display_no, virtual_displays)
 
 
-def getbitmap(name):
+def getbitmap(name, display_missing_icon=True):
 	"""
 	Create (if necessary) and return a named bitmap.
 	
@@ -203,16 +203,16 @@ def getbitmap(name):
 	from wxaddons import wx
 	if not name in bitmaps:
 		parts = name.split("/")
+		w = 16
+		h = 16
+		if len(parts) > 1:
+			size = parts[-2].split("x")
+			if len(size) == 2:
+				try:
+					w, h = map(int, size)
+				except ValueError:
+					pass
 		if parts[-1] == "empty":
-			w = 16
-			h = 16
-			if len(parts) > 1:
-				size = parts[-2].split("x")
-				if len(size) == 2:
-					try:
-						w, h = map(int, size)
-					except ValueError:
-						pass
 			bitmaps[name] = wx.EmptyBitmap(w, h, depth=-1)
 			dc = wx.MemoryDC()
 			dc.SelectObject(bitmaps[name])
@@ -229,17 +229,18 @@ def getbitmap(name):
 			if path:
 				bitmaps[name] = wx.Bitmap(path)
 			else:
-				w = 32
-				h = 32
-				if len(parts) > 1:
-					size = parts[-2].split("x")
-					if len(size) == 2:
-						try:
-							w, h = map(int, size)
-						except ValueError:
-							pass
-				bitmaps[name] = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, 
-														 size=(w, h))
+				img = wx.EmptyImage(w, h)
+				img.SetMaskColour(0, 0, 0)
+				img.InitAlpha()
+				bmp = img.ConvertToBitmap()
+				bitmaps[name] = bmp
+				dc = wx.MemoryDC()
+				dc.SelectObject(bitmaps[name])
+				if display_missing_icon:
+					bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE,
+												   size=(w, h))
+					dc.DrawBitmap(bmp, 0, 0, True)
+				dc.SelectObject(wx.NullBitmap)
 	return bitmaps[name]
 
 
