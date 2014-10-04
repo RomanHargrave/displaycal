@@ -728,6 +728,9 @@ class BaseFrame(wx.Frame):
 		return "invalid"
 
 	def finish_processing(self, data, conn, command_timestamp):
+		if not responseformats.get(conn):
+			# Client connection has broken down in the meantime
+			return
 		state = self.get_app_state("plain")
 		dialog = isinstance(self.get_top_window(), wx.Dialog)
 		if ((state in ("blocked", "busy") or dialog) and
@@ -1199,6 +1202,9 @@ class BaseFrame(wx.Frame):
 				  child or win)
 
 	def send_response(self, response, data, conn, command_timestamp, win=None):
+		if not responseformats.get(conn):
+			# Client connection has broken down in the meantime
+			return
 		if response == "invalid":
 			safe_print(lang.getstr("app.incoming_message.invalid"))
 		if responseformats[conn] != "plain":
