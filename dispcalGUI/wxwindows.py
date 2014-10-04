@@ -562,37 +562,70 @@ class BaseFrame(wx.Frame):
 							if len(data) == 2:
 								# Return cfg value
 								if data[1] in defaults:
-									response = {data[1]: getcfg(data[1])}
+									if responseformats[conn].startswith("xml"):
+										response = {"name": data[1],
+													"value": getcfg(data[1])}
+									else:
+										response = {data[1]: getcfg(data[1])}
 								else:
 									response = "invalid"
 							else:
 								# Return whole cfg
-								response = OrderedDict()
+								if responseformats[conn] != "plain":
+									response = []
+								else:
+									response = OrderedDict()
 								for name in sorted(defaults):
 									value = getcfg(name, False)
 									if value is not None:
-										response[name] = value
+										if responseformats[conn] != "plain":
+											response.append({"name": name,
+															 "value": value})
+										else:
+											response[name] = value
 						elif data[0] == "getcommands" and len(data) == 1:
 							response = sorted(self.get_commands())
 						elif data[0] == "getdefault" and len(data) == 2:
 							if data[1] in defaults:
-								response = {data[1]: defaults[data[1]]}
+								if responseformats[conn] != "plain":
+									response = {"name": data[1],
+												"value": defaults[data[1]]}
+								else:
+									response = {data[1]: defaults[data[1]]}
 							else:
 								response = "invalid"
 						elif data[0] == "getdefaults" and len(data) == 1:
-							response = OrderedDict()
+							if responseformats[conn] != "plain":
+								response = []
+							else:
+								response = OrderedDict()
 							for name in sorted(defaults):
-								response[name] = defaults[name]
+								if responseformats[conn] != "plain":
+									response.append({"name": name,
+													 "value": defaults[name]})
+								else:
+									response[name] = defaults[name]
 						elif data[0] == "getvalid" and len(data) == 1:
-							response = {"ranges": config.valid_ranges,
-										"values": config.valid_values}
+							if responseformats[conn] != "plain":
+								response = {}
+								for section, options in (("ranges",
+														  config.valid_ranges),
+														 ("values",
+														  config.valid_values)):
+									valid = response[section] = []
+									for name, values in options.iteritems():
+										valid.append({"name": name,
+													  "values": values})
+							else:
+								response = {"ranges": config.valid_ranges,
+											"values": config.valid_values}
 							if responseformats[conn] == "plain":
 								valid = []
 								for section, options in response.iteritems():
 									valid.append("[%s]" % section)
-									for key, values in options.iteritems():
+									for name, values in options.iteritems():
 										valid.append("%s = %s" %
-													 (key,
+													 (name,
 													  " ".join(demjson.encode(value)
 															   for value in values)))
 								response = valid
@@ -1169,6 +1202,8 @@ class BaseFrame(wx.Frame):
 		if response == "invalid":
 			safe_print(lang.getstr("app.incoming_message.invalid"))
 		if responseformats[conn] != "plain":
+			if not isinstance(response, (basestring, list)):
+				response = [response]
 			response = {"command": data,
 						"command_timestamp": command_timestamp,
 						"result": response,
@@ -1182,8 +1217,7 @@ class BaseFrame(wx.Frame):
 			response = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
 						(responseformats[conn] == "xml.pretty" and "\n" or "") +
 						dict2xml(response, "response",
-								 pretty=responseformats[conn] == "xml.pretty",
-								 allow_attributes=False))
+								 pretty=responseformats[conn] == "xml.pretty"))
 		else:
 			if isinstance(response, dict):
 				response = ["%s = %s" % (name, value) for name, value in
