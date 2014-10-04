@@ -3730,7 +3730,7 @@ class SimpleTerminal(InvincibleFrame):
 				 size=wx.DefaultSize, consolestyle=wx.TE_CHARWRAP |
 												   wx.TE_MULTILINE |
 												   wx.TE_READONLY | wx.VSCROLL |
-												   wx.NO_BORDER):
+												   wx.NO_BORDER, show=True):
 		if pos == wx.DefaultPosition:
 			pos = getcfg("position.progress.x"), getcfg("position.progress.y")
 		if size == wx.DefaultSize:
@@ -3763,7 +3763,7 @@ class SimpleTerminal(InvincibleFrame):
 													   wx.FONTWEIGHT_NORMAL,
 													   **{kwarg: "Monaco"})
 		else:
-			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
 		self.console.SetFont(font)
 		self.sizer.Add(self.console, 1, flag=wx.ALL | wx.EXPAND, border=0)
@@ -3815,8 +3815,9 @@ class SimpleTerminal(InvincibleFrame):
 		if start_timer:
 			self.start_timer()
 		
-		self.Show()
-		self.console.SetFocus()
+		if show:
+			self.Show()
+			self.console.SetFocus()
 	
 	def EndModal(self, returncode=wx.ID_OK):
 		return returncode

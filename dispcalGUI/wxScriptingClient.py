@@ -61,11 +61,11 @@ class ScriptingClientSocket(socket.socket):
 		end = self.recv_buffer.find("\4")
 		single_response = self.recv_buffer[:end]
 		self.recv_buffer = self.recv_buffer[end + 1:]
-		return single_response
+		return safe_unicode(single_response, "UTF-8")
 
 	def send_command(self, command):
 		# Automatically append newline (command end marker)
-		self.sendall(command + "\n")
+		self.sendall(safe_str(command, "UTF-8") + "\n")
 
 
 class ScriptingClientFrame(SimpleTerminal):
@@ -73,17 +73,21 @@ class ScriptingClientFrame(SimpleTerminal):
 	def __init__(self):
 		SimpleTerminal.__init__(self, None, wx.ID_ANY,
 								lang.getstr("scripting-client"),
+								start_timer=False,
 								pos=(getcfg("position.scripting.x"),
 									 getcfg("position.scripting.y")),
 								size=(getcfg("size.scripting.w"),
 									  getcfg("size.scripting.h")),
 								consolestyle=wx.TE_CHARWRAP | wx.TE_MULTILINE |
 											 wx.TE_PROCESS_ENTER | wx.TE_RICH |
-											 wx.VSCROLL | wx.NO_BORDER)
+											 wx.VSCROLL | wx.NO_BORDER,
+								show=False)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], 
 											 appname + "-scripting-client"))
+		self.console.SetForegroundColour("#EEEEEE")
 		self.console.SetDefaultStyle(wx.TextAttr("#EEEEEE"))
 
+		self.busy = False
 		self.commands = []
 		self.history = []
 		self.historyfilename = os.path.join(confighome,
@@ -108,16 +112,24 @@ class ScriptingClientFrame(SimpleTerminal):
 		scripting_hosts = self.get_scripting_hosts()
 
 		self.sizer.Layout()
-		self.SetTransparent(240)
+		if sys.platform != "darwin":
+			# Under Mac OS X, the transparency messes up the window shadow if
+			# there is another window's border behind
+			self.SetTransparent(240)
 
 		self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
-		##self.Unbind(wx.EVT_CHAR_HOOK)
-		##self.console.Unbind(wx.EVT_KEY_DOWN)
-		##self.console.Bind(wx.EVT_CHAR, self.key_handler)
+		self.Unbind(wx.EVT_CHAR_HOOK)
+		self.console.Unbind(wx.EVT_KEY_DOWN, self.console)
+		self.console.Bind(wx.EVT_KEY_DOWN, self.key_handler)
+		self.console.Bind(wx.EVT_TEXT_PASTE, self.paste_text_handler)
+		if sys.platform == "darwin":
+			# Under Mac OS X, pasting text via the context menu isn't catched
+			# by EVT_TEXT_PASTE. TODO: Implement custom context menu.
+			self.console.Bind(wx.EVT_CONTEXT_MENU, lambda event: None)
 
 		if scripting_hosts:
-			self.add_text(lang.getstr("scripting-client.detected-hosts") + "\n")
+			self.add_text("> getscriptinghosts" + "\n")
 			for host in scripting_hosts:
 				self.add_text(host + "\n")
 			ip_port = scripting_hosts[0].split()[0]
@@ -272,11 +284,26 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def get_commands(self):
 		if self.conn:
-			commands = self.get_common_commands() + ["disconnect"]
+			commands = self.get_common_commands() + ["disconnect", "echo"]
 		else:
-			commands = ["echo"]
+			commands = []
 		return commands + ["clear", "connect <ip>:<port>",
 						   "getscriptinghosts"]
+
+	def get_last_line(self):
+		linecount = self.console.GetNumberOfLines()
+		lastline = self.console.GetLineText(linecount - 1)
+		lastpos = self.console.GetLastPosition()
+		start, end = self.console.GetSelection()
+		startcol, startrow = self.console.PositionToXY(start)
+		endcol, endrow = self.console.PositionToXY(end)
+		if startcol > lastpos or endcol > lastpos:
+			# Under Mac OS X, PositionToXY seems to be broken and returns insane
+			# numbers. Calculate them ourselves. Note they will only be correct
+			# for the last line, but that's all we care about.
+			startcol = len(lastline) - (lastpos - start)
+			endcol = len(lastline) - (lastpos - end)
+		return lastline, lastpos, startcol, endcol
 
 	def get_response(self):
 		try:
@@ -310,40 +337,31 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def key_handler(self, event):
 		##safe_print(event.KeyCode)
-		linecount = self.console.GetNumberOfLines()
-		lastline = self.console.GetLineText(linecount - 1)
-		lastpos = self.console.GetLastPosition()
 		insertionpoint = self.console.GetInsertionPoint()
-		start, end = self.console.GetSelection()
-		startcol, startrow = self.console.PositionToXY(start)
-		endcol, endrow = self.console.PositionToXY(end)
+		lastline, lastpos, startcol, endcol = self.get_last_line()
+		##safe_print(insertionpoint, lastline, lastpos, startcol, endcol)
 		cmd_or_ctrl = event.ControlDown() or event.CmdDown()
 		if cmd_or_ctrl and event.KeyCode == 65:
 			# A
 			self.console.SelectAll()
 		elif cmd_or_ctrl and event.KeyCode in (67, 88):
-			# C / X
-			event.Skip()
-		elif insertionpoint >= lastpos - len(lastline) + 2:
+			# C
+			# Override native copy to clipboard because reading the text back
+			# from wx.TheClipboard results in wrongly encoded characters under
+			# Mac OS X
+			# TODO: The correct way to fix this would actually be in the pasting
+			# code because pasting text that was copied from other sources still
+			# has the problem with this workaround
+			clipdata = wx.TextDataObject()
+			clipdata.SetText(self.console.GetStringSelection())
+			wx.TheClipboard.Open()
+			wx.TheClipboard.SetData(clipdata)
+			wx.TheClipboard.Close()
+		elif insertionpoint >= lastpos - len(lastline):
 			if cmd_or_ctrl:
-				if event.KeyCode == 86:
+				if startcol > 1 and event.KeyCode == 86:
 					# V
-					do = wx.TextDataObject()
-					wx.TheClipboard.Open()
-					success = wx.TheClipboard.GetData(do)
-					wx.TheClipboard.Close()
-					if success:
-						cliptext = universal_newlines(do.GetText())
-						lines = cliptext.replace("\n", "\n\0").split("\0")
-						command1 = (lastline[2:startcol] +
-									lines[0].rstrip("\n") +
-									lastline[endcol:])
-						self.add_text("\r> " + command1)
-						if "\n" in cliptext:
-							self.send_command_handler(command1, lines[1:])
-						else:
-							self.console.SetInsertionPoint(insertionpoint +
-														   len(cliptext))
+					self.paste_text_handler(None)
 				elif event.UnicodeKey:
 					wx.Bell()
 			elif event.KeyCode in (10, 13, wx.WXK_NUMPAD_ENTER):
@@ -351,22 +369,20 @@ class ScriptingClientFrame(SimpleTerminal):
 				self.send_command_handler(lastline[2:])
 			elif event.KeyCode == wx.WXK_BACK:
 				# Backspace
-				if startcol == endcol:
-					startcol -= 1
-					insertionpoint -= 1
-				if startcol > 1:
-					self.add_text("\r> " + lastline[2:startcol] +
-								  lastline[endcol:])
-					self.console.SetInsertionPoint(insertionpoint)
+				if startcol > 1 and endcol > 2:
+					if endcol > startcol:
+						self.console.WriteText("")
+					else:
+						event.Skip()
 				else:
 					wx.Bell()
 			elif event.KeyCode in (wx.WXK_DELETE, wx.WXK_NUMPAD_DELETE):
-				if startcol == endcol:
-					endcol += 1
-				if endcol <= len(lastline):
-					self.add_text("\r> " + lastline[2:startcol] +
-								  lastline[endcol:])
-					self.console.SetInsertionPoint(insertionpoint)
+				if startcol > 1 and (endcol < len(lastline) or
+									 startcol < endcol):
+					if endcol > startcol:
+						self.console.WriteText("")
+					else:
+						event.Skip()
 				else:
 					wx.Bell()
 			elif event.KeyCode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN,
@@ -377,19 +393,19 @@ class ScriptingClientFrame(SimpleTerminal):
 				else:
 					wx.Bell()
 			elif event.KeyCode in (wx.WXK_END, wx.WXK_NUMPAD_END):
-				self.console.SetInsertionPoint(lastpos)
+				event.Skip()
 			elif event.KeyCode in (wx.WXK_HOME, wx.WXK_NUMPAD_HOME):
 				self.console.SetInsertionPoint(lastpos - len(lastline) + 2)
 			elif event.KeyCode in (wx.WXK_INSERT, wx.WXK_NUMPAD_INSERT):
 				self.overwrite = not self.overwrite
 			elif event.KeyCode in (wx.WXK_LEFT, wx.WXK_NUMPAD_LEFT):
-				if (start > lastpos - len(lastline) + 2):
-					self.console.SetInsertionPoint(start - 1)
+				if (startcol > 2):
+					event.Skip()
 				else:
 					wx.Bell()
 			elif event.KeyCode in (wx.WXK_RIGHT, wx.WXK_NUMPAD_RIGHT):
-				if end < lastpos:
-					self.console.SetInsertionPoint(end + 1)
+				if endcol < len(lastline):
+					event.Skip()
 				else:
 					wx.Bell()
 			elif event.KeyCode in (wx.WXK_UP, wx.WXK_NUMPAD_UP,
@@ -401,6 +417,8 @@ class ScriptingClientFrame(SimpleTerminal):
 					wx.Bell()
 			elif event.KeyCode == wx.WXK_TAB:
 				# Tab completion
+				# Can't use built-in AutoComplete feature because it only
+				# works for single-line TextCtrls
 				commonpart = lastline[2:endcol]
 				candidates = []
 				for command in sorted(list(set(self.commands +
@@ -440,6 +458,26 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def mark_text(self, start, end, color):
 		self.console.SetStyle(start, end, wx.TextAttr(color))
+
+	def paste_text_handler(self, event):
+		do = wx.TextDataObject()
+		wx.TheClipboard.Open()
+		success = wx.TheClipboard.GetData(do)
+		wx.TheClipboard.Close()
+		if success:
+			insertionpoint = self.console.GetInsertionPoint()
+			lastline, lastpos, startcol, endcol = self.get_last_line()
+			cliptext = universal_newlines(do.GetText())
+			lines = cliptext.replace("\n", "\n\0").split("\0")
+			command1 = (lastline[2:startcol] +
+						lines[0].rstrip("\n") +
+						lastline[endcol:])
+			self.add_text("\r> " + command1)
+			if "\n" in cliptext:
+				self.send_command_handler(command1, lines[1:])
+			else:
+				self.console.SetInsertionPoint(insertionpoint +
+											   len(cliptext))
 
 	def process_data(self, data):
 		if data[0] == "echo" and len(data) > 1:
