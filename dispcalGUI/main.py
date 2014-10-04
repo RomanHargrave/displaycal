@@ -74,6 +74,7 @@ def main(module=None):
 	safe_print("Encoding: " + enc)
 	safe_print("File system encoding: " + fs_enc)
 	lockfilename = None
+	port = 0
 	try:
 		initcfg()
 		# Allow multiple instances only for curve viewer, profile info,
@@ -292,15 +293,7 @@ def main(module=None):
 									   "address:", exception)
 							del sys._appsocket
 							break
-						try:
-							# Create lockfile
-							with open(lockfilename, "w") as lockfile:
-								lockfile.write("%s\n" % port)
-						except EnvironmentError, exception:
-							# This shouldn't happen
-							safe_print("Warning - could not write "
-									   "lockfile %s:" % lockfilename,
-									   exception)
+						write_lockfile(lockfilename, "a", str(port))
 						break
 			# Check for required resource files
 			mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
@@ -404,11 +397,53 @@ def main(module=None):
 		if thread.isAlive() and thread is not threading.currentThread():
 			thread.join()
 	if lockfilename and os.path.isfile(lockfilename):
+		# Each lockfile may contain multiple ports of running instances
 		try:
-			os.remove(lockfilename)
+			with open(lockfilename) as lockfile:
+				ports = lockfile.read().splitlines()
 		except EnvironmentError, exception:
-			safe_print("Warning - could not remove lockfile %s: %r" %
+			safe_print("Warning - could not read lockfile %s: %r" %
 					   (lockfilename, exception))
+			ports = []
+		else:
+			# Remove ourself
+			if port and str(port) in ports:
+				ports.remove(str(port))
+
+			# Determine if instances still running. If not still running,
+			# remove from list of ports
+			for i in reversed(xrange(len(ports))):
+				try:
+					port = int(ports[i])
+				except ValueError:
+					# This shouldn't happen
+					continue
+				try:
+					appsocket = socket.socket(socket.AF_INET,
+											  socket.SOCK_STREAM)
+				except socket.error, exception:
+					# This shouldn't happen
+					safe_print("Warning - could not create TCP socket:",
+							   exception)
+					break
+				try:
+					appsocket.connect(("127.0.0.1", port))
+				except socket.error, exception:
+					# Other instance probably died
+					safe_print("Connection to 127.0.0.1:%s failed:" % port,
+							   exception)
+					del ports[i]
+				appsocket.close()
+			if ports:
+				# Write updated lockfile
+				write_lockfile(lockfilename, "w", "\n".join(ports))
+		# If no ports of running instances, ok to remove lockfile
+		if not ports:
+			try:
+				os.remove(lockfilename)
+			except EnvironmentError, exception:
+				safe_print("Warning - could not remove lockfile %s: %r" %
+						   (lockfilename, exception))
 	try:
 		logger = logging.getLogger(pyname)
 		for handler in logger.handlers:
@@ -436,6 +471,17 @@ def main_synthprofile():
 
 def main_testchart_editor():
 	main("testchart-editor")
+
+
+def write_lockfile(lockfilename, mode, contents):
+	try:
+		# Create lockfile
+		with open(lockfilename, mode) as lockfile:
+			lockfile.write("%s\n" % contents)
+	except EnvironmentError, exception:
+		# This shouldn't happen
+		safe_print("Warning - could not write lockfile %s:" % lockfilename,
+				   exception)
 
 
 class Error(Exception):
