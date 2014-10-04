@@ -62,10 +62,12 @@ numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD8,
 				   wx.WXK_NUMPAD9,
 				   wx.WXK_NUMPAD_ADD,
+				   wx.WXK_NUMPAD_DECIMAL,
 				   wx.WXK_NUMPAD_ENTER,
 				   wx.WXK_NUMPAD_EQUAL,
 				   wx.WXK_NUMPAD_DIVIDE,
 				   wx.WXK_NUMPAD_MULTIPLY,
+				   wx.WXK_NUMPAD_SEPARATOR,
 				   wx.WXK_NUMPAD_SUBTRACT]
 
 
@@ -3283,7 +3285,8 @@ class LogWindow(InvincibleFrame):
 	""" A log-type window with Clear and Save As buttons """
 
 	def __init__(self, parent=None, id=-1, title=None, pos=wx.DefaultPosition,
-				 size=wx.DefaultSize):
+				 size=wx.DefaultSize, logctrlstyle=wx.TE_MULTILINE |
+												   wx.TE_READONLY):
 		if not title:
 			title = lang.getstr("infoframe.title")
 		if pos == wx.DefaultPosition:
@@ -3299,8 +3302,7 @@ class LogWindow(InvincibleFrame):
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer)
-		self.log_txt = wx.TextCtrl(self.panel, -1, "", style=wx.TE_MULTILINE | 
-															 wx.TE_READONLY)
+		self.log_txt = wx.TextCtrl(self.panel, -1, "", style=logctrlstyle)
 		if u"phoenix" in wx.PlatformInfo:
 			kwarg = "faceName"
 		else:
@@ -3321,9 +3323,10 @@ class LogWindow(InvincibleFrame):
 											 wx.EXPAND, border=4)
 		self.log_txt.MinSize = (self.log_txt.GetTextExtent("=" * 82)[0] +
 								wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
-								-1)
+								defaults["size.info.h"] - 24 -
+								max(0, self.Size[1] - self.ClientSize[1]))
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(self.btnsizer)
+		self.sizer.Add(self.btnsizer, flag=wx.EXPAND)
 		self.save_as_btn = GenBitmapButton(self.panel, -1, 
 										   geticon(16, "media-floppy"), 
 										   style = wx.NO_BORDER)
@@ -3336,9 +3339,8 @@ class LogWindow(InvincibleFrame):
 		self.clear_btn.Bind(wx.EVT_BUTTON, self.OnClear)
 		self.clear_btn.SetToolTipString(lang.getstr("clear"))
 		self.btnsizer.Add(self.clear_btn, flag=wx.ALL, border=4)
-		borders_lr = self.Size[0] - self.ClientSize[0]
-		self.SetMinSize((self.sizer.MinSize[0] + borders_lr,
-						 defaults["size.info.h"]))
+		self.sizer.SetSizeHints(self)
+		self.sizer.Layout()
 		self.SetSaneGeometry(*pos + size)
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -3724,13 +3726,17 @@ class SimpleTerminal(InvincibleFrame):
 	""" A simple terminal-like window. """
 
 	def __init__(self, parent=None, id=-1, title=appname, handler=None, 
-				 keyhandler=None, start_timer=True):
-		wx.Frame.__init__(self, parent, id, title, 
+				 keyhandler=None, start_timer=True, pos=wx.DefaultPosition,
+				 size=wx.DefaultSize, consolestyle=wx.TE_CHARWRAP |
+												   wx.TE_MULTILINE |
+												   wx.TE_READONLY | wx.VSCROLL |
+												   wx.NO_BORDER):
+		if pos == wx.DefaultPosition:
+			pos = getcfg("position.progress.x"), getcfg("position.progress.y")
+		if size == wx.DefaultSize:
+			size = getcfg("size.progress.w"), getcfg("size.progress.h")
+		wx.Frame.__init__(self, parent, id, title, pos=pos,
 								style=wx.DEFAULT_FRAME_STYLE)
-		if parent and parent.Icon and parent.Icon.IsOk():
-			self.Icon = parent.Icon
-		else:
-			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -3741,11 +3747,8 @@ class SimpleTerminal(InvincibleFrame):
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer)
-		self.console = wx.TextCtrl(self.panel, -1, "", style=wx.TE_MULTILINE | 
-															 wx.TE_READONLY |
-															 wx.VSCROLL |
-															 wx.NO_BORDER)
-		self.console.SetBackgroundColour(wx.BLACK)
+		self.console = wx.TextCtrl(self.panel, -1, "", style=consolestyle)
+		self.console.SetBackgroundColour("#272727")
 		self.console.SetForegroundColour("#808080")
 		if u"phoenix" in wx.PlatformInfo:
 			kwarg = "faceName"
@@ -3754,7 +3757,7 @@ class SimpleTerminal(InvincibleFrame):
 		if sys.platform == "win32":
 			font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													  wx.FONTWEIGHT_NORMAL,
-													  **{kwarg: "Terminal"})
+													  **{kwarg: "Consolas"})
 		elif sys.platform == "darwin":
 			font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL,
@@ -3781,9 +3784,11 @@ class SimpleTerminal(InvincibleFrame):
 		
 		# set size
 		text_extent = self.console.GetTextExtent(" ")
-		vscroll_w = self.console.GetSize()[0] - self.console.GetClientRect()[2]
-		w, h = (text_extent[0] * 80 + vscroll_w, 
+		vscroll_w = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+		w, h = (text_extent[0] * 80 + vscroll_w + 4, 
 				text_extent[1] * 24)
+		self.console.SetMinSize((w, h))
+		w, h = max(size[0], w), max(size[1], h)
 		self.console.SetSize((w, h))
 		self.sizer.SetSizeHints(self)
 		self.sizer.Layout()
@@ -3795,11 +3800,10 @@ class SimpleTerminal(InvincibleFrame):
 				self.Center()
 				placed = True
 			else:
-				x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
-				y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+				x = pos[0] or parent.GetScreenPosition()[0]
+				y = pos[1] or parent.GetScreenPosition()[1]
 		else:
-			x = getcfg("position.progress.x")
-			y = getcfg("position.progress.y")
+			x, y = pos
 		if not placed:
 			self.SetSaneGeometry(x, y, w, h)
 		
