@@ -1217,10 +1217,12 @@ class BaseFrame(wx.Frame):
 		if responseformats[conn] != "plain":
 			if not isinstance(response, (basestring, list)):
 				response = [response]
-			response = {"command": data,
-						"command_timestamp": command_timestamp,
+			command = {"name": data[0], "timestamp": command_timestamp}
+			if data[1:]:
+				command["arguments"] = data[1:]
+			response = {"command": command,
 						"result": response,
-						"result_timestamp": datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")}
+						"timestamp": datetime.now().strftime("%Y-%m-%dTH:%M:%S.%f")}
 			if win:
 				response["object"] = format_ui_element(win, responseformats[conn])
 		if responseformats[conn].startswith("json"):
