@@ -188,7 +188,12 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def check_result(self, delayedResult, get_response=False,
 					 additional_commands=None, colorize=True):
-		result = delayedResult.get()
+		try:
+			result = delayedResult.get()
+		except Exception, exception:
+			if hasattr(exception, "originalTraceback"):
+				self.add_text(exception.originalTraceback)
+			result = exception
 		if result:
 			text = "%s\n" % safe_unicode(result)
 			self.add_text(text)
@@ -307,7 +312,7 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def get_response(self):
 		try:
-			return "< " + "\n< ".join(self.conn.get_single_response().decode("UTF-8").splitlines())
+			return "< " + "\n< ".join(self.conn.get_single_response().splitlines())
 		except socket.error, exception:
 			return exception
 
