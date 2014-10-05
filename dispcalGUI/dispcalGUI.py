@@ -1973,7 +1973,7 @@ class MainFrame(BaseFrame):
 			installed = self.worker.get_argyll_instrument_conf("installed")
 			self.menuitem_install_argyll_instrument_conf.Enable(
 				bool(not installed and
-					 self.worker.get_argyll_instrument_conf("installed")))
+					 self.worker.get_argyll_instrument_conf()))
 			self.menuitem_uninstall_argyll_instrument_conf.Enable(
 				bool(installed))
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
