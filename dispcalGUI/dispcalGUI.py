@@ -4864,15 +4864,21 @@ class MainFrame(BaseFrame):
 			return
 		self.worker.start(self.install_argyll_instrument_conf_consumer,
 						  self.worker.install_argyll_instrument_conf,
+						  ckwargs={"uninstall": uninstall},
 						  wkwargs={"uninstall": uninstall})
 
-	def install_argyll_instrument_conf_consumer(self, result):
+	def install_argyll_instrument_conf_consumer(self, result, uninstall=False):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result is False:
 			show_result_dialog(Error("".join(self.worker.errors)), self)
 		else:
 			self.update_menus()
+			if uninstall:
+				msgid = "argyll.instrument.configuration_files.uninstall.success"
+			else:
+				msgid = "argyll.instrument.configuration_files.install.success"
+			show_result_dialog(Info(lang.getstr(msgid)))
 	
 	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
 		if uninstall:
