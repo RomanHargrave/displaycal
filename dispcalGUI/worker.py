@@ -89,7 +89,7 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 from util_str import safe_basestring, safe_str, safe_unicode, universal_newlines
-from wxaddons import wx
+from wxaddons import BetterWindowDisabler, wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
@@ -1531,10 +1531,6 @@ class Worker(object):
 		if sys.platform == "win32" or os.geteuid() == 0:
 			return
 		self.auth_timestamp = 0
-		if not self.sudo:
-			self.sudo = Sudo()
-			if not self.sudo:
-				return Error(lang.getstr("file.missing", "sudo"))
 		ocmd = cmd
 		if cmd and not os.path.isabs(cmd):
 			cmd = get_argyll_util(ocmd)
@@ -1542,30 +1538,39 @@ class Worker(object):
 				cmd = which(ocmd)
 		if not cmd or not os.path.isfile(cmd):
 			return Error(lang.getstr("file.missing", ocmd))
-		pwd = self.pwd
-		args = [cmd, "-?"]
-		if not pwd or not self.sudo.is_allowed(args, pwd):
-			# If no password was previously available, or if the requested
-			# command cannot be run via sudo regardless of password (we check
-			# this with sudo -l <command>), we ask for a password.
-			safe_print(lang.getstr("auth"))
-			progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
-														 "progress_dlg", None)
-			if parent is None:
-				if progress_dlg and progress_dlg.IsShownOnScreen():
-					parent = progress_dlg
+		_disabler = BetterWindowDisabler()
+		result = True
+		if not self.sudo:
+			self.sudo = Sudo()
+			if not self.sudo:
+				result = Error(lang.getstr("file.missing", "sudo"))
+		if result is True:
+			pwd = self.pwd
+			args = [cmd, "-?"]
+			if not pwd or not self.sudo.is_allowed(args, pwd):
+				# If no password was previously available, or if the requested
+				# command cannot be run via sudo regardless of password (we check
+				# this with sudo -l <command>), we ask for a password.
+				safe_print(lang.getstr("auth"))
+				progress_dlg = self._progress_wnd or getattr(wx.GetApp(),
+															 "progress_dlg", None)
+				if parent is None:
+					if progress_dlg and progress_dlg.IsShownOnScreen():
+						parent = progress_dlg
+					else:
+						parent = self.owner
+				result, pwd = self.sudo.authenticate(args, title, parent)
+				if result:
+					self.pwd = pwd
+					result = True
+				elif result is False:
+					safe_print(lang.getstr("aborted"))
 				else:
-					parent = self.owner
-			result, pwd = self.sudo.authenticate(args, title, parent)
-			if result:
-				self.pwd = pwd
-			elif result is False:
-				safe_print(lang.getstr("aborted"))
-				return False
-			else:
-				return Error(result)
-		self.auth_timestamp = time()
-		return True
+					result = Error(result)
+			if result is True:
+				self.auth_timestamp = time()
+		del _disabler
+		return result
 
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None):
