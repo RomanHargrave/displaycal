@@ -4853,7 +4853,20 @@ class MainFrame(BaseFrame):
 			dlg.ShowModalThenDestroy(parent)
 
 	def install_argyll_instrument_conf(self, event=None, uninstall=False):
-		result = self.worker.install_argyll_instrument_conf(uninstall=uninstall)
+		if uninstall:
+			cmd = "rm"
+		else:
+			cmd = "cp"
+		result = self.worker.authenticate(which(cmd))
+		if result not in (True, None):
+			if isinstance(result, Exception):
+				show_result_dialog(result, self)
+			return
+		self.worker.start(self.install_argyll_instrument_conf_consumer,
+						  self.worker.install_argyll_instrument_conf,
+						  wkwargs={"uninstall": uninstall})
+
+	def install_argyll_instrument_conf_consumer(self, result):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result is False:
