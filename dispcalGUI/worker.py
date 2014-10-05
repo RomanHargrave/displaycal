@@ -4,6 +4,7 @@
 from __future__ import with_statement
 from binascii import hexlify
 import getpass
+import glob
 import math
 import os
 import re
@@ -1668,6 +1669,38 @@ class Worker(object):
 										  pwd.encode("UTF-8").encode("base64").rstrip("=\n"))
 		
 		return locals()
+
+	def get_argyll_instrument_conf(self, what=None):
+		""" Check for Argyll CMS udev rules/hotplug scripts """
+		filenames = []
+		if what == "installed":
+			for filename in ("/etc/udev/rules.d/55-Argyll.rules",
+							 "/etc/udev/rules.d/45-Argyll.rules",
+							 "/etc/hotplug/Argyll",
+							 "/etc/hotplug/Argyll.usermap"):
+				if os.path.isfile(filename):
+					filenames.append(filename)
+		else:
+			if what == "expected":
+				fn = lambda filename: filename
+			else:
+				fn = get_data_path
+			if os.path.isdir("/etc/udev/rules.d"):
+				if glob.glob("/dev/bus/usb/*/*"):
+					# USB and serial instruments using udev, where udev 
+					# already creates /dev/bus/usb/00X/00X devices
+					filenames.append(fn("usb/55-Argyll.rules"))
+				else:
+					# USB using udev, where there are NOT /dev/bus/usb/00X/00X 
+					# devices
+					filenames.append(fn("usb/45-Argyll.rules"))
+			else:
+				if os.path.isdir("/etc/hotplug"):
+					# USB using hotplug and Serial using udev
+					# (older versions of Linux)
+					filenames.extend(fn(filename) for filename in
+									 ("usb/Argyll", "usb/Argyll.usermap"))
+		return filter(lambda filename: filename, filenames)
 	
 	def check_display_conf_oy_compat(self, display_no):
 		""" Check the screen configuration for oyranos-monitor compatibility 
@@ -2642,6 +2675,9 @@ class Worker(object):
 				 sessionlogfile=None):
 		"""
 		Execute a command.
+		
+		Return value is either True (succeed), False (failed), None (canceled)
+		or an exception.
 		
 		cmd is the full path of the command.
 		args are the arguments, if any.
@@ -4270,6 +4306,40 @@ usage: spotread [-options] [logfile]
 		if not result:
 			# This should never happen
 			result = Error(lang.getstr("profile.install.error"))
+		return result
+
+	def install_argyll_instrument_conf(self, uninstall=False):
+		""" (Un-)install Argyll CMS instrument configuration under Linux """
+		udevrules = "/etc/udev/rules.d"
+		hotplug = "/etc/hotplug"
+		if not os.path.isdir(udevrules) and not os.path.isdir(hotplug):
+			return Error(lang.getstr("udev_hotplug.unavailable"))
+		filenames = self.get_argyll_instrument_conf()
+		if not filenames:
+			return Error("\n".join(lang.getstr("file.missing", filename)
+								   for filename in
+								   self.get_argyll_instrument_conf("expected")))
+		for filename in filenames:
+			if uninstall:
+				cmd, args = "rm", ["-f"]
+			else:
+				cmd, args = "cp", ["-f", filename]
+			if filename.endswith(".rules"):
+				dst = udevrules
+			else:
+				dst = hotplug
+			args.append(os.path.join(dst, os.path.basename(filename)))
+			result = self.exec_cmd(cmd, args, capture_output=True,
+								   skip_scripts=True, asroot=True)
+			if result is not True:
+				break
+		if result is True and dst == udevrules:
+			# Reload udev rules
+			udevadm = which("udevadm", ["/sbin"])
+			if udevadm:
+				result = self.exec_cmd(udevadm, ["control", "--reload-rules"],
+									   capture_output=True,
+									   skip_scripts=True, asroot=True)
 		return result
 	
 	def install_argyll_instrument_drivers(self, uninstall=False,

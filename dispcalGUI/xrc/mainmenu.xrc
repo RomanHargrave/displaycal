@@ -138,6 +138,12 @@
         <label>3dlut.create</label>
       </object>
       <object class="separator"/>
+      <object class="wxMenuItem" name="argyll.instrument.configuration_files.install">
+        <label>argyll.instrument.configuration_files.install</label>
+      </object>
+      <object class="wxMenuItem" name="argyll.instrument.configuration_files.uninstall">
+        <label>argyll.instrument.configuration_files.uninstall</label>
+      </object>
       <object class="wxMenuItem" name="install_argyll_instrument_drivers">
         <label>argyll.instrument.drivers.install</label>
       </object>

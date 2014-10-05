@@ -1815,18 +1815,31 @@ class MainFrame(BaseFrame):
 			tools.FindItem("3dlut.create"))
 		self.Bind(wx.EVT_MENU, self.lut3d_create_handler, 
 				  self.menuitem_lut3d_create)
+		self.menuitem_install_argyll_instrument_conf = tools.FindItemById(
+			tools.FindItem("argyll.instrument.configuration_files.install"))
+		self.menuitem_uninstall_argyll_instrument_conf = tools.FindItemById(
+			tools.FindItem("argyll.instrument.configuration_files.uninstall"))
+		if sys.platform in ("darwin", "win32") and not test:
+			tools.RemoveItem(self.menuitem_install_argyll_instrument_conf)
+			tools.RemoveItem(self.menuitem_uninstall_argyll_instrument_conf)
+		else:
+			# Linux may need instrument access being setup
+			self.Bind(wx.EVT_MENU, self.install_argyll_instrument_conf, 
+					  self.menuitem_install_argyll_instrument_conf)
+			self.Bind(wx.EVT_MENU, self.uninstall_argyll_instrument_conf, 
+					  self.menuitem_uninstall_argyll_instrument_conf)
 		self.menuitem_install_argyll_instrument_drivers = tools.FindItemById(
 			tools.FindItem("argyll.instrument.drivers.install"))
 		self.menuitem_uninstall_argyll_instrument_drivers = tools.FindItemById(
 			tools.FindItem("argyll.instrument.drivers.uninstall"))
-		if sys.platform == "win32":
+		if sys.platform == "win32" or test:
 			# Windows may need an Argyll CMS instrument driver
 			self.Bind(wx.EVT_MENU, self.install_argyll_instrument_drivers, 
 					  self.menuitem_install_argyll_instrument_drivers)
 		else:
 			# Other OS do not need an Argyll CMS instrument driver
 			tools.RemoveItem(self.menuitem_install_argyll_instrument_drivers)
-		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, )) or test:
 			# Windows Vista and newer can uninstall Argyll CMS instrument driver
 			self.Bind(wx.EVT_MENU, self.uninstall_argyll_instrument_drivers, 
 					  self.menuitem_uninstall_argyll_instrument_drivers)
@@ -1954,8 +1967,13 @@ class MainFrame(BaseFrame):
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
-		if sys.platform == "win32":
+		if sys.platform == "win32" or test:
 			self.menuitem_install_argyll_instrument_drivers.Enable(bool(get_data_path("usb/ArgyllCMS.inf")))
+		if sys.platform not in ("darwin", "win32") or test:
+			self.menuitem_install_argyll_instrument_conf.Enable(
+				bool(self.worker.get_argyll_instrument_conf()))
+			self.menuitem_uninstall_argyll_instrument_conf.Enable(
+				bool(self.worker.get_argyll_instrument_conf("installed")))
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   spyder2_firmware_exists)
@@ -4831,6 +4849,13 @@ class MainFrame(BaseFrame):
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy(parent)
+
+	def install_argyll_instrument_conf(self, event=None, uninstall=False):
+		result = self.worker.install_argyll_instrument_conf(uninstall=uninstall)
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		elif result is False:
+			show_result_dialog(Error("".join(self.worker.errors)), self)
 	
 	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
 		if uninstall:
@@ -4889,6 +4914,9 @@ class MainFrame(BaseFrame):
 										 else 0,
 						  self.worker.install_argyll_instrument_drivers,
 						  wargs=(uninstall, launch_devman))
+
+	def uninstall_argyll_instrument_conf(self, event=None):
+		self.install_argyll_instrument_confs(uninstall=True)
 	
 	def uninstall_argyll_instrument_drivers(self, event=None):
 		self.install_argyll_instrument_drivers(uninstall=True)
