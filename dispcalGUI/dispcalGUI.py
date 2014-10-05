@@ -1971,11 +1971,13 @@ class MainFrame(BaseFrame):
 			self.menuitem_install_argyll_instrument_drivers.Enable(bool(get_data_path("usb/ArgyllCMS.inf")))
 		if sys.platform not in ("darwin", "win32") or test:
 			installed = self.worker.get_argyll_instrument_conf("installed")
+			installable = self.worker.get_argyll_instrument_conf()
+			# Only enable if not yet installed and installable
 			self.menuitem_install_argyll_instrument_conf.Enable(
-				bool(not installed and
-					 self.worker.get_argyll_instrument_conf()))
+				bool(not installed and installable))
+			# Only enable if installed and (re-)installable
 			self.menuitem_uninstall_argyll_instrument_conf.Enable(
-				bool(installed))
+				bool(installed and installable))
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   spyder2_firmware_exists)
@@ -4854,6 +4856,17 @@ class MainFrame(BaseFrame):
 
 	def install_argyll_instrument_conf(self, event=None, uninstall=False):
 		if uninstall:
+			for filename in self.worker.get_argyll_instrument_conf("installed"):
+				if os.path.basename(filename) == "69-cd-sensors.rules":
+					dlg = ConfirmDialog(self,
+										title=lang.getstr("warning.system_file",
+														  filename),
+										msg=lang.getstr(),
+										ok=lang.getstr("continue"),
+										cancel=lang.getstr("cancel"),
+										bitmap=geticon(32, "dialog-warning"))
+					if dlg.ShowModal() != wx.ID_OK:
+						return
 			cmd = "rm"
 		else:
 			cmd = "cp"
