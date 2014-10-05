@@ -209,9 +209,6 @@ class BetterWindowDisabler(object):
 
 	def __init__(self, skip=None):
 		self._windows = []
-		if skip:
-			if not isinstance(skip, (list, tuple)):
-				skip = [skip]
 		self.skip = skip
 		self.id = id(self)
 		self.disable()
@@ -224,7 +221,10 @@ class BetterWindowDisabler(object):
 	
 	def enable(self, enable=True):
 		if not enable:
-			skip = self.skip
+			skip = self.skip or []
+			if skip:
+				if not isinstance(skip, (list, tuple)):
+					skip = [skip]
 			toplevel = list(wx.GetTopLevelWindows())
 			for w in toplevel:
 				if w not in skip and "Inspection" not in "%s" % w:
