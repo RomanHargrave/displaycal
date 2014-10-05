@@ -1738,6 +1738,10 @@ class MainFrame(BaseFrame):
 			options.FindItem("allow_skip_sensor_cal"))
 		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
 				  self.menuitem_allow_skip_sensor_cal)
+		self.menuitem_calibrate_instrument = options.FindItemById(
+			options.FindItem("calibrate_instrument"))
+		self.Bind(wx.EVT_MENU, self.calibrate_instrument_handler, 
+				  self.menuitem_calibrate_instrument)
 		self.menuitem_show_advanced_calibration_options = options.FindItemById(
 			options.FindItem("show_advanced_calibration_options"))
 		self.Bind(wx.EVT_MENU, self.show_advanced_calibration_options_handler, 
@@ -1944,6 +1948,8 @@ class MainFrame(BaseFrame):
 		self.menuitem_do_not_use_video_lut.Enable(self.worker.argyll_version >=
 												  [1, 3, 3] and has_lut_access)
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
+		self.menuitem_calibrate_instrument.Enable(
+			bool(self.worker.get_instrument_features().get("sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
 		spyd2en = get_argyll_util("spyd2en")
@@ -3501,6 +3507,12 @@ class MainFrame(BaseFrame):
 			   int(not do_not_use_video_lut))
 		if not is_patterngenerator:
 			setcfg("calibration.use_video_lut.backup", None)
+
+	def calibrate_instrument_handler(self, event):
+		self.worker.start(lambda result: show_result_dialog(result, self)
+										 if isinstance(result, Exception)
+										 else None,
+						  self.worker.calibrate_instrument_producer)
 
 	def allow_skip_sensor_cal_handler(self, event):
 		setcfg("allow_skip_sensor_cal", 
@@ -8258,6 +8270,8 @@ class MainFrame(BaseFrame):
 									   getevttype(event)))
 		if self.comport_ctrl.GetSelection() > -1:
 			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
+		self.menuitem_calibrate_instrument.Enable(
+			bool(self.worker.get_instrument_features().get("sensor_cal")))
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(force)

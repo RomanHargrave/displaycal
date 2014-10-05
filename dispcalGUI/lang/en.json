@@ -105,6 +105,7 @@
 	"button.profile": "Profile only",
 	"cal_extraction_failed": "Could not extract calibration data from the profile.",
 	"calculated_checksum": "Calculated checksum",
+	"calibrate_instrument": "Spectrometer self-calibration",
 	"calibration": "Calibration",
 	"calibration.ambient_viewcond_adjust": "Ambient light level adjustment",
 	"calibration.ambient_viewcond_adjust.info": "To perform a viewing condition adjustment when computing calibration curves, tick the checkbox and enter your ambient light level. You can also optionally measure ambient light, if supported by your instrument.",

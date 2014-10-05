@@ -1353,6 +1353,7 @@ class Worker(object):
 		self.dispread_after_dispcal = False
 		self.finished = True
 		self.interactive = False
+		self.spotread_just_do_instrument_calibration = False
 		self.lastcmdname = None
 		self.lastmsg_discard = re.compile("[\\*\\.]+|Current RGB .+")
 		self.measurement_modes = {}
@@ -1512,7 +1513,8 @@ class Worker(object):
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		if (getcfg("allow_skip_sensor_cal") and
 			instrument_features.get("skip_sensor_cal") and
-			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args)):
+			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args) and
+			not self.spotread_just_do_instrument_calibration):
 			args.append("-N")
 		return True
 	
@@ -1591,6 +1593,17 @@ class Worker(object):
 			tgamma = gamma
 		self.log(appname + ": Technical gamma = %.2f" % tgamma)
 		profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
+
+	def calibrate_instrument_producer(self):
+		cmd, args = get_argyll_util("spotread"), ["-v"]
+		if cmd:
+			self.spotread_just_do_instrument_calibration = True
+			self.add_measurement_features(args, display=False)
+			result = self.exec_cmd(cmd, args, skip_scripts=True)
+			self.spotread_just_do_instrument_calibration = False
+			return result
+		else:
+			return Error(lang.getstr("argyll.util.not_found", "spotread"))
 	
 	def instrument_can_use_ccxx(self):
 		"""
@@ -1787,7 +1800,9 @@ class Worker(object):
 		""" Check if spotread returned a result """
 		if (self.cmdname == "spotread" and
 			self.progress_wnd is not getattr(self, "terminal", None) and
-			("Result is XYZ:" in txt or "Result is Y:" in txt)):
+			("Result is XYZ:" in txt or "Result is Y:" in txt or
+			 (self.instrument_calibration_complete and
+			  self.spotread_just_do_instrument_calibration))):
 			# Single spotread reading, we are done
 			wx.CallLater(1000, self.quit_terminate_cmd)
 	
@@ -3263,6 +3278,7 @@ class Worker(object):
 			if use_pty and verbose >= 1 and not silent:
 				safe_print(lang.getstr("aborted"))
 			if use_pty and len(self.output):
+				errmsg = None
 				for i, line in enumerate(self.output):
 					if "Calibrate failed with 'User hit Abort Key' (No device error)" in line:
 						break
@@ -3293,7 +3309,8 @@ class Worker(object):
 						startpos = errmsg.find(": Error")
 						if startpos > -1:
 							errmsg = errmsg[startpos + 2:]
-						return UnloggedError(errmsg.strip())
+				if errmsg:
+					return UnloggedError(errmsg.strip())
 			return False
 		return True
 	
