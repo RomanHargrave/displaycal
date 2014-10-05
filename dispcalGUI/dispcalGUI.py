@@ -4859,9 +4859,9 @@ class MainFrame(BaseFrame):
 			for filename in self.worker.get_argyll_instrument_conf("installed"):
 				if os.path.basename(filename) == "69-cd-sensors.rules":
 					dlg = ConfirmDialog(self,
-										title=lang.getstr("warning.system_file",
-														  filename),
-										msg=lang.getstr(),
+										title=lang.getstr("argyll.instrument.configuration_files.uninstall"),
+										msg=lang.getstr("warning.system_file",
+														filename),
 										ok=lang.getstr("continue"),
 										cancel=lang.getstr("cancel"),
 										bitmap=geticon(32, "dialog-warning"))
