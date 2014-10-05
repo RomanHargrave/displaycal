@@ -135,6 +135,12 @@ if u"phoenix" in wx.PlatformInfo:
 		# This may be a bug in the current development version of Phoenix
 		wx.grid.GridEvent.CmdDown = lambda self: False
 
+	# Not sure if this is a bug, but the PositionToXY signature differs from
+	# current Phoenix docs. Actual return value is a 3-tuple, not a 2-tuple:
+	# (bool inrange, int col, int line)
+	PositionToXY = wx.TextCtrl.PositionToXY
+	wx.TextCtrl.PositionToXY = lambda self, pos: PositionToXY(self, pos)[1:]
+
 	def TabFrame__init__(self, parent):
 		pre = wx.Window.__init__(self)
 
