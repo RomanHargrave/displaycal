@@ -4920,7 +4920,7 @@ class MainFrame(BaseFrame):
 						  wargs=(uninstall, launch_devman))
 
 	def uninstall_argyll_instrument_conf(self, event=None):
-		self.install_argyll_instrument_confs(uninstall=True)
+		self.install_argyll_instrument_conf(uninstall=True)
 	
 	def uninstall_argyll_instrument_drivers(self, event=None):
 		self.install_argyll_instrument_drivers(uninstall=True)
