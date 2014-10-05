@@ -124,6 +124,7 @@ class ScriptingClientFrame(SimpleTerminal):
 		self.Unbind(wx.EVT_CHAR_HOOK)
 		self.console.Unbind(wx.EVT_KEY_DOWN, self.console)
 		self.console.Bind(wx.EVT_KEY_DOWN, self.key_handler)
+		self.console.Bind(wx.EVT_TEXT_COPY, self.copy_text_handler)
 		self.console.Bind(wx.EVT_TEXT_PASTE, self.paste_text_handler)
 		if sys.platform == "darwin":
 			# Under Mac OS X, pasting text via the context menu isn't catched
@@ -254,6 +255,19 @@ class ScriptingClientFrame(SimpleTerminal):
 			return exception
 		return lang.getstr("connection.established")
 
+	def copy_text_handler(self, event):
+		# Override native copy to clipboard because reading the text back
+		# from wx.TheClipboard results in wrongly encoded characters under
+		# Mac OS X
+		# TODO: The correct way to fix this would actually be in the pasting
+		# code because pasting text that was copied from other sources still
+		# has the problem with this workaround
+		clipdata = wx.TextDataObject()
+		clipdata.SetText(self.console.GetStringSelection())
+		wx.TheClipboard.Open()
+		wx.TheClipboard.SetData(clipdata)
+		wx.TheClipboard.Close()
+
 	def disconnect(self):
 		if self.conn:
 			try:
@@ -344,7 +358,13 @@ class ScriptingClientFrame(SimpleTerminal):
 		return scripting_hosts
 
 	def key_handler(self, event):
-		##safe_print(event.KeyCode)
+		##safe_print("KeyCode", event.KeyCode, "UnicodeKey", event.UnicodeKey,
+				   ##"CmdDown:", event.CmdDown(),
+				   ##"ControlDown:", event.ControlDown(),
+				   ##"MetaDown:", event.MetaDown(),
+				   ##"ShiftDown:", event.ShiftDown(),
+				   ##"console.CanUndo:", self.console.CanUndo(),
+				   ##"console.CanRedo:", self.console.CanRedo())
 		insertionpoint = self.console.GetInsertionPoint()
 		lastline, lastpos, startcol, endcol = self.get_last_line()
 		##safe_print(insertionpoint, lastline, lastpos, startcol, endcol)
@@ -354,23 +374,25 @@ class ScriptingClientFrame(SimpleTerminal):
 			self.console.SelectAll()
 		elif cmd_or_ctrl and event.KeyCode in (67, 88):
 			# C
-			# Override native copy to clipboard because reading the text back
-			# from wx.TheClipboard results in wrongly encoded characters under
-			# Mac OS X
-			# TODO: The correct way to fix this would actually be in the pasting
-			# code because pasting text that was copied from other sources still
-			# has the problem with this workaround
-			clipdata = wx.TextDataObject()
-			clipdata.SetText(self.console.GetStringSelection())
-			wx.TheClipboard.Open()
-			wx.TheClipboard.SetData(clipdata)
-			wx.TheClipboard.Close()
+			self.copy_text_handler(None)
 		elif insertionpoint >= lastpos - len(lastline):
 			if cmd_or_ctrl:
 				if startcol > 1 and event.KeyCode == 86:
 					# V
 					self.paste_text_handler(None)
-				elif event.UnicodeKey:
+				elif event.KeyCode in (89, 90):
+					# Y / Z
+					if (event.KeyCode == 89 or (sys.platform != "win32" and
+												event.ShiftDown())):
+						if self.console.CanRedo():
+							self.console.Redo()
+						else:
+							wx.Bell()
+					elif self.console.CanUndo() and lastline[2:]:
+						self.console.Undo()
+					else:
+						wx.Bell()
+				elif event.KeyCode != wx.WXK_SHIFT and event.UnicodeKey:
 					wx.Bell()
 			elif event.KeyCode in (10, 13, wx.WXK_NUMPAD_ENTER):
 				# Enter, return key
@@ -379,7 +401,12 @@ class ScriptingClientFrame(SimpleTerminal):
 				# Backspace
 				if startcol > 1 and endcol > 2:
 					if endcol > startcol:
-						self.console.WriteText("")
+						# TextCtrl.WriteText would be optimal, but it doesn't
+						# do anything under wxGTK with wxPython 2.8.12
+						self.add_text("\r" + lastline[:startcol] +
+									  lastline[endcol:])
+						self.console.SetInsertionPoint(lastpos - len(lastline) +
+													   startcol)
 					else:
 						event.Skip()
 				else:
@@ -388,7 +415,12 @@ class ScriptingClientFrame(SimpleTerminal):
 				if startcol > 1 and (endcol < len(lastline) or
 									 startcol < endcol):
 					if endcol > startcol:
-						self.console.WriteText("")
+						# TextCtrl.WriteText would be optimal, but it doesn't
+						# do anything under wxGTK with wxPython 2.8.12
+						self.add_text("\r" + lastline[:startcol] +
+									  lastline[endcol:])
+						self.console.SetInsertionPoint(lastpos - len(lastline) +
+													   startcol)
 					else:
 						event.Skip()
 				else:
