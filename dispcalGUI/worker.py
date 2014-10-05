@@ -1525,7 +1525,7 @@ class Worker(object):
 		
 		The return value will either be True (authentication successful and
 		command allowed), False (in case of the user cancelling the password
-		dialog) or an error.
+		dialog), None (Windows or running as root) or an error.
 		
 		"""
 		if sys.platform == "win32" or os.geteuid() == 0:
@@ -1536,7 +1536,7 @@ class Worker(object):
 			if not self.sudo:
 				return Error(lang.getstr("file.missing", "sudo"))
 		ocmd = cmd
-		if not os.path.isabs(cmd):
+		if cmd and not os.path.isabs(cmd):
 			cmd = get_argyll_util(ocmd)
 			if not cmd:
 				cmd = which(ocmd)
