@@ -1970,10 +1970,12 @@ class MainFrame(BaseFrame):
 		if sys.platform == "win32" or test:
 			self.menuitem_install_argyll_instrument_drivers.Enable(bool(get_data_path("usb/ArgyllCMS.inf")))
 		if sys.platform not in ("darwin", "win32") or test:
+			installed = self.worker.get_argyll_instrument_conf("installed")
 			self.menuitem_install_argyll_instrument_conf.Enable(
-				bool(self.worker.get_argyll_instrument_conf()))
+				bool(not installed and
+					 self.worker.get_argyll_instrument_conf("installed")))
 			self.menuitem_uninstall_argyll_instrument_conf.Enable(
-				bool(self.worker.get_argyll_instrument_conf("installed")))
+				bool(installed))
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   spyder2_firmware_exists)
@@ -4856,6 +4858,8 @@ class MainFrame(BaseFrame):
 			show_result_dialog(result, self)
 		elif result is False:
 			show_result_dialog(Error("".join(self.worker.errors)), self)
+		else:
+			self.update_menus()
 	
 	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
 		if uninstall:
