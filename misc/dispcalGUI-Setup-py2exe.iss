@@ -60,6 +60,7 @@ Name: "{group}\3DLUT Maker"; Filename: {app}\dispcalGUI-3DLUT-maker.exe; IconFil
 Name: "{group}\Curve Viewer"; Filename: {app}\dispcalGUI-curve-viewer.exe; IconFilename: {app}\dispcalGUI-curve-viewer.exe; 
 Name: "{group}\Profile Info"; Filename: {app}\dispcalGUI-profile-info.exe; IconFilename: {app}\dispcalGUI-profile-info.exe; 
 Name: "{group}\Synthetic Profile Creator"; Filename: {app}\dispcalGUI-synthprofile.exe; IconFilename: {app}\dispcalGUI-synthprofile.exe; 
+Name: "{group}\Scripting Client"; Filename: {app}\dispcalGUI-scripting-client.exe; IconFilename: {app}\dispcalGUI-scripting-client.exe; 
 Name: "{group}\Testchart Editor"; Filename: {app}\dispcalGUI-testchart-editor.exe; IconFilename: {app}\dispcalGUI-testchart-editor.exe; 
 Name: "{group}\VRML to X3D converter"; Filename: {app}\dispcalGUI-VRML-to-X3D-converter.exe; IconFilename: {app}\dispcalGUI-VRML-to-X3D-converter.exe; 
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
