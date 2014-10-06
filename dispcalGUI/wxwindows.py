@@ -110,7 +110,12 @@ class AboutDialog(wx.Dialog):
 				if item.GetLabel() and font.GetPointSize() > pointsize:
 					font.SetPointSize(pointsize)
 					item.SetFont(font)
-			self.sizer.Add(item, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 0)
+			flag = wx.ALIGN_CENTER_HORIZONTAL
+			if isinstance(item, (wx.Panel, wx.PyPanel)):
+				flag |= wx.EXPAND
+			else:
+				flag |= wx.LEFT | wx.RIGHT
+			self.sizer.Add(item, 0, flag, 12)
 		self.ok.SetDefault()
 		self.ok.SetFocus()
 
