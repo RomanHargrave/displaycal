@@ -4335,14 +4335,14 @@ usage: spotread [-options] [logfile]
 				dst = hotplug
 			if uninstall:
 				# Move file to backup location
-				backupdir = "".join(os.path.join(config.datahome, "backup"),
-									os.path.dirname(filename))
+				backupdir = "".join([os.path.join(config.datahome, "backup"),
+									 os.path.dirname(filename)])
 				if not os.path.isdir(backupdir):
 					os.makedirs(backupdir)
 				cmd, args = "mv", ["-f", filename,
-								   "".join(os.path.join(config.datahome,
+								   "".join([os.path.join(config.datahome,
 														"backup"),
-										   filename)]
+										    filename])]
 			else:
 				cmd, args = "cp", ["-f", filename]
 				args.append(os.path.join(dst, os.path.basename(filename)))
