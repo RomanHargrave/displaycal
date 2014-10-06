@@ -1683,12 +1683,8 @@ class Worker(object):
 							 "/etc/udev/rules.d/45-Argyll.rules",
 							 "/etc/hotplug/Argyll",
 							 "/etc/hotplug/Argyll.usermap",
-							 # Ubuntu
 							 "/lib/udev/rules.d/55-Argyll.rules",
-							 "/lib/udev/rules.d/69-cd-sensors.rules",
-							 # Fedora
-							 "/usr/lib/udev/rules.d/55-Argyll.rules",
-							 "/usr/lib/udev/rules.d/69-cd-sensors.rules"):
+							 "/lib/udev/rules.d/69-cd-sensors.rules"):
 				if os.path.isfile(filename):
 					filenames.append(filename)
 		else:
@@ -4338,7 +4334,15 @@ usage: spotread [-options] [logfile]
 			else:
 				dst = hotplug
 			if uninstall:
-				cmd, args = "rm", ["-f", filename]
+				# Move file to backup location
+				backupdir = "".join(os.path.join(config.datahome, "backup"),
+									os.path.dirname(filename))
+				if not os.path.isdir(backupdir):
+					os.makedirs(backupdir)
+				cmd, args = "mv", ["-f", filename,
+								   "".join(os.path.join(config.datahome,
+														"backup"),
+										   filename)]
 			else:
 				cmd, args = "cp", ["-f", filename]
 				args.append(os.path.join(dst, os.path.basename(filename)))
