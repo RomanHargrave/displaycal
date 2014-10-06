@@ -581,7 +581,7 @@ class ScriptingClientFrame(SimpleTerminal):
 											 additional_commands),
 									  wargs=(command, ))
 		self.history.insert(len(self.history) - 1, command)
-		if len(self.history) > 8192:
+		if len(self.history) > 1000:
 			del self.history[0]
 		self.historypos = len(self.history) - 1
 
