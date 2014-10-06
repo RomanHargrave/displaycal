@@ -340,6 +340,7 @@ class PathDialogBase(wx.Dialog):
 		wx.Dialog.__init__(self, None, -1, name=name)
 		self._ismodal = False
 		self._isshown = False
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def __getattr__(self, name):
 		return getattr(self.filedialog, name)
@@ -349,6 +350,10 @@ class PathDialogBase(wx.Dialog):
 
 	def IsShown(self):
 		return self._isshown
+
+	def OnDestroy(self, event):
+		self.filedialog.Destroy()
+		event.Skip()
 
 	def Show(self, show=True):
 		self._isshown = show

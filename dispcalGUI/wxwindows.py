@@ -31,8 +31,8 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
 from wexpect import split_command_line
-from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
-					 set_bitmap_labels)
+from wxfixes import (_DirDialog, _FileDialog, GenBitmapButton, GenButton,
+					 GTKMenuItemGetFixedLabel, set_bitmap_labels)
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -1193,7 +1193,10 @@ class BaseFrame(wx.Frame):
 						self.update_layout()
 						self.panel.Thaw()
 						response = "ok"
-		if data[0].startswith("get") or data[0] == "setcfg" or response != "ok":
+		if (data[0].startswith("get") or data[0] in ("refresh",
+													 "restore-defaults",
+													 "setcfg") or
+			response != "ok"):
 			# No interaction with UI
 			relayfunc = lambda func, *args: func(*args)
 		else:
@@ -1977,7 +1980,12 @@ class PathDialog(ConfirmDialog):
 		ConfirmDialog.__init__(self, parent, msg=msg,
 							   ok=lang.getstr("browse"),
 							   cancel=lang.getstr("cancel"), name=name)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 		self.ok.Bind(wx.EVT_BUTTON, self.filedialog_handler)
+
+	def OnDestroy(self, event):
+		self.filedialog.Destroy()
+		event.Skip()
 
 	def __getattr__(self, name):
 		return getattr(self.filedialog, name)
@@ -1985,8 +1993,6 @@ class PathDialog(ConfirmDialog):
 	def filedialog_handler(self, event):
 		self.EndModal(self.filedialog.ShowModal())
 
-
-_DirDialog = wx.DirDialog
 
 class DirDialog(PathDialog):
 
@@ -1997,8 +2003,6 @@ class DirDialog(PathDialog):
 		PathDialog.__init__(self, args[0], args[1], "dirdialog")
 		self.filedialog = _DirDialog(*args, **kwargs)
 
-
-_FileDialog = wx.FileDialog
 
 class FileDialog(PathDialog):
 
