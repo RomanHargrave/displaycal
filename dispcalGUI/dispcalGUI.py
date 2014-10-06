@@ -4927,7 +4927,7 @@ class MainFrame(BaseFrame):
 				msgid = "argyll.instrument.configuration_files.uninstall.success"
 			else:
 				msgid = "argyll.instrument.configuration_files.install.success"
-			show_result_dialog(Info(lang.getstr(msgid)))
+			show_result_dialog(Info(lang.getstr(msgid)), self)
 	
 	def install_argyll_instrument_drivers(self, event=None, uninstall=False):
 		if uninstall:
