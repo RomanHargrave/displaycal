@@ -4319,13 +4319,15 @@ usage: spotread [-options] [logfile]
 			result = Error(lang.getstr("profile.install.error"))
 		return result
 
-	def install_argyll_instrument_conf(self, uninstall=False):
+	def install_argyll_instrument_conf(self, uninstall=False, filenames=None):
 		""" (Un-)install Argyll CMS instrument configuration under Linux """
 		udevrules = "/etc/udev/rules.d"
 		hotplug = "/etc/hotplug"
 		if not os.path.isdir(udevrules) and not os.path.isdir(hotplug):
 			return Error(lang.getstr("udev_hotplug.unavailable"))
-		filenames = self.get_argyll_instrument_conf()
+		if not filenames:
+			filenames = self.get_argyll_instrument_conf("installed" if uninstall
+														else None)
 		if not filenames:
 			return Error("\n".join(lang.getstr("file.missing", filename)
 								   for filename in

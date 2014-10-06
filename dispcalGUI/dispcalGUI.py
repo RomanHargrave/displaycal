@@ -4856,19 +4856,54 @@ class MainFrame(BaseFrame):
 
 	def install_argyll_instrument_conf(self, event=None, uninstall=False):
 		if uninstall:
-			for filename in self.worker.get_argyll_instrument_conf("installed"):
-				if os.path.basename(filename) == "69-cd-sensors.rules":
-					dlg = ConfirmDialog(self,
-										title=lang.getstr("argyll.instrument.configuration_files.uninstall"),
-										msg=lang.getstr("warning.system_file",
-														filename),
-										ok=lang.getstr("continue"),
-										cancel=lang.getstr("cancel"),
-										bitmap=geticon(32, "dialog-warning"))
-					if dlg.ShowModal() != wx.ID_OK:
-						return
+			filenames = self.worker.get_argyll_instrument_conf("installed")
+			if filenames:
+				dlgs = []
+				dlg = ConfirmDialog(self,
+									title=lang.getstr("argyll.instrument.configuration_files.uninstall"),
+									msg=lang.getstr("dialog.confirm_delete"), 
+									ok=lang.getstr("delete"),
+									cancel=lang.getstr("cancel"), 
+									bitmap=geticon(32, "dialog-warning"))
+				dlgs.append(dlg)
+				dlg.sizer3.Add((0, 8))
+				chks = []
+				for filename in filenames:
+					dlg.sizer3.Add((0, 4))
+					chk = wx.CheckBox(dlg, -1, filename)
+					chks.append(chk)
+					chk.SetValue(os.path.basename(filename) !=
+								 "69-cd-sensors.rules")
+					dlg.sizer3.Add(chk, flag=wx.ALIGN_LEFT)
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+				dlg.Center()
+				result = dlg.ShowModal()
+				filenames = []
+				if result == wx.ID_OK:
+					for chk in chks:
+						if chk.GetValue():
+							filenames.append(chk.Label)
+				for filename in filenames:
+					if os.path.basename(filename) == "69-cd-sensors.rules":
+						dlg = ConfirmDialog(self,
+											title=lang.getstr("argyll.instrument.configuration_files.uninstall"),
+											msg=lang.getstr("warning.system_file",
+															filename),
+											ok=lang.getstr("continue"),
+											cancel=lang.getstr("cancel"),
+											bitmap=geticon(32, "dialog-warning"))
+						dlgs.append(dlg)
+						result = dlg.ShowModal()
+						if result != wx.ID_OK:
+							break
+				for dlg in dlgs:
+					dlg.Destroy()
+				if result != wx.ID_OK:
+					return
 			cmd = "rm"
 		else:
+			filenames = None
 			cmd = "cp"
 		result = self.worker.authenticate(which(cmd))
 		if result not in (True, None):
@@ -4878,7 +4913,8 @@ class MainFrame(BaseFrame):
 		self.worker.start(self.install_argyll_instrument_conf_consumer,
 						  self.worker.install_argyll_instrument_conf,
 						  ckwargs={"uninstall": uninstall},
-						  wkwargs={"uninstall": uninstall})
+						  wkwargs={"uninstall": uninstall,
+								   "filenames": filenames})
 
 	def install_argyll_instrument_conf_consumer(self, result, uninstall=False):
 		if isinstance(result, Exception):
