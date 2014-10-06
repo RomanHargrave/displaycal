@@ -4899,8 +4899,8 @@ class MainFrame(BaseFrame):
 							break
 				for dlg in dlgs:
 					dlg.Destroy()
-				if result != wx.ID_OK:
-					return
+			if not filenames or result != wx.ID_OK:
+				return
 			cmd = "rm"
 		else:
 			filenames = None
