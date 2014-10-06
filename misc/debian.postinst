@@ -6,7 +6,7 @@ set -e
 if [ -e "/etc/udev/rules.d" ]; then
 	ls /dev/bus/usb/*/* > /dev/null 2>&1 && (
 		# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-		if [ ! -e "/etc/udev/rules.d/55-Argyll.rules" ]; then
+		if [ ! -e "/etc/udev/rules.d/55-Argyll.rules" ] && [ ! -e "/usr/lib/udev/rules.d/55-Argyll.rules" ] && [ ! -e "/usr/lib/udev/rules.d/69-cd-sensors.rules" ]; then
 			ln -s "/usr/share/dispcalGUI/usb/55-Argyll.rules" "/etc/udev/rules.d/55-Argyll.rules"
 		fi
 	) || (
