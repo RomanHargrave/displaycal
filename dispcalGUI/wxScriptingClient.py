@@ -355,6 +355,7 @@ class ScriptingClientFrame(SimpleTerminal):
 						for port in ports:
 							scripting_hosts.append("127.0.0.1:%s %s" %
 												   (port, lockfilebasename))
+		scripting_hosts.sort()
 		return scripting_hosts
 
 	def key_handler(self, event):
