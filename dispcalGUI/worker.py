@@ -4333,15 +4333,15 @@ usage: spotread [-options] [logfile]
 								   for filename in
 								   self.get_argyll_instrument_conf("expected")))
 		for filename in filenames:
-			if uninstall:
-				cmd, args = "rm", ["-f"]
-			else:
-				cmd, args = "cp", ["-f", filename]
 			if filename.endswith(".rules"):
 				dst = udevrules
 			else:
 				dst = hotplug
-			args.append(os.path.join(dst, os.path.basename(filename)))
+			if uninstall:
+				cmd, args = "rm", ["-f", filename]
+			else:
+				cmd, args = "cp", ["-f", filename]
+				args.append(os.path.join(dst, os.path.basename(filename)))
 			result = self.exec_cmd(cmd, args, capture_output=True,
 								   skip_scripts=True, asroot=True)
 			if result is not True:
