@@ -9269,7 +9269,7 @@ class MainFrame(BaseFrame):
 	def profile_name_info_btn_handler(self, event):
 		if not hasattr(self, "profile_name_tooltip_window"):
 			self.profile_name_tooltip_window = TooltipWindow(
-				self, msg=self.profile_name_info(), 
+				self, msg=self.profile_name_info(), cols=2, 
 				title=lang.getstr("profile.name"), 
 				bitmap=geticon(32, "dialog-information"))
 		else:
@@ -9303,7 +9303,7 @@ class MainFrame(BaseFrame):
 					 "%pq	" + lang.getstr("profile.quality"),
 					 "%pt	" + lang.getstr("profile.type"),
 					 "%tpa	" + lang.getstr("testchart.info")])
-		return lang.getstr("profile.name.placeholders") + "\n\n" + \
+		return lang.getstr("profile.name.placeholders") + "\n" + \
 			   "\n".join(info)
 	
 	def profile_hires_b2a_handler(self, event):

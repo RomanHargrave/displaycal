@@ -3911,7 +3911,7 @@ class TooltipWindow(InvincibleFrame):
 
 	""" A tooltip-style window """
 	
-	def __init__(self, parent=None, id=-1, title=appname, msg="", 
+	def __init__(self, parent=None, id=-1, title=appname, msg="", cols=1,
 				 bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW, wrap=70):
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
@@ -3926,21 +3926,42 @@ class TooltipWindow(InvincibleFrame):
 		self.panel = wx.Panel(self, -1)
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer0)
-		if bitmap:
-			self.sizer1 = wx.FlexGridSizer(1, 2, 0, 0)
-		else:
-			self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_CENTER | wx.ALL, 
 		   border = margin)
 
 		if bitmap:
 			self.bitmap = wx.StaticBitmap(self.panel, -1, bitmap, 
 			   size = (32, 32))
-			self.sizer1.Add(self.bitmap, flag=wx.RIGHT, border=margin)
+			self.sizer1.Add(self.bitmap)
 
-		self.message = wx.StaticText(self.panel, -1, util_str.wrap(msg, wrap))
-		self.message.SetMaxFontSize()
-		self.sizer1.Add(self.message)
+		self.sizer2 = wx.BoxSizer(wx.VERTICAL)
+		self.sizer1.Add(self.sizer2)
+
+		msg = util_str.wrap(msg, wrap).splitlines()
+		for i, line in enumerate(msg):
+			if not line:
+				# Use as header
+				header = wx.StaticText(self.panel, -1, "\n".join(msg[:i + 1]))
+				self.sizer2.Add(header, flag=wx.LEFT, border=margin)
+				msg = msg[i + 1:]
+				break
+		self.sizer3 = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer2.Add(self.sizer3, flag=wx.EXPAND)
+		rowspercol = int(math.ceil(len(msg) / float(cols)))
+		msgs = []
+		while msg:
+			msgs.append(msg[:rowspercol])
+			msg = msg[rowspercol:]
+		for msg in msgs:
+			col = wx.StaticText(self.panel, -1, "")
+			col.SetMaxFontSize()
+			maxlinewidth = 0
+			for line in msg:
+				maxlinewidth = max(col.GetTextExtent(line)[0], maxlinewidth)
+			col.Label = "\n".join(msg)
+			col.MinSize = maxlinewidth + margin * 2, -1
+			self.sizer3.Add(col, flag=wx.LEFT, border=margin)
 
 		self.sizer0.SetSizeHints(self)
 		self.sizer0.Layout()
