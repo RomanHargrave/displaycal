@@ -1481,10 +1481,7 @@ class BaseInteractiveDialog(wx.Dialog):
 			bgcolor = self.BackgroundColour
 			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 		self.SetPosition(pos)  # yes, this is needed
-		if parent and parent.Icon and parent.Icon.IsOk():
-			self.Icon = parent.Icon
-		else:
-			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.set_icons()
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 
@@ -1570,6 +1567,18 @@ class BaseInteractiveDialog(wx.Dialog):
 	def ShowModal(self):
 		self.set_position()
 		return wx.Dialog.ShowModal(self)
+
+	def set_icons(self):
+		parent = self.Parent
+		while parent:
+			if isinstance(parent, wx.Frame):
+				break
+			parent = parent.Parent
+		if (parent and parent.Icon and parent.Icon.IsOk() and
+			parent.Name != "mainframe"):
+			self.Icon = parent.Icon
+		else:
+			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
 	def set_position(self):
 		if self.Parent and self.Parent.IsIconized():
@@ -3463,10 +3472,7 @@ class ProgressDialog(wx.Dialog):
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
 				self.SetDoubleBuffered(True)
-		if parent and parent.Icon and parent.Icon.IsOk():
-			self.Icon = parent.Icon
-		else:
-			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.set_icons()
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
 			self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -3709,6 +3715,8 @@ class ProgressDialog(wx.Dialog):
 		self.pause_continue.Enable(not event)
 		self.Layout()
 
+	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
+
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
 		if hasattr(self, "elapsed_timer"):
@@ -3916,10 +3924,7 @@ class TooltipWindow(InvincibleFrame):
 				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW, wrap=70):
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
-		if parent and parent.Icon and parent.Icon.IsOk():
-			self.Icon = parent.Icon
-		else:
-			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		self.set_icons()
 
 		margin = 12
 		
@@ -3973,6 +3978,8 @@ class TooltipWindow(InvincibleFrame):
 			self.Center(wx.VERTICAL)
 		self.Show()
 		self.Raise()
+
+	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
 
 
 class TwoWaySplitter(FourWaySplitter):
