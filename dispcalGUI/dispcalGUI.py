@@ -11341,7 +11341,7 @@ class MainFrame(BaseFrame):
 		if not self.IsShownOnScreen():
 			if hasattr(self, "tcframe"):
 				self.tcframe.Show(getcfg("tc.show"))
-			self.infoframe.Show(getcfg("log.show"))
+			wx.CallAfter(self.infoframe.Show, getcfg("log.show"))
 			if LUTFrame and getcfg("lut_viewer.show"):
 				if getattr(self, "lut_viewer", None):
 					self.init_lut_viewer(show=True)
