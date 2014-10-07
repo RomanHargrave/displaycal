@@ -83,7 +83,7 @@ class ScriptingClientFrame(SimpleTerminal):
 								consolestyle=wx.TE_CHARWRAP | wx.TE_MULTILINE |
 											 wx.TE_PROCESS_ENTER | wx.TE_RICH |
 											 wx.VSCROLL | wx.NO_BORDER,
-								show=False)
+								show=False, name="scriptingframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], 
 											 appname + "-scripting-client"))
 		self.console.SetForegroundColour("#EEEEEE")

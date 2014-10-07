@@ -1575,7 +1575,9 @@ class BaseInteractiveDialog(wx.Dialog):
 				break
 			parent = parent.Parent
 		if (parent and parent.Icon and parent.Icon.IsOk() and
-			parent.Name != "mainframe"):
+			parent.Name in ("lut3dframe", "lut_viewer", "profile_info",
+							"scriptingframe", "synthiccframe", "tcgen",
+							"vrml2x3dframe")):
 			self.Icon = parent.Icon
 		else:
 			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -3757,13 +3759,14 @@ class SimpleTerminal(InvincibleFrame):
 				 size=wx.DefaultSize, consolestyle=wx.TE_CHARWRAP |
 												   wx.TE_MULTILINE |
 												   wx.TE_READONLY | wx.VSCROLL |
-												   wx.NO_BORDER, show=True):
+												   wx.NO_BORDER, show=True,
+				 name="simpleterminal"):
 		if pos == wx.DefaultPosition:
 			pos = getcfg("position.progress.x"), getcfg("position.progress.y")
 		if size == wx.DefaultSize:
 			size = getcfg("size.progress.w"), getcfg("size.progress.h")
 		wx.Frame.__init__(self, parent, id, title, pos=pos,
-								style=wx.DEFAULT_FRAME_STYLE)
+								style=wx.DEFAULT_FRAME_STYLE, name=name)
 		
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)

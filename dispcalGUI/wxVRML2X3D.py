@@ -22,7 +22,8 @@ class VRML2X3DFrame(BaseFrame):
 		BaseFrame.__init__(self, None, wx.ID_ANY,
 						   lang.getstr("vrml_to_x3d_converter"),
 						   style=wx.DEFAULT_FRAME_STYLE & ~(wx.MAXIMIZE_BOX |
-															wx.RESIZE_BORDER))
+															wx.RESIZE_BORDER),
+						   name="vrml2x3dframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											  appname +
 											  "-VRML-to-X3D-converter"))
