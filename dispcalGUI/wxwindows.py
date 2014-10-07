@@ -489,7 +489,8 @@ class BaseFrame(wx.Frame):
 		quit = filemenu.Append(-1 if wx.VERSION < (2, 9) else wx.ID_EXIT,
 							   "&%s\tCtrl+Q" % lang.getstr("menuitem.quit"))
 		self.Bind(wx.EVT_MENU, lambda event: self.Close(), quit)
-		self.MenuBar.Append(filemenu, "&%s" % lang.getstr("menu.file"))
+		if sys.platform != "darwin":
+			self.MenuBar.Append(filemenu, "&%s" % lang.getstr("menu.file"))
 
 	def activate_handler(self, event):
 		global active_window
