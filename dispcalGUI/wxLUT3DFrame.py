@@ -769,6 +769,7 @@ def main():
 	lang.update_defaults()
 	app = BaseApp(0)
 	app.TopWindow = LUT3DFrame()
+	app.TopWindow.init_menubar()
 	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()

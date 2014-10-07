@@ -483,6 +483,14 @@ class BaseFrame(wx.Frame):
 	def init(self):
 		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
 
+	def init_menubar(self):
+		self.MenuBar = wx.MenuBar()
+		filemenu = wx.Menu()
+		quit = filemenu.Append(-1 if wx.VERSION < (2, 9) else wx.ID_EXIT,
+							   "&%s\tCtrl+Q" % lang.getstr("menuitem.quit"))
+		self.Bind(wx.EVT_MENU, lambda event: self.Close(), quit)
+		self.MenuBar.Append(filemenu, "&%s" % lang.getstr("menu.file"))
+
 	def activate_handler(self, event):
 		global active_window
 		active_window = self
@@ -3765,8 +3773,8 @@ class SimpleTerminal(InvincibleFrame):
 			pos = getcfg("position.progress.x"), getcfg("position.progress.y")
 		if size == wx.DefaultSize:
 			size = getcfg("size.progress.w"), getcfg("size.progress.h")
-		wx.Frame.__init__(self, parent, id, title, pos=pos,
-								style=wx.DEFAULT_FRAME_STYLE, name=name)
+		InvincibleFrame.__init__(self, parent, id, title, pos=pos,
+								 style=wx.DEFAULT_FRAME_STYLE, name=name)
 		
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)

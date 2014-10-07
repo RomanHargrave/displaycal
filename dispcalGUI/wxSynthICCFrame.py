@@ -701,6 +701,7 @@ def main():
 	lang.update_defaults()
 	app = BaseApp(0)
 	app.TopWindow = SynthICCFrame()
+	app.TopWindow.init_menubar()
 	app.TopWindow.listen()
 	app.process_argv(1)
 	app.TopWindow.Show()

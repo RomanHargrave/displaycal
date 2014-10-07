@@ -1847,6 +1847,7 @@ def main():
 	app = BaseApp(0)
 	app.TopWindow = LUTFrame(None, -1)
 	app.TopWindow.Bind(wx.EVT_CLOSE, app.TopWindow.OnClose, app.TopWindow)
+	app.TopWindow.init_menubar()
 	app.TopWindow.worker.enumerate_displays_and_ports(check_lut_access=False,
 													  enumerate_ports=False)
 	app.TopWindow.display_no, geometry, client_area = app.TopWindow.get_display()

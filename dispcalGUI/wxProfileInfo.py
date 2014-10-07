@@ -1889,6 +1889,7 @@ def main():
 	app = BaseApp(0)
 	check_set_argyll_bin()
 	app.TopWindow = ProfileInfoFrame(None, -1)
+	app.TopWindow.init_menubar()
 	app.TopWindow.listen()
 	display_no = get_argyll_display_number(app.TopWindow.get_display()[1])
 	for arg in sys.argv[1:]:
