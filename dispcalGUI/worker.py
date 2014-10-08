@@ -3093,18 +3093,31 @@ class Worker(object):
 					logfiles.extend([self.recent, self.lastmsg, self])
 				logfiles = Files(logfiles)
 				if use_patterngenerator:
-					self.patterngenerator = ResolveCMPatternGeneratorServer(
-						port=getcfg("patterngenerator.resolve.port"),
-						bits=getcfg("patterngenerator.resolve.bits"),
-						use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
-						logfile=logfiles)
-					# Wait for connection - blocking
-					self.patterngenerator.wait()
-					if self.patterngenerator.listening:
-						self.patterngenerator_send((.5, ) * 3)
+					if getattr(self, "patterngenerator", None):
+						# Use existing pattern generator instance
+						self.patterngenerator.logfile = logfiles
+						self.patterngenerator.bits = getcfg("patterngenerator.resolve.bits")
+						self.patterngenerator.use_video_levels = getcfg("patterngenerator.resolve.use_video_levels")
+						if hasattr(self.patterngenerator, "conn"):
+							# Try to use existing connection
+							try:
+								self.patterngenerator_send((.5, ) * 3, True)
+							except socket.error:
+								self.patterngenerator.disconnect_client()
 					else:
-						# User aborted before connection was established
-						return False
+						self.patterngenerator = ResolveCMPatternGeneratorServer(
+							port=getcfg("patterngenerator.resolve.port"),
+							bits=getcfg("patterngenerator.resolve.bits"),
+							use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
+							logfile=logfiles)
+					if not hasattr(self.patterngenerator, "conn"):
+						# Wait for connection - blocking
+						self.patterngenerator.wait()
+						if hasattr(self.patterngenerator, "conn"):
+							self.patterngenerator_send((.5, ) * 3)
+						else:
+							# User aborted before connection was established
+							return False
 			tries = 1
 			while tries > 0:
 				if use_pty:
@@ -3302,19 +3315,12 @@ class Worker(object):
 				self.output = output
 				self.retcode = retcode
 			if getattr(self, "patterngenerator", None):
-				if self.patterngenerator.listening:
+				if hasattr(self.patterngenerator, "conn"):
 					try:
 						# Send fullscreen black to prevent plasma burn-in
 						self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
 					except Exception, exception:
 						safe_print(exception)
-				try:
-					del self.patterngenerator
-				except Exception, exception:
-					safe_print("%s: Warning - could not de-reference pattern "
-							   "generator: %s" % (appname,
-												  safe_unicode(exception)))
-					self.patterngenerator = None
 		if debug and not silent:
 			safe_print("*** Returncode:", self.retcode)
 		if self.retcode != 0:
@@ -5493,7 +5499,7 @@ usage: spotread [-options] [logfile]
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
 
-	def patterngenerator_send(self, rgb):
+	def patterngenerator_send(self, rgb, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
 		if getattr(self, "abort_requested", False):
 			return
@@ -5523,8 +5529,11 @@ usage: spotread [-options] [logfile]
 		try:
 			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
 		except socket.error, exception:
-			self.log("%s: %s" % (appname, safe_unicode(exception)))
-			wx.CallAfter(self.abort_subprocess)
+			if raise_exceptions:
+				raise
+			else:
+				self.log("%s: %s" % (appname, safe_unicode(exception)))
+				wx.CallAfter(self.abort_subprocess)
 	
 	def pause_continue(self):
 		if (getattr(self.progress_wnd, "paused", False) and
@@ -6446,17 +6455,6 @@ usage: spotread [-options] [logfile]
 									 "inconvenience." %
 									 (self.cmd, appname, self.cmd, appname)),
 							 self.owner)
-		if getattr(self, "patterngenerator", None):
-			self.log("%s: Trying to shut down pattern generator..." % appname,
-					 fn=logfn)
-			try:
-				self.patterngenerator.shutdown()
-			except Exception, exception:
-				self.log("%s: %s" % (appname, safe_unicode(exception)),
-						 fn=logfn)
-			else:
-				self.log("%s: Pattern generator successfully shut down." %
-						 appname, fn=logfn)
 		return not subprocess_isalive
 	
 	def report(self, report_calibrated=True):
@@ -7824,7 +7822,7 @@ usage: spotread [-options] [logfile]
 	def write(self, txt):
 		# Send colors to pattern generator
 		if (getattr(self, "patterngenerator", None) and
-			self.patterngenerator.listening):
+			hasattr(self.patterngenerator, "conn")):
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:

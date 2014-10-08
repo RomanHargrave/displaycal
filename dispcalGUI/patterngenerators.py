@@ -2,9 +2,11 @@
 
 from socket import (AF_INET, SHUT_RDWR, SOCK_STREAM, error, gethostbyname, 
 					gethostname, socket, timeout)
+import errno
 import struct
 
 import localization as lang
+from util_str import safe_unicode
 
 class ResolveCMPatternGeneratorServer(object):
 
@@ -16,11 +18,11 @@ class ResolveCMPatternGeneratorServer(object):
 		self.socket = socket(AF_INET, SOCK_STREAM)
 		self.socket.settimeout(1)
 		self.socket.bind(('', port))
+		self.socket.listen(1)
 		self.listening = False
 		self.logfile = logfile
 
 	def wait(self):
-		self.socket.listen(1)
 		self.listening = True
 		if self.logfile:
 			self.logfile.write(lang.getstr("connection.waiting") +
@@ -31,21 +33,28 @@ class ResolveCMPatternGeneratorServer(object):
 				self.conn, addr = self.socket.accept()
 			except timeout:
 				continue
+			self.conn.settimeout(1)
 			break
 		if self.listening:
 			if self.logfile:
 				self.logfile.write(lang.getstr("connection.established") + "\n")
 
 	def __del__(self):
-		self.shutdown()
+		self.disconnect_client()
+		self.socket.close()
 
-	def shutdown(self):
+	def disconnect_client(self):
 		self.listening = False
 		if hasattr(self, "conn"):
-			self.conn.shutdown(SHUT_RDWR)
+			try:
+				self.conn.shutdown(SHUT_RDWR)
+			except error, exception:
+				if exception.errno != errno.ENOTCONN and self.logfile:
+					self.logfile.write("Warning - could not shutdown "
+									   "pattern generator connection: %s" %
+									   safe_unicode(exception))
 			self.conn.close()
 			del self.conn
-		self.socket.close()
 
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
