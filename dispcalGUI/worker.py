@@ -6455,6 +6455,8 @@ usage: spotread [-options] [logfile]
 									 "inconvenience." %
 									 (self.cmd, appname, self.cmd, appname)),
 							 self.owner)
+		if getattr(self, "patterngenerator", None):
+			self.patterngenerator.listening = False
 		return not subprocess_isalive
 	
 	def report(self, report_calibrated=True):
