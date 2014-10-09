@@ -286,14 +286,13 @@ class ScriptingClientFrame(SimpleTerminal):
 			self.add_error_text(lang.getstr("not_connected") + "\n")
 
 	def get_app_info(self):
-		commands = ["setresponseformat json", "getcommands",
-					"setresponseformat plain", "getappname"]
+		commands = ["setresponseformat plain", "getcommands", "getappname"]
 		try:
 			for command in commands:
 				self.conn.send_command(command)
 				response = self.conn.get_single_response()
 				if command == "getcommands":
-					self.commands = demjson.decode(response)["result"]
+					self.commands = response.splitlines()
 				elif command == "getappname":
 					wx.CallAfter(self.add_text,
 								 lang.getstr("connected.to.at",
