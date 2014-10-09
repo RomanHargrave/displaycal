@@ -1383,7 +1383,8 @@ class Worker(object):
 		self._pwdstr = ""
 		workers.append(self)
 	
-	def add_measurement_features(self, args, display=True):
+	def add_measurement_features(self, args, display=True,
+								 ignore_display_name=False):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
@@ -1435,7 +1436,8 @@ class Worker(object):
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
-				if config.get_display_name() == "Resolve":
+				if (config.get_display_name() == "Resolve" and
+					not ignore_display_name):
 					# Move Argyll test window to lower right corner and make it
 					# very small
 					dimensions_measureframe = "1,1,0.01"
@@ -1444,7 +1446,8 @@ class Worker(object):
 				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 							dimensions_measureframe)
 			farg = get_arg("-F", args)
-			if config.get_display_name() == "Resolve":
+			if (config.get_display_name() == "Resolve" and
+				not ignore_display_name):
 				if farg:
 					# Remove -F (darken background) as we relay colors to
 					# Resolve
@@ -5804,7 +5807,16 @@ usage: spotread [-options] [logfile]
 					args.append("-E")  # Verify current curves
 		if getcfg("extra_args.dispcal").strip():
 			args += parse_argument_string(getcfg("extra_args.dispcal"))
-		self.options_dispcal = list(args)
+		if config.get_display_name() == "Resolve":
+			# Substitute actual measurement frame dimensions
+			self.options_dispcal = map(lambda arg: re.sub("^-[Pp]1,1,0.01$",
+														  "-P" + getcfg("dimensions.measureframe"),
+														  arg), args)
+			# Re-add -F (darken background) so it can be set when loading settings
+			if getcfg("measure.darken_background"):
+				self.options_dispcal.append("-F")
+		else:
+			self.options_dispcal = list(args)
 		if calibrate:
 			args.append(inoutfile)
 		return cmd, args
@@ -5997,7 +6009,8 @@ usage: spotread [-options] [logfile]
 				arg = dispcal_extra_args[i - 1]
 			if arg[:2] in dispcal_override_args:
 				self.options_dispcal.append(dispcal_extra_args[i])
-		result = self.add_measurement_features(self.options_dispcal)
+		result = self.add_measurement_features(self.options_dispcal,
+											   ignore_display_name=True)
 		if isinstance(result, Exception):
 			return result, None
 		cmd = get_argyll_util("dispread")
