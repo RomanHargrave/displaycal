@@ -31,8 +31,8 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
 from wexpect import split_command_line
-from wxfixes import (_DirDialog, _FileDialog, GenBitmapButton, GenButton,
-					 GTKMenuItemGetFixedLabel, set_bitmap_labels)
+from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
+					 set_bitmap_labels)
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -2019,6 +2019,8 @@ class PathDialog(ConfirmDialog):
 		self.EndModal(self.filedialog.ShowModal())
 
 
+_DirDialog = wx.DirDialog
+
 class DirDialog(PathDialog):
 
 	""" wx.DirDialog cannot be interacted with programmatically after
@@ -2028,6 +2030,8 @@ class DirDialog(PathDialog):
 		PathDialog.__init__(self, args[0], args[1], "dirdialog")
 		self.filedialog = _DirDialog(*args, **kwargs)
 
+
+_FileDialog = wx.FileDialog
 
 class FileDialog(PathDialog):
 
