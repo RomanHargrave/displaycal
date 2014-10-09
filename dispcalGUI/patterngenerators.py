@@ -6,6 +6,7 @@ import errno
 import struct
 
 import localization as lang
+from log import safe_print
 from util_str import safe_unicode
 
 class ResolveCMPatternGeneratorServer(object):
@@ -49,10 +50,9 @@ class ResolveCMPatternGeneratorServer(object):
 			try:
 				self.conn.shutdown(SHUT_RDWR)
 			except error, exception:
-				if exception.errno != errno.ENOTCONN and self.logfile:
-					self.logfile.write("Warning - could not shutdown "
-									   "pattern generator connection: %s" %
-									   safe_unicode(exception))
+				if exception.errno != errno.ENOTCONN:
+					safe_print("Warning - could not shutdown pattern generator "
+							   "connection:", exception)
 			self.conn.close()
 			del self.conn
 
