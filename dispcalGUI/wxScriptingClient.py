@@ -359,6 +359,7 @@ class ScriptingClientFrame(SimpleTerminal):
 
 	def key_handler(self, event):
 		##safe_print("KeyCode", event.KeyCode, "UnicodeKey", event.UnicodeKey,
+				   ##"AltDown:", event.AltDown(),
 				   ##"CmdDown:", event.CmdDown(),
 				   ##"ControlDown:", event.ControlDown(),
 				   ##"MetaDown:", event.MetaDown(),
@@ -368,7 +369,8 @@ class ScriptingClientFrame(SimpleTerminal):
 		insertionpoint = self.console.GetInsertionPoint()
 		lastline, lastpos, startcol, endcol = self.get_last_line()
 		##safe_print(insertionpoint, lastline, lastpos, startcol, endcol)
-		cmd_or_ctrl = event.ControlDown() or event.CmdDown()
+		cmd_or_ctrl = (event.ControlDown() or
+					   event.CmdDown()) and not event.AltDown()
 		if cmd_or_ctrl and event.KeyCode == 65:
 			# A
 			self.console.SelectAll()
