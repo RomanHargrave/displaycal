@@ -2917,12 +2917,14 @@ def split_command_line(command_line):
     state_doublequote = 3
     state_whitespace = 4 # The state of consuming whitespace between commands.
     state = state_basic
+    state_backup = state
 
     for c in command_line:
-        if state == state_basic or state == state_whitespace:
-            if c == '\\' and sys.platform != "win32": # Escape the next character
-                state = state_esc
-            elif c == r"'": # Handle single quote
+        if state != state_esc and c == '\\': # Escape the next character
+            state_backup = state
+            state = state_esc
+        elif state == state_basic or state == state_whitespace:
+            if c == r"'": # Handle single quote
                 state = state_singlequote
             elif c == r'"': # Handle double quote
                 state = state_doublequote
@@ -2939,7 +2941,7 @@ def split_command_line(command_line):
                 state = state_basic
         elif state == state_esc:
             arg = arg + c
-            state = state_basic
+            state = state_backup
         elif state == state_singlequote:
             if c == r"'":
                 state = state_basic
