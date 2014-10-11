@@ -2920,7 +2920,7 @@ def split_command_line(command_line):
     state_backup = state
 
     for c in command_line:
-        if state != state_esc and c == '\\': # Escape the next character
+        if state not in (state_esc, state_singlequote) and c == '\\': # Escape the next character
             state_backup = state
             state = state_esc
         elif state == state_basic or state == state_whitespace:
@@ -2940,8 +2940,16 @@ def split_command_line(command_line):
                 arg = arg + c
                 state = state_basic
         elif state == state_esc:
+            # Follow bash escaping rules within double quotes:
+            # http://www.gnu.org/software/bash/manual/html_node/Double-Quotes.html
+            if state_backup == state_doublequote and c not in ('$', '`', '"',
+                                                               '\\', '\n'):
+                arg += '\\'
             arg = arg + c
-            state = state_backup
+            if state_backup != state_whitespace:
+                state = state_backup
+            else:
+                state = state_basic
         elif state == state_singlequote:
             if c == r"'":
                 state = state_basic
