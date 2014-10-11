@@ -1604,7 +1604,7 @@ class Worker(object):
 		profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
 
 	def calibrate_instrument_producer(self):
-		cmd, args = get_argyll_util("spotread"), ["-v"]
+		cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 		if cmd:
 			self.spotread_just_do_instrument_calibration = True
 			self.add_measurement_features(args, display=False)
