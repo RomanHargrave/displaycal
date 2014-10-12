@@ -3544,7 +3544,7 @@ class MainFrame(BaseFrame):
 		update_cal = getcfg("calibration.update")
 		auto = self.get_measurement_mode() == "auto"
 		do_cal = bool(getcfg("calibration.interactive_display_adjustment",
-							 False) or getcfg("trc", False))
+							 False) or getcfg("trc"))
 		enable = (not update_cal and not auto and do_cal)
 		for option in ("whitepoint.colortemp", "whitepoint.x",
 					   "whitepoint.y", "calibration.luminance",
