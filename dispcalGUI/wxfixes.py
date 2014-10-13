@@ -649,3 +649,29 @@ class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):
 			pos_x = pos_x + sw   # extra spacing from bitmap
 
 		dc.DrawText(label, pos_x + dx+bw, (height-th)/2+dy)      # draw the text
+
+
+class BitmapWithThemedButton(wx.BoxSizer):
+
+	def __init__(self, parent, id=-1, bitmap=wx.NullBitmap, label="",
+				 pos=wx.DefaultPosition, size=wx.DefaultSize, style=0,
+				 validator=wx.DefaultValidator, name="button"):
+		wx.BoxSizer.__init__(self, wx.HORIZONTAL)
+		self._bmp = wx.StaticBitmap(parent, -1, bitmap)
+		self.Add(self._bmp, flag=wx.ALIGN_CENTER_VERTICAL)
+		if wx.Platform == "__WXMSW__":
+			btncls = ThemedGenButton
+		else:
+			btncls = wx.Button
+		self._btn = btncls(parent, id, label, pos, size, style, validator, name)
+		self.Add(self._btn, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT, border=8)
+
+	def __getattr__(self, name):
+		return getattr(self._btn, name)
+
+	def Bind(self, event, handler):
+		self._btn.Bind(event, handler)
+
+	def SetBitmapLabel(self, bitmap):
+		self._bmp.SetBitmap(bitmap)
+		self.Layout()

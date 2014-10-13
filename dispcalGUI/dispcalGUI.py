@@ -125,7 +125,7 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
-from wxfixes import ThemedGenButton, ThemedGenBitmapTextButton, set_bitmap_labels
+from wxfixes import ThemedGenButton, BitmapWithThemedButton, set_bitmap_labels
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
@@ -7724,7 +7724,7 @@ class MainFrame(BaseFrame):
 				if getcfg("last_%s_ti3_path" % name, False):
 					bmp = geticon(16, "checkmark")
 				else:
-					bmp = None
+					bmp = geticon(16, "empty")
 				getattr(dlg, "measure_" + name).SetBitmapLabel(bmp)
 				getattr(dlg, "measure_" + name).Refresh()
 				if isinstance(event, wx.Event):
@@ -7739,10 +7739,11 @@ class MainFrame(BaseFrame):
 			if sys.platform == "win32" and sys.getwindowsversion() < (6, 2):
 				# Windows 7 / Vista / XP
 				btn_h += 2
-			dlg.measure_reference = ThemedGenBitmapTextButton(dlg,
-				id_measure_reference, None,
-				lang.getstr("measure"), size=(-1, btn_h), style=wx.NO_BORDER)
-			dlg.measure_reference.BackgroundColour = dlg.BackgroundColour
+			dlg.measure_reference = BitmapWithThemedButton(dlg,
+				id_measure_reference, geticon(16, "empty"),
+				lang.getstr("measure"), size=(-1, btn_h))
+			if sys.platform == "win32":
+				dlg.measure_reference.BackgroundColour = dlg.BackgroundColour
 			dlg.measure_reference.Bind(wx.EVT_BUTTON, dlg.OnClose)
 			hsizer.Add(dlg.measure_reference,
 					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
@@ -7798,10 +7799,11 @@ class MainFrame(BaseFrame):
 			hsizer.Add(dlg.measurement_mode,
 					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
 							wx.ALIGN_CENTER_VERTICAL, border=8)
-			dlg.measure_colorimeter = ThemedGenBitmapTextButton(dlg,
-				id_measure_colorimeter, None,
-				lang.getstr("measure"), size=(-1, btn_h), style=wx.NO_BORDER)
-			dlg.measure_colorimeter.BackgroundColour = dlg.BackgroundColour
+			dlg.measure_colorimeter = BitmapWithThemedButton(dlg,
+				id_measure_colorimeter, geticon(16, "empty"),
+				lang.getstr("measure"), size=(-1, btn_h))
+			if sys.platform == "win32":
+				dlg.measure_colorimeter.BackgroundColour = dlg.BackgroundColour
 			dlg.measure_colorimeter.Bind(wx.EVT_BUTTON, dlg.OnClose)
 			hsizer.Add(dlg.measure_colorimeter,
 					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
