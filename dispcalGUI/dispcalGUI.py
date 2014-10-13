@@ -7743,7 +7743,7 @@ class MainFrame(BaseFrame):
 				id_measure_reference, geticon(16, "empty"),
 				lang.getstr("measure"), size=(-1, btn_h))
 			if sys.platform == "win32":
-				dlg.measure_reference.BackgroundColour = dlg.BackgroundColour
+				dlg.measure_reference.SetBackgroundColour(dlg.BackgroundColour)
 			dlg.measure_reference.Bind(wx.EVT_BUTTON, dlg.OnClose)
 			hsizer.Add(dlg.measure_reference,
 					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
@@ -7803,7 +7803,7 @@ class MainFrame(BaseFrame):
 				id_measure_colorimeter, geticon(16, "empty"),
 				lang.getstr("measure"), size=(-1, btn_h))
 			if sys.platform == "win32":
-				dlg.measure_colorimeter.BackgroundColour = dlg.BackgroundColour
+				dlg.measure_colorimeter.SetBackgroundColour(dlg.BackgroundColour)
 			dlg.measure_colorimeter.Bind(wx.EVT_BUTTON, dlg.OnClose)
 			hsizer.Add(dlg.measure_colorimeter,
 					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
