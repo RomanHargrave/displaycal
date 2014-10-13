@@ -7727,6 +7727,8 @@ class MainFrame(BaseFrame):
 					bmp = geticon(16, "empty")
 				getattr(dlg, "measure_" + name).SetBitmapLabel(bmp)
 				getattr(dlg, "measure_" + name).Refresh()
+				getattr(dlg, "measure_" + name)._bmp.SetToolTipString(
+					getcfg("last_%s_ti3_path" % name, False) or "")
 				if isinstance(event, wx.Event):
 					set_ok_btn_state()
 			dlg.measurement_mode_reference.Bind(wx.EVT_CHOICE,
