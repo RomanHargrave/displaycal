@@ -24,6 +24,7 @@ if wx.VERSION < wx_minversion:
 import wx.grid
 from wx.lib.buttons import GenBitmapButton as _GenBitmapButton
 from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
+from wx.lib.buttons import GenBitmapTextButton as _GenBitmapTextButton
 
 if u"phoenix" in wx.PlatformInfo:
 	# Phoenix compatibility
@@ -469,8 +470,8 @@ class GenButton(object):
 	def OnPaint(self, event):
 		(width, height) = self.ClientSize
 		x1 = y1 = 0
-		x2 = width-1
-		y2 = height-1
+		x2 = width
+		y2 = height
 
 		dc = wx.PaintDC(self)
 		brush = self.GetBackgroundBrush(dc)
@@ -516,6 +517,27 @@ class ThemedGenButton(GenButton, _ThemedGenButton):
 
 	def Disable(self):
 		self.Enable(False)
+
+	def DoGetBestSize(self):
+		"""
+		Overridden base class virtual.  Determines the best size of the
+		button based on the label and bezel size.
+		"""
+		w, h, useMin = self._GetLabelSize()
+		if self.style & wx.BU_EXACTFIT:
+			width = w + 2 + 2 * self.bezelWidth + 4 * int(self.useFocusInd)
+			height = h + 2 + 2 * self.bezelWidth + 4 * int(self.useFocusInd)
+		else:
+			defSize = wx.Button.GetDefaultSize()
+			width = 12 + w
+			if useMin and width < defSize.width:
+				width = defSize.width
+			height = 11 + h
+			if useMin and height < defSize.height:
+				height = defSize.height
+			width = width + self.bezelWidth - 2
+			height = height + self.bezelWidth - 2
+		return (width, height)
 
 	def DrawBezel(self, dc, x1, y1, x2, y2):
 		rect = wx.Rect(x1, y1, x2, y2)
@@ -582,3 +604,48 @@ class ThemedGenButton(GenButton, _ThemedGenButton):
 	def SetDefault(self):
 		self._default = True
 		_ThemedGenButton.SetDefault(self)
+
+
+class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):
+	"""A themed generic bitmapped button with text label"""
+	def __init__(self, parent, id=-1, bitmap=wx.NullBitmap, label='',
+				 pos=wx.DefaultPosition, size=wx.DefaultSize, style=0,
+				 validator=wx.DefaultValidator, name="genbutton"):
+		GenButton.__init__(self)
+		_GenBitmapTextButton.__init__(self, parent, id, bitmap, label, pos, size, style, validator, name)
+		self._default = False
+
+	def DrawLabel(self, dc, width, height, dx=0, dy=0):
+		bmp = self.bmpLabel
+		if bmp is not None:     # if the bitmap is used
+			if self.bmpDisabled and not self.IsEnabled():
+				bmp = self.bmpDisabled
+			if self.bmpFocus and self.hasFocus:
+				bmp = self.bmpFocus
+			if self.bmpSelected and not self.up:
+				bmp = self.bmpSelected
+			bw,bh = bmp.GetWidth(), bmp.GetHeight()
+			if sys.platform != "win32" and not self.up:
+				dx = dy = self.labelDelta
+			hasMask = bmp.GetMask() is not None
+		else:
+			bw = bh = 0     # no bitmap -> size is zero
+
+		dc.SetFont(self.GetFont())
+		if self.IsEnabled():
+			dc.SetTextForeground(self.GetForegroundColour())
+		else:
+			dc.SetTextForeground(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT))
+
+		label = self.GetLabel()
+		tw, th = dc.GetTextExtent(label)        # size of text
+		sw, sh = dc.GetTextExtent(" ")   # extra spacing from bitmap
+		if sys.platform != "win32" and not self.up:
+			dx = dy = self.labelDelta
+
+		pos_x = (width-bw-sw-tw)/2+dx      # adjust for bitmap and text to centre
+		if bmp is not None:
+			dc.DrawBitmap(bmp, pos_x, (height-bh)/2+dy, hasMask) # draw bitmap if available
+			pos_x = pos_x + sw   # extra spacing from bitmap
+
+		dc.DrawText(label, pos_x + dx+bw, (height-th)/2+dy)      # draw the text

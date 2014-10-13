@@ -1801,8 +1801,7 @@ class Worker(object):
 				((config.is_untethered_display() or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
-				  self.cmdname == "dispcal")) or
-				getcfg("comport.number.backup", False)):
+				  self.cmdname == "dispcal"))):
 				# Show a dialog asking user to place the instrument on the
 				# screen if the instrument calibration was completed,
 				# or if we measure a remote ("Web") display,

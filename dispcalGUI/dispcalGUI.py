@@ -125,7 +125,7 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
-from wxfixes import ThemedGenButton, set_bitmap_labels
+from wxfixes import ThemedGenButton, ThemedGenBitmapTextButton, set_bitmap_labels
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
@@ -6616,7 +6616,6 @@ class MainFrame(BaseFrame):
 														 path)), self)
 					return
 				setcfg("measurement.save_path", path)
-				# Spectrometer measurement
 				setcfg("measurement.name.expanded", "%s & %s %s" %
 													(self.worker.get_instrument_name(),
 													 self.worker.get_display_name(),
@@ -6659,25 +6658,8 @@ class MainFrame(BaseFrame):
 		self.worker.dispread_after_dispcal = False
 		self.worker.interactive = config.get_display_name() == "Untethered"
 		setcfg("calibration.file.previous", None)
-		continue_next = ((is_ccxx_testchart() and
-						  getcfg("comport.number.backup", False) and
-						  getcfg("colorimeter_correction.type") == "matrix" and
-						  self.worker.get_instrument_name() ==
-						  getcfg("colorimeter_correction.instrument.reference")) or
-						 bool(consumer))
-		if (is_ccxx_testchart() and
-			getcfg("comport.number.backup", False) and
-			getcfg("colorimeter_correction.type") == "matrix" and
-			self.worker.get_instrument_name() ==
-			getcfg("colorimeter_correction.instrument")):
-			# Colorimeter measurement
-			setcfg("measurement.name.expanded", "%s & %s %s" %
-												(self.worker.get_instrument_name(),
-												 self.worker.get_display_name(),
-												 strftime("%Y-%m-%d %H-%M-%S")))
-			resume = True
-		else:
-			resume = bool(getattr(self, "measure_auto_after", None))
+		continue_next = bool(consumer)
+		resume = bool(getattr(self, "measure_auto_after", None))
 		if not consumer:
 			consumer = self.just_measure_finish
 		self.worker.start_measurement(consumer, apply_calibration,
@@ -6707,25 +6689,17 @@ class MainFrame(BaseFrame):
 				if getcfg("comport.number.backup", False):
 					# Measurements were started from colorimeter correction
 					# creation dialog
-					if (getcfg("colorimeter_correction.type") == "matrix" and
-						self.worker.get_instrument_name() ==
-						getcfg("colorimeter_correction.instrument.reference")):
-						# Done spectrometer measurements for CCMX, do
-						# colorimeter measurements
-						setcfg("comport.number", self.worker.instruments.index(
-							getcfg("colorimeter_correction.instrument")) + 1)
-						setcfg("measurement_mode",
-							getcfg("colorimeter_correction.measurement_mode"))
-						wx.CallAfter(self.just_measure,
-									 get_data_path("linear.cal"))
-						return
-					else:
-						# Finished colorimeter correction measurements
-						paths = [getcfg("last_reference_ti3_path")]
+					paths = []
+					if (getcfg("last_reference_ti3_path") and
+						os.path.isfile(getcfg("last_reference_ti3_path")) and
+						(getcfg("colorimeter_correction.type") == "spectral" or
+						 (getcfg("last_colorimeter_ti3_path") and
+						  os.path.isfile(getcfg("last_colorimeter_ti3_path"))))):
+						paths.append(getcfg("last_reference_ti3_path"))
 						if getcfg("colorimeter_correction.type") == "matrix":
 							paths.append(getcfg("last_colorimeter_ti3_path"))
-						wx.CallAfter(self.create_colorimeter_correction_handler,
-									 True, paths=paths)
+					wx.CallAfter(self.create_colorimeter_correction_handler,
+								 True, paths=paths)
 		else:
 			wx.CallAfter(self.just_measure_show_result, 
 						 os.path.join(getcfg("profile.save_path"), 
@@ -7645,15 +7619,24 @@ class MainFrame(BaseFrame):
 		
 		"""
 		parent = self if event else None
+		id_measure_reference = wx.NewId()
+		id_measure_colorimeter = wx.NewId()
 		if not paths:
+			if event and event is not True:
+				for name in ("reference", "colorimeter"):
+					if not getcfg("last_%s_ti3_path.backup" % name, False):
+						setcfg("last_%s_ti3_path.backup" % name,
+							   getcfg("last_%s_ti3_path" % name))
+						setcfg("last_%s_ti3_path" % name, None)
+						setcfg("last_%s_ti3_path.current" % name, None)
 			dlg = ConfirmDialog(parent,
 								title=lang.getstr("colorimeter_correction.create"),
 								msg=lang.getstr("colorimeter_correction.create.info"), 
-								ok=lang.getstr("measure.testchart"), 
+								ok=lang.getstr("colorimeter_correction.create"),
 								cancel=lang.getstr("cancel"), 
 								alt=lang.getstr("browse"), 
 								bitmap=geticon(32, "dialog-information"),
-								wrap=80)
+								wrap=90)
 			# Colorimeter correction type
 			# We deliberately don't use RadioBox because there's no way to
 			# set the correct background color (this matters under MSWindows
@@ -7687,8 +7670,6 @@ class MainFrame(BaseFrame):
 					reference_instruments.append(instrument)
 				else:
 					colorimeters.append(instrument)
-					if instrument == self.worker.get_instrument_name():
-						setcfg("colorimeter_correction.instrument", instrument)
 			# Reference instrument
 			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 													  "%s (%s)" %
@@ -7702,15 +7683,72 @@ class MainFrame(BaseFrame):
 			boxsizer.Add(hsizer, flag=wx.EXPAND)
 			dlg.reference_instrument = wx.Choice(dlg, -1,
 												 choices=reference_instruments)
-			hsizer.Add(dlg.reference_instrument, 1, flag=wx.LEFT | wx.TOP |
-														 wx.BOTTOM, border=4)
+			hsizer.Add(dlg.reference_instrument, 1,
+					   flag=wx.LEFT | wx.TOP | wx.BOTTOM |
+							wx.ALIGN_CENTER_VERTICAL, border=4)
 			hsizer.Add(wx.StaticText(dlg, -1,
 									   lang.getstr("measurement_mode")),
 						 flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 						 border=8)
 			dlg.measurement_mode_reference = wx.Choice(dlg, -1, choices=[])
-			hsizer.Add(dlg.measurement_mode_reference, flag=wx.RIGHT | wx.TOP |
-															wx.BOTTOM, border=4)
+			def set_ok_btn_state():
+				dlg.ok.Enable(bool(getcfg("last_reference_ti3_path") and 
+								   os.path.isfile(getcfg("last_reference_ti3_path")) and
+								   ((getcfg("last_colorimeter_ti3_path") and
+									 os.path.isfile(getcfg("last_colorimeter_ti3_path"))) or
+									dlg.correction_type_spectral.GetValue())))
+			def check_last_ccxx_ti3(event):
+				if event.GetId() in (dlg.instrument.Id,
+									 dlg.measurement_mode.Id):
+					name = "colorimeter"
+					instrument = getcfg("colorimeter_correction.instrument")
+					instrument_ctrl = dlg.instrument
+					measurement_mode_ctrl = dlg.measurement_mode
+				else:
+					name = "reference"
+					instrument = getcfg("colorimeter_correction.instrument." +
+										name)
+					instrument_ctrl = dlg.reference_instrument
+					measurement_mode_ctrl = dlg.measurement_mode_reference
+				if (instrument_ctrl.GetStringSelection() != instrument or
+					measurement_mode_ctrl.GetSelection() != measurement_mode_ctrl.initialsel):
+					if getcfg("last_%s_ti3_path" % name, False):
+						setcfg("last_%s_ti3_path.current" % name,
+							   getcfg("last_%s_ti3_path" % name))
+						setcfg("last_%s_ti3_path" % name, None)
+				else:
+					if getcfg("last_%s_ti3_path.current" % name, False):
+						setcfg("last_%s_ti3_path" % name,
+							   getcfg("last_%s_ti3_path.current" % name))
+						setcfg("last_%s_ti3_path.current" % name, None)
+				if getcfg("last_%s_ti3_path" % name, False):
+					bmp = geticon(16, "checkmark")
+				else:
+					bmp = None
+				getattr(dlg, "measure_" + name).SetBitmapLabel(bmp)
+				getattr(dlg, "measure_" + name).Refresh()
+				if isinstance(event, wx.Event):
+					set_ok_btn_state()
+			dlg.measurement_mode_reference.Bind(wx.EVT_CHOICE,
+												check_last_ccxx_ti3)
+			hsizer.Add(dlg.measurement_mode_reference,
+					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
+							wx.ALIGN_CENTER_VERTICAL, border=8)
+			# Make measure button height match instrument choice height
+			btn_h = dlg.reference_instrument.Size[1]
+			if sys.platform == "win32" and sys.getwindowsversion() < (6, 2):
+				# Windows 7 / Vista / XP
+				btn_h += 2
+			dlg.measure_reference = ThemedGenBitmapTextButton(dlg,
+				id_measure_reference, None,
+				lang.getstr("measure"), size=(-1, btn_h), style=wx.NO_BORDER)
+			dlg.measure_reference.BackgroundColour = dlg.BackgroundColour
+			dlg.measure_reference.Bind(wx.EVT_BUTTON, dlg.OnClose)
+			hsizer.Add(dlg.measure_reference,
+					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
+							wx.ALIGN_CENTER_VERTICAL, border=4)
+			dlg.measure_reference.Enable(bool(self.worker.displays and
+											  reference_instruments))
 			def reference_instrument_handler(event):
 				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
 					dlg.reference_instrument.GetStringSelection(), "spect",
@@ -7721,6 +7759,8 @@ class MainFrame(BaseFrame):
 						len(modes["spect"]) - 1))
 				dlg.measurement_mode_reference.Enable(len(modes["spect"]) > 1)
 				boxsizer.Layout()
+				if event:
+					check_last_ccxx_ti3(event)
 			instrument = getcfg("colorimeter_correction.instrument.reference")
 			if instrument in reference_instruments:
 				dlg.reference_instrument.SetStringSelection(instrument)
@@ -7730,6 +7770,7 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode_reference.Disable()
 			if reference_instruments:
 				reference_instrument_handler(None)
+			dlg.measurement_mode_reference.initialsel = dlg.measurement_mode_reference.GetSelection()
 			if len(reference_instruments) < 2:
 				dlg.reference_instrument.Disable()
 			else:
@@ -7745,15 +7786,28 @@ class MainFrame(BaseFrame):
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
 			boxsizer.Add(hsizer, flag=wx.EXPAND)
 			dlg.instrument = wx.Choice(dlg, -1, choices=colorimeters)
-			hsizer.Add(dlg.instrument, 1, flag=wx.LEFT | wx.TOP |  wx.BOTTOM,
+			hsizer.Add(dlg.instrument, 1, flag=wx.LEFT | wx.TOP |  wx.BOTTOM |
+											   wx.ALIGN_CENTER_VERTICAL,
 					   border=4)
 			hsizer.Add(wx.StaticText(dlg, -1,
 									 lang.getstr("measurement_mode")),
 					   flag=wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 					   border=8)
 			dlg.measurement_mode = wx.Choice(dlg, -1, choices=[])
-			hsizer.Add(dlg.measurement_mode, flag=wx.RIGHT | wx.TOP |
-													wx.BOTTOM, border=4)
+			dlg.measurement_mode.Bind(wx.EVT_CHOICE, check_last_ccxx_ti3)
+			hsizer.Add(dlg.measurement_mode,
+					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
+							wx.ALIGN_CENTER_VERTICAL, border=8)
+			dlg.measure_colorimeter = ThemedGenBitmapTextButton(dlg,
+				id_measure_colorimeter, None,
+				lang.getstr("measure"), size=(-1, btn_h), style=wx.NO_BORDER)
+			dlg.measure_colorimeter.BackgroundColour = dlg.BackgroundColour
+			dlg.measure_colorimeter.Bind(wx.EVT_BUTTON, dlg.OnClose)
+			hsizer.Add(dlg.measure_colorimeter,
+					   flag=wx.RIGHT | wx.TOP | wx.BOTTOM |
+							wx.ALIGN_CENTER_VERTICAL, border=4)
+			dlg.measure_colorimeter.Enable(bool(self.worker.displays and
+												colorimeters))
 			def instrument_handler(event):
 				modes = self.get_ccxx_measurement_modes(
 					dlg.instrument.GetStringSelection())
@@ -7763,6 +7817,8 @@ class MainFrame(BaseFrame):
 					modes.values()[-1]))
 				dlg.measurement_mode.Enable(len(modes) > 1)
 				boxsizer.Layout()
+				if event:
+					check_last_ccxx_ti3(event)
 			instrument = getcfg("colorimeter_correction.instrument")
 			if instrument in colorimeters:
 				dlg.instrument.SetStringSelection(instrument)
@@ -7772,6 +7828,7 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode.Disable()
 			if colorimeters:
 				instrument_handler(None)
+			dlg.measurement_mode.initialsel = dlg.measurement_mode.GetSelection()
 			if len(colorimeters) < 2:
 				dlg.instrument.Disable()
 			else:
@@ -7783,10 +7840,7 @@ class MainFrame(BaseFrame):
 					if isinstance(item, (wx.SizerItem, wx.Window)):
 						item.Show(bool(colorimeters) and
 								  dlg.correction_type_matrix.GetValue())
-				dlg.ok.Enable(bool(self.worker.displays and 
-								   reference_instruments and
-								   (colorimeters or
-									dlg.correction_type_spectral.GetValue())))
+				set_ok_btn_state()
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 				dlg.Refresh()
@@ -7796,9 +7850,11 @@ class MainFrame(BaseFrame):
 			dlg.correction_type_spectral.Bind(wx.EVT_RADIOBUTTON,
 											  correction_type_handler)
 			# Layout
+			check_last_ccxx_ti3(dlg.measurement_mode_reference)
+			check_last_ccxx_ti3(dlg.measurement_mode)
 			correction_type_handler(None)
 			result = dlg.ShowModal()
-			if result == wx.ID_OK:
+			if result in (id_measure_reference, id_measure_colorimeter):
 				setcfg("colorimeter_correction.instrument.reference",
 					   dlg.reference_instrument.GetStringSelection())
 				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
@@ -7821,6 +7877,19 @@ class MainFrame(BaseFrame):
 					dlg.instrument.GetStringSelection(), True)
 				setcfg("colorimeter_correction.measurement_mode",
 					   modes[dlg.measurement_mode.GetStringSelection()])
+			elif result == wx.ID_OK:
+				paths = [getcfg("last_reference_ti3_path")]
+				if dlg.correction_type_matrix.GetValue():
+					paths.append(getcfg("last_colorimeter_ti3_path"))
+			else:
+				# Restore TI3 paths if not changed
+				for name in ("reference", "colorimeter"):
+					if (getcfg("last_%s_ti3_path.backup" % name, False) and
+						not getcfg("last_%s_ti3_path" % name, False) and
+						not getcfg("last_%s_ti3_path.current" % name, False)):
+						setcfg("last_%s_ti3_path" % name,
+							   getcfg("last_%s_ti3_path.backup" % name))
+						setcfg("last_%s_ti3_path.backup" % name, None)
 			if result != wx.ID_CANCEL:
 				setcfg("colorimeter_correction.type",
 					   {True: "matrix",
@@ -7830,7 +7899,7 @@ class MainFrame(BaseFrame):
 			result = -1
 		if result == wx.ID_CANCEL:
 			return
-		elif result == wx.ID_OK:
+		elif result in (id_measure_reference, id_measure_colorimeter):
 			# Select CCXX testchart
 			if not is_ccxx_testchart():
 				# Backup testchart selection
@@ -7838,18 +7907,26 @@ class MainFrame(BaseFrame):
 			self.set_testchart(get_ccxx_testchart())
 			# Backup instrument selection
 			setcfg("comport.number.backup", getcfg("comport.number"))
-			# Switch to reference instrument
-			setcfg("comport.number", self.worker.instruments.index(
-				getcfg("colorimeter_correction.instrument.reference")) + 1)
-			# Set measurement mode
-			setcfg("measurement_mode",
-				   getcfg("colorimeter_correction.measurement_mode.reference"))
-			setcfg("measurement_mode.adaptive",
-				   getcfg("colorimeter_correction.measurement_mode.reference.adaptive"))
-			setcfg("measurement_mode.highres",
-				   getcfg("colorimeter_correction.measurement_mode.reference.highres"))
-			setcfg("measurement_mode.projector",
-				   getcfg("colorimeter_correction.measurement_mode.reference.projector"))
+			if result == id_measure_reference:
+				# Switch to reference instrument
+				setcfg("comport.number", self.worker.instruments.index(
+					getcfg("colorimeter_correction.instrument.reference")) + 1)
+				# Set measurement mode
+				setcfg("measurement_mode",
+					   getcfg("colorimeter_correction.measurement_mode.reference"))
+				setcfg("measurement_mode.adaptive",
+					   getcfg("colorimeter_correction.measurement_mode.reference.adaptive"))
+				setcfg("measurement_mode.highres",
+					   getcfg("colorimeter_correction.measurement_mode.reference.highres"))
+				setcfg("measurement_mode.projector",
+					   getcfg("colorimeter_correction.measurement_mode.reference.projector"))
+			else:
+				# Switch to colorimeter
+				setcfg("comport.number", self.worker.instruments.index(
+					getcfg("colorimeter_correction.instrument")) + 1)
+				# Set measurement mode
+				setcfg("measurement_mode",
+					   getcfg("colorimeter_correction.measurement_mode"))
 			self.measure_handler()
 			return
 		try:

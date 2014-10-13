@@ -231,7 +231,7 @@
 	"colorimeter_correction.create": "Crear correccion de colorimetro...",
 	"colorimeter_correction.create.details": "Por favor comprobar los campos de abajo y cambiarlos cuando sea necesario. La descripcion puede contener detalles importantes (p.e. ajustes de pantalla especificas, observador no CIE por defecto o similar).",
 	"colorimeter_correction.create.failure": "Creacion de correcion fallada.",
-	"colorimeter_correction.create.info": "Para crear una correcion de matriz de colorimetro (CCMX) o un ejemplo de archivo de calibracion espectral (CCSS), primero nedesita medir “carta de ajustes para correcion de colorimetro” con un espectrofotometro, y en caso de crear un archivo CCMX, tambien con el colorimetro.\nPara hacer esto, seleccionar “Medir carta de ajustes”.",
+	"colorimeter_correction.create.info": "Para crear una correcion de matriz de colorimetro (CCMX) o un ejemplo de archivo de calibracion espectral (CCSS), primero nedesita medir “carta de ajustes para correcion de colorimetro” con un espectrofotometro, y en caso de crear un archivo CCMX, tambien con el colorimetro.",
 	"colorimeter_correction.create.success": "Correcion creada con exito.",
 	"colorimeter_correction.file.none": "Ninguno",
 	"colorimeter_correction.import": "Importar correciones de colorimetro desde otros programas de calibracion de pantallas...",
