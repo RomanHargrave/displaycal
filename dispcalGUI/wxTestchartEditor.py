@@ -1950,7 +1950,7 @@ class TestchartEditor(BaseFrame):
 		size = int(round(get_default_size() *
 						 float(getcfg("dimensions.measureframe").split(",")[-1])))
 		count = 0
-		bitmap = wx.EmptyBitmap(size, size)
+		bitmap = wx.EmptyBitmap(min(1920, size), min(1080, size))  # Max. FullHD
 		dc = wx.MemoryDC()
 		dc.SelectObject(bitmap)
 		for i in xrange(maxlen):
