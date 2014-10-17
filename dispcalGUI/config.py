@@ -67,6 +67,13 @@ else:
 							else os.path.abspath(unicode(__file__, fs_enc)))
 
 data_dirs = [pydir]
+extra_data_dirs = []
+# Search directories on PATH for data directories so Argyll reference files
+# can be found automatically if Argyll directory not explicitly configured
+for dir_ in getenvu("PATH", "").split(os.pathsep):
+	dir_parent = os.path.dirname(dir_)
+	if os.path.isdir(os.path.join(dir_parent, "ref")):
+		extra_data_dirs.append(dir_parent)
 
 if sys.platform == "win32":
 	if pydir.lower().startswith(exedir.lower()) and pydir != exedir:
@@ -111,18 +118,12 @@ else:
 		if not datahome_default in data_dirs:
 			data_dirs.append(datahome_default)
 		data_dirs.extend(os.path.join(dir_, appname) for dir_ in xdg_data_dirs)
-		data_dirs.extend(os.path.join(dir_, "argyllcms") for dir_ in
-						 xdg_data_dirs)
-		data_dirs.extend(os.path.join(dir_, "color", "argyll") for dir_ in
-						 xdg_data_dirs)
+		extra_data_dirs.extend(os.path.join(dir_, "argyllcms") for dir_ in
+							   xdg_data_dirs)
+		extra_data_dirs.extend(os.path.join(dir_, "color", "argyll") for dir_ in
+							   xdg_data_dirs)
 	exe_ext = ""
 	profile_ext = ".icc"
-# Search directories on PATH for data directories so Argyll reference files
-# can be found automatically if Argyll directory not explicitly configured
-for dir_ in getenvu("PATH", "").split(os.pathsep):
-	dir_parent = os.path.dirname(dir_)
-	if os.path.isdir(os.path.join(dir_parent, "ref")):
-		data_dirs.append(dir_parent)
 
 storage = os.path.join(datahome, "storage")
 
@@ -366,6 +367,7 @@ def get_data_path(relpath, rex=None):
 	argyll_dir = getcfg("argyll.dir")
 	if argyll_dir and os.path.isdir(os.path.join(argyll_dir, "..", "ref")):
 		dirs.append(os.path.dirname(argyll_dir))
+	dirs.extend(extra_data_dirs)
 	intersection = []
 	paths = []
 	for dir_ in dirs:
