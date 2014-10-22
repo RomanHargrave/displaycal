@@ -304,12 +304,12 @@ class ScriptingClientFrame(SimpleTerminal):
 			return exception
 
 	def get_commands(self):
-		if self.conn:
-			commands = self.get_common_commands() + ["disconnect", "echo"]
-		else:
-			commands = []
-		return commands + ["clear", "connect <ip>:<port>",
-						   "getscriptinghosts"]
+		return ["clear", "connect <ip>:<port>", "disconnect", "echo",
+				"getscriptinghosts"]
+
+	def get_common_commands(self):
+		cmds = SimpleTerminal.get_common_commands(self)
+		return filter(lambda cmd: not cmd.startswith("echo "), cmds)
 
 	def get_last_line(self):
 		linecount = self.console.GetNumberOfLines()
@@ -527,7 +527,9 @@ class ScriptingClientFrame(SimpleTerminal):
 			lastline = self.console.GetLineText(linecount - 1)
 			if lastline:
 				self.add_text("\n")
-			self.add_text(" ".join(data[1:]) + "\n")
+			txt = " ".join(data[1:])
+			safe_print(txt)
+			self.add_text(txt + "\n")
 			if lastline:
 				self.add_text("> ")
 			return "ok"

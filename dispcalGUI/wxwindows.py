@@ -720,7 +720,7 @@ class BaseFrame(wx.Frame):
 	def get_common_commands(self):
 		cmds = ["abort", "activate [window]",
 				"alt", "cancel", "ok [filename]", "close [window]",
-				"getactivewindow", "getappname",
+				"echo <string>", "getactivewindow", "getappname",
 				"getcellvalues [window] <grid>", "getcommands",
 				"getcfg [option]", "getdefault <option>", "getdefaults",
 				"getmenus", "getmenuitems [menu]", "getstate",
@@ -850,6 +850,10 @@ class BaseFrame(wx.Frame):
 						response = "ok"
 					else:
 						response = "forbidden"
+		elif (data[0] == "echo" and
+			  "echo <string>" in self.get_common_commands() and len(data) > 1):
+			txt = " ".join(data[1:])
+			safe_print(txt)
 		elif data[0] == "invokemenu" and len(data) == 3:
 			if self.get_app_state("plain") == "idle":
 				menubar = self.GetMenuBar()
