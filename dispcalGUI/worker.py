@@ -1857,10 +1857,18 @@ class Worker(object):
 			return
 		self.progress_wnd.Pulse(" " * 4)
 		if self.get_instrument_name() == "ColorMunki":
-			lstr ="instrument.calibrate.colormunki"
+			msg = lang.getstr("instrument.calibrate.colormunki")
 		else:
-			lstr = "instrument.calibrate"
-		dlg = ConfirmDialog(self.progress_wnd, msg=lang.getstr(lstr) +
+			serial = re.search("Serial no. (\S+)", self.recent.read(), re.I)
+			if serial:
+				# Reflective calibration, white reference tile required
+				# (e.g. i1 Pro hires mode)
+				msg = lang.getstr("instrument.calibrate.reflective",
+								  serial.group(1))
+			else:
+				# Emissive dark calibration
+				msg = lang.getstr("instrument.calibrate")
+		dlg = ConfirmDialog(self.progress_wnd, msg=msg +
 							"\n\n" + self.get_instrument_name(), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 

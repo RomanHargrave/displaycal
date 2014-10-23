@@ -547,6 +547,7 @@
 	"instrument": "Messgerät",
 	"instrument.calibrate": "Setzen Sie das Messgerät auf einen dunklen, nichtreflektierenden Untergrund oder auf eine eventuell zum Messgerät-Zubehör gehörende Kalibrierplatte und drücken Sie dann OK, um das Messgerät zu eichen.",
 	"instrument.calibrate.colormunki": "Drehen Sie den ColorMunki-Sensor in die Kalibrierposition und drücken Sie dann OK, um das Messgerät zu eichen.",
+	"instrument.calibrate.reflective": "Setzen Sie das Messgerät auf die zum Messgerät-Zubehör gehörende Weißkachel mit der Seriennummer %s und drücken Sie dann OK, um das Messgerät zu eichen.",
 	"instrument.calibrating": "Messgerätekalibrierung...",
 	"instrument.connect": "Bitte schließen Sie jetzt Ihr Messgerät an.",
 	"instrument.initializing": "Initialisiere Messgerät, bitte warten...",

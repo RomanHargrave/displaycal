@@ -547,6 +547,7 @@
 	"instrument": "Instrument",
 	"instrument.calibrate": "Place the instrument on a dark, matte surface or onto its calibration plate and press OK to calibrate the instrument.",
 	"instrument.calibrate.colormunki": "Set the ColorMunki sensor to calibration position and press OK to calibrate the instrument.",
+	"instrument.calibrate.reflective": "Place the instrument onto its reflective white reference serial no. %s and press OK to calibrate the instrument.",
 	"instrument.calibrating": "Calibrating instrument...",
 	"instrument.connect": "Please connect your measurement instrument now.",
 	"instrument.initializing": "Setting up the instrument, please wait...",
