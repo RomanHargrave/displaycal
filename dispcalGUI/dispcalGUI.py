@@ -7625,13 +7625,6 @@ class MainFrame(BaseFrame):
 		id_measure_reference = wx.NewId()
 		id_measure_colorimeter = wx.NewId()
 		if not paths:
-			if event and event is not True:
-				for name in ("reference", "colorimeter"):
-					if not getcfg("last_%s_ti3_path.backup" % name, False):
-						setcfg("last_%s_ti3_path.backup" % name,
-							   getcfg("last_%s_ti3_path" % name))
-						setcfg("last_%s_ti3_path" % name, None)
-						setcfg("last_%s_ti3_path.current" % name, None)
 			dlg = ConfirmDialog(parent,
 								title=lang.getstr("colorimeter_correction.create"),
 								msg=lang.getstr("colorimeter_correction.create.info"), 
@@ -7720,14 +7713,14 @@ class MainFrame(BaseFrame):
 												 name)).startswith(instrument +
 																   " &"))):
 					if getcfg("last_%s_ti3_path" % name, False):
-						setcfg("last_%s_ti3_path.current" % name,
+						setcfg("last_%s_ti3_path.backup" % name,
 							   getcfg("last_%s_ti3_path" % name))
 						setcfg("last_%s_ti3_path" % name, None)
 				else:
-					if getcfg("last_%s_ti3_path.current" % name, False):
+					if getcfg("last_%s_ti3_path.backup" % name, False):
 						setcfg("last_%s_ti3_path" % name,
-							   getcfg("last_%s_ti3_path.current" % name))
-						setcfg("last_%s_ti3_path.current" % name, None)
+							   getcfg("last_%s_ti3_path.backup" % name))
+						setcfg("last_%s_ti3_path.backup" % name, None)
 				if getcfg("last_%s_ti3_path" % name, False):
 					bmp = geticon(16, "checkmark")
 				else:
@@ -7888,19 +7881,13 @@ class MainFrame(BaseFrame):
 					dlg.instrument.GetStringSelection(), True)
 				setcfg("colorimeter_correction.measurement_mode",
 					   modes[dlg.measurement_mode.GetStringSelection()])
+				# Clear previous TI3 paths (if any)
+				for name in ("colorimeter", "reference"):
+					setcfg("last_%s_ti3_path.backup" % name, None)
 			elif result == wx.ID_OK:
 				paths = [getcfg("last_reference_ti3_path")]
 				if dlg.correction_type_matrix.GetValue():
 					paths.append(getcfg("last_colorimeter_ti3_path"))
-			else:
-				# Restore TI3 paths if not changed
-				for name in ("reference", "colorimeter"):
-					if (getcfg("last_%s_ti3_path.backup" % name, False) and
-						not getcfg("last_%s_ti3_path" % name, False) and
-						not getcfg("last_%s_ti3_path.current" % name, False)):
-						setcfg("last_%s_ti3_path" % name,
-							   getcfg("last_%s_ti3_path.backup" % name))
-						setcfg("last_%s_ti3_path.backup" % name, None)
 			if result != wx.ID_CANCEL:
 				setcfg("colorimeter_correction.type",
 					   {True: "matrix",
