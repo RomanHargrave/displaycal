@@ -6694,9 +6694,12 @@ class MainFrame(BaseFrame):
 						os.path.isfile(getcfg("last_reference_ti3_path")) and
 						(getcfg("colorimeter_correction.type") == "spectral" or
 						 (getcfg("last_colorimeter_ti3_path") and
-						  os.path.isfile(getcfg("last_colorimeter_ti3_path"))))):
+						  os.path.isfile(getcfg("last_colorimeter_ti3_path")) and
+						  self.worker.get_instrument_name() ==
+						  getcfg("colorimeter_correction.instrument")))):
 						paths.append(getcfg("last_reference_ti3_path"))
-						if getcfg("colorimeter_correction.type") == "matrix":
+						if (self.worker.get_instrument_name() ==
+							getcfg("colorimeter_correction.instrument")):
 							paths.append(getcfg("last_colorimeter_ti3_path"))
 					wx.CallAfter(self.create_colorimeter_correction_handler,
 								 True, paths=paths)
@@ -7711,7 +7714,11 @@ class MainFrame(BaseFrame):
 					instrument_ctrl = dlg.reference_instrument
 					measurement_mode_ctrl = dlg.measurement_mode_reference
 				if (instrument_ctrl.GetStringSelection() != instrument or
-					measurement_mode_ctrl.GetSelection() != measurement_mode_ctrl.initialsel):
+					measurement_mode_ctrl.GetSelection() != measurement_mode_ctrl.initialsel or
+					(getcfg("last_%s_ti3_path" % name, False) and
+					 not os.path.basename(getcfg("last_%s_ti3_path" %
+												 name)).startswith(instrument +
+																   " &"))):
 					if getcfg("last_%s_ti3_path" % name, False):
 						setcfg("last_%s_ti3_path.current" % name,
 							   getcfg("last_%s_ti3_path" % name))
