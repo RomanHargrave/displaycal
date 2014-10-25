@@ -3389,7 +3389,8 @@ class ICCProfile:
 		for i, XYZ in values.iteritems():
 			rgb = mtx.inverted() * XYZ
 			for j, channel in enumerate(("r", "g", "b")):
-				self.tags[channel + "TRC"][i] = min(rgb[j] * 65535, 65535)
+				self.tags[channel + "TRC"][i] = max(min(rgb[j] * 65535, 65535),
+													0)
 		self.set_blackpoint(XYZbp)
 	
 	def set_dicom_trc(self, XYZbp, white_cdm2=100, size=1024):
