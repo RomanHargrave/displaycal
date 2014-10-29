@@ -486,7 +486,6 @@ class SynthICCFrame(BaseFrame):
 			gamma = 2.2
 			self.trc_gamma_ctrl.Value = str(gamma)
 		white = XYZ["wX"], XYZ["wY"], XYZ["wZ"]
-		black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
 		if self.trc_ctrl.GetSelection() == 0:
 			# Gamma
 			trc = gamma
@@ -519,6 +518,11 @@ class SynthICCFrame(BaseFrame):
 											   trc,
 											   defaultFile,
 											   getcfg("copyright"))
+			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
+			profile.tags.rTRC = ICCP.CurveType()
+			profile.tags.gTRC = ICCP.CurveType()
+			profile.tags.bTRC = ICCP.CurveType()
+			channels = "rgb"
 		else:
 			# Grayscale profile
 			profile = ICCP.ICCProfile()
@@ -528,43 +532,58 @@ class SynthICCFrame(BaseFrame):
 			(profile.tags.wtpt.X,
 			 profile.tags.wtpt.Y,
 			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
-		profile.tags.rTRC = ICCP.CurveType()
-		profile.tags.gTRC = ICCP.CurveType()
-		profile.tags.bTRC = ICCP.CurveType()
+			black = [XYZ["wY"] * (getcfg("synthprofile.black_luminance") /
+								  getcfg("synthprofile.luminance"))] * 3
+			profile.tags.kTRC = ICCP.CurveType()
+			channels = "k"
 		if self.trc_ctrl.GetSelection() == 1:
 			# DICOM
 			# Absolute luminance values!
 			try:
-				profile.set_dicom_trc([v * getcfg("synthprofile.luminance")
-									   for v in black],
-									  getcfg("synthprofile.luminance"))
+				if self.colorspace_rgb_ctrl.Value:
+					# Color profile
+					profile.set_dicom_trc([v * getcfg("synthprofile.luminance")
+										   for v in black],
+										  getcfg("synthprofile.luminance"))
+				else:
+					# Grayscale profile
+					profile.tags.kTRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
+													getcfg("synthprofile.luminance"))
 			except ValueError, exception:
 				show_result_dialog(exception, self)
 				return
-		elif self.trc_ctrl.GetSelection() in (0, 4) and black != (0, 0, 0):
+		elif self.trc_ctrl.GetSelection() in (0, 4) and black != [0, 0, 0]:
 			# Gamma with output offset or Rec. 1886-like
 			outoffset = getcfg("synthprofile.trc_output_offset")
-			profile.set_bt1886_trc(black, outoffset, gamma,
-								   getcfg("synthprofile.trc_gamma_type"))
-		elif black != (0, 0, 0):
-			rXYZ = profile.tags.rXYZ.values()
-			gXYZ = profile.tags.gXYZ.values()
-			bXYZ = profile.tags.bXYZ.values()
-			mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-									   [rXYZ[1], gXYZ[1], bXYZ[1]],
-									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-			rgbblack = mtx.inverted() * black
+			if self.colorspace_rgb_ctrl.Value:
+				# Color profile
+				profile.set_bt1886_trc(black, outoffset, gamma,
+									   getcfg("synthprofile.trc_gamma_type"))
+			else:
+				# Grayscale profile
+				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, gamma,
+												 getcfg("synthprofile.trc_gamma_type"))
+		elif black != [0, 0, 0]:
+			if self.colorspace_rgb_ctrl.Value:
+				# Color profile
+				rXYZ = profile.tags.rXYZ.values()
+				gXYZ = profile.tags.gXYZ.values()
+				bXYZ = profile.tags.bXYZ.values()
+				mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+										   [rXYZ[1], gXYZ[1], bXYZ[1]],
+										   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+				rgbblack = mtx.inverted() * black
+			else:
+				# Grayscale profile
+				rgbblack = black
 			# Optimize for uInt16Number encoding
 			rgbblack = [round(max(v, 0) * 65535) / 65535 for v in rgbblack]
-			for i, channel in enumerate("rgb"):
+			for i, channel in enumerate(channels):
 				TRC = profile.tags["%sTRC" % channel]
 				TRC.set_trc(trc, 1024, vmin=rgbblack[i] * 65535)
 		else:
-			for channel in "rgb":
+			for channel in channels:
 				profile.tags["%sTRC" % channel].set_trc(trc, 1)
-		if not self.colorspace_rgb_ctrl.Value:
-			# Grayscale profile
-			profile.tags.kTRC = profile.tags.gTRC
 		for tagname in ("lumi", "bkpt"):
 			if tagname == "lumi":
 				# Absolute
