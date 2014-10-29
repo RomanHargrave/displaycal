@@ -7888,6 +7888,12 @@ class MainFrame(BaseFrame):
 				paths = [getcfg("last_reference_ti3_path")]
 				if dlg.correction_type_matrix.GetValue():
 					paths.append(getcfg("last_colorimeter_ti3_path"))
+			# Restore previous TI3 paths (if any)
+			for name in ("colorimeter", "reference"):
+				if getcfg("last_%s_ti3_path.backup" % name, False):
+					setcfg("last_%s_ti3_path" % name,
+						   getcfg("last_%s_ti3_path.backup" % name))
+					setcfg("last_%s_ti3_path.backup" % name, None)
 			if result != wx.ID_CANCEL:
 				setcfg("colorimeter_correction.type",
 					   {True: "matrix",
