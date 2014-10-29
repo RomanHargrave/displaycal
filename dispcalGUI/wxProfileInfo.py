@@ -1257,9 +1257,9 @@ class ProfileInfoFrame(LUTFrame):
 			self.client.SetEnableGrid(False)
 			self.client.SetEnablePointLabel(True)
 			if ("vcgt" in self.profile.tags or
-				("rTRC" in self.profile.tags and
-				 "gTRC" in self.profile.tags and
-				 "bTRC" in self.profile.tags) or
+				(self.rTRC and
+				 self.gTRC and
+				 self.bTRC) or
 				(("B2A0" in self.profile.tags or
 				  "A2B0" in self.profile.tags) and
 				 self.profile.colorSpace == "RGB")):
@@ -1286,9 +1286,9 @@ class ProfileInfoFrame(LUTFrame):
 				self.DrawCanvas(reset=reset)
 				return
 		self.profile = profile
-		self.rTRC = profile.tags.get("rTRC")
-		self.gTRC = profile.tags.get("gTRC")
-		self.bTRC = profile.tags.get("bTRC")
+		self.rTRC = profile.tags.get("rTRC", profile.tags.get("kTRC"))
+		self.gTRC = profile.tags.get("gTRC", profile.tags.get("kTRC"))
+		self.bTRC = profile.tags.get("bTRC", profile.tags.get("kTRC"))
 		self.trc = None
 		
 		self.gamut_view_options.direction_select.Show("B2A0" in
@@ -1299,11 +1299,11 @@ class ProfileInfoFrame(LUTFrame):
 													 "A2B0" in profile.tags)
 		self.gamut_view_options.toggle_clut.Show("B2A0" in profile.tags or
 												 "A2B0" in profile.tags)
-		self.gamut_view_options.toggle_clut.Enable(isinstance(profile.tags.get("rTRC"),
+		self.gamut_view_options.toggle_clut.Enable(isinstance(self.rTRC,
 															  ICCP.CurveType) and
-												   isinstance(profile.tags.get("gTRC"),
+												   isinstance(self.gTRC,
 															  ICCP.CurveType) and
-												   isinstance(profile.tags.get("bTRC"),
+												   isinstance(self.bTRC,
 															  ICCP.CurveType))
 		self.toggle_clut.SetValue("B2A0" in profile.tags or
 								  "A2B0" in profile.tags)
@@ -1313,8 +1313,7 @@ class ProfileInfoFrame(LUTFrame):
 		choice = []
 		info = profile.get_info()
 		self.client.errors = []
-		if (("rTRC" in self.profile.tags and "gTRC" in self.profile.tags and
-			 "bTRC" in self.profile.tags) or
+		if ((self.rTRC and self.gTRC and self.bTRC) or
 			(("B2A0" in self.profile.tags or "A2B0" in self.profile.tags) and
 			 self.profile.colorSpace == "RGB")):
 			# vcgt needs to be in here for compatibility with LUTFrame

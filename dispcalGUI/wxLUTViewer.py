@@ -1163,30 +1163,30 @@ class LUTFrame(BaseFrame):
 		if (intent == "r" and (not ("B2A0" in self.profile.tags or
 									"A2B0" in self.profile.tags) or
 							   not self.toggle_clut.GetValue()) and
-			isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
-			isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
-			isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType)):
+			isinstance(self.rTRC, ICCP.CurveType) and
+			isinstance(self.gTRC, ICCP.CurveType) and
+			isinstance(self.bTRC, ICCP.CurveType)):
 			#self.rTRC = self.profile.tags.rTRC
 			#self.gTRC = self.profile.tags.gTRC
 			#self.bTRC = self.profile.tags.bTRC
 			#return
 			# Use TRC tags if no LUT
-			if (len(self.profile.tags.rTRC) == 1 and
-				len(self.profile.tags.gTRC) == 1 and
-				len(self.profile.tags.bTRC) == 1):
+			if (len(self.rTRC) == 1 and
+				len(self.gTRC) == 1 and
+				len(self.bTRC) == 1):
 				# Gamma, convert to curves
 				trc = {"rTRC": [],
 					   "gTRC": [],
 					   "bTRC": []}
 				for sig in ("rTRC", "gTRC", "bTRC"):
-					gamma = self.profile.tags[sig][0]
+					gamma = getattr(self, sig)[0]
 					setattr(self, sig, CoordinateType())
 					for i in xrange(256):
 						trc[sig].append(math.pow(i / 255.0, gamma) * 65535)
 			else:
-				trc = {"rTRC": self.profile.tags.rTRC,
-					   "gTRC": self.profile.tags.gTRC,
-					   "bTRC": self.profile.tags.bTRC}
+				trc = {"rTRC": self.rTRC,
+					   "gTRC": self.gTRC,
+					   "bTRC": self.bTRC}
 			# Curves
 			for sig in ("rTRC", "gTRC", "bTRC"):
 				x, xp, y, yp = [], [], [], []
@@ -1378,9 +1378,9 @@ class LUTFrame(BaseFrame):
 			title = lang.getstr("calibration.lut_viewer.title")
 		self.SetTitle(title)
 		self.profile = profile
-		self.rTRC = profile.tags.get("rTRC")
-		self.gTRC = profile.tags.get("gTRC")
-		self.bTRC = profile.tags.get("bTRC")
+		self.rTRC = profile.tags.get("rTRC", profile.tags.get("kTRC"))
+		self.gTRC = profile.tags.get("gTRC", profile.tags.get("kTRC"))
+		self.bTRC = profile.tags.get("bTRC", profile.tags.get("kTRC"))
 		self.trc = None
 		curves = []
 		curves.append(lang.getstr('vcgt'))
@@ -1585,9 +1585,9 @@ class LUTFrame(BaseFrame):
 							  ("B2A0" in self.profile.tags or
 							   "A2B0" in self.profile.tags))
 		self.toggle_clut.Enable(self.plot_mode_select.GetSelection() == 1 and
-								isinstance(self.profile.tags.get("rTRC"), ICCP.CurveType) and
-								isinstance(self.profile.tags.get("gTRC"), ICCP.CurveType) and
-								isinstance(self.profile.tags.get("bTRC"), ICCP.CurveType))
+								isinstance(self.rTRC, (ICCP.CurveType, CoordinateType)) and
+								isinstance(self.gTRC, (ICCP.CurveType, CoordinateType)) and
+								isinstance(self.bTRC, (ICCP.CurveType, CoordinateType)))
 		self.save_plot_btn.Enable(bool(curves))
 		if hasattr(self, "reload_vcgt_btn"):
 			self.reload_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
