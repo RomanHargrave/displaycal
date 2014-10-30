@@ -460,6 +460,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None,
 	if getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO":
 		setcfg("colorimeter_correction_matrix_file", ":" + path)
 	if update_comports:
+		cgats = CGATS.CGATS(cgats)
 		instrument = (cgats.queryv1("INSTRUMENT") or
 					  getcfg("colorimeter_correction.instrument"))
 		if instrument:
