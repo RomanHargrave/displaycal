@@ -509,6 +509,36 @@ def get_argyll_data_files(scope, wildcard):
 	return data_files
 
 
+def get_cgats_measurement_mode(cgats, instrument):
+	base_id = cgats.queryv1("DISPLAY_TYPE_BASE_ID")
+	refresh = cgats.queryv1("DISPLAY_TYPE_REFRESH")
+	mode = None
+	if base_id:
+		# IMPORTANT: Make changes aswell in the following locations:
+		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
+		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
+		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
+		# - worker.Worker.instrument_can_use_ccxx
+		if instrument == "ColorHug":
+			mode = {1: "F",
+					2: "R"}.get(base_id)
+		elif instrument == "ColorMunki Smile":
+			mode = {1: "f"}.get(base_id)
+		elif instrument == "Colorimtre HCFR":
+			mode = {1: "R"}.get(base_id)
+		elif instrument == "K-10":
+			mode = {1: "F"}.get(base_id)
+		else:
+			mode = {1: "l",
+					2: "c",
+					3: "g"}.get(base_id)
+	elif refresh == "NO":
+		mode = "l"
+	elif refresh == "YES":
+		mode = "c"
+	return mode
+
+
 def get_cgats_path(cgats):
 	descriptor = re.search('\nDESCRIPTOR\s+"(.+?)"\n', cgats)
 	if descriptor:
@@ -2915,34 +2945,10 @@ class MainFrame(BaseFrame):
 			except (IOError, CGATS.CGATSError), exception:
 				safe_print("%s:" % ccmx[1], exception)
 			else:
-				base_id = cgats.queryv1("DISPLAY_TYPE_BASE_ID")
-				refresh = cgats.queryv1("DISPLAY_TYPE_REFRESH")
-				mode = None
-				if base_id:
-					# Set measurement mode according to base ID
-
-					# IMPORTANT: Make changes aswell in the following locations:
-					# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
-					# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
-					# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
-					# - worker.Worker.instrument_can_use_ccxx
-					if self.worker.get_instrument_name() == "ColorHug":
-						mode = {1: "F",
-								2: "R"}.get(base_id)
-					elif self.worker.get_instrument_name() == "ColorMunki Smile":
-						mode = {1: "f"}.get(base_id)
-					elif self.worker.get_instrument_name() == "Colorimtre HCFR":
-						mode = {1: "R"}.get(base_id)
-					elif self.worker.get_instrument_name() == "K-10":
-						mode = {1: "F"}.get(base_id)
-					else:
-						mode = {1: "l",
-								2: "c",
-								3: "g"}.get(base_id)
-				elif refresh == "NO":
-					mode = "l"
-				elif refresh == "YES":
-					mode = "c"
+				# IMPORTANT: Make changes aswell in the following locations:
+				# - dispcalGUI.get_cgats_measurement_mode
+				mode = get_cgats_measurement_mode(cgats,
+					self.worker.get_instrument_name())
 				if mode:
 					if (update_measurement_mode or
 						mode == getcfg("measurement_mode")):
@@ -7700,41 +7706,60 @@ class MainFrame(BaseFrame):
 									 os.path.isfile(getcfg("last_colorimeter_ti3_path"))) or
 									dlg.correction_type_spectral.GetValue())))
 			def check_last_ccxx_ti3(event):
+				cfgname = "colorimeter_correction.measurement_mode"
 				if event.GetId() in (dlg.instrument.Id,
 									 dlg.measurement_mode.Id):
 					name = "colorimeter"
-					instrument = getcfg("colorimeter_correction.instrument")
-					instrument_ctrl = dlg.instrument
-					measurement_mode_ctrl = dlg.measurement_mode
+					instrument = dlg.instrument.GetStringSelection()
+					measurement_mode = self.get_ccxx_measurement_modes(
+						instrument, True)[dlg.measurement_mode.GetStringSelection()]
 				else:
 					name = "reference"
-					instrument = getcfg("colorimeter_correction.instrument." +
-										name)
-					instrument_ctrl = dlg.reference_instrument
-					measurement_mode_ctrl = dlg.measurement_mode_reference
-				if (instrument_ctrl.GetStringSelection() != instrument or
-					measurement_mode_ctrl.GetSelection() != measurement_mode_ctrl.initialsel or
-					(getcfg("last_%s_ti3_path" % name, False) and
-					 not os.path.basename(getcfg("last_%s_ti3_path" %
-												 name)).startswith(instrument +
-																   " &"))):
-					if getcfg("last_%s_ti3_path" % name, False):
-						setcfg("last_%s_ti3_path.backup" % name,
-							   getcfg("last_%s_ti3_path" % name))
+					cfgname += "." + name
+					instrument = dlg.reference_instrument.GetStringSelection()
+					measurement_mode = dlg.modes_ab["spect"][
+						dlg.measurement_mode_reference.GetSelection()]
+				if getcfg("last_%s_ti3_path.backup" % name, False):
+					setcfg("last_%s_ti3_path" % name,
+						   getcfg("last_%s_ti3_path.backup" % name))
+					setcfg("last_%s_ti3_path.backup" % name, None)
+				ti3 = getcfg("last_%s_ti3_path" % name, False)
+				if ti3:
+					if os.path.isfile(ti3):
+						cgats = CGATS.CGATS(ti3)
+						cgats_instrument = cgats.queryv1("TARGET_INSTRUMENT")
+						if cgats_instrument:
+							cgats_instrument = get_canonical_instrument_name(
+								cgats_instrument)
+						if name == "reference" and getcfg(cfgname + ".projector"):
+							cgats_measurement_mode = "p"
+						else:
+							cgats_measurement_mode = get_cgats_measurement_mode(
+								cgats, cgats_instrument)
+						if cgats_measurement_mode:
+							instrument_features = self.worker.get_instrument_features(instrument)
+							if (instrument_features.get("adaptive_mode") and
+								getcfg(cfgname + ".adaptive")):
+								cgats_measurement_mode += "V"
+							if (instrument_features.get("highres_mode") and
+								cgats.queryv1("SPECTRAL_BANDS") > 36):
+								cgats_measurement_mode += "H"
+						if (cgats_instrument != instrument or
+							not cgats_measurement_mode or
+							not measurement_mode.startswith(cgats_measurement_mode)):
+							setcfg("last_%s_ti3_path.backup" % name,
+								   getcfg("last_%s_ti3_path" % name))
+							setcfg("last_%s_ti3_path" % name, None)
+					else:
 						setcfg("last_%s_ti3_path" % name, None)
-				else:
-					if getcfg("last_%s_ti3_path.backup" % name, False):
-						setcfg("last_%s_ti3_path" % name,
-							   getcfg("last_%s_ti3_path.backup" % name))
-						setcfg("last_%s_ti3_path.backup" % name, None)
-				if getcfg("last_%s_ti3_path" % name, False):
+				ti3 = getcfg("last_%s_ti3_path" % name, False)
+				if ti3:
 					bmp = geticon(16, "checkmark")
 				else:
 					bmp = geticon(16, "empty")
 				getattr(dlg, "measure_" + name).SetBitmapLabel(bmp)
 				getattr(dlg, "measure_" + name).Refresh()
-				getattr(dlg, "measure_" + name)._bmp.SetToolTipString(
-					getcfg("last_%s_ti3_path" % name, False) or "")
+				getattr(dlg, "measure_" + name)._bmp.SetToolTipString(ti3 or "")
 				if isinstance(event, wx.Event):
 					set_ok_btn_state()
 			dlg.measurement_mode_reference.Bind(wx.EVT_CHOICE,
@@ -7759,7 +7784,7 @@ class MainFrame(BaseFrame):
 			dlg.measure_reference.Enable(bool(self.worker.displays and
 											  reference_instruments))
 			def reference_instrument_handler(event):
-				mode, modes, modes_ab, modes_ba = self.get_measurement_modes(
+				mode, modes, dlg.modes_ab, modes_ba = self.get_measurement_modes(
 					dlg.reference_instrument.GetStringSelection(), "spect",
 					"colorimeter_correction.measurement_mode.reference")
 				dlg.measurement_mode_reference.SetItems(modes["spect"])
@@ -7779,7 +7804,6 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode_reference.Disable()
 			if reference_instruments:
 				reference_instrument_handler(None)
-			dlg.measurement_mode_reference.initialsel = dlg.measurement_mode_reference.GetSelection()
 			if len(reference_instruments) < 2:
 				dlg.reference_instrument.Disable()
 			else:
@@ -7824,7 +7848,7 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode.SetItems(modes.values())
 				dlg.measurement_mode.SetStringSelection(
 					modes.get(getcfg("colorimeter_correction.measurement_mode"),
-					modes.values()[-1]))
+							  modes.values()[-1]))
 				dlg.measurement_mode.Enable(len(modes) > 1)
 				boxsizer.Layout()
 				if event:
@@ -7838,7 +7862,6 @@ class MainFrame(BaseFrame):
 				dlg.measurement_mode.Disable()
 			if colorimeters:
 				instrument_handler(None)
-			dlg.measurement_mode.initialsel = dlg.measurement_mode.GetSelection()
 			if len(colorimeters) < 2:
 				dlg.instrument.Disable()
 			else:
@@ -7887,9 +7910,6 @@ class MainFrame(BaseFrame):
 					dlg.instrument.GetStringSelection(), True)
 				setcfg("colorimeter_correction.measurement_mode",
 					   modes[dlg.measurement_mode.GetStringSelection()])
-				# Clear previous TI3 paths (if any)
-				for name in ("colorimeter", "reference"):
-					setcfg("last_%s_ti3_path.backup" % name, None)
 			elif result == wx.ID_OK:
 				paths = [getcfg("last_reference_ti3_path")]
 				if dlg.correction_type_matrix.GetValue():
