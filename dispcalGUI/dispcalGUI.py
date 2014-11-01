@@ -7731,8 +7731,11 @@ class MainFrame(BaseFrame):
 						if cgats_instrument:
 							cgats_instrument = get_canonical_instrument_name(
 								cgats_instrument)
-						if name == "reference" and getcfg(cfgname + ".projector"):
-							cgats_measurement_mode = "p"
+						if name == "reference":
+							if getcfg(cfgname + ".projector"):
+								cgats_measurement_mode = "p"
+							else:
+								cgats_measurement_mode = getcfg(cfgname)
 						else:
 							cgats_measurement_mode = get_cgats_measurement_mode(
 								cgats, cgats_instrument)
@@ -7745,8 +7748,7 @@ class MainFrame(BaseFrame):
 								cgats.queryv1("SPECTRAL_BANDS") > 36):
 								cgats_measurement_mode += "H"
 						if (cgats_instrument != instrument or
-							not cgats_measurement_mode or
-							not measurement_mode.startswith(cgats_measurement_mode)):
+							cgats_measurement_mode != measurement_mode):
 							setcfg("last_%s_ti3_path.backup" % name,
 								   getcfg("last_%s_ti3_path" % name))
 							setcfg("last_%s_ti3_path" % name, None)
