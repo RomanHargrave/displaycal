@@ -7726,7 +7726,11 @@ class MainFrame(BaseFrame):
 				ti3 = getcfg("last_%s_ti3_path" % name, False)
 				if ti3:
 					if os.path.isfile(ti3):
-						cgats = CGATS.CGATS(ti3)
+						try:
+							cgats = CGATS.CGATS(ti3)
+						except (IOError, CGATS.CGATSError), exception:
+							show_result_dialog(exception, dlg)
+							cgats = CGATS.CGATS()
 						cgats_instrument = cgats.queryv1("TARGET_INSTRUMENT")
 						if cgats_instrument:
 							cgats_instrument = get_canonical_instrument_name(
