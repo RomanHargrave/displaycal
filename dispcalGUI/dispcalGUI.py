@@ -7398,7 +7398,7 @@ class MainFrame(BaseFrame):
 		elif data[0] == "restore-defaults":
 			# Restore defaults
 			wx.CallAfter(self.restore_defaults_handler, include=data[1:])
-		elif data[0] == "set-language" and len(data) == 2:
+		elif data[0] == "setlanguage" and len(data) == 2:
 			setcfg("lang", data[1])
 			menuitem = self.menubar.FindItemById(lang.ldict[lang.getcode()].menuitem_id)
 			event = CustomEvent(wx.EVT_MENU.typeId, menuitem)

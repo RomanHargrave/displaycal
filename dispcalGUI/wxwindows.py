@@ -733,7 +733,7 @@ class BaseFrame(wx.Frame):
 		if hasattr(self, "update_controls"):
 			cmds.append("refresh")
 			if hasattr(self, "panel"):
-				cmds.append("set-language <languagecode>")
+				cmds.append("setlanguage <languagecode>")
 		return cmds
 
 	def get_top_window(self):
@@ -1201,7 +1201,7 @@ class BaseFrame(wx.Frame):
 									continue
 							setcfg(name, None)
 						response = "ok"
-					elif (data[0] == "set-language" and len(data) == 2 and
+					elif (data[0] == "setlanguage" and len(data) == 2 and
 						  hasattr(self, "panel") and
 						  hasattr(self, "update_controls")):
 						setcfg("lang", data[1])
