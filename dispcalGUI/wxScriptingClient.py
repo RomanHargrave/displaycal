@@ -304,8 +304,9 @@ class ScriptingClientFrame(SimpleTerminal):
 			return exception
 
 	def get_commands(self):
-		return ["clear", "connect <ip>:<port>", "disconnect", "echo",
-				"getscriptinghosts"]
+		return self.get_common_commands() + ["clear", "connect <ip>:<port>",
+											 "disconnect", "echo <string>",
+											 "getscriptinghosts"]
 
 	def get_common_commands(self):
 		cmds = SimpleTerminal.get_common_commands(self)
