@@ -7880,8 +7880,7 @@ class MainFrame(BaseFrame):
 				dlg.Freeze()
 				for item in list(boxsizer.Children) + [boxsizer.StaticBox]:
 					if isinstance(item, (wx.SizerItem, wx.Window)):
-						item.Show(bool(colorimeters) and
-								  dlg.correction_type_matrix.GetValue())
+						item.Show(dlg.correction_type_matrix.GetValue())
 				set_ok_btn_state()
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
