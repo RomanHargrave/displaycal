@@ -7712,7 +7712,7 @@ class MainFrame(BaseFrame):
 					name = "colorimeter"
 					instrument = dlg.instrument.GetStringSelection()
 					measurement_mode = self.get_ccxx_measurement_modes(
-						instrument, True)[dlg.measurement_mode.GetStringSelection()]
+						instrument, True).get(dlg.measurement_mode.GetStringSelection())
 				else:
 					name = "reference"
 					cfgname += "." + name
@@ -7917,8 +7917,9 @@ class MainFrame(BaseFrame):
 					   dlg.instrument.GetStringSelection())
 				modes = self.get_ccxx_measurement_modes(
 					dlg.instrument.GetStringSelection(), True)
-				setcfg("colorimeter_correction.measurement_mode",
-					   modes[dlg.measurement_mode.GetStringSelection()])
+				if dlg.measurement_mode.GetStringSelection() in modes:
+					setcfg("colorimeter_correction.measurement_mode",
+						   modes[dlg.measurement_mode.GetStringSelection()])
 			elif result == wx.ID_OK:
 				paths = [getcfg("last_reference_ti3_path")]
 				if dlg.correction_type_matrix.GetValue():
