@@ -7717,8 +7717,11 @@ class MainFrame(BaseFrame):
 					name = "reference"
 					cfgname += "." + name
 					instrument = dlg.reference_instrument.GetStringSelection()
-					measurement_mode = dlg.modes_ab["spect"][
-						dlg.measurement_mode_reference.GetSelection()]
+					if hasattr(dlg, "modes_ab"):
+						measurement_mode = dlg.modes_ab["spect"][
+							dlg.measurement_mode_reference.GetSelection()]
+					else:
+						measurement_mode = None
 				if getcfg("last_%s_ti3_path.backup" % name, False):
 					setcfg("last_%s_ti3_path" % name,
 						   getcfg("last_%s_ti3_path.backup" % name))
