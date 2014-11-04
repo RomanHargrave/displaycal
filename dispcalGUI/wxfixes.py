@@ -4,9 +4,14 @@ import sys
 
 from meta import wx_minversion
 
-import wxversion
-if not getattr(sys, "frozen", False):
-	wxversion.ensureMinimal("%i.%i" % wx_minversion[:2])
+# wxversion will be removed in Phoenix
+try:
+	import wxversion
+except ImportError:
+	pass
+else:
+	if not getattr(sys, "frozen", False):
+		wxversion.ensureMinimal("%i.%i" % wx_minversion[:2])
 import wx
 if wx.VERSION < wx_minversion:
 	app = wx.PySimpleApp()
@@ -18,7 +23,7 @@ if wx.VERSION < wx_minversion:
 						   "wxPython Upgrade Needed", style=wx.YES_NO)
 	if result == wx.YES:
 		import webbrowser
-		webbrowser.open(wxversion.UPDATE_URL)
+		webbrowser.open("http://wxpython.org/")
 	app.MainLoop()
 	sys.exit()
 import wx.grid
