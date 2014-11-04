@@ -595,7 +595,8 @@ def main():
 	lang.init()
 	app = BaseApp(0)
 	app.TopWindow = ScriptingClientFrame()
-	app.TopWindow.init_menubar()
+	if sys.platform == "darwin":
+		app.TopWindow.init_menubar()
 	app.TopWindow.listen()
 	app.TopWindow.Show()
 	app.MainLoop()

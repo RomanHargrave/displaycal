@@ -122,7 +122,8 @@ def main():
 		view = not "--no-view" in sys.argv[1:]
 		app = BaseApp(0)
 		app.TopWindow = VRML2X3DFrame(html, embed, view, force, cache)
-		app.TopWindow.init_menubar()
+		if sys.platform == "darwin":
+			app.TopWindow.init_menubar()
 		app.TopWindow.listen()
 		app.process_argv()
 		app.TopWindow.Show()

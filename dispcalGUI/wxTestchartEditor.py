@@ -3135,7 +3135,8 @@ def main():
 	lang.update_defaults()
 	app = BaseApp(0)
 	app.TopWindow = TestchartEditor(path=False)
-	app.TopWindow.init_menubar()
+	if sys.platform == "darwin":
+		app.TopWindow.init_menubar()
 	app.TopWindow.listen()
 	app.process_argv(1) or app.TopWindow.tc_load_cfg_from_ti1()
 	app.TopWindow.Show()
