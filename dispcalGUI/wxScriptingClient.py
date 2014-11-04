@@ -396,7 +396,10 @@ class ScriptingClientFrame(SimpleTerminal):
 					else:
 						wx.Bell()
 				elif event.KeyCode != wx.WXK_SHIFT and event.UnicodeKey:
-					wx.Bell()
+					# wxPython 3 "Phoenix" defines UnicodeKey as "\x00" when
+					# control key pressed
+					if event.UnicodeKey != "\0":
+						wx.Bell()
 			elif event.KeyCode in (10, 13, wx.WXK_NUMPAD_ENTER):
 				# Enter, return key
 				self.send_command_handler(lastline[2:])
