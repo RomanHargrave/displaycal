@@ -7669,7 +7669,8 @@ class MainFrame(BaseFrame):
 			boxsizer.Add(dlg.correction_type_spectral, flag=wx.ALL | wx.EXPAND,
 						 border=4)
 			{"matrix": dlg.correction_type_matrix,
-			 "spectral": dlg.correction_type_spectral}[getcfg("colorimeter_correction.type")].SetValue(True)
+			 "spectral": dlg.correction_type_spectral}.get(
+				getcfg("colorimeter_correction.type"), "matrix").SetValue(True)
 			# Get instruments
 			reference_instruments = []
 			colorimeters = []

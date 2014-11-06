@@ -511,6 +511,7 @@ valid_values = {
 	"3dlut.size": [17, 24, 32, 33, 64, 65],
 	"3dlut.trc_gamma_type": ["b", "B"],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
+	"colorimeter_correction.type": ["matrix", "spectral"],
 	# Measurement modes as supported by Argyll -y parameter
 	# 'l' = 'n' (non-refresh-type display, e.g. LCD)
 	# 'c' = 'r' (refresh-type display, e.g. CRT)
