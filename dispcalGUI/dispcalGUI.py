@@ -7978,7 +7978,11 @@ class MainFrame(BaseFrame):
 		reference_ti3 = None
 		colorimeter_ti3 = None
 		spectral = False
-		for n in xrange(len(paths or (0, 1))):
+		if getcfg("colorimeter_correction.type") == "matrix":
+			ti3_range = (0, 1)
+		else:
+			ti3_range = (0, )
+		for n in xrange(len(paths or ti3_range)):
 			path = None
 			if not paths:
 				if reference_ti3:
