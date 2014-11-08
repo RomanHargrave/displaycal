@@ -1349,6 +1349,8 @@ class MainFrame(BaseFrame):
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".cal": self.cal_drop_handler,
+			".ccmx": self.ccxx_drop_handler,
+			".ccss": self.ccxx_drop_handler,
 			".icc": self.cal_drop_handler,
 			".icm": self.cal_drop_handler,
 			".ti1": self.ti1_drop_handler,
@@ -1473,6 +1475,14 @@ class MainFrame(BaseFrame):
 		"""
 		if not self.worker.is_working():
 			self.load_cal_handler(None, path)
+
+	def ccxx_drop_handler(self, path):
+		"""
+		Drag'n'drop handler for .ccmx/.ccss files.
+		
+		"""
+		if not self.worker.is_working():
+			self.colorimeter_correction_matrix_ctrl_handler(None, path)
 
 	def ti1_drop_handler(self, path):
 		"""
@@ -7564,10 +7574,10 @@ class MainFrame(BaseFrame):
 		else:
 			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
 	
-	def colorimeter_correction_matrix_ctrl_handler(self, event):
+	def colorimeter_correction_matrix_ctrl_handler(self, event, path=None):
 		measurement_mode = getcfg("measurement_mode")
-		if event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId():
-			path = None
+		if (event and
+			event.GetId() == self.colorimeter_correction_matrix_ctrl.GetId()):
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if self.colorimeter_correction_matrix_ctrl.GetSelection() == 0:
 				# Off
@@ -7582,20 +7592,20 @@ class MainFrame(BaseFrame):
 			setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 			self.update_colorimeter_correction_matrix_ctrl_items()
 		else:
-			path = None
-			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-			defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
-			dlg = wx.FileDialog(self, 
-								lang.getstr("colorimeter_correction_matrix_file.choose"), 
-								defaultDir=defaultDir if defaultFile else config.get_argyll_data_dir(), 
-								defaultFile=defaultFile,
-								wildcard=lang.getstr("filetype.ccmx") + 
-										 "|*.ccmx;*.ccss", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-			dlg.Center(wx.BOTH)
-			if dlg.ShowModal() == wx.ID_OK:
-				path = dlg.GetPath()
-			dlg.Destroy()
+			if not path:
+				ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+				defaultDir, defaultFile = get_verified_path(None, ccmx.pop())
+				dlg = wx.FileDialog(self, 
+									lang.getstr("colorimeter_correction_matrix_file.choose"), 
+									defaultDir=defaultDir if defaultFile else config.get_argyll_data_dir(), 
+									defaultFile=defaultFile,
+									wildcard=lang.getstr("filetype.ccmx") + 
+											 "|*.ccmx;*.ccss", 
+									style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+				dlg.Center(wx.BOTH)
+				if dlg.ShowModal() == wx.ID_OK:
+					path = dlg.GetPath()
+				dlg.Destroy()
 			if path:
 				if (getcfg("colorimeter_correction_matrix_file").split(":")[0] != "AUTO" or
 					path not in self.ccmx_cached_paths):
