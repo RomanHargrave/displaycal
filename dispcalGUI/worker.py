@@ -1778,7 +1778,8 @@ class Worker(object):
 			else:
 				for calmsg in INST_CAL_MSGS:
 					if calmsg in txt or "calibration failed" in txt.lower():
-						self.do_instrument_calibration()
+						self.do_instrument_calibration(
+							"calibration failed" in txt.lower())
 						break
 	
 	def check_instrument_place_on_screen(self, txt):
@@ -1848,7 +1849,7 @@ class Worker(object):
 			# Single spotread reading, we are done
 			wx.CallLater(1000, self.quit_terminate_cmd)
 	
-	def do_instrument_calibration(self):
+	def do_instrument_calibration(self, failed=False):
 		""" Ask user to initiate sensor calibration and execute.
 		Give an option to cancel. """
 		if getattr(self, "subprocess_abort", False) or \
@@ -1856,7 +1857,9 @@ class Worker(object):
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
-		if self.get_instrument_name() == "ColorMunki":
+		if failed:
+			msg = lang.getstr("failure")
+		elif self.get_instrument_name() == "ColorMunki":
 			msg = lang.getstr("instrument.calibrate.colormunki")
 		else:
 			serial = re.search("Serial no. (\S+)", self.recent.read(), re.I)
