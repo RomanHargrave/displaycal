@@ -8219,8 +8219,6 @@ class MainFrame(BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			return
-		else:
-			description = self.worker.get_display_name(True)
 		# Add display type
 		for cgats in cgats_list:
 			if not cgats.queryv1("DISPLAY_TYPE_REFRESH"):
@@ -8252,6 +8250,8 @@ class MainFrame(BaseFrame):
 									   self.worker.get_instrument_name(),
 									   manufacturer_display or
 									   self.worker.get_display_name(True))
+		else:
+			description = manufacturer_display or self.worker.get_display_name(True)
 		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
 		if target_instrument:
 			description = "%s (%s)" % (description, target_instrument)
