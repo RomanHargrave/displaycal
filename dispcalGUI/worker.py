@@ -1393,18 +1393,19 @@ class Worker(object):
 		measurement_mode = getcfg("measurement_mode")
 		if measurement_mode == "auto":
 			# Make changes in dispcalGUI.MainFrame.set_ccxx_measurement_mode too!
-			if self.get_instrument_name() == "ColorHug":
+			if self.get_instrument_name() in ("ColorHug", "ColorHug 2"):
 				measurement_mode = "R"
 			else:
 				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()
 		if (measurement_mode and (measurement_mode != "p" or
-								  self.get_instrument_name() == "ColorHug") and
+								  self.get_instrument_name() in ("ColorHug",
+																 "ColorHug 2")) and
 			not get_arg("-y", args) and
 			self.get_instrument_name() != "specbos 1201"):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
-				# Only ColorHug supports -yp parameter
+				# Only ColorHug (2) supports -yp parameter
 				# The specbos 1201 (unlike 1211) doesn't support measurement
 				# mode selection
 				if self.argyll_version >= [1, 5, 0]:
@@ -1637,7 +1638,8 @@ class Worker(object):
 		return (self.argyll_version >= [1, 3, 0] and
 				not self.get_instrument_features().get("spectral") and
 				(getcfg("measurement_mode") == "auto" or
-				 ((self.get_instrument_name() != "ColorHug" or
+				 ((self.get_instrument_name() not in ("ColorHug",
+													  "ColorHug 2") or
 				   getcfg("measurement_mode") in ("F", "R")) and
 				  (self.get_instrument_name() != "ColorMunki Smile" or
 				   getcfg("measurement_mode") == "f") and
