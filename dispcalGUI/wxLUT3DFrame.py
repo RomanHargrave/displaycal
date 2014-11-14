@@ -755,7 +755,8 @@ class LUT3DFrame(BaseFrame):
 		if getcfg("3dlut.format") == "eeColor":
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.input"))
 		self.encoding_output_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.output")])
-		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") != "eeColor")
+		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") not in ("eeColor",
+																		"madVR"))
 	
 	def enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
