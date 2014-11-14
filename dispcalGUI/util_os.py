@@ -16,6 +16,8 @@ from encoding import get_encodings
 
 fs_enc = get_encodings()[1]
 
+os._listdir = os.listdir
+
 if sys.platform == "win32":
 	# Add support for long paths (> 260 chars)
 	import __builtin__
@@ -62,12 +64,8 @@ if sys.platform == "win32":
 	os.path.isfile = isfile
 
 
-	os._listdir = os.listdir
-
 	def listdir(path):
 		return os._listdir(make_win32_compatible_long_path(path))
-
-	os.listdir = listdir
 
 
 	os._lstat = os.lstat
@@ -126,6 +124,15 @@ if sys.platform == "win32":
 		return win32api._GetShortPathName(make_win32_compatible_long_path(path))
 
 	win32api.GetShortPathName = GetShortPathName
+else:
+	def listdir(path):
+		paths = os._listdir(path)
+		if isinstance(path, unicode):
+			# Undecodable filenames will still be string objects. Ignore them.
+			paths = filter(lambda path: isinstance(path, unicode), paths)
+		return paths
+
+os.listdir = listdir
 
 
 def quote_args(args):
