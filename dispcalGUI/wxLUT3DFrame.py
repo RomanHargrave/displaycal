@@ -691,8 +691,8 @@ class LUT3DFrame(BaseFrame):
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		format = getcfg("3dlut.format")
 		if format == "madVR" and self.worker.argyll_version < [1, 6]:
-			# MadVR only available with Argyll 1.6+, fall back to 3dl
-			format = "3dl"
+			# MadVR only available with Argyll 1.6+, fall back to IRIDAS .cube
+			format = "cube"
 			setcfg("3dlut.format", format)
 		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])

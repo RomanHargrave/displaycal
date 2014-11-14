@@ -559,7 +559,7 @@ defaults = {
 	"3dlut.encoding.input.backup": "n",
 	"3dlut.encoding.output": "n",
 	"3dlut.encoding.output.backup": "n",
-	"3dlut.format": "3dl",
+	"3dlut.format": "cube",
 	"3dlut.input.profile": "",
 	"3dlut.abstract.profile": "",
 	"3dlut.madVR.enable": 1,

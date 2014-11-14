@@ -2044,7 +2044,7 @@ class Worker(object):
 		self.sessionlogfile = None
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
-					 apply_cal=True, intent="r", format="3dl",
+					 apply_cal=True, intent="r", format="cube",
 					 size=17, input_bits=10, output_bits=12, maxval=1.0,
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
