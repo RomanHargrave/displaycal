@@ -2175,7 +2175,17 @@ class Worker(object):
 			if not collink:
 				raise NotImplementedError(lang.getstr("argyll.util.not_found",
 													  "collink"))
-			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r65", "-n"]
+			is_argyll_lut_format = (self.argyll_version >= [1, 6] and
+									(((format == "eeColor" or
+									   (format == "cube" and
+										collink_version >= [1, 7])) and
+									  not test) or
+									 format == "madVR"))
+			if is_argyll_lut_format:
+				rsize = size
+			else:
+				rsize = 65
+			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r%i" % rsize, "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args.extend(["-p", "abstract.icc"])
@@ -2184,6 +2194,9 @@ class Worker(object):
 					args.append("-3m")
 				elif format == "eeColor" and not test:
 					args.append("-3e")
+				elif (format == "cube" and collink_version >= [1, 7] and
+					  not test):
+					args.append("-3c")
 				args.append("-e%s" % input_encoding)
 				args.append("-E%s" % output_encoding)
 				if trc_gamma and trc_gamma_type in ("b", "B"):
@@ -2223,14 +2236,12 @@ class Worker(object):
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
 
-			if self.argyll_version >= [1, 6] and ((format == "eeColor" and
-												   not test) or
-												  format == "madVR"):
+			if is_argyll_lut_format:
 				# Collink has already written the 3DLUT for us
 				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
 									  result, dst_path=path,
-									  ext_filter=[".3dlut", ".cal", ".log",
-												  ".txt"])
+									  ext_filter=[".3dlut", ".cal", ".cube",
+												  ".log", ".txt"])
 				if not result:
 					result = UnloggedError(lang.getstr("aborted"))
 				if isinstance(result2, Exception):
