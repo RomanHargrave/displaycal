@@ -60,3 +60,4 @@ SYSFS{idVendor}=="0971", SYSFS{idProduct}=="2007", PROGRAM="/bin/sh -c 'K=%k; K=
 # ColorHug
 SYSFS{idVendor}=="04d8", SYSFS{idProduct}=="f8da", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
 SYSFS{idVendor}=="273f", SYSFS{idProduct}=="1001", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
+SYSFS{idVendor}=="273f", SYSFS{idProduct}=="1004", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
