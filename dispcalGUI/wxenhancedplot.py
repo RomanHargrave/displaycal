@@ -258,7 +258,7 @@ class PolyLine(PolyPoints):
         pen = wx.Pen(colour, width, style)
         pen.SetCap(wx.CAP_BUTT)
         dc.SetPen(pen)
-        if coord == None:
+        if coord is None:
             if len(self.scaled): # bugfix for Mac OS X
                 dc.DrawLines(self.scaled)
         else:
@@ -301,7 +301,7 @@ class PolySpline(PolyLine):
         pen = wx.Pen(colour, width, style)
         pen.SetCap(wx.CAP_ROUND)
         dc.SetPen(pen)
-        if coord == None:
+        if coord is None:
             if len(self.scaled): # bugfix for Mac OS X
                 dc.DrawSpline(self.scaled)
         else:
@@ -363,7 +363,7 @@ class PolyMarker(PolyPoints):
             dc.SetBrush(wx.Brush(fillcolour,fillstyle))
         else:
             dc.SetBrush(wx.Brush(colour, fillstyle))
-        if coord == None:
+        if coord is None:
             if len(self.scaled): # bugfix for Mac OS X
                 self._drawmarkers(dc, self.scaled, marker, size)
         else:
@@ -1125,7 +1125,7 @@ class PlotCanvas(wx.Panel):
         If it's not, the offscreen buffer is used
         """
 
-        if dc == None:
+        if dc is None:
             # sets new dc and clears it 
             dc = wx.BufferedDC(wx.ClientDC(self.canvas), self._Buffer)
             bbr = wx.Brush(self.GetBackgroundColour(), wx.SOLID)
@@ -1167,12 +1167,12 @@ class PlotCanvas(wx.Panel):
         dc.SetFont(self._getFont(self._fontSizeAxis))
 
         # sizes axis to axis type, create lower left and upper right corners of plot
-        if xAxis == None or yAxis == None:
+        if xAxis is None or yAxis is None:
             # One or both axis not specified in Draw
             p1, p2 = graphics.boundingBox()     # min, max points of graphics
-            if xAxis == None:
+            if xAxis is None:
                 xAxis = self._axisInterval(self._xSpec, p1[0], p2[0]) # in user units
-            if yAxis == None:
+            if yAxis is None:
                 yAxis = self._axisInterval(self._ySpec, p1[1], p2[1])
             # Adjust bounding box for axis spec
             p1[0],p1[1] = xAxis[0], yAxis[0]     # lower left corner user scale (xmin,ymin)
@@ -1317,7 +1317,7 @@ class PlotCanvas(wx.Panel):
             if pointScaled == True based on screen coords
             if pointScaled == False based on user coords
         """
-        if self.last_draw == None:
+        if self.last_draw is None:
             #no graph available
             return []
         graphics, xAxis, yAxis= self.last_draw
@@ -1495,7 +1495,7 @@ class PlotCanvas(wx.Panel):
     # Private Methods **************************************************
     def _setSize(self, width=None, height=None):
         """DC width and height."""
-        if width == None:
+        if width is None:
             (self.width,self.height) = self.canvas.GetClientSize()
         else:
             self.width, self.height= width,height    

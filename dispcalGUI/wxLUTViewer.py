@@ -460,12 +460,12 @@ class LUTCanvas(plot.PlotCanvas):
 			return
 		graphics, xAxis, yAxis= self.last_draw
 		# sizes axis to axis type, create lower left and upper right corners of plot
-		if xAxis == None or yAxis == None:
+		if xAxis is None or yAxis is None:
 			# One or both axis not specified in Draw
 			p1, p2 = graphics.boundingBox()     # min, max points of graphics
-			if xAxis == None:
+			if xAxis is None:
 				xAxis = self._axisInterval(self._xSpec, p1[0], p2[0]) # in user units
-			if yAxis == None:
+			if yAxis is None:
 				yAxis = self._axisInterval(self._ySpec, p1[1], p2[1])
 			# Adjust bounding box for axis spec
 			p1[0],p1[1] = xAxis[0], yAxis[0]     # lower left corner user scale (xmin,ymin)
@@ -499,7 +499,7 @@ class LUTCanvas(plot.PlotCanvas):
 			if pointScaled == True based on screen coords
 			if pointScaled == False based on user coords
 		"""
-		if self.last_draw == None:
+		if self.last_draw is None:
 			#no graph available
 			return []
 		graphics, xAxis, yAxis= self.last_draw

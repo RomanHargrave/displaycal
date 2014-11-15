@@ -1599,7 +1599,7 @@ class FixedPoint(object):
 
     def __cmp__(self, other):
         
-        if (other == None):
+        if (other is None):
             return 1
         xn, yn, p = _norm(self, other)
         return cmp(xn, yn)
