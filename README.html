@@ -12,6 +12,7 @@
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="theme/readme.css" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css" />
+		<link rel="stylesheet" href="theme/prism.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
@@ -25,8 +26,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>2.5 </h2>
-					<p>2014-09-06 00:07 UTC</p>
+					<h2>2.6 Beta</h2>
+					<p>2014-11-15 20:40 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -97,6 +98,10 @@
 			</div>
 		</div>
 
+		<div class="infobox">
+			<p>If you'd like to measure color on the go, you may also be interested in <a href="http://argyllcms.com/pro/">ArgyllPRO ColorMeter</a> by Graeme Gill, author of Argyll CMS. Available for Android from the Google Play store.</p>
+		</div>
+
 		<div id="content">
 
 		<div id="toc">
@@ -129,8 +134,15 @@
 						<li><a href="#settings_calibration">Calibration settings</a></li>
 						<li><a href="#settings_profiling">Profiling settings</a></li>
 						<li><a href="#calibrating">Calibrating / profiling</a></li>
-						<li><a href="#remote">Remote measurements and profiling</a></li>
-						<li><a href="#untethered">Untethered display measurement and profiling</a></li>
+						<li><a href="#special">Special functionality</a>
+							<ul>
+								<li><a href="#special">Overview of special functionality</a></li>
+								<li><a href="#remote">Remote measurements and profiling</a></li>
+								<li><a href="#madvr">madVR test pattern generator</a></li>
+								<li><a href="#resolve">Resolve (10.1+) as pattern generator</a></li>
+								<li><a href="#untethered">Untethered display measurement and profiling</a></li>
+							</ul>
+						</li>
 					</ul>
 				</li>
 				<li><a href="#menu">Menu commands</a>
@@ -142,6 +154,8 @@
 						<li><a href="#menu-lang">Language menu</a></li>
 					</ul>
 				</li>
+				<li><a href="#scripting">Scripting</a></li>
+				<li><a href="#userdata">User data and configuration file locations</a></li>
 				<li><a href="#issues">Known issues &amp; solutions</a></li>
 				<li><a href="#help">Get help</a></li>
 				<li><a href="#reportbug">Report a bug</a></li>
@@ -156,13 +170,13 @@
 		<div id="about">
 			<h2>About dispcalGUI</h2>		
 
-			<p>dispcalGUI is a graphical user interface for the display calibration and profiling tools of <a href="http://argyllcms.com">Argyll CMS</a>, an open source color management system by Graeme Gill.</p>
+			<p>dispcalGUI is a graphical user interface developed by Florian Höch for the display calibration and profiling tools of <a href="http://argyllcms.com">Argyll CMS</a>, an open source color management system developed by Graeme Gill.</p>
 
 			<p>Calibrate and characterize your display devices using one of the <a href="#instruments">many supported hardware sensors</a>, with support for multi-display setups and a variety of available settings like customizable whitepoint, luminance, tone response curve as well as the option to create matrix and look-up-table ICC profiles, with optional gamut mapping, as well as some proprietary 3D LUT formats. Other features include:</p>
 
 			<ul>
 				<li>Support of colorimeter correction for different screens via <em>correction matrices</em> or <em>calibration specral sample</em> files (the latter only for specific colorimeters i.e. i1 Display Pro, ColorMunki Display and Spyder 4).</li>
-				<li>Profile verification: Check the quality of profiles via measurements. Also supports custom CGATS files (e.g. FOGRA, GRACoL/IDEAlliance, SWOP) and using of reference profiles to obtain test values.</li>
+				<li>Profile verification and measurement report: Check the quality of profiles and 3D LUTs via measurements. Also supports custom CGATS files (e.g. FOGRA, GRACoL/IDEAlliance, SWOP) and using of reference profiles to obtain test values.</li>
 				<li>Test chart editor: Create charts with any amount of color patches, easy copy &amp; paste from CGATS, CSV files (only tab-delimited) and spreadsheet applications.</li>
 				<li>Create synthetic ICC (matrix) profiles with custom primaries, white- and blackpoint as well as tone response.</li>
 			</ul>
@@ -244,131 +258,139 @@
 						<ul class="packages">
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/any/dispcalGUI.pkg.tar.xz">Arch Linux</a> <em>(please see note below)</em></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/any/dispcalGUI-0install.pkg.tar.xz">Arch Linux</a> <em>(please see note below)</em></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/noarch/dispcalGUI.rpm">CentOS 6</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/noarch/dispcalGUI-0install.rpm">CentOS 6</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-7/noarch/dispcalGUI.rpm">CentOS 7</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-7/noarch/dispcalGUI-0install.rpm">CentOS 7</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_5.0/all/dispcalGUI.deb">Debian 5 (Lenny)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_5.0/all/dispcalGUI-0install.deb">Debian 5 (Lenny)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_6.0/all/dispcalGUI.deb">Debian 6 (Squeezy)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_6.0/all/dispcalGUI-0install.deb">Debian 6 (Squeezy)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_7.0/all/dispcalGUI.deb">Debian 7 (Wheezy)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Debian_7.0/all/dispcalGUI-0install.deb">Debian 7 (Wheezy)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_16/noarch/dispcalGUI.rpm">Fedora 16</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_16/noarch/dispcalGUI-0install.rpm">Fedora 16</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_17/noarch/dispcalGUI.rpm">Fedora 17</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_17/noarch/dispcalGUI-0install.rpm">Fedora 17</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_18/noarch/dispcalGUI.rpm">Fedora 18</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_18/noarch/dispcalGUI-0install.rpm">Fedora 18</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_19/noarch/dispcalGUI.rpm">Fedora 19</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_19/noarch/dispcalGUI-0install.rpm">Fedora 19</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_20/noarch/dispcalGUI.rpm">Fedora 20</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Fedora_20/noarch/dispcalGUI-0install.rpm">Fedora 20</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2009.1/noarch/dispcalGUI.rpm">Mandriva 2009.1</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2009.1/noarch/dispcalGUI-0install.rpm">Mandriva 2009.1</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010/noarch/dispcalGUI.rpm">Mandriva 2010</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010/noarch/dispcalGUI-0install.rpm">Mandriva 2010</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010.1/noarch/dispcalGUI.rpm">Mandriva 2010.1</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010.1/noarch/dispcalGUI-0install.rpm">Mandriva 2010.1</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2011/noarch/dispcalGUI.rpm">Mandriva 2011</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2011/noarch/dispcalGUI-0install.rpm">Mandriva 2011</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.1/noarch/dispcalGUI.rpm">openSUSE 12.1</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.1/noarch/dispcalGUI-0install.rpm">openSUSE 12.1</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.2/noarch/dispcalGUI.rpm">openSUSE 12.2</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.2/noarch/dispcalGUI-0install.rpm">openSUSE 12.2</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.3/noarch/dispcalGUI.rpm">openSUSE 12.3</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.3/noarch/dispcalGUI-0install.rpm">openSUSE 12.3</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/noarch/dispcalGUI.rpm">openSUSE 13.1</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/noarch/dispcalGUI-0install.rpm">openSUSE 13.1</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/noarch/dispcalGUI.rpm">openSUSE Factory</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.2/noarch/dispcalGUI-0install.rpm">openSUSE 13.2</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Tumbleweed/noarch/dispcalGUI.rpm">openSUSE Tumbleweed</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/noarch/dispcalGUI-0install.rpm">openSUSE Factory</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/noarch/dispcalGUI.rpm">RedHat RHEL 6</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Tumbleweed/noarch/dispcalGUI-0install.rpm">openSUSE Tumbleweed</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-7/noarch/dispcalGUI.rpm">RedHat RHEL 7</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/noarch/dispcalGUI-0install.rpm">RedHat RHEL 6</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/all/dispcalGUI.deb">Ubuntu 10.04 (Lucid)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-7/noarch/dispcalGUI-0install.rpm">RedHat RHEL 7</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.10/all/dispcalGUI.deb">Ubuntu 10.10 (Maverick)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/all/dispcalGUI-0install.deb">Ubuntu 10.04 (Lucid)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.04/all/dispcalGUI.deb">Ubuntu 11.04 (Natty)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.10/all/dispcalGUI-0install.deb">Ubuntu 10.10 (Maverick)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.10/all/dispcalGUI.deb">Ubuntu 11.10 (Oneiric)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.04/all/dispcalGUI-0install.deb">Ubuntu 11.04 (Natty)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/all/dispcalGUI.deb">Ubuntu 12.04 (Precise)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.10/all/dispcalGUI-0install.deb">Ubuntu 11.10 (Oneiric)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/all/dispcalGUI.deb">Ubuntu 12.10 (Quantal)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/all/dispcalGUI-0install.deb">Ubuntu 12.04 (Precise)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/all/dispcalGUI.deb">Ubuntu 13.04 (Raring)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/all/dispcalGUI-0install.deb">Ubuntu 12.10 (Quantal)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/all/dispcalGUI.deb">Ubuntu 13.10 (Saucy)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/all/dispcalGUI-0install.deb">Ubuntu 13.04 (Raring)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/all/dispcalGUI.deb">Ubuntu 14.04 (Trusty)</a></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/all/dispcalGUI-0install.deb">Ubuntu 13.10 (Saucy)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/all/dispcalGUI-0install.deb">Ubuntu 14.04 (Trusty)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.10/all/dispcalGUI-0install.deb">Ubuntu 14.10 (Utopic)</a></span>
 							</li>
 						</ul>
 
@@ -553,6 +575,11 @@
 								<a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>openSUSE 13.2</span>
+								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.2/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/openSUSE_13.2/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>openSUSE Factory</span>
 								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/x86_64/dispcalGUI.rpm">x86_64</a></span>
@@ -637,6 +664,11 @@
 								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/i386/dispcalGUI.deb">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
+							<li>
+								<span>Ubuntu 14.10 (Utopic)</span>
+								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.10/i386/dispcalGUI.deb">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/xUbuntu_14.10/amd64/dispcalGUI.deb">x86_64</a></span>
+							</li>
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
@@ -687,7 +719,7 @@
 					<p>Launch dispcalGUI. If it cannot determine the path to the Argyll CMS binaries, it will prompt you to select the location manually on first launch.</p>
 				</li>
 				<li>
-					<p class="info"><strong>Windows only:</strong> If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug, you need to install an Argyll-specific driver before continuing. Select “Install Argyll CMS instrument drivers...” from the “Tools” menu. See also <a href="#install-windows-driver">“Instrument driver installation under Windows”.</a></p>
+					<p class="info"><strong>Windows only:</strong> If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10, you need to install an Argyll-specific driver before continuing. Select “Install Argyll CMS instrument drivers...” from the “Tools” menu. See also <a href="#install-windows-driver">“Instrument driver installation under Windows”.</a></p>
 					<p class="info"><strong>Mac OS X only:</strong> If you want to use the HCFR colorimeter, follow the instructions in the “HCFR Colorimeter” section under “<a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a>” in the Argyll CMS documentation before continuing.</p>
 					<p>Connect your measurement device to your computer.</p>
 				</li>
@@ -698,7 +730,7 @@
 				</li>
 				<li>
 					<p>Refer to the <a href="#concept">documentation</a> for <a href="#usage">usage instructions</a>.</p>
-					<p class="info"><em>Linux only:</em> If you cannot access your instrument, first try unplugging and reconnecting it, or a reboot. If that doesn't help, read “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>”.</p>
+					<p class="info"><strong>Linux only:</strong> If you can't access your instrument, choose “Install Argyll CMS instrument configuration files...” from the “Tools” menu (if that menu item is grayed out, the Argyll CMS version you're currently using has probably been installed from the distribution's repository and should already be setup correctly for instrument access). If you still cannot access the instrument, try unplugging and reconnecting it, or a reboot. If all else fails, read “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>” in the Argyll CMS documentation.</p>
 				</li>
 			</ol>
 		</div>
@@ -727,13 +759,14 @@
 
 				<h4>Colorimeters</h4>
 				<ul>
-					<li>Calman X2 (treated as i1 Display 2)</li>
+					<li>CalMAN X2 (treated as i1 Display 2)</li>
 					<li>Datacolor/ColorVision Spyder 2</li>
 					<li>Datacolor Spyder 3 (since Argyll CMS 1.1.0)</li>
 					<li>Datacolor Spyder 4 (since Argyll CMS 1.3.6)</li>
 					<li>HP Advanced Profiling Solution (treated as i1 Display 2)</li>
 					<li>HP DreamColor (treated as i1 Display 2)</li>
-					<li>Hughski ColorHug (experimental only, does not work reliably on all platforms, especially on Mac OS X. Linux support since Argyll CMS 1.3.6, Windows support with newest ColorHug firmware since Argyll CMS 1.5.0)</li>
+					<li>Hughski ColorHug (Linux support since Argyll CMS 1.3.6, Windows support with newest ColorHug firmware since Argyll CMS 1.5.0, fully functional Mac OS X support since Argyll CMS 1.6.2)</li>
+					<li>Hughski ColorHug 2 (new in Argyll CMS 1.7.0)</li>
 					<li>Klein K10-A (new in Argyll CMS 1.7.0 beta)</li>
 					<li>Lacie Blue Eye (treated as i1 Display 2)</li>
 					<li>Sequel Imaging MonacoOPTIX (treated as i1 Display 1)</li>
@@ -756,6 +789,10 @@
 					<li>X-Rite i1 Pro 2 (since Argyll CMS 1.5.0)</li>
 					<li>X-Rite/GretagMacbeth Spectrolino</li>
 				</ul>
+
+				<div class="infobox">
+					<p>If you've decided to buy a color instrument because Argyll CMS supports it, please let the dealer and manufacturer know that “You bought it because Argyll CMS supports it”—thanks.</p>
+				</div>
 
 				<p>Note that the <em>i1 Display Pro</em> and <em>i1 Pro</em> are very different instruments despite their naming similarities.</p>
 
@@ -856,7 +893,7 @@
 				<h3>Instrument driver installation under Windows</h3>
 
 				<div>
-					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug.</p>
+					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10.</p>
 
 					<div class="info">If you are using Windows 8, you need to <strong>disable driver signature enforcement</strong> before you can install the driver:
 
@@ -921,7 +958,7 @@
 
 				<div>
 					<p>Launch the installer which will guide you trough the required setup steps.</p>
-					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
+					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
 				</div>
 			</div>
 
@@ -931,7 +968,7 @@
 
 				<div>
 					<p>Unpack and then simply run dispcalGUI from the created folder.</p>
-					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey or ColorHug, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
+					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10, you need to install an Argyll-specific driver. <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
 				</div>
 			</div>
 
@@ -1329,7 +1366,7 @@
 
 							<h4>Generating diagnostic 3D views of testcharts</h4>
 							
-							<p>You can generate 3D views in several formats. The default HTML format should be viewable in a modern WebGL-enabled browser. You can choose the colorspace(s) you want to view the results in and also control wether to use RGB black offset (which will lighten up dark colors so they are better visible) and wether you want white to be neutral. All of these options are purely visual and will not influence the actual test patches.</p>
+							<p>You can generate 3D views in several formats. The default HTML format should be viewable in a modern WebGL-enabled browser. You can choose the colorspace(s) you want to view the results in and also control whether to use RGB black offset (which will lighten up dark colors so they are better visible) and whether you want white to be neutral. All of these options are purely visual and will not influence the actual test patches.</p>
 
 							<h4>Other functions</h4>
 							
@@ -1463,16 +1500,24 @@
 				<h4>Profile installation</h4>
 
 				<p>When installing a profile after creating or updating it, a startup item to load its calibration curves 
-				automatically on login will be created (on Windows and Linux, Mac OS X does not need a loader). You may also prevent this loader from doing anything by removing the check in the “Load calibration curves on Login” checkbox in the profile installation dialog, and in case you are using Windows 7 or later, you may let the operating system handle calibration loading instead (to be able to change this option, you need to run dispcalGUI as administrator).</p>
+				automatically on login will be created (on Windows and Linux, Mac OS X does not need a loader). You may also prevent this loader from doing anything by removing the check in the “Load calibration curves on Login” checkbox in the profile installation dialog, and in case you are using Windows 7 or later, you may let the operating system handle calibration loading instead (note that the Windows 7 internal calibration loader does not offer the same high quality, due to wrong scaling and quantization, as the dispcalGUI/Argyll CMS loader).</p>
 				
-				<h3>Advanced functions</h3>
+				<h3 id="special">Special functionality</h3>
 				
 				<h4 id="remote">Remote measurements and profiling</h4>
 				
 				<p>When using Argyll CMS 1.4.0 and newer, remote measurements on a device not directly connected to the machine that is running dispcalGUI is possible (e.g. a smartphone or tablet). The remote device needs to be able to run a web browser (Firefox recommended), and the local machine running dispcalGUI may need firewall rules added or altered to allow incoming connections. To set up remote profiling, select “Web @ localhost” from the display device dropdown menu, then choose the desired action (e.g. “Profile only”). When the message “Webserver waiting at http://&lt;IP&gt;:&lt;Port&gt;” appears, open the shown address in the remote browser and attach the measurement device.<br />
 				<strong>NOTE:</strong> If you use this method of displaying test patches, there is no access to the display video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>s and hardware calibration is not possible. The colors will be displayed with 8 bit per component precision, and any screen-saver or power-saver will not be automatically disabled. You will also be at the mercy of any color management applied by the web browser, and may have to carefully review and configure such color management.<br />
 				<strong>NOTE:</strong> Close the web browser window or tab after each run, otherwise reconnection may fail upon further runs.</p>
-				
+
+				<h4 id="madvr">madVR test pattern generator</h4>
+
+				<p>dispcalGUI supports the madVR test pattern generator (madTPG) and madVR 3D LUT formats since version 1.5.2.5 when used together with Argyll CMS 1.6.0 or newer.</p>
+
+				<h4 id="resolve">Resolve (10.1+) as pattern generator</h4>
+
+				<p>Since version 2.5, dispcalGUI can use <a href="https://www.blackmagicdesign.com/products/davinciresolve">Resolve</a> (10.1+) as pattern generator. Select the “Resolve” entry from the display devices dropdown in dispcalGUI and in Resolve itself choose “Monitor calibration”, “CalMAN” in the “Color” menu.</p>
+
 				<h4 id="untethered">Untethered display measurements</h4>
 				
 				<p>Untethered mode is another option to measure and profile a remote display that is not connected via standard means (calibration is not supported). To use untethered mode, the testchart that should be used needs to be optimized, then exported as image files (via the testchart editor) and those image files need to be displayed on the device that should be measured, in successive order. The procedure is as follows:</p>
@@ -1555,7 +1600,10 @@
 						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if madVR is being used to display the test patches.</dd>
 
 					<dt>Allow skipping of spectrometer self-calibration</dt>
-						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip the sensor calibration for characterization measurements if they are run directly after display calibration measurements (unattended calibration &amp; profiling). <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
+						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip this sensor calibration. <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
+
+					<dt>Spectrometer self-calibration</dt>
+						<dd>Do spectrometer sensor calibration on its own.</dd>
 
 					<dt>Show advanced calibration options</dt>
 						<dd>Enabling this menu option will show some additional controls for advanced users in the main window.</dd>
@@ -1699,8 +1747,8 @@
 
 
 					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
-						<dd>Allows you to create correction matrices for ordinary colorimeters as well as Colorimeter Calibration Spectral Set files for i1 Display Pro, ColorMunki Display and Spyder 4.
-							Before you choose this menu option though, you must measure the special Colorimeter Correction testchart with a spectrometer and (in case you want to create an ordinary correction matrix) with the colorimeter. To do this, select the aforementioned chart in the testchart file dropdown, then select “Measure testchart” from the “Options” menu. After you have measured the chart(s), you can select the resulting measurement files for processing into a correction matrix or Colorimeter Calibration Spectral Set file.
+						<dd>Allows you to create correction matrices for all colorimeters as well as spectral corrections for i1 Display Pro, ColorMunki Display and Spyder 4.
+						You first need to measure the required test colors with a spectrometer, and in case you want to create a correction matrix instead of a spectral correction, also with the colorimeter. A checkmark next to the “Measure” buttons indicates previous measurements already being present (it is recommended that measurements be recent though, so ideally both spectrometer and colorimeter measurements should be performed whenever a colorimeter correction matrix is to be created). Alternatively you can also use existing measurements by choosing “Browse...”.
 						</dd>
 
 					<dt id="upload-colorimeter-correction">Upload colorimeter correction...</dt>
@@ -1713,11 +1761,13 @@
 					<dt id="create-3dlut">Create 3D LUT...</dt>
 						<dd>Create display correction 3D LUTs for use in movie post-processing applications that don't have ICC support. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor (<code>.txt</code>), madVR (<code>.3dlut</code>), Pandora (<code>.mga</code>) and Sony Imageworks (<code>.spi3d</code>) formats.</dd>
 
-					<dt id="install-argyll-instrument-drivers">Install Argyll CMS instrument drivers... (Windows only)</dt>
-						<dd>Install the Argyll CMS instrument drivers that are needed by some instruments.</dd>
+					<dt id="install-argyll-instrument-drivers">Install Argyll CMS instrument drivers... (Windows) / Install Argyll CMS instrument configuration files... (Linux)</dt>
+						<dd>Windows: Install the Argyll CMS instrument drivers that are needed by some instruments.<br />
+						Linux: Install udev rules or hotplug scripts that configure instrument access (you only need to install these if you cannot access your instrument).</dd>
 
-					<dt id="uninstall-argyll-instrument-drivers">Uninstall Argyll CMS instrument drivers... (Windows Vista and newer only)</dt>
-						<dd>Uninstall the Argyll CMS instrument drivers.</dd>
+					<dt id="uninstall-argyll-instrument-drivers">Uninstall Argyll CMS instrument drivers... (Windows Vista and newer only) / Uninstall Argyll CMS instrument configuration files... (Linux)</dt>
+						<dd>Windows Vista and newer: Uninstall the Argyll CMS instrument drivers.<br />
+						Linux: Uninstall udev rules or hotplug scripts that configure instrument access (note that they will be backed up to <samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/backup</samp>).</dd>
 
 					<dt>Enable Spyder 2 colorimeter...</dt>
 						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor dispcalGUI, since it has not been made available under a compatible license.<br />
@@ -1743,6 +1793,260 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 
 				<p>Allows you to select one of the available localizations.</p>
 			</div>
+		</div>
+
+		<div id="scripting">
+			<h2>Scripting</h2>
+			
+			<p>dispcalGUI supports scripting locally and over the network (the latter must be explicitly enabled by setting <code>app.allow_network_clients = 1</code> in dispcalGUI.ini) via sockets. dispcalGUI must be already running on the target machine for this to work. Below is an example connecting to a running instance on the default port <code>15411</code> and starting calibration measurements (the port is configurable in dispcalGUI.ini as <code>app.port</code>, although if the desired port is not available an unused one will be chosen automatically. You can read the actual used port from the file dispcalGUI.lock in the <a href="#configuration">configuration</a> file folder of dispcalGUI while it is running). The example is written in <a href="http://www.python.org/">Python</a> and deals with some of the intricacies of sockets as well.</p>
+			
+			<pre class="language-python"><code>#!/usr/bin/env python2
+
+import socket
+
+class DCGScriptingClientSocket(socket.socket):
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, etype, value, tb):
+		# Disconnect
+		try:
+			# Will fail if the socket isn't connected, i.e. if there was an
+			# error during the call to connect()
+			self.shutdown(socket.SHUT_RDWR)
+		except socket.error:
+			pass
+		self.close()
+
+	def __init__(self):
+		socket.socket.__init__(self)
+		self.recv_buffer = ''
+
+	def get_single_response(self):
+		# Buffer received data until EOT (response end marker) and return
+		# single response (additional data will still be in the buffer)
+		while not '\4' in self.recv_buffer:
+			incoming = self.recv(4096)
+			if incoming == '':
+				raise socket.error("Connection broken")
+			self.recv_buffer += incoming
+		end = self.recv_buffer.find('\4')
+		single_response = self.recv_buffer[:end]
+		self.recv_buffer = self.recv_buffer[end + 1:]
+		return single_response
+
+	def send_and_check(self, command, expected_response="ok"):
+		""" Send command, get &amp; check response """
+		self.send_command(command)
+		single_response = self.get_single_response()
+		if single_response != expected_response:
+			# Check application state. If a modal dialog is displayed, choose
+			# the OK option. Note that this is just an example and normally you
+			# should be very careful with this, as it could mean confirming a
+			# potentially destructive operation (e.g. discarding current
+			# settings, overwriting existing files etc).
+			self.send_command('getstate')
+			state = self.get_single_response()
+			if 'Dialog' in state.split()[0]:
+				self.send_command('ok')
+				if self.get_single_response() == expected_response:
+					return
+			raise RuntimeError('%r got unexpected response: %r != %r' %
+							   (command, single_response, expected_response))
+
+	def send_command(self, command):
+		# Automatically append newline (command end marker)
+		self.sendall(command + '\n')
+
+# Generate a list of commands we want to execute in order
+commands = []
+
+# Load “Laptop” preset
+commands.append('load presets/laptop.icc')
+
+# Setup calibration &amp; profiling measurements
+commands.append('calibrate-profile')
+
+# Start actual measurements
+commands.append('measure')
+
+# Create socket &amp; send commands
+with DCGScriptingClientSocket() as client:
+	client.settimeout(3)  # Set a timeout of 3 seconds
+
+	# Open connection
+	client.connect(('127.0.0.1', 15411))  # Default port
+
+	for command in commands:
+		client.send_and_check(command)
+
+</code></pre>
+			
+			<p>Each command needs to be terminated with a newline character (after any arguments the command may accept). Note that data sent must be UTF-8 encoded, and if arguments contain spaces they should be encased in double or single quotes. You should check the response for each command sent (the response end marker is ASCII 0x4 EOT, and the default <a href="#scripting.commands.setresponseformat">response format</a> is a plain text format, but JSON and XML are also available). The common return values for commands are either <code>ok</code> in case the command was understood (note that this does not indicate if the command finished processing), <code>busy</code> or <code>blocked</code> in case the command was ignored because another operation was running or a modal dialog blocks the UI, <code>failed</code> in case the command or an argument could not be processed successfully, <code>forbidden</code> in case the command was not allowed (this may be a temporary condition depending on the circumstances, e.g. when trying to interact with an UI element that is currently disabled), <code>invalid</code> in case the command (or one of its arguments) was invalid, or <code>error</code> followed by an error message in case of an unhandled exception. Other return values are possible depending on the command. All values returned are UTF-8 encoded. If the return value is <code>blocked</code> (e.g. because a modal dialog is displayed) you should check the <a href="#scripting.commands.getstate">application state</a> with the <code><a href="#scripting.commands.getstate">getstate</a></code> command to determine the further course of action.</p>
+			
+			<div>
+				<h3>List of supported commands</h3>
+				<p>Below is a list of the currently supported commands (the list contains all valid commands for the main application, the standalone tools will typically just support a smaller subset. You can use the “dispcalGUI Scripting Client” standalone tool to learn about and experiment with commands). Note that filename arguments must refer to files present on the target machine running dispcalGUI.</p>
+				<div class="info">
+					<dl>
+						<dt><code>3DLUT-maker [create filename]</code></dt>
+							<dd>Show 3D LUT creation window, optionally create 3D LUT <code>filename</code>.</dd>
+						<dt><code>abort</code></dt>
+							<dd>Try to abort a currently running operation.</dd>
+						<dt id="scripting.commands.activate"><code>activate [window ID | name | label]</code></dt>
+							<dd>Activate window <code>window</code> or the main application window (bring it to the front). If it is minimized, restore it.</dd>
+						<dt id="scripting.commands.dialogactions"><code>alt | cancel | ok [filename]</code></dt>
+							<dd>If a modal dialog is shown, call the default action (ok), the alternate action (if applicable), or cancel it. If a file dialog is shown, using <code>ok filename</code> chooses that file.</dd>
+						<dt><code>calibrate</code></dt>
+							<dd>Setup calibration measurements (note that this won't give a choice whether to create a fast curves + matrix profile as well, if you want that use <code><a href="#scripting.commands.interact">interact</a> mainframe calibrate_btn</code> instead). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt><code>calibrate-profile</code></dt>
+							<dd>Setup calibration &amp; profiling measurements. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt id="scripting.commands.close"><code>close [window ID | name | label]</code></dt>
+							<dd>Close window <code>window</code> or the current active window (if the window is the main window, this quits the application). Note that this tries to abort any running operations first, so you may want to check application state via the <code><a href="#scripting.commands.getstate">getstate</a></code> command.</dd>
+						<dt><code>create-colorimeter-correction</code></dt>
+							<dd>Create colorimeter correction.</dd>
+						<dt><code>create-profile [filename]</code></dt>
+							<dd>Create profile from existing measurements (profile or measurement file).</dd>
+						<dt><code>curve-viewer [filename]</code></dt>
+							<dd>Show curves, optionally loading <code>filename</code>. Relative paths are possible e.g. for presets: <code>curve-viewer presets/photo.icc</code></dd>
+						<dt><code>dispcalGUI [filename]</code></dt>
+							<dd>Bring the main window to the front. If it is minimized, restore it. Optionally, load <code>filename</code>.</dd>
+						<dt><code>enable-spyder2</code></dt>
+							<dd>Enable the spyder 2.</dd>
+						<dt><code>getactivewindow</code></dt>
+							<dd>Get the current active window. The returned format is <code>classname</code> <code>ID</code> <code>name</code> <code>label</code> <code>state</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt><code>getcellvalues [window ID | name | label] &lt;grid ID | name | label&gt;</code></dt>
+							<dd>Get cell values from grid <code>grid</code> of window <code>window</code> or the current active window.</dd>
+						<dt><code>getappname</code></dt>
+							<dd>Get the name of the application you're connected to.</dd>
+						<dt><code>getcfg [option]</code></dt>
+							<dd>Get configuration <code>option</code>, or whole configuration (key-value pairs in INI format).</dd>
+						<dt><code>getcommands</code></dt>
+							<dd>Get list of commands supported by this application.</dd>
+						<dt><code>getdefault &lt;option&gt;</code></dt>
+							<dd>Get default <code>option</code> (key-value pair in INI format).</dd>
+						<dt id="scripting.commands.getdefaults"><code>getdefaults</code></dt>
+							<dd>Get all defaults (key-value pairs in INI format).</dd>
+						<dt id="scripting.commands.getmenus"><code>getmenus</code></dt>
+							<dd>Get available menus in the format <code>ID "label" state</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt id="scripting.commands.getmenuitems"><code>getmenuitems [menuposition | label]</code></dt>
+							<dd>Get available menu items in the format <code>menuposition</code> <code>"menulabel"</code> <code>menuitemID</code> <code>"menuitemlabel"</code> <code>state</code> <code>[checkable]</code> <code>[checked]</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt id="scripting.commands.getstate"><code>getstate</code></dt>
+							<dd>Get application state. Return value will be either <code>idle</code>, <code>busy</code>, <code>dialogclassname</code> <code>ID</code> <code>dialogname</code> <code>[dialoglabel]</code> <code>state</code> <code>"messagetext"</code> <code>[path "path"]</code> <code>[buttons "buttonlabel"...]</code> if a modal dialog is shown or <code>blocked</code> in case the UI is currently blocked. Most commands will not work if the UI is blocked—the only way to resolve the block is to non-programmatically interact with the actual UI elements of the application or closing it. Note that a state of <code>blocked</code> should normally only occur if an actual file dialog is shown. If using the scripting interface exclusively, this should never happen because it uses a replacement file dialog that supports the same actions as a real file dialog, but doesn't block. Also note that a return value of <code>blocked</code> for any of the other commands just means that a modal dialog is currently waiting to be interacted with, only if <code>getstate</code> also returns <code>blocked</code> you cannot resolve the situation with scripting alone.</dd>
+						<dt id="scripting.commands.getuielement"><code>getuielement [window ID | name | label] &lt;element ID | name | label&gt;</code></dt>
+						<dt id="scripting.commands.getuielements"><code>getuielements [window ID | name | label]</code></dt>
+							<dd>Get a single UI element or a list of the visible UI elements of window <code>window</code> or the current active window. Each returned line represents an UI element and has the format <code>classname</code> <code>ID</code> <code>name</code> <code>["label"]</code> <code>state</code> <code>[checked]</code> <code>[value "value"]</code> <code>[items "item"...]</code>. <code>classname</code> is the internal UI library class name. It can help you determine what type of UI element it is, and which interactions it supports. <code>ID</code> is a numeric identifier. <code>name</code> is the name of the UI element. <code>"label"</code> (if present) is a label which further helps in identifying the UI element. You can use the latter three with the <code><a href="#scripting.commands.interact">interact</a></code> command. <code>state</code> is either <code>enabled</code> or <code>disabled</code>. <code>items "item"...</code> (if present) is a list of items connected to the UI element (i.e. selection choices).</dd>
+						<dt id="scripting.commands.getvalid"><code>getvalid</code></dt>
+							<dd>Get valid values for options that have constraints (key-value pairs in INI format). There are two sections, <code>ranges</code> and <code>values</code>. <code>ranges</code> are the valid ranges for options that accept numeric values (note that integer options not covered by <code>ranges</code> are typically boolean types). <code>values</code> are the valid values for options that only accept certain values. Options not covered by <code>ranges</code> and <code>values</code> are limited to their data type (you can't set a numeric option to a string and vice versa).</dd>
+						<dt id="scripting.commands.getwindows"><code>getwindows</code></dt>
+							<dd>Get a list of visible windows. The returned format is a list of <code>classname</code> <code>ID</code> <code>name</code> <code>label</code> <code>state</code>. <code>state</code> is either <code>enabled</code> or <code>disabled</code>.</dd>
+						<dt><code>import-colorimeter-corrections [filename...]</code></dt>
+							<dd>Import colorimeter corrections.</dd>
+						<dt><code>install-profile [filename]</code></dt>
+							<dd>Install a profile.</dd>
+						<dt id="scripting.commands.interact"><code>interact [window ID | name | label] &lt;element ID | name | label&gt; [setvalue value]</code></dt>
+							<dd>Interact with the UI element <code>element</code> of window <code>window</code> or the current active window, e.g. invoke a button or set a control to a value.</dd>
+						<dt id="scripting.commands.invokemenu"><code>invokemenu &lt;menuposition | menulabel&gt; &lt;menuitemID | menuitemlabel&gt;</code></dt>
+							<dd>Invoke a menu item.</dd>
+						<dt id="scripting.commands.load"><code>load &lt;filename&gt;</code></dt>
+							<dd>Load <code>filename</code>. Relative paths are possible e.g. for presets: <code>load presets/photo.icc</code></dd>
+						<dt id="scripting.commands.measure"><code>measure</code></dt>
+							<dd>Start measurements (must be setup first!).</dd>
+						<dt><code>measure-uniformity</code></dt>
+							<dd>Measure screen uniformity.</dd>
+						<dt><code>measurement-report [filename]</code></dt>
+							<dd>If no filename given, show measurement report window. Otherwise, setup measurement to create the HTML report <code>filename</code>. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt><code>profile</code></dt>
+							<dd>Setup profiling measurements (note that this will always use the current calibration if applicable, if you want to use linear calibration instead call <code>load linear.cal</code> prior to calling <code>profile</code>). For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt><code>profile-info [filename]</code></dt>
+							<dd>Show profile information, optionally loading profile <code>filename</code>. Relative paths are possible e.g. for presets: <code>profile-info presets/photo.icc</code></dd>
+						<dt id="scripting.commands.refresh"><code>refresh</code></dt>
+							<dd>Update the GUI after configuration changes via <code><a href="#scripting.commands.setcfg">setcfg</a></code> or <code><a href="#scripting.commands.restore-defaults">restore-defaults</a></code>.</dd>
+						<dt><code>report-calibrated</code></dt>
+							<dd>Report on calibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt><code>report-uncalibrated</code></dt>
+							<dd>Report on uncalibrated display. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+						<dt id="scripting.commands.restore-defaults"><code>restore-defaults [category...]</code></dt>
+							<dd>Restore defaults globally or just for <code>category</code>. Call <code><a href="#scripting.commands.refresh">refresh</a></code> after changing the configuration to update the GUI.</dd>
+						<dt id="scripting.commands.setlanguage"><code>setlanguage &lt;languagecode&gt;</code></dt>
+							<dd>Set language.</dd>
+						<dt id="scripting.commands.setcfg"><code>setcfg &lt;option&gt; &lt;value&gt;</code></dt>
+							<dd>Set configuration <code>option</code> to <code>value</code>. The special value <code>null</code> clears a configuration option. Call <code>refresh</code> after changing the configuration to update the GUI. Also see <code><a href="#scripting.commands.getdefaults">getdefaults</a></code> and <code><a href="#scripting.commands.getvalid">getvalid</a></code>.</dd>
+						<dt id="scripting.commands.setresponseformat"><code>setresponseformat &lt;format&gt;</code></dt>
+							<dd>Set the format for responses. The default <code>plain</code> is a text format that is easy to read, but not necessarily the best for parsing programmatically. The other possible formats are <code>json</code>, <code>json.pretty</code>, <code>xml</code> and <code>xml.pretty</code>. The <code>*.pretty</code> formats use newlines and indentation to make them easier to read.</dd>
+						<dt><code>synthprofile [filename]</code></dt>
+							<dd>Show synthetic profile creation window, optionally loading profile <code>filename</code>.</dd>
+						<dt><code>testchart-editor [filename | create filename]</code></dt>
+							<dd>Show testchart editor window, optionally loading or creating testchart <code>filename</code>. Relative paths are possible e.g. for loading a default testchart: <code>testchart-editor ti1/d3-e4-s17-g49-m5-b5-f0.ti1</code></dd>
+						<dt><code>verify-calibration</code></dt>
+							<dd>Verify calibration. For non-virtual displays as well as pattern generators (except madVR), call the <code><a href="#scripting.commands.measure">measure</a></code> command afterwards to commence measurements.</dd>
+					</dl>
+				</div>
+			</div>
+			
+			<h3>Interacting with UI elements</h3>
+			
+			<ul>
+				<li>Invoking a button: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;button&gt;</code> e.g. show profile name placeholders information: <code><a href="#scripting.commands.interact">interact</a> mainframe profile_name_info_btn</code></li>
+				<li>Setting a value on a dropdown, text field, or slider: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;element&gt; setvalue "value"</code> e.g. set calibration gamma to 2.4: <code><a href="#scripting.commands.interact">interact</a> mainframe trc_textctrl setvalue 2.4</code> (note that for changing multiple options at once it is generally preferable to call <code><a href="#scripting.commands.setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> for each option you want to set followed by a single <code><a href="#scripting.commands.refresh">refresh</a></code> instead)</li>
+				<li>Setting a cell value on a grid: <code><a href="#scripting.commands.interact">interact</a> [window] &lt;grid&gt; setvalue "row,col,value"</code> e.g. while the testchart editor is shown, set the cell at the second column of the first row to 33: <code><a href="#scripting.commands.interact">interact</a> tcgen grid setvalue "0,1,33"</code></li>
+			</ul>
+			
+			<h3>Caveats and limitations</h3>
+			
+			<p>There are a few things to be aware of when using commands that interact with the UI directly (i.e. <code><a href="#scripting.commands.activate">activate</a></code>, <code><a href="#scripting.commands.dialogactions">alt | cancel | ok</a></code>, <code><a href="#scripting.commands.close">close</a></code>, <code><a href="#scripting.commands.interact">interact</a></code> and <code><a href="#scripting.commands.invokemenu">invokemenu</a></code>).</p>
+			
+			<p><strong>Referring to windows and UI elements:</strong> You can refer to windows and UI elements by their ID, name or label (you can find out about windows and UI elements with the <code><a href="#scripting.commands.getmenus">getmenus</a></code>/<code><a href="#scripting.commands.getmenuitems">getmenuitems</a></code>, <code><a href="#scripting.commands.getuielement">getuielement</a></code>/<code><a href="#scripting.commands.getuielements">getuielements</a></code>, and <code><a href="#scripting.commands.getwindows">getwindows</a></code> commands). If an object's ID is negative, it means that it has been automatically assigned at object creation time and is only valid during the lifetime of the object (i.e. for modal dialogs, only while the dialog is displayed). For this reason, using an object's name instead is easier, but names (aswell as non automatically assigned IDs) are not guaranteed to be unique, even for objects which share the same parent window (although most of the “important” controls as well as application windows will have unique names). Another possibility is to use an object's label, which while also not guaranteed to be unique, still has a fairly high likelihood of being unique for controls that share the same parent window, but has the drawback that it is localized (although you can ensure a specific UI language by calling <code><a href="#scripting.commands.setlanguage">setlanguage</a></code>) and is subject to change when the localization is updated.</p>
+			
+			<p><strong>Sequential operations:</strong> Calling commands that interact with the UI in rapid succession may require the use of additional delays between sending commands to allow the GUI to react (so <code><a href="#scripting.commands.getstate">getstate</a></code> will return the actual UI state after a specific command), although there is a default delay for commands that interact with the UI of atleast 55 ms. A good rule of thumb for sending commands is to use a “send command” → “read response” → “optionally wait a few extra ms” → “get application state (send <code><a href="#scripting.commands.getstate">getstate</a></code> command)” → “read response” cycle.</p>
+			
+			<p><strong>Setting values:</strong> If setting a value on an UI element returns <code>ok</code>, this is not always an indication that the value was actually changed, but only that the attempt to set the value has not failed, i.e. the event handler of the element may still do error checking and change the value to something sane if it was not valid. If you want to make sure that the intended value is set, use <code><a href="#scripting.commands.getuielement">getuielement</a></code> on the affected element(s) and check the value (or even better, if you use <a href="#scripting.commands.setresponseformat">JSON or XML response format</a>, you can check the <code>object</code> property/element of the response instead which will reflect the object's current state and saves you one request). In general it is preferable to use <code><a href="#scripting.commands.interact">interact</a> &lt;elementname&gt; setvalue &lt;value&gt;</code> only on dialogs, and in all other cases use a sequence of <code><a href="#scripting.commands.setcfg">setcfg</a> &lt;option&gt; &lt;value&gt;</code> (repeat as necessary, optionally call <code><a href="#scripting.commands.load">load</a> &lt;filename&gt;</code> or <code><a href="#scripting.commands.restore-defaults">restore-defaults</a></code> first to minimize the amount of configuration options that you need to change) followed by a call to <code><a href="#scripting.commands.refresh">refresh</a></code> to update the UI.</p>
+			
+			<p>Also, not all controls may offer a comprehensive scripting interface. I'm open to suggestions though.</p>
+		</div>
+
+		<div id="userdata">
+			<h2>User data and configuration file locations</h2>
+			
+			<p>dispcalGUI uses the following folders for configuration, logfiles and storage (the storage directory is configurable).</p>
+			
+			<h3 id="configuration">Configuration</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.config/dispcalGUI</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Preferences/dispcalGUI</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI</samp></li>
+			</ul>
+			
+			<h3 id="logs">Logs</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/logs</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Logs/dispcalGUI</samp><br />
+					<samp>/Users/<var>Your Username</var>/Library/Logs/0install</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI\logs</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\logs</samp></li>
+			</ul>
+			
+			<h3 id="storage">Storage</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/storage</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Application Support/dispcalGUI/storage</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI\storage</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\storage</samp></li>
+			</ul>
 		</div>
 
 		<div id="issues">
@@ -1852,9 +2156,10 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<li>Linux:
 							<samp>/home/<var>Your Username</var>/.local/share/dispcalGUI/logs</samp></li>
 						<li>Mac OS X:
-							<samp>/Users/<var>Your Username</var>/Library/Logs/dispcalGUI</samp></li>
+							<samp>/Users/<var>Your Username</var>/Library/Logs/dispcalGUI</samp><br />
+							<samp>/Users/<var>Your Username</var>/Library/Logs/0install</samp></li>
 						<li>Windows Vista and newer:
-							<samp>C:\Users\<var>Your Username</var>\AppData\dispcalGUI\logs</samp></li>
+							<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\dispcalGUI\logs</samp></li>
 						<li>Windows XP:
 							<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\logs</samp></li>
 					</ul>
@@ -1934,7 +2239,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Tomislav Stojanović, Michel Mougey, Tim Oberbillig, Peter Clarke, Lionel Davey, Christian-Aurel Buru, James Hainis, Nejib Boubaker, Tomislav Stojanović, Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Andrew Hunter, Yulian Martsenkov, Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</span></p>
+			<p>Recent donors: Heinrich Schemmann, Gábor Huszár, Tilman Holzhauer, Lateral Imaging, Frank Zacharias, Marina Toshich, Tomislav Stojanović, Michel Mougey, Tim Oberbillig, Peter Clarke, Lionel Davey, Christian-Aurel Buru, James Hainis, Nejib Boubaker, Tomislav Stojanović, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, Andrew Hunter, Yulian Martsenkov, Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -1945,8 +2250,49 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2014-09-06 00:07 (UTC) 2.5  -->
+			<!-- 2014-11-15 20:40 (UTC) 2.6 Beta -->
 			<dl>
+				<dt id="changelog-2.6">2014-11-15 20:40 (UTC) 2.6 Beta</dt>
+					<dd>
+						<h3>2.6 Beta</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<!--li>Support for Argyll CMS 1.7 capability to use <a href="https://www.google.com/chrome/devices/chromecast">Google Chromecast</a> as pattern generator.</li-->
+							<!--li>Support for the ColorHug 2 colorimeter (requires Argyll CMS 1.7 or newer).</li-->
+							<li><a href="#scripting">Scripting</a> support (locally and over the network).</li>
+							<li>Possibilty to do spectrometer self-calibration on its own (look in the “Options” menu). Useful in conjunction with “Allow to skip spectrometer self-calibration”.</li>
+							<li>Curve viewer, profile information: Support plotting tone response curve of grayscale profiles.</li>
+							<li>wxPython 3.0.2 “Phoenix” compatibility.</li>
+							<li>Linux: Install/uninstall instrument configuration files (udev rules/hotplug scripts) from the “Tools” menu.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Use extended testchart as default for matrix profiles.</li>
+							<li>When switching profiles or displays, make sure the measurement report and 3D LUT creation windows are updated accordingly if shown.</li>
+							<li>Unset Argyll display update delay/settle time environment variables after disabling their override when they were not set initially.</li>
+							<li>All standalone tools have separate configuration files (overridden by main configuration if newer and vice versa) and logfiles.</li>
+							<li>VRML to X3D converter can now do batch processing.</li>
+							<li>Enhanced UI for colorimeter correction creation.</li>
+							<li>Limit the ability to create colorimeter corrections for the Klein K-10 to factory measurement mode.</li>
+							<li>Detect instruments at startup if no instruments were previously configured.</li>
+							<li>Changed “Resolve” preset to use a minimum display update delay of 600 ms and constant APL patterns by default.</li>
+							<li>Restore defaults for display update delay and settle time multiplier when loading settings without override.</li>
+							<li>Linux: The system-wide configuration file is ignored except for the profile loader.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Calibration curve plot was not working anymore for profiles with formula-type vcgt tags (regression of r2384, did not affect Argyll-generated profiles).</li>
+							<li>Re-use existing Resolve connection if possible and only shut it down on application exit (fixes “Address already in use” error under Linux and Mac OS X).</li>
+							<li>When using Resolve, the measurement window position and size aswell as the “Use black background” setting were not correctly stored in the generated calibration file and/or profile and could thus not be restored by loading the file(s).</li>
+							<li>When exporting test patches as image files, limit pixel dimensions to FullHD (fixes memory error when exporting fullscreen patches).</li>
+							<li>When applying a tone response curve to an existing profile, make sure curve values can't become negative at and near zero input.</li>
+							<li>Fix generation of synthetic grayscale profiles.</li>
+							<li>Linux (only if Argyll CMS was installed via Zero Install)/Mac OS X/Windows: If the Argyll CMS directory was not explicitly configured, Argyll CMS reference profiles (e.g. Rec709.icm) were not added automatically to file dropdown lists and the “Install Argyll CMS instrument drivers...” menu item (Windows only) was grayed out (this impacted convenience, not functionality).</li>
+							<li>Cosmetic, Mac OS X 10.8 and earlier: Splash screen had a light gray border instead of being semi-transparent.</li>
+							<li>Mac OS X 10.10 Yosemite: Disable functionality to load/clear calibration like under Mac OS X 10.6 and up.</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-2.5">2014-09-06 00:07 (UTC) 2.5 </dt>
 					<dd>
 						<h3>2.5 </h3>
@@ -3491,7 +3837,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 					<dd>User Account Control — <a href="http://en.wikipedia.org/wiki/User_Account_Control">en.wikipedia.org/wiki/User_Account_Control</a></dd>
 				<dt id="definition_EDID">[10] EDID</dt>
 					<dd>Extended Display Identification Data — <a href="http://en.wikipedia.org/wiki/EDID">en.wikipedia.org/wiki/EDID</a></dd>
-				<dt id="definition_PCS">[11] EDID</dt>
+				<dt id="definition_PCS">[11] PCS</dt>
 					<dd>Profile Connection Space — <a href="http://en.wikipedia.org/wiki/ICC_profile">en.wikipedia.org/wiki/ICC_profile</a></dd>
 			</dl>
 		</div>
@@ -3505,6 +3851,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 		<div id="footer-container">
 			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>
 		</div>
+
+		<script type="text/javascript" src="theme/prism.js"></script>
 
 	</body>
 </html>
