@@ -1006,8 +1006,8 @@ def setup():
 			zeroinstall_version = re.search(r" (\d(?:\.\d+)+)", stdout)
 			if zeroinstall_version:
 				zeroinstall_version = zeroinstall_version.groups()[0]
-			if zeroinstall_version < "2.7":
-				zeroinstall_version = "2.7"
+			if zeroinstall_version < "2.8":
+				zeroinstall_version = "2.8"
 			feeduri = "http://%s/0install/%s.xml" % (domain.lower(), name)
 			dist_dir = os.path.join(pydir, "dist", "0install",
 									name + "-0install")
