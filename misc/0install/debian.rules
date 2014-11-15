@@ -18,7 +18,7 @@ CFLAGS += -O2
 endif
 
 # The DESTDIR Has To Be Exactly  /usr/src/packages/BUILD/debian/<nameOfPackage>
-export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}
+export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}-0install
 export python_version=`python -c "import sys;print sys.version[:3]"`
 
 build: build-stamp

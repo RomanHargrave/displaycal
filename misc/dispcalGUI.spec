@@ -27,11 +27,12 @@ License:        GPL-3.0+
 Name:           ${PACKAGE}
 Version:        ${VERSION}
 Release:        0
-Source0:        http://%{name}.hoech.net/download/%{name}-%version.tar.gz
+Source0:        ${URL}download/%{name}-%version.tar.gz
 Source1:        copyright
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Requires:       p7zip
+Obsoletes:      ${PACKAGE}-0install
 %if 0%{?mandriva_version} > 0
 Group:          Graphics
 BuildRequires:  gcc

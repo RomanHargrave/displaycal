@@ -24,10 +24,10 @@
 
 Summary:        ${SUMMARY}
 License:        GPL-3.0+
-Name:           ${PACKAGE}
+Name:           ${PACKAGE}-0install
 Version:        ${VERSION}
 Release:        0
-Source0:        http://%{name}.hoech.net/download/%{name}-%version.tar.gz
+Source0:        ${URL}download/${PACKAGE}-%version.tar.gz
 Source1:        copyright
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -36,6 +36,7 @@ BuildRequires:  python
 BuildRequires:  xdg-utils
 Requires:       xdg-utils
 Requires:       p7zip
+Obsoletes:      ${PACKAGE}
 %if 0%{?mandriva_version} > 0
 Group:          Graphics
 Requires:       libxscrnsaver1
@@ -72,7 +73,7 @@ Requires:       0install
 ${DESC}
 
 %prep
-%setup
+%setup -n ${PACKAGE}-%version
 
 %build
 

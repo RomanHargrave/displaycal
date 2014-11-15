@@ -1,13 +1,15 @@
-Source: ${DEBPACKAGE}
+Source: ${DEBPACKAGE}-0install
 Section: graphics
 Priority: extra
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Build-Depends: debhelper (>= 5.0.38), python
 XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
-Package: ${DEBPACKAGE}
+Package: ${DEBPACKAGE}-0install
 Architecture: all
 Depends: ${shlibs:Depends}, ${python:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), libxss1, p7zip, zeroinstall-injector
+Conflicts: ${DEBPACKAGE}
+Replaces: ${DEBPACKAGE}
 Recommends: argyll
 Description: ${SUMMARY}
 ${DESC}

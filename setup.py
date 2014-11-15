@@ -601,6 +601,7 @@ def setup():
 						  "debian.rules", "dispcalGUI.changes",
 						  "dispcalGUI.dsc", "dispcalGUI.spec", 
 						  os.path.join("0install", "PKGBUILD"),
+						  os.path.join("0install", "debian.changelog"),
 						  os.path.join("0install", "debian.control"),
 						  os.path.join("0install", "debian.rules"),
 						  os.path.join("0install", "dispcalGUI.dsc"),

@@ -8,6 +8,8 @@ XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 Package: ${DEBPACKAGE}
 Architecture: any
 Depends: ${shlibs:Depends}, ${python:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), p7zip
+Conflicts: ${DEBPACKAGE}-0install
+Replaces: ${DEBPACKAGE}-0install
 Recommends: argyll
 Description: ${SUMMARY}
 ${DESC}
