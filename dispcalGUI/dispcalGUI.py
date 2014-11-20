@@ -519,7 +519,7 @@ def get_cgats_measurement_mode(cgats, instrument):
 		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
 		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
 		# - worker.Worker.instrument_can_use_ccxx
-		if instrument in ("ColorHug", "ColorHug 2"):
+		if instrument in ("ColorHug", "ColorHug2"):
 			mode = {1: "F",
 					2: "R"}.get(base_id)
 		elif instrument == "ColorMunki Smile":
@@ -2643,11 +2643,11 @@ class MainFrame(BaseFrame):
 			else:
 				measurement_modes_ab[instrument_type].extend(["3", "4", "5",
 															  "6", "7"])
-		elif instrument_name in ("ColorHug", "ColorHug 2"):
+		elif instrument_name in ("ColorHug", "ColorHug2"):
 			# Argyll CMS 1.3.6, spectro/colorhug.c, colorhug_disptypesel
 			# Note: projector mode (-yp) is not the same as ColorMunki
 			# projector mode! (-p)
-			# ColorHug 2 needs Argyll CMS 1.7
+			# ColorHug2 needs Argyll CMS 1.7
 			measurement_modes[instrument_type].extend([lang.getstr("projector"),
 													   lang.getstr("measurement_mode.lcd.white_led"),
 													   lang.getstr("measurement_mode.factory"),
@@ -6235,7 +6235,7 @@ class MainFrame(BaseFrame):
 		modes = {"ColorHug":
 				 {"F": lang.getstr("measurement_mode.factory"),
 				  "R": lang.getstr("measurement_mode.raw")},
-				 "ColorHug 2":
+				 "ColorHug2":
 				 {"F": lang.getstr("measurement_mode.factory"),
 				  "R": lang.getstr("measurement_mode.raw")},
 				 "ColorMunki Smile":
@@ -6263,11 +6263,11 @@ class MainFrame(BaseFrame):
 		measurement_mode = None
 		if getcfg("measurement_mode") == "auto":
 			# Make changes in worker.Worker.add_instrument_features too!
-			if self.worker.get_instrument_name() in ("ColorHug", "ColorHug 2"):
+			if self.worker.get_instrument_name() in ("ColorHug", "ColorHug2"):
 				measurement_mode = "R"
 			else:
 				measurement_mode = "l"
-		elif (self.worker.get_instrument_name() in ("ColorHug", "ColorHug 2")
+		elif (self.worker.get_instrument_name() in ("ColorHug", "ColorHug2")
 			and getcfg("measurement_mode") not in ("F", "R")):
 			# Automatically set factory measurement mode if not already
 			# factory or raw measurement mode
@@ -6576,7 +6576,7 @@ class MainFrame(BaseFrame):
 				self.measure_auto_finish(exception)
 				return
 			luminance = None
-			if self.worker.get_instrument_name() in ("ColorHug", "ColorHug 2"):
+			if self.worker.get_instrument_name() in ("ColorHug", "ColorHug2"):
 				# Get the factory calibration so we can do luminance scaling
 				for line in self.worker.output:
 					if line.lower().startswith("serial number:"):
@@ -9046,7 +9046,7 @@ class MainFrame(BaseFrame):
 		if instrument_features.get("highres_mode"):
 			setcfg("measurement_mode.highres", 1 if v and "H" in v else 0)
 		if (v and self.worker.get_instrument_name() in ("ColorHug",
-														"ColorHug 2") and
+														"ColorHug2") and
 			"p" in v):
 			# ColorHug projector mode is just a correction matrix
 			# Avoid setting ColorMunki projector mode
