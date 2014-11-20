@@ -6716,10 +6716,10 @@ class MainFrame(BaseFrame):
 					# Measurements were started from colorimeter correction
 					# creation dialog
 					paths = []
-					if (getcfg("last_reference_ti3_path") and
+					if (getcfg("last_reference_ti3_path", False) and
 						os.path.isfile(getcfg("last_reference_ti3_path")) and
 						(getcfg("colorimeter_correction.type") == "spectral" or
-						 (getcfg("last_colorimeter_ti3_path") and
+						 (getcfg("last_colorimeter_ti3_path", False) and
 						  os.path.isfile(getcfg("last_colorimeter_ti3_path")) and
 						  self.worker.get_instrument_name() ==
 						  getcfg("colorimeter_correction.instrument")))):
@@ -7715,9 +7715,9 @@ class MainFrame(BaseFrame):
 						 border=8)
 			dlg.measurement_mode_reference = wx.Choice(dlg, -1, choices=[])
 			def set_ok_btn_state():
-				dlg.ok.Enable(bool(getcfg("last_reference_ti3_path") and 
+				dlg.ok.Enable(bool(getcfg("last_reference_ti3_path", False) and 
 								   os.path.isfile(getcfg("last_reference_ti3_path")) and
-								   ((getcfg("last_colorimeter_ti3_path") and
+								   ((getcfg("last_colorimeter_ti3_path", False) and
 									 os.path.isfile(getcfg("last_colorimeter_ti3_path"))) or
 									dlg.correction_type_spectral.GetValue())))
 			def check_last_ccxx_ti3(event):
