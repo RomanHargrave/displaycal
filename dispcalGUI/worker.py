@@ -1444,6 +1444,16 @@ class Worker(object):
 					dimensions_measureframe = "1,1,0.01"
 				else:
 					dimensions_measureframe = getcfg("dimensions.measureframe")
+					if config.get_display_name().startswith("Chromecast "):
+						# Rescale for Chromecast default patch size of 10%
+						dimensions_measureframe = [float(n) for n in
+												   dimensions_measureframe.split(",")]
+						dimensions_measureframe[2] *= defaults["size.measureframe"]
+						dimensions_measureframe[2] /= config.get_display_rects()[0][2]
+						dimensions_measureframe[2] /= .1
+						dimensions_measureframe = ",".join([str(min(n, 50))
+															for n in
+															dimensions_measureframe])
 				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 							dimensions_measureframe)
 			farg = get_arg("-F", args)
