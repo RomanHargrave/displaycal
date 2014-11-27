@@ -364,9 +364,12 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.SetColumnWidth(4, 75)
 	dlg_list_ctrl.SetColumnWidth(5, 75)
 	dlg_list_ctrl.SetColumnWidth(6, 150)
+	types = {"CCSS": lang.getstr("spectral").replace(":", ""),
+			 "CCMX": lang.getstr("matrix").replace(":", "")}
 	for i in cgats:
 		index = dlg_list_ctrl.InsertStringItem(i, "")
-		dlg_list_ctrl.SetStringItem(index, 0, cgats[i].type.strip())
+		ccxx_type = cgats[i].type.strip()
+		dlg_list_ctrl.SetStringItem(index, 0, types.get(ccxx_type, ccxx_type))
 		dlg_list_ctrl.SetStringItem(index, 1, get_canonical_instrument_name(cgats[i].queryv1("DESCRIPTOR") or ""))
 		dlg_list_ctrl.SetStringItem(index, 2, cgats[i].queryv1("MANUFACTURER") or "")
 		dlg_list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
@@ -2812,6 +2815,7 @@ class MainFrame(BaseFrame):
 				 lang.getstr("auto")]
 		self.ccmx_item_paths = []
 		index = 0
+		ccxx_path = None
 		ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 		if len(ccmx) > 1 and not os.path.isfile(ccmx[1]):
 			ccmx = ccmx[:1]
@@ -2821,11 +2825,12 @@ class MainFrame(BaseFrame):
 			ccmx_paths.sort(key=os.path.basename)
 			ccss_paths.sort(key=os.path.basename)
 			self.ccmx_cached_paths = ccmx_paths + ccss_paths
-			self.ccmx_cached_descriptors = OrderedDict()
+			self.ccmx_cached_descriptors = {}
 			self.ccmx_instruments = {}
 			self.ccmx_mapping = {}
 		types = {"ccss": lang.getstr("spectral").replace(":", ""),
 				 "ccmx": lang.getstr("matrix").replace(":", "")}
+		add_basename_to_desc_on_mismatch = False
 		for i, path in enumerate(self.ccmx_cached_paths):
 			if self.ccmx_cached_descriptors.get(path):
 				desc = self.ccmx_cached_descriptors[path]
@@ -2841,7 +2846,8 @@ class MainFrame(BaseFrame):
 				# (max 31 chars)
 				# See also colorimeter_correction_check_overwite, the
 				# way the filename is processed must be the same
-				if (re.sub(r"[\\/:*?\"<>|]+", "_",
+				if (add_basename_to_desc_on_mismatch and
+					re.sub(r"[\\/:*?\"<>|]+", "_",
 						   make_argyll_compatible_path(desc)) !=
 					os.path.splitext(os.path.basename(path))[0]):
 					desc = "%s <%s>" % (ellipsis(desc, 66, "m"),
@@ -2871,11 +2877,20 @@ class MainFrame(BaseFrame):
 				# Only add the correction to the list if it matches the
 				# currently selected instrument or if it is a CCSS
 				if len(ccmx) > 1 and ccmx[0] != "AUTO" and ccmx[1] == path:
-					index = len(items)
+					ccxx_path = path
 				items.append("%s: %s" %
 							 (types.get(os.path.splitext(path)[1].lower()[1:]),
 							  desc))
 				self.ccmx_item_paths.append(path)
+		items_paths = []
+		for i, item in enumerate(items[2:]):
+			items_paths.append({"item": item, "path": self.ccmx_item_paths[i]})
+		items_paths.sort(key=lambda item_path: item_path["item"].lower())
+		for i, item_path in enumerate(items_paths):
+			items[i + 2] = item_path["item"]
+			self.ccmx_item_paths[i] = item_path["path"]
+		if ccxx_path:
+			index = self.ccmx_item_paths.index(ccxx_path) + 2
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
@@ -2893,7 +2908,8 @@ class MainFrame(BaseFrame):
 					# (max 31 chars)
 					# See also colorimeter_correction_check_overwite, the
 					# way the filename is processed must be the same
-					if (re.sub(r"[\\/:*?\"<>|]+", "_",
+					if (add_basename_to_desc_on_mismatch and
+						re.sub(r"[\\/:*?\"<>|]+", "_",
 							   make_argyll_compatible_path(desc)) !=
 						os.path.splitext(os.path.basename(ccmx[1]))[0]):
 						desc = "%s <%s>" % (ellipsis(desc, 66, "m"),

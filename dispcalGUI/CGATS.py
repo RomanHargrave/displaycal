@@ -360,13 +360,25 @@ class CGATS(dict):
 	def get_descriptor(self):
 		""" Return descriptor """
 		desc = self.queryv1("DESCRIPTOR")
-		if not desc or desc == "Not specified":
-			desc = self.queryv1("INSTRUMENT")
-			if desc:
-				desc += " & "
+		is_ccss = self.get(0, self).type == "CCSS"
+		if not desc or desc == "Not specified" or is_ccss:
+			if not is_ccss:
+				desc = self.queryv1("INSTRUMENT")
+				if desc:
+					display = self.queryv1("DISPLAY")
+					if display:
+						desc += " & " + display
 			else:
-				desc = ""
-			desc += self.queryv1("DISPLAY") or ""
+				tech = self.queryv1("TECHNOLOGY")
+				if tech:
+					if (desc and desc != "Not specified" and
+						desc != "CCSS for " + tech):
+						display = desc
+					else:
+						display = self.queryv1("DISPLAY")
+					if display:
+						tech += " (%s)" % display
+				desc = tech
 		if not desc and self.filename:
 			desc = os.path.splitext(os.path.basename(self.filename))[0]
 		return desc
