@@ -11529,13 +11529,9 @@ class MainFrame(BaseFrame):
 			# If the user never closees that dialog before he quits the
 			# application, this dialog will hinder exiting the main loop.
 			win = self.get_top_window()
-			if isinstance(win, wx.Dialog):
-				if win.IsModal():
-					win.EndModal(wx.ID_CANCEL)
-				else:
-					win.Close()
-				# Give time for the dialog to be destroyed
-				wx.CallLater(55, self.Close)
+			if isinstance(win, wx.Dialog) and win.IsModal():
+				win.Raise()
+				wx.Bell()
 				return
 			writecfg()
 			if getattr(self, "thread", None) and self.thread.isAlive():
