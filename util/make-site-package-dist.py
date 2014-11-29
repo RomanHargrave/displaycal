@@ -6,6 +6,7 @@ Collect modules from site-packages used by dispcalGUI
 
 """
 
+import glob
 import os
 import shutil
 import sys
@@ -59,6 +60,17 @@ pkgs = {'numpy': ['numpy'],
 			   'wxversion']}
 if sys.platform == 'win32':
 	pkgs['wmi'] = ['wmi']
+if sys.platform == 'darwin':
+	pkgs['wx'].extend(glob.glob(os.path.normpath(os.path.join(
+		os.path.dirname(wx_pth), '..', '..', 'libwx_*.dylib'))))
+
+
+def copy(src, dst):
+	if os.path.islink(src):
+		os.symlink(os.readlink(src), dst)
+	else:
+		shutil.copy(src, dst)
+
 
 # Collect packages
 python_lib = get_python_lib(True)
@@ -78,6 +90,19 @@ for pkg_name, data in pkgs.iteritems():
 		if entry.lower().endswith('.pth'):
 			with open(entry) as pth:
 				entry = os.path.join(os.path.dirname(pth), pth.read().strip())
+		if os.path.isfile(entry):
+			print('  Collecting file: %s' % entry)
+			pth = entry
+		elif not os.path.isdir(entry):
+			print('  Collecting module: %s' % entry)
+			module = __import__(module)
+			filename, ext = os.path.splitext(module.__file__)
+			if os.path.basename(filename) == '__init__':
+				entry = os.path.dirname(filename)
+			else:
+				if ext in ('.pyc', '.pyo'):
+					ext = '.py'
+				pth = '%s%s' % (filename, ext)
 		if os.path.isdir(entry):
 			print('  Collecting package: %s' % entry)
 			dirname = os.path.dirname(entry)
@@ -96,14 +121,8 @@ for pkg_name, data in pkgs.iteritems():
 						os.makedirs(dst_dir)
 					dst = os.path.join(dst_dir, filename)
 					if not os.path.isfile(dst):
-						shutil.copy(src, dst)
+						copy(src, dst)
 		else:
-			print('  Collecting module: %s' % entry)
-			module = __import__(module)
-			filename, ext = os.path.splitext(module.__file__)
-			if ext in ('.pyc', '.pyo'):
-				ext = '.py'
-			pth = '%s%s' % (filename, ext)
 			dst = os.path.join(dist_dir, os.path.basename(pth))
 			if not os.path.isfile(dst):
-				shutil.copy(pth, dst)
+				copy(pth, dst)
