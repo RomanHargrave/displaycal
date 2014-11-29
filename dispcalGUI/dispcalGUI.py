@@ -683,17 +683,18 @@ def resize_bmp(event):
 		else:
 			bmp = ctrl.GetBitmap()
 			ctrl._bmp = bmp
-		ctrl.Freeze()
-		ctrl.MinSize = ctrl._bmp.GetSize()
-		ctrl.ContainingSizer.Layout()
-		w = ctrl.ContainingSizer.Size[0]
-		if getattr(ctrl, "_width", -1) != w and bmp.IsOk():
-			img = bmp.ConvertToImage()
-			img.Rescale(w, img.GetSize()[1])
-			bmp = img.ConvertToBitmap()
-			ctrl._width = w
-			ctrl.SetBitmap(bmp)
-		ctrl.Thaw()
+		if bmp.IsOk():
+			ctrl.Freeze()
+			ctrl.MinSize = ctrl._bmp.GetSize()
+			ctrl.ContainingSizer.Layout()
+			w = ctrl.ContainingSizer.Size[0]
+			if getattr(ctrl, "_width", -1) != w:
+				img = bmp.ConvertToImage()
+				img.Rescale(w, img.GetSize()[1])
+				bmp = img.ConvertToBitmap()
+				ctrl._width = w
+				ctrl.SetBitmap(bmp)
+			ctrl.Thaw()
 		event.Skip()
 
 
