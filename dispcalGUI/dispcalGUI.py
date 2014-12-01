@@ -9492,6 +9492,7 @@ class MainFrame(BaseFrame):
 								  wargs=(profile, ))
 
 	def profile_hires_b2a_consumer(self, result, profile):
+		self.start_timers()
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
