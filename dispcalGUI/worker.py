@@ -65,7 +65,8 @@ from argyll_names import (names as argyll_names, altnames as argyll_altnames,
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exe_ext, fs_enc, getcfg, geticon,
 					get_data_path, get_verified_path, isapp, isexe,
-					is_ccxx_testchart, profile_ext, pydir, setcfg, writecfg)
+					is_ccxx_testchart, logdir,
+					profile_ext, pydir, setcfg, writecfg)
 from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
@@ -3721,7 +3722,7 @@ class Worker(object):
 			# threshold
 			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
 			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
-							 cwd=xicclu1.tempdir, use_cam_clipping=True)
+							 use_cam_clipping=True)
 			threshold = clutres / 2
 			for a in xrange(clutres):
 				if self.thread_abort:
@@ -7883,7 +7884,7 @@ usage: spotread [-options] [logfile]
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
 			   pcs=None, scale=1, cwd=None, startupinfo=None, raw=False,
 			   logfile=None, use_icclu=False, use_cam_clipping=False,
-			   get_clip=False):
+			   get_clip=False, show_actual_if_clipped=False):
 		"""
 		Call xicclu, feed input floats into stdin, return output floats.
 		
@@ -7895,7 +7896,7 @@ usage: spotread [-options] [logfile]
 		"""
 		with Xicclu(profile, intent, direction, order, pcs, scale, cwd,
 					startupinfo, use_icclu, use_cam_clipping, logfile,
-					worker=self) as xicclu:
+					self, show_actual_if_clipped) as xicclu:
 			xicclu(idata)
 		return xicclu.get(raw, get_clip)
 
@@ -7903,7 +7904,8 @@ usage: spotread [-options] [logfile]
 class Xicclu(Worker):
 	def __init__(self, profile, intent="r", direction="f", order="n",
 				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
-				 use_cam_clipping=False, logfile=None, worker=None):
+				 use_cam_clipping=False, logfile=None, worker=None,
+				 show_actual_if_clipped=False):
 		Worker.__init__(self)
 		self.logfile = logfile
 		self.worker = worker
@@ -7915,20 +7917,19 @@ class Xicclu(Worker):
 												  utilname))
 		if not isinstance(profile, ICCP.ICCProfile):
 			profile = ICCP.ICCProfile(profile)
-		if not cwd:
-			cwd = self.create_tempdir()
-		if isinstance(cwd, Exception):
-			raise cwd
-		if not profile.fileName:
+		if not profile.fileName or not os.path.isfile(profile.fileName):
+			if not cwd:
+				cwd = self.create_tempdir()
+				if isinstance(cwd, Exception):
+					raise cwd
 			fd, profile.fileName = tempfile.mkstemp(profile_ext, dir=cwd)
 			profile.write(os.fdopen(fd, "wb"))
 			profile.close()
 			self.temp = True
+		elif not cwd:
+			cwd = os.path.dirname(profile.fileName)
 		profile_basename = safe_unicode(os.path.basename(profile.fileName))
-		profile_path = os.path.join(cwd, profile_basename)
-		if not os.path.isfile(profile_path):
-			profile.write(profile_path)
-			self.temp = True
+		profile_path = profile.fileName
 		if sys.platform == "win32":
 			profile_path = win32api.GetShortPathName(profile_path)
 		self.profile_path = safe_str(profile_path)
@@ -7940,8 +7941,8 @@ class Xicclu(Worker):
 		cwd = safe_str(cwd)
 		args = [xicclu, "-s%s" % scale]
 		if utilname == "xicclu":
-			if "A2B0" in profile.tags and ("B2A0" in profile.tags or
-										   direction == "if"):
+			if (show_actual_if_clipped and "A2B0" in profile.tags and
+				("B2A0" in profile.tags or direction == "if")):
 				args.append("-a")
 			if use_cam_clipping:
 				args.append("-b")
@@ -7954,6 +7955,12 @@ class Xicclu(Worker):
 			args.append("-p" + pcs)
 		args.append(self.profile_path)
 		if debug or verbose > 1:
+			self.sessionlogfile = LogFile(profile_basename + ".xicclu",
+										  os.path.dirname(profile.fileName))
+			profile_act = ICCP.ICCProfile(profile.fileName)
+			self.sessionlogfile.write("Profile ID %s (actual %s)" %
+									  (hexlify(profile.ID),
+									   hexlify(profile_act.calculateID(False))))
 			if cwd:
 				self.log(lang.getstr("working_dir"))
 				indent = "  "
@@ -7967,7 +7974,8 @@ class Xicclu(Worker):
 				self.log("")
 			self.log(lang.getstr("commandline"))
 			printcmdline(xicclu if debug or verbose > 2 else
-						 os.path.basename(xicclu), args[1:], cwd=cwd)
+						 os.path.basename(xicclu), args[1:], fn=self.log,
+						 cwd=cwd)
 			self.log("")
 		self.stdout = tempfile.SpooledTemporaryFile()
 		self.stderr = tempfile.SpooledTemporaryFile()
@@ -8048,22 +8056,28 @@ class Xicclu(Worker):
 	def get(self, raw=False, get_clip=False):
 		self.stdout.seek(0)
 		odata = self.stdout.readlines()
+		if self.sessionlogfile:
+			self.stderr.seek(0)
+			self.sessionlogfile.write(self.stderr.read())
 		if raw:
+			if self.sessionlogfile:
+				self.sessionlogfile.write("\n".join(odata))
+				self.sessionlogfile.close()
 			return odata
 		parsed = []
 		j = 0
 		for i, line in enumerate(odata):
 			line = line.strip()
 			if line.startswith("["):
-				if j > 0 and (debug or verbose > 3):
-					self.log("%s %s %s" % (j - 1, odata[j - 1], line))
+				if self.sessionlogfile:
+					self.sessionlogfile.write(line)
 				continue
 			elif not "->" in line:
-				if line and (debug or verbose > 3):
-					self.log(line)
+				if self.sessionlogfile and line:
+					self.sessionlogfile.write(line)
 				continue
-			elif debug or verbose > 3:
-				self.log(line)
+			elif self.sessionlogfile:
+				self.sessionlogfile.write("#%i %s" % (j, line))
 			parts = line.split("->")[-1].strip().split()
 			clip = parts.pop() == "(clip)"
 			if clip:
@@ -8072,6 +8086,8 @@ class Xicclu(Worker):
 			if get_clip and clip:
 				parsed[-1].append(clip)
 			j += 1
+		if self.sessionlogfile:
+			self.sessionlogfile.close()
 		return parsed
 	
 	@Property
