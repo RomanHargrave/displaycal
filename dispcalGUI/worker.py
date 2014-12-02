@@ -1394,8 +1394,10 @@ class Worker(object):
 		measurement_mode = getcfg("measurement_mode")
 		if measurement_mode == "auto":
 			# Make changes in dispcalGUI.MainFrame.set_ccxx_measurement_mode too!
-			if self.get_instrument_name() in ("ColorHug", "ColorHug2"):
+			if self.get_instrument_name() == "ColorHug":
 				measurement_mode = "R"
+			elif self.get_instrument_name() == "ColorHug2":
+				measurement_mode = "F"
 			else:
 				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()

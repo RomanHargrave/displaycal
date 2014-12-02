@@ -6280,8 +6280,10 @@ class MainFrame(BaseFrame):
 		measurement_mode = None
 		if getcfg("measurement_mode") == "auto":
 			# Make changes in worker.Worker.add_instrument_features too!
-			if self.worker.get_instrument_name() in ("ColorHug", "ColorHug2"):
+			if self.worker.get_instrument_name() == "ColorHug":
 				measurement_mode = "R"
+			elif self.worker.get_instrument_name() == "ColorHug2":
+				measurement_mode = "F"
 			else:
 				measurement_mode = "l"
 		elif (self.worker.get_instrument_name() in ("ColorHug", "ColorHug2")
@@ -6593,8 +6595,11 @@ class MainFrame(BaseFrame):
 				self.measure_auto_finish(exception)
 				return
 			luminance = None
-			if self.worker.get_instrument_name() in ("ColorHug", "ColorHug2"):
+			if self.worker.get_instrument_name() == "ColorHug":
 				# Get the factory calibration so we can do luminance scaling
+				# NOTE that this currently only works for the ColorHug,
+				# NOT the ColorHug2! (but it's probably not needed for the
+				# ColorHug2 anyway)
 				for line in self.worker.output:
 					if line.lower().startswith("serial number:"):
 						serial = line.split(":", 1)[-1].strip()
