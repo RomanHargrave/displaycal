@@ -3553,6 +3553,18 @@ class Worker(object):
 		XYZr = odata[2]
 		XYZg = odata[3]
 		XYZb = odata[4]
+
+		# Get the primaries
+		XYZrgb = [XYZr, XYZg, XYZb]
+
+		if logfile:
+			logfile.write("Black XYZ: %.4f %.4f %.4f\n" %
+						  tuple(XYZbp))
+			logfile.write("White XYZ: %.4f %.4f %.4f\n" %
+						  tuple(XYZwp))
+			for i in xrange(3):
+				logfile.write("%s XYZ: %.4f %.4f %.4f\n" %
+							  (("RGB"[i], ) + tuple(XYZrgb[i])))
 		
 		# Prepare input PCS values
 		if logfile:
@@ -3602,26 +3614,129 @@ class Worker(object):
 
 		# Initialize B2A
 		itable = ICCP.LUT16Type()
+
+		use_cam_clipping = True
 		
 		# Setup matrix
 		if profile.connectionColorSpace == "XYZ":
 			# Use a matrix that scales the profile colorspace into the XYZ
 			# encoding range, to make optimal use of the cLUT grid points
 
+			xyYrgb = [colormath.XYZ2xyY(*XYZ) for XYZ in XYZrgb]
+			area1 = 0.5 * abs(sum(x0 * y1 - x1 * y0
+								  for ((x0, y0, Y0), (x1, y1, Y1)) in
+								  zip(xyYrgb, xyYrgb[1:] + [xyYrgb[0]])))
+
+			if logfile:
+				logfile.write("Setting up matrix\n")
+
 			matrices = []
 
-			# Get the primaries
-			XYZrgb = [XYZr, XYZg, XYZb]
+			# RGB spaces used as PCS candidates
+			rgb_spaces = []
+
+			# A colorspace that encompasses Rec709. Uses Rec. 2020 blue.
+			rgb_spaces.append([2.2, "D50",
+							   [0.68280181011, 0.315096403371, 0.224182128906],
+							   [0.310096375087, 0.631250246526, 0.73258972168],
+							   [0.129244796433, 0.0471357502953, 0.0432281494141],
+							   "Rec709-like, variant 1"])
+
+			# A colorspace that encompasses Rec709. Uses slightly different
+			# primaries (based on WLED) than variant 1.
+			rgb_spaces.append([2.2, "D50",
+							   [0.664586722528, 0.329329440866, 0.225494384766],
+							   [0.318982028073, 0.644746162928, 0.749954223633],
+							   [0.146734108263, 0.0260849828964, 0.0245513916016],
+							   "Rec709-like, variant 2"])
+
+			# A colorspace with Plasma-like primaries. Uses Rec. 2020 blue.
+			rgb_spaces.append([2.2, "D50",
+							   [0.692947816539, 0.30857396028, 0.244430541992],
+							   [0.284461719244, 0.70017174365, 0.709167480469],
+							   [0.129234824405, 0.0471509419335, 0.0464019775391],
+							   "SMPTE-431-2/DCI-P3-like, variant 1"])
+
+			# A colorspace that encompasses both AdobeRGB and NTSC1953. Uses
+			# Rec. 2020 blue.
+			rgb_spaces.append([2.2, "D50",
+							   [0.680082575358, 0.319746686121, 0.314331054688],
+							   [0.200003470174, 0.730003123156, 0.641983032227],
+							   [0.129238369699, 0.0471305063812, 0.0436706542969],
+							   "AdobeRGB-NTSC1953-hybrid, variant 1"])
+
+			# A colorspace with Plasma-like primaries. Uses Rec. 2020 blue.
+			# More saturated green primary than variant 1.
+			rgb_spaces.append([2.2, "D50",
+							   [0.692943297796, 0.308579731457, 0.268966674805],
+							   [0.249088838269, 0.730263586072, 0.684844970703],
+							   [0.129230721306, 0.047147329564, 0.0461883544922],
+							   "SMPTE-431-2/DCI-P3-like, variant 2"])
+
+			# A colorspace that encompasses both AdobeRGB and NTSC1953.
+			# Different, more saturated primaries than variant 1.
+			rgb_spaces.append([2.2, "D50",
+							   [0.700603882817, 0.299296301842, 0.274520874023],
+							   [0.200006562972, 0.75, 0.697494506836],
+							   [0.143956453416, 0.0296952711131, 0.0279693603516],
+							   "AdobeRGB-NTSC1953-hybrid, variant 2"])
+
+			## Rec. 2020
+			#rgb_spaces.append([2.2, "D50",
+							   #[0.7084978651, 0.293540723619, 0.279037475586],
+							   #[0.190200063067, 0.775375775201, 0.675354003906],
+							   #[0.129244405192, 0.0471399056886, 0.0456085205078],
+							   #"Rec2020"])
+
+			# Find smallest candidate that encompasses space defined by actual
+			# primaries
+			for rgb_space in rgb_spaces:
+				extremes = []
+				for i in xrange(3):
+					RGB = colormath.XYZ2RGB(*XYZrgb[i],
+											rgb_space=rgb_space,
+											clamp=False)
+					maxima = max(RGB)
+					minima = min(RGB)
+					if minima < 0:
+						maxima += abs(minima)
+					extremes.append(maxima)
+				# Check area % (in xy for simplicity's sake)
+				xyYrgb = rgb_space[2:5]
+				area2 = 0.5 * abs(sum(x0 * y1 - x1 * y0
+									  for ((x0, y0, Y0), (x1, y1, Y1)) in
+									  zip(xyYrgb, xyYrgb[1:] + [xyYrgb[0]])))
+				if logfile:
+					logfile.write("%s fit: %.2f (area: %.2f%%)\n" %
+								  (rgb_space[-1], 1.0 / max(extremes),
+								   area1 / area2 * 100))
+				# Check if tested RGB space contains actual primaries
+				if max(extremes) <= 1.0:
+					if logfile:
+						logfile.write("Using primaries: %s\n" % rgb_space[-1])
+					XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space)
+					XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space)
+					XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space)
+					for i in xrange(3):
+						logfile.write("%s XYZ: %.4f %.4f %.4f\n" %
+									  (("RGB"[i], ) + tuple(XYZrgb[i])))
+					break
 	
 			# Construct the final matrix
 			Xr, Yr, Zr = XYZrgb[0]
 			Xg, Yg, Zg = XYZrgb[1]
 			Xb, Yb, Zb = XYZrgb[2]
+			if logfile:
+				logfile.write("R+G+B XYZ: %.4f %.4f %.4f\n" %
+							  (Xr + Xg + Xb, Yr + Yg + Yb, Zr + Zg + Zb))
 			m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
 									  (Yr, Yg, Yb),
 									  (Zr, Zg, Zb))).inverted()
 			matrices.append(m1)
 			Sr, Sg, Sb = m1 * XYZwp
+			if logfile:
+				logfile.write("Correction factors: %.4f %.4f %.4f\n" %
+							  (Sr, Sg, Sb))
 			m2 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
 									  (Sr * Yr, Sg * Yg, Sb * Yb),
 									  (Sr * Zr, Sg * Zg, Sb * Zb))).inverted()
@@ -3718,15 +3833,20 @@ class Worker(object):
 			idata = []
 			odata = []
 			abmaxval = 255 + (255 / 256.0)
-			# Use CAM Jab for clipping for cLUT grid points after a given
-			# threshold
 			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
-			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
-							 use_cam_clipping=True)
+			if logfile:
+				logfile.write("%s CAM Jab for clipping\n" %
+							  (use_cam_clipping and "Using" or "Not using"))
+			if use_cam_clipping:
+				# Use CAM Jab for clipping for cLUT grid points after a given
+				# threshold
+				xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
+								 use_cam_clipping=True)
 			threshold = clutres / 2
 			for a in xrange(clutres):
 				if self.thread_abort:
-					xicclu2.exit()
+					if use_cam_clipping:
+						xicclu2.exit()
 					xicclu1.exit()
 					raise Info(lang.getstr("aborted"))
 				for b in xrange(clutres):
@@ -3754,38 +3874,44 @@ class Worker(object):
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
 						xicclu1(v)
-						if a > threshold or b > threshold or c > threshold:
+						if use_cam_clipping and (a > threshold or
+												 b > threshold or
+												 c > threshold):
 							xicclu2(v)
 					if logfile:
 						logfile.write("\r%i%%" % round(len(idata) /
 													   clutres ** 3.0 *
 													   100))
-			xicclu2.exit()
+			if use_cam_clipping:
+				xicclu2.exit()
 			xicclu1.exit()
 			if logfile:
 				logfile.write("\n")
 				logfile.write("Input black XYZ: %s\n" % idata[0])
 				logfile.write("Input white XYZ: %s\n" % idata[-1])
 
-			# Linearly interpolate the crossover to CAM Jab clipping region
 			odata1 = xicclu1.get()
-			odata2 = xicclu2.get()
-			j, k = 0, 0
-			r = clutres - 1.0 - threshold
-			for a in xrange(clutres):
-				for b in xrange(clutres):
-					for c in xrange(clutres):
-						v = odata1[j]
-						j += 1
-						if a > threshold or b > threshold or c > threshold:
-							d = max(a, b, c)
-							v2 = odata2[k]
-							k += 1
-							for i, n in enumerate(v):
-								v[i] *= (clutres - 1 - d) / r
-								v2[i] *= 1 - (clutres - 1 - d) / r
-								v[i] += v2[i]
-						odata.append(v)
+			if use_cam_clipping:
+				# Linearly interpolate the crossover to CAM Jab clipping region
+				odata2 = xicclu2.get()
+				j, k = 0, 0
+				r = clutres - 1.0 - threshold
+				for a in xrange(clutres):
+					for b in xrange(clutres):
+						for c in xrange(clutres):
+							v = odata1[j]
+							j += 1
+							if a > threshold or b > threshold or c > threshold:
+								d = max(a, b, c)
+								v2 = odata2[k]
+								k += 1
+								for i, n in enumerate(v):
+									v[i] *= (clutres - 1 - d) / r
+									v2[i] *= 1 - (clutres - 1 - d) / r
+									v[i] += v2[i]
+							odata.append(v)
+			else:
+				odata = odata1
 			numrows = len(odata)
 			if numrows != clutres ** 3:
 				raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
