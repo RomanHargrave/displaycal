@@ -22,9 +22,21 @@ Files: dispcalGUI/lib/agw/*
 Copyright: 2006-${YEAR}, Andrea Gavana <andrea.gavana@gmail.com>
 License: wxWindows
 
-Files: dispcalGUI/theme/icons/16x16/dialog-information.png dispcalGUI/theme/icons/16x16/dialog-warning.png dispcalGUI/theme/icons/16x16/document-open.png dispcalGUI/theme/icons/16x16/edit-delete.png dispcalGUI/theme/icons/16x16/install.png dispcalGUI/theme/icons/16x16/media-floppy.png dispcalGUI/theme/icons/16x16/stock_brightness.png dispcalGUI/theme/icons/16x16/stock_contrast.png dispcalGUI/theme/icons/16x16/stock_filters-pop-art.png dispcalGUI/theme/icons/16x16/stock_lock.png dispcalGUI/theme/icons/16x16/stock_lock-open.png dispcalGUI/theme/icons/16x16/stock_refresh.png dispcalGUI/theme/icons/16x16/web.png dispcalGUI/theme/icons/32x32/dialog-error.png dispcalGUI/theme/icons/32x32/dialog-information.png dispcalGUI/theme/icons/32x32/dialog-question.png dispcalGUI/theme/icons/32x32/dialog-warning.png dispcalGUI/theme/icons/32x32/window-center.png dispcalGUI/theme/icons/32x32/zoom-best-fit.png dispcalGUI/theme/icons/32x32/zoom-in.png dispcalGUI/theme/icons/32x32/zoom-original.png dispcalGUI/theme/icons/32x32/zoom-out.png
-Copyright: 2008, Amazigh Aneglus <aneglus@gmail.com>
+Files: dispcalGUI/theme/icons/16x16/3D.png
+Copyright: 2007-${YEAR}, Daniel Foré <daniel@elementaryos.org>
+License: GPL-3+
+
+Files: dispcalGUI/theme/icons/16x16/applications-system.png dispcalGUI/theme/icons/16x16/camera-photo.png dispcalGUI/theme/icons/16x16/dialog-information.png dispcalGUI/theme/icons/16x16/dialog-warning.png dispcalGUI/theme/icons/16x16/document-open.png dispcalGUI/theme/icons/16x16/edit-delete.png dispcalGUI/theme/icons/16x16/install.png dispcalGUI/theme/icons/16x16/media-floppy.png dispcalGUI/theme/icons/16x16/stock_3d-color-picker.png dispcalGUI/theme/icons/16x16/stock_brightness.png dispcalGUI/theme/icons/16x16/stock_contrast.png dispcalGUI/theme/icons/16x16/stock_filters-pop-art.png dispcalGUI/theme/icons/16x16/stock_lock.png dispcalGUI/theme/icons/16x16/stock_lock-open.png dispcalGUI/theme/icons/16x16/stock_refresh.png dispcalGUI/theme/icons/16x16/web.png dispcalGUI/theme/icons/32x32/dialog-error.png dispcalGUI/theme/icons/32x32/dialog-information.png dispcalGUI/theme/icons/32x32/dialog-question.png dispcalGUI/theme/icons/32x32/dialog-warning.png dispcalGUI/theme/icons/32x32/window-center.png dispcalGUI/theme/icons/32x32/zoom-best-fit.png dispcalGUI/theme/icons/32x32/zoom-in.png dispcalGUI/theme/icons/32x32/zoom-original.png dispcalGUI/theme/icons/32x32/zoom-out.png dispcalGUI/theme/icons/256x256/document-open.png
+Copyright: 2008-${YEAR}, GNOME icon theme 2.18 authors
 License: GPL-2+
+
+Files: dispcalGUI/theme/icons/16x16/camera-photo.png dispcalGUI/theme/icons/32x32/lock.png
+Copyright: 2008-${YEAR}, GNOME icon theme 3.11.5 authors
+License: GPL-3+
+
+Files: dispcalGUI/theme/icons/16x16/checkmark.png dispcalGUI/theme/icons/16x16/x.png
+Copyright: 2007-${YEAR}, Everaldo Coelho
+License: LGPL-2.1+
 
 Files: dispcalGUI/RealDisplaySizeMM.c
 Copyright: 1995-${YEAR}, Graeme W. Gill <Graeme@argyllcms.com>
