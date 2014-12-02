@@ -199,7 +199,7 @@ class Tag(object):
 
 def _attrchk(attribute, token, tag, indent):
 	if attribute:
-		if verbose > 1 or debug:
+		if debug:
 			if tag.attributes.get(token):
 				safe_print(indent, "attribute %r %r" % (token,
 														tag.attributes[token]))
@@ -322,7 +322,7 @@ def get_vrml_axes(xlabel="X", ylabel="Y", zlabel="Z", offsetx=0,
 
 
 def safe_print(*args, **kwargs):
-	if verbose > 1 or debug:
+	if debug:
 		_safe_print(*args, **kwargs)
 
 
