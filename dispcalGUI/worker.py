@@ -3634,7 +3634,12 @@ class Worker(object):
 
 			matrices = []
 
-			# RGB spaces used as PCS candidates
+			# RGB spaces used as PCS candidates.
+			# Six synthetic RGB spaces that are large enough to encompass
+			# display gamuts (except the LaserVue one) found on
+			# http://www.tftcentral.co.uk/articles/pointers_gamut.htm
+			# aswell as a selection of around two dozen profiles from openSUSE
+			# ICC Profile Taxi database aswell as other user contributions
 			rgb_spaces = []
 
 			# A colorspace that encompasses Rec709. Uses Rec. 2020 blue.
@@ -3645,11 +3650,11 @@ class Worker(object):
 							   "Rec709-like, variant 1"])
 
 			# A colorspace that encompasses Rec709. Uses slightly different
-			# primaries (based on WLED) than variant 1.
+			# primaries (based on WLED and B+RG LED) than variant 1.
 			rgb_spaces.append([2.2, "D50",
-							   [0.664586722528, 0.329329440866, 0.225494384766],
-							   [0.318982028073, 0.644746162928, 0.749954223633],
-							   [0.146734108263, 0.0260849828964, 0.0245513916016],
+							   [0.664580313612, 0.329336320112, 0.228820800781],
+							   [0.318985161632, 0.644740328564, 0.742568969727],
+							   [0.143284983488, 0.0303535582465, 0.0286102294922],
 							   "Rec709-like, variant 2"])
 
 			# A colorspace with Plasma-like primaries. Uses Rec. 2020 blue.
