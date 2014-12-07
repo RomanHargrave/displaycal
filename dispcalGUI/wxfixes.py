@@ -128,6 +128,7 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.OVERWRITE_PROMPT = wx.FD_OVERWRITE_PROMPT
 	wx.SAVE = wx.FD_SAVE
 
+	wx.SystemSettings_GetColour = wx.SystemSettings.GetColour
 	wx.SystemSettings_GetFont = wx.SystemSettings.GetFont
 	wx.SystemSettings_GetMetric = wx.SystemSettings.GetMetric
 	wx.grid.EVT_GRID_CELL_CHANGE = wx.grid.EVT_GRID_CELL_CHANGED
