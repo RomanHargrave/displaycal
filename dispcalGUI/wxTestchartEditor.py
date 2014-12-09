@@ -3077,14 +3077,22 @@ class TestchartEditor(BaseFrame):
 			self.preview.BeginBatch()
 		rows.sort()
 		rows.reverse()
-		self.grid.DeleteRows(rows[-1], len(rows))
+		data = self.ti1.queryv1("DATA")
+		# Optimization: Delete consecutive rows in least number of operations
+		consecutive = []
+		rows.append(-1)
+		for row in rows:
+			if row == -1 or (consecutive and consecutive[-1] != row + 1):
+				self.grid.DeleteRows(consecutive[-1], len(consecutive))
+				if consecutive[0] != len(data) - 1:
+					data.moveby1(consecutive[-1] + len(consecutive), -len(consecutive))
+				for crow in consecutive:
+					dict.pop(data, len(data) - 1)
+				consecutive = []
+			consecutive.append(row)
+		rows.pop()
 		if hasattr(self, "preview"):
 			self.tc_preview_update(rows[-1])
-		data = self.ti1.queryv1("DATA")
-		if rows[0] != len(data) - 1:
-			data.moveby1(rows[-1] + len(rows), -len(rows))
-		for row in rows:
-			dict.pop(data, len(data) - 1)
 		data.setmodified()
 		self.tc_amount = self.ti1.queryv1("NUMBER_OF_SETS")
 		row = min(rows[-1], self.grid.GetNumberRows() - 1)
