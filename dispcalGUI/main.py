@@ -250,6 +250,7 @@ def main(module=None):
 					else:
 						msg = (u'An attempt to launch a terminal failed:\n\n%s'
 							   % unicode(stdout.read(), enc, "replace"))
+						stdout.close()
 				handle_error(Error(msg))
 		else:
 			lockfilename = os.path.join(confighome, "%s.lock" % name)

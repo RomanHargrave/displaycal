@@ -8232,10 +8232,18 @@ class Xicclu(Worker):
 		if p.poll() is None:
 			p.stdin.write("\n")
 			p.stdin.close()
-		if p.wait():
+		p.wait()
+		self.stdout.seek(0)
+		self.output = self.stdout.readlines()
+		self.stdout.close()
+		self.stderr.seek(0)
+		self.errors = self.stderr.readlines()
+		self.stderr.close()
+		if self.sessionlogfile and self.errors:
+			self.sessionlogfile.write("\n".join(self.errors))
+		if p.returncode:
 			# Error
-			self.stderr.seek(0)
-			raise IOError(self.stderr.read())
+			raise IOError("\n".join(self.errors))
 		if self.logfile:
 			self.logfile.write("\n")
 		if self.temp:
@@ -8244,19 +8252,14 @@ class Xicclu(Worker):
 				self.wrapup(False)
 	
 	def get(self, raw=False, get_clip=False):
-		self.stdout.seek(0)
-		odata = self.stdout.readlines()
-		if self.sessionlogfile:
-			self.stderr.seek(0)
-			self.sessionlogfile.write(self.stderr.read())
 		if raw:
 			if self.sessionlogfile:
-				self.sessionlogfile.write("\n".join(odata))
+				self.sessionlogfile.write("\n".join(self.output))
 				self.sessionlogfile.close()
-			return odata
+			return self.output
 		parsed = []
 		j = 0
-		for i, line in enumerate(odata):
+		for i, line in enumerate(self.output):
 			line = line.strip()
 			if line.startswith("["):
 				if self.sessionlogfile:
