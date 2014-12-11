@@ -1585,9 +1585,12 @@ class LUTFrame(BaseFrame):
 							  ("B2A0" in self.profile.tags or
 							   "A2B0" in self.profile.tags))
 		self.toggle_clut.Enable(self.plot_mode_select.GetSelection() == 1 and
-								isinstance(self.rTRC, (ICCP.CurveType, CoordinateType)) and
-								isinstance(self.gTRC, (ICCP.CurveType, CoordinateType)) and
-								isinstance(self.bTRC, (ICCP.CurveType, CoordinateType)))
+								isinstance(self.profile.tags.get("rTRC"),
+										   ICCP.CurveType) and
+								isinstance(self.profile.tags.get("gTRC"),
+										   ICCP.CurveType) and
+								isinstance(self.profile.tags.get("bTRC"),
+										   ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
 		if hasattr(self, "reload_vcgt_btn"):
 			self.reload_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
