@@ -5599,7 +5599,8 @@ usage: spotread [-options] [logfile]
 					table.apply_bpc()
 					bpc_applied = True
 				elif bpc:
-					# BPC not needed
+					# BPC not needed, copy existing B2A
+					profile.tags["B2A%i" % tableno] = results[0]
 					return results
 				# Write profile to temp dir
 				tempdir = self.create_tempdir()
