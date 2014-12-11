@@ -3499,7 +3499,7 @@ class Worker(object):
 	
 	def generate_B2A_from_inverse_table(self, profile, clutres=None,
 										source="A2B", tableno=None, bpc=False,
-										logfile=None):
+										logfile=None, filename=None):
 		"""
 		Generate a profile's B2A table by inverting the A2B table 
 		(default A2B1 or A2B0)
@@ -3526,7 +3526,6 @@ class Worker(object):
 			clutres = 23
 
 		if logfile:
-			safe_print("-" * 80)
 			if source == "A2B":
 				msg = ("Generating B2A%i table by inverting A2B%i table\n" %
 					   (tableno, tableno))
@@ -3579,9 +3578,6 @@ class Worker(object):
 			idata.append((i / maxval * 100, 0, 0))
 		
 		pcs = profile.connectionColorSpace[0].lower()
-
-		if logfile:
-			logfile.write("Looking up input curve RGB values...\n")
 		
 		if source == "B2A":
 			# NOTE:
@@ -3600,11 +3596,16 @@ class Worker(object):
 		fpY = [v[1] for v in oXYZ]
 		fpZ = [v[2] for v in oXYZ]
 
-		if bpc:
+		if bpc and XYZbp != [0, 0, 0]:
+			if logfile:
+				logfile.write("Applying BPC to input curve PCS values...\n")
 			for i, (L, a, b) in enumerate(idata):
 				X, Y, Z = colormath.Lab2XYZ(L, a, b)
 				X, Y, Z = colormath.apply_bpc(X, Y, Z, (0, 0, 0), XYZbp, XYZwp)
 				idata[i] = colormath.XYZ2Lab(X * 100, Y * 100, Z * 100)
+
+		if logfile:
+			logfile.write("Looking up input curve RGB values...\n")
 		
 		# Lookup Lab -> RGB values through profile using xicclu to get TRC
 		direction = {"A2B": "if", "B2A": "b"}[source]
@@ -3866,7 +3867,7 @@ class Worker(object):
 							##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
 							# Scale into device colorspace
 							v = m2.inverted() * XYZ
-							if bpc:
+							if bpc and XYZbp != [0, 0, 0]:
 								v = colormath.apply_bpc(v[0], v[1], v[2],
 														(0, 0, 0), XYZbp, XYZwp)
 							##print "%3.6f %3.6f %3.6f" % tuple(v)
@@ -3965,9 +3966,9 @@ class Worker(object):
 		if logfile:
 			logfile.write("\n")
 		
-		if getcfg("profile.b2a.hires.diagpng") and profile.fileName:
+		if getcfg("profile.b2a.hires.diagpng") and filename:
 			# Generate diagnostic images
-			fname, ext = os.path.splitext(profile.fileName)
+			fname, ext = os.path.splitext(filename)
 			for suffix, table in [("pre", profile.tags["B2A%i" % tableno]),
 								  ("post", itable)]:
 				table.clut_writepng(fname + ".B2A%i.%s.CLUT.png" %
@@ -4000,7 +4001,7 @@ class Worker(object):
 				for j, row in enumerate(grid):
 					itable.clut[i * clutres + j] = [[v for v in RGB]
 													for RGB in row]
-			if getcfg("profile.b2a.hires.diagpng") and profile.fileName:
+			if getcfg("profile.b2a.hires.diagpng") and filename:
 				itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
 									 tableno)
 
@@ -5523,6 +5524,7 @@ usage: spotread [-options] [logfile]
 										   triggers=[])), self.recent,
 							self.lastmsg])
 		tables = [1]
+		safe_print("-" * 80)
 		# Add perceptual tables if not present
 		if "A2B0" in profile.tags and not "A2B1" in profile.tags:
 			if not isinstance(profile.tags.A2B0, ICCP.LUT16Type):
@@ -5559,7 +5561,8 @@ usage: spotread [-options] [logfile]
 			tables.append(0)
 		# Invert A2B tables if present. Always invert colorimetric A2B table.
 		results = []
-		A2B = []
+		bpc_applied = False
+		filename = profile.fileName
 		for tableno in tables:
 			if "A2B%i" % tableno in profile.tags:
 				if ("B2A%i" % tableno in profile.tags and
@@ -5570,23 +5573,77 @@ usage: spotread [-options] [logfile]
 					self.log("%s: Can't process non-LUT16Type A2B%i table" %
 							 (appname, tableno))
 					continue
+				# Check if we want to apply BPC
+				bpc = tableno != 1
+				if (bpc and
+					profile.tags["A2B%i" % tableno].clut[0][0] != [0, 0, 0]):
+					# Need to apply BPC. Use temporary copy of A2B.
+					otable = profile.tags["A2B%i" % tableno]
+					profile.tags["A2B%i" % tableno] = table = ICCP.LUT16Type()
+					# Copy table
+					table.matrix = []
+					for row in otable.matrix:
+						table.matrix.append(list(row))
+					table.input = []
+					table.output = []
+					for curves in ("input", "output"):
+						for channel in getattr(otable, curves):
+							getattr(table, curves).append(list(channel))
+					table.clut = []
+					for block in otable.clut:
+						table.clut.append([])
+						for row in block:
+							table.clut[-1].append(list(row))
+					logfiles.write("Applying BPC to temporary A2B%i table...\n"
+								   % tableno)
+					table.apply_bpc()
+					bpc_applied = True
+				elif bpc:
+					# BPC not needed
+					return results
+				# Write profile to temp dir
+				tempdir = self.create_tempdir()
+				if isinstance(tempdir, Exception):
+					return tempdir
+				if not filename or not os.path.isfile(filename):
+					fd, profile.fileName = tempfile.mkstemp(profile_ext,
+															dir=tempdir)
+					profile.write(os.fdopen(fd, "wb"))
+					profile.close()
+					temp = True
+				else:
+					profile.fileName = os.path.join(tempdir,
+													os.path.basename(filename))
+					temp = False
+					if not os.path.isfile(profile.fileName):
+						temp = True
+					profile.write()
 				# Invert A2B
-				source = "A2B"
 				try:
 					result = self.generate_B2A_from_inverse_table(profile,
 																  clutres,
-																  source,
+																  "A2B",
 																  tableno,
-																  tableno != 1,
-																  logfiles)
+																  bpc,
+																  logfiles,
+																  filename)
 				except Exception, exception:
 					return exception
 				else:
 					if result:
 						results.append(profile.tags["B2A%i" % tableno])
-						A2B.append(profile.tags["A2B%i" % tableno])
 					else:
 						return False
+				finally:
+					if bpc_applied:
+						logfiles.write("Restoring original A2B%i table...\n" %
+									   tableno)
+						profile.tags["A2B%i" % tableno] = otable
+					if temp:
+						os.remove(profile.fileName)
+						if self.tempdir and not os.listdir(self.tempdir):
+							self.wrapup(False)
+					profile.fileName = filename
 		return results
 	
 	def isalive(self, subprocess=None):
@@ -8216,7 +8273,7 @@ class Xicclu(Worker):
 			if clip:
 				parts.pop()
 			parsed.append([float(n) for n in parts])
-			if get_clip and clip:
+			if get_clip:
 				parsed[-1].append(clip)
 			j += 1
 		if self.sessionlogfile:
