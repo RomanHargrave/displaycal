@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import csv
 import math
 import os
 import re
@@ -70,6 +71,7 @@ class TestchartEditor(BaseFrame):
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".cgats": self.ti1_drop_handler,
+			".csv": self.csv_drop_handler,
 			".icc": self.ti1_drop_handler,
 			".icm": self.ti1_drop_handler,
 			".ti1": self.ti1_drop_handler,
@@ -686,6 +688,88 @@ class TestchartEditor(BaseFrame):
 		self.tc_check()
 		if path is not False:
 			wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
+
+	def csv_drop_handler(self, path):
+		if self.worker.is_working():
+			return
+		if not self.tc_check_save_ti1():
+			return
+		self.worker.start(self.csv_convert_finish, self.csv_convert,
+						  wargs=(path, ),
+						  progress_msg=lang.getstr("testchart.read"),
+						  parent=self, progress_start=500, cancelable=False,
+						  continue_next=True, show_remaining_time=False)
+
+	def csv_convert(self, path):
+		# Read CSV file and get rows
+		rows = []
+		maxval = 100.0
+		try:
+			with open(path, "rb") as csvfile:
+				sniffer = csv.Sniffer()
+				rawcsv = csvfile.read()
+				dialect = sniffer.sniff(rawcsv, delimiters=",;\t")
+				has_header = sniffer.has_header(rawcsv)
+				csvfile.seek(0)
+				for i, row in enumerate(csv.reader(csvfile, dialect=dialect)):
+					if has_header:
+						continue
+					if len(row) == 3 or len(row) == 6:
+						# Add row number before first column
+						row.insert(0, i)
+					if len(row) not in (4, 7):
+						raise ValueError(lang.getstr("error.testchart.invalid",
+													 path))
+					row = [int(row[0])] + [float(v) for v in row[1:]]
+					for v in row[1:]:
+						if v > maxval:
+							maxval = v
+					rows.append(row)
+		except Exception, exception:
+			result = exception
+		else:
+			# Scale to 0..100 if actual value range is different
+			if maxval > 100:
+				for i, row in enumerate(rows):
+					rows[i][1:] = [v / maxval * 100 for v in row[1:]]
+			# Create temporary TI1
+			ti1 = CGATS.CGATS("""CTI1  
+KEYWORD "COLOR_REP"
+COLOR_REP "RGB"
+NUMBER_OF_FIELDS 7
+BEGIN_DATA_FORMAT
+SAMPLE_ID RGB_R RGB_G RGB_B XYZ_X XYZ_Y XYZ_Z 
+END_DATA_FORMAT
+NUMBER_OF_SETS 4
+BEGIN_DATA
+END_DATA""")
+			# Add rows to TI1
+			data = ti1[0].DATA
+			for row in rows:
+				if len(row) < 7:
+					# Missing XYZ, add via simple sRGB-like model
+					row.extend(v * 100 for v in 
+							   argyll_RGB2XYZ(*[v / 100.0 for v in row[1:]]))
+				data.add_data(row)
+			# Create temp dir
+			result = tmp = self.worker.create_tempdir()
+		if not isinstance(result, Exception):
+			# Write out temporary TI1
+			ti1.filename = os.path.join(tmp,
+										os.path.splitext(os.path.basename(path))[0] +
+										".ti1")
+			ti1.write()
+			result = ti1
+		return result
+
+	def csv_convert_finish(self, result):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self)
+		else:
+			self.tc_load_cfg_from_ti1(None, result.filename,
+									  getattr(self, "cfg", None),
+									  getattr(self, "target", None),
+									  resume=True)
 
 	def precond_profile_drop_handler(self, path):
 		self.tc_precond_profile.SetPath(path)
@@ -1866,43 +1950,6 @@ class TestchartEditor(BaseFrame):
 	def tc_export_handler(self, event):
 		if not hasattr(self, "ti1"):
 			return
-		dlg = ConfirmDialog(self, title=lang.getstr("export"),
-							msg=lang.getstr("testchart.export.repeat_patch"),
-							ok=lang.getstr("ok"),
-							cancel=lang.getstr("cancel"),
-							bitmap=geticon(32, "dispcalGUI-testchart-editor"))
-		sizer = wx.BoxSizer(wx.HORIZONTAL)
-		dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
-					   border=12)
-		intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
-							  min=config.valid_ranges["tc_export_repeat_patch_max"][0],
-							  max=config.valid_ranges["tc_export_repeat_patch_max"][1],
-							  value=str(getcfg("tc_export_repeat_patch_max")))
-		sizer.Add(intctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-				  border=4)
-		sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("max")), 0,
-								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-								border=12)
-		intctrl2 = wx.SpinCtrl(dlg, -1, size=(60, -1),
-							   min=config.valid_ranges["tc_export_repeat_patch_min"][0],
-							   max=config.valid_ranges["tc_export_repeat_patch_min"][1],
-							   value=str(getcfg("tc_export_repeat_patch_min")))
-		sizer.Add(intctrl2, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-				  border=4)
-		sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("min")), 0,
-								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-								border=12)
-		dlg.sizer0.SetSizeHints(dlg)
-		dlg.sizer0.Layout()
-		result = dlg.ShowModal()
-		repeatmax = intctrl.GetValue()
-		repeatmin = intctrl2.GetValue()
-		dlg.Destroy()
-		if result != wx.ID_OK:
-			return
-		setcfg("tc_export_repeat_patch_max", repeatmax)
-		setcfg("tc_export_repeat_patch_min", repeatmin)
-		self.writecfg()
 		path = None
 		(defaultDir,
 		 defaultFile) = (get_verified_path("last_testchart_export_path")[0],
@@ -1913,7 +1960,10 @@ class TestchartEditor(BaseFrame):
 							# Disable JPEG as it introduces slight color errors
 							wildcard=##lang.getstr("filetype.jpg") + "|*.jpg|" +
 									 lang.getstr("filetype.png") + "|*.png|" +
-									 lang.getstr("filetype.tif") + "|*.tif",
+									 lang.getstr("filetype.tif") + "|*.tif|" +
+									 "CSV (0.0..100.0)|*.csv|" +
+									 "CSV (0..255)|*.csv|" +
+									 "CSV (0..1023)|*.csv",
 							style=wx.SAVE | wx.OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
@@ -1927,8 +1977,50 @@ class TestchartEditor(BaseFrame):
 				return
 			setcfg("last_testchart_export_path", path)
 			self.writecfg()
-			if sys.platform not in ("darwin", "win32"):
-				# Linux segfaults if running the export threaded
+		else:
+			return
+		if filter_index < 2:
+			# Image format
+			dlg = ConfirmDialog(self, title=lang.getstr("export"),
+								msg=lang.getstr("testchart.export.repeat_patch"),
+								ok=lang.getstr("ok"),
+								cancel=lang.getstr("cancel"),
+								bitmap=geticon(32, "dispcalGUI-testchart-editor"))
+			sizer = wx.BoxSizer(wx.HORIZONTAL)
+			dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
+						   border=12)
+			intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
+								  min=config.valid_ranges["tc_export_repeat_patch_max"][0],
+								  max=config.valid_ranges["tc_export_repeat_patch_max"][1],
+								  value=str(getcfg("tc_export_repeat_patch_max")))
+			sizer.Add(intctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+					  border=4)
+			sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("max")), 0,
+									flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+									border=12)
+			intctrl2 = wx.SpinCtrl(dlg, -1, size=(60, -1),
+								   min=config.valid_ranges["tc_export_repeat_patch_min"][0],
+								   max=config.valid_ranges["tc_export_repeat_patch_min"][1],
+								   value=str(getcfg("tc_export_repeat_patch_min")))
+			sizer.Add(intctrl2, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+					  border=4)
+			sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("min")), 0,
+									flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+									border=12)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			result = dlg.ShowModal()
+			repeatmax = intctrl.GetValue()
+			repeatmin = intctrl2.GetValue()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
+			setcfg("tc_export_repeat_patch_max", repeatmax)
+			setcfg("tc_export_repeat_patch_min", repeatmin)
+			self.writecfg()
+		if path:
+			if sys.platform not in ("darwin", "win32") and filter_index < 2:
+				# Linux segfaults if running iamge export threaded
 				self.tc_export(path, filter_index)
 			else:
 				self.worker.start(lambda result: None, self.tc_export,
@@ -1937,22 +2029,41 @@ class TestchartEditor(BaseFrame):
 								  parent=self, progress_start=500)
 	
 	def tc_export(self, path, filter_index):
-		name, ext = os.path.splitext(path)[0], {0: ".png",
-												1: ".tif"}.get(filter_index)
-		ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
-					".png": wx.BITMAP_TYPE_PNG,
-					".tif": wx.BITMAP_TYPE_TIF}
-		repeatmax = getcfg("tc_export_repeat_patch_max")
-		repeatmin = getcfg("tc_export_repeat_patch_min")
+		if filter_index > 1:
+			# CSV
+			with open(path, "wb") as csvfile:
+				self.tc_export_subroutine(csv.writer(csvfile), filter_index)
+		else:
+			# Image format
+			self.tc_export_subroutine(path, filter_index)
+
+	def tc_export_subroutine(self, target, filter_index):
 		maxlen = len(self.ti1[0].DATA)
-		maxcount = maxlen * repeatmax
-		filenameformat = "%%s-%%0%id%%s" % len(str(maxcount))
-		size = int(round(get_default_size() *
-						 float(getcfg("dimensions.measureframe").split(",")[-1])))
-		count = 0
-		bitmap = wx.EmptyBitmap(min(1920, size), min(1080, size))  # Max. FullHD
-		dc = wx.MemoryDC()
-		dc.SelectObject(bitmap)
+		if filter_index < 2:
+			# Image format
+			name, ext = os.path.splitext(target)[0], {0: ".png",
+													  1: ".tif",
+													  2: ".csv",
+													  3: ".csv",
+													  4: ".csv"}[filter_index]
+			ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
+						".png": wx.BITMAP_TYPE_PNG,
+						".tif": wx.BITMAP_TYPE_TIF}
+			repeatmax = getcfg("tc_export_repeat_patch_max")
+			repeatmin = getcfg("tc_export_repeat_patch_min")
+			maxcount = maxlen * repeatmax
+			filenameformat = "%%s-%%0%id%%s" % len(str(maxcount))
+			size = int(round(get_default_size() *
+							 float(getcfg("dimensions.measureframe").split(",")[-1])))
+			count = 0
+			bitmap = wx.EmptyBitmap(min(1920, size), min(1080, size))  # Max. FullHD
+			dc = wx.MemoryDC()
+			dc.SelectObject(bitmap)
+		else:
+			# CSV
+			vscale = {2: 1.0,
+					  3: 2.55,
+					  4: 10.23}[filter_index]
 		for i in xrange(maxlen):
 			if self.worker.thread_abort:
 				break
@@ -1960,6 +2071,13 @@ class TestchartEditor(BaseFrame):
 			R, G, B = (self.ti1[0].DATA[i]["RGB_R"],
 			           self.ti1[0].DATA[i]["RGB_G"],
 			           self.ti1[0].DATA[i]["RGB_B"])
+			if filter_index > 1:
+				# CSV
+				if vscale != 1:
+					R, G, B = [int(round(v * vscale)) for v in [R, G, B]]
+				target.writerow([str(v) for v in [i, R, G, B]])
+				continue
+			# Image format
 			X, Y, Z = colormath.RGB2XYZ(R / 100.0, G / 100.0, B / 100.0,
 										scale=100.0)
 			L, a, b = colormath.XYZ2Lab(X, Y, Z)
@@ -2230,6 +2348,7 @@ class TestchartEditor(BaseFrame):
 				setcfg("tc.show", 0)
 				return True
 			else:
+				self.worker.wrapup(False)
 				self.writecfg()
 				self.Destroy()
 
@@ -2245,7 +2364,7 @@ class TestchartEditor(BaseFrame):
 		event.Skip()
 
 	def tc_load_cfg_from_ti1(self, event = None, path = None, cfg=None,
-							 target=None):
+							 target=None, resume=False):
 		if self.worker.is_working():
 			return
 
@@ -2267,9 +2386,10 @@ class TestchartEditor(BaseFrame):
 		self.worker.start(self.tc_load_cfg_from_ti1_finish,
 						  self.tc_load_cfg_from_ti1_worker,
 						  wargs=(path, ), wkwargs={},
+						  progress_title=lang.getstr("testchart.read"),
 						  progress_msg=lang.getstr("testchart.read"),
 						  parent=self, progress_start=500, cancelable=False,
-						  show_remaining_time=False)
+						  resume=resume, show_remaining_time=False)
 
 	def tc_load_cfg_from_ti1_worker(self, path):
 		if path is None:
