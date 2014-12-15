@@ -2826,6 +2826,7 @@ class TestchartEditor(BaseFrame):
 			self.sizer.Layout()
 			if verbose >= 1: safe_print(lang.getstr("tc.preview.create"))
 			data = self.ti1.queryv1("DATA")
+			data.vmaxlen = 6
 
 			if hasattr(self, "preview"):
 				self.preview.BeginBatch()
@@ -2863,7 +2864,11 @@ class TestchartEditor(BaseFrame):
 				for j in range(grid.GetNumberCols()):
 					label = self.label_b2a.get(grid.GetColLabelValue(j))
 					if label in ("RGB_R", "RGB_G", "RGB_B"):
-						grid.SetCellValue(i, j, str(sample[label]))
+						grid.SetCellValue(i, j,
+										  CGATS.rpad(sample[label],
+													 data.vmaxlen + 
+													 (1 if sample[label] < 0
+													  else 0)))
 				self.tc_grid_setcolorlabel(i, data)
 			self.tc_preview_update(0)
 
@@ -2903,9 +2908,12 @@ class TestchartEditor(BaseFrame):
 			for label in ("RGB_R", "RGB_G", "RGB_B"):
 				for col in range(self.grid.GetNumberCols()):
 					if self.label_b2a.get(self.grid.GetColLabelValue(col)) == label:
+						sample = newdata[i]
 						self.grid.SetCellValue(row + 1 + i, col,
-											   str(round(float(newdata[i][label]),
-														 4)))
+											   CGATS.rpad(sample[label],
+														  data.vmaxlen + 
+														  (1 if sample[label] < 0
+														   else 0)))
 			self.tc_grid_setcolorlabel(row + 1 + i, data)
 		self.tc_preview_update(row + 1)
 		self.grid.EndBatch()
