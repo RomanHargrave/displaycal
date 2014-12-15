@@ -12,7 +12,7 @@ import colormath
 import config
 import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
-from argyll_cgats import ti3_to_ti1, verify_ti1_rgb_xyz
+from argyll_cgats import ti3_to_ti1, verify_cgats
 from config import (defaults, getbitmap, getcfg, geticon, 
 					get_current_profile, get_data_path,
 					get_total_patches, get_verified_path, hascfg, setcfg,
@@ -2292,7 +2292,7 @@ class TestchartEditor(BaseFrame):
 											 profile.tags.get("targ", "")))
 				ti1.filename = filename + ".ti1"
 			try:
-				ti1_1 = verify_ti1_rgb_xyz(ti1)
+				ti1_1 = verify_cgats(ti1, ("RGB_R", "RGB_B", "RGB_G"))
 			except CGATS.CGATSError, exception:
 				msg = {CGATS.CGATSKeyError: lang.getstr("error.testchart.missing_fields", 
 														(path, 
@@ -2304,8 +2304,20 @@ class TestchartEditor(BaseFrame):
 																					   lang.getstr(safe_str(exception)))
 				return Error(msg)
 			else:
-				if ext.lower() not in (".ti1", ".ti2") and ti1_1:
-					ti1_1.add_keyword("ACCURATE_EXPECTED_VALUES", "true")
+				try:
+					verify_cgats(ti1, ("XYZ_X", "XYZ_Y", "XYZ_Z"))
+				except CGATS.CGATSKeyError:
+					# Missing XYZ, add via simple sRGB-like model
+					data = ti1_1.queryv1("DATA")
+					data.parent.DATA_FORMAT.add_data(("XYZ_X", "XYZ_Y", "XYZ_Z"))
+					for sample in data.itervalues():
+						XYZ = argyll_RGB2XYZ(*[sample["RGB_" + channel] / 100.0
+											   for channel in "RGB"])
+						for i, component in enumerate("XYZ"):
+							sample["XYZ_" + component] = XYZ[i] * 100
+				else:
+					if ext.lower() not in (".ti1", ".ti2") and ti1_1:
+						ti1_1.add_keyword("ACCURATE_EXPECTED_VALUES", "true")
 				ti1.root.setmodified(False)
 				self.ti1 = ti1
 		except Exception, exception:
