@@ -2837,7 +2837,9 @@ class TestchartEditor(BaseFrame):
 			self.sizer.Layout()
 			if verbose >= 1: safe_print(lang.getstr("tc.preview.create"))
 			data = self.ti1.queryv1("DATA")
+			modified = self.ti1.modified
 			data.vmaxlen = 6
+			self.ti1.modified = modified
 
 			if hasattr(self, "preview"):
 				self.preview.BeginBatch()
