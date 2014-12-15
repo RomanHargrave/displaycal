@@ -2284,13 +2284,12 @@ class TestchartEditor(BaseFrame):
 				else:
 					ti1 = CGATS.CGATS(path)
 					ti1.filename = path
-				if ext.lower() not in (".ti1", ".ti3"):
-					ti1.fix_device_values_scaling()
 			else: # icc or icm profile
 				profile = ICCP.ICCProfile(path)
 				ti1 = CGATS.CGATS(ti3_to_ti1(profile.tags.get("CIED", "") or 
 											 profile.tags.get("targ", "")))
 				ti1.filename = filename + ".ti1"
+			ti1.fix_device_values_scaling()
 			try:
 				ti1_1 = verify_cgats(ti1, ("RGB_R", "RGB_B", "RGB_G"))
 			except CGATS.CGATSError, exception:
