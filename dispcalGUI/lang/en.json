@@ -834,6 +834,7 @@
 	"tc.patches.selected": "selected",
 	"tc.patches.total": "Total patches",
 	"tc.precond": "Preconditioning profile",
+	"tc.precond.notset": "Please select a preconditioning profile.",
 	"tc.preview.create": "Creating preview, please wait...",
 	"tc.q": "Device space filling quasi-random",
 	"tc.r": "Device space random",

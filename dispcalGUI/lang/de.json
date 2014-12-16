@@ -834,6 +834,7 @@
 	"tc.patches.selected": "ausgewählt",
 	"tc.patches.total": "Felder gesamt",
 	"tc.precond": "Profil zur Vorkonditionierung",
+	"tc.precond.notset": "Bitte wählen Sie ein Profil zur Vorkonditionierung.",
 	"tc.preview.create": "Erstelle Vorschau, bitte warten...",
 	"tc.q": "Geräte-Farbraum füllend (quasi-zufällig)",
 	"tc.r": "Geräte-Farbraum (zufällig)",

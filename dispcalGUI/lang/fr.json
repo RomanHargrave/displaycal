@@ -834,6 +834,7 @@
 	"tc.patches.selected": "sélectionné(s) ",
 	"tc.patches.total": "Nombre total d'échantillons ",
 	"tc.precond": "Préconditionnement du profil",
+		"*tc.precond.notset": "Please select a preconditioning profile.",
 	"tc.preview.create": "Création de l'aperçu en cours, veuillez patienter...",
 	"tc.q": "Distribution quasi-aléatoire du remplissage de l'espace du périphérique",
 	"tc.r": "Distribution aléatoire dans l'espace du périphérique",

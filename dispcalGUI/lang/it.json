@@ -834,6 +834,7 @@
 	"tc.patches.selected": "selezionato",
 	"tc.patches.total": "Totale campioni",
 	"tc.precond": "Precondizionamento del profilo",
+		"*tc.precond.notset": "Please select a preconditioning profile.",
 	"tc.preview.create": "Creazione dell'anteprima, attendere prego...",
 	"tc.q": "Riempimento dello spazio del dispositivo quasi-random",
 	"tc.r": "Spazio del dispositivo casuale",

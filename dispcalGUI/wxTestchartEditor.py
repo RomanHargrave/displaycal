@@ -72,9 +72,16 @@ class TestchartEditor(BaseFrame):
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".cgats": self.ti1_drop_handler,
+			".cie": self.tc_drop_ti3_handler,
 			".csv": self.csv_drop_handler,
+			".gam": self.tc_drop_ti3_handler,
 			".icc": self.ti1_drop_handler,
 			".icm": self.ti1_drop_handler,
+			".jpg": self.tc_drop_ti3_handler,
+			".jpeg": self.tc_drop_ti3_handler,
+			".png": self.tc_drop_ti3_handler,
+			".tif": self.tc_drop_ti3_handler,
+			".tiff": self.tc_drop_ti3_handler,
 			".ti1": self.ti1_drop_handler,
 			".ti3": self.ti1_drop_handler,
 			".txt": self.ti1_drop_handler
@@ -1288,27 +1295,36 @@ END_DATA""")
 			self.tc_add_data(row, newdata)
 			self.grid.select_row(row + len(newdata))
 	
-	def tc_add_ti3_handler(self, event):
+	def tc_drop_ti3_handler(self, path):
+		if not hasattr(self, "ti1"):
+			wx.Bell()
+		elif getcfg("tc_precond_profile"):
+			self.tc_add_ti3_handler(None, path)
+		else:
+			show_result_dialog(lang.getstr("tc.precond.notset"), self)
+	
+	def tc_add_ti3_handler(self, event, chart=None):
 		try:
 			profile = ICCP.ICCProfile(getcfg("tc_precond_profile"))
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			show_result_dialog(exception, self)
 			return
 
-		defaultDir, defaultFile = get_verified_path("testchart.reference")
-		dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
-							defaultDir=defaultDir, defaultFile=defaultFile, 
-							wildcard=(lang.getstr("filetype.ti1_ti3_txt") + 
-									  "|*.cgats;*.cie;*.gam;*.icc;*.icm;*.jpg;*.jpeg;*.png;*.ti1;*.ti2;*.ti3;*.tif;*.tiff;*.txt"), 
-							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
-		dlg.Center(wx.BOTH)
-		result = dlg.ShowModal()
-		if result == wx.ID_OK:
-			chart = dlg.GetPath()
-			setcfg("testchart.reference", chart)
-		dlg.Destroy()
-		if result != wx.ID_OK:
-			return
+		if not chart:
+			defaultDir, defaultFile = get_verified_path("testchart.reference")
+			dlg = wx.FileDialog(self, lang.getstr("testchart_or_reference"), 
+								defaultDir=defaultDir, defaultFile=defaultFile, 
+								wildcard=(lang.getstr("filetype.ti1_ti3_txt") + 
+										  "|*.cgats;*.cie;*.gam;*.icc;*.icm;*.jpg;*.jpeg;*.png;*.ti1;*.ti2;*.ti3;*.tif;*.tiff;*.txt"), 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				chart = dlg.GetPath()
+				setcfg("testchart.reference", chart)
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
 
 		use_gamut = False
 

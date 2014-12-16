@@ -834,6 +834,7 @@
 	"tc.patches.selected": "Seleccionado",
 	"tc.patches.total": "Parches totales",
 	"tc.precond": "Precondicionando perfil",
+		"*tc.precond.notset": "Please select a preconditioning profile.",
 	"tc.preview.create": "Creando previo, por favor espere...",
 	"tc.q": "Llenado del espacio de dispositivo quasi-random",
 	"tc.r": "Espacio del dispositivo aleatorio",
