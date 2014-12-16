@@ -53,16 +53,16 @@ class Image(object):
 		for i, scanline in enumerate(self.data):
 			for RGB in scanline:
 				scanline = "".join(self._pack(v) for v in RGB)
-				#if not optimize:
-					## Pad lines with binary zeros so they end on 4-byte boundaries
-					#scanline = scanline.ljust(int(math.ceil(len(scanline) / 4.0)) * 4, "\0")
+				if not optimize:
+					# Pad lines with binary zeros so they end on 4-byte boundaries
+					scanline = scanline.ljust(int(math.ceil(len(scanline) / 4.0)) * 4, "\0")
 				imgdata.append(scanline)
 		imgdata = "".join(imgdata)
 		if optimize:
 			# Optimize for single color
 			imgdata *= dimensions[0]
-			## Pad lines with binary zeros so they end on 4-byte boundaries
-			#imgdata = imgdata.ljust(int(math.ceil(len(imgdata) / 4.0)) * 4, "\0")
+			# Pad lines with binary zeros so they end on 4-byte boundaries
+			imgdata = imgdata.ljust(int(math.ceil(len(imgdata) / 4.0)) * 4, "\0")
 			imgdata *= dimensions[1]
 			w, h = dimensions
 		else:
