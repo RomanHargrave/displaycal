@@ -102,7 +102,7 @@ class Image(object):
 		stream.write("\0")  # Transfer 0 = user defined
 		stream.write("\0")  # Colorimetric 0 = user defined
 		stream.write(chr(self.bitdepth))  # BitSize
-		stream.write("\0\x01")  # Packing 1 = filled 32-bit words
+		stream.write("\0\0")  # Packing 0 = packed 32-bit words
 		stream.write("\0\0")  # Encoding 0 = not encoded
 		stream.write(struct.pack(">I", 8192))  # Image data offset
 		stream.write("\0" * 4)  # End of line padding
