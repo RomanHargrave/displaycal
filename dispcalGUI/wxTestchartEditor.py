@@ -11,6 +11,7 @@ import CGATS
 import ICCProfile as ICCP
 import colormath
 import config
+import imfile
 import localization as lang
 from argyll_RGB2XYZ import RGB2XYZ as argyll_RGB2XYZ, XYZ2RGB as argyll_XYZ2RGB
 from argyll_cgats import ti3_to_ti1, verify_cgats
@@ -1959,8 +1960,12 @@ END_DATA""")
 							defaultFile=defaultFile,
 							# Disable JPEG as it introduces slight color errors
 							wildcard=##lang.getstr("filetype.jpg") + "|*.jpg|" +
-									 lang.getstr("filetype.png") + "|*.png|" +
-									 lang.getstr("filetype.tif") + "|*.tif|" +
+									 lang.getstr("filetype.png") + " (8-bit)|*.png|" +
+									 lang.getstr("filetype.png") + " (16-bit)|*.png|" +
+									 lang.getstr("filetype.tif") + " (8-bit)|*.tif|" +
+									 lang.getstr("filetype.tif") + " (16-bit)|*.tif|" +
+									 "DPX (8-bit)|*.dpx|" +
+									 "DPX (16-bit)|*.dpx|" +
 									 "CSV (0.0..100.0)|*.csv|" +
 									 "CSV (0..255)|*.csv|" +
 									 "CSV (0..1023)|*.csv",
@@ -1979,7 +1984,7 @@ END_DATA""")
 			self.writecfg()
 		else:
 			return
-		if filter_index < 2:
+		if filter_index < 6:
 			# Image format
 			dlg = ConfirmDialog(self, title=lang.getstr("export"),
 								msg=lang.getstr("testchart.export.repeat_patch"),
@@ -2019,51 +2024,53 @@ END_DATA""")
 			setcfg("tc_export_repeat_patch_min", repeatmin)
 			self.writecfg()
 		if path:
-			if sys.platform not in ("darwin", "win32") and filter_index < 2:
-				# Linux segfaults if running iamge export threaded
-				self.tc_export(path, filter_index)
-			else:
-				self.worker.start(lambda result: None, self.tc_export,
-								  wargs=(path, filter_index), wkwargs={},
-								  progress_msg=lang.getstr("export"),
-								  parent=self, progress_start=500)
+			self.worker.start(lambda result: None, self.tc_export,
+							  wargs=(path, filter_index), wkwargs={},
+							  progress_msg=lang.getstr("export"),
+							  parent=self, progress_start=500)
 	
 	def tc_export(self, path, filter_index):
-		if filter_index > 1:
+		if filter_index < 6:
+			# Image format
+			self.tc_export_subroutine(path, filter_index)
+		else:
 			# CSV
 			with open(path, "wb") as csvfile:
 				self.tc_export_subroutine(csv.writer(csvfile), filter_index)
-		else:
-			# Image format
-			self.tc_export_subroutine(path, filter_index)
 
 	def tc_export_subroutine(self, target, filter_index):
 		maxlen = len(self.ti1[0].DATA)
-		if filter_index < 2:
+		if filter_index < 6:
 			# Image format
 			name, ext = os.path.splitext(target)[0], {0: ".png",
-													  1: ".tif",
-													  2: ".csv",
-													  3: ".csv",
-													  4: ".csv"}[filter_index]
-			ext2type = {".jpg": wx.BITMAP_TYPE_JPEG,
-						".png": wx.BITMAP_TYPE_PNG,
-						".tif": wx.BITMAP_TYPE_TIF}
+													  1: ".png",
+													  2: ".tif",
+													  3: ".tif",
+													  4: ".dpx",
+													  5: ".dpx"}[filter_index]
+			format = {".dpx": "DPX",
+					  ".png": "PNG",
+					  ".tif": "TIFF"}[ext]
+			bitdepth = {0: 8,
+						1: 16,
+						2: 8,
+						3: 16,
+						4: 8,
+						5: 16}[filter_index]
+			vscale = (2 ** bitdepth - 1) / 100.0
 			repeatmax = getcfg("tc_export_repeat_patch_max")
 			repeatmin = getcfg("tc_export_repeat_patch_min")
 			maxcount = maxlen * repeatmax
 			filenameformat = "%%s-%%0%id%%s" % len(str(maxcount))
 			size = int(round(get_default_size() *
 							 float(getcfg("dimensions.measureframe").split(",")[-1])))
+			dimensions = (size, ) * 2
 			count = 0
-			bitmap = wx.EmptyBitmap(min(1920, size), min(1080, size))  # Max. FullHD
-			dc = wx.MemoryDC()
-			dc.SelectObject(bitmap)
 		else:
 			# CSV
-			vscale = {2: 1.0,
-					  3: 2.55,
-					  4: 10.23}[filter_index]
+			vscale = {6: 1.0,
+					  7: 2.55,
+					  8: 10.23}[filter_index]
 		for i in xrange(maxlen):
 			if self.worker.thread_abort:
 				break
@@ -2071,7 +2078,7 @@ END_DATA""")
 			R, G, B = (self.ti1[0].DATA[i]["RGB_R"],
 			           self.ti1[0].DATA[i]["RGB_G"],
 			           self.ti1[0].DATA[i]["RGB_B"])
-			if filter_index > 1:
+			if not filter_index < 6:
 				# CSV
 				if vscale != 1:
 					R, G, B = [int(round(v * vscale)) for v in [R, G, B]]
@@ -2084,14 +2091,12 @@ END_DATA""")
 			# Careful when rounding floats!
 			# Incorrect: int(round(50 * 2.55)) = 127 (127.499999)
 			# Correct: int(round(float(str(50 * 2.55)))) = 128 (127.5)
-			color = wx.Colour(int(round(float(str(R * 2.55)))),
-							  int(round(float(str(G * 2.55)))),
-							  int(round(float(str(B * 2.55)))))
-			dc.SetBackground(wx.Brush(color))
-			dc.Clear()
+			color = (int(round(float(str(R * vscale)))),
+					 int(round(float(str(G * vscale)))),
+					 int(round(float(str(B * vscale)))))
 			count += 1
 			filename = filenameformat % (name, count, ext)
-			bitmap.SaveFile(filename, ext2type.get(ext, ext2type[".png"]))
+			imfile.write([[color]], filename, bitdepth, format, dimensions)
 			repeat = int(round(repeatmin + ((repeatmax - repeatmin) / 100.0 * (100 - L))))
 			##safe_print("RGB", R, G, B, "L* %.2f" % L, "repeat", repeat)
 			if repeat > 1:
