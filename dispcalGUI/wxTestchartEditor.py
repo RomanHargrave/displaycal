@@ -2436,12 +2436,11 @@ END_DATA""")
 			except CGATS.CGATSError, exception:
 				msg = {CGATS.CGATSKeyError: lang.getstr("error.testchart.missing_fields", 
 														(path, 
-														 "RGB_R, RGB_G, RGB_B, "
-														 " XYZ_X, XYZ_Y, XYZ_Z"))}.get(exception.__class__,
-																					   lang.getstr("error.testchart.invalid",
-																								   path) + 
-																					   "\n" + 
-																					   lang.getstr(safe_str(exception)))
+														 "RGB_R, RGB_G, RGB_B"))}.get(exception.__class__,
+																					  lang.getstr("error.testchart.invalid",
+																								  path) + 
+																					  "\n" + 
+																					  lang.getstr(safe_str(exception)))
 				return Error(msg)
 			else:
 				try:
