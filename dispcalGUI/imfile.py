@@ -40,10 +40,6 @@ class Image(object):
 	def _write_dpx(self, stream, dimensions=None):
 		# Very helpful: http://www.fileformat.info/format/dpx/egff.htm
 
-		# Length of all headers combined
-		headersizes = {"generic": 768 + 640 + 256,
-					   "industry": 256 + 128}
-
 		# Generic file header (768 bytes)
 		stream.write("SDPX")  # Magic number
 		stream.write(struct.pack(">I", 8192))  # Offset to image data
@@ -75,8 +71,8 @@ class Image(object):
 		# Generic file header (cont.)
 		stream.write(struct.pack(">I", 8192 + len(imgdata)))  # File size
 		stream.write("\0\0\0\1")  # DittoKey (1 = not same as previous frame)
-		stream.write(struct.pack(">I", headersizes["generic"]))  # Generic section header length
-		stream.write(struct.pack(">I", headersizes["industry"]))  # Industry-specific section header length
+		stream.write(struct.pack(">I", 768 + 640 + 256))  # Generic section header length
+		stream.write(struct.pack(">I", 256 + 128))  # Industry-specific section header length
 		stream.write(struct.pack(">I", 0))  # User-defined data length
 		stream.write(os.path.basename(stream.name or "").ljust(100, "\0")[:100])  # File name
 		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S:+00") + "\0")  # Date & timestamp
@@ -86,13 +82,13 @@ class Image(object):
 		stream.write("\xff" * 4)  # EncryptKey 0xffffffff = not encrypted
 		stream.write("\0" * 104)  # Reserved
 
-		# Image header (640 bytes)
+		# Generic image header (640 bytes)
 		stream.write("\0\0")  # Orientation 0 = left to right, top to bottom
 		stream.write("\0\1")  # Number of image elements
 		stream.write(struct.pack(">I", w))  # Pixels per line
 		stream.write(struct.pack(">I", h))  # Lines per image element
 
-		# Image header - image element
+		# Generic image header - image element
 		stream.write("\0" * 4)  # 0 = unsigned data
 		stream.write("\0" * 4)  # Reference low data code value
 		stream.write("\0" * 4)  # Reference low quantity
@@ -112,25 +108,13 @@ class Image(object):
 		# Seven additional unused image elements
 		stream.write("\0" * 72 * 7)
 
-		# Image header (cont.)
+		# Generic image header (cont.)
 		stream.write("\0" * 52)  # Reserved
 
-		# Orientation header (256 bytes)
-		stream.write("\0" * 4)  # X offset
-		stream.write("\0" * 4)  # Y offset
-		stream.write("\0" * 4)  # X center
-		stream.write("\0" * 4)  # Y center
-		stream.write(struct.pack(">I", w))  # X original size
-		stream.write(struct.pack(">I", h))  # Y original size
-		stream.write(os.path.basename(stream.name or "").ljust(100, "\0")[:100])  # Source image file name
-		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S:+00") + "\0")  # Date & timestamp
-		stream.write("\0" * 32)  # Input device name
-		stream.write("\0" * 32)  # Input device serial number
-		stream.write("\0" * 2 * 4)  # Border
-		stream.write("\0" * 4 * 2)  # Aspect ratio
-		stream.write("\0" * 28)  # Reserved
+		# Generic image source header (256 bytes) - not used
+		stream.write("\0" * 256)
 
-		# Film & TV info headers - not used
+		# Industry-specific film & TV info headers - not used
 		stream.write("\0" * (256 + 128))
 
 		# Padding so image data begins at 8K boundary
