@@ -102,15 +102,15 @@ class Image(object):
 		stream.write(struct.pack(">I", 2 ** self.bitdepth - 1))  # Reference high data code value
 		stream.write("\xff" * 4)  # Reference high quantity
 		stream.write(chr(50))  # Descriptor 50 = RGB
-		stream.write("\0")  # Transfer 0 = user defined
-		stream.write("\0")  # Colorimetric 0 = user defined
+		stream.write("\2")  # Transfer 2 = linear
+		stream.write("\2")  # Colorimetric 2 = not applicable
 		stream.write(chr(self.bitdepth))  # BitSize
 		stream.write("\0\0")  # Packing 0 = packed 32-bit words
 		stream.write("\0\0")  # Encoding 0 = not encoded
 		stream.write(struct.pack(">I", 8192))  # Image data offset
 		stream.write("\0" * 4)  # End of line padding
 		stream.write("\0" * 4)  # End of image padding
-		stream.write("\0" * 32)  # Description
+		stream.write("RGB / Linear".ljust(32, "\0"))  # Description
 
 		# Seven additional unused image elements
 		stream.write("\0" * 72 * 7)
