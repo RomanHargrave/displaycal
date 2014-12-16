@@ -75,7 +75,14 @@ class Image(object):
 		stream.write(struct.pack(">I", 256 + 128))  # Industry-specific section header length
 		stream.write(struct.pack(">I", 0))  # User-defined data length
 		stream.write(os.path.basename(stream.name or "").ljust(100, "\0")[:100])  # File name
-		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S:+00") + "\0")  # Date & timestamp
+		# Date & timestamp
+		tzoffset = round((time.mktime(time.localtime()) -
+						  time.mktime(time.gmtime())) / 60.0 / 60.0)
+		if tzoffset < 0:
+			tzoffset = "%.2i" % tzoffset
+		else:
+			tzoffset = "+%.2i" % tzoffset
+		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S:") + tzoffset + "\0")
 		stream.write(appname.ljust(100, "\0"))  # Creator
 		stream.write("\0" * 200)  # Project
 		stream.write("\0" * 200)  # Copyright
