@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import sys
+import time
 
 import CGATS
 import ICCProfile as ICCP
@@ -2082,6 +2083,7 @@ END_DATA""")
 							 float(getcfg("dimensions.measureframe").split(",")[-1])))
 			dimensions = (size, ) * 2
 			count = 0
+			secs = 0
 		else:
 			# CSV
 			vscale = {6: 1.0,
@@ -2112,10 +2114,20 @@ END_DATA""")
 					 int(round(float(str(B * vscale)))))
 			count += 1
 			filename = filenameformat % (name, count, ext)
-			imfile.write([[color]], filename, bitdepth, format, dimensions)
 			repeat = int(round(repeatmin + ((repeatmax - repeatmin) / 100.0 * (100 - L))))
+			imfile.write([[color]], filename, bitdepth, format, dimensions,
+						 {"original_width": sw,
+						  "original_height": sh,
+						  "offset_x": x,
+						  "offset_y": y,
+						  "frame_rate": 1,
+						  "held_count": repeat,
+						  "timecode": [int(v) for v in
+									   time.strftime("%H:%M:%S:00",
+													 time.gmtime(secs)).split(":")]})
+			secs += repeat
 			##safe_print("RGB", R, G, B, "L* %.2f" % L, "repeat", repeat)
-			if repeat > 1:
+			if repeat > 1 and format != "DPX":
 				for j in xrange(repeat - 1):
 					count += 1
 					filecopyname = filenameformat % (name, count, ext)
