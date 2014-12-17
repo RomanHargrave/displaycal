@@ -2079,11 +2079,30 @@ END_DATA""")
 			repeatmin = getcfg("tc_export_repeat_patch_min")
 			maxcount = maxlen * repeatmax
 			filenameformat = "%%s-%%0%id%%s" % len(str(maxcount))
-			size = int(round(get_default_size() *
-							 float(getcfg("dimensions.measureframe").split(",")[-1])))
-			dimensions = (size, ) * 2
 			count = 0
 			secs = 0
+			# Scale from screen dimensions to fixed 1080p viewport
+			sw, sh = 1920, 1080
+			x, y, size = [float(v) for v in
+						  getcfg("dimensions.measureframe").split(",")]
+			size *= get_default_size()
+			displays = getcfg("displays").split(os.pathsep)
+			match = None
+			display_no = getcfg("display.number") - 1
+			if display_no in range(len(displays)):
+				match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)",
+								  displays[display_no])
+			if match:
+				display_size = [int(item) for item in match.groups()]
+			else:
+				display_size = wx.DisplaySize()
+			w, h = [min(size / v, 1.0) for v in display_size]
+			x = (display_size[0] - size) * x / display_size[0]
+			y = (display_size[1] - size) * y / display_size[1]
+			x, y, w, h = [max(v, 0) for v in (x, y, w, h)]
+			x, w = [int(round(v * sw)) for v in (x, w)]
+			y, h = [int(round(v * sh)) for v in (y, h)]
+			dimensions = w, h
 		else:
 			# CSV
 			vscale = {6: 1.0,
