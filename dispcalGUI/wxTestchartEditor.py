@@ -8,6 +8,9 @@ import shutil
 import sys
 import time
 
+if sys.platform == "win32":
+	import win32file
+
 import CGATS
 import ICCProfile as ICCP
 import colormath
@@ -26,7 +29,7 @@ from meta import name as appname
 from options import debug, tc_use_alternate_preview, test, verbose
 from ordereddict import OrderedDict
 from util_io import StringIOu as StringIO
-from util_os import launch_file, waccess
+from util_os import is_superuser, launch_file, waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
 					get_argyll_util, show_result_dialog)
@@ -2108,6 +2111,8 @@ END_DATA""")
 			vscale = {6: 1.0,
 					  7: 2.55,
 					  8: 10.23}[filter_index]
+		is_winnt6 = sys.platform == "win32" and sys.getwindowsversion() >= (6, )
+		use_winnt6_symlinks = is_winnt6 and is_superuser()
 		for i in xrange(maxlen):
 			if self.worker.thread_abort:
 				break
@@ -2150,7 +2155,17 @@ END_DATA""")
 				for j in xrange(repeat - 1):
 					count += 1
 					filecopyname = filenameformat % (name, count, ext)
-					shutil.copyfile(filename, filecopyname)
+					if os.path.isfile(filecopyname):
+						os.unlink(filecopyname)
+					if is_winnt6:
+						if use_winnt6_symlinks:
+							win32file.CreateSymbolicLink(filecopyname,
+														 os.path.basename(filename),
+														 0)
+						else:
+							shutil.copyfile(filename, filecopyname)
+					else:
+						os.symlink(os.path.basename(filename), filecopyname)
 
 	def tc_save_handler(self, event = None):
 		self.tc_save_as_handler(event, path = self.ti1.filename)
