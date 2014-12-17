@@ -2042,6 +2042,8 @@ END_DATA""")
 			setcfg("tc_export_repeat_patch_max", repeatmax)
 			setcfg("tc_export_repeat_patch_min", repeatmin)
 			self.writecfg()
+			defaults["size.measureframe"] = get_default_size()
+			self.display_size = wx.DisplaySize()
 		if path:
 			self.worker.start(lambda result: None, self.tc_export,
 							  wargs=(path, filter_index), wkwargs={},
@@ -2085,7 +2087,7 @@ END_DATA""")
 			sw, sh = 1920, 1080
 			x, y, size = [float(v) for v in
 						  getcfg("dimensions.measureframe").split(",")]
-			size *= get_default_size()
+			size *= defaults["size.measureframe"]
 			displays = getcfg("displays").split(os.pathsep)
 			match = None
 			display_no = getcfg("display.number") - 1
@@ -2095,7 +2097,7 @@ END_DATA""")
 			if match:
 				display_size = [int(item) for item in match.groups()]
 			else:
-				display_size = wx.DisplaySize()
+				display_size = self.display_size
 			w, h = [min(size / v, 1.0) for v in display_size]
 			x = (display_size[0] - size) * x / display_size[0]
 			y = (display_size[1] - size) * y / display_size[1]
