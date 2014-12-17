@@ -7,11 +7,12 @@ import struct
 import time
 import zlib
 
-from meta import name as appname
+from meta import name as appname, version
 
 
-def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None):
-	Image(data, bitdepth).write(stream_or_filename, format, dimensions)
+def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None,
+		  extrainfo=None):
+	Image(data, bitdepth, extrainfo).write(stream_or_filename, format, dimensions)
 
 
 class Image(object):
@@ -23,9 +24,10 @@ class Image(object):
 	
 	"""
 
-	def __init__(self, data, bitdepth=16):
+	def __init__(self, data, bitdepth=16, extrainfo=None):
 		self.bitdepth = bitdepth
 		self.data = data
+		self.extrainfo = extrainfo or {}
 
 	def _pack(self, n):
 		n = int(round(n))
@@ -74,7 +76,7 @@ class Image(object):
 		stream.write(struct.pack(">I", 768 + 640 + 256))  # Generic section header length
 		stream.write(struct.pack(">I", 256 + 128))  # Industry-specific section header length
 		stream.write(struct.pack(">I", 0))  # User-defined data length
-		stream.write(os.path.basename(stream.name or "").ljust(100, "\0")[:100])  # File name
+		stream.write((stream.name or "").ljust(100, "\0")[-100:])  # File name
 		# Date & timestamp
 		tzoffset = round((time.mktime(time.localtime()) -
 						  time.mktime(time.gmtime())) / 60.0 / 60.0)
@@ -83,7 +85,7 @@ class Image(object):
 		else:
 			tzoffset = "+%.2i" % tzoffset
 		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S:") + tzoffset + "\0")
-		stream.write(appname.ljust(100, "\0"))  # Creator
+		stream.write(("%s %s" % (appname, version)).ljust(100, "\0"))  # Creator
 		stream.write("\0" * 200)  # Project
 		stream.write("\0" * 200)  # Copyright
 		stream.write("\xff" * 4)  # EncryptKey 0xffffffff = not encrypted
@@ -98,7 +100,7 @@ class Image(object):
 		# Generic image header - image element
 		stream.write("\0" * 4)  # 0 = unsigned data
 		stream.write("\0" * 4)  # Reference low data code value
-		stream.write("\0" * 4)  # Reference low quantity
+		stream.write("\xff" * 4)  # Reference low quantity
 		stream.write(struct.pack(">I", 2 ** self.bitdepth - 1))  # Reference high data code value
 		stream.write("\xff" * 4)  # Reference high quantity
 		stream.write(chr(50))  # Descriptor 50 = RGB
@@ -118,11 +120,78 @@ class Image(object):
 		# Generic image header (cont.)
 		stream.write("\0" * 52)  # Reserved
 
-		# Generic image source header (256 bytes) - not used
-		stream.write("\0" * 256)
+		# Generic image source header (256 bytes)
+		sw, sh = [self.extrainfo.get("original_" + dim,
+									 locals()[dim[0]]) for dim in ("width",
+																   "height")]
+		# X offset
+		stream.write(struct.pack(">I", self.extrainfo.get("offset_x",
+														  (sw - w) / 2)))
+		# Y offset
+		stream.write(struct.pack(">I", self.extrainfo.get("offset_y",
+														  (sh - h) / 2)))
+		# X center
+		stream.write(struct.pack(">f", self.extrainfo.get("center_x", sw / 2.0)))
+		# Y center
+		stream.write(struct.pack(">f", self.extrainfo.get("center_y", sh / 2.0)))
+		stream.write(struct.pack(">I", sw))  # X original size
+		stream.write(struct.pack(">I", sh))  # Y original size
+		stream.write("\0" * 100)  # Source image file name
+		stream.write("\0" * 24)  # Source image date & timestamp
+		stream.write("\0" * 32)  # Input device name
+		stream.write("\0" * 32)  # Input device serial number
+		stream.write("\0" * 2 * 4)  # Border
+		stream.write("\0\0\0\1" * 2)  # Pixel aspect ratio
+		stream.write("\xff" * 4)  # X scanned size
+		stream.write("\xff" * 4)  # Y scanned size
+		stream.write("\0" * 20)  # Reserved
 
-		# Industry-specific film & TV info headers - not used
-		stream.write("\0" * (256 + 128))
+		# Industry-specific film info header (256 bytes)
+		stream.write("\0" * 2)  # Film mfg. ID code
+		stream.write("\0" * 2)  # Film type
+		stream.write("\0" * 2)  # Offset in perfs
+		stream.write("\0" * 6)  # Prefix
+		stream.write("\0" * 4)  # Count
+		stream.write("\0" * 32)  # Format
+		# Frame position in sequence
+		stream.write(struct.pack(">I", self.extrainfo.get("frame_position",
+														  2 ** 32 - 1)))
+		# Sequence length
+		stream.write(struct.pack(">I", self.extrainfo.get("sequence_length",
+														  2 ** 32 - 1)))
+		# Held count
+		stream.write(struct.pack(">I", self.extrainfo.get("held_count", 1)))
+		# Frame rate of original
+		if "frame_rate" in self.extrainfo:
+			stream.write(struct.pack(">f", self.extrainfo["frame_rate"]))
+		else:
+			stream.write("\xff" * 4)
+		# Shutter angle of camera in degrees
+		stream.write("\xff" * 4)
+		stream.write("\0" * 32)  # Frame identification - e.g. keyframe
+		stream.write("\0" * 100)  # Slate
+		stream.write("\0" * 56)  # Reserved
+		
+		# Industry-specific TV info header (128 bytes)
+		# SMPTE time code
+		stream.write("".join(chr(int(str(v), 16)) for v in
+							 self.extrainfo.get("timecode", ["ff"] * 4)))
+		stream.write("\xff" * 4)  # User bits
+		stream.write("\xff")  # Interlace
+		stream.write("\xff")  # Field number
+		stream.write("\xff")  # Video signal standard
+		stream.write("\0")  # Zero for byte alignment
+		stream.write("\xff" * 4)  # H sampling rate Hz
+		stream.write("\xff" * 4)  # V sampling rate Hz
+		stream.write("\xff" * 4)  # Temporal sampling or frame rate Hz
+		stream.write("\xff" * 4)  # Time offset in ms from sync to 1st pixel
+		stream.write("\xff" * 4)  # Gamma
+		stream.write("\xff" * 4)  # Black level code value
+		stream.write("\xff" * 4)  # Black gain
+		stream.write("\xff" * 4)  # Breakpoint
+		stream.write("\xff" * 4)  # Reference white level code value
+		stream.write("\xff" * 4)  # Integration time in s
+		stream.write("\0" * 76)  # Reserved
 
 		# Padding so image data begins at 8K boundary
 		stream.write("\0" * 6144)
