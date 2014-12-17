@@ -45,20 +45,32 @@ class Image(object):
 		# Generic file header (768 bytes)
 		stream.write("SDPX")  # Magic number
 		stream.write(struct.pack(">I", 8192))  # Offset to image data
-		stream.write("V1.0\0\0\0\0")  # ASCII version
+		stream.write("V2.0\0\0\0\0")  # ASCII version
 
 		# Optimize for single color
 		optimize = len(self.data) == 1 and len(self.data[0]) == 1 and dimensions
 
 		# Image data
 		imgdata = []
+		# 10-bit code adapted from GraphicsMagick dpx.c:WriteSamples
+		if self.bitdepth == 10:
+			shifts = (22, 12, 2)  # RGB
 		for i, scanline in enumerate(self.data):
-			for RGB in scanline:
-				scanline = "".join(self._pack(v) for v in RGB)
-				if not optimize:
-					# Pad lines with binary zeros so they end on 4-byte boundaries
-					scanline = scanline.ljust(int(math.ceil(len(scanline) / 4.0)) * 4, "\0")
-				imgdata.append(scanline)
+			if self.bitdepth == 10:
+				packed = []
+				for RGB in scanline:
+					packed_u32 = 0
+					for datum, sample in enumerate(RGB):
+						packed_u32 |= (sample << shifts[datum])
+					packed.append(struct.pack(">I", packed_u32))
+				scanline = "".join(packed)
+			else:
+				scanline = "".join("".join(self._pack(v) for v in RGB) for RGB in
+								   scanline)
+			if not optimize:
+				# Pad lines with binary zeros so they end on 4-byte boundaries
+				scanline = scanline.ljust(int(math.ceil(len(scanline) / 4.0)) * 4, "\0")
+			imgdata.append(scanline)
 		imgdata = "".join(imgdata)
 		if optimize:
 			# Optimize for single color
@@ -107,7 +119,7 @@ class Image(object):
 		stream.write("\2")  # Transfer 2 = linear
 		stream.write("\2")  # Colorimetric 2 = not applicable
 		stream.write(chr(self.bitdepth))  # BitSize
-		stream.write("\0\0")  # Packing 0 = packed 32-bit words
+		stream.write("\0\1")  # Packing 1 = filled 32-bit words
 		stream.write("\0\0")  # Encoding 0 = not encoded
 		stream.write(struct.pack(">I", 8192))  # Image data offset
 		stream.write("\0" * 4)  # End of line padding
@@ -228,16 +240,16 @@ class Image(object):
 		stream.write(ihdr)
 		stream.write(struct.pack(">I", zlib.crc32(ihdr) & 0xFFFFFFFF))
 		# IDAT image data chunk type
-		scanlines = []
+		imgdata = []
 		for i, scanline in enumerate(self.data):
 			# Add a scanline, filter type 0
-			scanlines.append("\0")
+			imgdata.append("\0")
 			for RGB in scanline:
-				scanline = "".join(self._pack(v) for v in RGB)
+				RGB = "".join(self._pack(v) for v in RGB)
 				if optimize:
-					scanline *= dimensions[0]
-				scanlines.append(scanline)
-		imgdata = "".join(scanlines)
+					RGB *= dimensions[0]
+				imgdata.append(RGB)
+		imgdata = "".join(imgdata)
 		if optimize:
 			imgdata *= dimensions[1]
 		imgdata = zlib.compress(imgdata, 9)

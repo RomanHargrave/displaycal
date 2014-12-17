@@ -1984,8 +1984,7 @@ END_DATA""")
 									 lang.getstr("filetype.png") + " (16-bit)|*.png|" +
 									 lang.getstr("filetype.tif") + " (8-bit)|*.tif|" +
 									 lang.getstr("filetype.tif") + " (16-bit)|*.tif|" +
-									 "DPX (8-bit)|*.dpx|" +
-									 "DPX (16-bit)|*.dpx|" +
+									 "DPX|*.dpx|" +
 									 "CSV (0.0..100.0)|*.csv|" +
 									 "CSV (0..255)|*.csv|" +
 									 "CSV (0..1023)|*.csv",
@@ -2004,7 +2003,7 @@ END_DATA""")
 			self.writecfg()
 		else:
 			return
-		if filter_index < 6:
+		if filter_index < 5:
 			# Image format
 			dlg = ConfirmDialog(self, title=lang.getstr("export"),
 								msg=lang.getstr("testchart.export.repeat_patch"),
@@ -2050,7 +2049,7 @@ END_DATA""")
 							  parent=self, progress_start=500)
 	
 	def tc_export(self, path, filter_index):
-		if filter_index < 6:
+		if filter_index < 5:
 			# Image format
 			self.tc_export_subroutine(path, filter_index)
 		else:
@@ -2060,14 +2059,13 @@ END_DATA""")
 
 	def tc_export_subroutine(self, target, filter_index):
 		maxlen = len(self.ti1[0].DATA)
-		if filter_index < 6:
+		if filter_index < 5:
 			# Image format
 			name, ext = os.path.splitext(target)[0], {0: ".png",
 													  1: ".png",
 													  2: ".tif",
 													  3: ".tif",
-													  4: ".dpx",
-													  5: ".dpx"}[filter_index]
+													  4: ".dpx"}[filter_index]
 			format = {".dpx": "DPX",
 					  ".png": "PNG",
 					  ".tif": "TIFF"}[ext]
@@ -2075,8 +2073,7 @@ END_DATA""")
 						1: 16,
 						2: 8,
 						3: 16,
-						4: 8,
-						5: 16}[filter_index]
+						4: 10}[filter_index]
 			vscale = (2 ** bitdepth - 1) / 100.0
 			repeatmax = getcfg("tc_export_repeat_patch_max")
 			repeatmin = getcfg("tc_export_repeat_patch_min")
@@ -2108,9 +2105,9 @@ END_DATA""")
 			dimensions = w, h
 		else:
 			# CSV
-			vscale = {6: 1.0,
-					  7: 2.55,
-					  8: 10.23}[filter_index]
+			vscale = {5: 1.0,
+					  6: 2.55,
+					  7: 10.23}[filter_index]
 		is_winnt6 = sys.platform == "win32" and sys.getwindowsversion() >= (6, )
 		use_winnt6_symlinks = is_winnt6 and is_superuser()
 		for i in xrange(maxlen):
@@ -2120,7 +2117,7 @@ END_DATA""")
 			R, G, B = (self.ti1[0].DATA[i]["RGB_R"],
 			           self.ti1[0].DATA[i]["RGB_G"],
 			           self.ti1[0].DATA[i]["RGB_B"])
-			if not filter_index < 6:
+			if not filter_index < 5:
 				# CSV
 				if vscale != 1:
 					R, G, B = [int(round(v * vscale)) for v in [R, G, B]]
