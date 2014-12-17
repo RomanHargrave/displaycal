@@ -2057,7 +2057,7 @@ END_DATA""")
 			with open(path, "wb") as csvfile:
 				self.tc_export_subroutine(csv.writer(csvfile), filter_index)
 
-	def tc_export_subroutine(self, target, filter_index):
+	def tc_export_subroutine(self, target, filter_index, allow_gaps=False):
 		maxlen = len(self.ti1[0].DATA)
 		if filter_index < 5:
 			# Image format
@@ -2141,17 +2141,37 @@ END_DATA""")
 						  "original_height": sh,
 						  "offset_x": x,
 						  "offset_y": y,
+						  "frame_position": count,
 						  "frame_rate": 1,
-						  "held_count": repeat,
+						  "held_count": repeat if allow_gaps else 1,
 						  "timecode": [int(v) for v in
 									   time.strftime("%H:%M:%S:00",
 													 time.gmtime(secs)).split(":")]})
-			secs += repeat
+			secs += 1
 			##safe_print("RGB", R, G, B, "L* %.2f" % L, "repeat", repeat)
-			if repeat > 1 and format != "DPX":
+			if repeat > 1:
+				if allow_gaps:
+					count += repeat - 1
+					secs += repeat - 1
+					continue
 				for j in xrange(repeat - 1):
 					count += 1
 					filecopyname = filenameformat % (name, count, ext)
+					if format == "DPX":
+						imfile.write([[color]], filecopyname, bitdepth, format,
+									 dimensions,
+									 {"original_width": sw,
+									  "original_height": sh,
+									  "offset_x": x,
+									  "offset_y": y,
+									  "frame_position": count,
+									  "frame_rate": 1,
+									  "timecode": [int(v) for v in
+												   time.strftime("%H:%M:%S:00",
+																 time.gmtime(secs)).split(":")]})
+					secs += 1
+					if format == "DPX":
+						continue
 					if os.path.isfile(filecopyname):
 						os.unlink(filecopyname)
 					if is_winnt6:
