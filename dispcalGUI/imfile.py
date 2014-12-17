@@ -41,6 +41,7 @@ class Image(object):
 
 	def _write_dpx(self, stream, dimensions=None):
 		# Very helpful: http://www.fileformat.info/format/dpx/egff.htm
+		# http://www.simplesystems.org/users/bfriesen/dpx/S268M_Revised.pdf
 
 		# Generic file header (768 bytes)
 		stream.write("SDPX")  # Magic number
@@ -96,7 +97,7 @@ class Image(object):
 			tzoffset = "%.2i" % tzoffset
 		else:
 			tzoffset = "+%.2i" % tzoffset
-		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S:") + tzoffset + "\0")
+		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S") + tzoffset + "\0\0")
 		stream.write(("%s %s" % (appname, version)).ljust(100, "\0"))  # Creator
 		stream.write("\0" * 200)  # Project
 		stream.write("\0" * 200)  # Copyright
