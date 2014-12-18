@@ -196,7 +196,11 @@ class Image(object):
 		stream.write("\0")  # Zero for byte alignment
 		stream.write("\xff" * 4)  # H sampling rate Hz
 		stream.write("\xff" * 4)  # V sampling rate Hz
-		stream.write("\xff" * 4)  # Temporal sampling or frame rate Hz
+		# Temporal sampling or frame rate Hz
+		if "frame_rate" in self.extrainfo:
+			stream.write(struct.pack(">f", self.extrainfo["frame_rate"]))
+		else:
+			stream.write("\xff" * 4)
 		stream.write("\xff" * 4)  # Time offset in ms from sync to 1st pixel
 		stream.write("\xff" * 4)  # Gamma
 		stream.write("\xff" * 4)  # Black level code value
