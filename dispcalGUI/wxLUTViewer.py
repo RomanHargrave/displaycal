@@ -931,6 +931,7 @@ class LUTFrame(BaseFrame):
 
 		children = self.GetAllChildren()
 
+		self.Bind(wx.EVT_KEY_DOWN, self.key_handler)
 		for child in children:
 			if isinstance(child, wx.Choice):
 				child.SetMaxFontSize(11)
