@@ -89,7 +89,7 @@ class Image(object):
 		stream.write(struct.pack(">I", 768 + 640 + 256))  # Generic section header length
 		stream.write(struct.pack(">I", 256 + 128))  # Industry-specific section header length
 		stream.write(struct.pack(">I", 0))  # User-defined data length
-		stream.write((stream.name or "").ljust(100, "\0")[-100:])  # File name
+		stream.write((stream.name or "").ljust(99, "\0")[-99:] + "\0")  # File name
 		# Date & timestamp
 		tzoffset = round((time.mktime(time.localtime()) -
 						  time.mktime(time.gmtime())) / 60.0 / 60.0)
