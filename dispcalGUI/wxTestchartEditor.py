@@ -2193,12 +2193,14 @@ END_DATA""")
 		checkoverwrite = True
 		if path is None or (event and not os.path.isfile(path)):
 			path = None
+			defaultDir = get_verified_path("last_ti1_path")[0]
 			if (hasattr(self, "ti1") and self.ti1.filename and
-				os.path.isfile(self.ti1.filename)):
-				defaultDir = os.path.dirname(self.ti1.filename)
+				(os.path.isfile(self.ti1.filename) or
+				 os.path.basename(self.ti1.filename) != "temp.ti1")):
+				if os.path.isfile(self.ti1.filename):
+					defaultDir = os.path.dirname(self.ti1.filename)
 				defaultFile = os.path.basename(self.ti1.filename)
 			else:
-				defaultDir = get_verified_path("last_ti1_path")[0]
 				defaultFile = os.path.basename(config.defaults["last_ti1_path"])
 			dlg = wx.FileDialog(self, lang.getstr("save_as"), defaultDir = defaultDir, defaultFile = defaultFile, wildcard = lang.getstr("filetype.ti1") + "|*.ti1", style = wx.SAVE | wx.OVERWRITE_PROMPT)
 			dlg.Center(wx.BOTH)
@@ -2429,12 +2431,12 @@ END_DATA""")
 				setcfg("tc.saturation_sweeps.custom.%s" % component,
 					   getattr(self, "saturation_sweeps_custom_%s_ctrl" %
 							   component).GetValue())
+			self.worker.wrapup(False)
 			self.Hide()
 			if self.Parent:
 				setcfg("tc.show", 0)
 				return True
 			else:
-				self.worker.wrapup(False)
 				self.writecfg()
 				self.Destroy()
 
@@ -2821,6 +2823,7 @@ END_DATA""")
 				gamma, dark_emphasis)
 
 	def tc_load_cfg_from_ti1_finish(self, result):
+		self.worker.wrapup(False)
 		if isinstance(result, tuple):
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 			# segfault under Arch Linux when setting the window title
