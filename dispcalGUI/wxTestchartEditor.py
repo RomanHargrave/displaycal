@@ -920,7 +920,9 @@ END_DATA""")
 						return
 			if key == 83: # S
 				if (hasattr(self, "ti1")):
-					if event.ShiftDown() or event.AltDown() or not os.path.exists(self.ti1.filename):
+					if (event.ShiftDown() or event.AltDown() or
+						not self.ti1.filename or
+						not os.path.exists(self.ti1.filename)):
 						self.tc_save_as_handler()
 					elif self.ti1.modified:
 						self.tc_save_handler(True)
@@ -1827,6 +1829,7 @@ END_DATA""")
 	
 	def tc_save_check(self):
 		self.save_btn.Enable(hasattr(self, "ti1") and self.ti1.modified and 
+							 bool(self.ti1.filename) and
 							 os.path.exists(self.ti1.filename) and 
 							 get_data_path(os.path.join("ref", os.path.basename(self.ti1.filename))) != self.ti1.filename and 
 							 get_data_path(os.path.join("ti1", os.path.basename(self.ti1.filename))) != self.ti1.filename)
@@ -1975,7 +1978,7 @@ END_DATA""")
 		(defaultDir,
 		 defaultFile) = (get_verified_path("last_testchart_export_path")[0],
 						 os.path.basename(os.path.splitext(self.ti1.filename or
-														   getcfg("last_testchart_export_path"))[0]))
+														   defaults["last_testchart_export_path"])[0]))
 		dlg = wx.FileDialog(self, lang.getstr("export"), defaultDir=defaultDir,
 							defaultFile=defaultFile,
 							# Disable JPEG as it introduces slight color errors
@@ -2194,9 +2197,7 @@ END_DATA""")
 		if path is None or (event and not os.path.isfile(path)):
 			path = None
 			defaultDir = get_verified_path("last_ti1_path")[0]
-			if (hasattr(self, "ti1") and self.ti1.filename and
-				(os.path.isfile(self.ti1.filename) or
-				 os.path.basename(self.ti1.filename) != "temp.ti1")):
+			if hasattr(self, "ti1") and self.ti1.filename:
 				if os.path.isfile(self.ti1.filename):
 					defaultDir = os.path.dirname(self.ti1.filename)
 				defaultFile = os.path.basename(self.ti1.filename)
@@ -2261,13 +2262,14 @@ END_DATA""")
 		return False
 	
 	def tc_view_3d(self, event):
-		if (not (self.worker.tempdir and
+		if (self.ti1.filename and
+			not (self.worker.tempdir and
 				 self.ti1.filename.startswith(self.worker.tempdir)) and
 			waccess(os.path.dirname(self.ti1.filename), os.W_OK)):
 			regenerate = self.ti1.modified
 			paths = self.tc_save_3d(os.path.splitext(self.ti1.filename)[0],
 									regenerate=regenerate)
-			if (not regenerate and self.ti1.filename and
+			if (not regenerate and
 				os.path.isfile(self.ti1.filename)):
 				# Check if the testchart is newer than the 3D file(s)
 				ti1_mtime = os.stat(self.ti1.filename).st_mtime
@@ -2292,7 +2294,7 @@ END_DATA""")
 			defaultFile = self.ti1.filename
 		else:
 			defaultDir = get_verified_path("last_vrml_path")[0]
-			defaultFile = getcfg("last_vrml_path")
+			defaultFile = defaults["last_vrml_path"]
 		view_3d_format = getcfg("3d.format")
 		if view_3d_format == "HTML":
 			formatext = ".html"
@@ -2379,7 +2381,8 @@ END_DATA""")
 
 	def tc_check_save_ti1(self, clear = True):
 		if hasattr(self, "ti1"):
-			if self.ti1.root.modified or not os.path.exists(self.ti1.filename):
+			if (self.ti1.root.modified or not self.ti1.filename or
+				not os.path.exists(self.ti1.filename)):
 				if self.save_btn.Enabled:
 					ok = lang.getstr("save")
 				else:
@@ -3008,9 +3011,6 @@ END_DATA""")
 		else:
 			result = cmd
 		if not isinstance(result, Exception) and result:
-			tmp = self.worker.create_tempdir()
-			if isinstance(tmp, Exception):
-				result = tmp
 			if not isinstance(result, Exception):
 				path = os.path.join(self.worker.tempdir, "temp.ti1")
 				result = check_file_isfile(path, silent = False)
@@ -3019,7 +3019,9 @@ END_DATA""")
 						result = CGATS.CGATS(path)
 						safe_print(lang.getstr("success"))
 					except Exception, exception:
-						return Error(u"Error - testchart file could not be read: " + safe_unicode(exception))
+						result = Error(u"Error - testchart file could not be read: " + safe_unicode(exception))
+					else:
+						result.filename = None
 		self.worker.wrapup(False)
 		return result
 
