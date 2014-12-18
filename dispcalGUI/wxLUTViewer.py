@@ -367,9 +367,14 @@ class LUTCanvas(plot.PlotCanvas):
 			else:
 				r_points = g_points = b_points = linear_points
 		
-		self.r_unique = len(set(round(y / axis_y * irange[-1]) for x, y in r_points))
-		self.g_unique = len(set(round(y / axis_y * irange[-1]) for x, y in g_points))
-		self.b_unique = len(set(round(y / axis_y * irange[-1]) for x, y in b_points))
+		# Note: We need to make sure each point is a float because it
+		# might be a decimal.Decimal, which can't be divided by floats!
+		self.r_unique = len(set(round(float(y) / axis_y * irange[-1])
+								for x, y in r_points))
+		self.g_unique = len(set(round(float(y) / axis_y * irange[-1])
+								for x, y in g_points))
+		self.b_unique = len(set(round(float(y) / axis_y * irange[-1])
+								for x, y in b_points))
 
 		legend = []
 		colour = None
