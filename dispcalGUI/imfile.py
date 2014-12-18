@@ -8,6 +8,7 @@ import time
 import zlib
 
 from meta import name as appname, version
+from util_str import safe_str
 
 
 def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None,
@@ -89,7 +90,7 @@ class Image(object):
 		stream.write(struct.pack(">I", 768 + 640 + 256))  # Generic section header length
 		stream.write(struct.pack(">I", 256 + 128))  # Industry-specific section header length
 		stream.write(struct.pack(">I", 0))  # User-defined data length
-		stream.write((stream.name or "").ljust(100, "\0")[-100:])  # File name
+		stream.write(safe_str(stream.name or "").ljust(100, "\0")[-100:])  # File name
 		# Date & timestamp
 		tzoffset = round((time.mktime(time.localtime()) -
 						  time.mktime(time.gmtime())) / 60.0 / 60.0)
@@ -98,7 +99,7 @@ class Image(object):
 		else:
 			tzoffset = "+%.2i" % tzoffset
 		stream.write(time.strftime("%Y:%m:%d:%H:%M:%S") + tzoffset + "\0\0")
-		stream.write(("%s %s" % (appname, version)).ljust(100, "\0"))  # Creator
+		stream.write(safe_str("%s %s" % (appname, version)).ljust(100, "\0"))  # Creator
 		stream.write("\0" * 200)  # Project
 		stream.write("\0" * 200)  # Copyright
 		stream.write("\xff" * 4)  # EncryptKey 0xffffffff = not encrypted
