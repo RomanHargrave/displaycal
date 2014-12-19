@@ -1628,7 +1628,7 @@ class Worker(object):
 		else:
 			return Error(lang.getstr("argyll.util.not_found", "spotread"))
 	
-	def instrument_can_use_ccxx(self):
+	def instrument_can_use_ccxx(self, check_measurement_mode=True):
 		"""
 		Return boolean whether the instrument in its current measurement mode
 		can use a CCMX or CCSS colorimeter correction
@@ -1650,7 +1650,8 @@ class Worker(object):
 		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
 		return (self.argyll_version >= [1, 3, 0] and
 				not self.get_instrument_features().get("spectral") and
-				(getcfg("measurement_mode") == "auto" or
+				(not check_measurement_mode or
+				 getcfg("measurement_mode") == "auto" or
 				 ((self.get_instrument_name() not in ("ColorHug",
 													  "ColorHug2") or
 				   getcfg("measurement_mode") in ("F", "R")) and

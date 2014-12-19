@@ -2769,7 +2769,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Freeze()
 		self.update_adjustment_controls()
 		instrument_features = self.worker.get_instrument_features()
-		show_control = (self.worker.instrument_can_use_ccxx() and
+		show_control = (self.worker.instrument_can_use_ccxx(False) and
 						not is_ccxx_testchart() and
 						getcfg("measurement_mode") != "auto")
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
@@ -2965,9 +2965,10 @@ class MainFrame(BaseFrame):
 										   self.ccmx_cached_descriptors[ccmx[1]])
 			else:
 				items[1] += " (%s)" % lang.getstr("colorimeter_correction.file.none")
-		use_ccmx = (self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and
-					ccmx[1])
+		use_ccmx = (self.worker.instrument_can_use_ccxx(False) and
+					len(ccmx) > 1 and ccmx[1])
 		if use_ccmx and getcfg("measurement_mode") != "auto":
+			mode = None
 			try:
 				cgats = CGATS.CGATS(ccmx[1])
 			except (IOError, CGATS.CGATSError), exception:
@@ -2977,14 +2978,14 @@ class MainFrame(BaseFrame):
 				# - dispcalGUI.get_cgats_measurement_mode
 				mode = get_cgats_measurement_mode(cgats,
 					self.worker.get_instrument_name())
-				if mode:
-					if (update_measurement_mode or
-						mode == getcfg("measurement_mode")):
-						setcfg("measurement_mode", mode)
-						self.update_measurement_mode()
-					else:
-						ccmx = ["", ""]
-						index = 0
+			if mode or not self.worker.instrument_can_use_ccxx():
+				if (update_measurement_mode or
+					mode == getcfg("measurement_mode")):
+					setcfg("measurement_mode", mode)
+					self.update_measurement_mode()
+				else:
+					ccmx = ["", ""]
+					index = 0
 		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 		self.colorimeter_correction_matrix_ctrl.Freeze()
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
