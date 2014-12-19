@@ -29,6 +29,6 @@ def get_canonical_instrument_name(instrument_name, replacements=None,
 
 def remove_vendor_names(txt):
 	for vendor in vendors:
-		txt = re.sub(re.escape(vendor), "", txt, re.I)
+		txt = re.sub(re.escape(vendor) + r"\s*", "", txt, re.I)
 	txt = txt.strip()
 	return txt
