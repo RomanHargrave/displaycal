@@ -54,7 +54,7 @@
 		"*app.otherinstance.notified": "Already running instance has been notified.",
 	"app.restart_request": "Riavviare l'applicazione, prego.",
 	"apply": "Applicare",
-		"*apply_black_output_offset": "Apply black output offset",
+		"*apply_black_output_offset": "Apply black output offset (100%)",
 		"*apply_cal": "Apply calibration (vcgt)",
 		"*apply_cal.error": "Calibration could not be applied.",
 		"*apply_trc": "Apply tone response curve",

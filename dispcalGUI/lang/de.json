@@ -54,7 +54,7 @@
 	"app.otherinstance.notified": "Bereits laufende Instanz wurde benachrichtigt.",
 	"app.restart_request": "Bitte starten Sie die Anwendung neu.",
 	"apply": "Anwenden",
-	"apply_black_output_offset": "Schwarzausgabeoffset anwenden",
+	"apply_black_output_offset": "Schwarzausgabeoffset anwenden (100%)",
 	"apply_cal": "Kalibrierung (vcgt) anwenden",
 	"apply_cal.error": "Kalibrierung konnte nicht angewendet werden.",
 	"apply_trc": "Tonwertkurve anwenden",

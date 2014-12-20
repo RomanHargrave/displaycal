@@ -55,7 +55,7 @@
 	"app.restart_request": "Please restart the application.",
 	"apply": "Apply",
 	"apply_cal": "Apply calibration (vcgt)",
-	"apply_black_output_offset": "Apply black output offset",
+	"apply_black_output_offset": "Apply black output offset (100%)",
 	"apply_cal.error": "Calibration could not be applied.",
 	"apply_trc": "Apply tone response curve",
 	"argyll.debug.warning1": "Please only use this option if you actually need debugging information (e.g. for troubleshooting Argyll CMS functionality)! It is normally only useful for software developers to aid in problem diagnosis and resolution. Are you sure you want to enable debugging output?",
