@@ -75,6 +75,10 @@ class LUT3DFrame(BaseFrame):
 											self.encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
 									   self.encoding_output_ctrl_handler)
+		self.gamut_mapping_inverse_a2b.Bind(wx.EVT_RADIOBUTTON,
+											self.gamut_mapping_mode_handler)
+		self.gamut_mapping_b2a.Bind(wx.EVT_RADIOBUTTON,
+									self.gamut_mapping_mode_handler)
 		self.apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
 		self.apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
 		self.apply_trc_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
@@ -383,6 +387,7 @@ class LUT3DFrame(BaseFrame):
 		input_bits = getcfg("3dlut.bitdepth.input")
 		output_bits = getcfg("3dlut.bitdepth.output")
 		apply_black_offset = getcfg("3dlut.apply_black_offset")
+		use_b2a = getcfg("3dlut.gamap.use_b2a")
 		try:
 			self.worker.create_3dlut(profile_in, path, profile_abst,
 									 profile_out, apply_cal=apply_cal,
@@ -394,7 +399,8 @@ class LUT3DFrame(BaseFrame):
 									 trc_gamma=trc_gamma,
 									 trc_gamma_type=trc_gamma_type,
 									 trc_output_offset=outoffset,
-									 apply_black_offset=apply_black_offset)
+									 apply_black_offset=apply_black_offset,
+									 use_b2a=use_b2a)
 		except Exception, exception:
 			return exception
 	
@@ -455,6 +461,9 @@ class LUT3DFrame(BaseFrame):
 		if profile_path and os.path.isfile(profile_path):
 			self.output_profile_ctrl.SetPath(profile_path)
 			self.set_profile("output", profile_path or False, silent=not event)
+
+	def gamut_mapping_mode_handler(self, event):
+		setcfg("3dlut.gamap.use_b2a", int(self.gamut_mapping_b2a.GetValue()))
 
 	def get_commands(self):
 		return self.get_common_commands() + ["3DLUT-maker [create <filename>]"]
@@ -592,6 +601,16 @@ class LUT3DFrame(BaseFrame):
 										show_result_dialog("Blackpoint is invalid: %s"
 														   % odata, self)
 									self.XYZbpout = odata[0]
+							allow_b2a_gamap = ("B2A0" in profile.tags and
+											   profile.tags.B2A0.clut_grid_steps >= 17)
+							# Allow using B2A instead of inverse A2B?
+							self.gamut_mapping_b2a.Enable(allow_b2a_gamap)
+							if not allow_b2a_gamap:
+								setcfg("3dlut.gamap.use_b2a", 0)
+							self.gamut_mapping_inverse_a2b.SetValue(
+								not getcfg("3dlut.gamap.use_b2a"))
+							self.gamut_mapping_b2a.SetValue(
+								bool(getcfg("3dlut.gamap.use_b2a")))
 							self.show_trc_controls()
 							if (hasattr(self, "input_profile") and
 								"rTRC" in self.input_profile.tags and

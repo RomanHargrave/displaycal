@@ -2071,7 +2071,8 @@ class Worker(object):
 					 size=17, input_bits=10, output_bits=12, maxval=1.0,
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
-					 save_link_icc=True, apply_black_offset=True):
+					 save_link_icc=True, apply_black_offset=True,
+					 use_b2a=False):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2212,7 +2213,8 @@ class Worker(object):
 				rsize = size
 			else:
 				rsize = 65
-			args = ["-v", "-qh", "-G", "-i%s" % intent, "-r%i" % rsize, "-n"]
+			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
+					"-r%i" % rsize, "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args.extend(["-p", "abstract.icc"])
