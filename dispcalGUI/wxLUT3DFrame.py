@@ -594,8 +594,6 @@ class LUT3DFrame(BaseFrame):
 									self.XYZbpout = odata[0]
 							self.show_trc_controls()
 							if (hasattr(self, "input_profile") and
-								getcfg("3dlut.input.profile") !=
-								self.input_profile.fileName and
 								"rTRC" in self.input_profile.tags and
 								"gTRC" in self.input_profile.tags and
 								"bTRC" in self.input_profile.tags and
@@ -604,15 +602,38 @@ class LUT3DFrame(BaseFrame):
 								self.input_profile.tags.bTRC and
 								isinstance(self.input_profile.tags.rTRC,
 										   ICCP.CurveType)):
-								# Use BT.1886 gamma mapping for SMPTE 240M /
-								# Rec. 709 TRC
 								tf = self.input_profile.tags.rTRC.get_transfer_function()
-								setcfg("3dlut.apply_trc",
-									   int(tf[0][1] in (-240, -709) and
-										   self.XYZbpin < self.XYZbpout))
-								setcfg("3dlut.apply_black_offset",
-									   int(tf[0][1] not in (-240, -709) and
-										   self.XYZbpin < self.XYZbpout))
+								if (getcfg("3dlut.input.profile") !=
+									self.input_profile.fileName):
+									# Use BT.1886 gamma mapping for SMPTE 240M /
+									# Rec. 709 TRC
+									setcfg("3dlut.apply_trc",
+										   int((tf[0][1] in (-240, -709) or
+												tf[0][0].startswith("Gamma")) and
+											   self.XYZbpin < self.XYZbpout))
+									# Use only BT.1886 black output offset
+									setcfg("3dlut.apply_black_offset",
+										   int(tf[0][1] not in (-240, -709) and
+											   not tf[0][0].startswith("Gamma") and
+											   self.XYZbpin < self.XYZbpout))
+								self.apply_black_offset_ctrl.Enable(
+									tf[0][1] not in (-240, -709))
+								# Set gamma to profile gamma if single gamma
+								# profile
+								if tf[0][0].startswith("Gamma"):
+									if not getcfg("3dlut.trc_gamma.backup", False):
+										# Backup current gamma
+										setcfg("3dlut.trc_gamma.backup",
+											   getcfg("3dlut.trc_gamma"))
+									setcfg("3dlut.trc_gamma",
+										   round(tf[0][1], 2))
+								# Restore previous gamma if not single gamma
+								# profile
+								elif getcfg("3dlut.trc_gamma.backup", False):
+									setcfg("3dlut.trc_gamma",
+										   getcfg("3dlut.trc_gamma.backup"))
+									setcfg("3dlut.trc_gamma.backup", None)
+								self.update_trc_controls()
 							if getcfg("3dlut.apply_black_offset"):
 								self.apply_black_offset_ctrl.SetValue(True)
 							elif getcfg("3dlut.apply_trc"):

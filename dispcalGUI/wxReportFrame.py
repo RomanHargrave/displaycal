@@ -273,7 +273,7 @@ class ReportFrame(BaseFrame):
 				self.chart_btn.Enable("RGB" in values and
 									  "XYZ" in values)
 		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
-		self.fields_ctrl_handler(None)
+		self.fields_ctrl_handler(event)
 
 	def chart_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -296,7 +296,8 @@ class ReportFrame(BaseFrame):
 	def fields_ctrl_handler(self, event):
 		setcfg("measurement_report.chart.fields",
 			   self.fields_ctrl.GetStringSelection())
-		self.update_main_controls()
+		if event:
+			self.update_main_controls()
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output")
@@ -455,6 +456,7 @@ class ReportFrame(BaseFrame):
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
 		self.set_testchart(getcfg("measurement_report.chart"))
+		self.use_simulation_profile_ctrl_handler(None)
 		self.panel.Thaw()
 
 	def update_trc_control(self):
@@ -512,7 +514,6 @@ class ReportFrame(BaseFrame):
 			(not getcfg("measurement_report.apply_black_offset") and
 			 not getcfg("measurement_report.apply_trc")) or
 			 not enable5)
-		self.apply_black_offset_ctrl.Enable(enable1 and enable5)
 		self.apply_black_offset_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_black_offset")))
 		self.apply_trc_ctrl.Enable(enable1 and enable5)
@@ -596,11 +597,15 @@ class ReportFrame(BaseFrame):
 		self.update_main_controls()
 	
 	def use_simulation_profile_ctrl_handler(self, event):
-		use_sim_profile = self.simulation_profile_cb.GetValue()
-		setcfg("measurement_report.use_simulation_profile",
-			   int(use_sim_profile))
+		if event:
+			use_sim_profile = self.simulation_profile_cb.GetValue()
+			setcfg("measurement_report.use_simulation_profile",
+				   int(use_sim_profile))
+		else:
+			use_sim_profile = getcfg("measurement_report.use_simulation_profile")
 		sim_profile = getattr(self, "simulation_profile", None)
-		if use_sim_profile and sim_profile:
+		enable = False
+		if sim_profile:
 			v = int(sim_profile.profileClass == "prtr")
 			setcfg("measurement_report.whitepoint.simulate", v)
 			setcfg("measurement_report.whitepoint.simulate.relative", v)
@@ -608,14 +613,32 @@ class ReportFrame(BaseFrame):
 				"bTRC" in sim_profile.tags and sim_profile.tags.rTRC is
 				sim_profile.tags.gTRC is sim_profile.tags.bTRC and
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
-				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 				tf = sim_profile.tags.rTRC.get_transfer_function()
+				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 				setcfg("measurement_report.apply_trc",
-					  int(tf[0][1] in (-240, -709) and
-						  self.XYZbpin < self.XYZbpout))
+					   int((tf[0][1] in (-240, -709) or
+						    tf[0][0].startswith("Gamma")) and
+						   self.XYZbpin < self.XYZbpout))
+				# Use only BT.1886 black output offset
 				setcfg("measurement_report.apply_black_offset",
-					  int(tf[0][1] not in (-240, -709) and
-						  self.XYZbpin < self.XYZbpout))
+					   int(tf[0][1] not in (-240, -709) and
+						   not tf[0][0].startswith("Gamma") and
+						   self.XYZbpin < self.XYZbpout))
+				# Set gamma to profile gamma if single gamma profile
+				if tf[0][0].startswith("Gamma"):
+					if not getcfg("measurement_report.trc_gamma.backup", False):
+						# Backup current gamma
+						setcfg("measurement_report.trc_gamma.backup",
+							   getcfg("measurement_report.trc_gamma"))
+					setcfg("measurement_report.trc_gamma", round(tf[0][1], 2))
+				# Restore previous gamma if not single gamma profile
+				elif getcfg("measurement_report.trc_gamma.backup", False):
+					setcfg("measurement_report.trc_gamma",
+						   getcfg("measurement_report.trc_gamma.backup"))
+					setcfg("measurement_report.trc_gamma.backup", None)
+				self.update_trc_controls()
+				enable = tf[0][1] not in (-240, -709)
+		self.apply_black_offset_ctrl.Enable(use_sim_profile and enable)
 		self.update_main_controls()
 
 	def use_simulation_profile_as_output_handler(self, event):
