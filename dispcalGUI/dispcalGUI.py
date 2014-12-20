@@ -5437,15 +5437,18 @@ class MainFrame(BaseFrame):
 				mprof = sim_profile
 			else:
 				mprof = profile
-		apply_trc = (use_sim and
-					 getcfg("measurement_report.apply_trc") and
+		apply_map = (use_sim and
 					 mprof.colorSpace == "RGB" and
 					 isinstance(mprof.tags.get("rXYZ"), ICCP.XYZType) and
 					 isinstance(mprof.tags.get("gXYZ"), ICCP.XYZType) and
 					 isinstance(mprof.tags.get("bXYZ"), ICCP.XYZType))
+		apply_off = (apply_map and
+					 getcfg("measurement_report.apply_black_offset"))
+		apply_trc = (apply_map and
+					 getcfg("measurement_report.apply_trc"))
 		bt1886 = None
-		if apply_trc:
-			# TRC BT.1886-like or gamma with black offset
+		if apply_trc or apply_off:
+			# TRC BT.1886-like, gamma with black offset, or just black offset
 			try:
 				odata = self.worker.xicclu(oprof, (0, 0, 0), pcs="x")
 				if len(odata) != 1 or len(odata[0]) != 3:
@@ -5454,25 +5457,34 @@ class MainFrame(BaseFrame):
 				show_result_dialog(exception, self.reportframe)
 				return
 			XYZbp = odata[0]
-			gamma = getcfg("measurement_report.trc_gamma")
-			gamma_type = getcfg("measurement_report.trc_gamma_type")
-			# TRC BT.1886-like
-			outoffset = getcfg("measurement_report.trc_output_offset")
-			if gamma_type == "b":
-				# Get technical gamma needed to achieve effective gamma
-				gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
+			if apply_trc:
+				# TRC BT.1886-like
+				gamma = getcfg("measurement_report.trc_gamma")
+				gamma_type = getcfg("measurement_report.trc_gamma_type")
+				outoffset = getcfg("measurement_report.trc_output_offset")
+				if gamma_type == "b":
+					# Get technical gamma needed to achieve effective gamma
+					gamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
+			else:
+				# Just black offset
+				outoffset = 1.0
+				gamma = 0.0
+				for channel in "rgb":
+					gamma += mprof.tags[channel + "TRC"].get_gamma()
+				gamma /= 3.0
 			rXYZ = mprof.tags.rXYZ.values()
 			gXYZ = mprof.tags.gXYZ.values()
 			bXYZ = mprof.tags.bXYZ.values()
 			mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
 									   [rXYZ[1], gXYZ[1], bXYZ[1]],
 									   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-			bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma)
-			# Make sure the profile has the expected Rec. 709 TRC
-			# for BT.1886
-			for i, channel in enumerate(("r", "g", "b")):
-				if channel + "TRC" in mprof.tags:
-					mprof.tags[channel + "TRC"].set_trc(-709)
+			bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma, apply_trc)
+			if apply_trc:
+				# Make sure the profile has the expected Rec. 709 TRC
+				# for BT.1886
+				for i, channel in enumerate(("r", "g", "b")):
+					if channel + "TRC" in mprof.tags:
+						mprof.tags[channel + "TRC"].set_trc(-709)
 
 		if sim_profile:
 			sim_intent = ("a"

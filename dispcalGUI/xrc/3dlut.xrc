@@ -33,6 +33,186 @@
                   <border>4</border>
                 </object>
                 <object class="sizeritem">
+                  <object class="wxStaticText" name="trc_label">
+                    <label>trc</label>
+                  </object>
+                  <flag>wxTOP</flag>
+                  <border>4</border>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxFlexGridSizer">
+                    <object class="sizeritem">
+                      <object class="wxBoxSizer">
+                        <object class="sizeritem">
+                          <object class="wxRadioButton" name="apply_none_ctrl">
+                            <label>unmodified</label>
+                            <style>wxRB_GROUP</style>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="spacer">
+                          <size>0,16</size>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxStaticBitmap" name="input_value_clipping_bmp">
+                            <size>16,16</size>
+                            <bitmap>../theme/icons/16x16/dialog-warning.png</bitmap>
+                            <hidden>1</hidden>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>16</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="input_value_clipping_label">
+                            <label>warning.input_value_clipping</label>
+                            <fg>#F07F00</fg>
+                            <hidden>1</hidden>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                        <orient>wxHORIZONTAL</orient>
+                      </object>
+                      <flag>wxTOP|wxBOTTOM</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxBoxSizer">
+                        <object class="sizeritem">
+                          <object class="wxRadioButton" name="apply_black_offset_ctrl">
+                            <label>apply_black_output_offset</label>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="spacer">
+                          <size>0,24</size>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <orient>wxHORIZONTAL</orient>
+                      </object>
+                      <flag>wxTOP|wxBOTTOM</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxBoxSizer">
+                        <object class="sizeritem">
+                          <object class="wxRadioButton" name="apply_trc_ctrl">
+                            <label/>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="spacer">
+                          <size>0,24</size>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxChoice" name="trc_ctrl">
+                            <enabled>0</enabled>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>4</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="trc_gamma_label">
+                            <label>trc.gamma</label>
+                            <enabled>0</enabled>
+                          </object>
+                          <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxComboBox" name="trc_gamma_ctrl">
+                            <size>75,-1</size>
+                            <content>
+                              <item>2.2</item>
+                              <item>2.4</item>
+                            </content>
+                            <enabled>0</enabled>
+                          </object>
+                          <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxChoice" name="trc_gamma_type_ctrl">
+                            <content>
+                              <item/>
+                            </content>
+                            <enabled>0</enabled>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <orient>wxHORIZONTAL</orient>
+                      </object>
+                      <flag>wxBOTTOM</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxBoxSizer">
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="black_output_offset_label">
+                            <label>calibration.black_output_offset</label>
+                            <enabled>0</enabled>
+                            <hidden>1</hidden>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>18</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxBoxSizer">
+                            <object class="sizeritem">
+                              <object class="wxSlider" name="black_output_offset_ctrl">
+                                <size>128,-1</size>
+                                <min>0</min>
+                                <max>100</max>
+                                <enabled>0</enabled>
+                                <hidden>1</hidden>
+                                <XRCED>
+                                  <events>EVT_SLIDER</events>
+                                </XRCED>
+                              </object>
+                              <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxSpinCtrl" name="black_output_offset_intctrl">
+                                <size>65,-1</size>
+                                <min>0</min>
+                                <max>100</max>
+                                <enabled>0</enabled>
+                                <hidden>1</hidden>
+                                <XRCED>
+                                  <events>EVT_TEXT</events>
+                                </XRCED>
+                              </object>
+                              <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="black_output_offset_intctrl_label">
+                                <label>%</label>
+                                <enabled>0</enabled>
+                                <hidden>1</hidden>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <orient>wxHORIZONTAL</orient>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>8</border>
+                        </object>
+                        <orient>wxHORIZONTAL</orient>
+                      </object>
+                      <flag>wxTOP</flag>
+                      <border>4</border>
+                    </object>
+                    <cols>1</cols>
+                    <growablecols>0</growablecols>
+                  </object>
+                  <flag>wxLEFT</flag>
+                  <border>4</border>
+                </object>
+                <object class="sizeritem">
                   <object class="wxCheckBox" name="abstract_profile_cb">
                     <label>3dlut.use_abstract_profile</label>
                   </object>
@@ -132,104 +312,6 @@
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxCheckBox" name="apply_trc_cb">
-                    <label>apply_trc</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>8</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxChoice" name="trc_ctrl">
-                        <enabled>0</enabled>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="trc_gamma_label">
-                        <label>trc.gamma</label>
-                        <enabled>0</enabled>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxComboBox" name="trc_gamma_ctrl">
-                        <size>75,-1</size>
-                        <content>
-                          <item>2.2</item>
-                          <item>2.4</item>
-                        </content>
-                        <enabled>0</enabled>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>8</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxChoice" name="trc_gamma_type_ctrl">
-                        <content>
-                          <item></item>
-                        </content>
-                        <enabled>0</enabled>
-                      </object>
-                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxStaticText" name="black_output_offset_label">
-                    <label>calibration.black_output_offset</label>
-                    <enabled>0</enabled>
-                    <hidden>1</hidden>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>8</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <object class="sizeritem">
-                      <object class="wxSlider" name="black_output_offset_ctrl">
-                        <size>128,-1</size>
-                        <min>0</min>
-                        <max>100</max>
-                        <enabled>0</enabled>
-                        <hidden>1</hidden>
-                        <XRCED>
-                          <events>EVT_SLIDER</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>4</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxSpinCtrl" name="black_output_offset_intctrl">
-                        <size>65,-1</size>
-                        <min>0</min>
-                        <max>100</max>
-                        <enabled>0</enabled>
-                        <hidden>1</hidden>
-                        <XRCED>
-                          <events>EVT_TEXT</events>
-                        </XRCED>
-                      </object>
-                      <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                      <border>4</border>
-                    </object>
-                    <object class="sizeritem">
-                      <object class="wxStaticText" name="black_output_offset_intctrl_label">
-                        <label>%</label>
-                        <enabled>0</enabled>
-                        <hidden>1</hidden>
-                      </object>
-                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                    </object>
-                    <orient>wxHORIZONTAL</orient>
-                  </object>
-                </object>
-                <object class="sizeritem">
                   <object class="wxStaticText" name="rendering_intent_label">
                     <label>rendering_intent</label>
                   </object>
@@ -311,7 +393,7 @@
                 <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
-                <growablerows>16</growablerows>
+                <growablerows>15</growablerows>
               </object>
               <option>1</option>
               <flag>wxALL|wxEXPAND</flag>

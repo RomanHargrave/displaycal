@@ -2053,8 +2053,17 @@ class BT1886(object):
 
 	""" BT.1886 like transfer function """
 
-	def __init__(self, matrix, XYZbp, outoffset=0.0, gamma=2.4):
-		""" Setup BT.1886 for the given target """
+	def __init__(self, matrix, XYZbp, outoffset=0.0, gamma=2.4, apply_trc=True):
+		""" Setup BT.1886 for the given target
+		
+		If apply_trc is False, apply only the black point blending portion of
+		BT.1886 mapping. Note that this will only work correctly for an output
+		offset of 1.0
+		
+		"""
+		if not apply_trc and outoffset < 1:
+			raise ValueError("Output offset must be 1.0 when not applying gamma")
+
 		self.bwd_matrix = matrix.inverted()
 		self.fwd_matrix = matrix
 		self.gamma = gamma
@@ -2083,6 +2092,7 @@ class BT1886(object):
 		self.ingo = bkipow / (wtipow - bkipow)
 		# Scale to make input of 1 map to 1.0 - self.outo
 		self.outsc = pow(wtipow - bkipow, self.gamma)
+		self.apply_trc = apply_trc
 
 	def apply(self, X, Y, Z):
 		"""
@@ -2104,18 +2114,22 @@ class BT1886(object):
 		for j in xrange(3):
 			vv = out[j]
 		
-			# Convert linear light to Rec709 transfer curve
-			if vv < 0.018:
-				vv = 4.5 * vv
-			else:
-				vv = 1.099 * math.pow(vv, 0.45) - 0.099
+			if self.apply_trc:
+				# Convert linear light to Rec709 transfer curve
+				if vv < 0.018:
+					vv = 4.5 * vv
+				else:
+					vv = 1.099 * math.pow(vv, 0.45) - 0.099
 			
 			# Apply input offset
 			vv = vv + self.ingo
 
 			# Apply power and scale
 			if vv > 0.0:
-				vv = self.outsc * math.pow(vv, self.gamma)
+				if self.apply_trc:
+					vv = self.outsc * math.pow(vv, self.gamma)
+				else:
+					vv *= self.outsc
 
 			# Apply output portion of offset
 			vv += self.outo

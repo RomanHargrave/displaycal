@@ -3317,6 +3317,39 @@ class ICCProfile:
 	def set_blackpoint(self, XYZbp):
 		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
 		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
+
+	def apply_black_offset(self, XYZbp):
+		# Apply only the black point blending portion of BT.1886 mapping
+		rXYZ = self.tags.rXYZ.values()
+		gXYZ = self.tags.gXYZ.values()
+		bXYZ = self.tags.bXYZ.values()
+		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+								   [rXYZ[1], gXYZ[1], bXYZ[1]],
+								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
+		gamma = 0.0
+		for channel in "rgb":
+			cgamma = self.tags[channel + "TRC"].get_gamma()
+			gamma += cgamma
+			if len(self.tags[channel + "TRC"]) == 1:
+				self.tags[channel + "TRC"].set_trc(cgamma, 1024)
+		gamma /= 3.0
+		bt1886 = colormath.BT1886(mtx, XYZbp, 1.0, gamma, False)
+		values = OrderedDict()
+		for i, channel in enumerate(("r", "g", "b")):
+			for j, v in enumerate(self.tags[channel + "TRC"]):
+				if not values.get(j):
+					values[j] = []
+				values[j].append(v / 65535.0)
+			self.tags[channel + "TRC"] = CurveType()
+		for i, (r, g, b) in values.iteritems():
+			X, Y, Z = mtx * (r, g, b)
+			values[i] = bt1886.apply(X, Y, Z)
+		for i, XYZ in values.iteritems():
+			rgb = mtx.inverted() * XYZ
+			for j, channel in enumerate(("r", "g", "b")):
+				self.tags[channel + "TRC"].append(max(min(rgb[j] * 65535, 65535),
+													  0))
+		self.set_blackpoint(XYZbp)
 	
 	def set_bt1886_trc(self, XYZbp, outoffset=0.0, gamma=2.4, gamma_type="B",
 					   size=None):

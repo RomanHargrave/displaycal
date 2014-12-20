@@ -549,6 +549,7 @@ valid_values = {
 
 defaults = {
 	"3d.format": "HTML",
+	"3dlut.apply_black_offset": 0,
 	"3dlut.apply_trc": 1,
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 10,
@@ -648,6 +649,7 @@ defaults = {
 	"measurement_mode.backup": "l",
 	"measurement_mode.highres": 0,
 	"measurement_mode.projector": 0,
+	"measurement_report.apply_black_offset": 0,
 	"measurement_report.apply_trc": 0,
 	"measurement_report.trc_gamma": 2.4,
 	"measurement_report.trc_gamma_type": "B",

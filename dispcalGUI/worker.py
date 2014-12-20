@@ -1590,7 +1590,8 @@ class Worker(object):
 		return result
 
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
-								 gamma=2.4, gamma_type="B", size=None):
+								 gamma=2.4, gamma_type="B", size=None,
+								 apply_trc=True):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -1601,13 +1602,21 @@ class Worker(object):
 		if len(odata) != 1 or len(odata[0]) != 3:
 			raise ValueError("Blackpoint is invalid: %s" % odata)
 		XYZbp = odata[0]
-		self.log(appname + ": Applying BT.1886-like TRC to " +
-				 os.path.basename(profile1.fileName))
+		if apply_trc:
+			self.log(appname + ": Applying BT.1886-like TRC to " +
+					 os.path.basename(profile1.fileName))
+		else:
+			self.log(appname + ": Applying BT.1886-like black offset to " +
+					 os.path.basename(profile1.fileName))
 		self.log(appname + ": Black XYZ (normalized 0..100) = %.6f %.6f %.6f" %
 				 tuple([v * 100 for v in XYZbp]))
 		self.log(appname + ": Black Lab = %.6f %.6f %.6f" %
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
+		if not apply_trc:
+			# Apply only the black point blending portion of BT.1886 mapping
+			profile1.apply_black_offset(XYZbp)
+			return
 		if gamma_type in ("b", "g"):
 			# Get technical gamma needed to achieve effective gamma
 			self.log(appname + ": Effective gamma = %.2f" % gamma)
@@ -2062,7 +2071,7 @@ class Worker(object):
 					 size=17, input_bits=10, output_bits=12, maxval=1.0,
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
-					 save_link_icc=True):
+					 save_link_icc=True, apply_black_offset=True):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2181,6 +2190,10 @@ class Worker(object):
 					self.blend_profile_blackpoint(profile_in, profile_out,
 												  trc_output_offset, trc_gamma,
 												  trc_gamma_type)
+			elif apply_black_offset:
+				# Apply only the black point blending portion of BT.1886 mapping
+				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
+											  apply_trc=False)
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 
@@ -2213,9 +2226,12 @@ class Worker(object):
 					args.append("-3c")
 				args.append("-e%s" % input_encoding)
 				args.append("-E%s" % output_encoding)
+				if (((trc_gamma and trc_gamma_type in ("b", "B")) or
+					 (not trc_gamma and apply_black_offset)) and
+					collink_version >= [1, 7]):
+					args.append("-b")  # Use RGB->RGB forced black point hack
 				if trc_gamma and trc_gamma_type in ("b", "B"):
 					if collink_version >= [1, 7]:
-						args.append("-b")  # Use RGB->RGB forced black point hack
 						args.append("-I%s:%s:%s" % (trc_gamma_type,
 													trc_output_offset,
 													trc_gamma))

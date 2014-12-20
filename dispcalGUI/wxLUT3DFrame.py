@@ -75,7 +75,9 @@ class LUT3DFrame(BaseFrame):
 											self.encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
 									   self.encoding_output_ctrl_handler)
-		self.apply_trc_cb.Bind(wx.EVT_CHECKBOX, self.apply_trc_ctrl_handler)
+		self.apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
+		self.apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
+		self.apply_trc_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
 								 self.trc_gamma_ctrl_handler)
@@ -102,6 +104,8 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_create_btn.SetDefault()
 		
 		self.setup_language()
+		self.XYZbpin = [0, 0, 0]
+		self.XYZbpout = [0, 0, 0]
 		self.update_controls()
 		self.update_layout()
 		
@@ -151,17 +155,33 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_desc.Enable(enable)
 	
 	def apply_trc_ctrl_handler(self, event=None):
-		v = self.apply_trc_cb.GetValue()
+		v = self.apply_trc_ctrl.GetValue()
 		self.trc_ctrl.Enable(v)
 		self.trc_gamma_label.Enable(v)
 		self.trc_gamma_ctrl.Enable(v)
 		self.trc_gamma_type_ctrl.Enable(v)
 		if event:
 			setcfg("3dlut.apply_trc", int(v))
+			setcfg("3dlut.apply_black_offset",
+				   int(self.apply_black_offset_ctrl.GetValue()))
 		self.black_output_offset_label.Enable(v)
 		self.black_output_offset_ctrl.Enable(v)
 		self.black_output_offset_intctrl.Enable(v)
 		self.black_output_offset_intctrl_label.Enable(v)
+		self.show_input_value_clipping_warning(event)
+
+	def show_input_value_clipping_warning(self, layout):
+		self.panel.Freeze()
+		show = (self.apply_none_ctrl.GetValue() and
+				self.XYZbpout > self.XYZbpin and
+				getcfg("3dlut.rendering_intent") not in ("la", "p", "pa", "ms",
+														 "s"))
+		self.input_value_clipping_bmp.Show(show)
+		self.input_value_clipping_label.Show(show)
+		if layout:
+			self.panel.Sizer.Layout()
+			self.update_layout()
+		self.panel.Thaw()
 	
 	def apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
@@ -362,6 +382,7 @@ class LUT3DFrame(BaseFrame):
 		size = getcfg("3dlut.size")
 		input_bits = getcfg("3dlut.bitdepth.input")
 		output_bits = getcfg("3dlut.bitdepth.output")
+		apply_black_offset = getcfg("3dlut.apply_black_offset")
 		try:
 			self.worker.create_3dlut(profile_in, path, profile_abst,
 									 profile_out, apply_cal=apply_cal,
@@ -372,7 +393,8 @@ class LUT3DFrame(BaseFrame):
 									 output_encoding=output_encoding,
 									 trc_gamma=trc_gamma,
 									 trc_gamma_type=trc_gamma_type,
-									 trc_output_offset=outoffset)
+									 trc_output_offset=outoffset,
+									 apply_black_offset=apply_black_offset)
 		except Exception, exception:
 			return exception
 	
@@ -452,6 +474,7 @@ class LUT3DFrame(BaseFrame):
 	def rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
 			   self.rendering_intents_ab[self.rendering_intent_ctrl.GetSelection()])
+		self.show_input_value_clipping_warning(True)
 	
 	def set_profile(self, which, profile_path=None, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
@@ -518,13 +541,13 @@ class LUT3DFrame(BaseFrame):
 							self.update_layout()
 							self.Thaw()
 					else:
+						self.Freeze()
 						if which == "input":
 							enable = bool(getcfg("3dlut.use_abstract_profile"))
 							self.abstract_profile_cb.SetValue(enable)
 							self.abstract_profile_cb.Enable()
 							self.abstract_profile_ctrl.Enable(enable)
 							self.abstract_profile_desc.Enable(enable)
-							self.Freeze()
 							self.output_profile_label.Show()
 							self.output_profile_ctrl.Show()
 							self.output_profile_current_btn.Show()
@@ -532,32 +555,76 @@ class LUT3DFrame(BaseFrame):
 							self.apply_cal_cb.Show()
 							self.show_encoding_controls()
 							self.update_encoding_controls()
-							self.show_trc_controls()
-							if (getcfg("3dlut.%s.profile" % which) !=
-								profile.fileName and
-								"rTRC" in profile.tags and
-								"gTRC" in profile.tags and
-								"bTRC" in profile.tags and profile.tags.rTRC is
-								profile.tags.gTRC is profile.tags.bTRC and
-								isinstance(profile.tags.rTRC, ICCP.CurveType)):
-								# Use BT.1886 gamma mapping for SMPTE 240M /
-								# Rec. 709 TRC
-								tf = profile.tags.rTRC.get_transfer_function()
-								setcfg("3dlut.apply_trc",
-									  int(tf[0][1] in (-240, -709)))
-							self.apply_trc_cb.SetValue(bool(getcfg("3dlut.apply_trc")))
-							self.apply_trc_ctrl_handler()
-							self.rendering_intent_label.Show()
-							self.rendering_intent_ctrl.Show()
+							if (not hasattr(self, which + "_profile") or
+								getcfg("3dlut.%s.profile" % which) !=
+								profile.fileName):
+								# Get profile blackpoint so we can check if it makes
+								# sense to show TRC type and output offset controls
+								try:
+									odata = self.worker.xicclu(profile, (0, 0, 0),
+															   pcs="x")
+								except Exception, exception:
+									show_result_dialog(exception, self)
+								else:
+									if len(odata) != 1 or len(odata[0]) != 3:
+										show_result_dialog("Blackpoint is invalid: %s"
+														   % odata, self)
+									self.XYZbpin = odata[0]
 							# Update controls related to output profile
+							setattr(self, "input_profile", profile)
 							self.set_profile("output", silent=silent)
-							self.panel.GetSizer().Layout()
-							self.update_layout()
-							self.Thaw()
 						elif which == "output":
 							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
 							self.apply_cal_cb.Enable("vcgt" in profile.tags)
+							if (not hasattr(self, which + "_profile") or
+								getcfg("3dlut.%s.profile" % which) !=
+								profile.fileName):
+								# Get profile blackpoint so we can check if input
+								# values would be clipped
+								try:
+									odata = self.worker.xicclu(profile, (0, 0, 0),
+															   pcs="x")
+								except Exception, exception:
+									show_result_dialog(exception, self)
+								else:
+									if len(odata) != 1 or len(odata[0]) != 3:
+										show_result_dialog("Blackpoint is invalid: %s"
+														   % odata, self)
+									self.XYZbpout = odata[0]
+							self.show_trc_controls()
+							if (hasattr(self, "input_profile") and
+								getcfg("3dlut.input.profile") !=
+								self.input_profile.fileName and
+								"rTRC" in self.input_profile.tags and
+								"gTRC" in self.input_profile.tags and
+								"bTRC" in self.input_profile.tags and
+								self.input_profile.tags.rTRC is
+								self.input_profile.tags.gTRC is
+								self.input_profile.tags.bTRC and
+								isinstance(self.input_profile.tags.rTRC,
+										   ICCP.CurveType)):
+								# Use BT.1886 gamma mapping for SMPTE 240M /
+								# Rec. 709 TRC
+								tf = self.input_profile.tags.rTRC.get_transfer_function()
+								setcfg("3dlut.apply_trc",
+									   int(tf[0][1] in (-240, -709) and
+										   self.XYZbpin < self.XYZbpout))
+								setcfg("3dlut.apply_black_offset",
+									   int(tf[0][1] not in (-240, -709) and
+										   self.XYZbpin < self.XYZbpout))
+							if getcfg("3dlut.apply_black_offset"):
+								self.apply_black_offset_ctrl.SetValue(True)
+							elif getcfg("3dlut.apply_trc"):
+								self.apply_trc_ctrl.SetValue(True)
+							else:
+								self.apply_none_ctrl.SetValue(True)
+							self.apply_trc_ctrl_handler()
+							self.rendering_intent_label.Show()
+							self.rendering_intent_ctrl.Show()
+							self.panel.GetSizer().Layout()
+							self.update_layout()
+						self.Thaw()
 					setattr(self, "%s_profile" % which, profile)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					if which == "output" and not self.output_profile_ctrl.IsShown():
@@ -732,15 +799,17 @@ class LUT3DFrame(BaseFrame):
 
 	def show_trc_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
-		self.apply_trc_cb.Show(show)
+		self.apply_trc_ctrl.Show(show)
 		self.trc_ctrl.Show(show)
 		self.trc_gamma_label.Show(show)
 		self.trc_gamma_ctrl.Show(show)
-		self.trc_gamma_type_ctrl.Show(show)
-		self.black_output_offset_label.Show(show)
-		self.black_output_offset_ctrl.Show(show)
-		self.black_output_offset_intctrl.Show(show)
-		self.black_output_offset_intctrl_label.Show(show)
+		self.trc_gamma_type_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_label.Show(show and self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_intctrl.Show(show and
+											  self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_intctrl_label.Show(show and
+													self.XYZbpout > [0, 0, 0])
 	
 	def show_encoding_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]

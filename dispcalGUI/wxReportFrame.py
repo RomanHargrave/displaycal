@@ -97,7 +97,12 @@ class ReportFrame(BaseFrame):
 		self.use_simulation_profile_as_output_cb.Bind(wx.EVT_CHECKBOX,
 													  self.use_simulation_profile_as_output_handler)
 		self.enable_3dlut_cb.Bind(wx.EVT_CHECKBOX, self.enable_3dlut_handler)
-		self.apply_trc_cb.Bind(wx.EVT_CHECKBOX, self.apply_trc_ctrl_handler)
+		self.apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON,
+								  self.apply_trc_ctrl_handler)
+		self.apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON,
+										  self.apply_trc_ctrl_handler)
+		self.apply_trc_ctrl.Bind(wx.EVT_RADIOBUTTON,
+								 self.apply_trc_ctrl_handler)
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
 								 self.trc_gamma_ctrl_handler)
@@ -121,6 +126,8 @@ class ReportFrame(BaseFrame):
 		self.measure_btn.SetDefault()
 		
 		self.setup_language()
+		self.XYZbpin = [0, 0, 0]
+		self.XYZbpout = [0, 0, 0]
 		self.update_controls()
 		self.update_layout()
 		
@@ -154,8 +161,10 @@ class ReportFrame(BaseFrame):
 			event.Skip()
 	
 	def apply_trc_ctrl_handler(self, event):
-		v = self.apply_trc_cb.GetValue()
+		v = self.apply_trc_ctrl.GetValue()
 		setcfg("measurement_report.apply_trc", int(v))
+		setcfg("measurement_report.apply_black_offset",
+			   int(self.apply_black_offset_ctrl.GetValue()))
 		self.update_main_controls()
 
 	def black_output_offset_ctrl_handler(self, event):
@@ -339,6 +348,35 @@ class ReportFrame(BaseFrame):
 																		profile.colorSpace))),
 									   parent=self)
 				else:
+					if (not hasattr(self, which + "_profile") or
+						getcfg("measurement_report.%s_profile" % which) !=
+						profile.fileName):
+						if which == "simulation":
+							# Get profile blackpoint so we can check if it makes
+							# sense to show TRC type and output offset controls
+							try:
+								odata = self.worker.xicclu(profile, (0, 0, 0),
+														   pcs="x")
+							except Exception, exception:
+								show_result_dialog(exception, self)
+							else:
+								if len(odata) != 1 or len(odata[0]) != 3:
+									show_result_dialog("Blackpoint is invalid: %s"
+													   % odata, self)
+								self.XYZbpin = odata[0]
+						elif which == "output":
+							# Get profile blackpoint so we can check if input
+							# values would be clipped
+							try:
+								odata = self.worker.xicclu(profile, (0, 0, 0),
+														   pcs="x")
+							except Exception, exception:
+								show_result_dialog(exception, self)
+							else:
+								if len(odata) != 1 or len(odata[0]) != 3:
+									show_result_dialog("Blackpoint is invalid: %s"
+													   % odata, self)
+								self.XYZbpout = odata[0]
 					setattr(self, "%s_profile" % which, profile)
 					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					if not silent:
@@ -440,6 +478,7 @@ class ReportFrame(BaseFrame):
 		self.chart_ctrl_handler(None)
 	
 	def update_main_controls(self):
+		self.Freeze()
 		chart_has_white = bool(getattr(self, "chart_white", None))
 		color = getcfg("measurement_report.chart.fields")
 		sim_profile_color = (getattr(self, "simulation_profile", None) and
@@ -468,10 +507,19 @@ class ReportFrame(BaseFrame):
 							  ICCP.XYZType) and
 				   isinstance(self.simulation_profile.tags.get("bXYZ"),
 							  ICCP.XYZType))
-		self.apply_trc_cb.Enable(enable1 and enable5)
+		self.apply_none_ctrl.Enable(enable1 and enable5)
+		self.apply_none_ctrl.SetValue(
+			(not getcfg("measurement_report.apply_black_offset") and
+			 not getcfg("measurement_report.apply_trc")) or
+			 not enable5)
+		self.apply_black_offset_ctrl.Enable(enable1 and enable5)
+		self.apply_black_offset_ctrl.SetValue(enable5 and
+			bool(getcfg("measurement_report.apply_black_offset")))
+		self.apply_trc_ctrl.Enable(enable1 and enable5)
 		enable6 = (enable1 and enable5 and
 				   bool(getcfg("measurement_report.apply_trc")))
-		self.apply_trc_cb.SetValue(enable6)
+		self.apply_trc_ctrl.SetValue(enable5 and
+			bool(getcfg("measurement_report.apply_trc")))
 		self.trc_ctrl.Enable(enable6)
 		self.trc_gamma_label.Enable(enable6)
 		self.trc_gamma_ctrl.Enable(enable6)
@@ -480,6 +528,16 @@ class ReportFrame(BaseFrame):
 		self.black_output_offset_ctrl.Enable(enable6)
 		self.black_output_offset_intctrl.Enable(enable6)
 		self.black_output_offset_intctrl_label.Enable(enable6)
+		self.trc_gamma_type_ctrl.Show(self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_label.Show(self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_ctrl.Show(self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_intctrl.Show(self.XYZbpout > [0, 0, 0])
+		self.black_output_offset_intctrl_label.Show(self.XYZbpout > [0, 0, 0])
+		show = (self.apply_none_ctrl.GetValue() and
+				enable1 and enable5 and
+				self.XYZbpout > self.XYZbpin)
+		self.input_value_clipping_bmp.Show(show)
+		self.input_value_clipping_label.Show(show)
 		self.simulate_whitepoint_cb.Enable((enable1 and not enable2) or
 										   (color in ("LAB", "XYZ") and
 											chart_has_white))
@@ -502,15 +560,18 @@ class ReportFrame(BaseFrame):
 		self.output_profile_label.Enable((color in ("LAB", "RGB", "XYZ") or
 										  enable1) and
 										 (not enable1 or not enable2 or
-										 self.apply_trc_cb.GetValue()))
+										  self.apply_trc_ctrl.GetValue() or
+										  self.apply_black_offset_ctrl.GetValue()))
 		self.output_profile_ctrl.Enable((color in ("LAB", "RGB", "XYZ") or
 										 enable1) and
 										(not enable1 or not enable2 or
-										self.apply_trc_cb.GetValue()))
+										 self.apply_trc_ctrl.GetValue() or
+										 self.apply_black_offset_ctrl.GetValue()))
 		self.output_profile_desc.Enable((color in ("LAB", "RGB", "XYZ") or
 										 enable1) and
 										(not enable1 or not enable2 or
-										self.apply_trc_cb.GetValue()))
+										 self.apply_trc_ctrl.GetValue() or
+										 self.apply_black_offset_ctrl.GetValue()))
 		output_profile = (bool(getcfg("measurement_report.output_profile")) and
 						  os.path.isfile(getcfg("measurement_report.output_profile")))
 		self.measure_btn.Enable(((enable1 and enable2 and (not enable6 or
@@ -526,6 +587,7 @@ class ReportFrame(BaseFrame):
 								 bool(getcfg("measurement_report.chart")) and
 								 os.path.isfile(getcfg("measurement_report.chart")))
 		self.update_layout()
+		self.Thaw()
 	
 	def use_devlink_profile_ctrl_handler(self, event):
 		setcfg("3dlut.madVR.enable", 0)
@@ -549,7 +611,11 @@ class ReportFrame(BaseFrame):
 				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 				tf = sim_profile.tags.rTRC.get_transfer_function()
 				setcfg("measurement_report.apply_trc",
-					  int(tf[0][1] in (-240, -709)))
+					  int(tf[0][1] in (-240, -709) and
+						  self.XYZbpin < self.XYZbpout))
+				setcfg("measurement_report.apply_black_offset",
+					  int(tf[0][1] not in (-240, -709) and
+						  self.XYZbpin < self.XYZbpout))
 		self.update_main_controls()
 
 	def use_simulation_profile_as_output_handler(self, event):
