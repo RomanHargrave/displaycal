@@ -3592,7 +3592,8 @@ class Worker(object):
 		idata = []
 		numentries = 4096
 		maxval = numentries - 1.0
-		for i in xrange(numentries):
+		vrange = xrange(numentries)
+		for i in vrange:
 			# Lab
 			idata.append((i / maxval * 100, 0, 0))
 		
@@ -3789,9 +3790,6 @@ class Worker(object):
 			# Use identity matrix for Lab as mandated by ICC spec
 			itable.matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-		numentries = 4096
-		maxval = numentries - 1.0
-		vrange = xrange(numentries)
 		if profile.connectionColorSpace == "XYZ":
 			if logfile:
 				logfile.write("Applying matrix to input curve XYZ values...\n")
