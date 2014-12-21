@@ -636,7 +636,8 @@ class LUT3DFrame(BaseFrame):
 											   not tf[0][0].startswith("Gamma") and
 											   self.XYZbpin < self.XYZbpout))
 								self.apply_black_offset_ctrl.Enable(
-									tf[0][1] not in (-240, -709))
+									tf[0][1] not in (-240, -709) and
+									not tf[0][0].startswith("Gamma"))
 								# Set gamma to profile gamma if single gamma
 								# profile
 								if tf[0][0].startswith("Gamma"):

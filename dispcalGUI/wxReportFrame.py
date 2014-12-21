@@ -637,7 +637,8 @@ class ReportFrame(BaseFrame):
 						   getcfg("measurement_report.trc_gamma.backup"))
 					setcfg("measurement_report.trc_gamma.backup", None)
 				self.update_trc_controls()
-				enable = tf[0][1] not in (-240, -709)
+				enable = (tf[0][1] not in (-240, -709) and
+						  not tf[0][0].startswith("Gamma"))
 		self.apply_black_offset_ctrl.Enable(use_sim_profile and enable)
 		self.update_main_controls()
 
