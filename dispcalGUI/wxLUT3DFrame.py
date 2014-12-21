@@ -616,8 +616,8 @@ class LUT3DFrame(BaseFrame):
 								"rTRC" in self.input_profile.tags and
 								"gTRC" in self.input_profile.tags and
 								"bTRC" in self.input_profile.tags and
-								self.input_profile.tags.rTRC is
-								self.input_profile.tags.gTRC is
+								self.input_profile.tags.rTRC ==
+								self.input_profile.tags.gTRC ==
 								self.input_profile.tags.bTRC and
 								isinstance(self.input_profile.tags.rTRC,
 										   ICCP.CurveType)):

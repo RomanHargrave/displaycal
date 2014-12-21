@@ -610,8 +610,8 @@ class ReportFrame(BaseFrame):
 			setcfg("measurement_report.whitepoint.simulate", v)
 			setcfg("measurement_report.whitepoint.simulate.relative", v)
 			if ("rTRC" in sim_profile.tags and "gTRC" in sim_profile.tags and
-				"bTRC" in sim_profile.tags and sim_profile.tags.rTRC is
-				sim_profile.tags.gTRC is sim_profile.tags.bTRC and
+				"bTRC" in sim_profile.tags and sim_profile.tags.rTRC ==
+				sim_profile.tags.gTRC == sim_profile.tags.bTRC and
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
 				tf = sim_profile.tags.rTRC.get_transfer_function()
 				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
