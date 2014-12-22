@@ -6306,13 +6306,6 @@ usage: spotread [-options] [logfile]
 			if (self.argyll_version >= [1, 3, 3] and
 				(not self.has_lut_access() or
 				 not getcfg("calibration.use_video_lut"))):
-				if config.get_display_name() == "madVR":
-					# Normally -K will automatically reset the video LUT,
-					# but when using madVR, we have to do it explicitly
-					result = self.reset_cal()
-					if (isinstance(result, Exception) and
-						not isinstance(result, UnloggedInfo)):
-						return result, None
 				args.append("-K")
 			else:
 				args.append("-k")
@@ -7921,13 +7914,6 @@ usage: spotread [-options] [logfile]
 				if (self.argyll_version >= [1, 3, 3] and
 					(not self.has_lut_access() or
 					 not getcfg("calibration.use_video_lut"))):
-					if config.get_display_name() == "madVR":
-						# Normally -K will automatically reset the video LUT,
-						# but when using madVR, we have to do it explicitly
-						result = self.reset_cal()
-						if (isinstance(result, Exception) and
-							not isinstance(result, UnloggedInfo)):
-							return result, None
 					args.append("-K")
 				else:
 					args.append("-k")
