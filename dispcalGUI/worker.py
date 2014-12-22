@@ -3593,9 +3593,29 @@ class Worker(object):
 		numentries = 4096
 		maxval = numentries - 1.0
 		vrange = xrange(numentries)
-		for i in vrange:
-			# Lab
-			idata.append((i / maxval * 100, 0, 0))
+		Lbp, abp, bbp = colormath.XYZ2Lab(*[v * 100 for v in XYZbp])
+		# Method to determine device <-> PCS neutral axis relationship
+		# 0: L* (a*=b*=0) -> RGB
+		# 1: As method 0, but blend a* b* to blackpoint hue
+		# 2: R=G=B -> PCS
+		# Method 0 and 1 result in lowest invprofcheck dE2k, with method 0
+		# having a slight edge
+		method = 0
+		if method != 2:
+			for i in vrange:
+				L, a, b = i / maxval * 100, 0, 0
+				if method == 1 and not bpc and XYZbp != [0, 0, 0]:
+					# Blend to blackpoint hue
+					vv = (L - Lbp) / (100.0 - Lbp)  # 0 at bp, 1 at wp
+					vv = 1.0 - vv
+					if vv < 0.0:
+						vv = 0.0
+					elif vv > 1.0:
+						vv = 1.0
+					vv = math.pow(vv, 40.0)
+					a += vv * abp
+					b += vv * bbp
+				idata.append((L, a, b))
 		
 		pcs = profile.connectionColorSpace[0].lower()
 		
@@ -3609,6 +3629,24 @@ class Worker(object):
 			
 			# TODO: How to deal with this?
 			pass
+
+		if method == 2:
+			# lookup RGB -> Lab values through profile using xicclu to get TRC
+			odata = []
+			if not bpc:
+				numentries -= 1
+				maxval -= 1
+			for i in xrange(numentries):
+				odata.append([i / maxval] * 3)
+			idata = self.xicclu(profile, odata, intent,
+								{"A2B": "f", "B2A": "ib"}[source], pcs="l")
+			if not bpc:
+				numentries += 1
+				maxval += 1
+				idata.insert(0, [0, 0, 0])
+				odata.insert(0, [0, 0, 0])
+			if idata[-1][0] != 100:
+				idata[-1][0] = 100.0
 
 		oXYZ = [colormath.Lab2XYZ(*v) for v in idata]
 		fpL = [v[0] for v in idata]
@@ -3629,7 +3667,8 @@ class Worker(object):
 		
 		# Lookup Lab -> RGB values through profile using xicclu to get TRC
 		direction = {"A2B": "if", "B2A": "b"}[source]
-		odata = self.xicclu(profile, idata, intent, direction, pcs="l")
+		if method != 2:
+			odata = self.xicclu(profile, idata, intent, direction, pcs="l")
 
 		xpR = [v[0] for v in odata]
 		xpG = [v[1] for v in odata]
