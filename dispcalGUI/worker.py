@@ -2801,7 +2801,7 @@ class Worker(object):
 		# any of these conditions apply
 		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
-		use_patterngenerator = (self.measure_cmd and
+		use_patterngenerator = (self.measure_cmd and cmdname != "spotread" and
 								config.get_display_name() ==
 								"Resolve")
 		if use_patterngenerator:
