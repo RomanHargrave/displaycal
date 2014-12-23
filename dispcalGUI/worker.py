@@ -2474,10 +2474,8 @@ class Worker(object):
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			instruments = []
-			if enumerate_ports:
-				cmd = get_argyll_util("dispcal")
-			else:
-				cmd = get_argyll_util("dispwin")
+			cmd = get_argyll_util("dispcal")
+			if not enumerate_ports:
 				for instrument in getcfg("instruments").split(os.pathsep):
 					# Names are canonical from 1.1.4.7 onwards, but we may have
 					# verbose names from an old configuration
@@ -2525,6 +2523,10 @@ class Worker(object):
 							defaults["calibration.black_point_rate.enabled"] = 1
 						elif arg in non_standard_display_args:
 							displays.append(arg)
+						elif arg == "-b" and line[-1] != "bright":
+							# Forced black point hack available
+							# (Argyll CMS 1.7b 2014-12-22)
+							defaults["calibration.black_point_hack"] = 1
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
 						if arg == "-d":
@@ -2548,7 +2550,7 @@ class Worker(object):
 												(line[0],
 												 safe_unicode(safe_str(match[0], enc),
 															  "UTF-8")))
-						elif arg == "-c":
+						elif arg == "-c" and enumerate_ports:
 							if ((re.match("/dev(?:/[\w.]+)*$", value) or
 								 re.match("COM\d+$", value)) and 
 								getcfg("skip_legacy_serial_ports")):
@@ -6079,6 +6081,18 @@ usage: spotread [-options] [logfile]
 			black_luminance = getcfg("calibration.black_luminance", False)
 			if black_luminance:
 				args.append("-B%f" % black_luminance)
+			elif (not (getcfg("calibration.black_point_correction.auto") or
+					   getcfg("calibration.black_point_correction")) and
+				  defaults["calibration.black_point_hack"]):
+				# Forced black point hack
+				# (Argyll CMS 1.7b 2014-12-22)
+				# Always use this if no black luminance or black point hue
+				# correction specified. The rationale is that a reasonably good
+				# quality digitally driven display should have no "dead zone"
+				# above zero device input if set up correctly. Using this option
+				# with a display that is not well behaved may result in a loss
+				# of shadow detail.
+				args.append("-b")
 			if verify:
 				if calibrate and type(verify) == int:
 					args.append("-e%s" % verify)  # Verify final computed curves

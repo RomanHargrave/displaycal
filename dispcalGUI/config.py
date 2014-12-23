@@ -589,6 +589,7 @@ defaults = {
 	"calibration.black_point_correction": 0.0,
 	"calibration.black_point_correction.auto": 0,
 	"calibration.black_point_correction_choice.show": 1,
+	"calibration.black_point_hack": 0,
 	"calibration.black_point_rate": 4.0,
 	"calibration.black_point_rate.enabled": 0,
 	"calibration.continue_next": 0,
