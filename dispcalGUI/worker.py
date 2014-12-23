@@ -2523,7 +2523,7 @@ class Worker(object):
 							defaults["calibration.black_point_rate.enabled"] = 1
 						elif arg in non_standard_display_args:
 							displays.append(arg)
-						elif arg == "-b" and line[-1] != "bright":
+						elif arg == "-b" and not line[-1].startswith("bright"):
 							# Forced black point hack available
 							# (Argyll CMS 1.7b 2014-12-22)
 							defaults["calibration.black_point_hack"] = 1
