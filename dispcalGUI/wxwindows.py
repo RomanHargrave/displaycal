@@ -32,7 +32,7 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  BetterWindowDisabler)
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
-					 set_bitmap_labels)
+					 ThemedGenButton, set_bitmap_labels)
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -100,7 +100,7 @@ class AboutDialog(wx.Dialog):
 		self.sizer.Layout()
 
 	def add_items(self, items):
-		self.ok = wx.Button(self, -1, lang.getstr("ok"))
+		self.ok = ThemedGenButton(self, -1, lang.getstr("ok"))
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.ok.GetId())
 		items.extend([self.ok, (1, 16)])
 		pointsize = 10

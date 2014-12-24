@@ -146,7 +146,7 @@ except ImportError:
 	# Fall back to wx.aui under ancient wxPython versions
 	from wx import aui
 from wx import xrc
-from wx.lib import delayedresult
+from wx.lib import delayedresult, platebtn
 from wx.lib.art import flagart
 import wx.html
 
@@ -563,7 +563,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.scalebitmap = (False, ) * 2
 	header.textshadow = False
 	header.SetBackgroundColour("#336699")
-	header.SetForegroundColour("#FFFFFF")
+	header.SetForegroundColour("#DDDDDD")
 	if not bitmap:
 		bitmap = getbitmap("theme/header", False)
 		if bitmap.Size[0] >= 220 and bitmap.Size[1] >= 60:
@@ -1386,6 +1386,9 @@ class MainFrame(BaseFrame):
 		
 		# Calibration settings panel
 		self.calpanel = self.FindWindowByName("calpanel")
+		self.display_instrument_panel = self.FindWindowByName("display_instrument_panel")
+		self.calibration_settings_panel = self.FindWindowByName("calibration_settings_panel")
+		self.profile_settings_panel = self.FindWindowByName("profile_settings_panel")
 		
 		# Button panel
 		self.buttonpanel = self.FindWindowByName("buttonpanel")
@@ -1416,6 +1419,78 @@ class MainFrame(BaseFrame):
 															 for v in bgcolor]))
 			self.buttonpanelheader.SetBackgroundColour(self.buttonpanel.BackgroundColour)
 			self.buttonpanelheader.blend = True
+		
+		# Tab panel
+		self.tabpanel = self.FindWindowByName("tabpanel")
+		sizer = self.tabpanel.ContainingSizer
+		if hasattr(sizer, "GetItemIndex"):
+			# wxPython 2.8.12+
+			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+			sizer.Insert(sizer.GetItemIndex(self.tabpanel), separator,
+						 flag=wx.EXPAND)
+			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+			sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1, separator,
+						 flag=wx.EXPAND)
+			self.tabpanelheader = BitmapBackgroundPanel(self.panel,
+														   size=(-1, 15))
+			self.tabpanelfooter = BitmapBackgroundPanel(self.panel,
+														   size=(-1, 15))
+			bmp = getbitmap("theme/gradient", False)
+			if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
+				sub = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage()
+				bmp = sub.Mirror(False).ConvertToBitmap()
+				image = bmp.ConvertToImage()
+				databuffer = image.GetDataBuffer()
+				for i, byte in enumerate(databuffer):
+					if byte > "\0":
+						databuffer[i] = chr(int(min(round(ord(byte) *
+														  (255.0 / 223.0)), 255)))
+				bmp = image.ConvertToBitmap()
+				self.tabpanelheader.SetBitmap(bmp)
+				bmp = image.Mirror(False).ConvertToBitmap()
+				self.tabpanelfooter.SetBitmap(bmp)
+			sizer.Insert(sizer.GetItemIndex(self.tabpanel),
+						 self.tabpanelheader, flag=wx.EXPAND)
+			sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1,
+						 self.tabpanelfooter, flag=wx.EXPAND)
+			bgcolor = self.tabpanel.BackgroundColour
+			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
+															 for v in bgcolor]))
+			self.tabpanelheader.SetBackgroundColour(self.tabpanel.BackgroundColour)
+			self.tabpanelheader.blend = True
+			self.tabpanelfooter.SetBackgroundColour(self.tabpanel.BackgroundColour)
+			self.tabpanelfooter.blend = True
+
+		# Add tab buttons
+		self.display_instrument_btn = platebtn.PlateButton(self.tabpanel, -1,
+													label=" & ".join([lang.getstr("display"),
+																	  lang.getstr("instrument")]),
+													bmp=geticon(48, "display-instrument"),
+													style=platebtn.PB_STYLE_GRADIENT |
+														  platebtn.PB_STYLE_TOGGLE)
+		self.display_instrument_btn.Bind(wx.EVT_TOGGLEBUTTON,
+										 self.tab_select_handler)
+		self.tabpanel.Sizer.Insert(1, self.display_instrument_btn)
+		self.calibration_settings_btn = platebtn.PlateButton(self.tabpanel, -1,
+													label=lang.getstr("calibration.settings"),
+													bmp=geticon(48, "calibration"),
+													style=platebtn.PB_STYLE_GRADIENT |
+														  platebtn.PB_STYLE_TOGGLE)
+		self.calibration_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
+										   self.tab_select_handler)
+		self.tabpanel.Sizer.Insert(2, self.calibration_settings_btn,
+								   flag=wx.LEFT | wx.RIGHT, border=16)
+		self.profile_settings_btn = platebtn.PlateButton(self.tabpanel, -1,
+													label=lang.getstr("profile.settings"),
+													bmp=geticon(48, "profiling"),
+													style=platebtn.PB_STYLE_GRADIENT |
+														  platebtn.PB_STYLE_TOGGLE)
+		self.profile_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
+									   self.tab_select_handler)
+		self.tabpanel.Sizer.Insert(3, self.profile_settings_btn)
+		self.tab_select_handler(self.display_instrument_btn)
 		
 		self.profile_info = {}
 	
@@ -1627,12 +1702,17 @@ class MainFrame(BaseFrame):
 			borders_tb = self.Size[1] - self.ClientSize[1]
 			height = min(self.GetDisplay().ClientArea[3] - borders_tb -
 						 safety_margin,
-						 self.header.Size[1] +
+						 max(self.header.Size[1] +
 						 self.headerpanel.Sizer.MinSize[1] + 1 +
-						 self.calpanel.Sizer.MinSize[1] +
+						 ((getattr(self, "tabpanelheader", None) and
+						   self.tabpanelheader.Size[1] + 1) or 0) +
+						 self.tabpanel.Sizer.MinSize[1] +
+						 ((getattr(self, "tabpanelfooter", None) and
+						   self.tabpanelfooter.Size[1] + 1) or 0) +
+						 self.calibration_settings_panel.Sizer.MinSize[1] +
 						 ((getattr(self, "buttonpanelheader", None) and
 						   self.buttonpanelheader.Size[1] + 1) or 0) +
-						 self.buttonpanel.Sizer.MinSize[1])
+						 self.buttonpanel.Sizer.MinSize[1], 600))
 		else:
 			height = self.ClientSize[1]
 		borders_lr = self.Size[0] - self.ClientSize[0]
@@ -7620,6 +7700,24 @@ class MainFrame(BaseFrame):
 			self.synthiccframe.Raise()
 		else:
 			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
+
+	def tab_select_handler(self, event):
+		self.calpanel.Freeze()
+		btn2tab = {self.display_instrument_btn: self.display_instrument_panel,
+				   self.calibration_settings_btn: self.calibration_settings_panel,
+				   self.profile_settings_btn: self.profile_settings_panel}
+		for btn, tab in btn2tab.iteritems():
+			if event.GetId() == btn.Id:
+				tab.Show()
+				btn._pressed = True
+				btn._SetState(platebtn.PLATE_PRESSED)
+			else:
+				tab.Hide()
+				btn._pressed = False
+				btn._SetState(platebtn.PLATE_NORMAL)
+		self.calpanel.Layout()
+		self.calpanel.Thaw()
+		self.calpanel.Layout()
 	
 	def colorimeter_correction_matrix_ctrl_handler(self, event, path=None):
 		measurement_mode = getcfg("measurement_mode")
@@ -11393,6 +11491,8 @@ class MainFrame(BaseFrame):
 		self.aboutdialog = AboutDialog(self, -1, 
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
+		self.aboutdialog.BackgroundColour = "#404040"
+		self.aboutdialog.ForegroundColour = "#DDDDDD"
 		items = []
 		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
@@ -11453,6 +11553,8 @@ class MainFrame(BaseFrame):
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		self.aboutdialog.add_items(items)
+		self.aboutdialog.ok.BackgroundColour = self.aboutdialog.BackgroundColour
+		self.aboutdialog.ok.ForegroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)
 		self.aboutdialog.Layout()
 		self.aboutdialog.Center()
 		self.aboutdialog.Show()
