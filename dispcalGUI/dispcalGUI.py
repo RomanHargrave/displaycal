@@ -125,13 +125,16 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
-from wxfixes import ThemedGenButton, BitmapWithThemedButton, set_bitmap_labels
+from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
+					 set_bitmap_labels)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
+					   BetterLinkCtrl,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileDrop, HyperLinkCtrl, InfoDialog, LogWindow,
 					   ProgressDialog, TooltipWindow, get_gradient_panel)
 import floatspin
+import xh_fancytext
 import xh_filebrowsebutton
 import xh_floatspin
 
@@ -563,7 +566,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.scalebitmap = (False, ) * 2
 	header.textshadow = False
 	header.SetBackgroundColour("#336699")
-	header.SetForegroundColour("#DDDDDD")
+	header.SetForegroundColour("#FFFFFF")
 	if not bitmap:
 		bitmap = getbitmap("theme/header", False)
 		if bitmap.Size[0] >= 220 and bitmap.Size[1] >= 60:
@@ -735,14 +738,6 @@ class ExtraArgsFrame(BaseFrame):
 		child = self.environment_shadow
 		child.Bind(wx.EVT_SIZE, resize_bmp)
 
-		min_val, max_val = config.valid_ranges["measure.min_display_update_delay_ms"]
-		self.min_display_update_delay_ms.SetRange(min_val, max_val)
-
-		min_val, max_val = config.valid_ranges["measure.display_settle_time_mult"]
-		self.display_settle_time_mult.SetDigits(len(str(stripzeros(min_val)).split(".")[-1]))
-		self.display_settle_time_mult.SetIncrement(min_val)
-		self.display_settle_time_mult.SetRange(min_val, max_val)
-
 		# Bind event handlers
 		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
 				   id=self.extra_args_dispcal_ctrl.GetId())
@@ -756,14 +751,6 @@ class ExtraArgsFrame(BaseFrame):
 				   id=self.extra_args_collink_ctrl.GetId())
 		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
 				   id=self.extra_args_targen_ctrl.GetId())
-		self.Bind(wx.EVT_CHECKBOX, self.extra_args_handler, 
-				   id=self.override_min_display_update_delay_ms.GetId())
-		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
-				   id=self.min_display_update_delay_ms.GetId())
-		self.Bind(wx.EVT_CHECKBOX, self.extra_args_handler, 
-				   id=self.override_display_settle_time_mult.GetId())
-		self.Bind(floatspin.EVT_FLOATSPIN, self.extra_args_handler, 
-				   id=self.display_settle_time_mult.GetId())
 		
 		self.setup_language()
 		self.update_controls()
@@ -777,18 +764,11 @@ class ExtraArgsFrame(BaseFrame):
 				   self.extra_args_spotread_ctrl.GetId(): "extra_args.spotread",
 				   self.extra_args_colprof_ctrl.GetId(): "extra_args.colprof",
 				   self.extra_args_collink_ctrl.GetId(): "extra_args.collink",
-				   self.extra_args_targen_ctrl.GetId(): "extra_args.targen",
-				   self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",
-				   self.min_display_update_delay_ms.GetId(): "measure.min_display_update_delay_ms",
-				   self.override_display_settle_time_mult.GetId(): "measure.override_display_settle_time_mult",
-				   self.display_settle_time_mult.GetId(): "measure.display_settle_time_mult"}
+				   self.extra_args_targen_ctrl.GetId(): "extra_args.targen"}
 		pref = mapping.get(event.GetId())
 		if pref:
 			ctrl = self.FindWindowById(event.GetId())
 			value = ctrl.GetValue()
-			if ctrl.Name.startswith("override_"):
-				self.update_display_ctrl(ctrl.Name[9:], value)
-				value = int(value)
 			setcfg(pref, value)
 	
 	def update_controls(self):
@@ -798,31 +778,8 @@ class ExtraArgsFrame(BaseFrame):
 		self.extra_args_colprof_ctrl.ChangeValue(getcfg("extra_args.colprof"))
 		self.extra_args_collink_ctrl.ChangeValue(getcfg("extra_args.collink"))
 		self.extra_args_targen_ctrl.ChangeValue(getcfg("extra_args.targen"))
-		for name in ("min_display_update_delay_ms",
-					 "display_settle_time_mult"):
-			value = bool(getcfg("measure.override_%s" % name))
-			getattr(self, "override_%s" % name).SetValue(value)
-			self.update_display_ctrl(name, value)
-		self.override_display_settle_time_mult.Show(getcfg("argyll.version") >= "1.7")
-		self.display_settle_time_mult.Show(getcfg("argyll.version") >= "1.7")
 		self.Sizer.SetSizeHints(self)
 		self.Sizer.Layout()
-
-	def update_display_ctrl(self, name, enable):
-		spinctrl = getattr(self, name)
-		spinctrl.Enable(enable)
-		spinvalue = getcfg("measure.%s" % name)
-		if not enable:
-			# Restore previous environment variable value
-			backup = os.getenv("ARGYLL_%s_BACKUP" % name.upper())
-			current = os.getenv("ARGYLL_%s" % name.upper())
-			if backup or current:
-				valuetype = type(defaults["measure.%s" % name])
-				try:
-					spinvalue = valuetype(backup or current)
-				except (TypeError, ValueError):
-					pass
-		spinctrl.SetValue(spinvalue)
 
 
 class GamapFrame(BaseFrame):
@@ -1055,6 +1012,9 @@ class GamapFrame(BaseFrame):
 		self.gamap_profile_handler()
 		if self.Parent:
 			self.Parent.update_bpc()
+			self.Parent.lut3d_update_b2a_controls()
+			if hasattr(self.Parent, "lut3dframe"):
+				self.Parent.lut3dframe.update_controls()
 	
 	def setup_language(self):
 		"""
@@ -1144,6 +1104,23 @@ class GamapFrame(BaseFrame):
 class MainFrame(BaseFrame):
 
 	""" Display calibrator main application window. """
+
+	lut3d_bind_event_handlers = LUT3DFrame.__dict__["lut3d_bind_event_handlers"]
+	lut3d_bitdepth_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_input_ctrl_handler"]
+	lut3d_bitdepth_output_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_output_ctrl_handler"]
+	lut3d_encoding_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_encoding_input_ctrl_handler"]
+	lut3d_encoding_output_ctrl_handler = LUT3DFrame.__dict__["lut3d_encoding_output_ctrl_handler"]
+	lut3d_enable_size_controls = LUT3DFrame.__dict__["lut3d_enable_size_controls"]
+	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
+	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
+	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
+	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
+	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
+	lut3d_show_bitdepth_controls = LUT3DFrame.__dict__["lut3d_show_bitdepth_controls"]
+	lut3d_show_encoding_controls = LUT3DFrame.__dict__["lut3d_show_encoding_controls"]
+	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
+	lut3d_update_encoding_controls = LUT3DFrame.__dict__["lut3d_update_encoding_controls"]
+	lut3d_update_shared_controls = LUT3DFrame.__dict__["lut3d_update_shared_controls"]
 	
 	def __init__(self, worker):
 		# Check for required resource files and get pre-canned testcharts
@@ -1166,6 +1143,7 @@ class MainFrame(BaseFrame):
 		# Initialize GUI
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "main.xrc")))
+		self.res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		if hasattr(wx, "PreFrame"):
 			# Classic
@@ -1464,7 +1442,7 @@ class MainFrame(BaseFrame):
 			self.tabpanelfooter.blend = True
 
 		# Add tab buttons
-		self.display_instrument_btn = platebtn.PlateButton(self.tabpanel, -1,
+		self.display_instrument_btn = PlateButton(self.tabpanel, -1,
 													label=" & ".join([lang.getstr("display"),
 																	  lang.getstr("instrument")]),
 													bmp=geticon(48, "display-instrument"),
@@ -1473,7 +1451,7 @@ class MainFrame(BaseFrame):
 		self.display_instrument_btn.Bind(wx.EVT_TOGGLEBUTTON,
 										 self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(1, self.display_instrument_btn)
-		self.calibration_settings_btn = platebtn.PlateButton(self.tabpanel, -1,
+		self.calibration_settings_btn = PlateButton(self.tabpanel, -1,
 													label=lang.getstr("calibration.settings"),
 													bmp=geticon(48, "calibration"),
 													style=platebtn.PB_STYLE_GRADIENT |
@@ -1482,7 +1460,7 @@ class MainFrame(BaseFrame):
 										   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(2, self.calibration_settings_btn,
 								   flag=wx.LEFT | wx.RIGHT, border=16)
-		self.profile_settings_btn = platebtn.PlateButton(self.tabpanel, -1,
+		self.profile_settings_btn = PlateButton(self.tabpanel, -1,
 													label=lang.getstr("profile.settings"),
 													bmp=geticon(48, "profiling"),
 													style=platebtn.PB_STYLE_GRADIENT |
@@ -1689,6 +1667,8 @@ class MainFrame(BaseFrame):
 				if not chart in self.default_testchart_names:
 					self.default_testchart_names.append(chart)
 
+		self.lut3d_setup_language()
+
 	def set_size(self, set_height=False, fit_width=False):
 		if not self.IsFrozen():
 			self.Freeze()
@@ -1702,17 +1682,19 @@ class MainFrame(BaseFrame):
 			borders_tb = self.Size[1] - self.ClientSize[1]
 			height = min(self.GetDisplay().ClientArea[3] - borders_tb -
 						 safety_margin,
-						 max(self.header.Size[1] +
+						 self.header.Size[1] +
 						 self.headerpanel.Sizer.MinSize[1] + 1 +
 						 ((getattr(self, "tabpanelheader", None) and
 						   self.tabpanelheader.Size[1] + 1) or 0) +
 						 self.tabpanel.Sizer.MinSize[1] +
 						 ((getattr(self, "tabpanelfooter", None) and
 						   self.tabpanelfooter.Size[1] + 1) or 0) +
-						 self.calibration_settings_panel.Sizer.MinSize[1] +
+						 max(self.display_instrument_panel.Sizer.MinSize[1],
+							 self.calibration_settings_panel.Sizer.MinSize[1],
+							 self.profile_settings_panel.Sizer.MinSize[1])+
 						 ((getattr(self, "buttonpanelheader", None) and
 						   self.buttonpanelheader.Size[1] + 1) or 0) +
-						 self.buttonpanel.Sizer.MinSize[1], 600))
+						 self.buttonpanel.Sizer.MinSize[1])
 		else:
 			height = self.ClientSize[1]
 		borders_lr = self.Size[0] - self.ClientSize[0]
@@ -2147,14 +2129,18 @@ class MainFrame(BaseFrame):
 
 		for child in (self.display_box_label, self.instrument_box_label,
 					  self.calibration_settings_label,
-					  self.profile_settings_label):
+					  self.profile_settings_label, self.lut3d_settings_label):
 			font = child.Font
 			font.SetWeight(wx.BOLD)
 			child.Font = font
 
 		for child in (self.display_shadow, self.instrument_shadow,
+					  self.display_instrument_info_shadow,
 					  self.calibration_settings_shadow,
-					  self.profile_settings_shadow):
+					  self.calibration_settings_info_shadow,
+					  self.profile_settings_shadow,
+					  self.lut3d_settings_shadow,
+					  self.profile_settings_info_shadow):
 			child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		# Settings file controls
@@ -2191,6 +2177,23 @@ class MainFrame(BaseFrame):
 				  id=self.measurement_mode_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.check_update_controls, 
 				  id=self.detect_displays_and_ports_btn.GetId())
+
+		# Display update delay & settle time
+		min_val, max_val = config.valid_ranges["measure.min_display_update_delay_ms"]
+		self.min_display_update_delay_ms.SetRange(min_val, max_val)
+
+		min_val, max_val = config.valid_ranges["measure.display_settle_time_mult"]
+		self.display_settle_time_mult.SetDigits(len(str(stripzeros(min_val)).split(".")[-1]))
+		self.display_settle_time_mult.SetIncrement(min_val)
+		self.display_settle_time_mult.SetRange(min_val, max_val)
+		self.Bind(wx.EVT_CHECKBOX, self.display_delay_handler, 
+				   id=self.override_min_display_update_delay_ms.GetId())
+		self.Bind(wx.EVT_TEXT, self.display_delay_handler, 
+				   id=self.min_display_update_delay_ms.GetId())
+		self.Bind(wx.EVT_CHECKBOX, self.display_delay_handler, 
+				   id=self.override_display_settle_time_mult.GetId())
+		self.Bind(floatspin.EVT_FLOATSPIN, self.display_delay_handler, 
+				   id=self.display_settle_time_mult.GetId())
 		
 		# Colorimeter correction matrix
 		self.Bind(wx.EVT_CHOICE, self.colorimeter_correction_matrix_ctrl_handler, 
@@ -2320,6 +2323,15 @@ class MainFrame(BaseFrame):
 		self.profile_name_info_btn.SetToolTipString(lang.getstr("profile.name"))
 		self.Bind(wx.EVT_BUTTON, self.profile_save_path_btn_handler, 
 				  id=self.profile_save_path_btn.GetId())
+
+		# 3D LUT controls
+		# ===============
+
+		self.create_3dlut_cb.Bind(wx.EVT_CHECKBOX, self.lut3d_create_cb_handler)
+		self.lut3d_init_input_profiles()
+		self.input_profile_ctrl.Bind(wx.EVT_CHOICE,
+									 self.lut3d_input_colorspace_handler)
+		self.lut3d_bind_event_handlers()
 
 		# Main buttons
 		# ============
@@ -2495,7 +2507,6 @@ class MainFrame(BaseFrame):
 			"last_ti1_path",
 			"last_ti3_path",
 			"last_vrml_path",
-			"log.autoshow",
 			"log.show",
 			"lut_viewer.show",
 			"lut_viewer.show_actual_lut",
@@ -3220,6 +3231,12 @@ class MainFrame(BaseFrame):
 
 		self.update_measurement_mode()
 
+		for name in ("min_display_update_delay_ms",
+					 "display_settle_time_mult"):
+			value = bool(getcfg("measure.override_%s" % name))
+			getattr(self, "override_%s" % name).SetValue(value)
+			self.update_display_delay_ctrl(name, value)
+
 		self.update_adjustment_controls()
 		self.whitepoint_colortemp_textctrl.Enable(not update_cal)
 		self.whitepoint_colortemp_locus_ctrl.Enable(not update_cal)
@@ -3352,6 +3369,7 @@ class MainFrame(BaseFrame):
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
 
+		self.lut3d_update_controls()
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
 
@@ -3457,6 +3475,7 @@ class MainFrame(BaseFrame):
 					   (self.get_profile_type() in ("x", "X") and
 						(getcfg("profile.b2a.hires") or
 						 getcfg("profile.quality.b2a") in ("l", "n")))) and
+					  not getcfg("3dlut.create") and
 					  enable_profile)
 		self.black_point_compensation_cb.Enable(enable_bpc)
 		self.black_point_compensation_cb.SetValue(enable_bpc and
@@ -3726,10 +3745,12 @@ class MainFrame(BaseFrame):
 		self.whitepoint_ctrl_handler(
 			CustomEvent(wx.EVT_CHOICE.evtType[0], 
 			self.whitepoint_ctrl), False)
+		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
 		for ctrl in (self.whitepoint_colortemp_locus_label,
 					 self.whitepoint_colortemp_locus_ctrl):
 			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and
-					  not auto and do_cal)
+					  not auto and do_cal and
+					  show_advanced_calibration_options)
 
 		if getcfg("calibration.luminance", False):
 			self.luminance_ctrl.SetSelection(1)
@@ -3748,10 +3769,10 @@ class MainFrame(BaseFrame):
 		self.black_luminance_textctrl.SetValue(
 			getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
-			bool(getcfg("show_advanced_calibration_options") and
+			bool(show_advanced_calibration_options and
 				 getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(
-			bool(getcfg("show_advanced_calibration_options") and
+			bool(show_advanced_calibration_options and
 				 getcfg("calibration.black_luminance", False)))
 
 	def enable_argyll_debug_handler(self, event):
@@ -3790,6 +3811,97 @@ class MainFrame(BaseFrame):
 			self.lut3dframe.Raise()
 		else:
 			self.lut3dframe.Show(not self.lut3dframe.IsShownOnScreen())
+
+	def lut3d_create_cb_handler(self, event):
+		setcfg("3dlut.create", int(self.create_3dlut_cb.GetValue()))
+		if getcfg("3dlut.create"):
+			# Do not allow BPC if creating 3D LUT
+			if not getcfg("profile.black_point_compensation.backup", False):
+				setcfg("profile.black_point_compensation.backup",
+					   getcfg("profile.black_point_compensation"))
+			setcfg("profile.black_point_compensation", 0)
+		else:
+			if getcfg("profile.black_point_compensation.backup", False):
+				setcfg("profile.black_point_compensation",
+					   getcfg("profile.black_point_compensation.backup"))
+			setcfg("profile.black_point_compensation.backup", None)
+		self.calpanel.Freeze()
+		self.update_bpc()
+		self.profile_settings_changed()
+		self.lut3d_show_controls()
+		self.calpanel.Thaw()
+		self.update_scrollbars()
+		self.calpanel.Layout()
+
+	def lut3d_init_input_profiles(self):
+		self.input_profiles = OrderedDict()
+		for profile_filename in ["ACES.icm", "DCI_XYZ.icm", "Rec709.icm", 
+								 "Rec2020.icm", "EBU3213_PAL.icm",
+								 "SMPTE_RP145_NTSC.icm", "SMPTE431_P3.icm",
+								 getcfg("3dlut.input.profile")]:
+			if not os.path.isabs(profile_filename):
+				profile_filename = get_data_path("ref/" + profile_filename)
+			if profile_filename:
+				try:
+					profile = ICCP.ICCProfile(profile_filename)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					safe_print("%s:" % profile_filename, exception)
+				else:
+					if profile_filename not in self.input_profiles.values():
+						desc = profile.getDescription()
+						desc = re.sub(r"\s*(?:color profile|primaries with "
+									  "\S+ transfer function)$", "", desc)
+						self.input_profiles[desc] = profile_filename
+		self.input_profiles.sort()
+		self.input_profile_ctrl.SetItems(self.input_profiles.keys())
+
+	def lut3d_input_colorspace_handler(self, event):
+		setcfg("3dlut.input.profile",
+			   self.input_profiles[self.input_profile_ctrl.GetStringSelection()])
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.update_controls()
+
+	def lut3d_show_controls(self):
+		show = bool(getcfg("3dlut.create"))
+		self.input_profile_label.Show(show)
+		self.input_profile_ctrl.Show(show)
+		self.lut3d_show_encoding_controls(show)
+		self.lut3d_format_label.Show(show)
+		self.lut3d_format_ctrl.Show(show)
+		show_advanced_calibration_options = getcfg("show_advanced_calibration_options")
+		for ctrl in (self.gamut_mapping_mode,
+					 self.gamut_mapping_inverse_a2b,
+					 self.gamut_mapping_b2a,
+					 self.rendering_intent_label,
+					 self.rendering_intent_ctrl,
+					 self.lut3d_size_label,
+					 self.lut3d_size_ctrl):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   show_advanced_calibration_options and
+										   bool(getcfg("3dlut.create")))
+
+	def lut3d_update_b2a_controls(self):
+		# Allow using B2A instead of inverse A2B?
+		allow_b2a_gamap = (getcfg("profile.type") in ("x", "X") and
+						   getcfg("profile.b2a.hires"))
+		self.gamut_mapping_b2a.Enable(allow_b2a_gamap)
+		if not allow_b2a_gamap:
+			setcfg("3dlut.gamap.use_b2a", 0)
+		self.gamut_mapping_inverse_a2b.SetValue(
+			not getcfg("3dlut.gamap.use_b2a"))
+		self.gamut_mapping_b2a.SetValue(
+			bool(getcfg("3dlut.gamap.use_b2a")))
+	
+	def lut3d_update_controls(self):
+		self.create_3dlut_cb.SetValue(bool(getcfg("3dlut.create")))
+		self.lut3d_show_controls()
+		lut3d_input_profile = getcfg("3dlut.input.profile")
+		if lut3d_input_profile in self.input_profiles.values():
+			self.input_profile_ctrl.SetSelection(
+				self.input_profiles.values().index(lut3d_input_profile))
+		self.lut3d_update_b2a_controls()
+		self.lut3d_update_shared_controls()
+		self.lut3d_update_encoding_controls()
 
 	def profile_quality_warning_handler(self, event):
 		q = self.get_profile_quality()
@@ -4303,6 +4415,7 @@ class MainFrame(BaseFrame):
 									   event.GetEventType(), 
 									   getevttype(event)))
 		self.calpanel.Freeze()
+		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
 		if self.whitepoint_ctrl.GetSelection() == 2: # x,y chromaticity coordinates
 			self.whitepoint_colortemp_locus_label.Hide()
 			self.whitepoint_colortemp_locus_ctrl.Hide()
@@ -4347,8 +4460,8 @@ class MainFrame(BaseFrame):
 				not self.updatingctrls):
 				self.whitepoint_x_textctrl.SetFocus()
 		elif self.whitepoint_ctrl.GetSelection() == 1:
-			self.whitepoint_colortemp_locus_label.Show()
-			self.whitepoint_colortemp_locus_ctrl.Show()
+			self.whitepoint_colortemp_locus_label.Show(show_advanced_calibration_options)
+			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_calibration_options)
 			self.whitepoint_colortemp_textctrl.Show()
 			self.whitepoint_colortemp_label.Show()
 			self.whitepoint_x_textctrl.Hide()
@@ -4380,8 +4493,8 @@ class MainFrame(BaseFrame):
 				self.whitepoint_colortemp_textctrl.SetFocus()
 				self.whitepoint_colortemp_textctrl.SelectAll()
 		else:
-			self.whitepoint_colortemp_locus_label.Show()
-			self.whitepoint_colortemp_locus_ctrl.Show()
+			self.whitepoint_colortemp_locus_label.Show(show_advanced_calibration_options)
+			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_calibration_options)
 			self.whitepoint_colortemp_textctrl.Hide()
 			self.whitepoint_colortemp_label.Hide()
 			self.whitepoint_x_textctrl.Hide()
@@ -6146,7 +6259,7 @@ class MainFrame(BaseFrame):
 		result was an exception. """
 		if isinstance(result, Exception) and result:
 			wx.CallAfter(show_result_dialog, result, self)
-		elif getcfg("log.autoshow"):
+		else:
 			wx.CallAfter(self.infoframe_toggle_handler, show=True)
 		self.worker.wrapup(False)
 		self.Show()
@@ -7646,14 +7759,28 @@ class MainFrame(BaseFrame):
 				   int(show_advanced_calibration_options))
 		self.calpanel.Freeze()
 		self.menuitem_show_advanced_calibration_options.Check(show_advanced_calibration_options)
-		for ctrl in (self.black_luminance_label,
-					 self.black_luminance_ctrl):
+		self.override_display_settle_time_mult.Show(
+			show_advanced_calibration_options and
+			getcfg("argyll.version") >= "1.7")
+		self.display_settle_time_mult.Show(
+			show_advanced_calibration_options and
+			getcfg("argyll.version") >= "1.7")
+		for ctrl in (self.override_min_display_update_delay_ms,
+					 self.min_display_update_delay_ms,
+					 self.min_display_update_delay_ms_label,
+					 self.black_luminance_label,
+					 self.black_luminance_ctrl,
+					 # Profiling options
+					 self.profile_type_label,
+					 self.profile_type_ctrl,
+					 self.gamap_btn):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_calibration_options)
 		self.black_luminance_textctrl.Show(show_advanced_calibration_options and
 										   bool(getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(show_advanced_calibration_options and
 												 bool(getcfg("calibration.black_luminance", False)))
+		self.lut3d_show_controls()
 		if event:
 			self.show_trc_controls()
 		self.calpanel.Layout()
@@ -7717,6 +7844,7 @@ class MainFrame(BaseFrame):
 				btn._SetState(platebtn.PLATE_NORMAL)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
+		self.update_scrollbars()
 		self.calpanel.Layout()
 	
 	def colorimeter_correction_matrix_ctrl_handler(self, event, path=None):
@@ -9092,6 +9220,36 @@ class MainFrame(BaseFrame):
 			self.reportframe.update_controls()
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
+	
+	def display_delay_handler(self, event):
+		mapping = {self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",
+				   self.min_display_update_delay_ms.GetId(): "measure.min_display_update_delay_ms",
+				   self.override_display_settle_time_mult.GetId(): "measure.override_display_settle_time_mult",
+				   self.display_settle_time_mult.GetId(): "measure.display_settle_time_mult"}
+		pref = mapping.get(event.GetId())
+		if pref:
+			ctrl = self.FindWindowById(event.GetId())
+			value = ctrl.GetValue()
+			if ctrl.Name.startswith("override_"):
+				self.update_display_delay_ctrl(ctrl.Name[9:], value)
+				value = int(value)
+			setcfg(pref, value)
+
+	def update_display_delay_ctrl(self, name, enable):
+		spinctrl = getattr(self, name)
+		spinctrl.Enable(enable)
+		spinvalue = getcfg("measure.%s" % name)
+		if not enable:
+			# Restore previous environment variable value
+			backup = os.getenv("ARGYLL_%s_BACKUP" % name.upper())
+			current = os.getenv("ARGYLL_%s" % name.upper())
+			if backup or current:
+				valuetype = type(defaults["measure.%s" % name])
+				try:
+					spinvalue = valuetype(backup or current)
+				except (TypeError, ValueError):
+					pass
+		spinctrl.SetValue(spinvalue)
 
 	def display_lut_ctrl_handler(self, event):
 		if debug:
@@ -11057,7 +11215,7 @@ class MainFrame(BaseFrame):
 				if options_colprof:
 					# restore defaults
 					self.restore_defaults_handler(
-						include=("profile", "gamap_"), 
+						include=("profile", "gamap_", "3dlut.create"), 
 						exclude=("profile.update",
 								 "profile.name", "gamap_default_intent"))
 					for o in options_colprof:
@@ -11491,8 +11649,8 @@ class MainFrame(BaseFrame):
 		self.aboutdialog = AboutDialog(self, -1, 
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
-		self.aboutdialog.BackgroundColour = "#404040"
-		self.aboutdialog.ForegroundColour = "#DDDDDD"
+		self.aboutdialog.BackgroundColour = "#336699"
+		self.aboutdialog.ForegroundColour = "#FFFFFF"
 		items = []
 		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
@@ -11502,7 +11660,7 @@ class MainFrame(BaseFrame):
 																	   author)))
 		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
 																	 build)))
-		items.append(HyperLinkCtrl(
+		items.append(BetterLinkCtrl(
 			self.aboutdialog, -1, label=domain, 
 			URL="http://%s" % domain))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -11511,7 +11669,7 @@ class MainFrame(BaseFrame):
 		items.append(wx.StaticText(
 			self.aboutdialog, -1, u"%s" % 
 								  self.worker.argyll_version_string))
-		items.append(HyperLinkCtrl(
+		items.append(BetterLinkCtrl(
 			self.aboutdialog, -1, label="ArgyllCMS.com", 
 			URL="http://www.argyllcms.com"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -11542,16 +11700,21 @@ class MainFrame(BaseFrame):
 			for part in pyver_long[1:]:
 				if part:
 					items.append(wx.StaticText(self.aboutdialog, -1, part))
-		items.append(HyperLinkCtrl(
+		items.append(BetterLinkCtrl(
 			self.aboutdialog, -1, label="python.org", 
 			URL="http://www.python.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1, "wxPython " + 
 														 wx.version()))
-		items.append(HyperLinkCtrl(
+		items.append(BetterLinkCtrl(
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		for item in items:
+			if isinstance(item, BetterLinkCtrl):
+				item.SetNormalColour("#99CCFF")
+				item.SetVisitedColour("#99CCFF")
+				item.SetHoverColour("#99CCFF")
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.ok.BackgroundColour = self.aboutdialog.BackgroundColour
 		self.aboutdialog.ok.ForegroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)

@@ -12,8 +12,8 @@
                   <object class="sizeritem">
                     <object class="wxStaticText" name="calibration_file_label">
                       <label>calibration.file</label>
-                      <fg>#DDDDDD</fg>
-                      <bg>#404040</bg>
+                      <fg>#FFFFFF</fg>
+                      <bg>#336699</bg>
                     </object>
                     <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                     <border>8</border>
@@ -28,7 +28,7 @@
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="calibration_file_btn">
                       <bitmap>../theme/icons/16x16/document-open.png</bitmap>
-                      <bg>#404040</bg>
+                      <bg>#336699</bg>
                       <tooltip>calibration.load</tooltip>
                       <style>wxNO_BORDER</style>
                       <XRCED>
@@ -41,7 +41,7 @@
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="delete_calibration_btn">
                       <bitmap>../theme/icons/16x16/edit-delete.png</bitmap>
-                      <bg>#404040</bg>
+                      <bg>#336699</bg>
                       <tooltip>delete</tooltip>
                       <style>wxNO_BORDER</style>
                       <XRCED>
@@ -54,7 +54,7 @@
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="install_profile_btn">
                       <bitmap>../theme/icons/16x16/install.png</bitmap>
-                      <bg>#404040</bg>
+                      <bg>#336699</bg>
                       <tooltip>profile.install</tooltip>
                       <style>wxNO_BORDER</style>
                       <XRCED>
@@ -67,7 +67,7 @@
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="profile_info_btn">
                       <bitmap>../theme/icons/16x16/info.png</bitmap>
-                      <bg>#404040</bg>
+                      <bg>#336699</bg>
                       <tooltip>profile.info</tooltip>
                       <style>wxNO_BORDER</style>
                       <XRCED>
@@ -79,7 +79,7 @@
                   </object>
                   <orient>wxHORIZONTAL</orient>
                 </object>
-                <bg>#404040</bg>
+                <bg>#336699</bg>
               </object>
               <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
             </object>
@@ -197,7 +197,7 @@
                                         </XRCED>
                                       </object>
                                       <flag>wxTOP|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>6</border>
+                                      <border>8</border>
                                     </object>
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
@@ -285,7 +285,7 @@
                                         </XRCED>
                                       </object>
                                       <flag>wxTOP|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>6</border>
+                                      <border>8</border>
                                     </object>
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
@@ -299,6 +299,55 @@
                             <orient>wxHORIZONTAL</orient>
                           </object>
                           <flag>wxEXPAND</flag>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxFlexGridSizer">
+                            <object class="sizeritem">
+                              <object class="wxCheckBox" name="override_min_display_update_delay_ms">
+                                <label>measure.override_min_display_update_delay_ms</label>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxSpinCtrl" name="min_display_update_delay_ms">
+                                <size>85,-1</size>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="min_display_update_delay_ms_label">
+                                <label>ms</label>
+                              </object>
+                              <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxCheckBox" name="override_display_settle_time_mult">
+                                <label>measure.override_display_settle_time_mult</label>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="FloatSpin" name="display_settle_time_mult">
+                                <size>85,-1</size>
+                                <digits>6</digits>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="spacer">
+                              <size>16,1</size>
+                            </object>
+                            <cols>3</cols>
+                            <vgap>8</vgap>
+                            <hgap>4</hgap>
+                            <growablecols>2</growablecols>
+                          </object>
+                          <flag>wxTOP|wxEXPAND</flag>
+                          <border>10</border>
                         </object>
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
@@ -352,12 +401,65 @@
                           </object>
                           <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                         </object>
-                        <object class="spacer">
-                          <size>1,4</size>
+                        <object class="sizeritem">
+                          <object class="wxPanel">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxStaticBitmap" name="display_instrument_info_shadow">
+                                  <bitmap>../theme/shadow-bordertop.png</bitmap>
+                                </object>
+                                <flag>wxBOTTOM|wxEXPAND</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxFlexGridSizer">
+                                  <object class="sizeritem">
+                                    <object class="wxStaticBitmap">
+                                      <bitmap>../theme/icons/48x48/stopwatch.png</bitmap>
+                                    </object>
+                                    <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                  </object>
+                                  <object class="sizeritem">
+                                    <object class="StaticFancyText">
+                                      <label>info.display_instrument.warmup</label>
+                                    </object>
+                                    <flag>wxTOP|wxALIGN_LEFT|wxALIGN_TOP</flag>
+                                    <border>6</border>
+                                  </object>
+                                  <object class="sizeritem">
+                                    <object class="wxStaticBitmap">
+                                      <bitmap>../theme/icons/32x32/dialog-information.png</bitmap>
+                                    </object>
+                                    <flag>wxALIGN_TOP|wxALIGN_RIGHT</flag>
+                                  </object>
+                                  <object class="sizeritem">
+                                    <object class="StaticFancyText">
+                                      <label>info.display_instrument</label>
+                                    </object>
+                                    <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
+                                  </object>
+                                  <cols>2</cols>
+                                  <vgap>12</vgap>
+                                  <hgap>12</hgap>
+                                  <growablecols>1</growablecols>
+                                  <growablerows>1</growablerows>
+                                </object>
+                                <option>1</option>
+                                <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                                <border>16</border>
+                              </object>
+                              <orient>wxVERTICAL</orient>
+                            </object>
+                            <bg>#FFFFFF</bg>
+                          </object>
+                          <flag>wxTOP|wxEXPAND</flag>
+                          <border>16</border>
+                          <option>1</option>
                         </object>
                         <orient>wxVERTICAL</orient>
                       </object>
                     </object>
+                    <option>1</option>
                     <flag>wxEXPAND</flag>
                   </object>
                   <object class="sizeritem">
@@ -894,10 +996,52 @@
                           <flag>wxLEFT|wxRIGHT</flag>
                           <border>16</border>
                         </object>
+                        <object class="sizeritem">
+                          <object class="wxPanel">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxStaticBitmap" name="calibration_settings_info_shadow">
+                                  <bitmap>../theme/shadow-bordertop.png</bitmap>
+                                </object>
+                                <flag>wxBOTTOM|wxEXPAND</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxFlexGridSizer">
+                                  <object class="sizeritem">
+                                    <object class="wxStaticBitmap">
+                                      <bitmap>../theme/icons/32x32/dialog-information.png</bitmap>
+                                    </object>
+                                    <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
+                                  </object>
+                                  <object class="sizeritem">
+                                    <object class="StaticFancyText">
+                                      <label>info.calibration_settings</label>
+                                    </object>
+                                    <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
+                                  </object>
+                                  <cols>2</cols>
+                                  <vgap>12</vgap>
+                                  <hgap>12</hgap>
+                                  <growablecols>1</growablecols>
+                                </object>
+                                <option>1</option>
+                                <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                                <border>16</border>
+                              </object>
+                              <orient>wxVERTICAL</orient>
+                            </object>
+                            <bg>#FFFFFF</bg>
+                          </object>
+                          <flag>wxTOP|wxEXPAND</flag>
+                          <border>8</border>
+                          <option>1</option>
+                        </object>
                         <orient>wxVERTICAL</orient>
                       </object>
                       <hidden>1</hidden>
                     </object>
+                    <option>1</option>
                     <flag>wxEXPAND</flag>
                   </object>
                   <object class="sizeritem">
@@ -1128,10 +1272,226 @@
                           <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
                           <border>16</border>
                         </object>
+                        <object class="sizeritem">
+                          <object class="wxBoxSizer">
+                            <object class="sizeritem">
+                              <object class="wxStaticBitmap" name="lut3d_settings_shadow">
+                                <bitmap>../theme/shadow-bordertop.png</bitmap>
+                              </object>
+                              <flag>wxEXPAND</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_settings_label">
+                                <label>3dlut.settings</label>
+                              </object>
+                              <flag>wxLEFT</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="spacer">
+                              <size>1,8</size>
+                            </object>
+                            <orient>wxVERTICAL</orient>
+                          </object>
+                          <flag>wxBOTTOM|wxEXPAND</flag>
+                          <border>8</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxCheckBox" name="create_3dlut_cb">
+                            <label>3dlut.create_after_profiling</label>
+                            <checked>0</checked>
+                          </object>
+                          <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>16</border>
+                        </object>
+                        <object class="spacer">
+                          <size>1,12</size>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxFlexGridSizer">
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="input_profile_label">
+                                <label>3dlut.input.colorspace</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="input_profile_ctrl">
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="encoding_input_label">
+                                <label>3dlut.encoding.input</label>
+                                <hidden>1</hidden>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="encoding_input_ctrl">
+                                <selection>4</selection>
+                                <hidden>1</hidden>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="encoding_output_label">
+                                <label>3dlut.encoding.output</label>
+                                <hidden>1</hidden>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="encoding_output_ctrl">
+                                <selection>4</selection>
+                                <hidden>1</hidden>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="gamut_mapping_mode">
+                                <label>gamut_mapping.mode</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxBoxSizer">
+                                <object class="sizeritem">
+                                  <object class="wxRadioButton" name="gamut_mapping_inverse_a2b">
+                                    <label>gamut_mapping.mode.inverse_a2b</label>
+                                    <style>wxRB_GROUP</style>
+                                  </object>
+                                  <flag>wxLEFT</flag>
+                                  <border>4</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxRadioButton" name="gamut_mapping_b2a">
+                                    <label>gamut_mapping.mode.b2a</label>
+                                  </object>
+                                  <flag>wxLEFT</flag>
+                                  <border>8</border>
+                                </object>
+                                <orient>wxHORIZONTAL</orient>
+                              </object>
+                              <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="rendering_intent_label">
+                                <label>rendering_intent</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxBoxSizer">
+                                <object class="sizeritem">
+                                  <object class="wxChoice" name="rendering_intent_ctrl">
+                                  </object>
+                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                </object>
+                                <orient>wxHORIZONTAL</orient>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_format_label">
+                                <label>3dlut.format</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="lut3d_format_ctrl">
+                                <selection>0</selection>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_size_label">
+                                <label>3dlut.size</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="lut3d_size_ctrl">
+                                <selection>0</selection>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_bitdepth_input_label">
+                                <label>3dlut.bitdepth.input</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="lut3d_bitdepth_input_ctrl">
+                                <selection>4</selection>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_bitdepth_output_label">
+                                <label>3dlut.bitdepth.output</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="lut3d_bitdepth_output_ctrl">
+                                <selection>4</selection>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <cols>2</cols>
+                            <vgap>8</vgap>
+                            <hgap>12</hgap>
+                          </object>
+                          <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                          <border>16</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxPanel">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxStaticBitmap" name="profile_settings_info_shadow">
+                                  <bitmap>../theme/shadow-bordertop.png</bitmap>
+                                </object>
+                                <flag>wxBOTTOM|wxEXPAND</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxFlexGridSizer">
+                                  <object class="sizeritem">
+                                    <object class="wxStaticBitmap">
+                                      <bitmap>../theme/icons/32x32/dialog-information.png</bitmap>
+                                    </object>
+                                    <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
+                                  </object>
+                                  <object class="sizeritem">
+                                    <object class="StaticFancyText">
+                                      <label>info.profile_settings</label>
+                                    </object>
+                                    <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
+                                  </object>
+                                  <cols>2</cols>
+                                  <vgap>12</vgap>
+                                  <hgap>12</hgap>
+                                  <growablecols>1</growablecols>
+                                </object>
+                                <option>1</option>
+                                <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                                <border>16</border>
+                              </object>
+                              <orient>wxVERTICAL</orient>
+                            </object>
+                            <bg>#FFFFFF</bg>
+                          </object>
+                          <flag>wxEXPAND</flag>
+                          <option>1</option>
+                        </object>
                         <orient>wxVERTICAL</orient>
                       </object>
                       <hidden>1</hidden>
                     </object>
+                    <option>1</option>
                     <flag>wxEXPAND</flag>
                   </object>
                   <orient>wxVERTICAL</orient>

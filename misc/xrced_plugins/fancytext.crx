@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<resource>
+  <component class="Component" name="StaticFancyText">
+    <groups>
+      <item>control</item>
+    </groups>
+    <attributes>
+      <item>pos</item>
+      <item>size</item>
+      <item>label</item>
+    </attributes>
+    <has-name>1</has-name>
+    <module>xh_fancytext</module>
+    <handler>StaticFancyTextCtrlXmlHandler</handler>
+    <menu>control</menu>
+    <label>StaticFancyText</label>
+    <help>This class works similar to StaticText except it interprets its text as FancyText.</help>
+  </component>
+</resource>

@@ -30,6 +30,7 @@ import wx.grid
 from wx.lib.buttons import GenBitmapButton as _GenBitmapButton
 from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
 from wx.lib.buttons import GenBitmapTextButton as _GenBitmapTextButton
+from wx.lib import platebtn
 
 if u"phoenix" in wx.PlatformInfo:
 	# Phoenix compatibility
@@ -610,6 +611,78 @@ class ThemedGenButton(GenButton, _ThemedGenButton):
 	def SetDefault(self):
 		self._default = True
 		_ThemedGenButton.SetDefault(self)
+
+
+
+class PlateButton(platebtn.PlateButton):
+
+	"""
+	Fixes wx.lib.platebtn.PlateButton sometimes not reflecting enabled state
+	correctly aswelll as other quirks
+	
+	"""
+
+	_reallyenabled = True
+
+	def DoGetBestSize(self):
+		"""Calculate the best size of the button
+		
+		:return: :class:`Size`
+
+		"""
+		# A liitle more padding left + right
+		width = 24
+		height = 6
+		if self.Label:
+			# NOTE: Should measure with a GraphicsContext to get right
+			#       size, but due to random segfaults on linux special
+			#       handling is done in the drawing instead...
+			lsize = self.GetFullTextExtent(self.Label)
+			width += lsize[0]
+			height += lsize[1]
+			
+		if self._bmp['enable'] is not None:
+			bsize = self._bmp['enable'].Size
+			width += (bsize[0] + 10)
+			if height <= bsize[1]:
+				height = bsize[1] + 6
+			else:
+				height += 3
+		else:
+			width += 10
+
+		if self._menu is not None or self._style & platebtn.PB_STYLE_DROPARROW:
+			width += 12
+
+		best = wx.Size(width, height)
+		self.CacheBestSize(best)
+		return best
+
+	def __DrawBitmap(self, gc):
+		"""Draw the bitmap if one has been set
+
+		:param GCDC `gc`: :class:`GCDC` to draw with
+		:return: x cordinate to draw text at
+
+		"""
+		if self.IsEnabled():
+			bmp = self._bmp['enable']
+		else:
+			bmp = self._bmp['disable']
+
+		xpos = 16
+		if bmp is not None and bmp.IsOk():
+			bw, bh = bmp.GetSize()
+			ypos = (self.GetSize()[1] - bh) // 2
+			gc.DrawBitmap(bmp, xpos, ypos, bmp.GetMask() != None)
+			return bw + xpos
+		else:
+			return xpos
+
+	Disable = ThemedGenButton.__dict__["Disable"]
+	Enable = ThemedGenButton.__dict__["Enable"]
+	Enabled = ThemedGenButton.__dict__["Enabled"]
+	IsEnabled = ThemedGenButton.__dict__["IsEnabled"]
 
 
 class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):

@@ -114,51 +114,7 @@
               <flag>wxEXPAND</flag>
             </object>
             <object class="spacer">
-              <size>1,12</size>
-            </object>
-            <object class="sizeritem">
-              <object class="wxFlexGridSizer">
-                <object class="sizeritem">
-                  <object class="wxCheckBox" name="override_min_display_update_delay_ms">
-                    <label>measure.override_min_display_update_delay_ms</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>4</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxSpinCtrl" name="min_display_update_delay_ms">
-                    <size>85,-1</size>
-                  </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxStaticText">
-                    <label>ms</label>
-                  </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <object class="sizeritem">
-                  <object class="wxCheckBox" name="override_display_settle_time_mult">
-                    <label>measure.override_display_settle_time_mult</label>
-                  </object>
-                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                  <border>4</border>
-                </object>
-                <object class="sizeritem">
-                  <object class="FloatSpin" name="display_settle_time_mult">
-                    <size>85,-1</size>
-                    <digits>6</digits>
-                  </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                </object>
-                <object class="spacer"/>
-                <cols>3</cols>
-                <growablecols>2</growablecols>
-                <hgap>4</hgap>
-                <vgap>8</vgap>
-              </object>
-              <flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-              <border>16</border>
+              <size>1,16</size>
             </object>
           </object>
         </object>

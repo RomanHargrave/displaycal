@@ -11,6 +11,7 @@ import string
 import subprocess as sp
 import sys
 import threading
+import xml.parsers.expat
 
 import demjson
 
@@ -49,6 +50,7 @@ except ImportError:
 	from wx import aui
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
+from wx.lib import fancytext
 
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
@@ -1374,6 +1376,7 @@ class BaseFrame(wx.Frame):
 		# Controls and labels
 		for child in self.GetAllChildren():
 			if isinstance(child, (wx.StaticText, wx.Control,
+								  BetterStaticFancyText,
 								  BitmapBackgroundPanelText)):
 				if not hasattr(child, "_Label"):
 					# Backup un-translated label
@@ -3300,6 +3303,217 @@ class HyperLinkCtrl(wx.HyperlinkCtrl):
 				 style=wx.HL_DEFAULT_STYLE, name=wx.HyperlinkCtrlNameStr, URL=""):
 		wx.HyperlinkCtrl.__init__(self, parent, id, label, URL, pos, size,
 								  style, name)
+
+
+class BetterLinkCtrl(wx.StaticText):
+
+	""" HyperLinkCtrl colors can't be chnaged under Windows """
+
+	def __init__(self, parent, id=wx.ID_ANY, label="",
+				 pos=wx.DefaultPosition, size=wx.DefaultSize,
+				 style=wx.HL_DEFAULT_STYLE, name=wx.HyperlinkCtrlNameStr, URL=""):
+		wx.StaticText.__init__(self, parent, id, label, pos, size,
+							   style, name)
+		self.URL = URL
+		self.Visited = False
+
+		font = self.GetFont()
+		font.SetUnderlined(True)
+		self.SetFont(font)
+
+		self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+
+		# Colors recommended for HTML5
+		self._normalcolor = "#0000EE"
+		self._visitedcolor = "#551A8B"
+		# Firefox uses this
+		self._hovercolor = "#EE0000"
+
+		self._hover = False
+
+		self.Bind(wx.EVT_LEFT_UP, self.OnClick)
+
+	def GetHoverColour(self):
+		return self._hovercolour
+
+	def GetNormalColour(self):
+		return self._normalcolor
+
+	def GetURL(self):
+		return self.URL
+
+	def GetVisited(self):
+		return self.Visited
+
+	def GetVisitedColour(self):
+		return self._visitedcolor
+
+	@Property
+	def HoverColour():
+		def fget(self):
+			return self._hoverlcolor
+
+		def fset(self, color):
+			self.SetHoverColour(color)
+
+		return locals()
+
+	@Property
+	def NormalColour():
+		def fget(self):
+			return self._normalcolor
+
+		def fset(self, color):
+			self.SetNormalColour(color)
+
+		return locals()
+
+	def OnClick(self, event):
+		wx.LaunchDefaultBrowser(self.URL)
+		self.Visited = True
+
+	@Property
+	def VisitedColour():
+		def fget(self):
+			return self._visitedcolor
+
+		def fset(self, color):
+			self.SetVisitedColour(color)
+
+		return locals()
+
+	def SetHoverColour(self, color):
+		self._hovercolor = color
+		if self._hover:
+			self.ForegroundColour = color
+
+	def SetNormalColour(self, color):
+		self._normalcolor = color
+		if not self.Visited and not self._hover:
+			self.ForegroundColour = color
+
+	def SetURL(self, url):
+		self.URL = url
+
+	def SetVisited(self, visited):
+		self.Visited = visited
+
+	def SetVisitedColour(self, color):
+		self._visitedcolor = color
+		if self.Visited and not self._hover:
+			self.ForegroundColour = color
+
+
+def fancytext_Renderer_getCurrentFont(self):
+	font = self.fonts[-1]
+	_font = self._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+	if "encoding" in font:
+		_font.SetEncoding(font["encoding"])
+	if "family" in font:
+		_font.SetFamily(font["family"])
+	if "size" in font:
+		_font.SetPointSize(font["size"])
+	if "style" in font:
+		_font.SetStyle(font["style"])
+	if "weight" in font:
+		_font.SetWeight(font["weight"])
+	return _font
+
+fancytext.Renderer._font = None
+fancytext.Renderer.getCurrentFont = fancytext_Renderer_getCurrentFont
+
+
+def fancytext_RenderToRenderer(str, renderer, enclose=True):
+	str = safe_str(str, "UTF-8")
+	try:
+		if enclose:
+			str = '<?xml version="1.0"?><FancyText>%s</FancyText>' % str
+		p = xml.parsers.expat.ParserCreate()
+		p.returns_unicode = 1
+		p.StartElementHandler = renderer.startElement
+		p.EndElementHandler = renderer.endElement
+		p.CharacterDataHandler = renderer.characterData
+		p.Parse(str, 1)
+	except xml.parsers.expat.error, err:
+		raise ValueError('error parsing text text "%s": %s' % (str, err)) 
+
+fancytext.RenderToRenderer = fancytext_RenderToRenderer
+
+
+class BetterStaticFancyText(fancytext.StaticFancyText):
+
+	_textlabel = ""
+
+	def __init__(self, window, id, text, *args, **kargs):
+		self._textlabel = text
+		args = list(args)
+		kargs.setdefault('name', 'staticFancyText')
+		if 'background' in kargs:
+			background = kargs.pop('background')
+		elif args:
+			background = args.pop(0)
+		else:
+			background = wx.Brush(window.GetBackgroundColour(), wx.SOLID)
+		
+		bmp = fancytext.RenderToBitmap(text, background)
+		wx.StaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
+
+	def GetFont(self):
+		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+
+	def GetLabel(self):
+		return self._textlabel
+
+	@Property
+	def Label():
+		def fget(self):
+			return self._textlabel
+		
+		def fset(self, label):
+			self.SetLabel(label)
+		
+		return locals()
+
+	def SetFont(self, font):
+		fancytext.Renderer._font = font
+
+	def SetLabel(self, label):
+		self._textlabel = label
+		# Wrap ignoring tags, only break in whitespace
+		wrapped = ""
+		llen = 0
+		intag = False
+		for c in label:
+			if c == "<":
+				intag = True
+			elif intag and c == ">":
+				intag = False
+			if c in "\t ":
+				whitespace = True
+			else:
+				whitespace = False
+			if c in u"-\u2012\u2013\u2014\u2015":
+				hyphen = True
+			else:
+				hyphen = False
+			if c == "\n":
+				llen = 0
+			elif not intag:
+				llen += 1
+				if llen >= 120 and (whitespace or hyphen):
+					if hyphen:
+						wrapped += c
+					c = "\n"
+					llen = 0
+			wrapped += c
+		label = wrapped
+		background = wx.Brush(self.Parent.BackgroundColour, wx.SOLID)
+		try:
+			self.SetBitmap(fancytext.RenderToBitmap(label, background))
+		except ValueError:
+			# XML parsing error, strip all tags
+			label = re.sub(r"<[^>]*?>", "", label)
+			self.SetBitmap(fancytext.RenderToBitmap(label, background))
 
 
 class InfoDialog(BaseInteractiveDialog):

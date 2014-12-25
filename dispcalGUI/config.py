@@ -553,6 +553,7 @@ defaults = {
 	"3dlut.apply_trc": 1,
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 10,
+	"3dlut.create": 0,
 	"3dlut.trc_gamma": 2.4,
 	"3dlut.trc_gamma.backup": 2.4,
 	"3dlut.trc_gamma_type": "B",
@@ -570,7 +571,7 @@ defaults = {
 	"3dlut.output.profile.apply_cal": 1,
 	"3dlut.rendering_intent": "r",
 	"3dlut.use_abstract_profile": 0,
-	"3dlut.size": 17,
+	"3dlut.size": 65,
 	"allow_skip_sensor_cal": 0,
 	"app.allow_network_clients": 0,
 	"app.port": 15411,
@@ -640,8 +641,7 @@ defaults = {
 	"gamap_default_intent": "p",
 	"gamma": 2.2,
 	"instruments": "",
-	"log.autoshow": int(not(hasattr(sys.stdout, "isatty") and 
-							sys.stdout.isatty())),
+	"log.autoshow": 0,
 	"log.show": 0,
 	"lang": "en",
 	# The last_[...]_path defaults are set in localization.py

@@ -71,14 +71,6 @@ class LUT3DFrame(BaseFrame):
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		self.apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
-		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
-											self.encoding_input_ctrl_handler)
-		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
-									   self.encoding_output_ctrl_handler)
-		self.gamut_mapping_inverse_a2b.Bind(wx.EVT_RADIOBUTTON,
-											self.gamut_mapping_mode_handler)
-		self.gamut_mapping_b2a.Bind(wx.EVT_RADIOBUTTON,
-									self.gamut_mapping_mode_handler)
 		self.apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
 		self.apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
 		self.apply_trc_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
@@ -93,17 +85,8 @@ class LUT3DFrame(BaseFrame):
 										   self.black_output_offset_ctrl_handler)
 		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
 											  self.black_output_offset_ctrl_handler)
-		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
-										self.rendering_intent_ctrl_handler)
-		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
-									self.lut3d_format_ctrl_handler)
-		self.lut3d_size_ctrl.Bind(wx.EVT_CHOICE,
-								  self.lut3d_size_ctrl_handler)
-		self.lut3d_bitdepth_input_ctrl.Bind(wx.EVT_CHOICE,
-											self.lut3d_bitdepth_input_ctrl_handler)
-		self.lut3d_bitdepth_output_ctrl.Bind(wx.EVT_CHOICE,
-											 self.lut3d_bitdepth_output_ctrl_handler)
 		self.lut3d_create_btn.Bind(wx.EVT_BUTTON, self.lut3d_create_handler)
+		self.lut3d_bind_event_handlers()
 		
 		self.lut3d_create_btn.SetDefault()
 		
@@ -129,6 +112,27 @@ class LUT3DFrame(BaseFrame):
 								 int(getcfg("size.lut3dframe.h")))
 		else:
 			self.Center()
+
+	def lut3d_bind_event_handlers(self):
+		# Shared with amin window
+		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
+											self.lut3d_encoding_input_ctrl_handler)
+		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
+									   self.lut3d_encoding_output_ctrl_handler)
+		self.gamut_mapping_inverse_a2b.Bind(wx.EVT_RADIOBUTTON,
+											self.lut3d_gamut_mapping_mode_handler)
+		self.gamut_mapping_b2a.Bind(wx.EVT_RADIOBUTTON,
+									self.lut3d_gamut_mapping_mode_handler)
+		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
+										self.lut3d_rendering_intent_ctrl_handler)
+		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
+									self.lut3d_format_ctrl_handler)
+		self.lut3d_size_ctrl.Bind(wx.EVT_CHOICE,
+								  self.lut3d_size_ctrl_handler)
+		self.lut3d_bitdepth_input_ctrl.Bind(wx.EVT_CHOICE,
+											self.lut3d_bitdepth_input_ctrl_handler)
+		self.lut3d_bitdepth_output_ctrl.Bind(wx.EVT_CHOICE,
+											 self.lut3d_bitdepth_output_ctrl_handler)
 	
 	def OnClose(self, event=None):
 		if (getattr(self.worker, "thread", None) and
@@ -238,14 +242,18 @@ class LUT3DFrame(BaseFrame):
 			self.abstract_profile_ctrl.SetPath(path)
 			self.set_profile("abstract")
 	
-	def encoding_input_ctrl_handler(self, event):
+	def lut3d_encoding_input_ctrl_handler(self, event):
 		encoding = self.encoding_ab[self.encoding_input_ctrl.GetSelection()]
 		setcfg("3dlut.encoding.input", encoding)
 		if getcfg("3dlut.format") == "eeColor":
 			self.encoding_output_ctrl.SetSelection(self.encoding_ba[encoding])
 			setcfg("3dlut.encoding.output", encoding)
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.lut3d_update_encoding_controls()
+		elif self.Parent:
+			self.Parent.lut3d_update_encoding_controls()
 	
-	def encoding_output_ctrl_handler(self, event):
+	def lut3d_encoding_output_ctrl_handler(self, event):
 		encoding = self.encoding_ab[self.encoding_output_ctrl.GetSelection()]
 		if getcfg("3dlut.format") == "madVR" and encoding != "t":
 			profile = getattr(self, "output_profile", None)
@@ -269,6 +277,10 @@ class LUT3DFrame(BaseFrame):
 					self.encoding_ba[getcfg("3dlut.encoding.output")])
 				return False
 		setcfg("3dlut.encoding.output", encoding)
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.lut3d_update_encoding_controls()
+		elif self.Parent:
+			self.Parent.lut3d_update_encoding_controls()
 
 	def input_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -285,14 +297,25 @@ class LUT3DFrame(BaseFrame):
 	
 	def input_profile_ctrl_handler(self, event):
 		self.set_profile("input", silent=not event)
+		if self.Parent:
+			self.Parent.lut3d_init_input_profiles()
+			self.Parent.lut3d_update_controls()
 	
 	def lut3d_bitdepth_input_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.input",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_input_ctrl.GetSelection()])
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.lut3d_update_shared_controls()
+		elif self.Parent:
+			self.Parent.lut3d_update_shared_controls()
 	
 	def lut3d_bitdepth_output_ctrl_handler(self, event):
 		setcfg("3dlut.bitdepth.output",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.lut3d_update_shared_controls()
+		elif self.Parent:
+			self.Parent.lut3d_update_shared_controls()
 	
 	def lut3d_create_consumer(self, result=None):
 		if isinstance(result, Exception) and result:
@@ -442,16 +465,26 @@ class LUT3DFrame(BaseFrame):
 			# collink says madVR works best with 65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
-		self.setup_encoding_ctrl(format)
-		self.update_encoding_controls()
-		self.enable_size_controls()
-		self.show_bitdepth_controls()
+		self.lut3d_setup_encoding_ctrl(format)
+		self.lut3d_update_encoding_controls()
+		self.lut3d_enable_size_controls()
+		self.lut3d_show_bitdepth_controls()
+		if not hasattr(self, "lut3d_create_btn"):
+			if getattr(self, "lut3dframe", None):
+				self.lut3dframe.lut3d_update_shared_controls()
+			return
+		elif self.Parent:
+			self.Parent.lut3d_update_shared_controls()
 		self.lut3d_create_btn.Enable(format != "madVR" or
 									 self.output_profile_ctrl.IsShown())
 	
 	def lut3d_size_ctrl_handler(self, event):
 		setcfg("3dlut.size",
 			   self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()])
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.lut3d_update_shared_controls()
+		elif self.Parent:
+			self.Parent.lut3d_update_shared_controls()
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output", silent=not event)
@@ -462,8 +495,12 @@ class LUT3DFrame(BaseFrame):
 			self.output_profile_ctrl.SetPath(profile_path)
 			self.set_profile("output", profile_path or False, silent=not event)
 
-	def gamut_mapping_mode_handler(self, event):
+	def lut3d_gamut_mapping_mode_handler(self, event):
 		setcfg("3dlut.gamap.use_b2a", int(self.gamut_mapping_b2a.GetValue()))
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.update_controls()
+		elif self.Parent:
+			self.Parent.lut3d_update_b2a_controls()
 
 	def get_commands(self):
 		return self.get_common_commands() + ["3DLUT-maker [create <filename>]"]
@@ -480,10 +517,15 @@ class LUT3DFrame(BaseFrame):
 			return "ok"
 		return "invalid"
 	
-	def rendering_intent_ctrl_handler(self, event):
+	def lut3d_rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
 			   self.rendering_intents_ab[self.rendering_intent_ctrl.GetSelection()])
-		self.show_input_value_clipping_warning(True)
+		if getattr(self, "lut3dframe", None):
+			self.lut3dframe.lut3d_update_shared_controls()
+		else:
+			self.show_input_value_clipping_warning(True)
+			if self.Parent:
+				self.Parent.lut3d_update_shared_controls()
 	
 	def set_profile(self, which, profile_path=None, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
@@ -542,7 +584,7 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_current_btn.Hide()
 							self.output_profile_desc.Hide()
 							self.apply_cal_cb.Hide()
-							self.show_encoding_controls(False)
+							self.lut3d_show_encoding_controls(False)
 							self.show_trc_controls(False)
 							self.rendering_intent_label.Hide()
 							self.rendering_intent_ctrl.Hide()
@@ -562,8 +604,8 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_current_btn.Show()
 							self.output_profile_desc.Show()
 							self.apply_cal_cb.Show()
-							self.show_encoding_controls()
-							self.update_encoding_controls()
+							self.lut3d_show_encoding_controls()
+							self.lut3d_update_encoding_controls()
 							if (not hasattr(self, which + "_profile") or
 								getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName):
@@ -685,7 +727,7 @@ class LUT3DFrame(BaseFrame):
 			if which == "input":
 				getattr(self, "%s_profile_ctrl" %
 							  which).SetPath(getcfg("3dlut.%s.profile" % which))
-				self.update_encoding_controls()
+				self.lut3d_update_encoding_controls()
 			else:
 				getattr(self, "%s_profile_desc" % which).SetLabel("")
 				if not silent:
@@ -719,7 +761,10 @@ class LUT3DFrame(BaseFrame):
 		self.trc_gamma_types_ba = {"b": 0, "B": 1}
 		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
-		
+		self.lut3d_setup_language()
+
+	def lut3d_setup_language(self):
+		# Shared with main window
 		self.rendering_intents_ab = {}
 		self.rendering_intents_ba = {}
 		self.rendering_intent_ctrl.Clear()
@@ -755,9 +800,10 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_bitdepth_ab[i] = bitdepth
 			self.lut3d_bitdepth_ba[bitdepth] = i
 		
-		self.setup_encoding_ctrl(getcfg("3dlut.format"))
+		self.lut3d_setup_encoding_ctrl(getcfg("3dlut.format"))
 	
-	def setup_encoding_ctrl(self, format=None):
+	def lut3d_setup_encoding_ctrl(self, format=None):
+		# Shared with amin window
 		if format == "madVR":
 			encodings = ["n", "t"]
 		else:
@@ -796,6 +842,11 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl_handler(None)
 		self.output_profile_ctrl_handler(None)
 		self.update_trc_controls()
+		self.lut3d_update_shared_controls()
+		self.panel.Thaw()
+
+	def lut3d_update_shared_controls(self):
+		# Shared with main window
 		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		format = getcfg("3dlut.format")
 		if format == "madVR" and self.worker.argyll_version < [1, 6]:
@@ -804,11 +855,12 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.format", format)
 		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
-		self.enable_size_controls()
+		self.lut3d_enable_size_controls()
 		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
 		self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
-		self.show_bitdepth_controls()
-		self.panel.Thaw()
+		self.lut3d_show_bitdepth_controls()
+		if self.Parent:
+			self.Parent.lut3d_update_shared_controls()
 
 	def update_trc_control(self):
 		if (getcfg("3dlut.trc_gamma_type") == "B" and
@@ -826,17 +878,24 @@ class LUT3DFrame(BaseFrame):
 		self.black_output_offset_ctrl.SetValue(outoffset)
 		self.black_output_offset_intctrl.SetValue(outoffset)
 	
-	def show_bitdepth_controls(self):
-		self.Freeze()
-		input_show = getcfg("3dlut.format") == "3dl"
+	def lut3d_show_bitdepth_controls(self):
+		frozen = self.IsFrozen()
+		if not frozen:
+			self.Freeze()
+		show = isinstance(self, LUT3DFrame) or getcfg("3dlut.create")
+		input_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_show)
 		self.lut3d_bitdepth_input_ctrl.Show(input_show)
-		output_show = getcfg("3dlut.format") in ("3dl", "mga")
+		output_show = show and getcfg("3dlut.format") in ("3dl", "mga")
 		self.lut3d_bitdepth_output_label.Show(output_show)
 		self.lut3d_bitdepth_output_ctrl.Show(output_show)
-		self.panel.GetSizer().Layout()
-		self.update_layout()
-		self.Thaw()
+		if isinstance(self, LUT3DFrame):
+			self.panel.GetSizer().Layout()
+			self.update_layout()
+		else:
+			self.update_scrollbars()
+		if not frozen:
+			self.Thaw()
 
 	def show_trc_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
@@ -852,14 +911,14 @@ class LUT3DFrame(BaseFrame):
 		self.black_output_offset_intctrl_label.Show(show and
 													self.XYZbpout > [0, 0, 0])
 	
-	def show_encoding_controls(self, show=True):
+	def lut3d_show_encoding_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
 		self.encoding_input_label.Show(show)
 		self.encoding_input_ctrl.Show(show)
 		self.encoding_output_label.Show(show)
 		self.encoding_output_ctrl.Show(show)
 	
-	def update_encoding_controls(self):
+	def lut3d_update_encoding_controls(self):
 		self.encoding_input_ctrl.SetSelection(self.encoding_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_input_ctrl.Enable(getcfg("3dlut.format") != "madVR")
 		if getcfg("3dlut.format") == "eeColor":
@@ -868,7 +927,7 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") not in ("eeColor",
 																		"madVR"))
 	
-	def enable_size_controls(self):
+	def lut3d_enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
 									not in ("eeColor", "madVR"))
 		
