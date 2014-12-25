@@ -280,6 +280,36 @@ def GridGetSelection(self):
 wx.grid.Grid.GetSelection = GridGetSelection
 
 
+def adjust_font_size_for_gcdc(font):
+	font.SetPointSize(get_gcdc_font_size(font.PointSize))
+	return font
+
+
+def get_dc_font_size(size, dc):
+	""" Get correct font size for DC """
+	pointsize = (1.0, 1.0)
+	if isinstance(dc, wx.GCDC):
+		pointsize = tuple(1.0 / scale for scale in dc.GetLogicalScale())
+	if (sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC) or
+		wx.VERSION >= (2, 9)):
+		return size * (sum(pointsize) / 2.0)
+	else:
+		# On Linux, we need to correct the font size by a certain factor if
+		# wx.GCDC is used, to make text the same size as if wx.GCDC weren't used
+		screenppi = map(float, wx.ScreenDC().GetPPI())
+		ppi = dc.GetPPI()
+		return size * ((screenppi[0] / ppi[0] * pointsize[0] + screenppi[1] / ppi[1] * pointsize[1]) / 2.0)
+
+
+def get_gcdc_font_size(size):
+	dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
+	try:
+		dc = wx.GCDC(dc)
+	except:
+		pass
+	return get_dc_font_size(size, dc)
+
+
 def set_bitmap_labels(btn):
 	bitmap = btn.BitmapLabel
 	if not bitmap.IsOk():
@@ -679,10 +709,74 @@ class PlateButton(platebtn.PlateButton):
 		else:
 			return xpos
 
+	def __DrawButton(self):
+		"""Draw the button"""
+		# TODO using a buffered paintdc on windows with the nobg style
+		#      causes lots of weird drawing. So currently the use of a
+		#      buffered dc is dissabled for this style.
+		if platebtn.PB_STYLE_NOBG & self._style:
+			dc = wx.PaintDC(self)
+		else:
+			dc = wx.AutoBufferedPaintDCFactory(self)
+
+		gc = wx.GCDC(dc)
+
+		# Setup
+		gc.SetBrush(wx.TRANSPARENT_BRUSH)
+		gc.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+		gc.SetBackgroundMode(wx.TRANSPARENT)
+
+		# The background needs some help to look transparent on
+		# on Gtk and Windows
+		if wx.Platform in ['__WXGTK__', '__WXMSW__']:
+			gc.SetBackground(self.GetBackgroundBrush(gc))
+			gc.Clear()
+
+		# Calc Object Positions
+		width, height = self.GetSize()
+		tw, th = gc.GetTextExtent(self.Label)
+		txt_y = max((height - th) // 2, 1)
+
+		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
+			gc.SetTextForeground(self._color['htxt'])
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			self.__DrawHighlight(gc, width, height)
+
+		elif self._state['cur'] == platebtn.PLATE_PRESSED:
+			gc.SetTextForeground(self._color['htxt'])
+			if wx.Platform == '__WXMAC__':
+				pen = wx.Pen(platebtn.GetHighlightColour(), 1, wx.SOLID)
+			else:
+				pen = wx.Pen(platebtn.AdjustColour(self._color['press'], -80, 220), 1)
+			gc.SetPen(pen)
+
+			self.__DrawHighlight(gc, width, height)
+			txt_x = self.__DrawBitmap(gc)
+			t_x = max((width - tw - (txt_x + 2)) // 2, txt_x + 2)
+			gc.DrawText(self.Label, t_x, txt_y)
+			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+
+		else:
+			if self.IsEnabled():
+				gc.SetTextForeground(self.GetForegroundColour())
+			else:
+				txt_c = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+				gc.SetTextForeground(txt_c)
+
+		# Draw bitmap and text
+		if self._state['cur'] != platebtn.PLATE_PRESSED:
+			txt_x = self.__DrawBitmap(gc)
+			t_x = max((width - tw - (txt_x + 2)) // 2, txt_x + 2)
+			gc.DrawText(self.Label, t_x, txt_y)
+			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+
 	Disable = ThemedGenButton.__dict__["Disable"]
 	Enable = ThemedGenButton.__dict__["Enable"]
 	Enabled = ThemedGenButton.__dict__["Enabled"]
 	IsEnabled = ThemedGenButton.__dict__["IsEnabled"]
+
+if not hasattr(PlateButton, "_SetState"):
+	PlateButton._SetState = PlateButton.SetState
 
 
 class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):

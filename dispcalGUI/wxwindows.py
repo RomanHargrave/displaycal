@@ -28,12 +28,12 @@ from util_os import waccess
 from util_str import safe_str, safe_unicode, wrap
 from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop,
-					  adjust_font_size_for_gcdc, get_dc_font_size,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler)
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
-					 ThemedGenButton, set_bitmap_labels)
+					 ThemedGenButton, adjust_font_size_for_gcdc,
+					 get_dc_font_size, set_bitmap_labels)
 from lib.agw import labelbook
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
