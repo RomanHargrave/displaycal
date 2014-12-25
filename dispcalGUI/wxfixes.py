@@ -722,20 +722,22 @@ class PlateButton(platebtn.PlateButton):
 		gc = wx.GCDC(dc)
 
 		# Setup
-		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 		gc.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
 		gc.SetBackgroundMode(wx.TRANSPARENT)
-
-		# The background needs some help to look transparent on
-		# on Gtk and Windows
-		if wx.Platform in ['__WXGTK__', '__WXMSW__']:
-			gc.SetBackground(self.GetBackgroundBrush(gc))
-			gc.Clear()
 
 		# Calc Object Positions
 		width, height = self.GetSize()
 		tw, th = gc.GetTextExtent(self.Label)
 		txt_y = max((height - th) // 2, 1)
+
+		# The background needs some help to look transparent on
+		# on Gtk and Windows
+		if wx.Platform in ['__WXGTK__', '__WXMSW__']:
+			gc.SetBrush(self.GetBackgroundBrush(gc))
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			gc.DrawRectangle(0, 0, width, height)
+
+		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
 		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
 			gc.SetTextForeground(self._color['htxt'])
