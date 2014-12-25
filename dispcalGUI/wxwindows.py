@@ -482,6 +482,13 @@ class BaseFrame(wx.Frame):
 		wx.Frame.__init__(self, *args, **kwargs)
 		self.init()
 
+	def FindWindowByName(self, name):
+		""" wxPython Phoenix FindWindowByName descends into the parent windows,
+		we don't want that """
+		for child in self.GetAllChildren():
+			if hasattr(child, "Name") and child.Name == name:
+				return child
+
 	def init(self):
 		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
 
@@ -1335,6 +1342,14 @@ class BaseFrame(wx.Frame):
 			# Needed for Phoenix because custom attributes attached to menus
 			# are not retained
 			self._menulabels = {}
+		if not hasattr(self, "_ctrllabels"):
+			# Needed for Phoenix because custom attributes attached to controls
+			# may not be retained
+			self._ctrllabels = {}
+		if not hasattr(self, "_tooltipstrings"):
+			# Needed for Phoenix because custom attributes attached to controls
+			# may not be retained
+			self._tooltipstrings = {}
 		
 		# Title
 		if not hasattr(self, "_Title"):
@@ -1378,24 +1393,24 @@ class BaseFrame(wx.Frame):
 			if isinstance(child, (wx.StaticText, wx.Control,
 								  BetterStaticFancyText,
 								  BitmapBackgroundPanelText)):
-				if not hasattr(child, "_Label"):
+				if not child in self._ctrllabels:
 					# Backup un-translated label
-					label = child._Label = child.Label
+					label = self._ctrllabels[child] = child.Label
 				else:
 					# Restore un-translated label
-					label = child._Label
+					label = self._ctrllabels[child]
 				translated = lang.getstr(label)
 				if translated != label:
 					if isinstance(child, wx.Button):
 						translated = translated.replace("&", "&&")
 					child.Label = translated
 				if child.ToolTip:
-					if not hasattr(child, "_ToolTipString"):
+					if not child in self._tooltipstrings:
 						# Backup un-translated tooltip
-						tooltipstr = child._ToolTipString = child.ToolTip.Tip
+						tooltipstr = self._tooltipstrings[child] = child.ToolTip.Tip
 					else:
 						# Restore un-translated tooltip
-						tooltipstr = child._ToolTipString
+						tooltipstr = self._tooltipstrings[child]
 					translated = lang.getstr(tooltipstr)
 					if translated != tooltipstr:
 						child.SetToolTipString(translated)
