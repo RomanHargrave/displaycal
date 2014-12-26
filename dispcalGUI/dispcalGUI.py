@@ -1405,10 +1405,6 @@ class MainFrame(BaseFrame):
 			# wxPython 2.8.12+
 			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
 			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-			sizer.Insert(sizer.GetItemIndex(self.tabpanel), separator,
-						 flag=wx.EXPAND)
-			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
-			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
 			sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1, separator,
 						 flag=wx.EXPAND)
 			self.tabpanelheader = BitmapBackgroundPanel(self.panel,
