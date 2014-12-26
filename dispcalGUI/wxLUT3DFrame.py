@@ -70,22 +70,10 @@ class LUT3DFrame(BaseFrame):
 									  self.use_abstract_profile_ctrl_handler)
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
-		self.apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
-		self.apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
-		self.apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
-		self.apply_trc_ctrl.Bind(wx.EVT_RADIOBUTTON, self.apply_trc_ctrl_handler)
-		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
-		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
-								 self.trc_gamma_ctrl_handler)
-		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
-								 self.trc_gamma_ctrl_handler)
-		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
-									  self.trc_gamma_type_ctrl_handler)
-		self.black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
-										   self.black_output_offset_ctrl_handler)
-		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
-											  self.black_output_offset_ctrl_handler)
-		self.lut3d_create_btn.Bind(wx.EVT_BUTTON, self.lut3d_create_handler)
+		self.lut3d_apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
+		self.lut3d_trc_apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON, self.lut3d_trc_apply_ctrl_handler)
+		self.lut3d_trc_apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON, self.lut3d_trc_apply_ctrl_handler)
+		self.lut3d_trc_apply_ctrl.Bind(wx.EVT_RADIOBUTTON, self.lut3d_trc_apply_ctrl_handler)
 		self.lut3d_bind_event_handlers()
 		
 		self.lut3d_create_btn.SetDefault()
@@ -115,6 +103,18 @@ class LUT3DFrame(BaseFrame):
 
 	def lut3d_bind_event_handlers(self):
 		# Shared with amin window
+		self.lut3d_create_btn.Bind(wx.EVT_BUTTON, self.lut3d_create_handler)
+		self.lut3d_trc_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_trc_ctrl_handler)
+		self.lut3d_trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
+								 self.lut3d_trc_gamma_ctrl_handler)
+		self.lut3d_trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
+								 self.lut3d_trc_gamma_ctrl_handler)
+		self.lut3d_trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
+									  self.lut3d_trc_gamma_type_ctrl_handler)
+		self.lut3d_trc_black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
+										   self.lut3d_trc_black_output_offset_ctrl_handler)
+		self.lut3d_trc_black_output_offset_intctrl.Bind(wx.EVT_TEXT,
+											  self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
@@ -123,7 +123,7 @@ class LUT3DFrame(BaseFrame):
 											self.lut3d_gamut_mapping_mode_handler)
 		self.gamut_mapping_b2a.Bind(wx.EVT_RADIOBUTTON,
 									self.lut3d_gamut_mapping_mode_handler)
-		self.rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
+		self.lut3d_rendering_intent_ctrl.Bind(wx.EVT_CHOICE,
 										self.lut3d_rendering_intent_ctrl_handler)
 		self.lut3d_format_ctrl.Bind(wx.EVT_CHOICE,
 									self.lut3d_format_ctrl_handler)
@@ -162,30 +162,30 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl.Enable(enable)
 		self.abstract_profile_desc.Enable(enable)
 	
-	def apply_trc_ctrl_handler(self, event=None):
-		v = self.apply_trc_ctrl.GetValue()
-		self.trc_ctrl.Enable(v)
-		self.trc_gamma_label.Enable(v)
-		self.trc_gamma_ctrl.Enable(v)
-		self.trc_gamma_type_ctrl.Enable(v)
+	def lut3d_trc_apply_ctrl_handler(self, event=None):
+		v = self.lut3d_trc_apply_ctrl.GetValue()
+		self.lut3d_trc_ctrl.Enable(v)
+		self.lut3d_trc_gamma_label.Enable(v)
+		self.lut3d_trc_gamma_ctrl.Enable(v)
+		self.lut3d_trc_gamma_type_ctrl.Enable(v)
 		if event:
 			setcfg("3dlut.apply_trc", int(v))
 			setcfg("3dlut.apply_black_offset",
-				   int(self.apply_black_offset_ctrl.GetValue()))
-		self.black_output_offset_label.Enable(v)
-		self.black_output_offset_ctrl.Enable(v)
-		self.black_output_offset_intctrl.Enable(v)
-		self.black_output_offset_intctrl_label.Enable(v)
-		self.show_input_value_clipping_warning(event)
+				   int(self.lut3d_trc_apply_black_offset_ctrl.GetValue()))
+		self.lut3d_trc_black_output_offset_label.Enable(v)
+		self.lut3d_trc_black_output_offset_ctrl.Enable(v)
+		self.lut3d_trc_black_output_offset_intctrl.Enable(v)
+		self.lut3d_trc_black_output_offset_intctrl_label.Enable(v)
+		self.lut3d_show_input_value_clipping_warning(event)
 
-	def show_input_value_clipping_warning(self, layout):
+	def lut3d_show_input_value_clipping_warning(self, layout):
 		self.panel.Freeze()
-		show = (self.apply_none_ctrl.GetValue() and
+		show = (self.lut3d_trc_apply_none_ctrl.GetValue() and
 				self.XYZbpout > self.XYZbpin and
 				getcfg("3dlut.rendering_intent") not in ("la", "p", "pa", "ms",
 														 "s"))
-		self.input_value_clipping_bmp.Show(show)
-		self.input_value_clipping_label.Show(show)
+		self.lut3d_input_value_clipping_bmp.Show(show)
+		self.lut3d_input_value_clipping_label.Show(show)
 		if layout:
 			self.panel.Sizer.Layout()
 			self.update_layout()
@@ -193,49 +193,53 @@ class LUT3DFrame(BaseFrame):
 	
 	def apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
-			   int(self.apply_cal_cb.GetValue()))
+			   int(self.lut3d_apply_cal_cb.GetValue()))
 
-	def black_output_offset_ctrl_handler(self, event):
-		if event.GetId() == self.black_output_offset_intctrl.GetId():
-			self.black_output_offset_ctrl.SetValue(
-				self.black_output_offset_intctrl.GetValue())
+	def lut3d_trc_black_output_offset_ctrl_handler(self, event):
+		if event.GetId() == self.lut3d_trc_black_output_offset_intctrl.GetId():
+			self.lut3d_trc_black_output_offset_ctrl.SetValue(
+				self.lut3d_trc_black_output_offset_intctrl.GetValue())
 		else:
-			self.black_output_offset_intctrl.SetValue(
-				self.black_output_offset_ctrl.GetValue())
-		v = self.black_output_offset_ctrl.GetValue() / 100.0
-		if v > 0:
-			self.trc_ctrl.SetSelection(1)  # Gamma
+			self.lut3d_trc_black_output_offset_intctrl.SetValue(
+				self.lut3d_trc_black_output_offset_ctrl.GetValue())
+		v = self.lut3d_trc_black_output_offset_ctrl.GetValue() / 100.0
 		setcfg("3dlut.trc_output_offset", v)
-		self.update_trc_control()
+		self.lut3d_update_trc_control()
 
-	def trc_gamma_ctrl_handler(self, event):
+	def lut3d_trc_gamma_ctrl_handler(self, event):
 		try:
-			v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
+			v = float(self.lut3d_trc_gamma_ctrl.GetValue().replace(",", "."))
 			if (v < config.valid_ranges["3dlut.trc_gamma"][0] or
 				v > config.valid_ranges["3dlut.trc_gamma"][1]):
 				raise ValueError()
 		except ValueError:
 			wx.Bell()
-			self.trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
+			self.lut3d_trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
 		else:
-			if str(v) != self.trc_gamma_ctrl.GetValue():
-				self.trc_gamma_ctrl.SetValue(str(v))
+			if str(v) != self.lut3d_trc_gamma_ctrl.GetValue():
+				self.lut3d_trc_gamma_ctrl.SetValue(str(v))
 			setcfg("3dlut.trc_gamma", v)
-			self.update_trc_control()
+			self.lut3d_update_trc_control()
 		event.Skip()
 
-	def trc_ctrl_handler(self, event):
-		if self.trc_ctrl.GetSelection() == 0:
+	def lut3d_trc_ctrl_handler(self, event):
+		if self.lut3d_trc_ctrl.GetSelection() == 0:
 			# BT.1886
 			setcfg("3dlut.trc_gamma", 2.4)
 			setcfg("3dlut.trc_gamma_type", "B")
 			setcfg("3dlut.trc_output_offset", 0.0)
-			self.update_trc_controls()
+			self.lut3d_update_trc_controls()
+		elif self.lut3d_trc_ctrl.GetSelection() == 1:
+			# Pure power gamma 2.2
+			setcfg("3dlut.trc_gamma", 2.2)
+			setcfg("3dlut.trc_gamma_type", "b")
+			setcfg("3dlut.trc_output_offset", 1.0)
+			self.lut3d_update_trc_controls()
 
-	def trc_gamma_type_ctrl_handler(self, event):
+	def lut3d_trc_gamma_type_ctrl_handler(self, event):
 		setcfg("3dlut.trc_gamma_type",
-			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
-		self.update_trc_control()
+			   self.trc_gamma_types_ab[self.lut3d_trc_gamma_type_ctrl.GetSelection()])
+		self.lut3d_update_trc_control()
 
 	def abstract_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -326,12 +330,22 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_create_handler(self, event, path=None):
 		if not check_set_argyll_bin():
 			return
-		profile_in = self.set_profile("input")
-		if getcfg("3dlut.use_abstract_profile"):
-			profile_abst = self.set_profile("abstract")
+		if isinstance(self, LUT3DFrame):
+			profile_in = self.set_profile("input")
+			if getcfg("3dlut.use_abstract_profile"):
+				profile_abst = self.set_profile("abstract")
+			else:
+				profile_abst = None
+			profile_out = self.set_profile("output")
 		else:
 			profile_abst = None
-		profile_out = self.set_profile("output")
+			try:
+				profile_in = ICCP.ICCProfile(getcfg("3dlut.input.profile"))
+				profile_out = ICCP.ICCProfile(getcfg("calibration.file"))
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				show_result_dialog(Error(lang.getstr("profile.invalid")),
+								   parent=self)
+				return
 		if (not None in (profile_in, profile_out) or
 			(profile_in and profile_in.profileClass == "link")):
 			if profile_out and profile_in.isSame(profile_out,
@@ -381,7 +395,7 @@ class LUT3DFrame(BaseFrame):
 						return
 				if self.Parent:
 					config.writecfg()
-				else:
+				elif isinstance(self, LUT3DFrame):
 					config.writecfg(module="3DLUT-maker",
 									options=("3dlut.", "last_3dlut_path",
 											 "position.lut3dframe",
@@ -395,10 +409,12 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_create_producer(self, profile_in, profile_abst, profile_out, path):
 		apply_cal = (profile_out and "vcgt" in profile_out.tags and
-					 getcfg("3dlut.output.profile.apply_cal"))
+					 (getcfg("3dlut.output.profile.apply_cal") or
+					  not hasattr(self, "lut3d_apply_cal_cb")))
 		input_encoding = getcfg("3dlut.encoding.input")
 		output_encoding = getcfg("3dlut.encoding.output")
-		if getcfg("3dlut.apply_trc"):
+		if (getcfg("3dlut.apply_trc") or
+			not hasattr(self, "lut3d_trc_apply_none_ctrl")):
 			trc_gamma = getcfg("3dlut.trc_gamma")
 		else:
 			trc_gamma = None
@@ -467,9 +483,11 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		self.lut3d_setup_encoding_ctrl(format)
 		self.lut3d_update_encoding_controls()
+		self.lut3d_show_encoding_controls()
 		self.lut3d_enable_size_controls()
 		self.lut3d_show_bitdepth_controls()
-		if not hasattr(self, "lut3d_create_btn"):
+		if not hasattr(self, "output_profile_ctrl"):
+			self.update_main_controls()
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.lut3d_update_shared_controls()
 			return
@@ -519,11 +537,11 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_rendering_intent_ctrl_handler(self, event):
 		setcfg("3dlut.rendering_intent",
-			   self.rendering_intents_ab[self.rendering_intent_ctrl.GetSelection()])
+			   self.rendering_intents_ab[self.lut3d_rendering_intent_ctrl.GetSelection()])
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
 		else:
-			self.show_input_value_clipping_warning(True)
+			self.lut3d_show_input_value_clipping_warning(True)
 			if self.Parent:
 				self.Parent.lut3d_update_shared_controls()
 	
@@ -583,11 +601,11 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_ctrl.Hide()
 							self.output_profile_current_btn.Hide()
 							self.output_profile_desc.Hide()
-							self.apply_cal_cb.Hide()
+							self.lut3d_apply_cal_cb.Hide()
 							self.lut3d_show_encoding_controls(False)
 							self.show_trc_controls(False)
-							self.rendering_intent_label.Hide()
-							self.rendering_intent_ctrl.Hide()
+							self.lut3d_rendering_intent_label.Hide()
+							self.lut3d_rendering_intent_ctrl.Hide()
 							self.panel.GetSizer().Layout()
 							self.update_layout()
 							self.Thaw()
@@ -603,7 +621,7 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_ctrl.Show()
 							self.output_profile_current_btn.Show()
 							self.output_profile_desc.Show()
-							self.apply_cal_cb.Show()
+							self.lut3d_apply_cal_cb.Show()
 							self.lut3d_show_encoding_controls()
 							self.lut3d_update_encoding_controls()
 							if (not hasattr(self, which + "_profile") or
@@ -625,9 +643,9 @@ class LUT3DFrame(BaseFrame):
 							setattr(self, "input_profile", profile)
 							self.set_profile("output", silent=silent)
 						elif which == "output":
-							self.apply_cal_cb.SetValue("vcgt" in profile.tags and
+							self.lut3d_apply_cal_cb.SetValue("vcgt" in profile.tags and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
-							self.apply_cal_cb.Enable("vcgt" in profile.tags)
+							self.lut3d_apply_cal_cb.Enable("vcgt" in profile.tags)
 							if (not hasattr(self, which + "_profile") or
 								getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName):
@@ -677,7 +695,7 @@ class LUT3DFrame(BaseFrame):
 										   int(tf[0][1] not in (-240, -709) and
 											   not tf[0][0].startswith("Gamma") and
 											   self.XYZbpin < self.XYZbpout))
-								self.apply_black_offset_ctrl.Enable(
+								self.lut3d_trc_apply_black_offset_ctrl.Enable(
 									tf[0][1] not in (-240, -709) and
 									not tf[0][0].startswith("Gamma"))
 								# Set gamma to profile gamma if single gamma
@@ -695,16 +713,16 @@ class LUT3DFrame(BaseFrame):
 									setcfg("3dlut.trc_gamma",
 										   getcfg("3dlut.trc_gamma.backup"))
 									setcfg("3dlut.trc_gamma.backup", None)
-								self.update_trc_controls()
+								self.lut3d_update_trc_controls()
 							if getcfg("3dlut.apply_black_offset"):
-								self.apply_black_offset_ctrl.SetValue(True)
+								self.lut3d_trc_apply_black_offset_ctrl.SetValue(True)
 							elif getcfg("3dlut.apply_trc"):
-								self.apply_trc_ctrl.SetValue(True)
+								self.lut3d_trc_apply_ctrl.SetValue(True)
 							else:
-								self.apply_none_ctrl.SetValue(True)
-							self.apply_trc_ctrl_handler()
-							self.rendering_intent_label.Show()
-							self.rendering_intent_ctrl.Show()
+								self.lut3d_trc_apply_none_ctrl.SetValue(True)
+							self.lut3d_trc_apply_ctrl_handler()
+							self.lut3d_rendering_intent_label.Show()
+							self.lut3d_rendering_intent_ctrl.Show()
 							self.panel.GetSizer().Layout()
 							self.update_layout()
 						self.Thaw()
@@ -734,7 +752,7 @@ class LUT3DFrame(BaseFrame):
 					setattr(self, "%s_profile" % which, None)
 					setcfg("3dlut.%s.profile" % which, None)
 					if which == "output":
-						self.apply_cal_cb.Disable()
+						self.lut3d_apply_cal_cb.Disable()
 						self.lut3d_create_btn.Disable()
 	
 	def setup_language(self):
@@ -752,24 +770,25 @@ class LUT3DFrame(BaseFrame):
 			for name, value in kwargs.iteritems():
 				setattr(ctrl, name, value)
 
-		items = []
-		for item in ("trc.rec1886", "custom"):
-			items.append(lang.getstr(item))
-		self.trc_ctrl.SetItems(items)
-		
-		self.trc_gamma_types_ab = {0: "b", 1: "B"}
-		self.trc_gamma_types_ba = {"b": 0, "B": 1}
-		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
-											  lang.getstr("trc.type.absolute")])
 		self.lut3d_setup_language()
 
 	def lut3d_setup_language(self):
 		# Shared with main window
+		items = []
+		for item in ("trc.rec1886", "Gamma 2.2", "custom"):
+			items.append(lang.getstr(item))
+		self.lut3d_trc_ctrl.SetItems(items)
+		
+		self.trc_gamma_types_ab = {0: "b", 1: "B"}
+		self.trc_gamma_types_ba = {"b": 0, "B": 1}
+		self.lut3d_trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+											  lang.getstr("trc.type.absolute")])
+
 		self.rendering_intents_ab = {}
 		self.rendering_intents_ba = {}
-		self.rendering_intent_ctrl.Clear()
+		self.lut3d_rendering_intent_ctrl.Clear()
 		for i, ri in enumerate(config.valid_values["3dlut.rendering_intent"]):
-			self.rendering_intent_ctrl.Append(lang.getstr("gamap.intents." + ri))
+			self.lut3d_rendering_intent_ctrl.Append(lang.getstr("gamap.intents." + ri))
 			self.rendering_intents_ab[i] = ri
 			self.rendering_intents_ba[ri] = i
 		
@@ -841,13 +860,13 @@ class LUT3DFrame(BaseFrame):
 		self.abstract_profile_ctrl.SetPath(getcfg("3dlut.abstract.profile"))
 		self.abstract_profile_ctrl_handler(None)
 		self.output_profile_ctrl_handler(None)
-		self.update_trc_controls()
 		self.lut3d_update_shared_controls()
 		self.panel.Thaw()
 
 	def lut3d_update_shared_controls(self):
 		# Shared with main window
-		self.rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
+		self.lut3d_update_trc_controls()
+		self.lut3d_rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
 		format = getcfg("3dlut.format")
 		if format == "madVR" and self.worker.argyll_version < [1, 6]:
 			# MadVR only available with Argyll 1.6+, fall back to IRIDAS .cube
@@ -862,27 +881,31 @@ class LUT3DFrame(BaseFrame):
 		if self.Parent:
 			self.Parent.lut3d_update_shared_controls()
 
-	def update_trc_control(self):
+	def lut3d_update_trc_control(self):
 		if (getcfg("3dlut.trc_gamma_type") == "B" and
 			getcfg("3dlut.trc_output_offset") == 0 and
 			getcfg("3dlut.trc_gamma") == 2.4):
-			self.trc_ctrl.SetSelection(0)  # BT.1886
+			self.lut3d_trc_ctrl.SetSelection(0)  # BT.1886
+		elif (getcfg("3dlut.trc_gamma_type") == "b" and
+			getcfg("3dlut.trc_output_offset") == 1 and
+			getcfg("3dlut.trc_gamma") == 2.2):
+			self.lut3d_trc_ctrl.SetSelection(1)  # Pure power gamma 2.2
 		else:
-			self.trc_ctrl.SetSelection(1)  # Gamma
+			self.lut3d_trc_ctrl.SetSelection(2)  # Custom
 
-	def update_trc_controls(self):
-		self.update_trc_control()
-		self.trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
-		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("3dlut.trc_gamma_type")])
+	def lut3d_update_trc_controls(self):
+		self.lut3d_update_trc_control()
+		self.lut3d_trc_gamma_ctrl.SetValue(str(getcfg("3dlut.trc_gamma")))
+		self.lut3d_trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("3dlut.trc_gamma_type")])
 		outoffset = int(getcfg("3dlut.trc_output_offset") * 100)
-		self.black_output_offset_ctrl.SetValue(outoffset)
-		self.black_output_offset_intctrl.SetValue(outoffset)
+		self.lut3d_trc_black_output_offset_ctrl.SetValue(outoffset)
+		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
 	
 	def lut3d_show_bitdepth_controls(self):
 		frozen = self.IsFrozen()
 		if not frozen:
 			self.Freeze()
-		show = isinstance(self, LUT3DFrame) or getcfg("3dlut.create")
+		show = True
 		input_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_show)
 		self.lut3d_bitdepth_input_ctrl.Show(input_show)
@@ -899,20 +922,21 @@ class LUT3DFrame(BaseFrame):
 
 	def show_trc_controls(self, show=True):
 		show = show and self.worker.argyll_version >= [1, 6]
-		self.apply_trc_ctrl.Show(show)
-		self.trc_ctrl.Show(show)
-		self.trc_gamma_label.Show(show)
-		self.trc_gamma_ctrl.Show(show)
-		self.trc_gamma_type_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_label.Show(show and self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_intctrl.Show(show and
+		self.lut3d_trc_apply_ctrl.Show(show)
+		self.lut3d_trc_ctrl.Show(show)
+		self.lut3d_trc_gamma_label.Show(show)
+		self.lut3d_trc_gamma_ctrl.Show(show)
+		self.lut3d_trc_gamma_type_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
+		self.lut3d_trc_black_output_offset_label.Show(show and self.XYZbpout > [0, 0, 0])
+		self.lut3d_trc_black_output_offset_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
+		self.lut3d_trc_black_output_offset_intctrl.Show(show and
 											  self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_intctrl_label.Show(show and
+		self.lut3d_trc_black_output_offset_intctrl_label.Show(show and
 													self.XYZbpout > [0, 0, 0])
 	
 	def lut3d_show_encoding_controls(self, show=True):
-		show = show and self.worker.argyll_version >= [1, 6]
+		show = (show and self.worker.argyll_version >= [1, 6] and
+				getcfg("3dlut.format") != "madVR")
 		self.encoding_input_label.Show(show)
 		self.encoding_input_ctrl.Show(show)
 		self.encoding_output_label.Show(show)

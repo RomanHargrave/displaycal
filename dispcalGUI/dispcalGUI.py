@@ -1106,6 +1106,7 @@ class MainFrame(BaseFrame):
 	""" Display calibrator main application window. """
 
 	lut3d_bind_event_handlers = LUT3DFrame.__dict__["lut3d_bind_event_handlers"]
+	lut3d_create_handler = LUT3DFrame.__dict__["lut3d_create_handler"]
 	lut3d_bitdepth_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_input_ctrl_handler"]
 	lut3d_bitdepth_output_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_output_ctrl_handler"]
 	lut3d_encoding_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_encoding_input_ctrl_handler"]
@@ -1119,8 +1120,14 @@ class MainFrame(BaseFrame):
 	lut3d_show_bitdepth_controls = LUT3DFrame.__dict__["lut3d_show_bitdepth_controls"]
 	lut3d_show_encoding_controls = LUT3DFrame.__dict__["lut3d_show_encoding_controls"]
 	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
+	lut3d_trc_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_ctrl_handler"]
+	lut3d_trc_gamma_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_ctrl_handler"]
+	lut3d_trc_gamma_type_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_type_ctrl_handler"]
+	lut3d_trc_black_output_offset_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_black_output_offset_ctrl_handler"]
 	lut3d_update_encoding_controls = LUT3DFrame.__dict__["lut3d_update_encoding_controls"]
 	lut3d_update_shared_controls = LUT3DFrame.__dict__["lut3d_update_shared_controls"]
+	lut3d_update_trc_control = LUT3DFrame.__dict__["lut3d_update_trc_control"]
+	lut3d_update_trc_controls = LUT3DFrame.__dict__["lut3d_update_trc_controls"]
 	
 	def __init__(self, worker):
 		# Check for required resource files and get pre-canned testcharts
@@ -1367,6 +1374,7 @@ class MainFrame(BaseFrame):
 		self.display_instrument_panel = self.FindWindowByName("display_instrument_panel")
 		self.calibration_settings_panel = self.FindWindowByName("calibration_settings_panel")
 		self.profile_settings_panel = self.FindWindowByName("profile_settings_panel")
+		self.lut3d_settings_panel = self.FindWindowByName("lut3d_settings_panel")
 		
 		# Button panel
 		self.buttonpanel = self.FindWindowByName("buttonpanel")
@@ -1439,31 +1447,41 @@ class MainFrame(BaseFrame):
 
 		# Add tab buttons
 		self.display_instrument_btn = PlateButton(self.tabpanel, -1,
-													label=" & ".join([lang.getstr("display"),
-																	  lang.getstr("instrument")]),
+													label="display-instrument",
 													bmp=geticon(48, "display-instrument"),
 													style=platebtn.PB_STYLE_GRADIENT |
 														  platebtn.PB_STYLE_TOGGLE)
 		self.display_instrument_btn.Bind(wx.EVT_TOGGLEBUTTON,
 										 self.tab_select_handler)
-		self.tabpanel.Sizer.Insert(1, self.display_instrument_btn)
+		self.tabpanel.Sizer.Insert(1, self.display_instrument_btn,
+								   flag=wx.LEFT, border=8)
 		self.calibration_settings_btn = PlateButton(self.tabpanel, -1,
-													label=lang.getstr("calibration.settings"),
+													label="calibration",
 													bmp=geticon(48, "calibration"),
 													style=platebtn.PB_STYLE_GRADIENT |
 														  platebtn.PB_STYLE_TOGGLE)
 		self.calibration_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 										   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(2, self.calibration_settings_btn,
-								   flag=wx.LEFT | wx.RIGHT, border=16)
+								   flag=wx.LEFT, border=8)
 		self.profile_settings_btn = PlateButton(self.tabpanel, -1,
-													label=lang.getstr("profile.settings"),
+													label="profiling",
 													bmp=geticon(48, "profiling"),
 													style=platebtn.PB_STYLE_GRADIENT |
 														  platebtn.PB_STYLE_TOGGLE)
 		self.profile_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 									   self.tab_select_handler)
-		self.tabpanel.Sizer.Insert(3, self.profile_settings_btn)
+		self.tabpanel.Sizer.Insert(3, self.profile_settings_btn,
+								   flag=wx.LEFT, border=8)
+		self.lut3d_settings_btn = PlateButton(self.tabpanel, -1,
+													label="3dlut",
+													bmp=geticon(48, "3dlut"),
+													style=platebtn.PB_STYLE_GRADIENT |
+														  platebtn.PB_STYLE_TOGGLE)
+		self.lut3d_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
+									   self.tab_select_handler)
+		self.tabpanel.Sizer.Insert(4, self.lut3d_settings_btn,
+								   flag=wx.LEFT | wx.RIGHT, border=8)
 		self.tab_select_handler(self.display_instrument_btn)
 		
 		self.profile_info = {}
@@ -1685,9 +1703,7 @@ class MainFrame(BaseFrame):
 						 self.tabpanel.Sizer.MinSize[1] +
 						 ((getattr(self, "tabpanelfooter", None) and
 						   self.tabpanelfooter.Size[1] + 1) or 0) +
-						 max(self.display_instrument_panel.Sizer.MinSize[1],
-							 self.calibration_settings_panel.Sizer.MinSize[1],
-							 self.profile_settings_panel.Sizer.MinSize[1])+
+						 self.display_instrument_panel.Sizer.MinSize[1] +
 						 ((getattr(self, "buttonpanelheader", None) and
 						   self.buttonpanelheader.Size[1] + 1) or 0) +
 						 self.buttonpanel.Sizer.MinSize[1])
@@ -1696,7 +1712,11 @@ class MainFrame(BaseFrame):
 		borders_lr = self.Size[0] - self.ClientSize[0]
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
-					    self.calpanel.GetSizer().GetMinSize()[0] + 34)), 
+					    max(self.display_instrument_panel.Sizer.MinSize[0],
+							self.calibration_settings_panel.Sizer.MinSize[0],
+							self.profile_settings_panel.Sizer.MinSize[0],
+							self.lut3d_settings_panel.Sizer.MinSize[0]) + 34,
+					    self.tabpanel.GetSizer().GetMinSize()[0])), 
 				height)
 		self.SetMaxSize((-1, -1))
 		if not self.IsMaximized() and not self.IsIconized():
@@ -1919,10 +1939,6 @@ class MainFrame(BaseFrame):
 			tools.FindItem("synthicc.create"))
 		self.Bind(wx.EVT_MENU, self.synthicc_create_handler, 
 				  self.menuitem_synthicc_create)
-		self.menuitem_lut3d_create = tools.FindItemById(
-			tools.FindItem("3dlut.create"))
-		self.Bind(wx.EVT_MENU, self.lut3d_create_handler, 
-				  self.menuitem_lut3d_create)
 		self.menuitem_install_argyll_instrument_conf = tools.FindItemById(
 			tools.FindItem("argyll.instrument.configuration_files.install"))
 		self.menuitem_uninstall_argyll_instrument_conf = tools.FindItemById(
@@ -2111,7 +2127,6 @@ class MainFrame(BaseFrame):
 												bool(self.worker.instruments))
 		self.menuitem_measurement_file_check_auto.Check(bool(getcfg("ti3.check_sanity.auto")))
 		self.menuitem_create_colorimeter_correction.Enable(bool(get_argyll_util("ccxxmake")))
-		self.menuitem_lut3d_create.Enable(bool(get_argyll_util("icclu")))
 		self.menuitem_show_log.Check(bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Enable(not bool(getcfg("log.show")))
 		self.menuitem_log_autoshow.Check(bool(getcfg("log.autoshow")))
@@ -2136,7 +2151,8 @@ class MainFrame(BaseFrame):
 					  self.calibration_settings_info_shadow,
 					  self.profile_settings_shadow,
 					  self.lut3d_settings_shadow,
-					  self.profile_settings_info_shadow):
+					  self.profile_settings_info_shadow,
+					  self.lut3d_settings_info_shadow):
 			child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		# Settings file controls
@@ -2323,9 +2339,9 @@ class MainFrame(BaseFrame):
 		# 3D LUT controls
 		# ===============
 
-		self.create_3dlut_cb.Bind(wx.EVT_CHECKBOX, self.lut3d_create_cb_handler)
+		self.lut3d_create_cb.Bind(wx.EVT_CHECKBOX, self.lut3d_create_cb_handler)
 		self.lut3d_init_input_profiles()
-		self.input_profile_ctrl.Bind(wx.EVT_CHOICE,
+		self.lut3d_input_profile_ctrl.Bind(wx.EVT_CHOICE,
 									 self.lut3d_input_colorspace_handler)
 		self.lut3d_bind_event_handlers()
 
@@ -3127,6 +3143,10 @@ class MainFrame(BaseFrame):
 		self.profile_btn.Enable(enable_profile and not update_cal and 
 								bool(self.worker.displays) and 
 								bool(self.worker.instruments))
+
+		self.lut3d_create_btn.Enable(is_profile(None, True) and
+									 getcfg("calibration.file")
+									 not in self.presets)
 		
 		self.panel.Thaw()
 
@@ -3797,19 +3817,8 @@ class MainFrame(BaseFrame):
 		if enable:
 			self.update_menus()
 
-	def lut3d_create_handler(self, event):
-		""" Assign and initialize the 3DLUT creation window """
-		if not getattr(self, "lut3dframe", None):
-			self.init_lut3dframe()
-		if self.lut3dframe.IsShownOnScreen():
-			if self.lut3dframe.IsIconized():
-				self.lut3dframe.Restore()
-			self.lut3dframe.Raise()
-		else:
-			self.lut3dframe.Show(not self.lut3dframe.IsShownOnScreen())
-
 	def lut3d_create_cb_handler(self, event):
-		setcfg("3dlut.create", int(self.create_3dlut_cb.GetValue()))
+		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
 		if getcfg("3dlut.create"):
 			# Do not allow BPC if creating 3D LUT
 			if not getcfg("profile.black_point_compensation.backup", False):
@@ -3849,18 +3858,18 @@ class MainFrame(BaseFrame):
 									  "\S+ transfer function)$", "", desc)
 						self.input_profiles[desc] = profile_filename
 		self.input_profiles.sort()
-		self.input_profile_ctrl.SetItems(self.input_profiles.keys())
+		self.lut3d_input_profile_ctrl.SetItems(self.input_profiles.keys())
 
 	def lut3d_input_colorspace_handler(self, event):
 		setcfg("3dlut.input.profile",
-			   self.input_profiles[self.input_profile_ctrl.GetStringSelection()])
+			   self.input_profiles[self.lut3d_input_profile_ctrl.GetStringSelection()])
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
 
 	def lut3d_show_controls(self):
-		show = bool(getcfg("3dlut.create"))
-		self.input_profile_label.Show(show)
-		self.input_profile_ctrl.Show(show)
+		show = True#bool(getcfg("3dlut.create"))
+		self.lut3d_input_profile_label.Show(show)
+		self.lut3d_input_profile_ctrl.Show(show)
 		self.lut3d_show_encoding_controls(show)
 		self.lut3d_format_label.Show(show)
 		self.lut3d_format_ctrl.Show(show)
@@ -3868,13 +3877,13 @@ class MainFrame(BaseFrame):
 		for ctrl in (self.gamut_mapping_mode,
 					 self.gamut_mapping_inverse_a2b,
 					 self.gamut_mapping_b2a,
-					 self.rendering_intent_label,
-					 self.rendering_intent_ctrl,
+					 self.lut3d_rendering_intent_label,
+					 self.lut3d_rendering_intent_ctrl,
 					 self.lut3d_size_label,
 					 self.lut3d_size_ctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_calibration_options and
-										   bool(getcfg("3dlut.create")))
+										   show)
 
 	def lut3d_update_b2a_controls(self):
 		# Allow using B2A instead of inverse A2B?
@@ -3889,11 +3898,11 @@ class MainFrame(BaseFrame):
 			bool(getcfg("3dlut.gamap.use_b2a")))
 	
 	def lut3d_update_controls(self):
-		self.create_3dlut_cb.SetValue(bool(getcfg("3dlut.create")))
+		self.lut3d_create_cb.SetValue(bool(getcfg("3dlut.create")))
 		self.lut3d_show_controls()
 		lut3d_input_profile = getcfg("3dlut.input.profile")
 		if lut3d_input_profile in self.input_profiles.values():
-			self.input_profile_ctrl.SetSelection(
+			self.lut3d_input_profile_ctrl.SetSelection(
 				self.input_profiles.values().index(lut3d_input_profile))
 		self.lut3d_update_b2a_controls()
 		self.lut3d_update_shared_controls()
@@ -7128,7 +7137,7 @@ class MainFrame(BaseFrame):
 										  ICCP.GAMUT_VOLUME_SRGB /
 										  gamut_volumes[key] * 100,
 										  name))
-			if config.is_virtual_display():
+			if config.is_virtual_display() or getcfg("3dlut.create"):
 				installable = False
 				title = appname
 				ok = lang.getstr("3dlut.create")
@@ -7828,7 +7837,8 @@ class MainFrame(BaseFrame):
 		self.calpanel.Freeze()
 		btn2tab = {self.display_instrument_btn: self.display_instrument_panel,
 				   self.calibration_settings_btn: self.calibration_settings_panel,
-				   self.profile_settings_btn: self.profile_settings_panel}
+				   self.profile_settings_btn: self.profile_settings_panel,
+				   self.lut3d_settings_btn: self.lut3d_settings_panel}
 		for btn, tab in btn2tab.iteritems():
 			if event.GetId() == btn.Id:
 				tab.Show()
