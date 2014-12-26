@@ -776,6 +776,8 @@ class PlateButton(platebtn.PlateButton):
 	Enable = ThemedGenButton.__dict__["Enable"]
 	Enabled = ThemedGenButton.__dict__["Enabled"]
 	IsEnabled = ThemedGenButton.__dict__["IsEnabled"]
+	Label = property(lambda self: self.GetLabel(),
+                     lambda self, label: self.SetLabel(label))
 
 if not hasattr(PlateButton, "_SetState"):
 	PlateButton._SetState = PlateButton.SetState
