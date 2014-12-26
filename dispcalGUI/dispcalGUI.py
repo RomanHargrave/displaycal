@@ -9235,6 +9235,9 @@ class MainFrame(BaseFrame):
 			setcfg("calibration.use_video_lut",
 				   getcfg("calibration.use_video_lut.backup"))
 			setcfg("calibration.use_video_lut.backup", None)
+		if config.is_uncalibratable_display():
+			setcfg("calibration.update", False)
+			self.calibration_update_cb.SetValue(False)
 		if self.IsShownOnScreen():
 			self.update_menus()
 		if (update_ccmx_items and
