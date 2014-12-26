@@ -1482,6 +1482,11 @@ class MainFrame(BaseFrame):
 									   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(4, self.lut3d_settings_btn,
 								   flag=wx.LEFT | wx.RIGHT, border=8)
+		for btn in (self.display_instrument_btn,
+					self.calibration_settings_btn,
+					self.profile_settings_btn,
+					self.lut3d_settings_btn):
+			set_bitmap_labels(btn, True, False, False)
 		self.tab_select_handler(self.display_instrument_btn)
 		
 		self.profile_info = {}
@@ -3130,19 +3135,31 @@ class MainFrame(BaseFrame):
 
 		enable_cal = (self.interactive_display_adjustment_cb.GetValue() or
 					  self.trc_ctrl.GetSelection() > 0)
-		self.calibrate_btn.Enable(enable_cal and
-								  not is_ccxx_testchart() and
-								  bool(self.worker.displays) and 
-								  not config.is_uncalibratable_display() and 
-								  bool(self.worker.instruments))
-		self.calibrate_and_profile_btn.Enable(enable_cal and
-											  enable_profile and 
-											  bool(self.worker.displays) and 
-											  not config.is_uncalibratable_display() and 
-											  bool(self.worker.instruments))
-		self.profile_btn.Enable(enable_profile and not update_cal and 
-								bool(self.worker.displays) and 
-								bool(self.worker.instruments))
+		calibrate_and_profile_btn_show = (enable_cal and
+										  enable_profile and 
+										  bool(self.worker.displays) and 
+										  not config.is_uncalibratable_display() and 
+										  bool(self.worker.instruments))
+		calibrate_btn_show = (enable_cal and
+							  not is_ccxx_testchart() and
+							  bool(self.worker.displays) and 
+							  not config.is_uncalibratable_display() and 
+							  bool(self.worker.instruments))
+		profile_btn_show = (not calibrate_and_profile_btn_show and
+							enable_profile and not update_cal and 
+							bool(self.worker.displays) and 
+							bool(self.worker.instruments))
+		if not calibrate_btn_show and self.calibration_settings_btn.IsEnabled():
+			self.tab_select_handler(self.display_instrument_btn)
+		if calibrate_btn_show and not self.calibration_settings_btn.IsEnabled():
+			self.calibration_settings_btn._pressed = False
+			self.calibration_settings_btn._SetState(platebtn.PLATE_NORMAL)
+		self.calibration_settings_btn.Enable(calibrate_btn_show)
+		self.calibrate_btn.Show(not calibrate_and_profile_btn_show and
+							    calibrate_btn_show)
+		self.calibrate_and_profile_btn.Show(calibrate_and_profile_btn_show)
+		self.profile_btn.Show(profile_btn_show)
+		self.buttonpanel.Layout()
 
 		self.lut3d_create_btn.Enable(is_profile(None, True) and
 									 getcfg("calibration.file")
@@ -7834,6 +7851,8 @@ class MainFrame(BaseFrame):
 			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
 
 	def tab_select_handler(self, event):
+		if hasattr(event, "EventObject") and not event.EventObject.IsEnabled():
+			return
 		self.calpanel.Freeze()
 		btn2tab = {self.display_instrument_btn: self.display_instrument_panel,
 				   self.calibration_settings_btn: self.calibration_settings_panel,

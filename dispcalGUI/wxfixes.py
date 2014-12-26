@@ -310,7 +310,7 @@ def get_gcdc_font_size(size):
 	return get_dc_font_size(size, dc)
 
 
-def set_bitmap_labels(btn):
+def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 	bitmap = btn.BitmapLabel
 	if not bitmap.IsOk():
 		size = btn.MinSize
@@ -320,18 +320,20 @@ def set_bitmap_labels(btn):
 										  size=size)
 
 	# Disabled
-	image = bitmap.ConvertToImage()
-	if image.HasMask() and not image.HasAlpha():
-		image.InitAlpha()
-	if image.HasAlpha():
-		alphabuffer = image.GetAlphaBuffer()
-		for i, byte in enumerate(alphabuffer):
-			if byte > "\0":
-				alphabuffer[i] = chr(int(round(ord(byte) * .3)))
-	btn.SetBitmapDisabled(image.ConvertToBitmap())
+	if disabled:
+		# Use Rec. 709 luma coefficients to convert to grayscale
+		image = bitmap.ConvertToImage().ConvertToGreyscale(.2126, .7152, .0722)
+		if image.HasMask() and not image.HasAlpha():
+			image.InitAlpha()
+		if image.HasAlpha():
+			alphabuffer = image.GetAlphaBuffer()
+			for i, byte in enumerate(alphabuffer):
+				if byte > "\0":
+					alphabuffer[i] = chr(int(round(ord(byte) * .3)))
+		btn.SetBitmapDisabled(image.ConvertToBitmap())
 
 	# Focus/Hover
-	if sys.platform != "darwin":
+	if sys.platform != "darwin" and focus:
 		# wxMac applies hover state also to disabled buttons...
 		image = bitmap.ConvertToImage()
 		if image.HasMask() and not image.HasAlpha():
@@ -350,20 +352,21 @@ def set_bitmap_labels(btn):
 			btn.SetBitmapHover(bmp)
 
 	# Selected
-	image = bitmap.ConvertToImage()
-	if image.HasMask() and not image.HasAlpha():
-		image.InitAlpha()
-	databuffer = image.GetDataBuffer()
-	for i, byte in enumerate(databuffer):
-		if byte > "\0":
-			databuffer[i] = chr(int(round(ord(byte) * .6)))
-	bmp = image.ConvertToBitmap()
-	if hasattr(btn, "SetBitmapPressed"):
-		# Phoenix
-		btn.SetBitmapPressed(bmp)
-	else:
-		# Classic
-		btn.SetBitmapSelected(bmp)
+	if pressed:
+		image = bitmap.ConvertToImage()
+		if image.HasMask() and not image.HasAlpha():
+			image.InitAlpha()
+		databuffer = image.GetDataBuffer()
+		for i, byte in enumerate(databuffer):
+			if byte > "\0":
+				databuffer[i] = chr(int(round(ord(byte) * .6)))
+		bmp = image.ConvertToBitmap()
+		if hasattr(btn, "SetBitmapPressed"):
+			# Phoenix
+			btn.SetBitmapPressed(bmp)
+		else:
+			# Classic
+			btn.SetBitmapSelected(bmp)
 
 
 # wx.DirDialog and wx.FileDialog are normally not returned by
@@ -688,6 +691,14 @@ class PlateButton(platebtn.PlateButton):
 		self.CacheBestSize(best)
 		return best
 
+	def GetBitmapLabel(self):
+		"""Get the label bitmap
+		
+		:return: :class:`Bitmap` or None
+
+		"""
+		return self._bmp["enable"]
+
 	def __DrawBitmap(self, gc):
 		"""Draw the bitmap if one has been set
 
@@ -739,12 +750,12 @@ class PlateButton(platebtn.PlateButton):
 
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
+		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT and self.IsEnabled():
 			gc.SetTextForeground(self._color['htxt'])
 			gc.SetPen(wx.TRANSPARENT_PEN)
 			self.__DrawHighlight(gc, width, height)
 
-		elif self._state['cur'] == platebtn.PLATE_PRESSED:
+		elif self._state['cur'] == platebtn.PLATE_PRESSED and self.IsEnabled():
 			gc.SetTextForeground(self._color['htxt'])
 			if wx.Platform == '__WXMAC__':
 				pen = wx.Pen(platebtn.GetHighlightColour(), 1, wx.SOLID)
@@ -766,7 +777,7 @@ class PlateButton(platebtn.PlateButton):
 				gc.SetTextForeground(txt_c)
 
 		# Draw bitmap and text
-		if self._state['cur'] != platebtn.PLATE_PRESSED:
+		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
 			txt_x = self.__DrawBitmap(gc)
 			t_x = max((width - tw - (txt_x + 2)) // 2, txt_x + 2)
 			gc.DrawText(self.Label, t_x, txt_y)
