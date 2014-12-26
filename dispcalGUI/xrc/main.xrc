@@ -1680,7 +1680,7 @@
                         <events>EVT_BUTTON</events>
                       </XRCED>
                     </object>
-                    <flag>wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                     <border>14</border>
                   </object>
                   <object class="sizeritem">
@@ -1690,7 +1690,7 @@
                         <events>EVT_BUTTON</events>
                       </XRCED>
                     </object>
-                    <flag>wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                     <border>14</border>
                   </object>
                   <object class="sizeritem">
@@ -1700,7 +1700,7 @@
                         <events>EVT_BUTTON</events>
                       </XRCED>
                     </object>
-                    <flag>wxBOTTOM|wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                     <border>14</border>
                   </object>
                   <object class="spacer">
