@@ -2283,6 +2283,14 @@ class FlatShadedButton(GradientButton):
 
 class BorderGradientButton(GradientButton):
 
+	def __init__(self, parent, id=wx.ID_ANY, bitmap=None, label="",
+				 pos=wx.DefaultPosition, size=wx.DefaultSize,
+				 style=wx.NO_BORDER, validator=wx.DefaultValidator,
+				 name="gradientbutton"):
+		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
+								style, validator, name)
+		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+
 	def DoGetBestSize(self):
 		"""
 		Overridden base class virtual. Determines the best size of the
@@ -2341,7 +2349,7 @@ class BorderGradientButton(GradientButton):
 		gc.SetBrush(brush)
 		gc.SetPen(wx.Pen(wx.WHITE))
 		gc.SetPen(wx.Pen(self.LightColour(self.ForegroundColour, 20)))
-		gc.DrawRoundedRectangle(0, 0, width - 1, height - 1, height / 2)
+		gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, height / 2)
 
 		if capture != self:
 			shadowOffset = 0
