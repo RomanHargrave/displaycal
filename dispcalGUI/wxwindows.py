@@ -2280,6 +2280,100 @@ class FlatShadedButton(GradientButton):
 		self._bitmap = bitmap
 		self.Refresh()
 
+
+class BorderGradientButton(GradientButton):
+
+	def DoGetBestSize(self):
+		"""
+		Overridden base class virtual. Determines the best size of the
+		button based on the label and bezel size.
+		"""
+
+		label = self.GetLabel()
+		if not label:
+			return wx.Size(112, 48)
+		
+		dc = wx.ClientDC(self)
+		dc.SetFont(self.GetFont())
+		retWidth, retHeight = dc.GetTextExtent(label)
+		
+		bmpWidth = bmpHeight = 0
+		constant = 15
+		if self._bitmap:
+			bmpWidth, bmpHeight = self._bitmap.GetWidth()+20, self._bitmap.GetHeight()
+			retWidth += bmpWidth
+			retHeight = max(bmpHeight, retHeight)
+			constant = 15
+
+		return wx.Size(retWidth+constant, retHeight+constant) 
+
+	def OnPaint(self, event):
+		"""
+		Handles the ``wx.EVT_PAINT`` event for L{GradientButton}.
+
+		:param `event`: a `wx.PaintEvent` event to be processed.
+		"""
+
+		dc = wx.BufferedPaintDC(self)
+		gc = wx.GraphicsContext.Create(dc)
+		dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))        
+		dc.Clear()
+		
+		clientRect = self.GetClientRect()
+		gradientRect = wx.Rect(*clientRect)
+		capture = wx.Window.GetCapture()
+
+		x, y, width, height = clientRect        
+		
+		gradientRect.SetHeight(gradientRect.GetHeight()/2 + ((capture==self and [1] or [0])[0]))
+		if capture != self:
+			if self._mouseAction == HOVER:
+				topStart, topEnd = self.LightColour(self._topStartColour, 10), self.LightColour(self._bottomEndColour, 10)
+			else:
+				topStart, topEnd = self._topStartColour, self._bottomEndColour
+			brush = gc.CreateLinearGradientBrush(0, 1, 0, height, topStart,
+												 topEnd)
+		else:
+			brush = gc.CreateLinearGradientBrush(0, 1, 0, height,
+												 self._pressedTopColour,
+												 self._pressedBottomColour)
+
+		gc.SetBrush(brush)
+		gc.SetPen(wx.Pen(wx.WHITE))
+		gc.SetPen(wx.Pen(self.LightColour(self.ForegroundColour, 20)))
+		gc.DrawRoundedRectangle(0, 0, width - 1, height - 1, height / 2)
+
+		if capture != self:
+			shadowOffset = 0
+		else:
+			shadowOffset = 1
+
+		font = gc.CreateFont(self.GetFont(), self.GetForegroundColour())
+		gc.SetFont(font)
+		label = self.GetLabel()
+		if label and self._bitmap:
+			label = " " + label
+		tw, th = gc.GetTextExtent(label)
+
+		if self._bitmap:
+			bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()
+			if tw:
+				tw += 5
+				if wx.VERSION < (2, 9):
+					tw += 5
+		else:
+			bw = bh = 0
+			
+		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
+		if self._bitmap:
+			pos_y =  (height-bh)/2+shadowOffset
+			gc.DrawBitmap(self._bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
+			pos_x = pos_x + 5   # extra spacing from bitmap
+
+		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-.5+shadowOffset) 
+
+
+
 class CustomGrid(wx.grid.Grid):
 
 	def __init__(self, *args, **kwargs):

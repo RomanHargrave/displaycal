@@ -128,7 +128,7 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
 					 set_bitmap_labels)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
-					   BetterLinkCtrl,
+					   BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileDrop, HyperLinkCtrl, InfoDialog, LogWindow,
@@ -1365,9 +1365,9 @@ class MainFrame(BaseFrame):
 			self.header_btm.SetBitmap(header_bmp)
 		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP |
 															   wx.EXPAND)
-		separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
-		separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-		self.panel.Sizer.Insert(2, separator, flag=wx.EXPAND)
+		#separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+		#separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+		#self.panel.Sizer.Insert(2, separator, flag=wx.EXPAND)
 		
 		# Calibration settings panel
 		self.calpanel = self.FindWindowByName("calpanel")
@@ -1375,6 +1375,7 @@ class MainFrame(BaseFrame):
 		self.calibration_settings_panel = self.FindWindowByName("calibration_settings_panel")
 		self.profile_settings_panel = self.FindWindowByName("profile_settings_panel")
 		self.lut3d_settings_panel = self.FindWindowByName("lut3d_settings_panel")
+		self.mr_settings_panel = self.FindWindowByName("mr_settings_panel")
 		
 		# Button panel
 		self.buttonpanel = self.FindWindowByName("buttonpanel")
@@ -1423,13 +1424,13 @@ class MainFrame(BaseFrame):
 			if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
 				sub = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage()
 				bmp = sub.Mirror(False).ConvertToBitmap()
-				image = bmp.ConvertToImage()
-				databuffer = image.GetDataBuffer()
+				image2 = bmp.ConvertToImage()
+				databuffer = image2.GetDataBuffer()
 				for i, byte in enumerate(databuffer):
 					if byte > "\0":
-						databuffer[i] = chr(int(min(round(ord(byte) *
-														  (255.0 / 223.0)), 255)))
-				bmp = image.ConvertToBitmap()
+						databuffer[i] = chr(int(min(round((ord(byte) - 153) *
+														  (255.0 / 70.0)), 255)))
+				bmp = image2.ConvertToBitmap()
 				self.tabpanelheader.SetBitmap(bmp)
 				bmp = image.Mirror(False).ConvertToBitmap()
 				self.tabpanelfooter.SetBitmap(bmp)
@@ -1438,8 +1439,9 @@ class MainFrame(BaseFrame):
 			sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1,
 						 self.tabpanelfooter, flag=wx.EXPAND)
 			bgcolor = self.tabpanel.BackgroundColour
-			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
+			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * .2125)
 															 for v in bgcolor]))
+			self.tabpanel.ForegroundColour = "#EEEEEE"
 			self.tabpanelheader.SetBackgroundColour(self.tabpanel.BackgroundColour)
 			self.tabpanelheader.blend = True
 			self.tabpanelfooter.SetBackgroundColour(self.tabpanel.BackgroundColour)
@@ -1481,12 +1483,25 @@ class MainFrame(BaseFrame):
 		self.lut3d_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 									   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(4, self.lut3d_settings_btn,
+								   flag=wx.LEFT, border=8)
+		self.mr_settings_btn = PlateButton(self.tabpanel, -1,
+													label="verification",
+													bmp=geticon(48, "dialog-ok"),
+													style=platebtn.PB_STYLE_GRADIENT |
+														  platebtn.PB_STYLE_TOGGLE)
+		self.mr_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
+									   self.tab_select_handler)
+		self.tabpanel.Sizer.Insert(5, self.mr_settings_btn,
 								   flag=wx.LEFT | wx.RIGHT, border=8)
 		for btn in (self.display_instrument_btn,
 					self.calibration_settings_btn,
 					self.profile_settings_btn,
-					self.lut3d_settings_btn):
+					self.lut3d_settings_btn,
+					self.mr_settings_btn):
 			set_bitmap_labels(btn, True, False, False)
+			btn.SetPressColor(wx.Colour(0x66, 0x66, 0x66))
+			btn.SetLabelColor(self.tabpanel.ForegroundColour,
+							  wx.WHITE)
 		self.tab_select_handler(self.display_instrument_btn)
 		
 		self.profile_info = {}
@@ -2145,7 +2160,8 @@ class MainFrame(BaseFrame):
 
 		for child in (self.display_box_label, self.instrument_box_label,
 					  self.calibration_settings_label,
-					  self.profile_settings_label, self.lut3d_settings_label):
+					  self.profile_settings_label, self.lut3d_settings_label,
+					  self.mr_settings_label):
 			font = child.Font
 			font.SetWeight(wx.BOLD)
 			child.Font = font
@@ -2157,7 +2173,9 @@ class MainFrame(BaseFrame):
 					  self.profile_settings_shadow,
 					  self.lut3d_settings_shadow,
 					  self.profile_settings_info_shadow,
-					  self.lut3d_settings_info_shadow):
+					  self.lut3d_settings_info_shadow,
+					  self.mr_settings_shadow,
+					  self.mr_settings_info_shadow):
 			child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		# Settings file controls
@@ -2361,8 +2379,17 @@ class MainFrame(BaseFrame):
 				# set because the button label background inherits the button
 				# background. Replace with ThemedGenButton which does not have
 				# that issue
-				subst = ThemedGenButton(btn.Parent, label=btn.Label, name=btn.Name)
+				subst = BorderGradientButton(btn.Parent,
+											 bitmap=geticon(16, "play"),
+											 label=btn.Label, name=btn.Name)
 				subst.SetBackgroundColour(btn.Parent.BackgroundColour)
+				subst.SetTopStartColour(wx.Colour(252, 252, 252))
+				subst.SetTopEndColour(wx.Colour(224, 224, 224))
+				subst.SetBottomStartColour(wx.Colour(224, 224, 224))
+				subst.SetBottomEndColour(wx.Colour(166, 166, 166))
+				subst.SetForegroundColour(wx.Colour(0, 0, 0))
+				subst.SetPressedTopColour(wx.Colour(166, 166, 166))
+				subst.SetPressedBottomColour(wx.Colour(224, 224, 224))
 				setattr(self, btn_name, subst)
 				btn.ContainingSizer.Replace(btn, subst)
 				btn.Destroy()
@@ -3149,12 +3176,14 @@ class MainFrame(BaseFrame):
 							enable_profile and not update_cal and 
 							bool(self.worker.displays) and 
 							bool(self.worker.instruments))
-		if not calibrate_btn_show and self.calibration_settings_btn.IsEnabled():
+		if (config.is_uncalibratable_display() and
+			self.calibration_settings_btn.IsEnabled()):
 			self.tab_select_handler(self.display_instrument_btn)
-		if calibrate_btn_show and not self.calibration_settings_btn.IsEnabled():
+		if (config.is_uncalibratable_display() and
+			not self.calibration_settings_btn.IsEnabled()):
 			self.calibration_settings_btn._pressed = False
 			self.calibration_settings_btn._SetState(platebtn.PLATE_NORMAL)
-		self.calibration_settings_btn.Enable(calibrate_btn_show)
+		self.calibration_settings_btn.Enable(not config.is_uncalibratable_display())
 		self.calibrate_btn.Show(not calibrate_and_profile_btn_show and
 							    calibrate_btn_show)
 		self.calibrate_and_profile_btn.Show(calibrate_and_profile_btn_show)
@@ -7857,7 +7886,8 @@ class MainFrame(BaseFrame):
 		btn2tab = {self.display_instrument_btn: self.display_instrument_panel,
 				   self.calibration_settings_btn: self.calibration_settings_panel,
 				   self.profile_settings_btn: self.profile_settings_panel,
-				   self.lut3d_settings_btn: self.lut3d_settings_panel}
+				   self.lut3d_settings_btn: self.lut3d_settings_panel,
+				   self.mr_settings_btn: self.mr_settings_panel}
 		for btn, tab in btn2tab.iteritems():
 			if event.GetId() == btn.Id:
 				tab.Show()

@@ -1659,6 +1659,87 @@
                     <option>1</option>
                     <flag>wxEXPAND</flag>
                   </object>
+                  <object class="sizeritem">
+                    <object class="wxPanel" name="mr_settings_panel">
+                      <object class="wxBoxSizer">
+                        <object class="sizeritem">
+                          <object class="wxBoxSizer">
+                            <object class="sizeritem">
+                              <object class="wxStaticBitmap" name="mr_settings_shadow">
+                                <bitmap>../theme/shadow.png</bitmap>
+                              </object>
+                              <flag>wxEXPAND</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="mr_settings_label">
+                                <label>verification.settings</label>
+                              </object>
+                              <flag>wxLEFT</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="spacer">
+                              <size>1,4</size>
+                            </object>
+                            <orient>wxVERTICAL</orient>
+                          </object>
+                          <flag>wxBOTTOM|wxEXPAND</flag>
+                          <border>12</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxFlexGridSizer">
+                            <vgap>8</vgap>
+                            <hgap>12</hgap>
+                          </object>
+                          <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                          <border>16</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxPanel">
+                            <object class="wxBoxSizer">
+                              <object class="sizeritem">
+                                <object class="wxStaticBitmap" name="mr_settings_info_shadow">
+                                  <bitmap>../theme/shadow-bordertop.png</bitmap>
+                                </object>
+                                <flag>wxBOTTOM|wxEXPAND</flag>
+                                <border>4</border>
+                              </object>
+                              <object class="sizeritem">
+                                <object class="wxFlexGridSizer">
+                                  <object class="sizeritem">
+                                    <object class="wxStaticBitmap">
+                                      <bitmap>../theme/icons/32x32/dialog-information.png</bitmap>
+                                    </object>
+                                    <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
+                                  </object>
+                                  <object class="sizeritem">
+                                    <object class="StaticFancyText">
+                                      <label>info.mr_settings</label>
+                                    </object>
+                                    <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
+                                  </object>
+                                  <cols>2</cols>
+                                  <vgap>12</vgap>
+                                  <hgap>12</hgap>
+                                  <growablecols>1</growablecols>
+                                </object>
+                                <option>1</option>
+                                <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                                <border>16</border>
+                              </object>
+                              <orient>wxVERTICAL</orient>
+                            </object>
+                            <bg>#FFFFFF</bg>
+                          </object>
+                          <flag>wxEXPAND</flag>
+                          <option>1</option>
+                        </object>
+                        <orient>wxVERTICAL</orient>
+                      </object>
+                      <hidden>1</hidden>
+                    </object>
+                    <option>1</option>
+                    <flag>wxEXPAND</flag>
+                  </object>
                   <orient>wxVERTICAL</orient>
                 </object>
                 <style>wxHSCROLL|wxVSCROLL|wxTAB_TRAVERSAL</style>
