@@ -389,7 +389,16 @@
                                     </XRCED>
                                   </object>
                                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                  <border>42</border>
+                                  <border>8</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="colorimeter_correction_create_btn">
+                                    <bitmap>../theme/icons/16x16/list-add.png</bitmap>
+                                    <tooltip>colorimeter_correction.create</tooltip>
+                                    <style>wxNO_BORDER</style>
+                                  </object>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>16</border>
                                 </object>
                                 <orient>wxHORIZONTAL</orient>
                               </object>

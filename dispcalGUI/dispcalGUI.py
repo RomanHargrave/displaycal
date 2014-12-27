@@ -2237,6 +2237,8 @@ class MainFrame(BaseFrame):
 				  id=self.colorimeter_correction_matrix_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_web_handler, 
 				  id=self.colorimeter_correction_web_btn.GetId())
+		self.colorimeter_correction_create_btn.Bind(wx.EVT_BUTTON,
+			self.create_colorimeter_correction_handler)
 
 		# Calibration settings
 		# ====================
@@ -2922,6 +2924,8 @@ class MainFrame(BaseFrame):
 			self.colorimeter_correction_matrix_btn, show_control)
 		self.colorimeter_correction_web_btn.GetContainingSizer().Show(
 			self.colorimeter_correction_web_btn, show_control)
+		self.colorimeter_correction_create_btn.ContainingSizer.Show(
+			self.colorimeter_correction_create_btn, show_control)
 		self.calpanel.Layout()
 		self.calpanel.Thaw()
 		if self.IsShown():
