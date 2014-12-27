@@ -366,7 +366,7 @@ class ReportFrame(BaseFrame):
 																		profile.colorSpace))),
 									   parent=self)
 				else:
-					if (not hasattr(self, which + "_profile") or
+					if (not getattr(self, which + "_profile", None) or
 						getattr(self, which + "_profile").fileName !=
 						profile.fileName):
 						if which == "simulation":
