@@ -11710,18 +11710,35 @@ class MainFrame(BaseFrame):
 		self.aboutdialog = AboutDialog(self, -1, 
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
-		self.aboutdialog.BackgroundColour = "#336699"
-		self.aboutdialog.ForegroundColour = "#FFFFFF"
+		self.aboutdialog.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		items = []
 		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
 								size=(320, 120), repeat_sub_bitmap_h=(214, 0, 8, 180)))
-		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		bmp = getbitmap("theme/gradient", False)
+		if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
+			separator = BitmapBackgroundPanel(self.aboutdialog, size=(-1, 1))
+			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+			items.append(separator)
+			shadow = BitmapBackgroundPanel(self.aboutdialog, size=(-1, 15))
+			bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+			image = bmp.ConvertToImage()
+			databuffer = image.GetDataBuffer()
+			for i, byte in enumerate(databuffer):
+				if byte > "\0":
+					databuffer[i] = chr(int(min(round(ord(byte) *
+													  (255.0 / 223.0)), 255)))
+			bmp = image.ConvertToBitmap()
+			shadow.BackgroundColour = self.aboutdialog.BackgroundColour
+			shadow.SetBitmap(bmp)
+			shadow.blend = True
+			items.append(shadow)
+		items.append((1, 8))
 		items.append(wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
 																	   author)))
 		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
 																	 build)))
-		items.append(BetterLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label=domain, 
 			URL="http://%s" % domain))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -11730,7 +11747,7 @@ class MainFrame(BaseFrame):
 		items.append(wx.StaticText(
 			self.aboutdialog, -1, u"%s" % 
 								  self.worker.argyll_version_string))
-		items.append(BetterLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="ArgyllCMS.com", 
 			URL="http://www.argyllcms.com"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
@@ -11761,24 +11778,18 @@ class MainFrame(BaseFrame):
 			for part in pyver_long[1:]:
 				if part:
 					items.append(wx.StaticText(self.aboutdialog, -1, part))
-		items.append(BetterLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="python.org", 
 			URL="http://www.python.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1, "wxPython " + 
 														 wx.version()))
-		items.append(BetterLinkCtrl(
+		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
-		for item in items:
-			if isinstance(item, BetterLinkCtrl):
-				item.SetNormalColour("#99CCFF")
-				item.SetVisitedColour("#99CCFF")
-				item.SetHoverColour("#99CCFF")
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.ok.BackgroundColour = self.aboutdialog.BackgroundColour
-		self.aboutdialog.ok.ForegroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)
 		self.aboutdialog.Layout()
 		self.aboutdialog.Center()
 		self.aboutdialog.Show()
