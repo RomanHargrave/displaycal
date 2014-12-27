@@ -1,6 +1,7 @@
 @echo off
 setlocal
 
+call :createpreset "Default"      "default"
 call :createpreset "Laptop"       "laptop"
 call :createpreset "madVR"        "madVR"
 call :createpreset "Office & Web" "office_web"

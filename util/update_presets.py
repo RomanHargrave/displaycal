@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dispcalGUI import ICCProfile as ICCP, colormath, config, worker
 
 
-ref = ICCP.ICCProfile(config.get_data_path("ref/Rec709_Gamma22.icm"))
+ref = ICCP.ICCProfile(config.get_data_path("ref/sRGB.icm"))
 
 
 def update_preset(name):
@@ -59,6 +59,11 @@ def update_preset(name):
 			(prof.tags.wtpt.X,
 			 prof.tags.wtpt.Y,
 			 prof.tags.wtpt.Z) = colormath.xyY2XYZ(x, y)
+		elif option[0] in ("t", "T"):
+			print "Updating white point..."
+			(prof.tags.wtpt.X,
+			 prof.tags.wtpt.Y,
+			 prof.tags.wtpt.Z) = colormath.get_whitepoint("D65")
 	for option in options_colprof:
 		if option[0] == "M":
 			print "Updating device model description..."

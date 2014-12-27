@@ -8,6 +8,7 @@ function createpreset() {
 	echo ""
 }
 
+createpreset "Default"      "default"
 createpreset "Laptop"       "laptop"
 createpreset "madVR"        "madVR"
 createpreset "Office & Web" "office_web"
