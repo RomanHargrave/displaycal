@@ -2371,28 +2371,27 @@ class MainFrame(BaseFrame):
 		# Main buttons
 		# ============
 
-		if sys.platform == "win32":
-			for btn_name in ("calibrate_btn", "calibrate_and_profile_btn",
-							 "profile_btn"):
-				btn = getattr(self, btn_name)
-				# wx.Button does not look correct when a custom background color is
-				# set because the button label background inherits the button
-				# background. Replace with ThemedGenButton which does not have
-				# that issue
-				subst = BorderGradientButton(btn.Parent,
-											 bitmap=geticon(16, "play"),
-											 label=btn.Label, name=btn.Name)
-				subst.SetBackgroundColour(btn.Parent.BackgroundColour)
-				subst.SetTopStartColour(wx.Colour(252, 252, 252))
-				subst.SetTopEndColour(wx.Colour(224, 224, 224))
-				subst.SetBottomStartColour(wx.Colour(224, 224, 224))
-				subst.SetBottomEndColour(wx.Colour(166, 166, 166))
-				subst.SetForegroundColour(wx.Colour(0, 0, 0))
-				subst.SetPressedTopColour(wx.Colour(166, 166, 166))
-				subst.SetPressedBottomColour(wx.Colour(224, 224, 224))
-				setattr(self, btn_name, subst)
-				btn.ContainingSizer.Replace(btn, subst)
-				btn.Destroy()
+		for btn_name in ("calibrate_btn", "calibrate_and_profile_btn",
+						 "profile_btn"):
+			btn = getattr(self, btn_name)
+			# wx.Button does not look correct when a custom background color is
+			# set because the button label background inherits the button
+			# background. Replace with ThemedGenButton which does not have
+			# that issue
+			subst = BorderGradientButton(btn.Parent,
+										 bitmap=geticon(16, "play"),
+										 label=btn.Label, name=btn.Name)
+			subst.SetBackgroundColour(btn.Parent.BackgroundColour)
+			subst.SetTopStartColour(wx.Colour(252, 252, 252))
+			subst.SetTopEndColour(wx.Colour(224, 224, 224))
+			subst.SetBottomStartColour(wx.Colour(224, 224, 224))
+			subst.SetBottomEndColour(wx.Colour(166, 166, 166))
+			subst.SetForegroundColour(wx.Colour(0, 0, 0))
+			subst.SetPressedTopColour(wx.Colour(166, 166, 166))
+			subst.SetPressedBottomColour(wx.Colour(224, 224, 224))
+			setattr(self, btn_name, subst)
+			btn.ContainingSizer.Replace(btn, subst)
+			btn.Destroy()
 		
 		self.Bind(wx.EVT_BUTTON, self.calibrate_btn_handler, 
 				  id=self.calibrate_btn.GetId())
