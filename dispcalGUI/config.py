@@ -1266,7 +1266,9 @@ def initcfg(module=None):
 		setcfg("gamap_src_viewcond", "mt")
 		setcfg("gamap_out_viewcond", "mt")
 	# Read cfg
-	cfgnames = [appname]
+	cfgnames = []
+	if module != "3DLUT-maker":
+		cfgnames.append(appname)
 	if module:
 		cfgnames.append(cfgbasename)
 	else:

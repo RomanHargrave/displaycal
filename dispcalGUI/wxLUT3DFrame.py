@@ -160,7 +160,6 @@ class LUT3DFrame(BaseFrame):
 			   int(self.abstract_profile_cb.GetValue()))
 		enable = bool(getcfg("3dlut.use_abstract_profile"))
 		self.abstract_profile_ctrl.Enable(enable)
-		self.abstract_profile_desc.Enable(enable)
 	
 	def lut3d_trc_apply_ctrl_handler(self, event=None):
 		v = self.lut3d_trc_apply_ctrl.GetValue()
@@ -595,12 +594,10 @@ class LUT3DFrame(BaseFrame):
 							self.abstract_profile_cb.SetValue(False)
 							self.abstract_profile_cb.Disable()
 							self.abstract_profile_ctrl.Disable()
-							self.abstract_profile_desc.Disable()
 							self.Freeze()
 							self.output_profile_label.Hide()
 							self.output_profile_ctrl.Hide()
 							self.output_profile_current_btn.Hide()
-							self.output_profile_desc.Hide()
 							self.lut3d_apply_cal_cb.Hide()
 							self.lut3d_show_encoding_controls(False)
 							self.show_trc_controls(False)
@@ -616,11 +613,9 @@ class LUT3DFrame(BaseFrame):
 							self.abstract_profile_cb.SetValue(enable)
 							self.abstract_profile_cb.Enable()
 							self.abstract_profile_ctrl.Enable(enable)
-							self.abstract_profile_desc.Enable(enable)
 							self.output_profile_label.Show()
 							self.output_profile_ctrl.Show()
 							self.output_profile_current_btn.Show()
-							self.output_profile_desc.Show()
 							self.lut3d_apply_cal_cb.Show()
 							self.lut3d_show_encoding_controls()
 							self.lut3d_update_encoding_controls()
@@ -687,9 +682,8 @@ class LUT3DFrame(BaseFrame):
 									# Use BT.1886 gamma mapping for SMPTE 240M /
 									# Rec. 709 TRC
 									setcfg("3dlut.apply_trc",
-										   int((tf[0][1] in (-240, -709) or
-												tf[0][0].startswith("Gamma")) and
-											   self.XYZbpin < self.XYZbpout))
+										   int(tf[0][1] in (-240, -709) or
+											   tf[0][0].startswith("Gamma")))
 									# Use only BT.1886 black output offset
 									setcfg("3dlut.apply_black_offset",
 										   int(tf[0][1] not in (-240, -709) and
@@ -697,7 +691,8 @@ class LUT3DFrame(BaseFrame):
 											   self.XYZbpin < self.XYZbpout))
 								self.lut3d_trc_apply_black_offset_ctrl.Enable(
 									tf[0][1] not in (-240, -709) and
-									not tf[0][0].startswith("Gamma"))
+									not tf[0][0].startswith("Gamma") and
+									self.XYZbpin < self.XYZbpout)
 								# Set gamma to profile gamma if single gamma
 								# profile
 								if tf[0][0].startswith("Gamma"):
@@ -727,7 +722,6 @@ class LUT3DFrame(BaseFrame):
 							self.update_layout()
 						self.Thaw()
 					setattr(self, "%s_profile" % which, profile)
-					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					if which == "output" and not self.output_profile_ctrl.IsShown():
 						return
 					setcfg("3dlut.%s.profile" % which, profile.fileName)
@@ -747,7 +741,6 @@ class LUT3DFrame(BaseFrame):
 							  which).SetPath(getcfg("3dlut.%s.profile" % which))
 				self.lut3d_update_encoding_controls()
 			else:
-				getattr(self, "%s_profile_desc" % which).SetLabel("")
 				if not silent:
 					setattr(self, "%s_profile" % which, None)
 					setcfg("3dlut.%s.profile" % which, None)

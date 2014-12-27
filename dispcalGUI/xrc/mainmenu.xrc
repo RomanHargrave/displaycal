@@ -103,9 +103,6 @@
       <object class="wxMenuItem" name="calibration.verify">
         <label>calibration.verify</label>
       </object>
-      <object class="wxMenuItem" name="measurement_report">
-        <label>measurement_report</label>
-      </object>
       <object class="wxMenuItem" name="measurement_report.update">
         <label>measurement_report.update</label>
       </object>

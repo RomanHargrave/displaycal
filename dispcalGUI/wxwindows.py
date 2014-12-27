@@ -15,6 +15,7 @@ import xml.parsers.expat
 
 import demjson
 
+import ICCProfile as ICCP
 import config
 from config import (defaults, getbitmap, getcfg, geticon, 
 					get_verified_path, pyname, setcfg)
@@ -1414,6 +1415,13 @@ class BaseFrame(wx.Frame):
 					translated = lang.getstr(tooltipstr)
 					if translated != tooltipstr:
 						child.SetToolTipString(translated)
+			elif isinstance(child, FileBrowseBitmapButtonWithChoiceHistory):
+				if child.history:
+					selection = child.textControl.GetSelection()
+					child.textControl.Clear()
+					for path in child.history:
+						child.textControl.Append(child.GetName(path))
+					child.textControl.SetSelection(selection)
 	
 	def update_layout(self):
 		""" Update main window layout. """
@@ -1451,6 +1459,7 @@ class BaseFrame(wx.Frame):
 			if debug:
 				safe_print(child.__class__, child.Name)
 			if isinstance(child, (wx.StaticText, wx.Control, 
+								  filebrowse.FileBrowseButton,
 								  floatspin.FloatSpin)):
 				if (isinstance(child, wx.Choice) and wx.VERSION < (2, 9) and
 					sys.platform not in ("darwin", "win32") and
@@ -1906,6 +1915,23 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		self.textControl.Enable(enable and self.history != [""])
 		self.browseButton.Enable(enable)
 
+	def GetName(self, path):
+		"""
+		Return a name for a path. Return value may be a translated string.
+		
+		"""
+		name = None
+		if os.path.splitext(path)[1].lower() in (".icc", ".icm"):
+			try:
+				profile = ICCP.ICCProfile(path)
+			except (IOError, ICCP.ICCProfileInvalidError):
+				pass
+			else:
+				name = profile.getDescription()
+		if not name:
+			name = os.path.basename(path)
+		return lang.getstr(name)
+
 	def GetValue(self):
 		"""
 		retrieve current value of text control
@@ -1935,13 +1961,12 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			tempValue = self.history[index]
 		else:
 			tempValue = ""
-		self.history = value
+		self.history = []
 		control.Clear()
-		for path in value:
-			control.Append(os.path.basename(path))
-		if tempValue is not None:
-			self.history.append(tempValue)
-			control.Append(os.path.basename(tempValue))
+		for path in list(value) + [tempValue]:
+			if path:
+				self.history.append(path)
+				control.Append(self.GetName(path))
 		self.setupControl(selectionIndex, control)
 	
 	def SetMaxFontSize(self, pointsize=11):
@@ -1956,7 +1981,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 					self.textControl.Delete(index)
 		if not value in self.history:
 			self.history.append(value)
-			self.textControl.Append(os.path.basename(value))
+			self.textControl.Append(self.GetName(value))
 		self.setupControl(self.history.index(value))
 		if callBack:
 			self.changeCallback(CustomEvent(wx.EVT_CHOICE.typeId, 
@@ -2290,6 +2315,14 @@ class BorderGradientButton(GradientButton):
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
 		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+		self._bitmapdisabled = self._bitmap
+		self._bitmapfocus = self._bitmap
+		self._bitmaphover = self._bitmap
+		self._bitmapselected = self._bitmap
+		set_bitmap_labels(self)
+
+	BitmapLabel = property(lambda self: self._bitmap,
+						   lambda self, bitmap: self.SetBitmap(bitmap))
 
 	def DoGetBestSize(self):
 		"""
@@ -2346,9 +2379,12 @@ class BorderGradientButton(GradientButton):
 												 self._pressedTopColour,
 												 self._pressedBottomColour)
 
+		fgcolor = self.ForegroundColour
+		if not self.IsEnabled():
+			fgcolor = self.LightColour(fgcolor, 40)
+
 		gc.SetBrush(brush)
-		gc.SetPen(wx.Pen(wx.WHITE))
-		gc.SetPen(wx.Pen(self.LightColour(self.ForegroundColour, 20)))
+		gc.SetPen(wx.Pen(self.LightColour(fgcolor, 20)))
 		gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, height / 2)
 
 		if capture != self:
@@ -2356,7 +2392,7 @@ class BorderGradientButton(GradientButton):
 		else:
 			shadowOffset = 1
 
-		font = gc.CreateFont(self.GetFont(), self.GetForegroundColour())
+		font = gc.CreateFont(self.GetFont(), fgcolor)
 		gc.SetFont(font)
 		label = self.GetLabel()
 		if label and self._bitmap:
@@ -2373,13 +2409,34 @@ class BorderGradientButton(GradientButton):
 			bw = bh = 0
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
-		if self._bitmap:
+		if self.IsEnabled():
+			if self._mouseAction == HOVER:
+				bitmap = self._bitmaphover
+			else:
+				bitmap = self._bitmap
+		else:
+			bitmap = self._bitmapdisabled
+		if bitmap:
 			pos_y =  (height-bh)/2+shadowOffset
-			gc.DrawBitmap(self._bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
+			gc.DrawBitmap(bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
 			pos_x = pos_x + 5   # extra spacing from bitmap
 
 		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-.5+shadowOffset) 
 
+	def SetBitmap(self, bitmap):
+		self._bitmap = bitmap
+
+	def SetBitmapDisabled(self, bitmap):
+		self._bitmapdisabled = bitmap
+
+	def SetBitmapFocus(self, bitmap):
+		self._bitmapfocus = bitmap
+
+	def SetBitmapHover(self, bitmap):
+		self._bitmaphover = bitmap
+
+	def SetBitmapSelected(self, bitmap):
+		self._bitmapselected = bitmap
 
 
 class CustomGrid(wx.grid.Grid):

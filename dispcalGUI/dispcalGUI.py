@@ -108,7 +108,7 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, Warn,
 					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
 					check_ti3_criteria2, get_argyll_util, get_options_from_cal,
-					get_argyll_version,
+					get_argyll_version, get_current_profile_path,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path, parse_argument_string,
 					set_argyll_bin, show_result_dialog, technology_strings)
@@ -1101,7 +1101,7 @@ class GamapFrame(BaseFrame):
 		self.gamap_profile_handler()
 
 
-class MainFrame(BaseFrame):
+class MainFrame(ReportFrame, BaseFrame):
 
 	""" Display calibrator main application window. """
 
@@ -1375,7 +1375,13 @@ class MainFrame(BaseFrame):
 		self.calibration_settings_panel = self.FindWindowByName("calibration_settings_panel")
 		self.profile_settings_panel = self.FindWindowByName("profile_settings_panel")
 		self.lut3d_settings_panel = self.FindWindowByName("lut3d_settings_panel")
-		self.mr_settings_panel = self.FindWindowByName("mr_settings_panel")
+
+		# Verification / measurement report
+		res = xrc.XmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
+		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
+		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		self.mr_settings_panel = res.LoadPanel(self.calpanel, "panel")
+		self.calpanel.Sizer.Add(self.mr_settings_panel, 1, flag=wx.EXPAND)
 		
 		# Button panel
 		self.buttonpanel = self.FindWindowByName("buttonpanel")
@@ -1628,7 +1634,7 @@ class MainFrame(BaseFrame):
 		
 		"""
 		self.reportframe = ReportFrame(self)
-		self.reportframe.measure_btn.Bind(wx.EVT_BUTTON,
+		self.reportframe.measurement_report_btn.Bind(wx.EVT_BUTTON,
 										  self.measurement_report_handler)
 
 	def init_synthiccframe(self):
@@ -1702,6 +1708,7 @@ class MainFrame(BaseFrame):
 					self.default_testchart_names.append(chart)
 
 		self.lut3d_setup_language()
+		self.mr_setup_language()
 
 	def set_size(self, set_height=False, fit_width=False):
 		if not self.IsFrozen():
@@ -1920,10 +1927,6 @@ class MainFrame(BaseFrame):
 			tools.FindItem("calibration.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_calibration_handler, 
 				  self.menuitem_calibration_verify)
-		self.menuitem_measurement_report = tools.FindItemById(
-			tools.FindItem("measurement_report"))
-		self.Bind(wx.EVT_MENU, self.measurement_report_create_handler, 
-				  self.menuitem_measurement_report)
 		menuitem = tools.FindItemById(
 			tools.FindItem("measurement_report.update"))
 		self.Bind(wx.EVT_MENU, self.update_measurement_report, 
@@ -2141,7 +2144,7 @@ class MainFrame(BaseFrame):
 		self.menuitem_calibration_verify.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments) and
 												not config.is_non_argyll_display())
-		self.menuitem_measurement_report.Enable(bool(self.worker.displays) and 
+		self.mr_settings_btn.Enable(bool(self.worker.displays) and 
 											bool(self.worker.instruments))
 		self.menuitem_measure_uniformity.Enable(bool(self.worker.displays) and 
 												bool(self.worker.instruments))
@@ -2374,7 +2377,8 @@ class MainFrame(BaseFrame):
 		# ============
 
 		for btn_name in ("calibrate_btn", "calibrate_and_profile_btn",
-						 "profile_btn"):
+						 "profile_btn", "lut3d_create_btn",
+						 "measurement_report_btn"):
 			btn = getattr(self, btn_name)
 			# wx.Button does not look correct when a custom background color is
 			# set because the button label background inherits the button
@@ -2401,6 +2405,10 @@ class MainFrame(BaseFrame):
 				  id=self.calibrate_and_profile_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.profile_btn_handler, 
 				  id=self.profile_btn.GetId())
+		self.lut3d_create_btn.Bind(wx.EVT_BUTTON,
+								   self.lut3d_create_handler)
+		self.measurement_report_btn.Bind(wx.EVT_BUTTON,
+										 self.measurement_report_handler)
 
 	def set_language_handler(self, event):
 		"""
@@ -3163,24 +3171,33 @@ class MainFrame(BaseFrame):
 		self.ambient_measure_btn.Enable(bool(self.worker.instruments) and
 										not update_cal)
 
+		lut3d_create_btn_show = (self.lut3d_settings_panel.IsShown()
+								 and not getcfg("3dlut.create"))
+		mr_btn_show = self.mr_settings_panel.IsShown()
 		enable_cal = (self.interactive_display_adjustment_cb.GetValue() or
 					  self.trc_ctrl.GetSelection() > 0)
-		calibrate_and_profile_btn_show = (enable_cal and
+		calibrate_and_profile_btn_show = (not lut3d_create_btn_show and
+										  not mr_btn_show and
+										  enable_cal and
 										  enable_profile and 
 										  bool(self.worker.displays) and 
 										  not config.is_uncalibratable_display() and 
 										  bool(self.worker.instruments))
-		calibrate_btn_show = (enable_cal and
+		calibrate_btn_show = (not lut3d_create_btn_show and
+							  not mr_btn_show and
+							  enable_cal and
 							  not is_ccxx_testchart() and
 							  bool(self.worker.displays) and 
 							  not config.is_uncalibratable_display() and 
 							  bool(self.worker.instruments))
-		profile_btn_show = (not calibrate_and_profile_btn_show and
+		profile_btn_show = (not lut3d_create_btn_show and
+							not mr_btn_show and
+							not calibrate_and_profile_btn_show and
 							enable_profile and not update_cal and 
 							bool(self.worker.displays) and 
 							bool(self.worker.instruments))
 		if (config.is_uncalibratable_display() and
-			self.calibration_settings_btn.IsEnabled()):
+			self.calibration_settings_panel.IsShown()):
 			self.tab_select_handler(self.display_instrument_btn)
 		if (config.is_uncalibratable_display() and
 			not self.calibration_settings_btn.IsEnabled()):
@@ -3191,11 +3208,15 @@ class MainFrame(BaseFrame):
 							    calibrate_btn_show)
 		self.calibrate_and_profile_btn.Show(calibrate_and_profile_btn_show)
 		self.profile_btn.Show(profile_btn_show)
+		self.lut3d_create_btn.Show(lut3d_create_btn_show)
+		self.measurement_report_btn.Show(mr_btn_show)
 		self.buttonpanel.Layout()
 
 		self.lut3d_create_btn.Enable(is_profile(None, True) and
 									 getcfg("calibration.file")
 									 not in self.presets)
+		if getcfg("calibration.file") in self.presets:
+			self.measurement_report_btn.Disable()
 		
 		self.panel.Thaw()
 
@@ -3438,6 +3459,9 @@ class MainFrame(BaseFrame):
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
 
+		if self.mr_settings_panel.IsShown():
+			##self.mr_update_controls()
+			self.set_profile("output")
 		if getattr(self, "reportframe", None):
 			self.reportframe.update_controls()
 
@@ -3886,6 +3910,7 @@ class MainFrame(BaseFrame):
 		self.calpanel.Thaw()
 		self.update_scrollbars()
 		self.calpanel.Layout()
+		self.update_main_controls()
 
 	def lut3d_init_input_profiles(self):
 		self.input_profiles = OrderedDict()
@@ -4009,6 +4034,12 @@ class MainFrame(BaseFrame):
 				self.lut3dframe.set_profile("output")
 			if getattr(self, "reportframe", None):
 				self.reportframe.set_profile("output")
+			### Set measurement report dest profile to current
+			##setcfg("measurement_report.output_profile",
+				   ##get_current_profile_path())
+			if self.mr_settings_panel.IsShown():
+				##self.mr_update_controls()
+				self.set_profile("output")
 	
 	def settings_discard_changes(self, sel=None, keep_changed_state=False):
 		""" Update the calibration file control and remove the leading
@@ -5639,7 +5670,7 @@ class MainFrame(BaseFrame):
 		try:
 			chart = CGATS.CGATS(chart, True)
 		except (IOError, CGATS.CGATSError), exception:
-			show_result_dialog(exception, self.reportframe)
+			show_result_dialog(exception, getattr(self, "reportframe", self))
 			return
 		
 		fields = getcfg("measurement_report.chart.fields")
@@ -5662,7 +5693,8 @@ class MainFrame(BaseFrame):
 			try:
 				profile = ICCP.ICCProfile(profilepath)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				InfoDialog(self.reportframe, msg=lang.getstr("profile.invalid") + 
+				InfoDialog(getattr(self, "reportframe", self),
+						   msg=lang.getstr("profile.invalid") + 
 								 "\n" + profilepath, 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
@@ -5709,7 +5741,7 @@ class MainFrame(BaseFrame):
 				if len(odata) != 1 or len(odata[0]) != 3:
 					raise ValueError("Blackpoint is invalid: %s" % odata)
 			except Exception, exception:
-				show_result_dialog(exception, self.reportframe)
+				show_result_dialog(exception, getattr(self, "reportframe", self))
 				return
 			XYZbp = odata[0]
 			if apply_trc:
@@ -5803,7 +5835,8 @@ class MainFrame(BaseFrame):
 			defaultDir = get_verified_path(None, 
 										   os.path.join(getcfg("profile.save_path"), 
 										   defaultFile))[0]
-			dlg = wx.FileDialog(self.reportframe, lang.getstr("save_as"), 
+			dlg = wx.FileDialog(getattr(self, "reportframe", self),
+								lang.getstr("save_as"), 
 								defaultDir, defaultFile, 
 								wildcard=lang.getstr("filetype.html") + "|*.html;*.htm", 
 								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
@@ -5814,7 +5847,7 @@ class MainFrame(BaseFrame):
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
 														 path)),
-									   self.reportframe)
+									   getattr(self, "reportframe", self))
 					return
 			dlg.Destroy()
 			if result != wx.ID_OK:
@@ -5824,8 +5857,8 @@ class MainFrame(BaseFrame):
 		# check if file(s) already exist
 		if os.path.exists(save_path):
 				dlg = ConfirmDialog(
-					self.reportframe, msg=lang.getstr("dialog.confirm_overwrite", 
-										  save_path), 
+					getattr(self, "reportframe", self),
+					msg=lang.getstr("dialog.confirm_overwrite", save_path), 
 					ok=lang.getstr("overwrite"), 
 					cancel=lang.getstr("cancel"), 
 					bitmap=geticon(32, "dialog-warning"))
@@ -5850,7 +5883,7 @@ class MainFrame(BaseFrame):
 		# setup temp dir
 		temp = self.worker.create_tempdir()
 		if isinstance(temp, Exception):
-			show_result_dialog(temp, self.reportframe)
+			show_result_dialog(temp, getattr(self, "reportframe", self))
 			return
 		
 		# filenames
@@ -5862,8 +5895,8 @@ class MainFrame(BaseFrame):
 		try:
 			ti1_file = open(ti1_path, "w")
 		except EnvironmentError, exception:
-			InfoDialog(self.reportframe, msg=lang.getstr("error.file.create", 
-											 ti1_path), 
+			InfoDialog(getattr(self, "reportframe", self),
+					   msg=lang.getstr("error.file.create", ti1_path), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-error"))
 			self.worker.wrapup(False)
@@ -5884,7 +5917,7 @@ class MainFrame(BaseFrame):
 					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 				wx.CallAfter(show_result_dialog,
 							 Error(lang.getstr("cal_extraction_failed")),
-							 self.reportframe)
+							 getattr(self, "reportframe", self))
 				self.Show()
 				return
 			cal_path = os.path.join(temp, name + ".cal")
@@ -5927,7 +5960,8 @@ class MainFrame(BaseFrame):
 		
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
-				wx.CallAfter(show_result_dialog, result, self.reportframe)
+				wx.CallAfter(show_result_dialog, result,
+							 getattr(self, "reportframe", self))
 			return
 
 		# Account for additional white patches
@@ -7565,9 +7599,10 @@ class MainFrame(BaseFrame):
 										 (len(data) == 3 and
 										  data[1] == "create")):
 			# 3D LUT maker
-			self.lut3d_create_handler(None)
 			if len(data) == 3:
-				response = self.lut3dframe.process_data(data)
+				self.lut3d_create_handler(None, data[-1])
+			else:
+				self.tab_select_handler(self.lut3d_settings_btn, True)
 		elif data[0] == "curve-viewer" and len(data) < 3:
 			# Curve viewer
 			profile = None
@@ -7686,7 +7721,7 @@ class MainFrame(BaseFrame):
 			if len(data) == 2:
 				wx.CallAfter(self.measurement_report_handler, None, path=data[1])
 			else:
-				self.measurement_report_create_handler(None)
+				self.tab_select_handler(self.mr_settings_btn, True)
 		elif data[0] == "profile" and len(data) == 1:
 			# Profile
 			wx.CallAfter(self.profile_btn_handler,
@@ -7882,10 +7917,10 @@ class MainFrame(BaseFrame):
 		else:
 			self.synthiccframe.Show(not self.synthiccframe.IsShownOnScreen())
 
-	def tab_select_handler(self, event):
+	def tab_select_handler(self, event, update_main_controls=False):
 		if hasattr(event, "EventObject") and not event.EventObject.IsEnabled():
 			return
-		self.calpanel.Freeze()
+		self.panel.Freeze()
 		btn2tab = {self.display_instrument_btn: self.display_instrument_panel,
 				   self.calibration_settings_btn: self.calibration_settings_panel,
 				   self.profile_settings_btn: self.profile_settings_panel,
@@ -7893,6 +7928,12 @@ class MainFrame(BaseFrame):
 				   self.mr_settings_btn: self.mr_settings_panel}
 		for btn, tab in btn2tab.iteritems():
 			if event.GetId() == btn.Id:
+				if tab is self.mr_settings_panel and not tab.IsShown():
+					if not hasattr(self, "XYZbpin"):
+						self.mr_init_controls()
+					else:
+						##self.mr_update_controls()
+						self.set_profile("output")
 				tab.Show()
 				btn._pressed = True
 				btn._SetState(platebtn.PLATE_PRESSED)
@@ -7901,7 +7942,9 @@ class MainFrame(BaseFrame):
 				btn._pressed = False
 				btn._SetState(platebtn.PLATE_NORMAL)
 		self.calpanel.Layout()
-		self.calpanel.Thaw()
+		if isinstance(event, wx.Event) or update_main_controls:
+			self.update_main_controls()
+		self.panel.Thaw()
 		self.update_scrollbars()
 		self.calpanel.Layout()
 	
@@ -9281,6 +9324,11 @@ class MainFrame(BaseFrame):
 			self.reportframe.update_controls()
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
+		##if (event and not isinstance(event, CustomEvent) and
+			##not getcfg("calibration.file")):
+			### Set measurement report dest profile to current
+			##setcfg("measurement_report.output_profile",
+				   ##get_current_profile_path())
 	
 	def display_delay_handler(self, event):
 		mapping = {self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",

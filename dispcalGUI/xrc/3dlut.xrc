@@ -24,14 +24,6 @@
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
-                <object class="spacer"/>
-                <object class="sizeritem">
-                  <object class="wxStaticText" name="input_profile_desc">
-                    <label>-</label>
-                  </object>
-                  <flag>wxLEFT|wxEXPAND</flag>
-                  <border>4</border>
-                </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="lut3d_trc_label">
                     <label>trc</label>
@@ -48,11 +40,8 @@
                             <label>unmodified</label>
                             <style>wxRB_GROUP</style>
                           </object>
-                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                        </object>
-                        <object class="spacer">
-                          <size>0,16</size>
-                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                          <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>4</border>
                         </object>
                         <object class="sizeritem">
                           <object class="wxStaticBitmap" name="lut3d_input_value_clipping_bmp">
@@ -74,8 +63,6 @@
                         </object>
                         <orient>wxHORIZONTAL</orient>
                       </object>
-                      <flag>wxTOP|wxBOTTOM</flag>
-                      <border>4</border>
                     </object>
                     <object class="sizeritem">
                       <object class="wxBoxSizer">
@@ -85,14 +72,10 @@
                           </object>
                           <flag>wxALIGN_CENTRE_VERTICAL</flag>
                         </object>
-                        <object class="spacer">
-                          <size>0,24</size>
-                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                        </object>
                         <orient>wxHORIZONTAL</orient>
                       </object>
                       <flag>wxTOP|wxBOTTOM</flag>
-                      <border>4</border>
+                      <border>8</border>
                     </object>
                     <object class="sizeritem">
                       <object class="wxBoxSizer">
@@ -227,14 +210,6 @@
                   </object>
                   <flag>wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
-                <object class="spacer"/>
-                <object class="sizeritem">
-                  <object class="wxStaticText" name="abstract_profile_desc">
-                    <label>-</label>
-                  </object>
-                  <flag>wxLEFT|wxEXPAND</flag>
-                  <border>4</border>
-                </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="output_profile_label">
                     <label>output.profile</label>
@@ -264,14 +239,6 @@
                   </object>
                   <option>1</option>
                   <flag>wxEXPAND</flag>
-                </object>
-                <object class="spacer"/>
-                <object class="sizeritem">
-                  <object class="wxStaticText" name="output_profile_desc">
-                    <label>-</label>
-                  </object>
-                  <flag>wxBOTTOM|wxLEFT|wxEXPAND</flag>
-                  <border>4</border>
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
@@ -422,7 +389,7 @@
                 <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
-                <growablerows>15</growablerows>
+                <growablerows>13</growablerows>
               </object>
               <option>1</option>
               <flag>wxALL|wxEXPAND</flag>

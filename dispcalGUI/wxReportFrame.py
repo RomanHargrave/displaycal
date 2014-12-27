@@ -15,6 +15,7 @@ import localization as lang
 import worker
 from wxTestchartEditor import TestchartEditor
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
+import xh_fancytext
 import xh_filebrowsebutton
 
 from wx import xrc
@@ -25,30 +26,36 @@ class ReportFrame(BaseFrame):
 	""" Measurement report creation window """
 	
 	def __init__(self, parent=None):
-		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
-															  "report.xrc")))
-		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
-		if hasattr(wx, "PreFrame"):
-			# Classic
-			pre = wx.PreFrame()
-			self.res.LoadOnFrame(pre, parent, "reportframe")
-			self.PostCreate(pre)
-		else:
-			# Phoenix
-			wx.Frame.__init__(self)
-			self.res.LoadFrame(self, parent, "reportframe")
-		self.init()
+		BaseFrame.__init__(self, parent, -1, lang.getstr("measurement_report"))
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+
+		res = xrc.XmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
+		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
+		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		self.panel = res.LoadPanel(self, "panel")
+
+		self.Sizer = wx.BoxSizer(wx.VERTICAL)
+		self.Sizer.Add(self.panel, 1, flag=wx.EXPAND)
 		
 		self.set_child_ctrls_as_attrs(self)
 
-		self.panel = self.FindWindowByName("panel")
+		self.measurement_report_btn = wx.Button(self.panel, -1,
+												lang.getstr("measure"))
+		self.panel.Sizer.Insert(2, self.measurement_report_btn,
+								flag=wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT,
+								border=16)
 
 		self.worker = worker.Worker(self)
 		self.worker.set_argyll_version("xicclu")
 
+		BaseFrame.setup_language(self)
+		self.mr_setup_language()
+		self.mr_init_controls()
+		self.mr_init_frame()
+
+	def mr_init_controls(self):
 		for which in ("chart", "simulation_profile", "devlink_profile",
 					  "output_profile"):
 			ctrl = self.FindWindowByName("%s_ctrl" % which)
@@ -103,17 +110,17 @@ class ReportFrame(BaseFrame):
 										  self.apply_trc_ctrl_handler)
 		self.apply_trc_ctrl.Bind(wx.EVT_RADIOBUTTON,
 								 self.apply_trc_ctrl_handler)
-		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
-		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
-								 self.trc_gamma_ctrl_handler)
-		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
-								 self.trc_gamma_ctrl_handler)
-		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
-									  self.trc_gamma_type_ctrl_handler)
-		self.black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
-										   self.black_output_offset_ctrl_handler)
-		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
-											  self.black_output_offset_ctrl_handler)
+		self.mr_trc_ctrl.Bind(wx.EVT_CHOICE, self.mr_trc_ctrl_handler)
+		self.mr_trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
+								 self.mr_trc_gamma_ctrl_handler)
+		self.mr_trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS,
+								 self.mr_trc_gamma_ctrl_handler)
+		self.mr_trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE,
+									  self.mr_trc_gamma_type_ctrl_handler)
+		self.mr_black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
+										   self.mr_black_output_offset_ctrl_handler)
+		self.mr_black_output_offset_intctrl.Bind(wx.EVT_TEXT,
+											  self.mr_black_output_offset_ctrl_handler)
 		self.simulate_whitepoint_cb.Bind(wx.EVT_CHECKBOX,
 										 self.simulate_whitepoint_ctrl_handler)
 		self.simulate_whitepoint_relative_cb.Bind(wx.EVT_CHECKBOX,
@@ -123,12 +130,14 @@ class ReportFrame(BaseFrame):
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		
-		self.measure_btn.SetDefault()
-		
-		self.setup_language()
-		self.XYZbpin = [0, 0, 0]
-		self.XYZbpout = [0, 0, 0]
-		self.update_controls()
+		if not hasattr(self, "XYZbpin"):
+			self.XYZbpin = [0, 0, 0]
+			self.XYZbpout = [0, 0, 0]
+		self.mr_update_controls()
+
+	def mr_init_frame(self):
+		self.measurement_report_btn.SetDefault()
+
 		self.update_layout()
 		
 		config.defaults.update({
@@ -165,47 +174,53 @@ class ReportFrame(BaseFrame):
 		setcfg("measurement_report.apply_trc", int(v))
 		setcfg("measurement_report.apply_black_offset",
 			   int(self.apply_black_offset_ctrl.GetValue()))
-		self.update_main_controls()
+		self.mr_update_main_controls()
 
-	def black_output_offset_ctrl_handler(self, event):
-		if event.GetId() == self.black_output_offset_intctrl.GetId():
-			self.black_output_offset_ctrl.SetValue(
-				self.black_output_offset_intctrl.GetValue())
+	def mr_black_output_offset_ctrl_handler(self, event):
+		if event.GetId() == self.mr_black_output_offset_intctrl.GetId():
+			self.mr_black_output_offset_ctrl.SetValue(
+				self.mr_black_output_offset_intctrl.GetValue())
 		else:
-			self.black_output_offset_intctrl.SetValue(
-				self.black_output_offset_ctrl.GetValue())
-		v = self.black_output_offset_ctrl.GetValue() / 100.0
+			self.mr_black_output_offset_intctrl.SetValue(
+				self.mr_black_output_offset_ctrl.GetValue())
+		v = self.mr_black_output_offset_ctrl.GetValue() / 100.0
 		setcfg("measurement_report.trc_output_offset", v)
-		self.update_trc_control()
+		self.mr_update_trc_control()
 
-	def trc_gamma_ctrl_handler(self, event):
+	def mr_trc_gamma_ctrl_handler(self, event):
 		try:
-			v = float(self.trc_gamma_ctrl.GetValue().replace(",", "."))
+			v = float(self.mr_trc_gamma_ctrl.GetValue().replace(",", "."))
 			if (v < config.valid_ranges["measurement_report.trc_gamma"][0] or
 				v > config.valid_ranges["measurement_report.trc_gamma"][1]):
 				raise ValueError()
 		except ValueError:
 			wx.Bell()
-			self.trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
+			self.mr_trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
 		else:
-			if str(v) != self.trc_gamma_ctrl.GetValue():
-				self.trc_gamma_ctrl.SetValue(str(v))
+			if str(v) != self.mr_trc_gamma_ctrl.GetValue():
+				self.mr_trc_gamma_ctrl.SetValue(str(v))
 			setcfg("measurement_report.trc_gamma", v)
-			self.update_trc_control()
+			self.mr_update_trc_control()
 		event.Skip()
 
-	def trc_ctrl_handler(self, event):
-		if self.trc_ctrl.GetSelection() == 0:
+	def mr_trc_ctrl_handler(self, event):
+		if self.mr_trc_ctrl.GetSelection() == 0:
 			# BT.1886
 			setcfg("measurement_report.trc_gamma", 2.4)
 			setcfg("measurement_report.trc_gamma_type", "B")
 			setcfg("measurement_report.trc_output_offset", 0.0)
-			self.update_trc_controls()
+			self.mr_update_trc_controls()
+		elif self.mr_trc_ctrl.GetSelection() == 1:
+			# Pure power gamma 2.2
+			setcfg("measurement_report.trc_gamma", 2.2)
+			setcfg("measurement_report.trc_gamma_type", "b")
+			setcfg("measurement_report.trc_output_offset", 1.0)
+			self.mr_update_trc_controls()
 
-	def trc_gamma_type_ctrl_handler(self, event):
+	def mr_trc_gamma_type_ctrl_handler(self, event):
 		setcfg("measurement_report.trc_gamma_type",
-			   self.trc_gamma_types_ab[self.trc_gamma_type_ctrl.GetSelection()])
-		self.update_trc_control()
+			   self.trc_gamma_types_ab[self.mr_trc_gamma_type_ctrl.GetSelection()])
+		self.mr_update_trc_control()
 	
 	def chart_btn_handler(self, event):
 		if self.Parent:
@@ -291,13 +306,13 @@ class ReportFrame(BaseFrame):
 	def enable_3dlut_handler(self, event):
 		setcfg("3dlut.madVR.enable", int(self.enable_3dlut_cb.GetValue()))
 		setcfg("measurement_report.use_devlink_profile", 0)
-		self.update_main_controls()
+		self.mr_update_main_controls()
 	
 	def fields_ctrl_handler(self, event):
 		setcfg("measurement_report.chart.fields",
 			   self.fields_ctrl.GetStringSelection())
 		if event:
-			self.update_main_controls()
+			self.mr_update_main_controls()
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output")
@@ -316,12 +331,14 @@ class ReportFrame(BaseFrame):
 	def set_profile(self, which, profile_path=None, silent=False):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
 		if which == "output":
-			if profile_path is None:
-				profile_path = get_current_profile_path()
-			self.output_profile_current_btn.Enable(self.output_profile_ctrl.IsShown() and
-												   bool(profile_path) and
-												   os.path.isfile(profile_path) and
-												   profile_path != path)
+			##if profile_path is None:
+				##profile_path = get_current_profile_path()
+			##self.output_profile_current_btn.Enable(self.output_profile_ctrl.IsShown() and
+												   ##bool(profile_path) and
+												   ##os.path.isfile(profile_path) and
+												   ##profile_path != path)
+			path = get_current_profile_path()
+			setcfg("measurement_report.%s_profile" % which, path)
 		if path:
 			if not os.path.isfile(path):
 				if not silent:
@@ -350,7 +367,7 @@ class ReportFrame(BaseFrame):
 									   parent=self)
 				else:
 					if (not hasattr(self, which + "_profile") or
-						getcfg("measurement_report.%s_profile" % which) !=
+						getattr(self, which + "_profile").fileName !=
 						profile.fileName):
 						if which == "simulation":
 							# Get profile blackpoint so we can check if it makes
@@ -379,26 +396,24 @@ class ReportFrame(BaseFrame):
 													   % odata, self)
 								self.XYZbpout = odata[0]
 					setattr(self, "%s_profile" % which, profile)
-					getattr(self, "%s_profile_desc" % which).SetLabel(profile.getDescription())
 					if not silent:
 						setcfg("measurement_report.%s_profile" % which, profile.fileName)
 						if which == "simulation":
 							self.use_simulation_profile_ctrl_handler(None)
 						else:
-							self.update_main_controls()
+							self.mr_update_main_controls()
 					return profile
 			getattr(self,
 					"%s_profile_ctrl" %
 					which).SetPath(getcfg("measurement_report.%s_profile" % which))
 		else:
-			getattr(self, "%s_profile_desc" % which).SetLabel("")
 			if not silent:
 				setattr(self, "%s_profile" % which, None)
 				setcfg("measurement_report.%s_profile" % which, None)
-				self.update_main_controls()
+				self.mr_update_main_controls()
 	
-	def setup_language(self):
-		BaseFrame.setup_language(self)
+	def mr_setup_language(self):
+		# Shared with main window
 		
 		for which in ("chart", "simulation_profile", "devlink_profile",
 					  "output_profile"):
@@ -418,19 +433,19 @@ class ReportFrame(BaseFrame):
 				setattr(ctrl, name, value)
 
 		items = []
-		for item in ("trc.rec1886", "custom"):
+		for item in ("trc.rec1886", "Gamma 2.2", "custom"):
 			items.append(lang.getstr(item))
-		self.trc_ctrl.SetItems(items)
+		self.mr_trc_ctrl.SetItems(items)
 		
 		self.trc_gamma_types_ab = {0: "b", 1: "B"}
 		self.trc_gamma_types_ba = {"b": 0, "B": 1}
-		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
+		self.mr_trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
 	
 	def simulate_whitepoint_ctrl_handler(self, event):
 		v = self.simulate_whitepoint_cb.GetValue()
 		setcfg("measurement_report.whitepoint.simulate", int(v))
-		self.update_main_controls()
+		self.mr_update_main_controls()
 		
 	
 	def simulate_whitepoint_relative_ctrl_handler(self, event):
@@ -445,42 +460,47 @@ class ReportFrame(BaseFrame):
 			self.simulation_profile_ctrl.SetPath(path)
 			self.set_profile("simulation")
 	
-	def update_controls(self):
+	def mr_update_controls(self):
 		""" Update controls with values from the configuration """
 		self.panel.Freeze()
 		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
 		self.set_profile("simulation", silent=True)
-		self.update_trc_controls()
+		self.mr_update_trc_controls()
 		self.devlink_profile_ctrl.SetPath(getcfg("measurement_report.devlink_profile"))
 		self.set_profile("devlink", silent=True)
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
-		self.set_testchart(getcfg("measurement_report.chart"))
+		self.mr_set_testchart(getcfg("measurement_report.chart"))
 		self.use_simulation_profile_ctrl_handler(None)
 		self.panel.Thaw()
 
-	def update_trc_control(self):
+	def mr_update_trc_control(self):
 		if (getcfg("measurement_report.trc_gamma_type") == "B" and
 			getcfg("measurement_report.trc_output_offset") == 0 and
 			getcfg("measurement_report.trc_gamma") == 2.4):
-			self.trc_ctrl.SetSelection(0)  # BT.1886
+			self.mr_trc_ctrl.SetSelection(0)  # BT.1886
+		elif (getcfg("measurement_report.trc_gamma_type") == "b" and
+			getcfg("measurement_report.trc_output_offset") == 1 and
+			getcfg("measurement_report.trc_gamma") == 2.2):
+			self.mr_trc_ctrl.SetSelection(1)  # Pure power gamma 2.2
 		else:
-			self.trc_ctrl.SetSelection(1)  # Gamma
+			self.mr_trc_ctrl.SetSelection(2)  # Custom
 
-	def update_trc_controls(self):
-		self.update_trc_control()
-		self.trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
-		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("measurement_report.trc_gamma_type")])
+	def mr_update_trc_controls(self):
+		self.mr_update_trc_control()
+		self.mr_trc_gamma_ctrl.SetValue(str(getcfg("measurement_report.trc_gamma")))
+		self.mr_trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("measurement_report.trc_gamma_type")])
 		outoffset = int(getcfg("measurement_report.trc_output_offset") * 100)
-		self.black_output_offset_ctrl.SetValue(outoffset)
-		self.black_output_offset_intctrl.SetValue(outoffset)
+		self.mr_black_output_offset_ctrl.SetValue(outoffset)
+		self.mr_black_output_offset_intctrl.SetValue(outoffset)
 	
-	def set_testchart(self, path):
+	def mr_set_testchart(self, path):
 		self.chart_ctrl.SetPath(path)
 		self.chart_ctrl_handler(None)
 	
-	def update_main_controls(self):
-		self.Freeze()
+	def mr_update_main_controls(self):
+		##print "MR update main ctrls",
+		self.panel.Freeze()
 		chart_has_white = bool(getattr(self, "chart_white", None))
 		color = getcfg("measurement_report.chart.fields")
 		sim_profile_color = (getattr(self, "simulation_profile", None) and
@@ -489,19 +509,21 @@ class ReportFrame(BaseFrame):
 			setcfg("measurement_report.use_simulation_profile",
 				   int(sim_profile_color == color))
 		self.simulation_profile_cb.Enable(sim_profile_color == color)
+		self.simulation_profile_cb.Show(color in ("CMYK", "RGB"))
 		enable1 = bool(getcfg("measurement_report.use_simulation_profile"))
+		##print enable1,
 		enable2 = (sim_profile_color == "RGB" and
 				   bool(getcfg("measurement_report.use_simulation_profile_as_output")))
 		self.simulation_profile_cb.SetValue(enable1)
-		self.simulation_profile_ctrl.Enable(color in ("CMYK", "RGB"))
-		self.simulation_profile_desc.Enable(color in ("CMYK", "RGB"))
-		self.use_simulation_profile_as_output_cb.Enable(enable1 and
+		self.simulation_profile_ctrl.Show(color in ("CMYK", "RGB"))
+		self.use_simulation_profile_as_output_cb.Show(enable1 and
 														sim_profile_color == "RGB")
 		self.use_simulation_profile_as_output_cb.SetValue(enable1 and enable2)
 		self.enable_3dlut_cb.Enable(enable1 and enable2)
 		self.enable_3dlut_cb.SetValue(enable1 and enable2 and
 									  bool(getcfg("3dlut.madVR.enable")))
-		self.enable_3dlut_cb.Show(config.get_display_name() == "madVR")
+		self.enable_3dlut_cb.Show(enable1 and sim_profile_color == "RGB" and
+								  config.get_display_name() == "madVR")
 		enable5 = (sim_profile_color == "RGB" and
 				   isinstance(self.simulation_profile.tags.get("rXYZ"),
 							  ICCP.XYZType) and
@@ -509,31 +531,46 @@ class ReportFrame(BaseFrame):
 							  ICCP.XYZType) and
 				   isinstance(self.simulation_profile.tags.get("bXYZ"),
 							  ICCP.XYZType))
-		self.apply_none_ctrl.Enable(enable1 and enable5)
+		##print enable5, self.XYZbpin, self.XYZbpout
+		self.mr_trc_label.Show(enable1 and enable5)
+		self.apply_none_ctrl.Show(enable1 and enable5)
 		self.apply_none_ctrl.SetValue(
 			(not getcfg("measurement_report.apply_black_offset") and
 			 not getcfg("measurement_report.apply_trc")) or
 			 not enable5)
+		self.apply_black_offset_ctrl.Show(enable1 and enable5)
 		self.apply_black_offset_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_black_offset")))
-		self.apply_trc_ctrl.Enable(enable1 and enable5)
+		self.apply_trc_ctrl.Show(enable1 and enable5)
 		enable6 = (enable1 and enable5 and
 				   bool(getcfg("measurement_report.apply_trc")))
 		self.apply_trc_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_trc")))
-		self.trc_ctrl.Enable(enable6)
-		self.trc_gamma_label.Enable(enable6)
-		self.trc_gamma_ctrl.Enable(enable6)
-		self.trc_gamma_type_ctrl.Enable(enable6)
-		self.black_output_offset_label.Enable(enable6)
-		self.black_output_offset_ctrl.Enable(enable6)
-		self.black_output_offset_intctrl.Enable(enable6)
-		self.black_output_offset_intctrl_label.Enable(enable6)
-		self.trc_gamma_type_ctrl.Show(self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_label.Show(self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_ctrl.Show(self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_intctrl.Show(self.XYZbpout > [0, 0, 0])
-		self.black_output_offset_intctrl_label.Show(self.XYZbpout > [0, 0, 0])
+		self.mr_trc_ctrl.Enable(enable6)
+		self.mr_trc_ctrl.Show(enable1 and enable5)
+		self.mr_trc_gamma_label.Enable(enable6)
+		self.mr_trc_gamma_label.Show(enable1 and enable5)
+		self.mr_trc_gamma_ctrl.Enable(enable6)
+		self.mr_trc_gamma_ctrl.Show(enable1 and enable5)
+		self.mr_trc_gamma_type_ctrl.Enable(enable6)
+		self.mr_black_output_offset_label.Enable(enable6 and
+											     self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_label.Show(enable1 and enable5 and
+											   self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_ctrl.Enable(enable6 and
+											    self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_ctrl.Show(enable1 and enable5 and
+											  self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl.Enable(enable6 and
+												   self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl.Show(enable1 and enable5 and
+												 self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl_label.Enable(enable6 and
+													     self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl_label.Show(enable1 and enable5 and
+													   self.XYZbpout > [0, 0, 0])
+		self.mr_trc_gamma_type_ctrl.Show(enable1 and enable5 and
+										 self.XYZbpout > [0, 0, 0])
 		show = (self.apply_none_ctrl.GetValue() and
 				enable1 and enable5 and
 				self.XYZbpout > self.XYZbpin)
@@ -553,11 +590,11 @@ class ReportFrame(BaseFrame):
 			((enable1 and not enable2) or color in ("LAB", "XYZ")) and
 			enable3 and
 			bool(getcfg("measurement_report.whitepoint.simulate.relative")))
-		self.devlink_profile_cb.Enable(enable1 and enable2)
+		self.devlink_profile_cb.Show(enable1 and enable2)
 		enable4 = bool(getcfg("measurement_report.use_devlink_profile"))
 		self.devlink_profile_cb.SetValue(enable1 and enable2 and enable4)
 		self.devlink_profile_ctrl.Enable(enable1 and enable2 and enable4)
-		self.devlink_profile_desc.Enable(enable1 and enable2 and enable4)
+		self.devlink_profile_ctrl.Show(enable1 and enable2)
 		self.output_profile_label.Enable((color in ("LAB", "RGB", "XYZ") or
 										  enable1) and
 										 (not enable1 or not enable2 or
@@ -568,14 +605,9 @@ class ReportFrame(BaseFrame):
 										(not enable1 or not enable2 or
 										 self.apply_trc_ctrl.GetValue() or
 										 self.apply_black_offset_ctrl.GetValue()))
-		self.output_profile_desc.Enable((color in ("LAB", "RGB", "XYZ") or
-										 enable1) and
-										(not enable1 or not enable2 or
-										 self.apply_trc_ctrl.GetValue() or
-										 self.apply_black_offset_ctrl.GetValue()))
 		output_profile = (bool(getcfg("measurement_report.output_profile")) and
 						  os.path.isfile(getcfg("measurement_report.output_profile")))
-		self.measure_btn.Enable(((enable1 and enable2 and (not enable6 or
+		self.measurement_report_btn.Enable(((enable1 and enable2 and (not enable6 or
 														   output_profile) and
 								  (not enable4 or
 								   (bool(getcfg("measurement_report.devlink_profile")) and
@@ -587,14 +619,19 @@ class ReportFrame(BaseFrame):
 								  output_profile)) and
 								 bool(getcfg("measurement_report.chart")) and
 								 os.path.isfile(getcfg("measurement_report.chart")))
-		self.update_layout()
-		self.Thaw()
+		self.panel.Layout()
+		self.panel.Thaw()
+		if hasattr(self, "update_scrollbars"):
+			self.update_scrollbars()
+			self.calpanel.Layout()
+		else:
+			self.update_layout()
 	
 	def use_devlink_profile_ctrl_handler(self, event):
 		setcfg("3dlut.madVR.enable", 0)
 		setcfg("measurement_report.use_devlink_profile",
 			   int(self.devlink_profile_cb.GetValue()))
-		self.update_main_controls()
+		self.mr_update_main_controls()
 	
 	def use_simulation_profile_ctrl_handler(self, event):
 		if event:
@@ -616,9 +653,8 @@ class ReportFrame(BaseFrame):
 				tf = sim_profile.tags.rTRC.get_transfer_function()
 				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 				setcfg("measurement_report.apply_trc",
-					   int((tf[0][1] in (-240, -709) or
-						    tf[0][0].startswith("Gamma")) and
-						   self.XYZbpin < self.XYZbpout))
+					   int(tf[0][1] in (-240, -709) or
+						   tf[0][0].startswith("Gamma")))
 				# Use only BT.1886 black output offset
 				setcfg("measurement_report.apply_black_offset",
 					   int(tf[0][1] not in (-240, -709) and
@@ -636,16 +672,17 @@ class ReportFrame(BaseFrame):
 					setcfg("measurement_report.trc_gamma",
 						   getcfg("measurement_report.trc_gamma.backup"))
 					setcfg("measurement_report.trc_gamma.backup", None)
-				self.update_trc_controls()
+				self.mr_update_trc_controls()
 				enable = (tf[0][1] not in (-240, -709) and
-						  not tf[0][0].startswith("Gamma"))
+						  not tf[0][0].startswith("Gamma") and
+						  self.XYZbpin < self.XYZbpout)
 		self.apply_black_offset_ctrl.Enable(use_sim_profile and enable)
-		self.update_main_controls()
+		self.mr_update_main_controls()
 
 	def use_simulation_profile_as_output_handler(self, event):
 		setcfg("measurement_report.use_simulation_profile_as_output",
 			   int(self.use_simulation_profile_as_output_cb.GetValue()))
-		self.update_main_controls()
+		self.mr_update_main_controls()
 
 
 if __name__ == "__main__":
