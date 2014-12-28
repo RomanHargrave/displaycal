@@ -2896,7 +2896,7 @@ class ICCProfile:
 		self.is_loaded = False
 		self.size = 0
 		
-		if profile:
+		if profile is not None:
 		
 			data = None
 			
