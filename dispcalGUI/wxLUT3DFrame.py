@@ -788,11 +788,13 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_formats_ab = {}
 		self.lut3d_formats_ba = {}
 		self.lut3d_format_ctrl.Clear()
-		for i, format in enumerate(config.valid_values["3dlut.format"]):
+		i = 0
+		for format in config.valid_values["3dlut.format"]:
 			if format != "madVR" or self.worker.argyll_version >= [1, 6]:
 				self.lut3d_format_ctrl.Append(lang.getstr("3dlut.format.%s" % format))
 				self.lut3d_formats_ab[i] = format
 				self.lut3d_formats_ba[format] = i
+				i += 1
 		
 		self.lut3d_size_ab = {}
 		self.lut3d_size_ba = {}
