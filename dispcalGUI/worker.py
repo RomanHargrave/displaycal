@@ -6028,7 +6028,7 @@ usage: spotread [-options] [logfile]
 						else:
 							value = "G"
 					elif cfgname == "3dlut.trc_gamma":
-						if getcfg("3dlut.trc_gamma_type") == "b":
+						if getcfg("3dlut.trc_gamma_type") == "B":
 							value = -value
 					ti3[0].add_keyword(keyword, value)
 			ti3.write()
