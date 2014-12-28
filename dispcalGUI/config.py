@@ -542,6 +542,7 @@ valid_values = {
 	"tc_vrml_cie_colorspace": ["DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							   "LCH(uv)", "Lab", "Luv", "Lu'v'", "xyY"],
 	"tc_vrml_device_colorspace": ["HSI", "HSL", "HSV", "RGB"],
+	"testchart.auto_optimize": [0, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
 	"trc": ["240", "709", "l", "s", ""],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
@@ -903,6 +904,7 @@ def getcfg(name, fallback=True):
 				value = "g"
 			elif (value and name.endswith("file") and
 				  name != "colorimeter_correction_matrix_file" and
+				  (name != "testchart.file" or value != "auto") and
 				  not os.path.exists(value)):
 				  # colorimeter_correction_matrix_file is special because it's
 				  # not (only) a path

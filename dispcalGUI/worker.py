@@ -63,8 +63,8 @@ from argyll_instruments import (get_canonical_instrument_name,
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds, intents)
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
-					exe_ext, fs_enc, getcfg, geticon,
-					get_data_path, get_verified_path, isapp, isexe,
+					exe_ext, fs_enc, getcfg, geticon, get_data_path,
+					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir,
 					profile_ext, pydir, setcfg, writecfg)
 from defaultpaths import iccprofiles_home, iccprofiles_display_home
@@ -2492,10 +2492,10 @@ class Worker(object):
 			if isinstance(result, Exception):
 				safe_print(result)
 			arg = None
-			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
 			self.display_rects = []
 			non_standard_display_args = ("-dweb[:port]", "-dmadvr")
+			defaults["calibration.black_point_hack"] = 0
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -5748,8 +5748,55 @@ usage: spotread [-options] [logfile]
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
-		cmd, args = self.prepare_dispread(apply_calibration)
-		if not isinstance(cmd, Exception):
+		if getcfg("testchart.file") == "auto":
+			# Testchart auto-optimization
+			# Create optimized testchart on-the-fly. To do this, create a
+			# simple shaper + matrix profile for preconditioning
+			if config.get_display_name() == "Untethered":
+				return Error(lang.getstr("testchart.auto_optimize.untethered.unsupported"))
+			# Use default shaper + matrix testchart
+			setcfg("testchart.file",
+				   get_data_path(os.path.join("ti1",
+											  config.testchart_defaults["s"][None])))
+			cmd, args = self.prepare_dispread(apply_calibration)
+			setcfg("testchart.file", "auto")
+			if not isinstance(cmd, Exception):
+				# Measure testchart
+				result = self.exec_cmd(cmd, args)
+				if not isinstance(result, Exception) and result:
+					# Create shaper + matrix preconditioning profile
+					basename = args[-1]
+					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-as",
+															 basename]
+					result = self.exec_cmd(cmd, args)
+					if not isinstance(result, Exception) and result:
+						# Create optimized testchart
+						auto = getcfg("testchart.auto_optimize") or 7
+						s = min(auto, 11) * 4 - 3
+						g = s * 3 - 2
+						f = get_total_patches(4, 4, s, g, auto, auto, 0)
+						cmd, args = (get_argyll_util("targen"),
+									 ["-v", "-d3", "-e4", "-s%i" % s,
+									  "-g%i" % g, "-m0", "-f%i" % f, "-A1.0"])
+						if self.argyll_version >= [1, 1]:
+							args.append("-G")
+						if self.argyll_version >= [1, 3, 3]:
+							args.append("-N0.5")
+						if self.argyll_version >= [1, 6]:
+							args.extend(["-B4", "-b0"])
+						if self.argyll_version >= [1, 6, 2]:
+							args.append("-V1.6")
+						args.extend(["-c", basename + profile_ext, basename])
+						result = self.exec_cmd(cmd, args)
+			else:
+				result = cmd
+		else:
+			result = True
+		if not isinstance(result, Exception) and result:
+			cmd, args = self.prepare_dispread(apply_calibration)
+		else:
+			cmd = result
+		if not isinstance(cmd, Exception) and cmd:
 			if config.get_display_name() == "Untethered":
 				cmd, args2 = get_argyll_util("spotread"), ["-v", "-e"]
 				if getcfg("extra_args.spotread").strip():
@@ -5950,6 +5997,9 @@ usage: spotread [-options] [logfile]
 			if getcfg("measure.override_display_settle_time_mult"):
 				ti3[0].add_keyword("DISPLAY_SETTLE_TIME_MULT",
 								   getcfg("measure.display_settle_time_mult"))
+			# Remove AUTO_OPTIMIZE
+			if ti3[0].queryv1("AUTO_OPTIMIZE"):
+				ti3[0].remove_keyword("AUTO_OPTIMIZE")
 			ti3.write()
 		return cmd, args
 

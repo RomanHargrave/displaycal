@@ -61,6 +61,7 @@ from config import (autostart, autostart_home, build,
 					exe, fs_enc, getbitmap, geticon, 
 					get_ccxx_testchart, get_current_profile,
 					get_display_profile, get_data_path, getcfg,
+					get_total_patches,
 					get_verified_path, hascfg, is_ccxx_testchart, is_profile,
 					initcfg, isapp, isexe, profile_ext,
 					pydir, resfiles, setcfg,
@@ -1829,8 +1830,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_MENU, self.load_cal_handler, menuitem)
 		menuitem = file_.FindItemById(file_.FindItem("testchart.set"))
 		self.Bind(wx.EVT_MENU, self.testchart_btn_handler, menuitem)
-		menuitem = file_.FindItemById(file_.FindItem("testchart.edit"))
-		self.Bind(wx.EVT_MENU, self.create_testchart_btn_handler, menuitem)
+		self.menuitem_testchart_edit = file_.FindItemById(file_.FindItem("testchart.edit"))
+		self.Bind(wx.EVT_MENU, self.create_testchart_btn_handler,
+			self.menuitem_testchart_edit)
 		menuitem = file_.FindItemById(file_.FindItem("profile.set_save_path"))
 		self.Bind(wx.EVT_MENU, self.profile_save_path_btn_handler, menuitem)
 		self.menuitem_profile_info = file_.FindItemById(file_.FindItem("profile.info"))
@@ -2076,6 +2078,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		Enable/disable menu items based on available Argyll functionality.
 		
 		"""
+		self.menuitem_testchart_edit.Enable(self.create_testchart_btn.Enabled)
 		self.menuitem_measure_testchart.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments))
 		self.menuitem_create_profile.Enable(bool(self.worker.displays))
@@ -2346,6 +2349,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  id=self.testchart_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.create_testchart_btn_handler, 
 				  id=self.create_testchart_btn.GetId())
+		self.testchart_patches_amount_ctrl.Bind(wx.EVT_SLIDER,
+			self.testchart_patches_amount_ctrl_handler)
 
 		# Profile quality
 		self.Bind(wx.EVT_SLIDER, self.profile_quality_ctrl_handler, 
@@ -10705,11 +10710,20 @@ class MainFrame(ReportFrame, BaseFrame):
 			writecfg()
 			self.profile_settings_changed()
 
+	def testchart_patches_amount_ctrl_handler(self, event):
+		auto = self.testchart_patches_amount_ctrl.GetValue()
+		if event:
+			setcfg("testchart.auto_optimize", auto)
+		s = min(auto, 11) * 4 - 3
+		g = s * 3 - 2
+		self.testchart_patches_amount.SetLabel(
+			str(get_total_patches(4, 4, s, g, auto, auto, 0)))
+
 	def create_testchart_btn_handler(self, event):
 		if not hasattr(self, "tcframe"):
 			self.init_tcframe()
 		elif not hasattr(self.tcframe, "ti1") or \
-			 getcfg("testchart.file") != self.tcframe.ti1.filename:
+			 getcfg("testchart.file") not in (self.tcframe.ti1.filename, "auto"):
 			self.tcframe.tc_load_cfg_from_ti1()
 		setcfg("tc.show", 1)
 		self.tcframe.Show()
@@ -10721,6 +10735,9 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def set_default_testchart(self, alert=True, force=False):
 		path = getcfg("testchart.file")
+		##print "set_default_testchart", path
+		if path == "auto":
+			return
 		if os.path.basename(path) in self.dist_testchart_names:
 			path = self.dist_testcharts[
 				self.dist_testchart_names.index(os.path.basename(path))]
@@ -10761,7 +10778,29 @@ class MainFrame(ReportFrame, BaseFrame):
 	def set_testchart(self, path=None):
 		if path is None:
 			path = getcfg("testchart.file")
-		
+		##print "set_testchart", path
+		self.create_testchart_btn.Enable(path != "auto" and
+			not getcfg("profile.update"))
+		self.menuitem_testchart_edit.Enable(self.create_testchart_btn.Enabled)
+		self.testchart_patches_amount_label.Show(path == "auto")
+		self.testchart_patches_amount_ctrl.Show(path == "auto")
+		if path == "auto":
+			if path != getcfg("testchart.file"):
+				self.profile_settings_changed()
+			setcfg("testchart.file", path)
+			if path not in self.testcharts:
+				self.set_testcharts(path)
+			self.testchart_ctrl.SetSelection(0)
+			self.testchart_ctrl.SetToolTipString("")
+			self.worker.options_targen = ["-d3"]
+			auto = getcfg("testchart.auto_optimize") or 7
+			self.testchart_patches_amount_ctrl.SetValue(auto)
+			self.testchart_patches_amount_ctrl_handler(None)
+		else:
+			self.set_testchart_from_path(path)
+		self.check_testchart()
+
+	def set_testchart_from_path(self, path):
 		result = check_file_isfile(path)
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
@@ -10834,6 +10873,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			   (not hasattr(self.tcframe, "ti1") or 
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
 				self.tcframe.tc_load_cfg_from_ti1()
+
+	def check_testchart(self):
 		if is_ccxx_testchart():
 			self.set_ccxx_measurement_mode()
 		else:
@@ -10847,7 +10888,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.testcharts = []
 		if path is None:
 			path = getcfg("testchart.file")
-		if os.path.exists(path):
+		##print "get_testchart_names", path
+		if path != "auto" and os.path.exists(path):
 			testchart_dir = os.path.dirname(path)
 			try:
 				testcharts = listdir_re(testchart_dir, 
@@ -10871,7 +10913,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					testchart_names.append(testchart_name)
 					self.testcharts.append(os.pathsep.join((testchart_name, 
 															testchart_dir)))
-		self.testcharts = natsort(self.testcharts)
+		self.testcharts = ["auto"] + natsort(self.testcharts)
 		self.testchart_names = []
 		i = 0
 		for chart in self.testcharts:
@@ -11448,7 +11490,9 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("measure.%s.backup" %
 									   keyword.lower(), None)
 						elif cfgvalue is not None:
-							if keyword == "3DLUT_GAMMA":
+							if keyword == "AUTO_OPTIMIZE" and cfgvalue:
+								setcfg("testchart.file", "auto")
+							elif keyword == "3DLUT_GAMMA":
 								try:
 									cfgvalue = float(cfgvalue)
 								except:

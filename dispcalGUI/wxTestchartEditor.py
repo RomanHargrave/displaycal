@@ -2460,6 +2460,10 @@ END_DATA""")
 			return
 
 		self.cfg = cfg or "testchart.file"
+		if path is None:
+			path = getcfg(self.cfg)
+		if path == "auto":
+			return
 		self.target = target or self.Parent
 
 		self.label_b2a = {"R %": "RGB_R",
@@ -2483,8 +2487,6 @@ END_DATA""")
 						  resume=resume, show_remaining_time=False)
 
 	def tc_load_cfg_from_ti1_worker(self, path):
-		if path is None:
-			path = getcfg(self.cfg)
 		path = safe_unicode(path)
 		try:
 			filename, ext = os.path.splitext(path)

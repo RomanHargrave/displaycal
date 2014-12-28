@@ -1203,6 +1203,29 @@
                                   <border>5</border>
                                 </object>
                                 <object class="sizeritem">
+                                  <object class="wxStaticText" name="testchart_patches_amount_label">
+                                    <label>testchart.patches_amount</label>
+                                  </object>
+                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBoxSizer">
+                                    <object class="sizeritem">
+                                      <object class="wxSlider" name="testchart_patches_amount_ctrl">
+                                        <min>7</min>
+                                        <max>17</max>
+                                        <style>wxSL_AUTOTICKS</style>
+                                      </object>
+                                      <option>1</option>
+                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>104</border>
+                                    </object>
+                                    <orient>wxHORIZONTAL</orient>
+                                  </object>
+                                  <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
+                                  <border>4</border>
+                                </object>
+                                <object class="sizeritem">
                                   <object class="wxStaticText" name="profile_name_label">
                                     <label>profile.name</label>
                                   </object>
@@ -1261,7 +1284,7 @@
                                       <object class="wxStaticText" name="profile_name">
                                         <label>?</label>
                                       </object>
-                                      <flag>wxTOP|wxBOTTOM|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <flag>wxALL|wxALIGN_CENTRE_VERTICAL</flag>
                                       <border>4</border>
                                     </object>
                                     <orient>wxHORIZONTAL</orient>
