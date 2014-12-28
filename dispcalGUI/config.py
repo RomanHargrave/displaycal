@@ -905,12 +905,13 @@ def getcfg(name, fallback=True):
 			elif (value and name.endswith("file") and
 				  name != "colorimeter_correction_matrix_file" and
 				  (name != "testchart.file" or value != "auto") and
-				  not os.path.exists(value)):
+				  (not os.path.isabs(value) or not os.path.exists(value))):
 				  # colorimeter_correction_matrix_file is special because it's
 				  # not (only) a path
 				if debug:
 					print "%s does not exist: %s" % (name, value),
-				if value.split(os.path.sep)[-3:-2] == [appname] and (
+				if (value.split(os.path.sep)[-3:-2] == [appname] or
+					not os.path.isabs(value)) and (
 				   value.split(os.path.sep)[-2:-1] == ["presets"] or 
 				   value.split(os.path.sep)[-2:-1] == ["ref"] or 
 				   value.split(os.path.sep)[-2:-1] == ["ti1"]):
