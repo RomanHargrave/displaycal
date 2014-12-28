@@ -7429,7 +7429,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.is_virtual_display():
+			if config.is_virtual_display() or getcfg("3dlut.create"):
 				self.profile_finish_consumer(False)
 				self.lut3d_create_handler(None)
 			else:
