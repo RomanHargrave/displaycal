@@ -1107,7 +1107,9 @@ class MainFrame(ReportFrame, BaseFrame):
 	""" Display calibrator main application window. """
 
 	lut3d_bind_event_handlers = LUT3DFrame.__dict__["lut3d_bind_event_handlers"]
+	lut3d_create_consumer = LUT3DFrame.__dict__["lut3d_create_consumer"]
 	lut3d_create_handler = LUT3DFrame.__dict__["lut3d_create_handler"]
+	lut3d_create_producer = LUT3DFrame.__dict__["lut3d_create_producer"]
 	lut3d_bitdepth_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_input_ctrl_handler"]
 	lut3d_bitdepth_output_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_output_ctrl_handler"]
 	lut3d_encoding_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_encoding_input_ctrl_handler"]

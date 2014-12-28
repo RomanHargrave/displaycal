@@ -340,7 +340,7 @@ class LUT3DFrame(BaseFrame):
 			profile_abst = None
 			try:
 				profile_in = ICCP.ICCProfile(getcfg("3dlut.input.profile"))
-				profile_out = ICCP.ICCProfile(getcfg("calibration.file"))
+				profile_out = ICCP.ICCProfile(get_current_profile_path())
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid")),
 								   parent=self)
@@ -485,7 +485,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_show_encoding_controls()
 		self.lut3d_enable_size_controls()
 		self.lut3d_show_bitdepth_controls()
-		if not hasattr(self, "output_profile_ctrl"):
+		if not isinstance(self, LUT3DFrame):
 			self.update_main_controls()
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.lut3d_update_shared_controls()
