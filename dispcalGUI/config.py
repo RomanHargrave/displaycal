@@ -463,7 +463,7 @@ def runtimeconfig(pyfile):
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
 	defaultchart = testchart_defaults.get(defaultptype, 
-										  testchart_defaults["s"])[None]
+										  testchart_defaults["l"])[None]
 	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
 															defaultchart)) or ""
 	defaults["testchart.file.backup"] = defaults["testchart.file"]
@@ -736,7 +736,7 @@ defaults = {
 	"profile.b2a.hires.size": 33,
 	"profile.b2a.hires.smooth": 1,
 	"profile.save_path": storage, # directory
-	"profile.type": "S",
+	"profile.type": "X",
 	"profile.update": 0,
 	"profile_loader.error.show_msg": 1,
 	"profile_loader.verify_calibration": 0,
