@@ -6001,6 +6001,36 @@ usage: spotread [-options] [logfile]
 			# Remove AUTO_OPTIMIZE
 			if ti3[0].queryv1("AUTO_OPTIMIZE"):
 				ti3[0].remove_keyword("AUTO_OPTIMIZE")
+			# Add 3D LUT options if set
+			if getcfg("3dlut.create"):
+				for keyword, cfgname in {"3DLUT_SOURCE_PROFILE":
+										 "3dlut.input.profile",
+										 "3DLUT_GAMMA":
+										 "3dlut.trc_gamma",
+										 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":
+										 "3dlut.trc_output_offset",
+										 "3DLUT_INPUT_ENCODING":
+										 "3dlut.encoding.input",
+										 "3DLUT_OUTPUT_ENCODING":
+										 "3dlut.encoding.output",
+										 "3DLUT_GAMUT_MAPPING_MODE":
+										 "3dlut.gamap.use_b2a",
+										 "3DLUT_RENDERING_INTENT":
+										 "3dlut.rendering_intent",
+										 "3DLUT_FORMAT":
+										 "3dlut.format",
+										 "3DLUT_SIZE":
+										 "3dlut.size"}.iteritems():
+					value = getcfg(cfgname)
+					if cfgname == "3dlut.gamap.use_b2a":
+						if value:
+							value = "g"
+						else:
+							value = "G"
+					elif cfgname == "3dlut.trc_gamma":
+						if getcfg("3dlut.trc_gamma_type") == "b":
+							value = -value
+					ti3[0].add_keyword(keyword, value)
 			ti3.write()
 		return cmd, args
 
