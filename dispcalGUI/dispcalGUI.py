@@ -1382,6 +1382,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		self.mr_settings_panel = res.LoadPanel(self.calpanel, "panel")
 		self.calpanel.Sizer.Add(self.mr_settings_panel, 1, flag=wx.EXPAND)
+
+		# Make info panels use theme color
+		for panel_name in ["display_instrument_info_panel",
+						   "calibration_settings_info_panel",
+						   "profile_settings_info_panel",
+						   "lut3d_settings_info_panel",
+						   "mr_settings_info_panel"]:
+			panel = self.FindWindowByName(panel_name)
+			panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		
 		# Button panel
 		self.buttonpanel = self.FindWindowByName("buttonpanel")

@@ -346,7 +346,7 @@
         <border>16</border>
       </object>
       <object class="sizeritem">
-        <object class="wxPanel">
+        <object class="wxPanel" name="mr_settings_info_panel">
           <object class="wxBoxSizer">
             <object class="sizeritem">
               <object class="wxStaticBitmap" name="mr_settings_info_shadow">
