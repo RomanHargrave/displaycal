@@ -2492,10 +2492,11 @@ class Worker(object):
 			if isinstance(result, Exception):
 				safe_print(result)
 			arg = None
+			defaults["calibration.black_point_hack"] = 0
+			defaults["calibration.black_point_rate.enabled"] = 0
 			n = -1
 			self.display_rects = []
 			non_standard_display_args = ("-dweb[:port]", "-dmadvr")
-			defaults["calibration.black_point_hack"] = 0
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
