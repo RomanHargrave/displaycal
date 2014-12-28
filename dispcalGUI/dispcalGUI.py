@@ -11324,7 +11324,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				if options_colprof:
 					# restore defaults
 					self.restore_defaults_handler(
-						include=("profile", "gamap_", "3dlut.create"), 
+						include=("profile", "gamap_", "3dlut.create",
+								 "testchart.auto_optimize"), 
 						exclude=("profile.update",
 								 "profile.name", "gamap_default_intent"))
 					for o in options_colprof:
@@ -11387,7 +11388,27 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "MIN_DISPLAY_UPDATE_DELAY_MS":
 											 "measure.min_display_update_delay_ms",
 											 "DISPLAY_SETTLE_TIME_MULT":
-											 "measure.display_settle_time_mult"}.iteritems():
+											 "measure.display_settle_time_mult",
+											 "AUTO_OPTIMIZE":
+											 "testchart.auto_optimize",
+											 "3DLUT_SOURCE_PROFILE":
+											 "3dlut.input.profile",
+											 "3DLUT_GAMMA":
+											 "3dlut.trc_gamma",
+											 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":
+											 "3dlut.trc_output_offset",
+											 "3DLUT_INPUT_ENCODING":
+											 "3dlut.encoding.input",
+											 "3DLUT_OUTPUT_ENCODING":
+											 "3dlut.encoding.output",
+											 "3DLUT_GAMUT_MAPPING_MODE":
+											 "3dlut.gamap.use_b2a",
+											 "3DLUT_RENDERING_INTENT":
+											 "3dlut.rendering_intent",
+											 "3DLUT_FORMAT":
+											 "3dlut.format",
+											 "3DLUT_SIZE":
+											 "3dlut.size"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
 						if keyword in ("MIN_DISPLAY_UPDATE_DELAY_MS",
 									   "DISPLAY_SETTLE_TIME_MULT"):
@@ -11417,6 +11438,25 @@ class MainFrame(ReportFrame, BaseFrame):
 									   keyword.lower(), None)
 								setcfg("measure.%s.backup" %
 									   keyword.lower(), None)
+						elif cfgvalue is not None:
+							if keyword == "3DLUT_GAMMA":
+								try:
+									cfgvalue = float(cfgvalue)
+								except:
+									pass
+								else:
+									if cfgvalue < 0:
+										setcfg("3dlut.trc_gamma_type", "B")
+										cfgvalue = abs(cfgvalue)
+									else:
+										setcfg("3dlut.trc_gamma_type", "b")
+							elif keyword == "3DLUT_GAMUT_MAPPING_MODE":
+								if cfgvalue == "G":
+									cfgvalue = 0
+								else:
+									cfgvalue = 1
+							if keyword.startswith("3DLUT"):
+								setcfg("3dlut.create", 1)
 						if cfgvalue is not None:
 							setcfg(cfgname, cfgvalue)
 				self.update_controls(
