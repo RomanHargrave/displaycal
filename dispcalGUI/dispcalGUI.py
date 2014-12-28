@@ -3951,10 +3951,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_input_profile_ctrl.SetItems(self.input_profiles.keys())
 
 	def lut3d_input_colorspace_handler(self, event):
-		setcfg("3dlut.input.profile",
-			   self.input_profiles[self.lut3d_input_profile_ctrl.GetStringSelection()])
-		if getattr(self, "lut3dframe", None):
-			self.lut3dframe.update_controls()
+		if event:
+			setcfg("3dlut.input.profile",
+				   self.input_profiles[self.lut3d_input_profile_ctrl.GetStringSelection()])
+			if getattr(self, "lut3dframe", None):
+				self.lut3dframe.update_controls()
+		self.lut3d_input_profile_ctrl.SetToolTipString(
+			getcfg("3dlut.input.profile"))
 
 	def lut3d_show_controls(self):
 		show = True#bool(getcfg("3dlut.create"))
@@ -3994,6 +3997,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if lut3d_input_profile in self.input_profiles.values():
 			self.lut3d_input_profile_ctrl.SetSelection(
 				self.input_profiles.values().index(lut3d_input_profile))
+			self.lut3d_input_colorspace_handler(None)
 		self.lut3d_update_b2a_controls()
 		self.lut3d_update_shared_controls()
 		self.lut3d_update_encoding_controls()
