@@ -11935,6 +11935,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		for item in items:
+			if isinstance(item, HyperLinkCtrl):
+				item.BackgroundColour = self.aboutdialog.BackgroundColour
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.ok.BackgroundColour = self.aboutdialog.BackgroundColour
 		self.aboutdialog.Layout()
