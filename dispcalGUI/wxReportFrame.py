@@ -231,12 +231,12 @@ class ReportFrame(BaseFrame):
 		if not hasattr(parent, "tcframe"):
 			parent.tcframe = TestchartEditor(parent, path=chart,
 											 cfg="measurement_report.chart",
-											 target=self)
+											 parent_set_chart_methodname="mr_set_testchart")
 		elif (not hasattr(parent.tcframe, "ti1") or
 			  chart != parent.tcframe.ti1.filename):
 			parent.tcframe.tc_load_cfg_from_ti1(None, chart,
 												"measurement_report.chart",
-												self)
+												"mr_set_testchart")
 		setcfg("tc.show", 1)
 		parent.tcframe.Show()
 		parent.tcframe.Raise()

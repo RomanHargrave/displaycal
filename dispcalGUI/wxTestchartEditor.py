@@ -48,7 +48,8 @@ def swap_dict_keys_values(mydict):
 
 class TestchartEditor(BaseFrame):
 	def __init__(self, parent = None, id = -1, path=None,
-				 cfg=None, target=None):
+				 cfg="testchart.file",
+				 parent_set_chart_methodname="set_testchart"):
 		BaseFrame.__init__(self, parent, id, lang.getstr("testchart.edit"),
 						   name="tcgen")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
@@ -73,8 +74,8 @@ class TestchartEditor(BaseFrame):
 
 		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
 
-		self.cfg = cfg or "testchart.file"
-		self.target = target or self.Parent
+		self.cfg = cfg
+		self.parent_set_chart_methodname = parent_set_chart_methodname
 
 		self.label_b2a = {"R %": "RGB_R",
 						  "G %": "RGB_G",
@@ -709,7 +710,7 @@ class TestchartEditor(BaseFrame):
 		self.tc_update_controls()
 		self.tc_check()
 		if path is not False:
-			wx.CallAfter(self.tc_load_cfg_from_ti1, None, path, cfg, target)
+			wx.CallAfter(self.tc_load_cfg_from_ti1, None, path)
 
 	def csv_drop_handler(self, path):
 		if self.worker.is_working():
@@ -788,10 +789,7 @@ END_DATA""")
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		else:
-			self.tc_load_cfg_from_ti1(None, result.filename,
-									  getattr(self, "cfg", None),
-									  getattr(self, "target", None),
-									  resume=True)
+			self.tc_load_cfg_from_ti1(None, result.filename, resume=True)
 
 	def precond_profile_drop_handler(self, path):
 		self.tc_precond_profile.SetPath(path)
@@ -2257,15 +2255,16 @@ END_DATA""")
 				handle_error(Error(u"Error - testchart could not be saved: " +
 								   safe_unicode(exception)), parent=self)
 			else:
-				if path != getcfg(self.cfg):
-					dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
-					result = dlg.ShowModal()
-					dlg.Destroy()
-					if result == wx.ID_OK:
-						setcfg(self.cfg, path)
-						self.writecfg()
-				if path == getcfg(self.cfg) and self.target and hasattr(self.target, "set_testchart"):
-					self.target.set_testchart(path)
+				if self.Parent:
+					if path != getcfg(self.cfg) and self.parent_set_chart_methodname:
+						dlg = ConfirmDialog(self, msg = lang.getstr("testchart.confirm_select"), ok = lang.getstr("testchart.select"), cancel = lang.getstr("testchart.dont_select"), bitmap = geticon(32, "dialog-question"))
+						result = dlg.ShowModal()
+						dlg.Destroy()
+						if result == wx.ID_OK:
+							setcfg(self.cfg, path)
+							self.writecfg()
+					if path == getcfg(self.cfg) and self.parent_set_chart_methodname:
+						getattr(self.Parent, self.parent_set_chart_methodname)(path)
 				if not self.IsBeingDeleted():
 					self.save_btn.Disable()
 				return True
@@ -2465,16 +2464,18 @@ END_DATA""")
 		event.Skip()
 
 	def tc_load_cfg_from_ti1(self, event = None, path = None, cfg=None,
-							 target=None, resume=False):
+							 parent_set_chart_methodname=None, resume=False):
 		if self.worker.is_working():
 			return
 
-		self.cfg = cfg or "testchart.file"
+		if cfg:
+			self.cfg = cfg
 		if path is None:
 			path = getcfg(self.cfg)
 		if path == "auto":
 			return
-		self.target = target or self.Parent
+		if parent_set_chart_methodname:
+			self.parent_set_chart_methodname = parent_set_chart_methodname
 
 		if not self.tc_check_save_ti1():
 			return

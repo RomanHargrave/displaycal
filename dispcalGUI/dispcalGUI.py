@@ -10730,7 +10730,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.init_tcframe()
 		elif not hasattr(self.tcframe, "ti1") or \
 			 getcfg("testchart.file") not in (self.tcframe.ti1.filename, "auto"):
-			self.tcframe.tc_load_cfg_from_ti1()
+			self.tcframe.tc_load_cfg_from_ti1(cfg="testchart.file",
+				parent_set_chart_methodname="set_testchart")
 		setcfg("tc.show", 1)
 		self.tcframe.Show()
 		self.tcframe.Raise()
@@ -10878,7 +10879,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			   self.tcframe.IsShownOnScreen() and \
 			   (not hasattr(self.tcframe, "ti1") or 
 				getcfg("testchart.file") != self.tcframe.ti1.filename):
-				self.tcframe.tc_load_cfg_from_ti1()
+				self.tcframe.tc_load_cfg_from_ti1(cfg="testchart.file",
+					parent_set_chart_methodname="set_testchart")
 
 	def check_testchart(self):
 		if is_ccxx_testchart():
