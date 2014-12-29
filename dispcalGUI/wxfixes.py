@@ -757,10 +757,7 @@ class PlateButton(platebtn.PlateButton):
 
 		elif self._state['cur'] == platebtn.PLATE_PRESSED and self.IsEnabled():
 			gc.SetTextForeground(self._color['htxt'])
-			if wx.Platform == '__WXMAC__':
-				pen = wx.Pen(platebtn.GetHighlightColour(), 1, wx.SOLID)
-			else:
-				pen = wx.Pen(platebtn.AdjustColour(self._color['press'], -80, 220), 1)
+			pen = wx.Pen(platebtn.AdjustColour(self._color['press'], -80, 220), 1)
 			gc.SetPen(pen)
 
 			self.__DrawHighlight(gc, width, height)
