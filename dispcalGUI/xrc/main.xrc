@@ -1206,7 +1206,8 @@
                                   <object class="wxStaticText" name="testchart_patches_amount_label">
                                     <label>testchart.patches_amount</label>
                                   </object>
-                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>12</border>
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">
