@@ -12179,7 +12179,8 @@ class StartupFrame(wx.Frame):
 			return
 		if self.frame < len(self.splash_anim) - 1 + len(self.splash_version_anim) - 1:
 			self.frame += 1
-			self.Draw(wx.ClientDC(self))
+			self.Refresh()
+			self.Update()
 			wx.CallLater(1000 / 30.0, self.startup)
 			return
 		check_set_argyll_bin()
@@ -12284,7 +12285,8 @@ class StartupFrame(wx.Frame):
 		if msg:
 			self._msg = msg
 			if self.IsShown():
-				self.Draw(wx.ClientDC(self))
+				self.Refresh()
+				self.Update()
 		return True, False
 
 	def SetWindowShape(self, *evt):
