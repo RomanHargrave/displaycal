@@ -7,6 +7,17 @@ import types
 
 from wxfixes import wx
 
+
+def AlphaBlend(self, alpha=1.0):
+	""" Apply alpha blending to existing image alpha buffer """
+	alphabuffer = self.GetAlphaBuffer()
+	for i, byte in enumerate(alphabuffer):
+		if byte > "\0":
+			alphabuffer[i] = chr(int(round(ord(byte) * alpha)))
+
+wx.Image.AlphaBlend = AlphaBlend
+
+
 def GetRealClientArea(self):
 	""" Return the real (non-overlapping) client area of a display """
 	# need to fix overlapping ClientArea on some Linux multi-display setups
