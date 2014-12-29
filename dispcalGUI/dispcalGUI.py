@@ -12095,13 +12095,6 @@ class StartupFrame(wx.Frame):
 		self.splash_anim = []
 		for pth in get_data_path("theme/splash_anim", r"\.png$") or []:
 			self.splash_anim.append(wx.Bitmap(pth))
-		# Fade in 1st frame
-		if self.splash_anim:
-			im = self.splash_anim[0].ConvertToImage()
-			for alpha in [.8, .6, .4, .2, 0]:
-				imcopy = im.Copy()
-				imcopy.AlphaBlend(alpha)
-				self.splash_anim.insert(0, imcopy.ConvertToBitmap())
 		# Fade in major version number
 		self.splash_version_anim = []
 		splash_version = getbitmap("theme/splash_version")
@@ -12241,13 +12234,12 @@ class StartupFrame(wx.Frame):
 						self.splash_bmp.Size[1], self._buffereddc, 0, 0)
 			x = y = 0
 		dc.DrawBitmap(self.splash_bmp, x, y)
-		if self.frame > 0:
-			dc.DrawBitmap(self.splash_anim[min(self.frame,
-											   len(self.splash_anim) - 1)], x, y)
-			if self.frame > len(self.splash_anim) - 1:
-				dc.DrawBitmap(self.splash_version_anim[self.frame -
-													   len(self.splash_anim)],
-							  x, y)
+		dc.DrawBitmap(self.splash_anim[min(self.frame,
+										   len(self.splash_anim) - 1)], x, y)
+		if self.frame > len(self.splash_anim) - 1:
+			dc.DrawBitmap(self.splash_version_anim[self.frame -
+												   len(self.splash_anim)],
+						  x, y)
 		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
 					   self.splash_bmp.Size[0], 40)
 		dc.SetFont(self.GetFont())
