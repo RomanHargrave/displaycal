@@ -2669,16 +2669,31 @@ class Worker(object):
 					displays = displays[:-1]
 				if check_lut_access:
 					dispwin = get_argyll_util("dispwin")
+					test_cal = get_data_path("test.cal")
+					if not test_cal:
+						safe_print(lang.getstr("file.missing", "test.cal"))
+					tmp = self.create_tempdir()
+					if isinstance(tmp, Exception):
+						safe_print(tmp)
+						tmp = None
 					for i, disp in enumerate(displays):
-						if disp.startswith("Chromecast "):
+						if disp.startswith("Chromecast ") or not test_cal:
 							lut_access.append(None)
 							continue
 						if verbose >= 1 and not silent:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
-						test_cal = get_data_path("test.cal")
-						if not test_cal:
-							safe_print(lang.getstr("file.missing", "test.cal"))
-							return
+						# Save current calibration?
+						if tmp:
+							current_cal = os.path.join(tmp, "current.cal")
+							if (self.argyll_version[0:3] > [1, 1, 0] or
+								(self.argyll_version[0:3] == [1, 1, 0] and
+								 not "Beta" in self.argyll_version_string)):
+								args = ["-d%s" % (i +1), "-s", 
+										current_cal]
+								result = self.exec_cmd(dispwin, args,
+													   capture_output=True, 
+													   skip_scripts=True,
+													   silent=True)
 						# Load test.cal
 						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
 														 test_cal], 
@@ -2706,12 +2721,16 @@ class Worker(object):
 							if line.find("IS loaded") >= 0:
 								retcode = 0
 								break
-						# Reset LUT & load profile cal (if any)
+						# Reset LUT & (re-)load previous cal (if any)
+						if not tmp or not os.path.isfile(current_cal):
+							current_cal = self.get_dispwin_display_profile_argument(i)
 						result = self.exec_cmd(dispwin, ["-d%s" % (i + 1), "-c", 
-														 self.get_dispwin_display_profile_argument(i)], 
+														 current_cal], 
 											   capture_output=True, 
 											   skip_scripts=True, 
 											   silent=True)
+						if tmp and os.path.isfile(current_cal):
+							os.remove(current_cal)
 						if isinstance(result, Exception):
 							safe_print(result)
 						lut_access.append(retcode == 0)
