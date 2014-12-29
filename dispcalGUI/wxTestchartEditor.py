@@ -72,6 +72,16 @@ class TestchartEditor(BaseFrame):
 			self.tc_algos_ab["Q"] = lang.getstr("tc.Q")
 
 		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
+
+		self.cfg = cfg or "testchart.file"
+		self.target = target or self.Parent
+
+		self.label_b2a = {"R %": "RGB_R",
+						  "G %": "RGB_G",
+						  "B %": "RGB_B",
+						  "X": "XYZ_X",
+						  "Y": "XYZ_Y",
+						  "Z": "XYZ_Z"}
 		
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
@@ -2465,13 +2475,6 @@ END_DATA""")
 		if path == "auto":
 			return
 		self.target = target or self.Parent
-
-		self.label_b2a = {"R %": "RGB_R",
-						  "G %": "RGB_G",
-						  "B %": "RGB_B",
-						  "X": "XYZ_X",
-						  "Y": "XYZ_Y",
-						  "Z": "XYZ_Z"}
 
 		if not self.tc_check_save_ti1():
 			return
