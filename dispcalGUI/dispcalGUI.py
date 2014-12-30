@@ -3438,7 +3438,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 		self.testchart_ctrl.Enable(enable_profile)
 		if self.set_default_testchart() is None:
-			self.set_testchart()
+			self.set_testchart(update_profile_name=not update_profile_name)
 
 		simple_gamma_model = self.get_profile_type() in ("g", "G")
 		if simple_gamma_model:
@@ -10671,7 +10671,6 @@ class MainFrame(ReportFrame, BaseFrame):
 									   event.GetEventType(), 
 									   getevttype(event)))
 		self.set_testchart(self.testcharts[self.testchart_ctrl.GetSelection()])
-		self.update_profile_name()
 		wx.CallAfter(self.check_testchart_patches_amount)
 
 	def testchart_btn_handler(self, event, path=None):
@@ -10785,7 +10784,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.testchart_ctrl.SetSelection(idx)
 		self.testchart_ctrl.Thaw()
 
-	def set_testchart(self, path=None):
+	def set_testchart(self, path=None, update_profile_name=True):
 		if path is None:
 			path = getcfg("testchart.file")
 		##print "set_testchart", path
@@ -10809,6 +10808,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			self.set_testchart_from_path(path)
 		self.check_testchart()
+		if update_profile_name:
+			self.update_profile_name()
 
 	def set_testchart_from_path(self, path):
 		result = check_file_isfile(path)
