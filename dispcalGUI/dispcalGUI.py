@@ -3920,7 +3920,6 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_create_cb_handler(self, event):
 		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
 		self.calpanel.Freeze()
-		self.profile_settings_changed()
 		self.lut3d_show_controls()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
@@ -7140,6 +7139,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not isinstance(result, Exception) and result:
 			if getcfg("log.autoshow") and allow_show_log:
 				self.infoframe_toggle_handler(show=True)
+			self.do_install = bool(profile_path)
 			if profile_path:
 				profile_save_path = os.path.splitext(profile_path)[0]
 			else:
@@ -7241,7 +7241,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										  ICCP.GAMUT_VOLUME_SRGB /
 										  gamut_volumes[key] * 100,
 										  name))
-			if config.is_virtual_display() or getcfg("3dlut.create"):
+			if config.is_virtual_display() or (getcfg("3dlut.create") and
+											   not self.do_install):
 				installable = False
 				title = appname
 				ok = lang.getstr("3dlut.create")
@@ -7430,7 +7431,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.is_virtual_display() or getcfg("3dlut.create"):
+			if config.is_virtual_display() or (getcfg("3dlut.create") and
+											   not self.do_install):
 				self.profile_finish_consumer(False)
 				self.lut3d_create_handler(None)
 			else:
