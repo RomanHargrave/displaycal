@@ -467,9 +467,10 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		elif format == "mga":
-			# Pandora uses a fixed size of 33x33x33
-			setcfg("3dlut.size", 33)
-			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[33])
+			# Pandora supports 17x17x17 and 33x33x33
+			size = 17
+			setcfg("3dlut.size", size)
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[size])
 			# Pandora uses a fixed bitdepth of 16
 			setcfg("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
@@ -496,8 +497,15 @@ class LUT3DFrame(BaseFrame):
 									 self.output_profile_ctrl.IsShown())
 	
 	def lut3d_size_ctrl_handler(self, event):
-		setcfg("3dlut.size",
-			   self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()])
+		size = self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()]
+		if getcfg("3dlut.format") == "mga" and size not in (17, 33):
+			wx.Bell()
+			if size < 33:
+				size = 17
+			else:
+				size = 33
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[size])
+		setcfg("3dlut.size", size)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
 		elif self.Parent:
@@ -904,7 +912,7 @@ class LUT3DFrame(BaseFrame):
 		input_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_show)
 		self.lut3d_bitdepth_input_ctrl.Show(input_show)
-		output_show = show and getcfg("3dlut.format") in ("3dl", "mga")
+		output_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_output_label.Show(output_show)
 		self.lut3d_bitdepth_output_ctrl.Show(output_show)
 		if isinstance(self, LUT3DFrame):
