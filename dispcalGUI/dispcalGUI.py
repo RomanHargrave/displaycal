@@ -3580,7 +3580,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					   (self.get_profile_type() in ("x", "X") and
 						(getcfg("profile.b2a.hires") or
 						 getcfg("profile.quality.b2a") in ("l", "n")))) and
-					  not getcfg("3dlut.create") and
 					  enable_profile)
 		self.black_point_compensation_cb.Enable(enable_bpc)
 		self.black_point_compensation_cb.SetValue(enable_bpc and
@@ -3906,26 +3905,27 @@ class MainFrame(ReportFrame, BaseFrame):
 		if enable:
 			self.update_menus()
 
+	def lut3d_check_bpc(self):
+		if getcfg("3dlut.create") and getcfg("profile.black_point_compensation"):
+			# Warn about BPC if creating 3D LUT
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("black_point_compensation.3dlut.warning"),
+								ok=lang.getstr("turn_off"),
+								cancel=lang.getstr("setting.keep_current"),
+								bitmap=geticon(32, "dialog-warning"))
+			if dlg.ShowModal() == wx.ID_OK:
+				setcfg("profile.black_point_compensation", 0)
+				self.update_bpc()
+
 	def lut3d_create_cb_handler(self, event):
 		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
-		if getcfg("3dlut.create"):
-			# Do not allow BPC if creating 3D LUT
-			if not getcfg("profile.black_point_compensation.backup", False):
-				setcfg("profile.black_point_compensation.backup",
-					   getcfg("profile.black_point_compensation"))
-			setcfg("profile.black_point_compensation", 0)
-		else:
-			if getcfg("profile.black_point_compensation.backup", False):
-				setcfg("profile.black_point_compensation",
-					   getcfg("profile.black_point_compensation.backup"))
-			setcfg("profile.black_point_compensation.backup", None)
 		self.calpanel.Freeze()
-		self.update_bpc()
 		self.profile_settings_changed()
 		self.lut3d_show_controls()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
 		self.calpanel.Layout()
+		self.lut3d_check_bpc()
 		self.update_main_controls()
 
 	def lut3d_init_input_profiles(self):
@@ -4163,6 +4163,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if v != getcfg("profile.black_point_compensation"):
 			self.profile_settings_changed()
 		setcfg("profile.black_point_compensation", v)
+		self.lut3d_check_bpc()
 	
 	def black_point_correction_auto_handler(self, event=None):
 		if event:
@@ -9492,10 +9493,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			if "c" in v:
 				ok = lang.getstr("calibration.turn_on_black_point_correction")
 			else:
-				ok = lang.getstr("calibration.turn_off_black_point_correction")
+				ok = lang.getstr("turn_off")
 			title = "calibration.black_point_correction"
 			msg = "calibration.black_point_correction_choice"
-			cancel = "calibration.keep_black_point_correction"
+			cancel = "setting.keep_current"
 			dlg = ConfirmDialog(self, title=lang.getstr(title), 
 								msg=lang.getstr(msg), ok=ok, 
 								cancel=lang.getstr(cancel), 
