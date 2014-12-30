@@ -10671,6 +10671,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									   event.GetEventType(), 
 									   getevttype(event)))
 		self.set_testchart(self.testcharts[self.testchart_ctrl.GetSelection()])
+		self.update_profile_name()
 		wx.CallAfter(self.check_testchart_patches_amount)
 
 	def testchart_btn_handler(self, event, path=None):
@@ -10725,6 +10726,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		g = s * 3 - 2
 		self.testchart_patches_amount.SetLabel(
 			str(get_total_patches(4, 4, s, g, auto, auto, 0)))
+		self.update_profile_name()
 
 	def create_testchart_btn_handler(self, event):
 		if not hasattr(self, "tcframe"):
