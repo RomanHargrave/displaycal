@@ -47,4 +47,4 @@ version_src = VERSION_STRING
 
 version_tuple = VERSION # only ints allowed and must be exactly 4 values
 
-wx_minversion = (2, 8, 6)
+wx_minversion = (2, 8, 8)
