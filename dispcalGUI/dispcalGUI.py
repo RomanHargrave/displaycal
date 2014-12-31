@@ -3988,7 +3988,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			allow_b2a_gamap = (profile and "B2A0" in profile.tags and
 							   isinstance(profile.tags.B2A0, ICCP.LUT16Type) and
 							   profile.tags.B2A0.clut_grid_steps >= 17)
-		self.gamut_mapping_b2a.Enable(allow_b2a_gamap)
+		self.gamut_mapping_b2a.Enable(bool(allow_b2a_gamap))
 		if not allow_b2a_gamap:
 			setcfg("3dlut.gamap.use_b2a", 0)
 		self.gamut_mapping_inverse_a2b.SetValue(
