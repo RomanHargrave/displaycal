@@ -3920,6 +3920,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_create_cb_handler(self, event):
 		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
 		self.calpanel.Freeze()
+		self.lut3d_update_b2a_controls()
 		self.lut3d_show_controls()
 		self.calpanel.Thaw()
 		self.update_scrollbars()
@@ -3979,8 +3980,14 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def lut3d_update_b2a_controls(self):
 		# Allow using B2A instead of inverse A2B?
-		allow_b2a_gamap = (getcfg("profile.type") in ("x", "X") and
-						   getcfg("profile.b2a.hires"))
+		if getcfg("3dlut.create"):
+			allow_b2a_gamap = (getcfg("profile.type") in ("x", "X") and
+							   getcfg("profile.b2a.hires"))
+		else:
+			profile = get_current_profile(True)
+			allow_b2a_gamap = (profile and "B2A0" in profile.tags and
+							   isinstance(profile.tags.B2A0, ICCP.LUT16Type) and
+							   profile.tags.B2A0.clut_grid_steps >= 17)
 		self.gamut_mapping_b2a.Enable(allow_b2a_gamap)
 		if not allow_b2a_gamap:
 			setcfg("3dlut.gamap.use_b2a", 0)

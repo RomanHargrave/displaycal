@@ -666,6 +666,8 @@ class LUT3DFrame(BaseFrame):
 														   % odata, self)
 									self.XYZbpout = odata[0]
 							allow_b2a_gamap = ("B2A0" in profile.tags and
+											   isinstance(profile.tags.B2A0,
+														  ICCP.LUT16Type) and
 											   profile.tags.B2A0.clut_grid_steps >= 17)
 							# Allow using B2A instead of inverse A2B?
 							self.gamut_mapping_b2a.Enable(allow_b2a_gamap)
