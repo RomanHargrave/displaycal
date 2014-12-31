@@ -817,7 +817,7 @@
 	"settings_loaded.cal_and_profile": "Einstellungen wurden geladen. Keine Kalibrierungskurven gefunden.",
 	"settings_loaded.profile": "Das Profil enthielt nur Profilierungseinstellungen. Andere Einstellungen wurden nicht verändert. Keine Kalibrierungskurven gefunden.",
 	"settings_loaded.profile_and_lut": "Das Profil enthielt nur Profilierungseinstellungen. Andere Einstellungen wurden nicht verändert und die Kalibrierungskurven geladen.",
-	"show_advanced_calibration_options": "Erweiterte Kalibrierungsoptionen zeigen",
+	"show_advanced_options": "Erweiterte Optionen zeigen",
 	"silkscreen": "Siebdruck",
 	"simulation_profile": "Simulationsprofil",
 	"size": "Größe",

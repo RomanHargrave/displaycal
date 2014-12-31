@@ -817,7 +817,7 @@
 	"settings_loaded.cal_and_profile": "Les réglages ont été chargés. Aucune courbe d'une table de correspondance n'a été trouvée.",
 	"settings_loaded.profile": "Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées. Aucune courbe d'une table de correspondance n'a été trouvée.",
 	"settings_loaded.profile_and_lut": "Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées et les courbes de la table de correspondance ont été chargées.",
-	"show_advanced_calibration_options": "Afficher les options de calibrage avancées",
+	"show_advanced_options": "Afficher les options avancées",
 		"*silkscreen": "Silkscreen",
 	"simulation_profile": "Profil de simulation",
 		"*size": "Size",

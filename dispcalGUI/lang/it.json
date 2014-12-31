@@ -817,7 +817,7 @@
 	"settings_loaded.cal_and_profile": "Sono state caricate le impostazioni. Le curve calibrazione non sono state trovate.",
 	"settings_loaded.profile": "Il profilo contiene solo le impostazioni del profilo. Le altre opzioni non sono state modificate. Le curve calibrazione non sono state trovate.",
 	"settings_loaded.profile_and_lut": "Il profilo contiene solo le impostazioni del profilo. Le altre opzioni non sono state modificate e le curve calibrazione sono state caricate.",
-		"*show_advanced_calibration_options": "Show advanced calibration options",
+		"*show_advanced_options": "Show advanced options",
 		"*silkscreen": "Silkscreen",
 		"*simulation_profile": "Simulation profile",
 		"*size": "Size",

@@ -743,7 +743,7 @@ defaults = {
 	"recent_cals": "",
 	"report.pack_js": 1,
 	"settings.changed": 0,
-	"show_advanced_calibration_options": 0,
+	"show_advanced_options": 0,
 	"size.info.w": 512,
 	"size.info.h": 384,
 	"size.lut3dframe.w": 512,

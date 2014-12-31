@@ -818,7 +818,7 @@
 	"settings_loaded.cal_and_profile": "Settings have been loaded. No calibration curves have been found.",
 	"settings_loaded.profile": "The profile contained just profiling settings. Other options have not been changed. No calibration curves have been found.",
 	"settings_loaded.profile_and_lut": "The profile contained just profiling settings. Other options have not been changed and calibration curves have been loaded.",
-	"show_advanced_calibration_options": "Show advanced calibration options",
+	"show_advanced_options": "Show advanced options",
 	"silkscreen": "Silkscreen",
 	"simulation_profile": "Simulation profile",
 	"size": "Size",

@@ -1182,7 +1182,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.init_measureframe()
 		self.init_menus()
 		self.init_controls()
-		self.show_advanced_calibration_options_handler()
+		self.show_advanced_options_handler()
 		self.setup_language()
 		self.update_displays(update_ccmx_items=False)
 		self.update_comports()
@@ -1910,10 +1910,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			options.FindItem("calibrate_instrument"))
 		self.Bind(wx.EVT_MENU, self.calibrate_instrument_handler, 
 				  self.menuitem_calibrate_instrument)
-		self.menuitem_show_advanced_calibration_options = options.FindItemById(
-			options.FindItem("show_advanced_calibration_options"))
-		self.Bind(wx.EVT_MENU, self.show_advanced_calibration_options_handler, 
-				  self.menuitem_show_advanced_calibration_options)
+		self.menuitem_show_advanced_options = options.FindItemById(
+			options.FindItem("show_advanced_options"))
+		self.Bind(wx.EVT_MENU, self.show_advanced_options_handler, 
+				  self.menuitem_show_advanced_options)
 		menuitem = options.FindItemById(options.FindItem("extra_args"))
 		self.Bind(wx.EVT_MENU, self.extra_args_handler, menuitem)
 		self.menuitem_enable_argyll_debug = options.FindItemById(
@@ -2616,7 +2616,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"recent_cals",
 			"report.pack_js",
 			"settings.changed",
-			"show_advanced_calibration_options",
+			"show_advanced_options",
 			"skip_legacy_serial_ports",
 			"sudo.preserve_environment",
 			"tc_precond_profile",
@@ -3501,14 +3501,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.trc_ctrl.SetSelection(1)  # Gamma
 
 	def show_trc_controls(self):
-		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
+		show_advanced_options = bool(getcfg("show_advanced_options"))
 		if self.trc_ctrl.GetSelection() in (1, 4):
 			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 1 or
 									(self.trc_ctrl.GetSelection() > 1 and
-									 show_advanced_calibration_options))
+									 show_advanced_options))
 			self.trc_gamma_label.Show(show_gamma_ctrls)
 			self.trc_textctrl.Show(show_gamma_ctrls)
-			self.trc_type_ctrl.Show(show_advanced_calibration_options)
+			self.trc_type_ctrl.Show(show_advanced_options)
 		else:
 			self.trc_gamma_label.Hide()
 			self.trc_textctrl.Hide()
@@ -3528,7 +3528,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.black_point_rate_floatctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   self.trc_ctrl.GetSelection() > 0 and
-										   show_advanced_calibration_options)
+										   show_advanced_options)
 		for ctrl in (
 					 self.calibration_quality_label,
 					 self.calibration_quality_ctrl,
@@ -3553,7 +3553,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_black_point_rate_ctrl(self):
 		self.calpanel.Freeze()
 		enable = not(self.calibration_update_cb.GetValue())
-		show = (bool(getcfg("show_advanced_calibration_options")) and
+		show = (bool(getcfg("show_advanced_options")) and
 				defaults["calibration.black_point_rate.enabled"])
 		self.black_point_rate_label.GetContainingSizer().Show(
 			self.black_point_rate_label,
@@ -3849,12 +3849,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.whitepoint_ctrl_handler(
 			CustomEvent(wx.EVT_CHOICE.evtType[0], 
 			self.whitepoint_ctrl), False)
-		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
+		show_advanced_options = bool(getcfg("show_advanced_options"))
 		for ctrl in (self.whitepoint_colortemp_locus_label,
 					 self.whitepoint_colortemp_locus_ctrl):
 			ctrl.Show(self.whitepoint_ctrl.GetSelection() in (0, 1) and
 					  not auto and do_cal and
-					  show_advanced_calibration_options)
+					  show_advanced_options)
 
 		if getcfg("calibration.luminance", False):
 			self.luminance_ctrl.SetSelection(1)
@@ -3873,10 +3873,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.black_luminance_textctrl.SetValue(
 			getcfg("calibration.black_luminance"))
 		self.black_luminance_textctrl.Show(
-			bool(show_advanced_calibration_options and
+			bool(show_advanced_options and
 				 getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(
-			bool(show_advanced_calibration_options and
+			bool(show_advanced_options and
 				 getcfg("calibration.black_luminance", False)))
 
 	def enable_argyll_debug_handler(self, event):
@@ -3966,7 +3966,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_show_encoding_controls(show)
 		self.lut3d_format_label.Show(show)
 		self.lut3d_format_ctrl.Show(show)
-		show_advanced_calibration_options = getcfg("show_advanced_calibration_options")
+		show_advanced_options = getcfg("show_advanced_options")
 		for ctrl in (self.gamut_mapping_mode,
 					 self.gamut_mapping_inverse_a2b,
 					 self.gamut_mapping_b2a,
@@ -3975,7 +3975,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.lut3d_size_label,
 					 self.lut3d_size_ctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
-										   show_advanced_calibration_options and
+										   show_advanced_options and
 										   show)
 
 	def lut3d_update_b2a_controls(self):
@@ -4181,7 +4181,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			auto = getcfg("calibration.black_point_correction.auto")
 			self.black_point_correction_auto_cb.SetValue(bool(auto))
 		show = (self.trc_ctrl.GetSelection() > 0 and
-				bool(getcfg("show_advanced_calibration_options")) and not auto)
+				bool(getcfg("show_advanced_options")) and not auto)
 		self.calpanel.Freeze()
 		self.black_point_correction_ctrl.Show(show)
 		self.black_point_correction_intctrl.Show(show)
@@ -4310,7 +4310,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		set_whitepoint = event_id == self.whitepoint_measure_btn.GetId()
 		set_ambient = event_id == self.ambient_measure_btn.GetId()
 		if (set_whitepoint and not set_ambient and lux and
-			getcfg("show_advanced_calibration_options")):
+			getcfg("show_advanced_options")):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
 								cancel=lang.getstr("no"), 
@@ -4527,7 +4527,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									   event.GetEventType(), 
 									   getevttype(event)))
 		self.calpanel.Freeze()
-		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
+		show_advanced_options = bool(getcfg("show_advanced_options"))
 		if self.whitepoint_ctrl.GetSelection() == 2: # x,y chromaticity coordinates
 			self.whitepoint_colortemp_locus_label.Hide()
 			self.whitepoint_colortemp_locus_ctrl.Hide()
@@ -4572,8 +4572,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				not self.updatingctrls):
 				self.whitepoint_x_textctrl.SetFocus()
 		elif self.whitepoint_ctrl.GetSelection() == 1:
-			self.whitepoint_colortemp_locus_label.Show(show_advanced_calibration_options)
-			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_calibration_options)
+			self.whitepoint_colortemp_locus_label.Show(show_advanced_options)
+			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_options)
 			self.whitepoint_colortemp_textctrl.Show()
 			self.whitepoint_colortemp_label.Show()
 			self.whitepoint_x_textctrl.Hide()
@@ -4605,8 +4605,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.whitepoint_colortemp_textctrl.SetFocus()
 				self.whitepoint_colortemp_textctrl.SelectAll()
 		else:
-			self.whitepoint_colortemp_locus_label.Show(show_advanced_calibration_options)
-			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_calibration_options)
+			self.whitepoint_colortemp_locus_label.Show(show_advanced_options)
+			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_options)
 			self.whitepoint_colortemp_textctrl.Hide()
 			self.whitepoint_colortemp_label.Hide()
 			self.whitepoint_x_textctrl.Hide()
@@ -4734,7 +4734,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		    (bool(int(getcfg("calibration.ambient_viewcond_adjust"))) and 
 			 getcfg("calibration.ambient_viewcond_adjust.lux")) and
 			getcfg("trc.should_use_viewcond_adjust.show_msg") and
-			getcfg("show_advanced_calibration_options")):
+			getcfg("show_advanced_options")):
 			dlg = InfoDialog(self, 
 							 msg=lang.getstr("trc.should_use_viewcond_adjust"), 
 							 ok=lang.getstr("ok"), 
@@ -7869,20 +7869,20 @@ class MainFrame(ReportFrame, BaseFrame):
 		if hasattr(self, "show_lut") and self.show_lut:
 			self.show_lut.SetValue(self.lut_viewer.IsShownOnScreen())
 
-	def show_advanced_calibration_options_handler(self, event=None):
+	def show_advanced_options_handler(self, event=None):
 		""" Show or hide advanced calibration settings """
-		show_advanced_calibration_options = bool(getcfg("show_advanced_calibration_options"))
+		show_advanced_options = bool(getcfg("show_advanced_options"))
 		if event:
-			show_advanced_calibration_options = not show_advanced_calibration_options
-			setcfg("show_advanced_calibration_options", 
-				   int(show_advanced_calibration_options))
+			show_advanced_options = not show_advanced_options
+			setcfg("show_advanced_options", 
+				   int(show_advanced_options))
 		self.calpanel.Freeze()
-		self.menuitem_show_advanced_calibration_options.Check(show_advanced_calibration_options)
+		self.menuitem_show_advanced_options.Check(show_advanced_options)
 		self.override_display_settle_time_mult.Show(
-			show_advanced_calibration_options and
+			show_advanced_options and
 			getcfg("argyll.version") >= "1.7")
 		self.display_settle_time_mult.Show(
-			show_advanced_calibration_options and
+			show_advanced_options and
 			getcfg("argyll.version") >= "1.7")
 		for ctrl in (self.override_min_display_update_delay_ms,
 					 self.min_display_update_delay_ms,
@@ -7894,10 +7894,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.profile_type_ctrl,
 					 self.gamap_btn):
 			ctrl.GetContainingSizer().Show(ctrl,
-										   show_advanced_calibration_options)
-		self.black_luminance_textctrl.Show(show_advanced_calibration_options and
+										   show_advanced_options)
+		self.black_luminance_textctrl.Show(show_advanced_options and
 										   bool(getcfg("calibration.black_luminance", False)))
-		self.black_luminance_textctrl_label.Show(show_advanced_calibration_options and
+		self.black_luminance_textctrl_label.Show(show_advanced_options and
 												 bool(getcfg("calibration.black_luminance", False)))
 		self.lut3d_show_controls()
 		if event:
