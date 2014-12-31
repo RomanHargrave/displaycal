@@ -463,6 +463,10 @@ class LUT3DFrame(BaseFrame):
 				# and xvYCC output encoding is not supported generally, fall
 				# back to Rec709 1125/60Hz YCbCr HD for xvYCC Rec709 YCbCr SD
 				setcfg("3dlut.encoding.input", "7")
+			else:
+				# -et -Et for eeColor
+				setcfg("3dlut.encoding.input", "t")
+				setcfg("3dlut.encoding.output", "t")
 			# eeColor uses a fixed size of 65x65x65
 			setcfg("3dlut.size", 65)
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
