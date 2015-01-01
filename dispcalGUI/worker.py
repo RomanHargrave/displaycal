@@ -5772,23 +5772,22 @@ usage: spotread [-options] [logfile]
 		if getcfg("testchart.file") == "auto":
 			# Testchart auto-optimization
 			# Create optimized testchart on-the-fly. To do this, create a
-			# simple shaper + matrix profile for preconditioning
+			# simple profile for preconditioning
 			if config.get_display_name() == "Untethered":
 				return Error(lang.getstr("testchart.auto_optimize.untethered.unsupported"))
-			# Use default shaper + matrix testchart
+			# Use small LUT testchart
 			setcfg("testchart.file",
-				   get_data_path(os.path.join("ti1",
-											  config.testchart_defaults["s"][None])))
+				   get_data_path("ti1/d3-e4-s13-g37-m4-b4-f0.ti1"))
 			cmd, args = self.prepare_dispread(apply_calibration)
 			setcfg("testchart.file", "auto")
 			if not isinstance(cmd, Exception):
 				# Measure testchart
 				result = self.exec_cmd(cmd, args)
 				if not isinstance(result, Exception) and result:
-					# Create shaper + matrix preconditioning profile
+					# Create preconditioning profile
 					basename = args[-1]
-					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-as",
-															 basename]
+					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-ax",
+															 "-bn", basename]
 					result = self.exec_cmd(cmd, args)
 					if not isinstance(result, Exception) and result:
 						# Create optimized testchart
