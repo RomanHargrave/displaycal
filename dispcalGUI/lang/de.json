@@ -301,7 +301,6 @@
 	"d3-e4-s29-g85-m0-f994-ceRGBv2.ti1": "Sehr große Testform für LUT-Profile, optimiert für L* mit NTSC-1953-Primärfarben (D50)",
 	"d3-e4-s29-g85-m0-f994-csRGB.ti1": "Sehr große Testform für LUT-Profile, optimiert für sRGB (D65)",
 	"d3-e4-s29-g85-m8-b8-f0.ti1": "Sehr große Testform für LUT-Profile",
-	"d3-e4-s3-g3-m0-f0.ti1": "Standard-Testform für „Gamma + Matrix“-Profile",
 	"d3-e4-s33-g97-m0-f1399-cRec709_Gamma22.ti1": "XXL Testform für LUT-Profile, optimiert für Gamma 2.2 mit Rec.-709-Primärfarben (D65)",
 	"d3-e4-s33-g97-m0-f1399-caRGB.ti1": "XXL Testform für LUT-Profile, optimiert für Gamma 2.2 mit AdobeRGB-Primärfarben (D65)",
 	"d3-e4-s33-g97-m0-f1399-ceRGBv2.ti1": "XXL Testform für LUT-Profile, optimiert für L* mit NTSC-1953-Primärfarben (D50)",
