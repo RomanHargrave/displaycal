@@ -7890,6 +7890,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.black_luminance_label,
 					 self.black_luminance_ctrl,
 					 # Profiling options
+					 self.black_point_compensation_cb,
 					 self.profile_type_label,
 					 self.profile_type_ctrl,
 					 self.gamap_btn):
