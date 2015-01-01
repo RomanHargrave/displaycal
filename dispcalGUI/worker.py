@@ -5354,8 +5354,9 @@ usage: spotread [-options] [logfile]
 					isinstance(profile.tags.rTRC, ICCP.CurveType) and
 					isinstance(profile.tags.gTRC, ICCP.CurveType) and
 					isinstance(profile.tags.bTRC, ICCP.CurveType) and
-					getcfg("profile.black_point_compensation") and
-					(not "A2B0" in profile.tags or process_A2B) and
+					((getcfg("profile.black_point_compensation") and
+					  not "A2B0" in profile.tags) or
+					 (process_A2B and getcfg("profile.b2a.hires"))) and
 					len(profile.tags.rTRC) > 1 and
 					len(profile.tags.gTRC) > 1 and
 					len(profile.tags.bTRC) > 1):
