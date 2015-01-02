@@ -32,6 +32,15 @@ from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
 from wx.lib.buttons import GenBitmapTextButton as _GenBitmapTextButton
 from wx.lib import platebtn
 
+
+if not hasattr(platebtn, "PB_STYLE_TOGGLE"):
+	platebtn.PB_STYLE_TOGGLE = 32
+
+
+if not hasattr(platebtn, "PB_STYLE_DROPARROW"):
+	platebtn.PB_STYLE_DROPARROW = 16
+
+
 if u"phoenix" in wx.PlatformInfo:
 	# Phoenix compatibility
 
@@ -236,6 +245,16 @@ def GTKMenuItemGetFixedLabel(label):
 		while label and label[0] == "_":
 			label = label[1:]
 	return label
+
+
+if not hasattr(wx.Sizer, "GetItemIndex"):
+	def GetItemIndex(self, item):
+		for i, child in enumerate(self.GetChildren()):
+			if child.GetWindow() is item:
+				return i
+		return -1
+
+	wx.Sizer.GetItemIndex = GetItemIndex
 
 
 wx.Window._SetToolTipString = wx.Window.SetToolTipString
@@ -657,6 +676,12 @@ class PlateButton(platebtn.PlateButton):
 
 	_reallyenabled = True
 
+	def __init__(self, *args, **kwargs):
+		platebtn.PlateButton.__init__(self, *args, **kwargs)
+		self.Unbind(wx.EVT_LEAVE_WINDOW)
+		self.Bind(wx.EVT_LEAVE_WINDOW,
+				  lambda evt: wx.CallLater(80, self.__LeaveWindow))
+
 	def DoGetBestSize(self):
 		"""Calculate the best size of the button
 		
@@ -779,6 +804,25 @@ class PlateButton(platebtn.PlateButton):
 			t_x = max((width - tw - (txt_x + 2)) // 2, txt_x + 2)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+
+	def __LeaveWindow(self):
+		"""Handle updating the buttons state when the mouse cursor leaves"""
+		if (self._style & platebtn.PB_STYLE_TOGGLE) and self._pressed:
+			self._SetState(platebtn.PLATE_PRESSED) 
+		else:
+			self._SetState(platebtn.PLATE_NORMAL)
+			self._pressed = False
+
+	def __PostEvent(self):
+		"""Post a button event to parent of this control"""
+		if self._style & platebtn.PB_STYLE_TOGGLE:
+			etype = wx.wxEVT_COMMAND_TOGGLEBUTTON_CLICKED
+		else:
+			etype = wx.wxEVT_COMMAND_BUTTON_CLICKED
+		bevt = wx.CommandEvent(etype, self.GetId())
+		bevt.SetEventObject(self)
+		bevt.SetString(self.GetLabel())
+		self.GetEventHandler().ProcessEvent(bevt)
 
 	Disable = ThemedGenButton.__dict__["Disable"]
 	Enable = ThemedGenButton.__dict__["Enable"]
