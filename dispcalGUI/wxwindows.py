@@ -3492,7 +3492,6 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 			else:
 				bmp = self.GetBitmap()
 				self._bmp = bmp
-			self.MinSize = self._bmp.GetSize()
 			w = self.Size[0]
 			if getattr(self, "_width", -1) != w:
 				img = bmp.ConvertToImage()
@@ -3503,6 +3502,7 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 				if self._init:
 					self.Freeze()
 				self.SetBitmap(bmp)
+				self.MinSize = self._bmp.GetSize()
 				if self._init:
 					self.Thaw()
 				elif self.IsShownOnScreen():
