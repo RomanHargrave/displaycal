@@ -3482,7 +3482,16 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 
 	def __init__(self, *args, **kwargs):
 		wx.StaticBitmap.__init__(self, *args, **kwargs)
-		self.Bind(wx.EVT_PAINT, self.OnPaint)
+		if sys.platform in ("darwin", "win32"):
+			# Works (only) under Mac OS X / Windows.
+			# Works better (no jump to correct width) under Mac OS X than
+			# EVT_SIZE method.
+			self.Bind(wx.EVT_PAINT, self.OnPaint)
+		else:
+			# Works under Mac OS X, Windows and Linux.
+			# Under Mac OS X, this visibly jumps to the correct width when
+			# first shown on screen.
+			self.Bind(wx.EVT_SIZE, self.OnPaint)
 		self._init = False
 
 	def OnPaint(self, event):
