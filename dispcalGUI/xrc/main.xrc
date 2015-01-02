@@ -1451,8 +1451,6 @@
                                     </object>
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
-                                  <flag>wxBOTTOM</flag>
-                                  <border>4</border>
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">
@@ -1502,7 +1500,7 @@
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
                                   <flag>wxTOP</flag>
-                                  <border>4</border>
+                                  <border>8</border>
                                 </object>
                                 <orient>wxVERTICAL</orient>
                               </object>

@@ -202,8 +202,10 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_trc_black_output_offset_intctrl.SetValue(
 				self.lut3d_trc_black_output_offset_ctrl.GetValue())
 		v = self.lut3d_trc_black_output_offset_ctrl.GetValue() / 100.0
-		setcfg("3dlut.trc_output_offset", v)
-		self.lut3d_update_trc_control()
+		if v != getcfg("3dlut.trc_output_offset"):
+			setcfg("3dlut.trc_output_offset", v)
+			self.lut3d_update_trc_control()
+			self.lut3d_show_trc_controls()
 
 	def lut3d_trc_gamma_ctrl_handler(self, event):
 		try:
@@ -217,28 +219,33 @@ class LUT3DFrame(BaseFrame):
 		else:
 			if str(v) != self.lut3d_trc_gamma_ctrl.GetValue():
 				self.lut3d_trc_gamma_ctrl.SetValue(str(v))
-			setcfg("3dlut.trc_gamma", v)
-			self.lut3d_update_trc_control()
+			if v != getcfg("3dlut.trc_gamma"):
+				setcfg("3dlut.trc_gamma", v)
+				self.lut3d_update_trc_control()
+				self.lut3d_show_trc_controls()
 		event.Skip()
 
 	def lut3d_trc_ctrl_handler(self, event):
-		if self.lut3d_trc_ctrl.GetSelection() == 0:
+		if self.lut3d_trc_ctrl.GetSelection() == 1:
 			# BT.1886
 			setcfg("3dlut.trc_gamma", 2.4)
 			setcfg("3dlut.trc_gamma_type", "B")
 			setcfg("3dlut.trc_output_offset", 0.0)
 			self.lut3d_update_trc_controls()
-		elif self.lut3d_trc_ctrl.GetSelection() == 1:
+		elif self.lut3d_trc_ctrl.GetSelection() == 0:
 			# Pure power gamma 2.2
 			setcfg("3dlut.trc_gamma", 2.2)
 			setcfg("3dlut.trc_gamma_type", "b")
 			setcfg("3dlut.trc_output_offset", 1.0)
 			self.lut3d_update_trc_controls()
+		self.lut3d_show_trc_controls()
 
 	def lut3d_trc_gamma_type_ctrl_handler(self, event):
-		setcfg("3dlut.trc_gamma_type",
-			   self.trc_gamma_types_ab[self.lut3d_trc_gamma_type_ctrl.GetSelection()])
-		self.lut3d_update_trc_control()
+		v = self.trc_gamma_types_ab[self.lut3d_trc_gamma_type_ctrl.GetSelection()]
+		if v != getcfg("3dlut.trc_gamma_type"):
+			setcfg("3dlut.trc_gamma_type", v)
+			self.lut3d_update_trc_control()
+			self.lut3d_show_trc_controls()
 
 	def abstract_drop_handler(self, path):
 		if not self.worker.is_working():
@@ -613,7 +620,7 @@ class LUT3DFrame(BaseFrame):
 							self.output_profile_current_btn.Hide()
 							self.lut3d_apply_cal_cb.Hide()
 							self.lut3d_show_encoding_controls(False)
-							self.show_trc_controls(False)
+							self.lut3d_show_trc_controls(False)
 							self.lut3d_rendering_intent_label.Hide()
 							self.lut3d_rendering_intent_ctrl.Hide()
 							self.panel.GetSizer().Layout()
@@ -681,7 +688,7 @@ class LUT3DFrame(BaseFrame):
 								not getcfg("3dlut.gamap.use_b2a"))
 							self.gamut_mapping_b2a.SetValue(
 								bool(getcfg("3dlut.gamap.use_b2a")))
-							self.show_trc_controls()
+							self.lut3d_show_trc_controls()
 							if (hasattr(self, "input_profile") and
 								"rTRC" in self.input_profile.tags and
 								"gTRC" in self.input_profile.tags and
@@ -783,7 +790,7 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_setup_language(self):
 		# Shared with main window
 		items = []
-		for item in ("trc.rec1886", "Gamma 2.2", "custom"):
+		for item in ("Gamma 2.2", "trc.rec1886", "custom"):
 			items.append(lang.getstr(item))
 		self.lut3d_trc_ctrl.SetItems(items)
 		
@@ -895,11 +902,11 @@ class LUT3DFrame(BaseFrame):
 		if (getcfg("3dlut.trc_gamma_type") == "B" and
 			getcfg("3dlut.trc_output_offset") == 0 and
 			getcfg("3dlut.trc_gamma") == 2.4):
-			self.lut3d_trc_ctrl.SetSelection(0)  # BT.1886
+			self.lut3d_trc_ctrl.SetSelection(1)  # BT.1886
 		elif (getcfg("3dlut.trc_gamma_type") == "b" and
 			getcfg("3dlut.trc_output_offset") == 1 and
 			getcfg("3dlut.trc_gamma") == 2.2):
-			self.lut3d_trc_ctrl.SetSelection(1)  # Pure power gamma 2.2
+			self.lut3d_trc_ctrl.SetSelection(0)  # Pure power gamma 2.2
 		else:
 			self.lut3d_trc_ctrl.SetSelection(2)  # Custom
 
@@ -930,19 +937,24 @@ class LUT3DFrame(BaseFrame):
 		if not frozen:
 			self.Thaw()
 
-	def show_trc_controls(self, show=True):
+	def lut3d_show_trc_controls(self, show=True):
+		self.panel.Freeze()
 		show = show and self.worker.argyll_version >= [1, 6]
-		self.lut3d_trc_apply_ctrl.Show(show)
+		if hasattr(self, "lut3d_trc_apply_ctrl"):
+			self.lut3d_trc_apply_ctrl.Show(show)
 		self.lut3d_trc_ctrl.Show(show)
+		show = show and self.lut3d_trc_ctrl.GetSelection() == 2  # Custom
 		self.lut3d_trc_gamma_label.Show(show)
 		self.lut3d_trc_gamma_ctrl.Show(show)
-		self.lut3d_trc_gamma_type_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
-		self.lut3d_trc_black_output_offset_label.Show(show and self.XYZbpout > [0, 0, 0])
-		self.lut3d_trc_black_output_offset_ctrl.Show(show and self.XYZbpout > [0, 0, 0])
-		self.lut3d_trc_black_output_offset_intctrl.Show(show and
-											  self.XYZbpout > [0, 0, 0])
-		self.lut3d_trc_black_output_offset_intctrl_label.Show(show and
-													self.XYZbpout > [0, 0, 0])
+		show = show and ((hasattr(self, "lut3d_create_cb") and
+						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])
+		self.lut3d_trc_gamma_type_ctrl.Show(show)
+		self.lut3d_trc_black_output_offset_label.Show(show)
+		self.lut3d_trc_black_output_offset_ctrl.Show(show)
+		self.lut3d_trc_black_output_offset_intctrl.Show(show)
+		self.lut3d_trc_black_output_offset_intctrl_label.Show(show)
+		self.panel.Layout()
+		self.panel.Thaw()
 	
 	def lut3d_show_encoding_controls(self, show=True):
 		show = (show and self.worker.argyll_version >= [1, 6] and

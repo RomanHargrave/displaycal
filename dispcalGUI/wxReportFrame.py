@@ -184,8 +184,10 @@ class ReportFrame(BaseFrame):
 			self.mr_black_output_offset_intctrl.SetValue(
 				self.mr_black_output_offset_ctrl.GetValue())
 		v = self.mr_black_output_offset_ctrl.GetValue() / 100.0
-		setcfg("measurement_report.trc_output_offset", v)
-		self.mr_update_trc_control()
+		if v != getcfg("measurement_report.trc_output_offset"):
+			setcfg("measurement_report.trc_output_offset", v)
+			self.mr_update_trc_control()
+			self.mr_show_trc_controls()
 
 	def mr_trc_gamma_ctrl_handler(self, event):
 		try:
@@ -199,28 +201,33 @@ class ReportFrame(BaseFrame):
 		else:
 			if str(v) != self.mr_trc_gamma_ctrl.GetValue():
 				self.mr_trc_gamma_ctrl.SetValue(str(v))
-			setcfg("measurement_report.trc_gamma", v)
-			self.mr_update_trc_control()
+			if v != getcfg("measurement_report.trc_gamma"):
+				setcfg("measurement_report.trc_gamma", v)
+				self.mr_update_trc_control()
+				self.mr_show_trc_controls()
 		event.Skip()
 
 	def mr_trc_ctrl_handler(self, event):
-		if self.mr_trc_ctrl.GetSelection() == 0:
+		if self.mr_trc_ctrl.GetSelection() == 1:
 			# BT.1886
 			setcfg("measurement_report.trc_gamma", 2.4)
 			setcfg("measurement_report.trc_gamma_type", "B")
 			setcfg("measurement_report.trc_output_offset", 0.0)
 			self.mr_update_trc_controls()
-		elif self.mr_trc_ctrl.GetSelection() == 1:
+		elif self.mr_trc_ctrl.GetSelection() == 0:
 			# Pure power gamma 2.2
 			setcfg("measurement_report.trc_gamma", 2.2)
 			setcfg("measurement_report.trc_gamma_type", "b")
 			setcfg("measurement_report.trc_output_offset", 1.0)
 			self.mr_update_trc_controls()
+		self.mr_show_trc_controls()
 
 	def mr_trc_gamma_type_ctrl_handler(self, event):
-		setcfg("measurement_report.trc_gamma_type",
-			   self.trc_gamma_types_ab[self.mr_trc_gamma_type_ctrl.GetSelection()])
-		self.mr_update_trc_control()
+		v = self.trc_gamma_types_ab[self.mr_trc_gamma_type_ctrl.GetSelection()]
+		if v != getcfg("measurement_report.trc_gamma_type"):
+			setcfg("measurement_report.trc_gamma_type", v)
+			self.mr_update_trc_control()
+			self.mr_show_trc_controls()
 	
 	def chart_btn_handler(self, event):
 		if self.Parent:
@@ -433,7 +440,7 @@ class ReportFrame(BaseFrame):
 				setattr(ctrl, name, value)
 
 		items = []
-		for item in ("trc.rec1886", "Gamma 2.2", "custom"):
+		for item in ("Gamma 2.2", "trc.rec1886", "custom"):
 			items.append(lang.getstr(item))
 		self.mr_trc_ctrl.SetItems(items)
 		
@@ -441,6 +448,40 @@ class ReportFrame(BaseFrame):
 		self.trc_gamma_types_ba = {"b": 0, "B": 1}
 		self.mr_trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
+
+	def mr_show_trc_controls(self):
+		shown = self.apply_trc_ctrl.IsShown()
+		enable6 = (shown and
+				   bool(getcfg("measurement_report.apply_trc")))
+		show = shown and self.mr_trc_ctrl.GetSelection() == 2
+		self.panel.Freeze()
+		self.mr_trc_ctrl.Enable(enable6)
+		self.mr_trc_ctrl.Show(shown)
+		self.mr_trc_gamma_label.Enable(enable6)
+		self.mr_trc_gamma_label.Show(show)
+		self.mr_trc_gamma_ctrl.Enable(enable6)
+		self.mr_trc_gamma_ctrl.Show(show)
+		self.mr_trc_gamma_type_ctrl.Enable(enable6)
+		self.mr_black_output_offset_label.Enable(enable6 and
+											     self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_label.Show(show and
+											   self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_ctrl.Enable(enable6 and
+											    self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_ctrl.Show(show and
+											  self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl.Enable(enable6 and
+												   self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl.Show(show and
+												 self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl_label.Enable(enable6 and
+													     self.XYZbpout > [0, 0, 0])
+		self.mr_black_output_offset_intctrl_label.Show(show and
+													   self.XYZbpout > [0, 0, 0])
+		self.mr_trc_gamma_type_ctrl.Show(show and
+										 self.XYZbpout > [0, 0, 0])
+		self.panel.Layout()
+		self.panel.Thaw()
 	
 	def simulate_whitepoint_ctrl_handler(self, event):
 		v = self.simulate_whitepoint_cb.GetValue()
@@ -478,11 +519,11 @@ class ReportFrame(BaseFrame):
 		if (getcfg("measurement_report.trc_gamma_type") == "B" and
 			getcfg("measurement_report.trc_output_offset") == 0 and
 			getcfg("measurement_report.trc_gamma") == 2.4):
-			self.mr_trc_ctrl.SetSelection(0)  # BT.1886
+			self.mr_trc_ctrl.SetSelection(1)  # BT.1886
 		elif (getcfg("measurement_report.trc_gamma_type") == "b" and
 			getcfg("measurement_report.trc_output_offset") == 1 and
 			getcfg("measurement_report.trc_gamma") == 2.2):
-			self.mr_trc_ctrl.SetSelection(1)  # Pure power gamma 2.2
+			self.mr_trc_ctrl.SetSelection(0)  # Pure power gamma 2.2
 		else:
 			self.mr_trc_ctrl.SetSelection(2)  # Custom
 
@@ -542,35 +583,9 @@ class ReportFrame(BaseFrame):
 		self.apply_black_offset_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_black_offset")))
 		self.apply_trc_ctrl.Show(enable1 and enable5)
-		enable6 = (enable1 and enable5 and
-				   bool(getcfg("measurement_report.apply_trc")))
 		self.apply_trc_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_trc")))
-		self.mr_trc_ctrl.Enable(enable6)
-		self.mr_trc_ctrl.Show(enable1 and enable5)
-		self.mr_trc_gamma_label.Enable(enable6)
-		self.mr_trc_gamma_label.Show(enable1 and enable5)
-		self.mr_trc_gamma_ctrl.Enable(enable6)
-		self.mr_trc_gamma_ctrl.Show(enable1 and enable5)
-		self.mr_trc_gamma_type_ctrl.Enable(enable6)
-		self.mr_black_output_offset_label.Enable(enable6 and
-											     self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_label.Show(enable1 and enable5 and
-											   self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_ctrl.Enable(enable6 and
-											    self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_ctrl.Show(enable1 and enable5 and
-											  self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_intctrl.Enable(enable6 and
-												   self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_intctrl.Show(enable1 and enable5 and
-												 self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_intctrl_label.Enable(enable6 and
-													     self.XYZbpout > [0, 0, 0])
-		self.mr_black_output_offset_intctrl_label.Show(enable1 and enable5 and
-													   self.XYZbpout > [0, 0, 0])
-		self.mr_trc_gamma_type_ctrl.Show(enable1 and enable5 and
-										 self.XYZbpout > [0, 0, 0])
+		self.mr_show_trc_controls()
 		show = (self.apply_none_ctrl.GetValue() and
 				enable1 and enable5 and
 				self.XYZbpout > self.XYZbpin)

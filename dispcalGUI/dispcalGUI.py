@@ -1122,6 +1122,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
 	lut3d_show_bitdepth_controls = LUT3DFrame.__dict__["lut3d_show_bitdepth_controls"]
 	lut3d_show_encoding_controls = LUT3DFrame.__dict__["lut3d_show_encoding_controls"]
+	lut3d_show_trc_controls = LUT3DFrame.__dict__["lut3d_show_trc_controls"]
 	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
 	lut3d_trc_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_ctrl_handler"]
 	lut3d_trc_gamma_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_ctrl_handler"]
@@ -1131,6 +1132,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_update_shared_controls = LUT3DFrame.__dict__["lut3d_update_shared_controls"]
 	lut3d_update_trc_control = LUT3DFrame.__dict__["lut3d_update_trc_control"]
 	lut3d_update_trc_controls = LUT3DFrame.__dict__["lut3d_update_trc_controls"]
+	XYZbpout = [0, 0, 0]
 	
 	def __init__(self, worker):
 		# Check for required resource files and get pre-canned testcharts
@@ -1697,12 +1699,13 @@ class MainFrame(ReportFrame, BaseFrame):
 											lang.getstr("custom")])
 		
 		self.trc_ctrl.SetItems([lang.getstr("as_measured"),
-								lang.getstr("custom"),
+								"Gamma 2.2",
 								lang.getstr("trc.lstar"),
 								lang.getstr("trc.rec709"),
 								lang.getstr("trc.rec1886"),
 								lang.getstr("trc.smpte240m"),
-								lang.getstr("trc.srgb")])
+								lang.getstr("trc.srgb"),
+								lang.getstr("custom")])
 		
 		self.trc_types = [
 			lang.getstr("trc.type.relative"),
@@ -3393,7 +3396,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.trc_type_ctrl.SetSelection(1)
 		else:
 			if trc:
-				self.trc_ctrl.SetSelection(1)
+				if (trc == 2.2 and getcfg("trc.type") == "g" and
+					getcfg("calibration.black_output_offset") == 1):
+					# Gamma 2.2 relative 100% output offset
+					self.trc_ctrl.SetSelection(1)
+				else:
+					# Custom
+					self.trc_ctrl.SetSelection(7)
 				self.trc_textctrl.SetValue(str(trc))
 			else:
 				self.trc_ctrl.SetSelection(0)
@@ -3471,13 +3480,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
 
+		if (self.lut3d_settings_panel.IsShown() or
+			self.mr_settings_panel.IsShown()):
+			##self.mr_update_controls()
+			self.set_profile("output")
+
 		self.lut3d_update_controls()
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
 
-		if self.mr_settings_panel.IsShown():
-			##self.mr_update_controls()
-			self.set_profile("output")
 		if getattr(self, "reportframe", None):
 			self.reportframe.update_controls()
 
@@ -3492,35 +3503,37 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.updatingctrls = False
 
 	def update_trc_control(self):
-		if self.trc_ctrl.GetSelection() in (1, 4):
+		if self.trc_ctrl.GetSelection() in (1, 4, 7):
 			if (getcfg("trc.type") == "G" and
 				getcfg("calibration.black_output_offset") == 0 and
 				getcfg("trc") == 2.4):
 				self.trc_ctrl.SetSelection(4)  # BT.1886
+			elif (getcfg("trc.type") == "g" and
+				getcfg("calibration.black_output_offset") == 1 and
+				getcfg("trc") == 2.2):
+				# Gamma 2.2 relative 100% output offset
+				self.trc_ctrl.SetSelection(1)
 			else:
-				self.trc_ctrl.SetSelection(1)  # Gamma
+				self.trc_ctrl.SetSelection(7)  # Custom
 
 	def show_trc_controls(self):
 		show_advanced_options = bool(getcfg("show_advanced_options"))
-		if self.trc_ctrl.GetSelection() in (1, 4):
-			show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 1 or
-									(self.trc_ctrl.GetSelection() > 1 and
-									 show_advanced_options))
-			self.trc_gamma_label.Show(show_gamma_ctrls)
-			self.trc_textctrl.Show(show_gamma_ctrls)
-			self.trc_type_ctrl.Show(show_advanced_options)
-		else:
-			self.trc_gamma_label.Hide()
-			self.trc_textctrl.Hide()
-			self.trc_type_ctrl.Hide()
+		for ctrl in (self.trc_gamma_label,
+					 self.trc_textctrl,
+					 self.trc_type_ctrl):
+			ctrl.Show(self.trc_ctrl.GetSelection() == 7)
+		show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 7 or
+								(self.trc_ctrl.GetSelection() and
+								 show_advanced_options))
+		for ctrl in (self.black_output_offset_label,
+					 self.black_output_offset_ctrl,
+					 self.black_output_offset_intctrl,
+					 self.black_output_offset_intctrl_label):
+			ctrl.Show(show_gamma_ctrls)
 		for ctrl in (self.ambient_viewcond_adjust_cb,
 					 self.ambient_viewcond_adjust_textctrl,
 					 self.ambient_viewcond_adjust_textctrl_label,
 					 self.ambient_measure_btn,
-					 self.black_output_offset_label,
-					 self.black_output_offset_ctrl,
-					 self.black_output_offset_intctrl,
-					 self.black_output_offset_intctrl_label,
 					 self.black_point_correction_label,
 					 self.black_point_correction_auto_cb,
 					 self.black_point_rate_label,
@@ -3963,6 +3976,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		show = True#bool(getcfg("3dlut.create"))
 		self.lut3d_input_profile_label.Show(show)
 		self.lut3d_input_profile_ctrl.Show(show)
+		self.lut3d_show_trc_controls()
 		self.lut3d_show_encoding_controls(show)
 		self.lut3d_format_label.Show(show)
 		self.lut3d_format_ctrl.Show(show)
@@ -3998,7 +4012,6 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def lut3d_update_controls(self):
 		self.lut3d_create_cb.SetValue(bool(getcfg("3dlut.create")))
-		self.lut3d_show_controls()
 		lut3d_input_profile = getcfg("3dlut.input.profile")
 		if lut3d_input_profile in self.input_profiles.values():
 			self.lut3d_input_profile_ctrl.SetSelection(
@@ -4007,6 +4020,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_update_b2a_controls()
 		self.lut3d_update_shared_controls()
 		self.lut3d_update_encoding_controls()
+		self.lut3d_show_controls()
 
 	def profile_quality_warning_handler(self, event):
 		q = self.get_profile_quality()
@@ -4063,9 +4077,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			### Set measurement report dest profile to current
 			##setcfg("measurement_report.output_profile",
 				   ##get_current_profile_path())
-			if self.mr_settings_panel.IsShown():
+			if (self.lut3d_settings_panel.IsShown() or
+				self.mr_settings_panel.IsShown()):
 				##self.mr_update_controls()
 				self.set_profile("output")
+				if self.lut3d_settings_panel.IsShown():
+					self.lut3d_show_trc_controls()
+				self.update_main_controls()
 	
 	def settings_discard_changes(self, sel=None, keep_changed_state=False):
 		""" Update the calibration file control and remove the leading
@@ -4248,13 +4266,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.black_output_offset_intctrl.SetValue(
 				self.black_output_offset_ctrl.GetValue())
 		v = self.get_black_output_offset()
-		if float(v) > 0 and self.trc_ctrl.GetSelection() == 4:  # BT.1886
-			self.trc_ctrl.SetSelection(1)  # Gamma
 		if float(v) != getcfg("calibration.black_output_offset"):
 			self.cal_changed()
-		setcfg("calibration.black_output_offset", v)
-		self.update_profile_name()
-		self.update_trc_control()
+			setcfg("calibration.black_output_offset", v)
+			self.update_profile_name()
+			self.update_trc_control()
+			self.show_trc_controls()
 	
 	def ambient_measure_handler(self, event):
 		""" Start measuring ambient illumination """
@@ -4654,17 +4671,17 @@ class MainFrame(ReportFrame, BaseFrame):
 		v = self.get_trc_type()
 		if v != getcfg("trc.type"):
 			setcfg("trc.type", v)
-			if v != "G" and self.trc_ctrl.GetSelection() == 4:  # BT.1886
-				self.trc_ctrl.SetSelection(1)  # Gamma
 			self.cal_changed()
 			self.update_profile_name()
 			self.update_trc_control()
+			self.show_trc_controls()
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.trc_textctrl.GetId() and (
-		   self.trc_ctrl.GetSelection() not in (1, 4) or stripzeros(getcfg("trc")) == 
+		   self.trc_ctrl.GetSelection() not in (1, 4, 7) or stripzeros(getcfg("trc")) == 
 		   stripzeros(self.trc_textctrl.GetValue())):
 			event.Skip()
+			self.show_trc_controls()
 			return
 		if debug:
 			safe_print("[D] trc_ctrl_handler called for ID %s %s event type %s "
@@ -4674,7 +4691,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			bt1886 = (getcfg("trc.type") == "G" and
 					  getcfg("calibration.black_output_offset") == 0 and
 					  getcfg("trc") == 2.4)
-			if self.trc_ctrl.GetSelection() == 4:
+			if self.trc_ctrl.GetSelection() == 1:
+				# Gamma 2.2
+				self.trc_textctrl.SetValue("2.2")
+				setcfg("trc.type", "g")
+				self.trc_type_ctrl.SetSelection(0)
+				setcfg("calibration.black_output_offset", 1)
+				self.black_output_offset_ctrl.SetValue(100)
+				self.black_output_offset_intctrl.SetValue(100)
+			elif self.trc_ctrl.GetSelection() == 4:
 				# BT.1886
 				if not bt1886 and not getcfg("trc.backup", False):
 					setcfg("trc.backup", self.trc_textctrl.GetValue().replace(",", "."))
@@ -4687,14 +4712,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("calibration.black_output_offset", 0)
 				self.black_output_offset_ctrl.SetValue(0)
 				self.black_output_offset_intctrl.SetValue(0)
-			elif (self.trc_ctrl.GetSelection() > 1 or bt1886):
+			elif self.trc_ctrl.GetSelection() not in (0, 1, 7):
 				self.restore_trc_backup()
 				if getcfg("calibration.black_output_offset.backup") is not None:
 					setcfg("calibration.black_output_offset",
 						   getcfg("calibration.black_output_offset.backup"))
 					setcfg("calibration.black_output_offset.backup", None)
 					self.update_black_output_offset_ctrl()
-		if self.trc_ctrl.GetSelection() in (1, 4):
+		if self.trc_ctrl.GetSelection() in (1, 4, 7):
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
 				if v == 0 or v > 10:
@@ -7896,6 +7921,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.gamap_btn):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_options)
+		self.whitepoint_colortemp_locus_label.Show(show_advanced_options and
+			self.whitepoint_ctrl.GetSelection() != 2)
+		self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_options and
+			self.whitepoint_ctrl.GetSelection() != 2)
 		self.black_luminance_textctrl.Show(show_advanced_options and
 										   bool(getcfg("calibration.black_luminance", False)))
 		self.black_luminance_textctrl_label.Show(show_advanced_options and
@@ -7965,6 +7994,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					else:
 						##self.mr_update_controls()
 						self.set_profile("output")
+				elif tab is self.lut3d_settings_panel and not tab.IsShown():
+					self.set_profile("output")
+					self.lut3d_show_trc_controls()
 				tab.Show()
 				btn._pressed = True
 				btn._SetState(platebtn.PLATE_PRESSED)
@@ -10632,7 +10664,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			return "g"
 
 	def get_trc(self):
-		if self.trc_ctrl.GetSelection() in (1, 4):
+		if self.trc_ctrl.GetSelection() in (1, 4, 7):
 			return str(stripzeros(self.trc_textctrl.GetValue().replace(",", 
 																	   ".")))
 		elif self.trc_ctrl.GetSelection() == 2:
