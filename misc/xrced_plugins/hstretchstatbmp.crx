@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<resource>
+  <component class="Component" name="HStretchStaticBitmap">
+    <groups>
+      <item>control</item>
+    </groups>
+    <attributes>
+      <item>pos</item>
+      <item>size</item>
+      <item>bitmap:BitmapAttribute</item>
+    </attributes>
+    <has-name>1</has-name>
+    <module>xh_hstretchstatbmp</module>
+    <handler>HStretchStaticBitmapXmlHandler</handler>
+    <menu>control</menu>
+    <label>HStretchStaticBitmap</label>
+    <help>An automatically horizontally stretching StaticBitmap.</help>
+  </component>
+</resource>

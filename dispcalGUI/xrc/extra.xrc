@@ -98,7 +98,7 @@
               <object class="wxBoxSizer">
                 <orient>wxVERTICAL</orient>
                 <object class="sizeritem">
-                  <object class="wxStaticBitmap" name="environment_shadow">
+                  <object class="HStretchStaticBitmap" name="environment_shadow">
                     <bitmap>../theme/shadow-bordertop.png</bitmap>
                   </object>
                   <flag>wxEXPAND</flag>

@@ -79,7 +79,7 @@
             <object class="sizeritem">
               <object class="wxBoxSizer">
                 <object class="sizeritem">
-                  <object class="wxStaticBitmap" name="gamut_mapping_ciecam02_shadow">
+                  <object class="HStretchStaticBitmap" name="gamut_mapping_ciecam02_shadow">
                     <bitmap>../theme/shadow-bordertop.png</bitmap>
                   </object>
                   <flag>wxEXPAND</flag>

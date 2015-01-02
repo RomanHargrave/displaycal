@@ -110,7 +110,7 @@
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">
                                     <object class="sizeritem">
-                                      <object class="wxStaticBitmap" name="display_shadow">
+                                      <object class="HStretchStaticBitmap" name="display_shadow">
                                         <bitmap>../theme/shadow.png</bitmap>
                                       </object>
                                       <flag>wxEXPAND</flag>
@@ -215,7 +215,7 @@
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">
                                     <object class="sizeritem">
-                                      <object class="wxStaticBitmap" name="instrument_shadow">
+                                      <object class="HStretchStaticBitmap" name="instrument_shadow">
                                         <bitmap>../theme/shadow.png</bitmap>
                                       </object>
                                       <flag>wxEXPAND</flag>
@@ -414,7 +414,7 @@
                           <object class="wxPanel" name="display_instrument_info_panel">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
-                                <object class="wxStaticBitmap" name="display_instrument_info_shadow">
+                                <object class="HStretchStaticBitmap" name="display_instrument_info_shadow">
                                   <bitmap>../theme/shadow-bordertop.png</bitmap>
                                 </object>
                                 <flag>wxBOTTOM|wxEXPAND</flag>
@@ -477,7 +477,7 @@
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
                             <object class="sizeritem">
-                              <object class="wxStaticBitmap" name="calibration_settings_shadow">
+                              <object class="HStretchStaticBitmap" name="calibration_settings_shadow">
                                 <bitmap>../theme/shadow.png</bitmap>
                               </object>
                               <flag>wxEXPAND</flag>
@@ -1009,7 +1009,7 @@
                           <object class="wxPanel" name="calibration_settings_info_panel">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
-                                <object class="wxStaticBitmap" name="calibration_settings_info_shadow">
+                                <object class="HStretchStaticBitmap" name="calibration_settings_info_shadow">
                                   <bitmap>../theme/shadow-bordertop.png</bitmap>
                                 </object>
                                 <flag>wxBOTTOM|wxEXPAND</flag>
@@ -1059,7 +1059,7 @@
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
                             <object class="sizeritem">
-                              <object class="wxStaticBitmap" name="profile_settings_shadow">
+                              <object class="HStretchStaticBitmap" name="profile_settings_shadow">
                                 <bitmap>../theme/shadow.png</bitmap>
                               </object>
                               <flag>wxEXPAND</flag>
@@ -1309,7 +1309,7 @@
                           <object class="wxPanel" name="profile_settings_info_panel">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
-                                <object class="wxStaticBitmap" name="profile_settings_info_shadow">
+                                <object class="HStretchStaticBitmap" name="profile_settings_info_shadow">
                                   <bitmap>../theme/shadow-bordertop.png</bitmap>
                                 </object>
                                 <flag>wxBOTTOM|wxEXPAND</flag>
@@ -1358,7 +1358,7 @@
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
                             <object class="sizeritem">
-                              <object class="wxStaticBitmap" name="lut3d_settings_shadow">
+                              <object class="HStretchStaticBitmap" name="lut3d_settings_shadow">
                                 <bitmap>../theme/shadow.png</bitmap>
                               </object>
                               <flag>wxEXPAND</flag>
@@ -1640,7 +1640,7 @@
                           <object class="wxPanel" name="lut3d_settings_info_panel">
                             <object class="wxBoxSizer">
                               <object class="sizeritem">
-                                <object class="wxStaticBitmap" name="lut3d_settings_info_shadow">
+                                <object class="HStretchStaticBitmap" name="lut3d_settings_info_shadow">
                                   <bitmap>../theme/shadow-bordertop.png</bitmap>
                                 </object>
                                 <flag>wxBOTTOM|wxEXPAND</flag>

@@ -138,6 +138,7 @@ import floatspin
 import xh_fancytext
 import xh_filebrowsebutton
 import xh_floatspin
+import xh_hstretchstatbmp
 
 # wxPython
 try:
@@ -679,29 +680,6 @@ def install_scope_handler(event=None, dlg=None):
 	dlg.buttonpanel.Layout()
 
 
-def resize_bmp(event):
-	ctrl = event.EventObject
-	if not ctrl.IsFrozen():
-		if hasattr(ctrl, "_bmp"):
-			bmp = ctrl._bmp
-		else:
-			bmp = ctrl.GetBitmap()
-			ctrl._bmp = bmp
-		if bmp.IsOk():
-			ctrl.Freeze()
-			ctrl.MinSize = ctrl._bmp.GetSize()
-			ctrl.ContainingSizer.Layout()
-			w = ctrl.ContainingSizer.Size[0]
-			if getattr(ctrl, "_width", -1) != w:
-				img = bmp.ConvertToImage()
-				img.Rescale(w, img.GetSize()[1])
-				bmp = img.ConvertToBitmap()
-				ctrl._width = w
-				ctrl.SetBitmap(bmp)
-			ctrl.Thaw()
-		event.Skip()
-
-
 class Dummy(object):
 	""" Useful if we need an object to attach arbitrary attributes."""
 	pass
@@ -715,6 +693,7 @@ class ExtraArgsFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "extra.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
+		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()
@@ -735,9 +714,6 @@ class ExtraArgsFrame(BaseFrame):
 		font = child.Font
 		font.SetWeight(wx.BOLD)
 		child.Font = font
-
-		child = self.environment_shadow
-		child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		# Bind event handlers
 		self.Bind(wx.EVT_TEXT, self.extra_args_handler, 
@@ -791,6 +767,7 @@ class GamapFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "gamap.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()
@@ -813,9 +790,6 @@ class GamapFrame(BaseFrame):
 		font = child.Font
 		font.SetWeight(wx.BOLD)
 		child.Font = font
-
-		child = self.gamut_mapping_ciecam02_shadow
-		child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		self.gamap_profile = self.FindWindowByName("gamap_profile")
 		self.gamap_profile.changeCallback = self.gamap_profile_handler
@@ -1157,6 +1131,7 @@ class MainFrame(ReportFrame, BaseFrame):
 															  "main.xrc")))
 		self.res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
+		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()
@@ -2185,18 +2160,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			font = child.Font
 			font.SetWeight(wx.BOLD)
 			child.Font = font
-
-		for child in (self.display_shadow, self.instrument_shadow,
-					  self.display_instrument_info_shadow,
-					  self.calibration_settings_shadow,
-					  self.calibration_settings_info_shadow,
-					  self.profile_settings_shadow,
-					  self.lut3d_settings_shadow,
-					  self.profile_settings_info_shadow,
-					  self.lut3d_settings_info_shadow,
-					  self.mr_settings_shadow,
-					  self.mr_settings_info_shadow):
-			child.Bind(wx.EVT_SIZE, resize_bmp)
 
 		# Settings file controls
 		# ======================

@@ -52,6 +52,7 @@ except ImportError:
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib import fancytext
+from wx.lib.statbmp import GenStaticBitmap
 
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
@@ -3468,6 +3469,42 @@ class CustomRowLabelRenderer(object):
 				align = align[0], wx.ALIGN_CENTER_VERTICAL
 			dc.DrawLabel(" %s " % grid.GetRowLabelValue(row), rect,
 						 align[0] | align[1])
+
+
+class HStretchStaticBitmap(wx.StaticBitmap):
+
+	"""
+	A StaticBitmap that will automatically stretch horizontally.
+	
+	To be used with sizers.
+	
+	"""
+
+	def __init__(self, *args, **kwargs):
+		wx.StaticBitmap.__init__(self, *args, **kwargs)
+		self.Bind(wx.EVT_SIZE, self.OnSize)
+
+	def OnSize(self, event):
+		if not self.IsFrozen():
+			if hasattr(self, "_bmp"):
+				bmp = self._bmp
+			else:
+				bmp = self.GetBitmap()
+				self._bmp = bmp
+			if bmp.IsOk():
+				self.Freeze()
+				self.MinSize = self._bmp.GetSize()
+				self.ContainingSizer.Layout()
+				w = self.ContainingSizer.Size[0]
+				if getattr(self, "_width", -1) != w:
+					img = bmp.ConvertToImage()
+					img.Rescale(w, img.GetSize()[1])
+					bmp = img.ConvertToBitmap()
+					self._width = w
+					self.SetBitmap(bmp)
+				self.Thaw()
+			if event:
+				event.Skip()
 
 
 class HyperLinkCtrl(wx.HyperlinkCtrl):
