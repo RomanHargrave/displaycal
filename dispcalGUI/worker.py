@@ -3782,7 +3782,8 @@ class Worker(object):
 			for rgb_space in rgb_spaces:
 				extremes = []
 				for i in xrange(3):
-					RGB = colormath.XYZ2RGB(*XYZrgb[i],
+					RGB = colormath.XYZ2RGB(XYZrgb[i][0], XYZrgb[i][1],
+											XYZrgb[i][2],
 											rgb_space=rgb_space,
 											clamp=False)
 					maxima = max(RGB)
