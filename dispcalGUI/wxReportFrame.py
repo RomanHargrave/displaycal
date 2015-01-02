@@ -210,6 +210,7 @@ class ReportFrame(BaseFrame):
 		event.Skip()
 
 	def mr_trc_ctrl_handler(self, event):
+		self.Freeze()
 		if self.mr_trc_ctrl.GetSelection() == 1:
 			# BT.1886
 			setcfg("measurement_report.trc_gamma", 2.4)
@@ -223,6 +224,7 @@ class ReportFrame(BaseFrame):
 			setcfg("measurement_report.trc_output_offset", 1.0)
 			self.mr_update_trc_controls()
 		self.mr_show_trc_controls()
+		self.Thaw()
 
 	def mr_trc_gamma_type_ctrl_handler(self, event):
 		v = self.trc_gamma_types_ab[self.mr_trc_gamma_type_ctrl.GetSelection()]

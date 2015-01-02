@@ -226,6 +226,7 @@ class LUT3DFrame(BaseFrame):
 		event.Skip()
 
 	def lut3d_trc_ctrl_handler(self, event):
+		self.Freeze()
 		if self.lut3d_trc_ctrl.GetSelection() == 1:
 			# BT.1886
 			setcfg("3dlut.trc_gamma", 2.4)
@@ -239,6 +240,7 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.trc_output_offset", 1.0)
 			self.lut3d_update_trc_controls()
 		self.lut3d_show_trc_controls()
+		self.Thaw()
 
 	def lut3d_trc_gamma_type_ctrl_handler(self, event):
 		v = self.trc_gamma_types_ab[self.lut3d_trc_gamma_type_ctrl.GetSelection()]

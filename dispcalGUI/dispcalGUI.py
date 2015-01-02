@@ -2679,7 +2679,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		""" Update the display selector controls. """
 		if debug:
 			safe_print("[D] update_displays")
-		self.calpanel.Freeze()
+		self.panel.Freeze()
 		self.displays = []
 		for item in self.worker.displays:
 			self.displays.append(item.replace("[PRIMARY]", 
@@ -2714,7 +2714,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		display_sizer.Show(self.display_lut_link_ctrl, use_lut_ctrl)
 		self.get_set_display(update_ccmx_items)
 		self.calpanel.Layout()
-		self.calpanel.Thaw()
+		self.panel.Thaw()
 		if self.IsShown():
 			self.set_size(set_height)
 		self.update_scrollbars()
@@ -2902,7 +2902,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def update_colorimeter_correction_matrix_ctrl(self):
 		""" Show or hide the colorimeter correction matrix controls """
-		self.calpanel.Freeze()
+		self.panel.Freeze()
 		self.update_adjustment_controls()
 		instrument_features = self.worker.get_instrument_features()
 		show_control = (self.worker.instrument_can_use_ccxx(False) and
@@ -2919,7 +2919,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.colorimeter_correction_create_btn.ContainingSizer.Show(
 			self.colorimeter_correction_create_btn, show_control)
 		self.calpanel.Layout()
-		self.calpanel.Thaw()
+		self.panel.Thaw()
 		if self.IsShown():
 			wx.CallAfter(self.set_size, True)
 			wx.CallLater(1, self.update_scrollbars)
@@ -3481,20 +3481,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				self.trc_ctrl.SetSelection(7)  # Custom
 
-	def show_trc_controls(self):
+	def show_trc_controls(self, freeze=False):
 		show_advanced_options = bool(getcfg("show_advanced_options"))
+		if freeze:
+			self.panel.Freeze()
 		for ctrl in (self.trc_gamma_label,
 					 self.trc_textctrl,
-					 self.trc_type_ctrl):
-			ctrl.Show(self.trc_ctrl.GetSelection() == 7)
-		show_gamma_ctrls = bool(self.trc_ctrl.GetSelection() == 7 or
-								(self.trc_ctrl.GetSelection() and
-								 show_advanced_options))
-		for ctrl in (self.black_output_offset_label,
+					 self.trc_type_ctrl,
+					 self.black_output_offset_label,
 					 self.black_output_offset_ctrl,
 					 self.black_output_offset_intctrl,
 					 self.black_output_offset_intctrl_label):
-			ctrl.Show(show_gamma_ctrls)
+			ctrl.Show(self.trc_ctrl.GetSelection() == 7)
 		for ctrl in (self.ambient_viewcond_adjust_cb,
 					 self.ambient_viewcond_adjust_textctrl,
 					 self.ambient_viewcond_adjust_textctrl_label,
@@ -3521,6 +3519,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			minheight = 0
 		self.calibration_quality_ctrl.ContainingSizer.SetMinSize((0, minheight))
 		self.black_point_correction_auto_handler()
+		if freeze:
+			self.panel.Thaw()
 	
 	def update_black_output_offset_ctrl(self):
 		self.black_output_offset_ctrl.SetValue(
@@ -3529,7 +3529,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			int(Decimal(str(getcfg("calibration.black_output_offset"))) * 100))
 	
 	def update_black_point_rate_ctrl(self):
-		self.calpanel.Freeze()
+		self.panel.Freeze()
 		enable = not(self.calibration_update_cb.GetValue())
 		show = (bool(getcfg("show_advanced_options")) and
 				defaults["calibration.black_point_rate.enabled"])
@@ -3551,7 +3551,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			getcfg("calibration.black_point_correction") < 1 and 
 			defaults["calibration.black_point_rate.enabled"])
 		self.calpanel.Layout()
-		self.calpanel.Thaw()
+		self.panel.Thaw()
 	
 	def update_bpc(self, enable_profile=True):
 		enable_bpc = ((self.get_profile_type() in ("g", "G", "s", "S") or
@@ -3564,7 +3564,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(int(getcfg("profile.black_point_compensation"))))
 	
 	def update_drift_compensation_ctrls(self):
-		self.calpanel.Freeze()
+		self.panel.Freeze()
 		self.blacklevel_drift_compensation.GetContainingSizer().Show(
 			self.blacklevel_drift_compensation,
 			self.worker.argyll_version >= [1, 3, 0])
@@ -3572,7 +3572,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.whitelevel_drift_compensation,
 			self.worker.argyll_version >= [1, 3, 0])
 		self.calpanel.Layout()
-		self.calpanel.Thaw()
+		self.panel.Thaw()
 	
 	def blacklevel_drift_compensation_handler(self, event):
 		setcfg("drift_compensation.blacklevel", 
@@ -4646,12 +4646,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		   self.trc_ctrl.GetSelection() not in (1, 4, 7) or stripzeros(getcfg("trc")) == 
 		   stripzeros(self.trc_textctrl.GetValue())):
 			event.Skip()
-			self.show_trc_controls()
+			self.show_trc_controls(True)
 			return
 		if debug:
 			safe_print("[D] trc_ctrl_handler called for ID %s %s event type %s "
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
+		self.panel.Freeze()
 		if event.GetId() == self.trc_ctrl.GetId():
 			bt1886 = (getcfg("trc.type") == "G" and
 					  getcfg("calibration.black_output_offset") == 0 and
@@ -4709,12 +4710,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_profile_name()
 		if event.GetId() != self.trc_ctrl.GetId():
 			self.update_trc_control()
-		self.calpanel.Freeze()
 		self.update_adjustment_controls()
 		self.show_trc_controls()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
-		self.calpanel.Thaw()
+		self.panel.Thaw()
 		self.set_size(True)
 		self.update_scrollbars()
 		self.update_main_controls()
@@ -7866,7 +7866,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			show_advanced_options = not show_advanced_options
 			setcfg("show_advanced_options", 
 				   int(show_advanced_options))
-		self.calpanel.Freeze()
+		self.panel.Freeze()
 		self.menuitem_show_advanced_options.Check(show_advanced_options)
 		self.override_display_settle_time_mult.Show(
 			show_advanced_options and
@@ -7899,7 +7899,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.show_trc_controls()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
-		self.calpanel.Thaw()
+		self.panel.Thaw()
 		if event:
 			self.set_size(True)
 		self.update_scrollbars()
