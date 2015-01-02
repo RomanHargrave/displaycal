@@ -211,11 +211,6 @@ class BetterWindowDisabler(object):
 				if w not in skip and "Inspection" not in "%s" % w:
 					self._windows.append(w)
 					for child in w.GetAllChildren(skip + toplevel):
-						if (isinstance(child, wx.StaticText) and
-							sys.platform == "darwin"):
-							# wxMac seems to loose foreground color of StaticText
-							# when enabled again
-							continue
 						if child:
 							self._windows.append(child)
 			def Enable(w, enable=True):

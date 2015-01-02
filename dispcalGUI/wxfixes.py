@@ -257,6 +257,55 @@ if not hasattr(wx.Sizer, "GetItemIndex"):
 	wx.Sizer.GetItemIndex = GetItemIndex
 
 
+if sys.platform == "darwin":
+	# wxMac seems to loose foreground color of StaticText
+	# when enabled again
+
+	@Property
+	def StaticTextEnabled():
+		def fget(self):
+			return self.IsEnabled()
+
+		def fset(self, enable=True):
+			self.Enable(enable)
+
+		return locals()
+
+	wx.StaticText.Enabled = StaticTextEnabled
+
+
+	def StaticTextDisable(self):
+		self.Enable(False)
+
+	wx.StaticText.Disable = StaticTextDisable
+
+
+	def StaticTextEnable(self, enable=True):
+		self._enabled = enable
+		if not hasattr(self, "_fgcolor"):
+			self._fgcolor = self.ForegroundColour
+		color = self._fgcolor
+		if not enable:
+			bgcolor = self.Parent.BackgroundColour
+			bgblend = .5
+			blend = .5
+			color = wx.Colour(int(round(bgblend * bgcolor.Red() +
+										blend * color.Red())),
+							  int(round(bgblend * bgcolor.Green() +
+										blend * color.Green())),
+							  int(round(bgblend * bgcolor.Blue() +
+										blend * color.Blue())))
+		self.ForegroundColour = color
+
+	wx.StaticText.Enable = StaticTextEnable
+
+
+	def StaticTextIsEnabled(self):
+		return getattr(self, "_enabled", True)
+
+	wx.StaticText.IsEnabled = StaticTextIsEnabled
+
+
 wx.Window._SetToolTipString = wx.Window.SetToolTipString
 
 def SetToolTipString(self, string):
