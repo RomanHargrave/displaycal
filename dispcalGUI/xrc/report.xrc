@@ -6,7 +6,7 @@
       <object class="sizeritem">
         <object class="wxBoxSizer">
           <object class="sizeritem">
-            <object class="wxStaticBitmap" name="mr_settings_shadow">
+            <object class="HStretchStaticBitmap" name="mr_settings_shadow">
               <bitmap>../theme/shadow.png</bitmap>
             </object>
             <flag>wxEXPAND</flag>
@@ -349,7 +349,7 @@
         <object class="wxPanel" name="mr_settings_info_panel">
           <object class="wxBoxSizer">
             <object class="sizeritem">
-              <object class="wxStaticBitmap" name="mr_settings_info_shadow">
+              <object class="HStretchStaticBitmap" name="mr_settings_info_shadow">
                 <bitmap>../theme/shadow-bordertop.png</bitmap>
               </object>
               <flag>wxBOTTOM|wxEXPAND</flag>

@@ -1360,6 +1360,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		res = xrc.XmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
 		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
 		self.mr_settings_panel = res.LoadPanel(self.calpanel, "panel")
 		self.calpanel.Sizer.Add(self.mr_settings_panel, 1, flag=wx.EXPAND)
 

@@ -3482,29 +3482,33 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 
 	def __init__(self, *args, **kwargs):
 		wx.StaticBitmap.__init__(self, *args, **kwargs)
-		self.Bind(wx.EVT_SIZE, self.OnSize)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+		self._init = False
 
-	def OnSize(self, event):
-		if not self.IsFrozen():
+	def OnPaint(self, event):
+		if self.GetBitmap() and self.GetBitmap().IsOk():
 			if hasattr(self, "_bmp"):
 				bmp = self._bmp
 			else:
 				bmp = self.GetBitmap()
 				self._bmp = bmp
-			if bmp.IsOk():
-				self.Freeze()
-				self.MinSize = self._bmp.GetSize()
-				self.ContainingSizer.Layout()
-				w = self.ContainingSizer.Size[0]
-				if getattr(self, "_width", -1) != w:
-					img = bmp.ConvertToImage()
-					img.Rescale(w, img.GetSize()[1])
-					bmp = img.ConvertToBitmap()
-					self._width = w
-					self.SetBitmap(bmp)
-				self.Thaw()
-			if event:
-				event.Skip()
+			self.MinSize = self._bmp.GetSize()
+			w = self.Size[0]
+			if getattr(self, "_width", -1) != w:
+				img = bmp.ConvertToImage()
+				img.Rescale(w, img.GetSize()[1])
+				bmp = img.ConvertToBitmap()
+				self._width = w
+				# Avoid flicker under Windows
+				if self._init:
+					self.Freeze()
+				self.SetBitmap(bmp)
+				if self._init:
+					self.Thaw()
+				elif self.IsShownOnScreen():
+					self._init = True
+		if event:
+			event.Skip()
 
 
 class HyperLinkCtrl(wx.HyperlinkCtrl):

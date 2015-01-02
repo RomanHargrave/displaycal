@@ -17,6 +17,7 @@ from wxTestchartEditor import TestchartEditor
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
 import xh_fancytext
 import xh_filebrowsebutton
+import xh_hstretchstatbmp
 
 from wx import xrc
 
@@ -34,6 +35,7 @@ class ReportFrame(BaseFrame):
 		res = xrc.XmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
 		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
 		self.panel = res.LoadPanel(self, "panel")
 
 		self.Sizer = wx.BoxSizer(wx.VERTICAL)
