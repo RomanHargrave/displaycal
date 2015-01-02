@@ -1757,15 +1757,15 @@ class MainFrame(ReportFrame, BaseFrame):
 					    max(self.display_instrument_panel.Sizer.MinSize[0],
 							self.calibration_settings_panel.Sizer.MinSize[0],
 							self.profile_settings_panel.Sizer.MinSize[0],
-							self.lut3d_settings_panel.Sizer.MinSize[0]) + 34,
+							self.lut3d_settings_panel.Sizer.MinSize[0]),
 					    self.tabpanel.GetSizer().GetMinSize()[0])), 
 				height)
 		self.SetMaxSize((-1, -1))
 		if not self.IsMaximized() and not self.IsIconized():
 			self.SetClientSize(((size[0] if fit_width
-								 else max(size[0], self.Size[0])) - borders_lr,
+								 else max(size[0], self.ClientSize[0])),
 								size[1]))
-		self.SetMinSize((size[0], self.GetSize()[1] - 
+		self.SetMinSize((size[0] + borders_lr, self.GetSize()[1] - 
 								  self.calpanel.GetSize()[1] + 64))
 		if self.IsFrozen():
 			self.Thaw()
