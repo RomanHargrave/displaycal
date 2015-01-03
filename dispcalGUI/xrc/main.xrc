@@ -1083,6 +1083,48 @@
                             <object class="sizeritem">
                               <object class="wxFlexGridSizer">
                                 <object class="sizeritem">
+                                  <object class="wxStaticText" name="profile_type_label">
+                                    <label>profile.type</label>
+                                  </object>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBoxSizer">
+                                    <orient>wxHORIZONTAL</orient>
+                                    <object class="sizeritem">
+                                      <object class="wxChoice" name="profile_type_ctrl">
+                                      </object>
+                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>8</border>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxBitmapButton" name="gamap_btn">
+                                        <bitmap>../theme/icons/16x16/applications-system.png</bitmap>
+                                        <tooltip>profile.advanced_gamap</tooltip>
+                                        <style>wxNO_BORDER</style>
+                                        <XRCED>
+                                          <events>EVT_BUTTON</events>
+                                        </XRCED>
+                                      </object>
+                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxCheckBox" name="black_point_compensation_cb">
+                                        <label>black_point_compensation</label>
+                                        <tooltip>black_point_compensation.info</tooltip>
+                                      </object>
+                                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>50</border>
+                                    </object>
+                                  </object>
+                                  <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>5</border>
+                                </object>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="sizeritem">
                                   <object class="wxStaticText" name="profile_quality_label">
                                     <label>profile.quality</label>
                                   </object>
@@ -1110,45 +1152,15 @@
                                         <size>64,-1</size>
                                         <label>medium</label>
                                       </object>
-                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>20</border>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxCheckBox" name="black_point_compensation_cb">
-                                        <label>black_point_compensation</label>
-                                        <tooltip>black_point_compensation.info</tooltip>
-                                      </object>
-                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>20</border>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxStaticText" name="profile_type_label">
-                                        <label>profile.type</label>
-                                      </object>
-                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>8</border>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxChoice" name="profile_type_ctrl">
-                                      </object>
-                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>8</border>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxBitmapButton" name="gamap_btn">
-                                        <bitmap>../theme/icons/16x16/applications-system.png</bitmap>
-                                        <tooltip>profile.advanced_gamap</tooltip>
-                                        <style>wxNO_BORDER</style>
-                                        <XRCED>
-                                          <events>EVT_BUTTON</events>
-                                        </XRCED>
-                                      </object>
                                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                     </object>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>2</border>
                                 </object>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
                                 <object class="sizeritem">
                                   <object class="wxStaticText" name="testchart_label">
                                     <label>testchart.file</label>
@@ -1166,41 +1178,41 @@
                                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                       <border>8</border>
                                     </object>
-                                    <object class="sizeritem">
-                                      <object class="wxBitmapButton" name="testchart_btn">
-                                        <bitmap>../theme/icons/16x16/document-open.png</bitmap>
-                                        <tooltip>testchart.set</tooltip>
-                                        <style>wxNO_BORDER</style>
-                                        <XRCED>
-                                          <events>EVT_BUTTON</events>
-                                        </XRCED>
-                                      </object>
-                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>8</border>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxBitmapButton" name="create_testchart_btn">
-                                        <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
-                                        <tooltip>testchart.edit</tooltip>
-                                        <style>wxNO_BORDER</style>
-                                        <XRCED>
-                                          <events>EVT_BUTTON</events>
-                                        </XRCED>
-                                      </object>
-                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxStaticText" name="testchart_patches_amount">
-                                        <size>48,-1</size>
-                                        <label>0</label>
-                                        <tooltip>testchart.info</tooltip>
-                                      </object>
-                                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>8</border>
-                                    </object>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>5</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="testchart_btn">
+                                    <bitmap>../theme/icons/16x16/document-open.png</bitmap>
+                                    <tooltip>testchart.set</tooltip>
+                                    <style>wxNO_BORDER</style>
+                                    <XRCED>
+                                      <events>EVT_BUTTON</events>
+                                    </XRCED>
+                                  </object>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="create_testchart_btn">
+                                    <bitmap>../theme/icons/16x16/rgbsquares.png</bitmap>
+                                    <tooltip>testchart.edit</tooltip>
+                                    <style>wxNO_BORDER</style>
+                                    <XRCED>
+                                      <events>EVT_BUTTON</events>
+                                    </XRCED>
+                                  </object>
+                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxStaticText" name="testchart_patches_amount">
+                                    <size>48,-1</size>
+                                    <label>0</label>
+                                    <tooltip>testchart.info</tooltip>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxStaticText" name="testchart_patches_amount_label">
@@ -1215,17 +1227,19 @@
                                       <object class="wxSlider" name="testchart_patches_amount_ctrl">
                                         <min>7</min>
                                         <max>17</max>
-                                        <style>wxSL_AUTOTICKS</style>
                                       </object>
                                       <option>1</option>
                                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>104</border>
+                                      <border>8</border>
                                     </object>
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
-                                  <border>4</border>
+                                  <border>2</border>
                                 </object>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
                                 <object class="sizeritem">
                                   <object class="wxStaticText" name="profile_name_label">
                                     <label>profile.name</label>
@@ -1246,33 +1260,33 @@
                                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                       <border>8</border>
                                     </object>
-                                    <object class="sizeritem">
-                                      <object class="wxBitmapButton" name="profile_name_info_btn">
-                                        <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
-                                        <style>wxNO_BORDER</style>
-                                      </object>
-                                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>8</border>
-                                    </object>
-                                    <object class="sizeritem">
-                                      <object class="wxBitmapButton" name="profile_save_path_btn">
-                                        <bitmap>../theme/icons/16x16/media-floppy.png</bitmap>
-                                        <tooltip>profile.set_save_path</tooltip>
-                                        <style>wxNO_BORDER</style>
-                                        <XRCED>
-                                          <events>EVT_BUTTON</events>
-                                        </XRCED>
-                                      </object>
-                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
-                                    </object>
-                                    <object class="spacer">
-                                      <size>48,-1</size>
-                                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                                      <border>8</border>
-                                    </object>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                                  <border>4</border>
+                                  <border>6</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="profile_name_info_btn">
+                                    <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
+                                    <style>wxNO_BORDER</style>
+                                  </object>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="profile_save_path_btn">
+                                    <bitmap>../theme/icons/16x16/media-floppy.png</bitmap>
+                                    <tooltip>profile.set_save_path</tooltip>
+                                    <style>wxNO_BORDER</style>
+                                    <XRCED>
+                                      <events>EVT_BUTTON</events>
+                                    </XRCED>
+                                  </object>
+                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                </object>
+                                <object class="spacer">
+                                  <size>48,-1</size>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
                                 </object>
                                 <object class="spacer">
                                   <size>1,1</size>
@@ -1293,12 +1307,12 @@
                                   <flag>wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>12</border>
                                 </object>
-                                <cols>2</cols>
+                                <cols>5</cols>
                                 <rows>0</rows>
                                 <growablecols>1</growablecols>
                               </object>
                               <flag>wxTOP|wxEXPAND</flag>
-                              <border>5</border>
+                              <border>6</border>
                             </object>
                             <orient>wxVERTICAL</orient>
                           </object>
