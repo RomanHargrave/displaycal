@@ -80,7 +80,11 @@ class LUT3DFrame(BaseFrame):
 		
 		self.setup_language()
 		self.XYZbpin = [0, 0, 0]
-		self.XYZbpout = [0, 0, 0]
+		# XYZbpout will be set to the blackpoint of the selected profile. This
+		# is used to determine if lack output offset controls should be shown.
+		# Set a initial value slightly above zero so output offset controls are
+		# shown if the selected profile doesn't exist.
+		self.XYZbpout = [0.001, 0.001, 0.001]
 		self.update_controls()
 		self.update_layout()
 		

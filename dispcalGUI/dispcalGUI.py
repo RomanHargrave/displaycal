@@ -1106,7 +1106,13 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_update_shared_controls = LUT3DFrame.__dict__["lut3d_update_shared_controls"]
 	lut3d_update_trc_control = LUT3DFrame.__dict__["lut3d_update_trc_control"]
 	lut3d_update_trc_controls = LUT3DFrame.__dict__["lut3d_update_trc_controls"]
-	XYZbpout = [0, 0, 0]
+
+	# XYZbpout will be set to the blackpoint of the selected profile. This is
+	# used to determine if 3D LUT or measurement report black output offset
+	# controls should be shown. Set a initial value slightly above zero so
+	# output offset controls are shown if the selected profile doesn't exist
+	# and "Create 3D LUT after profiling" is disabled.
+	XYZbpout = [0.001, 0.001, 0.001]
 	
 	def __init__(self, worker):
 		# Check for required resource files and get pre-canned testcharts
