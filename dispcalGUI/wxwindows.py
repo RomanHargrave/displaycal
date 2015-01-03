@@ -3786,9 +3786,15 @@ class LogWindow(InvincibleFrame):
 								 name="info")
 		self.last_visible = False
 		self.panel = wx.Panel(self, -1)
+		# Fix wrong background color when disabled
+		self.panel.Enable = lambda enable=True: None
+		self.panel.Disable = lambda: None
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer)
 		self.log_txt = wx.TextCtrl(self.panel, -1, "", style=logctrlstyle)
+		# Fix wrong background color when disabled
+		self.log_txt.Enable = lambda enable=True: None
+		self.log_txt.Disable = lambda: None
 		if u"phoenix" in wx.PlatformInfo:
 			kwarg = "faceName"
 		else:
