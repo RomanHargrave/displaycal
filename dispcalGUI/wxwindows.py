@@ -522,7 +522,7 @@ class BaseFrame(wx.Frame):
 
 	def connection_handler(self):
 		""" Handle socket connections """
-		while self and self.listening:
+		while self and getattr(self, "listening", False):
 			try:
 				# Wait for connection
 				conn, addrport = sys._appsocket.accept()
@@ -556,7 +556,7 @@ class BaseFrame(wx.Frame):
 		""" Handle messages sent via socket """
 		responseformats[conn] = "plain"
 		buffer = ""
-		while self and self.listening:
+		while self and getattr(self, "listening", False):
 			# Wait for incoming message
 			try:
 				incoming = conn.recv(4096)
@@ -571,7 +571,7 @@ class BaseFrame(wx.Frame):
 				if not incoming:
 					break
 				buffer += incoming
-				while "\n" in buffer and self and self.listening:
+				while "\n" in buffer and self and getattr(self, "listening", False):
 					end = buffer.find("\n")
 					line = buffer[:end].strip()
 					buffer = buffer[end + 1:]
