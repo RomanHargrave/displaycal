@@ -3493,12 +3493,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.panel.Freeze()
 		for ctrl in (self.trc_gamma_label,
 					 self.trc_textctrl,
-					 self.trc_type_ctrl,
-					 self.black_output_offset_label,
+					 self.trc_type_ctrl):
+			ctrl.Show(self.trc_ctrl.GetSelection() == 7)
+		for ctrl in (self.black_output_offset_label,
 					 self.black_output_offset_ctrl,
 					 self.black_output_offset_intctrl,
 					 self.black_output_offset_intctrl_label):
-			ctrl.Show(self.trc_ctrl.GetSelection() == 7)
+			ctrl.Show(self.trc_ctrl.GetSelection() == 7 or
+					  (self.trc_ctrl.GetSelection() > 0 and
+					   show_advanced_options))
 		for ctrl in (self.ambient_viewcond_adjust_cb,
 					 self.ambient_viewcond_adjust_textctrl,
 					 self.ambient_viewcond_adjust_textctrl_label,
