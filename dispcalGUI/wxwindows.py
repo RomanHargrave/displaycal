@@ -3843,25 +3843,26 @@ class LogWindow(InvincibleFrame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def Log(self, txt):
-		txt_lower = txt.lower()
-		textattr = None
-		if (lang.getstr("warning").lower() in txt_lower or
-			"warning" in txt_lower):
-			textattr = wx.TextAttr("#F07F00", font=self.log_txt.Font)
-		elif (lang.getstr("error").lower() in txt_lower or
-			"error" in txt_lower):
-			textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
-		for line in wrap(txt, 80).splitlines():
-			while line:
-				ms = time() - int(time())
-				logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
-				start = self.log_txt.GetLastPosition()
-				self.log_txt.AppendText(logline + os.linesep)
-				self.log_txt.SetStyle(start, start + 12, self._1stcolstyle)
-				if textattr:
-					self.log_txt.SetStyle(start + 12, start + len(logline),
-										  textattr)
-				line = line[80:]
+		for line in txt.splitlines():
+			line_lower = line.lower()
+			textattr = None
+			if (lang.getstr("warning").lower() in line_lower or
+				"warning" in line_lower):
+				textattr = wx.TextAttr("#F07F00", font=self.log_txt.Font)
+			elif (lang.getstr("error").lower() in line_lower or
+				"error" in line_lower):
+				textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
+			for line in wrap(line, 80).splitlines():
+				while line:
+					ms = time() - int(time())
+					logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
+					start = self.log_txt.GetLastPosition()
+					self.log_txt.AppendText(logline + os.linesep)
+					self.log_txt.SetStyle(start, start + 12, self._1stcolstyle)
+					if textattr:
+						self.log_txt.SetStyle(start + 12, start + len(logline),
+											  textattr)
+					line = line[80:]
 	
 	def ScrollToBottom(self):
 		self.log_txt.ScrollLines(self.log_txt.GetNumberOfLines())
