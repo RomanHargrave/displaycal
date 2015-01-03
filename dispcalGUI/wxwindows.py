@@ -3771,6 +3771,7 @@ class LogWindow(InvincibleFrame):
 
 	def __init__(self, parent=None, id=-1, title=None, pos=wx.DefaultPosition,
 				 size=wx.DefaultSize, logctrlstyle=wx.TE_MULTILINE |
+												   wx.TE_RICH | wx.NO_BORDER |
 												   wx.TE_READONLY):
 		if not title:
 			title = lang.getstr("infoframe.title")
@@ -3804,9 +3805,19 @@ class LogWindow(InvincibleFrame):
 			font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
 													   wx.FONTWEIGHT_NORMAL)
 		self.log_txt.SetFont(font)
-		self.sizer.Add(self.log_txt, 1, flag=wx.TOP | wx.LEFT | wx.RIGHT |
-											 wx.EXPAND, border=4)
-		self.log_txt.MinSize = (self.log_txt.GetTextExtent("=" * 82)[0] +
+		self.log_txt.SetDefaultStyle(wx.TextAttr(self.log_txt.ForegroundColour,
+												 self.log_txt.BackgroundColour,
+												 font=font))
+		bgcol = wx.Colour(self.log_txt.BackgroundColour.Red() * .5,
+						  self.log_txt.BackgroundColour.Green() * .5,
+						  self.log_txt.BackgroundColour.Blue() * .5)
+		fgcol = wx.Colour(bgcol.Red() + self.log_txt.ForegroundColour.Red() * .5,
+						  bgcol.Green() + self.log_txt.ForegroundColour.Green() * .5,
+						  bgcol.Blue() + self.log_txt.ForegroundColour.Blue() * .5)
+		self._1stcolstyle = wx.TextAttr(fgcol, self.log_txt.BackgroundColour,
+										font=font)
+		self.sizer.Add(self.log_txt, 1, flag=wx.EXPAND)
+		self.log_txt.MinSize = (self.log_txt.GetTextExtent("=" * 95)[0] +
 								wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 								defaults["size.info.h"] - 24 -
 								max(0, self.Size[1] - self.ClientSize[1]))
@@ -3832,7 +3843,25 @@ class LogWindow(InvincibleFrame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def Log(self, txt):
-		self.log_txt.AppendText(txt + os.linesep)
+		txt_lower = txt.lower()
+		textattr = None
+		if (lang.getstr("warning").lower() in txt_lower or
+			"warning" in txt_lower):
+			textattr = wx.TextAttr("#F07F00", font=self.log_txt.Font)
+		elif (lang.getstr("error").lower() in txt_lower or
+			"error" in txt_lower):
+			textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
+		for line in wrap(txt, 80).splitlines():
+			while line:
+				ms = time() - int(time())
+				logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
+				start = self.log_txt.GetLastPosition()
+				self.log_txt.AppendText(logline + os.linesep)
+				self.log_txt.SetStyle(start, start + 12, self._1stcolstyle)
+				if textattr:
+					self.log_txt.SetStyle(start + 12, start + len(logline),
+										  textattr)
+				line = line[80:]
 	
 	def ScrollToBottom(self):
 		self.log_txt.ScrollLines(self.log_txt.GetNumberOfLines())
