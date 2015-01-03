@@ -1156,7 +1156,7 @@
                                     </object>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                                  <border>4</border>
+                                  <border>5</border>
                                 </object>
                                 <object class="spacer"/>
                                 <object class="spacer"/>
@@ -1235,7 +1235,7 @@
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
-                                  <border>4</border>
+                                  <border>5</border>
                                 </object>
                                 <object class="spacer"/>
                                 <object class="spacer"/>
@@ -1262,7 +1262,7 @@
                                     </object>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
-                                  <border>6</border>
+                                  <border>5</border>
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="profile_name_info_btn">
@@ -1312,7 +1312,7 @@
                                 <growablecols>1</growablecols>
                               </object>
                               <flag>wxTOP|wxEXPAND</flag>
-                              <border>6</border>
+                              <border>5</border>
                             </object>
                             <orient>wxVERTICAL</orient>
                           </object>
