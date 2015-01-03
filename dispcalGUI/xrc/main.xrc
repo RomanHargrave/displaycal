@@ -1156,7 +1156,7 @@
                                     </object>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
-                                  <border>2</border>
+                                  <border>4</border>
                                 </object>
                                 <object class="spacer"/>
                                 <object class="spacer"/>
@@ -1235,7 +1235,7 @@
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
-                                  <border>2</border>
+                                  <border>4</border>
                                 </object>
                                 <object class="spacer"/>
                                 <object class="spacer"/>
