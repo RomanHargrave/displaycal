@@ -589,6 +589,8 @@ class ReportFrame(BaseFrame):
 		self.apply_trc_ctrl.Show(enable1 and enable5)
 		self.apply_trc_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_trc")))
+		enable6 = (enable1 and enable5 and
+				   bool(getcfg("measurement_report.apply_trc")))
 		self.mr_show_trc_controls()
 		show = (self.apply_none_ctrl.GetValue() and
 				enable1 and enable5 and
