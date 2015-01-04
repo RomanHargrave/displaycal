@@ -2321,9 +2321,13 @@ class BorderGradientButton(GradientButton):
 		self._bitmaphover = self._bitmap
 		self._bitmapselected = self._bitmap
 		set_bitmap_labels(self)
+		self._enabled = True
 
 	BitmapLabel = property(lambda self: self._bitmap,
 						   lambda self, bitmap: self.SetBitmap(bitmap))
+	
+	def Disable(self):
+		self.Enable(False)
 
 	def DoGetBestSize(self):
 		"""
@@ -2348,6 +2352,15 @@ class BorderGradientButton(GradientButton):
 			constant = 15
 
 		return wx.Size(retWidth+constant, retHeight+constant) 
+	
+	def Enable(self, enable=True):
+		self._enabled = enable
+		GradientButton.Enable(self, enable)
+
+	def IsEnabled(self):
+		return self._enabled
+
+	Enabled = property(IsEnabled, Enable)
 
 	def OnPaint(self, event):
 		"""
