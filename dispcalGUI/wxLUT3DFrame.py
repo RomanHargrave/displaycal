@@ -460,11 +460,15 @@ class LUT3DFrame(BaseFrame):
 			# If previous format was eeColor or madVR, restore 3D LUT encoding
 			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
+		if getcfg("3dlut.format") in ("eeColor", "madVR", "mga"):
+			setcfg("3dlut.size", getcfg("3dlut.size.backup"))
 		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
 		setcfg("3dlut.format", format)
 		if format in ("eeColor", "madVR"):
 			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
+		if format in ("eeColor", "madVR", "mga"):
+			setcfg("3dlut.size.backup", getcfg("3dlut.size"))
 		if format == "eeColor":
 			if getcfg("3dlut.encoding.input") == "x":
 				# As eeColor usually needs same input & output encoding,
@@ -482,12 +486,9 @@ class LUT3DFrame(BaseFrame):
 				setcfg("3dlut.encoding.output", "t")
 			# eeColor uses a fixed size of 65x65x65
 			setcfg("3dlut.size", 65)
-			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
 		elif format == "mga":
 			# Pandora supports 17x17x17 and 33x33x33
-			size = 17
-			setcfg("3dlut.size", size)
-			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[size])
+			setcfg("3dlut.size", 17)
 			# Pandora uses a fixed bitdepth of 16
 			setcfg("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
@@ -497,14 +498,18 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
 			setcfg("3dlut.size", 65)
-			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[65])
+		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_setup_encoding_ctrl(format)
 		self.lut3d_update_encoding_controls()
 		self.lut3d_show_encoding_controls()
 		self.lut3d_enable_size_controls()
 		self.lut3d_show_bitdepth_controls()
 		if not isinstance(self, LUT3DFrame):
+			self.panel.Freeze()
+			self.lut3d_show_controls()
+			self.calpanel.Layout()
 			self.update_main_controls()
+			self.panel.Thaw()
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.lut3d_update_shared_controls()
 			return

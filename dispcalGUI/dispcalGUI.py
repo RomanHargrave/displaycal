@@ -3908,10 +3908,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
 		self.calpanel.Freeze()
 		self.lut3d_update_b2a_controls()
-		self.lut3d_show_controls()
 		self.calpanel.Thaw()
-		self.update_scrollbars()
-		self.calpanel.Layout()
 		self.lut3d_check_bpc()
 		self.update_main_controls()
 
@@ -3957,14 +3954,16 @@ class MainFrame(ReportFrame, BaseFrame):
 		show_advanced_options = getcfg("show_advanced_options")
 		for ctrl in (self.gamut_mapping_mode,
 					 self.gamut_mapping_inverse_a2b,
-					 self.gamut_mapping_b2a,
-					 self.lut3d_rendering_intent_label,
-					 self.lut3d_rendering_intent_ctrl,
-					 self.lut3d_size_label,
-					 self.lut3d_size_ctrl):
+					 self.gamut_mapping_b2a):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_options and
 										   show)
+		for ctrl in (self.lut3d_size_label,
+					 self.lut3d_size_ctrl):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   show and
+										   getcfg("3dlut.format") not in
+										   ("eeColor", "madVR"))
 
 	def lut3d_update_b2a_controls(self):
 		# Allow using B2A instead of inverse A2B?
