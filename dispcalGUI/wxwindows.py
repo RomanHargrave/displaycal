@@ -2356,6 +2356,7 @@ class BorderGradientButton(GradientButton):
 	def Enable(self, enable=True):
 		self._enabled = enable
 		GradientButton.Enable(self, enable)
+		self.Update()
 
 	def IsEnabled(self):
 		return self._enabled
@@ -3693,7 +3694,25 @@ class BetterStaticFancyText(fancytext.StaticFancyText):
 			background = wx.Brush(window.GetBackgroundColour(), wx.SOLID)
 		
 		bmp = fancytext.RenderToBitmap(text, background)
+		self._bitmap = bmp
+		self._enabled = True
 		wx.StaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
+
+	def Disable(self):
+		self.Enable(False)
+
+	def Enable(self, enable=True):
+		self._enabled = enable
+		if enable:
+			bmp = self._bitmap
+		else:
+			bmp = self._bitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
+		self.SetBitmap(bmp)
+
+	def IsEnabled(self):
+		return self._enabled
+
+	Enabled = property(IsEnabled, Enable)
 
 	def GetFont(self):
 		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
@@ -3746,11 +3765,13 @@ class BetterStaticFancyText(fancytext.StaticFancyText):
 		label = wrapped
 		background = wx.Brush(self.Parent.BackgroundColour, wx.SOLID)
 		try:
-			self.SetBitmap(fancytext.RenderToBitmap(label, background))
+			bmp = fancytext.RenderToBitmap(label, background)
 		except ValueError:
 			# XML parsing error, strip all tags
 			label = re.sub(r"<[^>]*?>", "", label)
-			self.SetBitmap(fancytext.RenderToBitmap(label, background))
+			bmp = fancytext.RenderToBitmap(label, background)
+		self._bitmap = bmp
+		self.SetBitmap(bmp)
 
 
 class InfoDialog(BaseInteractiveDialog):
