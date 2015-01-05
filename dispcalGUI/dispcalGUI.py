@@ -2502,25 +2502,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.Destroy()
 			if result != wx.ID_OK: return
 		skip = [
-			"3dlut.apply_trc",
-			"3dlut.apply_black_offset",
-			"3dlut.bitdepth.input",
-			"3dlut.bitdepth.output",
-			"3dlut.trc_gamma",
-			"3dlut.trc_gamma.backup",
-			"3dlut.trc_gamma_type",
-			"3dlut.encoding.input",
-			"3dlut.encoding.input.backup",
-			"3dlut.encoding.output",
-			"3dlut.encoding.output.backup",
-			"3dlut.format",
-			"3dlut.input.profile",
-			"3dlut.abstract.profile",
-			"3dlut.output.profile",
-			"3dlut.output.profile.apply_cal",
-			"3dlut.rendering_intent",
-			"3dlut.use_abstract_profile",
-			"3dlut.size",
 			"allow_skip_sensor_cal",
 			"argyll.dir",
 			"argyll.version",
@@ -3453,8 +3434,10 @@ class MainFrame(ReportFrame, BaseFrame):
 
 		if (self.lut3d_settings_panel.IsShown() or
 			self.mr_settings_panel.IsShown()):
-			##self.mr_update_controls()
-			self.set_profile("output")
+			if self.mr_settings_panel.IsShown():
+				self.mr_update_controls()
+			else:
+				self.set_profile("output")
 
 		self.lut3d_update_controls()
 		if getattr(self, "lut3dframe", None):
@@ -4052,8 +4035,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				   ##get_current_profile_path())
 			if (self.lut3d_settings_panel.IsShown() or
 				self.mr_settings_panel.IsShown()):
-				##self.mr_update_controls()
-				self.set_profile("output")
+				if self.mr_settings_panel.IsShown():
+					self.mr_update_controls()
+				else:
+					self.set_profile("output")
 				if self.lut3d_settings_panel.IsShown():
 					self.lut3d_show_trc_controls()
 				self.update_main_controls()
@@ -7965,8 +7950,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					if not hasattr(self, "XYZbpin"):
 						self.mr_init_controls()
 					else:
-						##self.mr_update_controls()
-						self.set_profile("output")
+						self.mr_update_controls()
 				elif tab is self.lut3d_settings_panel and not tab.IsShown():
 					self.set_profile("output")
 					self.lut3d_show_trc_controls()
