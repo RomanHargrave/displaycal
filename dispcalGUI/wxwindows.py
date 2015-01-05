@@ -3678,7 +3678,7 @@ def fancytext_RenderToRenderer(str, renderer, enclose=True):
 fancytext.RenderToRenderer = fancytext_RenderToRenderer
 
 
-class BetterStaticFancyText(fancytext.StaticFancyText):
+class BetterStaticFancyText(GenStaticBitmap):
 
 	_textlabel = ""
 
@@ -3694,9 +3694,9 @@ class BetterStaticFancyText(fancytext.StaticFancyText):
 			background = wx.Brush(window.GetBackgroundColour(), wx.SOLID)
 		
 		bmp = fancytext.RenderToBitmap(text, background)
-		self._bitmap = bmp
+		self._enabledbitmap = bmp
 		self._enabled = True
-		wx.StaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
+		GenStaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
 
 	def Disable(self):
 		self.Enable(False)
@@ -3704,9 +3704,9 @@ class BetterStaticFancyText(fancytext.StaticFancyText):
 	def Enable(self, enable=True):
 		self._enabled = enable
 		if enable:
-			bmp = self._bitmap
+			bmp = self._enabledbitmap
 		else:
-			bmp = self._bitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
+			bmp = self._enabledbitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
 		self.SetBitmap(bmp)
 
 	def IsEnabled(self):
@@ -3729,6 +3729,14 @@ class BetterStaticFancyText(fancytext.StaticFancyText):
 			self.SetLabel(label)
 		
 		return locals()
+    
+	def OnPaint(self, event):
+		dc = wx.BufferedPaintDC(self)
+		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour, wx.SOLID))
+		dc.SetBackgroundMode(wx.SOLID)
+		dc.Clear()
+		if self._bitmap:
+			dc.DrawBitmap(self._bitmap, 0, 0, True)
 
 	def SetFont(self, font):
 		fancytext.Renderer._font = font
@@ -3770,7 +3778,7 @@ class BetterStaticFancyText(fancytext.StaticFancyText):
 			# XML parsing error, strip all tags
 			label = re.sub(r"<[^>]*?>", "", label)
 			bmp = fancytext.RenderToBitmap(label, background)
-		self._bitmap = bmp
+		self._enabledbitmap = bmp
 		self.SetBitmap(bmp)
 
 
