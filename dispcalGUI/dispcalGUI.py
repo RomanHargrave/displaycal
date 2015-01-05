@@ -11470,7 +11470,11 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3DLUT_FORMAT":
 											 "3dlut.format",
 											 "3DLUT_SIZE":
-											 "3dlut.size"}.iteritems():
+											 "3dlut.size",
+											 "3DLUT_INPUT_BITDEPTH":
+											 "3dlut.bitdepth.input",
+											 "3DLUT_OUTPUT_BITDEPTH":
+											 "3dlut.bitdepth.output"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
 						if keyword in ("MIN_DISPLAY_UPDATE_DELAY_MS",
 									   "DISPLAY_SETTLE_TIME_MULT"):
