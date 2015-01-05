@@ -302,6 +302,17 @@ class ReportFrame(BaseFrame):
 			else:
 				self.chart_btn.Enable("RGB" in values and
 									  "XYZ" in values)
+				if self.Parent:
+					parent = self.Parent
+				else:
+					parent = self
+				if (hasattr(parent, "tcframe") and
+					self.tcframe.IsShownOnScreen() and
+					(not hasattr(parent.tcframe, "ti1") or
+					 chart != parent.tcframe.ti1.filename)):
+					parent.tcframe.tc_load_cfg_from_ti1(None, chart,
+														"measurement_report.chart",
+														"mr_set_testchart")
 		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
 		self.fields_ctrl_handler(event)
 
