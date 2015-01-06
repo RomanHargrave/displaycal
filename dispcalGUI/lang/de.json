@@ -582,6 +582,7 @@
 	"luminance": "Helligkeit",
 	"lut_access": "Grafikkarten-Gammatabellen-Zugriff",
 	"madVR.icc": "madVR",
+	"madtpg.launch.failure": "madTPG wurde nicht gefunden oder konnte nicht gestartet werden.",
 	"magenta": "Magenta",
 	"make_and_model": "Gerätehersteller und Modell",
 	"manufacturer": "Hersteller",

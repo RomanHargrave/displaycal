@@ -71,6 +71,10 @@ from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
+if sys.platform == "win32":
+	import madvr
+else:
+	madvr = None
 from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
@@ -1824,7 +1828,7 @@ class Worker(object):
 				# hides the cursor and steals focus
 				start_new_thread(mac_app_activate, (1, wx.GetApp().AppName))
 			if (self.instrument_calibration_complete or
-				((config.is_untethered_display() or
+				((config.is_virtual_display() or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == "dispcal"))):
@@ -3198,6 +3202,16 @@ class Worker(object):
 						else:
 							# User aborted before connection was established
 							return False
+				if "-dmadvr" in args and madvr:
+					# Try to connect to running madTPG or launch a new instance
+					if not hasattr(self, "madtpg"):
+						self.madtpg = madvr.MadTPG()
+					if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
+						# Disconnect immediately, we really only wanted to make
+						# sure it's running
+						self.madtpg.disconnect()
+					else:
+						return Error(lang.getstr("madtpg.launch.failure"))
 			tries = 1
 			while tries > 0:
 				if use_pty:

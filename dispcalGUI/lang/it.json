@@ -582,6 +582,7 @@
 		"*luminance": "Luminance",
 	"lut_access": "Accesso a calibrazione",
 		"*madVR.icc": "madVR",
+		"*madtpg.launch.failure": "madTPG was not found or could not be launched.",
 		"*magenta": "Magenta",
 		"*make_and_model": "Make and model",
 		"*manufacturer": "Manufacturer",
