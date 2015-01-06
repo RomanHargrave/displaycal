@@ -95,6 +95,23 @@ class MadTPG(object):
 		result = self.mad.madVR_GetDeviceGammaRamp(ramp)
 		return result and ramp
 
+	def get_pattern_config(self):
+		"""
+		Return the pattern config as 4-tuple
+		
+		Pattern area in percent        1-100
+		Background level in percent    0-100
+		Background mode                0 = constant gray
+		                               1 = APL - gamma light
+		                               2 = APL - linear light
+		Black border width in pixels   0-100
+		"""
+		area, bglvl, bgmode, border = [ctypes.c_long() for i in xrange(4)]
+		result = self.mad.madVR_GetPatternConfig(*[ctypes.byref(v) for v in
+												   (area, bglvl, bgmode,
+												    border)])
+		return result and (area.value, bglvl.value, bgmode.value, border.value)
+
 	def show_rgb(self, r, g, b, bgr=None, bgg=None, bgb=None):
 		""" Shows a specific RGB color test pattern """
 		if not None in (bgr, bgg, bgb):

@@ -345,6 +345,18 @@ def get_instrument_name():
 	return ""
 
 
+def get_measureframe_dimensions(dimensions_measureframe=None, percent=10):
+	""" return measurement area size adjusted for percentage of screen area """
+	if not dimensions_measureframe:
+		dimensions_measureframe = getcfg("dimensions.measureframe")
+	dimensions_measureframe = [float(n) for n in
+							   dimensions_measureframe.split(",")]
+	dimensions_measureframe[2] *= defaults["size.measureframe"]
+	dimensions_measureframe[2] /= get_display_rects()[0][2]
+	dimensions_measureframe[2] *= percent
+	return ",".join([str(min(n, 50)) for n in dimensions_measureframe])
+
+
 def geticon(size, name):
 	""" Convenience function for getbitmap('theme/icons/<size>/<name>'). """
 	return getbitmap("theme/icons/%(size)sx%(size)s/%(name)s" % 

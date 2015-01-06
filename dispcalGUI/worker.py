@@ -1453,14 +1453,8 @@ class Worker(object):
 					dimensions_measureframe = getcfg("dimensions.measureframe")
 					if get_arg("-dcc", args):
 						# Rescale for Chromecast default patch size of 10%
-						dimensions_measureframe = [float(n) for n in
-												   dimensions_measureframe.split(",")]
-						dimensions_measureframe[2] *= defaults["size.measureframe"]
-						dimensions_measureframe[2] /= config.get_display_rects()[0][2]
-						dimensions_measureframe[2] /= .1
-						dimensions_measureframe = ",".join([str(min(n, 50))
-															for n in
-															dimensions_measureframe])
+						dimensions_measureframe = config.get_measureframe_dimensions(
+							dimensions_measureframe, 10)
 				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 							dimensions_measureframe)
 			farg = get_arg("-F", args, True)
@@ -2869,6 +2863,24 @@ class Worker(object):
 			else:
 				self.sessionlogfile = LogFile(working_basename, working_dir)
 			self.sessionlogfiles[working_basename] = self.sessionlogfile
+		if cmdname in ("dispcal", "dispread") and get_arg("-dmadvr", args) and madvr:
+			# Try to connect to running madTPG or launch a new instance
+			try:
+				if not hasattr(self, "madtpg"):
+					self.madtpg = madvr.MadTPG()
+				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
+					# Connected, get pattern config
+					patternconfig = self.madtpg.get_pattern_config()
+					if patternconfig:
+						# Setup patch size to match pattern config
+						args.insert(-1, "-P0.5,0.5,%f" %
+										math.sqrt(patternconfig[0]))
+					# Disconnect
+					self.madtpg.disconnect()
+				else:
+					return Error(lang.getstr("madtpg.launch.failure"))
+			except Exception, exception:
+				return exception
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
 				self.log("-" * 80)
@@ -3203,16 +3215,6 @@ class Worker(object):
 						else:
 							# User aborted before connection was established
 							return False
-				if "-dmadvr" in args and madvr:
-					# Try to connect to running madTPG or launch a new instance
-					if not hasattr(self, "madtpg"):
-						self.madtpg = madvr.MadTPG()
-					if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
-						# Disconnect immediately, we really only wanted to make
-						# sure it's running
-						self.madtpg.disconnect()
-					else:
-						return Error(lang.getstr("madtpg.launch.failure"))
 			tries = 1
 			while tries > 0:
 				if use_pty:
