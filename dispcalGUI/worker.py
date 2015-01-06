@@ -1434,7 +1434,7 @@ class Worker(object):
 					  not "RC1" in self.argyll_version_string and
 					  not "RC2" in self.argyll_version_string)) and
 					 self.argyll_version[0:3] < [1, 5, 0] and
-					 not get_arg("-V", args)):
+					 not get_arg("-V", args, True)):
 					# Adaptive measurement mode, Argyll >= 1.1.0 RC3
 					args.append("-V")
 			else:
@@ -1451,7 +1451,7 @@ class Worker(object):
 					dimensions_measureframe = "1,1,0.01"
 				else:
 					dimensions_measureframe = getcfg("dimensions.measureframe")
-					if config.get_display_name().startswith("Chromecast "):
+					if get_arg("-dcc", args):
 						# Rescale for Chromecast default patch size of 10%
 						dimensions_measureframe = [float(n) for n in
 												   dimensions_measureframe.split(",")]
@@ -1463,7 +1463,7 @@ class Worker(object):
 															dimensions_measureframe])
 				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 							dimensions_measureframe)
-			farg = get_arg("-F", args)
+			farg = get_arg("-F", args, True)
 			if (config.get_display_name() == "Resolve" and
 				not ignore_display_name):
 				if farg:
@@ -1473,7 +1473,8 @@ class Worker(object):
 			elif getcfg("measure.darken_background") and not farg:
 				args.append("-F")
 		if getcfg("measurement_mode.highres") and \
-		   instrument_features.get("highres_mode") and not get_arg("-H", args):
+		   instrument_features.get("highres_mode") and not get_arg("-H", args,
+																   True):
 			args.append("-H")
 		if (self.instrument_can_use_ccxx() and
 		    not is_ccxx_testchart() and not get_arg("-X", args)):
@@ -1535,7 +1536,7 @@ class Worker(object):
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		if (getcfg("allow_skip_sensor_cal") and
 			instrument_features.get("skip_sensor_cal") and
-			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args) and
+			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args, True) and
 			not self.spotread_just_do_instrument_calibration):
 			args.append("-N")
 		return True
