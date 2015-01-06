@@ -11514,10 +11514,16 @@ class MainFrame(ReportFrame, BaseFrame):
 									pass
 								else:
 									if cfgvalue < 0:
-										setcfg("3dlut.trc_gamma_type", "B")
+										gamma_type = "B"
 										cfgvalue = abs(cfgvalue)
 									else:
-										setcfg("3dlut.trc_gamma_type", "b")
+										gamma_type = "b"
+									setcfg("3dlut.trc_gamma_type", gamma_type)
+									# Sync measurement report settings
+									setcfg("measurement_report.trc_gamma_type",
+										   gamma_type)
+									setcfg("measurement_report.apply_black_offset", 0)
+									setcfg("measurement_report.apply_trc", 1)
 							elif keyword == "3DLUT_GAMUT_MAPPING_MODE":
 								if cfgvalue == "G":
 									cfgvalue = 0
@@ -11527,6 +11533,20 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("3dlut.create", 1)
 						if cfgvalue is not None:
 							setcfg(cfgname, cfgvalue)
+							# Sync measurement report settings
+							if cfgname == "3dlut.input.profile":
+								setcfg("measurement_report.simulation_profile",
+									   cfgvalue)
+								setcfg("measurement_report.use_simulation_profile", 1)
+								setcfg("measurement_report.use_simulation_profile_as_output", 1)
+							elif cfgname in ("3dlut.trc_gamma",
+											 "3dlut.trc_output_offset"):
+								cfgname = cfgname.replace("3dlut",
+														  "measurement_report")
+								setcfg(cfgname, cfgvalue)
+							elif cfgname == "3dlut.format":
+								if cfgvalue == "madVR":
+									setcfg("3dlut.madVR.enable", 1)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)
