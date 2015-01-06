@@ -426,7 +426,7 @@ class ReportFrame(BaseFrame):
 						setcfg("measurement_report.%s_profile" % which, profile.fileName)
 						if which == "simulation":
 							self.use_simulation_profile_ctrl_handler(None)
-						else:
+						elif hasattr(self, "XYZbpin"):
 							self.mr_update_main_controls()
 					return profile
 			getattr(self,
