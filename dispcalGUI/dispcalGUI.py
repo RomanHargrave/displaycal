@@ -3373,7 +3373,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 		self.profile_type_ctrl.SetSelection(
 			self.profile_types_ba.get(getcfg("profile.type"), 
-			self.profile_types_ba.get(defaults["profile.type"])))
+			self.profile_types_ba.get(defaults["profile.type"], 0)))
 
 		self.update_black_output_offset_ctrl()
 
@@ -11000,7 +11000,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_profile_type_ctrl()
 			self.profile_type_ctrl.SetSelection(
 				self.profile_types_ba.get(getcfg("profile.type"), 
-				self.profile_types_ba.get(defaults["profile.type"])))
+				self.profile_types_ba.get(defaults["profile.type"], 0)))
 			if hasattr(self, "aboutdialog"):
 				if self.aboutdialog.IsShownOnScreen():
 					self.aboutdialog_handler(None)
