@@ -3869,6 +3869,9 @@ class LogWindow(InvincibleFrame):
 								wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 								defaults["size.info.h"] - 24 -
 								max(0, self.Size[1] - self.ClientSize[1]))
+		separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+		separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+		self.sizer.Add(separator, flag=wx.EXPAND)
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.btnsizer, flag=wx.EXPAND)
 		self.save_as_btn = GenBitmapButton(self.panel, -1, 
