@@ -6438,7 +6438,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			if not getcfg("dry_run"):
+			elif not getcfg("dry_run"):
 				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("calibration.incomplete"), 
 							 ok=lang.getstr("ok"), 
@@ -6692,7 +6692,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			if not getcfg("dry_run"):
+			elif not getcfg("dry_run"):
 				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("calibration.incomplete"), 
 							 ok=lang.getstr("ok"), 
@@ -6712,7 +6712,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			if not getcfg("dry_run"):
+			elif not getcfg("dry_run"):
 				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("profiling.incomplete"), 
 							 ok=lang.getstr("ok"), 
@@ -7116,7 +7116,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			if not getcfg("dry_run"):
+			elif not getcfg("dry_run"):
 				wx.CallAfter(InfoDialog, self, 
 							 msg=lang.getstr("profiling.incomplete"), 
 							 ok=lang.getstr("ok"), 

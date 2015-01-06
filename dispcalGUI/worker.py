@@ -3381,7 +3381,7 @@ class Worker(object):
 				if not silent and len(self.errors):
 					errstr = "".join(self.errors).strip()
 					self.log(errstr)
-		except (Error, socket.error), exception:
+		except (Error, socket.error, EnvironmentError, RuntimeError), exception:
 			return exception
 		except Exception, exception:
 			if debug:
