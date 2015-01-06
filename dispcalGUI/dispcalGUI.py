@@ -12181,6 +12181,7 @@ class StartupFrame(wx.Frame):
 				self.worker.wrapup(False)
 		self.SetClientSize(self.splash_bmp.Size)
 		self.SetPosition((self.splash_x, self.splash_y))
+		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.SetTransparent(0)
 		self._alpha = 0
@@ -12248,6 +12249,9 @@ class StartupFrame(wx.Frame):
 			self.Hide()
 		else:
 			self.Close()
+
+	def OnEraseBackground(self, event):
+		pass
 
 	def OnPaint(self, event):
 		self.Draw(wx.BufferedPaintDC(self))
