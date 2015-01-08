@@ -9334,33 +9334,32 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("calibration.use_video_lut",
 				   getcfg("calibration.use_video_lut.backup"))
 			setcfg("calibration.use_video_lut.backup", None)
-		if not isinstance(event, CustomEvent):
-			update_delay_ctrls = False
-			if config.get_display_name() == "Resolve":
-				# Special case: Resolve. Needs a minimum display update delay of
-				# atleast 600 ms for repeatable measurements. This is a Resolve
-				# issue. There seem to be quite a few bugs that were introduced in
-				# Resolve via the version 10.1.x to 11.x transition.
-				if getcfg("measure.min_display_update_delay_ms", False) is None:
-					setcfg("measure.override_min_display_update_delay_ms.backup",
-						   getcfg("measure.override_min_display_update_delay_ms"))
-					setcfg("measure.min_display_update_delay_ms.backup",
-						   getcfg("measure.min_display_update_delay_ms"))
-				setcfg("measure.override_min_display_update_delay_ms", 1)
-				setcfg("measure.min_display_update_delay_ms", 600)
-				update_delay_ctrls = True
-			elif getcfg("calibration.use_video_lut.backup", False) is not None:
-				setcfg("measure.override_min_display_update_delay_ms",
-					   getcfg("measure.override_min_display_update_delay_ms.backup"))
-				setcfg("measure.min_display_update_delay_ms",
-					   getcfg("measure.min_display_update_delay_ms.backup"))
-				update_delay_ctrls = True
-			if update_delay_ctrls:
-				override = bool(getcfg("measure.override_min_display_update_delay_ms"))
-				getattr(self,
-						"override_min_display_update_delay_ms").SetValue(override)
-				self.update_display_delay_ctrl("min_display_update_delay_ms",
-											   override)
+		update_delay_ctrls = False
+		if config.get_display_name() == "Resolve":
+			# Special case: Resolve. Needs a minimum display update delay of
+			# atleast 600 ms for repeatable measurements. This is a Resolve
+			# issue. There seem to be quite a few bugs that were introduced in
+			# Resolve via the version 10.1.x to 11.x transition.
+			if getcfg("measure.min_display_update_delay_ms", False) is None:
+				setcfg("measure.override_min_display_update_delay_ms.backup",
+					   getcfg("measure.override_min_display_update_delay_ms"))
+				setcfg("measure.min_display_update_delay_ms.backup",
+					   getcfg("measure.min_display_update_delay_ms"))
+			setcfg("measure.override_min_display_update_delay_ms", 1)
+			setcfg("measure.min_display_update_delay_ms", 600)
+			update_delay_ctrls = True
+		elif getcfg("measure.min_display_update_delay_ms", False) is not None:
+			setcfg("measure.override_min_display_update_delay_ms",
+				   getcfg("measure.override_min_display_update_delay_ms.backup"))
+			setcfg("measure.min_display_update_delay_ms",
+				   getcfg("measure.min_display_update_delay_ms.backup"))
+			update_delay_ctrls = True
+		if update_delay_ctrls:
+			override = bool(getcfg("measure.override_min_display_update_delay_ms"))
+			getattr(self,
+					"override_min_display_update_delay_ms").SetValue(override)
+			self.update_display_delay_ctrl("min_display_update_delay_ms",
+										   override)
 		# Check if display is calibratable at all. Unset calibration update
 		# checkbox if this is not the case.
 		if config.is_uncalibratable_display():
