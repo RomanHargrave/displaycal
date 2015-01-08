@@ -922,6 +922,10 @@ def getcfg(name, fallback=True):
 				  # not (only) a path
 				if debug:
 					print "%s does not exist: %s" % (name, value),
+				# Normalize path (important, this turns altsep into sep under
+				# Windows)
+				value = os.path.normpath(value)
+				# Check if this is a relative path covered by data_dirs
 				if (value.split(os.path.sep)[-3:-2] == [appname] or
 					not os.path.isabs(value)) and (
 				   value.split(os.path.sep)[-2:-1] == ["presets"] or 
