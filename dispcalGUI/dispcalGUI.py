@@ -9353,6 +9353,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				   getcfg("measure.override_min_display_update_delay_ms.backup"))
 			setcfg("measure.min_display_update_delay_ms",
 				   getcfg("measure.min_display_update_delay_ms.backup"))
+			setcfg("measure.override_min_display_update_delay_ms.backup", None)
+			setcfg("measure.min_display_update_delay_ms.backup", None)
 			update_delay_ctrls = True
 		if update_delay_ctrls:
 			override = bool(getcfg("measure.override_min_display_update_delay_ms"))
