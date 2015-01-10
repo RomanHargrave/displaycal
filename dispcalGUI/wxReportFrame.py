@@ -65,11 +65,11 @@ class ReportFrame(BaseFrame):
 			ctrl.changeCallback = getattr(self, "%s_ctrl_handler" % which)
 			if which not in ("devlink_profile", "output_profile"):
 				if which == "chart":
-					wildcard = "\.(cie|gam|ti1|ti3)$"
+					wildcard = "\.(cie|ti1|ti2|ti3)$"
 				else:
 					wildcard = "\.(icc|icm)$"
+				history = []
 				if which == "simulation_profile":
-					history = []
 					standard_profiles = config.get_standard_profiles(True)
 					basenames = []
 					for path in standard_profiles:
@@ -78,7 +78,12 @@ class ReportFrame(BaseFrame):
 							basenames.append(basename)
 							history.append(path)
 				else:
-					history = get_data_path("ref", wildcard)
+					paths = get_data_path("ref", wildcard) or []
+					for path in paths:
+						basepath, ext = os.path.splitext(path)
+						if not (path.lower().endswith(".ti2") and
+								basepath + ".cie" in paths):
+							history.append(path)
 				history = sorted(history, key=lambda path:
 											  os.path.basename(path).lower())
 				ctrl.SetHistory(history)
@@ -277,9 +282,17 @@ class ReportFrame(BaseFrame):
 					self.fields_ctrl.GetContainingSizer().Layout()
 					self.panel.Thaw()
 					fields = getcfg("measurement_report.chart.fields")
-					try:
-						index = values.index(fields)
-					except ValueError:
+					if chart.lower().endswith(".ti1"):
+						index = 0
+					elif "RGB" in values and not chart.lower().endswith(".cie"):
+						index = values.index("RGB")
+					elif "CMYK" in values:
+						index = values.index("CMYK")
+					elif "XYZ" in values:
+						index = values.index("XYZ")
+					elif "LAB" in values:
+						index = values.index("LAB")
+					else:
 						index = 0
 					self.fields_ctrl.SetSelection(index)
 					setcfg("measurement_report.chart", chart)
@@ -306,7 +319,8 @@ class ReportFrame(BaseFrame):
 					parent = self.Parent
 				else:
 					parent = self
-				if (hasattr(parent, "tcframe") and
+				if (self.chart_btn.Enabled and
+					hasattr(parent, "tcframe") and
 					self.tcframe.IsShownOnScreen() and
 					(not hasattr(parent.tcframe, "ti1") or
 					 chart != parent.tcframe.ti1.filename)):
@@ -447,7 +461,7 @@ class ReportFrame(BaseFrame):
 				wildcard = lang.getstr("filetype.icc")  + "|*.icc;*.icm"
 			else:
 				wildcard = (lang.getstr("filetype.ti1_ti3_txt") + 
-							"|*.cgats;*.cie;*.gam;*.ti1;*.ti2;*.ti3;*.txt")
+							"|*.cgats;*.cie;*.ti1;*.ti2;*.ti3;*.txt")
 			msg = {"chart": "measurement_report_choose_chart_or_reference",
 				   "devlink_profile": "devicelink_profile",
 				   "output_profile": "measurement_report_choose_profile"}.get(which, which)
