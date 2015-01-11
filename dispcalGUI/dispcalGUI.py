@@ -9405,15 +9405,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			# atleast 600 ms for repeatable measurements. This is a Resolve
 			# issue. There seem to be quite a few bugs that were introduced in
 			# Resolve via the version 10.1.x to 11.x transition.
-			if getcfg("measure.min_display_update_delay_ms", False) is None:
+			if getcfg("measure.min_display_update_delay_ms.backup", False) is None:
 				setcfg("measure.override_min_display_update_delay_ms.backup",
 					   getcfg("measure.override_min_display_update_delay_ms"))
 				setcfg("measure.min_display_update_delay_ms.backup",
 					   getcfg("measure.min_display_update_delay_ms"))
-			setcfg("measure.override_min_display_update_delay_ms", 1)
-			setcfg("measure.min_display_update_delay_ms", 600)
-			update_delay_ctrls = True
-		elif getcfg("measure.min_display_update_delay_ms", False) is not None:
+				setcfg("measure.override_min_display_update_delay_ms", 1)
+				setcfg("measure.min_display_update_delay_ms", 600)
+				update_delay_ctrls = True
+		elif getcfg("measure.min_display_update_delay_ms.backup", False) is not None:
 			setcfg("measure.override_min_display_update_delay_ms",
 				   getcfg("measure.override_min_display_update_delay_ms.backup"))
 			setcfg("measure.min_display_update_delay_ms",
