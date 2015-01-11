@@ -319,7 +319,7 @@ class ReportFrame(BaseFrame):
 					parent = self.Parent
 				else:
 					parent = self
-				if (self.chart_btn.Enabled and
+				if (event and self.chart_btn.Enabled and
 					hasattr(parent, "tcframe") and
 					self.tcframe.IsShownOnScreen() and
 					(not hasattr(parent.tcframe, "ti1") or
