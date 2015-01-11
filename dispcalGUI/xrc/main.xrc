@@ -999,6 +999,12 @@
                               </object>
                               <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
+                            <object class="spacer"/>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="cal_meas_time"/>
+                              <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
                             <cols>2</cols>
                             <rows>0</rows>
                           </object>
@@ -1236,6 +1242,15 @@
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
                                   <border>5</border>
+                                </object>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="sizeritem">
+                                  <object class="wxStaticText" name="testchart_meas_time"/>
+                                  <flag>wxALL|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>4</border>
                                 </object>
                                 <object class="spacer"/>
                                 <object class="spacer"/>

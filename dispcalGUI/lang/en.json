@@ -446,6 +446,7 @@
 	"error.tmp_creation": "Could not create temporary working directory.",
 	"error.trashcan_unavailable": "The %s is not available. No files were removed.",
 	"errors.none_found": "No errors found.",
+	"estimated_measurement_time": "Estimated measurement time approximately %s hour(s) %s minutes",
 	"export": "Export...",
 	"extra_args": "Set additional commandline arguments...",
 	"factory_default": "Factory Default",

@@ -17,6 +17,12 @@
 	   removed from the display for sensor calibration if it cannot be skipped
 	  
 	   skip_sensor_cal: Can the sensor calibration be skipped?
+	
+	   integration_time: Approx. integration time (seconds) for black and white,
+	                     based on measurements on wide-gamut IPS display with
+	                     0.23 cd/m2 black and 130 cd/m2 white level, rounded to
+	                     multiple of .1 seconds.
+	                     Instruments which I don't own have been estimated.
 	  
 	   A value of null for any of the keys means unknown/not tested
 	   
@@ -38,10 +44,11 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": false,
-		"skip_sensor_cal": false // DTP94 instrument access fails 
+		"skip_sensor_cal": false, // DTP94 instrument access fails 
 				// when using -N option to skip automatic sensor calibration
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				// failed with 'Unsupported function'")
+		"integration_time": [4.0, 1.1]  // Estimated
 	},
 	"Spectrolino": {
 		"spectral": true,
@@ -82,7 +89,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": false,
-		"skip_sensor_cal": false
+		"skip_sensor_cal": false,
+		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"i1 Display 1": {  // Argyll 1.3.6 and newer
 		"id": "i1D1",
@@ -91,7 +99,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": true,
-		"skip_sensor_cal": false
+		"skip_sensor_cal": false,
+		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"i1 Display 2": {  // Argyll 1.3.6 and newer
 		"id": "i1D2",
@@ -100,10 +109,11 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": false,
-		"skip_sensor_cal": false // i1 Display 2 instrument access fails 
+		"skip_sensor_cal": false, // i1 Display 2 instrument access fails 
 				// when using -N option to skip automatic sensor calibration
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				// failed with 'Unsupported function'")
+		"integration_time": [4.0, 1.0]  // Measured
 	},
 	"i1 DisplayPro, ColorMunki Display": {
 		"id": "i1D3",
@@ -113,7 +123,8 @@
 		"projector_mode": false,
 		"sensor_cal": false,
 		"skip_sensor_cal": false,
-		"measurement_mode_map": {"c": "r", "l": "n"}
+		"measurement_mode_map": {"c": "r", "l": "n"},
+		"integration_time": [2.6, 0.2]  // Measured
 	},
 	"i1 Monitor": {  // like i1Pro
 		"spectral": true,
@@ -121,7 +132,8 @@
 		"highres_mode": true,
 		"projector_mode": false,
 		"sensor_cal": true,
-		"skip_sensor_cal": true
+		"skip_sensor_cal": true,
+		"integration_time": [9.2, 3.9]  // Using i1 Pro values
 	},
 	"i1 Pro": {
 		"spectral": true,
@@ -129,7 +141,8 @@
 		"highres_mode": true,
 		"projector_mode": false,
 		"sensor_cal": true,
-		"skip_sensor_cal": true
+		"skip_sensor_cal": true,
+		"integration_time": [9.2, 3.9]  // Measured (i1 Pro Rev. A)
 	},
 	"i1 Pro 2": {
 		"spectral": true,
@@ -137,7 +150,8 @@
 		"highres_mode": true,
 		"projector_mode": false,
 		"sensor_cal": true,
-		"skip_sensor_cal": true
+		"skip_sensor_cal": true,
+		"integration_time": [9.2, 3.9]  // Using i1 Pro values
 	},
 	"ColorHug": {
 		"spectral": false,
@@ -145,7 +159,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"integration_time": [1.8, 0.8]  // Measured (ColorHug #660)
 	},
 	"ColorHug2": {
 		"spectral": false,
@@ -153,7 +168,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"integration_time": [2.0, 0.6]  // Measured (ColorHug2 prototype #2)
 	},
 	"ColorMunki": {
 		"spectral": true,
@@ -161,7 +177,8 @@
 		"highres_mode": true,
 		"projector_mode": true,
 		"sensor_cal": true,
-		"skip_sensor_cal": true
+		"skip_sensor_cal": true,
+		"integration_time": [9.2, 3.9]  // Using i1 Pro values
 	},
 	"Colorimtre HCFR": {
 		"id": "HCFR",
@@ -179,7 +196,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": false,
-		"skip_sensor_cal": false
+		"skip_sensor_cal": false,
+		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"K-10": {
 		"spectral": false,
@@ -187,7 +205,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"integration_time": [1.3, 0.1]  // Using i1D3 values halved
 	},
 	"Spyder2": {
 		"spectral": false,
@@ -195,7 +214,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"integration_time": [14.0, 2.3]  // Using Spyder3 values
 	},
 	"Spyder3": {
 		"spectral": false,
@@ -204,7 +224,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"measurement_mode_map": {"c": "r", "l": "n"}
+		"measurement_mode_map": {"c": "r", "l": "n"},
+		"integration_time": [14.0, 2.3]  // Estimated
 	},
 	"Spyder4": {
 		"spectral": false,
@@ -213,7 +234,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"measurement_mode_map": {"c": "r", "l": "n"}
+		"measurement_mode_map": {"c": "r", "l": "n"},
+		"integration_time": [14.0, 2.3]  // Using Spyder3 values
 	},
 	"Huey": {
 		"spectral": false,
@@ -221,7 +243,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"specbos": {
 		"spectral": true,
@@ -230,7 +253,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"measurement_mode_map": {"c": "r", "l": "n"}
+		"measurement_mode_map": {"c": "r", "l": "n"},
+		"integration_time": [3.3, 0.8]  // Estimated, VERY rough
 	},
 	"specbos 1201": {
 		"spectral": true,
@@ -238,7 +262,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"integration_time": [10.3, 2.8]  // Estimated, VERY rough
 	},
 	"Dummy Meter / Hires & Projector": {
 		// dummy instrument, just for testing

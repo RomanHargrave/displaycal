@@ -444,6 +444,7 @@
 	"error.tmp_creation": "Il n'a pas été possible de créer un répertoire de travail temporaire.",
 	"error.trashcan_unavailable": "La %s n'est pas disponible. Aucun fichier n'a été supprimé.",
 	"errors.none_found": "Aucune erreur trouvée.",
+		"*estimated_measurement_time": "Estimated measurement time approximately %s hour(s) %s minutes",
 	"export": "Exporter...",
 	"extra_args": "Définir des arguments de ligne de commande supplémentaires...",
 		"*factory_default": "Factory Default",

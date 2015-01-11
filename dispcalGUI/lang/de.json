@@ -444,6 +444,7 @@
 	"error.tmp_creation": "Konnte das temporäre Arbeitsverzeichnis nicht erstellen.",
 	"error.trashcan_unavailable": "Der %s ist nicht verfügbar. Es wurden keine Dateien entfernt.",
 	"errors.none_found": "Keine Fehler gefunden.",
+	"estimated_measurement_time": "Geschätzte Messzeit ungefähr %s Stunde(n) %s Minuten",
 	"export": "Exportieren...",
 	"extra_args": "Zusätzliche Befehlszeilen-Parameter setzen...",
 	"factory_default": "Werksstandard",

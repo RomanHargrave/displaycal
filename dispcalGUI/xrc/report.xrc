@@ -74,6 +74,11 @@
           </object>
           <object class="spacer"/>
           <object class="sizeritem">
+            <object class="wxStaticText" name="chart_meas_time"/>
+            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+          </object>
+          <object class="spacer"/>
+          <object class="sizeritem">
             <object class="wxBoxSizer">
               <object class="sizeritem">
                 <object class="wxCheckBox" name="simulate_whitepoint_cb">

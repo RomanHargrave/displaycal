@@ -444,6 +444,7 @@
 	"error.tmp_creation": "No se puede crear directorio de trabajo temporal.",
 	"error.trashcan_unavailable": "El %s no esta disponible. No se eliminaron archivos.",
 		"*errors.none_found": "No errors found.",
+		"*estimated_measurement_time": "Estimated measurement time approximately %s hour(s) %s minutes",
 	"export": "Exportar...",
 	"extra_args": "Establecer argumentos adicionales de línea de comandos...",
 		"*factory_default": "Factory Default",

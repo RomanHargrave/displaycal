@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from time import gmtime, strftime
+import math
 import os
 import sys
 
@@ -299,6 +301,7 @@ class ReportFrame(BaseFrame):
 					self.chart_patches_amount.Freeze()
 					self.chart_patches_amount.SetLabel(
 						str(cgats.queryv1("NUMBER_OF_SETS") or ""))
+					self.update_estimated_measurement_time("chart")
 					self.chart_patches_amount.GetContainingSizer().Layout()
 					self.chart_patches_amount.Thaw()
 					self.chart_white = cgats.get_white_cie()
@@ -676,6 +679,68 @@ class ReportFrame(BaseFrame):
 			self.calpanel.Layout()
 		else:
 			self.update_layout()
+
+	def update_estimated_measurement_time(self, which, patches=None):
+		""" Update the estimated measurement time shown """
+		integration_time = self.worker.get_instrument_features().get("integration_time")
+		if integration_time:
+			if which == "chart" and not patches:
+				patches = int(self.chart_patches_amount.Label)
+			opatches = patches
+			# Sum integration time and default display update delay of 200 ms
+			# to get time per patch (ttp)
+			ttp = [v + .2 for v in integration_time]
+			if (getcfg("measurement_mode").startswith("c") and
+				self.worker.get_instrument_name() in
+				("ColorMunki", "DTP92", "DTP94", "i1 Display", "i1 Display 1",
+				 "i1 Display 2", "i1 DisplayPro, ColorMunki Display",
+				 "i1 Monitor", "i1 Pro", "i1 Pro 2", "K-10", "specbos",
+				 "Spyder2", "Spyder3", "Spyder4")):
+				# Not all instruments can measure refresh rate! Add .25 secs
+				# for those who do if refresh mode is used.
+				ttp = [v + .25 for v in ttp]
+			if getcfg("measure.override_min_display_update_delay_ms"):
+				# Add additional display update delay (zero at <= 200 ms)
+				min_delay_ms = getcfg("measure.min_display_update_delay_ms")
+				min_delay_s = (max(min_delay_ms, 200) - 200) / 1000.0
+				ttp = [v + min_delay_s for v in ttp]
+			if getcfg("measure.override_display_settle_time_mult"):
+				# We don't have access to display rise/fall time, so use this as
+				# generic integration time multiplier
+				settle_mult = getcfg("measure.display_settle_time_mult")
+				ttp = [v * settle_mult for v in ttp]
+			avg_delay = sum(ttp) / 2.0
+			seconds = avg_delay * patches
+			if getcfg("drift_compensation.blacklevel"):
+				# Assume black patch every n samples
+				seconds += math.ceil(opatches / 20.0) * ttp[0]
+			if getcfg("drift_compensation.whitelevel"):
+				# Assume white patch every n samples
+				seconds += math.ceil(opatches / 20.0) * ttp[1]
+			timestamp = gmtime(seconds)
+			hours = int(strftime("%H", timestamp))
+			minutes = int(strftime("%M", timestamp))
+			minutes += int(math.ceil(int(strftime("%S", timestamp)) / 60.0))
+			if minutes > 59:
+				minutes = 0
+				hours += 1
+		else:
+			hours, minutes = "--", "--"
+		getattr(self, which + "_meas_time").Label = lang.getstr("estimated_measurement_time",
+																(hours, minutes))
+		# Show visual warning by coloring the text if measurement is going to
+		# take a long time. Display and instrument stability and repeatability
+		# may be an issue over such long periods of time.
+		if hours != "--" and hours > 7:
+			# Warning color "red"
+			color = "#FF3300"
+		elif hours != "--" and hours > 3:
+			# Warning color "orange"
+			color = "#F07F00"
+		else:
+			# Default text color
+			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+		getattr(self, which + "_meas_time").ForegroundColour = color
 	
 	def use_devlink_profile_ctrl_handler(self, event):
 		setcfg("3dlut.madVR.enable", 0)

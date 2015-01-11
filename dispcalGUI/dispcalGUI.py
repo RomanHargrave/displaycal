@@ -47,7 +47,7 @@ import urllib2
 if sys.platform == "win32":
 	import _winreg
 from hashlib import md5
-from time import sleep, strftime, strptime, struct_time
+from time import gmtime, sleep, strftime, strptime, struct_time
 from zlib import crc32
 
 # 3rd party modules
@@ -2460,6 +2460,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_measurement_modes()
 				self.update_controls()
 				self.update_displays()
+				self.update_estimated_measurement_time("cal")
 				self.set_testcharts()
 				self.update_layout()
 				self.panel.Thaw()
@@ -3497,10 +3498,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   self.trc_ctrl.GetSelection() > 0 and
 										   show_advanced_options)
-		for ctrl in (
-					 self.calibration_quality_label,
+		for ctrl in (self.calibration_quality_label,
 					 self.calibration_quality_ctrl,
-					 self.calibration_quality_info):
+					 self.calibration_quality_info,
+					 self.cal_meas_time):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   self.trc_ctrl.GetSelection() > 0)
 		# Make the height of the last row in the calibration settings sizer
@@ -3565,14 +3566,76 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.worker.argyll_version >= [1, 3, 0])
 		self.calpanel.Layout()
 		self.panel.Thaw()
+
+	def update_estimated_measurement_time(self, which):
+		""" Update the estimated measurement time shown """
+		if which == "testchart":
+			patches = int(self.testchart_patches_amount.Label)
+			if getcfg("testchart.file") == "auto":
+				patches += 154
+		elif which == "cal":
+			# See dispcal.c
+			if getcfg("calibration.quality") == "v":
+				# Very low
+				isteps = 10
+				rsteps = 16
+				maxits = 1
+				mxrpts = 10
+			elif getcfg("calibration.quality") == "l":
+				# Low
+				isteps = 12
+				rsteps = 32
+				maxits = 2
+				mxrpts = 10
+			elif getcfg("calibration.quality") == "m":
+				# Medium
+				isteps = 16
+				rsteps = 64
+				maxits = 3
+				mxrpts = 12
+			elif getcfg("calibration.quality") == "h":
+				# High
+				isteps = 20
+				rsteps = 96
+				maxits = 4
+				mxrpts = 16
+			elif getcfg("calibration.quality") == "u":
+				# Ultra
+				isteps = 24
+				rsteps = 128
+				maxits = 5
+				mxrpts = 24
+			# 1st iteration
+			rsteps /= 1 << (maxits - 1)
+			patches = rsteps
+			# 2nd..nth iteration
+			for i in xrange(maxits - 1):
+				rsteps *= 2
+				patches += rsteps
+			# Multiply by estimated repeats
+			patches *= mxrpts / 2.0
+			# Amount of precal patches is always 9
+			patches += 9
+			# Initial amount of cal patches is always isteps * 4
+			patches += isteps * 4
+		elif which == "chart":
+			patches = int(self.chart_patches_amount.Label)
+		ReportFrame.update_estimated_measurement_time(self, which, patches)
+
+	def update_estimated_measurement_times(self):
+		self.update_estimated_measurement_time("cal")
+		self.update_estimated_measurement_time("testchart")
+		self.update_estimated_measurement_time("chart")
 	
 	def blacklevel_drift_compensation_handler(self, event):
 		setcfg("drift_compensation.blacklevel", 
 			   int(self.blacklevel_drift_compensation.GetValue()))
+		self.update_estimated_measurement_times()
 	
 	def whitelevel_drift_compensation_handler(self, event):
 		setcfg("drift_compensation.whitelevel", 
 			   int(self.whitelevel_drift_compensation.GetValue()))
+		self.update_estimated_measurement_times()
 
 	def calibration_update_ctrl_handler(self, event):
 		if debug:
@@ -4101,6 +4164,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if q != getcfg("calibration.quality"):
 			self.profile_settings_changed()
 		setcfg("calibration.quality", q)
+		self.update_estimated_measurement_time("cal")
 		self.update_profile_name()
 	
 	def set_calibration_quality_label(self, q):
@@ -8900,6 +8964,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(force)
+		self.update_estimated_measurement_times()
 	
 	def import_colorimeter_corrections_handler(self, event, paths=None):
 		"""
@@ -9362,6 +9427,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					"override_min_display_update_delay_ms").SetValue(override)
 			self.update_display_delay_ctrl("min_display_update_delay_ms",
 										   override)
+			self.update_estimated_measurement_times()
 		# Check if display is calibratable at all. Unset calibration update
 		# checkbox if this is not the case.
 		if config.is_uncalibratable_display():
@@ -9396,6 +9462,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_display_delay_ctrl(ctrl.Name[9:], value)
 				value = int(value)
 			setcfg(pref, value)
+		self.update_estimated_measurement_times()
 
 	def update_display_delay_ctrl(self, name, enable):
 		spinctrl = getattr(self, name)
@@ -9516,6 +9583,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(update_measurement_mode=False)
+		self.update_estimated_measurement_times()
 		if (v and (((not "c" in v or "p" in v) and
 					float(self.get_black_point_correction()) > 0) or
 				   ("c" in v and
@@ -10757,6 +10825,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		g = s * 3 - 2
 		self.testchart_patches_amount.SetLabel(
 			str(get_total_patches(4, 4, s, g, auto, auto, 0)))
+		self.update_estimated_measurement_time("testchart")
 		self.update_profile_name()
 
 	def create_testchart_btn_handler(self, event):
@@ -10897,11 +10966,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if ti1.queryv1("COLOR_REP") and \
 			   ti1.queryv1("COLOR_REP")[:3] == "RGB":
 				self.worker.options_targen = ["-d3"]
-			if self.testchart_ctrl.IsEnabled():
-				self.testchart_patches_amount.SetLabel(
-					str(ti1.queryv1("NUMBER_OF_SETS")))
-			else:
-				self.testchart_patches_amount.SetLabel("")
+			self.testchart_patches_amount.SetLabel(
+				str(ti1.queryv1("NUMBER_OF_SETS")))
 		except Exception, exception:
 			error = traceback.format_exc() if debug else exception
 			InfoDialog(self, 
@@ -10911,6 +10977,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					   bitmap=geticon(32, "dialog-error"))
 			self.set_default_testchart(force=True)
 		else:
+			self.update_estimated_measurement_time("testchart")
 			if hasattr(self, "tcframe") and \
 			   self.tcframe.IsShownOnScreen() and \
 			   (not hasattr(self.tcframe, "ti1") or 
