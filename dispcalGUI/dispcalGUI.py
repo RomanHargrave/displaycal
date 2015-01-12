@@ -3613,7 +3613,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				rsteps *= 2
 				patches += rsteps
 			# Multiply by estimated repeats
-			patches *= mxrpts / 2.0
+			patches *= mxrpts / (1 / .75)
 			# Amount of precal patches is always 9
 			patches += 9
 			# Initial amount of cal patches is always isteps * 4

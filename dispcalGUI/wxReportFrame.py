@@ -709,14 +709,19 @@ class ReportFrame(BaseFrame):
 				# generic integration time multiplier
 				settle_mult = getcfg("measure.display_settle_time_mult")
 				ttp = [v * settle_mult for v in ttp]
-			avg_delay = sum(ttp) / 2.0
+			avg_delay = sum(ttp) / (8 / 3.0)
 			seconds = avg_delay * patches
+			oseconds = seconds
 			if getcfg("drift_compensation.blacklevel"):
+				# Assume black patch every 60 seconds
+				seconds += math.ceil(oseconds / 60.0) * ((20 - ttp[0]) / 2.0 + ttp[0])
 				# Assume black patch every n samples
-				seconds += math.ceil(opatches / 20.0) * ttp[0]
+				seconds += math.ceil(opatches / 40.0) * ((20 - ttp[0]) / 2.0 + ttp[0])
 			if getcfg("drift_compensation.whitelevel"):
+				# Assume white patch every 60 seconds
+				seconds += math.ceil(oseconds / 60.0) * ttp[1]
 				# Assume white patch every n samples
-				seconds += math.ceil(opatches / 20.0) * ttp[1]
+				seconds += math.ceil(opatches / 40.0) * ttp[1]
 			timestamp = gmtime(seconds)
 			hours = int(strftime("%H", timestamp))
 			minutes = int(strftime("%M", timestamp))
