@@ -25,6 +25,7 @@ else:
 
 if sys.platform == "win32":
 	try:
+		import win32api
 		import win32gui
 	except ImportError:
 		pass
@@ -63,12 +64,35 @@ if sys.platform not in ("darwin", "win32"):
 		xrandr = None
 elif sys.platform == "win32":
 	import util_win
+	mscms = util_win._get_mscms_dll_handle()
+	if mscms:
+		mscms.WcsGetDefaultColorProfileSize.restype = ctypes.c_bool
+		mscms.WcsGetDefaultColorProfile.restype = ctypes.c_bool
 elif sys.platform == "darwin":
 	from util_mac import osascript
 
 
 GAMUT_VOLUME_SRGB = 833675.435316  # rel. col.
 GAMUT_VOLUME_ADOBERGB = 1209986.014983  # rel. col.
+
+# http://msdn.microsoft.com/en-us/library/dd371953%28v=vs.85%29.aspx
+COLORPROFILESUBTYPE = {"NONE": 0x0000,
+					   "RGB_WORKING_SPACE": 0x0001,
+					   "PERCEPTUAL": 0x0002,
+					   "ABSOLUTE_COLORIMETRIC": 0x0004,
+					   "RELATIVE_COLORIMETRIC": 0x0008,
+					   "SATURATION": 0x0010,
+					   "CUSTOM_WORKING_SPACE": 0x0020}
+
+# http://msdn.microsoft.com/en-us/library/dd371955%28v=vs.85%29.aspx (wrong)
+# http://msdn.microsoft.com/en-us/library/windows/hardware/ff546018%28v=vs.85%29.aspx (ok)
+COLORPROFILETYPE = {"ICC": 0,
+					"DMP": 1,
+					"CAMP": 2,
+					"GMMP": 3}
+
+WCS_PROFILE_MANAGEMENT_SCOPE = {"SYSTEM_WIDE": 0,
+								"CURRENT_USER": 1}
 
 debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
 
@@ -396,6 +420,31 @@ def _colord_get_display_profile(display_no=0):
 	return None
 
 
+def _wcs_get_display_profile(devicekey,
+							 scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
+							 profile_type=COLORPROFILETYPE["ICC"],
+							 profile_subtype=COLORPROFILESUBTYPE["NONE"],
+							 profile_id=0):
+	buflen = ctypes.c_ulong()
+	if not mscms.WcsGetDefaultColorProfileSize(scope,
+											   devicekey,
+											   profile_type,
+											   profile_subtype,
+											   profile_id,
+											   ctypes.byref(buflen)):
+		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
+	buf = ctypes.create_unicode_buffer(u'\0' * buflen.value)
+	if not mscms.WcsGetDefaultColorProfile(scope, devicekey,
+										   profile_type,
+										   profile_subtype,
+										   profile_id,
+										   buflen,
+										   ctypes.byref(buf)):
+		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
+	if buf.value:
+		return ICCProfile(buf.value)
+
+
 def _winreg_get_display_profile(monkey, current_user=False):
 	filename = None
 	try:
@@ -488,19 +537,23 @@ def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0,
 
 
 def get_display_profile(display_no=0, x_hostname="", x_display=0, 
-						x_screen=0):
+						x_screen=0, win_get_correct_profile=False):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
-		if not "win32gui" in sys.modules:
+		if not "win32api" in sys.modules:
 			raise ImportError("pywin32 not available")
 		# The ordering will work as long as Argyll continues using
 		# EnumDisplayMonitors
 		monitors = util_win.get_real_display_devices_info()
 		moninfo = monitors[display_no]
-		if True:
-			# via GetICMProfile
-			buflen = ctypes.c_int()
+		if not mscms:
+			# Via GetICMProfile. Sucks royally in a multi-monitor setup
+			# where one monitor is disabled, because it'll always get
+			# the profile of the first monitor regardless if that is the active
+			# one or not. Yuck. Also, in this case it does not reflect runtime
+			# changes to profile assignments. Double yuck.
+			buflen = ctypes.c_ulong()
 			dc = win32gui.CreateDC(moninfo["Device"], None, None)
 			try:
 				ctypes.windll.gdi32.GetICMProfileW(dc, ctypes.byref(buflen),
@@ -514,9 +567,21 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			finally:
 				win32gui.DeleteDC(dc)
 		else:
-			# via registry - NEVER
-			device = util_win.get_active_display_device(moninfo["Device"])
+			if win_get_correct_profile:
+				# This would be the correct way. Unfortunately that is not
+				# what other apps (or Windows itself) do.
+				device = util_win.get_active_display_device(moninfo["Device"])
+			else:
+				# This is wrong, but it's what other apps use. Matches
+				# GetICMProfile sucky behavior i.e. should return the same
+				# profile, but atleast reflects runtime changes to profile
+				# assignments.
+				device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
 			if device:
+				if mscms:
+					# Via WCS
+					return _wcs_get_display_profile(unicode(device.DeviceKey))
+				# Via registry - NEVER
 				monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
 				# current user
 				profile = _winreg_get_display_profile(monkey, True)
