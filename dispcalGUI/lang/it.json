@@ -568,6 +568,7 @@
 		"*instrument.initializing": "Setting up the instrument, please wait...",
 		"*instrument.measure_ambient": "If your instrument requires a special cap to measure ambient, please attach it. To measure ambient light, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation. Press OK to commence measurement.",
 	"instrument.place_on_screen": "Posizionare lo strumento sulla finestra di test. Clicca su OK. Premere ESC, Q o CTRL^C per annullare, qualsiasi altro tasto avvierà la misurazione.",
+		"*instrument.place_on_screen.madvr": "(%i) Please place your %s on the test area",
 		"*instrument.reposition_sensor": "The measurement failed because the instrument sensor is in the wrong position. Please correct the sensor position, then click OK to continue.",
 		"*internal": "Internal",
 		"*invert_selection": "Invert selection",

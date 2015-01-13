@@ -568,6 +568,7 @@
 	"instrument.initializing": "Connexion à l'instrument...",
 	"instrument.measure_ambient": "Si votre instrument requiert une coiffe spéciale pour mesurer la lumière ambiante, veuillez l'attacher. Pour mesurer la lumière ambiante, placez l'instrument vers le haut, à côté de l'écran, ou si vous voulez mesurer une cabine de visionnage, placez une carte grise sans métamérisme à l'intérieur de la cabine et pointez l'instrument vers elle. Des instructions complémentaires sur la façon de mesurer la lumière ambiante peuvent être disponibles dans la documentation de votre instrument. Appuyez sur Valider pour commencer la mesure.",
 	"instrument.place_on_screen": "1. Cliquez sur Valider. Après 1 à 3 secondes, la fenêtre de mesure va apparaître.\n2. Placez l'instrument sur la fenêtre de mesure.\n3. Appuyez sur Échap, Q ou Ctrl+C pour abandonner, ou sur toute autre touche pour commencer la mesure.",
+		"*instrument.place_on_screen.madvr": "(%i) Please place your %s on the test area",
 	"instrument.reposition_sensor": "La mesure a échoué car le capteur de l'instrument est dans la mauvaise position. Veuillez corriger la position du capteur, puis cliquer sur OK pour continuer.",
 	"internal": "Interne",
 	"invert_selection": "Inverser la sélection",

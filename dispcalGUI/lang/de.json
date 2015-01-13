@@ -568,6 +568,7 @@
 	"instrument.initializing": "Initialisiere Messgerät, bitte warten...",
 	"instrument.measure_ambient": "Falls Ihr Messgerät einen speziellen Aufsatz zur Umgebungslichtmessung benötigt, bringen Sie diesen bitte an. Platzieren Sie das Messgerät zur Umgebungslichtmessung mit der nach oben gerichteten Messöffnung neben Ihrem Anzeigegerät, oder legen Sie zur Messung eines Normlichtkastens eine Metamerie-freie Graukarte hinein und richten Sie das Messgerät darauf. Weitere Infos zum Messen von Umgebungslicht entnehmen Sie bitte der Dokumentation Ihres Messgeräts. Klicken Sie zum Durchführen der Messung auf OK.",
 	"instrument.place_on_screen": "Setzen Sie das Messgerät auf die Messfläche und klicken Sie OK, um fortzufahren.",
+	"instrument.place_on_screen.madvr": "(%i) Bitte setzen Sie Ihr %s auf die Messfläche",
 	"instrument.reposition_sensor": "Die Messung konnte nicht durchgeführt werden, weil sich der Messgerätesensor in der falschen Position befindet. Bitte korrigieren Sie die Sensorposition und klicken Sie OK, um fortzufahren.",
 	"internal": "Intern",
 	"invert_selection": "Auswahl umkehren",

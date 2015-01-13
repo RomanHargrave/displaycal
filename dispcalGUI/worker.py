@@ -1823,7 +1823,7 @@ class Worker(object):
 				# hides the cursor and steals focus
 				start_new_thread(mac_app_activate, (1, wx.GetApp().AppName))
 			if (self.instrument_calibration_complete or
-				((config.is_virtual_display() or
+				((config.is_untethered_display() or
 				  getcfg("measure.darken_background")) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == "dispcal"))):
@@ -2875,6 +2875,30 @@ class Worker(object):
 						# Setup patch size to match pattern config
 						args.insert(-1, "-P0.5,0.5,%f" %
 										math.sqrt(patternconfig[0]))
+					if (not self.dispread_after_dispcal or
+						(cmdname == "dispcal" and ("-m" in args or
+												   "-u" in args))):
+						# Show place instrument on screen message with countdown
+						self.madtpg.set_device_gamma_ramp(None)
+						if not "-V" in args:
+							self.madtpg.disable_3dlut()
+						countdown = 15
+						for i in xrange(countdown):
+							if self.subprocess_abort or self.thread_abort:
+								break
+							self.madtpg.set_osd_text(
+								lang.getstr("instrument.place_on_screen.madvr",
+											(countdown - i,
+											 self.get_instrument_name())))
+							ts = time()
+							if i % 2 == 0:
+								# Flash test area red
+								self.madtpg.show_rgb(.8, 0, 0, .5, .5, .5)
+							else:
+								self.madtpg.show_rgb(.15, .15, .15, .5, .5, .5)
+							delay = time() - ts
+							if delay < 1:
+								sleep(1 - delay)
 					# Disconnect
 					self.madtpg.disconnect()
 				else:
@@ -3217,6 +3241,8 @@ class Worker(object):
 							return False
 			tries = 1
 			while tries > 0:
+				if self.subprocess_abort or self.thread_abort:
+					break
 				if use_pty:
 					if self.argyll_version >= [1, 2] and USE_WPOPEN and \
 					   os.environ.get("ARGYLL_NOT_INTERACTIVE"):

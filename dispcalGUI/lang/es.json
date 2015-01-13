@@ -568,6 +568,7 @@
 	"instrument.initializing": "Configurando instrumento, por favor espere...",
 	"instrument.measure_ambient": "Si su instrumento requiere de una tapa especial para medir la luz ambiente, por favor coloquela. Para medir la luz ambiente, coloque el instrumento hacia arriba, al lado de la pantalla. O si desea medir una caja de luz, coloque una carta de gris sin metamerismo dentro de la caja de luz y ponga el instrumento hacia ella. Instrucciones adicionales de como medir la luz ambiente pueden estar disponibles en la documentacion del instrumento. Presione OK para comenzar la medicion.",
 	"instrument.place_on_screen": "Coloque el instrumwento en la ventana de test. Pulse OK. Presione ESC, Q o CTRL^C para abortar, cualquier otra tecla para iniciar la medición.",
+		"*instrument.place_on_screen.madvr": "(%i) Please place your %s on the test area",
 		"*instrument.reposition_sensor": "The measurement failed because the instrument sensor is in the wrong position. Please correct the sensor position, then click OK to continue.",
 	"internal": "Interno",
 		"*invert_selection": "Invert selection",
