@@ -2460,7 +2460,6 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_measurement_modes()
 				self.update_controls()
 				self.update_displays()
-				self.update_estimated_measurement_time("cal")
 				self.set_testcharts()
 				self.update_layout()
 				self.panel.Thaw()
@@ -3093,6 +3092,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				items[1] += " (%s)" % lang.getstr("colorimeter_correction.file.none")
 		use_ccmx = (self.worker.instrument_can_use_ccxx(False) and
 					len(ccmx) > 1 and ccmx[1])
+		setcfg("display.technology",
+			   {"c": "CRT", "l": "LCD"}.get(getcfg("measurement_mode")))
 		if use_ccmx and getcfg("measurement_mode") != "auto":
 			mode = None
 			try:
@@ -3100,6 +3101,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			except (IOError, CGATS.CGATSError), exception:
 				safe_print("%s:" % ccmx[1], exception)
 			else:
+				setcfg("display.technology", cgats.queryv1("TECHNOLOGY"))
+				# Set appropriate measurement mode
 				# IMPORTANT: Make changes aswell in the following locations:
 				# - dispcalGUI.get_cgats_measurement_mode
 				mode = get_cgats_measurement_mode(cgats,
@@ -3123,6 +3126,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			tooltip = ""
 		self.update_main_controls()
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
+		self.update_estimated_measurement_times()
 
 	def update_main_controls(self):
 		""" Enable/disable the calibrate and profile buttons 
@@ -3613,7 +3617,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				rsteps *= 2
 				patches += rsteps
 			# Multiply by estimated repeats
-			patches *= mxrpts / (1 / .75)
+			patches *= mxrpts / 1.5
 			# Amount of precal patches is always 9
 			patches += 9
 			# Initial amount of cal patches is always isteps * 4
@@ -8964,7 +8968,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_measurement_modes()
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(force)
-		self.update_estimated_measurement_times()
 	
 	def import_colorimeter_corrections_handler(self, event, paths=None):
 		"""
@@ -9427,7 +9430,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					"override_min_display_update_delay_ms").SetValue(override)
 			self.update_display_delay_ctrl("min_display_update_delay_ms",
 										   override)
-			self.update_estimated_measurement_times()
 		# Check if display is calibratable at all. Unset calibration update
 		# checkbox if this is not the case.
 		if config.is_uncalibratable_display():
@@ -9583,7 +9585,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(update_measurement_mode=False)
-		self.update_estimated_measurement_times()
 		if (v and (((not "c" in v or "p" in v) and
 					float(self.get_black_point_correction()) > 0) or
 				   ("c" in v and

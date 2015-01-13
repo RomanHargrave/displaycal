@@ -637,6 +637,7 @@ defaults = {
 	"display.number": 1,
 	"display_lut.link": 1,
 	"display_lut.number": 1,
+	"display.technology": "LCD",
 	"displays": "",
 	"dry_run": 0,
 	"enumerate_ports.auto": 0,

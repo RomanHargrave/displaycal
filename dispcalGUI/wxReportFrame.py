@@ -687,6 +687,18 @@ class ReportFrame(BaseFrame):
 			if which == "chart" and not patches:
 				patches = int(self.chart_patches_amount.Label)
 			opatches = patches
+			# Scale integration time based on display technology
+			tech = getcfg("display.technology").lower()
+			prop = [1, 1]
+			if "plasma" in tech or "crt" in tech:
+				prop[0] = 1.9
+			elif "projector" in tech:
+				prop[0] = 2.2
+				prop[1] = 2.2
+			elif "oled" in tech:
+				prop[0] = 2.2
+			integration_time = [min(prop[i] * v, 20) for i, v in
+								enumerate(integration_time)]
 			# Sum integration time and default display update delay of 200 ms
 			# to get time per patch (ttp)
 			ttp = [v + .2 for v in integration_time]
