@@ -67,7 +67,7 @@ class ReportFrame(BaseFrame):
 			ctrl.changeCallback = getattr(self, "%s_ctrl_handler" % which)
 			if which not in ("devlink_profile", "output_profile"):
 				if which == "chart":
-					wildcard = "\.(cie|ti1|ti2|ti3)$"
+					wildcard = "\.(cie|ti1|ti3)$"
 				else:
 					wildcard = "\.(icc|icm)$"
 				history = []
@@ -272,11 +272,18 @@ class ReportFrame(BaseFrame):
 			show_result_dialog(exception, self)
 		else:
 			data_format = cgats.queryv1("DATA_FORMAT")
+			accurate = cgats.queryv1("ACCURATE_EXPECTED_VALUES") == "true"
 			if data_format:
+				basename, ext = os.path.splitext(chart)
 				for column in data_format.itervalues():
 					column_prefix = column.split("_")[0]
 					if (column_prefix in ("CMYK", "LAB", "RGB", "XYZ") and
-						column_prefix not in values):
+						column_prefix not in values and
+						(((ext.lower() == ".cie" or accurate) and
+						  column_prefix in ("LAB", "XYZ")) or
+						 (ext.lower() == ".ti1" and
+						  column_prefix in ("CMYK", "RGB")) or
+						 (ext.lower() not in (".cie", ".ti1")))):
 						values.append(column_prefix)
 				if values:
 					self.panel.Freeze()
@@ -284,9 +291,9 @@ class ReportFrame(BaseFrame):
 					self.fields_ctrl.GetContainingSizer().Layout()
 					self.panel.Thaw()
 					fields = getcfg("measurement_report.chart.fields")
-					if chart.lower().endswith(".ti1"):
+					if ext.lower() == ".ti1":
 						index = 0
-					elif "RGB" in values and not chart.lower().endswith(".cie"):
+					elif "RGB" in values and not ext.lower() == ".cie":
 						index = values.index("RGB")
 					elif "CMYK" in values:
 						index = values.index("CMYK")
