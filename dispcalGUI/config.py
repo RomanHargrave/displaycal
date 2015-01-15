@@ -948,7 +948,8 @@ def getcfg(name, fallback=True):
 		else:
 			if debug and not hasdef: 
 				print "Warning - unknown option:", name
-	if (value and name.endswith("file") and
+	if (value and isinstance(value, basestring) and
+		name.endswith("file") and
 		name != "colorimeter_correction_matrix_file" and
 		(name != "testchart.file" or value != "auto") and
 		(not os.path.isabs(value) or not os.path.exists(value))):
