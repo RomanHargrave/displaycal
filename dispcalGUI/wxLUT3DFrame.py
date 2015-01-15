@@ -352,7 +352,7 @@ class LUT3DFrame(BaseFrame):
 					# 3D LUT was created automatically after profiling, show
 					# usual profile summary window
 					self.profile_finish(True,
-										getcfg("calibration.file"),
+										getcfg("calibration.file", False),
 										lang.getstr("calibration_profiling.complete"), 
 										lang.getstr("profiling.incomplete"))
 				else:

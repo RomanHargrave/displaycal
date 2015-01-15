@@ -541,7 +541,7 @@ def get_argyll_version_string(name, silent=False, paths=None):
 
 def get_current_profile_path():
 	profile = None
-	profile_path = getcfg("calibration.file")
+	profile_path = getcfg("calibration.file", False)
 	if profile_path:
 		filename, ext = os.path.splitext(profile_path)
 		if ext.lower() in (".icc", ".icm"):
@@ -6136,7 +6136,7 @@ usage: spotread [-options] [logfile]
 			   self.dispcal_create_fast_matrix_shaper:
 				args.append("-o")
 			if getcfg("calibration.update") and not dry_run:
-				cal = getcfg("calibration.file")
+				cal = getcfg("calibration.file", False)
 				calcopy = os.path.join(inoutfile + ".cal")
 				filename, ext = os.path.splitext(cal)
 				ext = ".cal"
@@ -6175,7 +6175,7 @@ usage: spotread [-options] [logfile]
 						return None, None
 				if getcfg("profile.update"):
 					profile_path = os.path.splitext(
-						getcfg("calibration.file"))[0] + profile_ext
+						getcfg("calibration.file", False))[0] + profile_ext
 					result = check_profile_isfile(profile_path)
 					if isinstance(result, Exception):
 						return result, None
@@ -7447,7 +7447,7 @@ usage: spotread [-options] [logfile]
 				result = result2
 		elif not isinstance(result, Exception) and result and getcfg("trc"):
 			setcfg("last_cal_path", dst_pathname + ".cal")
-			setcfg("calibration.file.previous", getcfg("calibration.file"))
+			setcfg("calibration.file.previous", getcfg("calibration.file", False))
 			if (getcfg("profile.update") or
 				self.dispcal_create_fast_matrix_shaper):
 				setcfg("last_cal_or_icc_path", dst_pathname + profile_ext)

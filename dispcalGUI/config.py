@@ -607,7 +607,7 @@ defaults = {
 	"calibration.black_point_rate": 4.0,
 	"calibration.black_point_rate.enabled": 0,
 	"calibration.continue_next": 0,
-	"calibration.file": None,
+	"calibration.file": "presets/default.icc",
 	"calibration.file.previous": None,
 	"calibration.interactive_display_adjustment": 1,
 	"calibration.interactive_display_adjustment.backup": 1,
@@ -874,6 +874,7 @@ def getcfg(name, fallback=True):
 	"""
 	if name == "profile.name.expanded" and is_ccxx_testchart():
 		name = "measurement.name.expanded"
+	value = None
 	hasdef = name in defaults
 	if hasdef:
 		defval = defaults[name]
@@ -915,40 +916,10 @@ def getcfg(name, fallback=True):
 				value = "h"
 			elif name == "trc.type" and getcfg("trc") in valid_values["trc"]:
 				value = "g"
-			elif (value and name.endswith("file") and
-				  name != "colorimeter_correction_matrix_file" and
-				  (name != "testchart.file" or value != "auto") and
-				  (not os.path.isabs(value) or not os.path.exists(value))):
-				  # colorimeter_correction_matrix_file is special because it's
-				  # not (only) a path
-				if debug:
-					print "%s does not exist: %s" % (name, value),
-				# Normalize path (important, this turns altsep into sep under
-				# Windows)
-				value = os.path.normpath(value)
-				# Check if this is a relative path covered by data_dirs
-				if (value.split(os.path.sep)[-3:-2] == [appname] or
-					not os.path.isabs(value)) and (
-				   value.split(os.path.sep)[-2:-1] == ["presets"] or 
-				   value.split(os.path.sep)[-2:-1] == ["ref"] or 
-				   value.split(os.path.sep)[-2:-1] == ["ti1"]):
-					value = os.path.join(*value.split(os.path.sep)[-2:])
-					value = get_data_path(value)
-				elif hasdef:
-					value = None
-				if not value and hasdef:
-					value = defval
-				if debug:
-					print "- falling back to", value
 			elif name in valid_values and value not in valid_values[name]:
 				if debug:
 					print "Invalid config value for %s: %s" % (name, value),
-				if hasdef:
-					value = defval
-				else:
-					value = None
-				if debug:
-					print "- falling back to", value
+				value = None
 			elif name == "copyright":
 				# Make sure dispcalGUI and Argyll version are up-to-date
 				pattern = re.compile("(%s(?:\s*v(?:ersion|\.)?)?\s*)\d+(?:\.\d+)*" %
@@ -969,13 +940,39 @@ def getcfg(name, fallback=True):
 				# Worker.add_measurement_features(). That way we can have
 				# compatibility with old and current Argyll CMS
 				value = {"n": "l", "r": "c"}.get(value, value)
-			return value
-	if hasdef and fallback:
-		value = defval
-	else:
-		if debug and not hasdef: 
-			print "Warning - unknown option:", name
-		value = None
+	if value is None:
+		if hasdef and fallback:
+			value = defval
+			if debug:
+				print "- falling back to", value
+		else:
+			if debug and not hasdef: 
+				print "Warning - unknown option:", name
+	if (value and name.endswith("file") and
+		name != "colorimeter_correction_matrix_file" and
+		(name != "testchart.file" or value != "auto") and
+		(not os.path.isabs(value) or not os.path.exists(value))):
+		# colorimeter_correction_matrix_file is special because it's
+		# not (only) a path
+		if debug:
+			print "%s does not exist: %s" % (name, value),
+		# Normalize path (important, this turns altsep into sep under
+		# Windows)
+		value = os.path.normpath(value)
+		# Check if this is a relative path covered by data_dirs
+		if (value.split(os.path.sep)[-3:-2] == [appname] or
+			not os.path.isabs(value)) and (
+		   value.split(os.path.sep)[-2:-1] == ["presets"] or 
+		   value.split(os.path.sep)[-2:-1] == ["ref"] or 
+		   value.split(os.path.sep)[-2:-1] == ["ti1"]):
+			value = os.path.join(*value.split(os.path.sep)[-2:])
+			value = get_data_path(value)
+		elif hasdef:
+			value = None
+		if not value and hasdef:
+			value = defval
+		if debug:
+			print "- falling back to", value
 	return value
 
 
@@ -1003,7 +1000,7 @@ def get_ccxx_testchart():
 
 def get_current_profile(include_display_profile=False):
 	""" Get the currently selected profile (if any) """
-	path = getcfg("calibration.file")
+	path = getcfg("calibration.file", False)
 	if path:
 		import ICCProfile as ICCP
 		try:
@@ -1185,7 +1182,7 @@ def is_ccxx_testchart(testchart=None):
 
 
 def is_profile(filename=None, include_display_profile=False):
-	filename = filename or getcfg("calibration.file")
+	filename = filename or getcfg("calibration.file", False)
 	if filename:
 		if os.path.exists(filename):
 			import ICCProfile as ICCP

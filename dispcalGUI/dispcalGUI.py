@@ -1181,7 +1181,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		# Check for and load default calibration
 		if len(self.worker.displays):
-			if getcfg("calibration.file"):
+			if getcfg("calibration.file", False):
 				# Load LUT curves from last used .cal file
 				self.load_cal(silent=True)
 			else:
@@ -1659,7 +1659,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		settings = [lang.getstr("settings.new")]
 		for cal in self.recent_cals[1:]:
 			lstr = lang.getstr(os.path.basename(cal))
-			if cal == getcfg("calibration.file") and getcfg("settings.changed"):
+			if cal == getcfg("calibration.file", False) and getcfg("settings.changed"):
 				lstr = "* " + lstr
 			settings.append(lstr)
 		self.calibration_file_ctrl.SetItems(settings)
@@ -2586,7 +2586,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		]
 		override_default = {
 			"calibration.black_luminance": None,
-			"calibration.file": None,
 			"calibration.luminance": None,
 			"gamap_src_viewcond": "mt",
 			"gamap_out_viewcond": "mt",
@@ -2644,7 +2643,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if setchanged:
 				setcfg("settings.changed", 1)
 			self.worker.options_dispcal = []
-			if getcfg("calibration.file"):
+			if getcfg("calibration.file", False):
 				setcfg("calibration.file", None)
 				# Load LUT curves from current display profile (if any, and if 
 				# it contains curves)
@@ -3190,9 +3189,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.buttonpanel.Layout()
 
 		self.lut3d_create_btn.Enable(is_profile() and
-									 getcfg("calibration.file")
+									 getcfg("calibration.file", False)
 									 not in self.presets)
-		if getcfg("calibration.file") in self.presets:
+		if getcfg("calibration.file", False) in self.presets:
 			self.measurement_report_btn.Disable()
 		
 		self.panel.Thaw()
@@ -3200,7 +3199,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_calibration_file_ctrl(self, silent=False):
 		""" Update items shown in the calibration file control and set
 		a tooltip with the path of the currently selected file """
-		cal = getcfg("calibration.file")
+		cal = getcfg("calibration.file", False)
 		
 		if cal:
 			result = check_file_isfile(cal, silent=silent)
@@ -4160,7 +4159,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		""" Show a dialog for user to confirm or cancel discarding changed
 		settings """
 		sel = self.calibration_file_ctrl.GetSelection()
-		cal = getcfg("calibration.file") or ""
+		cal = getcfg("calibration.file", False) or ""
 		if not cal in self.recent_cals:
 			self.recent_cals.append(cal)
 		# The case-sensitive index could fail because of 
@@ -5431,7 +5430,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not check_set_argyll_bin():
 			return
 		if profile_path is None:
-			profile_path = getcfg("calibration.file")
+			profile_path = getcfg("calibration.file", False)
 		if profile_path:
 			result = check_file_isfile(profile_path)
 			if isinstance(result, Exception):
@@ -5456,7 +5455,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			setcfg("calibration.file.previous", getcfg("calibration.file"))
+			setcfg("calibration.file.previous", getcfg("calibration.file", False))
 			self.profile_finish(
 				True, profile_path=profile_path, 
 				skip_scripts=True,
@@ -6342,7 +6341,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		to currently configured file if cal parameter is not given. """
 		load_vcgt = getcfg("calibration.autoload") or cal
 		if not cal:
-			cal = getcfg("calibration.file")
+			cal = getcfg("calibration.file", False)
 		if cal:
 			if check_set_argyll_bin():
 				if verbose >= 1 and load_vcgt:
@@ -6858,7 +6857,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		"""
 		if config.is_uncalibratable_display():
 			return False
-		cal = getcfg("calibration.file")
+		cal = getcfg("calibration.file", False)
 		if cal:
 			filename, ext = os.path.splitext(cal)
 			if ext.lower() in (".icc", ".icm"):
@@ -7258,7 +7257,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.start_timers(True)
 					setcfg("calibration.file.previous", None)
 					return
-				if getcfg("calibration.file") != profile_path:
+				if getcfg("calibration.file", False) != profile_path:
 					(options_dispcal, 
 					 options_colprof) = get_options_from_profile(profile)
 					if options_dispcal or options_colprof:
@@ -7571,7 +7570,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								  stop_timers=False)
 		else:
 			if self.modaldlg.preview:
-				if getcfg("calibration.file"):
+				if getcfg("calibration.file", False):
 					# Load LUT curves from last used .cal file
 					self.load_cal(silent=True)
 					if not getcfg("calibration.autoload"):
@@ -7909,7 +7908,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									 self.lut_viewer_close_handler, 
 									 self.lut_viewer)
 			if not profile and not hasattr(self, "current_cal"):
-				path = getcfg("calibration.file")
+				path = getcfg("calibration.file", False)
 				if path:
 					name, ext = os.path.splitext(path)
 					if ext.lower() in (".icc", ".icm"):
@@ -9433,7 +9432,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("display.number", display_no + 1)
 			if load_lut:
 				profile = get_display_profile(display_no)
-				if not getcfg("calibration.file"):
+				if not getcfg("calibration.file", False):
 					# Current
 					self.profile_info_btn.Enable(bool(profile))
 		if self.display_lut_link_ctrl.IsShown():
@@ -9503,7 +9502,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
 		##if (event and not isinstance(event, CustomEvent) and
-			##not getcfg("calibration.file")):
+			##not getcfg("calibration.file", False)):
 			### Set measurement report dest profile to current
 			##setcfg("measurement_report.output_profile",
 				   ##get_current_profile_path())
@@ -9622,7 +9621,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
 		cal_changed = v != getcfg("measurement_mode") and \
-					  getcfg("calibration.file") not in self.presets
+					  getcfg("calibration.file", False) not in self.presets
 		if cal_changed:
 			self.cal_changed()
 		setcfg("measurement_mode", (strtr(v, {"V": "", 
@@ -10801,7 +10800,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		return self.quality_ab[self.profile_quality_ctrl.GetValue() + 1]
 
 	def profile_settings_changed(self):
-		cal = getcfg("calibration.file")
+		cal = getcfg("calibration.file", False)
 		if cal:
 			filename, ext = os.path.splitext(cal)
 			if ext.lower() in (".icc", ".icm"):
@@ -11004,7 +11003,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						   bitmap=geticon(32, "dialog-error"))
 				self.set_default_testchart(force=True)
 				return
-			if path != getcfg("calibration.file"):
+			if path != getcfg("calibration.file", False):
 				self.profile_settings_changed()
 			if debug:
 				safe_print("[D] set_testchart testchart.file:", path)
@@ -11102,7 +11101,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if set_argyll_bin(self):
 			self.check_update_controls() or self.update_menus()
 			if len(self.worker.displays):
-				if getcfg("calibration.file"):
+				if getcfg("calibration.file", False):
 					# Load LUT curves from last used .cal file
 					self.load_cal(silent=True)
 				else:
@@ -11267,7 +11266,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							recent_cals.append(recent_cal)
 					setcfg("recent_cals", os.pathsep.join(recent_cals))
 					self.calibration_file_ctrl.Delete(sel)
-					cal = getcfg("calibration.file") or ""
+					cal = getcfg("calibration.file", False) or ""
 					if not cal in self.recent_cals:
 						self.recent_cals.append(cal)
 					# The case-sensitive index could fail because of 
@@ -11743,7 +11742,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if len(self.recent_cals) > sel and self.recent_cals[sel] == path:
 					self.recent_cals.remove(self.recent_cals[sel])
 					self.calibration_file_ctrl.Delete(sel)
-					cal = getcfg("calibration.file") or ""
+					cal = getcfg("calibration.file", False) or ""
 					if not cal in self.recent_cals:
 						self.recent_cals.append(cal)
 					# The case-sensitive index could fail because of 
@@ -11912,7 +11911,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.lut_viewer.Refresh()
 
 	def delete_calibration_handler(self, event):
-		cal = getcfg("calibration.file")
+		cal = getcfg("calibration.file", False)
 		if cal and os.path.exists(cal):
 			caldir = os.path.dirname(cal)
 			try:
