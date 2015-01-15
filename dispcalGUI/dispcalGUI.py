@@ -12292,8 +12292,10 @@ class StartupFrame(wx.Frame):
 				self.splash_version_anim.append(imcopy.ConvertToBitmap())
 		self.frame = 0
 		clientarea = self.GetDisplay().ClientArea
-		self.splash_x, self.splash_y = (int(clientarea[2] / 2.0 -
+		self.splash_x, self.splash_y = (clientarea[0] +
+										int(clientarea[2] / 2.0 -
 											self.splash_bmp.Size[0] / 2.0),
+										clientarea[1] +
 										int(clientarea[3] / 2.0 -
 											self.splash_bmp.Size[1] / 2.0))
 		self.Pulse("\n".join([lang.getstr("welcome_back"
