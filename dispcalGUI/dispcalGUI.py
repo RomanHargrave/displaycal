@@ -1091,6 +1091,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_enable_size_controls = LUT3DFrame.__dict__["lut3d_enable_size_controls"]
 	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
 	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
+	lut3d_install = LUT3DFrame.__dict__["lut3d_install"]
 	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
 	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
 	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
@@ -3188,7 +3189,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.measurement_report_btn.Show(mr_btn_show)
 		self.buttonpanel.Layout()
 
-		self.lut3d_create_btn.Enable(is_profile(None, True) and
+		self.lut3d_create_btn.Enable(is_profile() and
 									 getcfg("calibration.file")
 									 not in self.presets)
 		if getcfg("calibration.file") in self.presets:
@@ -3992,6 +3993,32 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.lut3dframe.update_controls()
 		self.lut3d_input_profile_ctrl.SetToolTipString(
 			getcfg("3dlut.input.profile"))
+
+	def lut3d_set_path(self):
+		# Get 3D LUT options
+		profile_save_path = os.path.splitext(getcfg("calibration.file"))[0]
+		lut3d = [getcfg("3dlut.gamap.use_b2a") and "g" or "G",
+				 "i" + getcfg("3dlut.rendering_intent"),
+				 "r%i" % getcfg("3dlut.size"),
+				 "e" + getcfg("3dlut.encoding.input"),
+				 "E" + getcfg("3dlut.encoding.output"),
+				 "I%s:%s:%s" % (getcfg("3dlut.trc_gamma_type"),
+								getcfg("3dlut.trc_output_offset"),
+								getcfg("3dlut.trc_gamma"))]
+		if getcfg("3dlut.format") == "3dl":
+			lut3d.append(str(getcfg("3dlut.bitdepth.input")))
+		if getcfg("3dlut.format") in ("3dl", "mga"):
+			lut3d.append(str(getcfg("3dlut.bitdepth.output")))
+		lut3d_ext = getcfg("3dlut.format")
+		if lut3d_ext == "eeColor":
+			lut3d_ext = "txt"
+		elif lut3d_ext == "madVR":
+			lut3d_ext = "3dlut"
+		self.lut3d_path = ".".join([profile_save_path,
+									os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0],
+									"%X" % (crc32("-".join(lut3d))
+											& 0xFFFFFFFF),
+									lut3d_ext])
 
 	def lut3d_show_controls(self):
 		show = True#bool(getcfg("3dlut.create"))
@@ -7252,6 +7279,16 @@ class MainFrame(ReportFrame, BaseFrame):
 							setcfg("3dlut.output.profile", profile_path)
 							setcfg("measurement_report.output_profile", profile_path)
 							self.update_controls(update_profile_name=False)
+				# Get 3D LUT options
+				self.lut3d_set_path()
+				# Check if we want to automatically create 3D LUT
+				if (getcfg("3dlut.create") and
+					not (os.path.isfile(self.lut3d_path) or self.do_install)):
+					# Update curve viewer if shown
+					self.lut_viewer_load_lut(profile=profile)
+					# Create 3D LUT
+					self.lut3d_create_handler(None)
+					return
 				if "meta" in profile.tags:
 					for key in ("avg", "max", "rms"):
 						try:
@@ -7303,7 +7340,15 @@ class MainFrame(ReportFrame, BaseFrame):
 											   not self.do_install):
 				installable = False
 				title = appname
-				ok = lang.getstr("3dlut.create")
+				if self.lut3d_path and os.path.isfile(self.lut3d_path):
+					# 3D LUT file already exists
+					if getcfg("3dlut.format") == "madVR":
+						# madVR support 3D LUT installation
+						ok = lang.getstr("3dlut.install")
+					else:
+						ok = lang.getstr("3dlut.save_as")
+				else:
+					ok = lang.getstr("3dlut.create")
 				cancel = lang.getstr("cancel")
 			else:
 				installable = True
@@ -7492,7 +7537,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			if config.is_virtual_display() or (getcfg("3dlut.create") and
 											   not self.do_install):
 				self.profile_finish_consumer(False)
-				self.lut3d_create_handler(None)
+				if self.lut3d_path and os.path.isfile(self.lut3d_path):
+					# 3D LUT file already exists
+					if getcfg("3dlut.format") == "madVR":
+						# madVR supports 3D LUT installation
+						self.lut3d_install(self.lut3d_path)
+					else:
+						# Copy to user-selectable location
+						self.lut3d_create_handler(None,
+												  copy_from_path=self.lut3d_path)
+				else:
+					# Need to create 3D LUT
+					self.lut3d_create_handler(None)
 			else:
 				if getcfg("profile.install_scope") in ("l", "n"):
 					result = self.worker.authenticate("dispwin",
@@ -7848,6 +7904,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not lut_viewer:
 				self.lut_viewer = LUTFrame(None, -1)
 				self.lut_viewer.client.worker = self.worker
+				self.lut_viewer.update_controls()
 				self.lut_viewer.Bind(wx.EVT_CLOSE, 
 									 self.lut_viewer_close_handler, 
 									 self.lut_viewer)

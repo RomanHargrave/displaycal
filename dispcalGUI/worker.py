@@ -2863,7 +2863,8 @@ class Worker(object):
 			else:
 				self.sessionlogfile = LogFile(working_basename, working_dir)
 			self.sessionlogfiles[working_basename] = self.sessionlogfile
-		if cmdname in ("dispcal", "dispread") and get_arg("-dmadvr", args) and madvr:
+		if cmdname in ("dispcal", "dispread",
+					   "dispwin") and get_arg("-dmadvr", args) and madvr:
 			# Try to connect to running madTPG or launch a new instance
 			try:
 				if not hasattr(self, "madtpg"):
@@ -2873,9 +2874,10 @@ class Worker(object):
 					patternconfig = self.madtpg.get_pattern_config()
 					if patternconfig:
 						# Setup patch size to match pattern config
-						args.insert(-1, "-P0.5,0.5,%f" %
+						args.insert(0, "-P0.5,0.5,%f" %
 										math.sqrt(patternconfig[0]))
-					if (not self.dispread_after_dispcal or
+					if (not (cmdname == "dispwin" or
+							 self.dispread_after_dispcal) or
 						(cmdname == "dispcal" and ("-m" in args or
 												   "-u" in args))):
 						# Show place instrument on screen message with countdown

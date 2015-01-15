@@ -4,6 +4,7 @@
 
 import ctypes
 import os
+import struct
 import _winreg
 
 import localization as lang
@@ -30,9 +31,11 @@ class MadTPG(object):
 	def __init__(self):
 		# We only expose stuff we might actually use.
 		self._methodnames = ("ConnectEx", "Disable3dlut", "GetDeviceGammaRamp",
+							 "GetSelected3dlut", "GetVersion",
 							 "SetDeviceGammaRamp", "SetOsdText",
 							 "GetPatternConfig", "SetPatternConfig",
-							 "ShowProgressBar", "SetProgressBarPos", "ShowRGB",
+							 "ShowProgressBar", "SetProgressBarPos",
+							 "SetSelected3dlut", "ShowRGB",
 							 "ShowRGBEx", "Load3dlutFile", "Disconnect",
 							 "Quit")
 
@@ -91,7 +94,7 @@ class MadTPG(object):
 
 	def get_device_gamma_ramp(self):
 		""" Calls the win32 API 'GetDeviceGammaRamp' """
-		ramp = ((ctypes.c_ushort * 3) * 256)()
+		ramp = ((ctypes.c_ushort * 256) * 3)()
 		result = self.mad.madVR_GetDeviceGammaRamp(ramp)
 		return result and ramp
 
@@ -111,6 +114,17 @@ class MadTPG(object):
 												   (area, bglvl, bgmode,
 												    border)])
 		return result and (area.value, bglvl.value, bgmode.value, border.value)
+
+	def get_selected_3dlut(self):
+		thr3dlut = ctypes.c_ulong()
+		result = self.mad.madVR_GetSelected3dlut(ctypes.byref(thr3dlut))
+		return result and thr3dlut
+
+	def get_version(self):
+		version = (ctypes.c_char * 4)()
+		result = self.mad.madVR_GetVersion(ctypes.byref(version))
+		version = struct.unpack(">I", version.raw)[0]
+		return result and version
 
 	def show_rgb(self, r, g, b, bgr=None, bgg=None, bgb=None):
 		""" Shows a specific RGB color test pattern """
