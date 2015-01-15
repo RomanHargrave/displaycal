@@ -12342,6 +12342,18 @@ class StartupFrame(wx.Frame):
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.SetTransparent(0)
 		self._alpha = 0
+
+		# Startup sound
+		# Needs to be stereo!
+		try:
+			self.startup_sound = wx.Sound(get_data_path("theme/intro_new.wav") or "")
+		except NotImplementedError:
+			pass
+
+		if (getattr(self, "startup_sound", None) and
+			self.startup_sound.IsOk()):
+			self.startup_sound.Play(wx.SOUND_ASYNC)
+
 		self.Show()
 
 		# We need to use CallLater instead of CallAfter otherwise dialogs
