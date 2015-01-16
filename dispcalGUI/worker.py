@@ -1405,14 +1405,10 @@ class Worker(object):
 			else:
 				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()
-		if (measurement_mode and (measurement_mode != "p" or
-								  self.get_instrument_name() in ("ColorHug",
-																 "ColorHug2")) and
-			not get_arg("-y", args) and
+		if (measurement_mode and not get_arg("-y", args) and
 			self.get_instrument_name() != "specbos 1201"):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
-				# Only ColorHug (2) supports -yp parameter
 				# The specbos 1201 (unlike 1211) doesn't support measurement
 				# mode selection
 				if self.argyll_version >= [1, 5, 0]:
