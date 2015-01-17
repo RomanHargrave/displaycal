@@ -3093,7 +3093,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		use_ccmx = (self.worker.instrument_can_use_ccxx(False) and
 					len(ccmx) > 1 and ccmx[1])
 		setcfg("display.technology",
-			   {"c": "CRT", "l": "LCD"}.get(getcfg("measurement_mode")))
+			   self.worker.get_instrument_measurement_modes().get(
+				getcfg("measurement_mode")))
 		if use_ccmx and getcfg("measurement_mode") != "auto":
 			mode = None
 			try:
