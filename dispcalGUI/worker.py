@@ -6665,7 +6665,7 @@ usage: spotread [-options] [logfile]
 		percentage = None
 		msg = self.recent.read(FilteredStream.triggers)
 		lastmsg = self.lastmsg.read(FilteredStream.triggers).strip()
-		if re.match("\\s*\\d+%", lastmsg):
+		if re.match(r"\s*\d+%\s*$", lastmsg):
 			# colprof
 			try:
 				percentage = int(self.lastmsg.read().split("%")[0])
