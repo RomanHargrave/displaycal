@@ -3496,13 +3496,11 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.ambient_viewcond_adjust_textctrl_label,
 					 self.ambient_measure_btn,
 					 self.black_point_correction_label,
-					 self.black_point_correction_auto_cb,
-					 self.black_point_rate_label,
-					 self.black_point_rate_ctrl,
-					 self.black_point_rate_floatctrl):
+					 self.black_point_correction_auto_cb):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   self.trc_ctrl.GetSelection() > 0 and
 										   show_advanced_options)
+		self.update_black_point_rate_ctrl()
 		for ctrl in (self.calibration_quality_label,
 					 self.calibration_quality_ctrl,
 					 self.calibration_quality_info,
@@ -3529,7 +3527,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_black_point_rate_ctrl(self):
 		self.panel.Freeze()
 		enable = not(self.calibration_update_cb.GetValue())
-		show = (bool(getcfg("show_advanced_options")) and
+		show = (self.trc_ctrl.GetSelection() > 0 and
+				bool(getcfg("show_advanced_options")) and
 				defaults["calibration.black_point_rate.enabled"])
 		self.black_point_rate_label.GetContainingSizer().Show(
 			self.black_point_rate_label,
