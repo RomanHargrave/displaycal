@@ -22,6 +22,7 @@ from options import debug, test, verbose
 from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanel, CustomCheckBox,
 					   CustomGrid, FlatShadedButton, numpad_keycodes)
 import CGATS
+import audio
 import colormath
 import config
 import localization as lang
@@ -105,11 +106,8 @@ class UntetheredFrame(BaseFrame):
 		sizer.Add(self.measure_btn, 0, wx.RIGHT, border=6)
 		# Sound when measuring
 		# Needs to be stereo!
-		try:
-			self.measurement_sound = wx.Sound(get_data_path("beep.wav") or "")
-			self.commit_sound = wx.Sound(get_data_path("camera_shutter.wav") or "")
-		except NotImplementedError:
-			pass
+		self.measurement_sound = audio.Sound(get_data_path("beep.wav"))
+		self.commit_sound = audio.Sound(get_data_path("camera_shutter.wav"))
 		if getcfg("measurement.play_sound"):
 			bitmap = geticon(16, "sound_volume_full")
 		else:
@@ -446,10 +444,8 @@ class UntetheredFrame(BaseFrame):
 			self.last_error = txt
 		if "Result is XYZ:" in txt:
 			self.last_error = None
-			if (getattr(self, "measurement_sound", None) and
-				getcfg("measurement.play_sound") and
-				self.measurement_sound.IsOk()):
-				self.measurement_sound.Play(wx.SOUND_ASYNC)
+			if getcfg("measurement.play_sound"):
+				self.measurement_sound.safe_play()
 			# Result is XYZ: d.dddddd d.dddddd d.dddddd, D50 Lab: d.dddddd d.dddddd d.dddddd
 			XYZ = re.search("XYZ:\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)",
 							txt)
@@ -479,10 +475,8 @@ class UntetheredFrame(BaseFrame):
 				 abs(delta["C"]) < getcfg("untethered.max_delta.chroma"))):
 				self.measure_count += 1
 				if self.measure_count == 2:
-					if (getattr(self, "commit_sound", None) and
-						getcfg("measurement.play_sound") and
-						self.commit_sound.IsOk()):
-						self.commit_sound.Play(wx.SOUND_ASYNC)
+					if getcfg("measurement.play_sound"):
+						self.commit_sound.safe_play()
 					self.measure_count = 0
 					# Reset row label
 					self.grid.SetRowLabelValue(self.index, "%i" % (self.index + 1))

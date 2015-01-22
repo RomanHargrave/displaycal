@@ -1,3 +1,20 @@
-Default theme
+Theme files
+===========
 
-This theme uses some icons from Gnome 2.18 icon theme (http://art.gnome.org/themes/icon/1352) licensed under GPL.
+This is the default (and only) theme.
+
+Copyright information
+---------------------
+
+This theme uses some icons from various 3rd party authors licensed under GPL.
+See sources, misc/debian.copyright for extended copyright information.
+
+Audio credits
+-------------
+
+CC0 audio files from freesounds.org have been used to create some of the sound effects. These are:
+
+intro_new.wav: pulse3D.wav by Sclolex, space_string.wav by fons
+engine_hum_loop.wav: EnginesTurbinesOne.wav by pushkin
+
+Audio processing was done in Audacity.

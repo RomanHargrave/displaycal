@@ -722,7 +722,8 @@ class TestchartEditor(BaseFrame):
 						  wargs=(path, ),
 						  progress_msg=lang.getstr("testchart.read"),
 						  parent=self, progress_start=500, cancelable=False,
-						  continue_next=True, show_remaining_time=False)
+						  continue_next=True, show_remaining_time=False,
+						  fancy=False)
 
 	def csv_convert(self, path):
 		# Read CSV file and get rows
@@ -1403,7 +1404,8 @@ END_DATA""")
 						  self.tc_add_ti3, cargs=(profile, ),
 						  wargs=(chart, img, use_gamut, profile), wkwargs={},
 						  progress_msg=lang.getstr("testchart.add_ti3_patches"),
-						  parent=self, progress_start=500)
+						  parent=self, progress_start=500,
+						  fancy=False)
 		
 	def tc_add_ti3_consumer(self, result, profile=None):
 		if isinstance(result, Exception):
@@ -2060,7 +2062,8 @@ END_DATA""")
 			self.worker.start(lambda result: None, self.tc_export,
 							  wargs=(path, filter_index), wkwargs={},
 							  progress_msg=lang.getstr("export"),
-							  parent=self, progress_start=500)
+							  parent=self, progress_start=500,
+							  fancy=False)
 	
 	def tc_export(self, path, filter_index):
 		if filter_index < 5:
@@ -2489,7 +2492,8 @@ END_DATA""")
 						  progress_title=lang.getstr("testchart.read"),
 						  progress_msg=lang.getstr("testchart.read"),
 						  parent=self, progress_start=500, cancelable=False,
-						  resume=resume, show_remaining_time=False)
+						  resume=resume, show_remaining_time=False,
+						  fancy=False)
 
 	def tc_load_cfg_from_ti1_worker(self, path):
 		path = safe_unicode(path)

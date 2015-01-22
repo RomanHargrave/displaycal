@@ -24,6 +24,7 @@ from meta import name as appname
 from ordereddict import OrderedDict
 from util_str import safe_unicode, wrap
 from wxwindows import BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes
+import audio
 import config
 import localization as lang
 
@@ -671,10 +672,7 @@ class DisplayAdjustmentFrame(BaseFrame):
 		
 		# Sound when measuring
 		# Needs to be stereo!
-		try:
-			self.measurement_sound = wx.Sound(get_data_path("beep.wav") or "")
-		except NotImplementedError:
-			pass
+		self.measurement_sound = audio.Sound(get_data_path("beep.wav"))
 		
 		# Add buttons
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -1218,11 +1216,8 @@ class DisplayAdjustmentFrame(BaseFrame):
 				set_label_and_size(self.lb.GetCurrentPage().txt["black_point"], label)
 		if ((current_br or current_bl or xy_dE_rgb) and
 			self.lb.GetCurrentPage().ctrltype != "check_all"):
-			if (getattr(self, "measurement_sound", None) and
-				#self.measurement_play_sound_ctrl.GetValue() and
-				getcfg("measurement.play_sound") and
-				self.measurement_sound.IsOk()):
-				self.measurement_sound.Play(wx.SOUND_ASYNC)
+			if getcfg("measurement.play_sound"):
+				self.measurement_sound.safe_play()
 			self.indicator_ctrl.SetBitmap(indicator)
 			self.btnsizer.Layout()
 		if current_br or current_bl or xy_dE_rgb or white_xy_dE or black_xy_dE:

@@ -16,8 +16,9 @@ import xml.parsers.expat
 import demjson
 
 import ICCProfile as ICCP
+import audio
 import config
-from config import (defaults, getbitmap, getcfg, geticon, 
+from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 					get_verified_path, pyname, setcfg)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
@@ -35,7 +36,7 @@ from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 ThemedGenButton, adjust_font_size_for_gcdc,
 					 get_dc_font_size, set_bitmap_labels)
-from lib.agw import labelbook
+from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
 									 NOWHERE, FourWaySplitter,
@@ -122,6 +123,73 @@ class AboutDialog(wx.Dialog):
 			self.sizer.Add(item, 0, flag, 12)
 		self.ok.SetDefault()
 		self.ok.SetFocus()
+
+
+class AnimatedBitmap(wx.PyControl):
+
+	""" Animated bitmap """
+
+	def __init__(self, parent, id=wx.ID_ANY, bitmaps=None, range=(0, -1),
+				 loop=True, pos=wx.DefaultPosition, size=wx.DefaultSize,
+				 style=wx.NO_BORDER):
+		"""
+		Create animated bitmap
+		
+		bitmaps should be an array of bitmaps.
+		range should be the indexes of the range of frames that should be looped.
+		-1 means last frame.
+		
+		"""
+		wx.PyControl.__init__(self, parent, id, pos, size, style)
+		self._minsize = size
+		self.SetBitmaps(bitmaps or [], range, loop)
+		# Avoid flickering under Windows
+		self.Bind(wx.EVT_ERASE_BACKGROUND, lambda event: None)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+		self._timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.OnTimer)
+
+	def DoGetBestSize(self):
+		return self._minsize
+
+	def OnPaint(self, event):
+		dc = wx.BufferedPaintDC(self)
+		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour))     
+		dc.Clear()
+		if self._bitmaps:
+			if self.frame > len(self._bitmaps) - 1:
+				self.frame = len(self._bitmaps) - 1
+			dc.DrawBitmap(self._bitmaps[self.frame], 0, 0, True)
+
+	def OnTimer(self, event):
+		if self.loop:
+			first_frame, last_frame = self.range
+		else:
+			first_frame, last_frame = 0, -1
+		if last_frame < 0:
+			last_frame += len(self._bitmaps)
+		if self.frame < last_frame:
+			self.frame += 1
+		elif self.loop:
+			self.frame = first_frame
+		self.Refresh()
+
+	def Play(self, fps=20):
+		self._timer.Start(1000.0 / fps)
+
+	def Stop(self):
+		self._timer.Stop()
+
+	def SetBitmaps(self, bitmaps, range=(0, -1), loop=True):
+		w, h = self._minsize
+		for bitmap in bitmaps:
+			w = max(bitmap.Size[0], w)
+			h = max(bitmap.Size[0], h)
+		self._minsize = w, h
+		self._bitmaps = bitmaps
+		self.loop = loop
+		self.range = range
+		self.frame = 0
 
 
 class AuiBetterTabArt(AuiDefaultTabArt):
@@ -3678,6 +3746,95 @@ def fancytext_RenderToRenderer(str, renderer, enclose=True):
 fancytext.RenderToRenderer = fancytext_RenderToRenderer
 
 
+class BetterPyGauge(pygauge.PyGauge):
+
+	def __init__(self, *args, **kwargs):
+		pygauge.PyGauge.__init__(self, *args, **kwargs)
+		self._indeterminate = False
+		self.gradientindex = 0
+		self._gradients = []
+		self._indeterminate_gradients = []
+		self._timer = wx.Timer(self, self._timerId)
+		self._timer.Start(50)
+
+	def OnTimer(self, event):
+		gradient = self._barGradient
+		if self._indeterminate:
+			if self.gradientindex < len(self._indeterminate_gradients) - 1:
+				self.gradientindex += 1
+			else:
+				self.gradientindex = 0
+			self._barGradient = [self._indeterminate_gradients[self.gradientindex]]
+		else:
+			if self.gradientindex < len(self._gradients) - 1:
+				self.gradientindex += 1
+			else:
+				self.gradientindex = 0
+			self._barGradient = [self._gradients[self.gradientindex]]
+		if hasattr(self, "_update_step") and not self._indeterminate:
+			stop = True
+			for i, v in enumerate(self._value):
+				self._value[i] += self._update_step[i]
+				
+				if self._update_step[i] > 0:
+					if self._value[i] > self._update_value[i]:
+						self._value[i] = self._update_value[i]
+					else: stop = False
+				else:
+					if self._value[i] < self._update_value[i]:
+						self._value[i] = self._update_value[i]
+					else: stop = False
+			if stop:
+				del self._update_step
+			updated = True
+		else:
+			updated = False
+		if gradient != self._barGradient or updated:
+			self.SortForDisplay()
+			if self._indeterminate:
+				self._valueSorted = [self.GetRange()]
+			self.Refresh()
+
+	def Pulse(self):
+		self._indeterminate = True
+
+	def SetBarGradients(self, gradients):
+		self._gradients = gradients
+
+	def SetIndeterminateBarGradients(self, gradients):
+		self._indeterminate_gradients = gradients
+
+	def SetValue(self, value):
+		self._indeterminate = False
+		pygauge.PyGauge.SetValue(self, value)
+		self.Refresh()
+
+	def Update(self, value, time=0):
+		"""
+		Update the gauge by adding `value` to it over `time` milliseconds. The `time` parameter
+		**must** be a multiple of 50 milliseconds.
+
+		:param `value`: The value to be added to the gauge;
+		:param `time`: The length of time in milliseconds that it will take to move the gauge.
+		"""
+		self._indeterminate = False
+	   
+		if type(value) != type([]):
+			value = [value]
+			 
+		if len(value) != len(self._value):
+			raise Exception("ERROR:\n len(value) != len(self.GetValue())")
+
+		self._update_value = []
+		self._update_step  = []
+		for i, v in enumerate(self._value):
+			if value[i] < 0 or value[i] > self._range:
+				raise Exception("ERROR:\n Gauge value must be between 0 and its range. ")
+		
+			self._update_value.append(value[i])
+			self._update_step.append((float(value[i]) - v)/(time/50))
+
+
 class BetterStaticFancyText(GenStaticBitmap):
 
 	_textlabel = ""
@@ -3993,18 +4150,25 @@ class LogWindow(InvincibleFrame):
 class ProgressDialog(wx.Dialog):
 	
 	""" A progress dialog. """
+
+	bitmaps = {}
 	
 	def __init__(self, title=appname, msg="", maximum=100, parent=None, style=None, 
 				 handler=None, keyhandler=None, start_timer=True, pos=None,
-				 pauseable=False):
+				 pauseable=False, fancy=True):
 		if style is None:
 			style = (wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
 					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
+		self._style = style
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title,
 						   name="progressdialog")
+		if fancy:
+			self.BackgroundColour = "#141414"
+			self.ForegroundColour = "#FFFFFF"
 		if sys.platform == "win32":
-			bgcolor = self.BackgroundColour
-			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+			if not fancy:
+				bgcolor = self.BackgroundColour
+				self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 			if sys.getwindowsversion() >= (6, ):
 				# No need to enable double buffering under Linux and Mac OS X.
 				# Under Windows, enabling double buffering on the panel seems
@@ -4020,35 +4184,90 @@ class ProgressDialog(wx.Dialog):
 		self.keepGoing = True
 		self.skip = False
 		self.paused = False
+		self.progress_type = 0  # 0 = processing, 1 = measurement
 
 		margin = 12
 
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self.sizer0)
+		if fancy:
+			self.sizerH = wx.BoxSizer(wx.HORIZONTAL)
+			self.SetSizer(self.sizerH)
+			self.animbmp = AnimatedBitmap(self, -1, size=(200, 200))
+			self.sizerH.Add(self.animbmp, 0, flag=wx.ALIGN_CENTER_VERTICAL)
+			self.sizerH.Add(self.sizer0, 1, flag=wx.EXPAND)
+			try:
+				audio.init()
+			except Exception, exception:
+				safe_print(exception)
+			self.sound = audio.Sound(get_data_path("theme/engine_hum_loop.wav"),
+									 True)
+			self.indicator_sound = audio.Sound(get_data_path("theme/beep_boop.wav"))
+			self.get_bitmaps(self.progress_type)
+			sizer0flag = 0
+		else:
+			self.SetSizer(self.sizer0)
+			sizer0flag = wx.LEFT
 		self.sizer1 = wx.BoxSizer(wx.VERTICAL)
 		self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
-		   wx.RIGHT | wx.LEFT, border = margin)
+		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | wx.RIGHT |
+						sizer0flag, border=margin)
 		self.buttonpanel = wx.Panel(self)
 		self.buttonpanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
 		self.buttonpanel.Sizer.Add(self.sizer2, 1, flag=wx.ALIGN_RIGHT | wx.ALL, 
 								   border=margin)
-		if sys.platform == "win32":
+		if sys.platform == "win32" and not fancy:
 			self.buttonpanel_line = wx.Panel(self, size=(-1,1))
 			self.buttonpanel_line.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 			self.sizer0.Add(self.buttonpanel_line, flag=wx.TOP | wx.EXPAND,
 							border=margin)
 			self.buttonpanel.SetBackgroundColour(bgcolor)
+		elif fancy:
+			self.buttonpanel.BackgroundColour = "#141414"
 		self.sizer0.Add(self.buttonpanel, flag=wx.EXPAND)
 
-		self.msg = wx.StaticText(self, -1, "")
+		self.msg = wx.StaticText(self, -1, "", size=(-1, 74))
 		self.sizer1.Add(self.msg, flag=wx.EXPAND | wx.BOTTOM, border=margin)
 		
-		gauge_style = wx.GA_HORIZONTAL
-		if style & wx.PD_SMOOTH:
-			gauge_style |= wx.GA_SMOOTH
-		
-		self.gauge = wx.Gauge(self, wx.ID_ANY, range=maximum, style=gauge_style)
+		self._fpprogress = 0.0
+		if fancy:
+			self.gauge = BetterPyGauge(self, wx.ID_ANY, range=maximum,
+									   size=(-1, 4))
+			self.gauge.SetBackgroundColour("#202020")
+			self.gauge.SetBorderColour("#0066CC")
+			self.gauge.SetBarGradients([("#0099CC", "#00CCFF"),
+									    ("#0088BB", "#00BBEE"),
+									    ("#0077AA", "#00AADD"),
+									    ("#006699", "#0099CC"),
+									    ("#0077AA", "#00AADD"),
+									    ("#0088BB", "#00BBEE")])
+			self.gauge.SetIndeterminateBarGradients([("#00CCFF", "#001144"),
+													 ("#00BBEE", "#002255"),
+													 ("#00AADD", "#003366"),
+													 ("#0099CC", "#004477"),
+													 ("#0088BB", "#005588"),
+													 ("#0077AA", "#006699"),
+													 ("#006699", "#0077AA"),
+													 ("#005588", "#0088BB"),
+													 ("#004477", "#0099CC"),
+													 ("#003366", "#00AADD"),
+													 ("#002255", "#00BBEE"),
+													 ("#001144", "#00CCFF"),
+													 ("#002255", "#00BBEE"),
+													 ("#003366", "#00AADD"),
+													 ("#004477", "#0099CC"),
+													 ("#005588", "#0088BB"),
+													 ("#006699", "#0077AA"),
+													 ("#0077AA", "#006699"),
+													 ("#0088BB", "#005588"),
+													 ("#0099CC", "#004477"),
+													 ("#00AADD", "#003366"),
+													 ("#00BBEE", "#002255")])
+			self.gauge.SetValue(0)
+		else:
+			gauge_style = wx.GA_HORIZONTAL
+			if style & wx.PD_SMOOTH:
+				gauge_style |= wx.GA_SMOOTH
+			self.gauge = wx.Gauge(self, wx.ID_ANY, range=maximum, style=gauge_style)
 		self.sizer1.Add(self.gauge, flag=wx.EXPAND | wx.BOTTOM, border=margin)
 		
 		if style & wx.PD_ELAPSED_TIME or style & wx.PD_REMAINING_TIME:
@@ -4075,19 +4294,41 @@ class ProgressDialog(wx.Dialog):
 			self.remaining_time = wx.StaticText(self, -1, u"––:––:––")
 			self.sizer3.Add(self.remaining_time)
 
+		if fancy:
+			def buttoncls(parent, id, label):
+				return FlatShadedButton(parent, id, None, label,
+										fgcolour="#FFFFFF")
+		else:
+			buttoncls = wx.Button
+
 		if style & wx.PD_CAN_ABORT:
-			self.cancel = wx.Button(self.buttonpanel, wx.ID_ANY,
+			self.cancel = buttoncls(self.buttonpanel, wx.ID_ANY,
 									lang.getstr("cancel"))
 			self.sizer2.Add(self.cancel)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.cancel.GetId())
 
-		self.pause_continue = wx.Button(self.buttonpanel, wx.ID_ANY,
-										lang.getstr("pause"))
+		self.pause_continue = buttoncls(self.buttonpanel, wx.ID_ANY,
+										lang.getstr("continue"))
 		self.sizer2.Prepend((margin, margin))
-		self.sizer2.Prepend(self.pause_continue)
+		self.sizer2.Prepend(self.pause_continue, flag=wx.LEFT, border=margin)
 		self.Bind(wx.EVT_BUTTON, self.pause_continue_handler,
 				  id=self.pause_continue.GetId())
 		self.pause_continue.Show(pauseable)
+
+		if fancy:
+			if getcfg("measurement.play_sound"):
+				bitmap = geticon(16, "sound_volume_full")
+			else:
+				bitmap = geticon(16, "sound_off")
+			im = bitmap.ConvertToImage()
+			im.AdjustMinMax(maxvalue=1.5)
+			bitmap = im.ConvertToBitmap()
+			self.sound_on_off_btn = FlatShadedButton(self.buttonpanel,
+													 bitmap=bitmap,
+													 fgcolour="#FFFFFF")
+			self.sizer2.Prepend(self.sound_on_off_btn)
+			self.sound_on_off_btn.Bind(wx.EVT_BUTTON,
+									   self.play_sound_handler)
 
 		self.buttonpanel.Layout()
 		
@@ -4107,9 +4348,11 @@ class ProgressDialog(wx.Dialog):
 		self.msg.WindowStyle |= wx.ST_NO_AUTORESIZE
 		self.msg.SetMinSize((w, h))
 		self.msg.SetSize((w, h))
-		self.sizer0.SetSizeHints(self)
-		self.sizer0.Layout()
+		self.Sizer.SetSizeHints(self)
+		self.Sizer.Layout()
 		self.msg.SetLabel(msg.replace("&", "&&"))
+
+		self.pause_continue.Label = lang.getstr("pause")
 		
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
@@ -4173,12 +4416,20 @@ class ProgressDialog(wx.Dialog):
 	
 	def OnTimer(self, event):
 		if self.keepGoing:
-			if self.gauge.GetValue() < self.gauge.GetRange():
-				self.Update(self.gauge.GetValue() + 1)
+			if not self.pause_continue.IsEnabled():
+				self.set_progress_type(int(not self.progress_type))
+			self.pause_continue.Enable()
+			if self.paused:
+				return
+			if self._fpprogress < self.gauge.GetRange():
+				self.Update(self._fpprogress + self.gauge.GetRange() / 1000.0)
 			else:
 				self.stop_timer()
 				self.Update(self.gauge.GetRange(),
 							"Finished. You may now close this window.")
+				self.pause_continue.Disable()
+				if hasattr(self, "cancel"):
+					self.cancel.Disable()
 		else:
 			self.Pulse("Aborting...")
 			if not hasattr(self, "delayed_stop"):
@@ -4215,6 +4466,9 @@ class ProgressDialog(wx.Dialog):
 			self.msg.Wrap(self.msg.ContainingSizer.Size[0])
 			self.msg.Refresh()
 			self.msg.Update()
+		prev_value = self._fpprogress
+		self._fpprogress = value
+		value = int(round(value))
 		if hasattr(self, "time2"):
 			t = time()
 			if not self.time2:
@@ -4232,38 +4486,168 @@ class ProgressDialog(wx.Dialog):
 				if remaining > 9 or value > self.gauge.GetRange() * .03:
 					self.remaining_time.Label = strftime("%H:%M:%S",
 														 gmtime(remaining))
-		self.gauge.SetValue(value)
+		if getcfg("measurement.play_sound"):
+			if value < prev_value and hasattr(self, "indicator_sound"):
+				self.indicator_sound.safe_play()
+		if (isinstance(self.gauge, BetterPyGauge) and
+			self._style & wx.PD_SMOOTH and value >= prev_value):
+			update_value = abs(self._fpprogress - prev_value)
+			if update_value:
+				ms = 950 + 50 * update_value
+				self.gauge.Update(value, ms)
+		else:
+			self.gauge.SetValue(value)
 		return self.keepGoing, self.skip
 	
 	UpdatePulse = Pulse
+
+	def anim_fadein(self):
+		bitmaps = ProgressDialog.get_bitmaps(self.progress_type)
+		if self.progress_type == 0:
+			# Processing
+			range = (60, 68)
+		else:
+			# Measuring
+			range = (27, 36)
+		self.animbmp.SetBitmaps(bitmaps, range=range, loop=True)
+		wx.CallLater(50, lambda: self and self.IsShown() and
+								  self.animbmp.Play(20))
+		if self.progress_type == 0 and getcfg("measurement.play_sound"):
+			wx.CallLater(50, lambda: self and self.IsShown() and
+									  self.sound.safe_play(3000))
+
+	def anim_fadeout(self):
+		self.animbmp.loop = False
+		if self.sound.is_playing:
+			self.sound.safe_stop(3000)
 	
 	def elapsed_time_handler(self, event):
 		self.elapsed_time.Label = strftime("%H:%M:%S",
 										   gmtime(time() - self.time))
+
+	@staticmethod
+	def get_bitmaps(progress_type=0):
+		if progress_type in ProgressDialog.bitmaps:
+			bitmaps = ProgressDialog.bitmaps[progress_type]
+		else:
+			bitmaps = ProgressDialog.bitmaps[progress_type] = []
+			if progress_type == 0:
+				# Processing
+				for pth in get_data_path("theme/jet_anim", r"\.png$") or []:
+					im = wx.Image(pth)
+					# Blend red
+					im = im.AdjustChannels(1, .2, 0)
+					# Adjust for background
+					im.AdjustMinMax(1.0 / 255 * 0x14)
+					bitmaps.append(im)
+				# Needs to be exactly 8 images
+				if bitmaps and len(bitmaps) == 8:
+					for i in xrange(7):
+						bitmaps.extend(bitmaps[:8])
+					bitmaps.extend(bitmaps[:4])
+					# Fade in
+					for i, im in enumerate(bitmaps[:10]):
+						im = im.AdjustChannels(1, 1, 1, i / 10.0)
+						bitmaps[i] = im.ConvertToBitmap()
+					# Normal
+					for i in xrange(50):
+						im = bitmaps[i + 10].Copy()
+						im.RotateHue(.05 * (i / 50.0))
+						bitmaps[i + 10] = im.ConvertToBitmap()
+					for i, im in enumerate(bitmaps[60:]):
+						im = im.Copy()
+						im.RotateHue(.05)
+						bitmaps[i + 60] = im.ConvertToBitmap()
+					# Fade out
+					bitmaps.extend(reversed(bitmaps[:60]))
+			else:
+				# Measuring
+				for pth in get_data_path("theme/patch_anim", r"\.png$") or []:
+					im = wx.Image(pth)
+					bitmaps.append(im)
+				# Needs to be exactly 9 images
+				if bitmaps and len(bitmaps) == 9:
+					for i in xrange(3):
+						bitmaps.extend(bitmaps[:9])
+					# Fade in
+					for i, im in enumerate(bitmaps[:27]):
+						im = im.AdjustChannels(1, 1, 1, i / 27.0)
+						bitmaps[i] = im.ConvertToBitmap()
+					# Normal
+					for i, im in enumerate(bitmaps[27:]):
+						bitmaps[i + 27] = im.ConvertToBitmap()
+					# Fade out
+					for i in xrange(3):
+						bitmaps.extend(bitmaps[27:36])
+					for i, bmp in enumerate(bitmaps[36:]):
+						im = bmp.ConvertToImage().AdjustChannels(1, 1, 1, 1 - i / 26.0)
+						bitmaps[i + 36] = im.ConvertToBitmap()
+		return bitmaps
 	
 	def key_handler(self, event):
 		pass
 
 	def pause_continue_handler(self, event=None):
 		self.paused = not self.paused
+		self.gauge.Pulse()
 		if self.paused:
 			self.pause_continue.Label = lang.getstr("continue")
 		else:
 			self.pause_continue.Label = lang.getstr("pause")
 		self.pause_continue.Enable(not event)
 		self.Layout()
+	
+	def play_sound_handler(self, event):
+		setcfg("measurement.play_sound",
+			   int(not(bool(getcfg("measurement.play_sound")))))
+		if getcfg("measurement.play_sound"):
+			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
+			if self.keepGoing and self._fpprogress < self.gauge.GetRange():
+				self.sound.safe_play()
+		else:
+			bitmap = getbitmap("theme/icons/16x16/sound_off")
+			if self.sound.is_playing:
+				self.sound.safe_stop()
+		im = bitmap.ConvertToImage()
+		im.AdjustMinMax(maxvalue=1.5)
+		bitmap = im.ConvertToBitmap()
+		self.sound_on_off_btn._bitmap = bitmap
 
 	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
+
+	def set_progress_type(self, progress_type):
+		if hasattr(self, "animbmp"):
+			self.anim_fadeout()
+			if self.progress_type == 0:
+				delay = 4000
+			else:
+				delay = 2000
+			wx.CallLater(delay, lambda: self and
+										self.progress_type == progress_type and
+										self.anim_fadein())
+		if progress_type != self.progress_type:
+			self.progress_type = progress_type
 
 	def start_timer(self, ms=50):
 		self.timer.Start(ms)
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Start(1000)
+		if hasattr(self, "animbmp"):
+			self.anim_fadein()
 	
 	def stop_timer(self):
 		self.timer.Stop()
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Stop()
+		if hasattr(self, "animbmp") and self.animbmp.loop:
+			self.anim_fadeout()
+
+
+class FancyProgressDialog(ProgressDialog):
+
+	def __init__(self, *args, **kwargs):
+		kwargs["fancy"] = True
+		ProgressDialog.__init__(self, *args, **kwargs)
 
 
 class SimpleBook(labelbook.FlatBookBase):
@@ -4994,6 +5378,8 @@ def restore_path_dialog_classes():
 
 
 def test():
+	config.initcfg()
+	lang.init()
 	def key_handler(self, event):
 		if event.GetEventType() == wx.EVT_CHAR_HOOK.typeId:
 			print "Received EVT_CHAR_HOOK", event.GetKeyCode(), repr(unichr(event.GetKeyCode()))
@@ -5007,8 +5393,11 @@ def test():
 	SimpleTerminal.key_handler = key_handler
 	
 	app = BaseApp(0)
-	p = ProgressDialog(msg="".join(("Test " * 5)))
-	t = SimpleTerminal(start_timer=False)
+	style = (wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT |
+			 wx.PD_SMOOTH)
+	p = ProgressDialog(msg="".join(("Test " * 5)), maximum=10000, style=style,
+					   pauseable=True, fancy=not "+fancy" in sys.argv[1:])
+	#t = SimpleTerminal(start_timer=False)
 	app.MainLoop()
 
 if __name__ == "__main__":

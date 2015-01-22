@@ -50,6 +50,7 @@ elif sys.platform != "darwin":
 # custom
 import CGATS
 import ICCProfile as ICCP
+import audio
 import colormath
 import config
 import defaultpaths
@@ -1363,6 +1364,10 @@ class Worker(object):
 		self.lastcmdname = None
 		self.lastmsg_discard = re.compile("[\\*\\.]+|Current RGB .+")
 		self.measurement_modes = {}
+		# Sounds when measuring
+		# Needs to be stereo!
+		self.measurement_sound = audio.Sound(get_data_path("beep.wav"))
+		self.commit_sound = audio.Sound(get_data_path("camera_shutter.wav"))
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
@@ -2044,6 +2049,7 @@ class Worker(object):
 		self.recent.clear()
 		self.retrycount = 0
 		self.lastmsg.clear()
+		self.repeat = False
 		self.send_buffer = None
 		if not hasattr(self, "logger") or (self.interactive and self.owner and
 										   isinstance(self.logger,
@@ -2836,6 +2842,21 @@ class Worker(object):
 				args[index] += "echo. && echo Current RGB "
 			else:
 				args[index] += "echo '\nCurrent RGB '"
+		if self.measure_cmd and cmdname != "spotread" and False:
+			# FIXME: Hmm. this doesn't work right, dispcal/dispread crashes.
+			# Run a dummy command so we can grab measured XYZ
+			marg = get_arg("-M", args, True)
+			if marg:
+				index = min(marg[0] + 1, len(args) - 1)
+				args[index] += " && "
+			else:
+				args.insert(0, "-M")
+				args.insert(1, "")
+				index = 1
+			if sys.platform == "win32":
+				args[index] += "echo. && echo Current XYZ "
+			else:
+				args[index] += "echo '\nCurrent XYZ '"
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
@@ -5893,6 +5914,17 @@ usage: spotread [-options] [logfile]
 		self.check_retry_measurement(txt)
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
+		if (self.cmdname in ("dispcal", "dispread") and
+			getcfg("measurement.play_sound")):
+			if self.cmdname == "dispcal" and ", repeat" in txt.lower():
+				self.repeat = True
+			elif ", ok" in txt.lower():
+				self.repeat = False
+			if re.search(r"Patch \d+ of \d+", txt, re.I):
+				if self.cmdname == "dispcal" and self.repeat:
+					self.measurement_sound.safe_play()
+				else:
+					self.commit_sound.safe_play()
 
 	def patterngenerator_send(self, rgb, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
@@ -6696,6 +6728,13 @@ usage: spotread [-options] [logfile]
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
+		if hasattr(self.progress_wnd, "progress_type"):
+			if self.cmdname in ("dispcal", "dispread", "spotread"):
+				progress_type = 1  # Measuring
+			else:
+				progress_type = 0  # Processing
+			if self.progress_wnd.progress_type != progress_type:
+				self.progress_wnd.set_progress_type(progress_type)
 		if getattr(self.progress_wnd, "original_msg", None) and \
 		   msg != self.progress_wnd.original_msg:
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
@@ -6754,7 +6793,7 @@ usage: spotread [-options] [logfile]
 			self.progress_wnd.Raise()
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
-						   parent=None, resume=False):
+						   parent=None, resume=False, fancy=True):
 		""" Start a progress dialog, replacing existing one if present """
 		if getattr(self, "progress_dlg", None) and not resume:
 			self.progress_dlg.Destroy()
@@ -6783,7 +6822,6 @@ usage: spotread [-options] [logfile]
 			self.progress_wnd.Resume()
 			if not self.progress_wnd.IsShownOnScreen():
 				self.progress_wnd.Show()
-			self.progress_wnd.start_timer()
 		else:
 			style = wx.PD_APP_MODAL | wx.PD_SMOOTH | wx.PD_ELAPSED_TIME
 			if self.show_remaining_time:
@@ -6798,8 +6836,15 @@ usage: spotread [-options] [logfile]
 											   handler=self.progress_handler,
 											   keyhandler=self.terminal_key_handler,
 											   pauseable=pauseable,
-											   style=style)
+											   style=style, start_timer=False,
+											   fancy=fancy)
 			self.progress_wnd = self.progress_dlg
+		if hasattr(self.progress_wnd, "progress_type"):
+			if self.cmdname in ("dispcal", "dispread", "spotread"):
+				self.progress_wnd.progress_type = 1  # Measuring
+			else:
+				self.progress_wnd.progress_type = 0  # Processing
+		self.progress_wnd.start_timer()
 		self.progress_wnd.original_msg = progress_msg
 	
 	def quit_terminate_cmd(self):
@@ -7010,7 +7055,8 @@ usage: spotread [-options] [logfile]
 			  wkwargs=None, progress_title=appname, progress_msg="", 
 			  parent=None, progress_start=100, resume=False, 
 			  continue_next=False, stop_timers=True, interactive_frame="",
-			  pauseable=False, cancelable=True, show_remaining_time=True):
+			  pauseable=False, cancelable=True, show_remaining_time=True,
+			  fancy=True):
 		"""
 		Start a worker process.
 		
@@ -7032,6 +7078,10 @@ usage: spotread [-options] [logfile]
 		                    interactive window)
 		pauseable           Is the operation pauseable? (show pause button on
 		                    progress dialog)
+		cancelable          Is the operation cancelable? (show cancel button on
+		                    progress dialog)
+		fancy               Use fancy progress dialog with animated throbber &
+		                    sound fx
 		
 		""" % appname
 		if ckwargs is None:
@@ -7048,6 +7098,8 @@ usage: spotread [-options] [logfile]
 			# Can't be zero!
 			progress_start = 1
 		self.activated = False
+		if not resume:
+			self.cmdname = None
 		self.cmdrun = False
 		self.finished = False
 		self.instrument_calibration_complete = False
@@ -7059,11 +7111,17 @@ usage: spotread [-options] [logfile]
 		self.paused = False
 		self.cancelable = cancelable
 		self.show_remaining_time = show_remaining_time
+		self.fancy = fancy
 		self.resume = resume
 		self.subprocess_abort = False
 		self.abort_requested = False
 		self.starttime = time()
 		self.thread_abort = False
+		if fancy and (not self.interactive or
+					  interactive_frame not in ("uniformity", "untethered")):
+			# Pre-init progress dialog bitmaps
+			ProgressDialog.get_bitmaps(0)
+			ProgressDialog.get_bitmaps(1)
 		if self.interactive:
 			self.progress_start_timer = wx.Timer()
 			if getattr(self, "progress_wnd", None) and \
@@ -7132,7 +7190,7 @@ usage: spotread [-options] [logfile]
 													 self.progress_dlg_start, 
 													 progress_title, 
 													 progress_msg, parent,
-													 resume)
+													 resume, fancy)
 		self.thread = delayedresult.startWorker(self._generic_consumer, 
 												producer, [consumer, 
 														   continue_next] + 
@@ -7160,7 +7218,7 @@ usage: spotread [-options] [logfile]
 			title = lang.getstr("calibration")
 		else:
 			title = self.terminal.GetTitle()
-		self.progress_dlg_start(title, "", parent, self.resume)
+		self.progress_dlg_start(title, "", parent, self.resume, self.fancy)
 	
 	def terminal_key_handler(self, event):
 		""" Key handler for the interactive window or progress dialog. """

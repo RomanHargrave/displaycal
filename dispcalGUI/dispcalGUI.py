@@ -71,6 +71,7 @@ from config import (autostart, autostart_home, build,
 
 import CGATS
 import ICCProfile as ICCP
+import audio
 import ccmx
 import colord
 import colormath
@@ -321,13 +322,15 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 						 ckwargs={"exit": True},
 						 wargs=("http://%s/download%s/%s-%s-Setup.exe" %
 								(domain.lower(), folder, appname, newversion),),
-						 progress_msg=lang.getstr("download"))
+						 progress_msg=lang.getstr("download"),
+						 fancy=False)
 		else:
 			worker.start(worker.process_download, worker.download,
 						 ckwargs={"exit": True},
 						 wargs=("http://%s/download%s/%s-%s.dmg" %
 								(domain.lower(), folder, appname, newversion),),
-						 progress_msg=lang.getstr("download"))
+						 progress_msg=lang.getstr("download"),
+						 fancy=False)
 	elif result != wx.ID_CANCEL:
 		launch_file("http://" + domain)
 
@@ -3739,7 +3742,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							  self.enable_spyder2_producer,
 							  cargs=(import_colorimeter_corrections, ),
 							  wargs=(path, asroot),
-							  progress_msg=lang.getstr("enable_spyder2"))
+							  progress_msg=lang.getstr("enable_spyder2"),
+							  fancy=False)
 			return (event and None) or True
 	
 	def enable_spyder2(self, path, asroot):
@@ -3823,7 +3827,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
 										 else None,
-						  self.worker.calibrate_instrument_producer)
+						  self.worker.calibrate_instrument_producer,
+						  fancy=False)
 
 	def allow_skip_sensor_cal_handler(self, event):
 		setcfg("allow_skip_sensor_cal", 
@@ -5256,7 +5261,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								   "files": files},
 						  progress_msg=lang.getstr("profile.share"),
 						  stop_timers=False, cancelable=False,
-						  show_remaining_time=False)
+						  show_remaining_time=False, fancy=False)
 
 	def profile_share_consumer(self, result, parent=None):
 		""" This function receives the response from the profile upload """
@@ -5345,7 +5350,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						  self.worker.install_argyll_instrument_conf,
 						  ckwargs={"uninstall": uninstall},
 						  wkwargs={"uninstall": uninstall,
-								   "filenames": filenames})
+								   "filenames": filenames}, fancy=False)
 
 	def install_argyll_instrument_conf_consumer(self, result, uninstall=False):
 		if isinstance(result, Exception):
@@ -5416,7 +5421,7 @@ class MainFrame(ReportFrame, BaseFrame):
 										 if isinstance(result, Exception)
 										 else 0,
 						  self.worker.install_argyll_instrument_drivers,
-						  wargs=(uninstall, launch_devman))
+						  wargs=(uninstall, launch_devman), fancy=False)
 
 	def uninstall_argyll_instrument_conf(self, event=None):
 		self.install_argyll_instrument_conf(uninstall=True)
@@ -7567,7 +7572,7 @@ class MainFrame(ReportFrame, BaseFrame):
 										   "skip_scripts": self.modaldlg.skip_scripts},
 								  parent=self.modaldlg,
 								  progress_msg=lang.getstr("profile.install"),
-								  stop_timers=False)
+								  stop_timers=False, fancy=False)
 		else:
 			if self.modaldlg.preview:
 				if getcfg("calibration.file", False):
@@ -8151,7 +8156,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								 "/colorimetercorrections/index.php", params),
 						  progress_msg=lang.getstr("colorimeter_correction.web_check"),
 						  stop_timers=False, cancelable=False,
-						  show_remaining_time=False)
+						  show_remaining_time=False, fancy=False)
 	
 	def create_colorimeter_correction_handler(self, event=None, paths=None,
 											  luminance=None):
@@ -8977,7 +8982,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							  wargs=(self, params),
 							  progress_msg=lang.getstr("colorimeter_correction.upload"),
 							  stop_timers=False, cancelable=False,
-							  show_remaining_time=False)
+							  show_remaining_time=False, fancy=False)
 	
 	def upload_colorimeter_correction_handler(self, event):
 		""" Let user choose a ccss/ccmx file to upload """
@@ -9143,7 +9148,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						  wargs=(result, i1d3, i1d3ccss, spyd4, spyd4en, icd,
 								 oeminst, paths, choice == wx.ID_OK, asroot,
 								 importers),
-						  progress_msg=lang.getstr("colorimeter_correction.import"))
+						  progress_msg=lang.getstr("colorimeter_correction.import"),
+						  fancy=False)
 	
 	def import_colorimeter_correction(self, result, i1d3, i1d3ccss, spyd4,
 									  spyd4en, icd, oeminst, path, asroot):
@@ -12345,16 +12351,11 @@ class StartupFrame(wx.Frame):
 		self.SetTransparent(0)
 		self._alpha = 0
 
+		audio.safe_init()
 		# Startup sound
 		# Needs to be stereo!
-		try:
-			self.startup_sound = wx.Sound(get_data_path("theme/intro_new.wav") or "")
-		except NotImplementedError:
-			pass
-
-		if (getattr(self, "startup_sound", None) and
-			self.startup_sound.IsOk()):
-			self.startup_sound.Play(wx.SOUND_ASYNC)
+		self.startup_sound = audio.Sound(get_data_path("theme/intro_new.wav"))
+		self.startup_sound.safe_play()
 
 		self.Show()
 

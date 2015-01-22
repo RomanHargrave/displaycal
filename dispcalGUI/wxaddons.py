@@ -18,6 +18,15 @@ def AlphaBlend(self, alpha=1.0):
 wx.Image.AlphaBlend = AlphaBlend
 
 
+def AdjustMinMax(self, minvalue=0.0, maxvalue=1.0):
+	""" Adjust min/max """
+	buffer = self.GetDataBuffer()
+	for i, byte in enumerate(buffer):
+		buffer[i] = chr(min(int(round(minvalue * 255 + ord(byte) * (maxvalue - minvalue))), 255))
+
+wx.Image.AdjustMinMax = AdjustMinMax
+
+
 def GetRealClientArea(self):
 	""" Return the real (non-overlapping) client area of a display """
 	# need to fix overlapping ClientArea on some Linux multi-display setups

@@ -215,7 +215,7 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 					 progress_title=lang.getstr("vrml_to_x3d_converter"),
 					 progress_start=1,
 					 resume=worker.progress_wnd and
-							worker.progress_wnd.IsShownOnScreen())
+							worker.progress_wnd.IsShownOnScreen(), fancy=False)
 	else:
 		result = x3dom.vrmlfile2x3dfile(vrmlpath, x3dpath, html, embed, force,
 										cache, None)
