@@ -5834,6 +5834,7 @@ usage: spotread [-options] [logfile]
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
+		precond_ti3 = None
 		if getcfg("testchart.file") == "auto":
 			# Testchart auto-optimization
 			# Create optimized testchart on-the-fly. To do this, create a
@@ -5851,6 +5852,7 @@ usage: spotread [-options] [logfile]
 				if not isinstance(result, Exception) and result:
 					# Create preconditioning profile
 					basename = args[-1]
+					precond_ti3 = CGATS.CGATS(basename + ".ti3")
 					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-ax",
 															 "-bn", basename]
 					result = self.exec_cmd(cmd, args)
@@ -5894,6 +5896,41 @@ usage: spotread [-options] [logfile]
 			result = self.exec_cmd(cmd, args2)
 			if not isinstance(result, Exception) and result:
 				self.update_display_name_manufacturer(args[-1] + ".ti3")
+				if precond_ti3:
+					# Add patches from preconditioning measurements
+					ti3 = CGATS.CGATS(args[-1] + ".ti3")
+					precond_data = precond_ti3.queryv1("DATA")
+					data = ti3.queryv1("DATA")
+					data_format = ti3.queryv1("DATA_FORMAT")
+					# Get only RGB data
+					data.parent.DATA_FORMAT = CGATS.CGATS()
+					data.parent.DATA_FORMAT.key = "DATA_FORMAT"
+					data.parent.DATA_FORMAT.parent = data
+					data.parent.DATA_FORMAT.root = data.root
+					data.parent.DATA_FORMAT.type = "DATA_FORMAT"
+					for i, label in enumerate(("RGB_R", "RGB_G", "RGB_B")):
+						data.parent.DATA_FORMAT[i] = label
+					precond_data.parent.DATA_FORMAT = data.parent.DATA_FORMAT
+					rgbdata = str(data)
+					# Restore DATA_FORMAT
+					data.parent.DATA_FORMAT = data_format
+					# Collect all preconditioning point datasets not in data
+					precond_data.vmaxlen = data.vmaxlen
+					precond_datasets = []
+					for i, dataset in precond_data.iteritems():
+						if not str(dataset) in rgbdata:
+							precond_datasets.append(dataset)
+					if precond_datasets:
+						# Insert preconditioned point datasets after first patch
+						safe_print("%s: Adding %i fixed points" %
+								   (appname, len(precond_datasets)))
+						data.moveby1(1, len(precond_datasets))
+						for i, dataset in enumerate(precond_datasets):
+							dataset.key = i + 1
+							dataset.parent = data
+							dataset.root = data.root
+							data[dataset.key] = dataset
+						ti3.write()
 		else:
 			result = cmd
 		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
