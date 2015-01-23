@@ -23,7 +23,6 @@ _initialized = False
 _lib = None
 _server = None
 _sounds = {}
-_wx_is_playing = False
 
 
 def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
@@ -101,6 +100,7 @@ class Sound(object):
 	def __init__(self, filename, loop=False):
 		self._ch = None
 		self._filename = filename
+		self._is_playing = False
 		self._lib = _lib
 		self._loop = loop
 		self._play_count = 0
@@ -166,10 +166,9 @@ class Sound(object):
 			return self._snd.isOutputting()
 		elif self._lib == "pygame":
 			return bool(self._ch and self._ch.get_busy())
-		return _wx_is_playing
+		return self._is_playing
 
 	def play(self, fade_ms=0):
-		global _wx_is_playing
 		if not _initialized:
 			init()
 		if not self._server and _server:
@@ -206,8 +205,13 @@ class Sound(object):
 					flags = wx.SOUND_ASYNC
 					if self._loop:
 						flags |= wx.SOUND_LOOP
-					is_playing = self._snd.Play(flags)
-					_wx_is_playing = is_playing
+						# The best we can do is have the correct state reflected
+						# for looping sounds only
+						self._is_playing = True
+					# wx.Sound.Play is supposed to return True on success.
+					# When I tested this, it always returned False, but still
+					# played the sound.
+					self._snd.Play(flags)
 				if self._lib:
 					self._play_count += 1
 				if fade_ms and self._lib != "wx":
@@ -248,6 +252,7 @@ class Sound(object):
 		if self._snd and self.is_playing:
 			if self._lib == "wx":
 				self._snd.Stop()
+				self._is_playing = False
 			elif fade_ms:
 				self.fade(fade_ms, False)
 			else:
