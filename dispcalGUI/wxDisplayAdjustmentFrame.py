@@ -116,7 +116,7 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		
 			if self._pagesInfoVec[i].GetPosition() == wx.Point(-1, -1):
 				break
-			if getcfg("measurement_mode") != "c" and i in self.GetParent().disabled_pages:
+			if i in self.GetParent().disabled_pages:
 				continue
 			
 			# For Web Hover style, we test the TextRect
@@ -199,7 +199,7 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		for i in xrange(len(self._pagesInfoVec)):
 			if self.GetParent().GetParent().is_busy and i != self.GetParent().GetSelection():
 				continue
-			if getcfg("measurement_mode") != "c" and i in self.GetParent().disabled_pages:
+			if i in self.GetParent().disabled_pages:
 				continue
 
 			count = count + 1
@@ -844,10 +844,14 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.target_br = None
 		self._assign_image_list()
 		if getcfg("measurement_mode") == "c":
-			self.lb.disabled_pages = tuple()
-			self.lb.SetSelection(0)
+			self.lb.disabled_pages = []
+			if getcfg("calibration.black_luminance", False):
+				self.lb.SetSelection(0)
+			else:
+				self.lb.disabled_pages.append(0)
+				self.lb.SetSelection(1)
 		else:
-			self.lb.disabled_pages = (0, 3)
+			self.lb.disabled_pages = [0, 3]
 			self.lb.SetSelection(1)
 		if getcfg("trc"):
 			self.calibration_btn.SetLabel(lang.getstr("calibration.start"))
