@@ -2422,14 +2422,8 @@ class BorderGradientButton(GradientButton):
 		return wx.Size(retWidth+constant, retHeight+constant) 
 	
 	def Enable(self, enable=True):
-		self._enabled = enable
 		GradientButton.Enable(self, enable)
 		self.Update()
-
-	def IsEnabled(self):
-		return self._enabled
-
-	Enabled = property(IsEnabled, Enable)
 
 	def OnPaint(self, event):
 		"""
