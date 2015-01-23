@@ -6729,7 +6729,8 @@ usage: spotread [-options] [logfile]
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
 		if hasattr(self.progress_wnd, "progress_type"):
-			if self.cmdname in ("dispcal", "dispread", "spotread"):
+			if self.pauseable:
+				# If pauseable, we assume it's a measurement
 				progress_type = 1  # Measuring
 			else:
 				progress_type = 0  # Processing
@@ -6839,11 +6840,13 @@ usage: spotread [-options] [logfile]
 											   fancy=fancy)
 			self.progress_wnd = self.progress_dlg
 		if hasattr(self.progress_wnd, "progress_type"):
-			if self.cmdname in ("dispcal", "dispread", "spotread"):
+			if pauseable:
+				# If pauseable, we assume it's a measurement
 				self.progress_wnd.progress_type = 1  # Measuring
 			else:
 				self.progress_wnd.progress_type = 0  # Processing
-		self.progress_wnd.start_timer()
+		if not self.progress_wnd.timer.IsRunning():
+			self.progress_wnd.start_timer()
 		self.progress_wnd.original_msg = progress_msg
 	
 	def quit_terminate_cmd(self):
@@ -7097,8 +7100,6 @@ usage: spotread [-options] [logfile]
 			# Can't be zero!
 			progress_start = 1
 		self.activated = False
-		if not resume:
-			self.cmdname = None
 		self.cmdrun = False
 		self.finished = False
 		self.instrument_calibration_complete = False
