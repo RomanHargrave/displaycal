@@ -1231,7 +1231,7 @@
                                   <object class="wxBoxSizer">
                                     <object class="sizeritem">
                                       <object class="wxSlider" name="testchart_patches_amount_ctrl">
-                                        <min>7</min>
+                                        <min>5</min>
                                         <max>17</max>
                                       </object>
                                       <option>1</option>

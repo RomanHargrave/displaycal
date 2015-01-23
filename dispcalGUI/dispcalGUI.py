@@ -3578,8 +3578,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		""" Update the estimated measurement time shown """
 		if which == "testchart":
 			patches = int(self.testchart_patches_amount.Label)
-			if getcfg("testchart.file") == "auto":
-				patches += 154
 		elif which == "cal":
 			# See dispcal.c
 			if getcfg("calibration.quality") == "v":
@@ -10887,7 +10885,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		s = min(auto, 11) * 4 - 3
 		g = s * 3 - 2
 		self.testchart_patches_amount.SetLabel(
-			str(get_total_patches(4, 4, s, g, auto, auto, 0)))
+			str(get_total_patches(4, 4, s, g, auto, auto, 0) + 154))
 		self.update_estimated_measurement_time("testchart")
 		self.update_profile_name()
 
