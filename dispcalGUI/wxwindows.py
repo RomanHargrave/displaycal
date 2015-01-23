@@ -4281,6 +4281,7 @@ class ProgressDialog(wx.Dialog):
 			self.sizer3.Add(wx.StaticText(self, -1,
 										  lang.getstr("elapsed_time")))
 			self.elapsed_time = wx.StaticText(self, -1, "--:--:--")
+			self.elapsed_time.SetMaxFontSize(11)
 			self.elapsed_time_handler(None)
 			self.sizer3.Add(self.elapsed_time)
 			self.elapsed_timer = wx.Timer(self)
@@ -4294,6 +4295,7 @@ class ProgressDialog(wx.Dialog):
 			self.time3 = time()
 			self.time4 = 0
 			self.remaining_time = wx.StaticText(self, -1, u"––:––:––")
+			self.remaining_time.SetMaxFontSize(11)
 			self.sizer3.Add(self.remaining_time)
 
 		if fancy:
@@ -4345,6 +4347,7 @@ class ProgressDialog(wx.Dialog):
 			accels.append((wx.ACCEL_NORMAL, keycode, id))
 		self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		
+		self.msg.SetMaxFontSize(11)
 		self.msg.Label = "\n".join(["E" * 80] * 4)
 		w, h = self.msg.Size
 		self.msg.WindowStyle |= wx.ST_NO_AUTORESIZE
