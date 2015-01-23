@@ -4490,11 +4490,16 @@ class ProgressDialog(wx.Dialog):
 			if value < prev_value and hasattr(self, "indicator_sound"):
 				self.indicator_sound.safe_play()
 		if (isinstance(self.gauge, BetterPyGauge) and
-			self._style & wx.PD_SMOOTH and value >= prev_value):
-			update_value = abs(self._fpprogress - prev_value)
-			if update_value:
-				ms = 950 + 50 * update_value
-				self.gauge.Update(value, ms)
+			self._style & wx.PD_SMOOTH):
+			if value >= prev_value:
+				update_value = abs(self._fpprogress - prev_value)
+				if update_value:
+					# Higher ms = smoother animation, but potentially
+					# increased "lag"
+					ms = 950 + 50 * update_value
+					self.gauge.Update(value, ms)
+			else:
+				self.gauge.Update(value, 50)
 		else:
 			self.gauge.SetValue(value)
 		return self.keepGoing, self.skip
