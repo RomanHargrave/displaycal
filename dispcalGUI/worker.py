@@ -3525,6 +3525,8 @@ class Worker(object):
 			self.progress_start_timer.Stop()
 		self.finished = True
 		if not continue_next or isinstance(result, Exception) or not result:
+			if hasattr(self, "_disabler"):
+				del self._disabler
 			self.stop_progress()
 		self.subprocess_abort = False
 		self.thread_abort = False
@@ -7209,8 +7211,6 @@ usage: spotread [-options] [logfile]
 					self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
 				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
-			if hasattr(self, "_disabler"):
-				del self._disabler
 			self.progress_wnd.Hide()
 			self.subprocess_abort = False
 			self.thread_abort = False
