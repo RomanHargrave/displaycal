@@ -2458,7 +2458,7 @@ class BorderGradientButton(GradientButton):
 												 self._pressedBottomColour)
 
 		fgcolor = self.ForegroundColour
-		if not self._enabled:
+		if not self._enabled and not self.IsEnabled():
 			fgcolor = self.LightColour(fgcolor, 40)
 
 		gc.SetBrush(brush)
@@ -2487,7 +2487,7 @@ class BorderGradientButton(GradientButton):
 			bw = bh = 0
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
-		if self._enabled:
+		if self._enabled or self.IsEnabled():
 			if self._mouseAction == HOVER:
 				bitmap = self._bitmaphover
 			else:
