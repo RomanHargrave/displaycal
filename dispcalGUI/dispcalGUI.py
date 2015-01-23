@@ -11105,7 +11105,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			wx.Bell()
 			return
 		if set_argyll_bin(self):
-			self.check_update_controls() or self.update_menus()
+			self.check_update_controls(True) or self.update_menus()
 			if len(self.worker.displays):
 				if getcfg("calibration.file", False):
 					# Load LUT curves from last used .cal file
@@ -11154,6 +11154,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									   event=None):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
+			self.show_advanced_options_handler()
 			self.worker.measurement_modes = {}
 			self.update_measurement_modes()
 			if comports == self.worker.instruments:
