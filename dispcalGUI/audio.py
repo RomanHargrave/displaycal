@@ -194,16 +194,14 @@ class Sound(object):
 					_sounds[self._filename] = {"lib": self._lib,
 											   "loop": self._loop,
 											   "snd": self._snd}
-				if self._lib:
-					self.volume = 0 if fade_ms else 1
 			if self._snd:
+				if not self.is_playing:
+					self.volume = 0 if fade_ms else 1
 				if self._lib == "pyo":
-					if not self.is_playing:
-						self._snd.out()
+					self._snd.out()
 				elif self._lib == "pygame":
-					if not self.is_playing:
-						self._ch = self._snd.play(-1 if self._loop else 0,
-												  fade_ms=0)
+					self._ch = self._snd.play(-1 if self._loop else 0,
+											  fade_ms=0)
 				elif self._lib == "wx" and self._snd.IsOk():
 					flags = wx.SOUND_ASYNC
 					if self._loop:

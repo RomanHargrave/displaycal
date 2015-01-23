@@ -4515,7 +4515,7 @@ class ProgressDialog(wx.Dialog):
 								  self.animbmp.Play(20))
 		if self.progress_type == 0 and getcfg("measurement.play_sound"):
 			wx.CallLater(50, lambda: self and self.IsShown() and
-									  self.sound.safe_play(3000))
+									 self.sound.safe_fade(3000, True))
 
 	def anim_fadeout(self):
 		self.animbmp.loop = False
@@ -4603,7 +4603,8 @@ class ProgressDialog(wx.Dialog):
 			   int(not(bool(getcfg("measurement.play_sound")))))
 		if getcfg("measurement.play_sound"):
 			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
-			if self.keepGoing and self._fpprogress < self.gauge.GetRange():
+			if (self.progress_type == 0 and self.keepGoing and
+				self._fpprogress < self.gauge.GetRange()):
 				self.sound.safe_play()
 		else:
 			bitmap = getbitmap("theme/icons/16x16/sound_off")
