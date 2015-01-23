@@ -4155,9 +4155,14 @@ class ProgressDialog(wx.Dialog):
 			style = (wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
 					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
 		self._style = style
+		if sys.platform == "darwin":
+			dlgstyle = 0
+		else:
+			# STAY_ON_TOP pushes modal dialogs under the progress dialog on
+			# Mac OS X
+			dlgstyle = wx.STAY_ON_TOP
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title,
-						   style=wx.DEFAULT_DIALOG_STYLE |
-								 wx.STAY_ON_TOP,
+						   style=wx.DEFAULT_DIALOG_STYLE | dlgstyle,
 						   name="progressdialog")
 		if fancy:
 			self.BackgroundColour = "#141414"
