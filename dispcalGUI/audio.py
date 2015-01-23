@@ -39,9 +39,11 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
 	# User choice or pygame > pyo > wx
 	if not lib:
 		for lib in ("pygame", "pyo", "wx"):
-			result = init(lib, samplerate, channels, buffersize, reinit)
-			if not isinstance(result, Exception):
-				return result
+			try:
+				return init(lib, samplerate, channels, buffersize, reinit)
+			except Exception, exception:
+				pass
+		raise exception
 	elif lib == "pygame":
 		try:
 			import pygame.mixer
@@ -49,15 +51,11 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
 		except ImportError:
 			_lib = None
 		else:
-			try:
-				if _initialized:
-					pygame.mixer.quit()
-				pygame.mixer.init(frequency=samplerate, channels=channels,
-								  buffer=buffersize)
-			except Exception, exception:
-				_server = exception
-			else:
-				_server = pygame.mixer
+			if _initialized:
+				pygame.mixer.quit()
+			pygame.mixer.init(frequency=samplerate, channels=channels,
+							  buffer=buffersize)
+			_server = pygame.mixer
 	elif lib == "pyo":
 		try:
 			import pyo
@@ -65,24 +63,21 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
 		except ImportError:
 			_lib = None
 		else:
-			try:
-				if _server:
-					_server.reinit(sr=samplerate, nchnls=channels,
-								   buffersize=buffersize, duplex=0)
-				else:
-					_server = pyo.Server(sr=samplerate, nchnls=channels,
-										 buffersize=buffersize, duplex=0).boot()
-					_server.start()
-			except Exception, exception:
-				_server = exception
+			if _server:
+				_server.reinit(sr=samplerate, nchnls=channels,
+							   buffersize=buffersize, duplex=0)
+			else:
+				_server = pyo.Server(sr=samplerate, nchnls=channels,
+									 buffersize=buffersize, duplex=0).boot()
+				_server.start()
 	elif lib == "wx":
 		try:
 			import wx
 			_lib = "wx"
-		except (ImportError, NotImplementedError):
+		except ImportError:
 			_lib = None
 	if not _lib:
-		raise NotImplementedError("No audio library available")
+		raise RuntimeError("No audio library available")
 	_initialized = True
 	return _server
 
@@ -96,6 +91,7 @@ def safe_init(lib=None, samplerate=22050, channels=2, buffersize=1536,
 	except Exception, exception:
 		# So we can check if initialization failed
 		_initialized = exception
+		return exception
 
 
 class Sound(object):
@@ -227,25 +223,25 @@ class Sound(object):
 		if not _initialized:
 			self._server = safe_init()
 		try:
-			self.fade(fade_ms, fade_in)
-		except:
-			pass
+			return self.fade(fade_ms, fade_in)
+		except Exception, exception:
+			return exception
 
 	def safe_play(self, fade_ms=0):
 		""" Like play(), but catch any exceptions """
 		if not _initialized:
 			self._server = safe_init()
 		try:
-			self.play(fade_ms)
-		except:
-			pass
+			return self.play(fade_ms)
+		except Exception, exception:
+			return exception
 
 	def safe_stop(self, fade_ms=0):
 		""" Like stop(), but catch any exceptions """
 		try:
-			self.stop(fade_ms)
-		except:
-			pass
+			return self.stop(fade_ms)
+		except Exception, exception:
+			return exception
 
 	def stop(self, fade_ms=0):
 		if self._snd and self.is_playing:
