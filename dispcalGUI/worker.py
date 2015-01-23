@@ -6807,7 +6807,6 @@ usage: spotread [-options] [logfile]
 		pauseable = getattr(self, "pauseable", False)
 		if getattr(self, "progress_dlg", None):
 			self.progress_wnd = self.progress_dlg
-			self.progress_wnd.MakeModal(True)
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 			# segfault under Arch Linux when setting the window title
 			# This has a chance of throwing a IOError: [Errno 9] Bad file
@@ -6823,7 +6822,7 @@ usage: spotread [-options] [logfile]
 			if not self.progress_wnd.IsShownOnScreen():
 				self.progress_wnd.Show()
 		else:
-			style = wx.PD_APP_MODAL | wx.PD_SMOOTH | wx.PD_ELAPSED_TIME
+			style = wx.PD_SMOOTH | wx.PD_ELAPSED_TIME
 			if self.show_remaining_time:
 				style |= wx.PD_REMAINING_TIME
 			if self.cancelable:
@@ -7117,6 +7116,8 @@ usage: spotread [-options] [logfile]
 		self.abort_requested = False
 		self.starttime = time()
 		self.thread_abort = False
+		if not hasattr(self, "_disabler"):
+			self._disabler = BetterWindowDisabler()
 		if fancy and (not self.interactive or
 					  interactive_frame not in ("uniformity", "untethered")):
 			# Pre-init progress dialog bitmaps
@@ -7205,7 +7206,8 @@ usage: spotread [-options] [logfile]
 					self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
 				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
-			self.progress_wnd.MakeModal(False)
+			if hasattr(self, "_disabler"):
+				del self._disabler
 			self.progress_wnd.Hide()
 			self.subprocess_abort = False
 			self.thread_abort = False
