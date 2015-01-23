@@ -4155,6 +4155,8 @@ class ProgressDialog(wx.Dialog):
 					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
 		self._style = style
 		wx.Dialog.__init__(self, parent, wx.ID_ANY, title,
+						   style=wx.DEFAULT_DIALOG_STYLE |
+								 wx.STAY_ON_TOP,
 						   name="progressdialog")
 		if fancy:
 			self.BackgroundColour = "#141414"

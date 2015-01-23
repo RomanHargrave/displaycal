@@ -6778,20 +6778,6 @@ usage: spotread [-options] [logfile]
 			self.abort_subprocess(True)
 		if self.finished is True:
 			return
-		if (self.progress_wnd.IsShownOnScreen() and
-			not self.progress_wnd.IsActive() and
-			(not getattr(self.progress_wnd, "dlg", None) or
-			 not self.progress_wnd.dlg.IsShownOnScreen()) and
-			wx.GetApp().GetTopWindow() and
-			wx.GetApp().GetTopWindow().IsShownOnScreen() and
-			(wx.GetApp().IsActive() or (sys.platform == "darwin" and
-										not self.activated))):
-			for window in wx.GetTopLevelWindows():
-				if (window and window is not self.progress_wnd and
-					isinstance(window, wx.Dialog) and window.IsShownOnScreen()):
-					return
-		   	self.activated = True
-			self.progress_wnd.Raise()
 
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None, resume=False, fancy=True):
@@ -7099,7 +7085,6 @@ usage: spotread [-options] [logfile]
 		if progress_start < 1:
 			# Can't be zero!
 			progress_start = 1
-		self.activated = False
 		self.cmdrun = False
 		self.finished = False
 		self.instrument_calibration_complete = False
