@@ -7103,7 +7103,8 @@ usage: spotread [-options] [logfile]
 		self.starttime = time()
 		self.thread_abort = False
 		if not hasattr(self, "_disabler"):
-			self._disabler = BetterWindowDisabler()
+			self._disabler = BetterWindowDisabler(getattr(self, "terminal",
+														  None))
 		if fancy and (not self.interactive or
 					  interactive_frame not in ("uniformity", "untethered")):
 			# Pre-init progress dialog bitmaps
