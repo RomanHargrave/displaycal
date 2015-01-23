@@ -181,7 +181,7 @@ class Sound(object):
 			if not self._snd and self._filename:
 				if (self._filename in _sounds and
 					_sounds[self._filename]["lib"] == self._lib and
-					_sounds[self._filename]["loop"] == self.loop):
+					_sounds[self._filename]["loop"] == self._loop):
 					# Cache hit
 					self._snd = _sounds[self._filename]["snd"]
 				elif self._lib == "pyo":
