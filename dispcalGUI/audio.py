@@ -171,7 +171,10 @@ class Sound(object):
 	def play(self, fade_ms=0):
 		global _wx_is_playing
 		if not _initialized:
-			self._server = init()
+			init()
+		if not self._server and _server:
+			self._server = _server
+		if not self._lib and _lib:
 			self._lib = _lib
 		if _initialized and not isinstance(_initialized, Exception):
 			if not self._snd and self._filename:
