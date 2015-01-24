@@ -706,9 +706,8 @@ class ReportFrame(BaseFrame):
 				prop[0] = 2.2
 			integration_time = [min(prop[i] * v, 20) for i, v in
 								enumerate(integration_time)]
-			# Sum integration time and default display update delay of 200 ms
-			# to get time per patch (ttp)
-			ttp = [v + .2 for v in integration_time]
+			# Get time per patch (tpp)
+			tpp = [v for v in integration_time]
 			if (("plasma" in tech or "crt" in tech or "projector" in tech or
 				 "dlp" in tech) and self.worker.get_instrument_name() in
 				("ColorMunki", "DTP92", "DTP94", "i1 Display", "i1 Display 1",
@@ -717,30 +716,35 @@ class ReportFrame(BaseFrame):
 				 "Spyder2", "Spyder3", "Spyder4")):
 				# Not all instruments can measure refresh rate! Add .25 secs
 				# for those who do if refresh mode is used.
-				ttp = [v + .25 for v in ttp]
+				tpp = [v + .25 for v in tpp]
+			if config.get_display_name() == "madVR":
+				# madVR takes a tad longer
+				tpp = [v + .45 for v in tpp]
+			min_delay_s = .2
 			if getcfg("measure.override_min_display_update_delay_ms"):
 				# Add additional display update delay (zero at <= 200 ms)
 				min_delay_ms = getcfg("measure.min_display_update_delay_ms")
-				min_delay_s = (max(min_delay_ms, 200) - 200) / 1000.0
-				ttp = [v + min_delay_s for v in ttp]
+				min_delay_s = max(min_delay_ms / 1000.0, min_delay_s)
 			if getcfg("measure.override_display_settle_time_mult"):
 				# We don't have access to display rise/fall time, so use this as
-				# generic integration time multiplier
+				# generic delay multiplier
 				settle_mult = getcfg("measure.display_settle_time_mult")
-				ttp = [v * settle_mult for v in ttp]
-			avg_delay = sum(ttp) / (8 / 3.0)
+			else:
+				settle_mult = 1.0
+			tpp = [v + min_delay_s + .145 * settle_mult for v in tpp]
+			avg_delay = sum(tpp) / (8 / 3.0)
 			seconds = avg_delay * patches
 			oseconds = seconds
 			if getcfg("drift_compensation.blacklevel"):
 				# Assume black patch every 60 seconds
-				seconds += math.ceil(oseconds / 60.0) * ((20 - ttp[0]) / 2.0 + ttp[0])
+				seconds += math.ceil(oseconds / 60.0) * ((20 - tpp[0]) / 2.0 + tpp[0])
 				# Assume black patch every n samples
-				seconds += math.ceil(opatches / 40.0) * ((20 - ttp[0]) / 2.0 + ttp[0])
+				seconds += math.ceil(opatches / 40.0) * ((20 - tpp[0]) / 2.0 + tpp[0])
 			if getcfg("drift_compensation.whitelevel"):
 				# Assume white patch every 60 seconds
-				seconds += math.ceil(oseconds / 60.0) * ttp[1]
+				seconds += math.ceil(oseconds / 60.0) * tpp[1]
 				# Assume white patch every n samples
-				seconds += math.ceil(opatches / 40.0) * ttp[1]
+				seconds += math.ceil(opatches / 40.0) * tpp[1]
 			timestamp = gmtime(seconds)
 			hours = int(strftime("%H", timestamp))
 			minutes = int(strftime("%M", timestamp))
