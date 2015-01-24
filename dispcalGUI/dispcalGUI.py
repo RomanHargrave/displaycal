@@ -12433,6 +12433,7 @@ class StartupFrame(wx.Frame):
 		self.Draw(wx.BufferedPaintDC(self))
 
 	def Draw(self, dc):
+		# Background
 		dc.SetBackgroundMode(wx.TRANSPARENT)
 		if isinstance(dc, wx.ScreenDC):
 			dc.StartDrawingOnTop()
@@ -12443,12 +12444,7 @@ class StartupFrame(wx.Frame):
 						self.splash_bmp.Size[1], self._buffereddc, 0, 0)
 			x = y = 0
 		dc.DrawBitmap(self.splash_bmp, x, y)
-		dc.DrawBitmap(self.splash_anim[min(self.frame,
-										   len(self.splash_anim) - 1)], x, y)
-		if self.frame > len(self.splash_anim) - 1:
-			dc.DrawBitmap(self.splash_version_anim[self.frame -
-												   len(self.splash_anim)],
-						  x, y)
+		# Text
 		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
 					   self.splash_bmp.Size[0], 40)
 		dc.SetFont(self.GetFont())
@@ -12479,6 +12475,13 @@ class StartupFrame(wx.Frame):
 													  wx.ALIGN_TOP)
 		dc.SetTextForeground("#CCCCCC")
 		dc.DrawLabel(self._msg, rect, wx.ALIGN_CENTER | wx.ALIGN_TOP)
+		# Animation
+		dc.DrawBitmap(self.splash_anim[min(self.frame,
+										   len(self.splash_anim) - 1)], x, y)
+		if self.frame > len(self.splash_anim) - 1:
+			dc.DrawBitmap(self.splash_version_anim[self.frame -
+												   len(self.splash_anim)],
+						  x, y)
 		if isinstance(dc, wx.ScreenDC):
 			dc.EndDrawingOnTop()
 
