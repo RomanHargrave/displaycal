@@ -6817,8 +6817,7 @@ usage: spotread [-options] [logfile]
 			self.abort_subprocess(True)
 		if self.finished is True:
 			return
-		if (not self.progress_wnd.WindowStyle & wx.STAY_ON_TOP and
-			self.progress_wnd.IsShownOnScreen() and
+		if (self.progress_wnd.IsShownOnScreen() and
 			not self.progress_wnd.IsActive() and
 			(not getattr(self.progress_wnd, "dlg", None) or
 			 not self.progress_wnd.dlg.IsShownOnScreen()) and
