@@ -2389,7 +2389,6 @@ class BorderGradientButton(GradientButton):
 		self._bitmaphover = self._bitmap
 		self._bitmapselected = self._bitmap
 		set_bitmap_labels(self)
-		self._enabled = True
 
 	BitmapLabel = property(lambda self: self._bitmap,
 						   lambda self, bitmap: self.SetBitmap(bitmap))
@@ -2422,7 +2421,6 @@ class BorderGradientButton(GradientButton):
 		return wx.Size(retWidth+constant, retHeight+constant) 
 	
 	def Enable(self, enable=True):
-		self._enabled = enable
 		GradientButton.Enable(self, enable)
 		self.Update()
 
@@ -2458,7 +2456,7 @@ class BorderGradientButton(GradientButton):
 												 self._pressedBottomColour)
 
 		fgcolor = self.ForegroundColour
-		if not self._enabled and not self.IsEnabled():
+		if not self.IsEnabled():
 			fgcolor = self.LightColour(fgcolor, 40)
 
 		gc.SetBrush(brush)
@@ -2487,7 +2485,7 @@ class BorderGradientButton(GradientButton):
 			bw = bh = 0
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
-		if self._enabled or self.IsEnabled():
+		if self.IsEnabled():
 			if self._mouseAction == HOVER:
 				bitmap = self._bitmaphover
 			else:

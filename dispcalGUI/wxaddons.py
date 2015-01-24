@@ -223,32 +223,32 @@ class BetterWindowDisabler(object):
 						if child:
 							self._windows.append(child)
 			def Enable(w, enable=True):
-				w._enabled = enable
+				w._BetterWindowDisabler_enabled = enable
 			def Disable(w):
-				w._enabled = False
+				w._BetterWindowDisabler_enabled = False
 			for w in reversed(self._windows):
-				if hasattr(w, "_disabler_id"):
+				if hasattr(w, "_BetterWindowDisabler_disabler_id"):
 					continue
-				w._disabler_id = self.id
+				w._BetterWindowDisabler_disabler_id = self.id
 				enabled = w.IsEnabled()
 				w.Disable()
-				w._Disable = w.Disable
+				w._BetterWindowDisabler_Disable = w.Disable
 				w.Disable = types.MethodType(Disable, w, type(w))
-				w._Enable = w.Enable
+				w._BetterWindowDisabler_Enable = w.Enable
 				w.Enable = types.MethodType(Enable, w, type(w))
 				w.Enable(enabled)
 			return
 		for w in self._windows:
 			if w:
-				if getattr(w, "_disabler_id", None) != self.id:
+				if getattr(w, "_BetterWindowDisabler_disabler_id", None) != self.id:
 					continue
-				if hasattr(w, "_Disable"):
-					w.Disable = w._Disable
-				if hasattr(w, "_Enable"):
-					w.Enable = w._Enable
-				if hasattr(w, "_enabled"):
-					w.Enable(w._enabled)
-				del w._disabler_id
+				if hasattr(w, "_BetterWindowDisabler_Disable"):
+					w.Disable = w._BetterWindowDisabler_Disable
+				if hasattr(w, "_BetterWindowDisabler_Enable"):
+					w.Enable = w._BetterWindowDisabler_Enable
+				if hasattr(w, "_BetterWindowDisabler_enabled"):
+					w.Enable(w._BetterWindowDisabler_enabled)
+				del w._BetterWindowDisabler_disabler_id
 
 
 class CustomGridCellEvent(CustomEvent):
