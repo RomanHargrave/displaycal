@@ -1176,8 +1176,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_controls(update_ccmx_items=False)
 		self.set_size(True, True)
 		self.calpanel.SetScrollRate(2, 2)
-		self.SetSaneGeometry(int(getcfg("position.x")), 
-							 int(getcfg("position.y")))
+		x, y = getcfg("position.x", False), getcfg("position.y", False)
+		if not None in (x, y):
+			self.SetSaneGeometry(x, y)
+		else:
+			self.Center()
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		if verbose >= 1:
 			safe_print(lang.getstr("success"))
