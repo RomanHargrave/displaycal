@@ -3095,9 +3095,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				items[1] += " (%s)" % lang.getstr("colorimeter_correction.file.none")
 		use_ccmx = (self.worker.instrument_can_use_ccxx(False) and
 					len(ccmx) > 1 and ccmx[1])
-		setcfg("display.technology",
-			   self.worker.get_instrument_measurement_modes().get(
-				getcfg("measurement_mode")))
+		tech = None
 		if use_ccmx and getcfg("measurement_mode") != "auto":
 			mode = None
 			try:
@@ -3105,7 +3103,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			except (IOError, CGATS.CGATSError), exception:
 				safe_print("%s:" % ccmx[1], exception)
 			else:
-				setcfg("display.technology", cgats.queryv1("TECHNOLOGY"))
+				tech = cgats.queryv1("TECHNOLOGY")
 				# Set appropriate measurement mode
 				# IMPORTANT: Make changes aswell in the following locations:
 				# - dispcalGUI.get_cgats_measurement_mode
@@ -3119,6 +3117,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				else:
 					ccmx = ["", ""]
 					index = 0
+					tech = None
+		if not tech:
+			tech = self.worker.get_instrument_measurement_modes().get(
+				getcfg("measurement_mode"))
+		setcfg("display.technology", tech)
 		setcfg("colorimeter_correction_matrix_file", ":".join(ccmx))
 		self.colorimeter_correction_matrix_ctrl.Freeze()
 		self.colorimeter_correction_matrix_ctrl.SetItems(items)
@@ -9500,6 +9503,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if (update_ccmx_items and
 			getcfg("colorimeter_correction_matrix_file").split(":")[0] == "AUTO"):
 			self.update_colorimeter_correction_matrix_ctrl_items()
+		else:
+			self.update_estimated_measurement_times()
 		self.update_main_controls()
 		if getattr(self, "reportframe", None):
 			self.reportframe.update_controls()
