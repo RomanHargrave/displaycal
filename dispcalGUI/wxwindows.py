@@ -4570,7 +4570,7 @@ class ProgressDialog(wx.Dialog):
 				for pth in get_data_path("theme/jet_anim", r"\.png$") or []:
 					im = wx.Image(pth)
 					# Blend red
-					im = im.AdjustChannels(1, .2, 0)
+					im = im.AdjustChannels(1, .25, 0)
 					# Adjust for background
 					im.AdjustMinMax(1.0 / 255 * 0x14)
 					bitmaps.append(im)
