@@ -31,7 +31,7 @@ from util_str import safe_str, safe_unicode, wrap
 from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  get_platform_window_decoration_size, wx,
-					  BetterWindowDisabler)
+					  BetterWindowDisabler, BetterTimer, EVT_BETTERTIMER)
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 ThemedGenButton, adjust_font_size_for_gcdc,
@@ -146,8 +146,13 @@ class AnimatedBitmap(wx.PyControl):
 		# Avoid flickering under Windows
 		self.Bind(wx.EVT_ERASE_BACKGROUND, lambda event: None)
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
-		self._timer = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, self.OnTimer)
+		self._timer = BetterTimer(self)
+		self.Bind(EVT_BETTERTIMER, self.OnTimer, self._timer)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+	
+	def OnDestroy(self, event):
+		self._timer.Stop()
+		del self._timer
 
 	def DoGetBestSize(self):
 		return self._minsize
@@ -3754,8 +3759,15 @@ class BetterPyGauge(pygauge.PyGauge):
 		self.gradientindex = 0
 		self._gradients = []
 		self._indeterminate_gradients = []
-		self._timer = wx.Timer(self, self._timerId)
-		self._timer.Start(50)
+		self._timer = BetterTimer(self, self._timerId)
+		self.Unbind(wx.EVT_TIMER)
+		self.Bind(EVT_BETTERTIMER, self.OnTimer, self._timer)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+		self.Start(50)
+	
+	def OnDestroy(self, event):
+		self._timer.Stop()
+		del self._timer
 
 	def OnTimer(self, event):
 		gradient = self._barGradient
@@ -3808,6 +3820,12 @@ class BetterPyGauge(pygauge.PyGauge):
 		self._indeterminate = False
 		pygauge.PyGauge.SetValue(self, value)
 		self.Refresh()
+
+	def Start(self, milliseconds=50):
+		self._timer.Start(milliseconds)
+
+	def Stop(self):
+		self._timer.Stop()
 
 	def Update(self, value, time=0):
 		"""
@@ -4013,12 +4031,12 @@ class LogWindow(InvincibleFrame):
 		self.log_txt.SetDefaultStyle(wx.TextAttr(self.log_txt.ForegroundColour,
 												 self.log_txt.BackgroundColour,
 												 font=font))
-		bgcol = wx.Colour(self.log_txt.BackgroundColour.Red() * .5,
-						  self.log_txt.BackgroundColour.Green() * .5,
-						  self.log_txt.BackgroundColour.Blue() * .5)
-		fgcol = wx.Colour(bgcol.Red() + self.log_txt.ForegroundColour.Red() * .5,
-						  bgcol.Green() + self.log_txt.ForegroundColour.Green() * .5,
-						  bgcol.Blue() + self.log_txt.ForegroundColour.Blue() * .5)
+		bgcol = wx.Colour(int(self.log_txt.BackgroundColour.Red() * .5),
+						  int(self.log_txt.BackgroundColour.Green() * .5),
+						  int(self.log_txt.BackgroundColour.Blue() * .5))
+		fgcol = wx.Colour(int(bgcol.Red() + self.log_txt.ForegroundColour.Red() * .5),
+						  int(bgcol.Green() + self.log_txt.ForegroundColour.Green() * .5),
+						  int(bgcol.Blue() + self.log_txt.ForegroundColour.Blue() * .5))
 		self._1stcolstyle = wx.TextAttr(fgcol, self.log_txt.BackgroundColour,
 										font=font)
 		self.sizer.Add(self.log_txt, 1, flag=wx.EXPAND)
@@ -4178,8 +4196,8 @@ class ProgressDialog(wx.Dialog):
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
 			self.Bind(wx.EVT_MOVE, self.OnMove, self)
-		self.timer = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, handler or self.OnTimer, self.timer)
+		self.timer = BetterTimer(self)
+		self.Bind(EVT_BETTERTIMER, handler or self.OnTimer, self.timer)
 		
 		self.keepGoing = True
 		self.skip = False
@@ -4202,7 +4220,7 @@ class ProgressDialog(wx.Dialog):
 			self.sound = audio.Sound(get_data_path("theme/engine_hum_loop.wav"),
 									 True)
 			self.indicator_sound = audio.Sound(get_data_path("theme/beep_boop.wav"))
-			self.get_bitmaps(self.progress_type)
+			ProgressDialog.get_bitmaps(self.progress_type)
 			sizer0flag = 0
 		else:
 			self.SetSizer(self.sizer0)
@@ -4284,8 +4302,8 @@ class ProgressDialog(wx.Dialog):
 			self.elapsed_time.SetMaxFontSize(11)
 			self.elapsed_time_handler(None)
 			self.sizer3.Add(self.elapsed_time)
-			self.elapsed_timer = wx.Timer(self)
-			self.Bind(wx.EVT_TIMER, self.elapsed_time_handler,
+			self.elapsed_timer = BetterTimer(self)
+			self.Bind(EVT_BETTERTIMER, self.elapsed_time_handler,
 					  self.elapsed_timer)
 		
 		if style & wx.PD_REMAINING_TIME:
@@ -4431,7 +4449,7 @@ class ProgressDialog(wx.Dialog):
 			if self._fpprogress < self.gauge.GetRange():
 				self.Update(self._fpprogress + self.gauge.GetRange() / 1000.0)
 			else:
-				self.stop_timer()
+				self.stop_timer(False)
 				self.Update(self.gauge.GetRange(),
 							"Finished. You may now close this window.")
 				self.pause_continue.Disable()
@@ -4440,7 +4458,7 @@ class ProgressDialog(wx.Dialog):
 		else:
 			self.Pulse("Aborting...")
 			if not hasattr(self, "delayed_stop"):
-				self.delayed_stop = wx.CallLater(3000, self.stop_timer)
+				self.delayed_stop = wx.CallLater(3000, self.stop_timer, False)
 				wx.CallLater(3000, self.Pulse, 
 							 "Aborted. You may now close this window.")
 	
@@ -4494,11 +4512,11 @@ class ProgressDialog(wx.Dialog):
 					self.remaining_time.Label = strftime("%H:%M:%S",
 														 gmtime(remaining))
 		if getcfg("measurement.play_sound"):
-			if value < prev_value and hasattr(self, "indicator_sound"):
+			if self._fpprogress < prev_value and hasattr(self, "indicator_sound"):
 				self.indicator_sound.safe_play()
 		if (isinstance(self.gauge, BetterPyGauge) and
 			self._style & wx.PD_SMOOTH):
-			if value >= prev_value:
+			if self._fpprogress >= prev_value:
 				update_value = abs(self._fpprogress - prev_value)
 				if update_value:
 					# Higher ms = smoother animation, but potentially
@@ -4524,12 +4542,16 @@ class ProgressDialog(wx.Dialog):
 		self.animbmp.SetBitmaps(bitmaps, range=range, loop=True)
 		wx.CallLater(50, lambda: self and self.IsShown() and
 								  self.animbmp.Play(20))
-		if self.progress_type == 0 and getcfg("measurement.play_sound"):
+
+	def sound_fadein(self):
+		if getcfg("measurement.play_sound"):
 			wx.CallLater(50, lambda: self and self.IsShown() and
 									 self.sound.safe_fade(3000, True))
 
 	def anim_fadeout(self):
 		self.animbmp.loop = False
+
+	def sound_fadeout(self):
 		if self.sound.is_playing:
 			self.sound.safe_stop(3000)
 	
@@ -4629,31 +4651,46 @@ class ProgressDialog(wx.Dialog):
 	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
 
 	def set_progress_type(self, progress_type):
-		if hasattr(self, "animbmp"):
-			self.anim_fadeout()
+		if progress_type != self.progress_type:
 			if self.progress_type == 0:
 				delay = 4000
 			else:
 				delay = 2000
-			wx.CallLater(delay, lambda: self and
-										self.progress_type == progress_type and
-										self.anim_fadein())
-		if progress_type != self.progress_type:
+			if hasattr(self, "animbmp"):
+				self.anim_fadeout()
+				wx.CallLater(delay, lambda: self and
+											self.progress_type == progress_type and
+											self.anim_fadein())
+			if hasattr(self, "sound"):
+				self.sound_fadeout()
+				if progress_type == 0:
+					wx.CallLater(delay, lambda: self and
+												self.progress_type == progress_type and
+												self.sound_fadein())
 			self.progress_type = progress_type
 
-	def start_timer(self, ms=50):
+	def start_timer(self, ms=100):
 		self.timer.Start(ms)
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Start(1000)
 		if hasattr(self, "animbmp"):
 			self.anim_fadein()
+		if hasattr(self, "sound"):
+			self.sound_fadein()
 	
-	def stop_timer(self):
+	def stop_timer(self, immediate=True):
 		self.timer.Stop()
+		if isinstance(self.gauge, BetterPyGauge) and immediate:
+			self.gauge.Stop()
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Stop()
-		if hasattr(self, "animbmp") and self.animbmp.loop:
-			self.anim_fadeout()
+		if hasattr(self, "animbmp"):
+			if immediate:
+				self.animbmp.Stop()
+			elif self.animbmp.loop:
+				self.anim_fadeout()
+		if hasattr(self, "sound"):
+			self.sound_fadeout()
 
 
 class FancyProgressDialog(ProgressDialog):
@@ -4703,9 +4740,9 @@ class SimpleTerminal(InvincibleFrame):
 		
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
-		self.timer = wx.Timer(self)
+		self.timer = BetterTimer(self)
 		if handler:
-			self.Bind(wx.EVT_TIMER, handler, self.timer)
+			self.Bind(EVT_BETTERTIMER, handler, self.timer)
 		
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)

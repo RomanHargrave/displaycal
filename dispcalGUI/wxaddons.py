@@ -3,6 +3,7 @@
 from time import sleep
 import os
 import sys
+import threading
 import types
 
 from wxfixes import wx
@@ -189,6 +190,95 @@ class CustomEvent(wx.PyEvent):
 
 	def GetWindow(self):
 		return self.window
+
+
+wxEVT_BETTERTIMER = wx.NewEventType()
+EVT_BETTERTIMER = wx.PyEventBinder(wxEVT_BETTERTIMER, 1)
+
+
+class BetterTimerEvent(wx.PyCommandEvent):
+
+	def __init__(self, id=wx.ID_ANY, ms=0):
+		wx.PyCommandEvent.__init__(self, wxEVT_BETTERTIMER, id)
+		self._ms = ms
+
+	def GetInterval(self):
+		return self._ms
+
+	Interval = property(GetInterval)
+
+
+class BetterTimer(object):
+
+	""" A wx.Timer replacement that uses threads instead of actual timers
+	which are a limited resource """
+
+	def __init__(self, owner=None, id=wx.ID_ANY):
+		self._owner = owner
+		if id < 0:
+			id = wx.NewId()
+		self._id = id
+		self._ms = 0
+		self._oneshot = False
+		self._keep_running = False
+		self._thread = None
+
+	def __del__(self):
+		self.Destroy()
+
+	def _timer(self):
+		self._keep_running = True
+		while self._keep_running:
+			sleep(self._ms / 1000.0)
+			if wx.GetApp():
+				wx.CallAfter(self.Notify)
+				if self._oneshot:
+					self._keep_running = False
+			else:
+				self._keep_running = False
+
+	def Destroy(self):
+		self._owner = None
+		del self._thread
+
+	def GetId(self):
+		return self._id
+
+	def GetInterval(self):
+		return self._ms
+
+	def GetOwner(self):
+		return self._owner
+
+	def SetOwner(self, owner):
+		self._owner = owner
+
+	Id = property(GetId)
+	Interval = property(GetInterval)
+	Owner = property(GetOwner, SetOwner)
+
+	def IsOneShot(self):
+		return self._oneshot
+
+	def IsRunning(self):
+		return self._keep_running
+
+	def Notify(self):
+		if self._keep_running and self._owner:
+			self._owner.ProcessEvent(BetterTimerEvent(self._id, self._ms))
+
+	def Start(self, milliseconds=-1, oneShot=False):
+		if self._thread and self._thread.isAlive():
+			self._keep_running = False
+			self._thread.join()
+		if milliseconds > -1:
+			self._ms = milliseconds
+		self._oneshot = oneShot
+		self._thread = threading.Thread(target=self._timer)
+		self._thread.start()
+
+	def Stop(self):
+		self._keep_running = False
 
 
 class BetterWindowDisabler(object):
