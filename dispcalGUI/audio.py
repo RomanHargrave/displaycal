@@ -156,6 +156,18 @@ class _Sound(object):
 		self._loop = loop
 		self._play_count = 0
 		self._thread = -1
+		if not _initialized:
+			init()
+		if _initialized and not isinstance(_initialized, Exception):
+			if not self._lib and _lib:
+				self._lib = _lib
+			if not self._snd and self._filename:
+				if self._lib == "pyo":
+					self._snd = pyo.SfPlayer(self._filename, loop=self._loop)
+				elif self._lib == "pygame":
+					self._snd = pygame.mixer.Sound(self._filename)
+				elif self._lib == "wx":
+					self._snd = wx.Sound(self._filename)
 
 	def _get_ch(self):
 		return _ch.get((self._filename, self._loop))
@@ -234,42 +246,30 @@ class _Sound(object):
 		return self._is_playing
 
 	def play(self, fade_ms=0):
-		if not _initialized:
-			init()
-		if not self._lib and _lib:
-			self._lib = _lib
-		if _initialized and not isinstance(_initialized, Exception):
-			if not self._snd and self._filename:
-				if self._lib == "pyo":
-					self._snd = pyo.SfPlayer(self._filename, loop=self._loop)
-				elif self._lib == "pygame":
-					self._snd = pygame.mixer.Sound(self._filename)
-				elif self._lib == "wx":
-					self._snd = wx.Sound(self._filename)
-			if self._snd:
-				if not self.is_playing:
-					self.volume = 0 if fade_ms else 1
-				if self._lib == "pyo":
-					self._snd.out()
-				elif self._lib == "pygame":
-					self._ch = self._snd.play(-1 if self._loop else 0,
-											  fade_ms=0)
-				elif self._lib == "wx" and self._snd.IsOk():
-					flags = wx.SOUND_ASYNC
-					if self._loop:
-						flags |= wx.SOUND_LOOP
-						# The best we can do is have the correct state reflected
-						# for looping sounds only
-						self._is_playing = True
-					# wx.Sound.Play is supposed to return True on success.
-					# When I tested this, it always returned False, but still
-					# played the sound.
-					self._snd.Play(flags)
-				if self._lib:
-					self._play_count += 1
-				if fade_ms and self._lib != "wx":
-					self.fade(fade_ms, True)
-				return True
+		if self._snd:
+			if not self.is_playing:
+				self.volume = 0 if fade_ms else 1
+			if self._lib == "pyo":
+				self._snd.out()
+			elif self._lib == "pygame":
+				self._ch = self._snd.play(-1 if self._loop else 0,
+										  fade_ms=0)
+			elif self._lib == "wx" and self._snd.IsOk():
+				flags = wx.SOUND_ASYNC
+				if self._loop:
+					flags |= wx.SOUND_LOOP
+					# The best we can do is have the correct state reflected
+					# for looping sounds only
+					self._is_playing = True
+				# wx.Sound.Play is supposed to return True on success.
+				# When I tested this, it always returned False, but still
+				# played the sound.
+				self._snd.Play(flags)
+			if self._lib:
+				self._play_count += 1
+			if fade_ms and self._lib != "wx":
+				self.fade(fade_ms, True)
+			return True
 		return False
 
 	@property
