@@ -5,7 +5,8 @@ Audio wrapper module
 
 Can use pygame, pyo or wx.
 pygame will be used by default if available.
-pyo seems to be buggy under Linux and has a few quirks under Windows.
+pyo is still buggy under Linux and has a few quirks under Windows, but seems
+like the best bet in the long run as pygame development is stagnant since 2009.
 wx doesn't support fading, changing volume, multiple concurrent sounds, and
 only supports wav format.
 
@@ -19,9 +20,11 @@ import threading
 import time
 
 
+_ch = {}
 _initialized = False
 _lib = None
 _server = None
+_snd = {}
 _sounds = {}
 
 
@@ -62,7 +65,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
 		except ImportError:
 			_lib = None
 		else:
-			if _server:
+			if isinstance(_server, pyo.Server):
 				_server.reinit(sr=samplerate, nchnls=channels,
 							   buffersize=buffersize, duplex=0)
 			else:
@@ -75,6 +78,8 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
 			_lib = "wx"
 		except ImportError:
 			_lib = None
+		else:
+			_server = wx
 	if not _lib:
 		raise RuntimeError("No audio library available")
 	_initialized = True
@@ -93,20 +98,72 @@ def safe_init(lib=None, samplerate=22050, channels=2, buffersize=1536,
 		return exception
 
 
-class Sound(object):
+def Sound(filename, loop=False):
+	""" Sound caching mechanism """
+	if (filename, loop) in _sounds:
+		# Cache hit
+		return _sounds[(filename, loop)]
+	else:
+		sound = _Sound(filename, loop)
+		_sounds[(filename, loop)] = sound
+		return sound
+
+
+class _DummySound(object):
+
+	""" Dummy sound wrapper class """
+
+	def __init__(self, filename, loop=False):
+		pass
+
+	def fade(self, fade_ms, fade_in=None):
+		pass
+
+	@property
+	def is_playing(self):
+		return False
+
+	def play(self, fade_ms=0):
+		return False
+
+	@property
+	def play_count(self):
+		return 0
+
+	def safe_fade(self, fade_ms, fade_in=None):
+		return False
+
+	def safe_play(self, fade_ms=0):
+		return False
+
+	def safe_stop(self, fade_ms=0):
+		return False
+
+	def stop(self, fade_ms=0):
+		return False
+
+	volume = 0
+
+
+class _Sound(object):
 
 	""" Sound wrapper class """
 
 	def __init__(self, filename, loop=False):
-		self._ch = None
 		self._filename = filename
 		self._is_playing = False
 		self._lib = _lib
 		self._loop = loop
 		self._play_count = 0
-		self._snd = None
-		self._server = _server
 		self._thread = -1
+
+	def _get_ch(self):
+		return _ch.get((self._filename, self._loop))
+
+	def _set_ch(self, ch):
+		_ch[(self._filename, self._loop)] = ch
+
+	_ch = property(_get_ch, _set_ch)
 
 	def _fade(self, fade_ms, fade_in, thread):
 		volume = self.volume
@@ -136,11 +193,19 @@ class Sound(object):
 	def _set_volume(self, volume):
 		if self._snd and self._lib != "wx":
 			if self._lib == "pyo":
-				volume = self._snd.mul = volume
+				self._snd.mul = volume
 			elif self._lib == "pygame":
-				volume = self._snd.set_volume(volume)
+				self._snd.set_volume(volume)
 			return True
 		return False
+
+	def _get_snd(self):
+		return _snd.get((self._filename, self._loop))
+
+	def _set_snd(self, snd):
+		_snd[(self._filename, self._loop)] = snd
+
+	_snd = property(_get_snd, _set_snd)
 
 	def fade(self, fade_ms, fade_in=None):
 		"""
@@ -163,7 +228,7 @@ class Sound(object):
 	@property
 	def is_playing(self):
 		if self._lib == "pyo":
-			return self._snd.isOutputting()
+			return self._snd and self._snd.isOutputting()
 		elif self._lib == "pygame":
 			return bool(self._ch and self._ch.get_busy())
 		return self._is_playing
@@ -171,28 +236,16 @@ class Sound(object):
 	def play(self, fade_ms=0):
 		if not _initialized:
 			init()
-		if not self._server and _server:
-			self._server = _server
 		if not self._lib and _lib:
 			self._lib = _lib
 		if _initialized and not isinstance(_initialized, Exception):
 			if not self._snd and self._filename:
-				if (self._filename in _sounds and
-					_sounds[self._filename]["lib"] == self._lib and
-					_sounds[self._filename]["loop"] == self._loop):
-					# Cache hit
-					self._snd = _sounds[self._filename]["snd"]
-				elif self._lib == "pyo":
+				if self._lib == "pyo":
 					self._snd = pyo.SfPlayer(self._filename, loop=self._loop)
 				elif self._lib == "pygame":
 					self._snd = pygame.mixer.Sound(self._filename)
 				elif self._lib == "wx":
 					self._snd = wx.Sound(self._filename)
-				if self._snd and not self._filename in _sounds:
-					# Cache sound
-					_sounds[self._filename] = {"lib": self._lib,
-											   "loop": self._loop,
-											   "snd": self._snd}
 			if self._snd:
 				if not self.is_playing:
 					self.volume = 0 if fade_ms else 1
@@ -226,7 +279,7 @@ class Sound(object):
 	def safe_fade(self, fade_ms, fade_in=None):
 		""" Like fade(), but catch any exceptions """
 		if not _initialized:
-			self._server = safe_init()
+			safe_init()
 		try:
 			return self.fade(fade_ms, fade_in)
 		except Exception, exception:
@@ -235,7 +288,7 @@ class Sound(object):
 	def safe_play(self, fade_ms=0):
 		""" Like play(), but catch any exceptions """
 		if not _initialized:
-			self._server = safe_init()
+			safe_init()
 		try:
 			return self.play(fade_ms)
 		except Exception, exception:
@@ -278,10 +331,12 @@ if __name__ == "__main__":
 	panel = wx.Panel(frame)
 	panel.Sizer = wx.BoxSizer()
 	button = wx.Button(panel, -1, "Play")
-	button.Bind(wx.EVT_BUTTON, lambda event: sound.play(3000))
+	button.Bind(wx.EVT_BUTTON, lambda event: not sound.is_playing and
+											 sound.play(3000))
 	panel.Sizer.Add(button, 1)
 	button = wx.Button(panel, -1, "Stop")
-	button.Bind(wx.EVT_BUTTON, lambda event: sound.stop(3000))
+	button.Bind(wx.EVT_BUTTON, lambda event: sound.is_playing and
+											 sound.stop(3000))
 	panel.Sizer.Add(button, 1)
 	panel.Sizer.SetSizeHints(frame)
 	frame.Show()
