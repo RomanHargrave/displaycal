@@ -117,30 +117,30 @@ class _DummySound(object):
 		pass
 
 	def fade(self, fade_ms, fade_in=None):
-		pass
+		return True
 
 	@property
 	def is_playing(self):
 		return False
 
 	def play(self, fade_ms=0):
-		return False
+		return True
 
 	@property
 	def play_count(self):
 		return 0
 
 	def safe_fade(self, fade_ms, fade_in=None):
-		return False
+		return True
 
 	def safe_play(self, fade_ms=0):
-		return False
+		return True
 
 	def safe_stop(self, fade_ms=0):
-		return False
+		return True
 
 	def stop(self, fade_ms=0):
-		return False
+		return True
 
 	volume = 0
 
@@ -229,7 +229,7 @@ class _Sound(object):
 		if fade_in is None:
 			fade_in = not self.volume
 		if fade_in and not self.is_playing:
-			self.play(fade_ms=fade_ms)
+			return self.play(fade_ms=fade_ms)
 		elif self._snd and self._lib != "wx":
 			self._thread += 1
 			threading.Thread(target=self._fade,
