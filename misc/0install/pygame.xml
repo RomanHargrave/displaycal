@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/pygame.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>Pygame</name>
+	<summary xml:lang="en">Python modules for writing games</summary>
+	<description xml:lang="en">Pygame is a set of Python modules designed for writing games. Pygame adds functionality on top of the excellent SDL library. This allows you to create fully featured games and multimedia programs in the python language. Pygame is highly portable and runs on nearly every platform and operating system.</description>
+	<homepage>http://www.pygame.org/</homepage>
+	<package-implementation package="pygame" distributions="RPM" />
+	<package-implementation package="python-pygame" distributions="RPM" />
+	<package-implementation package="python-pygame" distributions="Debian" />
+	<package-implementation package="dev-python/pygame" distributions="Gentoo" />
+	<package-implementation package="python2-pygame" distributions="Arch" />
+	<group license="NumPy License">
+		<environment name="PYTHONPATH" insert="." />
+		<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+			<!-- Mac OS X Python 2.6 -->
+			<requires interface="http://repo.roscidus.com/python/python" version="2.6..!2.7">
+				<version not-before="2.6" before="2.7" />
+			</requires>
+		</implementation>
+		<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+			<!-- Mac OS X Python 2.7 -->
+			<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+				<version not-before="2.7" before="3.0" />
+			</requires>
+		</implementation>
+		<implementation arch="Windows-*" version="0.0.0" released="0000-00-00" stability="stable">
+			<requires interface="${URL}0install/python.xml" version="2.7..!3.0">
+				<version not-before="2.7" before="3.0" />
+			</requires>
+		</implementation>
+	</group>
+</interface>

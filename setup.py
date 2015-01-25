@@ -831,7 +831,7 @@ def setup():
 		for tmpl_name in ("7z.xml", "argyllcms.xml", "dispcalGUI.xml",
 						  "dispcalGUI-linux.xml",
 						  "dispcalGUI-mac.xml", "dispcalGUI-win32.xml",
-						  "numpy.xml", "wmi.xml", "wxpython.xml"):
+						  "numpy.xml", "pygame.xml", "wmi.xml", "wxpython.xml"):
 			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
 			create = not os.path.isfile(dist_path)
 			if create:

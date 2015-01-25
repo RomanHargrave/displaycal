@@ -56,6 +56,7 @@ if raw_input('Press <ENTER> to continue, X <ENTER> to abort: ').upper() == 'X':
 
 # Packages to collect
 pkgs = {'numpy': ['numpy'],
+		'pygame': ['pygame'],
 	    'wx': [wx_pth,
 			   'wxversion']}
 if sys.platform == 'win32':
