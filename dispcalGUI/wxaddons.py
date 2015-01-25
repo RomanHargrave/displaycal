@@ -226,16 +226,27 @@ class BetterTimer(object):
 	def __del__(self):
 		self.Destroy()
 
+	def _notify(self):
+		if self._keep_running:
+			try:
+				self.Notify()
+			finally:
+				if self._oneshot:
+					self._keep_running = False
+				self._notified = True
+
 	def _timer(self):
 		self._keep_running = True
 		while self._keep_running:
 			sleep(self._ms / 1000.0)
-			if wx.GetApp():
-				wx.CallAfter(self.Notify)
-				if self._oneshot:
+			if self._keep_running:
+				if wx.GetApp():
+					self._notified = False
+					wx.CallAfter(self._notify)
+					while self._keep_running and not self._notified:
+						sleep(0.001)
+				else:
 					self._keep_running = False
-			else:
-				self._keep_running = False
 
 	def Destroy(self):
 		self._owner = None
@@ -264,7 +275,7 @@ class BetterTimer(object):
 		return self._keep_running
 
 	def Notify(self):
-		if self._keep_running and self._owner:
+		if self._owner:
 			self._owner.ProcessEvent(BetterTimerEvent(self._id, self._ms))
 
 	def Start(self, milliseconds=-1, oneShot=False):
@@ -279,6 +290,43 @@ class BetterTimer(object):
 
 	def Stop(self):
 		self._keep_running = False
+
+
+class BetterCallLater(BetterTimer):
+
+	def __init__(self, millis, callableObj, *args, **kwargs):
+		BetterTimer.__init__(self)
+		self._oneshot = True
+		self._callable = callableObj
+		self._has_run = False
+		self._result = None
+		self.SetArgs(*args, **kwargs)
+		self.Start(millis)
+
+	def GetResult(self):
+		return self._result
+
+	Result = property(GetResult)
+
+	def HasRun(self):
+		return self._has_run
+
+	def Notify(self):
+		self._result = self._callable(*self._args, **self._kwargs)
+		self._has_run = True
+
+	def SetArgs(self, *args, **kwargs):
+		self._args = args
+		self._kwargs = kwargs
+
+	def Start(self, millis=None, *args, **kwargs):
+		if args:
+			self._args = args
+		if kwargs:
+			self._kwargs = kwargs
+		BetterTimer.Start(self, millis, True)
+
+	Restart = Start
 
 
 class BetterWindowDisabler(object):
