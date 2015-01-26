@@ -62,6 +62,10 @@ pkgs = {'numpy': ['numpy'],
 if sys.platform == 'win32':
 	pkgs['wmi'] = ['wmi']
 if sys.platform == 'darwin':
+	pkgs['pygame'].extend(['/Library/Frameworks/SDL_image.framework/Versions/A/SDL_image',
+						   '/Library/Frameworks/SDL_mixer.framework/Versions/A/SDL_mixer',
+						   '/Library/Frameworks/SDL_ttf.framework/Versions/A/SDL_ttf',
+						   '/Library/Frameworks/SDL.framework/Versions/A/SDL'])
 	pkgs['wx'].extend(glob.glob(os.path.normpath(os.path.join(
 		os.path.dirname(wx_pth), '..', '..', 'libwx_*.dylib'))))
 
