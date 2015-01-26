@@ -12442,6 +12442,7 @@ class StartupFrame(wx.Frame):
 			dc.StartDrawingOnTop()
 			x, y = self.splash_x, self.splash_y
 		else:
+			dc.Clear()
 			if hasattr(self, "_buffereddc"):
 				dc.Blit(0, 0, self.splash_bmp.Size[0],
 						self.splash_bmp.Size[1], self._buffereddc, 0, 0)
