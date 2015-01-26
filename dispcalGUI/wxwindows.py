@@ -2216,7 +2216,8 @@ class FlatShadedButton(GradientButton):
 		"""
 
 		if not getattr(self, "_lastBestSize", None):
-			label = self.GetLabel() or u"\u200b"
+			dummy = u"FfGgJjPpYy"
+			label = self.GetLabel() or dummy
 			
 			dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
 			try:
@@ -2225,12 +2226,14 @@ class FlatShadedButton(GradientButton):
 				pass
 			dc.SetFont(self.GetFont())
 			retWidth, retHeight = dc.GetTextExtent(label)
-			if label != u"\u200b" and wx.VERSION < (2, 9):
+			if label == dummy:
+				retWidth = 0
+			elif wx.VERSION < (2, 9):
 				retWidth += 5
 			
 			bmpWidth = bmpHeight = 0
 			if self._bitmap:
-				if label != u"\u200b":
+				if label != dummy:
 					constant = 10
 					if wx.VERSION < (2, 9):
 						retWidth += 5
