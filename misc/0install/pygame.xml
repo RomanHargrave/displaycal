@@ -13,18 +13,21 @@
 	<package-implementation package="python2-pygame" distributions="Arch" />
 	<group license="NumPy License">
 		<environment name="PYTHONPATH" insert="." />
-		<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
-			<!-- Mac OS X Python 2.6 -->
-			<requires interface="http://repo.roscidus.com/python/python" version="2.6..!2.7">
-				<version not-before="2.6" before="2.7" />
-			</requires>
-		</implementation>
-		<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
-			<!-- Mac OS X Python 2.7 -->
-			<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
-				<version not-before="2.7" before="3.0" />
-			</requires>
-		</implementation>
+		<group arch="MacOSX-*">
+			<environment name="DYLD_FALLBACK_FRAMEWORK_PATH" insert="." />
+			<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+				<!-- Mac OS X PPC/x86 Python 2.6 -->
+				<requires interface="http://repo.roscidus.com/python/python" version="2.6..!2.7">
+					<version not-before="2.6" before="2.7" />
+				</requires>
+			</implementation>
+			<implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+				<!-- Mac OS X x86_64 Python 2.7 -->
+				<requires interface="http://repo.roscidus.com/python/python" version="2.7..!3.0">
+					<version not-before="2.7" before="3.0" />
+				</requires>
+			</implementation>
+		</group>
 		<implementation arch="Windows-*" version="0.0.0" released="0000-00-00" stability="stable">
 			<requires interface="${URL}0install/python.xml" version="2.7..!3.0">
 				<version not-before="2.7" before="3.0" />
