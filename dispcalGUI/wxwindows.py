@@ -167,10 +167,7 @@ class AnimatedBitmap(wx.PyControl):
 			dc.DrawBitmap(self._bitmaps[self.frame], 0, 0, True)
 
 	def OnTimer(self, event):
-		if self.loop:
-			first_frame, last_frame = self.range
-		else:
-			first_frame, last_frame = 0, -1
+		first_frame, last_frame = self.range
 		if first_frame < 0:
 			first_frame += len(self._bitmaps)
 		if last_frame < 0:
@@ -4584,15 +4581,18 @@ class ProgressDialog(wx.Dialog):
 		if self.progress_type == 0:
 			# Processing
 			range = (60, 68)
+			loop = True
 		elif self.progress_type == 1:
 			# Measuring
-			range = (-1, -1)
+			range = (5, 14)
+			loop = False
 		else:
 			# Generating test patches
 			range = (27, 36)
-		self.animbmp.SetBitmaps(bitmaps, range=range, loop=True)
-		if range[0] == -1:
-			self.animbmp.frame = len(self.animbmp._bitmaps) - 1
+			loop = True
+		self.animbmp.SetBitmaps(bitmaps, range=range, loop=loop)
+		if self.progress_type == 1:
+			self.animbmp.frame = 9
 		wx.CallLater(50, lambda: self and self.IsShown() and
 								  self.animbmp.Play(20))
 
@@ -4603,6 +4603,7 @@ class ProgressDialog(wx.Dialog):
 
 	def anim_fadeout(self):
 		self.animbmp.loop = False
+		self.animbmp.range = self.animbmp.range[0], -1
 
 	def sound_fadeout(self):
 		if self.sound.is_playing:
@@ -4661,6 +4662,8 @@ class ProgressDialog(wx.Dialog):
 						bmp = wx.Bitmap(pth)
 						bitmaps.append(bmp)
 				if bitmaps and len(bitmaps) == 5:
+					bitmaps.extend(reversed(bitmaps[:5]))
+					bitmaps.extend(bitmaps[:5])
 					bitmaps.extend(reversed(bitmaps[:5]))
 			else:
 				# Animation for generating test patches
@@ -4757,7 +4760,7 @@ class ProgressDialog(wx.Dialog):
 		if hasattr(self, "animbmp"):
 			if immediate:
 				self.animbmp.Stop()
-			elif self.animbmp.loop:
+			elif self.animbmp.loop or self.animbmp.range[1] != -1:
 				self.anim_fadeout()
 		if hasattr(self, "sound"):
 			self.sound_fadeout()
