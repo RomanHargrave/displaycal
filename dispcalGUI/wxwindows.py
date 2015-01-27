@@ -4658,7 +4658,7 @@ class ProgressDialog(wx.Dialog):
 			elif progress_type == 1:
 				# Animation for measurements
 				for i, pth in enumerate(get_data_path("theme/shutter_anim", r"\.png$") or []):
-					if not i % 2:
+					if i < 5:
 						bmp = wx.Bitmap(pth)
 						bitmaps.insert(0, bmp)
 				if bitmaps and len(bitmaps) == 5:
