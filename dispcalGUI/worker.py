@@ -5871,6 +5871,7 @@ usage: spotread [-options] [logfile]
 				result = self.exec_cmd(cmd, args)
 				if not isinstance(result, Exception) and result:
 					# Create preconditioning profile
+					self.pauseable = False
 					basename = args[-1]
 					precond_ti3 = CGATS.CGATS(basename + ".ti3")
 					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-ax",
@@ -5895,6 +5896,7 @@ usage: spotread [-options] [logfile]
 							args.append("-V1.6")
 						args.extend(["-c", basename + profile_ext, basename])
 						result = self.exec_cmd(cmd, args)
+						self.pauseable = True
 			else:
 				result = cmd
 		else:
@@ -6834,9 +6836,12 @@ usage: spotread [-options] [logfile]
 							   " " + webserver.groups()[0])
 				keepGoing, skip = self.progress_wnd.Pulse(msg)
 		self.pause_continue()
-		if (hasattr(self.progress_wnd, "pause_continue") and
-			"read stopped at user request!" in lastmsg):
-			self.progress_wnd.pause_continue.Enable()
+		if hasattr(self.progress_wnd, "pause_continue"):
+			if "read stopped at user request!" in lastmsg:
+				self.progress_wnd.pause_continue.Enable()
+			if self.progress_wnd.pause_continue.IsShown() != self.pauseable:
+				self.progress_wnd.pause_continue.Show(self.pauseable)
+				self.progress_wnd.Layout()
 		if not keepGoing and not getattr(self, "abort_requested", False):
 			self.abort_subprocess(True)
 		if self.finished is True:
