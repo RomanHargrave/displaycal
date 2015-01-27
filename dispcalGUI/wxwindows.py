@@ -4117,7 +4117,7 @@ class LogWindow(InvincibleFrame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def Log(self, txt):
-		for line in txt.splitlines():
+		for line in safe_unicode(txt).splitlines():
 			line_lower = line.lower()
 			textattr = None
 			if (lang.getstr("warning").lower() in line_lower or
