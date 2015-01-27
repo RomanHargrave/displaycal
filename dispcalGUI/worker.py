@@ -6786,6 +6786,18 @@ usage: spotread [-options] [logfile]
 				pass
 			else:
 				percentage = start / end * 100
+		else:
+			iteration = re.search("It (\\d+):", msg)
+			if iteration:
+				# targen
+				try:
+					start = float(iteration.groups()[0])
+				except ValueError:
+					pass
+				else:
+					end = 20
+					percentage = min(start, 20.0) / end * 100
+					lastmsg = ""
 		if (percentage and time() > self.starttime + 3 and
 			self.progress_wnd is getattr(self, "terminal", None)):
 			# We no longer need keyboard interaction, switch over to
