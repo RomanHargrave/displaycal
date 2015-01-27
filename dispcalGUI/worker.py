@@ -1409,6 +1409,7 @@ class Worker(object):
 									  triggers=self.triggers)
 		self.clear_argyll_info()
 		self.clear_cmd_output()
+		self._progress_dlgs = {}
 		self._progress_wnd = None
 		self._pwdstr = ""
 		workers.append(self)
@@ -1710,7 +1711,14 @@ class Worker(object):
 			self._progress_wnd = progress_wnd
 		
 		return locals()
-	
+
+	@property
+	def progress_wnds(self):
+		progress_wnds = self._progress_dlgs.values()
+		if hasattr(self, "terminal"):
+			progress_wnds.append(self.terminal)
+		return progress_wnds
+
 	@Property
 	def pwd():
 		def fget(self):
@@ -6876,9 +6884,6 @@ usage: spotread [-options] [logfile]
 	def progress_dlg_start(self, progress_title="", progress_msg="", 
 						   parent=None, resume=False, fancy=True):
 		""" Start a progress dialog, replacing existing one if present """
-		if getattr(self, "progress_dlg", None) and not resume:
-			self.progress_dlg.Destroy()
-			self.progress_dlg = None
 		if self._progress_wnd and \
 		   self.progress_wnd is getattr(self, "terminal", None):
 			self.terminal.stop_timer()
@@ -6886,8 +6891,8 @@ usage: spotread [-options] [logfile]
 		if self.finished is True:
 			return
 		pauseable = getattr(self, "pauseable", False)
-		if getattr(self, "progress_dlg", None):
-			self.progress_wnd = self.progress_dlg
+		if self._progress_dlgs.get(fancy):
+			self.progress_wnd = self._progress_dlgs[fancy]
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 			# segfault under Arch Linux when setting the window title
 			# This has a chance of throwing a IOError: [Errno 9] Bad file
@@ -6895,7 +6900,8 @@ usage: spotread [-options] [logfile]
 			if "__WXGTK__" in wx.PlatformInfo:
 				safe_print("")
 			self.progress_wnd.SetTitle(progress_title)
-			self.progress_wnd.Update(0, progress_msg)
+			self.progress_wnd.reset()
+			self.progress_wnd.Pulse(progress_msg)
 			if hasattr(self.progress_wnd, "pause_continue"):
 				self.progress_wnd.pause_continue.Show(pauseable)
 				self.progress_wnd.Layout()
@@ -6910,7 +6916,7 @@ usage: spotread [-options] [logfile]
 				style |= wx.PD_CAN_ABORT
 			# Set maximum to 101 to prevent the 'cancel' changing to 'close'
 			# when 100 is reached
-			self.progress_dlg = ProgressDialog(progress_title, progress_msg, 
+			self._progress_dlgs[fancy] = ProgressDialog(progress_title, progress_msg, 
 											   maximum=101, 
 											   parent=parent, 
 											   handler=self.progress_handler,
@@ -6918,7 +6924,7 @@ usage: spotread [-options] [logfile]
 											   pauseable=pauseable,
 											   style=style, start_timer=False,
 											   fancy=fancy)
-			self.progress_wnd = self.progress_dlg
+			self.progress_wnd = self._progress_dlgs[fancy]
 		if hasattr(self.progress_wnd, "progress_type"):
 			if pauseable:
 				# If pauseable, we assume it's a measurement
@@ -7200,9 +7206,6 @@ usage: spotread [-options] [logfile]
 		self.abort_requested = False
 		self.starttime = time()
 		self.thread_abort = False
-		if not hasattr(self, "_disabler"):
-			self._disabler = BetterWindowDisabler(getattr(self, "terminal",
-														  None))
 		if fancy and (not self.interactive or
 					  interactive_frame not in ("uniformity", "untethered")):
 			# Pre-init progress dialog bitmaps
@@ -7210,10 +7213,6 @@ usage: spotread [-options] [logfile]
 			ProgressDialog.get_bitmaps(1)
 		if self.interactive:
 			self.progress_start_timer = wx.Timer()
-			if getattr(self, "progress_wnd", None) and \
-			   self.progress_wnd is getattr(self, "progress_dlg", None):
-				self.progress_dlg.Destroy()
-				self.progress_dlg = None
 			if progress_msg and progress_title == appname:
 				progress_title = progress_msg
 			if (config.get_display_name() == "Untethered" and
@@ -7277,6 +7276,8 @@ usage: spotread [-options] [logfile]
 													 progress_title, 
 													 progress_msg, parent,
 													 resume, fancy)
+		if not hasattr(self, "_disabler"):
+			self._disabler = BetterWindowDisabler(self.progress_wnds)
 		self.thread = delayedresult.startWorker(self._generic_consumer, 
 												Producer(self, producer,
 														 continue_next),

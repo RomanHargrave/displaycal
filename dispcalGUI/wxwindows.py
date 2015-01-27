@@ -3852,6 +3852,9 @@ class BetterPyGauge(pygauge.PyGauge):
 				self._valueSorted = [self.GetRange()]
 			self.Refresh()
 
+	def IsRunning(self):
+		return self._timer.IsRunning()
+
 	def Pulse(self):
 		self._indeterminate = True
 
@@ -4336,16 +4339,14 @@ class ProgressDialog(wx.Dialog):
 		if style & wx.PD_ELAPSED_TIME or style & wx.PD_REMAINING_TIME:
 			self.sizer3 = wx.FlexGridSizer(0, 2, 0, margin)
 			self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT)
-			self.time = time()
 		
 		if style & wx.PD_ELAPSED_TIME:
 			self.elapsed_time_label = wx.StaticText(self, -1,
 													lang.getstr("elapsed_time"))
 			self.elapsed_time_label.SetMaxFontSize(11)
 			self.sizer3.Add(self.elapsed_time_label)
-			self.elapsed_time = wx.StaticText(self, -1, "--:--:--")
+			self.elapsed_time = wx.StaticText(self, -1, "")
 			self.elapsed_time.SetMaxFontSize(11)
-			self.elapsed_time_handler(None)
 			self.sizer3.Add(self.elapsed_time)
 			self.elapsed_timer = BetterTimer(self)
 			self.Bind(EVT_BETTERTIMER, self.elapsed_time_handler,
@@ -4356,12 +4357,11 @@ class ProgressDialog(wx.Dialog):
 													  lang.getstr("remaining_time"))
 			self.remaining_time_label.SetMaxFontSize(11)
 			self.sizer3.Add(self.remaining_time_label)
-			self.time2 = 0
-			self.time3 = time()
-			self.time4 = 0
-			self.remaining_time = wx.StaticText(self, -1, u"––:––:––")
+			self.remaining_time = wx.StaticText(self, -1, "")
 			self.remaining_time.SetMaxFontSize(11)
 			self.sizer3.Add(self.remaining_time)
+
+		self.reset()
 
 		if fancy:
 			def buttoncls(parent, id, label):
@@ -4718,6 +4718,18 @@ class ProgressDialog(wx.Dialog):
 		bitmap = im.ConvertToBitmap()
 		self.sound_on_off_btn._bitmap = bitmap
 
+	def reset(self):
+		self._fpprogress = 0
+		self.gauge.SetValue(0)
+		self.time = time()
+		if hasattr(self, "elapsed_time"):
+			self.elapsed_time_handler(None)
+		if hasattr(self, "remaining_time"):
+			self.time2 = 0
+			self.time3 = self.time
+			self.time4 = 0
+			self.remaining_time.Label = u"––:––:––"
+
 	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
 
 	def set_progress_type(self, progress_type):
@@ -4743,6 +4755,8 @@ class ProgressDialog(wx.Dialog):
 
 	def start_timer(self, ms=100):
 		self.timer.Start(ms)
+		if isinstance(self.gauge, BetterPyGauge) and not self.gauge.IsRunning():
+			self.gauge.Start()
 		if hasattr(self, "elapsed_timer"):
 			self.elapsed_timer.Start(1000)
 		if hasattr(self, "animbmp"):
