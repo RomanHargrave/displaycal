@@ -4584,7 +4584,7 @@ class ProgressDialog(wx.Dialog):
 			loop = True
 		elif self.progress_type == 1:
 			# Measuring
-			range = (5, 14)
+			range = (0, 9)
 			loop = False
 		else:
 			# Generating test patches
@@ -4592,7 +4592,7 @@ class ProgressDialog(wx.Dialog):
 			loop = True
 		self.animbmp.SetBitmaps(bitmaps, range=range, loop=loop)
 		if self.progress_type == 1:
-			self.animbmp.frame = 9
+			self.animbmp.frame = 4
 		wx.CallLater(50, lambda: self and self.IsShown() and
 								  self.animbmp.Play(20))
 
@@ -4660,11 +4660,10 @@ class ProgressDialog(wx.Dialog):
 				for i, pth in enumerate(get_data_path("theme/shutter_anim", r"\.png$") or []):
 					if not i % 2:
 						bmp = wx.Bitmap(pth)
-						bitmaps.append(bmp)
+						bitmaps.insert(0, bmp)
 				if bitmaps and len(bitmaps) == 5:
 					bitmaps.extend(reversed(bitmaps[:5]))
 					bitmaps.extend(bitmaps[:5])
-					bitmaps.extend(reversed(bitmaps[:5]))
 			else:
 				# Animation for generating test patches
 				for pth in get_data_path("theme/patch_anim", r"\.png$") or []:

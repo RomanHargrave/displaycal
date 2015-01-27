@@ -5987,7 +5987,7 @@ usage: spotread [-options] [logfile]
 				else:
 					self.commit_sound.safe_play()
 					if hasattr(self.progress_wnd, "animbmp"):
-						self.progress_wnd.animbmp.frame = 5
+						self.progress_wnd.animbmp.frame = 0
 
 	def patterngenerator_send(self, rgb, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
