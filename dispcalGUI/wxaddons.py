@@ -363,7 +363,7 @@ class BetterWindowDisabler(object):
 					skip = [skip]
 			toplevel = list(wx.GetTopLevelWindows())
 			for w in toplevel:
-				if w not in skip and "Inspection" not in "%s" % w:
+				if w and w not in skip and "Inspection" not in "%s" % w:
 					self._windows.append(w)
 					for child in w.GetAllChildren(skip + toplevel):
 						if child:
