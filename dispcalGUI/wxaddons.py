@@ -9,16 +9,6 @@ import types
 from wxfixes import wx
 
 
-def AlphaBlend(self, alpha=1.0):
-	""" Apply alpha blending to existing image alpha buffer """
-	alphabuffer = self.GetAlphaBuffer()
-	for i, byte in enumerate(alphabuffer):
-		if byte > "\0":
-			alphabuffer[i] = chr(int(round(ord(byte) * alpha)))
-
-wx.Image.AlphaBlend = AlphaBlend
-
-
 def AdjustMinMax(self, minvalue=0.0, maxvalue=1.0):
 	""" Adjust min/max """
 	buffer = self.GetDataBuffer()

@@ -12300,8 +12300,7 @@ class StartupFrame(wx.Frame):
 		if splash_version:
 			im = splash_version.ConvertToImage()
 			for alpha in [0, .2, .4, .6, .8, 1, .95, .9, .85, .8, .75]:
-				imcopy = im.Copy()
-				imcopy.AlphaBlend(alpha)
+				imcopy = im.AdjustChannels(1, 1, 1, alpha)
 				self.splash_version_anim.append(imcopy.ConvertToBitmap())
 		self.frame = 0
 		clientarea = self.GetDisplay().ClientArea
