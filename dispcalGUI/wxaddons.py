@@ -28,6 +28,14 @@ def AdjustMinMax(self, minvalue=0.0, maxvalue=1.0):
 wx.Image.AdjustMinMax = AdjustMinMax
 
 
+def Blend(self, bitmap, x, y):
+	""" Blend the given bitmap over the specified position in this bitmap. """
+	dc = wx.MemoryDC(self)
+	dc.DrawBitmap(bitmap, x, y)
+
+wx.Bitmap.Blend = Blend
+
+
 def GetRealClientArea(self):
 	""" Return the real (non-overlapping) client area of a display """
 	# need to fix overlapping ClientArea on some Linux multi-display setups

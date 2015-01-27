@@ -1052,6 +1052,26 @@ class LineCache():
 					  self.cache[-1:])[-self.maxlines - 1:]
 
 
+class Producer(object):
+
+	""" Generic producer """
+
+	def __init__(self, worker, producer, continue_next=False):
+		self.worker = worker
+		self.producer = producer
+		self.continue_next = continue_next
+
+	def __call__(self, *args, **kwargs):
+		result = self.producer(*args, **kwargs)
+		if not self.continue_next and self.worker.progress_wnd:
+			wx.CallAfter(self.worker.progress_wnd.stop_timer, False)
+			if (hasattr(self.worker.progress_wnd, "animbmp") and
+				self.worker.progress_wnd.progress_type == 0):
+				# Allow time for animation fadeout
+				sleep(4)
+		return result
+
+
 class StringWithLengthOverride(UserString):
 
 	""" Allow defined behavior in comparisons and when evaluating length """
@@ -5964,6 +5984,8 @@ usage: spotread [-options] [logfile]
 					self.measurement_sound.safe_play()
 				else:
 					self.commit_sound.safe_play()
+					if hasattr(self.progress_wnd, "animbmp"):
+						self.progress_wnd.animbmp.frame = 0
 
 	def patterngenerator_send(self, rgb, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
@@ -6771,6 +6793,8 @@ usage: spotread [-options] [logfile]
 			if self.pauseable:
 				# If pauseable, we assume it's a measurement
 				progress_type = 1  # Measuring
+			elif self.cmdname == "targen":
+				progress_type = 2  # Generating test patches
 			else:
 				progress_type = 0  # Processing
 			if self.progress_wnd.progress_type != progress_type:
@@ -6882,6 +6906,8 @@ usage: spotread [-options] [logfile]
 			if pauseable:
 				# If pauseable, we assume it's a measurement
 				self.progress_wnd.progress_type = 1  # Measuring
+			elif self.cmdname == "targen":
+				self.progress_wnd.progress_type = 2  # Generating test patches
 			else:
 				self.progress_wnd.progress_type = 0  # Processing
 		if not self.progress_wnd.timer.IsRunning():
@@ -7139,6 +7165,7 @@ usage: spotread [-options] [logfile]
 			# Can't be zero!
 			progress_start = 1
 		self.activated = False
+		self.cmdname = None
 		self.cmdrun = False
 		self.finished = False
 		self.instrument_calibration_complete = False
@@ -7234,8 +7261,9 @@ usage: spotread [-options] [logfile]
 													 progress_msg, parent,
 													 resume, fancy)
 		self.thread = delayedresult.startWorker(self._generic_consumer, 
-												producer, [consumer, 
-														   continue_next] + 
+												Producer(self, producer,
+														 continue_next),
+												[consumer, continue_next] + 
 												list(cargs), ckwargs, wargs, 
 												wkwargs)
 		return True

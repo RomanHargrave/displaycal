@@ -171,13 +171,18 @@ class AnimatedBitmap(wx.PyControl):
 			first_frame, last_frame = self.range
 		else:
 			first_frame, last_frame = 0, -1
+		if first_frame < 0:
+			first_frame += len(self._bitmaps)
 		if last_frame < 0:
 			last_frame += len(self._bitmaps)
-		if self.frame < last_frame:
-			self.frame += 1
+		frame = self.frame
+		if frame < last_frame:
+			frame += 1
 		elif self.loop:
-			self.frame = first_frame
-		self.Refresh()
+			frame = first_frame
+		if frame != self.frame:
+			self.frame = frame
+			self.Refresh()
 
 	def Play(self, fps=20):
 		self._timer.Start(1000.0 / fps)
@@ -3766,11 +3771,51 @@ class BetterPyGauge(pygauge.PyGauge):
 		self.Unbind(wx.EVT_TIMER)
 		self.Bind(EVT_BETTERTIMER, self.OnTimer, self._timer)
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
-		self.Start(50)
+		self.Start()
 	
 	def OnDestroy(self, event):
 		self._timer.Stop()
 		del self._timer
+
+	def OnPaint(self, event):
+		"""
+		Handles the ``wx.EVT_PAINT`` event for L{PyGauge}.
+
+		:param `event`: a `wx.PaintEvent` event to be processed.
+		"""
+
+		dc = wx.BufferedPaintDC(self)
+		gc = wx.GraphicsContext.Create(dc)
+		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour))
+		dc.Clear()
+
+		rect = self.GetClientRect()
+
+		if self._border_colour:
+			gc.SetPen(wx.Pen(self._border_colour))
+		else:
+			gc.SetPen(wx.Pen(self.BackgroundColour))
+		gc.SetBrush(wx.Brush(self.BackgroundColour))
+		gc.DrawRoundedRectangle(rect.X, rect.Y, rect.Width - 1,
+								rect.Height - 1, (rect.Height - 1) / 2)
+
+		pad = self.GetBorderPadding()
+		if self._border_colour:
+			pad += 1
+		if pad:
+			rect.Deflate(pad, pad)
+
+		if self._barGradientSorted:
+			for i, gradient in enumerate(self._barGradientSorted):
+				c1, c2 = gradient
+				w = max(rect.Width * (float(self._valueSorted[i]) / self._range),
+						rect.Height)
+				gc.SetBrush(gc.CreateLinearGradientBrush(rect.X, rect.Y,
+														 rect.Y + w,
+														 rect.Y, c1, c2))
+				gc.SetPen(wx.TRANSPARENT_PEN)
+				gc.DrawRoundedRectangle(rect.X, rect.Y, w, rect.Height,
+										(rect.Height) / 2)
 
 	def OnTimer(self, event):
 		gradient = self._barGradient
@@ -4176,7 +4221,7 @@ class ProgressDialog(wx.Dialog):
 	
 	def __init__(self, title=appname, msg="", maximum=100, parent=None, style=None, 
 				 handler=None, keyhandler=None, start_timer=True, pos=None,
-				 pauseable=False, fancy=True):
+				 pauseable=False, fancy=True, allow_close=False):
 		if style is None:
 			style = (wx.PD_APP_MODAL | wx.PD_ELAPSED_TIME |
 					 wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT | wx.PD_SMOOTH)
@@ -4206,6 +4251,7 @@ class ProgressDialog(wx.Dialog):
 		self.skip = False
 		self.paused = False
 		self.progress_type = 0  # 0 = processing, 1 = measurement
+		self.allow_close = allow_close
 
 		margin = 12
 
@@ -4253,8 +4299,7 @@ class ProgressDialog(wx.Dialog):
 		if fancy:
 			self.gauge = BetterPyGauge(self, wx.ID_ANY, range=maximum,
 									   size=(-1, 4))
-			self.gauge.SetBackgroundColour("#202020")
-			self.gauge.SetBorderColour("#0066CC")
+			self.gauge.BackgroundColour = "#003366"
 			self.gauge.SetBarGradients([("#0099CC", "#00CCFF"),
 									    ("#0088BB", "#00BBEE"),
 									    ("#0077AA", "#00AADD"),
@@ -4422,7 +4467,7 @@ class ProgressDialog(wx.Dialog):
 		if hasattr(self, "cancel"):
 			self.cancel.Disable()
 		self.pause_continue.Disable()
-		if not self.timer.IsRunning():
+		if not self.timer.IsRunning() and self.allow_close:
 			self.Destroy()
 		elif self.gauge.GetValue() == self.gauge.GetRange():
 			event.Skip()
@@ -4539,10 +4584,15 @@ class ProgressDialog(wx.Dialog):
 		if self.progress_type == 0:
 			# Processing
 			range = (60, 68)
-		else:
+		elif self.progress_type == 1:
 			# Measuring
+			range = (-1, -1)
+		else:
+			# Generating test patches
 			range = (27, 36)
 		self.animbmp.SetBitmaps(bitmaps, range=range, loop=True)
+		if range[0] == -1:
+			self.animbmp.frame = len(self.animbmp._bitmaps) - 1
 		wx.CallLater(50, lambda: self and self.IsShown() and
 								  self.animbmp.Play(20))
 
@@ -4569,7 +4619,10 @@ class ProgressDialog(wx.Dialog):
 		else:
 			bitmaps = ProgressDialog.bitmaps[progress_type] = []
 			if progress_type == 0:
-				# Processing
+				# Animation for processing
+				for pth in get_data_path("theme/shutter_anim", r"\.png$") or []:
+					im = wx.Image(pth)
+					bitmaps.append(im)
 				for pth in get_data_path("theme/jet_anim", r"\.png$") or []:
 					im = wx.Image(pth)
 					# Blend red
@@ -4577,28 +4630,40 @@ class ProgressDialog(wx.Dialog):
 					# Adjust for background
 					im.AdjustMinMax(1.0 / 255 * 0x14)
 					bitmaps.append(im)
-				# Needs to be exactly 8 images
-				if bitmaps and len(bitmaps) == 8:
+				# Needs to be exactly 17 images
+				if bitmaps and len(bitmaps) == 17:
 					for i in xrange(7):
-						bitmaps.extend(bitmaps[:8])
-					bitmaps.extend(bitmaps[:4])
+						bitmaps.extend(bitmaps[9:17])
+					bitmaps.extend(bitmaps[9:13])
 					# Fade in
-					for i, im in enumerate(bitmaps[:10]):
+					for i, im in enumerate(bitmaps[9:19]):
+						bg = bitmaps[8].ConvertToBitmap()
 						im = im.AdjustChannels(1, 1, 1, i / 10.0)
+						bg.Blend(im.ConvertToBitmap(), 0, 0)
+						bitmaps[i + 9] = bg
+					for i, im in enumerate(bitmaps[:9]):
 						bitmaps[i] = im.ConvertToBitmap()
 					# Normal
-					for i in xrange(50):
-						im = bitmaps[i + 10].Copy()
+					for i in xrange(41):
+						im = bitmaps[i + 19].Copy()
 						im.RotateHue(.05 * (i / 50.0))
-						bitmaps[i + 10] = im.ConvertToBitmap()
+						bitmaps[i + 19] = im.ConvertToBitmap()
 					for i, im in enumerate(bitmaps[60:]):
 						im = im.Copy()
 						im.RotateHue(.05)
 						bitmaps[i + 60] = im.ConvertToBitmap()
 					# Fade out
 					bitmaps.extend(reversed(bitmaps[:60]))
+			elif progress_type == 1:
+				# Animation for measurements
+				for i, pth in enumerate(get_data_path("theme/shutter_anim", r"\.png$") or []):
+					if not i % 2:
+						bmp = wx.Bitmap(pth)
+						bitmaps.append(bmp)
+				if bitmaps and len(bitmaps) == 5:
+					bitmaps.extend(reversed(bitmaps[:5]))
 			else:
-				# Measuring
+				# Animation for generating test patches
 				for pth in get_data_path("theme/patch_anim", r"\.png$") or []:
 					im = wx.Image(pth)
 					bitmaps.append(im)
@@ -4657,6 +4722,8 @@ class ProgressDialog(wx.Dialog):
 		if progress_type != self.progress_type:
 			if self.progress_type == 0:
 				delay = 4000
+			elif self.progress_type == 1:
+				delay = 500
 			else:
 				delay = 2000
 			if hasattr(self, "animbmp"):
@@ -4678,7 +4745,7 @@ class ProgressDialog(wx.Dialog):
 			self.elapsed_timer.Start(1000)
 		if hasattr(self, "animbmp"):
 			self.anim_fadein()
-		if hasattr(self, "sound"):
+		if hasattr(self, "sound") and self.progress_type == 0:
 			self.sound_fadein()
 	
 	def stop_timer(self, immediate=True):
@@ -5449,7 +5516,8 @@ def test():
 	style = (wx.PD_ELAPSED_TIME | wx.PD_REMAINING_TIME | wx.PD_CAN_ABORT |
 			 wx.PD_SMOOTH)
 	p = ProgressDialog(msg="".join(("Test " * 5)), maximum=10000, style=style,
-					   pauseable=True, fancy=not "+fancy" in sys.argv[1:])
+					   pauseable=True, fancy=not "+fancy" in sys.argv[1:],
+					   allow_close=True)
 	#t = SimpleTerminal(start_timer=False)
 	app.MainLoop()
 

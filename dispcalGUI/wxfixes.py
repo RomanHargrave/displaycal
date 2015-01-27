@@ -110,6 +110,7 @@ if u"phoenix" in wx.PlatformInfo:
 
 	wx.DC.BeginDrawing = lambda self: None
 	wx.DC.DrawRectangleRect = lambda dc, rect: dc.DrawRectangle(rect)
+	wx.DC.DrawRoundedRectangleRect = lambda dc, rect, radius: dc.DrawRoundedRectangle(rect, radius)
 	wx.DC.EndDrawing = lambda self: None
 
 	def ContainsRect(self, *args):
