@@ -1063,7 +1063,7 @@ class Producer(object):
 
 	def __call__(self, *args, **kwargs):
 		result = self.producer(*args, **kwargs)
-		if not self.continue_next and self.worker.progress_wnd:
+		if not self.continue_next and self.worker._progress_wnd:
 			wx.CallAfter(self.worker.progress_wnd.stop_timer, False)
 			if (hasattr(self.worker.progress_wnd, "animbmp") and
 				self.worker.progress_wnd.progress_type == 0):
@@ -1702,6 +1702,8 @@ class Worker(object):
 			if not self._progress_wnd:
 				if (getattr(self, "progress_start_timer", None) and
 					self.progress_start_timer.IsRunning()):
+					if currentThread().__class__ is not _MainThread:
+						raise RuntimeError("GUI access in non-main thread!")
 					# Instantiate the progress dialog instantly on access
 					self.progress_start_timer.Notify()
 					self.progress_start_timer.Stop()
