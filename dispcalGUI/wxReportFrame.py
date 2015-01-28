@@ -323,8 +323,7 @@ class ReportFrame(BaseFrame):
 														   lang.getstr("or"))), self)
 				self.chart_ctrl.SetPath(getcfg("measurement_report.chart"))
 			else:
-				self.chart_btn.Enable("RGB" in values and
-									  "XYZ" in values)
+				self.chart_btn.Enable("RGB" in values)
 				if self.Parent:
 					parent = self.Parent
 				else:
