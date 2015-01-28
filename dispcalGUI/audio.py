@@ -28,7 +28,7 @@ _snd = {}
 _sounds = {}
 
 
-def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
+def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	""" (Re-)Initialize sound subsystem """
 	# Note on buffer size: Too high values cause crackling during fade, too low
 	# values cause choppy playback of ogg files when using pyo (good value for
@@ -86,7 +86,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=1024, reinit=False):
 	return _server
 
 
-def safe_init(lib=None, samplerate=22050, channels=2, buffersize=1536,
+def safe_init(lib=None, samplerate=22050, channels=2, buffersize=2048,
 			  reinit=False):
 	""" Like init(), but catch any exceptions """
 	global _initialized
