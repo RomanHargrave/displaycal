@@ -153,10 +153,10 @@ def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,
 							style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
-		if result != wx.ID_OK:
-			return
 		vrmlpath = dlg.GetPath()
 		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
 		config.setcfg("last_vrml_path", vrmlpath)
 		config.writecfg(module="VRML-to-X3D-converter",
 						options=("last_vrml_path", ))
