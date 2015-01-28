@@ -190,6 +190,9 @@ class CustomEvent(wx.PyEvent):
 		return self.window
 
 
+_global_timer_lock = threading.Lock()
+
+
 wxEVT_BETTERTIMER = wx.NewEventType()
 EVT_BETTERTIMER = wx.PyEventBinder(wxEVT_BETTERTIMER, 1)
 
@@ -206,49 +209,77 @@ class BetterTimerEvent(wx.PyCommandEvent):
 	Interval = property(GetInterval)
 
 
-class BetterTimer(object):
+class BetterTimer(wx.Timer):
+
+	"""
+	A wx.Timer replacement.
+	
+	Doing GUI updates using regular timers can be incredibly segfaulty under
+	wxPython Phoenix when several timers run concurrently.
+	
+	This approach uses a global lock to work around the issue.
+	
+	"""
+
+	def __init__(self, owner=None, timerid=wx.ID_ANY):
+		wx.Timer.__init__(self, None, timerid)
+		self._owner = owner
+
+	def Notify(self):
+		if self._owner and _global_timer_lock.acquire(False):
+			try:
+				self._owner.ProcessEvent(BetterTimerEvent(self.Id,
+														  self.Interval))
+			finally:
+				_global_timer_lock.release()
+
+
+class BetterCallLater(wx.CallLater):
+
+	def __init__(self, millis, callableObj, *args, **kwargs):
+		wx.CallLater.__init__(self, millis, callableObj, *args, **kwargs)
+
+	def Notify(self):
+		if _global_timer_lock.acquire(True):
+			try:
+				wx.CallLater.Notify(self)
+			finally:
+				_global_timer_lock.release()
+
+
+class ThreadedTimer(object):
 
 	""" A wx.Timer replacement that uses threads instead of actual timers
 	which are a limited resource """
 
-	def __init__(self, owner=None, id=wx.ID_ANY):
+	def __init__(self, owner=None, timerid=wx.ID_ANY):
 		self._owner = owner
-		if id < 0:
-			id = wx.NewId()
-		self._id = id
+		if timerid < 0:
+			timerid = wx.NewId()
+		self._id = timerid
 		self._ms = 0
 		self._oneshot = False
 		self._keep_running = False
 		self._thread = None
 
-	def __del__(self):
-		self.Destroy()
-
 	def _notify(self):
-		if self._keep_running:
+		if self._owner and _global_timer_lock.acquire(self._oneshot):
 			try:
 				self.Notify()
 			finally:
-				if self._oneshot:
-					self._keep_running = False
-				self._notified = True
+				_global_timer_lock.release()
 
 	def _timer(self):
 		self._keep_running = True
 		while self._keep_running:
 			sleep(self._ms / 1000.0)
 			if self._keep_running:
-				if wx.GetApp():
-					self._notified = False
-					wx.CallAfter(self._notify)
-					while self._keep_running and not self._notified:
-						sleep(0.001)
-				else:
+				wx.CallAfter(self._notify)
+				if self._oneshot:
 					self._keep_running = False
 
 	def Destroy(self):
-		self._owner = None
-		del self._thread
+		pass
 
 	def GetId(self):
 		return self._id
@@ -273,8 +304,7 @@ class BetterTimer(object):
 		return self._keep_running
 
 	def Notify(self):
-		if self._owner:
-			self._owner.ProcessEvent(BetterTimerEvent(self._id, self._ms))
+		self._owner.ProcessEvent(BetterTimerEvent(self._id, self._ms))
 
 	def Start(self, milliseconds=-1, oneShot=False):
 		if self._thread and self._thread.isAlive():
@@ -290,7 +320,7 @@ class BetterTimer(object):
 		self._keep_running = False
 
 
-class BetterCallLater(BetterTimer):
+class ThreadedCallLater(ThreadedTimer):
 
 	def __init__(self, millis, callableObj, *args, **kwargs):
 		BetterTimer.__init__(self)

@@ -95,7 +95,7 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 from util_str import safe_basestring, safe_str, safe_unicode, universal_newlines
-from wxaddons import BetterWindowDisabler, wx
+from wxaddons import BetterCallLater, BetterWindowDisabler, wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
@@ -7273,7 +7273,7 @@ usage: spotread [-options] [logfile]
 			if not progress_msg:
 				progress_msg = lang.getstr("please_wait")
 			# Show the progress dialog after a delay
-			self.progress_start_timer = wx.CallLater(progress_start, 
+			self.progress_start_timer = BetterCallLater(progress_start, 
 													 self.progress_dlg_start, 
 													 progress_title, 
 													 progress_msg, parent,

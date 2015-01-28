@@ -181,7 +181,7 @@ class AnimatedBitmap(wx.PyControl):
 			self.frame = frame
 			self.Refresh()
 
-	def Play(self, fps=20):
+	def Play(self, fps=24):
 		self._timer.Start(1000.0 / fps)
 
 	def Stop(self):
@@ -3869,7 +3869,7 @@ class BetterPyGauge(pygauge.PyGauge):
 		pygauge.PyGauge.SetValue(self, value)
 		self.Refresh()
 
-	def Start(self, milliseconds=50):
+	def Start(self, milliseconds=67):
 		self._timer.Start(milliseconds)
 
 	def Stop(self):
@@ -4512,7 +4512,6 @@ class ProgressDialog(wx.Dialog):
 			self.msg.SetLabel(msg)
 			self.msg.Wrap(self.msg.ContainingSizer.Size[0])
 			self.msg.Refresh()
-			self.msg.Update()
 		if getattr(self, "time2", 0):
 			self.time2 = 0
 			if not self.time3:
@@ -4535,7 +4534,6 @@ class ProgressDialog(wx.Dialog):
 			self.msg.SetLabel(msg)
 			self.msg.Wrap(self.msg.ContainingSizer.Size[0])
 			self.msg.Refresh()
-			self.msg.Update()
 		prev_value = self._fpprogress
 		self._fpprogress = value
 		value = int(round(value))
@@ -4566,7 +4564,7 @@ class ProgressDialog(wx.Dialog):
 				if update_value:
 					# Higher ms = smoother animation, but potentially
 					# increased "lag"
-					ms = 950 + 50 * update_value
+					ms = 450 + 50 * update_value
 					self.gauge.Update(value, ms)
 			else:
 				self.gauge.Update(value, 50)
@@ -4594,7 +4592,7 @@ class ProgressDialog(wx.Dialog):
 		if self.progress_type == 1:
 			self.animbmp.frame = 4
 		wx.CallLater(50, lambda: self and self.IsShown() and
-								  self.animbmp.Play(20))
+								  self.animbmp.Play(24))
 
 	def sound_fadein(self):
 		if getcfg("measurement.play_sound"):
@@ -4753,7 +4751,7 @@ class ProgressDialog(wx.Dialog):
 												self.sound_fadein())
 			self.progress_type = progress_type
 
-	def start_timer(self, ms=100):
+	def start_timer(self, ms=75):
 		self.timer.Start(ms)
 		if isinstance(self.gauge, BetterPyGauge) and not self.gauge.IsRunning():
 			self.gauge.Start()
