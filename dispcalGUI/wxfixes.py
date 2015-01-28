@@ -804,6 +804,8 @@ class PlateButton(platebtn.PlateButton):
 			dc = wx.PaintDC(self)
 		else:
 			dc = wx.AutoBufferedPaintDCFactory(self)
+			dc.SetBackground(wx.Brush(self.Parent.BackgroundColour))
+			dc.Clear()
 
 		gc = wx.GCDC(dc)
 
