@@ -123,7 +123,8 @@ class MadTPG(object):
 	def get_version(self):
 		version = (ctypes.c_char * 4)()
 		result = self.mad.madVR_GetVersion(ctypes.byref(version))
-		version = struct.unpack(">I", version.raw)[0]
+		version = tuple(struct.unpack(">B", version.raw[i:i + 1])[0] for i in
+						reversed(xrange(4)))
 		return result and version
 
 	def show_rgb(self, r, g, b, bgr=None, bgg=None, bgb=None):
