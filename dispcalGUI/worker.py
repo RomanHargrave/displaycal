@@ -4650,16 +4650,10 @@ usage: spotread [-options] [logfile]
 				loader_install = self._install_profile_loader_xdg(silent)
 			if loader_install is not True and check:
 				return loader_install
-		# Check if atleast one of our profile install methods succeeded without
-		# error or warning
+		# Check if atleast one of our profile install methods returned a result
 		for result in (argyll_install, colord_install, oy_install):
-			if result and not isinstance(result, Exception):
+			if result is not None:
 				return argyll_install, colord_install, oy_install, loader_install
-		# All profile install methods either failed or returned an error
-		# or warning. Get the last error or warning.
-		for result in (oy_install, colord_install, argyll_install):
-			if result:
-				break
 		if not result:
 			# This should never happen
 			result = Error(lang.getstr("profile.install.error"))

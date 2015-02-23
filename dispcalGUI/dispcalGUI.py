@@ -7604,15 +7604,23 @@ class MainFrame(ReportFrame, BaseFrame):
 					   colord_install in (None, True) and
 					   oy_install in (None, True) and
 					   loader_install in (None, True))
+			somegood = (argyll_install is True or
+						colord_install is True or
+						oy_install is True or
+						loader_install is True)
+			linux = sys.platform not in ("darwin", "win32")
 			if allgood:
 				msg = lang.getstr("profile.install.success")
 				icon = "dialog-information"
-			else:
+			elif somegood and linux:
 				msg = lang.getstr("profile.install.warning")
 				icon = "dialog-warning"
+			else:
+				msg = lang.getstr("profile.install.error")
+				icon = "dialog-error"
 			dlg = InfoDialog(self.modaldlg, msg=msg, ok=lang.getstr("ok"), 
 							 bitmap=geticon(32, icon), show=False)
-			if not allgood:
+			if not allgood and linux:
 				sizer = wx.FlexGridSizer(0, 2, 8, 8)
 				dlg.sizer3.Add(sizer, 1, flag=wx.TOP, border=12)
 				for name, result in (("Argyll CMS", argyll_install),
