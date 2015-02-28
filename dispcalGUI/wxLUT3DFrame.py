@@ -357,13 +357,17 @@ class LUT3DFrame(BaseFrame):
 										lang.getstr("profiling.incomplete"))
 				else:
 					# 3D LUT was created manually
-					if getcfg("3dlut.format") == "madVR" and madvr:
-						# madVR supports installing 3D LUT
-						self.lut3d_install(self.lut3d_path)
-					else:
-						# Copy to user-selectable location
-						self.lut3d_create_handler(None,
-												  copy_from_path=self.lut3d_path)
+					##if getcfg("3dlut.format") == "madVR" and madvr:
+						### madVR supports installing 3D LUT
+						##self.lut3d_install(self.lut3d_path)
+					##else:
+						### Copy to user-selectable location
+						##self.lut3d_create_handler(None,
+												  ##copy_from_path=self.lut3d_path)
+					self.profile_finish(True,
+										getcfg("calibration.file", False),
+										lang.getstr("3dlut.install"), 
+										lang.getstr("profiling.incomplete"))
 			elif getcfg("3dlut.format") == "madVR" and madvr:
 				# madVR supports installing 3D LUT
 				self.lut3d_install(getcfg("last_3dlut_path"))
@@ -493,6 +497,7 @@ class LUT3DFrame(BaseFrame):
 									 use_b2a=use_b2a)
 		except Exception, exception:
 			return exception
+		return True
 	
 	def lut3d_format_ctrl_handler(self, event):
 		if getcfg("3dlut.format") in ("eeColor", "madVR"):
