@@ -3492,7 +3492,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		for ctrl in (self.trc_gamma_label,
 					 self.trc_textctrl,
 					 self.trc_type_ctrl):
-			ctrl.Show(self.trc_ctrl.GetSelection() == 7)
+			ctrl.Show(self.trc_ctrl.GetSelection() == 7 or
+					  (self.trc_ctrl.GetSelection() in (1, 4) and
+					   show_advanced_options))
 		for ctrl in (self.black_output_offset_label,
 					 self.black_output_offset_ctrl,
 					 self.black_output_offset_intctrl,
@@ -4332,7 +4334,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("calibration.black_output_offset", v)
 			self.update_profile_name()
 			self.update_trc_control()
-			self.show_trc_controls()
+			self.show_trc_controls(True)
 	
 	def ambient_measure_handler(self, event):
 		""" Start measuring ambient illumination """
@@ -4735,7 +4737,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.cal_changed()
 			self.update_profile_name()
 			self.update_trc_control()
-			self.show_trc_controls()
+			self.show_trc_controls(True)
 
 	def trc_ctrl_handler(self, event, cal_changed=True):
 		if event.GetId() == self.trc_textctrl.GetId() and (

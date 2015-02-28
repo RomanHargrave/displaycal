@@ -1028,7 +1028,9 @@ class LUT3DFrame(BaseFrame):
 		if hasattr(self, "lut3d_trc_apply_ctrl"):
 			self.lut3d_trc_apply_ctrl.Show(show)
 		self.lut3d_trc_ctrl.Show(show)
-		show = show and self.lut3d_trc_ctrl.GetSelection() == 2  # Custom
+		show = show and (self.lut3d_trc_ctrl.GetSelection() == 2 or  # Custom
+						 (isinstance(self, LUT3DFrame) or
+						  getcfg("show_advanced_options")))
 		self.lut3d_trc_gamma_label.Show(show)
 		self.lut3d_trc_gamma_ctrl.Show(show)
 		show = show and ((hasattr(self, "lut3d_create_cb") and
