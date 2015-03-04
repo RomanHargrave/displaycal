@@ -3690,8 +3690,25 @@ class Worker(object):
 		XYZg = odata[3]
 		XYZb = odata[4]
 
+		# Sanity check whitepoint
+		if (round(XYZwp[0], 3) != .964 or round(XYZwp[1], 3) != 1 or
+			round(XYZwp[2], 3) != .825):
+			raise ValueError("Argyll CMS xicclu: Invalid white XYZ: "
+							 "%.4f %.4f %.4f" % tuple(XYZwp))
+
 		# Get the primaries
 		XYZrgb = [XYZr, XYZg, XYZb]
+
+		# Sanity check primaries:
+		# Red Y, Z shall not be higher than X
+		# Green X, Z shall not be higher than Y
+		# Blue X, Y shall not be higher than Z
+		for i, XYZ in enumerate(XYZrgb):
+			for j, v in enumerate(XYZ):
+				if v > XYZ[i]:
+					raise ValueError("Argyll CMS xicclu: Invalid primary %s "
+									 "XYZ: %.4f %.4f %.4f" %
+									 (("RGB"[i], ) + tuple(XYZ)))
 
 		if logfile:
 			logfile.write("Black XYZ: %.4f %.4f %.4f\n" %
