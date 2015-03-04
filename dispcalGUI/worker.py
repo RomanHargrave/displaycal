@@ -5719,10 +5719,7 @@ usage: spotread [-options] [logfile]
 						B2A1.clut.append([])
 						for row in block:
 							B2A1.clut[-1].append(list(row))
-			except Info, exception:
-				return exception
 			except Exception, exception:
-				safe_print(traceback.format_exc())
 				return exception
 		if not "A2B2" in profile.tags:
 			# Argyll always creates a complete set of A2B / B2A tables if
@@ -5799,7 +5796,10 @@ usage: spotread [-options] [logfile]
 																  bpc,
 																  logfiles,
 																  filename)
+				except Info, exception:
+					return exception
 				except Exception, exception:
+					safe_print(traceback.format_exc())
 					return exception
 				else:
 					if result:
