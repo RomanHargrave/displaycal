@@ -3681,6 +3681,7 @@ class Worker(object):
 		odata = self.xicclu(profile, idata, intent, direction, pcs="x")
 		
 		# Scale to Y = 1
+		XYZwp_abs = odata[1]
 		XYZwpY = odata[1][1]
 		odata = [[n / XYZwpY for n in v] for v in odata]
 
@@ -3693,8 +3694,8 @@ class Worker(object):
 		# Sanity check whitepoint
 		if (round(XYZwp[0], 3) != .964 or round(XYZwp[1], 3) != 1 or
 			round(XYZwp[2], 3) != .825):
-			raise ValueError("Argyll CMS xicclu: Invalid white XYZ: "
-							 "%.4f %.4f %.4f" % tuple(XYZwp))
+			raise Error("Argyll CMS xicclu: Invalid white XYZ: "
+						"%.4f %.4f %.4f" % tuple(XYZwp_abs))
 
 		# Get the primaries
 		XYZrgb = [XYZr, XYZg, XYZb]
@@ -3706,9 +3707,8 @@ class Worker(object):
 		for i, XYZ in enumerate(XYZrgb):
 			for j, v in enumerate(XYZ):
 				if v > XYZ[i]:
-					raise ValueError("Argyll CMS xicclu: Invalid primary %s "
-									 "XYZ: %.4f %.4f %.4f" %
-									 (("RGB"[i], ) + tuple(XYZ)))
+					raise Error("Argyll CMS xicclu: Invalid primary %s XYZ: "
+								"%.4f %.4f %.4f" % (("RGB"[i], ) + tuple(XYZ)))
 
 		if logfile:
 			logfile.write("Black XYZ: %.4f %.4f %.4f\n" %
@@ -5813,7 +5813,7 @@ usage: spotread [-options] [logfile]
 																  bpc,
 																  logfiles,
 																  filename)
-				except Info, exception:
+				except (Error, Info), exception:
 					return exception
 				except Exception, exception:
 					safe_print(traceback.format_exc())
