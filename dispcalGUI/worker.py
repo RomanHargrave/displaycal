@@ -5999,17 +5999,18 @@ usage: spotread [-options] [logfile]
 		self.check_retry_measurement(txt)
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
-		if (self.cmdname in ("dispcal", "dispread") and
-			getcfg("measurement.play_sound")):
+		if self.cmdname in ("dispcal", "dispread"):
 			if self.cmdname == "dispcal" and ", repeat" in txt.lower():
 				self.repeat = True
 			elif ", ok" in txt.lower():
 				self.repeat = False
 			if re.search(r"Patch \d+ of \d+", txt, re.I):
-				if self.cmdname == "dispcal" and self.repeat:
+				if (self.cmdname == "dispcal" and self.repeat and
+					getcfg("measurement.play_sound")):
 					self.measurement_sound.safe_play()
 				else:
-					self.commit_sound.safe_play()
+					if getcfg("measurement.play_sound"):
+						self.commit_sound.safe_play()
 					if hasattr(self.progress_wnd, "animbmp"):
 						self.progress_wnd.animbmp.frame = 0
 
