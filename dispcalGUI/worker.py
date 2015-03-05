@@ -6920,7 +6920,7 @@ usage: spotread [-options] [logfile]
 			if "__WXGTK__" in wx.PlatformInfo:
 				safe_print("")
 			self.progress_wnd.SetTitle(progress_title)
-			if not resume:
+			if not resume or not self.progress_wnd.IsShown():
 				self.progress_wnd.reset()
 			self.progress_wnd.Pulse(progress_msg)
 			if hasattr(self.progress_wnd, "pause_continue"):

@@ -6542,7 +6542,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			   self.worker.dispcal_create_fast_matrix_shaper:
 				start_timers = False
 				wx.CallAfter(self.profile_finish, True, 
-							 success_msg=lang.getstr("calibration.complete"))
+							 success_msg=lang.getstr("calibration.complete"),
+							 install_3dlut=getcfg("3dlut.create"))
 			elif getcfg("trc"):
 				wx.CallAfter(self.load_cal, silent=True)
 				wx.CallAfter(InfoDialog, self, 
@@ -6847,10 +6848,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.worker.start(self.profile_finish, self.worker.create_profile, 
 						  ckwargs={"success_msg": success_msg, 
 								   "failure_msg": lang.getstr(
-									   "profiling.incomplete")}, 
+									   "profiling.incomplete"),
+								   "install_3dlut": getcfg("3dlut.create")}, 
 						  wkwargs={"tags": True},
 						  progress_msg=lang.getstr("create_profile"), 
-						  resume=resume)
+						  resume=resume, continue_next=getcfg("3dlut.create"))
 
 	def gamap_btn_handler(self, event):
 		if not hasattr(self, "gamapframe"):
@@ -7239,11 +7241,11 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def profile_finish(self, result, profile_path=None, success_msg="", 
 					   failure_msg="", preview=True, skip_scripts=False,
-					   allow_show_log=True):
+					   allow_show_log=True, install_3dlut=False):
 		if not isinstance(result, Exception) and result:
 			if getcfg("log.autoshow") and allow_show_log:
 				self.infoframe_toggle_handler(show=True)
-			self.do_install = bool(profile_path)
+			self.install_3dlut = install_3dlut
 			if profile_path:
 				profile_save_path = os.path.splitext(profile_path)[0]
 			else:
@@ -7302,7 +7304,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.lut3d_set_path()
 				# Check if we want to automatically create 3D LUT
 				if (getcfg("3dlut.create") and
-					not (os.path.isfile(self.lut3d_path) or self.do_install)):
+					not os.path.isfile(self.lut3d_path) and install_3dlut):
 					# Update curve viewer if shown
 					self.lut_viewer_load_lut(profile=profile)
 					# Create 3D LUT
@@ -7355,8 +7357,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										  ICCP.GAMUT_VOLUME_SRGB /
 										  gamut_volumes[key] * 100,
 										  name))
-			if config.is_virtual_display() or (getcfg("3dlut.create") and
-											   not self.do_install):
+			if config.is_virtual_display() or (getcfg("3dlut.create") or
+											   install_3dlut):
 				installable = False
 				title = appname
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
@@ -7553,8 +7555,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			result = event.GetId()
 		if result == wx.ID_OK:
-			if config.is_virtual_display() or (getcfg("3dlut.create") and
-											   not self.do_install):
+			if config.is_virtual_display() or (getcfg("3dlut.create") or
+											   self.install_3dlut):
 				self.profile_finish_consumer(False)
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists

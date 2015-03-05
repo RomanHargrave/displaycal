@@ -354,7 +354,8 @@ class LUT3DFrame(BaseFrame):
 					self.profile_finish(True,
 										getcfg("calibration.file", False),
 										lang.getstr("calibration_profiling.complete"), 
-										lang.getstr("profiling.incomplete"))
+										lang.getstr("profiling.incomplete"),
+										install_3dlut=True)
 				else:
 					# 3D LUT was created manually
 					##if getcfg("3dlut.format") == "madVR" and madvr:
@@ -366,8 +367,9 @@ class LUT3DFrame(BaseFrame):
 												  ##copy_from_path=self.lut3d_path)
 					self.profile_finish(True,
 										getcfg("calibration.file", False),
-										lang.getstr("3dlut.install"), 
-										lang.getstr("profiling.incomplete"))
+										"", 
+										lang.getstr("profiling.incomplete"),
+										install_3dlut=True)
 			elif getcfg("3dlut.format") == "madVR" and madvr:
 				# madVR supports installing 3D LUT
 				self.lut3d_install(getcfg("last_3dlut_path"))
@@ -394,7 +396,7 @@ class LUT3DFrame(BaseFrame):
 			if path:
 				# Called from script client
 				self.lut3d_path = None
-			else:
+			elif not copy_from_path:
 				self.lut3d_set_path()
 				path = self.lut3d_path
 		if (not None in (profile_in, profile_out) or
@@ -453,14 +455,31 @@ class LUT3DFrame(BaseFrame):
 											 "size.lut3dframe"))
 				if copy_from_path:
 					# Instead of creating a 3D LUT, copy existing one
-					shutil.copyfile(copy_from_path, path)
+					src_name = os.path.splitext(copy_from_path)[0]
+					dst_name = os.path.splitext(path)[0]
+					src_paths = [copy_from_path]
+					dst_paths = [path]
+					if getcfg("3dlut.format") == "eeColor":
+						# eeColor: 3D LUT + 6x 1D LUT
+						for part in ("first", "second"):
+							for channel in ("blue", "green", "red"):
+								src_path = "%s-%s1d%s.txt" % (src_name, part,
+															  channel)
+								if os.path.isfile(src_path):
+									src_paths.append(src_path)
+									dst_paths.append("%s-%s1d%s.txt" %
+													 (dst_name, part, channel))
+					for src_path, dst_path in zip(src_paths, dst_paths):
+						shutil.copyfile(src_path, dst_path)
 					return
 				self.worker.interactive = False
 				self.worker.start(self.lut3d_create_consumer,
 								  self.lut3d_create_producer,
 								  wargs=(profile_in, profile_abst, profile_out,
 										 path),
-								  progress_msg=lang.getstr("3dlut.create"))
+								  progress_msg=lang.getstr("3dlut.create"),
+								  resume=not isinstance(self, LUT3DFrame) and
+										 getcfg("3dlut.create"))
 	
 	def lut3d_create_producer(self, profile_in, profile_abst, profile_out, path):
 		apply_cal = (profile_out and "vcgt" in profile_out.tags and
