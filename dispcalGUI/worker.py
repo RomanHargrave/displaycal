@@ -2303,7 +2303,7 @@ class Worker(object):
 				# Collink has already written the 3DLUT for us
 				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
 									  result, dst_path=path,
-									  ext_filter=[".3dlut", ".cal", ".cube",
+									  ext_filter=[".3dlut", ".cube",
 												  ".log", ".txt"])
 				if not result:
 					result = UnloggedError(lang.getstr("aborted"))
