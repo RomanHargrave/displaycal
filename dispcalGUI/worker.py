@@ -6005,9 +6005,9 @@ usage: spotread [-options] [logfile]
 			elif ", ok" in txt.lower():
 				self.repeat = False
 			if re.search(r"Patch \d+ of \d+", txt, re.I):
-				if (self.cmdname == "dispcal" and self.repeat and
-					getcfg("measurement.play_sound")):
-					self.measurement_sound.safe_play()
+				if self.cmdname == "dispcal" and self.repeat:
+					if getcfg("measurement.play_sound"):
+						self.measurement_sound.safe_play()
 				else:
 					if getcfg("measurement.play_sound"):
 						self.commit_sound.safe_play()
