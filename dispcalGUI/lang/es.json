@@ -951,6 +951,7 @@
 	"update_check.uptodate": "%s esta actualizada.",
 		"*update_now": "Update now",
 	"upload": "Subir",
+		"*use_fancy_progress": "Use fancy progress dialog",
 	"use_separate_lut_access": "Usar acceso separado a la tabla de gamma de la tarjeta grafica ",
 		"*use_simulation_profile_as_output": "Use simulation profile as target profile",
 	"vcgt": "Curvas de calibracion",

@@ -831,6 +831,7 @@ defaults = {
 	"untethered.min_delta": 1.5,
 	"untethered.min_delta.lightness": 1.0,
 	"update_check": 1,
+	"use_fancy_progress": 1,
 	"use_separate_lut_access": 0,
 	"vrml.compress": 1,
 	"webserver.portnumber": 8080,

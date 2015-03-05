@@ -951,6 +951,7 @@
 	"update_check.uptodate": "%s est à jour.",
 		"*update_now": "Update now",
 	"upload": "Chargement",
+		"*use_fancy_progress": "Use fancy progress dialog",
 	"use_separate_lut_access": "Utiliser un accès séparé à la table du gamma de la carte vidéo",
 	"use_simulation_profile_as_output": "Utiliser un profil de simulation comme profil cible",
 	"vcgt": "Courbes de calibrage",

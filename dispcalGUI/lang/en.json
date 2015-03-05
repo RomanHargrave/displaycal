@@ -951,6 +951,7 @@
 	"update_check.uptodate": "%s is up-to-date.",
 	"update_now": "Update now",
 	"upload": "Upload",
+	"use_fancy_progress": "Use fancy progress dialog",
 	"use_separate_lut_access": "Use separate video card gamma table access",
 	"use_simulation_profile_as_output": "Use simulation profile as target profile",
 	"vcgt": "Calibration curves",

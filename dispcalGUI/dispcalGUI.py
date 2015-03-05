@@ -1917,6 +1917,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			options.FindItem("dry_run"))
 		self.Bind(wx.EVT_MENU, self.enable_dry_run_handler, 
 				  self.menuitem_enable_dry_run)
+		self.menuitem_use_fancy_progress = options.FindItemById(
+			options.FindItem("use_fancy_progress"))
+		self.Bind(wx.EVT_MENU, self.use_fancy_progress_handler, 
+				  self.menuitem_use_fancy_progress)
 		menuitem = options.FindItemById(options.FindItem("restore_defaults"))
 		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
 		
@@ -2119,6 +2123,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(self.worker.get_instrument_features().get("sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
+		self.menuitem_use_fancy_progress.Check(bool(getcfg("use_fancy_progress")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
 		if sys.platform == "win32" or test:
@@ -3804,6 +3809,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.extra_args.Raise()
 		else:
 			self.extra_args.Show()
+
+	def use_fancy_progress_handler(self, event):
+		setcfg("use_fancy_progress", 
+			   int(self.menuitem_use_fancy_progress.IsChecked()))
 
 	def use_separate_lut_access_handler(self, event):
 		setcfg("use_separate_lut_access", 

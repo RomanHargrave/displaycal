@@ -87,6 +87,11 @@
         <checkable>1</checkable>
       </object>
       <object class="separator"/>
+      <object class="wxMenuItem" name="use_fancy_progress">
+        <label>use_fancy_progress</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="separator"/>
       <object class="wxMenuItem" name="restore_defaults">
         <label>restore_defaults</label>
       </object>

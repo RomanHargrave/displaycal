@@ -6910,6 +6910,7 @@ usage: spotread [-options] [logfile]
 		if self.finished is True:
 			return
 		pauseable = getattr(self, "pauseable", False)
+		fancy = fancy and getcfg("use_fancy_progress")
 		if self._progress_dlgs.get(fancy):
 			self.progress_wnd = self._progress_dlgs[fancy]
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 

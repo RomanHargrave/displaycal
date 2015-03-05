@@ -951,6 +951,7 @@
 	"update_check.uptodate": "%s ist auf dem neuesten Stand.",
 	"update_now": "Jetzt aktualisieren",
 	"upload": "Hochladen",
+	"use_fancy_progress": "Ausgefallene Fortschrittsanzeige verwenden",
 	"use_separate_lut_access": "Gesonderten Grafikkarten-Gammatabellen-Zugriff verwenden",
 	"use_simulation_profile_as_output": "Simulationsprofil als Zielprofil verwenden",
 	"vcgt": "Kalibrierungskurven",
