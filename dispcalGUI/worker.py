@@ -6040,6 +6040,9 @@ usage: spotread [-options] [logfile]
 			desired_apl = getcfg("patterngenerator.apl")
 			apl = desired_apl * 3
 			bgrgb = [(apl - max(rgbl - apl, 0.0)) / bgrgbl * v for v in bgrgb]
+		self.log("Sending RGB %.3f %.3f %.3f, background %.3f %.3f %.3f, "
+				 "x %.4f, y %.4f, w %.4f, h %.4f" %
+				 (tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
 		try:
 			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
 		except socket.error, exception:
