@@ -6006,10 +6006,12 @@ usage: spotread [-options] [logfile]
 				self.repeat = False
 			if re.search(r"Patch \d+ of \d+", txt, re.I):
 				if self.cmdname == "dispcal" and self.repeat:
-					if getcfg("measurement.play_sound"):
+					if (getcfg("measurement.play_sound") and
+						hasattr(self.progress_wnd, "sound_on_off_btn")):
 						self.measurement_sound.safe_play()
 				else:
-					if getcfg("measurement.play_sound"):
+					if (getcfg("measurement.play_sound") and
+						hasattr(self.progress_wnd, "sound_on_off_btn")):
 						self.commit_sound.safe_play()
 					if hasattr(self.progress_wnd, "animbmp"):
 						self.progress_wnd.animbmp.frame = 0
