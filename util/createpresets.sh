@@ -9,12 +9,13 @@ function createpreset() {
 }
 
 createpreset "Default"      "default"
+createpreset "eeColor"      "video_eeColor"
 createpreset "Laptop"       "laptop"
-createpreset "madVR"        "madVR"
+createpreset "madVR"        "video_madVR"
 createpreset "Office & Web" "office_web"
 createpreset "Photo"        "photo"
 createpreset "Prepress"     "prepress"
-createpreset "Resolve"      "resolve"
+createpreset "Resolve"      "video_resolve"
 createpreset "Softproof"    "softproof"
 createpreset "sRGB"         "sRGB"
 createpreset "Video"        "video"

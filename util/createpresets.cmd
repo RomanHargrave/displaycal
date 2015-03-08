@@ -2,12 +2,13 @@
 setlocal
 
 call :createpreset "Default"      "default"
+call :createpreset "eeColor"      "video_eeColor"
 call :createpreset "Laptop"       "laptop"
-call :createpreset "madVR"        "madVR"
+call :createpreset "madVR"        "video_madVR"
 call :createpreset "Office & Web" "office_web"
 call :createpreset "Photo"        "photo"
 call :createpreset "Prepress"     "prepress"
-call :createpreset "Resolve"      "resolve"
+call :createpreset "Resolve"      "video_resolve"
 call :createpreset "Softproof"    "softproof"
 call :createpreset "sRGB"         "sRGB"
 call :createpreset "Video"        "video"

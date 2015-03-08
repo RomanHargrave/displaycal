@@ -9514,8 +9514,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("measure.override_min_display_update_delay_ms.backup", None)
 			setcfg("measure.min_display_update_delay_ms.backup", None)
 			update_delay_ctrls = True
-		if config.get_display_name() in ("Resolve", "madVR"):
-			# Enable 3D LUT tab for madVR & Resolve
+		if config.get_display_name() in ("Resolve", "madVR", "SII REPEATER"):
+			# Enable 3D LUT tab for madVR, Resolve & eeColor
 			if getcfg("3dlut.tab.enable.backup", False) is None:
 				setcfg("3dlut.tab.enable.backup", getcfg("3dlut.tab.enable"))
 			setcfg("3dlut.tab.enable", 1)
@@ -11408,9 +11408,10 @@ class MainFrame(ReportFrame, BaseFrame):
 						display_match = True
 						setcfg("display.number", display_index + 1)
 						self.get_set_display()
-						if config.get_display_name() in ("madVR", "Resolve"):
+						if config.get_display_name() in ("madVR", "Resolve",
+														 "SII REPEATER"):
 							# Don't disable 3D LUT tab when switching from
-							# madVR / Resolve
+							# madVR / Resolve / eeColor
 							setcfg("3dlut.tab.enable.backup", 1)
 				# Get and set the instrument
 				instrument_id = profile.tags.get("meta",
@@ -11758,10 +11759,12 @@ class MainFrame(ReportFrame, BaseFrame):
 							elif cfgname == "3dlut.format":
 								if cfgvalue == "madVR":
 									setcfg("3dlut.madVR.enable", 1)
-				if (config.get_display_name() in ("madVR", "Resolve") and
+				if (config.get_display_name() in ("madVR", "Resolve",
+												  "SII REPEATER") and
 					not getcfg("3dlut.tab.enable")):
 					# Old presets don't contain 3D LUT settings, so we
-					# need to re-enable the 3D LUT tab for madVR & Resolve
+					# need to re-enable the 3D LUT tab for madVR, Resolve &
+					# eeColor
 					setcfg("3dlut.tab.enable", 1)
 				self.update_controls(
 					update_profile_name=update_profile_name,
