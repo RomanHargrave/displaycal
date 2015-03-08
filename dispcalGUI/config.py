@@ -585,6 +585,8 @@ defaults = {
 	"3dlut.rendering_intent": "r",
 	"3dlut.use_abstract_profile": 0,
 	"3dlut.size": 65,
+	"3dlut.tab.enable": 0,
+	"3dlut.tab.enable.backup": 0,
 	"allow_skip_sensor_cal": 0,
 	"app.allow_network_clients": 0,
 	"app.port": 15411,
