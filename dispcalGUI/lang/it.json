@@ -292,6 +292,7 @@
 		"*contrast": "Contrast",
 		"*converting": "Converting",
 		"*copyright": "Copyright",
+	"corrected": "corretto",
 	"create_and_preview": "Crea & Mostra anteprima",
 		"*create_ccss_or_ccmx": "Do you want to create a correction matrix for ordinary colorimeters (CCMX) or a calibration spectral sample for the i1 Display Pro and ColorMunki Display (CCSS)?",
 	"create_profile": "Creazione del profilo dai dati di misurazione...",
