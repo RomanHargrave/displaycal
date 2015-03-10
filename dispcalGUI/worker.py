@@ -3634,7 +3634,8 @@ class Worker(object):
 	
 	def generate_B2A_from_inverse_table(self, profile, clutres=None,
 										source="A2B", tableno=None, bpc=False,
-										logfile=None, filename=None):
+										logfile=None, filename=None,
+										intent="r"):
 		"""
 		Generate a profile's B2A table by inverting the A2B table 
 		(default A2B1 or A2B0)
@@ -3669,10 +3670,12 @@ class Worker(object):
 			logfile.write(msg)
 			logfile.write("\n")
 
-		# Note that intent 0 will be colorimetric if no other tables are present
-		intent = {0: "p",
-				  1: "r",
-				  2: "s"}[tableno]
+		if intent is None:
+			# Note that intent 0 will be colorimetric if no other tables are
+			# present
+			intent = {0: "p",
+					  1: "r",
+					  2: "s"}[tableno]
 		
 		# Lookup RGB -> XYZ for primaries, black- and white point
 		idata = [[0, 0, 0], [1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
