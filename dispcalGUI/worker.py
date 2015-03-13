@@ -3801,10 +3801,19 @@ class Worker(object):
 		if logfile:
 			logfile.write("Looking up input curve RGB values...\n")
 		
-		# Lookup Lab -> RGB values through profile using xicclu to get TRC
 		direction = {"A2B": "if", "B2A": "b"}[source]
+
 		if method != 2:
+			# Lookup Lab -> RGB values through profile using xicclu to get TRC
 			odata = self.xicclu(profile, idata, intent, direction, pcs="l")
+
+			# Sanity check white
+			if (round(odata[-1][0], 3) != 1 or round(odata[-1][1], 3) != 1 or
+				round(odata[-1][2], 3) != 1):
+				self.log("\n".join(" ".join(str(v) for v in item)
+								   for item in odata))
+				raise Error("Argyll CMS xicclu: Invalid white RGB: "
+							"%.4f %.4f %.4f" % tuple(odata[-1]))
 
 		xpR = [v[0] for v in odata]
 		xpG = [v[1] for v in odata]
