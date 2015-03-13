@@ -729,6 +729,7 @@
 	"profile": "Perfil",
 	"profile.advanced_gamap": "Avanzado...",
 		"*profile.b2a.hires": "Enhance effective resolution of colorimetric PCS-to-device table",
+		"*profile.b2a.lowres.warning": "The profile is seemingly missing high-quality PCS-to-device tables, which are essential for proper operation. Do you want to generate high-quality tables now? This will take a few minutes.",
 		"*profile.b2a.smooth": "Smoothing",
 		"*profile.choose": "Please choose a profile.",
 		"*profile.confirm_regeneration": "Do you want to regenerate the profile?",

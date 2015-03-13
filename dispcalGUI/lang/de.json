@@ -729,6 +729,7 @@
 	"profile": "Profil",
 	"profile.advanced_gamap": "Erweitert...",
 	"profile.b2a.hires": "Effektive Auflösung der farbmetrischen Bezugsfarbraum-zu-Gerätefarbraum-Tabelle verbessern",
+	"profile.b2a.lowres.warning": "Das Profil enthält scheinbar keine hochauflösende Bezugsfarbraum-zu-Gerätefarbraum-Tabellen, die zur Verwendung als Anzeigeräteprofil notwendig sind. Möchten Sie hochauflösende Tabellen jetzt erzeugen? Das wird einige Minuten dauern.",
 	"profile.b2a.smooth": "Glätten",
 	"profile.choose": "Bitte wählen Sie ein Profil.",
 	"profile.confirm_regeneration": "Möchten Sie das Profil neu erstellen?",

@@ -7284,6 +7284,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					setcfg("calibration.file.previous", None)
 					return
 				if getcfg("calibration.file", False) != profile_path:
+					# Load profile
 					(options_dispcal, 
 					 options_colprof) = get_options_from_profile(profile)
 					if options_dispcal or options_colprof:
@@ -7376,6 +7377,20 @@ class MainFrame(ReportFrame, BaseFrame):
 					ok = lang.getstr("3dlut.create")
 				cancel = lang.getstr("cancel")
 			else:
+				# Check if profile is a LUT-type, and if yes, if LUT is of high
+				# enough resolution (we assume anything >= 17 to be ok)
+				if ("B2A0" in profile.tags and isinstance(profile.tags.B2A0,
+														  ICCP.LUT16Type) and
+					profile.tags.B2A0.clut_grid_steps < 17):
+					# Nope. Not allowing to install. Offer to re-generate B2A
+					# tables.
+					dlg = ConfirmDialog(self,
+										msg=lang.getstr("profile.b2a.lowres.warning"), 
+								bitmap=geticon(32, "dialog-warning"))
+					choice = dlg.ShowModal()
+					if choice == wx.ID_OK:
+						self.profile_hires_b2a_handler(None, profile)
+					return
 				installable = True
 				title = lang.getstr("profile.install")
 				ok = lang.getstr("profile.install")
@@ -10201,9 +10216,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		return lang.getstr("profile.name.placeholders") + "\n" + \
 			   "\n".join(info)
 	
-	def profile_hires_b2a_handler(self, event):
-		profile = self.select_profile(title=lang.getstr("profile.b2a.hires"),
-									  ignore_current_profile=True)
+	def profile_hires_b2a_handler(self, event, profile=None):
+		if not profile:
+			profile = self.select_profile(title=lang.getstr("profile.b2a.hires"),
+										  ignore_current_profile=True)
 		if profile:
 			if not ("A2B0" in profile.tags or "A2B1" in profile.tags):
 				result = Error(lang.getstr("profile.required_tags_missing",
@@ -10236,17 +10252,21 @@ class MainFrame(ReportFrame, BaseFrame):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result:
-			# Let the user choose a location for the profile
-			defaultDir, defaultFile = os.path.split(profile.fileName)
-			dlg = wx.FileDialog(self, lang.getstr("save_as"), 
-								defaultDir, defaultFile, 
-								wildcard=lang.getstr("filetype.icc") + 
-										 "|*" + profile_ext, 
-								style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
-			dlg.Center(wx.BOTH)
-			result = dlg.ShowModal()
-			profile_save_path = dlg.GetPath()
-			dlg.Destroy()
+			if not profile.fileName or not os.path.isfile(profile.fileName):
+				# Let the user choose a location for the profile
+				defaultDir, defaultFile = os.path.split(profile.fileName)
+				dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+									defaultDir, defaultFile, 
+									wildcard=lang.getstr("filetype.icc") + 
+											 "|*" + profile_ext, 
+									style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+				dlg.Center(wx.BOTH)
+				result = dlg.ShowModal()
+				profile_save_path = dlg.GetPath()
+				dlg.Destroy()
+			else:
+				result = wx.ID_OK
+				profile_save_path = profile.fileName
 			if result == wx.ID_OK:
 				filename, ext = os.path.splitext(profile_save_path)
 				if ext.lower() not in (".icc", ".icm"):
@@ -10259,6 +10279,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				profile.setDescription(os.path.basename(filename))
 				profile.calculateID()
 				profile.write(profile_save_path)
+				self.install_profile_handler(None, profile_save_path)
 		else:
 			show_result_dialog(lang.getstr("error.profile.file_not_created"),
 							   self)
