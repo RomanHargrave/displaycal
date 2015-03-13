@@ -3810,8 +3810,6 @@ class Worker(object):
 			# Sanity check white
 			if (round(odata[-1][0], 3) != 1 or round(odata[-1][1], 3) != 1 or
 				round(odata[-1][2], 3) != 1):
-				self.log("\n".join(" ".join(str(v) for v in item)
-								   for item in odata))
 				raise Error("Argyll CMS xicclu: Invalid white RGB: "
 							"%.4f %.4f %.4f" % tuple(odata[-1]))
 
