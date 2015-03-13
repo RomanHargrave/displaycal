@@ -3980,6 +3980,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_create_cb_handler(self, event):
 		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
 		self.calpanel.Freeze()
+		self.lut3d_show_trc_controls()
 		self.lut3d_update_b2a_controls()
 		self.calpanel.Thaw()
 		self.lut3d_check_bpc()
