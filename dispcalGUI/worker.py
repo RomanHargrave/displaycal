@@ -5801,12 +5801,7 @@ usage: spotread [-options] [logfile]
 					profile.close()
 					temp = True
 				else:
-					profile.fileName = os.path.join(tempdir,
-													os.path.basename(filename))
 					temp = False
-					if not os.path.isfile(profile.fileName):
-						temp = True
-					profile.write()
 				# Invert A2B
 				try:
 					result = self.generate_B2A_from_inverse_table(profile,
@@ -5835,7 +5830,7 @@ usage: spotread [-options] [logfile]
 						os.remove(profile.fileName)
 						if self.tempdir and not os.listdir(self.tempdir):
 							self.wrapup(False)
-					profile.fileName = filename
+						profile.fileName = filename
 		return results
 	
 	def isalive(self, subprocess=None):
