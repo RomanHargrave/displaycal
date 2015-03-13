@@ -12,7 +12,7 @@ See sources, misc/debian.copyright for extended copyright information.
 Audio credits
 -------------
 
-CC0 audio files from freesounds.org have been used to create some of the sound effects. These are:
+CC0 audio files from freesound.org have been used to create some of the sound effects. These are:
 
 intro_new.wav: pulse3D.wav by Sclolex, space_string.wav by fons
 engine_hum_loop.wav: EnginesTurbinesOne.wav by pushkin
