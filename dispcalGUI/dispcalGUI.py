@@ -852,8 +852,11 @@ class GamapFrame(BaseFrame):
 		self.Hide()
 	
 	def b2a_size_ctrl_handler(self, event):
-		setcfg("profile.b2a.hires.size",
-			   config.valid_values["profile.b2a.hires.size"][self.b2a_size_ctrl.GetSelection()])
+		v = config.valid_values["profile.b2a.hires.size"][self.b2a_size_ctrl.GetSelection()]
+		if v != getcfg("profile.b2a.hires.size") and self.Parent and \
+		   hasattr(self.Parent, "profile_settings_changed"):
+			self.Parent.profile_settings_changed()
+		setcfg("profile.b2a.hires.size", v)
 
 	def drop_handler(self, path):
 		self.gamap_profile.SetPath(path)
