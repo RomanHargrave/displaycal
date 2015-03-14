@@ -370,9 +370,6 @@ class LUT3DFrame(BaseFrame):
 										"", 
 										lang.getstr("profiling.incomplete"),
 										install_3dlut=True)
-			elif getcfg("3dlut.format") == "madVR" and madvr:
-				# madVR supports installing 3D LUT
-				self.lut3d_install(getcfg("last_3dlut_path"))
 	
 	def lut3d_create_handler(self, event, path=None, copy_from_path=None):
 		if not check_set_argyll_bin():
