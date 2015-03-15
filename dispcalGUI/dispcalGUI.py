@@ -1104,6 +1104,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_show_bitdepth_controls = LUT3DFrame.__dict__["lut3d_show_bitdepth_controls"]
 	lut3d_show_encoding_controls = LUT3DFrame.__dict__["lut3d_show_encoding_controls"]
 	lut3d_show_trc_controls = LUT3DFrame.__dict__["lut3d_show_trc_controls"]
+	lut3d_set_option = LUT3DFrame.__dict__["lut3d_set_option"]
 	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
 	lut3d_trc_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_ctrl_handler"]
 	lut3d_trc_gamma_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_ctrl_handler"]
@@ -3981,7 +3982,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_bpc()
 
 	def lut3d_create_cb_handler(self, event):
-		setcfg("3dlut.create", int(self.lut3d_create_cb.GetValue()))
+		self.lut3d_set_option("3dlut.create", int(self.lut3d_create_cb.GetValue()))
 		self.calpanel.Freeze()
 		self.lut3d_show_trc_controls()
 		self.lut3d_update_b2a_controls()
@@ -4013,8 +4014,9 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def lut3d_input_colorspace_handler(self, event):
 		if event:
-			setcfg("3dlut.input.profile",
-				   self.input_profiles[self.lut3d_input_profile_ctrl.GetStringSelection()])
+			self.lut3d_set_option("3dlut.input.profile",
+				   self.input_profiles[self.lut3d_input_profile_ctrl.GetStringSelection()],
+				   event)
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.update_controls()
 		self.lut3d_input_profile_ctrl.SetToolTipString(
@@ -10995,14 +10997,14 @@ class MainFrame(ReportFrame, BaseFrame):
 		return self.quality_ab[self.profile_quality_ctrl.GetValue() + 1]
 
 	def profile_settings_changed(self):
-		cal = getcfg("calibration.file", False)
-		if cal:
-			filename, ext = os.path.splitext(cal)
-			if ext.lower() in (".icc", ".icm"):
-				if not os.path.exists(filename + ".cal") and \
-				   not cal in self.presets:
-					self.cal_changed()
-					return
+		##cal = getcfg("calibration.file", False)
+		##if cal:
+			##filename, ext = os.path.splitext(cal)
+			##if ext.lower() in (".icc", ".icm"):
+				##if not os.path.exists(filename + ".cal") and \
+				   ##not cal in self.presets:
+					##self.cal_changed()
+					##return
 		if not self.updatingctrls:
 			setcfg("settings.changed", 1)
 			if self.calibration_file_ctrl.GetStringSelection()[0] != "*":

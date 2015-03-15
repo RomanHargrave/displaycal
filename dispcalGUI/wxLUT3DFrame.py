@@ -213,7 +213,7 @@ class LUT3DFrame(BaseFrame):
 				self.lut3d_trc_black_output_offset_ctrl.GetValue())
 		v = self.lut3d_trc_black_output_offset_ctrl.GetValue() / 100.0
 		if v != getcfg("3dlut.trc_output_offset"):
-			setcfg("3dlut.trc_output_offset", v)
+			self.lut3d_set_option("3dlut.trc_output_offset", v)
 			self.lut3d_update_trc_control()
 			self.lut3d_show_trc_controls()
 
@@ -230,7 +230,7 @@ class LUT3DFrame(BaseFrame):
 			if str(v) != self.lut3d_trc_gamma_ctrl.GetValue():
 				self.lut3d_trc_gamma_ctrl.SetValue(str(v))
 			if v != getcfg("3dlut.trc_gamma"):
-				setcfg("3dlut.trc_gamma", v)
+				self.lut3d_set_option("3dlut.trc_gamma", v)
 				self.lut3d_update_trc_control()
 				self.lut3d_show_trc_controls()
 		event.Skip()
@@ -239,15 +239,15 @@ class LUT3DFrame(BaseFrame):
 		self.Freeze()
 		if self.lut3d_trc_ctrl.GetSelection() == 1:
 			# BT.1886
-			setcfg("3dlut.trc_gamma", 2.4)
-			setcfg("3dlut.trc_gamma_type", "B")
-			setcfg("3dlut.trc_output_offset", 0.0)
+			self.lut3d_set_option("3dlut.trc_gamma", 2.4)
+			self.lut3d_set_option("3dlut.trc_gamma_type", "B")
+			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
 			self.lut3d_update_trc_controls()
 		elif self.lut3d_trc_ctrl.GetSelection() == 0:
 			# Pure power gamma 2.2
-			setcfg("3dlut.trc_gamma", 2.2)
-			setcfg("3dlut.trc_gamma_type", "b")
-			setcfg("3dlut.trc_output_offset", 1.0)
+			self.lut3d_set_option("3dlut.trc_gamma", 2.2)
+			self.lut3d_set_option("3dlut.trc_gamma_type", "b")
+			self.lut3d_set_option("3dlut.trc_output_offset", 1.0)
 			self.lut3d_update_trc_controls()
 		self.lut3d_show_trc_controls()
 		self.Thaw()
@@ -255,7 +255,7 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_trc_gamma_type_ctrl_handler(self, event):
 		v = self.trc_gamma_types_ab[self.lut3d_trc_gamma_type_ctrl.GetSelection()]
 		if v != getcfg("3dlut.trc_gamma_type"):
-			setcfg("3dlut.trc_gamma_type", v)
+			self.lut3d_set_option("3dlut.trc_gamma_type", v)
 			self.lut3d_update_trc_control()
 			self.lut3d_show_trc_controls()
 
@@ -266,10 +266,10 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_encoding_input_ctrl_handler(self, event):
 		encoding = self.encoding_ab[self.encoding_input_ctrl.GetSelection()]
-		setcfg("3dlut.encoding.input", encoding)
+		self.lut3d_set_option("3dlut.encoding.input", encoding)
 		if getcfg("3dlut.format") == "eeColor":
 			self.encoding_output_ctrl.SetSelection(self.encoding_ba[encoding])
-			setcfg("3dlut.encoding.output", encoding)
+			self.lut3d_set_option("3dlut.encoding.output", encoding)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_encoding_controls()
 		elif self.Parent:
@@ -298,7 +298,7 @@ class LUT3DFrame(BaseFrame):
 				self.encoding_output_ctrl.SetSelection(
 					self.encoding_ba[getcfg("3dlut.encoding.output")])
 				return False
-		setcfg("3dlut.encoding.output", encoding)
+		self.lut3d_set_option("3dlut.encoding.output", encoding)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_encoding_controls()
 		elif self.Parent:
@@ -324,7 +324,7 @@ class LUT3DFrame(BaseFrame):
 			self.Parent.lut3d_update_controls()
 	
 	def lut3d_bitdepth_input_ctrl_handler(self, event):
-		setcfg("3dlut.bitdepth.input",
+		self.lut3d_set_option("3dlut.bitdepth.input",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_input_ctrl.GetSelection()])
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
@@ -332,7 +332,7 @@ class LUT3DFrame(BaseFrame):
 			self.Parent.lut3d_update_shared_controls()
 	
 	def lut3d_bitdepth_output_ctrl_handler(self, event):
-		setcfg("3dlut.bitdepth.output",
+		self.lut3d_set_option("3dlut.bitdepth.output",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
@@ -523,7 +523,7 @@ class LUT3DFrame(BaseFrame):
 		if getcfg("3dlut.format") in ("eeColor", "madVR", "mga"):
 			setcfg("3dlut.size", getcfg("3dlut.size.backup"))
 		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
-		setcfg("3dlut.format", format)
+		self.lut3d_set_option("3dlut.format", format)
 		if format in ("eeColor", "madVR"):
 			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
@@ -534,30 +534,30 @@ class LUT3DFrame(BaseFrame):
 				# As eeColor usually needs same input & output encoding,
 				# and xvYCC output encoding is not supported generally, fall
 				# back to Rec601 YCbCr SD for xvYCC Rec601 YCbCr SD
-				setcfg("3dlut.encoding.input", "6")
+				self.lut3d_set_option("3dlut.encoding.input", "6")
 			elif getcfg("3dlut.encoding.input") == "X":
 				# As eeColor usually needs same input & output encoding,
 				# and xvYCC output encoding is not supported generally, fall
 				# back to Rec709 1125/60Hz YCbCr HD for xvYCC Rec709 YCbCr SD
-				setcfg("3dlut.encoding.input", "7")
+				self.lut3d_set_option("3dlut.encoding.input", "7")
 			else:
 				# -et -Et for eeColor
-				setcfg("3dlut.encoding.input", "t")
-				setcfg("3dlut.encoding.output", "t")
+				self.lut3d_set_option("3dlut.encoding.input", "t")
+				self.lut3d_set_option("3dlut.encoding.output", "t")
 			# eeColor uses a fixed size of 65x65x65
-			setcfg("3dlut.size", 65)
+			self.lut3d_set_option("3dlut.size", 65)
 		elif format == "mga":
 			# Pandora supports 17x17x17 and 33x33x33
-			setcfg("3dlut.size", 17)
+			self.lut3d_set_option("3dlut.size", 17)
 			# Pandora uses a fixed bitdepth of 16
-			setcfg("3dlut.bitdepth.output", 16)
+			self.lut3d_set_option("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
 		elif format == "madVR":
 			# -et -Et for madVR
-			setcfg("3dlut.encoding.input", "t")
-			setcfg("3dlut.encoding.output", "t")
+			self.lut3d_set_option("3dlut.encoding.input", "t")
+			self.lut3d_set_option("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
-			setcfg("3dlut.size", 65)
+			self.lut3d_set_option("3dlut.size", 65)
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_setup_encoding_ctrl(format)
 		self.lut3d_update_encoding_controls()
@@ -587,7 +587,7 @@ class LUT3DFrame(BaseFrame):
 			else:
 				size = 33
 			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[size])
-		setcfg("3dlut.size", size)
+		self.lut3d_set_option("3dlut.size", size)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
 		elif self.Parent:
@@ -603,7 +603,8 @@ class LUT3DFrame(BaseFrame):
 			self.set_profile("output", profile_path or False, silent=not event)
 
 	def lut3d_gamut_mapping_mode_handler(self, event):
-		setcfg("3dlut.gamap.use_b2a", int(self.gamut_mapping_b2a.GetValue()))
+		self.lut3d_set_option("3dlut.gamap.use_b2a",
+							  int(self.gamut_mapping_b2a.GetValue()))
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.update_controls()
 		elif self.Parent:
@@ -655,7 +656,7 @@ class LUT3DFrame(BaseFrame):
 		return "invalid"
 	
 	def lut3d_rendering_intent_ctrl_handler(self, event):
-		setcfg("3dlut.rendering_intent",
+		self.lut3d_set_option("3dlut.rendering_intent",
 			   self.rendering_intents_ab[self.lut3d_rendering_intent_ctrl.GetSelection()])
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
@@ -965,6 +966,13 @@ class LUT3DFrame(BaseFrame):
 			self.encoding_ba[encoding] = i
 		self.encoding_input_ctrl.Thaw()
 		self.encoding_output_ctrl.Thaw()
+
+	def lut3d_set_option(self, option, v, set_changed=True):
+		""" Set option to value and update settings state """
+		if (hasattr(self, "profile_settings_changed") and set_changed and
+			getcfg("3dlut.create") and v != getcfg(option)):
+			self.profile_settings_changed()
+		setcfg(option, v)
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
