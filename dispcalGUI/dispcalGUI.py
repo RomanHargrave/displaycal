@@ -9661,12 +9661,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("measure.override_min_display_update_delay_ms.backup", None)
 			setcfg("measure.min_display_update_delay_ms.backup", None)
 			update_delay_ctrls = True
-		if config.get_display_name() in ("Resolve", "madVR", "SII REPEATER"):
+		if (config.is_virtual_display() or
+			config.get_display_name() == "SII REPEATER"):
 			# Enable 3D LUT tab for madVR, Resolve & eeColor
 			if getcfg("3dlut.tab.enable.backup", False) is None:
 				setcfg("3dlut.tab.enable.backup", getcfg("3dlut.tab.enable"))
 			setcfg("3dlut.tab.enable", 1)
-		elif getcfg("3dlut.tab.enable.backup", False) is not None:
+		elif (getcfg("3dlut.tab.enable.backup", False) is not None and
+			  not getcfg("3dlut.create")):
 			setcfg("3dlut.tab.enable", getcfg("3dlut.tab.enable.backup"))
 			setcfg("3dlut.tab.enable.backup", None)
 		if update_delay_ctrls:
@@ -11912,8 +11914,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							elif cfgname == "3dlut.format":
 								if cfgvalue == "madVR":
 									setcfg("3dlut.madVR.enable", 1)
-				if (config.get_display_name() in ("madVR", "Resolve",
-												  "SII REPEATER") and
+				if ((config.is_virtual_display() or
+					 config.get_display_name() == "SII REPEATER") and
 					not getcfg("3dlut.tab.enable")):
 					# Old presets don't contain 3D LUT settings, so we
 					# need to re-enable the 3D LUT tab for madVR, Resolve &
