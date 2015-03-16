@@ -5797,11 +5797,11 @@ usage: spotread [-options] [logfile]
 					# BPC not needed, copy existing B2A
 					profile.tags["B2A%i" % tableno] = results[0]
 					return results
-				# Write profile to temp dir
-				tempdir = self.create_tempdir()
-				if isinstance(tempdir, Exception):
-					return tempdir
 				if not filename or not os.path.isfile(filename):
+					# Write profile to temp dir
+					tempdir = self.create_tempdir()
+					if isinstance(tempdir, Exception):
+						return tempdir
 					fd, profile.fileName = tempfile.mkstemp(profile_ext,
 															dir=tempdir)
 					profile.write(os.fdopen(fd, "wb"))
