@@ -8513,6 +8513,10 @@ class Xicclu(Worker):
 				args.append("-a")
 			if use_cam_clipping:
 				args.append("-b")
+			if get_argyll_version("xicclu") >= [1, 6]:
+				# Add -en -En to prevent problems due to unitialized in_tvenc
+				# and out_tvenc variables in xicclu.c
+				args += ["-en", "-En"]
 		args.append("-f" + direction)
 		if profile.profileClass not in ("abst", "link"):
 			args.append("-i" + intent)
