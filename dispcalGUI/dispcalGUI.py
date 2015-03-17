@@ -3574,7 +3574,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.panel.Thaw()
 	
 	def update_bpc(self, enable_profile=True):
-		enable_bpc = ((self.get_profile_type() in ("g", "G", "s", "S") or
+		enable_bpc = ((self.get_profile_type() in ("s", "S") or
 					   (self.get_profile_type() in ("x", "X") and
 						(getcfg("profile.b2a.hires") or
 						 getcfg("profile.quality.b2a") in ("l", "n")))) and
@@ -9893,20 +9893,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		lut_type = v in ("l", "x", "X")
 		self.gamap_btn.Enable(lut_type)
 		
-		enable_b2a_extra = v in ("x", "X")
-		if enable_b2a_extra:
-			if (getcfg("profile.black_point_compensation.backup", False)
-				is None):
-				if getcfg("profile.black_point_compensation"):
-					setcfg("profile.black_point_compensation.backup",
-						   getcfg("profile.black_point_compensation"))
+		if v in ("x", "X"):
+			# XYZ LUT type
+			if getcfg("profile.type") not in ("x", "X"):
 				# Disable black point compensation for LUT profiles
 				setcfg("profile.black_point_compensation", 0)
-		elif (getcfg("profile.black_point_compensation.backup", False)
-			  is not None):
-			setcfg("profile.black_point_compensation",
-				   getcfg("profile.black_point_compensation.backup"))
-			setcfg("profile.black_point_compensation.backup", None)
+		elif v in ("s", "S"):
+			# Shaper + matrix type
+			if getcfg("profile.type") not in ("s", "S"):
+				# Enable black point compensation for shaper profiles
+				setcfg("profile.black_point_compensation", 1)
+		else:
+			setcfg("profile.black_point_compensation", 0)
 		self.update_bpc()
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
