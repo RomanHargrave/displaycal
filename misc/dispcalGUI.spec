@@ -44,6 +44,7 @@ BuildRequires:  lib64xorg-x11-devel
 BuildRequires:  libxorg-x11-devel
 %endif
 Requires:       argyllcms
+Requires:       pygame
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
 %else
@@ -55,6 +56,7 @@ BuildRequires:  udev
 BuildRequires:  update-desktop-files
 BuildRequires:  xorg-x11-devel
 Requires:       argyllcms
+Requires:       python-pygame
 Requires:       python-numpy >= %{numpy_version}
 Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
@@ -71,6 +73,7 @@ BuildRequires:  udev
 Requires:       argyllcms
 Requires:       numpy >= %{numpy_version}
 Requires:       p7zip-plugins
+Requires:       pygame
 Requires:       wxPython >= %{wx_minversion}
 %endif
 %endif
