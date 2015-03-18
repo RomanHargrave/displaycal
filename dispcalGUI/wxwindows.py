@@ -4431,13 +4431,9 @@ class ProgressDialog(wx.Dialog):
 		if pos:
 			x, y = pos
 		else:
-			if parent:
-				if parent.IsShownOnScreen():
-					self.Center()
-					placed = True
-				else:
-					x = getcfg("position.progress.x", False) or parent.GetScreenPosition()[0]
-					y = getcfg("position.progress.y", False) or parent.GetScreenPosition()[1]
+			if parent and parent.IsShownOnScreen():
+				self.Center()
+				placed = True
 			else:
 				x = getcfg("position.progress.x")
 				y = getcfg("position.progress.y")

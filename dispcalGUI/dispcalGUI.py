@@ -1218,14 +1218,14 @@ class MainFrame(ReportFrame, BaseFrame):
 	def init_defaults(self):
 		""" Initialize GUI-specific defaults. """
 		defaults.update({
-			"position.info.x": self.GetDisplay().ClientArea[0] + 20,
-			"position.info.y": self.GetDisplay().ClientArea[1] + 40,
-			"position.lut_viewer.x": self.GetDisplay().ClientArea[0] + 30,
-			"position.lut_viewer.y": self.GetDisplay().ClientArea[1] + 50,
-			"position.progress.x": self.GetDisplay().ClientArea[0] + 20,
-			"position.progress.y": self.GetDisplay().ClientArea[1] + 40,
-			"position.x": self.GetDisplay().ClientArea[0] + 10,
-			"position.y": self.GetDisplay().ClientArea[1] + 30
+			"position.info.x": self.GetDisplay().ClientArea[0] + 30,
+			"position.info.y": self.GetDisplay().ClientArea[1] + 30,
+			"position.lut_viewer.x": self.GetDisplay().ClientArea[0] + 40,
+			"position.lut_viewer.y": self.GetDisplay().ClientArea[1] + 40,
+			"position.progress.x": self.GetDisplay().ClientArea[0] + 30,
+			"position.progress.y": self.GetDisplay().ClientArea[1] + 30,
+			"position.x": self.GetDisplay().ClientArea[0] + 20,
+			"position.y": self.GetDisplay().ClientArea[1] + 20
 		})
 
 		self.recent_cals = getcfg("recent_cals").split(os.pathsep)
