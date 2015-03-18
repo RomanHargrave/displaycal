@@ -4649,6 +4649,8 @@ class ProgressDialog(wx.Dialog):
 						bitmaps[i + 60] = im.ConvertToBitmap()
 					# Fade out
 					bitmaps.extend(reversed(bitmaps[:60]))
+				else:
+					bitmaps = []
 			elif progress_type == 1:
 				# Animation for measurements
 				for i, pth in enumerate(get_data_path("theme/shutter_anim", r"\.png$") or []):
@@ -4680,6 +4682,8 @@ class ProgressDialog(wx.Dialog):
 					for i, bmp in enumerate(bitmaps[36:]):
 						im = bmp.ConvertToImage().AdjustChannels(1, 1, 1, 1 - i / 26.0)
 						bitmaps[i + 36] = im.ConvertToBitmap()
+				else:
+					bitmaps = []
 		return bitmaps
 	
 	def key_handler(self, event):
