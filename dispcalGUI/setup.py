@@ -66,7 +66,7 @@ config = {"data": ["tests/*.icc"],
 		  # numpy.lib.utils is not even used by dispcalGUI, so omit all 
 		  # Tk stuff
 		  "excludes": {"all": ["Tkconstants", "Tkinter", "setuptools", "tcl",
-							   "test"],
+							   "test", "pyo"],
 					   "darwin": [],
 					   "win32": ["win32com.client.genpy"]},
 		  "package_data": {name: ["argyll_instruments.json",
@@ -95,6 +95,7 @@ config = {"data": ["tests/*.icc"],
 								  "theme/jet_anim/*.png",
 								  "theme/patch_anim/*.png",
 								  "theme/splash_anim/*.png",
+								  "theme/shutter_anim/*.png",
 								  "ti1/*.ti1",
 								  "x3d-viewer/*.css",
 								  "x3d-viewer/*.html",
@@ -279,9 +280,11 @@ def get_scripts(excludes=None):
 			return 0
 	desktopfiles.sort(sortbyname)
 	for desktopfile in desktopfiles:
+		if desktopfile.startswith("z-"):
+			continue
 		cfg = ConfigParser()
 		cfg.read(desktopfile)
-		script = cfg.get("Desktop Entry", "Exec")
+		script = cfg.get("Desktop Entry", "Exec").split()[0]
 		if not filter(lambda exclude: fnmatch(script, exclude), excludes or []):
 			scripts.append((script,
 							cfg.get("Desktop Entry", "Name").decode("UTF-8")))

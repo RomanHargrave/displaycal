@@ -818,6 +818,15 @@ def setup():
 		# Create/update 0install feeds
 		from setup import get_data, get_scripts
 		scripts = sorted(get_scripts())
+		cmds = []
+		for script, desc in scripts:
+			cmdname = "run"
+			if script != name:
+				cmdname += "-" + script.replace(name + "-", "")
+			cmds.append((cmdname, script, desc))
+			if script.endswith("-apply-profiles"):
+				# Add forced calibration loading entry
+				cmds.append((cmdname + "-force", script, desc))
 		# Get archive digest
 		extract = "%s-%s" % (name, version)
 		archive_name = extract + ".tar.gz"
@@ -848,21 +857,20 @@ def setup():
 				langs = [os.path.splitext(lang)[0] for lang in
 						 os.listdir(os.path.join(name, "lang"))]
 				# Get architecture groups
-				groups = filter(lambda group: group.hasAttribute("arch"),
-								domtree.getElementsByTagName("group"))
+				groups = domtree.getElementsByTagName("group")
 				if groups:
 					# Get main group
 					group0 = groups[0]
 					# Add languages
 					group0.setAttribute("langs", " ".join(langs))
 				# Update groups
-				for i, group in enumerate(groups):
+				for i, group in enumerate(groups[-1:]):
 					if create:
 						# Remove dummy implementations
 						for implementation in group.getElementsByTagName("implementation"):
 							if implementation.getAttribute("released") == "0000-00-00":
 								implementation.parentNode.removeChild(implementation)
-						# Add commands and entry-points
+						# Add commands
 						runner = domtree.createElement("runner")
 						if group.getAttribute("arch").startswith("Windows-"):
 							runner.setAttribute("command", "run-win")
@@ -873,16 +881,17 @@ def setup():
 						runner.setAttribute("interface", python)
 						runner.setAttribute("version",
 											"%i.%i..!3.0" % py_minversion)
-						for script, desc in scripts:
+						for cmdname, script, desc in cmds:
 							# Add command to group
 							cmd = domtree.createElement("command")
-							cmdname = "run"
-							if script != name:
-								cmdname += "-" + script.replace(name + "-",
-																"")
 							cmd.setAttribute("name", cmdname)
 							cmd.setAttribute("path", script + ".pyw")
-							if script.endswith("-apply-profiles"):
+							##if cmdname.endswith("-apply-profiles"):
+								### Autostart
+								##arg = domtree.createElement("suggest-auto-start")
+								##cmd.appendChild(arg)
+							if cmdname.endswith("-apply-profiles-force"):
+								# Forced calibration loading
 								arg = domtree.createElement("arg")
 								arg.appendChild(domtree.createTextNode("--force"))
 								cmd.appendChild(arg)
@@ -927,17 +936,17 @@ def setup():
 					archive.setAttribute("type", "application/x-compressed-tar")
 					group.appendChild(implementation)
 				if create:
-					for script, desc in scripts:
+					for cmdname, script, desc in cmds:
 						# Add entry-points to interface
 						entry_point = domtree.createElement("entry-point")
-						cmdname = "run"
-						if script != name:
-							cmdname += "-" + script.replace(name + "-", "")
 						entry_point.setAttribute("command", cmdname)
-						entry_point.setAttribute("binary-name", script)
+						binname = script
+						if cmdname.endswith("-force"):
+							binname += "-force"
+						entry_point.setAttribute("binary-name", binname)
 						cfg = RawConfigParser()
 						desktopbasename = "%s.desktop" % script
-						if script.endswith("-apply-profiles"):
+						if cmdname.endswith("-apply-profiles"):
 							desktopbasename = "z-" + desktopbasename
 						cfg.read(os.path.join(pydir, "misc",
 											  desktopbasename))
