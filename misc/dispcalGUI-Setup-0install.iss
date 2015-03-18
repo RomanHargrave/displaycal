@@ -10,7 +10,6 @@
 AppID={{4714199A-0D66-4E69-97FF-7B54BFF80B88}
 AppCopyright=%(AppCopyright)s
 AppName=dispcalGUI
-AppVerName=dispcalGUI %(AppVerName)s
 AppPublisher=%(AppPublisher)s
 AppPublisherURL=%(AppPublisherURL)s
 AppReadmeFile=%(URL)s
@@ -26,10 +25,10 @@ Compression=lzma/Max
 SolidCompression=true
 VersionInfoVersion=%(VersionInfoVersion)s
 VersionInfoDescription=dispcalGUI Setup
-VersionInfoTextVersion=%(VersionInfoTextVersion)s
+VersionInfoTextVersion=0install
 WizardImageFile=..\misc\media\install.bmp
 WizardSmallImageFile=..\misc\media\icon-install.bmp
-AppVersion=%(AppVersion)s
+AppVersion=0install
 UninstallDisplayName={cm:UninstallProgram,dispcalGUI}
 UninstallDisplayIcon={app}\dispcalGUI-uninstall.ico
 AlwaysShowComponentsList=false
@@ -56,7 +55,7 @@ Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
 
 [Icons]
 Name: {group}\dispcalGUI; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --no-wait %(URL)s0install/dispcalGUI.xml";
-Name: {group}\{cm:SelectVersion}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --gui --no-wait %(URL)s0install/dispcalGUI.xml";
+Name: {group}\{cm:SelectVersion}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --refresh --customize --no-wait %(URL)s0install/dispcalGUI.xml";
 Name: {group}\{cm:ChangeIntegration}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate %(URL)s0install/dispcalGUI.xml";
 Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\dispcalGUI-uninstall.ico;
 Name: {group}\LICENSE; Filename: %(URL)sLICENSE.txt;
@@ -66,11 +65,12 @@ Name: {commonstartup}\dispcalGUI Profile Loader; Filename: {reg:HKCU\Software\Ze
 [Run]
 Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: runasoriginaluser
 Filename: %(URL)s; Description: {code:Get_RunEntryShellExec_Message|README}; Flags: nowait postinstall shellexec skipifsilent;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --not-before=%(AppVersion)s %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent
+Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --not-before=%(AppVersion)s --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydispcalgui;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --not-before=%(AppVersion)s --command=set-calibration-loading -- %(URL)s0install/dispcalGUI.xml --os"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbyos;
+Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydispcalgui;
+; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --machine --add=auto-start --batch %(URL)s0install/dispcalGUI.xml"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydispcalgui;
+Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading -- %(URL)s0install/dispcalGUI.xml --os"; Description: {cm:LaunchProgram,dispcalGUI}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbyos;
 
 [Dirs]
 Name: {commonappdata}\dispcalGUI; Permissions: users-modify;
