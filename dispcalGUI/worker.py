@@ -2374,8 +2374,8 @@ class Worker(object):
 		# prior to Argyll CMS 1.6.0 could not deal with devicelink profiles)
 		RGB_out = self.xicclu(link_filename, RGB_in, use_icclu=True)
 
-		# Remove temporary files, move .cal and .log files
-		result2 = self.wrapup(dst_path=path, ext_filter=[".cal", ".log"])
+		# Remove temporary files, move log file
+		result2 = self.wrapup(dst_path=path, ext_filter=[".log"])
 
 		if isinstance(result, Exception):
 			raise result
