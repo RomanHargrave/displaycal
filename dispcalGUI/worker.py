@@ -79,7 +79,8 @@ else:
 from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
-from patterngenerators import ResolveCMPatternGeneratorServer
+from patterngenerators import (ResolveLSPatternGeneratorServer,
+							   ResolveCMPatternGeneratorServer)
 from trash import trash
 from util_io import EncodedWriter, Files, GzipFileProper, StringIOu as StringIO
 from util_list import intlist
@@ -3275,9 +3276,12 @@ class Worker(object):
 							except socket.error:
 								self.patterngenerator.disconnect_client()
 					else:
-						self.patterngenerator = ResolveCMPatternGeneratorServer(
+						if getcfg("patterngenerator.resolve") == "LS":
+							patterngenerator = ResolveLSPatternGeneratorServer
+						else:
+							patterngenerator = ResolveCMPatternGeneratorServer
+						self.patterngenerator = patterngenerator(
 							port=getcfg("patterngenerator.resolve.port"),
-							bits=getcfg("patterngenerator.resolve.bits"),
 							use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
 							logfile=logfiles)
 					if not hasattr(self.patterngenerator, "conn"):

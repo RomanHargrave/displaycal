@@ -699,7 +699,7 @@ defaults = {
 	"measure.override_min_display_update_delay_ms.backup": 0,
 	"measure.uniformity.show_detail": 0,
 	"patterngenerator.apl": .22,
-	"patterngenerator.resolve.bits": 10,
+	"patterngenerator.resolve": "CM",
 	"patterngenerator.resolve.port": 20002,
 	"patterngenerator.resolve.use_video_levels": 0,
 	"position.x": 50,
