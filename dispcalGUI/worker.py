@@ -3267,7 +3267,6 @@ class Worker(object):
 					if getattr(self, "patterngenerator", None):
 						# Use existing pattern generator instance
 						self.patterngenerator.logfile = logfiles
-						self.patterngenerator.bits = getcfg("patterngenerator.resolve.bits")
 						self.patterngenerator.use_video_levels = getcfg("patterngenerator.resolve.use_video_levels")
 						if hasattr(self.patterngenerator, "conn"):
 							# Try to use existing connection
