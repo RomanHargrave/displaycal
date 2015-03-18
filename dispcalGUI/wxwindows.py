@@ -2436,10 +2436,10 @@ class BorderGradientButton(GradientButton):
 		GradientButton.Enable(self, enable)
 		self.Update()
 
-	Enabled = property(lambda: self._enabled)
-
 	def IsEnabled(self):
 		return self._enabled
+
+	Enabled = property(IsEnabled, Enable)
 
 	def OnPaint(self, event):
 		"""
