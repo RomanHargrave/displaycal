@@ -2918,12 +2918,7 @@ class Worker(object):
 				if not hasattr(self, "madtpg"):
 					self.madtpg = madvr.MadTPG()
 				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
-					# Connected, get pattern config
-					patternconfig = self.madtpg.get_pattern_config()
-					if patternconfig:
-						# Setup patch size to match pattern config
-						args.insert(0, "-P0.5,0.5,%f" %
-										math.sqrt(patternconfig[0]))
+					# Connected
 					if (not (cmdname == "dispwin" or
 							 self.dispread_after_dispcal) or
 						(cmdname == "dispcal" and ("-m" in args or
@@ -2949,6 +2944,16 @@ class Worker(object):
 							delay = time() - ts
 							if delay < 1:
 								sleep(1 - delay)
+					# Get pattern config
+					patternconfig = self.madtpg.get_pattern_config()
+					if (patternconfig and isinstance(patternconfig, tuple) and
+						len(patternconfig)):
+						# Setup patch size to match pattern config
+						args.insert(0, "-P0.5,0.5,%f" %
+										math.sqrt(patternconfig[0]))
+						if len(patternconfig) > 1 and not patternconfig[1]:
+							# Setup black background if background level is zero
+							args.insert(1, "-F")
 					# Disconnect
 					self.madtpg.disconnect()
 				else:
