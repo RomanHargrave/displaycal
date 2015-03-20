@@ -317,18 +317,21 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 					  "--not-before", newversion, "http://%s/0install/%s.xml" %
 												  (domain.lower(), appname)],
 					 **kwargs)
-		elif sys.platform == "win32":
-			worker.start(worker.process_download, worker.download,
-						 ckwargs={"exit": True},
-						 wargs=("http://%s/download%s/%s-%s-Setup.exe" %
-								(domain.lower(), folder, appname, newversion),),
-						 progress_msg=lang.getstr("download"),
-						 fancy=False)
 		else:
+			if sys.platform == "win32":
+				if snapshot:
+					# Snapshots are only avaialble as ZIP
+					suffix = "-win32.zip"
+				else:
+					# Regular stable versions are available as setup
+					suffix = "-Setup.exe"
+			else:
+				suffix = ".dmg"
 			worker.start(worker.process_download, worker.download,
 						 ckwargs={"exit": True},
-						 wargs=("http://%s/download%s/%s-%s.dmg" %
-								(domain.lower(), folder, appname, newversion),),
+						 wargs=("http://%s/download%s/%s-%s%s" %
+								(domain.lower(), folder, appname, newversion,
+								 suffix),),
 						 progress_msg=lang.getstr("download"),
 						 fancy=False)
 	elif result != wx.ID_CANCEL:
