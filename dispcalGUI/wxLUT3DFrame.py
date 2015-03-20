@@ -404,6 +404,7 @@ class LUT3DFrame(BaseFrame):
 								   self)
 				return
 			checkoverwrite = True
+			remember_last_3dlut_path = False
 			if not path:
 				defaultDir, defaultFile = get_verified_path("last_3dlut_path")
 				ext = getcfg("3dlut.format")
@@ -424,13 +425,17 @@ class LUT3DFrame(BaseFrame):
 					path = dlg.GetPath()
 				dlg.Destroy()
 				checkoverwrite = False
+				# Only remember last used path if it was a deliberate user
+				# choice via the filedialog
+				remember_last_3dlut_path = True
 			if path:
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
 														 path)),
 									   self)
 					return
-				setcfg("last_3dlut_path", path)
+				if remember_last_3dlut_path:
+					setcfg("last_3dlut_path", path)
 				if checkoverwrite and os.path.isfile(path):
 					dlg = ConfirmDialog(self,
 										msg=lang.getstr("dialog.confirm_overwrite",
