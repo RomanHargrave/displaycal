@@ -368,14 +368,14 @@ def setup():
 	
 	if do_py2exe:
 		origIsSystemDLL = py2exe.build_exe.isSystemDLL
+		systemroot = os.getenv("SystemRoot").lower()
 		def isSystemDLL(pathname):
-			if os.path.basename(pathname).lower() in ("gdiplus.dll", 
-													  "mfc90.dll"):
+			if (os.path.basename(pathname).lower() in ("gdiplus.dll", 
+													   "mfc90.dll") or
+				os.path.basename(pathname).lower().startswith("python") or
+				os.path.basename(pathname).lower().startswith("pywintypes")):
 				return 0
-			if os.path.basename(pathname).lower() in ("powrprof.dll", ) or \
-			   os.path.basename(pathname).lower().startswith("api-ms-win-"):
-				return 1
-			return origIsSystemDLL(pathname)
+			return pathname.lower().startswith(systemroot + "\\")
 		py2exe.build_exe.isSystemDLL = isSystemDLL
 
 	if do_uninstall:
