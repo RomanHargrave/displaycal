@@ -6012,19 +6012,22 @@ usage: spotread [-options] [logfile]
 		self.check_retry_measurement(txt)
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
-		if self.cmdname in ("dispcal", "dispread"):
+		if self.cmdname in ("dispcal", "dispread", "spotread"):
 			if self.cmdname == "dispcal" and ", repeat" in txt.lower():
 				self.repeat = True
 			elif ", ok" in txt.lower():
 				self.repeat = False
-			if re.search(r"Patch \d+ of \d+", txt, re.I):
+			if (re.search(r"Patch \d+ of \d+", txt, re.I) or
+				("Result is XYZ:" in txt and
+				 not isinstance(self.progress_wnd, UntetheredFrame))):
 				if self.cmdname == "dispcal" and self.repeat:
 					if (getcfg("measurement.play_sound") and
 						hasattr(self.progress_wnd, "sound_on_off_btn")):
 						self.measurement_sound.safe_play()
 				else:
 					if (getcfg("measurement.play_sound") and
-						hasattr(self.progress_wnd, "sound_on_off_btn")):
+						(hasattr(self.progress_wnd, "sound_on_off_btn")
+						 or isinstance(self.progress_wnd, DisplayUniformityFrame))):
 						self.commit_sound.safe_play()
 					if hasattr(self.progress_wnd, "animbmp"):
 						self.progress_wnd.animbmp.frame = 0
@@ -6847,7 +6850,7 @@ usage: spotread [-options] [logfile]
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
 		if hasattr(self.progress_wnd, "progress_type"):
-			if self.pauseable:
+			if self.pauseable or getattr(self, "interactive_frame", "") == "ambient":
 				# If pauseable, we assume it's a measurement
 				progress_type = 1  # Measuring
 			elif self.cmdname == "targen":
@@ -6963,7 +6966,7 @@ usage: spotread [-options] [logfile]
 											   fancy=fancy)
 			self.progress_wnd = self._progress_dlgs[fancy]
 		if hasattr(self.progress_wnd, "progress_type"):
-			if pauseable:
+			if pauseable or getattr(self, "interactive_frame", "") == "ambient":
 				# If pauseable, we assume it's a measurement
 				self.progress_wnd.progress_type = 1  # Measuring
 			elif self.cmdname == "targen":
@@ -7231,6 +7234,7 @@ usage: spotread [-options] [logfile]
 		self.instrument_calibration_complete = False
 		self.instrument_place_on_screen_msg = False
 		self.instrument_sensor_position_msg = False
+		self.interactive_frame = interactive_frame
 		self.is_ambient_measuring = interactive_frame == "ambient"
 		self.lastcmdname = None
 		self.pauseable = pauseable
