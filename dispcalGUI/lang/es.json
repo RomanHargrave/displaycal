@@ -100,6 +100,7 @@
 	"argyll.util.not_found": "El ejecutable de Argyll CMS “%s” no se encuentra!",
 	"as_measured": "Nativo",
 		"*attributes": "Attributes",
+		"*audio.lib": "Audio module: %s",
 	"auth": "Autentificacion",
 	"auth.failed": "Autentificacion fallida.",
 	"auto": "Auto",

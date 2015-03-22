@@ -100,6 +100,7 @@
 	"argyll.util.not_found": "Argyll CMS „%s“ Hilfsprogramm nicht gefunden!",
 	"as_measured": "Wie gemessen",
 	"attributes": "Attribute",
+	"audio.lib": "Audio-Modul: %s",
 	"auth": "Authentifizierung",
 	"auth.failed": "Authentifizierung fehlgeschlagen.",
 	"auto": "Automatisch",

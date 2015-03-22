@@ -3,10 +3,13 @@
 """
 Audio wrapper module
 
-Can use pygame, pyo or wx.
+Can use pygame, pyglet, pyo or wx.
 pygame will be used by default if available.
-pyo is still buggy under Linux and has a few quirks under Windows, but seems
-like the best bet in the long run as pygame development is stagnant since 2009.
+pyglet can only be used if version >= 1.2 is available, and has
+crackling/popping issues (atleast under Windows).
+pyo is still buggy under Linux and has a few quirks under Windows.
+pyglet seems like the best bet in the long run as pygame development is stagnant
+since 2009.
 wx doesn't support fading, changing volume, multiple concurrent sounds, and
 only supports wav format.
 
@@ -18,6 +21,8 @@ sound.Play(fade_ms=1000)
 
 import threading
 import time
+
+from log import safe_print
 
 
 _ch = {}
@@ -33,7 +38,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	# Note on buffer size: Too high values cause crackling during fade, too low
 	# values cause choppy playback of ogg files when using pyo (good value for
 	# pyo is >= 2048)
-	global _initialized, _lib, _server, pygame, pyo, wx
+	global _initialized, _lib, _server, pygame, pyglet, pyo, wx
 	if _initialized and not reinit:
 		# To re-initialize, explicitly set reinit to True
 		return
@@ -58,6 +63,23 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 			pygame.mixer.init(frequency=samplerate, channels=channels,
 							  buffer=buffersize)
 			_server = pygame.mixer
+	elif lib == "pyglet":
+		try:
+			import pyglet
+			version = []
+			for item in pyglet.version.split("."):
+				try:
+					version.append(int(item))
+				except ValueError:
+					version.append(item)
+			if version < [1, 2]:
+				raise ImportError("pyglet version %s is too old" %
+								  pyglet.version)
+			_lib = "pyglet"
+		except ImportError:
+			_lib = None
+		else:
+			_server = pyglet.media
 	elif lib == "pyo":
 		try:
 			import pyo
@@ -98,13 +120,19 @@ def safe_init(lib=None, samplerate=22050, channels=2, buffersize=2048,
 		return exception
 
 
-def Sound(filename, loop=False):
+def Sound(filename, loop=False, raise_exceptions=False):
 	""" Sound caching mechanism """
 	if (filename, loop) in _sounds:
 		# Cache hit
 		return _sounds[(filename, loop)]
 	else:
-		sound = _Sound(filename, loop)
+		try:
+			sound = _Sound(filename, loop)
+		except Exception, exception:
+			if raise_exceptions:
+				raise
+			safe_print(exception)
+			sound = _Sound(None, loop)
 		_sounds[(filename, loop)] = sound
 		return sound
 
@@ -154,6 +182,7 @@ class _Sound(object):
 		self._is_playing = False
 		self._lib = _lib
 		self._loop = loop
+		self._play_clock = 0
 		self._play_count = 0
 		self._thread = -1
 		if not _initialized:
@@ -164,6 +193,14 @@ class _Sound(object):
 			if not self._snd and self._filename:
 				if self._lib == "pyo":
 					self._snd = pyo.SfPlayer(self._filename, loop=self._loop)
+				elif self._lib == "pyglet":
+					self._snd = pyglet.media.Player()
+					snd = pyglet.media.load(self._filename, streaming=False)
+					group = pyglet.media.SourceGroup(snd.audio_format,
+													 snd.video_format)
+					group.loop = self._loop
+					group.queue(snd)
+					self._snd.queue(group)
 				elif self._lib == "pygame":
 					self._snd = pygame.mixer.Sound(self._filename)
 				elif self._lib == "wx":
@@ -198,6 +235,8 @@ class _Sound(object):
 		if self._snd:
 			if self._lib == "pyo":
 				volume = self._snd.mul
+			elif self._lib == "pyglet":
+				volume = self._snd.volume
 			elif self._lib == "pygame":
 				volume = self._snd.get_volume()
 		return volume
@@ -206,6 +245,8 @@ class _Sound(object):
 		if self._snd and self._lib != "wx":
 			if self._lib == "pyo":
 				self._snd.mul = volume
+			elif self._lib == "pyglet":
+				self._snd.volume = volume
 			elif self._lib == "pygame":
 				self._snd.set_volume(volume)
 			return True
@@ -240,7 +281,11 @@ class _Sound(object):
 	@property
 	def is_playing(self):
 		if self._lib == "pyo":
-			return self._snd and self._snd.isOutputting()
+			return bool(self._snd and self._snd.isOutputting())
+		elif self._lib == "pyglet":
+			return bool(self._snd and self._snd.playing and self._snd.source and
+						(self._loop or time.clock() - self._play_clock <
+						 self._snd.source.duration))
 		elif self._lib == "pygame":
 			return bool(self._ch and self._ch.get_busy())
 		return self._is_playing
@@ -249,8 +294,12 @@ class _Sound(object):
 		if self._snd:
 			if not self.is_playing:
 				self.volume = 0 if fade_ms else 1
+			self._play_clock = time.clock()
 			if self._lib == "pyo":
 				self._snd.out()
+			elif self._lib == "pyglet":
+				self._snd.seek(0)
+				self._snd.play()
 			elif self._lib == "pygame":
 				self._ch = self._snd.play(-1 if self._loop else 0,
 										  fade_ms=0)
@@ -309,7 +358,10 @@ class _Sound(object):
 			elif fade_ms:
 				self.fade(fade_ms, False)
 			else:
-				self._snd.stop()
+				if self._lib == "pyglet":
+					self._snd.pause()
+				else:
+					self._snd.stop()
 				if self._lib == "pygame":
 					self._ch = None
 			return True

@@ -400,7 +400,8 @@ def main(module=None):
 						  safe_unicode(traceback.format_exc()))
 		handle_error(error)
 	for thread in threading.enumerate():
-		if thread.isAlive() and thread is not threading.currentThread():
+		if (thread.isAlive() and thread is not threading.currentThread() and
+			not thread.isDaemon()):
 			thread.join()
 	if lockfilename and os.path.isfile(lockfilename):
 		# Each lockfile may contain multiple ports of running instances

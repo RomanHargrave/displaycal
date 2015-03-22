@@ -12342,6 +12342,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.aboutdialog, -1, label="wxPython.org", 
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog, -1,
+								   lang.getstr("audio.lib", audio._lib)))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		for item in items:
 			if isinstance(item, HyperLinkCtrl):
 				item.BackgroundColour = self.aboutdialog.BackgroundColour
@@ -12566,6 +12569,8 @@ class StartupFrame(wx.Frame):
 		self._alpha = 0
 
 		audio.safe_init()
+		if audio._lib:
+			safe_print(lang.getstr("audio.lib", audio._lib))
 		# Startup sound
 		# Needs to be stereo!
 		self.startup_sound = audio.Sound(get_data_path("theme/intro_new.wav"))
