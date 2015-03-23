@@ -2911,6 +2911,11 @@ class Worker(object):
 			else:
 				self.sessionlogfile = LogFile(working_basename, working_dir)
 			self.sessionlogfiles[working_basename] = self.sessionlogfile
+		if not silent or verbose >= 3:
+			self.log("-" * 80)
+			if self.sessionlogfile:
+				safe_print("Session log: %s" % working_basename + ".log")
+				safe_print("")
 		if cmdname in ("dispcal", "dispread",
 					   "dispwin") and get_arg("-dmadvr", args) and madvr:
 			# Try to connect to running madTPG or launch a new instance
@@ -2919,6 +2924,8 @@ class Worker(object):
 					self.madtpg = madvr.MadTPG()
 				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
 					# Connected
+					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
+							 (self.madtpg.get_version() + (self.madtpg.dllpath, )))
 					if (not (cmdname == "dispwin" or
 							 self.dispread_after_dispcal) or
 						(cmdname == "dispcal" and ("-m" in args or
@@ -2938,34 +2945,39 @@ class Worker(object):
 							ts = time()
 							if i % 2 == 0:
 								# Flash test area red
-								self.madtpg.show_rgb(.8, 0, 0, .5, .5, .5)
+								self.madtpg.show_rgb(.8, 0, 0)
 							else:
-								self.madtpg.show_rgb(.15, .15, .15, .5, .5, .5)
+								self.madtpg.show_rgb(.15, .15, .15)
 							delay = time() - ts
 							if delay < 1:
 								sleep(1 - delay)
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
 					if (patternconfig and isinstance(patternconfig, tuple) and
-						len(patternconfig)):
-						# Setup patch size to match pattern config
-						args.insert(0, "-P0.5,0.5,%f" %
-										math.sqrt(patternconfig[0]))
-						if len(patternconfig) > 1 and not patternconfig[1]:
+						len(patternconfig) == 4):
+						self.log("Pattern area: %i%%" % patternconfig[0])
+						self.log("Background level: %i%%" % patternconfig[1])
+						self.log("Background mode: %s" % {0: "Constant",
+														  1: "APL gamma",
+														  2: "APL linear"}.get(patternconfig[2],
+																			   patternconfig[2]))
+						self.log("Border width: %i pixels" % patternconfig[3])
+						if not get_arg("-P", args):
+							# Setup patch size to match pattern config
+							args.insert(-1, "-P0.5,0.5,%f" %
+											math.sqrt(patternconfig[0]))
+						if not patternconfig[1]:
 							# Setup black background if background level is zero
-							args.insert(1, "-F")
+							args.insert(-1, "-F")
 					# Disconnect
 					self.madtpg.disconnect()
+					self.log("")
 				else:
 					return Error(lang.getstr("madtpg.launch.failure"))
 			except Exception, exception:
 				return exception
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
-				self.log("-" * 80)
-				if self.sessionlogfile:
-					safe_print("Session log: %s" % working_basename + ".log")
-					safe_print("")
 				if (not silent and (dry_run or getcfg("dry_run")) and
 					not self.cmdrun):
 					safe_print(lang.getstr("dry_run"))
