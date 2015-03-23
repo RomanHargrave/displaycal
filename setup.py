@@ -838,9 +838,9 @@ def setup():
 		if not hash:
 			raise SystemExit(p.wait())
 		for tmpl_name in ("7z.xml", "argyllcms.xml", "dispcalGUI.xml",
-						  "dispcalGUI-linux.xml",
-						  "dispcalGUI-mac.xml", "dispcalGUI-win32.xml",
-						  "numpy.xml", "pygame.xml", "wmi.xml", "wxpython.xml"):
+						  "dispcalGUI-linux.xml", "dispcalGUI-mac.xml",
+						  "dispcalGUI-win32.xml", "numpy.xml", "pygame.xml",
+						  "pywin32.xml", "wmi.xml", "wxpython.xml"):
 			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
 			create = not os.path.isfile(dist_path)
 			if create:

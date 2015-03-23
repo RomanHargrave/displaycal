@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/pywin32.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<name>pywin32</name>
+	<summary xml:lang="en">Python for Windows Extensions</summary>
+	<description xml:lang="en">Provides access to much of the Win32 API, the ability to create and use COM objects, and the Pythonwin environment.</description>
+	<homepage>http://sourceforge.net/projects/pywin32/</homepage>
+	<group arch="Windows-*" license="Python License">
+		<environment name="PATH" insert="win32" />
+		<environment name="PYTHONPATH" insert="." />
+		<environment name="PYTHONPATH" insert="win32" />
+		<environment name="PYTHONPATH" insert="win32\lib" />
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<requires interface="${URL}0install/python.xml" version="2.7..!3.0">
+				<version not-before="2.7" before="3.0" />
+			</requires>
+		</implementation>
+	</group>
+</interface>
