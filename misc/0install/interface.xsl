@@ -232,14 +232,29 @@
 											<th>Archive</th>
 										</tr>
 										<xsl:for-each select="//zi:implementation">
+											<xsl:variable name="stability"
+														  select="(ancestor-or-self::*[@stability])[last()]/@stability"/>
 											<tr>
+												<xsl:if test="$stability = 'buggy' or $stability = 'insecure'">
+													<xsl:attribute name="style">
+														opacity: .5
+													</xsl:attribute>
+												</xsl:if>
 												<td>
 													<h2>
+														<xsl:if test="$stability = 'buggy' or $stability = 'insecure'">
+															<xsl:attribute name="style">
+																text-decoration: line-through
+															</xsl:attribute>
+														</xsl:if>
 														<xsl:value-of select="(ancestor-or-self::*[@version])[last()]/@version"/>
+														<xsl:if test="(ancestor-or-self::*[@version])[last()]/@version-modifier">
+															<xsl:value-of select="(ancestor-or-self::*[@version])[last()]/@version-modifier"/>
+														</xsl:if>
+														<xsl:if test="$stability = 'testing' or $stability = 'developer' or contains(.//zi:archive/@href, 'snapshot')">
+															Beta
+														</xsl:if>
 													</h2>
-													<xsl:if test="(ancestor-or-self::*[@version])[last()]/@version-modifier">
-														<xsl:value-of select="(ancestor-or-self::*[@version])[last()]/@version-modifier"/>
-													</xsl:if>
 													<xsl:if test="@langs">
 														(<xsl:value-of select="@langs"/>)
 													</xsl:if>
@@ -267,8 +282,15 @@
 												</td>
 												<td class="download">
 													<xsl:for-each select=".//zi:archive">
-														<a href="{@href}">Download</a>
-														(<xsl:value-of select="format-number(@size div 1024 div 1024, '####0.00')"/> MiB)
+														<span>
+															<xsl:if test="$stability = 'buggy' or $stability = 'insecure'">
+																<xsl:attribute name="style">
+																	visibility: hidden
+																</xsl:attribute>
+															</xsl:if>
+															<a href="{@href}">Download</a>
+															(<xsl:value-of select="format-number(@size div 1024 div 1024, '####0.00')"/> MiB)
+														</span>
 													</xsl:for-each>
 												</td>
 											</tr>
