@@ -8,6 +8,7 @@ import struct
 import _winreg
 
 import localization as lang
+from util_str import safe_str
 
 
 # Search for madTPG on the local PC, connect to the first found instance
@@ -47,10 +48,10 @@ class MadTPG(object):
 			value, valuetype = _winreg.QueryValueEx(key, "")
 		except:
 			raise RuntimeError(lang.getstr("madvr.not_found"))
-		dllpath = os.path.join(os.path.split(value)[0], "madHcNet32.dll")
-		if not value or not os.path.isfile(dllpath):
-			raise OSError(lang.getstr("not_found", dllpath))
-		self.mad = ctypes.windll.LoadLibrary(dllpath)
+		self.dllpath = os.path.join(os.path.split(value)[0], "madHcNet32.dll")
+		if not value or not os.path.isfile(self.dllpath):
+			raise OSError(lang.getstr("not_found", self.dllpath))
+		self.mad = ctypes.windll.LoadLibrary(safe_str(self.dllpath))
 
 		try:
 			# Set expected return value types
