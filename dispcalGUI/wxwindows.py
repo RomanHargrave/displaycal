@@ -4117,7 +4117,7 @@ class LogWindow(InvincibleFrame):
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def Log(self, txt):
-		for line in safe_unicode(txt).splitlines():
+		for line in safe_unicode(txt).split("\n"):
 			line_lower = line.lower()
 			textattr = None
 			if (lang.getstr("warning").lower() in line_lower or
@@ -4126,8 +4126,8 @@ class LogWindow(InvincibleFrame):
 			elif (lang.getstr("error").lower() in line_lower or
 				"error" in line_lower):
 				textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
-			for line in wrap(line, 80).splitlines():
-				while line:
+			for line in wrap(line, 80).split("\n"):
+				while 1:
 					ms = time() - int(time())
 					logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
 					start = self.log_txt.GetLastPosition()
@@ -4137,6 +4137,8 @@ class LogWindow(InvincibleFrame):
 						self.log_txt.SetStyle(start + 12, start + len(logline),
 											  textattr)
 					line = line[80:]
+					if not line:
+						break
 	
 	def ScrollToBottom(self):
 		self.log_txt.ScrollLines(self.log_txt.GetNumberOfLines())
