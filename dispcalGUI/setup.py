@@ -66,9 +66,9 @@ config = {"data": ["tests/*.icc"],
 		  # numpy.lib.utils is not even used by dispcalGUI, so omit all 
 		  # Tk stuff
 		  "excludes": {"all": ["Tkconstants", "Tkinter", "setuptools", "tcl",
-							   "test", "pyo"],
+							   "test"],
 					   "darwin": [],
-					   "win32": ["win32com.client.genpy"]},
+					   "win32": ["win32com.client.genpy", "pyglet", "pyo"]},
 		  "package_data": {name: ["argyll_instruments.json",
 								  "beep.wav",
 								  "camera_shutter.wav",
