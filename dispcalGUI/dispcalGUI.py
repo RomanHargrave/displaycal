@@ -4775,6 +4775,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					   "%s" % (event.GetId(), getevtobjname(event, self), 
 							   event.GetEventType(), getevttype(event)))
 		self.panel.Freeze()
+		unload_cal = True
 		if event.GetId() == self.trc_ctrl.GetId():
 			bt1886 = (getcfg("trc.type") == "G" and
 					  getcfg("calibration.black_output_offset") == 0 and
@@ -4807,6 +4808,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						   getcfg("calibration.black_output_offset.backup"))
 					setcfg("calibration.black_output_offset.backup", None)
 					self.update_black_output_offset_ctrl()
+			elif self.trc_ctrl.GetSelection() == 0:
+				# As measured
+				unload_cal = False
 		if self.trc_ctrl.GetSelection() in (1, 4, 7):
 			try:
 				v = float(self.trc_textctrl.GetValue().replace(",", "."))
@@ -4826,7 +4830,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		trc = self.get_trc()
 		if cal_changed:
 			if trc != str(getcfg("trc")):
-				self.cal_changed()
+				if unload_cal:
+					self.cal_changed()
+				else:
+					self.profile_settings_changed()
 		setcfg("trc", trc)
 		if cal_changed:
 			self.update_profile_name()
