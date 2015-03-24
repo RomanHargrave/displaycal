@@ -182,7 +182,7 @@ class _Sound(object):
 		self._is_playing = False
 		self._lib = _lib
 		self._loop = loop
-		self._play_clock = 0
+		self._play_timestamp = 0
 		self._play_count = 0
 		self._thread = -1
 		if not _initialized:
@@ -280,7 +280,7 @@ class _Sound(object):
 			return bool(self._snd and self._snd.isOutputting())
 		elif self._lib == "pyglet":
 			return bool(self._ch and self._ch.playing and self._ch.source and
-						(self._loop or time.clock() - self._play_clock <
+						(self._loop or time.time() - self._play_timestamp <
 						 self._ch.source.duration))
 		elif self._lib == "pygame":
 			return bool(self._ch and self._ch.get_busy())
@@ -298,7 +298,7 @@ class _Sound(object):
 				self.volume = volume
 			if not self.is_playing and fade_ms and volume == 1:
 				self.volume = 0
-			self._play_clock = time.clock()
+			self._play_timestamp = time.time()
 			if self._lib == "pyo":
 				self._snd.out()
 			elif self._lib == "pyglet":
