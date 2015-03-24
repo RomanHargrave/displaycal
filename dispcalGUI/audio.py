@@ -195,12 +195,8 @@ class _Sound(object):
 					self._snd = pyo.SfPlayer(self._filename, loop=self._loop)
 				elif self._lib == "pyglet":
 					snd = pyglet.media.load(self._filename, streaming=False)
-					group = pyglet.media.SourceGroup(snd.audio_format,
-													 snd.video_format)
-					group.loop = self._loop
-					group.queue(snd)
 					self._ch = pyglet.media.Player()
-					self._snd = group
+					self._snd = snd
 				elif self._lib == "pygame":
 					self._snd = pygame.mixer.Sound(self._filename)
 				elif self._lib == "wx":
@@ -292,20 +288,28 @@ class _Sound(object):
 
 	def play(self, fade_ms=0):
 		if self._snd:
-			is_playing = self.is_playing
 			volume = self.volume
 			self.stop()
-			if self._lib == "pyglet" and is_playing:
-				self._ch.delete()
+			if self._lib == "pyglet":
+				# Can't reuse the player, won't replay the sound under Mac OS X
+				# and Linux even when seeking to start position which allows
+				# replaying the sound under Windows.
 				self._ch = pyglet.media.Player()
 				self.volume = volume
-			if not is_playing and fade_ms and volume == 1:
+			if not self.is_playing and fade_ms and volume == 1:
 				self.volume = 0
 			self._play_clock = time.clock()
 			if self._lib == "pyo":
 				self._snd.out()
 			elif self._lib == "pyglet":
-				self._ch.queue(self._snd)
+				if self._loop:
+					snd = pyglet.media.SourceGroup(self._snd.audio_format,
+												   self._snd.video_format)
+					snd.loop = True
+					snd.queue(self._snd)
+				else:
+					snd = self._snd
+				self._ch.queue(snd)
 				self._ch.play()
 			elif self._lib == "pygame":
 				self._ch = self._snd.play(-1 if self._loop else 0,
