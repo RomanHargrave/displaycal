@@ -22,7 +22,7 @@ Files: dispcalGUI/lib/agw/*
 Copyright: 2006-${YEAR}, Andrea Gavana <andrea.gavana@gmail.com>
 License: wxWindows
 
-Files: dispcalGUI/theme/icons/16x16/3D.png
+Files: dispcalGUI/theme/icons/16x16/3D.png dispcalGUI/theme/icons/48x48/dialog-ok.png
 Copyright: 2007-${YEAR}, Daniel Foré <daniel@elementaryos.org>
 License: GPL-3+
 
@@ -30,7 +30,7 @@ Files: dispcalGUI/theme/icons/16x16/applications-system.png dispcalGUI/theme/ico
 Copyright: 2008-${YEAR}, GNOME icon theme 2.18 authors
 License: GPL-2+
 
-Files: dispcalGUI/theme/icons/16x16/camera-photo.png dispcalGUI/theme/icons/32x32/lock.png
+Files: dispcalGUI/theme/icons/16x16/camera-photo.png dispcalGUI/theme/icons/16x16/list-add.png dispcalGUI/theme/icons/32x32/lock.png
 Copyright: 2008-${YEAR}, GNOME icon theme 3.11.5 authors
 License: GPL-3+
 
