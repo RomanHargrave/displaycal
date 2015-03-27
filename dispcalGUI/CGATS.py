@@ -445,7 +445,7 @@ class CGATS(dict):
 								result.append('%s "%s"' % (key, value))
 				elif key not in ('DATA_FORMAT', 'KEYWORDS'):
 					if (value.type == 'SECTION' and result[-1:] and 
-						result[-1:][0][-1] != '\n'):
+						result[-1:][0] != ''):
 						result.append('')
 					result.append(str(value))
 			if self.type == 'SECTION':
