@@ -11765,7 +11765,8 @@ class MainFrame(ReportFrame, BaseFrame):
 								 "3dlut.tab.enable",
 								 "testchart.auto_optimize"), 
 						exclude=("3dlut.tab.enable.backup", "profile.update",
-								 "profile.name", "gamap_default_intent"))
+								 "profile.name", "gamap_default_intent",
+								 "testchart.auto_optimize.fix_zero_blackpoint"))
 					for o in options_colprof:
 						if o[0] == "q":
 							setcfg("profile.quality", o[1])

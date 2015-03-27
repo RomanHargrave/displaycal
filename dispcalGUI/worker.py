@@ -5926,6 +5926,42 @@ usage: spotread [-options] [logfile]
 					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-ax",
 															 "-bn", basename]
 					result = self.exec_cmd(cmd, args)
+					if (not isinstance(result, Exception) and result and
+						getcfg("testchart.auto_optimize.fix_zero_blackpoint")):
+						# Hmm. Some users have reported targen hanging, and I
+						# couldn't reproduce it unless I used MinGW (32-bit) to
+						# compile Argyll 1.7b (2015-03-06) development code
+						# and a preconditioning profile with zero blackpoint.
+						self.log("Pre-conditioning zero black point fix enabled")
+						try:
+							profile = ICCP.ICCProfile(basename + profile_ext)
+						except Exception, exception:
+							result = exception
+						else:
+							profchanged = False
+							if isinstance(profile.tags.get("A2B0"),
+										  ICCP.LUT16Type):
+								# Make sure blackpoint isn't zero
+								if profile.tags.A2B0.clut[0][0] == [0, 0, 0]:
+									profile.tags.A2B0.apply_bpc((1.0 / 65535, ) * 3)
+									profchanged = True
+							elif (isinstance(profile.tags.get("rTRC"),
+											 ICCP.CurveType) and
+								  isinstance(profile.tags.get("gTRC"),
+											 ICCP.CurveType) and
+								  isinstance(profile.tags.get("bTRC"),
+											 ICCP.CurveType)):
+								# Make sure blackpoint isn't zero
+								for channel in "rgb":
+									if profile.tags[channel + "TRC"][0] == 0:
+										profile.tags[channel + "TRC"].apply_bpc(1.0 / 65535)
+										profchanged = True
+							if profchanged:
+								try:
+									profile.write()
+								except Exception, exception:
+									result = exception
+								self.log("Pre-conditioning zero black point fix applied")
 					if not isinstance(result, Exception) and result:
 						# Create optimized testchart
 						auto = getcfg("testchart.auto_optimize") or 7

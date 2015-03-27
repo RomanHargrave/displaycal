@@ -818,6 +818,7 @@ defaults = {
 	"tc_white_patches": 4,
 	"tc.show": 0,
 	"testchart.auto_optimize": 0,
+	"testchart.auto_optimize.fix_zero_blackpoint": 0,
 	"testchart.reference": "",
 	"ti3.check_sanity.auto": 0,
 	"trc": 2.2,
