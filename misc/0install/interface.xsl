@@ -251,7 +251,7 @@
 														<xsl:if test="(ancestor-or-self::*[@version])[last()]/@version-modifier">
 															<xsl:value-of select="(ancestor-or-self::*[@version])[last()]/@version-modifier"/>
 														</xsl:if>
-														<xsl:if test="$stability = 'testing' or $stability = 'developer' or contains(.//zi:archive/@href, 'snapshot')">
+														<xsl:if test="$stability = 'testing' or $stability = 'developer' or $stability = 'buggy' or contains(.//zi:archive/@href, 'snapshot')">
 															Beta
 														</xsl:if>
 													</h2>
@@ -281,17 +281,7 @@
 													</xsl:choose>
 												</td>
 												<td class="download">
-													<xsl:for-each select=".//zi:archive">
-														<span>
-															<xsl:if test="$stability = 'buggy' or $stability = 'insecure'">
-																<xsl:attribute name="style">
-																	visibility: hidden
-																</xsl:attribute>
-															</xsl:if>
-															<a href="{@href}">Download</a>
-															(<xsl:value-of select="format-number(@size div 1024 div 1024, '####0.00')"/> MiB)
-														</span>
-													</xsl:for-each>
+													<xsl:apply-templates select=".//zi:archive | .//zi:file" />
 												</td>
 											</tr>
 										</xsl:for-each>
@@ -416,9 +406,17 @@
 			<xsl:value-of select="."/>
 		</dd>
 	</xsl:template>
-	<xsl:template match="zi:archive">
-		<dt>Download</dt>
-		<dd><a href="{@href}"><xsl:value-of select="@href"/></a>
-		(<xsl:value-of select="@size"/> bytes)</dd>
+	<xsl:template match="zi:archive | zi:file">
+		<xsl:variable name="stability"
+					  select="(ancestor-or-self::*[@stability])[last()]/@stability"/>
+		<span>
+			<xsl:if test="$stability = 'buggy' or $stability = 'insecure'">
+				<xsl:attribute name="style">
+					visibility: hidden
+				</xsl:attribute>
+			</xsl:if>
+			<a href="{@href}">Download</a>
+			(<xsl:value-of select="format-number(@size div 1024 div 1024, '####0.00')"/> MiB)
+		</span>
 	</xsl:template>
 </xsl:stylesheet>
