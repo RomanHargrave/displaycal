@@ -2964,13 +2964,13 @@ class Worker(object):
 						self.log("Border width: %i pixels" % patternconfig[3])
 						if not get_arg("-P", args):
 							# Setup patch size to match pattern config
-							args.insert(-1, "-P0.5,0.5,%f" %
+							args.insert(0, "-P0.5,0.5,%f" %
 											math.sqrt(patternconfig[0]))
 						if not patternconfig[1] and self.argyll_version >= [1, 7]:
 							# Setup black background if background level is zero.
 							# Only do this for Argyll >= 1.7 to prevent messing
 							# with pattern area when Argyll 1.6.x is used
-							args.insert(-1, "-F")
+							args.insert(0, "-F")
 					# Disconnect
 					self.madtpg.disconnect()
 					self.log("")
