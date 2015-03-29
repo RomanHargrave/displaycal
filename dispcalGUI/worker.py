@@ -468,18 +468,23 @@ def check_ti3(ti3, print_debuginfo=True):
 	return suspicious
 
 
+argyll_utils = {}
+
 def get_argyll_util(name, paths=None):
 	""" Find a single Argyll utility. Return the full path. """
+	cfg_argyll_dir = getcfg("argyll.dir")
+	exe = argyll_utils.get(cfg_argyll_dir, {}).get(name, None)
+	if exe:
+		return exe
 	if not paths:
 		paths = getenvu("PATH", os.defpath).split(os.pathsep)
-		argyll_dir = (getcfg("argyll.dir") or "").rstrip(os.path.sep)
+		argyll_dir = (cfg_argyll_dir or "").rstrip(os.path.sep)
 		if argyll_dir:
 			if argyll_dir in paths:
 				paths.remove(argyll_dir)
 			paths = [argyll_dir] + paths
 	elif verbose >= 4:
 		safe_print("Info: Searching for", name, "in", os.pathsep.join(paths))
-	exe = None
 	for path in paths:
 		for altname in argyll_altnames.get(name, []):
 			exe = which(altname + exe_ext, [path])
@@ -493,6 +498,10 @@ def get_argyll_util(name, paths=None):
 		else:
 			safe_print("Info:", "|".join(argyll_altnames[name]), 
 					   "not found in", os.pathsep.join(paths))
+	if exe:
+		if not cfg_argyll_dir in argyll_utils:
+			argyll_utils[cfg_argyll_dir] = {}
+		argyll_utils[cfg_argyll_dir][name] = exe
 	return exe
 
 
@@ -1859,7 +1868,7 @@ class Worker(object):
 				  getcfg("measure.darken_background") or
 				  not self.madtpg_fullscreen) and
 				 (not self.dispread_after_dispcal or
-				  self.cmdname == "dispcal"))):
+				  self.cmdname == get_argyll_utilname("dispcal")))):
 				# Show a dialog asking user to place the instrument on the
 				# screen if the instrument calibration was completed,
 				# or if we measure a remote ("Web") display,
@@ -1898,7 +1907,7 @@ class Worker(object):
 	
 	def check_spotread_result(self, txt):
 		""" Check if spotread returned a result """
-		if (self.cmdname == "spotread" and
+		if (self.cmdname == get_argyll_utilname("spotread") and
 			self.progress_wnd is not getattr(self, "terminal", None) and
 			("Result is XYZ:" in txt or "Result is Y:" in txt or
 			 (self.instrument_calibration_complete and
@@ -2858,7 +2867,8 @@ class Worker(object):
 		# any of these conditions apply
 		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
-		self.use_patterngenerator = (self.measure_cmd and cmdname != "spotread" and
+		self.use_patterngenerator = (self.measure_cmd and
+									 cmdname != get_argyll_utilname("spotread") and
 									 config.get_display_name() == "Resolve")
 		if self.use_patterngenerator:
 			# Run a dummy command so we can grab the RGB numbers for
@@ -2875,7 +2885,7 @@ class Worker(object):
 				args[index] += "echo. && echo Current RGB "
 			else:
 				args[index] += "echo '\nCurrent RGB '"
-		if self.measure_cmd and cmdname != "spotread" and False:
+		if self.measure_cmd and cmdname != get_argyll_utilname("spotread") and False:
 			# FIXME: Hmm. this doesn't work right, dispcal/dispread crashes.
 			# Run a dummy command so we can grab measured XYZ
 			marg = get_arg("-M", args, True)
@@ -2918,8 +2928,10 @@ class Worker(object):
 			if self.sessionlogfile:
 				safe_print("Session log: %s" % working_basename + ".log")
 				safe_print("")
-		if cmdname in ("dispcal", "dispread",
-					   "dispwin") and get_arg("-dmadvr", args) and madvr:
+		if (cmdname in (get_argyll_utilname("dispcal"),
+						get_argyll_utilname("dispread"),
+						get_argyll_utilname("dispwin")) and
+			get_arg("-dmadvr", args) and madvr):
 			# Try to connect to running madTPG or launch a new instance
 			try:
 				if not hasattr(self, "madtpg"):
@@ -2929,10 +2941,10 @@ class Worker(object):
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
 							 (self.madtpg.get_version() + (self.madtpg.dllpath, )))
 					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
-					if ((not (cmdname == "dispwin" or
+					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
-						 (cmdname == "dispcal" and ("-m" in args or
-													"-u" in args))) and
+						 (cmdname == get_argyll_utilname("dispcal") and
+						  ("-m" in args or "-u" in args))) and
 						self.madtpg_fullscreen):
 						# Show place instrument on screen message with countdown
 						self.madtpg.set_device_gamma_ramp(None)
@@ -6066,15 +6078,18 @@ usage: spotread [-options] [logfile]
 		self.check_retry_measurement(txt)
 		self.check_is_ambient_measuring(txt)
 		self.check_spotread_result(txt)
-		if self.cmdname in ("dispcal", "dispread", "spotread"):
-			if self.cmdname == "dispcal" and ", repeat" in txt.lower():
+		if self.cmdname in (get_argyll_utilname("dispcal"),
+							get_argyll_utilname("dispread"),
+							get_argyll_utilname("spotread")):
+			if (self.cmdname == get_argyll_utilname("dispcal") and
+				", repeat" in txt.lower()):
 				self.repeat = True
 			elif ", ok" in txt.lower():
 				self.repeat = False
 			if (re.search(r"Patch \d+ of \d+", txt, re.I) or
 				("Result is XYZ:" in txt and
 				 not isinstance(self.progress_wnd, UntetheredFrame))):
-				if self.cmdname == "dispcal" and self.repeat:
+				if self.cmdname == get_argyll_utilname("dispcal") and self.repeat:
 					if (getcfg("measurement.play_sound") and
 						hasattr(self.progress_wnd, "sound_on_off_btn")):
 						self.measurement_sound.safe_play()
@@ -6907,7 +6922,7 @@ usage: spotread [-options] [logfile]
 			if self.pauseable or getattr(self, "interactive_frame", "") == "ambient":
 				# If pauseable, we assume it's a measurement
 				progress_type = 1  # Measuring
-			elif self.cmdname == "targen":
+			elif self.cmdname == get_argyll_utilname("targen"):
 				progress_type = 2  # Generating test patches
 			else:
 				progress_type = 0  # Processing
@@ -7024,7 +7039,7 @@ usage: spotread [-options] [logfile]
 			if pauseable or getattr(self, "interactive_frame", "") == "ambient":
 				# If pauseable, we assume it's a measurement
 				self.progress_wnd.progress_type = 1  # Measuring
-			elif self.cmdname == "targen":
+			elif self.cmdname == get_argyll_utilname("targen"):
 				self.progress_wnd.progress_type = 2  # Generating test patches
 			else:
 				self.progress_wnd.progress_type = 0  # Processing
