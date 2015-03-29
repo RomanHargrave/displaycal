@@ -1392,7 +1392,7 @@ class Worker(object):
 		self.interactive = False
 		self.spotread_just_do_instrument_calibration = False
 		self.lastcmdname = None
-		self.lastmsg_discard = re.compile("[\\*\\.]+|Current RGB .+")
+		self.lastmsg_discard = re.compile("[\\*\\.]+|Current (?:RGB|XYZ)(?: +.*)?")
 		self.measurement_modes = {}
 		# Sounds when measuring
 		# Needs to be stereo!
