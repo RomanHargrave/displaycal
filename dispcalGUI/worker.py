@@ -6930,7 +6930,7 @@ usage: spotread [-options] [logfile]
 			   "Calibration complete" in msg:
 				self.recent.clear()
 				msg = ""
-			keepGoing, skip = self.progress_wnd.Update(math.ceil(percentage), 
+			keepGoing, skip = self.progress_wnd.Update(max(min(percentage, 100), 0), 
 													   msg + "\n" + 
 													   lastmsg)
 		elif re.match("\d+(?:\.\d+)? (?:[KM]iB)", lastmsg, re.I):

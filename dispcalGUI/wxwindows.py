@@ -4255,6 +4255,7 @@ class ProgressDialog(wx.Dialog):
 		self.timer = BetterTimer(self)
 		self.Bind(EVT_BETTERTIMER, handler or self.OnTimer, self.timer)
 		
+		self.indeterminate = True
 		self.keepGoing = True
 		self.skip = False
 		self.paused = False
@@ -4520,6 +4521,8 @@ class ProgressDialog(wx.Dialog):
 			self.time2 = 0
 			if not self.time3:
 				self.time3 = time()
+		if not self.indeterminate:
+			self.indeterminate = True
 			self.remaining_time.Label = u"––:––:––"
 		self.gauge.Pulse()
 		return self.keepGoing, self.skip
@@ -4534,11 +4537,14 @@ class ProgressDialog(wx.Dialog):
 			self.pause_continue.Enable()
 	
 	def Update(self, value, msg=None):
+		self.indeterminate = False
 		if msg and msg != self.msg.Label:
 			self.msg.SetLabel(msg)
 			self.msg.Wrap(self.msg.ContainingSizer.Size[0])
 			self.msg.Refresh()
 		prev_value = self._fpprogress
+		if value == prev_value:
+			return self.keepGoing, self.skip
 		self._fpprogress = value
 		value = int(round(value))
 		if hasattr(self, "time2"):
@@ -4552,12 +4558,6 @@ class ProgressDialog(wx.Dialog):
 					self.time4 += time() - self.time3
 					self.time2 = self.time + self.time4
 					self.time3 = 0
-			if value and value != self.gauge.GetValue() and self.time2 < t:
-				remaining = ((t - self.time2) / value *
-								  (self.gauge.GetRange() - value))
-				if remaining > 9 or value > self.gauge.GetRange() * .03:
-					self.remaining_time.Label = strftime("%H:%M:%S",
-														 gmtime(remaining))
 		if getcfg("measurement.play_sound"):
 			if self._fpprogress < prev_value and hasattr(self, "indicator_sound"):
 				self.indicator_sound.safe_play()
@@ -4569,9 +4569,9 @@ class ProgressDialog(wx.Dialog):
 					# Higher ms = smoother animation, but potentially
 					# increased "lag"
 					ms = 450 + 50 * update_value
-					self.gauge.Update(value, ms)
+					self.gauge.Update(self._fpprogress, ms)
 			else:
-				self.gauge.Update(value, 50)
+				self.gauge.Update(self._fpprogress, 50)
 		else:
 			self.gauge.SetValue(value)
 		return self.keepGoing, self.skip
@@ -4614,6 +4614,15 @@ class ProgressDialog(wx.Dialog):
 	def elapsed_time_handler(self, event):
 		self.elapsed_time.Label = strftime("%H:%M:%S",
 										   gmtime(time() - self.time))
+		value = self._fpprogress
+		if getattr(self, "time2", 0) and value:
+			t = time()
+			if self.time2 < t:
+				remaining = ((t - self.time2) / value *
+								  (self.gauge.GetRange() - value))
+				if remaining >= 0:
+					self.remaining_time.Label = strftime("%H:%M:%S",
+														 gmtime(remaining))
 
 	@staticmethod
 	def get_bitmaps(progress_type=0):
@@ -4699,13 +4708,16 @@ class ProgressDialog(wx.Dialog):
 
 	def pause_continue_handler(self, event=None):
 		self.paused = not self.paused
-		self.gauge.Pulse()
 		if self.paused:
 			self.pause_continue.Label = lang.getstr("continue")
 		else:
 			self.pause_continue.Label = lang.getstr("pause")
 		self.pause_continue.Enable(not event)
 		self.Layout()
+		if getattr(self, "time2", 0):
+			self.time2 = 0
+			if not self.time3:
+				self.time3 = time()
 	
 	def play_sound_handler(self, event):
 		setcfg("measurement.play_sound",
