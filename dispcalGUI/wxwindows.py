@@ -4436,18 +4436,7 @@ class ProgressDialog(wx.Dialog):
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
 		
 		# set position
-		placed = False
-		if pos:
-			x, y = pos
-		else:
-			if parent and parent.IsShownOnScreen():
-				self.Center()
-				placed = True
-			else:
-				x = getcfg("position.progress.x")
-				y = getcfg("position.progress.y")
-		if not placed:
-			self.SetSaneGeometry(x, y)
+		self.place(pos)
 		
 		if start_timer:
 			self.start_timer()
@@ -4718,6 +4707,21 @@ class ProgressDialog(wx.Dialog):
 			self.time2 = 0
 			if not self.time3:
 				self.time3 = time()
+
+	def place(self, pos=None):
+		""" Set position """
+		placed = False
+		if pos:
+			x, y = pos
+		else:
+			if self.Parent and self.Parent.IsShownOnScreen():
+				self.Center()
+				placed = True
+			else:
+				x = getcfg("position.progress.x")
+				y = getcfg("position.progress.y")
+		if not placed:
+			self.SetSaneGeometry(x, y)
 	
 	def play_sound_handler(self, event):
 		setcfg("measurement.play_sound",

@@ -7001,6 +7001,7 @@ usage: spotread [-options] [logfile]
 				self.progress_wnd.Layout()
 			self.progress_wnd.Resume()
 			if not self.progress_wnd.IsShownOnScreen():
+				self.progress_wnd.place()
 				self.progress_wnd.Show()
 		else:
 			style = wx.PD_SMOOTH | wx.PD_ELAPSED_TIME
