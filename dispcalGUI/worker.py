@@ -1856,7 +1856,8 @@ class Worker(object):
 				start_new_thread(mac_app_activate, (1, wx.GetApp().AppName))
 			if (self.instrument_calibration_complete or
 				((config.is_untethered_display() or
-				  getcfg("measure.darken_background")) and
+				  getcfg("measure.darken_background") or
+				  not self.madtpg_fullscreen) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == "dispcal"))):
 				# Show a dialog asking user to place the instrument on the
@@ -2097,6 +2098,7 @@ class Worker(object):
 		if self.interactive:
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
+		self.madtpg_fullscreen = True
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
@@ -2926,10 +2928,12 @@ class Worker(object):
 					# Connected
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
 							 (self.madtpg.get_version() + (self.madtpg.dllpath, )))
-					if (not (cmdname == "dispwin" or
-							 self.dispread_after_dispcal) or
-						(cmdname == "dispcal" and ("-m" in args or
-												   "-u" in args))):
+					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
+					if ((not (cmdname == "dispwin" or
+							  self.dispread_after_dispcal) or
+						 (cmdname == "dispcal" and ("-m" in args or
+													"-u" in args))) and
+						self.madtpg_fullscreen):
 						# Show place instrument on screen message with countdown
 						self.madtpg.set_device_gamma_ramp(None)
 						if not "-V" in args:

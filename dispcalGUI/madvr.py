@@ -34,6 +34,7 @@ class MadTPG(object):
 		# We only expose stuff we might actually use.
 		self._methodnames = ("ConnectEx", "Disable3dlut", "GetDeviceGammaRamp",
 							 "GetSelected3dlut", "GetVersion",
+							 "IsUseFullscreenButtonPressed",
 							 "SetDeviceGammaRamp", "SetOsdText",
 							 "GetPatternConfig", "SetPatternConfig",
 							 "ShowProgressBar", "SetProgressBarPos",
