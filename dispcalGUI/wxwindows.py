@@ -11,6 +11,7 @@ import string
 import subprocess as sp
 import sys
 import threading
+import warnings
 import xml.parsers.expat
 
 import demjson
@@ -3895,7 +3896,12 @@ class BetterPyGauge(pygauge.PyGauge):
 		self._update_step  = []
 		for i, v in enumerate(self._value):
 			if value[i] < 0 or value[i] > self._range:
-				raise Exception("ERROR:\n Gauge value must be between 0 and its range. ")
+				warnings.warn("Gauge value %r is invalid - must be between 0 "
+							  "and %s" % (value[i], self._range), Warning)
+				if value[i] < 0:
+					value[i] = 0
+				else:
+					value[i] = self._range
 		
 			self._update_value.append(value[i])
 			self._update_step.append((float(value[i]) - v)/(time/50))
