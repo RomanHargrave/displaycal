@@ -2099,6 +2099,7 @@ class Worker(object):
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
 		self.madtpg_fullscreen = True
+		self.use_patterngenerator = False
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
@@ -2857,10 +2858,9 @@ class Worker(object):
 		# any of these conditions apply
 		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
-		use_patterngenerator = (self.measure_cmd and cmdname != "spotread" and
-								config.get_display_name() ==
-								"Resolve")
-		if use_patterngenerator:
+		self.use_patterngenerator = (self.measure_cmd and cmdname != "spotread" and
+									 config.get_display_name() == "Resolve")
+		if self.use_patterngenerator:
 			# Run a dummy command so we can grab the RGB numbers for
 			# the pattern generator from the output
 			carg = get_arg("-C", args, True)
@@ -3286,7 +3286,7 @@ class Worker(object):
 					cmdname in measure_cmds + process_cmds):
 					logfiles.extend([self.recent, self.lastmsg, self])
 				logfiles = Files(logfiles)
-				if use_patterngenerator:
+				if self.use_patterngenerator:
 					if getattr(self, "patterngenerator", None):
 						# Use existing pattern generator instance
 						self.patterngenerator.logfile = logfiles
@@ -8505,7 +8505,8 @@ usage: spotread [-options] [logfile]
 	
 	def write(self, txt):
 		# Send colors to pattern generator
-		if (getattr(self, "patterngenerator", None) and
+		if (self.use_patterngenerator and
+			getattr(self, "patterngenerator", None) and
 			hasattr(self.patterngenerator, "conn")):
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
