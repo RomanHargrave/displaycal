@@ -11926,6 +11926,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							elif cfgname == "3dlut.format":
 								if cfgvalue == "madVR":
 									setcfg("3dlut.madVR.enable", 1)
+								if cfgvalue in ("eeColor", "madVR"):
+									setcfg("measurement_report.use_devlink_profile", 0)
 				if ((config.is_virtual_display() or
 					 config.get_display_name() == "SII REPEATER") and
 					not getcfg("3dlut.tab.enable")):
@@ -11933,6 +11935,13 @@ class MainFrame(ReportFrame, BaseFrame):
 					# need to re-enable the 3D LUT tab for madVR, Resolve &
 					# eeColor
 					setcfg("3dlut.tab.enable", 1)
+				if config.get_display_name() == "Resolve":
+					self.lut3d_set_path()
+					devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
+					if os.path.isfile(devlink):
+						setcfg("3dlut.madVR.enable", 0)
+						setcfg("measurement_report.devlink_profile", devlink)
+						setcfg("measurement_report.use_devlink_profile", 1)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)
