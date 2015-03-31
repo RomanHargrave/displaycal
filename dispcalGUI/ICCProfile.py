@@ -379,6 +379,17 @@ tech = {"fscn": "Film scanner",
 		"silk": "Silkscreen",
 		"flex": "Flexography"}
 
+			
+def PCSLab_dec_to_uInt16(L, a, b):
+	return [v * (655.35, 256, 256)[i] + (0, 32768, 32768)[i]
+			for i, v in enumerate((L, a, b))]
+
+
+def PCSLab_uInt16_to_dec(L_uInt16, a_uInt16, b_uInt16):
+	return [(v - (0, 32768, 32768)[i]) / (65535.0, 32768.0, 32768.0)[i] *
+			(100, 128, 128)[i]
+			for i, v in enumerate((L_uInt16, a_uInt16, b_uInt16))]
+
 
 def Property(func):
 	return property(**func())
@@ -1001,8 +1012,9 @@ class Illuminant(ADict):
 
 class LUT16Type(ICCProfileTag):
 
-	def __init__(self, tagData=None, tagSignature=None):
+	def __init__(self, tagData=None, tagSignature=None, profile=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self.profile = profile
 		self._matrix = None
 		self._input = None
 		self._clut = None
@@ -1014,15 +1026,34 @@ class LUT16Type(ICCProfileTag):
 		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
 
 	def apply_bpc(self, bp_out=(0, 0, 0), weight=False):
-		bp = [v / 65535.0 for v in self.clut[0][0]]
-		wp = [v / 65535.0 for v in self.clut[-1][-1]]
+		pcs = self.profile and self.profile.connectionColorSpace
+		if pcs == "Lab":
+			bp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*self.clut[0][0]))
+			wp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*self.clut[-1][-1]))
+		elif not pcs or pcs == "XYZ":
+			if not pcs:
+				warnings.warn("LUT16Type.apply_bpc: PCS not specified, "
+							  "assuming XYZ", Warning)
+			bp = [v / 65535.0 for v in self.clut[0][0]]
+			wp = [v / 65535.0 for v in self.clut[-1][-1]]
+		else:
+			raise ValueError("LUT16Type.apply_bpc: Unsupported PCS %r" % pcs)
 		if bp != list(bp_out):
+			D50 = colormath.get_whitepoint("D50")
 			for block in self.clut:
 				for i, row in enumerate(block):
-					X, Y, Z = [v / 65535.0 for v in row]
+					if pcs == "Lab":
+						X, Y, Z = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*row))
+					else:
+						X, Y, Z = [v / 65535.0 for v in row]
 					XYZ = colormath.apply_bpc(X, Y, Z, bp, bp_out, wp,
 											  weight=weight)
-					block[i] = [max(v, 0) * 65535.0 for v in XYZ]
+					if pcs == "Lab":
+						L, a, b = colormath.XYZ2Lab(*XYZ + [D50])
+						block[i] = [min(max(0, v), 65535) for v in
+									PCSLab_dec_to_uInt16(L, a, b)]
+					else:
+						block[i] = [max(v, 0) * 65535.0 for v in XYZ]
 
 	@Property
 	def clut():
@@ -3207,7 +3238,7 @@ class ICCProfile:
 										args += (self.connectionColorSpace, )
 										if typeSignature == "ncl2":
 											args += (self.colorSpace, )
-									elif typeSignature == "XYZ ":
+									elif typeSignature in ("XYZ ", "mft2"):
 										args += (self, )
 									tag = typeSignature2Type[typeSignature](*args)
 								else:
