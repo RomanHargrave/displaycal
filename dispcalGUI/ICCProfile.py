@@ -3427,11 +3427,15 @@ class ICCProfile:
 			cgamma = self.tags[channel + "TRC"].get_gamma()
 			gamma += cgamma
 			if len(self.tags[channel + "TRC"]) == 1:
+				self.tags[channel + "TRC"] = CurveType()
 				self.tags[channel + "TRC"].set_trc(cgamma, 1024)
 		gamma /= 3.0
 		bt1886 = colormath.BT1886(mtx, XYZbp, 1.0, gamma, False)
 		values = OrderedDict()
 		for i, channel in enumerate(("r", "g", "b")):
+			if self.tags[channel + "TRC"][0] != 0:
+				# So we can hit the target blackpoint
+				self.tags[channel + "TRC"].apply_bpc()
 			for j, v in enumerate(self.tags[channel + "TRC"]):
 				if not values.get(j):
 					values[j] = []
