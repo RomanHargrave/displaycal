@@ -628,7 +628,8 @@ class ReportFrame(BaseFrame):
 		self.apply_trc_ctrl.SetValue(enable5 and
 			bool(getcfg("measurement_report.apply_trc")))
 		enable6 = (enable1 and enable5 and
-				   bool(getcfg("measurement_report.apply_trc")))
+				   bool(getcfg("measurement_report.apply_trc") or
+						getcfg("measurement_report.apply_black_offset")))
 		self.mr_show_trc_controls()
 		show = (self.apply_none_ctrl.GetValue() and
 				enable1 and enable5 and
@@ -664,7 +665,10 @@ class ReportFrame(BaseFrame):
 										(not enable1 or not enable2 or
 										 self.apply_trc_ctrl.GetValue() or
 										 self.apply_black_offset_ctrl.GetValue()))
-		output_profile = (bool(getcfg("measurement_report.output_profile")) and
+		output_profile = ((hasattr(self, "presets") and
+						   getcfg("measurement_report.output_profile")
+						   not in self.presets or not hasattr(self, "presets")) and
+						  bool(getcfg("measurement_report.output_profile")) and
 						  os.path.isfile(getcfg("measurement_report.output_profile")))
 		self.measurement_report_btn.Enable(((enable1 and enable2 and (not enable6 or
 														   output_profile) and
