@@ -68,7 +68,7 @@ class Tag(object):
 			float(self.attributes.get("transparency",
 									  "0").strip()) not in (0.0, 1.0) and x3dom):
 			# Fix z-fighting in X3DOM renderer
-			markup += "<DepthMode readOnly='true'></DepthMode>"
+			markup.append("<DepthMode readOnly='true'></DepthMode>")
 		return "".join(markup)
 
 	def append_child(self, child):
