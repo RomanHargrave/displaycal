@@ -3186,7 +3186,7 @@ class Worker(object):
 						if last:
 							os.remove(allfilename)
 			except Exception, exception:
-				safe_print("Warning - error during shell script creation:", 
+				self.log("Warning - error during shell script creation:", 
 						   safe_unicode(exception))
 		cmdline = [arg.encode(fs_enc) for arg in cmdline]
 		working_dir = None if not working_dir else working_dir.encode(fs_enc)
@@ -3194,13 +3194,13 @@ class Worker(object):
 			if not self.measure_cmd and self.argyll_version >= [1, 2]:
 				# Argyll tools will no longer respond to keys
 				if debug:
-					safe_print("[D] Setting ARGYLL_NOT_INTERACTIVE 1")
+					self.log("[D] Setting ARGYLL_NOT_INTERACTIVE 1")
 				os.environ["ARGYLL_NOT_INTERACTIVE"] = "1"
 			elif "ARGYLL_NOT_INTERACTIVE" in os.environ:
 				del os.environ["ARGYLL_NOT_INTERACTIVE"]
 			if debug:
-				safe_print("[D] argyll_version", self.argyll_version)
-				safe_print("[D] ARGYLL_NOT_INTERACTIVE", 
+				self.log("[D] argyll_version", self.argyll_version)
+				self.log("[D] ARGYLL_NOT_INTERACTIVE", 
 						   os.environ.get("ARGYLL_NOT_INTERACTIVE"))
 			if self.measure_cmd:
 				for name, version in (("MIN_DISPLAY_UPDATE_DELAY_MS", [1, 5]),
@@ -3216,23 +3216,23 @@ class Worker(object):
 						else:
 							current = backup
 						if current:
-							safe_print("%s: Overriding ARGYLL_%s %s" %
+							self.log("%s: Overriding ARGYLL_%s %s" %
 									   (appname, name, current))
 						# Override
 						value = str(getcfg("measure.%s" % name.lower()))
-						safe_print("%s: Setting ARGYLL_%s %s" % (appname,
+						self.log("%s: Setting ARGYLL_%s %s" % (appname,
 																 name, value))
 					elif backup is not None:
 						value = backup
 						del os.environ["ARGYLL_%s_BACKUP" % name]
 						if value:
-							safe_print("%s: Restoring ARGYLL_%s %s" % (appname,
+							self.log("%s: Restoring ARGYLL_%s %s" % (appname,
 																	   name,
 																	   value))
 						elif "ARGYLL_%s" % name in os.environ:
 							del os.environ["ARGYLL_%s" % name]
 					elif "ARGYLL_%s" % name in os.environ:
-						safe_print("%s: ARGYLL_%s" % (appname, name),
+						self.log("%s: ARGYLL_%s" % (appname, name),
 								   os.getenv("ARGYLL_%s" % name))
 					if value:
 						os.environ["ARGYLL_%s" % name] = value
@@ -3501,7 +3501,7 @@ class Worker(object):
 			return exception
 		except Exception, exception:
 			if debug:
-				safe_print('[D] working_dir:', working_dir)
+				self.log('[D] working_dir:', working_dir)
 			errmsg = (" ".join(cmdline).decode(fs_enc) + "\n" + 
 					  safe_unicode(traceback.format_exc()))
 			self.retcode = -1
@@ -3530,12 +3530,12 @@ class Worker(object):
 						# Send fullscreen black to prevent plasma burn-in
 						self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
 					except Exception, exception:
-						safe_print(exception)
+						self.log(exception)
 		if debug and not silent:
-			safe_print("*** Returncode:", self.retcode)
+			self.log("*** Returncode:", self.retcode)
 		if self.retcode != 0:
 			if use_pty and verbose >= 1 and not silent:
-				safe_print(lang.getstr("aborted"))
+				self.log(lang.getstr("aborted"))
 			if use_pty and len(self.output):
 				errmsg = None
 				for i, line in enumerate(self.output):
@@ -5445,8 +5445,8 @@ usage: spotread [-options] [logfile]
 		""" Generate gamut views (VRML files) and show progress in current
 		progress dialog """
 		if getcfg("profile.create_gamut_views"):
-			safe_print("-" * 80)
-			safe_print(lang.getstr("gamut.view.create"))
+			self.log("-" * 80)
+			self.log(lang.getstr("gamut.view.create"))
 			self.recent.clear()
 			self.recent.write(lang.getstr("gamut.view.create"))
 			sleep(.75)  # Allow time for progress window to update
@@ -5588,7 +5588,7 @@ usage: spotread [-options] [logfile]
 		if not isinstance(result, Exception) and result:
 			(gamut_volume,
 			 gamut_coverage) = self.create_gamut_views(profile_path)
-		safe_print("-" * 80)
+		self.log("-" * 80)
 		if not isinstance(result, Exception) and result:
 			result = self.update_profile(profile, ti3, chrm,
 										 tags, avg, peak, rms, gamut_volume,
@@ -5757,7 +5757,7 @@ usage: spotread [-options] [logfile]
 										   triggers=[])), self.recent,
 							self.lastmsg])
 		tables = [1]
-		safe_print("-" * 80)
+		self.log("-" * 80)
 		# Add perceptual tables if not present
 		if "A2B0" in profile.tags and not "A2B1" in profile.tags:
 			if not isinstance(profile.tags.A2B0, ICCP.LUT16Type):
@@ -5859,7 +5859,7 @@ usage: spotread [-options] [logfile]
 				except (Error, Info), exception:
 					return exception
 				except Exception, exception:
-					safe_print(traceback.format_exc())
+					self.log(traceback.format_exc())
 					return exception
 				else:
 					if result:
@@ -5895,8 +5895,10 @@ usage: spotread [-options] [logfile]
 				return True
 		return False
 	
-	def log(self, msg, fn=safe_print):
-		msg = safe_basestring(msg)
+	def log(self, *args, **kwargs):
+		""" Log to global logfile and session logfile (if any) """
+		msg = " ".join(safe_basestring(arg) for arg in args)
+		fn = kwargs.get("fn", safe_print)
 		fn(msg)
 		if self.sessionlogfile:
 			self.sessionlogfile.write(msg + "\n")
@@ -6047,7 +6049,7 @@ usage: spotread [-options] [logfile]
 							precond_datasets.append(dataset)
 					if precond_datasets:
 						# Insert preconditioned point datasets after first patch
-						safe_print("%s: Adding %i fixed points" %
+						self.log("%s: Adding %i fixed points" %
 								   (appname, len(precond_datasets)))
 						data.moveby1(1, len(precond_datasets))
 						for i, dataset in enumerate(precond_datasets):
@@ -7468,7 +7470,7 @@ usage: spotread [-options] [logfile]
 		det = getcfg("iccgamut.surface_detail")
 		for i, profile_path in enumerate(profile_paths):
 			if not profile_path:
-				safe_print("Warning: calculate_gamut(): No profile path %i" % i)
+				self.log("Warning: calculate_gamut(): No profile path %i" % i)
 				continue
 			result = self.exec_cmd(get_argyll_util("iccgamut"),
 								   ["-v", "-w", "-i" + intent, "-f" + direction,
@@ -7605,10 +7607,10 @@ usage: spotread [-options] [logfile]
 							os.remove(filename)
 						os.rename(tmpfilename, filename)
 				except Exception, exception:
-					safe_print(safe_unicode(exception))
+					self.log(exception)
 		elif result:
 			# Exception
-			safe_print(safe_unicode(result))
+			self.log(result)
 		return gamut_volume, gamut_coverage
 
 	def calibrate(self, remove=False):
@@ -7688,7 +7690,7 @@ usage: spotread [-options] [logfile]
 							try:
 								profile.write()
 							except Exception, exception:
-								safe_print(exception)
+								self.log(exception)
 		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
 							  remove or isinstance(result, Exception) or
 							  not result)
