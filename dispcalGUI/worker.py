@@ -7465,13 +7465,14 @@ usage: spotread [-options] [logfile]
 		gamut_volume = None
 		gamut_coverage = {}
 		# Create profile gamut and vrml
+		det = getcfg("iccgamut.surface_detail")
 		for i, profile_path in enumerate(profile_paths):
 			if not profile_path:
 				safe_print("Warning: calculate_gamut(): No profile path %i" % i)
 				continue
 			result = self.exec_cmd(get_argyll_util("iccgamut"),
 								   ["-v", "-w", "-i" + intent, "-f" + direction,
-									"-o" + order, profile_path],
+									"-o" + order, "-d%.2f" % det, profile_path],
 								   capture_output=True,
 								   skip_scripts=True)
 			if not isinstance(result, Exception) and result:
@@ -7521,8 +7522,8 @@ usage: spotread [-options] [logfile]
 				outfilename += ".wrl"
 				tmpfilenames.append(outfilename)
 				result = self.exec_cmd(get_argyll_util("viewgam"),
-									   ["-cw", "-t.75", "-s", src_path, "-cn",
-										"-t.25", "-s", gamfilename, "-i",
+									   ["-cw", "-t0", "-w", src_path, "-cn",
+										"-t.3", "-s", gamfilename, "-i",
 										outfilename],
 									   capture_output=True,
 									   skip_scripts=True)
