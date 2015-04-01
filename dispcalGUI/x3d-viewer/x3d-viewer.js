@@ -77,15 +77,25 @@ var x3d_viewer = {
 				args.push(fix(method));
 				cls[methodName] = Function.apply(Function, args);
 			}
-			// Fix lighting clamping and transparency gamma
+			// Fix lighting clamping
 			fixMethod(x3dom.shader.DynamicShader.prototype, 'generateFragmentShader', ['gl', 'properties'], function (method) {
 				for (var i = 0; i < 3; i ++) {
 					method = method.replace(/(ambient|diffuse|specular)\s*=\s*clamp\(\1,\s*0.0,\s*1.0\)/, '$1 = max($1, 0.0)');
 					method = method.replace(/clamp\((ambient\s*\+\sdiffuse),\s*0.0,\s*1.0\)/, 'max($1, 0.0)');
-					method = method.replace(/(color\.a\s*=\s*1\.0\s*-\s*)transparency(\s*;)/, '$1pow(transparency, 2.2)$2');
 				}
 				return method;
 			});
+			//
+			var background = document.getElementsByTagName('background')[0];
+			if (!background) {
+				// Having a background element fixes transparency tone mapping
+				background = document.createElement('background');
+				document.getElementsByTagName('scene')[0].appendChild(background);
+			}
+			background.setAttribute('groundAngle', '1.5707963268');
+			background.setAttribute('groundColor', '.08 .08 .08 .04 .04 .04');
+			background.setAttribute('skyAngle', '1.5707963268');
+			background.setAttribute('skyColor', '0 0 0 .04 .04 .04');
 			// Fix fontsize clamping and text positioning
 			fixMethod(x3dom.Texture.prototype, 'updateText', [], function (method) {
 				// Fix fontsize clamping
@@ -95,10 +105,26 @@ var x3d_viewer = {
 										'this.node._mesh._positions[0] = [-w + w / 2, -h + h / 2, 0, w + w / 2, -h + h / 2, 0, w + w / 2, h + h / 2, 0, -w + w / 2, h + h / 2, 0]');
 				return method;
 			});
-			// Set gamma correction to none
-			var environment = document.createElement('environment');
-			environment.setAttribute('gammaCorrectionDefault', 'none');
-			document.getElementsByTagName('scene')[0].appendChild(environment);
+			//
+			var environment = document.getElementsByTagName('environment')[0];
+			if (!environment || !environment.hasAttribute('gammaCorrectionDefault')) {
+				// Set gamma correction to none
+				if (!environment) {
+					environment = document.createElement('environment');
+					document.getElementsByTagName('scene')[0].appendChild(environment);
+				}
+				environment.setAttribute('gammaCorrectionDefault', 'none');
+			}
+			//
+			var navigationInfo = document.getElementsByTagName('navigationInfo')[0],
+				indexedFaceSets = document.getElementsByTagName('indexedFaceSet');
+			// Fix transparency problems with sort order
+			for (var i = 0; i < indexedFaceSets.length; i ++) {
+				if (indexedFaceSets[i].getAttribute('solid') == 'false')
+					indexedFaceSets[i].setAttribute('solid', 'true');
+				if (indexedFaceSets[i].getAttribute('ccw') != 'false')
+					indexedFaceSets[i].setAttribute('ccw', 'false');
+			}
 			//
 			x3dom.runtime.ready = function () {
 				var lights = ['directional', 'point', 'spot'],
@@ -130,7 +156,7 @@ var x3d_viewer = {
 '			--><div class="button">',
 '				<div class="selected">Lights</div>',
 '				<div class="options">',
-'					<div class="checked" onclick="x3d_viewer.toggleLights(\'headlight\', this)">Headlight</div>'
+'					<div class="' + (navigationInfo && navigationInfo.getAttribute('headlight') == 'false' ? 'un' : '') + 'checked" onclick="x3d_viewer.toggleLights(\'headlight\', this)">Headlight</div>'
 				];
 				// Add light toggles for existing lights
 				for (var i = 0; i < lights.length; i ++) {

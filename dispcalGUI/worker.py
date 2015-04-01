@@ -3236,6 +3236,10 @@ class Worker(object):
 								   os.getenv("ARGYLL_%s" % name))
 					if value:
 						os.environ["ARGYLL_%s" % name] = value
+			elif cmdname in (get_argyll_utilname("iccgamut"),
+							 get_argyll_utilname("tiffgamut"),
+							 get_argyll_utilname("viewgam")):
+				os.environ["ARGYLL_3D_DISP_FORMAT"] = "VRML"
 			if sys.platform not in ("darwin", "win32"):
 				os.environ["ENABLE_COLORHUG"] = "1"
 			if sys.platform == "win32":
