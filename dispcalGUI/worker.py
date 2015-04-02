@@ -6237,10 +6237,10 @@ usage: spotread [-options] [logfile]
 		ti3 = add_options_to_ti3(inoutfile + ".ti3", options_dispcal, 
 								 self.options_colprof)
 		if ti3:
+			color_rep = (ti3.queryv1("COLOR_REP") or "").split("_")
 			# Prepare ChromaticityType tag
 			colorants = ti3.get_colorants()
 			if colorants and not None in colorants:
-				color_rep = ti3.queryv1("COLOR_REP").split("_")
 				chrm = ICCP.ChromaticityType()
 				chrm.type = 0
 				for colorant in colorants:
@@ -6312,6 +6312,42 @@ usage: spotread [-options] [logfile]
 						if getcfg("3dlut.trc_gamma_type") == "B":
 							value = -value
 					ti3[0].add_keyword(keyword, value)
+			data = ti3[0].get("DATA")
+			if len(color_rep) == 2 and data:
+				# Check for XYZ/Lab = 0 readings
+				query = {}
+				for channel in color_rep[1]:
+					query[color_rep[1] + "_" + channel] = 0
+				device_labels = []
+				for channel in color_rep[0]:
+					device_labels.append(color_rep[0] + "_" + channel)
+				zeros = data.queryi(query)
+				errors = []
+				removed = []
+				for key in reversed(zeros.keys()):
+					sample = zeros[key]
+					device_values = [sample[label] for label in device_labels]
+					device_sum = 0
+					for value in device_values:
+						if value >= 5:
+							# Error on device values >= 5
+							errors.append(sample)
+							continue
+						device_sum += value
+					if not device_sum:
+						# Skip device black
+						continue
+					# Remove sample
+					data.pop(sample)
+					removed.insert(0, sample)
+				for sample in removed:
+					self.log("Removed sample ID %i with %s = 0 for %s < 5%% (%s)" %
+							 (sample.key, color_rep[1], color_rep[0],
+							  " ".join(str(sample.queryv1(device_labels)).split())))
+				for sample in errors:
+					self.log("Warning: Sample ID %i %s = 0 for %s >= 5%%! (%s)" %
+							 (sample.key, color_rep[1], color_rep[0],
+							  " ".join(str(sample.queryv1(device_labels)).split())))
 			ti3.write()
 		return cmd, args
 
