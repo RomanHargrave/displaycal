@@ -16,6 +16,7 @@
 	"3dlut.encoding.type_6": "TV Rec. 601 YCbCr SD",
 	"3dlut.encoding.type_7": "TV Rec. 709 1125/60Hz YCbCr HD",
 	"3dlut.encoding.type_C": "TV Rec. 2020 Constant Luminance YCbCr UHD",
+		"*3dlut.encoding.type_T": "TV RGB 16-235 (clip WTW)",
 	"3dlut.encoding.type_X": "TV xvYCC Rec. 709 YCbCr HD",
 	"3dlut.encoding.type_n": "Étendue complète RGB 0-255",
 	"3dlut.encoding.type_t": "TV RGB 16-235",
