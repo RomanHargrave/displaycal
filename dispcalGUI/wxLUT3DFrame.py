@@ -951,9 +951,13 @@ class LUT3DFrame(BaseFrame):
 		# Shared with amin window
 		if format == "madVR":
 			encodings = ["t"]
+			config.defaults["3dlut.encoding.input"] = "t"
+			config.defaults["3dlut.encoding.output"] = "t"
 			config.valid_values["3dlut.encoding.input"] = encodings
 		else:
 			encodings = list(video_encodings)
+			config.defaults["3dlut.encoding.input"] = "n"
+			config.defaults["3dlut.encoding.output"] = "n"
 			config.valid_values["3dlut.encoding.input"] = encodings
 		if (self.worker.argyll_version >= [1, 7] and
 			self.worker.argyll_version != [1, 7, 0, "_beta"] and
