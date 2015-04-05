@@ -524,34 +524,31 @@ class LUT3DFrame(BaseFrame):
 		return True
 	
 	def lut3d_format_ctrl_handler(self, event):
-		if getcfg("3dlut.format") in ("eeColor", "madVR"):
+		# Get selected format
+		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
+		if getcfg("3dlut.format") in ("eeColor",
+									  "madVR") and format not in ("eeColor",
+																  "madVR"):
 			# If previous format was eeColor or madVR, restore 3D LUT encoding
 			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
 		if getcfg("3dlut.format") in ("eeColor", "madVR", "mga"):
 			setcfg("3dlut.size", getcfg("3dlut.size.backup"))
-		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
-		self.lut3d_set_option("3dlut.format", format)
-		if format in ("eeColor", "madVR"):
+		if getcfg("3dlut.format") not in ("eeColor",
+										  "madVR") and format in ("eeColor",
+																  "madVR"):
+			# If selected format is eeColor or madVR, backup 3D LUT encoding
 			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
+		# Set selected format
+		self.lut3d_set_option("3dlut.format", format)
 		if format in ("eeColor", "madVR", "mga"):
 			setcfg("3dlut.size.backup", getcfg("3dlut.size"))
 		if format == "eeColor":
-			if getcfg("3dlut.encoding.input") == "x":
-				# As eeColor usually needs same input & output encoding,
-				# and xvYCC output encoding is not supported generally, fall
-				# back to Rec601 YCbCr SD for xvYCC Rec601 YCbCr SD
-				self.lut3d_set_option("3dlut.encoding.input", "6")
-			elif getcfg("3dlut.encoding.input") == "X":
-				# As eeColor usually needs same input & output encoding,
-				# and xvYCC output encoding is not supported generally, fall
-				# back to Rec709 1125/60Hz YCbCr HD for xvYCC Rec709 YCbCr SD
-				self.lut3d_set_option("3dlut.encoding.input", "7")
-			else:
-				# -et -Et for eeColor
+			# -et -Et for eeColor
+			if getcfg("3dlut.encoding.input") not in ("t", "T"):
 				self.lut3d_set_option("3dlut.encoding.input", "t")
-				self.lut3d_set_option("3dlut.encoding.output", "t")
+			self.lut3d_set_option("3dlut.encoding.output", "t")
 			# eeColor uses a fixed size of 65x65x65
 			self.lut3d_set_option("3dlut.size", 65)
 		elif format == "mga":
@@ -562,7 +559,8 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
 		elif format == "madVR":
 			# -et -Et for madVR
-			self.lut3d_set_option("3dlut.encoding.input", "t")
+			if getcfg("3dlut.encoding.input") not in ("t", "T"):
+				self.lut3d_set_option("3dlut.encoding.input", "t")
 			self.lut3d_set_option("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
 			self.lut3d_set_option("3dlut.size", 65)
@@ -953,17 +951,25 @@ class LUT3DFrame(BaseFrame):
 			encodings = ["t"]
 			config.defaults["3dlut.encoding.input"] = "t"
 			config.defaults["3dlut.encoding.output"] = "t"
-			config.valid_values["3dlut.encoding.input"] = encodings
 		else:
 			encodings = list(video_encodings)
 			config.defaults["3dlut.encoding.input"] = "n"
 			config.defaults["3dlut.encoding.output"] = "n"
-			config.valid_values["3dlut.encoding.input"] = encodings
+			if format == "eeColor":
+				# As eeColor usually needs same input & output encoding,
+				# and xvYCC output encoding is not supported generally,
+				# remove xvYCC input encoding choices for eeColor
+				encodings.remove("x")
+				encodings.remove("X")
 		if (self.worker.argyll_version >= [1, 7] and
-			self.worker.argyll_version != [1, 7, 0, "_beta"] and
-			not "T" in encodings):
+			self.worker.argyll_version != [1, 7, 0, "_beta"]):
 			# Argyll 1.7 beta 3 (2015-04-02) added clip WTW on input TV encoding
 			encodings.insert(2, "T")
+		config.valid_values["3dlut.encoding.input"] = encodings
+		# collink: xvYCC output encoding is not supported
+		config.valid_values["3dlut.encoding.output"] = filter(lambda v:
+															  v not in ("T", "x", "X"),
+															  encodings)
 		self.encoding_input_ab = {}
 		self.encoding_input_ba = {}
 		self.encoding_output_ab = {}
@@ -972,25 +978,16 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_input_ctrl.Clear()
 		self.encoding_output_ctrl.Freeze()
 		self.encoding_output_ctrl.Clear()
-		i = 0
-		o = 0
-		for encoding in encodings:
+		for i, encoding in enumerate(config.valid_values["3dlut.encoding.input"]):
 			lstr = lang.getstr("3dlut.encoding.type_%s" % encoding)
-			if encoding not in ("x", "X") or format != "eeColor":
-				# As eeColor usually needs same input & output encoding,
-				# and xvYCC output encoding is not supported generally,
-				# don't add xvYCC input encoding choices for eeColor
-				self.encoding_input_ctrl.Append(lstr)
-			if encoding not in ("x", "X", "T"):
-				# collink: xvYCC output encoding is not supported
-				# T (clip WTW) is only supported on input
-				self.encoding_output_ctrl.Append(lstr)
-				self.encoding_output_ab[o] = encoding
-				self.encoding_output_ba[encoding] = o
-				o += 1
+			self.encoding_input_ctrl.Append(lstr)
 			self.encoding_input_ab[i] = encoding
 			self.encoding_input_ba[encoding] = i
-			i += 1
+		for o, encoding in enumerate(config.valid_values["3dlut.encoding.output"]):
+			lstr = lang.getstr("3dlut.encoding.type_%s" % encoding)
+			self.encoding_output_ctrl.Append(lstr)
+			self.encoding_output_ab[o] = encoding
+			self.encoding_output_ba[encoding] = o
 		self.encoding_input_ctrl.Thaw()
 		self.encoding_output_ctrl.Thaw()
 
@@ -1097,13 +1094,11 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_show_encoding_controls(self, show=True):
 		show = ((show and self.worker.argyll_version >= [1, 7] and
 				 self.worker.argyll_version != [1, 7, 0, "_beta"]) or
-				 self.worker.argyll_version >= [1, 6] and
-				 getcfg("3dlut.format") != "madVR")
+				 self.worker.argyll_version >= [1, 6])
 		# Argyll 1.7 beta 3 (2015-04-02) added clip WTW on input TV encoding
 		self.encoding_input_label.Show(show)
 		self.encoding_input_ctrl.Show(show)
-		show = (show and self.worker.argyll_version >= [1, 6] and
-				getcfg("3dlut.format") != "madVR")
+		show = show and self.worker.argyll_version >= [1, 6]
 		self.encoding_output_label.Show(show)
 		self.encoding_output_ctrl.Show(show)
 	

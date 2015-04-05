@@ -518,7 +518,9 @@ valid_values = {
 	"3dlut.bitdepth.input": [8, 10, 12, 14, 16],
 	"3dlut.bitdepth.output": [8, 10, 12, 14, 16],
 	"3dlut.encoding.input": list(video_encodings),
-	"3dlut.encoding.output": list(video_encodings),
+	# collink: xvYCC output encoding is not supported
+	"3dlut.encoding.output": filter(lambda v: v not in ("T", "x", "X"),
+									video_encodings),
 	"3dlut.format": ["3dl", "cube", "eeColor", "madVR", "mga", "spi3d"],
 	"3dlut.rendering_intent": intents,
 	"3dlut.size": [17, 24, 32, 33, 64, 65],
