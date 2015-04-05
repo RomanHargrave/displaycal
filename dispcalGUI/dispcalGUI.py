@@ -4071,10 +4071,7 @@ class MainFrame(ReportFrame, BaseFrame):
 										   show)
 		for ctrl in (self.lut3d_size_label,
 					 self.lut3d_size_ctrl):
-			ctrl.GetContainingSizer().Show(ctrl,
-										   show and
-										   getcfg("3dlut.format") not in
-										   ("eeColor", "madVR"))
+			ctrl.GetContainingSizer().Show(ctrl, show)
 
 	def lut3d_update_b2a_controls(self):
 		# Allow using B2A instead of inverse A2B?
