@@ -4050,7 +4050,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			getcfg("3dlut.input.profile"))
 
 	def lut3d_set_path(self):
-		# Get 3D LUT options
+		# 3D LUT filename with crcr32 hash before extension - up to DCG 2.9.0.7
 		profile_save_path = os.path.splitext(getcfg("calibration.file"))[0]
 		lut3d = [getcfg("3dlut.gamap.use_b2a") and "g" or "G",
 				 "i" + getcfg("3dlut.rendering_intent"),
@@ -4062,18 +4062,42 @@ class MainFrame(ReportFrame, BaseFrame):
 								getcfg("3dlut.trc_gamma"))]
 		if getcfg("3dlut.format") == "3dl":
 			lut3d.append(str(getcfg("3dlut.bitdepth.input")))
-		if getcfg("3dlut.format") in ("3dl", "mga"):
 			lut3d.append(str(getcfg("3dlut.bitdepth.output")))
 		lut3d_ext = getcfg("3dlut.format")
 		if lut3d_ext == "eeColor":
 			lut3d_ext = "txt"
 		elif lut3d_ext == "madVR":
 			lut3d_ext = "3dlut"
-		self.lut3d_path = ".".join([profile_save_path,
-									os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0],
+		input_profname = os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0]
+		self.lut3d_path = ".".join([profile_save_path, input_profname,
 									"%X" % (crc32("-".join(lut3d))
 											& 0xFFFFFFFF),
 									lut3d_ext])
+		if not os.path.isfile(self.lut3d_path):
+			# 3D LUT filename with plain options before extension - DCG 2.9.0.8+
+			enc_in = lut3d[3][1:]
+			enc_out = lut3d[4][1:]
+			encoding = enc_in
+			if enc_in != enc_out:
+				encoding += enc_out
+			lut3dp = [lut3d[5][1] + lut3d[5][3:].replace(":", ","),  # TRC
+					  lut3d[0],  # Gamut mapping mode
+					  lut3d[1][1:],  # Rendering intent
+					  encoding,
+					  lut3d[2][1:]]  # Resolution
+			bitdepth_in = None
+			bitdepth_out = None
+			if len(lut3d) > 6:
+				bitdepth_in = lut3d[6]  # Input bitdepth
+			if len(lut3d) > 7:
+				bitdepth_out = lut3d[7]  # Output bitdepth
+			if bitdepth_in or bitdepth_out:
+				bitdepth = bitdepth_in
+				if bitdepth_out and bitdepth_in != bitdepth_out:
+					bitdepth += bitdepth_out
+				lut3dp.append(bitdepth)
+			self.lut3d_path = ".".join([profile_save_path, input_profname,
+										"".join(lut3dp), lut3d_ext])
 
 	def lut3d_show_controls(self):
 		show = True#bool(getcfg("3dlut.create"))
