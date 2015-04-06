@@ -6098,7 +6098,9 @@ usage: spotread [-options] [logfile]
 				self.repeat = True
 			elif ", ok" in txt.lower():
 				self.repeat = False
-			if (re.search(r"Patch \d+ of \d+", txt, re.I) or
+			if (re.search(r"Patch [2-9]\d* of ", txt, re.I) or
+				(re.search(r"Patch \d+ of |The instrument can be removed from "
+						   "the screen", txt, re.I) and self.patch_count > 1) or
 				("Result is XYZ:" in txt and
 				 not isinstance(self.progress_wnd, UntetheredFrame))):
 				if self.cmdname == get_argyll_utilname("dispcal") and self.repeat:
