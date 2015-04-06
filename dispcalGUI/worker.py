@@ -8579,29 +8579,32 @@ usage: spotread [-options] [logfile]
 					self.patch_sequence = True
 				self.patch_count = 0
 				self.patterngenerator_sent_count = 0
+		update = re.search(r"[/\\] current|patch \d+ of |the instrument "
+						   "can be removed from the screen", txt, re.I)
 		# Send colors to pattern generator
-		if (self.use_patterngenerator and
-			getattr(self, "patterngenerator", None) and
-			hasattr(self.patterngenerator, "conn")):
+		use_patterngenerator = (self.use_patterngenerator and
+								getattr(self, "patterngenerator", None) and
+								hasattr(self.patterngenerator, "conn"))
+		if use_patterngenerator:
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
 				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
 				self.patterngenerator_send(rgb)
-			if re.search(r"[/\\] current|patch \d+ of |the instrument "
-						 "can be removed from the screen", txt, re.I):
+			if update:
 				# Check if patch count is higher than patterngenerator sent count
 				if (self.patch_count > self.patterngenerator_sent_count and
 					self.exec_cmd_returnvalue is None):
 					# This should never happen
 					self.exec_cmd_returnvalue = Error(lang.getstr("patterngenerator.sync_lost"))
 					self.abort_subprocess()
-				if not (self.subprocess_abort or self.thread_abort or
-						"the instrument can be removed from the screen"
-						in txt.lower()):
-					self.patch_count += 1
-					self.log("%s: Argyll CMS patch update count: %i" %
-							 (appname, self.patch_count))
+		if update and not (self.subprocess_abort or self.thread_abort or
+						   "the instrument can be removed from the screen"
+						   in txt.lower()):
+			self.patch_count += 1
+			if use_patterngenerator:
+				self.log("%s: Argyll CMS patch update count: %i" %
+						 (appname, self.patch_count))
 		# Parse
 		wx.CallAfter(self.parse, txt)
 	
