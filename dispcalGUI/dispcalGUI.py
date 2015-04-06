@@ -2104,13 +2104,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			not config.is_virtual_display())
 		calibration_loading_supported = self.worker.calibration_loading_supported
 		self.menuitem_load_lut_from_cal_or_profile.Enable(
-			bool(self.worker.displays) and
-			not config.is_untethered_display() and
-			calibration_loading_supported)
+			bool(self.worker.displays) and calibration_loading_supported)
 		self.menuitem_load_lut_from_display_profile.Enable(
-			bool(self.worker.displays) and
-			not config.is_untethered_display() and
-			calibration_loading_supported)
+			bool(self.worker.displays) and calibration_loading_supported)
 		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
 		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
 												  [0, 0, 0])
@@ -2152,7 +2148,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		if hasattr(self, "lut_viewer"):
 			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
-									   not config.is_untethered_display() and
 									   calibration_loading_supported)
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
