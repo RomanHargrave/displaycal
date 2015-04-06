@@ -708,6 +708,7 @@
 	"panel.type": "Tipo de panel",
 		"*passive_matrix_display": "Passive matrix display",
 	"patches": "Parches",
+		"*patterngenerator.sync_lost": "Lost sync with the pattern generator.",
 	"pause": "Pausa",
 		"*pcs_illuminant_xyz": "PCS illuminant XYZ",
 		"*pcs_relative_cct": "PCS-relative CCT",

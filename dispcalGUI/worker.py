@@ -1992,6 +1992,7 @@ class Worker(object):
 				self.progress_wnd.Resume()
 				self.abort_requested = False
 				return
+		self.patch_count = 0
 		self.subprocess_abort = True
 		self.thread_abort = True
 		delayedresult.startWorker(self.quit_terminate_consumer, 
@@ -2109,6 +2110,10 @@ class Worker(object):
 		self.sessionlogfile = None
 		self.madtpg_fullscreen = True
 		self.use_patterngenerator = False
+		self.patch_sequence = False
+		self.patch_count = 0
+		self.patterngenerator_sent_count = 0
+		self.exec_cmd_returnvalue = None
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
@@ -3574,8 +3579,9 @@ class Worker(object):
 							errmsg = errmsg[startpos + 2:]
 				if errmsg:
 					return UnloggedError(errmsg.strip())
-			return False
-		return True
+		if self.exec_cmd_returnvalue is not None:
+			return self.exec_cmd_returnvalue
+		return self.retcode == 0
 	
 	def flush(self):
 		pass
@@ -6134,17 +6140,21 @@ usage: spotread [-options] [logfile]
 			desired_apl = getcfg("patterngenerator.apl")
 			apl = desired_apl * 3
 			bgrgb = [(apl - max(rgbl - apl, 0.0)) / bgrgbl * v for v in bgrgb]
-		self.log("Sending RGB %.3f %.3f %.3f, background %.3f %.3f %.3f, "
+		self.log("%s: Sending RGB %.3f %.3f %.3f, background %.3f %.3f %.3f, "
 				 "x %.4f, y %.4f, w %.4f, h %.4f" %
-				 (tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
+				 ((appname, ) + tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
 		try:
 			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
 		except socket.error, exception:
 			if raise_exceptions:
 				raise
 			else:
-				self.log("%s: %s" % (appname, safe_unicode(exception)))
-				wx.CallAfter(self.abort_subprocess)
+				self.exec_cmd_returnvalue = exception
+				self.abort_subprocess()
+		else:
+			self.patterngenerator_sent_count += 1
+			self.log("%s: Patterngenerator sent count: %i" %
+					 (appname, self.patterngenerator_sent_count))
 	
 	def pause_continue(self):
 		if (getattr(self.progress_wnd, "paused", False) and
@@ -8563,6 +8573,14 @@ usage: spotread [-options] [logfile]
 		return result
 	
 	def write(self, txt):
+		if re.search("press 1|space when done|patch 1 of ", txt, re.I):
+			# There are some intial measurements which we can't check for
+			# unless -D (debug) is used for Argyll tools
+			if not "patch 1 of " in txt.lower() or not self.patch_sequence:
+				if "patch 1 of " in txt.lower():
+					self.patch_sequence = True
+				self.patch_count = 0
+				self.patterngenerator_sent_count = 0
 		# Send colors to pattern generator
 		if (self.use_patterngenerator and
 			getattr(self, "patterngenerator", None) and
@@ -8572,6 +8590,20 @@ usage: spotread [-options] [logfile]
 			if rgb:
 				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
 				self.patterngenerator_send(rgb)
+			if re.search(r"[/\\] current|patch \d+ of |the instrument "
+						 "can be removed from the screen", txt, re.I):
+				# Check if patch count is higher than patterngenerator sent count
+				if (self.patch_count > self.patterngenerator_sent_count and
+					self.exec_cmd_returnvalue is None):
+					# This should never happen
+					self.exec_cmd_returnvalue = Error(lang.getstr("patterngenerator.sync_lost"))
+					self.abort_subprocess()
+				if not (self.subprocess_abort or self.thread_abort or
+						"the instrument can be removed from the screen"
+						in txt.lower()):
+					self.patch_count += 1
+					self.log("%s: Argyll CMS patch update count: %i" %
+							 (appname, self.patch_count))
 		# Parse
 		wx.CallAfter(self.parse, txt)
 	

@@ -708,6 +708,7 @@
 	"panel.type": "Panel-Typ",
 	"passive_matrix_display": "Passiv-Matrix Anzeigegerät",
 	"patches": "Felder",
+	"patterngenerator.sync_lost": "Synchronisierung mit Testfeld-Generator verloren.",
 	"pause": "Pause",
 	"pcs_illuminant_xyz": "PCS-Leuchtmittel XYZ",
 	"pcs_relative_cct": "PCS-Bezug CCT",
