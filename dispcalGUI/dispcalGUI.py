@@ -7437,7 +7437,7 @@ class MainFrame(ReportFrame, BaseFrame):
 											  (os.path.basename(profile_path), 
 											   self.display_ctrl.GetStringSelection()))
 				else:
-					success_msg = ""
+					success_msg = lang.getstr("profiling.complete")
 			if extra:
 				extra = ",".join(extra).replace(":,", ":").replace(",,", "\n")
 				success_msg = "\n\n".join([success_msg, extra]).strip()
