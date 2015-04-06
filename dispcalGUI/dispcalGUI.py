@@ -3179,7 +3179,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		update_cal = self.calibration_update_cb.GetValue()
 
 		self.measurement_mode_ctrl.Enable(
-			not update_cal and bool(self.worker.instruments) and 
+			bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
 		update_profile = update_cal and is_profile()
@@ -3365,6 +3365,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_drift_compensation_ctrls()
 
 		self.testchart_btn.Enable(enable_profile)
+		self.testchart_patches_amount_ctrl.Enable(enable_profile)
 		self.create_testchart_btn.Enable(enable_profile)
 		self.profile_type_ctrl.Enable(enable_profile)
 
@@ -9870,8 +9871,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					   bitmap=geticon(32, "dialog-information"))
 		cal_changed = v != getcfg("measurement_mode") and \
 					  getcfg("calibration.file", False) not in self.presets
-		if cal_changed:
-			self.cal_changed()
 		setcfg("measurement_mode", (strtr(v, {"V": "", 
 											  "H": ""}) if v else None) or None)
 		instrument_features = self.worker.get_instrument_features()
