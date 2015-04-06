@@ -6943,7 +6943,7 @@ usage: spotread [-options] [logfile]
 			except ValueError:
 				pass
 			else:
-				percentage = start / end * 100
+				percentage = max(start - 1, 0) / end * 100
 		elif re.match("Added \\d+/\\d+", lastmsg, re.I):
 			# targen
 			components = lastmsg.lower().replace("added ", "").split("/")
@@ -6966,7 +6966,7 @@ usage: spotread [-options] [logfile]
 					end = 20
 					percentage = min(start, 20.0) / end * 100
 					lastmsg = ""
-		if (percentage and time() > self.starttime + 3 and
+		if (percentage is not None and time() > self.starttime + 3 and
 			self.progress_wnd is getattr(self, "terminal", None)):
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
@@ -6991,7 +6991,7 @@ usage: spotread [-options] [logfile]
 				safe_print("")
 			self.progress_wnd.SetTitle(self.progress_wnd.original_msg)
 			self.progress_wnd.original_msg = None
-		if percentage:
+		if percentage is not None:
 			if "Setting up the instrument" in msg or \
 			   "Commencing device calibration" in msg or \
 			   "Commencing display calibration" in msg or \
