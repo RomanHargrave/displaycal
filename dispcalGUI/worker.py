@@ -2093,18 +2093,13 @@ class Worker(object):
 		self.lastmsg.clear()
 		self.repeat = False
 		self.send_buffer = None
-		if not hasattr(self, "logger") or (self.interactive and self.owner and
-										   isinstance(self.logger,
-													  DummyLogger)):
-			# Log interaction with Argyll tools that run interactively
-			if self.interactive and self.owner:
-				if self.owner.Name != "mainframe":
-					name = "interact.%s" % self.owner.Name
-				else:
-					name = "interact"
-				self.logger = get_file_logger(name)
-			else:
-				self.logger = DummyLogger()
+		# Log interaction with Argyll tools
+		if self.owner and self.owner.Name != "mainframe":
+			name = "interact.%s" % self.owner.Name
+		else:
+			name = "interact"
+		if not hasattr(self, "logger") or self.logger.name != name:
+			self.logger = get_file_logger(name)
 		if self.interactive:
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
