@@ -11,6 +11,7 @@ import warnings
 from time import localtime, strftime, time
 
 from meta import name as appname
+from options import debug
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
 from util_str import safe_str, safe_unicode
@@ -18,6 +19,12 @@ from util_str import safe_str, safe_unicode
 logging.raiseExceptions = 0
 
 logging._warnings_showwarning = warnings.showwarning
+
+if debug:
+	loglevel = logging.DEBUG
+else:
+	loglevel = logging.INFO
+
 
 def showwarning(message, category, filename, lineno, file=None, line=""):
 	"""
@@ -151,7 +158,7 @@ safe_log = SafeLogger(print_=False)
 safe_print = SafeLogger()
 
 
-def get_file_logger(name, level=logging.DEBUG, when="midnight", backupCount=0,
+def get_file_logger(name, level=loglevel, when="midnight", backupCount=0,
 					logdir=None, filename=None):
 	global _logdir
 	if logdir is None:
@@ -260,7 +267,7 @@ def setup_logging(logdir, name=appname):
 	"""
 	global _logdir, logger
 	_logdir = logdir
-	logger = get_file_logger(None, logging.DEBUG, "midnight",
+	logger = get_file_logger(None, loglevel, "midnight",
 							 5 if name == appname else 0, filename=name)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
