@@ -7793,7 +7793,7 @@ usage: spotread [-options] [logfile]
 		# on Mac OS X 10.6 and newer
 		return ((sys.platform != "darwin" or
 				 intlist(mac_ver()[0].split(".")) < [10, 6]) and
-				not config.is_untethered_display())
+				not config.is_virtual_display())
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",
