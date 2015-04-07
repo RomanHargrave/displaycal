@@ -3677,8 +3677,7 @@ class Worker(object):
 	
 	def generate_B2A_from_inverse_table(self, profile, clutres=None,
 										source="A2B", tableno=None, bpc=False,
-										logfile=None, filename=None,
-										intent="r"):
+										logfile=None, filename=None):
 		"""
 		Generate a profile's B2A table by inverting the A2B table 
 		(default A2B1 or A2B0)
@@ -3713,12 +3712,11 @@ class Worker(object):
 			logfile.write(msg)
 			logfile.write("\n")
 
-		if intent is None:
-			# Note that intent 0 will be colorimetric if no other tables are
-			# present
-			intent = {0: "p",
-					  1: "r",
-					  2: "s"}[tableno]
+		# Note that intent 0 will be colorimetric if no other tables are
+		# present
+		intent = {0: "p",
+				  1: "r",
+				  2: "s"}[tableno]
 		
 		# Lookup RGB -> XYZ for primaries, black- and white point
 		idata = [[0, 0, 0], [1, 1, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
@@ -3777,23 +3775,29 @@ class Worker(object):
 		# 0: L* (a*=b*=0) -> RGB
 		# 1: As method 0, but blend a* b* to blackpoint hue
 		# 2: R=G=B -> PCS
-		# Method 0 and 1 result in lowest invprofcheck dE2k, with method 0
-		# having a slight edge
-		method = 0
+		# 3: As method 0, but blend a* b* to blackpoint hue in XYZ (BPC)
+		# Method 0 and 1 result in lowest invprofcheck dE2k, with method 1
+		# having a slight edge due to more accurately encoding the blackpoint
+		method = 1
 		if method != 2:
 			for i in vrange:
 				L, a, b = i / maxval * 100, 0, 0
-				if method == 1 and not bpc and XYZbp != [0, 0, 0]:
+				if method in (1, 3) and not bpc and XYZbp != [0, 0, 0]:
 					# Blend to blackpoint hue
-					vv = (L - Lbp) / (100.0 - Lbp)  # 0 at bp, 1 at wp
-					vv = 1.0 - vv
-					if vv < 0.0:
-						vv = 0.0
-					elif vv > 1.0:
-						vv = 1.0
-					vv = math.pow(vv, 40.0)
-					a += vv * abp
-					b += vv * bbp
+					if method == 1:
+						vv = (L - Lbp) / (100.0 - Lbp)  # 0 at bp, 1 at wp
+						vv = 1.0 - vv
+						if vv < 0.0:
+							vv = 0.0
+						elif vv > 1.0:
+							vv = 1.0
+						vv = math.pow(vv, 40.0)
+						a += vv * abp
+						b += vv * bbp
+					else:
+						X, Y, Z = colormath.Lab2XYZ(L, a, b)
+						XYZ = colormath.apply_bpc(X, Y, Z, (0, 0, 0), XYZbp)
+						a, b = colormath.XYZ2Lab(*[v * 100 for v in XYZ])[1:]
 				idata.append((L, a, b))
 		
 		pcs = profile.connectionColorSpace[0].lower()
@@ -3810,7 +3814,7 @@ class Worker(object):
 			pass
 
 		if method == 2:
-			# lookup RGB -> Lab values through profile using xicclu to get TRC
+			# lookup RGB -> XYZ values through profile using xicclu to get TRC
 			odata = []
 			if not bpc:
 				numentries -= 1
@@ -3818,22 +3822,22 @@ class Worker(object):
 			for i in xrange(numentries):
 				odata.append([i / maxval] * 3)
 			idata = self.xicclu(profile, odata, intent,
-								{"A2B": "f", "B2A": "ib"}[source], pcs="l")
+								{"A2B": "f", "B2A": "ib"}[source], pcs="x")
 			if not bpc:
 				numentries += 1
 				maxval += 1
 				idata.insert(0, [0, 0, 0])
 				odata.insert(0, [0, 0, 0])
-			if idata[-1][0] != 100:
-				idata[-1][0] = 100.0
-
-		oXYZ = [colormath.Lab2XYZ(*v) for v in idata]
+			wY = idata[-1][1]
+			oXYZ = idata = [[n / wY for n in v] for v in idata]
+		else:
+			oXYZ = [colormath.Lab2XYZ(*v) for v in idata]
 		fpL = [v[0] for v in idata]
 		fpX = [v[0] for v in oXYZ]
 		fpY = [v[1] for v in oXYZ]
 		fpZ = [v[2] for v in oXYZ]
 
-		if bpc and XYZbp != [0, 0, 0]:
+		if method != 2 and bpc and XYZbp != [0, 0, 0]:
 			if logfile:
 				logfile.write("Applying BPC to input curve PCS values...\n")
 			for i, (L, a, b) in enumerate(idata):
@@ -4070,6 +4074,24 @@ class Worker(object):
 				logfile.write("\r%i%%" % round(j / maxval * 100))
 		if logfile:
 			logfile.write("\n")
+		if False and method and not bpc:
+			# Force the blackpoint - NEVER
+			if logfile:
+				logfile.write("Forcing B2A input curve blackpoint...\n")
+			XYZbp_m = m2 * XYZbp
+			for i in xrange(3):
+				black_index = int(math.ceil(maxval * XYZbp_m[i]))
+				if logfile:
+					logfile.write("Channel #%i\n" % i)
+				for j in xrange(black_index + 1):
+					if j == black_index:
+						v = int(math.ceil(65535 * XYZbp_m[i]))
+					else:
+						v = 0
+					if logfile:
+						logfile.write("#%i %i -> %i\n" %
+									  (j, itable.input[i][j], v))
+					itable.input[i][j] = v
 
 		step = 1.0 / (clutres - 1.0)
 		do_lookup = True
@@ -5816,8 +5838,13 @@ usage: spotread [-options] [logfile]
 				if (bpc and
 					profile.tags["A2B%i" % tableno].clut[0][0] != [0, 0, 0]):
 					# Need to apply BPC. Use temporary copy of A2B.
-					otable = profile.tags["A2B%i" % tableno]
-					profile.tags["A2B%i" % tableno] = table = ICCP.LUT16Type()
+					otables = {}
+					table = ICCP.LUT16Type(profile=profile)
+					for i in xrange(3):
+						if "A2B%i" % i in profile.tags:
+							otables[i] = profile.tags["A2B%i" % i]
+							profile.tags["A2B%i" % i] = table
+					otable = otables[tableno]
 					# Copy table
 					table.matrix = []
 					for row in otable.matrix:
@@ -5832,15 +5859,14 @@ usage: spotread [-options] [logfile]
 						table.clut.append([])
 						for row in block:
 							table.clut[-1].append(list(row))
-					logfiles.write("Applying BPC to temporary A2B%i table...\n"
-								   % tableno)
+					logfiles.write("Applying BPC to temporary A2B tables...\n")
 					table.apply_bpc()
 					bpc_applied = True
 				elif bpc:
 					# BPC not needed, copy existing B2A
 					profile.tags["B2A%i" % tableno] = results[0]
 					return results
-				if not filename or not os.path.isfile(filename):
+				if not filename or not os.path.isfile(filename) or bpc_applied:
 					# Write profile to temp dir
 					tempdir = self.create_tempdir()
 					if isinstance(tempdir, Exception):
@@ -5873,9 +5899,9 @@ usage: spotread [-options] [logfile]
 						return False
 				finally:
 					if bpc_applied:
-						logfiles.write("Restoring original A2B%i table...\n" %
-									   tableno)
-						profile.tags["A2B%i" % tableno] = otable
+						logfiles.write("Restoring original A2B tables...\n")
+						for i, otable in otables.iteritems():
+							profile.tags["A2B%i" % i] = otable
 					if temp:
 						os.remove(profile.fileName)
 						if self.tempdir and not os.listdir(self.tempdir):
