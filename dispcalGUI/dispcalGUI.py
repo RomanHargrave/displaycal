@@ -4053,7 +4053,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_set_path(self):
 		# 3D LUT filename with crcr32 hash before extension - up to DCG 2.9.0.7
 		profile_save_path = os.path.splitext(getcfg("calibration.file"))[0]
-		lut3d = [getcfg("3dlut.gamap.use_b2a") and "g" or "G",
+		lut3d = [getcfg("3dlut.gamap.use_b2a") and "gg" or "G",
 				 "i" + getcfg("3dlut.rendering_intent"),
 				 "r%i" % getcfg("3dlut.size"),
 				 "e" + getcfg("3dlut.encoding.input"),
