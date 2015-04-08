@@ -815,20 +815,16 @@ p.generate_report = function(set_delta_calc_method) {
 		else if (mode == 'XYZ' || mode == 'xyY' || mode == "Lu'v'") {
 			target_color = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2]);
 			actual_color = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
+			target_color = [target_color[0] * 100, target_color[1] * 100, target_color[2] * 100];
+			actual_color = [actual_color[0] * 100, actual_color[1] * 100, actual_color[2] * 100];
+			accuracy = 4;
 			if (mode == 'xyY') {
 				target_color = jsapi.math.color.XYZ2xyY(target_color[0], target_color[1], target_color[2]);
 				actual_color = jsapi.math.color.XYZ2xyY(actual_color[0], actual_color[1], actual_color[2]);
-				accuracy = 4;
 			}
 			else if (mode == "Lu'v'") {
-				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0] * 100, target_color[1] * 100, target_color[2] * 100);
-				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0] * 100, actual_color[1] * 100, actual_color[2] * 100);
-				accuracy = 4;
-			}
-			else {
-				target_color = [target_color[0] * 100, target_color[1] * 100, target_color[2] * 100];
-				actual_color = [actual_color[0] * 100, actual_color[1] * 100, actual_color[2] * 100];
-				accuracy = 2;
+				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0], target_color[1], target_color[2]);
+				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0], actual_color[1], actual_color[2]);
 			}
 		}
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
