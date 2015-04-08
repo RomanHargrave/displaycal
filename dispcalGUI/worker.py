@@ -2848,7 +2848,7 @@ class Worker(object):
 					# Root is required if installing a profile to a system
 					# location
 					asroot = True
-			elif not ("-s" in args or self.calibration_loading_supported):
+			elif not ("-s" in args or self.calibration_loading_generally_supported):
 				# Loading/clearing calibration not supported
 				# Don't actually do it, pretend we were successful
 				if "-V" in args:
@@ -7786,13 +7786,19 @@ usage: spotread [-options] [logfile]
 				setcfg("calibration.file", dst_pathname + ".cal")
 				setcfg("last_cal_or_icc_path", dst_pathname + ".cal")
 		return result
+
+	@property
+	def calibration_loading_generally_supported(self):
+		# Loading/clearing calibration seems to have undesirable side-effects
+		# on Mac OS X 10.6 and newer
+		return (sys.platform != "darwin" or
+				intlist(mac_ver()[0].split(".")) < [10, 6])
 	
 	@property
 	def calibration_loading_supported(self):
 		# Loading/clearing calibration seems to have undesirable side-effects
 		# on Mac OS X 10.6 and newer
-		return ((sys.platform != "darwin" or
-				 intlist(mac_ver()[0].split(".")) < [10, 6]) and
+		return (self.calibration_loading_generally_supported and
 				not config.is_virtual_display())
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
