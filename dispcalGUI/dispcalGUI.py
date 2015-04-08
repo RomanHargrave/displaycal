@@ -12348,19 +12348,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			shadow.blend = True
 			items.append(shadow)
 		items.append((1, 8))
-		items.append(wx.StaticText(self.aboutdialog, -1, u"%s © %s" % (appname, 
-																	   author)))
-		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s" % (version,
-																	 build)))
+		version_title = version
+		if VERSION > VERSION_BASE:
+			version_title += " Beta"
+		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s © %s" %
+								   (appname, version_title, author)))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label=domain, 
 			URL="http://%s" % domain))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
-		items.append(wx.StaticText(
-			self.aboutdialog, -1, u"Argyll CMS © Graeme Gill"))
-		items.append(wx.StaticText(
-			self.aboutdialog, -1, u"%s" % 
-								  self.worker.argyll_version_string))
+		items.append(wx.StaticText(self.aboutdialog, -1,
+								   u"Argyll CMS %s © Graeme Gill" %
+								   self.worker.argyll_version_string))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="ArgyllCMS.com", 
 			URL="http://www.argyllcms.com"))
@@ -12388,10 +12387,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			pyver_long = [sys.version]
 		items.append(wx.StaticText(self.aboutdialog, -1, 
 								   "Python " + pyver_long[0].strip()))
-		if len(pyver_long) > 1:
-			for part in pyver_long[1:]:
-				if part:
-					items.append(wx.StaticText(self.aboutdialog, -1, part))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="python.org", 
 			URL="http://www.python.org"))
