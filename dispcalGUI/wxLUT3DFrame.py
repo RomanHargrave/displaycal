@@ -565,7 +565,7 @@ class LUT3DFrame(BaseFrame):
 			# collink says madVR works best with 65
 			self.lut3d_set_option("3dlut.size", 65)
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
-		self.lut3d_setup_encoding_ctrl(format)
+		self.lut3d_setup_encoding_ctrl()
 		self.lut3d_update_encoding_controls()
 		self.lut3d_show_encoding_controls()
 		self.lut3d_enable_size_controls()
@@ -943,9 +943,10 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_bitdepth_ab[i] = bitdepth
 			self.lut3d_bitdepth_ba[bitdepth] = i
 		
-		self.lut3d_setup_encoding_ctrl(getcfg("3dlut.format"))
+		self.lut3d_setup_encoding_ctrl()
 	
-	def lut3d_setup_encoding_ctrl(self, format=None):
+	def lut3d_setup_encoding_ctrl(self):
+		format = getcfg("3dlut.format")
 		# Shared with amin window
 		if format == "madVR":
 			encodings = ["t"]
