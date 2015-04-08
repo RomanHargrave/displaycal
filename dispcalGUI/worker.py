@@ -473,7 +473,11 @@ argyll_utils = {}
 def get_argyll_util(name, paths=None):
 	""" Find a single Argyll utility. Return the full path. """
 	cfg_argyll_dir = getcfg("argyll.dir")
-	exe = argyll_utils.get(cfg_argyll_dir, {}).get(name, None)
+	if paths:
+		cache_key = os.pathsep.join(paths)
+	else:
+		cache_key = cfg_argyll_dir
+	exe = argyll_utils.get(cache_key, {}).get(name, None)
 	if exe:
 		return exe
 	if not paths:
@@ -499,9 +503,9 @@ def get_argyll_util(name, paths=None):
 			safe_print("Info:", "|".join(argyll_altnames[name]), 
 					   "not found in", os.pathsep.join(paths))
 	if exe:
-		if not cfg_argyll_dir in argyll_utils:
-			argyll_utils[cfg_argyll_dir] = {}
-		argyll_utils[cfg_argyll_dir][name] = exe
+		if not cache_key in argyll_utils:
+			argyll_utils[cache_key] = {}
+		argyll_utils[cache_key][name] = exe
 	return exe
 
 
@@ -771,8 +775,10 @@ def set_argyll_bin(parent=None):
 	argyll_version_cfg = parse_argyll_version_string(argyll_version_string_cfg)
 	# Don't prompt for 1.2.3_foo if current version is 1.2.3
 	# but prompt for 1.2.3 if current version is 1.2.3_foo
+	# Also prompt for 1.2.3_beta2 if current version is 1.2.3_beta
 	if ((argyll_version > argyll_version_cfg and
-		 not argyll_version_string.startswith(argyll_version_string_cfg)) or
+		 (argyll_version[:4] == argyll_version_cfg[:4] or
+		  not argyll_version_string.startswith(argyll_version_string_cfg))) or
 		(argyll_version < argyll_version_cfg and
 		 argyll_version_string_cfg.startswith(argyll_version_string))):
 		argyll_dir = os.path.dirname(get_argyll_util("dispwin", paths) or "")
