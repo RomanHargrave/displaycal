@@ -4090,10 +4090,7 @@ class Worker(object):
 				if logfile:
 					logfile.write("Channel #%i\n" % i)
 				for j in xrange(black_index + 1):
-					if j == black_index:
-						v = int(math.ceil(65535 * XYZbp_m[i]))
-					else:
-						v = 0
+					v = 0
 					if logfile:
 						logfile.write("#%i %i -> %i\n" %
 									  (j, itable.input[i][j], v))
