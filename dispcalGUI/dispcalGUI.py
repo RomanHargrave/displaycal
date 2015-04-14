@@ -10343,6 +10343,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				profile.setDescription(os.path.basename(filename))
 				profile.calculateID()
 				profile.write(profile_save_path)
+				if profile_save_path == get_current_profile_path():
+					self.lut3d_update_b2a_controls()
 				self.install_profile_handler(None, profile_save_path)
 		else:
 			show_result_dialog(lang.getstr("error.profile.file_not_created"),
