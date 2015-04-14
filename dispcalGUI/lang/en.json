@@ -244,6 +244,7 @@
 	"chromatic_adaptation_matrix": "Chromatic adaptation matrix",
 	"chromatic_adaptation_transform": "Chromatic adaptation transform",
 	"chromaticity_illuminant_relative": "Chromaticity (illuminant-relative)",
+	"chromecast_limitations_warning": "Please note that Chromecast accuracy is not as good as a directly connected display or madTPG, due to the Chromecast using RGB to YCbCr conversion and upscaling.",
 	"clear": "Clear",
 	"color": "Color",
 	"color.custom": "Custom color",

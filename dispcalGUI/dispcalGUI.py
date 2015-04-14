@@ -105,8 +105,8 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
-from worker import (Error, Info, UnloggedError, UnloggedInfo, Warn,
-					Worker, check_create_dir,
+from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
+					Warn, Worker, check_create_dir,
 					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
 					check_ti3_criteria2, get_argyll_util, get_options_from_cal,
@@ -9755,6 +9755,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			### Set measurement report dest profile to current
 			##setcfg("measurement_report.output_profile",
 				   ##get_current_profile_path())
+		if (not isinstance(event, CustomEvent) and
+			config.get_display_name().startswith("Chromecast ")):
+			# Show a warning re Chromecast limitation
+			show_result_dialog(UnloggedWarning(lang.getstr("chromecast_limitations_warning")),
+							   parent=self)
 	
 	def display_delay_handler(self, event):
 		mapping = {self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",

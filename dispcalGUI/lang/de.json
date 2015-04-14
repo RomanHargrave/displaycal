@@ -242,6 +242,7 @@
 	"chromatic_adaptation_matrix": "Matrix zur chromatischen Anpassung",
 	"chromatic_adaptation_transform": "Methode zur chromatischen Anpassung",
 	"chromaticity_illuminant_relative": "Chromatizität (Leuchtmittel-Bezug)",
+	"chromecast_limitations_warning": "Bitte beachten Sie, dass die Genauigkeit über Chromecast nicht so gut ist wie über eine direkte Verbindung zum Anzeigegerät oder madTPG, da Chromecast RGB in YCbCr konvertiert und hochskaliert.",
 	"clear": "Löschen",
 	"color": "Farbe",
 	"color.custom": "Benutzerdefinierte Farbe",
