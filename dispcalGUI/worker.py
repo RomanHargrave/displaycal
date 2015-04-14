@@ -2890,21 +2890,6 @@ class Worker(object):
 				args[index] += "echo. && echo Current RGB "
 			else:
 				args[index] += "echo '\nCurrent RGB '"
-		if self.measure_cmd and cmdname != get_argyll_utilname("spotread") and False:
-			# FIXME: Hmm. this doesn't work right, dispcal/dispread crashes.
-			# Run a dummy command so we can grab measured XYZ
-			marg = get_arg("-M", args, True)
-			if marg:
-				index = min(marg[0] + 1, len(args) - 1)
-				args[index] += " && "
-			else:
-				args.insert(0, "-M")
-				args.insert(1, "")
-				index = 1
-			if sys.platform == "win32":
-				args[index] += "echo. && echo Current XYZ "
-			else:
-				args[index] += "echo '\nCurrent XYZ '"
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
