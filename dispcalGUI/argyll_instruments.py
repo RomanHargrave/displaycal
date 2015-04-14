@@ -13,6 +13,7 @@ vendors = [
 	"Datacolor",
 	"GretagMacbeth",
 	"Hughski",
+	"Image Engineering",
 	"JETI",
 	"Klein",
 	"X-Rite",

@@ -199,6 +199,15 @@
 		"skip_sensor_cal": false,
 		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
+	"EX1": {
+		"spectral": true,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": true,
+		"skip_sensor_cal": true,
+		"integration_time": [9.2, 3.9]  // Using i1 Pro values
+	},
 	"K-10": {
 		"spectral": false,
 		"adaptive_mode": false,

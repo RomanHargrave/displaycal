@@ -88,8 +88,10 @@ ATTRS{idVendor}=="273f", ATTRS{idProduct}=="1001", ENV{COLORD_SENSOR_KIND}="colo
 ATTRS{idVendor}=="273f", ATTRS{idProduct}=="1004", ENV{COLORD_SENSOR_KIND}="colorhug" ENV{COLORD_SENSOR_CAPS}="lcd"
 
 # ColorHug Spectro
-ATTRS{idVendor}=="273f", ATTRS{idProduct}=="1002", ENV{COLORD_SENSOR_KIND}="colorhug-spectro", ENV{C
-OLORD_SENSOR_CAPS}="lcd"
+ATTRS{idVendor}=="273f", ATTRS{idProduct}=="1002", ENV{COLORD_SENSOR_KIND}="colorhug-spectro", ENV{COLORD_SENSOR_CAPS}="lcd"
+
+# Image Engineering
+ATTRS{idVendor}=="2457", ATTRS{idProduct}=="4000", ENV{COLORD_SENSOR_KIND}="ex1", ENV{COLORD_SENSOR_CAPS}="lcd crt ambient"
 
 #########################################################
 # color calibration device
