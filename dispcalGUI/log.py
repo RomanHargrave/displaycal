@@ -114,9 +114,12 @@ log = Log()
 
 class LogFile():
 	
-	def __init__(self, filename, logdir):
+	""" Logfile class. Default is to not rotate. """
+	
+	def __init__(self, filename, logdir, when="never", backupCount=0):
 		self._logger = get_file_logger(md5(safe_str(filename,
 													"UTF-8")).hexdigest(),
+									   when=when, backupCount=backupCount,
 									   logdir=logdir, filename=filename)
 	
 	def close(self):
@@ -158,8 +161,13 @@ safe_log = SafeLogger(print_=False)
 safe_print = SafeLogger()
 
 
-def get_file_logger(name, level=loglevel, when="midnight", backupCount=0,
+def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 					logdir=None, filename=None):
+	""" Return logger object.
+	
+	A TimedRotatingFileHandler (if when == "never") or FileHandler will be used.
+	
+	"""
 	global _logdir
 	if logdir is None:
 		logdir = _logdir
@@ -179,7 +187,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=0,
 		except Exception, exception:
 			safe_print(u"Warning - log directory '%s' could not be created: %s" 
 					   % tuple(safe_unicode(s) for s in (logdir, exception)))
-	elif os.path.exists(logfile):
+	elif when != "never" and os.path.exists(logfile):
 		try:
 			logstat = os.stat(logfile)
 		except Exception, exception:
@@ -249,9 +257,12 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=0,
 												 (logbackup, exception)))
 	if os.path.exists(logdir):
 		try:
-			filehandler = logging.handlers.TimedRotatingFileHandler(logfile,
-																	when=when,
-																	backupCount=backupCount)
+			if when != "never":
+				filehandler = logging.handlers.TimedRotatingFileHandler(logfile,
+																		when=when,
+																		backupCount=backupCount)
+			else:
+				filehandler = logging.handlers.FileHandler(logfile)
 			fileformatter = logging.Formatter("%(asctime)s %(message)s")
 			filehandler.setFormatter(fileformatter)
 			logger.addHandler(filehandler)
@@ -261,14 +272,14 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=0,
 	return logger
 
 
-def setup_logging(logdir, name=appname):
+def setup_logging(logdir, name=appname, backupCount=5):
 	"""
 	Setup the logging facility.
 	"""
 	global _logdir, logger
 	_logdir = logdir
 	logger = get_file_logger(None, loglevel, "midnight",
-							 5 if name == appname else 0, filename=name)
+							 backupCount, filename=name)
 	streamhandler = logging.StreamHandler(logbuffer)
 	streamformatter = logging.Formatter("%(message)s")
 	streamhandler.setFormatter(streamformatter)
