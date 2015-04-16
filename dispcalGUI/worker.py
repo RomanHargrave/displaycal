@@ -2100,7 +2100,9 @@ class Worker(object):
 		self.repeat = False
 		self.send_buffer = None
 		# Log interaction with Argyll tools
-		if not hasattr(self, "logger"):
+		if (not hasattr(self, "logger") or
+			(isinstance(self.logger, DummyLogger) and self.owner and
+			 self.owner.Name == "mainframe")):
 			if not self.owner or self.owner.Name != "mainframe":
 				self.logger = DummyLogger()
 			else:
