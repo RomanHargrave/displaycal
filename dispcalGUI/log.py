@@ -195,8 +195,9 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 					   tuple(safe_unicode(s) for s in (logfile, exception)))
 		else:
 			# rollover needed?
+			t = logstat.st_mtime
 			try:
-				mtime = localtime(logstat.st_mtime)
+				mtime = localtime(t)
 			except ValueError, exception:
 				# This can happen on Windows because localtime() is buggy on
 				# that platform. See:
@@ -204,8 +205,19 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 				# http://bugs.python.org/issue1760357
 				# To overcome this problem, we ignore the real modification
 				# date and force a rollover
-				mtime = localtime(time() - 60 * 60 * 24)
-			if localtime()[:3] > mtime[:3]:
+				t = time() - 60 * 60 * 24
+				mtime = localtime(t)
+			# Deal with DST
+			now = localtime()
+			dstNow = now[-1]
+			dstThen = mtime[-1]
+			if dstNow != dstThen:
+				if dstNow:
+					addend = 3600
+				else:
+					addend = -3600
+				mtime = localtime(t + addend)
+			if now[:3] > mtime[:3]:
 				# do rollover
 				logbackup = logfile + strftime(".%Y-%m-%d", mtime)
 				if os.path.exists(logbackup):
