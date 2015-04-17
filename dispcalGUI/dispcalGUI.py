@@ -10261,17 +10261,38 @@ class MainFrame(ReportFrame, BaseFrame):
 					 glob.glob(os.path.join(dirname, "*.ccmx")) +
 					 glob.glob(os.path.join(dirname, "*.ccss")))
 		filenames.sort()
+		lut3d_ext = ["." + strtr(lut3d_format, {"eeColor": "txt",
+												"madVR": "3dlut"})
+					 for lut3d_format in config.valid_values["3dlut.format"]]
+		has_3dlut = False
+		for filename in filenames:
+			if os.path.splitext(filename)[1].lower() in lut3d_ext:
+				has_3dlut = True
+				break
+		if has_3dlut:
+			# Should 3D LUT files be included?
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("archive.include_3dluts"), 
+								ok=lang.getstr("no"), alt=lang.getstr("yes"),
+								cancel=lang.getstr("cancel"), 
+								bitmap=geticon(32, "dialog-question"))
+			result = dlg.ShowModal()
+			if result == wx.ID_CANCEL:
+				return
+			if result != wx.ID_OK:
+				# Include 3D LUTs
+				lut3d_ext = None
 		self.worker.interactive = False
 		self.worker.start(self.create_session_archive_consumer,
 						  self.create_session_archive_producer,
 						  wargs=(dirname, dirfilenames, filenames, archive_path,
-								 sevenzip),
+								 lut3d_ext if has_3dlut else None, sevenzip),
 						  progress_msg=lang.getstr("archive.create"),
 						  stop_timers=False, cancelable=bool(sevenzip),
 						  fancy=False)
 
 	def create_session_archive_producer(self, dirname, dirfilenames, filenames,
-										archive_path, sevenzip):
+										archive_path, exclude_ext, sevenzip):
 		""" Create session archive """
 		if sevenzip:
 			# Create 7z archive
@@ -10281,8 +10302,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				filenames = [dirname]
 			if os.path.isfile(archive_path):
 				os.remove(archive_path)
-			return self.worker.exec_cmd(sevenzip, ["a", "-y", archive_path] +
-												  filenames,
+			args = ["a", "-y"]
+			if exclude_ext:
+				for ext in exclude_ext:
+					args.append("-xr!*" + ext)
+			return self.worker.exec_cmd(sevenzip, args + [archive_path] + filenames,
 										capture_output=True)
 		else:
 			# Create ZIP archive
@@ -10294,6 +10318,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			try:
 				with zipfile.ZipFile(archive_path, 'w') as zip:
 					for filename in filenames:
+						if exclude_ext:
+							if os.path.splitext(filename)[1].lower() in exclude_ext:
+								continue
 						zip.write(filename,
 								  os.path.join(dirbasename,
 											   os.path.basename(filename)))

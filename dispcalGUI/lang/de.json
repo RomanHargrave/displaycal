@@ -81,6 +81,7 @@
 	"apply_cal.error": "Kalibrierung konnte nicht angewendet werden.",
 	"apply_trc": "Tonwertkurve anwenden",
 	"archive.create": "Komprimierte Archivdatei erstellen...",
+	"archive.include_3dluts": "Möchten Sie auch 3D-LUT-Dateien dem Archiv hinzufügen (nicht empfohlen, führt zu größerer Archivdatei)?",
 	"argyll.debug.warning1": "Bitte benutzen Sie diese Option nur, wenn Sie Debugging-Informationen wirklich benötigen (z.B. zur tiefgreifenden Fehlersuche in Argyll CMS)! In der Regel ist diese Option nur für Software-Entwickler zum Auffinden und Beheben von Problemen nützlich. Möchten Sie die Debugging-Ausgabe wirklich aktivieren?",
 	"argyll.debug.warning2": "Bitte vergessen Sie nicht, die Debugging-Ausgabe für den normalen Betrieb der Software wieder zu deaktivieren.",
 	"argyll.dir": "Argyll-CMS-Programmverzeichnis:",

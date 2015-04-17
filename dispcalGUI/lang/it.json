@@ -81,6 +81,7 @@
 		"*apply_cal.error": "Calibration could not be applied.",
 		"*apply_trc": "Apply tone response curve",
 		"*archive.create": "Create compressed archive...",
+		"*archive.include_3dluts": "Do you want to include 3D LUT files in the archive (not recommended, leads to larger archive file size)?",
 		"*argyll.debug.warning1": "Please only use this option if you actually need debugging information (e.g. for troubleshooting Argyll CMS functionality)! It is normally only useful for software developers to aid in problem diagnosis and resolution. Are you sure you want to enable debugging output?",
 		"*argyll.debug.warning2": "Please remember to disable debugging output for normal operation of the software.",
 	"argyll.dir": "Directory con gli eseguibili di Argyll CMS:",

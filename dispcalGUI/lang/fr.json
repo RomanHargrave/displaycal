@@ -81,6 +81,7 @@
 	"apply_cal.error": "Le calibrage n'a pu être appliqué.",
 	"apply_trc": "Appliquer le mappage de gamma",
 		"*archive.create": "Create compressed archive...",
+		"*archive.include_3dluts": "Do you want to include 3D LUT files in the archive (not recommended, leads to larger archive file size)?",
 	"argyll.debug.warning1": "Veuillez utiliser cette option uniquement si vous avez vraiment besoin d'information de débogage (p. ex. pour le dépannage d'une fonctionnalité d'Argyll CMS) ! Ceci est en principe utile uniquement aux développeurs du logiciel pour aider au diagnostic et à la résolution de problèmes. Êtes-vous sûr(e) de vouloir activer la sortie du débogage ?",
 	"argyll.debug.warning2": "N'oubliez pas de désactiver la sortie du débogage pour le fonctionnement normal du logiciel.",
 	"argyll.dir": "Répertoire des exécutables Argyll CMS :",
