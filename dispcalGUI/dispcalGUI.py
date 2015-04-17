@@ -44,6 +44,7 @@ import threading
 import traceback
 import urllib
 import urllib2
+import zipfile
 if sys.platform == "win32":
 	import _winreg
 from hashlib import md5
@@ -58,7 +59,7 @@ import demjson
 import config
 from config import (autostart, autostart_home, build, 
 					script_ext, defaults, enc, 
-					exe, fs_enc, getbitmap, geticon, 
+					exe, exe_ext, fs_enc, getbitmap, geticon, 
 					get_ccxx_testchart, get_current_profile,
 					get_display_profile, get_data_path, getcfg,
 					get_total_patches,
@@ -2191,6 +2192,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  id=self.calibration_file_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.load_cal_handler, 
 				  id=self.calibration_file_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.create_session_archive_handler, 
+				  id=self.create_session_archive_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.delete_calibration_handler, 
 				  id=self.delete_calibration_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.install_profile_handler, 
@@ -2690,6 +2693,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.calibration_file_ctrl.SetStringSelection(
 				lang.getstr("settings.new"))
 			self.calibration_file_ctrl.SetToolTip(None)
+			self.create_session_archive_btn.Disable()
 			self.delete_calibration_btn.Disable()
 			self.install_profile_btn.Disable()
 			do_update_controls = self.calibration_update_cb.GetValue()
@@ -3313,6 +3317,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		(cal, filename, profile_path,
 		 profile_exists) = self.update_calibration_file_ctrl(silent)
+		self.create_session_archive_btn.Enable(bool(cal) and 
+											   cal not in self.presets)
 		self.delete_calibration_btn.Enable(bool(cal) and 
 										   cal not in self.presets)
 		self.install_profile_btn.Enable(profile_exists and
@@ -9418,15 +9424,14 @@ class MainFrame(ReportFrame, BaseFrame):
 					if icolordisplay:
 						kind = "icd"
 						if sys.platform == "win32":
-							sevenzip_name = "7z.exe"
 							paths = getenvu("PATH", os.defpath).split(os.pathsep)
 							paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
 														    "7-zip"))
 							paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
 														    "7-zip"))
 						else:
-							sevenzip_name = "7z"
 							paths = None
+						sevenzip_name = "7z" + exe_ext
 						sevenzip = which(sevenzip_name, paths=paths)
 						if sevenzip:
 							if not getcfg("dry_run"):
@@ -10211,6 +10216,95 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def create_profile_name_btn_handler(self, event):
 		self.update_profile_name()
+
+	def create_session_archive_handler(self, event):
+		""" Create 7z or ZIP archive of the currently selected profile folder """
+		filename = getcfg("calibration.file", False)
+		if not filename:
+			return
+		path_name, ext = os.path.splitext(filename)
+		# Check for 7-Zip
+		if sys.platform == "win32":
+			paths = getenvu("PATH", os.defpath).split(os.pathsep)
+			paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+											"7-zip"))
+			paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
+											"7-zip"))
+		else:
+			paths = None
+		sevenzip_name = "7z" + exe_ext
+		sevenzip = which(sevenzip_name, paths=paths)
+		if sevenzip:
+			format = "7z"
+		else:
+			format = "zip"
+		# Ask where to save archive
+		defaultDir, defaultFile = get_verified_path("last_archive_save_path")
+		dlg = wx.FileDialog(self, lang.getstr("archive.create"), defaultDir, 
+							"%s.%s" % (os.path.basename(path_name), format),
+							wildcard=lang.getstr("filetype." + format) + "|*." +
+									 format, style=wx.SAVE |
+												   wx.FD_OVERWRITE_PROMPT)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		archive_path = dlg.GetPath()
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		setcfg("last_archive_save_path", archive_path)
+		dirname = os.path.dirname(filename)
+		dirfilenames = [os.path.join(dirname, filename) for filename in
+						os.listdir(dirname)]
+		# Select filenames
+		filenames = (glob.glob(path_name + "*") +
+					 glob.glob(os.path.join(dirname, "*.ccmx")) +
+					 glob.glob(os.path.join(dirname, "*.ccss")))
+		self.worker.interactive = False
+		self.worker.start(self.create_session_archive_consumer,
+						  self.create_session_archive_producer,
+						  wargs=(dirname, dirfilenames, filenames, archive_path,
+								 sevenzip),
+						  progress_msg=lang.getstr("archive.create"),
+						  stop_timers=False, cancelable=bool(sevenzip),
+						  fancy=False)
+
+	def create_session_archive_producer(self, dirname, dirfilenames, filenames,
+										archive_path, sevenzip):
+		""" Create session archive """
+		if sevenzip:
+			# Create 7z archive
+			if filenames == dirfilenames:
+				# Add whole folder to archive, so that the 7z archive
+				# has one folder in it containing all files
+				filenames = [dirname]
+			if os.path.isfile(archive_path):
+				os.remove(archive_path)
+			return self.worker.exec_cmd(sevenzip, ["a", "-y", archive_path] +
+												  filenames,
+										capture_output=True)
+		else:
+			# Create ZIP archive
+			dirbasename = ""
+			if filenames == dirfilenames:
+				# Add whole folder to archive, so that the ZIP archive
+				# has one folder in it containing all files
+				dirbasename = os.path.basename(dirname)
+			try:
+				with zipfile.ZipFile(archive_path, 'w') as zip:
+					for filename in filenames:
+						zip.write(filename,
+								  os.path.join(dirbasename,
+											   os.path.basename(filename)))
+			except Exception, exception:
+				return exception
+			else:
+				return True
+
+	def create_session_archive_consumer(self, result):
+		if not result:
+			result = UnloggedError("".join(self.worker.errors))
+		if isinstance(result, Exception):
+			show_result_dialog(result, parent=self)
 
 	def profile_save_path_btn_handler(self, event):
 		defaultPath = os.path.join(*get_verified_path("profile.save_path"))
