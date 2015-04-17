@@ -274,7 +274,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 																		when=when,
 																		backupCount=backupCount)
 			else:
-				filehandler = logging.handlers.FileHandler(logfile)
+				filehandler = logging.FileHandler(logfile)
 			fileformatter = logging.Formatter("%(asctime)s %(message)s")
 			filehandler.setFormatter(fileformatter)
 			logger.addHandler(filehandler)
