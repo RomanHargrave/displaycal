@@ -10255,10 +10255,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		dirname = os.path.dirname(filename)
 		dirfilenames = [os.path.join(dirname, filename) for filename in
 						os.listdir(dirname)]
+		dirfilenames.sort()
 		# Select filenames
 		filenames = (glob.glob(path_name + "*") +
 					 glob.glob(os.path.join(dirname, "*.ccmx")) +
 					 glob.glob(os.path.join(dirname, "*.ccss")))
+		filenames.sort()
 		self.worker.interactive = False
 		self.worker.start(self.create_session_archive_consumer,
 						  self.create_session_archive_producer,
