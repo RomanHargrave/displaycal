@@ -63,45 +63,36 @@ http://pexpect.sourceforge.net/
 $Id: pexpect.py 507 2007-12-27 02:40:52Z noah $
 """
 
-try:
-    import os, sys, time
-    import select
-    import string
-    import re
-    import struct
-    import types
-    import errno
-    import traceback
-    import signal
-    import subprocess
-    
-    if sys.platform != 'win32':
-        import pty
-        import tty
-        import termios
-        import resource
-        import fcntl
-    else:
-        from StringIO import StringIO
-        try:
-            from ctypes import windll
-            import pywintypes
-            from win32com.shell.shellcon import CSIDL_APPDATA
-            from win32com.shell.shell import SHGetSpecialFolderPath
-            from win32console import *
-            from win32process import *
-            from win32con import *
-            from win32gui import *
-            import win32api
-            import win32file
-            import winerror
-        except ImportError, e:
-            raise ImportError(str(e) + "\nThis package requires the win32 python packages.")
-except ImportError, e:
-    raise ImportError (str(e) + """
+import os, sys, time
+import select
+import string
+import re
+import struct
+import types
+import errno
+import traceback
+import signal
+import subprocess
 
-A critical module was not found. Probably this operating system does not
-support it. Pexpect is intended for UNIX-like operating systems.""")
+if sys.platform != 'win32':
+    import pty
+    import tty
+    import termios
+    import resource
+    import fcntl
+else:
+    from StringIO import StringIO
+    from ctypes import windll
+    import pywintypes
+    from win32com.shell.shellcon import CSIDL_APPDATA
+    from win32com.shell.shell import SHGetSpecialFolderPath
+    from win32console import *
+    from win32process import *
+    from win32con import *
+    from win32gui import *
+    import win32api
+    import win32file
+    import winerror
 
 __version__ = '2.3'
 __revision__ = '$Revision: 399 $'
