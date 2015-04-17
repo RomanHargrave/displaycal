@@ -6151,8 +6151,8 @@ usage: spotread [-options] [logfile]
 			bgrgbl = sum(bgrgb)
 			desired_apl = getcfg("patterngenerator.apl")
 			apl = desired_apl * 3
-			bgrgb = [(apl - max(rgbl - apl, 0.0)) / bgrgbl * v for v in bgrgb]
-		self.log("%s: Sending RGB %.3f %.3f %.3f, background %.3f %.3f %.3f, "
+			bgrgb = [max(apl - max(rgbl - apl, 0.0), 0.0) / bgrgbl * v for v in bgrgb]
+		self.log("%s: Sending RGB %.3f %.3f %.3f, background RGB %.3f %.3f %.3f, "
 				 "x %.4f, y %.4f, w %.4f, h %.4f" %
 				 ((appname, ) + tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
 		try:
