@@ -28,6 +28,7 @@ from log import safe_print
 _ch = {}
 _initialized = False
 _lib = None
+_lib_version = None
 _server = None
 _snd = {}
 _sounds = {}
@@ -38,7 +39,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	# Note on buffer size: Too high values cause crackling during fade, too low
 	# values cause choppy playback of ogg files when using pyo (good value for
 	# pyo is >= 2048)
-	global _initialized, _lib, _server, pygame, pyglet, pyo, wx
+	global _initialized, _lib, _lib_version, _server, pygame, pyglet, pyo, wx
 	if _initialized and not reinit:
 		# To re-initialize, explicitly set reinit to True
 		return
@@ -53,7 +54,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 		raise exception
 	elif lib == "pygame":
 		try:
-			import pygame.mixer
+			import pygame, pygame.mixer
 			_lib = "pygame"
 		except ImportError:
 			_lib = None
@@ -63,6 +64,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 			pygame.mixer.init(frequency=samplerate, channels=channels,
 							  buffer=buffersize)
 			_server = pygame.mixer
+			_lib_version = pygame.__version__
 	elif lib == "pyglet":
 		try:
 			import pyglet
@@ -80,6 +82,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 			_lib = None
 		else:
 			_server = pyglet.media
+			_lib_version = pyglet.version
 	elif lib == "pyo":
 		try:
 			import pyo
@@ -94,6 +97,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 				_server = pyo.Server(sr=samplerate, nchnls=channels,
 									 buffersize=buffersize, duplex=0).boot()
 				_server.start()
+				_lib_version = ".".join(str(v) for v in pyo.getVersion())
 	elif lib == "wx":
 		try:
 			import wx
@@ -102,6 +106,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 			_lib = None
 		else:
 			_server = wx
+			_lib_version = wx.__version__
 	if not _lib:
 		raise RuntimeError("No audio library available")
 	_initialized = True
