@@ -25,6 +25,8 @@ if debug:
 else:
 	loglevel = logging.INFO
 
+logger = None
+
 
 def showwarning(message, category, filename, lineno, file=None, line=""):
 	"""
@@ -91,7 +93,7 @@ class Log():
 		"""
 		global logger
 		msg = msg.replace("\r\n", "\n").replace("\r", "")
-		if fn is None and logger.handlers:
+		if fn is None and logger and logger.handlers:
 			fn = logger.info
 		if fn:
 			for line in msg.split("\n"):
@@ -172,15 +174,15 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 	if logdir is None:
 		logdir = _logdir
 	logger = logging.getLogger(name)
-	logger.propagate = 0
-	logger.setLevel(level)
 	if not filename:
 		filename = name
 	logfile = os.path.join(logdir, filename + ".log")
 	for handler in logger.handlers:
-		if (isinstance(handler, logging.handlers.TimedRotatingFileHandler) and
+		if (isinstance(handler, logging.FileHandler) and
 			handler.baseFilename == os.path.abspath(logfile)):
 			return logger
+	logger.propagate = 0
+	logger.setLevel(level)
 	if not os.path.exists(logdir):
 		try:
 			os.makedirs(logdir)
@@ -290,9 +292,10 @@ def setup_logging(logdir, name=appname, backupCount=5):
 	"""
 	global _logdir, logger
 	_logdir = logdir
-	logger = get_file_logger(None, loglevel, "midnight",
-							 backupCount, filename=name)
-	streamhandler = logging.StreamHandler(logbuffer)
-	streamformatter = logging.Formatter("%(message)s")
-	streamhandler.setFormatter(streamformatter)
-	logger.addHandler(streamhandler)
+	if name.startswith(appname):
+		logger = get_file_logger(None, loglevel, "midnight",
+								 backupCount, filename=name)
+		streamhandler = logging.StreamHandler(logbuffer)
+		streamformatter = logging.Formatter("%(message)s")
+		streamhandler.setFormatter(streamformatter)
+		logger.addHandler(streamhandler)

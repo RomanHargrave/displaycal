@@ -425,8 +425,7 @@ def runtimeconfig(pyfile):
 	
 	"""
 	from log import setup_logging
-	if pyname.startswith(appname):
-		setup_logging(logdir, pyname)
+	setup_logging(logdir, pyname)
 	if debug or verbose >= 1:
 		from log import safe_print
 	if debug:
