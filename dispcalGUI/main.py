@@ -451,13 +451,6 @@ def main(module=None):
 			except EnvironmentError, exception:
 				safe_print("Warning - could not remove lockfile %s: %r" %
 						   (lockfilename, exception))
-	try:
-		logger = logging.getLogger(pyname)
-		for handler in logger.handlers:
-			logger.removeHandler(handler)
-		logging.shutdown()
-	except Exception, exception:
-		pass
 
 
 def main_3dlut_maker():
