@@ -4275,8 +4275,11 @@ class ProgressDialog(wx.Dialog):
 				audio.init()
 			except Exception, exception:
 				safe_print(exception)
-			self.sound = audio.Sound(get_data_path("theme/engine_hum_loop.wav"),
-									 True)
+			self.processor_sound = audio.Sound(get_data_path("theme/engine_hum_loop.wav"),
+											   True)
+			self.generator_sound = audio.Sound(get_data_path("theme/pulsing_loop.wav"),
+											   True)
+			self.sound = self.processor_sound
 			self.indicator_sound = audio.Sound(get_data_path("theme/beep_boop.wav"))
 			ProgressDialog.get_bitmaps(self.progress_type)
 			sizer0flag = 0
@@ -4590,7 +4593,8 @@ class ProgressDialog(wx.Dialog):
 	def sound_fadein(self):
 		if getcfg("measurement.play_sound"):
 			wx.CallLater(50, lambda: self and self.IsShown() and
-									 self.sound.safe_fade(3000, True))
+									 self.sound.safe_fade(self.sound_get_delay(),
+														  True))
 
 	def anim_fadeout(self):
 		self.animbmp.loop = False
@@ -4598,7 +4602,13 @@ class ProgressDialog(wx.Dialog):
 
 	def sound_fadeout(self):
 		if self.sound.is_playing:
-			self.sound.safe_stop(3000)
+			self.sound.safe_stop(self.sound_get_delay())
+
+	def sound_get_delay(self):
+		if self.sound is self.processor_sound:
+			return 3000
+		else:
+			return 1500
 	
 	def elapsed_time_handler(self, event):
 		self.elapsed_time.Label = strftime("%H:%M:%S",
@@ -4728,7 +4738,7 @@ class ProgressDialog(wx.Dialog):
 			   int(not(bool(getcfg("measurement.play_sound")))))
 		if getcfg("measurement.play_sound"):
 			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
-			if (self.progress_type == 0 and self.keepGoing and
+			if (self.progress_type in (0, 2) and self.keepGoing and
 				self._fpprogress < self.gauge.GetRange()):
 				self.sound.safe_play()
 		else:
@@ -4757,10 +4767,13 @@ class ProgressDialog(wx.Dialog):
 	def set_progress_type(self, progress_type):
 		if progress_type != self.progress_type:
 			if self.progress_type == 0:
+				# Processing
 				delay = 4000
 			elif self.progress_type == 1:
+				# Measuring
 				delay = 500
 			else:
+				# Generating test patches
 				delay = 2000
 			if hasattr(self, "animbmp"):
 				self.anim_fadeout()
@@ -4769,11 +4782,18 @@ class ProgressDialog(wx.Dialog):
 											self.anim_fadein())
 			if hasattr(self, "sound"):
 				self.sound_fadeout()
-				if progress_type == 0:
+				if progress_type in (0, 2):
+					self.set_sound(progress_type)
 					wx.CallLater(delay, lambda: self and
 												self.progress_type == progress_type and
 												self.sound_fadein())
 			self.progress_type = progress_type
+
+	def set_sound(self, progress_type=0):
+		if progress_type == 0 and hasattr(self, "processor_sound"):
+			self.sound = self.processor_sound
+		elif hasattr(self, "generator_sound"):
+			self.sound = self.generator_sound
 
 	def start_timer(self, ms=75):
 		self.timer.Start(ms)
@@ -4783,7 +4803,8 @@ class ProgressDialog(wx.Dialog):
 			self.elapsed_timer.Start(1000)
 		if hasattr(self, "animbmp"):
 			self.anim_fadein()
-		if hasattr(self, "sound") and self.progress_type == 0:
+		if hasattr(self, "sound") and self.progress_type in (0, 2):
+			self.set_sound(self.progress_type)
 			self.sound_fadein()
 	
 	def stop_timer(self, immediate=True):

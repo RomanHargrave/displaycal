@@ -1081,10 +1081,13 @@ class Producer(object):
 		result = self.producer(*args, **kwargs)
 		if not self.continue_next and self.worker._progress_wnd:
 			if (hasattr(self.worker.progress_wnd, "animbmp") and
-				self.worker.progress_wnd.progress_type == 0):
+				self.worker.progress_wnd.progress_type in (0, 2)):
 				# Allow time for animation fadeout
 				wx.CallAfter(self.worker.progress_wnd.stop_timer, False)
-				sleep(4)
+				if self.worker.progress_wnd.progress_type == 0:
+					sleep(4)
+				else:
+					sleep(1)
 		return result
 
 
