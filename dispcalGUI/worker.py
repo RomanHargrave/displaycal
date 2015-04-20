@@ -1875,7 +1875,7 @@ class Worker(object):
 			if (self.instrument_calibration_complete or
 				((config.is_untethered_display() or
 				  getcfg("measure.darken_background") or
-				  not self.madtpg_fullscreen) and
+				  self.madtpg_fullscreen is False) and
 				 (not self.dispread_after_dispcal or
 				  self.cmdname == get_argyll_utilname("dispcal")))):
 				# Show a dialog asking user to place the instrument on the
@@ -2113,7 +2113,7 @@ class Worker(object):
 		if self.interactive:
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
-		self.madtpg_fullscreen = True
+		self.madtpg_fullscreen = None
 		self.use_patterngenerator = False
 		self.patch_sequence = False
 		self.patch_count = 0
@@ -2935,6 +2935,17 @@ class Worker(object):
 					# Connected
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
 							 (self.madtpg.get_version() + (self.madtpg.dllpath, )))
+					fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
+					if cmdname == get_argyll_utilname("dispcal"):
+						self.madtpg_previous_fullscreen = fullscreen
+						if not ("-m" in args or "-u" in args) and fullscreen:
+							# Disable fullscreen
+							self.madtpg.set_use_fullscreen_button(False)
+					elif (getattr(self, "madtpg_previous_fullscreen", None) and
+						  cmdname == get_argyll_utilname("dispread") and
+						  self.dispread_after_dispcal):
+						# Restore fullscreen
+						self.madtpg.set_use_fullscreen_button(True)
 					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
@@ -2946,6 +2957,10 @@ class Worker(object):
 						if not "-V" in args:
 							self.madtpg.disable_3dlut()
 						countdown = 15
+						madtpg_osd = not self.madtpg.is_disable_osd_button_pressed()
+						if not madtpg_osd:
+							# Enable OSD if disabled
+							self.madtpg.set_disable_osd_button(False)
 						for i in xrange(countdown):
 							if self.subprocess_abort or self.thread_abort:
 								break
@@ -2962,6 +2977,9 @@ class Worker(object):
 							delay = time() - ts
 							if delay < 1:
 								sleep(1 - delay)
+						if not madtpg_osd:
+							# Disable OSD
+							self.madtpg.set_disable_osd_button(True)
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
 					if (patternconfig and isinstance(patternconfig, tuple) and
