@@ -610,7 +610,7 @@
 	"lut_access": "Accès à la table de correspondance",
 		"*madtpg.launch.failure": "madTPG was not found or could not be launched.",
 		"*madvr.not_found": "madVR DirectShow filter was not found in the registry. Please make sure it is installed.",
-		"*madvr.outdated": "The installed version of madVR is outdated. Please update to the latest version (atleast 0.87.12).",
+		"*madvr.outdated": "The installed version of madVR is outdated. Please update to the latest version (at least 0.87.14).",
 	"magenta": "Magenta",
 		"*make_and_model": "Make and model",
 		"*manufacturer": "Manufacturer",

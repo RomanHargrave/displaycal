@@ -32,13 +32,18 @@ class MadTPG(object):
 
 	def __init__(self):
 		# We only expose stuff we might actually use.
-		self._methodnames = ("ConnectEx", "Disable3dlut", "GetDeviceGammaRamp",
+		self._methodnames = ("ConnectEx", "Disable3dlut", "Enable3dlut",
+							 "GetBlackAndWhiteLevel", "GetDeviceGammaRamp",
 							 "GetSelected3dlut", "GetVersion",
+							 "IsDisableOsdButtonPressed",
+							 "IsStayOnTopButtonPressed",
 							 "IsUseFullscreenButtonPressed",
+							 "SetDisableOsdButton",
 							 "SetDeviceGammaRamp", "SetOsdText",
 							 "GetPatternConfig", "SetPatternConfig",
 							 "ShowProgressBar", "SetProgressBarPos",
-							 "SetSelected3dlut", "ShowRGB",
+							 "SetSelected3dlut", "SetStayOnTopButton",
+							 "SetUseFullscreenButton", "ShowRGB",
 							 "ShowRGBEx", "Load3dlutFile", "Disconnect",
 							 "Quit")
 
@@ -95,6 +100,13 @@ class MadTPG(object):
 		return self.mad.madVR_ConnectEx(method1, timeout1, method2, timeout2,
 										method3, timeout3, method4, timeout4,
 										parentwindow)
+
+	def get_black_and_white_level(self):
+		""" Return madVR output level setup """
+		blacklvl, whitelvl = ctypes.c_long(), ctypes.c_long()
+		result = self.mad.madVR_GetBlackAndWhiteLevel(*[ctypes.byref(v) for v in
+														(blacklvl, whitelvl)])
+		return result and (blacklvl.value, whitelvl.value)
 
 	def get_device_gamma_ramp(self):
 		""" Calls the win32 API 'GetDeviceGammaRamp' """
