@@ -2110,7 +2110,8 @@ class Worker(object):
 				self.logger = DummyLogger()
 			else:
 				self.logger = get_file_logger("interact")
-		if self.interactive:
+		if (hasattr(self, "thread") and self.thread.isAlive() and
+			self.interactive):
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
 		self.madtpg_fullscreen = None
