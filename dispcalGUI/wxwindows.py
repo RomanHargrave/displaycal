@@ -3016,10 +3016,15 @@ class CustomCheckBox(wx.Panel):
 		self.Enable(False)
 
 	def Enable(self, enable=True):
+		enable = bool(enable)
+		if self.Enabled is enable:
+			return
 		self._enabled = enable
 		self._cb.Enable(enable)
 		if self._label is not self._cb:
-			color = self.ForegroundColour
+			if not hasattr(self, "_fgcolor"):
+				self._fgcolor = self.ForegroundColour
+			color = self._fgcolor
 			if not enable:
 				bgcolor = self.Parent.BackgroundColour
 				bgblend = .5

@@ -282,6 +282,9 @@ if sys.platform == "darwin":
 
 
 	def StaticTextEnable(self, enable=True):
+		enable = bool(enable)
+		if self.Enabled is enable:
+			return
 		self._enabled = enable
 		if not hasattr(self, "_fgcolor"):
 			self._fgcolor = self.ForegroundColour
