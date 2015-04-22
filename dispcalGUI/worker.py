@@ -7476,12 +7476,21 @@ usage: spotread [-options] [logfile]
 													 resume, fancy)
 		if not hasattr(self, "_disabler"):
 			self._disabler = BetterWindowDisabler(self.progress_wnds)
-		self.thread = delayedresult.startWorker(self._generic_consumer, 
-												Producer(self, producer,
-														 continue_next),
-												[consumer, continue_next] + 
-												list(cargs), ckwargs, wargs, 
-												wkwargs)
+		# Can't use startWorker because we may need access to self.thread from
+		# within thread, and startWorker does not return before the actual
+		# thread starts running
+		jobID = None
+		sender = delayedresult.SenderCallAfter(self._generic_consumer, jobID,
+											   args=[consumer, continue_next] +
+													list(cargs), kwargs=ckwargs)
+		self.thread = delayedresult.Producer(sender, Producer(self, producer,
+															  continue_next),
+											 args=wargs, kwargs=wkwargs, 
+											 name=jobID, group=None,
+											 daemon=False, senderArg=None,
+											 sendReturn=True)
+        
+		self.thread.start()
 		return True
 	
 	def stop_progress(self):
