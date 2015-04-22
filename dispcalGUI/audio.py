@@ -299,6 +299,7 @@ class _Sound(object):
 				# Can't reuse the player, won't replay the sound under Mac OS X
 				# and Linux even when seeking to start position which allows
 				# replaying the sound under Windows.
+				self._ch.delete()
 				self._ch = pyglet.media.Player()
 				self.volume = volume
 			if not self.is_playing and fade_ms and volume == 1:
