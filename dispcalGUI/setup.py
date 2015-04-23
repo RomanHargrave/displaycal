@@ -29,6 +29,7 @@ from distutils.command.install import install
 from distutils.util import change_root, get_platform
 from fnmatch import fnmatch
 import codecs
+import ctypes.util
 import distutils.core
 import glob
 import os
@@ -65,10 +66,16 @@ config = {"data": ["tests/*.icc"],
 		  # numpy.lib.utils imports pydoc, which imports Tkinter, but 
 		  # numpy.lib.utils is not even used by dispcalGUI, so omit all 
 		  # Tk stuff
-		  "excludes": {"all": ["Tkconstants", "Tkinter", "setuptools", "tcl",
+		  # Use pyglet with OpenAL as audio backend. We only need
+		  # pyglet, pyglet.app and pyglet.media
+		  "excludes": {"all": ["Tkconstants", "Tkinter", "pygame",
+							   "pyglet.canvas", "pyglet.extlibs", "pyglet.font",
+							   "pyglet.gl", "pyglet.graphics", "pyglet.image",
+							   "pyglet.input", "pyglet.libs", "pyglet.text",
+							   "pyglet.window", "pyo", "setuptools", "tcl",
 							   "test"],
 					   "darwin": [],
-					   "win32": ["win32com.client.genpy", "pyglet", "pyo"]},
+					   "win32": ["win32com.client.genpy"]},
 		  "package_data": {name: ["argyll_instruments.json",
 								  "beep.wav",
 								  "camera_shutter.wav",
@@ -489,6 +496,18 @@ def setup():
 		data_files += get_data(data, "xtra_package_data", name, sys.platform)
 		if sys.platform == "win32":
 			data_files.extend([(os.path.join(data, "lib"), [sys.executable])])
+			# OpenAL DLLs for pyglet
+			openal32 = ctypes.util.find_library("OpenAL32.dll")
+			wrap_oal = ctypes.util.find_library("wrap_oal.dll")
+			if openal32:
+				oal = [openal32]
+				if wrap_oal:
+					oal.append(wrap_oal)
+				else:
+					print "WARNING: wrap_oal.dll not found!"
+				data_files.append((data, oal))
+			else:
+				print "WARNING: OpenAL32.dll not found!"
 		elif sys.platform != "darwin":
 			# Linux
 			data_files.append((os.path.join(os.path.dirname(data), "appdata"),
