@@ -12,7 +12,15 @@ import shutil
 import sys
 from distutils.sysconfig import get_python_lib
 
-import wxversion
+try:
+	import wxversion
+except:
+	class WxVersion(object):
+		__file__ = ''
+		def getInstalled(self):
+			return []
+
+	wxversion = WxVersion()
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -26,8 +34,7 @@ for wxv in wxversions_all:
 	if wxv >= wx_minversion_str:
 		wxversions_candidates.append(wxv)
 if not wxversions_candidates:
-	raise SystemExit('No wxPython versions >= %s found. Aborting.'
-					 % wx_minversion_str)
+	print 'No wxPython versions >= %s found' % wx_minversion_str
 choice = 1
 if len(wxversions_candidates) > 1:
 	print('Several wxPython versions >= %s found.' % wx_minversion_str)
@@ -48,11 +55,13 @@ if len(wxversions_candidates) > 1:
 				  % (1, len(wxversions_candidates)))
 		else:
 			break
-wx_pth = os.path.join(os.path.dirname(wxversion.__file__),
-					  'wx-%s' % wxversions_candidates[choice - 1])
-print('Your choice: %s' % wx_pth)
-if raw_input('Press <ENTER> to continue, X <ENTER> to abort: ').upper() == 'X':
-	sys.exit()
+	wx_pth = os.path.join(os.path.dirname(wxversion.__file__),
+						  'wx-%s' % wxversions_candidates[choice - 1])
+	print('Your choice: %s' % wx_pth)
+	if raw_input('Press <ENTER> to continue, X <ENTER> to abort: ').upper() == 'X':
+		sys.exit()
+else:
+	wx_pth = 'wx'
 
 # Packages to collect
 pkgs = {'numpy': ['numpy'],
@@ -62,6 +71,7 @@ pkgs = {'numpy': ['numpy'],
 if sys.platform == 'win32':
 	pkgs['wmi'] = ['wmi']
 if sys.platform == 'darwin':
+	pkgs['pyglet'] = ['pyglet']
 	pkgs['pygame'].extend(['/Library/Frameworks/SDL_image.framework',
 						   '/Library/Frameworks/SDL_mixer.framework',
 						   '/Library/Frameworks/SDL_ttf.framework',
@@ -80,7 +90,12 @@ def copy(src, dst):
 # Collect packages
 python_lib = get_python_lib(True)
 for pkg_name, data in pkgs.iteritems():
-	pkg = __import__(pkg_name)
+	print('Checking for package: %s' % pkg_name)
+	try:
+		pkg = __import__(pkg_name)
+	except ImportError, exception:
+		print exception
+		continue
 	dist_dir = os.path.join('dist', '%s-%s-%s-py%i.%i' % ((pkg_name,
 														   pkg.__version__,
 														   sys.platform) +
@@ -89,29 +104,37 @@ for pkg_name, data in pkgs.iteritems():
 	if not os.path.isdir(dist_dir):
 		os.makedirs(dist_dir)
 	for entry in data:
-		module = entry
-		if not os.path.isabs(entry):
-			entry = os.path.join(python_lib, entry)
-		if entry.lower().endswith('.pth'):
-			with open(entry) as pth:
-				entry = os.path.join(os.path.dirname(pth), pth.read().strip())
-		if os.path.isfile(entry):
-			print('  Collecting file: %s' % entry)
-			pth = entry
-		elif not os.path.isdir(entry):
-			print('  Collecting module: %s' % entry)
-			module = __import__(module)
+		pth = entry
+		if not os.path.isabs(pth):
+			pth = os.path.join(python_lib, pth)
+		if pth.lower().endswith('.pth'):
+			with open(pth) as pthfile:
+				pth = os.path.join(os.path.dirname(pth), pthfile.read().strip())
+		if not os.path.exists(pth):
+			print('  Checking for module: %s' % pth)
+			try:
+				module = __import__(entry)
+			except ImportError, exception:
+				print exception
+				continue
 			filename, ext = os.path.splitext(module.__file__)
 			if os.path.basename(filename) == '__init__':
-				entry = os.path.dirname(filename)
+				pth = os.path.dirname(filename)
+				if not os.path.isdir(pth):
+					while not os.path.isfile(pth):
+						pth = os.path.dirname(pth)
+						print '  Checking for %s' % pth
+					if not os.path.isfile(pth):
+						print('  Warning: Module not found: %s' % entry)
+						continue
 			else:
 				if ext in ('.pyc', '.pyo'):
 					ext = '.py'
 				pth = '%s%s' % (filename, ext)
-		if os.path.isdir(entry):
-			print('  Collecting package: %s' % entry)
-			dirname = os.path.dirname(entry)
-			for dirpath, dirnames, filenames in os.walk(entry):
+		if os.path.isdir(pth):
+			print('  Collecting package: %s' % pth)
+			dirname = os.path.dirname(pth)
+			for dirpath, dirnames, filenames in os.walk(pth):
 				for filename in filenames:
 					src = os.path.join(dirpath, filename)
 					if filename in ('unins000.exe', 'unins000.dat'):
@@ -126,8 +149,10 @@ for pkg_name, data in pkgs.iteritems():
 						os.makedirs(dst_dir)
 					dst = os.path.join(dst_dir, filename)
 					if not os.path.isfile(dst):
+						print('  Collecting file: %s' % pth)
 						copy(src, dst)
 		else:
 			dst = os.path.join(dist_dir, os.path.basename(pth))
 			if not os.path.isfile(dst):
+				print('  Collecting file: %s' % pth)
 				copy(pth, dst)
