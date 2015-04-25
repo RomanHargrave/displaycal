@@ -883,6 +883,8 @@ class BaseFrame(wx.Frame):
 						response = "failed"
 				else:
 					response = "invalid"
+			else:
+				response = "invalid"
 		elif data[0] == "activate" and len(data) < 3:
 			response = "ok"
 			if len(data) < 2:
