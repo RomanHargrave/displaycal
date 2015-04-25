@@ -6027,8 +6027,10 @@ usage: spotread [-options] [logfile]
 					if not isinstance(result, Exception) and result:
 						# Create optimized testchart
 						if getcfg("use_fancy_progress"):
-							# Allow time for animation fade out
-							sleep(3)
+							# Fade out animation/sound
+							self.cmdname = get_argyll_utilname("targen")
+							# Allow time for fade out
+							sleep(4)
 						auto = getcfg("testchart.auto_optimize") or 7
 						s = min(auto, 11) * 4 - 3
 						g = s * 3 - 2
@@ -6047,10 +6049,6 @@ usage: spotread [-options] [logfile]
 						args.extend(["-c", basename + profile_ext, basename])
 						result = self.exec_cmd(cmd, args)
 						self.pauseable = True
-						if not isinstance(result, Exception) and result:
-							if getcfg("use_fancy_progress"):
-								# Allow time for animation fade out
-								sleep(1)
 			else:
 				result = cmd
 		else:
