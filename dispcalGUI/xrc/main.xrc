@@ -1244,8 +1244,6 @@
                                   <object class="wxBoxSizer">
                                     <object class="sizeritem">
                                       <object class="wxSlider" name="testchart_patches_amount_ctrl">
-                                        <min>5</min>
-                                        <max>17</max>
                                       </object>
                                       <option>1</option>
                                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>

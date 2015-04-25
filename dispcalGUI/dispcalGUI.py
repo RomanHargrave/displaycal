@@ -2342,6 +2342,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  id=self.testchart_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.create_testchart_btn_handler, 
 				  id=self.create_testchart_btn.GetId())
+		self.testchart_patches_amount_ctrl.SetRange(config.valid_values["testchart.auto_optimize"][1],
+													config.valid_values["testchart.auto_optimize"][-1])
 		self.testchart_patches_amount_ctrl.Bind(wx.EVT_SLIDER,
 			self.testchart_patches_amount_ctrl_handler)
 

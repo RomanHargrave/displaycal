@@ -558,7 +558,7 @@ valid_values = {
 	"tc_vrml_cie_colorspace": ["DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							   "LCH(uv)", "Lab", "Luv", "Lu'v'", "xyY"],
 	"tc_vrml_device_colorspace": ["HSI", "HSL", "HSV", "RGB"],
-	"testchart.auto_optimize": [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+	"testchart.auto_optimize": [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
 	"trc": ["240", "709", "l", "s", ""],
 	"trc.type": ["g", "G"],
 	"whitepoint.colortemp.locus": ["t", "T"]
