@@ -4557,9 +4557,11 @@ class ProgressDialog(wx.Dialog):
 					self.time4 += time() - self.time3
 					self.time2 = self.time + self.time4
 					self.time3 = 0
-		if getcfg("measurement.play_sound"):
-			if self._fpprogress < prev_value and hasattr(self, "indicator_sound"):
-				self.indicator_sound.safe_play()
+		if (getcfg("measurement.play_sound") and
+			self._fpprogress < prev_value and
+			hasattr(self, "indicator_sound") and
+			not self.indicator_sound.is_playing):
+			self.indicator_sound.safe_play()
 		if (isinstance(self.gauge, BetterPyGauge) and
 			self._style & wx.PD_SMOOTH):
 			if self._fpprogress >= prev_value:
