@@ -1411,6 +1411,7 @@ class Worker(object):
 		self.options_dispcal = []
 		self.options_dispread = []
 		self.options_targen = []
+		self.pauseable = False
 		self.recent_discard = re.compile(r"^Display type is .+|^Doing (?:some initial|check) measurements|^Adjust .+? Press space when done\.\s*|^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma|RGB|\d(?:\.\d+)?).*|^Gamma curve .+|^Display adjustment menu:|^Press|^\d\).+|^(?:1%|Black|Red|Green|Blue|White|Grey)\s+=.+|^\s*patch \d+ of \d+.*|^\s*point \d+.*|^\s*Added \d+/\d+|[\*\.]+|\s*\d*%?", re.I)
 		self.subprocess_abort = False
 		self.sudo = None
@@ -1889,6 +1890,7 @@ class Worker(object):
 			else:
 				if self.isalive():
 					self.safe_send(" ")
+					self.pauseable_now = True
 	
 	def check_instrument_sensor_position(self, txt):
 		""" Check instrument sensor position by looking
@@ -2050,6 +2052,7 @@ class Worker(object):
 			return False
 		if not isinstance(self.progress_wnd, UntetheredFrame):
 			self.safe_send(" ")
+		self.pauseable_now = True
 	
 	def instrument_reposition_sensor(self):
 		if getattr(self, "subprocess_abort", False) or \
@@ -6194,8 +6197,21 @@ usage: spotread [-options] [logfile]
 			self.patterngenerator_sent_count += 1
 			self.log("%s: Patterngenerator sent count: %i" %
 					 (appname, self.patterngenerator_sent_count))
+
+	@Property
+	def pauseable():
+		def fget(self):
+			return self._pauseable
+
+		def fset(self, pauseable):
+			self._pauseable = pauseable
+			self.pauseable_now = False
+
+		return locals()
 	
 	def pause_continue(self):
+		if not self.pauseable or not self.pauseable_now:
+			return
 		if (getattr(self.progress_wnd, "paused", False) and
 			  not getattr(self, "paused", False)):
 			self.paused = True
