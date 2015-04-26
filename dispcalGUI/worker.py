@@ -2973,10 +2973,11 @@ class Worker(object):
 						for i in xrange(countdown):
 							if self.subprocess_abort or self.thread_abort:
 								break
-							self.madtpg.set_osd_text(
+							if not self.madtpg.set_osd_text(
 								lang.getstr("instrument.place_on_screen.madvr",
 											(countdown - i,
-											 self.get_instrument_name())))
+											 self.get_instrument_name()))):
+								return Error("madVR_SetOsdText failed")
 							ts = time()
 							if i % 2 == 0:
 								# Flash test area red
@@ -2992,6 +2993,8 @@ class Worker(object):
 							self.madtpg.set_disable_osd_button(True)
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
+					if not patternconfig:
+						return Error("madVR_GetPatternConfig failed")
 					if (patternconfig and isinstance(patternconfig, tuple) and
 						len(patternconfig) == 4):
 						self.log("Pattern area: %i%%" % patternconfig[0])
@@ -8485,6 +8488,11 @@ usage: spotread [-options] [logfile]
 		if debug: safe_print("[D] wrapup(copy=%s, remove=%s)" % (copy, remove))
 		if not self.tempdir or not os.path.isdir(self.tempdir):
 			return # nothing to do
+		if (isinstance(copy, Exception) and
+			not isinstance(copy, (UnloggedError, UnloggedInfo,
+								  UnloggedWarning)) and self.sessionlogfile):
+			# This is an incomplete run, log exception to session logfile
+			self.sessionlogfile.write(safe_basestring(copy))
 		while self.sessionlogfiles:
 			self.sessionlogfiles.popitem()[1].close()
 		result = True
