@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/pyglet.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>Pygame</name>
+	<summary xml:lang="en">A cross-platform windowing and multimedia library for Python</summary>
+	<description xml:lang="en">pyglet provides an object-oriented programming interface for developing games and other visually-rich applications for Windows, Mac OS X and Linux. Some of the features of pyglet are:
+
+    No external dependencies or installation requirements. For most application and game requirements, pyglet needs nothing else besides Python, simplifying distribution and installation.
+    Take advantage of multiple windows and multi-monitor desktops. pyglet allows you to use as many windows as you need, and is fully aware of multi-monitor setups for use with fullscreen games.
+    Load images, sound, music and video in almost any format. pyglet can optionally use AVbin to play back audio formats such as MP3, OGG/Vorbis and WMA, and video formats such as DivX, MPEG-2, H.264, WMV and Xvid.
+
+pyglet is provided under the BSD open-source license, allowing you to use it for both commerical and other open-source projects with very little restriction.</description>
+	<homepage>http://www.pyglet.org/</homepage>
+	<package-implementation package="pyglet" distributions="RPM" />
+	<package-implementation package="python-pyglet" distributions="RPM" />
+	<package-implementation package="python-pyglet" distributions="Debian" />
+	<package-implementation package="dev-python/pyglet" distributions="Gentoo" />
+	<package-implementation package="python2-pyglet" distributions="Arch" />
+	<group license="BSD License">
+		<requires interface="${URL}0install/python.xml" version="2.6..!3.0">
+			<version not-before="2.6" before="3.0" />
+		</requires>
+		<environment name="DYLD_FALLBACK_LIBRARY_PATH" value="$HOME/lib:/usr/local/lib:/lib:/usr/lib" mode="append" />
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<environment name="PYTHONPATH" insert="." />
+		</implementation>
+	</group>
+</interface>

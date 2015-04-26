@@ -11,7 +11,7 @@
 	<package-implementation package="python-pygame" distributions="Debian" />
 	<package-implementation package="dev-python/pygame" distributions="Gentoo" />
 	<package-implementation package="python2-pygame" distributions="Arch" />
-	<group license="NumPy License">
+	<group license="LGPL (GNU Lesser General Public License)">
 		<environment name="PYTHONPATH" insert="." />
 		<group arch="MacOSX-*">
 			<environment name="DYLD_FALLBACK_FRAMEWORK_PATH" insert="." />

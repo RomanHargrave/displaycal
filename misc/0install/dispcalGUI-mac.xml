@@ -21,7 +21,7 @@ ${DESC}</description>
 		<implementation released="0000-00-00" version="0.0.0.0">
 		</implementation>
 		<group>
-			<requires interface="${URL}0install/pygame.xml" />
+			<requires interface="${URL}0install/pyglet.xml" />
 		</group>
 	</group>
 </interface>
