@@ -8491,15 +8491,30 @@ usage: spotread [-options] [logfile]
 					ext_filter = [".app", ".cal", ".ccmx", ".ccss", ".cmd", 
 								  ".command", ".gam", ".gz", ".icc", ".icm", ".log",
 								  ".png", ".sh", ".ti1", ".ti3", ".wrl", ".wrz"]
+				save_path = getcfg("profile.save_path")
 				if dst_path is None:
-					dst_path = os.path.join(getcfg("profile.save_path"), 
+					dst_path = os.path.join(save_path, 
 											getcfg("profile.name.expanded"), 
 											getcfg("profile.name.expanded") + 
 											".ext")
+				if isinstance(copy, Exception):
+					# This is an incomplete run
+					parts = os.path.normpath(dst_path).split(os.sep)
+					# DON'T use os.path.join due to how it works under Windows:
+					# os.path.join("c:", "foo") represents a path relative to
+					# the current directory on drive C: (c:foo), not c:\foo.
+					if os.sep.join(parts[:-2]) == os.path.normpath(save_path):
+						# If storage directory, save incomplete runs to
+						# different directory
+						parts = [config.datahome, "incomplete"] + parts[-2:]
+						dst_path = os.sep.join(parts)
 				result = check_create_dir(os.path.dirname(dst_path))
 				if isinstance(result, Exception):
 					remove = False
 				else:
+					if isinstance(copy, Exception):
+						safe_print("Moving files of incomplete run to",
+								   os.path.dirname(dst_path))
 					for basename in src_listdir:
 						name, ext = os.path.splitext(basename)
 						if ext_filter is None or ext.lower() in ext_filter:
