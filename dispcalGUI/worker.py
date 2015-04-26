@@ -1398,6 +1398,7 @@ class Worker(object):
 		self.dispcal_create_fast_matrix_shaper = False
 		self.dispread_after_dispcal = False
 		self.finished = True
+		self.instrument_on_screen = False
 		self.interactive = False
 		self.spotread_just_do_instrument_calibration = False
 		self.lastcmdname = None
@@ -1878,7 +1879,8 @@ class Worker(object):
 				  getcfg("measure.darken_background") or
 				  self.madtpg_fullscreen is False) and
 				 (not self.dispread_after_dispcal or
-				  self.cmdname == get_argyll_utilname("dispcal")))):
+				  self.cmdname == get_argyll_utilname("dispcal")) and
+				  not self.instrument_on_screen)):
 				# Show a dialog asking user to place the instrument on the
 				# screen if the instrument calibration was completed,
 				# or if we measure a remote ("Web") display,
@@ -1891,6 +1893,7 @@ class Worker(object):
 				if self.isalive():
 					self.safe_send(" ")
 					self.pauseable_now = True
+					self.instrument_on_screen = True
 	
 	def check_instrument_sensor_position(self, txt):
 		""" Check instrument sensor position by looking
@@ -2053,6 +2056,7 @@ class Worker(object):
 		if not isinstance(self.progress_wnd, UntetheredFrame):
 			self.safe_send(" ")
 		self.pauseable_now = True
+		self.instrument_on_screen = True
 	
 	def instrument_reposition_sensor(self):
 		if getattr(self, "subprocess_abort", False) or \
@@ -2955,7 +2959,8 @@ class Worker(object):
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
 						  ("-m" in args or "-u" in args))) and
-						self.madtpg_fullscreen):
+						self.madtpg_fullscreen and
+						not self.instrument_on_screen):
 						# Show place instrument on screen message with countdown
 						self.madtpg.set_device_gamma_ramp(None)
 						if not "-V" in args:
@@ -2981,6 +2986,7 @@ class Worker(object):
 							delay = time() - ts
 							if delay < 1:
 								sleep(1 - delay)
+						self.instrument_on_screen = True
 						if not madtpg_osd:
 							# Disable OSD
 							self.madtpg.set_disable_osd_button(True)
@@ -7410,6 +7416,8 @@ usage: spotread [-options] [logfile]
 		self.cmdrun = False
 		self.finished = False
 		self.instrument_calibration_complete = False
+		if not resume:
+			self.instrument_on_screen = False
 		self.instrument_place_on_screen_msg = False
 		self.instrument_sensor_position_msg = False
 		self.interactive_frame = interactive_frame
