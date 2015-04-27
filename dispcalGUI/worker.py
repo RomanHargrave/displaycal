@@ -879,6 +879,20 @@ class Warn(UserWarning):
 	pass
 
 
+class EvalFalse(object):
+
+	""" Evaluate to False in boolean comparisons """
+
+	def __init__(self, wrapped_object):
+		self._wrapped_object = wrapped_object
+
+	def __getattribute__(self, name):
+		return getattr(object.__getattribute__(self, "_wrapped_object"), name)
+
+	def __nonzero__(self):
+		return False
+
+
 class DummyDialog(object):
 
 	def __init__(self, *args, **kwargs):
@@ -2127,6 +2141,7 @@ class Worker(object):
 		self.patch_count = 0
 		self.patterngenerator_sent_count = 0
 		self.exec_cmd_returnvalue = None
+		self.tmpfiles = {}
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
@@ -2919,6 +2934,13 @@ class Worker(object):
 			working_dir = self.tempdir
 		if working_dir and not os.path.isdir(working_dir):
 			working_dir = None
+		if working_dir and working_dir == self.tempdir:
+			# Get a list of files in the temp directory and their modification
+			# times so we can determine later if anything has changed and we
+			# should keep the files in case of errors
+			for filename in os.listdir(working_dir):
+				self.tmpfiles[filename] = os.stat(os.path.join(working_dir,
+															   filename)).st_mtime
 		if (working_basename and working_dir == self.tempdir and not silent
 			and log_output and not getcfg("dry_run")):
 			if sessionlogfile:
@@ -8500,6 +8522,21 @@ usage: spotread [-options] [logfile]
 			self.sessionlogfile.write(safe_basestring(copy))
 		while self.sessionlogfiles:
 			self.sessionlogfiles.popitem()[1].close()
+		if isinstance(copy, Exception):
+			# This is an incomplete run, check if any files have been added or
+			# modified (except log files)
+			changes = False
+			for filename in os.listdir(self.tempdir):
+				if filename.endswith(".log"):
+					# Skip log files
+					continue
+				if (filename not in self.tmpfiles or
+					os.stat(os.path.join(self.tempdir, filename)).st_mtime !=
+					self.tmpfiles[filename]):
+					changes = True
+					break
+			if not changes:
+				copy = False
 		result = True
 		if copy:
 			try:
