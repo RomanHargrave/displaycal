@@ -2249,7 +2249,8 @@ class Worker(object):
 					profile_out = ICCP.ICCProfile(profile_out.fileName)
 
 			# Deal with applying TRC
-			collink_version = get_argyll_version("collink")
+			collink_version_string = get_argyll_version_string("collink")
+			collink_version = parse_argyll_version_string(collink_version_string)
 			if trc_gamma:
 				if collink_version >= [1, 7] or not trc_output_offset:
 					# Make sure the profile has the expected Rec. 709 TRC
@@ -2320,7 +2321,7 @@ class Worker(object):
 					# Apply the calibration when building our device link
 					# i.e. use collink -a parameter (apply calibration curves
 					# to link output and append linear)
-					args.extend(["-a", profile_out_cal_path])
+					args.extend(["-a", os.path.basename(profile_out_cal_path)])
 			if getcfg("extra_args.collink").strip():
 				args += parse_argument_string(getcfg("extra_args.collink"))
 			result = self.exec_cmd(collink, args + [profile_in_basename,
@@ -2342,6 +2343,18 @@ class Worker(object):
 				profile_link.device["model"] = device_model
 				if mmod:
 					profile_link.tags.mmod = mmod
+				profile_link.tags.meta = ICCP.DictType()
+				profile_link.tags.meta.update([("CMF_product", appname),
+											   ("CMF_binary", appname),
+											   ("CMF_version", version),
+											   ("collink.args",
+											    sp.list2cmdline(
+												   args + [profile_in_basename,
+														   profile_out_basename,
+														   link_basename])),
+											   ("collink.version", collink_version_string),
+											   ("encoding.input", input_encoding),
+											   ("encoding.output", output_encoding)])
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
 
@@ -8067,9 +8080,37 @@ usage: spotread [-options] [logfile]
 			# DeviceLink profile, we have to use icclu under older Argyll CMS
 			# versions because older xicclu cannot handle devicelink
 			use_icclu = True
+
+		input_encoding = None
+		output_encoding = None
+		if not pcs:
+			# Try to determine input/output encoding for devicelink
+			if isinstance(profile.tags.get("meta"), ICCP.DictType):
+				input_encoding = profile.tags.meta.get("encoding.input")
+				output_encoding = profile.tags.meta.get("encoding.output")
+				if input_encoding == "T":
+					# 'T' (clip wtw on input) not supported for xicclu
+					input_encoding = "t"
+			# Fall back to configured 3D LUT encoding
+			if (not input_encoding or input_encoding
+				not in config.valid_values["3dlut.encoding.input"]):
+				input_encoding = getcfg("3dlut.encoding.input")
+				if input_encoding == "T":
+					# 'T' (clip wtw on input) not supported for xicclu
+					input_encoding = "t"
+			if (not output_encoding or output_encoding
+				not in config.valid_values["3dlut.encoding.output"]):
+				output_encoding = getcfg("3dlut.encoding.output")
+			if (self.argyll_version < [1, 6] and
+				not (input_encoding == output_encoding == "n")):
+				# Fail if encoding is not n (data levels)
+				raise ValueError("The used version of Argyll CMS only"
+								 "supports full range RGB encoding.")
 			
 		odata = self.xicclu(profile, idata, intent, function, pcs=pcs,
-							scale=100, use_icclu=use_icclu)
+							scale=100, use_icclu=use_icclu,
+							input_encoding=input_encoding,
+							output_encoding=output_encoding)
 		
 		gray = []
 		igray = []
@@ -8757,7 +8798,8 @@ usage: spotread [-options] [logfile]
 	def xicclu(self, profile, idata, intent="r", direction="f", order="n",
 			   pcs=None, scale=1, cwd=None, startupinfo=None, raw=False,
 			   logfile=None, use_icclu=False, use_cam_clipping=False,
-			   get_clip=False, show_actual_if_clipped=False):
+			   get_clip=False, show_actual_if_clipped=False,
+			   input_encoding=None, output_encoding=None):
 		"""
 		Call xicclu, feed input floats into stdin, return output floats.
 		
@@ -8769,7 +8811,8 @@ usage: spotread [-options] [logfile]
 		"""
 		with Xicclu(profile, intent, direction, order, pcs, scale, cwd,
 					startupinfo, use_icclu, use_cam_clipping, logfile,
-					self, show_actual_if_clipped) as xicclu:
+					self, show_actual_if_clipped, input_encoding,
+					output_encoding) as xicclu:
 			xicclu(idata)
 		return xicclu.get(raw, get_clip)
 
@@ -8778,7 +8821,8 @@ class Xicclu(Worker):
 	def __init__(self, profile, intent="r", direction="f", order="n",
 				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
 				 use_cam_clipping=False, logfile=None, worker=None,
-				 show_actual_if_clipped=False):
+				 show_actual_if_clipped=False, input_encoding=None,
+				 output_encoding=None):
 		Worker.__init__(self)
 		self.logfile = logfile
 		self.worker = worker
@@ -8820,9 +8864,14 @@ class Xicclu(Worker):
 			if use_cam_clipping:
 				args.append("-b")
 			if get_argyll_version("xicclu") >= [1, 6]:
-				# Add -en -En to prevent problems due to unitialized in_tvenc
-				# and out_tvenc variables in xicclu.c
-				args += ["-en", "-En"]
+				# Add encoding parameters
+				# Note: Not adding -e -E can cause problems due to unitialized
+				# in_tvenc and out_tvenc variables in xicclu.c for Argyll 1.6.x
+				if not input_encoding:
+					input_encoding = "n"
+				if not output_encoding:
+					output_encoding = "n"
+				args += ["-e" + input_encoding, "-E" + output_encoding]
 		args.append("-f" + direction)
 		if profile.profileClass not in ("abst", "link"):
 			args.append("-i" + intent)
