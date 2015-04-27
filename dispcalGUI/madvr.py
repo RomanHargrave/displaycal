@@ -12,6 +12,9 @@ import win32api
 import localization as lang
 
 
+min_version = (0, 87, 14, 0)
+
+
 # Search for madTPG on the local PC, connect to the first found instance
 CM_ConnectToLocalInstance = 0
 # Search for madTPG on the LAN, connect to the first found instance
@@ -70,7 +73,9 @@ class MadTPG(object):
 			self.mad.madVR_ShowRGB.argtypes = [ctypes.c_double] * 3
 			self.mad.madVR_ShowRGBEx.argtypes = [ctypes.c_double] * 6
 		except AttributeError:
-			raise RuntimeError(lang.getstr("madvr.outdated"))
+			raise RuntimeError(lang.getstr("madhcnet.outdated",
+										   tuple(reversed(os.path.split(self.dllpath))) +
+										   min_version))
 
 	def __del__(self):
 		if hasattr(self, "mad"):

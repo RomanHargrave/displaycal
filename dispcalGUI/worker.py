@@ -2941,8 +2941,13 @@ class Worker(object):
 					self.madtpg = madvr.MadTPG()
 				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
 					# Connected
+					# Check madVR version
+					madvr_version = self.madtpg.get_version()
+					if not madvr_version or madvr_version < madvr.min_version:
+						return Error(lang.getstr("madvr.outdated",
+												 madvr.min_version))
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
-							 (self.madtpg.get_version() + (self.madtpg.dllpath, )))
+							 (madvr_version + (self.madtpg.dllpath, )))
 					fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
 					if cmdname == get_argyll_utilname("dispcal"):
 						self.madtpg_previous_fullscreen = fullscreen
