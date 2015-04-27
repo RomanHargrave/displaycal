@@ -137,10 +137,10 @@ class MadTPG(object):
 		return result and thr3dlut
 
 	def get_version(self):
-		version = (ctypes.c_char * 4)()
+		version = ctypes.c_ulong()
 		result = self.mad.madVR_GetVersion(ctypes.byref(version))
-		version = tuple(struct.unpack(">B", version.raw[i:i + 1])[0] for i in
-						reversed(xrange(4)))
+		version = tuple(struct.unpack(">B", c)[0] for c in
+						struct.pack(">I", version.value))
 		return result and version
 
 	def show_rgb(self, r, g, b, bgr=None, bgg=None, bgb=None):
