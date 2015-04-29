@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import inspect
 import sys
 import traceback
 
@@ -95,6 +96,16 @@ def handle_error(error, parent=None, silent=False):
 				dlg.Destroy()
 		except Exception, exception:
 			safe_print("Warning: handle_error():", safe_unicode(exception))
+
+
+def print_callstack():
+	""" Print call stack """
+	stack = inspect.stack()
+	indent = ""
+	for frame, filename, linenum, funcname, line, exc in reversed(stack[1:]):
+		safe_print(indent, funcname, filename, linenum,
+				   repr("".join(line).strip()))
+		indent += " "
 
 
 class ResourceError(Exception):
