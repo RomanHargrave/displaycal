@@ -984,29 +984,39 @@ def setup():
 							entry_point.appendChild(icon)
 						interface.appendChild(entry_point)
 				# Update feed
+				print "Updating 0install feed", dist_path
 				with open(dist_path, "wb") as dist_file:
 					xml = domtree.toprettyxml(encoding="utf-8")
 					xml = re.sub(r"\n\s+\n", "\n", xml)
 					xml = re.sub(r"\n\s*([^<]+)\n\s*", r"\1", xml)
 					dist_file.write(xml)
 				# Sign feed
-				print "Signing", dist_path
 				zeropublish = which("0publish") or which("0publish.exe")
-				passphrase_path = os.path.join(pydir, "gpg", "passphrase.txt")
-				if os.path.isfile(passphrase_path):
-					with open(passphrase_path) as passphrase_file:
-						passphrase = passphrase_file.read().strip()
-					p = wexpect.spawn(zeropublish.encode(fs_enc),
-									  ["-x", dist_path.encode(fs_enc)])
-					p.expect(":")
-					p.send(passphrase)
-					p.send("\n")
-					try:
-						p.expect(wexpect.EOF, timeout=3)
-					except:
-						p.terminate()
+				args = []
+				if not zeropublish:
+					zeropublish = which("0install") or which("0install.exe")
+					if zeropublish:
+						args = ["run", "--command", "0publish", "--",
+								"http://0install.de/feeds/ZeroInstall_Tools.xml"]
+				if zeropublish:
+					passphrase_path = os.path.join(pydir, "gpg", "passphrase.txt")
+					print "Signing", dist_path
+					if os.path.isfile(passphrase_path):
+						with open(passphrase_path) as passphrase_file:
+							passphrase = passphrase_file.read().strip()
+						p = wexpect.spawn(zeropublish.encode(fs_enc), args +
+										  ["-x", dist_path.encode(fs_enc)])
+						p.expect(":")
+						p.send(passphrase)
+						p.send("\n")
+						try:
+							p.expect(wexpect.EOF, timeout=3)
+						except:
+							p.terminate()
+					else:
+						call([zeropublish] + args + ["-x", dist_path.encode(fs_enc)])
 				else:
-					call(["0publish", "-x", dist_path.encode(fs_enc)])
+					print "WARNING: 0publish not found, please sign the feed!"
 		# Create 0install app bundles
 		bundletemplate = os.path.join("0install", "template.app", "Contents")
 		bundletemplatepath = os.path.join(pydir, bundletemplate)
