@@ -9,7 +9,7 @@ arch=('any')
 url="${URL}"
 license=('GPL3')
 makedepends=('python2>=${PY_MINVERSION}')
-depends=('python2>=${PY_MINVERSION}' 'wxpython>=${WX_MINVERSION}' 'python2-numpy' 'python2-pygame' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils' 'zeroinstall-injector')
+depends=('python2>=${PY_MINVERSION}' 'wxpython>=${WX_MINVERSION}' 'python2-numpy' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils' 'zeroinstall-injector')
 optdepends=('argyllcms: calibration & profiling support')
 conflicts=('dispcalgui')
 install=${pkgname}.install

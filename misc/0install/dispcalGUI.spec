@@ -40,7 +40,6 @@ Obsoletes:      ${PACKAGE}
 %if 0%{?mandriva_version} > 0
 Group:          Graphics
 Requires:       libxscrnsaver1
-Requires:       pygame
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
@@ -50,7 +49,6 @@ Group:          Productivity/Graphics/Other
 BuildRequires:  update-desktop-files
 BuildRequires:  zeroinstall-injector
 Requires:       libXss1
-Requires:       python-pygame
 Requires:       python-numpy >= %{numpy_version}
 Requires:       python-wxGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
@@ -61,7 +59,6 @@ Group:          Applications/Multimedia
 Requires:       libXScrnSaver
 Requires:       numpy >= %{numpy_version}
 Requires:       p7zip-plugins
-Requires:       pygame
 Requires:       wxPython >= %{wx_minversion}
 %if 0%{?fedora_version} < 19
 Requires:       zeroinstall-injector
