@@ -386,7 +386,10 @@ class BetterWindowDisabler(object):
 				if w and w not in skip and "Inspection" not in "%s" % w:
 					self._windows.append(w)
 					for child in w.GetAllChildren(skip + toplevel):
-						if child:
+						if child and not isinstance(child, (wx.Panel,
+															wx.PyPanel)):
+							# Don't disable panels, this can have weird side
+							# effects for contained controls
 							self._windows.append(child)
 			def Enable(w, enable=True):
 				w._BetterWindowDisabler_enabled = enable
