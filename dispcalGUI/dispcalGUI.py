@@ -315,7 +315,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 			else:
 				kwargs = {}
 			sp.Popen([zeroinstall.encode(fs_enc), "run", "--refresh",
-					  "--not-before", newversion, "http://%s/0install/%s.xml" %
+					  "--version", newversion, "http://%s/0install/%s.xml" %
 												  (domain.lower(), appname)],
 					 **kwargs)
 		else:
