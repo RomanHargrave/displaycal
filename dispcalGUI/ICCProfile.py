@@ -64,7 +64,11 @@ if sys.platform not in ("darwin", "win32"):
 		xrandr = None
 elif sys.platform == "win32":
 	import util_win
-	mscms = util_win._get_mscms_dll_handle()
+	if sys.getwindowsversion() < (6, ):
+		# WCS only available under Vista and later
+		mscms = None
+	else:
+		mscms = util_win._get_mscms_dll_handle()
 	if mscms:
 		mscms.WcsGetDefaultColorProfileSize.restype = ctypes.c_bool
 		mscms.WcsGetDefaultColorProfile.restype = ctypes.c_bool
