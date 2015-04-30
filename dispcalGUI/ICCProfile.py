@@ -334,10 +334,11 @@ tags = {"A2B0": "Device to PCS: Intent 0",
 		"B2A2": "PCS to device: Intent 2",
 		"CIED": "Characterization measurement values",  # Non-standard
 		"DevD": "Characterization device values",  # Non-standard
+		"arts": "Absolute to media relative transform",  # Non-standard (Argyll)
 		"bkpt": "Media black point",
 		"bTRC": "Blue tone response curve",
 		"bXYZ": "Blue matrix column",
-		"chad": "Chromatic adaptation matrix",
+		"chad": "Chromatic adaptation transform",
 		"clro": "Colorant order",
 		"cprt": "Copyright",
 		"desc": "Description",
@@ -2594,7 +2595,12 @@ class XYZType(ICCProfileTag, XYZNumber):
 			self[name] = value
 	
 	def adapt(self, whitepoint_source=None, whitepoint_destination=None,
-			  cat="Bradford"):
+			  cat=None):
+		if self.profile and isinstance(self.profile.tags.get("arts"),
+									   chromaticAdaptionTag):
+			cat = self.profile.tags.arts
+		else:
+			cat = "Bradford"
 		XYZ = self.__class__(profile=self.profile)
 		XYZ.X, XYZ.Y, XYZ.Z = colormath.adapt(self.X, self.Y, self.Z,
 											  whitepoint_source,
@@ -2706,6 +2712,12 @@ class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 			pass
 		
 		return locals()
+	
+	def get_cat(self):
+		""" Compare to known CAT matrices and return matching name (if any) """
+		for cat_name, cat_matrix in colormath.cat_matrices.iteritems():
+			if colormath.is_similar_matrix(self, cat_matrix, 4):
+				return cat_name
 
 
 class NamedColor2Value(object):
@@ -2946,6 +2958,7 @@ class NamedColor2Type(ICCProfileTag, AODict):
 
 
 tagSignature2Tag = {
+	"arts": chromaticAdaptionTag,
 	"chad": chromaticAdaptionTag
 }
 
@@ -3616,12 +3629,23 @@ class ICCProfile:
 		"""
 		return unicode(self.tags.get("vued", ""))
 	
-	def guess_cat(self):
+	def guess_cat(self, matrix=True):
+		"""
+		Get or guess chromatic adaptation transform.
+		
+		If 'matrix' is True, and 'arts' tag is present, return actual matrix
+		instead of name.
+		
+		"""
 		illuminant = self.illuminant.values()
-		if "chad" in self.tags:
+		if isinstance(self.tags.get("chad"), chromaticAdaptionTag):
 			return colormath.guess_cat(self.tags.chad, 
 									   self.tags.chad.inverted() * illuminant, 
 									   illuminant)
+		elif isinstance(self.tags.get("arts"), chromaticAdaptionTag):
+			if matrix:
+				return self.tags.arts
+			return self.tags.arts.get_cat()
 	
 	def isSame(self, profile, force_calculation=False):
 		"""
@@ -3726,11 +3750,12 @@ class ICCProfile:
 		for sig, tag in self.tags.iteritems():
 			name = tags.get(sig, "'%s'" % sig)
 			if isinstance(tag, chromaticAdaptionTag):
+				info[name] = self.guess_cat(False) or "Unknown"
+				name = "    Matrix"
 				for i, row in enumerate(tag):
 					if i > 0:
-						name = "    "
+						name = "    " * 2
 					info[name] = " ".join("%6.4f" % v for v in row)
-				info["Chromatic adaptation transform"] = self.guess_cat() or "Unknown"
 			elif isinstance(tag, ChromaticityType):
 				info["Chromaticity (illuminant-relative)"] = ""
 				for i, channel in enumerate(tag.channels):

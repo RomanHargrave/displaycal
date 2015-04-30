@@ -6253,11 +6253,13 @@ class MainFrame(ReportFrame, BaseFrame):
 				ti3_joined.DATA[i][color] = ti3_measured.DATA[i + offset][color]
 		
 		wtpt_profile_norm = tuple(n * 100 for n in profile.tags.wtpt.values())
-		if "chad" in profile.tags:
+		if isinstance(profile.tags.get("chad"), ICCP.chromaticAdaptionTag):
 			# undo chromatic adaption of profile whitepoint
 			WX, WY, WZ = profile.tags.chad.inverted() * wtpt_profile_norm
 			wtpt_profile_norm = tuple((n / WY) * 100.0 for n in (WX, WY, WZ))
 			# guess chromatic adaption transform (Bradford, CAT02...)
+			cat = profile.guess_cat() or cat
+		elif isinstance(profile.tags.get("arts"), ICCP.chromaticAdaptionTag):
 			cat = profile.guess_cat() or cat
 		if "lumi" in profile.tags and isinstance(profile.tags.lumi,
 												 ICCP.XYZType):
@@ -6407,7 +6409,7 @@ class MainFrame(ReportFrame, BaseFrame):
 																	  intent == "r").lower(),
 							 "${DEVICELINK_PROFILE}": devlink.getDescription() if devlink else '',
 							 "${TESTCHART}": os.path.basename(chart.filename),
-							 "${ADAPTION}": str(cat),
+							 "${ADAPTION}": str(profile.guess_cat(False) or cat),
 							 "${DATETIME}": strftime("%Y-%m-%d %H:%M:%S"),
 							 "${REF}":  str(ti3_ref).decode(enc, 
 															"replace").replace('"', 
