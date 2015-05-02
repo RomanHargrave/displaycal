@@ -65,6 +65,7 @@ from meta import (author, author_ascii, description, longdesc, domain, name,
 				  py_maxversion, py_minversion, version, version_tuple, 
 				  wx_minversion)
 from util_os import relpath
+appname = name
 
 bits = platform.architecture()[0][:2]
 pypath = os.path.abspath(__file__)
