@@ -36,7 +36,7 @@ jQuery(function ($) {
 	$makeslider('#infobox', '#info', 'fixed-top');
 	
 	/* Donation box slider */
-	$makeslider('#donation-box', '#donate', 'fixed-center', 'fadeToggle');
+	if (location.protocol == 'file:') $makeslider('#donation-box', '#donate', 'fixed-center', 'fadeToggle');
 	
 	/* TOC toggles */
 	$maketoggle('#toc li:has(ul) > a', 'ul', false);
