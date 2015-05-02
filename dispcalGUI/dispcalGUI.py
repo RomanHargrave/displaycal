@@ -224,9 +224,14 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 		wx.CallAfter(app_uptodate, parent)
 	else:
 		safe_print(lang.getstr("update_check.uptodate", appname))
-		if not getcfg("first_launch") and getcfg("show_donation_message"):
+		# Show donation popup if user did not choose "don't show again".
+		# Reset donation popup after a major update.
+		if (not snapshot and
+			VERSION[0] > tuple(intlist(getcfg("last_launch").split(".")))[0]):
+			setcfg("show_donation_message", 1)
+		setcfg("last_launch", version)
+		if getcfg("show_donation_message"):
 			wx.CallAfter(donation_message, parent)
-	setcfg("first_launch", 0)
 
 
 def app_uptodate(parent=None):
