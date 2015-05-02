@@ -356,7 +356,7 @@ def donation_message(parent=None):
 						msg=lang.getstr("donation_message"), 
 						ok=lang.getstr("contribute"), 
 						cancel=lang.getstr("not_now"), 
-						bitmap=getbitmap("theme/headericon"), wrap=79,
+						bitmap=getbitmap("theme/headericon"),
 						bitmap_margin=0)
 	header = wx.StaticText(dlg, -1, lang.getstr("donation_header"))
 	font = header.Font
@@ -371,7 +371,8 @@ def donation_message(parent=None):
 	dlg.sizer2.Insert(0, chkbox, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
 									  wx.RIGHT,
 					  border=max(dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
-								 chkbox.Size[0], 24))
+								 chkbox.Size[0], 12))
+	dlg.sizer2.Insert(0, (88, -1))
 	dlg.buttonpanel.Layout()
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
