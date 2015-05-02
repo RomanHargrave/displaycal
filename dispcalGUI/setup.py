@@ -295,7 +295,8 @@ def get_data(tgt_dir, key, pkgname=None, subkey=None, excludes=None):
 def get_scripts(excludes=None):
 	# It is required that each script has an accompanying .desktop file
 	scripts = []
-	desktopfiles = glob.glob(os.path.join(pydir, "..", "misc", "*.desktop"))
+	desktopfiles = glob.glob(os.path.join(pydir, "..", "misc",
+							 appname + "*.desktop"))
 	def sortbyname(a, b):
 		a, b = [os.path.splitext(v)[0] for v in (a, b)]
 		if a > b:
@@ -493,7 +494,10 @@ def setup():
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name].append("theme/icons/*.ico")
 	# Scripts
-	scripts = get_scripts()
+	if sys.platform == 'darwin':
+		scripts = get_scripts(excludes=[appname + '-apply-profiles'])
+	else:
+		scripts = get_scripts()
 	# Doc files
 	data_files = []
 	if not is_rpm_build or doc_layout.startswith("deb"):
