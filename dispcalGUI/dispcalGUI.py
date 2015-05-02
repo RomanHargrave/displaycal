@@ -226,7 +226,7 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 		safe_print(lang.getstr("update_check.uptodate", appname))
 		if not getcfg("first_launch") and getcfg("show_donation_message"):
 			wx.CallAfter(donation_message, parent)
-		setcfg("first_launch", 0)
+	setcfg("first_launch", 0)
 
 
 def app_uptodate(parent=None):
@@ -348,18 +348,19 @@ def donation_message(parent=None):
 	""" Show donation message """
 	dlg = ConfirmDialog(parent,
 						title=lang.getstr("welcome"),
-						msg="", 
+						msg=lang.getstr("donation_message"), 
 						ok=lang.getstr("contribute"), 
 						cancel=lang.getstr("not_now"), 
 						bitmap=getbitmap("theme/headericon"),
 						bitmap_margin=0)
-	fancymsg = BetterStaticFancyText(dlg, -1,
-									 "<font size='14'>" +
-									 wrap(lang.getstr("donation_header"), 80) +
-									 "</font>\n\n<font size='10'>" +
-									 wrap(lang.getstr("donation_message"), 80) +
-									 "</font>")
-	dlg.sizer3.Replace(dlg.message, fancymsg)
+	header = wx.StaticText(dlg, -1, lang.getstr("donation_header"))
+	font = header.Font
+	font.PointSize += 4
+	header.SetFont(font)
+	dlg.sizer3.Insert(0, header, flag=wx.BOTTOM, border=14)
+	font = dlg.message.Font
+	font.PointSize += 1
+	dlg.message.SetFont(font)
 	chkbox = wx.CheckBox(dlg.buttonpanel, -1, lang.getstr("dialog.do_not_show_again"))
 	dlg.sizer2.Insert(0, chkbox, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
 									  wx.RIGHT,
