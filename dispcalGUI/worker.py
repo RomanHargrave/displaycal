@@ -1705,7 +1705,7 @@ class Worker(object):
 		# ColorMunki Smile (only generic LCD CCFL measurement mode),
 		# Colorimétre HCFR (only raw measurement mode),
 		# DTP94 (only LCD, refresh and generic measurement modes)
-		# Spyder 4 (only generic LCD and refresh measurement modes)
+		# Spyder4/5 (only generic LCD and refresh measurement modes)
 		# K-10 (only factory measurement mode)
 
 		# IMPORTANT: Make changes aswell in the following locations:
@@ -1726,7 +1726,7 @@ class Worker(object):
 				   getcfg("measurement_mode") == "R") and
 				  (self.get_instrument_name() != "DTP94" or
 				   getcfg("measurement_mode") in ("l", "c", "g")) and
-				  (self.get_instrument_name() != "Spyder4" or
+				  (self.get_instrument_name() not in ("Spyder4", "Spyder5") or
 				   getcfg("measurement_mode") in ("l", "c")) and
 				  (self.get_instrument_name() != "K-10" or
 				   getcfg("measurement_mode") == "F"))))
@@ -4686,7 +4686,7 @@ usage: spotread [-options] [logfile]
 												   args, asroot)
 	
 	def import_spyd4cal(self, args=None, asroot=False):
-		""" Import Spyder4 calibrations to spy4cal.bin """
+		""" Import Spyder4/5 calibrations to spy4cal.bin """
 		return self.import_colorimeter_corrections(get_argyll_util("spyd4en"),
 												   args, asroot)
 
@@ -5506,7 +5506,7 @@ usage: spotread [-options] [logfile]
 		""" Return whether instrument supports CCSS files or not """
 		instrument_name = self.get_instrument_name()
 		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
-				"Spyder4" in instrument_name)
+				"Spyder4" in instrument_name or "Spyder5" in instrument_name)
 	
 	def create_ccxx(self, args=None, working_dir=None):
 		""" Create CCMX or CCSS """
@@ -7401,7 +7401,7 @@ usage: spotread [-options] [logfile]
 			return self.argyll_support_file_exists("spyd2PLD.bin")
 
 	def spyder4_cal_exists(self):
-		""" Check if the Spyder 4 calibration file exists in any of the known
+		""" Check if the Spyder4/5 calibration file exists in any of the known
 		locations valid for the chosen Argyll CMS version. """
 		if self.argyll_version < [1, 3, 6]:
 			# We couldn't use it even if it exists

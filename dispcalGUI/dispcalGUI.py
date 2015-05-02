@@ -2834,8 +2834,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			measurement_modes = dict({instrument_type: [lang.getstr("measurement_mode.refresh")]})
 			measurement_modes_ab = dict({instrument_type: ["c"]})
-		if instrument_name == "Spyder4" and self.worker.spyder4_cal_exists():
-			# Argyll CMS 1.3.6
+		if (instrument_name in ("Spyder4", "Spyder5") and
+			self.worker.spyder4_cal_exists()):
+			# Spyder4 Argyll CMS >= 1.3.6
+			# Spyder5 Argyll CMS >= 1.7.0
 			# See http://www.argyllcms.com/doc/instruments.html#spyd4
 			# for description of supported modes
 			measurement_modes[instrument_type].extend([lang.getstr("measurement_mode.lcd.ccfl"),
@@ -6837,7 +6839,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Automatically set raw measurement mode if not already
 			# raw measurement mode
 			measurement_mode = "R"
-		elif (self.worker.get_instrument_name() == "Spyder4"
+		elif (self.worker.get_instrument_name() in ("Spyder4", "Spyder5")
 			and getcfg("measurement_mode") not in ("l", "c")):
 			# Automatically set LCD measurement mode if not already
 			# LCD or refresh measurement mode
@@ -8347,7 +8349,7 @@ class MainFrame(ReportFrame, BaseFrame):
 														  lang.getstr("spectral") +
 														  " (i1 DisplayPro, "
 														  "ColorMunki "
-														  "Display, Spyder 4)")
+														  "Display, Spyder4/5)")
 			boxsizer.Add(dlg.correction_type_spectral, flag=wx.ALL | wx.EXPAND,
 						 border=4)
 			{"matrix": dlg.correction_type_matrix,
@@ -9308,11 +9310,11 @@ class MainFrame(ReportFrame, BaseFrame):
 	def import_colorimeter_corrections_handler(self, event, paths=None):
 		"""
 		Convert correction matrices from other profiling softwares to Argyll's
-		CCMX or CCSS format (or to spyd4cal.bin in case of the Spyder4)
+		CCMX or CCSS format (or to spyd4cal.bin in case of the Spyder4/5)
 		
 		Currently supported: iColor Display (native import to CCMX),
-							 i1 Profiler (import to CCSS via Argyll CMS 1.3.4)
-							 Spyder4 (import to spyd4cal.bin via Argyll CMS 1.3.6)
+							 i1 Profiler (import to CCSS via Argyll CMS >= 1.3.4)
+							 Spyder4/5 (import to spyd4cal.bin via Argyll CMS >= 1.3.6)
 		
 		"""
 		msg = " ".join([lang.getstr("oem.import.auto"),
@@ -9340,12 +9342,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		for (name, desc, instruments,
 			 importer) in [("i1d3", "i1 Profiler",
 							("i1 DisplayPro, ColorMunki Display",
-							  "Spyder4"), i1d3ccss or oeminst),
+							  "Spyder4", "Spyder5"), i1d3ccss or oeminst),
 							("icd", "iColor Display",
 							 ("DTP94", "i1 Display 2", "Spyder2",
 							  "Spyder3"), True),
-							("spyd4", "Spyder4", ("Spyder4", ), spyd4en or
-																oeminst)]:
+							("spyd4", "Spyder4/5", ("Spyder4", "Spyder5"),
+							 spyd4en or oeminst)]:
 			if importer:
 				for instrument in instruments:
 					if instrument not in desc:
@@ -9354,9 +9356,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				setattr(dlg, name, wx.CheckBox(dlg, -1, desc))
 				for instrument in instruments:
 					if instruments == ("i1 DisplayPro, ColorMunki Display",
-									   "Spyder4"):
+									   "Spyder4", "Spyder5"):
 						check = "" in self.ccmx_instruments.itervalues()
-					elif instruments == ("Spyder4", ):
+					elif instruments == ("Spyder4", "Spyder5"):
 						check = self.worker.spyder4_cal_exists()
 					else:
 						check = instrument in self.ccmx_instruments.itervalues()
@@ -9500,7 +9502,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						# Assume X-Rite installer
 						kind = "xrite"
 					elif spyd4en and "spyder4" in os.path.basename(path).lower():
-						# Assume Spyder4
+						# Assume Spyder4/5
 						kind = "spyder4"
 			if kind == "icd":
 				if (not getcfg("dry_run") and result and
@@ -9628,6 +9630,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 												   "Datacolor", "Spyder4*", 
 												   "dccmtr.dll"))
+					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+												   "Datacolor", "Spyder5*", 
+												   "dccmtr.dll"))
 				elif sys.platform == "darwin":
 					# Look for setup.exe on CD-ROM
 					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
@@ -9682,7 +9687,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if i1d3 and not isinstance(i1d3, Exception):
 			imported.append("i1 Profiler/ColorMunki Display")
 		if spyd4 and not isinstance(spyd4, Exception):
-			imported.append("Spyder4")
+			imported.append("Spyder4/5")
 			self.update_measurement_modes()
 		if icd and not isinstance(icd, Exception):
 			imported.append("iColor Display")
@@ -11635,7 +11640,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					    not "Spyder3" in ccmx_instruments))
 				spyd2 = ("Spyder2" in self.worker.instruments and
 						 not self.worker.spyder2_firmware_exists())
-				spyd4 = ("Spyder4" in self.worker.instruments and
+				spyd4 = (("Spyder4" in self.worker.instruments or
+						  "Spyder5" in self.worker.instruments) and
 						 not self.worker.spyder4_cal_exists())
 				if spyd2:
 					spyd2 = self.enable_spyder2_handler(None,
