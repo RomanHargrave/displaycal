@@ -91,7 +91,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"PY_MAXVERSION": ".".join(str(n) for n in py_maxversion),
 		"PY_MINVERSION": ".".join(str(n) for n in py_minversion),
 		"VERSION": version,
-		"VERSION_SHORT": re.sub("(?:\.0)+$", "", version),
+		"VERSION_SHORT": re.sub("(?:\.0){2}$", "", version),
 		"URL": "http://%s/" % domain.lower(),
 		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
 		"YEAR": strftime("%Y", gmtime())}
