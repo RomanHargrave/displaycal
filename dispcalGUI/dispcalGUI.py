@@ -131,7 +131,7 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
 					 set_bitmap_labels)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
-					   BetterLinkCtrl, BorderGradientButton,
+					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileDrop, HyperLinkCtrl, InfoDialog, LogWindow,
@@ -194,10 +194,12 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"), log=False)
 			return
+		newversion_tuple = (0, 0, 0, 0)
 	if newversion_tuple > curversion_tuple:
 		# Get changelog
 		resp = http_request(parent, domain, "GET", "/" + readme_file,
 							silent=silent)
+		chglog = None
 		if resp:
 			readme = resp.read()
 			chglog = re.search('<div id="(?:changelog|history)">'
@@ -222,6 +224,9 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 		wx.CallAfter(app_uptodate, parent)
 	else:
 		safe_print(lang.getstr("update_check.uptodate", appname))
+		if not getcfg("first_launch") and getcfg("show_donation_message"):
+			wx.CallAfter(donation_message, parent)
+		setcfg("first_launch", 0)
 
 
 def app_uptodate(parent=None):
@@ -337,6 +342,35 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 						 fancy=False)
 	elif result != wx.ID_CANCEL:
 		launch_file("http://" + domain)
+
+
+def donation_message(parent=None):
+	""" Show donation message """
+	dlg = ConfirmDialog(parent,
+						title=lang.getstr("welcome"),
+						msg="", 
+						ok=lang.getstr("contribute"), 
+						cancel=lang.getstr("not_now"), 
+						bitmap=getbitmap("theme/headericon"),
+						bitmap_margin=0)
+	fancymsg = BetterStaticFancyText(dlg, -1,
+									 "<font size='14'>" +
+									 wrap(lang.getstr("donation_header"), 80) +
+									 "</font>\n\n<font size='10'>" +
+									 wrap(lang.getstr("donation_message"), 80) +
+									 "</font>")
+	dlg.sizer3.Replace(dlg.message, fancymsg)
+	chkbox = wx.CheckBox(dlg.buttonpanel, -1, lang.getstr("dialog.do_not_show_again"))
+	dlg.sizer2.Insert(0, chkbox, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
+									  wx.RIGHT,
+					  border=dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
+							 chkbox.Size[0])
+	dlg.sizer0.SetSizeHints(dlg)
+	dlg.sizer0.Layout()
+	if dlg.ShowModal() == wx.ID_OK:
+		launch_file("http://" + domain + "/#donate")
+	setcfg("show_donation_message", int(not chkbox.Value))
+	dlg.Destroy()
 
 
 def colorimeter_correction_web_check_choose(resp, parent=None):

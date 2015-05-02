@@ -1584,7 +1584,7 @@ class BaseInteractiveDialog(wx.Dialog):
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 show=True, log=True, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
-				 name=wx.DialogNameStr):
+				 name=wx.DialogNameStr, bitmap_margin=None):
 		if log:
 			safe_print(msg)
 		if parent:
@@ -1606,6 +1606,9 @@ class BaseInteractiveDialog(wx.Dialog):
 
 		margin = 12
 
+		if bitmap_margin is None:
+			bitmap_margin = margin
+
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer0)
 		if bitmap:
@@ -1614,8 +1617,8 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer3 = wx.FlexGridSizer(0, 1, 0, 0)
-		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.TOP | 
-		   wx.RIGHT | wx.LEFT, border = margin)
+		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_LEFT | wx.RIGHT,
+						border=margin)
 		self.buttonpanel = wx.Panel(self)
 		self.buttonpanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
 		self.buttonpanel.Sizer.Add(self.sizer2, 1, flag=wx.ALIGN_RIGHT | wx.ALL, 
@@ -1628,11 +1631,15 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.buttonpanel.SetBackgroundColour(bgcolor)
 		self.sizer0.Add(self.buttonpanel, flag=wx.EXPAND)
 
+		if bitmap_margin:
+			flags = wx.RIGHT | wx.LEFT | wx.TOP
+		else:
+			flags = 0
 		if bitmap:
-			self.bitmap = wx.StaticBitmap(self, -1, bitmap, size=(32, 32))
-			self.sizer1.Add(self.bitmap, flag=wx.RIGHT, border=margin)
+			self.bitmap = wx.StaticBitmap(self, -1, bitmap)
+			self.sizer1.Add(self.bitmap, flag=flags, border=margin)
 
-		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT)
+		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT | wx.TOP, border=margin)
 		msg = msg.replace("&", "&&")
 		self.message = wx.StaticText(self, -1, msg if nowrap else
 											   util_str.wrap(msg, wrap))
@@ -1915,12 +1922,13 @@ class ConfirmDialog(BaseInteractiveDialog):
 				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
 				 size=(400, -1), alt=None, log=False, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
-				 name=wx.DialogNameStr):
+				 name=wx.DialogNameStr, bitmap_margin=None):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
 									   log=log, style=style,
 									   nowrap=nowrap, wrap=wrap,
-									   name=name)
+									   name=name,
+									   bitmap_margin=bitmap_margin)
 
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 
@@ -4024,9 +4032,10 @@ class InfoDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, log=True):
+				 show=True, log=True, bitmap_margin=None):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
-									   bitmap, pos, size, show, log)
+									   bitmap, pos, size, show, log,
+									   bitmap_margin=bitmap_margin)
 
 
 class InvincibleFrame(BaseFrame):
