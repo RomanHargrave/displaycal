@@ -356,21 +356,23 @@ def donation_message(parent=None):
 						msg=lang.getstr("donation_message"), 
 						ok=lang.getstr("contribute"), 
 						cancel=lang.getstr("not_now"), 
-						bitmap=getbitmap("theme/headericon"),
+						bitmap=getbitmap("theme/headericon"), wrap=79,
 						bitmap_margin=0)
 	header = wx.StaticText(dlg, -1, lang.getstr("donation_header"))
 	font = header.Font
 	font.PointSize += 4
 	header.SetFont(font)
 	dlg.sizer3.Insert(0, header, flag=wx.BOTTOM, border=14)
-	font = dlg.message.Font
-	font.PointSize += 1
-	dlg.message.SetFont(font)
+	if sys.platform == "win32":
+		font = dlg.message.Font
+		font.PointSize += 1
+		dlg.message.SetFont(font)
 	chkbox = wx.CheckBox(dlg.buttonpanel, -1, lang.getstr("dialog.do_not_show_again"))
 	dlg.sizer2.Insert(0, chkbox, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
 									  wx.RIGHT,
-					  border=dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
-							 chkbox.Size[0])
+					  border=max(dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
+								 chkbox.Size[0], 24))
+	dlg.buttonpanel.Layout()
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
 	if dlg.ShowModal() == wx.ID_OK:
