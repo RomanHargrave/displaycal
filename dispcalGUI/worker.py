@@ -2067,9 +2067,10 @@ class Worker(object):
 		if dlg_result != wx.ID_OK:
 			self.abort_subprocess()
 			return False
-		if not isinstance(self.progress_wnd, UntetheredFrame):
+		if not isinstance(self.progress_wnd, (UntetheredFrame,
+											  DisplayUniformityFrame)):
 			self.safe_send(" ")
-		self.pauseable_now = True
+			self.pauseable_now = True
 		self.instrument_on_screen = True
 	
 	def instrument_reposition_sensor(self):
