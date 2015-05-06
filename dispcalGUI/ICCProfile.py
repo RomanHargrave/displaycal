@@ -2618,8 +2618,15 @@ class XYZType(ICCProfileTag, XYZNumber):
 				XYZ = self.__class__(profile=self.profile)
 				XYZ.X, XYZ.Y, XYZ.Z = self.values()
 			else:
-				# Go from XYZ mediawhite-relative under PCS illuminant to XYZ under PCS illuminant
-				XYZ = self.adapt(pcs_illuminant, self.profile.tags.wtpt.values(), cat="XYZ scaling")
+				# Go from XYZ mediawhite-relative under PCS illuminant to XYZ
+				# under PCS illuminant
+				if isinstance(self.profile.tags.get("arts"),
+							  chromaticAdaptionTag):
+					cat = self.profile.tags.arts
+				else:
+					cat = "XYZ scaling"
+				XYZ = self.adapt(pcs_illuminant, self.profile.tags.wtpt.values(),
+								 cat=cat)
 			# Go from XYZ under PCS illuminant to XYZ illuminant-relative
 			XYZ.X, XYZ.Y, XYZ.Z = self.profile.tags.chad.inverted() * XYZ.values()
 			return XYZ
