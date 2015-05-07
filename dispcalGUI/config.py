@@ -1322,6 +1322,14 @@ def initcfg(module=None):
 		from log import safe_print
 		safe_print("Warning - could not parse configuration files:\n%s" %
 				   "\n".join(cfgfiles))
+		# Fix Python 2.7 ConfigParser option values being lists instead of
+		# strings in case of a ParsingError. http://bugs.python.org/issue2414
+		all_sections = [ConfigParser.DEFAULTSECT]
+		all_sections.extend(cfg.sections())
+		for section in all_sections:
+			for name, val in cfg.items(section):
+				if isinstance(val, list):
+					cfg.set(section, name, "\n".join(val))
 
 
 def setcfg(name, value):
