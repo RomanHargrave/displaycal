@@ -6935,27 +6935,33 @@ usage: spotread [-options] [logfile]
 							except OSError, exception:
 								return exception, None
 					args.append("-I")
+					# Always copy to temp dir so if a user accidentally tries
+					# to install a profile from the location where it's already
+					# installed (e.g. system32/spool/drivers/color) it doesn't
+					# get nuked by dispwin
+					tmp_dir = self.create_tempdir()
+					if not tmp_dir or isinstance(tmp_dir, Exception):
+						return tmp_dir, None
+					# Check directory and in/output file(s)
+					result = check_create_dir(tmp_dir)
+					if isinstance(result, Exception):
+						return result, None
+					profile_name = os.path.basename(profile_path)
 					if (sys.platform in ("win32", "darwin") or 
 						fs_enc.upper() not in ("UTF8", "UTF-8")) and \
-					   re.search("[^\x20-\x7e]", 
-								 os.path.basename(profile_path)):
+					   re.search("[^\x20-\x7e]", profile_name):
 						# Copy to temp dir and give unique ASCII-only name to
 						# avoid profile install issues
-						tmp_dir = self.create_tempdir()
-						if not tmp_dir or isinstance(tmp_dir, Exception):
-							return tmp_dir, None
-						# Check directory and in/output file(s)
-						result = check_create_dir(tmp_dir)
-						if isinstance(result, Exception):
-							return result, None
 						# profile name: 'display<n>-<hexmd5sum>.icc'
 						profile_tmp_path = os.path.join(tmp_dir, "display" + 
 														self.get_display() + 
 														"-" + 
 														md5(profile.data).hexdigest() + 
 														profile_ext)
-						shutil.copyfile(profile_path, profile_tmp_path)
-						profile_path = profile_tmp_path
+					else:
+						profile_tmp_path = os.path.join(tmp_dir, profile_name)
+					shutil.copyfile(profile_path, profile_tmp_path)
+					profile_path = profile_tmp_path
 				args.append(profile_path)
 		return cmd, args
 
