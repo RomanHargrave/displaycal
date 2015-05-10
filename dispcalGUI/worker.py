@@ -5561,24 +5561,24 @@ usage: spotread [-options] [logfile]
 		if not isinstance(cmd, Exception): 
 			result = self.exec_cmd(cmd, args, low_contrast=False, 
 								   skip_scripts=skip_scripts)
+			if (os.path.isfile(args[-1] + ".ti3.backup") and
+				os.path.isfile(args[-1] + ".ti3")):
+				# Restore backed up TI3
+				os.rename(args[-1] + ".ti3", args[-1] + ".bpc.ti3")
+				os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
+				ti3_file = open(args[-1] + ".ti3", "rb")
+				ti3 = ti3_file.read()
+				ti3_file.close()
+			else:
+				ti3 = None
+			if os.path.isfile(args[-1] + ".chrm"):
+				# Get ChromaticityType tag
+				with open(args[-1] + ".chrm", "rb") as blob:
+					chrm = ICCP.ChromaticityType(blob.read())
+			else:
+				chrm = None
 		else:
 			result = cmd
-		if (os.path.isfile(args[-1] + ".ti3.backup") and
-			os.path.isfile(args[-1] + ".ti3")):
-			# Restore backed up TI3
-			os.rename(args[-1] + ".ti3", args[-1] + ".bpc.ti3")
-			os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
-			ti3_file = open(args[-1] + ".ti3", "rb")
-			ti3 = ti3_file.read()
-			ti3_file.close()
-		else:
-			ti3 = None
-		if os.path.isfile(args[-1] + ".chrm"):
-			# Get ChromaticityType tag
-			with open(args[-1] + ".chrm", "rb") as blob:
-				chrm = ICCP.ChromaticityType(blob.read())
-		else:
-			chrm = None
 		bpc_applied = False
 		profchanged = False
 		if not isinstance(result, Exception) and result:
