@@ -81,6 +81,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 		except ImportError:
 			_lib = None
 		else:
+			pyglet.options["audio"] = ("pulse", "openal", "directsound", "silent")
 			_server = pyglet.media
 			_lib_version = pyglet.version
 	elif lib == "pyo":
