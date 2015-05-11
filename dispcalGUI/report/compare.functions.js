@@ -227,6 +227,10 @@ p.generate_report = function(set_delta_calc_method) {
 			wp_norm_round[i] = wp_norm[i].accuracy(2)
 		};
 		colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(wp_norm[0], wp_norm[1], wp_norm[2]));
+		if (colortemp >= 1667 && colortemp < 4000) {
+			f['F_out'].elements['FF_planckian'].checked = planckian = true;
+			f['F_out'].elements['FF_planckian'].disabled = true;
+		}
 		colortemp_assumed = Math.round(colortemp / 100) * 100;
 		if (planckian)
 			wp_assumed = jsapi.math.color.planckianCT2XYZ(colortemp_assumed);
