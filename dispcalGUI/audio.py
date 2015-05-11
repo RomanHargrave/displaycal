@@ -80,6 +80,10 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 		except ImportError:
 			_lib = None
 		else:
+			# Work around localization preventing fallback to RIFFSourceLoader
+			pyglet.lib.LibraryLoader.darwin_not_found_error = ""
+			pyglet.lib.LibraryLoader.linux_not_found_error = ""
+			# Set audio driver preference
 			pyglet.options["audio"] = ("pulse", "openal", "directsound", "silent")
 			_server = pyglet.media
 			_lib_version = pyglet.version
