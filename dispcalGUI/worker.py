@@ -8839,16 +8839,21 @@ class Xicclu(Worker):
 		if not xicclu:
 			raise NotImplementedError(lang.getstr("argyll.util.not_found",
 												  utilname))
-		if not isinstance(profile, ICCP.ICCProfile):
-			profile = ICCP.ICCProfile(profile)
+		if not isinstance(profile, (CGATS.CGATS, ICCP.ICCProfile)):
+			if profile.lower().endswith(".cal"):
+				profile = CGATS.CGATS(profile)
+			else:
+				profile = ICCP.ICCProfile(profile)
+		is_profile = isinstance(profile, ICCP.ICCProfile)
 		if not profile.fileName or not os.path.isfile(profile.fileName):
 			if not cwd:
 				cwd = self.create_tempdir()
 				if isinstance(cwd, Exception):
 					raise cwd
 			fd, profile.fileName = tempfile.mkstemp(profile_ext, dir=cwd)
-			profile.write(os.fdopen(fd, "wb"))
-			profile.close()
+			stream = os.fdopen(fd, "wb")
+			profile.write(stream)
+			stream.close()
 			self.temp = True
 		elif not cwd:
 			cwd = os.path.dirname(profile.fileName)
@@ -8865,7 +8870,8 @@ class Xicclu(Worker):
 		cwd = safe_str(cwd)
 		args = [xicclu, "-s%s" % scale]
 		if utilname == "xicclu":
-			if (show_actual_if_clipped and "A2B0" in profile.tags and
+			if (is_profile and
+				show_actual_if_clipped and "A2B0" in profile.tags and
 				("B2A0" in profile.tags or direction == "if")):
 				args.append("-a")
 			if use_cam_clipping:
@@ -8880,20 +8886,22 @@ class Xicclu(Worker):
 					output_encoding = "n"
 				args += ["-e" + input_encoding, "-E" + output_encoding]
 		args.append("-f" + direction)
-		if profile.profileClass not in ("abst", "link"):
-			args.append("-i" + intent)
-			if order != "n":
-				args.append("-o" + order)
-		if pcs and profile.profileClass != "link":
-			args.append("-p" + pcs)
+		if is_profile:
+			if profile.profileClass not in ("abst", "link"):
+				args.append("-i" + intent)
+				if order != "n":
+					args.append("-o" + order)
+			if pcs and profile.profileClass != "link":
+				args.append("-p" + pcs)
 		args.append(self.profile_path)
 		if debug or verbose > 1:
 			self.sessionlogfile = LogFile(profile_basename + ".xicclu",
 										  os.path.dirname(profile.fileName))
-			profile_act = ICCP.ICCProfile(profile.fileName)
-			self.sessionlogfile.write("Profile ID %s (actual %s)" %
-									  (hexlify(profile.ID),
-									   hexlify(profile_act.calculateID(False))))
+			if is_profile:
+				profile_act = ICCP.ICCProfile(profile.fileName)
+				self.sessionlogfile.write("Profile ID %s (actual %s)" %
+										  (hexlify(profile.ID),
+										   hexlify(profile_act.calculateID(False))))
 			if cwd:
 				self.log(lang.getstr("working_dir"))
 				indent = "  "
