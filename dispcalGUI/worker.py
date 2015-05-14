@@ -4180,7 +4180,8 @@ class Worker(object):
 				# threshold
 				xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
 								 use_cam_clipping=True)
-			threshold = clutres / 2
+			threshold = int((clutres - 1) * 0.75)
+			threshold2 = int((clutres - 1) / 3)
 			for a in xrange(clutres):
 				if self.thread_abort:
 					if use_cam_clipping:
@@ -4211,10 +4212,13 @@ class Worker(object):
 							v = d, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
-						xicclu1(v)
-						if use_cam_clipping and (a > threshold or
-												 b > threshold or
-												 c > threshold):
+						if not use_cam_clipping or (a <= threshold and
+													b <= threshold and
+													c <= threshold):
+							xicclu1(v)
+						if use_cam_clipping and (a > threshold2 or
+												 b > threshold2 or
+												 c > threshold2):
 							xicclu2(v)
 					if logfile:
 						logfile.write("\r%i%%" % round(len(idata) /
@@ -4231,22 +4235,34 @@ class Worker(object):
 			odata1 = xicclu1.get()
 			if use_cam_clipping:
 				# Linearly interpolate the crossover to CAM Jab clipping region
+				cam_diag = False
 				odata2 = xicclu2.get()
 				j, k = 0, 0
-				r = clutres - 1.0 - threshold
+				r = float(threshold - threshold2)
 				for a in xrange(clutres):
 					for b in xrange(clutres):
 						for c in xrange(clutres):
-							v = odata1[j]
-							j += 1
-							if a > threshold or b > threshold or c > threshold:
-								d = max(a, b, c)
-								v2 = odata2[k]
+							if a <= threshold and b <= threshold and c <= threshold:
+								v = odata1[j]
+								j += 1
+								if a > threshold2 or b > threshold2 or c > threshold2:
+									d = max(a, b, c)
+									if cam_diag:
+										v = [100.0, 100.0, 0.0]
+										v2 = [0.0, 100.0, 100.0]
+									else:
+										v2 = odata2[k]
+									k += 1
+									for i, n in enumerate(v):
+										v[i] *= (threshold - d) / r
+										v2[i] *= 1 - (threshold - d) / r
+										v[i] += v2[i]
+							else:
+								if cam_diag:
+									v = [100.0, 0.0, 100.0]
+								else:
+									v = odata2[k]
 								k += 1
-								for i, n in enumerate(v):
-									v[i] *= (clutres - 1 - d) / r
-									v2[i] *= 1 - (clutres - 1 - d) / r
-									v[i] += v2[i]
 							odata.append(v)
 			else:
 				odata = odata1
