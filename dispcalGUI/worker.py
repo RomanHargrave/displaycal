@@ -57,6 +57,7 @@ import defaultpaths
 import localization as lang
 import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
+						  cal_to_fake_profile,
 						  extract_fix_copy_cal, ti3_to_ti1, vcgt_to_cal,
 						  verify_cgats)
 from argyll_instruments import (get_canonical_instrument_name,
@@ -7899,6 +7900,278 @@ usage: spotread [-options] [logfile]
 		# on Mac OS X 10.6 and newer
 		return (self.calibration_loading_generally_supported and
 				not config.is_virtual_display())
+
+	def change_display_profile_cal_whitepoint(self, profile, x, y, outfilename,
+											  calibration_only=False,
+											  use_collink=False):
+		"""
+		Change display profile (and calibration) whitepoint.
+		
+		Do it in an colorimetrically accurate manner (as far as possible).
+		
+		"""
+		XYZw = colormath.xyY2XYZ(x, y)
+		xicclu = get_argyll_util("xicclu")
+		if not xicclu:
+			return Error(lang.getstr("argyll.util.not_found", "xicclu"))
+		tempdir = self.create_tempdir()
+		if isinstance(tempdir, Exception):
+			return tempdir
+		outpathname = os.path.splitext(outfilename)[0]
+		outname = os.path.basename(outpathname)
+		logfiles = Files([self.recent, self.lastmsg,
+						  LineBufferedStream(safe_print)])
+		ofilename = profile.fileName
+		temppathname = os.path.join(tempdir, outname)
+		if ofilename and os.path.isfile(ofilename):
+			# Profile comes from a file
+			temp = False
+			temporig = ofilename
+		else:
+			# Profile not associated to a file, write to temp dir
+			temp = True
+			profile.fileName = temporig = temppathname + ".orig.icc"
+			profile.write(temporig)
+		# Remember original white XYZ
+		origXYZ = profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z
+		# Make a copy of the profile with changed whitepoint
+		profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z = XYZw
+		tempcopy = temppathname + ".copy.icc"
+		profile.write(tempcopy)
+		# Generate updated calibration with changed whitepoint
+		if use_collink:
+			collink = get_argyll_util("collink")
+			if not collink:
+				profile.fileName = ofilename
+				self.wrapup(False)
+				return Error(lang.getstr("argyll.util.not_found", "collink"))
+			linkpath = temppathname + ".link.icc"
+			result = self.exec_cmd(collink, ["-v", "-n", "-G", "-iaw", "-b",
+											 tempcopy, temporig, linkpath],
+								   capture_output=True)
+			if not result or isinstance(result, Exception):
+				profile.fileName = ofilename
+				self.wrapup(False)
+				return result
+			link = ICCP.ICCProfile(linkpath)
+			RGBscaled = []
+			for i in xrange(256):
+				RGBscaled.append([i / 255.0] * 3)
+			RGBscaled = self.xicclu(link, RGBscaled)
+			logfiles.write("RGB white %6.4f %6.4f %6.4f\n" % tuple(RGBscaled[-1]))
+			# Restore original white XYZ
+			profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z = origXYZ
+			# Get white RGB
+			XYZwscaled = self.xicclu(profile, RGBscaled[-1], "a")[0]
+			logfiles.write("XYZ white %6.4f %6.4f %6.4f, CCT %i\n" %
+						   tuple(XYZwscaled + [colormath.XYZ2CCT(*XYZwscaled)]))
+		else:
+			# Lookup scaled down white XYZ
+			logfiles.write("Looking for solution...\n")
+			XYZscaled = []
+			for i in xrange(2000):
+				XYZscaled.append([v * (1 - i / 1999.0) for v in XYZw])
+			RGBscaled = self.xicclu(profile, XYZscaled, "a", "if", get_clip=True)
+			# Set filename to copy (used by worker.xicclu to get profile path)
+			profile.fileName = tempcopy
+			# Find point at which it no longer clips
+			for i, RGBclip in enumerate(RGBscaled):
+				if RGBclip[3] is True:
+					# Clipped, skip
+					continue
+				# Found
+				XYZwscaled = XYZscaled[i]
+				logfiles.write("Solution found at index %i (step size %f)\n" %
+							   (i, 1 / 1999.0))
+				logfiles.write("RGB white %6.4f %6.4f %6.4f\n" % tuple(RGBclip[:3]))
+				logfiles.write("XYZ white %6.4f %6.4f %6.4f, CCT %i\n" %
+							   tuple(XYZscaled[i] +
+									 [colormath.XYZ2CCT(*XYZscaled[i])]))
+				break
+			else:
+				profile.fileName = ofilename
+				self.wrapup(False)
+				return Error("No solution found in %i steps" % i)
+			# Generate RGB input values
+			# Reduce interpolation res as target whitepoint moves farther away
+			# from profile whitepoint in RGB
+			res = max(int(round((min(RGBclip[:3]) / 1.0) * 33)), 9)
+			logfiles.write("Interpolation res %i\n" % res)
+			RGBscaled = []
+			for i in xrange(res):
+				RGBscaled.append([v * (i / (res - 1.0)) for v in (1, 1, 1)])
+			# Lookup RGB -> XYZ through whitepoint adjusted profile
+			RGBscaled2XYZ = self.xicclu(profile, RGBscaled, "a")
+			# Restore original XYZ
+			profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z = origXYZ
+			# Restore original filename (used by worker.xicclu to get profile path)
+			profile.fileName = temporig
+			# Get original black point
+			XYZk = self.xicclu(profile, [0, 0, 0], "a")[0]
+			logfiles.write("XYZ black %6.4f %6.4f %6.4f\n" % tuple(XYZk))
+			logfiles.write("XYZ white after forward lookup %6.4f %6.4f %6.4f\n" %
+						   tuple(RGBscaled2XYZ[-1]))
+			# Scale down XYZ
+			XYZscaled = []
+			for i in xrange(res):
+				XYZ = [v * XYZwscaled[1] for v in RGBscaled2XYZ[i]]
+				if i == 0:
+					bp_in = XYZ
+				XYZ = colormath.apply_bpc(*XYZ, bp_in=bp_in, bp_out=XYZk,
+										  wp_out=XYZwscaled, weight=True)
+				XYZscaled.append(XYZ)
+			logfiles.write("XYZ white after scale down %6.4f %6.4f %6.4f\n" %
+						   tuple(XYZscaled[-1]))
+			# Lookup XYZ -> RGB through original profile
+			RGBscaled = self.xicclu(profile, XYZscaled, "a", "if",
+									use_cam_clipping=True)
+			logfiles.write("RGB black after inverse forward lookup %6.4f %6.4f %6.4f\n" %
+						   tuple(RGBscaled[0]))
+			logfiles.write("RGB white after inverse forward lookup %6.4f %6.4f %6.4f\n" %
+						   tuple(RGBscaled[-1]))
+			if res != 256:
+				# Interpolate
+				R = []
+				G = []
+				B = []
+				for i, RGB in enumerate(RGBscaled):
+					R.append(RGB[0])
+					G.append(RGB[1])
+					B.append(RGB[2])
+				if res > 2:
+					# Catmull-Rom spline interpolation
+					Ri = ICCP.CRInterpolation(R)
+					Gi = ICCP.CRInterpolation(G)
+					Bi = ICCP.CRInterpolation(B)
+				else:
+					# Linear interpolation
+					Ri = colormath.Interp(range(res), R)
+					Gi = colormath.Interp(range(res), G)
+					Bi = colormath.Interp(range(res), B)
+				RGBscaled = []
+				step = (res - 1) / 255.0
+				for i in xrange(256):
+					RGB = [Ri(i * step), Gi(i * step), Bi(i * step)]
+					RGBscaled.append(RGB)
+				logfiles.write("RGB black after interpolation %6.4f %6.4f %6.4f\n" %
+							   tuple(RGBscaled[0]))
+				logfiles.write("RGB white after interpolation %6.4f %6.4f %6.4f\n" %
+							   tuple(RGBscaled[-1]))
+		has_nonlinear_vcgt = (isinstance(profile.tags.get("vcgt"),
+										 ICCP.VideoCardGammaType) and
+							  not profile.tags.vcgt.is_linear())
+		if has_nonlinear_vcgt:
+			# Apply cal
+			ocal = vcgt_to_cal(profile)
+			bp_out = ocal.queryv1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0}).values()
+			ocalpath = temppathname + ".cal"
+			ocal.filename = ocalpath
+			RGBscaled = self.xicclu(ocal, RGBscaled)
+			logfiles.write("RGB black after cal %6.4f %6.4f %6.4f\n" %
+						   tuple(RGBscaled[0]))
+			logfiles.write("RGB white after cal %6.4f %6.4f %6.4f\n" %
+						   tuple(RGBscaled[-1]))
+		else:
+			bp_out = (0, 0, 0)
+		cal = """CAL    
+
+KEYWORD "DEVICE_CLASS"
+DEVICE_CLASS "DISPLAY"
+KEYWORD "COLOR_REP"
+COLOR_REP "RGB"
+BEGIN_DATA_FORMAT
+RGB_I RGB_R RGB_G RGB_B
+END_DATA_FORMAT
+NUMBER_OF_SETS 256
+BEGIN_DATA
+"""
+		for i, RGB in enumerate(RGBscaled):
+			R, G, B = colormath.apply_bpc(*RGB, bp_in=RGBscaled[0],
+										  bp_out=bp_out, wp_out=RGBscaled[-1],
+										  weight=True)
+			cal += "%f %f %f %f\n" % (i / 255.0, R, G, B)
+		cal += "END_DATA"
+		cal = CGATS.CGATS(cal)
+		cal.filename = outpathname + ".cal"
+		cal.write()
+		if calibration_only:
+			# Only update calibration
+			profile.setDescription(outname)
+			profile.tags.vcgt = cal_to_fake_profile(cal).tags.vcgt
+			profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z = XYZw
+			profile.calculateID()
+			profile.write(outfilename)
+			self.wrapup(False)
+			return True
+		else:
+			# Re-create profile
+			cti3 = None
+			if isinstance(profile.tags.get("targ"), ICCP.Text):
+				# Get measurement data
+				try:
+					cti3 = CGATS.CGATS(profile.tags.targ)
+				except (IOError, CGATS.CGATSError):
+					pass
+				else:
+					if not 0 in cti3 or cti3[0].type.strip() != "CTI3":
+						# Not Argyll measurement data
+						cti3 = None
+			if not cti3:
+				# Use fakeread
+				fakeread = get_argyll_util("fakeread")
+				if not fakeread:
+					profile.fileName = ofilename
+					self.wrapup(False)
+					return Error(lang.getstr("argyll.util.not_found", "fakeread"))
+				shutil.copyfile(defaults["testchart.file"],
+								temppathname + ".ti1")
+				result = self.exec_cmd(fakeread, [temporig, temppathname])
+				if not result or isinstance(result, Exception):
+					profile.fileName = ofilename
+					self.wrapup(False)
+					return result
+				cti3 = CGATS.CGATS(temppathname + ".ti3")
+			# Get RGB from measurement data
+			RGBorig = []
+			for i, sample in cti3[0].DATA.iteritems():
+				RGB = []
+				for j, component in enumerate("RGB"):
+					RGB.append(sample["RGB_" + component])
+				RGBorig.append(RGB)
+			# Lookup RGB -> scaled RGB through calibration
+			RGBscaled = self.xicclu(cal, RGBorig, scale=100)
+			if has_nonlinear_vcgt:
+				# Undo original calibration
+				RGBscaled = self.xicclu(ocal, RGBscaled, direction="b", scale=100)
+			# Update CAL in ti3 file
+			if 1 in cti3 and cti3[1].type.strip() == "CAL":
+				cti3[1].DATA = cal[0].DATA
+			else:
+				cti3[1] = cal[0]
+			# Lookup scaled RGB -> XYZ through profile
+			RGBscaled2XYZ = self.xicclu(profile, RGBscaled, "a", scale=100)
+			# Update measurement data
+			if "LUMINANCE_XYZ_CDM2" in cti3[0]:
+				XYZa = [float(v) * XYZwscaled[i] for i, v in enumerate(cti3[0].LUMINANCE_XYZ_CDM2.split())]
+				cti3[0].add_keyword("LUMINANCE_XYZ_CDM2", " ".join([str(v) for v in XYZa]))
+			for i, sample in cti3[0].DATA.iteritems():
+				for j, component in enumerate("XYZ"):
+					sample["XYZ_" + component] = RGBscaled2XYZ[i][j] / XYZwscaled[1] * 100
+			cti3.write(temppathname + ".ti3")
+			# Preserve custom tags
+			display_name = profile.getDeviceModelDescription()
+			display_manufacturer = profile.getDeviceManufacturerDescription()
+			tags = {}
+			for tagname in ("mmod", "meta"):
+				if tagname in profile.tags:
+					tags[tagname] = profile.tags[tagname]
+			if temp:
+				os.remove(temporig)
+			os.remove(tempcopy)
+			# Compute profile
+			self.options_targen = ["-d3"]
+			return self.create_profile(outfilename, True, display_name,
+									   display_manufacturer, tags)
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",

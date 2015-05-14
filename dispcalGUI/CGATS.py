@@ -186,6 +186,8 @@ class CGATS(dict):
 	
 	datetime = None
 	filename = None
+	fileName = property(lambda self: self.filename,
+						lambda self, filename: setattr(self, "filename", filename))
 	key = None
 	_modified = False
 	mtime = None
@@ -386,7 +388,7 @@ class CGATS(dict):
 	def __setattr__(self, name, value):
 		if name == 'modified':
 			self.setmodified(value)
-		elif name in ('datetime', 'filename', 'file_identifier', 'key', 
+		elif name in ('datetime', 'filename', 'fileName', 'file_identifier', 'key', 
 					  'mtime', 'normalize_fields', 'parent', 'root', 'type', 
 					  'vmaxlen'):
 			object.__setattr__(self, name, value)
@@ -1602,10 +1604,18 @@ Transform {
 	
 	pop = remove
 	
-	def write(self, filename=None):
-		if not filename:
-			filename = self.filename
-		txt = open(filename, "w")
-		txt.write(str(self))
-		txt.close()
+	def write(self, stream_or_filename=None):
+		"""
+		Write CGATS text to stream.
+		
+		"""
+		if not stream_or_filename:
+			stream_or_filename = self.filename
+		if isinstance(stream_or_filename, basestring):
+			stream = open(stream_or_filename, "w")
+		else:
+			stream = stream_or_filename
+		stream.write(str(self))
+		if isinstance(stream_or_filename, basestring):
+			stream.close()
 	

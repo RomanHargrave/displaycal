@@ -11,6 +11,7 @@ names = [
 	"collink",
 	"colprof",
 	"dispwin",
+	"fakeread",
 	"iccgamut",
 	"icclu",
 	"xicclu",
