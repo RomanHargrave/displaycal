@@ -73,10 +73,7 @@ from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
-if sys.platform == "win32":
-	import madvr
-else:
-	madvr = None
+import madvr
 from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
@@ -2138,6 +2135,7 @@ class Worker(object):
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
 		self.madtpg_fullscreen = None
+		self.use_madnet = False
 		self.use_patterngenerator = False
 		self.patch_sequence = False
 		self.patch_count = 0
@@ -2918,21 +2916,6 @@ class Worker(object):
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and
 									 config.get_display_name() == "Resolve")
-		if self.use_patterngenerator:
-			# Run a dummy command so we can grab the RGB numbers for
-			# the pattern generator from the output
-			carg = get_arg("-C", args, True)
-			if carg:
-				index = min(carg[0] + 1, len(args) - 1)
-				args[index] += " && "
-			else:
-				args.insert(0, "-C")
-				args.insert(1, "")
-				index = 1
-			if sys.platform == "win32":
-				args[index] += "echo. && echo Current RGB "
-			else:
-				args[index] += "echo '\nCurrent RGB '"
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
@@ -2968,23 +2951,31 @@ class Worker(object):
 			if self.sessionlogfile:
 				safe_print("Session log: %s" % working_basename + ".log")
 				safe_print("")
-		if (cmdname in (get_argyll_utilname("dispcal"),
-						get_argyll_utilname("dispread"),
-						get_argyll_utilname("dispwin")) and
-			get_arg("-dmadvr", args) and madvr):
+		use_madvr = (cmdname in (get_argyll_utilname("dispcal"),
+								 get_argyll_utilname("dispread"),
+								 get_argyll_utilname("dispwin")) and
+					 get_arg("-dmadvr", args) and madvr)
+		if use_madvr:
 			# Try to connect to running madTPG or launch a new instance
 			try:
 				if not hasattr(self, "madtpg"):
-					self.madtpg = madvr.MadTPG()
+					if sys.platform == "win32":
+						# Using native implementation (madHcNet32.dll)
+						self.madtpg = madvr.MadTPG()
+					else:
+						# Using madVR net-protocol implementation
+						self.madtpg = madvr.MadTPG_Net(getcfg("madtpg.host"),
+													   debug=debug)
 				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
 					# Connected
 					# Check madVR version
 					madvr_version = self.madtpg.get_version()
 					if not madvr_version or madvr_version < madvr.min_version:
+						self.madtpg.disconnect()
 						return Error(lang.getstr("madvr.outdated",
 												 madvr.min_version))
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
-							 (madvr_version + (self.madtpg.dllpath, )))
+							 (madvr_version + (self.madtpg.uri, )))
 					fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
 					if cmdname == get_argyll_utilname("dispcal"):
 						self.madtpg_previous_fullscreen = fullscreen
@@ -2997,6 +2988,9 @@ class Worker(object):
 						# Restore fullscreen
 						self.madtpg.set_use_fullscreen_button(True)
 					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
+					self.madtpg.set_device_gamma_ramp(None)
+					if not "-V" in args:
+						self.madtpg.disable_3dlut()
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
@@ -3004,9 +2998,6 @@ class Worker(object):
 						self.madtpg_fullscreen and
 						not self.instrument_on_screen):
 						# Show place instrument on screen message with countdown
-						self.madtpg.set_device_gamma_ramp(None)
-						if not "-V" in args:
-							self.madtpg.disable_3dlut()
 						countdown = 15
 						madtpg_osd = not self.madtpg.is_disable_osd_button_pressed()
 						if not madtpg_osd:
@@ -3019,6 +3010,7 @@ class Worker(object):
 								lang.getstr("instrument.place_on_screen.madvr",
 											(countdown - i,
 											 self.get_instrument_name()))):
+								self.madtpg.disconnect()
 								return Error("madVR_SetOsdText failed")
 							ts = time()
 							if i % 2 == 0:
@@ -3035,17 +3027,23 @@ class Worker(object):
 							self.madtpg.set_disable_osd_button(True)
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
-					if not patternconfig:
+					if (not patternconfig or
+						not isinstance(patternconfig, tuple) or
+						len(patternconfig) != 4):
+						self.madtpg.disconnect()
 						return Error("madVR_GetPatternConfig failed")
-					if (patternconfig and isinstance(patternconfig, tuple) and
-						len(patternconfig) == 4):
-						self.log("Pattern area: %i%%" % patternconfig[0])
-						self.log("Background level: %i%%" % patternconfig[1])
-						self.log("Background mode: %s" % {0: "Constant",
-														  1: "APL gamma",
-														  2: "APL linear"}.get(patternconfig[2],
-																			   patternconfig[2]))
-						self.log("Border width: %i pixels" % patternconfig[3])
+					self.log("Pattern area: %i%%" % patternconfig[0])
+					self.log("Background level: %i%%" % patternconfig[1])
+					self.log("Background mode: %s" % {0: "Constant",
+													  1: "APL gamma",
+													  2: "APL linear"}.get(patternconfig[2],
+																		   patternconfig[2]))
+					self.log("Border width: %i pixels" % patternconfig[3])
+					if isinstance(self.madtpg, madvr.MadTPG_Net):
+						args.remove("-dmadvr")
+						args.insert(0, "-P1,1,0.01")
+					else:
+						# Only if using native madTPG implementation!
 						if not get_arg("-P", args):
 							# Setup patch size to match pattern config
 							args.insert(0, "-P0.5,0.5,%f" %
@@ -3055,13 +3053,31 @@ class Worker(object):
 							# Only do this for Argyll >= 1.7 to prevent messing
 							# with pattern area when Argyll 1.6.x is used
 							args.insert(0, "-F")
-					# Disconnect
-					self.madtpg.disconnect()
+						# Disconnect
+						self.madtpg.disconnect()
 					self.log("")
 				else:
 					return Error(lang.getstr("madtpg.launch.failure"))
 			except Exception, exception:
+				if isinstance(getattr(self, "madtpg", None), madvr.MadTPG_Net):
+					self.madtpg.disconnect()
 				return exception
+		self.use_madnet = use_madvr and isinstance(self.madtpg, madvr.MadTPG_Net)
+		if self.use_patterngenerator or self.use_madnet:
+			# Run a dummy command so we can grab the RGB numbers for
+			# the pattern generator from the output
+			carg = get_arg("-C", args, True)
+			if carg:
+				index = min(carg[0] + 1, len(args) - 1)
+				args[index] += " && "
+			else:
+				args.insert(0, "-C")
+				args.insert(1, "")
+				index = 1
+			if sys.platform == "win32":
+				args[index] += "echo. && echo Current RGB "
+			else:
+				args[index] += "echo '\nCurrent RGB '"
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
 				if (not silent and (dry_run or getcfg("dry_run")) and
@@ -3089,6 +3105,8 @@ class Worker(object):
 						safe_print(lang.getstr("dry_run.end"))
 					if self.owner and hasattr(self.owner, "infoframe"):
 						wx.CallAfter(self.owner.infoframe.Show)
+					if self.use_madnet:
+						self.madtpg.disconnect()
 					return UnloggedInfo(lang.getstr("dry_run.info"))
 		cmdline = [cmd] + args
 		for i, item in enumerate(cmdline):
@@ -3126,11 +3144,17 @@ class Worker(object):
 					if hasattr(self, "thread") and self.thread.isAlive():
 						# Careful: We can only show the auth dialog if running
 						# in the main GUI thread!
+						if self.use_madnet:
+							self.madtpg.disconnect()
 						return Error("Authentication requested in non-GUI thread")
 					result = self.authenticate(cmd, title, parent)
 					if result is False:
+						if self.use_madnet:
+							self.madtpg.disconnect()
 						return None
 					elif isinstance(result, Exception):
+						if self.use_madnet:
+							self.madtpg.disconnect()
 						return result
 				sudo = unicode(self.sudo)
 		if sudo:
@@ -3512,6 +3536,8 @@ class Worker(object):
 							win32com_shell.ShellExecuteEx(lpVerb="runas",
 														  lpFile=cmd,
 														  lpParameters=" ".join(quote_args(args)))
+							if self.use_madnet:
+								self.madtpg.disconnect()
 							return True
 						else:
 							self.subprocess = sp.Popen(cmdline, stdin=stdin,
@@ -3603,6 +3629,8 @@ class Worker(object):
 						self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
 					except Exception, exception:
 						self.log(exception)
+			if self.use_madnet:
+				self.madtpg.disconnect()
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
 		if self.retcode != 0:
@@ -9068,12 +9096,21 @@ BEGIN_DATA
 		use_patterngenerator = (self.use_patterngenerator and
 								getattr(self, "patterngenerator", None) and
 								hasattr(self.patterngenerator, "conn"))
-		if use_patterngenerator:
+		if use_patterngenerator or self.use_madnet:
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
 				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
-				self.patterngenerator_send(rgb)
+				if self.use_madnet:
+					if self.madtpg.show_rgb(*rgb):
+						self.patterngenerator_sent_count += 1
+						self.log("%s: MadTPG_Net sent count: %i" %
+								 (appname, self.patterngenerator_sent_count))
+					else:
+						self.exec_cmd_returnvalue = Error(lang.getstr("patterngenerator.sync_lost"))
+						self.abort_subprocess()
+				else:
+					self.patterngenerator_send(rgb)
 			if update:
 				# Check if patch count is higher than patterngenerator sent count
 				if (self.patch_count > self.patterngenerator_sent_count and
@@ -9085,9 +9122,19 @@ BEGIN_DATA
 						   "the instrument can be removed from the screen"
 						   in txt.lower()):
 			self.patch_count += 1
-			if use_patterngenerator:
+			if use_patterngenerator or self.use_madnet:
 				self.log("%s: Argyll CMS patch update count: %i" %
 						 (appname, self.patch_count))
+			if self.use_madnet and re.match("Patch \\d+ of \\d+", txt, re.I):
+				# Set madTPG progress bar
+				components = txt.split()
+				try:
+					start = int(components[1])
+					end = int(components[3])
+				except ValueError:
+					pass
+				else:
+					self.madtpg.set_progress_bar_pos(start, end)
 		# Parse
 		wx.CallAfter(self.parse, txt)
 	

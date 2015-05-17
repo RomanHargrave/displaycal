@@ -669,6 +669,8 @@ defaults = {
 	# The last_[...]_path defaults are set in localization.py
 	"lut_viewer.show": 0,
 	"lut_viewer.show_actual_lut": 0,
+	"madtpg.host": "localhost",
+	"madtpg.port": 60562,
 	"measurement_mode": "l",
 	"measurement_mode.adaptive": 1,
 	"measurement_mode.backup": "l",

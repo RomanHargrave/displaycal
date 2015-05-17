@@ -4519,6 +4519,14 @@ class ProgressDialog(wx.Dialog):
 				self.delayed_stop = wx.CallLater(3000, self.stop_timer, False)
 				wx.CallLater(3000, self.Pulse, 
 							 "Aborted. You may now close this window.")
+
+	def GetValue(self):
+		return self._fpprogress
+
+	def SetValue(self, value):
+		self.Update(value)
+
+	Value = property(GetValue, SetValue)
 	
 	def Pulse(self, msg=None):
 		if msg and msg != self.msg.Label:

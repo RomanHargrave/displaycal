@@ -77,6 +77,7 @@ import ccmx
 import colord
 import colormath
 import localization as lang
+import madvr
 import pyi_md5pickuphelper
 import report
 if sys.platform == "win32":
@@ -12708,6 +12709,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					safe_print("Waiting for child thread to exit...")
 				self.thread.join()
 			self.listening = False
+			if isinstance(getattr(self.worker, "madtpg", None),
+						  madvr.MadTPG_Net):
+				self.worker.madtpg.shutdown()
 			self.HideAll()
 			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 				self.worker.wrapup(False)

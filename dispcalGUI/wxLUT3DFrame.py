@@ -15,10 +15,7 @@ from worker import Error, Info, get_current_profile_path, show_result_dialog
 import ICCProfile as ICCP
 import config
 import localization as lang
-if sys.platform == "win32":
-	import madvr
-else:
-	madvr = None
+import madvr
 import worker
 from worker import check_set_argyll_bin
 from wxwindows import (BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog,
@@ -628,7 +625,10 @@ class LUT3DFrame(BaseFrame):
 					 "Rec2020.icm": 3,
 					 "SMPTE431_P3.icm": 4}.get(basename, 0)
 			try:
-				madtpg = madvr.MadTPG()
+				if sys.platform == "win32":
+					madtpg = madvr.MadTPG()
+				else:
+					madtpg = madvr.MadTPG_Net()
 				# Connect & load 3D LUT
 				if (madtpg.connect(method2=madvr.CM_StartLocalInstance) and
 					madtpg.load_3dlut_file(path, True, gamut)):
@@ -640,8 +640,9 @@ class LUT3DFrame(BaseFrame):
 				show_result_dialog(exception, self)
 			finally:
 				if madtpg:
-					madtpg.disconnect()
 					madtpg.quit()
+					if isinstance(madtpg, madvr.MadTPG_Net):
+						madtpg.shutdown()
 		else:
 			show_result_dialog(Error(lang.getstr("3dlut.install.unsupported")),
 							   self)
