@@ -86,6 +86,16 @@ def inet_pton(ip_string):
 		return "".join([chr(int(block)) for block in ip_string.split(".")])
 
 
+def trunc(value, length):
+	""" For string types, return value truncated to length """
+	if isinstance(value, basestring):
+		value = safe_str(value)
+		if len(repr(value)) > length:
+			value = value[:length - 3 - len(str(length)) - len(repr(value)) + len(value)]
+			return "%r[:%i]" % (value, length)
+	return repr(value)
+
+
 class H3DLUT(object):
 
 	""" 3D LUT file format used by madVR """
@@ -378,7 +388,7 @@ class MadTPG_Net(object):
 			safe_print("MadTPG_Net: Entering incoming connection thread for port",
 					   port)
 		self._server_sockets[(host, port)] = sock
-		while self and getattr(self, "listening", False):
+		while getattr(self, "listening", False):
 			try:
 				# Wait for connection
 				conn, addr = sock.accept()
@@ -424,7 +434,9 @@ class MadTPG_Net(object):
 		self._incoming[addr] = []
 		hello = self._hello(conn)
 		blob = ""
-		while hello and self and getattr(self, "listening", False):
+		send_bye = True
+		while (hello and addr in self._client_sockets and
+			   getattr(self, "listening", False)):
 			# Wait for incoming message
 			try:
 				incoming = conn.recv(4096)
@@ -441,20 +453,21 @@ class MadTPG_Net(object):
 										   errno.ECONNRESET) or self.debug:
 					safe_print("MadTPG_Net: In receiver thread for %s:%i:" %
 							   addr[:2], exception)
+				send_bye = False
 				break
 			else:
 				with _lock:
 					if not incoming:
 						# Connection broken
 						if self.debug:
-							safe_print("MadTPG_Net: Client %s:%i disappeared" %
+							safe_print("MadTPG_Net: Client %s:%i stopped sending" %
 									   addr[:2])
 						break
 					blob += incoming
 					if self.debug:
-						safe_print("MadTPG_Net: Received from %s:%s" %
+						safe_print("MadTPG_Net: Received from %s:%s:" %
 								   addr[:2])
-					while blob:
+					while blob and addr in self._client_sockets:
 						try:
 							record, blob = self._parse(blob)
 						except ValueError, exception:
@@ -466,27 +479,32 @@ class MadTPG_Net(object):
 								# Need more data
 								break
 							self._process(record, conn)
-		self._client_sockets.pop(addr)
 		with _lock:
-			self._remove_client(addr)
+			self._remove_client(addr, send_bye=addr in self._client_sockets and
+											   send_bye)
 		self._incoming.pop(addr)
-		conn.close()
 		if self.debug:
 			safe_print("MadTPG_Net: Exiting receiver thread for %s:%s" %
 					   addr[:2])
 
-	def _remove_client(self, addr):
+	def _remove_client(self, addr, send_bye=True):
 		""" Remove client from list of connected clients """
-		for c_addr, client in self.clients.items():
-			if addr == c_addr:
+		if addr in self._client_sockets:
+			conn = self._client_sockets.pop(addr)
+			if send_bye:
+				self._send(conn, "bye",
+						   component=self.clients.get(addr,
+													  {}).get("component", ""))
+			if addr in self.clients:
 				self.clients.pop(addr)
-				if (self._client_socket and
-					self._client_socket.getpeername() == addr):
-					self._reset()
-				if self.debug:
-					safe_print("MadTPG_Net: Removed client %s:%i" %
-							   addr[:2])
-				self._dispatch_event("on_client_removed", addr)
+			if (self._client_socket and
+				self._client_socket == conn):
+				self._reset()
+			self._shutdown(conn, addr)
+			if self.debug:
+				safe_print("MadTPG_Net: Removed client %s:%i" %
+						   addr[:2])
+			self._dispatch_event("on_client_removed", addr)
 
 	def _cast_receive_handler(self, sock, host, port):
 		if host == self.broadcast_ip:
@@ -499,7 +517,7 @@ class MadTPG_Net(object):
 			safe_print("MadTPG_Net: Entering receiver thread for %s port %i" %
 					   (cast, port))
 		self._cast_sockets[(host, port)] = sock
-		while self and getattr(self, "listening", False):
+		while getattr(self, "listening", False):
 			try:
 				data, addr = sock.recvfrom(4096)
 			except socket.timeout, exception:
@@ -668,6 +686,7 @@ class MadTPG_Net(object):
 			if self.debug:
 				safe_print("MadTPG_Net: Connecting to %s:%s failed:" %
 						   (host, port), exception)
+			sock.close()
 		else:
 			if self.debug:
 				safe_print("MadTPG_Net: Connected to %s:%s" % (host, port))
@@ -707,13 +726,15 @@ class MadTPG_Net(object):
 		elif command == "confirm":
 			params = True
 		elif command == "hello":
-			if (params.get("exeFile", "").lower() == "madtpg.exe" or
-				component == "madTPG"):
+			is_madtpg = (params.get("exeFile", "").lower() == "madtpg.exe" or
+						 component == "madTPG")
+			if is_madtpg and not self._client_socket:
+				# madTPG instance
 				client = OrderedDict()
 				client["processId"] = record["processId"]
 				client["module"] = record["module"]
-				if component == "madTPG":
-					client["instance"] = record["instance"]
+				client["component"] = component
+				client["instance"] = record["instance"]
 				client.update(params)
 				if addr not in self.clients:
 					self.clients[addr] = client
@@ -728,7 +749,15 @@ class MadTPG_Net(object):
 					self.clients[addr].update(client)
 					if self.clients[addr] != client_copy:
 						self._dispatch_event("on_client_updated", addr)
-			else:
+			elif conn != self._client_socket:
+				# Not a madTPG instance or duplicate connection
+				if self.debug:
+					if is_madtpg:
+						msg = "MadTPG_Net: Closing duplicate connection %s:%i"
+					else:
+						msg = "MadTPG_Net: Disconnecting non-madTPG client %s:%i"
+					safe_print(msg % addr[:2])
+				self._remove_client(addr)
 				return
 		elif command == "bye":
 			if self.debug:
@@ -795,14 +824,21 @@ class MadTPG_Net(object):
 		""" Wait for (first) client connection and handshake """
 		start = end = time()
 		while end - start < timeout:
-			if self.clients:
-				conn = self._client_sockets.get(addr or self._client_sockets.keys()[0])
-				if conn and (##self._expect(conn, -1, "hello") and
-							 ##self._expect(conn, -1, "hello",
-							 ##			 component="madTPG") and
-							 ##self._confirm(conn) and
-							 self._send(conn, "StartTestPattern")):
+			clients = self.clients.copy()
+			if clients:
+				addr = addr or clients.keys()[0]
+				client = clients.get(addr)
+				conn = self._client_sockets.get(addr)
+				if (client.get("instance") and conn and
+					self._send(conn, "StartTestPattern")):
 					self._client_socket = conn
+					if client:
+						for c_addr, c_client in clients.iteritems():
+							if (c_addr != addr and
+								c_client.get("instance") == client["instance"]):
+								# Remove duplicate connection
+								with _lock:
+									self._remove_client(c_addr)
 					return True
 			sleep(0.001)
 			end = time()
@@ -872,9 +908,17 @@ class MadTPG_Net(object):
 			cfg.optionxform = str
 			cfg.readfp(io)
 			params = OrderedDict(cfg.items("Default"))
-			if "mvrVersion" in params:
-				params["mvrVersion"] = tuple(int(v) for v in
-											 params["mvrVersion"].split("."))
+			# Convert version strings to tuples with integers
+			for param in ("mvr", "exe"):
+				param += "Version"
+				if param in params:
+					values = params[param].split(".")
+					for i, value in enumerate(values):
+						try:
+							values[i] = int(value)
+						except ValueError:
+							pass
+					params[param] = tuple(values)
 		elif command == "reply":
 			commandno = record["commandNo"]
 			repliedcomamnd = self._commands.get(commandno)
@@ -892,7 +936,7 @@ class MadTPG_Net(object):
 			else:
 				# Got a reply for a command we never issued?
 				if self.debug:
-					safe_print("MadTPG_Net: Got reply #%i for unknown command" %
+					safe_print("MadTPG_Net: Got reply %i for unknown command" %
 							   commandno)
 		record["params"] = params
 		if self.debug:
@@ -902,15 +946,14 @@ class MadTPG_Net(object):
 						   record["instance"], record["command"])
 				for key, value in record.iteritems():
 					if key == "params" or self.debug > 2:
-						if (value and isinstance(value,
-												 basestring)) or self.debug > 1:
-							if isinstance(value, basestring):
-								tvalue = value[:256]
-								if tvalue != value:
-									value = "%r[:256]" % tvalue
-								else:
-									value = "%r" % value
-							safe_print("    %s = %s" % (key, value))
+						if isinstance(value, dict):
+							safe_print("  %s:" % key)
+							for subkey, subvalue in value.iteritems():
+								safe_print("    %s = %s" % (subkey.ljust(16),
+															trunc(subvalue, 56)))
+						else:
+							safe_print("  %s = %s" % (key.ljust(16),
+													  trunc(value, 58)))
 		blob = blob[a:]
 		return record, blob
 
@@ -951,19 +994,20 @@ class MadTPG_Net(object):
 			packet = self._assemble(conn, commandno, command, params,
 									component)
 			if self.debug:
-				safe_print("MadTPG_Net: Sending #%i %s to %s:%s" %
+				safe_print("MadTPG_Net: Sending command %i %r to %s:%s" %
 						   ((commandno, command) + conn.getpeername()[:2]))
 			conn.sendall(packet)
 		except socket.error, exception:
-			safe_print("MadTPG_Net:", exception)
+			safe_print("MadTPG_Net: Sending command %i %r failed" %
+					   (commandno, command), exception)
 			return False
 		if command not in ("confirm", "hello", "reply",
 						   "bye") and not command.startswith("store:"):
 			self._commands[commandno] = command
 			# Get reply
 			if self.debug:
-				safe_print("MadTPG_Net: Expecting reply for #%i" %
-						   commandno, command)
+				safe_print("MadTPG_Net: Expecting reply for command %i %r" %
+						   (commandno, command))
 			return self._expect(conn, commandno, "reply")
 		return True
 
