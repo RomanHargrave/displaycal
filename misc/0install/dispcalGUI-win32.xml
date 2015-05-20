@@ -21,6 +21,9 @@ ${DESC}</description>
 		<requires interface="${URL}0install/wmi.xml" />
 		<requires interface="${URL}0install/7z.xml" />
 		<requires importance="recommended" interface="${URL}0install/argyllcms.xml" />
+		<command name="change-display-profile-cal-whitepoint" path="util/change_display_profile_cal_whitepoint.py">
+			<runner interface="${URL}0install/python.xml" version="2.5..!3.0" />
+		</command>
 		<command name="set-calibration-loading">
 			<arg>-c</arg>
 			<arg>import sys; from dispcalGUI import util_win; util_win.calibration_management_isenabled() or util_win.enable_calibration_management() if '--os' in sys.argv[1:] else not util_win.calibration_management_isenabled() or util_win.disable_calibration_management();</arg>

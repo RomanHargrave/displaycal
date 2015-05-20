@@ -24,6 +24,7 @@ USE_COLLINK = int(os.getenv("CHANGE_DISPLAY_PROFILE_WTPT_USE_COLLINK", 0))
 
 def main(*args, **kwargs):
 	# Parse arguments
+	cal_only = kwargs.get("--cal-only", CAL_ONLY)
 	state = None
 	xy = None
 	profile = None
@@ -72,7 +73,7 @@ def main(*args, **kwargs):
 		else:
 			outfilename = os.path.abspath(arg)
 	if not xy or not outfilename:
-		raise Invalid("Usage: %s [-t temp | -T temp | -w x,y] [inprofile] outfilename" % os.path.basename(__file__))
+		raise Invalid("Usage: %s [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename" % os.path.basename(__file__))
 	if not profile:
 		safe_print("Reading display profile")
 		profile = ICCP.get_display_profile()
@@ -81,7 +82,7 @@ def main(*args, **kwargs):
 	lang.init()
 	w = worker.Worker()
 	fn = w.change_display_profile_cal_whitepoint
-	args = profile, xy[0], xy[1], outfilename, CAL_ONLY, USE_COLLINK
+	args = profile, xy[0], xy[1], outfilename, cal_only, USE_COLLINK
 	# Process
 	if CAL_ONLY:
 		fn(*args)
@@ -98,4 +99,7 @@ class Invalid(ValueError):
 
 
 if __name__ == "__main__":
-	main(*sys.argv[1:])
+	try:
+		main(*sys.argv[1:])
+	except Invalid, exception:
+		print exception
