@@ -10,10 +10,7 @@
 		<html>
 			<head>
 				<title>
-					<xsl:value-of select="zi:name"/>
-					<xsl:if test="zi:summary and zi:summary != zi:name">
-						—<xsl:value-of select="zi:summary"/>
-					</xsl:if>
+					<xsl:value-of select="zi:name"/><xsl:if test="zi:summary and zi:summary != zi:name">—<xsl:value-of select="zi:summary"/></xsl:if>
 				</title>
 				<link rel="stylesheet" href="../theme/readme.css" />
 				<link rel="stylesheet" href="interface1.css" />
@@ -68,56 +65,71 @@
 								</xsl:for-each>
 							</div>
 						</xsl:when>
-						<xsl:when test="//zi:implementation[@main] | //zi:group[@main] | //zi:command[@name='run'] | //zi:package-implementation[@main] | //zi:entry-point">
-							<p>
-								To add this program to your Applications menu,
-								choose <strong>Zero Install (0install)</strong>
-								from your <strong>Applications</strong> menu
-								(start menu under Windows 7), and <strong>drag
-								this feed's URL into the window that
-								opens.</strong>
-							</p>
-							<p>
-								If you don't see this menu item, install the
-								<code>zeroinstall-injector</code> package from
-								your distribution's repository, or from
-								<a href="http://0install.net/injector.html">0install.net</a>.
-							</p>
-			
-							<div id="box">
-								<p>
-									<img src="0install.png" alt="" />
-								</p>
-								<p>
-									<a class="button" href="{/zi:interface/@uri}">
-										<xsl:value-of select="/zi:interface/@uri"/>
-									</a>
-								</p>
-								<xsl:if test="zi:feed-for">
+						<xsl:when test="//zi:implementation[@main] | //zi:group[@main] | //zi:command | //zi:package-implementation[@main] | //zi:entry-point">
+							<xsl:choose>
+								<xsl:when test="//zi:entry-point">
 									<p>
-										In most cases, you should use the
-										interface URI instead of this feed's
-										URI.
+										To add this program to your Applications menu,
+										choose <strong>Zero Install (0install)</strong>
+										from your <strong>Applications</strong> menu
+										(“Start” menu under Windows), and <strong>drag
+										this feed's URL into the window that
+										opens.</strong>
 									</p>
-									<xsl:for-each select="zi:feed-for">
+									<p>
+										If you don't see this menu item, install the
+										<code>zeroinstall-injector</code> package from
+										your distribution's repository, or from
+										<a href="http://0install.net/injector.html">0install.net</a>.
+									</p>
+									<div id="box">
 										<p>
-											<a class="button">
-												<xsl:attribute name="href">
-													<xsl:value-of select="@interface"/>
-												</xsl:attribute>
-												<xsl:value-of select="@interface"/>
+											<img src="0install.png" alt="" />
+										</p>
+										<p>
+											<a class="button" href="{/zi:interface/@uri}">
+												<xsl:value-of select="/zi:interface/@uri"/>
 											</a>
 										</p>
-									</xsl:for-each>
-								</xsl:if>
-							</div>
+										<xsl:if test="zi:feed-for">
+											<p>
+												In most cases, you should use the
+												interface URI instead of this feed's
+												URI.
+											</p>
+											<xsl:for-each select="zi:feed-for">
+												<p>
+													<a class="button">
+														<xsl:attribute name="href">
+															<xsl:value-of select="@interface"/>
+														</xsl:attribute>
+														<xsl:value-of select="@interface"/>
+													</a>
+												</p>
+											</xsl:for-each>
+										</xsl:if>
+									</div>
+									<p>
+										Alternatively, to run it from the command-line:
+									</p>
+								</xsl:when>
+								<xsl:otherwise>
+									<p>
+										To run this program from the command-line:
+									</p>
+								</xsl:otherwise>
+							</xsl:choose>
 
-							<p>
-								Alternatively, to run it from the command-line:
-							</p>
 							<p>
 								<code>
 									0launch
+									<xsl:choose>
+										<xsl:when test="//zi:implementation[@main] | //zi:group[@main] | //zi:command[@name='run'] | //zi:package-implementation[@main]">
+										</xsl:when>
+										<xsl:otherwise>
+											--command=COMMAND
+										</xsl:otherwise>
+									</xsl:choose>
 									<xsl:value-of select="/zi:interface/@uri"/>
 								</code>
 							</p>
@@ -146,22 +158,36 @@
 				</div>
 				<div class="main" id="content">
 					<xsl:apply-templates mode="dl" select="*|@*"/>
-					<xsl:if test="zi:entry-point">
-						<h2>Provides</h2>
-						<xsl:for-each select="zi:entry-point">
-							<div class="entry-point">
-								<xsl:variable name="icon-href" select="(zi:icon[@type='image/png'][1])/@href"/>
-								<xsl:if test="$icon-href != ''">
-									<img src="{$icon-href}"
-										 alt="" />
-								</xsl:if>
-								<div>
-									<h3><xsl:value-of select="zi:name"/></h3>
-									<p><xsl:value-of select="zi:description"/></p>
+					<xsl:choose>
+						<xsl:when test="zi:entry-point">
+							<h2>Provides</h2>
+							<xsl:for-each select="zi:entry-point">
+								<div class="entry-point">
+									<xsl:variable name="icon-href" select="(zi:icon[@type='image/png'][1])/@href"/>
+									<xsl:if test="$icon-href != ''">
+										<img src="{$icon-href}"
+											 alt="" />
+									</xsl:if>
+									<div>
+										<h3><xsl:value-of select="zi:name"/></h3>
+										<p><xsl:value-of select="zi:description"/></p>
+									</div>
 								</div>
-							</div>
-						</xsl:for-each>
-					</xsl:if>
+							</xsl:for-each>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:if test="//zi:command[@name!='run']">
+								<h2>Provides</h2>
+								<ul>
+									<xsl:for-each select="//zi:command">
+										<li>
+											<xsl:value-of select="@name"/>
+										</li>
+									</xsl:for-each>
+								</ul>
+							</xsl:if>
+						</xsl:otherwise>
+					</xsl:choose>
 					<h2>Required libraries</h2>
 					<xsl:choose>
 						<xsl:when test="//zi:requires|//zi:runner">
@@ -251,7 +277,7 @@
 														<xsl:if test="(ancestor-or-self::*[@version])[last()]/@version-modifier">
 															<xsl:value-of select="(ancestor-or-self::*[@version])[last()]/@version-modifier"/>
 														</xsl:if>
-														<xsl:if test="$stability = 'testing' or $stability = 'developer' or $stability = 'buggy' or contains(.//zi:archive/@href, 'snapshot')">
+														<xsl:if test="$stability = 'testing' or $stability = 'developer' or contains(.//zi:archive/@href, 'snapshot')">
 															Beta
 														</xsl:if>
 													</h2>
