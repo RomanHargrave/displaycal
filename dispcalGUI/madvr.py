@@ -629,19 +629,15 @@ class MadTPG_Net(object):
 			sock.sendall(struct.pack("<i", 0))
 			sock.close()
 
-	def connect(self, method1=CM_ConnectToLocalInstance, timeout1=1000,
-				method2=CM_ConnectToLanInstance, timeout2=3000,
-				method3=CM_ShowListDialog, timeout3=0, method4=CM_Fail,
+	def connect(self, method1=CM_ConnectToLanInstance, timeout1=4000,
+				method2=CM_ShowListDialog, timeout2=0,
+				method3=CM_Fail, timeout3=0, method4=CM_Fail,
 				timeout4=0, parentwindow=None):
 		""" Find or select a madTPG instance on the network and connect to it """
 		for i in xrange(1, 5):
 			method = locals()["method%i" % i]
 			timeout = locals()["timeout%i" % i] / 1000.0
-			if method in (CM_ConnectToLocalInstance, CM_StartLocalInstance,
-						  CM_ConnectToLanInstance, CM_ShowListDialog):
-				# NOTE: We treat CM_ConnectToLocalInstance and
-				# CM_StartLocalInstance as equivalent to 
-				# CM_ConnectToLanInstance.
+			if method in (CM_ConnectToLanInstance, CM_ShowListDialog):
 				if not self._cast_sockets:
 					self.listen()
 					self.announce()
