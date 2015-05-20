@@ -260,8 +260,6 @@ class MadTPG_Net(object):
 
 	""" Implementation of madVR network protocol in pure python """
 
-	# FIXME/NOTE this isn't working yet
-
 	# Wireshark filter to help ananlyze traffic:
 	# (tcp.dstport != 1900 and tcp.dstport != 443) or (udp.dstport != 1900 and udp.dstport != 137 and udp.dstport != 138 and udp.dstport != 5355 and udp.dstport != 547 and udp.dstport != 10111)
 
