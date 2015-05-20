@@ -785,6 +785,7 @@ defaults = {
 	"size.synthiccframe.h": 384,
 	"skip_legacy_serial_ports": 1,
 	"skip_scripts": 1,
+	"startup_sound.enable": 1,
 	"sudo.preserve_environment": 1,
 	"synthprofile.black_luminance": 0.0,
 	"synthprofile.luminance": 120.0,

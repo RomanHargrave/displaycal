@@ -87,6 +87,10 @@
         <checkable>1</checkable>
       </object>
       <object class="separator"/>
+      <object class="wxMenuItem" name="startup_sound.enable">
+        <label>startup_sound.enable</label>
+        <checkable>1</checkable>
+      </object>
       <object class="wxMenuItem" name="use_fancy_progress">
         <label>use_fancy_progress</label>
         <checkable>1</checkable>

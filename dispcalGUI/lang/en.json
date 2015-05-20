@@ -860,6 +860,7 @@
 	"softproof.icc": "Softproof (D55, 160 cd/m², L*)",
 	"spectral": "Spectral",
 	"startup": "Starting up...",
+	"startup_sound.enable": "Enable startup sound",
 	"success": "...ok.",
 	"surround_xyz": "Surround XYZ",
 	"synthicc.create": "Create synthetic ICC profile...",

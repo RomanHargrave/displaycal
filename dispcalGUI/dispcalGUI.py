@@ -1973,6 +1973,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			options.FindItem("dry_run"))
 		self.Bind(wx.EVT_MENU, self.enable_dry_run_handler, 
 				  self.menuitem_enable_dry_run)
+		self.menuitem_startup_sound = options.FindItemById(
+			options.FindItem("startup_sound.enable"))
+		self.Bind(wx.EVT_MENU, self.startup_sound_enable_handler, 
+				  self.menuitem_startup_sound)
 		self.menuitem_use_fancy_progress = options.FindItemById(
 			options.FindItem("use_fancy_progress"))
 		self.Bind(wx.EVT_MENU, self.use_fancy_progress_handler, 
@@ -2175,6 +2179,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(self.worker.get_instrument_features().get("sensor_cal")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
+		self.menuitem_startup_sound.Check(bool(getcfg("startup_sound.enable")))
 		self.menuitem_use_fancy_progress.Check(bool(getcfg("use_fancy_progress")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
@@ -3899,6 +3904,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.extra_args.Raise()
 		else:
 			self.extra_args.Show()
+
+	def startup_sound_enable_handler(self, event):
+		setcfg("startup_sound.enable", 
+			   int(self.menuitem_startup_sound.IsChecked()))
 
 	def use_fancy_progress_handler(self, event):
 		setcfg("use_fancy_progress", 
@@ -12807,8 +12816,9 @@ class StartupFrame(wx.Frame):
 														   audio._lib_version)))
 		# Startup sound
 		# Needs to be stereo!
-		self.startup_sound = audio.Sound(get_data_path("theme/intro_new.wav"))
-		self.startup_sound.safe_play()
+		if getcfg("startup_sound.enable"):
+			self.startup_sound = audio.Sound(get_data_path("theme/intro_new.wav"))
+			self.startup_sound.safe_play()
 
 		self.Show()
 
