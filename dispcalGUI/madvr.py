@@ -235,7 +235,7 @@ class MadTPG(object):
 	def get_selected_3dlut(self):
 		thr3dlut = ctypes.c_ulong()
 		result = self.mad.madVR_GetSelected3dlut(ctypes.byref(thr3dlut))
-		return result and thr3dlut
+		return result and thr3dlut.value
 
 	def get_version(self):
 		version = ctypes.c_ulong()
@@ -417,7 +417,7 @@ class MadTPG_Net(object):
 				else:
 					self._client_sockets[addr] = conn
 					thread = threading.Thread(target=self._receive_handler,
-											  args=(conn, ))
+											  args=(addr, conn, ))
 					self._threads.append(thread)
 					thread.start()
 		self._server_sockets.pop((host, port))
@@ -426,8 +426,7 @@ class MadTPG_Net(object):
 			safe_print("MadTPG_Net: Exiting incoming connection thread for port",
 					   port)
 
-	def _receive_handler(self, conn):
-		addr = conn.getpeername()
+	def _receive_handler(self, addr, conn):
 		if self.debug:
 			safe_print("MadTPG_Net: Entering receiver thread for %s:%s" %
 					   addr[:2])
@@ -482,7 +481,7 @@ class MadTPG_Net(object):
 		with _lock:
 			self._remove_client(addr, send_bye=addr in self._client_sockets and
 											   send_bye)
-		self._incoming.pop(addr)
+			self._incoming.pop(addr)
 		if self.debug:
 			safe_print("MadTPG_Net: Exiting receiver thread for %s:%s" %
 					   addr[:2])
@@ -695,7 +694,7 @@ class MadTPG_Net(object):
 				safe_print("MadTPG_Net: Connected to %s:%s" % (host, port))
 			sock.settimeout(0)
 			thread = threading.Thread(target=self._receive_handler,
-									  args=(sock, ))
+									  args=((host, port), sock, ))
 			self._threads.append(thread)
 			thread.start()
 
@@ -934,12 +933,29 @@ class MadTPG_Net(object):
 				if repliedcomamnd == "GetBlackAndWhiteLevel":
 					if len(params) == 8:
 						params = struct.unpack("<ii", params)
+					else:
+						params = False
+				elif repliedcomamnd == "GetDeviceGammaRamp":
+					# Convert to ushort_Array_256_Array_3
+					ramp = ((ctypes.c_ushort * 256) * 3)()
+					if len(params) == 1536:
+						for j in xrange(3):
+							for i in xrange(256):
+								ramp[j][i] = int(round(struct.unpack("<H", params[:2])[0]))
+								params = params[2:]
+						params = ramp
+					else:
+						params = False
 				elif repliedcomamnd == "GetPatternConfig":
 					if len(params) == 16:
 						params = struct.unpack("<iiii", params)
+					else:
+						params = False
 				elif repliedcomamnd in ("GetSelected3dlut", ):
 					if len(params) == 4:
 						params = struct.unpack("<i", params[0:4])[0]
+					else:
+						params = False
 			else:
 				# Got a reply for a command we never issued?
 				if self.debug:
@@ -1020,7 +1036,9 @@ class MadTPG_Net(object):
 
 	@property
 	def uri(self):
-		return "%s:%s" % (self._host, self.port)
+		return "%s:%s" % (self._client_socket and
+						  self._client_socket.getpeername()[:2] or
+						  ("0.0.0.0", 0))
 
 
 class MadTPG_Net_Sender(object):
@@ -1044,12 +1062,17 @@ class MadTPG_Net_Sender(object):
 			params = struct.pack("<i", args[1])  # Save to settings?
 			params += struct.pack("<i", args[2])  # 3D LUT slot
 			params += lutdata
-		elif self.command == "SetDeviceGammaRamp" and args[0] is None:
-			# Clear device gamma ramp
+		elif self.command == "SetDeviceGammaRamp":
 			params = ""
-			for i in xrange(3):
-				for j in xrange(256):
-					params += struct.pack("<H", j * 257)
+			for j in xrange(3):
+				for i in xrange(256):
+					if args[0] is None:
+						# Clear device gamma ramp
+						v = i * 257
+					else:
+						# Convert ushort_Array_256_Array_3 to string
+						v = args[0][j][i]
+					params += struct.pack("<H", v)
 		elif self.command in ("SetDisableOsdButton", "SetStayOnTopButton",
 							  "SetUseFullscreenButton"):
 			if args[0]:

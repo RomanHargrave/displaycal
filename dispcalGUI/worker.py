@@ -3,6 +3,7 @@
 # stdlib
 from __future__ import with_statement
 from binascii import hexlify
+import ctypes
 import getpass
 import glob
 import math
@@ -700,6 +701,34 @@ def get_options_from_ti3(ti3):
 		colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
 															"replace")
 	return get_options_from_args(dispcal_args, colprof_args)
+
+
+def get_python_and_pythonpath():
+	""" Return python and pythonpath """
+	# Determine the path of python, and python module search paths
+	# If we are running 'frozen', expect python.exe in the same directory
+	# as the packed executable.
+	# py2exe: The python executable can be included via setup script by 
+	# adding it to 'data_files'
+	pythonpath = list(sys.path)
+	if sys.platform == "win32":
+		dirname = os.path.dirname(sys.executable)
+		if getattr(sys, "frozen", False):
+			pythonpath = [dirname]
+			# If we are running 'frozen', add library.zip and lib\library.zip
+			# to sys.path
+			# py2exe: Needs appropriate 'zipfile' option in setup script and 
+			# 'bundle_files' 3
+			pythonpath.append(os.path.join(dirname, "library.zip"))
+			pythonpath.append(os.path.join(dirname, "library.zip", appname))
+			if os.path.isdir(os.path.join(dirname, "lib")):
+				dirname = os.path.join(dirname, "lib")
+				pythonpath.append(os.path.join(dirname, "library.zip"))
+				pythonpath.append(os.path.join(dirname, "library.zip", appname))
+		python = os.path.join(dirname, "python.exe")
+	else:
+		python = which("python2.7") or which("python2.6") or "python"
+	return (python, pythonpath)
 
 
 def get_arg(argmatch, args, whole=False):
@@ -2021,6 +2050,8 @@ class Worker(object):
 		self.patch_count = 0
 		self.subprocess_abort = True
 		self.thread_abort = True
+		abortfilename = os.path.join(self.tempdir, ".abort")
+		open(abortfilename, "w").close()
 		delayedresult.startWorker(self.quit_terminate_consumer, 
 								  self.quit_terminate_cmd)
 
@@ -2135,13 +2166,14 @@ class Worker(object):
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
 		self.madtpg_fullscreen = None
-		self.use_madnet = False
+		self.use_madnet_tpg = False
 		self.use_patterngenerator = False
 		self.patch_sequence = False
 		self.patch_count = 0
 		self.patterngenerator_sent_count = 0
 		self.exec_cmd_returnvalue = None
 		self.tmpfiles = {}
+		self.buffer = []
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
@@ -2959,13 +2991,13 @@ class Worker(object):
 			# Try to connect to running madTPG or launch a new instance
 			try:
 				if not hasattr(self, "madtpg"):
-					if sys.platform == "win32":
+					if sys.platform == "win32" and getcfg("madtpg.native"):
 						# Using native implementation (madHcNet32.dll)
 						self.madtpg = madvr.MadTPG()
 					else:
-						# Using madVR net-protocol implementation
-						self.madtpg = madvr.MadTPG_Net(getcfg("madtpg.host"),
-													   debug=debug)
+						# Using madVR net-protocol pure python implementation
+						self.madtpg = madvr.MadTPG_Net()
+						self.madtpg.debug = debug
 				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
 					# Connected
 					# Check madVR version
@@ -2988,9 +3020,136 @@ class Worker(object):
 						# Restore fullscreen
 						self.madtpg.set_use_fullscreen_button(True)
 					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
-					self.madtpg.set_device_gamma_ramp(None)
+					if isinstance(self.madtpg, madvr.MadTPG_Net):
+						# Need to handle calibration clearing/loading/saving
+						# for madVR net-protocol pure python implementation
+						cal = None
+						calfilename = None
+						profile = None
+						ramp = False
+						if cmdname == get_argyll_utilname("dispwin"):
+							if "-c" in args:
+								# Clear calibration
+								self.log("MadTPG_Net clear calibration")
+								ramp = None
+							if "-L" in args:
+								# NOTE: Hmm, profile will be None. It's not
+								# functionality we currently use though.
+								profile = config.get_display_profile()
+							if "-s" in args:
+								# Save calibration. Get from madTPG
+								self.log("MadTPG_Net save calibration:", args[-1])
+								ramp = self.madtpg.get_device_gamma_ramp()
+								if not ramp:
+									self.madtpg.disconnect()
+									return Error("madVR_GetDeviceGammaRamp failed")
+								cal = """CAL    
+
+KEYWORD "DEVICE_CLASS"
+DEVICE_CLASS "DISPLAY"
+KEYWORD "COLOR_REP"
+COLOR_REP "RGB"
+BEGIN_DATA_FORMAT
+RGB_I RGB_R RGB_G RGB_B
+END_DATA_FORMAT
+NUMBER_OF_SETS 256
+BEGIN_DATA
+"""
+								# Convert ushort_Array_256_Array_3 to dictionary
+								RGB = {}
+								for j in xrange(3):
+									for i in xrange(256):
+										if not i in RGB:
+											RGB[i] = []
+										RGB[i].append(ramp[j][i] / 65535.0)
+								# Get RGB from dictionary
+								for i, (R, G, B) in RGB.iteritems():
+									cal += "%f %f %f %f\n" % (i / 255.0, R, G, B)
+								cal += "END_DATA"
+								# Write out .cal file
+								try:
+									with open(args[-1], "w") as calfile:
+										calfile.write(cal)
+								except (IOError, OSError), exception:
+									self.madtpg.disconnect()
+									return exception
+								cal = None
+								ramp = False
+							elif working_basename:
+								# .cal/.icc/.icm file to load
+								calfilename = args[-1]
+						elif cmdname == get_argyll_utilname("dispread"):
+							# Check for .cal file to load
+							# NOTE this isn't normally used as we use -K
+							# for madTPG, but is overridable by the user
+							k_arg = get_arg("-k", args, True)
+							if k_arg:
+								calfilename = args[k_arg[0] + 1]
+							else:
+								ramp = None
+						if calfilename:
+							# Load calibration from .cal file or ICC profile
+							self.log("MadTPG_Net load calibration:", calfilename)
+							result = check_file_isfile(calfilename)
+							if isinstance(result, Exception):
+								self.madtpg.disconnect()
+								return result
+							if calfilename.lower().endswith(".cal"):
+								# .cal file
+								try:
+									cal = CGATS.CGATS(calfilename)
+								except (IOError, CGATS.CGATSError), exception:
+									self.madtpg.disconnect()
+									return exception
+							else:
+								# ICC profile
+								try:
+									profile = ICCP.ICCProfile(calfilename)
+								except (IOError, ICCP.ICCProfileInvalidError), exception:
+									self.madtpg.disconnect()
+									return exception
+						if profile:
+							# Load calibration from ICC profile vcgt (if present)
+							if isinstance(profile.tags.get("vcgt"),
+										  ICCP.VideoCardGammaType):
+								cal = vcgt_to_cal(profile)
+							else:
+								# Linear
+								ramp = None
+						if cal:
+							# Check calibration we're going to load
+							try:
+								cal = verify_cgats(cal,
+												   ("RGB_R", "RGB_G", "RGB_B"))
+								if len(cal.DATA) != 256:
+									# Needs to have 256 entries
+									raise CGATSError("%s: %s != 256" %
+													 (lang.getstr("calibration"),
+													  lang.getstr("number_of_entries")))
+							except CGATS.CGATSError, exception:
+								self.madtpg.disconnect()
+								return exception
+							# Convert calibration to ushort_Array_256_Array_3
+							ramp = ((ctypes.c_ushort * 256) * 3)()
+							for i in xrange(256):
+								for j, channel in enumerate("RGB"):
+									ramp[j][i] = int(round(cal.DATA[i]["RGB_" + channel] * 65535))
+					else:
+						ramp = None
+					if (ramp is not False and
+						not self.madtpg.set_device_gamma_ramp(ramp)):
+						self.madtpg.disconnect()
+						return Error("madVR_SetDeviceGammaRamp failed")
+					if (isinstance(self.madtpg, madvr.MadTPG_Net) and
+						cmdname == get_argyll_utilname("dispwin")):
+						# For madVR net-protocol pure python implementation
+						# we are now done
+						self.madtpg.disconnect()
+						return True
 					if not "-V" in args:
-						self.madtpg.disable_3dlut()
+						if not self.madtpg.disable_3dlut():
+							self.madtpg.disconnect()
+							return Error("madVR_Disable3dlut failed")
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
@@ -3062,8 +3221,11 @@ class Worker(object):
 				if isinstance(getattr(self, "madtpg", None), madvr.MadTPG_Net):
 					self.madtpg.disconnect()
 				return exception
-		self.use_madnet = use_madvr and isinstance(self.madtpg, madvr.MadTPG_Net)
-		if self.use_patterngenerator or self.use_madnet:
+		# Use mad* net protocol pure python implementation
+		use_madnet = use_madvr and isinstance(self.madtpg, madvr.MadTPG_Net)
+		# Use mad* net protocol pure python implementation as pattern generator
+		self.use_madnet_tpg = use_madnet and cmdname != get_argyll_utilname("dispwin")
+		if self.use_patterngenerator or self.use_madnet_tpg:
 			# Run a dummy command so we can grab the RGB numbers for
 			# the pattern generator from the output
 			carg = get_arg("-C", args, True)
@@ -3074,10 +3236,55 @@ class Worker(object):
 				args.insert(0, "-C")
 				args.insert(1, "")
 				index = 1
+			python, pythonpath = get_python_and_pythonpath()
+			script_dir = working_dir
+			pythonscript = """from __future__ import print_function
+import os, sys, time
+if sys.platform != "win32":
+	print(*["\\nCurrent RGB"] + sys.argv[1:])
+abortfilename = os.path.join(%r, ".abort")
+okfilename = os.path.join(%r, ".ok")
+while 1:
+	if os.path.isfile(abortfilename):
+		break
+	if os.path.isfile(okfilename):
+		try:
+			os.remove(okfilename)
+		except OSError, e:
+			pass
+		else:
+			break
+	time.sleep(0.001)
+""" % (script_dir, script_dir)
+			waitfilename = os.path.join(script_dir, ".wait")
 			if sys.platform == "win32":
-				args[index] += "echo. && echo Current RGB "
+				# Avoid problems with encoding
+				python = win32api.GetShortPathName(python)
+				for i, path in enumerate(pythonpath):
+					if os.path.exists(path):
+						pythonpath[i] = win32api.GetShortPathName(path)
+				# Write out .wait.py file
+				scriptfilename = waitfilename + ".py"
+				with open(scriptfilename, "w") as scriptfile:
+					scriptfile.write(pythonscript)
+				scriptfilename = win32api.GetShortPathName(scriptfilename)
+				# Write out .wait.cmd file
+				with open(waitfilename + ".cmd", "w") as waitfile:
+					waitfile.write('@echo off\n')
+					waitfile.write('echo.\n')
+					waitfile.write('echo Current RGB %*\n')
+					waitfile.write('set "PYTHONPATH=%s"\n' %
+								   safe_str(os.pathsep.join(pythonpath), enc))
+					waitfile.write('"%s" -S "%s" %%*\n' %
+								   (safe_str(python, enc),
+									safe_str(scriptfilename, enc)))
 			else:
-				args[index] += "echo '\nCurrent RGB '"
+				# Write out .wait file
+				with open(waitfilename, "w") as waitfile:
+					waitfile.write('#!%s -S\n' % safe_str(python))
+					waitfile.write(pythonscript)
+				os.chmod(waitfilename, 0755)
+			args[index] += waitfilename
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
 				if (not silent and (dry_run or getcfg("dry_run")) and
@@ -3105,7 +3312,7 @@ class Worker(object):
 						safe_print(lang.getstr("dry_run.end"))
 					if self.owner and hasattr(self.owner, "infoframe"):
 						wx.CallAfter(self.owner.infoframe.Show)
-					if self.use_madnet:
+					if use_madnet:
 						self.madtpg.disconnect()
 					return UnloggedInfo(lang.getstr("dry_run.info"))
 		cmdline = [cmd] + args
@@ -3144,16 +3351,16 @@ class Worker(object):
 					if hasattr(self, "thread") and self.thread.isAlive():
 						# Careful: We can only show the auth dialog if running
 						# in the main GUI thread!
-						if self.use_madnet:
+						if use_madnet:
 							self.madtpg.disconnect()
 						return Error("Authentication requested in non-GUI thread")
 					result = self.authenticate(cmd, title, parent)
 					if result is False:
-						if self.use_madnet:
+						if use_madnet:
 							self.madtpg.disconnect()
 						return None
 					elif isinstance(result, Exception):
-						if self.use_madnet:
+						if use_madnet:
 							self.madtpg.disconnect()
 						return result
 				sudo = unicode(self.sudo)
@@ -3536,8 +3743,6 @@ class Worker(object):
 							win32com_shell.ShellExecuteEx(lpVerb="runas",
 														  lpFile=cmd,
 														  lpParameters=" ".join(quote_args(args)))
-							if self.use_madnet:
-								self.madtpg.disconnect()
 							return True
 						else:
 							self.subprocess = sp.Popen(cmdline, stdin=stdin,
@@ -3629,7 +3834,7 @@ class Worker(object):
 						self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
 					except Exception, exception:
 						self.log(exception)
-			if self.use_madnet:
+			if use_madnet:
 				self.madtpg.disconnect()
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
@@ -9082,6 +9287,15 @@ BEGIN_DATA
 		return result
 	
 	def write(self, txt):
+		self.buffer.append(txt)
+		self.buffer = [line for line in StringIO("".join(self.buffer))]
+		for line in self.buffer:
+			if not (line.endswith("\n") or line.rstrip().endswith(":")):
+				break
+			self._write(line)
+			self.buffer = self.buffer[1:]
+
+	def _write(self, txt):
 		if re.search("press 1|space when done|patch 1 of ", txt, re.I):
 			# There are some intial measurements which we can't check for
 			# unless -D (debug) is used for Argyll tools
@@ -9096,12 +9310,12 @@ BEGIN_DATA
 		use_patterngenerator = (self.use_patterngenerator and
 								getattr(self, "patterngenerator", None) and
 								hasattr(self.patterngenerator, "conn"))
-		if use_patterngenerator or self.use_madnet:
+		if use_patterngenerator or self.use_madnet_tpg:
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
 				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
-				if self.use_madnet:
+				if self.use_madnet_tpg:
 					if self.madtpg.show_rgb(*rgb):
 						self.patterngenerator_sent_count += 1
 						self.log("%s: MadTPG_Net sent count: %i" %
@@ -9111,6 +9325,9 @@ BEGIN_DATA
 						self.abort_subprocess()
 				else:
 					self.patterngenerator_send(rgb)
+				# Create .ok file which will be picked up by .wait script
+				okfilename = os.path.join(self.tempdir, ".ok")
+				open(okfilename, "w").close()
 			if update:
 				# Check if patch count is higher than patterngenerator sent count
 				if (self.patch_count > self.patterngenerator_sent_count and
@@ -9122,10 +9339,10 @@ BEGIN_DATA
 						   "the instrument can be removed from the screen"
 						   in txt.lower()):
 			self.patch_count += 1
-			if use_patterngenerator or self.use_madnet:
+			if use_patterngenerator or self.use_madnet_tpg:
 				self.log("%s: Argyll CMS patch update count: %i" %
 						 (appname, self.patch_count))
-			if self.use_madnet and re.match("Patch \\d+ of \\d+", txt, re.I):
+			if self.use_madnet_tpg and re.match("Patch \\d+ of \\d+", txt, re.I):
 				# Set madTPG progress bar
 				components = txt.split()
 				try:
