@@ -4539,7 +4539,8 @@ class ProgressDialog(wx.Dialog):
 				self.time3 = time()
 		if not self.indeterminate:
 			self.indeterminate = True
-			self.remaining_time.Label = u"––:––:––"
+			if hasattr(self, "remaining_time"):
+				self.remaining_time.Label = u"––:––:––"
 		self.gauge.Pulse()
 		return self.keepGoing, self.skip
 	
