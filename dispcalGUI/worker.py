@@ -3278,13 +3278,14 @@ while 1:
 					waitfile.write('"%s" -S "%s" %%*\n' %
 								   (safe_str(python, enc),
 									safe_str(scriptfilename, enc)))
+				args[index] += waitfilename
 			else:
 				# Write out .wait file
 				with open(waitfilename, "w") as waitfile:
 					waitfile.write('#!%s -S\n' % safe_str(python))
 					waitfile.write(pythonscript)
 				os.chmod(waitfilename, 0755)
-			args[index] += waitfilename
+				args[index] += "./" + os.path.basename(waitfilename)
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
 				if (not silent and (dry_run or getcfg("dry_run")) and
