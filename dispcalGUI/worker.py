@@ -2669,7 +2669,7 @@ class Worker(object):
 							# Chromecast
 							match = re.findall(r"(.+)", value)
 							if len(match):
-								displays.append("Chromecast %s: %s" %
+								displays.append("Chromecast %s - %s" %
 												(line[0],
 												 safe_unicode(safe_str(match[0], enc),
 															  "UTF-8")))
@@ -2717,7 +2717,7 @@ class Worker(object):
 					if display.startswith("Chromecast "):
 						self.display_edid.append({})
 						self.display_manufacturers.append("Google")
-						self.display_names.append(display.split(":", 1)[1].strip())
+						self.display_names.append(display.split("-", 1)[1].strip())
 						continue
 					display_name = displays[i].split("@")[0].strip()
 					# Make sure we have nice descriptions
