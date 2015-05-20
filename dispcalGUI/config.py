@@ -741,7 +741,7 @@ defaults = {
 	"profile.load_on_login": 1,
 	"profile.name": u" ".join([
 		u"%dns",
-		u"%Y-%m-%d",
+		u"%Y-%m-%d %H-%M",
 		u"%cb",
 		u"%wp",
 		u"%cB",
