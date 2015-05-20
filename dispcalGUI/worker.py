@@ -2082,8 +2082,9 @@ class Worker(object):
 		self.patch_count = 0
 		self.subprocess_abort = True
 		self.thread_abort = True
-		abortfilename = os.path.join(self.tempdir, ".abort")
-		open(abortfilename, "w").close()
+		if self.use_patterngenerator or self.use_madnet_tpg:
+			abortfilename = os.path.join(self.tempdir, ".abort")
+			open(abortfilename, "w").close()
 		delayedresult.startWorker(self.quit_terminate_consumer, 
 								  self.quit_terminate_cmd)
 
