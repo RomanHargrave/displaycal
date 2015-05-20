@@ -91,7 +91,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"PY_MAXVERSION": ".".join(str(n) for n in py_maxversion),
 		"PY_MINVERSION": ".".join(str(n) for n in py_minversion),
 		"VERSION": version,
-		"VERSION_SHORT": re.sub("(?:\.0){2}$", "", version),
+		"VERSION_SHORT": re.sub("(?:\.0){1,2}$", "", version),
 		"URL": "http://%s/" % domain.lower(),
 		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
 		"YEAR": strftime("%Y", gmtime())}
@@ -834,9 +834,11 @@ def setup():
 		p = Popen(["0install", "digest", archive_path.encode(fs_enc), extract],
 				  stdout=sp.PIPE, cwd=pydir)
 		stdout, stderr = p.communicate()
-		hash = stdout.strip()
+		print stdout
+		hash = re.search("(sha\d+\w+[=_][0-9a-f]+)", stdout.strip())
 		if not hash:
 			raise SystemExit(p.wait())
+		hash = hash.groups()[0]
 		for tmpl_name in ("7z.xml", "argyllcms.xml", "dispcalGUI.xml",
 						  "dispcalGUI-linux.xml", "dispcalGUI-mac.xml",
 						  "dispcalGUI-win32.xml", "numpy.xml", "pygame.xml",
