@@ -9094,11 +9094,13 @@ BEGIN_DATA
 			self.sessionlogfiles.popitem()[1].close()
 		if isinstance(copy, Exception):
 			# This is an incomplete run, check if any files have been added or
-			# modified (except log files)
+			# modified (except log files and 'hidden' temporary files)
 			changes = False
 			for filename in os.listdir(self.tempdir):
-				if filename.endswith(".log"):
-					# Skip log files
+				if (filename.endswith(".log") or
+					filename in (".abort", ".ok", ".wait", ".wait.cmd",
+								 ".wait.py")):
+					# Skip log files and 'hidden' temporary files
 					continue
 				if (filename not in self.tmpfiles or
 					os.stat(os.path.join(self.tempdir, filename)).st_mtime !=
