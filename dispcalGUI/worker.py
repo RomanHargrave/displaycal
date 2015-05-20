@@ -704,7 +704,7 @@ def get_options_from_ti3(ti3):
 
 
 def get_python_and_pythonpath():
-	""" Return python and pythonpath """
+	""" Return (system) python and pythonpath """
 	# Determine the path of python, and python module search paths
 	# If we are running 'frozen', expect python.exe in the same directory
 	# as the packed executable.
@@ -728,10 +728,7 @@ def get_python_and_pythonpath():
 		python = os.path.join(dirname, "python.exe")
 	else:
 		# Linux / Mac OS X
-		paths = getenvu("PATH", os.defpath).split(os.pathsep)
-		for path in os.defpath.split(os.pathsep):
-			if path and not path in paths:
-				paths.append(path)
+		paths = os.defpath.split(os.pathsep)
 		python = (which("python2.7", paths) or which("python2.6", paths) or
 				  "/usr/bin/env python")
 	return (python, pythonpath)
