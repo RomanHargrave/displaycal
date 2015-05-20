@@ -4623,7 +4623,7 @@ while 1:
 		if display_name == "Resolve":
 			return "1"
 		if display_name.startswith("Chromecast "):
-			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1]
+			return "cc:%s" % display_name.split("-")[0].split(None, 1)[1]
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 
