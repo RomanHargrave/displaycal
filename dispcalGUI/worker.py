@@ -9290,10 +9290,16 @@ BEGIN_DATA
 		return result
 	
 	def write(self, txt):
+		if True:
+			# Don't buffer
+			self._write(txt)
+			return
+		# NEVER - Use line buffer
 		self.buffer.append(txt)
 		self.buffer = [line for line in StringIO("".join(self.buffer))]
 		for line in self.buffer:
-			if not (line.endswith("\n") or line.rstrip().endswith(":")):
+			if not (line.endswith("\n") or line.rstrip().endswith(":") or
+					line.rstrip().endswith(",") or line.rstrip().endswith(".")):
 				break
 			self._write(line)
 			self.buffer = self.buffer[1:]
