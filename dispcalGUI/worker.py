@@ -1570,8 +1570,7 @@ class Worker(object):
 				try:
 					cgats = CGATS.CGATS(ccmx)
 				except (IOError, CGATS.CGATSError), exception:
-					safe_print("%s:" % ccmx, exception)
-					instrument = None
+					return exception
 				else:
 					instrument = get_canonical_instrument_name(
 						str(cgats.queryv1("INSTRUMENT") or ""),
@@ -1589,9 +1588,11 @@ class Worker(object):
 					ccmxcopy = os.path.join(tempdir, 
 											os.path.basename(ccmx))
 					if not os.path.isfile(ccmxcopy):
+						# Add display base ID if missing
+						self.check_add_display_type_base_id(cgats)
 						try:
 							# Copy ccmx to profile dir
-							shutil.copyfile(ccmx, ccmxcopy) 
+							cgats.write(ccmxcopy) 
 						except Exception, exception:
 							return Error(lang.getstr("error.copy_failed", 
 													 (ccmx, ccmxcopy)) + 
@@ -1712,8 +1713,10 @@ class Worker(object):
 	def calibrate_instrument_producer(self):
 		cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 		if cmd:
+			result = self.add_measurement_features(args, display=False)
+			if isinstance(result, Exception):
+				return result
 			self.spotread_just_do_instrument_calibration = True
-			self.add_measurement_features(args, display=False)
 			result = self.exec_cmd(cmd, args, skip_scripts=True)
 			self.spotread_just_do_instrument_calibration = False
 			return result
@@ -1740,6 +1743,7 @@ class Worker(object):
 		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
 		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
 		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+		# - worker.Worker.check_add_display_type_base_id
 		return (self.argyll_version >= [1, 3, 0] and
 				not self.get_instrument_features().get("spectral") and
 				(not check_measurement_mode or
@@ -1828,6 +1832,31 @@ class Worker(object):
 					filenames.extend(fn(filename) for filename in
 									 ("usb/Argyll", "usb/Argyll.usermap"))
 		return filter(lambda filename: filename, filenames)
+
+	def check_add_display_type_base_id(self, cgats, cfgname="measurement_mode"):
+		""" Add DISPLAY_TYPE_BASE_ID to CCMX """
+		if not cgats.queryv1("DISPLAY_TYPE_BASE_ID"):
+			# c, l (most colorimeters)
+			# R (ColorHug and Colorimétre HCFR)
+			# F (ColorHug)
+			# f (ColorMunki Smile)
+			# g (DTP94)
+
+			# IMPORTANT: Make changes aswell in the following locations:
+			# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
+			# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
+			# - dispcalGUI.MainFrame.set_ccxx_measurement_modes
+			# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+			# - worker.Worker.instrument_can_use_ccxx
+			cgats[0].add_keyword("DISPLAY_TYPE_BASE_ID",
+							     {"c": 2,
+								  "l": 1,
+								  "R": 2,
+								  "F": 1,
+								  "f": 1,
+								  "g": 3}.get(getcfg(cfgname), 1))
+			safe_print("Added DISPLAY_TYPE_BASE_ID %r" %
+					   cgats[0].DISPLAY_TYPE_BASE_ID)
 	
 	def check_display_conf_oy_compat(self, display_no):
 		""" Check the screen configuration for oyranos-monitor compatibility 

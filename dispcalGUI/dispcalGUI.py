@@ -580,6 +580,7 @@ def get_cgats_measurement_mode(cgats, instrument):
 		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
 		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
 		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
+		# - worker.Worker.check_add_display_type_base_id
 		# - worker.Worker.instrument_can_use_ccxx
 		if instrument in ("ColorHug", "ColorHug2"):
 			mode = {1: "F",
@@ -4484,7 +4485,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		args = ["-v", "-a", "-x"]
 		if getcfg("extra_args.spotread").strip():
 			args += parse_argument_string(getcfg("extra_args.spotread"))
-		self.worker.add_measurement_features(args, False)
+		result = self.worker.add_measurement_features(args, False)
+		if isinstance(result, Exception):
+			return result
 		return self.worker.exec_cmd(cmd, args, capture_output=True,
 									skip_scripts=True)
 	
@@ -5009,7 +5012,9 @@ class MainFrame(ReportFrame, BaseFrame):
 	def measure_uniformity_producer(self):
 		cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-T"]
 		if cmd:
-			self.worker.add_measurement_features(args, display=False)
+			result = self.worker.add_measurement_features(args, display=False)
+			if isinstance(result, Exception):
+				return result
 			return self.worker.exec_cmd(cmd, args, skip_scripts=True)
 		else:
 			wx.CallAfter(show_result_dialog,
@@ -6799,6 +6804,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
 		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
 		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+		# - worker.Worker.check_add_display_type_base_id
 		# - worker.Worker.instrument_can_use_ccxx
 		modes = {"ColorHug":
 				 {"F": lang.getstr("measurement_mode.factory"),
@@ -6827,6 +6833,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		# - dispcalGUI.MainFrame.create_colorimeter_correction_handler
 		# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
 		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
+		# - worker.Worker.check_add_display_type_base_id
 		# - worker.Worker.instrument_can_use_ccxx
 		measurement_mode = None
 		if getcfg("measurement_mode") == "auto":
@@ -8875,29 +8882,8 @@ class MainFrame(ReportFrame, BaseFrame):
 												   white["XYZ_Y"] * scale,
 												   white["XYZ_Z"] * scale)])
 				colorimeter_ti3.queryi1("DATA").LUMINANCE_XYZ_CDM2 = white
-			# Add display base ID
-			if not colorimeter_ti3.queryv1("DISPLAY_TYPE_BASE_ID"):
-				# c, l (most colorimeters)
-				# R (ColorHug and Colorimétre HCFR)
-				# F (ColorHug)
-				# f (ColorMunki Smile)
-				# g (DTP94)
-
-				# IMPORTANT: Make changes aswell in the following locations:
-				# - dispcalGUI.MainFrame.get_ccxx_measurement_modes
-				# - dispcalGUI.MainFrame.set_ccxx_measurement_modes
-				# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
-				# - worker.Worker.instrument_can_use_ccxx
-				colorimeter_ti3[0].add_keyword("DISPLAY_TYPE_BASE_ID",
-											   {"c": 2,
-												"l": 1,
-												"R": 2,
-												"F": 1,
-												"f": 1,
-												"g": 3}.get(getcfg(cfgname),
-															1))
-				safe_print("Added DISPLAY_TYPE_BASE_ID %r" %
-						   colorimeter_ti3[0].DISPLAY_TYPE_BASE_ID)
+			# Add display base ID if missing
+			self.worker.check_add_display_type_base_id(colorimeter_ti3, cfgname)
 		elif not spectral:
 			# If 1 file, check if it contains spectral values (CCSS creation)
 			InfoDialog(self,
