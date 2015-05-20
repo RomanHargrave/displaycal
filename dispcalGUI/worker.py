@@ -727,7 +727,13 @@ def get_python_and_pythonpath():
 				pythonpath.append(os.path.join(dirname, "library.zip", appname))
 		python = os.path.join(dirname, "python.exe")
 	else:
-		python = which("python2.7") or which("python2.6") or "python"
+		# Linux / Mac OS X
+		paths = getenvu("PATH", os.defpath).split(os.pathsep)
+		for path in os.defpath.split(os.pathsep):
+			if path and not path in paths:
+				paths.append(path)
+		python = (which("python2.7", paths) or which("python2.6", paths) or
+				  "/usr/bin/env python")
 	return (python, pythonpath)
 
 
