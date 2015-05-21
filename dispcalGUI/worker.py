@@ -1591,8 +1591,9 @@ class Worker(object):
 					ccmxcopy = os.path.join(tempdir, 
 											os.path.basename(ccmx))
 					if not os.path.isfile(ccmxcopy):
-						# Add display base ID if missing
-						self.check_add_display_type_base_id(cgats)
+						if cgats[0] and cgats[0].type.strip() == "CCMX":
+							# Add display base ID if missing
+							self.check_add_display_type_base_id(cgats)
 						try:
 							# Copy ccmx to profile dir
 							cgats.write(ccmxcopy) 
