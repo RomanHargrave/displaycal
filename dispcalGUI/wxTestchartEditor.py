@@ -551,6 +551,12 @@ class TestchartEditor(BaseFrame):
 		patch_order_choices = []
 		for lstr in ("testchart.sort_RGB_gray_to_top",
 					 "testchart.sort_RGB_white_to_top",
+					 "testchart.sort_RGB_red_to_top",
+					 "testchart.sort_RGB_green_to_top",
+					 "testchart.sort_RGB_blue_to_top",
+					 "testchart.sort_RGB_cyan_to_top",
+					 "testchart.sort_RGB_magenta_to_top",
+					 "testchart.sort_RGB_yellow_to_top",
 					 "testchart.sort_by_HSI",
 					 "testchart.sort_by_HSL",
 					 "testchart.sort_by_HSV",
@@ -963,18 +969,30 @@ END_DATA""")
 		elif idx == 1:
 			self.ti1.sort_RGB_white_to_top()
 		elif idx == 2:
-			self.ti1.sort_by_HSI()
+			self.ti1.sort_RGB_to_top(1, 0, 0)  # Red
 		elif idx == 3:
-			self.ti1.sort_by_HSL()
+			self.ti1.sort_RGB_to_top(0, 1, 0)  # Green
 		elif idx == 4:
-			self.ti1.sort_by_HSV()
+			self.ti1.sort_RGB_to_top(0, 0, 1)  # Blue
 		elif idx == 5:
-			self.ti1.sort_by_L()
+			self.ti1.sort_RGB_to_top(0, 1, 1)  # Cyan
 		elif idx == 6:
-			self.ti1.sort_by_RGB()
+			self.ti1.sort_RGB_to_top(1, 0, 1)  # Magenta
 		elif idx == 7:
-			self.ti1.sort_by_RGB_sum()
+			self.ti1.sort_RGB_to_top(1, 1, 0)  # Yellow
 		elif idx == 8:
+			self.ti1.sort_by_HSI()
+		elif idx == 9:
+			self.ti1.sort_by_HSL()
+		elif idx == 10:
+			self.ti1.sort_by_HSV()
+		elif idx == 11:
+			self.ti1.sort_by_L()
+		elif idx == 12:
+			self.ti1.sort_by_RGB()
+		elif idx == 13:
+			self.ti1.sort_by_RGB_sum()
+		elif idx == 14:
 			self.ti1.checkerboard()
 		self.tc_clear(False)
 		self.tc_preview(True)

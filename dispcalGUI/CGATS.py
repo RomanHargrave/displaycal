@@ -73,6 +73,17 @@ def sort_RGB_gray_to_top(a, b):
 		return 0
 
 
+def sort_RGB_to_top_factory(i1, i2, i3, i4):
+	def sort_RGB_to_top(a, b):
+		if a[i1] == a[i2] and not a[i3] and a[i4]:
+			if b[i1] == b[i2] and not b[i3] and b[i4] and a[i4] > b[i4]:
+				return 1
+			return -1
+		else:
+			return 0
+	return sort_RGB_to_top
+
+
 def sort_RGB_white_to_top(a, b):
 	sum1, sum2 = sum(a[:3]), sum(b[:3])
 	if sum1 == 300:
@@ -579,6 +590,34 @@ class CGATS(dict):
 		if not valueslist:
 			return False
 		valueslist.sort(sort_RGB_gray_to_top)
+		return data.set_RGB_XYZ_values(valueslist)
+	
+	def sort_RGB_to_top(self, r=0, g=0, b=0):
+		"""
+		Sort quantities of R, G or B (or combinations) to top.
+		
+		Example: sort_RGB_to_top(True, 0, 0) - sort red values to top
+		Example: sort_RGB_to_top(0, True, True) - sort cyan values to top
+		
+		"""
+		data, valueslist = self.get_RGB_XYZ_values()
+		if not valueslist:
+			return False
+		if r and g and b:
+			fn = sort_RGB_gray_to_top
+		elif r and g:
+			fn = sort_RGB_to_top_factory(0, 1, 2, 0)
+		elif r and b:
+			fn = sort_RGB_to_top_factory(0, 2, 1, 0)
+		elif g and b:
+			fn = sort_RGB_to_top_factory(1, 2, 0, 1)
+		elif r:
+			fn = sort_RGB_to_top_factory(1, 2, 1, 0)
+		elif g:
+			fn = sort_RGB_to_top_factory(0, 2, 0, 1)
+		elif b:
+			fn = sort_RGB_to_top_factory(0, 1, 0, 2)
+		valueslist.sort(fn)
 		return data.set_RGB_XYZ_values(valueslist)
 	
 	def sort_RGB_white_to_top(self):
