@@ -217,8 +217,7 @@ def setup():
 			print "...failed:", exception
 		else:
 			svnversion = p.communicate()[0]
-			svnversion = strtr(svnversion.strip().split(":")[-1], 
-							   ["M", "P", "S"])
+			svnversion = strtr(svnversion.strip().split(":")[-1], "MPS")
 			svnbasefilename = os.path.join(pydir, "VERSION_BASE")
 			if os.path.isfile(svnbasefilename):
 				with open(svnbasefilename) as svnbasefile:
