@@ -137,7 +137,7 @@ resfiles = [
 	"test.cal",
 	"ref/ClayRGB1998.gam",
 	"ref/sRGB.gam",
-	"ref/verify.ti1",
+	"ref/verify_extended.ti1",
 	"xrc/3dlut.xrc",
 	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
@@ -480,7 +480,7 @@ def runtimeconfig(pyfile):
 															defaultchart)) or ""
 	defaults["testchart.file.backup"] = defaults["testchart.file"]
 	defaults["measurement_report.chart"] = get_data_path(os.path.join("ref", 
-															"verify.ti1")) or ""
+															"verify_extended.ti1")) or ""
 	return runtype
 
 # User settings
