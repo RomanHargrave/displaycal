@@ -342,7 +342,7 @@ def strtr(txt, replacements):
 	"""
 	if hasattr(replacements, "iteritems"):
 		replacements = replacements.iteritems()
-	else:
+	elif isinstance(replacements, basestring):
 		replacements = zip(replacements, [""] * len(replacements))
 	for srch, sub in replacements:
 		txt = txt.replace(srch, sub)

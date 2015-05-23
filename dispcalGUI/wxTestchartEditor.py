@@ -2121,7 +2121,7 @@ END_DATA""")
 			x, y, size = [float(v) for v in
 						  getcfg("dimensions.measureframe").split(",")]
 			size *= defaults["size.measureframe"]
-			displays = getcfg("displays").split(os.pathsep)
+			displays = getcfg("displays")
 			match = None
 			display_no = getcfg("display.number") - 1
 			if display_no in range(len(displays)):

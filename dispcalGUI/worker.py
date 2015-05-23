@@ -2632,7 +2632,7 @@ class Worker(object):
 			instruments = []
 			cmd = get_argyll_util("dispcal")
 			if not enumerate_ports:
-				for instrument in getcfg("instruments").split(os.pathsep):
+				for instrument in getcfg("instruments"):
 					# Names are canonical from 1.1.4.7 onwards, but we may have
 					# verbose names from an old configuration
 					instrument = get_canonical_instrument_name(instrument)
@@ -2703,7 +2703,7 @@ class Worker(object):
 							# Chromecast
 							match = re.findall(r"(.+)", value)
 							if len(match):
-								displays.append("Chromecast %s - %s" %
+								displays.append("Chromecast %s: %s" %
 												(line[0],
 												 safe_unicode(safe_str(match[0], enc),
 															  "UTF-8")))
@@ -2733,7 +2733,7 @@ class Worker(object):
 			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
 			if instruments != self.instruments:
 				self.instruments = instruments
-				setcfg("instruments", os.pathsep.join(instruments))
+				setcfg("instruments", instruments)
 			if displays != self._displays:
 				self._displays = list(displays)
 				displays = filter(lambda display:
@@ -2751,7 +2751,7 @@ class Worker(object):
 					if display.startswith("Chromecast "):
 						self.display_edid.append({})
 						self.display_manufacturers.append("Google")
-						self.display_names.append(display.split("-", 1)[1].strip())
+						self.display_names.append(display.split(":", 1)[1].strip())
 						continue
 					display_name = displays[i].split("@")[0].strip()
 					# Make sure we have nice descriptions
@@ -2814,7 +2814,7 @@ class Worker(object):
 				self.display_names.append("Untethered")
 				#
 				self.displays = displays
-				setcfg("displays", os.pathsep.join(displays))
+				setcfg("displays", displays)
 				# Filter out Resolve and Untethered
 				displays = displays[:-2]
 				if self.argyll_version >= [1, 6, 0]:
@@ -4658,7 +4658,7 @@ while 1:
 		if display_name == "Resolve":
 			return "1"
 		if display_name.startswith("Chromecast "):
-			return "cc:%s" % display_name.split("-")[0].split(None, 1)[1].strip()
+			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1].strip()
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 
@@ -6497,7 +6497,8 @@ usage: spotread [-options] [logfile]
 		x, y, size = [float(v) for v in
 					  getcfg("dimensions.measureframe").split(",")]
 		size = size * defaults["size.measureframe"]
-		match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)", getcfg("displays"))
+		match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)", getcfg("displays",
+																raw=True))
 		if match:
 			display_size = [int(item) for item in match.groups()]
 		else:

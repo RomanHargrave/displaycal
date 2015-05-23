@@ -34,7 +34,7 @@ from options import ascii, debug, verbose
 from safe_print import enc, fs_enc, original_codepage
 from util_io import StringIOu as StringIO
 from util_os import expanduseru, expandvarsu, getenvu, is_superuser, listdir_re
-from util_str import create_replace_function, safe_unicode
+from util_str import create_replace_function, safe_unicode, strtr
 import encodedstdio
 
 # Runtime configuration
@@ -274,7 +274,7 @@ def get_display_name(n=None, include_geometry=False):
 	""" Return name of currently configured display """
 	if n is None:
 		n = getcfg("display.number") - 1
-	displays = getcfg("displays").split(os.pathsep)
+	displays = getcfg("displays")
 	if n >= 0 and n < len(displays):
 		if include_geometry:
 			return displays[n]
@@ -286,7 +286,7 @@ def get_display_name(n=None, include_geometry=False):
 def get_argyll_display_number(geometry):
 	""" Translate from wx display geometry to Argyll display index """
 	geometry = "%i, %i, %ix%i" % tuple(geometry)
-	for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+	for i, display in enumerate(getcfg("displays")):
 		if display.find("@ " + geometry) > -1:
 			if debug:
 				from log import safe_print
@@ -301,7 +301,7 @@ def get_display_number(display_no):
 		return 0
 	from wxaddons import wx
 	try:
-		display = getcfg("displays").split(os.pathsep)[display_no]
+		display = getcfg("displays")[display_no]
 	except IndexError:
 		return 0
 	else:
@@ -320,7 +320,7 @@ def get_display_rects():
 	""" Return the Argyll enumerated display coordinates and sizes """
 	from wxaddons import wx
 	display_rects = []
-	for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+	for i, display in enumerate(getcfg("displays")):
 		match = re.search("@ (-?\d+), (-?\d+), (\d+)x(\d+)", display)
 		if match:
 			display_rects.append(wx.Rect(*[int(item) for item in match.groups()]))
@@ -339,7 +339,7 @@ def get_icon_bundle(sizes, name):
 def get_instrument_name():
 	""" Return name of currently configured instrument """
 	n = getcfg("comport.number") - 1
-	instrument_names = getcfg("instruments").split(os.pathsep)
+	instrument_names = getcfg("instruments")
 	if n >= 0 and n < len(instrument_names):
 		return instrument_names[n]
 	return ""
@@ -877,7 +877,7 @@ def _init_testcharts():
 		testchart_defaults[key] = testchart_defaults["l"]
 
 
-def getcfg(name, fallback=True):
+def getcfg(name, fallback=True, raw=False):
 	"""
 	Get and return an option value from the configuration.
 	
@@ -899,7 +899,9 @@ def getcfg(name, fallback=True):
 			pass
 		else:
 			# Check for invalid types and return default if wrong type
-			if (name != "trc" or value not in valid_values["trc"]) and \
+			if raw:
+				pass
+			elif (name != "trc" or value not in valid_values["trc"]) and \
 			   hasdef and deftype in (Decimal, int, float):
 				try:
 					value = deftype(value)
@@ -961,6 +963,8 @@ def getcfg(name, fallback=True):
 		else:
 			if debug and not hasdef: 
 				print "Warning - unknown option:", name
+	if raw:
+		return value
 	if (value and isinstance(value, basestring) and
 		name.endswith("file") and
 		name != "colorimeter_correction_matrix_file" and
@@ -987,6 +991,9 @@ def getcfg(name, fallback=True):
 			value = defval
 		if debug:
 			print "- falling back to", value
+	elif name in ("displays", "instruments"):
+		value = [strtr(v, [("%3A", ":"),
+						   ("%25", "%")]) for v in value.split(os.pathsep)]
 	return value
 
 
@@ -1341,6 +1348,10 @@ def setcfg(name, value):
 	if value is None:
 		cfg.remove_option(ConfigParser.DEFAULTSECT, name)
 	else:
+		if name in ("displays", "instruments") and isinstance(value, (list,
+																	  tuple)):
+			value = os.pathsep.join(strtr(v, [("%", "%25"),
+											  (":", "%3A")]) for v in value)
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 

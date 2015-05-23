@@ -12846,7 +12846,7 @@ class StartupFrame(wx.Frame):
 								  self.worker.enumerate_displays_and_ports,
 								  wkwargs={"enumerate_ports":
 										   getcfg("enumerate_ports.auto") or
-										   not getcfg("instruments"),
+										   not getcfg("instruments", raw=True),
 										   "silent": True})
 
 	def setup_frame(self, result):

@@ -281,7 +281,7 @@ class DisplayUniformityFrame(BaseFrame):
 					display_no, geometry, client_area = self.get_display()
 					# Translate from wx display index to Argyll display index
 					geometry = "%i, %i, %ix%i" % tuple(geometry)
-					for i, display in enumerate(getcfg("displays").split(os.pathsep)):
+					for i, display in enumerate(getcfg("displays")):
 						if display.find("@ " + geometry) > -1:
 							safe_print("Found display %s at index %i" % 
 									   (display, i))
