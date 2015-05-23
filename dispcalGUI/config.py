@@ -992,7 +992,7 @@ def getcfg(name, fallback=True, raw=False):
 		if debug:
 			print "- falling back to", value
 	elif name in ("displays", "instruments"):
-		value = [strtr(v, [("%3A", ":"),
+		value = [strtr(v, [("%" + hex(ord(os.pathsep))[2:].upper(), os.pathsep),
 						   ("%25", "%")]) for v in value.split(os.pathsep)]
 	return value
 
@@ -1351,7 +1351,8 @@ def setcfg(name, value):
 		if name in ("displays", "instruments") and isinstance(value, (list,
 																	  tuple)):
 			value = os.pathsep.join(strtr(v, [("%", "%25"),
-											  (":", "%3A")]) for v in value)
+											  (os.pathsep,
+											   "%" + hex(ord(os.pathsep))[2:].upper())]) for v in value)
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
