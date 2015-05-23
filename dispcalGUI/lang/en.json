@@ -397,6 +397,7 @@
 	"display-instrument": "Display & instrument",
 	"display.connection.type": "Connection",
 	"display.manufacturer": "Display device manufacturer",
+	"display.output": "Output #",
 	"display.primary": "(Primary)",
 	"display.properties": "Display device properties",
 	"display.reset.info": "Please reset the display device to factory defaults, then adjust its brightness to a comfortable level.",

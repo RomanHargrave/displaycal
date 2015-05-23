@@ -10432,6 +10432,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							lang.getstr("windows_only") + ")",
 				"%dnws	" + lang.getstr("display_short") + " (" +
 							lang.getstr("windows_only") + ")",
+				"%out	" + lang.getstr("display.output"),
 				"%ds	" + lang.getstr("edid.serial") + " (" +
 							lang.getstr("if_available") + ")",
 				"%crc32	" + lang.getstr("edid.crc32") + " (" +
@@ -10862,6 +10863,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		if "%dn" in profile_name:
 			display = self.worker.get_display_name(True, True)
 			profile_name = profile_name.replace("%dn", display or "\0")
+
+		# Output #
+		if config.is_virtual_display():
+			output = "\0"
+		else:
+			output = "#%s" % getcfg("display.number")
+		profile_name = profile_name.replace("%out", output or "\0")
 
 		# Instrument name
 		if "%in" in profile_name:

@@ -396,6 +396,7 @@
 		"*display-instrument": "Display & instrument",
 	"display.connection.type": "Conexion",
 	"display.manufacturer": "Fabricante de pantalla",
+		"*display.output": "Output #",
 	"display.primary": "(Primaria)",
 	"display.properties": "Propiedades de pantalla",
 		"*display.reset.info": "Please reset the display device to factory defaults, then adjust its brightness to a comfortable level.",

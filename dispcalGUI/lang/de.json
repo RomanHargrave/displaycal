@@ -396,6 +396,7 @@
 	"display-instrument": "Anzeige- & Messgerät",
 	"display.connection.type": "Anschlusstyp",
 	"display.manufacturer": "Anzeigegerätehersteller",
+	"display.output": "Ausgang #",
 	"display.primary": "(Primär)",
 	"display.properties": "Anzeigegeräteeingenschaften",
 	"display.reset.info": "Bitte setzen Sie das Anzeigegerät auf die Werkseinstellungen zurück und stellen danach die Helligkeit auf einen angenehmen Wert ein.",
