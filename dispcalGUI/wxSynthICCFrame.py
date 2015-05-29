@@ -486,21 +486,17 @@ class SynthICCFrame(BaseFrame):
 			gamma = 2.2
 			self.trc_gamma_ctrl.Value = str(gamma)
 		white = XYZ["wX"], XYZ["wY"], XYZ["wZ"]
-		if self.trc_ctrl.GetSelection() == 0:
-			# Gamma
+		if self.trc_ctrl.GetSelection() in (0, 1, 4):
+			# 0 = Gamma
+			# 1 = DICOM - trc set here is not actually used in the end
+			# 4 = Rec. 1886 - trc set here is only used if black = 0
 			trc = gamma
-		elif self.trc_ctrl.GetSelection() == 1:
-			# DICOM - gamma set here is not actually used
-			trc = 2.2
 		elif self.trc_ctrl.GetSelection() == 2:
 			# L*
 			trc = -3.0
 		elif self.trc_ctrl.GetSelection() == 3:
 			# Rec. 709
 			trc = -709
-		elif self.trc_ctrl.GetSelection() == 4:
-			# Rec. 1886 - gamma set here is not actually used
-			trc = 2.2
 		elif self.trc_ctrl.GetSelection() == 5:
 			# SMPTE 240M
 			trc = -240
