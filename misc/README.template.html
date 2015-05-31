@@ -13,6 +13,7 @@
 		<link rel="stylesheet" href="theme/readme.css" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css" />
 		<link rel="stylesheet" href="theme/prism.css" />
+		<link rel="stylesheet" href="${URL}shariff/shariff.complete.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
@@ -21,12 +22,14 @@
 	</head>
 	<body>
 
-		<h1><img src="theme/icon-reflection.png" alt="dispcalGUI" /> <a href="http://dispcalGUI.hoech.net">dispcalGUI</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
+		<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">dispcalGUI</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
+
+		<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="${URL}shariff/index.php" data-url="${URL}" data-info-url="https://github.com/heiseonline/shariff"></p>
 
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>Version ${VERSION_SHORT} ${STABILITY}</h2>
+					<h2>${VERSION_SHORT} ${STABILITY}</h2>
 					<p>${ISODATE} ${ISOTIME} UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
@@ -116,8 +119,8 @@
 			</div>
 		</div>
 
-		<div class="infobox">
-			<p>If you'd like to measure color on the go, you may also be interested in <a href="http://argyllcms.com/pro/">ArgyllPRO ColorMeter</a> by Graeme Gill, author of Argyll CMS. Available for Android from the Google Play store.</p>
+		<div class="infobox" style="margin-top: 78px">
+			<p><a href="http://argyllcms.com/pro/" title="ArgyllPRO ColorMeter"><img src="${URL}img/argyllpro-small.png" alt="" style="float: left; margin-left: -38px; margin-right: 8px; margin-top: -64px" /></a> <strong>If you'd like to measure color on the go</strong>, you may also be interested in <a href="http://argyllcms.com/pro/"><strong>ArgyllPRO ColorMeter</strong></a> by Graeme Gill, author of Argyll CMS. <strong>Available for Android</strong> from the Google Play store. <a href="http://youtu.be/ODfCoUH0euQ" title="ArgyllPRO ColorMeter 2 Minute Overview + Guided Tour Video">Check out the 2 Minute Overview + Guided Tour Video.</a></p>
 		</div>
 
 		<div id="content">
@@ -290,147 +293,75 @@
 						<ul class="packages">
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/any/dispcalGUI-0install.pkg.tar.xz">Arch Linux</a> <em>(please see note below)</em></span>
+								<span><a href="${URL}download/Arch_Extra/any/dispcalGUI-0install.pkg.tar.xz">Arch Linux</a> <em>(please see note below)</em></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/noarch/dispcalGUI-0install.rpm">CentOS 6</a></span>
+								<span><a href="${URL}download/CentOS_CentOS-6/noarch/dispcalGUI-0install.rpm">CentOS 6</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-7/noarch/dispcalGUI-0install.rpm">CentOS 7</a></span>
+								<span><a href="${URL}download/CentOS_CentOS-7/noarch/dispcalGUI-0install.rpm">CentOS 7</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_6.0/all/dispcalGUI-0install.deb">Debian 6 (Squeezy)</a></span>
+								<span><a href="${URL}download/Debian_7.0/all/dispcalGUI-0install.deb">Debian 7 (Wheezy)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_7.0/all/dispcalGUI-0install.deb">Debian 7 (Wheezy)</a></span>
+								<span><a href="${URL}download/Debian_8.0/all/dispcalGUI-0install.deb">Debian 8 (Jessie)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_8.0/all/dispcalGUI-0install.deb">Debian 8 (Jessie)</a></span>
+								<span><a href="${URL}download/Fedora_20/noarch/dispcalGUI-0install.rpm">Fedora 20</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_16/noarch/dispcalGUI-0install.rpm">Fedora 16</a></span>
+								<span><a href="${URL}download/Fedora_21/noarch/dispcalGUI-0install.rpm">Fedora 21</a></span>
+							</li>
+							<!--li>
+								<span></span>
+								<span><a href="${URL}download/Fedora_22/noarch/dispcalGUI-0install.rpm">Fedora 22</a></span>
+							</li-->
+							<li>
+								<span></span>
+								<span><a href="${URL}download/openSUSE_13.1/noarch/dispcalGUI-0install.rpm">openSUSE 13.1</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_17/noarch/dispcalGUI-0install.rpm">Fedora 17</a></span>
+								<span><a href="${URL}download/openSUSE_13.2/noarch/dispcalGUI-0install.rpm">openSUSE 13.2</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_18/noarch/dispcalGUI-0install.rpm">Fedora 18</a></span>
+								<span><a href="${URL}download/openSUSE_Factory/noarch/dispcalGUI-0install.rpm">openSUSE Factory</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_19/noarch/dispcalGUI-0install.rpm">Fedora 19</a></span>
+								<span><a href="${URL}download/openSUSE_Tumbleweed/noarch/dispcalGUI-0install.rpm">openSUSE Tumbleweed</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_20/noarch/dispcalGUI-0install.rpm">Fedora 20</a></span>
+								<span><a href="${URL}download/RedHat_RHEL-6/noarch/dispcalGUI-0install.rpm">RedHat RHEL 6</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_21/noarch/dispcalGUI-0install.rpm">Fedora 21</a></span>
+								<span><a href="${URL}download/RedHat_RHEL-7/noarch/dispcalGUI-0install.rpm">RedHat RHEL 7</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2009.1/noarch/dispcalGUI-0install.rpm">Mandriva 2009.1</a></span>
+								<span><a href="${URL}download/xUbuntu_12.04/all/dispcalGUI-0install.deb">Ubuntu 12.04 (Precise)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010/noarch/dispcalGUI-0install.rpm">Mandriva 2010</a></span>
+								<span><a href="${URL}download/xUbuntu_14.04/all/dispcalGUI-0install.deb">Ubuntu 14.04 (Trusty)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010.1/noarch/dispcalGUI-0install.rpm">Mandriva 2010.1</a></span>
+								<span><a href="${URL}download/xUbuntu_14.10/all/dispcalGUI-0install.deb">Ubuntu 14.10 (Utopic)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2011/noarch/dispcalGUI-0install.rpm">Mandriva 2011</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.1/noarch/dispcalGUI-0install.rpm">openSUSE 12.1</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.2/noarch/dispcalGUI-0install.rpm">openSUSE 12.2</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.3/noarch/dispcalGUI-0install.rpm">openSUSE 12.3</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/noarch/dispcalGUI-0install.rpm">openSUSE 13.1</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.2/noarch/dispcalGUI-0install.rpm">openSUSE 13.2</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/noarch/dispcalGUI-0install.rpm">openSUSE Factory</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Tumbleweed/noarch/dispcalGUI-0install.rpm">openSUSE Tumbleweed</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/noarch/dispcalGUI-0install.rpm">RedHat RHEL 6</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-7/noarch/dispcalGUI-0install.rpm">RedHat RHEL 7</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/all/dispcalGUI-0install.deb">Ubuntu 10.04 (Lucid)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.10/all/dispcalGUI-0install.deb">Ubuntu 10.10 (Maverick)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.04/all/dispcalGUI-0install.deb">Ubuntu 11.04 (Natty)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.10/all/dispcalGUI-0install.deb">Ubuntu 11.10 (Oneiric)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/all/dispcalGUI-0install.deb">Ubuntu 12.04 (Precise)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/all/dispcalGUI-0install.deb">Ubuntu 12.10 (Quantal)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/all/dispcalGUI-0install.deb">Ubuntu 13.04 (Raring)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/all/dispcalGUI-0install.deb">Ubuntu 13.10 (Saucy)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/all/dispcalGUI-0install.deb">Ubuntu 14.04 (Trusty)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.10/all/dispcalGUI-0install.deb">Ubuntu 14.10 (Utopic)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_15.04/all/dispcalGUI-0install.deb">Ubuntu 15.04 (Vivid)</a></span>
+								<span><a href="${URL}download/xUbuntu_15.04/all/dispcalGUI-0install.deb">Ubuntu 15.04 (Vivid)</a></span>
 							</li>
 						</ul>
 
@@ -457,24 +388,24 @@
 						<ol>
 							<li>Install the <strong>0install</strong> or <strong>zeroinstall-injector</strong> package from your distribution. In case it is not available, there are pre-compiled <a href="http://0install.net/tools/0install.xml">generic binaries</a>. Download the appropriate archive for your system, unpack it, <code>cd</code> to the extracted folder in a terminal, and run <code>sudo ./install.sh local</code> to install to /usr/local, or <code>./install.sh home</code> to install to your home directory (you may have to add ~/bin to your PATH variable in that case). You'll need libcurl installed (most systems have it by default).</li>
 							<li>Choose the <strong>0install</strong> entry from the applications menu (older versions of Zero Install will have an “Add New Program” entry instead).</li>
-							<li>Drag <a href="http://dispcalgui.hoech.net/0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
+							<li>Drag <a href="${URL}0install/dispcalGUI.xml">dispcalGUI's Zero Install feed</a> link to the Zero Install window.</li>
 						</ol>
 						<p>Note on dispcalGUI's standalone tools under Linux (3D LUT maker, curve viewer, profile information, synthetic profile creator, testchart editor, VRML to X3D converter): If using the alternate installation method, an application icon entry will only be created for dispcalGUI itself. This is currently a limitation of Zero Install under Linux. You can manually install icon entries for the standalone tools by running the following in a terminal:</p>
-						<pre><code>0launch --command=install-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
+						<pre><code>0launch --command=install-standalone-tools-icons \<br />	${URL}0install/dispcalGUI.xml</code></pre>
 						<p>And you may uninstall them again with:</p>
-						<pre><code>0launch --command=uninstall-standalone-tools-icons \<br />	http://dispcalgui.hoech.net/0install/dispcalGUI.xml</code></pre>
+						<pre><code>0launch --command=uninstall-standalone-tools-icons \<br />	${URL}0install/dispcalGUI.xml</code></pre>
 					</div>
 				</li>
 				<li>
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
-						<p>Download the <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
+						<p>Download the <a href="${URL}download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
 					</div>
 				</li>
 				<li>
 					<h3>For Windows (XP or newer)</h3>
 					<div>
-						<p>Download and install the dispcalGUI Zero Install Setup: <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install-Setup.exe">Administrator install</a> | <a href="http://dispcalGUI.hoech.net/download/dispcalGUI-0install-Setup-per-user.exe">Per-user install</a>.</p>
+						<p>Download and install the dispcalGUI Zero Install Setup: <a href="${URL}download/dispcalGUI-0install-Setup.exe">Administrator install</a> | <a href="${URL}download/dispcalGUI-0install-Setup-per-user.exe">Per-user install</a>.</p>
 					</div>
 				</li>
 				<li>
@@ -516,227 +447,122 @@
 						<ul class="packages">
 							<li>
 								<span>Arch Linux</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Arch_Extra/i686/dispcalGUI.pkg.tar.xz">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Arch_Extra/x86_64/dispcalGUI.pkg.tar.xz">x86_64</a></span>
+								<span><a href="${URL}download/Arch_Extra/i686/dispcalGUI.pkg.tar.xz">x86</a> | 
+								<a href="${URL}download/Arch_Extra/x86_64/dispcalGUI.pkg.tar.xz">x86_64</a></span>
 							</li>
 							<li>
 								<span>CentOS 6</span>
-								<span><a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/CentOS_CentOS-6/i686/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/CentOS_CentOS-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>CentOS 7</span>
 								<span>
-								<a href="http://dispcalgui.hoech.net/download/CentOS_CentOS-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Debian 5 (Lenny)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_5.0/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Debian_5.0/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Debian 6 (Squeezy)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_6.0/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Debian_6.0/amd64/dispcalGUI.deb">x86_64</a></span>
+								<a href="${URL}download/CentOS_CentOS-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Debian 7 (Wheezy)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_7.0/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Debian_7.0/amd64/dispcalGUI.deb">x86_64</a></span>
+								<span><a href="${URL}download/Debian_7.0/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/Debian_7.0/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Debian 8 (Jessie)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Debian_8.0/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Debian_8.0/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora 16</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_16/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Fedora_16/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora 17</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_17/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Fedora_17/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora 18</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_18/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Fedora_18/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora 19</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_19/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Fedora_19/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/Debian_8.0/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/Debian_8.0/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Fedora 20</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_20/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Fedora_20/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/Fedora_20/i686/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/Fedora_20/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Fedora 21</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Fedora_21/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Fedora_21/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/Fedora_21/i686/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/Fedora_21/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
-							<li>
-								<span>Mandriva 2009.1</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2009.1/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Mandriva_2009.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Mandriva 2010</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Mandriva_2010/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Mandriva 2010.1</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2010.1/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Mandriva_2010.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Mandriva 2011</span>
-								<span><a href="http://dispcalgui.hoech.net/download/Mandriva_2011/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/Mandriva_2011/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>openSUSE 11.4</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_11.4/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_11.4/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>openSUSE 12.1</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.1/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_12.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>openSUSE 12.2</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.2/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_12.2/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>openSUSE 12.3</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_12.3/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_12.3/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
+							<!--li>
+								<span>Fedora 22</span>
+								<span><a href="${URL}download/Fedora_22/i686/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/Fedora_22/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li-->
 							<li>
 								<span>openSUSE 13.1</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/openSUSE_13.1/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/openSUSE_13.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE 13.2</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.2/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_13.2/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/openSUSE_13.2/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/openSUSE_13.2/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Factory</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_Factory/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/openSUSE_Factory/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/openSUSE_Factory/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Tumbleweed</span>
-								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_Tumbleweed/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/openSUSE_Tumbleweed/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/openSUSE_Tumbleweed/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/openSUSE_Tumbleweed/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>RedHat RHEL 6</span>
-								<span><a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/i686/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/RedHat_RHEL-6/i686/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/RedHat_RHEL-6/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>RedHat RHEL 7</span>
 								<span>
-								<a href="http://dispcalgui.hoech.net/download/RedHat_RHEL-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>SUSE Linux Enterprise 11</span>
-								<span><a href="http://dispcalgui.hoech.net/download/SLE_11/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/SLE_11/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>SUSE Linux Enterprise 11 SP1</span>
-								<span><a href="http://dispcalgui.hoech.net/download/SLE_11_SP1/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP1/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<a href="${URL}download/RedHat_RHEL-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>SUSE Linux Enterprise 11 SP2</span>
-								<span><a href="http://dispcalgui.hoech.net/download/SLE_11_SP2/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP2/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/SLE_11_SP2/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/SLE_11_SP2/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>SUSE Linux Enterprise 11 SP3</span>
-								<span><a href="http://dispcalgui.hoech.net/download/SLE_11_SP3/i586/dispcalGUI.rpm">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP3/x86_64/dispcalGUI.rpm">x86_64</a></span>
+								<span><a href="${URL}download/SLE_11_SP3/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/SLE_11_SP3/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
-								<span>Ubuntu 10.04 (Lucid)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_10.04/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Ubuntu 10.10 (Maverick)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_10.10/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_10.10/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Ubuntu 11.04 (Natty)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.04/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_11.04/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Ubuntu 11.10 (Oneiric)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_11.10/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_11.10/amd64/dispcalGUI.deb">x86_64</a></span>
+								<span>SUSE Linux Enterprise 12</span>
+								<span>
+								<a href="${URL}download/SLE_12/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 12.04 (Precise)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_12.04/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Ubuntu 12.10 (Quantal)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_12.10/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Ubuntu 13.04 (Raring)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_13.04/amd64/dispcalGUI.deb">x86_64</a></span>
-							</li>
-							<li>
-								<span>Ubuntu 13.10 (Saucy)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_13.10/amd64/dispcalGUI.deb">x86_64</a></span>
+								<span><a href="${URL}download/xUbuntu_12.04/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/xUbuntu_12.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 14.04 (Trusty)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_14.04/amd64/dispcalGUI.deb">x86_64</a></span>
+								<span><a href="${URL}download/xUbuntu_14.04/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/xUbuntu_14.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 14.10 (Utopic)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_14.10/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_14.10/amd64/dispcalGUI.deb">x86_64</a></span>
+								<span><a href="${URL}download/xUbuntu_14.10/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/xUbuntu_14.10/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 15.04 (Vivid)</span>
-								<span><a href="http://dispcalgui.hoech.net/download/xUbuntu_15.04/i386/dispcalGUI.deb">x86</a> | 
-								<a href="http://dispcalgui.hoech.net/download/xUbuntu_15.04/amd64/dispcalGUI.deb">x86_64</a></span>
+								<span><a href="${URL}download/xUbuntu_15.04/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/xUbuntu_15.04/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
 
 						<p>In all other cases, you can try this universal install that should work on a multitude of distributions (if you use it, please uninstall any already installed version of dispcalGUI first to avoid file conflicts):</p>
-						<p><a href="http://dispcalGUI.hoech.net/download/dispcalGUI.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
+						<p><a href="${URL}download/dispcalGUI.package">Autopackage (Python 2.5, 2.6 and 2.7, x86 and x86_64)</a></p>
 					</div>
 				</li>
 				<li>
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>
-							<a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI.dmg">Disk image</a>
+							<a href="${URL}download/standalone/dispcalGUI.dmg">Disk image</a>
 						</p>
 					</div>
 				</li>
@@ -744,7 +570,7 @@
 					<h3>For Windows (XP or newer)</h3>
 					<div>
 						<p>
-							<a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI-Setup.exe">Installer (recommended)</a> or <a href="http://dispcalGUI.hoech.net/download/standalone/dispcalGUI-win32.zip">ZIP archive</a>
+							<a href="${URL}download/standalone/dispcalGUI-Setup.exe">Installer (recommended)</a> or <a href="${URL}download/standalone/dispcalGUI-win32.zip">ZIP archive</a>
 						</p>
 					</div>
 				</li>
@@ -752,7 +578,7 @@
 					<h3>Source code</h3>
 					<div>
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
-						<p><a href="http://dispcalGUI.hoech.net/download/dispcalGUI.tar.gz">Source Tarball</a></p>
+						<p><a href="${URL}download/dispcalGUI.tar.gz">Source Tarball</a></p>
 						<p>
 							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
@@ -823,6 +649,7 @@
 					<li>HP DreamColor (treated as i1 Display 2)</li>
 					<li>Hughski ColorHug (Linux support since Argyll CMS 1.3.6, Windows support with newest ColorHug firmware since Argyll CMS 1.5.0, fully functional Mac OS X support since Argyll CMS 1.6.2)</li>
 					<li>Hughski ColorHug2 (new in Argyll CMS 1.7.0)</li>
+					<li>Image Engineering EX1 (new in Argyll CMS 1.7.0)</li>
 					<li>Klein K10-A (new in Argyll CMS 1.7.0)</li>
 					<li>Lacie Blue Eye (treated as i1 Display 2)</li>
 					<li>Sequel Imaging MonacoOPTIX (treated as i1 Display 1)</li>
@@ -1148,7 +975,7 @@
 			<h2>A note about colorimeters, displays and dispcalGUI</h2>
 
 			<p>Colorimeters need a correction in hardware or software to obtain correct measurements from different types of displays (please also see <a href="http://argyllcms.com/doc/WideGamutColmters.html">“Wide Gamut Displays and Colorimeters”</a> on the Argyll CMS website for more information). The latter is supported when using Argyll CMS &gt;= 1.3.0, so if you own a display and colorimeter which has not been specifically tuned for this display (i.e. does not contain a correction in hardware), you can apply a correction that has been calculated from spectrometer measurements to help better measure such a screen.<br />
-			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's <a href="http://dispcalgui.hoech.net/colorimetercorrections">Colorimeter Corrections Database</a>, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most older colorimeters (with the exception of the DTP94), newer devices like the i1 Display Pro/ColorMunki Display and possibly the Spyder 4/5 seem to be less affected by this.<br />
+			You need a spectrometer in the first place to do the necessary measurements to create such a correction, or you may query dispcalGUI's <a href="${URL}colorimetercorrections">Colorimeter Corrections Database</a>, and there's also a <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed colorimeter correction files on the Argyll CMS website</a>—<strong>please note</strong> though that a matrix created for one particular instrument/display combination may not work well for different instances of the same combination because of generally low inter-instrument agreement of most older colorimeters (with the exception of the DTP94), newer devices like the i1 Display Pro/ColorMunki Display and possibly the Spyder 4/5 seem to be less affected by this.<br />
 			Starting with dispcalGUI 0.6.8, you can also <a href="#import-correction-matrices">import generic corrections</a> from some profiling softwares by choosing the corresponding item in the “Tools” menu.</p>
 
 			<p>If you buy a screen bundled with a colorimeter, the instrument may have been matched to the screen in some way already, so you may not need a software correction in that case.</p>
@@ -1215,14 +1042,14 @@
 				
 				<p>Normally a delay of 200 msec is allowed between changing a patch color in software, and that change appearing in the displayed color itself. For some instuments (i.e. i1d3, i1pro, ColorMunki, Klein K10-A) ArgyllCMS will automatically measure and set an appropriate update delay during instrument calibration. In rare situations this delay may not be sufficient (ie. some TV's with extensive image processing features turned on), and a larger delay can be set here.</p>
 
-				<h4 id="display-update-delay">Override display settle time multiplier (only available if using Argyll CMS &gt;= 1.7.0, only visible if “Show advanced options” in the “Options” menu is enabled)</h4>
+				<h4 id="display-settle-time">Override display settle time multiplier (only available if using Argyll CMS &gt;= 1.7.0, only visible if “Show advanced options” in the “Options” menu is enabled)</h4>
 				
 				<p>Normally the display technology type determines how long is allowed between when a patch color change appears on the display, and when that change has settled down, and as actually complete within measurement tolerance. A CRT or Plasma display for instance, can have quite a long settling delay due to the decay characteristics of the phosphor used, while an LCD can also have a noticeable settling delay due to the liquid crystal response time and any response time enhancement circuitr (instruments without a display technology type selection such as spectrometers assume a worst case).<br />
 				The display settle time multiplier allows the rise and fall times of the model to be scaled to extend or reduce the settling time. For instance, a multiplier of 2.0 would double the settling time, while a multiplier of 0.5 would halve it.</p>
 
 				<h4 id="settings_colorimeter_correction">Choosing a colorimeter correction for a particular display</h4>
 
-				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#colorimeter-corrections">“A note about colorimeters, displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online <a href="http://dispcalgui.hoech.net/colorimetercorrections/">Colorimeter Corrections Database</a> for a match of your display/instrument combination (click the small globe next to the correction dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
+				<p>This can improve a colorimeters accuracy for a particular type of display, please also see <a href="#colorimeter-corrections">“A note about colorimeters, displays and dispcalGUI”</a>. You can import generic matrices from some other display profiling softwares as well as check the online <a href="${URL}colorimetercorrections/">Colorimeter Corrections Database</a> for a match of your display/instrument combination (click the small globe next to the correction dropdown). A <a href="http://argyllcms.com/doc/ccmxs.html">list of contributed correction matrices</a> can also be found on the Argyll CMS website.</p>
 
 				<p>Please note this option is only available if using Argyll CMS &gt;= 1.3.0 and a colorimeter.</p>
 			</div>
@@ -1365,19 +1192,19 @@
 							<p>See below example images for the result you can expect, where the original image has been converted from sRGB to the display profile. Note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this. Also note that the sRGB blue in the image is actually out of gamut for the specific display used, and the edges visible in the blue gradient for the rendering are a result of the color being out of gamut, and the gamut mapping thus hitting the less smooth gamut boundaries.</p>
 							<div style="overflow: hidden; padding: 1.4em 0;">
 								<div style="text-align: center;">
-									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow.png"><img src="${URL}img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>Original “granger rainbow” image</p>
 								</div>
 								<div style="float: left; margin: 0 15px 0 22px; width: 200px">
-									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
 								</div>
 								<div style="float: left; margin: 0 15px; width: 200px">
-									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 								</div>
 								<div style="float: left; margin: 0 15px; width: 200px">
-									<p><a rel="lightbox-set-smooth_b2a" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 								</div>
 							</div>
@@ -1862,7 +1689,7 @@
 						</dd>
 
 					<dt id="upload-colorimeter-correction">Upload colorimeter correction...</dt>
-						<dd>Upload a colorimeter correction to the online <a href="http://dispcalgui.hoech.net/colorimetercorrections/">Colorimeter Corrections Database</a> to share it with other users or download it later on another machine.
+						<dd>Upload a colorimeter correction to the online <a href="${URL}colorimetercorrections/">Colorimeter Corrections Database</a> to share it with other users or download it later on another machine.
 						</dd>
 
 					<dt id="synthprofile">Create synthetic ICC profile...</dt>
@@ -1899,6 +1726,65 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 				<h3>“Language” menu</h3>
 
 				<p>Allows you to select one of the available localizations.</p>
+			</div>
+		</div>
+
+		<div id="non-ui-functionality">
+			<h2>Non-UI functionality</h2>
+
+			<p>There is a bit of functionality that is not available via the UI and needs to be run from a command prompt or ternminal. Use of this functionality currently requires 0install, or running from source.</p>
+
+			<div>
+				<div class="info">
+					<dl>
+						<dt id="change-display-profile-cal-whitepoint">Change display profile and calibration whitepoint</dt>
+							<dd>
+								<p>Note that this reduces the profile gamut and accuracy.</p>
+								<p>Via 0install:<br />
+									<code>0install run --command=change-display-profile-cal-whitepoint -- \<br />
+										&#160; ${URL}0install/dispcalGUI.xml \<br />
+										&#160; [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename</code></p>
+									<p>From source:<br />
+									<code>python util/change_display_profile_cal_whitepoint.py- \<br />
+										&#160; ${URL}0install/dispcalGUI.xml \<br />
+										&#160; [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename</code>
+								</p>
+								<div>
+									<dl>
+										<dt><code>-t temp</code></dt>
+											<dd>Use daylight color temperature <code>temp</code> as whitepoint target.</dd>
+										<dt><code>-T temp</code></dt>
+											<dd>Use blackbody color temperature <code>temp</code> as whitepoint target.</dd>
+										<dt><code>-w x,y</code></dt>
+											<dd>Use x,y chromaticity as whitepoint target.</dd>
+										<dt><code>--cal-only</code> (optional)</dt>
+											<dd>Only alter the calibration embedded in the profile, not the profile itself.</dd>
+										<dt><code>inprofile</code> (optional)</dt>
+											<dd>Use profile <code>inprofile</code> instead of the current display profile.</dd>
+										<dt><code>outfilename</code></dt>
+											<dd>Output profile filename. The changed profile will be written to this file.</dd>
+									</dl>
+								</div>
+							</dd>
+						<dt id="set-calibration-loading">Enable/disable Windows 7 and later calibration loading</dt>
+							<dd>
+								<p>Note that Windows calibration loading is of lower quality than using Argyll CMS because Windows always quantizes the calibration to 8 bit and scales it wrongly. This is not the case when using the dispcalGUI calibration loader which uses Argyll CMS.</p>
+								<p>Via 0install:<br />
+									<code>0install run --command=set-calibration-loading -- \<br />
+										&#160; ${URL}0install/dispcalGUI.xml [--os]</code>
+								</p>
+								<p>From source:<br />
+									<code>python -c "import sys; from dispcalGUI import util_win; \<br />
+										&#160; util_win.calibration_management_isenabled() or \<br />
+										&#160; util_win.enable_calibration_management() \<br />
+										&#160; if '--os' in sys.argv[1:] else \<br />
+										&#160; not util_win.calibration_management_isenabled() or \<br />
+										&#160; util_win.disable_calibration_management();" [--os]</code>
+								</p>
+								<p>The <code>--os</code> option determines wether Windows calibration loading functionality should be enbaled or disabled.</p>
+							</dd>
+					</dl>
+				</div>
 			</div>
 		</div>
 
@@ -2358,7 +2244,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors: Peter Clarke, Rajinder Singh Gill, Ed Rudolph, Pedro Santo, Peter Clarke, Paul Philippov, Fabio Giraldi, Antonio Marcheselli, Stevan Rankic, Manuel Weber, Heinrich Schemmann, Gábor Huszár, Tilman Holzhauer, Lateral Imaging, Frank Zacharias, Marina Toshich, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Tomislav Stojanović, Michel Mougey, Tim Oberbillig, Peter Clarke, Lionel Davey, Christian-Aurel Buru, James Hainis, Nejib Boubaker, Tomislav Stojanović, Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, Andrew Hunter, Yulian Martsenkov, Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin, Eugeniy Yurov</span></p>
+			<p>Recent donors: Eddy Young, Sudarshan Chakravarthy, Eric Carter, Henke Benke, Guilherme Ambros, Mario Adario, Marius Parazols, Ladislav Filo, David Torcivia, Lateral Imaging, Thomas Fowler, Ievgen Morskyi, Daniel Bachler, Alex Mirkin, R.Masciola's Advanced Calibration Disc, Yingyu Yao, Gregor Kofler, Sarah Gerweck, Myron Blume, <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Peter Clarke, Rajinder Singh Gill, Ed Rudolph, Pedro Santo, Peter Clarke, Paul Philippov, Fabio Giraldi, Antonio Marcheselli, Stevan Rankic, Manuel Weber, Heinrich Schemmann, Gábor Huszár, Tilman Holzhauer, Lateral Imaging, Frank Zacharias, Marina Toshich, Tomislav Stojanović, Michel Mougey, Tim Oberbillig, Peter Clarke, Lionel Davey, Christian-Aurel Buru, James Hainis, Nejib Boubaker, Tomislav Stojanović, Scott Miller, John Navarro, Stephen Wall, Andrej Schmitt, Olivier Besner Morin, Christian Ramharter, Dieter Pongratz, Andrew Hunter, Yulian Martsenkov, Catherine Goniot, Ben Edwards, Ievgen Morskyi, Ahammed Umminiyil, LivingWithBugs.com, Christoph Clarenbach, Paul Fokkens, Kieren Hinch, Dale Somerville, Francesco Demontis, Projection Mapping Central, Scott Janz, Govindanunny Thekkadath, Nejib Boubaker, Mason Livingston, Daniel Lenardon, Manuel López Pérez, Xavier Potel, Andrew Hunter, Thomas Voigt, Александр Ольховский, Eugeniy Yurov, Hans Cremers, George Pop, Michael Gestgrasser, Stefan Pallari, Oliver Hoefele, Kyle Winfree, Alexander Mitchell, Juho Turunen, Jon Sands, Evgueni Ivanov, Riccardo Mandarano, Roman Romenskiy, Myron Blume, WTPM van Vucht, Philip Tobias, Richard Luney, Matthias Klausing, M E M van Ineveld, Patryk Bajer, Gregor Kofler, Richard Egger, Michael Dougherty, Christian Spyr, Konstantin Pyanzin, Eugeniy Yurov</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -2374,6 +2260,34 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>madTPG network interface cross-platform support. This means you can now connect from Linux or Mac OS X to madTPG running under Windows.</li>
+							<li>Functionality to <a href="#change-display-profile-cal-whitepoint">change display profile (and calibration) whitepoint</a> of existing profiles without re-measuring (no UI, only available via the command line). This is more or less a gimmick and should not be used if colorimetric accuracy is important, but should result in a more precise white point change than using (for example) <a href="https://justgetflux.com/">f.lux</a> or <a href="http://jonls.dk/redshift/">redshift</a> because it fully takes into account the profile colorimetry, although white point shifting in real time is not supported.</li>
+							<li>Option to enable/disable startup sound.</li>
+							<li>Additional verification testcharts (roughly 750 and 1000 patches in size).</li>
+							<li>Output number placeholder for use in the profile name (as another means to disinguish equal display models).</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Force planckian locus in measurement reports if color temperature is &gt;= 1667 and &lt; 4000.</li>
+							<li>Improve “enhance effective resolution of PCS-to-device tables” slightly: Move CAM Jab clipping blending region from 50%..100% to 33%..75% in the cLUT grid. This improves inverse profile self check errors very slightly and in some cases visually further improves gamut mapping smoothness in the blue region for gamuts that are really limited there (e.g. Laptops/Notebooks, cheap TN panels).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Uniformity measurements not working with spectrometer if instrument self-calibration is performed during the measurements.</li>
+							<li>Work-around <a href="http://bugs.python.org/issue24142">Python 2.7 configuration file parsing bug</a> if configuration file gets corrupted (e.g. through hard disk issues, destructive edits or similar).</li>
+							<li>When installing a profile, always copy it to a temporary directory first so if accidentally installing a profile from the location where it's already installed (e.g. system32\spool\drivers\color) it doesn't get nuked by dispwin.</li>
+							<li>Cosmetic: Fix “ProgressDialog object has no attribute 'remaining_time'” when the fancy progress dialog is disabled under “Options” and using the testchart editor to create a testchart.</li>
+							<li>Chromecast messing with display enumeration under Linux and Mac OS X.</li>
+							<li>If missing, add DISPLAY_TYPE_BASE_ID to colorimeter correction matrix (CCMX) files when reading (fixes “Instrument access failed” when using Argyll CMS 1.7 with older CCMX files).</li>
+							<li>When creating a synthetic ICC profile with Rec. 1886 tone response curve and a black level of zero, the fallback gamma value of 2.2 was used instead of the configured gamma of 2.4.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0">2015-05-02 22:11 (UTC) 3.0 </dt>
+					<dd>
+						<h3>3.0 </h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>Tabbed user interface.</strong> See <a href="${URL}#screenshots">screenshots</a>.</li>
@@ -2580,19 +2494,19 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 								<p>See below example images for the result you can expect (note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this).</p>
 								<div style="overflow: hidden; padding: 1.4em 0;">
 									<div style="text-align: center;">
-										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow.png"><img src="${URL}img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>Original “granger rainbow” image</p>
 									</div>
 									<div style="float: left; margin: 0 15px 0 22px; width: 200px">
-										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
 									</div>
 									<div style="float: left; margin: 0 15px; width: 200px">
-										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 									</div>
 									<div style="float: left; margin: 0 15px; width: 200px">
-										<p><a rel="lightbox-set-1784" href="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="http://dispcalGUI.hoech.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 									</div>
 								</div>
@@ -3207,7 +3121,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<ul>
 							<li>Added ability to specify the display technology for created colorimeter corrections.</li>
 							<li>Enabled overriding of default gamut mapping intents for LUT profiles. “Luminance matched appearance” is the default override for perceptual intent, which provides an effect similar to black point compensation.</li>
-							<li>The <a href="http://dispcalgui.hoech.net/colorimetercorrections/">colorimeter corrections database</a> now has a public web interface and API.</li>
+							<li>The <a href="${URL}colorimetercorrections/">colorimeter corrections database</a> now has a public web interface and API.</li>
 						</ul>
 					</dd>
 
@@ -4030,6 +3944,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 		</div>
 
 		<script type="text/javascript" src="theme/prism.js"></script>
+		<script type="text/javascript" src="${URL}shariff/shariff.min.js"></script>
 
 	</body>
 </html>

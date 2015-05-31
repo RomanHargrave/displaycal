@@ -584,6 +584,7 @@ sup {
 #install-windows-driver h5,
 #requirements-source > div,
 #install > div,
+#non-ui-functionality > div,
 #scripting > div,
 #issues dt.collapsed,
 #issues dt.collapsed + dd {
@@ -607,6 +608,7 @@ sup {
 .ie_lte_8 #install-windows-driver h5,
 .ie_lte_8 #requirements-source > div,
 .ie_lte_8 #install > div,
+.ie_lte_8 #non-ui-functionality > div,
 .ie_lte_8 #scripting > div,
 .ie_lte_8 #issues dt.collapsed,
 .ie_lte_8 #issues dt.collapsed + dd {
@@ -617,6 +619,7 @@ sup {
 #quickstart > ol > li,
 #requirements-source > div,
 #install > div,
+#non-ui-functionality > div,
 #scripting > div,
 #issues dt,
 #issues dd {
@@ -635,11 +638,12 @@ sup {
 }
 #requirements-source > div h3,
 #install > div h3,
+#non-ui-functionality > div h3,
 #scripting > div h3 {
 	margin: 0;
 }
-#quickstart > ol > li p.info,
-.info {
+p.info,
+div.info {
 	background: rgba(255, 255, 255, .75);
 	-moz-border-radius: 8px;
 	-webkit-border-radius: 8px;
@@ -765,6 +769,7 @@ sup {
 /* Install */
 
 #install-src dt,
+#non-ui-functionality dt,
 #scripting dt {
 	font: normal 14px/22px Arial, sans-serif;
 	font-style: normal;
@@ -772,6 +777,7 @@ sup {
 	white-space: nowrap;
 }
 #install-src dt code,
+#non-ui-functionality dt code,
 #scripting dt code {
 	background: transparent none;
 	padding: 0;
@@ -924,6 +930,7 @@ sup {
 	clear: both;
 }
 #install-src dd,
+#non-ui-functionality dd,
 #scripting dd,
 #usage dd,
 #menu dd {
@@ -1216,7 +1223,6 @@ sup {
 	right: 10px;
 	text-shadow: 1px 1px 1px #360;
 }
-
 
 
 /* Print Styles */
