@@ -1496,7 +1496,8 @@ class Worker(object):
 			else:
 				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()
-		if (measurement_mode and not get_arg("-y", args) and
+		if (not getattr(self, "is_ambient_measuring", False) and
+			measurement_mode and not get_arg("-y", args) and
 			self.get_instrument_name() != "specbos 1201"):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
@@ -1557,7 +1558,8 @@ class Worker(object):
 		   instrument_features.get("highres_mode") and not get_arg("-H", args,
 																   True):
 			args.append("-H")
-		if (self.instrument_can_use_ccxx() and
+		if (not getattr(self, "is_ambient_measuring", False) and
+			self.instrument_can_use_ccxx() and
 		    not is_ccxx_testchart() and not get_arg("-X", args)):
 			# Use colorimeter correction?
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
