@@ -10941,7 +10941,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			black_output_offset = self.get_black_output_offset()
 
 		# TRC
-		if "%cg" in profile_name:
+		if "%cg" in profile_name and trc:
 			trc_type = self.get_trc_type()
 			bt1886 = (trc == "2.4" and trc_type == "G" and
 					  black_output_offset == "0")
@@ -10955,7 +10955,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								  "709": "Rec. 709", 
 								  "s": "sRGB", 
 								  "240": "SMPTE240M"})
-			profile_name = profile_name.replace("%cg", trc or "\0")
+		profile_name = profile_name.replace("%cg", trc or "\0")
 
 		# Ambient adjustment
 		if "%ca" in profile_name:
