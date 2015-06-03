@@ -5370,7 +5370,12 @@ usage: spotread [-options] [logfile]
 					break
 			if not result and self.errors:
 				result = Error("".join(self.errors).strip())
-		self.wrapup(False)
+		# DO NOT call wrapup() here, it'll remove the profile in the temp
+		# directory before dispwin can get a hold of it when running with UAC
+		# under Windows, because that makes the call to dispwin run in a
+		# separate thread. dispcalGUI.MainFrame.profile_finish_consumer calls
+		# dispcalGUI.MainFrame.start_timers(True) after displaying the result
+		# message which takes care of cleanup.
 		return result
 	
 	def _install_profile_colord(self, profile, device_id):
