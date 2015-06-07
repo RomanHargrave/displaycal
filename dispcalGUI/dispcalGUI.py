@@ -11690,7 +11690,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				  "Spyder5" in self.worker.instruments) and
 				 not self.worker.spyder4_cal_exists())
 		if spyd2:
-			spyd2 = self.enable_spyder2_handler(None,
+			spyd2 = self.enable_spyder2_handler(True,
 												i1d3 or icd or spyd4,
 												callafter=callafter,
 												callafter_args=callafter_args)
