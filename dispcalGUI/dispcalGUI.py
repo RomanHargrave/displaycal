@@ -9966,10 +9966,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("measurement_mode.projector", 1 if v and "p" in v else None)
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(update_measurement_mode=False)
-		if (v and (((not "c" in v or "p" in v) and
-					float(self.get_black_point_correction()) > 0) or
-				   ("c" in v and
-					float(self.get_black_point_correction()) == 0)) and
+		if (v and self.get_trc() and (not "c" in v or "p" in v) and
+			float(self.get_black_point_correction()) > 0 and
 			getcfg("calibration.black_point_correction_choice.show") and
 			not getcfg("calibration.black_point_correction.auto")):
 			if "c" in v:
