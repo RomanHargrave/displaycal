@@ -3250,7 +3250,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
 		update_profile = update_cal and is_profile()
-		enable_profile = not update_profile and not is_ccxx_testchart()
 
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
 										   not update_cal)
@@ -3265,23 +3264,14 @@ class MainFrame(ReportFrame, BaseFrame):
 		calibrate_and_profile_btn_show = (not lut3d_create_btn_show and
 										  not mr_btn_show and
 										  enable_cal and
-										  enable_profile and 
-										  bool(self.worker.displays) and 
-										  not config.is_uncalibratable_display() and 
-										  bool(self.worker.instruments))
+										  not update_profile)
 		calibrate_btn_show = (not lut3d_create_btn_show and
 							  not mr_btn_show and
-							  enable_cal and
-							  not is_ccxx_testchart() and
-							  bool(self.worker.displays) and 
-							  not config.is_uncalibratable_display() and 
-							  bool(self.worker.instruments))
+							  enable_cal)
 		profile_btn_show = (not lut3d_create_btn_show and
 							not mr_btn_show and
 							not calibrate_and_profile_btn_show and
-							enable_profile and not update_cal and 
-							bool(self.worker.displays) and 
-							bool(self.worker.instruments))
+							not update_cal)
 		if ((config.is_uncalibratable_display() and
 			 self.calibration_settings_panel.IsShown()) or
 			(not getcfg("3dlut.tab.enable") and
@@ -3295,8 +3285,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_settings_btn.Enable(bool(getcfg("3dlut.tab.enable")))
 		self.calibrate_btn.Show(not calibrate_and_profile_btn_show and
 							    calibrate_btn_show)
+		self.calibrate_btn.Enable(not calibrate_and_profile_btn_show and
+							      calibrate_btn_show and
+							      not is_ccxx_testchart() and
+								  bool(self.worker.displays) and 
+								  not config.is_uncalibratable_display() and 
+								  bool(self.worker.instruments))
 		self.calibrate_and_profile_btn.Show(calibrate_and_profile_btn_show)
+		self.calibrate_and_profile_btn.Enable(calibrate_and_profile_btn_show and
+											  not is_ccxx_testchart() and 
+											  bool(self.worker.displays) and 
+											  not config.is_uncalibratable_display() and 
+											  bool(self.worker.instruments))
 		self.profile_btn.Show(profile_btn_show)
+		self.profile_btn.Enable(profile_btn_show and 
+								bool(self.worker.displays) and 
+								bool(self.worker.instruments))
 		self.lut3d_create_btn.Show(lut3d_create_btn_show)
 		self.measurement_report_btn.Show(mr_btn_show)
 		self.buttonpanel.Layout()
@@ -3307,6 +3311,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if getcfg("calibration.file", False) in self.presets:
 			self.measurement_report_btn.Disable()
 		
+		self.panel.Layout()
 		self.panel.Thaw()
 
 	def update_calibration_file_ctrl(self, silent=False):
