@@ -11435,6 +11435,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			show_result_dialog(result, self)
 			self.set_default_testchart(force=True)
 			return
+		if getattr(self, "_current_testchart_path", None) == path:
+			# Nothing to do
+			return
 		filename, ext = os.path.splitext(path)
 		try:
 			if ext.lower() in (".ti1", ".ti3"):
@@ -11485,6 +11488,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.worker.options_targen = ["-d3"]
 			self.testchart_patches_amount.SetLabel(
 				str(ti1.queryv1("NUMBER_OF_SETS")))
+			self._current_testchart_path = path
 		except Exception, exception:
 			error = traceback.format_exc() if debug else exception
 			InfoDialog(self, 
