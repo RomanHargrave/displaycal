@@ -761,7 +761,7 @@
 	"profile.install.success": "Das Profil wurde installiert und aktiviert.",
 	"profile.install.virtual.unsupported": "Profile können nicht für virtuelle Anzeigegeräte installiert werden.",
 	"profile.install.warning": "Das Profil wurde installiert, allerdings sind Probleme aufgetreten.",
-	"profile.install_local_system": "Profil systemweit installieren",
+	"profile.install_local_system": "Profil als Systemstandard installieren",
 	"profile.install_network": "Profil im Netzwerk installieren",
 	"profile.install_user": "Profil nur für aktuellen Benutzer installieren",
 	"profile.invalid": "Ungültiges Profil.",

@@ -761,7 +761,7 @@
 	"profile.install.success": "Il profilo è stato installato ed attivato.",
 		"*profile.install.virtual.unsupported": "Profiles cannot be installed for virtual display devices.",
 		"*profile.install.warning": "The profile has been installed, but there may be problems.",
-		"*profile.install_local_system": "Install profile system-wide",
+		"*profile.install_local_system": "Install profile as system default",
 		"*profile.install_network": "Install profile network-wide",
 		"*profile.install_user": "Install profile for current user only",
 	"profile.invalid": "Profilo non valido.",
