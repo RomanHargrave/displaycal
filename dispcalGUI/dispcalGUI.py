@@ -225,14 +225,20 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 		wx.CallAfter(app_uptodate, parent)
 	else:
 		safe_print(lang.getstr("update_check.uptodate", appname))
-		# Show donation popup if user did not choose "don't show again".
-		# Reset donation popup after a major update.
-		if (not snapshot and
-			VERSION[0] > tuple(intlist(getcfg("last_launch").split(".")))[0]):
-			setcfg("show_donation_message", 1)
-		setcfg("last_launch", version)
-		if getcfg("show_donation_message"):
-			wx.CallAfter(donation_message, parent)
+		# Check if we need to run instrument setup
+		wx.CallAfter(parent.check_instrument_setup, check_donation,
+					 (parent, snapshot))
+
+
+def check_donation(parent, snapshot):
+	# Show donation popup if user did not choose "don't show again".
+	# Reset donation popup after a major update.
+	if (not snapshot and
+		VERSION[0] > tuple(intlist(getcfg("last_launch").split(".")))[0]):
+		setcfg("show_donation_message", 1)
+	setcfg("last_launch", version)
+	if getcfg("show_donation_message"):
+		wx.CallAfter(donation_message, parent)
 
 
 def app_uptodate(parent=None):
@@ -3763,8 +3769,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			   int(self.calibration_update_cb.GetValue() and is_profile()))
 		self.update_controls()
 
-	def enable_spyder2_handler(self, event,
-							   import_colorimeter_corrections=False):
+	def enable_spyder2_handler(self, event, check_instrument_setup=False,
+							   callafter=None, callafter_args=None):
 		self.update_menus()
 		if check_set_argyll_bin():
 			msg = lang.getstr("oem.import.auto")
@@ -3846,7 +3852,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					return
 			self.worker.start(self.enable_spyder2_consumer,
 							  self.enable_spyder2_producer,
-							  cargs=(import_colorimeter_corrections, ),
+							  cargs=(check_instrument_setup, callafter,
+									 callafter_args),
 							  wargs=(path, asroot),
 							  progress_msg=lang.getstr("enable_spyder2"),
 							  fancy=False)
@@ -3885,7 +3892,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 		return self.enable_spyder2(path, asroot)
 	
-	def enable_spyder2_consumer(self, result, import_colorimeter_corrections):
+	def enable_spyder2_consumer(self, result, check_instrument_setup,
+								callafter=None, callafter_args=()):
 		if not isinstance(result, Exception) and result:
 			result = UnloggedInfo(lang.getstr("enable_spyder2_success"))
 			self.update_menus()
@@ -3893,8 +3901,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = UnloggedError("".join(self.worker.errors))
 		if result:
 			show_result_dialog(result, self)
-		if import_colorimeter_corrections:
-			self.import_colorimeter_corrections_handler(True)
+		if check_instrument_setup:
+			self.check_instrument_setup(callafter, callafter_args)
+		elif callafter:
+			wx.CallAfter(callafter, *callafter_args)
 
 	def extra_args_handler(self, event):
 		if not hasattr(self, "extra_args"):
@@ -9315,7 +9325,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(force)
 	
-	def import_colorimeter_corrections_handler(self, event, paths=None):
+	def import_colorimeter_corrections_handler(self, event, paths=None,
+											   callafter=None,
+											   callafter_args=()):
 		"""
 		Convert correction matrices from other profiling softwares to Argyll's
 		CCMX or CCSS format (or to spyd4cal.bin in case of the Spyder4/5)
@@ -9430,11 +9442,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.worker.interactive = False
 		self.worker.start(self.import_colorimeter_corrections_consumer,
 						  self.import_colorimeter_corrections_producer,
+						  cargs=(callafter, callafter_args),
 						  wargs=(result, i1d3, i1d3ccss, spyd4, spyd4en, icd,
 								 oeminst, paths, choice == wx.ID_OK, asroot,
 								 importers),
 						  progress_msg=lang.getstr("colorimeter_correction.import"),
 						  fancy=False)
+		return (event and None) or True
 	
 	def import_colorimeter_correction(self, result, i1d3, i1d3ccss, spyd4,
 									  spyd4en, icd, oeminst, path, asroot):
@@ -9687,7 +9701,8 @@ class MainFrame(ReportFrame, BaseFrame):
 														   asroot)
 		return result, i1d3, spyd4, icd
 	
-	def import_colorimeter_corrections_consumer(self, results):
+	def import_colorimeter_corrections_consumer(self, results, callafter=None,
+												callafter_args=()):
 		result, i1d3, spyd4, icd = results
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
@@ -9710,6 +9725,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			error = ("".join(self.worker.errors) or
 					 lang.getstr("colorimeter_correction.import.failure"))
 			show_result_dialog(UnloggedError(error), self)
+		if callafter:
+			wx.CallAfter(callafter, *callafter_args)
 
 	def display_ctrl_handler(self, event, load_lut=True,
 							 update_ccmx_items=True):
@@ -11642,28 +11659,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if verbose >= 1: safe_print(lang.getstr("comport_detected"))
 			if event:
 				# Check if we should import colorimeter corrections
-				ccmx_instruments = self.ccmx_instruments.itervalues()
-				i1d3 = ("i1 DisplayPro, ColorMunki Display" in
-						self.worker.instruments and
-						not "" in ccmx_instruments)
-				icd = (("DTP94" in self.worker.instruments and
-						not "DTP94" in ccmx_instruments) or
-					   ("i1 Display 2" in self.worker.instruments and
-					    not "i1 Display 2" in ccmx_instruments) or
-					   ("Spyder2" in self.worker.instruments and
-					    not "Spyder2" in ccmx_instruments) or
-					   ("Spyder3" in self.worker.instruments and
-					    not "Spyder3" in ccmx_instruments))
-				spyd2 = ("Spyder2" in self.worker.instruments and
-						 not self.worker.spyder2_firmware_exists())
-				spyd4 = (("Spyder4" in self.worker.instruments or
-						  "Spyder5" in self.worker.instruments) and
-						 not self.worker.spyder4_cal_exists())
-				if spyd2:
-					spyd2 = self.enable_spyder2_handler(None,
-														i1d3 or icd or spyd4)
-				if not spyd2 and (i1d3 or icd or spyd4):
-					self.import_colorimeter_corrections_handler(True)
+				# or other instrument setup
+				self.check_instrument_setup()
 		if displays != self.worker.displays or \
 		   comports != self.worker.instruments:
 			if self.IsShownOnScreen():
@@ -11671,6 +11668,38 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_main_controls()
 			return True
 		return False
+
+	def check_instrument_setup(self, callafter=None, callafter_args=()):
+		# Check if we should import colorimeter corrections
+		# or do other instrument specific setup
+		ccmx_instruments = self.ccmx_instruments.itervalues()
+		i1d3 = ("i1 DisplayPro, ColorMunki Display" in
+				self.worker.instruments and
+				not "" in ccmx_instruments)
+		icd = (("DTP94" in self.worker.instruments and
+				not "DTP94" in ccmx_instruments) or
+			   ("i1 Display 2" in self.worker.instruments and
+				not "i1 Display 2" in ccmx_instruments) or
+			   ("Spyder2" in self.worker.instruments and
+				not "Spyder2" in ccmx_instruments) or
+			   ("Spyder3" in self.worker.instruments and
+				not "Spyder3" in ccmx_instruments))
+		spyd2 = ("Spyder2" in self.worker.instruments and
+				 not self.worker.spyder2_firmware_exists())
+		spyd4 = (("Spyder4" in self.worker.instruments or
+				  "Spyder5" in self.worker.instruments) and
+				 not self.worker.spyder4_cal_exists())
+		if spyd2:
+			spyd2 = self.enable_spyder2_handler(None,
+												i1d3 or icd or spyd4,
+												callafter=callafter,
+												callafter_args=callafter_args)
+		result = spyd2
+		if not spyd2 and (i1d3 or icd or spyd4):
+			result = self.import_colorimeter_corrections_handler(True,
+				callafter=callafter, callafter_args=callafter_args)
+		if not result and callafter:
+			callafter(*callafter_args)
 
 	def plugplay_timer_handler(self, event):
 		if debug >= 9:
