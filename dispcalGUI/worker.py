@@ -711,8 +711,8 @@ def get_python_and_pythonpath():
 	# py2exe: The python executable can be included via setup script by 
 	# adding it to 'data_files'
 	pythonpath = list(sys.path)
+	dirname = os.path.dirname(sys.executable)
 	if sys.platform == "win32":
-		dirname = os.path.dirname(sys.executable)
 		if getattr(sys, "frozen", False):
 			pythonpath = [dirname]
 			# If we are running 'frozen', add library.zip and lib\library.zip
@@ -728,9 +728,12 @@ def get_python_and_pythonpath():
 		python = os.path.join(dirname, "python.exe")
 	else:
 		# Linux / Mac OS X
-		paths = os.defpath.split(os.pathsep)
-		python = (which("python2.7", paths) or which("python2.6", paths) or
-				  "/usr/bin/env python")
+		if isapp:
+			python = os.path.join(dirname, "python")
+		else:
+			paths = os.defpath.split(os.pathsep)
+			python = (which("python2.7", paths) or which("python2.6", paths) or
+					  "/usr/bin/env python")
 	return (python, pythonpath)
 
 
