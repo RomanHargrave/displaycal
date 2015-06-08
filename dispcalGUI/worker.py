@@ -3321,7 +3321,7 @@ while 1:
 			else:
 				# Write out .wait file
 				with open(waitfilename, "w") as waitfile:
-					waitfile.write('#!%s -S\n' % safe_str(python))
+					waitfile.write('#!%s\n' % safe_str(python))
 					waitfile.write(pythonscript)
 				os.chmod(waitfilename, 0755)
 				args[index] += "./" + os.path.basename(waitfilename)
