@@ -29,8 +29,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>3.0.1 </h2>
-					<p>2015-05-31 20:35 UTC</p>
+					<h2>3.0.2 Beta</h2>
+					<p>2015-06-08 00:03 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -319,10 +319,10 @@
 								<span></span>
 								<span><a href="http://dispcalgui.hoech.net/download/Fedora_21/noarch/dispcalGUI-0install.rpm">Fedora 21</a></span>
 							</li>
-							<!--li>
+							<li>
 								<span></span>
 								<span><a href="http://dispcalgui.hoech.net/download/Fedora_22/noarch/dispcalGUI-0install.rpm">Fedora 22</a></span>
-							</li-->
+							</li>
 							<li>
 								<span></span>
 								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/noarch/dispcalGUI-0install.rpm">openSUSE 13.1</a></span>
@@ -480,11 +480,11 @@
 								<span><a href="http://dispcalgui.hoech.net/download/Fedora_21/i686/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/Fedora_21/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
-							<!--li>
+							<li>
 								<span>Fedora 22</span>
 								<span><a href="http://dispcalgui.hoech.net/download/Fedora_22/i686/dispcalGUI.rpm">x86</a> | 
 								<a href="http://dispcalgui.hoech.net/download/Fedora_22/x86_64/dispcalGUI.rpm">x86_64</a></span>
-							</li-->
+							</li>
 							<li>
 								<span>openSUSE 13.1</span>
 								<span><a href="http://dispcalgui.hoech.net/download/openSUSE_13.1/i586/dispcalGUI.rpm">x86</a> | 
@@ -2255,8 +2255,27 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2015-05-31 20:35 (UTC) 3.0.1  -->
+			<!-- 2015-06-08 00:03 (UTC) 3.0.2 Beta -->
 			<dl>
+				<dt id="changelog-3.0.2">2015-06-08 00:03 (UTC) 3.0.2 Beta</dt>
+					<dd>
+						<h3>3.0.2 Beta</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Instrument first-time setup (i.e. importing colorimeter corrections) will now automatically run when it hasn't been run before.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Removed black point correction choice when switching to “refresh” measurement mode.</li>
+							<li>Cosmetic: Always show main buttons, but disable them if no action is possible.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Mac OS X (standalone): Use bundled python when running from application bundle (fixes Resolve and madTPG interface).</li>
+							<li>Windows: Installing a profile as system default wasn't working correctly when UAC was enabled (regression of a change in 3.0.1).</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.0.1">2015-05-31 20:35 (UTC) 3.0.1 </dt>
 					<dd>
 						<h3>3.0.1 </h3>
