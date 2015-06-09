@@ -1533,6 +1533,37 @@ class CurveType(ICCProfileTag, list):
 											  black_jndi))) / white_dicomY
 			self.append(v * 65535)
 	
+	def set_smpte2084_trc(self, black_cdm2=.05, white_cdm2=100, size=None):
+		"""
+		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
+		
+		This response is special in that it depends on the actual black
+		and white level of the display.
+		
+		"""
+		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
+		# Luminance levels depend on the end level of 10000 cd/m2
+		if black_cdm2 < 0 or black_cdm2 >= white_cdm2:
+			raise ValueError("The black level of %f cd/m2 is out of range "
+							 "for SMPTE 2084. Valid range begins at 0 cd/m2." %
+							 black_cdm2)
+		if white_cdm2 > 10000 or white_cdm2 <= black_cdm2:
+			raise ValueError("The white level of %f cd/m2 is out of range "
+							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
+							 white_cdm2)
+		mini = colormath.specialpow(black_cdm2 / 10000.0, 1.0 / -2084)
+		maxi = colormath.specialpow(white_cdm2 / 10000.0, 1.0 / -2084)
+		white_smpte2084Y = colormath.specialpow(maxi, -2084)
+		if not size:
+			size = len(self)
+		if size < 2:
+			size = 1024
+		self[:] = []
+		for i in xrange(size):
+			n = i / (size - 1.0)
+			v = colormath.specialpow(mini + n * (maxi - mini), -2084)
+			self.append(v / white_smpte2084Y * 65535)
+	
 	def set_trc(self, power=2.2, size=None, vmin=0, vmax=65535):
 		"""
 		Set the response to a certain function.
@@ -3543,6 +3574,60 @@ class ICCProfile:
 											 (float(i) / (size - 1)) *
 											 (white_jndi -
 											  black_jndi))) / white_dicomY
+			values.append(v)
+		XYZbp = [v / white_cdm2 for v in XYZbp]
+		rgbbp = mtx * XYZbp
+		# Optimize for uInt16Number encoding
+		rgbbp = [round(max(v, 0) * 65535) / 65535 for v in rgbbp]
+		minv = values[0]
+		maxX = (1.0 - rgbbp[0]) / (values[-1] - minv)
+		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)
+		maxZ = (1.0 - rgbbp[2]) / (values[-1] - minv)
+		for channel in "rgb":
+			self.tags["%sTRC" % channel] = CurveType()
+		for i in xrange(size):
+			rgb = (rgbbp[0] + (values[i] - minv) * maxX,
+				   rgbbp[1] + (values[i] - minv) * maxY,
+				   rgbbp[2] + (values[i] - minv) * maxZ)
+			for j in xrange(3):
+				self.tags["%sTRC" % "rgb"[j]].append(min(rgb[j] * 65535,
+														 65535))
+		self.set_blackpoint(XYZbp)
+
+	def set_smpte2084_trc(self, XYZbp, white_cdm2=100, size=1024):
+		"""
+		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
+		
+		This response is special in that it depends on the actual black
+		and white level of the display.
+		
+		XYZbp   Black point in absolute XYZ, Y range 0..white_cdm2
+		
+		"""
+		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
+		# Luminance levels depend on the end level of 10000 cd/m2
+		if XYZbp[1] < 0 or XYZbp[1] >= white_cdm2:
+			raise ValueError("The black level of %f cd/m2 is out of range "
+							 "for SMPTE 2084. Valid range begins at 0 cd/m2." %
+							 XYZbp[1])
+		if white_cdm2 > 10000 or white_cdm2 <= XYZbp[1]:
+			raise ValueError("The white level of %f cd/m2 is out of range "
+							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
+							 white_cdm2)
+		rXYZ = self.tags.rXYZ.values()
+		gXYZ = self.tags.gXYZ.values()
+		bXYZ = self.tags.bXYZ.values()
+		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
+								   [rXYZ[1], gXYZ[1], bXYZ[1]],
+								   [rXYZ[2], gXYZ[2], bXYZ[2]]]).inverted()
+		if size < 2:
+			size = 1024
+		values = []
+		mini = colormath.specialpow((mtx * XYZbp)[1] / 10000.0, 1.0 / -2084)
+		maxi = colormath.specialpow(white_cdm2 / 10000.0, 1.0 / -2084)
+		for i in xrange(size):
+			n = i / (size - 1.0)
+			v = colormath.specialpow(mini + n * (maxi - mini), -2084)
 			values.append(v)
 		XYZbp = [v / white_cdm2 for v in XYZbp]
 		rgbbp = mtx * XYZbp

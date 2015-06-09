@@ -15,6 +15,11 @@ REC709_K0 = 0.081  # 0.099 / (1.0 / 0.45 - 1)
 REC709_P = 4.5  # get_transfer_function_phi(0.099, 1.0 / 0.45)
 SMPTE240M_K0 = 0.0913  # 0.1115 / (1.0 / 0.45 - 1)
 SMPTE240M_P = 4.0  # get_transfer_function_phi(0.1115, 1.0 / 0.45)
+SMPTE2084_M1 = (2610.0 / 4096) * .25
+SMPTE2084_M2 = (2523.0 / 4096) * 128
+SMPTE2084_C1 = (3424.0 / 4096)
+SMPTE2084_C2 = (2413.0 / 4096) * 32
+SMPTE2084_C3 = (2392.0 / 4096) * 32
 SRGB_K0 = 0.04045  # 0.055 / (2.4 - 1)
 SRGB_P = 12.92  # get_transfer_function_phi(0.055, 2.4)
 
@@ -87,6 +92,10 @@ def specialpow(a, b):
 			v = a * SRGB_P
 		else:
 			v = 1.055 * math.pow(a, 1.0 / 2.4) - 0.055
+	elif b == 1.0 / -2084:
+		# XYZ -> RGB, SMPTE 2084 (PQ)
+		v = ((2413.0 * (a ** SMPTE2084_M1) + 107) /
+			 (2392.0 * (a ** SMPTE2084_M1) + 128)) ** SMPTE2084_M2
 	elif b == -2.4:
 		# RGB -> XYZ, sRGB TRC
 		if a <= SRGB_K0:
@@ -111,6 +120,11 @@ def specialpow(a, b):
 			v = a / REC709_P
 		else:
 			v = math.pow((a + .099) / 1.099, 1.0 / 0.45)
+	elif b == -2084:
+		# RGB -> XYZ, SMPTE 2084 (PQ)
+		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
+		v = (max(a ** (1.0 / SMPTE2084_M2) - SMPTE2084_C1, 0) /
+			 (SMPTE2084_C2 - SMPTE2084_C3 * a ** (1.0 / SMPTE2084_M2))) ** (1.0 / SMPTE2084_M1)
 	else:
 		raise ValueError("Invalid gamma %s" % b)
 	return v * signScale

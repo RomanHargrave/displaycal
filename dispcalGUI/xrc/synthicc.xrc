@@ -436,7 +436,7 @@
                       <object class="FloatSpin" name="luminance_ctrl">
                         <size>75, -1</size>
                         <min_val>40.0</min_val>
-                        <max_val>3993.3295858873271</max_val>
+                        <max_val>10000.0</max_val>
                         <increment>0.1</increment>
                         <digits>2</digits>
                       </object>
@@ -498,6 +498,7 @@
                           <item>trc.rec709</item>
                           <item>trc.rec1886</item>
                           <item>trc.smpte240m</item>
+                          <item>trc.smpte2084</item>
                           <item>trc.srgb</item>
                         </content>
                         <selection>0</selection>
