@@ -4132,9 +4132,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_input_profile_ctrl.SetToolTipString(
 			getcfg("3dlut.input.profile"))
 
-	def lut3d_set_path(self):
+	def lut3d_set_path(self, path=None):
 		# 3D LUT filename with crcr32 hash before extension - up to DCG 2.9.0.7
-		profile_save_path = os.path.splitext(getcfg("calibration.file"))[0]
+		profile_save_path = os.path.splitext(path or getcfg("calibration.file"))[0]
 		lut3d = [getcfg("3dlut.gamap.use_b2a") and "gg" or "G",
 				 "i" + getcfg("3dlut.rendering_intent"),
 				 "r%i" % getcfg("3dlut.size"),
@@ -6999,6 +6999,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		return result
 
 	def start_profile_worker(self, success_msg, resume=False):
+		name = getcfg("profile.name.expanded")
+		path = os.path.join(getcfg("profile.save_path"), name, name + profile_ext)
+		self.lut3d_set_path(path)
+		continue_next = (getcfg("3dlut.create") and
+						 not os.path.isfile(self.lut3d_path))
 		self.worker.interactive = False
 		self.worker.start(self.profile_finish, self.worker.create_profile, 
 						  ckwargs={"success_msg": success_msg, 
@@ -7007,7 +7012,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								   "install_3dlut": getcfg("3dlut.create")}, 
 						  wkwargs={"tags": True},
 						  progress_msg=lang.getstr("create_profile"), 
-						  resume=resume, continue_next=getcfg("3dlut.create"))
+						  resume=resume, continue_next=continue_next)
 
 	def gamap_btn_handler(self, event):
 		if not hasattr(self, "gamapframe"):
@@ -7460,12 +7465,15 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.lut3d_set_path()
 				# Check if we want to automatically create 3D LUT
 				if (getcfg("3dlut.create") and
-					not os.path.isfile(self.lut3d_path) and install_3dlut):
+					not os.path.isfile(self.lut3d_path)):
 					# Update curve viewer if shown
 					self.lut_viewer_load_lut(profile=profile)
 					# Create 3D LUT
 					self.lut3d_create_handler(None)
 					return
+				elif hasattr(self.worker, "_disabler"):
+					# This shouldn't happen
+					self.worker.stop_progress()
 				if "meta" in profile.tags:
 					for key in ("avg", "max", "rms"):
 						try:
