@@ -7346,12 +7346,6 @@ class MainFrame(ReportFrame, BaseFrame):
 									  getcfg("profile.name.expanded") + 
 									  ".ti3"))
 		self.Show(start_timers=True)
-		if is_ccxx_testchart():
-			# Restore calibration after measuring CCXX testcahrt
-			self.load_cal(silent=True) or self.load_display_profile_cal()
-			if not getcfg("calibration.autoload"):
-				# Reload display profile into videoLUT
-				self.load_display_profile_cal(True, False)
 		self.restore_measurement_mode()
 		self.restore_testchart()
 	
