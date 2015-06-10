@@ -249,7 +249,8 @@ class SynthICCFrame(BaseFrame):
 		else:
 			if (profile.colorSpace != "RGB" or
 				profile.connectionColorSpace not in ("Lab", "XYZ")):
-				show_result_dialog(Error(lang.getstr("profile.unsupported",
+				wx.CallAfter(show_result_dialog,
+								   Error(lang.getstr("profile.unsupported",
 													 (profile.profileClass,
 													  profile.colorSpace))),
 								   self)
@@ -281,7 +282,7 @@ class SynthICCFrame(BaseFrame):
 								(color, component)).SetValue(xyY[j])
 				self.parse_xy(None)
 				self.black_XYZ_ctrl_handler(None)
-				trc = ICCP.CurveType()
+				trc = ICCP.CurveType(profile=profile)
 				for XYZ in colors[5:]:
 					trc.append(XYZ[1] / colors[0][1] * 65535)
 				transfer_function = trc.get_transfer_function()
@@ -519,9 +520,9 @@ class SynthICCFrame(BaseFrame):
 											   defaultFile,
 											   getcfg("copyright"))
 			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
-			profile.tags.rTRC = ICCP.CurveType()
-			profile.tags.gTRC = ICCP.CurveType()
-			profile.tags.bTRC = ICCP.CurveType()
+			profile.tags.rTRC = ICCP.CurveType(profile=profile)
+			profile.tags.gTRC = ICCP.CurveType(profile=profile)
+			profile.tags.bTRC = ICCP.CurveType(profile=profile)
 			channels = "rgb"
 		else:
 			# Grayscale profile
@@ -534,7 +535,7 @@ class SynthICCFrame(BaseFrame):
 			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
 			black = [XYZ["wY"] * (getcfg("synthprofile.black_luminance") /
 								  getcfg("synthprofile.luminance"))] * 3
-			profile.tags.kTRC = ICCP.CurveType()
+			profile.tags.kTRC = ICCP.CurveType(profile=profile)
 			channels = "k"
 		if self.trc_ctrl.GetSelection() == 1:
 			# DICOM

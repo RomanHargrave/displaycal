@@ -212,6 +212,22 @@ def cbrt(x):
 	return math.pow(x, 1.0 / 3.0) if x >= 0 else -math.pow(-x, 1.0 / 3.0)
 
 
+def var(a):
+	""" Variance """
+	s = 0.0
+	l = len(a)
+	while l:
+		l -= 1
+		s += a[l]
+	l = len(a)
+	m = s / l
+	s = 0.0
+	while l:
+		l -= 1
+		s += (a[l] - m) ** 2
+	return s / len(a)
+
+
 def XYZ2LMS(X, Y, Z, cat="Bradford"):
 	""" Convert from XYZ to cone response domain """
 	cat = get_cat_matrix(cat)
@@ -2091,6 +2107,7 @@ class BT1886(object):
 		self.tab[0] = 0  # 0 because bt1886 maps L to target
 
 		if XYZbp[1] < 0:
+			XYZbp = list(XYZbp)
 			XYZbp[1] = 0.0
 
 		# Offset acounted for in output

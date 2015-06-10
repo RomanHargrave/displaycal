@@ -507,6 +507,7 @@ valid_ranges = {
 	"measure.min_display_update_delay_ms": [20, 60000],
 	"patterngenerator.apl": [0.0, 1.0],
 	"patterngenerator.resolve.port": [1, 65535],
+	"synthprofile.trc_gamma": [0.01, 10],
 	"synthprofile.trc_output_offset": [0.0, 1.0],
 	"tc_export_repeat_patch_max": [1, 1000],
 	"tc_export_repeat_patch_min": [1, 1000],

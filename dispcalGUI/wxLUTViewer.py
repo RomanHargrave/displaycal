@@ -52,7 +52,8 @@ class CoordinateType(list):
 	
 	"""
 	
-	def __init__(self):
+	def __init__(self, profile=None):
+		self.profile = profile
 		self._transfer_function = {}
 	
 	def get_gamma(self, use_vmin_vmax=False, average=True, least_squares=False,
@@ -87,7 +88,7 @@ class CoordinateType(list):
 		transfer_function = self._transfer_function.get((best, slice))
 		if transfer_function:
 			return transfer_function
-		trc = CoordinateType()
+		trc = ICCP.CurveType()
 		match = {}
 		vmin = self[0][0]
 		vmax = self[-1][0]
@@ -97,11 +98,32 @@ class CoordinateType(list):
 				best_yx = (y, x)
 		gamma = colormath.get_gamma([(best_yx[1] / 255.0 * 100.0, best_yx[0])], 100.0, vmin, vmax)
 		for name, exp in (("Rec. 709", -709),
+						  ("Rec. 1886", -1886),
 						  ("SMPTE 240M", -240),
+						  ("SMPTE 2084", -2084),
+						  ("DICOM", -1023),
 						  ("L*", -3.0),
 						  ("sRGB", -2.4),
 						  ("Gamma %.2f" % gamma, gamma)):
-			trc.set_trc(exp, self, vmin, vmax)
+			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
+				if self.profile and isinstance(self.profile.tags.get("lumi"),
+											   ICCP.XYZType):
+					white_cdm2 = self.profile.tags.lumi.Y
+				else:
+					white_cdm2 = 100.0
+				black_Y = vmin / 100.0
+				black_cdm2 = black_Y * white_cdm2
+				try:
+					if name == "DICOM":
+						trc.set_dicom_trc(black_cdm2, white_cdm2, size=len(self))
+					elif name == "Rec. 1886":
+						trc.set_bt1886_trc(black_Y, size=len(self))
+					elif name == "SMPTE 2084":
+						trc.set_smpte2084_trc(black_cdm2, white_cdm2, size=len(self))
+				except ValueError:
+					continue
+			else:
+				trc.set_trc(exp, len(self), vmin * 655.35, vmax * 655.35)
 			match[(name, exp)] = 0.0
 			count = 0
 			start = slice[0] * 255
@@ -113,7 +135,7 @@ class CoordinateType(list):
 					if n:
 						n = n[0]
 						##n2 = colormath.XYZ2Lab(0, trc[i][0], 0)[0]
-						n2 = colormath.get_gamma([(trc[i][1] / 255.0 * 100, trc[i][0])], 100.0, vmin, vmax, False)
+						n2 = colormath.get_gamma([(i / (len(trc) - 1.0) * 65535, trc[i])], 65535, vmin * 655.35, vmax * 655.35, False)
 						if n2:
 							n2 = n2[0]
 							match[(name, exp)] += 1 - (max(n, n2) - min(n, n2)) / n2
@@ -1186,7 +1208,7 @@ class LUTFrame(BaseFrame):
 					   "bTRC": []}
 				for sig in ("rTRC", "gTRC", "bTRC"):
 					gamma = getattr(self, sig)[0]
-					setattr(self, sig, CoordinateType())
+					setattr(self, sig, CoordinateType(self.profile))
 					for i in xrange(256):
 						trc[sig].append(math.pow(i / 255.0, gamma) * 65535)
 			else:
@@ -1198,18 +1220,18 @@ class LUTFrame(BaseFrame):
 				x, xp, y, yp = [], [], [], []
 				# First, get actual values
 				for i, Y in enumerate(trc[sig]):
-					if not i or Y > trc[sig][i - 1]:
-						xp.append(i / (len(trc[sig]) - 1.0) * 255)
-						yp.append(Y / 65535.0 * 100)
-				# Second, interpolate to given size and use the same Y axis 
+					##if not i or Y >= trc[sig][i - 1]:
+					xp.append(i / (len(trc[sig]) - 1.0) * 255)
+					yp.append(Y / 65535.0 * 100)
+				# Second, interpolate to given size and use the same y axis 
 				# for all channels
 				for i in xrange(size):
 					x.append(i / (size - 1.0) * 255)
 					y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
-				yi = interp(x, xp, yp)
-				xi = interp(y, yi, x)
-				setattr(self, sig, CoordinateType())
-				for v, Y in zip(xi, y):
+				xi = interp(y, yp, xp)
+				yi = interp(x, xi, y)
+				setattr(self, sig, CoordinateType(self.profile))
+				for Y, v in zip(yi, x):
 					if Y <= yp[0]:
 						Y = yp[0]
 					getattr(self, sig).append([Y, v])
@@ -1287,14 +1309,16 @@ class LUTFrame(BaseFrame):
 		else:
 			Lab_triplets = odata
 
-		self.rTRC = CoordinateType()
-		self.gTRC = CoordinateType()
-		self.bTRC = CoordinateType()
+		self.rTRC = CoordinateType(self.profile)
+		self.gTRC = CoordinateType(self.profile)
+		self.bTRC = CoordinateType(self.profile)
 		for j, RGB in enumerate(RGB_triplets):
 			for i, v in enumerate(RGB):
 				v = min(v, 1.0)
 				v *= 255
 				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], **{"scale": 100})
+				if not v:
+					continue
 				if direction in ("b", "if"):
 					X = Z = Y
 				elif intent == "a":
@@ -1306,6 +1330,25 @@ class LUTFrame(BaseFrame):
 					self.gTRC.append([Y, v])
 				elif i == 2:
 					self.bTRC.append([Z, v])
+		for sig in ("rTRC", "gTRC", "bTRC"):
+			x, xp, y, yp = [], [], [], []
+			# First, get actual values
+			for i, (Y, v) in enumerate(getattr(self, sig)):
+				##if not i or Y >= trc[sig][i - 1]:
+				xp.append(v)
+				yp.append(Y)
+			# Second, interpolate to given size and use the same y axis 
+			# for all channels
+			for i in xrange(size):
+				x.append(i / (size - 1.0) * 255)
+				y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
+			xi = interp(y, yp, xp)
+			yi = interp(x, xi, y)
+			setattr(self, sig, CoordinateType(self.profile))
+			for Y, v in zip(yi, x):
+				if Y <= yp[0]:
+					Y = yp[0]
+				getattr(self, sig).append([Y, v])
 
 	def move_handler(self, event):
 		if not self.IsShownOnScreen():
@@ -1399,7 +1442,7 @@ class LUTFrame(BaseFrame):
 			try:
 				self.lookup_tone_response_curves()
 			except Exception, exception:
-				show_result_dialog(exception, self)
+				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				curves.append(lang.getstr('[rgb]TRC'))
 		selection = self.plot_mode_select.GetSelection()
@@ -1479,13 +1522,13 @@ class LUTFrame(BaseFrame):
 			if (not getattr(self, "trc", None) and
 				len(self.rTRC) == len(self.gTRC) == len(self.bTRC)):
 				if isinstance(self.rTRC, ICCP.CurveType):
-					self.trc = ICCP.CurveType()
+					self.trc = ICCP.CurveType(profile=self.profile)
 					for i in xrange(len(self.rTRC)):
 						self.trc.append((self.rTRC[i] +
 										 self.gTRC[i] +
 										 self.bTRC[i]) / 3.0)
 				else:
-					self.trc = CoordinateType()
+					self.trc = CoordinateType(self.profile)
 					for i in xrange(len(self.rTRC)):
 						self.trc.append([(self.rTRC[i][0] +
 										  self.gTRC[i][0] +

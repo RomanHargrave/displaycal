@@ -1311,8 +1311,9 @@ class ColorantTableType(ICCProfileTag, AODict):
 
 class CurveType(ICCProfileTag, list):
 
-	def __init__(self, tagData=None, tagSignature=None):
+	def __init__(self, tagData=None, tagSignature=None, profile=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self.profile = profile
 		self._transfer_function = {}
 		if not tagData:
 			return
@@ -1423,11 +1424,32 @@ class CurveType(ICCProfileTag, list):
 		gamma = colormath.get_gamma([((len(self) / 2 - 1) / (len(self) - 1.0) * 65535.0,
 									  self[len(self) / 2 - 1])], 65535.0, vmin, vmax)
 		for name, exp in (("Rec. 709", -709),
+						  ("Rec. 1886", -1886),
 						  ("SMPTE 240M", -240),
+						  ("SMPTE 2084", -2084),
+						  ("DICOM", -1023),
 						  ("L*", -3.0),
 						  ("sRGB", -2.4),
 						  ("Gamma %.2f" % gamma, gamma)):
-			trc.set_trc(exp, len(self), vmin, vmax)
+			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
+				if self.profile and isinstance(self.profile.tags.get("lumi"),
+											   XYZType):
+					white_cdm2 = self.profile.tags.lumi.Y
+				else:
+					white_cdm2 = 100.0
+				black_Y = vmin / 65535.0
+				black_cdm2 = black_Y * white_cdm2
+				try:
+					if name == "DICOM":
+						trc.set_dicom_trc(black_cdm2, white_cdm2, size=len(self))
+					elif name == "Rec. 1886":
+						trc.set_bt1886_trc(black_Y, size=len(self))
+					elif name == "SMPTE 2084":
+						trc.set_smpte2084_trc(black_cdm2, white_cdm2, size=len(self))
+				except ValueError:
+					continue
+			else:
+				trc.set_trc(exp, len(self), vmin, vmax)
 			if self == trc:
 				match[(name, exp)] = 1.0
 			else:
@@ -3293,7 +3315,7 @@ class ICCProfile:
 										args += (self.connectionColorSpace, )
 										if typeSignature == "ncl2":
 											args += (self.colorSpace, )
-									elif typeSignature in ("XYZ ", "mft2"):
+									elif typeSignature in ("XYZ ", "mft2", "curv"):
 										args += (self, )
 									tag = typeSignature2Type[typeSignature](*args)
 								else:
@@ -3457,7 +3479,7 @@ class ICCProfile:
 			(profile.tags[tagname].X, profile.tags[tagname].Y,
 			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, D50, cat)
 			tagname = color + "TRC"
-			profile.tags[tagname] = CurveType()
+			profile.tags[tagname] = CurveType(profile=profile)
 			if isinstance(gamma, (list, tuple)):
 				profile.tags[tagname].extend(gamma)
 			else:
@@ -3482,7 +3504,7 @@ class ICCProfile:
 			cgamma = self.tags[channel + "TRC"].get_gamma()
 			gamma += cgamma
 			if len(self.tags[channel + "TRC"]) == 1:
-				self.tags[channel + "TRC"] = CurveType()
+				self.tags[channel + "TRC"] = CurveType(profile=self)
 				self.tags[channel + "TRC"].set_trc(cgamma, 1024)
 		gamma /= 3.0
 		bt1886 = colormath.BT1886(mtx, XYZbp, 1.0, gamma, False)
@@ -3495,7 +3517,7 @@ class ICCProfile:
 				if not values.get(j):
 					values[j] = []
 				values[j].append(v / 65535.0)
-			self.tags[channel + "TRC"] = CurveType()
+			self.tags[channel + "TRC"] = CurveType(profile=self)
 		for i, (r, g, b) in values.iteritems():
 			X, Y, Z = mtx * (r, g, b)
 			values[i] = bt1886.apply(X, Y, Z)
@@ -3520,7 +3542,7 @@ class ICCProfile:
 		bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma)
 		values = OrderedDict()
 		for i, channel in enumerate(("r", "g", "b")):
-			self.tags[channel + "TRC"] = CurveType()
+			self.tags[channel + "TRC"] = CurveType(profile=self)
 			self.tags[channel + "TRC"].set_trc(-709, size)
 			for j, v in enumerate(self.tags[channel + "TRC"]):
 				if not values.get(j):
@@ -3584,7 +3606,7 @@ class ICCProfile:
 		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)
 		maxZ = (1.0 - rgbbp[2]) / (values[-1] - minv)
 		for channel in "rgb":
-			self.tags["%sTRC" % channel] = CurveType()
+			self.tags["%sTRC" % channel] = CurveType(profile=self)
 		for i in xrange(size):
 			rgb = (rgbbp[0] + (values[i] - minv) * maxX,
 				   rgbbp[1] + (values[i] - minv) * maxY,
@@ -3638,7 +3660,7 @@ class ICCProfile:
 		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)
 		maxZ = (1.0 - rgbbp[2]) / (values[-1] - minv)
 		for channel in "rgb":
-			self.tags["%sTRC" % channel] = CurveType()
+			self.tags["%sTRC" % channel] = CurveType(profile=self)
 		for i in xrange(size):
 			rgb = (rgbbp[0] + (values[i] - minv) * maxX,
 				   rgbbp[1] + (values[i] - minv) * maxY,

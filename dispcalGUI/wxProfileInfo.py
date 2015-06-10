@@ -1322,7 +1322,7 @@ class ProfileInfoFrame(LUTFrame):
 			try:
 				self.lookup_tone_response_curves()
 			except Exception, exception:
-				show_result_dialog(exception, self)
+				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				choice.append(lang.getstr("[rgb]TRC"))
 		choice.append(lang.getstr("gamut"))
