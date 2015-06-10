@@ -248,7 +248,7 @@ class SynthICCFrame(BaseFrame):
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			show_result_dialog(Error(lang.getstr("profile.invalid")), self)
 		else:
-			if (profile.colorSpace != "RGB" or
+			if (profile.colorSpace not in ("RGB", "GRAY") or
 				profile.connectionColorSpace not in ("Lab", "XYZ")):
 				wx.CallAfter(show_result_dialog,
 								   Error(lang.getstr("profile.unsupported",
@@ -264,6 +264,13 @@ class SynthICCFrame(BaseFrame):
 			except Exception, exception:
 				show_result_dialog(exception, self)
 			else:
+				self.panel.Freeze()
+				for ctrl, value in [(self.colorspace_rgb_ctrl,
+									 profile.colorSpace == "RGB"),
+									(self.colorspace_gray_ctrl,
+									 profile.colorSpace == "GRAY")]:
+					ctrl.SetValue(value)
+				self.colorspace_ctrl_handler(None)
 				if "lumi" in profile.tags:
 					luminance = profile.tags.lumi.Y
 				else:
@@ -296,6 +303,7 @@ class SynthICCFrame(BaseFrame):
 				self.set_trc(round(gamma, 2))
 				setcfg("synthprofile.trc_gamma_type", "g")
 				self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["g"])
+				self.panel.Thaw()
 	
 	def enable_save_as_btn(self):
 		self.save_as_btn.Enable(bool(self.get_XYZ()))
