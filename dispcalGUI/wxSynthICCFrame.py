@@ -142,24 +142,25 @@ class SynthICCFrame(BaseFrame):
 	
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
-		white_Y = getcfg("synthprofile.luminance")
-		min_Y = (1 / 65535.0) * 100
-		increment = (1 / 65535.0) * white_Y
-		if increment < min_Y:
-			increment = min_Y * (white_Y / 100.0)
-		min_inc = 1.0 / (10.0 ** self.black_luminance_ctrl.GetDigits())
-		if increment < min_inc:
-			increment = min_inc
-		self.black_luminance_ctrl.SetIncrement(increment)
-		fmt = "%%.%if" % self.black_luminance_ctrl.GetDigits()
-		if fmt % v > fmt % 0 and fmt % v < fmt % increment:
-			if event:
-				v = increment
-			else:
+		if event:
+			white_Y = getcfg("synthprofile.luminance")
+			min_Y = (1 / 65535.0) * 100
+			increment = (1 / 65535.0) * white_Y
+			if increment < min_Y:
+				increment = min_Y * (white_Y / 100.0)
+			min_inc = 1.0 / (10.0 ** self.black_luminance_ctrl.GetDigits())
+			if increment < min_inc:
+				increment = min_inc
+			self.black_luminance_ctrl.SetIncrement(increment)
+			fmt = "%%.%if" % self.black_luminance_ctrl.GetDigits()
+			if fmt % v > fmt % 0 and fmt % v < fmt % increment:
+				if event:
+					v = increment
+				else:
+					v = 0
+			elif fmt % v == fmt % 0:
 				v = 0
-		elif fmt % v == fmt % 0:
-			v = 0
-		v = round(v / increment) * increment
+			v = round(v / increment) * increment
 		self.black_luminance_ctrl.SetValue(v)
 
 		old = getcfg("synthprofile.black_luminance")
