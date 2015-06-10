@@ -260,7 +260,7 @@ class SynthICCFrame(BaseFrame):
 			for i in xrange(256):
 				rgb.append((1.0 / 255 * i, 1.0 / 255 * i, 1.0 / 255 * i))
 			try:
-				colors = self.worker.xicclu(profile, rgb, intent="a")
+				colors = self.worker.xicclu(profile, rgb, intent="a", pcs="x")
 			except Exception, exception:
 				show_result_dialog(exception, self)
 			else:
