@@ -173,6 +173,9 @@ class SynthICCFrame(BaseFrame):
 			self.Freeze()
 			i = self.trc_ctrl.GetSelection()
 			self.trc_gamma_type_ctrl.Show(i in (0, 4) and bool(v))
+			if not v:
+				self.bpc_ctrl.SetValue(False)
+			self.bpc_ctrl.Enable(bool(v))
 			black_output_offset_show = (i in (0, 4) and bool(v))
 			self.black_output_offset_label.Show(black_output_offset_show)
 			self.black_output_offset_ctrl.Show(black_output_offset_show)
@@ -605,6 +608,9 @@ class SynthICCFrame(BaseFrame):
 		else:
 			for channel in channels:
 				profile.tags["%sTRC" % channel].set_trc(trc, 1)
+		if self.bpc_ctrl.Value:
+			for channel in channels:
+				profile.tags["%sTRC" % channel].apply_bpc()
 		for tagname in ("lumi", "bkpt"):
 			if tagname == "lumi":
 				# Absolute

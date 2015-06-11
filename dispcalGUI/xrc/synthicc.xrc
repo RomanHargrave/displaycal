@@ -376,7 +376,7 @@
                         <size>75, -1</size>
                         <min_val>0</min_val>
                         <max_val>100.0</max_val>
-                        <!--increment>0.0015259021896696422</increment-->
+                        <increment>0.0015259021896696422</increment>
                         <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
@@ -537,6 +537,13 @@
                       <object class="wxChoice" name="trc_gamma_type_ctrl"/>
                       <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                       <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxCheckBox" name="bpc_ctrl">
+                        <label>black_point_compensation</label>
+                      </object>
+                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>20</border>
                     </object>
                     <orient>wxHORIZONTAL</orient>
                   </object>
