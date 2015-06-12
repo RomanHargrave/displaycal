@@ -197,15 +197,14 @@
 				$(center).animate({width: centerWidth, marginLeft: -centerWidth/2}, options.resizeDuration, options.resizeEasing);
 			}
 			$(center).queue(function() {
-				$(bottomContainer).css({width: centerWidth, top: top + centerHeight, marginLeft: -centerWidth/2, visibility: "hidden", display: ""});
+				$(bottomContainer).css({width: centerWidth, top: top + centerHeight, marginLeft: -centerWidth/2, display: ""});
 				$(image).css({display: "none", visibility: "", opacity: ""}).fadeIn(options.imageFadeDuration, animateCaption);
 			});
 		};
 
 		function animateCaption() {
-			if (prevImage >= 0) $(prevLink).show();
-			if (nextImage >= 0) $(nextLink).show();
-			$(bottom).css("marginTop", -bottom.offsetHeight).animate({marginTop: 0}, options.captionAnimationDuration);
+			if (prevImage >= 0) $(prevLink).fadeIn(200);
+			if (nextImage >= 0) $(nextLink).fadeIn(200);
 			bottomContainer.style.visibility = "";
 		};
 
@@ -213,7 +212,9 @@
 			preload.onload = null;
 			preload.src = preloadPrev.src = preloadNext.src = activeURL;
 			$([center, image, bottom]).stop(true);
-			$([prevLink, nextLink, image, bottomContainer]).hide();
+			$(image).hide();
+			if (prevImage < 0) $(prevLink).fadeOut(200);
+			if (nextImage < 0) $(nextLink).fadeOut(200);
 		};
 
 		function close() {
@@ -221,6 +222,7 @@
 				stop();
 				activeImage = prevImage = nextImage = -1;
 				$(center).hide();
+				$(bottomContainer).fadeOut(200);
 				$(overlay).stop().fadeOut(options.overlayFadeDuration, setup);
 			}
 			

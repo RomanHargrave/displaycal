@@ -10,10 +10,10 @@
 		<title>dispcalGUI—Open Source Display Calibration and Characterization powered by Argyll CMS</title>
 		<meta name="description" content="${SUMMARY}" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
+		<link rel="stylesheet" href="${URL}shariff/shariff.complete.css" />
 		<link rel="stylesheet" href="theme/readme.css" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css" />
 		<link rel="stylesheet" href="theme/prism.css" />
-		<link rel="stylesheet" href="${URL}shariff/shariff.complete.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
@@ -22,14 +22,21 @@
 	</head>
 	<body>
 
-		<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">dispcalGUI</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
+		<div id="header">
+			<div id="title-wrapper">
+				<div id="title">
+					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">dispcalGUI</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
 
-		<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="${URL}shariff/index.php" data-url="${URL}" data-info-url="https://github.com/heiseonline/shariff"></p>
+					<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="${URL}shariff/index.php" data-url="${URL}" data-info-url="https://github.com/heiseonline/shariff"></p>
+				</div>
+			</div>
+			<div id="header-inner-overlay"></div>
+		</div>
 
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>${VERSION_SHORT} ${STABILITY}</h2>
+					<h2 id="version">${VERSION_SHORT} ${STABILITY}</h2>
 					<p>${ISODATE} ${ISOTIME} UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
@@ -2260,6 +2267,33 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Synthetic ICC profile creator and curve viewer: SMPTE 2084 (perceptual quantizer) tone response curve option.</li>
+							<li>Curve viewer and profile information: Detect more known tone response curves.</li>
+							<li>Synthetic ICC profile creator: Re-introduced black point compensation option.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li></li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>When creating a profile (from new measurements) and 3D LUT that overwrite existing files with the same name, the progress dialog was never closed automatically and the windows never re-enabled after creating the profile.</li>
+							<li>Synthetic ICC profile creator:
+								<ul>
+									<li>Very low black points (&lt;= 0.0015 cd/m²) could not be parsed from existing profiles.</li>
+									<li>When switching to the “Untethered” display, the “Profile only” button wasn't shown if not already visible.</li>
+									<li>Synthetic ICC profile creator: Dragging &amp; dropping grayscale profiles now works.</li>
+									<li>Synthetic ICC profile creator: Dragging &amp; dropping profiles with a PCS other than XYZ now works.</li>
+								</ul>
+							</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0.2">2015-06-08 00:08 (UTC) 3.0.2 </dt>
+					<dd>
+						<h3>3.0.2 </h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Instrument first-time setup (i.e. importing colorimeter corrections) will now automatically run when it hasn't been run before.</li>

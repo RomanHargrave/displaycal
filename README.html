@@ -10,10 +10,10 @@
 		<title>dispcalGUI—Open Source Display Calibration and Characterization powered by Argyll CMS</title>
 		<meta name="description" content="A graphical front-end for display calibration and profiling using Argyll CMS" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
+		<link rel="stylesheet" href="http://dispcalgui.hoech.net/shariff/shariff.complete.css" />
 		<link rel="stylesheet" href="theme/readme.css" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css" />
 		<link rel="stylesheet" href="theme/prism.css" />
-		<link rel="stylesheet" href="http://dispcalgui.hoech.net/shariff/shariff.complete.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
@@ -22,15 +22,22 @@
 	</head>
 	<body>
 
-		<h1><img src="theme/icon-reflection.png" alt="" /> <a href="http://dispcalgui.hoech.net/">dispcalGUI</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
+		<div id="header">
+			<div id="title-wrapper">
+				<div id="title">
+					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="http://dispcalgui.hoech.net/">dispcalGUI</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
 
-		<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="http://dispcalgui.hoech.net/shariff/index.php" data-url="http://dispcalgui.hoech.net/" data-info-url="https://github.com/heiseonline/shariff"></p>
+					<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="http://dispcalgui.hoech.net/shariff/index.php" data-url="http://dispcalgui.hoech.net/" data-info-url="https://github.com/heiseonline/shariff"></p>
+				</div>
+			</div>
+			<div id="header-inner-overlay"></div>
+		</div>
 
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2>3.0.2 </h2>
-					<p>2015-06-08 00:08 UTC</p>
+					<h2 id="version">3.0.3 Beta</h2>
+					<p>2015-06-12 02:09 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -2255,8 +2262,35 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2015-06-08 00:08 (UTC) 3.0.2  -->
+			<!-- 2015-06-12 02:09 (UTC) 3.0.3 Beta -->
 			<dl>
+				<dt id="changelog-3.0.3">2015-06-12 02:09 (UTC) 3.0.3 Beta</dt>
+					<dd>
+						<h3>3.0.3 Beta</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Synthetic ICC profile creator and curve viewer: SMPTE 2084 (perceptual quantizer) tone response curve option.</li>
+							<li>Curve viewer and profile information: Detect more known tone response curves.</li>
+							<li>Synthetic ICC profile creator: Re-introduced black point compensation option.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li></li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>When creating a profile (from new measurements) and 3D LUT that overwrite existing files with the same name, the progress dialog was never closed automatically and the windows never re-enabled after creating the profile.</li>
+							<li>Synthetic ICC profile creator:
+								<ul>
+									<li>Very low black points (&lt;= 0.0015 cd/m²) could not be parsed from existing profiles.</li>
+									<li>When switching to the “Untethered” display, the “Profile only” button wasn't shown if not already visible.</li>
+									<li>Synthetic ICC profile creator: Dragging &amp; dropping grayscale profiles now works.</li>
+									<li>Synthetic ICC profile creator: Dragging &amp; dropping profiles with a PCS other than XYZ now works.</li>
+								</ul>
+							</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.0.2">2015-06-08 00:08 (UTC) 3.0.2 </dt>
 					<dd>
 						<h3>3.0.2 </h3>

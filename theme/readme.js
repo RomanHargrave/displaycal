@@ -30,6 +30,36 @@ function $makeslider(container_selector, toggle_selector, class_name, effect) {
 	}).appendTo(toggle_selector);
 };
 
+function $splash_anim(i, splash_frames) {
+	if (i == splash_frames.length) {
+		$('#splash').fadeOut(566, function () {
+			$('#splash_version_string, .splash_anim').hide();
+			$('#splash').addClass('folded');
+			$('#splash').css({'background-image': 'url(' + imgs.pop().src + ')',
+							  'display': 'block',
+							  'width': '760px', 'height': '575px', 'top': '42px'});
+			setTimeout(function () {
+				$('#splash').addClass('unfold');
+				setTimeout(function () {
+					$('#splash').css({'top': '344px'})
+					$('#intro').css({'z-index': 9999}).animate({'top': '-888px', 'margin-bottom': '-318px'}, 500, function() {
+						$('#splash').addClass('down');
+					});
+				}, 1000);
+			}, 100);
+		});
+		return;
+	}
+	splash_frames[i].css('left', '0');
+	if (i && i != 16)
+		splash_frames[i - 1].hide();
+	setTimeout(function () {
+		$splash_anim(i + 1, splash_frames);
+	}, 1000 / 30);
+};
+
+var img, imgs = [], imgpaths = ['theme/splash.png', 'theme/splash_version.png'];
+
 jQuery(function ($) {
 	/* Infobox slider */
 	$('<div id="info-link-box"><a href="#info">i</a></div>').prependTo('#infobox');
@@ -101,6 +131,58 @@ jQuery(function ($) {
 	
 	/* Indent after br */
 	$('#content p > br').after('<span class="indent"></span>')
+
+	/* Intro */
+	if (location.protocol != 'file:' || (location.search || '').indexOf('debug') > -1 || (document.cookie || '').indexOf('debug') > -1) {
+		$('#header').addClass('intro');
+		function splash_onload() {
+			this._loaded = true;
+			for (var i = 0; i < imgs.length; i ++) if (!imgs[i]._loaded) return;
+			var splash_wrapper = $('<div id="splash-wrapper"></div>'),
+				splash = $('<div id="splash"><p id="splash_version_string"></p></div>'),
+				splash_anim, splash_frames = [],
+				splash_version_alpha = [0, .2, .4, .6, .8, 1, .95, .9, .85, .8, .75];
+			splash.hide();
+			splash.css('background-image', 'url(' + imgs[0].src + ')');
+			/* Splash animation */
+			for (var i = 2; i < imgs.length - 1; i ++) {
+				splash_anim = $('<div id="splash_anim_' + splash_frames.length + '" class="splash_anim">');
+				if (i > 2) splash_anim.css('left', '-9999px');
+				splash_anim.css('background-image', 'url(' + imgs[i].src + ')');
+				splash.append(splash_anim);
+				splash_frames.push(splash_anim);
+			}
+			/* Major version animation */
+			for (var i = 0; i < splash_version_alpha.length; i ++) {
+				splash_anim = $('<div id="splash_anim_' + splash_frames.length + '" class="splash_anim">');
+				splash_anim.css('left', '-9999px');
+				splash_anim.css('background-image', 'url(' + imgs[1].src + ')');
+				splash_anim.css('opacity', splash_version_alpha[i]);
+				splash.append(splash_anim);
+				splash_frames.push(splash_anim);
+			}
+			splash_wrapper.append(splash);
+			$('#header').append(splash_wrapper);
+			$('#splash_version_string').html($('#version').text());
+			setTimeout(function () {
+				$('#splash').fadeIn(566, function() {
+					$splash_anim(0, splash_frames);
+				});
+			}, 500);
+		}
+		/* Get paths to remaining images */
+		for (var i = 0; i < 16; i ++) {
+			imgpaths.push('theme/splash_anim/splash_anim_' + (i < 9 ? '0' : '') + (i + 1) + '.png');
+		}
+		imgpaths.push('img/dispcalGUI-main_window-shadow-720.png');
+		/* Load images */
+		for (var i = 0; i < imgpaths.length; i ++) {
+			img = new Image();
+			imgs.push(img);
+			img.onload = splash_onload;
+			img.src = 'http://dispcalgui.hoech.net/' + imgpaths[i];
+		}
+	}
 	
 	/* Teaser */
 	var interval = setInterval(function () {
