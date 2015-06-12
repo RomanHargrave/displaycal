@@ -3259,7 +3259,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		lut3d_create_btn_show = (self.lut3d_settings_panel.IsShown()
 								 and not getcfg("3dlut.create"))
 		mr_btn_show = self.mr_settings_panel.IsShown()
-		enable_cal = (self.interactive_display_adjustment_cb.GetValue() or
+		enable_cal = (not config.is_uncalibratable_display() and
+					  self.interactive_display_adjustment_cb.GetValue() or
 					  self.trc_ctrl.GetSelection() > 0)
 		calibrate_and_profile_btn_show = (not lut3d_create_btn_show and
 										  not mr_btn_show and
@@ -3289,13 +3290,11 @@ class MainFrame(ReportFrame, BaseFrame):
 							      calibrate_btn_show and
 							      not is_ccxx_testchart() and
 								  bool(self.worker.displays) and 
-								  not config.is_uncalibratable_display() and 
 								  bool(self.worker.instruments))
 		self.calibrate_and_profile_btn.Show(calibrate_and_profile_btn_show)
 		self.calibrate_and_profile_btn.Enable(calibrate_and_profile_btn_show and
 											  not is_ccxx_testchart() and 
 											  bool(self.worker.displays) and 
-											  not config.is_uncalibratable_display() and 
 											  bool(self.worker.instruments))
 		self.profile_btn.Show(profile_btn_show)
 		self.profile_btn.Enable(profile_btn_show and 
