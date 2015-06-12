@@ -336,7 +336,7 @@ sup {
 	background-size: auto 100%;
 	color: rgba(255, 255, 255, .9);
 	height: 1032px;
-	margin: 0 0 60px;
+	margin: 0 0 48px;
 	overflow: hidden;
 	position: relative;
 }
@@ -485,7 +485,7 @@ sup {
 /* Friendlybox */
 
 #friendlybox {
-	border: 5px solid #d1efb2;
+	border: 5px solid #bbe68c;
 	-moz-border-radius: 16px;
 	-webkit-border-radius: 16px;
 	border-radius: 16px;

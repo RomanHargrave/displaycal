@@ -40,9 +40,9 @@ function $splash_anim(i, splash_frames) {
 							  'width': '760px', 'height': '575px', 'top': '42px'});
 			setTimeout(function () {
 				$('#splash').addClass('unfold');
-				setTimeout(function () {
+				if ($(window).scrollTop() < 300) setTimeout(function () {
 					$('#splash').css({'top': '344px'})
-					$('#intro').css({'z-index': 9999}).animate({'top': '-888px', 'margin-bottom': '-318px'}, 500, function() {
+					$('#intro').css({'z-index': 9999}).animate({'top': '-876px', 'margin-bottom': '-306px'}, 500, function() {
 						$('#splash').addClass('down');
 					});
 				}, 1000);
