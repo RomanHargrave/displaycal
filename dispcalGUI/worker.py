@@ -8482,8 +8482,8 @@ BEGIN_DATA
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",
-					 intent="r", bt1886=None, add_white_patches=4,
-					 raise_exceptions=False):
+					 intent="r", bt1886=None, white_patches=4,
+					 white_patches_total=True, raise_exceptions=False):
 		""" Lookup CIE or device values through profile """
 		if profile.colorSpace == "RGB":
 			labels = ('RGB_R', 'RGB_G', 'RGB_B')
@@ -8512,7 +8512,8 @@ BEGIN_DATA
 				ti1, ti3_ref, gray = self.ti1_lookup_to_ti3(cgats, profile, 
 															function, pcs,
 															"r",
-															add_white_patches)
+															white_patches,
+															white_patches_total)
 				if bt1886 or intent == "a":
 					cat = profile.guess_cat() or "Bradford"
 					for item in ti3_ref.DATA.itervalues():
@@ -8541,7 +8542,7 @@ BEGIN_DATA
 					raise ValueError(lang.getstr("error.testchart.missing_fields", 
 												 (cgats.filename, ", ".join(labels))))
 				ti1, ti3_ref = self.ti3_lookup_to_ti1(cgats, profile, fields,
-													  intent, add_white_patches)
+													  intent, white_patches)
 		except Exception, exception:
 			if raise_exceptions:
 				raise exception
@@ -8550,7 +8551,7 @@ BEGIN_DATA
 		return ti1, ti3_ref, gray
 	
 	def ti1_lookup_to_ti3(self, ti1, profile, function="f", pcs=None,
-						  intent="r", add_white_patches=4):
+						  intent="r", white_patches=4, white_patches_total=True):
 		"""
 		Read TI1 (filename or CGATS instance), lookup device->pcs values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -8618,7 +8619,7 @@ BEGIN_DATA
 			raise ValueError(lang.getstr("error.testchart.missing_fields", 
 										 (ti1_filename, ", ".join(required))))
 		
-		if colorspace == "RGB" and add_white_patches:
+		if colorspace == "RGB" and white_patches:
 			# make sure the first four patches are white so the whitepoint can be
 			# averaged
 			white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
@@ -8646,9 +8647,16 @@ BEGIN_DATA
 					white.update({label: value})
 			white_added_count = 0
 			if profile.profileClass != "link":
-				while len(data.queryi(white_rgb)) < add_white_patches:  # add white patches
-					data.insert(0, white)
-					white_added_count += 1
+				if white_patches_total:
+					# Ensure total of n white patches
+					while len(data.queryi(white_rgb)) < white_patches:
+						data.insert(0, white)
+						white_added_count += 1
+				else:
+					# Add exactly n white patches
+					while white_added_count < white_patches:
+						data.insert(0, white)
+						white_added_count += 1
 				safe_print("Added %i white patch(es)" % white_added_count)
 		
 		idata = []
@@ -8815,10 +8823,18 @@ BEGIN_DATA
 		ofile.seek(0)
 		ti3 = CGATS.CGATS(ofile)[0]
 
-		if profile.profileClass == "link":
-			while len(ti3.DATA.queryi(white_rgb)) < add_white_patches:  # add white patches
-				ti3.DATA.insert(0, white)
-				white_added_count += 1
+		if (colorspace == "RGB" and white_patches and
+			profile.profileClass == "link"):
+			if white_patches_total:
+				# Ensure total of n white patches
+				while len(ti3.DATA.queryi(white_rgb)) < white_patches:
+					ti3.DATA.insert(0, white)
+					white_added_count += 1
+			else:
+				# Add exactly n white patches
+				while white_added_count < white_patches:
+					ti3.DATA.insert(0, white)
+					white_added_count += 1
 			safe_print("Added %i white patch(es)" % white_added_count)
 
 		if debug:

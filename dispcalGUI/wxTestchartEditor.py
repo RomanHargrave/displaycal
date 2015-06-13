@@ -1447,7 +1447,7 @@ END_DATA""")
 				ti1, ti3, void = self.worker.chart_lookup(chart, 
 														  profile,
 														  as_ti3, intent=intent,
-														  add_white_patches=False)
+														  white_patches=False)
 				if not ti1 or not ti3:
 					return
 				if as_ti3:
@@ -1653,7 +1653,7 @@ END_DATA""")
 					void, ti3, void = self.worker.chart_lookup(chart, 
 															   profile,
 															   intent=intent,
-															   add_white_patches=False,
+															   white_patches=False,
 															   raise_exceptions=True)
 				except Exception, exception:
 					return exception

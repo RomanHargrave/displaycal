@@ -6095,7 +6095,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if devlink:
 			void, ti1, void = self.worker.chart_lookup(ti1, devlink,
 													   check_missing_fields=True,
-													   add_white_patches=1)
+													   white_patches=1,
+													   white_patches_total=False)
 			if not ti1:
 				return
 		
