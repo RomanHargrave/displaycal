@@ -8482,7 +8482,7 @@ BEGIN_DATA
 	
 	def chart_lookup(self, cgats, profile, as_ti3=False, fields=None,
 					 check_missing_fields=False, function="f", pcs="l",
-					 intent="r", bt1886=None, add_white_patches=True,
+					 intent="r", bt1886=None, add_white_patches=4,
 					 raise_exceptions=False):
 		""" Lookup CIE or device values through profile """
 		if profile.colorSpace == "RGB":
@@ -8550,7 +8550,7 @@ BEGIN_DATA
 		return ti1, ti3_ref, gray
 	
 	def ti1_lookup_to_ti3(self, ti1, profile, function="f", pcs=None,
-						  intent="r", add_white_patches=True):
+						  intent="r", add_white_patches=4):
 		"""
 		Read TI1 (filename or CGATS instance), lookup device->pcs values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -8645,10 +8645,11 @@ BEGIN_DATA
 						value = '0'
 					white.update({label: value})
 			white_added_count = 0
-			while len(data.queryi(white_rgb)) < 4:  # add white patches
-				data.insert(0, white)
-				white_added_count += 1
-			safe_print("Added %i white patch(es)" % white_added_count)
+			if profile.profileClass != "link":
+				while len(data.queryi(white_rgb)) < add_white_patches:  # add white patches
+					data.insert(0, white)
+					white_added_count += 1
+				safe_print("Added %i white patch(es)" % white_added_count)
 		
 		idata = []
 		for primaries in device_data.values():
@@ -8813,12 +8814,19 @@ BEGIN_DATA
 		ofile.write('END_DATA\n')
 		ofile.seek(0)
 		ti3 = CGATS.CGATS(ofile)[0]
+
+		if profile.profileClass == "link":
+			while len(ti3.DATA.queryi(white_rgb)) < add_white_patches:  # add white patches
+				ti3.DATA.insert(0, white)
+				white_added_count += 1
+			safe_print("Added %i white patch(es)" % white_added_count)
+
 		if debug:
 			safe_print(ti3)
 		return ti1, ti3, map(list, gray)
 	
 	def ti3_lookup_to_ti1(self, ti3, profile, fields=None, intent="r",
-						  add_white_patches=True):
+						  add_white_patches=4):
 		"""
 		Read TI3 (filename or CGATS instance), lookup cie->device values 
 		colorimetrically through profile using Argyll's xicclu 
@@ -8907,8 +8915,8 @@ BEGIN_DATA
 				wp = OrderedDict((('L', wp[0]), ('a', wp[1]), ('b', wp[2])))
 			else:
 				wp = OrderedDict((('X', wp[0]), ('Y', wp[1]), ('Z', wp[2])))
-			wp = [wp] * 4
-			safe_print("Added 4 white patches")
+			wp = [wp] * int(add_white_patches)
+			safe_print("Added %i white patches" % add_white_patches)
 		else:
 			wp = []
 		

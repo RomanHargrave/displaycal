@@ -6093,8 +6093,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			gray = sim_gray
 		
 		if devlink:
-			void, ti1, void = self.worker.chart_lookup(chart, devlink,
-													   check_missing_fields=True)
+			void, ti1, void = self.worker.chart_lookup(ti1, devlink,
+													   check_missing_fields=True,
+													   add_white_patches=1)
 			if not ti1:
 				return
 		
@@ -6237,12 +6238,43 @@ class MainFrame(ReportFrame, BaseFrame):
 				wx.CallAfter(show_result_dialog, result,
 							 getattr(self, "reportframe", self))
 			return
-
+		
 		# Account for additional white patches
 		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
-		white_measured = ti3_measured.queryi(white_rgb)
 		white_ref = ti3_ref.queryi(white_rgb)
-		offset = max(len(white_measured) - len(white_ref), 0)
+		if devlink:
+			# Remove additional white patch (device white = 100 before
+			# accounting for effect of devicelink)
+			# This is always the first patch ONLY
+			ti3_measured.DATA.remove(0)
+			# The new offset is the difference in length between measured and
+			# ref because the white patch is always added at the start
+			offset = len(ti3_measured.DATA) - len(ti3_ref.DATA)
+			# Set full white RGB to 100
+			for i in xrange(offset):
+				for label in ("RGB_R", "RGB_G", "RGB_B"):
+					ti3_measured.DATA[i][label] = 100.0
+			# Restore original device values
+			for i in ti3_ref.DATA:
+				for label in ("RGB_R", "RGB_G", "RGB_B"):
+					ti3_measured.DATA[i + offset][label] = ti3_ref.DATA[i][label]
+			# White patches (device white = 100 after accounting for effect of
+			# devicelink)
+			white_measured = ti3_measured.queryi(white_rgb)
+			# Update white cd/m2
+			luminance = float(ti3_measured.LUMINANCE_XYZ_CDM2.split()[1])
+			white_XYZ_cdm2 = [0, 0, 0]
+			for i, label in enumerate(("XYZ_X", "XYZ_Y", "XYZ_Z")):
+				white_XYZ_cdm2[i] = white_measured[0][label] * luminance / 100.0
+			ti3_measured.LUMINANCE_XYZ_CDM2 = "%.6f %.6f %.6f" % tuple(white_XYZ_cdm2)
+			# Scale to actual white Y after accounting for effect of devicelink
+			scale = 100.0 / white_measured[0]["XYZ_Y"]
+			for i in ti3_measured.DATA:
+				for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
+					ti3_measured.DATA[i][label] *= scale
+		else:
+			white_measured = ti3_measured.queryi(white_rgb)
+			offset = max(len(white_measured) - len(white_ref), 0)
 
 		# If patches were removed from the measured TI3, we need to remove them
 		# from reference and simulation TI3
