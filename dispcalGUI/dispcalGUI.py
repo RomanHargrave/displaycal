@@ -12240,10 +12240,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				if config.get_display_name() == "Resolve":
 					self.lut3d_set_path()
 					devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
-					if os.path.isfile(devlink):
-						setcfg("3dlut.madVR.enable", 0)
-						setcfg("measurement_report.devlink_profile", devlink)
-						setcfg("measurement_report.use_devlink_profile", 1)
+					setcfg("3dlut.madVR.enable", 0)
+					setcfg("measurement_report.devlink_profile", devlink)
+					setcfg("measurement_report.use_devlink_profile", 1)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)
