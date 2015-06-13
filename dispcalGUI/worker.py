@@ -2620,7 +2620,8 @@ class Worker(object):
 		return self.tempdir
 
 	def enumerate_displays_and_ports(self, silent=False, check_lut_access=True,
-									 enumerate_ports=True):
+									 enumerate_ports=True,
+									 include_chromecast=True):
 		"""
 		Enumerate the available displays and ports.
 		
@@ -2635,19 +2636,25 @@ class Worker(object):
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			instruments = []
-			cmd = get_argyll_util("dispcal")
-			if not enumerate_ports:
+			if enumerate_ports:
+				cmd = get_argyll_util("dispcal")
+			else:
+				cmd = get_argyll_util("dispwin")
 				for instrument in getcfg("instruments"):
 					# Names are canonical from 1.1.4.7 onwards, but we may have
 					# verbose names from an old configuration
 					instrument = get_canonical_instrument_name(instrument)
 					if instrument.strip():
 						instruments.append(instrument)
+			args = []
+			if include_chromecast:
+				args.append("-dcc:?")
+			args.append("-?")
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
 				self.argyll_bin_dir = argyll_bin_dir
 				safe_print(self.argyll_bin_dir)
-			result = self.exec_cmd(cmd, ["-dcc:?", "-?"], capture_output=True, 
+			result = self.exec_cmd(cmd, args, capture_output=True, 
 								   skip_scripts=True, silent=True, 
 								   log_output=False)
 			if isinstance(result, Exception):

@@ -39,7 +39,8 @@ def apply_profiles():
 	dispwin = get_argyll_util("dispwin")
 	if dispwin:
 		worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
-											enumerate_ports=False)
+											enumerate_ports=False,
+											include_chromecast=False)
 	else:
 		errors.append(lang.getstr("argyll.util.not_found", "dispwin"))
 
