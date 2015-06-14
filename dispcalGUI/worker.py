@@ -2683,7 +2683,7 @@ class Worker(object):
 						if self.argyll_version > [1, 0, 4]:
 							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
-						if (self.argyll_version > [1, 7] and
+						if (self.argyll_version >= [1, 7] and
 							not "Beta" in self.argyll_version_string):
 							# Forced black point hack available
 							# (Argyll CMS 1.7)
