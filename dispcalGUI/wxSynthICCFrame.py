@@ -142,8 +142,12 @@ class SynthICCFrame(BaseFrame):
 	
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
+		white_Y = getcfg("synthprofile.luminance")
+		if v >= white_Y * .9:
+			if event:
+				wx.Bell()
+			v = white_Y * .9
 		if event:
-			white_Y = getcfg("synthprofile.luminance")
 			min_Y = (1 / 65535.0) * 100
 			increment = (1 / 65535.0) * white_Y
 			if increment < min_Y:
@@ -608,7 +612,7 @@ class SynthICCFrame(BaseFrame):
 		else:
 			for channel in channels:
 				profile.tags["%sTRC" % channel].set_trc(trc, 1)
-		if self.bpc_ctrl.Value:
+		if black != [0, 0, 0] and self.bpc_ctrl.Value:
 			for channel in channels:
 				profile.tags["%sTRC" % channel].apply_bpc()
 		for tagname in ("lumi", "bkpt"):
