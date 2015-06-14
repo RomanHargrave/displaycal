@@ -4959,6 +4959,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if unload_cal:
 					self.cal_changed()
 				else:
+					self.worker.options_dispcal = []
 					self.profile_settings_changed()
 		setcfg("trc", trc)
 		if cal_changed:
