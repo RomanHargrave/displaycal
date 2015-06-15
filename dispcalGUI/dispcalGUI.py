@@ -11458,6 +11458,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			auto = getcfg("testchart.auto_optimize") or 7
 			self.testchart_patches_amount_ctrl.SetValue(auto)
 			self.testchart_patches_amount_ctrl_handler(None)
+			self._current_testchart_path = path
 		else:
 			self.set_testchart_from_path(path)
 		self.check_testchart()
