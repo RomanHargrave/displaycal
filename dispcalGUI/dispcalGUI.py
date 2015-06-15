@@ -9868,11 +9868,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			### Set measurement report dest profile to current
 			##setcfg("measurement_report.output_profile",
 				   ##get_current_profile_path())
-		if (not isinstance(event, CustomEvent) and
-			config.get_display_name().startswith("Chromecast ")):
-			# Show a warning re Chromecast limitation
-			show_result_dialog(UnloggedWarning(lang.getstr("chromecast_limitations_warning")),
-							   parent=self)
+		if not isinstance(event, CustomEvent):
+			if config.get_display_name().startswith("Chromecast "):
+				# Show a warning re Chromecast limitation
+				show_result_dialog(UnloggedWarning(lang.getstr("chromecast_limitations_warning")),
+								   parent=self)
+			if (config.get_display_name() == "Untethered" and
+				getcfg("testchart.file") == "auto"):
+				# Untethered does not support auto-optimization
+				self.set_testchart()
 	
 	def display_delay_handler(self, event):
 		mapping = {self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",
@@ -11441,6 +11445,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		if path is None:
 			path = getcfg("testchart.file")
 		##print "set_testchart", path
+		if path == "auto" and config.get_display_name() == "Untethered":
+			self._current_testchart_path = path
+			if self.IsShown():
+				wx.CallAfter(show_result_dialog,
+					UnloggedInfo(lang.getstr("testchart.auto_optimize.untethered.unsupported")),
+					self)
+			path = getcfg("calibration.file", False)
+			if not path or path.lower().endswith(".cal"):
+				path = defaults["testchart.file"]
 		self.create_testchart_btn.Enable(path != "auto" and
 			not getcfg("profile.update"))
 		self.menuitem_testchart_edit.Enable(self.create_testchart_btn.Enabled)
