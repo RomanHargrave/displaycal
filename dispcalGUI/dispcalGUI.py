@@ -3260,8 +3260,8 @@ class MainFrame(ReportFrame, BaseFrame):
 								 and not getcfg("3dlut.create"))
 		mr_btn_show = self.mr_settings_panel.IsShown()
 		enable_cal = (not config.is_uncalibratable_display() and
-					  self.interactive_display_adjustment_cb.GetValue() or
-					  self.trc_ctrl.GetSelection() > 0)
+					  (self.interactive_display_adjustment_cb.GetValue() or
+					   self.trc_ctrl.GetSelection() > 0))
 		calibrate_and_profile_btn_show = (not lut3d_create_btn_show and
 										  not mr_btn_show and
 										  enable_cal and
