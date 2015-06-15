@@ -12825,6 +12825,19 @@ class StartupFrame(wx.Frame):
 		self.splash_anim = []
 		for pth in get_data_path("theme/splash_anim", r"\.png$") or []:
 			self.splash_anim.append(wx.Bitmap(pth))
+		self.zoom_scales = []
+		if getcfg("splash.zoom"):
+			# Zoom in instead of fade
+			numframes = 15
+			self.splash_alpha = self.splash_bmp.ConvertToImage().GetAlphaData()
+			minv = 1.0 / self.splash_bmp.Size[0]
+			for x in xrange(numframes):
+				scale = minv + colormath.specialpow(0.35 + 
+													x / (numframes - 1.0) * (1 - 0.35),
+													-2084) * (1 - minv)
+				self.zoom_scales.append(scale)
+			self.zoom_scales.append(1.02)
+			self.zoom_scales.append(1.0)
 		# Fade in major version number
 		self.splash_version_anim = []
 		splash_version = getbitmap("theme/splash_version")
@@ -12885,8 +12898,11 @@ class StartupFrame(wx.Frame):
 		self.SetPosition((self.splash_x, self.splash_y))
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
-		self.SetTransparent(0)
-		self._alpha = 0
+		if len(self.zoom_scales):
+			self._alpha = 255
+		else:
+			self.SetTransparent(0)
+			self._alpha = 0
 
 		audio.safe_init()
 		if audio._lib:
@@ -12896,6 +12912,7 @@ class StartupFrame(wx.Frame):
 		# Needs to be stereo!
 		if getcfg("startup_sound.enable"):
 			self.startup_sound = audio.Sound(get_data_path("theme/intro_new.wav"))
+			self.startup_sound.volume = .8
 			self.startup_sound.safe_play()
 
 		self.Show()
@@ -12913,11 +12930,15 @@ class StartupFrame(wx.Frame):
 				self.Update()
 			wx.CallLater(1, self.startup)
 			return
-		if self.frame < len(self.splash_anim) - 1 + len(self.splash_version_anim) - 1:
+		if self.frame < (len(self.zoom_scales) + len(self.splash_anim) +
+						 len(self.splash_version_anim)) - 1:
 			self.frame += 1
 			self.Refresh()
 			self.Update()
-			wx.CallLater(1000 / 30.0, self.startup)
+			if self.frame < len(self.zoom_scales):
+				wx.CallLater(1, self.startup)
+			else:
+				wx.CallLater(1000 / 30.0, self.startup)
 			return
 		check_set_argyll_bin()
 		delayedresult.startWorker(self.setup_frame, 
@@ -12981,6 +13002,13 @@ class StartupFrame(wx.Frame):
 				dc.Blit(0, 0, self.splash_bmp.Size[0],
 						self.splash_bmp.Size[1], self._buffereddc, 0, 0)
 			x = y = 0
+		if self.frame < len(self.zoom_scales):
+			pdc = dc
+			bufferbitmap = wx.EmptyBitmap(self.splash_bmp.Size[0],
+										  self.splash_bmp.Size[1])
+			dc = wx.MemoryDC()
+			dc.SelectObject(bufferbitmap)
+			dc.SetBackgroundMode(wx.TRANSPARENT)
 		dc.DrawBitmap(self.splash_bmp, x, y)
 		# Text
 		rect = wx.Rect(0, int(self.splash_bmp.Size[1] * 0.75),
@@ -13013,13 +13041,32 @@ class StartupFrame(wx.Frame):
 													  wx.ALIGN_TOP)
 		dc.SetTextForeground("#CCCCCC")
 		dc.DrawLabel(self._msg, rect, wx.ALIGN_CENTER | wx.ALIGN_TOP)
-		# Animation
-		dc.DrawBitmap(self.splash_anim[min(self.frame,
-										   len(self.splash_anim) - 1)], x, y)
-		if self.frame > len(self.splash_anim) - 1:
-			dc.DrawBitmap(self.splash_version_anim[self.frame -
-												   len(self.splash_anim)],
-						  x, y)
+		if self.frame < len(self.zoom_scales):
+			# Zoom
+			dc.DrawBitmap(self.splash_anim[0], x, y)
+			dc.SelectObject(wx.NullBitmap)
+			scale = self.zoom_scales[self.frame]
+			frame = bufferbitmap.ConvertToImage()
+			frame.SetAlphaData(self.splash_alpha)
+			if scale < 1:
+				frame = frame.Blur(int(round(1 * (1 - scale))))
+			frame.Rescale(max(int(round(self.splash_bmp.Size[0] * scale)), 1),
+						  max(int(round(self.splash_bmp.Size[1] * scale)), 1),
+						  wx.IMAGE_QUALITY_HIGH)
+			frame.Resize(self.splash_bmp.Size,
+						 (int(round(self.splash_bmp.Size[0] / 2 - frame.Width / 2)),
+						  int(round(self.splash_bmp.Size[1] / 2 - frame.Height / 2))))
+			pdc.DrawBitmap(frame.ConvertToBitmap(), x, y)
+		else:
+			# Animation
+			if self.splash_anim:
+				dc.DrawBitmap(self.splash_anim[min(self.frame - len(self.zoom_scales),
+												   len(self.splash_anim) - 1)], x, y)
+			if self.frame > len(self.zoom_scales) + len(self.splash_anim) - 1:
+				dc.DrawBitmap(self.splash_version_anim[self.frame -
+													   len(self.zoom_scales) -
+													   len(self.splash_anim)],
+							  x, y)
 		if isinstance(dc, wx.ScreenDC):
 			dc.EndDrawingOnTop()
 
