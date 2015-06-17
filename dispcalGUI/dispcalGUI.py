@@ -7227,8 +7227,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.measure_auto_after = measure_auto_after
 			self.measure_auto_after_args = measure_auto_after_args
 			if not is_ccxx_testchart():
+				ccxx_testchart = get_ccxx_testchart()
+				if not ccxx_testchart:
+					self.measure_auto_finish(Error("ti1/ccxx.ti1 does not exist"))
+					return True
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
-				self.set_testchart(get_ccxx_testchart())
+				self.set_testchart(ccxx_testchart)
 			self.just_measure(get_data_path("linear.cal"),
 							  self.measure_auto_finish)
 			return True
@@ -8815,10 +8819,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			return
 		elif result in (id_measure_reference, id_measure_colorimeter):
 			# Select CCXX testchart
+			ccxx_testchart = get_ccxx_testchart()
+			if not ccxx_testchart:
+				show_result_dialog(Error("ti1/ccxx.ti1 does not exist"), self)
+				return
 			if not is_ccxx_testchart():
 				# Backup testchart selection
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
-			self.set_testchart(get_ccxx_testchart())
+			self.set_testchart(ccxx_testchart)
 			# Backup instrument selection
 			setcfg("comport.number.backup", getcfg("comport.number"))
 			# Backup observer
@@ -8850,8 +8858,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.measure_handler()
 			return
 		try:
-			ccxx = CGATS.CGATS(get_ccxx_testchart())
-		except (IOError, CGATS.CGATSInvalidError), exception:
+			ccxx_testchart = get_ccxx_testchart()
+			if not ccxx_testchart:
+				raise Error("ti1/ccxx.ti1 does not exist")
+			ccxx = CGATS.CGATS(ccxx_testchart)
+		except (Error, IOError, CGATS.CGATSInvalidError), exception:
 			show_result_dialog(exception, self)
 			return
 		cgats_list = []
