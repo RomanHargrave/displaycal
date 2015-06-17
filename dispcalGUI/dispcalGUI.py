@@ -111,7 +111,8 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					Warn, Worker, check_create_dir,
 					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
-					check_ti3_criteria2, get_argyll_util, get_options_from_cal,
+					check_ti3_criteria2, get_arg, get_argyll_util,
+					get_options_from_cal,
 					get_argyll_version, get_current_profile_path,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path, parse_argument_string,
@@ -421,14 +422,16 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.InsertColumn(3, lang.getstr("display"))
 	dlg_list_ctrl.InsertColumn(4, lang.getstr("instrument"))
 	dlg_list_ctrl.InsertColumn(5, lang.getstr("reference"))
-	dlg_list_ctrl.InsertColumn(6, lang.getstr("created"))
+	dlg_list_ctrl.InsertColumn(6, lang.getstr("observer"))
+	dlg_list_ctrl.InsertColumn(7, lang.getstr("created"))
 	dlg_list_ctrl.SetColumnWidth(0, 50)
 	dlg_list_ctrl.SetColumnWidth(1, 250)
 	dlg_list_ctrl.SetColumnWidth(2, 150)
 	dlg_list_ctrl.SetColumnWidth(3, 100)
 	dlg_list_ctrl.SetColumnWidth(4, 75)
 	dlg_list_ctrl.SetColumnWidth(5, 75)
-	dlg_list_ctrl.SetColumnWidth(6, 150)
+	dlg_list_ctrl.SetColumnWidth(6, 75)
+	dlg_list_ctrl.SetColumnWidth(7, 150)
 	types = {"CCSS": lang.getstr("spectral").replace(":", ""),
 			 "CCMX": lang.getstr("matrix").replace(":", "")}
 	for i in cgats:
@@ -469,7 +472,10 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						pass
 			if isinstance(created, struct_time):
 				created = strftime("%Y-%m-%d %H:%M:%S", created)
-		dlg_list_ctrl.SetStringItem(index, 6, created or "")
+		dlg_list_ctrl.SetStringItem(index, 6,
+									parent.observers_ab.get(cgats[i].queryv1("OBSERVER"),
+									lang.getstr("unknown")))
+		dlg_list_ctrl.SetStringItem(index, 7, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
@@ -1731,6 +1737,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				lstr = "* " + lstr
 			settings.append(lstr)
 		self.calibration_file_ctrl.SetItems(settings)
+
+		self.observers_ab = OrderedDict()
+		for observer in config.valid_values["observer"]:
+			self.observers_ab[observer] = lang.getstr("observer." + observer)
+		self.observers_ba = swap_dict_keys_values(self.observers_ab)
+		self.observer_ctrl.SetItems(self.observers_ab.values())
 		
 		self.whitepoint_ctrl.SetItems([lang.getstr("as_measured"),
 									   lang.getstr("whitepoint.colortemp"),
@@ -2296,6 +2308,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				   id=self.override_display_settle_time_mult.GetId())
 		self.Bind(floatspin.EVT_FLOATSPIN, self.display_delay_handler, 
 				   id=self.display_settle_time_mult.GetId())
+
+		# Observer
+		self.observer_ctrl.Bind(wx.EVT_CHOICE, self.observer_ctrl_handler)
 		
 		# Colorimeter correction matrix
 		self.Bind(wx.EVT_CHOICE, self.colorimeter_correction_matrix_ctrl_handler, 
@@ -3199,20 +3214,26 @@ class MainFrame(ReportFrame, BaseFrame):
 		use_ccmx = (self.worker.instrument_can_use_ccxx(False) and
 					len(ccmx) > 1 and ccmx[1])
 		tech = None
-		if use_ccmx and getcfg("measurement_mode") != "auto":
+		if use_ccmx:
 			mode = None
 			try:
 				cgats = CGATS.CGATS(ccmx[1])
 			except (IOError, CGATS.CGATSError), exception:
 				safe_print("%s:" % ccmx[1], exception)
 			else:
-				tech = cgats.queryv1("TECHNOLOGY")
-				# Set appropriate measurement mode
-				# IMPORTANT: Make changes aswell in the following locations:
-				# - dispcalGUI.get_cgats_measurement_mode
-				mode = get_cgats_measurement_mode(cgats,
-					self.worker.get_instrument_name())
-			if mode or not self.worker.instrument_can_use_ccxx():
+				if getcfg("measurement_mode") != "auto":
+					tech = cgats.queryv1("TECHNOLOGY")
+					# Set appropriate measurement mode
+					# IMPORTANT: Make changes aswell in the following locations:
+					# - dispcalGUI.get_cgats_measurement_mode
+					mode = get_cgats_measurement_mode(cgats,
+						self.worker.get_instrument_name())
+				observer = cgats.queryv1("OBSERVER")
+				if observer in self.observers_ab:
+					setcfg("observer", observer)
+					self.update_observer_ctrl()
+			if mode or (getcfg("measurement_mode") != "auto" and
+						not self.worker.instrument_can_use_ccxx()):
 				if (update_measurement_mode or
 					mode == getcfg("measurement_mode")):
 					setcfg("measurement_mode", mode)
@@ -3237,6 +3258,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_main_controls()
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
 		self.update_estimated_measurement_times()
+		self.show_observer_ctrl()
 
 	def update_main_controls(self):
 		""" Enable/disable the calibrate and profile buttons 
@@ -3411,6 +3433,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_colorimeter_correction_matrix_ctrl_items()
 
 		self.update_measurement_mode()
+
+		self.update_observer_ctrl()
 
 		for name in ("min_display_update_delay_ms",
 					 "display_settle_time_mult"):
@@ -6453,6 +6477,19 @@ class MainFrame(ReportFrame, BaseFrame):
 		measurement_mode = self.measurement_mode_ctrl.GetStringSelection()
 		instrument += u" \u2014 " + measurement_mode
 		
+		observer = defaults["observer"]
+		qarg = get_arg("-Q", self.worker.options_dispread)
+		if qarg:
+			if len(qarg[1]) == 2:
+				if len(self.worker.options_dispread) > qarg[0] + 1:
+					observer = self.worker.options_dispread[qarg[0] + 1]
+			else:
+				observer = qarg[1][2:]
+		elif self.worker.instrument_can_use_nondefault_observer():
+			observer = getcfg("observer")
+		observer = self.observers_ab.get(observer, observer)
+		instrument += u" \u2014 " + observer
+		
 		ccmx = "None"
 		if self.worker.instrument_can_use_ccxx():
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
@@ -7171,6 +7208,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_comports()
 			else:
 				self.update_measurement_mode()
+		if getcfg("observer.backup", False):
+			setcfg("observer", getcfg("observer.backup"))
+			setcfg("observer.backup", None)
 
 	def restore_testchart(self):
 		if getcfg("testchart.file.backup", False):
@@ -8127,7 +8167,11 @@ class MainFrame(ReportFrame, BaseFrame):
 	def modaldlg_raise_handler(self, event):
 		""" Prevent modal dialog from being lowered (keep on top) """
 		self.modaldlg.Raise()
-		
+
+	def observer_ctrl_handler(self, event):
+		observer = self.observers_ba.get(self.observer_ctrl.GetStringSelection())
+		setcfg("observer", observer)
+
 	def init_lut_viewer(self, event=None, profile=None, show=None):
 		if debug:
 			safe_print("[D] init_lut_viewer", 
@@ -8248,6 +8292,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												 bool(getcfg("calibration.black_luminance", False)))
 		self.lut3d_show_controls()
 		if event:
+			self.show_observer_ctrl()
 			self.show_trc_controls()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
@@ -8255,6 +8300,19 @@ class MainFrame(ReportFrame, BaseFrame):
 		if event:
 			self.set_size(True)
 		self.update_scrollbars()
+
+	def show_observer_ctrl(self):
+		self.panel.Freeze()
+		show = bool(getcfg("show_advanced_options") and
+					self.worker.instrument_can_use_nondefault_observer())
+		self.observer_label.Show(show)
+		self.observer_ctrl.Show(show)
+		self.calpanel.Layout()
+		self.panel.Thaw()
+		self.update_scrollbars()
+
+	def update_observer_ctrl(self):
+		self.observer_ctrl.SetStringSelection(self.observers_ab[getcfg("observer")])
 	
 	def install_profile_scope_handler(self, event):
 		if self.install_profile_systemwide.GetValue():
@@ -8472,11 +8530,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			def check_last_ccxx_ti3(event):
 				cfgname = "colorimeter_correction.measurement_mode"
 				if event.GetId() in (dlg.instrument.Id,
-									 dlg.measurement_mode.Id):
+									 dlg.measurement_mode.Id,
+									 dlg.observer_ctrl.Id):
 					name = "colorimeter"
 					instrument = dlg.instrument.GetStringSelection()
 					measurement_mode = self.get_ccxx_measurement_modes(
 						instrument, True).get(dlg.measurement_mode.GetStringSelection())
+					observer_ctrl = dlg.observer_ctrl
 				else:
 					name = "reference"
 					cfgname += "." + name
@@ -8486,6 +8546,11 @@ class MainFrame(ReportFrame, BaseFrame):
 							dlg.measurement_mode_reference.GetSelection()]
 					else:
 						measurement_mode = None
+					observer_ctrl = dlg.observer_reference_ctrl
+				if self.worker.instrument_can_use_nondefault_observer(instrument):
+					observer = self.observers_ba[observer_ctrl.GetStringSelection()]
+				else:
+					observer = None
 				if getcfg("last_%s_ti3_path.backup" % name, False):
 					setcfg("last_%s_ti3_path" % name,
 						   getcfg("last_%s_ti3_path.backup" % name))
@@ -8518,8 +8583,10 @@ class MainFrame(ReportFrame, BaseFrame):
 							if (instrument_features.get("highres_mode") and
 								cgats.queryv1("SPECTRAL_BANDS") > 36):
 								cgats_measurement_mode += "H"
+						cgats_observer = cgats.queryv1("OBSERVER")
 						if (cgats_instrument != instrument or
-							cgats_measurement_mode != measurement_mode):
+							cgats_measurement_mode != measurement_mode or
+							cgats_observer != observer):
 							setcfg("last_%s_ti3_path.backup" % name,
 								   getcfg("last_%s_ti3_path" % name))
 							setcfg("last_%s_ti3_path" % name, None)
@@ -8556,6 +8623,21 @@ class MainFrame(ReportFrame, BaseFrame):
 							wx.ALIGN_CENTER_VERTICAL, border=4)
 			dlg.measure_reference.Enable(bool(self.worker.displays and
 											  reference_instruments))
+			dlg.observer_reference_label = wx.StaticText(dlg, -1, lang.getstr("observer"))
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			boxsizer.Add(hsizer, flag=wx.BOTTOM, border=8)
+			hsizer.Add(dlg.observer_reference_label,
+					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=4)
+			dlg.observer_reference_ctrl = wx.Choice(dlg, -1,
+										  choices=self.observers_ab.values())
+			dlg.observer_reference_ctrl.Bind(wx.EVT_CHOICE,
+											 check_last_ccxx_ti3)
+			hsizer.Add(dlg.observer_reference_ctrl,
+					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=8)
+			dlg.observer_reference_ctrl.SetStringSelection(
+				self.observers_ab[getcfg("colorimeter_correction.observer.reference")])
+			dlg.observer_reference_label.Show(bool(getcfg("show_advanced_options")))
+			dlg.observer_reference_ctrl.Show(bool(getcfg("show_advanced_options")))
 			def reference_instrument_handler(event):
 				mode, modes, dlg.modes_ab, modes_ba = self.get_measurement_modes(
 					dlg.reference_instrument.GetStringSelection(), "spect",
@@ -8615,7 +8697,26 @@ class MainFrame(ReportFrame, BaseFrame):
 							wx.ALIGN_CENTER_VERTICAL, border=4)
 			dlg.measure_colorimeter.Enable(bool(self.worker.displays and
 												colorimeters))
+			dlg.observer_label = wx.StaticText(dlg, -1, lang.getstr("observer"))
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			boxsizer.Add(hsizer, flag=wx.BOTTOM, border=8)
+			hsizer.Add(dlg.observer_label,
+					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=4)
+			dlg.observer_ctrl = wx.Choice(dlg, -1,
+										  choices=self.observers_ab.values())
+			dlg.observer_ctrl.Bind(wx.EVT_CHOICE, check_last_ccxx_ti3)
+			hsizer.Add(dlg.observer_ctrl,
+					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=8)
+			dlg.observer_ctrl.SetStringSelection(
+				self.observers_ab[getcfg("colorimeter_correction.observer")])
+			def show_observer_ctrl():
+				instrument_name = dlg.instrument.GetStringSelection()
+				show = bool(getcfg("show_advanced_options") and
+							self.worker.instrument_can_use_nondefault_observer(instrument_name))
+				dlg.observer_label.Show(show)
+				dlg.observer_ctrl.Show(show)
 			def instrument_handler(event):
+				dlg.Freeze()
 				modes = self.get_ccxx_measurement_modes(
 					dlg.instrument.GetStringSelection())
 				dlg.measurement_mode.SetItems(modes.values())
@@ -8623,9 +8724,14 @@ class MainFrame(ReportFrame, BaseFrame):
 					modes.get(getcfg("colorimeter_correction.measurement_mode"),
 							  modes.values()[-1]))
 				dlg.measurement_mode.Enable(len(modes) > 1)
+				show_observer_ctrl()
 				boxsizer.Layout()
 				if event:
 					check_last_ccxx_ti3(event)
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+				dlg.Refresh()
+				dlg.Thaw()
 			instrument = getcfg("colorimeter_correction.instrument")
 			if instrument in colorimeters:
 				dlg.instrument.SetStringSelection(instrument)
@@ -8645,6 +8751,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				for item in list(boxsizer.Children) + [boxsizer.StaticBox]:
 					if isinstance(item, (wx.SizerItem, wx.Window)):
 						item.Show(dlg.correction_type_matrix.GetValue())
+				show_observer_ctrl()
 				set_ok_btn_state()
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
@@ -8676,6 +8783,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					   1 if mode and "H" in mode else 0)
 				setcfg("colorimeter_correction.measurement_mode.reference.projector",
 					   1 if mode and "p" in mode else None)
+				observer = self.observers_ba.get(dlg.observer_reference_ctrl.GetStringSelection())
+				setcfg("colorimeter_correction.observer.reference", observer)
+				observer = self.observers_ba.get(dlg.observer_ctrl.GetStringSelection())
+				setcfg("colorimeter_correction.observer", observer)
 				setcfg("colorimeter_correction.instrument",
 					   dlg.instrument.GetStringSelection())
 				modes = self.get_ccxx_measurement_modes(
@@ -8710,6 +8821,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.set_testchart(get_ccxx_testchart())
 			# Backup instrument selection
 			setcfg("comport.number.backup", getcfg("comport.number"))
+			# Backup observer
+			setcfg("observer.backup", getcfg("observer"))
 			if result == id_measure_reference:
 				# Switch to reference instrument
 				setcfg("comport.number", self.worker.instruments.index(
@@ -8723,6 +8836,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					   getcfg("colorimeter_correction.measurement_mode.reference.highres"))
 				setcfg("measurement_mode.projector",
 					   getcfg("colorimeter_correction.measurement_mode.reference.projector"))
+				# Set observer
+				setcfg("observer", getcfg("colorimeter_correction.observer.reference"))
 			else:
 				# Switch to colorimeter
 				setcfg("comport.number", self.worker.instruments.index(
@@ -8730,6 +8845,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				# Set measurement mode
 				setcfg("measurement_mode",
 					   getcfg("colorimeter_correction.measurement_mode"))
+				# Set observer
+				setcfg("observer", getcfg("colorimeter_correction.observer"))
 			self.measure_handler()
 			return
 		try:
@@ -8969,15 +9086,18 @@ class MainFrame(ReportFrame, BaseFrame):
 				display = option[1:].strip(' "')
 			elif option.startswith("A"):
 				manufacturer = option[1:].strip(' "')
-		if manufacturer and display:
-			manufacturer_display = " ".join([colord.quirk_manufacturer(manufacturer),
-											 display])
+		if manufacturer:
+			quirk_manufacturer = colord.quirk_manufacturer(manufacturer)
+		if (manufacturer and display and
+			not quirk_manufacturer.lower() in display.lower()):
+			manufacturer_display = " ".join([quirk_manufacturer, display])
 		elif display:
 			manufacturer_display = display
 		if len(cgats_list) == 2:
 			instrument = colorimeter_ti3.queryv1("TARGET_INSTRUMENT")
 			if instrument:
 				instrument = safe_unicode(instrument, "UTF-8")
+				instrument = get_canonical_instrument_name(instrument)
 			description = "%s & %s" % (instrument or 
 									   self.worker.get_instrument_name(),
 									   manufacturer_display or
@@ -8986,6 +9106,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			description = manufacturer_display or self.worker.get_display_name(True)
 		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
 		if target_instrument:
+			target_instrument = safe_unicode(target_instrument, "UTF-8")
+			target_instrument = get_canonical_instrument_name(target_instrument)
 			description = "%s (%s)" % (description, target_instrument)
 		args = []
 		tech = {"YES": "Unknown"}.get(reference_ti3.queryv1("DISPLAY_TYPE_REFRESH"),
@@ -9097,11 +9219,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			ti3_tmp_names.append('colorimeter.ti3')
 			name = "correction"
 			ext = ".ccmx"
+			observer = colorimeter_ti3.queryv1("OBSERVER")
 		else:
 			# Create CCSS
 			args.append("-S")
 			name = "calibration"
 			ext = ".ccss"
+			observer = reference_ti3.queryv1("OBSERVER")
 		args.append("-f")
 		args.append(",".join(ti3_tmp_names))
 		args.append(name + ext)
@@ -9150,6 +9274,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "MANUFACTURER"\nMANUFACTURER "%s"\\1' %
 							   safe_str(manufacturer, "UTF-8"), cgats)
+			if observer and not re.search('\nOBSERVER\s+".+?"\n', cgats):
+				# By default, CCMX/CCSS files don't contain observer
+				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
+							   '\nKEYWORD "OBSERVER"\nOBSERVER "%s"\\1' %
+							   safe_str(observer, "UTF-8"), cgats)
 			result = check_create_dir(config.get_argyll_data_dir())
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)

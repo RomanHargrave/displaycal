@@ -1561,6 +1561,10 @@ class Worker(object):
 		   instrument_features.get("highres_mode") and not get_arg("-H", args,
 																   True):
 			args.append("-H")
+		if (self.instrument_can_use_nondefault_observer() and
+			  getcfg("observer") != defaults["observer"] and
+			  not get_arg("-Q", args)):
+			args.append("-Q" + getcfg("observer"))
 		if (not getattr(self, "is_ambient_measuring", False) and
 			self.instrument_can_use_ccxx() and
 		    not is_ccxx_testchart() and not get_arg("-X", args)):
@@ -1628,6 +1632,13 @@ class Worker(object):
 			not self.spotread_just_do_instrument_calibration):
 			args.append("-N")
 		return True
+
+	def add_measurement_params(self, ti3):
+		""" Add measurement parameters to TI3 """
+		if not isinstance(ti3, CGATS.CGATS):
+			ti3 = CGATS.CGATS(ti3)
+		ti3[0].add_keyword("OBSERVER", getcfg("observer"))
+		ti3.write()
 	
 	def authenticate(self, cmd, title=appname, parent=None):
 		"""
@@ -1732,7 +1743,8 @@ class Worker(object):
 		else:
 			return Error(lang.getstr("argyll.util.not_found", "spotread"))
 	
-	def instrument_can_use_ccxx(self, check_measurement_mode=True):
+	def instrument_can_use_ccxx(self, check_measurement_mode=True,
+								instrument_name=None):
 		"""
 		Return boolean whether the instrument in its current measurement mode
 		can use a CCMX or CCSS colorimeter correction
@@ -1753,23 +1765,28 @@ class Worker(object):
 		# - dispcalGUI.MainFrame.set_ccxx_measurement_mode
 		# - dispcalGUI.MainFrame.update_colorimeter_correction_matrix_ctrl_items
 		# - worker.Worker.check_add_display_type_base_id
+		if not instrument_name:
+			instrument_name = self.get_instrument_name()
 		return (self.argyll_version >= [1, 3, 0] and
-				not self.get_instrument_features().get("spectral") and
+				not self.get_instrument_features(instrument_name).get("spectral") and
 				(not check_measurement_mode or
 				 getcfg("measurement_mode") == "auto" or
-				 ((self.get_instrument_name() not in ("ColorHug",
-													  "ColorHug2") or
+				 ((instrument_name not in ("ColorHug", "ColorHug2") or
 				   getcfg("measurement_mode") in ("F", "R")) and
-				  (self.get_instrument_name() != "ColorMunki Smile" or
+				  (instrument_name != "ColorMunki Smile" or
 				   getcfg("measurement_mode") == "f") and
-				  (self.get_instrument_name() != "Colorimtre HCFR" or  # Missing é is NOT a typo
+				  (instrument_name != "Colorimtre HCFR" or  # Missing é is NOT a typo
 				   getcfg("measurement_mode") == "R") and
-				  (self.get_instrument_name() != "DTP94" or
+				  (instrument_name != "DTP94" or
 				   getcfg("measurement_mode") in ("l", "c", "g")) and
-				  (self.get_instrument_name() not in ("Spyder4", "Spyder5") or
+				  (instrument_name not in ("Spyder4", "Spyder5") or
 				   getcfg("measurement_mode") in ("l", "c")) and
-				  (self.get_instrument_name() != "K-10" or
+				  (instrument_name != "K-10" or
 				   getcfg("measurement_mode") == "F"))))
+
+	def instrument_can_use_nondefault_observer(self, instrument_name=None):
+		return bool(self.get_instrument_features(instrument_name).get("spectral") or
+					self.instrument_can_use_ccxx(True, instrument_name))
 	
 	@Property
 	def progress_wnd():
@@ -6465,6 +6482,8 @@ usage: spotread [-options] [logfile]
 						ti3.write()
 		else:
 			result = cmd
+		if not isinstance(result, Exception) and result:
+			self.add_measurement_params(args[-1] + ".ti3")
 		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
 							  isinstance(result, Exception) or not result)
 		if isinstance(result2, Exception):
@@ -9155,6 +9174,7 @@ BEGIN_DATA
 											   cmd == get_argyll_util("dispread"))
 		if isinstance(result, Exception):
 			return result
+		self.options_dispread = list(args)
 		if config.get_display_name() != "Untethered":
 			args.append(os.path.splitext(ti1_path)[0])
 		return self.exec_cmd(cmd, args, skip_scripts=True)

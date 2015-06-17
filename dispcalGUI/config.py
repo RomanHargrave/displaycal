@@ -17,7 +17,7 @@ from time import gmtime, strftime, timezone
 if sys.platform == "win32":
 	import _winreg
 
-from argyll_names import viewconds, intents, video_encodings
+from argyll_names import observers, viewconds, intents, video_encodings
 from defaultpaths import appdata, commonappdata
 if sys.platform == "win32":
 	from defaultpaths import commonprogramfiles
@@ -529,6 +529,8 @@ valid_values = {
 	"3dlut.size": [17, 24, 32, 33, 64, 65],
 	"3dlut.trc_gamma_type": ["b", "B"],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
+	"colorimeter_correction.observer": observers,
+	"colorimeter_correction.observer.reference": observers,
 	"colorimeter_correction.type": ["matrix", "spectral"],
 	# Measurement modes as supported by Argyll -y parameter
 	# 'l' = 'n' (non-refresh-type display, e.g. LCD)
@@ -545,6 +547,7 @@ valid_values = {
 	"gamap_src_viewcond": viewconds,
 	"gamap_out_viewcond": ["mt", "mb", "md", "jm", "jd"],
 	"measurement_report.trc_gamma_type": ["b", "B"],
+	"observer": observers,
 	"patterngenerator.resolve.use_video_levels": [0, 1],
 	"profile.black_point_compensation": [0, 1],
 	"profile.install_scope": ["l", "u"],
@@ -631,6 +634,8 @@ defaults = {
 	"colorimeter_correction.measurement_mode.reference.highres": 0,
 	"colorimeter_correction.measurement_mode.reference.projector": 0,
 	"colorimeter_correction.measurement_mode.reference": "l",
+	"colorimeter_correction.observer": "1931_2",
+	"colorimeter_correction.observer.reference": "1931_2",
 	"colorimeter_correction.testchart": "ccxx.ti1",
 	"colorimeter_correction_matrix_file": "AUTO:",
 	"colorimeter_correction.type": "matrix",
@@ -707,6 +712,8 @@ defaults = {
 	"measure.override_display_settle_time_mult.backup": 0,
 	"measure.override_min_display_update_delay_ms": 0,
 	"measure.override_min_display_update_delay_ms.backup": 0,
+	"observer": "1931_2",
+	"observer.backup": "1931_2",
 	"patterngenerator.apl": .22,
 	"patterngenerator.resolve": "CM",
 	"patterngenerator.resolve.port": 20002,

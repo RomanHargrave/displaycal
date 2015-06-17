@@ -78,3 +78,6 @@ intents = ["a", "aa", "aw", "la", "ms", "p", "pa", "r", "s"]  # pa = Argyll >= 1
 
 # Video input/output encodings supported by collink (Argyll >= 1.6)
 video_encodings = ["n", "t", "6", "7", "5", "2", "C", "x", "X"]
+
+# Observers
+observers = ["1931_2", "1955_2", "1964_10", "1964_10c", "1978_2", "shaw"]

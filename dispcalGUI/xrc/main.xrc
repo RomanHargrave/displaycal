@@ -326,13 +326,24 @@
                               <object class="wxSpinCtrl" name="min_display_update_delay_ms">
                                 <size>85,-1</size>
                               </object>
-                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                              <border>4</border>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="min_display_update_delay_ms_label">
                                 <label>ms</label>
                               </object>
+                              <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="observer_label">
+                                <label>observer</label>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="observer_ctrl"/>
                               <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                               <border>16</border>
                             </object>
@@ -348,15 +359,14 @@
                                 <size>85,-1</size>
                                 <digits>6</digits>
                               </object>
-                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                              <border>4</border>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="spacer">
                               <size>16,1</size>
                             </object>
-                            <cols>3</cols>
+                            <cols>5</cols>
                             <vgap>8</vgap>
-                            <hgap>4</hgap>
+                            <hgap>8</hgap>
                             <growablecols>2</growablecols>
                           </object>
                           <flag>wxTOP|wxEXPAND</flag>
