@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import glob
 import os
 import shutil
 import sys
+
+if sys.platform == "win32":
+	import win32api
 
 from argyll_names import video_encodings
 from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
@@ -407,6 +411,34 @@ class LUT3DFrame(BaseFrame):
 			remember_last_3dlut_path = False
 			if not path:
 				defaultDir, defaultFile = get_verified_path("last_3dlut_path")
+				# Only remember last used path if it was a deliberate user
+				# choice via the filedialog
+				remember_last_3dlut_path = True
+				if copy_from_path and config.get_display_name() == "Resolve":
+					# Find path to Resolve LUT folder
+					if sys.platform == "win32":
+						drives = win32api.GetLogicalDriveStrings()
+						for drive in drives.split("\0")[:-1]:
+							lut_dir = os.path.join(drive, "ProgramData",
+												   "Blackmagic Design",
+												   "DaVinci Resolve", "Support",
+												   "LUT")
+							if os.path.isdir(lut_dir):
+								defaultDir = lut_dir
+								remember_last_3dlut_path = False
+								break
+					else:
+						# Assume OS X
+						volumes = ["/"] + glob.glob("/Volumes/*")
+						for volume in volumes:
+							lut_dir = os.path.join(volume, "Library",
+												   "Application Support",
+												   "Blackmagic Design",
+												   "DaVinci Resolve", "LUT")
+							if os.path.isdir(lut_dir):
+								defaultDir = lut_dir
+								remember_last_3dlut_path = False
+								break
 				ext = getcfg("3dlut.format")
 				if ext == "eeColor":
 					ext = "txt"
@@ -425,9 +457,6 @@ class LUT3DFrame(BaseFrame):
 					path = dlg.GetPath()
 				dlg.Destroy()
 				checkoverwrite = False
-				# Only remember last used path if it was a deliberate user
-				# choice via the filedialog
-				remember_last_3dlut_path = True
 			if path:
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
