@@ -276,10 +276,10 @@ def get_display_name(n=None, include_geometry=False):
 		n = getcfg("display.number") - 1
 	displays = getcfg("displays")
 	if n >= 0 and n < len(displays):
-		if include_geometry:
+		if include_geometry or displays[n].startswith("Chromecast "):
 			return displays[n]
 		else:
-			return displays[n].split("@")[0].strip()
+			return "@".join(displays[n].split("@")[:-1]).strip()
 	return ""
 
 

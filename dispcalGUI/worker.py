@@ -2790,7 +2790,7 @@ class Worker(object):
 						self.display_manufacturers.append("Google")
 						self.display_names.append(display.split(":", 1)[1].strip())
 						continue
-					display_name = displays[i].split("@")[0].strip()
+					display_name = "@".join(displays[i].split("@")[:-1]).strip()
 					# Make sure we have nice descriptions
 					desc = []
 					if sys.platform == "win32" and i < len(monitors):
@@ -2826,9 +2826,9 @@ class Worker(object):
 						# Only replace the description if it not already
 						# contains the monitor model
 						displays[i] = " @".join([" ".join(desc), 
-												 display.split("@")[1]])
+												 display.split("@")[-1]])
 					self.display_manufacturers.append(" ".join(manufacturer))
-					self.display_names.append(displays[i].split("@")[0].strip())
+					self.display_names.append("@".join(displays[i].split("@")[:-1]).strip())
 				if self.argyll_version >= [1, 4, 0]:
 					displays.append("Web @ localhost")
 					self.display_edid.append({})
@@ -5466,7 +5466,7 @@ usage: spotread [-options] [logfile]
 		""" Install profile using oyranos-monitor """
 		display = self.displays[max(0, min(len(self.displays) - 1,
 										   getcfg("display.number") - 1))]
-		x, y = [pos.strip() for pos in display.split(" @")[1].split(",")[0:2]]
+		x, y = [pos.strip() for pos in display.split("@")[-1].split(",")[0:2]]
 		if getcfg("profile.install_scope") == "l":
 			# If system-wide install, copy profile to 
 			# /var/lib/color/icc/devices/display
