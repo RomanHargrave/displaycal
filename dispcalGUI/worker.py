@@ -1785,8 +1785,11 @@ class Worker(object):
 				   getcfg("measurement_mode") == "F"))))
 
 	def instrument_can_use_nondefault_observer(self, instrument_name=None):
+		if not instrument_name:
+			instrument_name = self.get_instrument_name()
 		return bool(self.get_instrument_features(instrument_name).get("spectral") or
-					self.instrument_can_use_ccxx(True, instrument_name))
+					instrument_name in ("i1 DisplayPro, ColorMunki Display",
+										"Spyder4", "Spyder5"))
 	
 	@Property
 	def progress_wnd():
