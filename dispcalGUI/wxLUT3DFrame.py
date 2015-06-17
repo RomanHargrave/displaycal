@@ -411,6 +411,8 @@ class LUT3DFrame(BaseFrame):
 			remember_last_3dlut_path = False
 			if not path:
 				defaultDir, defaultFile = get_verified_path("last_3dlut_path")
+				if copy_from_path:
+					defaultFile = os.path.basename(copy_from_path)
 				# Only remember last used path if it was a deliberate user
 				# choice via the filedialog
 				remember_last_3dlut_path = True
