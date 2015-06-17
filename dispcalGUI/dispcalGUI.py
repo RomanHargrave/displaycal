@@ -7799,10 +7799,23 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = wx.ID_CANCEL
 		else:
 			result = event.GetId()
+		lut3d = (config.is_virtual_display() or getcfg("3dlut.create") or
+				 self.install_3dlut)
+		if result != wx.ID_OK or lut3d:
+			if self.modaldlg.preview:
+				if getcfg("calibration.file", False):
+					# Load LUT curves from last used .cal file
+					self.load_cal(silent=True)
+					if not getcfg("calibration.autoload"):
+						# Reload display profile into videoLUT
+						self.load_display_profile_cal(True, False)
+				else:
+					# Load LUT curves from current display profile (if any, 
+					# and if it contains curves)
+					self.load_display_profile_cal(True)
+			self.profile_finish_consumer()
 		if result == wx.ID_OK:
-			if config.is_virtual_display() or (getcfg("3dlut.create") or
-											   self.install_3dlut):
-				self.profile_finish_consumer(False)
+			if lut3d:
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
 					if getcfg("3dlut.format") == "madVR":
@@ -7835,19 +7848,6 @@ class MainFrame(ReportFrame, BaseFrame):
 								  parent=self.modaldlg,
 								  progress_msg=lang.getstr("profile.install"),
 								  stop_timers=False, fancy=False)
-		else:
-			if self.modaldlg.preview:
-				if getcfg("calibration.file", False):
-					# Load LUT curves from last used .cal file
-					self.load_cal(silent=True)
-					if not getcfg("calibration.autoload"):
-						# Reload display profile into videoLUT
-						self.load_display_profile_cal(True, False)
-				else:
-					# Load LUT curves from current display profile (if any, 
-					# and if it contains curves)
-					self.load_display_profile_cal(True)
-			self.profile_finish_consumer()
 	
 	def profile_finish_consumer(self, result=None):
 		if isinstance(result, Exception):
