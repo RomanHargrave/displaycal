@@ -1404,6 +1404,7 @@ div.info {
 	position: absolute;
 	right: 10px;
 	text-shadow: 1px 1px 1px #360;
+	z-index: 9999;
 }
 
 

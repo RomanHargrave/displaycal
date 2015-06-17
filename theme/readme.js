@@ -40,7 +40,8 @@ function $splash_anim(i, splash_frames) {
 							  'width': '760px', 'height': '575px', 'top': '42px'});
 			setTimeout(function () {
 				$('#splash').addClass('unfold');
-				if ($(window).scrollTop() < 300) setTimeout(function () {
+				if ($(window).height() <= $('#header').outerHeight(true) + 64 && 
+					$(window).scrollTop() < ($('#header').outerHeight(true) + 64) - $(window).height()) setTimeout(function () {
 					$('#splash').css({'top': '344px'})
 					$('#intro').css({'z-index': 9999}).animate({'top': '-876px', 'margin-bottom': '-306px'}, 500, function() {
 						$('#splash').addClass('down');
@@ -195,6 +196,11 @@ jQuery(function ($) {
 			jQuery('#teaser img').attr('src', src).fadeIn(750);
 		});
 	}, 10000);
+	
+	/* Insert facebook page link into shariff bar */
+	$('.shariff > ul').removeClass('col-5');
+	$('.shariff > ul').addClass('col-6');
+	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit dispcalGUI on Facebook" target="_blank" href="https://www.facebook.com/dispcalGUI/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
 });
 
 jQuery(window).load(function () {
