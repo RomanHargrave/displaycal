@@ -261,8 +261,7 @@ class SynthICCFrame(BaseFrame):
 				return
 			if (profile.colorSpace not in ("RGB", "GRAY") or
 				profile.connectionColorSpace not in ("Lab", "XYZ")):
-				wx.CallAfter(show_result_dialog,
-								   Error(lang.getstr("profile.unsupported",
+				show_result_dialog(Error(lang.getstr("profile.unsupported",
 													 (profile.profileClass,
 													  profile.colorSpace))),
 								   self)
