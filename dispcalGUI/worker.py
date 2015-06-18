@@ -9647,7 +9647,10 @@ class Xicclu(Worker):
 	def exit(self):
 		p = self.subprocess
 		if p.poll() is None:
-			p.stdin.write("\n")
+			try:
+				p.stdin.write("\n")
+			except IOError:
+				pass
 			p.stdin.close()
 		p.wait()
 		self.stdout.seek(0)
