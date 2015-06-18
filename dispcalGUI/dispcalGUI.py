@@ -7229,7 +7229,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not is_ccxx_testchart():
 				ccxx_testchart = get_ccxx_testchart()
 				if not ccxx_testchart:
-					self.measure_auto_finish(Error("ti1/ccxx.ti1 does not exist"))
+					self.measure_auto_finish(Error(lang.getstr("not_found",
+															   lang.getstr("ccxx.ti1"))))
 					return True
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
 				self.set_testchart(ccxx_testchart)
@@ -8821,7 +8822,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Select CCXX testchart
 			ccxx_testchart = get_ccxx_testchart()
 			if not ccxx_testchart:
-				show_result_dialog(Error("ti1/ccxx.ti1 does not exist"), self)
+				show_result_dialog(Error(lang.getstr("not_found",
+													 lang.getstr("ccxx.ti1"))), self)
 				return
 			if not is_ccxx_testchart():
 				# Backup testchart selection
@@ -8860,7 +8862,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		try:
 			ccxx_testchart = get_ccxx_testchart()
 			if not ccxx_testchart:
-				raise Error("ti1/ccxx.ti1 does not exist")
+				raise Error(lang.getstr("not_found", lang.getstr("ccxx.ti1")))
 			ccxx = CGATS.CGATS(ccxx_testchart)
 		except (Error, IOError, CGATS.CGATSInvalidError), exception:
 			show_result_dialog(exception, self)
