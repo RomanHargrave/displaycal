@@ -255,6 +255,10 @@ class SynthICCFrame(BaseFrame):
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			show_result_dialog(Error(lang.getstr("profile.invalid")), self)
 		else:
+			if profile.version >= 4:
+				show_result_dialog(Error(lang.getstr("profile.iccv4.unsupported")),
+								   self)
+				return
 			if (profile.colorSpace not in ("RGB", "GRAY") or
 				profile.connectionColorSpace not in ("Lab", "XYZ")):
 				wx.CallAfter(show_result_dialog,
