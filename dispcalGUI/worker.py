@@ -3158,6 +3158,9 @@ BEGIN_DATA
 								calfilename = args[k_arg[0] + 1]
 							else:
 								ramp = None
+						else:
+							# dispcal
+							ramp = None
 						if calfilename:
 							# Load calibration from .cal file or ICC profile
 							self.log("MadTPG_Net load calibration:", calfilename)
