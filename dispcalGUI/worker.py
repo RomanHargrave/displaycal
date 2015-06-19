@@ -3648,7 +3648,7 @@ while 1:
 					kwargs["codepage"] = windll.kernel32.GetACP()
 					# As Windows' console always hard wraps at the
 					# rightmost column, increase the buffer width
-					kwargs["columns"] = 132
+					kwargs["columns"] = 160
 				stderr = None
 				stdout = EncodedWriter(StringIO(), None, data_encoding)
 				logfiles = []
