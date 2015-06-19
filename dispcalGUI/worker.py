@@ -69,7 +69,7 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exe_ext, fs_enc, getcfg, geticon, get_data_path,
 					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir,
-					profile_ext, pydir, setcfg, writecfg)
+					profile_ext, pydir, setcfg, split_display_name, writecfg)
 from defaultpaths import iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
@@ -2790,7 +2790,7 @@ class Worker(object):
 						self.display_manufacturers.append("Google")
 						self.display_names.append(display.split(":", 1)[1].strip())
 						continue
-					display_name = "@".join(displays[i].split("@")[:-1]).strip()
+					display_name = split_display_name(displays[i])
 					# Make sure we have nice descriptions
 					desc = []
 					if sys.platform == "win32" and i < len(monitors):
@@ -2828,7 +2828,7 @@ class Worker(object):
 						displays[i] = " @".join([" ".join(desc), 
 												 display.split("@")[-1]])
 					self.display_manufacturers.append(" ".join(manufacturer))
-					self.display_names.append("@".join(displays[i].split("@")[:-1]).strip())
+					self.display_names.append(split_display_name(displays[i]))
 				if self.argyll_version >= [1, 4, 0]:
 					displays.append("Web @ localhost")
 					self.display_edid.append({})

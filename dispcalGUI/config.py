@@ -276,11 +276,25 @@ def get_display_name(n=None, include_geometry=False):
 		n = getcfg("display.number") - 1
 	displays = getcfg("displays")
 	if n >= 0 and n < len(displays):
-		if include_geometry or displays[n].startswith("Chromecast "):
+		if include_geometry:
 			return displays[n]
 		else:
-			return "@".join(displays[n].split("@")[:-1]).strip()
+			return split_display_name(displays[n])
 	return ""
+
+
+def split_display_name(display):
+	"""
+	Split and return name part of display
+	
+	E.g.
+	'LCD2690WUXi @ 0, 0, 1920x1200' -> 'LCD2690WUXi'
+	'madVR' -> 'madVR'
+	
+	"""
+	if "@" in display and not display.startswith("Chromecast "):
+		display = "@".join(display.split("@")[:-1])
+	return display.strip()
 
 
 def get_argyll_display_number(geometry):
