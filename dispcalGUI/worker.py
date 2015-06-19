@@ -1489,19 +1489,20 @@ class Worker(object):
 			args.append("-d" + self.get_display())
 		if not get_arg("-c", args):
 			args.append("-c%s" % getcfg("comport.number"))
+		instrument_name = self.get_instrument_name()
 		measurement_mode = getcfg("measurement_mode")
 		if measurement_mode == "auto":
 			# Make changes in dispcalGUI.MainFrame.set_ccxx_measurement_mode too!
-			if self.get_instrument_name() == "ColorHug":
+			if instrument_name == "ColorHug":
 				measurement_mode = "R"
-			elif self.get_instrument_name() == "ColorHug2":
+			elif instrument_name == "ColorHug2":
 				measurement_mode = "F"
 			else:
 				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()
 		if (not getattr(self, "is_ambient_measuring", False) and
 			measurement_mode and not get_arg("-y", args) and
-			self.get_instrument_name() != "specbos 1201"):
+			instrument_name != "specbos 1201"):
 				# Always specify -y for colorimeters (won't be read from .cal 
 				# when updating)
 				# The specbos 1201 (unlike 1211) doesn't support measurement
@@ -1532,6 +1533,12 @@ class Worker(object):
 				if self.argyll_version[0:3] >= [1, 5, 0]:
 					# Disable adaptive measurement mode
 					args.append("-YA")
+		if (instrument_name in ("Spyder4", "Spyder5") and
+			self.argyll_version == [1, 7, 0] and
+			getcfg("display.technology").startswith("LCD") and
+			not get_arg("-YR:", args)):
+			# Prevent 'Warning - Spyder: measuring refresh rate failed'
+			args.append("-YR:60")
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
@@ -1584,15 +1591,15 @@ class Worker(object):
 				except (IOError, CGATS.CGATSError), exception:
 					return exception
 				else:
-					instrument = get_canonical_instrument_name(
+					ccxx_instrument = get_canonical_instrument_name(
 						str(cgats.queryv1("INSTRUMENT") or ""),
 						{"DTP94-LCD mode": "DTP94",
 						 "eye-one display": "i1 Display",
 						 "Spyder 2 LCD": "Spyder2",
 						 "Spyder 3": "Spyder3"})
-				if ((instrument and
-					 self.get_instrument_name().lower().replace(" ", "") in
-					 instrument.lower().replace(" ", "")) or
+				if ((ccxx_instrument and
+					 instrument_name.lower().replace(" ", "") in
+					 ccxx_instrument.lower().replace(" ", "")) or
 					ccmx.lower().endswith(".ccss")):
 					tempdir = self.create_tempdir()
 					if isinstance(tempdir, Exception):
@@ -7370,6 +7377,9 @@ usage: spotread [-options] [logfile]
 		percentage = None
 		msg = self.recent.read(FilteredStream.triggers)
 		lastmsg = self.lastmsg.read(FilteredStream.triggers).strip()
+		warning = r"\D+: Warning -.*"
+		msg = re.sub(warning, "", msg)
+		lastmsg = re.sub(warning, "", lastmsg)
 		if re.match(r"\s*\d+%\s*$", lastmsg):
 			# colprof
 			try:
