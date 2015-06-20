@@ -1795,8 +1795,7 @@ class Worker(object):
 		if not instrument_name:
 			instrument_name = self.get_instrument_name()
 		return bool(self.get_instrument_features(instrument_name).get("spectral") or
-					instrument_name in ("i1 DisplayPro, ColorMunki Display",
-										"Spyder4", "Spyder5"))
+					self.instrument_supports_ccss(instrument_name))
 	
 	@Property
 	def progress_wnd():
@@ -5838,9 +5837,10 @@ usage: spotread [-options] [logfile]
 												 system_desktopfile_path))
 		return result
 	
-	def instrument_supports_ccss(self):
+	def instrument_supports_ccss(self, instrument_name=None):
 		""" Return whether instrument supports CCSS files or not """
-		instrument_name = self.get_instrument_name()
+		if not instrument_name:
+			instrument_name = self.get_instrument_name()
 		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
 				"Spyder4" in instrument_name or "Spyder5" in instrument_name)
 	
