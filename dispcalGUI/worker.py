@@ -3589,7 +3589,7 @@ while 1:
 			except Exception, exception:
 				self.log("Warning - error during shell script creation:", 
 						   safe_unicode(exception))
-		cmdline = [arg.encode(fs_enc) for arg in cmdline]
+		cmdline = [safe_str(arg, fs_enc) for arg in cmdline]
 		working_dir = None if not working_dir else working_dir.encode(fs_enc)
 		try:
 			if not self.measure_cmd and self.argyll_version >= [1, 2]:
