@@ -1562,8 +1562,7 @@ class Worker(object):
 					args.append("-YA")
 		if (instrument_name in ("Spyder4", "Spyder5") and
 			self.argyll_version == [1, 7, 0] and
-			measurement_mode != "n" and
-			getcfg("display.technology").startswith("LCD") and
+			measurement_mode in ("f", "e") and
 			not get_arg("-YR:", args)):
 			# Prevent 'Warning - Spyder: measuring refresh rate failed'
 			args.append("-YR:60")
