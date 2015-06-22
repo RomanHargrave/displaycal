@@ -112,7 +112,7 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
 					check_ti3_criteria2, get_arg, get_argyll_util,
-					get_options_from_cal,
+					get_cfg_option_from_args, get_options_from_cal,
 					get_argyll_version, get_current_profile_path,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path, parse_argument_string,
@@ -473,8 +473,9 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 			if isinstance(created, struct_time):
 				created = strftime("%Y-%m-%d %H:%M:%S", created)
 		dlg_list_ctrl.SetStringItem(index, 6,
-									parent.observers_ab.get(cgats[i].queryv1("OBSERVER"),
-									lang.getstr("unknown")))
+									parent.observers_ab.get(cgats[i].queryv1("REFERENCE_OBSERVER"),
+															lang.getstr("unknown" if ccxx_type == "CCMX"
+																		else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 7, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
@@ -4409,11 +4410,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		if v != getcfg("calibration.interactive_display_adjustment"):
 			setcfg("calibration.interactive_display_adjustment", v)
 			self.profile_settings_changed()
-			self.calpanel.Freeze()
+			self.panel.Freeze()
 			self.update_adjustment_controls()
 			self.calpanel.Layout()
 			self.calpanel.Refresh()
-			self.calpanel.Thaw()
+			self.panel.Thaw()
 			self.update_main_controls()
 			self.update_profile_name()
 
@@ -4532,7 +4533,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		args = ["-v", "-a", "-x"]
 		if getcfg("extra_args.spotread").strip():
 			args += parse_argument_string(getcfg("extra_args.spotread"))
-		result = self.worker.add_measurement_features(args, False)
+		result = self.worker.add_measurement_features(args, False,
+													  allow_nondefault_observer=True)
 		if isinstance(result, Exception):
 			return result
 		return self.worker.exec_cmd(cmd, args, capture_output=True,
@@ -4879,6 +4881,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
+		self.show_observer_ctrl()
 		if self.whitepoint_ctrl.GetSelection() != 2:
 			if getcfg("whitepoint.colortemp.locus") == "T":
 				# Planckian locus
@@ -6477,20 +6480,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		measurement_mode = self.measurement_mode_ctrl.GetStringSelection()
 		instrument += u" \u2014 " + measurement_mode
 		
-		observer = defaults["observer"]
-		qarg = get_arg("-Q", self.worker.options_dispread)
-		if qarg:
-			if len(qarg[1]) == 2:
-				if len(self.worker.options_dispread) > qarg[0] + 1:
-					observer = self.worker.options_dispread[qarg[0] + 1]
-			else:
-				observer = qarg[1][2:]
-		elif self.worker.instrument_can_use_nondefault_observer():
-			observer = getcfg("observer")
-		observer = self.observers_ab.get(observer, observer)
-		instrument += u" \u2014 " + observer
+		observer = get_cfg_option_from_args("observer", "-Q",
+											self.worker.options_dispread)
+		instrument += u" \u2014 " + self.observers_ab.get(observer, observer)
 		
 		ccmx = "None"
+		reference_observer = None
 		if self.worker.instrument_can_use_ccxx():
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if len(ccmx) > 1 and ccmx[1]:
@@ -6513,6 +6508,13 @@ class MainFrame(ReportFrame, BaseFrame):
 						ccmx = "%s &amp;lt;%s&amp;gt;" % (desc, ellipsis(ccmx,
 																		 31,
 																		 "m"))
+					if cgats.get(0, cgats).type == "CCMX":
+						reference_observer = cgats.queryv1("REFERENCE_OBSERVER")
+						if reference_observer:
+							reference_observer = self.observers_ab.get(reference_observer,
+																	   reference_observer)
+							if not reference_observer.lower() in ccmx.lower():
+								ccmx += u" \u2014 " + reference_observer
 			else:
 				ccmx = "None"
 		
@@ -8308,7 +8310,9 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def show_observer_ctrl(self):
 		self.panel.Freeze()
-		show = bool(getcfg("show_advanced_options") and
+		show = bool((getcfg("calibration.interactive_display_adjustment", False) or
+					 getcfg("trc")) and
+					getcfg("show_advanced_options") and
 					self.worker.instrument_can_use_nondefault_observer())
 		self.observer_label.Show(show)
 		self.observer_ctrl.Show(show)
@@ -8717,7 +8721,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			def show_observer_ctrl():
 				instrument_name = dlg.instrument.GetStringSelection()
 				show = bool(getcfg("show_advanced_options") and
-							self.worker.instrument_can_use_nondefault_observer(instrument_name))
+							self.worker.instrument_can_use_nondefault_observer(instrument_name) and
+							getcfg("colorimeter_correction.observer") != defaults["colorimeter_correction.observer"])
 				dlg.observer_label.Show(show)
 				dlg.observer_ctrl.Show(show)
 			def instrument_handler(event):
@@ -9232,13 +9237,20 @@ class MainFrame(ReportFrame, BaseFrame):
 			ti3_tmp_names.append('colorimeter.ti3')
 			name = "correction"
 			ext = ".ccmx"
+			# CCSS-capable instruments enable creating a CCMX that maps from
+			# non-standard observer A used for the colorimeter measurements
+			# to non-standard observer B used for the reference measurements.
+			# To get correct readings (= matching reference observer B) when
+			# using such a CCMX, observer A needs to be used, not observer B.
 			observer = colorimeter_ti3.queryv1("OBSERVER")
+			reference_observer = reference_ti3.queryv1("OBSERVER")
 		else:
 			# Create CCSS
 			args.append("-S")
 			name = "calibration"
 			ext = ".ccss"
-			observer = reference_ti3.queryv1("OBSERVER")
+			observer = None
+			reference_observer = None
 		args.append("-f")
 		args.append(",".join(ti3_tmp_names))
 		args.append(name + ext)
@@ -9292,6 +9304,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
 							   '\nKEYWORD "OBSERVER"\nOBSERVER "%s"\\1' %
 							   safe_str(observer, "UTF-8"), cgats)
+			if (reference_observer and
+				not re.search('\nREFERENCE_OBSERVER\s+".+?"\n', cgats)):
+				# By default, CCMX/CCSS files don't contain observer
+				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
+							   '\nKEYWORD "REFERENCE_OBSERVER"\nREFERENCE_OBSERVER "%s"\\1' %
+							   safe_str(reference_observer, "UTF-8"), cgats)
 			result = check_create_dir(config.get_argyll_data_dir())
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -12089,6 +12107,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							 "measure.min_display_update_delay_ms",
 							 "measure.override_display_settle_time_mult",
 							 "measure.display_settle_time_mult",
+							 "observer",
 							 "trc", 
 							 "whitepoint"), 
 					exclude=("calibration.black_point_correction_choice.show", 
@@ -12206,6 +12225,13 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("drift_compensation.blacklevel", 1)
 							if "w" in o[1:]:
 								setcfg("drift_compensation.whitelevel", 1)
+							continue
+						if o[0] == "Q":
+							setcfg("observer", o[1:])
+							# Need to update ccmx items again even if
+							# comport_ctrl_handler already did because CCMX
+							# observer may override calibration observer
+							update_ccmx_items = True
 							continue
 					if trc and not black_point_correction:
 						setcfg("calibration.black_point_correction.auto", 1)

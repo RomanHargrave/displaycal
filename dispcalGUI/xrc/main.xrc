@@ -336,18 +336,6 @@
                               <border>16</border>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxStaticText" name="observer_label">
-                                <label>observer</label>
-                              </object>
-                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
-                              <border>16</border>
-                            </object>
-                            <object class="sizeritem">
-                              <object class="wxChoice" name="observer_ctrl"/>
-                              <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                              <border>16</border>
-                            </object>
-                            <object class="sizeritem">
                               <object class="wxCheckBox" name="override_display_settle_time_mult">
                                 <label>measure.override_display_settle_time_mult</label>
                               </object>
@@ -364,7 +352,7 @@
                             <object class="spacer">
                               <size>16,1</size>
                             </object>
-                            <cols>5</cols>
+                            <cols>3</cols>
                             <vgap>8</vgap>
                             <hgap>8</hgap>
                             <growablecols>2</growablecols>
@@ -552,6 +540,18 @@
                         </object>
                         <object class="sizeritem">
                           <object class="wxFlexGridSizer">
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="observer_label">
+                                <label>observer</label>
+                              </object>
+                              <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>12</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxChoice" name="observer_ctrl"/>
+                              <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="whitepoint_label">
                                 <label>whitepoint</label>

@@ -693,6 +693,7 @@
 	"no": "Non",
 	"no_settings": "Le fichier ne contient pas de réglages.",
 		"*none": "None",
+		"*not_applicable": "Not applicable",
 		"*not_connected": "Not connected",
 		"*not_found": "“%s” was not found.",
 		"*not_now": "Not now",

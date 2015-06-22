@@ -146,6 +146,15 @@ def Property(func):
 	return property(**func())
 
 
+def add_keywords_to_cgats(cgats, keywords):
+	""" Add keywords to CGATS """
+	if not isinstance(cgats, CGATS.CGATS):
+		cgats = CGATS.CGATS(cgats)
+	for keyword, value in keywords.iteritems():
+		cgats[0].add_keyword(keyword, value)
+	return cgats
+
+
 def check_argyll_bin(paths=None):
 	""" Check if the Argyll binaries can be found. """
 	prev_dir = None
@@ -585,6 +594,22 @@ def parse_argyll_version_string(argyll_version_string):
 			pass
 	return argyll_version
 
+
+def get_cfg_option_from_args(option_name, argmatch, args, whole=False):
+	""" Parse args and return option (if found), otherwise default """
+	option = defaults[option_name]
+	iarg = get_arg(argmatch, args, whole)
+	if iarg:
+		if len(iarg[1]) == len(argmatch):
+			# Option value is the next argument
+			if len(args) > iarg[0] + 1:
+				option = args[iarg[0] + 1]
+		else:
+			# Option value follows argument directly
+			option = iarg[1][len(argmatch):]
+	return option
+
+
 def get_options_from_args(dispcal_args=None, colprof_args=None):
 	"""
 	Extract options used for dispcal and colprof from argument strings.
@@ -602,7 +627,8 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"[pP]\d+(?:\.\d+)?,\d+(?:\.\d+)?,\d+(?:\.\d+)?",
 		'X(?:\s*\d+|\s+["\'][^"\']+?["\'])',  # Argyll >= 1.3.0 colorimeter correction matrix / Argyll >= 1.3.4 calibration spectral sample
 		"I[bw]{,2}",  # Argyll >= 1.3.0 drift compensation
-		"YA"  # Argyll >= 1.5.0 disable adaptive mode
+		"YA",  # Argyll >= 1.5.0 disable adaptive mode
+		"Q\w+"
 	]
 	re_options_colprof = [
 		"q[lmh]",
@@ -1483,7 +1509,8 @@ class Worker(object):
 		workers.append(self)
 	
 	def add_measurement_features(self, args, display=True,
-								 ignore_display_name=False):
+								 ignore_display_name=False,
+								 allow_nondefault_observer=False):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
@@ -1568,9 +1595,10 @@ class Worker(object):
 		   instrument_features.get("highres_mode") and not get_arg("-H", args,
 																   True):
 			args.append("-H")
-		if (self.instrument_can_use_nondefault_observer() and
-			  getcfg("observer") != defaults["observer"] and
-			  not get_arg("-Q", args)):
+		if (allow_nondefault_observer and
+			self.instrument_can_use_nondefault_observer() and
+			getcfg("observer") != defaults["observer"] and
+			not get_arg("-Q", args)):
 			args.append("-Q" + getcfg("observer"))
 		if (not getattr(self, "is_ambient_measuring", False) and
 			self.instrument_can_use_ccxx() and
@@ -1639,13 +1667,6 @@ class Worker(object):
 			not self.spotread_just_do_instrument_calibration):
 			args.append("-N")
 		return True
-
-	def add_measurement_params(self, ti3):
-		""" Add measurement parameters to TI3 """
-		if not isinstance(ti3, CGATS.CGATS):
-			ti3 = CGATS.CGATS(ti3)
-		ti3[0].add_keyword("OBSERVER", getcfg("observer"))
-		ti3.write()
 	
 	def authenticate(self, cmd, title=appname, parent=None):
 		"""
@@ -6450,7 +6471,8 @@ usage: spotread [-options] [logfile]
 				cmd, args2 = get_argyll_util("spotread"), ["-v", "-e"]
 				if getcfg("extra_args.spotread").strip():
 					args2 += parse_argument_string(getcfg("extra_args.spotread"))
-				result = self.add_measurement_features(args2, False)
+				result = self.add_measurement_features(args2, False,
+													   allow_nondefault_observer=is_ccxx_testchart())
 				if isinstance(result, Exception):
 					return result
 			else:
@@ -6458,9 +6480,10 @@ usage: spotread [-options] [logfile]
 			result = self.exec_cmd(cmd, args2)
 			if not isinstance(result, Exception) and result:
 				self.update_display_name_manufacturer(args[-1] + ".ti3")
+				ti3 = args[-1] + ".ti3"
 				if precond_ti3:
 					# Add patches from preconditioning measurements
-					ti3 = CGATS.CGATS(args[-1] + ".ti3")
+					ti3 = CGATS.CGATS(ti3)
 					precond_data = precond_ti3.queryv1("DATA")
 					data = ti3.queryv1("DATA")
 					data_format = ti3.queryv1("DATA_FORMAT")
@@ -6492,11 +6515,12 @@ usage: spotread [-options] [logfile]
 							dataset.parent = data
 							dataset.root = data.root
 							data[dataset.key] = dataset
-						ti3.write()
+				options = {"OBSERVER": get_cfg_option_from_args("observer", "-Q",
+																args[:-1])}
+				ti3 = add_keywords_to_cgats(ti3, options)
+				ti3.write()
 		else:
 			result = cmd
-		if not isinstance(result, Exception) and result:
-			self.add_measurement_params(args[-1] + ".ti3")
 		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
 							  isinstance(result, Exception) or not result)
 		if isinstance(result2, Exception):
@@ -6819,7 +6843,8 @@ usage: spotread [-options] [logfile]
 		args.append("-v2") # verbose
 		if getcfg("argyll.debug"):
 			args.append("-D6")
-		result = self.add_measurement_features(args)
+		result = self.add_measurement_features(args,
+											   allow_nondefault_observer=True)
 		if isinstance(result, Exception):
 			return result, None
 		if calibrate:
@@ -7165,7 +7190,8 @@ usage: spotread [-options] [logfile]
 		args.append("-v") # verbose
 		if getcfg("argyll.debug"):
 			args.append("-D6")
-		result = self.add_measurement_features(args)
+		result = self.add_measurement_features(args,
+											   allow_nondefault_observer=is_ccxx_testchart())
 		if isinstance(result, Exception):
 			return result, None
 		if apply_calibration is not False:
@@ -9187,7 +9213,8 @@ BEGIN_DATA
 			if getcfg("extra_args.dispread").strip():
 				args += parse_argument_string(getcfg("extra_args.dispread"))
 		result = self.add_measurement_features(args,
-											   cmd == get_argyll_util("dispread"))
+											   cmd == get_argyll_util("dispread"),
+											   allow_nondefault_observer=is_ccxx_testchart())
 		if isinstance(result, Exception):
 			return result
 		self.options_dispread = list(args)

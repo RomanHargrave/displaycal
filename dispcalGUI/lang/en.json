@@ -693,6 +693,7 @@
 	"native": "Native",
 	"negative": "Negative",
 	"no": "No",
+	"not_applicable": "Not applicable",
 	"not_connected": "Not connected",
 	"not_found": "“%s” was not found.",
 	"not_now": "Not now",
