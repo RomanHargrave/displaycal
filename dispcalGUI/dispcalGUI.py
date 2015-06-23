@@ -6482,7 +6482,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		observer = get_cfg_option_from_args("observer", "-Q",
 											self.worker.options_dispread)
-		instrument += u" \u2014 " + self.observers_ab.get(observer, observer)
+		if observer != defaults["observer"]:
+			instrument += u" \u2014 " + self.observers_ab.get(observer, observer)
 		
 		ccmx = "None"
 		reference_observer = None
@@ -6510,7 +6511,8 @@ class MainFrame(ReportFrame, BaseFrame):
 																		 "m"))
 					if cgats.get(0, cgats).type == "CCMX":
 						reference_observer = cgats.queryv1("REFERENCE_OBSERVER")
-						if reference_observer:
+						if (reference_observer and
+							reference_observer != defaults["observer"]):
 							reference_observer = self.observers_ab.get(reference_observer,
 																	   reference_observer)
 							if not reference_observer.lower() in ccmx.lower():
