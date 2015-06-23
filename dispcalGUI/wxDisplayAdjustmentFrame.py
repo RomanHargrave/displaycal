@@ -11,6 +11,8 @@ import re
 import sys
 if sys.platform == "win32":
 	from ctypes import windll
+elif sys.platform == "darwin":
+	from platform import mac_ver
 
 from wxaddons import wx
 from lib.agw import labelbook
@@ -22,6 +24,7 @@ from config import enc
 from log import get_file_logger
 from meta import name as appname
 from ordereddict import OrderedDict
+from util_list import intlist
 from util_str import safe_unicode, wrap
 from wxwindows import BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes
 import audio
@@ -889,7 +892,12 @@ class DisplayAdjustmentFrame(BaseFrame):
 			page = self.lb.GetPage(pagenum)
 			page.SetSize((w, -1))
 			page.desc.SetLabel(page.desc.GetLabel().replace("\n", " "))
-			page.desc.Wrap(w - 12)
+			if (sys.platform == "darwin" and
+				intlist(mac_ver()[0].split(".")) >= [10, 10]):
+				margin = 24
+			else:
+				margin = 12
+			page.desc.Wrap(w - margin)
 			bitmaps = {"black_level": {CRT: "luminance",
 									   not CRT: "black_level"},
 					   "luminance": {CRT: "contrast",
