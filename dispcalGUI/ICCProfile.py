@@ -2162,6 +2162,17 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 											 errors="replace").strip("\0\n\r ")
 					if macDescription:
 						self.Macintosh = macDescription
+				except KeyError:
+					safe_print("KeyError (non-critical): could not "
+							   "decode '%s' Macintosh part (unsupported "
+							   "encoding %s)" % (tagData[:4],
+												 self.macScriptCode))
+				except LookupError:
+					safe_print("LookupError (non-critical): could not "
+							   "decode '%s' Macintosh part (unsupported "
+							   "encoding '%s')" %
+							   (tagData[:4],
+							    encodings["mac"][self.macScriptCode]))
 				except UnicodeDecodeError:
 					safe_print("UnicodeDecodeError (non-critical): could not "
 							   "decode '%s' Macintosh part" % tagData[:4])
