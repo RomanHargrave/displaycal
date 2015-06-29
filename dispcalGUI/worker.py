@@ -16,18 +16,17 @@ import subprocess as sp
 import sys
 import tempfile
 import textwrap
-import threading
 import traceback
 import urllib2
 from UserString import UserString
 from hashlib import md5
+from threading import _MainThread, currentThread
 from time import sleep, strftime, time
 if sys.platform == "darwin":
 	from platform import mac_ver
 	from thread import start_new_thread
 elif sys.platform == "win32":
 	from ctypes import windll
-	from threading import _MainThread, currentThread
 	import _winreg
 
 # 3rd party
@@ -7591,8 +7590,8 @@ usage: spotread [-options] [logfile]
 		# 'Bad file descriptor', so don't use sys.stdout
 		# Careful: Python 2.5 Producer objects don't have a name attribute
 		if (hasattr(self, "thread") and self.thread.isAlive() and
-			(not hasattr(threading.currentThread(), "name") or
-			 threading.currentThread().name != self.thread.name)):
+			(not hasattr(currentThread(), "name") or
+			 currentThread().name != self.thread.name)):
 			logfn = log
 		else:
 			logfn = safe_print
