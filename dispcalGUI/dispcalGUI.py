@@ -2600,6 +2600,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK: return
+		if getcfg("settings.changed"):
+			self.settings_discard_changes()
 		skip = [
 			"allow_skip_sensor_cal",
 			"app.allow_network_clients",
