@@ -17,6 +17,7 @@ ${DESC}</description>
 			<version not-before="${WX_MINVERSION}" />
 		</requires>
 		<requires interface="${URL}0install/numpy.xml" />
+		<requires interface="${URL}0install/pyglet.xml" />
 		<requires interface="${URL}0install/pywin32.xml" />
 		<requires interface="${URL}0install/wmi.xml" />
 		<requires interface="${URL}0install/7z.xml" />
@@ -32,8 +33,5 @@ ${DESC}</description>
 		</command>
 		<implementation released="0000-00-00" version="0.0.0.0">
 		</implementation>
-		<group>
-			<requires interface="${URL}0install/pyglet.xml" />
-		</group>
 	</group>
 </interface>

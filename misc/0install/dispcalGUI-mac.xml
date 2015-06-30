@@ -17,14 +17,12 @@ ${DESC}</description>
 			<version not-before="${WX_MINVERSION}" />
 		</requires>
 		<requires interface="${URL}0install/numpy.xml" />
+		<requires interface="${URL}0install/pyglet.xml" />
 		<requires importance="recommended" interface="${URL}0install/argyllcms.xml" />
 		<command name="change-display-profile-cal-whitepoint" path="util/change_display_profile_cal_whitepoint.py">
 			<runner interface="${URL}0install/python.xml" version="2.5..!3.0" />
 		</command>
 		<implementation released="0000-00-00" version="0.0.0.0">
 		</implementation>
-		<group>
-			<requires interface="${URL}0install/pyglet.xml" />
-		</group>
 	</group>
 </interface>

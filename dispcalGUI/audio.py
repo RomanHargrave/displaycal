@@ -4,7 +4,7 @@
 Audio wrapper module
 
 Can use pygame, pyglet, pyo or wx.
-pyglet will be used by default if available.
+pyglet or pygame will be used by default if available.
 pyglet can only be used if version >= 1.2.2 is available.
 pyo is still buggy under Linux and has a few quirks under Windows.
 pyglet seems like the best bet in the long run as pygame development is stagnant
@@ -18,6 +18,7 @@ sound.Play(fade_ms=1000)
 
 """
 
+import sys
 import threading
 import time
 
@@ -45,7 +46,13 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	# Select the audio library we're going to use.
 	# User choice or pyglet > pygame > pyo > wx
 	if not lib:
-		for lib in ("pyglet", "pygame", "pyo", "wx"):
+		if sys.platform in ("darwin", "win32"):
+			# Mac OS X, Windows
+			libs = ("pyglet", "pygame", "pyo", "wx")
+		else:
+			# Linux
+			libs = ("pygame", "pyglet", "pyo", "wx")
+		for lib in libs:
 			try:
 				return init(lib, samplerate, channels, buffersize, reinit)
 			except Exception, exception:
