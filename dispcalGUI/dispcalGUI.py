@@ -2689,6 +2689,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"report.pack_js",
 			"settings.changed",
 			"show_advanced_options",
+			"show_donation_message",
 			"skip_legacy_serial_ports",
 			"skip_scripts",
 			"sudo.preserve_environment",
