@@ -6374,7 +6374,8 @@ usage: spotread [-options] [logfile]
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
 		precond_ti3 = None
-		if getcfg("testchart.file") == "auto":
+		auto = getcfg("testchart.auto_optimize") or 7
+		if getcfg("testchart.file") == "auto" and auto > 4:
 			# Testchart auto-optimization
 			# Create optimized testchart on-the-fly. To do this, create a
 			# simple profile for preconditioning
@@ -6439,7 +6440,6 @@ usage: spotread [-options] [logfile]
 							self.cmdname = get_argyll_utilname("targen")
 							# Allow time for fade out
 							sleep(4)
-						auto = getcfg("testchart.auto_optimize") or 7
 						s = min(auto, 11) * 4 - 3
 						g = s * 3 - 2
 						f = get_total_patches(4, 4, s, g, auto, auto, 0)
@@ -6461,6 +6461,17 @@ usage: spotread [-options] [logfile]
 				result = cmd
 		else:
 			result = True
+			if getcfg("testchart.file") == "auto" and auto < 5:
+				# Use pre-baked testchart
+				if auto == 3:
+					testchart = "ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1"
+				else:
+					testchart = "ti1/d3-e4-s0-g49-m3-b3-f0-crossover.ti1"
+				testchart_path = get_data_path(testchart)
+				if testchart_path:
+					setcfg("testchart.file", testchart_path)
+				else:
+					result = Error(lang.getstr("not_found", testchart))
 		if not isinstance(result, Exception) and result:
 			cmd, args = self.prepare_dispread(apply_calibration)
 		else:

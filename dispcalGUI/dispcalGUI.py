@@ -1777,7 +1777,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		]
 		self.trc_type_ctrl.SetItems(self.trc_types)
 
-		self.update_profile_type_ctrl()
+		self.update_profile_type_ctrl_items()
 
 		self.default_testchart_names = []
 		for testcharts in self.testchart_defaults.values():
@@ -1836,8 +1836,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.Thaw()
 		if self.IsShown():
 			self.calpanel.Layout()
-	
+
 	def update_profile_type_ctrl(self):
+		self.profile_type_ctrl.SetSelection(
+			self.profile_types_ba.get(getcfg("profile.type"), 
+			self.profile_types_ba.get(defaults["profile.type"], 0)))
+	
+	def update_profile_type_ctrl_items(self):
 		""" Populate the profile type control with available choices
 		depending on Argyll version. """
 		self.profile_types = [
@@ -2708,6 +2713,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"calibration.luminance": None,
 			"gamap_src_viewcond": "mt",
 			"gamap_out_viewcond": "mt",
+			"testchart.file": "auto",
 			"trc": defaults["gamma"],
 			"whitepoint.colortemp": None,
 			"whitepoint.x": None,
@@ -3521,9 +3527,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			not update_cal and 
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
 
-		self.profile_type_ctrl.SetSelection(
-			self.profile_types_ba.get(getcfg("profile.type"), 
-			self.profile_types_ba.get(defaults["profile.type"], 0)))
+		self.update_profile_type_ctrl()
 
 		self.update_black_output_offset_ctrl()
 
@@ -10211,7 +10215,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			   int(not event.GetEventObject().GetValue()))
 
 	def profile_type_ctrl_handler(self, event):
-		if debug:
+		if debug and event:
 			safe_print("[D] profile_type_ctrl_handler called for ID %s %s "
 					   "event type %s %s" % (event.GetId(), 
 											 getevtobjname(event, self), 
@@ -11534,10 +11538,27 @@ class MainFrame(ReportFrame, BaseFrame):
 		auto = self.testchart_patches_amount_ctrl.GetValue()
 		if event:
 			setcfg("testchart.auto_optimize", auto)
-		s = min(auto, 11) * 4 - 3
-		g = s * 3 - 2
-		self.testchart_patches_amount.SetLabel(
-			str(get_total_patches(4, 4, s, g, auto, auto, 0) + 154))
+			self.profile_settings_changed()
+		proftype_changed = False
+		if auto > 4:
+			s = min(auto, 11) * 4 - 3
+			g = s * 3 - 2
+			patches_amount = get_total_patches(4, 4, s, g, auto, auto, 0) + 154
+			if event and getcfg("profile.type") not in ("l", "x", "X"):
+				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
+				proftype_changed = True
+		else:
+			if auto == 3:
+				patches_amount = 73
+			else:
+				patches_amount = 97
+			if event and getcfg("profile.type") not in ("g", "G", "s", "S"):
+				setcfg("profile.type", "S" if getcfg("trc") else "s")
+				proftype_changed = True
+		if proftype_changed:
+			self.update_profile_type_ctrl()
+			self.profile_type_ctrl_handler(None)
+		self.testchart_patches_amount.SetLabel(str(patches_amount))
 		self.update_estimated_measurement_time("testchart")
 		self.update_profile_name()
 
@@ -11825,7 +11846,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_colorimeter_correction_matrix_ctrl()
 			self.update_black_point_rate_ctrl()
 			self.update_drift_compensation_ctrls()
-			self.update_profile_type_ctrl()
+			self.update_profile_type_ctrl_items()
 			self.profile_type_ctrl.SetSelection(
 				self.profile_types_ba.get(getcfg("profile.type"), 
 				self.profile_types_ba.get(defaults["profile.type"], 0)))
