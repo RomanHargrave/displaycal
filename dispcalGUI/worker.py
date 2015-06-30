@@ -7500,7 +7500,10 @@ usage: spotread [-options] [logfile]
 				self.progress_wnd.pause_continue.Show(self.pauseable)
 				self.progress_wnd.Layout()
 		if not keepGoing and not getattr(self, "abort_requested", False):
-			self.abort_subprocess(True)
+			# Only confirm abort if we are not currently doing interactive
+			# display adjustment
+			self.abort_subprocess(not isinstance(self._progress_wnd,
+												 DisplayAdjustmentFrame))
 		if self.finished is True:
 			return
 		if (self.progress_wnd.IsShownOnScreen() and

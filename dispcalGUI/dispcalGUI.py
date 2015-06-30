@@ -7036,11 +7036,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result, self)
-			elif not getcfg("dry_run"):
-				wx.CallAfter(InfoDialog, self, 
-							 msg=lang.getstr("calibration.incomplete"), 
-							 ok=lang.getstr("ok"), 
-							 bitmap=geticon(32, "dialog-error"))
 			self.Show()
 	
 	def calibrate_and_profile_finish(self, result):
