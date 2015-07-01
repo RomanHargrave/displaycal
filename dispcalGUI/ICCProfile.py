@@ -2142,18 +2142,11 @@ class TextDescriptionType(ICCProfileTag, ADict): # ICC v2
 		else:
 			charBytes = 1
 		macOffset = unicodeOffset + 8 + unicodeDescriptionLength * charBytes
-		macOffsetBackup = macOffset
-		if tagData[macOffset:macOffset + 5] == "\0\0\0\0\0":
-			macOffset += 5  # fix for fubar'd desc
 		self.macScriptCode = 0
 		if len(tagData) > macOffset + 2:
 			self.macScriptCode = uInt16Number(tagData[macOffset:macOffset + 2])
 			macDescriptionLength = ord(tagData[macOffset + 2])
 			if macDescriptionLength:
-				if macOffsetBackup < macOffset:
-					safe_print("Warning (non-critical): '%s' Macintosh "
-							   "part offset points to null bytes" % 
-							   tagData[:4])
 				try:
 					macDescription = unicode(tagData[macOffset + 3:macOffset + 
 											 3 + macDescriptionLength], 
