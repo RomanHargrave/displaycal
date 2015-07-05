@@ -13178,6 +13178,10 @@ class StartupFrame(wx.Frame):
 			# update, otherwise the main window may steal the update
 			# confirmation dialog's focus which looks weird
 			wx.CallAfter(app.frame.app_update_check_handler, None, silent=True)
+		else:
+			# Check if we need to run instrument setup
+			wx.CallAfter(app.frame.check_instrument_setup, check_donation,
+						 (app.frame, snapshot))
 		# If resources are missing, XRC shows an error dialog which immediately
 		# gets hidden when we close ourselves because we are the parent.
 		# Hide instead.
