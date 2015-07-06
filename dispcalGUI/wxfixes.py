@@ -85,6 +85,10 @@ if "gtk3" in wx.PlatformInfo:
 			self.Size = self.GetTextExtent(label)[0], -1
 			self.MaxSize = self.Size[0], -1
 
+		def Wrap(self, width):
+			wx._StaticText.Wrap(self, width)
+			self.SetLabel(self.Label)
+
 		Label = property(lambda self: self.GetLabel(), SetLabel)
 
 	wx.StaticText = StaticText
