@@ -73,6 +73,10 @@ if "gtk3" in wx.PlatformInfo:
 		def __init__(self, *args, **kwargs):
 			wx._StaticText.__init__(self, *args, **kwargs)
 
+		def SetFont(self, font):
+			wx.Control.SetFont(self, font)
+			self.SetLabel(self.Label)
+
 		def SetLabel(self, label):
 			# Fix GTK3 label width on label change
 			self.MaxSize = -1, -1
