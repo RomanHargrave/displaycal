@@ -236,6 +236,7 @@ if "gtk3" in wx.PlatformInfo:
 		def GetItem(self, row, col=0):
 			item = self.RowToItem(row)
 			item.GetId = lambda: row
+			item.GetText = lambda: self.GetTextValue(row, col)
 			return item
 
 		def SetItemState(self, row, state, stateMask):
@@ -253,6 +254,24 @@ if "gtk3" in wx.PlatformInfo:
 			else:
 				raise NotImplementedError("GetNextItem is only implemented for "
 										  "returning the selected row")
+
+		GetFirstSelected = DataViewListCtrl.__dict__["GetSelectedRow"]
+
+		def GetItemState(self, row, stateMask):
+			if stateMask == wx.LIST_STATE_SELECTED:
+				if self.GetSelectedRow() == row:
+					return wx.LIST_STATE_SELECTED
+				else:
+					return 0
+			else:
+				raise NotImplementedError("GetItemState is only implemented to "
+										  "check if a row is selected")
+
+		def Select(self, row, on=1):
+			if on:
+				self.SelectRow(row)
+			else:
+				self.UnselectRow(row)
 
 	wx.ListCtrl = ListCtrl
 
@@ -278,6 +297,8 @@ if "gtk3" in wx.PlatformInfo:
 
 	wx.SpinCtrl = SpinCtrl
 
+	_StaticText_SetLabel = wx._StaticText.SetLabel
+
 	class StaticText(wx._StaticText):
 
 		def __init__(self, *args, **kwargs):
@@ -288,13 +309,19 @@ if "gtk3" in wx.PlatformInfo:
 			self.SetLabel(self.Label)
 
 		def SetLabel(self, label):
-			# Fix GTK3 label width on label change
+			# Fix GTK3 label auto-resize on label change not working
 			if not self.WindowStyle & wx.ST_NO_AUTORESIZE:
 				self.MaxSize = -1, -1
 				self.MinSize = -1, -1
-			wx.Control.SetLabel(self, label)
+			_StaticText_SetLabel(self, label)
 			if not self.WindowStyle & wx.ST_NO_AUTORESIZE:
-				self.Size = self.GetTextExtent(label)[0], -1
+				# Find widest line
+				max_width = 0
+				for line in label.splitlines():
+					width = self.GetTextExtent(line)[0]
+					if width > max_width:
+						max_width = width
+				self.Size = max_width, -1
 				self.MaxSize = self.Size[0], -1
 
 		def Wrap(self, width):

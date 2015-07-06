@@ -5592,7 +5592,7 @@ def format_ui_element(child, format="plain"):
 			uielement["label"] = child.Label
 		if isinstance(child, (CustomCheckBox, wx.CheckBox, wx.RadioButton)):
 			uielement["checked"] = child.GetValue()
-		elif hasattr(child, "GetValue"):
+		elif hasattr(child, "GetValue") and not isinstance(child, wx.ListCtrl):
 			uielement["value"] = child.GetValue()
 		elif hasattr(child, "GetStringSelection"):
 			uielement["value"] = child.GetStringSelection()
@@ -5614,7 +5614,7 @@ def format_ui_element(child, format="plain"):
 									 child.GetValue() and " checked") or
 									(getattr(child, "GetValue", "") and
 									 not isinstance(child, (CustomCheckBox, wx.CheckBox,
-													  wx.RadioButton)) and
+													  wx.RadioButton, wx.ListCtrl)) and
 									 " value " + demjson.encode(child.GetValue())) or
 									(getattr(child, "GetStringSelection", "") and
 									 " value " + demjson.encode(child.GetStringSelection())) or
