@@ -9353,8 +9353,12 @@ class MainFrame(ReportFrame, BaseFrame):
 						font.SetWeight(wx.BOLD)
 						txt.Font = font
 						sizer.Add(txt, flag=wx.LEFT, border=40)
+					if "gtk3" in wx.PlatformInfo:
+						style = wx.BORDER_SIMPLE
+					else:
+						style = wx.BORDER_THEME
 					grid = CustomGrid(dlg, -1, size=(640 + wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
-												     -1), style=wx.BORDER_THEME)
+												     -1), style=style)
 					grid.Size = grid.Size[0], grid.GetDefaultRowSize() * 4
 					dlg.sizer3.Add(grid, flag=wx.TOP | wx.ALIGN_LEFT, border=4)
 					grid.DisableDragColSize()
@@ -13336,7 +13340,11 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.mods = {}
 		dlg.force = force
 
-		dlg.grid = CustomGrid(dlg, -1, size=(940, 200), style=wx.BORDER_THEME)
+		if "gtk3" in wx.PlatformInfo:
+			style = wx.BORDER_SIMPLE
+		else:
+			style = wx.BORDER_THEME
+		dlg.grid = CustomGrid(dlg, -1, size=(940, 200), style=style)
 		grid = dlg.grid
 		grid.DisableDragRowSize()
 		grid.SetCellHighlightPenWidth(0)
