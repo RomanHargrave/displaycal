@@ -6879,7 +6879,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.Show(start_timers=True)
 			self.restore_measurement_mode()
 			self.restore_testchart()
-			if stderr and stderr.strip():
+			if returncode != 0 and stderr and stderr.strip():
 				InfoDialog(self, msg=safe_unicode(stderr.strip()), 
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))

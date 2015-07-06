@@ -118,7 +118,7 @@ class MeasureFrame(InvincibleFrame):
 	
 	"""
 
-	exitcode = 0
+	exitcode = 1
 
 	def __init__(self, parent=None, id=-1):
 		InvincibleFrame.__init__(self, parent, id, 
@@ -411,6 +411,8 @@ class MeasureFrame(InvincibleFrame):
 		else:
 			writecfg()
 			self.Destroy()
+			if MeasureFrame.exitcode != 255:
+				MeasureFrame.exitcode = 0
 
 	def get_display(self, display_no=None):
 		"""
