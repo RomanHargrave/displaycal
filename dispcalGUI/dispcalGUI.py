@@ -10257,7 +10257,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.gamapframe.update_controls()
 		self.update_profile_name()
 		self.set_default_testchart(force=True)
-		self.check_testchart_patches_amount
+		if event:
+			self.check_testchart_patches_amount()
 	
 	def check_testchart_patches_amount(self):
 		""" Check if the selected testchart has at least the recommended
@@ -10291,11 +10292,10 @@ class MainFrame(ReportFrame, BaseFrame):
 											 ("g", "G"))
 			dlg.Destroy()
 			if result == wx.ID_OK:
-				testchart = self.testchart_defaults[self.get_profile_type()].get(
-					self.get_profile_quality(), 
-					self.testchart_defaults[self.get_profile_type()][None])
-				self.set_testchart(get_data_path(os.path.join("ti1", 
-															  testchart)))
+				setcfg("testchart.auto_optimize",
+					   max(config.valid_values["testchart.auto_optimize"][1],
+						   int(round(colormath.cbrt(recommended)))))
+				self.set_testchart("auto")
 	
 	def measurement_file_check_auto_handler(self, event):
 		if not getcfg("ti3.check_sanity.auto"):
@@ -11786,7 +11786,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			chart = chart.split(os.pathsep)
 			chart.reverse()
 			self.testcharts[i] = os.path.join(*chart)
-			self.testchart_names.append(lang.getstr(chart[-1]))
+			if chart[-1] == "auto":
+				testchart_name = "auto_optimized"
+			else:
+				testchart_name = chart[-1]
+			self.testchart_names.append(lang.getstr(testchart_name))
 			i += 1
 		return self.testchart_names
 
