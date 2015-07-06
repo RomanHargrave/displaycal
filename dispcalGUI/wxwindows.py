@@ -2603,7 +2603,7 @@ class CustomGrid(wx.grid.Grid):
 		self.SetRowLabelAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 
 		self.headerbitmap = None
-		if sys.platform == "darwin":
+		if sys.platform == "darwin" or "gtk3" in wx.PlatformInfo:
 			# wxMac draws a too short native header
 			self.rendernative = False
 			self.style = "Mavericks"
@@ -3358,7 +3358,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 			focus = grid.Parent.FindFocus()
 			if not focus or grid not in (focus, focus.GetParent(),
 										 focus.GetGrandParent()):
-				if mavericks or sys.platform == "darwin":
+				if mavericks or sys.platform == "darwin" or "gtk3" in wx.PlatformInfo:
 					# Use Mavericks-like color scheme
 					color = wx.Colour(202, 202, 202)
 					if isSelected:
@@ -3366,7 +3366,7 @@ class CustomCellRenderer(wx.grid.PyGridCellRenderer):
 				else:
 					rgb = int((color.Red() + color.Green() + color.Blue()) / 3.0)
 					color = wx.Colour(rgb, rgb, rgb)
-			elif mavericks or sys.platform == "darwin":
+			elif mavericks or sys.platform == "darwin" or "gtk3" in wx.PlatformInfo:
 				# Use Mavericks-like color scheme
 				color = wx.Colour(44, 93, 205)
 				if isSelected:
