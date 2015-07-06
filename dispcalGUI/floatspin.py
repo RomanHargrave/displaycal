@@ -1349,6 +1349,8 @@ if wx.VERSION >= (3, ):
 
     # Use wx.SpinCtrlDouble
 
+    EVT_FLOATSPIN = wx.EVT_SPINCTRLDOUBLE
+
     class FloatSpin(wx.SpinCtrlDouble):
 
         _spinwidth = 0
@@ -1357,7 +1359,7 @@ if wx.VERSION >= (3, ):
                      size=(95,-1), style=0, value=0.0, min_val=None, max_val=None,
                      increment=1.0, digits=-1, agwStyle=FS_LEFT,
                      name="FloatSpin"):
-            if size != (95,-1):
+            if "gtk3" in wx.PlatformInfo:
                 if not FloatSpin._spinwidth:
                     spin = wx.SpinCtrl(parent, -1)
                     text = wx.TextCtrl(parent, -1)
