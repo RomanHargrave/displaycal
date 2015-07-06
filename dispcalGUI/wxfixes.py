@@ -199,6 +199,7 @@ if "gtk3" in wx.PlatformInfo:
 				dv_style |= dataview.DV_SINGLE
 			DataViewListCtrl.__init__(self, parent, id, pos, size, dv_style,
 									  validator)
+			self.Name = name
 			self._columns = {}
 			self._items = {}
 			self.Bind(dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.OnEvent)
@@ -254,6 +255,9 @@ if "gtk3" in wx.PlatformInfo:
 			else:
 				raise NotImplementedError("GetNextItem is only implemented for "
 										  "returning the selected row")
+
+		def GetItemCount(self):
+			return len(self._items)
 
 		GetFirstSelected = DataViewListCtrl.__dict__["GetSelectedRow"]
 
