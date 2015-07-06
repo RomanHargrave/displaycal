@@ -380,6 +380,10 @@ sup {
 	background: none;
 }
 
+.shariff .facebook.info .share_count {
+	display: none;
+}
+
 #header.intro .shariff .theme-white .shariff-button {
 	border: 1px solid rgba(255, 255, 255, .25);
 }
