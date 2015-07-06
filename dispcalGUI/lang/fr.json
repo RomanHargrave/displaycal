@@ -108,6 +108,7 @@
 	"auth": "Authentification",
 	"auth.failed": "Échec de l'authentification.",
 	"auto": "Automatique",
+		"*auto_optimized": "Auto-optimized",
 	"autostart_remove_old": "Suppression de l'ancienne entrée de démarrage automatique",
 		"*backing_xyz": "Backing XYZ",
 	"backlight": "Rétroéclairage",
