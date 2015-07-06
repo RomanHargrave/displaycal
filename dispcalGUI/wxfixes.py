@@ -41,6 +41,51 @@ if not hasattr(platebtn, "PB_STYLE_DROPARROW"):
 	platebtn.PB_STYLE_DROPARROW = 16
 
 
+wx._SpinCtrl = wx.SpinCtrl
+wx._StaticText = wx.StaticText
+if "gtk3" in wx.PlatformInfo:
+	# GTK3 fixes
+	
+	class SpinCtrl(wx._SpinCtrl):
+
+		_spinwidth = 0
+
+		def __init__(self, parent, id=wx.ID_ANY, value="",
+					 pos=wx.DefaultPosition, size=wx.DefaultSize,
+					 style=wx.SP_ARROW_KEYS, min=0, max=100, initial=0,
+					 name="wxSpinCtrl"):
+			if size[0] != -1:
+				# Adjust initial size for GTK3 to accomodate spin buttons
+				if not SpinCtrl._spinwidth:
+					spin = wx.SpinCtrl(parent, -1)
+					text = wx.TextCtrl(parent, -1)
+					SpinCtrl._spinwidth = spin.Size[0] - text.Size[0] + 11
+					spin.Destroy()
+					text.Destroy()
+				size = size[0] + SpinCtrl._spinwidth, size[1]
+			wx._SpinCtrl.__init__(self, parent, id, value, pos, size, style,
+								  min, max, initial, name)
+
+	wx.SpinCtrl = SpinCtrl
+
+	class StaticText(wx._StaticText):
+
+		def __init__(self, *args, **kwargs):
+			wx._StaticText.__init__(self, *args, **kwargs)
+
+		def SetLabel(self, label):
+			# Fix GTK3 label width on label change
+			self.MaxSize = -1, -1
+			self.MinSize = -1, -1
+			wx.Control.SetLabel(self, label)
+			self.Size = self.GetTextExtent(label)[0], -1
+			self.MaxSize = self.Size[0], -1
+
+		Label = property(lambda self: self.GetLabel(), SetLabel)
+
+	wx.StaticText = StaticText
+
+
 if u"phoenix" in wx.PlatformInfo:
 	# Phoenix compatibility
 
@@ -598,11 +643,106 @@ class GenButton(object):
 			self.DrawFocusIndicator(dc, width, height)
 
 
-class GenBitmapButton(wx.BitmapButton):
+if not "gtk3" in wx.PlatformInfo:
+	# GTK3 doesn't respect NO_BORDER in hovered state when using wx.BitmapButton
+	_GenBitmapButton = wx.BitmapButton
+
+class GenBitmapButton(GenButton, _GenBitmapButton):
 
 	def __init__(self, *args, **kwargs):
-		wx.BitmapButton.__init__(self, *args, **kwargs)
+		GenButton.__init__(self)
+		_GenBitmapButton.__init__(self, *args, **kwargs)
+		self.hover = False
 		set_bitmap_labels(self)
+		if _GenBitmapButton is not wx.BitmapButton:
+			self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
+			self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
+
+	@Property
+	def BitmapFocus():
+		def fget(self):
+			return self.GetBitmapFocus()
+
+		def fset(self, bitmap):
+			self.SetBitmapFocus(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapDisabled():
+		def fget(self):
+			return self.GetBitmapDisabled()
+
+		def fset(self, bitmap):
+			self.SetBitmapDisabled(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapHover():
+		def fget(self):
+			return self.GetBitmapHover()
+
+		def fset(self, bitmap):
+			self.SetBitmapHover(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapSelected():
+		def fget(self):
+			return self.GetBitmapSelected()
+
+		def fset(self, bitmap):
+			self.SetBitmapSelected(self, bitmap)
+
+		return locals()
+
+	@Property
+	def BitmapLabel():
+		def fget(self):
+			return self.GetBitmapLabel()
+
+		def fset(self, bitmap):
+			self.SetBitmapLabel(self, bitmap)
+
+		return locals()
+
+	def DrawLabel(self, dc, width, height, dx=0, dy=0):
+		bmp = self.BitmapLabel
+		if self.BitmapDisabled and not self.IsEnabled():
+			bmp = self.BitmapDisabled
+		elif self.BitmapSelected and not self.up:
+			bmp = self.BitmapSelected
+		elif self.BitmapHover and self.hover:
+			bmp = self.BitmapHover
+		elif self.BitmapFocus and self.hasFocus:
+			bmp = self.BitmapFocus
+		bw, bh = bmp.GetWidth(), bmp.GetHeight()
+		hasMask = bmp.GetMask() != None
+		dc.DrawBitmap(bmp, (width-bw)/2+dx, (height-bh)/2+dy, hasMask)
+
+	def GetBitmapHover(self):
+		return self.bmpHover
+
+	def OnMouseEnter(self, event):
+		if not self.IsEnabled():
+			return
+		if not self.hover:
+			self.hover = True
+			self.Refresh()
+		event.Skip()
+
+	def OnMouseLeave(self, event):
+		if not self.IsEnabled():
+			return
+		if self.hover:
+			self.hover = False
+			self.Refresh()
+		event.Skip()
+
+	def SetBitmapHover(self, bitmap):
+		self.bmpHover = bitmap
 
 
 class ThemedGenButton(GenButton, _ThemedGenButton):

@@ -367,6 +367,8 @@ class FloatSpin(wx.PyControl):
     from Tim Peters.
     """
 
+    _spinwidth = 0
+
     def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=(95,-1), style=0, value=0.0, min_val=None, max_val=None,
                  increment=1.0, digits=-1, agwStyle=FS_LEFT,
@@ -436,7 +438,10 @@ class FloatSpin(wx.PyControl):
             self._text_top = 0
         else:
             # GTK
-            self._gap = -1
+            if "gtk3" in wx.PlatformInfo:
+                self._gap = 1
+            else:
+                self._gap = -1
             self._spin_top = 0
             self._text_left = 0
             self._text_top = 0
@@ -473,6 +478,14 @@ class FloatSpin(wx.PyControl):
                                          wx.SP_WRAP)
         self._spinbutton.SetRange(-2 ** 32 / 2.0, 2 ** 32 / 2.0 - 1)
         self._spinbutton.AcceptsFocusFromKeyboard = lambda: False
+        if "gtk3" in wx.PlatformInfo:
+            if not FloatSpin._spinwidth:
+                spin = wx.SpinCtrl(self, -1)
+                text = wx.TextCtrl(self, -1)
+                FloatSpin._spinwidth = spin.Size[0] - text.Size[0] + 11
+                spin.Destroy()
+                text.Destroy()
+            self._spinbutton.MaxSize = FloatSpin._spinwidth, height
 
         txtstyle = wx.TE_NOHIDESEL | wx.TE_PROCESS_ENTER
 
@@ -509,6 +522,8 @@ class FloatSpin(wx.PyControl):
         # Ensure the spin button is shown, and the text widget takes
         # all remaining free space
         self._mainsizer.Add(self._textctrl, 1)
+        if "gtk3" in wx.PlatformInfo:
+            self._mainsizer.Add((self._gap, 1), 0)
         self._mainsizer.Add(self._spinbutton, 0)
         self.SetSizer(self._mainsizer)
         self._mainsizer.Layout()
@@ -526,7 +541,9 @@ class FloatSpin(wx.PyControl):
         self._spinbutton.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
 
         self.Bind(wx.EVT_SET_FOCUS, self.OnFocus)
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+        if not "gtk3" in wx.PlatformInfo:
+            self.Bind(wx.EVT_SIZE, self.OnSize)
 
         if hasattr(self, "SetBestSize"):
             # Not Phoenix
@@ -1326,6 +1343,33 @@ class FloatSpin(wx.PyControl):
             snap_value = None
 
         return finite, snap_value
+
+
+if wx.VERSION >= (3, ):
+
+    # Use wx.SpinCtrlDouble
+
+    class FloatSpin(wx.SpinCtrlDouble):
+
+        _spinwidth = 0
+
+        def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
+                     size=(95,-1), style=0, value=0.0, min_val=None, max_val=None,
+                     increment=1.0, digits=-1, agwStyle=FS_LEFT,
+                     name="FloatSpin"):
+            if size != (95,-1):
+                if not FloatSpin._spinwidth:
+                    spin = wx.SpinCtrl(parent, -1)
+                    text = wx.TextCtrl(parent, -1)
+                    FloatSpin._spinwidth = spin.Size[0] - text.Size[0] + 11
+                    spin.Destroy()
+                    text.Destroy()
+                size = size[0] + FloatSpin._spinwidth, size[1]
+            wx.SpinCtrlDouble.__init__(self, parent, id, str(value), pos, size,
+                                       style, min_val or 0, max_val or 100,
+                                       value, increment, name)
+            if digits > -1:
+                self.SetDigits(digits)
 
 
 

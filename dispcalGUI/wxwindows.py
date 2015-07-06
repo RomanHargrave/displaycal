@@ -1540,20 +1540,56 @@ class BaseFrame(wx.Frame):
 			if isinstance(child, (wx.StaticText, wx.Control, 
 								  filebrowse.FileBrowseButton,
 								  floatspin.FloatSpin)):
-				if (isinstance(child, wx.Choice) and wx.VERSION < (2, 9) and
-					sys.platform not in ("darwin", "win32") and
+				if (isinstance(child, wx.Choice) and
+					((wx.VERSION < (2, 9) and
+					  sys.platform not in ("darwin", "win32")) or
+					 "gtk3" in wx.PlatformInfo) and
 					child.MinSize[1] == -1):
 					# wx.Choice with wxPython < 2.9 under Gnome 3 Adwaita theme
 					# has varying height. We can't easily check for Gnome 3 or
 					# Adwaita, so simply always set wx.Choice height to
 					# wx.ComboBox height with wxPython < 2.9 under Linux
-					if not hasattr(self, "_comboboxheight"):
+					if not hasattr(BaseFrame, "_comboboxheight"):
 						combobox = wx.ComboBox(self, -1)
-						self._comboboxheight = combobox.Size[1]
+						BaseFrame._comboboxheight = combobox.Size[1]
 						combobox.Destroy()
-					child.MinSize = child.MinSize[0], self._comboboxheight
+					child.MinSize = child.MinSize[0], BaseFrame._comboboxheight
 				elif isinstance(child, wx.BitmapButton):
-					set_bitmap_labels(child)
+					if "gtk3" in wx.PlatformInfo:
+						# GTK3 doesn't respect NO_BORDER in hovered state when
+						# using wx.BitmapButton and looks ugly
+						orig_child = child
+						child = GenBitmapButton(child.Parent, -1, child.BitmapLabel,
+												child.Position, child.MinSize,
+												child.WindowStyle, child.Validator or
+																   wx.DefaultValidator,
+												child.Name)
+						child.BackgroundColour = orig_child.Parent.BackgroundColour
+						child.Enabled = orig_child.Enabled
+						if orig_child.ToolTipString:
+							child.ToolTipString = orig_child.ToolTipString
+						orig_child.ContainingSizer.Replace(orig_child, child)
+						orig_child.Destroy()
+					else:
+						set_bitmap_labels(child)
+				elif (isinstance(child, wx._SpinCtrl) and
+					  not hasattr(child, "_spinwidth") and
+					  "gtk3" in wx.PlatformInfo):
+					if not getattr(wx.SpinCtrl, "_spinwidth", 0):
+						spin = wx.SpinCtrl(self, -1)
+						text = wx.TextCtrl(self, -1)
+						wx.SpinCtrl._spinwidth = spin.Size[0] - text.Size[0] + 11
+						spin.Destroy()
+						text.Destroy()
+					child.MinSize = (child.MinSize[0] + wx.SpinCtrl._spinwidth,
+									 child.MinSize[1])
+				elif (isinstance(child, wx._StaticText) and
+					  "gtk3" in wx.PlatformInfo):
+					if child.__class__.SetLabel is not wx.StaticText.__dict__['SetLabel']:
+						child.__class__.SetLabel = wx.StaticText.__dict__['SetLabel']
+					if child.__class__.Label is not wx.StaticText.__dict__['Label']:
+						child.__class__.Label = property(child.__class__.GetLabel,
+														 child.__class__.SetLabel)
 				child.SetMaxFontSize(11)
 				if sys.platform == "darwin" or debug:
 					# Work around ComboBox issues on Mac OS X
@@ -5121,6 +5157,12 @@ class TwoWaySplitter(FourWaySplitter):
 		self._expandedsize = (400, 400)
 		self._handcursor = wx.StockCursor(wx.CURSOR_HAND)
 		self.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
+		# Redrawing the splitter in FourWaySplitter._RedrawIfHotSensitive
+		# which happens if the mouse enters or leaves the splitter causes blank
+		# windows managed by the splitter under wxGTK if using GTK3.
+		# We are using a custom splitter graphic without 'hot' state, so we can
+		# circumvent this.
+		self.Unbind(wx.EVT_ENTER_WINDOW)
 
 	def _GetSashSize(self):
 		""" Used internally. """
@@ -5249,7 +5291,16 @@ class TwoWaySplitter(FourWaySplitter):
 	
 	def GetSplitSize(self):
 		return self._splitsize
-	
+
+	def OnLeaveWindow(self, event):
+		"""
+		Handles the ``wx.EVT_LEAVE_WINDOW`` event for L{FourWaySplitter}.
+
+		:param `event`: a `wx.MouseEvent` event to be processed.
+		"""
+
+		self.SetCursor(wx.STANDARD_CURSOR)
+
 	def OnLeftDClick(self, event):
 		if not self.IsEnabled():
 			return

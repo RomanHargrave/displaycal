@@ -505,7 +505,7 @@ class LUTCanvas(plot.PlotCanvas):
 		# allow graph to overlap axis lines by adding units to width and height
 		dc.SetClippingRegion(ptx,pty,rectWidth+2,rectHeight+2)
 
-		if sys.platform == "darwin":
+		if sys.platform == "darwin" or "gtk3" in wx.PlatformInfo:
 			color = wx.WHITE
 		else:
 			color = wx.BLACK
