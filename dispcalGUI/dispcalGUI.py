@@ -13181,7 +13181,7 @@ class StartupFrame(wx.Frame):
 		else:
 			# Check if we need to run instrument setup
 			wx.CallAfter(app.frame.check_instrument_setup, check_donation,
-						 (app.frame, snapshot))
+						 (app.frame, VERSION > VERSION_BASE))
 		# If resources are missing, XRC shows an error dialog which immediately
 		# gets hidden when we close ourselves because we are the parent.
 		# Hide instead.
