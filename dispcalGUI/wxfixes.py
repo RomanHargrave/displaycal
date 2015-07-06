@@ -41,59 +41,6 @@ if not hasattr(platebtn, "PB_STYLE_DROPARROW"):
 	platebtn.PB_STYLE_DROPARROW = 16
 
 
-wx._SpinCtrl = wx.SpinCtrl
-wx._StaticText = wx.StaticText
-if "gtk3" in wx.PlatformInfo:
-	# GTK3 fixes
-	
-	class SpinCtrl(wx._SpinCtrl):
-
-		_spinwidth = 0
-
-		def __init__(self, parent, id=wx.ID_ANY, value="",
-					 pos=wx.DefaultPosition, size=wx.DefaultSize,
-					 style=wx.SP_ARROW_KEYS, min=0, max=100, initial=0,
-					 name="wxSpinCtrl"):
-			if size[0] != -1:
-				# Adjust initial size for GTK3 to accomodate spin buttons
-				if not SpinCtrl._spinwidth:
-					spin = wx.SpinCtrl(parent, -1)
-					text = wx.TextCtrl(parent, -1)
-					SpinCtrl._spinwidth = spin.Size[0] - text.Size[0] + 11
-					spin.Destroy()
-					text.Destroy()
-				size = size[0] + SpinCtrl._spinwidth, size[1]
-			wx._SpinCtrl.__init__(self, parent, id, value, pos, size, style,
-								  min, max, initial, name)
-
-	wx.SpinCtrl = SpinCtrl
-
-	class StaticText(wx._StaticText):
-
-		def __init__(self, *args, **kwargs):
-			wx._StaticText.__init__(self, *args, **kwargs)
-
-		def SetFont(self, font):
-			wx.Control.SetFont(self, font)
-			self.SetLabel(self.Label)
-
-		def SetLabel(self, label):
-			# Fix GTK3 label width on label change
-			self.MaxSize = -1, -1
-			self.MinSize = -1, -1
-			wx.Control.SetLabel(self, label)
-			self.Size = self.GetTextExtent(label)[0], -1
-			self.MaxSize = self.Size[0], -1
-
-		def Wrap(self, width):
-			wx._StaticText.Wrap(self, width)
-			self.SetLabel(self.Label)
-
-		Label = property(lambda self: self.GetLabel(), SetLabel)
-
-	wx.StaticText = StaticText
-
-
 if u"phoenix" in wx.PlatformInfo:
 	# Phoenix compatibility
 
@@ -229,6 +176,134 @@ if u"phoenix" in wx.PlatformInfo:
 		self.Create(parent, size=(0, 0))
 
 	aui.TabFrame.__init__ = TabFrame__init__
+
+
+wx._ListCtrl = wx.ListCtrl
+wx._SpinCtrl = wx.SpinCtrl
+wx._StaticText = wx.StaticText
+if "gtk3" in wx.PlatformInfo:
+	# GTK3 fixes
+	from wx import dataview
+	DataViewListCtrl = dataview.DataViewListCtrl
+
+	class ListCtrl(DataViewListCtrl):
+
+		# Implement ListCtrl as DataViewListCtrl
+		# Works around header rendering ugliness with GTK3
+
+		def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
+					 size=wx.DefaultSize, style=wx.LC_ICON,
+					 validator=wx.DefaultValidator, name=wx.ListCtrlNameStr):
+			dv_style = 0
+			if style & wx.LC_SINGLE_SEL:
+				dv_style |= dataview.DV_SINGLE
+			DataViewListCtrl.__init__(self, parent, id, pos, size, dv_style,
+									  validator)
+			self._columns = {}
+			self._items = {}
+			self.Bind(dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.OnEvent)
+			self.Bind(dataview.EVT_DATAVIEW_ITEM_ACTIVATED, self.OnEvent)
+
+		def OnEvent(self, event):
+			typeId = event.GetEventType()
+			if typeId == dataview.EVT_DATAVIEW_SELECTION_CHANGED.typeId:
+				if self.GetSelectedRow() != wx.NOT_FOUND:
+					typeId = wx.EVT_LIST_ITEM_SELECTED.typeId
+				else:
+					typeId = wx.EVT_LIST_ITEM_DESELECTED.typeId
+				event = wx.ListEvent(typeId, self.Id)
+			elif typeId == dataview.EVT_DATAVIEW_ITEM_ACTIVATED.typeId:
+				event = wx.ListEvent(wx.EVT_LIST_ITEM_ACTIVATED.typeId, self.Id)
+			event.SetEventObject(self)
+			self.GetEventHandler().ProcessEvent(event)
+
+		def InsertColumn(self, pos, col):
+			self._columns[pos] = col
+
+		def SetColumnWidth(self, pos, width):
+			self.AppendTextColumn(self._columns[pos], width=width)
+
+		def InsertStringItem(self, row, label):
+			self._items[row] = []
+			return row
+
+		def SetStringItem(self, row, col, label):
+			self._items[row].append(label)
+			if len(self._items[row]) == len(self._columns):
+				# Row complete
+				DataViewListCtrl.InsertItem(self, row, self._items[row])
+
+		def GetItem(self, row, col=0):
+			item = self.RowToItem(row)
+			item.GetId = lambda: row
+			return item
+
+		def SetItemState(self, row, state, stateMask):
+			if state == stateMask == wx.LIST_STATE_SELECTED:
+				self.SelectRow(row)
+			else:
+				raise NotImplementedError("SetItemState is only implemented for "
+										  "selecting a single row")
+
+		def GetNextItem(self, row, geometry=wx.LIST_NEXT_ALL,
+						state=wx.LIST_STATE_DONTCARE):
+			if (row == -1 and geometry == wx.LIST_NEXT_ALL and
+				state == wx.LIST_STATE_SELECTED):
+				return self.GetSelectedRow()
+			else:
+				raise NotImplementedError("GetNextItem is only implemented for "
+										  "returning the selected row")
+
+	wx.ListCtrl = ListCtrl
+
+	class SpinCtrl(wx._SpinCtrl):
+
+		_spinwidth = 0
+
+		def __init__(self, parent, id=wx.ID_ANY, value="",
+					 pos=wx.DefaultPosition, size=wx.DefaultSize,
+					 style=wx.SP_ARROW_KEYS, min=0, max=100, initial=0,
+					 name="wxSpinCtrl"):
+			if size[0] != -1:
+				# Adjust initial size for GTK3 to accomodate spin buttons
+				if not SpinCtrl._spinwidth:
+					spin = wx.SpinCtrl(parent, -1)
+					text = wx.TextCtrl(parent, -1)
+					SpinCtrl._spinwidth = spin.Size[0] - text.Size[0] + 11
+					spin.Destroy()
+					text.Destroy()
+				size = size[0] + SpinCtrl._spinwidth, size[1]
+			wx._SpinCtrl.__init__(self, parent, id, value, pos, size, style,
+								  min, max, initial, name)
+
+	wx.SpinCtrl = SpinCtrl
+
+	class StaticText(wx._StaticText):
+
+		def __init__(self, *args, **kwargs):
+			wx._StaticText.__init__(self, *args, **kwargs)
+
+		def SetFont(self, font):
+			wx.Control.SetFont(self, font)
+			self.SetLabel(self.Label)
+
+		def SetLabel(self, label):
+			# Fix GTK3 label width on label change
+			if not self.WindowStyle & wx.ST_NO_AUTORESIZE:
+				self.MaxSize = -1, -1
+				self.MinSize = -1, -1
+			wx.Control.SetLabel(self, label)
+			if not self.WindowStyle & wx.ST_NO_AUTORESIZE:
+				self.Size = self.GetTextExtent(label)[0], -1
+				self.MaxSize = self.Size[0], -1
+
+		def Wrap(self, width):
+			wx._StaticText.Wrap(self, width)
+			self.SetLabel(self.Label)
+
+		Label = property(lambda self: self.GetLabel(), SetLabel)
+
+	wx.StaticText = StaticText
 
 
 def Property(func):
