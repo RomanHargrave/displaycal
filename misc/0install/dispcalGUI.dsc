@@ -1,3 +1,4 @@
+Standards-Version: 3.9.6.1
 Debtransform-Tar: ${PACKAGE}-${VERSION}.tar.gz
 Format: 1.0
 Source: ${DEBPACKAGE}-0install
