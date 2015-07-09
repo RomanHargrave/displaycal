@@ -1138,19 +1138,18 @@ class LUTFrame(BaseFrame):
 			if isinstance(tmp, Exception):
 				show_result_dialog(tmp, self)
 				return
-			cmd, args = (get_argyll_util("dispwin"), 
-						 ["-d" + self.worker.get_display(), "-s", 
-						  os.path.join(tmp, 
+			outfilename = os.path.join(tmp, 
 									   re.sub(r"[\\/:*?\"<>|]+",
 											  "",
 											  make_argyll_compatible_path(
 												config.get_display_name(
 													include_geometry=True) or 
-												"Video LUT")))])
-			result = self.worker.exec_cmd(cmd, args, capture_output=True, 
-										  skip_scripts=True, silent=not __name__ == "__main__")
+												"Video LUT")))
+			result = self.worker.save_current_video_lut(self.worker.get_display(),
+														outfilename,
+														silent=not __name__ == "__main__")
 			if not isinstance(result, Exception) and result:
-				profile = cal_to_fake_profile(args[-1])
+				profile = cal_to_fake_profile(outfilename)
 			else:
 				if isinstance(result, Exception):
 					safe_print(result)

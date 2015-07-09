@@ -2904,15 +2904,9 @@ class Worker(object):
 						# Save current calibration?
 						if tmp:
 							current_cal = os.path.join(tmp, "current.cal")
-							if (self.argyll_version[0:3] > [1, 1, 0] or
-								(self.argyll_version[0:3] == [1, 1, 0] and
-								 not "Beta" in self.argyll_version_string)):
-								args = ["-d%s" % (i +1), "-s", 
-										current_cal]
-								result = self.exec_cmd(dispwin, args,
-													   capture_output=True, 
-													   skip_scripts=True,
-													   silent=True)
+							result = self.save_current_video_lut(i + 1,
+																 current_cal,
+																 silent=True)
 						# Load test.cal
 						result = self.exec_cmd(dispwin, ["-d%s" % (i +1), "-c", 
 														 test_cal], 
@@ -7066,42 +7060,12 @@ usage: spotread [-options] [logfile]
 								   getcfg("profile.name.expanded"), 
 								   getcfg("profile.name.expanded")) + ".cal"
 			elif apply_calibration is None:
-				result = None
-				if self.argyll_version >= [1, 1, 0]:
-					cal = inoutfile + ".cal"
-					cmd, args = (get_argyll_util("dispwin"), 
-								 ["-d" + self.get_display(), "-s", cal])
-					result = self.exec_cmd(cmd, args, capture_output=True, 
-										   skip_scripts=True, silent=False)
-					if (isinstance(result, Exception) and
-						not isinstance(result, UnloggedInfo)):
-						return result, None
-				if not result:
-					return Error(lang.getstr("calibration.load_error")), None
-				# Make sure it's 256 entries (e.g. Mac OS X 10.9 has 1024)
-				cgats = CGATS.CGATS(cal)
-				data = cgats.queryv1("DATA")
-				sets = cgats.queryv1("NUMBER_OF_SETS")
-				if data and sets != 256:
-					rgb = {"I": [], "R": [], "G": [], "B": []}
-					for entry in data.itervalues():
-						for column in ("I", "R", "G", "B"):
-							rgb[column].append(entry["RGB_" + column])
-					interp = {}
-					for column in ("R", "G", "B"):
-						interp[column] = colormath.Interp(rgb["I"], rgb[column])
-					resized = CGATS.CGATS()
-					data.parent.DATA = resized
-					resized.key = 'DATA'
-					resized.parent = data.parent
-					resized.root = cgats
-					resized.type = 'DATA'
-					for i in xrange(256):
-						entry = {"RGB_I": i / 255.0}
-						for column in ("R", "G", "B"):
-							entry["RGB_" + column] = interp[column](entry["RGB_I"])
-						resized.add_data(entry)
-					cgats.write()
+				# Use current videoLUT
+				cal = inoutfile + ".cal"
+				result = self.save_current_video_lut(self.get_display(), cal)
+				if (isinstance(result, Exception) and
+					not isinstance(result, UnloggedInfo)):
+					return result, None
 			else:
 				cal = apply_calibration # can be .cal or .icc / .icm
 			calcopy = inoutfile + ".cal"
@@ -7734,6 +7698,54 @@ usage: spotread [-options] [logfile]
 					return True
 			sleep(.25)
 		return False
+
+	def save_current_video_lut(self, display_no, outfilename,
+							   interpolate_to_256=True, silent=False):
+		""" Save current videoLUT, optionally interpolating to n entries """
+		result = None
+		if (self.argyll_version[0:3] > [1, 1, 0] or
+			(self.argyll_version[0:3] == [1, 1, 0] and
+			 not "Beta" in self.argyll_version_string)):
+			cmd, args = (get_argyll_util("dispwin"),
+						 ["-d%s" % display_no, "-s", outfilename])
+			result = self.exec_cmd(cmd, args, capture_output=True, 
+								   skip_scripts=True, silent=silent)
+			if (isinstance(result, Exception) and
+				not isinstance(result, UnloggedInfo)):
+				return result
+		if not result:
+			return Error(lang.getstr("calibration.load_error"))
+		# Make sure there are 256 entries in the .cal file, otherwise dispwin
+		# will complain and not be able to load it back in.
+		# Under Windows, the GetDeviceGammaRamp API seems to enforce 256 entries
+		# regardless of graphics card, but under Linux and Mac OS X there may be
+		# more than 256 entries if the graphics card has greater than 8 bit
+		# videoLUTs (e.g. Quadro and newer consumer cards)
+		cgats = CGATS.CGATS(outfilename)
+		data = cgats.queryv1("DATA")
+		if data and len(data) != 256:
+			safe_print("VideoLUT has %i entries, interpolating to 256" %
+					   len(data))
+			rgb = {"I": [], "R": [], "G": [], "B": []}
+			for entry in data.itervalues():
+				for column in ("I", "R", "G", "B"):
+					rgb[column].append(entry["RGB_" + column])
+			interp = {}
+			for column in ("R", "G", "B"):
+				interp[column] = colormath.Interp(rgb["I"], rgb[column])
+			resized = CGATS.CGATS()
+			data.parent.DATA = resized
+			resized.key = 'DATA'
+			resized.parent = data.parent
+			resized.root = cgats
+			resized.type = 'DATA'
+			for i in xrange(256):
+				entry = {"RGB_I": i / 255.0}
+				for column in ("R", "G", "B"):
+					entry["RGB_" + column] = interp[column](entry["RGB_I"])
+				resized.add_data(entry)
+			cgats.write()
+		return result
 	
 	def set_argyll_version(self, name, silent=False, cfg=False):
 		self.set_argyll_version_from_string(get_argyll_version_string(name,
