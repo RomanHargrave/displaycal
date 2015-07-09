@@ -2300,6 +2300,15 @@ Troy Sobotka</span></p>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Make sure there are exactly 256 entries when saving the current videoLUT, otherwise dispwin will complain and not be able to load it back in. Fixes restoring current videoLUT after checking access under Linux when using a graphics card with more than 256 videoLUT entries per channel (e.g. nVidia Quadro).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0.3">2015-07-06 22:58 (UTC) 3.0.3 </dt>
+					<dd>
+						<h3>3.0.3 </h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Curve viewer and profile information: Detect more known tone response curves.</li>
