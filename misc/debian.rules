@@ -5,9 +5,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-# This is the debhelper compatibility version to use.
-export DH_COMPAT=4
-
 export DH_PYCENTRAL=include-links dh_pycentral
 
 CFLAGS = -g
@@ -26,6 +23,8 @@ export python_version=`python -c "import sys;print sys.version[:3]"`
 export install_lib=`python -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)"`
 
 build: build-stamp
+build-arch: build-stamp
+build-indep: build-stamp
 build-stamp:
 	dh_testdir
 
@@ -54,7 +53,7 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs
 
 	# Add here commands to install the package

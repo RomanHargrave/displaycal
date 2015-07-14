@@ -1,4 +1,4 @@
-${DEBPACKAGE} (${VERSION}) stable; urgency=low
+${DEBPACKAGE} (${VERSION}-1) stable; urgency=low
 
   * Version ${VERSION}
 

@@ -597,6 +597,7 @@ def setup():
 			with open(tgz, "rb") as tgzfile:
 				mapping["MD5"] = md5(tgzfile.read()).hexdigest()
 		for tmpl_name in ("PKGBUILD", "debian.changelog", "debian.control",
+						  "debian.copyright",
 						  "debian.rules", "dispcalGUI.changes",
 						  "dispcalGUI.dsc", "dispcalGUI.spec", 
 						  os.path.join("0install", "PKGBUILD"),

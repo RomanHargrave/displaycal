@@ -28,7 +28,6 @@ Name:           ${PACKAGE}
 Version:        ${VERSION}
 Release:        0
 Source0:        ${URL}download/%{name}-%version.tar.gz
-Source1:        copyright
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Requires:       p7zip

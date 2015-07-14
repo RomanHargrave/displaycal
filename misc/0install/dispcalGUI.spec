@@ -28,7 +28,6 @@ Name:           ${PACKAGE}-0install
 Version:        ${VERSION}
 Release:        0
 Source0:        ${URL}download/${PACKAGE}-%version.tar.gz
-Source1:        copyright
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch

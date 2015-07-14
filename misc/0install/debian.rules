@@ -5,23 +5,15 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-# This is the debhelper compatibility version to use.
-export DH_COMPAT=4
-
 export DH_PYCENTRAL=include-links dh_pycentral
-
-CFLAGS = -g
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-CFLAGS += -O0
-else
-CFLAGS += -O2
-endif
 
 # The DESTDIR Has To Be Exactly  /usr/src/packages/BUILD/debian/<nameOfPackage>
 export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}-0install
 export python_version=`python -c "import sys;print sys.version[:3]"`
 
 build: build-stamp
+build-arch: build-stamp
+build-indep: build-stamp
 build-stamp:
 	dh_testdir
 
@@ -35,7 +27,6 @@ clean:
 	rm -f build-stamp
 
 	# Add here commands to clean up after the build process.
-	make clean || true
 	# --- end custom part for cleaning up
 
 	dh_clean
@@ -43,19 +34,18 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs
 
 	# Add here commands to install the package
 	PYTHONPATH=. python${python_version} util/0install_desktop.py "${DEB_BUILD_ROOT}/usr/share"
 	# --- end custom part for installing
 
+# Build architecture-dependent files here.
+binary-arch:
+
 # Build architecture-independent files here.
 binary-indep: build install
-	# We have nothing to do by default.
-
-# Build architecture-dependent files here.
-binary-arch: build install
 	dh_testdir
 	dh_testroot
 #	dh_installdebconf

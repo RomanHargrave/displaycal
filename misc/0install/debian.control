@@ -7,7 +7,7 @@ XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
 Package: ${DEBPACKAGE}-0install
 Architecture: all
-Depends: ${shlibs:Depends}, ${python:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), python-pygame, libxss1, p7zip, zeroinstall-injector
+Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), python-pygame, libxss1, p7zip, zeroinstall-injector
 Conflicts: ${DEBPACKAGE}
 Replaces: ${DEBPACKAGE}
 Recommends: argyll

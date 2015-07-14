@@ -2,7 +2,7 @@ Standards-Version: 3.9.6.1
 Debtransform-Tar: ${PACKAGE}-${VERSION}.tar.gz
 Format: 1.0
 Source: ${DEBPACKAGE}-0install
-Version: ${VERSION}
+Version: ${VERSION}-1
 Binary: ${DEBPACKAGE}-0install
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Architecture: all
