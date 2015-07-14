@@ -1,7 +1,13 @@
+body {
+	border-top: 12px solid #6c0;
+	padding: 48px 0;
+}
 h1 {
 	height: auto;
+	margin-left: auto;
+	margin-right: auto;
 	padding-left: 0;
-	width: 100%;
+	width: 720px;
 }
 h1:after {
 	content: ".";
@@ -12,7 +18,7 @@ h1:after {
 	height: 0;
 }
 h1 {
-	display: inline-block;
+	display: block;
 }
 html[xmlns] h1 {
 	display: block;
