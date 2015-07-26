@@ -336,6 +336,8 @@ class LUT3DFrame(BaseFrame):
 			self.Parent.lut3d_update_shared_controls()
 	
 	def lut3d_bitdepth_output_ctrl_handler(self, event):
+		if self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()] not in (8, 16):
+			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[8])
 		self.lut3d_set_option("3dlut.bitdepth.output",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
 		if getattr(self, "lut3dframe", None):
@@ -592,6 +594,10 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
 			self.lut3d_set_option("3dlut.size", 65)
+		elif format == "png":
+			if getcfg("3dlut.bitdepth.output") not in (8, 16):
+				self.lut3d_set_option("3dlut.bitdepth.output", 8)
+				self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[8])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_setup_encoding_ctrl()
 		self.lut3d_update_encoding_controls()
@@ -1092,7 +1098,7 @@ class LUT3DFrame(BaseFrame):
 		input_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_show)
 		self.lut3d_bitdepth_input_ctrl.Show(input_show)
-		output_show = show and getcfg("3dlut.format") == "3dl"
+		output_show = show and getcfg("3dlut.format") in ("3dl", "png")
 		self.lut3d_bitdepth_output_label.Show(output_show)
 		self.lut3d_bitdepth_output_ctrl.Show(output_show)
 		if isinstance(self, LUT3DFrame):

@@ -54,6 +54,7 @@ import audio
 import colormath
 import config
 import defaultpaths
+import imfile
 import localization as lang
 import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
@@ -2506,7 +2507,8 @@ class Worker(object):
 		RGB_triplet = [0.0, 0.0, 0.0]
 		RGB_index = [0, 0, 0]
 		# Set the fastest and slowest changing columns, from right to left
-		if format in ("3dl", "mga", "spi3d"):
+		if (format in ("3dl", "mga", "spi3d") or
+			(format == "png" and getcfg("3dlut.image.order") == "bgr")):
 			columns = (0, 1, 2)
 		elif format == "eeColor":
 			columns = (2, 0, 1)
@@ -2541,7 +2543,7 @@ class Worker(object):
 					RGB_in.append(RGB_copy)
 					RGB_indexes.append(list(RGB_index))
 
-		# Lookup RGB -> XYZ values through devicelink profile using icclu
+		# Lookup RGB -> RGB values through devicelink profile using icclu
 		# (Using icclu instead of xicclu because xicclu in versions
 		# prior to Argyll CMS 1.6.0 could not deal with devicelink profiles)
 		RGB_out = self.xicclu(link_filename, RGB_in, use_icclu=True)
@@ -2552,9 +2554,10 @@ class Worker(object):
 		if isinstance(result, Exception):
 			raise result
 
-		lut = [["# Created with %s %s" % (appname, version)]]
-		valsep = " "
-		linesep = "\n"
+		if format != "png":
+			lut = [["# Created with %s %s" % (appname, version)]]
+			valsep = " "
+			linesep = "\n"
 		if format == "3dl":
 			if maxval is None:
 				maxval = 1023
@@ -2628,14 +2631,42 @@ class Worker(object):
 				for component in (0, 1, 2):
 					lut[-1].append(("%i" % int(round(RGB_triplet[component] * maxval))))
 			valsep = "\t"
-		lut.append([])
-		for i, line in enumerate(lut):
-			lut[i] = valsep.join(line)
-		result = linesep.join(lut)
+		elif format == "png":
+			lut = [[]]
+			if output_bits > 8:
+				# PNG only supports 8 and 16 bit
+				output_bits = 16
+			maxval = 2 ** output_bits - 1
+			for RGB_triplet in RGB_out:
+				if len(lut[-1]) == size:
+					# Append new scanline
+					lut.append([])
+				lut[-1].append([int(round(v * maxval)) for v in RGB_triplet])
+			# Current layout is vertical
+			if getcfg("3dlut.image.layout") == "h":
+				# Change layout to horizontal
+				lutv = lut
+				lut = [[]]
+				for i in xrange(size):
+					if len(lut[-1]) == size ** 2:
+						# Append new scanline
+						lut.append([])
+					for j in xrange(size):
+						lut[-1].extend(lutv[i + size * j])
+
+		if format != "png":
+			lut.append([])
+			for i, line in enumerate(lut):
+				lut[i] = valsep.join(line)
+			result = linesep.join(lut)
 
 		# Write 3DLUT
 		lut_file = open(path, "wb")
-		lut_file.write(result)
+		if format != "png":
+			lut_file.write(result)
+		else:
+			im = imfile.Image(lut, output_bits)
+			im.write(lut_file)
 		lut_file.close()
 
 		if isinstance(result2, Exception):
