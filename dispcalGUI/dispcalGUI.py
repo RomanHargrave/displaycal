@@ -3199,7 +3199,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if ccmx[0] == "AUTO":
 			if len(ccmx) < 2:
 				ccmx.append("")
-			display_name = self.worker.get_display_name(False, True)
+			display_name = self.worker.get_display_name(False, True, False)
 			if self.worker.instrument_supports_ccss():
 				# Prefer CCSS
 				ccmx[1] = self.ccmx_mapping.get("\0%s" % display_name, "")

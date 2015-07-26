@@ -4739,7 +4739,8 @@ while 1:
 			return self.display_edid[n]
 		return {}
 	
-	def get_display_name(self, prepend_manufacturer=False, prefer_edid=False):
+	def get_display_name(self, prepend_manufacturer=False, prefer_edid=False,
+						 remove_manufacturer=True):
 		""" Return name of currently configured display """
 		n = getcfg("display.number") - 1
 		if n >= 0 and n < len(self.display_names):
@@ -4762,7 +4763,7 @@ while 1:
 				if prepend_manufacturer:
 					if manufacturer.lower() not in display_name.lower():
 						display.append(manufacturer)
-				else:
+				elif remove_manufacturer:
 					start = display_name.lower().find(manufacturer.lower())
 					if start > -1:
 						display_name = (display_name[:start] +
