@@ -116,7 +116,8 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					get_argyll_version, get_current_profile_path,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path, parse_argument_string,
-					set_argyll_bin, show_result_dialog, technology_strings)
+					set_argyll_bin, show_result_dialog, technology_strings_170,
+					technology_strings_171)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -9134,6 +9135,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		args = []
 		tech = {"YES": "Unknown"}.get(reference_ti3.queryv1("DISPLAY_TYPE_REFRESH"),
 									  "LCD")
+		if self.worker.argyll_version >= [1, 7, 1]:
+			technology_strings = technology_strings_171
+		else:
+			technology_strings = technology_strings_170
 		if event:
 			# Allow user to alter description, display and instrument
 			dlg = ConfirmDialog(

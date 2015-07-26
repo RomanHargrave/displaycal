@@ -135,9 +135,15 @@ keycodes = {wx.WXK_NUMPAD0: ord("0"),
 			wx.WXK_NUMPAD_SUBTRACT: ord("-")}
 
 
-technology_strings = JSONDict()
-technology_strings["u"] = "Unknown"
-technology_strings.path = "technology_strings.json"
+technology_strings_170 = JSONDict()
+technology_strings_170["u"] = "Unknown"
+technology_strings_170.path = "technology_strings-1.7.0.json"
+
+# Argyll 1.7.1 fixes the technology type and display type selector
+# "uniqueification" bug and thus uses different technology selectors
+technology_strings_171 = JSONDict()
+technology_strings_171["u"] = "Unknown"
+technology_strings_171.path = "technology_strings-1.7.1.json"
 
 workers = []
 
@@ -4985,6 +4991,10 @@ usage: spotread [-options] [logfile]
  -D [level]           Print debug diagnostics to stderr
  logfile              Optional file to save reading results as text""".splitlines())
 				measurement_modes_follow = False
+				if self.argyll_version >= [1, 7, 1]:
+					technology_strings = technology_strings_171
+				else:
+					technology_strings = technology_strings_170
 				for line in self.output:
 					line = line.strip()
 					if line.startswith("-y "):
