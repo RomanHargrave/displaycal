@@ -6793,7 +6793,7 @@ usage: spotread [-options] [logfile]
 					elif cfgname == "3dlut.trc_gamma":
 						if getcfg("3dlut.trc_gamma_type") == "B":
 							value = -value
-					ti3[0].add_keyword(keyword, value)
+					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 			data = ti3[0].get("DATA")
 			if len(color_rep) == 2 and data:
 				# Check for XYZ/Lab = 0 readings
