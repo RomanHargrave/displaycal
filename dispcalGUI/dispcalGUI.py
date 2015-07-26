@@ -11922,18 +11922,24 @@ class MainFrame(ReportFrame, BaseFrame):
 	def check_instrument_setup(self, callafter=None, callafter_args=()):
 		# Check if we should import colorimeter corrections
 		# or do other instrument specific setup
-		ccmx_instruments = self.ccmx_instruments.itervalues()
-		i1d3 = ("i1 DisplayPro, ColorMunki Display" in
-				self.worker.instruments and
-				not "" in ccmx_instruments)
-		icd = (("DTP94" in self.worker.instruments and
-				not "DTP94" in ccmx_instruments) or
-			   ("i1 Display 2" in self.worker.instruments and
-				not "i1 Display 2" in ccmx_instruments) or
-			   ("Spyder2" in self.worker.instruments and
-				not "Spyder2" in ccmx_instruments) or
-			   ("Spyder3" in self.worker.instruments and
-				not "Spyder3" in ccmx_instruments))
+		if getcfg("colorimeter_correction_matrix_file") in ("AUTO:", ""):
+			# Check for applicable corrections
+			ccmx_instruments = self.ccmx_instruments.itervalues()
+			i1d3 = ("i1 DisplayPro, ColorMunki Display" in
+					self.worker.instruments and
+					not "" in ccmx_instruments)
+			icd = (("DTP94" in self.worker.instruments and
+					not "DTP94" in ccmx_instruments) or
+				   ("i1 Display 2" in self.worker.instruments and
+					not "i1 Display 2" in ccmx_instruments) or
+				   ("Spyder2" in self.worker.instruments and
+					not "Spyder2" in ccmx_instruments) or
+				   ("Spyder3" in self.worker.instruments and
+					not "Spyder3" in ccmx_instruments))
+		else:
+			# Already using a suitable correction
+			i1d3 = False
+			icd = False
 		spyd2 = ("Spyder2" in self.worker.instruments and
 				 not self.worker.spyder2_firmware_exists())
 		spyd4 = (("Spyder4" in self.worker.instruments or
