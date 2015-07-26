@@ -2404,12 +2404,8 @@ class Worker(object):
 										collink_version >= [1, 7])) and
 									  not test) or
 									 format == "madVR"))
-			if is_argyll_lut_format:
-				rsize = size
-			else:
-				rsize = 65
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
-					"-r%i" % rsize, "-n"]
+					"-r%i" % size, "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args.extend(["-p", "abstract.icc"])
