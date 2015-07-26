@@ -78,7 +78,14 @@ def installer(action="install"):
 			except Exception, exception:
 				import warnings
 				warnings.warn(exception, Warning)
-	call(["touch", "--no-create", prefix + "/share/icons/hicolor"])
+	if os.geteuid() == 0:
+		data_dirs = os.getenv("XDG_DATA_DIRS", 
+							  "/usr/local/share:/usr/share").split(os.pathsep)
+	else:
+		data_dirs = os.getenv("XDG_DATA_HOME",
+							  os.path.expandvars("$HOME/.local/share")).split(os.pathsep)
+	for data_dir in data_dirs:
+		call(["touch", "--no-create", data_dir.rstrip("/") + "/icons/hicolor"])
 	call(["xdg-icon-resource", "forceupdate"])
 	call(["xdg-desktop-menu", "forceupdate"])
 
