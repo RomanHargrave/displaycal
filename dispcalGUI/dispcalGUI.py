@@ -125,6 +125,7 @@ except ImportError:
 	LUTFrame = None
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
+from wxDisplayUniformityFrame import DisplayUniformityFrame
 from wxProfileInfo import ProfileInfoFrame
 from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
@@ -5088,7 +5089,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if result != wx.ID_OK:
 			return
 		if isinstance(getattr(self.worker, "terminal", None),
-					  worker.DisplayUniformityFrame):
+					  DisplayUniformityFrame):
 			self.worker.terminal.Destroy()
 			self.worker.terminal = None
 		self.HideAll()
