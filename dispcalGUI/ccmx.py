@@ -80,8 +80,10 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 	skipped = 0
 	for name, devcorrection in devcorrections.iteritems():
 		values = {'DateTime': time.strftime('%a %b %d %H:%M:%S %Y'),
-				  'Originator': "Quato iColorDisplay"}
-		for key in ('Name', 'Device', 'Display', 'ReferenceDevice', 'MatrixXYZ'):
+				  'Originator': "Quato iColorDisplay",
+				  'Name': "%s & %s" % (devcorrection.get("Device"),
+									   devcorrection.get("Display"))}
+		for key in ('Device', 'Display', 'ReferenceDevice', 'MatrixXYZ'):
 			value = devcorrection.get(key)
 			if value is None:
 				break
