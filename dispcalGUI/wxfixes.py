@@ -747,7 +747,7 @@ class GenButton(object):
 		dc = wx.PaintDC(self)
 		brush = self.GetBackgroundBrush(dc)
 		if brush is not None:
-			brush.SetColour(self.BackgroundColour)
+			brush.SetColour(self.Parent.BackgroundColour)
 			dc.SetBackground(brush)
 			dc.Clear()
 
