@@ -187,6 +187,8 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 	if resp is False:
 		return
 	data = resp.read()
+	if not wx.GetApp():
+		return
 	try:
 		newversion_tuple = tuple(int(n) for n in data.split("."))
 	except ValueError:
@@ -220,6 +222,8 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 				chglog = re.sub('<sup><a .+?>.+?</a></sup>', "", chglog)
 				chglog = re.sub('<a (?:.+? )?href="#[^"]+">(.+?)</a>', "\\1",
 								chglog)
+		if not wx.GetApp():
+			return
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
 					 snapshot)
 	elif not snapshot and VERSION > VERSION_BASE:
