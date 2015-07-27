@@ -5069,8 +5069,10 @@ class MainFrame(ReportFrame, BaseFrame):
 							bitmap=geticon(32, "dialog-information"))
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Add(sizer, flag=wx.TOP, border=12)
-		cols = wx.Choice(dlg, -1, choices=["3", "5", "7", "9"])
-		rows = wx.Choice(dlg, -1, choices=["3", "5", "7", "9"])
+		cols = wx.Choice(dlg, -1,
+						 choices=map(str, config.valid_values["uniformity.cols"]))
+		rows = wx.Choice(dlg, -1,
+						 choices=map(str, config.valid_values["uniformity.rows"]))
 		cols.SetStringSelection(str(getcfg("uniformity.cols")))
 		rows.SetStringSelection(str(getcfg("uniformity.rows")))
 		sizer.Add(cols, flag=wx.ALIGN_CENTER_VERTICAL)
