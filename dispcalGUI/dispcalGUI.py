@@ -13341,7 +13341,7 @@ class StartupFrame(wx.Frame):
 		return True, False
 
 	def SetWindowShape(self, *evt):
-		r = wx.RegionFromBitmap(self.mask_bmp)
+		r = wx.RegionFromBitmapColour(self.mask_bmp, wx.BLACK)
 		self.hasShape = self.SetShape(r)
 
 	UpdatePulse = Pulse
