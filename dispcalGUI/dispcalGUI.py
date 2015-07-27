@@ -5062,6 +5062,35 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def measure_uniformity_handler(self, event):
 		""" Start measuring display device uniformity """
+		dlg = ConfirmDialog(self, msg=lang.getstr("patch.layout.select"),
+							ok=lang.getstr("ok"), 
+							cancel=lang.getstr("cancel"), 
+							bitmap=geticon(32, "dialog-information"))
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		dlg.sizer3.Add(sizer, flag=wx.TOP, border=12)
+		cols = wx.Choice(dlg, -1, choices=["3", "5", "7", "9"])
+		rows = wx.Choice(dlg, -1, choices=["3", "5", "7", "9"])
+		cols.SetStringSelection(str(getcfg("uniformity.cols")))
+		rows.SetStringSelection(str(getcfg("uniformity.rows")))
+		sizer.Add(cols, flag=wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(wx.StaticText(dlg, -1, "x"), flag=wx.LEFT | wx.RIGHT |
+													wx.ALIGN_CENTER_VERTICAL,
+								border=4)
+		sizer.Add(rows, flag=wx.ALIGN_CENTER_VERTICAL)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		dlg.ok.SetDefault()
+		result = dlg.ShowModal()
+		if result == wx.ID_OK:
+			setcfg("uniformity.cols", int(cols.GetStringSelection()))
+			setcfg("uniformity.rows", int(rows.GetStringSelection()))
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		if isinstance(getattr(self.worker, "terminal", None),
+					  worker.DisplayUniformityFrame):
+			self.worker.terminal.Destroy()
+			self.worker.terminal = None
 		self.HideAll()
 		self.worker.interactive = True
 		self.worker.start(self.measure_uniformity_consumer,

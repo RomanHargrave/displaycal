@@ -112,11 +112,11 @@
       <object class="wxMenuItem" name="calibration.verify">
         <label>calibration.verify</label>
       </object>
-      <object class="wxMenuItem" name="measurement_report.update">
-        <label>measurement_report.update</label>
-      </object>
       <object class="wxMenuItem" name="report.uniformity">
         <label>report.uniformity</label>
+      </object>
+      <object class="wxMenuItem" name="measurement_report.update">
+        <label>measurement_report.update</label>
       </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="measurement_file.check_sanity">

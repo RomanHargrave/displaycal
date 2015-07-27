@@ -126,7 +126,14 @@ def update(report_path, pack=True):
 			("${MEASURED}", '"FF_data_in"\s*value="(.+?)"\s\/>', re.DOTALL),
 			("${CAL_ENTRYCOUNT}", "CAL_ENTRYCOUNT\s*=\s*(.+?)[;,]$", re.M),
 			("${CAL_RGBLEVELS}", "CAL_RGBLEVELS\s*=\s*(.+?)[;,]$", re.M),
-			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?)[;,]$", re.M))
+			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?)[;,]$", re.M),
+			# Uniformity report
+			("${DISPLAY}", u"\u2014 (.+?) \u2014", 0),
+			("${DATETIME}", u"\u2014 .+? \u2014 (.+?)</title>", 0),
+			("${ROWS}", 'rows\s*=\s*(.+?)[;,]', 0),
+			("${COLS}", 'cols\s*=\s*(.+?)[;,]', 0),
+			("${RESULTS}", 'results\s*=\s*(.+?), locus = ', 0),
+			("${LOCUS}", "locus\s*=\s*'([^']+)'", 0))
 	
 	placeholders2data = {"${REPORT_VERSION}": version,
 						 "${CORRECTION_MATRIX}": "Unknown",
@@ -140,6 +147,7 @@ def update(report_path, pack=True):
 						 "${WHITEPOINT_SIMULATION}": "false",
 						 "${WHITEPOINT_SIMULATION_RELATIVE}": "false"}
 	
+	templatename = "report"
 	for placeholder, pattern, flags in data:
 		result = re.search(pattern, orig_report_html, flags)
 		if result or not placeholders2data.get(placeholder):
@@ -149,12 +157,14 @@ def update(report_path, pack=True):
 			else:
 				default = ""
 			placeholders2data[placeholder] = result.groups()[0] if result else default
+		if result and placeholder == "${COLS}":
+			templatename = "uniformity"
 	
 	# backup original report
 	shutil.copy2(report_path, "%s.%s" % (report_path, 
 										 strftime("%Y-%m-%d_%H-%M-%S")))
 	
-	create(report_path, placeholders2data, pack)
+	create(report_path, placeholders2data, pack, templatename)
 
 
 if __name__ == "__main__":

@@ -51,7 +51,11 @@ class FlatShadedNumberedButton(FlatShadedButton):
 class DisplayUniformityFrame(BaseFrame):
 
 	def __init__(self, parent=None, handler=None,
-				 keyhandler=None, start_timer=True, rows=3, cols=5):
+				 keyhandler=None, start_timer=True, rows=None, cols=None):
+		if not rows:
+			rows = getcfg("uniformity.rows")
+		if not cols:
+			cols = getcfg("uniformity.cols")
 		BaseFrame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("report.uniformity"),
 						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,

@@ -581,6 +581,8 @@ valid_values = {
 	"testchart.auto_optimize": [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
 	"trc": ["240", "709", "l", "s", ""],
 	"trc.type": ["g", "G"],
+	"uniformity.cols": [3, 5, 7, 9],
+	"uniformity.rows": [3, 5, 7, 9],
 	"whitepoint.colortemp.locus": ["t", "T"]
 }
 
@@ -864,7 +866,9 @@ defaults = {
 	"trc.should_use_viewcond_adjust.show_msg": 1,
 	"trc.type": "g",
 	"trc.type.backup": "g",
+	"uniformity.cols": 5,
 	"uniformity.measure.continuous": 0,
+	"uniformity.rows": 3,
 	"untethered.measure.auto": 1,
 	"untethered.measure.manual.delay": 0.75,
 	"untethered.max_delta.chroma": 0.5,

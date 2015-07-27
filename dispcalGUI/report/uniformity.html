@@ -5,7 +5,8 @@
 	<title>Uniformity Check ${REPORT_VERSION} — ${DISPLAY} — ${DATETIME}</title>
 	<style type="text/css">
 		abbr { border-bottom: 1px dotted #666; cursor: help; }
-		.rgb_toggle:hover, .locus_toggle:hover { cursor: pointer; text-decoration: underline; }
+		.rgb_toggle, .locus_toggle, .delta_toggle { cursor: pointer; }
+		.rgb_toggle:hover, .locus_toggle:hover, .delta_toggle:hover { text-decoration: underline; }
 		html, body, table { height: 100%; }
 		body, td { font: normal 11px/15px sans-serif; margin: 0; padding: 0; }
 		table { border: 1px solid #666; border-collapse: separate; border-spacing: 0; width: 100%; }
@@ -16,7 +17,7 @@
 	<script type="text/javascript" src="jsapi-patches.js"></script>
 	<script type="text/javascript" src="uniformity.functions.js"></script>
 	<script type="text/javascript">
-		var rows = ${ROWS}, cols = ${COLS}, results = ${RESULTS}, locus = '${LOCUS}';
+		var rows = ${ROWS}, cols = ${COLS}, results = ${RESULTS}, locus = '${LOCUS}', delta = 'E';
 	</script>
 </head>
 <body>
