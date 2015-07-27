@@ -7956,6 +7956,10 @@ usage: spotread [-options] [logfile]
 					self.progress_wnd.console.ScrollLines(
 						self.progress_wnd.console.GetNumberOfLines())
 			else:
+				if getattr(self, "terminal", None):
+					# Destroy the wx object so the decref'd python object can
+					# be garbage collected
+					self.terminal.Destroy()
 				if interactive_frame == "adjust":
 					self.terminal = DisplayAdjustmentFrame(parent,
 														   handler=self.progress_handler,
