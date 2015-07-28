@@ -1646,18 +1646,24 @@ class LUTFrame(BaseFrame):
 			self.reload_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "apply_bpc_btn"):
 			enable_bpc = (not(self.plot_mode_select.GetSelection()) and
-						  bool(self.profile) and "vcgt" in self.profile.tags)
+						  bool(self.profile) and
+						  isinstance(self.profile.tags.get("vcgt"),
+									 ICCP.VideoCardGammaType))
 			if enable_bpc:
 				values = self.profile.tags.vcgt.getNormalizedValues()
 			self.apply_bpc_btn.Enable(enable_bpc and values[0] != (0, 0, 0))
 			self.apply_bpc_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "install_vcgt_btn"):
 			self.install_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-										 bool(self.profile) and "vcgt" in self.profile.tags)
+										 bool(self.profile) and
+										 isinstance(self.profile.tags.get("vcgt"),
+													ICCP.VideoCardGammaType))
 			self.install_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "save_vcgt_btn"):
 			self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
-									  bool(self.profile) and "vcgt" in self.profile.tags)
+									  bool(self.profile) and
+									  isinstance(self.profile.tags.get("vcgt"),
+												 ICCP.VideoCardGammaType))
 			self.save_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
 		if hasattr(self, "show_actual_lut_cb"):
 			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)

@@ -5231,7 +5231,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			week = int(date[1])
 			date = datetime.date(int(year), 1, 1) + datetime.timedelta(weeks=week)
 			description += " '" + strftime("%y", date.timetuple())
-		if "vcgt" in profile.tags:
+		if isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType):
 			if profile.tags.vcgt.is_linear():
 				vcgt = "linear VCGT"
 			else:
@@ -6274,7 +6274,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		# extract calibration from profile
 		cal_path = None
-		if "vcgt" in profile.tags:
+		if isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType):
 			try:
 				cgats = vcgt_to_cal(profile)
 			except (CGATS.CGATSInvalidError, 
@@ -6399,8 +6399,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		# calculate amount of calibration grayscale tone values
 		cal_entrycount = 256
-		if "vcgt" in profile.tags and isinstance(profile.tags.vcgt,
-												 ICCP.VideoCardGammaType):
+		if isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType):
 			rgb = [[], [], []]
 			vcgt = profile.tags.vcgt
 			if "data" in vcgt:
@@ -7562,7 +7561,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("calibration.file.previous", None)
 				return
 			else:
-				has_cal = "vcgt" in profile.tags
+				has_cal = isinstance(profile.tags.get("vcgt"),
+									 ICCP.VideoCardGammaType)
 				if profile.profileClass != "mntr" or \
 				   profile.colorSpace != "RGB":
 					InfoDialog(self, msg=lang.getstr("profiling.complete"), 

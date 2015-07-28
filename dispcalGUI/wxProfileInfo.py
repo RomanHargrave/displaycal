@@ -1256,7 +1256,8 @@ class ProfileInfoFrame(LUTFrame):
 			self.client.SetEnableDiagonals('Bottomleft-Topright')
 			self.client.SetEnableGrid(False)
 			self.client.SetEnablePointLabel(True)
-			if ("vcgt" in self.profile.tags or
+			if (isinstance(self.profile.tags.get("vcgt"),
+						   ICCP.VideoCardGammaType) or
 				(self.rTRC and
 				 self.gTRC and
 				 self.bTRC) or
