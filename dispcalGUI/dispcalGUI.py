@@ -1169,7 +1169,6 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_enable_size_controls = LUT3DFrame.__dict__["lut3d_enable_size_controls"]
 	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
 	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
-	lut3d_install = LUT3DFrame.__dict__["lut3d_install"]
 	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
 	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
 	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
@@ -7866,6 +7865,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = event.GetId()
 		lut3d = (config.is_virtual_display() or getcfg("3dlut.create") or
 				 self.install_3dlut)
+		installable_3dlut = getcfg("3dlut.format") == "madVR"
 		if result != wx.ID_OK or lut3d:
 			if self.modaldlg.preview:
 				if getcfg("calibration.file", False):
@@ -7878,14 +7878,20 @@ class MainFrame(ReportFrame, BaseFrame):
 					# Load LUT curves from current display profile (if any, 
 					# and if it contains curves)
 					self.load_display_profile_cal(True)
-			self.profile_finish_consumer()
+			if (result != wx.ID_OK or not self.lut3d_path or
+				not os.path.isfile(self.lut3d_path) or not installable_3dlut):
+				self.profile_finish_consumer()
 		if result == wx.ID_OK:
+			producer = None
 			if lut3d:
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
-					if getcfg("3dlut.format") == "madVR":
-						# madVR supports 3D LUT installation
-						self.lut3d_install(self.lut3d_path)
+					if installable_3dlut:
+						# Some formats support automatic 3D LUT installation
+						producer = self.worker.install_3dlut
+						wargs = (self.lut3d_path, )
+						wkwargs = None
+						progress_msg = lang.getstr("3dlut.install")
 					else:
 						# Copy to user-selectable location
 						self.lut3d_create_handler(None,
@@ -7903,15 +7909,19 @@ class MainFrame(ReportFrame, BaseFrame):
 							show_result_dialog(result, parent=self.modaldlg)
 						self.modaldlg.Raise()
 						return
+				producer = self.worker.install_profile
+				wargs = ()
+				wkwargs = {"profile_path": self.modaldlg.profile_path, 
+						   "skip_scripts": self.modaldlg.skip_scripts}
+				progress_msg = lang.getstr("profile.install")
+			if producer:
 				safe_print("-" * 80)
-				safe_print(lang.getstr("profile.install"))
+				safe_print(progress_msg)
 				self.worker.interactive = False
 				self.worker.start(self.profile_finish_consumer,
-								  self.worker.install_profile,
-								  wkwargs={"profile_path": self.modaldlg.profile_path, 
-										   "skip_scripts": self.modaldlg.skip_scripts},
+								  producer, wargs=wargs, wkwargs=wkwargs,
 								  parent=self.modaldlg,
-								  progress_msg=lang.getstr("profile.install"),
+								  progress_msg=progress_msg,
 								  stop_timers=False, fancy=False)
 	
 	def profile_finish_consumer(self, result=None):

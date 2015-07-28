@@ -364,13 +364,6 @@ class LUT3DFrame(BaseFrame):
 										install_3dlut=True)
 				else:
 					# 3D LUT was created manually
-					##if getcfg("3dlut.format") == "madVR" and madvr:
-						### madVR supports installing 3D LUT
-						##self.lut3d_install(self.lut3d_path)
-					##else:
-						### Copy to user-selectable location
-						##self.lut3d_create_handler(None,
-												  ##copy_from_path=self.lut3d_path)
 					self.profile_finish(True,
 										getcfg("calibration.file", False),
 										"", 
@@ -651,40 +644,6 @@ class LUT3DFrame(BaseFrame):
 			self.lut3dframe.update_controls()
 		elif self.Parent:
 			self.Parent.lut3d_update_b2a_controls()
-
-	def lut3d_install(self, path):
-		if getcfg("3dlut.format") == "madVR" and madvr:
-			# Install (load) 3D LUT using madTPG
-			madtpg = None
-			# Get mapping from source profile to madVR gamut
-			basename = os.path.basename(getcfg("3dlut.input.profile"))
-			gamut = {"Rec709.icm": 0,
-					 "SMPTE_RP145_NTSC.icm": 1,
-					 "EBU3213_PAL.icm": 2,
-					 "Rec2020.icm": 3,
-					 "SMPTE431_P3.icm": 4}.get(basename, 0)
-			try:
-				if sys.platform == "win32":
-					madtpg = madvr.MadTPG()
-				else:
-					madtpg = madvr.MadTPG_Net()
-				# Connect & load 3D LUT
-				if (madtpg.connect(method2=madvr.CM_StartLocalInstance) and
-					madtpg.load_3dlut_file(path, True, gamut)):
-					raise Info(lang.getstr("3dlut.install.success"))
-				else:
-					raise Error(lang.getstr("3dlut.install.failure"))
-			except Exception, exception:
-				madtpg.set_osd_text(safe_unicode(exception))
-				show_result_dialog(exception, self)
-			finally:
-				if madtpg:
-					madtpg.quit()
-					if isinstance(madtpg, madvr.MadTPG_Net):
-						madtpg.shutdown()
-		else:
-			show_result_dialog(Error(lang.getstr("3dlut.install.unsupported")),
-							   self)
 
 	def get_commands(self):
 		return self.get_common_commands() + ["3DLUT-maker [create <filename>]"]

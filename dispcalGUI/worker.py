@@ -3114,15 +3114,7 @@ class Worker(object):
 		if use_madvr:
 			# Try to connect to running madTPG or launch a new instance
 			try:
-				if not hasattr(self, "madtpg"):
-					if sys.platform == "win32" and getcfg("madtpg.native"):
-						# Using native implementation (madHcNet32.dll)
-						self.madtpg = madvr.MadTPG()
-					else:
-						# Using madVR net-protocol pure python implementation
-						self.madtpg = madvr.MadTPG_Net()
-						self.madtpg.debug = debug
-				if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
+				if self.madtpg_connect():
 					# Connected
 					# Check madVR version
 					madvr_version = self.madtpg.get_version()
@@ -5072,6 +5064,33 @@ usage: spotread [-options] [logfile]
 		return self.import_colorimeter_corrections(get_argyll_util("spyd4en"),
 												   args, asroot)
 
+	def install_3dlut(self, path):
+		if getcfg("3dlut.format") == "madVR" and madvr:
+			# Install (load) 3D LUT using madTPG
+			# Get mapping from source profile to madVR gamut
+			basename = os.path.basename(getcfg("3dlut.input.profile"))
+			gamut = {"Rec709.icm": 0,
+					 "SMPTE_RP145_NTSC.icm": 1,
+					 "EBU3213_PAL.icm": 2,
+					 "Rec2020.icm": 3,
+					 "SMPTE431_P3.icm": 4}.get(basename, 0)
+			try:
+				# Connect & load 3D LUT
+				if (self.madtpg_connect() and
+					self.madtpg.load_3dlut_file(path, True, gamut)):
+					raise Info(lang.getstr("3dlut.install.success"))
+				else:
+					raise Error(lang.getstr("3dlut.install.failure"))
+			except Exception, exception:
+				return exception
+			finally:
+				if hasattr(self, "madtpg"):
+					self.madtpg.quit()
+					if isinstance(self.madtpg, madvr.MadTPG_Net):
+						self.madtpg.shutdown()
+		else:
+			return Error(lang.getstr("3dlut.install.unsupported"))
+
 	def install_profile(self, profile_path, capture_output=True,
 						skip_scripts=False, silent=False):
 		""" Install a profile by copying it to an appropriate location and
@@ -6402,6 +6421,17 @@ usage: spotread [-options] [logfile]
 				   progress_msg=progress_msg, resume=resume,
 				   continue_next=continue_next, interactive_frame="adjust",
 				   pauseable=True)
+
+	def madtpg_connect(self):
+		if not hasattr(self, "madtpg"):
+			if sys.platform == "win32" and getcfg("madtpg.native"):
+				# Using native implementation (madHcNet32.dll)
+				self.madtpg = madvr.MadTPG()
+			else:
+				# Using madVR net-protocol pure python implementation
+				self.madtpg = madvr.MadTPG_Net()
+				self.madtpg.debug = debug
+		return self.madtpg.connect(method2=madvr.CM_StartLocalInstance)
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
