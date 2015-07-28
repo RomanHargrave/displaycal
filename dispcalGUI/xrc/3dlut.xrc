@@ -381,7 +381,7 @@
                 <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
-                <growablerows>13</growablerows>
+                <growablerows>14</growablerows>
               </object>
               <option>1</option>
               <flag>wxALL|wxEXPAND</flag>
