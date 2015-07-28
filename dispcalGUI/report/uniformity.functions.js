@@ -89,11 +89,11 @@ function generate_report() {
 					Y_mark = ' \u2716';
 				}
 				if (delta == 'E') {
-					if (Math.abs(deltas[j]) < 2) {
+					if (Math.abs(deltas[j]) <= 2) {
 						color = 'green';
 						mark = ' \u2713\u2713';
 					}
-					else if (Math.abs(deltas[j]) < 4) {
+					else if (Math.abs(deltas[j]) <= 4) {
 						color = 'green';
 						mark = ' \u2713';
 					}
@@ -134,11 +134,11 @@ function generate_report() {
 				Y_mark = ' \u2716';
 			}
 			if (delta == 'E') {
-				if (Math.abs(delta_avg) < 2) {
+				if (Math.abs(delta_avg) <= 2) {
 					color = 'green';
 					mark = ' \u2713\u2713';
 				}
-				else if (Math.abs(delta_avg) < 4) {
+				else if (Math.abs(delta_avg) <= 4) {
 					color = 'green';
 					mark = ' \u2713';
 				}

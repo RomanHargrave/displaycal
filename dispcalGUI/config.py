@@ -868,7 +868,7 @@ defaults = {
 	"trc.type.backup": "g",
 	"uniformity.cols": 5,
 	"uniformity.measure.continuous": 0,
-	"uniformity.rows": 3,
+	"uniformity.rows": 5,
 	"untethered.measure.auto": 1,
 	"untethered.measure.manual.delay": 0.75,
 	"untethered.max_delta.chroma": 0.5,
