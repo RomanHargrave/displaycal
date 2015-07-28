@@ -1556,6 +1556,15 @@
                               </object>
                             </object>
                             <object class="spacer"/>
+                            <object class="spacer"/>
+                            <object class="sizeritem">
+                              <object class="wxCheckBox" name="lut3d_apply_cal_cb">
+                                <label>apply_cal</label>
+                              </object>
+                              <flag>wxTOP|wxBOTTOM</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="spacer"/>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="gamut_mapping_mode">
                                 <label>gamut_mapping.mode</label>

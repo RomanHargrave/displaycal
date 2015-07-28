@@ -1157,6 +1157,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	""" Display calibrator main application window. """
 
+	lut3d_apply_cal_ctrl_handler = LUT3DFrame.__dict__["lut3d_apply_cal_ctrl_handler"]
 	lut3d_bind_event_handlers = LUT3DFrame.__dict__["lut3d_bind_event_handlers"]
 	lut3d_create_consumer = LUT3DFrame.__dict__["lut3d_create_consumer"]
 	lut3d_create_handler = LUT3DFrame.__dict__["lut3d_create_handler"]
@@ -4132,6 +4133,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("3dlut.create", v)
 		self.calpanel.Freeze()
 		self.lut3d_show_trc_controls()
+		self.lut3d_update_apply_cal_control()
 		self.lut3d_update_b2a_controls()
 		self.calpanel.Thaw()
 		self.lut3d_check_bpc()
@@ -4228,7 +4230,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_format_label.Show(show)
 		self.lut3d_format_ctrl.Show(show)
 		show_advanced_options = getcfg("show_advanced_options")
-		for ctrl in (self.gamut_mapping_mode,
+		for ctrl in (self.lut3d_apply_cal_cb,
+					 self.gamut_mapping_mode,
 					 self.gamut_mapping_inverse_a2b,
 					 self.gamut_mapping_b2a):
 			ctrl.GetContainingSizer().Show(ctrl,
@@ -4237,6 +4240,17 @@ class MainFrame(ReportFrame, BaseFrame):
 		for ctrl in (self.lut3d_size_label,
 					 self.lut3d_size_ctrl):
 			ctrl.GetContainingSizer().Show(ctrl, show)
+
+	def lut3d_update_apply_cal_control(self):
+		profile = not getcfg("3dlut.create") and get_current_profile(True)
+		enable_apply_cal = bool((getcfg("3dlut.create") and getcfg("trc")) or
+								(profile and
+								 isinstance(profile.tags.get("vcgt"),
+											ICCP.VideoCardGammaType) and
+								 not profile.tags.vcgt.is_linear()))
+		self.lut3d_apply_cal_cb.SetValue(enable_apply_cal and
+										 bool(getcfg("3dlut.output.profile.apply_cal")))
+		self.lut3d_apply_cal_cb.Enable(enable_apply_cal)
 
 	def lut3d_update_b2a_controls(self):
 		# Allow using B2A instead of inverse A2B?
@@ -4263,6 +4277,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.lut3d_input_profile_ctrl.SetSelection(
 				self.input_profiles.values().index(lut3d_input_profile))
 			self.lut3d_input_colorspace_handler(None)
+		self.lut3d_update_apply_cal_control()
 		self.lut3d_update_b2a_controls()
 		self.lut3d_update_shared_controls()
 		self.lut3d_update_encoding_controls()
@@ -5006,6 +5021,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_profile_name()
 		if event.GetId() != self.trc_ctrl.GetId():
 			self.update_trc_control()
+		else:
+			self.lut3d_update_apply_cal_control()
 		self.update_adjustment_controls()
 		self.show_trc_controls()
 		self.calpanel.Layout()
@@ -12325,6 +12342,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.restore_defaults_handler(
 						include=("profile", "gamap_", "3dlut.create",
 								 "3dlut.tab.enable",
+								 "3dlut.output.profile.apply_cal",
 								 "testchart.auto_optimize"), 
 						exclude=("3dlut.tab.enable.backup", "profile.update",
 								 "profile.name", "gamap_default_intent",
@@ -12413,7 +12431,9 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3DLUT_INPUT_BITDEPTH":
 											 "3dlut.bitdepth.input",
 											 "3DLUT_OUTPUT_BITDEPTH":
-											 "3dlut.bitdepth.output"}.iteritems():
+											 "3dlut.bitdepth.output",
+											 "3DLUT_APPLY_CAL":
+											 "3dlut.output.profile.apply_cal"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
 						if keyword in ("MIN_DISPLAY_UPDATE_DELAY_MS",
 									   "DISPLAY_SETTLE_TIME_MULT"):

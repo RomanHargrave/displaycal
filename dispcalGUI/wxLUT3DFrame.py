@@ -78,7 +78,6 @@ class LUT3DFrame(BaseFrame):
 									  self.use_abstract_profile_ctrl_handler)
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
-		self.lut3d_apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.apply_cal_ctrl_handler)
 		self.lut3d_trc_apply_none_ctrl.Bind(wx.EVT_RADIOBUTTON, self.lut3d_trc_apply_ctrl_handler)
 		self.lut3d_trc_apply_black_offset_ctrl.Bind(wx.EVT_RADIOBUTTON, self.lut3d_trc_apply_ctrl_handler)
 		self.lut3d_trc_apply_ctrl.Bind(wx.EVT_RADIOBUTTON, self.lut3d_trc_apply_ctrl_handler)
@@ -114,7 +113,8 @@ class LUT3DFrame(BaseFrame):
 			self.Center()
 
 	def lut3d_bind_event_handlers(self):
-		# Shared with amin window
+		# Shared with main window
+		self.lut3d_apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.lut3d_apply_cal_ctrl_handler)
 		self.lut3d_create_btn.Bind(wx.EVT_BUTTON, self.lut3d_create_handler)
 		self.lut3d_trc_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_trc_ctrl_handler)
 		self.lut3d_trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
@@ -202,7 +202,7 @@ class LUT3DFrame(BaseFrame):
 			self.update_layout()
 		self.panel.Thaw()
 	
-	def apply_cal_ctrl_handler(self, event):
+	def lut3d_apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
 			   int(self.lut3d_apply_cal_cb.GetValue()))
 
@@ -517,7 +517,9 @@ class LUT3DFrame(BaseFrame):
 										 getcfg("3dlut.create"))
 	
 	def lut3d_create_producer(self, profile_in, profile_abst, profile_out, path):
-		apply_cal = (profile_out and "vcgt" in profile_out.tags and
+		apply_cal = (profile_out and isinstance(profile_out.tags.get("vcgt"),
+												ICCP.VideoCardGammaType) and
+					 not profile_out.tags.vcgt.is_linear() and
 					 (getcfg("3dlut.output.profile.apply_cal") or
 					  not hasattr(self, "lut3d_apply_cal_cb")))
 		input_encoding = getcfg("3dlut.encoding.input")
@@ -804,9 +806,12 @@ class LUT3DFrame(BaseFrame):
 							setattr(self, "input_profile", profile)
 							self.set_profile("output", silent=silent)
 						elif which == "output":
-							self.lut3d_apply_cal_cb.SetValue("vcgt" in profile.tags and
+							has_nonlinear_vcgt = (isinstance(profile.tags.get("vcgt"),
+															 ICCP.VideoCardGammaType) and
+												  not profile.tags.vcgt.is_linear())
+							self.lut3d_apply_cal_cb.SetValue(has_nonlinear_vcgt and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
-							self.lut3d_apply_cal_cb.Enable("vcgt" in profile.tags)
+							self.lut3d_apply_cal_cb.Enable(has_nonlinear_vcgt)
 							if (not hasattr(self, which + "_profile") or
 								getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName):

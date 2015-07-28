@@ -6820,7 +6820,9 @@ usage: spotread [-options] [logfile]
 										 "3DLUT_INPUT_BITDEPTH":
 										 "3dlut.bitdepth.input",
 										 "3DLUT_OUTPUT_BITDEPTH":
-										 "3dlut.bitdepth.output"}.iteritems():
+										 "3dlut.bitdepth.output",
+										 "3DLUT_APPLY_CAL":
+										 "3dlut.output.profile.apply_cal"}.iteritems():
 					value = getcfg(cfgname)
 					if cfgname == "3dlut.gamap.use_b2a":
 						if value:
