@@ -1006,6 +1006,7 @@
 		"*verify_xxxl.ti1": "XXXL verification testchart",
 	"vga": "VGA",
 	"video.icc": "Vidéo (D65, Rec. 1886)",
+		"*video_ReShade.icc": "Video 3D LUT for ReShade (D65, Rec. 709 / Rec. 1886)",
 		"*video_camera": "Video camera",
 		"*video_card_gamma_table": "Video card gamma table",
 	"video_eeColor.icc": "Video 3D LUT pour eeColor (D65, Rec. 709 / Rec. 1886)",

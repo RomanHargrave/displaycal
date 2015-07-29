@@ -53,7 +53,8 @@ def natsort(list_in):
 			else:
 				tmp.append((j, None))
 		list_out.append(tmp)
-	list_out.sort()
+	list_out.sort(key=lambda item: [((v.lower() if isinstance(v, basestring)
+									  else v), j) for v, j in item])
 	list_in = list_out
 	list_out = []
 	# undecorate
