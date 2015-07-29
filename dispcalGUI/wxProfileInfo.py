@@ -1716,12 +1716,11 @@ class ProfileInfoFrame(LUTFrame):
 			try:
 				profile = ICCP.ICCProfile(path)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				show_result_dialog(exception, self)
-			if profile:
+				show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
+										 path), self)
+			else:
 				setcfg("last_icc_path", path)
 				setcfg("last_cal_or_icc_path", path)
-			else:
-				show_result_dialog(Error(lang.getstr("profile.invalid")), self)
 		if profile:
 			view_3d_format = getcfg("3d.format")
 			if view_3d_format == "HTML":

@@ -253,7 +253,8 @@ class SynthICCFrame(BaseFrame):
 		try:
 			profile = ICCP.ICCProfile(path)
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
-			show_result_dialog(Error(lang.getstr("profile.invalid")), self)
+			show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
+									 path), self)
 		else:
 			if profile.version >= 4:
 				show_result_dialog(Error(lang.getstr("profile.iccv4.unsupported")),

@@ -398,7 +398,8 @@ class ReportFrame(BaseFrame):
 				profile = ICCP.ICCProfile(path)
 			except (IOError, ICCP.ICCProfileInvalidError):
 				if not silent:
-					show_result_dialog(Error(lang.getstr("profile.invalid")),
+					show_result_dialog(Error(lang.getstr("profile.invalid") +
+											 "\n" + path),
 									   parent=self)
 			except IOError, exception:
 				if not silent:

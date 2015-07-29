@@ -384,12 +384,25 @@ class LUT3DFrame(BaseFrame):
 			profile_out = self.set_profile("output")
 		else:
 			profile_abst = None
-			try:
-				profile_in = ICCP.ICCProfile(getcfg("3dlut.input.profile"))
-				profile_out = config.get_current_profile()
-			except (IOError, ICCP.ICCProfileInvalidError), exception:
-				show_result_dialog(Error(lang.getstr("profile.invalid")),
+			profile_in_path = getcfg("3dlut.input.profile")
+			if not profile_in_path or not os.path.isfile(profile_in_path):
+				show_result_dialog(Error(lang.getstr("error.profile.file_missing",
+													 getcfg("3dlut.input.profile",
+															raw=True))),
 								   parent=self)
+				return
+				
+			try:
+				profile_in = ICCP.ICCProfile(profile_in_path)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
+										 profile_in_path), parent=self)
+				return
+			profile_out = config.get_current_profile()
+			if not profile_out:
+				show_result_dialog(Error(lang.getstr("profile.invalid") +
+										 "\n%s" % getcfg("calibration.file",
+														 False)), parent=self)
 				return
 			if path:
 				# Called from script client
@@ -765,7 +778,8 @@ class LUT3DFrame(BaseFrame):
 				profile = ICCP.ICCProfile(path)
 			except (IOError, ICCP.ICCProfileInvalidError):
 				if not silent:
-					show_result_dialog(Error(lang.getstr("profile.invalid")),
+					show_result_dialog(Error(lang.getstr("profile.invalid") +
+											 "\n" + path),
 									   parent=self)
 			except IOError, exception:
 				if not silent:
