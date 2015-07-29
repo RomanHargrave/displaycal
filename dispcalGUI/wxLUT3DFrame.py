@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 import glob
 import os
+import re
 import shutil
 import sys
 
@@ -12,8 +14,8 @@ from argyll_names import video_encodings
 from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 					setcfg)
 from log import safe_print
-from meta import name as appname
-from util_os import waccess
+from meta import name as appname, version
+from util_os import islink, readlink, waccess
 from util_str import safe_unicode
 from worker import Error, Info, get_current_profile_path, show_result_dialog
 import ICCProfile as ICCP
@@ -437,21 +439,28 @@ class LUT3DFrame(BaseFrame):
 								remember_last_3dlut_path = False
 								break
 				ext = getcfg("3dlut.format")
-				if ext == "eeColor":
-					ext = "txt"
-				elif ext == "madVR":
-					ext = "3dlut"
-				defaultFile = os.path.splitext(defaultFile or
-											   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + ext
-				dlg = wx.FileDialog(self, 
-									lang.getstr("3dlut.create"),
-									defaultDir=defaultDir,
-									defaultFile=defaultFile,
-									wildcard="*." + ext, 
-									style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
+				if ext == "ReShade":
+					dlg = wx.DirDialog(self, lang.getstr("3dlut.install"), 
+									   defaultPath=defaultDir)
+				else:
+					if ext == "eeColor":
+						ext = "txt"
+					elif ext == "madVR":
+						ext = "3dlut"
+					defaultFile = os.path.splitext(defaultFile or
+												   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + ext
+					dlg = wx.FileDialog(self, 
+										lang.getstr("3dlut.save_as"),
+										defaultDir=defaultDir,
+										defaultFile=defaultFile,
+										wildcard="*." + ext, 
+										style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 				dlg.Center(wx.BOTH)
 				if dlg.ShowModal() == wx.ID_OK:
 					path = dlg.GetPath()
+					if ext == "ReShade":
+						path = os.path.join(path.rstrip(os.path.sep),
+											"ColorLookupTable.png")
 				dlg.Destroy()
 				checkoverwrite = False
 			if path:
@@ -497,6 +506,62 @@ class LUT3DFrame(BaseFrame):
 									src_paths.append(src_path)
 									dst_paths.append("%s-%s1d%s.txt" %
 													 (dst_name, part, channel))
+					elif getcfg("3dlut.format") == "ReShade":
+						dst_dir = os.path.dirname(path)
+						# Check if MasterEffect is installed
+						me_header_path = os.path.join(dst_dir, "MasterEffect.h")
+						if (os.path.isfile(me_header_path) and
+							os.path.isdir(os.path.join(dst_dir, "MasterEffect"))):
+							dst_paths = [os.path.join(dst_dir, "MasterEffect",
+													  "mclut3d.png")]
+							# Alter existing MasterEffect.h
+							with open(me_header_path, "rb") as me_header_file:
+								me_header = me_header_file.read()
+							# Enable LUT
+							me_header = re.sub(r"#define\s+USE_LUT\s+0",
+											   "#define USE_LUT 1", me_header)
+							# iLookupTableMode 2 = use mclut3d.png
+							me_header = re.sub(r"#define\s+iLookupTableMode\s+\d+",
+											   "#define iLookupTableMode 2", me_header)
+							# Amount of color change by lookup table.
+							# 1.0 means full effect.
+							me_header = re.sub(r"#define\s+fLookupTableMix\s+\d+(?:\.\d+)",
+											   "#define fLookupTableMix 1.0", me_header)
+							with open(me_header_path, "wb") as me_header_file:
+								me_header_file.write(me_header)
+						else:
+							# Write out our own shader
+							clut_fx_path = get_data_path("ColorLookupTable.fx")
+							if not clut_fx_path:
+								show_result_dialog(Error(lang.getstr("file.missing",
+																	 "ColorLookupTable.fx")),
+												   self)
+								return
+							src_paths.append(clut_fx_path)
+							reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
+							if os.path.isfile(reshade_fx_path):
+								# Alter existing ReShade.fx
+								with open(reshade_fx_path, "rb") as reshade_fx_file:
+									reshade_fx = reshade_fx_file.read()
+								# Remove existing shader include
+								reshade_fx = re.sub(r'\s+#include\s+"ColorLookupTable.fx"\s+',
+												    "", reshade_fx)
+								reshade_fx = re.sub(r'\n// Automatically added by dispcalGUI .+',
+												    "", reshade_fx)
+								reshade_fx += "\n// Automatically added by dispcalGUI %s" % version
+							else:
+								reshade_fx = "// Automatically created by dispcalGUI %s" % version
+							reshade_fx += '\n#include "ColorLookupTable.fx"\n'
+							# Adjust path for correct installation if ReShade.fx
+							# is a symlink.
+							if islink(reshade_fx_path):
+								path = os.path.join(os.path.dirname(readlink(reshade_fx_path)),
+													os.path.basename(path))
+								dst_paths = [path]
+							dst_paths.append(os.path.join(os.path.dirname(path),
+														  "ColorLookupTable.fx"))
+							with open(reshade_fx_path, "wb") as reshade_fx_file:
+								reshade_fx_file.write(reshade_fx)
 					for src_path, dst_path in zip(src_paths, dst_paths):
 						shutil.copyfile(src_path, dst_path)
 					return
@@ -552,22 +617,26 @@ class LUT3DFrame(BaseFrame):
 		# Get selected format
 		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
 		if getcfg("3dlut.format") in ("eeColor",
-									  "madVR") and format not in ("eeColor",
-																  "madVR"):
-			# If previous format was eeColor or madVR, restore 3D LUT encoding
+									  "madVR",
+									  "ReShade") and format not in ("eeColor",
+																	"madVR",
+																	"ReShade"):
+			# If previous format was eeColor/madVR/ReShade, restore 3D LUT encoding
 			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
-		if getcfg("3dlut.format") in ("eeColor", "madVR", "mga"):
+		if getcfg("3dlut.format") in ("eeColor", "madVR", "mga", "ReShade"):
 			setcfg("3dlut.size", getcfg("3dlut.size.backup"))
 		if getcfg("3dlut.format") not in ("eeColor",
-										  "madVR") and format in ("eeColor",
-																  "madVR"):
-			# If selected format is eeColor or madVR, backup 3D LUT encoding
+										  "madVR",
+										  "ReShade") and format in ("eeColor",
+																	"madVR",
+																	"ReShade"):
+			# If selected format is eeColor/madVR/ReShade, backup 3D LUT encoding
 			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
 		# Set selected format
 		self.lut3d_set_option("3dlut.format", format)
-		if format in ("eeColor", "madVR", "mga"):
+		if format in ("eeColor", "madVR", "mga", "ReShade"):
 			setcfg("3dlut.size.backup", getcfg("3dlut.size"))
 		if format == "eeColor":
 			# -et -Et for eeColor
@@ -589,10 +658,15 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.encoding.output", "t")
 			# collink says madVR works best with 65
 			self.lut3d_set_option("3dlut.size", 65)
-		elif format == "png":
-			if getcfg("3dlut.bitdepth.output") not in (8, 16):
+		elif format in ("png", "ReShade"):
+			if format == "ReShade":
+				self.lut3d_set_option("3dlut.size", 16)
+				self.lut3d_set_option("3dlut.encoding.input", "n")
+				self.lut3d_set_option("3dlut.encoding.output", "n")
 				self.lut3d_set_option("3dlut.bitdepth.output", 8)
-				self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[8])
+			elif getcfg("3dlut.bitdepth.output") not in (8, 16):
+				self.lut3d_set_option("3dlut.bitdepth.output", 8)
+			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_setup_encoding_ctrl()
 		self.lut3d_update_encoding_controls()
@@ -1062,7 +1136,7 @@ class LUT3DFrame(BaseFrame):
 		input_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_show)
 		self.lut3d_bitdepth_input_ctrl.Show(input_show)
-		output_show = show and getcfg("3dlut.format") in ("3dl", "png")
+		output_show = show and getcfg("3dlut.format") in ("3dl", "png", "ReShade")
 		self.lut3d_bitdepth_output_label.Show(output_show)
 		self.lut3d_bitdepth_output_ctrl.Show(output_show)
 		if isinstance(self, LUT3DFrame):

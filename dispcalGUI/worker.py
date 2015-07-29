@@ -2509,6 +2509,8 @@ class Worker(object):
 		if format == "eeColor":
 			# Fixed size
 			size = 65
+		elif format == "ReShade":
+			format = "png"
 		step = 1.0 / (size - 1)
 		RGB_triplet = [0.0, 0.0, 0.0]
 		RGB_index = [0, 0, 0]

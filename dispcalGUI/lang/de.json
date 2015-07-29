@@ -23,6 +23,7 @@
 	"3dlut.encoding.type_x": "TV xvYCC Rec. 601 YCbCr (Rec. 709 Primärfarben) SD",
 	"3dlut.format": "3D LUT Dateiformat",
 	"3dlut.format.3dl": "Autodesk Lustre / Kodak Look Manager System (.3dl)",
+		"*3dlut.format.ReShade": "ReShade (.png, .fx)",
 	"3dlut.format.cube": "IRIDAS (.cube)",
 	"3dlut.format.eeColor": "eeColor Processor (.txt)",
 	"3dlut.format.madVR": "madVR (.3dlut)",

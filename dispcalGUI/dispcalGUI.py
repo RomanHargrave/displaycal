@@ -4183,12 +4183,15 @@ class MainFrame(ReportFrame, BaseFrame):
 								getcfg("3dlut.trc_gamma"))]
 		if getcfg("3dlut.format") == "3dl":
 			lut3d.append(str(getcfg("3dlut.bitdepth.input")))
+		if getcfg("3dlut.format") in ("3dl", "png", "ReShade"):
 			lut3d.append(str(getcfg("3dlut.bitdepth.output")))
 		lut3d_ext = getcfg("3dlut.format")
 		if lut3d_ext == "eeColor":
 			lut3d_ext = "txt"
 		elif lut3d_ext == "madVR":
 			lut3d_ext = "3dlut"
+		elif lut3d_ext == "ReShade":
+			lut3d_ext = "png"
 		input_profname = os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0]
 		self.lut3d_path = ".".join([profile_save_path, input_profname,
 									"%X" % (crc32("-".join(lut3d))
@@ -7658,8 +7661,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				title = appname
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
-					if getcfg("3dlut.format") == "madVR":
-						# madVR support 3D LUT installation
+					if getcfg("3dlut.format") in ("madVR", "ReShade"):
 						ok = lang.getstr("3dlut.install")
 					else:
 						ok = lang.getstr("3dlut.save_as")
@@ -7865,7 +7867,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = event.GetId()
 		lut3d = (config.is_virtual_display() or getcfg("3dlut.create") or
 				 self.install_3dlut)
-		installable_3dlut = getcfg("3dlut.format") == "madVR"
 		if result != wx.ID_OK or lut3d:
 			if self.modaldlg.preview:
 				if getcfg("calibration.file", False):
@@ -7879,15 +7880,16 @@ class MainFrame(ReportFrame, BaseFrame):
 					# and if it contains curves)
 					self.load_display_profile_cal(True)
 			if (result != wx.ID_OK or not self.lut3d_path or
-				not os.path.isfile(self.lut3d_path) or not installable_3dlut):
+				not os.path.isfile(self.lut3d_path) or
+				getcfg("3dlut.format") != "madVR"):
 				self.profile_finish_consumer()
 		if result == wx.ID_OK:
 			producer = None
 			if lut3d:
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
-					if installable_3dlut:
-						# Some formats support automatic 3D LUT installation
+					if getcfg("3dlut.format") == "madVR":
+						# madVR has an API for installing 3D LUTs
 						producer = self.worker.install_3dlut
 						wargs = (self.lut3d_path, )
 						wkwargs = None

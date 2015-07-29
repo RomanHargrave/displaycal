@@ -28,6 +28,7 @@
 	"3dlut.format.madVR": "madVR (.3dlut)",
 	"3dlut.format.mga": "Pandora (.mga)",
 	"3dlut.format.png": "PNG (.png)",
+	"3dlut.format.ReShade": "ReShade (.png, .fx)",
 	"3dlut.format.spi3d": "Sony Imageworks (.spi3d)",
 	"3dlut.frame.title": "Create 3D LUT",
 	"3dlut.input.colorspace": "Source colorspace",
