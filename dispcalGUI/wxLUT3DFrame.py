@@ -539,6 +539,13 @@ class LUT3DFrame(BaseFrame):
 								return
 							src_paths.append(clut_fx_path)
 							reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
+							# Adjust path for correct installation if ReShade.fx
+							# is a symlink.
+							if islink(reshade_fx_path):
+								reshade_fx_path = readlink(reshade_fx_path)
+								path = os.path.join(os.path.dirname(reshade_fx_path),
+													os.path.basename(path))
+								dst_paths = [path]
 							if os.path.isfile(reshade_fx_path):
 								# Alter existing ReShade.fx
 								with open(reshade_fx_path, "rb") as reshade_fx_file:
@@ -552,12 +559,6 @@ class LUT3DFrame(BaseFrame):
 							else:
 								reshade_fx = "// Automatically created by dispcalGUI %s" % version
 							reshade_fx += '\n#include "ColorLookupTable.fx"\n'
-							# Adjust path for correct installation if ReShade.fx
-							# is a symlink.
-							if islink(reshade_fx_path):
-								path = os.path.join(os.path.dirname(readlink(reshade_fx_path)),
-													os.path.basename(path))
-								dst_paths = [path]
 							dst_paths.append(os.path.join(os.path.dirname(path),
 														  "ColorLookupTable.fx"))
 							with open(reshade_fx_path, "wb") as reshade_fx_file:
