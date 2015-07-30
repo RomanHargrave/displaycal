@@ -591,7 +591,6 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_create_producer(self, profile_in, profile_abst, profile_out, path):
 		apply_cal = (profile_out and isinstance(profile_out.tags.get("vcgt"),
 												ICCP.VideoCardGammaType) and
-					 not profile_out.tags.vcgt.is_linear() and
 					 (getcfg("3dlut.output.profile.apply_cal") or
 					  not hasattr(self, "lut3d_apply_cal_cb")))
 		input_encoding = getcfg("3dlut.encoding.input")
@@ -854,12 +853,11 @@ class LUT3DFrame(BaseFrame):
 							setattr(self, "input_profile", profile)
 							self.set_profile("output", silent=silent)
 						elif which == "output":
-							has_nonlinear_vcgt = (isinstance(profile.tags.get("vcgt"),
-															 ICCP.VideoCardGammaType) and
-												  not profile.tags.vcgt.is_linear())
-							self.lut3d_apply_cal_cb.SetValue(has_nonlinear_vcgt and
+							enable_apply_cal = (isinstance(profile.tags.get("vcgt"),
+														   ICCP.VideoCardGammaType))
+							self.lut3d_apply_cal_cb.SetValue(enable_apply_cal and
 													   bool(getcfg("3dlut.output.profile.apply_cal")))
-							self.lut3d_apply_cal_cb.Enable(has_nonlinear_vcgt)
+							self.lut3d_apply_cal_cb.Enable(enable_apply_cal)
 							if (not hasattr(self, which + "_profile") or
 								getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName):

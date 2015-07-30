@@ -4250,11 +4250,10 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def lut3d_update_apply_cal_control(self):
 		profile = not getcfg("3dlut.create") and get_current_profile(True)
-		enable_apply_cal = bool((getcfg("3dlut.create") and getcfg("trc")) or
+		enable_apply_cal = bool(getcfg("3dlut.create") or
 								(profile and
 								 isinstance(profile.tags.get("vcgt"),
-											ICCP.VideoCardGammaType) and
-								 not profile.tags.vcgt.is_linear()))
+											ICCP.VideoCardGammaType)))
 		self.lut3d_apply_cal_cb.SetValue(enable_apply_cal and
 										 bool(getcfg("3dlut.output.profile.apply_cal")))
 		self.lut3d_apply_cal_cb.Enable(enable_apply_cal)
