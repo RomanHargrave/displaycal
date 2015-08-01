@@ -1177,6 +1177,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_show_trc_controls = LUT3DFrame.__dict__["lut3d_show_trc_controls"]
 	lut3d_set_option = LUT3DFrame.__dict__["lut3d_set_option"]
 	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
+	lut3d_snap_size = LUT3DFrame.__dict__["lut3d_snap_size"]
 	lut3d_trc_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_ctrl_handler"]
 	lut3d_trc_gamma_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_ctrl_handler"]
 	lut3d_trc_gamma_type_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_type_ctrl_handler"]

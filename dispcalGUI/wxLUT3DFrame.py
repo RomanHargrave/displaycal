@@ -674,8 +674,6 @@ class LUT3DFrame(BaseFrame):
 			# eeColor uses a fixed size of 65x65x65
 			self.lut3d_set_option("3dlut.size", 65)
 		elif format == "mga":
-			# Pandora supports 17x17x17 and 33x33x33
-			self.lut3d_set_option("3dlut.size", 17)
 			# Pandora uses a fixed bitdepth of 16
 			self.lut3d_set_option("3dlut.bitdepth.output", 16)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[16])
@@ -688,13 +686,16 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.size", 65)
 		elif format in ("png", "ReShade"):
 			if format == "ReShade":
-				self.lut3d_set_option("3dlut.size", 16)
 				self.lut3d_set_option("3dlut.encoding.input", "n")
 				self.lut3d_set_option("3dlut.encoding.output", "n")
 				self.lut3d_set_option("3dlut.bitdepth.output", 8)
 			elif getcfg("3dlut.bitdepth.output") not in (8, 16):
 				self.lut3d_set_option("3dlut.bitdepth.output", 8)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
+		size = getcfg("3dlut.size")
+		snap_size = self.lut3d_snap_size(size)
+		if snap_size != size:
+			self.lut3d_set_option("3dlut.size", snap_size)
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_setup_encoding_ctrl()
 		self.lut3d_update_encoding_controls()
@@ -717,27 +718,30 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_size_ctrl_handler(self, event):
 		size = self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()]
-		force_size = False
-		if getcfg("3dlut.format") == "mga" and size not in (17, 33):
-			if size < 33:
-				force_size = 17
-			else:
-				force_size = 33
-		elif getcfg("3dlut.format") == "ReShade" and size not in (16, 32, 64):
-			if size < 32:
-				force_size = 16
-			elif size < 64:
-				force_size = 32
-			else:
-				force_size = 64
-		if force_size:
+		snap_size = self.lut3d_snap_size(size)
+		if snap_size != size:
 			wx.Bell()
-			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[force_size])
-		self.lut3d_set_option("3dlut.size", size)
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[snap_size])
+		self.lut3d_set_option("3dlut.size", snap_size)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
 		elif self.Parent:
 			self.Parent.lut3d_update_shared_controls()
+
+	def lut3d_snap_size(self, size):
+		if getcfg("3dlut.format") == "mga" and size not in (17, 33):
+			if size < 33:
+				size = 17
+			else:
+				size = 33
+		elif getcfg("3dlut.format") == "ReShade" and size not in (16, 32, 64):
+			if size < 32:
+				size = 16
+			elif size < 64:
+				size = 32
+			else:
+				size = 64
+		return size
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output", silent=not event)
