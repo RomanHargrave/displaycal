@@ -16,7 +16,7 @@ from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 from log import safe_print
 from meta import name as appname, version
 from util_os import islink, readlink, waccess
-from util_str import safe_unicode
+from util_str import safe_unicode, strtr
 from worker import Error, Info, get_current_profile_path, show_result_dialog
 import ICCProfile as ICCP
 import config
@@ -338,7 +338,10 @@ class LUT3DFrame(BaseFrame):
 			self.Parent.lut3d_update_shared_controls()
 	
 	def lut3d_bitdepth_output_ctrl_handler(self, event):
-		if self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()] not in (8, 16):
+		if (getcfg("3dlut.format") in ("png", "ReShade") and
+			self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()]
+			not in (8, 16)):
+			wx.Bell()
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[8])
 		self.lut3d_set_option("3dlut.bitdepth.output",
 			   self.lut3d_bitdepth_ab[self.lut3d_bitdepth_output_ctrl.GetSelection()])
@@ -523,7 +526,8 @@ class LUT3DFrame(BaseFrame):
 						dst_dir = os.path.dirname(path)
 						# Check if MasterEffect is installed
 						me_header_path = os.path.join(dst_dir, "MasterEffect.h")
-						if (os.path.isfile(me_header_path) and
+						use_mclut3d = False
+						if (use_mclut3d and os.path.isfile(me_header_path) and
 							os.path.isdir(os.path.join(dst_dir, "MasterEffect"))):
 							dst_paths = [os.path.join(dst_dir, "MasterEffect",
 													  "mclut3d.png")]
@@ -550,7 +554,16 @@ class LUT3DFrame(BaseFrame):
 																	 "ColorLookupTable.fx")),
 												   self)
 								return
-							src_paths.append(clut_fx_path)
+							with open(clut_fx_path, "rb") as clut_fx_file:
+								clut_fx = clut_fx_file.read()
+							clut_size = getcfg("3dlut.size")
+							clut_fx = strtr(clut_fx,
+											{"${WIDTH}": str(clut_size ** 2),
+											 "${HEIGHT}": str(clut_size),
+											 "${FORMAT}": "RGBA%i" % getcfg("3dlut.bitdepth.output"),
+											 "${GRID_X}": str(1 / (clut_size ** 2.0)),
+											 "${GRID_Y}": str(clut_size / (clut_size ** 2.0)),
+											 "${CLUT_MAXINDEX}": str(clut_size - 1)})
 							reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
 							# Adjust path for correct installation if ReShade.fx
 							# is a symlink.
@@ -572,8 +585,10 @@ class LUT3DFrame(BaseFrame):
 							else:
 								reshade_fx = "// Automatically created by dispcalGUI %s" % version
 							reshade_fx += '\n#include "ColorLookupTable.fx"\n'
-							dst_paths.append(os.path.join(os.path.dirname(path),
-														  "ColorLookupTable.fx"))
+							clut_fx_path = os.path.join(os.path.dirname(path),
+														"ColorLookupTable.fx")
+							with open(clut_fx_path, "wb") as clut_fx_file:
+								clut_fx_file.write(clut_fx)
 							with open(reshade_fx_path, "wb") as reshade_fx_file:
 								reshade_fx_file.write(reshade_fx)
 					for src_path, dst_path in zip(src_paths, dst_paths):
@@ -702,13 +717,22 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_size_ctrl_handler(self, event):
 		size = self.lut3d_size_ab[self.lut3d_size_ctrl.GetSelection()]
+		force_size = False
 		if getcfg("3dlut.format") == "mga" and size not in (17, 33):
-			wx.Bell()
 			if size < 33:
-				size = 17
+				force_size = 17
 			else:
-				size = 33
-			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[size])
+				force_size = 33
+		elif getcfg("3dlut.format") == "ReShade" and size not in (16, 32, 64):
+			if size < 32:
+				force_size = 16
+			elif size < 64:
+				force_size = 32
+			else:
+				force_size = 64
+		if force_size:
+			wx.Bell()
+			self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[force_size])
 		self.lut3d_set_option("3dlut.size", size)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()

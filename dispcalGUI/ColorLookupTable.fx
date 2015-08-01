@@ -16,9 +16,9 @@ texture2D texColor : COLOR;
 
 texture texCLUT < string source = "ColorLookupTable.png"; >
 {
-	Width = 256;
-	Height = 16;
-	Format = RGBA8;
+	Width = ${WIDTH};
+	Height = ${HEIGHT};
+	Format = ${FORMAT};
 };
 
 sampler2D samplerColor
@@ -55,12 +55,12 @@ float4 PS_ColorLookupTable(in float2 texcoord : TEXCOORD0) : COLOR
 	float4 color = tex2D(samplerColor, texcoord.xy);
 
 	float3 CLUTcolor = 0.0;	
-	float2 GridSize = float2(0.00390625, 0.0625);
+	float2 GridSize = float2(${GRID_X}, ${GRID_Y});
 	float3 coord3D = saturate(color.xyz);
-	coord3D.z *= 15;
+	coord3D.z *= ${CLUT_MAXINDEX};
 	float shift = floor(coord3D.z);
-	coord3D.xy = coord3D.xy * 15 * GridSize + 0.5 * GridSize;
-	coord3D.x += shift * 0.0625;
+	coord3D.xy = coord3D.xy * ${CLUT_MAXINDEX} * GridSize + 0.5 * GridSize;
+	coord3D.x += shift * ${GRID_Y};
 	CLUTcolor.xyz = lerp(tex2D(samplerCLUT, coord3D.xy).xyz,
 						 tex2D(samplerCLUT, coord3D.xy + float2(GridSize.y, 0)).xyz,
 						 coord3D.z - shift);
