@@ -902,7 +902,7 @@ def set_argyll_bin(parent=None):
 	return result
 
 
-def show_result_dialog(result, parent=None, pos=None):
+def show_result_dialog(result, parent=None, pos=None, confirm=False):
 	""" Show dialog depending on type of result. Result should be an
 	exception type. An appropriate visual representation will be chosen
 	whether result is of exception type 'Info', 'Warning' or other error. """
@@ -915,9 +915,19 @@ def show_result_dialog(result, parent=None, pos=None):
 		bitmap = geticon(32, "dialog-warning")
 	else:
 		bitmap = geticon(32, "dialog-error")
-	InfoDialog(parent, pos=pos, msg=msg, ok=lang.getstr("ok"), bitmap=bitmap, 
-			   log=not isinstance(result, (UnloggedError, UnloggedInfo,
-										   UnloggedWarning)))
+	if confirm:
+		cls = ConfirmDialog
+		ok = confirm
+	else:
+		cls = InfoDialog
+		ok = lang.getstr("ok")
+	dlg = cls(parent, pos=pos, msg=msg, ok=ok, bitmap=bitmap, 
+			  log=not isinstance(result, (UnloggedError, UnloggedInfo,
+										  UnloggedWarning)))
+	if confirm:
+		returncode = dlg.ShowModal()
+		dlg.Destroy()
+		return returncode == wx.ID_OK
 
 
 class Error(Exception):

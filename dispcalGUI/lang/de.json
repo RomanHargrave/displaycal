@@ -4,6 +4,7 @@
 	"!language": "Deutsch",
 	"!language_name": "GERMAN",
 	"3dlut": "3D LUT",
+	"3dlut.1dlut.videolut.nonlinear": "Die Grafikkarten-Gammatabelle des Anzeigegeräts einthält nichtlineare Kalibrierungskurven, und die 3D LUT enthält angewendete Kalibrierungskurven. Bitte setzen Sie die Grafikkarten-Gammatabelle vor jeder Verwendung der 3D LUT in einen linearen Zustand zurück, oder erstellen Sie eine 3D LUT ohne angewendete Kaliebrierungskurven (in letzterem Fall aktivieren Sie „Erweiterte Optionen zeigen“ im „Optionen“-Menü und deaktivieren Sie „Kaliebrierung (vcgt) anwenden“ sowie „Nach Profilierung 3D LUT erstellen“, und erzeugen Sie eine neue 3D LUT).",
 	"3dlut.bitdepth.input": "3D LUT Eingabe-Bittiefe",
 	"3dlut.bitdepth.output": "3D LUT Ausgabe-Bittiefe",
 	"3dlut.create": "3D LUT erstellen...",

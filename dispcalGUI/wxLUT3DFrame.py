@@ -10,6 +10,7 @@ import sys
 if sys.platform == "win32":
 	import win32api
 
+from argyll_cgats import cal_to_fake_profile
 from argyll_names import video_encodings
 from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 					setcfg)
@@ -23,7 +24,7 @@ import config
 import localization as lang
 import madvr
 import worker
-from worker import check_set_argyll_bin
+from worker import UnloggedWarning, check_set_argyll_bin, get_options_from_profile
 from wxwindows import (BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog,
 					   wx)
 import xh_filebrowsebutton
@@ -455,6 +456,33 @@ class LUT3DFrame(BaseFrame):
 								remember_last_3dlut_path = False
 								break
 				ext = getcfg("3dlut.format")
+				if (ext != "madVR" and not isinstance(self, LUT3DFrame) and
+					getcfg("3dlut.output.profile.apply_cal")):
+					# Check if there's a clash between current videoLUT
+					# and 3D LUT (do both contain non-linear calibration?)
+					profile_display_name = profile_out.getDeviceModelDescription()
+					tempdir = self.worker.create_tempdir()
+					if isinstance(tempdir, Exception):
+						show_result_dialog(tempdir, self)
+						return
+					tempcal = os.path.join(tempdir, "temp.cal")
+					cancel = False
+					for i, display_name in enumerate(self.worker.display_names):
+						if (display_name == profile_display_name and
+							display_name != "madVR" and
+							self.worker.lut_access[i] and
+							self.worker.save_current_video_lut(
+								i + 1, tempcal, silent=True) is True and
+							not cal_to_fake_profile(tempcal).tags.vcgt.is_linear()):
+							if not show_result_dialog(UnloggedWarning(
+								lang.getstr("3dlut.1dlut.videolut.nonlinear")),
+								self, confirm=lang.getstr("3dlut.install")):
+								cancel = True
+							break
+					if os.path.isfile(tempcal):
+						os.remove(tempcal)
+					if cancel:
+						return
 				if ext == "ReShade":
 					dlg = wx.DirDialog(self, lang.getstr("3dlut.install"), 
 									   defaultPath=defaultDir)
