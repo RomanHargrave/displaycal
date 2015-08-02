@@ -2269,39 +2269,39 @@ class VideoCardGammaType(ICCProfileTag, ADict):
 			while len(data) < 3:
 				data.append(data[0])
 			irange = range(0, vcgt['entryCount'])
+			vmax = math.pow(256, vcgt['entrySize']) - 1
 			for i in irange:
 				j = i * (255.0 / (vcgt['entryCount'] - 1))
-				linear_points.append([j, j])
+				linear_points.append([j, int(round(i / float(vcgt['entryCount'] - 1) * 65535))])
 				if r:
-					n = float(data[0][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
+					n = int(round(float(data[0][i]) / vmax * 65535))
 					r_points.append([j, n])
 				if g:
-					n = float(data[1][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
+					n = int(round(float(data[1][i]) / vmax * 65535))
 					g_points.append([j, n])
 				if b:
-					n = float(data[2][i]) / (math.pow(256, vcgt['entrySize']) - 1) * 255
+					n = int(round(float(data[2][i]) / vmax * 65535))
 					b_points.append([j, n])
 		else: # formula
 			irange = range(0, 256)
 			step = 100.0 / 255.0
 			for i in irange:
-				# float2dec(v) fixes miniscule deviations in the calculated gamma
-				linear_points.append([i, (i)])
+				linear_points.append([i, i / 255.0 * 65535])
 				if r:
-					vmin = float2dec(vcgt["redMin"] * 255)
-					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
-					vmax = float2dec(vcgt["redMax"] * 255)
-					r_points.append([i, float2dec(vmin + v * (vmax - vmin), 8)])
+					vmin = vcgt["redMin"] * 65535
+					v = math.pow(step * i / 100.0, vcgt["redGamma"])
+					vmax = vcgt["redMax"] * 65535
+					r_points.append([i, int(round(vmin + v * (vmax - vmin)))])
 				if g:
-					vmin = float2dec(vcgt["greenMin"] * 255)
-					v = float2dec(math.pow(step * i / 100.0, vcgt["greenGamma"]))
-					vmax = float2dec(vcgt["greenMax"] * 255)
-					g_points.append([i, float2dec(vmin + v * (vmax - vmin), 8)])
+					vmin = vcgt["greenMin"] * 65535
+					v = math.pow(step * i / 100.0, vcgt["greenGamma"])
+					vmax = vcgt["greenMax"] * 65535
+					g_points.append([i, int(round(vmin + v * (vmax - vmin)))])
 				if b:
-					vmin = float2dec(vcgt["blueMin"] * 255)
-					v = float2dec(math.pow(step * i / 100.0, vcgt["blueGamma"]))
-					vmax = float2dec(vcgt["blueMax"] * 255)
-					b_points.append([i, float2dec(vmin + v * (vmax - vmin), 8)])
+					vmin = vcgt["blueMin"] * 65535
+					v = math.pow(step * i / 100.0, vcgt["blueGamma"])
+					vmax = vcgt["blueMax"] * 65535
+					b_points.append([i, int(round(vmin + v * (vmax - vmin)))])
 		return r_points, g_points, b_points, linear_points
 
 	def printNormalizedValues(self, amount=None, digits=12):
