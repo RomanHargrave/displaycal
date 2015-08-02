@@ -1205,7 +1205,7 @@ class LUT3DFrame(BaseFrame):
 		input_show = show and getcfg("3dlut.format") == "3dl"
 		self.lut3d_bitdepth_input_label.Show(input_show)
 		self.lut3d_bitdepth_input_ctrl.Show(input_show)
-		output_show = show and getcfg("3dlut.format") in ("3dl", "png", "ReShade")
+		output_show = show and getcfg("3dlut.format") in ("3dl", "png")
 		self.lut3d_bitdepth_output_label.Show(output_show)
 		self.lut3d_bitdepth_output_ctrl.Show(output_show)
 		if isinstance(self, LUT3DFrame):
