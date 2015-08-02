@@ -1617,10 +1617,12 @@ class BaseInteractiveDialog(wx.Dialog):
 	""" Base class for informational and confirmation dialogs """
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
-				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
+				 ok=None, bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 show=True, log=True, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
 				 name=wx.DialogNameStr, bitmap_margin=None):
+		if not ok:
+			ok = lang.getstr("ok")
 		if log:
 			safe_print(msg)
 		if parent:
@@ -1955,10 +1957,14 @@ class ConfirmDialog(BaseInteractiveDialog):
 	""" Confirmation dialog with OK and Cancel buttons """
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
-				 ok="OK", cancel="Cancel", bitmap=None, pos=(-1, -1), 
+				 ok=None, cancel=None, bitmap=None, pos=(-1, -1), 
 				 size=(400, -1), alt=None, log=False, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
 				 name=wx.DialogNameStr, bitmap_margin=None):
+		if not ok:
+			ok = lang.getstr("ok")
+		if not cancel:
+			cancel = lang.getstr("cancel")
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show=False, 
 									   log=log, style=style,
