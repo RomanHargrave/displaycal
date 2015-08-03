@@ -702,11 +702,11 @@ def get_options_from_profile(profile):
 	colprof_args = None
 	if "targ" in profile.tags:
 		ti3 = CGATS.CGATS(profile.tags.targ)
-		if len(ti3) > 1 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
+		if 1 in ti3 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
 		   ti3[1].ARGYLL_DISPCAL_ARGS:
 			dispcal_args = ti3[1].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", 
 																"replace")
-		if "ARGYLL_COLPROF_ARGS" in ti3[0] and \
+		if 0 in ti3 and "ARGYLL_COLPROF_ARGS" in ti3[0] and \
 		   ti3[0].ARGYLL_COLPROF_ARGS:
 			colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
 																"replace")
@@ -724,11 +724,11 @@ def get_options_from_ti3(ti3):
 		ti3 = CGATS.CGATS(ti3)
 	dispcal_args = None
 	colprof_args = None
-	if len(ti3) > 1 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
+	if 1 in ti3 and "ARGYLL_DISPCAL_ARGS" in ti3[1] and \
 	   ti3[1].ARGYLL_DISPCAL_ARGS:
 		dispcal_args = ti3[1].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", 
 															"replace")
-	if "ARGYLL_COLPROF_ARGS" in ti3[0] and \
+	if 0 in ti3 and "ARGYLL_COLPROF_ARGS" in ti3[0] and \
 	   ti3[0].ARGYLL_COLPROF_ARGS:
 		colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
 															"replace")
