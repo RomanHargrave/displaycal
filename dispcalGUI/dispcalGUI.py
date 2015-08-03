@@ -7901,11 +7901,11 @@ class MainFrame(ReportFrame, BaseFrame):
 						progress_msg = lang.getstr("3dlut.install")
 					else:
 						# Copy to user-selectable location
-						self.lut3d_create_handler(None,
-												  copy_from_path=self.lut3d_path)
+						wx.CallAfter(self.lut3d_create_handler, None,
+									 copy_from_path=self.lut3d_path)
 				else:
 					# Need to create 3D LUT
-					self.lut3d_create_handler(None)
+					wx.CallAfter(self.lut3d_create_handler, None)
 			else:
 				if getcfg("profile.install_scope") in ("l", "n"):
 					result = self.worker.authenticate("dispwin",
