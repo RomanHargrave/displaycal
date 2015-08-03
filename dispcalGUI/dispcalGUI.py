@@ -7884,7 +7884,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					# Load LUT curves from current display profile (if any, 
 					# and if it contains curves)
 					self.load_display_profile_cal(True)
-				self.preview.SetValue(False)
+				if getattr(self, "preview", None):
+					self.preview.SetValue(False)
 			if (result != wx.ID_OK or not self.lut3d_path or
 				not os.path.isfile(self.lut3d_path) or
 				getcfg("3dlut.format") != "madVR"):
