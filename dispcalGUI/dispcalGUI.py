@@ -4228,6 +4228,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				lut3dp.append(bitdepth)
 			self.lut3d_path = ".".join([profile_save_path, input_profname,
 										"".join(lut3dp), lut3d_ext])
+		devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
+		setcfg("measurement_report.devlink_profile", devlink)
 
 	def lut3d_show_controls(self):
 		show = True#bool(getcfg("3dlut.create"))
@@ -12536,11 +12538,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					# need to re-enable the 3D LUT tab for madVR, Resolve &
 					# eeColor
 					setcfg("3dlut.tab.enable", 1)
+				self.lut3d_set_path()
 				if config.get_display_name() == "Resolve":
-					self.lut3d_set_path()
-					devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
 					setcfg("3dlut.madVR.enable", 0)
-					setcfg("measurement_report.devlink_profile", devlink)
 					setcfg("measurement_report.use_devlink_profile", 1)
 				self.update_controls(
 					update_profile_name=update_profile_name,
