@@ -4206,11 +4206,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			if enc_in != enc_out:
 				encoding += enc_out
 			if getcfg("3dlut.output.profile.apply_cal"):
-				cal_external = ""
+				cal_exclude = ""
 			else:
-				cal_external = "e"
-			lut3dp = [lut3d[5][1] + lut3d[5][3:].replace(":", ","),  # TRC
-					  cal_external,
+				cal_exclude = "e"
+			lut3dp = [lut3d[5][1].replace("b", "bb") +
+					  lut3d[5][3:].replace(":", ","),  # TRC
+					  cal_exclude,
 					  lut3d[0],  # Gamut mapping mode
 					  lut3d[1][1:],  # Rendering intent
 					  encoding,
