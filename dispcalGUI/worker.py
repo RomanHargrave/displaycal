@@ -197,8 +197,10 @@ def check_argyll_bin(paths=None):
 					paths.remove(argyll_dir)
 				paths = [argyll_dir] + paths
 		safe_print("[D] Searchpath:\n  ", "\n  ".join(paths))
+	# Fedora doesn't ship Rec709.icm
 	config.defaults["3dlut.input.profile"] = get_data_path(os.path.join("ref",
-																		"Rec709.icm")) or ""
+																		"Rec709.icm")) or \
+											 get_data_path(os.path.join("ref", "sRGB.icm")) or ""
 	config.defaults["testchart.reference"] = get_data_path(os.path.join("ref", 
 																		"ColorChecker.cie")) or ""
 	config.defaults["gamap_profile"] = get_data_path(os.path.join("ref", "sRGB.icm")) or ""
