@@ -586,11 +586,12 @@ class LUT3DFrame(BaseFrame):
 								clut_fx = clut_fx_file.read()
 							clut_size = getcfg("3dlut.size")
 							clut_fx = strtr(clut_fx,
-											{"${WIDTH}": str(clut_size ** 2),
+											{"${VERSION}": version,
+											 "${WIDTH}": str(clut_size ** 2),
 											 "${HEIGHT}": str(clut_size),
 											 "${FORMAT}": "RGBA%i" % getcfg("3dlut.bitdepth.output"),
-											 "${GRID_X}": str(1 / (clut_size ** 2.0)),
-											 "${GRID_Y}": str(clut_size / (clut_size ** 2.0)),
+											 "${GRID_X}": str(1.0 / (clut_size ** 2)),
+											 "${GRID_Y}": str(1.0 / clut_size),
 											 "${CLUT_MAXINDEX}": str(clut_size - 1)})
 							reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
 							# Adjust path for correct installation if ReShade.fx
@@ -607,11 +608,11 @@ class LUT3DFrame(BaseFrame):
 								# Remove existing shader include
 								reshade_fx = re.sub(r'\s+#include\s+"ColorLookupTable.fx"\s+',
 												    "", reshade_fx)
-								reshade_fx = re.sub(r'\n// Automatically added by dispcalGUI .+',
-												    "", reshade_fx)
-								reshade_fx += "\n// Automatically added by dispcalGUI %s" % version
+								reshade_fx = re.sub(r'\n// Automatically added by %s .+' %
+													appname, "", reshade_fx)
+								reshade_fx += "\n// Automatically added by %s %s" % (appname, version)
 							else:
-								reshade_fx = "// Automatically created by dispcalGUI %s" % version
+								reshade_fx = "// Automatically created by %s %s" % (appname, version)
 							reshade_fx += '\n#include "ColorLookupTable.fx"\n'
 							clut_fx_path = os.path.join(os.path.dirname(path),
 														"ColorLookupTable.fx")

@@ -2,6 +2,8 @@
 
 // Configuration ---------------------------------------------------------------
 
+#define CLUT_ENABLED	1
+
 // Key to toggle CLUT on or off. See MSDN, "Virtual-Key Codes",
 // msdn.microsoft.com/library/windows/desktop/dd375731%28v=vs.85%29.aspx
 // for a list of key codes.
@@ -9,21 +11,21 @@
 
 // END Configuration -----------------------------------------------------------
 
-#pragma message "\nColor Look Up Table Shader 1.0\n"
+#pragma message "\nColor Look Up Table Shader ${VERSION}\n"
 #pragma reshade showtogglemessage
 
-texture2D texColor : COLOR;
+texture2D ColorLookupTable_texColor : COLOR;
 
-texture texCLUT < string source = "ColorLookupTable.png"; >
+texture ColorLookupTable_texCLUT < string source = "ColorLookupTable.png"; >
 {
 	Width = ${WIDTH};
 	Height = ${HEIGHT};
 	Format = ${FORMAT};
 };
 
-sampler2D samplerColor
+sampler2D ColorLookupTable_samplerColor
 {
-	Texture = texColor;
+	Texture = ColorLookupTable_texColor;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
 	MipFilter = LINEAR;
@@ -31,9 +33,9 @@ sampler2D samplerColor
 	AddressV = Clamp;
 };
 
-sampler2D samplerCLUT
+sampler2D ColorLookupTable_samplerCLUT
 {
-	Texture = texCLUT;
+	Texture = ColorLookupTable_texCLUT;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
 	MipFilter = LINEAR;
@@ -41,7 +43,7 @@ sampler2D samplerCLUT
 	AddressV = Clamp;
 };
 
-void VS_ColorLookupTable(in uint id : SV_VertexID,
+void ColorLookupTable_VS(in uint id : SV_VertexID,
 						 out float4 position : SV_Position,
 						 out float2 texcoord : TEXCOORD0)
 {
@@ -50,30 +52,30 @@ void VS_ColorLookupTable(in uint id : SV_VertexID,
 	position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 }
 
-float4 PS_ColorLookupTable(in float2 texcoord : TEXCOORD0) : COLOR 
+float4 ColorLookupTable_PS(in float2 texcoord : TEXCOORD0) : COLOR 
 {
-	float4 color = tex2D(samplerColor, texcoord.xy);
+	float4 color = tex2D(ColorLookupTable_samplerColor, texcoord.xy);
 
 	float3 CLUTcolor = 0.0;	
-	float2 GridSize = float2(${GRID_X}, ${GRID_Y});
-	float3 coord3D = saturate(color.xyz);
-	coord3D.z *= ${CLUT_MAXINDEX};
-	float shift = floor(coord3D.z);
-	coord3D.xy = coord3D.xy * ${CLUT_MAXINDEX} * GridSize + 0.5 * GridSize;
-	coord3D.x += shift * ${GRID_Y};
-	CLUTcolor.xyz = lerp(tex2D(samplerCLUT, coord3D.xy).xyz,
-						 tex2D(samplerCLUT, coord3D.xy + float2(GridSize.y, 0)).xyz,
-						 coord3D.z - shift);
+	float2 CLUTgrid = float2(${GRID_X}, ${GRID_Y});
+	float3 CLUTcoord = saturate(color.xyz);
+	CLUTcoord.z *= ${CLUT_MAXINDEX};
+	float shift = floor(CLUTcoord.z);
+	CLUTcoord.xy = CLUTcoord.xy * ${CLUT_MAXINDEX} * CLUTgrid + 0.5 * CLUTgrid;
+	CLUTcoord.x += shift * ${GRID_Y};
+	CLUTcolor.xyz = lerp(tex2D(ColorLookupTable_samplerCLUT, CLUTcoord.xy).xyz,
+						 tex2D(ColorLookupTable_samplerCLUT, CLUTcoord.xy + float2(CLUTgrid.y, 0)).xyz,
+						 CLUTcoord.z - shift);
 	color.xyz = lerp(color.xyz, CLUTcolor.xyz, 1.0);
 
 	return color;
 }
 
-technique ColorLookupTable < bool enabled = 1; toggle = CLUT_TOGGLEKEY; >
+technique ColorLookupTable < bool enabled = CLUT_ENABLED; toggle = CLUT_TOGGLEKEY; >
 {
 	pass
 	{
-		VertexShader = VS_ColorLookupTable;
-		PixelShader = PS_ColorLookupTable;
+		VertexShader = ColorLookupTable_VS;
+		PixelShader = ColorLookupTable_PS;
 	}
 }
