@@ -8856,8 +8856,8 @@ BEGIN_DATA
 		if not pcs:
 			# Try to determine input/output encoding for devicelink
 			if isinstance(profile.tags.get("meta"), ICCP.DictType):
-				input_encoding = profile.tags.meta.get("encoding.input")
-				output_encoding = profile.tags.meta.get("encoding.output")
+				input_encoding = profile.tags.meta.getvalue("encoding.input")
+				output_encoding = profile.tags.meta.getvalue("encoding.output")
 				if input_encoding == "T":
 					# 'T' (clip wtw on input) not supported for xicclu
 					input_encoding = "t"
