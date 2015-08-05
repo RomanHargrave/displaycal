@@ -6243,14 +6243,15 @@ class MainFrame(ReportFrame, BaseFrame):
 					return
 		
 		# setup for measurement
-		self.setup_measurement(self.measurement_report, ti1, profile, sim_profile, 
-							   intent, sim_intent, devlink, ti3_ref, sim_ti3,
-							   save_path, chart, gray, apply_trc,
-							   colormanaged)
+		self.setup_measurement(self.measurement_report, ti1, oprof, profile,
+							   sim_profile, intent, sim_intent, devlink,
+							   ti3_ref, sim_ti3, save_path, chart, gray,
+							   apply_trc, colormanaged, use_sim_as_output)
 
-	def measurement_report(self, ti1, profile, sim_profile, intent, sim_intent,
-						   devlink, ti3_ref, sim_ti3, save_path, chart, gray,
-						   apply_trc, colormanaged):
+	def measurement_report(self, ti1, oprof, profile, sim_profile, intent,
+						   sim_intent, devlink, ti3_ref, sim_ti3, save_path,
+						   chart, gray, apply_trc, colormanaged,
+						   use_sim_as_output):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("measurement_report")
 		safe_print(progress_msg)
@@ -6281,12 +6282,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		# write profile to temp dir
 		profile.write(profile_path)
-		
-		# extract calibration from profile
-		cal_path = None
-		if isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType):
+		# Check if we need to apply calibration
+		if (not use_sim_as_output or
+			(devlink and not "-a" in parse_argument_string(
+				devlink.tags.get("meta", {}).get("collink.args", {}).get("value",
+					"-a" if getcfg("3dlut.output.profile.apply_cal") else "")))):
+			calprof = oprof
+		else:
+			calprof = profile
+		if isinstance(calprof.tags.get("vcgt"), ICCP.VideoCardGammaType):
+			# Extract calibration from profile
 			try:
-				cgats = vcgt_to_cal(profile)
+				cgats = vcgt_to_cal(calprof)
 			except (CGATS.CGATSInvalidError, 
 					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
