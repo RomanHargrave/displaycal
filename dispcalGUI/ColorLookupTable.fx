@@ -1,4 +1,4 @@
-// Color Look Up Table Shader 1.0 ==============================================
+// Color Look Up Table Shader ==================================================
 
 // Configuration ---------------------------------------------------------------
 
@@ -26,21 +26,11 @@ texture ColorLookupTable_texCLUT < string source = "ColorLookupTable.png"; >
 sampler2D ColorLookupTable_samplerColor
 {
 	Texture = ColorLookupTable_texColor;
-	MinFilter = LINEAR;
-	MagFilter = LINEAR;
-	MipFilter = LINEAR;
-	AddressU = Clamp;
-	AddressV = Clamp;
 };
 
 sampler2D ColorLookupTable_samplerCLUT
 {
 	Texture = ColorLookupTable_texCLUT;
-	MinFilter = LINEAR;
-	MagFilter = LINEAR;
-	MipFilter = LINEAR;
-	AddressU = Clamp;
-	AddressV = Clamp;
 };
 
 void ColorLookupTable_VS(in uint id : SV_VertexID,
@@ -52,21 +42,22 @@ void ColorLookupTable_VS(in uint id : SV_VertexID,
 	position = float4(texcoord * float2(2.0, -2.0) + float2(-1.0, 1.0), 0.0, 1.0);
 }
 
-float4 ColorLookupTable_PS(in float2 texcoord : TEXCOORD0) : COLOR 
+#define CLUTscale float2(1.0 / ${WIDTH}.0, 1.0 / ${HEIGHT}.0)
+
+float4 ColorLookupTable_PS(in float4 position : SV_Position,
+						   in float2 texcoord : TEXCOORD) : SV_Target
 {
 	float4 color = tex2D(ColorLookupTable_samplerColor, texcoord.xy);
 
-	float3 CLUTcolor = 0.0;	
-	float2 CLUTgrid = float2(${GRID_X}, ${GRID_Y});
-	float3 CLUTcoord = saturate(color.xyz);
-	CLUTcoord.z *= ${CLUT_MAXINDEX};
-	float shift = floor(CLUTcoord.z);
-	CLUTcoord.xy = CLUTcoord.xy * ${CLUT_MAXINDEX} * CLUTgrid + 0.5 * CLUTgrid;
-	CLUTcoord.x += shift * ${GRID_Y};
-	CLUTcolor.xyz = lerp(tex2D(ColorLookupTable_samplerCLUT, CLUTcoord.xy).xyz,
-						 tex2D(ColorLookupTable_samplerCLUT, CLUTcoord.xy + float2(CLUTgrid.y, 0)).xyz,
-						 CLUTcoord.z - shift);
-	color.xyz = lerp(color.xyz, CLUTcolor.xyz, 1.0);
+	float3 CLUTcolor = float3((color.rg * (${HEIGHT} - 1) + 0.5) * CLUTscale,
+							  color.b * (${HEIGHT} - 1));
+	float shift = floor(CLUTcolor.z);
+	CLUTcolor.x += shift * CLUTscale.y;
+	CLUTcolor = lerp(tex2D(ColorLookupTable_samplerCLUT, CLUTcolor.xy).xyz,
+					 tex2D(ColorLookupTable_samplerCLUT,
+						   float2(CLUTcolor.x + CLUTscale.y, CLUTcolor.y)).xyz,
+					 CLUTcolor.z - shift);
+	color.rgb = lerp(color.rgb, CLUTcolor.xyz, 1.0);
 
 	return color;
 }

@@ -589,10 +589,7 @@ class LUT3DFrame(BaseFrame):
 											{"${VERSION}": version,
 											 "${WIDTH}": str(clut_size ** 2),
 											 "${HEIGHT}": str(clut_size),
-											 "${FORMAT}": "RGBA%i" % getcfg("3dlut.bitdepth.output"),
-											 "${GRID_X}": str(1.0 / (clut_size ** 2)),
-											 "${GRID_Y}": str(1.0 / clut_size),
-											 "${CLUT_MAXINDEX}": str(clut_size - 1)})
+											 "${FORMAT}": "RGBA%i" % getcfg("3dlut.bitdepth.output")})
 							reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
 							# Adjust path for correct installation if ReShade.fx
 							# is a symlink.
@@ -608,7 +605,7 @@ class LUT3DFrame(BaseFrame):
 								# Remove existing shader include
 								reshade_fx = re.sub(r'\s+#include\s+"ColorLookupTable.fx"\s+',
 												    "", reshade_fx)
-								reshade_fx = re.sub(r'\n// Automatically added by %s .+' %
+								reshade_fx = re.sub(r'\n// Automatically \S+ by %s .+' %
 													appname, "", reshade_fx)
 								reshade_fx += "\n// Automatically added by %s %s" % (appname, version)
 							else:
