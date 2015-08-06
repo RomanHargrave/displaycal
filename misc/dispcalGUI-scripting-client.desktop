@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI Scripting Client
-Name[de]=dispcalGUI Skript-Client
+Name=Scripting Client
+Name[de]=Skript-Client
 GenericName=Scripting Client
 GenericName[de]=Scripting-Client
 Exec=dispcalGUI-scripting-client

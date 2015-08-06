@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI 3D LUT Maker
-Name[de]=dispcalGUI 3D-LUT-Erzeuger
+Name=3D LUT Maker
+Name[de]=3D-LUT-Erzeuger
 GenericName=3D LUT maker
 GenericName[de]=3D-LUT-Erzeuger
 Exec=dispcalGUI-3DLUT-maker

@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI VRML to X3D converter
-Name[de]=dispcalGUI VRML zu X3D Konverter
+Name=VRML to X3D
+Name[de]=VRML zu X3D
 GenericName=VRML to X3D converter
 GenericName[de]=VRML zu X3D Konverter
 Exec=dispcalGUI-VRML-to-X3D-converter

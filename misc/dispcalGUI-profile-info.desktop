@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI ICC Profile Information
-Name[de]=dispcalGUI ICC-Profil-Information
+Name=ICC Profile Info
+Name[de]=ICC-Profil-Info
 GenericName=ICC profile information
 GenericName[de]=ICC-Profil-Information
 Exec=dispcalGUI-profile-info

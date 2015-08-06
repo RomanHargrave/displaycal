@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI Curve Viewer
-Name[de]=dispcalGUI Kurvenbetrachter
+Name=Curve Viewer
+Name[de]=Kurvenbetrachter
 GenericName=Calibration and ICC profile tone response curve viewer
 GenericName[de]=Kalibrierungs- und ICC-Profil-Tonwertkurvenbetrachter
 Exec=dispcalGUI-curve-viewer

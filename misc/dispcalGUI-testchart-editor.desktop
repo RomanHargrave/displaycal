@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI Testchart Editor
-Name[de]=dispcalGUI Testform-Editor
+Name=Testchart Editor
+Name[de]=Testform-Editor
 GenericName=Testchart editor
 GenericName[de]=Testform-Editor
 Exec=dispcalGUI-testchart-editor

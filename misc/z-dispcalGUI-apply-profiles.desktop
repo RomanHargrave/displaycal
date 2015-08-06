@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=dispcalGUI Calibration and ICC Profile Loader
-Name[de]=dispcalGUI Kalibrierungs- und ICC-Profil-Lader
+Name=Calibration Loader
+Name[de]=Kalibrierungs-Lader
 GenericName=Calibration and ICC Profile Loader
 GenericName[de]=Kalibrierungs- und ICC-Profil-Lader
 Icon=dispcalGUI-apply-profiles
