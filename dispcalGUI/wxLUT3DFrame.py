@@ -603,14 +603,17 @@ class LUT3DFrame(BaseFrame):
 								with open(reshade_fx_path, "rb") as reshade_fx_file:
 									reshade_fx = reshade_fx_file.read()
 								# Remove existing shader include
-								reshade_fx = re.sub(r'\s+#include\s+"ColorLookupTable.fx"\s+',
-												    "", reshade_fx)
-								reshade_fx = re.sub(r'\n// Automatically \S+ by %s .+' %
+								reshade_fx = re.sub(r'[ \t]*//\s*Automatically\s+\S+\s+by\s+%s\s+.+[ \t]*\r?\n?' %
 													appname, "", reshade_fx)
-								reshade_fx += "\n// Automatically added by %s %s" % (appname, version)
+								reshade_fx = re.sub(r'[ \t]*#include\s+"ColorLookupTable.fx"[ \t]*\r?\n?',
+												    "", reshade_fx).rstrip("\r\n")
 							else:
-								reshade_fx = "// Automatically created by %s %s" % (appname, version)
-							reshade_fx += '\n#include "ColorLookupTable.fx"\n'
+								reshade_fx = ""
+							if reshade_fx:
+								reshade_fx += "%s// Automatically added by %s %s%s" % (os.linesep * 2, appname, version, os.linesep)
+							else:
+								reshade_fx = "// Automatically created by %s %s%s" % (appname, version, os.linesep)
+							reshade_fx += '#include "ColorLookupTable.fx"' + os.linesep
 							clut_fx_path = os.path.join(os.path.dirname(path),
 														"ColorLookupTable.fx")
 							with open(clut_fx_path, "wb") as clut_fx_file:
