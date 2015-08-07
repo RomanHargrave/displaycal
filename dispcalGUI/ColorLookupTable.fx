@@ -59,11 +59,10 @@ float4 ColorLookupTable_PS(in float4 position : SV_Position,
 							  color.b * (CLUT_TEXTURE_HEIGHT - 1));
 	float shift = floor(CLUTcolor.z);
 	CLUTcolor.x += shift * CLUTscale.y;
-	CLUTcolor = lerp(tex2D(ColorLookupTable_samplerCLUT, CLUTcolor.xy).xyz,
+	color.rgb = lerp(tex2D(ColorLookupTable_samplerCLUT, CLUTcolor.xy).xyz,
 					 tex2D(ColorLookupTable_samplerCLUT,
 						   float2(CLUTcolor.x + CLUTscale.y, CLUTcolor.y)).xyz,
 					 CLUTcolor.z - shift);
-	color.rgb = lerp(color.rgb, CLUTcolor.xyz, 1.0);
 
 	return color;
 }
