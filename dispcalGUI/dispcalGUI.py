@@ -1994,6 +1994,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			options.FindItem("show_advanced_options"))
 		self.Bind(wx.EVT_MENU, self.show_advanced_options_handler, 
 				  self.menuitem_show_advanced_options)
+		self.menuitem_enable_3dlut_tab = options.FindItemById(
+			options.FindItem("3dlut.tab.enable"))
+		self.Bind(wx.EVT_MENU, self.enable_3dlut_tab_handler, 
+				  self.menuitem_enable_3dlut_tab)
 		menuitem = options.FindItemById(options.FindItem("extra_args"))
 		self.Bind(wx.EVT_MENU, self.extra_args_handler, menuitem)
 		self.menuitem_enable_argyll_debug = options.FindItemById(
@@ -2208,6 +2212,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_allow_skip_sensor_cal.Check(bool(getcfg("allow_skip_sensor_cal")))
 		self.menuitem_calibrate_instrument.Enable(
 			bool(self.worker.get_instrument_features().get("sensor_cal")))
+		self.menuitem_enable_3dlut_tab.Check(bool(getcfg("3dlut.tab.enable")))
 		self.menuitem_enable_argyll_debug.Check(bool(getcfg("argyll.debug")))
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
 		self.menuitem_startup_sound.Check(bool(getcfg("startup_sound.enable")))
@@ -4087,6 +4092,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.black_luminance_textctrl_label.Show(
 			bool(show_advanced_options and
 				 getcfg("calibration.black_luminance", False)))
+
+	def enable_3dlut_tab_handler(self, event):
+		setcfg("3dlut.tab.enable", 
+			   int(self.menuitem_enable_3dlut_tab.IsChecked()))
+		setcfg("3dlut.tab.enable.backup", getcfg("3dlut.tab.enable"))
+		if not getcfg("3dlut.tab.enable"):
+			setcfg("3dlut.create", 0)
+			self.lut3d_update_controls()
+		self.update_main_controls()
 
 	def enable_argyll_debug_handler(self, event):
 		if not getcfg("argyll.debug"):
@@ -12539,13 +12553,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									setcfg("3dlut.madVR.enable", 1)
 								if cfgvalue in ("eeColor", "madVR"):
 									setcfg("measurement_report.use_devlink_profile", 0)
-				if ((config.is_virtual_display() or
-					 config.get_display_name() == "SII REPEATER") and
-					not getcfg("3dlut.tab.enable")):
-					# Old presets don't contain 3D LUT settings, so we
-					# need to re-enable the 3D LUT tab for madVR, Resolve &
-					# eeColor
-					setcfg("3dlut.tab.enable", 1)
+				if not display_match:
+					self.update_menus()
 				self.lut3d_set_path()
 				if config.get_display_name() == "Resolve":
 					setcfg("3dlut.madVR.enable", 0)

@@ -75,6 +75,10 @@
         <label>show_advanced_options</label>
         <checkable>1</checkable>
       </object>
+      <object class="wxMenuItem" name="3dlut.tab.enable">
+        <label>3dlut.tab.enable</label>
+        <checkable>1</checkable>
+      </object>
       <object class="wxMenuItem" name="extra_args">
         <label>extra_args</label>
       </object>

@@ -42,6 +42,7 @@
 		"*3dlut.save_as": "Save 3D LUT as...",
 		"*3dlut.settings": "3D LUT settings",
 		"*3dlut.size": "3D LUT size",
+		"*3dlut.tab.enable": "Enable 3D LUT tab",
 		"*3dlut.use_abstract_profile": "Abstract (“Look”) profile",
 		"*CMP_Digital_Target-3.cie": "CMP Digital Target 3",
 		"*CMP_Digital_Target-4.cie": "CMP Digital Target 4",
