@@ -36,8 +36,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.0.3.1 </h2>
-					<p>2015-07-09 15:00 UTC</p>
+					<h2 id="version">3.0.4 </h2>
+					<p>2015-08-10 01:01 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -383,7 +383,7 @@
 						<p>Please note:</p>
 						<ul>
 							<li><strong>The version number in the package name does not necessarily reflect the dispcalGUI version</strong>.</li>
-							<li><strong>An official Argyll CMS version from ArgyllCMS.com will be used by default</strong> unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</li>
+							<!--li><strong>An official Argyll CMS version from ArgyllCMS.com will be used by default</strong> unless the distribution-packaged version is newer, but you can switch to a distribution-packaged version anytime (see <a href="#zeroinstall-updating">“Updating or switching between software versions”</a> below).</li-->
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly. In all other cases, please try the instructions below or one of the <a href="#standalone">standalone installations</a>.</p>
@@ -407,6 +407,7 @@
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>Download the <a href="http://dispcalgui.hoech.net/download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
+						<p>If you are using Mac OS X 10.11 “El capitan”, please also download and install <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a> to prevent a runtime incompatibility with the system python.</p>
 					</div>
 				</li>
 				<li>
@@ -533,6 +534,11 @@
 								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP3/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>SUSE Linux Enterprise 11 SP4</span>
+								<span><a href="http://dispcalgui.hoech.net/download/SLE_11_SP4/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="http://dispcalgui.hoech.net/download/SLE_11_SP4/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>SUSE Linux Enterprise 12</span>
 								<span>
 								<a href="http://dispcalgui.hoech.net/download/SLE_12/x86_64/dispcalGUI.rpm">x86_64</a></span>
@@ -656,7 +662,7 @@
 					<li>HP DreamColor (treated as i1 Display 2)</li>
 					<li>Hughski ColorHug (Linux support since Argyll CMS 1.3.6, Windows support with newest ColorHug firmware since Argyll CMS 1.5.0, fully functional Mac OS X support since Argyll CMS 1.6.2)</li>
 					<li>Hughski ColorHug2 (new in Argyll CMS 1.7.0)</li>
-					<li>Image Engineering EX1 (new in Argyll CMS 1.7.0)</li>
+					<li>Image Engineering EX1 (new in Argyll CMS 1.8.0 Beta)</li>
 					<li>Klein K10-A (new in Argyll CMS 1.7.0)</li>
 					<li>Lacie Blue Eye (treated as i1 Display 2)</li>
 					<li>Sequel Imaging MonacoOPTIX (treated as i1 Display 1)</li>
@@ -1410,19 +1416,22 @@
 			<div>
 				<h3 id="create-3dlut">Creating 3D LUTs</h3>
 
-				<p>You can create display correction RGB-in/RGB-out 3D LUTs for use in video playback or editing applications/devices that don't have ICC support as part of the profiling process.</p>
+				<p>You can create display correction RGB-in/RGB-out 3D LUTs (for use in video playback or editing applications/devices that don't have ICC support) as part of the profiling process.</p>
 
 				<h4>3D LUT settings</h4>
 				
 				<dl>
 					<dt>Create 3D LUT after profiling</dt>
-					<dd>Normally after profiling, you'll be given the option to install the profile to make it available for ICC color managed applications. If this box is checked, you'll have the option to generate a 3D LUT (with the chosen settings) instead, and the 3D LUT settings will also be stored inside the profile, so that they can be easily restored by selecting the profile under “Settings” if needed.</dd>
+					<dd>Normally after profiling, you'll be given the option to install the profile to make it available for ICC color managed applications. If this box is checked, you'll have the option to generate a 3D LUT (with the chosen settings) instead, and the 3D LUT settings will also be stored inside the profile, so that they can be easily restored by selecting the profile under “Settings” if needed. If this box is unchecked, you can create a 3D LUT from an existing profile.</dd>
 
 					<dt>Source colorspace/source profile</dt>
 					<dd>This sets the source colorspace for the 3D LUT, which is normally a video standard space like defined by Rec. 709 or Rec. 2020.</dd>
 
 					<dt>Tone curve</dt>
 					<dd>This allows to set a predefined or custom tone response curve for the 3D LUT. Predefined settings are Rec. 1886 (input offset) and Gamma 2.2 (output offset, pure power).</dd>
+
+					<dt>Apply calibration (vcgt) (only visible if “Show advanced options” in the “Options” menu is enabled)</dt>
+					<dd>Apply the profile's 1D LUT calibration (if any) to the 3D LUT. Nornmally, this should always be enabled if the profile contains a non-linear 1D LUT calibration, otherwise you have to make sure the 1D calibration is loaded whenever the 3D LUT is used.</dd>
 
 					<dt>Gamut mapping mode (only visible if “Show advanced options” in the “Options” menu is enabled)</dt>
 					<dd>The default gamut mapping mode is “Inverse device to PCS” and gives the most accurate results. In case a profile with high enough PCS-to-device tables is used, the option “PCS-to-device” is selectable as well, which allows for quicker generation of a 3D LUT, but is somewhat less accurate.</dd>
@@ -1443,11 +1452,22 @@
 					</dd>
 
 					<dt>3D LUT file format</dt>
-					<dd>Sets the output format for the 3D LUT. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor (<code>.txt</code>), madVR (<code>.3dlut</code>), Pandora (<code>.mga</code>) and Sony Imageworks (<code>.spi3d</code>). Note that an ICC device link profile (the ICC equivalent of an RGB-in/RGB-out 3D LUT) is always created as well.</dd>
+					<dd>Sets the output format for the 3D LUT. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor (<code>.txt</code>), madVR (<code>.3dlut</code>), Pandora (<code>.mga</code>), Portable Network Graphic (<code>.png</code>), <a href="http://reshade.me/">ReShade</a> (<code>.png</code>, <code>.fx</code>) and Sony Imageworks (<code>.spi3d</code>). Note that an ICC device link profile (the ICC equivalent of an RGB-in/RGB-out 3D LUT) is always created as well.</dd>
 
 					<dt>Input/output encoding</dt>
 					<dd>Some 3D LUT formats allow you to set the input/output encoding. Note that in most cases, sensible defaults will be chosen depending on selected 3D LUT format, but may be application- or workflow-specific.</dd>
+
+					<dt>Input/output bit depth</dt>
+					<dd>Some 3D LUT formats allow you to set the input/output bit depth. Note that in most cases, sensible defaults will be chosen depending on selected 3D LUT format, but may be application- or workflow-specific.</dd>
 				</dl>
+
+				<h4>Installing 3D LUTs</h4>
+
+				<p>Depending on the 3D LUT file format, installing or saving the 3D LUT to a specific location may be required before it can be used. You will be asked to install or save the 3D LUT directly after it was created. If you need to install or save the 3D LUT again at a later point, switch to the “3D LUT” tab and click the small “Install 3D LUT” button next to the “Settings” dropdown (the same button that installs display profiles when on the “Display &amp; instrument” tab and a directly connected, desktop-accessible display is selected).</p>
+
+				<h4>Installing 3D LUTs for the ReShade injector</h4>
+
+				<p>First, you need to install <a href="http://reshade.me/">ReShade</a> for each application or game you want to use a 3D LUT with. Follow the installation instructions in the ReShade README, but in case you are using ReShade Core do <strong>not</strong> copy the example <code>ReShade.fx</code> that comes with it. If you want to use the 3D LUT together with one of the other shader packs available for ReShade, install that too <strong>prior</strong> to installing the 3D LUT. Then, install the 3D LUT from within dispcalGUI to the same folder where you previously installed/copied ReShade and related files. The default toggle key to turn the 3D LUT on and off is the HOME key. You can change this key or disable the 3D LUT altogether by editing ColorLookUpTable.fx (with a text editor) inside the application/game folder where you installed the 3D LUT. To remove a 3D LUT completely, delete ColorLookUpTable.png and ColorLookUpTable.fx, as well as edit ReShade.fx and remove the line <code class="language-clike">#include "ColorLookupTable.fx"</code> near the end.</p>
 			</div>
 
 			<div>
@@ -1678,7 +1698,8 @@
 						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of dispcalGUI (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 
 					<dt>Measure display device uniformity...</dt>
-						<dd>Measure the display at several points to evaluate evenness of illumination and chroma errors. The results are shown after all patches are measured, and include the luminance difference, delta C, which is the chrominance difference, CCT (correlated color temperature), and CDT (closest daylight temperature) or CPT (closest planckian temperature) depending on the selection for the whitepoint locus in the main window. Differences are computed in comparison to the center point, which is used as reference.</dd>
+						<dd>Measure the display at several points to evaluate evenness of illumination and color errors. The results are shown after all patches are measured, and include the luminance difference, delta E 2000, CCT (correlated color temperature), and CDT (closest daylight temperature) or CPT (closest planckian temperature) depending on the selection for the whitepoint locus set on the “Calibration” tab. Differences are computed in comparison to the center point, which is used as reference.<br />
+						The evaluation is done according to ISO 12646:2015. A checkmark means the ISO criteria have been met (delta E of equal or less than 4, luminance difference of less than 10%). Two checkmarks mean that both the ISO criteria as well as twice as strict tolerances have been met (delta E of equal or less than 2, luminance difference of less than 5%). You can switch between delta E, delta C, delta H and delta L by clicking the labels.</dd>
 
 					<dt>Check measurement file...</dt>
 						<dd>This checks a measurement file for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
@@ -2075,6 +2096,7 @@ with DCGScriptingClientSocket() as client:
 				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and 7: The display profile isn't used if it was installed for the current user</a></li>
 				<li><a href="#issue-win7-autoloadcalibration">MS Windows 7: Calibration does not load automatically on login when not using the dispcalGUI Profile Loader</a></li>
 				<li><a href="#issue-winxp-multidisplay">MS Windows XP, multiple displays: One profile is used by all displays connected to a graphics card</a></li>
+				<li><a href="#issue-mac-dispcalgui-0install-elcapitan">Mac OS X: If running via 0install, dispcalGUI won't launch anymore under Mac OS X 10.11 “El Capitan”</a></li>
 				<li><a href="#issue-mac-dispcalgui-damaged">Mac OS X: dispcalGUI.app is damaged and can't be opened.</a></li>
 				<li><a href="#issue-mac-pscursor">Photoshop CS3 (Mac OS X): The brush cursor looks funny (box around brush)</a></li>
 				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“Calibrate &amp; profile” button grayed despite display and instrument detected)</a></li>
@@ -2121,6 +2143,22 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<li>Install and use the <a href="http://www.microsoft.com/downloads/en/details.aspx?FamilyID=1e33dca0-7721-43ca-9174-7f8d429fbb9e">Windows XP color control applet</a></li>
 						<li>Some graphics cards, like the Matrox Parhelia APV (no longer produced), will expose two logical cards to the OS when using a specific vendor driver (some older ATI drivers also had this feature, but it seems to have been removed from newer ones)</li>
 					</ul>
+				</dd>
+
+				<dt id="issue-mac-dispcalgui-0install-elcapitan"><span>Mac OS X:</span> If running via 0install, dispcalGUI won't launch anymore under Mac OS X 10.11 “El Capitan”</dt>
+				<dd><strong>Solution:</strong> Apple has changed the system Python interpreter to ignore dynamic library loading overrides in El Capitan. To fix this, you have two options:
+
+					<ol>
+						<li>Option 1: Override the system Python with the official Python distribution from python.org
+							<ol>
+								<li>Download and install the python.org <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a></li>
+								<li>Run the “0install Launcher” application from the dispcalGUI-0install.dmg disk image.</li>
+								<li>Click “Refresh”, then “Run”. dispcalGUI should launch now.</li>
+								<li>From now on, you can start dispcalGUI normally as usual.</li>
+							</ol>
+						</li>
+						<li>Option 2: Download and use the <a href="#standalone">standalone dispcalGUI application</a> instead.</li>
+					</ol>
 				</dd>
 
 				<dt id="issue-mac-dispcalgui-damaged"><span>Mac OS X:</span> dispcalGUI.app is damaged and can't be opened.</dt>
@@ -2250,41 +2288,21 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Tommaso Schiavinotto (italian translation)</p>
 
 			<p>Recent donors:
-Alexey Osetyanov,
-Michael Götz,
-Christian Spyr,
-Alain Perrier,
-Michael Wendel,
-Alessandro Steri,
-Frank Born,
-Thomas Lehmann,
-Alexandr Medvedev,
-Reynaldo Angeles,
-Business Ventures International LLC,
-Philipp Weber,
-Carsten Grebehem,
-Brandon Kuschel,
-Xavier Arnau,
-Dzmitry Parul,
-Jan Kampling,
-Martin Kapostas,
-Jacques Monier,
-Martin Rivas Jr,
-Alexey Buteskul,
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Hubert Fritz,
-Cristiano Garcia,
-Allan Derickson,
-Brett Howard,
-Raymond Ambrosi,
-Oliver Hoefele,
-Matthew Khan,
-Stephan Munsch,
-Aaron Hamilton,
-Yonathan Zarkovian,
-Niccolò Belli,
-Aleksandar Tarlyovski,
-Christian Samberger,
-Troy Sobotka</span></p>
+蔡 明逸,
+Gho Wright,
+Christian Dembowski,
+Daniel Collins,
+Samu Ristkari,
+SkiVR,
+Jordan Szuch,
+Dale Phurrough,
+David Vogt,
+Hadi Izadi,
+Hans Vonsild,
+Jürgen Bode,
+Marco Brigham,
+Talon Kelley Flatting
+<!--a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none"></span--></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
 
@@ -2295,10 +2313,35 @@ Troy Sobotka</span></p>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2015-07-09 15:00 (UTC) 3.0.3.1  -->
+			<!-- 2015-08-10 01:01 (UTC) 3.0.4  -->
 			<dl>
-				<dt id="changelog-3.0.3.1">2015-07-09 15:00 (UTC) 3.0.3.1 </dt>
+				<dt id="changelog-3.0.4">2015-08-10 01:01 (UTC) 3.0.4 </dt>
 					<dd>
+						<h3>3.0.4 </h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Ability to create 3D LUTs in PNG (Portable Network Graphic) and <a href="http://reshade.me/">ReShade</a> format. The latter allows fully color managed Direct3D (8–11.2) and OpenGL applications (e.g. games) under Windows (Vista and higher).</li>
+							<!--li>Compatibility for updated Argyll CMS 1.8 Beta display technology mappings when creating colorimeter corrections.</li-->
+							<li>“Apply calibration (vcgt)” to 3D LUT tab as advanced option, as well as a warning when installing a 3D LUT with applied calibration for a display with non-linear videocard gamma tables.</li>
+							<li>Option to enable/disable the 3D LUT tab.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Speed up calculation of 3D LUTs in 3DL, MGA, and SPI3D format when using a size smaller than 65x65x65.</li>
+							<li>Only prompt to import colorimeter corrections from the vendor software if none is currently selected.</li>
+							<li>Changed uniformity measurement report criteria to follow ISO 12646:2015 and allow selection of the layout to be used. “Update measurement or uniformity report” in the “Tools” menu can now also be used to update old uniformity reports.</li>
+							<li>The “Install profile” button changes to “Install 3D LUT” when on the 3D LUT tab.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>“Auto” colorimeter correction setting not selecting an available correction if the display device name contained the manufacturer name.</li>
+							<li>When creating a 3D LUT as part of a profiling run and if the path to Argyll CMS contained non-ASCII characters, profile creation failed with an Unicode error.</li>
+							<li>Linux (cosmetic): Background of some bitmap buttons was black when wxGTK is built against GTK3.</li>
+							<li>Linux (cosmetic): Splash screen mask not working correctly with wxPython 3 classic.</li>
+							<li>Mac OS X, Windows: Changing (only) the 3D LUT gamma type setting and creating a 3D LUT from an existing profile could lead to a confirmation prompt to overwrite an existing 3D LUT with a different gamma type setting, because this setting was differentiated in the 3D LUT file name with the uppercase or lowercase letter “B” (Windows and Mac OS X have a case-insensitive file system).</li>
+						</ul>
+
+						<p id="changelog-3.0.3.1">2015-07-09 15:00 (UTC) 3.0.3.1 </p>
 						<h3>3.0.3.1 </h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
