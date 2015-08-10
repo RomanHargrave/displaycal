@@ -5707,7 +5707,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def uninstall_argyll_instrument_drivers(self, event=None):
 		self.install_argyll_instrument_drivers(uninstall=True)
 
-	def install_profile_handler(self, event=None, profile_path=None):
+	def install_profile_handler(self, event=None, profile_path=None,
+								install_3dlut=None):
 		""" Install a profile. Show an error dialog if the profile is
 		invalid or unsupported (only 'mntr' RGB profiles are allowed) """
 		if not check_set_argyll_bin():
@@ -5720,6 +5721,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(result, self)
 		else:
 			result = False
+		if install_3dlut is None:
+			install_3dlut = self.lut3d_settings_panel.IsShown()
 		if not isinstance(result, Exception) and result:
 			try:
 				profile = ICCP.ICCProfile(profile_path)
@@ -5742,7 +5745,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.profile_finish(
 				True, profile_path=profile_path, 
 				skip_scripts=True,
-				allow_show_log=False)
+				allow_show_log=False,
+				install_3dlut=install_3dlut)
 
 	def select_install_profile_handler(self, event):
 		""" Show a dialog for user to select a profile for installation """
@@ -5759,7 +5763,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if result == wx.ID_OK:
 			setcfg("last_icc_path", path)
 			setcfg("last_cal_or_icc_path", path)
-			self.install_profile_handler(profile_path=path)
+			self.install_profile_handler(profile_path=path, install_3dlut=False)
 
 	def load_profile_cal_handler(self, event):
 		""" Show a dialog for user to select a profile to load calibration
@@ -7684,8 +7688,7 @@ class MainFrame(ReportFrame, BaseFrame):
 										  ICCP.GAMUT_VOLUME_SRGB /
 										  gamut_volumes[key] * 100,
 										  name))
-			if config.is_virtual_display() or (getcfg("3dlut.create") or
-											   install_3dlut):
+			if config.is_virtual_display() or install_3dlut:
 				installable = False
 				title = appname
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
@@ -7894,8 +7897,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = wx.ID_CANCEL
 		else:
 			result = event.GetId()
-		lut3d = (config.is_virtual_display() or getcfg("3dlut.create") or
-				 self.install_3dlut)
+		lut3d = config.is_virtual_display() or self.install_3dlut
 		if result != wx.ID_OK or lut3d:
 			if self.modaldlg.preview:
 				if getcfg("calibration.file", False):
@@ -8217,7 +8219,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						 paths=data[1:])
 		elif data[0] == "install-profile" and len(data) < 3:
 			if len(data) == 2:
-				wx.CallAfter(self.install_profile_handler, profile_path=data[1])
+				wx.CallAfter(self.install_profile_handler, profile_path=data[1],
+							 install_3dlut=False)
 			else:
 				wx.CallAfter(self.select_install_profile_handler, None)
 		elif data[0] == "measure" and len(data) == 1:
@@ -8481,6 +8484,13 @@ class MainFrame(ReportFrame, BaseFrame):
 				elif tab is self.lut3d_settings_panel and not tab.IsShown():
 					self.set_profile("output")
 					self.lut3d_show_trc_controls()
+				if hasattr(self, "install_profile_btn"):
+					if tab is self.lut3d_settings_panel:
+						self.install_profile_btn.SetToolTipString(
+							lang.getstr("3dlut.install"))
+					else:
+						self.install_profile_btn.SetToolTipString(
+							lang.getstr("profile.install"))
 				tab.Show()
 				btn._pressed = True
 				btn._SetState(platebtn.PLATE_PRESSED)
@@ -11064,7 +11074,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.profile_finish, self.worker.create_profile, ckwargs={
 						"profile_path": profile_save_path, 
 						"failure_msg": lang.getstr(
-							"error.profile.file_not_created")}, 
+							"error.profile.file_not_created"),
+						"install_3dlut": getcfg("3dlut.create")}, 
 					wkwargs={"dst_path": profile_save_path, 
 							 "display_name": display_name,
 							 "display_manufacturer": display_manufacturer,
@@ -11139,7 +11150,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			except Exception, exception:
 				show_result_dialog(exception, self)
 				return
-			self.profile_finish(True, profile.fileName)
+			self.profile_finish(True, profile.fileName,
+								install_3dlut=getcfg("3dlut.create"))
 	
 	def create_profile_name(self):
 		"""
