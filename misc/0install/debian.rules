@@ -38,6 +38,8 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package
+	mkdir -p "${DEB_BUILD_ROOT}/usr/share/doc/${DEBPACKAGE}-0install";
+	cp debian/copyright "${DEB_BUILD_ROOT}/usr/share/doc/${DEBPACKAGE}-0install/copyright";
 	PYTHONPATH=. python${python_version} util/0install_desktop.py "${DEB_BUILD_ROOT}/usr/share"
 	# --- end custom part for installing
 
