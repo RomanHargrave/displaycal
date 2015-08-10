@@ -407,7 +407,7 @@
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>Download the <a href="${URL}download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
-						<p>If you are using Mac OS X 10.11 “El capitan”, please also download and install <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a> to prevent a runtime incompatibility with the system python.</p>
+						<p>If you are using Mac OS X 10.11 “El Capitan”, please also download and install <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a> to prevent a runtime incompatibility with the system python.</p>
 					</div>
 				</li>
 				<li>
@@ -2148,8 +2148,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="issue-mac-dispcalgui-0install-elcapitan"><span>Mac OS X:</span> If running via 0install, dispcalGUI won't launch anymore under Mac OS X 10.11 “El Capitan”</dt>
 				<dd><strong>Solution:</strong> Apple has changed the system Python interpreter to ignore dynamic library loading overrides in El Capitan. To fix this, you have two options:
 
-					<ol>
-						<li>Option 1: Override the system Python with the official Python distribution from python.org
+					<ul>
+						<li>Option A: Override the system Python with the official Python distribution from python.org
 							<ol>
 								<li>Download and install the python.org <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a></li>
 								<li>Run the “0install Launcher” application from the dispcalGUI-0install.dmg disk image.</li>
@@ -2157,8 +2157,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 								<li>From now on, you can start dispcalGUI normally as usual.</li>
 							</ol>
 						</li>
-						<li>Option 2: Download and use the <a href="#standalone">standalone dispcalGUI application</a> instead.</li>
-					</ol>
+						<li>Option B: Download and use the <a href="#standalone">standalone dispcalGUI application</a> instead.</li>
+					</ul>
 				</dd>
 
 				<dt id="issue-mac-dispcalgui-damaged"><span>Mac OS X:</span> dispcalGUI.app is damaged and can't be opened.</dt>
