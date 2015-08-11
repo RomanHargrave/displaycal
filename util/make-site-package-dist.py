@@ -9,6 +9,7 @@ Collect modules from site-packages used by dispcalGUI
 import glob
 import os
 import shutil
+import subprocess as sp
 import sys
 from distutils.sysconfig import get_python_lib
 
@@ -60,6 +61,9 @@ if len(wxversions_candidates) > 1:
 	print('Your choice: %s' % wx_pth)
 	if raw_input('Press <ENTER> to continue, X <ENTER> to abort: ').upper() == 'X':
 		sys.exit()
+elif wxversions_candidates:
+	wx_pth = os.path.join(os.path.dirname(wxversion.__file__),
+						  'wx-%s' % wxversions_candidates[0])
 else:
 	wx_pth = 'wx'
 
@@ -79,18 +83,35 @@ if sys.platform == 'darwin':
 	pkgs['wx'].extend(glob.glob(os.path.normpath(os.path.join(
 		os.path.dirname(wx_pth), '..', '..', 'libwx_*.dylib'))))
 
+dylibs = []
+
 
 def copy(src, dst):
 	if os.path.islink(src):
 		os.symlink(os.readlink(src), dst)
 	else:
 		shutil.copy(src, dst)
+		name, ext = os.path.splitext(os.path.basename(dst))
+		if sys.platform == "darwin":
+			# Fixup loader path
+			if ext == '.so':
+				for dylib in dylibs:
+					args = ['install_name_tool', '-change', dylib,
+							'@loader_path/../../' + os.path.basename(dylib), dst]
+					print sp.list2cmdline(args)
+					sp.call(args)
+			elif ext == '.dylib':
+				args = ['install_name_tool', '-id',
+						'@loader_path/../../' + os.path.basename(src), dst]
+				print sp.list2cmdline(args)
+				sp.call(args)
 
 
 # Collect packages
 python_lib = get_python_lib(True)
 for pkg_name, data in pkgs.iteritems():
 	print('Checking for package: %s' % pkg_name)
+	dylibs = filter(lambda entry: entry.endswith('.dylib'), data)
 	try:
 		pkg = __import__(pkg_name)
 	except ImportError, exception:
@@ -149,7 +170,7 @@ for pkg_name, data in pkgs.iteritems():
 						os.makedirs(dst_dir)
 					dst = os.path.join(dst_dir, filename)
 					if not os.path.isfile(dst):
-						print('  Collecting file: %s' % pth)
+						print('  Collecting file: %s' % src)
 						copy(src, dst)
 		else:
 			dst = os.path.join(dist_dir, os.path.basename(pth))
