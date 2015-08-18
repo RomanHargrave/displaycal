@@ -8,7 +8,7 @@ XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
 Package: ${DEBPACKAGE}
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}, python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), python-pygame, argyll, p7zip
+Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}, python-wxgtk3.0 (>= 3.0) | python-wxgtk2.8 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), python-pygame, argyll, p7zip
 Conflicts: ${DEBPACKAGE}-0install
 Replaces: ${DEBPACKAGE}-0install
 Description: ${SUMMARY}
