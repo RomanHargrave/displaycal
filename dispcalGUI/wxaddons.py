@@ -228,8 +228,8 @@ class BetterTimer(wx.Timer):
 	def Notify(self):
 		if self._owner and _global_timer_lock.acquire(False):
 			try:
-				self._owner.ProcessEvent(BetterTimerEvent(self.Id,
-														  self.Interval))
+				wx.PostEvent(self._owner, BetterTimerEvent(self.Id,
+														   self.Interval))
 			finally:
 				_global_timer_lock.release()
 
