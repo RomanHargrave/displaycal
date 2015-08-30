@@ -822,7 +822,9 @@ def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 			if os.path.dirname(item) == cwd:
 				item = os.path.basename(item)
 			ispath = True
-		item = quote_args([item])[0]
+		item = sp.list2cmdline([item])
+		if not item.startswith('"'):
+			item = quote_args([item])[0]
 		lines.append(item)
 		i += 1
 	for line in lines:
