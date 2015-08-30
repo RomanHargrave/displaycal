@@ -94,7 +94,8 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 					 whereis)
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
-from util_str import safe_basestring, safe_str, safe_unicode, universal_newlines
+from util_str import (safe_basestring, safe_str, safe_unicode, strtr,
+					  universal_newlines)
 from wxaddons import BetterCallLater, BetterWindowDisabler, wx
 from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
