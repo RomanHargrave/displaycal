@@ -8,6 +8,7 @@ import getpass
 import glob
 import math
 import os
+import pipes
 import re
 import socket
 import shutil
@@ -822,9 +823,12 @@ def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 			if os.path.dirname(item) == cwd:
 				item = os.path.basename(item)
 			ispath = True
-		item = sp.list2cmdline([item])
-		if not item.startswith('"'):
-			item = quote_args([item])[0]
+		if sys.platform == "win32":
+			item = sp.list2cmdline([item])
+			if not item.startswith('"'):
+				item = quote_args([item])[0]
+		else:
+			item = pipes.quote(item)
 		lines.append(item)
 		i += 1
 	for line in lines:
