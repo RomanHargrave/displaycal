@@ -70,7 +70,7 @@ def handle_error(error, parent=None, silent=False):
 			else:
 				frame = None
 			if parent is None:
-				parent = app.GetTopWindow()
+				parent = app.GetActiveWindow()
 			if parent:
 				try:
 					parent.IsShownOnScreen()
