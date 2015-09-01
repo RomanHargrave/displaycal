@@ -379,7 +379,7 @@ function slimbox_init($, container) {
 };
 
 // AUTOLOAD CODE BLOCK (MAY BE CHANGED OR REMOVED)
-if (!/android|iphone|ipod|series60|symbian|windows ce|blackberry/i.test(navigator.userAgent)) {
+if (!/ipod|series60|symbian|windows ce/i.test(navigator.userAgent)) {
   jQuery(function ($) {
 	  slimbox_init($);
   });

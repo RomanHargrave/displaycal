@@ -134,7 +134,10 @@ jQuery(function ($) {
 	$('#content p > br').after('<span class="indent"></span>')
 
 	/* Intro */
-	if (location.protocol != 'file:' || (location.search || '').indexOf('debug') > -1 || (document.cookie || '').indexOf('debug') > -1) {
+	if ($(window).width() >= 760 &&
+		(location.protocol != 'file:' ||
+		 (location.search || '').indexOf('debug') > -1 ||
+		 (document.cookie || '').indexOf('debug') > -1)) {
 		$('#header').addClass('intro');
 		function splash_onload() {
 			this._loaded = true;
@@ -201,6 +204,19 @@ jQuery(function ($) {
 	$('.shariff > ul').removeClass('col-5');
 	$('.shariff > ul').addClass('col-6');
 	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit dispcalGUI on Facebook" target="_blank" href="https://www.facebook.com/dispcalGUI/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
+
+	/* Only show 'to top' link if scroll position > ToC offset top */
+	var totop_isshown = false;
+	$(window).scroll(function () {
+		if (totop_isshown && $(window).scrollTop() < $('#toc').offset().top) {
+			$('#totop').slideUp();
+			totop_isshown = false;
+		}
+		else if (!totop_isshown && $(window).scrollTop() > $('#toc').offset().top) {
+			$('#totop').slideDown();
+			totop_isshown = true;
+		}
+	});
 });
 
 jQuery(window).load(function () {
