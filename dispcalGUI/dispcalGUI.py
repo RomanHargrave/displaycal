@@ -9859,22 +9859,25 @@ class MainFrame(ReportFrame, BaseFrame):
 					try:
 						imported, skipped = ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
 						if imported == 0:
-							raise ValueError()
+							raise Info()
 					except (UnicodeDecodeError,
 							demjson.JSONDecodeError), exception:
-						result = Error(lang.getstr("file.invalid"))
-					except EnvironmentError, exception:
-						result = exception
-					except ValueError:
+						if isinstance(exception, demjson.JSONDecodeError):
+							exception = exception.pretty_description()
+						result = Error(lang.getstr("file.invalid") + "\n" +
+									   safe_unicode(exception))
+					except Info:
 						result = False
+					except Exception, exception:
+						result = exception
 					else:
 						result = icd = True
-						self.worker.wrapup(False)
 						if skipped > 0:
 							result = Warn(lang.getstr("colorimeter_correction.import.partial_warning",
 													  ("iColor Display",
 													   skipped,
 													   imported + skipped)))
+					self.worker.wrapup(False)
 			elif kind == "xrite":
 				# Import .edr
 				if asroot and sys.platform == "win32":
