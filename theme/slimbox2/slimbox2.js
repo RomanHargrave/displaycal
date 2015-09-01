@@ -361,7 +361,7 @@
 })(jQuery);
 
 function slimbox_init($, container) {
-  $(container || 'body').find("a[rel^='lightbox'], a[href$='.gif'], a[href$='.jpg'], a[href$='.jpeg'], a[href$='.png']").filter(function () {
+  $(container || 'body').find("a[data-lightbox^='lightbox'], a[href$='.gif'], a[href$='.jpg'], a[href$='.jpeg'], a[href$='.png']").filter(function () {
 	return $(this).attr('slimbox') != 'slimbox';
   }).each(function () {
 	  $(this).attr('slimbox', 'slimbox');
@@ -374,7 +374,7 @@ function slimbox_init($, container) {
 		  else this.title = $(this).text();
 	  }
   }).slimbox({filterDuplicates: true}, null, function(el) {
-    return this == el || (this.rel.length > 8 && this.rel == el.rel);
+    return this == el || ($(this).data('lightbox').length > 8 && $(this).data('lightbox') == $(el).data('lightbox'));
   });
 };
 

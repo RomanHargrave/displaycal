@@ -195,11 +195,11 @@ h5 {
 	font-size: 16px;
 	line-height: 20px;
 }
-acronym[title], span[title] {
+abbr[title], acronym[title], span[title] {
 	border-bottom: 1px dotted #ccc;
 	cursor: help;
 }
-acronym a {
+abbr a, acronym a {
 	display: none;
 }
 code {
@@ -290,7 +290,7 @@ p {
 }
 h6,
 strong {
-	font-weight: 600;
+	font-weight: 700;
 }
 sup {
 	font-size: 9px;

@@ -106,7 +106,7 @@
 }
 
 #lbNextLink {
-	right: 65px;
+	right: 55px;
 }
 
 #lbBottom {
@@ -155,7 +155,7 @@
 		right: auto;
 	}
 	#lbPrevLink {
-		left: 65px;
+		left: 55px;
 		right: auto;
 	}
 }

@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 <!--[if lte IE 8 ]>
 <html xmlns="http://www.w3.org/1999/xhtml" class="ie_lte_8">
 <![endif]-->
@@ -7,18 +7,19 @@
 <!--<![endif]-->
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=device-width" />
 		<title>dispcalGUI—Open Source Display Calibration and Characterization powered by Argyll CMS</title>
 		<meta name="description" content="${SUMMARY}" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="${URL}shariff/shariff.complete.css" />
-		<link rel="stylesheet" href="theme/readme.css" />
-		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css" />
+		<link rel="stylesheet" href="theme/readme.css?ts=2015-09-01T12:26" />
+		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2015-09-01T12:44" />
 		<link rel="stylesheet" href="theme/prism.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
-		<script type="text/javascript" src="theme/slimbox2/slimbox2.js"></script>
-		<script type="text/javascript" src="theme/readme.js"></script>
+		<script type="text/javascript" src="theme/slimbox2/slimbox2.js?ts=2015-09-01T14:54"></script>
+		<script type="text/javascript" src="theme/readme.js?ts=2015-09-01T01:40"></script>
 	</head>
 	<body>
 
@@ -47,7 +48,7 @@
 				<ul class="complementary">
 					<li class="about"><a href="#about">About</a></li>
 					<li class="quickstart"><a href="#quickstart">Quickstart guide</a></li>
-					<li class="issues"><a href="#issues">Issues &amp; solutions</a></li>
+					<li class="toc"><a href="#toc">Documentation</a></li>
 					<li class="help"><a href="#help">Get help</a></li>
 					<li class="reportbug"><a href="#reportbug">Report a bug</a></li>
 					<li class="donate"><a href="#donate">Donate</a></li>
@@ -216,46 +217,46 @@
 				<h3>Screenshots</h3>		
 
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink" rel="lightbox-set" title="Display &amp; instrument settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME.png" class="imagelink" data-lightbox="lightbox-set" title="Display &amp; instrument settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Display &amp; instrument settings</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-calibration-settings.png" class="imagelink" rel="lightbox-set" title="Calibration settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-calibration-settings-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-calibration-settings.png" class="imagelink" data-lightbox="lightbox-set" title="Calibration settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-calibration-settings-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Calibration settings</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-profiling-settings.png" class="imagelink" rel="lightbox-set" title="Profiling settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-profiling-settings-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-profiling-settings.png" class="imagelink" data-lightbox="lightbox-set" title="Profiling settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-profiling-settings-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Profiling settings</small><br /></span>
 				</p>
 
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-3DLUT-settings.png" class="imagelink" rel="lightbox-set" title="3D LUT settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-3DLUT-settings-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-3DLUT-settings.png" class="imagelink" data-lightbox="lightbox-set" title="3D LUT settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-3DLUT-settings-thumb.png" alt="" class="opaque" /></a><br />
 					<small>3D LUT settings</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-verification-settings.png" class="imagelink" rel="lightbox-set" title="Verification settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-verification-settings-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-verification-settings.png" class="imagelink" data-lightbox="lightbox-set" title="Verification settings"><img src="screenshots/dispcalGUI-screenshot-GNOME-verification-settings-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Verification settings</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart.png" class="imagelink" rel="lightbox-set" title="Testchart editor"><img src="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart.png" class="imagelink" data-lightbox="lightbox-set" title="Testchart editor"><img src="screenshots/dispcalGUI-screenshot-GNOME-edit-testchart-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Testchart editor</small><br /></span>
 				</p>
 
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-adjust.png" class="imagelink" rel="lightbox-set" title="Display adjustment"><img src="screenshots/dispcalGUI-screenshot-GNOME-adjust-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-adjust.png" class="imagelink" data-lightbox="lightbox-set" title="Display adjustment"><img src="screenshots/dispcalGUI-screenshot-GNOME-adjust-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Display adjustment</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-profile-information.png" class="imagelink" rel="lightbox-set" title="Profile information"><img src="screenshots/dispcalGUI-screenshot-GNOME-profile-information-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-profile-information.png" class="imagelink" data-lightbox="lightbox-set" title="Profile information"><img src="screenshots/dispcalGUI-screenshot-GNOME-profile-information-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Profile information</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-view-curves.png" class="imagelink" rel="lightbox-set" title="Calibration curves"><img src="screenshots/dispcalGUI-screenshot-GNOME-view-curves-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-GNOME-view-curves.png" class="imagelink" data-lightbox="lightbox-set" title="Calibration curves"><img src="screenshots/dispcalGUI-screenshot-GNOME-view-curves-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Calibration curves</small><br /></span>
 				</p>
 
 				<p>
-					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Linux with KDE4"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-KDE4.png" class="imagelink" data-lightbox="lightbox-set" title="dispcalGUI running under Linux with KDE4"><img src="screenshots/dispcalGUI-screenshot-KDE4-thumb.png" alt="" class="opaque" /></a><br />
 					<small>KDE4</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-Mac.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Mac OS X"><img src="screenshots/dispcalGUI-screenshot-Mac-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-Mac.png" class="imagelink" data-lightbox="lightbox-set" title="dispcalGUI running under Mac OS X"><img src="screenshots/dispcalGUI-screenshot-Mac-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Mac OS X</small><br /></span>
 
-					<span><a href="screenshots/dispcalGUI-screenshot-Win7.png" class="imagelink" rel="lightbox-set" title="dispcalGUI running under Windows 7"><img src="screenshots/dispcalGUI-screenshot-Win7-thumb.png" alt="" class="opaque" /></a><br />
+					<span><a href="screenshots/dispcalGUI-screenshot-Win7.png" class="imagelink" data-lightbox="lightbox-set" title="dispcalGUI running under Windows 7"><img src="screenshots/dispcalGUI-screenshot-Win7-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Windows 7</small><br /></span>
 				</p>
 			</div>
@@ -273,7 +274,7 @@
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 
-			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://numpy.scipy.org/">NumPy</a>, <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<acronym title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[6]</a></sup></acronym> library) and <a href="http://wxpython.org/">wxPython</a> (<acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
+			<p>dispcalGUI is written in <a href="http://python.org/">Python</a> and uses the 3rd-party packages <a href="http://numpy.scipy.org/">NumPy</a>, <a href="http://pypi.python.org/pypi/demjson">demjson</a> (<abbr title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[6]</a></sup></abbr> library) and <a href="http://wxpython.org/">wxPython</a> (<abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit). It also makes extensive use of several <a href="http://argyllcms.com/">Argyll CMS</a> utilities. The build system to create standalone executables additionally uses <a href="http://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="http://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="http://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
 		</div>
 
 		<div id="download">
@@ -407,7 +408,6 @@
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>Download the <a href="${URL}download/dispcalGUI-0install.dmg">dispcalGUI Zero Install Launcher</a> disk image and run any of the included applications.</p>
-						<p>If you are using Mac OS X 10.11 “El Capitan”, please also download and install <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a> to prevent a runtime incompatibility with the system python.</p>
 					</div>
 				</li>
 				<li>
@@ -524,22 +524,22 @@
 								<a href="${URL}download/RedHat_RHEL-7/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
-								<span>SUSE Linux Enterprise 11 SP2</span>
+								<span>SLE 11 SP2</span>
 								<span><a href="${URL}download/SLE_11_SP2/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="${URL}download/SLE_11_SP2/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
-								<span>SUSE Linux Enterprise 11 SP3</span>
+								<span>SLE 11 SP3</span>
 								<span><a href="${URL}download/SLE_11_SP3/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="${URL}download/SLE_11_SP3/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
-								<span>SUSE Linux Enterprise 11 SP4</span>
+								<span>SLE 11 SP4</span>
 								<span><a href="${URL}download/SLE_11_SP4/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="${URL}download/SLE_11_SP4/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
-								<span>SUSE Linux Enterprise 12</span>
+								<span>SLE 12</span>
 								<span>
 								<a href="${URL}download/SLE_12/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
@@ -593,7 +593,7 @@
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
 						<p><a href="${URL}download/dispcalGUI.tar.gz">Source Tarball</a></p>
 						<p>
-							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the <acronym title="Subversion">SVN<sup><a href="#definition_SVN">[8]</a></sup></acronym> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
+							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="http://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="http://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
 					</div>
 				</li>
@@ -728,7 +728,7 @@
 						<ul>
 							<li><a href="http://python.org/">Python</a> &gt;= v2.5 &lt;= v2.7.x (2.7.x is the recommended version. Mac OS X users: If you want to compile dispcalGUI's C extension module, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
 							<li><a href="http://numpy.scipy.org/">NumPy</a></li>
-							<li><a href="http://wxpython.org/">wxPython</a> <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> toolkit</li>
+							<li><a href="http://wxpython.org/">wxPython</a> <abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit</li>
 						</ul>
 
 						<h4>Windows:</h4>
@@ -753,7 +753,7 @@
 						<h4>Mac OS X:</h4>
 						<ul>
 							<li><a href="http://developer.apple.com/xcode/">XCode</a></li>
-							<li><a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable (on Mac OS X before 10.5, install setuptools first: <code>sudo python util/ez_setup.py setuptools</code>)</li>
+							<li><a href="http://pypi.python.org/pypi/py2app/">py2app</a> if you want to build a standalone executable. On Mac OS X before 10.5, install setuptools first: <code>sudo python util/ez_setup.py setuptools</code></li>
 						</ul>
 
 						<h4>Windows:</h4>
@@ -955,14 +955,14 @@
 			user-definable target characteristics, like brightness, gamma and white point. 
 			This step is generally referred to as <em>calibration</em>. Calibration is done by 
 			adjusting the monitor controls, and the output of the graphics card (via 
-			<em>calibration curves</em>, also sometimes called <em>video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> curves</em>—please don't confuse these with <em>LUT profiles</em>, the <a href="#difference_lutcurves_lutprofile" title="Difference between LUT (calibration) curves and LUT profiles">differences are explained here</a>) to get as 
+			<em>calibration curves</em>, also sometimes called <em>video <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> curves</em>—please don't confuse these with <em>LUT profiles</em>, the <a href="#difference_lutcurves_lutprofile" title="Difference between LUT (calibration) curves and LUT profiles">differences are explained here</a>) to get as 
 			close as possible to the chosen target.<br />
 			To meet the user-defined target characteristics, it is generally advisable to 
 			get as far as possible by using the monitor controls, and only thereafter by 
 			manipulating the output of the video card via calibration curves, which are loaded into the <em>video card gamma table</em>, to get the best
 			results.</p>
 
-			<p>Second, the calibrated displays response is measured and an <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile 
+			<p>Second, the calibrated displays response is measured and an <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> profile 
 			describing it is created.</p>
 
 			<p>Optionally and for convenience purposes, the calibration is stored in the profile, but both 
@@ -1019,7 +1019,7 @@
 
 				<p>When a calibration file is selected, the “Update calibration”
 				checkbox will become available, which takes less time than a calibration from scratch.
-				If a <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile is selected, and a calibration file with the same base name
+				If a <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> profile is selected, and a calibration file with the same base name
 				exists in the same directory, the profile will be updated with the new calibration. Ticking the “Update calibration” checkbox will gray out
 				all options as well as the “Calibrate &amp; profile” and “Just profile” buttons, only the quality level will be changeable.</p>
 			</div>
@@ -1111,7 +1111,7 @@
 							<p>Also note that many color spaces are encoded with, and labelled as having a gamma of approximately 2.2 (ie. sRGB, REC 709, SMPTE 240M, Macintosh OS X 10.6), but are actually intended to be displayed on a display with a typical CRT gamma of 2.4 viewed in a darkened environment.<br />
 							This is because this 2.2 gamma is a source gamma encoding in bright viewing conditions such as a television studio, while typical display viewing conditions are quite dark by comparison, and a contrast expansion of (approx.) gamma 1.1 is desirable to make the images look as intended.<br />
 							So if you are displaying images encoded to the sRGB standard, or displaying video through the calibration, just setting the gamma curve to sRGB or REC 709 (respectively) is probably not what you want! What you probably want to do, is to set the gamma curve to about gamma 2.4, so that the contrast range is expanded appropriately, or alternatively use sRGB or REC 709 or a gamma of 2.2 but also specify the actual ambient viewing conditions via a light level in Lux, so that an appropriate contrast enhancement can be made during calibration. If your instrument is capable of measuring ambient light levels, then you can do so.<br />
-							<span class="footnote">(For in-depth technical information about sRGB, see “<a href="http://www.color.org/sRGB.xalter">A Standard Default Color Space for the Internet: sRGB</a>” at the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> website for details of how it is intended to be used)</span></p>
+							<span class="footnote">(For in-depth technical information about sRGB, see “<a href="http://www.color.org/sRGB.xalter">A Standard Default Color Space for the Internet: sRGB</a>” at the <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> website for details of how it is intended to be used)</span></p>
 
 							<p>If you're wondering what gamma value you should use, you can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info. Setting the gamma to the reported value can then help to reduce calibration artifacts like banding, because the adjustments needed for the video card's gamma table should not be as strong as if a gamma further away from the display's native response was chosen.</p>
 						</dd>
@@ -1170,54 +1170,54 @@
 
 				<dl>
 					<dt>Profile quality</dt>
-						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
+						<dd>Sets the level of effort and/or detail in the resulting profile. For table based profiles (<abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>), it sets the main lookup table size, and hence quality in the resulting profile. For matrix profiles it sets the per channel curve detail level and fitting “effort”.</dd>
 
 					<dt id="settings_profiling_bpc">Black point compensation (enable “Show advanced options” in the “Options” menu)</dt>
 						<dd>
 							<p>(Note: This option has no effect if just calibrating and creating a simple curves + matrix profile directly from the calibration data without additional profiling measurements)</p>
-							<p>This effectively prevents black crush when using the profile, but at the expense of accuracy. It is generally best to only use this option when it is not certain that the applications you are going to use have a high quality color management implementation. For LUT profiles, more sophisticated options exist (i.e. <a href="#settings_profiling_gamutmapping">advanced gamut mapping options</a> and use either “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables”, which is enabled by default, or “Gamut mapping for perceptual intent”, which can be used to create a perceptual table that maps the black point).</p>
+							<p>This effectively prevents black crush when using the profile, but at the expense of accuracy. It is generally best to only use this option when it is not certain that the applications you are going to use have a high quality color management implementation. For LUT profiles, more sophisticated options exist (i.e. <a href="#settings_profiling_gamutmapping">advanced gamut mapping options</a> and use either “Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables”, which is enabled by default, or “Gamut mapping for perceptual intent”, which can be used to create a perceptual table that maps the black point).</p>
 						</dd>
 
 					<dt id="settings_profiling_profile_type">Profile type (enable “Show advanced options” in the “Options” menu)</dt>
 						<dd>
-							<p>Generally you can differentiate between two types of profiles: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based and matrix based.</p>
+							<p>Generally you can differentiate between two types of profiles: <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> based and matrix based.</p>
 
-							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based types, and usually have the best compatibility across <acronym title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[2]</a></sup></acronym>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
+							<p>Matrix based profiles are smaller in filesize, somewhat less accurate (though in most cases smoother) compared to <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> based types, and usually have the best compatibility across <abbr title="Color Mangement Module">CMM<sup><a href="#definition_CMM">[2]</a></sup></abbr>s, applications and systems — but only support the colorimetric intent for color transforms. For matrix based profiles, the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> is always XYZ. You can choose between using individual curves for each channel (red, green and blue), a single curve for all channels, individual gamma values for each channel or a single gamma for all channels. Curves are more accurate than gamma values. A single curve or gamma can be used if individual curves or gamma values degrade the gray balance of an otherwise good calibration.</p>
 
-							<p><acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> type profiles, or certain variations of them).
-							When choosing a <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created.<br />
-							L*a*b* or XYZ can be used as <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> L*a*b* encoding range (Note: Under Windows, XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll CMS versions).<br />
-							As it is hard to verify if the <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> of an combined XYZ <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> + matrix profile is actually used, you may choose to create a profile with a swapped matrix, ie. blue-red-green instead of red-green-blue, so it will be obvious if an application uses the (deliberately wrong) matrix instead of the (correct) LUT because the colors will look very wrong (e.g. everything that should be red will be blue, green will be red, blue will be green, yellow will be purple etc).</p>
+							<p><abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> based profiles are larger in filesize, more accurate (but may sacrifice smoothness), in some cases less compatible (applications might not be able to use or show bugs/quirks with <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> type profiles, or certain variations of them).
+							When choosing a <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> based profile type, advanced gamut mapping options become available which you can use to create perceptual and/or saturation tables inside the profile in addition to the default colorimetric tables which are always created.<br />
+							L*a*b* or XYZ can be used as <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>, with XYZ being recommended especially for wide-gamut displays bacause their primaries might exceed the <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> L*a*b* encoding range (Note: Under Windows, XYZ <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> types are only available in dispcalGUI if using Argyll CMS &gt;= 1.1.0 because of a requirement for matrix tags in the profile, which are not created by prior Argyll CMS versions).<br />
+							As it is hard to verify if the <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> of an combined XYZ <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> + matrix profile is actually used, you may choose to create a profile with a swapped matrix, ie. blue-red-green instead of red-green-blue, so it will be obvious if an application uses the (deliberately wrong) matrix instead of the (correct) LUT because the colors will look very wrong (e.g. everything that should be red will be blue, green will be red, blue will be green, yellow will be purple etc).</p>
 
-							<p id="difference_lutcurves_lutprofile">Note: <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based profiles (which contain three-dimensional LUTs) might be confused with video card <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> (calibration) curves (one-dimensional LUTs), but they're two different things. Both <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-based and matrix-based profiles may include calibration curves which can be loaded into a video card's gamma table hardware.</p>
+							<p id="difference_lutcurves_lutprofile">Note: <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-based profiles (which contain three-dimensional LUTs) might be confused with video card <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> (calibration) curves (one-dimensional LUTs), but they're two different things. Both <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-based and matrix-based profiles may include calibration curves which can be loaded into a video card's gamma table hardware.</p>
 						</dd>
 
 					<dt id="settings_profiling_gamutmapping">Advanced gamut mapping options (enable “Show advanced options” in the “Options” menu)</dt>
 						<dd>
-							<p>You can choose any of the following options after selecting a LUT profile type and clicking “Advanced...”. <em>Note:</em> The options “Low quality <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables” and “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table” are mutually exclusive.</p>
+							<p>You can choose any of the following options after selecting a LUT profile type and clicking “Advanced...”. <em>Note:</em> The options “Low quality <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables” and “Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table” are mutually exclusive.</p>
 							
-							<h4>Low quality <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables</h4>
-							<p>Choose this option if the profile is only going to be used with inverse device-to-<acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> gamut mapping to create a DeviceLink or 3D LUT (dispcalGUI always uses inverse device-to-<acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> gamut mapping when creating a DeviceLink/3D LUT). This will reduce the processing time needed to create the <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device tables. <strong>Don't</strong> choose this option if you want to install or otherwise use the profile.</p>
+							<h4>Low quality <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables</h4>
+							<p>Choose this option if the profile is only going to be used with inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping to create a DeviceLink or 3D LUT (dispcalGUI always uses inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping when creating a DeviceLink/3D LUT). This will reduce the processing time needed to create the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables. <strong>Don't</strong> choose this option if you want to install or otherwise use the profile.</p>
 
-							<h4>Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table</h4>
-							<p>To use this option, you have to select a XYZ LUT profile type. This option increases the effective resolution of the <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> to device colorimetric color lookup table by using a matrix to fill the whole grid with the values obtained by inverting the device-to-<acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
+							<h4>Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table</h4>
+							<p>To use this option, you have to select a XYZ LUT profile type. This option increases the effective resolution of the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> to device colorimetric color lookup table by using a matrix to fill the whole grid with the values obtained by inverting the device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
 							<p>You can also set the interpolated lookup table size. The default 33x33x33 resulution will provide a good balance between smoothness and accuracy. Lowering the resolution can increase smoothness (at the potential expense of some accuracy), while increasing resolution may make the resulting profile potentially more accurate (at the expense of some smoothness). Note that computation will need a lot of memory (&gt;= 4 GB of RAM recommended to prevent swapping to harddisk) especially at higher resolutions.</p>
 							<p>See below example images for the result you can expect, where the original image has been converted from sRGB to the display profile. Note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this. Also note that the sRGB blue in the image is actually out of gamut for the specific display used, and the edges visible in the blue gradient for the rendering are a result of the color being out of gamut, and the gamut mapping thus hitting the less smooth gamut boundaries.</p>
-							<div style="overflow: hidden; padding: 1.4em 0;">
-								<div style="text-align: center;">
-									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow.png"><img src="${URL}img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+							<div style="overflow: hidden; padding: 1.4em 16px 1.4em 0; text-align: center">
+								<div>
+									<p><a data-lightbox="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow.png"><img src="${URL}img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>Original “granger rainbow” image</p>
 								</div>
-								<div style="float: left; margin: 0 15px 0 22px; width: 200px">
-									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+								<div style="display: inline-block; margin: 0 12px; vertical-align: top; width: 200px">
+									<p><a data-lightbox="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
 								</div>
-								<div style="float: left; margin: 0 15px; width: 200px">
-									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+								<div style="display: inline-block; margin: 0 12px; vertical-align: top; width: 200px">
+									<p><a data-lightbox="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 								</div>
-								<div style="float: left; margin: 0 15px; width: 200px">
-									<p><a rel="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+								<div style="display: inline-block; margin: 0 12px; vertical-align: top; width: 200px">
+									<p><a data-lightbox="lightbox-set-smooth_b2a" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 									<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 								</div>
 							</div>
@@ -1475,7 +1475,7 @@
 
 				<p>You can do verification measurements to assess the display chain's (display profile - video card and the calibration curves in its gamma table - monitor) fit to the measured data, or to find out about the soft proofing capabilities of the display chain.</p>
 
-				<p>To do the former, you have to select a <acronym title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></acronym> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the display profile (measured vs expected values). The default verification chart contains 26 patches and can be used, for example, to check if a display needs to be re-profiled. If a RGB testchart with gray patches (R=G=B) is measured, like the default and extended verification charts, you also have the option to evaluate the graybalance through the calibration only, by placing a check in the corresponding box on the report.</p>
+				<p>To do the former, you have to select a <abbr title="CGATS.5 Data Exchange Format">CGATS<sup><a href="#definition_CGATS">[1]</a></sup></abbr> testchart file containing device values (RGB). The measured values are then compared to the values obtained by feeding the device RGB numbers through the display profile (measured vs expected values). The default verification chart contains 26 patches and can be used, for example, to check if a display needs to be re-profiled. If a RGB testchart with gray patches (R=G=B) is measured, like the default and extended verification charts, you also have the option to evaluate the graybalance through the calibration only, by placing a check in the corresponding box on the report.</p>
 
 				<p>To perform a check on the soft proofing capabilities, you have to provide a CGATS reference file containing XYZ or L*a*b* data, or a combination of simulation profile and testchart file, which will be fed through the display profile to lookup corresponding device (RGB) values, and then be sent to the display and measured. Afterwards, the measured values are compared to the original XYZ or L*a*b* values, which can give a hint how suitable (or unsuitable) the display is for softproofing to the colorspace indicated by the reference.</p>
 
@@ -1565,7 +1565,7 @@
 				<h4 id="remote">Remote measurements and profiling</h4>
 				
 				<p>When using Argyll CMS 1.4.0 and newer, remote measurements on a device not directly connected to the machine that is running dispcalGUI is possible (e.g. a smartphone or tablet). The remote device needs to be able to run a web browser (Firefox recommended), and the local machine running dispcalGUI may need firewall rules added or altered to allow incoming connections. To set up remote profiling, select “Web @ localhost” from the display device dropdown menu, then choose the desired action (e.g. “Profile only”). When the message “Webserver waiting at http://&lt;IP&gt;:&lt;Port&gt;” appears, open the shown address in the remote browser and attach the measurement device.<br />
-				<strong>NOTE:</strong> If you use this method of displaying test patches, there is no access to the display video <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>s and hardware calibration is not possible. The colors will be displayed with 8 bit per component precision, and any screen-saver or power-saver will not be automatically disabled. You will also be at the mercy of any color management applied by the web browser, and may have to carefully review and configure such color management.<br />
+				<strong>NOTE:</strong> If you use this method of displaying test patches, there is no access to the display video <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>s and hardware calibration is not possible. The colors will be displayed with 8 bit per component precision, and any screen-saver or power-saver will not be automatically disabled. You will also be at the mercy of any color management applied by the web browser, and may have to carefully review and configure such color management.<br />
 				<strong>NOTE:</strong> Close the web browser window or tab after each run, otherwise reconnection may fail upon further runs.</p>
 
 				<h4 id="madvr">madVR test pattern generator</h4>
@@ -1628,7 +1628,7 @@
 						<dd>Allows you to (re-)create a profile from existing measurement data (existing profiles created with Argyll CMS or dispcalGUI can also be selected as source) with the current profiling settings.</dd>
 
 					<dt>Create profile from extended display identification data...</dt>
-						<dd>Allows you to create a profile from your display's <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> (if available).</dd>
+						<dd>Allows you to create a profile from your display's <abbr title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> (if available).</dd>
 
 					<dt>Install display device profile...</dt>
 						<dd>Install an existing profile for the currently selected display.</dd>
@@ -1768,15 +1768,14 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 						<dt id="change-display-profile-cal-whitepoint">Change display profile and calibration whitepoint</dt>
 							<dd>
 								<p>Note that this reduces the profile gamut and accuracy.</p>
-								<p>Via 0install:<br />
-									<code>0install run --command=change-display-profile-cal-whitepoint -- \<br />
-										&#160; ${URL}0install/dispcalGUI.xml \<br />
-										&#160; [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename</code></p>
-									<p>From source:<br />
-									<code>python util/change_display_profile_cal_whitepoint.py- \<br />
-										&#160; ${URL}0install/dispcalGUI.xml \<br />
-										&#160; [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename</code>
-								</p>
+								<p>Via 0install:</p>
+								<pre><code>0install run --command=change-display-profile-cal-whitepoint -- \<br />
+&#160; ${URL}0install/dispcalGUI.xml \<br />
+&#160; [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename</code></pre>
+									<p>From source:</p>
+									<pre><code>python util/change_display_profile_cal_whitepoint.py- \<br />
+&#160; ${URL}0install/dispcalGUI.xml \<br />
+&#160; [-t temp | -T temp | -w x,y] [--cal-only] [inprofile] outfilename</code></pre>
 								<div>
 									<dl>
 										<dt><code>-t temp</code></dt>
@@ -1797,18 +1796,16 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 						<dt id="set-calibration-loading">Enable/disable Windows 7 and later calibration loading</dt>
 							<dd>
 								<p>Note that Windows calibration loading is of lower quality than using Argyll CMS because Windows always quantizes the calibration to 8 bit and scales it wrongly. This is not the case when using the dispcalGUI calibration loader which uses Argyll CMS.</p>
-								<p>Via 0install:<br />
-									<code>0install run --command=set-calibration-loading -- \<br />
-										&#160; ${URL}0install/dispcalGUI.xml [--os]</code>
-								</p>
-								<p>From source:<br />
-									<code>python -c "import sys; from dispcalGUI import util_win; \<br />
-										&#160; util_win.calibration_management_isenabled() or \<br />
-										&#160; util_win.enable_calibration_management() \<br />
-										&#160; if '--os' in sys.argv[1:] else \<br />
-										&#160; not util_win.calibration_management_isenabled() or \<br />
-										&#160; util_win.disable_calibration_management();" [--os]</code>
-								</p>
+								<p>Via 0install:</p>
+								<pre><code>0install run --command=set-calibration-loading -- \<br />
+&#160; ${URL}0install/dispcalGUI.xml [--os]</code></pre>
+								<p>From source:</p>
+								<pre><code>python -c "import sys; from dispcalGUI import util_win; \<br />
+&#160; util_win.calibration_management_isenabled() or \<br />
+&#160; util_win.enable_calibration_management() \<br />
+&#160; if '--os' in sys.argv[1:] else \<br />
+&#160; not util_win.calibration_management_isenabled() or \<br />
+&#160; util_win.disable_calibration_management();" [--os]</code></pre>
 								<p>The <code>--os</code> option determines wether Windows calibration loading functionality should be enbaled or disabled.</p>
 							</dd>
 					</dl>
@@ -2122,7 +2119,7 @@ The underlying issue seems to be that while USB 3.0 has been designed to be back
 				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “Use profile regardless” and “Ignore profile”, you may choose “Use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a L*a*b* LUT profile.</dd>
 
 				<dt id="issue-win-uac-cal-reset"><span>MS Windows Vista:</span> The calibration gets unloaded when a User Access Control prompt is shown</dt>
-				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <acronym title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></acronym> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
+				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7, and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open dispcalGUI and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “dispcalGUI Profile Loader” in the “Startup” subfolder. To disable <abbr title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></abbr> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
 				
 				<dt id="issue-win-intel-cal-reset"><span>MS Windows with Intel graphics (also Intel/AMD hybrid):</span> The Calibration gets unloaded after login/resume/User Access Control prompt</dt>
 				<dd><strong>Solution:</strong> The Intel graphics drivers contain several utilities that interfere with correct calibration loading. A workaround is to rename, move or disable (e.g. using a tool like <a href="http://technet.microsoft.com/en-us/sysinternals/bb963902">AutoRuns</a>) the following files:
@@ -2146,26 +2143,20 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				</dd>
 
 				<dt id="issue-mac-dispcalgui-0install-elcapitan"><span>Mac OS X:</span> If running via 0install, dispcalGUI won't launch anymore under Mac OS X 10.11 “El Capitan”</dt>
-				<dd><strong>Solution:</strong> Apple has changed the system Python interpreter to ignore dynamic library loading overrides in El Capitan. To fix this, you have two options:
+				<dd><strong>Solution:</strong>
 
-					<ul>
-						<li>Option A: Override the system Python with the official Python distribution from python.org
-							<ol>
-								<li>Download and install the python.org <a href="https://www.python.org/ftp/python/2.7.10/python-2.7.10-macosx10.6.pkg">Python 2.7</a></li>
-								<li>Run the “0install Launcher” application from the dispcalGUI-0install.dmg disk image.</li>
-								<li>Click “Refresh”, then “Run”. dispcalGUI should launch now.</li>
-								<li>From now on, you can start dispcalGUI normally as usual.</li>
-							</ol>
-						</li>
-						<li>Option B: Download and use the <a href="#standalone">standalone dispcalGUI application</a> instead.</li>
-					</ul>
+					<ol>
+						<li>Run the “0install Launcher” application from the dispcalGUI-0install.dmg disk image.</li>
+						<li>Click “Refresh”, then “Run”. An updated library will be downloaded, and dispcalGUI should launch.</li>
+						<li>From now on, you can start dispcalGUI normally as usual.</li>
+					</ol>
 				</dd>
 
 				<dt id="issue-mac-dispcalgui-damaged"><span>Mac OS X:</span> dispcalGUI.app is damaged and can't be opened.</dt>
 				<dd><strong>Solution:</strong> Go to the “Security &amp; Privacy” settings in System Preferences and set “Allow applications downloaded from” (under the “General” tab) to the “Anywhere” setting. After you have successfully launched dispcalGUI, you can change the setting back to a more secure option and dispcalGUI will continue to run properly.</dd>
 
 				<dt id="issue-mac-pscursor"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</dt>
-				<dd><strong>Solution:</strong> This seems to be a bug which shows with <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <acronym title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></acronym> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table” or “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
+				<dd><strong>Solution:</strong> This seems to be a bug which shows with <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table” or “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
 
 				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</dt>
 				<dd><strong>Solution:</strong> Make sure you have not selected a display that doesn't support calibration (i.e. “Web @ localhost” or “Untethered”) and that you have enabled “Interactive display adjustment” or set the tone curve to a different value than “As measured”. Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows 7 and make sure you have a recent driver for your video card installed.</dd>
@@ -2184,7 +2175,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			If you want to report a bug, please see the <a href="#reportbug">guidelines on bug reporting</a>. Otherwise, feel free to use one of the following channels:</p>
 
 			<ul>
-				<li><a href="http://sourceforge.net/p/dispcalgui/discussion/932493/">Help &amp; support forum</a></li>
+				<li><a href="${URL}forums/forum/help-and-support/">Help &amp; support forum</a></li>
 				<li><a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalGUI-users mailing list</a></li>
 				<li>Contact me directly via E-Mail: <a>dispcalGUI ‹at› hoech . net</a> (but keep in mind other users may also benefit from exchanges, so I'm encouraging the use one of the above channels if possible)</li>
 			</ul>
@@ -2193,8 +2184,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 		<div id="reportbug">
 			<h2>Report a bug</h2>
 
-			<p>Found a bug? If so, please first check the <a href="https://sourceforge.net/p/dispcalgui/bug-reports/">bug tracker</a>, it may have been reported already.
-			Please follow these guidelines for reporting bugs:</p>
+			<p>Found a bug? If so, please first check the <a href="${URL}issues/">issue tracker</a>, it may have been reported already.
+			Otherwise, please follow these guidelines for reporting bugs:</p>
 
 			<ul>
 				<li>Try to give a <strong>short, but concise summary of the problem</strong>.</li>
@@ -2212,10 +2203,10 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 							<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\dispcalGUI\logs</samp></li>
 					</ul>
 					<p>As the folder may contain several logfiles, it is a good idea to compress the whole folder to a ZIP or tar.gz archive that you can easily attach to a bug report.</p>
-					<p><em>Please note the logfiles may contain your username as well as paths of files you may have used in dispcalGUI. I will respect your privacy at all times, but you may want to consider this when attaching logfiles to public places like the <a href="https://sourceforge.net/p/dispcalgui/bug-reports/">bug tracker</a>.</em></p>
+					<p><em>Please note the logfiles may contain your username as well as paths of files you may have used in dispcalGUI. I will respect your privacy at all times, but you may want to consider this when attaching logfiles to public places like the <a href="${URL}issues/">issue tracker</a>.</em></p>
 				</li>
 			</ul>
-			<p>Create a new ticket (or if the bug has been reported already, use the existing ticket) at the <a href="https://sourceforge.net/p/dispcalgui/bug-reports/">bug tracker</a>, following the guidelines above, and attach the logfiles archive.</p>
+			<p>Create a new ticket (or if the bug has been reported already, use the existing ticket) at the <a href="${URL}issues/">issue tracker</a>, following the guidelines above, and attach the logfiles archive.</p>
 
 			<p>If you don't want to or can't use the bug tracker, feel free to use one of the <a href="#help">other support channels</a>.</p>
 		</div>
@@ -2223,7 +2214,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 		<div id="discuss">
 			<h2>Discussion</h2>
 
-			<p>Do you want to get in touch with me or other users regarding dispcalGUI or related topics? The <a href="http://sourceforge.net/p/dispcalgui/discussion/932494/">general discussion forum</a> or <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalGUI-users mailing list</a> is a good place to do so. You can also contact me directly via E-Mail: <a>dispcalGUI ‹at› hoech . net</a>.</p>
+			<p>Do you want to get in touch with me or other users regarding dispcalGUI or related topics? The <a href="${URL}forums/forum/general-discussion/">general discussion forum</a> or <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalGUI-users mailing list</a> is a good place to do so. You can also contact me directly via E-Mail: <a>dispcalGUI ‹at› hoech . net</a>.</p>
 		</div>
 
 		<div id="todo">
@@ -2288,20 +2279,21 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Tommaso Schiavinotto (italian translation)</p>
 
 			<p>Recent donors:
-蔡 明逸,
-Gho Wright,
-Christian Dembowski,
-Daniel Collins,
-Samu Ristkari,
-SkiVR,
-Jordan Szuch,
-Dale Phurrough,
-David Vogt,
-Hadi Izadi,
-Hans Vonsild,
-Jürgen Bode,
-Marco Brigham,
-Talon Kelley Flatting
+Paul Gold,
+Srinivas Murty,
+Piotr Billik,
+albert palaudaries,
+Hugo Wilkinson,
+David Barrett,
+Ian Maw,
+書宏 廖,
+Enes pizovic,
+Angus Taggart,
+Tom Luttrell,
+Bin Ming,
+Vovk Serge,
+Jeffrey Riaboy,
+Edward Roslak
 <!--a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none"></span--></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
@@ -2318,6 +2310,16 @@ Talon Kelley Flatting
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>wxPython Phoenix: Ensure that timer notifications run in the main GUI thread.</li>
+							<li>Mac OS X: Fix Resolve pattern generator loosing sync immediately if dispcalGUI is running standalone from a path that contains spaces.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0.4">2015-08-10 01:22 (UTC) 3.0.4 </dt>
+					<dd>
+						<h3>3.0.4 </h3>
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Ability to create 3D LUTs in PNG (Portable Network Graphic) and <a href="http://reshade.me/">ReShade</a> format. The latter allows fully color managed Direct3D (8–11.2) and OpenGL applications (e.g. games) under Windows (Vista and higher).</li>
@@ -2552,7 +2554,7 @@ Talon Kelley Flatting
 							<li>Enable black output offset instead of all-input offset for 3D LUTs, measurement report and synthetic profile creation (based on Argyll CMS 1.7 beta development code 2014-07-12, thanks to Graeme Gill). Note that for 3D LUTs, if using output offset ideally Argyll CMS 1.7 should be used aswell once it becomes available since the current implementation in dispcalGUI that enables output offset when used with Argyll CMS 1.6.3 or older has limited 16-bit precision for the black point mapping (due to the implementation altering the source profile TRC on-the-fly in that case, and the ICCv2 16-bit encoding used for the TRC tags in the source profile), while Argyll CMS 1.7 will enable full floating point processing (due to the black point mapping then taking place internally in <code>collink</code>, and dispcalGUI not having to alter the source profile TRC beforehand).</li>
 							<li>Black point can be specified in XYZ or chromaticity coordinates when creating a synthetic ICC profile.</li>
 							<li>When dropping an existing profile onto the synthetic ICC profile creation window, set whitepoint, primaries, blackpoint and tone response curve (average) according to the profile.</li>
-							<li><strong>Support for the Resolve 10.1 (and newer) CM pattern generator.</strong> See also <a href="https://sourceforge.net/p/dispcalgui/wiki/3D%20LUT%20creation%20workflow%20for%20Resolve/">3D LUT creation workflow for Resolve</a> on the <a href="https://sourceforge.net/p/dispcalgui/wiki/browse_pages/">dispcalGUI Wiki</a>.</li>
+							<li><strong>Support for the Resolve 10.1 (and newer) CM pattern generator.</strong> See also <a href="${URL}wiki/3d-lut-creation-workflow-for-resolve/">3D LUT creation workflow for Resolve</a> on the <a href="${URL}wiki/">dispcalGUI Wiki</a>.</li>
 							<li>Enable interactive display adjustment without creating calibration curves by setting “Tone curve” to “As measured”. This also causes all calibration setting placeholders in the profile name to be ignored.</li>
 							<li>Added options to override the minimum display update delay (requires Argyll CMS 1.5 or newer) and display settle time multiplier (requires Argyll CMS 1.7 Beta or newer). These options can be found in the <a href="#additional-commandline-arguments">“Set additional commandline arguments...”</a> window accessible from the “Options” menu. Note that these two settings (unlike the additional commandline parameters) are stored in the profile, and will be restored when the profile is selected again under “Settings”.</li>
 							<li>Testchart editor: If generating any number of iterative patches as well as single channel, gray or multidimensional patches, it is possible to add the single channel, gray and multidimensional patches in a separate step by holding the shift key while clicking on “Create testchart”. This prevents those patches affecting the iterative patch distribution, with the drawback of making the patch distribution less even. This is an experimental feature.</li>
@@ -2562,7 +2564,7 @@ Talon Kelley Flatting
 						<ul>
 							<li>Visual overhaul.</li>
 							<li>Calibration curves are no longer automatically loaded into the video card gamma table when loading a settings file. To manually load calibration curves into the video card gamma table, choose “Load calibration curves from calibration file or profile...” in the “Options” menu (Linux and Windows only), or install a profile, or use the “Preview calibration” checkbox (Linux and Windows only) in the profile installation dialog. The previous behavior can be restored by editing dispcalGUI.ini and adding a line <code>calibration.autoload = 1</code>.</li>
-							<li>Split “Smooth B2A tables” into “Enhance effective resolution of colorimetric <acronym title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></acronym>-to-device table” and “Smoothing” options and moved them to advanced gamut mapping options.</li>
+							<li>Split “Smooth B2A tables” into “Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table” and “Smoothing” options and moved them to advanced gamut mapping options.</li>
 							<li>Renamed “Apply BT.1886 gamma mapping” to “Apply tone response curve”.</li>
 							<li>Always override the source profile tone response curve when using “Apply tone response curve” (3D LUT creation and measurement report) so the result will be correct for the chosen parameters regardless of source profile tone response curve.</li>
 							<li>Removed black point compensation option from synthetic profile creation window.</li>
@@ -2616,7 +2618,7 @@ Talon Kelley Flatting
 						<h3>2.1</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><strong>“Auto” measurement mode for the ColorHug.</strong> This will automatically create a colorimeter correction with the reference based on <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> as part of the normal measurement process. This is a work-around for the red primary shift problem that some ColorHug users are experiencing (note that this will make ColorHug measurements closely match the gamut boundaries defined by the primaries and whitepoint from EDID). This mode should only be used as a last resort if no colorimeter correction with reference measurements from a spectrometer or other known accurate instrument can be obtained.</li>
+							<li><strong>“Auto” measurement mode for the ColorHug.</strong> This will automatically create a colorimeter correction with the reference based on <abbr title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> as part of the normal measurement process. This is a work-around for the red primary shift problem that some ColorHug users are experiencing (note that this will make ColorHug measurements closely match the gamut boundaries defined by the primaries and whitepoint from EDID). This mode should only be used as a last resort if no colorimeter correction with reference measurements from a spectrometer or other known accurate instrument can be obtained.</li>
 							<li><strong>Auto-update functionality.</strong> Apply updates from within dispcalGUI under Mac OS X and Windows, or if using Zero Install.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
@@ -2653,19 +2655,19 @@ Talon Kelley Flatting
 								<p>See below example images for the result you can expect (note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this).</p>
 								<div style="overflow: hidden; padding: 1.4em 0;">
 									<div style="text-align: center;">
-										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow.png"><img src="${URL}img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="${URL}img/GrangerRainbow.png"><img src="${URL}img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>Original “granger rainbow” image</p>
 									</div>
 									<div style="float: left; margin: 0 15px 0 22px; width: 200px">
-										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
 									</div>
 									<div style="float: left; margin: 0 15px; width: 200px">
-										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 									</div>
 									<div style="float: left; margin: 0 15px; width: 200px">
-										<p><a rel="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="${URL}img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 									</div>
 								</div>
@@ -3538,7 +3540,7 @@ Talon Kelley Flatting
 							<li>Linux: Allow installation of profiles using GNOME Color Manager even if XRandR is not working/available.</li>
 							<li>Linux: Installation now checks for existing udev rules/hotplug scripts for instruments and only installs its own rules if none exist yet.</li>
 							<li>Linux/Windows: The profile loader will now show a warning dialog if a profile couldn't be loaded.</li>
-							<li>Linux/Windows: Device model and manufacturer are added to profiles if <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> info is available.</li>
+							<li>Linux/Windows: Device model and manufacturer are added to profiles if <abbr title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> info is available.</li>
 						</ul>
 						<p>+ Numerous other small fixes and changes.</p>
 					</dd>
@@ -3577,7 +3579,7 @@ Talon Kelley Flatting
 							<li>Remember visible state of curves, log window and testchart editor.</li>
 							<li>Updated french translation (thanks).</li>
 							<li>Linux: Unattended calibration &amp; profiling no longer depends on xautomation.</li>
-							<li>Linux: <acronym title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></acronym> is now used (if available) when generating descriptive identifiers for displays.</li>
+							<li>Linux: <abbr title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> is now used (if available) when generating descriptive identifiers for displays.</li>
 							<li>Linux: When determining a display's associated profile, check XrandR _ICC_PROFILE output properties first if available.</li>
 							<li>Linux: The option to install a profile system-wide is not offered if using <a href="http://projects.gnome.org/gnome-color-manager/">GNOME Color Manager</a> to install profiles (GCM has its own way to set profiles as system default).</li>
 							<li>Linux (only when <a href="http://projects.gnome.org/gnome-color-manager/" title="GNOME Color Manager">GCM</a> is not installed or XRandR is not working), Mac OS X, Windows: Installing a profile system-wide now also sets it as default for the current user.</li>
@@ -3958,7 +3960,7 @@ Talon Kelley Flatting
 							<li>fix: when creating a new profile from an existing profile, use that profile's device model description if present.</li>
 							<li>fix: also create .app/.sh/.cmd files when creating a new profile from existing measurement data.</li>
 							<li>fix: restore advanced gamut mapping options to default if selecting a profile which does not contain those settings.</li>
-							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> profiles regardless of source profile type.</li>
+							<li>fix: allow free selection of source and target viewing conditions in advanced gamut mapping options for <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> profiles regardless of source profile type.</li>
 							<li>fix: if the screen or instrument that was selected in a previous session is not available, select an available one.</li>
 							<li>fix: (Mac) the “enable spyder 2” menu item would not allow to select files other than “setup.exe”.</li>
 							<li>fix: [src] (Mac) if dispcalGUI was installed as application and then run from (separate) source, multiple copies were launched at certain occasions.</li>
@@ -4006,7 +4008,7 @@ Talon Kelley Flatting
 							and then re-install your current profile so the new loader is created. The new loader will be created in $XDG_CONFIG_HOME/autostart/ (if set) or ~/.config/autostart/ (if not set), with the filename dispcalGUI-Calibration-Loader-Display-<strong>x</strong>.desktop, where <strong>x</strong> is the display number.</li>
 							<li>chg: the calibration loader will check if gnome-screensaver is running and if so, exit it before loading the calibration, then start it again to prevent resetting the calibration when activated.</li>
 							<li>chg: .sh/.cmd file in profile folder is no longer created when just installing a profile.</li>
-							<li>add: message box when selecting <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> as profile type with recommendation to use more samples for higher quality profiles.</li>
+							<li>add: message box when selecting <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> as profile type with recommendation to use more samples for higher quality profiles.</li>
 							<li>add: default to english locale if translation doesn't exist.</li>
 						</ul>
 					</dd>
@@ -4025,10 +4027,10 @@ Talon Kelley Flatting
 							<li>chg: renamed “Display type” to “Measurement mode” and moved over to measurement device selector.</li>
 							<li>chg: default to “LCD” for measurement mode.</li>
 							<li>chg: default testchart file names are now localized.</li>
-							<li>chg: new default testcharts, four flavours: matrix default (91 patches), <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym> default (127 patches), large (512 patches) and massive (3012 patches).</li>
+							<li>chg: new default testcharts, four flavours: matrix default (91 patches), <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr> default (127 patches), large (512 patches) and massive (3012 patches).</li>
 							<li>chg: testchart selector is now a dropdown box, shows all testchart files in chosen directory plus the default testcharts.</li>
 							<li>chg: [build/src] new and improved build system.</li>
-							<li>chg: [build/src] Python 2.6 is now the recommended version to run and/or build dispcalGUI. Python 2.5 is still supported, but you will not be able to cancel profile or testchart creation through the <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym>.</li>
+							<li>chg: [build/src] Python 2.6 is now the recommended version to run and/or build dispcalGUI. Python 2.5 is still supported, but you will not be able to cancel profile or testchart creation through the <abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr>.</li>
 							<li>chg: (Linux) externally installed wxGTK is no longer a dependency for executables.</li>
 							<li>chg: [build] Executables are now completely self-contained. The following paths are searched for additional language files: <code>&lt;user home directory&gt;/dispcalGUI/lang</code>, <code>&lt;dispcalGUI root directory&gt;/lang</code></li>
 							<li>add: all settings now stored in profile whenever possible.</li>
@@ -4044,14 +4046,14 @@ Talon Kelley Flatting
 								- to add a patch, double-click a row label<br />
 								- to delete patches, select them, then hold CTRL or CMD and hit DEL or BACKSPACE (will always delete whole rows even if only single cells selected)<br />
 								- CTRL-C/CTRL-V/CTRL-A = copy/paste/select all</li>
-							<li>add: advanced gamut mapping options for <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-type profiles, can also be used to overcome an apparent Photoshop CS3 bug under Mac OS X where the brush cursor shows strange artifacts when using <acronym title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></acronym>-profiles with only one intent (thanks to Klaus Karcher for reporting this).</li>
+							<li>add: advanced gamut mapping options for <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-type profiles, can also be used to overcome an apparent Photoshop CS3 bug under Mac OS X where the brush cursor shows strange artifacts when using <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-profiles with only one intent (thanks to Klaus Karcher for reporting this).</li>
 							<li>add: ability to generate profile from existing measurement data, even from an existing profile (if it contains appropriate data).</li>
 							<li>add: drag and drop calibration files (.cal), profiles (.icc/.icm), testcharts (.ti1) and measurement data files (.ti3) to the main window to process/select them (does not work very reliably on Mac OS X depending on where you drop the files, and you also get no optical feedback during the drag operation like the changed mouse cursor on Linux/Windows. Your best bet when dropping any files is perhaps the unoccupied area below “Settings”).</li>
 							<li>add: fully movable/resizable measurement window.</li>
 							<li>add: profile and testchart creation can be aborted (when running from source only if using Python &gt;= 2.6).</li>
 							<li>add: “Before” / “After” switch when calibration / profiling complete.</li>
 							<li>add: menu item to enable Spyder 2 from within dispcalGUI.</li>
-							<li>add: italian and spanish <acronym title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></acronym> translations (thanks contributors!)</li>
+							<li>add: italian and spanish <abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> translations (thanks contributors!)</li>
 							<li>Numerous other small fixes/changes.</li>
 						</ul>
 					</dd>
