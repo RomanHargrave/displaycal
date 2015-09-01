@@ -1757,9 +1757,9 @@ END_DATA""")
 			if not profile.fileName or not os.path.isfile(profile.fileName):
 				# Profile in memory, but not on disk
 				# Let user select profile
-				self.tc_precond_profile.ProcessEvent(
+				self.tc_precond_profile.browseButton.ProcessEvent(
 					wx.CommandEvent(wx.EVT_BUTTON.typeId,
-									self.tc_precond_profile.GetId()))
+									self.tc_precond_profile.browseButton.GetId()))
 				return
 				# NEVER: Write profile to disk
 				# Hmm... we probably don't want to do that, because in-memory
