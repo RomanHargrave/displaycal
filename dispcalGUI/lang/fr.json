@@ -410,6 +410,8 @@
 	"display_detected": "Une modification de la configuration du périphérique d'affichage a été détectée.",
 		"*display_device_profile": "Display device profile",
 	"display_lut.link": "Lier/délier l'accès à l'écran et à la table de correspondance",
+		"*display_profile.not_detected": "No current profile detected for display “%s”",
+		"*display_profile.save_as": "The current profile for display “%s” only exists in memory. Please save it to a file first.",
 	"display_short": "Périphérique d'affichage (abrégé)",
 	"displayport": "DisplayPort",
 		"*dlp_screen": "DLP Screen",

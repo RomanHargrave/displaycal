@@ -410,6 +410,8 @@
 	"display_detected": "Eine Änderung in der Anzeigegerätekonfiguration wurde erkannt.",
 	"display_device_profile": "Anzeigegeräteprofil",
 	"display_lut.link": "Anzeigegerät und Grafikkarten-Gammatabellen-Zugriff getrennt oder gemeinsam ändern",
+	"display_profile.not_detected": "Es wurde kein aktuelles Profil für das Anzeigegerät „%s“ erkannt.",
+	"display_profile.save_as": "Das aktuelle Profil für Anzeigegerät „%s“ existiert gerade nur im Arbeitsspeicher. Bitte speichern Sie es zuerst in eine Datei.",
 	"display_short": "Anzeigegerät (Kurzname)",
 	"displayport": "DisplayPort",
 	"dlp_screen": "DLP-Bildschirm",

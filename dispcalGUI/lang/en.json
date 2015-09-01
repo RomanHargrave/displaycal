@@ -411,6 +411,8 @@
 	"display_detected": "A change in the display device configuration has been detected.",
 	"display_device_profile": "Display device profile",
 	"display_lut.link": "Link/unlink display and video card gamma table access",
+	"display_profile.not_detected": "No current profile detected for display “%s”",
+	"display_profile.save_as": "The current profile for display “%s” only exists in memory. Please save it to a file first.",
 	"display_short": "Display device (abbreviated)",
 	"displayport": "DisplayPort",
 	"dlp_screen": "DLP Screen",

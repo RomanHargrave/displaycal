@@ -410,6 +410,8 @@
 	"display_detected": "Rilevato un cambiamento nella configurazione dello schermo.",
 		"*display_device_profile": "Display device profile",
 	"display_lut.link": "Collega/Scollega schermo e accesso a calibrazione",
+		"*display_profile.not_detected": "No current profile detected for display “%s”",
+		"*display_profile.save_as": "The current profile for display “%s” only exists in memory. Please save it to a file first.",
 		"*display_short": "Display device (abbreviated)",
 		"*displayport": "DisplayPort",
 		"*dlp_screen": "DLP Screen",
