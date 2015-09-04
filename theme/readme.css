@@ -97,6 +97,7 @@ body {
 	color: black;
 	font: normal 14px/22px Arial, sans-serif;
 	padding: 0 0 48px;
+	word-wrap: break-word;
 }
 body > div,
 #title,
@@ -212,7 +213,11 @@ samp {
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border-radius: 5px;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+    box-sizing: border-box;
 	display: inline-block;
+	max-width: 100%;
 	padding: 0 .5em;
 	text-shadow: 1px 1px 1px rgba(0, 0, 0, .125);
 }
@@ -1337,7 +1342,7 @@ div.info,
 	padding: 1em;
 	max-width: 696px;
 	position: relative;
-	text-shadow: 1px 1px 0 rgba(255, 255, 255, 1);
+	text-shadow: 1px 1px 1px rgba(255, 255, 255, 1);
 }
 
 .ie_lte_8 #donate,
