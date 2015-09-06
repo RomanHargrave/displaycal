@@ -12,6 +12,7 @@ import math, os, re, sys
 import colormath
 import x3dom
 from log import safe_print
+from ordereddict import OrderedDict
 from util_io import GzipFileProper, StringIOu as StringIO
 
 
@@ -185,7 +186,7 @@ class CGATSValueError(CGATSError, ValueError):
 	pass
 
 
-class CGATS(dict):
+class CGATS(OrderedDict):
 
 	"""
 	CGATS structure.
@@ -220,7 +221,7 @@ class CGATS(dict):
 		file_identifier is used as fallback if no file identifier is present
 		
 		"""
-		
+		OrderedDict.__init__(self)
 		self.normalize_fields = normalize_fields
 		self.file_identifier = file_identifier
 		self.root = self
@@ -325,7 +326,7 @@ class CGATS(dict):
 		self.setmodified()
 	
 	def __delitem__(self, name):
-		dict.__delitem__(self, name)
+		OrderedDict.__delitem__(self, name)
 		self.setmodified()
 
 	def __getattr__(self, name):
@@ -353,11 +354,11 @@ class CGATS(dict):
 	
 	def get(self, name, default=None):
 		if name == -1:
-			return dict.get(self, len(self) - 1, default)
+			return OrderedDict.get(self, len(self) - 1, default)
 		elif name in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
 			return getattr(self, name, default)
 		else:
-			return dict.get(self, name, default)
+			return OrderedDict.get(self, name, default)
 	
 	def get_colorants(self):
 		color_rep = (self.queryv1("COLOR_REP") or "").split("_")
@@ -397,7 +398,9 @@ class CGATS(dict):
 		return desc
 
 	def __setattr__(self, name, value):
-		if name == 'modified':
+		if name == '_keys':
+			object.__setattr__(self, name, value)
+		elif name == 'modified':
 			self.setmodified(value)
 		elif name in ('datetime', 'filename', 'fileName', 'file_identifier', 'key', 
 					  'mtime', 'normalize_fields', 'parent', 'root', 'type', 
@@ -408,7 +411,7 @@ class CGATS(dict):
 			self[name] = value
 	
 	def __setitem__(self, name, value):
-		dict.__setitem__(self, name, value)
+		OrderedDict.__setitem__(self, name, value)
 		self.setmodified()
 	
 	def setmodified(self, modified=True):
@@ -702,7 +705,7 @@ class CGATS(dict):
 		"""
 		context = self
 		if self.type == 'DATA':
-			if type(data) in (CGATS, dict, list, tuple):
+			if isinstance(data, (dict, list, tuple)):
 				if self.parent['DATA_FORMAT']:
 					fl, il = len(self.parent['DATA_FORMAT']), len(data)
 					if fl != il:
@@ -712,7 +715,7 @@ class CGATS(dict):
 					i = -1
 					for item in self.parent['DATA_FORMAT'].values():
 						i += 1
-						if type(data) in (CGATS, dict):
+						if isinstance(data, dict):
 							try:
 								value = data[item]
 							except KeyError:
@@ -803,12 +806,12 @@ class CGATS(dict):
 					'or unicode, got %s)' % (self.type, type(data)))
 		elif self.type in ('DATA_FORMAT', 'KEYWORDS') or \
 			(self.parent and self.parent.type == 'ROOT'):
-			if type(data) in (CGATS, dict, list, tuple):
+			if isinstance(data, (dict, list, tuple)):
 				for var in data:
 					if var in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
 						self[var] = None
 					else:
-						if type(data) in (CGATS, dict):
+						if isinstance(data, dict):
 							if self.type in ('DATA_FORMAT', 'KEYWORDS'):
 								key, value = len(self), data[var]
 							else:
@@ -1318,7 +1321,7 @@ Transform {
 		
 		items = [self] + [self[key] for key in self]
 		for item in items:
-			if type(item) in (CGATS, dict, list, tuple):
+			if isinstance(item, (dict, list, tuple)):
 			
 				if not get_first:
 					n = len(result)
@@ -1330,7 +1333,7 @@ Transform {
 				
 				match_count = 0
 				for query_key in query:
-					if query_key in item or (type(item) == CGATS and 
+					if query_key in item or (type(item) is CGATS and 
 					   ((query_key == 'NUMBER_OF_FIELDS' and 'DATA_FORMAT' in 
 					   item) or (query_key == 'NUMBER_OF_SETS' and 'DATA' in 
 					   item))):
@@ -1408,7 +1411,7 @@ Transform {
 		result = self[key]
 		if type(key) == int and key != maxindex:
 			self.moveby1(key + 1, -1)
-		dict.pop(self, len(self) - 1)
+		OrderedDict.pop(self, len(self) - 1)
 		self.setmodified()
 		return result
 	
