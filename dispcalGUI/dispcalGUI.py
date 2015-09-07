@@ -1596,9 +1596,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		Setup the timers for display/instrument detection and profile name.
 		
 		"""
-		self.plugplay_timer = wx.Timer(self)
-		self.Bind(wx.EVT_TIMER, self.plugplay_timer_handler, 
-				  self.plugplay_timer)
 		self.update_profile_name_timer = wx.Timer(self)
 		self.Bind(wx.EVT_TIMER, self.update_profile_name, 
 				  self.update_profile_name_timer)
@@ -1970,10 +1967,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		menuitem = options.FindItemById(
 			options.FindItem("detect_displays_and_ports"))
 		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
-		self.menuitem_auto_enumerate_ports = options.FindItemById(
-			options.FindItem("enumerate_ports.auto"))
-		self.Bind(wx.EVT_MENU, self.auto_enumerate_ports_handler, 
-				  self.menuitem_auto_enumerate_ports) 
 		self.menuitem_use_separate_lut_access = options.FindItemById(
 			options.FindItem("use_separate_lut_access"))
 		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
@@ -2195,9 +2188,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(self.worker.displays) and calibration_loading_supported)
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and calibration_loading_supported)
-		self.menuitem_auto_enumerate_ports.Check(bool(getcfg("enumerate_ports.auto")))
-		self.menuitem_auto_enumerate_ports.Enable(self.worker.argyll_version >
-												  [0, 0, 0])
 		has_separate_lut_access = self.worker.has_separate_lut_access()
 		self.menuitem_use_separate_lut_access.Check(has_separate_lut_access or
 													bool(getcfg("use_separate_lut_access")))
@@ -8449,13 +8439,10 @@ class MainFrame(ReportFrame, BaseFrame):
 	def start_timers(self, wrapup=False):
 		if wrapup:
 			self.worker.wrapup(False)
-		if not self.plugplay_timer.IsRunning():
-			self.plugplay_timer.Start(10000)
 		if not self.update_profile_name_timer.IsRunning():
 			self.update_profile_name_timer.Start(1000)
 	
 	def stop_timers(self):
-		self.plugplay_timer.Stop()
 		self.update_profile_name_timer.Stop()
 
 	def synthicc_create_handler(self, event):
@@ -12077,15 +12064,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not result and callafter:
 			callafter(*callafter_args)
 
-	def plugplay_timer_handler(self, event):
-		if debug >= 9:
-			safe_print("[D] plugplay_timer_handler")
-		if (getcfg("enumerate_ports.auto") and not self.worker.is_working() and
-			(not getattr(self, "thread", None) or not self.thread.isAlive()) and
-			(not hasattr(self, "tcframe") or 
-			 not self.tcframe.worker.is_working())):
-			self.check_update_controls(silent=True)
-
 	def load_cal_handler(self, event, path=None, update_profile_name=True, 
 						 silent=False, load_vcgt=True):
 		""" Load settings and calibration """
@@ -13040,10 +13018,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("update_check", 
 			   int(self.menuitem_app_auto_update_check.IsChecked()))
 
-	def auto_enumerate_ports_handler(self, event):
-		setcfg("enumerate_ports.auto", 
-			   int(self.menuitem_auto_enumerate_ports.IsChecked()))
-
 	def infoframe_toggle_handler(self, event=None, show=None):
 		if show is None:
 			show = not self.infoframe.IsShownOnScreen()
@@ -13280,6 +13254,9 @@ class StartupFrame(wx.Frame):
 				wx.CallLater(1000 / 30.0, self.startup)
 			return
 		check_set_argyll_bin()
+		# Give 10 seconds for display & instrument enumeration to run.
+		# This should be plenty and will kill the subprocess in case it hangs.
+		self.timeout = wx.CallLater(10000, self.worker.abort_subprocess)
 		delayedresult.startWorker(self.setup_frame, 
 								  self.worker.enumerate_displays_and_ports,
 								  wkwargs={"enumerate_ports":
@@ -13288,6 +13265,9 @@ class StartupFrame(wx.Frame):
 										   "silent": True})
 
 	def setup_frame(self, result):
+		if self.timeout.IsRunning():
+			self.timeout.Stop()
+		self.timeout = None
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
 		app = wx.GetApp()

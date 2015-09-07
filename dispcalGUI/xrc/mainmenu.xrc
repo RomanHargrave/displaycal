@@ -52,10 +52,6 @@
       <object class="wxMenuItem" name="detect_displays_and_ports">
         <label>detect_displays_and_ports</label>
       </object>
-      <object class="wxMenuItem" name="enumerate_ports.auto">
-        <label>enumerate_ports.auto</label>
-        <checkable>1</checkable>
-      </object>
       <object class="wxMenuItem" name="use_separate_lut_access">
         <label>use_separate_lut_access</label>
         <checkable>1</checkable>
