@@ -387,7 +387,10 @@ class ReportFrame(BaseFrame):
 												   ##os.path.isfile(profile_path) and
 												   ##profile_path != path)
 			profile = config.get_current_profile(True)
-			path = profile.fileName
+			if profile:
+				path = profile.fileName
+			else:
+				path = None
 			setcfg("measurement_report.output_profile", path)
 		else:
 			profile = None
