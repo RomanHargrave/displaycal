@@ -32,7 +32,8 @@ from util_io import StringIOu as StringIO
 from util_os import expanduseru, is_superuser, launch_file, waccess
 from util_str import safe_str, safe_unicode
 from worker import (Error, Worker, check_file_isfile, check_set_argyll_bin, 
-					get_argyll_util, show_result_dialog)
+					get_argyll_util, get_current_profile_path,
+					show_result_dialog)
 from wxaddons import CustomEvent, CustomGridCellEvent, wx
 from wxwindows import (BaseApp, BaseFrame, CustomGrid, ConfirmDialog,
 					   FileBrowseBitmapButtonWithChoiceHistory, FileDrop,
@@ -1752,47 +1753,9 @@ END_DATA""")
 		self.tc_algo_handler()
 	
 	def tc_precond_profile_current_ctrl_handler(self, event):
-		profile = get_current_profile(include_display_profile=True)
-		if profile:
-			if not profile.fileName or not os.path.isfile(profile.fileName):
-				# Profile in memory, but not on disk
-				# Let user select profile
-				self.tc_precond_profile.browseButton.ProcessEvent(
-					wx.CommandEvent(wx.EVT_BUTTON.typeId,
-									self.tc_precond_profile.browseButton.GetId()))
-				return
-				# NEVER: Write profile to disk
-				# Hmm... we probably don't want to do that, because in-memory
-				# profiles are very likely from an _ICC_PROFILE X Atom or XrandR
-				# output property, so they DO exist on disk, just the profile
-				# object itself is not associated to a file anymore
-				path = None
-				defaultDir = os.path.dirname(profile.fileName or
-											 expanduseru("~"))
-				defaultFile = os.path.basename(profile.fileName or
-											   profile.getDescription() +
-											   profile_ext)
-				dlg = wx.FileDialog(self,
-									lang.getstr("display_profile.save_as",
-												get_display_name(None, True)),
-									defaultDir=defaultDir,
-									defaultFile=defaultFile,
-									wildcard=lang.getstr("filetype.icc") + "|*" +
-											 profile_ext,
-									style=wx.SAVE | wx.OVERWRITE_PROMPT)
-				dlg.Center(wx.BOTH)
-				if dlg.ShowModal() == wx.ID_OK:
-					path = dlg.GetPath()
-				dlg.Destroy()
-				if path:
-					if not waccess(path, os.W_OK):
-						show_result_dialog(Error(lang.getstr("error.access_denied.write",
-															 path)), self)
-						return
-					profile.write(path)
-				else:
-					return
-			self.tc_precond_profile.SetPath(profile.fileName)
+		profile_path = get_current_profile_path(True, True)
+		if profile_path:
+			self.tc_precond_profile.SetPath(profile_path)
 			self.tc_precond_profile_handler()
 		else:
 			show_result_dialog(Error(lang.getstr("display_profile.not_detected",

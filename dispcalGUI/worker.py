@@ -71,7 +71,7 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir,
 					profile_ext, pydir, setcfg, split_display_name, writecfg)
-from defaultpaths import iccprofiles_home, iccprofiles_display_home
+from defaultpaths import cache, iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
@@ -572,7 +572,8 @@ def get_argyll_version_string(name, silent=False, paths=None):
 	return argyll_version_string
 
 
-def get_current_profile_path():
+def get_current_profile_path(include_display_profile=True,
+							 save_profile_if_no_path=False):
 	profile = None
 	profile_path = getcfg("calibration.file", False)
 	if profile_path:
@@ -583,8 +584,17 @@ def get_current_profile_path():
 			except Exception, exception:
 				safe_print("ICCP.ICCProfile(%r):" % profile_path, 
 						   exception)
-	else:
+	elif include_display_profile:
 		profile = config.get_display_profile()
+		if profile and not profile.fileName and save_profile_if_no_path:
+			if profile.ID == "\0" * 16:
+				profile.calculateID()
+			profile_cache_path = os.path.join(cache, "icc")
+			if check_create_dir(profile_cache_path) is True:
+				profile.fileName = os.path.join(profile_cache_path,
+												"id=" + hexlify(profile.ID))
+				if not os.path.isfile(profile.fileName):
+					profile.write()
 	if profile:
 		return profile.fileName
 

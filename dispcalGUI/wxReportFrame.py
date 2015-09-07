@@ -367,7 +367,7 @@ class ReportFrame(BaseFrame):
 		self.set_profile("output")
 	
 	def output_profile_current_ctrl_handler(self, event):
-		profile_path = get_current_profile_path()
+		profile_path = get_current_profile_path(True, True)
 		if profile_path and os.path.isfile(profile_path):
 			self.output_profile_ctrl.SetPath(profile_path)
 			self.set_profile("output")
@@ -381,12 +381,12 @@ class ReportFrame(BaseFrame):
 		path = getattr(self, "%s_profile_ctrl" % which).GetPath()
 		if which == "output":
 			##if profile_path is None:
-				##profile_path = get_current_profile_path()
+				##profile_path = get_current_profile_path(True, True)
 			##self.output_profile_current_btn.Enable(self.output_profile_ctrl.IsShown() and
 												   ##bool(profile_path) and
 												   ##os.path.isfile(profile_path) and
 												   ##profile_path != path)
-			path = get_current_profile_path()
+			path = get_current_profile_path(True, True)
 			setcfg("measurement_report.%s_profile" % which, path)
 		if path:
 			if not os.path.isfile(path):
