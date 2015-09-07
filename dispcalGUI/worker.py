@@ -592,7 +592,8 @@ def get_current_profile_path(include_display_profile=True,
 			profile_cache_path = os.path.join(cache, "icc")
 			if check_create_dir(profile_cache_path) is True:
 				profile.fileName = os.path.join(profile_cache_path,
-												"id=" + hexlify(profile.ID))
+												"id=" + hexlify(profile.ID) +
+												profile_ext)
 				if not os.path.isfile(profile.fileName):
 					profile.write()
 	if profile:
