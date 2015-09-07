@@ -386,25 +386,29 @@ class ReportFrame(BaseFrame):
 												   ##bool(profile_path) and
 												   ##os.path.isfile(profile_path) and
 												   ##profile_path != path)
-			path = get_current_profile_path(True, True)
-			setcfg("measurement_report.%s_profile" % which, path)
-		if path:
-			if not os.path.isfile(path):
+			profile = config.get_current_profile(True)
+			path = profile.fileName
+			setcfg("measurement_report.output_profile", path)
+		else:
+			profile = None
+		if path or profile:
+			if path and not os.path.isfile(path):
 				if not silent:
 					show_result_dialog(Error(lang.getstr("file.missing", path)),
 									   parent=self)
 				return
-			try:
-				profile = ICCP.ICCProfile(path)
-			except (IOError, ICCP.ICCProfileInvalidError):
-				if not silent:
-					show_result_dialog(Error(lang.getstr("profile.invalid") +
-											 "\n" + path),
-									   parent=self)
-			except IOError, exception:
-				if not silent:
-					show_result_dialog(exception, parent=self)
-			else:
+			if not profile:
+				try:
+					profile = ICCP.ICCProfile(path)
+				except (IOError, ICCP.ICCProfileInvalidError):
+					if not silent:
+						show_result_dialog(Error(lang.getstr("profile.invalid") +
+												 "\n" + path),
+										   parent=self)
+				except IOError, exception:
+					if not silent:
+						show_result_dialog(exception, parent=self)
+			if profile:
 				if ((which == "simulation" and
 					 (profile.profileClass not in ("mntr", "prtr") or 
 					  profile.colorSpace not in ("CMYK", "RGB"))) or
@@ -453,9 +457,10 @@ class ReportFrame(BaseFrame):
 						elif hasattr(self, "XYZbpin"):
 							self.mr_update_main_controls()
 					return profile
-			getattr(self,
-					"%s_profile_ctrl" %
-					which).SetPath(getcfg("measurement_report.%s_profile" % which))
+			if path:
+				getattr(self,
+						"%s_profile_ctrl" %
+						which).SetPath(getcfg("measurement_report.%s_profile" % which))
 		else:
 			if not silent:
 				setattr(self, "%s_profile" % which, None)
@@ -669,8 +674,7 @@ class ReportFrame(BaseFrame):
 		output_profile = ((hasattr(self, "presets") and
 						   getcfg("measurement_report.output_profile")
 						   not in self.presets or not hasattr(self, "presets")) and
-						  bool(getcfg("measurement_report.output_profile")) and
-						  os.path.isfile(getcfg("measurement_report.output_profile")))
+						  bool(getattr(self, "output_profile", None)))
 		self.measurement_report_btn.Enable(((enable1 and enable2 and (not enable6 or
 														   output_profile) and
 								  (not enable4 or

@@ -6071,15 +6071,21 @@ class MainFrame(ReportFrame, BaseFrame):
 		use_sim = getcfg("measurement_report.use_simulation_profile")
 		use_sim_as_output = getcfg("measurement_report.use_simulation_profile_as_output")
 		use_devlink = getcfg("measurement_report.use_devlink_profile")
-		#if not use_sim or not use_sim_as_output:
-		paths.append(getcfg("measurement_report.output_profile"))
+		##if not use_sim or not use_sim_as_output:
+			##paths.append(getcfg("measurement_report.output_profile"))
 		if use_sim:
 			if use_sim_as_output and use_devlink:
 				paths.append(getcfg("measurement_report.devlink_profile"))
 			paths.append(getcfg("measurement_report.simulation_profile"))
 		sim_profile = None
 		devlink = None
-		oprof = None
+		oprof = get_current_profile(True)
+		if not oprof:
+			show_result_dialog(Error(lang.getstr("display_profile.not_detected",
+												 config.get_display_name(None,
+																		 True))),
+							   getattr(self, "reportframe", self))
+			return
 		for i, profilepath in enumerate(paths):
 			try:
 				profile = ICCP.ICCProfile(profilepath)
@@ -6090,11 +6096,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			if i == 0:
-				oprof = profile
-			elif i in (1, 2) and use_sim:
+			if i in (0, 1) and use_sim:
 				if use_sim_as_output and profile.colorSpace == "RGB":
-					if i == 1 and use_devlink:
+					if i == 0 and use_devlink:
 						devlink = profile
 				else:
 					if profile.colorSpace != "RGB":
