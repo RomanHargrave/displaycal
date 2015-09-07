@@ -12,7 +12,6 @@ import math, os, re, sys
 import colormath
 import x3dom
 from log import safe_print
-from ordereddict import OrderedDict
 from util_io import GzipFileProper, StringIOu as StringIO
 
 
@@ -186,7 +185,7 @@ class CGATSValueError(CGATSError, ValueError):
 	pass
 
 
-class CGATS(OrderedDict):
+class CGATS(dict):
 
 	"""
 	CGATS structure.
@@ -221,10 +220,11 @@ class CGATS(OrderedDict):
 		file_identifier is used as fallback if no file identifier is present
 		
 		"""
-		OrderedDict.__init__(self)
+		
 		self.normalize_fields = normalize_fields
 		self.file_identifier = file_identifier
 		self.root = self
+		self._keys = []
 		
 		if cgats:
 			
@@ -326,7 +326,10 @@ class CGATS(OrderedDict):
 		self.setmodified()
 	
 	def __delitem__(self, name):
-		OrderedDict.__delitem__(self, name)
+		if (self.type not in ('DATA', 'DATA_FORMAT', 'KEYWORDS', 'SECTION') and
+			name in self._keys):
+			self._keys.remove(name)
+		dict.__delitem__(self, name)
 		self.setmodified()
 
 	def __getattr__(self, name):
@@ -354,11 +357,11 @@ class CGATS(OrderedDict):
 	
 	def get(self, name, default=None):
 		if name == -1:
-			return OrderedDict.get(self, len(self) - 1, default)
+			return dict.get(self, len(self) - 1, default)
 		elif name in ('NUMBER_OF_FIELDS', 'NUMBER_OF_SETS'):
 			return getattr(self, name, default)
 		else:
-			return OrderedDict.get(self, name, default)
+			return dict.get(self, name, default)
 	
 	def get_colorants(self):
 		color_rep = (self.queryv1("COLOR_REP") or "").split("_")
@@ -411,7 +414,10 @@ class CGATS(OrderedDict):
 			self[name] = value
 	
 	def __setitem__(self, name, value):
-		OrderedDict.__setitem__(self, name, value)
+		if (self.type not in ('DATA', 'DATA_FORMAT', 'KEYWORDS', 'SECTION') and
+			not name in self):
+			self._keys.append(name)
+		dict.__setitem__(self, name, value)
 		self.setmodified()
 	
 	def setmodified(self, modified=True):
@@ -442,7 +448,11 @@ class CGATS(OrderedDict):
 												# identifiers are always 
 												# a minimum of 7 characters
 				result.append('')
-			for key in self:
+			if self.type in ('DATA', 'DATA_FORMAT', 'KEYWORDS', 'SECTION'):
+				iterable = self
+			else:
+				iterable = self._keys
+			for key in iterable:
 				value = self[key]
 				if key == 'DATA':
 					data = value
@@ -1411,7 +1421,11 @@ Transform {
 		result = self[key]
 		if type(key) == int and key != maxindex:
 			self.moveby1(key + 1, -1)
-		OrderedDict.pop(self, len(self) - 1)
+		name = len(self) - 1
+		if (self.type not in ('DATA', 'DATA_FORMAT', 'KEYWORDS', 'SECTION') and
+			name in self._keys):
+			self._keys.remove(name)
+		dict.pop(self, name)
 		self.setmodified()
 		return result
 	
