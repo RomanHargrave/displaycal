@@ -6079,7 +6079,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			paths.append(getcfg("measurement_report.simulation_profile"))
 		sim_profile = None
 		devlink = None
-		oprof = get_current_profile(True)
+		oprof = profile = get_current_profile(True)
 		if not oprof:
 			show_result_dialog(Error(lang.getstr("display_profile.not_detected",
 												 config.get_display_name(None,
