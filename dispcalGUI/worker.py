@@ -7612,8 +7612,10 @@ usage: spotread [-options] [logfile]
 			return
 		pauseable = getattr(self, "pauseable", False)
 		fancy = fancy and getcfg("use_fancy_progress")
-		if self._progress_dlgs.get(fancy):
-			self.progress_wnd = self._progress_dlgs[fancy]
+		if self._progress_dlgs.get((self.show_remaining_time, self.cancelable,
+									fancy)):
+			self.progress_wnd = self._progress_dlgs[(self.show_remaining_time,
+													 self.cancelable, fancy)]
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 			# segfault under Arch Linux when setting the window title
 			# This has a chance of throwing a IOError: [Errno 9] Bad file
@@ -7639,7 +7641,9 @@ usage: spotread [-options] [logfile]
 				style |= wx.PD_CAN_ABORT
 			# Set maximum to 101 to prevent the 'cancel' changing to 'close'
 			# when 100 is reached
-			self._progress_dlgs[fancy] = ProgressDialog(progress_title, progress_msg, 
+			self._progress_dlgs[(self.show_remaining_time, self.cancelable,
+								 fancy)] = ProgressDialog(progress_title,
+											   progress_msg, 
 											   maximum=101, 
 											   parent=parent, 
 											   handler=self.progress_handler,
@@ -7647,7 +7651,8 @@ usage: spotread [-options] [logfile]
 											   pauseable=pauseable,
 											   style=style, start_timer=False,
 											   fancy=fancy)
-			self.progress_wnd = self._progress_dlgs[fancy]
+			self.progress_wnd = self._progress_dlgs[(self.show_remaining_time,
+													 self.cancelable, fancy)]
 		if hasattr(self.progress_wnd, "progress_type"):
 			if pauseable or getattr(self, "interactive_frame", "") == "ambient":
 				# If pauseable, we assume it's a measurement

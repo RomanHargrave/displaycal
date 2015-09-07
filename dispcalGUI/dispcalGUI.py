@@ -11946,14 +11946,19 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Use configured value
 			enumerate_ports = getcfg("enumerate_ports.auto")
 		if event or silent:
-			self.thread = delayedresult.startWorker(self.check_update_controls_consumer, 
-													self.worker.enumerate_displays_and_ports, 
-													cargs=(argyll_bin_dir, argyll_version, 
-														   displays, comports,
-														   event), 
-													wargs=(silent, ),
-													wkwargs={"enumerate_ports":
-															 enumerate_ports})
+			args = (self.check_update_controls_consumer, 
+					self.worker.enumerate_displays_and_ports)
+			kwargs = dict(cargs=(argyll_bin_dir, argyll_version, displays,
+								 comports, event), wargs=(silent, ),
+						  wkwargs={"enumerate_ports": enumerate_ports})
+			if silent:
+				self.thread = delayedresult.startWorker(*args, **kwargs)
+			else:
+				kwargs["progress_msg"] = lang.getstr("enumerating_displays_and_comports")
+				kwargs["stop_timers"] = False
+				kwargs["show_remaining_time"] = False
+				kwargs["fancy"] = False
+				self.worker.start(*args, **kwargs)
 		else:
 			self.worker.enumerate_displays_and_ports(silent,
 													 enumerate_ports=enumerate_ports)
@@ -12072,6 +12077,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if debug >= 9:
 			safe_print("[D] plugplay_timer_handler")
 		if (getcfg("enumerate_ports.auto") and not self.worker.is_working() and
+			(not getattr(self, "thread", None) or not self.thread.isAlive()) and
 			(not hasattr(self, "tcframe") or 
 			 not self.tcframe.worker.is_working())):
 			self.check_update_controls(silent=True)
