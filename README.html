@@ -12,7 +12,7 @@
 		<meta name="description" content="A graphical front-end for display calibration and profiling using Argyll CMS" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="http://dispcalgui.hoech.net/shariff/shariff.complete.css" />
-		<link rel="stylesheet" href="theme/readme.css?ts=2015-09-01T12:26" />
+		<link rel="stylesheet" href="theme/readme.css?ts=2015-09-04T02:46" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2015-09-01T12:44" />
 		<link rel="stylesheet" href="theme/prism.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
@@ -37,8 +37,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.0.4.1 </h2>
-					<p>2015-09-01 12:56 UTC</p>
+					<h2 id="version">3.0.4.2 </h2>
+					<p>2015-09-07 14:31 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -922,7 +922,7 @@
 								<dd>Skip installation of udev rules and hotplug scripts.</dd>
 							<dt><code>--skip-postinstall</code></dt>
 								<dd>Skip post-installation on Linux (an entry in the desktop menu will still be created, but may not become visible until logging out and back in or rebooting) and Windows (no shortcuts in the start menu will be created at all).</dd>
-							<dt><code>-stability=stable|testing|developer|buggy|insecure</code></dt>
+							<dt><code>--stability=stable | testing | developer | buggy | insecure</code></dt>
 								<dd>Set the stability for the implementation that is added/updated via the <code>0install</code> command.</dd>
 							<dt><code>--use-distutils</code></dt>
 								<dd>Force setup to use distutils (default) instead of setuptools. This is useful in combination with the bdist* commands, because it will avoid an artificial dependency on setuptools. This is actually a switch, use it once and the choice is remembered until you specify the <code>--use-setuptools</code> switch (see next paragraph).</dd>
@@ -2305,14 +2305,32 @@ Edward Roslak
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2015-09-01 12:56 (UTC) 3.0.4.1  -->
+			<!-- 2015-09-07 14:31 (UTC) 3.0.4.2  -->
 			<dl>
+				<dt id="changelog-3.0.4.2">2015-09-07 14:31 (UTC) 3.0.4.2 </dt>
+					<dd>
+						<h3>3.0.4.2 </h3>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Show a progress dialog during user-initiated display and instrument enumeration to give some visual feedback (and the ability to cancel) in case it takes longer than expected.</li>
+							<li>Give initial display and instrument enumeration at startup a timeout of ten seconds.</li>
+							<li>Removed option to automatically detect new instruments.</li>
+							<li>Linux: Enable verifying display profiles only available via X atom.</li>
+							<li>Linux: Cache the current display profile on disk if it comes from an X atom to allow it to be used as preconditioning profile for the testchart editor or as destination profile for the standalone 3D LUT maker (the cache path is <samp>~/.cache/icc/id=&lt;profile-id&gt;.icc</samp>).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Sporadic failure to create a spectral colorimeter correction when using Argyll CMS 1.8 and newer.</li>
+							<li>Linux: Traceback when using the “Current profile” button on the testchart editor to set the preconditioning profile to the current display profile, and the display profile path is not available (e.g. if the profile comes from an X atom).</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.0.4.1">2015-09-01 12:56 (UTC) 3.0.4.1 </dt>
 					<dd>
 						<h3>3.0.4.1 </h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>wxPython Phoenix: Ensure that timer notifications run in the main GUI thread.</li>
+							<li>wxPython Phoenix compatibility: Ensure that timer notifications run in the main GUI thread.</li>
 							<li>Mac OS X: Fix Resolve pattern generator loosing sync immediately if dispcalGUI is running standalone from a path that contains spaces.</li>
 						</ul>
 					</dd>
@@ -2323,7 +2341,7 @@ Edward Roslak
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Ability to create 3D LUTs in PNG (Portable Network Graphic) and <a href="http://reshade.me/">ReShade</a> format. The latter allows fully color managed Direct3D (8–11.2) and OpenGL applications (e.g. games) under Windows (Vista and higher).</li>
-							<!--li>Compatibility for updated Argyll CMS 1.8 Beta display technology mappings when creating colorimeter corrections.</li-->
+							<li>Compatibility for updated Argyll CMS 1.8 Beta display technology mappings when creating colorimeter corrections.</li>
 							<li>“Apply calibration (vcgt)” to 3D LUT tab as advanced option, as well as a warning when installing a 3D LUT with applied calibration for a display with non-linear videocard gamma tables.</li>
 							<li>Option to enable/disable the 3D LUT tab.</li>
 						</ul>
