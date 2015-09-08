@@ -60,7 +60,7 @@ Requires:       python-numpy >= %{numpy_version}
 Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
 %else
-%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0
+%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
 Group:          Applications/Multimedia
 BuildRequires:  gcc
 BuildRequires:  libX11-devel
@@ -126,7 +126,8 @@ for py in (glob.glob(os.path.join(mod, '*.py')),
 		   glob.glob(os.path.join(mod, 'lib' + bits, '*.py')), 
 		   glob.glob(os.path.join(mod, 'lib' + bits, 'python%s%s' % sys.version_info[:2], '*.py'))):
 	byte_compile(py, optimize=0, force=1, prefix='$RPM_BUILD_ROOT')
-	if int('0%{?fedora_version}') > 0 or int('0%{?rhel_version}') > 0 or int('0%{?centos_version}') > 0:
+	if (int('0%{?fedora_version}') > 0 or int('0%{?rhel_version}') > 0 or
+    	int('0%{?centos_version}') > 0 or int('0%{?scientificlinux_version}') > 0):
 		byte_compile(py, optimize=1, force=1, prefix='$RPM_BUILD_ROOT')"
 %endif
 # Remove doc directory
@@ -158,7 +159,8 @@ for path in list(paths):
 	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
 		# Mandriva 2010.1 got rid of byte-compilation
 		paths.append(path + 'c')
-		if int('0%{?fedora_version}') > 0 or int('0%{?rhel_version}') > 0 or int('0%{?centos_version}') > 0:
+		if (int('0%{?fedora_version}') > 0 or int('0%{?rhel_version}') > 0 or
+        	int('0%{?centos_version}') > 0 or int('0%{?scientificlinux_version}') > 0):
 			paths.append(path + 'o')
 	if os.path.basename(path) in executables:
 		paths.append('%attr(755, root, root) ' + path)

@@ -55,7 +55,7 @@ Requires:       python-wxGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
 %py_requires
 %else
-%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0
+%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
 Group:          Applications/Multimedia
 Requires:       libXScrnSaver
 Requires:       numpy >= %{numpy_version}
