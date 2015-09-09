@@ -726,7 +726,6 @@ class LUT3DFrame(BaseFrame):
 		if snap_size != size:
 			self.lut3d_set_option("3dlut.size", snap_size)
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
-		self.lut3d_setup_encoding_ctrl()
 		self.lut3d_update_encoding_controls()
 		self.lut3d_show_encoding_controls()
 		self.lut3d_enable_size_controls()
@@ -1088,8 +1087,6 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_bitdepth_output_ctrl.Append(str(bitdepth))
 			self.lut3d_bitdepth_ab[i] = bitdepth
 			self.lut3d_bitdepth_ba[bitdepth] = i
-		
-		self.lut3d_setup_encoding_ctrl()
 	
 	def lut3d_setup_encoding_ctrl(self):
 		format = getcfg("3dlut.format")
@@ -1250,6 +1247,7 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_output_ctrl.Show(show)
 	
 	def lut3d_update_encoding_controls(self):
+		self.lut3d_setup_encoding_ctrl()
 		self.encoding_input_ctrl.SetSelection(self.encoding_input_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_input_ctrl.Enable(self.encoding_input_ctrl.Count > 1)
 		self.encoding_output_ctrl.SetSelection(self.encoding_output_ba[getcfg("3dlut.encoding.output")])
