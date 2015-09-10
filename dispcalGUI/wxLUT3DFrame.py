@@ -727,7 +727,6 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.size", snap_size)
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_update_encoding_controls()
-		self.lut3d_show_encoding_controls()
 		self.lut3d_enable_size_controls()
 		self.lut3d_show_bitdepth_controls()
 		if not isinstance(self, LUT3DFrame):
@@ -862,14 +861,22 @@ class LUT3DFrame(BaseFrame):
 							self.set_profile("input", silent=silent)
 							return
 						else:
-							self.abstract_profile_cb.SetValue(False)
-							self.abstract_profile_cb.Disable()
-							self.abstract_profile_ctrl.Disable()
 							self.Freeze()
+							self.abstract_profile_cb.SetValue(False)
+							self.abstract_profile_cb.Hide()
+							self.abstract_profile_ctrl.Hide()
 							self.output_profile_label.Hide()
 							self.output_profile_ctrl.Hide()
 							self.output_profile_current_btn.Hide()
 							self.lut3d_apply_cal_cb.Hide()
+							self.lut3d_trc_label.Hide()
+							self.lut3d_trc_apply_none_ctrl.Hide()
+							self.lut3d_input_value_clipping_bmp.Hide()
+							self.lut3d_input_value_clipping_label.Hide()
+							self.lut3d_trc_apply_black_offset_ctrl.Hide()
+							self.gamut_mapping_mode.Hide()
+							self.gamut_mapping_inverse_a2b.Hide()
+							self.gamut_mapping_b2a.Hide()
 							self.lut3d_show_encoding_controls(False)
 							self.lut3d_show_trc_controls(False)
 							self.lut3d_rendering_intent_label.Hide()
@@ -880,10 +887,17 @@ class LUT3DFrame(BaseFrame):
 					else:
 						self.Freeze()
 						if which == "input":
+							self.lut3d_trc_label.Show()
+							self.lut3d_trc_apply_none_ctrl.Show()
+							self.lut3d_trc_apply_black_offset_ctrl.Show()
+							self.gamut_mapping_mode.Show()
+							self.gamut_mapping_inverse_a2b.Show()
+							self.gamut_mapping_b2a.Show()
 							enable = bool(getcfg("3dlut.use_abstract_profile"))
 							self.abstract_profile_cb.SetValue(enable)
-							self.abstract_profile_cb.Enable()
+							self.abstract_profile_cb.Show()
 							self.abstract_profile_ctrl.Enable(enable)
+							self.abstract_profile_ctrl.Show()
 							self.output_profile_label.Show()
 							self.output_profile_ctrl.Show()
 							self.output_profile_current_btn.Show()
@@ -907,7 +921,8 @@ class LUT3DFrame(BaseFrame):
 									self.XYZbpin = odata[0]
 							# Update controls related to output profile
 							setattr(self, "input_profile", profile)
-							self.set_profile("output", silent=silent)
+							if not self.set_profile("output", silent=silent):
+								self.update_linking_controls()
 						elif which == "output":
 							enable_apply_cal = (isinstance(profile.tags.get("vcgt"),
 														   ICCP.VideoCardGammaType))
@@ -929,6 +944,7 @@ class LUT3DFrame(BaseFrame):
 										show_result_dialog("Blackpoint is invalid: %s"
 														   % odata, self)
 									self.XYZbpout = odata[0]
+							self.gamut_mapping_inverse_a2b.Enable()
 							allow_b2a_gamap = ("B2A0" in profile.tags and
 											   isinstance(profile.tags.B2A0,
 														  ICCP.LUT16Type) and
@@ -937,63 +953,12 @@ class LUT3DFrame(BaseFrame):
 							self.gamut_mapping_b2a.Enable(allow_b2a_gamap)
 							if not allow_b2a_gamap:
 								setcfg("3dlut.gamap.use_b2a", 0)
-							self.gamut_mapping_inverse_a2b.SetValue(
-								not getcfg("3dlut.gamap.use_b2a"))
-							self.gamut_mapping_b2a.SetValue(
-								bool(getcfg("3dlut.gamap.use_b2a")))
-							self.lut3d_show_trc_controls()
-							if (hasattr(self, "input_profile") and
-								"rTRC" in self.input_profile.tags and
-								"gTRC" in self.input_profile.tags and
-								"bTRC" in self.input_profile.tags and
-								self.input_profile.tags.rTRC ==
-								self.input_profile.tags.gTRC ==
-								self.input_profile.tags.bTRC and
-								isinstance(self.input_profile.tags.rTRC,
-										   ICCP.CurveType)):
-								tf = self.input_profile.tags.rTRC.get_transfer_function()
-								if (getcfg("3dlut.input.profile") !=
-									self.input_profile.fileName):
-									# Use BT.1886 gamma mapping for SMPTE 240M /
-									# Rec. 709 TRC
-									setcfg("3dlut.apply_trc",
-										   int(tf[0][1] in (-240, -709) or
-											   tf[0][0].startswith("Gamma")))
-									# Use only BT.1886 black output offset
-									setcfg("3dlut.apply_black_offset",
-										   int(tf[0][1] not in (-240, -709) and
-											   not tf[0][0].startswith("Gamma") and
-											   self.XYZbpin != self.XYZbpout))
-								self.lut3d_trc_apply_black_offset_ctrl.Enable(
-									tf[0][1] not in (-240, -709) and
-									self.XYZbpin != self.XYZbpout)
-								# Set gamma to profile gamma if single gamma
-								# profile
-								if tf[0][0].startswith("Gamma"):
-									if not getcfg("3dlut.trc_gamma.backup", False):
-										# Backup current gamma
-										setcfg("3dlut.trc_gamma.backup",
-											   getcfg("3dlut.trc_gamma"))
-									setcfg("3dlut.trc_gamma",
-										   round(tf[0][1], 2))
-								# Restore previous gamma if not single gamma
-								# profile
-								elif getcfg("3dlut.trc_gamma.backup", False):
-									setcfg("3dlut.trc_gamma",
-										   getcfg("3dlut.trc_gamma.backup"))
-									setcfg("3dlut.trc_gamma.backup", None)
-								self.lut3d_update_trc_controls()
-							if getcfg("3dlut.apply_black_offset"):
-								self.lut3d_trc_apply_black_offset_ctrl.SetValue(True)
-							elif getcfg("3dlut.apply_trc"):
-								self.lut3d_trc_apply_ctrl.SetValue(True)
-							else:
-								self.lut3d_trc_apply_none_ctrl.SetValue(True)
+							self.update_linking_controls()
 							self.lut3d_trc_apply_ctrl_handler()
 							self.lut3d_rendering_intent_label.Show()
 							self.lut3d_rendering_intent_ctrl.Show()
-							self.panel.GetSizer().Layout()
-							self.update_layout()
+						self.panel.GetSizer().Layout()
+						self.update_layout()
 						self.Thaw()
 					setattr(self, "%s_profile" % which, profile)
 					if which == "output" and not self.output_profile_ctrl.IsShown():
@@ -1194,6 +1159,60 @@ class LUT3DFrame(BaseFrame):
 		outoffset = int(getcfg("3dlut.trc_output_offset") * 100)
 		self.lut3d_trc_black_output_offset_ctrl.SetValue(outoffset)
 		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
+
+	def update_linking_controls(self):
+		self.gamut_mapping_inverse_a2b.SetValue(
+			not getcfg("3dlut.gamap.use_b2a"))
+		self.gamut_mapping_b2a.SetValue(
+			bool(getcfg("3dlut.gamap.use_b2a")))
+		self.lut3d_show_trc_controls()
+		if (hasattr(self, "input_profile") and
+			"rTRC" in self.input_profile.tags and
+			"gTRC" in self.input_profile.tags and
+			"bTRC" in self.input_profile.tags and
+			self.input_profile.tags.rTRC ==
+			self.input_profile.tags.gTRC ==
+			self.input_profile.tags.bTRC and
+			isinstance(self.input_profile.tags.rTRC,
+					   ICCP.CurveType)):
+			tf = self.input_profile.tags.rTRC.get_transfer_function()
+			if (getcfg("3dlut.input.profile") !=
+				self.input_profile.fileName):
+				# Use BT.1886 gamma mapping for SMPTE 240M /
+				# Rec. 709 TRC
+				setcfg("3dlut.apply_trc",
+					   int(tf[0][1] in (-240, -709) or
+						   tf[0][0].startswith("Gamma")))
+				# Use only BT.1886 black output offset
+				setcfg("3dlut.apply_black_offset",
+					   int(tf[0][1] not in (-240, -709) and
+						   not tf[0][0].startswith("Gamma") and
+						   self.XYZbpin != self.XYZbpout))
+			self.lut3d_trc_apply_black_offset_ctrl.Enable(
+				tf[0][1] not in (-240, -709) and
+				self.XYZbpin != self.XYZbpout)
+			# Set gamma to profile gamma if single gamma
+			# profile
+			if tf[0][0].startswith("Gamma"):
+				if not getcfg("3dlut.trc_gamma.backup", False):
+					# Backup current gamma
+					setcfg("3dlut.trc_gamma.backup",
+						   getcfg("3dlut.trc_gamma"))
+				setcfg("3dlut.trc_gamma",
+					   round(tf[0][1], 2))
+			# Restore previous gamma if not single gamma
+			# profile
+			elif getcfg("3dlut.trc_gamma.backup", False):
+				setcfg("3dlut.trc_gamma",
+					   getcfg("3dlut.trc_gamma.backup"))
+				setcfg("3dlut.trc_gamma.backup", None)
+			self.lut3d_update_trc_controls()
+		if getcfg("3dlut.apply_black_offset"):
+			self.lut3d_trc_apply_black_offset_ctrl.SetValue(True)
+		elif getcfg("3dlut.apply_trc"):
+			self.lut3d_trc_apply_ctrl.SetValue(True)
+		else:
+			self.lut3d_trc_apply_none_ctrl.SetValue(True)
 	
 	def lut3d_show_bitdepth_controls(self):
 		frozen = self.IsFrozen()
@@ -1236,9 +1255,9 @@ class LUT3DFrame(BaseFrame):
 		self.panel.Thaw()
 	
 	def lut3d_show_encoding_controls(self, show=True):
-		show = ((show and self.worker.argyll_version >= [1, 7] and
-				 self.worker.argyll_version != [1, 7, 0, "_beta"]) or
-				 self.worker.argyll_version >= [1, 6])
+		show = show and ((self.worker.argyll_version >= [1, 7] and
+						  self.worker.argyll_version != [1, 7, 0, "_beta"]) or
+						 self.worker.argyll_version >= [1, 6])
 		# Argyll 1.7 beta 3 (2015-04-02) added clip WTW on input TV encoding
 		self.encoding_input_label.Show(show)
 		self.encoding_input_ctrl.Show(show)

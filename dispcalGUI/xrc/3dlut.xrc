@@ -242,6 +242,7 @@
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="lut3d_apply_cal_cb">
                     <label>apply_cal</label>
+                    <enabled>0</enabled>
                   </object>
                   <flag>wxBOTTOM</flag>
                   <border>4</border>
@@ -256,6 +257,7 @@
                 <object class="sizeritem">
                   <object class="wxRadioButton" name="gamut_mapping_inverse_a2b">
                     <label>gamut_mapping.mode.inverse_a2b</label>
+                    <enabled>0</enabled>
                     <style>wxRB_GROUP</style>
                   </object>
                   <flag>wxTOP</flag>
@@ -265,6 +267,7 @@
                 <object class="sizeritem">
                   <object class="wxRadioButton" name="gamut_mapping_b2a">
                     <label>gamut_mapping.mode.b2a</label>
+                    <enabled>0</enabled>
                   </object>
                   <flag>wxBOTTOM</flag>
                   <border>4</border>
