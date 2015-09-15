@@ -12,7 +12,7 @@ from meta import domain
 from options import verbose, debug
 from log import safe_print as _safe_print
 from util_io import GzipFileProper
-from util_str import StrList, safe_unicode
+from util_str import StrList, create_replace_function, safe_unicode
 import colormath
 import localization as lang
 
@@ -176,7 +176,7 @@ class Tag(object):
 					html = html.replace(restag, updated_restag)
 		# Update title
 		html = re.sub("(<title>)[^<]*(</title>)",
-					  r"\1%s\2" % safe_unicode(title).encode("UTF-8"), html)
+					  create_replace_function(r"\1%s\2", safe_unicode(title).encode("UTF-8")), html)
 		# Insert X3D
 		html = html.replace("</x3d>", "\t" + x3d_html + "\n\t\t</x3d>")
 		# Finish
