@@ -6350,7 +6350,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				result = self.measurement_file_check_confirm(ti3_measured)
 		
 		# cleanup
-		self.worker.wrapup(False)
+		self.worker.wrapup(False if not isinstance(result, Exception)
+						   else result)
 		
 		self.Show()
 		
