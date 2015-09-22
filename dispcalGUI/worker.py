@@ -2373,7 +2373,7 @@ class Worker(object):
 					raise Error(lang.getstr("profile.no_vcgt"))
 				try:
 					cgats = vcgt_to_cal(profile_out)
-				except (CGATS.CGATSInvalidError, 
+				except (IOError, CGATS.CGATSInvalidError, 
 						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 					raise Error(lang.getstr("cal_extraction_failed"))
@@ -4891,7 +4891,9 @@ while 1:
 			# different sources
 			try:
 				ti3_options_colprof = get_options_from_ti3(ti3)[1]
-			except (IOError, CGATS.CGATSInvalidError), exception:
+			except (IOError, CGATS.CGATSInvalidError, 
+					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 				safe_print(exception)
 				ti3_options_colprof = []
 			for option in ti3_options_colprof:
@@ -7186,7 +7188,9 @@ usage: spotread [-options] [logfile]
 				# Get dispcal options if present
 				try:
 					options_dispcal = get_options_from_cal(cal)[0]
-				except (IOError, CGATS.CGATSInvalidError), exception:
+				except (IOError, CGATS.CGATSInvalidError, 
+						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 					return exception, None
 				if not os.path.exists(calcopy):
 					try:
@@ -7872,7 +7876,9 @@ usage: spotread [-options] [logfile]
 	def set_terminal_cgats(self, cgats_filename):
 		try:
 			self.terminal.cgats = CGATS.CGATS(cgats_filename)
-		except (IOError, CGATS.CGATSInvalidError), exception:
+		except (IOError, CGATS.CGATSInvalidError, 
+				CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+				CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 			return exception
 	
 	def argyll_support_file_exists(self, name):

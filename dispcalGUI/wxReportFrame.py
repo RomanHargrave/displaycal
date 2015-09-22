@@ -268,7 +268,9 @@ class ReportFrame(BaseFrame):
 		values = []
 		try:
 			cgats = CGATS.CGATS(chart)
-		except (IOError, CGATS.CGATSInvalidError), exception:
+		except (IOError, CGATS.CGATSInvalidError, 
+				CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+				CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 			show_result_dialog(exception, self)
 		else:
 			data_format = cgats.queryv1("DATA_FORMAT")

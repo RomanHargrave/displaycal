@@ -6306,7 +6306,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Extract calibration from profile
 			try:
 				cgats = vcgt_to_cal(calprof)
-			except (CGATS.CGATSInvalidError, 
+			except (IOError, CGATS.CGATSInvalidError, 
 					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
 					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 				wx.CallAfter(show_result_dialog,
@@ -6341,7 +6341,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			# get item 0 of the ti3 to strip the CAL part from the measured data
 			try:
 				ti3_measured = CGATS.CGATS(ti3_path)[0]
-			except (IOError, CGATS.CGATSInvalidError, CGATS.CGATSKeyError), exc:
+			except (IOError, CGATS.CGATSInvalidError, 
+					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+					CGATS.CGATSTypeError, CGATS.CGATSValueError), exc:
 				result = exc
 			else:
 				safe_print(lang.getstr("success"))
@@ -8971,7 +8973,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not ccxx_testchart:
 				raise Error(lang.getstr("not_found", lang.getstr("ccxx.ti1")))
 			ccxx = CGATS.CGATS(ccxx_testchart)
-		except (Error, IOError, CGATS.CGATSInvalidError), exception:
+		except (Error, IOError, CGATS.CGATSInvalidError, 
+				CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+				CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 			show_result_dialog(exception, self)
 			return
 		cgats_list = []
