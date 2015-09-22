@@ -6337,6 +6337,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									sim_ti3, save_path, chart, gray,
 									apply_trc):
 		
+		self.Show()
+		
 		if not isinstance(result, Exception) and result:
 			# get item 0 of the ti3 to strip the CAL part from the measured data
 			try:
@@ -6352,8 +6354,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		# cleanup
 		self.worker.wrapup(False if not isinstance(result, Exception)
 						   else result)
-		
-		self.Show()
 		
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
