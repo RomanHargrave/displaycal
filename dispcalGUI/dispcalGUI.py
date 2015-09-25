@@ -12543,11 +12543,12 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("3dlut.tab.enable", 1)
 								setcfg("3dlut.tab.enable.backup", 1)
 						if cfgvalue is not None:
+							cfgvalue = safe_unicode(cfgvalue, "UTF-7")
 							setcfg(cfgname, cfgvalue)
 							# Sync measurement report settings
 							if cfgname == "3dlut.input.profile":
 								setcfg("measurement_report.simulation_profile",
-									   safe_unicode(cfgvalue, "UTF-7"))
+									   cfgvalue)
 								setcfg("measurement_report.use_simulation_profile", 1)
 								setcfg("measurement_report.use_simulation_profile_as_output", 1)
 							elif cfgname in ("3dlut.trc_gamma",
