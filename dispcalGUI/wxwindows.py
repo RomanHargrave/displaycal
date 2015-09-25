@@ -1405,7 +1405,7 @@ class BaseFrame(wx.Frame):
 												 event.GetEventObject().__class__,
 												 event.GetEventType(), 
 												 getevttype(event)))
-			else:
+			elif hasattr(event.GetEventObject(), "GetId"):
 				safe_print("[D] Focus moving to control ID %s %s %s, event type "
 						   "%s %s" % (event.GetEventObject().GetId(), 
 									  getevtobjname(event, self), 
