@@ -991,8 +991,8 @@ def getcfg(name, fallback=True, raw=False):
 	if value is None:
 		if hasdef and fallback:
 			value = defval
-			if debug:
-				print "- falling back to", value
+			if debug > 1:
+				print name, "- falling back to", value
 		else:
 			if debug and not hasdef: 
 				print "Warning - unknown option:", name
@@ -1022,8 +1022,8 @@ def getcfg(name, fallback=True, raw=False):
 			value = None
 		if not value and hasdef:
 			value = defval
-		if debug:
-			print "- falling back to", value
+		if debug > 1:
+			print name, "- falling back to", value
 	elif name in ("displays", "instruments"):
 		value = [strtr(v, [("%" + hex(ord(os.pathsep))[2:].upper(), os.pathsep),
 						   ("%25", "%")]) for v in value.split(os.pathsep)]
