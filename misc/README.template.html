@@ -2310,6 +2310,21 @@ Edward Roslak
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Restore 3D LUT source colorspace setting when loading a settings file.</li>
+							<li>Error message popup when selecting xvYCC encoding for eeColor (this input encoding is unsupported for eeColor 3D LUTs).</li>
+							<li>When selecting a settings file that changes the 3D LUT format, make sure the selectable 3D LUT encodings are updated.</li>
+							<li>File parsing errors when reading a measurement file to be used for a measurement report could prevent the main window from reappearing.</li>
+							<li>Profile 3D gamut view, testchart 3D diagnostic: X3D file could not be created if the file name started with a number.</li>
+							<li>Cosmetic: Standalone 3D LUT maker: Set controls to the correct state if no target profile is set and hide all irrelevant controls if using a device link profile as source profile.</li>
+							<li>Mac OS X: Hang when when changing whitepoint chromaticity coordinates.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0.4.2">2015-09-07 14:31 (UTC) 3.0.4.2 </dt>
+					<dd>
+						<h3>3.0.4.2 </h3>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Show a progress dialog during user-initiated display and instrument enumeration to give some visual feedback (and the ability to cancel) in case it takes longer than expected.</li>
