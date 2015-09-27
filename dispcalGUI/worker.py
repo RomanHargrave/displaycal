@@ -4392,15 +4392,18 @@ while 1:
 							   [0.143956453416, 0.0296952711131, 0.0279693603516],
 							   "AdobeRGB-NTSC1953-hybrid, variant 2"])
 
-			## Rec. 2020
-			#rgb_spaces.append([2.2, "D50",
-							   #[0.7084978651, 0.293540723619, 0.279037475586],
-							   #[0.190200063067, 0.775375775201, 0.675354003906],
-							   #[0.129244405192, 0.0471399056886, 0.0456085205078],
-							   #"Rec2020"])
+			# Rec. 2020
+			rgb_spaces.append([2.2, "D50",
+							   [0.7084978651, 0.293540723619, 0.279037475586],
+							   [0.190200063067, 0.775375775201, 0.675354003906],
+							   [0.129244405192, 0.0471399056886, 0.0456085205078],
+							   "Rec2020"])
 
 			# Find smallest candidate that encompasses space defined by actual
 			# primaries
+			if logfile:
+				logfile.write("Checking for suitable PCS candidate...\n")
+			pcs_candidate = False
 			for rgb_space in rgb_spaces:
 				extremes = []
 				for i in xrange(3):
@@ -4429,10 +4432,59 @@ while 1:
 					XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space)
 					XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space)
 					XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space)
-					for i in xrange(3):
-						logfile.write("%s XYZ: %.4f %.4f %.4f\n" %
-									  (("RGB"[i], ) + tuple(XYZrgb[i])))
+					pcs_candidate = True
 					break
+
+			if not pcs_candidate and False:  # NEVER?
+				# Create quick medium quality shaper+matrix profile and use the
+				# matrix from that
+				if logfile:
+					logfile.write("No suitable PCS candidate. "
+								  "Computing best fit matrix...\n")
+				# Lookup small testchart so profile computation finishes quickly
+				ti1name = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
+				ti1 = get_data_path(ti1name)
+				if not ti1:
+					raise Error(lang.getstr("file.missing", ti1name))
+				ti1, ti3, gray = self.ti1_lookup_to_ti3(ti1, profile,
+														intent="a",
+														white_patches=1)
+				dirname, basename = os.path.split(profile.fileName)
+				basepath = os.path.join(dirname,
+										"." + os.path.splitext(basename)[0] +
+										"-MTX.tmp")
+				ti3.write(basepath + ".ti3")
+				# Calculate profile
+				cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-as",
+														 basepath]
+				result = self.exec_cmd(cmd, args, capture_output=True,
+									   sessionlogfile=getattr(self,
+															  "sessionlogfile",
+															  None))
+				if isinstance(result, Exception):
+					raise result
+				if result:
+					mtx = ICCP.ICCProfile(basepath + profile_ext)
+					XYZrgb = []
+					for column in "rgb":
+						tag = mtx.tags.get(column + "XYZ")
+						if isinstance(tag, ICCP.XYZType):
+							XYZrgb.append(tag.values())
+					#os.remove(basepath + ".ti3")
+					#os.remove(basepath + profile_ext)
+					if not XYZrgb:
+						raise Error(lang.getstr("profile.required_tags_missing",
+												"rXYZ/gXYZ/bXYZ"))
+			if not pcs_candidate:
+				if logfile:
+					logfile.write("Using primaries: ACES\n")
+				XYZrgb[0] = 0.9909, 0.3619, -0.0027
+				XYZrgb[1] = 0.0122, 0.7225, 0.0082
+				XYZrgb[2] = -0.0389, -0.0844, 0.8194
+
+			for i in xrange(3):
+				logfile.write("Using %s XYZ: %.4f %.4f %.4f\n" %
+							  (("RGB"[i], ) + tuple(XYZrgb[i])))
 	
 			# Construct the final matrix
 			Xr, Yr, Zr = XYZrgb[0]
