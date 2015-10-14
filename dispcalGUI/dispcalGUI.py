@@ -6891,7 +6891,8 @@ class MainFrame(ReportFrame, BaseFrame):
 								  **pending_function_kwargs)
 		if ((config.is_virtual_display() and
 			 config.get_display_name() != "Resolve" and
-			 not config.get_display_name().startswith("Chromecast ")) or
+			 not config.get_display_name().startswith("Chromecast ") and
+			 not config.get_display_name().startswith("Prisma ")) or
 			getcfg("dry_run")):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:

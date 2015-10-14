@@ -2732,7 +2732,7 @@ class Worker(object):
 
 	def enumerate_displays_and_ports(self, silent=False, check_lut_access=True,
 									 enumerate_ports=True,
-									 include_chromecast=True):
+									 include_network_devices=True):
 		"""
 		Enumerate the available displays and ports.
 		
@@ -2758,8 +2758,9 @@ class Worker(object):
 					if instrument.strip():
 						instruments.append(instrument)
 			args = []
-			if include_chromecast:
+			if include_network_devices:
 				args.append("-dcc:?")
+				args.append("-dprisma:?")
 			args.append("-?")
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
@@ -2776,6 +2777,15 @@ class Worker(object):
 			n = -1
 			self.display_rects = []
 			non_standard_display_args = ("-dweb[:port]", "-dmadvr")
+			if test:
+				# Add dummy Chromecasts
+				self.output.append(u" -dcc[:n]")
+				self.output.append(u"    100 = '\xd4\xc7\xf3 Test A'")
+				self.output.append(u"    101 = '\xd4\xc7\xf3 Test B'")
+				# Add dummy Prismas
+				self.output.append(u" -dprisma[:host]")
+				self.output.append(u"    100 = 141550000000: prisma-test-0000 @ 172.31.31.162")
+				self.output.append(u"    101 = 141560000000: \xd4\xc7\xf3 Test B @ 172.31.31.163")
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -2829,12 +2839,28 @@ class Worker(object):
 									wx.Rect(*[int(item) for item in match[0][1:]]))
 						elif arg == "-dcc[:n]":
 							# Chromecast
-							match = re.findall(r"(.+)", value)
-							if len(match):
+							if value:
+								# Note the Chromecast name may be mangled due
+								# to being UTF-8 encoded, but commandline output
+								# will always be decoded to Unicode using the
+								# stdout encoding, which may not be UTF-8
+								# (e.g. under Windows). We can recover characters
+								# valid in both UTF-8 and stdout encoding
+								# by a re-encode/decode step
 								displays.append("Chromecast %s: %s" %
 												(line[0],
-												 safe_unicode(safe_str(match[0], enc),
+												 safe_unicode(safe_str(value, enc),
 															  "UTF-8")))
+						elif arg == "-dprisma[:host]":
+							# Prisma
+							# <serial no>: <name> @ <ip>
+							# 141550000000: prisma-0000 @ 172.31.31.162
+							match = re.findall(".+?: (.+) @ (.+)", value)
+							if len(match):
+								displays.append("Prisma %s: %s @ %s" %
+												(line[0],
+												 safe_unicode(safe_str(match[0][0], enc),
+															  "UTF-8"), match[0][1]))
 						elif arg == "-c" and enumerate_ports:
 							if ((re.match("/dev(?:/[\w.]+)*$", value) or
 								 re.match("COM\d+$", value)) and 
@@ -2876,9 +2902,14 @@ class Worker(object):
 					# EnumDisplayMonitors
 					monitors = util_win.get_real_display_devices_info()
 				for i, display in enumerate(displays):
-					if display.startswith("Chromecast "):
+					if (display.startswith("Chromecast ") or
+						display.startswith("Prisma ")):
 						self.display_edid.append({})
-						self.display_manufacturers.append("Google")
+						if display.startswith("Prisma "):
+							display_manufacturer = "Q, Inc"
+						else:
+							display_manufacturer = "Google"
+						self.display_manufacturers.append(display_manufacturer)
 						self.display_names.append(display.split(":", 1)[1].strip())
 						continue
 					display_name = split_display_name(displays[i])
@@ -2961,7 +2992,8 @@ class Worker(object):
 						safe_print(tmp)
 						tmp = None
 					for i, disp in enumerate(displays):
-						if disp.startswith("Chromecast ") or not test_cal:
+						if (disp.startswith("Chromecast ") or
+							disp.startswith("Prisma ") or not test_cal):
 							lut_access.append(None)
 							continue
 						if verbose >= 1 and not silent:
@@ -4818,8 +4850,8 @@ while 1:
 		Returned is the Argyll CMS dispcal/dispread -d argument
 		
 		"""
-		display_name = config.get_display_name()
-		if display_name == "Web":
+		display_name = config.get_display_name(None, True)
+		if display_name == "Web @ localhost":
 			return "web:%i" % getcfg("webserver.portnumber")
 		if display_name == "madVR":
 			return "madvr"
@@ -4829,6 +4861,8 @@ while 1:
 			return "1"
 		if display_name.startswith("Chromecast "):
 			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1].strip()
+		if display_name.startswith("Prisma "):
+			return "prisma:%s" % display_name.split("@")[-1].strip()
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if (self.has_separate_lut_access() or 

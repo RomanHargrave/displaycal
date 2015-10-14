@@ -149,14 +149,21 @@ resfiles = [
 
 bitmaps = {}
 
+# Does the device not support iterative calibration?
 uncalibratable_displays = ("Untethered$", )
 
-patterngenerators = ("madVR$", "Resolve$", "Chromecast ")
+# Can the device generate patterns of its own?
+patterngenerators = ("madVR$", "Resolve$", "Chromecast ", "Prisma ")
 
 non_argyll_displays = uncalibratable_displays + ("Resolve$", )
 
-untethered_displays = non_argyll_displays + ("Web$", "Chromecast ")
+# Is the device directly connected or e.g. driven via network?
+# (note that madVR can technically be both, but the endpoint is always directly
+# connected to a display so we have videoLUT access via madVR's API. Only
+# devices which don't support that are considered 'untethered' in this context)
+untethered_displays = non_argyll_displays + ("Web$", "Chromecast ", "Prisma ")
 
+# Is the device not an actual display device (i.e. is it not a TV or monitor)?
 virtual_displays = untethered_displays + ("madVR$", )
 
 
