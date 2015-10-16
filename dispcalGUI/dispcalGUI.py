@@ -6070,12 +6070,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		sim_profile = None
 		devlink = None
 		oprof = profile = get_current_profile(True)
-		if not oprof:
-			show_result_dialog(Error(lang.getstr("display_profile.not_detected",
-												 config.get_display_name(None,
-																		 True))),
-							   getattr(self, "reportframe", self))
-			return
 		for i, profilepath in enumerate(paths):
 			try:
 				profile = ICCP.ICCProfile(profilepath)
@@ -6095,6 +6089,12 @@ class MainFrame(ReportFrame, BaseFrame):
 						devlink = None
 					sim_profile = profile
 					profile = oprof
+		if not profile and not oprof:
+			show_result_dialog(Error(lang.getstr("display_profile.not_detected",
+												 config.get_display_name(None,
+																		 True))),
+							   getattr(self, "reportframe", self))
+			return
 		colormanaged = (use_sim and use_sim_as_output and not sim_profile and
 						config.get_display_name() == "madVR" and
 						getcfg("3dlut.madVR.enable"))
