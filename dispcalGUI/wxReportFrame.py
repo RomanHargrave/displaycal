@@ -139,13 +139,6 @@ class ReportFrame(BaseFrame):
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
 		
-		if not hasattr(self, "XYZbpin"):
-			self.XYZbpin = [0, 0, 0]
-			# XYZbpout will be set to the blackpoint of the selected profile.
-			# This is used to determine if lack output offset controls should
-			# be shown. Set a initial value slightly above zero so output
-			# offset controls are shown if the selected profile doesn't exist.
-			self.XYZbpout = [0.001, 0.001, 0.001]
 		self.mr_update_controls()
 
 	def mr_init_frame(self):
@@ -394,8 +387,15 @@ class ReportFrame(BaseFrame):
 			else:
 				path = None
 			setcfg("measurement_report.output_profile", path)
+			# XYZbpout will be set to the blackpoint of the selected profile.
+			# This is used to determine if black output offset controls should
+			# be shown. Set a initial value slightly above zero so output
+			# offset controls are shown if the selected profile doesn't exist.
+			self.XYZbpout = [0.001, 0.001, 0.001]
 		else:
 			profile = None
+			if which == "input":
+				self.XYZbpin = [0, 0, 0]
 		if path or profile:
 			if path and not os.path.isfile(path):
 				if not silent:
@@ -467,8 +467,8 @@ class ReportFrame(BaseFrame):
 						"%s_profile_ctrl" %
 						which).SetPath(getcfg("measurement_report.%s_profile" % which))
 		else:
+			setattr(self, "%s_profile" % which, None)
 			if not silent:
-				setattr(self, "%s_profile" % which, None)
 				setcfg("measurement_report.%s_profile" % which, None)
 				self.mr_update_main_controls()
 	
