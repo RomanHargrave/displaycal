@@ -896,7 +896,11 @@ class GamapFrame(BaseFrame):
 		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 
 				  id=self.b2a_hires_cb.GetId())
 		for v in config.valid_values["profile.b2a.hires.size"]:
-			self.b2a_size_ctrl.Append("%sx%sx%s" % ((v, ) * 3))
+			if v > -1:
+				v = "%sx%sx%s" % ((v, ) * 3)
+			else:
+				v = lang.getstr("auto")
+			self.b2a_size_ctrl.Append(v)
 		self.Bind(wx.EVT_CHOICE, self.b2a_size_ctrl_handler, 
 				  id=self.b2a_size_ctrl.GetId())
 		self.Bind(wx.EVT_CHECKBOX, self.profile_quality_b2a_ctrl_handler, 

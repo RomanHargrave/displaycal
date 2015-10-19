@@ -4383,7 +4383,7 @@ while 1:
 							   [0.68280181011, 0.315096403371, 0.224182128906],
 							   [0.310096375087, 0.631250246526, 0.73258972168],
 							   [0.129244796433, 0.0471357502953, 0.0432281494141],
-							   "Rec709-like, variant 1"])
+							   "Rec709-encompassing, variant 1"])
 
 			# A colorspace that encompasses Rec709. Uses slightly different
 			# primaries (based on WLED and B+RG LED) than variant 1.
@@ -4391,14 +4391,14 @@ while 1:
 							   [0.664580313612, 0.329336320112, 0.228820800781],
 							   [0.318985161632, 0.644740328564, 0.742568969727],
 							   [0.143284983488, 0.0303535582465, 0.0286102294922],
-							   "Rec709-like, variant 2"])
+							   "Rec709-encompassing, variant 2"])
 
 			# A colorspace with Plasma-like primaries. Uses Rec. 2020 blue.
 			rgb_spaces.append([2.2, "D50",
 							   [0.692947816539, 0.30857396028, 0.244430541992],
 							   [0.284461719244, 0.70017174365, 0.709167480469],
 							   [0.129234824405, 0.0471509419335, 0.0464019775391],
-							   "SMPTE-431-2/DCI-P3-like, variant 1"])
+							   "SMPTE-431-2/DCI-P3-encompassing, variant 1"])
 
 			# A colorspace that encompasses both AdobeRGB and NTSC1953. Uses
 			# Rec. 2020 blue.
@@ -4414,7 +4414,7 @@ while 1:
 							   [0.692943297796, 0.308579731457, 0.268966674805],
 							   [0.249088838269, 0.730263586072, 0.684844970703],
 							   [0.129230721306, 0.047147329564, 0.0461883544922],
-							   "SMPTE-431-2/DCI-P3-like, variant 2"])
+							   "SMPTE-431-2/DCI-P3-encompassing, variant 2"])
 
 			# A colorspace that encompasses both AdobeRGB and NTSC1953.
 			# Different, more saturated primaries than variant 1.
@@ -4431,11 +4431,25 @@ while 1:
 							   [0.129244405192, 0.0471399056886, 0.0456085205078],
 							   "Rec2020"])
 
+			# A colorspace that encompasses Rec709 with imaginary red and blue
+			rgb_spaces.append([2.2, "D50",
+							   [0.699964323939, 0.312334528794, 0.253814697266],
+							   [0.284337791321, 0.68212854805, 0.73779296875],
+							   [0.098165262763, 0.00937830372063, 0.00839233398438],
+							   "Rec709-encompassing, variant 3"])
+
+			# A colorspace that encompasses Rec2020 with imaginary primaries
+			rgb_spaces.append([2.2, "D50",
+							   [0.71715243505, 0.296225595183, 0.291244506836],
+							   [0.191129060214, 0.795212673762, 0.700057983398],
+							   [0.0981403936826, 0.00939694681658, 0.00869750976562],
+							   "Rec2020-encompassing"])
+
 			# Find smallest candidate that encompasses space defined by actual
 			# primaries
 			if logfile:
 				logfile.write("Checking for suitable PCS candidate...\n")
-			pcs_candidate = False
+			pcs_candidate = None
 			for rgb_space in rgb_spaces:
 				extremes = []
 				for i in xrange(3):
@@ -4464,7 +4478,7 @@ while 1:
 					XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space)
 					XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space)
 					XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space)
-					pcs_candidate = True
+					pcs_candidate = rgb_space[-1]
 					break
 
 			if not pcs_candidate and False:  # NEVER?
@@ -4507,12 +4521,23 @@ while 1:
 					if not XYZrgb:
 						raise Error(lang.getstr("profile.required_tags_missing",
 												"rXYZ/gXYZ/bXYZ"))
+				pcs_candidate = "BestFit"
+			else:
+				# If clutres is -1 (auto), set it depending on area coverage
+				if clutres == -1:
+					if area1 / area2 <= .51:
+						clutres = 65
+					elif area1 / area2 <= .73:
+						clutres = 45
+
 			if not pcs_candidate:
+				# Use largest
 				if logfile:
-					logfile.write("Using primaries: ACES\n")
-				XYZrgb[0] = 0.9909, 0.3619, -0.0027
-				XYZrgb[1] = 0.0122, 0.7225, 0.0082
-				XYZrgb[2] = -0.0389, -0.0844, 0.8194
+					logfile.write("Using primaries: %s\n" % rgb_spaces[-1][-1])
+				XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_spaces[-1])
+				XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_spaces[-1])
+				XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_spaces[-1])
+				pcs_candidate = rgb_spaces[-1][-1]
 
 			for i in xrange(3):
 				logfile.write("Using %s XYZ: %.4f %.4f %.4f\n" %
@@ -4628,6 +4653,9 @@ while 1:
 									  (j, itable.input[i][j], v))
 					itable.input[i][j] = v
 
+		if clutres == -1:
+			# Auto
+			clutres = 33
 		step = 1.0 / (clutres - 1.0)
 		do_lookup = True
 		if do_lookup:
