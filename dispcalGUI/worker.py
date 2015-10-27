@@ -4393,6 +4393,13 @@ while 1:
 							   [0.143284983488, 0.0303535582465, 0.0286102294922],
 							   "Rec709-encompassing, variant 2"])
 
+			# A colorspace that encompasses Rec709 with imaginary red and blue
+			rgb_spaces.append([2.2, "D50",
+							   [0.672053135694, 0.331936091367, 0.250122070312],
+							   [0.319028093312, 0.644705491217, 0.710144042969],
+							   [0.113899645442, 0.0424325604954, 0.0396270751953],
+							   "Rec709-encompassing, variant 3"])
+
 			# A colorspace with Plasma-like primaries. Uses Rec. 2020 blue.
 			rgb_spaces.append([2.2, "D50",
 							   [0.692947816539, 0.30857396028, 0.244430541992],
@@ -4431,12 +4438,12 @@ while 1:
 							   [0.129244405192, 0.0471399056886, 0.0456085205078],
 							   "Rec2020"])
 
-			# A colorspace that encompasses Rec709 with imaginary red and blue
+			# A colorspace that encompasses DCI P3 with imaginary red and blue
 			rgb_spaces.append([2.2, "D50",
 							   [0.699964323939, 0.312334528794, 0.253814697266],
 							   [0.284337791321, 0.68212854805, 0.73779296875],
 							   [0.098165262763, 0.00937830372063, 0.00839233398438],
-							   "Rec709-encompassing, variant 3"])
+							   "SMPTE-431-2/DCI-P3-encompassing, variant 3"])
 
 			# A colorspace that encompasses Rec2020 with imaginary primaries
 			rgb_spaces.append([2.2, "D50",
