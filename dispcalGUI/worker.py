@@ -7074,7 +7074,7 @@ usage: spotread [-options] [logfile]
 		args = []
 		args.append("-v2") # verbose
 		if getcfg("argyll.debug"):
-			args.append("-D6")
+			args.append("-D8")
 		result = self.add_measurement_features(args,
 											   allow_nondefault_observer=True)
 		if isinstance(result, Exception):
@@ -7393,7 +7393,7 @@ usage: spotread [-options] [logfile]
 		args = []
 		args.append("-v") # verbose
 		if getcfg("argyll.debug"):
-			args.append("-D6")
+			args.append("-D8")
 		result = self.add_measurement_features(args,
 											   allow_nondefault_observer=is_ccxx_testchart())
 		if isinstance(result, Exception):
@@ -7435,9 +7435,9 @@ usage: spotread [-options] [logfile]
 		args.append("-v")
 		if getcfg("argyll.debug"):
 			if self.argyll_version >= [1, 3, 1]:
-				args.append("-D6")
+				args.append("-D8")
 			else:
-				args.append("-E6")
+				args.append("-E8")
 		args.append("-d" + self.get_display())
 		if sys.platform != "darwin" or cal is False:
 			# Mac OS X 10.7 Lion needs root privileges when clearing 
