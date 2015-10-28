@@ -6194,6 +6194,13 @@ usage: spotread [-options] [logfile]
 									 "compensation to non-LUT16Type %s "
 									 "table" % (appname, table))
 					if getcfg("profile.b2a.hires"):
+						if profchanged:
+							# We need to write the changed profile before
+							# enhancing B2A resolution!
+							try:
+								profile.write()
+							except Exception, exception:
+								return exception
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True
