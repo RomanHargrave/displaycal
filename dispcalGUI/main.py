@@ -54,21 +54,11 @@ def main(module=None):
 			 version += " Beta"
 		safe_print(pyname + runtype, version, build)
 	if sys.platform == "darwin":
+		# Python's platform.platform output is useless under Mac OS X
+		# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
 		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
 	else:
-		if sys.platform == "win32":
-			# http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832%28v=vs.85%29.aspx
-			ver2name = {(5, 0): "2000",
-						(5, 1): "XP",
-						(5, 2): "XP 64-Bit/Server 2003/Server 2003 R2",
-						(6, 0): "Vista/Server 2008",
-						(6, 1): "7/Server 2008 R2",
-						(6, 2): "8/Server 2012"}
-			dist = ver2name.get(sys.getwindowsversion()[:2], "N/A")
-		else:
-			dist = "%s %s %s" % getattr(platform, "linux_distribution", 
-										platform.dist)()
-		safe_print("%s %s (%s)" % (platform.system(), platform.version(), dist))
+		safe_print(platform.platform().replace("-", " "))
 	safe_print("Python " + sys.version)
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
