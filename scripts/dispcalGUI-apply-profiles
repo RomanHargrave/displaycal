@@ -82,11 +82,13 @@ def apply_profiles():
 				# Only need to run dispwin if under Windows, or if nothing else
 				# has already taken care of display profile and vcgt loading
 				# (e.g. oyranos-monitor with xcalib, or colord)
-				worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
-										  profile_arg], 
-								capture_output=True, skip_scripts=True, 
-								silent=False)
-				errortxt = "\n".join(worker.errors).strip()
+				if worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
+											 profile_arg], 
+								   capture_output=True, skip_scripts=True, 
+								   silent=False):
+					errortxt = ""
+				else:
+					errortxt = "\n".join(worker.errors).strip()
 				if errortxt and ((not "using linear" in errortxt and
 								  not "assuming linear" in errortxt) or 
 								 len(errortxt.split("\n")) > 1):
