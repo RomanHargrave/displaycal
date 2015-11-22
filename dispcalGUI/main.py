@@ -34,7 +34,8 @@ from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
 from options import debug, verbose
 from util_str import safe_str, safe_unicode
-from util_win import win_ver
+if sys.platform == "win32":
+	from util_win import win_ver
 from wxaddons import wx
 
 def _excepthook(etype, value, tb):
