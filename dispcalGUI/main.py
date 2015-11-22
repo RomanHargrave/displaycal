@@ -34,6 +34,7 @@ from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
 from options import debug, verbose
 from util_str import safe_str, safe_unicode
+from util_win import win_ver
 from wxaddons import wx
 
 def _excepthook(etype, value, tb):
@@ -57,6 +58,9 @@ def main(module=None):
 		# Python's platform.platform output is useless under Mac OS X
 		# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
 		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
+	elif sys.platform == "win32":
+		machine = platform.machine()
+		safe_print(*win_ver() + ({"AMD64": "x86_64"}.get(machine, machine), ))
 	else:
 		safe_print(platform.platform().replace("-", " "))
 	safe_print("Python " + sys.version)

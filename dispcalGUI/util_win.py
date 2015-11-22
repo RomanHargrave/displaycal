@@ -207,6 +207,25 @@ def per_user_profiles_isenabled(display_no=0):
 			return bool(pbool.contents)
 
 
+def win_ver():
+	""" Get Windows version info """
+	csd = sys.getwindowsversion()[-1]
+	# Use the registry to get product name, e.g. 'Windows 7 Ultimate'.
+	# Not recommended, but we don't care.
+	pname = "Windows"
+	key = None
+	try:
+		key = _winreg.OpenKeyEx(_winreg.HKEY_LOCAL_MACHINE,
+								r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+		pname = _winreg.QueryValueEx(key, "ProductName")[0]
+	except Exception, e:
+		pass
+	finally:
+		if key:
+			_winreg.CloseKey(key)
+	return pname, csd
+
+
 if __name__ == "__main__":
 	if "calibration" in sys.argv[1:]:
 		if "enable" in sys.argv[1:] or "disable" in sys.argv[1:]:
