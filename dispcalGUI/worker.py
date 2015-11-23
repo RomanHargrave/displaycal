@@ -2613,7 +2613,7 @@ class Worker(object):
 			for RGB_triplet in RGB_out:
 				lut.append([])
 				for component in (0, 1, 2):
-					lut[-1].append(("%i" % int(round(RGB_triplet[component] * maxval))).rjust(pad, " "))
+					lut[-1].append("%i" % int(round(RGB_triplet[component] * maxval)))
 		elif format == "cube":
 			if maxval is None:
 				maxval = 1.0

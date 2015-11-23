@@ -599,7 +599,7 @@ defaults = {
 	"3dlut.apply_black_offset": 0,
 	"3dlut.apply_trc": 1,
 	"3dlut.bitdepth.input": 10,
-	"3dlut.bitdepth.output": 10,
+	"3dlut.bitdepth.output": 12,
 	"3dlut.create": 0,
 	"3dlut.trc_gamma": 2.4,
 	"3dlut.trc_gamma.backup": 2.4,

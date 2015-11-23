@@ -1015,6 +1015,7 @@
 	"video_eeColor.icc": "Video 3D LUT for eeColor (D65, Rec. 709 / Rec. 1886)",
 	"video_madVR.icc": "Video 3D LUT for madVR (D65, Rec. 709 / Rec. 1886)",
 	"video_monitor": "Video monitor",
+	"video_Prisma.icc": "Video 3D LUT for Prisma (D65, Rec. 709 / Rec. 1886)",
 	"video_ReShade.icc": "Video 3D LUT for ReShade (D65, Rec. 709 / Rec. 1886)",
 	"video_resolve.icc": "Video 3D LUT for Resolve (D65, Rec. 709 / Rec. 1886)",
 	"view.3d": "3D view",
