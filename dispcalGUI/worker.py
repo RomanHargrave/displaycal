@@ -1511,7 +1511,10 @@ class Worker(object):
 		self.interactive = False
 		self.spotread_just_do_instrument_calibration = False
 		self.lastcmdname = None
-		self.lastmsg_discard = re.compile("[\\*\\.]+|Current (?:RGB|XYZ)(?: +.*)?")
+		# Filter out warnings from OS components (e.g. shared libraries)
+		discard_common = r"^\s*\w+\[\d+\]\s+<Warning>:.*"
+		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?", discard_common]
+		self.lastmsg_discard = re.compile("|".join(discard))
 		self.measurement_modes = {}
 		# Sounds when measuring
 		# Needs to be stereo!
@@ -1522,7 +1525,30 @@ class Worker(object):
 		self.options_dispread = []
 		self.options_targen = []
 		self.pauseable = False
-		self.recent_discard = re.compile(r"^Display type is .+|^Doing (?:some initial|check) measurements|^Adjust .+? Press space when done\.\s*|^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current|Initial|[Tt]arget) (?:Br(?:ightness)?|50% Level|white|(?:Near )?[Bb]lack|(?:advertised )?gamma|RGB|\d(?:\.\d+)?).*|^Gamma curve .+|^Display adjustment menu:|^Press|^\d\).+|^(?:1%|Black|Red|Green|Blue|White|Grey)\s+=.+|^\s*patch \d+ of \d+.*|^\s*point \d+.*|^\s*Added \d+/\d+|[\*\.]+|\s*\d*%?", re.I)
+		discard = [r"^Display type is .+",
+				   r"^Doing (?:some initial|check) measurements",
+				   r"^Adjust .+? Press space when done\.\s*",
+				   r"^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current",
+					   r"Initial",
+					   r"[Tt]arget) (?:Br(?:ightness)?",
+					   r"50% Level",
+					   r"white",
+					   r"(?:Near )?[Bb]lack",
+					   r"(?:advertised )?gamma",
+					   r"RGB",
+					   r"\d(?:\.\d+)?).*",
+				   r"^Gamma curve .+",
+				   r"^Display adjustment menu:",
+				   r"^Press",
+				   r"^\d\).+",
+				   r"^(?:1%|Black|Red|Green|Blue|White|Grey)\s+=.+",
+				   r"^\s*patch \d+ of \d+.*",
+				   r"^\s*point \d+.*",
+				   r"^\s*Added \d+/\d+",
+				   r"[\*\.]+",
+				   r"\s*\d*%?",
+				   discard_common]
+		self.recent_discard = re.compile("|".join(discard), re.I)
 		self.subprocess_abort = False
 		self.sudo = None
 		self.auth_timestamp = 0
