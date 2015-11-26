@@ -1514,12 +1514,8 @@ class Worker(object):
 		# Filter out warnings from OS components (e.g. shared libraries)
 		# E.g.:
 		# Nov 26 16:28:16  dispcal[1006] <Warning>: void CGSUpdateManager::log() const: conn 0x1ec57 token 0x3ffffffffffd0a
-		# Nov::dispcal[]<Warning>:voidCGSUpdateManager::log()const:connxectokenxffffffffffda
-		#
-		# (Note: the latter seems to be a malformed version of the former, both
-		#  occur under Mac OS X 10.11 El Capitan with Argyll 1.8.3)
-		discard_common = r"^.+?\w+\[\d*\]\s*<Warning>:[\S\s]*"
-		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?", discard_common]
+		discard_common = r"^.+?\s+\w+\[\d+\]\s+<Warning>:[\S\s]*"
+		discard = [discard_common, r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?"]
 		self.lastmsg_discard = re.compile("|".join(discard))
 		self.measurement_modes = {}
 		# Sounds when measuring
@@ -1531,7 +1527,8 @@ class Worker(object):
 		self.options_dispread = []
 		self.options_targen = []
 		self.pauseable = False
-		discard = [r"^Display type is .+",
+		discard = [discard_common,
+				   r"^Display type is .+",
 				   r"^Doing (?:some initial|check) measurements",
 				   r"^Adjust .+? Press space when done\.\s*",
 				   r"^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current",
@@ -1551,9 +1548,9 @@ class Worker(object):
 				   r"^\s*patch \d+ of \d+.*",
 				   r"^\s*point \d+.*",
 				   r"^\s*Added \d+/\d+",
+				   # These need to be last because they're very generic!
 				   r"[\*\.]+",
-				   r"\s*\d*%?",
-				   discard_common]
+				   r"\s*\d*%?"]
 		self.recent_discard = re.compile("|".join(discard), re.I)
 		self.subprocess_abort = False
 		self.sudo = None
