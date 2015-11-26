@@ -1512,7 +1512,13 @@ class Worker(object):
 		self.spotread_just_do_instrument_calibration = False
 		self.lastcmdname = None
 		# Filter out warnings from OS components (e.g. shared libraries)
-		discard_common = r"^.+?\s+\w+\[\d+\]\s+<Warning>:[\S\s]*"
+		# E.g.:
+		# Nov 26 16:28:16  dispcal[1006] <Warning>: void CGSUpdateManager::log() const: conn 0x1ec57 token 0x3ffffffffffd0a
+		# Nov::dispcal[]<Warning>:voidCGSUpdateManager::log()const:connxectokenxffffffffffda
+		#
+		# (Note: the latter seems to be a malformed version of the former, both
+		#  occur under Mac OS X 10.11 El Capitan with Argyll 1.8.3)
+		discard_common = r"^.+?\w+\[\d*\]\s*<Warning>:[\S\s]*"
 		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?", discard_common]
 		self.lastmsg_discard = re.compile("|".join(discard))
 		self.measurement_modes = {}
