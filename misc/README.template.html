@@ -19,7 +19,7 @@
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
 		<script type="text/javascript" src="theme/slimbox2/slimbox2.js?ts=2015-09-01T14:54"></script>
-		<script type="text/javascript" src="theme/readme.js?ts=2015-09-01T01:40"></script>
+		<script type="text/javascript" src="theme/readme.js?ts=2015-10-01T02:21"></script>
 	</head>
 	<body>
 
@@ -333,11 +333,19 @@
 							</li>
 							<li>
 								<span></span>
+								<span><a href="${URL}download/Fedora_23/noarch/dispcalGUI-0install.rpm">Fedora 23</a></span>
+							</li>
+							<li>
+								<span></span>
 								<span><a href="${URL}download/openSUSE_13.1/noarch/dispcalGUI-0install.rpm">openSUSE 13.1</a></span>
 							</li>
 							<li>
 								<span></span>
 								<span><a href="${URL}download/openSUSE_13.2/noarch/dispcalGUI-0install.rpm">openSUSE 13.2</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="${URL}download/openSUSE_Leap_42.1/noarch/dispcalGUI-0install.rpm">openSUSE Leap 42.1</a></span>
 							</li>
 							<li>
 								<span></span>
@@ -370,6 +378,10 @@
 							<li>
 								<span></span>
 								<span><a href="${URL}download/xUbuntu_15.04/all/dispcalGUI-0install.deb">Ubuntu 15.04 (Vivid)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="${URL}download/xUbuntu_15.10/all/dispcalGUI-0install.deb">Ubuntu 15.10 (Wily)</a></span>
 							</li>
 						</ul>
 
@@ -433,7 +445,7 @@
 							</li>
 							<li>
 								<h4>Windows</h4>
-								<p>Choose the <strong>Zero Install</strong> entry from the start page under Windows 8, or the respective subfolder of the programs folder in the start menu under Windows 7 and earlier, and switch to the “My Applications” tab in the window that opens. Click the small “down” arrow inside the “Start” button to the right of the dispcalGUI entry and choose “Update” or “Select version”.</p>
+								<p>Choose the <strong>Zero Install</strong> entry from the start page under Windows 8, or the respective subfolder of the programs folder in the start menu under Windows 10, Windows 7 and earlier, and switch to the “My Applications” tab in the window that opens. Click the small “down” arrow inside the “Start” button to the right of the dispcalGUI entry and choose “Update” or “Select version”.</p>
 								<p>To select a specific software version, click on the “change” link next to an item, then click on the version entry and set the rating to “preferred” (note that this will prevent updates being downloaded for the selected software until you manually change to a different version or reset the rating).</p>
 							</li>
 						</ul>
@@ -494,6 +506,11 @@
 								<a href="${URL}download/Fedora_22/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>Fedora 23</span>
+								<span><a href="${URL}download/Fedora_23/i686/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/Fedora_23/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>openSUSE 13.1</span>
 								<span><a href="${URL}download/openSUSE_13.1/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="${URL}download/openSUSE_13.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
@@ -502,6 +519,11 @@
 								<span>openSUSE 13.2</span>
 								<span><a href="${URL}download/openSUSE_13.2/i586/dispcalGUI.rpm">x86</a> | 
 								<a href="${URL}download/openSUSE_13.2/x86_64/dispcalGUI.rpm">x86_64</a></span>
+							</li>
+							<li>
+								<span>openSUSE Leap 42.1</span>
+								<span><a href="${URL}download/openSUSE_Leap_42.1/i586/dispcalGUI.rpm">x86</a> | 
+								<a href="${URL}download/openSUSE_Leap_42.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Factory</span>
@@ -562,6 +584,11 @@
 								<span>Ubuntu 15.04 (Vivid)</span>
 								<span><a href="${URL}download/xUbuntu_15.04/i386/dispcalGUI.deb">x86</a> | 
 								<a href="${URL}download/xUbuntu_15.04/amd64/dispcalGUI.deb">x86_64</a></span>
+							</li>
+							<li>
+								<span>Ubuntu 15.10 (Wily)</span>
+								<span><a href="${URL}download/xUbuntu_15.10/i386/dispcalGUI.deb">x86</a> | 
+								<a href="${URL}download/xUbuntu_15.10/amd64/dispcalGUI.deb">x86_64</a></span>
 							</li>
 						</ul>
 
@@ -791,15 +818,29 @@
 				<div>
 					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10.</p>
 
-					<div class="info">If you are using Windows 8, you need to <strong>disable driver signature enforcement</strong> before you can install the driver:
+					<div class="info">
+						<p>If you are using Windows 8, 8.1, or 10, you need to <strong>disable driver signature enforcement</strong> before you can install the driver.
+						If <a href="https://en.wikipedia.org/wiki/Unified_Extensible_Firmware_Interface#Secure_boot">Secure Boot</a> is enabled in the <abbr title="Unified Extensible Firmware Interface">UEFI<sup><a href="#definition_UEFI">[12]</a></sup></abbr> setup, you need to disable it first. Refer to your mainboard or firmware manual how to go about this. Usually entering the firmware setup requires holding the DEL key when the system starts booting.</p>
 
-					<ol>
-						<li>Go to “Settings” (hover the lower right corner of the screen, then click the gear icon).</li>
-						<li>Select “Power” (the on/off icon).</li>
-						<li>Hold the SHIFT key down and click “Restart”.</li>
-						<li>Select “Troubleshoot → “Advanced Options” → “Startup Settings” → “Restart”.</li>
-						<li>After reboot, select “Disable Driver Signature Enforcement” (number 7 on the list).</li>
-					</ol></div>
+						<p><strong>Method 1: Disable driver signature enforcement temporarily</strong></p>
+
+						<ol>
+							<li>Go to “Settings” (hover the lower right corner of the screen, then click the gear icon)</li>
+							<li>Select “Power” (the on/off icon)</li>
+							<li>Hold the SHIFT key down and click “Restart”.</li>
+							<li>Select “Troubleshoot → “Advanced Options” → “Startup Settings” → “Restart”</li>
+							<li>After reboot, select “Disable Driver Signature Enforcement” (number 7 on the list)</li>
+						</ol>
+
+						<p><strong>Method 2: Disable driver signature enforcement permanently</strong></p>
+
+						<ol>
+							<li>Open an elevated command prompt. Search for “Command Prompt” in the Windows start menu, right-click and select “Run as administrator”</li>
+							<li>Run the following command: <code>bcdedit /set loadoptions DDISABLE_INTEGRITY_CHECKS</code></li>
+							<li>Run the following command: <code>bcdedit /set TESTSIGNING ON</code></li>
+							<li>Reboot</li>
+						</ol>
+					</div>
 
 					<p>To install the Argyll-specific driver that is needed to use some instruments, launch dispcalGUI and select “Install Argyll CMS instrument drivers...” from the “Tools” menu.</p>
 					
@@ -1035,6 +1076,12 @@
 				<p>Of course, you can and should change the calibration response curve to a value suitable for your own requirements. For example, you might have a display that offers hardware calibration or gamma controls, that has been internally calibrated/adjusted to a different response curve, or your display's response is simply not close to a gamma of 2.2 for other reasons. You can run “Report on uncalibrated display device” from the “Tools” menu to measure the approximated overall gamma among other info.</p>
 			</div>
 
+			<div id="tabs">
+				<h3>Tabs</h3>
+
+				<p>The main user interface is divided into tabs, with each tab containing a sub-set of settings. Not all tabs may be available at any given time. Unavailable tabs will be grayed out.</p>
+			</div>
+
 			<div id="display_instrument">
 				<h3>Choosing the display to calibrate and the measurement device</h3>
 
@@ -1071,8 +1118,17 @@
 				<h3>Calibration settings</h3>
 
 				<dl>
-					<dt>Interactive display adjustment</dt>
+					<dt id="settings_calibration_interactive_display_adjustment">Interactive display adjustment</dt>
 						<dd>Turning this off skips straight to calibration or profiling measurements instead of giving you the opportunity to alter the display's controls first. You will normally want to keep this checked, to be able to use the controls to get closer to the chosen target characteristics.</dd>
+
+					<dt id="settings_calibration_observer">Observer</dt>
+						<dd>
+							<p>To see this setting, you need to have an instrument that supports spectral readings (i.e. a spectrometer) or spectral sample calibration (e.g. i1 DisplayPro, ColorMunki Display and Spyder4/5), and go into the “Options” menu, and enable “Show advanced options”.</p>
+
+							<p>This can be used to select a different colorimetric observer, also known as color matching function (CMF), for instruments that support it. The default is the CIE 1931 standard 2° observer.</p>
+
+							<p><strong>Note</strong> that if you select anything other than the default 1931 2 degree observer, then the Y values will not be cd/m², due to the Y curve not being the CIE 1924 photopic V(λ) luminosity function.</p>
+						</dd>
 
 					<dt id="settings_calibration_white_point">White point</dt>
 						<dd>
@@ -1085,7 +1141,7 @@
 
 					<dt id="settings_calibration_white_level">White level</dt>
 						<dd>
-							<p>Set the target brightness of white in cd/m<sup>2</sup>. If this number cannot be reached, the brightest output possible is chosen, consistent with matching the white point target. Note that many of the instruments are not particularly accurate when assessing the absolute display brightness in cd/m<sup>2</sup>. NOTE that some LCD screens behave a little strangely near their absolute white point, and may therefore exhibit odd behavior at values just below white. It may be advisable in such cases to set a brightness slightly less than the maximum such a display is capable of.</p>
+							<p>Set the target brightness of white in cd/m<sup>2</sup>. If this number cannot be reached, the brightest output possible is chosen, consistent with matching the white point target. Note that many of the instruments are not particularly accurate when assessing the absolute display brightness in cd/m<sup>2</sup>. Note that some LCD screens behave a little strangely near their absolute white point, and may therefore exhibit odd behavior at values just below white. It may be advisable in such cases to set a brightness slightly less than the maximum such a display is capable of.</p>
 
 							<p>If you want to find out the current uncalibrated white level of your display, you can run “Report on uncalibrated display device” from the “Tools” menu to measure it.</p>
 						</dd>
@@ -1200,8 +1256,8 @@
 							<p>Choose this option if the profile is only going to be used with inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping to create a DeviceLink or 3D LUT (dispcalGUI always uses inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping when creating a DeviceLink/3D LUT). This will reduce the processing time needed to create the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables. <strong>Don't</strong> choose this option if you want to install or otherwise use the profile.</p>
 
 							<h4>Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table</h4>
-							<p>To use this option, you have to select a XYZ LUT profile type. This option increases the effective resolution of the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> to device colorimetric color lookup table by using a matrix to fill the whole grid with the values obtained by inverting the device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
-							<p>You can also set the interpolated lookup table size. The default 33x33x33 resulution will provide a good balance between smoothness and accuracy. Lowering the resolution can increase smoothness (at the potential expense of some accuracy), while increasing resolution may make the resulting profile potentially more accurate (at the expense of some smoothness). Note that computation will need a lot of memory (&gt;= 4 GB of RAM recommended to prevent swapping to harddisk) especially at higher resolutions.</p>
+							<p>To use this option, you have to select a XYZ LUT profile type. This option increases the effective resolution of the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> to device colorimetric color lookup table by using a matrix to limit the XYZ space and fill the whole grid with the values obtained by inverting the device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
+							<p>You can also set the interpolated lookup table size. The default “Auto” will use a base 33x33x33 resulution that is increased if needed and provide a good balance between smoothness and accuracy. Lowering the resolution can increase smoothness (at the potential expense of some accuracy), while increasing resolution may make the resulting profile potentially more accurate (at the expense of some smoothness). Note that computation will need a lot of memory (&gt;= 4 GB of RAM recommended to prevent swapping to harddisk) especially at higher resolutions.</p>
 							<p>See below example images for the result you can expect, where the original image has been converted from sRGB to the display profile. Note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this. Also note that the sRGB blue in the image is actually out of gamut for the specific display used, and the edges visible in the blue gradient for the rendering are a result of the color being out of gamut, and the gamut mapping thus hitting the less smooth gamut boundaries.</p>
 							<div style="overflow: hidden; padding: 1.4em 16px 1.4em 0; text-align: center">
 								<div>
@@ -1239,7 +1295,7 @@
 						</dd>
 
 					<dt id="testchart_file">Testchart file</dt>
-						<dd>You can choose the test patches used when profiling the display here. The default ones are automatically chosen based on profile quality and type, but you can also use and create your own using the built-in testchart editor (click on the colored patches next to the testchart file selector or choose “Edit testchart...” from the “File” menu to launch it).</dd>
+						<dd>You can choose the test patches used when profiling the display here. The default “Auto” optimized setting takes the actual display characteristics into account. You can further increase potential profile accuracy by increasing the number of patches using the slider.</dd>
 
 					<dt id="testchart_editor">Testchart editor</dt>
 						<dd>
@@ -1483,9 +1539,9 @@
 				
 				<h5>HowTo—Common scenarios</h5>
 
-				<p>In all cases, make sure to select the profile you want to evaluate under “settings” (for evaluating 3D LUTs and DeviceLink profiles, this setting has only significance if a Rec. 1886 or custom gamma tone response curve was applied).</p>
+				<p>Select the profile you want to evaluate under “Settings” (for evaluating 3D LUTs and DeviceLink profiles, this setting has significance for a Rec. 1886 or custom gamma tone response curve, because they depend on the black level).</p>
 				
-				<p>Also there are two sets of default verification charts in different sizes, one for general use and one for Rec. 709 video. The “small” and “extended” versions can be used for a quick to moderate check to see if a display should be re-profiled, or if the used profile/3D LUT is any good to begin with. The “large” and “xl” versions can be used for a more thorough check. Also, you can create your own customized verification charts with the testchart editor.</p>
+				<p>There are two sets of default verification charts in different sizes, one for general use and one for Rec. 709 video. The “small” and “extended” versions can be used for a quick to moderate check to see if a display should be re-profiled, or if the used profile/3D LUT is any good to begin with. The “large” and “xl” versions can be used for a more thorough check. Also, you can create your own customized verification charts with the testchart editor.</p>
 
 				<h6>Checking the accuracy of a display profile (evaluating how well the profile characterizes the display)</h6>
 
@@ -1507,18 +1563,19 @@
 						<strong>Whitepoint simulation</strong>. If you are using a reference file that contains device white (100% RGB or 0% CMYK), or if you use a combination of testchart and simulation profile, you can choose if you want whitepoint simulation of the reference or simulation profile, and if so, if you want the whitepoint simulated relative to the target profile whitepoint. To explain the latter option: Let's assume a reference has a whitepoint that is slightly blueish (compared to D50), and a target profile has a whitepoint that is more blueish (compared to D50). If you do <em>not</em> choose to simulate the reference white relative to the target profile whitepoint, and the target profile's gamut is large and accurate enough to accomodate the reference white, then that is exactly what you will get. Depending on the adaptation state of your eyes though, it may be reasonable to assume that you are to a large extent adapted to the target profile whitepoint (assuming it is valid for the device), and the simulated whitepoint will look a little yellowish compared to the target profile whitepoint. In this case, choosing to simulate the whitepoint relative to that of the target profile may give you a better visual match e.g. in a softproofing scenario where you compare to a hardcopy proof under a certain illuminant, that is close to but not quite D50, and the display whitepoint has been matched to that illuminant. It will “add” the simulated whitepoint “on top” of the target profile whitepoint, so in our example the simulated whitepoint will be even more blueish than that of the target profile alone.
 					</li>
 					<li>
-						<strong>Using the simulation profile as target profile</strong> will override the profile set under “taget profile”. Whitepoint simulation does not apply here because color management will not be used and the display device is expected to be in the state described by the simulation profile. This may be accomplished in several ways, for example the display may be calibrated internally or externally, by a 3D LUT or device link profile. If this setting is enabled, a few other options will be available:
-					<ul>
-						<li>
-							<strong>Enable madVR 3D LUT</strong> (if using the madVR display device/madTPG under Windows). This allows you to check how well a madVR 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
-						</li>
-						<li>
-							<strong>Apply tone response curve</strong>. If you are evaluating a 3D LUT or DeviceLink profile, choose the same settings here as during 3D LUT/DeviceLink creation (and also make sure the same target profile is set, because it is used to map the blackpoint).
-						</li>
-						<li>
-							<strong>DeviceLink profile</strong>. This allows you to check how well the DeviceLink transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with the “Enable madVR 3D LUT” setting.
-						</li>
-					</ul>
+						<strong>Using the simulation profile as target profile</strong> will override the profile set under “Settings”. Whitepoint simulation does not apply here because color management will not be used and the display device is expected to be in the state described by the simulation profile. This may be accomplished in several ways, for example the display may be calibrated internally or externally, by a 3D LUT or device link profile. If this setting is enabled, a few other options will be available:
+						<ul>
+							<li>
+								<strong>Enable madVR 3D LUT</strong> (if using the madVR display device/madTPG under Windows). This allows you to check how well a madVR 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
+							</li>
+							<li>
+								<strong>DeviceLink profile</strong>. This allows you to check how well the DeviceLink transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with the “Enable madVR 3D LUT” setting.
+							</li>
+						</ul>
+					</li>
+					<li>
+						<strong>Tone response curve</strong>. If you are evaluating a 3D LUT or DeviceLink profile, choose the same settings here as during 3D LUT/DeviceLink creation (and also make sure the same target profile is set, because it is used to map the blackpoint).<br />
+						To check a display that does not have an associated profile (e.g. “Untethered”), set the verification tone curve to “Unmodified”. In case you want to verify against a different tone response curve instead, you need to create a synthetic profile for this purpose (“Tools” menu).
 					</li>
 				</ul>
 
@@ -1566,7 +1623,7 @@
 				
 				<p>When using Argyll CMS 1.4.0 and newer, remote measurements on a device not directly connected to the machine that is running dispcalGUI is possible (e.g. a smartphone or tablet). The remote device needs to be able to run a web browser (Firefox recommended), and the local machine running dispcalGUI may need firewall rules added or altered to allow incoming connections. To set up remote profiling, select “Web @ localhost” from the display device dropdown menu, then choose the desired action (e.g. “Profile only”). When the message “Webserver waiting at http://&lt;IP&gt;:&lt;Port&gt;” appears, open the shown address in the remote browser and attach the measurement device.<br />
 				<strong>NOTE:</strong> If you use this method of displaying test patches, there is no access to the display video <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>s and hardware calibration is not possible. The colors will be displayed with 8 bit per component precision, and any screen-saver or power-saver will not be automatically disabled. You will also be at the mercy of any color management applied by the web browser, and may have to carefully review and configure such color management.<br />
-				<strong>NOTE:</strong> Close the web browser window or tab after each run, otherwise reconnection may fail upon further runs.</p>
+				<strong>Note:</strong> Close the web browser window or tab after each run, otherwise reconnection may fail upon further runs.</p>
 
 				<h4 id="madvr">madVR test pattern generator</h4>
 
@@ -1658,7 +1715,7 @@
 						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if madVR is being used to display the test patches.</dd>
 
 					<dt>Allow skipping of spectrometer self-calibration</dt>
-						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip this sensor calibration. <em>NOTE</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
+						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, dispcalGUI will try to skip this sensor calibration. <em>Note</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
 
 					<dt>Spectrometer self-calibration</dt>
 						<dd>Do spectrometer sensor calibration on its own.</dd>
@@ -2279,21 +2336,50 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Tommaso Schiavinotto (italian translation)</p>
 
 			<p>Recent donors:
-Paul Gold,
-Srinivas Murty,
-Piotr Billik,
-albert palaudaries,
-Hugo Wilkinson,
-David Barrett,
-Ian Maw,
-書宏 廖,
-Enes pizovic,
-Angus Taggart,
-Tom Luttrell,
-Bin Ming,
-Vovk Serge,
-Jeffrey Riaboy,
-Edward Roslak
+Sarah Fields Photography,
+Felix Schumpelick,
+Andreas Teichert,
+Prepress by Sloane,
+Paul ter Laak,
+Richa Avasthi,
+Dale Mellinger,
+Daniel Jurcau,
+Greg Ausina,
+Marc Auber,
+Dilma Herrera,
+Manuel Pintor,
+Andy Taylor,
+Cooksey-Talbott Gallery,
+Ben Richardson LLC,
+Walter Romero,
+Cahill Casterline Limited,
+Smartcooky Design,
+Elio Clemente Alvarado,
+Timo Hakkarainen,
+Riley Brandt Photography (<a href="http://www.rileybrandt.com/lessons/">The Open Source Photography Course</a>),
+Gustavo Mendes,
+Karl Masreliez,
+Reinhold Schäfer,
+James Finnie,
+Robert Walker,
+Ardjuna Seghers,
+John Hughes,
+Andrew Fields,
+Per Baekgaard,
+Gianluca Hotz,
+Uwe Röger,
+Serge Ghis,
+Christophe Van Laer,
+Xavier Potel,
+Henry Huang,
+Louis Epure,
+Gert Meister,
+Stefan Berndt,
+Leslie B Bunch,
+Juergen Flosbach,
+Reinhold Schäfer,
+Antonio Marcheselli,
+Hrvoje Mijovic Kocan
 <!--a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none"></span--></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
@@ -2310,6 +2396,22 @@ Edward Roslak
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Added Rec. 2020 as well as Rec. 709, SMPTE 431-2 (DCI P3) and Rec. 2020 derivatives with imaginary primaries to PCS candidates for enhancing the effective resolution of PCS to device tables, and set the default lookup table size to “Auto” (base 33x33x33, increased if needed).</li>
+							<li>Enabled <a href="#verify-profile">verification without a display profile</a> by using the simulation profile as output with its tone curve unmodified.</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Black point compensation (when enabled) was not being applied to PCS-to-device table when creating XYZ LUT profiles. Note that using black point compensation for LUT profiles is neither recommended nor required, as it needlessly reduces the accuracy of the profile, and LUT profiles by default are generated with a perceptual table that maps the black point.</li>
+							<li>Work-around a problem with i1D2 and Argyll 1.7 to 1.8.3 under Mac OS X 10.11 El Capitan where disabling interactive display adjustment would botch the first reading (black).</li>
+							<li>Calibration loader: Don't show bogus “Calibration curves could not be loaded” message when using Argyll CMS 1.8.3 and the display profile does not contain calibration (profiles not created by dispcalGUI or Argyll CMS).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0.4.3">2015-09-25 22:16 (UTC) 3.0.4.3 </dt>
+					<dd>
+						<h3>3.0.4.3 </h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Restore 3D LUT source colorspace setting when loading a settings file.</li>
@@ -4124,6 +4226,8 @@ Edward Roslak
 					<dd>Extended Display Identification Data — <a href="http://en.wikipedia.org/wiki/EDID">en.wikipedia.org/wiki/EDID</a></dd>
 				<dt id="definition_PCS">[11] PCS</dt>
 					<dd>Profile Connection Space — <a href="http://en.wikipedia.org/wiki/ICC_profile">en.wikipedia.org/wiki/ICC_profile</a></dd>
+				<dt id="definition_UEFI">[12] UEFI</dt>
+					<dd>Unified Extensible Firmware Interface — <a href="https://en.wikipedia.org/wiki/Unified_Extensible_Firmware_Interface">en.wikipedia.org/wiki/UEFI</a></dd>
 			</dl>
 		</div>
 

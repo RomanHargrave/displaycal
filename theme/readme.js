@@ -59,7 +59,7 @@ function $splash_anim(i, splash_frames) {
 	}, 1000 / 30);
 };
 
-var img, imgs = [], imgpaths = ['theme/splash.png', 'theme/splash_version.png'];
+var img, imgs = [], imgpaths = ['theme/splash.png', 'theme/splash_version.png', 'theme/splash_anim.png'];
 
 jQuery(function ($) {
 	/* Infobox slider */
@@ -137,11 +137,12 @@ jQuery(function ($) {
 	if ($(window).width() >= 760 &&
 		(location.protocol != 'file:' ||
 		 (location.search || '').indexOf('debug') > -1 ||
-		 (document.cookie || '').indexOf('debug') > -1)) {
+		 (document.cookie || '').indexOf('debug') > -1) &&
+		!navigator.userAgent.match(/MSIE\s*[678]\./)) {
 		$('#header').addClass('intro');
 		function splash_onload() {
 			this._loaded = true;
-			for (var i = 0; i < imgs.length; i ++) if (!imgs[i]._loaded) return;
+			for (var i = 0; i < imgpaths.length; i ++) if (!imgs[i] || !imgs[i]._loaded || !imgs[i].complete || !imgs[i].height) return;
 			var splash_wrapper = $('<div id="splash-wrapper"></div>'),
 				splash = $('<div id="splash"><p id="splash_version_string"></p></div>'),
 				splash_anim, splash_frames = [],
@@ -149,10 +150,11 @@ jQuery(function ($) {
 			splash.hide();
 			splash.css('background-image', 'url(' + imgs[0].src + ')');
 			/* Splash animation */
-			for (var i = 2; i < imgs.length - 1; i ++) {
+			for (var i = 0; i < 16; i ++) {
 				splash_anim = $('<div id="splash_anim_' + splash_frames.length + '" class="splash_anim">');
-				if (i > 2) splash_anim.css('left', '-9999px');
-				splash_anim.css('background-image', 'url(' + imgs[i].src + ')');
+				if (i) splash_anim.css('left', '-9999px');
+				splash_anim.css({'background-image': 'url(' + imgs[2].src + ')',
+								 'background-position': - (444 * i) + 'px 0'});
 				splash.append(splash_anim);
 				splash_frames.push(splash_anim);
 			}
@@ -173,10 +175,6 @@ jQuery(function ($) {
 					$splash_anim(0, splash_frames);
 				});
 			}, 500);
-		}
-		/* Get paths to remaining images */
-		for (var i = 0; i < 16; i ++) {
-			imgpaths.push('theme/splash_anim/splash_anim_' + (i < 9 ? '0' : '') + (i + 1) + '.png');
 		}
 		imgpaths.push('img/dispcalGUI-main_window-shadow-720.png');
 		/* Load images */
