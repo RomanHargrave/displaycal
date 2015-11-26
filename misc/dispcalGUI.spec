@@ -22,6 +22,8 @@
 %define py_maxversion ${PY_MAXVERSION}
 %define wx_minversion ${WX_MINVERSION}
 
+%global debug_package %{nil}
+
 Summary:        ${SUMMARY}
 License:        GPL-3.0+
 Name:           ${PACKAGE}
