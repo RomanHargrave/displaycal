@@ -1019,7 +1019,7 @@ class FilteredStream():
 	
 	""" Wrap a stream and filter all lines written to it. """
 	
-	# Discard progress information like ... or *** or %
+	# Discard the whole line if it is empty after replacing patterns
 	discard = ""
 	
 	# If one of the triggers is contained in a line, skip the whole line
@@ -1039,11 +1039,15 @@ class FilteredStream():
 	substitutions = {r"\^\[": "",  # ESC key on Linux/OSX
 					 "patch ": "Patch ",
 					 re.compile(r"Point \d+", re.I): ""}
+
+	# Strip these patterns from input before writing. Note that this only works
+	# on full lines (ending with linesep_in)
+	prestrip = ""
 	
 	def __init__(self, stream, data_encoding=None, file_encoding=None,
 				 errors="replace", discard=None, linesep_in="\r\n", 
 				 linesep_out="\n", substitutions=None,
-				 triggers=None):
+				 triggers=None, prestrip=None):
 		self.stream = stream
 		self.data_encoding = data_encoding
 		self.file_encoding = file_encoding
@@ -1056,6 +1060,9 @@ class FilteredStream():
 			self.substitutions = substitutions
 		if triggers is not None:
 			self.triggers = triggers
+		if prestrip is not None:
+			self.prestrip = prestrip
+		self._buffer = ""
 	
 	def __getattr__(self, name):
 		return getattr(self.stream, name)
@@ -1068,6 +1075,16 @@ class FilteredStream():
 		"""
 		if not data:
 			return
+		if self.prestrip and (re.search(self.prestrip, data) or self._buffer):
+			if not data.endswith(self.linesep_in):
+				# Buffer all data until we see a line ending
+				self._buffer += data
+				return
+			elif self._buffer:
+				# Assemble the full line from the buffer
+				data = self._buffer + data
+				self._buffer = ""
+			data = re.sub(self.prestrip, "", data)
 		lines = []
 		for line in data.split(self.linesep_in):
 			if line and not re.sub(self.discard, "", line):
@@ -1514,8 +1531,8 @@ class Worker(object):
 		# Filter out warnings from OS components (e.g. shared libraries)
 		# E.g.:
 		# Nov 26 16:28:16  dispcal[1006] <Warning>: void CGSUpdateManager::log() const: conn 0x1ec57 token 0x3ffffffffffd0a
-		discard_common = r"^.+?\s+\w+\[\d+\]\s+<Warning>:[\S\s]*"
-		discard = [discard_common, r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?"]
+		prestrip = re.compile(r"\D+\s+\d+\s+\d+:\d+:\d+\s+\w+\[\d+\]\s+<Warning>:[\S\s]*")
+		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?"]
 		self.lastmsg_discard = re.compile("|".join(discard))
 		self.measurement_modes = {}
 		# Sounds when measuring
@@ -1527,8 +1544,7 @@ class Worker(object):
 		self.options_dispread = []
 		self.options_targen = []
 		self.pauseable = False
-		discard = [discard_common,
-				   r"^Display type is .+",
+		discard = [r"^Display type is .+",
 				   r"^Doing (?:some initial|check) measurements",
 				   r"^Adjust .+? Press space when done\.\s*",
 				   r"^\s*(?:[/\\]\s+)?(?:Adjusted )?(Current",
@@ -1562,10 +1578,12 @@ class Worker(object):
 		self.recent = FilteredStream(LineCache(maxlines=3), self.pty_encoding, 
 									 discard=self.recent_discard,
 									 triggers=self.triggers +
-											  ["stopped at user request"])
+											  ["stopped at user request"],
+									 prestrip=prestrip)
 		self.lastmsg = FilteredStream(LineCache(), self.pty_encoding, 
 									  discard=self.lastmsg_discard,
-									  triggers=self.triggers)
+									  triggers=self.triggers,
+									  prestrip=prestrip)
 		self.clear_argyll_info()
 		self.clear_cmd_output()
 		self._progress_dlgs = {}
