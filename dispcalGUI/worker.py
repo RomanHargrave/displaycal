@@ -2100,6 +2100,11 @@ class Worker(object):
 				self.instrument_place_on_screen()
 			else:
 				if self.isalive():
+					# Sleep to work-around a problem with i1D2 and Argyll 1.7
+					# to 1.8.3 under Mac OS X 10.11 El Capitan where skipping
+					# interactive display adjustment would botch the first
+					# reading (black)
+					sleep(1.5)
 					self.safe_send(" ")
 					self.pauseable_now = True
 					self.instrument_on_screen = True
