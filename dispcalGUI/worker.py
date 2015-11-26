@@ -1512,7 +1512,7 @@ class Worker(object):
 		self.spotread_just_do_instrument_calibration = False
 		self.lastcmdname = None
 		# Filter out warnings from OS components (e.g. shared libraries)
-		discard_common = r"^\s*\w+\[\d+\]\s+<Warning>:.*"
+		discard_common = r"^.+?\s+\w+\[\d+\]\s+<Warning>:.*"
 		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?", discard_common]
 		self.lastmsg_discard = re.compile("|".join(discard))
 		self.measurement_modes = {}
