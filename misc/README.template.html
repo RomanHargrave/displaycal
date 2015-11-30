@@ -1566,10 +1566,10 @@
 						<strong>Using the simulation profile as target profile</strong> will override the profile set under “Settings”. Whitepoint simulation does not apply here because color management will not be used and the display device is expected to be in the state described by the simulation profile. This may be accomplished in several ways, for example the display may be calibrated internally or externally, by a 3D LUT or device link profile. If this setting is enabled, a few other options will be available:
 						<ul>
 							<li>
-								<strong>Enable madVR 3D LUT</strong> (if using the madVR display device/madTPG under Windows). This allows you to check how well a madVR 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
+								<strong>Enable 3D LUT</strong> (if using the madVR display device/madTPG under Windows, or a Prisma video processor). This allows you to check how well the 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
 							</li>
 							<li>
-								<strong>DeviceLink profile</strong>. This allows you to check how well the DeviceLink transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with the “Enable madVR 3D LUT” setting.
+								<strong>DeviceLink profile</strong>. This allows you to check how well the DeviceLink transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with the “Enable 3D LUT” setting.
 							</li>
 						</ul>
 					</li>
@@ -2396,6 +2396,15 @@ Hrvoje Mijovic Kocan
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Support for the Prisma Video Processor (pattern generator, 3D LUT upload).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.0.5">2015-11-26 21:14 (UTC) 3.0.5 </dt>
+					<dd>
+						<h3>3.0.5 </h3>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Added Rec. 2020 as well as Rec. 709, SMPTE 431-2 (DCI P3) and Rec. 2020 derivatives with imaginary primaries to PCS candidates for enhancing the effective resolution of PCS to device tables, and set the default lookup table size to “Auto” (base 33x33x33, increased if needed).</li>

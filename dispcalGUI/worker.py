@@ -22,7 +22,7 @@ import urllib2
 from UserString import UserString
 from hashlib import md5
 from threading import _MainThread, currentThread
-from time import sleep, strftime, time
+from time import localtime, sleep, strftime, time
 if sys.platform == "darwin":
 	from platform import mac_ver
 	from thread import start_new_thread
@@ -79,7 +79,8 @@ import madvr
 from meta import domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
-from patterngenerators import (ResolveLSPatternGeneratorServer,
+from patterngenerators import (PrismaPatternGeneratorClient,
+							   ResolveLSPatternGeneratorServer,
 							   ResolveCMPatternGeneratorServer)
 from trash import trash
 from util_io import EncodedWriter, Files, GzipFileProper, StringIOu as StringIO
@@ -748,6 +749,28 @@ def get_options_from_ti3(ti3):
 		colprof_args = ti3[0].ARGYLL_COLPROF_ARGS[0].decode("UTF-7", 
 															"replace")
 	return get_options_from_args(dispcal_args, colprof_args)
+
+
+def get_pattern_geometry():
+	""" Return pattern geometry for pattern generator """
+	x, y, size = [float(v) for v in
+				  getcfg("dimensions.measureframe").split(",")]
+	size = size * defaults["size.measureframe"]
+	match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)", getcfg("displays",
+															raw=True))
+	if match:
+		display_size = [int(item) for item in match.groups()]
+	else:
+		display_size = 1920, 1080
+	w, h = [min(size / v, 1.0) for v in display_size]
+	if config.get_display_name(None, True) == "Prisma":
+		w = h
+	x = (display_size[0] - w * display_size[0]) * x / display_size[0]
+	y = (display_size[1] - h * display_size[1]) * y / display_size[1]
+	x, y, w, h = [max(v, 0) for v in (x, y, w, h)]
+	size = min((w * display_size[0] * h * display_size[1]) /
+			   float(display_size[0] * display_size[1]), 1.0)
+	return x, y, w, h, size
 
 
 def get_python_and_pythonpath():
@@ -1586,6 +1609,7 @@ class Worker(object):
 									  prestrip=prestrip)
 		self.clear_argyll_info()
 		self.clear_cmd_output()
+		self._patterngenerators = {}
 		self._progress_dlgs = {}
 		self._progress_wnd = None
 		self._pwdstr = ""
@@ -1652,7 +1676,7 @@ class Worker(object):
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
-				if (config.get_display_name() == "Resolve" and
+				if (config.get_display_name() in ("Prisma", "Resolve") and
 					not ignore_display_name):
 					# Move Argyll test window to lower right corner and make it
 					# very small
@@ -1666,11 +1690,11 @@ class Worker(object):
 				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 							dimensions_measureframe)
 			farg = get_arg("-F", args, True)
-			if (config.get_display_name() == "Resolve" and
+			if (config.get_display_name() in ("Prisma", "Resolve") and
 				not ignore_display_name):
 				if farg:
 					# Remove -F (darken background) as we relay colors to
-					# Resolve
+					# pattern generator
 					args = args[:farg[0]] + args[farg[0] + 1:]
 			elif getcfg("measure.darken_background") and not farg:
 				args.append("-F")
@@ -3013,6 +3037,11 @@ class Worker(object):
 					self.display_edid.append({})
 					self.display_manufacturers.append("")
 					self.display_names.append("madVR")
+				# Prisma
+				displays.append("Prisma")
+				self.display_edid.append({})
+				self.display_manufacturers.append("Q, Inc")
+				self.display_names.append("Prisma")
 				# Resolve
 				displays.append("Resolve")
 				self.display_edid.append({})
@@ -3026,8 +3055,10 @@ class Worker(object):
 				#
 				self.displays = displays
 				setcfg("displays", displays)
-				# Filter out Resolve and Untethered
-				displays = displays[:-2]
+				# Filter out Prisma, Resolve and Untethered
+				# IMPORTANT: Also make changes to display filtering in
+				# worker.Worker.has_separate_lut_access
+				displays = displays[:-3]
 				if self.argyll_version >= [1, 6, 0]:
 					# Filter out madVR
 					displays = displays[:-1]
@@ -3109,6 +3140,8 @@ class Worker(object):
 				if self.argyll_version >= [1, 6, 0]:
 					# madVR
 					lut_access.append(True)
+				# Prisma
+				lut_access.append(False)
 				# Resolve
 				lut_access.append(False)
 				# Untethered
@@ -3187,7 +3220,13 @@ class Worker(object):
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and
-									 config.get_display_name() == "Resolve")
+									 config.get_display_name() in ("Prisma",
+																   "Resolve"))
+		use_3dlut_override = (config.get_display_name(None, True) == "Prisma" and
+							  cmdname == get_argyll_utilname("dispread") and
+							  "-V" in args)
+		if use_3dlut_override:
+			args.remove("-V")
 		working_basename = None
 		if args and args[-1].find(os.path.sep) > -1:
 			working_basename = os.path.basename(args[-1])
@@ -3841,17 +3880,26 @@ while 1:
 					logfiles.extend([self.recent, self.lastmsg, self])
 				logfiles = Files(logfiles)
 				if self.use_patterngenerator:
-					if getattr(self, "patterngenerator", None):
+					pgname = config.get_display_name()
+					if self.patterngenerator:
 						# Use existing pattern generator instance
 						self.patterngenerator.logfile = logfiles
-						self.patterngenerator.use_video_levels = getcfg("patterngenerator.resolve.use_video_levels")
+						self.patterngenerator.use_video_levels = getcfg("patterngenerator.%s.use_video_levels" % pgname.lower())
 						if hasattr(self.patterngenerator, "conn"):
 							# Try to use existing connection
 							try:
 								self.patterngenerator_send((.5, ) * 3, True)
 							except socket.error:
 								self.patterngenerator.disconnect_client()
+					elif pgname == "Prisma":
+						patterngenerator = PrismaPatternGeneratorClient
+						self.patterngenerator = patterngenerator(
+							host=getcfg("patterngenerator.prisma.host"),
+							port=getcfg("patterngenerator.prisma.port"),
+							use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"),
+							logfile=logfiles)
 					else:
+						# Resolve
 						if getcfg("patterngenerator.resolve") == "LS":
 							patterngenerator = ResolveLSPatternGeneratorServer
 						else:
@@ -3868,6 +3916,12 @@ while 1:
 						else:
 							# User aborted before connection was established
 							return False
+					if pgname == "Prisma":
+						x, y, w, h, size = get_pattern_geometry()
+						if use_3dlut_override:
+							self.patterngenerator.enable_processing(size=size * 100)
+						else:
+							self.patterngenerator.disable_processing(size=size * 100)
 			tries = 1
 			while tries > 0:
 				if self.subprocess_abort or self.thread_abort:
@@ -4066,11 +4120,14 @@ while 1:
 				self.errors = errors
 				self.output = output
 				self.retcode = retcode
-			if getattr(self, "patterngenerator", None):
+			if self.patterngenerator:
 				if hasattr(self.patterngenerator, "conn"):
 					try:
-						# Send fullscreen black to prevent plasma burn-in
-						self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
+						if config.get_display_name() == "Resolve":
+							# Send fullscreen black to prevent plasma burn-in
+							self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
+						else:
+							self.patterngenerator.disconnect_client()
 					except Exception, exception:
 						self.log(exception)
 			if use_madnet:
@@ -4944,7 +5001,7 @@ while 1:
 			return "madvr"
 		if display_name == "Untethered":
 			return "0"
-		if display_name == "Resolve":
+		if display_name in ("Prisma", "Resolve"):
 			return "1"
 		if display_name.startswith("Chromecast "):
 			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1].strip()
@@ -5240,8 +5297,10 @@ usage: spotread [-options] [logfile]
 	
 	def has_separate_lut_access(self):
 		""" Return True if separate LUT access is possible and needed. """
-		# Filter out Untethered and Resolve
-		lut_access = self.lut_access[:-2]
+		# Filter out Prisma, Resolve and Untethered
+		# IMPORTANT: Also make changes to display filtering in
+		# worker.Worker.enumerate_displays_and_ports
+		lut_access = self.lut_access[:-3]
 		if self.argyll_version >= [1, 6, 0]:
 			# Filter out madVR
 			lut_access = lut_access[:-1]
@@ -5275,10 +5334,10 @@ usage: spotread [-options] [logfile]
 												   args, asroot)
 
 	def install_3dlut(self, path):
+		basename = os.path.basename(getcfg("3dlut.input.profile"))
 		if getcfg("3dlut.format") == "madVR" and madvr:
 			# Install (load) 3D LUT using madTPG
-			# Get mapping from source profile to madVR gamut
-			basename = os.path.basename(getcfg("3dlut.input.profile"))
+			# Get mapping from source profile to madVR gamut slot
 			gamut = {"Rec709.icm": 0,
 					 "SMPTE_RP145_NTSC.icm": 1,
 					 "EBU3213_PAL.icm": 2,
@@ -5298,6 +5357,29 @@ usage: spotread [-options] [logfile]
 					self.madtpg.quit()
 					if isinstance(self.madtpg, madvr.MadTPG_Net):
 						self.madtpg.shutdown()
+		elif config.get_display_name(None, True) == "Prisma":
+			# Get mapping from source profile to gamut name
+			gamut = {"Rec709.icm": "Rec709",
+					 "SMPTE_RP145_NTSC.icm": "NTSC",
+					 "EBU3213_PAL.icm": "PAL",
+					 "Rec2020.icm": "Rec2020",
+					 "SMPTE431_P3.icm": "P3"}.get(basename, "")
+			# Use file created date & time for filename
+			filename = strftime("%%s_%Y-%m-%d_%H:%M:%S.3dl",
+								localtime(os.stat(path).st_ctime)) % gamut
+			try:
+				# Use Prisma HTTP REST interface to upload 3D LUT
+				if not self.patterngenerator:
+					self.patterngenerator = PrismaPatternGeneratorClient(
+						host=getcfg("patterngenerator.prisma.host"),
+						port=getcfg("patterngenerator.prisma.port"),
+						use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"))
+				self.patterngenerator.connect()
+				self.patterngenerator.load_3dlut_file(path, "Custom-1",
+													  filename)
+			except Exception, exception:
+				return exception
+			return Info(lang.getstr("3dlut.install.success"))
 		else:
 			return Error(lang.getstr("3dlut.install.unsupported"))
 
@@ -6855,23 +6937,23 @@ usage: spotread [-options] [logfile]
 					if hasattr(self.progress_wnd, "animbmp"):
 						self.progress_wnd.animbmp.frame = 0
 
+	@Property
+	def patterngenerator():
+		def fget(self):
+			pgname = config.get_display_name()
+			return self._patterngenerators.get(pgname)
+
+		def fset(self, patterngenerator):
+			pgname = config.get_display_name()
+			self._patterngenerators[pgname] = patterngenerator
+
+		return locals()
+
 	def patterngenerator_send(self, rgb, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
 		if getattr(self, "abort_requested", False):
 			return
-		x, y, size = [float(v) for v in
-					  getcfg("dimensions.measureframe").split(",")]
-		size = size * defaults["size.measureframe"]
-		match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)", getcfg("displays",
-																raw=True))
-		if match:
-			display_size = [int(item) for item in match.groups()]
-		else:
-			display_size = 1920, 1080
-		w, h = [min(size / v, 1.0) for v in display_size]
-		x = (display_size[0] - size) * x / display_size[0]
-		y = (display_size[1] - size) * y / display_size[1]
-		x, y, w, h = [max(v, 0) for v in (x, y, w, h)]
+		x, y, w, h, size = get_pattern_geometry()
 		size = min(sum((w, h)) / 2.0, 1.0)
 		if getcfg("measure.darken_background") or size == 1.0:
 			bgrgb = (0, 0, 0)
@@ -6888,7 +6970,7 @@ usage: spotread [-options] [logfile]
 				 ((appname, ) + tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
 		try:
 			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
-		except socket.error, exception:
+		except Exception, exception:
 			if raise_exceptions:
 				raise
 			else:
@@ -7270,7 +7352,7 @@ usage: spotread [-options] [logfile]
 					args.append("-E")  # Verify current curves
 		if getcfg("extra_args.dispcal").strip():
 			args += parse_argument_string(getcfg("extra_args.dispcal"))
-		if config.get_display_name() == "Resolve":
+		if config.get_display_name() in ("Prisma", "Resolve"):
 			# Substitute actual measurement frame dimensions
 			self.options_dispcal = map(lambda arg: re.sub("^-[Pp]1,1,0.01$",
 														  "-P" + getcfg("dimensions.measureframe"),
@@ -7949,7 +8031,7 @@ usage: spotread [-options] [logfile]
 									 "inconvenience." %
 									 (self.cmd, appname, self.cmd, appname)),
 							 self.owner)
-		if getattr(self, "patterngenerator", None):
+		if self.patterngenerator:
 			self.patterngenerator.listening = False
 		return not subprocess_isalive
 	
@@ -9525,7 +9607,7 @@ BEGIN_DATA
 		else:
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]
-			if config.get_display_name() == "madVR" and colormanaged:
+			if config.get_display_name() in ("madVR", "Prisma") and colormanaged:
 				args.append("-V")
 			if cal_path:
 				if (self.argyll_version >= [1, 3, 3] and
@@ -9786,7 +9868,7 @@ BEGIN_DATA
 						   "can be removed from the screen", txt, re.I)
 		# Send colors to pattern generator
 		use_patterngenerator = (self.use_patterngenerator and
-								getattr(self, "patterngenerator", None) and
+								self.patterngenerator and
 								hasattr(self.patterngenerator, "conn"))
 		if use_patterngenerator or self.use_madnet_tpg:
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",

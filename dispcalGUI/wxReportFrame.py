@@ -348,7 +348,7 @@ class ReportFrame(BaseFrame):
 			self.set_profile("devlink")
 	
 	def enable_3dlut_handler(self, event):
-		setcfg("3dlut.madVR.enable", int(self.enable_3dlut_cb.GetValue()))
+		setcfg("3dlut.enable", int(self.enable_3dlut_cb.GetValue()))
 		setcfg("measurement_report.use_devlink_profile", 0)
 		self.mr_update_main_controls()
 	
@@ -615,9 +615,10 @@ class ReportFrame(BaseFrame):
 		self.use_simulation_profile_as_output_cb.SetValue(enable1 and enable2)
 		self.enable_3dlut_cb.Enable(enable1 and enable2)
 		self.enable_3dlut_cb.SetValue(enable1 and enable2 and
-									  bool(getcfg("3dlut.madVR.enable")))
+									  bool(getcfg("3dlut.enable")))
 		self.enable_3dlut_cb.Show(enable1 and sim_profile_color == "RGB" and
-								  config.get_display_name() == "madVR")
+								  config.get_display_name() in ("madVR",
+																"Prisma"))
 		enable5 = (sim_profile_color == "RGB" and
 				   isinstance(self.simulation_profile.tags.get("rXYZ"),
 							  ICCP.XYZType) and
@@ -784,7 +785,7 @@ class ReportFrame(BaseFrame):
 		getattr(self, which + "_meas_time").ForegroundColour = color
 	
 	def use_devlink_profile_ctrl_handler(self, event):
-		setcfg("3dlut.madVR.enable", 0)
+		setcfg("3dlut.enable", 0)
 		setcfg("measurement_report.use_devlink_profile",
 			   int(self.devlink_profile_cb.GetValue()))
 		self.mr_update_main_controls()

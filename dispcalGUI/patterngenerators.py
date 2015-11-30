@@ -3,14 +3,79 @@
 from socket import (AF_INET, SHUT_RDWR, SOCK_STREAM, error, gethostbyname, 
 					gethostname, socket, timeout)
 import errno
+import httplib
+import socket
 import struct
+
+import demjson
 
 import localization as lang
 from log import safe_print
+from util_http import encode_multipart_formdata
 from util_str import safe_unicode
 
 
-class PatternGeneratorServer(object):
+class GenHTTPPatternGeneratorClient(object):
+
+	""" Generic pattern generator client using HTTP REST interface """
+
+	def __init__(self, host, port, bits, use_video_levels=False,
+				 logfile=None):
+		self.host = gethostbyname(host)
+		self.port = port
+		self.bits = bits
+		self.use_video_levels = use_video_levels
+		self.logfile = logfile
+
+	def wait(self):
+		self.connect()
+
+	def __del__(self):
+		self.disconnect_client()
+
+	def _conn_exc(self, exception):
+		msg = lang.getstr("connection.fail", safe_unicode(exception))
+		raise Exception(msg)
+
+	def _send(self, method, url, params=None, headers=None, validate=None):
+		try:
+			self.conn.request(method, url, params, headers or {})
+			resp = self.conn.getresponse()
+		except (socket.error, httplib.HTTPException), exception:
+			self._conn_exc(exception)
+		else:
+			if resp.status == httplib.OK:
+				self._validate(resp, validate)
+			else:
+				raise Exception("%s %s" % (resp.status, resp.reason))
+
+	def _shutdown(self):
+		# Override this method in subclass!
+		pass
+
+	def _validate(self, resp, validate):
+		# Override this method in subclass!
+		pass
+
+	def connect(self):
+		self.conn = httplib.HTTPConnection(self.host, self.port)
+		self.conn.connect()
+
+	def disconnect_client(self):
+		if hasattr(self, "conn"):
+			self._shutdown()
+			self.conn.close()
+			del self.conn
+
+	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
+			 use_video_levels=None, x=0, y=0, w=1, h=1):
+		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
+		# Override this method in subclass!
+
+
+class GenTCPSockPatternGeneratorServer(object):
+
+	""" Generic pattern generator server using TCP sockets """
 
 	def __init__(self, port, bits, use_video_levels=False, logfile=None):
 		self.port = port
@@ -81,12 +146,88 @@ class PatternGeneratorServer(object):
 									x, y, w, h)
 
 
-class ResolveLSPatternGeneratorServer(PatternGeneratorServer):
+class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
+
+	""" Prisma HTTP REST interface """
+
+	def __init__(self, host, port=80, use_video_levels=False, logfile=None):
+		GenHTTPPatternGeneratorClient.__init__(self, host, port, 8,
+											   use_video_levels=use_video_levels,
+											   logfile=logfile)
+
+	def _get_rgb(self, rgb, bgrgb, bits=8, use_video_levels=None):
+		""" The RGB range should be 0..1 """
+		_get_rgb = GenTCPSockPatternGeneratorServer.__dict__["_get_rgb"]
+		rgb, bgrgb, bits = _get_rgb(self, rgb, bgrgb, 8, use_video_levels)
+		# Encode RGB values for Prisma HTTP REST interface
+		# See prisma-sdk/prisma.cpp, PrismaIo::wincolor
+		rgb = [int(round(v)) for v in rgb]
+		bgrgb = [int(round(v)) for v in bgrgb]
+		rgb = ((rgb[0] & 0xff) << 16 |
+			   (rgb[1] & 0xff) << 8 |
+			   (rgb[2] & 0xff) << 0)
+		bgrgb = ((bgrgb[0] & 0xff) << 16 |
+				 (bgrgb[1] & 0xff) << 8 |
+				 (bgrgb[2] & 0xff) << 0)
+		return rgb, bgrgb, bits
+
+	def _shutdown(self):
+		try:
+			self._send("GET", "/window?m=off&sz=10", validate={"off": "Ok"})
+		except:
+			pass
+
+	def _validate(self, resp, validate):
+		raw = resp.read()
+		if isinstance(validate, dict):
+			data = demjson.decode(raw)
+			for key, value in validate.iteritems():
+				if key not in data or (value is not None and data[key] != value):
+					raise Exception(raw)
+		elif validate:
+			if raw != validate:
+				raise Exception(raw)
+
+	def disable_processing(self, size=10):
+		self.enable_processing(False, size)
+
+	def enable_processing(self, enable=True, size=10):
+		if enable:
+			win = 1
+		else:
+			win = 2
+		self._send("GET", "/window?m=win%i&sz=%i" % (win, size),
+				   validate={"win%i" % win: "Ok"})
+
+	def load_3dlut_file(self, path, presetname, filename):
+		with open(path, "rb") as lut3d:
+			data = lut3d.read()
+		files = [("cubeFile", filename, data)]
+		content_type, params = encode_multipart_formdata([], files)
+		headers = {"Content-Type": content_type,
+				   "Content-Length": str(len(params))}
+		# Select preset
+		self._send("GET", "/setup?m=loadPreset&n=" + presetname,
+				   validate={"settings": None})
+		# Upload 3D LUT
+		self._send("POST", "/fwupload", params, headers)
+		# Select 3D LUT
+		self._send("GET", "/setup?m=setCube&n=%s&f=null" % filename,
+				   validate={"setCube": "Ok"})
+
+	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
+			 use_video_levels=None, x=0, y=0, w=1, h=1):
+		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
+		self._send("GET", "/window?m=color&bg=%i&fg=%i" % (bgrgb, rgb),
+				   validate={"color": "Ok"})
+
+
+class ResolveLSPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
 
 	def __init__(self, port=20002, bits=8, use_video_levels=False,
 				 logfile=None):
-		PatternGeneratorServer.__init__(self, port, bits, use_video_levels,
-										logfile)
+		GenTCPSockPatternGeneratorServer.__init__(self, port, bits,
+												  use_video_levels, logfile)
 
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
@@ -99,12 +240,12 @@ class ResolveLSPatternGeneratorServer(PatternGeneratorServer):
 		self.conn.sendall("%s%s" % (struct.pack(">I", len(xml)), xml))
 
 
-class ResolveCMPatternGeneratorServer(PatternGeneratorServer):
+class ResolveCMPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
 
 	def __init__(self, port=20002, bits=10, use_video_levels=False,
 				 logfile=None):
-		PatternGeneratorServer.__init__(self, port, bits, use_video_levels,
-										logfile)
+		GenTCPSockPatternGeneratorServer.__init__(self, port, bits,
+												  use_video_levels, logfile)
 
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
@@ -120,4 +261,4 @@ class ResolveCMPatternGeneratorServer(PatternGeneratorServer):
 	
 
 if __name__ == "__main__":
-	patterngenerator = PatternGeneratorServer()
+	patterngenerator = GenTCPSockPatternGeneratorServer()

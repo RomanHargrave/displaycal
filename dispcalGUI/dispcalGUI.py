@@ -6100,8 +6100,9 @@ class MainFrame(ReportFrame, BaseFrame):
 							   getattr(self, "reportframe", self))
 			return
 		colormanaged = (use_sim and use_sim_as_output and not sim_profile and
-						config.get_display_name() == "madVR" and
-						getcfg("3dlut.madVR.enable"))
+						config.get_display_name(None, True) in ("madVR",
+																"Prisma") and
+						getcfg("3dlut.enable"))
 		if debug:
 			for n, p in {"profile": profile, "devlink": devlink,
 						 "sim_profile": sim_profile, "oprof": oprof}.iteritems():
@@ -6885,6 +6886,67 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
+		if config.get_display_name(None, True) == "Prisma":
+			# Ask for prisma hostname or IP
+			dlg = ConfirmDialog(self, title=appname,
+								msg=lang.getstr("patterngenerator.prisma.specify_host"),
+								ok=lang.getstr("continue"),
+								cancel=lang.getstr("cancel"),
+								bitmap=geticon(32, "dialog-question"))
+			host = getcfg("patterngenerator.prisma.host")
+			dlg.host = wx.TextCtrl(dlg, -1, host)
+			def check_host_empty(event):
+				dlg.ok.Enable(bool(dlg.host.GetValue()))
+			dlg.host.Bind(wx.EVT_TEXT, check_host_empty)
+			dlg.sizer3.Add(dlg.host, 0, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
+						   border=12)
+			dlg.errormsg = wx.StaticText(dlg, -1, "")
+			dlg.sizer3.Add(dlg.errormsg, 0, flag=wx.TOP | wx.ALIGN_LEFT |
+												 wx.EXPAND, border=12)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			def check_host(host):
+				try:
+					ip = socket.gethostbyname(host)
+				except socket.error, exception:
+					result = exception
+				else:
+					result = ip
+				wx.CallAfter(check_host_consumer, result)
+			def check_host_consumer(result):
+				if not dlg:
+					return
+				if isinstance(result, Exception):
+					dlg.Freeze()
+					dlg.errormsg.Label = lang.getstr("host.invalid.lookup_failed")
+					dlg.errormsg.ForegroundColour = wx.Colour(204, 0, 0)
+					dlg.ok.Enable()
+					dlg.Thaw()
+					wx.Bell()
+				else:
+					dlg.EndModal(wx.ID_OK)
+			def check_host_handler(event):
+				host = dlg.host.GetValue()
+				if host:
+					dlg.Freeze()
+					dlg.errormsg.Label = lang.getstr("please_wait")
+					dlg.errormsg.ForegroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+					dlg.ok.Disable()
+					dlg.sizer0.SetSizeHints(dlg)
+					dlg.sizer0.Layout()
+					dlg.Thaw()
+					thread = threading.Thread(target=check_host, args=(host, ))
+					thread.start()
+				else:
+					wx.Bell()
+			dlg.ok.Bind(wx.EVT_BUTTON, check_host_handler)
+			dlg.ok.Enable(bool(host))
+			result = dlg.ShowModal()
+			host = dlg.host.GetValue()
+			dlg.Destroy()
+			if result != wx.ID_OK or not host:
+				return
+			setcfg("patterngenerator.prisma.host", host)
 		writecfg()
 		if pending_function_kwargs.get("wrapup", True):
 			self.worker.wrapup(False)
@@ -6894,7 +6956,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
 		if ((config.is_virtual_display() and
-			 config.get_display_name() != "Resolve" and
+			 config.get_display_name() not in ("Resolve", "Prisma") and
 			 not config.get_display_name().startswith("Chromecast ") and
 			 not config.get_display_name().startswith("Prisma ")) or
 			getcfg("dry_run")):
@@ -7695,7 +7757,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				title = appname
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
-					if getcfg("3dlut.format") in ("madVR", "ReShade"):
+					if (getcfg("3dlut.format") in ("madVR", "ReShade") or
+						config.get_display_name(None, True) == "Prisma"):
 						ok = lang.getstr("3dlut.install")
 					else:
 						ok = lang.getstr("3dlut.save_as")
@@ -7900,6 +7963,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			result = event.GetId()
 		lut3d = config.is_virtual_display() or self.install_3dlut
+		# madVR has an API for installing 3D LUTs
+		# Prisma has a HTTP REST interface for uploading and
+		# configuring 3D LUTs
+		install_3dlut_api = (getcfg("3dlut.format") == "madVR" or
+							 config.get_display_name(None, True) == "Prisma")
 		if result != wx.ID_OK or lut3d:
 			if self.modaldlg.preview:
 				if getcfg("calibration.file", False):
@@ -7916,15 +7984,14 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.preview.SetValue(False)
 			if (result != wx.ID_OK or not self.lut3d_path or
 				not os.path.isfile(self.lut3d_path) or
-				getcfg("3dlut.format") != "madVR"):
+				not install_3dlut_api):
 				self.profile_finish_consumer()
 		if result == wx.ID_OK:
 			producer = None
 			if lut3d:
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
-					if getcfg("3dlut.format") == "madVR":
-						# madVR has an API for installing 3D LUTs
+					if install_3dlut_api:
 						producer = self.worker.install_3dlut
 						wargs = (self.lut3d_path, )
 						wkwargs = None
@@ -12563,15 +12630,18 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg(cfgname, cfgvalue)
 							elif cfgname == "3dlut.format":
 								if cfgvalue == "madVR":
-									setcfg("3dlut.madVR.enable", 1)
+									setcfg("3dlut.enable", 1)
 								if cfgvalue in ("eeColor", "madVR"):
 									setcfg("measurement_report.use_devlink_profile", 0)
 				if not display_match:
 					self.update_menus()
 				self.lut3d_set_path()
 				if config.get_display_name() == "Resolve":
-					setcfg("3dlut.madVR.enable", 0)
+					setcfg("3dlut.enable", 0)
 					setcfg("measurement_report.use_devlink_profile", 1)
+				elif config.get_display_name(None, True) == "Prisma":
+					setcfg("3dlut.enable", 1)
+					setcfg("measurement_report.use_devlink_profile", 0)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)

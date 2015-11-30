@@ -121,7 +121,7 @@
               </object>
               <object class="sizeritem">
                 <object class="wxCheckBox" name="enable_3dlut_cb">
-                  <label>3dlut.madVR.enable</label>
+                  <label>3dlut.enable</label>
                 </object>
                 <flag>wxLEFT</flag>
                 <border>8</border>

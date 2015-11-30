@@ -153,7 +153,7 @@ bitmaps = {}
 uncalibratable_displays = ("Untethered$", )
 
 # Can the device generate patterns of its own?
-patterngenerators = ("madVR$", "Resolve$", "Chromecast ", "Prisma ")
+patterngenerators = ("madVR$", "Resolve$", "Chromecast ", "Prisma ", "Prisma$")
 
 non_argyll_displays = uncalibratable_displays + ("Resolve$", )
 
@@ -161,7 +161,8 @@ non_argyll_displays = uncalibratable_displays + ("Resolve$", )
 # (note that madVR can technically be both, but the endpoint is always directly
 # connected to a display so we have videoLUT access via madVR's API. Only
 # devices which don't support that are considered 'untethered' in this context)
-untethered_displays = non_argyll_displays + ("Web$", "Chromecast ", "Prisma ")
+untethered_displays = non_argyll_displays + ("Web$", "Chromecast ", "Prisma ",
+											 "Prisma$")
 
 # Is the device not an actual display device (i.e. is it not a TV or monitor)?
 virtual_displays = untethered_displays + ("madVR$", )
@@ -615,7 +616,7 @@ defaults = {
 	"3dlut.image.order": "rgb",
 	"3dlut.input.profile": "",
 	"3dlut.abstract.profile": "",
-	"3dlut.madVR.enable": 1,
+	"3dlut.enable": 1,
 	"3dlut.output.profile": "",
 	"3dlut.output.profile.apply_cal": 1,
 	"3dlut.rendering_intent": "aw",
@@ -743,6 +744,9 @@ defaults = {
 	"observer": "1931_2",
 	"observer.backup": "1931_2",
 	"patterngenerator.apl": .22,
+	"patterngenerator.prisma.host": "",
+	"patterngenerator.prisma.port": 80,
+	"patterngenerator.prisma.use_video_levels": 1,
 	"patterngenerator.resolve": "CM",
 	"patterngenerator.resolve.port": 20002,
 	"patterngenerator.resolve.use_video_levels": 0,
