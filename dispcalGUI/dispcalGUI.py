@@ -6890,9 +6890,31 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
+		if not self.setup_patterngenerator(self):
+			return
+		writecfg()
+		if pending_function_kwargs.get("wrapup", True):
+			self.worker.wrapup(False)
+		if "wrapup" in pending_function_kwargs:
+			del pending_function_kwargs["wrapup"]
+		self.HideAll()
+		self.set_pending_function(pending_function, *pending_function_args, 
+								  **pending_function_kwargs)
+		if ((config.is_virtual_display() and
+			 config.get_display_name() not in ("Resolve", "Prisma") and
+			 not config.get_display_name().startswith("Chromecast ") and
+			 not config.get_display_name().startswith("Prisma ")) or
+			getcfg("dry_run")):
+			self.call_pending_function()
+		elif sys.platform in ("darwin", "win32") or isexe:
+			self.measureframe.Show()
+		else:
+			wx.CallAfter(self.start_measureframe_subprocess)
+
+	def setup_patterngenerator(self, parent=None):
 		if config.get_display_name(None, True) == "Prisma":
 			# Ask for prisma hostname or IP
-			dlg = ConfirmDialog(self, title=appname,
+			dlg = ConfirmDialog(parent, title=appname,
 								msg=lang.getstr("patterngenerator.prisma.specify_host"),
 								ok=lang.getstr("continue"),
 								cancel=lang.getstr("cancel"),
@@ -6951,24 +6973,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if result != wx.ID_OK or not host:
 				return
 			setcfg("patterngenerator.prisma.host", host)
-		writecfg()
-		if pending_function_kwargs.get("wrapup", True):
-			self.worker.wrapup(False)
-		if "wrapup" in pending_function_kwargs:
-			del pending_function_kwargs["wrapup"]
-		self.HideAll()
-		self.set_pending_function(pending_function, *pending_function_args, 
-								  **pending_function_kwargs)
-		if ((config.is_virtual_display() and
-			 config.get_display_name() not in ("Resolve", "Prisma") and
-			 not config.get_display_name().startswith("Chromecast ") and
-			 not config.get_display_name().startswith("Prisma ")) or
-			getcfg("dry_run")):
-			self.call_pending_function()
-		elif sys.platform in ("darwin", "win32") or isexe:
-			self.measureframe.Show()
-		else:
-			wx.CallAfter(self.start_measureframe_subprocess)
+		return True
 	
 	def start_measureframe_subprocess(self):
 		args = u'"%s" -c "%s"' % (exe, "import sys;"
@@ -7996,6 +8001,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
 					if install_3dlut_api:
+						if not self.setup_patterngenerator(self.modaldlg):
+							return
 						producer = self.worker.install_3dlut
 						wargs = (self.lut3d_path, )
 						wkwargs = None
