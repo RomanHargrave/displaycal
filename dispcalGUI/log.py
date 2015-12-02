@@ -58,6 +58,14 @@ warnings.showwarning = showwarning
 
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
+
+def wx_log(logwindow):
+	if logwindow.IsShownOnScreen():
+		logbuffer.seek(0)
+		logwindow.Log(logbuffer.read().rstrip().decode("UTF-8", "replace"))
+		logbuffer.truncate(0)
+
+
 class DummyLogger():
 
 	def critical(self, msg, *args, **kwargs):
@@ -103,7 +111,7 @@ class Log():
 			if wx.GetApp() is not None and \
 			   hasattr(wx.GetApp(), "frame") and \
 			   hasattr(wx.GetApp().frame, "infoframe"):
-				wx.CallAfter(wx.GetApp().frame.infoframe.Log, msg)
+				wx.CallAfter(wx_log, wx.GetApp().frame.infoframe)
 	
 	def flush(self):
 		pass
@@ -296,6 +304,6 @@ def setup_logging(logdir, name=appname, backupCount=5):
 		logger = get_file_logger(None, loglevel, "midnight",
 								 backupCount, filename=name)
 		streamhandler = logging.StreamHandler(logbuffer)
-		streamformatter = logging.Formatter("%(message)s")
+		streamformatter = logging.Formatter("%(asctime)s %(message)s")
 		streamhandler.setFormatter(streamformatter)
 		logger.addHandler(streamhandler)

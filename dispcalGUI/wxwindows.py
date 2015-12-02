@@ -4179,9 +4179,38 @@ class LogWindow(InvincibleFrame):
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+		self._tspattern = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} ")
 
 	def Log(self, txt):
+		if not txt:
+			return
+		# TextCtrl.AppendText is an EXPENSIVE operation under OS X.
+		# For that reason, assemble the text to be added before calling it.
+		lines = []
+		start = self.log_txt.GetLastPosition()
+		ts = None
 		for line in safe_unicode(txt).split("\n"):
+			tsmatch = re.match(self._tspattern, line)
+			if tsmatch:
+				ts = tsmatch.group()
+				line = line[len(ts):]
+			for line in wrap(line, 80).split("\n"):
+				while 1:
+					if ts:
+						logline = ts[11:] + line
+					else:
+						ms = time() - int(time())
+						logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
+					lines.append(logline)
+					line = line[80:]
+					if not line:
+						break
+		self.log_txt.AppendText("\n".join(lines) + "\n")
+		# TextCtrl.SetStyle is an EXPENSIVE operation, especially under OS X.
+		# Only set styles for (up to) the last 1000 lines.
+		for line in lines[:-1000]:
+			start += len(line + "\n")
+		for i, line in enumerate(lines[-1000:]):
 			line_lower = line.lower()
 			textattr = None
 			if (lang.getstr("warning").lower() in line_lower or
@@ -4190,19 +4219,11 @@ class LogWindow(InvincibleFrame):
 			elif (lang.getstr("error").lower() in line_lower or
 				"error" in line_lower):
 				textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
-			for line in wrap(line, 80).split("\n"):
-				while 1:
-					ms = time() - int(time())
-					logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
-					start = self.log_txt.GetLastPosition()
-					self.log_txt.AppendText(logline + os.linesep)
-					self.log_txt.SetStyle(start, start + 12, self._1stcolstyle)
-					if textattr:
-						self.log_txt.SetStyle(start + 12, start + len(logline),
-											  textattr)
-					line = line[80:]
-					if not line:
-						break
+			self.log_txt.SetStyle(start, start + 12, self._1stcolstyle)
+			if textattr:
+				self.log_txt.SetStyle(start + 12, start + len(line),
+									  textattr)
+			start += len(line + "\n")
 	
 	def ScrollToBottom(self):
 		self.log_txt.ScrollLines(self.log_txt.GetNumberOfLines())

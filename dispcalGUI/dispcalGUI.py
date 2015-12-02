@@ -1279,17 +1279,21 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		if verbose >= 1:
 			safe_print(lang.getstr("ready"))
-		
-		self.log()
 	
 	def log(self):
-		""" Put log buffer contents into the log window. """
+		""" Append log buffer contents to the log window. """
 		# We do this after all initialization because the log.log() function 
 		# expects the window to be fully created and accessible via 
 		# wx.GetApp().frame.infoframe
+		if not hasattr(self, "logoffset"):
+			# Skip the very first line, which is just '=' * 80
+			self.logoffset = 1
+		else:
+			self.logoffset = 0
 		logbuffer.seek(0)
 		self.infoframe.Log("".join([line.decode("UTF-8", "replace") 
-								    for line in logbuffer][1:]).strip())
+								    for line in logbuffer][self.logoffset:]).rstrip())
+		logbuffer.truncate(0)
 
 	def init_defaults(self):
 		""" Initialize GUI-specific defaults. """
@@ -1699,7 +1703,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.infoframe.SetIcons(config.get_icon_bundle([256, 48, 32, 16], 
 													   appname))
 		if show:
-			self.infoframe.Show()
+			self.infoframe_toggle_handler(show=show)
 
 	def init_lut3dframe(self):
 		"""
@@ -1726,6 +1730,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def infoframe_close_handler(self, event):
 		self.infoframe_toggle_handler(event)
+		logbuffer.truncate(0)
 	
 	def setup_language(self):
 		"""
@@ -2573,7 +2578,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					del self.aboutdialog
 				self.infoframe.Destroy()
 				self.init_infoframe(show=getcfg("log.show"))
-				self.log()
 				if sys.platform in ("darwin", "win32") or isexe:
 					self.measureframe.Destroy()
 					self.init_measureframe()
@@ -13102,6 +13106,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if show is None:
 			show = not self.infoframe.IsShownOnScreen()
 		setcfg("log.show", int(show))
+		if show:
+			self.log()
 		self.infoframe.Show(show)
 		self.menuitem_show_log.Check(show)
 		self.menuitem_log_autoshow.Enable(not show)
@@ -13117,6 +13123,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.aboutdialog.Hide()
 		if hasattr(self, "extra_args"):
 			self.extra_args.Hide()
+		logbuffer.truncate(0)
 		self.infoframe.Hide()
 		if hasattr(self, "tcframe"):
 			self.tcframe.Hide()
@@ -13138,7 +13145,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not self.IsShownOnScreen():
 			if hasattr(self, "tcframe"):
 				self.tcframe.Show(getcfg("tc.show"))
-			wx.CallAfter(self.infoframe.Show, getcfg("log.show"))
+			wx.CallAfter(self.infoframe_toggle_handler, show=getcfg("log.show"))
 			if LUTFrame and getcfg("lut_viewer.show"):
 				if getattr(self, "lut_viewer", None):
 					self.init_lut_viewer(show=True)

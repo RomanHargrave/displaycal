@@ -3165,8 +3165,7 @@ class Worker(object):
 		args are the arguments, if any.
 		capture_output (if True) swallows any output from the command and
 		sets the 'output' and 'errors' properties of the Worker instance.
-		display_output shows any captured output if the Worker instance's 
-		'owner' window has a 'LogWindow' child called 'infoframe'.
+		display_output shows the log after the command.
 		low_contrast (if True) sets low contrast shell colors while the 
 		command is run.
 		skip_scripts (if True) skips the creation of shell scripts that allow 
@@ -3588,8 +3587,9 @@ while 1:
 				if not silent and (dry_run or getcfg("dry_run")):
 					if not self.lastcmdname or self.lastcmdname == cmdname:
 						safe_print(lang.getstr("dry_run.end"))
-					if self.owner and hasattr(self.owner, "infoframe"):
-						wx.CallAfter(self.owner.infoframe.Show)
+					if self.owner and hasattr(self.owner, "infoframe_toggle_handler"):
+						wx.CallAfter(self.owner.infoframe_toggle_handler,
+									 show=True)
 					if use_madnet:
 						self.madtpg.disconnect()
 					return UnloggedInfo(lang.getstr("dry_run.info"))
@@ -4086,8 +4086,9 @@ while 1:
 						if not use_pty:
 							self.log("".join(self.output).strip())
 						if display_output and self.owner and \
-						   hasattr(self.owner, "infoframe"):
-							wx.CallAfter(self.owner.infoframe.Show)
+						   hasattr(self.owner, "infoframe_toggle_handler"):
+							wx.CallAfter(self.owner.infoframe_toggle_handler,
+										 show=True)
 					if tries > 0 and not use_pty:
 						stdout = tempfile.SpooledTemporaryFile()
 				if not silent and len(self.errors):
