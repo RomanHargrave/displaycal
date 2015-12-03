@@ -48,7 +48,7 @@ import zipfile
 if sys.platform == "win32":
 	import _winreg
 from hashlib import md5
-from time import gmtime, sleep, strftime, strptime, struct_time
+from time import gmtime, localtime, sleep, strftime, strptime, struct_time
 from zlib import crc32
 
 # 3rd party modules
@@ -6911,10 +6911,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			wx.CallAfter(self.start_measureframe_subprocess)
 
-	def setup_patterngenerator(self, parent=None):
+	def setup_patterngenerator(self, parent=None, title=appname, upload=False):
+		retval = True
 		if config.get_display_name(None, True) == "Prisma":
 			# Ask for prisma hostname or IP
-			dlg = ConfirmDialog(parent, title=appname,
+			dlg = ConfirmDialog(parent, title=title,
 								msg=lang.getstr("patterngenerator.prisma.specify_host"),
 								ok=lang.getstr("continue"),
 								cancel=lang.getstr("cancel"),
@@ -6929,6 +6930,35 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.errormsg = wx.StaticText(dlg, -1, "")
 			dlg.sizer3.Add(dlg.errormsg, 0, flag=wx.TOP | wx.ALIGN_LEFT |
 												 wx.EXPAND, border=12)
+			if upload:
+				sizer = wx.BoxSizer(wx.HORIZONTAL)
+				dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
+							   border=12)
+				sizer.Add(wx.StaticText(dlg, -1,
+										lang.getstr("3dlut.holder.assign_preset")),
+						  flag=wx.ALIGN_CENTER_VERTICAL)
+				preset = wx.Choice(dlg, -1, choices=["Movie", "Sports", "Game",
+													 "Animation", "PC/Mac",
+													 "Black+White", "Custom-1",
+													 "Custom-2"])
+				preset.SetStringSelection("Custom-1")
+				sizer.Add(preset, flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL,
+						  border=8)
+				# Filename
+				basename = os.path.basename(getcfg("3dlut.input.profile"))
+				name = os.path.splitext(basename)[0]
+				# Shorten long name
+				gamut = {"SMPTE_RP145_NTSC": "NTSC",
+						 "EBU3213_PAL": "PAL",
+						 "SMPTE431_P3": "P3"}.get(name, name)
+				# Use file created date & time for filename
+				filename = strftime("%%s-%Y%m%dT%H%M%S.3dl",
+									localtime(os.stat(self.lut3d_path).st_ctime)) % gamut
+				dlg.sizer3.Add(wx.StaticText(dlg, -1, "%s: %s" %
+													  (lang.getstr("filename"),
+													   filename)),
+							   flag=wx.TOP | wx.ALIGN_LEFT,
+							   border=12)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			def check_host(host):
@@ -6969,11 +6999,16 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.ok.Enable(bool(host))
 			result = dlg.ShowModal()
 			host = dlg.host.GetValue()
+			if upload:
+				retval = (preset.GetStringSelection(), filename)
 			dlg.Destroy()
 			if result != wx.ID_OK or not host:
-				return
+				if upload:
+					return False, filename
+				else:
+					return
 			setcfg("patterngenerator.prisma.host", host)
-		return True
+		return retval
 	
 	def start_measureframe_subprocess(self):
 		args = u'"%s" -c "%s"' % (exe, "import sys;"
@@ -7767,7 +7802,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
 					if (getcfg("3dlut.format") in ("madVR", "ReShade") or
-						config.get_display_name(None, True) == "Prisma"):
+						config.check_3dlut_format("Prisma")):
 						ok = lang.getstr("3dlut.install")
 					else:
 						ok = lang.getstr("3dlut.save_as")
@@ -7976,7 +8011,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Prisma has a HTTP REST interface for uploading and
 		# configuring 3D LUTs
 		install_3dlut_api = (getcfg("3dlut.format") == "madVR" or
-							 config.get_display_name(None, True) == "Prisma")
+							 config.check_3dlut_format("Prisma"))
 		if result != wx.ID_OK or lut3d:
 			if self.modaldlg.preview:
 				if getcfg("calibration.file", False):
@@ -8001,10 +8036,13 @@ class MainFrame(ReportFrame, BaseFrame):
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
 					if install_3dlut_api:
-						if not self.setup_patterngenerator(self.modaldlg):
+						preset, filename = self.setup_patterngenerator(self.modaldlg,
+																	   lang.getstr("3dlut.install"),
+																	   True)
+						if not preset:
 							return
 						producer = self.worker.install_3dlut
-						wargs = (self.lut3d_path, )
+						wargs = (self.lut3d_path, preset, filename)
 						wkwargs = None
 						progress_msg = lang.getstr("3dlut.install")
 					else:

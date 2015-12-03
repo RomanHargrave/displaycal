@@ -196,6 +196,15 @@ def is_virtual_display(display_no=None):
 	return is_special_display(display_no, virtual_displays)
 
 
+def check_3dlut_format(devicename):
+	if get_display_name(None, True) == devicename:
+		if devicename == "Prisma":
+			return (getcfg("3dlut.format") == "3dl" and
+					getcfg("3dlut.size") == 17 and
+					getcfg("3dlut.bitdepth.input") == 10 and
+					getcfg("3dlut.bitdepth.output") == 12)
+
+
 def getbitmap(name, display_missing_icon=True):
 	"""
 	Create (if necessary) and return a named bitmap.

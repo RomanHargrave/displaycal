@@ -22,7 +22,7 @@ import urllib2
 from UserString import UserString
 from hashlib import md5
 from threading import _MainThread, currentThread
-from time import localtime, sleep, strftime, time
+from time import sleep, strftime, time
 if sys.platform == "darwin":
 	from platform import mac_ver
 	from thread import start_new_thread
@@ -5336,7 +5336,7 @@ usage: spotread [-options] [logfile]
 		return self.import_colorimeter_corrections(get_argyll_util("spyd4en"),
 												   args, asroot)
 
-	def install_3dlut(self, path):
+	def install_3dlut(self, path, preset=None, filename=None):
 		basename = os.path.basename(getcfg("3dlut.input.profile"))
 		if getcfg("3dlut.format") == "madVR" and madvr:
 			# Install (load) 3D LUT using madTPG
@@ -5361,15 +5361,6 @@ usage: spotread [-options] [logfile]
 					if isinstance(self.madtpg, madvr.MadTPG_Net):
 						self.madtpg.shutdown()
 		elif config.get_display_name(None, True) == "Prisma":
-			# Get mapping from source profile to gamut name
-			gamut = {"Rec709.icm": "Rec709",
-					 "SMPTE_RP145_NTSC.icm": "NTSC",
-					 "EBU3213_PAL.icm": "PAL",
-					 "Rec2020.icm": "Rec2020",
-					 "SMPTE431_P3.icm": "P3"}.get(basename, "")
-			# Use file created date & time for filename
-			filename = strftime("%%s_%Y-%m-%d_%H:%M:%S.3dl",
-								localtime(os.stat(path).st_ctime)) % gamut
 			try:
 				# Use Prisma HTTP REST interface to upload 3D LUT
 				if not self.patterngenerator:
@@ -5378,8 +5369,7 @@ usage: spotread [-options] [logfile]
 						port=getcfg("patterngenerator.prisma.port"),
 						use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"))
 				self.patterngenerator.connect()
-				self.patterngenerator.load_3dlut_file(path, "Custom-1",
-													  filename)
+				self.patterngenerator.load_3dlut_file(path, preset, filename)
 			except Exception, exception:
 				return exception
 			return Info(lang.getstr("3dlut.install.success"))
