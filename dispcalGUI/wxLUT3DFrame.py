@@ -474,9 +474,13 @@ class LUT3DFrame(BaseFrame):
 							self.worker.save_current_video_lut(
 								i + 1, tempcal, silent=True) is True and
 							not cal_to_fake_profile(tempcal).tags.vcgt.is_linear()):
+							if copy_from_path:
+								confirm = lang.getstr("3dlut.save_as")
+							else:
+								confirm = lang.getstr("3dlut.install")
 							if not show_result_dialog(UnloggedWarning(
 								lang.getstr("3dlut.1dlut.videolut.nonlinear")),
-								self, confirm=lang.getstr("3dlut.install")):
+								self, confirm=confirm):
 								cancel = True
 							break
 					if os.path.isfile(tempcal):
