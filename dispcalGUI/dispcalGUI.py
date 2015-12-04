@@ -6921,10 +6921,11 @@ class MainFrame(ReportFrame, BaseFrame):
 								cancel=lang.getstr("cancel"),
 								bitmap=geticon(32, "dialog-question"))
 			host = getcfg("patterngenerator.prisma.host")
-			dlg.host = wx.TextCtrl(dlg, -1, host)
+			dlg.host = wx.ComboBox(dlg, -1, host)
 			def check_host_empty(event):
 				dlg.ok.Enable(bool(dlg.host.GetValue()))
 			dlg.host.Bind(wx.EVT_TEXT, check_host_empty)
+			dlg.host.Bind(wx.EVT_COMBOBOX, check_host_empty)
 			dlg.sizer3.Add(dlg.host, 0, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
 						   border=12)
 			dlg.errormsg = wx.StaticText(dlg, -1, "")
@@ -6992,9 +6993,33 @@ class MainFrame(ReportFrame, BaseFrame):
 					thread.start()
 				else:
 					wx.Bell()
+			def add_client(addr_client):
+				if not dlg:
+					return
+				name = addr_client[1]["name"]
+				if sys.platform != "win32" and not name.endswith(".local"):
+					name += ".local"
+				dlg.host.Append(name)
+				if not dlg.host.GetValue():
+					dlg.host.SetSelection(0)
+					check_host_empty(None)
+			def discover():
+				self.worker.patterngenerator.bind("on_client_added",
+												  lambda addr_client:
+												  wx.CallAfter(add_client,
+															   addr_client))
+				self.worker.patterngenerator.listen()
+				self.worker.patterngenerator.announce()
+			thread = threading.Thread(target=discover)
 			dlg.ok.Bind(wx.EVT_BUTTON, check_host_handler)
 			dlg.ok.Enable(bool(host))
+			if self.worker.patterngenerator:
+				self.worker.patterngenerator.disconnect_client()
+			else:
+				self.worker.setup_patterngenerator()
+			wx.CallAfter(thread.start)
 			result = dlg.ShowModal()
+			self.worker.patterngenerator.listening = False
 			host = dlg.host.GetValue()
 			if result == wx.ID_OK and upload:
 				setcfg("patterngenerator.prisma.preset",
@@ -7004,6 +7029,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if result != wx.ID_OK or not host:
 				return
 			setcfg("patterngenerator.prisma.host", host)
+			self.worker.patterngenerator.host = host
 		return retval
 	
 	def start_measureframe_subprocess(self):
