@@ -756,6 +756,7 @@ defaults = {
 	"observer": "1931_2",
 	"observer.backup": "1931_2",
 	"patterngenerator.apl": .22,
+	"patterngenerator.prisma.argyll": 0,
 	"patterngenerator.prisma.host": "",
 	"patterngenerator.prisma.preset": "Custom-1",
 	"patterngenerator.prisma.port": 80,

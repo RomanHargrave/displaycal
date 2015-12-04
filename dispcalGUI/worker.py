@@ -1673,10 +1673,13 @@ class Worker(object):
 			not get_arg("-YR:", args)):
 			# Prevent 'Warning - Spyder: measuring refresh rate failed'
 			args.append("-YR:60")
+		non_argyll_prisma = (config.get_display_name() == "Prisma" and
+							 not defaults["patterngenerator.prisma.argyll"])
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
-				if (config.get_display_name() in ("Prisma", "Resolve") and
+				if ((config.get_display_name() == "Resolve" or
+				     non_argyll_prisma) and
 					not ignore_display_name):
 					# Move Argyll test window to lower right corner and make it
 					# very small
@@ -1690,14 +1693,19 @@ class Worker(object):
 				args.append(("-p" if self.argyll_version <= [1, 0, 4] else "-P") + 
 							dimensions_measureframe)
 			farg = get_arg("-F", args, True)
-			if (config.get_display_name() in ("Prisma", "Resolve") and
-				not ignore_display_name):
+			if ((config.get_display_name() == "Resolve" or
+				 non_argyll_prisma) and not ignore_display_name):
 				if farg:
 					# Remove -F (darken background) as we relay colors to
 					# pattern generator
 					args = args[:farg[0]] + args[farg[0] + 1:]
 			elif getcfg("measure.darken_background") and not farg:
 				args.append("-F")
+		if (config.get_display_name() == "Prisma" and
+			defaults["patterngenerator.prisma.argyll"] and
+			getcfg("patterngenerator.prisma.use_video_levels") and
+			not get_arg("-E", args, True)):
+			args.append("-E")
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args,
 																   True):
@@ -2838,7 +2846,6 @@ class Worker(object):
 			args = []
 			if include_network_devices:
 				args.append("-dcc:?")
-				args.append("-dprisma:?")
 			args.append("-?")
 			argyll_bin_dir = os.path.dirname(cmd)
 			if (argyll_bin_dir != self.argyll_bin_dir):
@@ -2852,6 +2859,7 @@ class Worker(object):
 			arg = None
 			defaults["calibration.black_point_hack"] = 0
 			defaults["calibration.black_point_rate.enabled"] = 0
+			defaults["patterngenerator.prisma.argyll"] = 0
 			n = -1
 			self.display_rects = []
 			non_standard_display_args = ("-dweb[:port]", "-dmadvr")
@@ -2860,10 +2868,6 @@ class Worker(object):
 				self.output.append(u" -dcc[:n]")
 				self.output.append(u"    100 = '\xd4\xc7\xf3 Test A'")
 				self.output.append(u"    101 = '\xd4\xc7\xf3 Test B'")
-				# Add dummy Prismas
-				self.output.append(u" -dprisma[:host]")
-				self.output.append(u"    100 = 141550000000: prisma-test-0000 @ 172.31.31.162")
-				self.output.append(u"    101 = 141560000000: \xd4\xc7\xf3 Test B @ 172.31.31.163")
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -2900,6 +2904,8 @@ class Worker(object):
 							# Forced black point hack available
 							# (Argyll CMS 1.7b 2014-12-22)
 							defaults["calibration.black_point_hack"] = 1
+						elif arg == "-dprisma[:host]":
+							defaults["patterngenerator.prisma.argyll"] = 1
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
 						if arg == "-d":
@@ -3221,9 +3227,11 @@ class Worker(object):
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and
-									 config.get_display_name() in ("Prisma",
-																   "Resolve"))
-		use_3dlut_override = (config.get_display_name(None, True) == "Prisma" and
+									 (config.get_display_name() == "Resolve" or
+									  (config.get_display_name() == "Prisma" and
+									   not defaults["patterngenerator.prisma.argyll"])))
+		use_3dlut_override = (self.use_patterngenerator and
+							  config.get_display_name(None, True) == "Prisma" and
 							  cmdname == get_argyll_utilname("dispread") and
 							  "-V" in args)
 		if use_3dlut_override:
@@ -4989,8 +4997,17 @@ while 1:
 			return "madvr"
 		if display_name == "Untethered":
 			return "0"
-		if display_name in ("Prisma", "Resolve"):
+		if (display_name == "Resolve" or
+			(display_name == "Prisma" and
+			 not defaults["patterngenerator.prisma.argyll"])):
 			return "1"
+		if display_name == "Prisma":
+			host = getcfg("patterngenerator.prisma.host")
+			try:
+				host = socket.gethostbyname(host)
+			except socket.error:
+				pass
+			return "prisma:%s" % host
 		if display_name.startswith("Chromecast "):
 			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1].strip()
 		if display_name.startswith("Prisma "):
@@ -7418,7 +7435,9 @@ usage: spotread [-options] [logfile]
 					args.append("-E")  # Verify current curves
 		if getcfg("extra_args.dispcal").strip():
 			args += parse_argument_string(getcfg("extra_args.dispcal"))
-		if config.get_display_name() in ("Prisma", "Resolve"):
+		if (config.get_display_name() == "Resolve" or
+			(config.get_display_name() == "Prisma" and
+			 not defaults["patterngenerator.prisma.argyll"])):
 			# Substitute actual measurement frame dimensions
 			self.options_dispcal = map(lambda arg: re.sub("^-[Pp]1,1,0.01$",
 														  "-P" + getcfg("dimensions.measureframe"),
