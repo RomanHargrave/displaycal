@@ -238,10 +238,10 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 					if data.startswith(self.prod_oem):
 						name = data[8:32].rstrip("\0")
 						serial = data[32:].rstrip("\0")
-						self.prismas[serial] = {"ip": addr[0],
-												"name": name}
+						self.prismas[addr[0]] = {"serial": serial,
+												 "name": name}
 						self._dispatch_event("on_client_added",
-											 (addr, self.prismas[serial]))
+											 (addr, self.prismas[addr[0]]))
 		self._cast_sockets.pop((host, port))
 		_shutdown(sock, (host, port))
 		if self.debug:
