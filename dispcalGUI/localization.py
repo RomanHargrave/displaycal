@@ -90,7 +90,7 @@ def getstr(id_str, strvars=None, lcode=None):
 		if strvars is not None:
 			if not isinstance(strvars, (list, tuple)):
 				strvars = [strvars]
-			fmt = re.findall(r"%\d?(?:\.d+)?[deEfFgGiorsxX]", lstr)
+			fmt = re.findall(r"%\d?(?:\.\d+)?[deEfFgGiorsxX]", lstr)
 			if len(fmt) == len(strvars):
 				if not isinstance(strvars, list):
 					strvars = list(strvars)
