@@ -4,7 +4,6 @@ from socket import (AF_INET, SHUT_RDWR, SOCK_STREAM, error, gethostbyname,
 					gethostname, socket, timeout)
 import errno
 import httplib
-import socket
 import struct
 import urlparse
 
@@ -42,7 +41,7 @@ class GenHTTPPatternGeneratorClient(object):
 		try:
 			self.conn.request(method, url, params, headers or {})
 			resp = self.conn.getresponse()
-		except (socket.error, httplib.HTTPException), exception:
+		except (error, httplib.HTTPException), exception:
 			self._conn_exc(exception)
 		else:
 			if resp.status == httplib.OK:
