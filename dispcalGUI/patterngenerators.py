@@ -178,7 +178,7 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		if method:
 			url += "?m=" + method
 			if params:
-				url += "&" + urllib.urlencode(params)
+				url += "&" + urllib.unquote_plus(urllib.urlencode(params))
 		if not validate:
 			validate = {method: "Ok"}
 		return self._request("GET", url, validate=validate)
