@@ -5365,7 +5365,7 @@ usage: spotread [-options] [logfile]
 				assigned_luts = {}
 				for presetname in presetnames:
 					self.log("Loading Prisma preset", presetname)
-					preset, raw = self.patterngenerator.load_preset(presetname)
+					preset = self.patterngenerator.load_preset(presetname)
 					assigned_lut = preset["settings"].get("cube", "")
 					if not assigned_lut in assigned_luts:
 						assigned_luts[assigned_lut] = 0
@@ -5380,8 +5380,8 @@ usage: spotread [-options] [logfile]
 				# Check total size of installed 3D LUTs. The Prisma has 1 MB of
 				# custom LUT storage, which is enough for 15 67 KB LUTs.
 				maxsize = 1024 * 67 * 15
-				installed, raw = self.patterngenerator.get_installed_3dluts()
-				rawlen = len(raw)
+				installed = self.patterngenerator.get_installed_3dluts()
+				rawlen = len(installed["raw"])
 				size = 0
 				numinstalled = 0
 				for table in installed["tables"]:
