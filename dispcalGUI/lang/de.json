@@ -739,7 +739,7 @@
 	"passive_matrix_display": "Passiv-Matrix Anzeigegerät",
 	"patch.layout.select": "Bitte wählen Sie eine Messfeld-Anordnung:",
 	"patches": "Felder",
-	"patterngenerator.prisma.specify_host": "Bitte geben Sie den Host-Namen Ihres Prisma Video-Prozessors an, zum Beispiel prisma-0123 (Windows) bzw. prisma-0123.local (Mac OS X) oder geben Sie die IP-Adresse ein, z.B. 192.168.1.234",
+	"patterngenerator.prisma.specify_host": "Bitte geben Sie den Host-Namen Ihres Prisma Video-Prozessors an, zum Beispiel prisma-0123 (Windows) bzw. prisma-0123.local (Linux/Mac OS X). Sie finden den Host-Namen auf einem Etikett an der Unterseite Ihres Prisma, solang er nicht über das administrative Web-Interface geändert wurde. Alternativ geben Sie die IP-Adresse ein (falls bekannt), z.B. 192.168.1.234",
 	"patterngenerator.sync_lost": "Synchronisierung mit Testfeld-Generator verloren.",
 	"pause": "Pause",
 	"pcs_illuminant_xyz": "PCS-Leuchtmittel XYZ",

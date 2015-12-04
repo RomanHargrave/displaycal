@@ -741,7 +741,7 @@
 	"passive_matrix_display": "Passive matrix display",
 	"patch.layout.select": "Please select a patch layout:",
 	"patches": "Patches",
-	"patterngenerator.prisma.specify_host": "Please specify the hostname of your Prisma Video Processor, e.g. prisma-0123 (Windows) or prisma-0123.local (Mac OS X), or enter the IP address, e.g. 192.168.1.234",
+	"patterngenerator.prisma.specify_host": "Please specify the hostname of your Prisma Video Processor, e.g. prisma-0123 (Windows) or prisma-0123.local (Linux/Mac OS X). You can find the hostname on a label at the underside of the Prisma, unless it was changed via the Prisma's administrative web interface. Alternatively, enter the IP address (if known), e.g. 192.168.1.234",
 	"patterngenerator.sync_lost": "Lost sync with the pattern generator.",
 	"pause": "Pause",
 	"pcs_illuminant_xyz": "PCS illuminant XYZ",
