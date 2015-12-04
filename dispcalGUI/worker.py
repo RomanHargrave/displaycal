@@ -3893,23 +3893,8 @@ while 1:
 								self.patterngenerator_send((.5, ) * 3, True)
 							except socket.error:
 								self.patterngenerator.disconnect_client()
-					elif pgname == "Prisma":
-						patterngenerator = PrismaPatternGeneratorClient
-						self.patterngenerator = patterngenerator(
-							host=getcfg("patterngenerator.prisma.host"),
-							port=getcfg("patterngenerator.prisma.port"),
-							use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"),
-							logfile=logfiles)
 					else:
-						# Resolve
-						if getcfg("patterngenerator.resolve") == "LS":
-							patterngenerator = ResolveLSPatternGeneratorServer
-						else:
-							patterngenerator = ResolveCMPatternGeneratorServer
-						self.patterngenerator = patterngenerator(
-							port=getcfg("patterngenerator.resolve.port"),
-							use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
-							logfile=logfiles)
+						self.setup_patterngenerator(logfiles)
 					if not hasattr(self.patterngenerator, "conn"):
 						# Wait for connection - blocking
 						self.patterngenerator.wait()
@@ -5336,7 +5321,7 @@ usage: spotread [-options] [logfile]
 		return self.import_colorimeter_corrections(get_argyll_util("spyd4en"),
 												   args, asroot)
 
-	def install_3dlut(self, path, preset=None, filename=None):
+	def install_3dlut(self, path, filename=None):
 		basename = os.path.basename(getcfg("3dlut.input.profile"))
 		if getcfg("3dlut.format") == "madVR" and madvr:
 			# Install (load) 3D LUT using madTPG
@@ -5364,12 +5349,79 @@ usage: spotread [-options] [logfile]
 			try:
 				# Use Prisma HTTP REST interface to upload 3D LUT
 				if not self.patterngenerator:
-					self.patterngenerator = PrismaPatternGeneratorClient(
-						host=getcfg("patterngenerator.prisma.host"),
-						port=getcfg("patterngenerator.prisma.port"),
-						use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"))
+					self.setup_patterngenerator()
 				self.patterngenerator.connect()
-				self.patterngenerator.load_3dlut_file(path, preset, filename)
+				# Check preset. If it has a custom LUT assigned, we delete the
+				# currently assigned LUT before uploading, unless its filename
+				# is the same as the LUT to be uploaded, in which case it will
+				# be simply overwritten, and unless the custom LUT is still
+				# assigned to another preset as well.
+				presetname = getcfg("patterngenerator.prisma.preset")
+				# Check all presets for currently assigned LUT
+				# Check the preset we're going to use for the upload last
+				presetnames = filter(lambda name: name != presetname,
+									 config.valid_values["patterngenerator.prisma.preset"])
+				presetnames.append(presetname)
+				assigned_luts = {}
+				for presetname in presetnames:
+					self.log("Loading Prisma preset", presetname)
+					preset, raw = self.patterngenerator.load_preset(presetname)
+					assigned_lut = preset["settings"].get("cube", "")
+					if not assigned_lut in assigned_luts:
+						assigned_luts[assigned_lut] = 0
+					assigned_luts[assigned_lut] += 1
+				# Only remove the currently assigned custom LUT if it's not
+				# assigned to another preset
+				if (assigned_lut.lower().endswith(".3dl") and
+					assigned_luts[assigned_lut] == 1):
+					remove = preset["settings"]["cube"]
+				else:
+					remove = False
+				# Check total size of installed 3D LUTs. The Prisma has 1 MB of
+				# custom LUT storage, which is enough for 15 67 KB LUTs.
+				maxsize = 1024 * 67 * 15
+				installed, raw = self.patterngenerator.get_installed_3dluts()
+				rawlen = len(raw)
+				size = 0
+				numinstalled = 0
+				for table in installed["tables"]:
+					if table.get("n") != remove:
+						size += table.get("s", 0)
+						numinstalled += 1
+					else:
+						rawlen -= len('{"n":"%s", "s":%i},' %
+									  (table["n"], table.get("s", 0)))
+				filesize = os.stat(path).st_size
+				size_exceeded = size + filesize > maxsize
+				# NOTE that due to a bug in the Prisma firmware (1.02),
+				# responses are sometimes truncated to 512 bytes, which means
+				# with the current 3D LUT naming scheme we can effectively only
+				# store two of them.
+				response_len_exceeded = rawlen + len('{"n":"%s", "s":%i},' %
+													 (filename, filesize)) > 512
+				# NOTE that the total number of 3D LUT slots seems to be limited
+				# to 32, which includes built-in LUTs.
+				maxluts = 32
+				luts_exceeded = numinstalled >= maxluts
+				if size_exceeded or response_len_exceeded or luts_exceeded:
+					if size_exceeded:
+						missing = size + filesize - maxsize
+					elif luts_exceeded:
+						missing = filesize * (numinstalled + 1 - maxluts)
+					else:
+						missing = size + filesize - 1024 * 67 * 2
+					raise Error(lang.getstr("3dlut.holder.out_of_memory",
+											(getcfg("patterngenerator.prisma.host"),
+											 round(missing / 1024.0),
+											 getcfg("patterngenerator.prisma.host"),
+											 "Prisma")))
+				if remove and remove != filename:
+					self.log("Removing currently assigned LUT", remove)
+					self.patterngenerator.remove_3dlut(remove)
+				self.log("Uploading LUT", path, "as", filename)
+				self.patterngenerator.load_3dlut_file(path, filename)
+				self.log("Setting LUT", filename)
+				self.patterngenerator.set_3dlut(filename)
 			except Exception, exception:
 				return exception
 			return Info(lang.getstr("3dlut.install.success"))
@@ -6929,6 +6981,25 @@ usage: spotread [-options] [logfile]
 						self.commit_sound.safe_play()
 					if hasattr(self.progress_wnd, "animbmp"):
 						self.progress_wnd.animbmp.frame = 0
+
+	def setup_patterngenerator(self, logfile=None):
+		if config.get_display_name() == "Prisma":
+			patterngenerator = PrismaPatternGeneratorClient
+			self.patterngenerator = patterngenerator(
+				host=getcfg("patterngenerator.prisma.host"),
+				port=getcfg("patterngenerator.prisma.port"),
+				use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"),
+				logfile=logfile)
+		else:
+			# Resolve
+			if getcfg("patterngenerator.resolve") == "LS":
+				patterngenerator = ResolveLSPatternGeneratorServer
+			else:
+				patterngenerator = ResolveCMPatternGeneratorServer
+			self.patterngenerator = patterngenerator(
+				port=getcfg("patterngenerator.resolve.port"),
+				use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
+				logfile=logfile)
 
 	@Property
 	def patterngenerator():

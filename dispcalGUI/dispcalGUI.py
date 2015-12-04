@@ -6937,11 +6937,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				sizer.Add(wx.StaticText(dlg, -1,
 										lang.getstr("3dlut.holder.assign_preset")),
 						  flag=wx.ALIGN_CENTER_VERTICAL)
-				preset = wx.Choice(dlg, -1, choices=["Movie", "Sports", "Game",
-													 "Animation", "PC/Mac",
-													 "Black+White", "Custom-1",
-													 "Custom-2"])
-				preset.SetStringSelection("Custom-1")
+				preset = wx.Choice(dlg, -1, choices=config.valid_values["patterngenerator.prisma.preset"])
+				preset.SetStringSelection(getcfg("patterngenerator.prisma.preset"))
 				sizer.Add(preset, flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL,
 						  border=8)
 				# Filename
@@ -6955,7 +6952,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				filename = strftime("%%s-%Y%m%dT%H%M%S.3dl",
 									localtime(os.stat(self.lut3d_path).st_ctime)) % gamut
 				dlg.sizer3.Add(wx.StaticText(dlg, -1, "%s: %s" %
-													  (lang.getstr("filename"),
+													  (lang.getstr("filename.upload"),
 													   filename)),
 							   flag=wx.TOP | wx.ALIGN_LEFT,
 							   border=12)
@@ -6999,14 +6996,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.ok.Enable(bool(host))
 			result = dlg.ShowModal()
 			host = dlg.host.GetValue()
-			if upload:
-				retval = (preset.GetStringSelection(), filename)
+			if result == wx.ID_OK and upload:
+				setcfg("patterngenerator.prisma.preset",
+					   preset.GetStringSelection())
+				retval = filename
 			dlg.Destroy()
 			if result != wx.ID_OK or not host:
-				if upload:
-					return False, filename
-				else:
-					return
+				return
 			setcfg("patterngenerator.prisma.host", host)
 		return retval
 	
@@ -8036,13 +8032,13 @@ class MainFrame(ReportFrame, BaseFrame):
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
 					if install_3dlut_api:
-						preset, filename = self.setup_patterngenerator(self.modaldlg,
-																	   lang.getstr("3dlut.install"),
-																	   True)
-						if not preset:
+						filename = self.setup_patterngenerator(self.modaldlg,
+															   lang.getstr("3dlut.install"),
+															   True)
+						if not filename:
 							return
 						producer = self.worker.install_3dlut
-						wargs = (self.lut3d_path, preset, filename)
+						wargs = (self.lut3d_path, filename)
 						wkwargs = None
 						progress_msg = lang.getstr("3dlut.install")
 					else:

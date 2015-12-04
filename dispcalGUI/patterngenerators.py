@@ -6,6 +6,7 @@ import errno
 import httplib
 import socket
 import struct
+import urlparse
 
 import demjson
 
@@ -45,7 +46,7 @@ class GenHTTPPatternGeneratorClient(object):
 			self._conn_exc(exception)
 		else:
 			if resp.status == httplib.OK:
-				self._validate(resp, validate)
+				return self._validate(resp, url, validate)
 			else:
 				raise Exception("%s %s" % (resp.status, resp.reason))
 
@@ -53,7 +54,7 @@ class GenHTTPPatternGeneratorClient(object):
 		# Override this method in subclass!
 		pass
 
-	def _validate(self, resp, validate):
+	def _validate(self, resp, url, validate):
 		# Override this method in subclass!
 		pass
 
@@ -151,6 +152,7 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 	""" Prisma HTTP REST interface """
 
 	def __init__(self, host, port=80, use_video_levels=False, logfile=None):
+		self._host = host
 		GenHTTPPatternGeneratorClient.__init__(self, host, port, 8,
 											   use_video_levels=use_video_levels,
 											   logfile=logfile)
@@ -177,16 +179,29 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		except:
 			pass
 
-	def _validate(self, resp, validate):
+	def _validate(self, resp, url, validate):
 		raw = resp.read()
 		if isinstance(validate, dict):
 			data = demjson.decode(raw)
+			components = urlparse.urlparse(url)
+			api = components.path[1:]
+			query = urlparse.parse_qs(components.query)
+			method = query['m'][0]
+			if data.get(method) == "Error" and "msg" in data:
+				raise Exception("%s: %s" % (self._host, data["msg"]))
 			for key, value in validate.iteritems():
-				if key not in data or (value is not None and data[key] != value):
-					raise Exception(raw)
+				if key not in data:
+					raise Exception(lang.getstr("response.invalid.missing_key",
+												(self._host, key, raw)))
+				elif value is not None and data[key] != value:
+					raise Exception(lang.getstr("response.invalid.value",
+												(self._host, key, value, raw)))
+			return data, raw
 		elif validate:
 			if raw != validate:
-				raise Exception(raw)
+				raise Exception(lang.getstr("response.invalid",
+											(self._host, raw)))
+		return raw
 
 	def disable_processing(self, size=10):
 		self.enable_processing(False, size)
@@ -199,18 +214,34 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		self._send("GET", "/window?m=win%i&sz=%i" % (win, size),
 				   validate={"win%i" % win: "Ok"})
 
-	def load_3dlut_file(self, path, presetname, filename):
+	def get_installed_3dluts(self):
+		return self._send("GET", "/cube?m=list", validate={"list": "Ok",
+														   "tables": None})
+
+	def load_preset(self, presetname=None):
+		validate = {"settings": None}
+		if presetname:
+			query = "?m=loadPreset&n=" + presetname
+		else:
+			query = ""
+			validate["preset"] = None
+		return self._send("GET", "/setup" + query, validate=validate)
+
+	def load_3dlut_file(self, path, filename):
 		with open(path, "rb") as lut3d:
 			data = lut3d.read()
 		files = [("cubeFile", filename, data)]
 		content_type, params = encode_multipart_formdata([], files)
 		headers = {"Content-Type": content_type,
 				   "Content-Length": str(len(params))}
-		# Select preset
-		self._send("GET", "/setup?m=loadPreset&n=" + presetname,
-				   validate={"settings": None})
 		# Upload 3D LUT
 		self._send("POST", "/fwupload", params, headers)
+
+	def remove_3dlut(self, filename):
+		self._send("GET", "/cube?m=remove&n=" + filename,
+				   validate={"remove": "Ok"})
+
+	def set_3dlut(self, filename):
 		# Select 3D LUT
 		self._send("GET", "/setup?m=setCube&n=%s&f=null" % filename,
 				   validate={"setCube": "Ok"})
