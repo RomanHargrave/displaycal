@@ -245,6 +245,10 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		self._send("GET", "/setup?m=setCube&n=%s&f=null" % filename,
 				   validate={"setCube": "Ok"})
 
+	def set_prismavue(self, value):
+		self._send("GET", "/setup?m=setPrismaVue&a=%f&t=null" % value,
+				   validate={"setPrismaVue": "Ok"})
+
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
 		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)

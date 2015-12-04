@@ -5422,6 +5422,8 @@ usage: spotread [-options] [logfile]
 				self.patterngenerator.load_3dlut_file(path, filename)
 				self.log("Setting LUT", filename)
 				self.patterngenerator.set_3dlut(filename)
+				self.log("Setting PrismaVue to zero")
+				self.patterngenerator.set_prismavue(0)
 			except Exception, exception:
 				return exception
 			return Info(lang.getstr("3dlut.install.success"))
