@@ -5,6 +5,7 @@ from socket import (AF_INET, SHUT_RDWR, SOCK_STREAM, error, gethostbyname,
 import errno
 import httplib
 import struct
+import urllib
 import urlparse
 
 import demjson
@@ -37,7 +38,7 @@ class GenHTTPPatternGeneratorClient(object):
 		msg = lang.getstr("connection.fail", safe_unicode(exception))
 		raise Exception(msg)
 
-	def _send(self, method, url, params=None, headers=None, validate=None):
+	def _request(self, method, url, params=None, headers=None, validate=None):
 		try:
 			self.conn.request(method, url, params, headers or {})
 			resp = self.conn.getresponse()
@@ -172,9 +173,19 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 				 (bgrgb[2] & 0xff) << 0)
 		return rgb, bgrgb, bits
 
+	def invoke(self, api, method=None, params=None, validate=None):
+		url = "/" + api
+		if method:
+			url += "?m=" + method
+			if params:
+				url += "&" + urllib.urlencode(params)
+		if not validate:
+			validate = {method: "Ok"}
+		return self._request("GET", url, validate=validate)
+
 	def _shutdown(self):
 		try:
-			self._send("GET", "/window?m=off&sz=10", validate={"off": "Ok"})
+			self.invoke("window", "off", {"sz": 10})
 		except:
 			pass
 
@@ -185,9 +196,10 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 			components = urlparse.urlparse(url)
 			api = components.path[1:]
 			query = urlparse.parse_qs(components.query)
-			method = query['m'][0]
-			if data.get(method) == "Error" and "msg" in data:
-				raise Exception("%s: %s" % (self._host, data["msg"]))
+			if "m" in query:
+				method = query["m"][0]
+				if data.get(method) == "Error" and "msg" in data:
+					raise Exception("%s: %s" % (self._host, data["msg"]))
 			for key, value in validate.iteritems():
 				if key not in data:
 					raise Exception(lang.getstr("response.invalid.missing_key",
@@ -195,7 +207,8 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 				elif value is not None and data[key] != value:
 					raise Exception(lang.getstr("response.invalid.value",
 												(self._host, key, value, raw)))
-			return data, raw
+			data["raw"] = raw
+			return data
 		elif validate:
 			if raw != validate:
 				raise Exception(lang.getstr("response.invalid",
@@ -210,21 +223,18 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 			win = 1
 		else:
 			win = 2
-		self._send("GET", "/window?m=win%i&sz=%i" % (win, size),
-				   validate={"win%i" % win: "Ok"})
+		self.invoke("window", "win%i" % win, {"sz": size})
+
+	def get_config(self):
+		return self.invoke("setup", validate={"preset": None, "settings": None,
+											  "vpath": None})
 
 	def get_installed_3dluts(self):
-		return self._send("GET", "/cube?m=list", validate={"list": "Ok",
-														   "tables": None})
+		return self.invoke("cube", "list", validate={"list": "Ok", "tables": None})
 
-	def load_preset(self, presetname=None):
-		validate = {"settings": None}
-		if presetname:
-			query = "?m=loadPreset&n=" + presetname
-		else:
-			query = ""
-			validate["preset"] = None
-		return self._send("GET", "/setup" + query, validate=validate)
+	def load_preset(self, presetname):
+		return self.invoke("setup", "loadPreset", {"n": presetname},
+						   validate={"settings": None})
 
 	def load_3dlut_file(self, path, filename):
 		with open(path, "rb") as lut3d:
@@ -234,26 +244,22 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		headers = {"Content-Type": content_type,
 				   "Content-Length": str(len(params))}
 		# Upload 3D LUT
-		self._send("POST", "/fwupload", params, headers)
+		self._request("POST", "/fwupload", params, headers)
 
 	def remove_3dlut(self, filename):
-		self._send("GET", "/cube?m=remove&n=" + filename,
-				   validate={"remove": "Ok"})
+		self.invoke("cube", "remove", {"n": filename})
 
 	def set_3dlut(self, filename):
 		# Select 3D LUT
-		self._send("GET", "/setup?m=setCube&n=%s&f=null" % filename,
-				   validate={"setCube": "Ok"})
+		self.invoke("setup", "setCube", {"n": filename, "f": "null"})
 
 	def set_prismavue(self, value):
-		self._send("GET", "/setup?m=setPrismaVue&a=%f&t=null" % value,
-				   validate={"setPrismaVue": "Ok"})
+		self.invoke("setup", "setPrismaVue", {"a": value, "t": "null"})
 
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
 		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
-		self._send("GET", "/window?m=color&bg=%i&fg=%i" % (bgrgb, rgb),
-				   validate={"color": "Ok"})
+		self.invoke("window", "color", {"bg": bgrgb, "fg": rgb})
 
 
 class ResolveLSPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
