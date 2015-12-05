@@ -2576,6 +2576,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				if hasattr(self, "aboutdialog"):
 					self.aboutdialog.Destroy()
 					del self.aboutdialog
+				if self.infoframe.IsShownOnScreen():
+					logbuffer.write(self.infoframe.log_txt.GetValue().encode("UTF-8", "replace"))
 				self.infoframe.Destroy()
 				self.init_infoframe(show=getcfg("log.show"))
 				if sys.platform in ("darwin", "win32") or isexe:

@@ -4179,7 +4179,7 @@ class LogWindow(InvincibleFrame):
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
-		self._tspattern = re.compile(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} ")
+		self._tspattern = re.compile(r"(?:\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2},\d{3} )")
 
 	def Log(self, txt):
 		if not txt:
@@ -4192,12 +4192,12 @@ class LogWindow(InvincibleFrame):
 		for line in safe_unicode(txt).split("\n"):
 			tsmatch = re.match(self._tspattern, line)
 			if tsmatch:
-				ts = tsmatch.group()
-				line = line[len(ts):]
+				line = line[len(tsmatch.group()):]
+				ts = tsmatch.group(1)
 			for line in wrap(line, 80).split("\n"):
 				while 1:
 					if ts:
-						logline = ts[11:] + line
+						logline = ts + line
 					else:
 						ms = time() - int(time())
 						logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
