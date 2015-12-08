@@ -1617,7 +1617,8 @@ class Worker(object):
 	
 	def add_measurement_features(self, args, display=True,
 								 ignore_display_name=False,
-								 allow_nondefault_observer=False):
+								 allow_nondefault_observer=False,
+								 ambient=False):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
@@ -1634,7 +1635,7 @@ class Worker(object):
 			else:
 				measurement_mode = "l"
 		instrument_features = self.get_instrument_features()
-		if (not getattr(self, "is_ambient_measuring", False) and
+		if (not ambient and
 			measurement_mode and not get_arg("-y", args) and
 			instrument_name != "specbos 1201"):
 				# Always specify -y for colorimeters (won't be read from .cal 
@@ -1715,7 +1716,7 @@ class Worker(object):
 			getcfg("observer") != defaults["observer"] and
 			not get_arg("-Q", args)):
 			args.append("-Q" + getcfg("observer"))
-		if (not getattr(self, "is_ambient_measuring", False) and
+		if (not ambient and
 			self.instrument_can_use_ccxx() and
 		    not is_ccxx_testchart() and not get_arg("-X", args)):
 			# Use colorimeter correction?

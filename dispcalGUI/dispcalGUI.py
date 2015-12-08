@@ -4586,7 +4586,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if getcfg("extra_args.spotread").strip():
 			args += parse_argument_string(getcfg("extra_args.spotread"))
 		result = self.worker.add_measurement_features(args, False,
-													  allow_nondefault_observer=True)
+													  allow_nondefault_observer=True,
+													  ambient=True)
 		if isinstance(result, Exception):
 			return result
 		return self.worker.exec_cmd(cmd, args, capture_output=True,
