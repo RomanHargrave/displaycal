@@ -59,11 +59,9 @@ warnings.showwarning = showwarning
 logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
 
-def wx_log(logwindow):
+def wx_log(logwindow, msg):
 	if logwindow.IsShownOnScreen():
-		logbuffer.seek(0)
-		logwindow.Log(logbuffer.read().rstrip().decode("UTF-8", "replace"))
-		logbuffer.truncate(0)
+		logwindow.Log(msg)
 
 
 class DummyLogger():
@@ -111,7 +109,7 @@ class Log():
 			if wx.GetApp() is not None and \
 			   hasattr(wx.GetApp(), "frame") and \
 			   hasattr(wx.GetApp().frame, "infoframe"):
-				wx.CallAfter(wx_log, wx.GetApp().frame.infoframe)
+				wx.CallAfter(wx_log, wx.GetApp().frame.infoframe, msg)
 	
 	def flush(self):
 		pass

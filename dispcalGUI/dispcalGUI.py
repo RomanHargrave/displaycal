@@ -1730,7 +1730,6 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def infoframe_close_handler(self, event):
 		self.infoframe_toggle_handler(event)
-		logbuffer.truncate(0)
 	
 	def setup_language(self):
 		"""
@@ -2576,8 +2575,16 @@ class MainFrame(ReportFrame, BaseFrame):
 				if hasattr(self, "aboutdialog"):
 					self.aboutdialog.Destroy()
 					del self.aboutdialog
-				if self.infoframe.IsShownOnScreen():
-					logbuffer.write(self.infoframe.log_txt.GetValue().encode("UTF-8", "replace"))
+				log_txt = self.infoframe.log_txt.GetValue().encode("UTF-8",
+																   "replace")
+				if log_txt:
+					# Remember current log window contents
+					if not self.infoframe.IsShownOnScreen():
+						# Append buffer of non-shown log window
+						logbuffer.seek(0)
+						log_txt += logbuffer.read()
+					logbuffer.truncate(0)
+					logbuffer.write(log_txt)
 				self.infoframe.Destroy()
 				self.init_infoframe(show=getcfg("log.show"))
 				if sys.platform in ("darwin", "win32") or isexe:
@@ -13198,6 +13205,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("log.show", int(show))
 		if show:
 			self.log()
+		else:
+			logbuffer.truncate(0)
 		self.infoframe.Show(show)
 		self.menuitem_show_log.Check(show)
 		self.menuitem_log_autoshow.Enable(not show)
@@ -13235,7 +13244,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not self.IsShownOnScreen():
 			if hasattr(self, "tcframe"):
 				self.tcframe.Show(getcfg("tc.show"))
-			wx.CallAfter(self.infoframe_toggle_handler, show=getcfg("log.show"))
+			if getcfg("log.show"):
+				wx.CallAfter(self.infoframe_toggle_handler, show=True)
 			if LUTFrame and getcfg("lut_viewer.show"):
 				if getattr(self, "lut_viewer", None):
 					self.init_lut_viewer(show=True)
