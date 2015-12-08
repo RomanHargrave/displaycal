@@ -1701,7 +1701,7 @@ class Worker(object):
 					args = args[:farg[0]] + args[farg[0] + 1:]
 			elif getcfg("measure.darken_background") and not farg:
 				args.append("-F")
-		if (config.get_display_name() == "Prisma" and
+		if (display and config.get_display_name() == "Prisma" and
 			defaults["patterngenerator.prisma.argyll"] and
 			getcfg("patterngenerator.prisma.use_video_levels") and
 			not get_arg("-E", args, True)):
