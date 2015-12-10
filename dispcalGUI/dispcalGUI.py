@@ -9556,13 +9556,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			if (reference_ti3[0].get("TARGET_INSTRUMENT") and
 				not re.search('\nREFERENCE\s+".+?"\n', cgats)):
 				# By default, CCSS files don't contain reference instrument
-				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
-							   '\nKEYWORD "REFERENCE"\nREFERENCE "%s"\\1' %
+				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
+							   '\nREFERENCE "%s"\\1' %
 							   reference_ti3[0].get("TARGET_INSTRUMENT"), cgats)
 			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats) and tech:
 				# By default, CCMX files don't contain technology string
-				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
-							   '\nKEYWORD "TECHNOLOGY"\nTECHNOLOGY "%s"\\1' %
+				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
+							   '\nTECHNOLOGY "%s"\\1' %
 							   safe_str(tech, "UTF-8"), cgats)
 			manufacturer_id = None
 			if manufacturer:
@@ -9575,24 +9575,24 @@ class MainFrame(ReportFrame, BaseFrame):
 			if manufacturer_id and not re.search('\nMANUFACTURER_ID\s+".+?"\n',
 												 cgats):
 				# By default, CCMX/CCSS files don't contain manufacturer ID
-				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
-							   '\nKEYWORD "MANUFACTURER_ID"\nMANUFACTURER_ID "%s"\\1' %
+				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
+							   '\nMANUFACTURER_ID "%s"\\1' %
 							   safe_str(manufacturer_id, "UTF-8"), cgats)
 			if manufacturer and not re.search('\nMANUFACTURER\s+".+?"\n', cgats):
 				# By default, CCMX/CCSS files don't contain manufacturer
-				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
-							   '\nKEYWORD "MANUFACTURER"\nMANUFACTURER "%s"\\1' %
+				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
+							   '\nMANUFACTURER "%s"\\1' %
 							   safe_str(manufacturer, "UTF-8"), cgats)
 			if observer and not re.search('\nOBSERVER\s+".+?"\n', cgats):
 				# By default, CCMX/CCSS files don't contain observer
-				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
-							   '\nKEYWORD "OBSERVER"\nOBSERVER "%s"\\1' %
+				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
+							   '\nOBSERVER "%s"\\1' %
 							   safe_str(observer, "UTF-8"), cgats)
 			if (reference_observer and
 				not re.search('\nREFERENCE_OBSERVER\s+".+?"\n', cgats)):
 				# By default, CCMX/CCSS files don't contain observer
-				cgats = re.sub('(\nKEYWORD\s+"DISPLAY"\n)',
-							   '\nKEYWORD "REFERENCE_OBSERVER"\nREFERENCE_OBSERVER "%s"\\1' %
+				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
+							   '\nREFERENCE_OBSERVER "%s"\\1' %
 							   safe_str(reference_observer, "UTF-8"), cgats)
 			result = check_create_dir(config.get_argyll_data_dir())
 			if isinstance(result, Exception):
