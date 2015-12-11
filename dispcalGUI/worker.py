@@ -6446,7 +6446,10 @@ usage: spotread [-options] [logfile]
 															   (0, scale, 0),
 															   (0, 0, scale)))
 								profile.tags[table].matrix = matrix
-								profile.version = 2.4
+								if profile.version < 2.4:
+									# Increase profile version to atleast 2.4
+									# when adding more tables (adhere to spec)
+									profile.version = 2.4
 								profchanged = True
 					# Remove temporary source profile
 					os.remove(gamap_profile.fileName)
@@ -6849,6 +6852,10 @@ usage: spotread [-options] [logfile]
 						if self.tempdir and not os.listdir(self.tempdir):
 							self.wrapup(False)
 						profile.fileName = filename
+		if profile.version < 2.4:
+			# Increase profile version to atleast 2.4
+			# when adding more tables (adhere to spec)
+			profile.version = 2.4
 		return results
 	
 	def isalive(self, subprocess=None):
