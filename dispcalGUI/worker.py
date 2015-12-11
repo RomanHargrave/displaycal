@@ -6818,8 +6818,9 @@ usage: spotread [-options] [logfile]
 						return tempdir
 					fd, profile.fileName = tempfile.mkstemp(profile_ext,
 															dir=tempdir)
-					profile.write(os.fdopen(fd, "wb"))
-					profile.close()
+					stream = os.fdopen(fd, "wb")
+					profile.write(stream)
+					stream.close()
 					temp = True
 				else:
 					temp = False
