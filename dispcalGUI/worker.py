@@ -5375,10 +5375,15 @@ usage: spotread [-options] [logfile]
 				# be simply overwritten, and unless the custom LUT is still
 				# assigned to another preset as well.
 				presetname = getcfg("patterngenerator.prisma.preset")
-				# Check all presets for currently assigned LUT
-				# Check the preset we're going to use for the upload last
-				presetnames = filter(lambda name: name != presetname,
-									 config.valid_values["patterngenerator.prisma.preset"])
+				if False:
+					# NEVER?
+					# Check all presets for currently assigned LUT
+					# Check the preset we're going to use for the upload last
+					presetnames = filter(lambda name: name != presetname,
+										 config.valid_values["patterngenerator.prisma.preset"])
+				else:
+					# Check only the preset we're going to use for the upload
+					presetnames = []
 				presetnames.append(presetname)
 				assigned_luts = {}
 				for presetname in presetnames:
