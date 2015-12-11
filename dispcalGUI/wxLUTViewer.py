@@ -1824,12 +1824,9 @@ class LUTFrame(BaseFrame):
 			if dlst != [] and hasattr(self.client, "point_grid"):
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
 				legend = legend.split(", ")
-				R, G, B = (self.client.point_grid[0].get(pointXY[0],
-							0 if self.toggle_red.GetValue() else None),
-						   self.client.point_grid[1].get(pointXY[0],
-							0 if self.toggle_green.GetValue() else None),
-						   self.client.point_grid[2].get(pointXY[0],
-							0 if self.toggle_blue.GetValue() else None))
+				R, G, B = (self.client.point_grid[0].get(pointXY[0], None),
+						   self.client.point_grid[1].get(pointXY[0], None),
+						   self.client.point_grid[2].get(pointXY[0], None))
 				if (self.plot_mode_select.GetSelection() == 0 or
 					R == G == B or ((R == G or G == B or R == B) and
 									None in (R, G ,B))):
