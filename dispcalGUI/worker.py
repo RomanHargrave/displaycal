@@ -6351,6 +6351,114 @@ usage: spotread [-options] [logfile]
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
+				# Hires CIECAM02 gamut mapping - perceptual and saturation tables
+				# Use collink for smoother result.
+				# Only for XYZ LUT and if source profile is a simple matrix
+				# profile, otherwise CIECAM02 tables will already have been
+				# created by colprof
+				collink = None
+				if ("A2B0" in profile.tags and profile.colorSpace == "RGB" and
+					profile.connectionColorSpace == "XYZ" and
+					(getcfg("gamap_perceptual") or
+					 getcfg("gamap_saturation")) and
+					getcfg("gamap_profile") and getcfg("profile.b2a.hires")):
+					collink = get_argyll_util("collink")
+					if not collink:
+						self.log(lang.getstr("argyll.util.not_found",
+											 "collink"))
+				gamap_profile = None
+				if collink:
+					try:
+						gamap_profile = ICCP.ICCProfile(getcfg("gamap_profile"))
+					except (IOError, ICCProfileInvalidError), exception:
+						self.log(exception)
+					else:
+						if (not "A2B0" in gamap_profile.tags and
+							"rXYZ" in gamap_profile.tags and
+							"gXYZ" in gamap_profile.tags and
+							"bXYZ" in gamap_profile.tags):
+							# Simple matrix source profile. Change gamma to 1.0
+							gamap_profile.tags.rTRC = ICCP.CurveType()
+							gamap_profile.tags.rTRC.append(1.0)
+							gamap_profile.tags.gTRC = gamap_profile.tags.rTRC
+							gamap_profile.tags.bTRC = gamap_profile.tags.rTRC
+							# Write to temp file
+							fd, gamap_profile.fileName = tempfile.mkstemp(profile_ext,
+																		  dir=self.tempdir)
+							stream = os.fdopen(fd, "wb")
+							gamap_profile.write(stream)
+							stream.close()
+							# Only table 0 (colorimetric) in display profile.
+							# Assign it to table 1 as per ICC spec to prepare
+							# for adding table 0 (perceptual) and 2 (saturation)
+							profile.tags.B2A1 = profile.tags.B2A0
+						else:
+							gamap_profile = None
+				if gamap_profile:
+					size = getcfg("profile.b2a.hires.size")
+					# Make sure to map 'auto' value (-1) to an actual size
+					size = {-1: 33}.get(size, size)
+					collink_args = ["-v", "-q" + getcfg("profile.quality"),
+									"-G", "-r%i" % size]
+					if getcfg("gamap_src_viewcond"):
+						collink_args.append("-c" +
+											getcfg("gamap_src_viewcond"))
+					if getcfg("gamap_out_viewcond"):
+						collink_args.append("-d" +
+											getcfg("gamap_out_viewcond"))
+					for tableno, gamap in ((0, "gamap_perceptual"),
+										   (2, "gamap_saturation")):
+						# Create perceptual / saturation device link(s)
+						if getcfg(gamap):
+							link_profile = tempfile.mktemp(profile_ext,
+														   dir=self.tempdir)
+							tmpres = self.exec_cmd(collink,
+												   collink_args +
+												   ["-i" +
+													getcfg(gamap + "_intent"),
+													gamap_profile.fileName,
+													profile_path,
+													link_profile])
+							if not isinstance(tmpres, Exception) and tmpres:
+								try:
+									link_profile = ICCP.ICCProfile(link_profile)
+								except (IOError,
+										ICCP.ICCProfileInvalidError), exception:
+									self.log(exception)
+									continue
+								table = "B2A%i" % tableno
+								profile.tags[table] = link_profile.tags.A2B0
+								# Remove temporary link profile
+								os.remove(link_profile.fileName)
+								# Update B2A matrix with source profile matrix
+								matrix = colormath.Matrix3x3([[gamap_profile.tags.rXYZ.X,
+															   gamap_profile.tags.gXYZ.X,
+															   gamap_profile.tags.bXYZ.X],
+															  [gamap_profile.tags.rXYZ.Y,
+															   gamap_profile.tags.gXYZ.Y,
+															   gamap_profile.tags.bXYZ.Y],
+															  [gamap_profile.tags.rXYZ.Z,
+															   gamap_profile.tags.gXYZ.Z,
+															   gamap_profile.tags.bXYZ.Z]])
+								matrix.invert()
+								scale = 1 + (32767 / 32768.0)
+								matrix *= colormath.Matrix3x3(((scale, 0, 0),
+															   (0, scale, 0),
+															   (0, 0, scale)))
+								profile.tags[table].matrix = matrix
+								profile.version = 2.4
+								profchanged = True
+					# Remove temporary source profile
+					os.remove(gamap_profile.fileName)
+					# Make sure we match Argyll colprof i.e. have a complete
+					# set of tables
+					if not "A2B1" in profile.tags:
+						profile.tags.A2B1 = profile.tags.A2B0
+					if not "A2B2" in profile.tags:
+						profile.tags.A2B2 = profile.tags.A2B0
+					if not "B2A2" in profile.tags:
+						profile.tags.B2A2 = profile.tags.B2A0
+				# A2B processing
 				process_A2B = ("A2B0" in profile.tags and
 							   profile.colorSpace == "RGB" and
 							   profile.connectionColorSpace == "XYZ" and
@@ -7128,9 +7236,31 @@ usage: spotread [-options] [logfile]
 				gamap = "s"
 			else:
 				gamap = None
+			gamap_profile = None
 			if gamap and getcfg("gamap_profile"):
+				# CIECAM02 gamut mapping - perceptual and saturation tables
+				# Only for L*a*b* LUT or if source profile is not a simple matrix
+				# profile, otherwise create hires CIECAM02 tables with collink
+				try:
+					gamap_profile = ICCP.ICCProfile(getcfg("gamap_profile"))
+				except ICCProfileInvalidError, exception:
+					self.log(exception)
+					return Error(lang.getstr("profile.invalid") + "\n" +
+								 getcfg("gamap_profile"))
+				except IOError, exception:
+					return exception
+				if (getcfg("profile.type") == "l" or
+					not getcfg("profile.b2a.hires") or
+					"A2B0" in gamap_profile.tags or
+					not "rXYZ" in gamap_profile.tags or
+					not "gXYZ" in gamap_profile.tags or
+					not "bXYZ" in gamap_profile.tags):
+					gamap_profile = gamap_profile.fileName
+				else:
+					gamap_profile = None
+			if gamap and gamap_profile:
 				args.append("-" + gamap)
-				args.append(getcfg("gamap_profile"))
+				args.append(gamap_profile)
 				args.append("-t" + getcfg("gamap_perceptual_intent"))
 				if gamap == "S":
 					args.append("-T" + getcfg("gamap_saturation_intent"))
@@ -7141,7 +7271,7 @@ usage: spotread [-options] [logfile]
 			b2a_q = getcfg("profile.quality.b2a")
 			if (getcfg("profile.b2a.hires") and
 				getcfg("profile.type") in ("x", "X") and
-				not (gamap and getcfg("gamap_profile"))):
+				not (gamap and gamap_profile)):
 				# Disable B2A creation in colprof, B2A is handled
 				# by A2B inversion code
 				b2a_q = "n"
