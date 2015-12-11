@@ -702,7 +702,7 @@ defaults = {
 	"extra_args.targen": "",
 	"gamap_profile": "",
 	"gamap_perceptual": 0,
-	"gamap_perceptual_intent": "la",
+	"gamap_perceptual_intent": "p",
 	"gamap_saturation": 0,
 	"gamap_saturation_intent": "s",
 	"gamap_default_intent": "p",
