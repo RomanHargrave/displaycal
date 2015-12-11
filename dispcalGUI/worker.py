@@ -7238,6 +7238,7 @@ usage: spotread [-options] [logfile]
 		args.append("-v") # verbose
 		args.append("-q" + getcfg("profile.quality"))
 		args.append("-a" + getcfg("profile.type"))
+		gamap_args = args
 		if getcfg("profile.type") in ["l", "x", "X"]:
 			if getcfg("gamap_saturation"):
 				gamap = "S"
@@ -7258,25 +7259,25 @@ usage: spotread [-options] [logfile]
 								 getcfg("gamap_profile"))
 				except IOError, exception:
 					return exception
-				if (getcfg("profile.type") == "l" or
-					not getcfg("profile.b2a.hires") or
-					"A2B0" in gamap_profile.tags or
-					not "rXYZ" in gamap_profile.tags or
-					not "gXYZ" in gamap_profile.tags or
-					not "bXYZ" in gamap_profile.tags):
-					gamap_profile = gamap_profile.fileName
-				else:
+				if (getcfg("profile.type") != "l" and
+					getcfg("profile.b2a.hires") and
+					not "A2B0" in gamap_profile.tags and
+					"rXYZ" in gamap_profile.tags and
+					"gXYZ" in gamap_profile.tags and
+					"bXYZ" in gamap_profile.tags):
+					# Make a copy so we can store options without adding them
+					# to actual colprof arguments
+					gamap_args = []
 					gamap_profile = None
-			if gamap and gamap_profile:
-				args.append("-" + gamap)
-				args.append(gamap_profile)
-				args.append("-t" + getcfg("gamap_perceptual_intent"))
+				gamap_args.append("-" + gamap)
+				gamap_args.append(getcfg("gamap_profile"))
+				gamap_args.append("-t" + getcfg("gamap_perceptual_intent"))
 				if gamap == "S":
-					args.append("-T" + getcfg("gamap_saturation_intent"))
+					gamap_args.append("-T" + getcfg("gamap_saturation_intent"))
 				if getcfg("gamap_src_viewcond"):
-					args.append("-c" + getcfg("gamap_src_viewcond"))
+					gamap_args.append("-c" + getcfg("gamap_src_viewcond"))
 				if getcfg("gamap_out_viewcond"):
-					args.append("-d" + getcfg("gamap_out_viewcond"))
+					gamap_args.append("-d" + getcfg("gamap_out_viewcond"))
 			b2a_q = getcfg("profile.quality.b2a")
 			if (getcfg("profile.b2a.hires") and
 				getcfg("profile.type") in ("x", "X") and
@@ -7301,6 +7302,8 @@ usage: spotread [-options] [logfile]
 														  display_manufacturer, 
 														  write=False))
 		self.options_colprof = list(args)
+		if gamap_args is not args:
+			self.options_colprof.extend(gamap_args)
 		args.append("-D")
 		args.append(profile_name)
 		args.append(inoutfile)
