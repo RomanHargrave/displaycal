@@ -6418,7 +6418,8 @@ usage: spotread [-options] [logfile]
 													getcfg(gamap + "_intent"),
 													gamap_profile.fileName,
 													profile_path,
-													link_profile])
+													link_profile],
+												   sessionlogfile=self.sessionlogfile)
 							if not isinstance(tmpres, Exception) and tmpres:
 								try:
 									link_profile = ICCP.ICCProfile(link_profile)
