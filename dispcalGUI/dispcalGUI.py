@@ -1082,11 +1082,14 @@ class GamapFrame(BaseFrame):
 		self.gamap_profile.dialogTitle = lang.getstr("gamap.profile")
 		self.gamap_profile.fileMask = lang.getstr("filetype.icc") + "|*.icc;*.icm"
 		
-		intents = ["a", "aa", "aw", "la", "ms", "p", "r", "s"]
+		intents = list(config.intents)
 		if (self.Parent and hasattr(self.Parent, "worker") and
-			self.Parent.worker.argyll_version >= [1, 3, 3]):
-			intents.append("pa")
-		for v in sorted(intents):
+			self.Parent.worker.argyll_version < [1, 3, 3]):
+			intents.remove("pa")
+		if (self.Parent and hasattr(self.Parent, "worker") and
+			self.Parent.worker.argyll_version < [1, 8, 3]):
+			intents.remove("lp")
+		for v in intents:
 			lstr = lang.getstr("gamap.intents.%s" % v)
 			self.intents_ab[v] = lstr
 			self.intents_ba[lstr] = v

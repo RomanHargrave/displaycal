@@ -197,7 +197,7 @@ class LUT3DFrame(BaseFrame):
 		show = (self.lut3d_trc_apply_none_ctrl.GetValue() and
 				self.XYZbpout > self.XYZbpin and
 				getcfg("3dlut.rendering_intent") not in ("la", "p", "pa", "ms",
-														 "s"))
+														 "s", "lp"))
 		self.lut3d_input_value_clipping_bmp.Show(show)
 		self.lut3d_input_value_clipping_label.Show(show)
 		if layout:
@@ -1023,7 +1023,10 @@ class LUT3DFrame(BaseFrame):
 		self.rendering_intents_ab = {}
 		self.rendering_intents_ba = {}
 		self.lut3d_rendering_intent_ctrl.Clear()
-		for i, ri in enumerate(config.valid_values["3dlut.rendering_intent"]):
+		intents = list(config.valid_values["3dlut.rendering_intent"])
+		if self.worker.argyll_version < [1, 8, 3]:
+			intents.remove("lp")
+		for i, ri in enumerate(intents):
 			self.lut3d_rendering_intent_ctrl.Append(lang.getstr("gamap.intents." + ri))
 			self.rendering_intents_ab[i] = ri
 			self.rendering_intents_ba[ri] = i

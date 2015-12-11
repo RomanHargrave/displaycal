@@ -522,6 +522,7 @@
 	"gamap.intents.aa": "Absolutes Erscheinungsbild",
 	"gamap.intents.aw": "Absolut farbmetrisch mit Weißpunkt-Skalierung",
 	"gamap.intents.la": "Luminanz angleichen",
+	"gamap.intents.lp": "Luminanz erhaltende Wahrnehmung",
 	"gamap.intents.ms": "Sättigung erhalten",
 	"gamap.intents.p": "Wahrnehmung",
 	"gamap.intents.pa": "Wahrnehmungs-Erscheinungsbild",
