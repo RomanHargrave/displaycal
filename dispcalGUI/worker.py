@@ -7357,32 +7357,32 @@ usage: spotread [-options] [logfile]
 			# Remove AUTO_OPTIMIZE
 			if ti3[0].queryv1("AUTO_OPTIMIZE"):
 				ti3[0].remove_keyword("AUTO_OPTIMIZE")
-			# Add 3D LUT options if set
-			if getcfg("3dlut.create"):
-				for keyword, cfgname in {"3DLUT_SOURCE_PROFILE":
-										 "3dlut.input.profile",
-										 "3DLUT_GAMMA":
-										 "3dlut.trc_gamma",
-										 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":
-										 "3dlut.trc_output_offset",
-										 "3DLUT_INPUT_ENCODING":
-										 "3dlut.encoding.input",
-										 "3DLUT_OUTPUT_ENCODING":
-										 "3dlut.encoding.output",
-										 "3DLUT_GAMUT_MAPPING_MODE":
-										 "3dlut.gamap.use_b2a",
-										 "3DLUT_RENDERING_INTENT":
-										 "3dlut.rendering_intent",
-										 "3DLUT_FORMAT":
-										 "3dlut.format",
-										 "3DLUT_SIZE":
-										 "3dlut.size",
-										 "3DLUT_INPUT_BITDEPTH":
-										 "3dlut.bitdepth.input",
-										 "3DLUT_OUTPUT_BITDEPTH":
-										 "3dlut.bitdepth.output",
-										 "3DLUT_APPLY_CAL":
-										 "3dlut.output.profile.apply_cal"}.iteritems():
+			# Add 3D LUT options if set, else remove them
+			for keyword, cfgname in {"3DLUT_SOURCE_PROFILE":
+									 "3dlut.input.profile",
+									 "3DLUT_GAMMA":
+									 "3dlut.trc_gamma",
+									 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":
+									 "3dlut.trc_output_offset",
+									 "3DLUT_INPUT_ENCODING":
+									 "3dlut.encoding.input",
+									 "3DLUT_OUTPUT_ENCODING":
+									 "3dlut.encoding.output",
+									 "3DLUT_GAMUT_MAPPING_MODE":
+									 "3dlut.gamap.use_b2a",
+									 "3DLUT_RENDERING_INTENT":
+									 "3dlut.rendering_intent",
+									 "3DLUT_FORMAT":
+									 "3dlut.format",
+									 "3DLUT_SIZE":
+									 "3dlut.size",
+									 "3DLUT_INPUT_BITDEPTH":
+									 "3dlut.bitdepth.input",
+									 "3DLUT_OUTPUT_BITDEPTH":
+									 "3dlut.bitdepth.output",
+									 "3DLUT_APPLY_CAL":
+									 "3dlut.output.profile.apply_cal"}.iteritems():
+				if getcfg("3dlut.create"):
 					value = getcfg(cfgname)
 					if cfgname == "3dlut.gamap.use_b2a":
 						if value:
@@ -7393,6 +7393,8 @@ usage: spotread [-options] [logfile]
 						if getcfg("3dlut.trc_gamma_type") == "B":
 							value = -value
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
+				elif keyword in ti3[0]:
+					ti3[0].remove_keyword(keyword)
 			data = ti3[0].get("DATA")
 			if len(color_rep) == 2 and data:
 				# Check for XYZ/Lab = 0 readings
