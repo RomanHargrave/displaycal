@@ -1102,10 +1102,14 @@ class GamapFrame(BaseFrame):
 		self.viewconds_ab[None] = lang.getstr("default")
 		self.viewconds_ba[lang.getstr("default")] = None
 		for v in viewconds:
+			if self.Parent and hasattr(self.Parent, "worker") and (
+				(v == "pc" and self.Parent.worker.argyll_version < [1, 1, 1]) or
+				(v == "tv" and self.Parent.worker.argyll_version < [1, 6, 0])):
+				continue
 			lstr = lang.getstr("gamap.viewconds.%s" % v)
 			self.viewconds_ab[v] = lstr
 			self.viewconds_ba[lstr] = v
-			if v not in ("pp", "pe", "pcd", "ob", "cx"):
+			if v not in ("pp", "pe", "pc", "pcd", "ob", "cx"):
 				self.viewconds_out_ab[v] = lstr
 		
 		self.gamap_src_viewcond_ctrl.SetItems(

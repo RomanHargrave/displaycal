@@ -63,11 +63,13 @@ for name in names:
 viewconds = [
 	"pp",
 	"pe",
+	"pc",  # Argyll 1.1.1
 	"mt",
 	"mb",
 	"md",
 	"jm",
 	"jd",
+	"tv",  # Argyll 1.6
 	"pcd",
 	"ob",
 	"cx"
