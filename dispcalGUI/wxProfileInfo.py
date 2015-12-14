@@ -1746,9 +1746,11 @@ class ProfileInfoFrame(LUTFrame):
 											make_argyll_compatible_path(desc) +
 											profile_ext)
 				profile.write(profile_path)
+			profile_mtime = os.stat(profile_path).st_mtime
 			filename, ext = os.path.splitext(profile_path)
 			comparison_profile = self.gamut_view_options.comparison_profile
 			comparison_profile_path = None
+			comparison_profile_mtime = 0
 			if comparison_profile:
 				comparison_profile_path = comparison_profile.fileName
 				if (comparison_profile_path and
@@ -1761,6 +1763,7 @@ class ProfileInfoFrame(LUTFrame):
 					comparison_profile_path = os.path.join(self.worker.tempdir,
 														   make_argyll_compatible_path(os.path.basename(comparison_profile_path)))
 					comparison_profile.write(comparison_profile_path)
+				comparison_profile_mtime = os.stat(comparison_profile_path).st_mtime
 			mods = []
 			intent = self.gamut_view_options.intent
 			if intent != "r":
@@ -1801,6 +1804,13 @@ class ProfileInfoFrame(LUTFrame):
 				vrmloutpath = make_win32_compatible_long_path(vrmloutpath)
 				x3dpath = make_win32_compatible_long_path(x3dpath)
 				finalpath = make_win32_compatible_long_path(finalpath)
+			for outpath in (finalpath, vrmloutpath, vrmlpath):
+				if os.path.isfile(outpath):
+					mtime = os.stat(outpath).st_mtime
+					if profile_mtime > mtime or comparison_profile_mtime > mtime:
+						# Profile(s) have changed, delete existing 3D visualization
+						# so it will be re-generated
+						os.remove(outpath)
 			if os.path.isfile(finalpath):
 				launch_file(finalpath)
 			else:
