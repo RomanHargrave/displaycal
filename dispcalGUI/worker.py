@@ -6456,14 +6456,14 @@ usage: spotread [-options] [logfile]
 												  getcfg("gamap_out_viewcond"))
 						link_profile = tempfile.mktemp(profile_ext,
 													   dir=self.tempdir)
-						tmpres = self.exec_cmd(collink,
+						result = self.exec_cmd(collink,
 											   collink_args + gamap_args +
 											   ["-i" + intent,
 												gamap_profile.fileName,
 												profile_path,
 												link_profile],
 											   sessionlogfile=self.sessionlogfile)
-						if not isinstance(tmpres, Exception) and tmpres:
+						if not isinstance(result, Exception) and result:
 							try:
 								link_profile = ICCP.ICCProfile(link_profile)
 							except (IOError,
@@ -6491,6 +6491,8 @@ usage: spotread [-options] [logfile]
 														   (0, 0, scale)))
 							profile.tags[table].matrix = matrix
 							profchanged = True
+						else:
+							break
 			if not isinstance(result, Exception) and result:
 				if (gamap_profile and
 					os.path.dirname(gamap_profile.fileName) == self.tempdir):
