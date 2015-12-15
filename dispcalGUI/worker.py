@@ -6356,23 +6356,26 @@ usage: spotread [-options] [logfile]
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
-				# Hires CIECAM02 gamut mapping - perceptual and saturation tables
+				# Hires CIECAM02 gamut mapping - perceptual and saturation
+				# tables, also colorimetric table for non-RGB profiles
 				# Use collink for smoother result.
 				# Only for XYZ LUT and if source profile is a simple matrix
 				# profile, otherwise CIECAM02 tables will already have been
 				# created by colprof
+				gamap = ((getcfg("gamap_perceptual") or
+						  getcfg("gamap_saturation")) and
+						 getcfg("gamap_profile"))
 				collink = None
-				if ("A2B0" in profile.tags and profile.colorSpace == "RGB" and
+				if ("A2B0" in profile.tags and
 					profile.connectionColorSpace == "XYZ" and
-					(getcfg("gamap_perceptual") or
-					 getcfg("gamap_saturation")) and
-					getcfg("gamap_profile") and getcfg("profile.b2a.hires")):
+					(gamap or profile.colorSpace != "RGB") and
+					getcfg("profile.b2a.hires")):
 					collink = get_argyll_util("collink")
 					if not collink:
 						self.log(lang.getstr("argyll.util.not_found",
 											 "collink"))
 				gamap_profile = None
-				if collink:
+				if gamap and collink:
 					try:
 						gamap_profile = ICCP.ICCProfile(getcfg("gamap_profile"))
 					except (IOError, ICCProfileInvalidError), exception:
@@ -6393,74 +6396,124 @@ usage: spotread [-options] [logfile]
 							stream = os.fdopen(fd, "wb")
 							gamap_profile.write(stream)
 							stream.close()
-							# Only table 0 (colorimetric) in display profile.
-							# Assign it to table 1 as per ICC spec to prepare
-							# for adding table 0 (perceptual) and 2 (saturation)
-							profile.tags.B2A1 = profile.tags.B2A0
+							if profile.colorSpace == "RGB":
+								# Only table 0 (colorimetric) in display profile.
+								# Assign it to table 1 as per ICC spec to prepare
+								# for adding table 0 (perceptual) and 2 (saturation)
+								profile.tags.B2A1 = profile.tags.B2A0
 						else:
 							gamap_profile = None
-				if gamap_profile:
+				if gamap_profile or (collink and profile.colorSpace != "RGB"):
 					size = getcfg("profile.b2a.hires.size")
 					# Make sure to map 'auto' value (-1) to an actual size
 					size = {-1: 33}.get(size, size)
 					collink_args = ["-v", "-q" + getcfg("profile.quality"),
 									"-G", "-r%i" % size]
-					if getcfg("gamap_src_viewcond"):
-						collink_args.append("-c" +
-											getcfg("gamap_src_viewcond"))
-					if getcfg("gamap_out_viewcond"):
-						collink_args.append("-d" +
-											getcfg("gamap_out_viewcond"))
-					for tableno, gamap in ((0, "gamap_perceptual"),
-										   (2, "gamap_saturation")):
-						# Create perceptual / saturation device link(s)
-						if getcfg(gamap):
-							link_profile = tempfile.mktemp(profile_ext,
-														   dir=self.tempdir)
-							tmpres = self.exec_cmd(collink,
-												   collink_args +
-												   ["-i" +
-													getcfg(gamap + "_intent"),
-													gamap_profile.fileName,
-													profile_path,
-													link_profile],
-												   sessionlogfile=self.sessionlogfile)
-							if not isinstance(tmpres, Exception) and tmpres:
+					tables = []
+					for tableno, cfgname in [(0, "gamap_perceptual"),
+											 (2, "gamap_saturation")]:
+						if getcfg(cfgname):
+							tables.append((tableno, getcfg(cfgname + "_intent")))
+					if profile.colorSpace != "RGB":
+						# Create colorimetric table for non-RGB profile
+						tables.append((1, "r"))
+						# Get inking rules from colprof extra args
+						extra_args = getcfg("extra_args.colprof")
+						inking = re.findall(r"-[Kk](?:[zhxr]|p[0-9\.\s]+)|"
+											 "-[Ll][0-9\.\s]+", extra_args)
+						if inking:
+							collink_args.extend(parse_argument_string(" ".join(inking)))
+					for tableno, intent in tables:
+						# Create device link(s)
+						gamap_args = []
+						if tableno == 1:
+							# Use PhotoPrintRGB as PCS if creating colorimetric
+							# table for non-RGB profile.
+							# PhotoPrintRGB is a synthetic linear gamma space
+							# with the Rec2020 red and blue adapted to D50
+							# and a green of x 0.1292 (same as blue x) y 0.8185
+							# It almost completely encompasses PhotoGamutRGB
+							pcs = get_data_path("ref/PhotoPrintRGB.icc")
+							if pcs:
 								try:
-									link_profile = ICCP.ICCProfile(link_profile)
-								except (IOError,
-										ICCP.ICCProfileInvalidError), exception:
+									gamap_profile = ICCP.ICCProfile(pcs)
+								except (IOError, ICCProfileInvalidError), exception:
 									self.log(exception)
-									continue
-								table = "B2A%i" % tableno
-								profile.tags[table] = link_profile.tags.A2B0
-								# Remove temporary link profile
-								os.remove(link_profile.fileName)
-								# Update B2A matrix with source profile matrix
-								matrix = colormath.Matrix3x3([[gamap_profile.tags.rXYZ.X,
-															   gamap_profile.tags.gXYZ.X,
-															   gamap_profile.tags.bXYZ.X],
-															  [gamap_profile.tags.rXYZ.Y,
-															   gamap_profile.tags.gXYZ.Y,
-															   gamap_profile.tags.bXYZ.Y],
-															  [gamap_profile.tags.rXYZ.Z,
-															   gamap_profile.tags.gXYZ.Z,
-															   gamap_profile.tags.bXYZ.Z]])
-								matrix.invert()
-								scale = 1 + (32767 / 32768.0)
-								matrix *= colormath.Matrix3x3(((scale, 0, 0),
-															   (0, scale, 0),
-															   (0, 0, scale)))
-								profile.tags[table].matrix = matrix
-								if profile.version < 2.4:
-									# Increase profile version to atleast 2.4
-									# when adding more tables (adhere to spec)
-									profile.version = 2.4
-								profchanged = True
+							else:
+								missing = lang.getstr("file.missing",
+													  "ref/PhotoPrintRGB.icc")
+								if gamap_profile:
+									self.log(missing)
+								else:
+									result = Error(missing)
+									break
+						else:
+							if getcfg("gamap_src_viewcond"):
+								gamap_args.append("-c" +
+												  getcfg("gamap_src_viewcond"))
+							if getcfg("gamap_out_viewcond"):
+								gamap_args.append("-d" +
+												  getcfg("gamap_out_viewcond"))
+						link_profile = tempfile.mktemp(profile_ext,
+													   dir=self.tempdir)
+						tmpres = self.exec_cmd(collink,
+											   collink_args + gamap_args +
+											   ["-i" + intent,
+												gamap_profile.fileName,
+												profile_path,
+												link_profile],
+											   sessionlogfile=self.sessionlogfile)
+						if not isinstance(tmpres, Exception) and tmpres:
+							try:
+								link_profile = ICCP.ICCProfile(link_profile)
+							except (IOError,
+									ICCP.ICCProfileInvalidError), exception:
+								self.log(exception)
+								continue
+							table = "B2A%i" % tableno
+							profile.tags[table] = link_profile.tags.A2B0
+							# Remove temporary link profile
+							os.remove(link_profile.fileName)
+							# Update B2A matrix with source profile matrix
+							matrix = colormath.Matrix3x3([[gamap_profile.tags.rXYZ.X,
+														   gamap_profile.tags.gXYZ.X,
+														   gamap_profile.tags.bXYZ.X],
+														  [gamap_profile.tags.rXYZ.Y,
+														   gamap_profile.tags.gXYZ.Y,
+														   gamap_profile.tags.bXYZ.Y],
+														  [gamap_profile.tags.rXYZ.Z,
+														   gamap_profile.tags.gXYZ.Z,
+														   gamap_profile.tags.bXYZ.Z]])
+							matrix.invert()
+							scale = 1 + (32767 / 32768.0)
+							matrix *= colormath.Matrix3x3(((scale, 0, 0),
+														   (0, scale, 0),
+														   (0, 0, scale)))
+							profile.tags[table].matrix = matrix
+							profchanged = True
+			if not isinstance(result, Exception) and result:
+				if (gamap_profile and
+					os.path.dirname(gamap_profile.fileName) == self.tempdir):
 					# Remove temporary source profile
 					os.remove(gamap_profile.fileName)
+				if profchanged:
+					if profile.version < 2.4:
+						# Increase profile version to atleast 2.4
+						# when adding more tables (adhere to spec)
+						profile.version = 2.4
 					# Make sure we match Argyll colprof i.e. have a complete
 					# set of tables
+					if profile.colorSpace != "RGB":
+						if len(tables) == 1:
+							# We only created a colorimetric table, the
+							# others are still low quality. Assign 
+							# colorimetric table
+							profile.tags.B2A0 = profile.tags.B2A1
+						if len(tables) < 3:
+							# We only created colorimetric and/or perceptual
+							# tables, saturation table is still low quality.
+							# Assign perceptual table
+							profile.tags.B2A2 = profile.tags.B2A0
 					if not "A2B1" in profile.tags:
 						profile.tags.A2B1 = profile.tags.A2B0
 					if not "A2B2" in profile.tags:
