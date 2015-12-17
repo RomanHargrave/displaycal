@@ -1356,6 +1356,24 @@ class BaseFrame(wx.Frame):
 			safe_print(exception)
 
 	def focus_handler(self, event):
+		if debug:
+			if hasattr(event.GetEventObject(), "GetId"):
+				safe_print("[D] focus_handler called for ID %s %s %s, event type "
+						   "%s %s" % (event.GetEventObject().GetId(), 
+									  getevtobjname(event, self), 
+									  event.GetEventObject().__class__,
+									  event.GetEventType(), getevttype(event)))
+			else:
+				safe_print("[D] focus_handler called for %s %s, event type "
+						   "%s %s" % (getevtobjname(event, self), 
+									  event.GetEventObject().__class__,
+									  event.GetEventType(), getevttype(event)))
+			if (hasattr(event, "GetWindow") and event.GetWindow() and
+				event.GetEventObject() != event.GetWindow()):
+					safe_print("[D] Focus moving from control ID %s %s %s" %
+							   (event.GetWindow().GetId(), 
+								event.GetWindow().GetName(), 
+								event.GetWindow().__class__))
 		if debug and hasattr(self, "last_focused_ctrl"):
 				safe_print("[D] Last focused control: ID %s %s %s" %
 						   (self.last_focused_ctrl.GetId(),
@@ -1364,7 +1382,9 @@ class BaseFrame(wx.Frame):
 		if (hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and
 			not isinstance(self.last_focused_ctrl, floatspin.FloatTextCtrl) and
 			self.last_focused_ctrl != event.GetEventObject() and
-			self.last_focused_ctrl.IsShownOnScreen()):
+			self.last_focused_ctrl.IsShownOnScreen() and
+			event.GetEventObject() and
+			event.GetEventObject().IsShownOnScreen()):
 			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.evtType[0], 
 										  self.last_focused_ctrl.GetId())
 			if debug:
@@ -1379,14 +1399,9 @@ class BaseFrame(wx.Frame):
 				if debug:
 					safe_print("[D] Last focused control processed catchup "
 							   "event")
-				event.Skip()
-				if hasattr(event.GetEventObject(), "GetId") and \
-				   callable(event.GetEventObject().GetId):
-					event = CustomEvent(event.GetEventType(), 
-										event.GetEventObject(), 
-										self.last_focused_ctrl)
 		if (hasattr(event.GetEventObject(), "GetId") and
 			callable(event.GetEventObject().GetId) and
+			event.GetEventObject() != getattr(self, "last_focused_ctrl", None) and
 			event.GetEventObject().IsShownOnScreen()):
 		   	if debug:
 					safe_print("[D] Setting last focused control to ID %s %s %s"
@@ -1394,23 +1409,6 @@ class BaseFrame(wx.Frame):
 								  getevtobjname(event, self),
 								  event.GetEventObject().__class__))
 			self.last_focused_ctrl = event.GetEventObject()
-		if debug:
-			if hasattr(event, "GetWindow") and event.GetWindow():
-				safe_print("[D] Focus moving from control ID %s %s %s to %s %s %s, "
-						   "event type %s %s" % (event.GetWindow().GetId(), 
-												 event.GetWindow().GetName(), 
-												 event.GetWindow().__class__,
-												 event.GetEventObject().GetId(), 
-												 getevtobjname(event, self), 
-												 event.GetEventObject().__class__,
-												 event.GetEventType(), 
-												 getevttype(event)))
-			elif hasattr(event.GetEventObject(), "GetId"):
-				safe_print("[D] Focus moving to control ID %s %s %s, event type "
-						   "%s %s" % (event.GetEventObject().GetId(), 
-									  getevtobjname(event, self), 
-									  event.GetEventObject().__class__,
-									  event.GetEventType(), getevttype(event)))
 		event.Skip()
 	
 	def setup_language(self):
@@ -1591,7 +1589,7 @@ class BaseFrame(wx.Frame):
 						child.__class__.Label = property(child.__class__.GetLabel,
 														 child.__class__.SetLabel)
 				child.SetMaxFontSize(11)
-				if sys.platform == "darwin" and wx.VERSION < (3, ):
+				if sys.platform == "darwin":
 					# Work around ComboBox issues on Mac OS X
 					# (doesn't receive EVT_KILL_FOCUS)
 					if isinstance(child, wx.ComboBox):
