@@ -12338,6 +12338,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					setcfg("3dlut.output.profile", path)
 					setcfg("measurement_report.output_profile", path)
 				# Disable 3D LUT tab when switching from madVR / Resolve
+				setcfg("3dlut.tab.enable", 0)
 				setcfg("3dlut.tab.enable.backup", 0)
 				(options_dispcal, 
 				 options_colprof) = get_options_from_profile(profile)
@@ -12571,7 +12572,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					# restore defaults
 					self.restore_defaults_handler(
 						include=("profile", "gamap_", "3dlut.create",
-								 "3dlut.tab.enable",
 								 "3dlut.output.profile.apply_cal",
 								 "testchart.auto_optimize"), 
 						exclude=("3dlut.tab.enable.backup", "profile.update",
