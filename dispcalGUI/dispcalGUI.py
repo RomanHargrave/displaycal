@@ -4194,6 +4194,33 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.lut3d_set_option("3dlut.input.profile",
 				   self.input_profiles[self.lut3d_input_profile_ctrl.GetStringSelection()],
 				   event)
+			lut3d_input_profile = ICCP.ICCProfile(getcfg("3dlut.input.profile"))
+			if (lut3d_input_profile and
+				"rTRC" in lut3d_input_profile.tags and
+				"gTRC" in lut3d_input_profile.tags and
+				"bTRC" in lut3d_input_profile.tags and
+				lut3d_input_profile.tags.rTRC ==
+				lut3d_input_profile.tags.gTRC ==
+				lut3d_input_profile.tags.bTRC and
+				isinstance(lut3d_input_profile.tags.rTRC,
+						   ICCP.CurveType)):
+				tf = lut3d_input_profile.tags.rTRC.get_transfer_function()
+				# Set gamma to profile gamma if single gamma profile
+				if tf[0][0].startswith("Gamma"):
+					if not getcfg("3dlut.trc_gamma.backup", False):
+						# Backup current gamma
+						setcfg("3dlut.trc_gamma.backup",
+							   getcfg("3dlut.trc_gamma"))
+					setcfg("3dlut.trc_gamma",
+						   round(tf[0][1], 2))
+				# Restore previous gamma if not single gamma
+				# profile
+				elif getcfg("3dlut.trc_gamma.backup", False):
+					setcfg("3dlut.trc_gamma",
+						   getcfg("3dlut.trc_gamma.backup"))
+					setcfg("3dlut.trc_gamma.backup", None)
+				self.lut3d_update_trc_controls()
+				self.lut3d_show_trc_controls()
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.update_controls()
 		self.lut3d_input_profile_ctrl.SetToolTipString(
