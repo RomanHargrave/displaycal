@@ -4311,6 +4311,10 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_update_controls(self):
 		self.lut3d_create_cb.SetValue(bool(getcfg("3dlut.create")))
 		lut3d_input_profile = getcfg("3dlut.input.profile")
+		if not lut3d_input_profile in self.input_profiles.values():
+			if not lut3d_input_profile:
+				lut3d_input_profile = defaults["3dlut.input.profile"]
+				setcfg("3dlut.input.profile", lut3d_input_profile)
 		if lut3d_input_profile in self.input_profiles.values():
 			self.lut3d_input_profile_ctrl.SetSelection(
 				self.input_profiles.values().index(lut3d_input_profile))
@@ -12158,7 +12162,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.profile_type_ctrl.SetSelection(
 				self.profile_types_ba.get(getcfg("profile.type"), 
 				self.profile_types_ba.get(defaults["profile.type"], 0)))
-			self.lut3d_update_encoding_controls()
+			self.lut3d_init_input_profiles()
+			self.lut3d_update_controls()
 			if hasattr(self, "aboutdialog"):
 				if self.aboutdialog.IsShownOnScreen():
 					self.aboutdialog_handler(None)
