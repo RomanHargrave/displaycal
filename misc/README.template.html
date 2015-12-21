@@ -522,7 +522,7 @@
 							</li>
 							<li>
 								<span>openSUSE Leap 42.1</span>
-								<span><a href="${URL}download/openSUSE_Leap_42.1/i586/dispcalGUI.rpm">x86</a> | 
+								<span>
 								<a href="${URL}download/openSUSE_Leap_42.1/x86_64/dispcalGUI.rpm">x86_64</a></span>
 							</li>
 							<li>
@@ -1086,6 +1086,50 @@
 				<h3>Choosing the display to calibrate and the measurement device</h3>
 
 				<p>After connecting the instrument, click the small icon with the swirling arrows <img src="theme/refresh_lr.png" alt="" /> in between the “Display device” and “Instrument” controls to detect connected display devices and instruments.</p>
+
+				<h4 id="settings_display_device">Choosing a display device</h4>
+				
+				<p>Directly connected displays will appear at the top of the list as entries in the form “Display Name/Model @ x, y, w, h” with x, y, w and h being virtual screen coordinates depending on resolution and DPI settings. Apart from those directly connected displays, a few additional options are also available:</p>
+
+				<dl>
+					<dt>Web @ localhost</dt>
+						<dd>
+							<p>Starts a standalone web server on your machine, which then allows a local or remote web browser to display the color test patches, e.g. to calibrate/profile a smartphone or tablet computer.</p>
+
+							<p>Note that if you use this method of displaying test patches, then colors will be displayed with 8 bit per component precision, and any screen-saver or power-saver will <strong>not</strong> be automatically disabled. You will also be at the mercy of any color management applied by the web browser, and may have to carefully review and configure such color management.</p>
+						</dd>
+
+					<dt>madVR</dt>
+						<dd>
+							<p>Causes test patches to be displayed using the madVR Test Pattern Generator (madTPG) application which comes with the <a href="http://madvr.com/">madVR video renderer</a> (only available for Windows, but you can connect via local network from Linux and Mac OS X). Note that while you can adjust the test pattern configuration controls in madTPG itself, you should not normally alter the “disable videoLUT” and “disable 3D LUT” controls, as these will be set appropriately automatically when doing measurements.</p>
+
+							<p>Note that if you want to create a 3D LUT for use with madVR, there is a “Video 3D LUT for madVR” preset available under “Settings” that will not only configure dispcalGUI to use madTPG, but also setup the correct 3D LUT format and encoding for madVR.</p>
+						</dd>
+
+					<dt>Prisma</dt>
+						<dd>
+							<p>The Q, Inc./Murideo Prisma is a video processor and combined pattern generator/3D LUT holder accessible over the network.</p>
+
+							<p>Note that if you want to create a 3D LUT for use with a Prisma, there is a “Video 3D LUT for Prisma” preset available under “Settings” that will not only configure dispcalGUI to use a Prisma, but also setup the correct 3D LUT format and encoding.</p>
+
+							<p>Also note that the Prisma has 1 MB of internal memory for custom LUT storage, which is enough for around 15 17x17x17 LUTs. You may occasionally need to enter the Prisma's administrative interface via a web browser to delete old LUTs to make space for new ones.</p>
+						</dd>
+
+					<dt>Resolve</dt>
+						<dd>
+							<p>Allows you to use the built-in pattern generator of DaVinci Resolve video editing and grading software, which is accessible over the network or on the local machine. The way this works is that you start a calibration or profiling run in dispcalGUI, position the measurement window and click “Start measurement”. A message “Waiting for connection on IP:PORT” should appear. Note the IP and port numbers. In Resolve, switch to the “Color” tab and then choose “Monitor calibration”, “CalMAN” in the “Color” menu (Resolve version 11 and earlier) or the “Workspace” menu (Resolve 12).<br />
+Enter the IP address in the window that opens (port should already be filled) and click “Connect” (if Resolve is running on the same machine as dispcalGUI, enter <code>localhost</code> or <code>127.0.0.1</code> instead). The position of the measurement window you placed earlier will be mimicked on the display you have connected via Resolve.</p>
+
+							<p>Note that if you want to create a 3D LUT for use with Resolve, there is a “Video 3D LUT for Resolve” preset available under “Settings” that will not only configure dispcalGUI to use Resolve, but also setup the correct 3D LUT format and encoding.</p>
+
+							<p><strong>Note</strong> that if you want to create a 3D LUT for a display that is <strong>directly connected</strong> (e.g. for Resolve's GUI viewer), you should <strong>not</strong> use the Resolve pattern generator, and select the actual display device instead which will allow for quicker measurements (Resolve's pattern generator has additional delay).</p>
+						</dd>
+
+					<dt>Untethered</dt>
+						<dd>
+							<p>See <a href="#untethered">untethered display measurements</a>. <em>Please note that the untethered mode should generally only be used if you've exhausted all other options.</em></p>
+						</dd>
+				</dl>
 				
 				<h4 id="settings_measurement_modes">Choosing a measurement mode</h4>
 				
@@ -1256,6 +1300,7 @@
 							<p>Choose this option if the profile is only going to be used with inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping to create a DeviceLink or 3D LUT (dispcalGUI always uses inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping when creating a DeviceLink/3D LUT). This will reduce the processing time needed to create the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables. <strong>Don't</strong> choose this option if you want to install or otherwise use the profile.</p>
 
 							<h4>Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table</h4>
+
 							<p>To use this option, you have to select a XYZ LUT profile type. This option increases the effective resolution of the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> to device colorimetric color lookup table by using a matrix to limit the XYZ space and fill the whole grid with the values obtained by inverting the device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
 							<p>You can also set the interpolated lookup table size. The default “Auto” will use a base 33x33x33 resulution that is increased if needed and provide a good balance between smoothness and accuracy. Lowering the resolution can increase smoothness (at the potential expense of some accuracy), while increasing resolution may make the resulting profile potentially more accurate (at the expense of some smoothness). Note that computation will need a lot of memory (&gt;= 4 GB of RAM recommended to prevent swapping to harddisk) especially at higher resolutions.</p>
 							<p>See below example images for the result you can expect, where the original image has been converted from sRGB to the display profile. Note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this. Also note that the sRGB blue in the image is actually out of gamut for the specific display used, and the edges visible in the blue gradient for the rendering are a result of the color being out of gamut, and the gamut mapping thus hitting the less smooth gamut boundaries.</p>
@@ -1282,7 +1327,10 @@
 							<p>Sets the default rendering intent. In theory applications could use this, in practice they don't, so changing this setting probably won't have any effect whatsoever.</p>
 							
 							<h4 id="settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</h4>
-							<p>Normally, profiles created by dispcalGUI only incorporate the colorimetric rendering intent, which means colors outside the display's gamut will be clipped to the next in-gamut color. LUT-type profiles can also have gamut mapping by implementing perceptual and/or saturation rendering intents. You can choose if and which of those you want by specifying a source profile and marking the appropriate checkboxes. Note that a input, output, display or device colororspace profile should be specified as source, not a non-device colorspace, device link, abstract or named color profile. You can also choose viewing conditions which describe the intended use of both the source and the display profile that is to be generated. An appropriate source viewing condition is chosen automatically based on the source profile type.</p>
+
+							<p>Note: When enabling one of the CIECAM02 gamut mapping options, and the source profile is a matrix profile, then enabling effective resolution enhancement will also influence the CIECAM02 gamut mapping, making it smoother, more accurate and also generated faster as a side-effect.</p>
+
+							<p>Normally, profiles created by dispcalGUI only incorporate the colorimetric rendering intent, which means colors outside the display's gamut will be clipped to the next in-gamut color. LUT-type profiles can also have gamut mapping by implementing perceptual and/or saturation rendering intents (gamut compression/expansion). You can choose if and which of those you want by specifying a source profile and marking the appropriate checkboxes. Note that a input, output, display or device colororspace profile should be specified as source, not a non-device colorspace, device link, abstract or named color profile. You can also choose viewing conditions which describe the intended use of both the source and the display profile that is to be generated. An appropriate source viewing condition is chosen automatically based on the source profile type.</p>
 
 							<p>An explanation of the available rendering intents can be found in the 3D LUT section “<a href="#rendering-intents">Rendering intent</a>”.</p>
 
@@ -1501,6 +1549,7 @@
 							<li><strong>“Luminance matched appearance”</strong> linearly compresses or expands the luminance axis from white to black to match the source to the destination space, while not otherwise altering the gamut, clipping any out of gamut colors to the closest match. The destination whitepoint is <strong>not</strong> altered to match the source whitepoint.</li>
 							<li><strong>“Perceptual”</strong> uses three-dimensional compression to make the source gamut fit within the destination gamut. As much as possible, clipping is avoided, hues and the overall appearance is maintained. The destination whitepoint is <strong>not</strong> altered to match the source whitepoint. This intent is useful if the destination gamut is smaller than the source gamut.</li>
 							<li><strong>“Perceptual appearance”</strong> uses three-dimensional compression to make the source gamut fit within the destination gamut. As much as possible, clipping is avoided, hues and the overall appearance is maintained. The destination whitepoint is altered to match the source whitepoint. This intent is useful if the destination gamut is smaller than the source gamut.</li>
+							<li><strong>“Luminance preserving perceptual”</strong> (Argyll CMS 1.8.3+) uses compression to make the source gamut fit within the destination gamut, but very heavily weights the preservation of the luminance value of the source, which will compromise the preservation of saturation. No contrast enhancement is used if the dynamic range is reduced. This intent may be of use where preserving the tonal distinctions in images is more important than maintaining overall colorfulness or contrast.</li>
 							<li><strong>“Preserve saturation”</strong> uses three-dimensional compression and expansion to try and make the source gamut match the destination gamut, and also favours higher saturation over hue or lightness preservation. The destination whitepoint is <strong>not</strong> altered to match the source whitepoint.</li>
 							<li><strong>“Relative colorimetric”</strong> is intended to reproduce colors exactly, but relative to the destination whitepoint which will <strong>not</strong> be altered to match the source whitepoint. Out of gamut colors will be clipped to the closest possible match. This intent is useful if you have calibrated a display to a custom whitepoint that you want to keep.</li>
 							<li><strong>“Saturation”</strong> uses the same basic gamut mapping as “Preserve saturation”, but increases saturation slightly in highly saturated areas of the gamut.</li>
@@ -1634,6 +1683,8 @@
 				<p>Since version 2.5, dispcalGUI can use <a href="https://www.blackmagicdesign.com/products/davinciresolve">Resolve</a> (10.1+) as pattern generator. Select the “Resolve” entry from the display devices dropdown in dispcalGUI and in Resolve itself choose “Monitor calibration”, “CalMAN” in the “Color” menu.</p>
 
 				<h4 id="untethered">Untethered display measurements</h4>
+				
+				<p><em>Please note that the untethered mode should generally only be used if you've exhausted all other options.</em></p>
 				
 				<p>Untethered mode is another option to measure and profile a remote display that is not connected via standard means (calibration is not supported). To use untethered mode, the testchart that should be used needs to be optimized, then exported as image files (via the testchart editor) and those image files need to be displayed on the device that should be measured, in successive order. The procedure is as follows:</p>
 				<ul>
@@ -2336,6 +2387,14 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Tommaso Schiavinotto (italian translation)</p>
 
 			<p>Recent donors:
+Jürgen Diez,
+Joel Lehmann,
+John Hawkins,
+Rebecca Jackson,
+Eric Crawford,
+Thamagon Kao-ian,
+Dzmitry Parul,
+Trutz-Günther Volkmann,
 Sarah Fields Photography,
 Felix Schumpelick,
 Andreas Teichert,
@@ -2346,40 +2405,7 @@ Dale Mellinger,
 Daniel Jurcau,
 Greg Ausina,
 Marc Auber,
-Dilma Herrera,
-Manuel Pintor,
-Andy Taylor,
-Cooksey-Talbott Gallery,
-Ben Richardson LLC,
-Walter Romero,
-Cahill Casterline Limited,
-Smartcooky Design,
-Elio Clemente Alvarado,
-Timo Hakkarainen,
-Riley Brandt Photography (<a href="http://www.rileybrandt.com/lessons/">The Open Source Photography Course</a>),
-Gustavo Mendes,
-Karl Masreliez,
-Reinhold Schäfer,
-James Finnie,
-Robert Walker,
-Ardjuna Seghers,
-John Hughes,
-Andrew Fields,
-Per Baekgaard,
-Gianluca Hotz,
-Uwe Röger,
-Serge Ghis,
-Christophe Van Laer,
-Xavier Potel,
-Henry Huang,
-Louis Epure,
-Gert Meister,
-Stefan Berndt,
-Leslie B Bunch,
-Juergen Flosbach,
-Reinhold Schäfer,
-Antonio Marcheselli,
-Hrvoje Mijovic Kocan
+Dilma Herrera
 <!--a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none"></span--></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses dispcalGUI.</p>
@@ -2398,7 +2424,25 @@ Hrvoje Mijovic Kocan
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>Support for the Prisma Video Processor (pattern generator, 3D LUT upload).</li>
+							<li>Support for the Q, Inc./Murideo Prisma video processor (pattern generation, 3D LUT upload).</li>
+							<li>Support for Argyll 1.8.3 (and newer) luminance preserving perceptual intent.</li>
+							<li>CIECAM02 viewing conditions for critical print evaluation environment (ISO-3664 P1) and television/film studio.</li>
+						</ul>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Advanced option: Smoother CIECAM02 perceptual and saturation gamut mapping for XYZ LUT profiles if the source profile is a matrix profile and “Enhance effective resolution of PCS to device tables” is enabled. Also works if creating CMYK (printer) profiles from existing reflective measurements (you can specify black generation and ink limiting parameters as additional commandline parameters to colprof).</li>
+							<li>Advanced option: Default CIECAM02 perceptual gamut mapping to (ICC) perceptual.</li>
+							<li>Profile information, 3D gamut visualization: Re-generate existing gamut visualization if involved profile(s) have a newer modification date than the visualization file(s).</li>
+							<li>When changing the 3D LUT input color space on the 3D LUT tab, automatically set a corresponding tone curve (match standalone 3D LUT maker behavior).</li>
+						</ul>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Colorimeter correction creation: Reference instrument, manufacturer name/ID and observer choice weren't added to the correction file if it was created by Argyll CMS 1.8 or newer. This could prevent uploading the correction to the online database.</li>
+							<li>Optimize performance of adding log messages to the log window, especially under Mac OS X where enabling Argyll debug output could generate high CPU load and stall UI updates due to the huge amount of messages generated each second during measurements.</li>
+							<li>Re-enumerate 3D LUT input color space profiles when changing to a different Argyll CMS version.</li>
+							<li>When re-creating a profile from an existing measurement file or profile that contains 3D LUT settings, remove those settings from its enclosed settings container if automatic 3D LUT creation after profiling is disabled in the current configuration (prevents a 3D LUT being automatically created unexpectedly after re-creating the profile).</li>
+							<li>Curve viewer: Hovering a specific channel would display unexpected zero values for the other two channels in the status bar (regression of r3309, dispcalGUI &gt;= 3.0.3).</li>
+							<li>Mac OS X: Revert r3478 (dispcalGUI &gt;= 3.0.4.3) which prevented custom values typed into comboboxes actually updating the configuration due to a Mac OS X specific wxWidgets bug that is not yet fixed in wxPython (<a href="http://trac.wxwidgets.org/ticket/9862">#9862</a>). Work-around the underlying problem that r3478 was meant to fix (wxPython 3 generates an EVT_TEXT when calling SetValue on a ComboBox, which could cause an infinite loop of events to be generated, wxPython 2.8 does not).</li>
 						</ul>
 					</dd>
 
