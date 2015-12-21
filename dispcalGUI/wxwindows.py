@@ -1374,7 +1374,7 @@ class BaseFrame(wx.Frame):
 							   (event.GetWindow().GetId(), 
 								event.GetWindow().GetName(), 
 								event.GetWindow().__class__))
-		if debug and hasattr(self, "last_focused_ctrl"):
+			if hasattr(self, "last_focused_ctrl"):
 				safe_print("[D] Last focused control: ID %s %s %s" %
 						   (self.last_focused_ctrl.GetId(),
 							self.last_focused_ctrl.GetName(),
@@ -1404,10 +1404,10 @@ class BaseFrame(wx.Frame):
 			event.GetEventObject() != getattr(self, "last_focused_ctrl", None) and
 			event.GetEventObject().IsShownOnScreen()):
 		   	if debug:
-					safe_print("[D] Setting last focused control to ID %s %s %s"
-							   % (event.GetEventObject().GetId(),
-								  getevtobjname(event, self),
-								  event.GetEventObject().__class__))
+				safe_print("[D] Setting last focused control to ID %s %s %s"
+						   % (event.GetEventObject().GetId(),
+							  getevtobjname(event, self),
+							  event.GetEventObject().__class__))
 			self.last_focused_ctrl = event.GetEventObject()
 		event.Skip()
 	
