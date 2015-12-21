@@ -1287,9 +1287,12 @@ class ProfileInfoFrame(LUTFrame):
 				self.DrawCanvas(reset=reset)
 				return
 		self.profile = profile
-		self.rTRC = profile.tags.get("rTRC", profile.tags.get("kTRC"))
-		self.gTRC = profile.tags.get("gTRC", profile.tags.get("kTRC"))
-		self.bTRC = profile.tags.get("bTRC", profile.tags.get("kTRC"))
+		self.rTRC = self.tf_rTRC = profile.tags.get("rTRC",
+													profile.tags.get("kTRC"))
+		self.gTRC = self.tf_gTRC = profile.tags.get("gTRC",
+													profile.tags.get("kTRC"))
+		self.bTRC = self.tf_bTRC = profile.tags.get("bTRC",
+													profile.tags.get("kTRC"))
 		self.trc = None
 		
 		self.gamut_view_options.direction_select.Show("B2A0" in
