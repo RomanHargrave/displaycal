@@ -1187,54 +1187,16 @@ class LUTFrame(BaseFrame):
 					  2: "p",
 					  3: "s"}.get(self.rendering_intent_select.GetSelection())
 
-		if (intent == "r" and (not ("B2A0" in self.profile.tags or
-									"A2B0" in self.profile.tags) or
-							   not self.toggle_clut.GetValue()) and
-			isinstance(self.rTRC, ICCP.CurveType) and
-			isinstance(self.gTRC, ICCP.CurveType) and
-			isinstance(self.bTRC, ICCP.CurveType)):
-			#self.rTRC = self.profile.tags.rTRC
-			#self.gTRC = self.profile.tags.gTRC
-			#self.bTRC = self.profile.tags.bTRC
-			#return
-			# Use TRC tags if no LUT
-			if (len(self.rTRC) == 1 and
-				len(self.gTRC) == 1 and
-				len(self.bTRC) == 1):
-				# Gamma, convert to curves
-				trc = {"rTRC": [],
-					   "gTRC": [],
-					   "bTRC": []}
-				for sig in ("rTRC", "gTRC", "bTRC"):
-					gamma = getattr(self, sig)[0]
-					setattr(self, sig, CoordinateType(self.profile))
-					for i in xrange(256):
-						trc[sig].append(math.pow(i / 255.0, gamma) * 65535)
-			else:
-				trc = {"rTRC": self.rTRC,
-					   "gTRC": self.gTRC,
-					   "bTRC": self.bTRC}
-			# Curves
-			for sig in ("rTRC", "gTRC", "bTRC"):
-				x, xp, y, yp = [], [], [], []
-				# First, get actual values
-				for i, Y in enumerate(trc[sig]):
-					##if not i or Y >= trc[sig][i - 1]:
-					xp.append(i / (len(trc[sig]) - 1.0) * 255)
-					yp.append(Y / 65535.0 * 100)
-				# Second, interpolate to given size and use the same y axis 
-				# for all channels
-				for i in xrange(size):
-					x.append(i / (size - 1.0) * 255)
-					y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
-				xi = interp(y, yp, xp)
-				yi = interp(x, xi, y)
-				setattr(self, sig, CoordinateType(self.profile))
-				for Y, v in zip(yi, x):
-					if Y <= yp[0]:
-						Y = yp[0]
-					getattr(self, sig).append([Y, v])
-			return
+		use_trc_tags = (intent == "r" and (not ("B2A0" in self.profile.tags or
+												"A2B0" in self.profile.tags) or
+										   not self.toggle_clut.GetValue()) and
+						isinstance(self.rTRC, ICCP.CurveType) and
+						isinstance(self.gTRC, ICCP.CurveType) and
+						isinstance(self.bTRC, ICCP.CurveType) and
+						len(self.rTRC) ==
+						len(self.gTRC) ==
+						len(self.bTRC))
+		has_same_trc = self.rTRC == self.gTRC == self.bTRC
 
 		profile = self.profile
 
@@ -1243,9 +1205,9 @@ class LUTFrame(BaseFrame):
 													   profile.getDescription()])))
 			return
 
-		if (profile.colorSpace != "RGB" or
+		if (profile.colorSpace not in ("RGB", "GRAY") or
 			profile.connectionColorSpace not in ("Lab", "XYZ")):
-			if profile.colorSpace != "RGB":
+			if profile.colorSpace not in ("RGB", "GRAY"):
 				unsupported_colorspace = profile.colorSpace
 			else:
 				unsupported_colorspace = profile.connectionColorSpace
@@ -1254,7 +1216,9 @@ class LUTFrame(BaseFrame):
 														 unsupported_colorspace))))
 			return
 		
-		if "B2A0" in profile.tags:
+		if profile.colorSpace == "GRAY":
+			direction = "b"
+		elif "B2A0" in profile.tags:
 			direction = {0: "b",
 						 1: "if",
 						 2: "f",
@@ -1280,8 +1244,19 @@ class LUTFrame(BaseFrame):
 				Lab_triplets.append([i * (100.0 / (size - 1)), a, b])
 			else:
 				RGB_triplets.append([i * (1.0 / (size - 1))] * 3)
+		if profile.colorSpace == "GRAY":
+			use_icclu = True
+			pcs = "x"
+			for Lab in Lab_triplets:
+				XYZ_triplets.append(colormath.Lab2XYZ(*Lab))
+		else:
+			use_icclu = False
+			pcs = "l"
 		if direction in ("b", "if"):
-			idata = Lab_triplets
+			if pcs == "l":
+				idata = Lab_triplets
+			else:
+				idata = XYZ_triplets
 		else:
 			idata = RGB_triplets
 		
@@ -1293,7 +1268,8 @@ class LUTFrame(BaseFrame):
 		# Lookup values through 'input' profile using xicclu
 		try:
 			odata = self.worker.xicclu(profile, idata, intent,
-									   direction, order, "l")
+									   direction, order, pcs,
+									   use_icclu=use_icclu)
 		except Exception, exception:
 			self.client.errors.append(Error(safe_unicode(exception)))
 
@@ -1314,10 +1290,11 @@ class LUTFrame(BaseFrame):
 		for j, RGB in enumerate(RGB_triplets):
 			for i, v in enumerate(RGB):
 				v = min(v, 1.0)
+				if (not v and j < len(RGB_triplets) - 1 and
+					not min(RGB_triplets[j + 1][i], 1.0)):
+					continue
 				v *= 255
 				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], **{"scale": 100})
-				if not v:
-					continue
 				if direction in ("b", "if"):
 					X = Z = Y
 				elif intent == "a":
@@ -1329,6 +1306,11 @@ class LUTFrame(BaseFrame):
 					self.gTRC.append([Y, v])
 				elif i == 2:
 					self.bTRC.append([Z, v])
+		if use_trc_tags:
+			if has_same_trc:
+				self.bTRC = self.gTRC = self.rTRC
+			return
+		# Generate interpolated TRCs for transfer function detection
 		for sig in ("rTRC", "gTRC", "bTRC"):
 			x, xp, y, yp = [], [], [], []
 			# First, get actual values
@@ -1343,11 +1325,11 @@ class LUTFrame(BaseFrame):
 				y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
 			xi = interp(y, yp, xp)
 			yi = interp(x, xi, y)
-			setattr(self, sig, CoordinateType(self.profile))
+			setattr(self, "tf_" + sig, CoordinateType(self.profile))
 			for Y, v in zip(yi, x):
 				if Y <= yp[0]:
 					Y = yp[0]
-				getattr(self, sig).append([Y, v])
+				getattr(self, "tf_" + sig).append([Y, v])
 
 	def move_handler(self, event):
 		if not self.IsShownOnScreen():
@@ -1426,9 +1408,12 @@ class LUTFrame(BaseFrame):
 			title = lang.getstr("calibration.lut_viewer.title")
 		self.SetTitle(title)
 		self.profile = profile
-		self.rTRC = profile.tags.get("rTRC", profile.tags.get("kTRC"))
-		self.gTRC = profile.tags.get("gTRC", profile.tags.get("kTRC"))
-		self.bTRC = profile.tags.get("bTRC", profile.tags.get("kTRC"))
+		self.rTRC = self.tf_rTRC = profile.tags.get("rTRC",
+													profile.tags.get("kTRC"))
+		self.gTRC = self.tf_gTRC = profile.tags.get("gTRC",
+													profile.tags.get("kTRC"))
+		self.bTRC = self.tf_bTRC = profile.tags.get("bTRC",
+													profile.tags.get("kTRC"))
 		self.trc = None
 		curves = []
 		curves.append(lang.getstr('vcgt'))
@@ -1437,7 +1422,7 @@ class LUTFrame(BaseFrame):
 								  "A2B0" in profile.tags)
 		if ((self.rTRC and self.gTRC and self.bTRC) or
 			(self.toggle_clut.GetValue() and
-			 profile.colorSpace == "RGB")):
+			 profile.colorSpace in ("RGB", "GRAY"))):
 			try:
 				self.lookup_tone_response_curves()
 			except Exception, exception:
@@ -1511,30 +1496,30 @@ class LUTFrame(BaseFrame):
 															100.0), unique, 
 														   self.client.entryCount)
 		elif (self.plot_mode_select.GetSelection() == 1 and
-			  isinstance(self.rTRC, (ICCP.CurveType, CoordinateType)) and
-			  len(self.rTRC) > 1 and
-			  isinstance(self.gTRC, (ICCP.CurveType, CoordinateType)) and
-			  len(self.gTRC) > 1 and
-			  isinstance(self.bTRC, (ICCP.CurveType, CoordinateType)) and
-			  len(self.bTRC) > 1):
+			  isinstance(self.tf_rTRC, (ICCP.CurveType, CoordinateType)) and
+			  len(self.tf_rTRC) > 1 and
+			  isinstance(self.tf_gTRC, (ICCP.CurveType, CoordinateType)) and
+			  len(self.tf_gTRC) > 1 and
+			  isinstance(self.tf_bTRC, (ICCP.CurveType, CoordinateType)) and
+			  len(self.tf_bTRC) > 1):
 			transfer_function = None
 			if (not getattr(self, "trc", None) and
-				len(self.rTRC) == len(self.gTRC) == len(self.bTRC)):
-				if isinstance(self.rTRC, ICCP.CurveType):
+				len(self.tf_rTRC) == len(self.tf_gTRC) == len(self.tf_bTRC)):
+				if isinstance(self.tf_rTRC, ICCP.CurveType):
 					self.trc = ICCP.CurveType(profile=self.profile)
-					for i in xrange(len(self.rTRC)):
-						self.trc.append((self.rTRC[i] +
-										 self.gTRC[i] +
-										 self.bTRC[i]) / 3.0)
+					for i in xrange(len(self.tf_rTRC)):
+						self.trc.append((self.tf_rTRC[i] +
+										 self.tf_gTRC[i] +
+										 self.tf_bTRC[i]) / 3.0)
 				else:
 					self.trc = CoordinateType(self.profile)
-					for i in xrange(len(self.rTRC)):
-						self.trc.append([(self.rTRC[i][0] +
-										  self.gTRC[i][0] +
-										  self.bTRC[i][0]) / 3.0,
-										 (self.rTRC[i][1] +
-										  self.gTRC[i][1] +
-										  self.bTRC[i][1]) / 3.0])
+					for i in xrange(len(self.tf_rTRC)):
+						self.trc.append([(self.tf_rTRC[i][0] +
+										  self.tf_gTRC[i][0] +
+										  self.tf_bTRC[i][0]) / 3.0,
+										 (self.tf_rTRC[i][1] +
+										  self.tf_gTRC[i][1] +
+										  self.tf_bTRC[i][1]) / 3.0])
 			if getattr(self, "trc", None):
 				transfer_function = self.trc.get_transfer_function(slice=(0.00, 1.00))
 			#if "R" in colorants and "G" in colorants and "B" in colorants:
@@ -1559,7 +1544,7 @@ class LUTFrame(BaseFrame):
 				   #self.profile.tags.bTRC == self.profile.tags.rTRC)):
 				#transfer_function = self.profile.tags.bTRC.get_transfer_function()
 			if transfer_function and transfer_function[1] >= .95:
-				if self.rTRC == self.gTRC == self.bTRC:
+				if self.tf_rTRC == self.tf_gTRC == self.tf_bTRC:
 					label = lang.getstr("rgb.trc")
 				else:
 					label = lang.getstr("rgb.trc.averaged")
@@ -1824,9 +1809,12 @@ class LUTFrame(BaseFrame):
 			if dlst != [] and hasattr(self.client, "point_grid"):
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
 				legend = legend.split(", ")
-				R, G, B = (self.client.point_grid[0].get(pointXY[0], None),
-						   self.client.point_grid[1].get(pointXY[0], None),
-						   self.client.point_grid[2].get(pointXY[0], None))
+				R, G, B = (self.client.point_grid[0].get(pointXY[0],
+							0 if self.toggle_red.GetValue() else None),
+						   self.client.point_grid[1].get(pointXY[0],
+							0 if self.toggle_green.GetValue() else None),
+						   self.client.point_grid[2].get(pointXY[0],
+							0 if self.toggle_blue.GetValue() else None))
 				if (self.plot_mode_select.GetSelection() == 0 or
 					R == G == B or ((R == G or G == B or R == B) and
 									None in (R, G ,B))):
