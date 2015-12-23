@@ -12775,6 +12775,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									setcfg("measurement_report.use_devlink_profile", 0)
 				if not display_match:
 					self.update_menus()
+					if not update_ccmx_items:
+						self.update_estimated_measurement_time("cal")
 				self.lut3d_set_path()
 				if config.get_display_name() == "Resolve":
 					setcfg("3dlut.enable", 0)
