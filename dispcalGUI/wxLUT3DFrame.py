@@ -37,7 +37,7 @@ class LUT3DFrame(BaseFrame):
 
 	""" 3D LUT creation window """
 	
-	def __init__(self, parent=None):
+	def __init__(self, parent=None, setup=True):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "3dlut.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
@@ -60,6 +60,10 @@ class LUT3DFrame(BaseFrame):
 
 		self.panel = self.FindWindowByName("panel")
 
+		if setup:
+			self.setup()
+
+	def setup(self):
 		self.worker = worker.Worker(self)
 		self.worker.set_argyll_version("collink")
 
@@ -920,7 +924,8 @@ class LUT3DFrame(BaseFrame):
 									odata = self.worker.xicclu(profile, (0, 0, 0),
 															   pcs="x")
 								except Exception, exception:
-									show_result_dialog(exception, self)
+									wx.CallAfter(show_result_dialog, exception,
+												 self)
 								else:
 									if len(odata) != 1 or len(odata[0]) != 3:
 										show_result_dialog("Blackpoint is invalid: %s"
@@ -945,7 +950,8 @@ class LUT3DFrame(BaseFrame):
 									odata = self.worker.xicclu(profile, (0, 0, 0),
 															   pcs="x")
 								except Exception, exception:
-									show_result_dialog(exception, self)
+									wx.CallAfter(show_result_dialog, exception,
+												 self)
 								else:
 									if len(odata) != 1 or len(odata[0]) != 3:
 										show_result_dialog("Blackpoint is invalid: %s"
@@ -1294,12 +1300,16 @@ def main():
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
-	app.TopWindow = LUT3DFrame()
+	app.TopWindow = LUT3DFrame(setup=False)
 	if sys.platform == "darwin":
 		app.TopWindow.init_menubar()
-	app.TopWindow.listen()
-	app.TopWindow.Show()
+	wx.CallLater(1, _main, app)
 	app.MainLoop()
+
+def _main(app):
+	app.TopWindow.listen()
+	app.TopWindow.setup()
+	app.TopWindow.Show()
 
 if __name__ == "__main__":
 	main()

@@ -759,10 +759,13 @@ def main():
 	app.TopWindow = SynthICCFrame()
 	if sys.platform == "darwin":
 		app.TopWindow.init_menubar()
+	wx.CallLater(1, _main, app)
+	app.MainLoop()
+
+def _main(app):
 	app.TopWindow.listen()
 	app.process_argv(1)
 	app.TopWindow.Show()
-	app.MainLoop()
 
 if __name__ == "__main__":
 	main()

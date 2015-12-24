@@ -1899,10 +1899,18 @@ def main():
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
-	check_set_argyll_bin()
 	app.TopWindow = ProfileInfoFrame(None, -1)
 	if sys.platform == "darwin":
 		app.TopWindow.init_menubar()
+	wx.CallLater(1, _main, app)
+	app.MainLoop()
+	writecfg(module="profile-info", options=("3d.format",
+											 "last_cal_or_icc_path",
+											 "last_icc_path",
+											 "position.profile_info",
+											 "size.profile_info"))
+
+def _main(app):
 	app.TopWindow.listen()
 	display_no = get_argyll_display_number(app.TopWindow.get_display()[1])
 	for arg in sys.argv[1:]:
@@ -1912,12 +1920,6 @@ def main():
 	else:
 		app.TopWindow.LoadProfile(get_display_profile(display_no))
 	app.TopWindow.Show()
-	app.MainLoop()
-	writecfg(module="profile-info", options=("3d.format",
-											 "last_cal_or_icc_path",
-											 "last_icc_path",
-											 "position.profile_info",
-											 "size.profile_info"))
 
 if __name__ == "__main__":
 	main()

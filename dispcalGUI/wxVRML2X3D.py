@@ -124,10 +124,13 @@ def main():
 		app.TopWindow = VRML2X3DFrame(html, embed, view, force, cache)
 		if sys.platform == "darwin":
 			app.TopWindow.init_menubar()
-		app.TopWindow.listen()
-		app.process_argv()
-		app.TopWindow.Show()
+		wx.CallLater(1, _main, app)
 		app.MainLoop()
+
+def _main(app):
+	app.TopWindow.listen()
+	app.process_argv()
+	app.TopWindow.Show()
 
 
 def vrmlfile2x3dfile(vrmlpath=None, x3dpath=None, html=True, embed=False,

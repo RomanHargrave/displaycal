@@ -50,7 +50,7 @@ def swap_dict_keys_values(mydict):
 class TestchartEditor(BaseFrame):
 	def __init__(self, parent = None, id = -1, path=None,
 				 cfg="testchart.file",
-				 parent_set_chart_methodname="set_testchart"):
+				 parent_set_chart_methodname="set_testchart", setup=True):
 		BaseFrame.__init__(self, parent, id, lang.getstr("testchart.edit"),
 						   name="tcgen")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
@@ -66,7 +66,14 @@ class TestchartEditor(BaseFrame):
 			"i": lang.getstr("tc.i"),
 			"I": lang.getstr("tc.I")
 		}
-		
+
+		self.cfg = cfg
+		self.parent_set_chart_methodname = parent_set_chart_methodname
+
+		if setup:
+			self.setup(path)
+
+	def setup(self, path=None):
 		self.worker = Worker(self)
 		self.worker.set_argyll_version("targen")
 		
@@ -74,9 +81,6 @@ class TestchartEditor(BaseFrame):
 			self.tc_algos_ab["Q"] = lang.getstr("tc.Q")
 
 		self.tc_algos_ba = swap_dict_keys_values(self.tc_algos_ab)
-
-		self.cfg = cfg
-		self.parent_set_chart_methodname = parent_set_chart_methodname
 
 		self.label_b2a = {"R %": "RGB_R",
 						  "G %": "RGB_G",
@@ -3404,13 +3408,17 @@ def main():
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
-	app.TopWindow = TestchartEditor(path=False)
+	app.TopWindow = TestchartEditor(setup=False)
 	if sys.platform == "darwin":
 		app.TopWindow.init_menubar()
+	wx.CallLater(1, _main, app)
+	app.MainLoop()
+
+def _main(app):
 	app.TopWindow.listen()
+	app.TopWindow.setup(path=False)
 	app.process_argv(1) or app.TopWindow.tc_load_cfg_from_ti1()
 	app.TopWindow.Show()
-	app.MainLoop()
 
 if __name__ == "__main__":
 	main()

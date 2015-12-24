@@ -1891,6 +1891,12 @@ def main():
 	app.TopWindow.Bind(wx.EVT_CLOSE, app.TopWindow.OnClose, app.TopWindow)
 	if sys.platform == "darwin":
 		app.TopWindow.init_menubar()
+	wx.CallLater(1, _main, app)
+	app.MainLoop()
+	config.writecfg(module="curve-viewer", options=("display.number", ))
+
+def _main(app):
+	app.TopWindow.listen()
 	app.TopWindow.worker.enumerate_displays_and_ports(check_lut_access=False,
 													  enumerate_ports=False)
 	app.TopWindow.display_no, geometry, client_area = app.TopWindow.get_display()
@@ -1898,7 +1904,6 @@ def main():
 	display_no = get_argyll_display_number(geometry)
 	setcfg("display.number", display_no + 1)
 	app.TopWindow.update_controls()
-	app.TopWindow.listen()
 	for arg in sys.argv[1:]:
 		if os.path.isfile(arg):
 			app.TopWindow.drop_handler(safe_unicode(arg))
@@ -1906,8 +1911,6 @@ def main():
 	else:
 		app.TopWindow.load_lut(get_display_profile(display_no))
 	app.TopWindow.Show()
-	app.MainLoop()
-	config.writecfg(module="curve-viewer", options=("display.number", ))
 
 if __name__ == '__main__':
 	main()
