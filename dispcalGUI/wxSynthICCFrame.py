@@ -8,6 +8,7 @@ from ICCProfile import ICCProfile
 from config import get_data_path, get_verified_path, getcfg, hascfg, setcfg
 from log import safe_print
 from meta import name as appname
+from options import debug
 from util_os import waccess
 from worker import Error, show_result_dialog
 import ICCProfile as ICCP
@@ -123,6 +124,7 @@ class SynthICCFrame(BaseFrame):
 			self.Center()
 	
 	def OnClose(self, event=None):
+		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if (self.IsShownOnScreen() and not self.IsMaximized() and
 			not self.IsIconized()):
 			x, y = self.GetScreenPosition()

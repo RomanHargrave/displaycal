@@ -16,6 +16,7 @@ from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 					setcfg)
 from log import safe_print
 from meta import name as appname, version
+from options import debug
 from util_os import islink, readlink, waccess
 from util_str import safe_unicode, strtr
 from worker import Error, Info, get_current_profile_path, show_result_dialog
@@ -154,6 +155,7 @@ class LUT3DFrame(BaseFrame):
 			self.worker.thread.isAlive()):
 			self.worker.abort_subprocess(True)
 			return
+		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if (self.IsShownOnScreen() and not self.IsMaximized() and
 			not self.IsIconized()):
 			x, y = self.GetScreenPosition()
@@ -377,6 +379,7 @@ class LUT3DFrame(BaseFrame):
 										install_3dlut=True)
 	
 	def lut3d_create_handler(self, event, path=None, copy_from_path=None):
+		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not check_set_argyll_bin():
 			return
 		if isinstance(self, LUT3DFrame):

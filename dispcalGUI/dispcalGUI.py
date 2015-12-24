@@ -6095,6 +6095,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.reportframe.Show(not self.reportframe.IsShownOnScreen())
 
 	def measurement_report_handler(self, event, path=None):
+		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not check_set_argyll_bin():
 			return
 			
