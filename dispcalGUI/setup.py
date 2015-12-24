@@ -208,7 +208,9 @@ def create_app_symlinks(dist_dir, scripts):
 		toolscript = os.path.join(dist_dir, maincontents_rel, 'MacOS', script)
 		has_tool_script = os.path.exists(toolscript)
 		if not has_tool_script:
-			os.symlink(appname, toolscript)
+			# Don't symlink, apps won't be able to run in parallel!
+			shutil.copy(os.path.join(dist_dir, maincontents_rel, 'MacOS',
+						appname), toolscript)
 		toolcontents = os.path.join(toolapp, "Contents")
 		os.makedirs(toolcontents)
 		subdirs = ["Frameworks", "Resources"]
