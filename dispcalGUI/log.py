@@ -292,13 +292,13 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 	return logger
 
 
-def setup_logging(logdir, name=appname, backupCount=5):
+def setup_logging(logdir, name=appname, ext=".py", backupCount=5):
 	"""
 	Setup the logging facility.
 	"""
 	global _logdir, logger
 	_logdir = logdir
-	if name.startswith(appname):
+	if name.startswith(appname) or ext in (".app", ".exe", ".pyw"):
 		logger = get_file_logger(None, loglevel, "midnight",
 								 backupCount, filename=name)
 		streamhandler = logging.StreamHandler(logbuffer)
