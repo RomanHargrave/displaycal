@@ -418,7 +418,7 @@
 		"*displayport": "DisplayPort",
 		"*dlp_screen": "DLP Screen",
 		"*donation_header": "Your support is appreciated!",
-		"*donation_message": "If you would like to support the development of, technical assistance with, and continued availability of dispcalGUI and Argyll CMS, please consider a financial contribution. As dispcalGUI wouldn't be useful without Argyll CMS, all donations received for dispcalGUI will be split between both projects.\nFor light personal non-commercial use, a one-time donation may be appropriate. If you're using dispcalGUI professionally, an annual or monthly contribution would make a great deal of difference in ensuring that both projects continue to be available.\n\nThanks to all contributors!",
+		"*donation_message": "If you would like to support the development of, technical assistance with, and continued availability of dispcalGUI and Argyll CMS, please consider a financial contribution. As dispcalGUI wouldn't be useful without Argyll CMS, all contributions received for dispcalGUI will be split between both projects.\nFor light personal non-commercial use, a one-time contribution may be appropriate. If you're using dispcalGUI professionally, an annual or monthly contribution would make a great deal of difference in ensuring that both projects continue to be available.\n\nThanks to all contributors!",
 		"*download": "Downloading",
 		"*download_fail_empty_response": "Download failed: %s returned an empty document.",
 		"*download_fail_wrong_size": "Download failed: The file does not have the expected size of %s bytes (received %s bytes).",

@@ -178,11 +178,13 @@ jQuery(function ($) {
 		}
 		imgpaths.push('img/dispcalGUI-main_window-shadow-720.png');
 		/* Load images */
+		var protocol = location.protocol;
+		if (protocol == 'file:') protocol = 'http:';
 		for (var i = 0; i < imgpaths.length; i ++) {
 			img = new Image();
 			imgs.push(img);
 			img.onload = splash_onload;
-			img.src = 'http://dispcalgui.hoech.net/' + imgpaths[i];
+			img.src = protocol + '//dispcalgui.hoech.net/' + imgpaths[i];
 		}
 	}
 	

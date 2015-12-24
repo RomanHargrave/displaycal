@@ -12,7 +12,7 @@
 		<meta name="description" content="A graphical front-end for display calibration and profiling using Argyll CMS" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="http://dispcalgui.hoech.net/shariff/shariff.complete.css" />
-		<link rel="stylesheet" href="theme/readme.css?ts=2015-09-04T02:46" />
+		<link rel="stylesheet" href="theme/readme.css?ts=2015-12-23T03:39" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2015-09-01T12:44" />
 		<link rel="stylesheet" href="theme/prism.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
@@ -37,8 +37,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.0.6 </h2>
-					<p>2015-12-21 21:12 UTC</p>
+					<h2 id="version">3.0.6.1 </h2>
+					<p>2015-12-24 14:40 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -51,7 +51,7 @@
 					<li class="toc"><a href="#toc">Documentation</a></li>
 					<li class="help"><a href="#help">Get help</a></li>
 					<li class="reportbug"><a href="#reportbug">Report a bug</a></li>
-					<li class="donate"><a href="#donate">Donate</a></li>
+					<li class="donate"><a href="#donate">Contribute</a></li>
 				</ul>
 			</div>
 
@@ -68,18 +68,19 @@
 			<div id="donate">
 			<h2 style="margin-top: 0">Your support is appreciated!</h2>
 			<p>If you would like to support the development of, technical assistance with, and continued availability of dispcalGUI and Argyll CMS, please consider a financial contribution.
-			As dispcalGUI wouldn't be useful without Argyll CMS, all donations received for dispcalGUI will be split between both projects.<br />
-			For light personal non-commercial use, a one-time donation may be appropriate.
-			If you're using dispcalGUI professionally, an annual or monthly donation would make a great deal of difference in ensuring that both projects continue to be available.</p>
-			<p>If you have decided to donate (many thanks!), but you'd like to give to <a href="http://argyllcms.com">Argyll CMS</a> directly on your own behalf (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its donation links), please leave a note on your dispcalGUI donation if donating to both projects. Please note that if your contribution should be put towards adding a certain feature in Argyll CMS, like support for a specific instrument, it will be more appropriate and efficient to <a href="http://argyllcms.com">donate to Argyll CMS only</a>, and directly.</p>
+			As dispcalGUI wouldn't be useful without Argyll CMS, all contributions received for dispcalGUI will be split between both projects.<br />
+			For light personal non-commercial use, a one-time contribution may be appropriate.
+			If you're using dispcalGUI professionally, an annual or monthly contribution would make a great deal of difference in ensuring that both projects continue to be available.</p>
+			<p>If you have decided to contribute (many thanks!), but you'd like to give to <a href="http://argyllcms.com">Argyll CMS</a> directly on your own behalf (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its contribution links), please leave a note on your dispcalGUI contribution if contributing to both projects. Please note that if your contribution should be put towards adding a certain feature in Argyll CMS, like support for a specific instrument, it will be more appropriate and efficient to <a href="http://argyllcms.com">contribute to Argyll CMS only</a>, and directly.</p>
 			<a href="#thanks">Thanks to all contributors!</a><br />
 			<form id="donationform" action="https://www.paypal.com/cgi-bin/webscr" method="post">
 				<p>
-					Donate using PayPal:
+					Contribute using PayPal:
 					<input type="hidden" name="cmd" value="_donations" />
 					<input id="donationform_business" type="hidden" name="business" value="" />
-					<input type="hidden" name="item_name" value="Donation to Florian Hoech/dispcalGUI" />
+					<input type="hidden" name="item_name" value="Contribution to Florian Hoech/dispcalGUI" />
 					<input type="hidden" name="no_shipping" value="1" />
+					<input type="hidden" name="lc" value="US" />
 					<select name="amount">
 						<option disabled="disabled">Home / Enthusiast Use</option>
 						<option value="10">10</option>
@@ -104,7 +105,7 @@
 						<option value="USD">$ US Dollar</option>
 					</select>
 					<button type="submit" class="paypal">Contribute</button>
-					<button type="button" class="paypal" onclick="location.href = document.forms['donationform'].action + '?cmd=_donations&amp;business=' + encodeURIComponent(document.forms['donationform'].elements['business'].value) + '&amp;item_name=' + encodeURIComponent(document.forms['donationform'].elements['item_name'].value) + '&amp;no_shipping=1&amp;currency_code=' + document.forms['donationform'].elements['currency_code'].value">Own amount</button>
+					<button type="button" class="paypal" onclick="location.href = document.forms['donationform'].action + '?cmd=_donations&amp;lc=' + document.forms['donationform'].elements['lc'].value + '&amp;business=' + encodeURIComponent(document.forms['donationform'].elements['business'].value) + '&amp;item_name=' + encodeURIComponent(document.forms['donationform'].elements['item_name'].value) + '&amp;no_shipping=1&amp;currency_code=' + document.forms['donationform'].elements['currency_code'].value">Own amount</button>
 				</p>
 			</form>
 			<script type="text/javascript">
@@ -115,7 +116,7 @@
 						btns[i].style.visibility = 'hidden';
 					}
 					setTimeout(function () {
-						document.getElementById('donationform_business').value = ['dispcalgui.hoech.net', 'donate'].reverse().join('\x40');
+						document.getElementById('donationform_business').value = ['dispcalgui.hoech.net', 'contribute'].reverse().join('\x40');
 						for (i = 0; i < btns.length; i ++) {
 							btns[i].style.visibility = 'visible';
 						}
@@ -123,7 +124,7 @@
 				})();
 				//]]>
 			</script>
-			<span>(For other means of donating, please contact me under <a>dispcalGUI ‹at› hoech . net</a>)</span>
+			<span>(For other means of contributing, please contact me under <a>dispcalGUI ‹at› hoech . net</a>)</span>
 			</div>
 		</div>
 
@@ -2417,8 +2418,18 @@ Dilma Herrera
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2015-12-21 21:12 (UTC) 3.0.6  -->
+			<!-- 2015-12-24 14:40 (UTC) 3.0.6.1  -->
 			<dl>
+				<dt id="changelog-3.0.6.1">2015-12-24 14:40 (UTC) 3.0.6.1 </dt>
+					<dd>
+						<h3>3.0.6.1 </h3>
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Mac OS X: 'Menu' object has no attribute 'IsShownOnScreen' when trying to use Cmd-Q to quit after using some of the controls.</li>
+							<li>Mac OS X: Find Argyll CMS reference files if Argyll CMS was installed via Homebrew.</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.0.6">2015-12-21 21:12 (UTC) 3.0.6 </dt>
 					<dd>
 						<h3>3.0.6 </h3>
@@ -2573,7 +2584,7 @@ Dilma Herrera
 							<li>After creating a 3D LUT that incorporates 1D LUT calibration and previewing this calibration on a display connected directly to the system when saving/installing the 3D LUT, restore video card gamma table to the current display profile calibration (if any) afterwards.</li>
 							<li>Creating colorimeter correction with non-7-bit-ASCII characters in the description.</li>
 							<li>Added workaround for undecodable strings in some 3rd party ICC profiles.</li>
-							<li>Restoring defaults from the “Options” menu no longer resets the donation popup “Do not show again” preference.</li>
+							<li>Restoring defaults from the “Options” menu no longer resets the contribution popup “Do not show again” preference.</li>
 							<li>Cosmetic: Work-around Argyll CMS 1.7 (harmless) warning message “Spyder: Measuring refresh rate failed” when using the Spyder4/5 with measurement modes “LCD (CCFL)” or “LCD (White LED)”.</li>
 							<li>Synthetic ICC profile creator:
 								<ul>
