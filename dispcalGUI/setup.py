@@ -205,9 +205,10 @@ def create_app_symlinks(dist_dir, scripts):
 				shutil.rmtree(toolapp)
 			else:
 				raise SystemExit('User aborted')
-		has_tool_script = os.path.exists(os.path.join(dist_dir,
-													  maincontents_rel,
-													  'MacOS', script))
+		toolscript = os.path.join(dist_dir, maincontents_rel, 'MacOS', script)
+		has_tool_script = os.path.exists(toolscript)
+		if not has_tool_script:
+			os.symlink(appname, toolscript)
 		toolcontents = os.path.join(toolapp, "Contents")
 		os.makedirs(toolcontents)
 		subdirs = ["Frameworks", "Resources"]
@@ -261,12 +262,10 @@ def create_app_symlinks(dist_dir, scripts):
 				# CFBundleIconFile
 				infoxml = infoxml.replace("%s.icns</string>" % name,
 										  "%s.icns</string>" % script)
-				if has_tool_script:
-					# PyInstaller
-					# CFBundleExecutable
-					infoxml = re.sub("(Executable</key>\s*<string>)%s" % name,
-									 lambda match: match.group(1) +
-												   script, infoxml)
+				# CFBundleExecutable
+				infoxml = re.sub("(Executable</key>\s*<string>)%s" % name,
+								 lambda match: match.group(1) +
+											   script, infoxml)
 				with codecs.open(os.path.join(toolcontents, entry), "w",
 								 "UTF-8") as info_out:
 					info_out.write(infoxml)
