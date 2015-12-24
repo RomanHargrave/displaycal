@@ -38,7 +38,7 @@
 			<div id="friendlybox">
 				<div id="get">
 					<h2 id="version">3.0.6.1 </h2>
-					<p>2015-12-24 14:40 UTC</p>
+					<p>2015-12-24 19:34 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get dispcalGUI</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -2418,15 +2418,18 @@ Dilma Herrera
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2015-12-24 14:40 (UTC) 3.0.6.1  -->
+			<!-- 2015-12-24 19:34 (UTC) 3.0.6.1  -->
 			<dl>
-				<dt id="changelog-3.0.6.1">2015-12-24 14:40 (UTC) 3.0.6.1 </dt>
+				<dt id="changelog-3.0.6.1">2015-12-24 19:34 (UTC) 3.0.6.1 </dt>
 					<dd>
 						<h3>3.0.6.1 </h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Mac OS X: 'Menu' object has no attribute 'IsShownOnScreen' when trying to use Cmd-Q to quit after using some of the controls.</li>
+							<li>Standalone tools: If Argyll CMS executables were not found at launch, the dialog asking for their location closed immediately.</li>
+							<li>Mac OS X: Error message “'Menu' object has no attribute 'IsShownOnScreen'” when trying to use the menu or Cmd-Q to quit after using some of the controls.</li>
 							<li>Mac OS X: Find Argyll CMS reference files if Argyll CMS was installed via Homebrew.</li>
+							<li>Mac OS X: Application logfiles for standalone tools weren't written anymore (regression of r3431).</li>
+							<li>Mac OS X: Standalone tools couldn't be run in parallel to each other or the main application.</li>
 						</ul>
 					</dd>
 

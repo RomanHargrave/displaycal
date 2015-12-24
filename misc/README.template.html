@@ -2425,8 +2425,11 @@ Dilma Herrera
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>Mac OS X: 'Menu' object has no attribute 'IsShownOnScreen' when trying to use Cmd-Q to quit after using some of the controls.</li>
+							<li>Standalone tools: If Argyll CMS executables were not found at launch, the dialog asking for their location closed immediately.</li>
+							<li>Mac OS X: Error message “'Menu' object has no attribute 'IsShownOnScreen'” when trying to use the menu or Cmd-Q to quit after using some of the controls.</li>
 							<li>Mac OS X: Find Argyll CMS reference files if Argyll CMS was installed via Homebrew.</li>
+							<li>Mac OS X: Application logfiles for standalone tools weren't written anymore (regression of r3431).</li>
+							<li>Mac OS X: Standalone tools couldn't be run in parallel to each other or the main application.</li>
 						</ul>
 					</dd>
 
