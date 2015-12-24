@@ -33,7 +33,8 @@ from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose
 from safe_print import enc, fs_enc, original_codepage
 from util_io import StringIOu as StringIO
-from util_os import expanduseru, expandvarsu, getenvu, is_superuser, listdir_re
+from util_os import (expanduseru, expandvarsu, getenvu, is_superuser,
+					 listdir_re, which)
 from util_str import create_replace_function, safe_unicode, strtr
 import encodedstdio
 
@@ -407,7 +408,8 @@ def get_data_path(relpath, rex=None):
 		 relpath.endswith(os.path.altsep))):
 		return None
 	dirs = list(data_dirs)
-	argyll_dir = getcfg("argyll.dir")
+	argyll_dir = (getcfg("argyll.dir") or
+				  os.path.dirname(os.path.realpath(which("dispcal") or "")))
 	if argyll_dir and os.path.isdir(os.path.join(argyll_dir, "..", "ref")):
 		dirs.append(os.path.dirname(argyll_dir))
 	dirs.extend(extra_data_dirs)
