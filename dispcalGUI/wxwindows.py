@@ -1356,6 +1356,12 @@ class BaseFrame(wx.Frame):
 			safe_print(exception)
 
 	def focus_handler(self, event):
+		# IMPORTANT: event can either be EVT_TEXT, EVT_SET_FOCUS, EVT_CLOSE,
+		# EVT_MENU or EVT_BUTTON.
+		# This means the available event methods will be different, e.g.
+		# only EVT_SET_FOCUS will have a GetWindow method, and EVT_MENU's
+		# GetEventObject method returns the menu item which doesn't have
+		# most methods that controls would have.
 		if debug:
 			if hasattr(event.GetEventObject(), "GetId"):
 				safe_print("[D] focus_handler called for ID %s %s %s, event type "
@@ -1374,17 +1380,18 @@ class BaseFrame(wx.Frame):
 							   (event.GetWindow().GetId(), 
 								event.GetWindow().GetName(), 
 								event.GetWindow().__class__))
-			if hasattr(self, "last_focused_ctrl"):
+			if getattr(self, "last_focused_ctrl", None):
 				safe_print("[D] Last focused control: ID %s %s %s" %
 						   (self.last_focused_ctrl.GetId(),
 							self.last_focused_ctrl.GetName(),
 							self.last_focused_ctrl.__class__))
-		if (hasattr(self, "last_focused_ctrl") and self.last_focused_ctrl and
-			not isinstance(self.last_focused_ctrl, floatspin.FloatTextCtrl) and
+		if (getattr(self, "last_focused_ctrl", None) and
+			isinstance(self.last_focused_ctrl, wx.ComboBox) and
 			self.last_focused_ctrl != event.GetEventObject() and
 			self.last_focused_ctrl.IsShownOnScreen() and
 			event.GetEventObject() and
-			event.GetEventObject().IsShownOnScreen()):
+			(not hasattr(event.GetEventObject(), "IsShownOnScreen") or
+			 event.GetEventObject().IsShownOnScreen())):
 			catchup_event = wx.FocusEvent(wx.EVT_KILL_FOCUS.evtType[0], 
 										  self.last_focused_ctrl.GetId())
 			if debug:
@@ -1399,9 +1406,12 @@ class BaseFrame(wx.Frame):
 				if debug:
 					safe_print("[D] Last focused control processed catchup "
 							   "event")
+				self.last_focused_ctrl = None
 		if (hasattr(event.GetEventObject(), "GetId") and
 			callable(event.GetEventObject().GetId) and
+			isinstance(event.GetEventObject(), wx.Control) and
 			event.GetEventObject() != getattr(self, "last_focused_ctrl", None) and
+			hasattr(event.GetEventObject(), "IsShownOnScreen") and
 			event.GetEventObject().IsShownOnScreen()):
 		   	if debug:
 				safe_print("[D] Setting last focused control to ID %s %s %s"
