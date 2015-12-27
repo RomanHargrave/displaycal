@@ -647,7 +647,8 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.SetMaxFontSize(11)
 	label = label or lang.getstr("header")
 	if scale > 1:
-		label_h = label.count("\n") * header.GetTextExtent(label.split("\n")[0])[1]
+		lines = label.split("\n")
+		label_h = len(lines) * header.GetTextExtent(lines[0])[1]
 	if not bitmap:
 		bitmap = getbitmap("theme/header", False)
 		h = 60
