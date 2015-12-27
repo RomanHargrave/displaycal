@@ -285,17 +285,17 @@ def getbitmap(name, display_missing_icon=True):
 			if path:
 				bitmaps[name] = wx.Bitmap(path)
 				if scale > 1:
-					downscale = False
+					rescale = False
 					if i == 1:
 						# HighDPI support. 2x version, determine scaled size
 						w, h = [int(round(v / 2 * scale)) for v in bitmaps[name].Size]
-						downscale = True
+						rescale = True
 					elif len(size) == 2:
 						# HighDPI support. Icon
-						downscale = True
-					if downscale and (bitmaps[name].Size[0] > w or
-									  bitmaps[name].Size[1] > h):
-						# HighDPI support. Scale down
+						rescale = True
+					if rescale and (bitmaps[name].Size[0] != w or
+									bitmaps[name].Size[1] != h):
+						# HighDPI support. Rescale
 						img = bitmaps[name].ConvertToImage()
 						if parts[-1] == "rgbsquares":
 							# Hmm. Everything else looks great with bicubic,
