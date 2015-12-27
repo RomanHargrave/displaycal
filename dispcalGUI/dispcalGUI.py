@@ -636,21 +636,40 @@ def get_cgats_path(cgats):
 
 def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 			   repeat_sub_bitmap_h=(214, 0, 8, 60)):
-	header = BitmapBackgroundPanelText(parent, size=size)
+	scale = getcfg("app.dpi") / config.get_default_dpi()
+	header = BitmapBackgroundPanelText(parent)
 	header.label_x = x
 	header.label_y = y
-	header.repeat_sub_bitmap_h = repeat_sub_bitmap_h
 	header.scalebitmap = (False, ) * 2
 	header.textshadow = False
 	header.SetBackgroundColour("#336699")
 	header.SetForegroundColour("#FFFFFF")
+	header.SetMaxFontSize(11)
+	label = label or lang.getstr("header")
+	if scale > 1:
+		label_h = label.count("\n") * header.GetTextExtent(label.split("\n")[0])[1]
 	if not bitmap:
 		bitmap = getbitmap("theme/header", False)
-		if bitmap.Size[0] >= 220 and bitmap.Size[1] >= 60:
-			bitmap = bitmap.GetSubBitmap((0, 0, 222, 60))
+		h = 60
+		if scale > 1:
+			h = h - label_h + label_h * scale
+		if bitmap.Size[0] >= 220 and bitmap.Size[1] >= h:
+			bitmap = bitmap.GetSubBitmap((0, 0, 222, h))
+	if scale > 1:
+		size = (-1, size[1] - label_h + label_h * scale)
+		y = repeat_sub_bitmap_h[1]
+		if y:
+			y = y - label_h + label_h * scale
+		if y + (repeat_sub_bitmap_h[3] - repeat_sub_bitmap_h[1]) < bitmap.Size[1]:
+			repeat_sub_bitmap_h = (repeat_sub_bitmap_h[0],
+								   y,
+								   repeat_sub_bitmap_h[2],
+								   repeat_sub_bitmap_h[3] -
+								   repeat_sub_bitmap_h[1] + y)
+	header.MinSize = size
+	header.repeat_sub_bitmap_h = repeat_sub_bitmap_h
 	header.SetBitmap(bitmap)
-	header.SetMaxFontSize(11)
-	header.SetLabel(label or lang.getstr("header"))
+	header.SetLabel(label)
 	return header
 
 
@@ -1451,8 +1470,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.header_btm.BackgroundColour = "#336699"
 		self.header_btm.scalebitmap = False, False
 		header_bmp = getbitmap("theme/header", False)
-		if header_bmp.Size[0] >= 80 and header_bmp.Size[1] >= 180:
-			header_bmp = header_bmp.GetSubBitmap((0, 60, 80, 120))
+		if (header_bmp.Size[0] >= 80 and header_bmp.Size[1] >= 180 and
+			self.header.MinSize[1] < 120):
+			header_bmp = header_bmp.GetSubBitmap((0, self.header.MinSize[1], 80,
+												  180 - self.header.MinSize[1]))
 			self.header_btm.SetBitmap(header_bmp)
 		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP |
 															   wx.EXPAND)
