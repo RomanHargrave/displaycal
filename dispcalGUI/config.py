@@ -234,8 +234,17 @@ def getbitmap(name, display_missing_icon=True):
 					size = []
 		ow, oh = w, h
 		if not getcfg("app.dpi", False):
-			# HighDPI support. Get screen PPI
-			defaults["app.dpi"] = wx.ScreenDC().GetPPI()[0]
+			# HighDPI support
+			if sys.platform in ("darwin", "win32"):
+				# Determine screen DPI
+				dpi = wx.ScreenDC().GetPPI()[0]
+			else:
+				# Linux. Determine font scaling factor
+				font = wx.Font(256, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+							   wx.FONTWEIGHT_NORMAL)
+				txt_scale = max(font.GetPixelSize()[0] / 256.0, 1)
+				dpi = int(round(get_default_dpi() * txt_scale))
+			defaults["app.dpi"] = dpi
 		scale = getcfg("app.dpi") / get_default_dpi()
 		if scale > 1:
 			# HighDPI support
