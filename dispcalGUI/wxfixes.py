@@ -521,9 +521,15 @@ def get_dc_font_size(size, dc):
 	pointsize = (1.0, 1.0)
 	if isinstance(dc, wx.GCDC):
 		pointsize = tuple(1.0 / scale for scale in dc.GetLogicalScale())
-	if (sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC) or
-		wx.VERSION >= (2, 9)):
+	if sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC):
 		return size * (sum(pointsize) / 2.0)
+	elif wx.VERSION >= (2, 9):
+		# On Linux, we need to correct the font size by a certain factor if
+		# wx.GCDC is used, to make text the same size as if wx.GCDC weren't used
+		from config import get_default_dpi, getcfg, set_default_app_dpi
+		set_default_app_dpi()
+		scale = getcfg("app.dpi") / get_default_dpi()
+		return size * ((scale * pointsize[0] + scale * pointsize[1]) / 2.0)
 	else:
 		# On Linux, we need to correct the font size by a certain factor if
 		# wx.GCDC is used, to make text the same size as if wx.GCDC weren't used
