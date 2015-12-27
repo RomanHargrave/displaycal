@@ -1875,7 +1875,8 @@ class BitmapBackgroundPanel(wx.PyPanel):
 				sub_img = sub_bmp.ConvertToImage()
 				sub_img.Rescale(self.GetSize()[0] -
 								bmp.GetSize()[0],
-								bmp.GetSize()[1],
+								bmp.GetSize()[1] if self.scalebitmap[1]
+								else sub_bmp.GetSize()[1],
 								quality=self.scalequality)
 				dc.DrawBitmap(sub_img.ConvertToBitmap(), bmp.GetSize()[0], 0)
 		if self.drawbordertop:
