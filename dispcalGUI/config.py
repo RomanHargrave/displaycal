@@ -1482,7 +1482,9 @@ def set_default_app_dpi():
 			# Linux. Determine font scaling factor
 			font = wx.Font(256, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
 						   wx.FONTWEIGHT_NORMAL)
-			txt_scale = max(font.GetPixelSize()[0] / 256.0, 1)
+			txt_scale = font.GetPixelSize()[0] / 256.0
+			if not txt_scale:
+				txt_scale = 1
 			dpi = int(round(get_default_dpi() * txt_scale))
 		defaults["app.dpi"] = dpi
 
