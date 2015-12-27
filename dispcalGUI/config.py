@@ -295,7 +295,9 @@ def getbitmap(name, display_missing_icon=True):
 									bitmaps[name].Size[1] != h):
 						# HighDPI support. Rescale
 						img = bitmaps[name].ConvertToImage()
-						if parts[-1] == "rgbsquares":
+						if not hasattr(wx, "IMAGE_QUALITY_BICUBIC"):
+							quality = wx.IMAGE_QUALITY_NORMAL
+						elif parts[-1] == "rgbsquares":
 							# Hmm. Everything else looks great with bicubic,
 							# but this one gets jaggy unless we use bilinear
 							quality = wx.IMAGE_QUALITY_BILINEAR
