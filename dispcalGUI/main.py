@@ -69,15 +69,21 @@ def main(module=None):
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
 	safe_print("File system encoding: " + fs_enc)
-	if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+	if sys.platform == "win32" and sys.getwindowsversion() >= (6, 2):
 		# HighDPI support
-		user32 = ctypes.windll.user32
-		if hasattr(user32, "SetProcessDPIAware"):
-			try:
-				user32.SetProcessDPIAware()
-			except Exception, exception:
-				safe_print("Warning - SetProcessDPIAware() failed:",
-						   exception)
+		try:
+			shcore = ctypes.windll.shcore
+		except:
+			pass
+		else:
+			if hasattr(shcore, "SetProcessDpiAwareness"):
+				try:
+					# 1 = System DPI aware (wxWpython currently does not
+					# support per-monitor DPI)
+					shcore.SetProcessDpiAwareness(1)
+				except Exception, exception:
+					safe_print("Warning - SetProcessDpiAwareness() failed:",
+							   exception)
 	lockfilename = None
 	port = 0
 	# Allow multiple instances only for curve viewer, profile info,
