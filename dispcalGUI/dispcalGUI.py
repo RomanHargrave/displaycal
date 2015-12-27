@@ -297,7 +297,10 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 						bitmap=geticon(32, "dialog-information"), 
 						log=True)
 	if chglog:
-		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500, 300),
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
+		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500 * scale, 300 * scale),
 									 style=wx.BORDER_THEME)
 		htmlwnd.SetStandardFonts()
 		htmlwnd.SetPage(chglog)
@@ -420,7 +423,10 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						ok=lang.getstr("ok"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), nowrap=True)
-	dlg_list_ctrl = wx.ListCtrl(dlg, -1, size=(640, 150), style=wx.LC_REPORT | 
+	scale = getcfg("app.dpi") / config.get_default_dpi()
+	if scale < 1:
+		scale = 1
+	dlg_list_ctrl = wx.ListCtrl(dlg, -1, size=(640 * scale, 150 * scale), style=wx.LC_REPORT | 
 																wx.LC_SINGLE_SEL,
 								name="colorimeter_corrections")
 	dlg_list_ctrl.InsertColumn(0, lang.getstr("type"))
@@ -5432,6 +5438,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				pass
 		dlg.display_settings = display_settings_tabs
 		# Column layout
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
 		display_settings = ((# 1st tab
 							 lang.getstr("osd") + ": " +
 							 lang.getstr("settings.basic"), # Tab title
@@ -5494,7 +5503,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							ctrl = wx.TextCtrl(panel, -1,
 											   metadata.getvalue("OSD_settings_%s" %
 																 re.sub("[ .]", "_", name), ""),
-											   size=(width, -1),
+											   size=(width * scale, -1),
 											   name=name)
 						else:
 							text = (0, 0)
@@ -9502,7 +9511,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												   description, 
 												   size=(400, -1))
 			boxsizer.Add(dlg.description_txt_ctrl, 1, 
-						 flag=wx.ALL | wx.ALIGN_LEFT, border=4)
+						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			if not display:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display")),
@@ -9515,7 +9524,7 @@ class MainFrame(ReportFrame, BaseFrame):
 																				True), 
 												   size=(400, -1))
 				boxsizer.Add(dlg.display_txt_ctrl, 1, 
-							 flag=wx.ALL | wx.ALIGN_LEFT, border=4)
+							 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			if not manufacturer:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display.manufacturer")),
@@ -9527,7 +9536,7 @@ class MainFrame(ReportFrame, BaseFrame):
 														self.worker.get_display_edid().get("manufacturer", ""), 
 														size=(400, -1))
 				boxsizer.Add(dlg.manufacturer_txt_ctrl, 1, 
-							 flag=wx.ALL | wx.ALIGN_LEFT, border=4)
+							 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			# Display technology
 			boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 													  lang.getstr("display.tech")),
@@ -9695,8 +9704,11 @@ class MainFrame(ReportFrame, BaseFrame):
 											ccmx.queryv1("INSTRUMENT") or
 											lang.getstr("instrument")),
 										   lang.getstr("corrected")))
+					scale = getcfg("app.dpi") / config.get_default_dpi()
+					if scale < 1:
+						scale = 1
 					for i, label in enumerate(labels):
-						txt = wx.StaticText(dlg, -1, label, size=(80 * (3 + i),
+						txt = wx.StaticText(dlg, -1, label, size=(80 * scale * (3 + i),
 																  -1),
 											style=wx.ALIGN_CENTER_HORIZONTAL)
 						font = txt.Font
@@ -9707,7 +9719,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						style = wx.BORDER_SIMPLE
 					else:
 						style = wx.BORDER_THEME
-					grid = CustomGrid(dlg, -1, size=(640 + wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+					grid = CustomGrid(dlg, -1, size=(640 * scale + wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 												     -1), style=style)
 					grid.Size = grid.Size[0], grid.GetDefaultRowSize() * 4
 					dlg.sizer3.Add(grid, flag=wx.TOP | wx.ALIGN_LEFT, border=4)
@@ -9732,7 +9744,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							# Rectangular (width = height)
 							size = grid.GetDefaultRowSize()
 						else:
-							size = 80
+							size = 80 * scale
 						grid.SetColSize(i, size)
 						grid.SetColLabelValue(i, label)
 					grid.BeginBatch()
@@ -13671,6 +13683,9 @@ class StartupFrame(wx.Frame):
 class MeasurementFileCheckSanityDialog(ConfirmDialog):
 	
 	def __init__(self, parent, ti3, suspicious, force=False):
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
 		ConfirmDialog.__init__(self, parent,
 							   title=os.path.basename(ti3.filename)
 									 if ti3.filename
@@ -13691,10 +13706,10 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		dlg.sizer4 = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Add(dlg.sizer4)
 		dlg.message_col1 = wx.StaticText(dlg, -1, msg_col1)
-		dlg.message_col1.Wrap(450)
+		dlg.message_col1.Wrap(450 * scale)
 		dlg.sizer4.Add(dlg.message_col1, flag=wx.RIGHT, border = 20)
 		dlg.message_col2 = wx.StaticText(dlg, -1, msg_col2)
-		dlg.message_col2.Wrap(450)
+		dlg.message_col2.Wrap(450 * scale)
 		dlg.sizer4.Add(dlg.message_col2, flag=wx.LEFT, border = 20)
 
 		dlg.Unbind(wx.EVT_BUTTON, dlg.alt)
@@ -13716,7 +13731,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 			style = wx.BORDER_SIMPLE
 		else:
 			style = wx.BORDER_THEME
-		dlg.grid = CustomGrid(dlg, -1, size=(940, 200), style=style)
+		dlg.grid = CustomGrid(dlg, -1, size=(940 * scale, 200 * scale), style=style)
 		grid = dlg.grid
 		grid.DisableDragRowSize()
 		grid.SetCellHighlightPenWidth(0)
@@ -13741,7 +13756,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 				attr.SetReadOnly(True) 
 				grid.SetColAttr(i, attr)
 			if i == 0:
-				size = 22
+				size = 22 * scale
 			elif i in (4, 5):
 				size = self.grid.GetDefaultRowSize()
 			else:

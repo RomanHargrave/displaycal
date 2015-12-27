@@ -2047,6 +2047,9 @@ END_DATA""")
 			return
 		if filter_index < 5:
 			# Image format
+			scale = getcfg("app.dpi") / config.get_default_dpi()
+			if scale < 1:
+				scale = 1
 			dlg = ConfirmDialog(self, title=lang.getstr("export"),
 								msg=lang.getstr("testchart.export.repeat_patch"),
 								ok=lang.getstr("ok"),
@@ -2055,7 +2058,7 @@ END_DATA""")
 			sizer = wx.BoxSizer(wx.HORIZONTAL)
 			dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
 						   border=12)
-			intctrl = wx.SpinCtrl(dlg, -1, size=(60, -1),
+			intctrl = wx.SpinCtrl(dlg, -1, size=(60 * scale, -1),
 								  min=config.valid_ranges["tc_export_repeat_patch_max"][0],
 								  max=config.valid_ranges["tc_export_repeat_patch_max"][1],
 								  value=str(getcfg("tc_export_repeat_patch_max")))
@@ -2064,7 +2067,7 @@ END_DATA""")
 			sizer.Add(wx.StaticText(dlg, -1, u"× " + lang.getstr("max")), 0,
 									flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 									border=12)
-			intctrl2 = wx.SpinCtrl(dlg, -1, size=(60, -1),
+			intctrl2 = wx.SpinCtrl(dlg, -1, size=(60 * scale, -1),
 								   min=config.valid_ranges["tc_export_repeat_patch_min"][0],
 								   max=config.valid_ranges["tc_export_repeat_patch_min"][1],
 								   value=str(getcfg("tc_export_repeat_patch_min")))

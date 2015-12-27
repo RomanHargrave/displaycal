@@ -1644,6 +1644,9 @@ class BaseInteractiveDialog(wx.Dialog):
 					pos[i] += parent.GetScreenPosition()[i]
 				i += 1
 			pos = tuple(pos)
+		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale > 1 and size == (400, -1):
+			size = size[0] * scale, size[1]
 		wx.Dialog.__init__(self, parent, id, title, pos, size, style, name)
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
@@ -5126,6 +5129,9 @@ class TooltipWindow(InvincibleFrame):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", cols=1,
 				 bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW, wrap=70):
+		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale > 1 and size == (400, -1):
+			size = size[0] * scale, size[1]
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
 		self.set_icons()
