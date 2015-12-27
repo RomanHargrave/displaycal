@@ -1203,7 +1203,7 @@ class ProfileInfoFrame(LUTFrame):
 		droptarget = FileDrop(self, drophandlers)
 		self.grid.SetDropTarget(droptarget)
 
-		min_w = max(self.gamut_view_options.MinSize[0],
+		min_w = max(self.options_panel.GetBestSize()[0] + 24,
 					defaults["size.profile_info.w"])
 
 		self.splitter.SetMinimumPaneSize(min_w - self.splitter._GetSashSize())
