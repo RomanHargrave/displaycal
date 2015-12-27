@@ -1204,9 +1204,9 @@ class ProfileInfoFrame(LUTFrame):
 		self.grid.SetDropTarget(droptarget)
 
 		min_w = max(self.options_panel.GetBestSize()[0] + 24,
-					defaults["size.profile_info.w"])
+					defaults["size.profile_info.w"] - self.splitter._GetSashSize())
 
-		self.splitter.SetMinimumPaneSize(min_w - self.splitter._GetSashSize())
+		self.splitter.SetMinimumPaneSize(min_w)
 		self.splitter.SetHSplit(0)
 		
 		border, titlebar = get_platform_window_decoration_size()
