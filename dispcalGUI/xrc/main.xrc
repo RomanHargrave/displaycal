@@ -375,7 +375,7 @@
                                   <object class="wxChoice" name="colorimeter_correction_matrix_ctrl">
                                   </object>
                                   <option>1</option>
-                                  <flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>8</border>
                                 </object>
                                 <object class="sizeritem">

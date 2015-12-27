@@ -224,13 +224,23 @@ def getbitmap(name, display_missing_icon=True):
 		parts = name.split("/")
 		w = 16
 		h = 16
+		size = []
 		if len(parts) > 1:
 			size = parts[-2].split("x")
 			if len(size) == 2:
 				try:
 					w, h = map(int, size)
 				except ValueError:
-					pass
+					size = []
+		ow, oh = w, h
+		if not getcfg("app.dpi", False):
+			# HighDPI support. Get screen PPI
+			defaults["app.dpi"] = wx.ScreenDC().GetPPI()[0]
+		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale > 1:
+			# HighDPI support
+			w = int(round(w * scale))
+			h = int(round(h * scale))
 		if parts[-1] == "empty":
 			bitmaps[name] = wx.EmptyBitmap(w, h, depth=-1)
 			dc = wx.MemoryDC()
@@ -241,12 +251,60 @@ def getbitmap(name, display_missing_icon=True):
 			bitmaps[name].SetMaskColour("black")
 		else:
 			path = None
-			if parts[-1].startswith(appname):
-				path = get_data_path(os.path.join(parts[-2], "apps", parts[-1]) + ".png")
-			if not path:
-				path = get_data_path(os.path.sep.join(parts) + ".png")
+			for i in xrange(3):
+				if scale > 1:
+					if len(size) == 2:
+						# Icon
+						if i == 0:
+							# HighDPI support. Try scaled size
+							parts[-2] = "%ix%i" % (w, h)
+						elif i == 1:
+							# HighDPI support. Try original size times two
+							parts[-2] = "%ix%i" % (ow * 2, oh * 2)
+						else:
+							# Try original size
+							parts[-2] = "%ix%i" % (ow, oh)
+					else:
+						# Theme graphic
+						if i == 0:
+							continue
+						elif i == 1:
+							# HighDPI support. Try 2x version
+							parts.insert(-1, "2x")
+						else:
+							# Try original size
+							parts.pop(-2)
+				if (sys.platform not in ("darwin", "win32") and
+					parts[-1].startswith(appname)):
+					# Search /usr/share/icons on Linux first
+					path = get_data_path(os.path.join(parts[-2], "apps", parts[-1]) + ".png")
+				if not path:
+					path = get_data_path(os.path.sep.join(parts) + ".png")
+				if path or scale == 1:
+					break
 			if path:
 				bitmaps[name] = wx.Bitmap(path)
+				if scale > 1:
+					downscale = False
+					if i == 1:
+						# HighDPI support. 2x version, determine scaled size
+						w, h = [int(round(v / 2 * scale)) for v in bitmaps[name].Size]
+						downscale = True
+					elif len(size) == 2:
+						# HighDPI support. Icon
+						downscale = True
+					if downscale and (bitmaps[name].Size[0] > w or
+									  bitmaps[name].Size[1] > h):
+						# HighDPI support. Scale down
+						img = bitmaps[name].ConvertToImage()
+						if parts[-1] == "rgbsquares":
+							# Hmm. Everything else looks great with bicubic,
+							# but this one gets jaggy unless we use bilinear
+							quality = wx.IMAGE_QUALITY_BILINEAR
+						else:
+							quality = wx.IMAGE_QUALITY_BICUBIC
+						img.Rescale(w, h, quality=quality)
+						bitmaps[name] = img.ConvertToBitmap()
 			else:
 				img = wx.EmptyImage(w, h)
 				img.SetMaskColour(0, 0, 0)
@@ -449,6 +507,13 @@ def get_data_path(relpath, rex=None):
 	return None if len(paths) == 0 else paths
 
 
+def get_default_dpi():
+	if sys.platform == "darwin":
+		return 72.0
+	else:
+		return 96.0
+
+
 def runtimeconfig(pyfile):
 	"""
 	Configure remaining runtime options and return runtype.
@@ -640,6 +705,7 @@ defaults = {
 	"3dlut.tab.enable.backup": 0,
 	"allow_skip_sensor_cal": 0,
 	"app.allow_network_clients": 0,
+	"app.dpi": None,
 	"app.port": 15411,
 	"argyll.debug": 0,
 	"argyll.dir": None,

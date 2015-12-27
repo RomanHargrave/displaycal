@@ -594,18 +594,18 @@ def setup():
 						for fname in entry[1]:
 							if os.path.isfile(fname):
 								data_files.extend([(entry[0], [fname])])
-		for dname in ("10x10", "16x16", "22x22", "24x24", "32x32", "48x48",
-					  "72x72", "128x128", "256x256"):
-			# Only the 10x10, 16x16, 32x32 and 72x72 icons are used exclusively
-			# by the app, the other sizes of the app icon are used for the 
-			# desktop entry under Linux
+		for dname in ("10x10", "16x16", "20x20", "22x22", "24x24", "32x32", "48x48",
+					  "72x72", "96x96", "128x128", "144x144", "256x256"):
+			# Only the 10x10, 16x16, 20x20, 32x32, 72x72, 96x96 and 144x144
+			# icons are used exclusively by the app, the other sizes of the app
+			# icon are used for the desktop entry under Linux
 			icons = []
 			desktopicons = []
 			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
 												   dname, "*.png")):
 				if not os.path.basename(iconpath).startswith(name) or (
 					sys.platform in ("darwin", "win32") and 
-					dname in ("16x16", "32x32")):
+					dname in ("16x16", "32x32", "64x64")):
 					icons.append(iconpath)
 				elif sys.platform not in ("darwin", "win32"):
 					desktopicons.append(iconpath)

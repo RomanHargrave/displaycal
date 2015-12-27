@@ -6,8 +6,8 @@ import sys
 
 import config
 import localization as lang
-from config import (defaults, getcfg, geticon, 
-					get_argyll_display_number, get_display_number, 
+from config import (defaults, getcfg, geticon, get_argyll_display_number,
+					get_default_dpi, get_display_number, 
 					get_display_rects, scale_adjustment_factor, setcfg,
 					writecfg)
 from debughelpers import handle_error
@@ -54,10 +54,7 @@ def get_default_size():
 		if debug:
 			safe_print("[D]  display_size_mm:", display_size_mm)
 		if not len(display_size_mm) or 0 in display_size_mm:
-			if sys.platform == "darwin":
-				ppi_def = 72.0
-			else:
-				ppi_def = 96.0
+			ppi_def = get_default_dpi()
 			method = 1
 			if method == 0:
 				# use configurable screen diagonal

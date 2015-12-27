@@ -19,6 +19,7 @@ import worker
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
 import floatspin
 import xh_floatspin
+import xh_bitmapctrls
 
 from wx import xrc
 
@@ -31,6 +32,8 @@ class SynthICCFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "synthicc.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
+		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
+		self.res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()

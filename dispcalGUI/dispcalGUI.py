@@ -145,6 +145,7 @@ import xh_fancytext
 import xh_filebrowsebutton
 import xh_floatspin
 import xh_hstretchstatbmp
+import xh_bitmapctrls
 
 # wxPython
 try:
@@ -768,6 +769,8 @@ class ExtraArgsFrame(BaseFrame):
 															  "extra.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
+		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
+		self.res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()
@@ -842,6 +845,8 @@ class GamapFrame(BaseFrame):
 															  "gamap.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
+		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
+		self.res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()
@@ -1229,6 +1234,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
+		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
+		self.res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()
@@ -1465,6 +1472,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
+		res.InsertHandler(xh_bitmapctrls.BitmapButton())
+		res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		self.mr_settings_panel = res.LoadPanel(self.calpanel, "panel")
 		self.calpanel.Sizer.Add(self.mr_settings_panel, 1, flag=wx.EXPAND)
 
@@ -2491,7 +2500,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# background. Replace with ThemedGenButton which does not have
 			# that issue
 			subst = BorderGradientButton(btn.Parent,
-										 bitmap=geticon(16, "play"),
+										 bitmap=geticon(16, "start"),
 										 label=btn.Label, name=btn.Name)
 			subst.SetBackgroundColour(btn.Parent.BackgroundColour)
 			subst.SetTopStartColour(wx.Colour(252, 252, 252))

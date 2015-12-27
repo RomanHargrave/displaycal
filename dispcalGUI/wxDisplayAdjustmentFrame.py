@@ -19,7 +19,8 @@ from lib.agw import labelbook
 from lib.agw.fmresources import *
 from lib.agw.pygauge import PyGauge
 
-from config import get_data_path, get_icon_bundle, getbitmap, getcfg, setcfg
+from config import (get_data_path, get_default_dpi, get_icon_bundle, getbitmap,
+					getcfg, setcfg)
 from config import enc
 from log import get_file_logger
 from meta import name as appname
@@ -79,7 +80,9 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		"""
 		labelbook.ImageContainer.__init__(self, parent, id, pos, size, style,
 										  agwStyle, name)
-		imagelist = wx.ImageList(84, 72)
+		scale = getcfg("app.dpi") / get_default_dpi()
+		img_w, img_h = map(int, map(round, (84 * scale, 72 * scale)))
+		imagelist = wx.ImageList(img_w, img_h)
 		for img in ("tab_hilite", "tab_selected"):
 			bmp = getbitmap("theme/%s" % img)
 			imagelist.Add(bmp)
@@ -423,7 +426,8 @@ class DisplayAdjustmentFlatImageBook(labelbook.FlatImageBook):
 		if className == "FlatImageBook":
 		
 			if agwStyle & INB_LEFT or agwStyle & INB_RIGHT:
-				self._pages.SetSizeHints(self._pages._nImgSize + 24, -1)
+				border = int(round(24 * getcfg("app.dpi") / get_default_dpi()))
+				self._pages.SetSizeHints(self._pages._nImgSize + border, -1)
 			else:
 				self._pages.SetSizeHints(-1, self._pages._nImgSize)
 		
@@ -826,7 +830,9 @@ class DisplayAdjustmentFrame(BaseFrame):
 		return self.Pulse(msg)
 
 	def _assign_image_list(self):
-		imagelist = wx.ImageList(72, 72)
+		scale = getcfg("app.dpi") / get_default_dpi()
+		img_w, img_h = map(int, map(round, (72 * scale, 72 * scale)))
+		imagelist = wx.ImageList(img_w, img_h)
 		modes = {CRT: {"black_luminance": "luminance",
 					   "luminance": "contrast"}}
 		for img in ("black_luminance", "white_point", "luminance",
@@ -873,7 +879,9 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.lb.GetPage(2).update_desc()
 		
 		# Set size
-		min_h = (72 + 8) * (self.lb.GetPageCount() - len(self.lb.disabled_pages)) + 2 - 8
+		scale = getcfg("app.dpi") / get_default_dpi()
+		img_w, img_h = map(int, map(round, (84 * scale, 72 * scale)))
+		min_h = (img_h + 8) * (self.lb.GetPageCount() - len(self.lb.disabled_pages)) + 2 - 8
 		if init:
 			self.lb.SetMinSize((418, min_h))
 		self.lb.SetMinSize((self.lb.GetMinSize()[0],
@@ -887,7 +895,7 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.Layout()
 		# The button sizer will be as wide as the labelbook or wider,
 		# so use it as reference
-		w = self.btnsizer.GetSize()[0] - 84 - 12
+		w = self.btnsizer.GetSize()[0] - img_w - 12
 		for pagenum in xrange(0, self.lb.GetPageCount()):
 			page = self.lb.GetPage(pagenum)
 			page.SetSize((w, -1))

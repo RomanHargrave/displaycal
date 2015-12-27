@@ -29,6 +29,7 @@ from worker import UnloggedWarning, check_set_argyll_bin, get_options_from_profi
 from wxwindows import (BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog,
 					   wx)
 import xh_filebrowsebutton
+import xh_bitmapctrls
 
 from wx import xrc
 
@@ -41,6 +42,8 @@ class LUT3DFrame(BaseFrame):
 		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
 															  "3dlut.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
+		self.res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		if hasattr(wx, "PreFrame"):
 			# Classic
 			pre = wx.PreFrame()

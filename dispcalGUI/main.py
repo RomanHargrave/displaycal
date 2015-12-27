@@ -36,6 +36,7 @@ from options import debug, verbose
 from util_str import safe_str, safe_unicode
 if sys.platform == "win32":
 	from util_win import win_ver
+	import ctypes
 from wxaddons import wx
 
 def _excepthook(etype, value, tb):
@@ -68,6 +69,15 @@ def main(module=None):
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
 	safe_print("File system encoding: " + fs_enc)
+	if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+		# HighDPI support
+		user32 = ctypes.windll.user32
+		if hasattr(user32, "SetProcessDPIAware"):
+			try:
+				user32.SetProcessDPIAware()
+			except Exception, exception:
+				safe_print("Warning - SetProcessDPIAware() failed:",
+						   exception)
 	lockfilename = None
 	port = 0
 	# Allow multiple instances only for curve viewer, profile info,

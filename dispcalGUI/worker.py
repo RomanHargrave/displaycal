@@ -2997,7 +2997,7 @@ class Worker(object):
 						self.display_manufacturers.append(display_manufacturer)
 						self.display_names.append(display.split(":", 1)[1].strip())
 						continue
-					display_name = split_display_name(displays[i])
+					display_name = split_display_name(display)
 					# Make sure we have nice descriptions
 					desc = []
 					if sys.platform == "win32" and i < len(monitors):
@@ -3007,6 +3007,11 @@ class Worker(object):
 						if device:
 							desc.append(device.DeviceString.decode(fs_enc, 
 																   "replace"))
+						# Deal with HiDPI - update monitor rect
+						self.display_rects[i] = wx.Rect(*monitors[i]["Monitor"])
+						display = " @ ".join([display_name, 
+											  "%i, %i, %ix%i" %
+											  tuple(self.display_rects[i])])
 					# Get monitor descriptions from EDID
 					try:
 						# Important: display_name must be given for get_edid
@@ -3032,10 +3037,10 @@ class Worker(object):
 					if desc and desc[-1] not in display:
 						# Only replace the description if it not already
 						# contains the monitor model
-						displays[i] = " @".join([" ".join(desc), 
+						display = " @".join([" ".join(desc), 
 												 display.split("@")[-1]])
 					self.display_manufacturers.append(" ".join(manufacturer))
-					self.display_names.append(split_display_name(displays[i]))
+					self.display_names.append(split_display_name(display))
 				if self.argyll_version >= [1, 4, 0]:
 					displays.append("Web @ localhost")
 					self.display_edid.append({})
