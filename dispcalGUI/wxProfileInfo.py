@@ -1203,7 +1203,10 @@ class ProfileInfoFrame(LUTFrame):
 		droptarget = FileDrop(self, drophandlers)
 		self.grid.SetDropTarget(droptarget)
 
-		self.splitter.SetMinimumPaneSize(defaults["size.profile_info.w"] - self.splitter._GetSashSize())
+		min_w = max(self.gamut_view_options.MinSize[0],
+					defaults["size.profile_info.w"])
+
+		self.splitter.SetMinimumPaneSize(min_w - self.splitter._GetSashSize())
 		self.splitter.SetHSplit(0)
 		
 		border, titlebar = get_platform_window_decoration_size()
@@ -1212,7 +1215,7 @@ class ProfileInfoFrame(LUTFrame):
 			getcfg("position.profile_info.y"),
 			defaults["size.profile_info.split.w"] + border * 2,
 			getcfg("size.profile_info.h") + titlebar + border)
-		self.SetMinSize((defaults["size.profile_info.w"] + border * 2,
+		self.SetMinSize((min_w + border * 2,
 						 defaults["size.profile_info.h"] + titlebar + border))
 		self.splitter.SetSplitSize((defaults["size.profile_info.split.w"] + border * 2,
 									self.GetSize()[1]))
