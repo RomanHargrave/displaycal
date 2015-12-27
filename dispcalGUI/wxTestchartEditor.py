@@ -107,6 +107,10 @@ class TestchartEditor(BaseFrame):
 			".txt": self.ti1_drop_handler
 		}
 
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
+
 		if tc_use_alternate_preview:
 			# splitter
 			splitter = self.splitter = wx.SplitterWindow(self, -1, style = wx.SP_LIVE_UPDATE | wx.SP_3DSASH)
@@ -142,13 +146,13 @@ class TestchartEditor(BaseFrame):
 
 		# white patches
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.white")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_white_patches = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, name = "tc_white_patches")
+		self.tc_white_patches = wx.SpinCtrl(panel, -1, size = (65 * scale, -1), min = 0, name = "tc_white_patches")
 		self.Bind(wx.EVT_TEXT, self.tc_white_patches_handler, id = self.tc_white_patches.GetId())
 		sizer.Add(self.tc_white_patches, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
 		# single channel patches
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.single")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
-		self.tc_single_channel_patches = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 256, name = "tc_single_channel_patches")
+		self.tc_single_channel_patches = wx.SpinCtrl(panel, -1, size = (65 * scale, -1), min = 0, max = 256, name = "tc_single_channel_patches")
 		self.tc_single_channel_patches.Bind(wx.EVT_KILL_FOCUS, self.tc_single_channel_patches_handler)
 		self.Bind(wx.EVT_SPINCTRL, self.tc_single_channel_patches_handler, id = self.tc_single_channel_patches.GetId())
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -161,7 +165,7 @@ class TestchartEditor(BaseFrame):
 			hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.black")),
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT,
 					   border=border)
-			self.tc_black_patches = wx.SpinCtrl(panel, -1, size=(65, -1), min=0,
+			self.tc_black_patches = wx.SpinCtrl(panel, -1, size=(65 * scale, -1), min=0,
 												name="tc_black_patches")
 			self.Bind(wx.EVT_TEXT, self.tc_black_patches_handler,
 					  id=self.tc_black_patches.GetId())
@@ -170,7 +174,7 @@ class TestchartEditor(BaseFrame):
 
 		# gray axis patches
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.gray")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_gray_patches = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 256, name = "tc_gray_patches")
+		self.tc_gray_patches = wx.SpinCtrl(panel, -1, size = (65 * scale, -1), min = 0, max = 256, name = "tc_gray_patches")
 		self.tc_gray_patches.Bind(wx.EVT_KILL_FOCUS, self.tc_gray_handler)
 		self.Bind(wx.EVT_SPINCTRL, self.tc_gray_handler, id = self.tc_gray_patches.GetId())
 		sizer.Add(self.tc_gray_patches, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
@@ -179,7 +183,7 @@ class TestchartEditor(BaseFrame):
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.multidim")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT, border = border)
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		sizer.Add(hsizer)
-		self.tc_multi_steps = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 21, name = "tc_multi_steps") # 16 multi dim steps = 4096 patches
+		self.tc_multi_steps = wx.SpinCtrl(panel, -1, size = (65 * scale, -1), min = 0, max = 21, name = "tc_multi_steps") # 16 multi dim steps = 4096 patches
 		self.tc_multi_steps.Bind(wx.EVT_KILL_FOCUS, self.tc_multi_steps_handler)
 		self.Bind(wx.EVT_SPINCTRL, self.tc_multi_steps_handler, id = self.tc_multi_steps.GetId())
 		hsizer.Add(self.tc_multi_steps, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
@@ -192,7 +196,7 @@ class TestchartEditor(BaseFrame):
 
 		# full spread patches
 		sizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.fullspread")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_fullspread_patches = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 9999, name = "tc_fullspread_patches")
+		self.tc_fullspread_patches = wx.SpinCtrl(panel, -1, size = (65 * scale, -1), min = 0, max = 9999, name = "tc_fullspread_patches")
 		self.Bind(wx.EVT_TEXT, self.tc_fullspread_handler, id = self.tc_fullspread_patches.GetId())
 		sizer.Add(self.tc_fullspread_patches, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
@@ -209,11 +213,11 @@ class TestchartEditor(BaseFrame):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		sizer.Add(hsizer, 1, flag = wx.EXPAND)
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.adaption")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_adaption_slider = wx.Slider(panel, -1, 0, 0, 100, size = (64, -1), name = "tc_adaption_slider")
+		self.tc_adaption_slider = wx.Slider(panel, -1, 0, 0, 100, size = (64 * scale, -1), name = "tc_adaption_slider")
 		self.tc_adaption_slider.Disable()
 		self.Bind(wx.EVT_SLIDER, self.tc_adaption_handler, id = self.tc_adaption_slider.GetId())
 		hsizer.Add(self.tc_adaption_slider, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.tc_adaption_intctrl = wx.SpinCtrl(panel, -1, size = (65, -1), min = 0, max = 100, name = "tc_adaption_intctrl")
+		self.tc_adaption_intctrl = wx.SpinCtrl(panel, -1, size = (65 * scale, -1), min = 0, max = 100, name = "tc_adaption_intctrl")
 		self.tc_adaption_intctrl.Disable()
 		self.Bind(wx.EVT_TEXT, self.tc_adaption_handler, id = self.tc_adaption_intctrl.GetId())
 		sizer.Add(self.tc_adaption_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
@@ -226,11 +230,11 @@ class TestchartEditor(BaseFrame):
 		# angle
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		sizer.Add(hsizer, 1, flag = wx.EXPAND)
-		self.tc_angle_slider = wx.Slider(panel, -1, 0, 0, 5000, size = (128, -1), name = "tc_angle_slider")
+		self.tc_angle_slider = wx.Slider(panel, -1, 0, 0, 5000, size = (128 * scale, -1), name = "tc_angle_slider")
 		self.tc_angle_slider.Disable()
 		self.Bind(wx.EVT_SLIDER, self.tc_angle_handler, id = self.tc_angle_slider.GetId())
 		hsizer.Add(self.tc_angle_slider, flag = wx.ALIGN_CENTER_VERTICAL)
-		self.tc_angle_intctrl = wx.SpinCtrl(panel, -1, size = (75, -1), min = 0, max = 5000, name = "tc_angle_intctrl")
+		self.tc_angle_intctrl = wx.SpinCtrl(panel, -1, size = (75 * scale, -1), min = 0, max = 5000, name = "tc_angle_intctrl")
 		self.tc_angle_intctrl.Disable()
 		self.Bind(wx.EVT_TEXT, self.tc_angle_handler, id = self.tc_angle_intctrl.GetId())
 		hsizer.Add(self.tc_angle_intctrl, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
@@ -241,7 +245,7 @@ class TestchartEditor(BaseFrame):
 			sizer.Add(wx.StaticText(panel, -1, lang.getstr("trc.gamma")),
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 					   border=border)
-			self.tc_gamma_floatctrl = floatspin.FloatSpin(panel, -1, size=(65, -1),
+			self.tc_gamma_floatctrl = floatspin.FloatSpin(panel, -1, size=(65 * scale, -1),
 														  min_val=0.0,
 														  max_val=9.9,
 														  increment=0.05,
@@ -262,7 +266,7 @@ class TestchartEditor(BaseFrame):
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
 			sizer.Add(hsizer, 1, flag = wx.EXPAND)
 			self.tc_neutral_axis_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
-															 size=(64, -1),
+															 size=(64 * scale, -1),
 															 name="tc_neutral_axis_emphasis_slider")
 			self.tc_neutral_axis_emphasis_slider.Disable()
 			self.Bind(wx.EVT_SLIDER, self.tc_neutral_axis_emphasis_handler,
@@ -270,7 +274,7 @@ class TestchartEditor(BaseFrame):
 			hsizer.Add(self.tc_neutral_axis_emphasis_slider,
 					   flag=wx.ALIGN_CENTER_VERTICAL)
 			self.tc_neutral_axis_emphasis_intctrl = wx.SpinCtrl(panel, -1,
-																size=(65, -1),
+																size=(65 * scale, -1),
 																min=0,
 																max=100,
 																name="tc_neutral_axis_emphasis_intctrl")
@@ -290,7 +294,7 @@ class TestchartEditor(BaseFrame):
 										  wx.ALIGN_RIGHT,
 									 border=border)
 			self.tc_dark_emphasis_slider = wx.Slider(panel, -1, 0, 0, 100,
-													 size=(64, -1),
+													 size=(64 * scale, -1),
 													 name="tc_dark_emphasis_slider")
 			self.tc_dark_emphasis_slider.Disable()
 			self.Bind(wx.EVT_SLIDER, self.tc_dark_emphasis_handler,
@@ -298,7 +302,7 @@ class TestchartEditor(BaseFrame):
 			hsizer.Add(self.tc_dark_emphasis_slider,
 					   flag=wx.ALIGN_CENTER_VERTICAL)
 			self.tc_dark_emphasis_intctrl = wx.SpinCtrl(panel, -1,
-														size=(65, -1),
+														size=(65 * scale, -1),
 														min=0,
 														max=100,
 														name="tc_dark_emphasis_intctrl")
@@ -348,22 +352,22 @@ class TestchartEditor(BaseFrame):
 		hsizer.Add(self.tc_filter, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		# L
 		hsizer.Add(wx.StaticText(panel, -1, "L"), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_filter_L = wx.SpinCtrl(panel, -1, initial = 50, size = (65, -1), min = 0, max = 100, name = "tc_filter_L")
+		self.tc_filter_L = wx.SpinCtrl(panel, -1, initial = 50, size = (65 * scale, -1), min = 0, max = 100, name = "tc_filter_L")
 		self.Bind(wx.EVT_TEXT, self.tc_filter_handler, id = self.tc_filter_L.GetId())
 		hsizer.Add(self.tc_filter_L, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		# a
 		hsizer.Add(wx.StaticText(panel, -1, "a"), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_filter_a = wx.SpinCtrl(panel, -1, initial = 0, size = (65, -1), min = -128, max = 127, name = "tc_filter_a")
+		self.tc_filter_a = wx.SpinCtrl(panel, -1, initial = 0, size = (65 * scale, -1), min = -128, max = 127, name = "tc_filter_a")
 		self.Bind(wx.EVT_TEXT, self.tc_filter_handler, id = self.tc_filter_a.GetId())
 		hsizer.Add(self.tc_filter_a, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		# b
 		hsizer.Add(wx.StaticText(panel, -1, "b"), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_filter_b = wx.SpinCtrl(panel, -1, initial = 0, size = (65, -1), min = -128, max = 127, name = "tc_filter_b")
+		self.tc_filter_b = wx.SpinCtrl(panel, -1, initial = 0, size = (65 * scale, -1), min = -128, max = 127, name = "tc_filter_b")
 		self.Bind(wx.EVT_TEXT, self.tc_filter_handler, id = self.tc_filter_b.GetId())
 		hsizer.Add(self.tc_filter_b, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 		# radius
 		hsizer.Add(wx.StaticText(panel, -1, lang.getstr("tc.limit.sphere_radius")), flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
-		self.tc_filter_rad = wx.SpinCtrl(panel, -1, initial = 255, size = (65, -1), min = 1, max = 255, name = "tc_filter_rad")
+		self.tc_filter_rad = wx.SpinCtrl(panel, -1, initial = 255, size = (65 * scale, -1), min = 1, max = 255, name = "tc_filter_rad")
 		self.Bind(wx.EVT_TEXT, self.tc_filter_handler, id = self.tc_filter_rad.GetId())
 		hsizer.Add(self.tc_filter_rad, flag = wx.ALL | wx.ALIGN_CENTER_VERTICAL, border = border)
 
@@ -433,7 +437,7 @@ class TestchartEditor(BaseFrame):
 								 flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 								 border=border)
 		self.tc_vrml_black_offset_intctrl = wx.SpinCtrl(panel, -1,
-														size=(55, -1), min=0,
+														size=(55 * scale, -1), min=0,
 														max=40,
 														name="tc_vrml_black_offset_intctrl")
 		self.Bind(wx.EVT_TEXT, self.tc_vrml_black_offset_ctrl_handler,
@@ -492,7 +496,7 @@ class TestchartEditor(BaseFrame):
 								 lang.getstr("testchart.add_saturation_sweeps")),
 				   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 				   border=border)
-		self.saturation_sweeps_intctrl = wx.SpinCtrl(panel, -1, size=(50, -1),
+		self.saturation_sweeps_intctrl = wx.SpinCtrl(panel, -1, size=(50 * scale, -1),
 													 initial=getcfg("tc.saturation_sweeps"),
 													 min=2, max=255)
 		self.saturation_sweeps_intctrl.Disable()
@@ -501,7 +505,7 @@ class TestchartEditor(BaseFrame):
 
 		for color in ("R", "G", "B", "C", "M", "Y"):
 			name = "saturation_sweeps_%s_btn" % color
-			setattr(self, name, wx.Button(panel, -1, color, size=(30, -1)))
+			setattr(self, name, wx.Button(panel, -1, color, size=(30 * scale, -1)))
 			getattr(self, "saturation_sweeps_%s_btn" % color).Disable()
 			self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
 					  id=getattr(self, name).GetId())
@@ -509,7 +513,7 @@ class TestchartEditor(BaseFrame):
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=border)
 		
 		self.saturation_sweeps_custom_btn = wx.Button(panel, -1, "=",
-													  size=(30, -1))
+													  size=(30 * scale, -1))
 		self.saturation_sweeps_custom_btn.Disable()
 		self.Bind(wx.EVT_BUTTON, self.tc_add_saturation_sweeps_handler,
 				  id=self.saturation_sweeps_custom_btn.GetId())
@@ -520,7 +524,7 @@ class TestchartEditor(BaseFrame):
 					   flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
 					   border=border)
 			name = "saturation_sweeps_custom_%s_ctrl" % component
-			setattr(self, name, floatspin.FloatSpin(panel, -1, size=(65, -1),
+			setattr(self, name, floatspin.FloatSpin(panel, -1, size=(65 * scale, -1),
 													value=getcfg("tc.saturation_sweeps.custom.%s" %
 																 component),
 													min_val=0, max_val=100,

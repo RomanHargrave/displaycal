@@ -20,7 +20,7 @@ import ICCProfile as ICCP
 import audio
 import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
-					get_verified_path, pyname, setcfg)
+					get_default_dpi, get_verified_path, pyname, setcfg)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
@@ -1542,6 +1542,7 @@ class BaseFrame(wx.Frame):
 		"""
 		if not parent:
 			parent = self
+		scale = getcfg("app.dpi") / get_default_dpi()
 		for child in parent.GetAllChildren():
 			if debug:
 				safe_print(child.__class__, child.Name)
@@ -1599,6 +1600,8 @@ class BaseFrame(wx.Frame):
 						child.__class__.Label = property(child.__class__.GetLabel,
 														 child.__class__.SetLabel)
 				child.SetMaxFontSize(11)
+				if scale > 1 and child.MinSize[0] != -1:
+					child.MinSize = child.MinSize[0] * scale, child.MinSize[1]
 				if sys.platform == "darwin":
 					# Work around ComboBox issues on Mac OS X
 					# (doesn't receive EVT_KILL_FOCUS)
