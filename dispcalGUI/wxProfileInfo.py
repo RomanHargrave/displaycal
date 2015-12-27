@@ -635,6 +635,10 @@ class GamutCanvas(LUTCanvas):
 class GamutViewOptions(wx.Panel):
 	
 	def __init__(self, *args, **kwargs):
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
+
 		wx.Panel.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.FlexGridSizer(0, 3, 4, 0)
@@ -695,7 +699,7 @@ class GamutViewOptions(wx.Panel):
 		self.options_sizer.Add(self.colorspace_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.colorspace_select = wx.Choice(self, -1,
-												 size=(150, -1), 
+												 size=(150 * scale, -1), 
 												 choices=["CIE a*b*",
 														  "CIE u*v*",
 														  "CIE u'v'",
@@ -735,7 +739,7 @@ class GamutViewOptions(wx.Panel):
 		self.options_sizer.Add(self.whitepoint_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.whitepoint_select = wx.Choice(self, -1,
-												 size=(150, -1), 
+												 size=(150 * scale, -1), 
 												 choices=[lang.getstr("calibration.file.none"),
 														  lang.getstr("whitepoint.colortemp.locus.daylight"),
 														  lang.getstr("whitepoint.colortemp.locus.blackbody")])
@@ -772,7 +776,7 @@ class GamutViewOptions(wx.Panel):
 			if basename not in self.comparison_profiles:
 				self.comparison_profiles[basename] = profile
 		self.comparison_profile_select = wx.Choice(self, -1,
-												   size=(150, -1), 
+												   size=(150 * scale, -1), 
 												   choices=[])
 		self.comparison_profiles_sort()
 		self.options_sizer.Add(self.comparison_profile_select, 
@@ -796,7 +800,7 @@ class GamutViewOptions(wx.Panel):
 		self.options_sizer.Add(self.rendering_intent_label,
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.rendering_intent_select = wx.Choice(self, -1,
-												 size=(150, -1), 
+												 size=(150 * scale, -1), 
 												 choices=[lang.getstr("gamap.intents.a"),
 														  lang.getstr("gamap.intents.r"),
 														  lang.getstr("gamap.intents.p"),
@@ -819,7 +823,7 @@ class GamutViewOptions(wx.Panel):
 		
 		# Direction selection
 		self.direction_select = wx.Choice(self, -1,
-										  size=(150, -1),
+										  size=(150 * scale, -1),
 										  choices=[lang.getstr("direction.forward"),
 												   lang.getstr("direction.backward.inverted")])
 		self.options_sizer.Add(self.direction_select,
