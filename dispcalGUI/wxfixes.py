@@ -479,6 +479,19 @@ def SetToolTipString(self, string):
 wx.Window.SetToolTipString = SetToolTipString
 
 
+wx.Sizer._Add = wx.Sizer.Add
+
+def SizerAdd(self, *args, **kwargs):
+	if kwargs.get("border"):
+		from config import get_default_dpi, getcfg
+		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale > 1:
+			kwargs["border"] = int(round(kwargs["border"] * scale))
+	return self._Add(*args, **kwargs)
+
+wx.Sizer.Add = SizerAdd
+
+
 def GridGetSelection(self):
 	""" Return selected rows, cols, block and cells """
 	sel = []
