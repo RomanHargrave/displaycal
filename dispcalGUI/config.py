@@ -233,18 +233,7 @@ def getbitmap(name, display_missing_icon=True):
 				except ValueError:
 					size = []
 		ow, oh = w, h
-		if not getcfg("app.dpi", False):
-			# HighDPI support
-			if sys.platform in ("darwin", "win32"):
-				# Determine screen DPI
-				dpi = wx.ScreenDC().GetPPI()[0]
-			else:
-				# Linux. Determine font scaling factor
-				font = wx.Font(256, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-							   wx.FONTWEIGHT_NORMAL)
-				txt_scale = max(font.GetPixelSize()[0] / 256.0, 1)
-				dpi = int(round(get_default_dpi() * txt_scale))
-			defaults["app.dpi"] = dpi
+		set_default_app_dpi()
 		scale = getcfg("app.dpi") / get_default_dpi()
 		if scale > 1:
 			# HighDPI support
@@ -1476,6 +1465,24 @@ def initcfg(module=None):
 			for name, val in cfg.items(section):
 				if isinstance(val, list):
 					cfg.set(section, name, "\n".join(val))
+
+
+def set_default_app_dpi():
+	""" Set application DPI """
+	# Only call this after creating the wx.App object!
+	if not getcfg("app.dpi", False):
+		# HighDPI support
+		from wxaddons import wx
+		if sys.platform in ("darwin", "win32"):
+			# Determine screen DPI
+			dpi = wx.ScreenDC().GetPPI()[0]
+		else:
+			# Linux. Determine font scaling factor
+			font = wx.Font(256, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+						   wx.FONTWEIGHT_NORMAL)
+			txt_scale = max(font.GetPixelSize()[0] / 256.0, 1)
+			dpi = int(round(get_default_dpi() * txt_scale))
+		defaults["app.dpi"] = dpi
 
 
 def setcfg(name, value):
