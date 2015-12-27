@@ -516,26 +516,31 @@ def adjust_font_size_for_gcdc(font):
 	return font
 
 
-def get_dc_font_size(size, dc):
-	""" Get correct font size for DC """
+def get_dc_font_scale(dc):
+	""" Get correct font scaling factor for DC """
 	pointsize = (1.0, 1.0)
 	if isinstance(dc, wx.GCDC):
 		pointsize = tuple(1.0 / scale for scale in dc.GetLogicalScale())
 	if sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC):
-		return size * (sum(pointsize) / 2.0)
+		return sum(pointsize) / 2.0
 	elif wx.VERSION >= (2, 9):
 		# On Linux, we need to correct the font size by a certain factor if
 		# wx.GCDC is used, to make text the same size as if wx.GCDC weren't used
 		from config import get_default_dpi, getcfg, set_default_app_dpi
 		set_default_app_dpi()
 		scale = getcfg("app.dpi") / get_default_dpi()
-		return size * ((scale * pointsize[0] + scale * pointsize[1]) / 2.0)
+		return (scale * pointsize[0] + scale * pointsize[1]) / 2.0
 	else:
 		# On Linux, we need to correct the font size by a certain factor if
 		# wx.GCDC is used, to make text the same size as if wx.GCDC weren't used
 		screenppi = map(float, wx.ScreenDC().GetPPI())
 		ppi = dc.GetPPI()
-		return size * ((screenppi[0] / ppi[0] * pointsize[0] + screenppi[1] / ppi[1] * pointsize[1]) / 2.0)
+		return (screenppi[0] / ppi[0] * pointsize[0] + screenppi[1] / ppi[1] * pointsize[1]) / 2.0
+
+
+def get_dc_font_size(size, dc):
+	""" Get correct font size for DC """
+	return size * get_dc_font_scale(dc)
 
 
 def get_gcdc_font_size(size):
