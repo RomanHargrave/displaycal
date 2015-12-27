@@ -3011,7 +3011,7 @@ class Worker(object):
 						self.display_rects[i] = wx.Rect(*monitors[i]["Monitor"])
 						display = " @ ".join([display_name, 
 											  "%i, %i, %ix%i" %
-											  tuple(self.display_rects[i])])
+											  monitors[i]["Monitor"]])
 					# Get monitor descriptions from EDID
 					try:
 						# Important: display_name must be given for get_edid
@@ -3039,6 +3039,7 @@ class Worker(object):
 						# contains the monitor model
 						display = " @".join([" ".join(desc), 
 												 display.split("@")[-1]])
+					displays[i] = display
 					self.display_manufacturers.append(" ".join(manufacturer))
 					self.display_names.append(split_display_name(display))
 				if self.argyll_version >= [1, 4, 0]:
