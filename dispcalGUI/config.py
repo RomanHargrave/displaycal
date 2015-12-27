@@ -705,7 +705,7 @@ defaults = {
 	"3dlut.tab.enable.backup": 0,
 	"allow_skip_sensor_cal": 0,
 	"app.allow_network_clients": 0,
-	"app.dpi": None,
+	"app.dpi": get_default_dpi(),
 	"app.port": 15411,
 	"argyll.debug": 0,
 	"argyll.dir": None,
