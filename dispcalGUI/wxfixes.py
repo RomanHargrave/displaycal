@@ -146,6 +146,7 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.GridSelectRows
 	wx.grid.PyGridCellEditor = wx.grid.GridCellEditor
 	wx.grid.PyGridCellRenderer = wx.grid.GridCellRenderer
+	wx.RegionFromBitmapColour = wx.Region
 
 	# Bugfixes
 
@@ -489,7 +490,8 @@ def SizerAdd(self, *args, **kwargs):
 			kwargs["border"] = int(round(kwargs["border"] * scale))
 	return self._Add(*args, **kwargs)
 
-wx.Sizer.Add = SizerAdd
+if not u"phoenix" in wx.PlatformInfo:
+	wx.Sizer.Add = SizerAdd
 
 
 def GridGetSelection(self):
