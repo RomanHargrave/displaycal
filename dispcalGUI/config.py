@@ -1469,24 +1469,41 @@ def initcfg(module=None):
 					cfg.set(section, name, "\n".join(val))
 
 
+dpiset = False
+
 def set_default_app_dpi():
 	""" Set application DPI """
 	# Only call this after creating the wx.App object!
-	if not getcfg("app.dpi", False):
+	global dpiset
+	if not getcfg("app.dpi", False) and not dpiset:
 		# HighDPI support
 		from wxaddons import wx
 		if sys.platform in ("darwin", "win32"):
 			# Determine screen DPI
 			dpi = wx.ScreenDC().GetPPI()[0]
 		else:
-			# Linux. Determine font scaling factor
-			font = wx.Font(256, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
-						   wx.FONTWEIGHT_NORMAL)
-			txt_scale = font.GetPixelSize()[0] / 256.0
-			if not txt_scale:
+			if "gtk3" in wx.PlatformInfo:
+				from util_os import which
 				txt_scale = 1
+				if which("gsettings"):
+					import subprocess as sp
+					p = sp.Popen(["gsettings", "get", "org.gnome.desktop.interface",
+								  "text-scaling-factor"], stdin=sp.PIPE,
+								 stdout=sp.PIPE, stderr=sp.PIPE)
+					stdout, stderr = p.communicate()
+					if stdout:
+						try:
+							txt_scale = float(stdout)
+						except ValueError:
+							pass
+			else:
+				# Linux. Determine font scaling factor
+				font = wx.Font(256, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+							   wx.FONTWEIGHT_NORMAL)
+				txt_scale = font.GetPixelSize()[0] / 256.0 or 1
 			dpi = int(round(get_default_dpi() * txt_scale))
 		defaults["app.dpi"] = dpi
+		dpiset = True
 
 
 def setcfg(name, value):

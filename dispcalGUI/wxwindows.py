@@ -1919,7 +1919,7 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 				dc = wx.GCDC(dc)
 			except Exception, exception:
 				pass
-			font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
+		font.SetPointSize(get_dc_font_size(font.GetPointSize(), dc))
 		dc.SetFont(font)
 		return dc
  	
@@ -3802,6 +3802,9 @@ def fancytext_Renderer_getCurrentFont(self):
 		_font.SetFamily(font["family"])
 	if "size" in font:
 		_font.SetPointSize(font["size"])
+	if "gtk3" in wx.PlatformInfo:
+		scale = getcfg("app.dpi") / get_default_dpi()
+		_font.SetPointSize(_font.GetPointSize() * scale)
 	if "style" in font:
 		_font.SetStyle(font["style"])
 	if "weight" in font:

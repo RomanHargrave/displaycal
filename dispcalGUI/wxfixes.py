@@ -534,7 +534,8 @@ def get_dc_font_scale(dc):
 	pointsize = (1.0, 1.0)
 	if isinstance(dc, wx.GCDC):
 		pointsize = tuple(1.0 / scale for scale in dc.GetLogicalScale())
-	if sys.platform in ("darwin", "win32") or not isinstance(dc, wx.GCDC):
+	if sys.platform in ("darwin", "win32") or (not isinstance(dc, wx.GCDC) and
+											   not "gtk3" in wx.PlatformInfo):
 		return sum(pointsize) / 2.0
 	else:
 		# On Linux, we need to correct the font size by a certain factor if
