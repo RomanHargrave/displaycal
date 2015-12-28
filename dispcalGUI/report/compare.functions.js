@@ -912,7 +912,7 @@ p.generate_report = function(set_delta_calc_method) {
 		}
 		CCT.push('</tr>');
 		for (var i = start - rstep; i >= end; i -= rstep) {
-			CCT.push('<tr><th>' + i + 'K</th></tr>');
+			CCT.push('<tr><th style="height: ' + rowh + 'px">' + i + 'K</th></tr>');
 		}
 		CCT.push('<tr class="x"><th style="height: ' + rowh + 'px">%</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
