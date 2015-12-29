@@ -1040,17 +1040,13 @@ class LUTFrame(BaseFrame):
 									   self)
 			# Important:
 			# Make sure to only delete the temporary cal file we created
-			# (which hasn't an extension, so we can use ext_filter to 
-			# exclude files which should not be deleted)
-			self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
-													   ".ccmx", ".ccss",
-													   ".cmd", ".command", 
-													   ".gam", ".gz",
-													   ".icc", ".icm",
-													   ".log", ".png",
-													   ".sh", ".ti1",
-													   ".ti3", ".wrl",
-													   ".wrz"])
+			try:
+				os.remove(cal)
+			except Exception, exception:
+				safe_print(u"Warning - temporary file "
+						   u"'%s' could not be removed: %s" % 
+						   tuple(safe_unicode(s) for s in 
+								 (cal, exception)))
 
 	def key_handler(self, event):
 		# AltDown
@@ -1155,17 +1151,13 @@ class LUTFrame(BaseFrame):
 					safe_print(result)
 			# Important: lut_viewer_load_lut is called after measurements,
 			# so make sure to only delete the temporary cal file we created
-			# (which hasn't an extension, so we can use ext_filter to 
-			# exclude files which should not be deleted)
-			self.worker.wrapup(copy=False, ext_filter=[".app", ".cal", 
-													   ".ccmx", ".ccss",
-													   ".cmd", ".command", 
-													   ".gam", ".gz",
-													   ".icc", ".icm",
-													   ".log", ".png",
-													   ".sh", ".ti1",
-													   ".ti3", ".wrl",
-													   ".wrz"])
+			try:
+				os.remove(outfilename)
+			except Exception, exception:
+				safe_print(u"Warning - temporary file "
+						   u"'%s' could not be removed: %s" % 
+						   tuple(safe_unicode(s) for s in 
+								 (outfilename, exception)))
 		if profile and (profile.is_loaded or not profile.fileName or 
 						os.path.isfile(profile.fileName)):
 			if not self.profile or \
@@ -1272,9 +1264,6 @@ class LUTFrame(BaseFrame):
 									   use_icclu=use_icclu)
 		except Exception, exception:
 			self.client.errors.append(Error(safe_unicode(exception)))
-
-		# Remove temporary files
-		self.client.worker.wrapup(False)
 		
 		if self.client.errors:
 			return
