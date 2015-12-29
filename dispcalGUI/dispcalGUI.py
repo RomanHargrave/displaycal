@@ -10167,6 +10167,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		""" Import colorimetercorrections from paths """
 		if (oeminst or i1d3ccss or spyd4en) and auto:
 			# Automatically import OEM files
+			self.worker.create_tempdir()
 			for importer in filter(lambda importer: importer, [oeminst,
 															   i1d3ccss,
 															   spyd4en]):
@@ -10174,10 +10175,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					ccss = get_argyll_data_files("l", "*.ccss")
 				result = self.worker.import_colorimeter_corrections(importer,
 																	asroot=asroot)
-				if not isinstance(result, Exception):
-					if result is None:
-						# Cancelled
-						return
+				if isinstance(result, Exception) or not result:
+					continue
 				if (".ccss" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
 					 get_argyll_data_files("l", "*.ccss") != ccss)):
@@ -10188,6 +10187,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					spyd4 = result
 				if importer == oeminst:
 					break
+			self.worker.wrapup(False)
 		if auto and not paths:
 			paths = []
 			# Look for iColorDisplay
