@@ -81,10 +81,12 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		labelbook.ImageContainer.__init__(self, parent, id, pos, size, style,
 										  agwStyle, name)
 		scale = getcfg("app.dpi") / get_default_dpi()
-		img_w, img_h = map(int, map(round, (84 * scale, 72 * scale)))
-		imagelist = wx.ImageList(img_w, img_h)
+		imagelist = None
 		for img in ("tab_hilite", "tab_selected"):
 			bmp = getbitmap("theme/%s" % img)
+			if not imagelist:
+				img_w, img_h = bmp.Size
+				imagelist = wx.ImageList(img_w, img_h)
 			imagelist.Add(bmp)
 		self.stateimgs = imagelist
 
@@ -831,8 +833,7 @@ class DisplayAdjustmentFrame(BaseFrame):
 
 	def _assign_image_list(self):
 		scale = getcfg("app.dpi") / get_default_dpi()
-		img_w, img_h = map(int, map(round, (72 * scale, 72 * scale)))
-		imagelist = wx.ImageList(img_w, img_h)
+		imagelist = None
 		modes = {CRT: {"black_luminance": "luminance",
 					   "luminance": "contrast"}}
 		for img in ("black_luminance", "white_point", "luminance",
@@ -840,6 +841,9 @@ class DisplayAdjustmentFrame(BaseFrame):
 			img = modes.get(getcfg("measurement_mode") == "c",
 							{}).get(img, img)
 			bmp = getbitmap("theme/icons/72x72/%s" % img)
+			if not imagelist:
+				img_w, img_h = bmp.Size
+				imagelist = wx.ImageList(img_w, img_h)
 			imagelist.Add(bmp)
 		self.lb.AssignImageList(imagelist)
 	
