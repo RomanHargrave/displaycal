@@ -288,7 +288,9 @@ class ProfileLoader(object):
 
 	def exit(self, event=None):
 		from util_win import calibration_management_isenabled
-		if self.frame and not calibration_management_isenabled():
+		from wxwindows import ConfirmDialog, wx
+		if (self.frame and event.GetEventType() == wx.EVT_MENU.typeId and
+			not calibration_management_isenabled()):
 			import config
 			import localization as lang
 			from wxwindows import ConfirmDialog, wx
