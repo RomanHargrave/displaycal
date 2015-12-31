@@ -735,7 +735,7 @@ defaults = {
 	"calibration.interactive_display_adjustment.backup": 1,
 	"calibration.luminance": 120.0,
 	"calibration.luminance.backup": 120.0,
-	"calibration.quality": "m",
+	"calibration.quality": "l",
 	"calibration.update": 0,
 	"calibration.use_video_lut": 1,
 	"calibration.use_video_lut.backup": 1,
