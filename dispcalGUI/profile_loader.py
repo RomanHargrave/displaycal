@@ -288,7 +288,7 @@ class ProfileLoader(object):
 
 	def exit(self, event=None):
 		from util_win import calibration_management_isenabled
-		if not calibration_management_isenabled():
+		if self.frame and not calibration_management_isenabled():
 			import config
 			import localization as lang
 			from wxwindows import ConfirmDialog, wx
@@ -302,8 +302,8 @@ class ProfileLoader(object):
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				return
-		self.frame.Destroy()
-		self.taskbar_icon.Destroy()
+		self.frame and self.frame.Destroy()
+		self.taskbar_icon and self.taskbar_icon.Destroy()
 
 	def get_title(self):
 		import localization as lang
