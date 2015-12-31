@@ -206,7 +206,7 @@ def check_3dlut_format(devicename):
 					getcfg("3dlut.bitdepth.output") == 12)
 
 
-def getbitmap(name, display_missing_icon=True):
+def getbitmap(name, display_missing_icon=True, scale=True):
 	"""
 	Create (if necessary) and return a named bitmap.
 	
@@ -234,7 +234,10 @@ def getbitmap(name, display_missing_icon=True):
 					size = []
 		ow, oh = w, h
 		set_default_app_dpi()
-		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale:
+			scale = getcfg("app.dpi") / get_default_dpi()
+		else:
+			scale = 1
 		if scale > 1:
 			# HighDPI support
 			w = int(round(w * scale))
@@ -321,14 +324,14 @@ def getbitmap(name, display_missing_icon=True):
 	return bitmaps[name]
 
 
-def get_bitmap_as_icon(size, name):
+def get_bitmap_as_icon(size, name, scale=True):
 	""" Like geticon, but return a wx.Icon instance """
 	from wxaddons import wx
 	icon = wx.EmptyIcon()
 	if sys.platform == "darwin" and wx.VERSION >= (2, 9) and size > 128:
 		# FIXME: wxMac 2.9 doesn't support icon sizes above 128
 		size = 128
-	bmp = geticon(size, name)
+	bmp = geticon(size, name, scale)
 	icon.CopyFromBitmap(bmp)
 	return icon
 
@@ -422,7 +425,7 @@ def get_icon_bundle(sizes, name):
 	from wxaddons import wx
 	iconbundle = wx.IconBundle()
 	for size in sizes:
-		iconbundle.AddIcon(get_bitmap_as_icon(size, name))
+		iconbundle.AddIcon(get_bitmap_as_icon(size, name, False))
 	return iconbundle
 
 
@@ -447,10 +450,10 @@ def get_measureframe_dimensions(dimensions_measureframe=None, percent=10):
 	return ",".join([str(min(n, 50)) for n in dimensions_measureframe])
 
 
-def geticon(size, name):
+def geticon(size, name, scale=True):
 	""" Convenience function for getbitmap('theme/icons/<size>/<name>'). """
 	return getbitmap("theme/icons/%(size)sx%(size)s/%(name)s" % 
-					 {"size": size, "name": name})
+					 {"size": size, "name": name}, scale=scale)
 
 
 def get_data_path(relpath, rex=None):
