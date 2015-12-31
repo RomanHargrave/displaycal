@@ -63,7 +63,7 @@ def langmerge(infilename1, infilename2, outfilename):
 	outstream.seek(0)
 	formatted = outstream.read()
 	for key in added:
-		formatted = formatted.replace('"%s"' % key, '\t"*%s"' % key)
+		formatted = formatted.replace('"%s":' % key, '\t"*%s":' % key)
 	safe_print("writing", outfilename)
 	outfile = open(outfilename, "wb")
 	outfile.write(formatted.replace(" " * 4, "\t"))

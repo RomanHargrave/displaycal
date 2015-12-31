@@ -338,7 +338,7 @@ class ScriptingClientFrame(SimpleTerminal):
 		lockfilebasenames = [appname]
 		for module in ["3DLUT-maker", "curve-viewer", "profile-info",
 					   "scripting-client", "synthprofile", "testchart-editor",
-					   "VRML-to-X3D-converter"]:
+					   "VRML-to-X3D-converter", "apply-profiles"]:
 			lockfilebasenames.append("%s-%s" % (appname, module))
 		for lockfilebasename in lockfilebasenames:
 				lockfilename = os.path.join(confighome, "%s.lock" %

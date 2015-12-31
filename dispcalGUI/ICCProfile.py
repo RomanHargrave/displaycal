@@ -400,7 +400,7 @@ def Property(func):
 	return property(**func())
 
 
-def _colord_get_display_profile(display_no=0):
+def _colord_get_display_profile(display_no=0, path_only=False):
 	edid = get_edid(display_no)
 	if edid:
 		# Try a range of possible device IDs
@@ -431,6 +431,8 @@ def _colord_get_display_profile(display_no=0):
 					warnings.warn(safe_str(exception, enc), Warning)
 				else:
 					if profile_path:
+						if path_only:
+							return profile_path
 						return ICCProfile(profile_path)
 				break
 	return None
@@ -440,7 +442,7 @@ def _wcs_get_display_profile(devicekey,
 							 scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
 							 profile_type=COLORPROFILETYPE["ICC"],
 							 profile_subtype=COLORPROFILESUBTYPE["NONE"],
-							 profile_id=0):
+							 profile_id=0, path_only=False):
 	buflen = ctypes.c_ulong()
 	if not mscms.WcsGetDefaultColorProfileSize(scope,
 											   devicekey,
@@ -458,10 +460,12 @@ def _wcs_get_display_profile(devicekey,
 										   ctypes.byref(buf)):
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
 	if buf.value:
+		if path_only:
+			return buf.value
 		return ICCProfile(buf.value)
 
 
-def _winreg_get_display_profile(monkey, current_user=False):
+def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 	filename = None
 	try:
 		if current_user and sys.getwindowsversion() >= (6, ):
@@ -519,6 +523,8 @@ def _winreg_get_display_profile(monkey, current_user=False):
 		filename = os.path.join(iccprofiles[0], 
 								"sRGB Color Space Profile.icm")
 	if filename:
+		if path_only:
+			return filename
 		return ICCProfile(filename)
 	return None
 
@@ -553,7 +559,8 @@ def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0,
 
 
 def get_display_profile(display_no=0, x_hostname="", x_display=0, 
-						x_screen=0, win_get_correct_profile=False):
+						x_screen=0, win_get_correct_profile=False,
+						path_only=False):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
@@ -579,7 +586,10 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 					if ctypes.windll.gdi32.GetICMProfileW(dc,
 														  ctypes.byref(buflen),
 														  ctypes.byref(buf)):
-						profile = ICCProfile(buf.value)
+						if path_only:
+							profile = buf.value
+						else:
+							profile = ICCProfile(buf.value)
 			finally:
 				win32gui.DeleteDC(dc)
 		else:
@@ -596,14 +606,17 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			if device:
 				if mscms:
 					# Via WCS
-					return _wcs_get_display_profile(unicode(device.DeviceKey))
+					return _wcs_get_display_profile(unicode(device.DeviceKey),
+													path_only=path_only)
 				# Via registry - NEVER
 				monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
 				# current user
-				profile = _winreg_get_display_profile(monkey, True)
+				profile = _winreg_get_display_profile(monkey, True,
+													  path_only=path_only)
 				if not profile:
 					# system
-					profile = _winreg_get_display_profile(monkey)
+					profile = _winreg_get_display_profile(monkey,
+														  path_only=path_only)
 	else:
 		if sys.platform == "darwin":
 			if intlist(mac_ver()[0].split(".")) >= [10, 6]:
@@ -628,16 +641,24 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 							   'end tell']
 				retcode, output, errors = osascript(applescript)
 				if retcode == 0 and output.strip():
-					profile = ICCProfile(output.strip("\n").decode(fs_enc))
+					filename = output.strip("\n").decode(fs_enc)
+					if path_only:
+						profile = filename
+					else:
+						profile = ICCProfile(filename)
 				elif errors.strip():
 					raise IOError(errors.strip())
 			else:
 				# Linux
 				# Try colord
 				if colord.which("colormgr"):
-					profile = _colord_get_display_profile(display_no)
+					profile = _colord_get_display_profile(display_no,
+														  path_only=path_only)
 					if profile:
 						return profile
+				if path_only:
+					# No way to figure out the profile path from X atom
+					return
 				# Try XrandR
 				if xrandr and option == "_ICC_PROFILE":
 					if debug:
@@ -674,7 +695,10 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				if stdout:
 					if sys.platform == "darwin":
 						filename = unicode(stdout, "UTF-8")
-						profile = ICCProfile(filename)
+						if path_only:
+							profile = filename
+						else:
+							profile = ICCProfile(filename)
 					else:
 						raw = [item.strip() for item in stdout.split("=")]
 						if raw[0] == atom and len(raw) == 2:

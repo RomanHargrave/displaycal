@@ -1,209 +1,23 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-""" 
-Set ICC profiles and load calibration curves for all configured display devices
-
-"""
-
 import sys
 
 
-def apply_profiles():
-	from dispcalGUI import config
-	from dispcalGUI import localization as lang
-	from dispcalGUI.log import safe_print
-	from dispcalGUI.util_os import which
-	from dispcalGUI.worker import Worker, get_argyll_util
-	from dispcalGUI.wxwindows import wx
-	if not wx.GetApp():
-		app = wx.App(0)
+for arg in sys.argv[1:]:
+	if arg not in ("--help", "--force", "--verify", "--silent",
+				   "--error-dialog", "-V", "--version"):
+		unknown_option = arg
+		break
 
-	worker = Worker()
+if sys.platform == "win32" and not ("--help" in sys.argv[1:] or
+									"-V" in sys.argv[1:] or
+									"--version" in sys.argv[1:]):
+	from dispcalGUI.main import main
 
-	errors = []
-	
-	safe_print("=" * 80)
-	safe_print(lang.getstr("calibration.loading_from_display_profile"))
+	main("apply-profiles")
+else:
+	# Linux
+	from dispcalGUI.profile_loader import main
 
-	# dispwin sets the _ICC_PROFILE(_n) root window atom, per-output xrandr 
-	# _ICC_PROFILE property (if xrandr is working) and loads the vcgt for the 
-	# requested screen (ucmm backend using color.jcnf), and has to be called 
-	# multiple times to setup multiple screens.
-	#
-	# If there is no profile configured in ucmm for the requested screen (or 
-	# ucmm support has been removed, like in the Argyll CMS versions shipped by 
-	# recent Fedora releases), it falls back to a possibly existing per-output 
-	# xrandr _ICC_PROFILE property (if xrandr is working) or _ICC_PROFILE(_n) 
-	# root window atom.
-	dispwin = get_argyll_util("dispwin")
-	if dispwin:
-		worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
-											enumerate_ports=False,
-											include_network_devices=False)
-	else:
-		errors.append(lang.getstr("argyll.util.not_found", "dispwin"))
-
-	if sys.platform != "win32":
-		# gcm-apply sets the _ICC_PROFILE root window atom for the first screen, 
-		# per-output xrandr _ICC_PROFILE properties (if xrandr is working) and 
-		# loads the vcgt for all configured screens (device-profiles.conf)
-		# NOTE: gcm-apply is no longer part of GNOME Color Manager since the 
-		# introduction of colord as it's no longer needed
-		gcm_apply = which("gcm-apply")
-		if gcm_apply:
-			worker.exec_cmd(gcm_apply, capture_output=True, skip_scripts=True,
-							silent=False)
-
-		# oyranos-monitor sets _ICC_PROFILE(_n) root window atoms (oyranos 
-		# db backend) and loads the vcgt for all configured screens when 
-		# xcalib is installed
-		oyranos_monitor = which("oyranos-monitor")
-		xcalib = which("xcalib")
-
-	for i, display in enumerate([display.replace("[PRIMARY]", 
-												 lang.getstr("display.primary")) 
-								 for display in worker.displays]):
-		if config.is_virtual_display(i):
-			continue
-		# Load profile and set vcgt
-		if sys.platform != "win32" and oyranos_monitor:
-			display_conf_oy_compat = worker.check_display_conf_oy_compat(i + 1)
-			if display_conf_oy_compat:
-				worker.exec_cmd(oyranos_monitor, 
-								["-x", str(worker.display_rects[i][0]), 
-								 "-y", str(worker.display_rects[i][1])], 
-								capture_output=True, skip_scripts=True, 
-								silent=False)
-		if dispwin:
-			profile_arg = worker.get_dispwin_display_profile_argument(i)
-			if (sys.platform == "win32" or not oyranos_monitor or
-				not display_conf_oy_compat or not xcalib or profile_arg == "-L"):
-				# Only need to run dispwin if under Windows, or if nothing else
-				# has already taken care of display profile and vcgt loading
-				# (e.g. oyranos-monitor with xcalib, or colord)
-				if worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
-											 profile_arg], 
-								   capture_output=True, skip_scripts=True, 
-								   silent=False):
-					errortxt = ""
-				else:
-					errortxt = "\n".join(worker.errors).strip()
-				if errortxt and ((not "using linear" in errortxt and
-								  not "assuming linear" in errortxt) or 
-								 len(errortxt.split("\n")) > 1):
-					if "Failed to get the displays current ICC profile" in errortxt:
-						# Maybe just not configured
-						continue
-					elif sys.platform == "win32" or \
-					   "Failed to set VideoLUT" in errortxt or \
-					   "We don't have access to the VideoLUT" in errortxt:
-						errstr = lang.getstr("calibration.load_error")
-					else:
-						errstr = lang.getstr("profile.load_error")
-					errors.append(": ".join([display, errstr]))
-					continue
-			if (config.getcfg("profile_loader.verify_calibration")
-				or "--verify" in sys.argv[1:]):
-				# Verify the calibration was actually loaded
-				worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-V",
-										  profile_arg], 
-								capture_output=True, skip_scripts=True, 
-								silent=False)
-				# The 'NOT loaded' message goes to stdout!
-				# Other errors go to stderr
-				errortxt = "\n".join(worker.errors + worker.output).strip()
-				if "NOT loaded" in errortxt or \
-				   "We don't have access to the VideoLUT" in errortxt:
-					errors.append(": ".join([display, 
-											lang.getstr("calibration.load_error")]))
-
-	return errors
-
-
-def apply_profiles_and_warn_on_error():
-	errors = apply_profiles()
-	from dispcalGUI import config
-	if (errors and (config.getcfg("profile_loader.error.show_msg") or
-					"--error-dialog" in sys.argv[1:]) and
-		not "--silent" in sys.argv[1:]):
-		from dispcalGUI import localization as lang
-		from dispcalGUI.wxwindows import InfoDialog, wx
-		if not wx.GetApp():
-			app = wx.App(0)
-		dlg = InfoDialog(None, msg="\n".join(errors), 
-						 ok=lang.getstr("ok"), 
-						 bitmap=config.geticon(32, "dialog-error"),
-						 show=False)
-		dlg.do_not_show_again_cb = wx.CheckBox(dlg, -1, lang.getstr("dialog.do_not_show_again"))
-		dlg.do_not_show_again_cb.SetValue(not bool(config.getcfg("profile_loader.error.show_msg")))
-		def do_not_show_again_handler(event=None):
-			config.setcfg("profile_loader.error.show_msg",
-						  int(not dlg.do_not_show_again_cb.GetValue()))
-			config.writecfg()
-		dlg.do_not_show_again_cb.Bind(wx.EVT_CHECKBOX, do_not_show_again_handler)
-		dlg.sizer3.Add(dlg.do_not_show_again_cb, flag=wx.TOP, border=12)
-		dlg.sizer0.SetSizeHints(dlg)
-		dlg.sizer0.Layout()
-		dlg.Center(wx.BOTH)
-		dlg.ok.SetDefault()
-		dlg.ShowModalThenDestroy()
-
-
-def main():
-	from dispcalGUI.meta import version
-	
-	unknown_option = None
-	for arg in sys.argv[1:]:
-		if arg not in ("--help", "--force", "--verify", "--silent",
-					   "--error-dialog" "-V", "--version"):
-			unknown_option = arg
-			break
-
-	if "--help" in sys.argv[1:] or unknown_option:
-		if unknown_option:
-			print "%s: unrecognized option `%s'" % (os.path.basename(sys.argv[0]),
-											 unknown_option)
-		print "Usage: %s [OPTION]..." % os.path.basename(sys.argv[0])
-		print "Apply profiles to configured display devices and load calibration"
-		print "Version %s" % version
-		print ""
-		print "  --help           Output this help text and exit"
-		print "  --force          Force loading of calibration/profile (if it has been"
-		print "                   disabled in dispcalGUI.ini)"
-		print "  --verify         Verify if calibration was loaded correctly"
-		print "  --silent         Do not show dialog box on error"
-		print "  --error-dialog   Force dialog box on error"
-		print "  -V, --version    Output version information and exit"
-	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
-		print "%s %s" % (os.path.basename(sys.argv[0]), version)
-	else:
-		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
-			sys.getwindowsversion() >= (6, 1)):
-			from dispcalGUI.util_win import calibration_management_isenabled
-			if calibration_management_isenabled():
-				# Early exit incase calibration loading is handled by Windows 7 and
-				# isn't forced
-				sys.exit()
-
-		from dispcalGUI import config
-
-		config.initcfg("apply-profiles")
-
-		if (not "--force" in sys.argv[1:] and
-			not config.getcfg("profile.load_on_login")):
-			# Early exit incase profile loading has been disabled and isn't forced
-			sys.exit()
-
-		if "--error-dialog" in sys.argv[1:]:
-			config.setcfg("profile_loader.error.show_msg", 1)
-			config.writecfg()
-
-		from dispcalGUI import localization as lang
-		lang.init()
-
-		apply_profiles_and_warn_on_error()
-
-
-if __name__ == "__main__":
 	main()

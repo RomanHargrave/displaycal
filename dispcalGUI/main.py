@@ -400,6 +400,8 @@ def main(module=None):
 				from wxTestchartEditor import main
 			elif module == "VRML-to-X3D-converter":
 				from wxVRML2X3D import main
+			elif module == "apply-profiles":
+				from profile_loader import main
 			else:
 				from dispcalGUI import main
 			main()
