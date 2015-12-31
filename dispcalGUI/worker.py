@@ -3008,10 +3008,15 @@ class Worker(object):
 							desc.append(device.DeviceString.decode(fs_enc, 
 																   "replace"))
 						# Deal with HiDPI - update monitor rect
-						self.display_rects[i] = wx.Rect(*monitors[i]["Monitor"])
+						m_left, m_top, m_right, m_bottom = monitors[i]["Monitor"]
+						m_width = m_right - m_left
+						m_height = m_bottom - m_top
+						self.display_rects[i] = wx.Rect(m_left, m_top, m_width,
+														m_height)
 						display = " @ ".join([display_name, 
 											  "%i, %i, %ix%i" %
-											  monitors[i]["Monitor"]])
+											  (m_left, m_top, m_width,
+											   m_height)])
 					# Get monitor descriptions from EDID
 					try:
 						# Important: display_name must be given for get_edid
