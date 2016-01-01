@@ -61,7 +61,11 @@ class ProfileLoader(object):
 						if (not "--force" in sys.argv[1:] and
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
-						self.pl.apply_profiles(True)
+						if os.path.isfile(os.path.join(config.confighome,
+													   appname + ".lock")):
+							return "forbidden"
+						else:
+							self.pl.apply_profiles(True)
 						return self.pl.errors or "ok"
 					return "invalid"
 
@@ -81,8 +85,13 @@ class ProfileLoader(object):
 					# Popup menu appears on right-click
 					menu = wx.Menu()
 					
+					if os.path.isfile(os.path.join(config.confighome,
+												   appname + ".lock")):
+						method = None
+					else:
+						method = self.pl.apply_profiles_and_warn_on_error
 					for label, method in (("calibration.reload_from_display_profiles",
-										   self.pl.apply_profiles_and_warn_on_error),
+										   method),
 										  ("-", None),
 										  ("menuitem.quit", self.pl.exit)):
 						if label == "-":
@@ -329,12 +338,15 @@ class ProfileLoader(object):
 		display = None
 		current_display = None
 		current_timestamp = 0
+		displays_enumerated = False
 		first_run = True
 		self.profile_associations = {}
 		while wx.GetApp():
 			apply_profiles = ("--force" in sys.argv[1:] or
 							  (config.getcfg("profile.load_on_login") and
 							   not calibration_management_isenabled()))
+			if not apply_profiles:
+				self.profile_associations = {}
 			# Check if display configuration changed
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
@@ -344,14 +356,19 @@ class ProfileLoader(object):
 				display = _winreg.QueryValueEx(subkey, "SetId")[0]
 				timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
 				if timestamp > current_timestamp:
-					if (not first_run and apply_profiles and
-						display != current_display):
-						safe_print(lang.getstr("display_detected"))
-						# One second delay to allow display configuration
-						# to settle
-						time.sleep(1)
-						self.apply_profiles(True)
-						apply_profiles = False
+					if display != current_display:
+						if not first_run and apply_profiles:
+							safe_print(lang.getstr("display_detected"))
+							# One second delay to allow display configuration
+							# to settle
+							time.sleep(1)
+							self.apply_profiles(True)
+							apply_profiles = False
+						if not first_run or not displays_enumerated:
+							self.worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
+																	 enumerate_ports=False,
+																	 include_network_devices=False)
+							displays_enumerated = True
 					current_display = display
 					current_timestamp = timestamp
 				_winreg.CloseKey(subkey)
@@ -365,8 +382,8 @@ class ProfileLoader(object):
 					profile = ICCP.get_display_profile(i, path_only=True)
 				except IndexError:
 					break
-				if self.profile_associations.get(i) != profile:
-					if not first_run and apply_profiles:
+				if self.profile_associations.get(i) != profile and apply_profiles:
+					if not first_run:
 						safe_print(lang.getstr("display_detected"))
 						self.lock.release()
 						self.apply_profiles(True, index=i)
