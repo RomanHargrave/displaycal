@@ -6050,7 +6050,8 @@ usage: spotread [-options] [logfile]
 		loader_args = []
 		if os.path.basename(sys.executable).lower() in ("python.exe", 
 														"pythonw.exe"):
-			cmd = sys.executable
+			cmd = os.path.join(os.path.dirname(sys.executable),
+							   "pythonw.exe")
 			pyw = os.path.normpath(os.path.join(pydir, "..",
 												appname +
 												"-apply-profiles.pyw"))
@@ -6138,6 +6139,14 @@ usage: spotread [-options] [logfile]
 			if not_main_thread:
 				# If running in a thread, need to call pythoncom.CoUninitialize
 				pythoncom.CoUninitialize()
+		if not os.path.isfile(os.path.join(config.confighome,
+										   appname + "-apply-profiles.lock")):
+			# Run profile loader TSR program if not yet loaded
+			if loader_args:
+				cmdline = '%s" %s "--skip' % (cmd, " ".join(loader_args))
+			else:
+				cmdline = cmd
+			launch_file(cmdline)
 		return result
 	
 	def _uninstall_profile_loader_win32(self):

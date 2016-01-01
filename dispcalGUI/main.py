@@ -99,7 +99,8 @@ def main(module=None):
 			lockfilebasenames = []
 			if module:
 				lockfilebasenames.append(name)
-			if module not in ("3DLUT-maker", "VRML-to-X3D-converter"):
+			if module not in ("3DLUT-maker", "VRML-to-X3D-converter",
+							  "apply-profiles"):
 				lockfilebasenames.append(appname)
 			for lockfilebasename in lockfilebasenames:
 				lockfilename = os.path.join(confighome, "%s.lock" %

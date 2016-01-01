@@ -36,7 +36,7 @@ class ProfileLoader(object):
 				# Incase calibration loading is handled by Windows 7 and
 				# isn't forced
 				apply_profiles = False
-		if apply_profiles:
+		if apply_profiles and not "--skip" in sys.argv[1:]:
 			self.apply_profiles_and_warn_on_error()
 		if sys.platform == "win32":
 			# We create a TSR tray program only under Windows.
@@ -338,7 +338,7 @@ class ProfileLoader(object):
 		display = None
 		current_display = None
 		current_timestamp = 0
-		displays_enumerated = False
+		displays_enumerated = self.worker.displays
 		first_run = True
 		self.profile_associations = {}
 		while wx.GetApp():
@@ -404,7 +404,7 @@ def main():
 	unknown_option = None
 	for arg in sys.argv[1:]:
 		if arg not in ("--help", "--force", "--verify", "--silent",
-					   "--error-dialog", "-V", "--version"):
+					   "--error-dialog", "-V", "--version", "--skip"):
 			unknown_option = arg
 			break
 
@@ -421,6 +421,7 @@ def main():
 		print "                   disabled in dispcalGUI.ini)"
 		print "  --verify         Verify if calibration was loaded correctly"
 		print "  --silent         Do not show dialog box on error"
+		print "  --skip           Skip initial loading of calibration"
 		print "  --error-dialog   Force dialog box on error"
 		print "  -V, --version    Output version information and exit"
 	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
