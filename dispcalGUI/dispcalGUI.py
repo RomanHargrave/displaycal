@@ -108,16 +108,15 @@ from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
 from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
-					Warn, Worker, check_create_dir,
-					check_file_isfile,
+					Warn, Worker, check_create_dir, check_file_isfile,
 					check_set_argyll_bin, check_ti3, check_ti3_criteria1,
 					check_ti3_criteria2, get_arg, get_argyll_util,
 					get_cfg_option_from_args, get_options_from_cal,
 					get_argyll_version, get_current_profile_path,
 					get_options_from_profile, get_options_from_ti3,
-					make_argyll_compatible_path, parse_argument_string,
-					set_argyll_bin, show_result_dialog, technology_strings_170,
-					technology_strings_171)
+					get_program_file, make_argyll_compatible_path,
+					parse_argument_string, set_argyll_bin, show_result_dialog,
+					technology_strings_170, technology_strings_171)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -1454,13 +1453,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
+			".7z": self.cal_drop_handler,
 			".cal": self.cal_drop_handler,
 			".ccmx": self.ccxx_drop_handler,
 			".ccss": self.ccxx_drop_handler,
 			".icc": self.cal_drop_handler,
 			".icm": self.cal_drop_handler,
 			".ti1": self.ti1_drop_handler,
-			".ti3": self.ti3_drop_handler
+			".ti3": self.ti3_drop_handler,
+			".zip": self.cal_drop_handler
 		}
 
 		# Main panel
@@ -5174,10 +5175,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("trc.should_use_viewcond_adjust.show_msg", 
 			   int(not event.GetEventObject().GetValue()))
 
-	def check_overwrite(self, ext=""):
-		filename = getcfg("profile.name.expanded") + ext
-		dst_file = os.path.join(getcfg("profile.save_path"), 
-								getcfg("profile.name.expanded"), filename)
+	def check_overwrite(self, ext="", filename=None):
+		if not filename:
+			filename = getcfg("profile.name.expanded") + ext
+			dst_file = os.path.join(getcfg("profile.save_path"), 
+									getcfg("profile.name.expanded"), filename)
+		else:
+			dst_file = os.path.join(getcfg("profile.save_path"), filename)
 		if os.path.exists(dst_file):
 			dlg = ConfirmDialog(self, msg=lang.getstr("warning.already_exists", 
 													  filename), 
@@ -10055,16 +10059,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				elif ext.lower() in (".cab", ".exe"):
 					if icolordisplay:
 						kind = "icd"
-						if sys.platform == "win32":
-							paths = getenvu("PATH", os.defpath).split(os.pathsep)
-							paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
-														    "7-zip"))
-							paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
-														    "7-zip"))
-						else:
-							paths = None
-						sevenzip_name = "7z" + exe_ext
-						sevenzip = which(sevenzip_name, paths=paths)
+						sevenzip = get_program_file("7z", "7-zip")
 						if sevenzip:
 							if not getcfg("dry_run"):
 								# Extract from NSIS installer
@@ -10086,7 +10081,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									else:
 										self.worker.wrapup(False)
 						else:
-							result = Error(lang.getstr("file.missing", sevenzip_name))
+							result = Error(lang.getstr("file.missing",
+													   "7z" + exe_ext))
 					elif i1d3ccss and ("colormunki" in
 									   os.path.basename(path).lower() or
 									   "i1profiler" in
@@ -10300,6 +10296,104 @@ class MainFrame(ReportFrame, BaseFrame):
 			show_result_dialog(UnloggedError(error), self)
 		if callafter:
 			wx.CallAfter(callafter, *callafter_args)
+
+	def import_session_archive(self, path):
+		""" Import compressed session archive """
+		filename, ext = os.path.splitext(path)
+		basename = os.path.basename(filename)  # Without extension
+		if self.check_overwrite(filename=basename):
+			self.worker.start(self.import_session_archive_consumer,
+							  self.import_session_archive_producer,
+							  cargs=(basename, ), wargs=(path, basename, ext),
+							  progress_msg=lang.getstr("archive.import"),
+							  fancy=False)
+
+	def import_session_archive_producer(self, path, basename, ext):
+		temp = self.worker.create_tempdir()
+		if isinstance(temp, Exception):
+			return temp
+		if ext.lower() == ".7z":
+			sevenzip = get_program_file("7z", "7-zip")
+			if sevenzip:
+				# Extract from 7z archive (flat hierarchy, not using dirnames)
+				result = self.worker.exec_cmd(sevenzip,
+											  ["e", "-y",
+											   path],
+											  capture_output=True,
+											  log_output=False,
+											  skip_scripts=True,
+											  working_dir=temp)
+				if not result or isinstance(result, Exception):
+					return result
+				# Check if a session archive
+				is_session_archive = False
+				for ext in (".icc", ".icm", ".cal"):
+					if os.path.isfile(os.path.join(temp, basename + ext)):
+						is_session_archive = True
+						break
+				if not is_session_archive:
+					# Doesn't seem to be a session archive
+					return Error(lang.getstr("error.not_a_session_archive",
+											 os.path.basename(path)))
+				if os.path.isdir(os.path.join(temp, basename)):
+					# Remove empty directory
+					shutil.rmtree(os.path.join(temp, basename))
+			else:
+				return Error(lang.getstr("file.missing", "7z" + exe_ext))
+		else:
+			try:
+				with zipfile.ZipFile(path, "r") as z:
+					# Check if a session archive
+					info = None
+					for ext in (".icc", ".icm", ".cal"):
+						for name in (basename + "/" + basename + ext,
+									 basename + ext):
+							# If the ZIP file was created with Unicode names
+							# stored in the file, 'name' will already be Unicode.
+							# Otherwise, it'll either be 7-bit ASCII or (legacy)
+							# cp437 encoding
+							for name in (name, safe_str(name, "cp437")):
+								try:
+									info = z.getinfo(name)
+								except KeyError:
+									continue
+								break
+							if info:
+								break
+						if info:
+							break
+					if not info:
+						# Doesn't seem to be a session archive
+						return Error(lang.getstr("error.not_a_session_archive",
+												 os.path.basename(path)))
+					# Extract from ZIP archive (flat hierarchy, not using dirnames)
+					for name in z.namelist():
+						# If the ZIP file was created with Unicode names stored
+						# in the file, 'name' will already be Unicode.
+						# Otherwise, it'll either be 7-bit ASCII or (legacy)
+						# cp437 encoding
+						outname = safe_unicode(name, "cp437")
+						with open(os.path.join(temp, os.path.basename(outname)),
+								  "wb") as outfile:
+							outfile.write(z.read(name))
+			except Exception, exception:
+				from traceback import format_exc
+				safe_print(traceback.format_exc())
+				return exception
+		return os.path.join(getcfg("profile.save_path"), basename,
+							basename + ext)
+
+	def import_session_archive_consumer(self, result, basename):
+		if result and not isinstance(result, Exception):
+			# Copy to storage folder
+			self.worker.wrapup(dst_path=os.path.join(getcfg("profile.save_path"),
+													 basename,
+													 basename + ".ext"))
+			# Load settings from profile
+			self.load_cal_handler(None, result)
+		else:
+			show_result_dialog(result)
+			self.worker.wrapup(False)
 
 	def display_ctrl_handler(self, event, load_lut=True,
 							 update_ccmx_items=True):
@@ -10867,30 +10961,26 @@ class MainFrame(ReportFrame, BaseFrame):
 			return
 		path_name, ext = os.path.splitext(filename)
 		# Check for 7-Zip
-		if sys.platform == "win32":
-			paths = getenvu("PATH", os.defpath).split(os.pathsep)
-			paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
-											"7-zip"))
-			paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
-											"7-zip"))
-		else:
-			paths = None
-		sevenzip_name = "7z" + exe_ext
-		sevenzip = which(sevenzip_name, paths=paths)
+		sevenzip = get_program_file("7z", "7-zip")
 		if sevenzip:
 			format = "7z"
 		else:
 			format = "zip"
+		wildcard = lang.getstr("filetype." + format) + "|*." + format
+		if format == "7z":
+			wildcard += "|" + lang.getstr("filetype.zip") + "|*.zip"
 		# Ask where to save archive
 		defaultDir, defaultFile = get_verified_path("last_archive_save_path")
 		dlg = wx.FileDialog(self, lang.getstr("archive.create"), defaultDir, 
 							"%s.%s" % (os.path.basename(path_name), format),
-							wildcard=lang.getstr("filetype." + format) + "|*." +
-									 format, style=wx.SAVE |
-												   wx.FD_OVERWRITE_PROMPT)
+							wildcard=wildcard, style=wx.SAVE |
+													 wx.FD_OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
 		archive_path = dlg.GetPath()
+		if sevenzip and dlg.GetFilterIndex():
+			# ZIP
+			sevenzip = None
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
@@ -12330,11 +12420,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not check_set_argyll_bin():
 			return
 		if path is None:
+			wildcard = lang.getstr("filetype.cal_icc") + "|*.cal;*.icc;*.icm"
+			sevenzip = get_program_file("7z", "7-zip")
+			if sevenzip:
+				wildcard += ";*.7z"
+			wildcard += ";*.zip"
 			defaultDir, defaultFile = get_verified_path("last_cal_or_icc_path")
 			dlg = wx.FileDialog(self, lang.getstr("dialog.load_cal"), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
-								wildcard=lang.getstr("filetype.cal_icc") + 
-										 "|*.cal;*.icc;*.icm", 
+								wildcard=wildcard, 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			if dlg.ShowModal() == wx.ID_OK:
@@ -12372,6 +12466,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 
 			filename, ext = os.path.splitext(path)
+			if ext.lower() in (".7z", ".zip"):
+				self.import_session_archive(path)
+				return
 			if ext.lower() in (".icc", ".icm"):
 				try:
 					profile = ICCP.ICCProfile(path)
