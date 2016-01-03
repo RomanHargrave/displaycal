@@ -17,6 +17,7 @@ import localization as lang
 import worker
 from wxTestchartEditor import TestchartEditor
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
+from wxfixes import TempXmlResource
 import xh_fancytext
 import xh_filebrowsebutton
 import xh_hstretchstatbmp
@@ -35,7 +36,7 @@ class ReportFrame(BaseFrame):
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
-		res = xrc.XmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
+		res = TempXmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
 		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())

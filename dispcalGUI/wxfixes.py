@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import atexit
+import os
+import re
+import shutil
 import sys
+import tempfile
 
-from meta import wx_minversion
+from meta import name as appname, wx_minversion
 
 # wxversion will be removed in Phoenix
 try:
@@ -31,6 +36,9 @@ from wx.lib.buttons import GenBitmapButton as _GenBitmapButton
 from wx.lib.buttons import ThemedGenButton as _ThemedGenButton
 from wx.lib.buttons import GenBitmapTextButton as _GenBitmapTextButton
 from wx.lib import platebtn
+from wx import xrc
+
+from util_str import safe_str
 
 
 if not hasattr(platebtn, "PB_STYLE_TOGGLE"):
@@ -483,15 +491,61 @@ wx.Window.SetToolTipString = SetToolTipString
 wx.Sizer._Add = wx.Sizer.Add
 
 def SizerAdd(self, *args, **kwargs):
-	if kwargs.get("border"):
-		from config import get_default_dpi, getcfg
-		scale = getcfg("app.dpi") / get_default_dpi()
-		if scale > 1:
+	from config import get_default_dpi, getcfg
+	scale = getcfg("app.dpi") / get_default_dpi()
+	if scale > 1:
+		if kwargs.get("border"):
 			kwargs["border"] = int(round(kwargs["border"] * scale))
+		if args and isinstance(args[0], tuple):
+			spacer = list(args[0])
+			##print spacer, '->',
+			for i, dimension in enumerate(spacer):
+				if dimension > 0:
+					spacer[i] = int(round(dimension * scale))
+			##print spacer
+			args = (tuple(spacer), ) + args[1:]
+				
 	return self._Add(*args, **kwargs)
 
 if not u"phoenix" in wx.PlatformInfo:
+	# Doesn't work with Phoenix
 	wx.Sizer.Add = SizerAdd
+
+
+	wx._GridSizer = wx.GridSizer
+
+	class GridSizer(wx._GridSizer):
+
+		def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
+			if vgap or hgap:
+				from config import get_default_dpi, getcfg
+				scale = getcfg("app.dpi") / get_default_dpi()
+				if scale > 1:
+					##print vgap, hgap, '->',
+					vgap, hgap = [int(round(v * scale)) for v in (vgap, hgap)]
+					##print vgap, hgap
+			super(GridSizer, self).__init__(rows, cols, vgap, hgap)
+
+	# TODO: Yet to test if this works with Phoenix
+	wx.GridSizer = GridSizer
+
+
+	wx._FlexGridSizer = wx.FlexGridSizer
+
+	class FlexGridSizer(wx._FlexGridSizer):
+
+		def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
+			if vgap or hgap:
+				from config import get_default_dpi, getcfg
+				scale = getcfg("app.dpi") / get_default_dpi()
+				if scale > 1:
+					##print vgap, hgap, '->',
+					vgap, hgap = [int(round(v * scale)) for v in (vgap, hgap)]
+					##print vgap, hgap
+			super(FlexGridSizer, self).__init__(rows, cols, vgap, hgap)
+
+	# TODO: Yet to test if this works with Phoenix
+	wx.FlexGridSizer = FlexGridSizer
 
 
 def GridGetSelection(self):
@@ -1169,6 +1223,62 @@ class PlateButton(platebtn.PlateButton):
 
 if not hasattr(PlateButton, "_SetState"):
 	PlateButton._SetState = PlateButton.SetState
+
+
+class TempXmlResource(object):
+
+	_temp = None
+
+	def __init__(self, xmlpath):
+		from config import get_default_dpi, getcfg
+		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale > 1:
+			if not TempXmlResource._temp:
+				try:
+					TempXmlResource._temp = tempfile.mkdtemp(prefix=appname + u"-XRC-")
+				except:
+					pass
+			if TempXmlResource._temp and os.path.isdir(TempXmlResource._temp):
+				# Read original XML
+				with open(xmlpath, "rb") as xmlfile:
+					xml = xmlfile.read()
+				# Adjust spacing for scale
+				for tag in ("border", "hgap", "vgap"):
+					xml = re.sub(r"<%s>(\d+)</%s>" % (tag, tag),
+								 lambda match: "<%s>%i</%s>" %
+											   (tag, round(int(match.group(1)) * scale), tag),
+								 xml)
+				for tag in ("size", ):
+					xml = re.sub(r"<%s>(-?\d+)\s*,\s*(-?\d+)</%s>" % (tag, tag),
+								 lambda match: "<%s>%i,%i</%s>" %
+											   ((tag, ) +
+											    tuple(round(int(v) * scale)
+													  if int(v) > 0 else int(v)
+													  for v in match.groups()) +
+												(tag, )),
+								 xml)
+				# Set relative paths to absolute
+				basedir = os.path.dirname(os.path.dirname(xmlpath))
+				basedir = basedir.replace("\\", "/")
+				xml = xml.replace(">../", ">%s/" % safe_str(basedir, "UTF-8"))
+				# Write modified XML
+				xmlpath = os.path.join(TempXmlResource._temp,
+									   os.path.basename(xmlpath))
+				with open(xmlpath, "wb") as xmlfile:
+					xmlfile.write(xml)
+				atexit.register(self._cleanup)
+		self.xmlpath = xmlpath
+		self.res = xrc.XmlResource(xmlpath)
+
+	def _cleanup(self):
+		if (TempXmlResource._temp and
+			self.xmlpath.startswith(TempXmlResource._temp + os.path.sep)):
+			os.remove(self.xmlpath)
+			if not os.listdir(TempXmlResource._temp):
+				shutil.rmtree(TempXmlResource._temp)
+
+	def __getattr__(self, name):
+		return getattr(self.res, name)
 
 
 class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):

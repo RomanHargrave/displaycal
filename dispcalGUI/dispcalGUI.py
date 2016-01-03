@@ -132,7 +132,7 @@ from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
-					 set_bitmap_labels)
+					 set_bitmap_labels, TempXmlResource)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
@@ -790,7 +790,7 @@ class ExtraArgsFrame(BaseFrame):
 	""" Extra commandline arguments window. """
 	
 	def __init__(self, parent):
-		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
 															  "extra.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
@@ -866,7 +866,7 @@ class GamapFrame(BaseFrame):
 	""" Gamut mapping options window. """
 	
 	def __init__(self, parent):
-		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
 															  "gamap.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		self.res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
@@ -1254,7 +1254,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						 "\n" + safe_unicode("\n".join(missing)), self)
 		
 		# Initialize GUI
-		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
 															  "main.xrc")))
 		self.res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
@@ -1497,7 +1497,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_settings_panel = self.FindWindowByName("lut3d_settings_panel")
 
 		# Verification / measurement report
-		res = xrc.XmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
+		res = TempXmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
 		res.InsertHandler(xh_fancytext.StaticFancyTextCtrlXmlHandler())
 		res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		res.InsertHandler(xh_hstretchstatbmp.HStretchStaticBitmapXmlHandler())
@@ -1953,7 +1953,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def init_menus(self):
 		""" Initialize the menus and menuitem event handlers. """
-		res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+		res = TempXmlResource(get_data_path(os.path.join("xrc", 
 														 "mainmenu.xrc")))
 		self.menubar = res.LoadMenuBar("menu")
 		

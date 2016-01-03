@@ -28,6 +28,7 @@ import worker
 from worker import UnloggedWarning, check_set_argyll_bin, get_options_from_profile
 from wxwindows import (BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog,
 					   wx)
+from wxfixes import TempXmlResource
 import xh_filebrowsebutton
 import xh_bitmapctrls
 
@@ -39,7 +40,7 @@ class LUT3DFrame(BaseFrame):
 	""" 3D LUT creation window """
 	
 	def __init__(self, parent=None, setup=True):
-		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
 															  "3dlut.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
 		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())

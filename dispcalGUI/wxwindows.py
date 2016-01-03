@@ -1600,8 +1600,6 @@ class BaseFrame(wx.Frame):
 						child.__class__.Label = property(child.__class__.GetLabel,
 														 child.__class__.SetLabel)
 				child.SetMaxFontSize(11)
-				if scale > 1 and child.MinSize[0] != -1:
-					child.MinSize = child.MinSize[0] * scale, child.MinSize[1]
 				if sys.platform == "darwin":
 					# Work around ComboBox issues on Mac OS X
 					# (doesn't receive EVT_KILL_FOCUS)

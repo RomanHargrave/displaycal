@@ -17,6 +17,7 @@ import config
 import localization as lang
 import worker
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
+from wxfixes import TempXmlResource
 import floatspin
 import xh_floatspin
 import xh_bitmapctrls
@@ -29,7 +30,7 @@ class SynthICCFrame(BaseFrame):
 	""" 3D LUT creation window """
 	
 	def __init__(self, parent=None):
-		self.res = xrc.XmlResource(get_data_path(os.path.join("xrc", 
+		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
 															  "synthicc.xrc")))
 		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
