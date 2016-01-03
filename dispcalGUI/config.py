@@ -285,7 +285,7 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 					break
 			if path:
 				bitmaps[name] = wx.Bitmap(path)
-				if scale > 1:
+				if scale > 1 and i:
 					rescale = False
 					if i == 1:
 						# HighDPI support. 2x version, determine scaled size
