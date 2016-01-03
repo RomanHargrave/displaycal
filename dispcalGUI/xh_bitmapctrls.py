@@ -20,7 +20,9 @@ class BitmapButton(xrc.XmlResourceHandler):
 
 	# Process XML parameters and create the object
 	def DoCreateResource(self):
-		name = os.path.splitext(self.GetText('bitmap').lstrip('./'))[0]
+		name = os.path.splitext(self.GetText('bitmap'))[0]
+		if name.startswith('../'):
+			name = name[3:]
 		bitmap = getbitmap(name)
 		w = wx.BitmapButton(self.GetParentAsWindow(),
 							self.GetID(),
@@ -46,7 +48,9 @@ class StaticBitmap(xrc.XmlResourceHandler):
 
 	# Process XML parameters and create the object
 	def DoCreateResource(self):
-		name = os.path.splitext(self.GetText('bitmap').lstrip('./'))[0]
+		name = os.path.splitext(self.GetText('bitmap'))[0]
+		if name.startswith('../'):
+			name = name[3:]
 		bitmap = getbitmap(name)
 		w = wx.StaticBitmap(self.GetParentAsWindow(),
 							self.GetID(),
