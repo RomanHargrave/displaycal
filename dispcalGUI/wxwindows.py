@@ -2896,7 +2896,7 @@ class CustomGrid(wx.grid.Grid):
 		dc = wx.PaintDC(window)
 
 		cols = self.CalcColLabelsExposed(window.GetUpdateRegion())
-		if cols == [-1]:
+		if -1 in cols:
 			return
 
 		x, y = self.CalcUnscrolledPosition((0,0))
@@ -2937,7 +2937,7 @@ class CustomGrid(wx.grid.Grid):
 		dc = wx.PaintDC(window)
 
 		rows = self.CalcRowLabelsExposed(window.GetUpdateRegion())
-		if rows == [-1]:
+		if -1 in rows:
 			return
 
 		x, y = self.CalcUnscrolledPosition((0,0))
