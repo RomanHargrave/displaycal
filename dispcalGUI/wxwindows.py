@@ -1956,6 +1956,13 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 				self._txt = wx.StaticText(self, -1, self._label, pos=(x, y),
 										  style=style)
 			else:
+				if (sys.platform == "win32" and
+					sys.getwindowsversion() >= (6, ) and
+					not self.IsDoubleBuffered()):
+					# No need to enable double buffering under Linux and Mac OS X.
+					# Under Windows, enabling double buffering on the panel seems
+					# to work best to reduce flicker.
+					self.SetDoubleBuffered(True)
 				self._txt.Label = label
 				self._txt.Position = x, y
 	

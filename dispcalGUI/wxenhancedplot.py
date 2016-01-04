@@ -634,10 +634,7 @@ class PlotCanvas(wx.Panel):
         self.last_PointLabel= None
         self._pointLabelFunc= None
         self.canvas.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeave)
-        if sys.platform != "darwin":
-            self._logicalFunction = wx.EQUIV  # (NOT src) XOR dst
-        else:
-            self._logicalFunction = wx.COPY  # wx.EQUIV not supported on Mac OS X
+        self._logicalFunction = wx.COPY  # wx.EQUIV not supported on Mac OS X
 
         self._useScientificNotation = False
         
@@ -1515,14 +1512,8 @@ class PlotCanvas(wx.Panel):
         """Draws and erases pointLabels"""
         width = self._Buffer.GetWidth()
         height = self._Buffer.GetHeight()
-        if sys.platform != "darwin" and not "gtk3" in wx.PlatformInfo:
-            tmp_Buffer = wx.EmptyBitmap(width,height)
-            dcs = wx.MemoryDC()
-            dcs.SelectObject(tmp_Buffer)
-            dcs.Clear()
-        else:
-            tmp_Buffer = self._Buffer.GetSubBitmap((0, 0, width, height))
-            dcs = wx.MemoryDC(self._Buffer)
+        tmp_Buffer = self._Buffer.GetSubBitmap((0, 0, width, height))
+        dcs = wx.MemoryDC(self._Buffer)
         dcs.BeginDrawing()
         self._pointLabelFunc(dcs,mDataDict)  #custom user pointLabel function
         dcs.EndDrawing()
@@ -1531,8 +1522,7 @@ class PlotCanvas(wx.Panel):
         dc = wx.BufferedDC(dc, self._Buffer)
         #this will erase if called twice
         dc.Blit(0, 0, width, height, dcs, 0, 0, self._logicalFunction)
-        if sys.platform == "darwin" or "gtk3" in wx.PlatformInfo:
-            self._Buffer = tmp_Buffer
+        self._Buffer = tmp_Buffer
         
 
     def _drawLegend(self,dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt):
