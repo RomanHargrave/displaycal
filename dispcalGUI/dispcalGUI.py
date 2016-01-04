@@ -13750,9 +13750,13 @@ class StartupFrame(wx.Frame):
 			frame.SetAlphaData(self.splash_alpha)
 			if scale < 1:
 				frame = frame.Blur(int(round(1 * (1 - scale))))
+			if wx.VERSION > (3, ):
+				quality = wx.IMAGE_QUALITY_BILINEAR
+			else:
+				quality = wx.IMAGE_QUALITY_HIGH
 			frame.Rescale(max(int(round(self.splash_bmp.Size[0] * scale)), 1),
 						  max(int(round(self.splash_bmp.Size[1] * scale)), 1),
-						  wx.IMAGE_QUALITY_HIGH)
+						  quality)
 			frame.Resize(self.splash_bmp.Size,
 						 (int(round(self.splash_bmp.Size[0] / 2 - frame.Width / 2)),
 						  int(round(self.splash_bmp.Size[1] / 2 - frame.Height / 2))))
