@@ -1066,12 +1066,12 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.status = BitmapBackgroundPanelText(p1)
 		self.status.SetMaxFontSize(11)
-		h = self.status.GetTextExtent("Ig")[1]
-		self.status.SetMinSize((0, h * 2 + 10))
 		self.status.label_y = 0
 		self.status.textshadow = False
 		self.status.SetBackgroundColour(BGCOLOUR)
 		self.status.SetForegroundColour(FGCOLOUR)
+		h = self.status.GetTextExtent("Ig")[1]
+		self.status.SetMinSize((0, h * 2 + 10))
 		p1.sizer.Add(self.status, flag=wx.EXPAND)
 		
 		# Gamut view options

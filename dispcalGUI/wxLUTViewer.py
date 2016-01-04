@@ -786,12 +786,12 @@ class LUTFrame(BaseFrame):
 		
 		self.status = BitmapBackgroundPanelText(self)
 		self.status.SetMaxFontSize(11)
-		h = self.status.GetTextExtent("Ig")[1]
-		self.status.SetMinSize((0, h * 2 + 18))
 		self.status.label_y = 8
 		self.status.textshadow = False
 		self.status.SetBackgroundColour(BGCOLOUR)
 		self.status.SetForegroundColour(FGCOLOUR)
+		h = self.status.GetTextExtent("Ig")[1]
+		self.status.SetMinSize((0, h * 2 + 18))
 		self.sizer.Add(self.status, flag=wx.EXPAND)
 		
 		self.box_sizer = wx.FlexGridSizer(0, 3, 4, 4)

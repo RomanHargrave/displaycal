@@ -1927,6 +1927,18 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	def GetLabel(self):
 		return self._label
 
+	def GetTextExtent(self, string):
+		self.Freeze()
+		label = self.Label
+		self.Label = string
+		if not hasattr(self, "_txt"):
+			w, h = BitmapBackgroundPanel.GetTextExtent(self, string)
+		else:
+			w, h = self._txt.Size
+		self.Label = label
+		self.Thaw()
+		return w, h
+
 	@Property
 	def Label():
 		def fget(self):
