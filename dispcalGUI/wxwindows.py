@@ -1952,21 +1952,14 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	def SetLabel(self, label):
 		self._label = label
 		if not self.textshadow:
-			style = wx.ST_NO_AUTORESIZE
 			if self.label_x is None:
-				style |= wx.ALIGN_CENTER
-				x = 0
+				style = wx.ALIGN_CENTER
 			else:
-				style |= wx.ALIGN_LEFT
-				x = self.label_x
+				style = wx.ALIGN_LEFT
 			if self.label_y is None:
 				style |= wx.ALIGN_CENTER_VERTICAL
-				y = 0
-			else:
-				y = self.label_y
 			if not hasattr(self, "_txt"):
-				self._txt = wx.StaticText(self, -1, self._label, pos=(x, y),
-										  style=style)
+				self._txt = wx.StaticText(self, -1, self._label, style=style)
 			else:
 				if (sys.platform == "win32" and
 					sys.getwindowsversion() >= (6, ) and
@@ -1976,15 +1969,21 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 					# to work best to reduce flicker.
 					self.SetDoubleBuffered(True)
 				self._txt.Label = label
-				self._txt.Position = x, y
+			if self.label_x is None:
+				w = self._txt.Size[0]
+				x = (self.Size[0] - w) / 2.0
+			else:
+				x = self.label_x
+			if self.label_y is None:
+				h = self._txt.Size[1]
+				y = (self.Size[1] - h) / 2.0
+			else:
+				y = self.label_y
+			self._txt.Position = x, y
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
 		if not self.textshadow:
-			if hasattr(self, "_txt"):
-				size = self.Size - wx.Size(*self._txt.Position)
-				if size[0] > 0 and size[1] > 0 and size != self._txt.Size:
-					self._txt.Size = size
 			return
 		dc.SetBackgroundMode(wx.TRANSPARENT)
 		dc = self._set_font(dc)
