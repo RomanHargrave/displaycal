@@ -8494,7 +8494,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif data[0] == "measurement-report" and len(data) < 3:
 			# Measurement report
 			if len(data) == 2:
-				wx.CallAfter(self.measurement_report_handler, None, path=data[1])
+				wx.CallAfter(self.measurement_report_handler,
+							 CustomEvent(wx.EVT_BUTTON.evtType[0],
+										 self.measurement_report_btn),
+							 path=data[1])
 			else:
 				self.tab_select_handler(self.mr_settings_btn, True)
 		elif data[0] == "profile" and len(data) == 1:

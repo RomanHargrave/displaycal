@@ -813,7 +813,9 @@ class LUT3DFrame(BaseFrame):
 				self.Restore()
 			self.Raise()
 			if len(data) == 3:
-				wx.CallAfter(self.lut3d_create_handler, None, path=data[2])
+				wx.CallAfter(self.lut3d_create_handler,
+							 CustomEvent(wx.EVT_BUTTON.evtType[0],
+										 self.lut3d_create_btn), path=data[2])
 			return "ok"
 		return "invalid"
 	

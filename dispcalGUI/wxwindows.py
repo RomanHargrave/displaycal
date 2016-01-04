@@ -1355,13 +1355,15 @@ class BaseFrame(wx.Frame):
 		except socket.error, exception:
 			safe_print(exception)
 
-	def focus_handler(self, event):
+	def focus_handler(self, event=None):
 		# IMPORTANT: event can either be EVT_TEXT, EVT_SET_FOCUS, EVT_CLOSE,
 		# EVT_MENU or EVT_BUTTON.
 		# This means the available event methods will be different, e.g.
 		# only EVT_SET_FOCUS will have a GetWindow method, and EVT_MENU's
 		# GetEventObject method returns the menu item which doesn't have
 		# most methods that controls would have.
+		if not event:
+			event = CustomEvent(wx.EVT_SET_FOCUS.evtType[0], self)
 		if debug:
 			if hasattr(event.GetEventObject(), "GetId"):
 				safe_print("[D] focus_handler called for ID %s %s %s, event type "
