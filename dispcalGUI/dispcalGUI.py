@@ -13551,7 +13551,8 @@ class StartupFrame(wx.Frame):
 			splashdimensions = (self.splash_x, self.splash_y,
 							    self.splash_bmp.Size[0],
 							    self.splash_bmp.Size[1])
-			if intlist(mac_ver()[0].split(".")) >= [10, 9]:
+			is_mavericks = intlist(mac_ver()[0].split(".")) >= [10, 9]
+			if is_mavericks:
 				# Under 10.9 we can specify screen region as arguments
 				extra_args = ["-R%i,%i,%i,%i" % splashdimensions]
 			else:
@@ -13563,12 +13564,24 @@ class StartupFrame(wx.Frame):
 									silent=True) and os.path.isfile(bmp_path):
 				bmp = wx.Bitmap(bmp_path)
 				if bmp.IsOk():
-					if (intlist(mac_ver()[0].split(".")) < [10, 9] and
+					if (not is_mavericks and
 						bmp.Size[0] >= self.splash_x + self.splash_bmp.Size[0] and
 						bmp.Size[1] >= self.splash_y + self.splash_bmp.Size[1]):
 						# Pre 10.9 we have to get the splashscreen region
 						# from the full screenshot bitmap
 						bmp = bmp.GetSubBitmap(splashdimensions)
+					elif (is_mavericks and
+						  bmp.Size[0] == self.splash_bmp.Size[0] * 2 and
+						  bmp.Size[1] == self.splash_bmp.Size[1] * 2):
+						# Retina, screencapture is double our bitmap size
+						if wx.VERSION > (3, ):
+							quality = wx.IMAGE_QUALITY_BILINEAR
+						else:
+							quality = wx.IMAGE_QUALITY_HIGH
+						img = bmp.ConvertToImage()
+						img.Rescale(self.splash_bmp.Size[0],
+									self.splash_bmp.Size[1], quality)
+						bmp = img.ConvertToBitmap()
 					self._buffereddc.DrawBitmap(bmp, 0, 0)
 				self.worker.wrapup(False)
 		self.SetClientSize(self.splash_bmp.Size)
