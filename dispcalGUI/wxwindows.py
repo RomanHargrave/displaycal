@@ -1907,6 +1907,7 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		self.textshadow = True
 		self.textshadowcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 		self.use_gcdc = False
+		self._label = ""
 	
 	def _set_font(self, dc):
 		font = self.GetFont()
@@ -1922,15 +1923,48 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 		return dc
  	
 	def GetLabel(self):
-		return self.Label
+		return self._label
 
-	Label = ""
+	@Property
+	def Label():
+		def fget(self):
+			return self.GetLabel()
+
+		def fset(self, label):
+			self.SetLabel(label)
+
+		return locals()
 	
 	def SetLabel(self, label):
-		self.Label = label
+		self._label = label
+		if not self.textshadow:
+			style = wx.ST_NO_AUTORESIZE
+			if self.label_x is None:
+				style |= wx.ALIGN_CENTER
+				x = 0
+			else:
+				style |= wx.ALIGN_LEFT
+				x = self.label_x
+			if self.label_y is None:
+				style |= wx.ALIGN_CENTER_VERTICAL
+				y = 0
+			else:
+				y = self.label_y
+			if not hasattr(self, "_txt"):
+				self._txt = wx.StaticText(self, -1, self._label, pos=(x, y),
+										  style=style)
+			else:
+				self._txt.Label = label
+				self._txt.Position = x, y
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
+		if not self.textshadow:
+			if hasattr(self, "_txt"):
+				size = self.Size - wx.Size(*self._txt.Position)
+				if size[0] > 0 and size[1] > 0 and size != self._txt.Size:
+					self._txt.Size = size
+			return
 		dc.SetBackgroundMode(wx.TRANSPARENT)
 		dc = self._set_font(dc)
 		label = self.Label.splitlines()
