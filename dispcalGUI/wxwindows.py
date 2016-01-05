@@ -2400,7 +2400,13 @@ class FlatShadedButton(GradientButton):
 		:param `event`: a `wx.PaintEvent` event to be processed.
 		"""
 
-		dc = wx.BufferedPaintDC(self)
+		if sys.platform == "darwin":
+			# AutoBufferedPaintDCFactory is the magic needed for crisp text
+			# rendering in HiDPI mode under OS X
+			cls = wx.AutoBufferedPaintDCFactory
+		else:
+			cls = wx.BufferedPaintDC
+		dc = cls(self)
 		gc = wx.GraphicsContext.Create(dc)
 		dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))        
 		dc.Clear()
@@ -2568,7 +2574,13 @@ class BorderGradientButton(GradientButton):
 		:param `event`: a `wx.PaintEvent` event to be processed.
 		"""
 
-		dc = wx.BufferedPaintDC(self)
+		if sys.platform == "darwin":
+			# AutoBufferedPaintDCFactory is the magic needed for crisp text
+			# rendering in HiDPI mode under OS X
+			cls = wx.AutoBufferedPaintDCFactory
+		else:
+			cls = wx.BufferedPaintDC
+		dc = cls(self)
 		gc = wx.GraphicsContext.Create(dc)
 		dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))        
 		dc.Clear()
