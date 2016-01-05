@@ -1480,6 +1480,7 @@ def set_default_app_dpi():
 	global dpiset
 	if not getcfg("app.dpi", False) and not dpiset:
 		# HighDPI support
+		dpiset = True
 		from wxaddons import wx
 		if sys.platform in ("darwin", "win32"):
 			# Determine screen DPI
@@ -1506,7 +1507,6 @@ def set_default_app_dpi():
 				txt_scale = font.GetPixelSize()[0] / 256.0 or 1
 			dpi = int(round(get_default_dpi() * txt_scale))
 		defaults["app.dpi"] = dpi
-		dpiset = True
 
 
 def setcfg(name, value):
