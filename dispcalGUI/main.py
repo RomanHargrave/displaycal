@@ -280,9 +280,9 @@ def main(module=None):
 					try:
 						sys._appsocket.bind((host, port))
 					except socket.error, exception:
-						safe_print("Warning - could not bind to %s:%s:" %
-								   (host, port), exception)
 						if port == 0:
+							safe_print("Warning - could not bind to %s:%s:" %
+									   (host, port), exception)
 							del sys._appsocket
 							break
 					else:
