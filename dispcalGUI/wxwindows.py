@@ -4096,27 +4096,40 @@ class BetterStaticFancyText(wx.PyPanel):
 		wrapped = ""
 		llen = 0
 		intag = False
+		maxlen = 119
+		hyphens = u"-\u2012\u2013\u2014\u2015"
+		whitespace = "\n\t "
 		for c in label:
 			if c == "<":
 				intag = True
-			elif intag and c == ">":
-				intag = False
-			if c in "\t ":
-				whitespace = True
-			else:
-				whitespace = False
-			if c in u"-\u2012\u2013\u2014\u2015":
+			if c in hyphens:
 				hyphen = True
 			else:
 				hyphen = False
-			if c == "\n":
-				llen = 0
+			if intag and c == ">":
+				intag = False
 			elif not intag:
 				llen += 1
-				if llen >= 120 and (whitespace or hyphen):
+				if llen > maxlen and (c in whitespace or hyphen):
 					if hyphen:
 						wrapped += c
-					c = "\n"
+					elif llen > maxlen + 1:
+						for i, rc in enumerate(reversed(wrapped)):
+							if rc in whitespace + hyphens:
+								line = wrapped[-i:]
+								llen = 1
+								for rc in reversed(line):
+									if rc == ">":
+										intag = True
+									if not intag:
+										llen += 1
+									elif rc == "<":
+										intag = False
+								wrapped = wrapped[:-i] + "\n" + line
+								break
+					if llen > maxlen:
+						c = "\n"
+				if c == "\n":
 					llen = 0
 			wrapped += c
 		label = wrapped
@@ -4173,6 +4186,7 @@ class BetterStaticFancyText(wx.PyPanel):
 				self._statictext.append(statictext)
 			if i < len(rows) - 1:
 				self.Sizer.Add((1, 2))
+		self.Layout()
 
 
 class InfoDialog(BaseInteractiveDialog):
