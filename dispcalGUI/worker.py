@@ -3026,10 +3026,13 @@ class Worker(object):
 						m_height = m_bottom - m_top
 						self.display_rects[i] = wx.Rect(m_left, m_top, m_width,
 														m_height)
+						is_primary = u" [PRIMARY]" in display
 						display = " @ ".join([display_name, 
 											  "%i, %i, %ix%i" %
 											  (m_left, m_top, m_width,
 											   m_height)])
+						if is_primary:
+							display += u" [PRIMARY]"
 					# Get monitor descriptions from EDID
 					try:
 						# Important: display_name must be given for get_edid
