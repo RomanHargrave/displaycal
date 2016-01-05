@@ -1874,8 +1874,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			height = self.ClientSize[1]
 		borders_lr = self.Size[0] - self.ClientSize[0]
 		scale = getcfg("app.dpi") / config.get_default_dpi()
+		margin = 34
 		if scale > 1:
-			margin = int(round(34 * scale))
+			margin = int(round(margin * scale))
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
 					    max(self.display_instrument_panel.Sizer.MinSize[0],
