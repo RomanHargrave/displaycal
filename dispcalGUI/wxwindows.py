@@ -4034,12 +4034,23 @@ class BetterPyGauge(pygauge.PyGauge):
 			self._update_step.append((float(value[i]) - v)/(time/50))
 
 
-class BetterStaticFancyText(GenStaticBitmap):
+class BetterStaticFancyText(wx.PyPanel):
 
+	"""
+	Re-implementation of StaticFancyText.
+	
+	Instead of drawing to a wx.DC like the original StaticFancyText, this
+	uses one or several StaticText which render crisp on 'Retina' displays.
+	
+	Currently only implements <font style='italic'> and <font weight='bold'>
+	and does not support nested tags.
+	
+	"""
+
+	_enabled = True
 	_textlabel = ""
 
 	def __init__(self, window, id, text, *args, **kargs):
-		self._textlabel = text
 		args = list(args)
 		kargs.setdefault('name', 'staticFancyText')
 		if 'background' in kargs:
@@ -4047,31 +4058,24 @@ class BetterStaticFancyText(GenStaticBitmap):
 		elif args:
 			background = args.pop(0)
 		else:
-			background = wx.Brush(window.GetBackgroundColour(), wx.SOLID)
-		
-		bmp = fancytext.RenderToBitmap(text, background)
-		self._enabledbitmap = bmp
-		self._enabled = True
-		GenStaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
+			background = window.GetBackgroundColour()
+		wx.PyPanel.__init__(self, window, id, *args, **kargs)
+		self.BackgroundColour = background
+		self.Sizer = wx.BoxSizer(wx.VERTICAL)
+		self.Label = text
 
 	def Disable(self):
 		self.Enable(False)
 
 	def Enable(self, enable=True):
 		self._enabled = enable
-		if enable:
-			bmp = self._enabledbitmap
-		else:
-			bmp = self._enabledbitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
-		self.SetBitmap(bmp)
+		for statictext in self._statictext:
+			statictext.Enable(enable)
 
 	def IsEnabled(self):
 		return self._enabled
 
 	Enabled = property(IsEnabled, Enable)
-
-	def GetFont(self):
-		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
 
 	def GetLabel(self):
 		return self._textlabel
@@ -4085,17 +4089,6 @@ class BetterStaticFancyText(GenStaticBitmap):
 			self.SetLabel(label)
 		
 		return locals()
-    
-	def OnPaint(self, event):
-		dc = wx.BufferedPaintDC(self)
-		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour, wx.SOLID))
-		dc.SetBackgroundMode(wx.SOLID)
-		dc.Clear()
-		if self._bitmap:
-			dc.DrawBitmap(self._bitmap, 0, 0, True)
-
-	def SetFont(self, font):
-		fancytext.Renderer._font = font
 
 	def SetLabel(self, label):
 		self._textlabel = label
@@ -4127,15 +4120,59 @@ class BetterStaticFancyText(GenStaticBitmap):
 					llen = 0
 			wrapped += c
 		label = wrapped
-		background = wx.Brush(self.Parent.BackgroundColour, wx.SOLID)
-		try:
-			bmp = fancytext.RenderToBitmap(label, background)
-		except ValueError:
-			# XML parsing error, strip all tags
-			label = re.sub(r"<[^>]*?>", "", label)
-			bmp = fancytext.RenderToBitmap(label, background)
-		self._enabledbitmap = bmp
-		self.SetBitmap(bmp)
+		# Parse tags
+		start_tag = False
+		end_tag = False
+		tag = ""
+		rows = [[]]
+		text = ""
+		for i, c in enumerate(label):
+			if c == "\n":
+				rows[-1].append((tag, text))
+				rows.append([])
+				text = ""
+			elif c == u"<":
+				start_tag = True
+				end_tag = False
+			elif c == u">":
+				start_tag = False
+				end_tag = False
+			elif start_tag:
+				if c == u"/":
+					start_tag = False
+					end_tag = True
+					rows[-1].append((tag, text))
+					tag = ""
+					text = ""
+				else:
+					if not tag:
+						rows[-1].append(("", text))
+						text = ""
+					tag += c
+			elif not end_tag:
+				text += c
+		if text:
+			rows[-1].append((tag, text))
+		# Format according to tags
+		self._statictext = []
+		self.Sizer.Clear(True)
+		for i, row in enumerate(rows):
+			sizer = wx.BoxSizer(wx.HORIZONTAL)
+			self.Sizer.Add(sizer)
+			for tag, text in row:
+				statictext = wx.StaticText(self, -1, text)
+				tag = tag.replace('"', "'").split()
+				if "font" in tag[:1]:
+					font = statictext.Font
+					if "weight='bold'" in tag:
+						font.SetWeight(wx.BOLD)
+					elif "style='italic'" in tag:
+						font.SetStyle(wx.ITALIC)
+					statictext.Font = font
+				sizer.Add(statictext)
+				self._statictext.append(statictext)
+			if i < len(rows) - 1:
+				self.Sizer.Add((1, 2))
 
 
 class InfoDialog(BaseInteractiveDialog):
