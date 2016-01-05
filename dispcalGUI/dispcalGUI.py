@@ -301,7 +301,11 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 			scale = 1
 		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500 * scale, 300 * scale),
 									 style=wx.BORDER_THEME)
-		htmlwnd.SetStandardFonts()
+		if "gtk3" in wx.PlatformInfo:
+			size = int(round(dlg.message.Font.PointSize * scale))
+		else:
+			size = -1
+		htmlwnd.SetStandardFonts(size)
 		htmlwnd.SetPage(chglog)
 		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
 					 lambda event: launch_file(event.GetLinkInfo().Href))
