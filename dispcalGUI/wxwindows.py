@@ -1828,7 +1828,13 @@ class BitmapBackgroundPanel(wx.PyPanel):
 		self._bitmap = bitmap
 
 	def OnPaint(self, event):
-		dc = wx.BufferedPaintDC(self)
+		if sys.platform == "darwin":
+			# AutoBufferedPaintDCFactory is the magic needed for crisp text
+			# rendering in HiDPI mode under OS X
+			cls = wx.AutoBufferedPaintDCFactory
+		else:
+			cls = wx.BufferedPaintDC
+		dc = cls(self)
 		self._draw(dc)
 
 	def OnSize(self,event):
@@ -1927,18 +1933,6 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	def GetLabel(self):
 		return self._label
 
-	def GetTextExtent(self, string):
-		self.Freeze()
-		label = self.Label
-		self.Label = string
-		if not hasattr(self, "_txt"):
-			w, h = BitmapBackgroundPanel.GetTextExtent(self, string)
-		else:
-			w, h = self._txt.Size
-		self.Label = label
-		self.Thaw()
-		return w, h
-
 	@Property
 	def Label():
 		def fget(self):
@@ -1951,40 +1945,9 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 	
 	def SetLabel(self, label):
 		self._label = label
-		if not self.textshadow:
-			if self.label_x is None:
-				style = wx.ALIGN_CENTER
-			else:
-				style = wx.ALIGN_LEFT
-			if self.label_y is None:
-				style |= wx.ALIGN_CENTER_VERTICAL
-			if not hasattr(self, "_txt"):
-				self._txt = wx.StaticText(self, -1, self._label, style=style)
-			else:
-				if (sys.platform == "win32" and
-					sys.getwindowsversion() >= (6, ) and
-					not self.IsDoubleBuffered()):
-					# No need to enable double buffering under Linux and Mac OS X.
-					# Under Windows, enabling double buffering on the panel seems
-					# to work best to reduce flicker.
-					self.SetDoubleBuffered(True)
-				self._txt.Label = label
-			if self.label_x is None:
-				w = self._txt.Size[0]
-				x = (self.Size[0] - w) / 2.0
-			else:
-				x = self.label_x
-			if self.label_y is None:
-				h = self._txt.Size[1]
-				y = (self.Size[1] - h) / 2.0
-			else:
-				y = self.label_y
-			self._txt.Position = x, y
 	
 	def _draw(self, dc):
 		BitmapBackgroundPanel._draw(self, dc)
-		if not self.textshadow:
-			return
 		dc.SetBackgroundMode(wx.TRANSPARENT)
 		dc = self._set_font(dc)
 		label = self.Label.splitlines()
