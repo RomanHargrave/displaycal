@@ -1873,13 +1873,16 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			height = self.ClientSize[1]
 		borders_lr = self.Size[0] - self.ClientSize[0]
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale > 1:
+			margin = int(round(34 * scale))
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
 					    max(self.display_instrument_panel.Sizer.MinSize[0],
 							self.calibration_settings_panel.Sizer.MinSize[0],
 							self.profile_settings_panel.Sizer.MinSize[0],
 							self.lut3d_settings_panel.Sizer.MinSize[0],
-							self.mr_settings_panel.Sizer.MinSize[0]) + 34,
+							self.mr_settings_panel.Sizer.MinSize[0]) + margin,
 					    self.tabpanel.GetSizer().GetMinSize()[0])), 
 				height)
 		self.SetMaxSize((-1, -1))
