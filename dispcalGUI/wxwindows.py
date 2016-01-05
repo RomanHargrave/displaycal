@@ -4034,16 +4034,13 @@ class BetterPyGauge(pygauge.PyGauge):
 			self._update_step.append((float(value[i]) - v)/(time/50))
 
 
-class BetterStaticFancyText(wx.PyPanel):
+class BetterStaticFancyText(GenStaticBitmap):
 
 	"""
-	Re-implementation of StaticFancyText.
+	Based on wx.lib.fancytext functionality.
 	
-	Instead of drawing to a wx.DC like the original StaticFancyText, this
-	uses one or several StaticText which render crisp on 'Retina' displays.
-	
-	Currently only implements <font style='italic'> and <font weight='bold'>
-	and does not support nested tags.
+	Renders crisp on 'Retina' displays under OS X and in high DPI mode
+	under Linux/Windows.
 	
 	"""
 
@@ -4059,9 +4056,10 @@ class BetterStaticFancyText(wx.PyPanel):
 			background = args.pop(0)
 		else:
 			background = window.GetBackgroundColour()
-		wx.PyPanel.__init__(self, window, id, *args, **kargs)
+		
+		bmp = wx.EmptyBitmap(1, 1)
+		GenStaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
 		self.BackgroundColour = background
-		self.Sizer = wx.BoxSizer(wx.VERTICAL)
 		self.Label = text
 
 	def Disable(self):
@@ -4069,13 +4067,21 @@ class BetterStaticFancyText(wx.PyPanel):
 
 	def Enable(self, enable=True):
 		self._enabled = enable
-		for statictext in self._statictext:
-			statictext.Enable(enable)
+		if sys.platform == "darwin":
+			return
+		if enable:
+			bmp = self._enabledbitmap
+		else:
+			bmp = self._enabledbitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
+		self.SetBitmap(bmp)
 
 	def IsEnabled(self):
 		return self._enabled
 
 	Enabled = property(IsEnabled, Enable)
+
+	def GetFont(self):
+		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
 
 	def GetLabel(self):
 		return self._textlabel
@@ -4089,6 +4095,25 @@ class BetterStaticFancyText(wx.PyPanel):
 			self.SetLabel(label)
 		
 		return locals()
+    
+	def OnPaint(self, event):
+		if sys.platform == "darwin":
+			# AutoBufferedPaintDCFactory is the magic needed for crisp text
+			# rendering in HiDPI mode under OS X
+			cls = wx.AutoBufferedPaintDCFactory
+		else:
+			cls = wx.BufferedPaintDC
+		dc = cls(self)
+		dc.SetBackground(wx.Brush(self.BackgroundColour, wx.SOLID))
+		dc.SetBackgroundMode(wx.SOLID)
+		dc.Clear()
+		if sys.platform == "darwin":
+			fancytext.RenderToDC(self._label, dc, 0, 0)
+		elif self._bitmap:
+			dc.DrawBitmap(self._bitmap, 0, 0, True)
+
+	def SetFont(self, font):
+		fancytext.Renderer._font = font
 
 	def SetLabel(self, label):
 		self._textlabel = label
@@ -4115,7 +4140,9 @@ class BetterStaticFancyText(wx.PyPanel):
 						wrapped += c
 					elif llen > maxlen + 1:
 						for i, rc in enumerate(reversed(wrapped)):
-							if rc in whitespace + hyphens:
+							if rc == ">":
+								intag = True
+							elif not intag and rc in whitespace + hyphens:
 								line = wrapped[-i:]
 								llen = 1
 								for rc in reversed(line):
@@ -4127,66 +4154,28 @@ class BetterStaticFancyText(wx.PyPanel):
 										intag = False
 								wrapped = wrapped[:-i] + "\n" + line
 								break
+							elif intag and rc == "<":
+								intag = False
 					if llen > maxlen:
 						c = "\n"
 				if c == "\n":
 					llen = 0
 			wrapped += c
-		label = wrapped
-		# Parse tags
-		start_tag = False
-		end_tag = False
-		tag = ""
-		rows = [[]]
-		text = ""
-		for i, c in enumerate(label):
-			if c == "\n":
-				rows[-1].append((tag, text))
-				rows.append([])
-				text = ""
-			elif c == u"<":
-				start_tag = True
-				end_tag = False
-			elif c == u">":
-				start_tag = False
-				end_tag = False
-			elif start_tag:
-				if c == u"/":
-					start_tag = False
-					end_tag = True
-					rows[-1].append((tag, text))
-					tag = ""
-					text = ""
-				else:
-					if not tag:
-						rows[-1].append(("", text))
-						text = ""
-					tag += c
-			elif not end_tag:
-				text += c
-		if text:
-			rows[-1].append((tag, text))
-		# Format according to tags
-		self._statictext = []
-		self.Sizer.Clear(True)
-		for i, row in enumerate(rows):
-			sizer = wx.BoxSizer(wx.HORIZONTAL)
-			self.Sizer.Add(sizer)
-			for tag, text in row:
-				statictext = wx.StaticText(self, -1, text)
-				tag = tag.replace('"', "'").split()
-				if "font" in tag[:1]:
-					font = statictext.Font
-					if "weight='bold'" in tag:
-						font.SetWeight(wx.BOLD)
-					elif "style='italic'" in tag:
-						font.SetStyle(wx.ITALIC)
-					statictext.Font = font
-				sizer.Add(statictext)
-				self._statictext.append(statictext)
-			if i < len(rows) - 1:
-				self.Sizer.Add((1, 2))
-		self.Layout()
+		self._label = wrapped
+		background = wx.Brush(self.Parent.BackgroundColour, wx.SOLID)
+		try:
+			bmp = fancytext.RenderToBitmap(self._label, background)
+		except ValueError:
+			# XML parsing error, strip all tags
+			self._label = re.sub(r"<[^>]*?>", "", self._label)
+			self._label = self._label.replace("<", "")._label.replace(">", "")
+			bmp = fancytext.RenderToBitmap(self._label, background)
+		if sys.platform != "darwin":
+			self._enabledbitmap = bmp
+			self.SetBitmap(bmp)
+		else:
+			self.Size = self.MinSize = bmp.Size
+			self.Refresh()
 
 
 class InfoDialog(BaseInteractiveDialog):
