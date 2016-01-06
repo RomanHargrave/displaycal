@@ -62,9 +62,11 @@ def main(module=None):
 		safe_print("Mac OS X %s %s" % (mac_ver()[0], mac_ver()[-1]))
 	elif sys.platform == "win32":
 		machine = platform.machine()
-		safe_print(*win_ver() + ({"AMD64": "x86_64"}.get(machine, machine), ))
+		safe_print(*filter(lambda v: v, win_ver()) +
+				   ({"AMD64": "x86_64"}.get(machine, machine), ))
 	else:
-		safe_print(platform.platform().replace("-", " "))
+		# Linux
+		safe_print(' '.join(platform.dist()), platform.machine())
 	safe_print("Python " + sys.version)
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
