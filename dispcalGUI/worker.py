@@ -6,6 +6,7 @@ from binascii import hexlify
 import ctypes
 import getpass
 import glob
+import tarfile
 import math
 import os
 import pipes
@@ -19,6 +20,7 @@ import tempfile
 import textwrap
 import traceback
 import urllib2
+import zipfile
 from UserString import UserString
 from hashlib import md5
 from threading import _MainThread, currentThread
@@ -920,6 +922,22 @@ def set_argyll_bin(parent=None):
 			return False
 	else:
 		argyll_dir = None
+	if parent and not check_argyll_bin():
+		dlg = ConfirmDialog(parent,
+							msg=lang.getstr("dialog.argyll.notfound.choice"),
+							ok=lang.getstr("download"),
+							cancel=lang.getstr("cancel"),
+							alt=lang.getstr("browse"),
+							bitmap=geticon(32, "dialog-question"))
+		dlg_result = dlg.ShowModal()
+		dlg.Destroy()
+		if dlg_result == wx.ID_OK:
+			# Download Argyll CMS
+			from dispcalGUI import app_update_check
+			app_update_check(parent, argyll=True)
+			return False
+		elif dlg_result == wx.ID_CANCEL:
+			return False
 	defaultPath = os.path.join(*get_verified_path("argyll.dir",
 												  path=argyll_dir))
 	dlg = wx.DirDialog(parent, lang.getstr("dialog.set_argyll_bin"), 
@@ -930,6 +948,8 @@ def set_argyll_bin(parent=None):
 		result = dlg.ShowModal() == wx.ID_OK
 		if result:
 			path = dlg.GetPath().rstrip(os.path.sep)
+			if os.path.basename(path) != "bin":
+				path = os.path.join(path, "bin")
 			result = check_argyll_bin([path])
 			if result:
 				if verbose >= 3:
@@ -9843,7 +9863,7 @@ BEGIN_DATA
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
-			self.recent.write(lang.getstr("download") + " " + filename + "\n")
+			self.recent.write(lang.getstr("downloading") + " " + filename + "\n")
 			chunk_size = 8192
 			bytes_so_far = 0
 			bytes = []
@@ -9891,6 +9911,72 @@ BEGIN_DATA
 			with open(download_path, "wb") as download_file:
 				download_file.write("".join(bytes))
 		return download_path
+
+	def process_argyll_download(self, result, exit=False):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self.owner)
+		elif result:
+			if (result.lower().endswith(".zip") or
+				result.lower().endswith(".tgz")):
+				self.start(self.set_argyll_bin, self.extract_archive,
+						   cargs=(result, ), wargs=(result, ),
+						   progress_msg=lang.getstr("please_wait"),
+						   fancy=False)
+			else:
+				show_result_dialog(lang.getstr("error.file_type_unsupported") +
+								   "\n" + result, self.owner)
+	def extract_archive(self, filename):
+		extracted = []
+		if filename.lower().endswith(".zip"):
+			cls = zipfile.ZipFile
+			mode = "r"
+		elif filename.lower().endswith(".tgz"):
+			cls = tarfile.open
+			mode = "r:gz"
+		else:
+			return extracted
+		with cls(filename, mode) as z:
+			if cls is tarfile.open:
+				method = z.getnames
+			else:
+				method = z.namelist
+			for name in method():
+				# If the ZIP file was created with Unicode names stored
+				# in the file, 'name' will already be Unicode.
+				# Otherwise, it'll either be 7-bit ASCII or (legacy)
+				# cp437 encoding
+				outname = safe_unicode(name, "cp437")
+				outpath = os.path.join(os.path.dirname(filename),
+									   os.path.normpath(outname))
+				if outname.endswith("/"):
+					extracted.append(outpath)
+					if not os.path.isdir(outpath):
+						os.makedirs(outpath)
+				elif not os.path.isfile(outpath):
+					outdir = os.path.dirname(outpath)
+					extracted.append(outdir)
+					if not os.path.isdir(outdir):
+						os.makedirs(outdir)
+					extracted.append(outpath)
+					if cls is tarfile.open:
+						data = z.extractfile(name).read()
+					else:
+						data = z.read(name)
+					with open(outpath, "wb") as outfile:
+						outfile.write(data)
+		extracted.sort()
+		return extracted
+
+	def set_argyll_bin(self, result, filename):
+		if isinstance(result, Exception):
+			show_result_dialog(result, self.owner)
+		elif result and os.path.isdir(result[0]):
+			setcfg("argyll.dir",
+				   os.path.join(result[0], "bin"))
+			self.owner.set_argyll_bin_handler(None)
+		else:
+			show_result_dialog(lang.getstr("error.no_files_extracted_from_archive",
+										   filename), self.owner)
 
 	def process_download(self, result, exit=False):
 		if isinstance(result, Exception):

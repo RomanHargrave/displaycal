@@ -116,7 +116,8 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					get_options_from_profile, get_options_from_ti3,
 					get_program_file, make_argyll_compatible_path,
 					parse_argument_string, set_argyll_bin, show_result_dialog,
-					technology_strings_170, technology_strings_171)
+					technology_strings_170, technology_strings_171,
+					check_argyll_bin)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -167,10 +168,18 @@ def swap_dict_keys_values(mydict):
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
 
 
-def app_update_check(parent=None, silent=False, snapshot=False):
+def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	""" Check for application update. Show an error dialog if a failure
 	occurs. """
-	if snapshot:
+	if argyll:
+		if parent and hasattr(parent, "worker"):
+			argyll_version = parent.worker.argyll_version
+		else:
+			argyll_version = intlist(getcfg("argyll.version").split("."))
+		curversion_tuple = tuple(argyll_version)
+		version_file = "Argyll/VERSION"
+		readme_file = "Argyll/ChangesSummary.html"
+	elif snapshot:
 		# Snapshot
 		curversion_tuple = VERSION
 		version_file = "SNAPSHOT_VERSION"
@@ -208,9 +217,12 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 		chglog = None
 		if resp:
 			readme = resp.read()
-			chglog = re.search('<div id="(?:changelog|history)">'
-							   '.+?<h2>.+?</h2>'
-							   '.+?<dl>.+?</dd>', readme, re.S)
+			if argyll:
+				chglog = re.search('<h1>[^<]+</h1>\s*<ul>.+?</ul>', readme, re.S)
+			else:
+				chglog = re.search('<div id="(?:changelog|history)">'
+								   '.+?<h2>.+?</h2>'
+								   '.+?<dl>.+?</dd>', readme, re.S)
 			if chglog:
 				chglog = chglog.group().decode("utf-8", "replace")
 				chglog = re.sub('<div id="(?:changelog|history)">', "", chglog)
@@ -225,9 +237,14 @@ def app_update_check(parent=None, silent=False, snapshot=False):
 		if not wx.GetApp():
 			return
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
-					 snapshot)
-	elif not snapshot and VERSION > VERSION_BASE:
+					 snapshot, argyll)
+	elif not argyll and not snapshot and VERSION > VERSION_BASE:
 		app_update_check(parent, silent, True)
+	elif not argyll:
+		if check_argyll_bin():
+			app_update_check(parent, silent, argyll=True)
+		else:
+			wx.CallAfter(parent.set_argyll_bin_handler, True)
 	elif not silent:
 		wx.CallAfter(app_uptodate, parent)
 	else:
@@ -270,27 +287,36 @@ def app_uptodate(parent=None):
 
 
 def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
-					   snapshot=False):
+					   snapshot=False, argyll=False):
 	""" Show a dialog confirming application update, with cancel option """
-	zeroinstall = (os.path.exists(os.path.normpath(os.path.join(pydir, "..",
+	zeroinstall = (not argyll and
+				   os.path.exists(os.path.normpath(os.path.join(pydir, "..",
 																appname +
 																".pyw"))) and
 				   re.match("sha\d+(?:new)?",
 							os.path.basename(os.path.dirname(pydir))) and
 				   (which("0install-win.exe") or which("0install")))
+	download = argyll and not check_argyll_bin()
 	if zeroinstall or sys.platform in ("darwin", "win32"):
-		ok = lang.getstr("update_now")
+		ok = lang.getstr("download" if download else "update_now")
 		alt = lang.getstr("go_to_website")
 	else:
 		ok = lang.getstr("go_to_website")
 		alt = None
 	newversion = ".".join(str(n) for n in newversion_tuple)
-	newversion_desc = newversion
+	if argyll:
+		newversion_desc = "Argyll CMS"
+	else:
+		newversion_desc = appname
+	newversion_desc += " " + newversion
 	if snapshot:
 		newversion_desc += " Beta"
+	if download:
+		msg = lang.getstr("download") + " " + newversion_desc
+	else:
+		msg = lang.getstr("update_check.new_version", newversion_desc)
 	dlg = ConfirmDialog(parent,
-						msg=lang.getstr("update_check.new_version", 
-										newversion_desc), 
+						msg=msg, 
 						ok=ok, alt=alt,
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), 
@@ -325,7 +351,8 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 	if parent and getattr(parent, "menuitem_app_auto_update_check", None):
 		parent.menuitem_app_auto_update_check.Check(bool(getcfg("update_check")))
 	if result == wx.ID_OK and (zeroinstall or
-							   sys.platform in ("darwin", "win32")):
+							   (sys.platform in ("darwin", "win32")
+							    or argyll)):
 		if parent and hasattr(parent, "worker"):
 			worker = parent.worker
 		else:
@@ -350,7 +377,40 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 												  (domain.lower(), appname)],
 					 **kwargs)
 		else:
-			if sys.platform == "win32":
+			consumer = worker.process_download
+			dlname = appname
+			if argyll:
+				consumer = worker.process_argyll_download
+				dlname = "Argyll"
+				if sys.platform == "win32":
+					# Determine 32 or 64 bit OS
+					key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+										  r"SYSTEM\CurrentControlSet\Control"
+										  r"\Session Manager\Environment")
+					try:
+						value = _winreg.QueryValueEx(key,
+													 "PROCESSOR_ARCHITECTURE")[0]
+					except WindowsError:
+						value = "x86"
+					finally:
+						_winreg.CloseKey(key)
+					if value.lower() == "amd64":
+						suffix = "_win64_exe.zip"
+					else:
+						# Assume win32
+						suffix = "_win32_exe.zip"
+				elif sys.platform == "darwin":
+					# We only support OS X 10.5+
+					suffix = "_osx10.6_x86_64_bin.tgz"
+				else:
+					# Linux
+					if platform.architecture()[0] == "64bit":
+						# Assume x86_64
+						suffix = "_linux_x86_64_bin.tgz"
+					else:
+						# Assume x86
+						suffix = "_linux_x86_bin.tgz"
+			elif sys.platform == "win32":
 				if snapshot:
 					# Snapshots are only avaialble as ZIP
 					suffix = "-win32.zip"
@@ -359,15 +419,25 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 					suffix = "-Setup.exe"
 			else:
 				suffix = ".dmg"
-			worker.start(worker.process_download, worker.download,
-						 ckwargs={"exit": True},
+			worker.start(consumer, worker.download,
+						 ckwargs={"exit": dlname == appname},
 						 wargs=("http://%s/download%s/%s-%s%s" %
-								(domain.lower(), folder, appname, newversion,
+								(domain.lower(), folder, dlname, newversion,
 								 suffix),),
-						 progress_msg=lang.getstr("download"),
+						 progress_msg=lang.getstr("downloading"),
 						 fancy=False)
 	elif result != wx.ID_CANCEL:
-		launch_file("http://" + domain)
+		path = "/"
+		if argyll:
+			path += "argyll"
+			if sys.platform == "darwin":
+				path += "-mac"
+			elif sys.platform == "win32":
+				path += "-win"
+			else:
+				# Linux
+				path += "-linux"
+		launch_file("http://" + domain + path)
 
 
 def donation_message(parent=None):
@@ -12268,7 +12338,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.worker.thread.isAlive()):
 			wx.Bell()
 			return
-		if set_argyll_bin(self):
+		if (event and set_argyll_bin(self)) or (not event and check_argyll_bin()):
 			self.check_update_controls(True) or self.update_menus()
 			if len(self.worker.displays):
 				if getcfg("calibration.file", False):
@@ -13641,7 +13711,6 @@ class StartupFrame(wx.Frame):
 			else:
 				wx.CallLater(1000 / 30.0, self.startup)
 			return
-		check_set_argyll_bin()
 		# Give 10 seconds for display & instrument enumeration to run.
 		# This should be plenty and will kill the subprocess in case it hangs.
 		self.timeout = wx.CallLater(10000, self.worker.abort_subprocess)
