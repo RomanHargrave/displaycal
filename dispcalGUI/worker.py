@@ -9936,35 +9936,38 @@ BEGIN_DATA
 		else:
 			return extracted
 		with cls(filename, mode) as z:
+			outdir = os.path.realpath(os.path.dirname(filename))
 			if cls is tarfile.open:
 				method = z.getnames
 			else:
 				method = z.namelist
-			for name in method():
-				# If the ZIP file was created with Unicode names stored
-				# in the file, 'name' will already be Unicode.
-				# Otherwise, it'll either be 7-bit ASCII or (legacy)
-				# cp437 encoding
-				outname = safe_unicode(name, "cp437")
-				outpath = os.path.join(os.path.dirname(filename),
-									   os.path.normpath(outname))
-				if outname.endswith("/"):
-					extracted.append(outpath)
-					if not os.path.isdir(outpath):
-						os.makedirs(outpath)
-				elif not os.path.isfile(outpath):
-					outdir = os.path.dirname(outpath)
-					extracted.append(outdir)
-					if not os.path.isdir(outdir):
-						os.makedirs(outdir)
-					extracted.append(outpath)
-					if cls is tarfile.open:
-						data = z.extractfile(name).read()
-					else:
-						data = z.read(name)
-					with open(outpath, "wb") as outfile:
-						outfile.write(data)
-		extracted.sort()
+			names = method()
+			names.sort()
+			extracted = [os.path.join(outdir, os.path.normpath(name))
+						 for name in names]
+			if names:
+				name0 = os.path.normpath(names[0])
+			for outpath in extracted:
+				if not os.path.realpath(outpath).startswith(os.path.join(outdir,
+																		 name0)):
+					return Error(lang.getstr("file.invalid") + "\n" +
+								 filename)
+			if cls is tarfile.open:
+				z.extractall(outdir)
+			else:
+				for name in names:
+					# If the ZIP file was created with Unicode names stored
+					# in the file, 'name' will already be Unicode.
+					# Otherwise, it'll either be 7-bit ASCII or (legacy)
+					# cp437 encoding
+					outname = safe_unicode(name, "cp437")
+					outpath = os.path.join(outdir, os.path.normpath(outname))
+					if outname.endswith("/"):
+						if not os.path.isdir(outpath):
+							os.makedirs(outpath)
+					elif not os.path.isfile(outpath):
+						with open(outpath, "wb") as outfile:
+							outfile.write(z.read(name))
 		return extracted
 
 	def set_argyll_bin(self, result, filename):
