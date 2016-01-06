@@ -256,8 +256,8 @@ class ProfileLoader(object):
 		if sys.platform == "win32":
 			self.lock.release()
 			if event:
-				self.reload_count += 1
 				if results:
+					self.reload_count += 1
 					results.insert(0, lang.getstr("calibration.load_success"))
 				results.extend(errors)
 				wx.CallAfter(lambda text: self and
