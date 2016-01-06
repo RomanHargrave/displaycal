@@ -297,7 +297,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 							os.path.basename(os.path.dirname(pydir))) and
 				   (which("0install-win.exe") or which("0install")))
 	download = argyll and not check_argyll_bin()
-	if zeroinstall or sys.platform in ("darwin", "win32"):
+	if zeroinstall or sys.platform in ("darwin", "win32") or argyll:
 		ok = lang.getstr("download" if download else "update_now")
 		alt = lang.getstr("go_to_website")
 	else:
