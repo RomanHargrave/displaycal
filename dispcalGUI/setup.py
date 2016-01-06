@@ -512,7 +512,7 @@ def setup():
 												  "copyright")]))
 			data_files.append((os.path.join(os.path.dirname(data), "doc-base"), 
 							   [os.path.join(pydir, "..", "misc", 
-											 "dispcalgui-readme")]))
+											 appname.lower() + "-readme")]))
 		else:
 			data_files.append((doc, [os.path.join(pydir, "..", "LICENSE.txt")]))
 	if sys.platform not in ("darwin", "win32") or do_py2app or do_py2exe:

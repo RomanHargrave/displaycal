@@ -66,6 +66,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 										os.stat(tmpl_path).st_mtime)) +
 								 ("+" if timezone < 0 else "-") +
 								 strftime("%H%M", gmtime(abs(timezone))),
+		"DOMAIN": domain.lower(),
 		"ISODATE": 
 			strftime("%Y-%m-%d", 
 					 gmtime(lastmod_time or 
@@ -83,6 +84,8 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"SUMMARY": description,
 		"DESC": longdesc,
 		"APPDATADESC": "<p>\n\t\t\t" + longdesc.replace("\n", "\n\t\t\t").replace(".\n", ".\n\t\t</p>\n\t\t<p>\n") + "\n\t\t</p>",
+		"APPNAME": name,
+		"APPNAME_LOWER": name.lower(),
 		"AUTHOR": author,
 		"MAINTAINER": author,
 		"MAINTAINER_EMAIL": author_email,
@@ -452,6 +455,7 @@ def setup():
 			inno_template = open(inno_template_path, "r")
 			inno_script = inno_template.read().decode("UTF-8", "replace") % {
 				"AppCopyright": u"© %s %s" % (strftime("%Y"), author),
+				"AppName": name,
 				"AppVerName": version,
 				"AppPublisher": author,
 				"AppPublisherURL": "http://" + domain,
@@ -481,8 +485,8 @@ def setup():
 			return
 	
 	if "finalize_msi" in sys.argv[1:]:
-		db = msilib.OpenDatabase(r"dist\dispcalGUI-%s.win32-py%s.msi" %
-								 (msiversion, sys.version[:3]), 
+		db = msilib.OpenDatabase(r"dist\%s-%s.win32-py%s.msi" %
+								 (name, msiversion, sys.version[:3]), 
 								 msilib.MSIDBOPEN_TRANSACT)
 		view = db.OpenView("SELECT Value FROM Property WHERE Property = 'ProductCode'")
 		view.Execute(None)
@@ -494,17 +498,17 @@ def setup():
 										   ".")])  # DefaultDir
 		msilib.add_data(db, "Directory", [("MenuDir",  # Directory
 										   "ProgramMenuFolder",  # Parent
-										   "DISPCA~1|dispcalGUI")])  # DefaultDir
-		msilib.add_data(db, "Icon", [("dispcalGUI.ico",  # Name
-									  msilib.Binary(os.path.join(pydir, "dispcalGUI", 
+										   name.upper()[:6] + "~1|" + name)])  # DefaultDir
+		msilib.add_data(db, "Icon", [(name + ".ico",  # Name
+									  msilib.Binary(os.path.join(pydir, name, 
 														"theme", "icons", 
-														"dispcalGUI.ico")))])  # Data
+														name + ".ico")))])  # Data
 		msilib.add_data(db, "Icon", [("uninstall.ico",  # Name
-									  msilib.Binary(os.path.join(pydir, "dispcalGUI", 
+									  msilib.Binary(os.path.join(pydir, name, 
 														"theme", "icons", 
-														"dispcalGUI-uninstall.ico")))])  # Data
+														name + "-uninstall.ico")))])  # Data
 		msilib.add_data(db, "RemoveFile", [("MenuDir",  # FileKey
-											"dispcalGUI",  # Component
+											name,  # Component
 											None,  # FileName
 											"MenuDir",  # DirProperty
 											2)])  # InstallMode
@@ -513,48 +517,48 @@ def setup():
 										  r"Software\Microsoft\Windows\CurrentVersion\Uninstall\%s" % 
 										  productcode,  # Key
 										  "DisplayIcon",  # Name
-										  r"[icons]dispcalGUI.ico",  # Value
-										  "dispcalGUI")])  # Component
-		msilib.add_data(db, "Shortcut", [("dispcalGUI",  # Shortcut
+										  r"[icons]%s.ico" % name,  # Value
+										  name)])  # Component
+		msilib.add_data(db, "Shortcut", [(name,  # Shortcut
 										  "MenuDir",  # Directory
-										  "DISPCA~1|dispcalGUI",  # Name
-										  "dispcalGUI",  # Component
+										  name.upper()[:6] + "~1|" + name,  # Name
+										  name,  # Component
 										  r"[TARGETDIR]pythonw.exe",  # Target
-										  r'"[TARGETDIR]Scripts\dispcalGUI"',  # Arguments
+										  r'"[TARGETDIR]Scripts\%s"' % name,  # Arguments
 										  None,  # Description
 										  None,  # Hotkey
-										  "dispcalGUI.ico",  # Icon
+										  name + ".ico",  # Icon
 										  None,  # IconIndex
 										  None,  # ShowCmd
-										  "dispcalGUI")])  # WkDir
+										  name)])  # WkDir
 		msilib.add_data(db, "Shortcut", [("LICENSE",  # Shortcut
 										  "MenuDir",  # Directory
 										  "LICENSE|LICENSE",  # Name
-										  "dispcalGUI",  # Component
-										  r"[dispcalGUI]LICENSE.txt",  # Target
+										  name,  # Component
+										  r"[%s]LICENSE.txt" % name,  # Target
 										  None,  # Arguments
 										  None,  # Description
 										  None,  # Hotkey
 										  None,  # Icon
 										  None,  # IconIndex
 										  None,  # ShowCmd
-										  "dispcalGUI")])  # WkDir
+										  name)])  # WkDir
 		msilib.add_data(db, "Shortcut", [("README",  # Shortcut
 										  "MenuDir",  # Directory
 										  "README|README",  # Name
-										  "dispcalGUI",  # Component
-										  r"[dispcalGUI]README.html",  # Target
+										  name,  # Component
+										  r"[%s]README.html" % name,  # Target
 										  None,  # Arguments
 										  None,  # Description
 										  None,  # Hotkey
 										  None,  # Icon
 										  None,  # IconIndex
 										  None,  # ShowCmd
-										  "dispcalGUI")])  # WkDir
+										  name)])  # WkDir
 		msilib.add_data(db, "Shortcut", [("Uninstall",  # Shortcut
 										  "MenuDir",  # Directory
 										  "UNINST|Uninstall",  # Name
-										  "dispcalGUI",  # Component
+										  name,  # Component
 										  r"[SystemFolder]msiexec",  # Target
 										  r"/x" + productcode,  # Arguments
 										  None,  # Description
@@ -598,16 +602,16 @@ def setup():
 				mapping["MD5"] = md5(tgzfile.read()).hexdigest()
 		for tmpl_name in ("PKGBUILD", "debian.changelog", "debian.control",
 						  "debian.copyright",
-						  "debian.rules", "dispcalGUI.changes",
-						  "dispcalGUI.dsc", "dispcalGUI.spec", 
+						  "debian.rules", name + ".changes",
+						  name + ".dsc", name + ".spec", 
 						  os.path.join("0install", "PKGBUILD"),
 						  os.path.join("0install", "debian.changelog"),
 						  os.path.join("0install", "debian.control"),
 						  os.path.join("0install", "debian.rules"),
-						  os.path.join("0install", "dispcalGUI.dsc"),
-						  os.path.join("0install", "dispcalGUI.spec"),
+						  os.path.join("0install", name + ".dsc"),
+						  os.path.join("0install", name + ".spec"),
 						  os.path.join("obs-autopackage-deploy",
-									   "dispcalGUI.spec")):
+									   name + ".spec")):
 			tmpl_path = os.path.join(pydir, "misc", tmpl_name)
 			replace_placeholders(tmpl_path,
 								 os.path.join(pydir, "dist", tmpl_name),
@@ -773,7 +777,7 @@ def setup():
 		tgt_dirs = sorted(data.keys())
 		# Generate files list
 		with open(os.path.join(ipkinstall, "files-all.list"), "w") as fileslist:
-			fileslist.write("# IPK file list for dispcalGUI\n")
+			fileslist.write("# IPK file list for %s\n" % name)
 			fileslist.write("# Generated by setup.py, do not edit\n")
 			fileslist.write("\n")
 			cur_tgt_dir = None
@@ -839,9 +843,9 @@ def setup():
 		if not hash:
 			raise SystemExit(p.wait())
 		hash = hash.groups()[0]
-		for tmpl_name in ("7z.xml", "argyllcms.xml", "dispcalGUI.xml",
-						  "dispcalGUI-linux.xml", "dispcalGUI-mac.xml",
-						  "dispcalGUI-win32.xml", "numpy.xml", "pygame.xml",
+		for tmpl_name in ("7z.xml", "argyllcms.xml", name + ".xml",
+						  name + "-linux.xml", name + "-mac.xml",
+						  name + "-win32.xml", "numpy.xml", "pygame.xml",
 						  "pywin32.xml", "wmi.xml", "wxpython.xml"):
 			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
 			create = not os.path.isfile(dist_path)
@@ -849,7 +853,7 @@ def setup():
 				tmpl_path = os.path.join(pydir, "misc", "0install",
 										 tmpl_name)
 				replace_placeholders(tmpl_path, dist_path, lastmod_time)
-			if tmpl_name.startswith("dispcalGUI"):
+			if tmpl_name.startswith(name):
 				with open(dist_path) as dist_file:
 					xml = dist_file.read()
 					domtree = minidom.parseString(xml)

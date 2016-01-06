@@ -7,29 +7,29 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppID={{4714199A-0D66-4E69-97FF-7B54BFF80B88}
 AppCopyright=%(AppCopyright)s
-AppName=dispcalGUI
-AppVerName=dispcalGUI %(AppVerName)s
+AppName=%(AppName)
+AppVerName=%(AppName) %(AppVerName)s
 AppPublisher=%(AppPublisher)s
 AppPublisherURL=%(AppPublisherURL)s
 AppReadmeFile={app}\README.html
 AppSupportURL=%(AppSupportURL)s
 AppUpdatesURL=%(AppUpdatesURL)s
-DefaultDirName={pf}\dispcalGUI
-DefaultGroupName=dispcalGUI
+DefaultDirName={pf}\%(AppName)
+DefaultGroupName=%(AppName)
 LicenseFile=..\LICENSE.txt
 OutputDir=.
-OutputBaseFilename=dispcalGUI-%(AppVersion)s-Setup
-SetupIconFile=..\dispcalGUI\theme\icons\dispcalGUI.ico
+OutputBaseFilename=%(AppName)-%(AppVersion)s-Setup
+SetupIconFile=..\%(AppName)\theme\icons\%(AppName).ico
 Compression=lzma/Max
 SolidCompression=true
 VersionInfoVersion=%(VersionInfoVersion)s
-VersionInfoDescription=dispcalGUI Setup
+VersionInfoDescription=%(AppName) Setup
 VersionInfoTextVersion=%(VersionInfoTextVersion)s
 WizardImageFile=..\misc\media\install.bmp
 WizardSmallImageFile=..\misc\media\icon-install.bmp
 AppVersion=%(AppVersion)s
-UninstallDisplayName={cm:UninstallProgram,dispcalGUI}
-UninstallDisplayIcon={app}\theme\icons\dispcalGUI-uninstall.ico
+UninstallDisplayName={cm:UninstallProgram,%(AppName)}
+UninstallDisplayIcon={app}\theme\icons\%(AppName)-uninstall.ico
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
 MinVersion=0,5.1.2600
@@ -48,34 +48,34 @@ Name: calibrationloadinghandledbydispcalgui; Description: {cm:CalibrationLoading
 Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive unchecked; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600; 
 
 [Files]
-Source: py2exe.%(Platform)s-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\*; DestDir: {app}; Flags: recursesubdirs replacesameversion; Excludes: \dispcalGUI.exe,\README.html; 
-Source: py2exe.%(Platform)s-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\dispcalGUI.exe; DestDir: {app}; Flags: replacesameversion; 
-Source: py2exe.%(Platform)s-py%(PythonVersion)s\dispcalGUI-%(AppVersion)s\README.html; DestDir: {app}; Flags: isreadme; 
+Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)-%(AppVersion)s\*; DestDir: {app}; Flags: recursesubdirs replacesameversion; Excludes: \%(AppName).exe,\README.html; 
+Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)-%(AppVersion)s\%(AppName).exe; DestDir: {app}; Flags: replacesameversion; 
+Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)-%(AppVersion)s\README.html; DestDir: {app}; Flags: isreadme; 
 Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly; 
 
 [Icons]
-Name: {group}\dispcalGUI; Filename: {app}\dispcalGUI.exe; IconFilename: {app}\dispcalGUI.exe
-Name: "{group}\dispcalGUI Profile Loader"; Filename: {app}\dispcalGUI-apply-profiles.exe; Parameters: --force; IconFilename: {app}\dispcalGUI-apply-profiles.exe; 
-Name: "{group}\3DLUT Maker"; Filename: {app}\dispcalGUI-3DLUT-maker.exe; IconFilename: {app}\dispcalGUI-3DLUT-maker.exe; 
-Name: "{group}\Curve Viewer"; Filename: {app}\dispcalGUI-curve-viewer.exe; IconFilename: {app}\dispcalGUI-curve-viewer.exe; 
-Name: "{group}\Profile Info"; Filename: {app}\dispcalGUI-profile-info.exe; IconFilename: {app}\dispcalGUI-profile-info.exe; 
-Name: "{group}\Synthetic Profile Creator"; Filename: {app}\dispcalGUI-synthprofile.exe; IconFilename: {app}\dispcalGUI-synthprofile.exe; 
-Name: "{group}\Scripting Client"; Filename: {app}\dispcalGUI-scripting-client.exe; IconFilename: {app}\dispcalGUI-scripting-client.exe; 
-Name: "{group}\Testchart Editor"; Filename: {app}\dispcalGUI-testchart-editor.exe; IconFilename: {app}\dispcalGUI-testchart-editor.exe; 
-Name: "{group}\VRML to X3D converter"; Filename: {app}\dispcalGUI-VRML-to-X3D-converter.exe; IconFilename: {app}\dispcalGUI-VRML-to-X3D-converter.exe; 
-Name: {group}\{cm:UninstallProgram,dispcalGUI}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\dispcalGUI-uninstall.ico; Tasks: ; Languages: 
-Name: {commondesktop}\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: desktopicon; IconFilename: {app}\dispcalGUI.exe
-Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\dispcalGUI; Filename: {app}\dispcalGUI.exe; Tasks: quicklaunchicon; IconFilename: {app}\dispcalGUI.exe
+Name: {group}\%(AppName); Filename: {app}\%(AppName).exe; IconFilename: {app}\%(AppName).exe
+Name: "{group}\%(AppName) Profile Loader"; Filename: {app}\%(AppName)-apply-profiles.exe; Parameters: --force; IconFilename: {app}\%(AppName)-apply-profiles.exe; 
+Name: "{group}\3DLUT Maker"; Filename: {app}\%(AppName)-3DLUT-maker.exe; IconFilename: {app}\%(AppName)-3DLUT-maker.exe; 
+Name: "{group}\Curve Viewer"; Filename: {app}\%(AppName)-curve-viewer.exe; IconFilename: {app}\%(AppName)-curve-viewer.exe; 
+Name: "{group}\Profile Info"; Filename: {app}\%(AppName)-profile-info.exe; IconFilename: {app}\%(AppName)-profile-info.exe; 
+Name: "{group}\Synthetic Profile Creator"; Filename: {app}\%(AppName)-synthprofile.exe; IconFilename: {app}\%(AppName)-synthprofile.exe; 
+Name: "{group}\Scripting Client"; Filename: {app}\%(AppName)-scripting-client.exe; IconFilename: {app}\%(AppName)-scripting-client.exe; 
+Name: "{group}\Testchart Editor"; Filename: {app}\%(AppName)-testchart-editor.exe; IconFilename: {app}\%(AppName)-testchart-editor.exe; 
+Name: "{group}\VRML to X3D converter"; Filename: {app}\%(AppName)-VRML-to-X3D-converter.exe; IconFilename: {app}\%(AppName)-VRML-to-X3D-converter.exe; 
+Name: {group}\{cm:UninstallProgram,%(AppName)}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\%(AppName)-uninstall.ico; Tasks: ; Languages: 
+Name: {commondesktop}\%(AppName); Filename: {app}\%(AppName).exe; Tasks: desktopicon; IconFilename: {app}\%(AppName).exe
+Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\%(AppName); Filename: {app}\%(AppName).exe; Tasks: quicklaunchicon; IconFilename: {app}\%(AppName).exe
 Name: {group}\LICENSE; Filename: {app}\LICENSE.txt
 Name: {group}\README; Filename: {app}\README.html; Tasks: ; Languages: 
-Name: "{commonstartup}\dispcalGUI Profile Loader"; Filename: {app}\dispcalGUI-apply-profiles.exe; Tasks: calibrationloadinghandledbydispcalgui; 
+Name: "{commonstartup}\%(AppName) Profile Loader"; Filename: {app}\%(AppName)-apply-profiles.exe; Tasks: calibrationloadinghandledbydispcalgui; 
 
 [Run]
-Filename: {app}\dispcalGUI.exe; Description: {cm:LaunchProgram,dispcalGUI}; Flags: nowait postinstall skipifsilent;
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\dispcalGUI -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
-Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from dispcalGUI import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Tasks: calibrationloadinghandledbydispcalgui; 
-MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from dispcalGUI import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
+Filename: {app}\%(AppName).exe; Description: {cm:LaunchProgram,%(AppName)}; Flags: nowait postinstall skipifsilent;
+Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName) -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
+Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName) -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
+Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName) import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDispcalGUI}; Tasks: calibrationloadinghandledbydispcalgui; 
+MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName) import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
 
 [Dirs]
-Name: {commonappdata}\dispcalGUI; Permissions: users-modify;
+Name: {commonappdata}\%(AppName); Permissions: users-modify;

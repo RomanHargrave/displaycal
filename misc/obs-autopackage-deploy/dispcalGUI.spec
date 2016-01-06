@@ -79,19 +79,19 @@ f.close()"
 
 %build
 util/dist_autopackage.sh
-chmod +x dist/dispcalGUI-*.package
+chmod +x dist/${APPNAME}-*.package
 
 %install
 mkdir -p %{buildroot}/var/lib/packages
-mv dist/dispcalGUI-*.package %{buildroot}/var/lib/packages
-mv dist/dispcalGUI-*.package.meta %{buildroot}/var/lib/packages
+mv dist/${APPNAME}-*.package %{buildroot}/var/lib/packages
+mv dist/${APPNAME}-*.package.meta %{buildroot}/var/lib/packages
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-/var/lib/packages/dispcalGUI-*.package
-/var/lib/packages/dispcalGUI-*.package.meta
+/var/lib/packages/${APPNAME}-*.package
+/var/lib/packages/${APPNAME}-*.package.meta
 
 %changelog

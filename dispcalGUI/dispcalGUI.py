@@ -5446,7 +5446,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			getattr(self, "modaldlg", self), title=lang.getstr("profile.share"),
 			msg=lang.getstr("profile.share.enter_info"), 
 			ok=lang.getstr("upload"), cancel=lang.getstr("cancel"), 
-			bitmap=geticon(32, "dispcalGUI-profile-info"), alt=lang.getstr("save"),
+			bitmap=geticon(32, appname + "-profile-info"), alt=lang.getstr("save"),
 			wrap=100)
 		# Description field
 		boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
@@ -5698,7 +5698,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.worker.start(self.profile_share_consumer, 
 						  http_request, 
 						  ckwargs={}, 
-						  wkwargs={"domain": "dispcalgui.hoech.net" if test
+						  wkwargs={"domain": domain.lower() if test
 											 else "icc.opensuse.org",
 								   "request_type": "POST",
 								   "path": "/print_r_post.php" if test
@@ -6166,7 +6166,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									ok=lang.getstr("profile.current"),
 									cancel=lang.getstr("cancel"),
 									alt=lang.getstr("browse"),
-									bitmap=geticon(32, "dispcalGUI-profile-info"))
+									bitmap=geticon(32, appname + "-profile-info"))
 				dlg.ok.SetDefault()
 				result = dlg.ShowModal()
 				if result == wx.ID_CANCEL:
@@ -8061,7 +8061,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								title=title,
 								ok=ok, 
 								cancel=cancel, 
-								bitmap=geticon(32, "dispcalGUI-profile-info"),
+								bitmap=geticon(32, appname + "-profile-info"),
 								alt=share_profile)
 			self.modaldlg = dlg
 			if share_profile:
@@ -8424,7 +8424,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				 "create-colorimeter-correction",
 				 "create-profile [filename]",
 				 "curve-viewer [filename]",
-				 "dispcalGUI [filename]", "enable-spyder2",
+				 appname + " [filename]", "enable-spyder2",
 				 "import-colorimeter-corrections [filename...]",
 				 "install-profile [filename]", "load <filename>",
 				 "measure", "measure-uniformity",

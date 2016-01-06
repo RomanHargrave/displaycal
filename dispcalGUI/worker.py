@@ -6102,17 +6102,17 @@ usage: spotread [-options] [logfile]
 					loader_args.extend(["run", "--batch", "--no-wait",
 										"--offline",
 										"--command=run-apply-profiles",
-										"http://%s/0install/dispcalGUI.xml" %
-										domain.lower()])
+										"http://%s/0install/%s.xml" %
+										(domain.lower(), appname)])
 				else:
 					# Running from source
 					loader_args.append(u'"%s"' % pyw)
 			else:
 				# Regular install
 				loader_args.append(u'"%s"' % get_data_path(os.path.join("scripts", 
-																		"dispcalGUI-apply-profiles")))
+																		appname + "-apply-profiles")))
 		else:
-			cmd = os.path.join(pydir, "dispcalGUI-apply-profiles.exe")
+			cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
 		not_main_thread = currentThread().__class__ is not _MainThread
 		if not_main_thread:
 			# If running in a thread, need to call pythoncom.CoInitialize
@@ -6284,8 +6284,8 @@ usage: spotread [-options] [logfile]
 							os.path.basename(os.path.dirname(pydir))):
 					executable = ("0launch --console --offline "
 								  "--command=run-apply-profiles "
-								  "http://%s/0install/dispcalGUI.xml" %
-								  domain.lower())
+								  "http://%s/0install/%s.xml" %
+								  (domain.lower(), appname))
 				else:
 					icon = os.path.join(pydir, "theme", "icons", "256x256",
 										appname + "-apply-profiles.png")

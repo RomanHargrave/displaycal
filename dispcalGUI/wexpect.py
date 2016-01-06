@@ -99,7 +99,7 @@ __revision__ = '$Revision: 399 $'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
     'split_command_line', '__version__', '__revision__']
 
-appname = 'dispcalGUI'
+from meta import name as appname
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):

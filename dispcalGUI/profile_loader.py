@@ -418,7 +418,7 @@ def main():
 		print ""
 		print "  --help           Output this help text and exit"
 		print "  --force          Force loading of calibration/profile (if it has been"
-		print "                   disabled in dispcalGUI.ini)"
+		print "                   disabled in %s.ini)" % appname
 		print "  --verify         Verify if calibration was loaded correctly"
 		print "  --silent         Do not show dialog box on error"
 		print "  --skip           Skip initial loading of calibration"

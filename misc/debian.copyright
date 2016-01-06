@@ -1,76 +1,76 @@
 Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
-Name: dispcalGUI
+Name: ${APPNAME}
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Source: ${URL}
 
-Copyright: 2008-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
+Copyright: 2008-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
 License: GPL-3+
 
-Files: dispcalGUI/lang/es.json
+Files: ${APPNAME}/lang/es.json
 Copyright: 2008-${YEAR}, Roberto Quintero <betoven@ya.com>
 License: GPL-3+
 
-Files: dispcalGUI/lang/fr.json
+Files: ${APPNAME}/lang/fr.json
 Copyright: 2008-${YEAR}, Loïc Guégant <loic.guegant@free.fr>
 License: GPL-3+
 
-Files: dispcalGUI/lang/it.json
+Files: ${APPNAME}/lang/it.json
 Copyright: 2008-${YEAR}, Tommaso Schiavinotto <mynos_main@yahoo.it>
 License: GPL-3+
 
-Files: dispcalGUI/lib/agw/*
+Files: ${APPNAME}/lib/agw/*
 Copyright: 2006-${YEAR}, Andrea Gavana <andrea.gavana@gmail.com>
 License: wxWindows
 
-Files: dispcalGUI/theme/icons/16x16/3D.png dispcalGUI/theme/icons/48x48/dialog-ok.png
+Files: ${APPNAME}/theme/icons/16x16/3D.png ${APPNAME}/theme/icons/48x48/dialog-ok.png
 Copyright: 2007-${YEAR}, Daniel Foré <daniel@elementaryos.org>
 License: GPL-3+
 
-Files: dispcalGUI/theme/icons/16x16/applications-system.png dispcalGUI/theme/icons/16x16/camera-photo.png dispcalGUI/theme/icons/16x16/dialog-information.png dispcalGUI/theme/icons/16x16/dialog-warning.png dispcalGUI/theme/icons/16x16/document-open.png dispcalGUI/theme/icons/16x16/edit-delete.png dispcalGUI/theme/icons/16x16/install.png dispcalGUI/theme/icons/16x16/media-floppy.png dispcalGUI/theme/icons/16x16/stock_3d-color-picker.png dispcalGUI/theme/icons/16x16/stock_brightness.png dispcalGUI/theme/icons/16x16/stock_contrast.png dispcalGUI/theme/icons/16x16/stock_filters-pop-art.png dispcalGUI/theme/icons/16x16/stock_lock.png dispcalGUI/theme/icons/16x16/stock_lock-open.png dispcalGUI/theme/icons/16x16/stock_refresh.png dispcalGUI/theme/icons/16x16/web.png dispcalGUI/theme/icons/32x32/dialog-error.png dispcalGUI/theme/icons/32x32/dialog-information.png dispcalGUI/theme/icons/32x32/dialog-question.png dispcalGUI/theme/icons/32x32/dialog-warning.png dispcalGUI/theme/icons/32x32/window-center.png dispcalGUI/theme/icons/32x32/zoom-best-fit.png dispcalGUI/theme/icons/32x32/zoom-in.png dispcalGUI/theme/icons/32x32/zoom-original.png dispcalGUI/theme/icons/32x32/zoom-out.png dispcalGUI/theme/icons/256x256/document-open.png
+Files: ${APPNAME}/theme/icons/16x16/applications-system.png ${APPNAME}/theme/icons/16x16/camera-photo.png ${APPNAME}/theme/icons/16x16/dialog-information.png ${APPNAME}/theme/icons/16x16/dialog-warning.png ${APPNAME}/theme/icons/16x16/document-open.png ${APPNAME}/theme/icons/16x16/edit-delete.png ${APPNAME}/theme/icons/16x16/install.png ${APPNAME}/theme/icons/16x16/media-floppy.png ${APPNAME}/theme/icons/16x16/stock_3d-color-picker.png ${APPNAME}/theme/icons/16x16/stock_brightness.png ${APPNAME}/theme/icons/16x16/stock_contrast.png ${APPNAME}/theme/icons/16x16/stock_filters-pop-art.png ${APPNAME}/theme/icons/16x16/stock_lock.png ${APPNAME}/theme/icons/16x16/stock_lock-open.png ${APPNAME}/theme/icons/16x16/stock_refresh.png ${APPNAME}/theme/icons/16x16/web.png ${APPNAME}/theme/icons/32x32/dialog-error.png ${APPNAME}/theme/icons/32x32/dialog-information.png ${APPNAME}/theme/icons/32x32/dialog-question.png ${APPNAME}/theme/icons/32x32/dialog-warning.png ${APPNAME}/theme/icons/32x32/window-center.png ${APPNAME}/theme/icons/32x32/zoom-best-fit.png ${APPNAME}/theme/icons/32x32/zoom-in.png ${APPNAME}/theme/icons/32x32/zoom-original.png ${APPNAME}/theme/icons/32x32/zoom-out.png ${APPNAME}/theme/icons/256x256/document-open.png
 Copyright: 2008-${YEAR}, GNOME icon theme 2.18 authors
 License: GPL-2+
 
-Files: dispcalGUI/theme/icons/16x16/camera-photo.png dispcalGUI/theme/icons/16x16/list-add.png dispcalGUI/theme/icons/32x32/lock.png
+Files: ${APPNAME}/theme/icons/16x16/camera-photo.png ${APPNAME}/theme/icons/16x16/list-add.png ${APPNAME}/theme/icons/32x32/lock.png
 Copyright: 2008-${YEAR}, GNOME icon theme 3.11.5 authors
 License: GPL-3+
 
-Files: dispcalGUI/theme/icons/16x16/checkmark.png dispcalGUI/theme/icons/16x16/x.png
+Files: ${APPNAME}/theme/icons/16x16/checkmark.png ${APPNAME}/theme/icons/16x16/x.png
 Copyright: 2007-${YEAR}, Everaldo Coelho
 License: LGPL-2.1+
 
-Files: dispcalGUI/RealDisplaySizeMM.c
+Files: ${APPNAME}/RealDisplaySizeMM.c
 Copyright: 1995-${YEAR}, Graeme W. Gill <Graeme@argyllcms.com>
-           2008-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
+           2008-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
 License: GPL-3+
 
-Files: dispcalGUI/demjson.py
+Files: ${APPNAME}/demjson.py
 Copyright: 2006-${YEAR}, Deron E. Meranda <deron.meranda@gmail.com>
 License: LGPL-3+
 
-Files: dispcalGUI/embeddedimage.py
+Files: ${APPNAME}/embeddedimage.py
 Copyright: 2006-${YEAR}, Anthony Tuininga
 License: wxWindows
 
-Files: dispcalGUI/floatspin.py
+Files: ${APPNAME}/floatspin.py
 Copyright: 2005-${YEAR}, Andrea Gavana <andrea.gavana@gmail.com>
 License: wxWindows
 
-Files: dispcalGUI/jspacker.py
+Files: ${APPNAME}/jspacker.py
 Copyright: 2004-2005, Dean Edwards <dean.edwards@gmail.com>
            2006-${YEAR}, Florian Schulze <florian.proff.schulze@gmx.net>
-           2010-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
+           2010-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
 License: LGPL-2.1
 
-Files: dispcalGUI/wexpect.py
+Files: ${APPNAME}/wexpect.py
 Copyright: 2008-${YEAR}, Noah Spurrier <noah@noah.org>
            2008-${YEAR}, Chris Gorecki <chris.k.gorecki@gmail.com>
-           2010-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
+           2010-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
 License: MIT-style
 
-Files: dispcalGUI/wxenhancedplot.py
+Files: ${APPNAME}/wxenhancedplot.py
 Copyright: 2003-2004, Gordon Williams <g_will@cyberus.ca>
            2003, Jeff Grimmett <grimmtooth@softhome.net>
-           2009-${YEAR}, Florian Höch <dispcalGUI@hoech.net>
+           2009-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
 License:
  Use as you wish.
 

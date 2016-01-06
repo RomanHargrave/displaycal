@@ -1389,7 +1389,7 @@ END_DATA""")
 									title=lang.getstr("testchart.add_ti3_patches"),
 									msg=lang.getstr("gamut"),
 									ok="L*a*b*", alt="RGB",
-									bitmap=geticon(32, "dispcalGUI-testchart-editor"))
+									bitmap=geticon(32, appname + "-testchart-editor"))
 				result = dlg.ShowModal()
 				if result == wx.ID_CANCEL:
 					return
@@ -1914,7 +1914,7 @@ END_DATA""")
 								lang.getstr("testchart.separate_fixed_points"),
 								ok=lang.getstr("ok"),
 								cancel=lang.getstr("cancel"),
-								bitmap=geticon(32, "dispcalGUI-testchart-editor"))
+								bitmap=geticon(32, appname + "-testchart-editor"))
 			dlg.sizer3.Add((1, 4))
 			for name in ("single", "gray", "multidim"):
 				if (locals()[name + "_patches"] > 2 or
@@ -2054,7 +2054,7 @@ END_DATA""")
 								msg=lang.getstr("testchart.export.repeat_patch"),
 								ok=lang.getstr("ok"),
 								cancel=lang.getstr("cancel"),
-								bitmap=geticon(32, "dispcalGUI-testchart-editor"))
+								bitmap=geticon(32, appname + "-testchart-editor"))
 			sizer = wx.BoxSizer(wx.HORIZONTAL)
 			dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
 						   border=12)
