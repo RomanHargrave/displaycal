@@ -1478,7 +1478,7 @@ def set_default_app_dpi():
 	""" Set application DPI """
 	# Only call this after creating the wx.App object!
 	global dpiset
-	if not getcfg("app.dpi", False) and not dpiset:
+	if not dpiset and not getcfg("app.dpi", False):
 		# HighDPI support
 		dpiset = True
 		from wxaddons import wx
@@ -1507,6 +1507,7 @@ def set_default_app_dpi():
 				txt_scale = font.GetPixelSize()[0] / 256.0 or 1
 			dpi = int(round(get_default_dpi() * txt_scale))
 		defaults["app.dpi"] = dpi
+	dpiset = True
 
 
 def setcfg(name, value):
