@@ -82,6 +82,7 @@ import pyi_md5pickuphelper
 import report
 if sys.platform == "win32":
 	import util_win
+	from util_win import win_ver
 import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
 						  ti3_to_ti1, vcgt_to_cal,
@@ -802,7 +803,18 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 			params[key] = safe_str(params[key], charset)
 		params = urllib.urlencode(params)
 	if headers is None:
-		headers = {"User-Agent": "%s/%s" % (appname, version)}
+		if sys.platform == "darwin":
+			# Python's platform.platform output is useless under Mac OS X
+			# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
+			oscpu = "Mac OS X %s; %s" % (mac_ver()[0], mac_ver()[-1])
+		elif sys.platform == "win32":
+			machine = platform.machine()
+			oscpu = "%s; %s" % (" ".join(filter(lambda v: v, win_ver())),
+								{"AMD64": "x86_64"}.get(machine, machine))
+		else:
+			# Linux
+			oscpu = "%s; %s" % (' '.join(platform.dist()), platform.machine())
+		headers = {"User-Agent": "%s/%s (%s)" % (appname, version, oscpu)}
 		if request_type == "GET":
 			path += '?' + params
 			params = None
