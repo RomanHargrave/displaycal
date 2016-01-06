@@ -12369,7 +12369,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			enumerate_ports = getcfg("enumerate_ports.auto")
 		if event or silent:
 			args = (self.check_update_controls_consumer, 
-					self.worker.enumerate_displays_and_ports)
+					self.check_update_controls_producer)
 			kwargs = dict(cargs=(argyll_bin_dir, argyll_version, displays,
 								 comports, event), wargs=(silent, ),
 						  wkwargs={"enumerate_ports": enumerate_ports})
@@ -12387,6 +12387,41 @@ class MainFrame(ReportFrame, BaseFrame):
 			return self.check_update_controls_consumer(True, argyll_bin_dir,
 													   argyll_version, displays, 
 													   comports, event)
+
+	def check_update_controls_producer(self, silent=False, enumerate_ports=True):
+		result = self.worker.enumerate_displays_and_ports(silent,
+														  enumerate_ports=enumerate_ports)
+		if sys.platform == "win32":
+			# Update profile loader configuration if running
+			try:
+				for host in self.get_scripting_hosts():
+					ip_port, name = host.split(None, 1)
+					if name == appname + "-apply-profiles":
+						ip, port = ip_port.split(":", 1)
+						port = int(port)
+						conn_result = self.connect(ip, port)
+						if isinstance(conn_result, Exception):
+							raise conn_result
+						# Check if we're actually connected to the right
+						# application (if it terminated unexpectedly, something
+						# else may have grabbed the port)
+						self.conn.send_command("getappname")
+						response = self.conn.get_single_response()
+						if response == appname + "-apply-profiles":
+							self.conn.send_command('setcfg "argyll.dir" "%s"' %
+												   safe_str(getcfg("argyll.dir"),
+															"UTF-8"))
+							response = self.conn.get_single_response()
+							if response != "ok":
+								safe_print("Warning - could not update profile "
+										   "loader configuration: setcfg returned",
+										   response)
+						del self.conn
+						break
+			except Exception, exception:
+				safe_print("Warning - could not update profile loader "
+						   "configuration:", exception)
+		return result
 	
 	def check_update_controls_consumer(self, result, argyll_bin_dir,
 									   argyll_version, displays, comports,

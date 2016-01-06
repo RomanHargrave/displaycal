@@ -20,12 +20,14 @@ import ICCProfile as ICCP
 import audio
 import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
-					get_default_dpi, get_verified_path, pyname, setcfg)
+					get_default_dpi, get_verified_path, pyname, setcfg,
+					confighome)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
+from network import ScriptingClientSocket
 from util_io import StringIOu as StringIO
 from util_os import waccess
 from util_str import safe_str, safe_unicode, wrap
@@ -596,6 +598,19 @@ class BaseFrame(wx.Frame):
 			self.listener = threading.Thread(target=self.connection_handler)
 			self.listener.start()
 
+	def connect(self, ip, port):
+		if getattr(self, "conn", None):
+			self.conn.disconnect()
+		self.conn = ScriptingClientSocket()
+		self.conn.settimeout(3)
+		try:
+			self.conn.connect((ip, port))
+		except socket.error, exception:
+			del self.conn
+			self.conn = None
+			return exception
+		return lang.getstr("connection.established")
+
 	def connection_handler(self):
 		""" Handle socket connections """
 		while self and getattr(self, "listening", False):
@@ -822,6 +837,31 @@ class BaseFrame(wx.Frame):
 			if hasattr(self, "panel"):
 				cmds.append("setlanguage <languagecode>")
 		return cmds
+
+	def get_scripting_hosts(self):
+		scripting_hosts = []
+		lockfilebasenames = [appname]
+		for module in ["3DLUT-maker", "curve-viewer", "profile-info",
+					   "scripting-client", "synthprofile", "testchart-editor",
+					   "VRML-to-X3D-converter", "apply-profiles"]:
+			lockfilebasenames.append("%s-%s" % (appname, module))
+		for lockfilebasename in lockfilebasenames:
+				lockfilename = os.path.join(confighome, "%s.lock" %
+														lockfilebasename)
+				if os.path.isfile(lockfilename):
+					try:
+						with open(lockfilename) as lockfile:
+							ports = lockfile.read().splitlines()
+					except EnvironmentError, exception:
+						# This shouldn't happen
+						safe_print("Warning - could not read lockfile %s:" %
+								   lockfilename, exception)
+					else:
+						for port in ports:
+							scripting_hosts.append("127.0.0.1:%s %s" %
+												   (port, lockfilebasename))
+		scripting_hosts.sort()
+		return scripting_hosts
 
 	def get_top_window(self):
 		windows = [active_window or self] + list(wx.GetTopLevelWindows())
@@ -1250,7 +1290,7 @@ class BaseFrame(wx.Frame):
 					value = 0
 				elif value == "true":
 					value = 1
-				else:
+				elif defaults[data[1]] is not None:
 					try:
 						value = type(defaults[data[1]])(value)
 					except (UnicodeEncodeError, ValueError):

@@ -27,49 +27,6 @@ ERRORCOLOR = "#FF3300"
 RESPONSECOLOR = "#CCCCCC"
 
 
-class ScriptingClientSocket(socket.socket):
-
-	def __del__(self):
-		self.disconnect()
-
-	def __enter__(self):
-		return self
-
-	def __exit__(self, etype, value, tb):
-		self.disconnect()
-
-	def __init__(self):
-		socket.socket.__init__(self)
-		self.recv_buffer = ""
-
-	def disconnect(self):
-		try:
-			# Will fail if the socket isn't connected, i.e. if there was an
-			# error during the call to connect()
-			self.shutdown(socket.SHUT_RDWR)
-		except socket.error, exception:
-			if exception.errno != errno.ENOTCONN:
-				safe_print(exception)
-		self.close()
-
-	def get_single_response(self):
-		# Buffer received data until EOT (response end marker) and return
-		# single response (additional data will still be in the buffer)
-		while not "\4" in self.recv_buffer:
-			incoming = self.recv(4096)
-			if incoming == "":
-				raise socket.error(lang.getstr("connection.broken"))
-			self.recv_buffer += incoming
-		end = self.recv_buffer.find("\4")
-		single_response = self.recv_buffer[:end]
-		self.recv_buffer = self.recv_buffer[end + 1:]
-		return safe_unicode(single_response, "UTF-8")
-
-	def send_command(self, command):
-		# Automatically append newline (command end marker)
-		self.sendall(safe_str(command, "UTF-8") + "\n")
-
-
 class ScriptingClientFrame(SimpleTerminal):
 
 	def __init__(self):
@@ -238,22 +195,10 @@ class ScriptingClientFrame(SimpleTerminal):
 		if self.conn:
 			self.disconnect()
 		self.add_text(lang.getstr("connecting.to", (ip, port)) + "\n")
-		self.conn = ScriptingClientSocket()
-		self.conn.settimeout(3)
+		self.busy = True
 		delayedresult.startWorker(self.check_result, self.connect,
 								  cargs=(self.get_app_info, None, False),
 								  wargs=(ip, port))
-
-	def connect(self, ip, port):
-		self.busy = True
-		try:
-			self.conn.connect((ip, port))
-		except socket.error, exception:
-			self.conn.close()
-			del self.conn
-			self.conn = None
-			return exception
-		return lang.getstr("connection.established")
 
 	def copy_text_handler(self, event):
 		# Override native copy to clipboard because reading the text back
@@ -332,31 +277,6 @@ class ScriptingClientFrame(SimpleTerminal):
 			return "< " + "\n< ".join(self.conn.get_single_response().splitlines())
 		except socket.error, exception:
 			return exception
-
-	def get_scripting_hosts(self):
-		scripting_hosts = []
-		lockfilebasenames = [appname]
-		for module in ["3DLUT-maker", "curve-viewer", "profile-info",
-					   "scripting-client", "synthprofile", "testchart-editor",
-					   "VRML-to-X3D-converter", "apply-profiles"]:
-			lockfilebasenames.append("%s-%s" % (appname, module))
-		for lockfilebasename in lockfilebasenames:
-				lockfilename = os.path.join(confighome, "%s.lock" %
-														lockfilebasename)
-				if os.path.isfile(lockfilename):
-					try:
-						with open(lockfilename) as lockfile:
-							ports = lockfile.read().splitlines()
-					except EnvironmentError, exception:
-						# This shouldn't happen
-						safe_print("Warning - could not read lockfile %s:" %
-								   lockfilename, exception)
-					else:
-						for port in ports:
-							scripting_hosts.append("127.0.0.1:%s %s" %
-												   (port, lockfilebasename))
-		scripting_hosts.sort()
-		return scripting_hosts
 
 	def key_handler(self, event):
 		##safe_print("KeyCode", event.KeyCode, "UnicodeKey", event.UnicodeKey,
@@ -558,7 +478,6 @@ class ScriptingClientFrame(SimpleTerminal):
 		return "ok"
 
 	def send_command(self, command):
-		self.busy = True
 		try:
 			self.conn.send_command(command)
 		except socket.error, exception:
@@ -583,6 +502,7 @@ class ScriptingClientFrame(SimpleTerminal):
 			self.add_error_text(lang.getstr("not_connected") + "\n")
 			self.add_text("> ")
 		else:
+			self.busy = True
 			delayedresult.startWorker(self.check_result, self.send_command,
 									  cargs=(self.get_response,
 											 additional_commands),
