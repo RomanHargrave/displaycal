@@ -8089,8 +8089,11 @@ usage: spotread [-options] [logfile]
 		warning = r"\D+: Warning -.*"
 		msg = re.sub(warning, "", msg)
 		lastmsg = re.sub(warning, "", lastmsg)
-		if re.match(r"\s*\d+%\s*$", lastmsg):
-			# colprof
+		# Filter for '=' so that 1% reading during calibration check
+		# measurements doesn't trigger swapping from the interactive adjustment
+		# to the progress window
+		if re.match(r"\s*\d+%\s*(?:[^=]+)?$", lastmsg):
+			# colprof, download progress
 			try:
 				percentage = int(self.lastmsg.read().split("%")[0])
 			except ValueError:
