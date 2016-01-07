@@ -4444,7 +4444,6 @@ class LogWindow(InvincibleFrame):
 		dlg.Center(wx.BOTH)
 		result = dlg.ShowModal()
 		path = dlg.GetPath()
-		format = {0: "tgz", 1: "zip"}.get(dlg.GetFilterIndex(), "tgz")
 		dlg.Destroy()
 		if result == wx.ID_OK:
 			if not waccess(path, os.W_OK):
@@ -4454,7 +4453,12 @@ class LogWindow(InvincibleFrame):
 						   bitmap=geticon(32, "dialog-error"))
 				return
 			filename, ext = os.path.splitext(path)
-			if ext.lower() != "." + format:
+			if path.lower().endswith(".tar.gz"):
+				format = "tgz"
+			else:
+				format = ext[1:]
+			if (ext.lower() != "." + format and
+				(format != "tgz" or not path.lower().endswith(".tar.gz"))):
 				path += "." + format
 				if os.path.exists(path):
 					dlg = ConfirmDialog(self, 
