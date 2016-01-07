@@ -298,7 +298,7 @@ def setup_logging(logdir, name=appname, ext=".py", backupCount=5):
 	"""
 	global _logdir, logger
 	_logdir = logdir
-	if name.startswith(appname) or ext in (".app", ".exe", ".pyw"):
+	if name.lower().startswith(appname.lower()) or ext in (".app", ".exe", ".pyw"):
 		logger = get_file_logger(None, loglevel, "midnight",
 								 backupCount, filename=name)
 		streamhandler = logging.StreamHandler(logbuffer)
