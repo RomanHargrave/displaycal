@@ -3,6 +3,7 @@
 import gzip
 import os
 import sys
+import tarfile
 from StringIO import StringIO
 from time import time
 
@@ -160,3 +161,47 @@ class Tee(Files):
 
 	def truncate(self, size=None):
 		return self.files[1].truncate(size)
+
+
+class TarFileProper(tarfile.TarFile):
+
+	""" Support extracting to unicode location and using base name """
+
+	def extract(self, member, path="", full=True):
+		"""Extract a member from the archive to the current working directory,
+		   using its full name or base name. Its file information is extracted
+		   as accurately as possible. `member' may be a filename or a TarInfo
+		   object. You can specify a different directory using `path'.
+		"""
+		self._check("r")
+
+		if isinstance(member, basestring):
+			tarinfo = self.getmember(member)
+		else:
+			tarinfo = member
+
+		# Prepare the link target for makelink().
+		if tarinfo.islnk():
+			name = tarinfo.linkname.decode(self.encoding, self.errors)
+			if not full:
+				name = os.path.basename(name)
+			tarinfo._link_target = os.path.join(path, name)
+
+		try:
+			name =  tarinfo.name.decode(self.encoding, self.errors)
+			if not full:
+				name = os.path.basename(name)
+			self._extract_member(tarinfo, os.path.join(path, name))
+		except EnvironmentError, e:
+			if self.errorlevel > 0:
+				raise
+			else:
+				if e.filename is None:
+					self._dbg(1, "tarfile: %s" % e.strerror)
+				else:
+					self._dbg(1, "tarfile: %s %r" % (e.strerror, e.filename))
+		except ExtractError, e:
+			if self.errorlevel > 1:
+				raise
+			else:
+				self._dbg(1, "tarfile: %s" % e)

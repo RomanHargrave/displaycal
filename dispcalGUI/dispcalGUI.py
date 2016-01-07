@@ -101,7 +101,7 @@ from ordereddict import OrderedDict
 from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_http import encode_multipart_formdata
-from util_io import StringIOu as StringIO
+from util_io import StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
 					 launch_file, listdir_re, waccess, which)
@@ -1545,8 +1545,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			".ccss": self.ccxx_drop_handler,
 			".icc": self.cal_drop_handler,
 			".icm": self.cal_drop_handler,
+			".tar.gz": self.cal_drop_handler,
 			".ti1": self.ti1_drop_handler,
 			".ti3": self.ti3_drop_handler,
+			".tgz": self.cal_drop_handler,
 			".zip": self.cal_drop_handler
 		}
 
@@ -10434,20 +10436,36 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				return Error(lang.getstr("file.missing", "7z" + exe_ext))
 		else:
+			if (path.lower().endswith(".tgz") or
+				path.lower().endswith(".tar.gz")):
+				# Gzipped TAR archive
+				archive = TarFileProper.open(path, "r", encoding="UTF-8")
+				getinfo = archive.getmember
+				getnames = archive.getnames
+			else:
+				# ZIP
+				archive = zipfile.ZipFile(path, "r")
+				getinfo = archive.getinfo
+				getnames = archive.namelist
 			try:
-				with zipfile.ZipFile(path, "r") as z:
+				with archive:
 					# Check if a session archive
 					info = None
 					for ext in (".icc", ".icm", ".cal"):
 						for name in (basename + "/" + basename + ext,
 									 basename + ext):
-							# If the ZIP file was created with Unicode names
-							# stored in the file, 'name' will already be Unicode.
-							# Otherwise, it'll either be 7-bit ASCII or (legacy)
-							# cp437 encoding
-							for name in (name, safe_str(name, "cp437")):
+							if isinstance(archive, zipfile.ZipFile):
+								# If the ZIP file was created with Unicode
+								# names stored in the file, 'name' will already
+								# be Unicode. Otherwise, it'll either be 7-bit
+								# ASCII or (legacy) cp437 encoding
+								names = (name, safe_str(name, "cp437"))
+							else:
+								# Gzipped TAR archive, assume UTF-8
+								names = (safe_str(name, "UTF-8"), )
+							for name in names:
 								try:
-									info = z.getinfo(name)
+									info = getinfo(name)
 								except KeyError:
 									continue
 								break
@@ -10459,8 +10477,12 @@ class MainFrame(ReportFrame, BaseFrame):
 						# Doesn't seem to be a session archive
 						return Error(lang.getstr("error.not_a_session_archive",
 												 os.path.basename(path)))
-					# Extract from ZIP archive (flat hierarchy, not using dirnames)
-					for name in z.namelist():
+					# Extract from archive (flat hierarchy, not using dirnames)
+					for name in getnames():
+						if not isinstance(archive, zipfile.ZipFile):
+							# Gzipped TAR
+							archive.extract(name, temp, False)
+							continue
 						# If the ZIP file was created with Unicode names stored
 						# in the file, 'name' will already be Unicode.
 						# Otherwise, it'll either be 7-bit ASCII or (legacy)
@@ -10468,7 +10490,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						outname = safe_unicode(name, "cp437")
 						with open(os.path.join(temp, os.path.basename(outname)),
 								  "wb") as outfile:
-							outfile.write(z.read(name))
+							outfile.write(archive.read(name))
 			except Exception, exception:
 				from traceback import format_exc
 				safe_print(traceback.format_exc())
@@ -11062,6 +11084,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		wildcard = lang.getstr("filetype." + format) + "|*." + format
 		if format == "7z":
 			wildcard += "|" + lang.getstr("filetype.zip") + "|*.zip"
+		wildcard += "|" + lang.getstr("filetype.tgz") + "|*.tgz"
 		# Ask where to save archive
 		defaultDir, defaultFile = get_verified_path("last_archive_save_path")
 		dlg = wx.FileDialog(self, lang.getstr("archive.create"), defaultDir, 
@@ -11072,7 +11095,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		result = dlg.ShowModal()
 		archive_path = dlg.GetPath()
 		if sevenzip and dlg.GetFilterIndex():
-			# ZIP
+			# ZIP or TGZ
 			sevenzip = None
 		dlg.Destroy()
 		if result != wx.ID_OK:
@@ -11135,19 +11158,28 @@ class MainFrame(ReportFrame, BaseFrame):
 			return self.worker.exec_cmd(sevenzip, args + [archive_path] + filenames,
 										capture_output=True)
 		else:
-			# Create ZIP archive
+			# Create gzipped TAR or ZIP archive
 			dirbasename = ""
 			if filenames == dirfilenames:
 				# Add whole folder to archive, so that the ZIP archive
 				# has one folder in it containing all files
 				dirbasename = os.path.basename(dirname)
+			if (archive_path.lower().endswith(".tgz") or
+				archive_path.lower().endswith(".tar.gz")):
+				# Create gzipped tar archive
+				archive = TarFileProper.open(archive_path, "w:gz", encoding="UTF-8")
+				writefile = archive.add
+			else:
+				archive = zipfile.ZipFile(archive_path, "w",
+										  zipfile.ZIP_DEFLATED)
+				writefile = archive.write
 			try:
-				with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zip:
+				with archive:
 					for filename in filenames:
 						if exclude_ext:
 							if os.path.splitext(filename)[1].lower() in exclude_ext:
 								continue
-						zip.write(filename,
+						writefile(filename,
 								  os.path.join(dirbasename,
 											   os.path.basename(filename)))
 			except Exception, exception:
@@ -12552,7 +12584,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			sevenzip = get_program_file("7z", "7-zip")
 			if sevenzip:
 				wildcard += ";*.7z"
-			wildcard += ";*.zip"
+			wildcard += ";*.tar.gz;*.tgz;*.zip"
 			defaultDir, defaultFile = get_verified_path("last_cal_or_icc_path")
 			dlg = wx.FileDialog(self, lang.getstr("dialog.load_cal"), 
 								defaultDir=defaultDir, defaultFile=defaultFile, 
@@ -12594,7 +12626,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 
 			filename, ext = os.path.splitext(path)
-			if ext.lower() in (".7z", ".zip"):
+			if ext.lower() in (".7z", ".tar.gz", ".tgz", ".zip"):
 				self.import_session_archive(path)
 				return
 			if ext.lower() in (".icc", ".icm"):
