@@ -9921,13 +9921,13 @@ BEGIN_DATA
 			cls = zipfile.ZipFile
 			mode = "r"
 		elif filename.lower().endswith(".tgz"):
-			cls = TarFileProper.open
+			cls = TarFileProper.open  # classmethod
 			mode = "r:gz"
 		else:
 			return extracted
 		with cls(filename, mode) as z:
 			outdir = os.path.realpath(os.path.dirname(filename))
-			if cls is TarFileProper.open:
+			if cls is not zipfile.ZipFile:
 				method = z.getnames
 			else:
 				method = z.namelist
@@ -9942,7 +9942,7 @@ BEGIN_DATA
 																		 name0)):
 					return Error(lang.getstr("file.invalid") + "\n" +
 								 filename)
-			if cls is TarFileProper.open:
+			if cls is not zipfile.ZipFile:
 				z.extractall(outdir)
 			else:
 				for name in names:
