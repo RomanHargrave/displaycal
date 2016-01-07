@@ -4475,7 +4475,7 @@ class LogWindow(InvincibleFrame):
 			setcfg("last_filedialog_path", path)
 			if format == "tgz":
 				# Create gzipped tar archive
-				with tarfile.open(path, "w:gz") as tar:
+				with tarfile.open(path, "w:gz", encoding="UTF-8") as tar:
 					tar.add(logdir, arcname=os.path.basename(path))
 			else:
 				# Create ZIP archive

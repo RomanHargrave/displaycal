@@ -6,7 +6,6 @@ from binascii import hexlify
 import ctypes
 import getpass
 import glob
-import tarfile
 import math
 import os
 import pipes
@@ -85,7 +84,8 @@ from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveLSPatternGeneratorServer,
 							   ResolveCMPatternGeneratorServer)
 from trash import trash
-from util_io import EncodedWriter, Files, GzipFileProper, StringIOu as StringIO
+from util_io import (EncodedWriter, Files, GzipFileProper,
+					 StringIOu as StringIO, TarFileProper)
 from util_list import intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
@@ -9921,13 +9921,13 @@ BEGIN_DATA
 			cls = zipfile.ZipFile
 			mode = "r"
 		elif filename.lower().endswith(".tgz"):
-			cls = tarfile.open
+			cls = TarFileProper.open
 			mode = "r:gz"
 		else:
 			return extracted
 		with cls(filename, mode) as z:
 			outdir = os.path.realpath(os.path.dirname(filename))
-			if cls is tarfile.open:
+			if cls is TarFileProper.open:
 				method = z.getnames
 			else:
 				method = z.namelist
@@ -9942,7 +9942,7 @@ BEGIN_DATA
 																		 name0)):
 					return Error(lang.getstr("file.invalid") + "\n" +
 								 filename)
-			if cls is tarfile.open:
+			if cls is TarFileProper.open:
 				z.extractall(outdir)
 			else:
 				for name in names:
