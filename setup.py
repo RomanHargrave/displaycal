@@ -24,7 +24,6 @@ sys.path.insert(0, "dispcalGUI")
 
 from util_os import fs_enc, which
 from util_str import strtr
-import wexpect
 
 pypath = os.path.abspath(__file__)
 pydir = os.path.dirname(pypath)
@@ -1008,6 +1007,7 @@ def setup():
 					passphrase_path = os.path.join(pydir, "gpg", "passphrase.txt")
 					print "Signing", dist_path
 					if os.path.isfile(passphrase_path):
+						import wexpect
 						with open(passphrase_path) as passphrase_file:
 							passphrase = passphrase_file.read().strip()
 						p = wexpect.spawn(zeropublish.encode(fs_enc), args +
