@@ -183,231 +183,147 @@ def main(module=None):
 					handle_error(lang.getstr("app.otherinstance", name))
 				# Exit
 				return
-		# Force to run inside tty with the --terminal option
-		if "--terminal" in sys.argv[1:]:
-			if sys.platform == "win32":
-				import win32api
-			from util_os import which
-			if isapp:
-				# PyInstaller: executable is app-specific
-				# py2app: executable is always the same, differentiation
-				# occurs in Resources/main.py
-				cmd = u'"%s"' % (exe if exename.startswith(appname)
-								 else os.path.join(exedir, appname))
-				cwd = None
-			elif isexe:
-				if sys.platform == "win32":
-					cmd = u'"%s"' % win32api.GetShortPathName(exe)
-				else:
-					cmd = u'"%s"' % exe
-				cwd = None
-			else:
-				if os.path.basename(exe) == "pythonw" + exe_ext:
-					python = os.path.join(os.path.dirname(exe), 
-										  "python" + exe_ext)
-				else:
-					python = exe
-				if sys.platform == "win32":
-					cmd = u'"%s" "%s"' % tuple(
-						[win32api.GetShortPathName(path) for path in (python, 
-																	  pypath)])
-					cwd = win32api.GetShortPathName(pydir)
-				else:
-					cmd = u'"%s" "%s"' % (exe, pypath)
-					cwd = pydir.encode(fs_enc)
-			safe_print("Re-launching instance in terminal")
-			if sys.platform == "win32":
-				cmd = u'start "%s" /WAIT %s' % (pyname, cmd)
-				if debug: safe_print("[D]", cmd)
-				retcode = sp.call(cmd.encode(fs_enc), shell=True, cwd=cwd)
-			elif sys.platform == "darwin":
-				if debug: safe_print("[D]", cmd)
-				from util_mac import mac_terminal_do_script
-				retcode, output, errors = mac_terminal_do_script(cmd)
-			else:
-				import tempfile
-				stdout = tempfile.SpooledTemporaryFile()
-				retcode = None
-				terminals_opts = {
-					"Terminal": "-x",
-					"gnome-terminal": "-x",
-					"konsole": "-e",
-					"xterm": "-e"
-				}
-				terminals = terminals_opts.keys()
-				for terminal in terminals:
-					if which(terminal):
-						if debug:
-							safe_print("[D] %s %s %s" % 
-									   (terminal, terminals_opts[terminal], 
-										cmd))
-						stdout.write('%s %s %s' % 
-									 (terminal, terminals_opts[terminal], 
-									  cmd.encode(fs_enc)))
-						retcode = sp.call(
-							[terminal, terminals_opts[terminal]] + 
-							cmd.encode(fs_enc).strip('"').split('" "'), 
-							stdout=stdout, stderr=sp.STDOUT, cwd=cwd)
-						stdout.write('\n\n')
-						break
-				stdout.seek(0)
-			if retcode != 0:
-				if sys.platform == "win32":
-					msg = (u'An attempt to launch a command prompt failed.')
-				elif sys.platform == "darwin":
-					msg = (u'An attempt to launch Terminal failed.')
-				else:
-					if retcode is None:
-						msg = (u'An attempt to launch a terminal failed, '
-							   'because none of those known seem to be '
-							   'installed (%s).' % ", ".join(terminals))
-					else:
-						msg = (u'An attempt to launch a terminal failed:\n\n%s'
-							   % unicode(stdout.read(), enc, "replace"))
-						stdout.close()
-				handle_error(Error(msg))
+		lockfilename = os.path.join(confighome, "%s.lock" % name)
+		# Create listening socket
+		try:
+			sys._appsocket = socket.socket(socket.AF_INET,
+										   socket.SOCK_STREAM)
+		except socket.error, exception:
+			# This shouldn't happen
+			safe_print("Warning - could not create TCP socket:", exception)
 		else:
-			lockfilename = os.path.join(confighome, "%s.lock" % name)
-			# Create listening socket
-			try:
-				sys._appsocket = socket.socket(socket.AF_INET,
-											   socket.SOCK_STREAM)
-			except socket.error, exception:
-				# This shouldn't happen
-				safe_print("Warning - could not create TCP socket:", exception)
-			else:
-				if getcfg("app.allow_network_clients"):
-					host = ""
-				for port in (getcfg("app.port"), 0):
-					try:
-						sys._appsocket.bind((host, port))
-					except socket.error, exception:
-						if port == 0:
-							safe_print("Warning - could not bind to %s:%s:" %
-									   (host, port), exception)
-							del sys._appsocket
-							break
-					else:
-						try:
-							sys._appsocket.settimeout(.2)
-						except socket.error, exception:
-							safe_print("Warning - could not set socket "
-									   "timeout:", exception)
-							del sys._appsocket
-							break
-						try:
-							sys._appsocket.listen(1)
-						except socket.error, exception:
-							safe_print("Warning - could not listen on "
-									   "socket:", exception)
-							del sys._appsocket
-							break
-						try:
-							port = sys._appsocket.getsockname()[1]
-						except socket.error, exception:
-							safe_print("Warning - could not get socket "
-									   "address:", exception)
-							del sys._appsocket
-							break
-						if module in multi_instance:
-							mode = "a"
-						else:
-							mode = "w"
-						write_lockfile(lockfilename, mode, str(port))
-						break
-			# Check for required resource files
-			mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
-					   "curve-viewer": [],
-					   "profile-info": [],
-					   "scripting-client": [],
-					   "synthprofile": ["xrc/synthicc.xrc"],
-					   "testchart-editor": [],
-					   "VRML-to-X3D-converter": []}
-			for filename in mod2res.get(module, resfiles):
-				path = get_data_path(os.path.sep.join(filename.split("/")))
-				if not path or not os.path.isfile(path):
-					import localization as lang
-					lang.init()
-					raise ResourceError(lang.getstr("resources.notfound.error") + 
-										"\n" + filename)
-			# Create main data dir if it does not exist
-			if not os.path.exists(datahome):
+			if getcfg("app.allow_network_clients"):
+				host = ""
+			for port in (getcfg("app.port"), 0):
 				try:
-					os.makedirs(datahome)
-				except Exception, exception:
-					handle_error(UserWarning("Warning - could not create "
-											 "directory '%s'" % datahome))
-			elif sys.platform == "darwin":
-				# Check & fix permissions if necessary
-				import getpass
-				user = getpass.getuser().decode(fs_enc)
-				script = []
-				for directory in (confighome, datahome, logdir):
-					if (os.path.isdir(directory) and
-						not os.access(directory, os.W_OK)):
-						script.append("chown -R '%s' '%s'" % (user, directory))
-				if script:
-					sp.call(['osascript', '-e', 
-							 'do shell script "%s" with administrator privileges' 
-							 % ";".join(script).encode(fs_enc)])
-			if sys.platform not in ("darwin", "win32"):
-				# Linux: Try and fix v0.2.1b calibration loader, because 
-				# calibrationloader.sh is no longer present in v0.2.2b+
-				desktopfile_name = appname + "-Calibration-Loader-Display-"
-				if autostart_home and os.path.exists(autostart_home):
+					sys._appsocket.bind((host, port))
+				except socket.error, exception:
+					if port == 0:
+						safe_print("Warning - could not bind to %s:%s:" %
+								   (host, port), exception)
+						del sys._appsocket
+						break
+				else:
 					try:
-						autostarts = os.listdir(autostart_home)
-					except Exception, exception:
-						safe_print(u"Warning - directory '%s' listing failed: "
-								   u"%s" % tuple(safe_unicode(s) for s in 
-												 (autostarts, exception)))
-					import ConfigParser
-					from util_io import StringIOu as StringIO
-					for filename in autostarts:
-						if filename.startswith(desktopfile_name):
-							try:
-								desktopfile_path = os.path.join(autostart_home, 
-																filename)
-								cfg = ConfigParser.SafeConfigParser()
-								cfg.optionxform = str
-								cfg.read([desktopfile_path])
-								exec_ = cfg.get("Desktop Entry", "Exec")
-								if exec_.find("calibrationloader.sh") > -1:
-									cfg.set(
-										"Desktop Entry", "Exec", 
-										re.sub('"[^"]*calibrationloader.sh"\s*', 
-											   '', exec_, 1))
-									cfgio = StringIO()
-									cfg.write(cfgio)
-									desktopfile = open(desktopfile_path, "w")
-									cfgio.seek(0)
-									desktopfile.write("".join(["=".join(line.split(" = ", 1)) 
-															   for line in cfgio]))
-									desktopfile.close()
-							except Exception, exception:
-								safe_print("Warning - could not process old "
-										   "calibration loader:", 
-										   safe_unicode(exception))
-			# Initialize & run
-			if module == "3DLUT-maker":
-				from wxLUT3DFrame import main
-			elif module == "curve-viewer":
-				from wxLUTViewer import main
-			elif module == "profile-info":
-				from wxProfileInfo import main
-			elif module == "scripting-client":
-				from wxScriptingClient import main
-			elif module == "synthprofile":
-				from wxSynthICCFrame import main
-			elif module == "testchart-editor":
-				from wxTestchartEditor import main
-			elif module == "VRML-to-X3D-converter":
-				from wxVRML2X3D import main
-			elif module == "apply-profiles":
-				from profile_loader import main
-			else:
-				from dispcalGUI import main
-			main()
+						sys._appsocket.settimeout(.2)
+					except socket.error, exception:
+						safe_print("Warning - could not set socket "
+								   "timeout:", exception)
+						del sys._appsocket
+						break
+					try:
+						sys._appsocket.listen(1)
+					except socket.error, exception:
+						safe_print("Warning - could not listen on "
+								   "socket:", exception)
+						del sys._appsocket
+						break
+					try:
+						port = sys._appsocket.getsockname()[1]
+					except socket.error, exception:
+						safe_print("Warning - could not get socket "
+								   "address:", exception)
+						del sys._appsocket
+						break
+					if module in multi_instance:
+						mode = "a"
+					else:
+						mode = "w"
+					write_lockfile(lockfilename, mode, str(port))
+					break
+		# Check for required resource files
+		mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
+				   "curve-viewer": [],
+				   "profile-info": [],
+				   "scripting-client": [],
+				   "synthprofile": ["xrc/synthicc.xrc"],
+				   "testchart-editor": [],
+				   "VRML-to-X3D-converter": []}
+		for filename in mod2res.get(module, resfiles):
+			path = get_data_path(os.path.sep.join(filename.split("/")))
+			if not path or not os.path.isfile(path):
+				import localization as lang
+				lang.init()
+				raise ResourceError(lang.getstr("resources.notfound.error") + 
+									"\n" + filename)
+		# Create main data dir if it does not exist
+		if not os.path.exists(datahome):
+			try:
+				os.makedirs(datahome)
+			except Exception, exception:
+				handle_error(UserWarning("Warning - could not create "
+										 "directory '%s'" % datahome))
+		elif sys.platform == "darwin":
+			# Check & fix permissions if necessary
+			import getpass
+			user = getpass.getuser().decode(fs_enc)
+			script = []
+			for directory in (confighome, datahome, logdir):
+				if (os.path.isdir(directory) and
+					not os.access(directory, os.W_OK)):
+					script.append("chown -R '%s' '%s'" % (user, directory))
+			if script:
+				sp.call(['osascript', '-e', 
+						 'do shell script "%s" with administrator privileges' 
+						 % ";".join(script).encode(fs_enc)])
+		if sys.platform not in ("darwin", "win32"):
+			# Linux: Try and fix v0.2.1b calibration loader, because 
+			# calibrationloader.sh is no longer present in v0.2.2b+
+			desktopfile_name = appname + "-Calibration-Loader-Display-"
+			if autostart_home and os.path.exists(autostart_home):
+				try:
+					autostarts = os.listdir(autostart_home)
+				except Exception, exception:
+					safe_print(u"Warning - directory '%s' listing failed: "
+							   u"%s" % tuple(safe_unicode(s) for s in 
+											 (autostarts, exception)))
+				import ConfigParser
+				from util_io import StringIOu as StringIO
+				for filename in autostarts:
+					if filename.startswith(desktopfile_name):
+						try:
+							desktopfile_path = os.path.join(autostart_home, 
+															filename)
+							cfg = ConfigParser.SafeConfigParser()
+							cfg.optionxform = str
+							cfg.read([desktopfile_path])
+							exec_ = cfg.get("Desktop Entry", "Exec")
+							if exec_.find("calibrationloader.sh") > -1:
+								cfg.set(
+									"Desktop Entry", "Exec", 
+									re.sub('"[^"]*calibrationloader.sh"\s*', 
+										   '', exec_, 1))
+								cfgio = StringIO()
+								cfg.write(cfgio)
+								desktopfile = open(desktopfile_path, "w")
+								cfgio.seek(0)
+								desktopfile.write("".join(["=".join(line.split(" = ", 1)) 
+														   for line in cfgio]))
+								desktopfile.close()
+						except Exception, exception:
+							safe_print("Warning - could not process old "
+									   "calibration loader:", 
+									   safe_unicode(exception))
+		# Initialize & run
+		if module == "3DLUT-maker":
+			from wxLUT3DFrame import main
+		elif module == "curve-viewer":
+			from wxLUTViewer import main
+		elif module == "profile-info":
+			from wxProfileInfo import main
+		elif module == "scripting-client":
+			from wxScriptingClient import main
+		elif module == "synthprofile":
+			from wxSynthICCFrame import main
+		elif module == "testchart-editor":
+			from wxTestchartEditor import main
+		elif module == "VRML-to-X3D-converter":
+			from wxVRML2X3D import main
+		elif module == "apply-profiles":
+			from profile_loader import main
+		else:
+			from dispcalGUI import main
+		main()
 	except Exception, exception:
 		if isinstance(exception, ResourceError):
 			error = exception
