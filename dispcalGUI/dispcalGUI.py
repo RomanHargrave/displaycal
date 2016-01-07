@@ -11142,7 +11142,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				# has one folder in it containing all files
 				dirbasename = os.path.basename(dirname)
 			try:
-				with zipfile.ZipFile(archive_path, 'w') as zip:
+				with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zip:
 					for filename in filenames:
 						if exclude_ext:
 							if os.path.splitext(filename)[1].lower() in exclude_ext:
