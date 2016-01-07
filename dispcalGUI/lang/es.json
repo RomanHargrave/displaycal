@@ -511,6 +511,7 @@
 	"filetype.icc_ti3": "Archivos de medicion (*.icc;*.icm;*.ti3)",
 	"filetype.log": "Archivos Log (*.log)",
 	"filetype.png": "Portable Network Graphics (*.png)",
+		"*filetype.tgz": "Compressed TAR archive",
 	"filetype.ti1": "Archivos carta de ajustes (*.ti1)",
 	"filetype.ti1_ti3_txt": "Archivos de carta de ajustes (*.ti1), Archivos de medicion (*.ti3;*.txt)",
 	"filetype.ti3": "Archivos de medicion (*.icc;*.icm;*.ti3)",

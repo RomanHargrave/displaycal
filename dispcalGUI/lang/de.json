@@ -511,6 +511,7 @@
 	"filetype.icc_ti3": "Messwertdateien (*.icc;*.icm;*.ti3)",
 	"filetype.log": "Protokolldateien (*.log)",
 	"filetype.png": "Portable Network Graphics (*.png)",
+	"filetype.tgz": "Komprimiertes TAR-Archiv",
 	"filetype.ti1": "Testformdateien (*.ti1)",
 	"filetype.ti1_ti3_txt": "Testformdateien (*.ti1), Messwertdateien (*.ti3;*.txt)",
 	"filetype.ti3": "Messwertdateien (*.ti3)",

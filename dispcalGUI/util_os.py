@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import glob
 import locale
 import os
 import re
@@ -262,6 +263,21 @@ def expandvarsu(path):
 			index = index + 1
 		return res
 	return unicode(os.path.expandvars(path), fs_enc)
+
+
+def get_program_file(name, foldername):
+	""" Get path to program file """
+	if sys.platform == "win32":
+		paths = getenvu("PATH", os.defpath).split(os.pathsep)
+		paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+										foldername))
+		paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
+										foldername))
+		exe_ext = ".exe"
+	else:
+		paths = None
+		exe_ext = ""
+	return which(name + exe_ext, paths=paths)
 
 
 def getenvu(name, default = None):

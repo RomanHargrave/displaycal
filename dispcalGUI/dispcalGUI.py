@@ -103,8 +103,8 @@ from util_decimal import float2dec, stripzeros
 from util_http import encode_multipart_formdata
 from util_io import StringIOu as StringIO
 from util_list import index_fallback_ignorecase, intlist, natsort
-from util_os import (expanduseru, getenvu, is_superuser, launch_file, 
-					 listdir_re, waccess, which)
+from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
+					 launch_file, listdir_re, waccess, which)
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
@@ -115,7 +115,7 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					get_cfg_option_from_args, get_options_from_cal,
 					get_argyll_version, get_current_profile_path,
 					get_options_from_profile, get_options_from_ti3,
-					get_program_file, make_argyll_compatible_path,
+					make_argyll_compatible_path,
 					parse_argument_string, set_argyll_bin, show_result_dialog,
 					technology_strings_170, technology_strings_171,
 					check_argyll_bin)

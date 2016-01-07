@@ -10,9 +10,11 @@ import socket
 import string
 import subprocess as sp
 import sys
+import tarfile
 import threading
 import warnings
 import xml.parsers.expat
+import zipfile
 
 import demjson
 
@@ -21,7 +23,7 @@ import audio
 import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 					get_default_dpi, get_verified_path, pyname, setcfg,
-					confighome, appbasename)
+					confighome, appbasename, logdir)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
@@ -29,7 +31,7 @@ from options import debug
 from ordereddict import OrderedDict
 from network import ScriptingClientSocket
 from util_io import StringIOu as StringIO
-from util_os import waccess
+from util_os import get_program_file, waccess
 from util_str import safe_str, safe_unicode, wrap
 from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop,
@@ -4292,6 +4294,12 @@ class LogWindow(InvincibleFrame):
 		self.save_as_btn.Bind(wx.EVT_BUTTON, self.OnSaveAs)
 		self.save_as_btn.SetToolTipString(lang.getstr("save_as"))
 		self.btnsizer.Add(self.save_as_btn, flag=wx.ALL, border=4)
+		self.archive_btn = GenBitmapButton(self.panel, -1, 
+										   geticon(16, "package-x-generic"), 
+										   style = wx.NO_BORDER)
+		self.archive_btn.Bind(wx.EVT_BUTTON, self.create_logs_archive)
+		self.archive_btn.SetToolTipString(lang.getstr("archive.create"))
+		self.btnsizer.Add(self.archive_btn, flag=wx.ALL, border=4)
 		self.clear_btn = GenBitmapButton(self.panel, -1, 
 										 geticon(16, "edit-delete"), 
 										 style = wx.NO_BORDER)
@@ -4423,6 +4431,58 @@ class LogWindow(InvincibleFrame):
 			setcfg("size.info.h", h)
 		if event:
 			event.Skip()
+
+	def create_logs_archive(self, event):
+		wildcard = lang.getstr("filetype.tgz") + "|*.tgz"
+		wildcard += "|" + lang.getstr("filetype.zip") + "|*.zip"
+		defaultDir, defaultFile = (get_verified_path("last_filedialog_path")[0], 
+								   appname + "-logs")
+		dlg = wx.FileDialog(self, lang.getstr("save_as"), 
+							defaultDir=defaultDir, defaultFile=defaultFile, 
+							wildcard=wildcard, 
+							style=wx.SAVE | wx.OVERWRITE_PROMPT)
+		dlg.Center(wx.BOTH)
+		result = dlg.ShowModal()
+		path = dlg.GetPath()
+		format = {0: "tgz", 1: "zip"}.get(dlg.GetFilterIndex(), "tgz")
+		dlg.Destroy()
+		if result == wx.ID_OK:
+			if not waccess(path, os.W_OK):
+				InfoDialog(self, msg=lang.getstr("error.access_denied.write",
+												 path),
+						   ok=lang.getstr("ok"),
+						   bitmap=geticon(32, "dialog-error"))
+				return
+			filename, ext = os.path.splitext(path)
+			if ext.lower() != "." + format:
+				path += "." + format
+				if os.path.exists(path):
+					dlg = ConfirmDialog(self, 
+										msg=lang.getstr("dialog."
+														"confirm_overwrite", 
+														(path)), 
+										ok=lang.getstr("overwrite"), 
+										cancel=lang.getstr("cancel"), 
+										bitmap=geticon(32, "dialog-warning"))
+					result = dlg.ShowModal()
+					dlg.Destroy()
+					if result != wx.ID_OK:
+						return
+			setcfg("last_filedialog_path", path)
+			if format == "tgz":
+				# Create gzipped tar archive
+				with tarfile.open(path, "w:gz") as tar:
+					tar.add(logdir, arcname=os.path.basename(path))
+			else:
+				# Create ZIP archive
+				try:
+					with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as zip:
+						for filename in os.listdir(logdir):
+							zip.write(os.path.join(logdir, filename), filename)
+				except Exception, exception:
+					InfoDialog(self, msg=safe_unicode(exception), 
+							   ok=lang.getstr("ok"), 
+							   bitmap=geticon(32, "dialog-error"))
 
 
 class ProgressDialog(wx.Dialog):

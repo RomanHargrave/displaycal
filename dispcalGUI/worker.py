@@ -775,19 +775,6 @@ def get_pattern_geometry():
 	return x, y, w, h, size
 
 
-def get_program_file(name, foldername):
-	""" Get path to program file """
-	if sys.platform == "win32":
-		paths = getenvu("PATH", os.defpath).split(os.pathsep)
-		paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
-										foldername))
-		paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
-										foldername))
-	else:
-		paths = None
-	return which(name + exe_ext, paths=paths)
-
-
 def get_python_and_pythonpath():
 	""" Return (system) python and pythonpath """
 	# Determine the path of python, and python module search paths

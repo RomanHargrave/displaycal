@@ -512,6 +512,7 @@
 	"filetype.icc_ti3": "Measurement files (*.icc;*.icm;*.ti3)",
 	"filetype.log": "Log files (*.log)",
 	"filetype.png": "Portable Network Graphics (*.png)",
+	"filetype.tgz": "Compressed TAR archive",
 	"filetype.ti1": "Testchart files (*.ti1)",
 	"filetype.ti1_ti3_txt": "Testchart files (*.ti1), Measurement files (*.ti3;*.txt)",
 	"filetype.ti3": "Measurement files (*.ti3)",
