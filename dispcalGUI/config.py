@@ -587,6 +587,7 @@ def runtimeconfig(pyfile):
 						  for dir_ in xdg_data_dirs + [xdg_data_home]])
 	if debug:
 		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
+	defaults["calibration.file"] = get_data_path("presets/default.icc") or ""
 	defaultmmode = defaults["measurement_mode"]
 	defaultptype = defaults["profile.type"]
 	defaultchart = testchart_defaults.get(defaultptype, 
@@ -743,7 +744,7 @@ defaults = {
 	"calibration.black_point_rate": 4.0,
 	"calibration.black_point_rate.enabled": 0,
 	"calibration.continue_next": 0,
-	"calibration.file": "presets/default.icc",
+	"calibration.file": "",
 	"calibration.file.previous": None,
 	"calibration.interactive_display_adjustment": 1,
 	"calibration.interactive_display_adjustment.backup": 1,
