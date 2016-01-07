@@ -1391,44 +1391,9 @@ def initcfg(module=None):
 		cfgbasename = "%s-%s" % (appname, module)
 	else:
 		cfgbasename = appname
-	# read pre-v0.2.2b configuration if present
-	if sys.platform == "darwin":
-		oldcfg = os.path.join(expanduseru("~"), "Library", "Preferences", 
-							  appname + " Preferences")
-	else:
-		oldcfg = os.path.join(expanduseru("~"), "." + appname)
 	makecfgdir()
 	if os.path.exists(confighome) and \
 	   not os.path.exists(os.path.join(confighome, cfgbasename + ".ini")):
-		try:
-			if os.path.isfile(oldcfg):
-				oldcfg_file = open(oldcfg, "rb")
-				oldcfg_contents = oldcfg_file.read()
-				oldcfg_file.close()
-				cfg_file = open(os.path.join(confighome, cfgbasename + ".ini"), 
-								"wb")
-				cfg_file.write("[Default]\n" + oldcfg_contents)
-				cfg_file.close()
-			elif sys.platform == "win32":
-				key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, 
-									  "Software\\" + appname)
-				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-				cfg_file = open(os.path.join(confighome, cfgbasename + ".ini"), 
-								"wb")
-				cfg_file.write("[Default]\n")
-				for i in range(numvalues):
-					name, value, type_ = _winreg.EnumValue(key, i)
-					if type_ == 1: cfg_file.write((u"%s = %s\n" % (name, 
-												   value)).encode("UTF-8"))
-				cfg_file.close()
-		except Exception, exception:
-			# WindowsError 2 means registry key does not exist, do not show 
-			# warning in that case
-			if sys.platform != "win32" or not hasattr(exception, "errno") or \
-			   exception.errno != 2:
-				from log import safe_print
-				safe_print("Warning - could not process old configuration:", 
-						   safe_unicode(exception))
 		# Set a few defaults which have None as possible value and thus cannot
 		# be set in the 'defaults' collection
 		setcfg("gamap_src_viewcond", "mt")
