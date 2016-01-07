@@ -43,6 +43,7 @@ class ProfileLoader(object):
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
 			import localization as lang
+			from config import appbasename
 			from util_win import calibration_management_isenabled
 			from wxwindows import BaseFrame
 
@@ -62,7 +63,7 @@ class ProfileLoader(object):
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
 						if os.path.isfile(os.path.join(config.confighome,
-													   appname + ".lock")):
+													   appbasename + ".lock")):
 							return "forbidden"
 						else:
 							self.pl.apply_profiles(True)
@@ -86,7 +87,7 @@ class ProfileLoader(object):
 					menu = wx.Menu()
 					
 					if os.path.isfile(os.path.join(config.confighome,
-												   appname + ".lock")):
+												   appbasename + ".lock")):
 						method = None
 					else:
 						method = self.pl.apply_profiles_and_warn_on_error

@@ -71,8 +71,8 @@ from argyll_names import (names as argyll_names, altnames as argyll_altnames,
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exe_ext, fs_enc, getcfg, geticon, get_data_path,
 					get_total_patches, get_verified_path, isapp, isexe,
-					is_ccxx_testchart, logdir,
-					profile_ext, pydir, setcfg, split_display_name, writecfg)
+					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
+					split_display_name, writecfg, appbasename)
 from defaultpaths import cache, iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
@@ -6176,7 +6176,7 @@ usage: spotread [-options] [logfile]
 				# If running in a thread, need to call pythoncom.CoUninitialize
 				pythoncom.CoUninitialize()
 		if not os.path.isfile(os.path.join(config.confighome,
-										   appname + "-apply-profiles.lock")):
+										   appbasename + "-apply-profiles.lock")):
 			# Run profile loader TSR program if not yet loaded
 			if loader_args:
 				cmdline = '%s" %s "--skip' % (cmd, " ".join(loader_args))

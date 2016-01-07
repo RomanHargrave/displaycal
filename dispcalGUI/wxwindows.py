@@ -21,7 +21,7 @@ import audio
 import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 					get_default_dpi, get_verified_path, pyname, setcfg,
-					confighome)
+					confighome, appbasename)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
@@ -840,11 +840,11 @@ class BaseFrame(wx.Frame):
 
 	def get_scripting_hosts(self):
 		scripting_hosts = []
-		lockfilebasenames = [appname]
+		lockfilebasenames = [appbasename]
 		for module in ["3DLUT-maker", "curve-viewer", "profile-info",
 					   "scripting-client", "synthprofile", "testchart-editor",
 					   "VRML-to-X3D-converter", "apply-profiles"]:
-			lockfilebasenames.append("%s-%s" % (appname, module))
+			lockfilebasenames.append("%s-%s" % (appbasename, module))
 		for lockfilebasename in lockfilebasenames:
 				lockfilename = os.path.join(confighome, "%s.lock" %
 														lockfilebasename)

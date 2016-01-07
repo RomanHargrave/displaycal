@@ -76,6 +76,12 @@ for dir_ in getenvu("PATH", "").split(os.pathsep):
 	if os.path.isdir(os.path.join(dir_parent, "ref")):
 		extra_data_dirs.append(dir_parent)
 
+appbasename = appname
+# If old user data directory exists, use its basename
+if os.path.isdir(os.path.join(appdata, "dispcalGUI")):
+	appbasename = "dispcalGUI"
+	data_dirs.append(os.path.join(appdata, appname))
+datahome = os.path.join(appdata, appbasename)
 if sys.platform == "win32":
 	if pydir.lower().startswith(exedir.lower()) and pydir != exedir:
 		# We are installed in a subfolder of the executable directory (e.g. 
@@ -87,13 +93,15 @@ if sys.platform == "win32":
 		data_dirs.append(exedir)
 	script_ext = ".cmd"
 	scale_adjustment_factor = 1.0
-	config_sys = os.path.join(commonappdata[0], appname)
-	confighome = os.path.join(appdata, appname)
-	datahome = os.path.join(appdata, appname)
+	config_sys = os.path.join(commonappdata[0], appbasename)
+	confighome = os.path.join(appdata, appbasename)
 	logdir = os.path.join(datahome, "logs")
+	if appbasename != appname:
+		data_dirs.extend(os.path.join(dir_, appname) for dir_ in commonappdata)
+		data_dirs.append(os.path.join(commonprogramfiles, appname))
 	data_dirs.append(datahome)
-	data_dirs.extend(os.path.join(dir_, appname) for dir_ in commonappdata)
-	data_dirs.append(os.path.join(commonprogramfiles, appname))
+	data_dirs.extend(os.path.join(dir_, appbasename) for dir_ in commonappdata)
+	data_dirs.append(os.path.join(commonprogramfiles, appbasename))
 	exe_ext = ".exe"
 	profile_ext = ".icm"
 else:
@@ -101,24 +109,30 @@ else:
 		script_ext = ".command"
 		mac_create_app = True
 		scale_adjustment_factor = 1.0
-		config_sys = os.path.join(prefs, appname)
-		confighome = os.path.join(prefs_home, appname)
-		datahome = os.path.join(appdata, appname)
+		config_sys = os.path.join(prefs, appbasename)
+		confighome = os.path.join(prefs_home, appbasename)
 		logdir = os.path.join(expanduseru("~"), "Library", 
-							  "Logs", appname)
-		data_dirs.extend([datahome, os.path.join(commonappdata[0], appname)])
+							  "Logs", appbasename)
+		if appbasename != appname:
+			data_dirs.append(os.path.join(commonappdata[0], appname))
+		data_dirs.append(datahome)
+		data_dirs.append(os.path.join(commonappdata[0], appbasename))
 	else:
 		script_ext = ".sh"
 		scale_adjustment_factor = 1.0
-		config_sys = os.path.join(xdg_config_dir_default, appname)
-		confighome = os.path.join(xdg_config_home, appname)
-		datahome = os.path.join(xdg_data_home, appname)
-		datahome_default = os.path.join(xdg_data_home_default, appname)
+		config_sys = os.path.join(xdg_config_dir_default, appbasename)
+		confighome = os.path.join(xdg_config_home, appbasename)
 		logdir = os.path.join(datahome, "logs")
+		if appbasename != appname:
+			datahome_default = os.path.join(xdg_data_home_default, appname)
+			if not datahome_default in data_dirs:
+				data_dirs.append(datahome_default)
+			data_dirs.extend(os.path.join(dir_, appname) for dir_ in xdg_data_dirs)
 		data_dirs.append(datahome)
+		datahome_default = os.path.join(xdg_data_home_default, appbasename)
 		if not datahome_default in data_dirs:
 			data_dirs.append(datahome_default)
-		data_dirs.extend(os.path.join(dir_, appname) for dir_ in xdg_data_dirs)
+		data_dirs.extend(os.path.join(dir_, appbasename) for dir_ in xdg_data_dirs)
 		extra_data_dirs.extend(os.path.join(dir_, "argyllcms") for dir_ in
 							   xdg_data_dirs)
 		extra_data_dirs.extend(os.path.join(dir_, "color", "argyll") for dir_ in
@@ -1070,6 +1084,11 @@ def getcfg(name, fallback=True, raw=False):
 									 appname, re.I)
 				repl = create_replace_function("\\1%s", version)
 				value = re.sub(pattern, repl, value)
+				if appbasename != appname:
+					pattern = re.compile("(%s(?:\s*v(?:ersion|\.)?)?\s*)\d+(?:\.\d+)*" %
+										 appbasename, re.I)
+					repl = create_replace_function("\\1%s", version)
+					value = re.sub(pattern, repl, value)
 				pattern = re.compile("(Argyll(?:\s*CMS)?)((?:\s*v(?:ersion|\.)?)?\s*)\d+(?:\.\d+)*",
 									 re.I)
 				if defval.split()[-1] != "CMS":
@@ -1388,9 +1407,9 @@ def initcfg(module=None):
 	
 	"""
 	if module:
-		cfgbasename = "%s-%s" % (appname, module)
+		cfgbasename = "%s-%s" % (appbasename, module)
 	else:
-		cfgbasename = appname
+		cfgbasename = appbasename
 	makecfgdir()
 	if os.path.exists(confighome) and \
 	   not os.path.exists(os.path.join(confighome, cfgbasename + ".ini")):
@@ -1401,11 +1420,11 @@ def initcfg(module=None):
 	# Read cfg
 	cfgnames = []
 	if module != "3DLUT-maker":
-		cfgnames.append(appname)
+		cfgnames.append(appbasename)
 	if module:
 		cfgnames.append(cfgbasename)
 	else:
-		cfgnames.extend("%s-%s" % (appname, othermod) for othermod in
+		cfgnames.extend("%s-%s" % (appbasename, othermod) for othermod in
 						("synthprofile", "testchart-editor"))
 	cfgroots = [confighome]
 	if module == "apply-profiles":
@@ -1497,9 +1516,9 @@ def writecfg(which="user", worker=None, module=None, options=()):
 	
 	"""
 	if module:
-		cfgbasename = "%s-%s" % (appname, module)
+		cfgbasename = "%s-%s" % (appbasename, module)
 	else:
-		cfgbasename = appname
+		cfgbasename = appbasename
 	if which == "user":
 		# user config - stores everything and overrides system-wide config
 		cfgfilename = os.path.join(confighome, cfgbasename + ".ini")

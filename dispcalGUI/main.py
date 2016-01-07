@@ -28,7 +28,7 @@ if pyver < py_minversion or pyver > py_maxversion:
 from config import (autostart_home, confighome, datahome, enc, exe, exe_ext,
 					exedir, exename, get_data_path, getcfg, fs_enc, initcfg,
 					isapp, isexe, logdir, pydir, pyname, pypath, resfiles,
-					runtype)
+					runtype, appbasename)
 from debughelpers import ResourceError, handle_error
 from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
@@ -47,9 +47,9 @@ sys.excepthook = _excepthook
 
 def main(module=None):
 	if module:
-		name = "%s-%s" % (appname, module)
+		name = "%s-%s" % (appbasename, module)
 	else:
-		name = appname
+		name = appbasename
 	log("=" * 80)
 	if verbose >= 1:
 		version = VERSION_STRING
@@ -103,7 +103,7 @@ def main(module=None):
 				lockfilebasenames.append(name)
 			if module not in ("3DLUT-maker", "VRML-to-X3D-converter",
 							  "apply-profiles"):
-				lockfilebasenames.append(appname)
+				lockfilebasenames.append(appbasename)
 			for lockfilebasename in lockfilebasenames:
 				lockfilename = os.path.join(confighome, "%s.lock" %
 														lockfilebasename)
@@ -269,7 +269,7 @@ def main(module=None):
 		if sys.platform not in ("darwin", "win32"):
 			# Linux: Try and fix v0.2.1b calibration loader, because 
 			# calibrationloader.sh is no longer present in v0.2.2b+
-			desktopfile_name = appname + "-Calibration-Loader-Display-"
+			desktopfile_name = appbasename + "-Calibration-Loader-Display-"
 			if autostart_home and os.path.exists(autostart_home):
 				try:
 					autostarts = os.listdir(autostart_home)
