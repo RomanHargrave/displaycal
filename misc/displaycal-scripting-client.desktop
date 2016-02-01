@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=Scripting Client
+Name[de]=Skript-Client
+GenericName=Scripting Client
+GenericName[de]=Scripting-Client
+Exec=displaycal-scripting-client
+Icon=displaycal-scripting-client
+Terminal=false
+Categories=Graphics;
+Comment[de]=DisplayCAL mit einfachen Skript-Befehlen steuern
+Comment=Control DisplayCAL via simple scripting commands

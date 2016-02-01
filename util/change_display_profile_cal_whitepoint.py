@@ -9,13 +9,13 @@ sys.stdout = sys.stderr
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dispcalGUI import ICCProfile as ICCP
-from dispcalGUI import colormath as cm
-from dispcalGUI import config
-from dispcalGUI import localization as lang
-from dispcalGUI import worker
-from dispcalGUI.log import safe_print
-from dispcalGUI.wxwindows import BaseApp, wx
+from DisplayCAL import ICCProfile as ICCP
+from DisplayCAL import colormath as cm
+from DisplayCAL import config
+from DisplayCAL import localization as lang
+from DisplayCAL import worker
+from DisplayCAL.log import safe_print
+from DisplayCAL.wxwindows import BaseApp, wx
 
 # Environment sets defaults
 CAL_ONLY = int(os.getenv("CHANGE_DISPLAY_PROFILE_WTPT_CAL_ONLY", 0))

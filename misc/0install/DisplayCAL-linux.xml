@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface uri="${URL}0install/${APPNAME}-linux.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd">
+	<name>${PACKAGE}</name>
+	<summary xml:lang="en">${SUMMARY}</summary>
+	<description xml:lang="en">
+${DESC}</description>
+	<homepage>${URL}</homepage>
+	<icon href="${URL}theme/icons/256x256/${APPNAME_LOWER}.png" type="image/png" />
+	<category>Graphics</category>
+	<feed-for interface="${URL}0install/${APPNAME}.xml" />
+	<group arch="Linux-*" license="GPL v3 (GNU General Public License)" main="${APPNAME}.pyw">
+		<requires interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0">
+			<version before="3.0" not-before="${PY_MINVERSION}" />
+		</requires>
+		<requires interface="${URL}0install/wxpython.xml" version="${WX_MINVERSION}..">
+			<version not-before="${WX_MINVERSION}" />
+		</requires>
+		<requires interface="${URL}0install/numpy.xml" />
+		<requires interface="${URL}0install/pygame.xml" />
+		<command name="change-display-profile-cal-whitepoint" path="util/change_display_profile_cal_whitepoint.py">
+			<runner interface="http://repo.roscidus.com/python/python" version="2.6..!3.0" />
+		</command>
+		<command name="install-standalone-tools-icons" path="util/standalone-tools-icons.py">
+			<arg>install</arg>
+			<runner interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0" />
+		</command>
+		<command name="uninstall-standalone-tools-icons" path="util/standalone-tools-icons.py">
+			<arg>uninstall</arg>
+			<runner interface="http://repo.roscidus.com/python/python" version="${PY_MINVERSION}..!3.0" />
+		</command>
+		<implementation released="0000-00-00" version="0.0.0.0">
+		</implementation>
+	</group>
+</interface>

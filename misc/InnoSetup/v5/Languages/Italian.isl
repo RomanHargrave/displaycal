@@ -323,5 +323,5 @@ AssocFileExtension=&Associa l'estensione %2 a %1
 AssocingFileExtension=Associazione dell'estensione %2 a %1 in corso...
 
 CalibrationLoading=Caricamento di calibrazione su login:
-CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profile Loader (alta qualità)
-CalibrationLoadingHandledByOS=Sistema operativo (di bassa qualità)
+CalibrationLoadingHandledByDisplayCAL=DisplayCAL Profile Loader (alta precisione ed affidabilità)
+CalibrationLoadingHandledByOS=Sistema operativo (bassa precisione ed affidabilità)

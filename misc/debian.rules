@@ -66,14 +66,14 @@ install: build
 		--skip-instrument-configuration-files \
 		--skip-postinstall
 	# udev/hotplug
-	mkdir -p "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb"
+	mkdir -p "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb"
 	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-	cp -f "misc/55-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/55-Argyll.rules"
+	cp -f "misc/55-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/55-Argyll.rules"
 	# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-	cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/45-Argyll.rules"
+	cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/45-Argyll.rules"
 	# USB using hotplug and Serial using udev (older versions of Linux)
-	cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll"
-	cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/usr/share/dispcalGUI/usb/Argyll.usermap"
+	cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/Argyll"
+	cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/Argyll.usermap"
 	# --- end custom part for installing
 
 # Build architecture-independent files here.

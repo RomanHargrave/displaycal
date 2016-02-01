@@ -9,8 +9,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 								".."))
 
-from dispcalGUI import colormath
-from dispcalGUI import ICCProfile as ICCP
+from DisplayCAL import colormath
+from DisplayCAL import ICCProfile as ICCP
 
 
 def prettyprint(iterable, level=1):

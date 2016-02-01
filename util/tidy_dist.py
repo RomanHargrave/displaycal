@@ -8,7 +8,7 @@ import shutil
 
 
 def main():
-	dist = glob.glob(os.path.join('dist', 'dispcalGUI-*'))
+	dist = glob.glob(os.path.join('dist', 'DisplayCAL-*'))
 	for entry in dist:
 		version = re.search('\d+(?:\.\d+){3}', entry)
 		if version:

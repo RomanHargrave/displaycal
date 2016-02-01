@@ -320,5 +320,5 @@ SelectVersion=Select version
 ChangeIntegration=Change desktop integration
 
 CalibrationLoading=Calibration loading on login:
-CalibrationLoadingHandledByDispcalGUI=Let dispcalGUI handle calibration loading (high quality)
-CalibrationLoadingHandledByOS=Let the operating system handle calibration loading (low quality)
+CalibrationLoadingHandledByDisplayCAL=Let DisplayCAL handle calibration loading (high precision and reliability)
+CalibrationLoadingHandledByOS=Let the operating system handle calibration loading (low precision and reliability)

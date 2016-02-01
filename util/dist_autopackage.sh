@@ -3,13 +3,13 @@
 # Make sure __version__.py is current
 ./setup.py
 
-version=`python -c "from dispcalGUI import meta;print meta.version"`
+version=`python -c "from DisplayCAL import meta;print meta.version"`
 
 # Autopackage
 mkdir -p dist
-makepackage 2>&1 | tee dispcalGUI-$version.dist_autopackage.log
-mv "dispcalGUI - Display Calibration $version.package" dist/dispcalGUI-$version.package
-mv "dispcalGUI - Display Calibration $version.package.meta" dist/dispcalGUI-$version.package.meta
+makepackage 2>&1 | tee DisplayCAL-$version.dist_autopackage.log
+mv "DisplayCAL - Display Calibration $version.package" dist/DisplayCAL-$version.package
+mv "DisplayCAL - Display Calibration $version.package.meta" dist/DisplayCAL-$version.package.meta
 
 # Cleanup
 util/tidy_dist.py

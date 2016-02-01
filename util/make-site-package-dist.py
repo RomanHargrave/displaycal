@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Collect modules from site-packages used by dispcalGUI
+Collect modules from site-packages used by DisplayCAL
 
 """
 
@@ -25,7 +25,7 @@ except:
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dispcalGUI.meta import wx_minversion
+from DisplayCAL.meta import wx_minversion
 
 # Search for a suitable wx version
 wx_minversion_str = '.'.join(str(n) for n in wx_minversion[:2])

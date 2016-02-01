@@ -8,7 +8,7 @@ import re
 import shutil
 import sys
 
-from dispcalGUI.meta import name as appname, domain
+from DisplayCAL.meta import name as appname, domain, script2pywname
 
 
 def zeroinstall_desktop(datadir="/usr/share"):
@@ -17,7 +17,8 @@ def zeroinstall_desktop(datadir="/usr/share"):
 	if not os.path.isdir(appdir):
 		os.makedirs(appdir)
 	feeduri = "http://%s/0install/%s.xml" % (domain.lower(), appname)
-	for desktopfilename in glob(os.path.join("misc", "%s*.desktop" % appname)):
+	for desktopfilename in glob(os.path.join("misc", "%s*.desktop" %
+													 appname.lower())):
 		desktopbasename = os.path.basename(desktopfilename)
 		scriptname = re.sub("\.desktop$", "", desktopbasename)
 		for size in [16, 22, 24, 32, 48, 128, 256]:
@@ -30,15 +31,16 @@ def zeroinstall_desktop(datadir="/usr/share"):
 									 scriptname + ".png"), icondir)
 		with open(desktopfilename) as desktopfile:
 			contents = desktopfile.read()
-		if scriptname == appname:
+		cmdname = script2pywname(scriptname)
+		if cmdname == appname:
 			cmd = ""
 		else:
-			cmd = re.sub("^%s" % appname, " --command=run", scriptname)
+			cmd = re.sub("^%s" % appname, " --command=run", cmdname)
 		for pattern, repl in [("Exec=.+",
 							   "Exec=0launch%s -- %s %%f" %
 							   (cmd, feeduri))]:
 			contents = re.sub(pattern, repl, contents)
-		if scriptname == appname:
+		if cmdname == appname:
 			desktopbasename = ("zeroinstall-" + desktopbasename).lower()
 		with open(os.path.join(appdir, desktopbasename), "w") as desktopfile:
 			desktopfile.write(contents)

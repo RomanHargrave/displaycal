@@ -5,7 +5,7 @@ import sys
 import tempfile
 
 sys.path.insert(1, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
-								"dispcalGUI"))
+								"DisplayCAL"))
 
 from meta import description, name, version_tuple
 from winmanifest import ManifestFromXMLFile

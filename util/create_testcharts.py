@@ -8,8 +8,8 @@ import sys
 root = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(root)
 
-from dispcalGUI import config, ICCProfile as ICCP, localization as lang, meta
-from dispcalGUI.worker import Worker, check_argyll_bin, get_argyll_util
+from DisplayCAL import config, ICCProfile as ICCP, localization as lang, meta
+from DisplayCAL.worker import Worker, check_argyll_bin, get_argyll_util
 
 
 def create_testcharts(overwrite=False):

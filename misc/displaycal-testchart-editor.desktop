@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=Testchart Editor
+Name[de]=Testform-Editor
+GenericName=Testchart editor
+GenericName[de]=Testform-Editor
+Exec=displaycal-testchart-editor
+Icon=displaycal-testchart-editor
+Terminal=false
+Categories=Graphics;
+Comment[de]=Ein Testform-Editor und -Erzeuger für RGB-Testformen im Argyll-CMS-CGATS-Format
+Comment=A testchart editor and creator for RGB testcharts in Argyll CMS CGATS format

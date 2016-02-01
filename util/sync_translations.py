@@ -12,11 +12,11 @@ import ppdir
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, root)
 
-from dispcalGUI import demjson
-from dispcalGUI import jsondict
-from dispcalGUI import ordereddict
-from dispcalGUI.safe_print import safe_print
-from dispcalGUI.util_os import listdir_re
+from DisplayCAL import demjson
+from DisplayCAL import jsondict
+from DisplayCAL import ordereddict
+from DisplayCAL.safe_print import safe_print
+from DisplayCAL.util_os import listdir_re
 
 
 def quote(obj):
@@ -75,10 +75,10 @@ if __name__ == "__main__":
 		safe_print("Usage: %s" % os.path.basename(sys.argv[0]))
 		safe_print("Synchronizes translations to en.json")
 	else:
-		for langfile in listdir_re(os.path.join(root, "dispcalGUI", "lang"),
+		for langfile in listdir_re(os.path.join(root, "DisplayCAL", "lang"),
 								   r"^\w+\.json$"):
 			if langfile != "en.json":
 				langmerge(os.path.join("lang", langfile),
 						  os.path.join("lang", "en.json"),
-						  os.path.join(root, "dispcalGUI", "lang", langfile))
+						  os.path.join(root, "DisplayCAL", "lang", langfile))
 				safe_print("")

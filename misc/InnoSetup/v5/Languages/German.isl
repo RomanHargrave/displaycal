@@ -309,5 +309,5 @@ SelectVersion=Version auswählen
 ChangeIntegration=Desktopintegration ändern
 
 CalibrationLoading=Kalibrierung bei Anmeldung laden:
-CalibrationLoadingHandledByDispcalGUI=dispcalGUI Profil-Lader (hohe Qualität)
-CalibrationLoadingHandledByOS=Betriebssystem (niedrige Qualität)
+CalibrationLoadingHandledByDisplayCAL=DisplayCAL Profil-Lader (hohe Präzision und Zuverlässigkeit)
+CalibrationLoadingHandledByOS=Betriebssystem (niedrige Präzision und Zuverlässigkeit)

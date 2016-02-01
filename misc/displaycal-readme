@@ -1,0 +1,11 @@
+Document: displaycal-readme
+Title: DisplayCAL ReadMe
+Author: Florian Höch
+Abstract: This manual describes DisplayCAL, a graphical front-end to display 
+ calibration and characterization functionality provided by the Argyll color 
+ management system, and how it can be used.
+Section: Graphics
+
+Format: HTML
+Index: /usr/share/doc/displaycal/README.html
+Files: /usr/share/doc/displaycal/README.html

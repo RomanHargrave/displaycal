@@ -129,12 +129,20 @@ jQuery(function ($) {
 			$this.attr('href', 'mailto:' + email).html(email);
 		}
 	});
+
+	/* Track outbound links */
+	if (location.protocol != 'file:') $('a[href^="http://"]:not([href^="http://' + location.hostname + '"], [href^="http://hub.' + location.hostname + '"], [href^="http://colorimetercorrections.' + location.hostname + '"]), a[href^="https://"]:not([href^="https://' + location.hostname + '"], [href^="https://hub.' + location.hostname + '"], [href^="https://colorimetercorrections.' + location.hostname + '"])').each(function () {
+		this.target = "_blank";
+	}).on('mouseup', function (e) {
+		if (e.which <= 2) $.get(location.protocol + '//outbound.' + location.hostname + '/' + this.hostname + this.pathname);
+		return true;
+	});
 	
 	/* Indent after br */
 	$('#content p > br').after('<span class="indent"></span>')
 
 	/* Intro */
-	if ($(window).width() >= 760 &&
+	if (location.pathname != '/history.html' && $(window).width() >= 760 &&
 		(location.protocol != 'file:' ||
 		 (location.search || '').indexOf('debug') > -1 ||
 		 (document.cookie || '').indexOf('debug') > -1) &&
@@ -176,7 +184,7 @@ jQuery(function ($) {
 				});
 			}, 500);
 		}
-		imgpaths.push('img/dispcalGUI-main_window-shadow-720.png');
+		imgpaths.push('img/DisplayCAL-main_window-shadow-720.png');
 		/* Load images */
 		var protocol = location.protocol;
 		if (protocol == 'file:') protocol = 'http:';
@@ -184,7 +192,7 @@ jQuery(function ($) {
 			img = new Image();
 			imgs.push(img);
 			img.onload = splash_onload;
-			img.src = protocol + '//dispcalgui.hoech.net/' + imgpaths[i];
+			img.src = protocol + '//displaycal.net/' + imgpaths[i];
 		}
 	}
 	
@@ -192,10 +200,10 @@ jQuery(function ($) {
 	var interval = setInterval(function () {
 		jQuery('#teaser img').fadeOut(750, function () {
 			var src;
-			if (jQuery('#teaser img').attr('src').indexOf('theme/dispcalGUI-adjust-reflection.png') > -1)
-				src = 'theme/dispcalGUI-main_window-reflection.png';
+			if (jQuery('#teaser img').attr('src').indexOf('theme/DisplayCAL-adjust-reflection.png') > -1)
+				src = 'theme/DisplayCAL-main_window-reflection.png';
 			else
-				src = 'theme/dispcalGUI-adjust-reflection.png';
+				src = 'theme/DisplayCAL-adjust-reflection.png';
 			jQuery('#teaser img').attr('src', src).fadeIn(750);
 		});
 	}, 10000);
@@ -203,16 +211,16 @@ jQuery(function ($) {
 	/* Insert facebook page link into shariff bar */
 	$('.shariff > ul').removeClass('col-5');
 	$('.shariff > ul').addClass('col-6');
-	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit dispcalGUI on Facebook" target="_blank" href="https://www.facebook.com/dispcalGUI/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
+	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit DisplayCAL on Facebook" target="_blank" href="https://www.facebook.com/DisplayCAL/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
 
 	/* Only show 'to top' link if scroll position > ToC offset top */
 	var totop_isshown = false;
 	$(window).scroll(function () {
-		if (totop_isshown && $(window).scrollTop() < $('#toc').offset().top) {
+		if (totop_isshown && $(window).scrollTop() < $('#content').offset().top) {
 			$('#totop').slideUp();
 			totop_isshown = false;
 		}
-		else if (!totop_isshown && $(window).scrollTop() > $('#toc').offset().top) {
+		else if (!totop_isshown && $(window).scrollTop() > $('#content').offset().top) {
 			$('#totop').slideDown();
 			totop_isshown = true;
 		}
@@ -227,8 +235,8 @@ jQuery(window).load(function () {
 	
 	/* Teaser */
 	setTimeout(function () {
-		var src = ['theme/dispcalGUI-main_window-reflection.png',
-				   'theme/dispcalGUI-adjust-reflection.png'][Math.round(Math.random())];
+		var src = ['theme/DisplayCAL-main_window-reflection.png',
+				   'theme/DisplayCAL-adjust-reflection.png'][Math.round(Math.random())];
 		jQuery('#teaser img').attr('src', src).fadeIn(750);
 	}, 500);
 });

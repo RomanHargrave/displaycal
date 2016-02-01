@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>X3D Viewer</title>
+		<link rel="stylesheet" href="http://displaycal.net/x3d-viewer/release/x3dom.css" data-fallback-href="x3dom.css" />
+		<link rel="stylesheet" href="http://displaycal.net/x3d-viewer/release/x3d-viewer.css" data-fallback-href="x3d-viewer.css" />
+	</head>
+	<body>
+		<noscript><p>Please enable JavaScript</p></noscript>
+		<x3d id="x3d" showStat="false" showLog="false" swfpath="http://displaycal.net/x3d-viewer/release/x3dom.swf" data-fallback-swfpath="x3dom.swf" x="0px" y="0px">
+		</x3d>
+		<script src="http://displaycal.net/x3d-viewer/release/x3dom.js" data-fallback-src="x3dom.js"></script>
+		<script src="http://displaycal.net/x3d-viewer/release/x3d-viewer.js" data-fallback-src="x3d-viewer.js"></script>
+		<script>
+			if (!window.x3dom || !window.x3d_viewer) {
+				var elements = Array.prototype.slice.call(document.getElementsByTagName('link')).concat(Array.prototype.slice.call(document.getElementsByTagName('x3d'))).concat(Array.prototype.slice.call(document.getElementsByTagName('script'))),
+					attrname, fallback;
+				for (var i = 0; i < elements.length; i ++) {
+					attrname = {'link': 'href',
+								'script': 'src',
+								'x3d': 'swfpath'}[elements[i].tagName.toLowerCase()];
+					fallback = elements[i].getAttribute('data-fallback-' + attrname);
+					if (fallback) {
+						switch (attrname) {
+							case 'href':
+							case 'swfpath':
+								elements[i].setAttribute(attrname, fallback);
+								break;
+							case 'src':
+								document.write('<script src="' + fallback + '"><\/script>');
+								break;
+						}
+					}
+				}
+			}
+		</script>
+		<script>
+			if (window.x3d_viewer) x3d_viewer.setup();
+			else document.write('<div style="color: #c00; font-family: sans-serif; left: 0; margin-top: -8px; position: absolute; text-align: center; top: 50%; width: 100%;">Error: No internet access and viewer components are not cached.</div>');
+		</script>
+	</body>
+</html>

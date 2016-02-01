@@ -11,7 +11,7 @@ license=('GPL3')
 makedepends=('libx11' 'libxinerama' 'libxrandr' 'libxxf86vm')
 depends=('python2>=${PY_MINVERSION}' 'wxpython>=${WX_MINVERSION}' 'python2-numpy' 'python2-pygame' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils')
 optdepends=('argyllcms: calibration & profiling support')
-conflicts=('${APPNAME_LOWER}-0install')
+conflicts=('dispcalgui' 'dispcalgui-0install' '${APPNAME_LOWER}-0install')
 install=${pkgname}.install
 
 source=("${URL}download/${_pkgname}-${pkgver}.tar.gz")
@@ -46,6 +46,9 @@ package() {
     # USB using hotplug and Serial using udev (older versions of Linux)
     cp -f "misc/Argyll" "${pkgdir}/usr/share/${_pkgname}/usb/Argyll"
     cp -f "misc/Argyll.usermap" "${pkgdir}/usr/share/${_pkgname}/usb/Argyll.usermap"
+
+    # Fix permissions - read for all, eXecute for directories and scripts
+    chmod -R +rX "${pkgdir}"
 }
 
 # vim:set ts=2 sw=2 et:

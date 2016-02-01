@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface uri="${URL}0install/${APPNAME}.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd">
+	<name>${PACKAGE}</name>
+	<summary xml:lang="en">${SUMMARY}</summary>
+	<description xml:lang="en">
+${DESC}</description>
+	<homepage>${URL}</homepage>
+	<icon href="${URL}theme/icons/256x256/${APPNAME_LOWER}.png" type="image/png" />
+	<category>.</category>
+	<feed arch="Linux-*" src="${URL}0install/${APPNAME}-linux.xml" />
+	<feed arch="MacOSX-*" src="${URL}0install/${APPNAME}-mac.xml" />
+	<feed arch="Windows-*" src="${URL}0install/${APPNAME}-win32.xml" />
+</interface>

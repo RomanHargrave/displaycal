@@ -3,7 +3,7 @@ Name: ${APPNAME}
 Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 Source: ${URL}
 
-Copyright: 2008-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
+Copyright: 2008-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License: GPL-3+
 
 Files: ${APPNAME}/lang/es.json
@@ -40,7 +40,7 @@ License: LGPL-2.1+
 
 Files: ${APPNAME}/RealDisplaySizeMM.c
 Copyright: 1995-${YEAR}, Graeme W. Gill <Graeme@argyllcms.com>
-           2008-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
+           2008-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License: GPL-3+
 
 Files: ${APPNAME}/demjson.py
@@ -58,19 +58,19 @@ License: wxWindows
 Files: ${APPNAME}/jspacker.py
 Copyright: 2004-2005, Dean Edwards <dean.edwards@gmail.com>
            2006-${YEAR}, Florian Schulze <florian.proff.schulze@gmx.net>
-           2010-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
+           2010-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License: LGPL-2.1
 
 Files: ${APPNAME}/wexpect.py
 Copyright: 2008-${YEAR}, Noah Spurrier <noah@noah.org>
            2008-${YEAR}, Chris Gorecki <chris.k.gorecki@gmail.com>
-           2010-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
+           2010-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License: MIT-style
 
 Files: ${APPNAME}/wxenhancedplot.py
 Copyright: 2003-2004, Gordon Williams <g_will@cyberus.ca>
            2003, Jeff Grimmett <grimmtooth@softhome.net>
-           2009-${YEAR}, Florian Höch <${APPNAME_LOWER}@hoech.net>
+           2009-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License:
  Use as you wish.
 

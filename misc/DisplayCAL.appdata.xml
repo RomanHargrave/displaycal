@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright ${YEAR} ${AUTHOR} <florian_AT_${DOMAIN}> -->
+<component type="desktop">
+	<id>${APPNAME_LOWER}.desktop</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0+</project_license>
+	<name>${APPNAME}</name>
+	<summary>${SUMMARY}</summary>
+	<description>
+		${APPDATADESC}
+	</description>
+	<screenshots>
+		<screenshot type="default">
+			<image width="1024" height="576">${URL}screenshots/${APPNAME}-screenshot-GNOME-1024x576.png</image>
+		</screenshot>
+	</screenshots>
+	<url type="homepage">${URL}</url>
+	<developer_name>${AUTHOR}</developer_name>
+	<updatecontact>florian_AT_${DOMAIN}</updatecontact>
+	<provides>
+		${APPDATAPROVIDES}
+​ 	</provides>
+	<releases>
+		​<release version="${VERSION}" timestamp="${TIMESTAMP}">
+			<description>
+				<p>See README.html#changelog-${VERSION_SHORT} for the complete list of changes in this version.</p>
+			</description>
+		</release>
+	</releases>
+	<languages>
+		${LANGUAGES}
+	​</languages>
+</component>

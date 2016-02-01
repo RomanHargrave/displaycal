@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=DisplayCAL
+Name[de]=DisplayCAL
+GenericName=Display Calibration
+GenericName[de]=Anzeigegerätekalibrierung
+Exec=displaycal
+Icon=displaycal
+Terminal=false
+Categories=Graphics;
+Comment[de]=Eine grafische Benutzeroberfläche für die Argyll CMS Anzeigegerätekalibrierungs-Programme
+Comment=A graphical user interface for the Argyll CMS display calibration utilities

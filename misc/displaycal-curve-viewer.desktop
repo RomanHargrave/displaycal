@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=Curve Viewer
+Name[de]=Kurvenbetrachter
+GenericName=Calibration and ICC profile tone response curve viewer
+GenericName[de]=Kalibrierungs- und ICC-Profil-Tonwertkurvenbetrachter
+Exec=displaycal-curve-viewer
+Icon=displaycal-curve-viewer
+Terminal=false
+Categories=Graphics;
+Comment[de]=Zeigt Kalibrierungs- und ICC-Profil-Tonwertkurven. Unterstützt nur ICC v2.
+Comment=Shows calibration and ICC profile tone response curves. Only support ICC v2.

@@ -6,8 +6,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dispcalGUI import ICCProfile as iccp
-from dispcalGUI import util_str
+from DisplayCAL import ICCProfile as iccp
+from DisplayCAL import util_str
 
 
 def set_profile_desc_to_basename_sans_ext(profile):

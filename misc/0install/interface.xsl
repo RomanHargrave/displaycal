@@ -12,6 +12,7 @@
 				<title>
 					<xsl:value-of select="zi:name"/><xsl:if test="zi:summary and zi:summary != zi:name">—<xsl:value-of select="zi:summary"/></xsl:if>
 				</title>
+				<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 				<link rel="stylesheet" href="../theme/readme.css" />
 				<link rel="stylesheet" href="interface1.css" />
 			</head>

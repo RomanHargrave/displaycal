@@ -7,9 +7,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dispcalGUI import ICCProfile as ICCP, colormath, config, worker
+from DisplayCAL import ICCProfile as ICCP, colormath, config, worker
 
 
+config.initcfg()
 ref = ICCP.ICCProfile(config.get_data_path("ref/sRGB.icm"))
 
 

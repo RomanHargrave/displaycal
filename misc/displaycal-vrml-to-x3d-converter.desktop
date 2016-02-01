@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=VRML to X3D
+Name[de]=VRML zu X3D
+GenericName=VRML to X3D converter
+GenericName[de]=VRML zu X3D Konverter
+Exec=displaycal-vrml-to-x3d-converter %F
+Icon=displaycal-vrml-to-x3d-converter
+Terminal=false
+Categories=Graphics;
+Comment[de]=Konvertiert VRML-Dateien zu X3D eingebettet in HTML
+Comment=Converts VRML files to X3D embedded in HTML
+MimeType=model/vrml;x-world/x-vrml;

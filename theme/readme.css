@@ -95,7 +95,7 @@ html {
 body {
 	background: #fff url(bg.png) repeat-x 0 0 fixed;
 	color: black;
-	font: normal 14px/22px Arial, sans-serif;
+	font: normal 14px/22px Lato, sans-serif;
 	padding: 0 0 48px;
 	word-wrap: break-word;
 }
@@ -106,18 +106,32 @@ body > div,
 	padding: 0 10px;
 	width: auto;
 }
+#site-navigation {
+	padding: 0;
+}
+#site-navigation ul {
+	margin: 0 auto;
+	text-align: center;
+}
 @media screen and (min-width: 600px) {
 	body > div,
 	#title,
 	#copyright {
 		padding: 0 20px;
 	}
+	#site-navigation {
+		padding: 0;
+	}
 }
 @media screen and (min-width: 760px) {
 	body > div,
 	#title,
-	#copyright {
+	#copyright,
+	#site-navigation ul {
 		width: 720px;
+	}
+	#site-navigation ul {
+		text-align: right;
 	}
 }
 h1 {
@@ -136,17 +150,15 @@ h1 img {
 }
 h1 > a {
 	display: inline-block;
-	font-family: Arial, sans-serif;
 	font-size: 28px;
 	line-height: 34px;
-	letter-spacing: -1px;
 }
 h1 > a:hover {
 	border: none;
 }
-h1 span {
+h1 > span {
 	display: block;
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: Lato, serif;
 	font-size: 14px;
 	font-style: oblique;
 	line-height: 18px;
@@ -157,7 +169,7 @@ h1 span {
 		font-size: 36px;
 		line-height: 44px;
 	}
-	h1 span {
+	h1 > span {
 		font-size: 16px;
 		line-height: 21px;
 	}
@@ -167,7 +179,7 @@ h1 span {
 		font-size: 48px;
 		line-height: 58px;
 	}
-	h1 span {
+	h1 > span {
 		font-size: 18px;
 		line-height: 24px;
 	}
@@ -177,7 +189,7 @@ h1 .dash {
 }
 h2, h3, h4, h5, .h {
 	color: #333;
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: Lato, serif;
 	font-style: oblique;
 	margin: 1.4em 0 1em;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, .25);
@@ -276,7 +288,7 @@ del {
 dt {
 	border-bottom: 2px dotted rgba(0, 0, 0, .125);
 	color: #333;
-	font: oblique 16px/24px Georgia, "Times New Roman", serif;
+	font: oblique 16px/24px Lato, serif;
 	margin-bottom: .1em;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, .25);
 }
@@ -359,11 +371,40 @@ sup {
 	margin-top: 5em;
 }
 
+.appname {
+	font-family: Lato, sans-serif;
+}
+.appname > span {
+	font-weight: 700;
+}
+
+#site-navigation {
+	font-size: 11px;
+	overflow: hidden;
+	position: absolute;
+	top: 10px;
+	width: 100%;
+}
+#site-navigation li {
+	display: inline-block;
+	text-transform: uppercase;
+}
+#site-navigation li a {
+	display: inline-block;
+	height: 48px;
+	line-height: 48px;
+	padding: 0 12px;
+}
+#site-navigation li a:focus,
+#site-navigation li a:hover {
+	background: #6C0;
+	color: #fff;
+}
 
 /* Header */
 
 #header {
-	padding: 60px 0 0;
+	padding: 70px 0 0;
 	width: 100%;
 }
 
@@ -590,7 +631,7 @@ sup {
 }
 
 #friendlybox h2 {
-	font-family: Arial, sans-serif;
+	font-family: Lato, sans-serif;
 	font-size: 24px;
 	font-style: normal;
 	line-height: 24px;
@@ -997,7 +1038,7 @@ div.info,
 #install-windows-driver h4,
 #install-windows-driver h5 {
 	display: inline-block;
-	font-family: Arial, sans-serif;
+	font-family: Lato, sans-serif;
 	font-size: 14px;
 	font-style: normal;
 	font-weight: normal;
@@ -1079,7 +1120,7 @@ div.info,
 #install-src dt,
 #non-ui-functionality dt,
 #scripting dt {
-	font: normal 14px/22px Arial, sans-serif;
+	font: normal 14px/22px Lato, sans-serif;
 	font-style: normal;
 	text-shadow: 1px 1px 1px rgba(0, 0, 0, .25);
 }
@@ -1098,7 +1139,7 @@ div.info,
 
 #issues dt {
 	border: none;
-	font: 14px/22px Arial, sans-serif;
+	font: 14px/22px Lato, sans-serif;
 	margin: 0;
 	padding: .3em .5em;
 }
@@ -1158,7 +1199,7 @@ div.info,
 
 
 #content img {
-	vertical-align: middle;
+	vertical-align: text-bottom;
 }
 
 
@@ -1250,7 +1291,7 @@ div.info,
 	margin-bottom: .5em;
 }
 #changelog h3 {
-	font: normal 24px/24px Arial, sans-serif;
+	font: normal 24px/24px Lato, sans-serif;
 	margin-top: 1em;
 }
 #definitions dl {
@@ -1275,7 +1316,7 @@ div.info,
 #definitions dt {
 	border-bottom: none;
 	color: #666;
-	font: normal 14px/22px Arial, sans-serif;
+	font: normal 14px/22px Lato, sans-serif;
 	margin: 0;
 }
 #changelog dt {
@@ -1393,7 +1434,7 @@ div.info,
 
 #info:before {
 	content: 'i ';
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: Lato, serif;
 	font-size: 46px;
 }
 
@@ -1433,7 +1474,7 @@ div.info,
 
 	color: #fff;
 	display: block;
-	font-family: Georgia, "Times New Roman", serif;
+	font-family: Lato, serif;
 	left: 10px;
 	padding: 0 1em;
 	position: absolute;

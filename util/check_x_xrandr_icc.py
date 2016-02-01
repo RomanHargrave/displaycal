@@ -5,9 +5,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dispcalGUI import ICCProfile as ICCP, xrandr
-from dispcalGUI.safe_print import safe_print
-from dispcalGUI.RealDisplaySizeMM import RealDisplaySizeMM as RDSMM
+from DisplayCAL import ICCProfile as ICCP, xrandr
+from DisplayCAL.safe_print import safe_print
+from DisplayCAL.RealDisplaySizeMM import RealDisplaySizeMM as RDSMM
 
 for i in xrange(5):
 	# Show ICC info for first five screens / outputs
