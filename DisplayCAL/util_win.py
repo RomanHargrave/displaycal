@@ -230,6 +230,32 @@ def get_process_filename(pid):
 	return filename
 
 
+def get_file_info(filename):
+	""" Get exe/dll file information """
+	info = {"FileInfo": None, "StringFileInfo": {}, "FileVersion": None}
+
+	finfo = win32api.GetFileVersionInfo(filename, "\\")
+	info["FileInfo"] = finfo
+	info["FileVersion"] = "%i.%i.%i.%i" % (finfo["FileVersionMS"] / 65536,
+										   finfo["FileVersionMS"] % 65536,
+										   finfo["FileVersionLS"] / 65536,
+										   finfo["FileVersionLS"] % 65536)
+	for lcid, codepage in win32api.GetFileVersionInfo(filename,
+													  "\\VarFileInfo\\Translation"):
+		info["StringFileInfo"][lcid, codepage] = {}
+		for name in ["Comments", "CompanyName", "FileDescription",
+					 "FileVersion", "InternalName", "LegalCopyright",
+					 "LegalTrademarks", "OriginalFilename", "PrivateBuild",
+					 "ProductName", "ProductVersion", "SpecialBuild"]:
+			value = win32api.GetFileVersionInfo(filename,
+												u"\\StringFileInfo\\%04X%04X\\%s" %
+												(lcid, codepage, name))
+			if value is not None:
+				info["StringFileInfo"][lcid, codepage][name] = value
+
+	return info
+
+
 def get_pids():
 	""" Get PIDs of all running processes """
 	pids_count = 1024

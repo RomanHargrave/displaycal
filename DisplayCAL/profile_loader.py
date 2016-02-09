@@ -39,7 +39,7 @@ class ProfileLoader(object):
 										 config.getcfg("profile_loader.known_window_classes").split(";"))
 		self._madvr_instances = []
 		self._timestamp = time.time()
-		self.__other_component = None
+		self.__other_component = None, None
 		self.__other_isrunning = False
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
@@ -731,7 +731,7 @@ class ProfileLoader(object):
 			if (basename.lower() != "madhcctrl.exe" and
 				filename.lower() != exe.lower()):
 				self.__other_isrunning = True
-				self.__other_component = os.path.splitext(basename)[0]
+				self.__other_component = filename, cls
 
 	def _is_known_window_class(self, cls):
 		for partial in self._known_window_classes:
@@ -790,15 +790,32 @@ class ProfileLoader(object):
 						basename = os.path.basename(filename)
 						if basename.lower() in self._known_apps:
 							self.__other_isrunning = True
-							self.__other_component = os.path.splitext(basename)[0]
+							self.__other_component = filename, None
 							break
 			if other_isrunning != self.__other_isrunning:
 				import localization as lang
+				from util_win import get_file_info
 				if other_isrunning:
 					lstr = "app.detection_lost.calibration_loading_enabled"
 				else:
 					lstr = "app.detected.calibration_loading_disabled"
-				msg = lang.getstr(lstr, self.__other_component)
+				component = []
+				if self.__other_component[1] == "madHcNetQueueWindow":
+					component.append("madVR")
+					template = "(%s)"
+				else:
+					template = "%s"
+				product_name = os.path.basename(self.__other_component[0])
+				try:
+					info = get_file_info(self.__other_component[0])["StringFileInfo"].values()
+				except:
+					info = None
+				if info:
+					product_name = info[0].get("ProductName",
+											   info[0].get("FileDescription",
+														   product_name))
+				component.append(template % product_name)
+				msg = lang.getstr(lstr, " ".join(component))
 				safe_print(msg)
 				self.notify([], [msg], not other_isrunning)
 		return self.__other_isrunning
