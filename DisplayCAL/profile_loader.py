@@ -215,7 +215,16 @@ class ProfileLoader(object):
 							text = ""
 						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
-					self.ShowBalloon(self.pl.get_title(), text, 100)
+					if self.IsIconInstalled():
+						# In theory, checking if the icon is set shouldn't be
+						# needed, because we set the icon in the constructor.
+						# In practice, a few people have reported C++ assertion
+						# failures related to m_iconAdded on launch, which
+						# would indicate a possible wxPython/wxWidgets bug
+						self.ShowBalloon(self.pl.get_title(), text, 100)
+					else:
+						safe_print("Warning - couldn't show balloon because "
+								   "icon is not installed")
 
 			self.taskbar_icon = TaskBarIcon(self)
 
