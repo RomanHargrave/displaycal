@@ -715,6 +715,8 @@
 	"min": "Min",
 	"minimal": "Minimo",
 		"*model": "Model",
+		"*mswin.open_color_management_settings": "Open Windows color management settings...",
+		"*mswin.open_display_settings": "Open Windows display settings...",
 		"*named_color_profile": "Named color profile",
 		"*named_colors": "Named colors",
 	"native": "Nativo",

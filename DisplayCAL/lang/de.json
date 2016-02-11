@@ -715,6 +715,8 @@
 	"min": "Min",
 	"minimal": "Minimal",
 	"model": "Modell",
+	"mswin.open_color_management_settings": "Windows-Farbverwaltungseinstellungen öffnen...",
+	"mswin.open_display_settings": "Windows-Anzeigeeinstellungen öffnen...",
 	"named_color_profile": "Farbwerte-Profil",
 	"named_colors": "Farbwerte",
 	"native": "Nativ",

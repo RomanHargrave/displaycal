@@ -61,6 +61,7 @@ class ProfileLoader(object):
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
 			import ctypes
+			import subprocess as sp
 			import localization as lang
 			import madvr
 			from log import safe_print
@@ -157,8 +158,15 @@ class ProfileLoader(object):
 									  "profile_loader.fix_profile_associations",
 									  None),
 									 ("-", None, False, None, None),
-									 ("menuitem.quit", self.pl.exit, False,
-									  None, None)):
+									 ("mswin.open_color_management_settings",
+									  self.open_color_management_settings,
+									  wx.ITEM_NORMAL, None, None),
+									 ("mswin.open_display_settings",
+									  self.open_display_settings,
+									  wx.ITEM_NORMAL, None, None),
+									 ("-", None, False, None, None),
+									 ("menuitem.quit", self.pl.exit,
+									  wx.ITEM_NORMAL, None, None)):
 						if label == "-":
 							menu.AppendSeparator()
 						else:
@@ -182,6 +190,20 @@ class ProfileLoader(object):
 
 				def on_left_down(self, event):
 					self.show_balloon()
+
+				def open_color_management_settings(self, event):
+					try:
+						sp.call(["control", "/name", "Microsoft.ColorManagement"],
+								close_fds=True)
+					except:
+						wx.Bell()
+
+				def open_display_settings(self, event):
+					try:
+						sp.call(["control", "/name", "Microsoft.Display",
+								 "/page", "Settings"], close_fds=True)
+					except:
+						wx.Bell()
 
 				def set_auto_restore(self, event):
 					config.setcfg("profile.load_on_login",
