@@ -198,7 +198,8 @@ class ProfileLoader(object):
 						icon = self._inactive_icon
 					self.SetIcon(icon, self.pl.get_title())
 
-				def show_balloon(self, text=None, sticky=False):
+				def show_balloon(self, text=None, sticky=False,
+								 show_balloon=True):
 					if wx.VERSION < (3, ):
 						return
 					if sticky:
@@ -215,6 +216,8 @@ class ProfileLoader(object):
 							text = ""
 						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
+					if not show_balloon:
+						return
 					if self.IsIconInstalled():
 						# In theory, checking if the icon is set shouldn't be
 						# needed, because we set the icon in the constructor.
@@ -395,7 +398,7 @@ class ProfileLoader(object):
 
 		return errors
 
-	def notify(self, results, errors, sticky=False):
+	def notify(self, results, errors, sticky=False, show_balloon=False):
 		from wxwindows import wx
 		if results:
 			import localization as lang
@@ -407,10 +410,10 @@ class ProfileLoader(object):
 			results.insert(0, lang.getstr(lstr))
 		results.extend(errors)
 		wx.CallAfter(lambda: self and self.taskbar_icon.set_visual_state())
-		wx.CallAfter(lambda text, sticky: self and
-										  self.taskbar_icon.show_balloon(text,
-																		 sticky),
-					 "\n".join(results), sticky)
+		wx.CallAfter(lambda: self and
+							 self.taskbar_icon.show_balloon("\n".join(results),
+															sticky,
+															show_balloon))
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		errors = self.apply_profiles(event, index)
@@ -504,6 +507,7 @@ class ProfileLoader(object):
 		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
 		displaycal_running = os.path.isfile(displaycal_lockfile)
 		while self and self.monitoring:
+			result = None
 			results = []
 			errors = []
 			apply_profiles = self._should_apply_profiles()
@@ -671,8 +675,6 @@ class ProfileLoader(object):
 					else:
 						safe_print(lang.getstr("success"))
 						results.append(display)
-			self._manual_restore = False
-			first_run = False
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
 			localtime[3:6] = 23, 59, 59
@@ -681,7 +683,10 @@ class ProfileLoader(object):
 				self.reload_count = 0
 				self._timestamp = timestamp
 			if results or errors:
-				self.notify(results, errors)
+				self.notify(results, errors, show_balloon=not first_run and
+														  self.__other_component[1] != "madHcNetQueueWindow")
+				if result:
+					self.__other_component = None, None
 			else:
 				if displaycal_running != self._displaycal_running:
 					if displaycal_running:
@@ -692,14 +697,17 @@ class ProfileLoader(object):
 										  appname)
 					displaycal_running = self._displaycal_running
 					safe_print(msg)
-					self.notify([], [msg], displaycal_running)
+					self.notify([], [msg], displaycal_running,
+								show_balloon=False)
+			first_run = False
 			# Wait three seconds
 			timeout = 0
 			while self and self.monitoring:
-				time.sleep(.1)
-				timeout += .1
 				if timeout > 2.9 or self._manual_restore:
 					break
+				time.sleep(.1)
+				timeout += .1
+			self._manual_restore = False
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
 		safe_print("Display configuration monitoring thread finished")
@@ -799,25 +807,22 @@ class ProfileLoader(object):
 					lstr = "app.detection_lost.calibration_loading_enabled"
 				else:
 					lstr = "app.detected.calibration_loading_disabled"
-				component = []
 				if self.__other_component[1] == "madHcNetQueueWindow":
-					component.append("madVR")
-					template = "(%s)"
+					component = "madVR"
 				else:
-					template = "%s"
-				product_name = os.path.basename(self.__other_component[0])
-				try:
-					info = get_file_info(self.__other_component[0])["StringFileInfo"].values()
-				except:
-					info = None
-				if info:
-					product_name = info[0].get("ProductName",
-											   info[0].get("FileDescription",
-														   product_name))
-				component.append(template % product_name)
-				msg = lang.getstr(lstr, " ".join(component))
+					component = os.path.basename(self.__other_component[0])
+					try:
+						info = get_file_info(self.__other_component[0])["StringFileInfo"].values()
+					except:
+						info = None
+					if info:
+						component = info[0].get("ProductName",
+												info[0].get("FileDescription",
+															component))
+				msg = lang.getstr(lstr, component)
 				safe_print(msg)
-				self.notify([], [msg], not other_isrunning)
+				self.notify([], [msg], not other_isrunning,
+							show_balloon=component != "madVR")
 		return self.__other_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
@@ -825,23 +830,31 @@ class ProfileLoader(object):
 		with self.lock:
 			import localization as lang
 			from log import safe_print
+			from util_win import get_process_filename
 			if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
 				args = (param, connection, ip, pid, module, component, instance)
+				try:
+					filename = get_process_filename(pid)
+				except:
+					filename = lang.getstr("unknown")
 				if is_new_instance:
 					apply_profiles = self._should_apply_profiles()
 					self._madvr_instances.append(args)
+					self.__other_component = filename, "madHcNetQueueWindow"
+					safe_print("madVR instance connected:", "PID", pid, filename)
 					if apply_profiles:
 						msg = lang.getstr("app.detected.calibration_loading_disabled",
 										  component)
 						safe_print(msg)
-						self.notify([], [msg], True)
+						self.notify([], [msg], True, show_balloon=False)
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
+					safe_print("madVR instance disconnected:", "PID", pid, filename)
 					if self._should_apply_profiles():
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  component)
 						safe_print(msg)
-						self.notify([], [msg])
+						self.notify([], [msg], show_balloon=False)
 
 	def _reset_display_profile_associations(self):
 		import ICCProfile as ICCP
