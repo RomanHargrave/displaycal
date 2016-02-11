@@ -2,8 +2,8 @@
 Version=1.0
 Encoding=UTF-8
 Type=Application
-Name=Calibration Loader
-Name[de]=Kalibrierungs-Lader
+Name=Profile Loader
+Name[de]=Profil-Lader
 GenericName=Calibration and ICC Profile Loader
 GenericName[de]=Kalibrierungs- und ICC-Profil-Lader
 Icon=displaycal-apply-profiles
