@@ -469,6 +469,7 @@ class ProfileLoader(object):
 			dlg.ShowModalThenDestroy()
 
 	def exit(self, event=None):
+		#print 'exit() called'
 		from util_win import calibration_management_isenabled
 		from wxwindows import ConfirmDialog, wx
 		import config
@@ -491,9 +492,10 @@ class ProfileLoader(object):
 		config.writecfg(module="apply-profiles",
 						options=("argyll.dir", "profile.load_on_login",
 								 "profile_loader"))
+		self.taskbar_icon and self.taskbar_icon.RemoveIcon()
 		self.taskbar_icon and self.taskbar_icon.Destroy()
 		self.monitoring = False
-		event.Skip()
+		wx.GetApp().ExitMainLoop()
 
 	def get_title(self):
 		import localization as lang
@@ -504,6 +506,39 @@ class ProfileLoader(object):
 		if "--force" in sys.argv[1:]:
 			title += " (%s)" % lang.getstr("forced")
 		return title
+
+	def _check_keep_running(self, numwindows=0):
+		import win32gui
+		windows = []
+		#print '-' * 79
+		try:
+			win32gui.EnumWindows(self._enumerate_own_windows_callback, windows)
+		except pywintypes.error, exception:
+			return numwindows
+		if len(windows) < numwindows:
+			# One of our windows has been closed by an external event
+			# (i.e. WM_CLOSE). This is a hint that something external is trying
+			# to get us to exit. Comply by closing our main top-level window to
+			# initiate clean shutdown.
+			from wxwindows import wx
+			wx.CallAfter(lambda: self.frame and self.frame.Close())
+		return len(windows)
+
+	def _enumerate_own_windows_callback(self, hwnd, windowlist):
+		import pywintypes
+		import win32gui
+		import win32process
+		from wxwindows import wx
+		try:
+			thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
+		except pywintypes.error:
+			return
+		if pid == os.getpid():
+			cls = win32gui.GetClassName(hwnd)
+			#print cls
+			if (cls in ("madHcNetQueueWindow", "wxWindowNR") or
+				cls.startswith("madToolsMsgHandlerWindow")):
+				windowlist.append(hwnd)
 
 	def _check_display_conf(self):
 		import ctypes
@@ -528,6 +563,7 @@ class ProfileLoader(object):
 		self.profiles = {}
 		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
 		displaycal_running = os.path.isfile(displaycal_lockfile)
+		numwindows = 0
 		while self and self.monitoring:
 			result = None
 			results = []
@@ -724,9 +760,10 @@ class ProfileLoader(object):
 			first_run = False
 			# Wait three seconds
 			timeout = 0
-			while self and self.monitoring:
-				if timeout > 2.9 or self._manual_restore:
-					break
+			while (self and self.monitoring and timeout < 3 and
+				   not self._manual_restore):
+				if round(timeout, 1) % 1 == 0:
+					numwindows = self._check_keep_running(numwindows)
 				time.sleep(.1)
 				timeout += .1
 			self._manual_restore = False
