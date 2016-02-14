@@ -318,7 +318,7 @@ def _exit(lockfilename, port):
 			except EnvironmentError, exception:
 				safe_print("Warning - could not remove lockfile %s: %r" %
 						   (lockfilename, exception))
-	safe_print("Exiting")
+	safe_print("Exiting", pyname)
 	logging.shutdown()
 
 
