@@ -95,8 +95,6 @@ class ProfileLoader(object):
 						return "ok"
 					return "invalid"
 
-			self.frame = PLFrame(self)
-
 			class TaskBarIcon(wx.TaskBarIcon):
 
 				def __init__(self, pl):
@@ -283,6 +281,7 @@ class ProfileLoader(object):
 				self.madvr.listen()
 				self.madvr.announce()
 
+			self.frame = PLFrame(self)
 			self.frame.listen()
 
 			self._pid = os.getpid()
@@ -292,6 +291,7 @@ class ProfileLoader(object):
 			self._check_display_conf_thread.start()
 
 			if app:
+				app.TopWindow = self.frame
 				app.MainLoop()
 
 	def apply_profiles(self, event=None, index=None):
