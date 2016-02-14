@@ -102,6 +102,7 @@ class ProfileLoader(object):
 					super(TaskBarIcon, self).__init__()
 					self.pl = pl
 					self.balloon_text = None
+					self.flags = 0
 					bitmap = config.geticon(16, appname + "-apply-profiles")
 					icon = wx.EmptyIcon()
 					icon.CopyFromBitmap(bitmap)
@@ -221,15 +222,18 @@ class ProfileLoader(object):
 					self.SetIcon(icon, self.pl.get_title())
 
 				def show_balloon(self, text=None, sticky=False,
-								 show_balloon=True):
+								 show_balloon=True, flags=wx.ICON_INFORMATION):
 					if wx.VERSION < (3, ):
 						return
 					if sticky:
 						self.balloon_text = text
+						self.flags = flags
 					elif text:
 						self.balloon_text = None
+						self.flags = 0
 					else:
 						text = self.balloon_text
+						flags = self.flags or flags
 					if not text:
 						if (not "--force" in sys.argv[1:] and
 							calibration_management_isenabled()):
@@ -247,7 +251,8 @@ class ProfileLoader(object):
 						# In practice, a few people have reported C++ assertion
 						# failures related to m_iconAdded, which
 						# would indicate a possible wxPython/wxWidgets bug
-						self.ShowBalloon(self.pl.get_title(), text, 100)
+						self.ShowBalloon(self.pl.get_title(), text,
+										 flags=flags)
 					else:
 						safe_print("Warning - couldn't show balloon because "
 								   "icon is not installed")
@@ -436,8 +441,14 @@ class ProfileLoader(object):
 												   show_balloon))
 
 	def _notify(self, results, errors, sticky=False, show_balloon=False):
+		from wxwindows import wx
 		self.taskbar_icon.set_visual_state()
-		self.taskbar_icon.show_balloon("\n".join(results), sticky, show_balloon)
+		if errors:
+			flags = wx.ICON_ERROR
+		else:
+			flags = wx.ICON_INFORMATION
+		self.taskbar_icon.show_balloon("\n".join(results), sticky, show_balloon,
+									   flags)
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		errors = self.apply_profiles(event, index)
