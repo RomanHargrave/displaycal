@@ -429,21 +429,13 @@ class ProfileLoader(object):
 
 	def notify(self, results, errors, sticky=False, show_balloon=False):
 		from wxwindows import wx
-		if results:
-			import localization as lang
-			self.reload_count += 1
-			if self._reset_gamma_ramps:
-				lstr = "calibration.reset_success"
-			else:
-				lstr = "calibration.load_success"
-			results.insert(0, lang.getstr(lstr))
-		results.extend(errors)
 		wx.CallAfter(lambda: self and self._notify(results, errors, sticky,
 												   show_balloon))
 
 	def _notify(self, results, errors, sticky=False, show_balloon=False):
 		from wxwindows import wx
 		self.taskbar_icon.set_visual_state()
+		results.extend(errors)
 		if errors:
 			flags = wx.ICON_ERROR
 		else:
@@ -755,6 +747,13 @@ class ProfileLoader(object):
 				self.reload_count = 0
 				self._timestamp = timestamp
 			if results or errors:
+				if results:
+					self.reload_count += 1
+					if self._reset_gamma_ramps:
+						lstr = "calibration.reset_success"
+					else:
+						lstr = "calibration.load_success"
+					results.insert(0, lang.getstr(lstr))
 				self.notify(results, errors, show_balloon=not first_run and
 														  self.__other_component[1] != "madHcNetQueueWindow")
 				if result:
@@ -769,7 +768,7 @@ class ProfileLoader(object):
 										  appname)
 					displaycal_running = self._displaycal_running
 					safe_print(msg)
-					self.notify([], [msg], displaycal_running,
+					self.notify([msg], [], displaycal_running,
 								show_balloon=False)
 			first_run = False
 			# Wait three seconds
@@ -894,7 +893,7 @@ class ProfileLoader(object):
 															component))
 				msg = lang.getstr(lstr, component)
 				safe_print(msg)
-				self.notify([], [msg], not other_isrunning,
+				self.notify([msg], [], not other_isrunning,
 							show_balloon=component != "madVR")
 		return self.__other_isrunning
 
@@ -919,7 +918,7 @@ class ProfileLoader(object):
 						msg = lang.getstr("app.detected.calibration_loading_disabled",
 										  component)
 						safe_print(msg)
-						self.notify([], [msg], True, show_balloon=False)
+						self.notify([msg], [], True, show_balloon=False)
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
 					safe_print("madVR instance disconnected:", "PID", pid, filename)
@@ -927,7 +926,7 @@ class ProfileLoader(object):
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  component)
 						safe_print(msg)
-						self.notify([], [msg], show_balloon=False)
+						self.notify([msg], [], show_balloon=False)
 
 	def _reset_display_profile_associations(self):
 		import ICCProfile as ICCP
