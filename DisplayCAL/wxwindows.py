@@ -535,6 +535,7 @@ class BaseApp(wx.App):
 	def OnInit(self):
 		self.AppName = pyname
 		set_default_app_dpi()
+		self.Bind(wx.EVT_QUERY_END_SESSION, self.query_end_session)
 		return True
 
 	def MacOpenFiles(self, paths):
@@ -605,6 +606,13 @@ class BaseApp(wx.App):
 	@staticmethod
 	def register_exitfunc(func, *args, **kwargs):
 		BaseApp._exithandlers.append((func, args, kwargs))
+
+	def query_end_session(self, event):
+		safe_print("Received query to end session")
+		if self.TopWindow and self.IsMainLoopRunning():
+			safe_print("Trying to close main application window")
+			self.TopWindow.Close()
+			self.TopWindow.listening = False
 
 
 active_window = None
