@@ -242,9 +242,10 @@ class ProfileLoader(object):
 						return
 					if self.IsIconInstalled():
 						# In theory, checking if the icon is set shouldn't be
-						# needed, because we set the icon in the constructor.
+						# needed, because we set the icon in the constructor
+						# and before each call to show_balloon().
 						# In practice, a few people have reported C++ assertion
-						# failures related to m_iconAdded on launch, which
+						# failures related to m_iconAdded, which
 						# would indicate a possible wxPython/wxWidgets bug
 						self.ShowBalloon(self.pl.get_title(), text, 100)
 					else:
@@ -431,11 +432,12 @@ class ProfileLoader(object):
 				lstr = "calibration.load_success"
 			results.insert(0, lang.getstr(lstr))
 		results.extend(errors)
-		wx.CallAfter(lambda: self and self.taskbar_icon.set_visual_state())
-		wx.CallAfter(lambda: self and
-							 self.taskbar_icon.show_balloon("\n".join(results),
-															sticky,
-															show_balloon))
+		wx.CallAfter(lambda: self and self._notify(results, errors, sticky,
+												   show_balloon))
+
+	def _notify(self, results, errors, sticky=False, show_balloon=False):
+		self.taskbar_icon.set_visual_state()
+		self.taskbar_icon.show_balloon("\n".join(results), sticky, show_balloon)
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		errors = self.apply_profiles(event, index)
