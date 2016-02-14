@@ -6,6 +6,7 @@ Set ICC profiles and load calibration curves for all configured display devices
 
 """
 
+import errno
 import os
 import sys
 import threading
@@ -938,6 +939,8 @@ class ProfileLoader(object):
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)
 				except Exception, exception:
+					if exception.args[0] == errno.ENOENT:
+						exception.filename = devicekey
 					safe_print(exception)
 					continue
 				if not current_profile:
@@ -962,10 +965,13 @@ class ProfileLoader(object):
 					profile = ICCP.get_display_profile(path_only=True,
 													   devicekey=device.DeviceKey)
 				except Exception, exception:
+					if exception.args[0] == errno.ENOENT:
+						exception.filename = device.DeviceKey
 					safe_print(exception)
-					profile = None
-				if profile:
-					profile = os.path.basename(profile)
+					continue
+				if not profile:
+					continue
+				profile = os.path.basename(profile)
 				if device.DeviceID == active_device.DeviceID:
 					active_moninfo = moninfo
 				else:
@@ -981,6 +987,8 @@ class ProfileLoader(object):
 				correct_profile = ICCP.get_display_profile(path_only=True,
 														   devicekey=device.DeviceKey)
 			except Exception, exception:
+				if exception.args[0] == errno.ENOENT:
+					exception.filename = device.DeviceKey
 				safe_print(exception)
 				continue
 			if correct_profile:
