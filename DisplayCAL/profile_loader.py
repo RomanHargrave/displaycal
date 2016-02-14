@@ -285,6 +285,8 @@ class ProfileLoader(object):
 
 			self.frame.listen()
 
+			self._pid = os.getpid()
+
 			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf,
 															   name="DisplayConfigurationMonitoring")
 			self._check_display_conf_thread.start()
@@ -539,7 +541,7 @@ class ProfileLoader(object):
 			thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
 		except pywintypes.error:
 			return
-		if pid == os.getpid():
+		if pid == self._pid:
 			cls = win32gui.GetClassName(hwnd)
 			#print cls
 			if (cls in ("madHcNetQueueWindow", "wxWindowNR") or
@@ -775,7 +777,7 @@ class ProfileLoader(object):
 			timeout = 0
 			while (self and self.monitoring and timeout < 3 and
 				   not self._manual_restore):
-				if round(timeout, 1) % 1 == 0:
+				if round(timeout * 100) % 25 == 0:
 					numwindows = self._check_keep_running(numwindows)
 				time.sleep(.1)
 				timeout += .1
