@@ -530,7 +530,6 @@ class BaseApp(wx.App):
 	""" Application base class implementing common functionality. """
 
 	_exithandlers = []
-	_mainloopexit = False
 
 	def OnInit(self):
 		self.AppName = pyname
@@ -557,19 +556,6 @@ class BaseApp(wx.App):
 		if paths:
 			self.MacOpenFiles(paths)
 			return paths
-
-	def ExitMainLoop(self):
-		BaseApp._mainloopexit = True
-		try:
-			self.TopWindow.listening = False
-		except:
-			pass
-		BaseApp._run_exitfuncs()
-		return wx.App.ExitMainLoop(self)
-
-	@staticmethod
-	def IsMainLoopRunning():
-		return not BaseApp._mainloopexit and wx.App.IsMainLoopRunning()
 
 	def OnExit(self):
 		BaseApp._run_exitfuncs()
@@ -612,7 +598,6 @@ class BaseApp(wx.App):
 		if self.TopWindow and self.IsMainLoopRunning():
 			safe_print("Trying to close main application window")
 			self.TopWindow.Close()
-			self.TopWindow.listening = False
 
 
 active_window = None
@@ -633,21 +618,13 @@ class BaseFrame(wx.Frame):
 			if hasattr(child, "Name") and child.Name == name:
 				return child
 
-	def OnClose(self, event):
-		self.listening = False
-		if wx.GetApp().TopWindow is self and wx.GetApp().GetExitOnFrameDelete():
-			BaseApp._mainloopexit = True
-			BaseApp._run_exitfuncs()
-		event.Skip()
-
-	def OnDestroy(self, event):
+	def __OnClose(self, event):
 		self.listening = False
 		event.Skip()
 
 	def init(self):
 		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
-		self.Bind(wx.EVT_CLOSE, self.OnClose)
-		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+		self.Bind(wx.EVT_CLOSE, self.__OnClose)
 
 	def init_menubar(self):
 		self.MenuBar = wx.MenuBar()

@@ -501,7 +501,7 @@ class ProfileLoader(object):
 		self.taskbar_icon and self.taskbar_icon.RemoveIcon()
 		self.taskbar_icon and self.taskbar_icon.Destroy()
 		self.monitoring = False
-		wx.GetApp().ExitMainLoop()
+		event.Skip()
 
 	def get_title(self):
 		import localization as lang
