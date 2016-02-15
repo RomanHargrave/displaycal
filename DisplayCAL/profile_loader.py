@@ -497,15 +497,14 @@ class ProfileLoader(object):
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				return
-			self.frame.Close()
-			return
 		config.writecfg(module="apply-profiles",
 						options=("argyll.dir", "profile.load_on_login",
 								 "profile_loader"))
 		self.taskbar_icon and self.taskbar_icon.RemoveIcon()
-		self.taskbar_icon and self.taskbar_icon.Destroy()
 		self.monitoring = False
-		event.Skip()
+		if self.frame:
+			self.frame.listening = False
+		wx.GetApp().ExitMainLoop()
 
 	def get_title(self):
 		import localization as lang
