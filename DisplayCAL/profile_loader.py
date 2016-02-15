@@ -30,6 +30,7 @@ class ProfileLoader(object):
 		self.monitoring = True
 		self.monitors = []
 		self.devices2profiles = {}
+		self.use_madhcnet = config.getcfg("profile_loader.use_madhcnet")
 		self._skip = "--skip" in sys.argv[1:]
 		self._manual_restore = config.getcfg("profile.load_on_login")
 		self._reset_gamma_ramps = config.getcfg("profile_loader.reset_gamma_ramps")
@@ -267,19 +268,20 @@ class ProfileLoader(object):
 				safe_print(exception)
 				self.taskbar_icon.show_balloon(safe_unicode(exception))
 
-			try:
-				self.madvr = madvr.MadTPG()
-			except Exception, exception:
-				safe_print(exception)
-				if safe_unicode(exception) != lang.getstr("madvr.not_found"):
-					self.taskbar_icon.show_balloon(safe_unicode(exception))
-			else:
-				self.madvr.add_connection_callback(self._madvr_connection_callback,
-												   None, "madVR")
-				self.madvr.add_connection_callback(self._madvr_connection_callback,
-												   None, "madTPG")
-				self.madvr.listen()
-				self.madvr.announce()
+			if self.use_madhcnet:
+				try:
+					self.madvr = madvr.MadTPG()
+				except Exception, exception:
+					safe_print(exception)
+					if safe_unicode(exception) != lang.getstr("madvr.not_found"):
+						self.taskbar_icon.show_balloon(safe_unicode(exception))
+				else:
+					self.madvr.add_connection_callback(self._madvr_connection_callback,
+													   None, "madVR")
+					self.madvr.add_connection_callback(self._madvr_connection_callback,
+													   None, "madTPG")
+					self.madvr.listen()
+					self.madvr.announce()
 
 			self.frame = PLFrame(self)
 			self.frame.listen()
@@ -516,19 +518,23 @@ class ProfileLoader(object):
 		return title
 
 	def _check_keep_running(self, numwindows=0):
-		import win32gui
-		windows = []
-		#print '-' * 79
-		try:
-			win32gui.EnumWindows(self._enumerate_own_windows_callback, windows)
-		except pywintypes.error, exception:
-			return numwindows
+		from wxwindows import wx
+		if self.use_madhcnet:
+			import win32gui
+			windows = []
+			#print '-' * 79
+			try:
+				win32gui.EnumWindows(self._enumerate_own_windows_callback, windows)
+			except pywintypes.error, exception:
+				return numwindows
+		else:
+			windows = filter(lambda window: not isinstance(window, wx.Dialog),
+							 wx.GetTopLevelWindows())
 		if len(windows) < numwindows:
 			# One of our windows has been closed by an external event
 			# (i.e. WM_CLOSE). This is a hint that something external is trying
 			# to get us to exit. Comply by closing our main top-level window to
 			# initiate clean shutdown.
-			from wxwindows import wx
 			wx.CallAfter(lambda: self.frame and self.frame.Close())
 		return len(windows)
 

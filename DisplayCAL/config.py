@@ -946,6 +946,7 @@ defaults = {
 										   "flux.exe"]),
 	"profile_loader.known_window_classes": ";".join(["CalClient.exe"]),
 	"profile_loader.reset_gamma_ramps": 0,
+	"profile_loader.use_madhcnet": 0,
 	"profile_loader.verify_calibration": 0,
 	"recent_cals": "",
 	"report.pack_js": 1,
