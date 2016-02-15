@@ -8,6 +8,7 @@ import shutil
 import subprocess as sp
 import sys
 import tempfile
+import time
 from os.path import join
 
 if sys.platform == "win32":
@@ -29,10 +30,31 @@ os._listdir = os.listdir
 
 if sys.platform == "win32":
 	# Add support for long paths (> 260 chars)
+	# and retry ERROR_SHARING_VIOLATION
 	import __builtin__
+	import winerror
 	import win32api
 
 	__builtin__._open = __builtin__.open
+
+
+	def retry_sharing_violation_factory(fn, delay=0.25, maxretries=20):
+
+		def retry_sharing_violation(*args, **kwargs):
+			retries = 0
+			while True:
+				try:
+					return fn(*args, **kwargs)
+				except WindowsError, exception:
+					if exception.winerror == winerror.ERROR_SHARING_VIOLATION:
+						if retries < maxretries:
+							retries += 1
+							time.sleep(delay)
+							continue
+					raise
+
+		return retry_sharing_violation
+
 
 	def open(path, *args, **kwargs):
 		return __builtin__._open(make_win32_compatible_long_path(path), *args,
@@ -106,7 +128,7 @@ if sys.platform == "win32":
 	def remove(path):
 		return os._remove(make_win32_compatible_long_path(path))
 
-	os.remove = remove
+	os.remove = retry_sharing_violation_factory(remove)
 
 
 	os._rename = os.rename
@@ -116,7 +138,7 @@ if sys.platform == "win32":
 					(src, dst)]
 		return os._rename(src, dst)
 
-	os.rename = rename
+	os.rename = retry_sharing_violation_factory(rename)
 
 
 	os._stat = os.stat
@@ -125,6 +147,14 @@ if sys.platform == "win32":
 		return os._stat(make_win32_compatible_long_path(path))
 
 	os.stat = stat
+
+
+	os._unlink = os.unlink
+
+	def unlink(path):
+		return os._unlink(make_win32_compatible_long_path(path))
+
+	os.unlink = retry_sharing_violation_factory(unlink)
 
 
 	win32api._GetShortPathName = win32api.GetShortPathName
