@@ -691,7 +691,8 @@ class ProfileLoader(object):
 						vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
 						vcgt_values = vcgt.get_values()[:3]
 					values = ([], [], [])
-					if not self._manual_restore:
+					if (not self._manual_restore and
+						getcfg("profile_loader.check_gamma_ramps")):
 						# Get video card gamma ramp
 						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 						ramp = ((ctypes.c_ushort * 256) * 3)()
@@ -716,7 +717,8 @@ class ProfileLoader(object):
 					for j in xrange(len(vcgt_values[0])):
 						for k in xrange(3):
 							vcgt_ramp[k][j] = vcgt_values[k][j][1]
-					if not self._manual_restore:
+					if (not self._manual_restore and
+						getcfg("profile_loader.check_gamma_ramps")):
 						safe_print(lang.getstr("vcgt.mismatch", display))
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
@@ -724,12 +726,14 @@ class ProfileLoader(object):
 					if not apply_profiles:
 						break
 					# Now actually reload or reset calibration
-					if self._reset_gamma_ramps:
-						safe_print(lang.getstr("calibration.resetting"))
-						safe_print(display)
-					else:
-						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display, "->", os.path.basename(profile.fileName))
+					if (self._manual_restore or
+						getcfg("profile_loader.check_gamma_ramps")):
+						if self._reset_gamma_ramps:
+							safe_print(lang.getstr("calibration.resetting"))
+							safe_print(display)
+						else:
+							safe_print(lang.getstr("calibration.loading_from_display_profile"))
+							safe_print(display, "->", os.path.basename(profile.fileName))
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 					try:
 						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
@@ -737,15 +741,17 @@ class ProfileLoader(object):
 						result = exception
 					finally:
 						win32gui.DeleteDC(hdc)
-					if isinstance(result, Exception) or not result:
-						if result:
-							safe_print(result)
-						safe_print(lang.getstr("failure"))
-						errstr = lang.getstr("calibration.load_error")
-						errors.append(": ".join([display, errstr]))
-					else:
-						safe_print(lang.getstr("success"))
-						results.append(display)
+					if (self._manual_restore or
+						getcfg("profile_loader.check_gamma_ramps")):
+						if isinstance(result, Exception) or not result:
+							if result:
+								safe_print(result)
+							safe_print(lang.getstr("failure"))
+							errstr = lang.getstr("calibration.load_error")
+							errors.append(": ".join([display, errstr]))
+						else:
+							safe_print(lang.getstr("success"))
+							results.append(display)
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
 			localtime[3:6] = 23, 59, 59
