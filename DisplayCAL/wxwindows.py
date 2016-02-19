@@ -530,6 +530,7 @@ class BaseApp(wx.App):
 	""" Application base class implementing common functionality. """
 
 	_exithandlers = []
+	_query_end_session = False
 
 	def OnInit(self):
 		self.AppName = pyname
@@ -595,9 +596,12 @@ class BaseApp(wx.App):
 
 	def query_end_session(self, event):
 		safe_print("Received query to end session")
-		if self.TopWindow and self.IsMainLoopRunning():
+		if self.TopWindow and not self._query_end_session:
+			if event.CanVeto():
+				event.Veto()
 			safe_print("Trying to close main application window")
-			self.TopWindow.Close()
+			if self.TopWindow.Close():
+				self._query_end_session = True
 
 
 active_window = None
