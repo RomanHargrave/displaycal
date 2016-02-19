@@ -1019,12 +1019,14 @@ class ProfileLoader(object):
 		setcfg("profile_loader.reset_gamma_ramps", 0)
 		self._manual_restore = True
 		self._reset_gamma_ramps = False
+		self.taskbar_icon.set_visual_state()
 
 	def _set_reset_gamma_ramps(self, event):
 		from config import setcfg
 		setcfg("profile_loader.reset_gamma_ramps", 1)
 		self._manual_restore = True
 		self._reset_gamma_ramps = True
+		self.taskbar_icon.set_visual_state()
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True):
 		import config
