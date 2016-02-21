@@ -963,9 +963,8 @@ class ProfileLoader(object):
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)
 				except Exception, exception:
-					if exception.args[0] == errno.ENOENT:
-						exception.filename = devicekey
-					safe_print(exception)
+					if exception.args[0] != errno.ENOENT:
+						safe_print(exception)
 					continue
 				if not current_profile:
 					continue
@@ -989,20 +988,18 @@ class ProfileLoader(object):
 					profile = ICCP.get_display_profile(path_only=True,
 													   devicekey=device.DeviceKey)
 				except Exception, exception:
-					if exception.args[0] == errno.ENOENT:
-						exception.filename = device.DeviceKey
-					safe_print(exception)
-					continue
-				if not profile:
-					continue
-				profile = os.path.basename(profile)
+					if exception.args[0] != errno.ENOENT:
+						safe_print(exception)
+					profile = None
+				if profile:
+					profile = os.path.basename(profile)
 				if device.DeviceID == active_device.DeviceID:
 					active_moninfo = moninfo
 				else:
 					active_moninfo = None
 				display_edid = get_display_name_edid(device, active_moninfo)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
-														   profile)
+														   profile or "")
 			# Set the active profile
 			device = active_device
 			if not device:
@@ -1011,9 +1008,8 @@ class ProfileLoader(object):
 				correct_profile = ICCP.get_display_profile(path_only=True,
 														   devicekey=device.DeviceKey)
 			except Exception, exception:
-				if exception.args[0] == errno.ENOENT:
-					exception.filename = device.DeviceKey
-				safe_print(exception)
+				if exception.args[0] != errno.ENOENT:
+					safe_print(exception)
 				continue
 			if correct_profile:
 				correct_profile = os.path.basename(correct_profile)
