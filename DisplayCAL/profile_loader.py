@@ -29,6 +29,8 @@ class ProfileLoader(object):
 		self.lock = threading.Lock()
 		self.monitoring = True
 		self.monitors = []
+		self.profile_associations = {}
+		self.profiles = {}
 		self.devices2profiles = {}
 		self.use_madhcnet = config.getcfg("profile_loader.use_madhcnet")
 		self._skip = "--skip" in sys.argv[1:]
@@ -242,6 +244,18 @@ class ProfileLoader(object):
 							text = ""
 						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
+						for i, (display, edid,
+								moninfo) in enumerate(self.pl.monitors):
+							(profile,
+							 mtime) = self.pl.profile_associations.get(i,
+																	   (False,
+																		None))
+							if profile is False:
+								profile = "?"
+							if self.pl._reset_gamma_ramps:
+								profile = (lang.getstr("linear") +
+										   u" \u2192 " + profile)
+							text += u"\n%s \u2192 %s" % (display, profile)
 					if not show_balloon:
 						return
 					if self.IsIconInstalled():
@@ -572,8 +586,6 @@ class ProfileLoader(object):
 		current_display = None
 		current_timestamp = 0
 		first_run = True
-		self.profile_associations = {}
-		self.profiles = {}
 		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
 		displaycal_running = os.path.isfile(displaycal_lockfile)
 		numwindows = 0
