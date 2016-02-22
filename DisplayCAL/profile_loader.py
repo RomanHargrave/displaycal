@@ -763,7 +763,12 @@ class ProfileLoader(object):
 							errors.append(": ".join([display, errstr]))
 						else:
 							safe_print(lang.getstr("success"))
-							results.append(display)
+							text = display + u" \u2192 "
+							if self._reset_gamma_ramps:
+								text += lang.getstr("linear")
+							else:
+								text += os.path.basename(profile.fileName)
+							results.append(text)
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
 			localtime[3:6] = 23, 59, 59
@@ -796,6 +801,7 @@ class ProfileLoader(object):
 					self.notify([msg], [], displaycal_running,
 								show_balloon=False)
 			first_run = False
+			self._manual_restore = False
 			# Wait three seconds
 			timeout = 0
 			while (self and self.monitoring and timeout < 3 and
@@ -804,7 +810,6 @@ class ProfileLoader(object):
 					numwindows = self._check_keep_running(numwindows)
 				time.sleep(.1)
 				timeout += .1
-			self._manual_restore = False
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
 		safe_print("Display configuration monitoring thread finished")
