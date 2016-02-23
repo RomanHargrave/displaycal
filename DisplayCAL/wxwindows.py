@@ -5402,13 +5402,15 @@ class TaskBarNotification(wx.Frame):
 												wx.NO_BORDER |
 												wx.STAY_ON_TOP,
 						  name="TaskBarNotification")
-		if sys.getwindowsversion() >= (6, ):
-			self.SetDoubleBuffered(True)
 		self.SetTransparent(0)
 		border = wx.Panel(self)
+		if sys.getwindowsversion() >= (6, ):
+			border.SetDoubleBuffered(True)
 		border.BackgroundColour = "#484848"
 		border.Sizer = wx.BoxSizer(wx.HORIZONTAL)
 		panel = wx.Panel(border)
+		if sys.getwindowsversion() >= (6, ):
+			panel.SetDoubleBuffered(True)
 		border.Sizer.Add(panel, flag=wx.ALL, border=1)
 		panel.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
 		panel.BackgroundColour = "#1F1F1F"
