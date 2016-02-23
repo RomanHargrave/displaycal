@@ -114,8 +114,7 @@ class ProfileLoader(object):
 					image = bitmap.ConvertToImage().ConvertToGreyscale(.2126,
 																	   .7152,
 																	   .0722)
-					icon = wx.EmptyIcon()
-					icon.CopyFromBitmap(image.ConvertToBitmap())
+					icon = wx.IconFromBitmap(image.ConvertToBitmap())
 					self._inactive_icon = icon
 					self._active_icon_reset = config.get_bitmap_as_icon(16, appname + "-apply-profiles-reset")
 					self.set_visual_state(True)
@@ -192,6 +191,16 @@ class ProfileLoader(object):
 
 					return menu
 
+				def get_icon(self, enumerate_windows_and_processes=False):
+					if self.pl._should_apply_profiles(enumerate_windows_and_processes):
+						if self.pl._reset_gamma_ramps:
+							icon = self._active_icon_reset
+						else:
+							icon = self._active_icon
+					else:
+						icon = self._inactive_icon
+					return icon
+
 				def on_left_down(self, event):
 					self.show_notification(toggle=True)
 
@@ -215,14 +224,8 @@ class ProfileLoader(object):
 					self.set_visual_state()
 
 				def set_visual_state(self, enumerate_windows_and_processes=False):
-					if self.pl._should_apply_profiles(enumerate_windows_and_processes):
-						if self.pl._reset_gamma_ramps:
-							icon = self._active_icon_reset
-						else:
-							icon = self._active_icon
-					else:
-						icon = self._inactive_icon
-					self.SetIcon(icon, self.pl.get_title())
+					self.SetIcon(self.get_icon(enumerate_windows_and_processes),
+								 self.pl.get_title())
 
 				def show_notification(self, text=None, sticky=False,
 									  show_notification=True,
@@ -264,9 +267,10 @@ class ProfileLoader(object):
 						self._notification.fade("out")
 						if toggle:
 							return
-					self._notification = TaskBarNotification(
-						config.geticon(16, appname + "-apply-profiles"),
-						self.pl.get_title(), text)
+					bitmap = wx.BitmapFromIcon(self.get_icon())
+					self._notification = TaskBarNotification(bitmap,
+															 self.pl.get_title(),
+															 text)
 
 			self.taskbar_icon = TaskBarIcon(self)
 
