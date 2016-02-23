@@ -597,11 +597,11 @@ class BaseApp(wx.App):
 	def query_end_session(self, event):
 		safe_print("Received query to end session")
 		if self.TopWindow and not self._query_end_session:
-			if event.CanVeto():
-				event.Veto()
 			safe_print("Trying to close main application window")
 			if self.TopWindow.Close():
 				self._query_end_session = True
+			elif event.CanVeto():
+				event.Veto()
 
 
 active_window = None
