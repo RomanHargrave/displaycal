@@ -5386,6 +5386,116 @@ class SimpleTerminal(InvincibleFrame):
 		wx.CallAfter(self.add_text, txt)
 
 
+class TaskBarNotification(wx.Frame):
+
+	"""
+	A popup window in a visual style similar to Win10 'toast' notifications.
+	
+	It will be shown next to the task bar tray, which makes it a possible
+	replacement for 'balloon'-style notifications.
+	The viewing/hiding animation is implemented as a fade effect.
+	
+	"""
+
+	def __init__(self, icon=None, title="Notification", text=""):
+		wx.Frame.__init__(self, None, -1, style=wx.FRAME_NO_TASKBAR |
+												wx.NO_BORDER |
+												wx.STAY_ON_TOP,
+						  name="TaskBarNotification")
+		if sys.getwindowsversion() >= (6, ):
+			self.SetDoubleBuffered(True)
+		self.SetTransparent(0)
+		border = wx.Panel(self)
+		border.BackgroundColour = "#484848"
+		border.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+		panel = wx.Panel(border)
+		border.Sizer.Add(panel, flag=wx.ALL, border=1)
+		panel.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
+		panel.BackgroundColour = "#1F1F1F"
+		panel.ForegroundColour = "#A5A5A5"
+		panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+		if icon:
+			icon = wx.StaticBitmap(panel, -1, icon)
+			icon.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
+			panel.Sizer.Add(icon, flag=wx.TOP | wx.BOTTOM | wx.LEFT, border=12)
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		panel.Sizer.Add(sizer, flag=wx.ALL, border=12)
+		title = wx.StaticText(panel, -1, title)
+		title.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
+		title.ForegroundColour = wx.WHITE
+		font = title.Font
+		font.Weight = wx.BOLD
+		title.Font = font
+		sizer.Add(title)
+		msg = wx.StaticText(panel, -1, text)
+		msg.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
+		sizer.Add(msg)
+		close = wx.BitmapButton(panel, -1,
+								config.getbitmap("theme/x-2px-12x12-999"),
+								style=wx.NO_BORDER)
+		close.BackgroundColour = panel.BackgroundColour
+		close.Bind(wx.EVT_BUTTON, lambda event: self.fade("out"))
+		set_bitmap_labels(close)
+		panel.Sizer.Add(close, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
+						border=12)
+		border.Sizer.SetSizeHints(self)
+		border.Sizer.Layout()
+		display = self.GetDisplay()
+		client_area = display.ClientArea
+		geometry = display.Geometry
+		# Determine tray position so we can show our popup
+		# next to it
+		if (client_area[0] and
+			client_area[0] + client_area[2] == geometry[2]):
+			# Task bar is on the left, tray is in bottom left
+			pos = [geometry[0], geometry[3]]
+		elif (not client_area[0] and
+			  client_area[2] < geometry[2]):
+			# Task bar is on the right, tray is in bottom right
+			pos = [geometry[0] + geometry[2], geometry[3]]
+		elif (client_area[1] and
+			  client_area[1] + client_area[3] == geometry[3]):
+			# Task bar is at the top, tray is in top right
+			pos = [geometry[0] + geometry[2], geometry[1]]
+		elif (not client_area[1] and
+			  client_area[3] < geometry[3]):
+			# Task bar is at the bottom, tray is in bottom right
+			pos = [geometry[0] + geometry[2], geometry[1] + geometry[3]]
+		if pos[0] < client_area[0]:
+			pos[0] = client_area[0] + 12
+		if pos[1] < client_area[1]:
+			pos[1] = client_area[1] + 12
+		if pos[0] + self.Size[0] > client_area[0] + client_area[2]:
+			pos[0] = client_area[0] + client_area[2] - self.Size[0] - 12
+		if pos[1] + self.Size[1] > client_area[1] + client_area[3]:
+			pos[1] = client_area[1] + client_area[3] - self.Size[1] - 12
+		self.SetPosition(pos)
+		self._fadeout_timer = wx.CallLater(6250, lambda: self and
+														 self.fade("out"))
+		self.Show()
+		self.fade()
+
+	def fade(self, direction="in", i=1):
+		if (getattr(self, "_fade_timer", None) and
+			self._fade_timer.IsRunning()):
+			self._fade_timer.Stop()
+			i = self._fade_timer_i
+		if direction != "in":
+			if self._fadeout_timer.IsRunning():
+				self._fadeout_timer.Stop()
+			t = 10 - i
+		else:
+			t = i
+		if not self:
+			return
+		self.SetTransparent(int(t * 25.5))
+		if i < 10:
+			self._fade_timer_i = i
+			self._fade_timer = wx.CallLater(1, self.fade, direction, i + 1)
+		elif direction != "in" and self:
+			self.Destroy()
+
+
 class TooltipWindow(InvincibleFrame):
 
 	""" A tooltip-style window """

@@ -73,7 +73,7 @@ class ProfileLoader(object):
 			from util_win import (calibration_management_isenabled,
 								  get_display_devices)
 			from wxfixes import set_bitmap_labels
-			from wxwindows import BaseFrame
+			from wxwindows import BaseFrame, TaskBarNotification
 
 			class PLFrame(BaseFrame):
 
@@ -193,7 +193,7 @@ class ProfileLoader(object):
 					return menu
 
 				def on_left_down(self, event):
-					self.show_balloon(toggle=True)
+					self.show_notification(toggle=True)
 
 				def open_color_management_settings(self, event):
 					try:
@@ -224,9 +224,9 @@ class ProfileLoader(object):
 						icon = self._inactive_icon
 					self.SetIcon(icon, self.pl.get_title())
 
-				def show_balloon(self, text=None, sticky=False,
-								 show_balloon=True, flags=wx.ICON_INFORMATION,
-								 toggle=False):
+				def show_notification(self, text=None, sticky=False,
+									  show_notification=True,
+									  flags=wx.ICON_INFORMATION, toggle=False):
 					if wx.VERSION < (3, ):
 						return
 					if sticky:
@@ -258,113 +258,15 @@ class ProfileLoader(object):
 								profile = (lang.getstr("linear") +
 										   u" \u2192 " + profile)
 							text += u"\n%s \u2192 %s" % (display, profile)
-					if not show_balloon:
+					if not show_notification:
 						return
-					box_fade = self.box_fade
-					if (getattr(self, "_infobox_timer", None) and
-						self._infobox_timer.IsRunning()):
-						self._infobox_timer.Stop()
-						if self._infobox:
-							box_fade(self._infobox, "out")
-							if toggle:
-								return
-					box = wx.Frame(None, -1, style=wx.FRAME_NO_TASKBAR |
-												   wx.NO_BORDER |
-												   wx.STAY_ON_TOP,
-								   name="InfoBox")
-					if sys.getwindowsversion() >= (6, ):
-						box.SetDoubleBuffered(True)
-					box.SetTransparent(0)
-					border = wx.Panel(box)
-					border.BackgroundColour = "#484848"
-					border.Sizer = wx.BoxSizer(wx.HORIZONTAL)
-					panel = wx.Panel(border)
-					border.Sizer.Add(panel, flag=wx.ALL, border=1)
-					panel.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
-					panel.BackgroundColour = "#1F1F1F"
-					panel.ForegroundColour = "#A5A5A5"
-					panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
-					icon = wx.StaticBitmap(panel, -1,
-										   config.geticon(16, appname +
-															  "-apply-profiles"))
-					icon.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
-					panel.Sizer.Add(icon, flag=wx.ALL, border=12)
-					sizer = wx.BoxSizer(wx.VERTICAL)
-					panel.Sizer.Add(sizer, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
-									border=12)
-					title = wx.StaticText(panel, -1, self.pl.get_title())
-					title.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
-					title.ForegroundColour = wx.WHITE
-					font = title.Font
-					font.Weight = wx.BOLD
-					title.Font = font
-					sizer.Add(title)
-					msg = wx.StaticText(panel, -1, text)
-					msg.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
-					sizer.Add(msg)
-					close = wx.BitmapButton(panel, -1,
-											config.getbitmap("theme/x-2px-12x12-999"),
-											style=wx.NO_BORDER)
-					close.BackgroundColour = panel.BackgroundColour
-					close.Bind(wx.EVT_BUTTON, lambda event: box_fade(box, "out"))
-					set_bitmap_labels(close)
-					panel.Sizer.Add(close, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
-									border=12)
-					border.Sizer.SetSizeHints(box)
-					border.Sizer.Layout()
-					display = box.GetDisplay()
-					client_area = display.ClientArea
-					geometry = display.Geometry
-					# Determine tray icon position so we can show our popup
-					# next to it
-					if (client_area[0] and
-						client_area[0] + client_area[2] == geometry[2]):
-						# Task bar is on the left, icon is in bottom left
-						pos = [geometry[0], geometry[3]]
-					elif (not client_area[0] and
-						  client_area[2] < geometry[2]):
-						# Task bar is on the right, icon is in bottom right
-						pos = [geometry[0] + geometry[2], geometry[3]]
-					elif (client_area[1] and
-						  client_area[1] + client_area[3] == geometry[3]):
-						# Task bar is at the top, icon is in top right
-						pos = [geometry[0] + geometry[2], geometry[1]]
-					elif (not client_area[1] and
-						  client_area[3] < geometry[3]):
-						# Task bar is at the bottom, icon is in bottom right
-						pos = [geometry[0] + geometry[2], geometry[1] + geometry[3]]
-					if pos[0] < client_area[0]:
-						pos[0] = client_area[0] + 12
-					if pos[1] < client_area[1]:
-						pos[1] = client_area[1] + 12
-					if pos[0] + box.Size[0] > client_area[0] + client_area[2]:
-						pos[0] = client_area[0] + client_area[2] - box.Size[0] - 12
-					if pos[1] + box.Size[1] > client_area[1] + client_area[3]:
-						pos[1] = client_area[1] + client_area[3] - box.Size[1] - 12
-					box.pos = pos
-					box.SetPosition(pos)
-					self._infobox = box
-					self._infobox_timer = wx.CallLater(6250, lambda: box_fade(box, "out"))
-					box.Show()
-					box_fade(box)
-
-				def box_fade(self, box, direction="in", i=1):
-					if (getattr(box, "_box_fade", None) and
-						box._box_fade.IsRunning()):
-						box._box_fade.Stop()
-						i = box._box_fade_i
-					if direction != "in":
-						t = 10 - i
-					else:
-						t = i
-					if not box:
-						return
-					box.SetTransparent(int(t * 25.5))
-					if i < 10:
-						box._box_fade_i = i
-						box._box_fade = wx.CallLater(1, self.box_fade, box, direction, i + 1)
-					elif direction != "in" and box:
-						box.Destroy()
+					if getattr(self, "_notification", None):
+						self._notification.fade("out")
+						if toggle:
+							return
+					self._notification = TaskBarNotification(
+						config.geticon(16, appname + "-apply-profiles"),
+						self.pl.get_title(), text)
 
 			self.taskbar_icon = TaskBarIcon(self)
 
@@ -375,7 +277,7 @@ class ProfileLoader(object):
 			except Exception, exception:
 				self.gdi32 = None
 				safe_print(exception)
-				self.taskbar_icon.show_balloon(safe_unicode(exception))
+				self.taskbar_icon.show_notification(safe_unicode(exception))
 
 			if self.use_madhcnet:
 				try:
@@ -383,7 +285,7 @@ class ProfileLoader(object):
 				except Exception, exception:
 					safe_print(exception)
 					if safe_unicode(exception) != lang.getstr("madvr.not_found"):
-						self.taskbar_icon.show_balloon(safe_unicode(exception))
+						self.taskbar_icon.show_notification(safe_unicode(exception))
 				else:
 					self.madvr.add_connection_callback(self._madvr_connection_callback,
 													   None, "madVR")
@@ -540,12 +442,12 @@ class ProfileLoader(object):
 
 		return errors
 
-	def notify(self, results, errors, sticky=False, show_balloon=False):
+	def notify(self, results, errors, sticky=False, show_notification=False):
 		from wxwindows import wx
 		wx.CallAfter(lambda: self and self._notify(results, errors, sticky,
-												   show_balloon))
+												   show_notification))
 
-	def _notify(self, results, errors, sticky=False, show_balloon=False):
+	def _notify(self, results, errors, sticky=False, show_notification=False):
 		from wxwindows import wx
 		self.taskbar_icon.set_visual_state()
 		results.extend(errors)
@@ -553,8 +455,8 @@ class ProfileLoader(object):
 			flags = wx.ICON_ERROR
 		else:
 			flags = wx.ICON_INFORMATION
-		self.taskbar_icon.show_balloon("\n".join(results), sticky, show_balloon,
-									   flags)
+		self.taskbar_icon.show_notification("\n".join(results), sticky,
+											show_notification, flags)
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		errors = self.apply_profiles(event, index)
@@ -637,7 +539,7 @@ class ProfileLoader(object):
 				return numwindows
 		else:
 			windows = filter(lambda window: not isinstance(window, wx.Dialog) and
-											window.Name != "InfoBox",
+											window.Name != "TaskBarNotification",
 							 wx.GetTopLevelWindows())
 		if len(windows) < numwindows:
 			# One of our windows has been closed by an external event
@@ -880,8 +782,9 @@ class ProfileLoader(object):
 					else:
 						lstr = "calibration.load_success"
 					results.insert(0, lang.getstr(lstr))
-				self.notify(results, errors, show_balloon=not first_run and
-														  self.__other_component[1] != "madHcNetQueueWindow")
+				self.notify(results, errors,
+							show_notification=not first_run and
+											  self.__other_component[1] != "madHcNetQueueWindow")
 				if result:
 					self.__other_component = None, None
 			else:
@@ -895,7 +798,7 @@ class ProfileLoader(object):
 					displaycal_running = self._displaycal_running
 					safe_print(msg)
 					self.notify([msg], [], displaycal_running,
-								show_balloon=False)
+								show_notification=False)
 			first_run = False
 			self._manual_restore = False
 			# Wait three seconds
@@ -1020,7 +923,7 @@ class ProfileLoader(object):
 				msg = lang.getstr(lstr, component)
 				safe_print(msg)
 				self.notify([msg], [], not other_isrunning,
-							show_balloon=component != "madVR")
+							show_notification=component != "madVR")
 		return self.__other_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
@@ -1044,7 +947,7 @@ class ProfileLoader(object):
 						msg = lang.getstr("app.detected.calibration_loading_disabled",
 										  component)
 						safe_print(msg)
-						self.notify([msg], [], True, show_balloon=False)
+						self.notify([msg], [], True, show_notification=False)
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
 					safe_print("madVR instance disconnected:", "PID", pid, filename)
@@ -1052,7 +955,7 @@ class ProfileLoader(object):
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  component)
 						safe_print(msg)
-						self.notify([msg], [], show_balloon=False)
+						self.notify([msg], [], show_notification=False)
 
 	def _reset_display_profile_associations(self):
 		import ICCProfile as ICCP
