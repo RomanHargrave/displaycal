@@ -72,6 +72,7 @@ class ProfileLoader(object):
 			from util_str import safe_unicode
 			from util_win import (calibration_management_isenabled,
 								  get_display_devices)
+			from wxfixes import set_bitmap_labels
 			from wxwindows import BaseFrame
 
 			class PLFrame(BaseFrame):
@@ -192,7 +193,7 @@ class ProfileLoader(object):
 					return menu
 
 				def on_left_down(self, event):
-					self.show_balloon()
+					self.show_balloon(toggle=True)
 
 				def open_color_management_settings(self, event):
 					try:
@@ -224,7 +225,8 @@ class ProfileLoader(object):
 					self.SetIcon(icon, self.pl.get_title())
 
 				def show_balloon(self, text=None, sticky=False,
-								 show_balloon=True, flags=wx.ICON_INFORMATION):
+								 show_balloon=True, flags=wx.ICON_INFORMATION,
+								 toggle=False):
 					if wx.VERSION < (3, ):
 						return
 					if sticky:
@@ -258,18 +260,111 @@ class ProfileLoader(object):
 							text += u"\n%s \u2192 %s" % (display, profile)
 					if not show_balloon:
 						return
-					if self.IsIconInstalled():
-						# In theory, checking if the icon is set shouldn't be
-						# needed, because we set the icon in the constructor
-						# and before each call to show_balloon().
-						# In practice, a few people have reported C++ assertion
-						# failures related to m_iconAdded, which
-						# would indicate a possible wxPython/wxWidgets bug
-						self.ShowBalloon(self.pl.get_title(), text,
-										 flags=flags)
+					box_fade = self.box_fade
+					if (getattr(self, "_infobox_timer", None) and
+						self._infobox_timer.IsRunning()):
+						self._infobox_timer.Stop()
+						if self._infobox:
+							box_fade(self._infobox, "out")
+							if toggle:
+								return
+					box = wx.Frame(None, -1, style=wx.FRAME_NO_TASKBAR |
+												   wx.NO_BORDER |
+												   wx.STAY_ON_TOP,
+								   name="InfoBox")
+					if sys.getwindowsversion() >= (6, ):
+						box.SetDoubleBuffered(True)
+					box.SetTransparent(0)
+					border = wx.Panel(box)
+					border.BackgroundColour = "#484848"
+					border.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+					panel = wx.Panel(border)
+					border.Sizer.Add(panel, flag=wx.ALL, border=1)
+					panel.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
+					panel.BackgroundColour = "#1F1F1F"
+					panel.ForegroundColour = "#A5A5A5"
+					panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+					icon = wx.StaticBitmap(panel, -1,
+										   config.geticon(16, appname +
+															  "-apply-profiles"))
+					icon.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
+					panel.Sizer.Add(icon, flag=wx.ALL, border=12)
+					sizer = wx.BoxSizer(wx.VERTICAL)
+					panel.Sizer.Add(sizer, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
+									border=12)
+					title = wx.StaticText(panel, -1, self.pl.get_title())
+					title.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
+					title.ForegroundColour = wx.WHITE
+					font = title.Font
+					font.Weight = wx.BOLD
+					title.Font = font
+					sizer.Add(title)
+					msg = wx.StaticText(panel, -1, text)
+					msg.Bind(wx.EVT_LEFT_DOWN, lambda event: box_fade(box, "out"))
+					sizer.Add(msg)
+					close = wx.BitmapButton(panel, -1,
+											config.getbitmap("theme/x-2px-12x12-999"),
+											style=wx.NO_BORDER)
+					close.BackgroundColour = panel.BackgroundColour
+					close.Bind(wx.EVT_BUTTON, lambda event: box_fade(box, "out"))
+					set_bitmap_labels(close)
+					panel.Sizer.Add(close, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
+									border=12)
+					border.Sizer.SetSizeHints(box)
+					border.Sizer.Layout()
+					display = box.GetDisplay()
+					client_area = display.ClientArea
+					geometry = display.Geometry
+					# Determine tray icon position so we can show our popup
+					# next to it
+					if (client_area[0] and
+						client_area[0] + client_area[2] == geometry[2]):
+						# Task bar is on the left, icon is in bottom left
+						pos = [geometry[0], geometry[3]]
+					elif (not client_area[0] and
+						  client_area[2] < geometry[2]):
+						# Task bar is on the right, icon is in bottom right
+						pos = [geometry[0] + geometry[2], geometry[3]]
+					elif (client_area[1] and
+						  client_area[1] + client_area[3] == geometry[3]):
+						# Task bar is at the top, icon is in top right
+						pos = [geometry[0] + geometry[2], geometry[1]]
+					elif (not client_area[1] and
+						  client_area[3] < geometry[3]):
+						# Task bar is at the bottom, icon is in bottom right
+						pos = [geometry[0] + geometry[2], geometry[1] + geometry[3]]
+					if pos[0] < client_area[0]:
+						pos[0] = client_area[0] + 12
+					if pos[1] < client_area[1]:
+						pos[1] = client_area[1] + 12
+					if pos[0] + box.Size[0] > client_area[0] + client_area[2]:
+						pos[0] = client_area[0] + client_area[2] - box.Size[0] - 12
+					if pos[1] + box.Size[1] > client_area[1] + client_area[3]:
+						pos[1] = client_area[1] + client_area[3] - box.Size[1] - 12
+					box.pos = pos
+					box.SetPosition(pos)
+					self._infobox = box
+					self._infobox_timer = wx.CallLater(6250, lambda: box_fade(box, "out"))
+					box.Show()
+					box_fade(box)
+
+				def box_fade(self, box, direction="in", i=1):
+					if (getattr(box, "_box_fade", None) and
+						box._box_fade.IsRunning()):
+						box._box_fade.Stop()
+						i = box._box_fade_i
+					if direction != "in":
+						t = 10 - i
 					else:
-						safe_print("Warning - couldn't show balloon because "
-								   "icon is not installed")
+						t = i
+					if not box:
+						return
+					box.SetTransparent(int(t * 25.5))
+					if i < 10:
+						box._box_fade_i = i
+						box._box_fade = wx.CallLater(1, self.box_fade, box, direction, i + 1)
+					elif direction != "in" and box:
+						box.Destroy()
 
 			self.taskbar_icon = TaskBarIcon(self)
 
@@ -541,7 +636,8 @@ class ProfileLoader(object):
 			except pywintypes.error, exception:
 				return numwindows
 		else:
-			windows = filter(lambda window: not isinstance(window, wx.Dialog),
+			windows = filter(lambda window: not isinstance(window, wx.Dialog) and
+											window.Name != "InfoBox",
 							 wx.GetTopLevelWindows())
 		if len(windows) < numwindows:
 			# One of our windows has been closed by an external event
@@ -1126,6 +1222,7 @@ class ProfileLoader(object):
 			self._set_display_profiles()
 		else:
 			self._reset_display_profile_associations()
+		self._manual_restore = True
 
 
 def get_display_name_edid(device, moninfo=None):
