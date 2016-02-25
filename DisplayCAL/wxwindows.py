@@ -622,13 +622,14 @@ class BaseFrame(wx.Frame):
 			if hasattr(child, "Name") and child.Name == name:
 				return child
 
-	def __OnClose(self, event):
-		self.listening = False
+	def __OnDestroy(self, event):
+		if event.GetEventObject() is self:
+			self.listening = False
 		event.Skip()
 
 	def init(self):
 		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
-		self.Bind(wx.EVT_CLOSE, self.__OnClose)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.__OnDestroy)
 
 	def init_menubar(self):
 		self.MenuBar = wx.MenuBar()
