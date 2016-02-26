@@ -1525,7 +1525,9 @@ class BaseFrame(wx.Frame):
 							  getevtobjname(event, self),
 							  event.GetEventObject().__class__))
 			self.last_focused_ctrl = event.GetEventObject()
-		event.Skip()
+		if (isinstance(event, wx.FocusEvent) or
+			isinstance(event.GetEventObject(), wx.ComboBox)):
+			event.Skip()
 	
 	def setup_language(self):
 		"""
