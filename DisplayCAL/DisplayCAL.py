@@ -13748,6 +13748,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 				self.worker.wrapup(False)
 			wx.GetApp().ExitMainLoop()
+		elif isinstance(event, wx.CloseEvent) and event.CanVeto():
+			event.Veto()
 
 
 class StartupFrame(wx.Frame):

@@ -2486,6 +2486,8 @@ END_DATA""")
 			else:
 				self.writecfg()
 				self.Destroy()
+		elif isinstance(event, wx.CloseEvent) and event.CanVeto():
+			event.Veto()
 
 	def tc_move_handler(self, event = None):
 		if self.IsShownOnScreen() and not self.IsMaximized() and not self.IsIconized():
