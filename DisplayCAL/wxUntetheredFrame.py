@@ -291,6 +291,14 @@ class UntetheredFrame(BaseFrame):
 		self.cgats[0].add_keyword("INSTRUMENT_TYPE_SPECTRAL", "NO")
 		if hasattr(self.cgats[0], "APPROX_WHITE_POINT"):
 			self.cgats[0].remove_keyword("APPROX_WHITE_POINT")
+		# Remove L*a*b* from DATA_FORMAT if present
+		for i, label in reversed(self.cgats[0].DATA_FORMAT.items()):
+			if label.startswith("LAB_"):
+				self.cgats[0].DATA_FORMAT.pop(i)
+		# Add XYZ to DATA_FORMAT if not yet present
+		for label in ("XYZ_X", "XYZ_Y", "XYZ_Z"):
+			if not label in self.cgats[0].DATA_FORMAT.values():
+				self.cgats[0].DATA_FORMAT.add_data((label, ))
 		self.cgats[0].write(os.path.splitext(self.cgats.filename)[0] + ".ti3")
 		self.safe_send("Q")
 		time.sleep(.5)
