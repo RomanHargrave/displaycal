@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import codecs
+import exceptions
 import locale
 import string
 import sys
@@ -309,6 +310,9 @@ def safe_basestring(obj):
 			error.append(obj.filename)
 		error = [safe_unicode(arg) for arg in error]
 		obj = " ".join(error)
+	elif isinstance(obj, KeyError) and obj.args:
+		obj = "Key does not exist: %r" % obj.args[0]
+	oobj = obj
 	if not isinstance(obj, basestring):
 		try:
 			obj = unicode(obj)
@@ -317,6 +321,8 @@ def safe_basestring(obj):
 				obj = str(obj)
 			except UnicodeEncodeError:
 				obj = repr(obj)
+	if isinstance(oobj, Exception) and oobj.__class__.__name__ in dir(exceptions):
+		obj = obj.capitalize()
 	return obj
 
 
