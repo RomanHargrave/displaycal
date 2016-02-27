@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 from datetime import datetime
 from time import gmtime, sleep, strftime, time
 import errno
@@ -530,12 +531,35 @@ class BaseApp(wx.App):
 	""" Application base class implementing common functionality. """
 
 	_exithandlers = []
-	_query_end_session = False
+	_query_end_session = None
 
 	def OnInit(self):
 		self.AppName = pyname
 		set_default_app_dpi()
+		# We use a lock so we can make sure the exit handlers are executed
+		# properly before we actually exit when receiving OS
+		# logout/reboot/shutdown events. This is needed because it is not
+		# guaranteed that when we receive EVT_QUERY_END_SESSION and close
+		# the main application window (which will normally exit the main event
+		# loop unless BaseApp.ExitOnFrameDelete is False) that OnExit (which'll
+		# execute the exit handlers) will run right away because normally it'll
+		# run after the main event loop exits (i.e. in the next iteration of the
+		# main loop after an implicit or explicit call of ExitMainLoop).
+		# Also, we need to call OnExit explicitly when receiving EVT_END_SESSION
+		# because there will be no next iteration of the event loop (the OS
+		# simply kills the application after the handler is executed). If OnExit
+		# was already called before as a result of receiving
+		# EVT_QUERY_END_SESSION and exiting the main event loop (remember this
+		# is not guaranteed because of the way the event loop works!) and did
+		# already finish, this'll do nothing and we can just exit. If OnExit is
+		# still executing the exit handlers and thus holds the lock, the lock
+		# makes sure that we wait for OnExit to finish before we explicitly call
+		# sys.exit(0) (which'll make sure exit handlers registered by atexit
+		# will run) to finally exit for good before the OS tries to kill the
+		# application.
+		self._lock = threading.Lock()
 		self.Bind(wx.EVT_QUERY_END_SESSION, self.query_end_session)
+		self.Bind(wx.EVT_END_SESSION, self.end_session)
 		return True
 
 	def MacOpenFiles(self, paths):
@@ -559,7 +583,11 @@ class BaseApp(wx.App):
 			return paths
 
 	def OnExit(self):
-		BaseApp._run_exitfuncs()
+		safe_print("Executing BaseApp.OnExit()")
+		with self._lock:
+			if BaseApp._exithandlers:
+				safe_print("Running application exit handlers")
+				BaseApp._run_exitfuncs()
 
 	@staticmethod
 	def _run_exitfuncs():
@@ -583,8 +611,8 @@ class BaseApp(wx.App):
 				exc_info = sys.exc_info()
 			except:
 				import traceback
-				print >> sys.stderr, "Error in BaseApp._run_exitfuncs:"
-				traceback.print_exc()
+				safe_print("Error in BaseApp._run_exitfuncs:")
+				safe_print(traceback.format_exc())
 				exc_info = sys.exc_info()
 
 		if exc_info is not None:
@@ -596,12 +624,30 @@ class BaseApp(wx.App):
 
 	def query_end_session(self, event):
 		safe_print("Received query to end session")
-		if self.TopWindow and not self._query_end_session:
-			safe_print("Trying to close main application window")
-			if self.TopWindow.Close():
-				self._query_end_session = True
-			elif event.CanVeto():
+		if self.TopWindow and self.TopWindow is not self._query_end_session:
+			if not isinstance(self.TopWindow, wx.Dialog):
+				safe_print("Trying to close main top-level application window")
+				if self.TopWindow.Close():
+					self.TopWindow.listening = False
+					self._query_end_session = self.TopWindow
+					safe_print("Closed main top-level application window")
+					return
+				else:
+					safe_print("Failed to close main top-level application window")
+			if event.CanVeto():
 				event.Veto()
+				safe_print("Vetoed query to end session")
+
+	def end_session(self, event):
+		safe_print("Ending session")
+		self.ExitMainLoop()
+		# We need to call OnExit() explicitly because there will be no
+		# next iteration of the main event loop
+		self.OnExit()
+		# Calling sys.exit makes sure that exit handlers registered by atexit
+		# will run
+		safe_print("Calling sys.exit(0)")
+		sys.exit(0)
 
 
 active_window = None

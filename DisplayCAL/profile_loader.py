@@ -494,14 +494,15 @@ class ProfileLoader(object):
 			dlg.ShowModalThenDestroy()
 
 	def exit(self, event=None):
-		#print 'exit() called'
+		from log import safe_print
 		from util_win import calibration_management_isenabled
-		from wxwindows import ConfirmDialog, wx
+		from wxwindows import wx
 		import config
+		safe_print("Executing ProfileLoader.exit(%s)" % event)
 		if (self.frame and event.GetEventType() == wx.EVT_MENU.typeId and
 			not calibration_management_isenabled()):
 			import localization as lang
-			from wxwindows import ConfirmDialog, wx
+			from wxwindows import ConfirmDialog
 			dlg = ConfirmDialog(None, msg=lang.getstr("profile_loader.exit_warning"), 
 								title=self.get_title(),
 								ok=lang.getstr("menuitem.quit"), 
@@ -511,6 +512,7 @@ class ProfileLoader(object):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK:
+				safe_print("Cancelled ProfileLoader.exit(%s)" % event)
 				return
 		config.writecfg(module="apply-profiles",
 						options=("argyll.dir", "profile.load_on_login",
