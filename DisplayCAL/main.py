@@ -2,6 +2,7 @@
 
 from __future__ import with_statement
 from time import sleep
+import atexit
 import errno
 import logging
 import os
@@ -207,6 +208,7 @@ def main(module=None):
 						mode = "w"
 					write_lockfile(lockfilename, mode, str(port))
 					break
+		atexit.register(lambda: safe_print("Exiting", pyname))
 		BaseApp.register_exitfunc(_exit, lockfilename, port)
 		# Check for required resource files
 		mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
@@ -318,8 +320,6 @@ def _exit(lockfilename, port):
 			except EnvironmentError, exception:
 				safe_print("Warning - could not remove lockfile %s: %r" %
 						   (lockfilename, exception))
-	safe_print("Exiting", pyname)
-	logging.shutdown()
 
 
 def main_3dlut_maker():
