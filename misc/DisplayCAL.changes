@@ -4,6 +4,13 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 - update to ${VERSION}: see README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
+Sun Jan 31 23:47:53 UTC 2016 - florian@displaycal.net
+
+- update to 3.1.0.0:
+  * renamed dispcalGUI to DisplayCAL
+  * see README.html#changelog-3.1
+
+-------------------------------------------------------------------
 Mon Jan 11 10:34:55 UTC 2016 - dispcalGUI@hoech.net
 
 - update to 3.0.6.3: see README.html#changelog-3.0.6.3
