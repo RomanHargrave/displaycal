@@ -5496,29 +5496,41 @@ class TaskBarNotification(wx.Frame):
 		geometry = display.Geometry
 		# Determine tray position so we can show our popup
 		# next to it
-		if (client_area[0] and
-			client_area[0] + client_area[2] == geometry[2]):
+		if client_area[0] != geometry[0]:
 			# Task bar is on the left, tray is in bottom left
-			pos = [geometry[0], geometry[3]]
-		elif (not client_area[0] and
+			pos = [geometry[0], geometry[1] + geometry[3]]
+		elif (client_area[0] == geometry[0] and
 			  client_area[2] < geometry[2]):
 			# Task bar is on the right, tray is in bottom right
-			pos = [geometry[0] + geometry[2], geometry[3]]
-		elif (client_area[1] and
-			  client_area[1] + client_area[3] == geometry[3]):
+			pos = [geometry[0] + geometry[2], geometry[1] + geometry[3]]
+		elif client_area[1] != geometry[1]:
 			# Task bar is at the top, tray is in top right
 			pos = [geometry[0] + geometry[2], geometry[1]]
-		elif (not client_area[1] and
+		elif (client_area[1] == geometry[1] and
 			  client_area[3] < geometry[3]):
 			# Task bar is at the bottom, tray is in bottom right
 			pos = [geometry[0] + geometry[2], geometry[1] + geometry[3]]
-		if pos[0] < client_area[0]:
+		else:
+			# Task bar is probably set to auto-hide, so we cannot use client
+			# area to determine its position. Use mouse position instead.
+			mousepos = wx.GetMousePosition()
+			if mousepos[0] < (geometry[0] + geometry[2]) / 2.0:
+				# Assume task bar is on the left, tray is in bottom left
+				pos = [geometry[0], geometry[1] + geometry[3]]
+			elif (mousepos[0] > (geometry[0] + geometry[2]) / 2.0 and
+				  mousepos[1] < (geometry[1] + geometry[3]) / 2.0):
+				# Assume task bar is at the top, tray is in top right
+				pos = [geometry[0] + geometry[2], geometry[1]]
+			else:
+				# Assume task tray is in bottom right
+				pos = [geometry[0] + geometry[2], geometry[1] + geometry[3]]
+		if pos[0] <= client_area[0]:
 			pos[0] = client_area[0] + 12
-		if pos[1] < client_area[1]:
+		if pos[1] <= client_area[1]:
 			pos[1] = client_area[1] + 12
-		if pos[0] + self.Size[0] > client_area[0] + client_area[2]:
+		if pos[0] + self.Size[0] >= client_area[0] + client_area[2]:
 			pos[0] = client_area[0] + client_area[2] - self.Size[0] - 12
-		if pos[1] + self.Size[1] > client_area[1] + client_area[3]:
+		if pos[1] + self.Size[1] >= client_area[1] + client_area[3]:
 			pos[1] = client_area[1] + client_area[3] - self.Size[1] - 12
 		self.SetPosition(pos)
 		self._fadeout_timer = wx.CallLater(6250, lambda: self and
