@@ -746,7 +746,7 @@ def get_cgats_path(cgats):
 		descriptor = descriptor.groups()[0]
 	description = safe_unicode(descriptor or 
 							   lang.getstr("unnamed"), "UTF-8")
-	name = re.sub(r"[\\/:*?\"<>|]+", "_", 
+	name = re.sub(r"[\\/:;*?\"<>|]+", "_", 
 				  make_argyll_compatible_path(description))[:255]
 	return os.path.join(config.get_argyll_data_dir(), 
 						"%s.%s" % (name, cgats[:7].strip().lower()))
@@ -3310,7 +3310,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				# See also colorimeter_correction_check_overwite, the
 				# way the filename is processed must be the same
 				if (add_basename_to_desc_on_mismatch and
-					re.sub(r"[\\/:*?\"<>|]+", "_",
+					re.sub(r"[\\/:;*?\"<>|]+", "_",
 						   make_argyll_compatible_path(desc)) !=
 					os.path.splitext(os.path.basename(path))[0]):
 					desc = "%s <%s>" % (ellipsis(desc, 66, "m"),
@@ -3372,7 +3372,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					# See also colorimeter_correction_check_overwite, the
 					# way the filename is processed must be the same
 					if (add_basename_to_desc_on_mismatch and
-						re.sub(r"[\\/:*?\"<>|]+", "_",
+						re.sub(r"[\\/:;*?\"<>|]+", "_",
 							   make_argyll_compatible_path(desc)) !=
 						os.path.splitext(os.path.basename(ccmx[1]))[0]):
 						desc = "%s <%s>" % (ellipsis(desc, 66, "m"),
@@ -6459,7 +6459,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		# let the user choose a location for the result
 		defaultFile = u"Measurement Report %s — %s — %s" % (version_short,
-			re.sub(r"[\\/:*?\"<>|]+", "_",
+			re.sub(r"[\\/:;*?\"<>|]+", "_",
 			self.display_ctrl.GetStringSelection().replace(" " +
 														   lang.getstr("display.primary"),
 														   "")),
@@ -6841,7 +6841,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					# (max 31 chars)
 					# See also colorimeter_correction_check_overwite, the
 					# way the filename is processed must be the same
-					if (re.sub(r"[\\/:*?\"<>|]+", "_",
+					if (re.sub(r"[\\/:;*?\"<>|]+", "_",
 							   make_argyll_compatible_path(desc)) !=
 						os.path.splitext(ccmx)[0]):
 						ccmx = "%s &amp;lt;%s&amp;gt;" % (desc, ellipsis(ccmx,
@@ -11132,7 +11132,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if oldval == "":
 				newval = defaults.get("profile.name", "")
 			else:
-				newval = re.sub(r"[\\/:*?\"<>|]+", "", oldval).lstrip("-")[:self.maxprofilenamelength]
+				newval = re.sub(r"[\\/:;*?\"<>|]+", "", oldval).lstrip("-")[:self.maxprofilenamelength]
 			self.profile_name_textctrl.ChangeValue(newval)
 			self.profile_name_textctrl.SetInsertionPoint(x - (len(oldval) - 
 															  len(newval)))
@@ -11979,7 +11979,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		# to a length of <maxprofilenamelength> chars
 		# Also strip leading dashes which might trick Argyll tools into
 		# mistaking parts of the profile name as an option parameter
-		return re.sub(r"[\\/:*?\"<>|]+", "_", profile_name).lstrip("-")[:self.maxprofilenamelength]
+		return re.sub(r"[\\/:;*?\"<>|]+", "_", profile_name).lstrip("-")[:self.maxprofilenamelength]
 
 	def update_profile_name(self, event=None):
 		profile_name = self.create_profile_name()
@@ -12000,7 +12000,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def check_profile_name(self, profile_name=None):
 		if profile_name is None:
 			profile_name = self.profile_name_textctrl.GetValue()
-		if (re.match(r"^[^\\/:*?\"<>|]+$", profile_name) and
+		if (re.match(r"^[^\\/:;*?\"<>|]+$", profile_name) and
 			not profile_name.startswith("-")):
 			return True
 		else:
