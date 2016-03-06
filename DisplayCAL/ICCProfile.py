@@ -751,6 +751,8 @@ def set_display_profile(profile_name, display_no=0,
 		else:
 			# This is wrong, but it's what other apps (and Windows itself) use.
 			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+		if not device:
+			return False
 		devicekey = device.DeviceKey
 	if mscms:
 		return _wcs_set_display_profile(unicode(devicekey),
