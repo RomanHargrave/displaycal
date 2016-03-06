@@ -45,15 +45,16 @@ class ProfileLoader(object):
 		self._timestamp = time.time()
 		self.__other_component = None, None
 		self.__other_isrunning = False
+		self.__apply_profiles = None
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
-		##if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
-			##sys.getwindowsversion() >= (6, 1)):
-			##from util_win import calibration_management_isenabled
-			##if calibration_management_isenabled():
-				### Incase calibration loading is handled by Windows 7 and
-				### isn't forced
-				##apply_profiles = False
+		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
+			sys.getwindowsversion() >= (6, 1)):
+			from util_win import calibration_management_isenabled
+			if calibration_management_isenabled():
+				# Incase calibration loading is handled by Windows 7 and
+				# isn't forced
+				self._manual_restore = False
 		if (sys.platform != "win32" and
 			apply_profiles and not self._skip and
 			not os.path.isfile(os.path.join(config.confighome,
@@ -637,142 +638,141 @@ class ProfileLoader(object):
 			if key:
 				_winreg.CloseKey(key)
 			# Check profile associations
-			if apply_profiles or first_run:
-				for i, (display, edid, moninfo) in enumerate(self.monitors):
+			for i, (display, edid, moninfo) in enumerate(self.monitors):
+				try:
+					profile_path = ICCP.get_display_profile(i, path_only=True)
+				except IndexError:
+					break
+				except:
+					continue
+				if not profile_path:
+					continue
+				profile = os.path.basename(profile_path)
+				if os.path.isfile(profile_path):
+					mtime = os.stat(profile_path).st_mtime
+				else:
+					mtime = 0
+				if self.profile_associations.get(i) != (profile, mtime):
+					if not first_run:
+						device = get_active_display_device(moninfo["Device"])
+						if not device:
+							continue
+						safe_print(lang.getstr("display_detected"))
+						safe_print(display, "->", profile)
+						display_edid = get_display_name_edid(device,
+															 moninfo)
+						self.devices2profiles[device.DeviceKey] = (display_edid,
+																   profile)
+					self.profile_associations[i] = (profile, mtime)
+					self.profiles[profile] = None
+				# Check video card gamma table and (re)load calibration if
+				# necessary
+				if not apply_profiles or not self.gdi32:
+					continue
+				vcgt_values = ([], [], [])
+				if not self._reset_gamma_ramps:
+					# Get display profile
+					if not self.profiles.get(profile):
+						try:
+							self.profiles[profile] = ICCP.ICCProfile(profile)
+							self.profiles[profile].tags.get("vcgt")
+						except Exception, exception:
+							continue
+					profile = self.profiles[profile]
+					if isinstance(profile.tags.get("vcgt"),
+								  ICCP.VideoCardGammaType):
+						# Get display profile vcgt
+						vcgt_values = profile.tags.vcgt.get_values()[:3]
+				if len(vcgt_values[0]) != 256:
+					# Hmm. Do we need to deal with this?
+					# I've never seen table-based vcgt with != 256 entries
+					if (not self._reset_gamma_ramps and
+						self._manual_restore and profile.tags.get("vcgt")):
+						safe_print(lang.getstr("calibration.loading_from_display_profile"))
+						safe_print(display)
+						safe_print(lang.getstr("vcgt.unknown_format",
+											   os.path.basename(profile.fileName)))
+						safe_print(lang.getstr("failure"))
+						results.append(display)
+						errors.append(lang.getstr("vcgt.unknown_format",
+												  os.path.basename(profile.fileName)))
+					# Fall back to linear calibration
+					tagData = "vcgt"
+					tagData += "\0" * 4  # Reserved
+					tagData += "\0\0\0\x01"  # Formula type
+					for channel in xrange(3):
+						tagData += "\0\x01\0\0"  # Gamma 1.0
+						tagData += "\0" * 4  # Min 0.0
+						tagData += "\0\x01\0\0"  # Max 1.0
+					vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
+					vcgt_values = vcgt.get_values()[:3]
+				values = ([], [], [])
+				if (not self._manual_restore and
+					getcfg("profile_loader.check_gamma_ramps")):
+					# Get video card gamma ramp
+					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+					ramp = ((ctypes.c_ushort * 256) * 3)()
 					try:
-						profile_path = ICCP.get_display_profile(i, path_only=True)
-					except IndexError:
-						break
+						result = self.gdi32.GetDeviceGammaRamp(hdc, ramp)
 					except:
 						continue
-					if not profile_path:
-						continue
-					profile = os.path.basename(profile_path)
-					if os.path.isfile(profile_path):
-						mtime = os.stat(profile_path).st_mtime
-					else:
-						mtime = 0
-					if self.profile_associations.get(i) != (profile, mtime):
-						if not first_run:
-							device = get_active_display_device(moninfo["Device"])
-							if not device:
-								continue
-							safe_print(lang.getstr("display_detected"))
-							safe_print(display, "->", profile)
-							display_edid = get_display_name_edid(device,
-																 moninfo)
-							self.devices2profiles[device.DeviceKey] = (display_edid,
-																	   profile)
-						self.profile_associations[i] = (profile, mtime)
-						self.profiles[profile] = None
-					# Check video card gamma table and (re)load calibration if
-					# necessary
-					if not apply_profiles or not self.gdi32:
-						continue
-					vcgt_values = ([], [], [])
-					if not self._reset_gamma_ramps:
-						# Get display profile
-						if not self.profiles.get(profile):
-							try:
-								self.profiles[profile] = ICCP.ICCProfile(profile)
-								self.profiles[profile].tags.get("vcgt")
-							except Exception, exception:
-								continue
-						profile = self.profiles[profile]
-						if isinstance(profile.tags.get("vcgt"),
-									  ICCP.VideoCardGammaType):
-							# Get display profile vcgt
-							vcgt_values = profile.tags.vcgt.get_values()[:3]
-					if len(vcgt_values[0]) != 256:
-						# Hmm. Do we need to deal with this?
-						# I've never seen table-based vcgt with != 256 entries
-						if (not self._reset_gamma_ramps and
-							self._manual_restore and profile.tags.get("vcgt")):
-							safe_print(lang.getstr("calibration.loading_from_display_profile"))
-							safe_print(display)
-							safe_print(lang.getstr("vcgt.unknown_format",
-												   os.path.basename(profile.fileName)))
-							safe_print(lang.getstr("failure"))
-							results.append(display)
-							errors.append(lang.getstr("vcgt.unknown_format",
-													  os.path.basename(profile.fileName)))
-						# Fall back to linear calibration
-						tagData = "vcgt"
-						tagData += "\0" * 4  # Reserved
-						tagData += "\0\0\0\x01"  # Formula type
-						for channel in xrange(3):
-							tagData += "\0\x01\0\0"  # Gamma 1.0
-							tagData += "\0" * 4  # Min 0.0
-							tagData += "\0\x01\0\0"  # Max 1.0
-						vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
-						vcgt_values = vcgt.get_values()[:3]
-					values = ([], [], [])
-					if (not self._manual_restore and
-						getcfg("profile_loader.check_gamma_ramps")):
-						# Get video card gamma ramp
-						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
-						ramp = ((ctypes.c_ushort * 256) * 3)()
-						try:
-							result = self.gdi32.GetDeviceGammaRamp(hdc, ramp)
-						except:
-							continue
-						finally:
-							win32gui.DeleteDC(hdc)
-						if not result:
-							continue
-						# Get ramp values
-						for j, channel in enumerate(ramp):
-							for k, v in enumerate(channel):
-								values[j].append([float(k), v])
-					# Check if video card matches profile vcgt
-					if values == vcgt_values:
-						continue
-					# Reload calibration.
-					# Convert vcgt to ushort_Array_256_Array_3
-					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
-					for j in xrange(len(vcgt_values[0])):
-						for k in xrange(3):
-							vcgt_ramp[k][j] = vcgt_values[k][j][1]
-					if (not self._manual_restore and
-						getcfg("profile_loader.check_gamma_ramps")):
-						safe_print(lang.getstr("vcgt.mismatch", display))
-					# Try and prevent race condition with madVR
-					# launching and resetting video card gamma table
-					apply_profiles = self._should_apply_profiles()
-					if not apply_profiles:
-						break
-					# Now actually reload or reset calibration
-					if (self._manual_restore or
-						getcfg("profile_loader.check_gamma_ramps")):
-						if self._reset_gamma_ramps:
-							safe_print(lang.getstr("calibration.resetting"))
-							safe_print(display)
-						else:
-							safe_print(lang.getstr("calibration.loading_from_display_profile"))
-							safe_print(display, "->", os.path.basename(profile.fileName))
-					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
-					try:
-						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
-					except Exception, exception:
-						result = exception
 					finally:
 						win32gui.DeleteDC(hdc)
-					if (self._manual_restore or
-						getcfg("profile_loader.check_gamma_ramps")):
-						if isinstance(result, Exception) or not result:
-							if result:
-								safe_print(result)
-							safe_print(lang.getstr("failure"))
-							errstr = lang.getstr("calibration.load_error")
-							errors.append(": ".join([display, errstr]))
+					if not result:
+						continue
+					# Get ramp values
+					for j, channel in enumerate(ramp):
+						for k, v in enumerate(channel):
+							values[j].append([float(k), v])
+				# Check if video card matches profile vcgt
+				if values == vcgt_values:
+					continue
+				# Reload calibration.
+				# Convert vcgt to ushort_Array_256_Array_3
+				vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
+				for j in xrange(len(vcgt_values[0])):
+					for k in xrange(3):
+						vcgt_ramp[k][j] = vcgt_values[k][j][1]
+				if (not self._manual_restore and
+					getcfg("profile_loader.check_gamma_ramps")):
+					safe_print(lang.getstr("vcgt.mismatch", display))
+				# Try and prevent race condition with madVR
+				# launching and resetting video card gamma table
+				apply_profiles = self._should_apply_profiles()
+				if not apply_profiles:
+					break
+				# Now actually reload or reset calibration
+				if (self._manual_restore or
+					getcfg("profile_loader.check_gamma_ramps")):
+					if self._reset_gamma_ramps:
+						safe_print(lang.getstr("calibration.resetting"))
+						safe_print(display)
+					else:
+						safe_print(lang.getstr("calibration.loading_from_display_profile"))
+						safe_print(display, "->", os.path.basename(profile.fileName))
+				hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+				try:
+					result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
+				except Exception, exception:
+					result = exception
+				finally:
+					win32gui.DeleteDC(hdc)
+				if (self._manual_restore or
+					getcfg("profile_loader.check_gamma_ramps")):
+					if isinstance(result, Exception) or not result:
+						if result:
+							safe_print(result)
+						safe_print(lang.getstr("failure"))
+						errstr = lang.getstr("calibration.load_error")
+						errors.append(": ".join([display, errstr]))
+					else:
+						safe_print(lang.getstr("success"))
+						text = display + u" \u2192 "
+						if self._reset_gamma_ramps:
+							text += lang.getstr("linear")
 						else:
-							safe_print(lang.getstr("success"))
-							text = display + u" \u2192 "
-							if self._reset_gamma_ramps:
-								text += lang.getstr("linear")
-							else:
-								text += os.path.basename(profile.fileName)
-							results.append(text)
+							text += os.path.basename(profile.fileName)
+						results.append(text)
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
 			localtime[3:6] = 23, 59, 59
@@ -805,6 +805,10 @@ class ProfileLoader(object):
 					safe_print(msg)
 					self.notify([msg], [], displaycal_running,
 								show_notification=False)
+				elif apply_profiles != self.__apply_profiles:
+					self.__apply_profiles = apply_profiles
+					wx.CallAfter(lambda: self and
+										 self.taskbar_icon.set_visual_state())
 			first_run = False
 			self._manual_restore = False
 			# Wait three seconds
@@ -1049,14 +1053,16 @@ class ProfileLoader(object):
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True):
 		import config
 		from config import appbasename
-		from util_win import calibration_management_isenabled
+		if sys.platform == "win32":
+			from util_win import calibration_management_isenabled
 		displaycal_lockfile = os.path.join(config.confighome,
 										   appbasename + ".lock")
 		self._displaycal_running = os.path.isfile(displaycal_lockfile)
 		return (("--force" in sys.argv[1:] or
-				self._manual_restore or
+				 self._manual_restore or
 				 (config.getcfg("profile.load_on_login") and
-				  not calibration_management_isenabled())) and
+				  (sys.platform != "win32" or
+				   not calibration_management_isenabled()))) and
 				not self._displaycal_running and
 				not self._is_other_running(enumerate_windows_and_processes))
 
