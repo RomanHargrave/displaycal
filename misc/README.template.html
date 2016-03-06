@@ -78,7 +78,8 @@
 			For light personal non-commercial use, a one-time contribution may be appropriate.
 			If you're using ${APPNAME} professionally, an annual or monthly contribution would make a great deal of difference in ensuring that both projects continue to be available.</p>
 			<p>If you have decided to contribute (many thanks!), but you'd like to give to <a href="http://argyllcms.com">Argyll CMS</a> directly on your own behalf (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its contribution links), please leave a message on your ${APPNAME} contribution if contributing to both projects. Please note that if your contribution should be put towards adding a certain feature in Argyll CMS, like support for a specific instrument, it will be more appropriate and efficient to <a href="http://argyllcms.com">contribute to Argyll CMS only</a>, and directly.</p>
-			<form id="donationform" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+			<form id="donationform" action="https://www.paypal.com/cgi-bin/webscr" method="post" onsubmit="document.getElementById('donationform_business').value = ['${DOMAIN}', 'contribute'].reverse().join('\x40'); return true">
+				<noscript><strong>Please enable JavaScript!</strong></noscript>
 				<p>
 					Contribute using PayPal:
 					<input type="hidden" name="cmd" value="_donations" />
@@ -110,23 +111,19 @@
 						<option value="CAD">$ Canadian Dollar</option>
 						<option value="USD">$ US Dollar</option>
 					</select>
-					<button type="submit" class="paypal">Contribute</button>
-					<button type="button" class="paypal" onclick="location.href = document.forms['donationform'].action + '?cmd=_donations&amp;lc=' + document.forms['donationform'].elements['lc'].value + '&amp;business=' + encodeURIComponent(document.forms['donationform'].elements['business'].value) + '&amp;item_name=' + encodeURIComponent(document.forms['donationform'].elements['item_name'].value) + '&amp;no_shipping=1&amp;currency_code=' + document.forms['donationform'].elements['currency_code'].value">Own amount</button>
+					<button type="submit" class="paypal" disabled="disabled">Contribute</button>
+					<button type="button" class="paypal" disabled="disabled" onclick="location.href = document.forms['donationform'].action + '?cmd=_donations&amp;lc=' + document.forms['donationform'].elements['lc'].value + '&amp;business=' + encodeURIComponent(['${DOMAIN}', 'contribute'].reverse().join('\x40')) + '&amp;item_name=' + encodeURIComponent(document.forms['donationform'].elements['item_name'].value) + '&amp;no_shipping=1&amp;currency_code=' + document.forms['donationform'].elements['currency_code'].value">Own amount</button>
 				</p>
 			</form>
 			<script type="text/javascript">
 				//<![CDATA[
 				(function () {
-					var btns = document.getElementsByTagName('button'), i;
-					for (i = 0; i < btns.length; i ++) {
-						btns[i].style.visibility = 'hidden';
-					}
 					setTimeout(function () {
-						document.getElementById('donationform_business').value = ['${DOMAIN}', 'contribute'].reverse().join('\x40');
+						var btns = document.getElementsByTagName('button'), i;
 						for (i = 0; i < btns.length; i ++) {
-							btns[i].style.visibility = 'visible';
+							btns[i].disabled = false;
 						}
-					}, 3000);
+					}, 1500);
 				})();
 				//]]>
 			</script>
