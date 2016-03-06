@@ -802,8 +802,8 @@ def upload_colorimeter_correction(parent=None, params=None):
 	else:
 		# Upload
 		params['put'] = True
-		resp = http_request(parent, domain, "POST", path, params, 
-							failure_msg=failure_msg)
+		resp = http_request(parent, "colorimetercorrections." + domain, "POST",
+							path, params, failure_msg=failure_msg)
 	if resp is not False:
 		if resp.status == 201:
 			wx.CallAfter(InfoDialog, parent, 
