@@ -32,10 +32,11 @@ class ProfileLoader(object):
 		self.profile_associations = {}
 		self.profiles = {}
 		self.devices2profiles = {}
-		self.use_madhcnet = config.getcfg("profile_loader.use_madhcnet")
+		self.ramps = {}
+		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
 		self._skip = "--skip" in sys.argv[1:]
-		self._manual_restore = config.getcfg("profile.load_on_login")
-		self._reset_gamma_ramps = config.getcfg("profile_loader.reset_gamma_ramps")
+		self._manual_restore = bool(config.getcfg("profile.load_on_login"))
+		self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
 		self._known_apps = set([known_app.lower() for known_app in
 								config.defaults["profile_loader.known_apps"].split(";") +
 								config.getcfg("profile_loader.known_apps").split(";")])
@@ -652,6 +653,7 @@ class ProfileLoader(object):
 					mtime = os.stat(profile_path).st_mtime
 				else:
 					mtime = 0
+				profile_association_changed = False
 				if self.profile_associations.get(i) != (profile, mtime):
 					if not first_run:
 						device = get_active_display_device(moninfo["Device"])
@@ -664,49 +666,71 @@ class ProfileLoader(object):
 						self.devices2profiles[device.DeviceKey] = (display_edid,
 																   profile)
 					self.profile_associations[i] = (profile, mtime)
-					self.profiles[profile] = None
+					self.profiles[i] = None
+					self.ramps[i] = (None, None)
+					profile_association_changed = True
 				# Check video card gamma table and (re)load calibration if
 				# necessary
 				if not apply_profiles or not self.gdi32:
 					continue
-				vcgt_values = ([], [], [])
-				if not self._reset_gamma_ramps:
-					# Get display profile
-					if not self.profiles.get(profile):
-						try:
-							self.profiles[profile] = ICCP.ICCProfile(profile)
-							self.profiles[profile].tags.get("vcgt")
-						except Exception, exception:
-							continue
-					profile = self.profiles[profile]
-					if isinstance(profile.tags.get("vcgt"),
-								  ICCP.VideoCardGammaType):
-						# Get display profile vcgt
-						vcgt_values = profile.tags.vcgt.get_values()[:3]
-				if len(vcgt_values[0]) != 256:
-					# Hmm. Do we need to deal with this?
-					# I've never seen table-based vcgt with != 256 entries
-					if (not self._reset_gamma_ramps and
-						self._manual_restore and profile.tags.get("vcgt")):
-						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display)
-						safe_print(lang.getstr("vcgt.unknown_format",
-											   os.path.basename(profile.fileName)))
-						safe_print(lang.getstr("failure"))
-						results.append(display)
-						errors.append(lang.getstr("vcgt.unknown_format",
-												  os.path.basename(profile.fileName)))
-					# Fall back to linear calibration
-					tagData = "vcgt"
-					tagData += "\0" * 4  # Reserved
-					tagData += "\0\0\0\x01"  # Formula type
-					for channel in xrange(3):
-						tagData += "\0\x01\0\0"  # Gamma 1.0
-						tagData += "\0" * 4  # Min 0.0
-						tagData += "\0\x01\0\0"  # Max 1.0
-					vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
-					vcgt_values = vcgt.get_values()[:3]
-				values = ([], [], [])
+				(vcgt_ramp,
+				 vcgt_values) = self.ramps.get(self._reset_gamma_ramps or i,
+											   (None, None))
+				if not vcgt_ramp:
+					vcgt_values = ([], [], [])
+					if not self._reset_gamma_ramps:
+						# Get display profile
+						if not self.profiles.get(i):
+							try:
+								self.profiles[i] = ICCP.ICCProfile(profile)
+								self.profiles[i].tags.get("vcgt")
+							except Exception, exception:
+								continue
+						profile = self.profiles[i]
+						if isinstance(profile.tags.get("vcgt"),
+									  ICCP.VideoCardGammaType):
+							# Get display profile vcgt
+							vcgt_values = profile.tags.vcgt.get_values()[:3]
+					if len(vcgt_values[0]) != 256:
+						# Hmm. Do we need to deal with this?
+						# I've never seen table-based vcgt with != 256 entries
+						if (not self._reset_gamma_ramps and
+							(self._manual_restore or
+							 profile_association_changed) and
+							profile.tags.get("vcgt")):
+							safe_print(lang.getstr("calibration.loading_from_display_profile"))
+							safe_print(display)
+							safe_print(lang.getstr("vcgt.unknown_format",
+												   os.path.basename(profile.fileName)))
+							safe_print(lang.getstr("failure"))
+							results.append(display)
+							errors.append(lang.getstr("vcgt.unknown_format",
+													  os.path.basename(profile.fileName)))
+						# Fall back to linear calibration
+						tagData = "vcgt"
+						tagData += "\0" * 4  # Reserved
+						tagData += "\0\0\0\x01"  # Formula type
+						for channel in xrange(3):
+							tagData += "\0\x01\0\0"  # Gamma 1.0
+							tagData += "\0" * 4  # Min 0.0
+							tagData += "\0\x01\0\0"  # Max 1.0
+						vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
+						vcgt_values = vcgt.get_values()[:3]
+						if self._reset_gamma_ramps:
+							safe_print("Caching linear gamma ramps")
+						else:
+							safe_print("Caching implicit linear gamma ramps for profile",
+									   os.path.basename(profile_path))
+					else:
+						safe_print("Caching gamma ramps for profile",
+								   os.path.basename(profile_path))
+					# Convert vcgt to ushort_Array_256_Array_3
+					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
+					for j in xrange(len(vcgt_values[0])):
+						for k in xrange(3):
+							vcgt_ramp[k][j] = vcgt_values[k][j][1]
+					self.ramps[self._reset_gamma_ramps or i] = (vcgt_ramp,
+																vcgt_values)
 				if (not self._manual_restore and
 					getcfg("profile_loader.check_gamma_ramps")):
 					# Get video card gamma ramp
@@ -721,20 +745,13 @@ class ProfileLoader(object):
 					if not result:
 						continue
 					# Get ramp values
+					values = ([], [], [])
 					for j, channel in enumerate(ramp):
 						for k, v in enumerate(channel):
 							values[j].append([float(k), v])
-				# Check if video card matches profile vcgt
-				if values == vcgt_values:
-					continue
-				# Reload calibration.
-				# Convert vcgt to ushort_Array_256_Array_3
-				vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
-				for j in xrange(len(vcgt_values[0])):
-					for k in xrange(3):
-						vcgt_ramp[k][j] = vcgt_values[k][j][1]
-				if (not self._manual_restore and
-					getcfg("profile_loader.check_gamma_ramps")):
+					# Check if video card matches profile vcgt
+					if values == vcgt_values:
+						continue
 					safe_print(lang.getstr("vcgt.mismatch", display))
 				# Try and prevent race condition with madVR
 				# launching and resetting video card gamma table
@@ -742,14 +759,14 @@ class ProfileLoader(object):
 				if not apply_profiles:
 					break
 				# Now actually reload or reset calibration
-				if (self._manual_restore or
+				if (self._manual_restore or profile_association_changed or
 					getcfg("profile_loader.check_gamma_ramps")):
 					if self._reset_gamma_ramps:
 						safe_print(lang.getstr("calibration.resetting"))
 						safe_print(display)
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display, "->", os.path.basename(profile.fileName))
+						safe_print(display, "->", os.path.basename(profile_path))
 				hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				try:
 					result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
@@ -757,21 +774,25 @@ class ProfileLoader(object):
 					result = exception
 				finally:
 					win32gui.DeleteDC(hdc)
-				if (self._manual_restore or
+				if (self._manual_restore or profile_association_changed or
 					getcfg("profile_loader.check_gamma_ramps")):
 					if isinstance(result, Exception) or not result:
 						if result:
 							safe_print(result)
 						safe_print(lang.getstr("failure"))
+					else:
+						safe_print(lang.getstr("success"))
+				if (self._manual_restore or
+					getcfg("profile_loader.check_gamma_ramps")):
+					if isinstance(result, Exception) or not result:
 						errstr = lang.getstr("calibration.load_error")
 						errors.append(": ".join([display, errstr]))
 					else:
-						safe_print(lang.getstr("success"))
 						text = display + u" \u2192 "
 						if self._reset_gamma_ramps:
 							text += lang.getstr("linear")
 						else:
-							text += os.path.basename(profile.fileName)
+							text += os.path.basename(profile_path)
 						results.append(text)
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
