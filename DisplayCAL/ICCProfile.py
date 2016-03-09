@@ -3252,9 +3252,6 @@ class ICCProfile:
 			self.illuminant = XYZNumber("\0\0\xf6\xd6\0\x01\0\0\0\0\xd3-")  # D50
 			self.creator = ""
 	
-	def __del__(self):
-		self.close()
-	
 	def __len__(self):
 		"""
 		Return the number of tags. 
