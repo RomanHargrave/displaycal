@@ -303,7 +303,8 @@ def setup_logging(logdir, name=appname, ext=".py", backupCount=5):
 		ext in (".app", ".exe", ".pyw")):
 		logger = get_file_logger(None, loglevel, "midnight",
 								 backupCount, filename=name)
-		streamhandler = logging.StreamHandler(logbuffer)
-		streamformatter = logging.Formatter("%(asctime)s %(message)s")
-		streamhandler.setFormatter(streamformatter)
-		logger.addHandler(streamhandler)
+		if name == appname or name == "dispcalGUI":
+			streamhandler = logging.StreamHandler(logbuffer)
+			streamformatter = logging.Formatter("%(asctime)s %(message)s")
+			streamhandler.setFormatter(streamformatter)
+			logger.addHandler(streamhandler)
