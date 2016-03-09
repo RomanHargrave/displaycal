@@ -48,7 +48,7 @@ standard_illuminants = {
 }
 
 
-def specialpow(a, b):
+def specialpow(a, b, slope_limit=0):
 	"""
 	Wrapper for power, Rec. 601/709, SMPTE 240M, sRGB and L* functions
 	
@@ -60,8 +60,12 @@ def specialpow(a, b):
 	if b >= 0.0:
 		# Power curve
 		if a < 0.0:
+			if slope_limit:
+				return min(-math.pow(-a, b), a / slope_limit)
 			return -math.pow(-a, b)
 		else:
+			if slope_limit:
+				return max(math.pow(a, b), a / slope_limit)
 			return math.pow(a, b)
 	if a < 0.0:
 		signScale = -1.0
