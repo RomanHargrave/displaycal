@@ -4,6 +4,17 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 - update to ${VERSION}: see README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
+Wed Mar  9 13:07:36 UTC 2016 - kkaempf@suse.com
+
+- Add provides/obsoletes for the rename dispcalGUI -> DisplayCAL
+  at version 3.1.0.0
+
+-------------------------------------------------------------------
+Mon Feb 29 16:43:24 UTC 2016 - florian@displaycal.net
+
+- update to 3.1.1.0: see README.html#changelog-3.1.1
+
+-------------------------------------------------------------------
 Sun Jan 31 23:47:53 UTC 2016 - florian@displaycal.net
 
 - update to 3.1.0.0:

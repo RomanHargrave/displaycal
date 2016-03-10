@@ -1,7 +1,7 @@
 #
 # spec file for package DisplayCAL
 #
-# Copyright (c) ${YEAR} SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) ${YEAR} SUSE LINUX GmbH, Nuernberg, Germany.
 # Copyright (c) ${YEAR} Florian Hoech
 #
 # All modifications and additions to the file contributed by third parties
@@ -22,10 +22,23 @@
 %define py_maxversion ${PY_MAXVERSION}
 %define wx_minversion ${WX_MINVERSION}
 
+%if 0%{?mandriva_version} > 0
+%define correct_group Graphics
+%else
+%if 0%{?suse_version} > 0
+%define correct_group Productivity/Graphics/Other
+%else
+%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
+%define correct_group Applications/Multimedia
+%endif
+%endif
+%endif
+
 %global debug_package %{nil}
 
 Summary:        ${SUMMARY}
 License:        GPL-3.0+
+Group:          %{correct_group}
 Name:           ${PACKAGE}
 Version:        ${VERSION}
 Release:        0
@@ -33,9 +46,11 @@ Source0:        ${URL}download/%{name}-%version.tar.gz
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Requires:       p7zip
-Obsoletes:      dispcalGUI, dispcalGUI-0install, ${PACKAGE}-0install
+Obsoletes:      DisplayCAL-0install
+Provides:       dispcalGUI = %{version}
+Obsoletes:      dispcalGUI < 3.1.0.0
+Obsoletes:      dispcalGUI-0install < 3.1.0.0
 %if 0%{?mandriva_version} > 0
-Group:          Graphics
 BuildRequires:  gcc
 BuildRequires:  libpython-devel
 BuildRequires:  udev
@@ -50,20 +65,18 @@ Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
 %else
 %if 0%{?suse_version} > 0
-Group:          Productivity/Graphics/Other
 BuildRequires:  gcc
 BuildRequires:  python-devel
 BuildRequires:  udev
 BuildRequires:  update-desktop-files
 BuildRequires:  xorg-x11-devel
 Requires:       argyllcms
-Requires:       python-pygame
 Requires:       python-numpy >= %{numpy_version}
+Requires:       python-pygame
 Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
-Group:          Applications/Multimedia
 BuildRequires:  gcc
 BuildRequires:  libX11-devel
 BuildRequires:  libXinerama-devel

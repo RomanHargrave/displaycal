@@ -22,10 +22,23 @@
 %define py_maxversion ${PY_MAXVERSION}
 %define wx_minversion ${WX_MINVERSION}
 
+%if 0%{?mandriva_version} > 0
+%define correct_group Graphics
+%else
+%if 0%{?suse_version} > 0
+%define correct_group Productivity/Graphics/Other
+%else
+%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
+%define correct_group Applications/Multimedia
+%endif
+%endif
+%endif
+
 %global debug_package %{nil}
 
 Summary:        ${SUMMARY}
 License:        GPL-3.0+
+Group:          %{correct_group}
 Name:           ${PACKAGE}-0install
 Version:        ${VERSION}
 Release:        0
@@ -37,9 +50,12 @@ BuildRequires:  python
 BuildRequires:  xdg-utils
 Requires:       xdg-utils
 Requires:       p7zip
-Obsoletes:      dispcalGUI, dispcalGUI-0install, ${PACKAGE}
+Obsoletes:      ${PACKAGE}
+Provides:       ${PACKAGE} = %{version}
+Provides:       dispcalGUI = %{version}
+Obsoletes:      dispcalGUI < 3.1.0.0
+Obsoletes:      dispcalGUI-0install < 3.1.0.0
 %if 0%{?mandriva_version} > 0
-Group:          Graphics
 Requires:       libxscrnsaver1
 Requires:       pygame
 Requires:       python-numpy >= %{numpy_version}
@@ -47,18 +63,16 @@ Requires:       wxPythonGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
 %else
 %if 0%{?suse_version} > 0
-Group:          Productivity/Graphics/Other
 BuildRequires:  update-desktop-files
 BuildRequires:  zeroinstall-injector
 Requires:       libXss1
-Requires:       python-pygame
 Requires:       python-numpy >= %{numpy_version}
+Requires:       python-pygame
 Requires:       python-wxGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
-Group:          Applications/Multimedia
 Requires:       libXScrnSaver
 Requires:       numpy >= %{numpy_version}
 Requires:       p7zip-plugins
