@@ -450,7 +450,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 								 suffix),),
 						 progress_msg=lang.getstr("downloading"),
 						 fancy=False)
-			return
+		return
 	elif result != wx.ID_CANCEL:
 		path = "/"
 		if argyll:
