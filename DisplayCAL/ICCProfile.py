@@ -344,6 +344,7 @@ tags = {"A2B0": "Device to PCS: Intent 0",
 		"bTRC": "Blue tone response curve",
 		"bXYZ": "Blue matrix column",
 		"chad": "Chromatic adaptation transform",
+		"ciis": "Colorimetric intent image state",
 		"clro": "Colorant order",
 		"cprt": "Copyright",
 		"desc": "Description",
@@ -383,11 +384,21 @@ tech = {"fscn": "Film scanner",
 		"PMD ": "Passive matrix display",
 		"AMD ": "Active matrix display",
 		"KPCD": "Photo CD",
-		"imgs": "Photo imagesetter",
+		"imgs": "Photographic image setter",
 		"grav": "Gravure",
 		"offs": "Offset lithography",
 		"silk": "Silkscreen",
-		"flex": "Flexography"}
+		"flex": "Flexography",
+		"mpfs": "Motion picture film scanner",
+		"mpfr": "Motion picture film recorder",
+		"dmpc": "Digital motion picture camera",
+		"dcpj": "Digital cinema projector"}
+
+ciis = {"scoe": "Scene colorimetry estimates",
+		"sape": "Scene appearance estimates",
+		"fpce": "Focal plane colorimetry estimates",
+		"rhoc": "Reflection hardcopy original colorimetry",
+		"rpoc": "Reflection print output colorimetry"}
 
 			
 def PCSLab_dec_to_uInt16(L, a, b):
@@ -4067,8 +4078,10 @@ class ICCProfile:
 			elif isinstance(tag, Text):
 				if sig == "cprt":
 					info[name] = unicode(tag)
+				elif sig == "ciis":
+					info[name] = ciis.get(tag, "'%s'" % tag)
 				elif sig == "tech":
-					info[name] = tech.get(tag, "Unknown")
+					info[name] = tech.get(tag, "'%s'" % tag)
 				elif tag.find("\n") > -1 or tag.find("\r") > -1:
 					info[name] = "[%i Bytes]" % len(tag)
 				else:
@@ -4200,7 +4213,8 @@ class ICCProfile:
 						 "(xy %s)" % " ".join("%6.4f" % v for v in
 												tag.xyY[:2])])
 			elif isinstance(tag, ICCProfileTag):
-				info[name] = "[%i Bytes]" % len(tag.tagData)
+				info[name] = "'%s' [%i Bytes]" % (tag.tagData[:4],
+												  len(tag.tagData))
 		return info
 	
 	def get_rgb_space(self):

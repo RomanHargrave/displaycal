@@ -9,6 +9,7 @@ from config import get_data_path, get_verified_path, getcfg, hascfg, setcfg
 from log import safe_print
 from meta import name as appname
 from options import debug
+from ordereddict import OrderedDict
 from util_os import waccess
 from worker import Error, show_result_dialog
 import ICCProfile as ICCP
@@ -438,6 +439,12 @@ class SynthICCFrame(BaseFrame):
 			gamma, white, red, green, blue = colormath.rgb_spaces[preset_name]
 			white = colormath.get_whitepoint(white)
 			self._updating_ctrls = True
+			self.panel.Freeze()
+			if self.preset_ctrl.GetStringSelection() == "DCI P3 RGB":
+				tech = self.tech["dcpj"]
+			else:
+				tech = self.tech[""]
+			self.tech_ctrl.SetStringSelection(tech)
 			for i, component in enumerate("XYZ"):
 				getattr(self, "white_%s" % component).SetValue(white[i] * 100)
 			self.parse_XYZ("white", True)
@@ -446,6 +453,7 @@ class SynthICCFrame(BaseFrame):
 					getattr(self, "%s_%s" % (color, component)).SetValue(locals()[color][i])
 			self.parse_xy(None)
 			self.set_trc(gamma)
+			self.panel.Thaw()
 			self._updating_ctrls = False
 
 	def get_commands(self):
@@ -636,6 +644,20 @@ class SynthICCFrame(BaseFrame):
 			(profile.tags[tagname].X,
 			 profile.tags[tagname].Y,
 			 profile.tags[tagname].Z) = X, Y, Z
+		# Profile class
+		profile.profileClass = self.profile_classes.keys()[self.profile_class_ctrl.GetSelection()]
+		# Technology type
+		tech_i = self.tech_ctrl.GetSelection()
+		if tech_i > 0:
+			profile.tags.tech = ICCP.SignatureType("sig \0\0\0\0" +
+												   self.tech.keys()[tech_i],
+												   "tech")
+		# Colorimetric intent image state
+		ciis_i = self.ciis_ctrl.GetSelection()
+		if ciis_i > 0:
+			profile.tags.ciis = ICCP.SignatureType("sig \0\0\0\0" +
+												   self.ciis.keys()[ciis_i],
+												   "ciis")
 		path = None
 		dlg = wx.FileDialog(self, 
 							lang.getstr("save_as"),
@@ -676,6 +698,25 @@ class SynthICCFrame(BaseFrame):
 		self.trc_gamma_types_ba = {"g": 0, "G": 1}
 		self.trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 										   lang.getstr("trc.type.absolute")])
+
+		self.profile_classes = OrderedDict(get_mapping(ICCP.profileclass.items(),
+													   ["mntr", "scnr"]))
+		self.profile_class_ctrl.SetItems(self.profile_classes.values())
+		self.profile_class_ctrl.SetSelection(0)
+
+		self.tech = OrderedDict(get_mapping([("", "unspecified")] +
+											ICCP.tech.items(),
+											["", "fscn", "dcam", "rscn", "vidm",
+											 "vidc", "pjtv", "CRT ", "PMD ",
+											 "AMD ", "mpfs", "dmpc", "dcpj"]))
+		self.tech_ctrl.SetItems(self.tech.values())
+		self.tech_ctrl.SetSelection(0)
+
+		self.ciis = OrderedDict(get_mapping([("", "unspecified")] +
+											 ICCP.ciis.items(),
+											["", "scoe", "sape", "fpce"]))
+		self.ciis_ctrl.SetItems(self.ciis.values())
+		self.ciis_ctrl.SetSelection(0)
 	
 	def trc_ctrl_handler(self, event=None):
 		if not self._updating_ctrls:
@@ -745,6 +786,17 @@ class SynthICCFrame(BaseFrame):
 		self.black_output_offset_ctrl.SetValue(outoffset)
 		self.black_output_offset_intctrl.SetValue(outoffset)
 		self.black_luminance_ctrl_handler(True)
+		if i in (3, 5):
+			# Rec 709 or SMPTE 240M
+			# Match Adobe 'video' profiles
+			self.profile_class_ctrl.SetStringSelection(self.profile_classes["scnr"])
+			self.tech_ctrl.SetStringSelection(self.tech["vidc"])
+			self.ciis_ctrl.SetStringSelection(self.ciis["fpce"])
+		elif self.profile_class_ctrl.GetStringSelection() == self.profile_classes["scnr"]:
+			# If 'input' profile, reset class/tech/colorimetric intent image state
+			self.profile_class_ctrl.SetStringSelection(self.profile_classes["mntr"])
+			self.tech_ctrl.SetStringSelection(self.tech[""])
+			self.ciis_ctrl.SetStringSelection(self.ciis[""])
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")
@@ -753,6 +805,12 @@ class SynthICCFrame(BaseFrame):
 	def white_xy_ctrl_handler(self, event):
 		self.parse_xy("white")
 		
+
+
+def get_mapping(mapping, keys):
+	return sorted([(k, lang.getstr(v.lower().replace(" ", "_"))) for k, v in
+				   filter(lambda item: item[0] in keys, mapping)],
+				  key=lambda item: item[0])
 
 
 def main():
