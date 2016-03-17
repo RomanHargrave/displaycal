@@ -500,7 +500,8 @@ class ProfileLoader(object):
 		from wxwindows import wx
 		import config
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
-		if (self.frame and event.GetEventType() == wx.EVT_MENU.typeId and
+		if (event and self.frame and
+			event.GetEventType() == wx.EVT_MENU.typeId and
 			not calibration_management_isenabled()):
 			import localization as lang
 			from wxwindows import ConfirmDialog
@@ -831,6 +832,9 @@ class ProfileLoader(object):
 										 self.taskbar_icon.set_visual_state())
 			first_run = False
 			self._manual_restore = False
+			if "--oneshot" in sys.argv[1:]:
+				wx.CallAfter(self.exit)
+				break
 			# Wait three seconds
 			timeout = 0
 			while (self and self.monitoring and timeout < 3 and
@@ -1186,34 +1190,44 @@ def get_display_name_edid(device, moninfo=None):
 	return display, edid
 
 def main():
+	import config
+	from log import safe_print
+
 	unknown_option = None
 	for arg in sys.argv[1:]:
-		if arg not in ("--help", "--force", "--verify", "--silent",
-					   "--error-dialog", "-V", "--version", "--skip"):
+		if (arg not in ("--help", "--force", "-V", "--version") and
+			(arg != "--oneshot" or sys.platform != "win32") and
+			(arg not in ("--verify", "--silent", "--error-dialog", "--skip") or
+			 sys.platform == "win32")):
 			unknown_option = arg
 			break
 
 	if "--help" in sys.argv[1:] or unknown_option:
-		if unknown_option:
-			print "%s: unrecognized option `%s'" % (os.path.basename(sys.argv[0]),
-											 unknown_option)
-		print "Usage: %s [OPTION]..." % os.path.basename(sys.argv[0])
-		print "Apply profiles to configured display devices and load calibration"
-		print "Version %s" % version
-		print ""
-		print "  --help           Output this help text and exit"
-		print "  --force          Force loading of calibration/profile (if it has been"
-		print "                   disabled in %s.ini)" % appname
-		print "  --verify         Verify if calibration was loaded correctly"
-		print "  --silent         Do not show dialog box on error"
-		print "  --skip           Skip initial loading of calibration"
-		print "  --error-dialog   Force dialog box on error"
-		print "  -V, --version    Output version information and exit"
-	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
-		print "%s %s" % (os.path.basename(sys.argv[0]), version)
-	else:
-		import config
 
+		if unknown_option:
+			safe_print("%s: unrecognized option `%s'" %
+					   (os.path.basename(sys.argv[0]), unknown_option))
+			if sys.platform == "win32":
+				from wxwindows import BaseApp
+				BaseApp._run_exitfuncs()
+		safe_print("Usage: %s [OPTION]..." % os.path.basename(sys.argv[0]))
+		safe_print("Apply profiles to configured display devices and load calibration")
+		safe_print("Version %s" % version)
+		safe_print("")
+		safe_print("  --help           Output this help text and exit")
+		safe_print("  --force          Force loading of calibration/profile (if it has been")
+		safe_print("                   disabled in %s.ini)" % appname)
+		if sys.platform == "win32":
+			safe_print("  --oneshot        Exit after loading calibration")
+		else:
+			safe_print("  --verify         Verify if calibration was loaded correctly")
+			safe_print("  --silent         Do not show dialog box on error")
+			safe_print("  --skip           Skip initial loading of calibration")
+			safe_print("  --error-dialog   Force dialog box on error")
+		safe_print("  -V, --version    Output version information and exit")
+	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
+		safe_print("%s %s" % (os.path.basename(sys.argv[0]), version))
+	else:
 		config.initcfg("apply-profiles")
 
 		if (not "--force" in sys.argv[1:] and
