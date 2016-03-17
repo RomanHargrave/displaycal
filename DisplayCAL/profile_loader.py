@@ -131,7 +131,10 @@ class ProfileLoader(object):
 						restore_auto = restore_manual = reset = None
 					else:
 						restore_manual = self.pl._set_manual_restore
-						restore_auto = self.set_auto_restore
+						if "--force" in sys.argv[1:]:
+							restore_auto = None
+						else:
+							restore_auto = self.set_auto_restore
 						reset = self.pl._set_reset_gamma_ramps
 
 					fix = len(self.pl.monitors) > 1
