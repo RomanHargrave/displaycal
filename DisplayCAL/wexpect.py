@@ -2581,10 +2581,16 @@ class ConsoleReader:
                                        
         return PyConsoleScreenBufferType(consout)
         
-    def initConsole(self, consout, c=None, r=None):     
-        rect = PySMALL_RECTType(0, 0, 79, 24)
+    def initConsole(self, consout, c=None, r=None):
+        # Window size can't be larger than maximum window size
+        consinfo = consout.GetConsoleScreenBufferInfo()
+        maxwinsize = consinfo['MaximumWindowSize']
+        rect = PySMALL_RECTType(0, 0, min(maxwinsize.X - 1, 79),
+                                      min(maxwinsize.Y - 1, 24))
         consout.SetConsoleWindowInfo(True, rect)
-        size = PyCOORDType(c or 80, r or 16000)
+        # Buffer size can't be smaller than window size
+        size = PyCOORDType(max(rect.Right + 1, c or 80),
+                           max(rect.Bottom + 1, r or 16000))
         consout.SetConsoleScreenBufferSize(size)
         pos = PyCOORDType(0, 0)
         consout.FillConsoleOutputCharacter(u' ', size.X * size.Y, pos)   
