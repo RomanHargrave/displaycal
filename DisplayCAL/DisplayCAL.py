@@ -12482,6 +12482,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		Return True if update was needed and carried out, False otherwise.
 		
 		"""
+		if self.worker.is_working():
+			return
 		argyll_bin_dir = self.worker.argyll_bin_dir
 		argyll_version = list(self.worker.argyll_version)
 		displays = list(self.worker.displays)
@@ -12497,7 +12499,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			kwargs = dict(cargs=(argyll_bin_dir, argyll_version, displays,
 								 comports, event, callafter, callafter_args),
 						  wargs=(silent, ),
-						  wkwargs={"enumerate_ports": enumerate_ports})
+						  wkwargs={"enumerate_ports": enumerate_ports,
+								   "displays": displays,
+								   "profile_loader_load_cal":
+								   isinstance(event, wx.DisplayChangedEvent)})
 			if silent:
 				self.thread = delayedresult.startWorker(*args, **kwargs)
 			else:
@@ -12515,12 +12520,15 @@ class MainFrame(ReportFrame, BaseFrame):
 													   callafter,
 													   callafter_args)
 
-	def check_update_controls_producer(self, silent=False, enumerate_ports=True):
+	def check_update_controls_producer(self, silent=False, enumerate_ports=True,
+									   displays=None,
+									   profile_loader_load_cal=False):
 		result = self.worker.enumerate_displays_and_ports(silent,
 														  enumerate_ports=enumerate_ports)
-		if (sys.platform == "win32" and
+		if (sys.platform == "win32" and displays != self.worker.displays and
+			profile_loader_load_cal and
 			not util_win.calibration_management_isenabled()):
-			# Update profile loader configuration if running
+			# Tell profile loader to load calibration
 			try:
 				for host in self.get_scripting_hosts():
 					ip_port, name = host.split(None, 1)
