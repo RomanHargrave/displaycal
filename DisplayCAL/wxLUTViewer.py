@@ -1865,6 +1865,10 @@ class LUTFrame(BaseFrame):
 	def worker(self):
 		return self.client.worker
 
+	def display_changed(self, event):
+		self.worker.enumerate_displays_and_ports(check_lut_access=False,
+												 enumerate_ports=False)
+
 
 def main():
 	config.initcfg("curve-viewer")
@@ -1882,8 +1886,8 @@ def main():
 
 def _main(app):
 	app.TopWindow.listen()
-	app.TopWindow.worker.enumerate_displays_and_ports(check_lut_access=False,
-													  enumerate_ports=False)
+	app.TopWindow.display_changed(None)
+	app.TopWindow.Bind(wx.EVT_DISPLAY_CHANGED, app.TopWindow.display_changed)
 	app.TopWindow.display_no, geometry, client_area = app.TopWindow.get_display()
 	app.TopWindow.Bind(wx.EVT_MOVE, app.TopWindow.move_handler, app.TopWindow)
 	display_no = get_argyll_display_number(geometry)

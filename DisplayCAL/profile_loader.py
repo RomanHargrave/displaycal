@@ -82,21 +82,26 @@ class ProfileLoader(object):
 					BaseFrame.__init__(self, None)
 					self.pl = pl
 					self.Bind(wx.EVT_CLOSE, pl.exit)
+					self.Bind(wx.EVT_DISPLAY_CHANGED, self.pl._display_changed)
 
 				def get_commands(self):
-					return self.get_common_commands() + ["apply-profiles"]
+					return self.get_common_commands() + ["apply-profiles [force]"]
 
 				def process_data(self, data):
-					if data[0] == "apply-profiles" and len(data) == 1:
-						if (not "--force" in sys.argv[1:] and
+					if data[0] == "apply-profiles" and (len(data) == 1 or
+														(len(data) == 2 and
+														 data[1] == "force")):
+						if (not ("--force" in sys.argv[1:] or len(data) == 2) and
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
-						if (os.path.isfile(os.path.join(config.confighome,
-													    appbasename + ".lock")) or
+						if ((len(data) == 1 and
+							 os.path.isfile(os.path.join(config.confighome,
+														 appbasename + ".lock"))) or
 							self.pl._is_other_running()):
 							return "forbidden"
 						else:
-							self.pl._manual_restore = True
+							with self.pl.lock:
+								self.pl._manual_restore = len(data)
 						return "ok"
 					return "invalid"
 
@@ -576,6 +581,11 @@ class ProfileLoader(object):
 				cls.startswith("madToolsMsgHandlerWindow")):
 				windowlist.append(hwnd)
 
+	def _display_changed(self, event):
+		from log import safe_print
+
+		safe_print(event)
+
 	def _check_display_conf(self):
 		import ctypes
 		import struct
@@ -602,6 +612,7 @@ class ProfileLoader(object):
 			result = None
 			results = []
 			errors = []
+			self.lock.acquire()
 			apply_profiles = self._should_apply_profiles()
 			# Check if display configuration changed
 			try:
@@ -620,7 +631,7 @@ class ProfileLoader(object):
 				timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
 				if timestamp > current_timestamp:
 					if display != current_display:
-						if not first_run and apply_profiles:
+						if not first_run:
 							safe_print(lang.getstr("display_detected"))
 							# One second delay to allow display configuration
 							# to settle
@@ -835,6 +846,7 @@ class ProfileLoader(object):
 										 self.taskbar_icon.set_visual_state())
 			first_run = False
 			self._manual_restore = False
+			self.lock.release()
 			if "--oneshot" in sys.argv[1:]:
 				wx.CallAfter(self.exit)
 				break
@@ -1065,16 +1077,18 @@ class ProfileLoader(object):
 
 	def _set_manual_restore(self, event):
 		from config import setcfg
-		setcfg("profile_loader.reset_gamma_ramps", 0)
-		self._manual_restore = True
-		self._reset_gamma_ramps = False
+		with self.lock:
+			setcfg("profile_loader.reset_gamma_ramps", 0)
+			self._manual_restore = True
+			self._reset_gamma_ramps = False
 		self.taskbar_icon.set_visual_state()
 
 	def _set_reset_gamma_ramps(self, event):
 		from config import setcfg
-		setcfg("profile_loader.reset_gamma_ramps", 1)
-		self._manual_restore = True
-		self._reset_gamma_ramps = True
+		with self.lock:
+			setcfg("profile_loader.reset_gamma_ramps", 1)
+			self._manual_restore = True
+			self._reset_gamma_ramps = True
 		self.taskbar_icon.set_visual_state()
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True):
@@ -1090,7 +1104,7 @@ class ProfileLoader(object):
 				 (config.getcfg("profile.load_on_login") and
 				  (sys.platform != "win32" or
 				   not calibration_management_isenabled()))) and
-				not self._displaycal_running and
+				(not self._displaycal_running or self._manual_restore == 2) and
 				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
@@ -1158,13 +1172,14 @@ class ProfileLoader(object):
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				return
-		setcfg("profile_loader.fix_profile_associations",
-			   int(event.IsChecked()))
-		if event.IsChecked():
-			self._set_display_profiles()
-		else:
-			self._reset_display_profile_associations()
-		self._manual_restore = True
+		with self.lock:
+			setcfg("profile_loader.fix_profile_associations",
+				   int(event.IsChecked()))
+			if event.IsChecked():
+				self._set_display_profiles()
+			else:
+				self._reset_display_profile_associations()
+			self._manual_restore = True
 
 
 def get_display_name_edid(device, moninfo=None):

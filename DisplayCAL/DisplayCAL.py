@@ -57,7 +57,7 @@ import demjson
 
 # Config
 import config
-from config import (autostart, autostart_home, build, 
+from config import (appbasename, autostart, autostart_home, build, 
 					script_ext, defaults, enc, 
 					exe, exe_ext, fs_enc, getbitmap, geticon, 
 					get_ccxx_testchart, get_current_profile,
@@ -1571,6 +1571,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		self.Bind(wx.EVT_SIZE, self.OnResize, self)
+		self.Bind(wx.EVT_DISPLAY_CHANGED, self.check_update_controls)
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {
 			".7z": self.cal_drop_handler,
@@ -12486,8 +12487,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		displays = list(self.worker.displays)
 		comports = list(self.worker.instruments)
 		if event:
-			# Explicitly called from menu
-			enumerate_ports = True
+			enumerate_ports = not isinstance(event, wx.DisplayChangedEvent)
 		else:
 			# Use configured value
 			enumerate_ports = getcfg("enumerate_ports.auto")
@@ -12518,12 +12518,13 @@ class MainFrame(ReportFrame, BaseFrame):
 	def check_update_controls_producer(self, silent=False, enumerate_ports=True):
 		result = self.worker.enumerate_displays_and_ports(silent,
 														  enumerate_ports=enumerate_ports)
-		if sys.platform == "win32":
+		if (sys.platform == "win32" and
+			not util_win.calibration_management_isenabled()):
 			# Update profile loader configuration if running
 			try:
 				for host in self.get_scripting_hosts():
 					ip_port, name = host.split(None, 1)
-					if name == appname + "-apply-profiles":
+					if name == appbasename + "-apply-profiles":
 						ip, port = ip_port.split(":", 1)
 						port = int(port)
 						conn_result = self.connect(ip, port)
@@ -12535,19 +12536,21 @@ class MainFrame(ReportFrame, BaseFrame):
 						self.conn.send_command("getappname")
 						response = self.conn.get_single_response()
 						if response == appname + "-apply-profiles":
-							self.conn.send_command('setcfg "argyll.dir" "%s"' %
-												   safe_str(getcfg("argyll.dir"),
-															"UTF-8"))
+							self.conn.send_command('apply-profiles force')
 							response = self.conn.get_single_response()
 							if response != "ok":
-								safe_print("Warning - could not update profile "
-										   "loader configuration: setcfg returned",
-										   response)
+								safe_print("Warning - profile loader didn't"
+										   "load calibration:", response)
+						else:
+							safe_print("Warning - profile loader not running "
+									   "under expected port", port)
 						del self.conn
 						break
+				else:
+					safe_print("Warning - profile loader not running?")
 			except Exception, exception:
-				safe_print("Warning - could not update profile loader "
-						   "configuration:", exception)
+				safe_print("Warning - couldn't talk to profile loader:",
+						   exception)
 		return result
 	
 	def check_update_controls_consumer(self, result, argyll_bin_dir,
