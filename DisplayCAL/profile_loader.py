@@ -595,10 +595,62 @@ class ProfileLoader(object):
 
 		safe_print(event)
 
-	def _check_display_conf(self):
-		import ctypes
+	def _check_display_changed(self, first_run=False):
 		import struct
 		import _winreg
+
+		from config import getcfg
+		import localization as lang
+		from log import safe_print
+
+		try:
+			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
+		except WindowsError:
+			key = None
+			numsubkeys = 0
+			if not self.monitors:
+				self._enumerate_monitors()
+		else:
+			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+		for i in xrange(numsubkeys):
+			subkey = _winreg.OpenKey(key, _winreg.EnumKey(key, i))
+			display = _winreg.QueryValueEx(subkey, "SetId")[0]
+			timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
+			if timestamp > self._current_timestamp:
+				if display != self._current_display:
+					if not first_run:
+						safe_print(lang.getstr("display_detected"))
+						# One second delay to allow display configuration
+						# to settle
+						time.sleep(1)
+					if not first_run or not self.monitors:
+						self._enumerate_monitors()
+						for (display, edid, moninfo) in self.monitors:
+							safe_print(display)
+						if getcfg("profile_loader.fix_profile_associations"):
+							# Work-around long-standing bug in applications
+							# querying the monitor profile not making sure
+							# to use the active display (this affects Windows
+							# itself as well) when only one display is
+							# active in a multi-monitor setup.
+							if not first_run:
+								self._reset_display_profile_associations()
+							self._set_display_profiles()
+					self._has_display_changed = True
+					if self._is_displaycal_running():
+						# Normally calibration loading is disabled while
+						# DisplayCAL is running. Override this when the
+						# display has changed
+						self._manual_restore = 2
+				self._current_display = display
+				self._current_timestamp = timestamp
+			_winreg.CloseKey(subkey)
+		if key:
+			_winreg.CloseKey(key)
+
+	def _check_display_conf(self):
+		import ctypes
 
 		import win32gui
 
@@ -610,8 +662,8 @@ class ProfileLoader(object):
 		from util_win import get_active_display_device
 
 		display = None
-		current_display = None
-		current_timestamp = 0
+		self._current_display = None
+		self._current_timestamp = 0
 		first_run = True
 		displaycal_running = self._is_displaycal_running()
 		numwindows = 0
@@ -621,49 +673,7 @@ class ProfileLoader(object):
 			errors = []
 			self.lock.acquire()
 			# Check if display configuration changed
-			try:
-				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
-									  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
-			except WindowsError:
-				key = None
-				numsubkeys = 0
-				if not self.monitors:
-					self._enumerate_monitors()
-			else:
-				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-			for i in xrange(numsubkeys):
-				subkey = _winreg.OpenKey(key, _winreg.EnumKey(key, i))
-				display = _winreg.QueryValueEx(subkey, "SetId")[0]
-				timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
-				if timestamp > current_timestamp:
-					if display != current_display:
-						if not first_run:
-							safe_print(lang.getstr("display_detected"))
-							# One second delay to allow display configuration
-							# to settle
-							time.sleep(1)
-						if not first_run or not self.monitors:
-							self._enumerate_monitors()
-							if getcfg("profile_loader.fix_profile_associations"):
-								# Work-around long-standing bug in applications
-								# querying the monitor profile not making sure
-								# to use the active display (this affects Windows
-								# itself as well) when only one display is
-								# active in a multi-monitor setup.
-								if not first_run:
-									self._reset_display_profile_associations()
-								self._set_display_profiles()
-						self._has_display_changed = True
-						if self._is_displaycal_running():
-							# Normally calibration loading is disabled while
-							# DisplayCAL is running. Override this when the
-							# display has changed
-							self._manual_restore = 2
-					current_display = display
-					current_timestamp = timestamp
-				_winreg.CloseKey(subkey)
-			if key:
-				_winreg.CloseKey(key)
+			self._check_display_changed(first_run)
 			# Check profile associations
 			for i, (display, edid, moninfo) in enumerate(self.monitors):
 				try:
@@ -681,11 +691,13 @@ class ProfileLoader(object):
 					mtime = 0
 				profile_association_changed = False
 				if self.profile_associations.get(i) != (profile, mtime):
+					# Make sure our device <-> profile mappings are up-to-date
+					self._check_display_changed(first_run)
 					if not first_run:
 						device = get_active_display_device(moninfo["Device"])
 						if not device:
 							continue
-						safe_print(lang.getstr("display_detected"))
+						safe_print("A profile change has been detected")
 						safe_print(display, "->", profile)
 						display_edid = get_display_name_edid(device,
 															 moninfo)
@@ -1216,8 +1228,6 @@ def get_display_name_edid(device, moninfo=None):
 							  "%i, %i, %ix%i" %
 							  (m_left, m_top, m_width,
 							   m_height)])
-	else:
-		display = "%s (%s)" % (display, lang.getstr("deactivated"))
 	return display, edid
 
 def main():
