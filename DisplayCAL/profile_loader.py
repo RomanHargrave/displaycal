@@ -613,7 +613,6 @@ class ProfileLoader(object):
 			results = []
 			errors = []
 			self.lock.acquire()
-			apply_profiles = self._should_apply_profiles()
 			# Check if display configuration changed
 			try:
 				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
@@ -685,7 +684,7 @@ class ProfileLoader(object):
 					profile_association_changed = True
 				# Check video card gamma table and (re)load calibration if
 				# necessary
-				if not apply_profiles or not self.gdi32:
+				if not self.gdi32:
 					continue
 				(vcgt_ramp,
 				 vcgt_values) = self.ramps.get(self._reset_gamma_ramps or i,
