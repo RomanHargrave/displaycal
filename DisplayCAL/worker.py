@@ -5894,9 +5894,15 @@ usage: spotread [-options] [logfile]
 			if not isinstance(result, Exception) and result:
 				self.output = ["Installed"]
 		else:
-			if (sys.platform == "win32" and
-				sys.getwindowsversion() >= (6, ) and
-				not util_win.per_user_profiles_isenabled()):
+			if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+				try:
+					per_user_profiles = util_win.per_user_profiles_isenabled(getcfg("display.number") - 1)
+				except Exception, exception:
+					per_user_profiles = None
+					self.log("util_win.per_user_profiles_isenabled(%s): %s" %
+							 (getcfg("display.number") - 1,
+							  safe_unicode(exception)))
+				if not per_user_profiles:
 					# Enable per-user profiles under Vista / Windows 7
 					try:
 						util_win.enable_per_user_profiles(True,
