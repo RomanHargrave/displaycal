@@ -623,9 +623,6 @@ class ProfileLoader(object):
 				if display != self._current_display:
 					if not first_run:
 						safe_print(lang.getstr("display_detected"))
-						# One second delay to allow display configuration
-						# to settle
-						time.sleep(1)
 					if not first_run or not self.monitors:
 						self._enumerate_monitors()
 						for (display, edid, moninfo) in self.monitors:
@@ -687,14 +684,32 @@ class ProfileLoader(object):
 				if not profile_path:
 					continue
 				profile = os.path.basename(profile_path)
+				association = self.profile_associations.get(i, (None, 0))[0]
+				if not first_run and association != profile:
+					# At this point we do not yet know if only the profile
+					# association has changed or the display configuration.
+					# One second delay to allow display configuration
+					# to settle
+					safe_print("Delaying one second")
+					time.sleep(1)
+					self._check_display_changed(first_run)
+					break
+			for i, (display, edid, moninfo) in enumerate(self.monitors):
+				try:
+					profile_path = ICCP.get_display_profile(i, path_only=True)
+				except IndexError:
+					break
+				except:
+					continue
+				if not profile_path:
+					continue
+				profile = os.path.basename(profile_path)
 				if os.path.isfile(profile_path):
 					mtime = os.stat(profile_path).st_mtime
 				else:
 					mtime = 0
 				profile_association_changed = False
 				if self.profile_associations.get(i) != (profile, mtime):
-					# Make sure our device <-> profile mappings are up-to-date
-					self._check_display_changed(first_run)
 					if not first_run:
 						device = get_active_display_device(moninfo["Device"])
 						if not device:
@@ -709,6 +724,11 @@ class ProfileLoader(object):
 					self.profiles[i] = None
 					self.ramps[i] = (None, None)
 					profile_association_changed = True
+					if not first_run and self._is_displaycal_running():
+						# Normally calibration loading is disabled while
+						# DisplayCAL is running. Override this when the
+						# display has changed
+						self._manual_restore = 2
 				# Check video card gamma table and (re)load calibration if
 				# necessary
 				if not self.gdi32:
