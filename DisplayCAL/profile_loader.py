@@ -33,6 +33,7 @@ class ProfileLoader(object):
 		self.devices2profiles = {}
 		self.ramps = {}
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
+		self._has_display_changed = False
 		self._skip = "--skip" in sys.argv[1:]
 		self._manual_restore = bool(config.getcfg("profile.load_on_login"))
 		self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
@@ -90,7 +91,8 @@ class ProfileLoader(object):
 				def process_data(self, data):
 					if data[0] == "apply-profiles" and (len(data) == 1 or
 														(len(data) == 2 and
-														 data[1] == "force")):
+														 data[1] in ("force",
+																	 "display-changed"))):
 						if (not ("--force" in sys.argv[1:] or len(data) == 2) and
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
@@ -99,9 +101,16 @@ class ProfileLoader(object):
 														 appbasename + ".lock"))) or
 							self.pl._is_other_running()):
 							return "forbidden"
-						else:
-							with self.pl.lock:
-								self.pl._manual_restore = len(data)
+						elif data[-1] == "display-changed":
+							if self.pl._has_display_changed:
+								# Normally calibration loading is disabled while
+								# DisplayCAL is running. Override this when the
+								# display has changed
+								self.pl._has_display_changed = False
+							else:
+								return "ok"
+						with self.pl.lock:
+							self.pl._manual_restore = len(data)
 						return "ok"
 					return "invalid"
 
@@ -593,8 +602,7 @@ class ProfileLoader(object):
 
 		import win32gui
 
-		import config
-		from config import appbasename, getcfg
+		from config import getcfg
 		import ICCProfile as ICCP
 		from wxwindows import wx
 		import localization as lang
@@ -605,8 +613,7 @@ class ProfileLoader(object):
 		current_display = None
 		current_timestamp = 0
 		first_run = True
-		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
-		displaycal_running = os.path.isfile(displaycal_lockfile)
+		displaycal_running = self._is_displaycal_running()
 		numwindows = 0
 		while self and self.monitoring:
 			result = None
@@ -646,6 +653,12 @@ class ProfileLoader(object):
 								if not first_run:
 									self._reset_display_profile_associations()
 								self._set_display_profiles()
+						self._has_display_changed = True
+						if self._is_displaycal_running():
+							# Normally calibration loading is disabled while
+							# DisplayCAL is running. Override this when the
+							# display has changed
+							self._manual_restore = 2
 					current_display = display
 					current_timestamp = timestamp
 				_winreg.CloseKey(subkey)
@@ -828,14 +841,14 @@ class ProfileLoader(object):
 				if result:
 					self.__other_component = None, None
 			else:
-				if displaycal_running != self._displaycal_running:
+				if displaycal_running != self._is_displaycal_running():
 					if displaycal_running:
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  appname)
 					else:
 						msg = lang.getstr("app.detected.calibration_loading_disabled",
 										  appname)
-					displaycal_running = self._displaycal_running
+					displaycal_running = self._is_displaycal_running()
 					safe_print(msg)
 					self.notify([msg], [], displaycal_running,
 								show_notification=False)
@@ -894,6 +907,11 @@ class ProfileLoader(object):
 		for partial in self._known_window_classes:
 			if partial in cls:
 				return True
+
+	def _is_displaycal_running(self):
+		from config import appbasename, confighome
+		displaycal_lockfile = os.path.join(confighome, appbasename + ".lock")
+		return os.path.isfile(displaycal_lockfile)
 
 	def _is_other_running(self, enumerate_windows_and_processes=True):
 		"""
@@ -1092,18 +1110,14 @@ class ProfileLoader(object):
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True):
 		import config
-		from config import appbasename
 		if sys.platform == "win32":
 			from util_win import calibration_management_isenabled
-		displaycal_lockfile = os.path.join(config.confighome,
-										   appbasename + ".lock")
-		self._displaycal_running = os.path.isfile(displaycal_lockfile)
 		return (("--force" in sys.argv[1:] or
 				 self._manual_restore or
 				 (config.getcfg("profile.load_on_login") and
 				  (sys.platform != "win32" or
 				   not calibration_management_isenabled()))) and
-				(not self._displaycal_running or self._manual_restore == 2) and
+				(not self._is_displaycal_running() or self._manual_restore == 2) and
 				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):

@@ -12544,7 +12544,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						self.conn.send_command("getappname")
 						response = self.conn.get_single_response()
 						if response == appname + "-apply-profiles":
-							self.conn.send_command('apply-profiles force')
+							self.conn.send_command("apply-profiles display-changed")
 							response = self.conn.get_single_response()
 							if response != "ok":
 								safe_print("Warning - profile loader didn't"
