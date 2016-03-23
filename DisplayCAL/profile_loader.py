@@ -107,7 +107,6 @@ class ProfileLoader(object):
 									# Normally calibration loading is disabled while
 									# DisplayCAL is running. Override this when the
 									# display has changed
-									self.pl._has_display_changed = False
 									self.pl._manual_restore = 2
 						else:
 							with self.pl.lock:
@@ -597,6 +596,9 @@ class ProfileLoader(object):
 
 		safe_print(event)
 
+		with self.lock:
+			self._next = True
+
 	def _check_display_changed(self, first_run=False):
 		import struct
 		import _winreg
@@ -615,6 +617,7 @@ class ProfileLoader(object):
 				self._enumerate_monitors()
 		else:
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+		self._has_display_changed = False
 		for i in xrange(numsubkeys):
 			subkey = _winreg.OpenKey(key, _winreg.EnumKey(key, i))
 			display = _winreg.QueryValueEx(subkey, "SetId")[0]
@@ -651,6 +654,7 @@ class ProfileLoader(object):
 	def _check_display_conf(self):
 		import ctypes
 
+		import win32api
 		import win32gui
 
 		from config import getcfg
@@ -664,6 +668,7 @@ class ProfileLoader(object):
 		self._current_display = None
 		self._current_timestamp = 0
 		first_run = True
+		apply_profiles = self._should_apply_profiles()
 		displaycal_running = self._is_displaycal_running()
 		numwindows = 0
 		while self and self.monitoring:
@@ -671,32 +676,38 @@ class ProfileLoader(object):
 			results = []
 			errors = []
 			self.lock.acquire()
+			self._next = False
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
+			if not first_run and not self._has_display_changed:
+				for i, (display, edid, moninfo) in enumerate(self.monitors):
+					try:
+						device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+						profile_path = ICCP.get_display_profile(i, path_only=True,
+																devicekey=device.DeviceKey)
+					except IndexError:
+						break
+					except:
+						continue
+					if not profile_path:
+						continue
+					profile = os.path.basename(profile_path)
+					association = self.profile_associations.get(i, (None, 0))[0]
+					if association != profile:
+						# At this point we do not yet know if only the profile
+						# association has changed or the display configuration.
+						# One second delay to allow display configuration
+						# to settle
+						safe_print("Delaying one second")
+						time.sleep(1)
+						self._check_display_changed(first_run)
+						break
 			for i, (display, edid, moninfo) in enumerate(self.monitors):
 				try:
-					profile_path = ICCP.get_display_profile(i, path_only=True)
-				except IndexError:
-					break
-				except:
-					continue
-				if not profile_path:
-					continue
-				profile = os.path.basename(profile_path)
-				association = self.profile_associations.get(i, (None, 0))[0]
-				if not first_run and association != profile:
-					# At this point we do not yet know if only the profile
-					# association has changed or the display configuration.
-					# One second delay to allow display configuration
-					# to settle
-					safe_print("Delaying one second")
-					time.sleep(1)
-					self._check_display_changed(first_run)
-					break
-			for i, (display, edid, moninfo) in enumerate(self.monitors):
-				try:
-					profile_path = ICCP.get_display_profile(i, path_only=True)
+					device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+					profile_path = ICCP.get_display_profile(i, path_only=True,
+															devicekey=device.DeviceKey)
 				except IndexError:
 					break
 				except:
@@ -862,8 +873,6 @@ class ProfileLoader(object):
 				self.reload_count = 0
 				self._timestamp = timestamp
 			if results or errors:
-				if not errors:
-					self._has_display_changed = False
 				if results:
 					self.reload_count += 1
 					if self._reset_gamma_ramps:
@@ -893,6 +902,8 @@ class ProfileLoader(object):
 					wx.CallAfter(lambda: self and
 										 self.taskbar_icon.set_visual_state())
 			first_run = False
+			if result:
+				self._has_display_changed = False
 			self._manual_restore = False
 			self.lock.release()
 			if "--oneshot" in sys.argv[1:]:
@@ -901,7 +912,7 @@ class ProfileLoader(object):
 			# Wait three seconds
 			timeout = 0
 			while (self and self.monitoring and timeout < 3 and
-				   not self._manual_restore):
+				   not self._manual_restore	and not self._next):
 				if round(timeout * 100) % 25 == 0:
 					numwindows = self._check_keep_running(numwindows)
 				time.sleep(.1)
