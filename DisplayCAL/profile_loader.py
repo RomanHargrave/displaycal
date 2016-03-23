@@ -638,7 +638,7 @@ class ProfileLoader(object):
 								self._reset_display_profile_associations()
 							self._set_display_profiles()
 					self._has_display_changed = True
-					if self._is_displaycal_running():
+					if not first_run and self._is_displaycal_running():
 						# Normally calibration loading is disabled while
 						# DisplayCAL is running. Override this when the
 						# display has changed
