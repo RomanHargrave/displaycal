@@ -102,15 +102,16 @@ class ProfileLoader(object):
 							self.pl._is_other_running()):
 							return "forbidden"
 						elif data[-1] == "display-changed":
-							if self.pl._has_display_changed:
-								# Normally calibration loading is disabled while
-								# DisplayCAL is running. Override this when the
-								# display has changed
-								self.pl._has_display_changed = False
-							else:
-								return "ok"
-						with self.pl.lock:
-							self.pl._manual_restore = len(data)
+							with self.pl.lock:
+								if self.pl._has_display_changed:
+									# Normally calibration loading is disabled while
+									# DisplayCAL is running. Override this when the
+									# display has changed
+									self.pl._has_display_changed = False
+									self.pl._manual_restore = 2
+						else:
+							with self.pl.lock:
+								self.pl._manual_restore = len(data)
 						return "ok"
 					return "invalid"
 
@@ -210,7 +211,8 @@ class ProfileLoader(object):
 					return menu
 
 				def get_icon(self, enumerate_windows_and_processes=False):
-					if self.pl._should_apply_profiles(enumerate_windows_and_processes):
+					if self.pl._should_apply_profiles(enumerate_windows_and_processes,
+													  manual_override=None):
 						if self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
 						else:
@@ -840,6 +842,8 @@ class ProfileLoader(object):
 				self.reload_count = 0
 				self._timestamp = timestamp
 			if results or errors:
+				if not errors:
+					self._has_display_changed = False
 				if results:
 					self.reload_count += 1
 					if self._reset_gamma_ramps:
@@ -1017,7 +1021,7 @@ class ProfileLoader(object):
 				except:
 					filename = lang.getstr("unknown")
 				if is_new_instance:
-					apply_profiles = self._should_apply_profiles()
+					apply_profiles = self._should_apply_profiles(manual_override=None)
 					self._madvr_instances.append(args)
 					self.__other_component = filename, "madHcNetQueueWindow"
 					safe_print("madVR instance connected:", "PID", pid, filename)
@@ -1029,7 +1033,7 @@ class ProfileLoader(object):
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
 					safe_print("madVR instance disconnected:", "PID", pid, filename)
-					if self._should_apply_profiles():
+					if self._should_apply_profiles(manual_override=None):
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  component)
 						safe_print(msg)
@@ -1120,7 +1124,8 @@ class ProfileLoader(object):
 			self._reset_gamma_ramps = True
 		self.taskbar_icon.set_visual_state()
 
-	def _should_apply_profiles(self, enumerate_windows_and_processes=True):
+	def _should_apply_profiles(self, enumerate_windows_and_processes=True,
+							   manual_override=2):
 		import config
 		if sys.platform == "win32":
 			from util_win import calibration_management_isenabled
@@ -1129,7 +1134,8 @@ class ProfileLoader(object):
 				 (config.getcfg("profile.load_on_login") and
 				  (sys.platform != "win32" or
 				   not calibration_management_isenabled()))) and
-				(not self._is_displaycal_running() or self._manual_restore == 2) and
+				(not self._is_displaycal_running() or
+				 self._manual_restore == manual_override) and
 				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
