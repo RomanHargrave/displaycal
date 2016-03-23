@@ -634,7 +634,11 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 		if devicekey:
 			if mscms:
 				# Via WCS
-				return _wcs_get_display_profile(unicode(devicekey),
+				if util_win.per_user_profiles_isenabled(devicekey=devicekey):
+					scope = WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
+				else:
+					scope = WCS_PROFILE_MANAGEMENT_SCOPE["SYSTEM_WIDE"]
+				return _wcs_get_display_profile(unicode(devicekey), scope,
 												path_only=path_only)
 			# Via registry - NEVER
 			monkey = devicekey.split("\\")[-2:]  # pun totally intended
@@ -739,13 +743,11 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 	return profile
 
 
-def _wcs_set_display_profile(devicekey, profile_name):
-	mscms.WcsDisassociateColorProfileFromDevice(
-		WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
-		profile_name, devicekey)
-	return mscms.WcsAssociateColorProfileWithDevice(
-		WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
-		profile_name, devicekey)
+def _wcs_set_display_profile(devicekey, profile_name,
+							 scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]):
+	mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name, devicekey)
+	return mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
+													devicekey)
 
 
 def set_display_profile(profile_name, display_no=0,
@@ -766,8 +768,12 @@ def set_display_profile(profile_name, display_no=0,
 			return False
 		devicekey = device.DeviceKey
 	if mscms:
+		if util_win.per_user_profiles_isenabled(devicekey=devicekey):
+			scope = WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
+		else:
+			scope = WCS_PROFILE_MANAGEMENT_SCOPE["SYSTEM_WIDE"]
 		return _wcs_set_display_profile(unicode(devicekey),
-										profile_name)
+										profile_name, scope)
 	else:
 		# TODO: Implement for XP
 		return False

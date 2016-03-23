@@ -53,8 +53,8 @@ CLASS_PRINTER = struct.unpack("!L", "prtr")[0]
 CLASS_SCANNER = struct.unpack("!L", "scnr")[0]
 
 
-def _get_icm_display_device_key(device):
-	monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
+def _get_icm_display_device_key(devicekey):
+	monkey = devicekey.split("\\")[-2:]  # pun totally intended
 	subkey = "\\".join(["Software", "Microsoft", "Windows NT", 
 						"CurrentVersion", "ICM", "ProfileAssociations", 
 						"Display"] + monkey)
@@ -121,17 +121,20 @@ def enable_calibration_management(enable=True):
 		return True
 
 
-def enable_per_user_profiles(enable=True, display_no=0):
+def enable_per_user_profiles(enable=True, display_no=0, devicekey=None):
 	""" Enable per user profiles under Vista/Windows 7 """
 	if sys.getwindowsversion() < (6, ):
 		# Windows XP doesn't have per-user profiles
 		raise NotImplementedError("Per-user profiles are only available "
 								  "in Windows Vista, 7 or later")
-	device = get_display_device(display_no)
-	if device:
+	if not devicekey:
+		device = get_display_device(display_no)
+		if device:
+			devicekey = device.DeviceKey
+	if devicekey:
 		if False:
 			# Using registry - NEVER
-			key = _get_icm_display_device_key(device)
+			key = _get_icm_display_device_key(devicekey)
 			_winreg.SetValueEx(key, "UsePerUserProfiles", 0,
 							   _winreg.REG_DWORD, int(enable))
 		else:
@@ -139,7 +142,7 @@ def enable_per_user_profiles(enable=True, display_no=0):
 			mscms = _get_mscms_dll_handle()
 			if not mscms:
 				return False
-			if not mscms.WcsSetUsePerUserProfiles(unicode(device.DeviceID),
+			if not mscms.WcsSetUsePerUserProfiles(unicode(devicekey),
 																CLASS_MONITOR,
 																enable):
 				raise get_windows_error(ctypes.windll.kernel32.GetLastError())
@@ -193,7 +196,7 @@ def get_display_device(display_no=0):
 	monitors = get_real_display_devices_info()
 	moninfo = monitors[display_no]
 	# via win32api & registry
-	return get_active_display_device(moninfo["Device"])
+	return win32api.EnumDisplayDevices(moninfo["Device"], 0)
 
 
 def get_process_filename(pid):
@@ -291,22 +294,25 @@ def get_windows_error(errorcode):
 	return ctypes.WinError(errorcode)
 
 
-def per_user_profiles_isenabled(display_no=0):
+def per_user_profiles_isenabled(display_no=0, devicekey=None):
 	""" Check if per user profiles is enabled under Vista/Windows 7 """
 	if sys.getwindowsversion() < (6, ):
 		# Windows XP doesn't have per-user profiles
 		return False
-	device = get_display_device(display_no)
-	if device:
+	if not devicekey:
+		device = get_display_device(display_no)
+		if device:
+			devicekey = device.DeviceKey
+	if devicekey:
 		if False:
 			# Using registry - NEVER
-			key = _get_icm_display_device_key(device)
+			key = _get_icm_display_device_key(devicekey)
 			return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
 		else:
 			# Using ctypes
 			mscms = _get_mscms_dll_handle()
 			pbool = ctypes.pointer(ctypes.c_bool())
-			if not mscms or not mscms.WcsGetUsePerUserProfiles(unicode(device.DeviceID),
+			if not mscms or not mscms.WcsGetUsePerUserProfiles(unicode(devicekey),
 																CLASS_MONITOR,
 																pbool):
 				return
