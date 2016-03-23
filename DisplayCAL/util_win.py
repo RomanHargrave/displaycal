@@ -190,13 +190,15 @@ def get_active_display_device(devicename):
 			return device
 
 
-def get_display_device(display_no=0):
+def get_display_device(display_no=0, use_active_display_device=False):
 	# The ordering will work as long as Argyll continues using
 	# EnumDisplayMonitors
 	monitors = get_real_display_devices_info()
 	moninfo = monitors[display_no]
-	# via win32api & registry
-	return win32api.EnumDisplayDevices(moninfo["Device"], 0)
+	if use_active_display_device:
+		return get_active_display_device(moninfo["Device"])
+	else:
+		return win32api.EnumDisplayDevices(moninfo["Device"], 0)
 
 
 def get_process_filename(pid):

@@ -755,15 +755,8 @@ def set_display_profile(profile_name, display_no=0,
 	# Currently only implemented for Windows.
 	# The profile to be assigned has to be already installed!
 	if not devicekey:
-		monitors = util_win.get_real_display_devices_info()
-		moninfo = monitors[display_no]
-		if use_active_display_device:
-			# This would be the correct way. Unfortunately that is not
-			# what other apps (and Windows itself) do.
-			device = util_win.get_active_display_device(moninfo["Device"])
-		else:
-			# This is wrong, but it's what other apps (and Windows itself) use.
-			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+		device = util_win.get_display_device(display_no,
+											 use_active_display_device)
 		if not device:
 			return False
 		devicekey = device.DeviceKey
