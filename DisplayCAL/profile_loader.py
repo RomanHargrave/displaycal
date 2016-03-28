@@ -153,7 +153,7 @@ class ProfileLoader(object):
 
 					fix = len(self.pl.monitors) > 1
 					for i, (display, edid,
-							moninfo) in enumerate(self.pl.monitors):
+							moninfo, device0) in enumerate(self.pl.monitors):
 						displays = get_display_devices(moninfo["Device"])
 						if len(displays) > 1:
 							fix = True
@@ -269,7 +269,7 @@ class ProfileLoader(object):
 						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
 						for i, (display, edid,
-								moninfo) in enumerate(self.pl.monitors):
+								moninfo, device0) in enumerate(self.pl.monitors):
 							(profile,
 							 mtime) = self.pl.profile_associations.get(i,
 																	   (False,
@@ -628,7 +628,7 @@ class ProfileLoader(object):
 						safe_print(lang.getstr("display_detected"))
 					if not first_run or not self.monitors:
 						self._enumerate_monitors()
-						for (display, edid, moninfo) in self.monitors:
+						for (display, edid, moninfo, device0) in self.monitors:
 							safe_print(display)
 						if getcfg("profile_loader.fix_profile_associations"):
 							# Work-around long-standing bug in applications
@@ -667,6 +667,7 @@ class ProfileLoader(object):
 		display = None
 		self._current_display = None
 		self._current_timestamp = 0
+		self._next = False
 		first_run = True
 		apply_profiles = self._should_apply_profiles()
 		displaycal_running = self._is_displaycal_running()
@@ -676,51 +677,38 @@ class ProfileLoader(object):
 			results = []
 			errors = []
 			self.lock.acquire()
-			self._next = False
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
-			if not first_run and not self._has_display_changed:
-				for i, (display, edid, moninfo) in enumerate(self.monitors):
-					try:
-						device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
-						profile_path = ICCP.get_display_profile(i, path_only=True,
-																devicekey=device.DeviceKey)
-					except IndexError:
-						break
-					except:
-						continue
-					if not profile_path:
-						continue
-					profile = os.path.basename(profile_path)
-					association = self.profile_associations.get(i, (None, 0))[0]
-					if association != profile:
-						# At this point we do not yet know if only the profile
-						# association has changed or the display configuration.
-						# One second delay to allow display configuration
-						# to settle
-						safe_print("Delaying one second")
-						time.sleep(1)
-						self._check_display_changed(first_run)
-						break
-			for i, (display, edid, moninfo) in enumerate(self.monitors):
+			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 				try:
-					device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
 					profile_path = ICCP.get_display_profile(i, path_only=True,
-															devicekey=device.DeviceKey)
+															devicekey=device0.DeviceKey)
 				except IndexError:
+					self._next = False
 					break
 				except:
 					continue
 				if not profile_path:
 					continue
 				profile = os.path.basename(profile_path)
+				association = self.profile_associations.get(i, (None, 0))
+				if (not first_run and not self._has_display_changed and
+					not self._next and association[0] != profile):
+					# At this point we do not yet know if only the profile
+					# association has changed or the display configuration.
+					# One second delay to allow display configuration
+					# to settle
+					safe_print("Delaying one second")
+					time.sleep(1)
+					self._next = True
+					break
 				if os.path.isfile(profile_path):
 					mtime = os.stat(profile_path).st_mtime
 				else:
 					mtime = 0
 				profile_association_changed = False
-				if self.profile_associations.get(i) != (profile, mtime):
+				if association != (profile, mtime):
 					if not first_run:
 						device = get_active_display_device(moninfo["Device"])
 						if not device:
@@ -828,6 +816,7 @@ class ProfileLoader(object):
 				# launching and resetting video card gamma table
 				apply_profiles = self._should_apply_profiles()
 				if not apply_profiles:
+					self._next = False
 					break
 				# Now actually reload or reset calibration
 				if (self._manual_restore or profile_association_changed or
@@ -865,6 +854,14 @@ class ProfileLoader(object):
 						else:
 							text += os.path.basename(profile_path)
 						results.append(text)
+			else:
+				# We only arrive here if the loop was completed
+				self._next = False
+			if self._next:
+				# We only arrive here if a change in profile associations was
+				# detected and we exited the loop early
+				self.lock.release()
+				continue
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
 			localtime[3:6] = 23, 59, 59
@@ -922,6 +919,7 @@ class ProfileLoader(object):
 		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
+		import win32api
 		from util_win import (get_active_display_device,
 							  get_real_display_devices_info)
 		self.monitors = []
@@ -929,7 +927,8 @@ class ProfileLoader(object):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
 			display, edid = get_display_name_edid(device, moninfo)
-			self.monitors.append((display, edid, moninfo))
+			device0 = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+			self.monitors.append((display, edid, moninfo, device0))
 
 	def _enumerate_windows_callback(self, hwnd, extra):
 		import win32gui
@@ -1098,7 +1097,7 @@ class ProfileLoader(object):
 		from log import safe_print
 		from util_win import get_active_display_device, get_display_devices
 		self.devices2profiles = {}
-		for i, (display, edid, moninfo) in enumerate(self.monitors):
+		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 			active_device = get_active_display_device(moninfo["Device"])
 			for device in get_display_devices(moninfo["Device"]):
 				try:
