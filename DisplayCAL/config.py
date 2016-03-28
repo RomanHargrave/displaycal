@@ -928,6 +928,7 @@ defaults = {
 										   "coloreyes display pro.exe",
 										   "colormunkidisplay.exe",
 										   "colornavigator.exe",
+										   "cpkeeper.exe",
 										   "dell ultrasharp calibration solution.exe",
 										   "hp_dreamcolor_calibration_solution.exe",
 										   "i1profiler.exe",
