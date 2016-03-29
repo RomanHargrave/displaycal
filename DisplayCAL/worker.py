@@ -2558,9 +2558,13 @@ class Worker(object):
 									   (format == "cube" and
 										collink_version >= [1, 7])) and
 									  not test) or
-									 format == "madVR"))
+									 format == "madVR") or format == "icc")
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
-					"-r%i" % size, "-n"]
+					"-r%i" % size]
+			if format != "icc":
+				args.append("-n")
+			else:
+				args.append("-no")
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args.extend(["-p", "abstract.icc"])

@@ -4431,6 +4431,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			lut3d_ext = "3dlut"
 		elif lut3d_ext == "ReShade":
 			lut3d_ext = "png"
+		elif lut3d_ext == "icc":
+			lut3d_ext = profile_ext[1:]
 		input_profname = os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0]
 		self.lut3d_path = ".".join([profile_save_path, input_profname,
 									"%X" % (crc32("-".join(lut3d))
