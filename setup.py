@@ -857,9 +857,9 @@ def setup():
 			if script != name:
 				cmdname += "-" + script.replace(name + "-", "")
 			cmds.append((cmdname, script, desc))
-			if script.endswith("-apply-profiles"):
-				# Add forced calibration loading entry
-				cmds.append((cmdname + "-force", script, desc))
+			##if script.endswith("-apply-profiles"):
+				### Add forced calibration loading entry
+				##cmds.append((cmdname + "-force", script, desc))
 		# Get archive digest
 		extract = "%s-%s" % (name, version)
 		archive_name = extract + ".tar.gz"
