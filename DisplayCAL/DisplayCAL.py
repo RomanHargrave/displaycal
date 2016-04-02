@@ -13638,7 +13638,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.aboutdialog.Show()
 	
 	def readme_handler(self, event):
-		readme = get_data_path("README.html")
+		if lang.getcode() == "fr":
+			readme = get_data_path("README-fr.html")
+		else:
+			readme = None
+		if not readme:
+			readme = get_data_path("README.html")
 		if readme:
 			launch_file(readme)
 	

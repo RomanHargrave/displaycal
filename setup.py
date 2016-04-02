@@ -395,12 +395,15 @@ def setup():
 
 	if "readme" in sys.argv[1:]:
 		if not dry_run:
-			replace_placeholders(os.path.join(pydir, "misc", 
-											  "README.template.html"),
-								 os.path.join(pydir, "README.html"),
-								 lastmod_time,
-								 {"STABILITY": "Beta" if stability != "stable"
-											   else ""})
+			for suffix in ("", "-fr"):
+				replace_placeholders(os.path.join(pydir, "misc", 
+												  "README.template%s.html" %
+												  suffix),
+									 os.path.join(pydir, "README%s.html" %
+												  suffix),
+									 lastmod_time,
+									 {"STABILITY": "Beta" if stability != "stable"
+												   else ""})
 			replace_placeholders(os.path.join(pydir, "misc", 
 											  "history.template.html"),
 								 os.path.join(pydir, "history.html"),

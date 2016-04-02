@@ -75,6 +75,7 @@ basedir = os.path.dirname(pydir)
 config = {"data": ["tests/*.icc"],
 		  "doc": ["LICENSE.txt",
 				  "README.html",
+				  "README-fr.html",
 				  "screenshots/*.png",
 				  "theme/*.png",
 				  "theme/*.css",
@@ -185,6 +186,7 @@ def create_app_symlinks(dist_dir, scripts):
 	for src, tgt in [("ref", "Reference"),
 					 ("tests", "Tests"),
 					 ("README.html", "README.html"),
+					 ("README-fr.html", "README-fr.html"),
 					 ("LICENSE.txt", "LICENSE.txt")]:
 		tgt = os.path.join(dist_dir, tgt)
 		if os.path.islink(tgt):
@@ -1003,6 +1005,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					"x3d-viewer",
 					"LICENSE.txt",
 					"README.html",
+					"README-fr.html",
 					"argyll_instruments.json",
 					"beep.wav",
 					"camera_shutter.wav",
@@ -1029,7 +1032,8 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					"screenshots",
 					"theme",
 					"LICENSE.txt",
-					"README.html"
+					"README.html",
+					"README-fr.html"
 				]:
 					path = os.path.join(doc, fname)
 					if not path in paths:
@@ -1105,6 +1109,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					   "edit"]
 		manifest_in.extend(["include LICENSE.txt", "include MANIFEST", 
 							"include MANIFEST.in", "include README.html", 
+							"include README-fr.html",
 							"include *.pyw", "include use-distutils"])
 		manifest_in.append("include " + os.path.basename(sys.argv[0]))
 		manifest_in.append("include " + 
