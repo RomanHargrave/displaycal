@@ -113,6 +113,12 @@ body > div,
 	margin: 0 auto;
 	text-align: center;
 }
+@media screen and (max-width: 399px) {
+	#site-navigation .language-hint,
+	.formerly-known-as {
+		display: none;
+	}
+}
 @media screen and (min-width: 600px) {
 	body > div,
 	#title,
@@ -170,7 +176,7 @@ h1 > span {
 		line-height: 44px;
 	}
 	h1 > span {
-		font-size: 16px;
+		font-size: 14px;
 		line-height: 21px;
 	}
 }
@@ -180,7 +186,7 @@ h1 > span {
 		line-height: 58px;
 	}
 	h1 > span {
-		font-size: 18px;
+		font-size: 17px;
 		line-height: 24px;
 	}
 }
