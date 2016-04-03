@@ -681,9 +681,13 @@ class ProfileLoader(object):
 			self._check_display_changed(first_run)
 			# Check profile associations
 			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
+				if device0:
+					devicekey = device0.DeviceKey
+				else:
+					devicekey = None
 				try:
 					profile_path = ICCP.get_display_profile(i, path_only=True,
-															devicekey=device0.DeviceKey)
+															devicekey=devicekey)
 				except IndexError:
 					self._next = False
 					break
@@ -919,6 +923,7 @@ class ProfileLoader(object):
 		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
+		import pywintypes
 		import win32api
 		from util_win import (get_active_display_device,
 							  get_real_display_devices_info)
@@ -927,7 +932,10 @@ class ProfileLoader(object):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
 			display, edid = get_display_name_edid(device, moninfo)
-			device0 = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+			try:
+				device0 = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+			except pywintypes.error:
+				device0 = None
 			self.monitors.append((display, edid, moninfo, device0))
 
 	def _enumerate_windows_callback(self, hwnd, extra):

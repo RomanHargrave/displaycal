@@ -198,7 +198,10 @@ def get_display_device(display_no=0, use_active_display_device=False):
 	if use_active_display_device:
 		return get_active_display_device(moninfo["Device"])
 	else:
-		return win32api.EnumDisplayDevices(moninfo["Device"], 0)
+		try:
+			return win32api.EnumDisplayDevices(moninfo["Device"], 0)
+		except pywintypes.error:
+			pass
 
 
 def get_process_filename(pid):
