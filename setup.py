@@ -397,7 +397,7 @@ def setup():
 		if not dry_run:
 			for suffix in ("", "-fr"):
 				replace_placeholders(os.path.join(pydir, "misc", 
-												  "README.template%s.html" %
+												  "README%s.template.html" %
 												  suffix),
 									 os.path.join(pydir, "README%s.html" %
 												  suffix),
