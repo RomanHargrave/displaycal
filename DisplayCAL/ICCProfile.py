@@ -466,20 +466,12 @@ def _wcs_get_display_profile(devicekey,
 							 profile_type=COLORPROFILETYPE["ICC"],
 							 profile_subtype=COLORPROFILESUBTYPE["NONE"],
 							 profile_id=0, path_only=False):
-	buflen = ctypes.c_ulong()
-	if not mscms.WcsGetDefaultColorProfileSize(scope,
-											   devicekey,
-											   profile_type,
-											   profile_subtype,
-											   profile_id,
-											   ctypes.byref(buflen)):
-		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
-	buf = ctypes.create_unicode_buffer(u'\0' * buflen.value)
+	buf = ctypes.create_unicode_buffer(256)
 	if not mscms.WcsGetDefaultColorProfile(scope, devicekey,
 										   profile_type,
 										   profile_subtype,
 										   profile_id,
-										   buflen,
+										   ctypes.sizeof(buf),  # Bytes
 										   ctypes.byref(buf)):
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
 	if buf.value:
@@ -600,20 +592,17 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			# the profile of the first monitor regardless if that is the active
 			# one or not. Yuck. Also, in this case it does not reflect runtime
 			# changes to profile assignments. Double yuck.
-			buflen = ctypes.c_ulong()
+			buflen = ctypes.c_ulong(260)
 			dc = win32gui.CreateDC(moninfo["Device"], None, None)
 			try:
-				ctypes.windll.gdi32.GetICMProfileW(dc, ctypes.byref(buflen),
-												   None)
-				if buflen.value:
-					buf = ctypes.create_unicode_buffer(u'\0' * buflen.value)
-					if ctypes.windll.gdi32.GetICMProfileW(dc,
-														  ctypes.byref(buflen),
-														  ctypes.byref(buf)):
-						if path_only:
-							profile = buf.value
-						else:
-							profile = ICCProfile(buf.value)
+				buf = ctypes.create_unicode_buffer(buflen.value)
+				if ctypes.windll.gdi32.GetICMProfileW(dc,
+													  ctypes.byref(buflen),  # WCHARs
+													  ctypes.byref(buf)):
+					if path_only:
+						profile = buf.value
+					else:
+						profile = ICCProfile(buf.value)
 			finally:
 				win32gui.DeleteDC(dc)
 		else:
