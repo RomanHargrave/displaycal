@@ -675,6 +675,8 @@ class ProfileLoader(object):
 		try:
 			self._check_display_conf()
 		except Exception, exception:
+			if self.lock.locked():
+				self.lock.release()
 			from debughelpers import handle_error
 			handle_error(exception)
 			from wxwindows import wx
