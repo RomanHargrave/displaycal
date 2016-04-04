@@ -292,6 +292,21 @@ class ProfileLoader(object):
 															 self.pl.get_title(),
 															 text)
 
+			# We need to initialize a few 'hidden' windows so our _actual_ top
+			# level window can be last in the top level window list.
+			# This way, our application can be properly closed by e.g. taskkill,
+			# which will (seemingly) always close the last window created.
+			# If that window is a 'hidden' window that we can't directly manage,
+			# it'll cause application errors.
+			# wxTLWHiddenParent
+			self._tlwhidden = wx.Frame(None, -1, style=wx.FRAME_NO_TASKBAR |
+													   wx.NO_BORDER |
+													   wx.STAY_ON_TOP)
+			# wxDisplayHiddenWindow
+			self._displayhidden = self._tlwhidden.GetDisplay()
+			# wxTimerHiddenWindow
+			self._timerhidden = wx.CallLater(0, lambda: None)
+
 			self.taskbar_icon = TaskBarIcon(self)
 
 			try:
@@ -556,18 +571,17 @@ class ProfileLoader(object):
 
 	def _check_keep_running(self, numwindows=0):
 		from wxwindows import wx
+		windows = []
 		if self.use_madhcnet:
 			import win32gui
-			windows = []
 			#print '-' * 79
 			try:
 				win32gui.EnumWindows(self._enumerate_own_windows_callback, windows)
 			except pywintypes.error, exception:
 				return numwindows
-		else:
-			windows = filter(lambda window: not isinstance(window, wx.Dialog) and
-											window.Name != "TaskBarNotification",
-							 wx.GetTopLevelWindows())
+		windows.extend(filter(lambda window: not isinstance(window, wx.Dialog) and
+											 window.Name != "TaskBarNotification",
+							  wx.GetTopLevelWindows()))
 		if len(windows) < numwindows:
 			# One of our windows has been closed by an external event
 			# (i.e. WM_CLOSE). This is a hint that something external is trying
@@ -590,7 +604,9 @@ class ProfileLoader(object):
 		if pid == self._pid:
 			cls = win32gui.GetClassName(hwnd)
 			#print cls
-			if (cls in ("madHcNetQueueWindow", "wxWindowNR") or
+			if (cls in ("madHcNetQueueWindow",
+						"wxTLWHiddenParent", "wxTimerHiddenWindow",
+						"wxDisplayHiddenWindow") or
 				cls.startswith("madToolsMsgHandlerWindow")):
 				windowlist.append(hwnd)
 
