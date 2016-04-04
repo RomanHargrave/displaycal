@@ -263,7 +263,7 @@ class ThreadedTimer(object):
 		self._thread = None
 
 	def _notify(self):
-		if self._owner and _global_timer_lock.acquire(self._oneshot):
+		if _global_timer_lock.acquire(self._oneshot):
 			try:
 				self.Notify()
 			finally:
@@ -304,7 +304,8 @@ class ThreadedTimer(object):
 		return self._keep_running
 
 	def Notify(self):
-		self._owner.ProcessEvent(BetterTimerEvent(self._id, self._ms))
+		if self._owner:
+			self._owner.ProcessEvent(BetterTimerEvent(self._id, self._ms))
 
 	def Start(self, milliseconds=-1, oneShot=False):
 		if self._thread and self._thread.isAlive():
@@ -323,7 +324,7 @@ class ThreadedTimer(object):
 class ThreadedCallLater(ThreadedTimer):
 
 	def __init__(self, millis, callableObj, *args, **kwargs):
-		BetterTimer.__init__(self)
+		ThreadedTimer.__init__(self)
 		self._oneshot = True
 		self._callable = callableObj
 		self._has_run = False
@@ -352,7 +353,7 @@ class ThreadedCallLater(ThreadedTimer):
 			self._args = args
 		if kwargs:
 			self._kwargs = kwargs
-		BetterTimer.Start(self, millis, True)
+		ThreadedTimer.Start(self, millis, True)
 
 	Restart = Start
 
