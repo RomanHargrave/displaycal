@@ -618,7 +618,7 @@ class ProfileLoader(object):
 		with self.lock:
 			self._next = True
 
-	def _check_display_changed(self, first_run=False):
+	def _check_display_changed(self, first_run=False, dry_run=False):
 		import struct
 		import _winreg
 
@@ -633,20 +633,20 @@ class ProfileLoader(object):
 			safe_print("Registry access failed:", exception)
 			key = None
 			numsubkeys = 0
-			if not self.monitors:
+			if not (self.monitors or dry_run):
 				self._enumerate_monitors()
 		else:
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-		self._has_display_changed = False
+		has_display_changed = False
 		for i in xrange(numsubkeys):
 			subkey = _winreg.OpenKey(key, _winreg.EnumKey(key, i))
 			display = _winreg.QueryValueEx(subkey, "SetId")[0]
 			timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
 			if timestamp > self._current_timestamp:
 				if display != self._current_display:
-					if not first_run:
+					if not (first_run or dry_run):
 						safe_print(lang.getstr("display_detected"))
-					if not first_run or not self.monitors:
+					if not (first_run or dry_run) or not self.monitors:
 						self._enumerate_monitors()
 						for (display, edid, moninfo, device0) in self.monitors:
 							safe_print(display)
@@ -659,17 +659,22 @@ class ProfileLoader(object):
 							if not first_run:
 								self._reset_display_profile_associations()
 							self._set_display_profiles()
-					self._has_display_changed = True
-					if not first_run and self._is_displaycal_running():
+					has_display_changed = True
+					if not (first_run or
+							dry_run) and self._is_displaycal_running():
 						# Normally calibration loading is disabled while
 						# DisplayCAL is running. Override this when the
 						# display has changed
 						self._manual_restore = 2
-				self._current_display = display
-				self._current_timestamp = timestamp
+				if not dry_run:
+					self._current_display = display
+					self._current_timestamp = timestamp
 			_winreg.CloseKey(subkey)
 		if key:
 			_winreg.CloseKey(key)
+		if not dry_run:
+			self._has_display_changed = has_display_changed
+		return has_display_changed
 
 	def _check_display_conf_wrapper(self):
 		try:
@@ -736,9 +741,8 @@ class ProfileLoader(object):
 					# association has changed or the display configuration.
 					# One second delay to allow display configuration
 					# to settle
-					safe_print("Delaying one second")
-					time.sleep(1)
-					self._next = True
+					if not self._check_display_changed(dry_run=True):
+						self._next = True
 					break
 				if os.path.isfile(profile_path):
 					mtime = os.stat(profile_path).st_mtime
