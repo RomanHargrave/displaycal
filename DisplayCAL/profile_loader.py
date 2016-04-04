@@ -573,6 +573,8 @@ class ProfileLoader(object):
 			# (i.e. WM_CLOSE). This is a hint that something external is trying
 			# to get us to exit. Comply by closing our main top-level window to
 			# initiate clean shutdown.
+			from log import safe_print
+			safe_print("Window count", numwindows, "->", len(windows))
 			wx.CallAfter(lambda: self.frame and self.frame.Close())
 		return len(windows)
 
@@ -672,7 +674,7 @@ class ProfileLoader(object):
 		first_run = True
 		apply_profiles = self._should_apply_profiles()
 		displaycal_running = self._is_displaycal_running()
-		numwindows = 0
+		numwindows = self._check_keep_running()
 		while self and self.monitoring:
 			result = None
 			results = []
@@ -916,7 +918,7 @@ class ProfileLoader(object):
 			while (self and self.monitoring and timeout < 3 and
 				   not self._manual_restore	and not self._next):
 				if round(timeout * 100) % 25 == 0:
-					numwindows = self._check_keep_running(numwindows)
+					self._check_keep_running(numwindows)
 				time.sleep(.1)
 				timeout += .1
 		if getcfg("profile_loader.fix_profile_associations"):
