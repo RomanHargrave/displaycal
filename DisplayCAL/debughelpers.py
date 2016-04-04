@@ -85,7 +85,7 @@ def handle_error(error, parent=None, silent=False):
 				icon = wx.ICON_INFORMATION
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
-								   safe_unicode(error), appname, wx.OK | icon)
+								   safe_unicode(error), app.AppName, wx.OK | icon)
 			if frame:
 				# wxPython 3 bugfix: We need to use CallLater and MainLoop
 				wx.CallLater(1, dlg.ShowModal)
