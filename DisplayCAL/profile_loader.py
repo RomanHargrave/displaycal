@@ -161,33 +161,34 @@ class ProfileLoader(object):
 					if fix:
 						fix = self.pl._toggle_fix_profile_associations
 
-					for (label, method, kind, option,
-						 oxform) in (("calibration.load_from_display_profiles",
-									  restore_manual, wx.ITEM_RADIO,
-									  "profile_loader.reset_gamma_ramps",
-									  lambda v: not v),
-									 ("calibration.reset",
-									  reset, wx.ITEM_RADIO,
-									  "profile_loader.reset_gamma_ramps", None),
-									 ("-", None, False, None, None),
-									 ("calibration.preserve",
-									  restore_auto, wx.ITEM_CHECK,
-									  "profile.load_on_login", None),
-									 ("profile_loader.fix_profile_associations",
-									  fix,
-									  wx.ITEM_CHECK,
-									  "profile_loader.fix_profile_associations",
-									  None),
-									 ("-", None, False, None, None),
-									 ("mswin.open_color_management_settings",
-									  self.open_color_management_settings,
-									  wx.ITEM_NORMAL, None, None),
-									 ("mswin.open_display_settings",
-									  self.open_display_settings,
-									  wx.ITEM_NORMAL, None, None),
-									 ("-", None, False, None, None),
-									 ("menuitem.quit", self.pl.exit,
-									  wx.ITEM_NORMAL, None, None)):
+					menu_items = [("calibration.load_from_display_profiles",
+								   restore_manual, wx.ITEM_RADIO,
+								   "profile_loader.reset_gamma_ramps",
+								   lambda v: not v),
+								  ("calibration.reset",
+								   reset, wx.ITEM_RADIO,
+								   "profile_loader.reset_gamma_ramps", None),
+								  ("-", None, False, None, None),
+								  ("calibration.preserve",
+								   restore_auto, wx.ITEM_CHECK,
+								   "profile.load_on_login", None),
+								  ("profile_loader.fix_profile_associations",
+								   fix,
+								   wx.ITEM_CHECK,
+								   "profile_loader.fix_profile_associations",
+								   None),
+								  ("-", None, False, None, None)]
+					if sys.getwindowsversion() >= (6, ):
+						menu_items.extend([("mswin.open_color_management_settings",
+											self.open_color_management_settings,
+											wx.ITEM_NORMAL, None, None),
+										   ("mswin.open_display_settings",
+											self.open_display_settings,
+											wx.ITEM_NORMAL, None, None),
+										   ("-", None, False, None, None)])
+					menu_items.append(("menuitem.quit", self.pl.exit,
+									   wx.ITEM_NORMAL, None, None))
+					for (label, method, kind, option, oxform) in menu_items:
 						if label == "-":
 							menu.AppendSeparator()
 						else:
