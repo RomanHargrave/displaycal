@@ -323,7 +323,7 @@ class ProfileLoader(object):
 
 			self._pid = os.getpid()
 
-			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf,
+			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf_wrapper,
 															   name="DisplayConfigurationMonitoring")
 			self._check_display_conf_thread.start()
 
@@ -613,7 +613,8 @@ class ProfileLoader(object):
 		try:
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
-		except WindowsError:
+		except WindowsError, exception:
+			safe_print("Registry access failed:", exception)
 			key = None
 			numsubkeys = 0
 			if not self.monitors:
@@ -653,6 +654,15 @@ class ProfileLoader(object):
 			_winreg.CloseKey(subkey)
 		if key:
 			_winreg.CloseKey(key)
+
+	def _check_display_conf_wrapper(self):
+		try:
+			self._check_display_conf()
+		except Exception, exception:
+			from debughelpers import handle_error
+			handle_error(exception)
+			from wxwindows import wx
+			wx.CallAfter(self.exit)
 
 	def _check_display_conf(self):
 		import ctypes
@@ -694,7 +704,9 @@ class ProfileLoader(object):
 				except IndexError:
 					self._next = False
 					break
-				except:
+				except Exception, exception:
+					safe_print("Could not get display profile for display %i:" %
+							   i, exception)
 					continue
 				if not profile_path:
 					continue
@@ -751,6 +763,7 @@ class ProfileLoader(object):
 								self.profiles[i] = ICCP.ICCProfile(profile)
 								self.profiles[i].tags.get("vcgt")
 							except Exception, exception:
+								safe_print(exception)
 								continue
 						profile = self.profiles[i]
 						if isinstance(profile.tags.get("vcgt"),
