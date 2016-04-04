@@ -831,7 +831,12 @@ class ProfileLoader(object):
 				if (not self._manual_restore and
 					getcfg("profile_loader.check_gamma_ramps")):
 					# Get video card gamma ramp
-					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+					try:
+						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+					except Exception, exception:
+						safe_print("Couldn't create DC for", moninfo["Device"],
+								   "(%s)" % display)
+						continue
 					ramp = ((ctypes.c_ushort * 256) * 3)()
 					try:
 						result = self.gdi32.GetDeviceGammaRamp(hdc, ramp)
@@ -865,7 +870,12 @@ class ProfileLoader(object):
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
 						safe_print(display, "->", os.path.basename(profile_path))
-				hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+				try:
+					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+				except Exception, exception:
+					safe_print("Couldn't create DC for", moninfo["Device"],
+							   "(%s)" % display)
+					continue
 				try:
 					result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
 				except Exception, exception:
