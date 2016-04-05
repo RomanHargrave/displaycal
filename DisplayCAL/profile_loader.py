@@ -278,11 +278,12 @@ class ProfileLoader(object):
 							 mtime) = self.pl.profile_associations.get(i,
 																	   (False,
 																		None))
-							if not self.pl.setgammaramp_success.get(i):
-								profile = lang.getstr("calibration.load_error")
 							if profile is False:
 								profile = "?"
-							if self.pl._reset_gamma_ramps:
+							if not self.pl.setgammaramp_success.get(i):
+								profile = (lang.getstr("unknown") +
+										   u" (%s)" % profile)
+							elif self.pl._reset_gamma_ramps:
 								profile = (lang.getstr("linear") +
 										   u" (%s)" % profile)
 							text += u"\n%s: %s" % (display, profile)
@@ -709,7 +710,6 @@ class ProfileLoader(object):
 			results = []
 			errors = []
 			self.lock.acquire()
-			self.setgammaramp_success = {}
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
