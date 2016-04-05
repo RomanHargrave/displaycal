@@ -28,6 +28,7 @@ class ProfileLoader(object):
 		self.lock = threading.Lock()
 		self.monitoring = True
 		self.monitors = []
+		self.numwindows = 0
 		self.profile_associations = {}
 		self.profiles = {}
 		self.devices2profiles = {}
@@ -250,7 +251,8 @@ class ProfileLoader(object):
 				def show_notification(self, text=None, sticky=False,
 									  show_notification=True,
 									  flags=wx.ICON_INFORMATION, toggle=False):
-					if wx.VERSION < (3, ):
+					if wx.VERSION < (3, ) or not self.pl._check_keep_running():
+						wx.Bell()
 						return
 					if sticky:
 						self.balloon_text = text
@@ -292,21 +294,6 @@ class ProfileLoader(object):
 															 self.pl.get_title(),
 															 text)
 
-			# We need to initialize a few 'hidden' windows so our _actual_ top
-			# level window can be last in the top level window list.
-			# This way, our application can be properly closed by e.g. taskkill,
-			# which will (seemingly) always close the last window created.
-			# If that window is a 'hidden' window that we can't directly manage,
-			# it'll cause application errors.
-			# wxTLWHiddenParent
-			self._tlwhidden = wx.Frame(None, -1, style=wx.FRAME_NO_TASKBAR |
-													   wx.NO_BORDER |
-													   wx.STAY_ON_TOP)
-			# wxDisplayHiddenWindow
-			self._displayhidden = self._tlwhidden.GetDisplay()
-			# wxTimerHiddenWindow
-			self._timerhidden = wx.CallLater(0, lambda: None)
-
 			self.taskbar_icon = TaskBarIcon(self)
 
 			try:
@@ -337,6 +324,8 @@ class ProfileLoader(object):
 			self.frame.listen()
 
 			self._pid = os.getpid()
+			self._tid = threading.currentThread().ident
+			self._check_keep_running()
 
 			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf_wrapper,
 															   name="DisplayConfigurationMonitoring")
@@ -569,46 +558,41 @@ class ProfileLoader(object):
 			title += " (%s)" % lang.getstr("forced")
 		return title
 
-	def _check_keep_running(self, numwindows=0):
+	def _check_keep_running(self):
 		from wxwindows import wx
 		windows = []
-		if self.use_madhcnet:
-			import win32gui
-			#print '-' * 79
-			try:
-				win32gui.EnumWindows(self._enumerate_own_windows_callback, windows)
-			except pywintypes.error, exception:
-				return numwindows
+		import win32gui
+		#print '-' * 79
+		try:
+			win32gui.EnumThreadWindows(self._tid,
+									   self._enumerate_own_windows_callback,
+									   windows)
+		except pywintypes.error, exception:
+			pass
 		windows.extend(filter(lambda window: not isinstance(window, wx.Dialog) and
 											 window.Name != "TaskBarNotification",
 							  wx.GetTopLevelWindows()))
-		if len(windows) < numwindows:
+		numwindows = len(windows)
+		if numwindows < self.numwindows:
 			# One of our windows has been closed by an external event
 			# (i.e. WM_CLOSE). This is a hint that something external is trying
 			# to get us to exit. Comply by closing our main top-level window to
 			# initiate clean shutdown.
 			from log import safe_print
-			safe_print("Window count", numwindows, "->", len(windows))
-			wx.CallAfter(lambda: self.frame and self.frame.Close())
-		return len(windows)
+			safe_print("Window count", self.numwindows, "->", numwindows)
+			return False
+		self.numwindows = numwindows
+		return True
 
 	def _enumerate_own_windows_callback(self, hwnd, windowlist):
-		import pywintypes
 		import win32gui
-		import win32process
-		from wxwindows import wx
-		try:
-			thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
-		except pywintypes.error:
-			return
-		if pid == self._pid:
-			cls = win32gui.GetClassName(hwnd)
-			#print cls
-			if (cls in ("madHcNetQueueWindow",
-						"wxTLWHiddenParent", "wxTimerHiddenWindow",
-						"wxDisplayHiddenWindow") or
-				cls.startswith("madToolsMsgHandlerWindow")):
-				windowlist.append(hwnd)
+		cls = win32gui.GetClassName(hwnd)
+		#print cls
+		if (cls in ("madHcNetQueueWindow",
+					"wxTLWHiddenParent", "wxTimerHiddenWindow",
+					"wxDisplayHiddenWindow") or
+			cls.startswith("madToolsMsgHandlerWindow")):
+			windowlist.append(cls)
 
 	def _display_changed(self, event):
 		from log import safe_print
@@ -707,7 +691,6 @@ class ProfileLoader(object):
 		first_run = True
 		apply_profiles = self._should_apply_profiles()
 		displaycal_running = self._is_displaycal_running()
-		numwindows = self._check_keep_running()
 		while self and self.monitoring:
 			result = None
 			results = []
@@ -962,8 +945,11 @@ class ProfileLoader(object):
 			timeout = 0
 			while (self and self.monitoring and timeout < 3 and
 				   not self._manual_restore	and not self._next):
-				if round(timeout * 100) % 25 == 0:
-					self._check_keep_running(numwindows)
+				if (round(timeout * 100) % 25 == 0 and
+					not self._check_keep_running()):
+					self.monitoring = False
+					wx.CallAfter(lambda: self.frame and self.frame.Close())
+					break
 				time.sleep(.1)
 				timeout += .1
 		if getcfg("profile_loader.fix_profile_associations"):
