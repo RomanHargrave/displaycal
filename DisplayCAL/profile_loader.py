@@ -213,8 +213,9 @@ class ProfileLoader(object):
 					return menu
 
 				def get_icon(self, enumerate_windows_and_processes=False):
-					if self.pl._should_apply_profiles(enumerate_windows_and_processes,
-													  manual_override=None):
+					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
+													   manual_override=None) and
+						config.getcfg("profile.load_on_login")):
 						if self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
 						else:
