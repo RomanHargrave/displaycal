@@ -33,6 +33,7 @@ class ProfileLoader(object):
 		self.profiles = {}
 		self.devices2profiles = {}
 		self.ramps = {}
+		self.setgammaramp_success = {}
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
 		self._has_display_changed = False
 		self._skip = "--skip" in sys.argv[1:]
@@ -277,12 +278,14 @@ class ProfileLoader(object):
 							 mtime) = self.pl.profile_associations.get(i,
 																	   (False,
 																		None))
+							if not self.pl.setgammaramp_success.get(i):
+								profile = lang.getstr("calibration.load_error")
 							if profile is False:
 								profile = "?"
 							if self.pl._reset_gamma_ramps:
 								profile = (lang.getstr("linear") +
-										   u" \u2192 " + profile)
-							text += u"\n%s \u2192 %s" % (display, profile)
+										   u" (%s)" % profile)
+							text += u"\n%s: %s" % (display, profile)
 					if not show_notification:
 						return
 					if getattr(self, "_notification", None):
@@ -706,6 +709,7 @@ class ProfileLoader(object):
 			results = []
 			errors = []
 			self.lock.acquire()
+			self.setgammaramp_success = {}
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
@@ -878,6 +882,9 @@ class ProfileLoader(object):
 					result = exception
 				finally:
 					win32gui.DeleteDC(hdc)
+				self.setgammaramp_success[i] = (result and
+												not isinstance(result,
+															   Exception))
 				if (self._manual_restore or profile_association_changed or
 					getcfg("profile_loader.check_gamma_ramps")):
 					if isinstance(result, Exception) or not result:
@@ -887,12 +894,14 @@ class ProfileLoader(object):
 					else:
 						safe_print(lang.getstr("success"))
 				if (self._manual_restore or
+					(profile_association_changed and
+					 (isinstance(result, Exception) or not result)) or
 					getcfg("profile_loader.check_gamma_ramps")):
 					if isinstance(result, Exception) or not result:
 						errstr = lang.getstr("calibration.load_error")
 						errors.append(": ".join([display, errstr]))
 					else:
-						text = display + u" \u2192 "
+						text = display + u": "
 						if self._reset_gamma_ramps:
 							text += lang.getstr("linear")
 						else:
@@ -922,7 +931,7 @@ class ProfileLoader(object):
 						lstr = "calibration.load_success"
 					results.insert(0, lang.getstr(lstr))
 				self.notify(results, errors,
-							show_notification=not first_run and
+							show_notification=(not first_run or errors) and
 											  self.__other_component[1] != "madHcNetQueueWindow")
 				if result:
 					self.__other_component = None, None
