@@ -1159,8 +1159,11 @@ class ProfileLoader(object):
 		from util_win import get_active_display_device, get_display_devices
 		self.devices2profiles = {}
 		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
-			active_device = get_active_display_device(moninfo["Device"])
-			for device in get_display_devices(moninfo["Device"]):
+			devices = get_display_devices(moninfo["Device"])
+			if not devices:
+				continue
+			active_device = get_active_display_device(None, devices=devices)
+			for device in devices:
 				try:
 					profile = ICCP.get_display_profile(path_only=True,
 													   devicekey=device.DeviceKey)
@@ -1170,7 +1173,7 @@ class ProfileLoader(object):
 					profile = None
 				if profile:
 					profile = os.path.basename(profile)
-				if device.DeviceID == active_device.DeviceID:
+				if active_device and device.DeviceID == active_device.DeviceID:
 					active_moninfo = moninfo
 				else:
 					active_moninfo = None
@@ -1190,7 +1193,7 @@ class ProfileLoader(object):
 				continue
 			if correct_profile:
 				correct_profile = os.path.basename(correct_profile)
-			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+			device = devices[0]
 			current_profile = self.devices2profiles[device.DeviceKey][1]
 			if (correct_profile and current_profile != correct_profile and
 				not dry_run):

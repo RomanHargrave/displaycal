@@ -171,7 +171,7 @@ def get_display_devices(devicename):
 	return devices
 
 
-def get_active_display_device(devicename):
+def get_active_display_device(devicename, devices=None):
 	"""
 	Get active display device of an output (there can only be one per output)
 	
@@ -182,7 +182,8 @@ def get_active_display_device(devicename):
 	devicename = '\\\\.\\DISPLAYn' where n is a positive integer starting at 1
 	
 	"""
-	devices = get_display_devices(devicename)
+	if not devices:
+		devices = get_display_devices(devicename)
 	for device in devices:
 		if (device.StateFlags & DISPLAY_DEVICE_ACTIVE 
 			and (len(devices) == 1 or device.StateFlags & 
