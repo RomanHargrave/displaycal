@@ -926,6 +926,7 @@ defaults = {
 	"profile_loader.known_apps": ";".join(["basiccolor display.exe",
 										   "calclient.exe",
 										   "coloreyes display pro.exe",
+										   "colorhcfr.exe",
 										   "colormunkidisplay.exe",
 										   "colornavigator.exe",
 										   "cpkeeper.exe",
