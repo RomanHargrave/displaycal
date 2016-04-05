@@ -601,8 +601,16 @@ class ProfileLoader(object):
 
 		with self.lock:
 			self._next = True
+			if sys.getwindowsversion() < (6, ):
+				# Under XP, we can't use the registry to figure out if the
+				# display change was a display configuration change (e.g.
+				# display added/removed) or just a resolution change
+				self._enumerate_monitors()
+				self._has_display_changed = True
 
 	def _check_display_changed(self, first_run=False, dry_run=False):
+		# Check registry if display configuration changed (e.g. if a display
+		# was added/removed, and not just the resolution changed)
 		import struct
 		import _winreg
 
@@ -614,7 +622,9 @@ class ProfileLoader(object):
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
 		except WindowsError, exception:
-			safe_print("Registry access failed:", exception)
+			if (exception.errno != errno.ENOENT or
+				sys.getwindowsversion() >= (6, )):
+				safe_print("Registry access failed:", exception)
 			key = None
 			numsubkeys = 0
 			if not (self.monitors or dry_run):
@@ -734,15 +744,14 @@ class ProfileLoader(object):
 				profile_association_changed = False
 				if association != (profile, mtime):
 					if not first_run:
-						device = get_active_display_device(moninfo["Device"])
-						if not device:
-							continue
 						safe_print("A profile change has been detected")
 						safe_print(display, "->", profile)
-						display_edid = get_display_name_edid(device,
-															 moninfo)
-						self.devices2profiles[device.DeviceKey] = (display_edid,
-																   profile)
+						device = get_active_display_device(moninfo["Device"])
+						if device:
+							display_edid = get_display_name_edid(device,
+																 moninfo)
+							self.devices2profiles[device.DeviceKey] = (display_edid,
+																	   profile)
 					self.profile_associations[i] = (profile, mtime)
 					self.profiles[i] = None
 					self.ramps[i] = (None, None)
