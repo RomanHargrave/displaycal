@@ -285,7 +285,7 @@ class ProfileLoader(object):
 								profile = (lang.getstr("unknown") +
 										   u" (%s)" % profile)
 							elif self.pl._reset_gamma_ramps:
-								profile = (lang.getstr("linear") +
+								profile = (lang.getstr("linear").capitalize() +
 										   u" (%s)" % profile)
 							text += u"\n%s: %s" % (display, profile)
 					if not show_notification:
@@ -908,7 +908,7 @@ class ProfileLoader(object):
 					else:
 						text = display + u": "
 						if self._reset_gamma_ramps:
-							text += lang.getstr("linear")
+							text += lang.getstr("linear").capitalize()
 						else:
 							text += os.path.basename(profile_path)
 						results.append(text)
