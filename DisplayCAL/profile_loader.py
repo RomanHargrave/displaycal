@@ -134,6 +134,7 @@ class ProfileLoader(object):
 					icon = wx.IconFromBitmap(image.ConvertToBitmap())
 					self._inactive_icon = icon
 					self._active_icon_reset = config.get_bitmap_as_icon(16, appname + "-apply-profiles-reset")
+					self._error_icon = config.get_bitmap_as_icon(16, appname + "-apply-profiles-error")
 					self.set_visual_state(True)
 					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
@@ -216,7 +217,11 @@ class ProfileLoader(object):
 					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
 													   manual_override=None) and
 						config.getcfg("profile.load_on_login")):
-						if self.pl._reset_gamma_ramps:
+						count = len(self.pl.monitors)
+						if len(filter(lambda (i, success): success,
+									  sorted(self.pl.setgammaramp_success.items())[:count])) != count:
+							icon = self._error_icon
+						elif self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
 						else:
 							icon = self._active_icon
