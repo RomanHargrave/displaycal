@@ -61,7 +61,11 @@ logbuffer = EncodedFile(StringIO(), "UTF-8", errors="replace")
 
 def wx_log(logwindow, msg):
 	if logwindow.IsShownOnScreen():
-		logwindow.Log(msg)
+		# Check if log buffer has been emptied or not.
+		# If it has, our log message is already included.
+		logbuffer.seek(0)
+		if logbuffer.read():
+			logwindow.Log(msg)
 
 
 class DummyLogger():
