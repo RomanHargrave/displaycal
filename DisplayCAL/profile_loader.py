@@ -88,7 +88,9 @@ class ProfileLoader(object):
 					self.Bind(wx.EVT_DISPLAY_CHANGED, self.pl._display_changed)
 
 				def get_commands(self):
-					return self.get_common_commands() + ["apply-profiles [force]"]
+					return self.get_common_commands() + ["apply-profiles [force]",
+														 "notify <message> [silent] [sticky]",
+														 "setlanguage <languagecode>"]
 
 				def process_data(self, data):
 					if data[0] == "apply-profiles" and (len(data) == 1 or
@@ -113,6 +115,21 @@ class ProfileLoader(object):
 						else:
 							with self.pl.lock:
 								self.pl._manual_restore = len(data)
+						return "ok"
+					elif data[0] == "notify" and (len(data) == 2 or
+												  (len(data) == 3 and
+												   data[2] in ("silent",
+															   "sticky")) or
+												  (len(data) == 4 and
+												   "silent" in data[2:] and
+												   "sticky" in data[2:])):
+						self.pl.notify([data[1]], [],
+									   sticky="sticky" in data[2:],
+									   show_notification=not "silent" in data[2:])
+						return "ok"
+					elif data[0] == "setlanguage" and len(data) == 2:
+						config.setcfg("lang", data[1])
+						wx.CallAfter(self.pl.taskbar_icon.set_visual_state)
 						return "ok"
 					return "invalid"
 
