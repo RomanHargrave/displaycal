@@ -156,6 +156,9 @@ class ScriptingClientFrame(SimpleTerminal):
 				self.add_text(exception.originalTraceback)
 			result = exception
 		if result:
+			if isinstance(result, socket.socket):
+				self.conn = result
+				result = lang.getstr("connection.established")
 			text = "%s\n" % safe_unicode(result)
 			self.add_text(text)
 			if colorize or isinstance(result, Exception):

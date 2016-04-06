@@ -2797,32 +2797,32 @@ class MainFrame(ReportFrame, BaseFrame):
 			if ip == app_ip and port == app_port:
 				continue
 			try:
-				conn_result = self.connect(ip, port)
-				if isinstance(conn_result, Exception):
+				conn = self.connect(ip, port)
+				if isinstance(conn, Exception):
 					safe_print("Warning - couldn't connect to", ip_port,
-							   "(%s):" % name, conn_result)
+							   "(%s):" % name, conn)
 					continue
-				self.conn.send_command("getappname")
-				remote_appname = self.conn.get_single_response()
+				conn.send_command("getappname")
+				remote_appname = conn.get_single_response()
 				if remote_appname == appname:
 					safe_print("Warning - connected to self, skipping")
-					del self.conn
+					del conn
 					continue
-				self.conn.send_command("setlanguage %s" % getcfg("lang"))
-				response = self.conn.get_single_response()
+				conn.send_command("setlanguage %s" % getcfg("lang"))
+				response = conn.get_single_response()
 				if response not in ("ok", "invalid"):
 					safe_print("Warning - couldn't set language for", name,
 							   "(%s):" % ip_port, response)
 				if remote_appname == appname + "-apply-profiles":
 					# Update notification text of profile loader
-					self.conn.send_command("notify '%s' silent sticky" %
+					conn.send_command("notify '%s' silent sticky" %
 										   lang.getstr("app.detected.calibration_loading_disabled",
 													   appname))
-					response = self.conn.get_single_response()
+					response = conn.get_single_response()
 					if response != "ok":
 						safe_print("Warning - couldn't update profile loader "
 								   "notification text:", response)
-				del self.conn
+				del conn
 			except Exception, exception:
 				safe_print("Warning - error while trying to set language for",
 						   name, "(%s)" % ip_port, exception)
@@ -12578,24 +12578,24 @@ class MainFrame(ReportFrame, BaseFrame):
 					if name == appbasename + "-apply-profiles":
 						ip, port = ip_port.split(":", 1)
 						port = int(port)
-						conn_result = self.connect(ip, port)
-						if isinstance(conn_result, Exception):
-							raise conn_result
+						conn = self.connect(ip, port)
+						if isinstance(conn, Exception):
+							raise conn
 						# Check if we're actually connected to the right
 						# application (if it terminated unexpectedly, something
 						# else may have grabbed the port)
-						self.conn.send_command("getappname")
-						response = self.conn.get_single_response()
+						conn.send_command("getappname")
+						response = conn.get_single_response()
 						if response == appname + "-apply-profiles":
-							self.conn.send_command("apply-profiles display-changed")
-							response = self.conn.get_single_response()
+							conn.send_command("apply-profiles display-changed")
+							response = conn.get_single_response()
 							if response != "ok":
 								safe_print("Warning - profile loader didn't"
 										   "load calibration:", response)
 						else:
 							safe_print("Warning - profile loader not running "
 									   "under expected port", port)
-						del self.conn
+						del conn
 						break
 				else:
 					safe_print("Warning - profile loader not running?")

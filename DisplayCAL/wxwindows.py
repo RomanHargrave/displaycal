@@ -707,15 +707,14 @@ class BaseFrame(wx.Frame):
 	def connect(self, ip, port):
 		if getattr(self, "conn", None):
 			self.conn.disconnect()
-		self.conn = ScriptingClientSocket()
-		self.conn.settimeout(3)
+		conn = ScriptingClientSocket()
+		conn.settimeout(3)
 		try:
-			self.conn.connect((ip, port))
+			conn.connect((ip, port))
 		except socket.error, exception:
-			del self.conn
-			self.conn = None
+			del conn
 			return exception
-		return lang.getstr("connection.established")
+		return conn
 
 	def connection_handler(self):
 		""" Handle socket connections """
