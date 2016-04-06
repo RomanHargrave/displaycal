@@ -112,9 +112,13 @@ class GenTCPSockPatternGeneratorServer(object):
 	def wait(self):
 		self.listening = True
 		if self.logfile:
+			host = gethostname()
+			try:
+				host = gethostbyname(host)
+			except socket.error:
+				pass
 			self.logfile.write(lang.getstr("connection.waiting") +
-							   (" %s:%s\n" % (gethostbyname(gethostname()),
-											  self.port)))
+							   (" %s:%s\n" % (host, self.port)))
 		while self.listening:
 			try:
 				self.conn, addr = self.socket.accept()
