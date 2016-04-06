@@ -681,10 +681,14 @@ class ProfileLoader(object):
 		except Exception, exception:
 			if self.lock.locked():
 				self.lock.release()
-			from debughelpers import handle_error
-			handle_error(exception)
 			from wxwindows import wx
-			wx.CallAfter(self.exit)
+			wx.CallAfter(self._handle_fatal_error, exception)
+
+	def _handle_fatal_error(self, exception):
+		from debughelpers import handle_error
+		handle_error(exception)
+		from wxwindows import wx
+		wx.CallAfter(self.exit)
 
 	def _check_display_conf(self):
 		import ctypes
