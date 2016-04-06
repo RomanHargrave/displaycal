@@ -3097,8 +3097,14 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_comports(self, force=False):
 		""" Update the comport selector control. """
 		self.comport_ctrl.Freeze()
+		# Remember selection
+		selection = self.comport_ctrl.GetStringSelection()
 		self.comport_ctrl.SetItems(self.worker.instruments)
-		if self.worker.instruments:
+		# Try and restore selection
+		if self.comport_ctrl.SetStringSelection(selection):
+			# Successfully restored selection
+			setcfg("comport.number", self.comport_ctrl.GetSelection() + 1)
+		elif self.worker.instruments:
 			self.comport_ctrl.SetSelection(
 				min(max(0, len(self.worker.instruments) - 1), 
 					max(0, int(getcfg("comport.number")) - 1)))
