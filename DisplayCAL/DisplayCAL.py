@@ -3049,6 +3049,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.displays.append(item.replace("[PRIMARY]", 
 											  lang.getstr("display.primary")))
 			self.displays[-1] = lang.getstr(self.displays[-1])
+		# Remember display selection
+		display_selection = self.display_ctrl.GetStringSelection()
 		self.display_ctrl.SetItems(self.displays)
 		self.display_ctrl.Enable(len(self.worker.displays) > 1)
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
@@ -3076,6 +3078,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		display_lut_sizer.Show(self.display_lut_label, use_lut_ctrl)
 		display_lut_sizer.Show(self.display_lut_ctrl, use_lut_ctrl)
 		display_sizer.Show(self.display_lut_link_ctrl, use_lut_ctrl)
+		# Try and restore display selection
+		if self.display_ctrl.SetStringSelection(display_selection):
+			# Successfully restored display selection
+			setcfg("display.number", self.display_ctrl.GetSelection() + 1)
 		self.get_set_display(update_ccmx_items)
 		self.calpanel.Layout()
 		self.panel.Thaw()
