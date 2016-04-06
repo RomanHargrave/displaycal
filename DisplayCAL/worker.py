@@ -4177,7 +4177,10 @@ while 1:
 					try:
 						if config.get_display_name() == "Resolve":
 							# Send fullscreen black to prevent plasma burn-in
-							self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
+							try:
+								self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
+							except socket.error:
+								pass
 						else:
 							self.patterngenerator.disconnect_client()
 					except Exception, exception:
