@@ -5100,12 +5100,19 @@ while 1:
 					# channel is fully saturated
 					if [65535.0] in RGB:
 						# Filter with a "plus" (+) shape
+						if (profile.connectionColorSpace == "Lab" and
+							i > clutres / 2.0):
+							# Smoothing factor for L*a*b* -> RGB cLUT above 50%
+							smooth = 0.25
+						else:
+							smooth = 1.0
 						for j, c in enumerate((x, y)):
 							if c > 0 and c < clutres - 1 and y < clutres - 1:
 								for n in (-1, 1):
 									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
 									for k in xrange(3):
-										RGB[k].append(RGBn[k])
+										RGB[k].append(RGBn[k] * smooth +
+													  RGB[k][0] * (1 - smooth))
 					else:
 						# Box filter, 3x3
 						# Center pixel weight = 1.0, surround = 0.5
