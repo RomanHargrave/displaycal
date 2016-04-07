@@ -1191,6 +1191,8 @@ def getcfg(name, fallback=True, raw=False):
 		if debug > 1:
 			print name, "- falling back to", value
 	elif name in ("displays", "instruments"):
+		if not value:
+			return []
 		value = [strtr(v, [("%" + hex(ord(os.pathsep))[2:].upper(), os.pathsep),
 						   ("%25", "%")]) for v in value.split(os.pathsep)]
 	return value
