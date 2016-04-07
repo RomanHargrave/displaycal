@@ -5096,24 +5096,35 @@ while 1:
 						# Don't smooth dark colors and gray axis
 						continue
 					RGB = [[v] for v in grid[y][x]]
-					# Box filter, 3x3
-					# Center pixel weight = 1.0, surround = 0.5
-					for j in (0, 1):
-						for n in (-1, 1):
-							yi, xi = (y, y + n)[j], (x + n, x)[j]
-							if (xi > -1 and yi > -1 and
-								xi < clutres and yi < clutres):
-								RGBn = grid[yi][xi]
-								for k in xrange(3):
-									RGB[k].append(RGBn[k] * 0.5 +
-												  RGB[k][0] * 0.5)
-							yi, xi = y - n, (x + n, x - n)[j]
-							if (xi > -1 and yi > -1 and
-								xi < clutres and yi < clutres):
-								RGBn = grid[yi][xi]
-								for k in xrange(3):
-									RGB[k].append(RGBn[k] * 0.5 +
-												  RGB[k][0] * 0.5)
+					# Use either "plus"-shaped or box filter depending if one
+					# channel is fully saturated
+					if [65535.0] in RGB:
+						# Filter with a "plus" (+) shape
+						for j, c in enumerate((x, y)):
+							if c > 0 and c < clutres - 1 and y < clutres - 1:
+								for n in (-1, 1):
+									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k])
+					else:
+						# Box filter, 3x3
+						# Center pixel weight = 1.0, surround = 0.5
+						for j in (0, 1):
+							for n in (-1, 1):
+								yi, xi = (y, y + n)[j], (x + n, x)[j]
+								if (xi > -1 and yi > -1 and
+									xi < clutres and yi < clutres):
+									RGBn = grid[yi][xi]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k] * 0.5 +
+													  RGB[k][0] * 0.5)
+								yi, xi = y - n, (x + n, x - n)[j]
+								if (xi > -1 and yi > -1 and
+									xi < clutres and yi < clutres):
+									RGBn = grid[yi][xi]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k] * 0.5 +
+													  RGB[k][0] * 0.5)
 					grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
 			for j, row in enumerate(grid):
 				itable.clut[i * clutres + j] = [[v for v in RGB]
