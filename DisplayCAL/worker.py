@@ -86,7 +86,7 @@ from patterngenerators import (PrismaPatternGeneratorClient,
 from trash import trash
 from util_io import (EncodedWriter, Files, GzipFileProper,
 					 StringIOu as StringIO, TarFileProper)
-from util_list import intlist
+from util_list import get as listget, intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
 						  mac_terminal_set_colors, osascript)
@@ -2869,11 +2869,16 @@ class Worker(object):
 			if verbose >= 1 and not silent:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			instruments = []
+			current_display = listget(getcfg("displays"),
+									  getcfg("display.number") - 1)
+			cfg_instruments = getcfg("instruments")
+			current_instrument = listget(cfg_instruments,
+										 getcfg("comport.number") - 1)
 			if enumerate_ports:
 				cmd = get_argyll_util("dispcal")
 			else:
 				cmd = get_argyll_util("dispwin")
-				for instrument in getcfg("instruments"):
+				for instrument in cfg_instruments:
 					# Names are canonical from 1.1.4.7 onwards, but we may have
 					# verbose names from an old configuration
 					instrument = get_canonical_instrument_name(instrument)
@@ -3008,6 +3013,9 @@ class Worker(object):
 			if instruments != self.instruments:
 				self.instruments = instruments
 				setcfg("instruments", instruments)
+				if current_instrument in instruments:
+					setcfg("comport.number",
+						   instruments.index(current_instrument) + 1)
 			if displays != self._displays:
 				self._displays = list(displays)
 				displays = filter(lambda display:
@@ -3113,6 +3121,9 @@ class Worker(object):
 				#
 				self.displays = displays
 				setcfg("displays", displays)
+				if current_display in displays:
+					setcfg("display.number",
+						   displays.index(current_display) + 1)
 				# Filter out Prisma, Resolve and Untethered
 				# IMPORTANT: Also make changes to display filtering in
 				# worker.Worker.has_separate_lut_access
