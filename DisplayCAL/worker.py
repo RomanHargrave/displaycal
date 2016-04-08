@@ -4895,11 +4895,13 @@ while 1:
 							v = L, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
-						if not use_cam_clipping or (a <= threshold and
+						if not use_cam_clipping or (pcs == "x" and
+													a <= threshold and
 													b <= threshold and
 													c <= threshold):
 							xicclu1(v)
-						if use_cam_clipping and (a > threshold2 or
+						if use_cam_clipping and (pcs == "l" or
+												 a > threshold2 or
 												 b > threshold2 or
 												 c > threshold2):
 							xicclu2(v)
@@ -4926,7 +4928,11 @@ while 1:
 					logfile.write("Input white L*a*b*: %s\n" % iLabwp)
 
 			odata1 = xicclu1.get()
-			if use_cam_clipping:
+			if not use_cam_clipping:
+				odata = odata1
+			elif pcs == "l":
+				odata = xicclu2.get()
+			else:
 				# Linearly interpolate the crossover to CAM Jab clipping region
 				cam_diag = False
 				odata2 = xicclu2.get()
@@ -4957,8 +4963,6 @@ while 1:
 									v = odata2[k]
 								k += 1
 							odata.append(v)
-			else:
-				odata = odata1
 			numrows = len(odata)
 			if numrows != clutres ** 3:
 				raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
