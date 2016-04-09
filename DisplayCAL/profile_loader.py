@@ -37,7 +37,9 @@ class ProfileLoader(object):
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
 		self._has_display_changed = False
 		self._skip = "--skip" in sys.argv[1:]
-		self._manual_restore = bool(config.getcfg("profile.load_on_login"))
+		apply_profiles = bool("--force" in sys.argv[1:] or
+							  config.getcfg("profile.load_on_login"))
+		self._manual_restore = apply_profiles
 		self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
 		self._known_apps = set([known_app.lower() for known_app in
 								config.defaults["profile_loader.known_apps"].split(";") +
@@ -49,8 +51,6 @@ class ProfileLoader(object):
 		self.__other_component = None, None
 		self.__other_isrunning = False
 		self.__apply_profiles = None
-		apply_profiles = ("--force" in sys.argv[1:] or
-						  config.getcfg("profile.load_on_login"))
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
 			sys.getwindowsversion() >= (6, 1)):
 			from util_win import calibration_management_isenabled
@@ -165,11 +165,18 @@ class ProfileLoader(object):
 						restore_auto = restore_manual = reset = None
 					else:
 						restore_manual = self.pl._set_manual_restore
-						if "--force" in sys.argv[1:]:
+						if ("--force" in sys.argv[1:] or
+							calibration_management_isenabled()):
 							restore_auto = None
 						else:
 							restore_auto = self.set_auto_restore
 						reset = self.pl._set_reset_gamma_ramps
+						if (not "--force" in sys.argv[1:] and
+							calibration_management_isenabled()):
+							restore_auto_kind = apply_kind = wx.ITEM_NORMAL
+						else:
+							apply_kind = wx.ITEM_RADIO
+							restore_auto_kind = wx.ITEM_CHECK
 
 					fix = len(self.pl.monitors) > 1
 					for i, (display, edid,
@@ -182,15 +189,15 @@ class ProfileLoader(object):
 						fix = self.pl._toggle_fix_profile_associations
 
 					menu_items = [("calibration.load_from_display_profiles",
-								   restore_manual, wx.ITEM_RADIO,
+								   restore_manual, apply_kind,
 								   "profile_loader.reset_gamma_ramps",
 								   lambda v: not v),
 								  ("calibration.reset",
-								   reset, wx.ITEM_RADIO,
+								   reset, apply_kind,
 								   "profile_loader.reset_gamma_ramps", None),
 								  ("-", None, False, None, None),
 								  ("calibration.preserve",
-								   restore_auto, wx.ITEM_CHECK,
+								   restore_auto, restore_auto_kind,
 								   "profile.load_on_login", None),
 								  ("profile_loader.fix_profile_associations",
 								   fix,
@@ -233,7 +240,8 @@ class ProfileLoader(object):
 				def get_icon(self, enumerate_windows_and_processes=False):
 					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
 													   manual_override=None) and
-						config.getcfg("profile.load_on_login")):
+						("--force" in sys.argv[1:] or
+						 config.getcfg("profile.load_on_login"))):
 						count = len(self.pl.monitors)
 						if len(filter(lambda (i, success): success,
 									  sorted(self.pl.setgammaramp_success.items())[:count])) != count:
@@ -552,7 +560,8 @@ class ProfileLoader(object):
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
 		if (event and self.frame and
 			event.GetEventType() == wx.EVT_MENU.typeId and
-			not calibration_management_isenabled()):
+			(not calibration_management_isenabled() or
+			 config.getcfg("profile_loader.fix_profile_associations"))):
 			import localization as lang
 			from wxwindows import ConfirmDialog
 			dlg = ConfirmDialog(None, msg=lang.getstr("profile_loader.exit_warning"), 
