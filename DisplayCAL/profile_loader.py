@@ -274,7 +274,11 @@ class ProfileLoader(object):
 				def set_auto_restore(self, event):
 					config.setcfg("profile.load_on_login",
 								  int(event.IsChecked()))
-					self.set_visual_state()
+					if event.IsChecked():
+						with self.pl.lock:
+							self.pl._next = event.IsChecked()
+					else:
+						self.set_visual_state()
 
 				def set_visual_state(self, enumerate_windows_and_processes=False):
 					self.SetIcon(self.get_icon(enumerate_windows_and_processes),
