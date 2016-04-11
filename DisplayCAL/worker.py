@@ -3531,6 +3531,10 @@ BEGIN_DATA
 						not self.instrument_on_screen):
 						# Show place instrument on screen message with countdown
 						countdown = 15
+						# We need to show the progress bar to make OSD visible
+						if not self.madtpg.show_progress_bar(countdown):
+							self.madtpg_disconnect()
+							return Error("madVR_ShowProgressBar failed")
 						self.madtpg_osd = not self.madtpg.is_disable_osd_button_pressed()
 						if not self.madtpg_osd:
 							# Enable OSD if disabled
