@@ -54,24 +54,24 @@ Source: ..\%(AppName)s\theme\icons\%(AppName)s-uninstall.ico; DestDir: {app};
 Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
 
 [Icons]
-Name: {group}\%(AppName)s; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --no-wait %(URL)s0install/%(AppName)s.xml";
-Name: {group}\{cm:SelectVersion}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --refresh --customize --no-wait %(URL)s0install/%(AppName)s.xml";
-Name: {group}\{cm:ChangeIntegration}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate %(URL)s0install/%(AppName)s.xml";
+Name: {group}\%(AppName)s; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --no-wait %(URL)s0install/%(AppName)s.xml";
+Name: {group}\{cm:SelectVersion}; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --refresh --customize --no-wait %(URL)s0install/%(AppName)s.xml";
+Name: {group}\{cm:ChangeIntegration}; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate %(URL)s0install/%(AppName)s.xml";
 Name: {group}\{cm:UninstallProgram,%(AppName)s}; Filename: {uninstallexe}; IconFilename: {app}\%(AppName)s-uninstall.ico;
 Name: {group}\LICENSE; Filename: %(URL)sLICENSE.txt;
 Name: {group}\README; Filename: %(URL)s;
-Name: {commonstartup}\%(AppName)s Profile Loader; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --offline --command=run-apply-profiles %(URL)s0install/%(AppName)s.xml"; Tasks: calibrationloadinghandledbydisplaycal;
+Name: {commonstartup}\%(AppName)s Profile Loader; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --offline --command=run-apply-profiles %(URL)s0install/%(AppName)s.xml"; Tasks: calibrationloadinghandledbydisplaycal;
 
 [Run]
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: runasoriginaluser
+Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: runasoriginaluser
 Filename: %(URL)s; Description: {code:Get_RunEntryShellExec_Message|README}; Flags: nowait postinstall shellexec skipifsilent;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent
+Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --command=run-apply-profiles %(URL)s0install/%(AppName)s.xml"; Tasks: calibrationloadinghandledbydisplaycal;
-; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --machine --add=auto-start --batch %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading -- %(URL)s0install/%(AppName)s.xml --os"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbyos;
+Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
+Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --command=run-apply-profiles %(URL)s0install/%(AppName)s.xml"; Tasks: calibrationloadinghandledbydisplaycal;
+; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --machine --add=auto-start --batch %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
+Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading -- %(URL)s0install/%(AppName)s.xml --os"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbyos;
 
 [Dirs]
 Name: {commonappdata}\%(AppName)s; Permissions: users-modify;
@@ -129,7 +129,7 @@ var
 begin
 	if CurStep=ssInstall then begin
 		if not ZeroInstall_IsInstalled() then begin
-			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), '/SP- /SILENT /NORESTART', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), '--silent', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 			if not ZeroInstall_IsInstalled() then
 				Abort();
@@ -157,7 +157,7 @@ begin
 	end;
 	if CurUninstallStep=usDone then begin
 		if ZeroInstall_IsInstalled() then begin
-			UninstallString := Get_ZeroInstall_InstallLocation() + '\unins000.exe';
+			UninstallString := Get_UninstallString('Zero Install');
 			if (UninstallString <> '') and (SuppressibleMsgBox(FmtMessage(CustomMessage('AskRemove'), ['Zero Install']), mbConfirmation, MB_YESNO, IDNO) = IDYES) then
 				Exec(UninstallString, '', '', SW_SHOW, ewNoWait, ErrorCode);
 		end;

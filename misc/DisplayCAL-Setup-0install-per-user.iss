@@ -116,7 +116,7 @@ var
 begin
 	if CurStep=ssInstall then begin
 		if not ZeroInstall_IsInstalled() then begin
-			if not Exec(ExpandConstant('{tmp}\zero-install-per-user.exe'), '/SP- /SILENT /NORESTART', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ExpandConstant('{tmp}\zero-install-per-user.exe'), '--silent', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 			if not ZeroInstall_IsInstalled() then
 				Abort();
@@ -139,7 +139,7 @@ begin
 	end;
 	if CurUninstallStep=usDone then begin
 		if ZeroInstall_IsInstalled() then begin
-			UninstallString := Get_ZeroInstall_InstallLocation() + '\unins000.exe';
+			UninstallString := Get_UninstallString('Zero Install');
 			if (UninstallString <> '') and (SuppressibleMsgBox(FmtMessage(CustomMessage('AskRemove'), ['Zero Install']), mbConfirmation, MB_YESNO, IDNO) = IDYES) then
 				Exec(UninstallString, '', '', SW_SHOW, ewNoWait, ErrorCode);
 		end;
