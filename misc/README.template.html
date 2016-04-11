@@ -2483,6 +2483,22 @@ Dino Nuhagic</span></p>
 
 						<p><strong>If you update from ${APPNAME} 3.1 standalone under Windows using the installer</strong>, please close the profile loader manually (if it is running) before running setup - due to an unfortunate bug, the installer may not be able to close and restart the profile loader automatically, which may then require using the task manager to end the profile loader process. Apologies for the inconvenience.</p>
 
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Updated traditional chinese localization (work-in-progress, thanks to 楊添明).</li>
+							<li>Windows: If madTPG is set to fullscreen and there's more than one display connected, don't temporarily override fullscreen if interactive display adjustment is enabled.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Windows: If interactive display adjustment is disabled and madTPG is set to fullscreen, show instrument placement countdown messages in madTPG OSD.</li>
+							<li>Windows: Restore madTPG fullscreen button state on disconnect if it was temporarily overridden.</li>
+							<li>Profile loader (Windows): Error message when right-clicking the profile loader task tray icon while ${APPNAME} is running.</li>
+						</ul>
+
+						<p id="changelog-3.1.3">2016-04-09 12:16 (UTC) 3.1.3 </p>
+						<h3>3.1.3 </h3>
+
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Device link profile as possible 3D LUT output format.</li>
@@ -2544,7 +2560,7 @@ Dino Nuhagic</span></p>
 							<li>Profile loader (Windows):
 								<ul>
 									<li>Detect f.lux and dispcal/dispread when running outside ${APPNAME}.</li>
-									<li>Don't notify on launch or when detecting DisplayCAL or madVR.</li>
+									<li>Don't notify on launch or when detecting ${APPNAME} or madVR.</li>
 									<li>Detect madVR through window enumeration instead of via madHcNet (so madVR can be updated without having to close and restart the profile loader).</li>
 									<li>Enforce calibration state periodically regardless of video card gamma table state.</li>
 									<li>Don't use Windows native notifications to overcome their limitations (maximum number of lines, text wrapping).</li>
