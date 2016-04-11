@@ -171,12 +171,12 @@ class ProfileLoader(object):
 						else:
 							restore_auto = self.set_auto_restore
 						reset = self.pl._set_reset_gamma_ramps
-						if (not "--force" in sys.argv[1:] and
-							calibration_management_isenabled()):
-							restore_auto_kind = apply_kind = wx.ITEM_NORMAL
-						else:
-							apply_kind = wx.ITEM_RADIO
-							restore_auto_kind = wx.ITEM_CHECK
+					if (not "--force" in sys.argv[1:] and
+						calibration_management_isenabled()):
+						restore_auto_kind = apply_kind = wx.ITEM_NORMAL
+					else:
+						apply_kind = wx.ITEM_RADIO
+						restore_auto_kind = wx.ITEM_CHECK
 
 					fix = len(self.pl.monitors) > 1
 					for i, (display, edid,
