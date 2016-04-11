@@ -3347,23 +3347,11 @@ class Worker(object):
 					# Check madVR version
 					madvr_version = self.madtpg.get_version()
 					if not madvr_version or madvr_version < madvr.min_version:
-						self.madtpg.disconnect()
+						self.madtpg_disconnect(False)
 						return Error(lang.getstr("madvr.outdated",
 												 madvr.min_version))
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
 							 (madvr_version + (self.madtpg.uri, )))
-					fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
-					if cmdname == get_argyll_utilname("dispcal"):
-						self.madtpg_previous_fullscreen = fullscreen
-						if not ("-m" in args or "-u" in args) and fullscreen:
-							# Disable fullscreen
-							self.madtpg.set_use_fullscreen_button(False)
-					elif (getattr(self, "madtpg_previous_fullscreen", None) and
-						  cmdname == get_argyll_utilname("dispread") and
-						  self.dispread_after_dispcal):
-						# Restore fullscreen
-						self.madtpg.set_use_fullscreen_button(True)
-					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
 					if isinstance(self.madtpg, madvr.MadTPG_Net):
 						# Need to handle calibration clearing/loading/saving
 						# for madVR net-protocol pure python implementation
@@ -3385,7 +3373,7 @@ class Worker(object):
 								self.log("MadTPG_Net save calibration:", args[-1])
 								ramp = self.madtpg.get_device_gamma_ramp()
 								if not ramp:
-									self.madtpg.disconnect()
+									self.madtpg_disconnect(False)
 									return Error("madVR_GetDeviceGammaRamp failed")
 								cal = """CAL    
 
@@ -3415,7 +3403,7 @@ BEGIN_DATA
 									with open(args[-1], "w") as calfile:
 										calfile.write(cal)
 								except (IOError, OSError), exception:
-									self.madtpg.disconnect()
+									self.madtpg_disconnect(False)
 									return exception
 								cal = None
 								ramp = False
@@ -3439,21 +3427,21 @@ BEGIN_DATA
 							self.log("MadTPG_Net load calibration:", calfilename)
 							result = check_file_isfile(calfilename)
 							if isinstance(result, Exception):
-								self.madtpg.disconnect()
+								self.madtpg_disconnect(False)
 								return result
 							if calfilename.lower().endswith(".cal"):
 								# .cal file
 								try:
 									cal = CGATS.CGATS(calfilename)
 								except (IOError, CGATS.CGATSError), exception:
-									self.madtpg.disconnect()
+									self.madtpg_disconnect(False)
 									return exception
 							else:
 								# ICC profile
 								try:
 									profile = ICCP.ICCProfile(calfilename)
 								except (IOError, ICCP.ICCProfileInvalidError), exception:
-									self.madtpg.disconnect()
+									self.madtpg_disconnect(False)
 									return exception
 						if profile:
 							# Load calibration from ICC profile vcgt (if present)
@@ -3474,7 +3462,7 @@ BEGIN_DATA
 													 (lang.getstr("calibration"),
 													  lang.getstr("number_of_entries")))
 							except CGATS.CGATSError, exception:
-								self.madtpg.disconnect()
+								self.madtpg_disconnect(False)
 								return exception
 							# Convert calibration to ushort_Array_256_Array_3
 							ramp = ((ctypes.c_ushort * 256) * 3)()
@@ -3485,21 +3473,56 @@ BEGIN_DATA
 						ramp = None
 					if (ramp is not False and
 						not self.madtpg.set_device_gamma_ramp(ramp)):
-						self.madtpg.disconnect()
+						self.madtpg_disconnect(False)
 						return Error("madVR_SetDeviceGammaRamp failed")
 					if (isinstance(self.madtpg, madvr.MadTPG_Net) and
 						cmdname == get_argyll_utilname("dispwin")):
 						# For madVR net-protocol pure python implementation
 						# we are now done
-						self.madtpg.disconnect()
+						self.madtpg_disconnect(False)
 						return True
 					if not "-V" in args and not use_3dlut_override:
 						endis = "disable"
 					else:
 						endis = "enable"
 					if not getattr(self.madtpg, endis + "_3dlut")():
-						self.madtpg.disconnect()
+						self.madtpg_disconnect(False)
 						return Error("madVR_%s3dlut failed" % endis.capitalize())
+					fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
+					if sys.platform == "win32":
+						# Make sure interactive display adjustment window isn't
+						# concealed by temporarily disabling fullscreen if
+						# needed. This is only a problem in single display
+						# configurations.
+						# Check if we have more than one "real" display.
+						non_virtual_displays = []
+						for display_no in xrange(len(self.displays)):
+							if not config.is_virtual_display(display_no):
+								non_virtual_displays.append(display_no)
+						if len(non_virtual_displays) == 1:
+							# We only have one "real" display connected
+							if cmdname == get_argyll_utilname("dispcal"):
+								if not ("-m" in args or "-u" in args) and fullscreen:
+									# Disable fullscreen
+									if self.madtpg.set_use_fullscreen_button(False):
+										self.log("Temporarily leaving madTPG "
+												 "fullscreen")
+										self.madtpg_previous_fullscreen = fullscreen
+									else:
+										self.log("Warning - couldn't "
+												 "temporarily leave madTPG "
+												 "fullscreen")
+							elif (getattr(self, "madtpg_previous_fullscreen", None) and
+								  cmdname == get_argyll_utilname("dispread") and
+								  self.dispread_after_dispcal):
+								# Restore fullscreen
+								if self.madtpg.set_use_fullscreen_button(True):
+									self.log("Restored madTPG fullscreen")
+									self.madtpg_previous_fullscreen = None
+								else:
+									self.log("Warning - couldn't restore "
+											 "madTPG fullscreen")
+					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
@@ -3508,10 +3531,15 @@ BEGIN_DATA
 						not self.instrument_on_screen):
 						# Show place instrument on screen message with countdown
 						countdown = 15
-						madtpg_osd = not self.madtpg.is_disable_osd_button_pressed()
-						if not madtpg_osd:
+						self.madtpg_osd = not self.madtpg.is_disable_osd_button_pressed()
+						if not self.madtpg_osd:
 							# Enable OSD if disabled
-							self.madtpg.set_disable_osd_button(False)
+							if self.madtpg.set_disable_osd_button(False):
+								self.log("Temporarily enabled madTPG OSD for "
+										 "instrument placement countdown")
+							else:
+								self.log("Warning - couldn't temporarily "
+										 "enable madTPG OSD")
 						for i in xrange(countdown):
 							if self.subprocess_abort or self.thread_abort:
 								break
@@ -3519,7 +3547,7 @@ BEGIN_DATA
 								lang.getstr("instrument.place_on_screen.madvr",
 											(countdown - i,
 											 self.get_instrument_name()))):
-								self.madtpg.disconnect()
+								self.madtpg_disconnect()
 								return Error("madVR_SetOsdText failed")
 							ts = time()
 							if i % 2 == 0:
@@ -3531,15 +3559,21 @@ BEGIN_DATA
 							if delay < 1:
 								sleep(1 - delay)
 						self.instrument_on_screen = True
-						if not madtpg_osd:
+						if not self.madtpg_osd:
 							# Disable OSD
-							self.madtpg.set_disable_osd_button(True)
+							if self.madtpg.set_disable_osd_button(True):
+								self.log("Restored madTPG 'Disable OSD' button "
+										 "state")
+								self.madtpg_osd = None
+							else:
+								self.log("Warning - could not restore madTPG "
+								 "'Disable OSD' button state")
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
 					if (not patternconfig or
 						not isinstance(patternconfig, tuple) or
 						len(patternconfig) != 4):
-						self.madtpg.disconnect()
+						self.madtpg_disconnect()
 						return Error("madVR_GetPatternConfig failed")
 					self.log("Pattern area: %i%%" % patternconfig[0])
 					self.log("Background level: %i%%" % patternconfig[1])
@@ -3563,13 +3597,13 @@ BEGIN_DATA
 							# with pattern area when Argyll 1.6.x is used
 							args.insert(0, "-F")
 						# Disconnect
-						self.madtpg.disconnect()
+						self.madtpg_disconnect(False)
 					self.log("")
 				else:
 					return Error(lang.getstr("madtpg.launch.failure"))
 			except Exception, exception:
 				if isinstance(getattr(self, "madtpg", None), madvr.MadTPG_Net):
-					self.madtpg.disconnect()
+					self.madtpg_disconnect()
 				return exception
 		# Use mad* net protocol pure python implementation
 		use_madnet = use_madvr and isinstance(self.madtpg, madvr.MadTPG_Net)
@@ -3668,7 +3702,7 @@ while 1:
 						wx.CallAfter(self.owner.infoframe_toggle_handler,
 									 show=True)
 					if use_madnet:
-						self.madtpg.disconnect()
+						self.madtpg_disconnect()
 					return UnloggedInfo(lang.getstr("dry_run.info"))
 		cmdline = [cmd] + args
 		for i, item in enumerate(cmdline):
@@ -3707,16 +3741,16 @@ while 1:
 						# Careful: We can only show the auth dialog if running
 						# in the main GUI thread!
 						if use_madnet:
-							self.madtpg.disconnect()
+							self.madtpg_disconnect()
 						return Error("Authentication requested in non-GUI thread")
 					result = self.authenticate(cmd, title, parent)
 					if result is False:
 						if use_madnet:
-							self.madtpg.disconnect()
+							self.madtpg_disconnect()
 						return None
 					elif isinstance(result, Exception):
 						if use_madnet:
-							self.madtpg.disconnect()
+							self.madtpg_disconnect()
 						return result
 				sudo = unicode(self.sudo)
 		if sudo:
@@ -4196,8 +4230,8 @@ while 1:
 							self.patterngenerator.disconnect_client()
 					except Exception, exception:
 						self.log(exception)
-			if use_madnet:
-				self.madtpg.disconnect()
+			if hasattr(self, "madtpg"):
+				self.madtpg_disconnect()
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
 		if self.retcode != 0:
@@ -7193,6 +7227,37 @@ usage: spotread [-options] [logfile]
 				self.madtpg = madvr.MadTPG_Net()
 				self.madtpg.debug = verbose
 		return self.madtpg.connect(method2=madvr.CM_StartLocalInstance)
+
+	def madtpg_disconnect(self, restore_settings=True):
+		""" Restore madVR settings and disconnect """
+		if restore_settings:
+			restore_fullscreen = getattr(self, "madtpg_previous_fullscreen", None)
+			restore_osd = getattr(self, "madtpg_osd", None) is False
+			if restore_fullscreen or restore_osd:
+				check = self.madtpg.get_version()
+				if not check:
+					check = self.madtpg_connect()
+				if check:
+					if restore_fullscreen:
+						# Restore fullscreen
+						if self.madtpg.set_use_fullscreen_button(True):
+							self.log("Restored madTPG 'Fullscreen' button state")
+							self.madtpg_previous_fullscreen = None
+						else:
+							self.log("Warning - could not restore madTPG "
+									 "'Fullscreen' button state")
+					if restore_osd:
+						# Restore disable OSD
+						if self.madtpg.set_disable_osd_button(True):
+							self.log("Restored madTPG 'Disable OSD' button state")
+							self.madtpg_osd = None
+						else:
+							self.log("Warning - could not restore madTPG 'Disable "
+									 "OSD' button state")
+				else:
+					self.log("Warning - could not re-connect to madTPG to restore"
+							 "'Fullscreen'/'Disable OSD' button states")
+		self.madtpg.disconnect()
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
