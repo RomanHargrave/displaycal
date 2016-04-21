@@ -15,7 +15,7 @@ def floatlist(alist):
 
 def get(alist, index, default=None):
 	""" Similar to dict.get, return item at index or default if not in list """
-	if index > -1 and index < len(alist) - 1:
+	if index > -1 and index < len(alist):
 		return alist[index]
 	return default
 
