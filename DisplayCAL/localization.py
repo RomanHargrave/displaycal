@@ -4,6 +4,7 @@ import __builtin__
 import locale
 import os
 import re
+import sys
 
 import demjson
 
@@ -11,8 +12,13 @@ from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
 from jsondict import JSONDict
 from log import safe_print
+from options import debug
 from util_os import expanduseru
 from util_str import safe_unicode
+
+
+if not debug:
+	debug = "-dl" in sys.argv[1:] or "--debug-localization" in sys.argv[1:]
 
 
 def init(set_wx_locale=False):
@@ -87,6 +93,11 @@ def getstr(id_str, strvars=None, lcode=None):
 		lcode = "en"
 	if lcode in ldict and id_str in ldict[lcode]:
 		lstr = ldict[lcode][id_str]
+		if debug:
+			if not id_str in usage or not isinstance(usage[id_str], int):
+				usage[id_str] = 1
+			else:
+				usage[id_str] += 1
 		if strvars is not None:
 			if not isinstance(strvars, (list, tuple)):
 				strvars = [strvars]
@@ -109,6 +120,9 @@ def getstr(id_str, strvars=None, lcode=None):
 				lstr %= tuple(strvars)
 		return lstr
 	else:
+		if (debug and id_str and not isinstance(id_str, unicode) and
+			not " " in id_str):
+			usage[id_str] = 0
 		return id_str
 
 
@@ -126,3 +140,30 @@ def gettext(text):
 
 ldict = {}
 catalog = {}
+
+
+if debug:
+	import atexit
+	from config import confighome
+
+	usage = JSONDict()
+	usage_path = os.path.join(confighome, "localization_usage.json")
+	if os.path.isfile(usage_path):
+		usage.path = usage_path
+
+	def write_usage():
+		global usage
+		if not usage:
+			return
+		if os.path.isfile(usage_path):
+			temp = JSONDict(usage_path)
+			temp.load()
+			temp.update(usage)
+			usage = temp
+		with open(usage_path, "wb") as usagefile:
+			usagefile.write("{\n")
+			for key, count in sorted(usage.items()):
+				usagefile.write('\t"%s": %i,\n' % (key.encode("UTF-8"), count))
+			usagefile.write("}")
+
+	atexit.register(write_usage)
