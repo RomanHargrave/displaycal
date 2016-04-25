@@ -892,8 +892,8 @@ def setup():
 				# Get interface
 				interface = domtree.getElementsByTagName("interface")[0]
 				# Get languages
-				langs = [os.path.splitext(lang)[0] for lang in
-						 os.listdir(os.path.join(name, "lang"))]
+				langs = [os.path.splitext(os.path.basename(lang))[0] for lang in
+						 glob.glob(os.path.join(name, "lang", "*.json"))]
 				# Get architecture groups
 				groups = domtree.getElementsByTagName("group")
 				if groups:
