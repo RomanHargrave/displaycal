@@ -909,8 +909,27 @@ class LUT3DFrame(BaseFrame):
 							self.update_layout()
 							self.Thaw()
 					else:
-						self.Freeze()
 						if which == "input":
+							if (not hasattr(self, which + "_profile") or
+								getcfg("3dlut.%s.profile" % which) !=
+								profile.fileName):
+								# Get profile blackpoint so we can check if it makes
+								# sense to show TRC type and output offset controls
+								try:
+									odata = self.worker.xicclu(profile, (0, 0, 0),
+															   pcs="x")
+								except Exception, exception:
+									show_result_dialog(exception, self)
+									self.set_profile_ctrl_path(which)
+									return
+								else:
+									if len(odata) != 1 or len(odata[0]) != 3:
+										show_result_dialog("Blackpoint is invalid: %s"
+														   % odata, self)
+										self.set_profile_ctrl_path(which)
+										return
+									self.XYZbpin = odata[0]
+							self.Freeze()
 							self.lut3d_trc_label.Show()
 							self.lut3d_trc_apply_none_ctrl.Show()
 							self.lut3d_trc_apply_black_offset_ctrl.Show()
@@ -928,32 +947,11 @@ class LUT3DFrame(BaseFrame):
 							self.lut3d_apply_cal_cb.Show()
 							self.lut3d_show_encoding_controls()
 							self.lut3d_update_encoding_controls()
-							if (not hasattr(self, which + "_profile") or
-								getcfg("3dlut.%s.profile" % which) !=
-								profile.fileName):
-								# Get profile blackpoint so we can check if it makes
-								# sense to show TRC type and output offset controls
-								try:
-									odata = self.worker.xicclu(profile, (0, 0, 0),
-															   pcs="x")
-								except Exception, exception:
-									wx.CallAfter(show_result_dialog, exception,
-												 self)
-								else:
-									if len(odata) != 1 or len(odata[0]) != 3:
-										show_result_dialog("Blackpoint is invalid: %s"
-														   % odata, self)
-									self.XYZbpin = odata[0]
 							# Update controls related to output profile
 							setattr(self, "input_profile", profile)
 							if not self.set_profile("output", silent=silent):
 								self.update_linking_controls()
 						elif which == "output":
-							enable_apply_cal = (isinstance(profile.tags.get("vcgt"),
-														   ICCP.VideoCardGammaType))
-							self.lut3d_apply_cal_cb.SetValue(enable_apply_cal and
-													   bool(getcfg("3dlut.output.profile.apply_cal")))
-							self.lut3d_apply_cal_cb.Enable(enable_apply_cal)
 							if (not hasattr(self, which + "_profile") or
 								getcfg("3dlut.%s.profile" % which) !=
 								profile.fileName):
@@ -963,13 +961,22 @@ class LUT3DFrame(BaseFrame):
 									odata = self.worker.xicclu(profile, (0, 0, 0),
 															   pcs="x")
 								except Exception, exception:
-									wx.CallAfter(show_result_dialog, exception,
-												 self)
+									show_result_dialog(exception, self)
+									self.set_profile_ctrl_path(which)
+									return
 								else:
 									if len(odata) != 1 or len(odata[0]) != 3:
 										show_result_dialog("Blackpoint is invalid: %s"
 														   % odata, self)
+										self.set_profile_ctrl_path(which)
+										return
 									self.XYZbpout = odata[0]
+							self.Freeze()
+							enable_apply_cal = (isinstance(profile.tags.get("vcgt"),
+														   ICCP.VideoCardGammaType))
+							self.lut3d_apply_cal_cb.SetValue(enable_apply_cal and
+													   bool(getcfg("3dlut.output.profile.apply_cal")))
+							self.lut3d_apply_cal_cb.Enable(enable_apply_cal)
 							self.gamut_mapping_inverse_a2b.Enable()
 							allow_b2a_gamap = ("B2A0" in profile.tags and
 											   isinstance(profile.tags.B2A0,
@@ -998,12 +1005,10 @@ class LUT3DFrame(BaseFrame):
 												 (getcfg("3dlut.format") != "madVR" or
 												  self.output_profile_ctrl.IsShown()))
 					return profile
-			getattr(self, "%s_profile_ctrl" %
-						  which).SetPath(getcfg("3dlut.%s.profile" % which))
+			self.set_profile_ctrl_path(which)
 		else:
 			if which == "input":
-				getattr(self, "%s_profile_ctrl" %
-							  which).SetPath(getcfg("3dlut.%s.profile" % which))
+				self.set_profile_ctrl_path(which)
 				self.lut3d_update_encoding_controls()
 			else:
 				if not silent:
@@ -1012,6 +1017,10 @@ class LUT3DFrame(BaseFrame):
 					if which == "output":
 						self.lut3d_apply_cal_cb.Disable()
 						self.lut3d_create_btn.Disable()
+
+	def set_profile_ctrl_path(self, which):
+		getattr(self, "%s_profile_ctrl" %
+					  which).SetPath(getcfg("3dlut.%s.profile" % which))
 	
 	def setup_language(self):
 		BaseFrame.setup_language(self)

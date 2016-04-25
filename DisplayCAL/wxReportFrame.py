@@ -440,10 +440,14 @@ class ReportFrame(BaseFrame):
 														   pcs="x")
 							except Exception, exception:
 								show_result_dialog(exception, self)
+								self.set_profile_ctrl_path(which)
+								return
 							else:
 								if len(odata) != 1 or len(odata[0]) != 3:
 									show_result_dialog("Blackpoint is invalid: %s"
 													   % odata, self)
+									self.set_profile_ctrl_path(which)
+									return
 								self.XYZbpin = odata[0]
 						elif which == "output":
 							# Get profile blackpoint so we can check if input
@@ -453,28 +457,35 @@ class ReportFrame(BaseFrame):
 														   pcs="x")
 							except Exception, exception:
 								show_result_dialog(exception, self)
+								self.set_profile_ctrl_path(which)
+								return
 							else:
 								if len(odata) != 1 or len(odata[0]) != 3:
 									show_result_dialog("Blackpoint is invalid: %s"
 													   % odata, self)
+									self.set_profile_ctrl_path(which)
+									return
 								self.XYZbpout = odata[0]
 					setattr(self, "%s_profile" % which, profile)
 					if not silent:
-						setcfg("measurement_report.%s_profile" % which, profile.fileName)
+						setcfg("measurement_report.%s_profile" % which,
+							   profile and profile.fileName)
 						if which == "simulation":
 							self.use_simulation_profile_ctrl_handler(None)
 						elif hasattr(self, "XYZbpin"):
 							self.mr_update_main_controls()
 					return profile
 			if path:
-				getattr(self,
-						"%s_profile_ctrl" %
-						which).SetPath(getcfg("measurement_report.%s_profile" % which))
+				self.set_profile_ctrl_path(which)
 		else:
 			setattr(self, "%s_profile" % which, None)
 			if not silent:
 				setcfg("measurement_report.%s_profile" % which, None)
 				self.mr_update_main_controls()
+
+	def set_profile_ctrl_path(self, which):
+		getattr(self, "%s_profile_ctrl" %
+					  which).SetPath(getcfg("measurement_report.%s_profile" % which))
 	
 	def mr_setup_language(self):
 		# Shared with main window
