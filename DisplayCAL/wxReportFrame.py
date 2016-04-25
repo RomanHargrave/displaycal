@@ -815,14 +815,14 @@ class ReportFrame(BaseFrame):
 				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 				setcfg("measurement_report.apply_trc",
 					   int(tf[0][1] in (-240, -709) or
-						   tf[0][0].startswith("Gamma")))
+						   (tf[0][0].startswith("Gamma") and tf[1] >= .95)))
 				# Use only BT.1886 black output offset
 				setcfg("measurement_report.apply_black_offset",
 					   int(tf[0][1] not in (-240, -709) and
-						   not tf[0][0].startswith("Gamma") and
+						   (not tf[0][0].startswith("Gamma") or tf[1] < .95) and
 						   self.XYZbpin != self.XYZbpout))
 				# Set gamma to profile gamma if single gamma profile
-				if tf[0][0].startswith("Gamma"):
+				if tf[0][0].startswith("Gamma") and tf[1] >= .95:
 					if not getcfg("measurement_report.trc_gamma.backup", False):
 						# Backup current gamma
 						setcfg("measurement_report.trc_gamma.backup",

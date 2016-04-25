@@ -498,7 +498,8 @@
                           <item>trc.rec709</item>
                           <item>trc.rec1886</item>
                           <item>trc.smpte240m</item>
-                          <item>trc.smpte2084</item>
+                          <item>trc.smpte2084.hardclip</item>
+                          <item>trc.smpte2084.rolloffclip</item>
                           <item>trc.srgb</item>
                         </content>
                         <selection>0</selection>

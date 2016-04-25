@@ -3691,7 +3691,7 @@ class ICCProfile:
 														 65535))
 		self.set_blackpoint(XYZbp)
 
-	def set_smpte2084_trc(self, XYZbp, white_cdm2=100, size=1024):
+	def set_smpte2084_trc(self, XYZbp, white_cdm2=100, size=1024, rolloff=False):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
 		
@@ -3721,11 +3721,38 @@ class ICCProfile:
 			size = 1024
 		values = []
 		mini = colormath.specialpow((mtx * XYZbp)[1] / 10000.0, 1.0 / -2084)
-		maxi = colormath.specialpow(white_cdm2 / 10000.0, 1.0 / -2084)
-		for i in xrange(size):
-			n = i / (size - 1.0)
+		maxv = white_cdm2 / 10000.0
+		maxi = colormath.specialpow(maxv, 1.0 / -2084)
+		clip = math.ceil(size * maxi)
+		for i in xrange(int(clip)):
+			n = i / (clip - 1.0)
 			v = colormath.specialpow(mini + n * (maxi - mini), -2084)
-			values.append(v)
+			values.append(min(v / maxv, 1.0))
+		if clip < size:
+			while len(values) < size:
+				values.append(1.0)
+			index = i - int(min(math.ceil((size / 12) * (1.0 - maxi)),
+								size * (1 / 32.0)))
+			if rolloff and index > 0:
+				ival = values[index]
+				prev = 0
+				for i in xrange(index, size):
+					vv = (i - index) / (size - index - 1.0)  # 0 at index, 1 at max
+					vv = 1.0 - vv
+					if vv < 0.0:
+						vv = 0.0
+					elif vv > 1.0:
+						vv = 1.0
+					if vv:
+						vv = math.pow(vv, max(math.ceil(30 * (1 - maxi)), 10))
+					##print i, values[i], vv, '->',
+					values[i] = ival * vv + 1.0 * (1 - vv)
+					##print values[i]
+					if round(values[i] * 65535) < round(prev * 65535):
+						safe_print("Warning: Tone response curve is "
+								   "non-monotonically increasing (previous value "
+								   "%r, current value %r)" % (prev, values[i]))
+					prev = values[i]
 		XYZbp = [v / white_cdm2 for v in XYZbp]
 		rgbbp = mtx * XYZbp
 		# Optimize for uInt16Number encoding

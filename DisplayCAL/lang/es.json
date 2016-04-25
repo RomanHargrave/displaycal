@@ -990,6 +990,8 @@
 	"trc.rec709": "Rec. 709",
 	"trc.should_use_viewcond_adjust": "Cuando se usan las curvas SMPTE 240M, Rec. 709 o sRGB, debe usar un ajuste en las condiciones de visualizacion para los niveles de luz ambiente tan buenos como pueda para obtener los resultados que desee. Para hacer esto, marque la casilla cerca de “Nivel de luz ambiente” e introduzca un valor en Lux. Opcionalmente puede medir la luz ambiente cuando realiza una calibracion, si lo soporta su instrumento.",
 		"*trc.smpte2084": "SMPTE 2084",
+		"*trc.smpte2084.hardclip": "SMPTE 2084 (hard clip)",
+		"*trc.smpte2084.rolloffclip": "SMPTE 2084 (roll-off clip)",
 	"trc.smpte240m": "SMPTE 240M",
 	"trc.srgb": "sRGB",
 	"trc.type.absolute": "Absoluto",

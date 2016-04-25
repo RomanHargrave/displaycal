@@ -495,11 +495,11 @@ class SynthICCFrame(BaseFrame):
 			# SMPTE 240M
 			self.trc_ctrl.SetSelection(5)
 		elif gamma == -2084:
-			# SMPTE 2084
-			self.trc_ctrl.SetSelection(6)
+			# SMPTE 2084, roll-off clip
+			self.trc_ctrl.SetSelection(7)
 		elif gamma == -2.4:
 			# sRGB
-			self.trc_ctrl.SetSelection(7)
+			self.trc_ctrl.SetSelection(8)
 		else:
 			# Gamma
 			self.trc_ctrl.SetSelection(0)
@@ -524,11 +524,11 @@ class SynthICCFrame(BaseFrame):
 			gamma = 2.2
 			self.trc_gamma_ctrl.Value = str(gamma)
 		white = XYZ["wX"], XYZ["wY"], XYZ["wZ"]
-		if self.trc_ctrl.GetSelection() in (0, 1, 4, 6):
+		if self.trc_ctrl.GetSelection() in (0, 1, 4, 6, 7):
 			# 0 = Gamma
 			# 1 = DICOM - trc set here is not actually used in the end
 			# 4 = Rec. 1886 - trc set here is only used if black = 0
-			# 6 = SMPTE 2084 - trc set here is not actually used in the end
+			# 6 & 7 = SMPTE 2084 - trc set here is not actually used in the end
 			trc = gamma
 		elif self.trc_ctrl.GetSelection() == 2:
 			# L*
@@ -539,7 +539,7 @@ class SynthICCFrame(BaseFrame):
 		elif self.trc_ctrl.GetSelection() == 5:
 			# SMPTE 240M
 			trc = -240
-		elif self.trc_ctrl.GetSelection() == 7:
+		elif self.trc_ctrl.GetSelection() == 8:
 			# sRGB
 			trc = -2.4
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
@@ -598,13 +598,14 @@ class SynthICCFrame(BaseFrame):
 				# Grayscale profile
 				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, gamma,
 												 getcfg("synthprofile.trc_gamma_type"))
-		elif self.trc_ctrl.GetSelection() == 6:
+		elif self.trc_ctrl.GetSelection() in (6, 7):
 			# SMPTE 2084
 			if self.colorspace_rgb_ctrl.Value:
 				# Color profile
 				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance")
 										   for v in black],
-										  getcfg("synthprofile.luminance"))
+										  getcfg("synthprofile.luminance"),
+										  rolloff=self.trc_ctrl.GetSelection() == 7)
 			else:
 				# Grayscale profile
 				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance"),
