@@ -2560,11 +2560,7 @@ class Worker(object):
 									  not test) or
 									 format == "madVR") or format == "icc")
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
-					"-r%i" % size]
-			if format != "icc":
-				args.append("-n")
-			else:
-				args.append("-no")
+					"-r%i" % size, "-n"]
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args.extend(["-p", "abstract.icc"])
