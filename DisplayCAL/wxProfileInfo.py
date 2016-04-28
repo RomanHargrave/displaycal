@@ -476,9 +476,9 @@ class GamutCanvas(LUTCanvas):
 				self.profiles[i] = None
 				continue
 
-			id = profile.calculateID(False)
 			check = self.profiles.get(i)
-			if (check and check.ID == id and intent == self.intent and
+			if (check and check.fileName == profile.fileName and
+				check.ID == profile.calculateID(False) and intent == self.intent and
 				direction == self.direction and order == self.order):
 				continue
 
