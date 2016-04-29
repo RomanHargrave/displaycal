@@ -1425,8 +1425,10 @@ class ProfileInfoFrame(LUTFrame):
 												color.groups()[1].strip().split()],
 											  **dict(scale=255))
 				labelbgcolor = wx.Colour(*[int(round(v)) for v in color])
-				self.grid.SetRowLabelRenderer(i,
-											  CustomRowLabelRenderer(labelbgcolor))
+				rowlabelrenderer = CustomRowLabelRenderer(labelbgcolor)
+			else:
+				rowlabelrenderer = None
+			self.grid.SetRowLabelRenderer(i, rowlabelrenderer)
 			self.grid.SetCellTextColour(i, 0, textcolor)
 			self.grid.SetCellValue(i, 1, value)
 		
