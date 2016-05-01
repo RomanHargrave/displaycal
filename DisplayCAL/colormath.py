@@ -322,6 +322,48 @@ def avg(*args):
 	return float(sum(args)) / len(args)
 
 
+def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, power=40.0):
+	"""
+	Blend to destination black as L approaches black, optionally compensating
+	for input black first
+	
+	"""
+	L, a, b = XYZ2Lab(*[v * 100 for v in (X, Y, Z)])
+
+	for bp in (bp_in, bp_out):
+		if not bp:
+			continue
+		bpLab = XYZ2Lab(*[v * 100 for v in bp])
+		if bp is bp_in:
+			bL = bpLab[0]
+		else:
+			bL = 0
+		vv = (L - bL) / (100.0 - bL)  # 0 at bp, 1 at wp
+		vv = 1.0 - vv
+		if vv < 0.0:
+			vv = 0.0
+		elif vv > 1.0:
+			vv = 1.0
+		vv = math.pow(vv, power)
+		if bp is bp_in:
+			vv = -vv
+			oldmin = bp_in[1]
+			newmin = 0.0
+		else:
+			oldmin = 0.0
+			newmin = bp_out[1]
+		oldrange = 1.0 - oldmin
+		newrange = 1.0 - newmin
+		Y = (newrange * Y - 1.0 * (oldmin - newmin)) / oldrange
+		L = XYZ2Lab(0, Y * 100, 0)[0]
+		a += vv * bpLab[1]
+		b += vv * bpLab[2]
+
+	X, Y, Z = Lab2XYZ(L, a, b)
+
+	return X, Y, Z
+
+
 def interp(x, xp, fp, left=None, right=None):
 	"""
 	One-dimensional linear interpolation similar to numpy.interp
@@ -385,7 +427,7 @@ def compute_bpc(bp_in, bp_out):
 	bz = - D50[2] * (bp_out[2] - bp_in[2]) / tz
 
 	matrix = Matrix3x3([[ax, 0,  0],
-						[0, ay,  0]
+						[0, ay,  0],
 						[0,  0, az]])
 	offset = [bx, by, bz]
 	return matrix, offset
