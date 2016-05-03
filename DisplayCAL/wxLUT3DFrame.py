@@ -13,7 +13,7 @@ if sys.platform == "win32":
 from argyll_cgats import cal_to_fake_profile
 from argyll_names import video_encodings
 from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
-					setcfg)
+					profile_ext, setcfg)
 from log import safe_print
 from meta import name as appname, version
 from options import debug
@@ -513,6 +513,8 @@ class LUT3DFrame(BaseFrame):
 						ext = "txt"
 					elif ext == "madVR":
 						ext = "3dlut"
+					elif ext == "icc":
+						ext = profile_ext[1:]
 					defaultFile = os.path.splitext(defaultFile or
 												   os.path.basename(config.defaults.get("last_3dlut_path")))[0] + "." + ext
 					dlg = wx.FileDialog(self, 
