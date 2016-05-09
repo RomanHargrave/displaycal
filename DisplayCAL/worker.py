@@ -2862,7 +2862,7 @@ class Worker(object):
 											   check_set_argyll_bin()):
 			displays = []
 			lut_access = []
-			if verbose >= 1 and not silent:
+			if verbose >= 1:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			instruments = []
 			current_display = listget(getcfg("displays"),
@@ -3005,7 +3005,7 @@ class Worker(object):
 					iname = get_canonical_instrument_name(iname)
 					if not iname in instruments:
 						instruments.append(iname)
-			if verbose >= 1 and not silent: safe_print(lang.getstr("success"))
+			if verbose >= 1: safe_print(lang.getstr("success"))
 			if instruments != self.instruments:
 				self.instruments = instruments
 				setcfg("instruments", instruments)
@@ -3144,7 +3144,7 @@ class Worker(object):
 							disp.startswith("Prisma ") or not test_cal):
 							lut_access.append(None)
 							continue
-						if verbose >= 1 and not silent:
+						if verbose >= 1:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
 						# Save current calibration?
 						if tmp:
@@ -3192,7 +3192,7 @@ class Worker(object):
 						if isinstance(result, Exception):
 							safe_print(result)
 						lut_access.append(retcode == 0)
-						if verbose >= 1 and not silent:
+						if verbose >= 1:
 							if retcode == 0:
 								safe_print(lang.getstr("success"))
 							else:
