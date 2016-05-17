@@ -144,6 +144,12 @@ class GenTCPSockPatternGeneratorServer(object):
 		if use_video_levels:
 			minv = 16.0 / 255.0
 			maxv = 235.0 / 255.0 - minv
+			if bits > 8:
+				# For video encoding the extra bits of precision are created by
+				# bit shifting rather than scaling, so we need to scale the fp
+				# value to account for this.
+				minv = (minv * 255.0 * (1 << (bits - 8))) / bitv
+				maxv = (maxv * 255.0 * (1 << (bits - 8))) / bitv
 		else:
 			minv = 0.0
 			maxv = 1.0
