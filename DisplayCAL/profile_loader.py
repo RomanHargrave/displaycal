@@ -243,8 +243,11 @@ class ProfileLoader(object):
 						("--force" in sys.argv[1:] or
 						 config.getcfg("profile.load_on_login"))):
 						count = len(self.pl.monitors)
-						if len(filter(lambda (i, success): success,
-									  sorted(self.pl.setgammaramp_success.items())[:count])) != count:
+						if (len(filter(lambda (i, success): success,
+									   sorted(self.pl.setgammaramp_success.items())[:count])) != count or
+							len(filter(lambda (i, profile): profile and
+															profile.fileName,
+									   sorted(self.pl.profiles.items())[:count])) != count):
 							icon = self._error_icon
 						elif self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
@@ -765,9 +768,12 @@ class ProfileLoader(object):
 					self._next = False
 					break
 				except Exception, exception:
-					safe_print("Could not get display profile for display %i:" %
-							   i, exception)
-					continue
+					if exception.args[0] != errno.ENOENT:
+						safe_print("Could not get display profile for display %i:" %
+								   i, exception)
+						continue
+					else:
+						profile_path = "?"
 				if not profile_path:
 					continue
 				profile = os.path.basename(profile_path)
@@ -817,6 +823,8 @@ class ProfileLoader(object):
 					if not self._reset_gamma_ramps:
 						# Get display profile
 						if not self.profiles.get(i):
+							if profile == "?":
+								profile = None
 							try:
 								self.profiles[i] = ICCP.ICCProfile(profile)
 								self.profiles[i].tags.get("vcgt")
@@ -987,7 +995,8 @@ class ProfileLoader(object):
 					safe_print(msg)
 					self.notify([msg], [], displaycal_running,
 								show_notification=False)
-				elif apply_profiles != self.__apply_profiles:
+				elif (apply_profiles != self.__apply_profiles or
+					  profile_association_changed):
 					self.__apply_profiles = apply_profiles
 					wx.CallAfter(lambda: self and
 										 self.taskbar_icon.set_visual_state())
