@@ -999,6 +999,7 @@
 	"turn_off": "Ausschalten",
 	"type": "Typ",
 	"udev_hotplug.unavailable": "Weder udev noch hotplug wurden erkannt.",
+	"unassigned": "Nicht zugewiesen",
 	"uninstall_display_profile": "Anzeigegeräteprofil deinstallieren...",
 	"unknown": "Unbekannt",
 	"unmodified": "Unverändert",

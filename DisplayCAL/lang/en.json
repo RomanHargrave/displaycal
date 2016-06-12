@@ -999,6 +999,7 @@
 	"trc.type.relative": "Relative",
 	"type": "Type",
 	"udev_hotplug.unavailable": "Neither udev nor hotplug detected.",
+	"unassigned": "Unassigned",
 	"uninstall_display_profile": "Uninstall display device profile...",
 	"unknown": "Unknown",
 	"unmodified": "Unmodified",

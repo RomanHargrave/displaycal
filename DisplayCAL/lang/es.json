@@ -999,6 +999,7 @@
 	"turn_off": "Desactivar",
 	"type": "Tipo",
 		"*udev_hotplug.unavailable": "Neither udev nor hotplug detected.",
+		"*unassigned": "Unassigned",
 	"uninstall_display_profile": "Desinstalar perfil de pantalla...",
 	"unknown": "desconocido",
 		"*unmodified": "Unmodified",

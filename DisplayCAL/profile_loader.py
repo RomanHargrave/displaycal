@@ -243,11 +243,8 @@ class ProfileLoader(object):
 						("--force" in sys.argv[1:] or
 						 config.getcfg("profile.load_on_login"))):
 						count = len(self.pl.monitors)
-						if (len(filter(lambda (i, success): success,
-									   sorted(self.pl.setgammaramp_success.items())[:count])) != count or
-							len(filter(lambda (i, profile): profile and
-															profile.fileName,
-									   sorted(self.pl.profiles.items())[:count])) != count):
+						if len(filter(lambda (i, success): success,
+									  sorted(self.pl.setgammaramp_success.items())[:count])) != count:
 							icon = self._error_icon
 						elif self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
@@ -316,12 +313,16 @@ class ProfileLoader(object):
 							 mtime) = self.pl.profile_associations.get(i,
 																	   (False,
 																		None))
+							profile_name = profile
 							if profile is False:
 								profile = "?"
+							elif profile == "?":
+								profile = lang.getstr("unassigned").lower()
 							if not self.pl.setgammaramp_success.get(i):
 								profile = (lang.getstr("unknown") +
 										   u" (%s)" % profile)
-							elif self.pl._reset_gamma_ramps:
+							elif (self.pl._reset_gamma_ramps or
+								  profile_name == "?"):
 								profile = (lang.getstr("linear").capitalize() +
 										   u" (%s)" % profile)
 							text += u"\n%s: %s" % (display, profile)
@@ -771,12 +772,11 @@ class ProfileLoader(object):
 					if exception.args[0] != errno.ENOENT:
 						safe_print("Could not get display profile for display %i:" %
 								   i, exception)
-						continue
-					else:
-						profile_path = "?"
-				if not profile_path:
-					continue
+					profile_path = "?"
 				profile = os.path.basename(profile_path)
+				profile_name = profile
+				if profile_name == "?":
+					profile_name = "none"
 				association = self.profile_associations.get(i, (None, 0))
 				if (not first_run and not self._has_display_changed and
 					not self._next and association[0] != profile):
@@ -795,7 +795,7 @@ class ProfileLoader(object):
 				if association != (profile, mtime):
 					if not first_run:
 						safe_print("A profile change has been detected")
-						safe_print(display, "->", profile)
+						safe_print(display, "->", profile_name)
 						device = get_active_display_device(moninfo["Device"])
 						if device:
 							display_edid = get_display_name_edid(device,
@@ -865,10 +865,10 @@ class ProfileLoader(object):
 							safe_print("Caching linear gamma ramps")
 						else:
 							safe_print("Caching implicit linear gamma ramps for profile",
-									   os.path.basename(profile_path))
+									   profile_name)
 					else:
 						safe_print("Caching gamma ramps for profile",
-								   os.path.basename(profile_path))
+								   profile_name)
 					# Convert vcgt to ushort_Array_256_Array_3
 					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
 					for j in xrange(len(vcgt_values[0])):
@@ -917,7 +917,7 @@ class ProfileLoader(object):
 						safe_print(display)
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display, "->", os.path.basename(profile_path))
+						safe_print(display, "->", profile_name)
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
@@ -1183,7 +1183,7 @@ class ProfileLoader(object):
 		from log import safe_print
 		for devicekey, (display_edid,
 						profile) in self.devices2profiles.iteritems():
-			if profile:
+			if profile and profile != "?":
 				try:
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)

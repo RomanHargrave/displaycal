@@ -999,6 +999,7 @@
 	"turn_off": "Désactiver",
 	"type": "Type",
 	"udev_hotplug.unavailable": "Ni udev ni hotplug n’ont été détectés.",
+		"*unassigned": "Unassigned",
 	"uninstall_display_profile": "Désinstallation du profil du périphérique d’affichage…",
 	"unknown": "inconnu",
 	"unmodified": "Inchangé",
