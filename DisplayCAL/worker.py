@@ -4611,6 +4611,14 @@ while 1:
 							   [0.113899645442, 0.0424325604954, 0.0396270751953],
 							   "Rec709-encompassing, variant 3"])
 
+			# A colorspace that encompasses Rec709. Uses red and blue from
+			# variant 2, but a slightly different green primary.
+			rgb_spaces.append([2.2, "D50",
+							   [0.664627993657, 0.329338357942, 0.244033813477],
+							   [0.300155771607, 0.640946446796, 0.728302001953],
+							   [0.143304213944, 0.0303410650333, 0.0276641845703],
+							   "Rec709-encompassing, variant 4"])
+
 			# A colorspace with Plasma-like primaries. Uses Rec. 2020 blue.
 			rgb_spaces.append([2.2, "D50",
 							   [0.692947816539, 0.30857396028, 0.244430541992],
