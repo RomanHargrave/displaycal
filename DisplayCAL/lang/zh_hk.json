@@ -999,6 +999,7 @@
 	"turn_off": "關閉",
 	"type": "類型",
 	"udev_hotplug.unavailable": "無論 udev 或熱插拔裝置都偵測不到。",
+		"*unassigned": "Unassigned",
 	"uninstall_display_profile": "移除顯示裝置描述檔...",
 	"unknown": "未知",
 	"unmodified": "未修改",
