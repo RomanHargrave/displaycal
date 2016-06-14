@@ -665,8 +665,8 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 		"b[lmh]",  # B2A quality
 		"a(?:%s)" % "|".join(config.valid_values["profile.type"]),
 		'[sSMA]\s+["\'][^"\']+?["\']',
-		"[cd](?:%s)" % "|".join(viewconds),
-		"[tT](?:%s)" % "|".join(intents)
+		"[cd](?:%s)(?=\W|$)" % "|".join(viewconds),
+		"[tT](?:%s)(?=\W|$)" % "|".join(intents)
 	]
 	options_dispcal = []
 	options_colprof = []
