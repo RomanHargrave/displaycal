@@ -1867,7 +1867,8 @@ class LUTFrame(BaseFrame):
 
 	def display_changed(self, event):
 		self.worker.enumerate_displays_and_ports(check_lut_access=False,
-												 enumerate_ports=False)
+												 enumerate_ports=False,
+												 include_network_devices=False)
 
 
 def main():
