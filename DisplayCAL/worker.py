@@ -3149,6 +3149,7 @@ class Worker(object):
 						# Save current calibration?
 						if tmp:
 							current_cal = os.path.join(tmp, "current.cal")
+							tmp_cal = current_cal
 							result = self.save_current_video_lut(i + 1,
 																 current_cal,
 																 silent=True)
@@ -3187,8 +3188,8 @@ class Worker(object):
 											   capture_output=True, 
 											   skip_scripts=True, 
 											   silent=True)
-						if tmp and os.path.isfile(current_cal):
-							os.remove(current_cal)
+						if tmp and os.path.isfile(tmp_cal):
+							os.remove(tmp_cal)
 						if isinstance(result, Exception):
 							safe_print(result)
 						lut_access.append(retcode == 0)
