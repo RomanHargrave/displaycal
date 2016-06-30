@@ -12541,8 +12541,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.check_update_controls_producer)
 			kwargs = dict(cargs=(argyll_bin_dir, argyll_version, displays,
 								 comports, event, callafter, callafter_args),
-						  wargs=(silent, ),
-						  wkwargs={"enumerate_ports": enumerate_ports,
+						  wkwargs={"silent": True,
+								   "enumerate_ports": enumerate_ports,
 								   "displays": displays,
 								   "profile_loader_load_cal":
 								   isinstance(event, wx.DisplayChangedEvent)})
