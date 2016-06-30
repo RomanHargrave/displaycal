@@ -3197,10 +3197,13 @@ class Worker(object):
 											   capture_output=True, 
 											   skip_scripts=True, 
 											   silent=True)
-						if tmp and os.path.isfile(tmp_cal):
-							os.remove(tmp_cal)
 						if isinstance(result, Exception):
 							safe_print(result)
+						if tmp and os.path.isfile(tmp_cal):
+							try:
+								os.remove(tmp_cal)
+							except EnvironmentError, exception:
+								safe_print(exception)
 						lut_access.append(retcode == 0)
 						if verbose >= 1:
 							if retcode == 0:

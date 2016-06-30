@@ -12608,6 +12608,17 @@ class MainFrame(ReportFrame, BaseFrame):
 									   argyll_version, displays, comports,
 									   event=None, callafter=None,
 									   callafter_args=None):
+		if isinstance(result, delayedresult.DelayedResult):
+			try:
+				result.get()
+			except Exception, exception:
+				if hasattr(exception, "originalTraceback"):
+					error = exception.originalTraceback
+				else:
+					error = traceback.format_exc()
+				result = Error(error)
+		if isinstance(result, Exception):
+			raise result
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
 			self.show_advanced_options_handler()
@@ -13982,6 +13993,14 @@ class StartupFrame(wx.Frame):
 		if self.timeout.IsRunning():
 			self.timeout.Stop()
 		self.timeout = None
+		try:
+			result.get()
+		except Exception, exception:
+			if hasattr(exception, "originalTraceback"):
+				error = exception.originalTraceback
+			else:
+				error = traceback.format_exc()
+			raise Error(error)
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
 		app = wx.GetApp()
