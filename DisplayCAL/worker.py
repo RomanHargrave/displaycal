@@ -575,7 +575,7 @@ def get_argyll_version_string(name, silent=False, paths=None):
 		for i, line in enumerate((p.communicate()[0] or "").splitlines()):
 			if isinstance(line, basestring):
 				line = line.strip()
-				if i == 0 and "version" in line.lower():
+				if "version" in line.lower():
 					argyll_version_string = line[line.lower().find("version")+8:]
 					break
 	return argyll_version_string
@@ -2905,11 +2905,13 @@ class Worker(object):
 				self.output.append(u" -dcc[:n]")
 				self.output.append(u"    100 = '\xd4\xc7\xf3 Test A'")
 				self.output.append(u"    101 = '\xd4\xc7\xf3 Test B'")
+			argyll_version_string = None
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
 					line = line.strip()
-					if n == 0 and "version" in line.lower():
+					if (argyll_version_string is None
+						and "version" in line.lower()):
 						argyll_version_string = line[line.lower().find("version")
 													 + 8:]
 						if (argyll_version_string != self.argyll_version_string):
