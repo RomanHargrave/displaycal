@@ -3152,6 +3152,7 @@ class Worker(object):
 							# unless you run as root. Just assume we have
 							# access to all displays.
 							lut_access.append(True)
+							continue
 						if verbose >= 1:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
 						# Save current calibration?
