@@ -2973,7 +2973,7 @@ class Worker(object):
 												 safe_unicode(safe_str(value, enc),
 															  "UTF-8")))
 						elif arg == "-dprisma[:host]":
-							# Prisma
+							# Prisma (via Argyll CMS)
 							# <serial no>: <name> @ <ip>
 							# 141550000000: prisma-0000 @ 172.31.31.162
 							match = re.findall(".+?: (.+) @ (.+)", value)
@@ -3099,7 +3099,7 @@ class Worker(object):
 					self.display_edid.append({})
 					self.display_manufacturers.append("")
 					self.display_names.append("madVR")
-				# Prisma
+				# Prisma (via DisplayCAL)
 				displays.append("Prisma")
 				self.display_edid.append({})
 				self.display_manufacturers.append("Q, Inc")
@@ -3120,7 +3120,7 @@ class Worker(object):
 				if current_display in displays:
 					setcfg("display.number",
 						   displays.index(current_display) + 1)
-				# Filter out Prisma, Resolve and Untethered
+				# Filter out Prisma (via DisplayCAL), Resolve and Untethered
 				# IMPORTANT: Also make changes to display filtering in
 				# worker.Worker.has_separate_lut_access
 				displays = displays[:-3]
@@ -3144,6 +3144,12 @@ class Worker(object):
 							disp.startswith("Prisma ") or not test_cal):
 							lut_access.append(None)
 							continue
+						if sys.platform == "darwin":
+							# There's no easy way to check LUT access under
+							# Mac OS X because loading a LUT isn't persistent
+							# unless you run as root. Just assume we have
+							# access to all displays.
+							lut_access.append(True)
 						if verbose >= 1:
 							safe_print(lang.getstr("checking_lut_access", (i + 1)))
 						# Save current calibration?
@@ -3206,7 +3212,7 @@ class Worker(object):
 				if self.argyll_version >= [1, 6, 0]:
 					# madVR
 					lut_access.append(True)
-				# Prisma
+				# Prisma (via DisplayCAL)
 				lut_access.append(False)
 				# Resolve
 				lut_access.append(False)
