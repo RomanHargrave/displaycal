@@ -1104,35 +1104,101 @@ class LUT16Type(ICCProfileTag):
 		self._n = (tagData and uInt16Number(tagData[48:50])) or 0  # Input channel entries count
 		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
 
+	def apply_black_offset(self, XYZbp):
+		# Apply only the black point blending portion of BT.1886 mapping
+		self._apply_black(XYZbp, False)
+
 	def apply_bpc(self, bp_out=(0, 0, 0), weight=False):
+		return self._apply_black(bp_out, True, weight)
+
+	def _apply_black(self, bp_out, use_bpc=False, weight=False):
 		pcs = self.profile and self.profile.connectionColorSpace
+		bp_row = list(self.clut[0][0])
+		wp_row = list(self.clut[-1][-1])
+		nonzero_bp = tuple(bp_out) != (0, 0, 0)
+		if not use_bpc or nonzero_bp:
+			osize = len(self.output[0])
+			omaxv = osize - 1.0
+			orange = [i / omaxv * 65535 for i in xrange(osize)]
+			interp = []
+			rinterp = []
+			for i in xrange(3):
+				interp.append(colormath.Interp(orange, self.output[i]))
+				rinterp.append(colormath.Interp(self.output[i], orange))
+			for row in (bp_row, wp_row):
+				for column, value in enumerate(row):
+					row[column] = interp[column](value)
+		if use_bpc:
+			method = "apply_bpc"
+		else:
+			method = "apply_black_offset"
 		if pcs == "Lab":
-			bp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*self.clut[0][0]))
-			wp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*self.clut[-1][-1]))
+			bp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*bp_row))
+			wp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*wp_row))
 		elif not pcs or pcs == "XYZ":
 			if not pcs:
-				warnings.warn("LUT16Type.apply_bpc: PCS not specified, "
-							  "assuming XYZ", Warning)
-			bp = [v / 65535.0 for v in self.clut[0][0]]
-			wp = [v / 65535.0 for v in self.clut[-1][-1]]
+				warnings.warn("LUT16Type.%s: PCS not specified, "
+							  "assuming XYZ" % method, Warning)
+			bp = [v / 32768.0 for v in bp_row]
+			wp = [v / 32768.0 for v in wp_row]
 		else:
-			raise ValueError("LUT16Type.apply_bpc: Unsupported PCS %r" % pcs)
-		if bp != list(bp_out):
+			raise ValueError("LUT16Type.%s: Unsupported PCS %r" % (method, pcs))
+		if [round(v * 32768) for v in bp] != [round(v * 32768) for v in bp_out]:
 			D50 = colormath.get_whitepoint("D50")
+			def blend_blackpoint(row, bp_in, bp_out, wp=None):
+				if pcs == "Lab":
+					L, a, b = PCSLab_uInt16_to_dec(*row)
+					X, Y, Z = colormath.Lab2XYZ(L, a, b, D50)
+				else:
+					X, Y, Z = [v / 32768.0 for v in row]
+				if use_bpc:
+					X, Y, Z = colormath.apply_bpc(X, Y, Z, bp_in, bp_out, wp,
+												  weight=weight)
+				else:
+					if wp:
+						X, Y, Z = colormath.adapt(X, Y, Z, wp, D50)
+						if bp_in:
+							bp_in = colormath.adapt(*bp_in,
+													whitepoint_source=wp,
+													whitepoint_destination=D50)
+						if bp_out:
+							bp_out = colormath.adapt(*bp_out,
+													whitepoint_source=wp,
+													whitepoint_destination=D50)
+					X, Y, Z = colormath.blend_blackpoint(X, Y, Z, bp_in,
+														 bp_out)
+					if wp:
+						X, Y, Z = colormath.adapt(X, Y, Z, D50, wp)
+				if pcs == "Lab":
+					L, a, b = colormath.XYZ2Lab(X, Y, Z, D50)
+					row = [min(max(0, v), 65535) for v in
+						   PCSLab_dec_to_uInt16(L, a, b)]
+				else:
+					row = [max(v, 0) * 32768.0 for v in (X, Y, Z)]
+				return row
+			# Blend original black to zero
 			for block in self.clut:
 				for i, row in enumerate(block):
-					if pcs == "Lab":
-						X, Y, Z = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*row))
-					else:
-						X, Y, Z = [v / 65535.0 for v in row]
-					XYZ = colormath.apply_bpc(X, Y, Z, bp, bp_out, wp,
-											  weight=weight)
-					if pcs == "Lab":
-						L, a, b = colormath.XYZ2Lab(*XYZ + [D50])
-						block[i] = [min(max(0, v), 65535) for v in
-									PCSLab_dec_to_uInt16(L, a, b)]
-					else:
-						block[i] = [max(v, 0) * 65535.0 for v in XYZ]
+					if not use_bpc or nonzero_bp:
+						for column, value in enumerate(row):
+							row[column] = interp[column](value)
+					row = blend_blackpoint(row, bp,
+										   bp_out,
+										   wp if use_bpc else None)
+					if not use_bpc or nonzero_bp:
+						for column, value in enumerate(row):
+							row[column] = rinterp[column](value)
+					block[i] = row
+			#if pcs != "Lab" and nonzero_bp:
+				## Apply black offset to output curves
+				#out = [[], [], []]
+				#for j in xrange(4096):
+					#v = j / 4095.0 * 65535
+					#row = blend_blackpoint([rinterp[i](v) for i in xrange(3)],
+										   #(0, 0, 0), bp_out, (1, 1, 1))
+					#for i in xrange(3):
+						#out[i].append(interp[i](row[i]))
+				#self.output = out
 
 	@Property
 	def clut():
@@ -3568,13 +3634,22 @@ class ICCProfile:
 
 	def apply_black_offset(self, XYZbp):
 		# Apply only the black point blending portion of BT.1886 mapping
+		tables = []
+		for i in xrange(3):
+			a2b = self.tags.get("A2B%i" % i)
+			if isinstance(a2b, LUT16Type) and not a2b in tables:
+				a2b.apply_black_offset(XYZbp)
+				tables.append(a2b)
+		self.set_blackpoint(XYZbp)
+		if not self.tags.get("rTRC"):
+			return
 		rXYZ = self.tags.rXYZ.values()
 		gXYZ = self.tags.gXYZ.values()
 		bXYZ = self.tags.bXYZ.values()
 		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
 								   [rXYZ[1], gXYZ[1], bXYZ[1]],
 								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-		gamma = 0.0
+		gamma = 0.0  # Gamma doesn't really matter for output offset 100%
 		for channel in "rgb":
 			cgamma = self.tags[channel + "TRC"].get_gamma()
 			gamma += cgamma
@@ -3601,7 +3676,6 @@ class ICCProfile:
 			for j, channel in enumerate(("r", "g", "b")):
 				self.tags[channel + "TRC"].append(max(min(rgb[j] * 65535, 65535),
 													  0))
-		self.set_blackpoint(XYZbp)
 	
 	def set_bt1886_trc(self, XYZbp, outoffset=0.0, gamma=2.4, gamma_type="B",
 					   size=None):
