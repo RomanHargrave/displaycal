@@ -416,6 +416,116 @@ def Property(func):
 	return property(**func())
 
 
+def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
+								  white_Y=1.0, rolloff=False, clutres=9):
+	"""
+	Create a synthetic cLUT profile from a colorspace definition
+	
+	The rolloff parameter is used to make the clipping less harsh when the
+	white_Y is below 1.0
+	
+	"""
+	profile = ICCProfile()
+	
+	profile.tags.desc = TextDescriptionType("", "desc")
+	profile.tags.desc.ASCII = description
+	profile.tags.cprt = TextType("text\0\0\0\0Public domain\0", "cprt")
+	
+	profile.tags.wtpt = XYZType(profile=profile)
+	(profile.tags.wtpt.X,
+	 profile.tags.wtpt.Y,
+	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
+	
+	itable = profile.tags.A2B0 = LUT16Type(profile=profile)
+	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	
+	otable = profile.tags.B2A0 = LUT16Type(profile=profile)
+	Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
+								 whitepoint_source=rgb_space[1])
+	Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
+								 whitepoint_source=rgb_space[1])
+	Xb, Yb, Zb = colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space),
+								 whitepoint_source=rgb_space[1])
+	m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
+							  (Yr, Yg, Yb),
+							  (Zr, Zg, Zb))).inverted()
+	scale = 1 + (32767 / 32768.0)
+	m3 = colormath.Matrix3x3(((scale, 0, 0),
+							  (0, scale, 0),
+							  (0, 0, scale)))
+	otable.matrix = m1 * m3
+	
+	# Input curve interpolation
+	# Normlly the input curves would either be linear (= 1:1 mapping to
+	# cLUT) or the respective tone response curve.
+	# We use a overall linear curve that is 'bent' in <clutres> intervals
+	# to accomodate the non-linear TRC. Thus, we can get away with much
+	# fewer cLUT grid points.
+	
+	# Use higher interpolation size than actual number of curve entries
+	steps = 2 ** 15
+	maxv = steps - 1.0
+	gamma = rgb_space[0]
+	maxi = colormath.specialpow(white_Y, 1.0 / gamma)
+	segment = 1.0 / (clutres - 1.0) * maxi
+	iv = 0.0
+	prevpow = 0.0
+	nextpow = colormath.specialpow(segment, gamma)
+	interp = colormath.Interp([], range(steps))
+	for j in xrange(steps):
+		v = (j / maxv) * maxi
+		if v > iv + segment:
+			iv += segment
+			prevpow = nextpow
+			nextpow = colormath.specialpow(iv + segment, gamma)
+		prevs = 1.0 - (v - iv) / segment
+		nexts = (v - iv) / segment
+		vv = (prevs * prevpow + nexts * nextpow)
+		out = colormath.specialpow(vv, 1.0 / gamma)
+		interp.xp.append(out)
+	
+	# Create input and output curves
+	for i in xrange(3):
+		itable.input.append([])
+		itable.output.append([0, 65535])
+		otable.input.append([])
+		otable.output.append([0, 65535])
+		for j in xrange(4096):
+			otable.input[i].append(colormath.specialpow(j / 4095.0 * white_Y,
+														1.0 / gamma) * 65535)
+	
+	# Fill input curves from interpolated values
+	entries = 1024
+	for j in xrange(entries):
+		v = j / (entries - 1.0)
+		for i in xrange(3):
+			itable.input[i].append(interp(v) / maxv * 65535)
+	
+	# Create and fill cLUT
+	itable.clut = []
+	step = 1.0 / (clutres - 1.0)
+	for R in xrange(clutres):
+		for G in xrange(clutres):
+			itable.clut.append([])
+			for B in xrange(clutres):
+				X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*[v * step * maxi
+															   for v in (R, G, B)],
+															 rgb_space=rgb_space),
+										  whitepoint_source=rgb_space[1])
+				X, Y, Z = colormath.blend_blackpoint(X, Y, Z, None, XYZbp)
+				itable.clut[-1].append([max(v / white_Y * 32768, 0)
+										for v in (X, Y, Z)])
+	
+	otable.clut = []
+	for R in xrange(2):
+		for G in xrange(2):
+			otable.clut.append([])
+			for B in xrange(2):
+				otable.clut[-1].append([v * 65535 for v in (R , G, B)])
+	
+	return profile
+
+
 def _colord_get_display_profile(display_no=0, path_only=False):
 	edid = get_edid(display_no)
 	if edid:
