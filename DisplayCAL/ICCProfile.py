@@ -3765,26 +3765,34 @@ class ICCProfile:
 														 65535))
 		self.set_blackpoint(XYZbp)
 
-	def set_smpte2084_trc(self, XYZbp, white_cdm2=100, size=1024, rolloff=False):
+	def set_smpte2084_trc(self, XYZbp, white_cdm2=100, size=1024,
+						  white_out_cdm2=None, rolloff=False):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
 		
 		This response is special in that it depends on the actual black
 		and white level of the display.
 		
-		XYZbp   Black point in absolute XYZ, Y range 0..white_cdm2
+		XYZbp           Black point in absolute XYZ, Y range 0..white_cdm2
+		size            Number of steps. Recommended >= 1024
+		rolloff         (Optional) Rolloff rate. Lower value = smoother rolloff.
+		                Recommended range 0.5-1.5
+		white_out_cdm2  (Optional) Used to rescale input to output white level.
+		                E.g. 400 (in) to 10000 cd/m2 (out).
 		
 		"""
 		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
 		# Luminance levels depend on the end level of 10000 cd/m2
+		if not white_out_cdm2:
+			white_out_cdm2 = white_cdm2
 		if XYZbp[1] < 0 or XYZbp[1] >= white_cdm2:
 			raise ValueError("The black level of %f cd/m2 is out of range "
 							 "for SMPTE 2084. Valid range begins at 0 cd/m2." %
 							 XYZbp[1])
-		if white_cdm2 > 10000 or white_cdm2 <= XYZbp[1]:
+		if max(white_cdm2, white_out_cdm2) > 10000:
 			raise ValueError("The white level of %f cd/m2 is out of range "
 							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
-							 white_cdm2)
+							 max(white_cdm2, white_out_cdm2))
 		rXYZ = self.tags.rXYZ.values()
 		gXYZ = self.tags.gXYZ.values()
 		bXYZ = self.tags.bXYZ.values()
@@ -3797,17 +3805,22 @@ class ICCProfile:
 		mini = colormath.specialpow((mtx * XYZbp)[1] / 10000.0, 1.0 / -2084)
 		maxv = white_cdm2 / 10000.0
 		maxi = colormath.specialpow(maxv, 1.0 / -2084)
-		clip = math.ceil(size * maxi)
+		maxi_out = colormath.specialpow(white_out_cdm2 / 10000.0, 1.0 / -2084)
+		clip = math.ceil(size * maxi_out)
 		for i in xrange(int(clip)):
 			n = i / (clip - 1.0)
-			v = colormath.specialpow(mini + n * (maxi - mini), -2084)
+			v = colormath.specialpow((mini + n * (maxi_out - mini)) * (maxi / maxi_out), -2084)
 			values.append(min(v / maxv, 1.0))
-		if clip < size:
-			while len(values) < size:
-				values.append(1.0)
-			index = i - int(min(math.ceil((size / 12) * (1.0 - maxi)),
-								size * (1 / 32.0)))
-			if rolloff and index > 0:
+		while len(values) < size:
+			values.append(1.0)
+		if rolloff and clip < size:
+			a1 = 7.8 * rolloff  # Base val = 12
+			a2 = 20.8 * rolloff  # Base val = 32
+			a3 = 19.5 * rolloff  # Base val = 30
+			a4 = 6.5 * rolloff  # Base val = 10
+			index = i - int(min(math.ceil((size / a1) * (1.0 - maxi_out)),
+								size * (1 / a2)))
+			if index > 0:
 				ival = values[index]
 				prev = 0
 				for i in xrange(index, size):
@@ -3818,7 +3831,7 @@ class ICCProfile:
 					elif vv > 1.0:
 						vv = 1.0
 					if vv:
-						vv = math.pow(vv, max(math.ceil(30 * (1 - maxi)), 10))
+						vv = math.pow(vv, max(math.ceil(a3 * (1 - maxi_out)), a4))
 					##print i, values[i], vv, '->',
 					values[i] = ival * vv + 1.0 * (1 - vv)
 					##print values[i]
