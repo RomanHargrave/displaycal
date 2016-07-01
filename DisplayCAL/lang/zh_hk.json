@@ -898,6 +898,7 @@
 	"silkscreen": "絲印",
 	"simulation_profile": "模擬描述檔",
 	"size": "大小",
+		"*skip_legacy_serial_ports": "Skip legacy serial ports",
 	"softproof.icc": "螢幕校樣 (D55, 160 cd/m², L*)",
 	"spectral": "色譜",
 	"startup": "正在啟動...",

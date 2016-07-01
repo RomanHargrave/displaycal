@@ -899,6 +899,7 @@
 	"silkscreen": "Silkscreen",
 	"simulation_profile": "Simulation profile",
 	"size": "Size",
+	"skip_legacy_serial_ports": "Skip legacy serial ports",
 	"softproof.icc": "Softproof (D55, 160 cd/m², L*)",
 	"spectral": "Spectral",
 	"startup": "Starting up...",

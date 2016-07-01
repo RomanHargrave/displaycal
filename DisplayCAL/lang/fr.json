@@ -898,6 +898,7 @@
 	"silkscreen": "Sérigraphieuse",
 	"simulation_profile": "Profil de simulation",
 	"size": "Taille",
+		"*skip_legacy_serial_ports": "Skip legacy serial ports",
 	"softproof.icc": "Épreuvage à l’écran (D55, 160 cd/m², L*)",
 	"spectral": "Spectral",
 	"startup": "Démarrage…",

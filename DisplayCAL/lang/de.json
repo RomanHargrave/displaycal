@@ -898,6 +898,7 @@
 	"silkscreen": "Siebdruck",
 	"simulation_profile": "Simulationsprofil",
 	"size": "Größe",
+	"skip_legacy_serial_ports": "Veraltete serielle Anschlüsse auslassen",
 	"softproof.icc": "Softproof (D55, 160 cd/m², L*)",
 	"spectral": "Spektral",
 	"startup": "Starte...",

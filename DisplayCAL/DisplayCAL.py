@@ -2156,6 +2156,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		menuitem = options.FindItemById(
 			options.FindItem("detect_displays_and_ports"))
 		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
+		self.menuitem_skip_legacy_serial_ports = options.FindItemById(
+			options.FindItem("skip_legacy_serial_ports"))
+		self.Bind(wx.EVT_MENU, self.skip_legacy_serial_ports_handler, 
+				  self.menuitem_skip_legacy_serial_ports)
 		self.menuitem_use_separate_lut_access = options.FindItemById(
 			options.FindItem("use_separate_lut_access"))
 		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
@@ -2378,6 +2382,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(self.worker.displays) and calibration_loading_supported)
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and calibration_loading_supported)
+		self.menuitem_skip_legacy_serial_ports.Check(bool(getcfg("skip_legacy_serial_ports")))
 		has_separate_lut_access = self.worker.has_separate_lut_access()
 		self.menuitem_use_separate_lut_access.Check(has_separate_lut_access or
 													bool(getcfg("use_separate_lut_access")))
@@ -4230,6 +4235,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			   int(not do_not_use_video_lut))
 		if not is_patterngenerator:
 			setcfg("calibration.use_video_lut.backup", None)
+
+	def skip_legacy_serial_ports_handler(self, event):
+		setcfg("skip_legacy_serial_ports", 
+			   int(self.menuitem_skip_legacy_serial_ports.IsChecked()))
 
 	def calibrate_instrument_handler(self, event):
 		self.worker.start(lambda result: show_result_dialog(result, self)
