@@ -150,8 +150,8 @@ class ProfileLoader(object):
 																	   .0722)
 					icon = wx.IconFromBitmap(image.ConvertToBitmap())
 					self._inactive_icon = icon
-					self._active_icon_reset = config.get_bitmap_as_icon(16, appname + "-apply-profiles-reset")
-					self._error_icon = config.get_bitmap_as_icon(16, appname + "-apply-profiles-error")
+					self._active_icon_reset = config.get_bitmap_as_icon(16, "apply-profiles-reset")
+					self._error_icon = config.get_bitmap_as_icon(16, "apply-profiles-error")
 					self.set_visual_state(True)
 					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
