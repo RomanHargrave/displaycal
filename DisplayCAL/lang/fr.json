@@ -899,7 +899,7 @@
 	"simulation_profile": "Profil de simulation",
 	"size": "Taille",
 		"*skip_legacy_serial_ports": "Skip legacy serial ports",
-	"softproof.icc": "Épreuvage à l’écran (D55, 160 cd/m², L*)",
+	"softproof.icc": "Épreuvage à l’écran (5800K, 160 cd/m², L*)",
 	"spectral": "Spectral",
 	"startup": "Démarrage…",
 	"startup_sound.enable": "Activer le son de démarrage",

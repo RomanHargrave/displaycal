@@ -899,7 +899,7 @@
 		"*simulation_profile": "Simulation profile",
 		"*size": "Size",
 		"*skip_legacy_serial_ports": "Skip legacy serial ports",
-		"*softproof.icc": "Softproof (D55, 160 cd/m², L*)",
+		"*softproof.icc": "Softproof (5800K, 160 cd/m², L*)",
 		"*spectral": "Spectral",
 	"startup": "Avvio...",
 		"*startup_sound.enable": "Enable startup sound",
