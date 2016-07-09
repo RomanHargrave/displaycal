@@ -1805,12 +1805,20 @@ class CurveType(ICCProfileTag, list):
 											  black_jndi))) / white_dicomY
 			self.append(v * 65535)
 	
-	def set_smpte2084_trc(self, black_cdm2=.05, white_cdm2=100, size=None):
+	def set_smpte2084_trc(self, black_cdm2=0, white_cdm2=100, size=None,
+						  white_out_cdm2=None, rolloff=False):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
 		
 		This response is special in that it depends on the actual black
 		and white level of the display.
+		
+		black_cdm2      Black point in absolute Y, range 0..white_cdm2
+		size            Number of steps. Recommended >= 1024
+		white_out_cdm2  (Optional) Used to rescale input to output white level.
+		                E.g. 400 (in) to 10000 cd/m2 (out).
+		rolloff         (Optional) Rolloff rate. Lower value = smoother rolloff.
+		                Recommended range 0.5-1.5
 		
 		"""
 		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
@@ -1819,22 +1827,58 @@ class CurveType(ICCProfileTag, list):
 			raise ValueError("The black level of %f cd/m2 is out of range "
 							 "for SMPTE 2084. Valid range begins at 0 cd/m2." %
 							 black_cdm2)
-		if white_cdm2 > 10000 or white_cdm2 <= black_cdm2:
+		if not white_out_cdm2:
+			white_out_cdm2 = white_cdm2
+		if max(white_cdm2, white_out_cdm2) > 10000:
 			raise ValueError("The white level of %f cd/m2 is out of range "
 							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
-							 white_cdm2)
-		mini = colormath.specialpow(black_cdm2 / 10000.0, 1.0 / -2084)
-		maxi = colormath.specialpow(white_cdm2 / 10000.0, 1.0 / -2084)
-		white_smpte2084Y = colormath.specialpow(maxi, -2084)
+							 max(white_cdm2, white_out_cdm2))
+		values = []
+		mini = colormath.specialpow(0, 1.0 / -2084)
+		maxv = white_cdm2 / 10000.0
+		maxi = colormath.specialpow(maxv, 1.0 / -2084)
+		maxi_out = colormath.specialpow(white_out_cdm2 / 10000.0, 1.0 / -2084)
 		if not size:
 			size = len(self)
 		if size < 2:
 			size = 1024
-		self[:] = []
-		for i in xrange(size):
-			n = i / (size - 1.0)
-			v = colormath.specialpow(mini + n * (maxi - mini), -2084)
-			self.append(v / white_smpte2084Y * 65535)
+		clip = math.ceil(size * maxi_out)
+		for i in xrange(int(clip)):
+			n = i / (clip - 1.0)
+			v = colormath.specialpow((mini + n * (maxi_out - mini)) * (maxi / maxi_out), -2084)
+			values.append(min(v / maxv, 1.0))
+		while len(values) < size:
+			values.append(1.0)
+		if rolloff and clip < size:
+			a1 = 7.8 * rolloff  # Base val = 12
+			a2 = 20.8 * rolloff  # Base val = 32
+			a3 = 19.5 * rolloff  # Base val = 30
+			a4 = 6.5 * rolloff  # Base val = 10
+			index = i - int(min(math.ceil((size / a1) * (1.0 - maxi_out)),
+								size * (1 / a2)))
+			if index > 0:
+				ival = values[index]
+				prev = 0
+				for i in xrange(index, size):
+					vv = (i - index) / (size - index - 1.0)  # 0 at index, 1 at max
+					vv = 1.0 - vv
+					if vv < 0.0:
+						vv = 0.0
+					elif vv > 1.0:
+						vv = 1.0
+					if vv:
+						vv = math.pow(vv, max(math.ceil(a3 * (1 - maxi_out)), a4))
+					##print i, values[i], vv, '->',
+					values[i] = ival * vv + 1.0 * (1 - vv)
+					##print values[i]
+					if round(values[i] * 65535) < round(prev * 65535):
+						safe_print("Warning: Tone response curve is "
+								   "non-monotonically increasing (previous value "
+								   "%r, current value %r)" % (prev, values[i]))
+					prev = values[i]
+		self[:] = [min(v * 65535, 65535) for v in values]
+		if black_cdm2:
+			self.apply_bpc(black_cdm2 / white_cdm2)
 	
 	def set_trc(self, power=2.2, size=None, vmin=0, vmax=65535):
 		"""
@@ -3742,7 +3786,7 @@ class ICCProfile:
 		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
 		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 
-	def apply_black_offset(self, XYZbp):
+	def apply_black_offset(self, XYZbp, power=40.0):
 		# Apply only the black point blending portion of BT.1886 mapping
 		tables = []
 		for i in xrange(3):
@@ -3759,33 +3803,29 @@ class ICCProfile:
 		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
 								   [rXYZ[1], gXYZ[1], bXYZ[1]],
 								   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-		gamma = 0.0  # Gamma doesn't really matter for output offset 100%
+		imtx = mtx.inverted()
 		for channel in "rgb":
-			cgamma = self.tags[channel + "TRC"].get_gamma()
-			gamma += cgamma
+			tag = CurveType(profile=self)
 			if len(self.tags[channel + "TRC"]) == 1:
-				self.tags[channel + "TRC"] = CurveType(profile=self)
-				self.tags[channel + "TRC"].set_trc(cgamma, 1024)
-		gamma /= 3.0
-		bt1886 = colormath.BT1886(mtx, XYZbp, 1.0, gamma, False)
-		values = OrderedDict()
-		for i, channel in enumerate(("r", "g", "b")):
-			if self.tags[channel + "TRC"][0] != 0:
-				# So we can hit the target blackpoint
-				self.tags[channel + "TRC"].apply_bpc()
-			for j, v in enumerate(self.tags[channel + "TRC"]):
-				if not values.get(j):
-					values[j] = []
-				values[j].append(v / 65535.0)
-			self.tags[channel + "TRC"] = CurveType(profile=self)
-		for i, (r, g, b) in values.iteritems():
-			X, Y, Z = mtx * (r, g, b)
-			values[i] = bt1886.apply(X, Y, Z)
-		for i, XYZ in values.iteritems():
-			rgb = mtx.inverted() * XYZ
-			for j, channel in enumerate(("r", "g", "b")):
-				self.tags[channel + "TRC"].append(max(min(rgb[j] * 65535, 65535),
-													  0))
+				gamma = self.tags[channel + "TRC"].get_gamma()
+				tag.set_trc(gamma, 1024)
+			else:
+				tag.extend(self.tags[channel + "TRC"])
+			self.tags[channel + "TRC"] = tag
+		rgbbp_in = []
+		for channel in "rgb":
+			rgbbp_in.append(self.tags["%sTRC" % channel][0] / 65535.0)
+		bp_in = mtx * rgbbp_in
+		size = len(self.tags.rTRC)
+		for i in xrange(size):
+			rgb = []
+			for channel in "rgb":
+				rgb.append(self.tags["%sTRC" % channel][i] / 65535.0)
+			X, Y, Z = mtx * rgb
+			XYZ = colormath.blend_blackpoint(X, Y, Z, bp_in, XYZbp, power)
+			rgb = imtx * XYZ
+			for j in xrange(3):
+				self.tags["%sTRC" % "rgb"[j]][i] = min(rgb[j] * 65535, 65535)
 	
 	def set_bt1886_trc(self, XYZbp, outoffset=0.0, gamma=2.4, gamma_type="B",
 					   size=None):
@@ -3824,58 +3864,17 @@ class ICCProfile:
 		This response is special in that it depends on the actual black
 		and white level of the display.
 		
-		XYZbp   Black point in absolute XYZ, Y range 0..white_cdm2
+		XYZbp   Black point in absolute XYZ, Y range 0.05..white_cdm2
 		
 		"""
-		# See http://medical.nema.org/Dicom/2011/11_14pu.pdf
-		# Luminance levels depend on the start level of 0.05 cd/m2
-		# and end level of 4000 cd/m2
-		if XYZbp[1] < .05 or XYZbp[1] >= white_cdm2:
-			raise ValueError("The black level of %f cd/m2 is out of range "
-							 "for DICOM. Valid range begins at 0.05 cd/m2." %
-							 XYZbp[1])
-		if white_cdm2 > 4000 or white_cdm2 <= XYZbp[1]:
-			raise ValueError("The white level of %f cd/m2 is out of range "
-							 "for DICOM. Valid range is up to 4000 cd/m2." %
-							 white_cdm2)
-		black_jndi = colormath.DICOM(XYZbp[1], True)
-		white_jndi = colormath.DICOM(white_cdm2, True)
-		white_dicomY = math.pow(10, colormath.DICOM(white_jndi))
-		rXYZ = self.tags.rXYZ.values()
-		gXYZ = self.tags.gXYZ.values()
-		bXYZ = self.tags.bXYZ.values()
-		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-								   [rXYZ[1], gXYZ[1], bXYZ[1]],
-								   [rXYZ[2], gXYZ[2], bXYZ[2]]]).inverted()
-		if size < 2:
-			size = 1024
-		values = []
-		for i in xrange(size):
-			v = math.pow(10, colormath.DICOM(black_jndi +
-											 (float(i) / (size - 1)) *
-											 (white_jndi -
-											  black_jndi))) / white_dicomY
-			values.append(v)
-		XYZbp = [v / white_cdm2 for v in XYZbp]
-		rgbbp = mtx * XYZbp
-		# Optimize for uInt16Number encoding
-		rgbbp = [round(max(v, 0) * 65535) / 65535 for v in rgbbp]
-		minv = values[0]
-		maxX = (1.0 - rgbbp[0]) / (values[-1] - minv)
-		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)
-		maxZ = (1.0 - rgbbp[2]) / (values[-1] - minv)
+		self.set_trc_tags()
 		for channel in "rgb":
-			self.tags["%sTRC" % channel] = CurveType(profile=self)
-		for i in xrange(size):
-			rgb = (rgbbp[0] + (values[i] - minv) * maxX,
-				   rgbbp[1] + (values[i] - minv) * maxY,
-				   rgbbp[2] + (values[i] - minv) * maxZ)
-			for j in xrange(3):
-				self.tags["%sTRC" % "rgb"[j]].append(min(rgb[j] * 65535,
-														 65535))
-		self.set_blackpoint(XYZbp)
+			self.tags["%sTRC" % channel].set_dicom_trc(XYZbp[1], white_cdm2,
+													   size)
+		self.apply_black_offset([v / white_cdm2 for v in XYZbp],
+								40.0 * (white_cdm2 / 40.0))
 
-	def set_smpte2084_trc(self, XYZbp, white_cdm2=100, size=1024,
+	def set_smpte2084_trc(self, XYZbp=(0, 0, 0), white_cdm2=100, size=1024,
 						  white_out_cdm2=None, rolloff=False):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
@@ -3885,89 +3884,29 @@ class ICCProfile:
 		
 		XYZbp           Black point in absolute XYZ, Y range 0..white_cdm2
 		size            Number of steps. Recommended >= 1024
-		rolloff         (Optional) Rolloff rate. Lower value = smoother rolloff.
-		                Recommended range 0.5-1.5
 		white_out_cdm2  (Optional) Used to rescale input to output white level.
 		                E.g. 400 (in) to 10000 cd/m2 (out).
+		rolloff         (Optional) Rolloff rate. Lower value = smoother rolloff.
+		                Recommended range 0.5-1.5
 		
 		"""
-		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
-		# Luminance levels depend on the end level of 10000 cd/m2
-		if not white_out_cdm2:
-			white_out_cdm2 = white_cdm2
-		if XYZbp[1] < 0 or XYZbp[1] >= white_cdm2:
-			raise ValueError("The black level of %f cd/m2 is out of range "
-							 "for SMPTE 2084. Valid range begins at 0 cd/m2." %
-							 XYZbp[1])
-		if max(white_cdm2, white_out_cdm2) > 10000:
-			raise ValueError("The white level of %f cd/m2 is out of range "
-							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
-							 max(white_cdm2, white_out_cdm2))
-		rXYZ = self.tags.rXYZ.values()
-		gXYZ = self.tags.gXYZ.values()
-		bXYZ = self.tags.bXYZ.values()
-		mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-								   [rXYZ[1], gXYZ[1], bXYZ[1]],
-								   [rXYZ[2], gXYZ[2], bXYZ[2]]]).inverted()
-		if size < 2:
-			size = 1024
-		values = []
-		mini = colormath.specialpow((mtx * XYZbp)[1] / 10000.0, 1.0 / -2084)
-		maxv = white_cdm2 / 10000.0
-		maxi = colormath.specialpow(maxv, 1.0 / -2084)
-		maxi_out = colormath.specialpow(white_out_cdm2 / 10000.0, 1.0 / -2084)
-		clip = math.ceil(size * maxi_out)
-		for i in xrange(int(clip)):
-			n = i / (clip - 1.0)
-			v = colormath.specialpow((mini + n * (maxi_out - mini)) * (maxi / maxi_out), -2084)
-			values.append(min(v / maxv, 1.0))
-		while len(values) < size:
-			values.append(1.0)
-		if rolloff and clip < size:
-			a1 = 7.8 * rolloff  # Base val = 12
-			a2 = 20.8 * rolloff  # Base val = 32
-			a3 = 19.5 * rolloff  # Base val = 30
-			a4 = 6.5 * rolloff  # Base val = 10
-			index = i - int(min(math.ceil((size / a1) * (1.0 - maxi_out)),
-								size * (1 / a2)))
-			if index > 0:
-				ival = values[index]
-				prev = 0
-				for i in xrange(index, size):
-					vv = (i - index) / (size - index - 1.0)  # 0 at index, 1 at max
-					vv = 1.0 - vv
-					if vv < 0.0:
-						vv = 0.0
-					elif vv > 1.0:
-						vv = 1.0
-					if vv:
-						vv = math.pow(vv, max(math.ceil(a3 * (1 - maxi_out)), a4))
-					##print i, values[i], vv, '->',
-					values[i] = ival * vv + 1.0 * (1 - vv)
-					##print values[i]
-					if round(values[i] * 65535) < round(prev * 65535):
-						safe_print("Warning: Tone response curve is "
-								   "non-monotonically increasing (previous value "
-								   "%r, current value %r)" % (prev, values[i]))
-					prev = values[i]
-		XYZbp = [v / white_cdm2 for v in XYZbp]
-		rgbbp = mtx * XYZbp
-		# Optimize for uInt16Number encoding
-		rgbbp = [round(max(v, 0) * 65535) / 65535 for v in rgbbp]
-		minv = values[0]
-		maxX = (1.0 - rgbbp[0]) / (values[-1] - minv)
-		maxY = (1.0 - rgbbp[1]) / (values[-1] - minv)
-		maxZ = (1.0 - rgbbp[2]) / (values[-1] - minv)
+		self.set_trc_tags()
 		for channel in "rgb":
-			self.tags["%sTRC" % channel] = CurveType(profile=self)
-		for i in xrange(size):
-			rgb = (rgbbp[0] + (values[i] - minv) * maxX,
-				   rgbbp[1] + (values[i] - minv) * maxY,
-				   rgbbp[2] + (values[i] - minv) * maxZ)
-			for j in xrange(3):
-				self.tags["%sTRC" % "rgb"[j]].append(min(rgb[j] * 65535,
-														 65535))
-		self.set_blackpoint(XYZbp)
+			self.tags["%sTRC" % channel].set_smpte2084_trc(XYZbp[1],
+														   white_cdm2, size,
+														   white_out_cdm2,
+														   rolloff)
+		if tuple(XYZbp) != (0, 0, 0):
+			self.apply_black_offset([v / white_cdm2 for v in XYZbp],
+									40.0 * (white_cdm2 / 100.0))
+
+	def set_trc_tags(self, identical=False):
+		for channel in "rgb":
+			if identical and channel != "r":
+				tag = self.tags.rTRC
+			else:
+				tag = CurveType(profile=self)
+			self.tags["%sTRC" % channel] = tag
 	
 	def set_localizable_desc(self, tagname, description, languagecode="en",
 							 countrycode="US"):
