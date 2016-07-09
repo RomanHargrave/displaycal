@@ -510,7 +510,8 @@ def get_data_path(relpath, rex=None):
 		return None
 	dirs = list(data_dirs)
 	argyll_dir = (getcfg("argyll.dir") or
-				  os.path.dirname(os.path.realpath(which("dispcal") or "")))
+				  os.path.dirname(os.path.realpath(which("dispcal" +
+														 exe_ext) or "")))
 	if argyll_dir and os.path.isdir(os.path.join(argyll_dir, "..", "ref")):
 		dirs.append(os.path.dirname(argyll_dir))
 	dirs.extend(extra_data_dirs)
