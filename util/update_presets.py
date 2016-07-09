@@ -11,7 +11,11 @@ from DisplayCAL import ICCProfile as ICCP, colormath, config, worker
 
 
 config.initcfg()
-ref = ICCP.ICCProfile(config.get_data_path("ref/sRGB.icm"))
+srgb = config.get_data_path("ref/sRGB.icm")
+if not srgb:
+	raise OSError("File not found: ref/sRGB.icm")
+ref = ICCP.ICCProfile(srgb)
+print "sRGB:", ref.fileName
 
 
 def update_preset(name):
