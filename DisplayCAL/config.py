@@ -732,7 +732,7 @@ defaults = {
 	"3dlut.encoding.output.backup": "n",
 	"3dlut.format": "cube",
 	"3dlut.gamap.use_b2a": 0,
-	"3dlut.hdr_peak_luminance": 600,
+	"3dlut.hdr_peak_luminance": 900,
 	"3dlut.image.layout": "h",
 	"3dlut.image.order": "rgb",
 	"3dlut.input.profile": "",
