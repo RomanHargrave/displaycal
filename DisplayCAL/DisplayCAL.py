@@ -4584,9 +4584,21 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_create_cb.SetValue(bool(getcfg("3dlut.create")))
 		lut3d_input_profile = getcfg("3dlut.input.profile")
 		if not lut3d_input_profile in self.input_profiles.values():
-			if not lut3d_input_profile:
+			if (not lut3d_input_profile or
+				not os.path.isfile(lut3d_input_profile)):
 				lut3d_input_profile = defaults["3dlut.input.profile"]
 				setcfg("3dlut.input.profile", lut3d_input_profile)
+			else:
+				try:
+					profile = ICCP.ICCProfile(lut3d_input_profile)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					safe_print("%s:" % lut3d_input_profile, exception)
+				else:
+					if lut3d_input_profile not in self.input_profiles.values():
+						desc = profile.getDescription()
+						desc = re.sub(r"\s*(?:color profile|primaries with "
+									  "\S+ transfer function)$", "", desc)
+						self.input_profiles[desc] = lut3d_input_profile
 		if lut3d_input_profile in self.input_profiles.values():
 			self.lut3d_input_profile_ctrl.SetSelection(
 				self.input_profiles.values().index(lut3d_input_profile))
