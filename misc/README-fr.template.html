@@ -13,14 +13,14 @@
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="${URL}shariff/shariff.complete.css" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
-		<link rel="stylesheet" href="theme/readme.css?ts=2016-04-02T13:46" />
+		<link rel="stylesheet" href="theme/readme.css?ts=2016-07-01T16:38" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2015-09-01T12:44" />
 		<link rel="stylesheet" href="theme/prism.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
 		<script type="text/javascript" src="theme/slimbox2/slimbox2.js?ts=2015-09-01T14:54"></script>
-		<script type="text/javascript" src="theme/readme.js?ts=2015-10-01T02:21"></script>
+		<script type="text/javascript" src="theme/readme.js?ts=2016-07-01T16:38"></script>
 	</head>
 	<body>
 
@@ -339,6 +339,11 @@
 								<a href="${URL}download/Fedora_23/x86_64/${APPNAME}.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>Fedora 24</span>
+								<span><a href="${URL}download/Fedora_24/i686/${APPNAME}.rpm">x86</a> | 
+								<a href="${URL}download/Fedora_24/x86_64/${APPNAME}.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>openSUSE 13.1</span>
 								<span><a href="${URL}download/openSUSE_13.1/i586/${APPNAME}.rpm">x86</a> | 
 								<a href="${URL}download/openSUSE_13.1/x86_64/${APPNAME}.rpm">x86_64</a></span>
@@ -522,6 +527,10 @@
 							<li>
 								<span></span>
 								<span><a href="${URL}download/Fedora_23/noarch/${APPNAME}-0install.rpm">Fedora 23</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="${URL}download/Fedora_24/noarch/${APPNAME}-0install.rpm">Fedora 24</a></span>
 							</li>
 							<li>
 								<span></span>
@@ -2458,24 +2467,29 @@ Choi Ka Man</span></p>
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>A fourth Rec. 709 encompassing color space variant as a profile connection space candidate for XYZ LUT profiles. May lead to better utilization of color lookup table grid points in some cases (and thus smaller profiles when the effective resolution is set to “Auto”).</li>
+							<li>A fourth Rec. 709 encompassing color space variant as a profile connection space candidate for XYZ LUT profiles. May lead to better utilization of PCS-to-device color lookup table grid points in some cases (and thus potentially smaller profiles when the effective resolution is set to the default of “Auto”).</li>
 							<li>An option to include legacy serial ports (if any) in detected instruments.</li>
+							<li>SMPTE 2084 (HDR) as 3D LUT tone curve choice.</li>
 						</ul>
 
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li>Don't preserve shaper curves in ICC device link profiles if selected as 3D LUT output format (effectively matching other 3D LUT formats).</li>
+							<li>Removed “Prepress” preset due to large overlap with “Softproof”.</li>
+							<li>Changed “Softproof” preset to use 5800K whitepoint target (in line with Fogra softproof handbook typical photography workflow suggested starting point value) and automatic black point hue correction.</li>
 							<li>Synthetic ICC profile creator: Changed SMPTE 2084 to always clip (optionally with roll-off) if peak white is below 10000 cd/m².</li>
-							<li>Don't preserve shaper curves in device link profiles if selected as 3D LUT output format (effectively matching other 3D LUT formats).</li>
+							<li>Synthetic ICC profile creator: Changed transition to specified black point of generated profiles to be consistent with BT.1886 black point blending (less gradual transition, blend over to specified black point considerably closer to black).</li>
 							<li>Profile loader (Windows): If no profile assigned, load implicit linear calibration.</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li>When loading settings from an existing profile, reading some CIECAM02 profiling options did not work correctly.</li>
-							<li>Don't accidentally remove the current display profile if Argyll CMS is older than version 1.1 or the Argyll CMS version could not be correctly detected.</li>
-							<li>Make sure the Argyll CMS version is detected even if it isn't contained in the first output line (fixes Argyll version not being detected correctly if QuickKeys Input Manager is installed under Mac OS X).</li>
+							<li>When loading settings from an existing profile, some CIECAM02 advanced profiling options were not recognized correctly.</li>
+							<li>Don't accidentally remove the current display profile if Argyll CMS is older than version 1.1 or the Argyll CMS version is not included in the first line of output due to interference with QuickKeys under Mac OS X.</li>
+							<li>Make sure the Argyll CMS version is detected even if it isn't contained in the first line of output (fixes Argyll CMS version not being detected if QuickKeys Input Manager is installed under Mac OS X).</li>
+							<li>When loading settings, add 3D LUT input profile to selector if not yet present.</li>
 							<li>Curve viewer/profile information: Fix potential division by zero error when graphing unusual curves (e.g. non-monotonic or with very harsh bends).</li>
-							<li>Profile information: Reset right pane row background color on each profile load (fixes “named color” profile swatches sticking even after loading a different profile).</li>
+							<li>Profile information: Reset right pane row background color on each profile load (fixes “named color” profile color swatches sticking even after loading a different profile).</li>
 						</ul>
 					</dd>
 

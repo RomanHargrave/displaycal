@@ -62,6 +62,9 @@ function $splash_anim(i, splash_frames) {
 var img, imgs = [], imgpaths = ['theme/splash.png', 'theme/splash_version.png', 'theme/splash_anim.png'];
 
 jQuery(function ($) {
+	var protocol = location.protocol;
+	if (protocol == 'file:') protocol = 'http:';
+
 	/* Infobox slider */
 	$('<div id="info-link-box"><a href="#info">i</a></div>').prependTo('#infobox');
 	$makeslider('#infobox', '#info', 'fixed-top');
@@ -186,8 +189,6 @@ jQuery(function ($) {
 		}
 		imgpaths.push('img/DisplayCAL-main_window-shadow-720.png');
 		/* Load images */
-		var protocol = location.protocol;
-		if (protocol == 'file:') protocol = 'http:';
 		for (var i = 0; i < imgpaths.length; i ++) {
 			img = new Image();
 			imgs.push(img);
@@ -214,7 +215,7 @@ jQuery(function ($) {
 	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit DisplayCAL on Facebook" target="_blank" href="https://www.facebook.com/DisplayCAL/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
 
 	/* Only show 'to top' link if scroll position > ToC offset top */
-	var totop_isshown = false;
+	var totop_isshown = false, faded = false;
 	$(window).scroll(function () {
 		if (totop_isshown && $(window).scrollTop() < $('#content').offset().top) {
 			$('#totop').slideUp();
@@ -224,10 +225,21 @@ jQuery(function ($) {
 			$('#totop').slideDown();
 			totop_isshown = true;
 		}
+		if (!faded && $(window).scrollTop() > $('#requirements').offset().top) {
+			$('.sidebar-wrapper').addClass('faded');
+			faded = true;
+		}
+		else if (faded && $(window).scrollTop() < $('#requirements').offset().top) {
+			$('.sidebar-wrapper').removeClass('faded');
+			faded = false;
+		}
 	});
 });
 
 jQuery(window).load(function () {
+	var protocol = location.protocol;
+	if (protocol == 'file:') protocol = 'http:';
+
 	/* Anchor scroll effect */
 	$.localScroll({hash: true, filter: ':not(a[href="#info"], #toc li:has(ul) > a)'});
 	$.localScroll.hash();
@@ -239,4 +251,53 @@ jQuery(window).load(function () {
 				   'theme/DisplayCAL-adjust-reflection.png'][Math.round(Math.random())];
 		jQuery('#teaser img').attr('src', src).fadeIn(750);
 	}, 500);
+	
+	/* Insert floating sidebar */
+	if (location.protocol != 'file:' ||
+		(location.search || '').indexOf('debug') > -1 ||
+		(document.cookie || '').indexOf('debug') > -1) {
+			var sidebar = (!window.localStorage || localStorage.getItem('sidebar') != 'hidden') && $(window).width() >= 1100;
+			$('body').append('<div class="sidebar-wrapper left' + (sidebar ? '' : ' hidden') + '"><iframe class="sidebar" marginwidth="0" marginheight="0" frameborder="0"' + (sidebar ? ' src="' + protocol + '//displaycal.net/sidebar.php"' : '') + '></iframe><span class="sidebar-toggle" title="Show / Hide">' + (sidebar ? '‹' : '›') + '</span></div>');
+			//$('body').append('<div class="sidebar-wrapper right' + (sidebar ? '' : ' hidden') + '"><iframe class="sidebar" marginwidth="0" marginheight="0" frameborder="0" src="' + protocol + '//displaycal.net/sidebar.php?product_type=display"></iframe><span class="sidebar-toggle" title="Show / Hide">' + (sidebar ? '›' : '‹') + '</span></div>');
+			$('.sidebar-toggle').click(function (e) {
+				var classes = ['left', 'right'], cls, prop, query = ['', '?product_type=display'];
+				$('.sidebar-wrapper').stop();
+				for (var i = 0; i < 2; i ++) {
+					cls = classes[i];
+					if (!$('.sidebar-wrapper.' + cls).length) continue;
+					prop = {};
+					if ($('.sidebar-wrapper.' + cls).hasClass('hidden')) {
+						prop[cls] = 0;
+						if (!$('.sidebar-wrapper.' + cls + ' > iframe').attr('src'))
+							$('.sidebar-wrapper.' + cls + ' > iframe').attr('src', protocol + '//displaycal.net/sidebar.php' + query[i]);
+						$('.sidebar-wrapper.' + cls).removeClass('hidden auto-hidden');
+						$('.sidebar-wrapper.' + cls + ' > .sidebar-toggle').html(cls == 'left' ? '‹' : '›');
+						if (e.originalEvent) {
+							if ($(window).width() < 1100) $('.sidebar-wrapper.' + cls).addClass('visible');
+							window.localStorage && localStorage.setItem('sidebar', 'visible');
+						}
+					}
+					else {
+						prop[cls] = '-140px';
+						$('.sidebar-wrapper.' + cls).addClass('hidden').removeClass('visible');
+						$('.sidebar-wrapper.' + cls + ' > .sidebar-toggle').html(cls == 'left' ? '›': '‹');
+						if (e.originalEvent) window.localStorage && localStorage.setItem('sidebar', 'hidden');
+					}
+				}
+			});
+			$(window).resize(function () {
+				if ($(window).width() < 1100) {
+					if (!$('.sidebar-wrapper').hasClass('hidden') && !$('.sidebar-wrapper').hasClass('visible')) {
+						$('.sidebar-toggle').first().click();
+						$('.sidebar-wrapper').addClass('auto-hidden');
+					}
+				}
+				else {
+					if ($('.sidebar-wrapper').hasClass('auto-hidden')) {
+						$('.sidebar-toggle').first().click();
+						$('.sidebar-wrapper').removeClass('auto-hidden');
+					}
+				}
+			});
+	}
 });
