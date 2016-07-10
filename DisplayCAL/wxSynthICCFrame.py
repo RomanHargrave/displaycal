@@ -5,7 +5,8 @@ import os
 import sys
 
 from ICCProfile import ICCProfile
-from config import get_data_path, get_verified_path, getcfg, hascfg, setcfg
+from config import (get_data_path, get_verified_path, getcfg, hascfg,
+					profile_ext, setcfg)
 from log import safe_print
 from meta import name as appname
 from options import debug
@@ -660,7 +661,8 @@ class SynthICCFrame(BaseFrame):
 							lang.getstr("save_as"),
 							defaultDir=defaultDir,
 							defaultFile=defaultFile,
-							wildcard="*.icc", 
+							wildcard=lang.getstr("filetype.icc") + 
+									 "|*" + profile_ext, 
 							style=wx.SAVE | wx.FD_OVERWRITE_PROMPT)
 		dlg.Center(wx.BOTH)
 		if dlg.ShowModal() == wx.ID_OK:
@@ -668,7 +670,7 @@ class SynthICCFrame(BaseFrame):
 		dlg.Destroy()
 		if path:
 			if os.path.splitext(path)[1].lower() not in (".icc", ".icm"):
-				path += ".icc"
+				path += profile_ext
 			if not waccess(path, os.W_OK):
 				show_result_dialog(Error(lang.getstr("error.access_denied.write",
 													 path)),
