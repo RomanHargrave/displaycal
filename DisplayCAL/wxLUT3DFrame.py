@@ -274,9 +274,9 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.trc_output_offset", 1.0)
 			setcfg("3dlut.trc", "gamma2.2")
 			self.lut3d_update_trc_controls()
-		elif self.lut3d_trc_ctrl.GetSelection() == 3:  # SMPTE 2084, hard clip
+		elif self.lut3d_trc_ctrl.GetSelection() == 2:  # SMPTE 2084, hard clip
 			setcfg("3dlut.trc", "smpte2084.hardclip")
-		elif self.lut3d_trc_ctrl.GetSelection() == 4:  # SMPTE 2084, roll-off clip
+		elif self.lut3d_trc_ctrl.GetSelection() == 3:  # SMPTE 2084, roll-off clip
 			setcfg("3dlut.trc", "smpte2084.rolloffclip")
 		else:
 			setcfg("3dlut.trc", "customgamma")
@@ -1064,8 +1064,8 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_setup_language(self):
 		# Shared with main window
 		items = []
-		for item in ("Gamma 2.2", "trc.rec1886", "custom",
-					 "trc.smpte2084.hardclip", "trc.smpte2084.rolloffclip"):
+		for item in ("Gamma 2.2", "trc.rec1886", "trc.smpte2084.hardclip",
+					 "trc.smpte2084.rolloffclip", "custom"):
 			items.append(lang.getstr(item))
 		self.lut3d_trc_ctrl.SetItems(items)
 		
@@ -1204,9 +1204,9 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_update_trc_control(self):
 		if getcfg("3dlut.trc").startswith("smpte2084"):  # SMPTE 2084
 			if getcfg("3dlut.trc") == "smpte2084.hardclip":
-				sel = 3
+				sel = 2
 			else:
-				sel = 4
+				sel = 3
 			self.lut3d_trc_ctrl.SetSelection(sel)
 		elif (getcfg("3dlut.trc_gamma_type") == "B" and
 			getcfg("3dlut.trc_output_offset") == 0 and
@@ -1217,7 +1217,7 @@ class LUT3DFrame(BaseFrame):
 			getcfg("3dlut.trc_gamma") == 2.2):
 			self.lut3d_trc_ctrl.SetSelection(0)  # Pure power gamma 2.2
 		else:
-			self.lut3d_trc_ctrl.SetSelection(2)  # Custom
+			self.lut3d_trc_ctrl.SetSelection(4)  # Custom
 
 	def lut3d_update_trc_controls(self):
 		self.lut3d_update_trc_control()
