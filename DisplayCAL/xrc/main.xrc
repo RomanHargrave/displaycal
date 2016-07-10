@@ -1499,6 +1499,28 @@
                                       </object>
                                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                     </object>
+                                    <object class="sizeritem">
+                                      <object class="wxStaticText" name="lut3d_hdr_peak_luminance_label">
+                                        <label>hdr_peak_luminance</label>
+                                      </object>
+                                      <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>8</border>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxSpinCtrl" name="lut3d_hdr_peak_luminance_ctrl">
+                                        <size>75,-1</size>
+                                        <min>120</min>
+                                        <max>10000</max>
+                                      </object>
+                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxStaticText" name="lut3d_hdr_peak_luminance_ctrl_label">
+                                        <label>cd/m²</label>
+                                      </object>
+                                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>4</border>
+                                    </object>
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
                                 </object>

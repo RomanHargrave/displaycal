@@ -139,6 +139,10 @@ class LUT3DFrame(BaseFrame):
 										   self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.lut3d_trc_black_output_offset_intctrl.Bind(wx.EVT_TEXT,
 											  self.lut3d_trc_black_output_offset_ctrl_handler)
+		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_SPINCTRL,
+											self.lut3d_hdr_peak_luminance_handler)
+		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_KILL_FOCUS,
+											self.lut3d_hdr_peak_luminance_handler)
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
@@ -219,6 +223,10 @@ class LUT3DFrame(BaseFrame):
 		setcfg("3dlut.output.profile.apply_cal",
 			   int(self.lut3d_apply_cal_cb.GetValue()))
 
+	def lut3d_hdr_peak_luminance_handler(self, event):
+		setcfg("3dlut.hdr_peak_luminance",
+			   self.lut3d_hdr_peak_luminance_ctrl.GetValue())
+
 	def lut3d_trc_black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.lut3d_trc_black_output_offset_intctrl.GetId():
 			self.lut3d_trc_black_output_offset_ctrl.SetValue(
@@ -257,13 +265,21 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.trc_gamma", 2.4)
 			self.lut3d_set_option("3dlut.trc_gamma_type", "B")
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
+			setcfg("3dlut.trc", "bt1886")
 			self.lut3d_update_trc_controls()
 		elif self.lut3d_trc_ctrl.GetSelection() == 0:
 			# Pure power gamma 2.2
 			self.lut3d_set_option("3dlut.trc_gamma", 2.2)
 			self.lut3d_set_option("3dlut.trc_gamma_type", "b")
 			self.lut3d_set_option("3dlut.trc_output_offset", 1.0)
+			setcfg("3dlut.trc", "gamma2.2")
 			self.lut3d_update_trc_controls()
+		elif self.lut3d_trc_ctrl.GetSelection() == 3:  # SMPTE 2084, hard clip
+			setcfg("3dlut.trc", "smpte2084.hardclip")
+		elif self.lut3d_trc_ctrl.GetSelection() == 4:  # SMPTE 2084, roll-off clip
+			setcfg("3dlut.trc", "smpte2084.rolloffclip")
+		else:
+			setcfg("3dlut.trc", "customgamma")
 		self.lut3d_show_trc_controls()
 		self.Thaw()
 
@@ -665,7 +681,10 @@ class LUT3DFrame(BaseFrame):
 		output_encoding = getcfg("3dlut.encoding.output")
 		if (getcfg("3dlut.apply_trc") or
 			not hasattr(self, "lut3d_trc_apply_none_ctrl")):
-			trc_gamma = getcfg("3dlut.trc_gamma")
+			if getcfg("3dlut.trc").startswith("smpte2084"):
+				trc_gamma = getcfg("3dlut.trc")
+			else:
+				trc_gamma = getcfg("3dlut.trc_gamma")
 		else:
 			trc_gamma = None
 		trc_gamma_type = getcfg("3dlut.trc_gamma_type")
@@ -677,6 +696,7 @@ class LUT3DFrame(BaseFrame):
 		output_bits = getcfg("3dlut.bitdepth.output")
 		apply_black_offset = getcfg("3dlut.apply_black_offset")
 		use_b2a = getcfg("3dlut.gamap.use_b2a")
+		white_cdm2 = getcfg("3dlut.hdr_peak_luminance")
 		try:
 			self.worker.create_3dlut(profile_in, path, profile_abst,
 									 profile_out, apply_cal=apply_cal,
@@ -689,7 +709,7 @@ class LUT3DFrame(BaseFrame):
 									 trc_gamma_type=trc_gamma_type,
 									 trc_output_offset=outoffset,
 									 apply_black_offset=apply_black_offset,
-									 use_b2a=use_b2a)
+									 use_b2a=use_b2a, white_cdm2=white_cdm2)
 		except Exception, exception:
 			return exception
 		return True
@@ -1044,7 +1064,8 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_setup_language(self):
 		# Shared with main window
 		items = []
-		for item in ("Gamma 2.2", "trc.rec1886", "custom"):
+		for item in ("Gamma 2.2", "trc.rec1886", "custom",
+					 "trc.smpte2084.hardclip", "trc.smpte2084.rolloffclip"):
 			items.append(lang.getstr(item))
 		self.lut3d_trc_ctrl.SetItems(items)
 		
@@ -1181,7 +1202,13 @@ class LUT3DFrame(BaseFrame):
 			self.Parent.lut3d_update_shared_controls()
 
 	def lut3d_update_trc_control(self):
-		if (getcfg("3dlut.trc_gamma_type") == "B" and
+		if getcfg("3dlut.trc").startswith("smpte2084"):  # SMPTE 2084
+			if getcfg("3dlut.trc") == "smpte2084.hardclip":
+				sel = 3
+			else:
+				sel = 4
+			self.lut3d_trc_ctrl.SetSelection(sel)
+		elif (getcfg("3dlut.trc_gamma_type") == "B" and
 			getcfg("3dlut.trc_output_offset") == 0 and
 			getcfg("3dlut.trc_gamma") == 2.4):
 			self.lut3d_trc_ctrl.SetSelection(1)  # BT.1886
@@ -1199,6 +1226,7 @@ class LUT3DFrame(BaseFrame):
 		outoffset = int(getcfg("3dlut.trc_output_offset") * 100)
 		self.lut3d_trc_black_output_offset_ctrl.SetValue(outoffset)
 		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
+		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
 
 	def update_linking_controls(self):
 		self.gamut_mapping_inverse_a2b.SetValue(
@@ -1279,9 +1307,10 @@ class LUT3DFrame(BaseFrame):
 		if hasattr(self, "lut3d_trc_apply_ctrl"):
 			self.lut3d_trc_apply_ctrl.Show(show)
 		self.lut3d_trc_ctrl.Show(show)
-		show = show and (self.lut3d_trc_ctrl.GetSelection() == 2 or  # Custom
-						 (isinstance(self, LUT3DFrame) or
-						  getcfg("show_advanced_options")))
+		show = (show and (getcfg("3dlut.trc") == "customgamma" or
+						  (isinstance(self, LUT3DFrame) or
+						   getcfg("show_advanced_options"))) and
+				not getcfg("3dlut.trc").startswith("smpte2084"))
 		self.lut3d_trc_gamma_label.Show(show)
 		self.lut3d_trc_gamma_ctrl.Show(show)
 		show = show and ((hasattr(self, "lut3d_create_cb") and
@@ -1291,6 +1320,10 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_black_output_offset_ctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl_label.Show(show)
+		show = getcfg("3dlut.trc").startswith("smpte2084")  # SMPTE 2084
+		self.lut3d_hdr_peak_luminance_label.Show(show)
+		self.lut3d_hdr_peak_luminance_ctrl.Show(show)
+		self.lut3d_hdr_peak_luminance_ctrl_label.Show(show)
 		self.panel.Layout()
 		self.panel.Thaw()
 	

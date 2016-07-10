@@ -583,6 +583,7 @@
 	"grid_steps": "Grid Steps",
 	"header": "Display calibration and characterization powered by Argyll CMS",
 	"hdmi": "HDMI",
+	"hdr_peak_luminance": "HDR peak luminance",
 	"help_support": "Help and support...",
 	"host.invalid.lookup_failed": "Invalid host (address lookup failed)",
 	"hue": "Hue",

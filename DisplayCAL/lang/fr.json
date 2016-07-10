@@ -581,6 +581,7 @@
 	"green_xyz": "Vert XYZ",
 	"grid_steps": "Pas de mire",
 	"hdmi": "HDMI",
+		"*hdr_peak_luminance": "HDR peak luminance",
 	"header": "Étalonnage et caractérisation d’affichage produits par Argyll CMS",
 	"help_support": "Aide et assistance…",
 	"host.invalid.lookup_failed": "Hôte invalide (échec de la recherche de l’adresse)",

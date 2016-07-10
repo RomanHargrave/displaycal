@@ -625,6 +625,7 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 valid_ranges = {
+	"3dlut.hdr_peak_luminance": [120, 10000],
 	"3dlut.trc_gamma": [0.000001, 10],
 	"3dlut.trc_output_offset": [0.0, 1.0],
 	"app.port": [1, 65535],
@@ -666,6 +667,7 @@ valid_values = {
 	"3dlut.image.order": ["rgb", "bgr"],
 	"3dlut.rendering_intent": intents,
 	"3dlut.size": [16, 17, 24, 32, 33, 64, 65],
+	"3dlut.trc": ["bt1886", "customgamma", "gamma2.2", "smpte2084.hardclip", "smpte2084.rolloffclip"],
 	"3dlut.trc_gamma_type": ["b", "B"],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	"colorimeter_correction.observer": observers,
@@ -719,6 +721,7 @@ defaults = {
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 12,
 	"3dlut.create": 0,
+	"3dlut.trc": "bt1886",
 	"3dlut.trc_gamma": 2.4,
 	"3dlut.trc_gamma.backup": 2.4,
 	"3dlut.trc_gamma_type": "B",
@@ -729,6 +732,7 @@ defaults = {
 	"3dlut.encoding.output.backup": "n",
 	"3dlut.format": "cube",
 	"3dlut.gamap.use_b2a": 0,
+	"3dlut.hdr_peak_luminance": 600,
 	"3dlut.image.layout": "h",
 	"3dlut.image.order": "rgb",
 	"3dlut.input.profile": "",

@@ -581,6 +581,7 @@
 	"green_xyz": "Grün XYZ",
 	"grid_steps": "Raster-Schritte",
 	"hdmi": "HDMI",
+	"hdr_peak_luminance": "HDR Spitzen-Weißluminanz",
 	"header": "Anzeigegeräte-Kalibrierung und Charakterisierung powered by Argyll CMS",
 	"help_support": "Hilfe und Unterstützung...",
 	"host.invalid.lookup_failed": "Ungültiger Host (Adressauflösung fehlgeschlagen)",

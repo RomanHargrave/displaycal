@@ -581,6 +581,7 @@
 		"*green_xyz": "Green XYZ",
 		"*grid_steps": "Grid Steps",
 		"*hdmi": "HDMI",
+		"*hdr_peak_luminance": "HDR peak luminance",
 	"header": "採用 Argyll CMS 技術的顯示器校正及特性化工具",
 	"help_support": "幫助與支援...",
 	"host.invalid.lookup_failed": "無效的主機 (地址查詢失敗)",

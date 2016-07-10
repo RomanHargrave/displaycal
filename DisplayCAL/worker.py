@@ -1871,7 +1871,7 @@ class Worker(object):
 
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
-								 apply_trc=True):
+								 apply_trc=True, white_cdm2=100):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -1882,7 +1882,12 @@ class Worker(object):
 		if len(odata) != 1 or len(odata[0]) != 3:
 			raise ValueError("Blackpoint is invalid: %s" % odata)
 		XYZbp = odata[0]
-		if apply_trc:
+		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
+		if smpte2084:
+			outoffset = 1.0
+			self.log(appname + ": Applying " + lang.getstr("trc." + gamma) +
+					 " TRC to " + os.path.basename(profile1.fileName))
+		elif apply_trc:
 			self.log(appname + ": Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
 		else:
@@ -1893,7 +1898,10 @@ class Worker(object):
 		self.log(appname + ": Black Lab = %.6f %.6f %.6f" %
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
-		if not apply_trc:
+		if smpte2084:
+			profile1.set_smpte2084_trc((0, 0, 0), white_cdm2,
+									   rolloff=gamma == "smpte2084.rolloffclip")
+		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)
 			return
@@ -2422,7 +2430,7 @@ class Worker(object):
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
-					 use_b2a=False):
+					 use_b2a=False, white_cdm2=100):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2524,8 +2532,11 @@ class Worker(object):
 			# Deal with applying TRC
 			collink_version_string = get_argyll_version_string("collink")
 			collink_version = parse_argyll_version_string(collink_version_string)
+			smpte2084 = trc_gamma in ("smpte2084.hardclip",
+									 "smpte2084.rolloffclip")
 			if trc_gamma:
-				if collink_version >= [1, 7] or not trc_output_offset:
+				if (not smpte2084 and
+					(collink_version >= [1, 7] or not trc_output_offset)):
 					# Make sure the profile has the expected Rec. 709 TRC
 					# for BT.1886
 					self.log(appname + ": Applying Rec. 709 TRC to " +
@@ -2534,6 +2545,7 @@ class Worker(object):
 						if channel + "TRC" in profile_in.tags:
 							profile_in.tags[channel + "TRC"].set_trc(-709)
 				else:
+					# For SMPTE 2084 and Argyll < 1.7 beta, alter profile TRC
 					# Argyll CMS prior to 1.7 beta development code 2014-07-10
 					# does not support output offset, alter the source profile
 					# instead (note that accuracy is limited due to 16-bit
@@ -2541,7 +2553,8 @@ class Worker(object):
 					# floating point processing and will be more precise)
 					self.blend_profile_blackpoint(profile_in, profile_out,
 												  trc_output_offset, trc_gamma,
-												  trc_gamma_type)
+												  trc_gamma_type,
+												  white_cdm2=white_cdm2)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
@@ -2578,7 +2591,8 @@ class Worker(object):
 					 (not trc_gamma and apply_black_offset)) and
 					collink_version >= [1, 7]):
 					args.append("-b")  # Use RGB->RGB forced black point hack
-				if trc_gamma and trc_gamma_type in ("b", "B"):
+				if (trc_gamma and not smpte2084 and
+					trc_gamma_type in ("b", "B")):
 					if collink_version >= [1, 7]:
 						args.append("-I%s:%s:%s" % (trc_gamma_type,
 													trc_output_offset,
@@ -7721,6 +7735,8 @@ usage: spotread [-options] [logfile]
 			# Add 3D LUT options if set, else remove them
 			for keyword, cfgname in {"3DLUT_SOURCE_PROFILE":
 									 "3dlut.input.profile",
+									 "3DLUT_TRC":
+									 "3dlut.trc",
 									 "3DLUT_GAMMA":
 									 "3dlut.trc_gamma",
 									 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":

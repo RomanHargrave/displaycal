@@ -1329,6 +1329,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_enable_size_controls = LUT3DFrame.__dict__["lut3d_enable_size_controls"]
 	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
 	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
+	lut3d_hdr_peak_luminance_handler = LUT3DFrame.__dict__["lut3d_hdr_peak_luminance_handler"]
 	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
 	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
 	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
@@ -4499,13 +4500,22 @@ class MainFrame(ReportFrame, BaseFrame):
 				cal_exclude = ""
 			else:
 				cal_exclude = "e"
-			lut3dp = [lut3d[5][1].replace("b", "bb") +
-					  lut3d[5][3:].replace(":", ","),  # TRC
-					  cal_exclude,
-					  lut3d[0],  # Gamut mapping mode
-					  lut3d[1][1:],  # Rendering intent
-					  encoding,
-					  lut3d[2][1:]]  # Resolution
+			if getcfg("3dlut.trc").startswith("smpte2084"):
+				lut3dp = ["2084"]
+				if getcfg("3dlut.hdr_peak_luminance") < 10000:
+					lut3dp.append("@" + str(getcfg("3dlut.hdr_peak_luminance")))
+					if getcfg("3dlut.trc") == "smpte2084.hardclip":
+						lut3dp.append("h")
+					else:
+						lut3dp.append("s")
+			else:
+				lut3dp = [lut3d[5][1].replace("b", "bb") +
+						  lut3d[5][3:].replace(":", ",")]  # TRC
+			lut3dp.extend([cal_exclude,
+						   lut3d[0],  # Gamut mapping mode
+						   lut3d[1][1:],  # Rendering intent
+						   encoding,
+						   lut3d[2][1:]])  # Resolution
 			bitdepth_in = None
 			bitdepth_out = None
 			if len(lut3d) > 6:
@@ -13076,7 +13086,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.restore_defaults_handler(
 						include=("profile", "gamap_", "3dlut.create",
 								 "3dlut.output.profile.apply_cal",
-								 "testchart.auto_optimize"), 
+								 "3dlut.trc", "testchart.auto_optimize"), 
 						exclude=("3dlut.tab.enable.backup", "profile.update",
 								 "profile.name", "gamap_default_intent",
 								 "testchart.auto_optimize.fix_zero_blackpoint"))
@@ -13145,6 +13155,8 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "testchart.auto_optimize",
 											 "3DLUT_SOURCE_PROFILE":
 											 "3dlut.input.profile",
+											 "3DLUT_TRC":
+											 "3dlut.trc",
 											 "3DLUT_GAMMA":
 											 "3dlut.trc_gamma",
 											 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":
