@@ -4594,11 +4594,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
 					safe_print("%s:" % lut3d_input_profile, exception)
 				else:
-					if lut3d_input_profile not in self.input_profiles.values():
-						desc = profile.getDescription()
-						desc = re.sub(r"\s*(?:color profile|primaries with "
-									  "\S+ transfer function)$", "", desc)
-						self.input_profiles[desc] = lut3d_input_profile
+					desc = profile.getDescription()
+					desc = re.sub(r"\s*(?:color profile|primaries with "
+								  "\S+ transfer function)$", "", desc)
+					self.input_profiles[desc] = lut3d_input_profile
 		if lut3d_input_profile in self.input_profiles.values():
 			self.lut3d_input_profile_ctrl.SetSelection(
 				self.input_profiles.values().index(lut3d_input_profile))
