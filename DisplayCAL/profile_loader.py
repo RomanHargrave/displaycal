@@ -778,13 +778,19 @@ class ProfileLoader(object):
 				if profile_name == "?":
 					profile_name = "none"
 				association = self.profile_associations.get(i, (None, 0))
-				if (not first_run and not self._has_display_changed and
+				if (getcfg("profile_loader.fix_profile_associations") and
+					not first_run and not self._has_display_changed and
 					not self._next and association[0] != profile):
 					# At this point we do not yet know if only the profile
 					# association has changed or the display configuration.
 					# One second delay to allow display configuration
 					# to settle
 					if not self._check_display_changed(dry_run=True):
+						timeout = 0
+						while (self and self.monitoring and timeout < 1 and
+							   self._manual_restore != 2 and not self._next):
+							time.sleep(.1)
+							timeout += .1
 						self._next = True
 					break
 				if os.path.isfile(profile_path):
