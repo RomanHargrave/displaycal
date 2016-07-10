@@ -613,27 +613,23 @@ class SynthICCFrame(BaseFrame):
 		elif black != [0, 0, 0]:
 			if self.colorspace_rgb_ctrl.Value:
 				# Color profile
-				rXYZ = profile.tags.rXYZ.values()
-				gXYZ = profile.tags.gXYZ.values()
-				bXYZ = profile.tags.bXYZ.values()
-				mtx = colormath.Matrix3x3([[rXYZ[0], gXYZ[0], bXYZ[0]],
-										   [rXYZ[1], gXYZ[1], bXYZ[1]],
-										   [rXYZ[2], gXYZ[2], bXYZ[2]]])
-				rgbblack = mtx.inverted() * black
+				vmin = 0
 			else:
 				# Grayscale profile
-				rgbblack = black
-			# Optimize for uInt16Number encoding
-			rgbblack = [round(max(v, 0) * 65535) / 65535 for v in rgbblack]
+				vmin = black[1]
 			for i, channel in enumerate(channels):
 				TRC = profile.tags["%sTRC" % channel]
-				TRC.set_trc(trc, 1024, vmin=rgbblack[i] * 65535)
+				TRC.set_trc(trc, 1024, vmin=vmin * 65535)
+			if self.colorspace_rgb_ctrl.Value:
+				profile.apply_black_offset(black)
 		else:
 			for channel in channels:
 				profile.tags["%sTRC" % channel].set_trc(trc, 1)
 		if black != [0, 0, 0] and self.bpc_ctrl.Value:
-			for channel in channels:
-				profile.tags["%sTRC" % channel].apply_bpc()
+			if self.colorspace_rgb_ctrl.Value:
+				profile.apply_black_offset((0, 0, 0))
+			else:
+				profile.tags.kTRC.apply_bpc()
 		for tagname in ("lumi", "bkpt"):
 			if tagname == "lumi":
 				# Absolute
