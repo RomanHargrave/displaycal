@@ -339,10 +339,14 @@ def setup():
 	global version_src, version_tuple, version_win
 	global wx_minversion
 	from meta import (name, name_html, author, author_email, description,
-					  longdesc, domain, py_maxversion, py_minversion,
+					  lastmod, longdesc, domain, py_maxversion, py_minversion,
 					  version, version_lin, version_mac, 
 					  version_src, version_tuple, version_win,
 					  wx_minversion, script2pywname)
+
+	if not lastmod_time:
+		lastmod_time = time.mktime(time.strptime(lastmod,
+												 "%Y-%m-%dT%H:%M:%S.%fZ"))
 
 	msiversion = ".".join((str(version_tuple[0]), 
 						   str(version_tuple[1]), 
