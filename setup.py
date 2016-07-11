@@ -428,7 +428,7 @@ def setup():
 		provides = "\n\t\t".join(provides)
 		lang.init()
 		languages = []
-		for code, tdict in lang.ldict.iteritems():
+		for code, tdict in sorted(lang.ldict.items()):
 			if code == "en":
 				continue
 			untranslated = 0
