@@ -4581,8 +4581,12 @@ while 1:
 			# Sanity check white
 			if (round(odata[-1][0], 3) != 1 or round(odata[-1][1], 3) != 1 or
 				round(odata[-1][2], 3) != 1):
-				raise Error("Argyll CMS xicclu: Invalid white RGB: "
-							"%.4f %.4f %.4f" % tuple(odata[-1]))
+				wrgb_warning = ("Argyll CMS xicclu: Invalid white RGB: "
+								"%.4f %.4f %.4f" % tuple(odata[-1]))
+				if logfile:
+					logfile.write(wrgb_warning)
+				else:
+					safe_print(wrgb_warning)
 
 		xpR = [v[0] for v in odata]
 		xpG = [v[1] for v in odata]
