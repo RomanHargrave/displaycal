@@ -4581,8 +4581,8 @@ while 1:
 			# Sanity check white
 			if (round(odata[-1][0], 3) != 1 or round(odata[-1][1], 3) != 1 or
 				round(odata[-1][2], 3) != 1):
-				wrgb_warning = ("Warning: Argyll CMS xicclu: Invalid white RGB: "
-								"%.4f %.4f %.4f\n" % tuple(odata[-1]))
+				wrgb_warning = ("Warning: Argyll CMS xicclu: Suspicious white "
+								"RGB: %.4f %.4f %.4f\n" % tuple(odata[-1]))
 				if logfile:
 					logfile.write(wrgb_warning)
 				else:
