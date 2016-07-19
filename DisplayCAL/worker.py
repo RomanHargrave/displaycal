@@ -1884,7 +1884,6 @@ class Worker(object):
 		XYZbp = odata[0]
 		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
 		if smpte2084:
-			outoffset = 1.0
 			self.log(appname + ": Applying " + lang.getstr("trc." + gamma) +
 					 " TRC to " + os.path.basename(profile1.fileName))
 		elif apply_trc:
@@ -1899,7 +1898,9 @@ class Worker(object):
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
 		if smpte2084:
-			profile1.set_smpte2084_trc((0, 0, 0), white_cdm2,
+			lumi = profile2.tags.get("lumi", ICCP.XYZType()).Y
+			profile1.set_smpte2084_trc([v * lumi * (1 - outoffset)
+										for v in XYZbp], white_cdm2,
 									   rolloff=gamma == "smpte2084.rolloffclip")
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping

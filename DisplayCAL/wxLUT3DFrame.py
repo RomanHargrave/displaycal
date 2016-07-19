@@ -1307,23 +1307,22 @@ class LUT3DFrame(BaseFrame):
 		if hasattr(self, "lut3d_trc_apply_ctrl"):
 			self.lut3d_trc_apply_ctrl.Show(show)
 		self.lut3d_trc_ctrl.Show(show)
-		show = (show and (getcfg("3dlut.trc") == "customgamma" or
-						  (isinstance(self, LUT3DFrame) or
-						   getcfg("show_advanced_options"))) and
-				not getcfg("3dlut.trc").startswith("smpte2084"))
-		self.lut3d_trc_gamma_label.Show(show)
-		self.lut3d_trc_gamma_ctrl.Show(show)
+		smpte2084 = getcfg("3dlut.trc").startswith("smpte2084")
+		show = show and (getcfg("3dlut.trc") == "customgamma" or
+						 (isinstance(self, LUT3DFrame) or
+						  getcfg("show_advanced_options")))
+		self.lut3d_trc_gamma_label.Show(show and not smpte2084)
+		self.lut3d_trc_gamma_ctrl.Show(show and not smpte2084)
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])
-		self.lut3d_trc_gamma_type_ctrl.Show(show)
+		self.lut3d_trc_gamma_type_ctrl.Show(show and not smpte2084)
 		self.lut3d_trc_black_output_offset_label.Show(show)
 		self.lut3d_trc_black_output_offset_ctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl_label.Show(show)
-		show = getcfg("3dlut.trc").startswith("smpte2084")  # SMPTE 2084
-		self.lut3d_hdr_peak_luminance_label.Show(show)
-		self.lut3d_hdr_peak_luminance_ctrl.Show(show)
-		self.lut3d_hdr_peak_luminance_ctrl_label.Show(show)
+		self.lut3d_hdr_peak_luminance_label.Show(smpte2084)
+		self.lut3d_hdr_peak_luminance_ctrl.Show(smpte2084)
+		self.lut3d_hdr_peak_luminance_ctrl_label.Show(smpte2084)
 		self.panel.Layout()
 		self.panel.Thaw()
 	
