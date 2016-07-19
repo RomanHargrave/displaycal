@@ -1834,48 +1834,43 @@ class CurveType(ICCProfileTag, list):
 							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
 							 max(white_cdm2, white_out_cdm2))
 		values = []
-		mini = colormath.specialpow(0, 1.0 / -2084)
+		minv = black_cdm2 / 10000.0
+		mini = colormath.specialpow(minv, 1.0 / -2084)
 		maxv = white_cdm2 / 10000.0
 		maxi = colormath.specialpow(maxv, 1.0 / -2084)
 		maxi_out = colormath.specialpow(white_out_cdm2 / 10000.0, 1.0 / -2084)
+		if rolloff:
+			# Rolloff as defined in ITU-R BT.2390-0
+			KS = 1.5 * maxi - 0.5
+			def T(A):
+				return (A - KS) / (1 - KS)
+			def P(B):
+				return ((2 * T(B) ** 3 - 3 * T(B) ** 2 + 1) * KS +
+						(T(B) ** 3 - 2 * T(B) ** 2 + T(B)) * (1 - KS) +
+						(-2 * T(B) ** 3 + 3 * T(B) ** 2) * maxi)
+			# Need to scale into maxv for black offset
+			E2 = P(1)
+			n = E2 + mini * (1 - E2) ** 4
+			scale = maxv / colormath.specialpow(n, -2084)
+		else:
+			scale = 1
 		if not size:
 			size = len(self)
 		if size < 2:
 			size = 1024
-		clip = math.ceil(size * maxi_out)
-		for i in xrange(int(clip)):
-			n = i / (clip - 1.0)
-			v = colormath.specialpow((mini + n * (maxi_out - mini)) * (maxi / maxi_out), -2084)
+		for i in xrange(size):
+			n = i / (size - 1.0)
+			if rolloff:
+				if KS <= n <= 1:
+					E2 = P(n)
+				else:
+					E2 = n
+				if 0 <= E2 <= 1:
+					n = E2 + mini * (1 - E2) ** 4
+				else:
+					n = E2
+			v = colormath.specialpow(n * (maxi / maxi_out), -2084) * scale
 			values.append(min(v / maxv, 1.0))
-		while len(values) < size:
-			values.append(1.0)
-		if rolloff and clip < size:
-			a1 = 7.8 * rolloff  # Base val = 12
-			a2 = 20.8 * rolloff  # Base val = 32
-			a3 = 19.5 * rolloff  # Base val = 30
-			a4 = 6.5 * rolloff  # Base val = 10
-			index = i - int(min(math.ceil((size / a1) * (1.0 - maxi_out)),
-								size * (1 / a2)))
-			if index > 0:
-				ival = values[index]
-				prev = 0
-				for i in xrange(index, size):
-					vv = (i - index) / (size - index - 1.0)  # 0 at index, 1 at max
-					vv = 1.0 - vv
-					if vv < 0.0:
-						vv = 0.0
-					elif vv > 1.0:
-						vv = 1.0
-					if vv:
-						vv = math.pow(vv, max(math.ceil(a3 * (1 - maxi_out)), a4))
-					##print i, values[i], vv, '->',
-					values[i] = ival * vv + 1.0 * (1 - vv)
-					##print values[i]
-					if round(values[i] * 65535) < round(prev * 65535):
-						safe_print("Warning: Tone response curve is "
-								   "non-monotonically increasing (previous value "
-								   "%r, current value %r)" % (prev, values[i]))
-					prev = values[i]
 		self[:] = [min(v * 65535, 65535) for v in values]
 		if black_cdm2:
 			self.apply_bpc(black_cdm2 / white_cdm2)
