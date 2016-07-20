@@ -1849,7 +1849,10 @@ class CurveType(ICCProfileTag, list):
 						(T(B) ** 3 - 2 * T(B) ** 2 + T(B)) * (1 - KS) +
 						(-2 * T(B) ** 3 + 3 * T(B) ** 2) * maxi)
 			# Need to scale into maxv for black offset
-			E2 = P(1)
+			if KS < 1:
+				E2 = P(1)
+			else:
+				E2 = 1
 			n = E2 + mini * (1 - E2) ** 4
 			scale = maxv / colormath.specialpow(n, -2084)
 		else:
@@ -1861,7 +1864,7 @@ class CurveType(ICCProfileTag, list):
 		for i in xrange(size):
 			n = i / (size - 1.0)
 			if rolloff:
-				if KS <= n <= 1:
+				if KS < 1 and KS <= n <= 1:
 					E2 = P(n)
 				else:
 					E2 = n
