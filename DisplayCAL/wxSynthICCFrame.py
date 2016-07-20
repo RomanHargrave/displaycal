@@ -188,7 +188,7 @@ class SynthICCFrame(BaseFrame):
 			if not v:
 				self.bpc_ctrl.SetValue(False)
 			self.bpc_ctrl.Enable(bool(v))
-			black_output_offset_show = (i in (0, 4) and bool(v))
+			black_output_offset_show = (i in (0, 4, 6, 7) and bool(v))
 			self.black_output_offset_label.Show(black_output_offset_show)
 			self.black_output_offset_ctrl.Show(black_output_offset_show)
 			self.black_output_offset_intctrl.Show(black_output_offset_show)
@@ -572,6 +572,7 @@ class SynthICCFrame(BaseFrame):
 								  getcfg("synthprofile.luminance"))] * 3
 			profile.tags.kTRC = ICCP.CurveType(profile=profile)
 			channels = "k"
+		outoffset = getcfg("synthprofile.trc_output_offset")
 		if self.trc_ctrl.GetSelection() == 1:
 			# DICOM
 			# Absolute luminance values!
@@ -590,7 +591,6 @@ class SynthICCFrame(BaseFrame):
 				return
 		elif self.trc_ctrl.GetSelection() in (0, 4) and black != [0, 0, 0]:
 			# Gamma with output offset or Rec. 1886-like
-			outoffset = getcfg("synthprofile.trc_output_offset")
 			if self.colorspace_rgb_ctrl.Value:
 				# Color profile
 				profile.set_bt1886_trc(black, outoffset, gamma,
@@ -603,14 +603,22 @@ class SynthICCFrame(BaseFrame):
 			# SMPTE 2084
 			if self.colorspace_rgb_ctrl.Value:
 				# Color profile
-				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance")
+				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
+										   (1 - outoffset)
 										   for v in black],
 										  getcfg("synthprofile.luminance"),
-										  rolloff=self.trc_ctrl.GetSelection() == 7)
+										  rolloff=self.trc_ctrl.GetSelection() == 7,
+										  blend_blackpoint=False)
+				if black != [0, 0, 0] and not self.bpc_ctrl.Value:
+					profile.apply_black_offset(black)
 			else:
 				# Grayscale profile
-				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance"),
-													getcfg("synthprofile.luminance"))
+				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
+													(1 - outoffset),
+													getcfg("synthprofile.luminance"),
+													rolloff=self.trc_ctrl.GetSelection() == 7)
+				if black != [0, 0, 0] and outoffset and not self.bpc_ctrl.Value:
+					profile.tags.kTRC.apply_bpc(black[1])
 		elif black != [0, 0, 0]:
 			if self.colorspace_rgb_ctrl.Value:
 				# Color profile
@@ -778,7 +786,7 @@ class SynthICCFrame(BaseFrame):
 		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("synthprofile.trc_gamma_type")])
 		self.panel.GetSizer().Layout()
 		self.panel.Thaw()
-		if i in (0, 4):
+		if i in (0, 4, 6, 7):
 			outoffset = int(getcfg("synthprofile.trc_output_offset") * 100)
 		else:
 			outoffset = 100

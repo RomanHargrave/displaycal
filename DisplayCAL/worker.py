@@ -1901,7 +1901,8 @@ class Worker(object):
 			lumi = profile2.tags.get("lumi", ICCP.XYZType()).Y
 			profile1.set_smpte2084_trc([v * lumi * (1 - outoffset)
 										for v in XYZbp], white_cdm2,
-									   rolloff=gamma == "smpte2084.rolloffclip")
+									   rolloff=gamma == "smpte2084.rolloffclip",
+									   blend_blackpoint=False)
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)

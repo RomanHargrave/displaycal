@@ -3870,7 +3870,8 @@ class ICCProfile:
 								40.0 * (white_cdm2 / 40.0))
 
 	def set_smpte2084_trc(self, XYZbp=(0, 0, 0), white_cdm2=100, size=1024,
-						  white_out_cdm2=None, rolloff=False):
+						  white_out_cdm2=None, rolloff=False,
+						  blend_blackpoint=True):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
 		
@@ -3891,7 +3892,7 @@ class ICCProfile:
 														   white_cdm2, size,
 														   white_out_cdm2,
 														   rolloff)
-		if tuple(XYZbp) != (0, 0, 0):
+		if tuple(XYZbp) != (0, 0, 0) and blend_blackpoint:
 			self.apply_black_offset([v / white_cdm2 for v in XYZbp],
 									40.0 * (white_cdm2 / 100.0))
 
