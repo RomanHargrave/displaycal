@@ -3809,6 +3809,8 @@ class ICCProfile:
 		for channel in "rgb":
 			rgbbp_in.append(self.tags["%sTRC" % channel][0] / 65535.0)
 		bp_in = mtx * rgbbp_in
+		if tuple(bp_in) == tuple(XYZbp):
+			return
 		size = len(self.tags.rTRC)
 		for i in xrange(size):
 			rgb = []
