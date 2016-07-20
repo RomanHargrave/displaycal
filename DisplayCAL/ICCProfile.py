@@ -1863,15 +1863,10 @@ class CurveType(ICCProfileTag, list):
 			size = 1024
 		for i in xrange(size):
 			n = i / (size - 1.0)
-			if rolloff:
-				if KS < 1 and KS <= n <= 1:
-					E2 = P(n)
-				else:
-					E2 = n
-				if 0 <= E2 <= 1:
-					n = E2 + mini * (1 - E2) ** 4
-				else:
-					n = E2
+			if rolloff and KS < 1 and KS <= n <= 1:
+				n = P(n)
+			if 0 <= n <= 1:
+				n = n + mini * (1 - n) ** 4
 			v = colormath.specialpow(n * (maxi / maxi_out), -2084) * scale
 			values.append(min(v / maxv, 1.0))
 		self[:] = [min(v * 65535, 65535) for v in values]
