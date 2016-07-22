@@ -1210,10 +1210,23 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 
 def RGBsaturation(R, G, B, saturation, rgb_space=None):
 	""" (De)saturate a RGB color in CIE xy and return the RGB and xyY values """
-	wx, wy, wY = XYZ2xyY(*RGB2XYZ(1, 1, 1, rgb_space=rgb_space))
-	x, y, Y = XYZ2xyY(*RGB2XYZ(R, G, B, rgb_space=rgb_space))
-	x, y, Y = wx + (x - wx) * saturation,  wy + (y - wy) * saturation, Y
-	return xyY2RGB(x, y, Y, rgb_space=rgb_space), (x, y, Y)
+	whitepoint = RGB2XYZ(1, 1, 1, rgb_space=rgb_space)
+	X, Y, Z = RGB2XYZ(R, G, B, rgb_space=rgb_space)
+	XYZ, xyY = XYZsaturation(X, Y, Z, saturation, whitepoint)
+	return XYZ2RGB(*XYZ, rgb_space=rgb_space), xyY
+
+
+def XYZsaturation(X, Y, Z, saturation, whitepoint=None):
+	""" (De)saturate a XYZ color in CIE xy and return the RGB and xyY values """
+	wx, wy, wY = XYZ2xyY(*get_whitepoint(whitepoint))
+	x, y, Y = XYZ2xyY(X, Y, Z)
+	x, y, Y = xyYsaturation(x, y, Y, wx, wy, saturation)
+	return xyY2XYZ(x, y, Y), (x, y, Y)
+
+
+def xyYsaturation(x, y, Y, wx, wy, saturation):
+	""" (De)saturate a color in CIE xy and return the RGB and xyY values """
+	return wx + (x - wx) * saturation,  wy + (y - wy) * saturation, Y
 
 
 def rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
