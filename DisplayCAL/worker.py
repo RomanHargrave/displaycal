@@ -1898,11 +1898,18 @@ class Worker(object):
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
 		if smpte2084:
-			lumi = profile2.tags.get("lumi", ICCP.XYZType()).Y
-			profile1.set_smpte2084_trc([v * lumi * (1 - outoffset)
-										for v in XYZbp], white_cdm2,
-									   rolloff=gamma == "smpte2084.rolloffclip",
-									   blend_blackpoint=False)
+			lumi = profile2.tags.get("lumi", ICCP.XYZType())
+			rgb_space = profile1.get_rgb_space()
+			if not rgb_space:
+				raise Error(profile1.getDescription() + ": " +
+							lang.getstr("profile.unsupported", 
+										(lang.getstr("unknown"), 
+										 profile1.colorSpace)))
+			rgb_space[0] = -2084
+			rgb_space = colormath.get_rgb_space(rgb_space)
+			profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+				rgb_space, profile1.getDescription(), lumi.Y * (1 - outoffset),
+				white_cdm2, rolloff=gamma == "smpte2084.rolloffclip").tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)

@@ -600,8 +600,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			debugtable.clut.append([])
 			for B in xrange(clutres):
 				RGB = [v * step for v in (R, G, B)]
-				if R == G == B:
-					print "RGB %5.3f %5.3f %5.3f" % tuple(RGB),
+				if debug and R == G == B:
+					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
 				if mode == "HSV":
 					HSV = list(colormath.RGB2HSV(*RGB))
 					V1 = HSV[2]
@@ -614,8 +614,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						min_V = min(V1 / V2, V2 / V1)
 					else:
 						min_V = 1
-					if R == G == B:
-						print '* %5.3f' % min_V, '->',
+					if debug and R == G == B:
+						safe_print("* %5.3f" % min_V, "->", end=" ")
 					HSV[1] *= min_V
 					RGB = colormath.HSV2RGB(*HSV)
 				elif mode == "ICtCp":
@@ -625,12 +625,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							RGB2[i] = P(v)
 						if 0 <= RGB2[i] <= 1:
 							RGB2[i] = RGB2[i] + mini * (1 - RGB2[i]) ** 4
-					if R == G == B:
-						print "| %5.3f %5.3f %5.3f" % tuple(RGB2), "->",
+					if debug and R == G == B:
+						safe_print("| %5.3f %5.3f %5.3f" % tuple(RGB2), "->",
+								   end=" ")
 					RGB = [colormath.specialpow(v, -2084) for v in RGB]
 					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space)
-					if R == G == B:
-						print "ICtCp %5.3f %5.3f %5.3f" % (I1, Ct1, Cp1,),
+					if debug and R == G == B:
+						safe_print("ICtCp %5.3f %5.3f %5.3f" % (I1, Ct1, Cp1,),
+								   end=" ")
 					if rolloff and KS < 1 and KS <= I1 <= 1:
 						I2 = P(I1)
 					else:
@@ -644,13 +646,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							min_I = min(I1 / I2, I2 / I1)
 						else:
 							min_I = 1
-						if R == G == B:
-							print '* %5.3f' % min_I, '->',
+						if debug and R == G == B:
+							safe_print("* %5.3f" % min_I, "->", end=" ")
 						Ct2, Cp2 = [min_I * v for v in (Ct1, Cp1)]
 					else:
 						Ct2, Cp2 = Ct1, Cp1
-					if R == G == B:
-						print "| %5.3f %5.3f %5.3f" % (I2, Ct2, Cp2), '->',
+					if debug and R == G == B:
+						safe_print("| %5.3f %5.3f %5.3f" % (I2, Ct2, Cp2), "->",
+								   end=" ")
 					RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space)
 					##if min(RGB) < 0 or max(RGB) > 1:
 						##print 'WARNING:', RGB
@@ -668,8 +671,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							RGB[i] = P(v)
 						if 0 <= RGB[i] <= 1:
 							RGB[i] = RGB[i] + mini * (1 - RGB[i]) ** 4
-				if R == G == B:
-					print "RGB %5.3f %5.3f %5.3f" % tuple(RGB)
+				if debug and R == G == B:
+					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
 				X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
 															 rgb_space=rgb_space),
 										  whitepoint_source=rgb_space[1])
@@ -731,7 +734,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 										for v in (X, Y, Z)])
 				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
 											for v in RGB])
-	itable.clut[-1][-1] = colormath.get_whitepoint(scale=32768)
+	itable.clut[-1][-1] = list(colormath.get_whitepoint(scale=32768))
 	
 	return profile
 
