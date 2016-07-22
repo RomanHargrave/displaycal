@@ -571,9 +571,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		else:
 			E2 = 1
 		n = E2 + mini * (1 - E2) ** 4
-		scale = maxv / colormath.specialpow(n, -2084)
-	else:
-		scale = 1
+		maxv = colormath.specialpow(n, -2084)
 
 	# Create input and output curves
 	for i in xrange(3):
