@@ -669,6 +669,10 @@ def DIN99b2Lab(L99, a99, b99):
 	return DIN99bcdLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
 
 
+def DIN99bLCH2Lab(L99, C99, H99):
+	return DIN99bcdLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
+
+
 def DIN99c2Lab(L99, a99, b99, whitepoint=None):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
 	return DIN99bcdLCH2Lab(L99, C99, H99, .1, 317.651, .0037, 0, .94, 23, .066,
@@ -677,6 +681,11 @@ def DIN99c2Lab(L99, a99, b99, whitepoint=None):
 
 def DIN99d2Lab(L99, a99, b99, whitepoint=None):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
+	return DIN99bcdLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
+						   .06, whitepoint)
+
+
+def DIN99dLCH2Lab(L99, C99, H99, whitepoint=None):
 	return DIN99bcdLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
 						   .06, whitepoint)
 
@@ -1491,6 +1500,11 @@ def XYZ2DIN99b(X, Y, Z, whitepoint=None):
 	return Lab2DIN99b(L, a, b)
 
 
+def XYZ2DIN99bLCH(X, Y, Z, whitepoint=None):
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return Lab2DIN99bLCH(L, a, b)
+
+
 def XYZ2DIN99c(X, Y, Z, whitepoint=None):
 	return XYZ2DIN99cd(X, Y, Z, .1, 317.651, .0037, 0, .94, 23, .066,
 					   whitepoint)
@@ -1512,6 +1526,11 @@ def XYZ2DIN99cdLCH(X, Y, Z, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
 def XYZ2DIN99d(X, Y, Z, whitepoint=None):
 	return XYZ2DIN99cd(X, Y, Z, .12, 325.221, .0036, 50, 1.14, 22.5, .06,
 					   whitepoint)
+
+
+def XYZ2DIN99dLCH(X, Y, Z, whitepoint=None):
+	return XYZ2DIN99cdLCH(X, Y, Z, .12, 325.221, .0036, 50, 1.14, 22.5, .06,
+						  whitepoint)
 
 
 def XYZ2Lab(X, Y, Z, whitepoint=None):

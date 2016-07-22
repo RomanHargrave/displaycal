@@ -417,12 +417,9 @@ def Property(func):
 
 
 def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
-								  white_Y=1.0, rolloff=False, clutres=9):
+								  white_Y=1.0, clutres=9):
 	"""
 	Create a synthetic cLUT profile from a colorspace definition
-	
-	The rolloff parameter is used to make the clipping less harsh when the
-	white_Y is below 1.0
 	
 	"""
 	profile = ICCProfile()
@@ -522,6 +519,219 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 			otable.clut.append([])
 			for B in xrange(2):
 				otable.clut[-1].append([v * 65535 for v in (R , G, B)])
+	
+	return profile
+
+
+def create_synthetic_smpte2084_clut_profile(rgb_space, description,
+											black_cdm2=0,
+											white_cdm2=100, rolloff=True,
+											clutres=33, mode="ICtCp"):
+	"""
+	Create a synthetic cLUT profile with the SMPTE 2084 TRC from a colorspace
+	definition
+	
+	mode:  The gamut mapping mode when rolling off. Valid values:
+	       "ICtCp" (default), "HSV" (inaccurate),
+	       "RGB" (not recommended, saturation loss)
+	
+	"""
+	profile = ICCProfile()
+	
+	profile.tags.desc = TextDescriptionType("", "desc")
+	profile.tags.desc.ASCII = description
+	profile.tags.cprt = TextType("text\0\0\0\0Public domain\0", "cprt")
+	
+	profile.tags.wtpt = XYZType(profile=profile)
+	(profile.tags.wtpt.X,
+	 profile.tags.wtpt.Y,
+	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
+	
+	itable = profile.tags.A2B0 = LUT16Type(profile=profile)
+	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	debugtable = profile.tags.DBUG = LUT16Type(profile=profile)
+	debugtable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+
+	minv = black_cdm2 / 10000.0
+	mini = colormath.specialpow(minv, 1.0 / -2084)
+	maxv = white_cdm2 / 10000.0
+	maxi = colormath.specialpow(maxv, 1.0 / -2084)
+	if rolloff:
+		# Rolloff as defined in ITU-R BT.2390-0
+		KS = 1.5 * maxi - 0.5
+		def T(A):
+			return (A - KS) / (1 - KS)
+		def P(B):
+			return ((2 * T(B) ** 3 - 3 * T(B) ** 2 + 1) * KS +
+					(T(B) ** 3 - 2 * T(B) ** 2 + T(B)) * (1 - KS) +
+					(-2 * T(B) ** 3 + 3 * T(B) ** 2) * maxi)
+		# Need to scale into maxv for black offset
+		if KS < 1:
+			E2 = P(1)
+		else:
+			E2 = 1
+		n = E2 + mini * (1 - E2) ** 4
+		scale = maxv / colormath.specialpow(n, -2084)
+	else:
+		scale = 1
+
+	# Create input and output curves
+	for i in xrange(3):
+		itable.input.append([0, 65535])
+		itable.output.append([0, 65535])
+		debugtable.input.append([0, 65535])
+		debugtable.output.append([0, 65535])
+
+	rgb_space_linear = list(rgb_space)
+	rgb_space_linear[0] = 1.0
+	
+	white_L99 = colormath.Lab2DIN99d(100, 0, 0)[0]
+	white_DIN99d_Lab = colormath.DIN99d2Lab(white_L99, 0, 0)
+	white_DIN99d_XYZ = colormath.Lab2XYZ(*white_DIN99d_Lab)
+
+	# Create and fill cLUT
+	itable.clut = []
+	debugtable.clut = []
+	clutmax = clutres - 1.0
+	step = 1.0 / clutmax
+	for R in xrange(clutres):
+		for G in xrange(clutres):
+			itable.clut.append([])
+			debugtable.clut.append([])
+			for B in xrange(clutres):
+				RGB = [v * step for v in (R, G, B)]
+				if R == G == B:
+					print "RGB %5.3f %5.3f %5.3f" % tuple(RGB),
+				if mode == "HSV":
+					HSV = list(colormath.RGB2HSV(*RGB))
+					V1 = HSV[2]
+					if rolloff and KS < 1 and KS <= V1 <= 1:
+						HSV[2] = P(V1)
+					if 0 <= HSV[2] <= 1:
+						HSV[2] = HSV[2] + mini * (1 - HSV[2]) ** 4
+					V2 = HSV[2]
+					if V1 and V2:
+						min_V = min(V1 / V2, V2 / V1)
+					else:
+						min_V = 1
+					if R == G == B:
+						print '* %5.3f' % min_V, '->',
+					HSV[1] *= min_V
+					RGB = colormath.HSV2RGB(*HSV)
+				elif mode == "ICtCp":
+					RGB2 = list(RGB)
+					for i, v in enumerate(RGB2):
+						if rolloff and KS < 1 and KS <= v <= 1:
+							RGB2[i] = P(v)
+						if 0 <= RGB2[i] <= 1:
+							RGB2[i] = RGB2[i] + mini * (1 - RGB2[i]) ** 4
+					if R == G == B:
+						print "| %5.3f %5.3f %5.3f" % tuple(RGB2), "->",
+					RGB = [colormath.specialpow(v, -2084) for v in RGB]
+					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space)
+					if R == G == B:
+						print "ICtCp %5.3f %5.3f %5.3f" % (I1, Ct1, Cp1,),
+					if rolloff and KS < 1 and KS <= I1 <= 1:
+						I2 = P(I1)
+					else:
+						I2 = I1
+					if 0 <= I2 <= 1:
+						I2 = I2 + mini * (1 - I2) ** 4
+					if False:
+						# This saturation adjustment is actually recommended in
+						# BT.2390, but it doesn't seem to work well (hue shift)
+						if I1 and I2:
+							min_I = min(I1 / I2, I2 / I1)
+						else:
+							min_I = 1
+						if R == G == B:
+							print '* %5.3f' % min_I, '->',
+						Ct2, Cp2 = [min_I * v for v in (Ct1, Cp1)]
+					else:
+						Ct2, Cp2 = Ct1, Cp1
+					if R == G == B:
+						print "| %5.3f %5.3f %5.3f" % (I2, Ct2, Cp2), '->',
+					RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space)
+					##if min(RGB) < 0 or max(RGB) > 1:
+						##print 'WARNING:', RGB
+						##RGB = [max(min(v, 1), 0) for v in RGB]
+					RGB = [colormath.specialpow(v, 1.0 / -2084) for v in RGB]
+					if I1 > maxi * .9:
+						blend = min((I1 - maxi * .9) / (1 - maxi * .9), 1)
+						RGB1 = RGB
+						RGB = []
+						for i in xrange(3):
+							RGB.append(RGB1[i] * (1 - blend) + RGB2[i] * blend)
+				elif mode == "RGB":
+					for i, v in enumerate(RGB):
+						if rolloff and KS < 1 and KS <= v <= 1:
+							RGB[i] = P(v)
+						if 0 <= RGB[i] <= 1:
+							RGB[i] = RGB[i] + mini * (1 - RGB[i]) ** 4
+				if R == G == B:
+					print "RGB %5.3f %5.3f %5.3f" % tuple(RGB)
+				X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
+															 rgb_space=rgb_space),
+										  whitepoint_source=rgb_space[1])
+				##X, Y, Z = [v / maxv for v in X, Y, Z]
+				if False and (max(X, Y, Z) * 32768 > 65535 or
+							  min(X, Y, Z) < 0) and not R == G == B:
+					# Deal with out-of-range colors
+					#print 'OOG:', X, Y, Z, '->',
+					if mode == "DIN99b":
+						L99, C99, H99 = colormath.XYZ2DIN99bLCH(*[v * 100 for v in (X, Y, Z)])
+					elif mode == "DIN99d":
+						XYZ = colormath.adapt(X, Y, Z,
+											  whitepoint_destination=white_DIN99d_XYZ)
+						L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v * 100 for v in XYZ])
+					while max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0:
+						# Decrease intensity until in-gamut
+						if mode in ("HSV", "RGB"):
+							HSV = list(colormath.RGB2HSV(*RGB))
+							HSV[1] *= .99
+							#HSV[2] *= .99
+							RGB = colormath.HSV2RGB(*HSV)
+							X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
+																		 rgb_space=rgb_space),
+													  whitepoint_source=rgb_space[1])
+							##X, Y, Z = [v / maxv for v in X, Y, Z]
+						elif mode == "DIN99b":
+							#L99 *= .99
+							C99 *= .99
+							L, a, b = colormath.DIN99bLCH2Lab(L99, C99, H99)
+							X, Y, Z = colormath.Lab2XYZ(L, a, b)
+						elif mode == "DIN99d":
+							#L99 *= .99
+							C99 *= .99
+							L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
+							X, Y, Z = colormath.Lab2XYZ(L, a, b)
+							X, Y, Z = colormath.adapt(X, Y, Z,
+													  whitepoint_source=white_DIN99d_XYZ)
+						elif mode == "ICtCp":
+							#I2 *= .99
+							Ct2 *= .99
+							Cp2 *= .99
+							RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space)
+							RGB = [colormath.specialpow(v, 1.0 / -2084) for v in RGB]
+							X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
+																		 rgb_space=rgb_space),
+													  whitepoint_source=rgb_space[1])
+							##X, Y, Z = [v / maxv for v in X, Y, Z]
+					#print X, Y, Z
+				X, Y, Z = [v / maxv for v in X, Y, Z]
+				# Clip to RGB space
+				X, Y, Z = colormath.adapt(X, Y, Z,
+										  whitepoint_destination=rgb_space[1])
+				X, Y, Z = colormath.RGB2XYZ(*colormath.XYZ2RGB(X, Y, Z,
+															   rgb_space=rgb_space_linear),
+									 rgb_space=rgb_space_linear)
+				X, Y, Z = colormath.adapt(X, Y, Z,
+										  whitepoint_source=rgb_space[1])
+				itable.clut[-1].append([min(max(v * 32768, 0), 65535)
+										for v in (X, Y, Z)])
+				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
+											for v in RGB])
+	itable.clut[-1][-1] = colormath.get_whitepoint(scale=32768)
 	
 	return profile
 
