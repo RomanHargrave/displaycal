@@ -1908,8 +1908,9 @@ class Worker(object):
 			rgb_space[0] = -2084
 			rgb_space = colormath.get_rgb_space(rgb_space)
 			profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
-				rgb_space, profile1.getDescription(), lumi.Y * (1 - outoffset),
-				white_cdm2, rolloff=gamma == "smpte2084.rolloffclip").tags.A2B0
+				rgb_space, profile1.getDescription(),
+				XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
+				rolloff=gamma == "smpte2084.rolloffclip").tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)
