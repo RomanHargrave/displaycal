@@ -198,6 +198,9 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.apply_trc", int(v))
 			setcfg("3dlut.apply_black_offset",
 				   int(self.lut3d_trc_apply_black_offset_ctrl.GetValue()))
+		self.lut3d_hdr_peak_luminance_label.Enable(v)
+		self.lut3d_hdr_peak_luminance_ctrl.Enable(v)
+		self.lut3d_hdr_peak_luminance_ctrl_label.Enable(v)
 		self.lut3d_trc_black_output_offset_label.Enable(v)
 		self.lut3d_trc_black_output_offset_ctrl.Enable(v)
 		self.lut3d_trc_black_output_offset_intctrl.Enable(v)
