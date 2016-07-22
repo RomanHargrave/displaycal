@@ -4501,7 +4501,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				cal_exclude = "e"
 			if getcfg("3dlut.trc").startswith("smpte2084"):
-				lut3dp = ["2084"]
+				lut3dp = [str(getcfg("3dlut.trc_output_offset")) + ",2084"]
 				if getcfg("3dlut.hdr_peak_luminance") < 10000:
 					lut3dp.append("@" + str(getcfg("3dlut.hdr_peak_luminance")))
 					if getcfg("3dlut.trc") == "smpte2084.hardclip":
