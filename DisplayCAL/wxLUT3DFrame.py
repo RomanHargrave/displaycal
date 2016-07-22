@@ -139,9 +139,7 @@ class LUT3DFrame(BaseFrame):
 										   self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.lut3d_trc_black_output_offset_intctrl.Bind(wx.EVT_TEXT,
 											  self.lut3d_trc_black_output_offset_ctrl_handler)
-		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_SPINCTRL,
-											self.lut3d_hdr_peak_luminance_handler)
-		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_KILL_FOCUS,
+		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_TEXT,
 											self.lut3d_hdr_peak_luminance_handler)
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_encoding_input_ctrl_handler)
