@@ -637,18 +637,13 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						I2 = I1
 					if 0 <= I2 <= 1:
 						I2 = I2 + mini * (1 - I2) ** 4
-					if False:
-						# This saturation adjustment is actually recommended in
-						# BT.2390, but it doesn't seem to work well (hue shift)
-						if I1 and I2:
-							min_I = min(I1 / I2, I2 / I1)
-						else:
-							min_I = 1
-						if debug and R == G == B:
-							safe_print("* %5.3f" % min_I, "->", end=" ")
-						Ct2, Cp2 = [min_I * v for v in (Ct1, Cp1)]
+					if I1 and I2:
+						min_I = min(I1 / I2, I2 / I1)
 					else:
-						Ct2, Cp2 = Ct1, Cp1
+						min_I = 1
+					if debug and R == G == B:
+						safe_print("* %5.3f" % min_I, "->", end=" ")
+					Ct2, Cp2 = [min_I * v for v in (Ct1, Cp1)]
 					if debug and R == G == B:
 						safe_print("| %5.3f %5.3f %5.3f" % (I2, Ct2, Cp2), "->",
 								   end=" ")
