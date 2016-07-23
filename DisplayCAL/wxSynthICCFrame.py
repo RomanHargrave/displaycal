@@ -12,6 +12,7 @@ from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
 from util_os import waccess
+from util_str import safe_str
 from worker import Error, show_result_dialog
 import ICCProfile as ICCP
 import colormath
@@ -517,153 +518,15 @@ class SynthICCFrame(BaseFrame):
 		self.parse_xy("red")
 	
 	def save_as_btn_handler(self, event):
-		XYZ = self.get_XYZ()
 		try:
 			gamma = float(self.trc_gamma_ctrl.Value)
 		except ValueError:
 			wx.Bell()
 			gamma = 2.2
 			self.trc_gamma_ctrl.Value = str(gamma)
-		white = XYZ["wX"], XYZ["wY"], XYZ["wZ"]
-		if self.trc_ctrl.GetSelection() in (0, 1, 4, 6, 7):
-			# 0 = Gamma
-			# 1 = DICOM - trc set here is not actually used in the end
-			# 4 = Rec. 1886 - trc set here is only used if black = 0
-			# 6 & 7 = SMPTE 2084 - trc set here is not actually used in the end
-			trc = gamma
-		elif self.trc_ctrl.GetSelection() == 2:
-			# L*
-			trc = -3.0
-		elif self.trc_ctrl.GetSelection() == 3:
-			# Rec. 709
-			trc = -709
-		elif self.trc_ctrl.GetSelection() == 5:
-			# SMPTE 240M
-			trc = -240
-		elif self.trc_ctrl.GetSelection() == 8:
-			# sRGB
-			trc = -2.4
+
 		defaultDir, defaultFile = get_verified_path("last_icc_path")
 		defaultFile = lang.getstr("unnamed")
-		if self.colorspace_rgb_ctrl.Value:
-			# Color profile
-			profile = ICCP.ICCProfile.from_XYZ((XYZ["rX"], XYZ["rY"], XYZ["rZ"]),
-											   (XYZ["gX"], XYZ["gY"], XYZ["gZ"]),
-											   (XYZ["bX"], XYZ["bY"], XYZ["bZ"]),
-											   (XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
-											   trc,
-											   defaultFile,
-											   getcfg("copyright"))
-			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
-			profile.tags.rTRC = ICCP.CurveType(profile=profile)
-			profile.tags.gTRC = ICCP.CurveType(profile=profile)
-			profile.tags.bTRC = ICCP.CurveType(profile=profile)
-			channels = "rgb"
-		else:
-			# Grayscale profile
-			profile = ICCP.ICCProfile()
-			profile.colorSpace = "GRAY"
-			profile.setCopyright(getcfg("copyright"))
-			profile.tags.wtpt = ICCP.XYZType()
-			(profile.tags.wtpt.X,
-			 profile.tags.wtpt.Y,
-			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
-			black = [XYZ["wY"] * (getcfg("synthprofile.black_luminance") /
-								  getcfg("synthprofile.luminance"))] * 3
-			profile.tags.kTRC = ICCP.CurveType(profile=profile)
-			channels = "k"
-		outoffset = getcfg("synthprofile.trc_output_offset")
-		if self.trc_ctrl.GetSelection() == 1:
-			# DICOM
-			# Absolute luminance values!
-			try:
-				if self.colorspace_rgb_ctrl.Value:
-					# Color profile
-					profile.set_dicom_trc([v * getcfg("synthprofile.luminance")
-										   for v in black],
-										  getcfg("synthprofile.luminance"))
-				else:
-					# Grayscale profile
-					profile.tags.kTRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
-													getcfg("synthprofile.luminance"))
-			except ValueError, exception:
-				show_result_dialog(exception, self)
-				return
-		elif self.trc_ctrl.GetSelection() in (0, 4) and black != [0, 0, 0]:
-			# Gamma with output offset or Rec. 1886-like
-			if self.colorspace_rgb_ctrl.Value:
-				# Color profile
-				profile.set_bt1886_trc(black, outoffset, gamma,
-									   getcfg("synthprofile.trc_gamma_type"))
-			else:
-				# Grayscale profile
-				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, gamma,
-												 getcfg("synthprofile.trc_gamma_type"))
-		elif self.trc_ctrl.GetSelection() in (6, 7):
-			# SMPTE 2084
-			if self.colorspace_rgb_ctrl.Value:
-				# Color profile
-				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
-										   (1 - outoffset)
-										   for v in black],
-										  getcfg("synthprofile.luminance"),
-										  rolloff=self.trc_ctrl.GetSelection() == 7,
-										  blend_blackpoint=False)
-				if black != [0, 0, 0] and not self.bpc_ctrl.Value:
-					profile.apply_black_offset(black)
-			else:
-				# Grayscale profile
-				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
-													(1 - outoffset),
-													getcfg("synthprofile.luminance"),
-													rolloff=self.trc_ctrl.GetSelection() == 7)
-				if black != [0, 0, 0] and outoffset and not self.bpc_ctrl.Value:
-					profile.tags.kTRC.apply_bpc(black[1])
-		elif black != [0, 0, 0]:
-			if self.colorspace_rgb_ctrl.Value:
-				# Color profile
-				vmin = 0
-			else:
-				# Grayscale profile
-				vmin = black[1]
-			for i, channel in enumerate(channels):
-				TRC = profile.tags["%sTRC" % channel]
-				TRC.set_trc(trc, 1024, vmin=vmin * 65535)
-			if self.colorspace_rgb_ctrl.Value:
-				profile.apply_black_offset(black)
-		else:
-			for channel in channels:
-				profile.tags["%sTRC" % channel].set_trc(trc, 1)
-		if black != [0, 0, 0] and self.bpc_ctrl.Value:
-			if self.colorspace_rgb_ctrl.Value:
-				profile.apply_black_offset((0, 0, 0))
-			else:
-				profile.tags.kTRC.apply_bpc()
-		for tagname in ("lumi", "bkpt"):
-			if tagname == "lumi":
-				# Absolute
-				X, Y, Z = [(v / XYZ["wY"]) * getcfg("synthprofile.luminance")
-						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
-			else:
-				X, Y, Z = (XYZ["kX"], XYZ["kY"], XYZ["kZ"])
-			profile.tags[tagname] = ICCP.XYZType()
-			(profile.tags[tagname].X,
-			 profile.tags[tagname].Y,
-			 profile.tags[tagname].Z) = X, Y, Z
-		# Profile class
-		profile.profileClass = self.profile_classes.keys()[self.profile_class_ctrl.GetSelection()]
-		# Technology type
-		tech_i = self.tech_ctrl.GetSelection()
-		if tech_i > 0:
-			profile.tags.tech = ICCP.SignatureType("sig \0\0\0\0" +
-												   self.tech.keys()[tech_i],
-												   "tech")
-		# Colorimetric intent image state
-		ciis_i = self.ciis_ctrl.GetSelection()
-		if ciis_i > 0:
-			profile.tags.ciis = ICCP.SignatureType("sig \0\0\0\0" +
-												   self.ciis.keys()[ciis_i],
-												   "ciis")
 		path = None
 		dlg = wx.FileDialog(self, 
 							lang.getstr("save_as"),
@@ -685,12 +548,187 @@ class SynthICCFrame(BaseFrame):
 								   self)
 				return
 			setcfg("last_icc_path", path)
-			profile.setDescription(os.path.splitext(os.path.basename(path))[0])
-			profile.calculateID()
+		else:
+			return
+
+		XYZ = self.get_XYZ()
+		if self.trc_ctrl.GetSelection() in (0, 4):
+			# 0 = Gamma
+			# 4 = Rec. 1886 - trc set here is only used if black = 0
+			trc = gamma
+		elif self.trc_ctrl.GetSelection() == 1:
+			# DICOM
+			trc = -1
+		elif self.trc_ctrl.GetSelection() == 2:
+			# L*
+			trc = -3.0
+		elif self.trc_ctrl.GetSelection() == 3:
+			# Rec. 709
+			trc = -709
+		elif self.trc_ctrl.GetSelection() == 5:
+			# SMPTE 240M
+			trc = -240
+		elif self.trc_ctrl.GetSelection() in (6, 7):
+			# SMPTE 2084
+			trc = -2084
+		elif self.trc_ctrl.GetSelection() == 8:
+			# sRGB
+			trc = -2.4
+		class_i = self.profile_class_ctrl.GetSelection()
+		tech_i = self.tech_ctrl.GetSelection()
+		ciis_i = self.ciis_ctrl.GetSelection()
+		consumer = lambda result: (isinstance(result, Exception) and
+								   show_result_dialog(result, self))
+		wargs = (XYZ, trc, path)
+		wkwargs = {"rgb": self.colorspace_rgb_ctrl.Value,
+				   "rolloff": self.trc_ctrl.GetSelection() == 7,
+				   "bpc": self.bpc_ctrl.Value,
+				   "profile_class": self.profile_classes.keys()[class_i],
+				   "tech": self.tech.keys()[tech_i],
+				   "ciis": self.ciis.keys()[ciis_i]}
+		if trc == -2084:
+			self.worker.recent.write(lang.getstr("synthicc.create") + "\n")
+			self.worker.start(consumer,
+							  self.create_profile, wargs=(XYZ, trc, path),
+							  wkwargs=wkwargs,
+							  progress_title=lang.getstr("please_wait"))
+		else:
+			consumer(self.create_profile(*wargs, **wkwargs))
+
+	def create_profile(self, XYZ, trc, path, rgb=True, rolloff=True, bpc=False,
+					   profile_class="mntr", tech=None, ciis=None):
+		white = XYZ["wX"], XYZ["wY"], XYZ["wZ"]
+		if rgb:
+			# Color profile
+			profile = ICCP.ICCProfile.from_XYZ((XYZ["rX"], XYZ["rY"], XYZ["rZ"]),
+											   (XYZ["gX"], XYZ["gY"], XYZ["gZ"]),
+											   (XYZ["bX"], XYZ["bY"], XYZ["bZ"]),
+											   (XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
+											   trc,
+											   "",
+											   getcfg("copyright"))
+			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
+			profile.tags.rTRC = ICCP.CurveType(profile=profile)
+			profile.tags.gTRC = ICCP.CurveType(profile=profile)
+			profile.tags.bTRC = ICCP.CurveType(profile=profile)
+			channels = "rgb"
+		else:
+			# Grayscale profile
+			profile = ICCP.ICCProfile()
+			profile.colorSpace = "GRAY"
+			profile.setCopyright(getcfg("copyright"))
+			profile.tags.wtpt = ICCP.XYZType()
+			(profile.tags.wtpt.X,
+			 profile.tags.wtpt.Y,
+			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
+			black = [XYZ["wY"] * (getcfg("synthprofile.black_luminance") /
+								  getcfg("synthprofile.luminance"))] * 3
+			profile.tags.kTRC = ICCP.CurveType(profile=profile)
+			channels = "k"
+		outoffset = getcfg("synthprofile.trc_output_offset")
+		if trc == -1:
+			# DICOM
+			# Absolute luminance values!
 			try:
-				profile.write(path)
-			except Exception, exception:
-				show_result_dialog(exception, self)
+				if rgb:
+					# Color profile
+					profile.set_dicom_trc([v * getcfg("synthprofile.luminance")
+										   for v in black],
+										  getcfg("synthprofile.luminance"))
+				else:
+					# Grayscale profile
+					profile.tags.kTRC.set_dicom_trc(getcfg("synthprofile.black_luminance"),
+													getcfg("synthprofile.luminance"))
+			except ValueError, exception:
+				return exception
+		elif trc > -1 and black != [0, 0, 0]:
+			# Gamma with output offset or Rec. 1886-like
+			if rgb:
+				# Color profile
+				profile.set_bt1886_trc(black, outoffset, gamma,
+									   getcfg("synthprofile.trc_gamma_type"))
+			else:
+				# Grayscale profile
+				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, gamma,
+												 getcfg("synthprofile.trc_gamma_type"))
+		elif trc == -2084:
+			# SMPTE 2084
+			if rgb:
+				# Color profile
+				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
+										   (1 - outoffset)
+										   for v in black],
+										  getcfg("synthprofile.luminance"),
+										  rolloff=rolloff,
+										  blend_blackpoint=False)
+				rgb_space = profile.get_rgb_space()
+				rgb_space[0] = -2084
+				rgb_space = colormath.get_rgb_space(rgb_space)
+				profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+					rgb_space, "",
+					getcfg("synthprofile.black_luminance") * (1 - outoffset),
+					getcfg("synthprofile.luminance"),
+					rolloff=rolloff, worker=self.worker,
+					logfile=self.worker.lastmsg).tags.A2B0
+				if black != [0, 0, 0] and not bpc:
+					profile.apply_black_offset(black)
+			else:
+				# Grayscale profile
+				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
+													(1 - outoffset),
+													getcfg("synthprofile.luminance"),
+													rolloff=rolloff)
+				if black != [0, 0, 0] and outoffset and not bpc:
+					profile.tags.kTRC.apply_bpc(black[1])
+		elif black != [0, 0, 0]:
+			if rgb:
+				# Color profile
+				vmin = 0
+			else:
+				# Grayscale profile
+				vmin = black[1]
+			for i, channel in enumerate(channels):
+				TRC = profile.tags["%sTRC" % channel]
+				TRC.set_trc(trc, 1024, vmin=vmin * 65535)
+			if rgb:
+				profile.apply_black_offset(black)
+		else:
+			for channel in channels:
+				profile.tags["%sTRC" % channel].set_trc(trc, 1)
+		if black != [0, 0, 0] and bpc:
+			if rgb:
+				profile.apply_black_offset((0, 0, 0))
+			else:
+				profile.tags.kTRC.apply_bpc()
+		for tagname in ("lumi", "bkpt"):
+			if tagname == "lumi":
+				# Absolute
+				X, Y, Z = [(v / XYZ["wY"]) * getcfg("synthprofile.luminance")
+						   for v in (XYZ["wX"], XYZ["wY"], XYZ["wZ"])]
+			else:
+				X, Y, Z = (XYZ["kX"], XYZ["kY"], XYZ["kZ"])
+			profile.tags[tagname] = ICCP.XYZType()
+			(profile.tags[tagname].X,
+			 profile.tags[tagname].Y,
+			 profile.tags[tagname].Z) = X, Y, Z
+		# Profile class
+		profile.profileClass = profile_class
+		# Technology type
+		if tech:
+			profile.tags.tech = ICCP.SignatureType("sig \0\0\0\0" +
+												   tech,
+												   "tech")
+		# Colorimetric intent image state
+		if ciis:
+			profile.tags.ciis = ICCP.SignatureType("sig \0\0\0\0" +
+												   ciis,
+												   "ciis")
+		profile.setDescription(os.path.splitext(os.path.basename(path))[0])
+		profile.calculateID()
+		try:
+			profile.write(path)
+		except Exception, exception:
+			return exception
 	
 	def setup_language(self):
 		BaseFrame.setup_language(self)
