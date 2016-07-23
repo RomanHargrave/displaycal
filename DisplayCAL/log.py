@@ -129,6 +129,7 @@ class LogFile():
 	""" Logfile class. Default is to not rotate. """
 	
 	def __init__(self, filename, logdir, when="never", backupCount=0):
+		self.filename = filename
 		self._logger = get_file_logger(md5(safe_str(filename,
 													"UTF-8")).hexdigest(),
 									   when=when, backupCount=backupCount,

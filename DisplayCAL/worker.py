@@ -3373,7 +3373,7 @@ class Worker(object):
 		if not silent or verbose >= 3:
 			self.log("-" * 80)
 			if self.sessionlogfile:
-				safe_print("Session log: %s" % working_basename + ".log")
+				safe_print("Session log:", self.sessionlogfile.filename)
 				safe_print("")
 		use_madvr = (cmdname in (get_argyll_utilname("dispcal"),
 								 get_argyll_utilname("dispread"),
