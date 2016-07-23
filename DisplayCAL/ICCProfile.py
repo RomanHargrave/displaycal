@@ -670,8 +670,17 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 															 rgb_space=rgb_space),
 										  whitepoint_source=rgb_space[1])
 				X, Y, Z = [v / maxv for v in X, Y, Z]
-				if (max(X, Y, Z) * 32768 > 65535 or
-					 min(X, Y, Z) < 0) and not R == G == B:
+				if not rolloff:
+					# Hard clip
+					X, Y, Z = colormath.adapt(X, Y, Z,
+											  whitepoint_destination=rgb_space[1])
+					X, Y, Z = colormath.RGB2XYZ(*colormath.XYZ2RGB(X, Y, Z,
+																   rgb_space=rgb_space_linear),
+										 rgb_space=rgb_space_linear)
+					X, Y, Z = colormath.adapt(X, Y, Z,
+											  whitepoint_source=rgb_space[1])
+				elif (max(X, Y, Z) * 32768 > 65535 or
+					  min(X, Y, Z) < 0) and not R == G == B:
 					# Deal with out-of-range colors
 					#print 'OOG:', X, Y, Z, '->',
 					if mode == "DIN99b":
@@ -719,14 +728,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							##X, Y, Z = [v / maxv for v in X, Y, Z]
 					#print X, Y, Z
 				##X, Y, Z = [v / maxv for v in X, Y, Z]
-				### Clip to RGB space
-				##X, Y, Z = colormath.adapt(X, Y, Z,
-										  ##whitepoint_destination=rgb_space[1])
-				##X, Y, Z = colormath.RGB2XYZ(*colormath.XYZ2RGB(X, Y, Z,
-															   ##rgb_space=rgb_space_linear),
-									 ##rgb_space=rgb_space_linear)
-				##X, Y, Z = colormath.adapt(X, Y, Z,
-										  ##whitepoint_source=rgb_space[1])
 				itable.clut[-1].append([min(max(v * 32768, 0), 65535)
 										for v in (X, Y, Z)])
 				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
