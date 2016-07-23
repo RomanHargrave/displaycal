@@ -981,7 +981,12 @@ def show_result_dialog(result, parent=None, pos=None, confirm=False):
 	""" Show dialog depending on type of result. Result should be an
 	exception type. An appropriate visual representation will be chosen
 	whether result is of exception type 'Info', 'Warning' or other error. """
-	msg = safe_unicode(result)
+	if (result.__class__ is Exception and result.args and
+		result.args[0] == "aborted"):
+		# Special case - aborted
+		msg = lang.getstr("aborted")
+	else:
+		msg = safe_unicode(result)
 	if not pos:
 		pos=(-1, -1)
 	if isinstance(result, Info):
@@ -1907,10 +1912,12 @@ class Worker(object):
 										 profile1.colorSpace)))
 			rgb_space[0] = -2084
 			rgb_space = colormath.get_rgb_space(rgb_space)
+			self.recent.write(lang.getstr("synthicc.create") + "\n")
 			profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 				rgb_space, profile1.getDescription(),
 				XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
-				rolloff=gamma == "smpte2084.rolloffclip").tags.A2B0
+				rolloff=gamma == "smpte2084.rolloffclip", worker=self,
+				logfile=self.lastmsg).tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)
@@ -4323,11 +4330,16 @@ while 1:
 		try:
 			result = delayedResult.get()
 		except Exception, exception:
-			if hasattr(exception, "originalTraceback"):
-				self.log(exception.originalTraceback)
+			if (exception.__class__ is Exception and exception.args and
+				exception.args[0] == "aborted"):
+				# Special case - aborted
+				result = False
 			else:
-				self.log(traceback.format_exc())
-			result = UnloggedError(exception)
+				if hasattr(exception, "originalTraceback"):
+					self.log(exception.originalTraceback)
+				else:
+					self.log(traceback.format_exc())
+				result = UnloggedError(exception)
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
 		self.finished = True

@@ -526,7 +526,9 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0,
 											white_cdm2=100, rolloff=True,
-											clutres=33, mode="ICtCp"):
+											clutres=33, mode="ICtCp",
+											worker=None,
+											logfile=None):
 	"""
 	Create a synthetic cLUT profile with the SMPTE 2084 TRC from a colorspace
 	definition
@@ -592,11 +594,17 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	debugtable.clut = []
 	clutmax = clutres - 1.0
 	step = 1.0 / clutmax
+	count = 0
+	prevperc = 0
+	if logfile:
+		logfile.write("0%")
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			itable.clut.append([])
 			debugtable.clut.append([])
 			for B in xrange(clutres):
+				if worker and worker.thread_abort:
+					raise Exception("aborted")
 				RGB = [v * step for v in (R, G, B)]
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
@@ -732,7 +740,13 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 										for v in (X, Y, Z)])
 				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
 											for v in RGB])
+				count += 1
+				perc = round(count / clutres ** 3.0 * 100)
+				if logfile and perc > prevperc:
+					logfile.write("\r%i%%" % perc)
 	itable.clut[-1][-1] = list(colormath.get_whitepoint(scale=32768))
+	if logfile:
+		logfile.write("\n")
 	
 	return profile
 
