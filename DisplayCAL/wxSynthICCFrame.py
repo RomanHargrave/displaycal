@@ -574,6 +574,7 @@ class SynthICCFrame(BaseFrame):
 		elif self.trc_ctrl.GetSelection() == 8:
 			# sRGB
 			trc = -2.4
+		rolloff = self.trc_ctrl.GetSelection() == 7
 		class_i = self.profile_class_ctrl.GetSelection()
 		tech_i = self.tech_ctrl.GetSelection()
 		ciis_i = self.ciis_ctrl.GetSelection()
@@ -581,17 +582,21 @@ class SynthICCFrame(BaseFrame):
 								   show_result_dialog(result, self))
 		wargs = (XYZ, trc, path)
 		wkwargs = {"rgb": self.colorspace_rgb_ctrl.Value,
-				   "rolloff": self.trc_ctrl.GetSelection() == 7,
+				   "rolloff": rolloff,
 				   "bpc": self.bpc_ctrl.Value,
 				   "profile_class": self.profile_classes.keys()[class_i],
 				   "tech": self.tech.keys()[tech_i],
 				   "ciis": self.ciis.keys()[ciis_i]}
 		if trc == -2084:
-			self.worker.recent.write(lang.getstr("synthicc.create") + "\n")
+			if rolloff:
+				msg = "smpte2084.rolloffclip"
+			else:
+				msg = "smpte2084.hardclip"
+			self.worker.recent.write(lang.getstr("trc." + msg) + "\n")
 			self.worker.start(consumer,
 							  self.create_profile, wargs=(XYZ, trc, path),
 							  wkwargs=wkwargs,
-							  progress_title=lang.getstr("please_wait"))
+							  progress_msg=lang.getstr("synthicc.create"))
 		else:
 			consumer(self.create_profile(*wargs, **wkwargs))
 
@@ -668,8 +673,8 @@ class SynthICCFrame(BaseFrame):
 					rgb_space, "",
 					getcfg("synthprofile.black_luminance") * (1 - outoffset),
 					getcfg("synthprofile.luminance"),
-					rolloff=rolloff, worker=self.worker,
-					logfile=self.worker.lastmsg).tags.A2B0
+					rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
+					worker=self.worker, logfile=self.worker.lastmsg).tags.A2B0
 				if black != [0, 0, 0] and not bpc:
 					profile.apply_black_offset(black)
 			else:

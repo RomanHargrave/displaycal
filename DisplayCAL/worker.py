@@ -1889,8 +1889,8 @@ class Worker(object):
 		XYZbp = odata[0]
 		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
 		if smpte2084:
-			self.log(appname + ": Applying " + lang.getstr("trc." + gamma) +
-					 " TRC to " + os.path.basename(profile1.fileName))
+			self.log(appname + ": " + lang.getstr("trc." + gamma) +
+					 (u" %i cd/m² " % white_cdm2) + os.path.basename(profile1.fileName))
 		elif apply_trc:
 			self.log(appname + ": Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -1912,12 +1912,13 @@ class Worker(object):
 										 profile1.colorSpace)))
 			rgb_space[0] = -2084
 			rgb_space = colormath.get_rgb_space(rgb_space)
-			self.recent.write(lang.getstr("synthicc.create") + "\n")
+			self.recent.write(lang.getstr("trc." + gamma) + "\n")
 			profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 				rgb_space, profile1.getDescription(),
 				XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
-				rolloff=gamma == "smpte2084.rolloffclip", worker=self,
-				logfile=self.lastmsg).tags.A2B0
+				rolloff=gamma == "smpte2084.rolloffclip",
+				mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
+				worker=self, logfile=self.lastmsg).tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)
