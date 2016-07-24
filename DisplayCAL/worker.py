@@ -1904,21 +1904,26 @@ class Worker(object):
 		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
 		if smpte2084:
 			lumi = profile2.tags.get("lumi", ICCP.XYZType())
-			rgb_space = profile1.get_rgb_space()
-			if not rgb_space:
-				raise Error(profile1.getDescription() + ": " +
-							lang.getstr("profile.unsupported", 
-										(lang.getstr("unknown"), 
-										 profile1.colorSpace)))
-			rgb_space[0] = -2084
-			rgb_space = colormath.get_rgb_space(rgb_space)
-			self.recent.write(lang.getstr("trc." + gamma) + "\n")
-			profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
-				rgb_space, profile1.getDescription(),
-				XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
-				rolloff=gamma == "smpte2084.rolloffclip",
-				mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
-				worker=self, logfile=self.lastmsg).tags.A2B0
+			profile1.set_smpte2084_trc([v * lumi.Y * (1 - outoffset)
+										for v in XYZbp], white_cdm2,
+									   rolloff=gamma == "smpte2084.rolloffclip",
+									   blend_blackpoint=False)
+			if gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000:
+				rgb_space = profile1.get_rgb_space()
+				if not rgb_space:
+					raise Error(profile1.getDescription() + ": " +
+								lang.getstr("profile.unsupported", 
+											(lang.getstr("unknown"), 
+											 profile1.colorSpace)))
+				rgb_space[0] = -2084
+				rgb_space = colormath.get_rgb_space(rgb_space)
+				self.recent.write(lang.getstr("trc." + gamma) + "\n")
+				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+					rgb_space, profile1.getDescription(),
+					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
+					rolloff=gamma == "smpte2084.rolloffclip",
+					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
+					worker=self, logfile=self.lastmsg).tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)

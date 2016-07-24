@@ -587,7 +587,7 @@ class SynthICCFrame(BaseFrame):
 				   "profile_class": self.profile_classes.keys()[class_i],
 				   "tech": self.tech.keys()[tech_i],
 				   "ciis": self.ciis.keys()[ciis_i]}
-		if trc == -2084:
+		if trc == -2084 and rolloff and getcfg("synthprofile.luminance") < 10000:
 			if rolloff:
 				msg = "smpte2084.rolloffclip"
 			else:
@@ -666,15 +666,16 @@ class SynthICCFrame(BaseFrame):
 										  getcfg("synthprofile.luminance"),
 										  rolloff=rolloff,
 										  blend_blackpoint=False)
-				rgb_space = profile.get_rgb_space()
-				rgb_space[0] = -2084
-				rgb_space = colormath.get_rgb_space(rgb_space)
-				profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
-					rgb_space, "",
-					getcfg("synthprofile.black_luminance") * (1 - outoffset),
-					getcfg("synthprofile.luminance"),
-					rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
-					worker=self.worker, logfile=self.worker.lastmsg).tags.A2B0
+				if rolloff and getcfg("synthprofile.luminance") < 10000:
+					rgb_space = profile.get_rgb_space()
+					rgb_space[0] = -2084
+					rgb_space = colormath.get_rgb_space(rgb_space)
+					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+						rgb_space, "",
+						getcfg("synthprofile.black_luminance") * (1 - outoffset),
+						getcfg("synthprofile.luminance"),
+						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
+						worker=self.worker, logfile=self.worker.lastmsg).tags.A2B0
 				if black != [0, 0, 0] and not bpc:
 					profile.apply_black_offset(black)
 			else:
