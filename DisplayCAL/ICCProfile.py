@@ -538,6 +538,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	       "RGB" (not recommended, saturation loss)
 	
 	"""
+
+	if not rolloff:
+		raise NotImplementedError("rolloff needs to be True")
+
 	profile = ICCProfile()
 	
 	profile.tags.desc = TextDescriptionType("", "desc")
@@ -575,12 +579,61 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		n = E2 + mini * (1 - E2) ** 4
 		maxv = colormath.specialpow(n, -2084)
 
+	def apply_rolloff(v):
+		if rolloff and KS < 1 and KS <= v <= 1:
+			v = P(v)
+		if 0 <= v <= 1:
+			v = v + mini * (1 - v) ** 4
+		return v
+	
+	# Input curve interpolation
+	# Normlly the input curves would either be linear (= 1:1 mapping to
+	# cLUT) or the respective tone response curve.
+	# We use a overall linear curve that is 'bent' in <clutres> intervals
+	# to accomodate the non-linear TRC. Thus, we can get away with much
+	# fewer cLUT grid points.
+	
+	# Use higher interpolation size than actual number of curve entries
+	steps = 2 ** 15
+	maxstep = steps - 1.0
+	gamma = rgb_space[0]
+	segment = 1.0 / (clutres - 1.0)
+	iv = 0.0
+	prevpow = 0.0
+	nextpow = colormath.specialpow(apply_rolloff(segment), gamma)
+	interp = colormath.Interp([], range(steps))
+	if logfile:
+		logfile.write("0%")
+	for j in xrange(steps):
+		v = (j / maxstep)
+		if v > iv + segment:
+			iv += segment
+			prevpow = nextpow
+			nextpow = colormath.specialpow(apply_rolloff(iv + segment), gamma)
+		prevs = 1.0 - (v - iv) / segment
+		nexts = (v - iv) / segment
+		vv = (prevs * prevpow + nexts * nextpow)
+		out = colormath.specialpow(vv, 1.0 / gamma)
+		interp.xp.append(out)
+	
 	# Create input and output curves
 	for i in xrange(3):
-		itable.input.append([0, 65535])
+		itable.input.append([])
 		itable.output.append([0, 65535])
 		debugtable.input.append([0, 65535])
 		debugtable.output.append([0, 65535])
+	
+	# Fill input curves from interpolated values
+	entries = 1024
+	prevperc = 0
+	for j in xrange(entries):
+		v = j / (entries - 1.0)
+		for i in xrange(3):
+			itable.input[i].append(interp(apply_rolloff(v)) / maxstep * 65535)
+		perc = round(v * 25)
+		if logfile and perc > prevperc:
+			logfile.write("\r%i%%" % perc)
+			prevperc = perc
 
 	rgb_space_linear = list(rgb_space)
 	rgb_space_linear[0] = 1.0
@@ -596,8 +649,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	step = 1.0 / clutmax
 	count = 0
 	prevperc = 0
-	if logfile:
-		logfile.write("0%")
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			itable.clut.append([])
@@ -741,9 +792,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
 											for v in RGB])
 				count += 1
-				perc = round(count / clutres ** 3.0 * 100)
+				perc = 25 + round(count / clutres ** 3.0 * 75)
 				if logfile and perc > prevperc:
 					logfile.write("\r%i%%" % perc)
+					prevperc = perc
 	itable.clut[-1][-1] = list(colormath.get_whitepoint(scale=32768))
 	if logfile:
 		logfile.write("\n")
