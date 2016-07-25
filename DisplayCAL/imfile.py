@@ -16,6 +16,17 @@ def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None,
 	Image(data, bitdepth, extrainfo).write(stream_or_filename, format, dimensions)
 
 
+def write_rgb_clut(stream_or_filename, clutres=33, bitdepth=16, format=None):
+	clut = []
+	for R in xrange(clutres):
+		for G in xrange(clutres):
+			clut.append([])
+			for B in xrange(clutres):
+					RGB = [v * (1.0 / (clutres - 1)) for v in (R, G, B)]
+					clut[-1].append([v * (2 ** bitdepth - 1) for v in RGB])
+	write(clut, stream_or_filename, bitdepth, format)
+
+
 class Image(object):
 
 	""" Write 8 or 16 bit image files in DPX, PNG or TIFF format.

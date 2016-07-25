@@ -1889,8 +1889,9 @@ class Worker(object):
 		XYZbp = odata[0]
 		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
 		if smpte2084:
-			self.log(appname + ": " + lang.getstr("trc." + gamma) +
-					 (u" %i cd/m² " % white_cdm2) + os.path.basename(profile1.fileName))
+			self.log(appname + ": " + os.path.basename(profile1.fileName) +
+					 u" → " + lang.getstr("trc." + gamma) +
+					 (u" %i cd/m²" % white_cdm2))
 		elif apply_trc:
 			self.log(appname + ": Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -1917,7 +1918,9 @@ class Worker(object):
 											 profile1.colorSpace)))
 				rgb_space[0] = -2084
 				rgb_space = colormath.get_rgb_space(rgb_space)
-				self.recent.write(lang.getstr("trc." + gamma) + "\n")
+				self.recent.write(profile1.getDescription() + u" → " +
+								  lang.getstr("trc." + gamma) +
+								  (u" %i cd/m²\n" % white_cdm2))
 				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
 					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
@@ -2488,6 +2491,12 @@ class Worker(object):
 			link_filename = os.path.join(cwd, link_basename)
 			profile_in.write(link_filename)
 		else:
+			collink = get_argyll_util("collink")
+			if not collink:
+				raise Error(lang.getstr("argyll.util.not_found", "collink"))
+
+			extra_args = parse_argument_string(getcfg("extra_args.collink"))
+
 			# Check if files are the same
 			if profile_in.isSame(profile_out, force_calculation=True):
 				raise Error(lang.getstr("error.source_dest_same"))
@@ -2585,10 +2594,116 @@ class Worker(object):
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 
+			smpte2084_use_src_gamut = (smpte2084 and
+									   intent in ("p", "pa", "ms", "s") and
+									   not get_arg("-G", extra_args) and
+									   not get_arg("-g", extra_args))
+
+			if smpte2084_use_src_gamut:
+				# Use source gamut to preserve more saturation.
+				# Assume source encoded within SMPTE2084
+
+				tools = {}
+				for toolname in (#"iccgamut",
+								 #"timage",
+								 "cctiff",
+								 "tiffgamut"):
+					tools[toolname] = get_argyll_util(toolname)
+					if not tools[toolname]:
+						raise Error(lang.getstr("argyll.util.not_found",
+												toolname))
+
+				# Get source profile
+				profile_src_name = "P3_Rec2020red.icm"
+				profile_src = ICCP.ICCProfile(get_data_path("ref/" +
+															profile_src_name))
+				if not profile_src.fileName:
+					raise Error(lang.getstr("file.missing",
+											"ref/" + profile_src_name))
+				profile_src_basename = os.path.basename(profile_src.fileName)
+				(src_name, src_ext) = os.path.splitext(profile_src_basename)
+
+				# Get black offset
+				odata = self.xicclu(profile_out, (0, 0, 0), pcs="x")
+				if len(odata) != 1 or len(odata[0]) != 3:
+					raise ValueError("Blackpoint is invalid: %s" % odata)
+				XYZbp = odata[0]
+				lumi = profile_out.tags.get("lumi", ICCP.XYZType())
+
+				# Apply SMPTE 2084 TRC to source
+				self.blend_profile_blackpoint(profile_src, profile_out,
+											  trc_output_offset, trc_gamma,
+											  trc_gamma_type,
+											  white_cdm2=white_cdm2)
+
+				fd, profile_src.fileName = tempfile.mkstemp(src_ext,
+															"%s-" % src_name,
+															dir=cwd)
+				stream = os.fdopen(fd, "wb")
+				profile_src.write(stream)
+				stream.close()
+
+				# Create link from source to destination profile
+				gam_link_filename = tempfile.mktemp(profile_ext,
+													"gam-link-", dir=cwd)
+				result = self.exec_cmd(collink, ["-v", "-qh", "-G", "-ir",
+												 profile_src.fileName,
+												 profile_in_basename,
+												 gam_link_filename],
+									   capture_output=True,
+									   skip_scripts=True,
+									   sessionlogfile=self.sessionlogfile)
+
+				# Create RGB image
+				##gam_in_tiff = tempfile.mktemp(".tif", "gam-in-", dir=cwd)
+				##result = self.exec_cmd(tools["timage"], ["-x", gam_in_tiff],
+									   ##capture_output=True,
+									   ##skip_scripts=True,
+									   ##sessionlogfile=self.sessionlogfile)
+				##if isinstance(result, Exception) and not getcfg("dry_run"):
+					##raise result
+				##elif not result:
+					##raise Error("\n".join(self.errors) or lang.getstr("error"))
+				fd, gam_in_tiff = tempfile.mkstemp(".tif", "gam-in-", dir=cwd)
+				stream = os.fdopen(fd, "wb")
+				imfile.write_rgb_clut(stream, 65, format="TIFF")
+				stream.close()
+
+				# Convert RGB image from source to destination to get source
+				# encoded within destination.
+				gam_out_tiff = tempfile.mktemp(".tif", "gam-out-", dir=cwd)
+				result = self.exec_cmd(tools["cctiff"], ["-p",
+														 gam_link_filename,
+														 gam_in_tiff,
+														 gam_out_tiff],
+									   capture_output=True,
+									   skip_scripts=True,
+									   sessionlogfile=self.sessionlogfile)
+				if isinstance(result, Exception) and not getcfg("dry_run"):
+					raise result
+				elif not result:
+					raise Error("\n".join(self.errors) or lang.getstr("error"))
+
+				# Create gamut surface from image
+				##gam_filename = os.path.splitext(profile_src.fileName)[0] + ".gam"
+				##result = self.exec_cmd(tools["iccgamut"], ["-ir", "-pj",
+														   ##profile_src.fileName],
+									   ##capture_output=True,
+									   ##skip_scripts=True,
+									   ##sessionlogfile=self.sessionlogfile)
+				gam_filename = os.path.splitext(gam_out_tiff)[0] + ".gam"
+				result = self.exec_cmd(tools["tiffgamut"], ["-ir", "-pj",
+														    profile_in.fileName,
+														    gam_out_tiff],
+									   capture_output=True,
+									   skip_scripts=True,
+									   sessionlogfile=self.sessionlogfile)
+				if isinstance(result, Exception) and not getcfg("dry_run"):
+					raise result
+				elif not result:
+					raise Error("\n".join(self.errors) or lang.getstr("error"))
+
 			# Now build the device link
-			collink = get_argyll_util("collink")
-			if not collink:
-				raise Error(lang.getstr("argyll.util.not_found", "collink"))
 			is_argyll_lut_format = (self.argyll_version >= [1, 6] and
 									(((format == "eeColor" or
 									   (format == "cube" and
@@ -2597,6 +2712,9 @@ class Worker(object):
 									 format == "madVR") or format == "icc")
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
 					"-r%i" % size, "-n"]
+			if smpte2084_use_src_gamut:
+				# Use source gamut
+				args.insert(3, gam_filename)
 			if profile_abst:
 				profile_abst.write(os.path.join(cwd, "abstract.icc"))
 				args.extend(["-p", "abstract.icc"])
@@ -2627,8 +2745,8 @@ class Worker(object):
 					# i.e. use collink -a parameter (apply calibration curves
 					# to link output and append linear)
 					args.extend(["-a", os.path.basename(profile_out_cal_path)])
-			if getcfg("extra_args.collink").strip():
-				args += parse_argument_string(getcfg("extra_args.collink"))
+			if extra_args:
+				args += extra_args
 			result = self.exec_cmd(collink, args + [profile_in_basename,
 													profile_out_basename,
 													link_filename],

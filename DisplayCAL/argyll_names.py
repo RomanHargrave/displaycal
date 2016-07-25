@@ -20,6 +20,7 @@ names = [
 	"spyd4en",
 	"targen",
 	"tiffgamut",
+	"timage",
 	"txt2ti3",
 	"i1d3ccss",
 	"viewgam",
@@ -29,7 +30,7 @@ names = [
 
 # Argyll CMS tools optionally used by DisplayCAL
 optional = ["applycal", "average", "cctiff", "ccxxmake", "i1d3ccss", "oeminst",
-			"spyd2en", "spyd4en", "tiffgamut"]
+			"spyd2en", "spyd4en", "tiffgamut", "timage"]
 
 prefixes_suffixes = ["argyll"]
 
