@@ -527,6 +527,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0,
 											white_cdm2=100, rolloff=True,
 											clutres=33, mode="ICtCp",
+											generate_B2A=False,
 											worker=None,
 											logfile=None):
 	"""
@@ -557,6 +558,24 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
 	debugtable = profile.tags.DBUG = LUT16Type(profile=profile)
 	debugtable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	
+	if generate_B2A:
+		otable = profile.tags.B2A0 = LUT16Type(profile=profile)
+		Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
+									 whitepoint_source=rgb_space[1])
+		Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
+									 whitepoint_source=rgb_space[1])
+		Xb, Yb, Zb = colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space),
+									 whitepoint_source=rgb_space[1])
+		m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
+								  (Yr, Yg, Yb),
+								  (Zr, Zg, Zb)))
+		m2 = m1.inverted()
+		scale = 1 + (32767 / 32768.0)
+		m3 = colormath.Matrix3x3(((scale, 0, 0),
+								  (0, scale, 0),
+								  (0, 0, scale)))
+		otable.matrix = m2 * m3
 
 	minv = black_cdm2 / 10000.0
 	mini = colormath.specialpow(minv, 1.0 / -2084)
@@ -602,8 +621,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	prevpow = 0.0
 	nextpow = colormath.specialpow(apply_rolloff(segment), gamma)
 	interp = colormath.Interp([], range(steps))
-	if logfile:
-		logfile.write("0%")
+	if generate_B2A:
+		ointerp = colormath.Interp([], range(steps))
 	for j in xrange(steps):
 		v = (j / maxstep)
 		if v > iv + segment:
@@ -615,6 +634,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		vv = (prevs * prevpow + nexts * nextpow)
 		out = colormath.specialpow(vv, 1.0 / gamma)
 		interp.xp.append(out)
+		if generate_B2A:
+			ointerp.xp.append(colormath.specialpow(apply_rolloff(v), gamma) /
+							  maxv)
 	
 	# Create input and output curves
 	for i in xrange(3):
@@ -622,18 +644,44 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		itable.output.append([0, 65535])
 		debugtable.input.append([0, 65535])
 		debugtable.output.append([0, 65535])
+		if generate_B2A:
+			otable.input.append([])
+			otable.output.append([0, 65535])
 	
-	# Fill input curves from interpolated values
+	# Generate device-to-PCS shaper curves from interpolated values
+	if logfile:
+		logfile.write("Generating device-to-PCS shaper curves...\n0%")
 	entries = 1024
 	prevperc = 0
+	if generate_B2A:
+		endperc = 10
+	else:
+		endperc = 30
 	for j in xrange(entries):
-		v = j / (entries - 1.0)
+		n = j / (entries - 1.0)
+		v = interp(apply_rolloff(n)) / maxstep * 65535
 		for i in xrange(3):
-			itable.input[i].append(interp(apply_rolloff(v)) / maxstep * 65535)
-		perc = round(v * 25)
+			itable.input[i].append(v)
+		perc = math.floor(n * endperc)
 		if logfile and perc > prevperc:
 			logfile.write("\r%i%%" % perc)
 			prevperc = perc
+	startperc = perc
+
+	if generate_B2A:
+		# Generate PCS-to-device shaper curves from interpolated values
+		if logfile:
+			logfile.write("\rGenerating PCS-to-device shaper curves...\n%i%%" % perc)
+		for j in xrange(4096):
+			n = j / 4095.0
+			v = ointerp(n) / maxstep * 65535
+			for i in xrange(3):
+				otable.input[i].append(v)
+			perc = startperc + math.floor(n * 40)
+			if logfile and perc > prevperc:
+				logfile.write("\r%i%%" % perc)
+				prevperc = perc
+		startperc = perc
 
 	rgb_space_linear = list(rgb_space)
 	rgb_space_linear[0] = 1.0
@@ -643,12 +691,13 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	white_DIN99d_XYZ = colormath.Lab2XYZ(*white_DIN99d_Lab)
 
 	# Create and fill cLUT
+	if logfile:
+		logfile.write("\rGenerating device-to-PCS table...\n%i%%" % perc)
 	itable.clut = []
 	debugtable.clut = []
 	clutmax = clutres - 1.0
 	step = 1.0 / clutmax
 	count = 0
-	prevperc = 0
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			itable.clut.append([])
@@ -662,10 +711,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				if mode == "HSV":
 					HSV = list(colormath.RGB2HSV(*RGB))
 					V1 = HSV[2]
-					if rolloff and KS < 1 and KS <= V1 <= 1:
-						HSV[2] = P(V1)
-					if 0 <= HSV[2] <= 1:
-						HSV[2] = HSV[2] + mini * (1 - HSV[2]) ** 4
+					HSV[2] = apply_rolloff(V1)
 					V2 = HSV[2]
 					if V1 and V2:
 						min_V = min(V1 / V2, V2 / V1)
@@ -678,10 +724,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				elif mode == "ICtCp":
 					RGB2 = list(RGB)
 					for i, v in enumerate(RGB2):
-						if rolloff and KS < 1 and KS <= v <= 1:
-							RGB2[i] = P(v)
-						if 0 <= RGB2[i] <= 1:
-							RGB2[i] = RGB2[i] + mini * (1 - RGB2[i]) ** 4
+						RGB2[i] = apply_rolloff(v)
 					if debug and R == G == B:
 						safe_print("| %5.3f %5.3f %5.3f" % tuple(RGB2), "->",
 								   end=" ")
@@ -690,12 +733,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					if debug and R == G == B:
 						safe_print("ICtCp %5.3f %5.3f %5.3f" % (I1, Ct1, Cp1,),
 								   end=" ")
-					if rolloff and KS < 1 and KS <= I1 <= 1:
-						I2 = P(I1)
-					else:
-						I2 = I1
-					if 0 <= I2 <= 1:
-						I2 = I2 + mini * (1 - I2) ** 4
+					I2 = apply_rolloff(I1)
 					if I1 and I2:
 						min_I = min(I1 / I2, I2 / I1)
 					else:
@@ -719,10 +757,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							RGB.append(RGB1[i] * (1 - blend) + RGB2[i] * blend)
 				elif mode == "RGB":
 					for i, v in enumerate(RGB):
-						if rolloff and KS < 1 and KS <= v <= 1:
-							RGB[i] = P(v)
-						if 0 <= RGB[i] <= 1:
-							RGB[i] = RGB[i] + mini * (1 - RGB[i]) ** 4
+						RGB[i] = apply_rolloff(v)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
 				X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
@@ -792,11 +827,42 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
 											for v in RGB])
 				count += 1
-				perc = 25 + round(count / clutres ** 3.0 * 75)
+				perc = startperc + math.floor(count / clutres ** 3.0 *
+											  (100 - startperc))
 				if logfile and perc > prevperc:
 					logfile.write("\r%i%%" % perc)
 					prevperc = perc
 	itable.clut[-1][-1] = list(colormath.get_whitepoint(scale=32768))
+
+	if generate_B2A:
+		##if logfile:
+			##logfile.write("\rGenerating PCS-to-device table...\n%i%%" % perc)
+		
+		otable.clut = []
+		##rgb_space_out = list(rgb_space)
+		##rgb_space_out[0] = [[v / 65535.0 for v in otable.input[0]]] * 3
+		##count = 0
+		##for R in xrange(clutres):
+			##for G in xrange(clutres):
+				##otable.clut.append([])
+				##for B in xrange(clutres):
+					##RGB = [v * step for v in (R, G, B)]
+					##R_G_B_ = [ointerp(v) / maxstep for v in RGB]
+					##X, Y, Z = m1 * R_G_B_
+					##X, Y, Z = colormath.adapt(X, Y, Z, "D50", rgb_space[1])
+					##RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space_out)
+					##otable.clut[-1].append([v * 65535 for v in RGB])
+					##count += 1
+					##perc = 35 + round(count / clutres ** 3.0 * 65)
+					##if logfile and perc > prevperc:
+						##logfile.write("\r%i%%" % perc)
+						##prevperc = perc
+		for R in xrange(2):
+			for G in xrange(2):
+				otable.clut.append([])
+				for B in xrange(2):
+					otable.clut[-1].append([v * 65535 for v in (R , G, B)])
+
 	if logfile:
 		logfile.write("\n")
 	
