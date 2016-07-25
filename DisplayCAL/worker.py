@@ -1910,15 +1910,18 @@ class Worker(object):
 									   rolloff=gamma == "smpte2084.rolloffclip",
 									   blend_blackpoint=False)
 			if gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000:
+				desc = profile1.getDescription()
+				desc = re.sub(r"\s*(?:color profile|primaries with "
+							  "\S+ transfer function)$", "", desc)
 				rgb_space = profile1.get_rgb_space()
 				if not rgb_space:
-					raise Error(profile1.getDescription() + ": " +
+					raise Error(desc + ": " +
 								lang.getstr("profile.unsupported", 
 											(lang.getstr("unknown"), 
 											 profile1.colorSpace)))
 				rgb_space[0] = -2084
 				rgb_space = colormath.get_rgb_space(rgb_space)
-				self.recent.write(profile1.getDescription() + u" → " +
+				self.recent.write(desc + u" → " +
 								  lang.getstr("trc." + gamma) +
 								  (u" %i cd/m²\n" % white_cdm2))
 				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
@@ -2614,7 +2617,7 @@ class Worker(object):
 												toolname))
 
 				# Get source profile
-				profile_src_name = "P3_Rec2020red.icm"
+				profile_src_name = "SMPTE431_P3.icm"
 				profile_src = ICCP.ICCProfile(get_data_path("ref/" +
 															profile_src_name))
 				if not profile_src.fileName:
@@ -2646,13 +2649,19 @@ class Worker(object):
 				# Create link from source to destination profile
 				gam_link_filename = tempfile.mktemp(profile_ext,
 													"gam-link-", dir=cwd)
-				result = self.exec_cmd(collink, ["-v", "-qh", "-G", "-ir",
+				result = self.exec_cmd(collink, ["-v", "-G", "-ir",
 												 profile_src.fileName,
 												 profile_in_basename,
 												 gam_link_filename],
 									   capture_output=True,
 									   skip_scripts=True,
 									   sessionlogfile=self.sessionlogfile)
+				if isinstance(result, Exception) and not getcfg("dry_run"):
+					raise result
+				elif not result:
+					raise Error("\n".join(self.errors) or
+								"%s %s" % (collink,
+										   lang.getstr("error")))
 
 				# Create RGB image
 				##gam_in_tiff = tempfile.mktemp(".tif", "gam-in-", dir=cwd)
@@ -2682,7 +2691,9 @@ class Worker(object):
 				if isinstance(result, Exception) and not getcfg("dry_run"):
 					raise result
 				elif not result:
-					raise Error("\n".join(self.errors) or lang.getstr("error"))
+					raise Error("\n".join(self.errors) or
+								"%s %s" % (tools["cctiff"],
+										   lang.getstr("error")))
 
 				# Create gamut surface from image
 				##gam_filename = os.path.splitext(profile_src.fileName)[0] + ".gam"
@@ -2701,7 +2712,9 @@ class Worker(object):
 				if isinstance(result, Exception) and not getcfg("dry_run"):
 					raise result
 				elif not result:
-					raise Error("\n".join(self.errors) or lang.getstr("error"))
+					raise Error("\n".join(self.errors) or
+								"%s %s" % (tools["tiffgamut"],
+										   lang.getstr("error")))
 
 			# Now build the device link
 			is_argyll_lut_format = (self.argyll_version >= [1, 6] and
