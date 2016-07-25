@@ -656,7 +656,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	if generate_B2A:
 		endperc = 10
 	else:
-		endperc = 30
+		endperc = 20
 	for j in xrange(entries):
 		n = j / (entries - 1.0)
 		v = interp(apply_rolloff(n)) / maxstep * 65535

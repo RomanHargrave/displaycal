@@ -5,15 +5,16 @@ import os
 import sys
 
 from ICCProfile import ICCProfile
-from config import (get_data_path, get_verified_path, getcfg, hascfg,
+from config import (enc, get_data_path, get_verified_path, getcfg, hascfg,
 					profile_ext, setcfg)
-from log import safe_print
+from log import log, safe_print
 from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
+from util_io import Files
 from util_os import waccess
 from util_str import safe_str
-from worker import Error, show_result_dialog
+from worker import Error, FilteredStream, LineBufferedStream, show_result_dialog
 import ICCProfile as ICCP
 import colormath
 import config
@@ -676,6 +677,22 @@ class SynthICCFrame(BaseFrame):
 						getcfg("synthprofile.luminance"),
 						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
 						worker=self.worker, logfile=self.worker.lastmsg).tags.A2B0
+					linebuffered_logfiles = []
+					if sys.stdout.isatty():
+						linebuffered_logfiles.append(safe_print)
+					else:
+						linebuffered_logfiles.append(log)
+					logfiles = Files([LineBufferedStream(
+										FilteredStream(Files(linebuffered_logfiles),
+													   enc, discard="",
+													   linesep_in="\n", 
+													   triggers=[])),
+									  self.worker.recent,
+									  self.worker.lastmsg])
+					self.worker.generate_B2A_from_inverse_table(profile, 33,
+																smooth=False,
+																rgb_space=rgb_space,
+																logfile=logfiles)
 				if black != [0, 0, 0] and not bpc:
 					profile.apply_black_offset(black)
 			else:

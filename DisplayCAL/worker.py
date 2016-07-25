@@ -4545,6 +4545,7 @@ while 1:
 	
 	def generate_B2A_from_inverse_table(self, profile, clutres=None,
 										source="A2B", tableno=None, bpc=False,
+										smooth=True, rgb_space=None,
 										logfile=None, filename=None):
 		"""
 		Generate a profile's B2A table by inverting the A2B table 
@@ -4848,12 +4849,23 @@ while 1:
 							   [0.0981403936826, 0.00939694681658, 0.00869750976562],
 							   "Rec2020-encompassing"])
 
+			if rgb_space:
+				rgb_space = list(rgb_space[:5])
+				rgb_spaces = [rgb_space + ["Custom"]]
+
 			# Find smallest candidate that encompasses space defined by actual
 			# primaries
 			if logfile:
 				logfile.write("Checking for suitable PCS candidate...\n")
 			pcs_candidate = None
 			for rgb_space in rgb_spaces:
+				if rgb_space[1] not in ("D50", colormath.get_whitepoint("D50")):
+					# Adapt to D50
+					for i in xrange(3):
+						X, Y, Z = colormath.xyY2XYZ(*rgb_space[2 + i])
+						X, Y, Z = colormath.adapt(X, Y, Z, rgb_space[1])
+						rgb_space[2 + i] = colormath.XYZ2xyY(X, Y, Z)
+
 				extremes = []
 				for i in xrange(3):
 					RGB = colormath.XYZ2RGB(XYZrgb[i][0], XYZrgb[i][1],
@@ -5257,7 +5269,7 @@ while 1:
 		# Update profile
 		profile.tags["B2A%i" % tableno] = itable
 
-		if getcfg("profile.b2a.hires.smooth"):
+		if smooth:
 			self.smooth_B2A(profile, tableno,
 							getcfg("profile.b2a.hires.diagpng"), filename,
 							logfile) 
@@ -7335,6 +7347,8 @@ usage: spotread [-options] [logfile]
 																  "A2B",
 																  tableno,
 																  bpc,
+																  getcfg("profile.b2a.hires.smooth"),
+																  None,
 																  logfiles,
 																  filename)
 				except (Error, Info), exception:
