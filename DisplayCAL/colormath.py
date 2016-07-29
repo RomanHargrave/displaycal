@@ -1056,91 +1056,42 @@ def RGB2HSV(R, G, B, scale=1.0):
 	return H * scale, S * scale, V * scale
 
 
-def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 RGB", trc=-2084):
+def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 RGB"):
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf
-	hpe_lms_d65 = Matrix3x3([[0.4002, 0.7076, -0.0808],
-							 [-0.2263, 1.1653, 0.0457],
-							 [0, 0, 0.9182]])
-	##hpe_lms_d65 = get_cat_matrix("HPE normalized to illuminant D65")
-	matrix = get_rgb_space(rgb_space)[-1]
-	C = 0.04  # 4% crosstalk
-	crosstalk_matrix = Matrix3x3([[1 - 2 * C, C, C],
-								  [C, 1 - 2 * C, C],
-								  [C, C, 1 - 2 * C]])
-	rgb2lms_matrix = crosstalk_matrix * hpe_lms_d65 * matrix
-	for row in rgb2lms_matrix:
-		for j, col in enumerate(row):
-			row[j] = round(col * 4096) / 4096.0
-	L, M, S = rgb2lms_matrix * (R, G, B)
-	### SMPTE 2084 non-linearity
-	##m1 = 2610 / 16384.0  # 0.1593017578125
-	##m2 = 2523 / 4096.0 * 128  # 78.84375
-	##c2 = 2413 / 4096.0 * 32  # 18.8515625
-	##c3 = 2392 / 4096.0 * 32  # 18.6875
-	##c1 = c3 - c2 + 1  # 3424 ⁄ 4096.0 = 0.8359375
-	# Apply TRC non-linearity
-	L_M_S_ = []
-	for v in (L, M, S):
-		L_M_S_.append(specialpow(v, 1.0 / trc))
-		## L_M_S_.append(((c1 + c2 * v ** m1) / (1 + c3 * v ** m1)) ** m2)
-	# From L'M'S' to ICtCp
-	L_M_S_2IPT = Matrix3x3([[0.5, 0.5, 0],
-							 [4.4550, -4.8510, 0.3960],
-							 [0.8056, 0.3572, -1.1628]])
-	alpha = 1.134464  # Radians (to align skin tones)
-	rotation = Matrix3x3([[1, 0, 0],
-						  [0, math.cos(alpha), -math.sin(alpha)],
-						  [0, math.sin(alpha), math.cos(alpha)]])
-	# Scalar to to fit chroma between -0.5 and 0.5
-	scalar = Matrix3x3([[1, 1, 1],
-						[1.4, 1.4, 1.4],
-						[1, 1, 1]])
-	L_M_S_2ICtCp_matrix = rotation * L_M_S_2IPT
-	for i, row in enumerate(L_M_S_2ICtCp_matrix):
-		for j, col in enumerate(row):
-			row[j] = round(col * scalar[i][j] * 4096) / 4096.0
-	I, Ct, Cp = L_M_S_2ICtCp_matrix * L_M_S_
+	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
+								[683 / 4096., 2951 / 4096., 462 / 4096.],
+								[99 / 4096., 309 / 4096., 3688 / 4096.]])
+	LMS = rgb2lms_matrix * (R, G, B)
+	L_, M_, S_ = (specialpow(FD, 1.0 / -2084) for FD in LMS)
+	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
+									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
+									 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
+	I, Ct, Cp = L_M_S_2ICtCp_matrix * (L_, M_, S_)
 	return I, Ct, Cp
 
 
-def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 RGB", trc=-2084):
+def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 RGB"):
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf	
-	# From ICtCp to L'M'S'
-	L_M_S_2IPT = Matrix3x3([[0.5, 0.5, 0],
-							 [4.4550, -4.8510, 0.3960],
-							 [0.8056, 0.3572, -1.1628]])
-	alpha = 1.134464  # Radians (to align skin tones)
-	rotation = Matrix3x3([[1, 0, 0],
-						  [0, math.cos(alpha), -math.sin(alpha)],
-						  [0, math.sin(alpha), math.cos(alpha)]])
-	# Scalar to to fit chroma between -0.5 and 0.5
-	scalar = Matrix3x3([[1, 1, 1],
-						[1.4, 1.4, 1.4],
-						[1, 1, 1]])
-	L_M_S_2ICtCp_matrix = rotation * L_M_S_2IPT
-	for i, row in enumerate(L_M_S_2ICtCp_matrix):
-		for j, col in enumerate(row):
-			row[j] = round(col * scalar[i][j] * 4096) / 4096.0
-	L_, M_, S_ = L_M_S_2ICtCp_matrix.inverted() * (I, Ct, Cp)
-	# Undo TRC non-linearity
-	LMS = []
-	for v in (L_, M_, S_):
-		LMS.append(specialpow(v, trc))
-	hpe_lms_d65 = Matrix3x3([[0.4002, 0.7076, -0.0808],
-							 [-0.2263, 1.1653, 0.0457],
-							 [0, 0, 0.9182]])
-	##hpe_lms_d65 = get_cat_matrix("HPE normalized to illuminant D65")
-	matrix = get_rgb_space(rgb_space)[-1]
-	C = 0.04  # 4% crosstalk
-	crosstalk_matrix = Matrix3x3([[1 - 2 * C, C, C],
-								  [C, 1 - 2 * C, C],
-								  [C, C, 1 - 2 * C]])
-	rgb2lms_matrix = crosstalk_matrix * hpe_lms_d65 * matrix
-	for row in rgb2lms_matrix:
-		for j, col in enumerate(row):
-			row[j] = round(col * 4096) / 4096.0
-	R, G, B = rgb2lms_matrix.inverted() * tuple(LMS)
+	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
+									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
+									 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
+	L_M_S_ = L_M_S_2ICtCp_matrix.inverted() * (I, Ct, Cp)
+	L, M, S = (specialpow(v, -2084) for v in L_M_S_)
+	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
+								[683 / 4096., 2951 / 4096., 462 / 4096.],
+								[99 / 4096., 309 / 4096., 3688 / 4096.]])
+	R, G, B = rgb2lms_matrix.inverted() * (L, M, S)
 	return R, G, B
+
+
+def XYZ2ICtCp(X, Y, Z, rgb_space="Rec. 2020 RGB"):
+	R, G, B = (specialpow(v, -2084) for v in XYZ2RGB(X, Y, Z, rgb_space))
+	return RGB2ICtCp(R, G, B, rgb_space)
+
+
+def ICtCp2XYZ(I, Ct, Cp, rgb_space="Rec. 2020 RGB"):
+	R, G, B = (specialpow(v, 1.0 / -2084) for v in ICtCp2RGB(I, Ct, Cp, rgb_space))
+	return RGB2XYZ(R, G, B, rgb_space)
 
 
 def RGB2Lab(R, G, B, rgb_space=None, whitepoint=None, noadapt=False,

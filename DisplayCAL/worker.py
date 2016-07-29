@@ -1876,7 +1876,8 @@ class Worker(object):
 
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
-								 apply_trc=True, white_cdm2=100):
+								 apply_trc=True, white_cdm2=100,
+								 hdr_tonemapping=False):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -1924,11 +1925,16 @@ class Worker(object):
 				self.recent.write(desc + u" → " +
 								  lang.getstr("trc." + gamma) +
 								  (u" %i cd/m²\n" % white_cdm2))
+				xf = Xicclu(profile2, "r", direction="f", pcs="x",
+							use_cam_clipping=True, worker=self)
+				xb = Xicclu(profile2, "r", direction="if", pcs="x",
+							use_cam_clipping=True, worker=self)
 				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
 					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
+					forward_xicclu=xf, backward_xicclu=xb,
 					worker=self, logfile=self.lastmsg).tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
@@ -2590,6 +2596,12 @@ class Worker(object):
 												  trc_output_offset, trc_gamma,
 												  trc_gamma_type,
 												  white_cdm2=white_cdm2)
+					if smpte2084 and isinstance(profile_in.tags.get("A2B0"),
+												ICCP.LUT16Type):
+						# Write diagnostic PNG
+						profile_in.tags.A2B0.clut_writepng(
+							os.path.join(cwd, os.path.splitext(
+								profile_in_basename)[0] + ".A2B0.CLUT.png"))
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
@@ -2598,6 +2610,7 @@ class Worker(object):
 			profile_in.write()
 
 			smpte2084_use_src_gamut = (smpte2084 and
+									   profile_in_basename == "Rec2020.icm" and
 									   intent in ("p", "pa", "ms", "s") and
 									   not get_arg("-G", extra_args) and
 									   not get_arg("-g", extra_args))
@@ -2799,7 +2812,7 @@ class Worker(object):
 				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
 									  result, dst_path=path,
 									  ext_filter=[".3dlut", ".cube",
-												  ".log", ".txt"])
+												  ".log", ".png", ".txt"])
 				if not result:
 					result = UnloggedError(lang.getstr("aborted"))
 				if isinstance(result2, Exception):

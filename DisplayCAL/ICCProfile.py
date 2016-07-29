@@ -526,7 +526,9 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0,
 											white_cdm2=100, rolloff=True,
-											clutres=33, mode="ICtCp",
+											clutres=17, mode="ICtCp",
+											forward_xicclu=None,
+											backward_xicclu=None,
 											generate_B2A=False,
 											worker=None,
 											logfile=None):
@@ -535,13 +537,16 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	definition
 	
 	mode:  The gamut mapping mode when rolling off. Valid values:
-	       "ICtCp" (default), "HSV" (inaccurate),
+	       "ICtCp" (default), "XYZ", "HSV" (inaccurate),
 	       "RGB" (not recommended, saturation loss)
 	
 	"""
 
 	if not rolloff:
 		raise NotImplementedError("rolloff needs to be True")
+
+	rgb_space = list(rgb_space)
+	rgb_space[0] = -2084
 
 	profile = ICCProfile()
 	
@@ -613,7 +618,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	# fewer cLUT grid points.
 	
 	# Use higher interpolation size than actual number of curve entries
-	steps = 2 ** 15
+	steps = 2 ** 14
 	maxstep = steps - 1.0
 	gamma = rgb_space[0]
 	segment = 1.0 / (clutres - 1.0)
@@ -654,9 +659,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	entries = 1024
 	prevperc = 0
 	if generate_B2A:
-		endperc = 10
+		endperc = 5
 	else:
-		endperc = 20
+		endperc = 10
 	for j in xrange(entries):
 		n = j / (entries - 1.0)
 		v = interp(apply_rolloff(n)) / maxstep * 65535
@@ -677,7 +682,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			v = ointerp(n) / maxstep * 65535
 			for i in xrange(3):
 				otable.input[i].append(v)
-			perc = startperc + math.floor(n * 40)
+			perc = startperc + math.floor(n * 20)
 			if logfile and perc > prevperc:
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
@@ -690,49 +695,66 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	white_DIN99d_Lab = colormath.DIN99d2Lab(white_L99, 0, 0)
 	white_DIN99d_XYZ = colormath.Lab2XYZ(*white_DIN99d_Lab)
 
-	# Create and fill cLUT
+	# Scene RGB -> BT.2390 rolloff -> HDR XYZ -> backward lookup -> display RGB
 	if logfile:
-		logfile.write("\rGenerating device-to-PCS table...\n%i%%" % perc)
+		logfile.write("\rApplying BT.2390 rolloff and doing backward lookup...\n%i%%" % perc)
 	itable.clut = []
 	debugtable.clut = []
 	clutmax = clutres - 1.0
 	step = 1.0 / clutmax
 	count = 0
+	blendmode = "DIN99d"
+	HDR_ICtCp = []
+	HDR_RGB = []
+	HDR_XYZ = []
+	HDR_min_I = []
 	for R in xrange(clutres):
 		for G in xrange(clutres):
-			itable.clut.append([])
-			debugtable.clut.append([])
 			for B in xrange(clutres):
 				if worker and worker.thread_abort:
+					if forward_xicclu:
+						forward_xicclu.exit()
+					if backward_xicclu:
+						backward_xicclu.exit()
 					raise Exception("aborted")
 				RGB = [v * step for v in (R, G, B)]
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
+				if 1:#mode == "XYZ":
+					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space)
+					if Y:
+						I1 = colormath.specialpow(Y, 1.0 / -2084)
+						I2 = apply_rolloff(I1)
+						Y2 = colormath.specialpow(I2, -2084)
+						X, Y, Z = (v / Y * Y2 for v in (X, Y, Z))
+						min_I = min(I1 / I2, I2 / I1)
+					else:
+						I1 = I2 = 0
+						min_I = 1
 				if mode == "HSV":
 					HSV = list(colormath.RGB2HSV(*RGB))
-					V1 = HSV[2]
-					HSV[2] = apply_rolloff(V1)
-					V2 = HSV[2]
-					if V1 and V2:
-						min_V = min(V1 / V2, V2 / V1)
+					I1 = HSV[2]
+					HSV[2] = apply_rolloff(I1)
+					I2 = HSV[2]
+					if I1 and I2:
+						min_I = min(I1 / I2, I2 / I1)
 					else:
-						min_V = 1
+						min_I = 1
 					if debug and R == G == B:
-						safe_print("* %5.3f" % min_V, "->", end=" ")
-					HSV[1] *= min_V
+						safe_print("* %5.3f" % min_I, "->", end=" ")
+					HSV[1] *= min_I
 					RGB = colormath.HSV2RGB(*HSV)
 				elif mode == "ICtCp":
-					RGB2 = list(RGB)
-					for i, v in enumerate(RGB2):
-						RGB2[i] = apply_rolloff(v)
-					if debug and R == G == B:
-						safe_print("| %5.3f %5.3f %5.3f" % tuple(RGB2), "->",
-								   end=" ")
+					#RGB2 = list(RGB)
+					#for i, v in enumerate(RGB2):
+						#RGB2[i] = apply_rolloff(v)
+					#if debug and R == G == B:
+						#safe_print("| %5.3f %5.3f %5.3f" % tuple(RGB2), end=" ")
 					RGB = [colormath.specialpow(v, -2084) for v in RGB]
 					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space)
 					if debug and R == G == B:
-						safe_print("ICtCp %5.3f %5.3f %5.3f" % (I1, Ct1, Cp1,),
-								   end=" ")
+						safe_print("-> ICtCp % 5.3f % 5.3f % 5.3f" %
+								   (I1, Ct1, Cp1,), end=" ")
 					I2 = apply_rolloff(I1)
 					if I1 and I2:
 						min_I = min(I1 / I2, I2 / I1)
@@ -740,30 +762,241 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						min_I = 1
 					if debug and R == G == B:
 						safe_print("* %5.3f" % min_I, "->", end=" ")
-					Ct2, Cp2 = [min_I * v for v in (Ct1, Cp1)]
+					Ct2, Cp2 = (min_I * v for v in (Ct1, Cp1))
 					if debug and R == G == B:
-						safe_print("| %5.3f %5.3f %5.3f" % (I2, Ct2, Cp2), "->",
-								   end=" ")
+						safe_print("% 5.3f % 5.3f % 5.3f" % (I2, Ct2, Cp2),
+								   "->", end=" ")
 					RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space)
 					##if min(RGB) < 0 or max(RGB) > 1:
 						##print 'WARNING:', RGB
 						##RGB = [max(min(v, 1), 0) for v in RGB]
 					RGB = [colormath.specialpow(v, 1.0 / -2084) for v in RGB]
-					if I1 > maxi * .9:
-						blend = min((I1 - maxi * .9) / (1 - maxi * .9), 1)
-						RGB1 = RGB
-						RGB = []
-						for i in xrange(3):
-							RGB.append(RGB1[i] * (1 - blend) + RGB2[i] * blend)
+					HDR_ICtCp.append((I2, Ct2, Cp2))
+					XYZo = X, Y, Z
+					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space)
+					if Y:
+						# Blend to correct hue to avoid green shift in bright
+						# yellows.
+						# Take L and C from ICTCp and H from XYZ
+						XYZi = X, Y, Z
+						XYZi = colormath.adapt(*XYZi,
+											   whitepoint_source=rgb_space[1],
+											   whitepoint_destination=white_DIN99d_XYZ)
+						L99i, C99i, H99i = colormath.XYZ2DIN99dLCH(*[v / maxv * 100
+																	 for v in XYZi])
+						XYZ = colormath.adapt(*XYZo,
+											  whitepoint_source=rgb_space[1],
+											  whitepoint_destination=white_DIN99d_XYZ)
+						L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v / maxv * 100
+																  for v in XYZ])
+						L, a, b = colormath.DIN99dLCH2Lab(L99i, C99i, H99)
+						X, Y, Z = colormath.Lab2XYZ(L, a, b)
+						X, Y, Z = colormath.adapt(X, Y, Z,
+												  whitepoint_source=white_DIN99d_XYZ,
+												  whitepoint_destination=rgb_space[1])
+						X, Y, Z = (v * maxv for v in (X, Y, Z))
 				elif mode == "RGB":
+					I1 = colormath.RGB2HSV(*RGB)[2]
 					for i, v in enumerate(RGB):
 						RGB[i] = apply_rolloff(v)
+					I2 = colormath.RGB2HSV(*RGB)[2]
+					if I1 and I2:
+						min_I = min(I1 / I2, I2 / I1)
+					else:
+						min_I = 1
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
-				X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
-															 rgb_space=rgb_space),
+				if mode != "ICtCp":
+					HDR_ICtCp.append((I2, 0, 0))
+				HDR_RGB.append(RGB)
+				if mode not in ("XYZ", "ICtCp"):
+					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space)
+				# Adapt to D50
+				X, Y, Z = colormath.adapt(X, Y, Z,
 										  whitepoint_source=rgb_space[1])
-				X, Y, Z = [v / maxv for v in X, Y, Z]
+				HDR_XYZ.append((X, Y, Z))
+				HDR_min_I.append(min_I)
+				count += 1
+				perc = startperc + math.floor(count / clutres ** 3.0 *
+											  (20 - startperc))
+				if logfile and perc > prevperc:
+					logfile.write("\r%i%%" % perc)
+					prevperc = perc
+	startperc = perc
+
+	new_maxv = maxv
+	for i, (X, Y, Z) in enumerate(HDR_XYZ):
+		if Y > new_maxv:
+			R, G, B = HDR_RGB[i]
+			###safe_print("Out-of-range: RGB % 5.3f % 5.3f % 5.3f" % (R, G, B),
+					   ##"| XYZ %6.4f %6.4f %6.4f ->" % (X, Y, Z), end=" ")
+			##scale = maxv / Y
+			##X, Y, Z = colormath.XYZsaturation(X * scale, Y * scale, Z * scale,
+											  ##saturation=scale)[0]
+			##safe_print("XYZ %6.4f %6.4f %6.4f ->" % (X, Y, Z))
+			new_maxv = Y
+
+	count = 0
+	for i, (X, Y, Z) in enumerate(HDR_XYZ):
+		if worker and worker.thread_abort:
+			if forward_xicclu:
+				forward_xicclu.exit()
+			if backward_xicclu:
+				backward_xicclu.exit()
+			raise Exception("aborted")
+		X, Y, Z = [v / new_maxv for v in (X, Y, Z)]
+		HDR_XYZ[i] = X, Y, Z
+		if forward_xicclu and backward_xicclu:
+			# HDR XYZ -> backward lookup -> display RGB
+			backward_xicclu((X, Y, Z))
+		count += 1
+		perc = startperc + math.floor(count / clutres ** 3.0 *
+									  (85 - startperc))
+		if logfile and perc > prevperc:
+			logfile.write("\r%i%%" % perc)
+			prevperc = perc
+	startperc = perc
+
+	if forward_xicclu and backward_xicclu:
+		# Display RGB -> backward lookup -> display XYZ
+		if logfile:
+			logfile.write("\rDoing forward lookup...\n%i%%" % perc)
+		backward_xicclu.exit()
+		for i, (R, G, B) in enumerate(backward_xicclu.get()):
+			if worker and worker.thread_abort:
+				if backward_xicclu:
+					backward_xicclu.exit()
+				raise Exception("aborted")
+			forward_xicclu((R, G, B))
+			perc = startperc + math.floor((i + 1) / clutres ** 3.0 *
+										  (90 - startperc))
+			if logfile and perc > prevperc:
+				logfile.write("\r%i%%" % perc)
+				prevperc = perc
+		startperc = perc
+		forward_xicclu((1, 0, 0))
+		forward_xicclu((0, 1, 0))
+		forward_xicclu((0, 0, 1))
+		forward_xicclu.exit()
+		display_XYZ = forward_xicclu.get()
+		Cdiff = [1.0]
+		for i in xrange(3):
+			if blendmode == "ICtCp":
+				white_dest = rgb_space[1]
+			else:
+				white_dest = white_DIN99d_XYZ
+			XYZ = colormath.adapt(*display_XYZ[-(i + 1)],
+								  whitepoint_destination=white_dest)
+			if blendmode == "ICtCp":
+				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZ,
+												rgb_space=rgb_space)
+				Cd = colormath.Lab2LCHab(I, Ct, Cp)[1]
+			else:
+				Cd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZ))[1]
+			XYZ = colormath.RGB2XYZ(1 if i == 0 else 0,
+									1 if i == 1 else 0,
+									1 if i == 2 else 0,
+									"DCI P3 RGB")
+			XYZ = colormath.adapt(*XYZ,
+								  whitepoint_source=colormath.get_rgb_space("DCI P3 RGB")[1],
+								  whitepoint_destination=white_dest)
+			if blendmode == "ICtCp":
+				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZ,
+												rgb_space=rgb_space)
+				Cp3 = colormath.Lab2LCHab(I, Ct, Cp)[1]
+			else:
+				Cp3 = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZ))[1]
+			Cdiff.append(min(Cd / Cp3, 1))
+		##general_compression_factor = (sum(Cdiff) / 3.0) ** 1.62
+		general_compression_factor = min(Cdiff)
+	else:
+		display_XYZ = False
+		general_compression_factor = 0.9
+
+	# HDR tone mapping to display XYZ
+	if logfile:
+		logfile.write("\rApplying HDR tone mapping...\n%i%%" % perc)
+	row = 0
+	oog_count = 0
+	for a in xrange(clutres):
+		for b in xrange(clutres):
+			itable.clut.append([])
+			debugtable.clut.append([])
+			for c in xrange(clutres):
+				if worker and worker.thread_abort:
+					raise Exception("aborted")
+				R, G, B = HDR_RGB[row]
+				I, Ct, Cp = HDR_ICtCp[row]
+				X, Y, Z = HDR_XYZ[row]
+				min_I = HDR_min_I[row]
+				if min_I <= 1:
+					# Desaturate based on display color
+					XYZsrc = X, Y, Z
+					if display_XYZ:
+						XYZdisp = display_XYZ[row]
+						# Adjust luminance from destination to source
+						Ydest = XYZdisp[1]
+						if Ydest:
+							XYZdisp = [v / Ydest * XYZsrc[1] for v in XYZdisp]
+					else:
+						XYZdisp = XYZsrc
+					# Blending threshold: Don't desaturate dark colors
+					# (< 10 cd/m2) as values can become too low to be encoded
+					# as uInt16, which causes banding
+					thresh_I = .3
+					blend = min_I * min(max((I - thresh_I) / (.5 - thresh_I), 0), 1)
+					if blend:
+						if blendmode == "XYZ":
+							x, y, Y = colormath.XYZ2xyY(X, Y, Z)
+							xd, yd, Yd = colormath.XYZ2xyY(*XYZdisp)
+							if x and y and xd and yd:
+								min_C = min(general_compression_factor,
+											xd / x, yd / y)
+								sat = (1 - blend) + min_C * blend
+								X, Y, Z = colormath.XYZsaturation(X, Y, Z,
+																  sat,
+																  rgb_space[1])[0]
+						elif blendmode == "ICtCp":
+							# Adapt display XYZ from D50 to RGB colorspace whitepoint
+							XYZ = colormath.adapt(*XYZdisp,
+												  whitepoint_destination=rgb_space[1])
+							XYZ = (v * new_maxv for v in XYZ)
+							Id, Ctd, Cpd = colormath.XYZ2ICtCp(*XYZ,
+															   rgb_space=rgb_space)
+							if Ct and Cp and Ctd and Cpd:
+								L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
+								Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
+								min_C = min(general_compression_factor,
+											(Cd / C))
+								C = C * (1 - blend) + (C * min_C) * blend
+								I, Ct, Cp = colormath.LCHab2Lab(L, C, H)
+								XYZ = colormath.ICtCp2XYZ(I, Ct, Cp,
+														  rgb_space=rgb_space)
+								X, Y, Z = (v / new_maxv for v in XYZ)
+								# Adapt to D50
+								X, Y, Z = colormath.adapt(X, Y, Z,
+															  whitepoint_source=rgb_space[1])
+						elif blendmode == "DIN99d":
+							XYZ = colormath.adapt(X, Y, Z,
+												  whitepoint_destination=white_DIN99d_XYZ)
+							L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v * 100
+																	  for v in XYZ])
+							XYZdisp99 = colormath.adapt(*XYZdisp,
+														whitepoint_destination=white_DIN99d_XYZ)
+							L99d, C99d, H99d = colormath.XYZ2DIN99dLCH(*[v * 100
+																		 for v in
+																		 XYZdisp99])
+							if C99 and C99d:
+								min_C = min(general_compression_factor, (C99d / C99))
+								C99 = C99 * (1 - blend) + (C99 * min_C) * blend
+								L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
+								X, Y, Z = colormath.Lab2XYZ(L, a, b)
+								X, Y, Z = colormath.adapt(X, Y, Z,
+														  whitepoint_source=white_DIN99d_XYZ)
+						### Adjust luminance from destination to source
+						##if Y:
+							##XYZdest = X, Y, Z
+							##X, Y, Z = [v / Y * XYZsrc[1] for v in XYZdest]
 				if not rolloff:
 					# Hard clip
 					X, Y, Z = colormath.adapt(X, Y, Z,
@@ -773,66 +1006,79 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 										 rgb_space=rgb_space_linear)
 					X, Y, Z = colormath.adapt(X, Y, Z,
 											  whitepoint_source=rgb_space[1])
-				elif (max(X, Y, Z) * 32768 > 65535 or
-					  min(X, Y, Z) < 0) and not R == G == B:
+				elif 0 and (max(X, Y, Z) * 32768 > 65535 or
+					  min(X, Y, Z) < 0):
 					# Deal with out-of-range colors
-					#print 'OOG:', X, Y, Z, '->',
-					if mode == "DIN99b":
+					if debug:
+						safe_print("OOG: RGB % 5.3f % 5.3f % 5.3f" % (R, G, B),
+								   end=" ")
+						safe_print("| XYZ % 6.4f % 6.4f % 6.4f" % (X, Y, Z), "->",
+								   end=" ")
+					oog_count += 1
+					if blendmode == "DIN99b":
 						L99, C99, H99 = colormath.XYZ2DIN99bLCH(*[v * 100 for v in (X, Y, Z)])
-					elif mode == "DIN99d":
+					elif blendmode == "DIN99d":
 						XYZ = colormath.adapt(X, Y, Z,
 											  whitepoint_destination=white_DIN99d_XYZ)
 						L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v * 100 for v in XYZ])
 					while max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0:
 						# Decrease intensity until in-gamut
-						if True:
+						if worker and worker.thread_abort:
+							raise Exception("aborted")
+						if 1:#blendmode == "XYZ":
 							# Desaturate in xy
 							X, Y, Z = colormath.XYZsaturation(X, Y, Z,
 															  saturation=.99)[0]
-						elif mode in ("HSV", "RGB"):
-							HSV = list(colormath.RGB2HSV(*RGB))
+						elif blendmode in ("HSV", "RGB"):
+							HSV = list(colormath.RGB2HSV(R, G, B))
 							HSV[1] *= .99
 							#HSV[2] *= .99
 							RGB = colormath.HSV2RGB(*HSV)
-							X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
-																		 rgb_space=rgb_space),
-													  whitepoint_source=rgb_space[1])
-							##X, Y, Z = [v / maxv for v in X, Y, Z]
-						elif mode == "DIN99b":
+							XYZ = colormath.adapt(*colormath.RGB2XYZ(*RGB,
+																	 rgb_space=rgb_space),
+												  whitepoint_source=rgb_space[1])
+							X, Y, Z = (v / new_maxv for v in XYZ)
+						elif blendmode == "DIN99b":
 							#L99 *= .99
 							C99 *= .99
 							L, a, b = colormath.DIN99bLCH2Lab(L99, C99, H99)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
-						elif mode == "DIN99d":
+						elif blendmode == "DIN99d":
 							#L99 *= .99
 							C99 *= .99
 							L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
 							X, Y, Z = colormath.adapt(X, Y, Z,
 													  whitepoint_source=white_DIN99d_XYZ)
-						elif mode == "ICtCp":
-							#I2 *= .99
-							Ct2 *= .99
-							Cp2 *= .99
-							RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space)
-							RGB = [colormath.specialpow(v, 1.0 / -2084) for v in RGB]
-							X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*RGB,
-																		 rgb_space=rgb_space),
+						elif blendmode == "ICtCp":
+							#I *= .99
+							Ct *= .99
+							Cp *= .99
+							XYZ = colormath.ICtCp2XYZ(I, Ct, Cp,
+													  rgb_space=rgb_space)
+							X, Y, Z = (v / new_maxv for v in XYZ)
+							# Adapt to D50
+							X, Y, Z = colormath.adapt(X, Y, Z,
 													  whitepoint_source=rgb_space[1])
-							##X, Y, Z = [v / maxv for v in X, Y, Z]
-					#print X, Y, Z
-				##X, Y, Z = [v / maxv for v in X, Y, Z]
+					if debug:
+						safe_print("RGB %6.2f %6.2f %6.2f" %	
+								   tuple(colormath.XYZ2RGB(X, Y, Z, rgb_space)),
+								   end=" ")
+						safe_print("| XYZ %6.4f %6.4f %6.4f" % (X, Y, Z))
 				itable.clut[-1].append([min(max(v * 32768, 0), 65535)
 										for v in (X, Y, Z)])
 				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
 											for v in RGB])
-				count += 1
-				perc = startperc + math.floor(count / clutres ** 3.0 *
+				row += 1
+				perc = startperc + math.floor(row / clutres ** 3.0 *
 											  (100 - startperc))
 				if logfile and perc > prevperc:
 					logfile.write("\r%i%%" % perc)
 					prevperc = perc
-	itable.clut[-1][-1] = list(colormath.get_whitepoint(scale=32768))
+	if debug:
+		safe_print("Num OOG:", oog_count)
+
+	##itable.clut[-1][-1] = list(colormath.get_whitepoint(scale=32768))
 
 	if generate_B2A:
 		##if logfile:
