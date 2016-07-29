@@ -11258,7 +11258,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		filenames.sort()
 		lut3d_ext = ["." + strtr(lut3d_format, {"eeColor": "txt",
 												"madVR": "3dlut"})
-					 for lut3d_format in config.valid_values["3dlut.format"]]
+					 for lut3d_format in
+					 filter(lambda format: format not in ("icc", "icm"),
+							config.valid_values["3dlut.format"])]
 		has_3dlut = False
 		for filename in filenames:
 			if os.path.splitext(filename)[1].lower() in lut3d_ext:
