@@ -2857,11 +2857,11 @@ class Worker(object):
 
 					# Save SMPTE2084 profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
-					profile_in.tags.desc = ICCP.TextDescriptionType()
-					profile_in.tags.desc.ASCII = in_name
 					fd, profile_in.fileName = tempfile.mkstemp(in_ext,
 															   "%s-" % in_name,
 															   dir=os.path.dirname(path))
+					profile_in.setDescription(os.path.splitext(
+						os.path.basename(profile_in.fileName))[0])
 					stream = os.fdopen(fd, "wb")
 					profile_in.write(stream)
 					stream.close()
