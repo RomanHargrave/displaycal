@@ -446,9 +446,9 @@ class LUT3DFrame(BaseFrame):
 			(profile_in and profile_in.profileClass == "link")):
 			if profile_out and profile_in.isSame(profile_out,
 												 force_calculation=True):
-				show_result_dialog(Error(lang.getstr("error.source_dest_same")),
-								   self)
-				return
+				if not show_result_dialog(Warning(lang.getstr("error.source_dest_same")),
+										  self, confirm=lang.getstr("continue")):
+					return
 			checkoverwrite = True
 			remember_last_3dlut_path = False
 			if not path:

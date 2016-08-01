@@ -2542,10 +2542,6 @@ class Worker(object):
 					self.update_profile_B2A(profile_out, False)
 					profile_out.write()
 
-			# Check if files are the same
-			if profile_in.isSame(profile_out, force_calculation=True):
-				raise Error(lang.getstr("error.source_dest_same"))
-			
 			# Prepare building a device link
 			link_basename = name + profile_ext
 			link_filename = os.path.join(cwd, link_basename)
