@@ -322,7 +322,7 @@ def safe_basestring(obj):
 			except UnicodeEncodeError:
 				obj = repr(obj)
 	if isinstance(oobj, Exception) and oobj.__class__.__name__ in dir(exceptions):
-		obj = obj.capitalize()
+		obj = obj[0].capitalize() + obj[1:]
 	return obj
 
 
