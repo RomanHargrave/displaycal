@@ -1925,6 +1925,19 @@ class Worker(object):
 				self.recent.write(desc + u" → " +
 								  lang.getstr("trc." + gamma) +
 								  (u" %i cd/m²\n" % white_cdm2))
+				linebuffered_logfiles = []
+				if sys.stdout.isatty():
+					linebuffered_logfiles.append(safe_print)
+				else:
+					linebuffered_logfiles.append(log)
+				if self.sessionlogfile:
+					linebuffered_logfiles.append(self.sessionlogfile)
+				logfiles = Files([LineBufferedStream(
+									FilteredStream(Files(linebuffered_logfiles),
+												   enc, discard="",
+												   linesep_in="\n", 
+												   triggers=[])), self.recent,
+									self.lastmsg])
 				xf = Xicclu(profile2, "r", direction="f", pcs="x",
 							use_cam_clipping=True, worker=self)
 				xb = Xicclu(profile2, "r", direction="if", pcs="x",
@@ -1935,7 +1948,7 @@ class Worker(object):
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
-					worker=self, logfile=self.lastmsg).tags.A2B0
+					worker=self, logfile=logfiles).tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)
@@ -2506,6 +2519,29 @@ class Worker(object):
 
 			extra_args = parse_argument_string(getcfg("extra_args.collink"))
 
+			smpte2084 = trc_gamma in ("smpte2084.hardclip",
+									 "smpte2084.rolloffclip")
+
+			profile_in_basename = make_argyll_compatible_path(os.path.basename(profile_in.fileName))
+
+			smpte2084_use_src_gamut = (smpte2084 and
+									   profile_in_basename == "Rec2020.icm" and
+									   intent in ("p", "pa", "ms", "s") and
+									   not get_arg("-G", extra_args) and
+									   not get_arg("-g", extra_args))
+
+			if smpte2084 and not smpte2084_use_src_gamut and not use_b2a:
+				# Always use B2A instead of inverse forward table (faster and
+				# better result if B2A table has enough effective resolution)
+				# for SMPTE 2084 with colorimetric intents
+				use_b2a = True
+				# Check B2A resolution and regenerate on-the-fly if too low
+				b2a = profile_out.tags.get("B2A1", profile_out.tags.get("B2A0"))
+				if not b2a or (isinstance(b2a, ICCP.LUT16Type) and
+							   b2a.clut_grid_steps < 17):
+					self.update_profile_B2A(profile_out, False)
+					profile_out.write()
+
 			# Check if files are the same
 			if profile_in.isSame(profile_out, force_calculation=True):
 				raise Error(lang.getstr("error.source_dest_same"))
@@ -2514,7 +2550,6 @@ class Worker(object):
 			link_basename = name + profile_ext
 			link_filename = os.path.join(cwd, link_basename)
 
-			profile_in_basename = make_argyll_compatible_path(os.path.basename(profile_in.fileName))
 			profile_out_basename = make_argyll_compatible_path(os.path.basename(profile_out.fileName))
 			if profile_in_basename == profile_out_basename:
 				(profile_out_filename,
@@ -2573,8 +2608,6 @@ class Worker(object):
 			# Deal with applying TRC
 			collink_version_string = get_argyll_version_string("collink")
 			collink_version = parse_argyll_version_string(collink_version_string)
-			smpte2084 = trc_gamma in ("smpte2084.hardclip",
-									 "smpte2084.rolloffclip")
 			if trc_gamma:
 				if (not smpte2084 and
 					(collink_version >= [1, 7] or not trc_output_offset)):
@@ -2596,24 +2629,12 @@ class Worker(object):
 												  trc_output_offset, trc_gamma,
 												  trc_gamma_type,
 												  white_cdm2=white_cdm2)
-					if smpte2084 and isinstance(profile_in.tags.get("A2B0"),
-												ICCP.LUT16Type):
-						# Write diagnostic PNG
-						profile_in.tags.A2B0.clut_writepng(
-							os.path.join(cwd, os.path.splitext(
-								profile_in_basename)[0] + ".A2B0.CLUT.png"))
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
 											  apply_trc=False)
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
-
-			smpte2084_use_src_gamut = (smpte2084 and
-									   profile_in_basename == "Rec2020.icm" and
-									   intent in ("p", "pa", "ms", "s") and
-									   not get_arg("-G", extra_args) and
-									   not get_arg("-g", extra_args))
 
 			if smpte2084_use_src_gamut:
 				# Use source gamut to preserve more saturation.
@@ -2806,6 +2827,53 @@ class Worker(object):
 											   ("encoding.output", output_encoding)])
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
+
+				if smpte2084:
+					if format == "madVR":
+						# We need to update Input_Primaries, otherwise the
+						# madVR 3D LUT won't work correctly! (collink fills
+						# Input_Primaries from a lookup through the input
+						# profile, which won't work correctly in our case as
+						# the input profile is a gamut mapped CLUT)
+						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
+						input_primaries = re.search("Input_Primaries" +
+													"\s+(\d\.\d+)" * 6,
+													h3d.parametersData)
+						if input_primaries:
+							components = list(input_primaries.groups())
+							rgb_space = profile_in.get_rgb_space()
+							components_new = []
+							for i in xrange(3):
+								for j in xrange(2):
+									components_new.append(rgb_space[2 + i][j])
+							for i, component in enumerate(components_new):
+								frac = len(components[i].split(".").pop())
+								numberformat = "%%.%if" % frac
+								components_new[i] = numberformat % round(component, frac)
+							parametersData = list(h3d.parametersData)
+							components_len = len(input_primaries.group())
+							parametersData[16:components_len] = " ".join(components_new)
+							h3d.parametersData = "".join(parametersData)
+							h3d.write()
+						else:
+							raise Error("madVR 3D LUT doesn't contain "
+										"Input_Primaries")
+
+					# Save SMPTE2084 profile
+					in_name, in_ext = os.path.splitext(profile_in_basename)
+					profile_in.tags.desc = ICCP.TextDescriptionType()
+					profile_in.tags.desc.ASCII = in_name
+					fd, profile_in.fileName = tempfile.mkstemp(in_ext,
+															   "%s-" % in_name,
+															   dir=os.path.dirname(path))
+					stream = os.fdopen(fd, "wb")
+					profile_in.write(stream)
+					stream.close()
+					if isinstance(profile_in.tags.get("A2B0"), ICCP.LUT16Type):
+						# Write diagnostic PNG
+						profile_in.tags.A2B0.clut_writepng(
+							os.path.splitext(profile_in.fileName)[0] + 
+							".A2B0.CLUT.png")
 
 			if is_argyll_lut_format:
 				# Collink has already written the 3DLUT for us
@@ -7254,7 +7322,7 @@ usage: spotread [-options] [logfile]
 			return exception
 		return True
 	
-	def update_profile_B2A(self, profile):
+	def update_profile_B2A(self, profile, generate_perceptual_table=True):
 		# Use reverse A2B interpolation to generate B2A table
 		clutres = getcfg("profile.b2a.hires.size")
 		linebuffered_logfiles = []
@@ -7300,7 +7368,7 @@ usage: spotread [-options] [logfile]
 							B2A1.clut[-1].append(list(row))
 			except Exception, exception:
 				return exception
-		if not "A2B2" in profile.tags:
+		if not "A2B2" in profile.tags and generate_perceptual_table:
 			# Argyll always creates a complete set of A2B / B2A tables if
 			# colprof -s (perceptual) or -S (perceptual and saturation) is used,
 			# so we can assume that if A2B2 is not present then it is safe to
@@ -10912,11 +10980,20 @@ class Xicclu(Worker):
 						 os.path.basename(xicclu), args[1:], fn=self.log,
 						 cwd=cwd)
 			self.log("")
+		self.startupinfo = startupinfo
+		self.args = args
+		self.cwd = cwd
+		self.spawn()
+
+	def spawn(self):
+		self.closed = False
+		self.output = []
+		self.errors = []
 		self.stdout = tempfile.SpooledTemporaryFile()
 		self.stderr = tempfile.SpooledTemporaryFile()
-		self.subprocess = sp.Popen(args, stdin=sp.PIPE, stdout=self.stdout,
-								   stderr=self.stderr, cwd=cwd,
-								   startupinfo=startupinfo)
+		self.subprocess = sp.Popen(self.args, stdin=sp.PIPE, stdout=self.stdout,
+								   stderr=self.stderr, cwd=self.cwd,
+								   startupinfo=self.startupinfo)
 	
 	def __call__(self, idata):
 		if not isinstance(idata, basestring):
@@ -10972,7 +11049,9 @@ class Xicclu(Worker):
 		if tb:
 			return False
 	
-	def exit(self):
+	def close(self):
+		if self.closed:
+			return
 		p = self.subprocess
 		if p.poll() is None:
 			try:
@@ -10989,12 +11068,16 @@ class Xicclu(Worker):
 		self.stderr.close()
 		if self.sessionlogfile and self.errors:
 			self.sessionlogfile.write("\n".join(self.errors))
+		if self.logfile:
+			self.logfile.write("\n")
+		self.closed = True
 		if p.returncode:
 			# Error
 			raise IOError("\n".join(self.errors))
-		if self.logfile:
-			self.logfile.write("\n")
-		if self.temp:
+
+	def exit(self):
+		self.close()
+		if self.temp and os.path.isfile(self.profile_path):
 			os.remove(self.profile_path)
 			if self.tempdir and not os.listdir(self.tempdir):
 				self.wrapup(False)

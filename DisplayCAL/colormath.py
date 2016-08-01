@@ -23,30 +23,6 @@ SMPTE2084_C3 = (2392.0 / 4096) * 32
 SRGB_K0 = 0.04045  # 0.055 / (2.4 - 1)
 SRGB_P = 12.92  # get_transfer_function_phi(0.055, 2.4)
 
-standard_illuminants = {
-	# 1st level is the standard name => illuminant definitions
-	# 2nd level is the illuminant name => CIE XYZ coordinates
-	# (Y should always assumed to be 1.0 and is not explicitly defined)
-	None: {"E": {"X": 1.00000, "Z": 1.00000}},
-	"ASTM E308-01": {"A": {"X": 1.09850, "Z": 0.35585},
-					 "C": {"X": 0.98074, "Z": 1.18232},
-					 "D50": {"X": 0.96422, "Z": 0.82521},
-					 "D55": {"X": 0.95682, "Z": 0.92149},
-					 "D65": {"X": 0.95047, "Z": 1.08883},
-					 "D75": {"X": 0.94972, "Z": 1.22638},
-					 "F2": {"X": 0.99186, "Z": 0.67393},
-					 "F7": {"X": 0.95041, "Z": 1.08747},
-					 "F11": {"X": 1.00962, "Z": 0.64350}},
-	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
-			"D65": {"X": 0.9505, "Z": 1.0890}},
-	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
-						  "B": {"X": 0.99072, "Z": 0.85223},
-						  "C": {"X": 0.98041, "Z": 1.18103},
-						  "D55": {"X": 0.95642, "Z": 0.92085},
-						  "D65": {"X": 0.95017, "Z": 1.08813},
-						  "D75": {"X": 0.94939, "Z": 1.22558}}
-}
-
 
 def specialpow(a, b, slope_limit=0):
 	"""
@@ -1219,7 +1195,8 @@ get_rgb_space.cache = {}
 
 
 def get_standard_illuminant(illuminant_name="D50",
-							priority=("ICC", "ASTM E308-01", "Wyszecki & Stiles", None),
+							priority=("ISO 11664-2:2007", "ICC", "ASTM E308-01",
+									  "Wyszecki & Stiles", None),
 							scale=1.0):
 	""" Return a standard illuminant as XYZ coordinates. """
 	cachehash = illuminant_name, tuple(priority), scale
@@ -2490,6 +2467,32 @@ cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
 				"XYZ scaling": Matrix3x3([[1, 0, 0],
 										  [0, 1, 0],
 										  [0, 0, 1]])}
+
+standard_illuminants = {
+	# 1st level is the standard name => illuminant definitions
+	# 2nd level is the illuminant name => CIE XYZ coordinates
+	# (Y should always assumed to be 1.0 and is not explicitly defined)
+	None: {"E": {"X": 1.00000, "Z": 1.00000}},
+	"ASTM E308-01": {"A": {"X": 1.09850, "Z": 0.35585},
+					 "C": {"X": 0.98074, "Z": 1.18232},
+					 "D50": {"X": 0.96422, "Z": 0.82521},
+					 "D55": {"X": 0.95682, "Z": 0.92149},
+					 "D65": {"X": 0.95047, "Z": 1.08883},
+					 "D75": {"X": 0.94972, "Z": 1.22638},
+					 "F2": {"X": 0.99186, "Z": 0.67393},
+					 "F7": {"X": 0.95041, "Z": 1.08747},
+					 "F11": {"X": 1.00962, "Z": 0.64350}},
+	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
+			"D65": {"X": 0.9505, "Z": 1.0890}},
+	"ISO 11664-2:2007": {"D65": {"X": xyY2XYZ(0.3127, 0.329)[0],
+								 "Z": xyY2XYZ(0.3127, 0.329)[2]}},
+	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
+						  "B": {"X": 0.99072, "Z": 0.85223},
+						  "C": {"X": 0.98041, "Z": 1.18103},
+						  "D55": {"X": 0.95642, "Z": 0.92085},
+						  "D65": {"X": 0.95017, "Z": 1.08813},
+						  "D75": {"X": 0.94939, "Z": 1.22558}}
+}
 
 
 def test():

@@ -110,6 +110,7 @@ class H3DLUT(object):
 	# https://sourceforge.net/projects/thr3dlut
 
 	def __init__(self, filename):
+		self.fileName = filename
 		with open(filename, "rb") as lut:
 			data = lut.read()
 		self.signature = data[:4]
@@ -121,7 +122,7 @@ class H3DLUT(object):
 		self.outputBitDepth = struct.unpack("<l", data[64:68])[0]
 		self.outputColorEncoding = struct.unpack("<l", data[68:72])[0]
 		self.parametersFileOffset = struct.unpack("<l", data[72:76])[0]
-		self.parametersSize = struct.unpack("<l", data[76:80])[0]
+		parametersSize = struct.unpack("<l", data[76:80])[0]
 		self.lutFileOffset = struct.unpack("<l", data[80:84])[0]
 		self.lutCompressionMethod = struct.unpack("<l", data[84:88])[0]
 		if self.lutCompressionMethod != 0:
@@ -131,7 +132,7 @@ class H3DLUT(object):
 		self.lutUncompressedSize = struct.unpack("<l", data[92:96])[0]
 		self.parametersData = data[self.parametersFileOffset:
 								   self.parametersFileOffset +
-								   self.parametersSize]
+								   parametersSize]
 		self.LUTDATA = data[self.lutFileOffset:
 							self.lutFileOffset + self.lutCompressedSize]
 		if len(self.LUTDATA) != self.lutCompressedSize:
@@ -142,8 +143,48 @@ class H3DLUT(object):
 			self.LUTDATA += data[self.lutFileOffset + self.lutCompressedSize:
 								 self.lutFileOffset + self.lutCompressedSize +
 								 1552]
-			self.lutCompressedSize += 1552
-			self.lutUncompressedSize += 1552
+
+	@property
+	def data(self):
+		return "".join((self.signature,
+						struct.pack("<l", self.fileVersion),
+						self.programName.ljust(32, "\0"),
+						struct.pack("<q", self.programVersion),
+						struct.pack(*("<3l",) + self.inputBitDepth),
+						struct.pack("<l", self.inputColorEncoding),
+						struct.pack("<l", self.outputBitDepth),
+						struct.pack("<l", self.outputColorEncoding),
+						struct.pack("<l", self.parametersFileOffset),
+						struct.pack("<l", self.parametersSize),
+						struct.pack("<l", self.lutFileOffset),
+						struct.pack("<l", self.lutCompressionMethod),
+						struct.pack("<l", self.lutCompressedSize),
+						struct.pack("<l", self.lutUncompressedSize),
+						"\0" * (self.parametersFileOffset - 96),
+						self.parametersData,
+						"\0" * (self.lutFileOffset - self.parametersFileOffset - self.parametersSize),
+						self.LUTDATA))
+
+	@property
+	def parametersSize(self):
+		return len(self.parametersData)
+
+	def write(self, stream_or_filename=None):
+		"""
+		Write 3D LUT to stream or filename.
+		
+		"""
+		if not stream_or_filename:
+			stream_or_filename = self.fileName
+		if isinstance(stream_or_filename, basestring):
+			stream = open(stream_or_filename, "wb")
+			if not self.fileName:
+				self.fileName = stream_or_filename
+		else:
+			stream = stream_or_filename
+		stream.write(self.data)
+		if isinstance(stream_or_filename, basestring):
+			stream.close()
 
 
 class MadTPG(object):
