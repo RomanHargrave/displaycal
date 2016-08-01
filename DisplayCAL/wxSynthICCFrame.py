@@ -671,12 +671,6 @@ class SynthICCFrame(BaseFrame):
 					rgb_space = profile.get_rgb_space()
 					rgb_space[0] = -2084
 					rgb_space = colormath.get_rgb_space(rgb_space)
-					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
-						rgb_space, "",
-						getcfg("synthprofile.black_luminance") * (1 - outoffset),
-						getcfg("synthprofile.luminance"),
-						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
-						worker=self.worker, logfile=self.worker.lastmsg).tags.A2B0
 					linebuffered_logfiles = []
 					if sys.stdout.isatty():
 						linebuffered_logfiles.append(safe_print)
@@ -689,6 +683,12 @@ class SynthICCFrame(BaseFrame):
 													   triggers=[])),
 									  self.worker.recent,
 									  self.worker.lastmsg])
+					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+						rgb_space, "",
+						getcfg("synthprofile.black_luminance") * (1 - outoffset),
+						getcfg("synthprofile.luminance"),
+						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
+						worker=self.worker, logfile=logfiles).tags.A2B0
 					self.worker.generate_B2A_from_inverse_table(profile, 33,
 																smooth=False,
 																rgb_space=rgb_space,
