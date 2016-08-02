@@ -995,7 +995,7 @@
 	"trc.smpte240m": "SMPTE 240M",
 	"trc.smpte2084": "SMPTE 2084",
 	"trc.smpte2084.hardclip": "SMPTE 2084 (hard clip)",
-	"trc.smpte2084.rolloffclip": "SMPTE 2084 (roll-off clip)",
+	"trc.smpte2084.rolloffclip": "SMPTE 2084 (roll-off)",
 	"trc.srgb": "sRGB",
 	"trc.type.absolute": "Absolute",
 	"trc.type.relative": "Relative",

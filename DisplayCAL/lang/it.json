@@ -993,7 +993,7 @@
 	"trc.should_use_viewcond_adjust": "Per ottenere i risultati voluti, quando vengono usate le curve SMPTE 240M, Rec. 709 o sRGB, si dovrebbero applicare anche delle correzioni alle condizioni di visualizzazione per i livelli della luce ambientale. Per ottenere questo deve essere spuntata la casella vicino a “Livello di luce ambientale” e deve essere inserito un valore in Lux. Facoltativamente è possibile misurare la luce ambientale durante la calibrazione se lo strumento mette a disposizione questa funzionalità.",
 		"*trc.smpte2084": "SMPTE 2084",
 		"*trc.smpte2084.hardclip": "SMPTE 2084 (hard clip)",
-		"*trc.smpte2084.rolloffclip": "SMPTE 2084 (roll-off clip)",
+		"*trc.smpte2084.rolloffclip": "SMPTE 2084 (roll-off)",
 	"trc.smpte240m": "SMPTE 240M",
 	"trc.srgb": "sRGB",
 	"trc.type.absolute": "Absoluta",
