@@ -195,7 +195,7 @@ def get_object_path(search, object_type):
 
 
 def install_profile(device_id, profile, profile_installname=None,
-					timeout=5, logfn=None):
+					timeout=20, logfn=None):
 	"""
 	Install profile for device
 	
