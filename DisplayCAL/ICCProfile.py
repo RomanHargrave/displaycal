@@ -850,7 +850,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					  tuple(v * 10000 for v in (maxv, maxv * maxv / new_maxv)))
 		logfile.write("\r%i%%" % perc)
 
-	if logfile:
+	if forward_xicclu and backward_xicclu and logfile:
 		logfile.write("\rDoing backward lookup...\n")
 		logfile.write("\r%i%%" % perc)
 	count = 0
@@ -866,12 +866,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		if forward_xicclu and backward_xicclu:
 			# HDR XYZ -> backward lookup -> display RGB
 			backward_xicclu((X, Y, Z))
-		count += 1
-		perc = startperc + math.floor(count / clutres ** 3.0 *
-									  (85 - startperc))
-		if logfile and perc > prevperc:
-			logfile.write("\r%i%%" % perc)
-			prevperc = perc
+			count += 1
+			perc = startperc + math.floor(count / clutres ** 3.0 *
+										  (85 - startperc))
+			if logfile and perc > prevperc:
+				logfile.write("\r%i%%" % perc)
+				prevperc = perc
 	startperc = perc
 
 	Cdiff = [1.0]
@@ -940,7 +940,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 	# Determine compression factor from P3 in BT.2020
 	if logfile:
-		logfile.write("\rDetermining compression factor...\n")
+		logfile.write("\rDetermining chroma compression factor...\n")
 		logfile.write("\r%i%%" % perc)
 	p3st2084 = list(colormath.get_rgb_space("DCI P3 RGB"))
 	p3st2084[0] = -2084
@@ -1004,7 +1004,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	general_compression_factor = (sum(Cdiff) / len(Cdiff))
 
 	if logfile:
-		logfile.write("\rGeneral chroma compression factor: %6.4f\n" %
+		logfile.write("\rChroma compression factor: %6.4f\n" %
 					  general_compression_factor)
 
 	# HDR tone mapping to display XYZ
