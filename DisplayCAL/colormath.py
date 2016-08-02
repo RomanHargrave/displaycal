@@ -173,6 +173,7 @@ rgb_spaces = {
 	"ProPhoto RGB":     (1.8,             "D50",                   (0.7347, 0.2653, 0.288040), (0.1596, 0.8404, 0.711874), (0.0366, 0.0001, 0.000086)),
 	"Rec. 709 RGB":     (-709,            "D65",                   (0.6400, 0.3300, 0.212656), (0.3000, 0.6000, 0.715158), (0.1500, 0.0600, 0.072186)),
 	"Rec. 2020 RGB":    (-709,            "D65",                   (0.7080, 0.2920, 0.262694), (0.1700, 0.7970, 0.678009), (0.1310, 0.0460, 0.059297)),
+	"Rec. 2020 ST2084": (-2084,           "D65",                   (0.7080, 0.2920, 0.262694), (0.1700, 0.7970, 0.678009), (0.1310, 0.0460, 0.059297)),
 	"SMPTE-C RGB":      (2.2,             "D65",                   (0.6300, 0.3400, 0.212395), (0.3100, 0.5950, 0.701049), (0.1550, 0.0700, 0.086556)),
 	"SMPTE 240M RGB":   (-240,            "D65",                   (0.6300, 0.3400, 0.212395), (0.3100, 0.5950, 0.701049), (0.1550, 0.0700, 0.086556)),
 	"sRGB":             (-2.4,            "D65",                   (0.6400, 0.3300, 0.212656), (0.3000, 0.6000, 0.715158), (0.1500, 0.0600, 0.072186)),
@@ -1032,7 +1033,7 @@ def RGB2HSV(R, G, B, scale=1.0):
 	return H * scale, S * scale, V * scale
 
 
-def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 RGB"):
+def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 ST2084"):
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf
 	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
 								[683 / 4096., 2951 / 4096., 462 / 4096.],
@@ -1046,7 +1047,7 @@ def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 RGB"):
 	return I, Ct, Cp
 
 
-def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 RGB"):
+def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 ST2084"):
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf	
 	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
 									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
@@ -1060,12 +1061,13 @@ def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 RGB"):
 	return R, G, B
 
 
-def XYZ2ICtCp(X, Y, Z, rgb_space="Rec. 2020 RGB"):
-	R, G, B = (specialpow(v, -2084) for v in XYZ2RGB(X, Y, Z, rgb_space))
+def XYZ2ICtCp(X, Y, Z, rgb_space="Rec. 2020 ST2084", clamp=False):
+	R, G, B = (specialpow(v, -2084) for v in XYZ2RGB(X, Y, Z, rgb_space,
+													 clamp=clamp))
 	return RGB2ICtCp(R, G, B, rgb_space)
 
 
-def ICtCp2XYZ(I, Ct, Cp, rgb_space="Rec. 2020 RGB"):
+def ICtCp2XYZ(I, Ct, Cp, rgb_space="Rec. 2020 ST2084"):
 	R, G, B = (specialpow(v, 1.0 / -2084) for v in ICtCp2RGB(I, Ct, Cp, rgb_space))
 	return RGB2XYZ(R, G, B, rgb_space)
 

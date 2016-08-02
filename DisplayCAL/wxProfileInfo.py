@@ -284,6 +284,14 @@ class GamutCanvas(LUTCanvas):
 			min_x = -65.0
 			min_y = -65.0
 			step = 25
+		elif self.colorspace == "CtCp":
+			label_x = "Ct"
+			label_y = "Cp"
+			max_x = 0.4
+			max_y = 0.5
+			min_x = -0.5
+			min_y = -0.4
+			step = .1
 		else:
 			label_x = "a*"
 			label_y = "b*"
@@ -300,7 +308,9 @@ class GamutCanvas(LUTCanvas):
 						  "DIN99": lambda X, Y, Z: colormath.XYZ2DIN99(*[v * 100 for v in X, Y, Z])[1:],
 						  "DIN99b": lambda X, Y, Z: colormath.XYZ2DIN99b(*[v * 100 for v in X, Y, Z])[1:],
 						  "DIN99c": lambda X, Y, Z: colormath.XYZ2DIN99c(*[v * 100 for v in X, Y, Z])[1:],
-						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in X, Y, Z])[1:]}[self.colorspace]
+						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in X, Y, Z])[1:],
+						  "CtCp": lambda X, Y, Z: colormath.XYZ2ICtCp(X, Y, Z,
+																	  clamp=False)[1:]}[self.colorspace]
 
 		if show_outline and (self.colorspace == "a*b*" or
 							 self.colorspace.startswith("DIN99")):
@@ -707,7 +717,8 @@ class GamutViewOptions(wx.Panel):
 														  "DIN99",
 														  "DIN99b",
 														  "DIN99c",
-														  "DIN99d"])
+														  "DIN99d",
+														  "CtCp"])
 		self.options_sizer.Add(self.colorspace_select, 
 							   flag=wx.ALIGN_CENTER_VERTICAL)
 		self.colorspace_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
@@ -931,7 +942,9 @@ class GamutViewOptions(wx.Panel):
 				4: "DIN99",
 				5: "DIN99b",
 				6: "DIN99c",
-				7: "DIN99d"}.get(self.colorspace_select.GetSelection(),
+				7: "DIN99d",
+				8: "CtCp" if dimensions == 2 else "ICtCp"}.get(
+								  self.colorspace_select.GetSelection(),
 								 "a*b*" if dimensions == 2 else "Lab")
 
 	@property
@@ -1497,6 +1510,9 @@ class ProfileInfoFrame(LUTFrame):
 						# DIN99
 						a, b = colormath.DIN992Lab(L99, xy[0], xy[1])[1:]
 					x, y = colormath.Lab2xyY(100.0, a, b)[:2]
+				elif page.colorspace == "CtCp":
+					X, Y, Z = colormath.ICtCp2XYZ(1.0, xy[0], xy[1])
+					x, y = colormath.XYZ2xyY(X, Y, Z)[:2]
 				else:
 					# xy
 					x, y = xy

@@ -873,7 +873,7 @@ class CGATS(dict):
 				  normalize_RGB_white=False, compress=True, format="VRML"):
 		if colorspace not in ("DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY",
-							  "HSI", "HSL", "HSV"):
+							  "HSI", "HSL", "HSV", "ICtCp"):
 			raise ValueError("export_3d: Unknown colorspace %r" % colorspace)
 		data = self.queryv1("DATA")
 		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
@@ -935,7 +935,7 @@ Transform {
 		}
 """
 		axes = ""
-		if (colorspace not in ("Lab", "Luv") and
+		if (colorspace not in ("Lab", "Luv", "ICtCp") and
 			not colorspace.startswith("DIN99")):
 			if colorspace in ("Lu'v'", "xyY"):
 				maxz = scale = 100
@@ -960,6 +960,10 @@ Transform {
 				axes = x3dom.get_vrml_axes(xlabel, ylabel, zlabel,
 										   -180, -100, 0, 360, 200, 100, False)
 		else:
+			pxcolor = "1.0 0.0 0.0"
+			nxcolor = "0.0 1.0 0.0"
+			pycolor = "1.0 1.0 0.0"
+			nycolor = "0.0 0.0 1.0"
 			if colorspace.startswith("DIN99"):
 				axes += """Transform {
 			translation %.1f %.1f -50.0
@@ -985,6 +989,22 @@ Transform {
 							 '"b +%i"' % (100 / scale),
 							 '"b -%i"' % (100 / scale),
 							 '"L", "+100"')
+			elif colorspace == "ICtCp":
+				scale = 2.0
+				radius /= 2.0
+				(pxlabel,
+				 nxlabel,
+				 pylabel,
+				 nylabel,
+				 pllabel) = ('"Ct", "+%.1f"' % .5,
+							 '"Ct", "-%.1f"' % .5,
+							 '"Cp +%.1f"' % .5,
+							 '"Cp -%.1f"' % .5,
+							 '"I"')
+				pxcolor = "0.5 0.0 1.0"
+				nxcolor = "0.8 1.0 0.0"
+				pycolor = "1.0 0.0 0.25"
+				nycolor = "0.0 1.0 1.0"
 			else:
 				if colorspace == "Luv":
 					x = "u"
@@ -1016,7 +1036,11 @@ Transform {
 					  "nxlabel": nxlabel,
 					  "pylabel": pylabel,
 					  "nylabel": nylabel,
-					  "pllabel": pllabel}
+					  "pllabel": pllabel,
+					  "pxcolor": pxcolor,
+					  "nxcolor": nxcolor,
+					  "pycolor": pycolor,
+					  "nycolor": nycolor}
 			axes += """# L* axis
 		Transform {
 			translation 0.0 0.0 0.0
@@ -1051,7 +1075,7 @@ Transform {
 				Shape {
 					geometry Box { size %(ab).1f %(wh).1f %(wh).1f }
 					appearance Appearance {
-						material Material { diffuseColor 1.0 0.0 0.0 }
+						material Material { diffuseColor %(pxcolor)s }
 					}
 				}
 			]
@@ -1066,7 +1090,7 @@ Transform {
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
-						material Material { diffuseColor 1.0 0.0 0.0}
+						material Material { diffuseColor %(pxcolor)s }
 					}
 				}
 			]
@@ -1078,7 +1102,7 @@ Transform {
 				Shape {
 					geometry Box { size %(ab).1f %(wh).1f %(wh).1f }
 					appearance Appearance {
-						material Material { diffuseColor 0.0 1.0 0.0 }
+						material Material { diffuseColor %(nxcolor)s }
 					}
 				}
 			]
@@ -1093,7 +1117,7 @@ Transform {
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
-						material Material { diffuseColor 0.0 1.0 0.0}
+						material Material { diffuseColor %(nxcolor)s }
 					}
 				}
 			]
@@ -1105,7 +1129,7 @@ Transform {
 				Shape {
 					geometry Box { size %(wh).1f %(ab).1f %(wh).1f }
 					appearance Appearance {
-						material Material { diffuseColor 1.0 1.0 0.0 }
+						material Material { diffuseColor %(pycolor)s }
 					}
 				}
 			]
@@ -1120,7 +1144,7 @@ Transform {
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
-						material Material { diffuseColor 1.0 1.0 0.0}
+						material Material { diffuseColor %(pycolor)s }
 					}
 				}
 			]
@@ -1132,7 +1156,7 @@ Transform {
 				Shape {
 					geometry Box { size %(wh).1f %(ab).1f %(wh).1f }
 					appearance Appearance {
-						material Material { diffuseColor 0.0 0.0 1.0 }
+						material Material { diffuseColor %(nycolor)s }
 					}
 				}
 			]
@@ -1147,7 +1171,7 @@ Transform {
 						fontStyle FontStyle { family "SANS" style "BOLD" size %(fontsize).1f }
 					}
 					appearance Appearance {
-						material Material { diffuseColor 0.0 0.0 1.0}
+						material Material { diffuseColor %(nycolor)s }
 					}
 				}
 			]
@@ -1244,6 +1268,10 @@ Transform {
 				x, y, z = ((x + offsetx) * scale,
 						   (y + offsety) * scale,
 						   Y / 100.0 * maxz - 50)
+			elif colorspace == "ICtCp":
+				I, Ct, Cp = colormath.XYZ2ICtCp(X / 100.0, Y / 100.0, Z / 100.0,
+												clamp=False)
+				x, y, z = Ct * 100, Cp * 100, I * 100 - 50
 			if RGB_black_offset != 40:
 				# Keep reference hue and saturation
 				# Lab to sRGB using reference black offset of 40 like Argyll CMS
@@ -1274,7 +1302,7 @@ Transform {
 			# Use a very narrow field of view for LCH
 			fov /= 16.0
 			z *= 16
-		elif colorspace.startswith("DIN99"):
+		elif colorspace.startswith("DIN99") or colorspace == "ICtCp":
 			fov /= scale
 		out = vrml % {"children": children,
 					  "axes": axes,

@@ -365,6 +365,10 @@ def update_vrml(vrml, colorspace):
 			x, y, z = ((x + offsetx) * scale,
 					   (y + offsety) * scale,
 					   Y / 100.0 * maxz)
+		elif colorspace == "ICtCp":
+			I, Ct, Cp = colormath.XYZ2ICtCp(X / 100.0, Y / 100.0, Z / 100.0,
+										  clamp=False)
+			z, x, y = I * 100, Ct * 100, Cp * 100
 		z -= maxz / 2.0
 		return " ".join(["%.6f" % v for v in (x, y, z)])
 	# Update point lists
@@ -450,6 +454,29 @@ Transform {
 											  offsetx * scale, offsety * scale,
 											  0, maxxy, maxxy, maxz),
 					  vrml)
+	elif colorspace == "ICtCp":
+		# Replace L* a* b* labels with I Ct Cp
+		vrml = re.sub(r'(string\s*\["[+\-]?)L\*?',
+					  r"\1I", vrml)
+		vrml = re.sub(r'(string\s*\["[+\-]?)a\*?',
+					  r"\1Ct", vrml)
+		vrml = re.sub(r'(string\s*\["[+\-]?)b\*?',
+					  r"\1Cp", vrml)
+		# Change axis colors
+		axes = re.findall(r'Shape\s*\{\s*geometry\s*(?:Box|Text)\s*\{\s*(?:size\s+\d+\.0+\s+\d+\.0+\s+\d+\.0+|string\s+\["[^"]*"\]\s*fontStyle\s+FontStyle\s*\{[^}]+\})\s*\}\s*appearance\s+Appearance\s*\{\s*material\s*Material\s*\{[^}]+}\s*\}\s*\}', vrml)
+		for i, axis in enumerate(axes):
+			# Red -> purpleish blue
+			vrml = vrml.replace(axis, re.sub("diffuseColor\s+1\.0+\s+0\.0+\s+0\.0+",
+											 "diffuseColor 0.5 0.0 1.0", axis))
+			# Green -> yellowish green
+			vrml = vrml.replace(axis, re.sub("diffuseColor\s+0\.0+\s+1\.0+\s+0\.0+",
+											 "diffuseColor 0.8 1.0 0.0", axis))
+			# Yellow -> magentaish red
+			vrml = vrml.replace(axis, re.sub("diffuseColor\s+1\.0+\s+1\.0+\s+0\.0+",
+											 "diffuseColor 1.0 0.0 0.25", axis))
+			# Blue -> cyan
+			vrml = vrml.replace(axis, re.sub("diffuseColor\s+0\.0+\s+0\.0+\s+1\.0+",
+											 "diffuseColor 0.0 1.0 1.0", axis))
 	return vrml
 
 
