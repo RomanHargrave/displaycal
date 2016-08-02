@@ -1938,10 +1938,14 @@ class Worker(object):
 												   linesep_in="\n", 
 												   triggers=[])), self.recent,
 									self.lastmsg])
-				xf = Xicclu(profile2, "r", direction="f", pcs="x",
-							use_cam_clipping=True, worker=self)
-				xb = Xicclu(profile2, "r", direction="if", pcs="x",
-							use_cam_clipping=True, worker=self)
+				if hdr_tonemapping:
+					xf = Xicclu(profile2, "r", direction="f", pcs="x",
+								use_cam_clipping=True, worker=self)
+					xb = Xicclu(profile2, "r", direction="if", pcs="x",
+								use_cam_clipping=True, worker=self)
+				else:
+					xf=None
+					xb=None
 				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
 					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
@@ -2624,7 +2628,8 @@ class Worker(object):
 					self.blend_profile_blackpoint(profile_in, profile_out,
 												  trc_output_offset, trc_gamma,
 												  trc_gamma_type,
-												  white_cdm2=white_cdm2)
+												  white_cdm2=white_cdm2,
+												  hdr_tonemapping=not smpte2084_use_src_gamut)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
@@ -2667,7 +2672,8 @@ class Worker(object):
 				self.blend_profile_blackpoint(profile_src, profile_out,
 											  trc_output_offset, trc_gamma,
 											  trc_gamma_type,
-											  white_cdm2=white_cdm2)
+											  white_cdm2=white_cdm2,
+											  hdr_tonemapping=True)
 
 				fd, profile_src.fileName = tempfile.mkstemp(src_ext,
 															"%s-" % src_name,
