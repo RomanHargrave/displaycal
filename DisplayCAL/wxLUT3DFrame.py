@@ -276,9 +276,13 @@ class LUT3DFrame(BaseFrame):
 			setcfg("3dlut.trc", "gamma2.2")
 			self.lut3d_update_trc_controls()
 		elif self.lut3d_trc_ctrl.GetSelection() == 2:  # SMPTE 2084, hard clip
+			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
 			setcfg("3dlut.trc", "smpte2084.hardclip")
+			self.lut3d_update_trc_controls()
 		elif self.lut3d_trc_ctrl.GetSelection() == 3:  # SMPTE 2084, roll-off clip
+			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
 			setcfg("3dlut.trc", "smpte2084.rolloffclip")
+			self.lut3d_update_trc_controls()
 		else:
 			setcfg("3dlut.trc", "customgamma")
 		self.lut3d_show_trc_controls()
@@ -1310,6 +1314,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_ctrl.Show(show)
 		smpte2084 = getcfg("3dlut.trc").startswith("smpte2084")
 		show = show and (getcfg("3dlut.trc") == "customgamma" or
+						 smpte2084 or
 						 (isinstance(self, LUT3DFrame) or
 						  getcfg("show_advanced_options")))
 		self.lut3d_trc_gamma_label.Show(show and not smpte2084)
