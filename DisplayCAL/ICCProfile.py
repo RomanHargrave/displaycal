@@ -603,6 +603,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		n = E2 + mini * (1 - E2) ** 4
 		maxv = colormath.specialpow(n, -2084)
 
+	def apply_bpc(v, b_in, b_out, w_out):
+		return max(((w_out - b_out) * v - w_out * (b_in - b_out)) / (w_out - b_in), 0)
+
 	def apply_rolloff(v, KS=KS, maxi=maxi):
 		if rolloff and KS < 1 and KS <= v <= 1:
 			v = P(v, KS, maxi)
@@ -637,7 +640,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		prevs = 1.0 - (v - iv) / segment
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
-		out = colormath.specialpow(vv, 1.0 / gamma)
+		out = colormath.specialpow(apply_bpc(vv, 0.0, minv, maxv), 1.0 / gamma)
 		interp.xp.append(out)
 		if generate_B2A:
 			ointerp.xp.append(colormath.specialpow(apply_rolloff(v), gamma) /
