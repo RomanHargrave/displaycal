@@ -4220,7 +4220,7 @@ while 1:
 					stdin = sp.PIPE
 			else:
 				data_encoding = self.pty_encoding
-				kwargs = dict(timeout=5, cwd=working_dir,
+				kwargs = dict(timeout=20, cwd=working_dir,
 							  env=os.environ)
 				if sys.platform == "win32":
 					kwargs["codepage"] = windll.kernel32.GetACP()
