@@ -72,11 +72,12 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 	# Should match device ID returned by gcm_session_get_output_id in
 	# gnome-settings-daemon/plugins/color/gsd-color-state.c
 	# and Edid::deviceId in colord-kde/colord-kded/Edid.cpp respectively
-	if "hash" in edid and query:
+	if "hash" in edid:
 		device_id = device_ids.get(edid["hash"])
 		if device_id:
 			return device_id
-		elif sys.platform not in ("darwin", "win32") and which("colormgr"):
+		elif sys.platform not in ("darwin", "win32") and (query and
+														  which("colormgr")):
 			try:
 				device = find("device-by-property", ["OutputEdidMd5",
 													 edid["hash"]])
