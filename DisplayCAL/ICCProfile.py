@@ -1235,7 +1235,7 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 	edid = get_edid(display_no)
 	if edid:
 		# Try a range of possible device IDs
-		device_ids = [colord.device_id_from_edid(edid, quirk=True),
+		device_ids = [colord.device_id_from_edid(edid, quirk=True, query=True),
 					  colord.device_id_from_edid(edid, quirk=True,
 												 truncate_edid_strings=True),
 					  colord.device_id_from_edid(edid, quirk=True,
@@ -1250,7 +1250,17 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 												 use_serial_32=False),
 					  colord.device_id_from_edid(edid, quirk=False,
 												 use_serial_32=False,
-												 truncate_edid_strings=True)]
+												 truncate_edid_strings=True),
+					  # Try with manufacturer omitted
+					  colord.device_id_from_edid(edid, omit_manufacturer=True),
+					  colord.device_id_from_edid(edid,
+												 truncate_edid_strings=True,
+												 omit_manufacturer=True),
+					  colord.device_id_from_edid(edid, use_serial_32=False,
+												 omit_manufacturer=True),
+					  colord.device_id_from_edid(edid, use_serial_32=False,
+												 truncate_edid_strings=True,
+												 omit_manufacturer=True)]
 	elif xrandr:
 		# XrandR fallback
 		display_name = xrandr.get_display_name(display_no)
@@ -1269,6 +1279,8 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 					warnings.warn(safe_str(exception, enc), Warning)
 				else:
 					if profile_path:
+						if "hash" in edid:
+							colord.device_ids[edid["hash"]] = device_id
 						if path_only:
 							return profile_path
 						return ICCProfile(profile_path)

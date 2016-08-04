@@ -5475,7 +5475,8 @@ while 1:
 		return True
 	
 	def get_device_id(self, quirk=True, use_serial_32=True,
-					  truncate_edid_strings=False):
+					  truncate_edid_strings=False, omit_manufacturer=False,
+					  query=False):
 		""" Get org.freedesktop.ColorManager device key """
 		if config.is_virtual_display():
 			return None
@@ -5484,7 +5485,8 @@ while 1:
 		edid = self.display_edid[display_no]
 		if not edid and xrandr:
 			# XrandR fallback
-			if not (quirk and use_serial_32 and not truncate_edid_strings):
+			if not (quirk and use_serial_32 and not truncate_edid_strings and
+					not omit_manufacturer):
 				return
 			try:
 				display_name = xrandr.get_display_name(display_no)
@@ -5495,7 +5497,9 @@ while 1:
 					edid = {"monitor_name": display_name}
 		return colord.device_id_from_edid(edid, quirk=quirk,
 										  use_serial_32=use_serial_32,
-										  truncate_edid_strings=truncate_edid_strings)
+										  truncate_edid_strings=truncate_edid_strings,
+										  omit_manufacturer=omit_manufacturer,
+										  query=query)
 
 	def get_display(self):
 		""" Get the currently configured display number.
@@ -5982,7 +5986,7 @@ usage: spotread [-options] [logfile]
 			profile = ICCP.ICCProfile(profile_path)
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			return exception
-		device_id = self.get_device_id(quirk=True)
+		device_id = self.get_device_id(quirk=True, query=True)
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(self.argyll_version < [1, 6] or not whereis("libcolordcompat.so.*") or
 			 argyll_install is not True) and
@@ -6005,7 +6009,16 @@ usage: spotread [-options] [logfile]
 												 use_serial_32=False),
 							  self.get_device_id(quirk=False,
 												 use_serial_32=False,
-												 truncate_edid_strings=True)]
+												 truncate_edid_strings=True),
+							  # Try with manufacturer omitted
+							  self.get_device_id(omit_manufacturer=True),
+							  self.get_device_id(truncate_edid_strings=True,
+												 omit_manufacturer=True),
+							  self.get_device_id(use_serial_32=False,
+												 omit_manufacturer=True),
+							  self.get_device_id(use_serial_32=False,
+												 truncate_edid_strings=True,
+												 omit_manufacturer=True)]
 				for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
 					if device_id:
 						# NOTE: This can block
@@ -7283,7 +7296,7 @@ usage: spotread [-options] [logfile]
 					profile.tags.meta["SCREEN_brightness"] = str(brightness)
 					spec_prefixes += ",SCREEN_"
 			# Set device ID
-			device_id = self.get_device_id(quirk=True)
+			device_id = self.get_device_id(quirk=True, query=True)
 			if device_id:
 				profile.tags.meta["MAPPING_device_id"] = device_id
 				spec_prefixes += ",MAPPING_"

@@ -65,13 +65,14 @@ def device_connect(client, device_id):
 
 
 def device_id_from_edid(edid, quirk=True, use_serial_32=True,
-						truncate_edid_strings=False):
+						truncate_edid_strings=False,
+						omit_manufacturer=False, query=False):
 	""" Assemble device key from EDID """
 	# https://github.com/hughsie/colord/blob/master/doc/device-and-profile-naming-spec.txt
 	# Should match device ID returned by gcm_session_get_output_id in
 	# gnome-settings-daemon/plugins/color/gsd-color-state.c
 	# and Edid::deviceId in colord-kde/colord-kded/Edid.cpp respectively
-	if "hash" in edid:
+	if "hash" in edid and query:
 		device_id = device_ids.get(edid["hash"])
 		if device_id:
 			return device_id
@@ -88,7 +89,9 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 					device_ids[edid["hash"]] = device_id
 					return device_id
 	parts = ["xrandr"]
-	edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
+	edid_keys = ["monitor_name", "serial_ascii"]
+	if not omit_manufacturer:
+		edid_keys.insert(0, "manufacturer")
 	if use_serial_32:
 		edid_keys.append("serial_32")
 	for name in edid_keys:
@@ -106,8 +109,6 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 			parts.append(str(value))
 	if len(parts) > 1:
 		device_id = "-".join(parts)
-		if "hash" in edid:
-			device_ids[edid["hash"]] = device_id
 		return device_id
 
 
