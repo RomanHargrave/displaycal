@@ -651,11 +651,11 @@ class SynthICCFrame(BaseFrame):
 			# Gamma with output offset or Rec. 1886-like
 			if rgb:
 				# Color profile
-				profile.set_bt1886_trc(black, outoffset, gamma,
+				profile.set_bt1886_trc(black, outoffset, trc,
 									   getcfg("synthprofile.trc_gamma_type"))
 			else:
 				# Grayscale profile
-				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, gamma,
+				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, trc,
 												 getcfg("synthprofile.trc_gamma_type"))
 		elif trc == -2084:
 			# SMPTE 2084
