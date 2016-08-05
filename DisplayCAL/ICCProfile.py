@@ -721,6 +721,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	step = 1.0 / clutmax
 	count = 0
 	blendmode = "DIN99d"
+	Cmode = ("all", "primaries_secondaries")[0]
+	RGB_in = []
 	HDR_ICtCp = []
 	HDR_RGB = []
 	HDR_XYZ = []
@@ -735,6 +737,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						backward_xicclu.exit()
 					raise Exception("aborted")
 				RGB = [v * step for v in (R, G, B)]
+				RGB_in.append(RGB)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
 				if mode == "XYZ":
@@ -866,7 +869,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			raise Exception("aborted")
 		X, Y, Z = (v / new_maxv for v in (X, Y, Z))
 		HDR_XYZ[i] = X, Y, Z
-		if forward_xicclu and backward_xicclu:
+		if (forward_xicclu and backward_xicclu and 
+			Cmode != "primaries_secondaries"):
 			# HDR XYZ -> backward lookup -> display RGB
 			backward_xicclu((X, Y, Z))
 			count += 1
@@ -877,7 +881,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				prevperc = perc
 	startperc = perc
 
-	Cdiff = [1.0]
+	Cdiff = []
+	p3st2084 = list(colormath.get_rgb_space("DCI P3 RGB"))
+	p3st2084[0] = -2084
+	Cmax = 0
 	if forward_xicclu and backward_xicclu:
 		# Display RGB -> backward lookup -> display XYZ
 		if logfile:
@@ -899,112 +906,143 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				prevperc = perc
 		startperc = perc
 
-		# Compare to chroma of P3 primaries to determine general chroma
-		# compression factor
-		forward_xicclu((1, 0, 0))
-		forward_xicclu((0, 1, 0))
-		forward_xicclu((0, 0, 1))
+		if Cmode == "primaries_secondaries":
+			# Compare to chroma of P3 primaries/secondaries to determine
+			# general chroma compression factor
+			forward_xicclu((0, 0, 1))
+			forward_xicclu((0, 1, 0))
+			forward_xicclu((1, 0, 0))
+			forward_xicclu((0, 1, 1))
+			forward_xicclu((1, 0, 1))
+			forward_xicclu((1, 1, 0))
 		forward_xicclu.close()
 		display_XYZ = forward_xicclu.get()
-		##for i in xrange(3):
-			##if blendmode == "ICtCp":
-				##white_dest = rgb_space[1]
-			##else:
-				##white_dest = white_DIN99d_XYZ
-			##XYZ = colormath.adapt(*display_XYZ[-(i + 1)],
-								  ##whitepoint_destination=white_dest)
-			##if blendmode == "ICtCp":
-				##I, Ct, Cp = colormath.XYZ2ICtCp(*XYZ,
-												##rgb_space=rgb_space)
-				##Cd = colormath.Lab2LCHab(I, Ct, Cp)[1]
-			##else:
-				##Cd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZ))[1]
-			##XYZ = colormath.RGB2XYZ(1 if i == 0 else 0,
-									##1 if i == 1 else 0,
-									##1 if i == 2 else 0,
-									##"DCI P3 RGB")
-			##XYZ = colormath.adapt(*XYZ,
-								  ##whitepoint_source=colormath.get_rgb_space("DCI P3 RGB")[1],
-								  ##whitepoint_destination=white_dest)
-			##if blendmode == "ICtCp":
-				##I, Ct, Cp = colormath.XYZ2ICtCp(*XYZ,
-												##rgb_space=rgb_space)
-				##Cp3 = colormath.Lab2LCHab(I, Ct, Cp)[1]
-			##else:
-				##Cp3 = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZ))[1]
-			##Cdiff.append(min(Cd / Cp3, 1))
-
-			##if logfile:
-				##logfile.write("\r%s chroma compression factor: %6.4f\n" %
-							  ##({0: "R", 1: "G", 2: "B"}[i], Cdiff[-1]))
-		##general_compression_factor = sum(Cdiff) / 3.0
+		if Cmode == "primaries_secondaries":
+			for i in xrange(6):
+				if i == 0:
+					# Blue
+					j = clutres - 1
+				elif i == 1:
+					# Green
+					j = clutres ** 2 - clutres
+				elif i == 2:
+					# Red
+					j = clutres ** 3 - clutres ** 2
+				elif i == 3:
+					# Cyan
+					j = clutres ** 2 - 1
+				elif i == 4:
+					# Magenta
+					j = clutres ** 3 - clutres ** 2 + clutres - 1
+				elif i == 5:
+					# Yellow
+					j = clutres ** 3 - clutres
+				R, G, B = RGB_in[j]
+				XYZsrc = HDR_XYZ[j]
+				XYZdisp = display_XYZ[-(6 - i)]
+				XYZp3 = colormath.RGB2XYZ(R, G, B, "DCI P3 RGB")
+				XYZp3 = colormath.adapt(*XYZp3,
+										whitepoint_source=p3st2084[1],
+										whitepoint_destination=white_DIN99d_XYZ)
+				L, C, H = colormath.XYZ2DIN99dLCH(*(v * 100
+													for v in XYZp3))
+				XYZdisp99 = colormath.adapt(*XYZdisp,
+											whitepoint_destination=white_DIN99d_XYZ)
+				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
+				if C > Cmax:
+					Cmax = C
+				Cdiff.append(min(Cd / C, 1.0))
+				safe_print("RGB in %5.2f %5.2f %5.2f" % (R, G, B))
+				safe_print("P3 BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZp3))
+				safe_print("P3 BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" %
+						   (L, C, H))
+				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZdisp99))
+				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" %
+						   (Ld, Cd, Hd))
+				if logfile:
+					logfile.write("\r%s chroma compression factor: %6.4f\n" %
+								  ({0: "B", 1: "G", 2: "R",
+									3: "C", 4: "M", 5: "Y"}[i], Cdiff[-1]))
+			# Tweak so that it gives roughly 0.91 for a Rec. 709 target
+			general_compression_factor = (sum(Cdiff) / len(Cdiff)) * 0.99
 	else:
 		display_XYZ = False
 
-	# Determine compression factor from P3 in BT.2020
-	if logfile:
-		logfile.write("\rDetermining chroma compression factor...\n")
-		logfile.write("\r%i%%" % perc)
-	p3st2084 = list(colormath.get_rgb_space("DCI P3 RGB"))
-	p3st2084[0] = -2084
-	Cmax = 0
-	for i, (R, G, B) in enumerate(HDR_RGB):
-		if worker and worker.thread_abort:
-			if forward_xicclu:
-				forward_xicclu.exit()
-			if backward_xicclu:
-				backward_xicclu.exit()
-			raise Exception("aborted")
-		XYZsrc = HDR_XYZ[i]
-		if display_XYZ:
-			XYZdisp = display_XYZ[i]
-			# Adjust luminance from destination to source
-			Ydisp = XYZdisp[1]
-			if Ydisp:
-				XYZdisp = [v / Ydisp * XYZsrc[1] for v in XYZdisp]
-		else:
-			XYZdisp = XYZsrc
-		XYZp3 = colormath.RGB2XYZ(R, G, B, p3st2084)
-		XYZp3 = colormath.adapt(*XYZp3,
-								whitepoint_source=p3st2084[1],
-								whitepoint_destination=rgb_space[1])
-		RGBp3r2020 = colormath.XYZ2RGB(*XYZp3, rgb_space=rgb_space)
-		XYZp3r2020 = colormath.RGB2XYZ(*RGBp3r2020, rgb_space=rgb_space)
-		if blendmode == "ICtCp":
-			XYZp3r2020a = colormath.adapt(*XYZp3r2020,
-										  whitepoint_source=rgb_space[1],
-										  whitepoint_destination=white_DIN99d_XYZ)
-			I, Ct, Cp = colormath.XYZ2ICtCp(*XYZp3r2020a, rgb_space=rgb_space)
-			L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
-			XYZdispa = colormath.adapt(*XYZdisp,
-									   whitepoint_destination=rgb_space[1])
-			Id, Ctd, Cpd = colormath.XYZ2ICtCp(*(v * maxv for v in XYZdispa),
-											   rgb_space=rgb_space)
-			Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
-		else:
-			XYZp3r202099 = colormath.adapt(*XYZp3r2020,
-										   whitepoint_source=rgb_space[1],
-										   whitepoint_destination=white_DIN99d_XYZ)
-			L, C, H = colormath.XYZ2DIN99dLCH(*(v / new_maxv * 100
-												for v in XYZp3r202099))
-			XYZdisp99 = colormath.adapt(*XYZdisp,
-										whitepoint_destination=white_DIN99d_XYZ)
-			Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
-		if C > Cmax:
-			Cmax = C
-		if C:
-			##print '%6.3f %6.3f' % (Cd, C)
-			Cdiff.append(min(Cd / C, 1))
-			##if Cdiff[-1] < 0.0001:
-				##raise RuntimeError("#%i RGB % 5.3f % 5.3f % 5.3f Cdiff %5.3f" % (i, R, G, B, Cdiff[-1]))
-		perc = startperc + math.floor(i / clutres ** 3.0 *
-									  (95 - startperc))
-		if logfile and perc > prevperc:
+	if Cmode != "primaries_secondaries":
+		# Determine compression factor by comparing display to P3 in BT.2020
+		if logfile:
+			logfile.write("\rDetermining chroma compression factor...\n")
 			logfile.write("\r%i%%" % perc)
-			prevperc = perc
-	startperc = perc
+		for i, (R, G, B) in enumerate(HDR_RGB):
+			if worker and worker.thread_abort:
+				if forward_xicclu:
+					forward_xicclu.exit()
+				if backward_xicclu:
+					backward_xicclu.exit()
+				raise Exception("aborted")
+			XYZsrc = HDR_XYZ[i]
+			if display_XYZ:
+				XYZdisp = display_XYZ[i]
+				### Adjust luminance from destination to source
+				##Ydisp = XYZdisp[1]
+				##if Ydisp:
+					##XYZdisp = [v / Ydisp * XYZsrc[1] for v in XYZdisp]
+			else:
+				XYZdisp = XYZsrc
+			XYZp3 = colormath.RGB2XYZ(R, G, B, p3st2084)
+			XYZp3 = colormath.adapt(*XYZp3,
+									whitepoint_source=p3st2084[1],
+									whitepoint_destination=rgb_space[1])
+			RGBp3r2020 = colormath.XYZ2RGB(*XYZp3, rgb_space=rgb_space)
+			XYZp3r2020 = colormath.RGB2XYZ(*RGBp3r2020, rgb_space=rgb_space)
+			if blendmode == "ICtCp":
+				XYZp3r2020a = colormath.adapt(*XYZp3r2020,
+											  whitepoint_source=rgb_space[1],
+											  whitepoint_destination=white_DIN99d_XYZ)
+				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZp3r2020a, rgb_space=rgb_space)
+				L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
+				XYZdispa = colormath.adapt(*XYZdisp,
+										   whitepoint_destination=rgb_space[1])
+				Id, Ctd, Cpd = colormath.XYZ2ICtCp(*(v * maxv for v in XYZdispa),
+												   rgb_space=rgb_space)
+				Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
+			else:
+				XYZp3r202099 = colormath.adapt(*XYZp3r2020,
+											   whitepoint_source=rgb_space[1],
+											   whitepoint_destination=white_DIN99d_XYZ)
+				L, C, H = colormath.XYZ2DIN99dLCH(*(v / new_maxv * 100
+													for v in XYZp3r202099))
+				XYZdisp99 = colormath.adapt(*XYZdisp,
+											whitepoint_destination=white_DIN99d_XYZ)
+				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
+			if C > Cmax:
+				Cmax = C
+			if C:
+				##print '%6.3f %6.3f' % (Cd, C)
+				Cdiff.append(min(Cd / C, 1.0))
+				##if Cdiff[-1] < 0.0001:
+					##raise RuntimeError("#%i RGB % 5.3f % 5.3f % 5.3f Cdiff %5.3f" % (i, R, G, B, Cdiff[-1]))
+			else:
+				Cdiff.append(1.0)
+			if debug:
+				safe_print("RGB in %5.2f %5.2f %5.2f" % tuple(RGB_in[i]))
+				safe_print("RGB out %5.2f %5.2f %5.2f" % (R, G, B))
+				safe_print("P3 BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
+						   tuple(v / new_maxv * 100 for v in XYZp3r202099))
+				safe_print("P3 BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" % (L, C, H))
+				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZdisp99))
+				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" % (Ld, Cd, Hd))
+			perc = startperc + math.floor(i / clutres ** 3.0 *
+										  (95 - startperc))
+			if logfile and perc > prevperc:
+				logfile.write("\r%i%%" % perc)
+				prevperc = perc
+		startperc = perc
 
-	general_compression_factor = (sum(Cdiff) / len(Cdiff))
+		general_compression_factor = (sum(Cdiff) / len(Cdiff))
 
 	if logfile:
 		logfile.write("\rChroma compression factor: %6.4f\n" %
