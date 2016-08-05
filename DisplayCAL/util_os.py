@@ -538,8 +538,8 @@ def readlink(path):
 		createfilefn = CreateFileW
 	else:
 		createfilefn = CreateFile
-	handle = CreateFile(path, GENERIC_READ, 0, None, OPEN_EXISTING,
-						FILE_FLAG_OPEN_REPARSE_POINT, 0)
+	handle = createfilefn(path, GENERIC_READ, 0, None, OPEN_EXISTING,
+						  FILE_FLAG_OPEN_REPARSE_POINT, 0)
 
 	# MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384 = (16 * 1024)
 	buffer = DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, None, 16 * 1024)
