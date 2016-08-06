@@ -2619,7 +2619,7 @@ class Worker(object):
 						if channel + "TRC" in profile_in.tags:
 							profile_in.tags[channel + "TRC"].set_trc(-709)
 				else:
-					# For SMPTE 2084 and Argyll < 1.7 beta, alter profile TRC
+					# For SMPTE 2084 or Argyll < 1.7 beta, alter profile TRC
 					# Argyll CMS prior to 1.7 beta development code 2014-07-10
 					# does not support output offset, alter the source profile
 					# instead (note that accuracy is limited due to 16-bit
@@ -2853,9 +2853,10 @@ class Worker(object):
 								numberformat = "%%.%if" % frac
 								components_new[i] = numberformat % round(component, frac)
 							parametersData = list(h3d.parametersData)
-							components_len = len(input_primaries.group())
-							parametersData[16:components_len] = " ".join(components_new)
-							h3d.parametersData = "".join(parametersData)
+							cstart, cend = input_primaries.span()
+							parametersData[cstart + 16:cend] = " ".join(components_new)
+							h3d.parametersData = "Input_Transfer_Function PQ\r\n"
+							h3d.parametersData += "".join(parametersData)
 							h3d.write()
 						else:
 							raise Error("madVR 3D LUT doesn't contain "
