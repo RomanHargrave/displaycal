@@ -1076,9 +1076,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				if not (a == b == c):
 					# Desaturate based on compression factor
 					# Blending threshold: Don't desaturate dark colors
-					# (< 10 cd/m2). Preserves more "pop"
-					thresh_I = .3
-					blend = 1#min_I * min(max((I - thresh_I) / (.4 - thresh_I), 0), 1)
+					# (< 26 cd/m2). Preserves more "pop"
+					thresh_I = .381
+					blend = min_I * min(max((I - thresh_I) / (.5081 - thresh_I), 0), 1)
 					if blend:
 						if blendmode == "XYZ":
 							x, y, Y = colormath.XYZ2xyY(X, Y, Z)
