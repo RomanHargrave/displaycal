@@ -1876,7 +1876,7 @@ class Worker(object):
 
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
-								 apply_trc=True, white_cdm2=100,
+								 apply_trc=True, white_cdm2=100, maxcll=10000,
 								 hdr_tonemapping=False):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
@@ -1892,7 +1892,7 @@ class Worker(object):
 		if smpte2084:
 			self.log(appname + ": " + os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
-					 (u" %i cd/m²" % white_cdm2))
+					 (u" %i cd/m² (MaxCLL %i cd/m²)" % (white_cdm2, maxcll)))
 		elif apply_trc:
 			self.log(appname + ": Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -1924,7 +1924,8 @@ class Worker(object):
 				rgb_space = colormath.get_rgb_space(rgb_space)
 				self.recent.write(desc + u" → " +
 								  lang.getstr("trc." + gamma) +
-								  (u" %i cd/m²\n" % white_cdm2))
+								  (u" %i cd/m² (MaxCLL %i cd/m²)\n" %
+								   (white_cdm2, maxcll)))
 				linebuffered_logfiles = []
 				if sys.stdout.isatty():
 					linebuffered_logfiles.append(safe_print)
@@ -1948,7 +1949,7 @@ class Worker(object):
 					xb=None
 				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
-					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2,
+					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, maxcll,
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
@@ -2482,7 +2483,7 @@ class Worker(object):
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
-					 use_b2a=False, white_cdm2=100):
+					 use_b2a=False, white_cdm2=100, maxcll=10000):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2629,6 +2630,7 @@ class Worker(object):
 												  trc_output_offset, trc_gamma,
 												  trc_gamma_type,
 												  white_cdm2=white_cdm2,
+												  maxcll=maxcll,
 												  hdr_tonemapping=not smpte2084_use_src_gamut)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
@@ -2673,6 +2675,7 @@ class Worker(object):
 											  trc_output_offset, trc_gamma,
 											  trc_gamma_type,
 											  white_cdm2=white_cdm2,
+											  maxcll=maxcll,
 											  hdr_tonemapping=True)
 
 				fd, profile_src.fileName = tempfile.mkstemp(src_ext,

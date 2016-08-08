@@ -1501,7 +1501,7 @@
                                     </object>
                                     <object class="sizeritem">
                                       <object class="wxStaticText" name="lut3d_hdr_peak_luminance_label">
-                                        <label>hdr_peak_luminance</label>
+                                        <label>display_peak_luminance</label>
                                       </object>
                                       <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                       <border>8</border>
@@ -1523,6 +1523,35 @@
                                     </object>
                                     <orient>wxHORIZONTAL</orient>
                                   </object>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBoxSizer">
+                                    <object class="sizeritem">
+                                      <object class="wxStaticText" name="lut3d_hdr_maxcll_label">
+                                        <label>hdr_maxcll</label>
+                                      </object>
+                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxSpinCtrl" name="lut3d_hdr_maxcll_ctrl">
+                                        <size>75,-1</size>
+                                        <min>1000</min>
+                                        <max>10000</max>
+                                      </object>
+                                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>8</border>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxStaticText" name="lut3d_hdr_maxcll_ctrl_label">
+                                        <label>cd/m²</label>
+                                      </object>
+                                      <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                      <border>4</border>
+                                    </object>
+                                    <orient>wxHORIZONTAL</orient>
+                                  </object>
+                                  <flag>wxTOP</flag>
+                                  <border>8</border>
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">

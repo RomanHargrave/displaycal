@@ -1330,6 +1330,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
 	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
 	lut3d_hdr_peak_luminance_handler = LUT3DFrame.__dict__["lut3d_hdr_peak_luminance_handler"]
+	lut3d_hdr_maxcll_handler = LUT3DFrame.__dict__["lut3d_hdr_maxcll_handler"]
 	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
 	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
 	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
@@ -4508,6 +4509,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						lut3dp.append("h")
 					else:
 						lut3dp.append("s")
+					if getcfg("3dlut.hdr_maxcll") < 10000:
+						lut3dp.append(str(getcfg("3dlut.hdr_maxcll")))
 			else:
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC

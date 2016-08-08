@@ -141,6 +141,8 @@ class LUT3DFrame(BaseFrame):
 											  self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_TEXT,
 											self.lut3d_hdr_peak_luminance_handler)
+		self.lut3d_hdr_maxcll_ctrl.Bind(wx.EVT_TEXT,
+										self.lut3d_hdr_maxcll_handler)
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
@@ -201,6 +203,9 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_peak_luminance_label.Enable(v)
 		self.lut3d_hdr_peak_luminance_ctrl.Enable(v)
 		self.lut3d_hdr_peak_luminance_ctrl_label.Enable(v)
+		self.lut3d_hdr_maxcll_label.Enable(v)
+		self.lut3d_hdr_maxcll_ctrl.Enable(v)
+		self.lut3d_hdr_maxcll_ctrl_label.Enable(v)
 		self.lut3d_trc_black_output_offset_label.Enable(v)
 		self.lut3d_trc_black_output_offset_ctrl.Enable(v)
 		self.lut3d_trc_black_output_offset_intctrl.Enable(v)
@@ -227,6 +232,10 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_hdr_peak_luminance_handler(self, event):
 		setcfg("3dlut.hdr_peak_luminance",
 			   self.lut3d_hdr_peak_luminance_ctrl.GetValue())
+
+	def lut3d_hdr_maxcll_handler(self, event):
+		setcfg("3dlut.hdr_maxcll",
+			   self.lut3d_hdr_maxcll_ctrl.GetValue())
 
 	def lut3d_trc_black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.lut3d_trc_black_output_offset_intctrl.GetId():
@@ -278,10 +287,12 @@ class LUT3DFrame(BaseFrame):
 		elif self.lut3d_trc_ctrl.GetSelection() == 2:  # SMPTE 2084, hard clip
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
 			setcfg("3dlut.trc", "smpte2084.hardclip")
+			setcfg("3dlut.hdr_maxcll", 10000)
 			self.lut3d_update_trc_controls()
 		elif self.lut3d_trc_ctrl.GetSelection() == 3:  # SMPTE 2084, roll-off clip
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
 			setcfg("3dlut.trc", "smpte2084.rolloffclip")
+			setcfg("3dlut.hdr_maxcll", 10000)
 			self.lut3d_update_trc_controls()
 		else:
 			setcfg("3dlut.trc", "customgamma")
@@ -702,6 +713,7 @@ class LUT3DFrame(BaseFrame):
 		apply_black_offset = getcfg("3dlut.apply_black_offset")
 		use_b2a = getcfg("3dlut.gamap.use_b2a")
 		white_cdm2 = getcfg("3dlut.hdr_peak_luminance")
+		maxcll = getcfg("3dlut.hdr_maxcll")
 		try:
 			self.worker.create_3dlut(profile_in, path, profile_abst,
 									 profile_out, apply_cal=apply_cal,
@@ -714,7 +726,8 @@ class LUT3DFrame(BaseFrame):
 									 trc_gamma_type=trc_gamma_type,
 									 trc_output_offset=outoffset,
 									 apply_black_offset=apply_black_offset,
-									 use_b2a=use_b2a, white_cdm2=white_cdm2)
+									 use_b2a=use_b2a, white_cdm2=white_cdm2,
+									 maxcll=maxcll)
 		except Exception, exception:
 			return exception
 		return True
@@ -1232,6 +1245,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_black_output_offset_ctrl.SetValue(outoffset)
 		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
 		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
+		self.lut3d_hdr_maxcll_ctrl.SetValue(getcfg("3dlut.hdr_maxcll"))
 
 	def update_linking_controls(self):
 		self.gamut_mapping_inverse_a2b.SetValue(
@@ -1314,14 +1328,18 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_ctrl.Show(show)
 		smpte2084 = getcfg("3dlut.trc").startswith("smpte2084")
 		show = show and (getcfg("3dlut.trc") == "customgamma" or
-						 smpte2084 or
 						 (isinstance(self, LUT3DFrame) or
 						  getcfg("show_advanced_options")))
 		self.lut3d_trc_gamma_label.Show(show and not smpte2084)
 		self.lut3d_trc_gamma_ctrl.Show(show and not smpte2084)
+		smpte2084r = getcfg("3dlut.trc") == "smpte2084.rolloffclip"
+		self.lut3d_hdr_maxcll_label.Show(show and smpte2084r)
+		self.lut3d_hdr_maxcll_ctrl.Show(show and smpte2084r)
+		self.lut3d_hdr_maxcll_ctrl_label.Show(show and smpte2084r)
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])
 		self.lut3d_trc_gamma_type_ctrl.Show(show and not smpte2084)
+		show = show or smpte2084
 		self.lut3d_trc_black_output_offset_label.Show(show)
 		self.lut3d_trc_black_output_offset_ctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl.Show(show)

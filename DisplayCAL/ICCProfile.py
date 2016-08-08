@@ -524,8 +524,8 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 
 
 def create_synthetic_smpte2084_clut_profile(rgb_space, description,
-											black_cdm2=0,
-											white_cdm2=100, rolloff=True,
+											black_cdm2=0, white_cdm2=400,
+											maxcll=10000, rolloff=True,
 											clutres=17, mode="ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
@@ -586,15 +586,20 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	mini = colormath.specialpow(minv, 1.0 / -2084)
 	maxv = white_cdm2 / 10000.0
 	maxi = colormath.specialpow(maxv, 1.0 / -2084)
+	maxci = colormath.specialpow(maxcll / 10000.0, 1.0 / -2084)
 	if rolloff:
 		# Rolloff as defined in ITU-R BT.2390-0
 		KS = 1.5 * maxi - 0.5
 		def T(A, KS=KS):
 			return (A - KS) / (1 - KS)
-		def P(B, KS=KS, maxi=maxi):
-			return ((2 * T(B) ** 3 - 3 * T(B) ** 2 + 1) * KS +
+		def P(B, KS=KS, maxi=maxi, maxci=maxci):
+			E2 = ((2 * T(B) ** 3 - 3 * T(B) ** 2 + 1) * KS +
 					(T(B) ** 3 - 2 * T(B) ** 2 + T(B)) * (1 - KS) +
 					(-2 * T(B) ** 3 + 3 * T(B) ** 2) * maxi)
+			if maxci < 1:
+				s = min(((B - KS) / (maxci - KS)) ** 4, 1.0)
+				E2 = E2 * (1 - s) + maxi * s
+			return E2
 		# Need to scale into maxv for black offset
 		if KS < 1:
 			E2 = P(1)
@@ -606,9 +611,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	def apply_bpc(v, b_in, b_out, w_out):
 		return max(((w_out - b_out) * v - w_out * (b_in - b_out)) / (w_out - b_in), 0)
 
-	def apply_rolloff(v, KS=KS, maxi=maxi):
+	def apply_rolloff(v, KS=KS, maxi=maxi, maxci=maxci):
 		if rolloff and KS < 1 and KS <= v <= 1:
-			v = P(v, KS, maxi)
+			v = P(v, KS, maxi, maxci)
 		if 0 <= v <= 1:
 			v = v + mini * (1 - v) ** 4
 		return v
