@@ -1115,6 +1115,16 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							#L99 *= Lc
 							#L99 = L99 * (1 - blend) + (L99 * Lc) * blend
 							#C99 *= Cc
+							# Yellow saturation tweak.
+							# Increases preservation of yellow saturation.
+							if 40 <= H99 <= 60:
+								# 0 at 60 degrees, 1 at 40
+								blend *= 1 - (H99 - 40.0) / (60.0 - 40.0)
+							elif 60 <= H99 <= 100:
+								blend = 0
+							elif 100 <= H99 <= 125:
+								# 0 at 100 degrees, 1 at 125
+								blend *= (H99 - 100.0) / (125.0 - 100.0)
 							C99 = C99 * (1 - blend) + (C99 * Cc) * blend
 							L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
