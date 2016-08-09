@@ -13176,6 +13176,8 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3dlut.trc",
 											 "3DLUT_HDR_PEAK_LUMINANCE":
 											 "3dlut.hdr_peak_luminance",
+											 "3DLUT_HDR_MAXCLL":
+											 "3dlut.hdr_maxcll",
 											 "3DLUT_GAMMA":
 											 "3dlut.trc_gamma",
 											 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":
