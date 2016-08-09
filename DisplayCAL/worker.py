@@ -1877,7 +1877,8 @@ class Worker(object):
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
 								 apply_trc=True, white_cdm2=100, maxcll=10000,
-								 hdr_tonemapping=False):
+								 hdr_tonemapping=False,
+								 yellow_saturation_tweak=True):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -1953,6 +1954,7 @@ class Worker(object):
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
+					yellow_saturation_tweak=yellow_saturation_tweak,
 					worker=self, logfile=logfiles).tags.A2B0
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
@@ -2676,7 +2678,8 @@ class Worker(object):
 											  trc_gamma_type,
 											  white_cdm2=white_cdm2,
 											  maxcll=maxcll,
-											  hdr_tonemapping=True)
+											  hdr_tonemapping=True,
+											  yellow_saturation_tweak=False)
 
 				fd, profile_src.fileName = tempfile.mkstemp(src_ext,
 															"%s-" % src_name,
