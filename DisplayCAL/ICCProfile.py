@@ -891,6 +891,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	p3st2084 = list(colormath.get_rgb_space("DCI P3 RGB"))
 	p3st2084[0] = -2084
 	Cmax = 0
+	Cdmax = []
 	if forward_xicclu and backward_xicclu:
 		# Display RGB -> backward lookup -> display XYZ
 		if logfile:
@@ -958,6 +959,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				if C > Cmax:
 					Cmax = C
 				Cdiff.append(min(Cd / C, 1.0))
+				Cdmax.append(Cd)
 				safe_print("RGB in %5.2f %5.2f %5.2f" % (R, G, B))
 				safe_print("P3 BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
 						   tuple(v * 100 for v in XYZp3))
@@ -976,6 +978,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	else:
 		display_XYZ = False
 
+	display_LCH = []
 	if Cmode != "primaries_secondaries":
 		# Determine compression factor by comparing display to P3 in BT.2020
 		if logfile:
@@ -1032,6 +1035,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					##raise RuntimeError("#%i RGB % 5.3f % 5.3f % 5.3f Cdiff %5.3f" % (i, R, G, B, Cdiff[-1]))
 			else:
 				Cdiff.append(1.0)
+			display_LCH.append((Ld, Cd, Hd))
+			if RGB_in[i] in ([0, 0, 1],
+							 [0, 1, 0],
+							 [1, 0, 0],
+							 [0, 1, 1],
+							 [1, 0, 1],
+							 [1, 1, 0]):
+				Cdmax.append(Cd)
 			if debug:
 				safe_print("RGB in %5.2f %5.2f %5.2f" % tuple(RGB_in[i]))
 				safe_print("RGB out %5.2f %5.2f %5.2f" % (R, G, B))
@@ -1049,6 +1060,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		startperc = perc
 
 		general_compression_factor = (sum(Cdiff) / len(Cdiff))
+
+	Cdmax = max(Cdmax) #sum(Cdmax) / len(Cdmax)
 
 	if logfile:
 		logfile.write("\rChroma compression factor: %6.4f\n" %
@@ -1115,24 +1128,36 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 												  whitepoint_destination=white_DIN99d_XYZ)
 							L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v * 100
 																	  for v in XYZ])
-							Lc = Cc = general_compression_factor
-							Lc **= ((C99 / Cmax) ** 4)
-							Cc **= (C99 / Cmax)
+							if display_LCH:
+								Ld, Cd, Hd = display_LCH[row]
+								Lc = (Ld / L99)
+								if C99:
+									# Limit desaturation to general chroma
+									# compression factor
+									Cc = max(min(Cd / C99, 1.0),
+											 general_compression_factor)
+								else:
+									Cc = 1.0
+							else:
+								Lc = Cc = general_compression_factor
+								Lc **= ((C99 / Cmax) ** 4)
+								Cc **= (C99 / Cmax)
 							#L99 *= Lc
 							#L99 = L99 * (1 - blend) + (L99 * Lc) * blend
-							#C99 *= Cc
-							if yellow_saturation_tweak:
-								# Yellow saturation tweak.
-								# Increases preservation of yellow saturation.
-								if 40 <= H99 <= 60:
-									# 0 at 60 degrees, 1 at 40
-									blend *= 1 - (H99 - 40.0) / (60.0 - 40.0)
-								elif 60 <= H99 <= 100:
-									blend = 0
-								elif 100 <= H99 <= 125:
-									# 0 at 100 degrees, 1 at 125
-									blend *= (H99 - 100.0) / (125.0 - 100.0)
-							C99 = C99 * (1 - blend) + (C99 * Cc) * blend
+							C99 *= Cc
+							#if yellow_saturation_tweak:
+								## Yellow saturation tweak.
+								## Increases preservation of yellow saturation.
+								#hues = (40.0, 60.0, 100.0, 125.0)
+								#if hues[0] <= H99 <= hues[1]:
+									## 0 at hues[1] degrees, 1 at hues[0]
+									#blend *= 1 - (H99 - hues[0]) / (hues[1] - hues[0])
+								#elif hues[1] <= H99 <= hues[2]:
+									#blend = 0
+								#elif hues[2] <= H99 <= hues[3]:
+									## 0 at hues[2] degrees, 1 at hues[3]
+									#blend *= (H99 - hues[2]) / (hues[3] - hues[2])
+							#C99 = C99 * (1 - blend) + (C99 * Cc) * blend
 							L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
 							X, Y, Z = colormath.adapt(X, Y, Z,
