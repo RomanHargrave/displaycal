@@ -311,7 +311,7 @@ def safe_basestring(obj):
 		error = [safe_unicode(arg) for arg in error]
 		obj = " ".join(error)
 	elif isinstance(obj, KeyError) and obj.args:
-		obj = "Key does not exist: %r" % obj.args[0]
+		obj = "Key does not exist: " + repr(obj.args[0])
 	oobj = obj
 	if not isinstance(obj, basestring):
 		try:
