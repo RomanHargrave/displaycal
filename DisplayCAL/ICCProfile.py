@@ -433,10 +433,10 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	 profile.tags.wtpt.Y,
 	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
 	
-	itable = profile.tags.A2B0 = LUT16Type(profile=profile)
+	itable = profile.tags.A2B0 = LUT16Type(None, "A2B0", profile)
 	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
 	
-	otable = profile.tags.B2A0 = LUT16Type(profile=profile)
+	otable = profile.tags.B2A0 = LUT16Type(None, "B2A0", profile)
 	Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
 								 whitepoint_source=rgb_space[1])
 	Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
@@ -529,7 +529,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											clutres=17, mode="ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
-											yellow_saturation_tweak=True,
 											generate_B2A=False,
 											worker=None,
 											logfile=None):
@@ -560,13 +559,20 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	 profile.tags.wtpt.Y,
 	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
 	
-	itable = profile.tags.A2B0 = LUT16Type(profile=profile)
+	itable = profile.tags.A2B0 = LUT16Type(None, "A2B0", profile)
 	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-	debugtable = profile.tags.DBUG = LUT16Type(profile=profile)
-	debugtable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	# HDR RGB
+	debugtable0 = profile.tags.DBG0 = LUT16Type(None, "DBG0", profile)
+	debugtable0.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	# Display RGB
+	debugtable1 = profile.tags.DBG1 = LUT16Type(None, "DBG1", profile)
+	debugtable1.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	# Display XYZ
+	debugtable2 = profile.tags.DBG2 = LUT16Type(None, "DBG2", profile)
+	debugtable2.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
 	
 	if generate_B2A:
-		otable = profile.tags.B2A0 = LUT16Type(profile=profile)
+		otable = profile.tags.B2A0 = LUT16Type(None, "B2A0", profile)
 		Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
 									 whitepoint_source=rgb_space[1])
 		Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
@@ -594,9 +600,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		def T(A, KS=KS):
 			return (A - KS) / (1 - KS)
 		def P(B, KS=KS, maxi=maxi, maxci=maxci):
-			E2 = ((2 * T(B) ** 3 - 3 * T(B) ** 2 + 1) * KS +
-					(T(B) ** 3 - 2 * T(B) ** 2 + T(B)) * (1 - KS) +
-					(-2 * T(B) ** 3 + 3 * T(B) ** 2) * maxi)
+			E2 = ((2 * T(B, KS) ** 3 - 3 * T(B, KS) ** 2 + 1) * KS +
+				  (T(B, KS) ** 3 - 2 * T(B, KS) ** 2 + T(B, KS)) * (1 - KS) +
+				  (-2 * T(B, KS) ** 3 + 3 * T(B, KS) ** 2) * maxi)
 			if maxci < 1:
 				s = min(((B - KS) / (maxci - KS)) ** 4, 1.0)
 				E2 = E2 * (1 - s) + maxi * s
@@ -612,10 +618,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	def apply_bpc(v, b_in, b_out, w_out):
 		return max(((w_out - b_out) * v - w_out * (b_in - b_out)) / (w_out - b_in), 0)
 
-	def apply_rolloff(v, KS=KS, maxi=maxi, maxci=maxci):
-		if rolloff and KS < 1 and KS <= v <= 1:
+	def apply_rolloff(v, KS=KS, maxi=maxi, maxci=maxci, mini=mini):
+		if rolloff and 0 < KS < 1 and KS <= v <= 1:
 			v = P(v, KS, maxi, maxci)
-		if 0 <= v <= 1:
+		if mini and 0 <= v <= 1:
 			v = v + mini * (1 - v) ** 4
 		return v
 	
@@ -656,8 +662,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	for i in xrange(3):
 		itable.input.append([])
 		itable.output.append([0, 65535])
-		debugtable.input.append([0, 65535])
-		debugtable.output.append([0, 65535])
+		debugtable0.input.append([0, 65535])
+		debugtable0.output.append([0, 65535])
+		debugtable1.input.append([0, 65535])
+		debugtable1.output.append([0, 65535])
+		debugtable2.input.append([0, 65535])
+		debugtable2.output.append([0, 65535])
 		if generate_B2A:
 			otable.input.append([])
 			otable.output.append([0, 65535])
@@ -722,7 +732,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		logfile.write("\rApplying BT.2390 rolloff...\n")
 		logfile.write("\r%i%%" % perc)
 	itable.clut = []
-	debugtable.clut = []
+	debugtable0.clut = []
+	debugtable1.clut = []
+	debugtable2.clut = []
 	clutmax = clutres - 1.0
 	step = 1.0 / clutmax
 	count = 0
@@ -890,15 +902,33 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	Cdiff = []
 	p3st2084 = list(colormath.get_rgb_space("DCI P3 RGB"))
 	p3st2084[0] = -2084
-	Cmax = 0
-	Cdmax = []
+	Cmax = {}
+	Cdmax = {}
 	if forward_xicclu and backward_xicclu:
 		# Display RGB -> backward lookup -> display XYZ
 		if logfile:
 			logfile.write("\rDoing forward lookup...\n")
 			logfile.write("\r%i%%" % perc)
 		backward_xicclu.close()
-		for i, (R, G, B) in enumerate(backward_xicclu.get()):
+		display_RGB = backward_xicclu.get()
+
+		# Smooth
+		row = 0
+		for col_0 in xrange(clutres):
+			for col_1 in xrange(clutres):
+				debugtable1.clut.append([])
+				for col_2 in xrange(clutres):
+					RGBdisp = display_RGB[row]
+					debugtable1.clut[-1].append([min(max(v * 65535, 0), 65535)
+												for v in RGBdisp])
+					row += 1
+		debugtable1.smooth()
+		display_RGB = []
+		for block in debugtable1.clut:
+			for row in block:
+				display_RGB.append([v / 65535.0 for v in row])
+
+		for i, (R, G, B) in enumerate(display_RGB):
 			if worker and worker.thread_abort:
 				if forward_xicclu:
 					forward_xicclu.exit()
@@ -956,10 +986,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				XYZdisp99 = colormath.adapt(*XYZdisp,
 											whitepoint_destination=white_DIN99d_XYZ)
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
-				if C > Cmax:
-					Cmax = C
+				Cdmaxk = tuple(map(round, (Ld, Hd)))
+				if C > Cmax.get(Cdmaxk, -1):
+					Cmax[Cdmaxk] = C
 				Cdiff.append(min(Cd / C, 1.0))
-				Cdmax.append(Cd)
+				if Cd > Cdmax.get(Cdmaxk, -1):
+					Cdmax[Cdmaxk] = Cd
 				safe_print("RGB in %5.2f %5.2f %5.2f" % (R, G, B))
 				safe_print("P3 BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
 						   tuple(v * 100 for v in XYZp3))
@@ -976,10 +1008,11 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			# Tweak so that it gives roughly 0.91 for a Rec. 709 target
 			general_compression_factor = (sum(Cdiff) / len(Cdiff)) * 0.99
 	else:
+		display_RGB = False
 		display_XYZ = False
 
 	display_LCH = []
-	if Cmode != "primaries_secondaries":
+	if Cmode != "primaries_secondaries" and display_XYZ:
 		# Determine compression factor by comparing display to P3 in BT.2020
 		if logfile:
 			logfile.write("\rDetermining chroma compression factor...\n")
@@ -1000,6 +1033,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					##XYZdisp = [v / Ydisp * XYZsrc[1] for v in XYZdisp]
 			else:
 				XYZdisp = XYZsrc
+			X, Y, Z = (v * new_maxv for v in XYZsrc)
+			X, Y, Z = colormath.adapt(X, Y, Z,
+									  whitepoint_destination=p3st2084[1])
+			R, G, B = colormath.XYZ2RGB(X, Y, Z, p3st2084)
 			XYZp3 = colormath.RGB2XYZ(R, G, B, p3st2084)
 			XYZp3 = colormath.adapt(*XYZp3,
 									whitepoint_source=p3st2084[1],
@@ -1007,10 +1044,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			RGBp3r2020 = colormath.XYZ2RGB(*XYZp3, rgb_space=rgb_space)
 			XYZp3r2020 = colormath.RGB2XYZ(*RGBp3r2020, rgb_space=rgb_space)
 			if blendmode == "ICtCp":
-				XYZp3r2020a = colormath.adapt(*XYZp3r2020,
-											  whitepoint_source=rgb_space[1],
-											  whitepoint_destination=white_DIN99d_XYZ)
-				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZp3r2020a, rgb_space=rgb_space)
+				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZp3r2020, rgb_space=rgb_space)
 				L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
 				XYZdispa = colormath.adapt(*XYZdisp,
 										   whitepoint_destination=rgb_space[1])
@@ -1026,8 +1060,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				XYZdisp99 = colormath.adapt(*XYZdisp,
 											whitepoint_destination=white_DIN99d_XYZ)
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
-			if C > Cmax:
-				Cmax = C
+			Cdmaxk = tuple(map(round, (Ld, Hd)))
+			if C > Cmax.get(Cdmaxk, -1):
+				Cmax[Cdmaxk] = C
 			if C:
 				##print '%6.3f %6.3f' % (Cd, C)
 				Cdiff.append(min(Cd / C, 1.0))
@@ -1036,13 +1071,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			else:
 				Cdiff.append(1.0)
 			display_LCH.append((Ld, Cd, Hd))
-			if RGB_in[i] in ([0, 0, 1],
-							 [0, 1, 0],
-							 [1, 0, 0],
-							 [0, 1, 1],
-							 [1, 0, 1],
-							 [1, 1, 0]):
-				Cdmax.append(Cd)
+			if Cd > Cdmax.get(Cdmaxk, -1):
+				Cdmax[Cdmaxk] = Cd
 			if debug:
 				safe_print("RGB in %5.2f %5.2f %5.2f" % tuple(RGB_in[i]))
 				safe_print("RGB out %5.2f %5.2f %5.2f" % (R, G, B))
@@ -1061,9 +1091,11 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 		general_compression_factor = (sum(Cdiff) / len(Cdiff))
 
-	Cdmax = max(Cdmax) #sum(Cdmax) / len(Cdmax)
+	if display_XYZ:
+		Cmaxv = max(Cmax.values())
+		Cdmaxv = max(Cdmax.values())
 
-	if logfile:
+	if logfile and display_LCH:
 		logfile.write("\rChroma compression factor: %6.4f\n" %
 					  general_compression_factor)
 
@@ -1077,11 +1109,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		forward_xicclu.spawn()
 	if backward_xicclu:
 		backward_xicclu.spawn()
-	for a in xrange(clutres):
-		for b in xrange(clutres):
+	for col_0 in xrange(clutres):
+		for col_1 in xrange(clutres):
 			itable.clut.append([])
-			debugtable.clut.append([])
-			for c in xrange(clutres):
+			debugtable0.clut.append([])
+			if not display_RGB:
+				debugtable1.clut.append([])
+			debugtable2.clut.append([])
+			for col_2 in xrange(clutres):
 				if worker and worker.thread_abort:
 					if forward_xicclu:
 						forward_xicclu.exit()
@@ -1092,12 +1127,15 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				I, Ct, Cp = HDR_ICtCp[row]
 				X, Y, Z = HDR_XYZ[row]
 				min_I = HDR_min_I[row]
-				if not (a == b == c):
+				if not (col_0 == col_1 == col_2) and display_XYZ:
 					# Desaturate based on compression factor
-					# Blending threshold: Don't desaturate dark colors
-					# (< 26 cd/m2). Preserves more "pop"
-					thresh_I = .381
-					blend = min_I * min(max((I - thresh_I) / (.5081 - thresh_I), 0), 1)
+					if display_LCH:
+						blend = 1
+					else:
+						# Blending threshold: Don't desaturate dark colors
+						# (< 26 cd/m2). Preserves more "pop"
+						thresh_I = .381
+						blend = min_I * min(max((I - thresh_I) / (.5081 - thresh_I), 0), 1)
 					if blend:
 						if blendmode == "XYZ":
 							x, y, Y = colormath.XYZ2xyY(X, Y, Z)
@@ -1109,13 +1147,37 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 															  rgb_space[1])[0]
 						elif blendmode == "ICtCp":
 							L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
-							Lc = Cc = general_compression_factor
-							Lc **= ((C / Cmax) ** 4)
-							Cc **= (C / Cmax)
-							#I *= Lc
-							#I = I * (1 - blend) + (I * Lc) * blend
-							#C *= Cc
-							C = C * (1 - blend) + (C * Cc) * blend
+						elif blendmode == "DIN99d":
+							XYZ = colormath.adapt(X, Y, Z,
+												  whitepoint_destination=white_DIN99d_XYZ)
+							L, C, H = colormath.XYZ2DIN99dLCH(*[v * 100
+																for v in XYZ])
+						if blendmode != "XYZ":
+							if display_LCH:
+								Ld, Cd, Hd = display_LCH[row]
+								Cdmaxk = tuple(map(round, (Ld, Hd)))
+								HCmax = Cmax[Cdmaxk]
+								if C and HCmax:
+									HCdmax = Cdmax[Cdmaxk]
+									maxCc = min(HCdmax / HCmax, 1.0)
+									KSCc = 1.5 * maxCc - 0.5
+									Cc1 = min(C / HCmax, 1.0)
+									if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
+										Cc2 = apply_rolloff(Cc1, KSCc,
+														    maxCc, 1.0, 0)
+										C = HCmax * Cc2
+									else:
+										C = Cd
+										safe_print("CLUT grid point %i %i %i: "
+												   "C %6.4f HCmax %6.4f maxCc "
+												   "%6.4f KSCc %6.4f Cc1 %6.4f" %
+												   (col_0, col_1, col_2, C,
+												    HCmax, maxCc, KSCc, Cc1))
+							else:
+								Cc = general_compression_factor
+								Cc **= (C / Cmaxv)
+								C = C * (1 - blend) + (C * Cc) * blend
+						if blendmode == "ICtCp":
 							I, Ct, Cp = colormath.LCHab2Lab(L, C, H)
 							XYZ = colormath.ICtCp2XYZ(I, Ct, Cp,
 													  rgb_space=rgb_space)
@@ -1124,44 +1186,13 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							X, Y, Z = colormath.adapt(X, Y, Z,
 													  whitepoint_source=rgb_space[1])
 						elif blendmode == "DIN99d":
-							XYZ = colormath.adapt(X, Y, Z,
-												  whitepoint_destination=white_DIN99d_XYZ)
-							L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v * 100
-																	  for v in XYZ])
-							if display_LCH:
-								Ld, Cd, Hd = display_LCH[row]
-								Lc = (Ld / L99)
-								if C99:
-									# Limit desaturation to general chroma
-									# compression factor
-									Cc = max(min(Cd / C99, 1.0),
-											 general_compression_factor)
-								else:
-									Cc = 1.0
-							else:
-								Lc = Cc = general_compression_factor
-								Lc **= ((C99 / Cmax) ** 4)
-								Cc **= (C99 / Cmax)
-							#L99 *= Lc
-							#L99 = L99 * (1 - blend) + (L99 * Lc) * blend
-							C99 *= Cc
-							#if yellow_saturation_tweak:
-								## Yellow saturation tweak.
-								## Increases preservation of yellow saturation.
-								#hues = (40.0, 60.0, 100.0, 125.0)
-								#if hues[0] <= H99 <= hues[1]:
-									## 0 at hues[1] degrees, 1 at hues[0]
-									#blend *= 1 - (H99 - hues[0]) / (hues[1] - hues[0])
-								#elif hues[1] <= H99 <= hues[2]:
-									#blend = 0
-								#elif hues[2] <= H99 <= hues[3]:
-									## 0 at hues[2] degrees, 1 at hues[3]
-									#blend *= (H99 - hues[2]) / (hues[3] - hues[2])
-							#C99 = C99 * (1 - blend) + (C99 * Cc) * blend
-							L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
+							L, a, b = colormath.DIN99dLCH2Lab(L, C, H)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
 							X, Y, Z = colormath.adapt(X, Y, Z,
 													  whitepoint_source=white_DIN99d_XYZ)
+					else:
+						safe_print("CLUT grid point %i %i %i: blend = 0" %
+								   (col_0, col_1, col_2))
 				if rolloff and 0 and (max(X, Y, Z) * 32768 > 65535 or
 									  min(X, Y, Z) < 0):
 					# Deal with out-of-range colors
@@ -1246,7 +1277,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	##for a in xrange(clutres):
 		##for b in xrange(clutres):
 			##itable.clut.append([])
-			##debugtable.clut.append([])
+			##debugtable0.clut.append([])
 			##for c in xrange(clutres):
 				##if worker and worker.thread_abort:
 					##if forward_xicclu:
@@ -1257,8 +1288,16 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				##X, Y, Z = display_XYZ[row]
 				itable.clut[-1].append([min(max(v * 32768, 0), 65535)
 										for v in (X, Y, Z)])
-				debugtable.clut[-1].append([min(max(v * 65535, 0), 65535)
-											for v in RGB])
+				debugtable0.clut[-1].append([min(max(v * 65535, 0), 65535)
+											for v in (R, G, B)])
+				if not display_RGB:
+					debugtable1.clut[-1].append([0, 0, 0])
+				if display_XYZ:
+					XYZdisp = display_XYZ[row]
+				else:
+					XYZdisp = [0, 0, 0]
+				debugtable2.clut[-1].append([min(max(v * 65535, 0), 65535)
+											for v in XYZdisp])
 				row += 1
 				perc = startperc + math.floor(row / clutres ** 3.0 *
 											  (100 - startperc))
@@ -2232,6 +2271,101 @@ class LUT16Type(ICCProfileTag):
 	def output_entries_count(self):
 		""" Return number of entries per output channel. """
 		return self._m
+
+	def smooth(self, diagpng=2, pcs=None, filename=None, logfile=None):
+		""" Apply extra smoothing to the cLUT """
+		if not pcs:
+			if self.profile:
+				pcs = self.profile.connectionColorSpace
+			else:
+				raise TypeError("PCS not specified")
+
+		if not filename and self.profile:
+			filename = self.profile.fileName
+
+		clutres = len(self.clut[0])
+
+		sig = self.tagSignature or id(self)
+
+		if diagpng and filename:
+			# Generate diagnostic images
+			fname, ext = os.path.splitext(filename)
+			if diagpng == 2:
+				self.clut_writepng(fname + ".%s.pre-smoothing.CLUT.png" %
+								   sig)
+
+		if logfile:
+			logfile.write("Smoothing %s...\n" % sig)
+		# Create a list of <clutres> number of 2D grids, each one with a
+		# size of (width x height) <clutres> x <clutres>
+		grids = []
+		for i, block in enumerate(self.clut):
+			if i % clutres == 0:
+				grids.append([])
+			grids[-1].append([])
+			for RGB in block:
+				grids[-1][-1].append(RGB)
+		for i, grid in enumerate(grids):
+			for y in xrange(clutres):
+				for x in xrange(clutres):
+					is_dark = sum(grid[y][x]) < 65535 * .03125 * 3
+					if pcs == "XYZ":
+						is_gray = x == y == i
+					elif clutres // 2 != clutres / 2.0:
+						# For CIELab cLUT, gray will only
+						# fall on a cLUT point if uneven cLUT res
+						is_gray = x == y == clutres // 2
+					else:
+						is_gray = False
+					##print i, y, x, "%i %i %i" % tuple(v / 655.35 * 2.55 for v in grid[y][x]), is_dark, raw_input(is_gray) if is_gray else ''
+					if is_dark or is_gray:
+						# Don't smooth dark colors and gray axis
+						continue
+					RGB = [[v] for v in grid[y][x]]
+					# Use either "plus"-shaped or box filter depending if one
+					# channel is fully saturated
+					if [65535.0] in RGB:
+						# Filter with a "plus" (+) shape
+						if (pcs == "Lab" and
+							i > clutres / 2.0):
+							# Smoothing factor for L*a*b* -> RGB cLUT above 50%
+							smooth = 0.25
+						else:
+							smooth = 1.0
+						for j, c in enumerate((x, y)):
+							if c > 0 and c < clutres - 1 and y < clutres - 1:
+								for n in (-1, 1):
+									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k] * smooth +
+													  RGB[k][0] * (1 - smooth))
+					else:
+						# Box filter, 3x3
+						# Center pixel weight = 1.0, surround = 0.5
+						for j in (0, 1):
+							for n in (-1, 1):
+								yi, xi = (y, y + n)[j], (x + n, x)[j]
+								if (xi > -1 and yi > -1 and
+									xi < clutres and yi < clutres):
+									RGBn = grid[yi][xi]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k] * 0.5 +
+													  RGB[k][0] * 0.5)
+								yi, xi = y - n, (x + n, x - n)[j]
+								if (xi > -1 and yi > -1 and
+									xi < clutres and yi < clutres):
+									RGBn = grid[yi][xi]
+									for k in xrange(3):
+										RGB[k].append(RGBn[k] * 0.5 +
+													  RGB[k][0] * 0.5)
+					grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
+			for j, row in enumerate(grid):
+				self.clut[i * clutres + j] = [[v for v in RGB]
+											   for RGB in row]
+
+		if diagpng and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.extrasmooth.png" %
+							   sig)
 	
 	@Property
 	def tagData():

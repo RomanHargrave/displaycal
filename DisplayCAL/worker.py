@@ -1877,8 +1877,7 @@ class Worker(object):
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
 								 apply_trc=True, white_cdm2=100, maxcll=10000,
-								 hdr_tonemapping=False,
-								 yellow_saturation_tweak=True):
+								 hdr_tonemapping=False):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -1942,20 +1941,23 @@ class Worker(object):
 									self.lastmsg])
 				if hdr_tonemapping:
 					xf = Xicclu(profile2, "r", direction="f", pcs="x",
-								use_cam_clipping=True, worker=self)
+								worker=self)
 					xb = Xicclu(profile2, "r", direction="if", pcs="x",
 								use_cam_clipping=True, worker=self)
 				else:
 					xf=None
 					xb=None
-				profile1.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+				profile = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
 					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, maxcll,
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
-					yellow_saturation_tweak=yellow_saturation_tweak,
-					worker=self, logfile=logfiles).tags.A2B0
+					worker=self, logfile=logfiles)
+				profile1.tags.A2B0 = profile.tags.A2B0
+				profile1.tags.DBG0 = profile.tags.DBG0
+				profile1.tags.DBG1 = profile.tags.DBG1
+				profile1.tags.DBG2 = profile.tags.DBG2
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp)
@@ -2546,7 +2548,9 @@ class Worker(object):
 				b2a = profile_out.tags.get("B2A1", profile_out.tags.get("B2A0"))
 				if not b2a or (isinstance(b2a, ICCP.LUT16Type) and
 							   b2a.clut_grid_steps < 17):
-					self.update_profile_B2A(profile_out, False)
+					b2aresult = self.update_profile_B2A(profile_out, False)
+					if isinstance(b2aresult, Exception):
+						raise b2aresult
 					profile_out.write()
 
 			# Prepare building a device link
@@ -2678,8 +2682,7 @@ class Worker(object):
 											  trc_gamma_type,
 											  white_cdm2=white_cdm2,
 											  maxcll=maxcll,
-											  hdr_tonemapping=True,
-											  yellow_saturation_tweak=False)
+											  hdr_tonemapping=False)
 
 				fd, profile_src.fileName = tempfile.mkstemp(src_ext,
 															"%s-" % src_name,
@@ -2883,6 +2886,18 @@ class Worker(object):
 						profile_in.tags.A2B0.clut_writepng(
 							os.path.splitext(profile_in.fileName)[0] + 
 							".A2B0.CLUT.png")
+						# HDR RGB
+						profile_in.tags.DBG0.clut_writepng(
+							os.path.splitext(profile_in.fileName)[0] + 
+							".DBG0.CLUT.png")
+						# Display RGB
+						profile_in.tags.DBG1.clut_writepng(
+							os.path.splitext(profile_in.fileName)[0] + 
+							".DBG1.CLUT.png")
+						# Display XYZ
+						profile_in.tags.DBG2.clut_writepng(
+							os.path.splitext(profile_in.fileName)[0] + 
+							".DBG2.CLUT.png")
 
 			if is_argyll_lut_format:
 				# Collink has already written the 3DLUT for us
@@ -4591,7 +4606,7 @@ while 1:
 			logfile.write("Creating perceptual A2B0 table\n")
 			logfile.write("\n")
 		# Make new A2B0
-		A2B0 = ICCP.LUT16Type()
+		A2B0 = ICCP.LUT16Type(None, "A2B0", profile)
 		# Matrix (identity)
 		A2B0.matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 		# Input / output curves (linear)
@@ -4843,7 +4858,7 @@ while 1:
 		xpB = [v[2] for v in odata]
 
 		# Initialize B2A
-		itable = ICCP.LUT16Type()
+		itable = ICCP.LUT16Type(None, "B2A%i" % tableno, profile)
 
 		use_cam_clipping = True
 		
@@ -5364,10 +5379,11 @@ while 1:
 		if getcfg("profile.b2a.hires.diagpng") and filename:
 			# Generate diagnostic images
 			fname, ext = os.path.splitext(filename)
-			for suffix, table in [("pre", profile.tags["B2A%i" % tableno]),
+			for suffix, table in [("pre", profile.tags.get("B2A%i" % tableno)),
 								  ("post", itable)]:
-				table.clut_writepng(fname + ".B2A%i.%s.CLUT.png" %
-									(tableno, suffix))
+				if table:
+					table.clut_writepng(fname + ".B2A%i.%s.CLUT.png" %
+										(tableno, suffix))
 
 		# Update profile
 		profile.tags["B2A%i" % tableno] = itable
@@ -5390,95 +5406,10 @@ while 1:
 	def smooth_B2A(self, profile, tableno, diagpng=2, filename=None,
 				   logfile=None):
 		""" Apply extra smoothing to the cLUT """
-		if not filename:
-			filename = profile.fileName
-
 		itable = profile.tags.get("B2A%i" % tableno)
 		if not itable:
 			return False
-
-		clutres = len(itable.clut[0])
-
-		if diagpng and filename:
-			# Generate diagnostic images
-			fname, ext = os.path.splitext(filename)
-			if diagpng == 2:
-				itable.clut_writepng(fname + ".B2A%i.pre-smoothing.CLUT.png" %
-									 tableno)
-
-		if logfile:
-			logfile.write("Smoothing B2A%i...\n" % tableno)
-		# Create a list of <clutres> number of 2D grids, each one with a
-		# size of (width x height) <clutres> x <clutres>
-		grids = []
-		for i, block in enumerate(itable.clut):
-			if i % clutres == 0:
-				grids.append([])
-			grids[-1].append([])
-			for RGB in block:
-				grids[-1][-1].append(RGB)
-		for i, grid in enumerate(grids):
-			for y in xrange(clutres):
-				for x in xrange(clutres):
-					is_dark = sum(grid[y][x]) < 65535 * .03125 * 3
-					if profile.connectionColorSpace == "XYZ":
-						is_gray = x == y == i
-					elif clutres // 2 != clutres / 2.0:
-						# For CIELab cLUT, gray will only
-						# fall on a cLUT point if uneven cLUT res
-						is_gray = x == y == clutres // 2
-					else:
-						is_gray = False
-					##print i, y, x, "%i %i %i" % tuple(v / 655.35 * 2.55 for v in grid[y][x]), is_dark, raw_input(is_gray) if is_gray else ''
-					if is_dark or is_gray:
-						# Don't smooth dark colors and gray axis
-						continue
-					RGB = [[v] for v in grid[y][x]]
-					# Use either "plus"-shaped or box filter depending if one
-					# channel is fully saturated
-					if [65535.0] in RGB:
-						# Filter with a "plus" (+) shape
-						if (profile.connectionColorSpace == "Lab" and
-							i > clutres / 2.0):
-							# Smoothing factor for L*a*b* -> RGB cLUT above 50%
-							smooth = 0.25
-						else:
-							smooth = 1.0
-						for j, c in enumerate((x, y)):
-							if c > 0 and c < clutres - 1 and y < clutres - 1:
-								for n in (-1, 1):
-									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k] * smooth +
-													  RGB[k][0] * (1 - smooth))
-					else:
-						# Box filter, 3x3
-						# Center pixel weight = 1.0, surround = 0.5
-						for j in (0, 1):
-							for n in (-1, 1):
-								yi, xi = (y, y + n)[j], (x + n, x)[j]
-								if (xi > -1 and yi > -1 and
-									xi < clutres and yi < clutres):
-									RGBn = grid[yi][xi]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k] * 0.5 +
-													  RGB[k][0] * 0.5)
-								yi, xi = y - n, (x + n, x - n)[j]
-								if (xi > -1 and yi > -1 and
-									xi < clutres and yi < clutres):
-									RGBn = grid[yi][xi]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k] * 0.5 +
-													  RGB[k][0] * 0.5)
-					grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
-			for j, row in enumerate(grid):
-				itable.clut[i * clutres + j] = [[v for v in RGB]
-												for RGB in row]
-
-		if diagpng and filename:
-			itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
-								 tableno)
-
+		itable.smooth(diagpng, profile.connectionColorSpace, filename, logfile)
 		return True
 	
 	def get_device_id(self, quirk=True, use_serial_32=True,
@@ -7374,7 +7305,8 @@ usage: spotread [-options] [logfile]
 				if "B2A0" in profile.tags:
 					# Copy B2A0
 					B2A0 = profile.tags.B2A0
-					profile.tags.B2A1 = B2A1 = ICCP.LUT16Type()
+					profile.tags.B2A1 = B2A1 = ICCP.LUT16Type(None, "B2A1",
+															  profile)
 					B2A1.matrix = []
 					for row in B2A0.matrix:
 						B2A1.matrix.append(list(row))
