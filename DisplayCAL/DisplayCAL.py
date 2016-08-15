@@ -13195,6 +13195,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if 'BEGIN_DATA_FORMAT' in ti3_lines:
 					cfgend = ti3_lines.index('BEGIN_DATA_FORMAT')
 					cfgpart = CGATS.CGATS("\n".join(ti3_lines[:cfgend]))
+					lut3d_trc_set = False
 					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
 											 "profile.b2a.hires.size",
 											 "HIRES_B2A_SIZE":
@@ -13312,18 +13313,21 @@ class MainFrame(ReportFrame, BaseFrame):
 									setcfg("3dlut.enable", 1)
 								if cfgvalue in ("eeColor", "madVR"):
 									setcfg("measurement_report.use_devlink_profile", 0)
+							elif cfgname == "3dlut.trc":
+								lut3d_trc_set = True
 					# Make sure 3D LUT TRC enumeration matches parameters for
 					# older profiles not containing 3DLUT_TRC
-					if (getcfg("3dlut.trc_gamma_type") == "B" and
-						getcfg("3dlut.trc_output_offset") == 0 and
-						getcfg("3dlut.trc_gamma") == 2.4):
-						setcfg("3dlut.trc", "bt1886")  # BT.1886
-					elif (getcfg("3dlut.trc_gamma_type") == "b" and
-						getcfg("3dlut.trc_output_offset") == 1 and
-						getcfg("3dlut.trc_gamma") == 2.2):
-						setcfg("3dlut.trc", "gamma2.2")  # Pure power gamma 2.2
-					elif getcfg("3dlut.trc") == defaults["3dlut.trc"]:
-						setcfg("3dlut.trc", "customgamma")  # Custom
+					if not lut3d_trc_set:
+						if (getcfg("3dlut.trc_gamma_type") == "B" and
+							getcfg("3dlut.trc_output_offset") == 0 and
+							getcfg("3dlut.trc_gamma") == 2.4):
+							setcfg("3dlut.trc", "bt1886")  # BT.1886
+						elif (getcfg("3dlut.trc_gamma_type") == "b" and
+							getcfg("3dlut.trc_output_offset") == 1 and
+							getcfg("3dlut.trc_gamma") == 2.2):
+							setcfg("3dlut.trc", "gamma2.2")  # Pure power gamma 2.2
+						else:
+							setcfg("3dlut.trc", "customgamma")  # Custom
 				if not display_match:
 					self.update_menus()
 					if not update_ccmx_items:
