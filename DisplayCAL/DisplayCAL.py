@@ -8353,8 +8353,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
 			dlg.OnCloseIntercept = self.profile_finish_close_handler
-			# Make sure we stay under our dialog
-			self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
+			if sys.platform != "win32":
+				# Make sure we stay under our dialog
+				self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
 			dlg.Show()
 		else:
 			if isinstance(result, Exception):
