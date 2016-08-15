@@ -37,6 +37,7 @@ if sys.platform == "win32":
 	import pythoncom
 	import win32api
 	import win32con
+	import win32event
 elif sys.platform != "darwin":
 	try:
 		import dbus
@@ -4415,10 +4416,21 @@ while 1:
 					try:
 						if (asroot and sys.platform == "win32" and
 							sys.getwindowsversion() >= (6, )):
-							win32com_shell.ShellExecuteEx(lpVerb="runas",
-														  lpFile=cmd,
-														  lpParameters=" ".join(quote_args(args)))
-							return True
+							SEE_MASK_NOASYNC = 0x00000100
+							SEE_MASK_NOCLOSEPROCESS = 0x00000040
+							fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS
+							p = win32com_shell.ShellExecuteEx(fMask=fMask,
+															  lpVerb="runas",
+															  lpFile=cmd,
+															  lpParameters=" ".join(quote_args(args)))
+							while not self.subprocess_abort:
+								# Wait for subprocess to exit
+								self.retcode = win32event.WaitForSingleObject(p["hProcess"],
+																			  50)
+								if not self.retcode:
+									break
+							p["hProcess"].Close()
+							return self.retcode == 0
 						else:
 							self.subprocess = sp.Popen(cmdline, stdin=stdin,
 													   stdout=stdout,
