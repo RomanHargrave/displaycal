@@ -676,7 +676,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None,
 	return True
 
 
-def get_argyll_data_files(scope, wildcard):
+def get_argyll_data_files(scope, wildcard, include_lastmod=False):
 	"""
 	Get paths of Argyll data files.
 	
@@ -706,6 +706,15 @@ def get_argyll_data_files(scope, wildcard):
 	if "u" in scope:
 		data_files += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
 											 wildcard))
+	if include_lastmod:
+		filenames = list(data_files)
+		data_files = []
+		for filename in filenames:
+			try:
+				lastmod = os.stat(filename).st_mtime
+			except EnvironmentError:
+				lastmod = -1
+			data_files.append((filename, lastmod))
 	return data_files
 
 
@@ -10156,11 +10165,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		if sys.platform == "win32":
 			msg = " ".join([lang.getstr("oem.import.auto_windows"), msg])
 		result = None
-		i1d3 = False
+		i1d3 = None
 		i1d3ccss = None
-		spyd4 = False
+		spyd4 = None
 		spyd4en = None
-		icd = False
+		icd = None
 		oeminst = get_argyll_util("oeminst")
 		importers = []
 		if not oeminst:
@@ -10267,6 +10276,17 @@ class MainFrame(ReportFrame, BaseFrame):
 	def import_colorimeter_correction(self, result, i1d3, i1d3ccss, spyd4,
 									  spyd4en, icd, oeminst, path, asroot):
 		""" Import colorimter correction(s) from path """
+		if debug:
+			safe_print("import_colorimeter_correction <-")
+			safe_print("   result:", result)
+			safe_print("   i1d3:", i1d3)
+			safe_print("   i1d3ccss:", i1d3ccss)
+			safe_print("   spyd4:", spyd4)
+			safe_print("   spyd4en:", spyd4en)
+			safe_print("   icd:", icd)
+			safe_print("   oeminst:", oeminst)
+			safe_print("   path:", path)
+			safe_print("   asroot:", asroot)
 		if path and os.path.exists(path):
 			filename, ext = os.path.splitext(path)
 			kind = None
@@ -10368,10 +10388,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			elif kind == "xrite":
 				# Import .edr
 				if asroot and sys.platform == "win32":
-					ccss = get_argyll_data_files("l", "*.ccss")
+					ccss = get_argyll_data_files("l", "*.ccss", True)
 				result = i1d3 = self.worker.import_edr([path], asroot=asroot)
 				if asroot and sys.platform == "win32":
-					result = i1d3 = get_argyll_data_files("l", "*.ccss") != ccss
+					result = i1d3 = get_argyll_data_files("l", "*.ccss", True) != ccss
 			elif kind == "spyder4":
 				# Import spyd4cal.bin
 				result = spyd4 = self.worker.import_spyd4cal([path],
@@ -10380,13 +10400,13 @@ class MainFrame(ReportFrame, BaseFrame):
 					result = spyd4 = get_argyll_data_files("l", "spyd4cal.bin")
 			elif oeminst and not icolordisplay:
 				if asroot and sys.platform == "win32":
-					ccss = get_argyll_data_files("l", "*.ccss")
+					ccss = get_argyll_data_files("l", "*.ccss", True)
 				result = self.worker.import_colorimeter_corrections(oeminst,
 																	[path],
 																	asroot)
 				if (".ccss" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
-					 get_argyll_data_files("l", "*.ccss") != ccss)):
+					 get_argyll_data_files("l", "*.ccss", True) != ccss)):
 					i1d3 = result
 				if ("spyd4cal.bin" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
@@ -10395,6 +10415,17 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				result = Error(lang.getstr("error.file_type_unsupported") +
 							   "\n" + path)
+		if debug:
+			safe_print("import_colorimeter_correction ->")
+			safe_print("   result:", result)
+			safe_print("   i1d3:", i1d3)
+			safe_print("   i1d3ccss:", i1d3ccss)
+			safe_print("   spyd4:", spyd4)
+			safe_print("   spyd4en:", spyd4en)
+			safe_print("   icd:", icd)
+			safe_print("   oeminst:", oeminst)
+			safe_print("   path:", path)
+			safe_print("   asroot:", asroot)
 		return result, i1d3, spyd4, icd
 	
 	def import_colorimeter_corrections_producer(self, result, i1d3, i1d3ccss,
@@ -10408,14 +10439,14 @@ class MainFrame(ReportFrame, BaseFrame):
 															   i1d3ccss,
 															   spyd4en]):
 				if asroot and sys.platform == "win32":
-					ccss = get_argyll_data_files("l", "*.ccss")
+					ccss = get_argyll_data_files("l", "*.ccss", True)
 				result = self.worker.import_colorimeter_corrections(importer,
 																	asroot=asroot)
 				if isinstance(result, Exception) or not result:
 					continue
 				if (".ccss" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
-					 get_argyll_data_files("l", "*.ccss") != ccss)):
+					 get_argyll_data_files("l", "*.ccss", True) != ccss)):
 					i1d3 = result
 				if ("spyd4cal.bin" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
@@ -10516,13 +10547,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		imported = []
-		if i1d3 and not isinstance(i1d3, Exception):
-			imported.append("i1 Profiler/ColorMunki Display")
-		if spyd4 and not isinstance(spyd4, Exception):
-			imported.append("Spyder4/5")
-			self.update_measurement_modes()
-		if icd and not isinstance(icd, Exception):
-			imported.append("iColor Display")
+		failures = []
+		mapping = {"i1 Profiler/ColorMunki Display": i1d3,
+				   "Spyder4/5": spyd4,
+				   "iColor Display": icd}
+		for name, subresult in mapping.iteritems():
+			if subresult and not isinstance(subresult, Exception):
+				imported.append(name)
+			elif subresult is not None:
+				failures.append(name)
 		if imported:
 			self.update_colorimeter_correction_matrix_ctrl_items(True)
 			InfoDialog(self,
@@ -10530,9 +10563,10 @@ class MainFrame(ReportFrame, BaseFrame):
 									   "\n".join(imported)), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
-		elif result is not None:
+		if failures:
 			error = ("".join(self.worker.errors) or
-					 lang.getstr("colorimeter_correction.import.failure"))
+					 lang.getstr("colorimeter_correction.import.failure") +
+					 "\n\n" + "\n".join(failures))
 			show_result_dialog(UnloggedError(error), self)
 		if callafter:
 			wx.CallAfter(callafter, *callafter_args)
