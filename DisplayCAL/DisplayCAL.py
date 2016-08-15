@@ -13277,6 +13277,18 @@ class MainFrame(ReportFrame, BaseFrame):
 									setcfg("3dlut.enable", 1)
 								if cfgvalue in ("eeColor", "madVR"):
 									setcfg("measurement_report.use_devlink_profile", 0)
+					# Make sure 3D LUT TRC enumeration matches parameters for
+					# older profiles not containing 3DLUT_TRC
+					if (getcfg("3dlut.trc_gamma_type") == "B" and
+						getcfg("3dlut.trc_output_offset") == 0 and
+						getcfg("3dlut.trc_gamma") == 2.4):
+						setcfg("3dlut.trc", "bt1886")  # BT.1886
+					elif (getcfg("3dlut.trc_gamma_type") == "b" and
+						getcfg("3dlut.trc_output_offset") == 1 and
+						getcfg("3dlut.trc_gamma") == 2.2):
+						setcfg("3dlut.trc", "gamma2.2")  # Pure power gamma 2.2
+					elif getcfg("3dlut.trc") == defaults["3dlut.trc"]:
+						setcfg("3dlut.trc", "customgamma")  # Custom
 				if not display_match:
 					self.update_menus()
 					if not update_ccmx_items:
