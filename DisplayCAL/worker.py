@@ -6647,38 +6647,6 @@ usage: spotread [-options] [logfile]
 		# See http://standards.freedesktop.org/autostart-spec
 		# Must return either True on success or an Exception object on error
 		result = True
-		# Remove outdated (pre-0.5.5.9) profile loaders
-		name = "%s-Calibration-Loader-Display-%s" % (appname,
-													 self.get_display())
-		desktopfile_path = os.path.join(autostart_home, 
-										name + ".desktop")
-		oy_desktopfile_path = os.path.join(autostart_home, 
-										   "oyranos-monitor.desktop")
-		system_desktopfile_path = os.path.join(
-			autostart, name + ".desktop")
-		# Remove old (pre-0.5.5.9) dispwin user loader
-		if os.path.exists(desktopfile_path):
-			try:
-				os.remove(desktopfile_path)
-			except Exception, exception:
-				result = Warning(lang.getstr("error.autostart_remove_old", 
-										     desktopfile_path))
-		# Remove old (pre-0.5.5.9) oyranos user loader
-		if os.path.exists(oy_desktopfile_path):
-			try:
-				os.remove(oy_desktopfile_path)
-			except Exception, exception:
-				result = Warning(lang.getstr("error.autostart_remove_old", 
-										     oy_desktopfile_path))
-		# Remove old (pre-0.5.5.9) dispwin system loader
-		if (os.path.exists(system_desktopfile_path) and
-		    (self.exec_cmd("rm", ["-f", system_desktopfile_path], 
-								 capture_output=True, low_contrast=False, 
-								 skip_scripts=True, silent=False, asroot=True, 
-								 title=lang.getstr("autostart_remove_old")) 
-			 is not True) and not silent):
-			result = Warning(lang.getstr("error.autostart_remove_old", 
-									     system_desktopfile_path))
 		# Create unified loader
 		# Prepend 'z' so our loader hopefully loads after
 		# possible nvidia-settings entry (which resets gamma table)
