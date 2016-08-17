@@ -107,7 +107,7 @@
                   <object class="wxStaticText" name="environment_label">
                     <label>environment</label>
                   </object>
-                  <flag>wxLEFT</flag>
+                  <flag>wxLEFT|wxEXPAND</flag>
                   <border>16</border>
                 </object>
               </object>

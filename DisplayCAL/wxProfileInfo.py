@@ -30,7 +30,7 @@ from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanelText,
 					   CustomCheckBox, CustomGrid, CustomRowLabelRenderer,
 					   ConfirmDialog, FileDrop, InfoDialog, SimpleBook,
 					   TwoWaySplitter)
-from wxfixes import GenBitmapButton as BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton, wx_Panel
 import colormath
 import config
 import wxenhancedplot as plot
@@ -642,17 +642,18 @@ class GamutCanvas(LUTCanvas):
 		self.order = order
 
 
-class GamutViewOptions(wx.Panel):
+class GamutViewOptions(wx_Panel):
 	
 	def __init__(self, *args, **kwargs):
 		scale = getcfg("app.dpi") / config.get_default_dpi()
 		if scale < 1:
 			scale = 1
 
-		wx.Panel.__init__(self, *args, **kwargs)
+		wx_Panel.__init__(self, *args, **kwargs)
 		self.SetBackgroundColour(BGCOLOUR)
 		self.sizer = wx.FlexGridSizer(0, 3, 4, 0)
 		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
 		self.sizer.AddGrowableCol(2)
 		self.SetSizer(self.sizer)
 
@@ -695,7 +696,8 @@ class GamutViewOptions(wx.Panel):
 		
 		self.sizer.Add((0, 0))
 		self.options_sizer = wx.FlexGridSizer(0, 3, 4, 8)
-		self.sizer.Add(self.options_sizer)
+		self.options_sizer.AddGrowableCol(2)
+		self.sizer.Add(self.options_sizer, flag=wx.EXPAND)
 		
 		# Colorspace select
 		self.colorspace_outline_bmp = wx.StaticBitmap(self, -1,
@@ -720,7 +722,7 @@ class GamutViewOptions(wx.Panel):
 														  "DIN99d",
 														  "CtCp"])
 		self.options_sizer.Add(self.colorspace_select, 
-							   flag=wx.ALIGN_CENTER_VERTICAL)
+							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.colorspace_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
 		self.colorspace_select.SetSelection(0)
 		
@@ -755,7 +757,7 @@ class GamutViewOptions(wx.Panel):
 														  lang.getstr("whitepoint.colortemp.locus.daylight"),
 														  lang.getstr("whitepoint.colortemp.locus.blackbody")])
 		self.options_sizer.Add(self.whitepoint_select, 
-							   flag=wx.ALIGN_CENTER_VERTICAL)
+							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.whitepoint_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
 		self.whitepoint_select.SetSelection(0)
 		self.whitepoint_bmp.Hide()
@@ -791,7 +793,7 @@ class GamutViewOptions(wx.Panel):
 												   choices=[])
 		self.comparison_profiles_sort()
 		self.options_sizer.Add(self.comparison_profile_select, 
-							   flag=wx.ALIGN_CENTER_VERTICAL)
+							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.comparison_profile_select.Bind(wx.EVT_CHOICE,
 											self.comparison_profile_select_handler)
 		droptarget = FileDrop(self.TopLevelParent,
@@ -817,7 +819,7 @@ class GamutViewOptions(wx.Panel):
 														  lang.getstr("gamap.intents.p"),
 														  lang.getstr("gamap.intents.s")])
 		self.options_sizer.Add(self.rendering_intent_select, 
-							   flag=wx.ALIGN_CENTER_VERTICAL)
+							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.rendering_intent_select.Bind(wx.EVT_CHOICE,
 										  self.rendering_intent_select_handler)
 		self.rendering_intent_select.SetSelection(0)
@@ -838,7 +840,7 @@ class GamutViewOptions(wx.Panel):
 										  choices=[lang.getstr("direction.forward"),
 												   lang.getstr("direction.backward.inverted")])
 		self.options_sizer.Add(self.direction_select,
-							   flag=wx.ALIGN_CENTER_VERTICAL)
+							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
 		self.direction_select.SetSelection(0)
 		self.direction_select.Hide()
@@ -1004,7 +1006,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.splitter = TwoWaySplitter(self, -1, agwStyle = wx.SP_LIVE_UPDATE | wx.SP_NOSASH)
 		self.sizer.Add(self.splitter, 1, flag=wx.EXPAND)
 		
-		p1 = wx.Panel(self.splitter, name="canvaspanel")
+		p1 = wx_Panel(self.splitter, name="canvaspanel")
 		p1.SetBackgroundColour(BGCOLOUR)
 		p1.sizer = wx.BoxSizer(wx.VERTICAL)
 		p1.SetSizer(p1.sizer)
@@ -1092,7 +1094,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.options_panel.AddPage(self.gamut_view_options, "")
 		
 		# Curve view options
-		self.lut_view_options = wx.Panel(p1, name="lut_view_options")
+		self.lut_view_options = wx_Panel(p1, name="lut_view_options")
 		self.lut_view_options.SetBackgroundColour(BGCOLOUR)
 		self.lut_view_options_sizer = self.box_sizer = wx.FlexGridSizer(0, 3, 4, 4)
 		self.lut_view_options_sizer.AddGrowableCol(0)
@@ -1176,7 +1178,7 @@ class ProfileInfoFrame(LUTFrame):
 		
 		self.lut_view_options_sizer.Add((0, 0))
 		
-		p2 = wx.Panel(self.splitter, name="gridpanel")
+		p2 = wx_Panel(self.splitter, name="gridpanel")
 		p2.sizer = wx.BoxSizer(wx.VERTICAL)
 		p2.SetSizer(p2.sizer)
 		self.splitter.AppendWindow(p2)

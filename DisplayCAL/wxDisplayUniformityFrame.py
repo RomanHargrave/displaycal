@@ -22,7 +22,8 @@ from meta import name as appname, version as appversion
 from util_os import launch_file, waccess
 from wxaddons import CustomEvent
 from wxMeasureFrame import MeasureFrame
-from wxwindows import BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes
+from wxwindows import (BaseApp, BaseFrame, FlatShadedButton,
+					   numpad_keycodes, wx_Panel)
 import colormath
 import config
 import localization as lang
@@ -73,7 +74,7 @@ class DisplayUniformityFrame(BaseFrame):
 		self.panels = []
 		self.buttons = []
 		for index in xrange(rows * cols):
-			panel = wx.Panel(self, style=wx.BORDER_SIMPLE)
+			panel = wx_Panel(self, style=wx.BORDER_SIMPLE)
 			panel.SetBackgroundColour(BGCOLOUR)
 			sizer = wx.BoxSizer(wx.VERTICAL)
 			panel.SetSizer(sizer)

@@ -27,7 +27,8 @@ from meta import name as appname
 from ordereddict import OrderedDict
 from util_list import intlist
 from util_str import safe_unicode, wrap
-from wxwindows import BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes
+from wxwindows import (BaseApp, BaseFrame, FlatShadedButton,
+					   numpad_keycodes, wx_Panel)
 import audio
 import config
 import localization as lang
@@ -39,7 +40,7 @@ FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 CRT = True
 
 def get_panel(parent, size=wx.DefaultSize):
-	panel = wx.Panel(parent, wx.ID_ANY, size=size)
+	panel = wx_Panel(parent, wx.ID_ANY, size=size)
 	if "--debug" in sys.argv[1:]:
 		from random import randint
 		panel.SetBackgroundColour(wx.Colour(randint(0, 255), randint(0, 255), randint(0, 255)))
@@ -447,10 +448,10 @@ class DisplayAdjustmentFlatImageBook(labelbook.FlatImageBook):
 		self._pages.Refresh()
 
 
-class DisplayAdjustmentPanel(wx.Panel):
+class DisplayAdjustmentPanel(wx_Panel):
 	
 	def __init__(self, parent=None, id=wx.ID_ANY, title="", ctrltype="luminance"):
-		wx.Panel.__init__(self, parent, id)
+		wx_Panel.__init__(self, parent, id)
 		self.ctrltype = ctrltype
 		self.SetBackgroundColour(BGCOLOUR)
 		self.SetForegroundColour(FGCOLOUR)
@@ -753,6 +754,10 @@ class DisplayAdjustmentFrame(BaseFrame):
 			self.Bind(wx.EVT_TIMER, handler, self.timer)
 		self.Bind(labelbook.EVT_IMAGENOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
+
+		if "gtk3" in wx.PlatformInfo:
+			# Fix background color not working for panels under GTK3
+			self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 		
 		# Final initialization steps
 		self.logger = get_file_logger("adjust")
@@ -762,6 +767,9 @@ class DisplayAdjustmentFrame(BaseFrame):
 		
 		if start_timer:
 			self.start_timer()
+
+	if "gtk3" in wx.PlatformInfo:
+		OnEraseBackground = wx_Panel.__dict__["OnEraseBackground"]
 	
 	def EndModal(self, returncode=wx.ID_OK):
 		return returncode

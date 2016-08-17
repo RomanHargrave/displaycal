@@ -191,6 +191,33 @@ wx._SpinCtrl = wx.SpinCtrl
 wx._StaticText = wx.StaticText
 if "gtk3" in wx.PlatformInfo:
 	# GTK3 fixes
+
+	class wx_Panel(wx.Panel):
+		# Fix panel background color not working under wxGTK3
+		def __init__(self, *args, **kwargs):
+			if not args and hasattr(wx, "PreFrame"):
+				pre = wx.PrePanel()
+				self.PostCreate(pre)
+				self.Bind(wx.EVT_WINDOW_CREATE, self.OnCreate)
+			else:
+				wx.Panel.__init__(self, *args, **kwargs)
+				self.OnCreate(None)
+
+		def OnCreate(self, event):
+			self.Unbind(wx.EVT_WINDOW_CREATE)
+			self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+		def OnEraseBackground(self, event):
+			dc = event.GetDC()
+			rect = self.GetClientRect()
+			dc.SetClippingRect(rect)
+			bgcolor = self.BackgroundColour
+			dc.BeginDrawing()
+			dc.SetBrush(wx.Brush(bgcolor, wx.SOLID))
+			dc.SetPen(wx.Pen(bgcolor, wx.SOLID))
+			dc.DrawRectangle(*rect)
+			dc.EndDrawing()
+
 	from wx import dataview
 	DataViewListCtrl = dataview.DataViewListCtrl
 
@@ -343,6 +370,8 @@ if "gtk3" in wx.PlatformInfo:
 		Label = property(lambda self: self.GetLabel(), SetLabel)
 
 	wx.StaticText = StaticText
+else:
+	wx_Panel = wx.Panel
 
 
 def Property(func):
@@ -1231,7 +1260,7 @@ class TempXmlResource(object):
 	def __init__(self, xmlpath):
 		from config import get_default_dpi, getcfg
 		scale = getcfg("app.dpi") / get_default_dpi()
-		if scale > 1:
+		if scale > 1 or "gtk3" in wx.PlatformInfo:
 			if not TempXmlResource._temp:
 				try:
 					TempXmlResource._temp = tempfile.mkdtemp(prefix=appname + u"-XRC-")
@@ -1260,6 +1289,10 @@ class TempXmlResource(object):
 				basedir = os.path.dirname(os.path.dirname(xmlpath))
 				basedir = basedir.replace("\\", "/")
 				xml = xml.replace(">../", ">%s/" % safe_str(basedir, "UTF-8"))
+				# Fix background color not working for panels under wxGTK3
+				if "gtk3" in wx.PlatformInfo:
+					xml = xml.replace('class="wxPanel"',
+									  'class="wxPanel" subclass="DisplayCAL.wxfixes.wx_Panel"')
 				# Write modified XML
 				xmlpath = os.path.join(TempXmlResource._temp,
 									   os.path.basename(xmlpath))

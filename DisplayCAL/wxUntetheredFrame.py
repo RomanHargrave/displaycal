@@ -20,7 +20,8 @@ from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug, test, verbose
 from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanel, CustomCheckBox,
-					   CustomGrid, FlatShadedButton, numpad_keycodes)
+					   CustomGrid, FlatShadedButton, numpad_keycodes,
+					   wx_Panel)
 import CGATS
 import audio
 import colormath
@@ -44,7 +45,7 @@ class UntetheredFrame(BaseFrame):
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableRow(0)
 		self.sizer.AddGrowableRow(1)
-		self.panel = wx.Panel(self)
+		self.panel = wx_Panel(self)
 		self.SetSizer(self.sizer)
 		self.sizer.Add(self.panel, 1, wx.EXPAND)
 		self.panel.SetBackgroundColour(BGCOLOUR)

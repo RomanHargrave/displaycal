@@ -132,7 +132,7 @@
                                       <object class="wxStaticText" name="display_box_label">
                                         <label>display</label>
                                       </object>
-                                      <flag>wxLEFT</flag>
+                                      <flag>wxLEFT|wxEXPAND</flag>
                                       <border>16</border>
                                     </object>
                                     <orient>wxVERTICAL</orient>
@@ -236,6 +236,7 @@
                                     <object class="sizeritem">
                                       <object class="wxStaticText" name="instrument_box_label">
                                         <label>instrument</label>
+                                        <flag>wxEXPAND</flag>
                                       </object>
                                     </object>
                                     <orient>wxVERTICAL</orient>
@@ -497,7 +498,7 @@
                               <object class="wxStaticText" name="calibration_settings_label">
                                 <label>calibration.settings</label>
                               </object>
-                              <flag>wxLEFT</flag>
+                              <flag>wxLEFT|wxEXPAND</flag>
                               <border>16</border>
                             </object>
                             <object class="spacer">
@@ -1097,7 +1098,7 @@
                               <object class="wxStaticText" name="profile_settings_label">
                                 <label>profile.settings</label>
                               </object>
-                              <flag>wxLEFT</flag>
+                              <flag>wxLEFT|wxEXPAND</flag>
                               <border>16</border>
                             </object>
                             <object class="spacer">
@@ -1417,7 +1418,7 @@
                               <object class="wxStaticText" name="lut3d_settings_label">
                                 <label>3dlut.settings</label>
                               </object>
-                              <flag>wxLEFT</flag>
+                              <flag>wxLEFT|wxEXPAND</flag>
                               <border>16</border>
                             </object>
                             <object class="spacer">

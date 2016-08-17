@@ -15,7 +15,7 @@
             <object class="wxStaticText" name="mr_settings_label">
               <label>verification.settings</label>
             </object>
-            <flag>wxLEFT</flag>
+            <flag>wxLEFT|wxEXPAND</flag>
             <border>16</border>
           </object>
           <orient>wxVERTICAL</orient>

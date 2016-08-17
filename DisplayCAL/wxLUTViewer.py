@@ -24,7 +24,7 @@ from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanelText,
 					   CustomCheckBox, FileDrop, InfoDialog, TooltipWindow)
-from wxfixes import GenBitmapButton as BitmapButton
+from wxfixes import GenBitmapButton as BitmapButton, wx_Panel
 import colormath
 import config
 import wxenhancedplot as plot
@@ -731,7 +731,7 @@ class LUTFrame(BaseFrame):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 
-		panel = wx.Panel(self)
+		panel = wx_Panel(self)
 		panel.SetBackgroundColour(BGCOLOUR)
 		self.sizer.Add(panel, flag=wx.EXPAND)
 		panel.SetSizer(wx.FlexGridSizer(0, 5, 0, 8))
@@ -780,11 +780,11 @@ class LUTFrame(BaseFrame):
 		self.client = LUTCanvas(self)
 		self.sizer.Add(self.client, 1, wx.EXPAND)
 		
-		self.box_panel = wx.Panel(self)
+		self.box_panel = wx_Panel(self)
 		self.box_panel.SetBackgroundColour(BGCOLOUR)
 		self.sizer.Add(self.box_panel, flag=wx.EXPAND)
 		
-		self.status = BitmapBackgroundPanelText(self)
+		self.status = BitmapBackgroundPanelText(self, name="statuspanel")
 		self.status.SetMaxFontSize(11)
 		self.status.label_y = 8
 		self.status.textshadow = False

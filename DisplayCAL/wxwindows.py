@@ -41,7 +41,7 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 ThemedGenButton, adjust_font_size_for_gcdc,
-					 get_dc_font_size, set_bitmap_labels)
+					 get_dc_font_size, set_bitmap_labels, wx_Panel)
 from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -99,6 +99,13 @@ class AboutDialog(wx.Dialog):
 
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
+
+		if "gtk3" in wx.PlatformInfo:
+			# Fix background color not working for panels under GTK3
+			self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+	if "gtk3" in wx.PlatformInfo:
+		OnEraseBackground = wx_Panel.__dict__["OnEraseBackground"]
 
 	def set_properties(self):
 		icon = wx.EmptyIcon()
@@ -1752,6 +1759,12 @@ class BaseFrame(wx.Frame):
 					if child.__class__.Label is not wx.StaticText.__dict__['Label']:
 						child.__class__.Label = property(child.__class__.GetLabel,
 														 child.__class__.SetLabel)
+				elif (isinstance(child, wx.ComboBox) and
+					  "gtk3" in wx.PlatformInfo):
+					# ComboBox is not wide enough to accomodate its text
+					# box under GTK3
+					child.MinSize = max(child.MinSize[0],
+										170 * scale), child.MinSize[1]
 				child.SetMaxFontSize(11)
 				if sys.platform == "darwin":
 					# Work around ComboBox issues on Mac OS X
@@ -1993,9 +2006,16 @@ class BitmapBackgroundPanel(wx.PyPanel):
 		self.repeat_sub_bitmap_h = None
 		self.scalebitmap = (True, False)
 		self.scalequality = wx.IMAGE_QUALITY_NORMAL
-		self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+		if "gtk3" in wx.PlatformInfo:
+			# Fix background color not working for panels under GTK3
+			self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+		else:
+			self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
+
+	if "gtk3" in wx.PlatformInfo:
+		OnEraseBackground = wx_Panel.__dict__["OnEraseBackground"]
 
 	def AcceptsFocus(self):
 		return False
@@ -5259,6 +5279,12 @@ class SimpleBook(labelbook.FlatBookBase):
 		self._mainSizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.SetSizer(self._mainSizer)
 		
+		if "gtk3" in wx.PlatformInfo:
+			# Fix background color not working for panels under GTK3
+			self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+
+	if "gtk3" in wx.PlatformInfo:
+		OnEraseBackground = wx_Panel.__dict__["OnEraseBackground"]
 
 	def CreateImageContainer(self):
 		""" Creates the image container (LabelContainer) class for L{FlatImageBook}. """
