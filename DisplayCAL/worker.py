@@ -6647,6 +6647,16 @@ usage: spotread [-options] [logfile]
 		# See http://standards.freedesktop.org/autostart-spec
 		# Must return either True on success or an Exception object on error
 		result = True
+		# Remove wrong-cased entry potentially created by DisplayCAL < 3.1.6
+		name = "z-%s-apply-profiles" % appname
+		desktopfile_path = os.path.join(autostart_home, 
+										name + ".desktop")
+		if os.path.exists(desktopfile_path):
+			try:
+				os.remove(desktopfile_path)
+			except Exception, exception:
+				result = Warning(lang.getstr("error.autostart_remove_old", 
+										     desktopfile_path))
 		# Create unified loader
 		# Prepend 'z' so our loader hopefully loads after
 		# possible nvidia-settings entry (which resets gamma table)
