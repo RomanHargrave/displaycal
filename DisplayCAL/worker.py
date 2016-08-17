@@ -6682,7 +6682,7 @@ usage: spotread [-options] [logfile]
 		# Create unified loader
 		# Prepend 'z' so our loader hopefully loads after
 		# possible nvidia-settings entry (which resets gamma table)
-		name = "z-%s-apply-profiles" % appname
+		name = "z-%s-apply-profiles" % appname.lower()
 		desktopfile_path = os.path.join(autostart_home, 
 										name + ".desktop")
 		system_desktopfile_path = os.path.join(autostart, name + ".desktop")
@@ -6710,7 +6710,7 @@ usage: spotread [-options] [logfile]
 			pyw = os.path.normpath(os.path.join(pydir, "..",
 												appname +
 												"-apply-profiles.pyw"))
-			icon = appname + "-apply-profiles"
+			icon = appname.lower() + "-apply-profiles"
 			if os.path.exists(pyw):
 				# Running from source, or 0install/Listaller install
 				# Check if this is a 0install implementation, in which
@@ -6724,11 +6724,11 @@ usage: spotread [-options] [logfile]
 								  (domain.lower(), appname))
 				else:
 					icon = os.path.join(pydir, "theme", "icons", "256x256",
-										appname + "-apply-profiles.png")
+										appname.lower() + "-apply-profiles.png")
 					executable = pyw
 			else:
 				# Regular install
-				executable = appname + "-apply-profiles"
+				executable = appname.lower() + "-apply-profiles"
 			desktopfile.write('Icon=%s\n' % icon.encode("UTF-8"))
 			desktopfile.write('Exec=%s\n' % executable.encode("UTF-8"))
 			desktopfile.write('Terminal=false\n')
