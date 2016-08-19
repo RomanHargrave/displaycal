@@ -1878,6 +1878,7 @@ class Worker(object):
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
 								 apply_trc=True, white_cdm2=100, maxcll=10000,
+								 content_rgb_space="DCI P3",
 								 hdr_tonemapping=False):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
@@ -1945,12 +1946,16 @@ class Worker(object):
 								worker=self)
 					xb = Xicclu(profile2, "r", direction="if", pcs="x",
 								use_cam_clipping=True, worker=self)
+					
+					self.log(lang.getstr("3dlut.content.colorspace") + " " +
+							 repr(content_rgb_space))
 				else:
 					xf=None
 					xb=None
 				profile = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
 					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, maxcll,
+					content_rgb_space=content_rgb_space,
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
@@ -2488,7 +2493,8 @@ class Worker(object):
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
-					 use_b2a=False, white_cdm2=100, maxcll=10000):
+					 use_b2a=False, white_cdm2=100, maxcll=10000,
+					 content_rgb_space="DCI P3"):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2638,6 +2644,7 @@ class Worker(object):
 												  trc_gamma_type,
 												  white_cdm2=white_cdm2,
 												  maxcll=maxcll,
+												  content_rgb_space=content_rgb_space,
 												  hdr_tonemapping=not smpte2084_use_src_gamut)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
@@ -2661,14 +2668,18 @@ class Worker(object):
 												toolname))
 
 				# Get source profile
-				profile_src_name = "SMPTE431_P3.icm"
-				profile_src = ICCP.ICCProfile(get_data_path("ref/" +
-															profile_src_name))
-				if not profile_src.fileName:
-					raise Error(lang.getstr("file.missing",
-											"ref/" + profile_src_name))
-				profile_src_basename = os.path.basename(profile_src.fileName)
-				(src_name, src_ext) = os.path.splitext(profile_src_basename)
+				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
+				crx, cry = content_rgb_space[2:][0][:2]
+				cgx, cgy = content_rgb_space[2:][1][:2]
+				cbx, cby = content_rgb_space[2:][2][:2]
+				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
+				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
+																  cgx, cgy,
+																  cbx, cby,
+																  cwx, cwy,
+																  -2084,
+																  "Temp",
+																  "")
 
 				# Get black offset
 				odata = self.xicclu(profile_out, (0, 0, 0), pcs="x")
@@ -2685,8 +2696,7 @@ class Worker(object):
 											  maxcll=maxcll,
 											  hdr_tonemapping=False)
 
-				fd, profile_src.fileName = tempfile.mkstemp(src_ext,
-															"%s-" % src_name,
+				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
 															dir=cwd)
 				stream = os.fdopen(fd, "wb")
 				profile_src.write(stream)
@@ -4830,7 +4840,7 @@ while 1:
 			wY = idata[-1][1]
 			oXYZ = idata = [[n / wY for n in v] for v in idata]
 			D50 = colormath.get_whitepoint("D50")
-			fpL = [cm.XYZ2Lab(*v + [D50])[0] for v in oXYZ]
+			fpL = [colormath.XYZ2Lab(*v + [D50])[0] for v in oXYZ]
 		else:
 			oXYZ = [colormath.Lab2XYZ(*v) for v in idata]
 			fpL = [v[0] for v in idata]

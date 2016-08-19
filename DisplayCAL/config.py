@@ -36,6 +36,7 @@ from util_io import StringIOu as StringIO
 from util_os import (expanduseru, expandvarsu, getenvu, is_superuser,
 					 listdir_re, which)
 from util_str import create_replace_function, safe_unicode, strtr
+import colormath
 import encodedstdio
 
 # Runtime configuration
@@ -714,12 +715,25 @@ valid_values = {
 	"whitepoint.colortemp.locus": ["t", "T"]
 }
 
+content_rgb_space = colormath.get_rgb_space("DCI P3")
+crx, cry = content_rgb_space[2:][0][:2]
+cgx, cgy = content_rgb_space[2:][1][:2]
+cbx, cby = content_rgb_space[2:][2][:2]
+cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
 defaults = {
 	"3d.format": "HTML",
 	"3dlut.apply_black_offset": 0,
 	"3dlut.apply_trc": 1,
 	"3dlut.bitdepth.input": 10,
 	"3dlut.bitdepth.output": 12,
+	"3dlut.content.colorspace.blue.x": cbx,
+	"3dlut.content.colorspace.blue.y": cby,
+	"3dlut.content.colorspace.green.x": cgx,
+	"3dlut.content.colorspace.green.y": cgy,
+	"3dlut.content.colorspace.red.x": crx,
+	"3dlut.content.colorspace.red.y": cry,
+	"3dlut.content.colorspace.white.x": cwx,
+	"3dlut.content.colorspace.white.y": cwy,
 	"3dlut.create": 0,
 	"3dlut.trc": "bt1886",
 	"3dlut.trc_gamma": 2.4,

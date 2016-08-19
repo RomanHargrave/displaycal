@@ -7,6 +7,7 @@
 		"*3dlut.1dlut.videolut.nonlinear": "The display device's video card gamma tables 1D LUT calibration is non-linear, but the 3D LUT contains applied 1D LUT calibration. Make sure to manually reset the video card gamma tables to linear before using the 3D LUT, or create a 3D LUT without calibration applied (to do the latter, enable “Show advanced options” in the “Options” menu and disable “Apply calibration (vcgt)” as well as “Create 3D LUT after profiling” in the 3D LUT settings, then create a new 3D LUT).",
 	"3dlut.bitdepth.input": "Profundidad de bits de entrada 3D LUT",
 	"3dlut.bitdepth.output": "Profundidad de bits de salida 3D LUT",
+		"*3dlut.content.colorspace": "Content colorspace",
 	"3dlut.create": "Crear 3D LUT...",
 		"*3dlut.create_after_profiling": "Create 3D LUT after profiling",
 		"*3dlut.enable": "Enable 3D LUT",

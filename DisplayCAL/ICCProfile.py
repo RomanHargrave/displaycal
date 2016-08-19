@@ -525,7 +525,9 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 
 def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0, white_cdm2=400,
-											maxcll=10000, rolloff=True,
+											maxcll=10000,
+											content_rgb_space="DCI P3",
+											rolloff=True,
 											clutres=17, mode="ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
@@ -900,8 +902,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	startperc = perc
 
 	Cdiff = []
-	p3st2084 = list(colormath.get_rgb_space("DCI P3 RGB"))
-	p3st2084[0] = -2084
+	content_rgb_space_st2084 = list(colormath.get_rgb_space(content_rgb_space))
+	content_rgb_space_st2084[0] = -2084
 	Cmax = {}
 	Cdmax = {}
 	if forward_xicclu and backward_xicclu:
@@ -944,7 +946,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		startperc = perc
 
 		if Cmode == "primaries_secondaries":
-			# Compare to chroma of P3 primaries/secondaries to determine
+			# Compare to chroma of content primaries/secondaries to determine
 			# general chroma compression factor
 			forward_xicclu((0, 0, 1))
 			forward_xicclu((0, 1, 0))
@@ -977,12 +979,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				R, G, B = RGB_in[j]
 				XYZsrc = HDR_XYZ[j]
 				XYZdisp = display_XYZ[-(6 - i)]
-				XYZp3 = colormath.RGB2XYZ(R, G, B, "DCI P3 RGB")
-				XYZp3 = colormath.adapt(*XYZp3,
-										whitepoint_source=p3st2084[1],
+				XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space)
+				XYZc = colormath.adapt(*XYZc,
+										whitepoint_source=content_rgb_space_st2084[1],
 										whitepoint_destination=white_DIN99d_XYZ)
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v * 100
-													for v in XYZp3))
+													for v in XYZc))
 				XYZdisp99 = colormath.adapt(*XYZdisp,
 											whitepoint_destination=white_DIN99d_XYZ)
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
@@ -993,9 +995,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				if Cd > Cdmax.get(Cdmaxk, -1):
 					Cdmax[Cdmaxk] = Cd
 				safe_print("RGB in %5.2f %5.2f %5.2f" % (R, G, B))
-				safe_print("P3 BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
-						   tuple(v * 100 for v in XYZp3))
-				safe_print("P3 BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" %
+				safe_print("Content BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZc))
+				safe_print("Content BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" %
 						   (L, C, H))
 				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
 						   tuple(v * 100 for v in XYZdisp99))
@@ -1013,7 +1015,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 	display_LCH = []
 	if Cmode != "primaries_secondaries" and display_XYZ:
-		# Determine compression factor by comparing display to P3 in BT.2020
+		# Determine compression factor by comparing display to content
+		# colorspace in BT.2020
 		if logfile:
 			logfile.write("\rDetermining chroma compression factor...\n")
 			logfile.write("\r%i%%" % perc)
@@ -1035,16 +1038,16 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				XYZdisp = XYZsrc
 			X, Y, Z = (v * new_maxv for v in XYZsrc)
 			X, Y, Z = colormath.adapt(X, Y, Z,
-									  whitepoint_destination=p3st2084[1])
-			R, G, B = colormath.XYZ2RGB(X, Y, Z, p3st2084)
-			XYZp3 = colormath.RGB2XYZ(R, G, B, p3st2084)
-			XYZp3 = colormath.adapt(*XYZp3,
-									whitepoint_source=p3st2084[1],
+									  whitepoint_destination=content_rgb_space_st2084[1])
+			R, G, B = colormath.XYZ2RGB(X, Y, Z, content_rgb_space_st2084)
+			XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space_st2084)
+			XYZc = colormath.adapt(*XYZc,
+									whitepoint_source=content_rgb_space_st2084[1],
 									whitepoint_destination=rgb_space[1])
-			RGBp3r2020 = colormath.XYZ2RGB(*XYZp3, rgb_space=rgb_space)
-			XYZp3r2020 = colormath.RGB2XYZ(*RGBp3r2020, rgb_space=rgb_space)
+			RGBc_r2020 = colormath.XYZ2RGB(*XYZc, rgb_space=rgb_space)
+			XYZc_r2020 = colormath.RGB2XYZ(*RGBc_r2020, rgb_space=rgb_space)
 			if blendmode == "ICtCp":
-				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZp3r2020, rgb_space=rgb_space)
+				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZc_r2020, rgb_space=rgb_space)
 				L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
 				XYZdispa = colormath.adapt(*XYZdisp,
 										   whitepoint_destination=rgb_space[1])
@@ -1052,11 +1055,11 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 												   rgb_space=rgb_space)
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
 			else:
-				XYZp3r202099 = colormath.adapt(*XYZp3r2020,
+				XYZc_r202099 = colormath.adapt(*XYZc_r2020,
 											   whitepoint_source=rgb_space[1],
 											   whitepoint_destination=white_DIN99d_XYZ)
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v / new_maxv * 100
-													for v in XYZp3r202099))
+													for v in XYZc_r202099))
 				XYZdisp99 = colormath.adapt(*XYZdisp,
 											whitepoint_destination=white_DIN99d_XYZ)
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
@@ -1076,9 +1079,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			if debug:
 				safe_print("RGB in %5.2f %5.2f %5.2f" % tuple(RGB_in[i]))
 				safe_print("RGB out %5.2f %5.2f %5.2f" % (R, G, B))
-				safe_print("P3 BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
-						   tuple(v / new_maxv * 100 for v in XYZp3r202099))
-				safe_print("P3 BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" % (L, C, H))
+				safe_print("Content BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
+						   tuple(v / new_maxv * 100 for v in XYZc_r202099))
+				safe_print("Content BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" % (L, C, H))
 				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
 						   tuple(v * 100 for v in XYZdisp99))
 				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" % (Ld, Cd, Hd))

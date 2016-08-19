@@ -7,6 +7,7 @@
 	"3dlut.1dlut.videolut.nonlinear": "顯示裝置的顯示卡伽瑪表 1D LUT 校正並非線性, 但 3D LUT 含有已套用的 1D LUT 校正。 請確保在使用3D LUT 之前已將顯示卡伽瑪表重置為線性，又或者建立一個未有套用校正的 3D LUT (如用後者的方法，在“選項” 選單中啟用“顯示進階選項”及在 3D LUT 設定中停用“套用校正 (vcgt)”以及“測量後建立 3D LUT”，然後建立新的 3D LUT).",
 	"3dlut.bitdepth.input": "3D LUT 輸入色彩深度",
 	"3dlut.bitdepth.output": "3D LUT 輸出色彩深度",
+		"*3dlut.content.colorspace": "Content colorspace",
 	"3dlut.create": "建立 3D LUT...",
 	"3dlut.create_after_profiling": "特性分析後建立 3D LUT",
 	"3dlut.enable": "啟用 3D LUT",

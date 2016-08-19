@@ -443,7 +443,7 @@ class SynthICCFrame(BaseFrame):
 			white = colormath.get_whitepoint(white)
 			self._updating_ctrls = True
 			self.panel.Freeze()
-			if self.preset_ctrl.GetStringSelection() == "DCI P3 RGB":
+			if self.preset_ctrl.GetStringSelection() == "DCI P3":
 				tech = self.tech["dcpj"]
 			else:
 				tech = self.tech[""]

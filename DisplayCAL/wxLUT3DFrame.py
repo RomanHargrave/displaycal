@@ -21,6 +21,7 @@ from util_os import islink, readlink, waccess
 from util_str import safe_unicode, strtr
 from worker import Error, Info, get_current_profile_path, show_result_dialog
 import ICCProfile as ICCP
+import colormath
 import config
 import localization as lang
 import madvr
@@ -29,7 +30,9 @@ from worker import UnloggedWarning, check_set_argyll_bin, get_options_from_profi
 from wxwindows import (BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog,
 					   wx)
 from wxfixes import TempXmlResource
+import floatspin
 import xh_filebrowsebutton
+import xh_floatspin
 import xh_bitmapctrls
 
 from wx import xrc
@@ -43,6 +46,7 @@ class LUT3DFrame(BaseFrame):
 		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
 															  "3dlut.xrc")))
 		self.res.InsertHandler(xh_filebrowsebutton.FileBrowseButtonWithHistoryXmlHandler())
+		self.res.InsertHandler(xh_floatspin.FloatSpinCtrlXmlHandler())
 		self.res.InsertHandler(xh_bitmapctrls.BitmapButton())
 		self.res.InsertHandler(xh_bitmapctrls.StaticBitmap())
 		if hasattr(wx, "PreFrame"):
@@ -143,6 +147,14 @@ class LUT3DFrame(BaseFrame):
 											self.lut3d_hdr_peak_luminance_handler)
 		self.lut3d_hdr_maxcll_ctrl.Bind(wx.EVT_TEXT,
 										self.lut3d_hdr_maxcll_handler)
+		self.lut3d_content_colorspace_ctrl.Bind(wx.EVT_CHOICE,
+												self.lut3d_content_colorspace_handler)
+		for color in ("white", "red", "green", "blue"):
+			for coord in "xy":
+				v = getcfg("3dlut.content.colorspace.%s.%s" % (color, coord))
+				getattr(self, "lut3d_content_colorspace_%s_%s" %
+							  (color, coord)).Bind(floatspin.EVT_FLOATSPIN,
+												   self.lut3d_content_colorspace_xy_handler)
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,
@@ -206,6 +218,16 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_maxcll_label.Enable(v)
 		self.lut3d_hdr_maxcll_ctrl.Enable(v)
 		self.lut3d_hdr_maxcll_ctrl_label.Enable(v)
+		self.lut3d_content_colorspace_label.Enable(v)
+		self.lut3d_content_colorspace_ctrl.Enable(v)
+		for color in ("white", "red", "green", "blue"):
+			for coord in "xy":
+				getattr(self, "lut3d_content_colorspace_%s_label" %
+							  color[0]).Enable(v)
+				getattr(self, "lut3d_content_colorspace_%s_%s" %
+							  (color, coord)).Enable(v)
+				getattr(self, "lut3d_content_colorspace_%s_%s_label" %
+							  (color, coord)).Enable(v)
 		self.lut3d_trc_black_output_offset_label.Enable(v)
 		self.lut3d_trc_black_output_offset_ctrl.Enable(v)
 		self.lut3d_trc_black_output_offset_intctrl.Enable(v)
@@ -392,6 +414,37 @@ class LUT3DFrame(BaseFrame):
 			self.lut3dframe.lut3d_update_shared_controls()
 		elif self.Parent:
 			self.Parent.lut3d_update_shared_controls()
+
+	def lut3d_content_colorspace_handler(self, event):
+		sel = self.lut3d_content_colorspace_ctrl.Selection
+		try:
+			rgb_space = self.lut3d_content_colorspace_names[sel]
+		except IndexError:
+			# Custom
+			rgb_space = None
+		else:
+			rgb_space = colormath.get_rgb_space(rgb_space)
+			for i, color in enumerate(("white", "red", "green", "blue")):
+				if i == 0:
+					xyY = colormath.XYZ2xyY(*rgb_space[1])
+				else:
+					xyY = rgb_space[2:][i - 1]
+				for j, coord in enumerate("xy"):
+					v = xyY[j]
+					setcfg("3dlut.content.colorspace.%s.%s" % (color, coord), v)
+			self.lut3d_update_trc_controls()
+		self.panel.Freeze()
+		sizer = self.lut3d_content_colorspace_red_x.ContainingSizer
+		sizer.ShowItems(not rgb_space)
+		self.panel.Layout()
+		self.panel.Thaw()
+		if isinstance(self, LUT3DFrame):
+			self.update_layout()
+
+	def lut3d_content_colorspace_xy_handler(self, event):
+		option = event.GetEventObject().Name.replace("_", ".")[5:]
+		setcfg("3dlut" + option, event.GetEventObject().GetValue())
+		self.lut3d_update_trc_controls()
 	
 	def lut3d_create_consumer(self, result=None):
 		if isinstance(result, Exception):
@@ -714,6 +767,15 @@ class LUT3DFrame(BaseFrame):
 		use_b2a = getcfg("3dlut.gamap.use_b2a")
 		white_cdm2 = getcfg("3dlut.hdr_peak_luminance")
 		maxcll = getcfg("3dlut.hdr_maxcll")
+		content_rgb_space = [-2084, [], [], [], []]
+		for i, color in enumerate(("white", "red", "green", "blue")):
+			for coord in "xy":
+				v = getcfg("3dlut.content.colorspace.%s.%s" % (color, coord))
+				content_rgb_space[i + 1].append(v)
+			# Dummy Y value, not used for primaries but needs to be present
+			content_rgb_space[i + 1].append(1.0)
+		content_rgb_space[1] = colormath.xyY2XYZ(*content_rgb_space[1])
+		content_rgb_space = colormath.get_rgb_space(content_rgb_space)
 		try:
 			self.worker.create_3dlut(profile_in, path, profile_abst,
 									 profile_out, apply_cal=apply_cal,
@@ -727,7 +789,8 @@ class LUT3DFrame(BaseFrame):
 									 trc_output_offset=outoffset,
 									 apply_black_offset=apply_black_offset,
 									 use_b2a=use_b2a, white_cdm2=white_cdm2,
-									 maxcll=maxcll)
+									 maxcll=maxcll,
+									 content_rgb_space=content_rgb_space)
 		except Exception, exception:
 			return exception
 		return True
@@ -1092,6 +1155,10 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
 
+		self.lut3d_content_colorspace_names = ["Rec. 2020", "DCI P3", "Rec. 709"]
+		self.lut3d_content_colorspace_ctrl.SetItems(self.lut3d_content_colorspace_names +
+													[lang.getstr("custom")])
+
 		self.rendering_intents_ab = {}
 		self.rendering_intents_ba = {}
 		self.lut3d_rendering_intent_ctrl.Clear()
@@ -1246,6 +1313,27 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
 		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
 		self.lut3d_hdr_maxcll_ctrl.SetValue(getcfg("3dlut.hdr_maxcll"))
+		# Content colorspace (currently only used for SMPTE 2084)
+		content_colors = []
+		for color in ("white", "red", "green", "blue"):
+			for coord in "xy":
+				v = getcfg("3dlut.content.colorspace.%s.%s" % (color, coord))
+				getattr(self, "lut3d_content_colorspace_%s_%s" %
+							  (color, coord)).SetValue(v)
+				content_colors.append(round(v, 4))
+		for i, rgb_space in enumerate(self.lut3d_content_colorspace_names):
+			rgb_space = colormath.get_rgb_space(rgb_space)
+			wx, wy = (round(v, 4) for v in
+					  colormath.XYZ2xyY(*colormath.get_whitepoint(rgb_space[1]))[:2])
+			colors = [wx, wy]
+			for primary in rgb_space[2:5]:
+				for j in xrange(2):
+					colors.append(round(primary[j], 4))
+			if colors == content_colors:
+				break
+		else:
+			i = self.lut3d_content_colorspace_ctrl.Count - 1
+		self.lut3d_content_colorspace_ctrl.SetSelection(i)
 
 	def update_linking_controls(self):
 		self.gamut_mapping_inverse_a2b.SetValue(
@@ -1332,6 +1420,13 @@ class LUT3DFrame(BaseFrame):
 						  getcfg("show_advanced_options")))
 		self.lut3d_trc_gamma_label.Show(show and not smpte2084)
 		self.lut3d_trc_gamma_ctrl.Show(show and not smpte2084)
+		# Show items in this order so we end up with the correct controls shown
+		showcc = smpte2084 and getcfg("show_advanced_options")
+		self.lut3d_content_colorspace_label.ContainingSizer.ShowItems(showcc)
+		sel = self.lut3d_content_colorspace_ctrl.Selection
+		lastsel = self.lut3d_content_colorspace_ctrl.Count - 1
+		sizer = self.lut3d_content_colorspace_red_x.ContainingSizer
+		sizer.ShowItems(showcc and sel == lastsel)
 		smpte2084r = getcfg("3dlut.trc") == "smpte2084.rolloffclip"
 		self.lut3d_hdr_maxcll_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl.Show(show and smpte2084r)

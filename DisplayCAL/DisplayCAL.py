@@ -1328,6 +1328,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	lut3d_apply_cal_ctrl_handler = LUT3DFrame.__dict__["lut3d_apply_cal_ctrl_handler"]
 	lut3d_bind_event_handlers = LUT3DFrame.__dict__["lut3d_bind_event_handlers"]
+	lut3d_content_colorspace_handler = LUT3DFrame.__dict__["lut3d_content_colorspace_handler"]
+	lut3d_content_colorspace_xy_handler = LUT3DFrame.__dict__["lut3d_content_colorspace_xy_handler"]
 	lut3d_create_consumer = LUT3DFrame.__dict__["lut3d_create_consumer"]
 	lut3d_create_handler = LUT3DFrame.__dict__["lut3d_create_handler"]
 	lut3d_create_producer = LUT3DFrame.__dict__["lut3d_create_producer"]
