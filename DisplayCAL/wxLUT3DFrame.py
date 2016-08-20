@@ -1420,14 +1420,15 @@ class LUT3DFrame(BaseFrame):
 						  getcfg("show_advanced_options")))
 		self.lut3d_trc_gamma_label.Show(show and not smpte2084)
 		self.lut3d_trc_gamma_ctrl.Show(show and not smpte2084)
+		smpte2084r = getcfg("3dlut.trc") == "smpte2084.rolloffclip"
 		# Show items in this order so we end up with the correct controls shown
-		showcc = smpte2084 and getcfg("show_advanced_options")
+		showcc = smpte2084r and (isinstance(self, LUT3DFrame) or
+								 getcfg("show_advanced_options"))
 		self.lut3d_content_colorspace_label.ContainingSizer.ShowItems(showcc)
 		sel = self.lut3d_content_colorspace_ctrl.Selection
 		lastsel = self.lut3d_content_colorspace_ctrl.Count - 1
 		sizer = self.lut3d_content_colorspace_red_x.ContainingSizer
 		sizer.ShowItems(showcc and sel == lastsel)
-		smpte2084r = getcfg("3dlut.trc") == "smpte2084.rolloffclip"
 		self.lut3d_hdr_maxcll_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl_label.Show(show and smpte2084r)
@@ -1444,6 +1445,8 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_peak_luminance_ctrl_label.Show(smpte2084)
 		self.panel.Layout()
 		self.panel.Thaw()
+		if isinstance(self, LUT3DFrame):
+			self.update_layout()
 	
 	def lut3d_show_encoding_controls(self, show=True):
 		show = show and ((self.worker.argyll_version >= [1, 7] and

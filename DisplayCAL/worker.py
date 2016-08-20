@@ -1892,20 +1892,20 @@ class Worker(object):
 		XYZbp = odata[0]
 		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
 		if smpte2084:
-			self.log(appname + ": " + os.path.basename(profile1.fileName) +
+			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
 					 (u" %i cd/m² (MaxCLL %i cd/m²)" % (white_cdm2, maxcll)))
 		elif apply_trc:
-			self.log(appname + ": Applying BT.1886-like TRC to " +
+			self.log("Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
 		else:
-			self.log(appname + ": Applying BT.1886-like black offset to " +
+			self.log("Applying BT.1886-like black offset to " +
 					 os.path.basename(profile1.fileName))
-		self.log(appname + ": Black XYZ (normalized 0..100) = %.6f %.6f %.6f" %
+		self.log("Black XYZ (normalized 0..100) = %.6f %.6f %.6f" %
 				 tuple([v * 100 for v in XYZbp]))
-		self.log(appname + ": Black Lab = %.6f %.6f %.6f" %
+		self.log("Black Lab = %.6f %.6f %.6f" %
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
-		self.log(appname + ": Output offset = %.2f%%" % (outoffset * 100))
+		self.log("Output offset = %.2f%%" % (outoffset * 100))
 		if smpte2084:
 			lumi = profile2.tags.get("lumi", ICCP.XYZType())
 			profile1.set_smpte2084_trc([v * lumi.Y * (1 - outoffset)
@@ -1946,9 +1946,19 @@ class Worker(object):
 								worker=self)
 					xb = Xicclu(profile2, "r", direction="if", pcs="x",
 								use_cam_clipping=True, worker=self)
-					
-					self.log(lang.getstr("3dlut.content.colorspace") + " " +
-							 repr(content_rgb_space))
+					if content_rgb_space:
+						content_rgb_space = colormath.get_rgb_space(content_rgb_space)
+						for i, color in enumerate(("white", "red", "green",
+												   "blue")):
+							if i == 0:
+								xyY = colormath.XYZ2xyY(*content_rgb_space[1])
+							else:
+								xyY = content_rgb_space[2:][i - 1]
+							for j, coord in enumerate("xy"):
+								v = xyY[j]
+								self.log(lang.getstr("3dlut.content.colorspace") + 
+										 " " + lang.getstr(color) + " " +
+										 coord + " %6.4f" % v)
 				else:
 					xf=None
 					xb=None
@@ -1970,11 +1980,11 @@ class Worker(object):
 			return
 		if gamma_type in ("b", "g"):
 			# Get technical gamma needed to achieve effective gamma
-			self.log(appname + ": Effective gamma = %.2f" % gamma)
+			self.log("Effective gamma = %.2f" % gamma)
 			tgamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
 		else:
 			tgamma = gamma
-		self.log(appname + ": Technical gamma = %.2f" % tgamma)
+		self.log("Technical gamma = %.2f" % tgamma)
 		profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
 
 	def calibrate_instrument_producer(self):
