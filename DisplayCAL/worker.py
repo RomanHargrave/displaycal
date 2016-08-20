@@ -2683,13 +2683,35 @@ class Worker(object):
 				cgx, cgy = content_rgb_space[2:][1][:2]
 				cbx, cby = content_rgb_space[2:][2][:2]
 				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
+				content_colors = [round(v, 4) for v in (cwx, cwy, crx, cry,
+														cgx, cgy, cbx, cby)]
+				for i, rgb_space_name in enumerate(colormath.rgb_spaces.iterkeys()):
+					if rgb_space_name == "Rec. 2020 ST2084":
+						continue
+					rgb_space = colormath.get_rgb_space(rgb_space_name)
+					wx, wy = (round(v, 4) for v in
+							  colormath.XYZ2xyY(*colormath.get_whitepoint(rgb_space[1]))[:2])
+					colors = [wx, wy]
+					for primary in rgb_space[2:5]:
+						for j in xrange(2):
+							colors.append(round(primary[j], 4))
+					if colors == content_colors:
+						break
+				else:
+					rgb_space_name = "Custom"
 				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
 																  cgx, cgy,
 																  cbx, cby,
 																  cwx, cwy,
 																  -2084,
-																  "Temp",
+																  rgb_space_name,
 																  "")
+				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
+															"%s-" % rgb_space_name,
+															dir=cwd)
+				stream = os.fdopen(fd, "wb")
+				profile_src.write(stream)
+				stream.close()
 
 				# Get black offset
 				odata = self.xicclu(profile_out, (0, 0, 0), pcs="x")
@@ -2706,11 +2728,7 @@ class Worker(object):
 											  maxcll=maxcll,
 											  hdr_tonemapping=False)
 
-				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
-															dir=cwd)
-				stream = os.fdopen(fd, "wb")
-				profile_src.write(stream)
-				stream.close()
+				profile_src.write()
 
 				# Create link from source to destination profile
 				gam_link_filename = tempfile.mktemp(profile_ext,
