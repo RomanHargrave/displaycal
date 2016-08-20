@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resource>
-  <object class="wxFrame" name="synthiccframe" subclass="DisplayCAL.LUT3DFrame">
+  <object class="wxFrame" name="synthiccframe">
     <object class="wxBoxSizer">
       <orient>wxVERTICAL</orient>
       <object class="sizeritem">

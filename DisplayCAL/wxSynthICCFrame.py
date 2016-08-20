@@ -148,6 +148,10 @@ class SynthICCFrame(BaseFrame):
 									 "position.synthiccframe",
 									 "size.synthiccframe"))
 		if event:
+			if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+				# For some reason, double buffering prevents SynthICC from
+				# exiting cleanly under Windows 10
+				self.panel.SetDoubleBuffered(False)
 			event.Skip()
 	
 	def black_luminance_ctrl_handler(self, event):
