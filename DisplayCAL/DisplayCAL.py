@@ -8390,10 +8390,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			result = event.GetId()
 		lut3d = config.is_virtual_display() or self.install_3dlut
-		# madVR has an API for installing 3D LUTs
+		# madVR has an API for installing 3D LUTs (but currently no support
+		# for installing into HDR slots since madVR v0.90.24 supports HDR
+		# 3D LUTs)
 		# Prisma has a HTTP REST interface for uploading and
 		# configuring 3D LUTs
-		install_3dlut_api = (getcfg("3dlut.format") == "madVR" or
+		install_3dlut_api = ((getcfg("3dlut.format") == "madVR" and
+							  not getcfg("3dlut.trc").startswith("smpte2084")) or
 							 config.check_3dlut_format("Prisma"))
 		if result != wx.ID_OK or lut3d:
 			if self.modaldlg.preview:
