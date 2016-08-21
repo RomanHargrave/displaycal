@@ -10568,7 +10568,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									   "\n".join(imported)), 
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
-		if failures:
+		if failures or (not imported and result is not None):
 			error = ("".join(self.worker.errors) or
 					 lang.getstr("colorimeter_correction.import.failure") +
 					 "\n\n" + "\n".join(failures))
