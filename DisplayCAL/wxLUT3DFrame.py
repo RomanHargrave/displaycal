@@ -1432,10 +1432,10 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_maxcll_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl_label.Show(show and smpte2084r)
+		show = show or smpte2084
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])
 		self.lut3d_trc_gamma_type_ctrl.Show(show and not smpte2084)
-		show = show or smpte2084
 		self.lut3d_trc_black_output_offset_label.Show(show)
 		self.lut3d_trc_black_output_offset_ctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl.Show(show)
