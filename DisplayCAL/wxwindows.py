@@ -648,9 +648,16 @@ class BaseApp(wx.App):
 	def end_session(self, event):
 		safe_print("Ending session")
 		self.ExitMainLoop()
-		# We need to call OnExit() explicitly because there will be no
-		# next iteration of the main event loop
-		self.OnExit()
+		# We may need to call OnExit() explicitly because there is not
+		# guaranteed to be a next iteration of the main event loop
+		try:
+			self.OnExit()
+		except:
+			# Yes, this can fail with a TypeError, amazingly enough :-(
+			# Apparently sometimes, wx already shuts down the application
+			# and OnExit will be None. We assume in this case that OnExit
+			# already ran.
+			pass
 		# Calling sys.exit makes sure that exit handlers registered by atexit
 		# will run
 		safe_print("Calling sys.exit(0)")
