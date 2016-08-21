@@ -61,6 +61,15 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	elif lib == "pygame":
 		try:
 			import pygame, pygame.mixer
+			version = []
+			for item in pygame.__version__.split("."):
+				try:
+					version.append(int(item))
+				except ValueError:
+					version.append(item)
+			if version < [1, 9, 2]:
+				raise ImportError("pygame version %s is too old" %
+								  pygame.__version__)
 			_lib = "pygame"
 		except ImportError:
 			_lib = None
