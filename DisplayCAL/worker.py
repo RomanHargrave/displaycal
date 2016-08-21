@@ -99,6 +99,7 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 					 whereis)
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
+	import win_knownpaths
 from util_str import (safe_basestring, safe_str, safe_unicode, strtr,
 					  universal_newlines)
 from wxaddons import BetterCallLater, BetterWindowDisabler, wx
@@ -10382,6 +10383,17 @@ BEGIN_DATA
 				filename = filename.groups()[0]
 		download_dir = os.path.join(expanduseru("~"), "Downloads")
 		download_path = os.path.join(download_dir, filename)
+		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+			not os.path.isfile(download_path)):
+			# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
+			# regardless of Known Folder path, so files may already exist
+			try:
+				download_dir = win_knownpaths.get_path(win_knownpaths.FOLDERID.Downloads,
+													   win_knownpaths.UserHandle.current)
+			except Exception, exception:
+				safe_print(exception)
+			else:
+				download_path = os.path.join(download_dir, filename)
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):

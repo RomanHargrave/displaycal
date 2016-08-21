@@ -67,6 +67,10 @@ Copyright: 2008-${YEAR}, Noah Spurrier <noah@noah.org>
            2010-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License: MIT-style
 
+Files: ${APPNAME}/win_knownpaths.py
+Copyright: 2014-${YEAR}, Michael Kropat
+License: MIT-style or GPL-3+
+
 Files: ${APPNAME}/wxenhancedplot.py
 Copyright: 2003-2004, Gordon Williams <g_will@cyberus.ca>
            2003, Jeff Grimmett <grimmtooth@softhome.net>
