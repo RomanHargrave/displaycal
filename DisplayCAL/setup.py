@@ -412,6 +412,18 @@ def setup():
 			return pathname.lower().startswith(systemroot + "\\")
 		py2exe.build_exe.isSystemDLL = isSystemDLL
 
+		# Numpy DLL paths fix
+		def numpy_dll_paths_fix():
+			import numpy
+			paths = set()
+			numpy_path = numpy.__path__[0]
+			for dirpath, dirnames, filenames in os.walk(numpy_path):
+				for item in filenames:
+					if item.lower().endswith(".dll"):
+						paths.add(dirpath)
+			sys.path.extend(paths)
+		numpy_dll_paths_fix()
+
 	if do_uninstall:
 		i = sys.argv.index("uninstall")
 		sys.argv = sys.argv[:i] + ["install"] + sys.argv[i + 1:]
