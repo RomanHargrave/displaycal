@@ -4870,6 +4870,10 @@ class ProgressDialog(wx.Dialog):
 		self.pause_continue.Label = lang.getstr("pause")
 		
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy, self)
+
+		if "gtk3" in wx.PlatformInfo:
+			# Fix background color not working for panels under GTK3
+			self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
 		
 		# set position
 		self.place(pos)
@@ -4880,6 +4884,9 @@ class ProgressDialog(wx.Dialog):
 		self.Show()
 		if style & wx.PD_APP_MODAL:
 			self.MakeModal()
+
+	if "gtk3" in wx.PlatformInfo:
+		OnEraseBackground = wx_Panel.__dict__["OnEraseBackground"]
 	
 	def MakeModal(self, modal=True):
 		# wxPython 3.0 deprecates MakeModal, use a replacement implementation
