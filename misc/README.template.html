@@ -360,6 +360,11 @@
 								<a href="${URL}download/openSUSE_Leap_42.1/x86_64/${APPNAME}.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>openSUSE Leap 42.2</span>
+								<span>
+								<a href="${URL}download/openSUSE_Leap_42.2/x86_64/${APPNAME}.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>openSUSE Factory</span>
 								<span><a href="${URL}download/openSUSE_Factory/i586/${APPNAME}.rpm">x86</a> | 
 								<a href="${URL}download/openSUSE_Factory/x86_64/${APPNAME}.rpm">x86_64</a></span>
@@ -544,6 +549,10 @@
 							<li>
 								<span></span>
 								<span><a href="${URL}download/openSUSE_Leap_42.1/noarch/${APPNAME}-0install.rpm">openSUSE Leap 42.1</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="${URL}download/openSUSE_Leap_42.2/noarch/${APPNAME}-0install.rpm">openSUSE Leap 42.2</a></span>
 							</li>
 							<li>
 								<span></span>
@@ -1572,13 +1581,24 @@ Enter the IP address in the window that opens (port should already be filled) an
 					<dd>This sets the source colorspace for the 3D LUT, which is normally a video standard space like defined by Rec. 709 or Rec. 2020.</dd>
 
 					<dt>Tone curve</dt>
-					<dd>This allows to set a predefined or custom tone response curve for the 3D LUT. Predefined settings are Rec. 1886 (input offset) and Gamma 2.2 (output offset, pure power).</dd>
+					<dd>This allows to set a predefined or custom tone response curve for the 3D LUT. Predefined settings are Rec. 1886 (input offset), Gamma 2.2 (output offset, pure power), SMPTE 2084 hard clip and SMPTE 2084 roll-off (BT.2390).
+					<h5>Tone curve parameters</h5>
+					<ul>
+						<li><strong>“Absolute” vs. “Relative” gamma</strong> (not available for SMPTE 2084) To accomodate a non-zero black level of a real display, the tone response curve needs to be offset and scaled accordingly.<br />
+						“Absolute” gamma results in an actual output at 50% input which doesn't match that of an idealized power curve (unless the black level is zero).<br />
+						“Relative” gamma results in an actual output at 50% input which matches that of an idealized power curve.</li>
+						<li><strong>Black output offset</strong> To accomodate a non-zero black level of a real display, the tone response curve needs to be offset and scaled accordingly. A black output offset of 0% (= all input offset) scales and offsets the input values (this matches BT.1886), while an offset of 100% scales and offsets the output values (this matches the overall curve shape of a pure power curve). A split between input and output offset is also possible.</li>
+						<li><strong>Display peak luminance</strong> (only available for SMPTE 2084) This allows you to adjust the clipping point or roll-off to your display's capabilities.</li>
+						<li><strong>Maximum content light level</strong> (only available for SMPTE 2084 roll-off when advanced options are enabled in the “Options” menu) HDR video content may not encode the full range of HDR luminance levels, and so clipping after a certain point may be desirable to make slightly better use of a display's peak luminance capabilities. Note that you should be careful in choosing a maximum content light level, because you need to know exactly up to which point video content encodes luminance values, and HDR metadata is not guaranteed to be a reliable source to determine this clipping point. Setting a too low value may introduce visual artifacts, therefore you should normally leave the maximum content light level at its default value of 10000 cd/m² (this matches BT.2390).</li>
+						<li><strong>Content colorspace</strong> (only available for SMPTE 2084 roll-off when advanced options are enabled in the “Options” menu) HDR video content may not encode the full source gamut, and so compressing the actual encoded gamut (instead of the full source gamut) into the display gamut may be desirable. Note that there is usually no need to change this from the default (DCI P3), and that this setting will mostly affect perceptual gamut mapping, not colorimetric.</li>
+					</ul>
+					</dd>
 
 					<dt>Apply calibration (vcgt) (only visible if “Show advanced options” in the “Options” menu is enabled)</dt>
 					<dd>Apply the profile's 1D LUT calibration (if any) to the 3D LUT. Nornmally, this should always be enabled if the profile contains a non-linear 1D LUT calibration, otherwise you have to make sure the 1D calibration is loaded whenever the 3D LUT is used.</dd>
 
 					<dt>Gamut mapping mode (only visible if “Show advanced options” in the “Options” menu is enabled)</dt>
-					<dd>The default gamut mapping mode is “Inverse device to PCS” and gives the most accurate results. In case a profile with high enough PCS-to-device tables is used, the option “PCS-to-device” is selectable as well, which allows for quicker generation of a 3D LUT, but is somewhat less accurate.</dd>
+					<dd>The default gamut mapping mode is “Inverse device to PCS” and gives the most accurate results. In case a profile with high enough PCS-to-device table resolution is used, the option “PCS-to-device” is selectable as well, which allows for quicker generation of a 3D LUT, but is somewhat less accurate.</dd>
 
 					<dt id="rendering-intents">Rendering intent</dt>
 					<dd>
@@ -2428,65 +2448,15 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			楊添明 (traditional chinese translation)</p>
 
 			<p>Recent contributors:
-Jean-Christophe Frisch, Carl Stammerjohn, Matthew Beacher, Bogdan Hlevca,
+Maximilian Rosenberger, Jody Foo, Torben Klink, Michael Hoenig, Michele
+Mogioni, Mael Voyer, Angelos Tsiracis, Fotis Zagoras, Swen Heinrich, Ermes
+Turrin, Hubert Meitz, Tomas Sobek, Bernard Andre, Thomas Weimer, Dominic
+Dunkley, Hassan Elhassan
+<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Jean-Christophe Frisch, Carl Stammerjohn, Matthew Beacher, Bogdan Hlevca,
 Claude Labouebe, Zdenko Gubas, Sebastiaan Ubink, Alessandro Canali, Bren
 Ehnebuske, Joseph Jenco, Vidar Hoel, Martin Keusch, Pierre Marsault, William
 Downie, A J Gauld, Antonio Siegrist, Oliver Martin, Anton Palmqvist, Jeanine
-Ruby, Jacob Rajan, Martin Brandl, David Hover
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">Andrew Alexander,
-Gerald Zojer,
-Mickey Micklos,
-René Boyer,
-Damiano Croci,
-Matteo Cantarella,
-Bernhard Höll,
-tuya Tsetsgee,
-Janne Korkkula,
-Cedric Tancrez,
-Samuel Butler,
-James Youngquist,
-Richard Johnson,
-Riley Brandt Photography
-Gregory Young,
-Brian Hampton,
-Francesco Demontis,
-Gunnar Nitsche,
-Nancy Zeltvay,
-Markus Rudolf Domula,
-H Rodriguez,
-Thierry Fischmann,
-Webster Dove,
-Evan Pantiel,
-John Bryden,
-Andrew Fields,
-Francois Edelin,
-Steven Todd Bartrim,
-Fletcher Brown,
-Bernd Hohmann,
-Peter Vansanten,
-Ari Savilampi,
-David Gay,
-Jonas Schmöle,
-Hermann Kienlein,
-Ross Anderson,
-Guillem Ventura Burrel,
-Andreas Schwarz,
-Chris Sweet,
-Nicola Julian Seidenspinner,
-Matthew Levin,
-Pavla Horská,
-Marcin Gil,
-George Boyko,
-Bodo Schütze,
-Kathleen Burks,
-Bastian Jödden,
-Miguel Angel Fernandez Lopez,
-Guelette yves,
-Liu Di,
-Ricky Szabo,
-Michael Anderes,
-Rick Thurman,
-Ralf Siegfried</span></p>
+Ruby, Jacob Rajan, Martin Brandl, David Hover</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses ${APPNAME}.</p>
 
@@ -2505,6 +2475,36 @@ Ralf Siegfried</span></p>
 
 						<h4>Added in this release:</h4>
 						<ul>
+							<li>HDR/SMPTE 2084: Advanced options to specify maximum content light level for roll-off (use with care!) as well as content colorspace (affects perceptual intent gamut mapping, less so colorimetric).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Increased timeout to launch Argyll CMS tools to 20 seconds.</li>
+							<li>Show failed items when otherwise successfully importing colorimeter corrections, and detect updated CCSS files.</li>
+							<li>HDR/SMPTE 2084: Improve overall saturation preservation.</li>
+							<li>Linux/colord: When checking for a valid colord device ID, also try with manufacturer omitted.</li>
+							<li>Windows Vista and later: Use “known folders” API to determine path to “Downloads” directory.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>HDR/SMPTE 2084: Slightly too light near-black tones when black output offset was set to below 100%.</li>
+							<li>Synthetic ICC Profile Creator: Undefined variable when creating synthetic profile with custom gamma or BT.1886 and non-zero black level (regression of HDR-related changes made in 3.1.5).</li>
+							<li>When loading settings from a profile created with ${APPNAME} prior to 3.1.5 and custom 3D LUT tone curve gamma in ${APPNAME} 3.1.5, the gamma and output offset controls wouldn't be shown if advanced options weren't enabled until re-selecting the tone curve choice.</li>
+							<li>Cosmetic (Windows 10): Banner would go blank under some Windows 10 configurations when showing the profile or 3D LUT installation dialog.</li>
+							<li>Cosmetic (Linux): Missing backgrounds and wrongly sized combo boxes when wxGTK is built against GTK3.</li>
+							<li>Linux: Profile loader autostart entry was installed under wrong (mixed-case) name if installing for the current user, which lead to the loader unnecesarily being run twice if ${APPNAME} was installed from a RPM or DEB package. The superfluous loader entry will be automatically removed the next time you install a profile, or you can remove it manually by running <code>rm ~/.config/autostart/z-DisplayCAL-apply-profiles.desktop</code> in a terminal.</li>
+							<li>Linux/colord: Don't cache device IDs that are not the result of a successful query.</li>
+							<li>Windows: Make elevated subprocess calls synchronous. Fixes importing colorimeter corrections system-wide not listing all succesfully imported items on the first use.</li>
+						</ul>
+
+				<dt id="changelog-3.1.5">2016-08-02 22:28 (UTC) 3.1.5 </dt>
+					<dd>
+						<h3>3.1.5 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
 							<li>HDR: Allow specifying of black output offset for SMPTE 2084.</li>
 						</ul>
 
@@ -2519,7 +2519,7 @@ Ralf Siegfried</span></p>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Minor: HDR peak luminance textbox was sometimes not able to receive focus.</li>
-							<li>Minor (Mac OS X): Don't omit ICC files from compressed archives (regression of adding device link profiles as possible 3D LUT output format in ${APPNAME} 3.1.3).</li>
+							<li>Minor (Mac OS X): Don't omit ICC files from compressed archives (regression of adding device link profiles as possible 3D LUT output format in DisplayCAL 3.1.3).</li>
 						</ul>
 					</dd>
 
