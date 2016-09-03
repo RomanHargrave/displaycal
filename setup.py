@@ -7,7 +7,8 @@ from distutils.sysconfig import get_python_lib
 from distutils.util import change_root, get_platform
 from hashlib import md5, sha1
 from subprocess import call, Popen
-from time import gmtime, strftime, timezone
+from time import gmtime, strftime
+import calendar
 import codecs
 import glob
 import math
@@ -62,9 +63,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"DEBPACKAGE": name.lower(),
 		"DEBDATETIME": strftime("%a, %d %b %Y %H:%M:%S ",  # e.g. Wed, 07 Jul 2010 15:25:00 +0100
 								 gmtime(lastmod_time or 
-										os.stat(tmpl_path).st_mtime)) +
-								 ("+" if timezone < 0 else "-") +
-								 strftime("%H%M", gmtime(abs(timezone))),
+										os.stat(tmpl_path).st_mtime)) + "+0000",
 		"DOMAIN": domain.lower(),
 		"ISODATE": 
 			strftime("%Y-%m-%d", 
@@ -73,9 +72,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"ISODATETIME": 
 			strftime("%Y-%m-%dT%H:%M:%S", 
 					 gmtime(lastmod_time or 
-							os.stat(tmpl_path).st_mtime)) +
-					 ("+" if timezone < 0 else "-") +
-					 strftime("%H:%M", gmtime(abs(timezone))),
+							os.stat(tmpl_path).st_mtime)) + "+0000",
 		"ISOTIME": 
 			strftime("%H:%M", 
 					 gmtime(lastmod_time or 
@@ -99,7 +96,8 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"VERSION_SHORT": re.sub("(?:\.0){1,2}$", "", version),
 		"URL": "http://%s/" % domain.lower(),
 		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
-		"YEAR": strftime("%Y", gmtime())}
+		"YEAR": strftime("%Y", gmtime(lastmod_time or 
+									  os.stat(tmpl_path).st_mtime))}
 	mapping.update(iterable or {})
 	for key, val in mapping.iteritems():
 		tmpl_data = tmpl_data.replace("${%s}" % key, val)
@@ -286,12 +284,12 @@ def setup():
 			if lmdate:
 				lmdate = lmdate[0].firstChild.wholeText.strip()
 				dateparts = lmdate.split(".")  # split off milliseconds
-				mtime = time.mktime(time.strptime(dateparts[0], 
+				mtime = calendar.timegm(time.strptime(dateparts[0], 
 													  "%Y-%m-%dT%H:%M:%S"))
 				mtime += float("." + strtr(dateparts[1], "Z"))
 				if mtime > lastmod_time:
 					lastmod_time = mtime
-					timestamp = time.localtime(mtime)
+					timestamp = time.gmtime(mtime)
 		if timestamp:
 			lastmod = strftime("%Y-%m-%dT%H:%M:%S", timestamp) + \
 					  str(round(mtime - int(mtime), 6))[1:] + \
@@ -345,8 +343,8 @@ def setup():
 					  wx_minversion, script2pywname)
 
 	if not lastmod_time:
-		lastmod_time = time.mktime(time.strptime(lastmod,
-												 "%Y-%m-%dT%H:%M:%S.%fZ"))
+		lastmod_time = calendar.timegm(time.strptime(lastmod,
+													 "%Y-%m-%dT%H:%M:%S.%fZ"))
 
 	msiversion = ".".join((str(version_tuple[0]), 
 						   str(version_tuple[1]), 
