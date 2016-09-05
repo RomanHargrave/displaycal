@@ -1178,7 +1178,7 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 		rgb_space = "sRGB"
 	if isinstance(rgb_space, basestring):
 		rgb_space = rgb_spaces[rgb_space]
-	cachehash = id(rgb_space), scale
+	cachehash = repr(rgb_space[:5]), scale
 	cache = get_rgb_space.cache.get(cachehash, None)
 	if cache:
 		return cache
