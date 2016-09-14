@@ -2123,7 +2123,7 @@ class LUT16Type(ICCProfileTag):
 					row = [min(max(0, v), 65535) for v in
 						   PCSLab_dec_to_uInt16(L, a, b)]
 				else:
-					row = [max(v, 0) * 32768.0 for v in (X, Y, Z)]
+					row = [[min(max(0, v) * 32768.0, 65535) for v in (X, Y, Z)]
 				return row
 			# Blend original black to zero
 			for block in self.clut:
