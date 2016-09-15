@@ -5027,6 +5027,7 @@ while 1:
 			if logfile:
 				logfile.write("Checking for suitable PCS candidate...\n")
 			pcs_candidate = None
+			pcs_candidates = []
 			for rgb_space in rgb_spaces:
 				if rgb_space[1] not in ("D50", colormath.get_whitepoint("D50")):
 					# Adapt to D50
@@ -5055,14 +5056,11 @@ while 1:
 					logfile.write("%s fit: %.2f (area: %.2f%%)\n" %
 								  (rgb_space[-1], 1.0 / max(extremes),
 								   area1 / area2 * 100))
+				pcs_candidates.append((area1 / area2,
+									   1.0 / max(extremes),
+									   rgb_space))
 				# Check if tested RGB space contains actual primaries
 				if max(extremes) <= 1.0:
-					if logfile:
-						logfile.write("Using primaries: %s\n" % rgb_space[-1])
-					XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space)
-					XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space)
-					XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space)
-					pcs_candidate = rgb_space[-1]
 					break
 
 			if not pcs_candidate and False:  # NEVER?
@@ -5114,14 +5112,19 @@ while 1:
 					elif area1 / area2 <= .73:
 						clutres = 45
 
-			if not pcs_candidate:
-				# Use largest
+				# Use PCS candidate with best fit
+				# (best fit is the smallest fit greater or equal 1 and
+				# largest possible coverage)
+				pcs_candidates.sort(key=lambda row: (-row[0], row[1]))
+				for coverage, fit, rgb_space in pcs_candidates:
+					if fit >= 1:
+						break
 				if logfile:
-					logfile.write("Using primaries: %s\n" % rgb_spaces[-1][-1])
-				XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_spaces[-1])
-				XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_spaces[-1])
-				XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_spaces[-1])
-				pcs_candidate = rgb_spaces[-1][-1]
+					logfile.write("Using primaries: %s\n" % rgb_space[-1])
+				XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space)
+				XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space)
+				XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space)
+				pcs_candidate = rgb_space[-1]
 
 			for i in xrange(3):
 				logfile.write("Using %s XYZ: %.4f %.4f %.4f\n" %
