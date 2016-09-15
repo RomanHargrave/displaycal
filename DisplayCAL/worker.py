@@ -5116,9 +5116,9 @@ while 1:
 				# If clutres is -1 (auto), set it depending on area coverage
 				if clutres == -1:
 					if area1 / area2 <= .51:
-						clutres = 65
-					elif area1 / area2 <= .73:
 						clutres = 45
+					elif area1 / area2 <= .73:
+						clutres = 33
 
 				# Use PCS candidate with best fit
 				# (best fit is the smallest fit greater or equal 1 and
