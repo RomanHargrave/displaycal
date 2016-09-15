@@ -5004,6 +5004,14 @@ while 1:
 							   [0.098165262763, 0.00937830372063, 0.00839233398438],
 							   "SMPTE-431-2/DCI-P3-encompassing, variant 3"])
 
+			# A colorspace that encompasses DCI P3 with imaginary red and blue
+			# (red and blue are practically the same as Rec2020-encompassing)
+			rgb_spaces.append([2.2, "D50",
+							   [0.717267960557, 0.29619267491, 0.231002807617],
+							   [0.284277504105, 0.682088122605, 0.760604858398],
+							   [0.0981978292034, 0.00940337224384, 0.00840759277344],
+							   "SMPTE-431-2/DCI-P3-encompassing, variant 4"])
+
 			# Rec. 2020
 			rgb_spaces.append([2.2, "D50",
 							   [0.7084978651, 0.293540723619, 0.279037475586],
