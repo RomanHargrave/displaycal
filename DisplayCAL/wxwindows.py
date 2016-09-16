@@ -540,6 +540,19 @@ class BaseApp(wx.App):
 	_exithandlers = []
 	_query_end_session = None
 
+	def __init__(self, *args, **kwargs):
+		# Fix sys.prefix for SetInstallPrefix used inside wx.App which does not
+		# decode to Unicode when calling SetInstallPrefix. DisplayCAL when
+		# bundled by Py2App can't be run from a path containing Unicode
+		# characters under Mac OS X otherwise.
+		prefix = sys.prefix
+		sys.prefix = safe_unicode(sys.prefix)
+
+		wx.App.__init__(self, *args, **kwargs)
+
+		# Restore prefix
+		sys.prefix = prefix
+
 	def OnInit(self):
 		self.AppName = pyname
 		set_default_app_dpi()
