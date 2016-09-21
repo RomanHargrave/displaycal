@@ -10464,6 +10464,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			elif subresult is not None:
 				failures.append(name)
 		if imported:
+			self.update_measurement_modes()
 			self.update_colorimeter_correction_matrix_ctrl_items(True)
 			InfoDialog(self,
 					   msg=lang.getstr("colorimeter_correction.import.success",
