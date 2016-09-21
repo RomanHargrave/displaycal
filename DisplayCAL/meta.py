@@ -21,7 +21,6 @@ if sys.version_info[:2] < (3, ):
 else:
 	author = "Florian Höch"
 author_ascii = "Florian Hoech"
-author_email = "florian@displaycal.net"
 description = ("A graphical front-end for display calibration and profiling "
 			   "using Argyll CMS")
 longdesc = "\n".join(["Calibrates and characterizes display devices using a hardware sensor,",
@@ -35,6 +34,7 @@ longdesc = "\n".join(["Calibrates and characterizes display devices using a hard
 					  "Profile installation can utilize Argyll CMS, Oyranos and/or GNOME ",
 					  "Color Manager if available, for flexible integration."])
 domain = "displaycal.net"
+author_email = "florian" + chr(0100) + domain
 name = "DisplayCAL"
 name_html = '<span class="appname">Display<span>CAL</span></span>'
 
