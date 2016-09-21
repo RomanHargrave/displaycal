@@ -12652,7 +12652,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if comports != self.worker.instruments:
 			self.update_comports()
 			if verbose >= 1: safe_print(lang.getstr("comport_detected"))
-			if event:
+			if event and not callafter:
 				# Check if we should import colorimeter corrections
 				# or other instrument setup
 				self.check_instrument_setup()
