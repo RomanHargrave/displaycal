@@ -6318,29 +6318,38 @@ usage: spotread [-options] [logfile]
 							usb_ids[usb_id].append(instrument_name)
 
 			# Check connected USB devices for supported instruments
-			wmi_connection = wmi.WMI()
-			query = "Select * From Win32_USBControllerDevice"
-			for item in wmi_connection.query(query):
-				for usb_id in usb_ids:
-					hardware_id = ur"USB\VID_%04X&PID_%04X" % usb_id
-					if hardware_id in item.Dependent.HardwareID:
-						# Found supported instrument
-						self.log(item.Dependent.Caption)
-						# Install driver for specific device
-						result = self.exec_cmd(installer, ["--noprompt",
-														   "--usealldevices",
-														   "--vid",
-														   hex(usb_id[0]),
-														   "--pid",
-														   hex(usb_id[1])], 
-											   capture_output=True,
-											   skip_scripts=True,
-											   asroot=True)
-						output = universal_newlines("".join(self.output))
-						if isinstance(result, Exception):
-							return result
-						elif not result or "Failed to install driver" in output:
-							return Error(lang.getstr("argyll.instrument.drivers.install.failure"))
+			not_main_thread = currentThread().__class__ is not _MainThread
+			if not_main_thread:
+				# If running in a thread, need to call pythoncom.CoInitialize
+				pythoncom.CoInitialize()
+			try:
+				wmi_connection = wmi.WMI()
+				query = "Select * From Win32_USBControllerDevice"
+				for item in wmi_connection.query(query):
+					for usb_id in usb_ids:
+						hardware_id = ur"USB\VID_%04X&PID_%04X" % usb_id
+						if item.Dependent.DeviceID.startswith(hardware_id):
+							# Found supported instrument
+							self.log(item.Dependent.Caption)
+							# Install driver for specific device
+							result = self.exec_cmd(installer, ["--noprompt",
+															   "--usealldevices",
+															   "--vid",
+															   hex(usb_id[0]),
+															   "--pid",
+															   hex(usb_id[1])], 
+												   capture_output=True,
+												   skip_scripts=True,
+												   asroot=True)
+							output = universal_newlines("".join(self.output))
+							if isinstance(result, Exception):
+								return result
+							elif not result or "Failed to install driver" in output:
+								return Error(lang.getstr("argyll.instrument.drivers.install.failure"))
+			finally:
+				if not_main_thread:
+					# If running in a thread, need to call pythoncom.CoUninitialize
+					pythoncom.CoUninitialize()
 
 			if not result:
 				# No matching device found. Install driver anyway, doesn't
