@@ -23,6 +23,7 @@ import traceback
 import urllib
 import urllib2
 import zipfile
+import zlib
 from UserString import UserString
 from hashlib import md5
 from threading import _MainThread, currentThread
@@ -6294,14 +6295,22 @@ usage: spotread [-options] [logfile]
 				return
 
 			installer = os.path.splitext(installer_zip)[0]
-			if not os.path.isfile(installer):
-				# Unpack installer
-				try:
-					with zipfile.ZipFile(installer_zip) as z:
+			# Open installer ZIP archive
+			try:
+				with zipfile.ZipFile(installer_zip) as z:
+					# Extract installer if it does not exist or if the existing
+					# file is different from the one in the archive
+					if os.path.isfile(installer):
+						with open(installer, "rb") as f:
+							crc = zlib.crc32(f.read())
+					else:
+						crc = None
+					if (not os.path.isfile(installer) or
+						crc != z.getinfo(installer_basename).CRC):
 						z.extract(installer_basename,
 								  os.path.dirname(installer_zip))
-				except Exception, exception:
-					return exception
+			except Exception, exception:
+				return exception
 
 			# Get supported instruments USB device IDs
 			usb_ids = {}
