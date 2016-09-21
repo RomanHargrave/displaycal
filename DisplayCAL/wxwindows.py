@@ -4493,8 +4493,6 @@ class LogWindow(InvincibleFrame):
 		self._tspattern = re.compile(r"(?:\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2},\d{3} )")
 
 	def Log(self, txt):
-		if not txt:
-			return
 		# TextCtrl.AppendText is an EXPENSIVE operation under OS X.
 		# For that reason, assemble the text to be added before calling it.
 		lines = []
