@@ -6,9 +6,11 @@ from binascii import hexlify
 import ctypes
 import getpass
 import glob
+import httplib
 import math
 import os
 import pipes
+import platform
 import re
 import socket
 import shutil
@@ -18,6 +20,7 @@ import sys
 import tempfile
 import textwrap
 import traceback
+import urllib
 import urllib2
 import zipfile
 from UserString import UserString
@@ -38,6 +41,7 @@ if sys.platform == "win32":
 	import win32api
 	import win32con
 	import win32event
+	import wmi
 elif sys.platform != "darwin":
 	try:
 		import dbus
@@ -85,6 +89,7 @@ from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveLSPatternGeneratorServer,
 							   ResolveCMPatternGeneratorServer)
 from trash import trash
+from util_http import encode_multipart_formdata
 from util_io import (EncodedWriter, Files, GzipFileProper,
 					 StringIOu as StringIO, TarFileProper)
 from util_list import get as listget, intlist
@@ -93,6 +98,7 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors, osascript)
 elif sys.platform == "win32":
 	import util_win
+	from util_win import win_ver
 import colord
 from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 					 make_win32_compatible_long_path, quote_args, which,
@@ -823,6 +829,78 @@ def get_arg(argmatch, args, whole=False):
 		if (whole and arg == argmatch) or (not whole and
 										   arg.startswith(argmatch)):
 			return i, arg
+
+
+def http_request(parent=None, domain=None, request_type="GET", path="", 
+				 params=None, files=None, headers=None, charset="UTF-8", failure_msg="",
+				 silent=False):
+	""" HTTP request wrapper """
+	if params is None:
+		params = {}
+	if files:
+		content_type, params = encode_multipart_formdata(params.iteritems(),
+														 files)
+	else:
+		for key in params:
+			params[key] = safe_str(params[key], charset)
+		params = urllib.urlencode(params)
+	if headers is None:
+		if sys.platform == "darwin":
+			# Python's platform.platform output is useless under Mac OS X
+			# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
+			oscpu = "Mac OS X %s; %s" % (mac_ver()[0], mac_ver()[-1])
+		elif sys.platform == "win32":
+			machine = platform.machine()
+			oscpu = "%s; %s" % (" ".join(filter(lambda v: v, win_ver())),
+								{"AMD64": "x86_64"}.get(machine, machine))
+		else:
+			# Linux
+			oscpu = "%s; %s" % (' '.join(platform.dist()), platform.machine())
+		headers = {"User-Agent": "%s/%s (%s)" % (appname, version, oscpu)}
+		if request_type == "GET":
+			path += '?' + params
+			params = None
+		else:
+			if files:
+				headers.update({"Content-Type": content_type,
+								"Content-Length": str(len(params))})
+			else:
+				headers.update({"Content-Type": "application/x-www-form-urlencoded",
+								"Accept": "text/plain"})
+	conn = httplib.HTTPConnection(domain)
+	try:
+		conn.request(request_type, path, params, headers)
+		resp = conn.getresponse()
+	except (socket.error, httplib.HTTPException), exception:
+		msg = " ".join([failure_msg, lang.getstr("connection.fail", 
+												 " ".join([str(arg) for 
+														   arg in exception.args]))]).strip()
+		safe_print(msg)
+		if not silent:
+			wx.CallAfter(InfoDialog, parent, 
+						 msg=msg,
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"), log=False)
+		return False
+	if resp.status >= 400:
+		uri = "http://" + domain + path
+		msg = " ".join([failure_msg,
+						lang.getstr("connection.fail.http", 
+									" ".join([str(resp.status),
+											  resp.reason]))]).strip() + "\n" + uri
+		safe_print(msg)
+		html = universal_newlines(resp.read().strip())
+		html = re.sub(r"<script.*?</script>", "<!-- SCRIPT removed -->",
+					  html, re.I | re.S)
+		html = re.sub(r"<style.*?</style>", "<!-- STYLE removed -->",
+					  html, re.I | re.S)
+		safe_print(html)
+		if not silent:
+			wx.CallAfter(HtmlInfoDialog, parent, msg=msg, html=html,
+						 ok=lang.getstr("ok"), 
+						 bitmap=geticon(32, "dialog-error"), log=False)
+		return False
+	return resp
 
 
 def make_argyll_compatible_path(path):
@@ -6161,17 +6239,13 @@ usage: spotread [-options] [logfile]
 				args = ["devmgmt.msc"]
 			self.exec_cmd(cmd, args, capture_output=True, skip_scripts=True,
 						  asroot=not winxp, shell=winxp, working_dir=False)
-		if not uninstall:
-			usbinfpath = get_data_path("usb/ArgyllCMS.inf")
-			if not usbinfpath:
-				return Error(lang.getstr("file.missing", "usb/ArgyllCMS.inf"))
-		if not winxp:
-			# Windows Vista and newer
-			with win64_disable_file_system_redirection():
-				pnputil = which("PnPutil.exe")
-				if not pnputil:
-					return Error(lang.getstr("file.missing", "PnPutil.exe"))
-				if uninstall:
+		if uninstall:
+			if not winxp:
+				# Windows Vista and newer
+				with win64_disable_file_system_redirection():
+					pnputil = which("PnPutil.exe")
+					if not pnputil:
+						return Error(lang.getstr("file.missing", "PnPutil.exe"))
 					result = self.exec_cmd(pnputil, ["-e"], capture_output=True,
 										   log_output=False, silent=True,
 										   skip_scripts=True)
@@ -6190,59 +6264,104 @@ usage: spotread [-options] [logfile]
 													   capture_output=True,
 													   skip_scripts=True,
 													   asroot=True)
-					return result
-				else:
-					return self.exec_cmd(pnputil, ["-i", "-a", usbinfpath],
-										 capture_output=True, skip_scripts=True,
-										 asroot=True)
-		else:
-			# Windows XP
-			#subkey = "\\".join(["Software", "Microsoft", "Windows", 
-								#"CurrentVersion"])
-			#try:
-				#key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, subkey, 0,
-									  #_winreg.KEY_READ |
-									  #_winreg.KEY_QUERY_VALUE |
-									  #_winreg.KEY_SET_VALUE)
-				#newvalue = value = _winreg.QueryValueEx(key, "DevicePath")[0]
-				#if uninstall:
-					## No real uninstallation possible. Just remove all paths
-					## ending in '\argyllcms.inf'
-					#paths = []
-					#for path in value.split(os.pathsep):
-						#path = os.path.normpath(path)
-						#if not path.lower().endswith(r"\argyllcms.inf"):
-							#paths.append(path)
-					#newvalue = os.pathsep.join(paths)
-				#elif not usbinfpath.lower() in value.lower().split(os.pathsep):
-					#newvalue = value + os.pathsep + usbinfpath
-				#if newvalue != value:
-					#_winreg.SetValueEx(key, "DevicePath", 0,
-									   #_winreg.REG_EXPAND_SZ, newvalue)
-			#except Exception, exception:
-				#return exception
-			if uninstall:
+			else:
+				# Windows XP
 				# Uninstallation not supported
 				pass
+		else:
+			# Install driver using modified 'zadic' command line tool from
+			# https://github.com/fhoech/libwdi
+
+			result = None
+
+			# Get Argyll version
+			resp = http_request(None, domain, "GET", "/Argyll/VERSION",
+								failure_msg=lang.getstr("update_check.fail"),
+								silent=True)
+			if resp:
+				argyll_version_string = resp.read().strip()
 			else:
-				sections = ["LIBUSB0_DEV"]
-				#with open(usbinfpath, "rb") as usbinf:
-					#sections += re.findall(r"\[(\w+_Devices)\]", usbinf.read())
-				working_dir, infbasename = os.path.split(usbinfpath)
-				result = True
-				for section in sections:
-					result = self.exec_cmd(which("rundll32.exe"),
-										   ["setupapi,InstallHinfSection",
-											section, "132",
-											os.path.join(".", infbasename)],
-										   capture_output=True,
-										   skip_scripts=True,
-										   working_dir=working_dir)
-					if isinstance(result, Exception) or not result:
-						break
-				if not result:
-					result = Error(lang.getstr("argyll.instrument.drivers.install.failure"))
-			return result
+				argyll_version_string = self.argyll_version_string
+
+			installer_basename = ("Argyll_V%s_USB_driver_installer.exe" %
+								  argyll_version_string)
+			installer_zip = self.download("https://%s/Argyll/%s.zip" %
+										  (domain, installer_basename))
+			if isinstance(installer_zip, Exception):
+				return installer_zip
+			elif not installer_zip:
+				# Cancelled
+				return
+
+			installer = os.path.splitext(installer_zip)[0]
+			if not os.path.isfile(installer):
+				# Unpack installer
+				try:
+					with zipfile.ZipFile(installer_zip) as z:
+						z.extract(installer_basename,
+								  os.path.dirname(installer_zip))
+				except Exception, exception:
+					return exception
+
+			# Get supported instruments USB device IDs
+			usb_ids = {}
+			for instrument_name, instrument in all_instruments.iteritems():
+				if instrument.get("usb_ids"):
+					for entry in instrument.get("usb_ids"):
+						usb_id = (entry["vid"], entry["pid"])
+						if entry.get("hid"):
+							# Skip HID devices
+							continue
+						else:
+							usb_ids[usb_id] = usb_ids.get(usb_id,
+														  [instrument_name])
+							usb_ids[usb_id].append(instrument_name)
+
+			# Check connected USB devices for supported instruments
+			wmi_connection = wmi.WMI()
+			query = "Select * From Win32_USBControllerDevice"
+			for item in wmi_connection.query(query):
+				for usb_id in usb_ids:
+					hardware_id = ur"USB\VID_%04X&PID_%04X" % usb_id
+					if hardware_id in item.Dependent.HardwareID:
+						# Found supported instrument
+						self.log(item.Dependent.Caption)
+						# Install driver for specific device
+						result = self.exec_cmd(installer, ["--noprompt",
+														   "--usealldevices",
+														   "--vid",
+														   hex(usb_id[0]),
+														   "--pid",
+														   hex(usb_id[1])], 
+											   capture_output=True,
+											   skip_scripts=True,
+											   asroot=True)
+						output = universal_newlines("".join(self.output))
+						if isinstance(result, Exception):
+							return result
+						elif not result or "Failed to install driver" in output:
+							return Error(lang.getstr("argyll.instrument.drivers.install.failure"))
+
+			if not result:
+				# No matching device found. Install driver anyway, doesn't
+				# matter for which specific device as the .inf contains entries
+				# for all supported ones, thus instruments that are connected
+				# later should be recognized
+				usb_id, instrument_names = usb_ids.popitem()
+				result = self.exec_cmd(installer, ["--noprompt",
+												   "--vid", hex(usb_id[0]),
+												   "--pid", hex(usb_id[1]),
+												   "--create",
+												   "%s (Argyll)" %
+												   instrument_names[-1]], 
+									   capture_output=True,
+									   skip_scripts=True,
+									   asroot=True)
+				output = universal_newlines("".join(self.output))
+				if not result or "Failed to install driver" in output:
+					return Error(lang.getstr("argyll.instrument.drivers.install.failure"))
+
+		return result
 	
 	def _install_profile_argyll(self, profile_path, capture_output=False,
 								skip_scripts=False, silent=False):

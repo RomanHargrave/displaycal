@@ -429,6 +429,7 @@
 	"download": "Téléchargement",
 	"download_fail_empty_response": "Échec de téléchargement : %s a retourné un document vide.",
 	"download_fail_wrong_size": "Échec de téléchargement : le fichier n’a pas la taille attendue de %s octets (%s octets ont été reçu).",
+		"*download_install": "Download & install",
 	"downloading": "Téléchargement",
 	"drift_compensation.blacklevel": "Compensation de la dérive du niveau de noir",
 	"drift_compensation.blacklevel.info": "La compensation de la dérive du niveau de noir tente de prendre en compte les déviations de mesure causées par la dérive de l’étalonnage du noir d’un périphérique de mesure lors de son échauffement. À cette fin, un échantillon de test noir est mesuré périodiquement, ce qui augmente la durée totale nécessaire aux mesures. De nombreux colorimètres ont une compensation intégrée de la température, auquel cas la compensation de la dérive du niveau de noir n'est pas nécessaire, mais la plupart des spectromètres ne sont pas compensés en température.",

@@ -1,5 +1,11 @@
 {
 	/* instrument names from Argyll source spectro/insttypes.c
+	 
+	   vid: USB Vendor ID
+	   
+	   pid: USB Product ID
+	   
+	   hid: Is the device a USB HID (Human Interface Device) class device?
 	
 	   spectral: Does the instrument support spectral readings?
 	  
@@ -31,6 +37,13 @@
 	   the same as the id. */
 	
 	"DTP92": {
+		"usb_ids": [
+			{
+				"vid": 0x0765,
+				"pid": 0xD092,
+				"hid": false
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -39,6 +52,13 @@
 		"skip_sensor_cal": null
 	},
 	"DTP94": {
+		"usb_ids": [
+			{
+				"vid": 0x0765,
+				"pid": 0xD094,
+				"hid": false
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -83,6 +103,13 @@
 		"skip_sensor_cal": null
 	},
 	"i1 Display": {  // Argyll 1.3.5 and earlier
+		"usb_ids": [
+			{
+				"vid": 0x0670,
+				"pid": 0x0001,
+				"hid": false
+			}
+		],
 		"id": "i1D1",
 		"spectral": false,
 		"adaptive_mode": false,
@@ -93,6 +120,13 @@
 		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"i1 Display 1": {  // Argyll 1.3.6 and newer
+		"usb_ids": [
+			{
+				"vid": 0x0670,
+				"pid": 0x0001,
+				"hid": false
+			}
+		],
 		"id": "i1D1",
 		"spectral": false,
 		"adaptive_mode": false,
@@ -103,6 +137,13 @@
 		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"i1 Display 2": {  // Argyll 1.3.6 and newer
+		"usb_ids": [
+			{
+				"vid": 0x0971,
+				"pid": 0x2003,
+				"hid": false
+			}
+		],
 		"id": "i1D2",
 		"spectral": false,
 		"adaptive_mode": false,
@@ -116,6 +157,13 @@
 		"integration_time": [4.0, 1.0]  // Measured
 	},
 	"i1 DisplayPro, ColorMunki Display": {
+		"usb_ids": [
+			{
+				"vid": 0x0765,
+				"pid": 0x5020,
+				"hid": true
+			}
+		],
 		"id": "i1D3",
 		"spectral": false,
 		"adaptive_mode": false,
@@ -127,6 +175,13 @@
 		"integration_time": [2.6, 0.2]  // Measured
 	},
 	"i1 Monitor": {  // like i1Pro
+		"usb_ids": [
+			{
+				"vid": 0x0971,
+				"pid": 0x2001,
+				"hid": false
+			}
+		],
 		"spectral": true,
 		"adaptive_mode": true,
 		"highres_mode": true,
@@ -136,6 +191,13 @@
 		"integration_time": [9.2, 3.9]  // Using i1 Pro values
 	},
 	"i1 Pro": {
+		"usb_ids": [
+			{
+				"vid": 0x0971,
+				"pid": 0x2000,
+				"hid": false
+			}
+		],
 		"spectral": true,
 		"adaptive_mode": true,
 		"highres_mode": true,
@@ -145,6 +207,13 @@
 		"integration_time": [9.2, 3.9]  // Measured (i1 Pro Rev. A)
 	},
 	"i1 Pro 2": {
+		"usb_ids": [
+			{
+				"vid": 0x0971,
+				"pid": 0x2000,
+				"hid": false
+			}
+		],
 		"spectral": true,
 		"adaptive_mode": true,
 		"highres_mode": true,
@@ -154,6 +223,18 @@
 		"integration_time": [9.2, 3.9]  // Using i1 Pro values
 	},
 	"ColorHug": {
+		"usb_ids": [
+			{
+				"vid": 0x04D8,
+				"pid": 0xF8DA,
+				"hid": true
+			},
+			{
+				"vid": 0x273F,
+				"pid": 0x1001,
+				"hid": true
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -163,6 +244,13 @@
 		"integration_time": [1.8, 0.8]  // Measured (ColorHug #660)
 	},
 	"ColorHug2": {
+		"usb_ids": [
+			{
+				"vid": 0x273F,
+				"pid": 0x1004,
+				"hid": true
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -172,6 +260,13 @@
 		"integration_time": [2.0, 0.6]  // Measured (ColorHug2 prototype #2)
 	},
 	"ColorMunki": {
+		"usb_ids": [
+			{
+				"vid": 0x0971,
+				"pid": 0x2007,
+				"hid": false
+			}
+		],
 		"spectral": true,
 		"adaptive_mode": true,
 		"highres_mode": true,
@@ -181,6 +276,18 @@
 		"integration_time": [9.2, 3.9]  // Using i1 Pro values
 	},
 	"Colorimtre HCFR": {
+		"usb_ids": [
+			{  // V3.1
+				"vid": 0x04DB,
+				"pid": 0x005B,
+				"hid": false
+			},
+			{  // V4.0
+				"vid": 0x04D8,
+				"pid": 0xFE17,
+				"hid": false
+			}
+		],
 		"id": "HCFR",
 		"spectral": false,
 		"adaptive_mode": false,
@@ -190,6 +297,13 @@
 		"skip_sensor_cal": null
 	},
 	"ColorMunki Smile": {  // Argyll 1.5.x and newer
+		"usb_ids": [
+			{
+				"vid": 0x0765,
+				"pid": 0x6003,
+				"hid": false
+			}
+		],
 		"id": "Smile",
 		"spectral": false,
 		"adaptive_mode": false,
@@ -200,6 +314,13 @@
 		"integration_time": [4.0, 1.0]  // Using i1D2 values
 	},
 	"EX1": {
+		"usb_ids": [
+			{
+				"vid": 0x2457,
+				"pid": 0x4000,
+				"hid": false
+			}
+		],
 		"spectral": true,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -217,7 +338,30 @@
 		"skip_sensor_cal": null,
 		"integration_time": [1.1, 0.1]  // Using i1D3 values halved
 	},
+	"Spyder1": {
+		"usb_ids": [
+			{
+				"vid": 0x085C,
+				"pid": 0x0100,
+				"hid": false
+			}
+		],
+		"spectral": false,
+		"adaptive_mode": false,
+		"highres_mode": false,
+		"projector_mode": false,
+		"sensor_cal": null,
+		"skip_sensor_cal": null,
+		"integration_time": [10.5, 2.3]  // Using Spyder3 values
+	},
 	"Spyder2": {
+		"usb_ids": [
+			{
+				"vid": 0x085C,
+				"pid": 0x0200,
+				"hid": false
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -227,6 +371,13 @@
 		"integration_time": [10.5, 2.3]  // Using Spyder3 values
 	},
 	"Spyder3": {
+		"usb_ids": [
+			{
+				"vid": 0x085C,
+				"pid": 0x0300,
+				"hid": false
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -237,6 +388,13 @@
 		"integration_time": [10.5, 2.3]  // Estimated
 	},
 	"Spyder4": {
+		"usb_ids": [
+			{
+				"vid": 0x085C,
+				"pid": 0x0400,
+				"hid": false
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -247,6 +405,13 @@
 		"integration_time": [10.5, 2.3]  // Using Spyder3 values
 	},
 	"Spyder5": {
+		"usb_ids": [
+			{
+				"vid": 0x085C,
+				"pid": 0x0500,
+				"hid": false
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,
@@ -257,6 +422,23 @@
 		"integration_time": [10.5, 2.3]  // Using Spyder3 values
 	},
 	"Huey": {
+		"usb_ids": [
+			{
+				"vid": 0x0971,
+				"pid": 0x2005,
+				"hid": true
+			},
+			{  // HueyL
+				"vid": 0x0765,
+				"pid": 0x5001,
+				"hid": true
+			},
+			{  // HueyL
+				"vid": 0x0765,
+				"pid": 0x5010,
+				"hid": true
+			}
+		],
 		"spectral": false,
 		"adaptive_mode": false,
 		"highres_mode": false,

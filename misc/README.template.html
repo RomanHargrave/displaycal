@@ -856,6 +856,8 @@
 				<div>
 					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10 (the latter two may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead).</p>
 
+					<p>To automatically install the Argyll-specific driver that is needed to use some instruments, launch ${APPNAME} and select “Install Argyll CMS instrument drivers...” from the “Tools” menu. Alternatively, follow the manual instructions below.</p>
+
 					<div class="info">
 						<p>If you are using Windows 8, 8.1, or 10, you need to <strong>disable driver signature enforcement</strong> before you can install the driver.
 						If <a href="https://en.wikipedia.org/wiki/Unified_Extensible_Firmware_Interface#Secure_boot">Secure Boot</a> is enabled in the <abbr title="Unified Extensible Firmware Interface">UEFI<sup><a href="#definition_UEFI">[12]</a></sup></abbr> setup, you need to disable it first. Refer to your mainboard or firmware manual how to go about this. Usually entering the firmware setup requires holding the DEL key when the system starts booting.</p>
@@ -880,7 +882,8 @@
 						</ol>
 					</div>
 
-					<p>To install the Argyll-specific driver that is needed to use some instruments, launch ${APPNAME} and select “Install Argyll CMS instrument drivers...” from the “Tools” menu.</p>
+					<p>To install the Argyll-specific driver that is needed to use some instruments, launch Windows' Device Manager and locate the instrument in the device list. It may be underneath one of the top level items.
+					Right click on the instrument and select “Update Driver Software...”, then choose “Browse my computer for driver software”, “Let me pick from a list of device drivers on my computer”, “Have Disk...”, browse to the Argyll_VX.X.X\usb folder, open the ArgyllCMS.inf file, click OK, and finally confirm the Argyll driver for your instrument from the list.</p>
 					
 					<p>To switch between the Argyll CMS and vendor drivers, launch Windows' Device Manager and locate the instrument in the device list. It may be underneath one of the top level items.
 					Right click on the instrument and select “Update Driver Software...”, then choose “Browse my computer for driver software”, “Let me pick from a list of device drivers on my computer” and finally select the Argyll driver for your instrument from the list.</p>
@@ -1556,7 +1559,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 
 				<h4>Profile loader (Windows)</h4>
 
-				<p>Under Windows, the profile loader will stay in the taskbar tray and keep the calibration loaded. In addition, the profile loader is <a href="http://madvr.com/">madVR</a>-aware and will disable calibration loading if it detects e.g. madTPG or madVR being used by a video player. A right-click menu also allows you to set the desired calibration state and a few other options:</p>
+				<p>Under Windows, the profile loader will stay in the taskbar tray and keep the calibration loaded (unless started with the <code>--oneshot</code> argument, which will make the loader exit after loading calibration). In addition, the profile loader is <a href="http://madvr.com/">madVR</a>-aware and will disable calibration loading if it detects e.g. madTPG or madVR being used by a video player. A right-click menu also allows you to set the desired calibration state and a few other options:</p>
 
 				<ul>
 					<li><strong>Reload calibration from current display device profile(s)</strong>. Selecting this reloads the calibration instantly, and also sets the desired calibration state (see “Preserve calibration state” below).</li>
@@ -2448,7 +2451,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			楊添明 (traditional chinese translation)</p>
 
 			<p>Recent contributors:
-Maximilian Rosenberger, Jody Foo, Torben Klink, Michael Hoenig, Michele
+Peter Harris, Benedikt Nimmervoll, Stefan Maneth, Denis Cilia, Maximilian Rosenberger, Jody Foo, Torben Klink, Michael Hoenig, Michele
 Mogioni, Mael Voyer, Angelos Tsiracis, Fotis Zagoras, Swen Heinrich, Ermes
 Turrin, Hubert Meitz, Tomas Sobek, Bernard Andre, Thomas Weimer, Dominic
 Dunkley, Hassan Elhassan
@@ -2475,6 +2478,28 @@ Ruby, Jacob Rajan, Martin Brandl, David Hover</span></p>
 
 						<h4>Added in this release:</h4>
 						<ul>
+							<li>4th DCI-P3-encompassing PCS candidate. May improve efficiency of PCS-to-device tables slightly in some cases.</li>
+							<li>3D LUT sizes 5x5x5 and 9x9x9.</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Limit “Auto” resolution of PCS-to-device tables to 45x45x45.</li>
+							<li>Windows: <strong>Much easier Argyll CMS instrument driver installation</strong> (for instruments that require it). Connect your instrument, select “Install Argyll CMS instrument drivers...” from the “Tools” menu, click “Download &amp; install”, wait for the download to finish (400 KB), confirm the User Access Control popup, done! (thanks to Alex131089 for pointing me to <a href="https://github.com/pbatard/libwdi">libwdi</a> which makes this possible)</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Mac OS X: Work around a wxPython bug which prevents launching the application from a path containing non-ASCII characters.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.1.6">2016-08-24 21:33 (UTC) 3.1.6 </dt>
+					<dd>
+						<h3>3.1.6 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
 							<li>HDR/SMPTE 2084: Advanced options to specify maximum content light level for roll-off (use with care!) as well as content colorspace (affects perceptual intent gamut mapping, less so colorimetric).</li>
 						</ul>
 
@@ -2498,6 +2523,7 @@ Ruby, Jacob Rajan, Martin Brandl, David Hover</span></p>
 							<li>Linux/colord: Don't cache device IDs that are not the result of a successful query.</li>
 							<li>Windows: Make elevated subprocess calls synchronous. Fixes importing colorimeter corrections system-wide not listing all succesfully imported items on the first use.</li>
 						</ul>
+					</dd>
 
 				<dt id="changelog-3.1.5">2016-08-02 22:28 (UTC) 3.1.5 </dt>
 					<dd>

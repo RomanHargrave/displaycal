@@ -429,6 +429,7 @@
 	"download": "下載中",
 	"download_fail_empty_response": "下載失敗：%s 的回應為內容空白的檔案。",
 	"download_fail_wrong_size": "下載失敗: 檔案大小並非為預期的 %s 位元組 (已收到 %s 位元組).",
+		"*download_install": "Download & install",
 	"downloading": "下載中",
 	"drift_compensation.blacklevel": "黑色亮度漂移補償",
 	"drift_compensation.blacklevel.info": "黑色亮度漂移補償會試圖降低在測量裝置正在預熱時出現的校正黑色校正偏漂移現像而引致的測量值出現偏差所帶來影響。 由於此功能會反復地測量黑色色塊，會整體增加測量所需的時間。很多色度計都有內置溫度補償功能，因此很多時候都不需要使用黑色亮度漂移補償，但大部份光譜儀卻沒有溫度補償的設計。",

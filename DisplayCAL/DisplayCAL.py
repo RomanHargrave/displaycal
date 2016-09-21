@@ -30,7 +30,6 @@ import datetime
 import decimal
 Decimal = decimal.Decimal
 import glob
-import httplib
 import math
 import os
 import platform
@@ -42,7 +41,6 @@ import socket
 import subprocess as sp
 import threading
 import traceback
-import urllib
 import urllib2
 import zipfile
 if sys.platform == "win32":
@@ -82,7 +80,6 @@ import pyi_md5pickuphelper
 import report
 if sys.platform == "win32":
 	import util_win
-	from util_win import win_ver
 import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
 						  ti3_to_ti1, vcgt_to_cal,
@@ -100,7 +97,6 @@ from options import debug, test, verbose
 from ordereddict import OrderedDict
 from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
-from util_http import encode_multipart_formdata
 from util_io import StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
@@ -118,7 +114,7 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					make_argyll_compatible_path,
 					parse_argument_string, set_argyll_bin, show_result_dialog,
 					technology_strings_170, technology_strings_171,
-					check_argyll_bin)
+					check_argyll_bin, http_request)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -824,78 +820,6 @@ def upload_colorimeter_correction(parent=None, params=None):
 						 msg="\n\n".join([failure_msg, resp.read().strip()]),
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"))
-
-
-def http_request(parent=None, domain=None, request_type="GET", path="", 
-				 params=None, files=None, headers=None, charset="UTF-8", failure_msg="",
-				 silent=False):
-	""" HTTP request wrapper """
-	if params is None:
-		params = {}
-	if files:
-		content_type, params = encode_multipart_formdata(params.iteritems(),
-														 files)
-	else:
-		for key in params:
-			params[key] = safe_str(params[key], charset)
-		params = urllib.urlencode(params)
-	if headers is None:
-		if sys.platform == "darwin":
-			# Python's platform.platform output is useless under Mac OS X
-			# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
-			oscpu = "Mac OS X %s; %s" % (mac_ver()[0], mac_ver()[-1])
-		elif sys.platform == "win32":
-			machine = platform.machine()
-			oscpu = "%s; %s" % (" ".join(filter(lambda v: v, win_ver())),
-								{"AMD64": "x86_64"}.get(machine, machine))
-		else:
-			# Linux
-			oscpu = "%s; %s" % (' '.join(platform.dist()), platform.machine())
-		headers = {"User-Agent": "%s/%s (%s)" % (appname, version, oscpu)}
-		if request_type == "GET":
-			path += '?' + params
-			params = None
-		else:
-			if files:
-				headers.update({"Content-Type": content_type,
-								"Content-Length": str(len(params))})
-			else:
-				headers.update({"Content-Type": "application/x-www-form-urlencoded",
-								"Accept": "text/plain"})
-	conn = httplib.HTTPConnection(domain)
-	try:
-		conn.request(request_type, path, params, headers)
-		resp = conn.getresponse()
-	except (socket.error, httplib.HTTPException), exception:
-		msg = " ".join([failure_msg, lang.getstr("connection.fail", 
-												 " ".join([str(arg) for 
-														   arg in exception.args]))]).strip()
-		safe_print(msg)
-		if not silent:
-			wx.CallAfter(InfoDialog, parent, 
-						 msg=msg,
-						 ok=lang.getstr("ok"), 
-						 bitmap=geticon(32, "dialog-error"), log=False)
-		return False
-	if resp.status >= 400:
-		uri = "http://" + domain + path
-		msg = " ".join([failure_msg,
-						lang.getstr("connection.fail.http", 
-									" ".join([str(resp.status),
-											  resp.reason]))]).strip() + "\n" + uri
-		safe_print(msg)
-		html = universal_newlines(resp.read().strip())
-		html = re.sub(r"<script.*?</script>", "<!-- SCRIPT removed -->",
-					  html, re.I | re.S)
-		html = re.sub(r"<style.*?</style>", "<!-- STYLE removed -->",
-					  html, re.I | re.S)
-		safe_print(html)
-		if not silent:
-			wx.CallAfter(HtmlInfoDialog, parent, msg=msg, html=html,
-						 ok=lang.getstr("ok"), 
-						 bitmap=geticon(32, "dialog-error"), log=False)
-		return False
-	return resp
 
 
 def install_scope_handler(event=None, dlg=None):
@@ -5969,13 +5893,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		if uninstall:
 			title = "argyll.instrument.drivers.uninstall"
 			msg = "argyll.instrument.drivers.uninstall.confirm"
+			ok = "continue"
 		else:
 			title = "argyll.instrument.drivers.install"
 			msg = "argyll.instrument.drivers.install.confirm"
+			ok = "download_install"
 		dlg = ConfirmDialog(self,
 							title=lang.getstr(title),
 							msg=lang.getstr(msg),
-							ok=lang.getstr("ok"),
+							ok=lang.getstr(ok).replace("&", "&&"),
 							cancel=lang.getstr("cancel"),
 							bitmap=geticon(32, "dialog-information"))
 		dlg.launch_devman = wx.CheckBox(dlg, -1, lang.getstr("device_manager.launch"))
@@ -5991,35 +5917,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return
-		if not uninstall and sys.getwindowsversion() >= (6, 2):
-			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-								  r"SYSTEM\CurrentControlSet\Control", 0,
-								  _winreg.KEY_READ |
-								  _winreg.KEY_QUERY_VALUE)
-			try:
-				value = _winreg.QueryValueEx(key, "SystemStartOptions")[0]
-			except WindowsError:
-				value = ""
-			if (not "TESTSIGNING" in value and
-				not "DISABLE_INTEGRITY_CHECKS" in value):
-				dlg = ConfirmDialog(self,
-									title=lang.getstr("argyll.instrument.drivers.install"),
-									msg=lang.getstr("argyll.instrument.drivers.install.restart"),
-									ok=lang.getstr("ok"),
-									cancel=lang.getstr("cancel"),
-									bitmap=geticon(32, "dialog-warning"))
-				result = dlg.ShowModal()
-				dlg.Destroy()
-				if result != wx.ID_OK:
-					return
-				self.worker.exec_cmd(which("shutdown.exe"),
-									 ["/r", "/o", "/t", "0"],
-									 capture_output=True, skip_scripts=True,
-									 working_dir=False)
-				return
+		safe_print("-" * 80)
+		safe_print(lang.getstr(title))
 		self.worker.start(lambda result: show_result_dialog(result, self)
 										 if isinstance(result, Exception)
-										 else 0,
+										 else self.check_update_controls(True),
 						  self.worker.install_argyll_instrument_drivers,
 						  wargs=(uninstall, launch_devman), fancy=False)
 
