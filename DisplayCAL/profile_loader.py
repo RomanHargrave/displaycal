@@ -1010,6 +1010,8 @@ class ProfileLoader(object):
 				elif (apply_profiles != self.__apply_profiles or
 					  profile_association_changed):
 					self.__apply_profiles = apply_profiles
+					if apply_profiles:
+						self.reload_count += 1
 					wx.CallAfter(lambda: self and
 										 self.taskbar_icon.set_visual_state())
 			first_run = False
