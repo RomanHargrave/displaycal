@@ -88,15 +88,17 @@ class ProfileLoader(object):
 					self.Bind(wx.EVT_DISPLAY_CHANGED, self.pl._display_changed)
 
 				def get_commands(self):
-					return self.get_common_commands() + ["apply-profiles [force]",
+					return self.get_common_commands() + ["apply-profiles [force | display-changed]",
 														 "notify <message> [silent] [sticky]",
+														 "reset-vcgt [force]",
 														 "setlanguage <languagecode>"]
 
 				def process_data(self, data):
-					if data[0] == "apply-profiles" and (len(data) == 1 or
-														(len(data) == 2 and
-														 data[1] in ("force",
-																	 "display-changed"))):
+					if data[0] in ("apply-profiles",
+								   "reset-vcgt") and (len(data) == 1 or
+													  (len(data) == 2 and
+													   data[1] in ("force",
+																   "display-changed"))):
 						if (not ("--force" in sys.argv[1:] or len(data) == 2) and
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
@@ -113,6 +115,10 @@ class ProfileLoader(object):
 									# display has changed
 									self.pl._manual_restore = 2
 						else:
+							if data[0] == "reset-vcgt":
+								self.pl._set_reset_gamma_ramps(None)
+							else:
+								self.pl._set_manual_restore(None)
 							with self.pl.lock:
 								self.pl._manual_restore = len(data)
 						return "ok"
