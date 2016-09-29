@@ -7693,9 +7693,9 @@ usage: spotread [-options] [logfile]
 			# simple profile for preconditioning
 			if config.get_display_name() == "Untethered":
 				return Error(lang.getstr("testchart.auto_optimize.untethered.unsupported"))
-			# Use small LUT testchart
+			# Use default testchart for shaper+matrix (34 patches)
 			setcfg("testchart.file",
-				   get_data_path("ti1/d3-e4-s13-g37-m4-b4-f0.ti1"))
+				   get_data_path("ti1/d3-e4-s2-g25-m0-b0-f0.ti1"))
 			cmd, args = self.prepare_dispread(apply_calibration)
 			setcfg("testchart.file", "auto")
 			if not isinstance(cmd, Exception):
@@ -7706,45 +7706,9 @@ usage: spotread [-options] [logfile]
 					self.pauseable = False
 					basename = args[-1]
 					precond_ti3 = CGATS.CGATS(basename + ".ti3")
-					cmd, args = get_argyll_util("colprof"), ["-v", "-qm", "-ax",
-															 "-bn", basename]
+					cmd, args = get_argyll_util("colprof"), ["-v", "-qh", "-as",
+															 basename]
 					result = self.exec_cmd(cmd, args)
-					if (not isinstance(result, Exception) and result and
-						getcfg("testchart.auto_optimize.fix_zero_blackpoint")):
-						# Hmm. Some users have reported targen hanging, and I
-						# couldn't reproduce it unless I used MinGW (32-bit) to
-						# compile Argyll 1.7b (2015-03-06) development code
-						# and a preconditioning profile with zero blackpoint.
-						self.log("Pre-conditioning zero black point fix enabled")
-						try:
-							profile = ICCP.ICCProfile(basename + profile_ext)
-						except Exception, exception:
-							result = exception
-						else:
-							profchanged = False
-							if isinstance(profile.tags.get("A2B0"),
-										  ICCP.LUT16Type):
-								# Make sure blackpoint isn't zero
-								if profile.tags.A2B0.clut[0][0] == [0, 0, 0]:
-									profile.tags.A2B0.apply_bpc((1.0 / 65535, ) * 3)
-									profchanged = True
-							elif (isinstance(profile.tags.get("rTRC"),
-											 ICCP.CurveType) and
-								  isinstance(profile.tags.get("gTRC"),
-											 ICCP.CurveType) and
-								  isinstance(profile.tags.get("bTRC"),
-											 ICCP.CurveType)):
-								# Make sure blackpoint isn't zero
-								for channel in "rgb":
-									if profile.tags[channel + "TRC"][0] == 0:
-										profile.tags[channel + "TRC"].apply_bpc(1.0 / 65535)
-										profchanged = True
-							if profchanged:
-								try:
-									profile.write()
-								except Exception, exception:
-									result = exception
-								self.log("Pre-conditioning zero black point fix applied")
 					if not isinstance(result, Exception) and result:
 						# Create optimized testchart
 						if getcfg("use_fancy_progress"):
@@ -7755,6 +7719,7 @@ usage: spotread [-options] [logfile]
 						s = min(auto, 11) * 4 - 3
 						g = s * 3 - 2
 						f = get_total_patches(4, 4, s, g, auto, auto, 0)
+						f += 120
 						cmd, args = (get_argyll_util("targen"),
 									 ["-v", "-d3", "-e4", "-s%i" % s,
 									  "-g%i" % g, "-m0", "-f%i" % f, "-A1.0"])
@@ -7776,9 +7741,9 @@ usage: spotread [-options] [logfile]
 			if getcfg("testchart.file") == "auto" and auto < 5:
 				# Use pre-baked testchart
 				if auto == 3:
-					testchart = "ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1"
+					testchart = "ti1/d3-e4-s2-g49-m0-b0-f0.ti1"
 				else:
-					testchart = "ti1/d3-e4-s0-g49-m3-b3-f0-crossover.ti1"
+					testchart = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
 				testchart_path = get_data_path(testchart)
 				if testchart_path:
 					setcfg("testchart.file", testchart_path)

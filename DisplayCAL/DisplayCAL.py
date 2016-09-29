@@ -2888,7 +2888,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			"tc_vrml_device",
 			"tc_vrml_device_colorspace",
 			"tc.show",
-			"testchart.auto_optimize.fix_zero_blackpoint",
 			"uniformity.measure.continuous",
 			"untethered.measure.auto",
 			"untethered.measure.manual.delay",
@@ -10930,12 +10929,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		""" Check if the selected testchart has at least the recommended
 		amount of patches. Give user the choice to use the recommended amount
 		if patch count is lower. """
-		recommended = {"G": 9,
-					   "g": 11,
+		recommended = {"G": 6,
+					   "g": 6,
 					   "l": 238,
 					   "lh": 124,
-					   "S": 36,
-					   "s": 36,
+					   "S": 12,
+					   "s": 12,
 					   "X": 238,
 					   "Xh": 124,
 					   "x": 238,
@@ -12224,17 +12223,19 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("testchart.auto_optimize", auto)
 			self.profile_settings_changed()
 		proftype = getcfg("profile.type")
-		if auto > 4:
+		if auto >= 4:
 			s = min(auto, 11) * 4 - 3
 			g = s * 3 - 2
-			patches_amount = get_total_patches(4, 4, s, g, auto, auto, 0) + 154
+			patches_amount = get_total_patches(4, 4, s, g, auto, auto, 0) + 34
+			if auto > 4:
+				patches_amount += 120
+			else:
+				# Increment to 271 patches of default testchart for LUT profiles
+				patches_amount += 83
 			if event and proftype not in ("l", "x", "X"):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		else:
-			if auto == 3:
-				patches_amount = 73
-			else:
-				patches_amount = 97
+			patches_amount = 58
 			if event and proftype not in ("g", "G", "s", "S"):
 				setcfg("profile.type", "S" if getcfg("trc") else "s")
 		if proftype != getcfg("profile.type"):
@@ -12267,11 +12268,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		##print "set_default_testchart", path
 		if getcfg("profile.type") in ("l", "x", "X"):
 			# cLUT
-			if getcfg("testchart.auto_optimize") < 5:
+			if getcfg("testchart.auto_optimize") < 4:
 				setcfg("testchart.auto_optimize", 5)
 		else:
 			# Gamma or shaper + matrix
-			if getcfg("testchart.auto_optimize") > 4:
+			if getcfg("testchart.auto_optimize") > 3:
 				setcfg("testchart.auto_optimize", 3)
 		if path == "auto":
 			self.set_testchart(path)
@@ -13048,8 +13049,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								 "3dlut.output.profile.apply_cal",
 								 "3dlut.trc", "testchart.auto_optimize"), 
 						exclude=("3dlut.tab.enable.backup", "profile.update",
-								 "profile.name", "gamap_default_intent",
-								 "testchart.auto_optimize.fix_zero_blackpoint"))
+								 "profile.name", "gamap_default_intent"))
 					for o in options_colprof:
 						if o[0] == "q":
 							setcfg("profile.quality", o[1])
