@@ -102,7 +102,7 @@
 	"argyll.instrument.configuration_files.uninstall": "Uninstall Argyll CMS instrument configuration files...",
 	"argyll.instrument.configuration_files.uninstall.success": "Uninstallation of Argyll CMS instrument configuration files complete.",
 	"argyll.instrument.drivers.install": "Install Argyll CMS instrument drivers...",
-	"argyll.instrument.drivers.install.confirm": "You only need to install the Argyll CMS specific drivers if you have a measurement instrument that is not a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10.\n\nDo you want to proceed?",
+	"argyll.instrument.drivers.install.confirm": "You only need to install the Argyll CMS specific drivers if you have a measurement instrument that is not a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval or K-10.\n\nDo you want to proceed?",
 	"argyll.instrument.drivers.install.failure": "Installation of Argyll CMS instrument drivers failed.",
 	"argyll.instrument.drivers.install.restart": "You need to disable Driver Signature Enforcement to install the Argyll CMS instrument drivers. For this purpose, the system needs to be restarted. Select “Troubleshoot” on the page that will appear, then “Advanced Options”, “Startup Settings” and finally “Restart”. On startup, select “Disable Driver Signature Enforcement”. After the restart, choose “Install Argyll CMS instrument drivers...” in the menu again to install the drivers. If you don't see the “Troubleshoot” option, please refer to the DisplayCAL documentation section “Instrument driver installation under Windows” for an alternate method to disable Driver Signature Enforcement.",
 	"argyll.instrument.drivers.uninstall": "Uninstall Argyll CMS instrument drivers...",

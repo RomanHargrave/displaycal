@@ -86,7 +86,7 @@
 					Participer en utilisant PayPal :
 					<input type="hidden" name="cmd" value="_donations" />
 					<input id="donationform_business" type="hidden" name="business" value="" />
-					<input type="hidden" name="item_name" value="Contribution to Florian Hoech/${APPNAME}" />
+					<input type="hidden" name="item_name" value="${APPNAME} Contribution" />
 					<input type="hidden" name="no_shipping" value="1" />
 					<input type="hidden" name="lc" value="US" />
 					<select name="amount">
@@ -676,7 +676,7 @@
 					<p>Lancez ${APPNAME}. S’il ne peut pas déterminer le chemin vers les binaires d’Argyll CMS, il va, lors du premier lancement, vous demander d’en télécharger automatiquement la dernière version ou d’en sélectionner vous-même l’emplacement.</p>
 				</li>
 				<li>
-					<p class="info"><strong>Windows uniquement :</strong> si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos ou K-10, vous devrez installer un pilote spécifique à Argyll avant de poursuivre. Sélectionnez « Installer les pilotes des sondes de mesure d’Argyll CMS… » depuis le menu « Outils ». Voir aussi <a href="#install-windows-driver">« Installation du pilote de sonde de mesure sous Windows ».</a></p>
+					<p class="info"><strong>Windows uniquement :</strong> si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval ou K-10, vous devrez installer un pilote spécifique à Argyll avant de poursuivre. Sélectionnez « Installer les pilotes des sondes de mesure d’Argyll CMS… » depuis le menu « Outils ». Voir aussi <a href="#install-windows-driver">« Installation du pilote de sonde de mesure sous Windows ».</a></p>
 					<p class="info"><strong>Mac OS X uniquement :</strong> si vous désirez utiliser le colorimètre HCFR, suivez les instructions de la section « Colorimètre HCFR » dans <a href="http://argyllcms.com/doc/Installing_OSX.html">« Installing Argyll CMS on Mac OS X »</a> [en] (« Installer Argyll CMS sous Mac OS X ») dans la documentation d’Argyll CMS avant de poursuivre.</p>
 					
 					<p>Connectez votre sonde de mesure à votre ordinateur.</p>
@@ -747,6 +747,7 @@
 				<h4>Spectromètres</h4>
 				<ul>
 					<li>JETI specbos 1211/1201 (depuis Argyll CMS 1.6.0)</li>
+					<li>JETI spectraval 1511/1501 (depuis Argyll CMS 1.9.0)</li>
 					<li>X-Rite ColorMunki Design, ColorMunki Photo (depuis Argyll CMS 1.1.0)</li>
 					<li>X-Rite/GretagMacbeth i1 Monitor (depuis Argyll CMS 1.0.3)</li>
 					<li>X-Rite/GretagMacbeth i1 Pro/EFI ES-1000</li>
@@ -858,7 +859,7 @@
 				<h3>Installation du pilote de sonde de mesure sous Windows</h3>
 
 				<div>
-					<p class="info">Vous n’avez besoin d’installer le pilote spécifique à Argyll que si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos ou K-10.</p>
+					<p class="info">Vous n’avez besoin d’installer le pilote spécifique à Argyll que si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval ou K-10.</p>
 
 					<div class="info">
 						<p>Si vous utilisez Windows 8, 8.1, ou 10, vous devrez <strong>désactiver la vérification de signature du pilote</strong> avant de pouvoir l’installer.
@@ -938,7 +939,7 @@
 
 				<div>
 					<p>Lancez l’installateur qui vous guidera dans les différentes étapes nécessaires à la configuration.</p>
-					<p class="info">Si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos ni K-10, vous devrez installer un pilote spécifique à Argyll. Voir <a href="#install-windows-driver">« Installation d’un pilote de sonde de mesure sous Windows ».</a></p>
+					<p class="info">Si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval ni K-10, vous devrez installer un pilote spécifique à Argyll. Voir <a href="#install-windows-driver">« Installation d’un pilote de sonde de mesure sous Windows ».</a></p>
 				</div>
 			</div>
 
@@ -948,7 +949,7 @@
 
 				<div>
 					<p>Décompressez l’archive et lancez simplement ${APPNAME} depuis le dossier qui a été créé.</p>
-					<p class="info">Si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos ni un K-10, vous devrez installer un pilote spécifique à Argyll. Voir <a href="#install-windows-driver">« Installation d’un pilote de sonde de mesure sous Windows ».</a></p>
+					<p class="info">Si votre sonde de mesure n’est <strong>pas</strong> un ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval ni un K-10, vous devrez installer un pilote spécifique à Argyll. Voir <a href="#install-windows-driver">« Installation d’un pilote de sonde de mesure sous Windows ».</a></p>
 				</div>
 			</div>
 
@@ -2391,7 +2392,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			楊添明 (traduction chinois traditionnel)</p>
 
 			<p>Les donateurs récents :
-Maximilian Rosenberger, Jody Foo, Torben Klink, Michael Hoenig, Michele
+Peter Harris, Benedikt Nimmervoll, Stefan Maneth, Denis Cilia, Maximilian Rosenberger, Jody Foo, Torben Klink, Michael Hoenig, Michele
 Mogioni, Mael Voyer, Angelos Tsiracis, Fotis Zagoras, Swen Heinrich, Ermes
 Turrin, Hubert Meitz, Tomas Sobek, Bernard Andre, Thomas Weimer, Dominic
 Dunkley, Hassan Elhassan
@@ -2418,6 +2419,33 @@ Ruby, Jacob Rajan, Martin Brandl, David Hover</span></p>
 
 						<h4>Added in this release:</h4>
 						<ul>
+							<li>3D LUT sizes 5x5x5 and 9x9x9.</li>
+							<li>JETI spectraval 1511/1501 support (requires Argyll CMS &gt;= 1.9).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>“Auto” resolution of PCS-to-device tables is now limited to 45x45x45 to prevent excessive processing times with profiles from “funky” measurements (i.e. due to bad/inaccurate instrument).</li>
+							<li>Automatically optimized testcharts now use curves + matrix profiles for preconditioning to prevent a possible hang while creating the preconditioned testchart with LUT-type profiles from sufficiently “badly behaved” displays.</li>
+							<li>2nd auto-optimized testchart slider step now defaults to XYZ LUT profile type as well, and the previous patch count was increased from 97 to 271 to facilitate the necessary accuracy.</li>
+							<li>Adjusted curves + matrix testcharts to only include fully saturated RGB and grayscale to prevent tinted neutrals and/or “rollercoaster” curves on not-so-well behaved displays (also reduces testchart patch count and measurement time, but may worsen the resulting profile's overall accuracy).</li>
+							<li>Windows: <strong>Much easier Argyll CMS instrument driver installation</strong> (for instruments that require it). No need to disable driver signature enforcement under Windows 8/10 anymore. Select “Install Argyll CMS instrument drivers...” from the “Tools” menu, click “Download &amp; install”, wait briefly for the download to finish (400 KB), confirm the User Access Control popup, done. Note that the driver installer executable is currently not digitally signed (obtaining a suitable certificate and having it vetted by a trusted authority is on the to-do list), but the driver itself is signed as usual. The installer is based on <a href="https://github.com/pbatard/libwdi">libwdi</a>.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Update measurement modes after importing colorimeter corrections. Fixes additional measurement modes for the Spyder2 and Spyder4/5 not appearing until the program is restarted or a different instrument is selected first.</li>
+							<li>Trivial: Instrument setup was unnecessarily being called twice after downloading Argyll CMS when the latter wasn't previously detected.</li>
+							<li>Mac OS X: Work around a wxPython bug which prevents launching the application from a path containing non-ASCII characters.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.1.6">2016-08-24 21:33 (UTC) 3.1.6 </dt>
+					<dd>
+						<h3>3.1.6 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
 							<li>HDR/SMPTE 2084: Advanced options to specify maximum content light level for roll-off (use with care!) as well as content colorspace (affects perceptual intent gamut mapping, less so colorimetric).</li>
 						</ul>
 
@@ -2441,6 +2469,7 @@ Ruby, Jacob Rajan, Martin Brandl, David Hover</span></p>
 							<li>Linux/colord: Don't cache device IDs that are not the result of a successful query.</li>
 							<li>Windows: Make elevated subprocess calls synchronous. Fixes importing colorimeter corrections system-wide not listing all succesfully imported items on the first use.</li>
 						</ul>
+					</dd>
 
 				<dt id="changelog-3.1.5">2016-08-02 22:28 (UTC) 3.1.5 </dt>
 					<dd>

@@ -84,7 +84,7 @@
 					Contribute using PayPal:
 					<input type="hidden" name="cmd" value="_donations" />
 					<input id="donationform_business" type="hidden" name="business" value="" />
-					<input type="hidden" name="item_name" value="Contribution to Florian Hoech/${APPNAME}" />
+					<input type="hidden" name="item_name" value="${APPNAME} Contribution" />
 					<input type="hidden" name="no_shipping" value="1" />
 					<input type="hidden" name="lc" value="US" />
 					<INPUT TYPE="hidden" NAME="return" value="${URL}contribution_thank_you.html">
@@ -677,7 +677,7 @@
 					<p>Launch ${APPNAME}. If it cannot find Argyll CMS on your computer, it will prompt you to automatically download the latest version or select the location manually.</p>
 				</li>
 				<li>
-					<p class="info"><strong>Windows only:</strong> If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10, you need to install an Argyll-specific driver before continuing (the specbos and K-10 may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead). Select “Install Argyll CMS instrument drivers...” from the “Tools” menu. See also <a href="#install-windows-driver">“Instrument driver installation under Windows”.</a></p>
+					<p class="info"><strong>Windows only:</strong> If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval or K-10, you need to install an Argyll-specific driver before continuing (the specbos, spectraval and K-10 may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead). Select “Install Argyll CMS instrument drivers...” from the “Tools” menu. See also <a href="#install-windows-driver">“Instrument driver installation under Windows”.</a></p>
 					<p class="info"><strong>Mac OS X only:</strong> If you want to use the HCFR colorimeter, follow the instructions in the “HCFR Colorimeter” section under “<a href="http://argyllcms.com/doc/Installing_OSX.html">Installing Argyll CMS on Mac OS X</a>” in the Argyll CMS documentation before continuing.</p>
 					<p>Connect your measurement device to your computer.</p>
 				</li>
@@ -744,6 +744,7 @@
 				<h4>Spectrometers</h4>
 				<ul>
 					<li>JETI specbos 1211/1201 (since Argyll CMS 1.6.0)</li>
+					<li>JETI spectraval 1511/1501 (since Argyll CMS 1.9.0)</li>
 					<li>X-Rite ColorMunki Design/Photo (since Argyll CMS 1.1.0)</li>
 					<li>X-Rite/GretagMacbeth i1 Monitor (since Argyll CMS 1.0.3)</li>
 					<li>X-Rite/GretagMacbeth i1 Pro (the EFI ES-1000 version of the instrument is also reported to work)</li>
@@ -854,7 +855,7 @@
 				<h3>Instrument driver installation under Windows</h3>
 
 				<div>
-					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10 (the latter two may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead).</p>
+					<p class="info">You only need to install the Argyll-specific driver if your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval or K-10 (the latter two may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead).</p>
 
 					<p>To automatically install the Argyll-specific driver that is needed to use some instruments, launch ${APPNAME} and select “Install Argyll CMS instrument drivers...” from the “Tools” menu. Alternatively, follow the manual instructions below.</p>
 
@@ -936,7 +937,7 @@
 
 				<div>
 					<p>Launch the installer which will guide you trough the required setup steps.</p>
-					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10, you need to install an Argyll-specific driver (the specbos and K-10 may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead). <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
+					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval or K-10, you need to install an Argyll-specific driver (the specbos, spectraval and K-10 may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead). <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
 				</div>
 			</div>
 
@@ -946,7 +947,7 @@
 
 				<div>
 					<p>Unpack and then simply run ${APPNAME} from the created folder.</p>
-					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos or K-10, you need to install an Argyll-specific driver (the specbos and K-10 may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead). <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
+					<p class="info">If your measurement device is <strong>not</strong> a ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval or K-10, you need to install an Argyll-specific driver (the specbos, spectraval and K-10 may require the <a href="http://www.ftdichip.com/Drivers/VCP.htm">FTDI virtual COM port driver</a> instead). <a href="#install-windows-driver">See “Instrument driver installation under Windows”.</a></p>
 				</div>
 			</div>
 
@@ -2478,18 +2479,23 @@ Ruby, Jacob Rajan, Martin Brandl, David Hover</span></p>
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>4th DCI-P3-encompassing PCS candidate. May improve efficiency of PCS-to-device tables slightly in some cases.</li>
 							<li>3D LUT sizes 5x5x5 and 9x9x9.</li>
+							<li>JETI spectraval 1511/1501 support (requires Argyll CMS &gt;= 1.9).</li>
 						</ul>
 
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li>Limit “Auto” resolution of PCS-to-device tables to 45x45x45.</li>
-							<li>Windows: <strong>Much easier Argyll CMS instrument driver installation</strong> (for instruments that require it). Connect your instrument, select “Install Argyll CMS instrument drivers...” from the “Tools” menu, click “Download &amp; install”, wait for the download to finish (400 KB), confirm the User Access Control popup, done! (thanks to Alex131089 for pointing me to <a href="https://github.com/pbatard/libwdi">libwdi</a> which makes this possible)</li>
+							<li>“Auto” resolution of PCS-to-device tables is now limited to 45x45x45 to prevent excessive processing times with profiles from “funky” measurements (i.e. due to bad/inaccurate instrument).</li>
+							<li>Automatically optimized testcharts now use curves + matrix profiles for preconditioning to prevent a possible hang while creating the preconditioned testchart with LUT-type profiles from sufficiently “badly behaved” displays.</li>
+							<li>2nd auto-optimized testchart slider step now defaults to XYZ LUT profile type as well, and the previous patch count was increased from 97 to 271 to facilitate the necessary accuracy.</li>
+							<li>Adjusted curves + matrix testcharts to only include fully saturated RGB and grayscale to prevent tinted neutrals and/or “rollercoaster” curves on not-so-well behaved displays (also reduces testchart patch count and measurement time, but may worsen the resulting profile's overall accuracy).</li>
+							<li>Windows: <strong>Much easier Argyll CMS instrument driver installation</strong> (for instruments that require it). No need to disable driver signature enforcement under Windows 8/10 anymore. Select “Install Argyll CMS instrument drivers...” from the “Tools” menu, click “Download &amp; install”, wait briefly for the download to finish (400 KB), confirm the User Access Control popup, done. Note that the driver installer executable is currently not digitally signed (obtaining a suitable certificate and having it vetted by a trusted authority is on the to-do list), but the driver itself is signed as usual. The installer is based on <a href="https://github.com/pbatard/libwdi">libwdi</a>.</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
+							<li>Update measurement modes after importing colorimeter corrections. Fixes additional measurement modes for the Spyder2 and Spyder4/5 not appearing until the program is restarted or a different instrument is selected first.</li>
+							<li>Trivial: Instrument setup was unnecessarily being called twice after downloading Argyll CMS when the latter wasn't previously detected.</li>
 							<li>Mac OS X: Work around a wxPython bug which prevents launching the application from a path containing non-ASCII characters.</li>
 						</ul>
 					</dd>
