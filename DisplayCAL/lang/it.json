@@ -380,7 +380,7 @@
 		"*device_to_pcs_intent_1": "Device to PCS: Intent 1",
 		"*device_to_pcs_intent_2": "Device to PCS: Intent 2",
 		"*devicelink_profile": "Device link profile",
-		"*dialog.argyll.notfound.choice": "Argyll CMS, the color engine that is needed to run DisplayCAL, doesn't seem to be installed on this computer. Dow you want to automatically download it or browse for it manually?",
+		"*dialog.argyll.notfound.choice": "Argyll CMS, the color engine that is needed to run DisplayCAL, doesn't seem to be installed on this computer. Do you want to automatically download it or browse for it manually?",
 		"*dialog.cal_info": "The calibration file “%s” will be used. Do you want to continue?",
 		"*dialog.confirm_cancel": "Do you really want to cancel?",
 		"*dialog.confirm_delete": "Do you really want to delete the selected file(s)?",
