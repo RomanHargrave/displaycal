@@ -94,7 +94,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"PY_MINVERSION": ".".join(str(n) for n in py_minversion),
 		"VERSION": version,
 		"VERSION_SHORT": re.sub("(?:\.0){1,2}$", "", version),
-		"URL": "http://%s/" % domain.lower(),
+		"URL": "https://%s/" % domain.lower(),
 		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
 		"YEAR": strftime("%Y", gmtime(lastmod_time or 
 									  os.stat(tmpl_path).st_mtime))}
@@ -490,15 +490,15 @@ def setup():
 				"AppName": name,
 				"AppVerName": version,
 				"AppPublisher": author,
-				"AppPublisherURL": "http://" + domain,
-				"AppSupportURL": "http://" + domain,
-				"AppUpdatesURL": "http://" + domain,
+				"AppPublisherURL": "https://%s/" % domain,
+				"AppSupportURL": "https://%s/" % domain,
+				"AppUpdatesURL": "https://%s/" % domain,
 				"VersionInfoVersion": ".".join(map(str, version_tuple)),
 				"VersionInfoTextVersion": version,
 				"AppVersion": version,
 				"Platform": get_platform(),
 				"PythonVersion": sys.version[:3],
-				"URL": "http://%s/" % domain.lower(),
+				"URL": "https://%s/" % domain.lower(),
 				}
 			inno_template.close()
 			inno_path = os.path.join("dist", 
@@ -970,7 +970,7 @@ def setup():
 						folder = "&folder=snapshot"
 					archive.setAttribute("extract", extract)
 					archive.setAttribute("href",
-										 "http://%s/download.php?version=%s&suffix=.tar.gz%s" %
+										 "https://%s/download.php?version=%s&suffix=.tar.gz%s" %
 										 (domain.lower(), version, folder))
 					archive.setAttribute("size", "%s" % os.stat(archive_path).st_size)
 					archive.setAttribute("type", "application/x-compressed-tar")
@@ -1019,7 +1019,7 @@ def setup():
 								subdir = "256x256/"
 								filename = script.lower()
 							icon.setAttribute("href",
-											  "http://%s/theme/icons/%s%s.%s" %
+											  "https://%s/theme/icons/%s%s.%s" %
 											  (domain.lower(), subdir,
 											   filename, ext))
 							icon.setAttribute("type", mime_type)
@@ -1140,11 +1140,11 @@ def setup():
 			with codecs.open(os.path.join(dist_dir, "README.webloc"), "w",
 							 "UTF-8") as readme:
 				readme.write("""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>URL</key>
-	<string>http://%s/</string>
+	<string>https://%s/</string>
 </dict>
 </plist>
 """ % domain.lower())

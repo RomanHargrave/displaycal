@@ -458,7 +458,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 			else:
 				# Linux
 				path += "-linux"
-		launch_file("http://" + domain + path)
+		launch_file("https://" + domain + path)
 	elif not argyll:
 		# Check for Argyll update
 		if check_argyll_bin():
@@ -503,7 +503,7 @@ def donation_message(parent=None):
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
 	if dlg.ShowModal() == wx.ID_OK:
-		launch_file("http://" + domain + "/#donate")
+		launch_file("https://" + domain + "/#donate")
 		show_again = False
 	else:
 		show_again = not chkbox.Value
@@ -5718,7 +5718,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Link to ICC Profile Taxi service
 		hyperlink = HyperLinkCtrl(dlg.buttonpanel, -1,
 												   label="icc.opensuse.org", 
-												   URL="http://icc.opensuse.org")
+												   URL="https://icc.opensuse.org/")
 		dlg.sizer2.Insert(0, hyperlink, flag=wx.ALIGN_LEFT |
 											 wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
 						  border=dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] - hyperlink.Size[0])
@@ -5799,7 +5799,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Link to ICC Profile Taxi service
 			hyperlink = HyperLinkCtrl(dlg.buttonpanel, -1,
 													   label="icc.opensuse.org", 
-													   URL="http://icc.opensuse.org")
+													   URL="https://icc.opensuse.org/")
 			border = (dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] -
 					  hyperlink.Size[0])
 			if border < 24:
@@ -13634,7 +13634,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								   (appname, version_title, author)))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label=domain, 
-			URL="http://%s" % domain))
+			URL="https://%s/" % domain))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1,
 								   u"Argyll CMS %s © Graeme Gill" %
@@ -13668,13 +13668,13 @@ class MainFrame(ReportFrame, BaseFrame):
 								   "Python " + pyver_long[0].strip()))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="python.org", 
-			URL="http://www.python.org"))
+			URL="https://www.python.org/"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1, "wxPython " + 
 														 wx.version()))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="wxpython.org", 
-			URL="http://www.wxpython.org"))
+			URL="https://www.wxpython.org/"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1,
 								   lang.getstr("audio.lib",
@@ -13709,10 +13709,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			launch_file(license)
 	
 	def help_support_handler(self, event):
-		launch_file("http://%s/#help" % domain)
+		launch_file("https://%s/#help" % domain)
 	
 	def bug_report_handler(self, event):
-		launch_file("http://%s/#reportbug" % domain)
+		launch_file("https://%s/#reportbug" % domain)
 	
 	def app_update_check_handler(self, event, silent=False, argyll=False):
 		if not hasattr(self, "app_update_check") or \

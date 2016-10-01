@@ -723,7 +723,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		],
 		"data_files": data_files,
 		"description": description,
-		"download_url": "http://%(domain)s/"
+		"download_url": "https://%(domain)s/download/"
 						"%(name)s-%(version)s.tar.gz" % 
 						{"domain": domain, "name": name, "version": version},
 		"ext_modules": ext_modules,
@@ -745,7 +745,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		"requires": requires,
 		"provides": [name],
 		"scripts": [],
-		"url": "http://%s/" % domain,
+		"url": "https://%s/" % domain,
 		"version": msiversion if "bdist_msi" in sys.argv[1:] else version
 	}
 

@@ -63,7 +63,7 @@ var img, imgs = [], imgpaths = ['theme/splash.png', 'theme/splash_version.png', 
 
 jQuery(function ($) {
 	var protocol = location.protocol;
-	if (protocol == 'file:') protocol = 'http:';
+	if (protocol == 'file:') protocol = 'https:';
 
 	/* Infobox slider */
 	$('<div id="info-link-box"><a href="#info">i</a></div>').prependTo('#infobox');
@@ -238,7 +238,7 @@ jQuery(function ($) {
 
 jQuery(window).load(function () {
 	var protocol = location.protocol;
-	if (protocol == 'file:') protocol = 'http:';
+	if (protocol == 'file:') protocol = 'https:';
 
 	/* Anchor scroll effect */
 	$.localScroll({hash: true, filter: ':not(a[href="#info"], #toc li:has(ul) > a)'});
