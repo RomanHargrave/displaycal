@@ -9123,18 +9123,18 @@ usage: spotread [-options] [logfile]
 			paths = [defaultpaths.appdata] + defaultpaths.commonappdata
 		else:
 			paths = [defaultpaths.library_home, defaultpaths.library]
-			if self.argyll_version >= [1, 9]:
-				paths.extend([os.path.join(defaultpaths.home, ".local", "share"),
-							  "/usr/local/share"])
 		searchpaths = []
 		if self.argyll_version >= [1, 5, 0]:
 			if sys.platform != "darwin":
 				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)
 								   for dir_ in paths)
 			else:
+				paths2 = [defaultpaths.appdata, defaultpaths.library]
+				if self.argyll_version >= [1, 9]:
+					paths2.extend([os.path.join(defaultpaths.home, ".local",
+												"share"), "/usr/local/share"])
 				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)
-								   for dir_ in [defaultpaths.appdata,
-												defaultpaths.library])
+								   for dir_ in paths2)
 		searchpaths.extend(os.path.join(dir_, "color", name) for dir_ in paths)
 		for searchpath in searchpaths:
 			if os.path.isfile(searchpath):
