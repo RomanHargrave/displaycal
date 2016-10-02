@@ -10534,12 +10534,12 @@ BEGIN_DATA
 			bytes = []
 			total_unit = unit = "Bytes"
 			total_unit_size = unit_size = 1.0
-			if total_size > 1024:
-				total_unit = "KiB"
-				total_unit_size = 1024.0
-			elif total_size > 1048576:
+			if total_size > 1048576:
 				total_unit = "MiB"
 				total_unit_size = 1048576.0
+			elif total_size > 1024:
+				total_unit = "KiB"
+				total_unit_size = 1024.0
 
 			while True:
 				if self.thread_abort:
@@ -10554,12 +10554,12 @@ BEGIN_DATA
 
 				bytes.append(chunk)
 
-				if bytes_so_far > 1024 and unit_size < 1024:
-					unit = "KiB"
-					unit_size = 1024.0
-				elif bytes_so_far > 1048576 and unit_size < 1048576:
+				if bytes_so_far > 1048576 and unit_size < 1048576:
 					unit = "MiB"
 					unit_size = 1048576.0
+				elif bytes_so_far > 1024 and unit_size < 1024:
+					unit = "KiB"
+					unit_size = 1024.0
 
 				if total_size:
 					percent = float(bytes_so_far) / total_size
