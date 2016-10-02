@@ -10532,8 +10532,14 @@ BEGIN_DATA
 			chunk_size = 8192
 			bytes_so_far = 0
 			bytes = []
-			unit = "Bytes"
-			unit_size = 1
+			total_unit = unit = "Bytes"
+			total_unit_size = unit_size = 1.0
+			if total_size > 1024:
+				total_unit = "KiB"
+				total_unit_size = 1024.0
+			elif total_size > 1048576:
+				total_unit = "MiB"
+				total_unit_size = 1048576.0
 
 			while True:
 				if self.thread_abort:
@@ -10558,9 +10564,15 @@ BEGIN_DATA
 				if total_size:
 					percent = float(bytes_so_far) / total_size
 					percent = round(percent * 100, 2)
-					self.lastmsg.write("\r%i%% (%.1f / %.1f %s)" %
-									   (percent, bytes_so_far / unit_size,
-										total_size / unit_size, unit))
+					if unit == total_unit:
+						self.lastmsg.write("\r%i%% (%.1f / %.1f %s)" %
+										   (percent, bytes_so_far / unit_size,
+											total_size / unit_size, unit))
+					else:
+						self.lastmsg.write("\r%i%% (%.1f %s / %.1f %s)" %
+										   (percent, bytes_so_far / unit_size, unit,
+											total_size / total_unit_size,
+											total_unit))
 				else:
 					self.lastmsg.write("\r%.1f %s" % (bytes_so_far / unit_size,
 													unit))
