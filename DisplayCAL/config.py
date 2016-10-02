@@ -27,7 +27,7 @@ else:
 	from defaultpaths import (xdg_config_dir_default, xdg_config_home, 
 							  xdg_data_home, xdg_data_home_default, 
 							  xdg_data_dirs)
-from defaultpaths import (autostart, autostart_home, iccprofiles,
+from defaultpaths import (autostart, autostart_home, home, iccprofiles,
 						  iccprofiles_home)
 from meta import name as appname, build, lastmod, version
 from options import ascii, debug, verbose

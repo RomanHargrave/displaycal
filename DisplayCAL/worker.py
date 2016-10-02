@@ -9123,6 +9123,9 @@ usage: spotread [-options] [logfile]
 			paths = [defaultpaths.appdata] + defaultpaths.commonappdata
 		else:
 			paths = [defaultpaths.library_home, defaultpaths.library]
+			if self.argyll_version >= [1, 9]:
+				paths.extend([os.path.join(defaultpaths.home, ".local", "share"),
+							  "/usr/local/share"])
 		searchpaths = []
 		if self.argyll_version >= [1, 5, 0]:
 			if sys.platform != "darwin":

@@ -696,9 +696,15 @@ def get_argyll_data_files(scope, wildcard, include_lastmod=False):
 												 wildcard))
 			data_files += glob.glob(os.path.join(config.library, "ArgyllCMS",
 												 wildcard))
+			# Argyll 1.9
+			data_files += glob.glob(os.path.join("/usr/local/share",
+												 "ArgyllCMS", wildcard))
 		if "u" in scope:
 			data_files += glob.glob(os.path.join(config.library_home, "color",
 												 wildcard))
+			# Argyll 1.9
+			data_files += glob.glob(os.path.join(config.home, ".local", "share",
+												 "ArgyllCMS", wildcard))
 	if "u" in scope:
 		data_files += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
 											 wildcard))
