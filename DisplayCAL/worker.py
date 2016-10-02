@@ -10485,6 +10485,15 @@ BEGIN_DATA
 		return ti1, ti3v
 
 	def download(self, uri):
+		# Set timeout to a sane value
+		default_timeout = socket.getdefaulttimeout()
+		socket.setdefaulttimeout(10)  # 10 seconds
+		try:
+			return self._download(uri)
+		finally:
+			socket.setdefaulttimeout(default_timeout)
+
+	def _download(self, uri):
 		try:
 			response = urllib2.urlopen(uri)
 		except urllib2.URLError, exception:
