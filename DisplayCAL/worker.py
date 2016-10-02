@@ -4721,6 +4721,12 @@ while 1:
 		self.thread_abort = False
 		self.recent.clear()
 		self.lastmsg.clear()
+		if self.thread.isAlive():
+			# Consumer may check if thread is still alive. Technically
+			# it shouldn't be at that point when using CallAfter, but e.g. on
+			# OS X there seems to be overlap with the thread counting as
+			# 'alive' even though it already exited
+			self.thread.join()
 		wx.CallAfter(consumer, result, *args, **kwargs)
 	
 	def generate_A2B0(self, profile, clutres=None, logfile=None):
