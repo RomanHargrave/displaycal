@@ -1009,11 +1009,12 @@ class ProfileLoader(object):
 								show_notification=False)
 				elif (apply_profiles != self.__apply_profiles or
 					  profile_association_changed):
-					self.__apply_profiles = apply_profiles
-					if apply_profiles:
+					if apply_profiles or (profile_association_changed and
+										  not self._reset_gamma_ramps):
 						self.reload_count += 1
 					wx.CallAfter(lambda: self and
 										 self.taskbar_icon.set_visual_state())
+			self.__apply_profiles = apply_profiles
 			first_run = False
 			if result:
 				self._has_display_changed = False
