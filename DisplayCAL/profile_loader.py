@@ -13,6 +13,273 @@ import time
 
 from meta import VERSION, VERSION_BASE, name as appname, version, version_short
 
+if sys.platform == "win32":
+	from config import getcfg
+	from util_os import getenvu
+	from wxaddons import CustomGridCellEvent
+	from wxwindows import ConfirmDialog, CustomCellBoolRenderer, CustomGrid, wx
+	import config
+	import localization as lang
+
+	class ProfileLoaderExceptionsDialog(ConfirmDialog):
+		
+		def __init__(self, exceptions):
+			self._exceptions = {}
+			scale = getcfg("app.dpi") / config.get_default_dpi()
+			if scale < 1:
+				scale = 1
+			ConfirmDialog.__init__(self, None,
+								   title=lang.getstr("profile_loader.exceptions"),
+								   ok=lang.getstr("ok"),
+								   cancel=lang.getstr("cancel"),
+								   wrap=120)
+
+			dlg = self
+
+			dlg.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
+						 appname + "-apply-profiles"))
+
+			dlg.delete_btn = wx.Button(dlg.buttonpanel, -1,
+									   lang.getstr("delete"))
+			dlg.sizer2.Insert(0, (12, 12))
+			dlg.sizer2.Insert(0, dlg.delete_btn)
+			dlg.delete_btn.Bind(wx.EVT_BUTTON, dlg.delete_handler)
+
+			dlg.browse_btn = wx.Button(dlg.buttonpanel, -1,
+									   lang.getstr("browse"))
+			dlg.sizer2.Insert(0, (12, 12))
+			dlg.sizer2.Insert(0, dlg.browse_btn)
+			dlg.browse_btn.Bind(wx.EVT_BUTTON, dlg.browse_handler)
+
+			dlg.add_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("add"))
+			dlg.sizer2.Insert(0, (12, 12))
+			dlg.sizer2.Insert(0, dlg.add_btn)
+			dlg.add_btn.Bind(wx.EVT_BUTTON, dlg.browse_handler)
+
+			if "gtk3" in wx.PlatformInfo:
+				style = wx.BORDER_SIMPLE
+			else:
+				style = wx.BORDER_THEME
+			dlg.grid = CustomGrid(dlg, -1, size=(648 * scale, 200 * scale), style=style)
+			grid = dlg.grid
+			grid.DisableDragRowSize()
+			grid.SetCellHighlightPenWidth(0)
+			grid.SetCellHighlightROPenWidth(0)
+			grid.SetDefaultCellAlignment(wx.ALIGN_LEFT, wx.ALIGN_CENTER)
+			grid.SetMargins(0, 0)
+			grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+			grid.SetScrollRate(5, 5)
+			grid.draw_horizontal_grid_lines = False
+			grid.draw_vertical_grid_lines = False
+			grid.CreateGrid(0, 4)
+			grid.SetSelectionMode(wx.grid.Grid.SelectRows)
+			font = grid.GetDefaultCellFont()
+			if font.PointSize > 11:
+				font.PointSize = 11
+				grid.SetDefaultCellFont(font)
+			grid.SetColLabelSize(int(round(self.grid.GetDefaultRowSize() * 1.4)))
+			dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
+			dc.SetFont(grid.GetLabelFont())
+			grid.SetRowLabelSize(max(dc.GetTextExtent("99")[0],
+									 grid.GetDefaultRowSize()))
+			for i in xrange(grid.GetNumberCols()):
+				if i > 1:
+					attr = wx.grid.GridCellAttr()
+					attr.SetReadOnly(True) 
+					grid.SetColAttr(i, attr)
+				if i == 0:
+					# On/off checkbox
+					size = 22 * scale
+				elif i == 1:
+					# Profile loader state icon
+					size = 22 * scale
+				elif i == 2:
+					# Executable basename
+					size = dc.GetTextExtent("W" * 12)[0]
+				else:
+					# Directory component
+					size = dc.GetTextExtent("W" * 34)[0]
+				grid.SetColSize(i, size)
+			for i, label in enumerate(["", "", "executable", "directory"]):
+				grid.SetColLabelValue(i, lang.getstr(label))
+
+			# On/off checkbox
+			attr = wx.grid.GridCellAttr()
+			renderer = CustomCellBoolRenderer()
+			bitmap = renderer._bitmap
+			image = bitmap.ConvertToImage().ConvertToGreyscale(1,
+															   1,
+															   1)
+			renderer._bitmap_unchecked = image.ConvertToBitmap()
+			attr.SetRenderer(renderer)
+			grid.SetColAttr(0, attr)
+
+			# Profile loader state icon
+			attr = wx.grid.GridCellAttr()
+			renderer = CustomCellBoolRenderer()
+			renderer._bitmap = config.geticon(16, "apply-profiles-reset")
+			bitmap = config.geticon(16, appname + "-apply-profiles")
+			# Use Rec. 709 luma coefficients to convert to grayscale
+			image = bitmap.ConvertToImage().ConvertToGreyscale(.2126,
+															   .7152,
+															   .0722)
+			renderer._bitmap_unchecked = image.ConvertToBitmap()
+			attr.SetRenderer(renderer)
+			grid.SetColAttr(1, attr)
+
+			attr = wx.grid.GridCellAttr()
+			attr.SetRenderer(wx.grid.GridCellStringRenderer())
+			grid.SetColAttr(2, attr)
+
+			attr = wx.grid.GridCellAttr()
+			attr.SetRenderer(wx.grid.GridCellStringRenderer())
+			grid.SetColAttr(3, attr)
+			
+			grid.EnableGridLines(False)
+
+			grid.BeginBatch()
+			for i, (key,
+					(enabled,
+					 reset,
+					 path)) in enumerate(sorted(exceptions.items())):
+				grid.AppendRows(1)
+				grid.SetRowLabelValue(i, "%d" % (i + 1))
+				grid.SetCellValue(i, 0, "1" if enabled else "")
+				grid.SetCellValue(i, 1, "1" if reset else "")
+				grid.SetCellValue(i, 2, os.path.basename(path))
+				grid.SetCellValue(i, 3, os.path.dirname(path))
+				self._exceptions[key] = enabled, reset, path
+			grid.EndBatch()
+
+			grid.Bind(wx.EVT_KEY_DOWN, dlg.key_handler)
+			grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, dlg.cell_click_handler)
+			grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, dlg.cell_dclick_handler)
+			grid.Bind(wx.grid.EVT_GRID_SELECT_CELL, dlg.cell_select_handler)
+
+			dlg.sizer3.Add(grid, 1, flag=wx.LEFT | wx.ALIGN_LEFT, border=12)
+
+			# Legend
+			sizer = wx.FlexGridSizer(2, 2, 3, 1)
+			sizer.Add(wx.StaticBitmap(dlg, -1, renderer._bitmap_unchecked))
+			sizer.Add(wx.StaticText(dlg, -1, " = " +
+											 lang.getstr("profile_loader.disable")))
+			sizer.Add(wx.StaticBitmap(dlg, -1, renderer._bitmap))
+			sizer.Add(wx.StaticText(dlg, -1, " = " +
+											 lang.getstr("calibration.reset")))
+
+			dlg.sizer3.Add(sizer, 1, flag=wx.LEFT | wx.TOP | wx.ALIGN_LEFT,
+						   border=12)
+
+			dlg.buttonpanel.Layout()
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+
+			# This workaround is needed to update cell colours
+			grid.SelectAll()
+			grid.ClearSelection()
+
+			self.check_select_status()
+			dlg.ok.Disable()
+
+			dlg.Center()
+
+		def _get_path(self, row):
+			return os.path.join(self.grid.GetCellValue(row, 3),
+							    self.grid.GetCellValue(row, 2))
+
+		def _update_exception(self, row):
+			path = self._get_path(row)
+			enabled = int(self.grid.GetCellValue(row, 0) or 0)
+			reset = int(self.grid.GetCellValue(row, 1) or 0)
+			self._exceptions[path.lower()] = enabled, reset, path
+
+		def cell_click_handler(self, event):
+			if event.Col < 2:
+				if self.grid.GetCellValue(event.Row, event.Col):
+					value = ""
+				else:
+					value = "1"
+				self.grid.SetCellValue(event.Row, event.Col, value)
+				self._update_exception(event.Row)
+				self.ok.Enable()
+			event.Skip()
+
+		def cell_dclick_handler(self, event):
+			if event.Col > 1:
+				self.browse_handler(event)
+			else:
+				self.cell_click_handler(event)
+
+		def cell_select_handler(self, event):
+			event.Skip()
+			wx.CallAfter(self.check_select_status)
+
+		def check_select_status(self):
+			rows = self.grid.GetSelectedRows()
+			self.browse_btn.Enable(len(rows) == 1)
+			self.delete_btn.Enable(bool(rows))
+
+		def key_handler(self, event):
+			dlg = self
+			if event.KeyCode == wx.WXK_SPACE:
+				dlg.cell_click_handler(CustomGridCellEvent(wx.grid.EVT_GRID_CELL_CHANGE.evtType[0],
+														   dlg.grid,
+														   dlg.grid.GridCursorRow,
+														   dlg.grid.GridCursorCol))
+			elif event.KeyCode in (wx.WXK_BACK, wx.WXK_DELETE):
+				self.delete_handler(None)
+			else:
+				event.Skip()
+
+		def browse_handler(self, event):
+			if event.GetId() == self.add_btn.Id:
+				lstr = "add"
+				defaultDir = getenvu("ProgramW6432") or getenvu("ProgramFiles")
+				defaultFile = ""
+			else:
+				lstr = "browse"
+				row = self.grid.GetSelectedRows()[0]
+				defaultDir = self.grid.GetCellValue(row, 3)
+				defaultFile = self.grid.GetCellValue(row, 2)
+			dlg = wx.FileDialog(self, lang.getstr(lstr), 
+								defaultDir=defaultDir, defaultFile=defaultFile,
+								wildcard="*.exe", 
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+			dlg.Center(wx.BOTH)
+			result = dlg.ShowModal()
+			path = dlg.GetPath()
+			dlg.Destroy()
+			if result == wx.ID_OK:
+				if event.GetId() == self.add_btn.Id:
+					# If it already exists, select the respective row
+					if path.lower() in self._exceptions:
+						for row in xrange(self.grid.GetNumberRows()):
+							exception = os.path.join(self.grid.GetCellValue(row, 3),
+													 self.grid.GetCellValue(row, 2))
+							if exception.lower() == path.lower():
+								break
+					else:
+						# Add new row
+						self.grid.AppendRows(1)
+						row = self.grid.GetNumberRows() - 1
+						self.grid.SetCellValue(row, 0, "1")
+						self.grid.SetCellValue(row, 1, "")
+						self._exceptions[path.lower()] = 1, 0, path
+				self.grid.SetCellValue(row, 2, os.path.basename(path))
+				self.grid.SetCellValue(row, 3, os.path.dirname(path))
+				self._update_exception(row)
+				self.grid.SelectRow(row)
+				self.check_select_status()
+				self.grid.MakeCellVisible(row, 0)
+				self.ok.Enable()
+
+		def delete_handler(self, event):
+			for row in sorted(self.grid.GetSelectedRows(), reverse=True):
+				del self._exceptions[self._get_path(row).lower()]
+				self.grid.DeleteRows(row)
+			self.check_select_status()
+			self.ok.Enable()
+
 
 class ProfileLoader(object):
 
@@ -46,6 +313,7 @@ class ProfileLoader(object):
 								config.getcfg("profile_loader.known_apps").split(";")])
 		self._known_window_classes = set(config.defaults["profile_loader.known_window_classes"].split(";") +
 										 config.getcfg("profile_loader.known_window_classes").split(";"))
+		self._set_exceptions()
 		self._madvr_instances = []
 		self._timestamp = time.time()
 		self.__other_component = None, None
@@ -210,6 +478,10 @@ class ProfileLoader(object):
 								   wx.ITEM_CHECK,
 								   "profile_loader.fix_profile_associations",
 								   None),
+								  ("-", None, False, None, None),
+								  ("profile_loader.exceptions",
+								   self.set_exceptions,
+								   wx.ITEM_NORMAL, None, None),
 								  ("-", None, False, None, None)]
 					if sys.getwindowsversion() >= (6, ):
 						menu_items.extend([("mswin.open_color_management_settings",
@@ -285,6 +557,21 @@ class ProfileLoader(object):
 							self.pl._next = event.IsChecked()
 					else:
 						self.set_visual_state()
+
+				def set_exceptions(self, event):
+					dlg = ProfileLoaderExceptionsDialog(self.pl._exceptions)
+					result = dlg.ShowModal()
+					if result == wx.ID_OK:
+						exceptions = []
+						for key, (enabled,
+								  reset,
+								  path) in dlg._exceptions.iteritems():
+							exceptions.append("%i:%i:%s" %
+											  (enabled, reset, path))
+						config.setcfg("profile_loader.exceptions",
+									  ";".join(exceptions))
+						self.pl._exceptions = dlg._exceptions
+					dlg.Destroy()
 
 				def set_visual_state(self, enumerate_windows_and_processes=False):
 					self.SetIcon(self.get_icon(enumerate_windows_and_processes),
@@ -726,8 +1013,9 @@ class ProfileLoader(object):
 		except Exception, exception:
 			if self.lock.locked():
 				self.lock.release()
+			import traceback
 			from wxwindows import wx
-			wx.CallAfter(self._handle_fatal_error, exception)
+			wx.CallAfter(self._handle_fatal_error, traceback.format_exc())
 
 	def _handle_fatal_error(self, exception):
 		from debughelpers import handle_error
@@ -827,6 +1115,8 @@ class ProfileLoader(object):
 				# necessary
 				if not self.gdi32:
 					continue
+				apply_profiles = self._should_apply_profiles()
+				recheck = False
 				(vcgt_ramp,
 				 vcgt_values) = self.ramps.get(self._reset_gamma_ramps or i,
 											   (None, None))
@@ -888,6 +1178,7 @@ class ProfileLoader(object):
 							vcgt_ramp[k][j] = vcgt_values[k][j][1]
 					self.ramps[self._reset_gamma_ramps or i] = (vcgt_ramp,
 																vcgt_values)
+					recheck = True
 				if (not self._manual_restore and
 					getcfg("profile_loader.check_gamma_ramps")):
 					# Get video card gamma ramp
@@ -915,9 +1206,11 @@ class ProfileLoader(object):
 					if values == vcgt_values:
 						continue
 					safe_print(lang.getstr("vcgt.mismatch", display))
-				# Try and prevent race condition with madVR
-				# launching and resetting video card gamma table
-				apply_profiles = self._should_apply_profiles()
+					recheck = True
+				if recheck:
+					# Try and prevent race condition with madVR
+					# launching and resetting video card gamma table
+					apply_profiles = self._should_apply_profiles()
 				if not apply_profiles:
 					self._next = False
 					break
@@ -993,9 +1286,12 @@ class ProfileLoader(object):
 				self.notify(results, errors,
 							show_notification=(not first_run or errors) and
 											  self.__other_component[1] != "madHcNetQueueWindow")
-				if result:
-					self.__other_component = None, None
 			else:
+				if (apply_profiles != self.__apply_profiles or
+					profile_association_changed):
+					if apply_profiles and (not profile_association_changed or
+										   not self._reset_gamma_ramps):
+						self.reload_count += 1
 				if displaycal_running != self._is_displaycal_running():
 					if displaycal_running:
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
@@ -1009,9 +1305,6 @@ class ProfileLoader(object):
 								show_notification=False)
 				elif (apply_profiles != self.__apply_profiles or
 					  profile_association_changed):
-					if apply_profiles or (profile_association_changed and
-										  not self._reset_gamma_ramps):
-						self.reload_count += 1
 					wx.CallAfter(lambda: self and
 										 self.taskbar_icon.set_visual_state())
 			self.__apply_profiles = apply_profiles
@@ -1106,6 +1399,8 @@ class ProfileLoader(object):
 			from util_win import get_process_filename, get_pids
 			other_isrunning = self.__other_isrunning
 			self.__other_isrunning = False
+			other_component = self.__other_component
+			self.__other_component = None, None
 			# Look for known window classes
 			# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes): ~ 1ms
 			try:
@@ -1133,8 +1428,15 @@ class ProfileLoader(object):
 										   "process %s:" % pid, exception)
 							continue
 						basename = os.path.basename(filename)
-						if basename.lower() in self._known_apps:
-							self.__other_isrunning = True
+						known_app = basename.lower() in self._known_apps
+						enabled, reset, path = self._exceptions.get(filename.lower(),
+																	(0, "", ""))
+						if known_app or enabled:
+							if known_app or not reset:
+								self.__other_isrunning = True
+							elif other_component[0] != filename and reset:
+								self._manual_restore = -1
+								self._reset_gamma_ramps = True
 							self.__other_component = filename, None
 							break
 			if other_isrunning != self.__other_isrunning:
@@ -1142,24 +1444,32 @@ class ProfileLoader(object):
 				from util_win import get_file_info
 				if other_isrunning:
 					lstr = "app.detection_lost.calibration_loading_enabled"
+					component = other_component
 				else:
 					lstr = "app.detected.calibration_loading_disabled"
-				if self.__other_component[1] == "madHcNetQueueWindow":
-					component = "madVR"
-				else:
-					component = os.path.basename(self.__other_component[0])
+					component = self.__other_component
+				if component[1] == "madHcNetQueueWindow":
+					component_name = "madVR"
+				elif component[0]:
+					component_name = os.path.basename(component[0])
 					try:
-						info = get_file_info(self.__other_component[0])["StringFileInfo"].values()
+						info = get_file_info(component[0])["StringFileInfo"].values()
 					except:
 						info = None
 					if info:
-						component = info[0].get("ProductName",
-												info[0].get("FileDescription",
-															component))
-				msg = lang.getstr(lstr, component)
+						component_name = info[0].get("ProductName",
+													 info[0].get("FileDescription",
+																 component_name))
+				else:
+					component_name = lang.getstr("unknown")
+				msg = lang.getstr(lstr, component_name)
 				safe_print(msg)
 				self.notify([msg], [], not other_isrunning,
-							show_notification=component != "madVR")
+							show_notification=component_name != "madVR")
+			elif (other_component != self.__other_component and
+				  not self._manual_restore):
+				self._manual_restore = -1
+				self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
 		return self.__other_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
@@ -1293,7 +1603,8 @@ class ProfileLoader(object):
 				   not calibration_management_isenabled()))) and
 				(not self._is_displaycal_running() or
 				 self._manual_restore == manual_override) and
-				not self._is_other_running(enumerate_windows_and_processes))
+				(not self._is_other_running(enumerate_windows_and_processes)
+				 or self._manual_restore == -1))
 
 	def _toggle_fix_profile_associations(self, event):
 		from config import (get_default_dpi, get_icon_bundle, getcfg, geticon,
@@ -1368,6 +1679,23 @@ class ProfileLoader(object):
 			else:
 				self._reset_display_profile_associations()
 			self._manual_restore = True
+
+	def _set_exceptions(self):
+		import config
+		self._exceptions = {}
+		exceptions = config.getcfg("profile_loader.exceptions").split(";")
+		for exception in exceptions:
+			exception = exception.split(":", 2)
+			if len(exception) < 3:
+				# Malformed, ignore
+				continue
+			for i in xrange(2):
+				try:
+					exception[i] = int(exception[i])
+				except:
+					exception[i] = 0
+			enabled, reset, path = exception
+			self._exceptions[path.lower()] = (enabled, reset, path)
 
 
 def get_display_name_edid(device, moninfo=None):

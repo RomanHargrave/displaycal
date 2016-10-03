@@ -942,6 +942,7 @@ defaults = {
 	"profile.update": 0,
 	"profile_loader.check_gamma_ramps": 0,
 	"profile_loader.error.show_msg": 1,
+	"profile_loader.exceptions": "",
 	"profile_loader.fix_profile_associations": 0,
 	"profile_loader.known_apps": ";".join(["basiccolor display.exe",
 										   "calclient.exe",
