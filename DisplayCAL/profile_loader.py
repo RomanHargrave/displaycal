@@ -316,8 +316,9 @@ class ProfileLoader(object):
 		self._set_exceptions()
 		self._madvr_instances = []
 		self._timestamp = time.time()
-		self.__other_component = None, None
-		self.__other_isrunning = False
+		self._component_name = None
+		self._app_detection_msg = None
+		self.__other_component = None, None, 0
 		self.__apply_profiles = None
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
 			sys.getwindowsversion() >= (6, 1)):
@@ -464,11 +465,11 @@ class ProfileLoader(object):
 
 					menu_items = [("calibration.load_from_display_profiles",
 								   restore_manual, apply_kind,
-								   "profile_loader.reset_gamma_ramps",
+								   "reset_gamma_ramps",
 								   lambda v: not v),
 								  ("calibration.reset",
 								   reset, apply_kind,
-								   "profile_loader.reset_gamma_ramps", None),
+								   "reset_gamma_ramps", None),
 								  ("-", None, False, None, None),
 								  ("calibration.preserve",
 								   restore_auto, restore_auto_kind,
@@ -511,7 +512,11 @@ class ProfileLoader(object):
 								else:
 									if not oxform:
 										oxform = bool
-									item.Check(oxform(config.getcfg(option)))
+									if option == "reset_gamma_ramps":
+										value = self.pl._reset_gamma_ramps
+									else:
+										value = config.getcfg(option)
+									item.Check(oxform(value))
 
 					return menu
 
@@ -598,6 +603,9 @@ class ProfileLoader(object):
 							text = lang.getstr("calibration.load.handled_by_os") + "\n"
 						else:
 							text = ""
+						if self.pl._component_name:
+							text += lang.getstr("app.detected",
+												self.pl._component_name) + "\n"
 						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
 						for i, (display, edid,
@@ -1283,6 +1291,9 @@ class ProfileLoader(object):
 					else:
 						lstr = "calibration.load_success"
 					results.insert(0, lang.getstr(lstr))
+					if self._app_detection_msg:
+						results.insert(0, self._app_detection_msg)
+						self._app_detection_msg = None
 				self.notify(results, errors,
 							show_notification=(not first_run or errors) and
 											  self.__other_component[1] != "madHcNetQueueWindow")
@@ -1363,8 +1374,7 @@ class ProfileLoader(object):
 			basename = os.path.basename(filename)
 			if (basename.lower() != "madhcctrl.exe" and
 				filename.lower() != exe.lower()):
-				self.__other_isrunning = True
-				self.__other_component = filename, cls
+				self.__other_component = filename, cls, 0
 
 	def _is_known_window_class(self, cls):
 		for partial in self._known_window_classes:
@@ -1385,7 +1395,6 @@ class ProfileLoader(object):
 		if sys.platform != "win32":
 			return
 		if len(self._madvr_instances):
-			self.__other_isrunning = True
 			return True
 		if enumerate_windows_and_processes:
 			# At launch, we won't be able to determine if madVR is running via
@@ -1397,17 +1406,15 @@ class ProfileLoader(object):
 			import winerror
 			from log import safe_print
 			from util_win import get_process_filename, get_pids
-			other_isrunning = self.__other_isrunning
-			self.__other_isrunning = False
 			other_component = self.__other_component
-			self.__other_component = None, None
+			self.__other_component = None, None, 0
 			# Look for known window classes
 			# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes): ~ 1ms
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
 				safe_print("Enumerating windows failed:", exception)
-			if not self.__other_isrunning:
+			if not self.__other_component[1]:
 				# Look for known processes
 				# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes):
 				# ~ 6-9ms (1ms to get PIDs)
@@ -1430,24 +1437,40 @@ class ProfileLoader(object):
 						basename = os.path.basename(filename)
 						known_app = basename.lower() in self._known_apps
 						enabled, reset, path = self._exceptions.get(filename.lower(),
-																	(0, "", ""))
+																	(0, 0, ""))
 						if known_app or enabled:
 							if known_app or not reset:
-								self.__other_isrunning = True
-							elif other_component[0] != filename and reset:
-								self._manual_restore = -1
+								self.__other_component = filename, None, 0
+								break
+							elif other_component != (filename, None, reset):
 								self._reset_gamma_ramps = True
-							self.__other_component = filename, None
-							break
-			if other_isrunning != self.__other_isrunning:
+							self.__other_component = filename, None, reset
+			if other_component != self.__other_component:
 				import localization as lang
 				from util_win import get_file_info
-				if other_isrunning:
-					lstr = "app.detection_lost.calibration_loading_enabled"
-					component = other_component
+				if other_component[2] and not self.__other_component[2]:
+					self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
+				check = ((not other_component[2] and
+						  not self.__other_component[2]) or
+						 (other_component[2] and
+						  self.__other_component[0:2] != (None, None) and
+						  not self.__other_component[2]))
+				if check:
+					if self.__other_component[0:2] == (None, None):
+						lstr = "app.detection_lost.calibration_loading_enabled"
+						component = other_component
+						sticky = False
+					else:
+						lstr = "app.detected.calibration_loading_disabled"
+						component = self.__other_component
+						sticky = True
 				else:
-					lstr = "app.detected.calibration_loading_disabled"
-					component = self.__other_component
+					if self.__other_component[0:2] != (None, None):
+						lstr = "app.detected"
+						component = self.__other_component
+					else:
+						lstr = "app.detection_lost"
+						component = other_component
 				if component[1] == "madHcNetQueueWindow":
 					component_name = "madVR"
 				elif component[0]:
@@ -1462,15 +1485,20 @@ class ProfileLoader(object):
 																 component_name))
 				else:
 					component_name = lang.getstr("unknown")
+				if self.__other_component[0:2] != (None, None):
+					self._component_name = component_name
+				else:
+					self._component_name = None
 				msg = lang.getstr(lstr, component_name)
 				safe_print(msg)
-				self.notify([msg], [], not other_isrunning,
-							show_notification=component_name != "madVR")
-			elif (other_component != self.__other_component and
-				  not self._manual_restore):
-				self._manual_restore = -1
-				self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
-		return self.__other_isrunning
+				if check:
+					self.notify([msg], [], sticky,
+								show_notification=component_name != "madVR")
+				else:
+					self._app_detection_msg = msg
+					self._manual_restore = 2
+		return (self.__other_component[0:2] != (None, None) and
+				not self.__other_component[2])
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
@@ -1487,7 +1515,7 @@ class ProfileLoader(object):
 				if is_new_instance:
 					apply_profiles = self._should_apply_profiles(manual_override=None)
 					self._madvr_instances.append(args)
-					self.__other_component = filename, "madHcNetQueueWindow"
+					self.__other_component = filename, "madHcNetQueueWindow", 0
 					safe_print("madVR instance connected:", "PID", pid, filename)
 					if apply_profiles:
 						msg = lang.getstr("app.detected.calibration_loading_disabled",
@@ -1603,8 +1631,7 @@ class ProfileLoader(object):
 				   not calibration_management_isenabled()))) and
 				(not self._is_displaycal_running() or
 				 self._manual_restore == manual_override) and
-				(not self._is_other_running(enumerate_windows_and_processes)
-				 or self._manual_restore == -1))
+				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
 		from config import (get_default_dpi, get_icon_bundle, getcfg, geticon,
