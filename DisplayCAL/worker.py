@@ -8943,7 +8943,7 @@ usage: spotread [-options] [logfile]
 						while (self.isalive(subprocess) and
 							   self.subprocess == subprocess):
 							self.safe_send("\x1b")
-							if time() > ts + 9:
+							if time() > ts + 20:
 								break
 							sleep(.5)
 					except Exception, exception:
@@ -10487,7 +10487,7 @@ BEGIN_DATA
 	def download(self, uri):
 		# Set timeout to a sane value
 		default_timeout = socket.getdefaulttimeout()
-		socket.setdefaulttimeout(10)  # 10 seconds
+		socket.setdefaulttimeout(20)  # 20 seconds
 		try:
 			return self._download(uri)
 		finally:
