@@ -29,7 +29,7 @@ if sys.platform == "win32":
 			if scale < 1:
 				scale = 1
 			ConfirmDialog.__init__(self, None,
-								   title=lang.getstr("profile_loader.exceptions"),
+								   title=lang.getstr("exceptions"),
 								   ok=lang.getstr("ok"),
 								   cancel=lang.getstr("cancel"),
 								   wrap=120)
@@ -480,7 +480,7 @@ class ProfileLoader(object):
 								   "profile_loader.fix_profile_associations",
 								   None),
 								  ("-", None, False, None, None),
-								  ("profile_loader.exceptions",
+								  ("exceptions",
 								   self.set_exceptions,
 								   wx.ITEM_NORMAL, None, None),
 								  ("-", None, False, None, None)]
