@@ -12,7 +12,7 @@ import time
 
 from meta import VERSION, VERSION_BASE, name as appname, version, version_short
 import config
-from config import getcfg, setcfg
+from config import appbasename, confighome, getcfg, setcfg
 from log import safe_print
 
 if sys.platform == "win32":
@@ -30,8 +30,7 @@ if sys.platform == "win32":
 	import win32process
 
 	from colord import device_id_from_edid
-	from config import (appbasename, confighome, exe, get_default_dpi,
-						get_icon_bundle, geticon)
+	from config import (exe, get_default_dpi, get_icon_bundle, geticon)
 	from debughelpers import handle_error
 	from edid import get_edid
 	from util_os import getenvu
