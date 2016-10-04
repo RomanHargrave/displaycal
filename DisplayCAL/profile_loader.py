@@ -699,6 +699,7 @@ class ProfileLoader(object):
 				app.MainLoop()
 
 	def apply_profiles(self, event=None, index=None):
+		import localization as lang
 		from util_os import which
 		from worker import Worker, get_argyll_util
 
