@@ -10258,10 +10258,13 @@ class MainFrame(ReportFrame, BaseFrame):
 					elif i1d3ccss and ("colormunki" in
 									   os.path.basename(path).lower() or
 									   "i1profiler" in
-									   os.path.basename(path).lower()):
+									   os.path.basename(path).lower() or
+									   os.path.basename(path).lower() == "i1d3"):
 						# Assume X-Rite installer
 						kind = "xrite"
-					elif spyd4en and "spyder4" in os.path.basename(path).lower():
+					elif spyd4en and ("spyder4" in
+									  os.path.basename(path).lower() or
+									  os.path.basename(path).lower() == "spyd4"):
 						# Assume Spyder4/5
 						kind = "spyder4"
 			if kind == "icd":
