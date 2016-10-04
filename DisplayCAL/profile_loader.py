@@ -5,22 +5,48 @@ Set ICC profiles and load calibration curves for all configured display devices
 
 """
 
-import errno
 import os
 import sys
 import threading
 import time
 
 from meta import VERSION, VERSION_BASE, name as appname, version, version_short
+import config
+from config import getcfg, setcfg
+from log import safe_print
 
 if sys.platform == "win32":
-	from config import getcfg
+	import errno
+	import ctypes
+	import struct
+	import subprocess as sp
+	import traceback
+	import winerror
+	import _winreg
+
+	import pywintypes
+	import win32api
+	import win32gui
+	import win32process
+
+	from colord import device_id_from_edid
+	from config import (appbasename, confighome, exe, get_default_dpi,
+						get_icon_bundle, geticon)
+	from debughelpers import handle_error
+	from edid import get_edid
 	from util_os import getenvu
+	from util_str import safe_unicode
+	from util_win import (calibration_management_isenabled,
+						  get_active_display_device, get_display_devices,
+						  get_file_info, get_pids, get_process_filename,
+						  get_real_display_devices_info)
 	from worker import UnloggedError, show_result_dialog
 	from wxaddons import CustomGridCellEvent
-	from wxwindows import ConfirmDialog, CustomCellBoolRenderer, CustomGrid, wx
-	import config
+	from wxwindows import (BaseFrame, ConfirmDialog, CustomCellBoolRenderer,
+						   CustomGrid, InfoDialog, TaskBarNotification, wx)
+	import ICCProfile as ICCP
 	import localization as lang
+	import madvr
 
 	class ProfileLoaderExceptionsDialog(ConfirmDialog):
 		
@@ -290,8 +316,6 @@ if sys.platform == "win32":
 class ProfileLoader(object):
 
 	def __init__(self):
-		import config
-		from config import appbasename
 		from wxwindows import BaseApp, wx
 		if not wx.GetApp():
 			app = BaseApp(0)
@@ -328,7 +352,6 @@ class ProfileLoader(object):
 		self.__apply_profiles = None
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
 			sys.getwindowsversion() >= (6, 1)):
-			from util_win import calibration_management_isenabled
 			if calibration_management_isenabled():
 				# Incase calibration loading is handled by Windows 7 and
 				# isn't forced
@@ -343,16 +366,6 @@ class ProfileLoader(object):
 			# We create a TSR tray program only under Windows.
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
-			import ctypes
-			import subprocess as sp
-			import localization as lang
-			import madvr
-			from log import safe_print
-			from util_str import safe_unicode
-			from util_win import (calibration_management_isenabled,
-								  get_display_devices)
-			from wxfixes import set_bitmap_labels
-			from wxwindows import BaseFrame, TaskBarNotification
 
 			class PLFrame(BaseFrame):
 
@@ -687,9 +700,6 @@ class ProfileLoader(object):
 				app.MainLoop()
 
 	def apply_profiles(self, event=None, index=None):
-		import config
-		import localization as lang
-		from log import safe_print
 		from util_os import which
 		from worker import Worker, get_argyll_util
 
@@ -822,12 +832,10 @@ class ProfileLoader(object):
 		return errors
 
 	def notify(self, results, errors, sticky=False, show_notification=False):
-		from wxwindows import wx
 		wx.CallAfter(lambda: self and self._notify(results, errors, sticky,
 												   show_notification))
 
 	def _notify(self, results, errors, sticky=False, show_notification=False):
-		from wxwindows import wx
 		self.taskbar_icon.set_visual_state()
 		results.extend(errors)
 		if errors:
@@ -839,7 +847,6 @@ class ProfileLoader(object):
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		errors = self.apply_profiles(event, index)
-		import config
 		if (errors and (config.getcfg("profile_loader.error.show_msg") or
 						"--error-dialog" in sys.argv[1:]) and
 			not "--silent" in sys.argv[1:]):
@@ -869,17 +876,11 @@ class ProfileLoader(object):
 			dlg.ShowModalThenDestroy()
 
 	def exit(self, event=None):
-		from log import safe_print
-		from util_win import calibration_management_isenabled
-		from wxwindows import wx
-		import config
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
 		if (event and self.frame and
 			event.GetEventType() == wx.EVT_MENU.typeId and
 			(not calibration_management_isenabled() or
 			 config.getcfg("profile_loader.fix_profile_associations"))):
-			import localization as lang
-			from wxwindows import ConfirmDialog
 			dlg = ConfirmDialog(None, msg=lang.getstr("profile_loader.exit_warning"), 
 								title=self.get_title(),
 								ok=lang.getstr("menuitem.quit"), 
@@ -901,7 +902,6 @@ class ProfileLoader(object):
 		wx.GetApp().ExitMainLoop()
 
 	def get_title(self):
-		import localization as lang
 		title = "%s %s %s" % (appname, lang.getstr("profile_loader").title(),
 							  version_short)
 		if VERSION > VERSION_BASE:
@@ -911,9 +911,7 @@ class ProfileLoader(object):
 		return title
 
 	def _check_keep_running(self):
-		from wxwindows import wx
 		windows = []
-		import win32gui
 		#print '-' * 79
 		try:
 			win32gui.EnumThreadWindows(self._tid,
@@ -930,14 +928,12 @@ class ProfileLoader(object):
 			# (i.e. WM_CLOSE). This is a hint that something external is trying
 			# to get us to exit. Comply by closing our main top-level window to
 			# initiate clean shutdown.
-			from log import safe_print
 			safe_print("Window count", self.numwindows, "->", numwindows)
 			return False
 		self.numwindows = numwindows
 		return True
 
 	def _enumerate_own_windows_callback(self, hwnd, windowlist):
-		import win32gui
 		cls = win32gui.GetClassName(hwnd)
 		#print cls
 		if (cls in ("madHcNetQueueWindow",
@@ -947,8 +943,6 @@ class ProfileLoader(object):
 			windowlist.append(cls)
 
 	def _display_changed(self, event):
-		from log import safe_print
-
 		safe_print(event)
 
 		with self.lock:
@@ -963,13 +957,6 @@ class ProfileLoader(object):
 	def _check_display_changed(self, first_run=False, dry_run=False):
 		# Check registry if display configuration changed (e.g. if a display
 		# was added/removed, and not just the resolution changed)
-		import struct
-		import _winreg
-
-		from config import getcfg
-		import localization as lang
-		from log import safe_print
-
 		try:
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
@@ -1028,29 +1015,13 @@ class ProfileLoader(object):
 		except Exception, exception:
 			if self.lock.locked():
 				self.lock.release()
-			import traceback
-			from wxwindows import wx
 			wx.CallAfter(self._handle_fatal_error, traceback.format_exc())
 
 	def _handle_fatal_error(self, exception):
-		from debughelpers import handle_error
 		handle_error(exception)
-		from wxwindows import wx
 		wx.CallAfter(self.exit)
 
 	def _check_display_conf(self):
-		import ctypes
-
-		import win32api
-		import win32gui
-
-		from config import getcfg
-		import ICCProfile as ICCP
-		from wxwindows import wx
-		import localization as lang
-		from log import safe_print
-		from util_win import get_active_display_device
-
 		display = None
 		self._current_display = None
 		self._current_timestamp = 0
@@ -1350,10 +1321,6 @@ class ProfileLoader(object):
 		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
-		import pywintypes
-		import win32api
-		from util_win import (get_active_display_device,
-							  get_real_display_devices_info)
 		self.monitors = []
 		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
@@ -1366,18 +1333,13 @@ class ProfileLoader(object):
 			self.monitors.append((display, edid, moninfo, device0))
 
 	def _enumerate_windows_callback(self, hwnd, extra):
-		import win32gui
 		cls = win32gui.GetClassName(hwnd)
 		if cls == "madHcNetQueueWindow" or self._is_known_window_class(cls):
-			import pywintypes
-			import win32process
-			from util_win import get_process_filename
 			try:
 				thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
 				filename = get_process_filename(pid)
 			except pywintypes.error:
 				return
-			from config import exe
 			basename = os.path.basename(filename)
 			if (basename.lower() != "madhcctrl.exe" and
 				filename.lower() != exe.lower()):
@@ -1389,7 +1351,6 @@ class ProfileLoader(object):
 				return True
 
 	def _is_displaycal_running(self):
-		from config import appbasename, confighome
 		displaycal_lockfile = os.path.join(confighome, appbasename + ".lock")
 		return os.path.isfile(displaycal_lockfile)
 
@@ -1408,11 +1369,6 @@ class ProfileLoader(object):
 			# the callback API, and we can only determine if another
 			# calibration solution is running by enumerating windows and
 			# processes anyway.
-			import pywintypes
-			import win32gui
-			import winerror
-			from log import safe_print
-			from util_win import get_process_filename, get_pids
 			other_component = self.__other_component
 			self.__other_component = None, None, 0
 			# Look for known window classes
@@ -1453,8 +1409,6 @@ class ProfileLoader(object):
 								self._reset_gamma_ramps = True
 							self.__other_component = filename, None, reset
 			if other_component != self.__other_component:
-				import localization as lang
-				from util_win import get_file_info
 				if other_component[2] and not self.__other_component[2]:
 					self._reset_gamma_ramps = bool(config.getcfg("profile_loader.reset_gamma_ramps"))
 				check = ((not other_component[2] and
@@ -1510,9 +1464,6 @@ class ProfileLoader(object):
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
 		with self.lock:
-			import localization as lang
-			from log import safe_print
-			from util_win import get_process_filename
 			if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
 				args = (param, connection, ip, pid, module, component, instance)
 				try:
@@ -1539,8 +1490,6 @@ class ProfileLoader(object):
 						self.notify([msg], [], show_notification=False)
 
 	def _reset_display_profile_associations(self):
-		import ICCProfile as ICCP
-		from log import safe_print
 		for devicekey, (display_edid,
 						profile) in self.devices2profiles.iteritems():
 			if profile and profile != "?":
@@ -1560,11 +1509,6 @@ class ProfileLoader(object):
 					ICCP.set_display_profile(profile, devicekey=devicekey)
 
 	def _set_display_profiles(self, dry_run=False):
-		import win32api
-
-		import ICCProfile as ICCP
-		from log import safe_print
-		from util_win import get_active_display_device, get_display_devices
 		self.devices2profiles = {}
 		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 			devices = get_display_devices(moninfo["Device"])
@@ -1611,7 +1555,6 @@ class ProfileLoader(object):
 										 devicekey=device.DeviceKey)
 
 	def _set_manual_restore(self, event):
-		from config import setcfg
 		with self.lock:
 			setcfg("profile_loader.reset_gamma_ramps", 0)
 			self._manual_restore = True
@@ -1619,7 +1562,6 @@ class ProfileLoader(object):
 		self.taskbar_icon.set_visual_state()
 
 	def _set_reset_gamma_ramps(self, event):
-		from config import setcfg
 		with self.lock:
 			setcfg("profile_loader.reset_gamma_ramps", 1)
 			self._manual_restore = True
@@ -1628,9 +1570,6 @@ class ProfileLoader(object):
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True,
 							   manual_override=2):
-		import config
-		if sys.platform == "win32":
-			from util_win import calibration_management_isenabled
 		return (("--force" in sys.argv[1:] or
 				 self._manual_restore or
 				 (config.getcfg("profile.load_on_login") and
@@ -1641,13 +1580,7 @@ class ProfileLoader(object):
 				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
-		from config import (get_default_dpi, get_icon_bundle, getcfg, geticon,
-							setcfg)
 		if event.IsChecked():
-			import ICCProfile as ICCP
-			import localization as lang
-			from colord import device_id_from_edid
-			from wxwindows import ConfirmDialog, wx
 			self._set_display_profiles(dry_run=True)
 			dlg = ConfirmDialog(None,
 								msg=lang.getstr("profile_loader.fix_profile_associations_warning"), 
@@ -1715,7 +1648,6 @@ class ProfileLoader(object):
 			self._manual_restore = True
 
 	def _set_exceptions(self):
-		import config
 		self._exceptions = {}
 		exceptions = config.getcfg("profile_loader.exceptions").split(";")
 		for exception in exceptions:
@@ -1733,9 +1665,6 @@ class ProfileLoader(object):
 
 
 def get_display_name_edid(device, moninfo=None):
-	import localization as lang
-	from edid import get_edid
-	from util_str import safe_unicode
 	if device:
 		display = safe_unicode(device.DeviceString)
 	else:
@@ -1756,9 +1685,6 @@ def get_display_name_edid(device, moninfo=None):
 	return display, edid
 
 def main():
-	import config
-	from log import safe_print
-
 	unknown_option = None
 	for arg in sys.argv[1:]:
 		if (arg not in ("--help", "--force", "-V", "--version") and
