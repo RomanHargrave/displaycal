@@ -737,7 +737,7 @@
 	"observer.1978_2": "Judd & Voss 1978 2°",
 	"observer.shaw": "Shaw & Fairchild 1997 2°",
 	"oem.import.auto": "Falls Ihr Colorimeter mit einer Software-CD für Windows geliefert wurde, legen Sie diese bitte ein (brechen Sie eine eventuell automatisch startende Software-Installation ab).\n\nFalls Sie keine CD besitzen und die benötigten Dateien nicht automatisch gefunden werden können, werden diese aus dem Web heruntergeladen.",
-	"oem.import.auto.download_selection": "Eine Vorauswahl wurde anhand der erkannten Messgeräte festgelegt. Bitte wählen Sie die herunterzuladende(n) Datei(en) (die Gesamt-Datenmenge beträgt je nach Auswahl bis zu mehrere hundert MB).",
+	"oem.import.auto.download_selection": "Eine Vorauswahl wurde anhand der erkannten Messgeräte festgelegt. Bitte wählen Sie die herunterzuladende(n) Datei(en).",
 	"oem.import.auto_windows": "Falls Sie die Hersteller-Software Ihres Colorimeters installiert haben, können die benötigten Dateien in den meisten Fällen automatisch gefunden werden.",
 	"office_web.icc": "Büro & Web (D65, Gamma 2.2)",
 	"offset": "Versatz",

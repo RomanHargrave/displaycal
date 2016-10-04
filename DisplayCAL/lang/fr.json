@@ -737,7 +737,7 @@
 	"observer.1978_2": "Judd & Voss 1978 2°",
 	"observer.shaw": "Shaw & Fairchild 1997 2°",
 	"oem.import.auto": "Si votre colorimètre est livré avec un CD de logiciel pour, veuillez l’insérer maintenant (annulez l’installation du logiciel si elle est demandée).\n\nSi vous n’avez pas de CD et que les fichiers nécessaires ne peuvent pas être trouvés d’une autre manière, ils seront téléchargés depuis le Web.",
-	"oem.import.auto.download_selection": "Une présélection a été faite en se basant sur les sondes de mesure détectées. Veuillez sélectionner les fichiers à télécharger (la taille totale des fichiers à télécharger peut atteindre quelques centaines de Mo selon la sélection).",
+	"oem.import.auto.download_selection": "Une présélection a été faite en se basant sur les sondes de mesure détectées. Veuillez sélectionner les fichiers à télécharger.",
 	"oem.import.auto_windows": "Si le logiciel du fabricant de votre colorimètre est installé, les fichiers nécessaires seront trouvé automatiquement dans la plupart des cas.",
 	"office_web.icc": "Bureautique et Internet (D65, Gamma 2.2)",
 	"offset": "Décalage",

@@ -737,7 +737,7 @@
 		"*observer.1978_2": "Judd & Voss 1978 2°",
 		"*observer.shaw": "Shaw & Fairchild 1997 2°",
 	"oem.import.auto": "如你的色度計附帶適用於 Windows 的光碟，請現在將它插入(中止任何可能出現的自動安裝程式)。\n\n如你沒有光碟且無法在其他地方找到必須的檔案，它們將會從互聯絡下載到你的電腦。",
-	"oem.import.auto.download_selection": "已經基於偵測到的儀器預先選取了一些選項。請選取要下載的那些檔案(總共下載大小量會因應你的選擇而增加到數百MB不等)。",
+	"oem.import.auto.download_selection": "已經基於偵測到的儀器預先選取了一些選項。請選取要下載的那些檔案。",
 	"oem.import.auto_windows": "如果已安裝好你的色度計的原廠軟件，大部份情況下都會自動找到所需的檔案。",
 	"office_web.icc": "辦公室及互聯網 (D65，伽瑪2.2)",
 	"offset": "偏移",
