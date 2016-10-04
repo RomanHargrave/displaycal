@@ -844,6 +844,7 @@
 	"profile_connection_space_pcs": "描述檔連接空間 (PCS)",
 	"profile_loader": "描述檔載入工具",
 		"*profile_loader.disable": "Disable profile loader",
+		"*profile_loader.exceptions.known_app.error": "The profile loader disables itself automatically while %s is running. You cannot override this behavior.",
 	"profile_loader.exit_warning": "你是否真的要關閉描述檔載入工具？校正將不會於變更顯示器設定時重新載入！",
 	"profile_loader.fix_profile_associations": "自動修正描述檔關聯",
 	"profile_loader.fix_profile_associations_warning": "只要描述檔載入工具正在運作，它就會於變更顯示設定時處理好描述檔關聯。\n\n在你繼續之前，你要確保以上的描述檔關聯為正確的。如果不是，請跟從以下步驟：\n\n1. 開啟 Windows 顯示器設定。\n2. 啟用所有已連接的顯示器 (延伸桌面)。\n3. 於 Windows 控制台中開啟 Windows 彩色管理設定。\n4. 確認每個顯示裝置已指定正確的描述檔。然後關閉色彩管理設定。\n5. 在 Windows 顯示設定，回復到之前的顯示器設定。\n6. 現在你可以啟用“自動修正搭述檔關聯”。",

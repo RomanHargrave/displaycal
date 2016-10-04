@@ -846,6 +846,7 @@
 	"profile_connection_space_pcs": "Profile connection space (PCS)",
 	"profile_loader": "Profile loader",
 	"profile_loader.disable": "Disable profile loader",
+	"profile_loader.exceptions.known_app.error": "The profile loader disables itself automatically while %s is running. You cannot override this behavior.",
 	"profile_loader.exit_warning": "Do you really want to quit the profile loader? Calibration will no longer be automatically reloaded if you change the display configuration!",
 	"profile_loader.fix_profile_associations": "Automatically fix profile associations",
 	"profile_loader.fix_profile_associations_warning": "As long as the profile loader is running, it can take care of profile associations when you change the display configuration.\n\nBefore you proceed, please make sure the profile associations shown above are correct. If they aren't, follow these steps:\n\n1. Open Windows display settings.\n2. Activate all connected displays (extended desktop).\n3. Open Windows color management settings from the Windows control panel.\n4. Make sure each display device has the correct profile assigned. Then close color management settings.\n5. In Windows display settings, revert to the previous display configuration and close display settings.\n6. Now you can enable “Automatically fix profile associations”.",

@@ -16,6 +16,7 @@ from meta import VERSION, VERSION_BASE, name as appname, version, version_short
 if sys.platform == "win32":
 	from config import getcfg
 	from util_os import getenvu
+	from worker import UnloggedError, show_result_dialog
 	from wxaddons import CustomGridCellEvent
 	from wxwindows import ConfirmDialog, CustomCellBoolRenderer, CustomGrid, wx
 	import config
@@ -23,8 +24,9 @@ if sys.platform == "win32":
 
 	class ProfileLoaderExceptionsDialog(ConfirmDialog):
 		
-		def __init__(self, exceptions):
+		def __init__(self, exceptions, known_apps=set()):
 			self._exceptions = {}
+			self.known_apps = known_apps
 			scale = getcfg("app.dpi") / config.get_default_dpi()
 			if scale < 1:
 				scale = 1
@@ -250,6 +252,10 @@ if sys.platform == "win32":
 			path = dlg.GetPath()
 			dlg.Destroy()
 			if result == wx.ID_OK:
+				if os.path.basename(path).lower() in self.known_apps:
+					show_result_dialog(UnloggedError(lang.getstr("profile_loader.exceptions.known_app.error",
+													 os.path.basename(path))))
+					return
 				if event.GetId() == self.add_btn.Id:
 					# If it already exists, select the respective row
 					if path.lower() in self._exceptions:
@@ -564,7 +570,8 @@ class ProfileLoader(object):
 						self.set_visual_state()
 
 				def set_exceptions(self, event):
-					dlg = ProfileLoaderExceptionsDialog(self.pl._exceptions)
+					dlg = ProfileLoaderExceptionsDialog(self.pl._exceptions,
+														self.pl._known_apps)
 					result = dlg.ShowModal()
 					if result == wx.ID_OK:
 						exceptions = []
