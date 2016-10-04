@@ -9136,7 +9136,10 @@ usage: spotread [-options] [logfile]
 								   for dir_ in paths)
 			else:
 				paths2 = [defaultpaths.appdata, defaultpaths.library]
-				if self.argyll_version >= [1, 9]:
+				if (self.argyll_version >= [1, 9] and
+					self.argyll_version <= [1, 9, 1]):
+					# Argyll CMS 1.9 and 1.9.1 use *nix locations due to a
+					# configuration problem
 					paths2.extend([os.path.join(defaultpaths.home, ".local",
 												"share"), "/usr/local/share"])
 				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)

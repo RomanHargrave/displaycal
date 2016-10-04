@@ -672,54 +672,6 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None,
 	return True
 
 
-def get_argyll_data_files(scope, wildcard, include_lastmod=False):
-	"""
-	Get paths of Argyll data files.
-	
-	scope should be a string containing "l" (local system) and/or "u" (user)
-	
-	"""
-	data_files = []
-	if sys.platform != "darwin":
-		if "l" in scope:
-			for commonappdata in config.commonappdata:
-				data_files += glob.glob(os.path.join(commonappdata, "color",
-													 wildcard))
-				data_files += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
-													 wildcard))
-		if "u" in scope:
-			data_files += glob.glob(os.path.join(config.appdata, "color",
-												 wildcard))
-	else:
-		if "l" in scope:
-			data_files += glob.glob(os.path.join(config.library, "color",
-												 wildcard))
-			data_files += glob.glob(os.path.join(config.library, "ArgyllCMS",
-												 wildcard))
-			# Argyll 1.9
-			data_files += glob.glob(os.path.join("/usr/local/share",
-												 "ArgyllCMS", wildcard))
-		if "u" in scope:
-			data_files += glob.glob(os.path.join(config.library_home, "color",
-												 wildcard))
-			# Argyll 1.9
-			data_files += glob.glob(os.path.join(config.home, ".local", "share",
-												 "ArgyllCMS", wildcard))
-	if "u" in scope:
-		data_files += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
-											 wildcard))
-	if include_lastmod:
-		filenames = list(data_files)
-		data_files = []
-		for filename in filenames:
-			try:
-				lastmod = os.stat(filename).st_mtime
-			except EnvironmentError:
-				lastmod = -1
-			data_files.append((filename, lastmod))
-	return data_files
-
-
 def get_cgats_measurement_mode(cgats, instrument):
 	base_id = cgats.queryv1("DISPLAY_TYPE_BASE_ID")
 	refresh = cgats.queryv1("DISPLAY_TYPE_REFRESH")
@@ -3272,8 +3224,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if len(ccmx) > 1 and not os.path.isfile(ccmx[1]):
 			ccmx = ccmx[:1]
 		if force or not getattr(self, "ccmx_cached_paths", None):
-			ccmx_paths = get_argyll_data_files("lu", "*.ccmx")
-			ccss_paths = get_argyll_data_files("lu", "*.ccss")
+			ccmx_paths = self.get_argyll_data_files("lu", "*.ccmx")
+			ccss_paths = self.get_argyll_data_files("lu", "*.ccss")
 			ccmx_paths.sort(key=os.path.basename)
 			ccss_paths.sort(key=os.path.basename)
 			self.ccmx_cached_paths = ccmx_paths + ccss_paths
@@ -4105,7 +4057,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if asroot and sys.platform == "win32":
 			# Wait for async process
 			sleep(1)
-			result = get_argyll_data_files("l", "spyd2PLD.bin")
+			result = self.get_argyll_data_files("l", "spyd2PLD.bin")
 		return result
 	
 	def enable_spyder2_producer(self, path, asroot):
@@ -10303,29 +10255,31 @@ class MainFrame(ReportFrame, BaseFrame):
 			elif kind == "xrite":
 				# Import .edr
 				if asroot and sys.platform == "win32":
-					ccss = get_argyll_data_files("l", "*.ccss", True)
+					ccss = self.get_argyll_data_files("l", "*.ccss", True)
 				result = i1d3 = self.worker.import_edr([path], asroot=asroot)
 				if asroot and sys.platform == "win32":
-					result = i1d3 = get_argyll_data_files("l", "*.ccss", True) != ccss
+					result = i1d3 = self.get_argyll_data_files("l", "*.ccss",
+															   True) != ccss
 			elif kind == "spyder4":
 				# Import spyd4cal.bin
 				result = spyd4 = self.worker.import_spyd4cal([path],
 															 asroot=asroot)
 				if asroot and sys.platform == "win32":
-					result = spyd4 = get_argyll_data_files("l", "spyd4cal.bin")
+					result = spyd4 = self.get_argyll_data_files("l",
+																"spyd4cal.bin")
 			elif oeminst and not icolordisplay:
 				if asroot and sys.platform == "win32":
-					ccss = get_argyll_data_files("l", "*.ccss", True)
+					ccss = self.get_argyll_data_files("l", "*.ccss", True)
 				result = self.worker.import_colorimeter_corrections(oeminst,
 																	[path],
 																	asroot)
 				if (".ccss" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
-					 get_argyll_data_files("l", "*.ccss", True) != ccss)):
+					 self.get_argyll_data_files("l", "*.ccss", True) != ccss)):
 					i1d3 = result
 				if ("spyd4cal.bin" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
-					 get_argyll_data_files("l", "spyd4cal.bin"))):
+					 self.get_argyll_data_files("l", "spyd4cal.bin"))):
 					spyd4 = result
 			else:
 				result = Error(lang.getstr("error.file_type_unsupported") +
@@ -10354,18 +10308,18 @@ class MainFrame(ReportFrame, BaseFrame):
 															   i1d3ccss,
 															   spyd4en]):
 				if asroot and sys.platform == "win32":
-					ccss = get_argyll_data_files("l", "*.ccss", True)
+					ccss = self.get_argyll_data_files("l", "*.ccss", True)
 				result = self.worker.import_colorimeter_corrections(importer,
 																	asroot=asroot)
 				if isinstance(result, Exception) or not result:
 					continue
 				if (".ccss" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
-					 get_argyll_data_files("l", "*.ccss", True) != ccss)):
+					 self.get_argyll_data_files("l", "*.ccss", True) != ccss)):
 					i1d3 = result
 				if ("spyd4cal.bin" in "".join(self.worker.output) or
 					(asroot and sys.platform == "win32" and
-					 get_argyll_data_files("l", "spyd4cal.bin"))):
+					 self.get_argyll_data_files("l", "spyd4cal.bin"))):
 					spyd4 = result
 				if importer == oeminst:
 					break
@@ -12042,6 +11996,59 @@ class MainFrame(ReportFrame, BaseFrame):
 			return str(stripzeros(
 				self.ambient_viewcond_adjust_textctrl.GetValue()))
 		return None
+
+	def get_argyll_data_files(self, scope, wildcard, include_lastmod=False):
+		"""
+		Get paths of Argyll data files.
+		
+		scope should be a string containing "l" (local system) and/or "u" (user)
+		
+		"""
+		data_files = []
+		if sys.platform != "darwin":
+			if "l" in scope:
+				for commonappdata in config.commonappdata:
+					data_files += glob.glob(os.path.join(commonappdata, "color",
+														 wildcard))
+					data_files += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+														 wildcard))
+			if "u" in scope:
+				data_files += glob.glob(os.path.join(config.appdata, "color",
+													 wildcard))
+		else:
+			if "l" in scope:
+				data_files += glob.glob(os.path.join(config.library, "color",
+													 wildcard))
+				data_files += glob.glob(os.path.join(config.library, "ArgyllCMS",
+													 wildcard))
+				if (self.worker.argyll_version >= [1, 9] and
+					self.worker.argyll_version <= [1, 9, 1]):
+					# Argyll CMS 1.9 and 1.9.1 use *nix locations due to a
+					# configuration problem
+					data_files += glob.glob(os.path.join("/usr/local/share",
+														 "ArgyllCMS", wildcard))
+			if "u" in scope:
+				data_files += glob.glob(os.path.join(config.library_home, "color",
+													 wildcard))
+				if (self.worker.argyll_version >= [1, 9] and
+					self.worker.argyll_version <= [1, 9, 1]):
+					# Argyll CMS 1.9 and 1.9.1 use *nix locations due to a
+					# configuration problem
+					data_files += glob.glob(os.path.join(config.home, ".local", "share",
+														 "ArgyllCMS", wildcard))
+		if "u" in scope:
+			data_files += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
+												 wildcard))
+		if include_lastmod:
+			filenames = list(data_files)
+			data_files = []
+			for filename in filenames:
+				try:
+					lastmod = os.stat(filename).st_mtime
+				except EnvironmentError:
+					lastmod = -1
+				data_files.append((filename, lastmod))
+		return data_files
 	
 	def get_instrument_type(self):
 		# Return the instrument type, "color" (colorimeter) or "spect" 
