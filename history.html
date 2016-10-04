@@ -27,15 +27,15 @@
 		<div id="header">
 			<div id="title-wrapper">
 				<div id="title">
-					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="http://displaycal.net/"><span class="appname">Display<span>CAL</span></span></a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
+					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="https://displaycal.net/"><span class="appname">Display<span>CAL</span></span></a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
 				</div>
 
 				<div id="site-navigation">
 					<ul>
-						<li><a href="http://displaycal.net/news/">News</a></li>
-						<li><a href="http://displaycal.net/forums/">Forums</a></li>
-						<li><a href="http://displaycal.net/issues/">Issue Tracker</a></li>
-						<li><a href="http://displaycal.net/wiki/">Wiki</a></li>
+						<li><a href="https://displaycal.net/news/">News</a></li>
+						<li><a href="https://displaycal.net/forums/">Forums</a></li>
+						<li><a href="https://displaycal.net/issues/">Issue Tracker</a></li>
+						<li><a href="https://displaycal.net/wiki/">Wiki</a></li>
 					</ul>
 				</div>
 			</div>
@@ -299,7 +299,7 @@
 						<h3>3.0 </h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><strong>Tabbed user interface.</strong> See <a href="http://displaycal.net/#screenshots">screenshots</a>.</li>
+							<li><strong>Tabbed user interface.</strong> See <a href="https://displaycal.net/#screenshots">screenshots</a>.</li>
 							<li>Full support for Argyll CMS 1.7.0, which includes support for the ColorHug2, K-10A, Spyder5, the capability to use a <a href="https://www.google.com/chrome/devices/chromecast">Google Chromecast</a> as pattern generator, and more. Note that the accuracy of using a ChromeCast is limited due to the internal RGB to YCbCr conversion and upscaling in the device.</li>
 							<li>Optional automatic testchart optimization as part of the characterization process.</li>
 							<li>madTPG launches automatically when used (requires madVR 0.87.12 or later).</li>
@@ -402,7 +402,7 @@
 							<li>Enable black output offset instead of all-input offset for 3D LUTs, measurement report and synthetic profile creation (based on Argyll CMS 1.7 beta development code 2014-07-12, thanks to Graeme Gill). Note that for 3D LUTs, if using output offset ideally Argyll CMS 1.7 should be used aswell once it becomes available since the current implementation in DisplayCAL that enables output offset when used with Argyll CMS 1.6.3 or older has limited 16-bit precision for the black point mapping (due to the implementation altering the source profile TRC on-the-fly in that case, and the ICCv2 16-bit encoding used for the TRC tags in the source profile), while Argyll CMS 1.7 will enable full floating point processing (due to the black point mapping then taking place internally in <code>collink</code>, and DisplayCAL not having to alter the source profile TRC beforehand).</li>
 							<li>Black point can be specified in XYZ or chromaticity coordinates when creating a synthetic ICC profile.</li>
 							<li>When dropping an existing profile onto the synthetic ICC profile creation window, set whitepoint, primaries, blackpoint and tone response curve (average) according to the profile.</li>
-							<li><strong>Support for the Resolve 10.1 (and newer) CM pattern generator.</strong> See also <a href="http://displaycal.net/wiki/3d-lut-creation-workflow-for-resolve/">3D LUT creation workflow for Resolve</a> on the <a href="http://displaycal.net/wiki/">DisplayCAL Wiki</a>.</li>
+							<li><strong>Support for the Resolve 10.1 (and newer) CM pattern generator.</strong> See also <a href="https://displaycal.net/wiki/3d-lut-creation-workflow-for-resolve/">3D LUT creation workflow for Resolve</a> on the <a href="https://displaycal.net/wiki/">DisplayCAL Wiki</a>.</li>
 							<li>Enable interactive display adjustment without creating calibration curves by setting “Tone curve” to “As measured”. This also causes all calibration setting placeholders in the profile name to be ignored.</li>
 							<li>Added options to override the minimum display update delay (requires Argyll CMS 1.5 or newer) and display settle time multiplier (requires Argyll CMS 1.7 Beta or newer). These options can be found in the <a href="#additional-commandline-arguments">“Set additional commandline arguments...”</a> window accessible from the “Options” menu. Note that these two settings (unlike the additional commandline parameters) are stored in the profile, and will be restored when the profile is selected again under “Settings”.</li>
 							<li>Testchart editor: If generating any number of iterative patches as well as single channel, gray or multidimensional patches, it is possible to add the single channel, gray and multidimensional patches in a separate step by holding the shift key while clicking on “Create testchart”. This prevents those patches affecting the iterative patch distribution, with the drawback of making the patch distribution less even. This is an experimental feature.</li>
@@ -503,19 +503,19 @@
 								<p>See below example images for the result you can expect (note though that the particular synthetic image chosen, a “granger rainbow”, exaggerates banding, real-world material is much less likely to show this).</p>
 								<div style="overflow: hidden; padding: 1.4em 0;">
 									<div style="text-align: center;">
-										<p><a data-lightbox="lightbox-set-1784" href="http://displaycal.net/img/GrangerRainbow.png"><img src="http://displaycal.net/img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="https://displaycal.net/img/GrangerRainbow.png"><img src="https://displaycal.net/img/GrangerRainbow.thumb.png" alt="Original Granger Rainbow image" style="box-shadow: 0px 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>Original “granger rainbow” image</p>
 									</div>
 									<div style="float: left; margin: 0 15px 0 22px; width: 200px">
-										<p><a data-lightbox="lightbox-set-1784" href="http://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="http://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="https://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.png"><img src="https://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_colorimetric_default.thumb.png" alt="Granger Rainbow - default colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>Default colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile)</span></p>
 									</div>
 									<div style="float: left; margin: 0 15px; width: 200px">
-										<p><a data-lightbox="lightbox-set-1784" href="http://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="http://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="https://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.png"><img src="https://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_colorimetric.thumb.png" alt="Granger Rainbow - “smooth” colorimetric rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>“Smooth” colorimetric rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 									</div>
 									<div style="float: left; margin: 0 15px; width: 200px">
-										<p><a data-lightbox="lightbox-set-1784" href="http://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="http://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
+										<p><a data-lightbox="lightbox-set-1784" href="https://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.png"><img src="https://displaycal.net/img/GrangerRainbow_sRGB_to_widegamut_smooth_perceptual.thumb.png" alt="Granger Rainbow - “smooth” perceptual rendering" style="box-shadow: 0 1px 3px rgba(0, 0, 0, .75);" /></a></p>
 										<p>“Smooth” perceptual rendering <span style="white-space: nowrap">(2500 OFPS XYZ LUT profile</span>, inverted A2B)</p>
 									</div>
 								</div>
