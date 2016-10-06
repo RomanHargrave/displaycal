@@ -95,6 +95,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"VERSION": version,
 		"VERSION_SHORT": re.sub("(?:\.0){1,2}$", "", version),
 		"URL": "https://%s/" % domain.lower(),
+		"HTTPURL": "http://%s/" % domain.lower(),  # For share counts...
 		"WX_MINVERSION": ".".join(str(n) for n in wx_minversion),
 		"YEAR": strftime("%Y", gmtime(lastmod_time or 
 									  os.stat(tmpl_path).st_mtime))}

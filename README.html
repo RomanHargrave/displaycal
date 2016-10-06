@@ -29,7 +29,7 @@
 				<div id="title">
 					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="https://displaycal.net/"><span class="appname">Display<span>CAL</span></span></a><span><span class="dash">—</span><span class="formerly-known-as">Formerly known as dispcalGUI<br /></span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
 
-					<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="https://displaycal.net/shariff/index.php" data-url="https://displaycal.net/" data-info-url="https://github.com/heiseonline/shariff"></p>
+					<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="https://displaycal.net/shariff/index.php" data-url="http://displaycal.net/" data-info-url="https://github.com/heiseonline/shariff"></p>
 				</div>
 
 				<div id="site-navigation">
@@ -78,17 +78,22 @@
 			For light personal non-commercial use, a one-time contribution may be appropriate.
 			If you're using DisplayCAL professionally, an annual or monthly contribution would make a great deal of difference in ensuring that both projects continue to be available.</p>
 			<p>If you have decided to contribute (many thanks!), but you'd like to give to <a href="http://argyllcms.com">Argyll CMS</a> directly on your own behalf (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its contribution links), please leave a message on your DisplayCAL contribution if contributing to both projects. Please note that if your contribution should be put towards adding a certain feature in Argyll CMS, like support for a specific instrument, it will be more appropriate and efficient to <a href="http://argyllcms.com">contribute to Argyll CMS only</a>, and directly.</p>
-			<form id="donationform" action="https://www.paypal.com/cgi-bin/webscr" method="post" onsubmit="document.getElementById('donationform_business').value = ['displaycal.net', 'contribute'].reverse().join('\x40'); return true">
+			<form id="donationform" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+				<fieldset style="border: 1px solid #ccc; border-radius: 5px; padding: 0 5px;">
+				<legend style="padding: 0 3px;">Contribute using PayPal</legend>
 				<noscript><strong>Please enable JavaScript!</strong></noscript>
 				<p>
-					Contribute using PayPal:
+					<input id="credit_card" type="checkbox" onchange="document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'"/> <label for="credit_card">Use a credit card without a PayPal account</label><br />
+					<span style="padding-left: 2em;">(PayPal does not guarantee the availability of payment via credit card)</span><br />
 					<input type="hidden" name="cmd" value="_donations" />
-					<input id="donationform_business" type="hidden" name="business" value="" />
+					<input type="hidden" name="business" value="CEZVJ89TTS6FY" />
 					<input type="hidden" name="item_name" value="DisplayCAL Contribution" />
 					<input type="hidden" name="no_shipping" value="1" />
 					<input type="hidden" name="lc" value="US" />
-					<INPUT TYPE="hidden" NAME="return" value="https://displaycal.net/contribution_thank_you.html">
-					<select name="amount">
+					<input type="hidden" name="return" value="https://displaycal.net/contribution_thank_you.html">
+					<input type="hidden" name="image_url" value="https://displaycal.net/theme/icons/48x48/displaycal.png">
+					<input type="hidden" name="cpp_header_image" value="https://displaycal.net/theme/displaycal-paypal-cpp_header_image.png">
+					<select id="contribution_amount" name="amount" style="margin-left: 4px;">
 						<option disabled="disabled">Home / Enthusiast Use</option>
 						<option value="10">10</option>
 						<option value="20" selected="selected">20</option>
@@ -110,14 +115,16 @@
 						<option value="AUD">$ Australian Dollar</option>
 						<option value="CAD">$ Canadian Dollar</option>
 						<option value="USD">$ US Dollar</option>
-					</select>
+					</select>&#160;
 					<button type="submit" class="paypal" disabled="disabled">Contribute</button>
-					<button type="button" class="paypal" disabled="disabled" onclick="location.href = document.forms['donationform'].action + '?cmd=_donations&amp;lc=' + document.forms['donationform'].elements['lc'].value + '&amp;business=' + encodeURIComponent(['displaycal.net', 'contribute'].reverse().join('\x40')) + '&amp;item_name=' + encodeURIComponent(document.forms['donationform'].elements['item_name'].value) + '&amp;no_shipping=1&amp;currency_code=' + document.forms['donationform'].elements['currency_code'].value">Own amount</button>
+					<button type="button" class="paypal" disabled="disabled" onclick="contribute_own_amount(); jQuery(this).remove()">Own amount</button>
 				</p>
+				</fieldset>
 			</form>
 			<script type="text/javascript">
 				//<![CDATA[
 				(function () {
+					document.forms['donationform'].elements['lc'].value = (navigator.language || navigator.userLanguage || 'US').split('-').pop().toUpperCase();
 					setTimeout(function () {
 						var btns = document.getElementsByTagName('button'), i;
 						for (i = 0; i < btns.length; i ++) {
@@ -125,6 +132,9 @@
 						}
 					}, 1500);
 				})();
+				function contribute_own_amount() {
+					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" value="' + jQuery('#contribution_amount').val() + '" style="margin-left: 4px;" />')
+				}
 				//]]>
 			</script>
 			<span>(For other means of contributing, please contact me under <a>florian ‹at› displaycal . net</a>)</span>
