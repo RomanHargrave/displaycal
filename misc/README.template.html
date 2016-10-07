@@ -79,12 +79,12 @@
 			If you're using ${APPNAME} professionally, an annual or monthly contribution would make a great deal of difference in ensuring that both projects continue to be available.</p>
 			<p>If you have decided to contribute (many thanks!), but you'd like to give to <a href="http://argyllcms.com">Argyll CMS</a> directly on your own behalf (visit <a href="http://argyllcms.com">argyllcms.com</a> and scroll down a bit to get to its contribution links), please leave a message on your ${APPNAME} contribution if contributing to both projects. Please note that if your contribution should be put towards adding a certain feature in Argyll CMS, like support for a specific instrument, it will be more appropriate and efficient to <a href="http://argyllcms.com">contribute to Argyll CMS only</a>, and directly.</p>
 			<form id="donationform" action="https://www.paypal.com/cgi-bin/webscr" method="post">
-				<fieldset style="border: 1px solid #ccc; border-radius: 5px; padding: 0 5px;">
+				<fieldset style="border: 1px solid #ccc; border-radius: 5px; padding: 0 9px;">
 				<legend style="padding: 0 3px;">Contribute using PayPal</legend>
 				<noscript><strong>Please enable JavaScript!</strong></noscript>
 				<p>
-					<input id="credit_card" type="checkbox" onchange="document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'"/> <label for="credit_card">Use a credit card without a PayPal account</label><br />
-					<span style="padding-left: 2em;">(PayPal does not guarantee the availability of payment via credit card)</span><br />
+					<input id="credit_card" type="checkbox" onchange="document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'" style="margin-left: 0; vertical-align: text-top;" /> <label for="credit_card" style="display: inline-block; max-width: 90%; vertical-align: top;">Use a credit card without a PayPal account</label><br />
+					<span style="display: inline-block; line-height: 1.4em; margin-bottom: .5em; padding-left: 1.6em;">(PayPal does not guarantee the availability of payment via credit card)</span><br />
 					<input type="hidden" name="cmd" value="_donations" />
 					<input type="hidden" name="business" value="CEZVJ89TTS6FY" />
 					<input type="hidden" name="item_name" value="${APPNAME} Contribution" />
@@ -93,7 +93,7 @@
 					<input type="hidden" name="return" value="${URL}contribution_thank_you.html">
 					<input type="hidden" name="image_url" value="${URL}theme/icons/48x48/displaycal.png">
 					<input type="hidden" name="cpp_header_image" value="${URL}theme/displaycal-paypal-cpp_header_image.png">
-					<select id="contribution_amount" name="amount" style="margin-left: 4px;">
+					<select id="contribution_amount" name="amount">
 						<option disabled="disabled">Home / Enthusiast Use</option>
 						<option value="10">10</option>
 						<option value="20" selected="selected">20</option>
@@ -133,7 +133,7 @@
 					}, 1500);
 				})();
 				function contribute_own_amount() {
-					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" value="' + jQuery('#contribution_amount').val() + '" style="margin-left: 4px;" />')
+					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" value="' + jQuery('#contribution_amount').val() + '" />')
 				}
 				//]]>
 			</script>
