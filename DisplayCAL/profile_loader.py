@@ -14,6 +14,7 @@ from meta import VERSION, VERSION_BASE, name as appname, version, version_short
 import config
 from config import appbasename, confighome, getcfg, setcfg
 from log import safe_print
+from options import debug
 
 if sys.platform == "win32":
 	import errno
@@ -559,20 +560,26 @@ class ProfileLoader(object):
 					self.show_notification(toggle=True)
 
 				def open_color_management_settings(self, event):
+					safe_print("Menu command: Open color management settings")
 					try:
 						sp.call(["control", "/name", "Microsoft.ColorManagement"],
 								close_fds=True)
-					except:
+					except Exception, exception:
 						wx.Bell()
+						safe_print(exception)
 
 				def open_display_settings(self, event):
+					safe_print("Menu command: Open display settings")
 					try:
 						sp.call(["control", "/name", "Microsoft.Display",
 								 "/page", "Settings"], close_fds=True)
-					except:
+					except Exception, exception:
 						wx.Bell()
+						safe_print(exception)
 
 				def set_auto_restore(self, event):
+					safe_print("Menu command: Preserve calibration state",
+							   event.IsChecked())
 					config.setcfg("profile.load_on_login",
 								  int(event.IsChecked()))
 					if event.IsChecked():
@@ -582,6 +589,7 @@ class ProfileLoader(object):
 						self.set_visual_state()
 
 				def set_exceptions(self, event):
+					safe_print("Menu command: Set exceptions")
 					dlg = ProfileLoaderExceptionsDialog(self.pl._exceptions,
 														self.pl._known_apps)
 					result = dlg.ShowModal()
@@ -592,9 +600,16 @@ class ProfileLoader(object):
 								  path) in dlg._exceptions.iteritems():
 							exceptions.append("%i:%i:%s" %
 											  (enabled, reset, path))
+							safe_print("Enabled=%s" % bool(enabled),
+									   "Action=%s" % (reset and "Reset" or
+													  "Disable"), path)
+						if not exceptions:
+							safe_print("Clearing exceptions")
 						config.setcfg("profile_loader.exceptions",
 									  ";".join(exceptions))
 						self.pl._exceptions = dlg._exceptions
+					else:
+						safe_print("Cancelled setting exceptions")
 					dlg.Destroy()
 
 				def set_visual_state(self, enumerate_windows_and_processes=False):
@@ -629,8 +644,13 @@ class ProfileLoader(object):
 											self.pl.reload_count)
 						for i, (display, edid,
 								moninfo, device0) in enumerate(self.pl.monitors):
+							if device0:
+								devicekey = device0.DeviceKey
+							else:
+								devicekey = None
+							key = devicekey or str(i)
 							(profile,
-							 mtime) = self.pl.profile_associations.get(i,
+							 mtime) = self.pl.profile_associations.get(key,
 																	   (False,
 																		None))
 							profile_name = profile
@@ -756,7 +776,6 @@ class ProfileLoader(object):
 			oyranos_monitor = which("oyranos-monitor")
 			xcalib = which("xcalib")
 
-		self.profile_associations = {}
 		results = []
 		for i, display in enumerate([display.replace("[PRIMARY]", 
 													 lang.getstr("display.primary")) 
@@ -779,8 +798,6 @@ class ProfileLoader(object):
 					mtime = os.stat(profile_arg).st_mtime
 				else:
 					mtime = 0
-				self.profile_associations[i] = (os.path.basename(profile_arg),
-												mtime)
 				if (sys.platform == "win32" or not oyranos_monitor or
 					not display_conf_oy_compat or not xcalib or profile_arg == "-L"):
 					# Only need to run dispwin if under Windows, or if nothing else
@@ -983,10 +1000,10 @@ class ProfileLoader(object):
 				if display != self._current_display:
 					if not (first_run or dry_run):
 						safe_print(lang.getstr("display_detected"))
+						if debug:
+							safe_print(display)
 					if not (first_run or dry_run) or not self.monitors:
 						self._enumerate_monitors()
-						for (display, edid, moninfo, device0) in self.monitors:
-							safe_print(display)
 						if getcfg("profile_loader.fix_profile_associations"):
 							# Work-around long-standing bug in applications
 							# querying the monitor profile not making sure
@@ -1046,22 +1063,27 @@ class ProfileLoader(object):
 					devicekey = device0.DeviceKey
 				else:
 					devicekey = None
+				key = devicekey or str(i)
+				exception = None
 				try:
 					profile_path = ICCP.get_display_profile(i, path_only=True,
 															devicekey=devicekey)
 				except IndexError:
+					if debug:
+						safe_print("Display %s (%s) no longer present?" %
+								   (key, display))
 					self._next = False
 					break
 				except Exception, exception:
-					if exception.args[0] != errno.ENOENT:
-						safe_print("Could not get display profile for display %i:" %
-								   i, exception)
+					if exception.args[0] != errno.ENOENT or debug:
+						safe_print("Could not get display profile for display "
+								   "%s (%s):" % (key, display), exception)
 					profile_path = "?"
 				profile = os.path.basename(profile_path)
 				profile_name = profile
 				if profile_name == "?":
-					profile_name = "none"
-				association = self.profile_associations.get(i, (None, 0))
+					profile_name = safe_unicode(exception or "?")
+				association = self.profile_associations.get(key, (None, 0))
 				if (getcfg("profile_loader.fix_profile_associations") and
 					not first_run and not self._has_display_changed and
 					not self._next and association[0] != profile):
@@ -1070,6 +1092,8 @@ class ProfileLoader(object):
 					# One second delay to allow display configuration
 					# to settle
 					if not self._check_display_changed(dry_run=True):
+						if debug:
+							safe_print("Delay 1s")
 						timeout = 0
 						while (self and self.monitoring and timeout < 1 and
 							   self._manual_restore != 2 and not self._next):
@@ -1092,9 +1116,23 @@ class ProfileLoader(object):
 																 moninfo)
 							self.devices2profiles[device.DeviceKey] = (display_edid,
 																	   profile)
-					self.profile_associations[i] = (profile, mtime)
-					self.profiles[i] = None
-					self.ramps[i] = (None, None)
+						if debug and device:
+							safe_print("Monitor %r active display device name:" %
+									   moninfo["Device"], device.DeviceName)
+							safe_print("Monitor %r active display device string:" %
+									   moninfo["Device"], device.DeviceString)
+							safe_print("Monitor %r active display device state flags: 0x%x" %
+									   (moninfo["Device"], device.StateFlags))
+							safe_print("Monitor %r active display device ID:" %
+									   moninfo["Device"], device.DeviceID)
+							safe_print("Monitor %r active display device key:" %
+									   moninfo["Device"], device.DeviceKey)
+						elif debug:
+							safe_print("WARNING: Monitor %r has no active display device" %
+									   moninfo["Device"])
+					self.profile_associations[key] = (profile, mtime)
+					self.profiles[key] = None
+					self.ramps[key] = (None, None)
 					profile_association_changed = True
 					if not first_run and self._is_displaycal_running():
 						# Normally calibration loading is disabled while
@@ -1108,22 +1146,22 @@ class ProfileLoader(object):
 				apply_profiles = self._should_apply_profiles()
 				recheck = False
 				(vcgt_ramp,
-				 vcgt_values) = self.ramps.get(self._reset_gamma_ramps or i,
+				 vcgt_values) = self.ramps.get(self._reset_gamma_ramps or key,
 											   (None, None))
 				if not vcgt_ramp:
 					vcgt_values = ([], [], [])
 					if not self._reset_gamma_ramps:
 						# Get display profile
-						if not self.profiles.get(i):
+						if not self.profiles.get(key):
 							if profile == "?":
 								profile = None
 							try:
-								self.profiles[i] = ICCP.ICCProfile(profile)
-								self.profiles[i].tags.get("vcgt")
+								self.profiles[key] = ICCP.ICCProfile(profile)
+								self.profiles[key].tags.get("vcgt")
 							except Exception, exception:
 								safe_print(exception)
 								continue
-						profile = self.profiles[i]
+						profile = self.profiles[key]
 						if isinstance(profile.tags.get("vcgt"),
 									  ICCP.VideoCardGammaType):
 							# Get display profile vcgt
@@ -1166,8 +1204,8 @@ class ProfileLoader(object):
 					for j in xrange(len(vcgt_values[0])):
 						for k in xrange(3):
 							vcgt_ramp[k][j] = vcgt_values[k][j][1]
-					self.ramps[self._reset_gamma_ramps or i] = (vcgt_ramp,
-																vcgt_values)
+					self.ramps[self._reset_gamma_ramps or key] = (vcgt_ramp,
+																  vcgt_values)
 					recheck = True
 				if (not self._manual_restore and
 					getcfg("profile_loader.check_gamma_ramps")):
@@ -1325,15 +1363,54 @@ class ProfileLoader(object):
 		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
+		if debug:
+			safe_print("-" * 80)
+			safe_print("Enumerating monitors and display devices")
+			safe_print("-" * 80)
 		self.monitors = []
 		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
+			if debug:
+				safe_print("Found monitor %i %r flags 0x%x" %
+						   (i, moninfo["Device"], moninfo["Flags"]))
+				if device:
+					safe_print("Monitor %i active display device name:" % i,
+							   device.DeviceName)
+					safe_print("Monitor %i active display device string:" % i,
+							   device.DeviceString)
+					safe_print("Monitor %i active display device state flags: "
+							   "0x%x" % (i, device.StateFlags))
+					safe_print("Monitor %i active display device ID:" % i,
+							   device.DeviceID)
+					safe_print("Monitor %i active display device key:" % i,
+							   device.DeviceKey)
+				else:
+					safe_print("WARNING: Monitor %i has no active display device" %
+							   i)
+				safe_print("Monitor %i display name" % i, end=" ")
 			display, edid = get_display_name_edid(device, moninfo)
+			safe_print(display)
+			if debug:
+				safe_print("Enumerating 1st display device for monitor %i %r" %
+						   (i, moninfo["Device"]))
 			try:
 				device0 = win32api.EnumDisplayDevices(moninfo["Device"], 0)
-			except pywintypes.error:
+			except pywintypes.error, exception:
+				safe_print("EnumDisplayDevices(%r, 0) failed:" %
+						   moninfo["Device"], exception)
 				device0 = None
+			if debug and device0:
+				safe_print("Monitor %i 1st display device name:" % i,
+						   device0.DeviceName)
+				safe_print("Monitor %i 1st display device string:" % i,
+						   device0.DeviceString)
+				safe_print("Monitor %i 1st display device state flags: 0x%x" %
+						   (i, device0.StateFlags))
+				safe_print("Monitor %i 1st display device ID:" % i,
+						   device0.DeviceID)
+				safe_print("Monitor %i 1st display device key:" % i,
+						   device0.DeviceKey)
 			self.monitors.append((display, edid, moninfo, device0))
 
 	def _enumerate_windows_callback(self, hwnd, extra):
@@ -1501,8 +1578,8 @@ class ProfileLoader(object):
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)
 				except Exception, exception:
-					if exception.args[0] != errno.ENOENT:
-						safe_print(exception)
+					safe_print("Could not get display profile for display "
+							   "device %r:" % devicekey, exception)
 					continue
 				if not current_profile:
 					continue
@@ -1513,19 +1590,43 @@ class ProfileLoader(object):
 					ICCP.set_display_profile(profile, devicekey=devicekey)
 
 	def _set_display_profiles(self, dry_run=False):
+		if debug:
+			safe_print("-" * 80)
+			safe_print("Checking profile associations")
+			safe_print("-" * 80)
 		self.devices2profiles = {}
 		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
+			if debug:
+				safe_print("Enumerating display devices for monitor %i %r" %
+						   (i, moninfo["Device"]))
 			devices = get_display_devices(moninfo["Device"])
 			if not devices:
+				if debug:
+					safe_print("WARNING: Monitor %i has no display devices" % i)
 				continue
 			active_device = get_active_display_device(None, devices=devices)
+			if debug:
+				if active_device:
+					safe_print("Monitor %i active display device name:" % i,
+							   active_device.DeviceName)
+					safe_print("Monitor %i active display device string:" % i,
+							   active_device.DeviceString)
+					safe_print("Monitor %i active display device state flags: "
+							   "0x%x" % (i, active_device.StateFlags))
+					safe_print("Monitor %i active display device ID:" % i,
+							   active_device.DeviceID)
+					safe_print("Monitor %i active display device key:" % i,
+							   active_device.DeviceKey)
+				else:
+					safe_print("WARNING: Monitor %i has no active display device" %
+							   i)
 			for device in devices:
 				try:
 					profile = ICCP.get_display_profile(path_only=True,
 													   devicekey=device.DeviceKey)
 				except Exception, exception:
-					if exception.args[0] != errno.ENOENT:
-						safe_print(exception)
+					safe_print("Could not get display profile for display "
+							   "device %r:" % device.DeviceKey, exception)
 					profile = None
 				if profile:
 					profile = os.path.basename(profile)
@@ -1536,6 +1637,10 @@ class ProfileLoader(object):
 				display_edid = get_display_name_edid(device, active_moninfo)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile or "")
+				if debug:
+					safe_print("%s (%s) -> %s" % (display_edid[0],
+												  device.DeviceKey,
+												  profile or "none"))
 			# Set the active profile
 			device = active_device
 			if not device:
@@ -1544,8 +1649,8 @@ class ProfileLoader(object):
 				correct_profile = ICCP.get_display_profile(path_only=True,
 														   devicekey=device.DeviceKey)
 			except Exception, exception:
-				if exception.args[0] != errno.ENOENT:
-					safe_print(exception)
+				safe_print("Could not get display profile for display "
+						   "device %r:" % device.DeviceKey, exception)
 				continue
 			if correct_profile:
 				correct_profile = os.path.basename(correct_profile)
@@ -1559,6 +1664,9 @@ class ProfileLoader(object):
 										 devicekey=device.DeviceKey)
 
 	def _set_manual_restore(self, event):
+		if event:
+			safe_print("Menu command:", end=" ")
+		safe_print("Set calibration state to load profile vcgt")
 		with self.lock:
 			setcfg("profile_loader.reset_gamma_ramps", 0)
 			self._manual_restore = True
@@ -1566,6 +1674,9 @@ class ProfileLoader(object):
 		self.taskbar_icon.set_visual_state()
 
 	def _set_reset_gamma_ramps(self, event):
+		if event:
+			safe_print("Menu command:", end=" ")
+		safe_print("Set calibration state to reset vcgt")
 		with self.lock:
 			setcfg("profile_loader.reset_gamma_ramps", 1)
 			self._manual_restore = True
@@ -1584,6 +1695,8 @@ class ProfileLoader(object):
 				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
+		safe_print("Menu command:", end=" ")
+		safe_print("Toggle fix profile associations", event.IsChecked())
 		if event.IsChecked():
 			self._set_display_profiles(dry_run=True)
 			dlg = ConfirmDialog(None,
@@ -1641,6 +1754,7 @@ class ProfileLoader(object):
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK:
+				safe_print("Cancelled toggling fix profile associations")
 				return
 		with self.lock:
 			setcfg("profile_loader.fix_profile_associations",
@@ -1653,8 +1767,10 @@ class ProfileLoader(object):
 
 	def _set_exceptions(self):
 		self._exceptions = {}
-		exceptions = config.getcfg("profile_loader.exceptions").split(";")
-		for exception in exceptions:
+		exceptions = config.getcfg("profile_loader.exceptions").strip()
+		if exceptions:
+			safe_print("Exceptions:")
+		for exception in exceptions.split(";"):
 			exception = exception.split(":", 2)
 			if len(exception) < 3:
 				# Malformed, ignore
@@ -1666,6 +1782,8 @@ class ProfileLoader(object):
 					exception[i] = 0
 			enabled, reset, path = exception
 			self._exceptions[path.lower()] = (enabled, reset, path)
+			safe_print("Enabled=%s" % bool(enabled),
+					   "Action=%s" % (reset and "Reset" or "Disable"), path)
 
 
 def get_display_name_edid(device, moninfo=None):
@@ -1692,7 +1810,8 @@ def main():
 	unknown_option = None
 	for arg in sys.argv[1:]:
 		if (arg not in ("--help", "--force", "-V", "--version") and
-			(arg != "--oneshot" or sys.platform != "win32") and
+			(arg not in ("--oneshot", "--debug", "-d") or
+			 sys.platform != "win32") and
 			(arg not in ("--verify", "--silent", "--error-dialog", "--skip") or
 			 sys.platform == "win32")):
 			unknown_option = arg
