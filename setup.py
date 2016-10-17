@@ -971,7 +971,7 @@ def setup():
 						folder = "&folder=snapshot"
 					archive.setAttribute("extract", extract)
 					archive.setAttribute("href",
-										 "https://%s/download.php?version=%s&suffix=.tar.gz%s" %
+										 "http://%s/download.php?version=%s&suffix=.tar.gz%s" %
 										 (domain.lower(), version, folder))
 					archive.setAttribute("size", "%s" % os.stat(archive_path).st_size)
 					archive.setAttribute("type", "application/x-compressed-tar")
