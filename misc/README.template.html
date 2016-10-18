@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <!--[if lte IE 8 ]>
-<html xmlns="https://www.w3.org/1999/xhtml" class="ie_lte_8">
+<html class="ie_lte_8">
 <![endif]-->
 <!--[if (gt IE 8)|!(IE) ]><!-->
-<html xmlns="https://www.w3.org/1999/xhtml">
+<html lang="en">
 <!--<![endif]-->
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -2486,6 +2486,16 @@ Dunkley, Hassan Elhassan</span></p>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Profile loader (Windows): Setting calibration state to reset video card gamma tables overwrote cached gamma ramps for the 2nd display in a multi-display configuration.</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </dt>
+					<dd>
+						<h3>3.1.7 </h3>
 
 						<h4>Added in this release:</h4>
 						<ul>
