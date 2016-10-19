@@ -33,6 +33,8 @@ UninstallDisplayIcon={app}\theme\icons\%(AppName)s-uninstall.ico
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
 MinVersion=0,5.1.2600
+SignTool=sign.cmd
+SignedUninstaller=yes
 
 [Languages]
 Name: english; MessagesFile: ..\misc\InnoSetup\v5\Default.isl; 

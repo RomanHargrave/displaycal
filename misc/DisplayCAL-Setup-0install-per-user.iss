@@ -38,6 +38,8 @@ DisableDirPage=yes
 UsePreviousGroup=False
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
+SignTool=sign.cmd
+SignedUninstaller=yes
 
 [Languages]
 Name: english; MessagesFile: ..\misc\InnoSetup\v5\Default.isl;
