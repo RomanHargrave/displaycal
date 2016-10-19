@@ -1020,7 +1020,7 @@ def setup():
 								subdir = "256x256/"
 								filename = script.lower()
 							icon.setAttribute("href",
-											  "https://%s/theme/icons/%s%s.%s" %
+											  "http://%s/theme/icons/%s%s.%s" %
 											  (domain.lower(), subdir,
 											   filename, ext))
 							icon.setAttribute("type", mime_type)
@@ -1141,7 +1141,7 @@ def setup():
 			with codecs.open(os.path.join(dist_dir, "README.webloc"), "w",
 							 "UTF-8") as readme:
 				readme.write("""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>URL</key>
