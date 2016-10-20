@@ -914,8 +914,7 @@ class ProfileLoader(object):
 				safe_print("Cancelled ProfileLoader.exit(%s)" % event)
 				return
 		config.writecfg(module="apply-profiles",
-						options=("argyll.dir", "profile.load_on_login",
-								 "profile_loader"))
+						options=("profile.load_on_login", "profile_loader"))
 		self.taskbar_icon and self.taskbar_icon.RemoveIcon()
 		self.monitoring = False
 		if self.frame:

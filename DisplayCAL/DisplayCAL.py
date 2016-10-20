@@ -6085,16 +6085,42 @@ class MainFrame(ReportFrame, BaseFrame):
 					prev = int(prev.split()[-1])
 				except:
 					pass
-			result = self.send_command("apply-profiles",
-									   "setcfg profile.load_on_login %i" %
-									   getcfg("profile.load_on_login"))
-			if result == "ok" and getcfg("profile.load_on_login") != prev:
-				if getcfg("profile.load_on_login"):
-					lstr = "calibration.preserve"
-				else:
-					lstr = "profile_loader.disable"
-				self.send_command("apply-profiles",
-								  "notify '%s'" % lang.getstr(lstr))
+				result = self.send_command("apply-profiles",
+										   "setcfg profile.load_on_login %i" %
+										   getcfg("profile.load_on_login"))
+				if result == "ok" and getcfg("profile.load_on_login") != prev:
+					if getcfg("profile.load_on_login"):
+						lstr = "calibration.preserve"
+					else:
+						lstr = "profile_loader.disable"
+					self.send_command("apply-profiles",
+									  "notify '%s'" % lang.getstr(lstr))
+			else:
+				# Profile loader not running? Fall back to config files
+
+				# 1. Remember current config
+				items = config.cfg.items(config.ConfigParser.DEFAULTSECT)
+
+				# 2. Read in profile loader config. Result is unison of current
+				#    config and profile loader config.
+				initcfg("apply-profiles")
+
+				# 3. Restore current config (but do not override profile loader
+				#    options)
+				for name, value in items:
+					if not name.startswith("profile_loader"):
+						config.cfg.set(config.ConfigParser.DEFAULTSECT, name,
+									   value)
+
+				# 4. Write profile loader config with values updated from
+				#    current config
+				writecfg(module="apply-profiles",
+						 options=("profile.load_on_login", "profile_loader"))
+
+				# 5. Remove profile loader options from current config
+				for name in defaults:
+					if name.startswith("profile_loader"):
+						setcfg(name, None)
 	
 	def profile_load_by_os_handler(self, event=None):
 		if is_superuser():
