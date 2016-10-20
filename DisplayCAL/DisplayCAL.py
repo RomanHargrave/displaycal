@@ -745,6 +745,16 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	return header
 
 
+def get_profile_load_on_login_label(os_cal):
+	label = lang.getstr("profile.load_on_login")
+	if sys.platform == "win32" and not os_cal:
+		lstr = lang.getstr("calibration.preserve")
+		if getcfg("lang") != "de":
+			lstr = lstr[0].lower() + lstr[1:]
+		label += u" && " + lstr
+	return label
+
+
 def upload_colorimeter_correction(parent=None, params=None):
 	""" Upload colorimeter correction to online database """
 	path = "/index.php"
@@ -6064,6 +6074,25 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.profile_load_by_os.GetValue() and is_superuser()):
 				self.profile_load_by_os.SetValue(False)
 				self.profile_load_by_os_handler()
+		# Update profile loader config
+		if sys.platform == "win32":
+			prev = self.send_command("apply-profiles",
+									 "getcfg profile.load_on_login")
+			if prev:
+				try:
+					prev = int(prev.split()[-1])
+				except:
+					pass
+			result = self.send_command("apply-profiles",
+									   "setcfg profile.load_on_login %i" %
+									   getcfg("profile.load_on_login"))
+			if result == "ok" and getcfg("profile.load_on_login") != prev:
+				if getcfg("profile.load_on_login"):
+					lstr = "calibration.preserve"
+				else:
+					lstr = "profile_loader.disable"
+				self.send_command("apply-profiles",
+								  "notify '%s'" % lang.getstr(lstr))
 	
 	def profile_load_by_os_handler(self, event=None):
 		if is_superuser():
@@ -6073,6 +6102,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			except Exception, exception:
 				safe_print("util_win.enable_calibration_management(True): %s" %
 						   safe_unicode(exception))
+			else:
+				label = get_profile_load_on_login_label(
+							self.profile_load_by_os.GetValue())
+				self.profile_load_on_login.Label = label
+				self.profile_load_on_login.ContainingSizer.Layout()
 
 	def install_cal(self, capture_output=False, cal=None, profile_path=None,
 					skip_scripts=False, silent=False, title=appname):
@@ -8138,13 +8172,13 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.profile_info[id].IsShownOnScreen())
 			if installable:
 				if sys.platform != "darwin" or test:
-					self.profile_load_on_login = wx.CheckBox(dlg, -1, 
-						lang.getstr("profile.load_on_login"))
-					self.profile_load_on_login.SetValue(
-						bool(getcfg("profile.load_on_login") or
-							 (sys.platform == "win32" and
+					os_cal = (sys.platform == "win32" and
 							  sys.getwindowsversion() >= (6, 1) and
-							  util_win.calibration_management_isenabled())))
+							  util_win.calibration_management_isenabled())
+					label = get_profile_load_on_login_label(os_cal)
+					self.profile_load_on_login = wx.CheckBox(dlg, -1, label)
+					self.profile_load_on_login.SetValue(
+						bool(getcfg("profile.load_on_login") or os_cal))
 					dlg.Bind(wx.EVT_CHECKBOX,
 							 self.profile_load_on_login_handler, 
 							 id=self.profile_load_on_login.GetId())
@@ -8156,7 +8190,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						self.profile_load_by_os = wx.CheckBox(dlg, -1, 
 							lang.getstr("profile.load_on_login.handled_by_os"))
 						self.profile_load_by_os.SetValue(
-							bool(util_win.calibration_management_isenabled()))
+							bool(os_cal))
 						dlg.Bind(wx.EVT_CHECKBOX,
 								 self.profile_load_by_os_handler, 
 								 id=self.profile_load_by_os.GetId())
@@ -12569,36 +12603,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			profile_loader_load_cal and
 			not util_win.calibration_management_isenabled()):
 			# Tell profile loader to load calibration
-			try:
-				for host in self.get_scripting_hosts():
-					ip_port, name = host.split(None, 1)
-					if name == appbasename + "-apply-profiles":
-						ip, port = ip_port.split(":", 1)
-						port = int(port)
-						conn = self.connect(ip, port)
-						if isinstance(conn, Exception):
-							raise conn
-						# Check if we're actually connected to the right
-						# application (if it terminated unexpectedly, something
-						# else may have grabbed the port)
-						conn.send_command("getappname")
-						response = conn.get_single_response()
-						if response == appname + "-apply-profiles":
-							conn.send_command("apply-profiles display-changed")
-							response = conn.get_single_response()
-							if response != "ok":
-								safe_print("Warning - profile loader didn't"
-										   "load calibration:", response)
-						else:
-							safe_print("Warning - profile loader not running "
-									   "under expected port", port)
-						del conn
-						break
-				else:
-					safe_print("Warning - profile loader not running?")
-			except Exception, exception:
-				safe_print("Warning - couldn't talk to profile loader:",
-						   exception)
+			self.send_command("apply-profiles",
+							  "apply-profiles display-changed")
 		return result
 	
 	def check_update_controls_consumer(self, result, argyll_bin_dir,

@@ -1531,6 +1531,41 @@ class BaseFrame(wx.Frame):
 		except socket.error, exception:
 			safe_print(exception)
 
+	def send_command(self, scripting_host_name_suffix, command):
+		try:
+			for host in self.get_scripting_hosts():
+				ip_port, name = host.split(None, 1)
+				if name == appbasename + "-" + scripting_host_name_suffix:
+					ip, port = ip_port.split(":", 1)
+					port = int(port)
+					conn = self.connect(ip, port)
+					if isinstance(conn, Exception):
+						raise conn
+					# Check if we're actually connected to the right
+					# application (if it terminated unexpectedly, something
+					# else may have grabbed the port)
+					conn.send_command("getappname")
+					response = conn.get_single_response()
+					if response == appname + "-" + scripting_host_name_suffix:
+						conn.send_command(command)
+						response = conn.get_single_response()
+						safe_print("%s-%s %s returned" %
+								   (appname, scripting_host_name_suffix,
+									command), response)
+					else:
+						safe_print("Warning - %s-%s not running "
+								   "under expected port" %
+								   (appname, scripting_host_name_suffix), port)
+					del conn
+					return response
+			else:
+				safe_print("Warning - %s-%s not running?" %
+						   (appname, scripting_host_name_suffix))
+		except Exception, exception:
+			safe_print("Warning - couldn't talk to %s-%s:" %
+					   (appname, scripting_host_name_suffix), exception)
+			return exception
+
 	def focus_handler(self, event=None):
 		# IMPORTANT: event can either be EVT_TEXT, EVT_SET_FOCUS, EVT_CLOSE,
 		# EVT_MENU or EVT_BUTTON.
