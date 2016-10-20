@@ -1726,6 +1726,7 @@ class Worker(object):
 									  triggers=self.triggers,
 									  prestrip=prestrip)
 		self.clear_argyll_info()
+		self.set_argyll_version_from_string(getcfg("argyll.version"), False)
 		self.clear_cmd_output()
 		self._patterngenerators = {}
 		self._progress_dlgs = {}
@@ -3308,7 +3309,7 @@ class Worker(object):
 													 + 8:]
 						if (argyll_version_string != self.argyll_version_string):
 							self.set_argyll_version_from_string(argyll_version_string)
-							safe_print("Argyll CMS " + self.argyll_version_string)
+						safe_print("Argyll CMS " + self.argyll_version_string)
 						config.defaults["copyright"] = ("No copyright. Created "
 														"with %s %s and Argyll "
 														"CMS %s" % 
