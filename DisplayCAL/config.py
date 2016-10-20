@@ -1494,7 +1494,9 @@ def initcfg(module=None):
 		setcfg("calibration.file", defaults["calibration.file"])
 	# Read cfg
 	cfgnames = []
-	if module != "3DLUT-maker":
+	if module != "3DLUT-maker" and (module != "apply-profiles" or
+									sys.platform != "win32"):
+		# Never read base app cfg for 3D LUT maker or for Windows profile loader
 		cfgnames.append(appbasename)
 	if module:
 		cfgnames.append(cfgbasename)

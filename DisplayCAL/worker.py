@@ -6164,15 +6164,15 @@ usage: spotread [-options] [logfile]
 			check = (sys.platform == "win32" or
 					 (not colord_install or isinstance(colord_install,
 													   colord.CDError)))
-			if (getcfg("profile.install_scope") == "l"):
+			if (getcfg("profile.install_scope") == "l" and
+				sys.platform != "win32"):
 				# We need a system-wide config file to store the path to 
 				# the Argyll binaries for the profile loader
 				if (not config.makecfgdir("system", self) or
 					(not config.writecfg("system", self) and check)):
 					# If the system-wide config dir could not be created,
 					# or the system-wide config file could not be written,
-					# error out if under Windows or if under Linux but
-					# colord profile install failed
+					# error out if under Linux and colord profile install failed
 					return Error(lang.getstr("error.autostart_system"))
 			if sys.platform == "win32":
 				loader_install = self._install_profile_loader_win32(silent)
