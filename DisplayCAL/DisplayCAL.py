@@ -6077,7 +6077,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.profile_load_by_os.SetValue(False)
 				self.profile_load_by_os_handler()
 		# Update profile loader config
-		if sys.platform == "win32":
+		if sys.platform == "win32" and event:
 			prev = self.send_command("apply-profiles",
 									 "getcfg profile.load_on_login")
 			if prev:
@@ -8199,6 +8199,39 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.show_profile_info.SetValue(
 					self.profile_info[id].IsShownOnScreen())
 			if installable:
+				if sys.platform == "win32":
+					# Get profile loader config
+					cur = self.send_command("apply-profiles",
+											"getcfg profile.load_on_login")
+					if cur:
+						try:
+							cur = int(cur.split()[-1])
+						except:
+							pass
+						else:
+							setcfg("profile.load_on_login", cur)
+					else:
+						# Profile loader not running? Fall back to config files
+
+						# 1. Remember current config
+						items = config.cfg.items(config.ConfigParser.DEFAULTSECT)
+
+						# 2. Read in profile loader config. Result is unison of
+						#    current config and profile loader config.
+						initcfg("apply-profiles")
+
+						# 3. Restore current config (but do not override profile
+						#    loader options)
+						for name, value in items:
+							if (name != "profile.load_on_login" and
+								not name.startswith("profile_loader")):
+								config.cfg.set(config.ConfigParser.DEFAULTSECT,
+											   name, value)
+
+						# 4. Remove profile loader options from current config
+						for name in defaults:
+							if name.startswith("profile_loader"):
+								setcfg(name, None)
 				if sys.platform != "darwin" or test:
 					os_cal = (sys.platform == "win32" and
 							  sys.getwindowsversion() >= (6, 1) and
