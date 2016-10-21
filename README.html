@@ -10,6 +10,9 @@
 		<meta name="viewport" content="width=device-width" />
 		<title>DisplayCAL (formerly known as dispcalGUI)—Open Source Display Calibration and Characterization powered by Argyll CMS</title>
 		<meta name="description" content="A graphical front-end for display calibration and profiling using Argyll CMS" />
+		<meta property="fb:app_id" content="210635659357680" />
+		<meta property="og:url" content="http://displaycal.net/" />
+		<meta property="og:image" content="http://displaycal.net/theme/icons/256x256/displaycal.png" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="https://displaycal.net/shariff/shariff.complete.css" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
@@ -47,8 +50,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.1.7.1 </h2>
-					<p>2016-10-18 10:00 UTC</p>
+					<h2 id="version">3.1.7.2 </h2>
+					<p>2016-10-21 12:26 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -449,6 +452,11 @@
 								<span><a href="https://displaycal.net/download/xUbuntu_16.04/i386/DisplayCAL.deb">x86</a> | 
 								<a href="https://displaycal.net/download/xUbuntu_16.04/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
+							<li>
+								<span>Ubuntu 16.10 (Yakkety)</span>
+								<span><a href="https://displaycal.net/download/xUbuntu_16.10/i386/DisplayCAL.deb">x86</a> | 
+								<a href="https://displaycal.net/download/xUbuntu_16.10/amd64/DisplayCAL.deb">x86_64</a></span>
+							</li>
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
@@ -603,6 +611,10 @@
 							<li>
 								<span></span>
 								<span><a href="https://displaycal.net/download/xUbuntu_16.04/all/DisplayCAL-0install.deb">Ubuntu 16.04 (Xenial)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="https://displaycal.net/download/xUbuntu_16.10/all/DisplayCAL-0install.deb">Ubuntu 16.10 (Yakkety)</a></span>
 							</li>
 						</ul>
 
@@ -2481,20 +2493,32 @@ Dunkley, Hassan Elhassan</span></p>
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2016-10-18 10:00 (UTC) 3.1.7.1  -->
+			<!-- 2016-10-21 12:26 (UTC) 3.1.7.2  -->
 			<dl>
-				<dt id="changelog-3.1.7.1">2016-10-18 10:00 (UTC) 3.1.7.1 </dt>
+				<dt id="changelog-3.1.7.2">2016-10-21 12:26 (UTC) 3.1.7.2 </dt>
 					<dd>
+						<h3>3.1.7.2 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Windows: Toggling the “Load calibration on login” checkbox in the profile installation dialog now also toggles preserving calibration state in the profile loader and vice versa, thus actually affecting if calibration is loaded on login or not (this restores functionality that was lost with the initial DisplayCAL 3.1 release).</li>
+							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.1.7.2 from October 21, 2016).</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Profile loader (Windows): User-defined exceptions could be lost if exiting the profile loader followed by (re-)loading settings or restoring defaults in DisplayCAL.</li>
+						</ul>
+
+						<p id="changelog-3.1.7.1">2016-10-18 10:00 (UTC) 3.1.7.1 </p>
 						<h3>3.1.7.1 </h3>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Profile loader (Windows): Setting calibration state to reset video card gamma tables overwrote cached gamma ramps for the 2nd display in a multi-display configuration.</li>
 						</ul>
-					</dd>
 
-				<dt id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </dt>
-					<dd>
+						<p id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </p>
 						<h3>3.1.7 </h3>
 
 						<h4>Added in this release:</h4>

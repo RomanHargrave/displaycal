@@ -451,6 +451,11 @@
 								<span><a href="${URL}download/xUbuntu_16.04/i386/${APPNAME}.deb">x86</a> | 
 								<a href="${URL}download/xUbuntu_16.04/amd64/${APPNAME}.deb">x86_64</a></span>
 							</li>
+							<li>
+								<span>Ubuntu 16.10 (Yakkety)</span>
+								<span><a href="${URL}download/xUbuntu_16.10/i386/${APPNAME}.deb">x86</a> | 
+								<a href="${URL}download/xUbuntu_16.10/amd64/${APPNAME}.deb">x86_64</a></span>
+							</li>
 						</ul>
 
 						<p>Les paquets réalisés pour des distributions plus anciennes peuvent fonctionner sur les plus récentes tant qu’il n’y a rien eu de substantiel de modifié (c’est-à-dire la version de Python). Il existe aussi certaines distributions qui sont basées sur celles de la liste ci-dessus (par exemple, Linux Mint qui est basée sur Ubuntu). Ceci signifie que les paquets de cette distribution de base devraient aussi fonctionner avec ses dérivées, vous devez simplement connaître la version sur laquelle la dérivée est basée et faire votre téléchargement en conséquence.</p>
@@ -605,6 +610,10 @@
 							<li>
 								<span></span>
 								<span><a href="${URL}download/xUbuntu_16.04/all/${APPNAME}-0install.deb">Ubuntu 16.04 (Xenial)</a></span>
+							</li>
+							<li>
+								<span></span>
+								<span><a href="${URL}download/xUbuntu_16.10/all/${APPNAME}-0install.deb">Ubuntu 16.10 (Yakkety)</a></span>
 							</li>
 						</ul>
 
@@ -2429,14 +2438,26 @@ Dunkley, Hassan Elhassan</span></p>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
 
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Windows: Toggling the “Load calibration on login” checkbox in the profile installation dialog now also toggles preserving calibration state in the profile loader and vice versa, thus actually affecting if calibration is loaded on login or not (this restores functionality that was lost with the initial ${APPNAME} 3.1 release).</li>
+							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for ${VERSION_SHORT} from October 21, 2016).</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Profile loader (Windows): User-defined exceptions could be lost if exiting the profile loader followed by (re-)loading settings or restoring defaults in ${APPNAME}.</li>
+						</ul>
+
+						<p id="changelog-3.1.7.1">2016-10-18 10:00 (UTC) 3.1.7.1 </p>
+						<h3>3.1.7.1 </h3>
+
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Profile loader (Windows): Setting calibration state to reset video card gamma tables overwrote cached gamma ramps for the 2nd display in a multi-display configuration.</li>
 						</ul>
-					</dd>
 
-				<dt id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </dt>
-					<dd>
+						<p id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </p>
 						<h3>3.1.7 </h3>
 
 						<h4>Added in this release:</h4>

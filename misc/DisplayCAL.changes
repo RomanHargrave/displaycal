@@ -4,6 +4,11 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 - update to ${VERSION}: see README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
+Tue Oct 04 20:50:59 UTC 2016 - florian@displaycal.net
+
+- update to 3.1.7.0: see README.html#changelog-3.1.7
+
+-------------------------------------------------------------------
 Wed Aug 24 21:06:27 UTC 2016 - florian@displaycal.net
 
 - update to 3.1.6.0: see README.html#changelog-3.1.6
