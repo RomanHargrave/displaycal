@@ -16,9 +16,9 @@ feeduri = "http://displaycal.net/0install/%s.xml" % appname
 
 def script2pywname(script):
 	""" Convert all-lowercase script name to mixed-case pyw name """
-	a2b = {name + "-3dlut-maker": name + "-3DLUT-maker",
-		   name + "-vrml-to-x3d-converter": name + "-VRML-to-X3D-converter"}
-	pyw = name + script[len(name):]
+	a2b = {appname + "-3dlut-maker": appname + "-3DLUT-maker",
+		   appname + "-vrml-to-x3d-converter": appname + "-VRML-to-X3D-converter"}
+	pyw = appname + script[len(appname):]
 	return a2b.get(pyw, pyw)
 
 
