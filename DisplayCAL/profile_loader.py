@@ -316,6 +316,11 @@ if sys.platform == "win32":
 class ProfileLoader(object):
 
 	def __init__(self):
+		from wxwindows import BaseApp, wx
+		if not wx.GetApp():
+			app = BaseApp(0)
+		else:
+			app = None
 		self.reload_count = 0
 		self.lock = threading.Lock()
 		self.monitoring = True
@@ -361,11 +366,6 @@ class ProfileLoader(object):
 			# We create a TSR tray program only under Windows.
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
-			from wxwindows import BaseApp, wx
-			if not wx.GetApp():
-				app = BaseApp(0)
-			else:
-				app = None
 
 			class PLFrame(BaseFrame):
 
@@ -863,16 +863,13 @@ class ProfileLoader(object):
 											show_notification, flags)
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
+		# wx.App must already be initialized at this point!
 		errors = self.apply_profiles(event, index)
 		if (errors and (config.getcfg("profile_loader.error.show_msg") or
 						"--error-dialog" in sys.argv[1:]) and
 			not "--silent" in sys.argv[1:]):
 			import localization as lang
-			from wxwindows import BaseApp, InfoDialog, wx
-			if not wx.GetApp():
-				app = BaseApp(0)
-			else:
-				app = None
+			from wxwindows import InfoDialog, wx
 			dlg = InfoDialog(None, msg="\n".join(errors), 
 							 title=self.get_title(),
 							 ok=lang.getstr("ok"),
