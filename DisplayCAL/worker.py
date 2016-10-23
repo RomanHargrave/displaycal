@@ -1676,10 +1676,7 @@ class Worker(object):
 		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?"]
 		self.lastmsg_discard = re.compile("|".join(discard))
 		self.measurement_modes = {}
-		# Sounds when measuring
-		# Needs to be stereo!
-		self.measurement_sound = audio.Sound(get_data_path("beep.wav"))
-		self.commit_sound = audio.Sound(get_data_path("camera_shutter.wav"))
+		self._init_sounds(dummy=True)
 		self.options_colprof = []
 		self.options_dispcal = []
 		self.options_dispread = []
@@ -1733,6 +1730,16 @@ class Worker(object):
 		self._progress_wnd = None
 		self._pwdstr = ""
 		workers.append(self)
+
+	def _init_sounds(self, dummy=False):
+		if dummy:
+			self.measurement_sound = audio.DummySound()
+			self.commit_sound = audio.DummySound()
+		else:
+			# Sounds when measuring
+			# Needs to be stereo!
+			self.measurement_sound = audio.Sound(get_data_path("beep.wav"))
+			self.commit_sound = audio.Sound(get_data_path("camera_shutter.wav"))
 	
 	def add_measurement_features(self, args, display=True,
 								 ignore_display_name=False,
@@ -4297,6 +4304,7 @@ while 1:
 				self.log("[D] ARGYLL_NOT_INTERACTIVE", 
 						   os.environ.get("ARGYLL_NOT_INTERACTIVE"))
 			if self.measure_cmd:
+				self._init_sounds(dummy=False)
 				for name, version in (("MIN_DISPLAY_UPDATE_DELAY_MS", [1, 5]),
 									  ("DISPLAY_SETTLE_TIME_MULT", [1, 7])):
 					backup = os.getenv("ARGYLL_%s_BACKUP" % name)

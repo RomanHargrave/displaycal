@@ -162,11 +162,11 @@ def Sound(filename, loop=False, raise_exceptions=False):
 		return sound
 
 
-class _DummySound(object):
+class DummySound(object):
 
 	""" Dummy sound wrapper class """
 
-	def __init__(self, filename, loop=False):
+	def __init__(self, filename=None, loop=False):
 		pass
 
 	def fade(self, fade_ms, fade_in=None):
