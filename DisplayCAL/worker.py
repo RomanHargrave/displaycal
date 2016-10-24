@@ -4304,7 +4304,8 @@ while 1:
 				self.log("[D] ARGYLL_NOT_INTERACTIVE", 
 						   os.environ.get("ARGYLL_NOT_INTERACTIVE"))
 			if self.measure_cmd:
-				self._init_sounds(dummy=False)
+				if isinstance(self.measurement_sound, audio.DummySound):
+					self._init_sounds(dummy=False)
 				for name, version in (("MIN_DISPLAY_UPDATE_DELAY_MS", [1, 5]),
 									  ("DISPLAY_SETTLE_TIME_MULT", [1, 7])):
 					backup = os.getenv("ARGYLL_%s_BACKUP" % name)
