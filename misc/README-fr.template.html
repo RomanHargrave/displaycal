@@ -2438,6 +2438,15 @@ Dunkley, Hassan Elhassan</span></p>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
 
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>0install (Linux): <code>(un)install-standalone-tools-icons</code> command was broken with 3.1 release.</li>
+							<li>Profile loader (Linux): Unhandled exception if oyranos-monitor is present (regression of late initialization change made in 3.1.7).</li>
+						</ul>
+
+						<p id="changelog-3.1.7.2">2016-10-21 12:26 (UTC) 3.1.7.2 </p>
+						<h3>3.1.7.2 </h3>
+
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Windows: Toggling the “Load calibration on login” checkbox in the profile installation dialog now also toggles preserving calibration state in the profile loader and vice versa, thus actually affecting if calibration is loaded on login or not (this restores functionality that was lost with the initial ${APPNAME} 3.1 release).</li>
