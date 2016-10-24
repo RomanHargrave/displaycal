@@ -500,6 +500,7 @@ def setup():
 				"Platform": get_platform(),
 				"PythonVersion": sys.version[:3],
 				"URL": "https://%s/" % domain.lower(),
+				"HTTPURL": "http://%s/" % domain.lower(),
 				}
 			inno_template.close()
 			inno_path = os.path.join("dist", 
