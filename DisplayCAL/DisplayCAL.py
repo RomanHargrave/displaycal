@@ -135,7 +135,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
-					   FileDrop, HtmlInfoDialog, HyperLinkCtrl, InfoDialog,
+					   FileDrop, HyperLinkCtrl, InfoDialog,
 					   LogWindow, ProgressDialog, TooltipWindow,
 					   get_gradient_panel)
 import floatspin

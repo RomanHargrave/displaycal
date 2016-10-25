@@ -110,7 +110,8 @@ if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 from util_str import (safe_basestring, safe_str, safe_unicode, strtr,
 					  universal_newlines)
 from wxaddons import BetterCallLater, BetterWindowDisabler, wx
-from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
+from wxwindows import (ConfirmDialog, HtmlInfoDialog, InfoDialog,
+					   ProgressDialog, SimpleTerminal)
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
 from wxUntetheredFrame import UntetheredFrame
