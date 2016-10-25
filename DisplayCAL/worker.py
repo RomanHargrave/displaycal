@@ -891,10 +891,10 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 											  resp.reason]))]).strip() + "\n" + uri
 		safe_print(msg)
 		html = universal_newlines(resp.read().strip())
-		html = re.sub(r"<script.*?</script>", "<!-- SCRIPT removed -->",
-					  html, re.I | re.S)
-		html = re.sub(r"<style.*?</style>", "<!-- STYLE removed -->",
-					  html, re.I | re.S)
+		html = re.sub(re.compile(r"<script.*?</script>", re.I | re.S),
+					  "<!-- SCRIPT removed -->", html)
+		html = re.sub(re.compile(r"<style.*?</style>", re.I | re.S),
+					  "<!-- STYLE removed -->", html)
 		safe_print(html)
 		if not silent:
 			wx.CallAfter(HtmlInfoDialog, parent, msg=msg, html=html,
