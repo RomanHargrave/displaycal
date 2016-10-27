@@ -715,9 +715,9 @@ def get_cgats_path(cgats):
 						"%s.%s" % (name, cgats[:7].strip().lower()))
 
 
-def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
-			   repeat_sub_bitmap_h=(220, 0, 2, 60)):
-	w, h = 222, 60
+def get_header(parent, bitmap=None, label=None, size=(-1, 64), x=80, y=44,
+			   repeat_sub_bitmap_h=(220, 0, 2, 64)):
+	w, h = 222, 64
 	scale = getcfg("app.dpi") / config.get_default_dpi()
 	if scale > 1:
 		size = tuple(int(math.floor(v * scale)) if v > 0 else v for v in size)
@@ -730,7 +730,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.label_y = y
 	header.scalebitmap = (False, ) * 2
 	header.textshadow = False
-	header.SetBackgroundColour("#336699")
+	header.SetBackgroundColour("#003399")
 	header.SetForegroundColour("#FFFFFF")
 	header.SetMaxFontSize(11)
 	label = label or lang.getstr("header")
@@ -1499,17 +1499,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Header
 		# Its width also determines the initial min width of the main window
 		# after SetSizeHints and Layout
+		self.headerbordertop = self.FindWindowByName("headerbordertop")
 		self.header = get_header(self.panel)
 		self.headerpanel = self.FindWindowByName("headerpanel")
-		self.headerpanel.ContainingSizer.Insert(0, self.header, flag=wx.EXPAND)
-		y = 60
+		self.headerpanel.ContainingSizer.Insert(1, self.header, flag=wx.EXPAND)
+		y = 64
 		w = 80
 		h = 120
 		scale = getcfg("app.dpi") / config.get_default_dpi()
 		if scale > 1:
 			y, w, h = [int(math.floor(v * scale)) for v in (y, w, h)]
 		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(w, -1))
-		self.header_btm.BackgroundColour = "#336699"
+		self.header_btm.BackgroundColour = "#003399"
 		self.header_btm.scalebitmap = False, False
 		header_bmp = getbitmap("theme/header", False)
 		if header_bmp.Size[0] >= w and header_bmp.Size[1] >= h + y:
@@ -1725,6 +1726,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			scale = 1
 		self.header.GetContainingSizer().Show(
 			self.header, self.Size[1] > 480 * scale)
+		if not hasattr(self, "header_btm_bmp"):
+			self.header_btm_bmp = self.header_btm.GetBitmap()
+			self.header_btm_min_bmp = getbitmap("theme/header_minimal", False)
+		if self.Size[1] > 480 * scale:
+			if self.header_btm.GetBitmap() is not self.header_btm_bmp:
+				self.header_btm.SetBitmap(self.header_btm_bmp)
+		elif self.header_btm.GetBitmap() is not self.header_btm_min_bmp:
+			self.header_btm.SetBitmap(self.header_btm_min_bmp)
 		event.Skip()
 
 	def cal_drop_handler(self, path):
@@ -1894,6 +1903,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			borders_tb = self.Size[1] - self.ClientSize[1]
 			height = min(self.GetDisplay().ClientArea[3] - borders_tb -
 						 safety_margin,
+						 self.headerbordertop.Size[1] +
 						 self.header.Size[1] +
 						 self.headerpanel.Sizer.MinSize[1] + 1 +
 						 ((getattr(self, "tabpanelheader", None) and
@@ -13703,9 +13713,11 @@ class MainFrame(ReportFrame, BaseFrame):
 									   size=(100, 100))
 		self.aboutdialog.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		items = []
+		items.append(wx.Panel(self.aboutdialog, -1, size=(-1, 6)))
+		items[-1].BackgroundColour = "#66CC00"
 		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
-								size=(320, 120), repeat_sub_bitmap_h=(220, 0, 2, 180)))
+								size=(320, 120), repeat_sub_bitmap_h=(220, 0, 2, 184)))
 		bmp = getbitmap("theme/gradient", False)
 		if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
 			separator = BitmapBackgroundPanel(self.aboutdialog, size=(-1, 1))
