@@ -2039,7 +2039,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if sys.platform != "darwin" or wx.VERSION >= (2, 9):
 			file_.AppendSeparator()
 		self.menuitem_prefs = file_.Append(
-			-1,
+			-1 if wx.VERSION < (2, 9) or sys.platform != "darwin"
+			else wx.ID_PREFERENCES,
 			"&" + "menuitem.set_argyll_bin")
 		self.Bind(wx.EVT_MENU, self.set_argyll_bin_handler, self.menuitem_prefs)
 		if sys.platform != "darwin" or wx.VERSION >= (2, 9):
