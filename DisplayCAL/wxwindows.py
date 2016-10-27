@@ -1675,18 +1675,7 @@ class BaseFrame(wx.Frame):
 					self._menulabels[menu] = label
 				menubar.SetMenuLabel(menu_pos, "&" + lang.getstr(
 									 GTKMenuItemGetFixedLabel(self._menulabels[menu])))
-				if not hasattr(menu, "_Items"):
-					# Backup un-translated labels
-					menu._Items = [(item, item.Label) for item in 
-								   menu.GetMenuItems()]
-				for item, label in menu._Items:
-					if item.Label:
-						label = GTKMenuItemGetFixedLabel(label)
-						if item.Accel:
-							item.Text = lang.getstr(label) + "\t" + \
-										item.Accel.ToString()
-						else:
-							item.Text = lang.getstr(label)
+				self.setup_menu_language(menu)
 			if sys.platform == "darwin":
 				wx.GetApp().SetMacHelpMenuTitleName(lang.getstr("menu.help"))
 			self.SetMenuBar(menubar)
@@ -1724,6 +1713,22 @@ class BaseFrame(wx.Frame):
 					for path in child.history:
 						child.textControl.Append(child.GetName(path))
 					child.textControl.SetSelection(selection)
+
+	def setup_menu_language(self, menu):
+		if not hasattr(menu, "_Items"):
+			# Backup un-translated labels
+			menu._Items = [(item, item.Label) for item in 
+						   menu.GetMenuItems()]
+		for item, label in menu._Items:
+			if item.Label:
+				label = GTKMenuItemGetFixedLabel(label)
+				if item.Accel:
+					item.Text = lang.getstr(label) + "\t" + \
+								item.Accel.ToString()
+				else:
+					item.Text = lang.getstr(label)
+			if item.SubMenu:
+				self.setup_menu_language(item.SubMenu)
 	
 	def update_layout(self):
 		""" Update main window layout. """

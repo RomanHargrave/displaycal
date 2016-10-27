@@ -15,23 +15,12 @@
       <object class="wxMenuItem" name="profile.set_save_path">
         <label>profile.set_save_path</label>
       </object>
-      <object class="wxMenuItem" name="profile.info">
-        <label>profile.info</label>
-      </object>
-      <label>menu.file</label>
-    </object>
-    <object class="wxMenu" name="menu.options">
-      <object class="wxMenuItem" name="measure.testchart">
-        <label>measure.testchart</label>
-      </object>
+      <object class="separator"/>
       <object class="wxMenuItem" name="create_profile">
         <label>create_profile</label>
       </object>
       <object class="wxMenuItem" name="create_profile_from_edid">
         <label>create_profile_from_edid</label>
-      </object>
-      <object class="wxMenuItem" name="profile.b2a.hires">
-        <label>profile.b2a.hires</label>
       </object>
       <object class="wxMenuItem" name="install_display_profile">
         <label>install_display_profile</label>
@@ -39,58 +28,12 @@
       <object class="wxMenuItem" name="profile.share">
         <label>profile.share</label>
       </object>
-      <object class="wxMenuItem" name="calibration.load_from_cal_or_profile">
-        <label>calibration.load_from_cal_or_profile</label>
+      <object class="wxMenuItem" name="profile.info">
+        <label>profile.info</label>
       </object>
-      <object class="wxMenuItem" name="calibration.load_from_display_profile">
-        <label>calibration.load_from_display_profile</label>
-      </object>
-      <object class="wxMenuItem" name="calibration.reset">
-        <label>calibration.reset</label>
-      </object>
-      <object class="separator"/>
-      <object class="wxMenuItem" name="detect_displays_and_ports">
-        <label>detect_displays_and_ports</label>
-      </object>
-      <object class="wxMenuItem" name="skip_legacy_serial_ports">
-        <label>skip_legacy_serial_ports</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="use_separate_lut_access">
-        <label>use_separate_lut_access</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="calibration.do_not_use_video_lut">
-        <label>calibration.do_not_use_video_lut</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="allow_skip_sensor_cal">
-        <label>allow_skip_sensor_cal</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="calibrate_instrument">
-        <label>calibrate_instrument</label>
-      </object>
-      <object class="wxMenuItem" name="show_advanced_options">
-        <label>show_advanced_options</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="3dlut.tab.enable">
-        <label>3dlut.tab.enable</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="extra_args">
-        <label>extra_args</label>
-      </object>
-      <object class="wxMenuItem" name="enable_argyll_debug">
-        <label>enable_argyll_debug</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="wxMenuItem" name="enable_dry_run">
-        <label>dry_run</label>
-        <checkable>1</checkable>
-      </object>
-      <object class="separator"/>
+      <label>menu.file</label>
+    </object>
+    <object class="wxMenu" name="menu.options">
       <object class="wxMenuItem" name="startup_sound.enable">
         <label>startup_sound.enable</label>
         <checkable>1</checkable>
@@ -99,6 +42,49 @@
         <label>use_fancy_progress</label>
         <checkable>1</checkable>
       </object>
+      <object class="wxMenuItem" name="3dlut.tab.enable">
+        <label>3dlut.tab.enable</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="wxMenuItem" name="show_advanced_options">
+        <label>show_advanced_options</label>
+        <checkable>1</checkable>
+      </object>
+      <object class="separator"/>
+      <object class="wxMenu" name="menu.options.advanced">
+        <label>advanced</label>
+        <object class="wxMenuItem" name="use_separate_lut_access">
+          <label>use_separate_lut_access</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="wxMenuItem" name="calibration.do_not_use_video_lut">
+          <label>calibration.do_not_use_video_lut</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="skip_legacy_serial_ports">
+          <label>skip_legacy_serial_ports</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="allow_skip_sensor_cal">
+          <label>allow_skip_sensor_cal</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="enable_argyll_debug">
+          <label>enable_argyll_debug</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="wxMenuItem" name="enable_dry_run">
+          <label>dry_run</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="extra_args">
+          <label>extra_args</label>
+        </object>
+      </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="restore_defaults">
         <label>restore_defaults</label>
@@ -106,61 +92,76 @@
       <label>menu.options</label>
     </object>
     <object class="wxMenu" name="menu.tools">
-      <object class="wxMenuItem" name="report.uncalibrated">
-        <label>report.uncalibrated</label>
-      </object>
-      <object class="wxMenuItem" name="report.calibrated">
-        <label>report.calibrated</label>
-      </object>
-      <object class="separator"/>
-      <object class="wxMenuItem" name="calibration.verify">
-        <label>calibration.verify</label>
-      </object>
-      <object class="wxMenuItem" name="report.uniformity">
-        <label>report.uniformity</label>
-      </object>
-      <object class="wxMenuItem" name="measurement_report.update">
-        <label>measurement_report.update</label>
+      <object class="wxMenu" name="video_card_gamma_table">
+        <label>video_card_gamma_table</label>
+        <object class="wxMenuItem" name="calibration.load_from_cal_or_profile">
+          <label>calibration.load_from_cal_or_profile</label>
+        </object>
+        <object class="wxMenuItem" name="calibration.load_from_display_profile">
+          <label>calibration.load_from_display_profile</label>
+        </object>
+        <object class="wxMenuItem" name="calibration.reset">
+          <label>calibration.reset</label>
+        </object>
       </object>
       <object class="separator"/>
-      <object class="wxMenuItem" name="measurement_file.check_sanity">
-        <label>measurement_file.check_sanity</label>
-      </object>
-      <object class="wxMenuItem" name="measurement_file.check_sanity.auto">
-        <label>measurement_file.check_sanity.auto</label>
-        <checkable>1</checkable>
+      <object class="wxMenuItem" name="detect_displays_and_ports">
+        <label>detect_displays_and_ports</label>
       </object>
       <object class="separator"/>
-      <object class="wxMenuItem" name="colorimeter_correction.import">
-        <label>colorimeter_correction.import</label>
+      <object class="wxMenu" name="instrument">
+        <label>instrument</label>
+        <object class="wxMenuItem" name="argyll.instrument.configuration_files.install">
+          <label>argyll.instrument.configuration_files.install</label>
+        </object>
+        <object class="wxMenuItem" name="argyll.instrument.configuration_files.uninstall">
+          <label>argyll.instrument.configuration_files.uninstall</label>
+        </object>
+        <object class="wxMenuItem" name="install_argyll_instrument_drivers">
+          <label>argyll.instrument.drivers.install</label>
+        </object>
+        <object class="wxMenuItem" name="uninstall_argyll_instrument_drivers">
+          <label>argyll.instrument.drivers.uninstall</label>
+        </object>
+        <object class="wxMenuItem" name="enable_spyder2">
+          <label>enable_spyder2</label>
+          <checkable>1</checkable>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="calibrate_instrument">
+          <label>calibrate_instrument</label>
+        </object>
       </object>
-      <object class="wxMenuItem" name="colorimeter_correction.create">
-        <label>colorimeter_correction.create</label>
+      <object class="wxMenu" name="colorimeter_correction_matrix_file">
+        <label>colorimeter_correction_matrix_file</label>
+        <object class="wxMenuItem" name="colorimeter_correction.import">
+          <label>colorimeter_correction.import</label>
+        </object>
+        <object class="wxMenuItem" name="colorimeter_correction.create">
+          <label>colorimeter_correction.create</label>
+        </object>
+        <object class="wxMenuItem" name="colorimeter_correction.upload">
+          <label>colorimeter_correction.upload</label>
+        </object>
       </object>
-      <object class="wxMenuItem" name="colorimeter_correction.upload">
-        <label>colorimeter_correction.upload</label>
-      </object>
-      <object class="separator"/>
-      <object class="wxMenuItem" name="synthicc.create">
-        <label>synthicc.create</label>
-      </object>
-      
-      <object class="separator"/>
-      <object class="wxMenuItem" name="argyll.instrument.configuration_files.install">
-        <label>argyll.instrument.configuration_files.install</label>
-      </object>
-      <object class="wxMenuItem" name="argyll.instrument.configuration_files.uninstall">
-        <label>argyll.instrument.configuration_files.uninstall</label>
-      </object>
-      <object class="wxMenuItem" name="install_argyll_instrument_drivers">
-        <label>argyll.instrument.drivers.install</label>
-      </object>
-      <object class="wxMenuItem" name="uninstall_argyll_instrument_drivers">
-        <label>argyll.instrument.drivers.uninstall</label>
-      </object>
-      <object class="wxMenuItem" name="enable_spyder2">
-        <label>enable_spyder2</label>
-        <checkable>1</checkable>
+      <object class="wxMenu" name="menu.tools.report">
+        <label>report</label>
+        <object class="wxMenuItem" name="report.uncalibrated">
+          <label>report.uncalibrated</label>
+        </object>
+        <object class="wxMenuItem" name="report.calibrated">
+          <label>report.calibrated</label>
+        </object>
+        <object class="wxMenuItem" name="calibration.verify">
+          <label>calibration.verify</label>
+        </object>
+        <object class="wxMenuItem" name="report.uniformity">
+          <label>report.uniformity</label>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="measurement_report.update">
+          <label>measurement_report.update</label>
+        </object>
       </object>
       <object class="separator"/>
       <object class="wxMenuItem" name="calibration.show_lut">
@@ -176,6 +177,29 @@
         <label>log.autoshow</label>
         <checkable>1</checkable>
       </object>
+      <object class="separator"/>
+      <object class="wxMenu" name="menu.tools.advanced">
+        <label>advanced</label>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="synthicc.create">
+          <label>synthicc.create</label>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="profile.b2a.hires">
+            <label>profile.b2a.hires</label>
+        </object>
+        <object class="separator"/>
+        <object class="wxMenuItem" name="measure.testchart">
+          <label>measure.testchart</label>
+        </object>
+        <object class="wxMenuItem" name="measurement_file.check_sanity">
+          <label>measurement_file.check_sanity</label>
+        </object>
+        <object class="wxMenuItem" name="measurement_file.check_sanity.auto">
+          <label>measurement_file.check_sanity.auto</label>
+          <checkable>1</checkable>
+        </object>
+      </object>
       <label>menu.tools</label>
     </object>
     <object class="wxMenu" name="menu.language">
@@ -189,6 +213,9 @@
         <label>license</label>
       </object>
       <object class="separator"/>
+      <object class="wxMenuItem" name="go_to_website">
+        <label>go_to_website</label>
+      </object>
       <object class="wxMenuItem" name="help_support">
         <label>help_support</label>
       </object>

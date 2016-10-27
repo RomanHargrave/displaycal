@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.1.7.3 </h2>
-					<p>2016-10-24 10:13 UTC</p>
+					<h2 id="version">3.1.7.4 Beta</h2>
+					<p>2016-10-27 04:35 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Télécharger</a></li>
 						<li class="requirements"><a href="#requirements" style="font-size: 11px">Exigences du système</a></li>
@@ -617,9 +617,6 @@
 							</li>
 						</ul>
 
-						<div>
-							<em>Note concernant Arch Linux :</em> le paquet  zeroinstall-injector 2.6.1 de AUR est cassé. Récupérez une version fonctionnelle ici :
-						</div>
 						<div>
 							<a href="http://download.opensuse.org/repositories/home:/fhoech:/0install/Arch_Extra/i686/zeroinstall-injector-2.6.2-1-i686.pkg.tar.xz" title="Zero Install 2.6.2 for Arch Linux (x86)">x86</a> |
 							<a href="http://download.opensuse.org/repositories/home:/fhoech:/0install/Arch_Extra/x86_64/zeroinstall-injector-2.6.2-1-x86_64.pkg.tar.xz" title="Zero Install 2.6.2 for Arch Linux (x86_64)">x86_64</a>
@@ -1776,6 +1773,18 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 
 					<dt>Choisir le chemin d’enregistrement…</dt>
 						<dd>Vous permet de choisir un répertoire où enregistrer les fichiers créés par DisplayCAL lors de l’étalonnage, de la caractérisation et des mesures personnalisées.</dd>
+
+					<dt id="create_profile_from_measurement_data">Créer un profil à partir des données des mesures…</dt>
+						<dd>Vous permet de (re-)créer un profil à partir de données des mesures existantes avec les paramètres de caractérisation actuels (les profils existants créés à l’aide d’Argyll CMS ou de DisplayCAL peuvent aussi être sélectionnés en tant que source).</dd>
+
+					<dt>Créer un profil à partir des données d’identification étendue de l’écran…</dt>
+						<dd>Vous permet de créer un profil à partir des données <abbr title="Extended Display Identification Data (Données d’identification étendues de l’écran)">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> de votre écran (si disponibles).</dd>
+
+					<dt>Installer un profil pour le périphérique d’affichage…</dt>
+						<dd>Installe un profil existant pour l’écran actuellement sélectionné.</dd>
+
+					<dt>Téléverser un profil…</dt>
+						<dd>Partage un profil via le service <a href="https://icc.opensuse.org">openSUSE ICC Profile Taxi</a>. Ceci ne fonctionne que pour les profils créés à partir de mesures réelles par dispcalGUI 0.8.0.8 ou plus récent et non pour les profils créés depuis l’EDID.</dd>
 					
 					<dt>Informations du profil</dt>
 						<dd>Affiche un tracé du gamut, les courbes d’étalonnage et de réponse de tonalité ainsi que les informations d’en-tête et de mot-clé du profil actuel.</dd>
@@ -1789,21 +1798,36 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 				<h3>Menu « Options »</h3>
 
 				<dl>
-					<dt>Mesurer la mire de test</dt>
-						<dd>Mesure la mire de test actuellement sélectionnée sur l’écran sélectionné dans son état actuel et crée un fichier <code>.ti3</code> des données des mesures. Le fichier est enregistré sous le chemin d’enregistrement choisi (voir « Choisir le chemin d’enregistrement… » depuis le menu « Fichier ») et avec le même nom de base que celui utilisé pour les profils.</dd>
+					<dt>Afficher les options avancées</dt>
+						<dd>Activer cette option de menu affichera des commandes supplémentaires pour les utilisateurs avancés.</dd>
 
-					<dt id="create_profile_from_measurement_data">Créer un profil à partir des données des mesures…</dt>
-						<dd>Vous permet de (re-)créer un profil à partir de données des mesures existantes avec les paramètres de caractérisation actuels (les profils existants créés à l’aide d’Argyll CMS ou de DisplayCAL peuvent aussi être sélectionnés en tant que source).</dd>
+					<dt>Utiliser un accès séparé à la table de gamma de la carte vidéo</dt>
+						<dd>En raison des difficultés posées par TwinView et MergedFB sur les systèmes basés sur X11, vous pouvez de manière optionnelle indiquer un écran séparé pour accéder au matériel de la table de gamma de la carte vidéo lors de l’étalonnage. Vous devriez pouvoir étalonner un écran et ensuite partager l’étalonnage avec un autre écran. La caractérisation peut être faite indépendamment de l’étalonnage sur chaque écran. Normalement, DisplayCAL détectera automatiquement si un accès séparé à la table de gamma de la carte vidéo est nécessaire (et les commandes appropriées devront être affichées), mais vous pourrez le forcer en sélectionnant cette entrée de menu.</dd>
 
-					<dt>Créer un profil à partir des données d’identification étendue de l’écran…</dt>
-						<dd>Vous permet de créer un profil à partir des données <abbr title="Extended Display Identification Data (Données d’identification étendues de l’écran)">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> de votre écran (si disponibles).</dd>
+					<dt>Ne pas utiliser la table de gamma de la carte vidéo pour appliquer l’étalonnage</dt>
+						<dd>L’étalonnage sera appliqué aux valeurs de test de chaque mesure plutôt que d’être chargé dans la table de gamma de la carte vidéo, et il sera aussi inclus dans les fichiers de données des mesures. De cette manière, le programme de caractérisation peut l’inclure sous forme d’une balise vcgt dans le profil résultant. Ceci n’est normalement <strong>pas</strong> la meilleure façon de caractériser un écran étalonné, car le tampon de trames (« frame buffer ») peut avoir une plus faible précision que la table de gamma de la carte vidéo. C’est la manière dont l’étalonnage doit être appliqué si madVR est utilisé pour afficher les échantillons de test.</dd>
 
-					<dt>Installer un profil pour le périphérique d’affichage…</dt>
-						<dd>Installe un profil existant pour l’écran actuellement sélectionné.</dd>
+					<dt>Permettre de passer outre l’auto-étalonnage du spectromètre</dt>
+						<dd>Les spectromètres ont besoin d’un étalonnage de leur capteur avant les mesures. Si cette option est cochée, DisplayCAL essaiera de passer outre cet étalonnage du capteur. <em>Note que</em> même si cette option est cochée, vous pouvez être obligé d’effectuer un étalonnage du capteur si la sonde l’exige.</dd>
 
-					<dt>Téléverser un profil…</dt>
-					<dd>Partage un profil via le service <a href="https://icc.opensuse.org">openSUSE ICC Profile Taxi</a>. Ceci ne fonctionne que pour les profils créés à partir de mesures réelles par dispcalGUI 0.8.0.8 ou plus récent et non pour les profils créés depuis l’EDID.</dd>
+					<dt>Activer la sortie de diagnostic d’Argyll CMS</dt>
+						<dd>Si coché, affiche les informations de diagnostic pour les mesures. Utile pour le débogage. Attention : très bavard.</dd>
 
+					<dt>Fonctionnement à blanc</dt>
+						<dd>Lorsque cette entrée est cochée, toutes les fonctionnalités qui appellent les exécutables Argyll CMS ne feront effectivement rien. Ceci permet de passer en revue les paramètres de la ligne commandes utilisés en vérifiant le journal..</dd>
+
+					<dt id="additional-commandline-arguments">Définir des paramètres supplémentaires de la ligne de commandes…</dt>
+						<dd>Vous permet de définir des options supplémentaires pour les outils dispcal, dispread, spotread, colprof, collink et targen d’Argyll CMS de la même manière que vous les indiqueriez sur la ligne de commandes.</dd>
+
+					<dt>Restaurer les valeurs par défaut</dt>
+						<dd>Restaure à leur valeur par défaut tous les paramètres à l’exception de la langue, de l’écran sélectionné, de la sonde de mesure, du mode de mesure et du nom de profil.</dd>
+				</dl>
+			</div>
+
+			<div id="menu-tools">
+				<h3>Menu « Outils »</h3>
+
+				<dl>
 					<dt>Charger les courbes d’étalonnage à partir d’un fichier d’étalonnage ou d’un profil…</dt>
 						<dd>Contrairement à « Charger les paramètres… » du menu « Fichier », ne charge dans la carte vidéo que les courbes d’étalonnage pour l’écran actuellement sélectionné sans modifier les paramètres.</dd>
 
@@ -1816,65 +1840,21 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 					<dt>Détecter les périphériques d’affichage et les sondes de mesure</dt>
 						<dd>Utilisez cette entrée de menu pour détecter les modifications de la configuration d’affichage ou les sondes de mesure connectées.</dd>
 
-					<dt>Détecter automatiquement les sondes de mesure</dt>
-						<dd>Si cet élément de menu est coché, DisplayCAL va automatiquement détecter la sonde de mesure au démarrage et vérifiera périodiquement d’il y a des modifications, en gros toutes les 10 secondes si aucune autre opération n’est en cours.</dd>
+					<dt id="install-argyll-instrument-drivers">Installer les pilotes de sondes de mesure d’Argyll CMS… (Windows) / Installer les fichiers de configuration des sondes de mesure d’Argyll CMS… (Linux)</dt>
+						<dd>Windows : installe les pilotes de sondes de mesure d’Argyll CMS qui sont nécessaires à certaines sondes.<br />
+						Linux : installe les règles udev ou les scripts hotplug qui configurent l’accès à la sonde de mesure (vous n’avez besoin de les installer que si vous ne pouvez pas accéder à votre sonde de mesure).</dd>
 
-					<dt>Utiliser un accès séparé à la table de gamma de la carte vidéo</dt>
-						<dd>En raison des difficultés posées par TwinView et MergedFB sur les systèmes basés sur X11, vous pouvez de manière optionnelle indiquer un écran séparé pour accéder au matériel de la table de gamma de la carte vidéo lors de l’étalonnage. Vous devriez pouvoir étalonner un écran et ensuite partager l’étalonnage avec un autre écran. La caractérisation peut être faite indépendamment de l’étalonnage sur chaque écran. Normalement, DisplayCAL détectera automatiquement si un accès séparé à la table de gamma de la carte vidéo est nécessaire (et les commandes appropriées devront être affichées), mais vous pourrez le forcer en sélectionnant cette entrée de menu.</dd>
-
-					<dt>Ne pas utiliser la table de gamma de la carte vidéo pour appliquer l’étalonnage</dt>
-						<dd>L’étalonnage sera appliqué aux valeurs de test de chaque mesure plutôt que d’être chargé dans la table de gamma de la carte vidéo, et il sera aussi inclus dans les fichiers de données des mesures. De cette manière, le programme de caractérisation peut l’inclure sous forme d’une balise vcgt dans le profil résultant. Ceci n’est normalement <strong>pas</strong> la meilleure façon de caractériser un écran étalonné, car le tampon de trames (« frame buffer ») peut avoir une plus faible précision que la table de gamma de la carte vidéo. C’est la manière dont l’étalonnage doit être appliqué si madVR est utilisé pour afficher les échantillons de test.</dd>
-
-					<dt>Permettre de passer outre l’auto-étalonnage du spectromètre</dt>
-						<dd>Les spectromètres ont besoin d’un étalonnage de leur capteur avant les mesures. Si cette option est cochée, DisplayCAL essaiera de passer outre cet étalonnage du capteur. <em>Note que</em> même si cette option est cochée, vous pouvez être obligé d’effectuer un étalonnage du capteur si la sonde l’exige.</dd>
+					<dt id="uninstall-argyll-instrument-drivers">Désinstaller les pilotes de sondes d’Argyll CMS… (Windows Vista et plus récent uniquement) / Désinstaller les fichiers de configuration des sondes de mesure d’Argyll CMS… (Linux)</dt>
+						<dd>Windows Vista ou plus récent : désinstalle les pilotes de sondes de mesure d’Argyll CMS.<br />
+						Linux : désinstalle les règles udev ou les scripts hotplug qui configure l’accès à la sonde (notez qu’elles seront sauvegardées dans <samp>/home/VotreNomUtilisateur/.local/share/DisplayCAL/backup</samp>).</dd>
+		
+					<dt>Activer le colorimètre Spyder 2…</dt>
+						<dd>La sonde de mesure Spyder 2 ne peut pas fonctionner sans la présence d’un micrologiciel PLD du fabricant de l’appareil pour l’appareil. Ce micrologiciel n’est fourni ni avec Argyll CMS, ni avec DisplayCAL, car il n’a pas été rendu disponible sous une licence compatible.<br />
+						L’acheteur d’une sonde de mesure Spyder 2 devrait avoir reçu du vendeur une copie de ce micrologiciel avec leur sonde en tant qu’élément des fichiers de configuration de la sonde.<br />
+						Sur Microsoft Windows ou Mac OS X, si le logiciel du fabricant a été installé sur la machine de l’utilisateur, le micrologiciel peut habituellement être trouvé automatiquement à partie de là. Si le logiciel du fabricant n’ont pas été installés, ou si l’utilisateur ne veut pas l’installer, ou si aucun logiciel utilisateur n’est disponible pour la plate-forme de l’utilisateur (par ex. Linux), alors il sera recherché aussi sur le CD-ROM d’installation de la Spyder 2 s’il est présent. Dans le cas où les fichiers du micrologiciel ne sont pas trouvés, le binaire nécessaire peut être téléchargé automatiquement.</dd>
 
 					<dt>Auto-étalonnage du spectromètre</dt>
 						<dd>Effectuer l’étalonnage du capteur spectromètre par lui-même.</dd>
-
-					<dt>Afficher les options avancées</dt>
-						<dd>Activer cette option de menu affichera des commandes supplémentaires pour les utilisateurs avancés.</dd>
-
-					<dt id="additional-commandline-arguments">Définir des paramètres supplémentaires de la ligne de commandes…</dt>
-						<dd>Vous permet de définir des options supplémentaires pour les outils dispcal, dispread, spotread, colprof, collink et targen d’Argyll CMS de la même manière que vous les indiqueriez sur la ligne de commandes.</dd>
-
-					<dt>Activer la sortie de diagnostic d’Argyll CMS</dt>
-						<dd>Si coché, affiche les informations de diagnostic pour les mesures. Utile pour le débogage. Attention : très bavard.</dd>
-
-					<dt>Fonctionnement à blanc</dt>
-						<dd>Lorsque cette entrée est cochée, toutes les fonctionnalités qui appellent les exécutables Argyll CMS ne feront effectivement rien. Ceci permet de passer en revue les paramètres de la ligne commandes utilisés en vérifiant le journal..</dd>
-
-					<dt>Restaurer les valeurs par défaut</dt>
-						<dd>Restaure à leur valeur par défaut tous les paramètres à l’exception de la langue, de l’écran sélectionné, de la sonde de mesure, du mode de mesure et du nom de profil.</dd>
-				</dl>
-			</div>
-
-			<div id="menu-tools">
-				<h3>Menu « Outils »</h3>
-
-				<dl>
-
-					<dt id="report-uncal">Établir un rapport sur le périphérique d’affichage non étalonné</dt>
-						<dd>Effectue quelques mesures rapides sur l’écran actuellement sélectionné. Réinitialise tout d’abord, la table de gamma de la carte vidéo et affiche les informations de l’écran concernant la réponse mesurée comme la luminance, le gamma approximatif, la température de couleur, et la profondeur des couleurs de la table de gamma de la carte vidéo.
-</dd>
-
-					<dt id="report-cal">Établir un rapport sur le périphérique d’affichage étalonné</dt>
-						<dd>Effectue quelques mesures rapides sur l’écran actuellement sélectionné. Conserve la table de gamma de la carte vidéo et affiche les informations concernant les réponses mesurées comme la luminance, le gamma approximatif, et la température de couleur.</dd>
-
-					<dt id="verify-cal">Vérifier l’étalonnage</dt>
-						<dd>Lance les mesures de vérification sur l’écran sélectionné tel qu’il est actuellement configuré (c’est-à-dire, la table de gamma de la carte vidéo). Ceci utilisera les paramètres d’entée habituels pour établir la caractéristique attendue (cible). Notez que l’étalonnage initial a été modifié en car il était en dehors du gamut de l’écran, la vérification montrera les écarts résultants.</dd>
-
-					<dt>Mettre à jour le rapport de mesure…</dt>
-						<dd>Ceci permet de mettre à jour un fichier HTML de rapport existant avec le patron et la fonctionnalité d’une nouvelle versions de dispcalGUI (aucune mesure n’est mise en œuvre). C’est une manière facile d’obtenir des fonctionnalités de comparaison nouvelles ou modifiées, une disposition mise à jour et même des corrections de bogues d’anciens rapports. Une version de sauvegarde de l’ancien rapport avec une extension de date sera automatiquement crée.</dd>
-
-					<dt>Mesurer l’uniformité du périphérique d’affichage…</dt>
-						<dd>Mesure l’écran a plusieurs endroits pour évaluer la régularité de la clarté et les erreurs de couleurs. Le résultat est affiché après que tous les échantillons ont été mesurés et il comprend la différence de luminance, le delta E 2000, la CCT (couleur de température corrélée : « correlated color temperature »), et la CDT (température de lumière du jour la plus proche : « closest daylight temperature ») ou la CPT (température de Planck la plus proche : « closest planckian temperature ») selon la sélection de locus du point blanc définie dans l’onglet « Étalonnage ». Les différences sont calculées en comparaison avec le point central qui est utilisé comme référence.<br />
-						L’évaluation est faite selon la norme ISO 12646:2015. Une coche signifie qu’un critère de l’ISO est satisfait (delta E inférieur ou égal à 4, différence de luminance de moins de 10%). Deux coches indiquent qu’à la fois les critères de l’ISO et une tolérance deux fois plus stricte ont été satisfaits (delta E inférieur ou égal à 2, différence de luminance inférieure à 5%). Vous pouvez basculer entre delta E, delta C, delta H et delta L en cliquant les étiquettes.</dd>
-
-					<dt>Vérifier le fichier de mesures…</dt>
-						<dd>Ceci consulte le fichier des mesures à la recherche de lectures suspectes (erronées). On suppose que l’écran est de type sRGB, cette option ne fonctionnera donc pas bien si la réponse de l’écran n’est pas suffisamment proche de sRGB, elle peut signaler des faux positifs.</dd>
-
-					<dt>Vérifier automatiquement les mesures</dt>
-						<dd>Ceci recherche automatiquement les mesures suspectes (erronées). On suppose que l’écran est de type sRGB, cette option ne fonctionnera donc pas bien si la réponse de l’écran n’est pas suffisamment proche de sRGB, elle peut signaler des faux positifs.<dd>
 
 					<dt id="import-correction-matrices">Importer les corrections du colorimètre depuis un autre logiciel de caractérisation d’écran…</dt>
 						<dd>Le logiciel convertit les matrices provenant d’autres logiciels vers les formats CCMX / CCSS d’Argyll et les ajoute au menu déroulant correspondant. Actuellement, les logiciels des iColor Display, i1 Profiler, ColorMunki Display et Spyder 4/5 sont pris en charge. S’ils sont installés ou que le CD ou l’image disque est monté, les fichiers corrects peuvent être importés directement dans la plupart des cas, sinon ils peuvent être téléchargés automatiquement. Remarque : les corrections de colorimètre importées depuis le logiciel des Spyder 4/5 ne sont utilisables qu’avec la sonde Spyder 4/5 et doivent être sélectionné dans la liste déroulante du mode de mesure plutôt que dans la liste déroulante des corrections de colorimètre.</dd>
@@ -1886,20 +1866,21 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 						<dd>Téléversez une correction de colorimètre vers la <a href="https://colorimetercorrections.displaycal.net/">Colorimeter Corrections Database</a> (« Base de données  en ligne des corrections de colorimètre ») pour la partager avec d’autres utilisateurs ou la télécharger plus tard sur une autre machine.
  						</dd>
 
-					<dt id="synthprofile">Créer un profil ICC synthétique…</dt>
-						<dd>Crée un profil ICC synthétique en entrant les coordonnées XYZ ou de chromaticité pour R, V, B et blanc et en choisissant une courbe de réponse de tonalité.</dd>
+					<dt id="report-uncal">Établir un rapport sur le périphérique d’affichage non étalonné</dt>
+						<dd>Effectue quelques mesures rapides sur l’écran actuellement sélectionné. Réinitialise tout d’abord, la table de gamma de la carte vidéo et affiche les informations de l’écran concernant la réponse mesurée comme la luminance, le gamma approximatif, la température de couleur, et la profondeur des couleurs de la table de gamma de la carte vidéo.</dd>
 
-					<dt id="install-argyll-instrument-drivers">Installer les pilotes de sondes de mesure d’Argyll CMS… (Windows) / Installer les fichiers de configuration des sondes de mesure d’Argyll CMS… (Linux)</dt>
-						<dd>Windows : installe les pilotes de sondes de mesure d’Argyll CMS qui sont nécessaires à certaines sondes.<br />
-						Linux : installe les règles udev ou les scripts hotplug qui configurent l’accès à la sonde de mesure (vous n’avez besoin de les installer que si vous ne pouvez pas accéder à votre sonde de mesure).</dd>
-					<dt id="uninstall-argyll-instrument-drivers">Désinstaller les pilotes de sondes d’Argyll CMS… (Windows Vista et plus récent uniquement) / Désinstaller les fichiers de configuration des sondes de mesure d’Argyll CMS… (Linux)</dt>
-						<dd>Windows Vista ou plus récent : désinstalle les pilotes de sondes de mesure d’Argyll CMS.<br />
-						Linux : désinstalle les règles udev ou les scripts hotplug qui configure l’accès à la sonde (notez qu’elles seront sauvegardées dans <samp>/home/VotreNomUtilisateur/.local/share/DisplayCAL/backup</samp>).</dd>
-		
-					<dt>Activer le colorimètre Spyder 2…</dt>
-						<dd>La sonde de mesure Spyder 2 ne peut pas fonctionner sans la présence d’un micrologiciel PLD du fabricant de l’appareil pour l’appareil. Ce micrologiciel n’est fourni ni avec Argyll CMS, ni avec DisplayCAL, car il n’a pas été rendu disponible sous une licence compatible.<br />
-						L’acheteur d’une sonde de mesure Spyder 2 devrait avoir reçu du vendeur une copie de ce micrologiciel avec leur sonde en tant qu’élément des fichiers de configuration de la sonde.<br />
-						Sur Microsoft Windows ou Mac OS X, si le logiciel du fabricant a été installé sur la machine de l’utilisateur, le micrologiciel peut habituellement être trouvé automatiquement à partie de là. Si le logiciel du fabricant n’ont pas été installés, ou si l’utilisateur ne veut pas l’installer, ou si aucun logiciel utilisateur n’est disponible pour la plate-forme de l’utilisateur (par ex. Linux), alors il sera recherché aussi sur le CD-ROM d’installation de la Spyder 2 s’il est présent. Dans le cas où les fichiers du micrologiciel ne sont pas trouvés, le binaire nécessaire peut être téléchargé automatiquement.</dd>
+					<dt id="report-cal">Établir un rapport sur le périphérique d’affichage étalonné</dt>
+						<dd>Effectue quelques mesures rapides sur l’écran actuellement sélectionné. Conserve la table de gamma de la carte vidéo et affiche les informations concernant les réponses mesurées comme la luminance, le gamma approximatif, et la température de couleur.</dd>
+
+					<dt id="verify-cal">Vérifier l’étalonnage</dt>
+						<dd>Lance les mesures de vérification sur l’écran sélectionné tel qu’il est actuellement configuré (c’est-à-dire, la table de gamma de la carte vidéo). Ceci utilisera les paramètres d’entée habituels pour établir la caractéristique attendue (cible). Notez que l’étalonnage initial a été modifié en car il était en dehors du gamut de l’écran, la vérification montrera les écarts résultants.</dd>
+
+					<dt>Mesurer l’uniformité du périphérique d’affichage…</dt>
+						<dd>Mesure l’écran a plusieurs endroits pour évaluer la régularité de la clarté et les erreurs de couleurs. Le résultat est affiché après que tous les échantillons ont été mesurés et il comprend la différence de luminance, le delta E 2000, la CCT (couleur de température corrélée : « correlated color temperature »), et la CDT (température de lumière du jour la plus proche : « closest daylight temperature ») ou la CPT (température de Planck la plus proche : « closest planckian temperature ») selon la sélection de locus du point blanc définie dans l’onglet « Étalonnage ». Les différences sont calculées en comparaison avec le point central qui est utilisé comme référence.<br />
+						L’évaluation est faite selon la norme ISO 12646:2015. Une coche signifie qu’un critère de l’ISO est satisfait (delta E inférieur ou égal à 4, différence de luminance de moins de 10%). Deux coches indiquent qu’à la fois les critères de l’ISO et une tolérance deux fois plus stricte ont été satisfaits (delta E inférieur ou égal à 2, différence de luminance inférieure à 5%). Vous pouvez basculer entre delta E, delta C, delta H et delta L en cliquant les étiquettes.</dd>
+
+					<dt>Mettre à jour le rapport de mesure…</dt>
+						<dd>Ceci permet de mettre à jour un fichier HTML de rapport existant avec le patron et la fonctionnalité d’une nouvelle versions de dispcalGUI (aucune mesure n’est mise en œuvre). C’est une manière facile d’obtenir des fonctionnalités de comparaison nouvelles ou modifiées, une disposition mise à jour et même des corrections de bogues d’anciens rapports. Une version de sauvegarde de l’ancien rapport avec une extension de date sera automatiquement crée.</dd>
 
 					<dt id="curveviewer">Afficher les courbes</dt>
 						<dd>Affiche/masque le visualiseur de courbes, qui affiche de tracé de l’étalonnage et les courbes de réponse de tonalité du profil. Il affiche aussi le pourcentage et la valeur des niveaux de tonalité pour les courbes d’étalonnage.</dd>
@@ -1912,6 +1893,18 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 
 					<dt>Afficher automatiquement la fenêtre de journal</dt>
 						<dd>Affiche automatiquement la fenêtre de journal après des actions comme les mesures ou la création de profil.</dd>
+
+					<dt id="synthprofile">Créer un profil ICC synthétique…</dt>
+						<dd>Crée un profil ICC synthétique en entrant les coordonnées XYZ ou de chromaticité pour R, V, B et blanc et en choisissant une courbe de réponse de tonalité.</dd>
+
+					<dt>Mesurer la mire de test</dt>
+						<dd>Mesure la mire de test actuellement sélectionnée sur l’écran sélectionné dans son état actuel et crée un fichier <code>.ti3</code> des données des mesures. Le fichier est enregistré sous le chemin d’enregistrement choisi (voir « Choisir le chemin d’enregistrement… » depuis le menu « Fichier ») et avec le même nom de base que celui utilisé pour les profils.</dd>
+
+					<dt>Vérifier le fichier de mesures…</dt>
+						<dd>Ceci consulte le fichier des mesures à la recherche de lectures suspectes (erronées). On suppose que l’écran est de type sRGB, cette option ne fonctionnera donc pas bien si la réponse de l’écran n’est pas suffisamment proche de sRGB, elle peut signaler des faux positifs.</dd>
+
+					<dt>Vérifier automatiquement les mesures</dt>
+						<dd>Ceci recherche automatiquement les mesures suspectes (erronées). On suppose que l’écran est de type sRGB, cette option ne fonctionnera donc pas bien si la réponse de l’écran n’est pas suffisamment proche de sRGB, elle peut signaler des faux positifs.<dd>
 				</dl>
 			</div>
 
@@ -2432,8 +2425,30 @@ Dunkley, Hassan Elhassan</span></p>
 
 		<div id="changelog">
 			<h2>Journaux des modifications</h2>
-			<!-- 2016-10-24 10:13 (UTC) 3.1.7.3  -->
+			<!-- 2016-10-27 04:35 (UTC) 3.1.7.4 Beta -->
 			<dl>
+				<dt id="changelog-3.1.7.4">2016-10-27 04:35 (UTC) 3.1.7.4 Beta</dt>
+					<dd>
+						<h3>3.1.7.4 Beta</h3>
+
+						<h4>Changed in this release</h4>
+						<ul>
+							<li>UI: Menu overhaul. Menus are now better organized using categorized sub-menus and some menu items have been moved to more appropriate locations:
+								<ul>
+									<li>The “Options” menu no longer contains any functionality besides actual options. Advanced options have been moved to a sub-menu.</li>
+									<li>Profile creation from existing measurement files or EDID, profile installation as well as profile upload (sharing) functionality can now be found in the “File” menu.</li>
+									<li>Most functionality available in the “Tools” menu has been grouped into categorized sub-menus, with some of the less-used functionality now available under a separate “Advanced” sub-menu.</li>
+									<li>Measuring the selected testchart, enhancing the effective resolution of a colorimetric PCS-to-device table, loading calibration and resetting the video card gamma tables, detecting displays &amp; instruments, as well as user-initiated spectrometer self-calibration functionality has been moved to the “Tools” menu and respective sub-menus where applicable.</li>
+								</ul>
+							</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Trivial: If an update check, colorimeter correction query or profile sharing upload returned a HTTP status code equal or greater than 400 (should not happen as long as I don't delete or change URLs at the displaycal.net website, with one exception being the openSUSE ICC Profile Taxi service used for sharing profiles which isn't under my control), an unhandled exception was raised (regression of 3.1.7 instrument driver installer download related changes).</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.1.7.3">2016-10-24 10:13 (UTC) 3.1.7.3 </dt>
 					<dd>
 						<h3>3.1.7.3 </h3>
@@ -2450,7 +2465,7 @@ Dunkley, Hassan Elhassan</span></p>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Windows: Toggling the “Load calibration on login” checkbox in the profile installation dialog now also toggles preserving calibration state in the profile loader and vice versa, thus actually affecting if calibration is loaded on login or not (this restores functionality that was lost with the initial DisplayCAL 3.1 release).</li>
-							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.1.7.3 from October 21, 2016).</li>
+							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.1.7.4 from October 21, 2016).</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>

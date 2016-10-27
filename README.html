@@ -50,8 +50,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.1.7.3 </h2>
-					<p>2016-10-24 10:13 UTC</p>
+					<h2 id="version">3.1.7.4 Beta</h2>
+					<p>2016-10-27 04:35 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -618,9 +618,6 @@
 							</li>
 						</ul>
 
-						<div>
-							<em>Arch Linux note:</em> The zeroinstall-injector 2.6.1 package in AUR is broken. Get a working version here:
-						</div>
 						<div>
 							<a href="http://download.opensuse.org/repositories/home:/fhoech:/0install/Arch_Extra/i686/zeroinstall-injector-2.6.2-1-i686.pkg.tar.xz" title="Zero Install 2.6.2 for Arch Linux (x86)">x86</a> |
 							<a href="http://download.opensuse.org/repositories/home:/fhoech:/0install/Arch_Extra/x86_64/zeroinstall-injector-2.6.2-1-x86_64.pkg.tar.xz" title="Zero Install 2.6.2 for Arch Linux (x86_64)">x86_64</a>
@@ -1363,7 +1360,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 							<h4>Low quality <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables</h4>
 							<p>Choose this option if the profile is only going to be used with inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping to create a DeviceLink or 3D LUT (DisplayCAL always uses inverse device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> gamut mapping when creating a DeviceLink/3D LUT). This will reduce the processing time needed to create the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device tables. <strong>Don't</strong> choose this option if you want to install or otherwise use the profile.</p>
 
-							<h4>Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table</h4>
+							<h4 id="b2a-enhance-effective-resolution">Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table</h4>
 
 							<p>To use this option, you have to select a XYZ or L*a*b* LUT profile type (XYZ will be more effective). This option increases the effective resolution of the <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> to device colorimetric color lookup table by using a matrix to limit the XYZ space and fill the whole grid with the values obtained by inverting the device-to-<abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr> table, as well as optionally applies smoothing. If no <a href="#settings_profiling_gamutmapping_ciecam02">CIECAM02 gamut mapping</a> has been enabled for the perceptual intent, a simple but effective perceptual table (which is almost identical to the colorimetric table, but maps the black point to zero) will also be generated.</p>
 							<p>You can also set the interpolated lookup table size. The default “Auto” will use a base 33x33x33 resulution that is increased if needed and provide a good balance between smoothness and accuracy. Lowering the resolution can increase smoothness (at the potential expense of some accuracy), while increasing resolution may make the resulting profile potentially more accurate (at the expense of some smoothness). Note that computation will need a lot of memory (&gt;= 4 GB of RAM recommended to prevent swapping to harddisk) especially at higher resolutions.</p>
@@ -1803,6 +1800,18 @@ Enter the IP address in the window that opens (port should already be filled) an
 
 					<dt>Choose save path...</dt>
 						<dd>Allows you to select a directory to store the files created by DisplayCAL during calibration/profiling and custom measurements.</dd>
+
+					<dt id="create_profile_from_measurement_data">Create profile from measurement data...</dt>
+						<dd>Allows you to (re-)create a profile from existing measurement data (existing profiles created with Argyll CMS or DisplayCAL can also be selected as source) with the current profiling settings.</dd>
+
+					<dt>Create profile from extended display identification data...</dt>
+						<dd>Allows you to create a profile from your display's <abbr title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> (if available).</dd>
+
+					<dt>Install display device profile...</dt>
+						<dd>Install an existing profile for the currently selected display.</dd>
+
+					<dt>Upload profile...</dt>
+						<dd>Share a profile via the <a href="https://icc.opensuse.org/">openSUSE ICC Profile Taxi</a> service. This will only work for profiles created from actual measurements by DisplayCAL 0.8.0.8 and newer, and not for profiles created from EDID.</dd>
 					
 					<dt>Profile information</dt>
 						<dd>Show gamut plot, calibration and tone response curves, as well as header and tag information for the current profile.</dd>
@@ -1816,59 +1825,38 @@ Enter the IP address in the window that opens (port should already be filled) an
 				<h3>“Options” menu</h3>
 
 				<dl>
-					<dt>Measure testchart</dt>
-						<dd>Measures the currently selected testchart on the selected display in its current state and creates a <code>.ti3</code> measurement data file. The file is saved under the chosen save path (see “Choose save path...” under the “File” menu) and with the same base name used for profiles.</dd>
+					<dt>Enable startup sound</dt>
+						<dd>Enables the jingle on application startup.</dd>
 
-					<dt id="create_profile_from_measurement_data">Create profile from measurement data...</dt>
-						<dd>Allows you to (re-)create a profile from existing measurement data (existing profiles created with Argyll CMS or DisplayCAL can also be selected as source) with the current profiling settings.</dd>
+					<dt>Use fancy progress dialog</dt>
+						<dd>Use a fancy progress dialog with animations and sound while doing measurements and intense processing.</dd>
 
-					<dt>Create profile from extended display identification data...</dt>
-						<dd>Allows you to create a profile from your display's <abbr title="Extended Display Identification Data">EDID<sup><a href="#definition_EDID">[10]</a></sup></abbr> (if available).</dd>
-
-					<dt>Install display device profile...</dt>
-						<dd>Install an existing profile for the currently selected display.</dd>
-
-					<dt>Upload profile...</dt>
-						<dd>Share a profile via the <a href="https://icc.opensuse.org/">openSUSE ICC Profile Taxi</a> service. This will only work for profiles created from actual measurements by DisplayCAL 0.8.0.8 and newer, and not for profiles created from EDID.</dd>
-
-					<dt>Load calibration curves from calibration file or profile...</dt>
-						<dd>Unlike “Load settings....” from the “File” menu, loads just calibration curves for the currently selected display into the video card without changing settings.</dd>
-
-					<dt>Load calibration curves from current display device profile</dt>
-						<dd>Tries to determine the profile associated to the currently selected display and loads its calibration curves from the 'vcgt' tag.</dd>
-
-					<dt>Reset video card gamma table</dt>
-						<dd>Resets the video card gamma table for the currently selected display to linear, clearing any calibration curves, such that input = output.</dd>
-
-					<dt>Detect displays and instruments</dt>
-						<dd>To detect changes in display setup or connected instruments, use this menu entry.</dd>
-
-					<dt>Automatically detect instruments</dt>
-						<dd>If this menu item is checked, DisplayCAL will automatically detect instruments on startup and periodically check for changes roughly every 10 seconds after that, if no other operation is currently running.</dd>
-
-					<dt>Use separate video card gamma table acccess</dt>
-						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video card gamma table hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally DisplayCAL will automatically detect if separate video card gamma table access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
-
-					<dt>Do not use  video card gamma table to apply calibration</dt>
-						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if <a href="http://madvr.com/">madVR</a> is being used to display the test patches.</dd>
-
-					<dt>Allow skipping of spectrometer self-calibration</dt>
-						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, DisplayCAL will try to skip this sensor calibration. <em>Note</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
-
-					<dt>Spectrometer self-calibration</dt>
-						<dd>Do spectrometer sensor calibration on its own.</dd>
+					<dt>Enable 3D LUT tab</dt>
+						<dd>The 3D LUT tab will be automatically enabled when you choose one of the 3D LUT presets or one of the virtual display devices, but in case you want to create a 3D LUT from an existing profile that did not use such a preset, you can enable the respective tab here.</dd>
 
 					<dt>Show advanced options</dt>
-						<dd>Enabling this menu option will show some additional controls for advanced users.</dd>
+						<dd>Enabling this menu option will show some additional controls and menu options for advanced users.</dd>
 
-					<dt id="additional-commandline-arguments">Set additional commandline arguments...</dt>
-						<dd>Allows you to set additional options for the Argyll CMS dispcal, dispread, spotread, colprof, collink and targen tools in the same way you would specify them on the commandline.</dd>
+					<dt>Advanced › Use separate video card gamma table acccess</dt>
+						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video card gamma table hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally DisplayCAL will automatically detect if separate video card gamma table access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
 
-					<dt>Enable Argyll CMS diagnostic output</dt>
+					<dt>Advanced › Do not use  video card gamma table to apply calibration</dt>
+						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if <a href="http://madvr.com/">madVR</a> is being used to display the test patches.</dd>
+
+					<dt>Advanced › Skip legacy serial ports</dt>
+						<dd>Skips serial (non-USB) ports while enumerating instruments.</dd>
+
+					<dt>Advanced › Allow skipping of spectrometer self-calibration</dt>
+						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, DisplayCAL will try to skip this sensor calibration. <em>Note</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
+
+					<dt>Advanced › Enable Argyll CMS diagnostic output</dt>
 						<dd>When checked, outputs diagnostic information for measurements. Useful for debugging. Warning: Very verbose.</dd>
 
-					<dt>Dry run</dt>
+					<dt>Advanced › Dry run</dt>
 						<dd>When enabled, all functionality that calls Argyll CMS executables will effectively do nothing. This allows review of the used command line parameters by checking the log.</dd>
+
+					<dt id="additional-commandline-arguments">Advanced › Set additional commandline arguments...</dt>
+						<dd>Allows you to set additional options for the Argyll CMS dispcal, dispread, spotread, colprof, collink and targen tools in the same way you would specify them on the commandline.</dd>
 
 					<dt>Restore defaults</dt>
 						<dd>Restores all settings except language, selected display, instrument, measurement mode and profile name to default.</dd>
@@ -1879,57 +1867,62 @@ Enter the IP address in the window that opens (port should already be filled) an
 				<h3>“Tools” menu</h3>
 
 				<dl>
+					<dt>Video card gamma table › Load calibration curves from calibration file or profile...</dt>
+						<dd>Unlike “Load settings....” from the “File” menu, loads just calibration curves for the currently selected display into the video card without changing settings.</dd>
 
-					<dt id="report-uncal">Report on uncalibrated display device</dt>
-						<dd>Does some quick measurements on the currently selected display, first resetting the video card gamma table, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card gamma table bit depth.</dd>
+					<dt>Video card gamma table › Load calibration curves from current display device profile</dt>
+						<dd>Tries to determine the profile associated to the currently selected display and loads its calibration curves from the 'vcgt' tag.</dd>
 
-					<dt id="report-cal">Report on calibrated display device</dt>
-						<dd>Does some quick measurements on the currently selected display, keeping the video card gamma table, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
+					<dt>Video card gamma table › Reset video card gamma table</dt>
+						<dd>Resets the video card gamma table for the currently selected display to linear, clearing any calibration curves, such that input = output.</dd>
 
-					<dt id="verify-cal">Verify calibration</dt>
-						<dd>Run verify measurements on the selected display as it is currently setup (ie. video card gamma table). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
+					<dt>Detect displays and instruments</dt>
+						<dd>To detect changes in display setup or connected instruments, use this menu entry.</dd>
 
-					<dt>Update measurement report...</dt>
-						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of DisplayCAL (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
+					<dt id="install-argyll-instrument-drivers">Instrument › Install Argyll CMS instrument drivers... (Windows) / instrument configuration files... (Linux)</dt>
+						<dd>Windows: Install the Argyll CMS instrument drivers that are needed by some instruments.<br />
+						Linux: Install udev rules or hotplug scripts that configure instrument access (you only need to install these if you cannot access your instrument).</dd>
 
-					<dt>Measure display device uniformity...</dt>
-						<dd>Measure the display at several points to evaluate evenness of illumination and color errors. The results are shown after all patches are measured, and include the luminance difference, delta E 2000, CCT (correlated color temperature), and CDT (closest daylight temperature) or CPT (closest planckian temperature) depending on the selection for the whitepoint locus set on the “Calibration” tab. Differences are computed in comparison to the center point, which is used as reference.<br />
-						The evaluation is done according to ISO 12646:2015. A checkmark means the ISO criteria have been met (delta E of equal or less than 4, luminance difference of less than 10%). Two checkmarks mean that both the ISO criteria as well as twice as strict tolerances have been met (delta E of equal or less than 2, luminance difference of less than 5%). You can switch between delta E, delta C, delta H and delta L by clicking the labels.</dd>
+					<dt id="uninstall-argyll-instrument-drivers">Instrument › Uninstall Argyll CMS instrument drivers... (Windows Vista and newer only) / instrument configuration files... (Linux)</dt>
+						<dd>Windows Vista and newer: Uninstall the Argyll CMS instrument drivers.<br />
+						Linux: Uninstall udev rules or hotplug scripts that configure instrument access (note that they will be backed up to <samp>/home/<var>Your Username</var>/.local/share/DisplayCAL/backup</samp>).</dd>
 
-					<dt>Check measurement file...</dt>
-						<dd>This checks a measurement file for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
+					<dt>Instrument › Enable Spyder 2 colorimeter...</dt>
+						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor DisplayCAL, since it has not been made available under a compatible license.<br />
+The purchaser of a Spyder 2 instrument should have received a copy of this firmware along with their instrument from the original vendor, as part of the instrument setup files.<br />
+On Microsoft Windows or Mac OS X, if the vendors software has been installed on the users machine, the firmware pattern can usually automatically be located from there. If the vendors software have not been installed, or the user does not wish to install it, or no vendors software are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. In case no firmware files are found, the necessary binary can be downloaded automatically.</dd>
 
-					<dt>Automatically check measurements</dt>
-						<dd>This automatically checks measurements for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
+					<dt>Instrument › Spectrometer self-calibration</dt>
+						<dd>Do spectrometer sensor calibration on its own.</dd>
 
-					<dt id="import-correction-matrices">Import colorimeter corrections from other display profiling software...</dt>
+					<dt id="import-correction-matrices">Correction › Import colorimeter corrections from other display profiling software...</dt>
 						<dd>Converts matrices from other softwares to Argyll's CCMX / CCSS formats and adds them to the corresponding dropdown menu. Currently iColor Display, i1 Profiler, ColorMunki Display and Spyder 4/5 softwares are supported. If they are installed or the CD / disk image is mounted, the correct file(s) can in most cases be imported directly, otherwise they can be downloaded automatically. Please note: The colorimeter corrections imported from Spyder 4/5 software are only usable with the Spyder 4/5 and need to be selected in the measurement mode dropdown instead of the colorimeter corrections dropdown.</dd>
 
 
-					<dt id="create-colorimeter-correction">Create colorimeter correction...</dt>
+					<dt id="create-colorimeter-correction">Correction › Create colorimeter correction...</dt>
 						<dd>Allows you to create correction matrices for all colorimeters as well as spectral corrections for i1 Display Pro, ColorMunki Display and Spyder 4/5.
 						You first need to measure the required test colors with a spectrometer, and in case you want to create a correction matrix instead of a spectral correction, also with the colorimeter. A checkmark next to the “Measure” buttons indicates previous measurements already being present (it is recommended that measurements be recent though, so ideally both spectrometer and colorimeter measurements should be performed whenever a colorimeter correction matrix is to be created). Alternatively you can also use existing measurements by choosing “Browse...”.
 						</dd>
 
-					<dt id="upload-colorimeter-correction">Upload colorimeter correction...</dt>
+					<dt id="upload-colorimeter-correction">Correction › Upload colorimeter correction...</dt>
 						<dd>Upload a colorimeter correction to the online <a href="https://colorimetercorrections.displaycal.net/">Colorimeter Corrections Database</a> to share it with other users or download it later on another machine.
 						</dd>
 
-					<dt id="synthprofile">Create synthetic ICC profile...</dt>
-						<dd>Create a synthetic ICC profile by entering XYZ or chromaticity coordinates for R, G, B and white, and by choosing a tone response curve.</dd>
+					<dt id="report-uncal">Report › Report on uncalibrated display device</dt>
+						<dd>Does some quick measurements on the currently selected display, first resetting the video card gamma table, and displays information about the measured response like luminance, approx. gamma, color temperature, and video card gamma table bit depth.</dd>
 
-					<dt id="install-argyll-instrument-drivers">Install Argyll CMS instrument drivers... (Windows) / Install Argyll CMS instrument configuration files... (Linux)</dt>
-						<dd>Windows: Install the Argyll CMS instrument drivers that are needed by some instruments.<br />
-						Linux: Install udev rules or hotplug scripts that configure instrument access (you only need to install these if you cannot access your instrument).</dd>
+					<dt id="report-cal">Report › Report on calibrated display device</dt>
+						<dd>Does some quick measurements on the currently selected display, keeping the video card gamma table, and displays information about the measured response like luminance, approx. gamma, and color temperature.</dd>
 
-					<dt id="uninstall-argyll-instrument-drivers">Uninstall Argyll CMS instrument drivers... (Windows Vista and newer only) / Uninstall Argyll CMS instrument configuration files... (Linux)</dt>
-						<dd>Windows Vista and newer: Uninstall the Argyll CMS instrument drivers.<br />
-						Linux: Uninstall udev rules or hotplug scripts that configure instrument access (note that they will be backed up to <samp>/home/<var>Your Username</var>/.local/share/DisplayCAL/backup</samp>).</dd>
+					<dt id="verify-cal">Report › Verify calibration</dt>
+						<dd>Run verify measurements on the selected display as it is currently setup (ie. video card gamma table). This will use the usual input parameters to establish the expected (target) characteristic. Note that if the initial calibration was modified due to it being out of gamut of the display, verify will show the resulting discrepancy.</dd>
 
-					<dt>Enable Spyder 2 colorimeter...</dt>
-						<dd>The Spyder 2 instrument cannot function without the presence of the instrument vendors PLD firmware pattern for the device. This firmware is not provided with Argyll CMS nor DisplayCAL, since it has not been made available under a compatible license.<br />
-The purchaser of a Spyder 2 instrument should have received a copy of this firmware along with their instrument from the original vendor, as part of the instrument setup files.<br />
-On Microsoft Windows or Mac OS X, if the vendors software has been installed on the users machine, the firmware pattern can usually automatically be located from there. If the vendors software have not been installed, or the user does not wish to install it, or no vendors software are available for the users platform (i.e. Linux), then the Spyder 2 installation CDROM will also be searched if present. In case no firmware files are found, the necessary binary can be downloaded automatically.</dd>
+					<dt>Report › Measure display device uniformity...</dt>
+						<dd>Measure the display at several points to evaluate evenness of illumination and color errors. The results are shown after all patches are measured, and include the luminance difference, delta E 2000, CCT (correlated color temperature), and CDT (closest daylight temperature) or CPT (closest planckian temperature) depending on the selection for the whitepoint locus set on the “Calibration” tab. Differences are computed in comparison to the center point, which is used as reference.<br />
+						The evaluation is done according to ISO 12646:2015. A checkmark means the ISO criteria have been met (delta E of equal or less than 4, luminance difference of less than 10%). Two checkmarks mean that both the ISO criteria as well as twice as strict tolerances have been met (delta E of equal or less than 2, luminance difference of less than 5%). You can switch between delta E, delta C, delta H and delta L by clicking the labels.</dd>
+
+					<dt>Report › Update measurement report...</dt>
+						<dd>This allows to update an existing report HTML file with the template and functionality from a newer version of DisplayCAL (no measurements involved). It's a handy way to get new or changed comparison features, updated layout and even bugfixes into old reports. A backup copy of the old report with a date extension will automatically be created.</dd>
 
 					<dt id="curveviewer">Show curves</dt>
 						<dd>Shows/hides the curve viewer, which graphs calibration and profile tone response curves and also shows the percentage and amount of tone values for calibration curves.</dd>
@@ -1942,6 +1935,21 @@ On Microsoft Windows or Mac OS X, if the vendors software has been installed on 
 
 					<dt>Show log window automatically</dt>
 						<dd>Shows the log window automatically after actions like measurements or creating a profile.</dd>
+					<dt id="synthprofile">Advanced › Create synthetic ICC profile...</dt>
+						<dd>Create a synthetic ICC profile by entering XYZ or chromaticity coordinates for R, G, B and white, and by choosing a tone response curve.</dd>
+
+					<dt>Advanced › Enhance effective resolution of colorimetric PCS-to-device table</dt>
+						<dd>See <a href="#b2a-enhance-effective-resolution">Enhance effective resolution of colorimetric PCS-to-device table</a>.</dd>
+
+					<dt>Advanced › Measure testchart</dt>
+						<dd>Measures the currently selected testchart on the selected display in its current state and creates a <code>.ti3</code> measurement data file. The file is saved under the chosen save path (see “Choose save path...” under the “File” menu) and with the same base name used for profiles.</dd>
+
+
+					<dt>Advanced › Check measurement file...</dt>
+						<dd>This checks a measurement file for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
+
+					<dt>Advanced › Automatically check measurements</dt>
+						<dd>This automatically checks measurements for suspicious (erroneous) readings. An sRGB-like display is assumed, so this option will not work well if the display response is not so close to sRGB, and may report false positives.</dd>
 				</dl>
 			</div>
 
@@ -2493,8 +2501,30 @@ Dunkley, Hassan Elhassan</span></p>
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2016-10-24 10:13 (UTC) 3.1.7.3  -->
+			<!-- 2016-10-27 04:35 (UTC) 3.1.7.4 Beta -->
 			<dl>
+				<dt id="changelog-3.1.7.4">2016-10-27 04:35 (UTC) 3.1.7.4 Beta</dt>
+					<dd>
+						<h3>3.1.7.4 Beta</h3>
+
+						<h4>Changed in this release</h4>
+						<ul>
+							<li>UI: Menu overhaul. Menus are now better organized using categorized sub-menus and some menu items have been moved to more appropriate locations:
+								<ul>
+									<li>The “Options” menu no longer contains any functionality besides actual options. Advanced options have been moved to a sub-menu.</li>
+									<li>Profile creation from existing measurement files or EDID, profile installation as well as profile upload (sharing) functionality can now be found in the “File” menu.</li>
+									<li>Most functionality available in the “Tools” menu has been grouped into categorized sub-menus, with some of the less-used functionality now available under a separate “Advanced” sub-menu.</li>
+									<li>Measuring the selected testchart, enhancing the effective resolution of a colorimetric PCS-to-device table, loading calibration and resetting the video card gamma tables, detecting displays &amp; instruments, as well as user-initiated spectrometer self-calibration functionality has been moved to the “Tools” menu and respective sub-menus where applicable.</li>
+								</ul>
+							</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Trivial: If an update check, colorimeter correction query or profile sharing upload returned a HTTP status code equal or greater than 400 (should not happen as long as I don't delete or change URLs at the displaycal.net website, with one exception being the openSUSE ICC Profile Taxi service used for sharing profiles which isn't under my control), an unhandled exception was raised (regression of 3.1.7 instrument driver installer download related changes).</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.1.7.3">2016-10-24 10:13 (UTC) 3.1.7.3 </dt>
 					<dd>
 						<h3>3.1.7.3 </h3>

@@ -2010,6 +2010,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_MENU, self.profile_save_path_btn_handler, menuitem)
 		self.menuitem_profile_info = file_.FindItemById(file_.FindItem("profile.info"))
 		self.Bind(wx.EVT_MENU, self.profile_info_handler, self.menuitem_profile_info)
+		self.menuitem_create_profile = file_.FindItemById(
+			file_.FindItem("create_profile"))
+		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
+				  self.menuitem_create_profile)
+		self.menuitem_create_profile_from_edid = file_.FindItemById(
+			file_.FindItem("create_profile_from_edid"))
+		self.Bind(wx.EVT_MENU, self.create_profile_from_edid, 
+				  self.menuitem_create_profile_from_edid)
+		self.menuitem_install_display_profile = file_.FindItemById(
+			file_.FindItem("install_display_profile"))
+		self.Bind(wx.EVT_MENU, self.select_install_profile_handler, 
+				  self.menuitem_install_display_profile)
+		self.menuitem_profile_share = file_.FindItemById(
+			file_.FindItem("profile.share"))
+		self.Bind(wx.EVT_MENU, self.profile_share_handler, 
+				  self.menuitem_profile_share)
 		if sys.platform != "darwin" or wx.VERSION >= (2, 9):
 			file_.AppendSeparator()
 		self.menuitem_prefs = file_.Append(
@@ -2023,64 +2039,25 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_MENU, self.OnClose, self.menuitem_quit)
 
 		options = self.menubar.GetMenu(self.menubar.FindMenu("menu.options"))
-		self.menuitem_measure_testchart = options.FindItemById(
-			options.FindItem("measure.testchart"))
-		self.Bind(wx.EVT_MENU, self.measure_handler, 
-				  self.menuitem_measure_testchart)
-		self.menuitem_create_profile = options.FindItemById(
-			options.FindItem("create_profile"))
-		self.Bind(wx.EVT_MENU, self.create_profile_handler, 
-				  self.menuitem_create_profile)
-		self.menuitem_create_profile_from_edid = options.FindItemById(
-			options.FindItem("create_profile_from_edid"))
-		self.Bind(wx.EVT_MENU, self.create_profile_from_edid, 
-				  self.menuitem_create_profile_from_edid)
-		self.menuitem_profile_hires_b2a = options.FindItemById(
-			options.FindItem("profile.b2a.hires"))
-		self.Bind(wx.EVT_MENU, self.profile_hires_b2a_handler, 
-				  self.menuitem_profile_hires_b2a)
-		self.menuitem_install_display_profile = options.FindItemById(
-			options.FindItem("install_display_profile"))
-		self.Bind(wx.EVT_MENU, self.select_install_profile_handler, 
-				  self.menuitem_install_display_profile)
-		self.menuitem_profile_share = options.FindItemById(
-			options.FindItem("profile.share"))
-		self.Bind(wx.EVT_MENU, self.profile_share_handler, 
-				  self.menuitem_profile_share)
-		self.menuitem_load_lut_from_cal_or_profile = options.FindItemById(
-			options.FindItem("calibration.load_from_cal_or_profile"))
-		self.Bind(wx.EVT_MENU, self.load_profile_cal_handler, 
-				  self.menuitem_load_lut_from_cal_or_profile)
-		self.menuitem_load_lut_from_display_profile = options.FindItemById(
-			options.FindItem("calibration.load_from_display_profile"))
-		self.Bind(wx.EVT_MENU, self.load_display_profile_cal, 
-				  self.menuitem_load_lut_from_display_profile)
-		self.menuitem_lut_reset = options.FindItemById(
-			options.FindItem("calibration.reset"))
-		self.Bind(wx.EVT_MENU, self.reset_cal, self.menuitem_lut_reset)
-		menuitem = options.FindItemById(
-			options.FindItem("detect_displays_and_ports"))
-		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
-		self.menuitem_skip_legacy_serial_ports = options.FindItemById(
-			options.FindItem("skip_legacy_serial_ports"))
+		self.menuitem_advanced_options = options.FindItemById(options.FindItem("advanced"))
+		options_advanced = self.menuitem_advanced_options.SubMenu
+		self.menu_advanced_options = options_advanced
+		self.menuitem_skip_legacy_serial_ports = options_advanced.FindItemById(
+			options_advanced.FindItem("skip_legacy_serial_ports"))
 		self.Bind(wx.EVT_MENU, self.skip_legacy_serial_ports_handler, 
 				  self.menuitem_skip_legacy_serial_ports)
-		self.menuitem_use_separate_lut_access = options.FindItemById(
-			options.FindItem("use_separate_lut_access"))
+		self.menuitem_use_separate_lut_access = options_advanced.FindItemById(
+			options_advanced.FindItem("use_separate_lut_access"))
 		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
 				  self.menuitem_use_separate_lut_access)
-		self.menuitem_do_not_use_video_lut = options.FindItemById(
-			options.FindItem("calibration.do_not_use_video_lut"))
+		self.menuitem_do_not_use_video_lut = options_advanced.FindItemById(
+			options_advanced.FindItem("calibration.do_not_use_video_lut"))
 		self.Bind(wx.EVT_MENU, self.do_not_use_video_lut_handler, 
 				  self.menuitem_do_not_use_video_lut)
-		self.menuitem_allow_skip_sensor_cal = options.FindItemById(
-			options.FindItem("allow_skip_sensor_cal"))
+		self.menuitem_allow_skip_sensor_cal = options_advanced.FindItemById(
+			options_advanced.FindItem("allow_skip_sensor_cal"))
 		self.Bind(wx.EVT_MENU, self.allow_skip_sensor_cal_handler, 
 				  self.menuitem_allow_skip_sensor_cal)
-		self.menuitem_calibrate_instrument = options.FindItemById(
-			options.FindItem("calibrate_instrument"))
-		self.Bind(wx.EVT_MENU, self.calibrate_instrument_handler, 
-				  self.menuitem_calibrate_instrument)
 		self.menuitem_show_advanced_options = options.FindItemById(
 			options.FindItem("show_advanced_options"))
 		self.Bind(wx.EVT_MENU, self.show_advanced_options_handler, 
@@ -2089,14 +2066,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			options.FindItem("3dlut.tab.enable"))
 		self.Bind(wx.EVT_MENU, self.enable_3dlut_tab_handler, 
 				  self.menuitem_enable_3dlut_tab)
-		menuitem = options.FindItemById(options.FindItem("extra_args"))
+		menuitem = options_advanced.FindItemById(options_advanced.FindItem("extra_args"))
 		self.Bind(wx.EVT_MENU, self.extra_args_handler, menuitem)
-		self.menuitem_enable_argyll_debug = options.FindItemById(
-			options.FindItem("enable_argyll_debug"))
+		self.menuitem_enable_argyll_debug = options_advanced.FindItemById(
+			options_advanced.FindItem("enable_argyll_debug"))
 		self.Bind(wx.EVT_MENU, self.enable_argyll_debug_handler, 
 				  self.menuitem_enable_argyll_debug)
-		self.menuitem_enable_dry_run = options.FindItemById(
-			options.FindItem("dry_run"))
+		self.menuitem_enable_dry_run = options_advanced.FindItemById(
+			options_advanced.FindItem("dry_run"))
 		self.Bind(wx.EVT_MENU, self.enable_dry_run_handler, 
 				  self.menuitem_enable_dry_run)
 		self.menuitem_startup_sound = options.FindItemById(
@@ -2111,88 +2088,123 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_MENU, self.restore_defaults_handler, menuitem)
 		
 		tools = self.menubar.GetMenu(self.menubar.FindMenu("menu.tools"))
-		self.menuitem_report_uncalibrated = tools.FindItemById(
-			tools.FindItem("report.uncalibrated"))
+		tools_vcgt = tools.FindItemById(tools.FindItem("video_card_gamma_table")).SubMenu
+		tools_reports = tools.FindItemById(tools.FindItem("report")).SubMenu
+		tools_advanced = tools.FindItemById(tools.FindItem("advanced")).SubMenu
+		tools_instrument = tools.FindItemById(tools.FindItem("instrument")).SubMenu
+		tools_ccxx = tools.FindItemById(tools.FindItem("colorimeter_correction_matrix_file")).SubMenu
+		self.menuitem_load_lut_from_cal_or_profile = tools_vcgt.FindItemById(
+			tools_vcgt.FindItem("calibration.load_from_cal_or_profile"))
+		self.Bind(wx.EVT_MENU, self.load_profile_cal_handler, 
+				  self.menuitem_load_lut_from_cal_or_profile)
+		self.menuitem_load_lut_from_display_profile = tools_vcgt.FindItemById(
+			tools_vcgt.FindItem("calibration.load_from_display_profile"))
+		self.Bind(wx.EVT_MENU, self.load_display_profile_cal, 
+				  self.menuitem_load_lut_from_display_profile)
+		self.menuitem_lut_reset = tools_vcgt.FindItemById(
+			tools_vcgt.FindItem("calibration.reset"))
+		self.Bind(wx.EVT_MENU, self.reset_cal, self.menuitem_lut_reset)
+		self.menuitem_report_uncalibrated = tools_reports.FindItemById(
+			tools_reports.FindItem("report.uncalibrated"))
 		self.Bind(wx.EVT_MENU, self.report_uncalibrated_handler, 
 			self.menuitem_report_uncalibrated)
-		self.menuitem_report_calibrated = tools.FindItemById(
-			tools.FindItem("report.calibrated"))
+		self.menuitem_report_calibrated = tools_reports.FindItemById(
+			tools_reports.FindItem("report.calibrated"))
 		self.Bind(wx.EVT_MENU, self.report_calibrated_handler, 
 				  self.menuitem_report_calibrated)
-		self.menuitem_calibration_verify = tools.FindItemById(
-			tools.FindItem("calibration.verify"))
+		self.menuitem_calibration_verify = tools_reports.FindItemById(
+			tools_reports.FindItem("calibration.verify"))
 		self.Bind(wx.EVT_MENU, self.verify_calibration_handler, 
 				  self.menuitem_calibration_verify)
-		menuitem = tools.FindItemById(
-			tools.FindItem("measurement_report.update"))
+		menuitem = tools_reports.FindItemById(
+			tools_reports.FindItem("measurement_report.update"))
 		self.Bind(wx.EVT_MENU, self.update_measurement_report, 
 				  menuitem)
-		self.menuitem_measure_uniformity = tools.FindItemById(
-			tools.FindItem("report.uniformity"))
+		self.menuitem_measure_uniformity = tools_reports.FindItemById(
+			tools_reports.FindItem("report.uniformity"))
 		self.Bind(wx.EVT_MENU, self.measure_uniformity_handler, 
 				  self.menuitem_measure_uniformity)
 
-		self.menuitem_measurement_file_check = tools.FindItemById(
-			tools.FindItem("measurement_file.check_sanity"))
+		self.menuitem_measure_testchart = tools_advanced.FindItemById(
+			tools_advanced.FindItem("measure.testchart"))
+		self.Bind(wx.EVT_MENU, self.measure_handler, 
+				  self.menuitem_measure_testchart)
+
+		self.menuitem_profile_hires_b2a = tools_advanced.FindItemById(
+			tools_advanced.FindItem("profile.b2a.hires"))
+		self.Bind(wx.EVT_MENU, self.profile_hires_b2a_handler, 
+				  self.menuitem_profile_hires_b2a)
+
+		self.menuitem_measurement_file_check = tools_advanced.FindItemById(
+			tools_advanced.FindItem("measurement_file.check_sanity"))
 		self.Bind(wx.EVT_MENU, self.measurement_file_check_handler, 
 				  self.menuitem_measurement_file_check)
 
-		self.menuitem_measurement_file_check_auto = tools.FindItemById(
-			tools.FindItem("measurement_file.check_sanity.auto"))
+		self.menuitem_measurement_file_check_auto = tools_advanced.FindItemById(
+			tools_advanced.FindItem("measurement_file.check_sanity.auto"))
 		self.Bind(wx.EVT_MENU, self.measurement_file_check_auto_handler, 
 				  self.menuitem_measurement_file_check_auto)
 
-		self.menuitem_import_colorimeter_correction = tools.FindItemById(
-			tools.FindItem("colorimeter_correction.import"))
+		self.menuitem_import_colorimeter_correction = tools_ccxx.FindItemById(
+			tools_ccxx.FindItem("colorimeter_correction.import"))
 		self.Bind(wx.EVT_MENU, self.import_colorimeter_corrections_handler, 
 				  self.menuitem_import_colorimeter_correction)
-		self.menuitem_create_colorimeter_correction = tools.FindItemById(
-			tools.FindItem("colorimeter_correction.create"))
+		self.menuitem_create_colorimeter_correction = tools_ccxx.FindItemById(
+			tools_ccxx.FindItem("colorimeter_correction.create"))
 		self.Bind(wx.EVT_MENU, self.create_colorimeter_correction_handler, 
 				  self.menuitem_create_colorimeter_correction)
-		self.menuitem_upload_colorimeter_correction = tools.FindItemById(
-			tools.FindItem("colorimeter_correction.upload"))
+		self.menuitem_upload_colorimeter_correction = tools_ccxx.FindItemById(
+			tools_ccxx.FindItem("colorimeter_correction.upload"))
 		self.Bind(wx.EVT_MENU, self.upload_colorimeter_correction_handler, 
 				  self.menuitem_upload_colorimeter_correction)
-		self.menuitem_synthicc_create = tools.FindItemById(
-			tools.FindItem("synthicc.create"))
+
+		self.menuitem_synthicc_create = tools_advanced.FindItemById(
+			tools_advanced.FindItem("synthicc.create"))
 		self.Bind(wx.EVT_MENU, self.synthicc_create_handler, 
 				  self.menuitem_synthicc_create)
-		self.menuitem_install_argyll_instrument_conf = tools.FindItemById(
-			tools.FindItem("argyll.instrument.configuration_files.install"))
-		self.menuitem_uninstall_argyll_instrument_conf = tools.FindItemById(
-			tools.FindItem("argyll.instrument.configuration_files.uninstall"))
+
+		self.menuitem_install_argyll_instrument_conf = tools_instrument.FindItemById(
+			tools_instrument.FindItem("argyll.instrument.configuration_files.install"))
+		self.menuitem_uninstall_argyll_instrument_conf = tools_instrument.FindItemById(
+			tools_instrument.FindItem("argyll.instrument.configuration_files.uninstall"))
 		if sys.platform in ("darwin", "win32") and not test:
-			tools.RemoveItem(self.menuitem_install_argyll_instrument_conf)
-			tools.RemoveItem(self.menuitem_uninstall_argyll_instrument_conf)
+			tools_instrument.RemoveItem(self.menuitem_install_argyll_instrument_conf)
+			tools_instrument.RemoveItem(self.menuitem_uninstall_argyll_instrument_conf)
 		else:
 			# Linux may need instrument access being setup
 			self.Bind(wx.EVT_MENU, self.install_argyll_instrument_conf, 
 					  self.menuitem_install_argyll_instrument_conf)
 			self.Bind(wx.EVT_MENU, self.uninstall_argyll_instrument_conf, 
 					  self.menuitem_uninstall_argyll_instrument_conf)
-		self.menuitem_install_argyll_instrument_drivers = tools.FindItemById(
-			tools.FindItem("argyll.instrument.drivers.install"))
-		self.menuitem_uninstall_argyll_instrument_drivers = tools.FindItemById(
-			tools.FindItem("argyll.instrument.drivers.uninstall"))
+		self.menuitem_install_argyll_instrument_drivers = tools_instrument.FindItemById(
+			tools_instrument.FindItem("argyll.instrument.drivers.install"))
+		self.menuitem_uninstall_argyll_instrument_drivers = tools_instrument.FindItemById(
+			tools_instrument.FindItem("argyll.instrument.drivers.uninstall"))
 		if sys.platform == "win32" or test:
 			# Windows may need an Argyll CMS instrument driver
 			self.Bind(wx.EVT_MENU, self.install_argyll_instrument_drivers, 
 					  self.menuitem_install_argyll_instrument_drivers)
 		else:
 			# Other OS do not need an Argyll CMS instrument driver
-			tools.RemoveItem(self.menuitem_install_argyll_instrument_drivers)
+			tools_instrument.RemoveItem(self.menuitem_install_argyll_instrument_drivers)
 		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, )) or test:
 			# Windows Vista and newer can uninstall Argyll CMS instrument driver
 			self.Bind(wx.EVT_MENU, self.uninstall_argyll_instrument_drivers, 
 					  self.menuitem_uninstall_argyll_instrument_drivers)
 		else:
 			# Other OS cannot uninstall Argyll CMS instrument driver
-			tools.RemoveItem(self.menuitem_uninstall_argyll_instrument_drivers)
-		self.menuitem_enable_spyder2 = tools.FindItemById(
-			tools.FindItem("enable_spyder2"))
+			tools_instrument.RemoveItem(self.menuitem_uninstall_argyll_instrument_drivers)
+		self.menuitem_enable_spyder2 = tools_instrument.FindItemById(
+			tools_instrument.FindItem("enable_spyder2"))
 		self.Bind(wx.EVT_MENU, self.enable_spyder2_handler, 
 				  self.menuitem_enable_spyder2)
+		self.menuitem_calibrate_instrument = tools_instrument.FindItemById(
+			tools_instrument.FindItem("calibrate_instrument"))
+		self.Bind(wx.EVT_MENU, self.calibrate_instrument_handler, 
+				  self.menuitem_calibrate_instrument)
+		menuitem = tools.FindItemById(
+			tools.FindItem("detect_displays_and_ports"))
+		self.Bind(wx.EVT_MENU, self.check_update_controls, menuitem)
 		self.menuitem_show_lut = tools.FindItemById(
 			tools.FindItem("calibration.show_lut"))
 		self.Bind(wx.EVT_MENU, self.init_lut_viewer, self.menuitem_show_lut)
@@ -2307,6 +2319,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_enable_dry_run.Check(bool(getcfg("dry_run")))
 		self.menuitem_startup_sound.Check(bool(getcfg("startup_sound.enable")))
 		self.menuitem_use_fancy_progress.Check(bool(getcfg("use_fancy_progress")))
+		self.menuitem_advanced_options.Enable(bool(getcfg("show_advanced_options")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
 		if sys.platform == "win32" or test:
@@ -2969,9 +2982,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		use_lut_ctrl = self.worker.has_separate_lut_access() or \
 					   bool(getcfg("use_separate_lut_access"))
 		menubar = self.GetMenuBar()
-		options = menubar.GetMenu(menubar.FindMenu(lang.getstr("menu.options")))
-		menuitem = options.FindItemById(
-			options.FindItem(lang.getstr("use_separate_lut_access")))
+		menuitem = self.menu_advanced_options.FindItemById(
+			self.menu_advanced_options.FindItem(lang.getstr("use_separate_lut_access")))
 		menuitem.Check(use_lut_ctrl)
 		if use_lut_ctrl:
 			self.display_lut_ctrl.Clear()
@@ -4272,6 +4284,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def enable_dry_run_handler(self, event):
 		setcfg("dry_run", int(self.menuitem_enable_dry_run.IsChecked()))
+		self.menuitem_enable_argyll_debug.Enable(not self.menuitem_enable_dry_run.IsChecked())
 	
 	def enable_menus(self, enable=True):
 		for menu, label in self.menubar.GetMenus():
@@ -8837,6 +8850,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				   int(show_advanced_options))
 		self.panel.Freeze()
 		self.menuitem_show_advanced_options.Check(show_advanced_options)
+		self.menuitem_advanced_options.Enable(show_advanced_options)
 		self.override_display_settle_time_mult.Show(
 			show_advanced_options and
 			getcfg("argyll.version") >= "1.7")
