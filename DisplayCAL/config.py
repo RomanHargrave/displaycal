@@ -955,6 +955,7 @@ defaults = {
 										   "hp_dreamcolor_calibration_solution.exe",
 										   "i1profiler.exe",
 										   "icolordisplay.exe",
+										   "spectraview.exe",
 										   "spectraview profiler.exe",
 										   "spyder3elite.exe",
 										   "spyder3express.exe",
