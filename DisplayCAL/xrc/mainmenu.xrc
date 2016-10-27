@@ -180,7 +180,6 @@
       <object class="separator"/>
       <object class="wxMenu" name="menu.tools.advanced">
         <label>advanced</label>
-        <object class="separator"/>
         <object class="wxMenuItem" name="synthicc.create">
           <label>synthicc.create</label>
         </object>
