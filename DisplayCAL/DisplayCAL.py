@@ -2264,6 +2264,9 @@ class MainFrame(ReportFrame, BaseFrame):
 												basestring) or 
 									 os.path.isfile("/usr/share/common-licenses/GPL-3"))
 		self.Bind(wx.EVT_MENU, self.license_handler, self.menuitem_license)
+		menuitem = help.FindItemById(help.FindItem("go_to_website"))
+		self.Bind(wx.EVT_MENU, lambda event: launch_file("https://%s/" %
+														 domain), menuitem)
 		menuitem = help.FindItemById(help.FindItem("help_support"))
 		self.Bind(wx.EVT_MENU, self.help_support_handler, menuitem)
 		menuitem = help.FindItemById(help.FindItem("bug_report"))
