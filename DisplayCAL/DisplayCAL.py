@@ -14072,8 +14072,17 @@ class StartupFrame(wx.Frame):
 		wx.CallLater(1, self.startup)
 
 	def startup(self):
-		if self.IsShown() and self._alpha < 255:
+		if sys.platform not in ("darwin", "win32"):
+			# Drawing of window shadow can be prevented under some desktop
+			# environments that would normally try to draw a shadow by never
+			# making the window fully opaque
+			endalpha = 254
+		else:
+			endalpha = 255
+		if self.IsShown() and self._alpha < endalpha:
 			self._alpha += 15
+			if self._alpha > endalpha:
+				self._alpha = endalpha
 			self.SetTransparent(self._alpha)
 			if sys.platform not in ("darwin", "win32"):
 				self.Refresh()
@@ -14121,6 +14130,8 @@ class StartupFrame(wx.Frame):
 	def setup_frame_finish(self, app):
 		if self.IsShown() and self._alpha > 0:
 			self._alpha -= 15
+			if self._alpha < 0:
+				self._alpha = 0
 			self.SetTransparent(self._alpha)
 			if sys.platform not in ("darwin", "win32"):
 				self.Refresh()
