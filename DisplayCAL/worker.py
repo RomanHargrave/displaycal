@@ -2079,10 +2079,11 @@ class Worker(object):
 	def calibrate_instrument_producer(self):
 		cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 		if cmd:
+			self.spotread_just_do_instrument_calibration = True
 			result = self.add_measurement_features(args, display=False)
 			if isinstance(result, Exception):
+				self.spotread_just_do_instrument_calibration = False
 				return result
-			self.spotread_just_do_instrument_calibration = True
 			result = self.exec_cmd(cmd, args, skip_scripts=True)
 			self.spotread_just_do_instrument_calibration = False
 			return result
@@ -2393,7 +2394,12 @@ class Worker(object):
 		elif self.get_instrument_name() == "ColorMunki":
 			msg = lang.getstr("instrument.calibrate.colormunki")
 		else:
-			serial = re.search("Serial no. (\S+)", self.recent.read(), re.I)
+			# Detect type of calibration (emissive dark or reflective)
+			# by looking for serial number of calibration tile
+			# Argyll up to 1.8.3: 'Serial no.'
+			# Argyll 1.9.x: 'S/N'
+			serial = re.search("(?:Serial no.|S/N) (\S+)", self.recent.read(),
+							   re.I)
 			if serial:
 				# Reflective calibration, white reference tile required
 				# (e.g. i1 Pro hires mode)
