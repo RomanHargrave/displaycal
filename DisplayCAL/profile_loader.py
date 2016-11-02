@@ -964,11 +964,11 @@ class ProfileLoader(object):
 
 		with self.lock:
 			self._next = True
+			self._enumerate_monitors()
 			if sys.getwindowsversion() < (6, ):
 				# Under XP, we can't use the registry to figure out if the
 				# display change was a display configuration change (e.g.
 				# display added/removed) or just a resolution change
-				self._enumerate_monitors()
 				self._has_display_changed = True
 
 	def _check_display_changed(self, first_run=False, dry_run=False):
