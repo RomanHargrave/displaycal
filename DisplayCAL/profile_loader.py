@@ -1128,7 +1128,7 @@ class ProfileLoader(object):
 									   moninfo["Device"])
 					self.profile_associations[key] = (profile, mtime)
 					self.profiles[key] = None
-					self.ramps[key] = (None, None)
+					self.ramps[key] = (None, None, None)
 					profile_association_changed = True
 					if not first_run and self._is_displaycal_running():
 						# Normally calibration loading is disabled while
@@ -1141,9 +1141,9 @@ class ProfileLoader(object):
 					continue
 				apply_profiles = self._should_apply_profiles()
 				recheck = False
-				(vcgt_ramp,
+				(vcgt_ramp, vcgt_ramp_hack,
 				 vcgt_values) = self.ramps.get(self._reset_gamma_ramps or key,
-											   (None, None))
+											   (None, None, None))
 				if not vcgt_ramp:
 					vcgt_values = ([], [], [])
 					if not self._reset_gamma_ramps:
@@ -1197,10 +1197,20 @@ class ProfileLoader(object):
 								   profile_name)
 					# Convert vcgt to ushort_Array_256_Array_3
 					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
+					vcgt_ramp_hack = ((ctypes.c_ushort * 256) * 3)()
 					for j in xrange(len(vcgt_values[0])):
 						for k in xrange(3):
-							vcgt_ramp[k][j] = vcgt_values[k][j][1]
+							vcgt_value = vcgt_values[k][j][1]
+							vcgt_ramp[k][j] = vcgt_value
+							# Some video drivers won't reload gamma ramps if
+							# the previously loaded calibration was the same.
+							# Work-around by first loading a slightly changed
+							# gamma ramp.
+							if j == 0:
+								vcgt_value += 1
+							vcgt_ramp_hack[k][j] = vcgt_value
 					self.ramps[self._reset_gamma_ramps or key] = (vcgt_ramp,
+																  vcgt_ramp_hack,
 																  vcgt_values)
 					recheck = True
 				if (not self._manual_restore and
@@ -1254,6 +1264,8 @@ class ProfileLoader(object):
 							   "(%s)" % display)
 					continue
 				try:
+					if self._is_buggy_video_driver(moninfo):
+						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp_hack)
 					result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
 				except Exception, exception:
 					result = exception
@@ -1363,6 +1375,8 @@ class ProfileLoader(object):
 			safe_print("-" * 80)
 			safe_print("Enumerating monitors and display devices")
 			safe_print("-" * 80)
+		self.adapters = dict([(device.DeviceName, device) for device in
+							   get_display_devices(None)])
 		self.monitors = []
 		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
@@ -1385,8 +1399,15 @@ class ProfileLoader(object):
 					safe_print("WARNING: Monitor %i has no active display device" %
 							   i)
 				safe_print("Monitor %i display name" % i, end=" ")
+			moninfo["_adapter"] = self.adapters.get(moninfo["Device"],
+													ICCP.ADict({"DeviceString":
+																moninfo["Device"][4:]}))
 			display, edid = get_display_name_edid(device, moninfo)
 			safe_print(display)
+			if self._is_buggy_video_driver(moninfo):
+				safe_print("Buggy video driver detected: %s." %
+						   moninfo["_adapter"].DeviceString,
+						   "Gamma ramp hack activated.")
 			if debug:
 				safe_print("Enumerating 1st display device for monitor %i %r" %
 						   (i, moninfo["Device"]))
@@ -1426,6 +1447,13 @@ class ProfileLoader(object):
 		for partial in self._known_window_classes:
 			if partial in cls:
 				return True
+
+	def _is_buggy_video_driver(self, moninfo):
+		# Intel video drivers won't reload gamma ramps if the
+		# previously loaded calibration was the same.
+		# Work-around by first loading a slightly changed
+		# gamma ramp.
+		return "INTEL" in moninfo["_adapter"].DeviceString.upper()
 
 	def _is_displaycal_running(self):
 		displaycal_lockfile = os.path.join(confighome, appbasename + ".lock")
@@ -1800,6 +1828,8 @@ def get_display_name_edid(device, moninfo=None):
 							  "%i, %i, %ix%i" %
 							  (m_left, m_top, m_width,
 							   m_height)])
+		if moninfo.get("_adapter"):
+			display += u" (%s)" % moninfo["_adapter"].DeviceString
 	return display, edid
 
 def main():
