@@ -115,7 +115,7 @@ class GenTCPSockPatternGeneratorServer(object):
 			host = gethostname()
 			try:
 				host = gethostbyname(host)
-			except socket.error:
+			except error:
 				pass
 			self.logfile.write(lang.getstr("connection.waiting") +
 							   (" %s:%s\n" % (host, self.port)))
