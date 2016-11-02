@@ -64,7 +64,7 @@ class SafePrinter():
 			if not isinstance(arg, basestring):
 				arg = safe_unicode(arg)
 			if isinstance(arg, unicode) and encoding:
-				arg = arg.encode(encoding, "replace")
+				arg = arg.encode(encoding, "asciize")
 			strargs.append(arg)
 		line = sep.join(strargs).rstrip(end)
 		try:
