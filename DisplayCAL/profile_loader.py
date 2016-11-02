@@ -997,7 +997,7 @@ class ProfileLoader(object):
 					if not (first_run or dry_run):
 						safe_print(lang.getstr("display_detected"))
 						if debug:
-							safe_print(display)
+							safe_print(display.replace("\0", ""))
 					if not (first_run or dry_run) or not self.monitors:
 						self._enumerate_monitors()
 						if getcfg("profile_loader.fix_profile_associations"):
