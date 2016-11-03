@@ -84,6 +84,7 @@ from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
+from network import gethostbyname_local
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
@@ -5623,7 +5624,7 @@ while 1:
 		if display_name == "Prisma":
 			host = getcfg("patterngenerator.prisma.host")
 			try:
-				host = socket.gethostbyname(host)
+				host = gethostbyname_local(host)
 			except socket.error:
 				pass
 			return "prisma:%s" % host

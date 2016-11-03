@@ -8,6 +8,18 @@ from log import safe_print
 from util_str import safe_str, safe_unicode
 
 
+def gethostbyname_local(hostname):
+	""" Version of gethostbyname that also tries <hostname>.local """
+	hostnames = [hostname + ".local", hostname]
+	while hostnames:
+		try:
+			return socket.gethostbyname(hostnames.pop())
+		except socket.error:
+			if hostnames:
+				continue
+			raise
+
+
 class ScriptingClientSocket(socket.socket):
 
 	def __del__(self):

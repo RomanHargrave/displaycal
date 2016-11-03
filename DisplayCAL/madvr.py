@@ -26,6 +26,7 @@ if sys.platform == "win32":
 import localization as lang
 from log import safe_print as log_safe_print
 from meta import name as appname, version
+from network import gethostbyname_local
 from ordereddict import OrderedDict
 from util_str import safe_str, safe_unicode
 
@@ -344,7 +345,7 @@ class MadTPG_Net(object):
 		self._commandno = 0
 		self._commands = {}
 		hostname = socket.gethostname()
-		self._host = socket.gethostbyname(hostname)
+		self._host = gethostbyname_local(hostname)
 		self._incoming = {}
 		self._ips = [i[4][0] for i in socket.getaddrinfo(hostname, None)]
 		self._pid = 0
@@ -734,7 +735,7 @@ class MadTPG_Net(object):
 
 	def connect_to_ip(self, ip, timeout=1000):
 		""" Connect to madTPG running under a known IP address """
-		ip = socket.gethostbyname(ip)
+		ip = gethostbyname_local(ip)
 		for port in self.server_ports:
 			conn = self._get_client_socket(ip, port)
 			threading.Thread(target=self._connect,

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from socket import (AF_INET, SHUT_RDWR, SO_BROADCAST, SO_REUSEADDR, SOCK_DGRAM,
-					SOCK_STREAM, SOL_SOCKET, error, gethostbyname, gethostname,
+					SOCK_STREAM, SOL_SOCKET, error, gethostname,
 					socket, timeout)
 from time import sleep
 import errno
@@ -15,6 +15,7 @@ import demjson
 
 import localization as lang
 from log import safe_print
+from network import gethostbyname_local
 from util_http import encode_multipart_formdata
 from util_str import safe_unicode
 
@@ -77,7 +78,7 @@ class GenHTTPPatternGeneratorClient(object):
 		pass
 
 	def connect(self):
-		self.ip = gethostbyname(self.host)
+		self.ip = gethostbyname_local(self.host)
 		self.conn = httplib.HTTPConnection(self.ip, self.port)
 		self.conn.connect()
 
@@ -114,7 +115,7 @@ class GenTCPSockPatternGeneratorServer(object):
 		if self.logfile:
 			host = gethostname()
 			try:
-				host = gethostbyname(host)
+				host = gethostbyname_local(host)
 			except error:
 				pass
 			self.logfile.write(lang.getstr("connection.waiting") +
