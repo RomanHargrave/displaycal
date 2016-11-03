@@ -131,7 +131,7 @@ from wxTestchartEditor import TestchartEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
-					 set_bitmap_labels, TempXmlResource)
+					 set_bitmap_labels, TempXmlResource, wx_Panel)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
@@ -13718,7 +13718,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									   size=(100, 100))
 		self.aboutdialog.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		items = []
-		items.append(wx.Panel(self.aboutdialog, -1, size=(-1, 6)))
+		items.append(wx_Panel(self.aboutdialog, -1, size=(-1, 6)))
 		items[-1].BackgroundColour = "#66CC00"
 		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
