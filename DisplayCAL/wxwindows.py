@@ -28,7 +28,7 @@ from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
-from network import gethostbyname_local
+from network import get_valid_host
 from options import debug
 from ordereddict import OrderedDict
 from network import ScriptingClientSocket
@@ -723,7 +723,7 @@ class BaseFrame(wx.Frame):
 			addr, port = sys._appsocket.getsockname()
 			if addr == "0.0.0.0":
 				try:
-					addr = gethostbyname_local(socket.gethostname())
+					addr = get_valid_host(hostname)[1]
 				except socket.error:
 					pass
 			safe_print(lang.getstr("app.listening", (addr, port)))

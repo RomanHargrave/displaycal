@@ -93,7 +93,6 @@ from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
 from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
 				  version, version_short)
-from network import gethostbyname_local
 from options import debug, test, verbose
 from ordereddict import OrderedDict
 from trash import trash, TrashAborted, TrashcanUnavailableError
@@ -7252,7 +7251,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.sizer0.Layout()
 			def check_host(host):
 				try:
-					ip = gethostbyname_local(host)
+					ip = socket.gethostbyname(host)
 				except socket.error, exception:
 					result = exception
 				else:
