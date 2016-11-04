@@ -723,7 +723,7 @@ class BaseFrame(wx.Frame):
 			addr, port = sys._appsocket.getsockname()
 			if addr == "0.0.0.0":
 				try:
-					addr = get_valid_host(hostname)[1]
+					addr = get_valid_host()[1]
 				except socket.error:
 					pass
 			safe_print(lang.getstr("app.listening", (addr, port)))
