@@ -20,7 +20,7 @@ def get_network_addr():
 	# as remote address, but could use any valid non-local address (doesn't
 	# matter if it is actually reachable)
 	try:
-		s.connect(('8.8.8.8', 0))
+		s.connect(('8.8.8.8', 53))
 		return s.getsockname()[0]  # Return network address
 	finally:
 		s.close()
