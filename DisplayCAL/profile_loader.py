@@ -501,6 +501,9 @@ if sys.platform == "win32":
 			dlg.Destroy()
 
 		def identify_displays(self, event):
+			for display, frame in self.display_identification_frames.items():
+				if not frame:
+					self.display_identification_frames.pop(display)
 			for display, edid, moninfo, device0 in self.pl.monitors:
 				frame = self.display_identification_frames.get(display)
 				if frame:
