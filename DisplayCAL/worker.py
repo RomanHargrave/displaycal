@@ -1135,7 +1135,7 @@ class DummyDialog(object):
 	def __init__(self, *args, **kwargs):
 		self.is_shown_on_screen = True
 
-	def Close(self):
+	def Close(self, force=False):
 		pass
 
 	def Destroy(self):

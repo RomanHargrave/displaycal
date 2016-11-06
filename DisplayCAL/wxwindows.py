@@ -648,7 +648,7 @@ class BaseApp(wx.App):
 		if self.TopWindow and self.TopWindow is not self._query_end_session:
 			if not isinstance(self.TopWindow, wx.Dialog):
 				safe_print("Trying to close main top-level application window")
-				if self.TopWindow.Close():
+				if self.TopWindow.Close(force=not event.CanVeto()):
 					self.TopWindow.listening = False
 					self._query_end_session = self.TopWindow
 					safe_print("Closed main top-level application window")
