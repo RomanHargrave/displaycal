@@ -36,9 +36,11 @@ if sys.platform == "win32":
 						iccprofiles)
 	from debughelpers import handle_error
 	from edid import get_edid
+	from ordereddict import OrderedDict
 	from util_os import getenvu
 	from util_str import safe_unicode
 	from util_win import (calibration_management_isenabled,
+						  enable_per_user_profiles,
 						  get_active_display_device, get_display_devices,
 						  get_file_info, get_pids, get_process_filename,
 						  get_real_display_devices_info,
@@ -50,6 +52,50 @@ if sys.platform == "win32":
 	import ICCProfile as ICCP
 	import localization as lang
 	import madvr
+
+
+	class DisplayIdentificationFrame(wx.Frame):
+
+		def __init__(self, display, pos, size):
+			wx.Frame.__init__(self, None, pos=pos, size=size,
+							  style=wx.CLIP_CHILDREN | wx.STAY_ON_TOP |
+									wx.FRAME_NO_TASKBAR | wx.NO_BORDER,
+							  name="DisplayIdentification")
+			#self.SetTransparent(240)
+			self.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
+			self.Sizer = wx.BoxSizer()
+			panel_outer = wx.Panel(self)
+			panel_outer.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
+			panel_outer.BackgroundColour = "#111111"
+			panel_outer.Sizer = wx.BoxSizer()
+			self.Sizer.Add(panel_outer, 1, flag=wx.EXPAND)
+			panel_inner = wx.Panel(panel_outer)
+			panel_inner.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
+			panel_inner.BackgroundColour = "#111111"
+			panel_inner.Sizer = wx.BoxSizer()
+			panel_outer.Sizer.Add(panel_inner, 1, flag=wx.ALL | wx.EXPAND,
+								  border=4)
+			display_parts = display.split("@", 1)
+			if len(display_parts) > 1:
+				info = display_parts[1].split()
+				display_parts[1] = "@ " + " ".join(info[:3])
+				display_parts.append(" ".join(info[3:]).strip(" -"))
+			label = "\n".join(display_parts)
+			text = wx.StaticText(panel_inner, -1, label, style=wx.ALIGN_CENTER)
+			text.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
+			text.ForegroundColour = "#FFFFFF"
+			font = wx.Font(text.Font.PointSize * 4, wx.FONTFAMILY_DEFAULT,
+						   wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
+			if not font.SetFaceName("Segoe UI Light"):
+				font = text.Font
+				font.PointSize *= 4
+				font.weight = wx.FONTWEIGHT_LIGHT
+			text.Font = font
+			panel_inner.Sizer.Add(text, 1, flag=wx.ALIGN_CENTER_VERTICAL)
+			self.Layout()
+			self.Show()
+			self.close_timer = wx.CallLater(3000, lambda: self and self.Close())
+
 
 	class ProfileLoaderExceptionsDialog(ConfirmDialog):
 		
@@ -321,15 +367,17 @@ if sys.platform == "win32":
 		def __init__(self, pl):
 			self.pl = pl
 			self.current_user = False
+			self.display_identification_frames = {}
 			InfoDialog.__init__(self, None,
 								msg="",
-								title=lang.getstr("profile_loader.profile_associations"),
+								title=lang.getstr("profile_associations"),
 								ok=lang.getstr("close"),
 								bitmap=geticon(32, "display"),
-								show=False, wrap=128)
+								show=False, log=False, wrap=128)
 			dlg = self
 			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
 						 appname + "-apply-profiles"))
+			dlg.message.Hide()
 			dlg.set_as_default_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("set_as_default"))
 			dlg.sizer2.Insert(1, dlg.set_as_default_btn, flag=wx.RIGHT, border=12)
 			dlg.set_as_default_btn.Bind(wx.EVT_BUTTON, dlg.set_as_default)
@@ -347,10 +395,23 @@ if sys.platform == "win32":
 			dlg.display_ctrl = wx.Choice(dlg, -1)
 			dlg.display_ctrl.Bind(wx.EVT_CHOICE,
 								  lambda e: dlg.update_profiles())
-			dlg.sizer3.Insert(0, dlg.display_ctrl, 1, flag=wx.BOTTOM |
-														   wx.ALIGN_LEFT |
+			dlg.sizer3.Insert(0, dlg.display_ctrl, 1, flag=wx.ALIGN_LEFT |
 														   wx.EXPAND | wx.TOP,
-							  border=4)
+							  border=5)
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			dlg.sizer3.Insert(1, hsizer, flag=wx.ALIGN_LEFT | wx.EXPAND)
+			dlg.use_my_settings_cb = wx.CheckBox(dlg, -1,
+												 lang.getstr("profile_associations.use_my_settings"))
+			dlg.use_my_settings_cb.Bind(wx.EVT_CHECKBOX, self.use_my_settings)
+			hsizer.Add(dlg.use_my_settings_cb, flag=wx.TOP | wx.BOTTOM |
+													wx.ALIGN_LEFT |
+													wx.ALIGN_CENTER_VERTICAL,
+					   border=12)
+			hsizer.Add((1, 1), 1)
+			identify_btn = wx.Button(dlg, -1, lang.getstr("displays.identify"))
+			identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
+			hsizer.Add(identify_btn, flag=wx.ALIGN_RIGHT |
+										  wx.ALIGN_CENTER_VERTICAL)
 			list_panel = wx.Panel(dlg, -1)
 			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -371,10 +432,16 @@ if sys.platform == "win32":
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
 						   lambda e: (dlg.remove_btn.Disable(),
 									  dlg.set_as_default_btn.Disable()))
+			dlg.sizer3.Add(list_panel, flag=wx.BOTTOM | wx.ALIGN_LEFT,
+						   border=12)
 			dlg.profiles_ctrl = list_ctrl
+			dlg.fix_profile_associations_cb = wx.CheckBox(dlg, -1,
+														  lang.getstr("profile_loader.fix_profile_associations"))
+			dlg.fix_profile_associations_cb.SetValue(bool(getcfg("profile_loader.fix_profile_associations")))
+			dlg.fix_profile_associations_cb.Bind(wx.EVT_CHECKBOX,
+												 self.toggle_fix_profile_associations)
+			dlg.sizer3.Add(dlg.fix_profile_associations_cb, flag=wx.ALIGN_LEFT)
 			dlg.update()
-			dlg.sizer3.Add(list_panel, 1, flag=wx.BOTTOM | wx.ALIGN_LEFT,
-						   border=8)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
@@ -433,6 +500,21 @@ if sys.platform == "win32":
 					wx.Bell()
 			dlg.Destroy()
 
+		def identify_displays(self, event):
+			for display, edid, moninfo, device0 in self.pl.monitors:
+				frame = self.display_identification_frames.get(display)
+				if frame:
+					frame.close_timer.Stop()
+					frame.close_timer.Start(3000)
+				else:
+					m_left, m_top, m_right, m_bottom = moninfo["Monitor"]
+					m_width = abs(m_right - m_left)
+					m_height = abs(m_bottom - m_top)
+					pos = m_left + m_width / 4, m_top + m_height / 4
+					size = (m_width / 2, m_height / 2)
+					frame = DisplayIdentificationFrame(display, pos, size)
+					self.display_identification_frames[display] = frame
+
 		def remove_profile(self, event):
 			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 													wx.LIST_STATE_SELECTED)
@@ -454,24 +536,38 @@ if sys.platform == "win32":
 				fn = ICCP.unset_display_profile
 			else:
 				fn = ICCP.set_display_profile
+			self._update_configuration(fn, profile)
+
+		def _update_configuration(self, fn, arg0):
 			dindex = self.display_ctrl.GetSelection()
 			display, edid, moninfo, device0 = self.pl.monitors[dindex]
 			device = get_active_display_device(moninfo["Device"])
 			if device0 and device:
-				fn(profile,  devicekey=device0.DeviceKey)
+				fn(arg0,  devicekey=device0.DeviceKey)
 				self.pl._next = True
 				if device.DeviceKey != device0.DeviceKey:
-					fn(profile,  devicekey=device.DeviceKey)
+					fn(arg0,  devicekey=device.DeviceKey)
 				self.update_profiles(self.pl.monitors[dindex])
 			else:
 				wx.Bell()
+
+		def toggle_fix_profile_associations(self, event):
+			restart = event.IsChecked()
+			if restart:
+				self.EndModal(wx.ID_OK)
+			self.pl._toggle_fix_profile_associations(event, alt=False)
+			if restart:
+				safe_print("HMM...")
+				wx.CallAfter(self.pl._set_profile_associations, None)
+			else:
+				self.update_profiles()
 
 		def update(self, event=None):
 			self.display_ctrl.SetItems([entry[0] for entry in self.pl.monitors])
 			if self.pl.monitors:
 				self.display_ctrl.SetSelection(0)
 			self.update_profiles()
-			if event:
+			if event and not self.IsActive():
 				self.RequestUserAttention()
 
 		def update_profiles(self, monitor=None):
@@ -487,12 +583,13 @@ if sys.platform == "win32":
 					wx.Bell()
 					return
 			display, edid, moninfo, device0 = monitor
-			device = get_active_display_device(moninfo["Device"])
+			device = device0
 			if not device:
 				wx.Bell()
 				return
 			monkey = device.DeviceKey.split("\\")[-2:]
 			self.current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
+			self.use_my_settings_cb.SetValue(self.current_user)
 			self.profiles = ICCP._winreg_get_display_profiles(monkey, self.current_user)
 			self.profiles.reverse()
 			try:
@@ -511,6 +608,10 @@ if sys.platform == "win32":
 				i += 1
 			self.add_btn.Enable(self.current_user)
 
+		def use_my_settings(self, event):
+			self._update_configuration(enable_per_user_profiles,
+									   event.IsChecked())
+
 
 class ProfileLoader(object):
 
@@ -523,7 +624,8 @@ class ProfileLoader(object):
 		self.reload_count = 0
 		self.lock = threading.Lock()
 		self.monitoring = True
-		self.monitors = []
+		self.monitors = []  # Display devices that can be represented as ON
+		self.display_devices = {}  # All display devices
 		self.numwindows = 0
 		self.profile_associations = {}
 		self.profiles = {}
@@ -704,7 +806,7 @@ class ProfileLoader(object):
 								   wx.ITEM_NORMAL, None, None),
 								  ("-", None, False, None, None)]
 					if sys.getwindowsversion() >= (6, ):
-						menu_items.extend([("profile_loader.profile_associations",
+						menu_items.extend([("profile_associations",
 											self.pl._set_profile_associations,
 											wx.ITEM_NORMAL, None, None),
 										   ("mswin.open_display_settings",
@@ -1096,6 +1198,12 @@ class ProfileLoader(object):
 
 	def exit(self, event=None):
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
+		if getattr(self, "modaldlg", None):
+			self.modaldlg.RequestUserAttention()
+			if event.CanVeto():
+				event.Veto()
+				safe_print("Vetoed", event)
+			return
 		if (event and self.frame and
 			event.GetEventType() == wx.EVT_MENU.typeId and
 			(not calibration_management_isenabled() or
@@ -1139,7 +1247,8 @@ class ProfileLoader(object):
 		except pywintypes.error, exception:
 			pass
 		windows.extend(filter(lambda window: not isinstance(window, wx.Dialog) and
-											 window.Name != "TaskBarNotification",
+											 window.Name != "TaskBarNotification" and
+											 window.Name != "DisplayIdentification",
 							  wx.GetTopLevelWindows()))
 		numwindows = len(windows)
 		if numwindows < self.numwindows:
@@ -1172,6 +1281,9 @@ class ProfileLoader(object):
 				# display change was a display configuration change (e.g.
 				# display added/removed) or just a resolution change
 				self._has_display_changed = True
+			if getattr(self, "profile_associations_dlg", None):
+				wx.CallLater(1000, lambda: self.profile_associations_dlg and
+										   self.profile_associations_dlg.update(True))
 
 	def _check_display_changed(self, first_run=False, dry_run=False):
 		# Check registry if display configuration changed (e.g. if a display
@@ -1218,9 +1330,6 @@ class ProfileLoader(object):
 						# DisplayCAL is running. Override this when the
 						# display has changed
 						self._manual_restore = 2
-					if getattr(self, "profile_associations_dlg", None):
-						wx.CallAfter(lambda: self.profile_associations_dlg and
-											 self.profile_associations_dlg.update(True))
 				if not dry_run:
 					self._current_display = display
 					self._current_timestamp = timestamp
@@ -1576,13 +1685,22 @@ class ProfileLoader(object):
 		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
-		if debug:
-			safe_print("-" * 80)
-			safe_print("Enumerating monitors and display devices")
-			safe_print("-" * 80)
+		safe_print("-" * 80)
+		safe_print("Enumerating display adapters and devices:")
+		safe_print("")
 		self.adapters = dict([(device.DeviceName, device) for device in
 							   get_display_devices(None)])
 		self.monitors = []
+		self.display_devices = OrderedDict()
+		for adapter in self.adapters:
+			for i, device in enumerate(get_display_devices(adapter)):
+				if not i:
+					device0 = device
+				if self.display_devices.get(device.DeviceKey):
+					continue
+				display, edid = get_display_name_edid(device)
+				self.display_devices[device.DeviceKey] = [display, edid, device,
+														  device0]
 		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
@@ -1608,7 +1726,7 @@ class ProfileLoader(object):
 													ICCP.ADict({"DeviceString":
 																moninfo["Device"][4:]}))
 			display, edid = get_display_name_edid(device, moninfo)
-			safe_print(display)
+			self.display_devices[device.DeviceKey][0] = display
 			if self._is_buggy_video_driver(moninfo):
 				safe_print("Buggy video driver detected: %s." %
 						   moninfo["_adapter"].DeviceString,
@@ -1634,6 +1752,18 @@ class ProfileLoader(object):
 				safe_print("Monitor %i 1st display device key:" % i,
 						   device0.DeviceKey)
 			self.monitors.append((display, edid, moninfo, device0))
+		for display, edid, device, device0 in self.display_devices.itervalues():
+			if device.DeviceKey == device0.DeviceKey:
+				device_name = "\\".join(device.DeviceName.split("\\")[:-1])
+				safe_print(self.adapters.get(device_name,
+											 ICCP.ADict({"DeviceString":
+														 device_name[4:]})).DeviceString)
+			display_parts = display.split("@", 1)
+			if len(display_parts) > 1:
+				info = display_parts[1].split()
+				display_parts[1] = "@ " + " ".join(info[:3])
+			safe_print("  |-", " ".join(display_parts))
+		safe_print("-" * 80)
 
 	def _enumerate_windows_callback(self, hwnd, extra):
 		cls = win32gui.GetClassName(hwnd)
@@ -1929,8 +2059,9 @@ class ProfileLoader(object):
 				 self._manual_restore == manual_override) and
 				not self._is_other_running(enumerate_windows_and_processes))
 
-	def _toggle_fix_profile_associations(self, event):
-		safe_print("Menu command:", end=" ")
+	def _toggle_fix_profile_associations(self, event, alt=True):
+		if event:
+			safe_print("Menu command:", end=" ")
 		safe_print("Toggle fix profile associations", event.IsChecked())
 		if event.IsChecked():
 			self._set_display_profiles(dry_run=True)
@@ -1938,6 +2069,8 @@ class ProfileLoader(object):
 								msg=lang.getstr("profile_loader.fix_profile_associations_warning"), 
 								title=self.get_title(),
 								ok=lang.getstr("profile_loader.fix_profile_associations"), 
+								alt=lang.getstr("profile_associations") if alt
+									else None,
 								bitmap=geticon(32, "dialog-warning"), wrap=128)
 			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
 						 appname + "-apply-profiles"))
@@ -1989,8 +2122,11 @@ class ProfileLoader(object):
 			self.modaldlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
-			if result != wx.ID_OK:
+			if result == wx.ID_CANCEL:
 				safe_print("Cancelled toggling fix profile associations")
+				return
+			elif result != wx.ID_OK:
+				self._set_profile_associations(None)
 				return
 		with self.lock:
 			setcfg("profile_loader.fix_profile_associations",
@@ -2022,7 +2158,9 @@ class ProfileLoader(object):
 					   "Action=%s" % (reset and "Reset" or "Disable"), path)
 
 	def _set_profile_associations(self, event):
-		safe_print("Menu command: Set profile associations")
+		if event:
+			safe_print("Menu command:", end=" ")
+		safe_print("Set profile associations")
 		dlg = ProfileAssociationsDialog(self)
 		self.profile_associations_dlg = dlg
 		dlg.Center()
@@ -2030,14 +2168,15 @@ class ProfileLoader(object):
 
 
 def get_display_name_edid(device, moninfo=None):
+	edid = {}
 	if device:
 		display = safe_unicode(device.DeviceString)
+		try:
+			edid = get_edid(device=device)
+		except Exception, exception:
+			pass
 	else:
 		display = lang.getstr("unknown")
-	try:
-		edid = get_edid(device=device)
-	except Exception, exception:
-		edid = {}
 	display = edid.get("monitor_name", display)
 	if moninfo:
 		m_left, m_top, m_right, m_bottom = moninfo["Monitor"]
@@ -2048,7 +2187,7 @@ def get_display_name_edid(device, moninfo=None):
 							  (m_left, m_top, m_width,
 							   m_height)])
 		if moninfo.get("_adapter"):
-			display += u" (%s)" % moninfo["_adapter"].DeviceString
+			display += u" - %s" % moninfo["_adapter"].DeviceString
 	return display, edid
 
 def main():
