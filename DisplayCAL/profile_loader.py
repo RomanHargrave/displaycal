@@ -19,6 +19,7 @@ from options import debug
 if sys.platform == "win32":
 	import errno
 	import ctypes
+	import glob
 	import struct
 	import subprocess as sp
 	import traceback
@@ -31,7 +32,8 @@ if sys.platform == "win32":
 	import win32process
 
 	from colord import device_id_from_edid
-	from config import (exe, get_default_dpi, get_icon_bundle, geticon)
+	from config import (exe, get_default_dpi, get_icon_bundle, geticon,
+						iccprofiles)
 	from debughelpers import handle_error
 	from edid import get_edid
 	from util_os import getenvu
@@ -39,7 +41,8 @@ if sys.platform == "win32":
 	from util_win import (calibration_management_isenabled,
 						  get_active_display_device, get_display_devices,
 						  get_file_info, get_pids, get_process_filename,
-						  get_real_display_devices_info)
+						  get_real_display_devices_info,
+						  per_user_profiles_isenabled)
 	from worker import UnloggedError, show_result_dialog
 	from wxaddons import CustomGridCellEvent
 	from wxwindows import (BaseFrame, ConfirmDialog, CustomCellBoolRenderer,
@@ -313,6 +316,202 @@ if sys.platform == "win32":
 			self.ok.Enable()
 
 
+	class ProfileAssociationsDialog(InfoDialog):
+
+		def __init__(self, pl):
+			self.pl = pl
+			self.current_user = False
+			InfoDialog.__init__(self, None,
+								msg="",
+								title=lang.getstr("profile_loader.profile_associations"),
+								ok=lang.getstr("close"),
+								bitmap=geticon(32, "display"),
+								show=False, wrap=128)
+			dlg = self
+			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
+						 appname + "-apply-profiles"))
+			dlg.set_as_default_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("set_as_default"))
+			dlg.sizer2.Insert(1, dlg.set_as_default_btn, flag=wx.RIGHT, border=12)
+			dlg.set_as_default_btn.Bind(wx.EVT_BUTTON, dlg.set_as_default)
+			dlg.set_as_default_btn.Disable()
+			dlg.remove_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("remove"))
+			dlg.sizer2.Insert(0, dlg.remove_btn, flag=wx.RIGHT | wx.LEFT, border=12)
+			dlg.remove_btn.Bind(wx.EVT_BUTTON, dlg.remove_profile)
+			dlg.remove_btn.Disable()
+			dlg.add_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("add"))
+			dlg.sizer2.Insert(0, dlg.add_btn, flag=wx.LEFT, border=32 + 12)
+			dlg.add_btn.Bind(wx.EVT_BUTTON, dlg.add_profile)
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale < 1:
+				scale = 1
+			dlg.display_ctrl = wx.Choice(dlg, -1)
+			dlg.display_ctrl.Bind(wx.EVT_CHOICE,
+								  lambda e: dlg.update_profiles())
+			dlg.sizer3.Insert(0, dlg.display_ctrl, 1, flag=wx.BOTTOM |
+														   wx.ALIGN_LEFT |
+														   wx.EXPAND | wx.TOP,
+							  border=4)
+			list_panel = wx.Panel(dlg, -1)
+			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+			hscroll = wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y)
+			numrows = 10
+			list_ctrl = wx.ListCtrl(list_panel, -1,
+									size=(640 * scale,
+										  (20 * numrows + 25 + hscroll) * scale),
+									style=wx.LC_REPORT | wx.LC_SINGLE_SEL |
+										  wx.BORDER_THEME,
+									name="displays2profiles")
+			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
+			list_ctrl.InsertColumn(0, lang.getstr("profile"))
+			list_ctrl.SetColumnWidth(0, int(620 * scale))
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
+						   lambda e: (dlg.remove_btn.Enable(self.current_user),
+									  dlg.set_as_default_btn.Enable()))
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
+						   lambda e: (dlg.remove_btn.Disable(),
+									  dlg.set_as_default_btn.Disable()))
+			dlg.profiles_ctrl = list_ctrl
+			dlg.update()
+			dlg.sizer3.Add(list_panel, 1, flag=wx.BOTTOM | wx.ALIGN_LEFT,
+						   border=8)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			dlg.ok.SetDefault()
+
+		def add_profile(self, event):
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("profile.choose"),
+								title=lang.getstr("add"),
+								ok=lang.getstr("ok"),
+								cancel=lang.getstr("cancel"),
+								bitmap=geticon(32, appname + "-profile-info"),
+								wrap=128)
+			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
+						 appname + "-apply-profiles"))
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale < 1:
+				scale = 1
+			list_panel = wx.Panel(dlg, -1)
+			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+			hscroll = wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y)
+			numrows = 15
+			list_ctrl = wx.ListCtrl(list_panel, -1,
+									size=(640 * scale,
+										  (20 * numrows + 25 + hscroll) * scale),
+									style=wx.LC_REPORT | wx.LC_SINGLE_SEL |
+										  wx.BORDER_THEME,
+									name="displays2profiles")
+			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
+			list_ctrl.InsertColumn(0, lang.getstr("profile"))
+			list_ctrl.SetColumnWidth(0, int(620 * scale))
+			profiles = []
+			for pth in glob.glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
+				try:
+					profile = ICCP.ICCProfile(pth, False)
+				except (IOError, ICCP.ICCProfileInvalidError, exception):
+					continue
+				if profile.profileClass == "mntr":
+					profiles.append(os.path.basename(pth))
+			for i, profile in enumerate(profiles):
+				pindex = list_ctrl.InsertStringItem(i, "")
+				list_ctrl.SetStringItem(pindex, 0, profile)
+			dlg.profiles_ctrl = list_ctrl
+			dlg.sizer3.Add(list_panel, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			dlg.ok.SetDefault()
+			dlg.Center()
+			result = dlg.ShowModal()
+			if result == wx.ID_OK:
+				pindex = list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+											   wx.LIST_STATE_SELECTED)
+				if pindex > -1:
+					self.set_profile(list_ctrl.GetItemText(pindex))
+				else:
+					wx.Bell()
+			dlg.Destroy()
+
+		def remove_profile(self, event):
+			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+													wx.LIST_STATE_SELECTED)
+			if pindex > -1:
+				self.set_profile(self.profiles[pindex], True)
+			else:
+				wx.Bell()
+
+		def set_as_default(self, event):
+			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+													wx.LIST_STATE_SELECTED)
+			if pindex > -1:
+				self.set_profile(self.profiles[pindex])
+			else:
+				wx.Bell()
+
+		def set_profile(self, profile, unset=False):
+			if unset:
+				fn = ICCP.unset_display_profile
+			else:
+				fn = ICCP.set_display_profile
+			dindex = self.display_ctrl.GetSelection()
+			display, edid, moninfo, device0 = self.pl.monitors[dindex]
+			device = get_active_display_device(moninfo["Device"])
+			if device0 and device:
+				fn(profile,  devicekey=device0.DeviceKey)
+				self.pl._next = True
+				if device.DeviceKey != device0.DeviceKey:
+					fn(profile,  devicekey=device.DeviceKey)
+				self.update_profiles(self.pl.monitors[dindex])
+			else:
+				wx.Bell()
+
+		def update(self, event=None):
+			self.display_ctrl.SetItems([entry[0] for entry in self.pl.monitors])
+			if self.pl.monitors:
+				self.display_ctrl.SetSelection(0)
+			self.update_profiles()
+			if event:
+				self.RequestUserAttention()
+
+		def update_profiles(self, monitor=None):
+			self.profiles_ctrl.DeleteAllItems()
+			self.add_btn.Disable()
+			self.remove_btn.Disable()
+			self.set_as_default_btn.Disable()
+			if not monitor:
+				dindex = self.display_ctrl.GetSelection()
+				if dindex > -1:
+					monitor = self.pl.monitors[dindex]
+				else:
+					wx.Bell()
+					return
+			display, edid, moninfo, device0 = monitor
+			device = get_active_display_device(moninfo["Device"])
+			if not device:
+				wx.Bell()
+				return
+			monkey = device.DeviceKey.split("\\")[-2:]
+			self.current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
+			self.profiles = ICCP._winreg_get_display_profiles(monkey, self.current_user)
+			self.profiles.reverse()
+			try:
+				current_profile = ICCP.get_display_profile(win_get_correct_profile=True,
+														   path_only=True,
+														   devicekey=device.DeviceKey)
+			except Exception, exception:
+				current_profile = None
+			i = 0
+			for profile in self.profiles:
+				pindex = self.profiles_ctrl.InsertStringItem(i, "")
+				description = profile
+				if profile == os.path.basename(current_profile or ""):
+					description += " (%s)" % lang.getstr("default")
+				self.profiles_ctrl.SetStringItem(pindex, 0, description)
+				i += 1
+			self.add_btn.Enable(self.current_user)
+
+
 class ProfileLoader(object):
 
 	def __init__(self):
@@ -448,6 +647,7 @@ class ProfileLoader(object):
 					self._error_icon = config.get_bitmap_as_icon(16, "apply-profiles-error")
 					self.set_visual_state(True)
 					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
+					self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.on_right_down)
 
 				def CreatePopupMenu(self):
 					# Popup menu appears on right-click
@@ -504,8 +704,8 @@ class ProfileLoader(object):
 								   wx.ITEM_NORMAL, None, None),
 								  ("-", None, False, None, None)]
 					if sys.getwindowsversion() >= (6, ):
-						menu_items.extend([("mswin.open_color_management_settings",
-											self.open_color_management_settings,
+						menu_items.extend([("profile_loader.profile_associations",
+											self.pl._set_profile_associations,
 											wx.ITEM_NORMAL, None, None),
 										   ("mswin.open_display_settings",
 											self.open_display_settings,
@@ -559,14 +759,14 @@ class ProfileLoader(object):
 				def on_left_down(self, event):
 					self.show_notification(toggle=True)
 
-				def open_color_management_settings(self, event):
-					safe_print("Menu command: Open color management settings")
-					try:
-						sp.call(["control", "/name", "Microsoft.ColorManagement"],
-								close_fds=True)
-					except Exception, exception:
+				def on_right_down(self, event):
+					wx.CallLater(50, self.check_user_attention)
+				
+				def check_user_attention(self):
+					if getattr(self.pl, "modaldlg", None):
 						wx.Bell()
-						safe_print(exception)
+						self.pl.modaldlg.Raise()
+						self.pl.modaldlg.RequestUserAttention()
 
 				def open_display_settings(self, event):
 					safe_print("Menu command: Open display settings")
@@ -592,6 +792,7 @@ class ProfileLoader(object):
 					safe_print("Menu command: Set exceptions")
 					dlg = ProfileLoaderExceptionsDialog(self.pl._exceptions,
 														self.pl._known_apps)
+					self.pl.modaldlg = dlg
 					result = dlg.ShowModal()
 					if result == wx.ID_OK:
 						exceptions = []
@@ -905,6 +1106,7 @@ class ProfileLoader(object):
 								bitmap=config.geticon(32, "dialog-warning"))
 			dlg.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 						 appname + "-apply-profiles"))
+			self.modaldlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK:
@@ -1016,6 +1218,9 @@ class ProfileLoader(object):
 						# DisplayCAL is running. Override this when the
 						# display has changed
 						self._manual_restore = 2
+					if getattr(self, "profile_associations_dlg", None):
+						wx.CallAfter(lambda: self.profile_associations_dlg and
+											 self.profile_associations_dlg.update(True))
 				if not dry_run:
 					self._current_display = display
 					self._current_timestamp = timestamp
@@ -1611,7 +1816,10 @@ class ProfileLoader(object):
 				if current_profile and current_profile != profile:
 					safe_print("Resetting profile association for %s:" %
 							   display_edid[0], current_profile, "->", profile)
-					ICCP.set_display_profile(profile, devicekey=devicekey)
+					try:
+						ICCP.set_display_profile(profile, devicekey=devicekey)
+					except WindowsError, exception:
+						safe_print(exception)
 
 	def _set_display_profiles(self, dry_run=False):
 		if debug:
@@ -1684,8 +1892,11 @@ class ProfileLoader(object):
 				not dry_run):
 				safe_print("Fixing profile association for %s:" % display,
 						   current_profile, "->", correct_profile)
-				ICCP.set_display_profile(os.path.basename(correct_profile),
-										 devicekey=device.DeviceKey)
+				try:
+					ICCP.set_display_profile(os.path.basename(correct_profile),
+											 devicekey=device.DeviceKey)
+				except WindowsError, exception:
+					safe_print(exception)
 
 	def _set_manual_restore(self, event):
 		if event:
@@ -1775,6 +1986,7 @@ class ProfileLoader(object):
 							  border=12)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
+			self.modaldlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK:
@@ -1808,6 +2020,13 @@ class ProfileLoader(object):
 			self._exceptions[path.lower()] = (enabled, reset, path)
 			safe_print("Enabled=%s" % bool(enabled),
 					   "Action=%s" % (reset and "Reset" or "Disable"), path)
+
+	def _set_profile_associations(self, event):
+		safe_print("Menu command: Set profile associations")
+		dlg = ProfileAssociationsDialog(self)
+		self.profile_associations_dlg = dlg
+		dlg.Center()
+		dlg.ShowModalThenDestroy(self)
 
 
 def get_display_name_edid(device, moninfo=None):

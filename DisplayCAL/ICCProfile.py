@@ -1431,6 +1431,26 @@ def _wcs_get_display_profile(devicekey,
 
 def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 	filename = None
+	filenames = _winreg_get_display_profiles(monkey, current_user)
+	while filenames:
+		# last existing file in the list is active
+		if os.path.isfile(os.path.join(iccprofiles[0], 
+									   filenames[-1])):
+			filename = filenames.pop()
+			break
+	if not filename and not current_user:
+		# fall back to sRGB
+		filename = os.path.join(iccprofiles[0], 
+								"sRGB Color Space Profile.icm")
+	if filename:
+		if path_only:
+			return os.path.join(iccprofiles[0], filename)
+		return ICCProfile(filename)
+	return None
+
+
+def _winreg_get_display_profiles(monkey, current_user=False):
+	filenames = []
 	try:
 		if current_user and sys.getwindowsversion() >= (6, ):
 			# Vista / Windows 7 ONLY
@@ -1448,7 +1468,7 @@ def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 		numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		for i in range(numvalues):
 			name, value, type_ = _winreg.EnumValue(key, i)
-			if name == "ICMProfile":
+			if name == "ICMProfile" and value:
 				if type_ == _winreg.REG_BINARY:
 					# Win2k/XP
 					# convert to list of strings
@@ -1457,22 +1477,13 @@ def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 					# Vista / Windows 7
 					# nothing to be done, _winreg returns a list of strings
 					pass
-				if isinstance(value, list):
-					while "" in value:
-						value.remove("")
-					while value:
-						# last existing file in the list is active
-						if os.path.isfile(os.path.join(iccprofiles[0], 
-													   value[-1])):
-							filename = value[-1]
-							break
-						value = value[:-1]
-				else:
-					if os.path.isfile(os.path.join(iccprofiles[0], 
-												   value)):
-						filename = value
+				if not isinstance(value, list):
+					value = [value]
+				while "" in value:
+					value.remove("")
+				filenames.extend(value)
 			elif name == "UsePerUserProfiles" and not value:
-				filename = None
+				filenames = []
 				break
 	except WindowsError, exception:
 		if exception.args[0] == 2:
@@ -1480,17 +1491,7 @@ def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 			pass
 		else:
 			raise
-	except Exception, exception:
-		raise
-	if not filename and not current_user:
-		# fall back to sRGB
-		filename = os.path.join(iccprofiles[0], 
-								"sRGB Color Space Profile.icm")
-	if filename:
-		if path_only:
-			return os.path.join(iccprofiles[0], filename)
-		return ICCProfile(filename)
-	return None
+	return filenames
 
 
 def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0, 
@@ -1684,8 +1685,18 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 def _wcs_set_display_profile(devicekey, profile_name,
 							 scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]):
 	mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name, devicekey)
-	return mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
-													devicekey)
+	if not mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
+													devicekey):
+		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
+	return True
+
+
+def _wcs_unset_display_profile(devicekey, profile_name,
+							   scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]):
+	if not mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name,
+													   devicekey):
+		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
+	return True
 
 
 def set_display_profile(profile_name, display_no=0,
@@ -1705,6 +1716,28 @@ def set_display_profile(profile_name, display_no=0,
 			scope = WCS_PROFILE_MANAGEMENT_SCOPE["SYSTEM_WIDE"]
 		return _wcs_set_display_profile(unicode(devicekey),
 										profile_name, scope)
+	else:
+		# TODO: Implement for XP
+		return False
+
+
+def unset_display_profile(profile_name, display_no=0,
+						  use_active_display_device=False, devicekey=None):
+	# Currently only implemented for Windows.
+	# The profile to be unassigned has to be already installed!
+	if not devicekey:
+		device = util_win.get_display_device(display_no,
+											 use_active_display_device)
+		if not device:
+			return False
+		devicekey = device.DeviceKey
+	if mscms:
+		if util_win.per_user_profiles_isenabled(devicekey=devicekey):
+			scope = WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
+		else:
+			scope = WCS_PROFILE_MANAGEMENT_SCOPE["SYSTEM_WIDE"]
+		return _wcs_unset_display_profile(unicode(devicekey),
+										  profile_name, scope)
 	else:
 		# TODO: Implement for XP
 		return False

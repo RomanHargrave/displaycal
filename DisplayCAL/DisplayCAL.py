@@ -5718,8 +5718,8 @@ class MainFrame(ReportFrame, BaseFrame):
 												   label="icc.opensuse.org", 
 												   URL="https://icc.opensuse.org/")
 		dlg.sizer2.Insert(0, hyperlink, flag=wx.ALIGN_LEFT |
-											 wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
-						  border=dlg.sizer3.MinSize[0] - dlg.sizer2.MinSize[0] - hyperlink.Size[0])
+											 wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+						  border=int(round((32 + 12) * scale)))
 		dlg.description_txt_ctrl.SetFocus()
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()

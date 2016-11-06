@@ -1898,7 +1898,7 @@ class BaseInteractiveDialog(wx.Dialog):
 						border=margin)
 		self.buttonpanel = wx.Panel(self)
 		self.buttonpanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
-		self.buttonpanel.Sizer.Add(self.sizer2, 1, flag=wx.ALIGN_RIGHT | wx.ALL, 
+		self.buttonpanel.Sizer.Add(self.sizer2, 1, flag=wx.ALL | wx.EXPAND, 
 								   border=margin)
 		if sys.platform == "win32":
 			self.buttonpanel_line = wx.Panel(self, size=(-1,1))
@@ -1925,7 +1925,8 @@ class BaseInteractiveDialog(wx.Dialog):
 		btnwidth = 80
 
 		self.ok = wx.Button(self.buttonpanel, wx.ID_OK, ok)
-		self.sizer2.Add(self.ok)
+		self.sizer2.Add((-1, 1), 1)
+		self.sizer2.Add(self.ok, flag=wx.ALIGN_RIGHT)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_OK)
 
 		self.buttonpanel.Layout()
@@ -2271,13 +2272,13 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 		if alt:
 			self.alt = wx.Button(self.buttonpanel, -1, alt)
-			self.sizer2.Prepend((margin, margin))
-			self.sizer2.Prepend(self.alt)
+			self.sizer2.Insert(1, (margin, margin))
+			self.sizer2.Insert(1, self.alt)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.alt.GetId())
 
 		self.cancel = wx.Button(self.buttonpanel, wx.ID_CANCEL, cancel)
-		self.sizer2.Prepend((margin, margin))
-		self.sizer2.Prepend(self.cancel)
+		self.sizer2.Insert(1, (margin, margin))
+		self.sizer2.Insert(1, self.cancel)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
 		
 		self.buttonpanel.Layout()
@@ -4420,9 +4421,11 @@ class InfoDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 show=True, log=True, bitmap_margin=None):
+				 show=True, log=True, bitmap_margin=None, nowrap=False,
+				 wrap=70):
 		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
 									   bitmap, pos, size, show, log,
+									   nowrap=nowrap, wrap=wrap,
 									   bitmap_margin=bitmap_margin)
 
 
