@@ -47,6 +47,7 @@ if sys.platform == "win32":
 						  per_user_profiles_isenabled)
 	from worker import UnloggedError, show_result_dialog
 	from wxaddons import CustomGridCellEvent
+	from wxfixes import ThemedGenButton
 	from wxwindows import (BaseFrame, ConfirmDialog, CustomCellBoolRenderer,
 						   CustomGrid, InfoDialog, TaskBarNotification, wx)
 	import ICCProfile as ICCP
@@ -408,7 +409,8 @@ if sys.platform == "win32":
 													wx.ALIGN_CENTER_VERTICAL,
 					   border=12)
 			hsizer.Add((1, 1), 1)
-			identify_btn = wx.Button(dlg, -1, lang.getstr("displays.identify"))
+			identify_btn = ThemedGenButton(dlg, -1,
+										   lang.getstr("displays.identify"))
 			identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
 			hsizer.Add(identify_btn, flag=wx.ALIGN_RIGHT |
 										  wx.ALIGN_CENTER_VERTICAL)
