@@ -557,7 +557,6 @@ if sys.platform == "win32":
 				self.EndModal(wx.ID_OK)
 			self.pl._toggle_fix_profile_associations(event, alt=False)
 			if restart:
-				safe_print("HMM...")
 				wx.CallAfter(self.pl._set_profile_associations, None)
 			else:
 				self.update_profiles()
@@ -1762,7 +1761,7 @@ class ProfileLoader(object):
 			if len(display_parts) > 1:
 				info = display_parts[1].split()
 				display_parts[1] = "@ " + " ".join(info[:3])
-			safe_print("  |-", " ".join(display_parts))
+			safe_print("  |-", "".join(display_parts))
 		safe_print("-" * 80)
 
 	def _enumerate_windows_callback(self, hwnd, extra):
