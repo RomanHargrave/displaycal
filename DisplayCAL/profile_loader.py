@@ -55,6 +55,16 @@ if sys.platform == "win32":
 	import madvr
 
 
+	def get_dialog():
+		""" If there are any dialogs open, return the first one """
+		dialogs = filter(lambda window: window and
+										isinstance(window, wx.Dialog) and
+										window.IsShown(),
+						 wx.GetTopLevelWindows())
+		if dialogs:
+			return dialogs[0]
+
+
 	class DisplayIdentificationFrame(wx.Frame):
 
 		def __init__(self, display, pos, size):
@@ -366,6 +376,7 @@ if sys.platform == "win32":
 	class ProfileAssociationsDialog(InfoDialog):
 
 		def __init__(self, pl):
+			self.monitors = []
 			self.pl = pl
 			self.current_user = False
 			self.display_identification_frames = {}
@@ -394,8 +405,7 @@ if sys.platform == "win32":
 			if scale < 1:
 				scale = 1
 			dlg.display_ctrl = wx.Choice(dlg, -1)
-			dlg.display_ctrl.Bind(wx.EVT_CHOICE,
-								  lambda e: dlg.update_profiles())
+			dlg.display_ctrl.Bind(wx.EVT_CHOICE, dlg.update_profiles)
 			dlg.sizer3.Insert(0, dlg.display_ctrl, 1, flag=wx.ALIGN_LEFT |
 														   wx.EXPAND | wx.TOP,
 							  border=5)
@@ -506,7 +516,7 @@ if sys.platform == "win32":
 			for display, frame in self.display_identification_frames.items():
 				if not frame:
 					self.display_identification_frames.pop(display)
-			for display, edid, moninfo, device0 in self.pl.monitors:
+			for display, edid, moninfo, device0 in self.monitors:
 				frame = self.display_identification_frames.get(display)
 				if frame:
 					frame.close_timer.Stop()
@@ -545,14 +555,15 @@ if sys.platform == "win32":
 
 		def _update_configuration(self, fn, arg0):
 			dindex = self.display_ctrl.GetSelection()
-			display, edid, moninfo, device0 = self.pl.monitors[dindex]
+			display, edid, moninfo, device0 = self.monitors[dindex]
 			device = get_active_display_device(moninfo["Device"])
 			if device0 and device:
-				fn(arg0,  devicekey=device0.DeviceKey)
-				self.pl._next = True
-				if device.DeviceKey != device0.DeviceKey:
-					fn(arg0,  devicekey=device.DeviceKey)
-				self.update_profiles(self.pl.monitors[dindex])
+				with self.pl.lock:
+					fn(arg0,  devicekey=device0.DeviceKey)
+					if device.DeviceKey != device0.DeviceKey:
+						fn(arg0,  devicekey=device.DeviceKey)
+					self.update_profiles(monitor=self.monitors[dindex])
+					self.pl._next = True
 			else:
 				wx.Bell()
 
@@ -567,14 +578,15 @@ if sys.platform == "win32":
 				self.update_profiles()
 
 		def update(self, event=None):
-			self.display_ctrl.SetItems([entry[0] for entry in self.pl.monitors])
-			if self.pl.monitors:
+			self.monitors = list(self.pl.monitors)
+			self.display_ctrl.SetItems([entry[0] for entry in self.monitors])
+			if self.monitors:
 				self.display_ctrl.SetSelection(0)
 			self.update_profiles()
 			if event and not self.IsActive():
 				self.RequestUserAttention()
 
-		def update_profiles(self, monitor=None):
+		def update_profiles(self, event=None, monitor=None):
 			self.profiles_ctrl.DeleteAllItems()
 			self.add_btn.Disable()
 			self.remove_btn.Disable()
@@ -582,7 +594,7 @@ if sys.platform == "win32":
 			if not monitor:
 				dindex = self.display_ctrl.GetSelection()
 				if dindex > -1:
-					monitor = self.pl.monitors[dindex]
+					monitor = self.monitors[dindex]
 				else:
 					wx.Bell()
 					return
@@ -623,6 +635,7 @@ class ProfileLoader(object):
 		from wxwindows import BaseApp, wx
 		if not wx.GetApp():
 			app = BaseApp(0)
+			BaseApp.register_exitfunc(self.shutdown)
 		else:
 			app = None
 		self.reload_count = 0
@@ -729,6 +742,7 @@ class ProfileLoader(object):
 					elif data[0] == "setlanguage" and len(data) == 2:
 						config.setcfg("lang", data[1])
 						wx.CallAfter(self.pl.taskbar_icon.set_visual_state)
+						self.pl.writecfg()
 						return "ok"
 					return "invalid"
 
@@ -866,13 +880,14 @@ class ProfileLoader(object):
 					self.show_notification(toggle=True)
 
 				def on_right_down(self, event):
-					wx.CallLater(50, self.check_user_attention)
+					wx.CallLater(100, self.check_user_attention)
 				
 				def check_user_attention(self):
-					if getattr(self.pl, "modaldlg", None):
+					dlg = get_dialog()
+					if dlg:
 						wx.Bell()
-						self.pl.modaldlg.Raise()
-						self.pl.modaldlg.RequestUserAttention()
+						dlg.Raise()
+						dlg.RequestUserAttention()
 
 				def open_display_settings(self, event):
 					safe_print("Menu command: Open display settings")
@@ -888,6 +903,7 @@ class ProfileLoader(object):
 							   event.IsChecked())
 					config.setcfg("profile.load_on_login",
 								  int(event.IsChecked()))
+					self.pl.writecfg()
 					if event.IsChecked():
 						with self.pl.lock:
 							self.pl._next = event.IsChecked()
@@ -898,7 +914,6 @@ class ProfileLoader(object):
 					safe_print("Menu command: Set exceptions")
 					dlg = ProfileLoaderExceptionsDialog(self.pl._exceptions,
 														self.pl._known_apps)
-					self.pl.modaldlg = dlg
 					result = dlg.ShowModal()
 					if result == wx.ID_OK:
 						exceptions = []
@@ -915,6 +930,7 @@ class ProfileLoader(object):
 						config.setcfg("profile_loader.exceptions",
 									  ";".join(exceptions))
 						self.pl._exceptions = dlg._exceptions
+						self.pl.writecfg()
 					else:
 						safe_print("Cancelled setting exceptions")
 					dlg.Destroy()
@@ -1202,12 +1218,21 @@ class ProfileLoader(object):
 
 	def exit(self, event=None):
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
-		if getattr(self, "modaldlg", None):
-			self.modaldlg.RequestUserAttention()
-			if event.CanVeto():
+		dlg = get_dialog()
+		if dlg:
+			if (not isinstance(dlg, ProfileLoaderExceptionsDialog) or
+				(event and not event.CanVeto())):
+				try:
+					dlg.EndModal(wx.ID_CANCEL)
+				except:
+					pass
+				else:
+					dlg = None
+			if dlg and event and event.CanVeto():
 				event.Veto()
 				safe_print("Vetoed", event)
-			return
+				dlg.RequestUserAttention()
+				return
 		if (event and self.frame and
 			event.GetEventType() == wx.EVT_MENU.typeId and
 			(not calibration_management_isenabled() or
@@ -1218,14 +1243,11 @@ class ProfileLoader(object):
 								bitmap=config.geticon(32, "dialog-warning"))
 			dlg.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 						 appname + "-apply-profiles"))
-			self.modaldlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				safe_print("Cancelled ProfileLoader.exit(%s)" % event)
 				return
-		config.writecfg(module="apply-profiles",
-						options=("profile.load_on_login", "profile_loader"))
 		self.taskbar_icon and self.taskbar_icon.RemoveIcon()
 		self.monitoring = False
 		if self.frame:
@@ -1428,8 +1450,9 @@ class ProfileLoader(object):
 						if device:
 							display_edid = get_display_name_edid(device,
 																 moninfo)
-							self.devices2profiles[device.DeviceKey] = (display_edid,
-																	   profile)
+							if self.monitoring:
+								self.devices2profiles[device.DeviceKey] = (display_edid,
+																		   profile)
 						if debug and device:
 							safe_print("Monitor %r active display device name:" %
 									   moninfo["Device"], device.DeviceName)
@@ -1684,9 +1707,15 @@ class ProfileLoader(object):
 					break
 				time.sleep(.1)
 				timeout += .1
+		safe_print("Display configuration monitoring thread finished")
+
+	def shutdown(self):
+		safe_print("Shutting down profile loader")
+		if self.monitoring:
+			safe_print("Shutting down display configuration monitoring thread")
+			self.monitoring = False
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
-		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
 		safe_print("-" * 80)
@@ -2041,6 +2070,7 @@ class ProfileLoader(object):
 			self._manual_restore = True
 			self._reset_gamma_ramps = False
 		self.taskbar_icon.set_visual_state()
+		self.writecfg()
 
 	def _set_reset_gamma_ramps(self, event):
 		if event:
@@ -2051,6 +2081,7 @@ class ProfileLoader(object):
 			self._manual_restore = True
 			self._reset_gamma_ramps = True
 		self.taskbar_icon.set_visual_state()
+		self.writecfg()
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True,
 							   manual_override=2):
@@ -2123,7 +2154,6 @@ class ProfileLoader(object):
 							  border=12)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
-			self.modaldlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_CANCEL:
@@ -2140,6 +2170,7 @@ class ProfileLoader(object):
 			else:
 				self._reset_display_profile_associations()
 			self._manual_restore = True
+			self.writecfg()
 
 	def _set_exceptions(self):
 		self._exceptions = {}
@@ -2168,7 +2199,11 @@ class ProfileLoader(object):
 		dlg = ProfileAssociationsDialog(self)
 		self.profile_associations_dlg = dlg
 		dlg.Center()
-		dlg.ShowModalThenDestroy(self)
+		dlg.ShowModalThenDestroy()
+
+	def writecfg(self):
+		config.writecfg(module="apply-profiles",
+						options=("profile.load_on_login", "profile_loader"))
 
 
 def get_display_name_edid(device, moninfo=None):
