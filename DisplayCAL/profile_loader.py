@@ -20,6 +20,7 @@ if sys.platform == "win32":
 	import errno
 	import ctypes
 	import glob
+	import math
 	import struct
 	import subprocess as sp
 	import traceback
@@ -72,20 +73,20 @@ if sys.platform == "win32":
 							  style=wx.CLIP_CHILDREN | wx.STAY_ON_TOP |
 									wx.FRAME_NO_TASKBAR | wx.NO_BORDER,
 							  name="DisplayIdentification")
-			#self.SetTransparent(240)
+			self.SetTransparent(240)
 			self.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
 			self.Sizer = wx.BoxSizer()
 			panel_outer = wx.Panel(self)
 			panel_outer.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
-			panel_outer.BackgroundColour = "#111111"
+			panel_outer.BackgroundColour = "#303030"
 			panel_outer.Sizer = wx.BoxSizer()
 			self.Sizer.Add(panel_outer, 1, flag=wx.EXPAND)
 			panel_inner = wx.Panel(panel_outer)
 			panel_inner.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
-			panel_inner.BackgroundColour = "#111111"
+			panel_inner.BackgroundColour = "#0078d7"
 			panel_inner.Sizer = wx.BoxSizer()
 			panel_outer.Sizer.Add(panel_inner, 1, flag=wx.ALL | wx.EXPAND,
-								  border=4)
+								  border=int(math.ceil(size[0] / 12. / 40)))
 			display_parts = display.split("@", 1)
 			if len(display_parts) > 1:
 				info = display_parts[1].split()
@@ -95,11 +96,12 @@ if sys.platform == "win32":
 			text = wx.StaticText(panel_inner, -1, label, style=wx.ALIGN_CENTER)
 			text.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
 			text.ForegroundColour = "#FFFFFF"
-			font = wx.Font(text.Font.PointSize * 4, wx.FONTFAMILY_DEFAULT,
-						   wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
+			font = wx.Font(text.Font.PointSize * size[0] / 12. / 16,
+						   wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
+						   wx.FONTWEIGHT_LIGHT)
 			if not font.SetFaceName("Segoe UI Light"):
 				font = text.Font
-				font.PointSize *= 4
+				font.PointSize *= size[0] / 12. / 16
 				font.weight = wx.FONTWEIGHT_LIGHT
 			text.Font = font
 			panel_inner.Sizer.Add(text, 1, flag=wx.ALIGN_CENTER_VERTICAL)
