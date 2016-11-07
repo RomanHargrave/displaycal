@@ -107,6 +107,78 @@ if sys.platform == "win32":
 			self.Show()
 			self.close_timer = wx.CallLater(3000, lambda: self and self.Close())
 
+	class FixProfileAssociationsDialog(ConfirmDialog):
+
+		def __init__(self, pl):
+			self.pl = pl
+			ConfirmDialog.__init__(self, None,
+								msg=lang.getstr("profile_loader.fix_profile_associations_warning"), 
+								title=pl.get_title(),
+								ok=lang.getstr("profile_loader.fix_profile_associations"), 
+								alt=lang.getstr("profile_associations"),
+								bitmap=geticon(32, "dialog-warning"), wrap=128)
+			dlg = self
+			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
+						 appname + "-apply-profiles"))
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale < 1:
+				scale = 1
+			list_panel = wx.Panel(dlg, -1)
+			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+			list_ctrl = wx.ListCtrl(list_panel, -1,
+									style=wx.LC_REPORT | wx.LC_SINGLE_SEL |
+										  wx.BORDER_THEME,
+									name="displays2profiles")
+			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
+			list_ctrl.InsertColumn(0, lang.getstr("display"))
+			list_ctrl.InsertColumn(1, lang.getstr("profile"))
+			list_ctrl.SetColumnWidth(0, int(200 * scale))
+			list_ctrl.SetColumnWidth(1, int(420 * scale))
+			# Ignore item focus/selection
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_FOCUSED,
+						   lambda e: list_ctrl.SetItemState(e.GetIndex(), 0,
+															wx.LIST_STATE_FOCUSED))
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
+						   lambda e: list_ctrl.SetItemState(e.GetIndex(), 0,
+															wx.LIST_STATE_SELECTED))
+			self.devices2profiles_ctrl = list_ctrl
+			dlg.sizer3.Insert(0, list_panel, 1, flag=wx.BOTTOM | wx.ALIGN_LEFT,
+							  border=12)
+			self.update()
+
+		def update(self, event=None):
+			self.pl._set_display_profiles(dry_run=True)
+			numdisp = min(len(self.pl.devices2profiles), 5)
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale < 1:
+				scale = 1
+			hscroll = wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y)
+			size=(640 * scale,
+				  (20 * numdisp + 25 + hscroll) * scale)
+			list_ctrl = self.devices2profiles_ctrl
+			list_ctrl.MinSize = size
+			list_ctrl.DeleteAllItems()
+			for i, (display_edid,
+					profile) in enumerate(self.pl.devices2profiles.itervalues()):
+				index = list_ctrl.InsertStringItem(i, "")
+				list_ctrl.SetStringItem(index, 0, display_edid[0])
+				list_ctrl.SetStringItem(index, 1, profile)
+				try:
+					profile = ICCP.ICCProfile(profile)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					pass
+				else:
+					if isinstance(profile.tags.get("meta"), ICCP.DictType):
+						# Check if profile mapping makes sense
+						id = device_id_from_edid(display_edid[1])
+						if profile.tags.meta.getvalue("MAPPING_device_id") != id:
+							list_ctrl.SetItemTextColour(index, "#FF8000")
+			self.sizer0.SetSizeHints(self)
+			self.sizer0.Layout()
+			if event and not self.IsActive():
+				self.RequestUserAttention()
+
 
 	class ProfileLoaderExceptionsDialog(ConfirmDialog):
 		
@@ -571,10 +643,8 @@ if sys.platform == "win32":
 			restart = event.IsChecked()
 			if restart:
 				self.EndModal(wx.ID_OK)
-			self.pl._toggle_fix_profile_associations(event, alt=False)
-			if restart:
-				wx.CallAfter(self.pl._set_profile_associations, None)
-			else:
+			self.pl._toggle_fix_profile_associations(event)
+			if not restart:
 				self.update_profiles()
 
 		def update(self, event=None):
@@ -1310,6 +1380,9 @@ class ProfileLoader(object):
 			if getattr(self, "profile_associations_dlg", None):
 				wx.CallLater(1000, lambda: self.profile_associations_dlg and
 										   self.profile_associations_dlg.update(True))
+			if getattr(self, "fix_profile_associations_dlg", None):
+				wx.CallLater(1000, lambda: self.fix_profile_associations_dlg and
+										   self.fix_profile_associations_dlg.update(True))
 
 	def _check_display_changed(self, first_run=False, dry_run=False):
 		# Check registry if display configuration changed (e.g. if a display
@@ -2099,61 +2172,8 @@ class ProfileLoader(object):
 			safe_print("Menu command:", end=" ")
 		safe_print("Toggle fix profile associations", event.IsChecked())
 		if event.IsChecked():
-			self._set_display_profiles(dry_run=True)
-			dlg = ConfirmDialog(None,
-								msg=lang.getstr("profile_loader.fix_profile_associations_warning"), 
-								title=self.get_title(),
-								ok=lang.getstr("profile_loader.fix_profile_associations"), 
-								alt=lang.getstr("profile_associations") if alt
-									else None,
-								bitmap=geticon(32, "dialog-warning"), wrap=128)
-			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
-						 appname + "-apply-profiles"))
-			numdisp = len(self.devices2profiles)
-			scale = getcfg("app.dpi") / get_default_dpi()
-			if scale < 1:
-				scale = 1
-			list_panel = wx.Panel(dlg, -1)
-			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
-			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
-			hscroll = wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y)
-			list_ctrl = wx.ListCtrl(list_panel, -1,
-									size=(640 * scale,
-										  (20 * numdisp + 25 + hscroll) * scale),
-									style=wx.LC_REPORT | wx.LC_SINGLE_SEL |
-										  wx.BORDER_THEME,
-									name="displays2profiles")
-			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
-			list_ctrl.InsertColumn(0, lang.getstr("display"))
-			list_ctrl.InsertColumn(1, lang.getstr("profile"))
-			list_ctrl.SetColumnWidth(0, int(200 * scale))
-			list_ctrl.SetColumnWidth(1, int(420 * scale))
-			for i, (display_edid,
-					profile) in enumerate(self.devices2profiles.itervalues()):
-				index = list_ctrl.InsertStringItem(i, "")
-				list_ctrl.SetStringItem(index, 0, display_edid[0])
-				list_ctrl.SetStringItem(index, 1, profile)
-				try:
-					profile = ICCP.ICCProfile(profile)
-				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					pass
-				else:
-					if isinstance(profile.tags.get("meta"), ICCP.DictType):
-						# Check if profile mapping makes sense
-						id = device_id_from_edid(display_edid[1])
-						if profile.tags.meta.getvalue("MAPPING_device_id") != id:
-							list_ctrl.SetItemTextColour(index, "#FF8000")
-			# Ignore item focus/selection
-			list_ctrl.Bind(wx.EVT_LIST_ITEM_FOCUSED,
-						   lambda e: list_ctrl.SetItemState(e.GetIndex(), 0,
-															wx.LIST_STATE_FOCUSED))
-			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
-						   lambda e: list_ctrl.SetItemState(e.GetIndex(), 0,
-															wx.LIST_STATE_SELECTED))
-			dlg.sizer3.Insert(0, list_panel, 1, flag=wx.BOTTOM | wx.ALIGN_LEFT,
-							  border=12)
-			dlg.sizer0.SetSizeHints(dlg)
-			dlg.sizer0.Layout()
+			dlg = FixProfileAssociationsDialog(self)
+			self.fix_profile_associations_dlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_CANCEL:
