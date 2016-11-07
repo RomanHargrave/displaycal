@@ -488,19 +488,21 @@ if sys.platform == "win32":
 							  border=5)
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
 			dlg.sizer3.Insert(1, hsizer, flag=wx.ALIGN_LEFT | wx.EXPAND)
-			dlg.use_my_settings_cb = wx.CheckBox(dlg, -1,
-												 lang.getstr("profile_associations.use_my_settings"))
-			dlg.use_my_settings_cb.Bind(wx.EVT_CHECKBOX, self.use_my_settings)
-			hsizer.Add(dlg.use_my_settings_cb, flag=wx.TOP | wx.BOTTOM |
-													wx.ALIGN_LEFT |
-													wx.ALIGN_CENTER_VERTICAL,
-					   border=12)
+			if sys.getwindowsversion() >= (6, ):
+				dlg.use_my_settings_cb = wx.CheckBox(dlg, -1,
+													 lang.getstr("profile_associations.use_my_settings"))
+				dlg.use_my_settings_cb.Bind(wx.EVT_CHECKBOX, self.use_my_settings)
+				hsizer.Add(dlg.use_my_settings_cb, flag=wx.TOP | wx.BOTTOM |
+														wx.ALIGN_LEFT |
+														wx.ALIGN_CENTER_VERTICAL,
+						   border=12)
 			hsizer.Add((1, 1), 1)
 			identify_btn = ThemedGenButton(dlg, -1,
 										   lang.getstr("displays.identify"))
 			identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
 			hsizer.Add(identify_btn, flag=wx.ALIGN_RIGHT |
-										  wx.ALIGN_CENTER_VERTICAL)
+										  wx.ALIGN_CENTER_VERTICAL | wx.TOP |
+										  wx.BOTTOM, border=8)
 			list_panel = wx.Panel(dlg, -1)
 			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -657,6 +659,8 @@ if sys.platform == "win32":
 			self.display_ctrl.SetItems([entry[0] for entry in self.monitors])
 			if self.monitors:
 				self.display_ctrl.SetSelection(0)
+			fix = self.pl._can_fix_profile_associations()
+			self.fix_profile_associations_cb.Enable(fix)
 			self.update_profiles()
 			if event and not self.IsActive():
 				self.RequestUserAttention()
@@ -680,7 +684,8 @@ if sys.platform == "win32":
 				return
 			monkey = device.DeviceKey.split("\\")[-2:]
 			self.current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
-			self.use_my_settings_cb.SetValue(self.current_user)
+			if sys.getwindowsversion() >= (6, ):
+				self.use_my_settings_cb.SetValue(self.current_user)
 			self.profiles = ICCP._winreg_get_display_profiles(monkey, self.current_user)
 			self.profiles.reverse()
 			try:
@@ -867,13 +872,7 @@ class ProfileLoader(object):
 						apply_kind = wx.ITEM_RADIO
 						restore_auto_kind = wx.ITEM_CHECK
 
-					fix = len(self.pl.monitors) > 1
-					for i, (display, edid,
-							moninfo, device0) in enumerate(self.pl.monitors):
-						displays = get_display_devices(moninfo["Device"])
-						if len(displays) > 1:
-							fix = True
-							break
+					fix = self.pl._can_fix_profile_associations()
 					if fix:
 						fix = self.pl._toggle_fix_profile_associations
 
@@ -898,14 +897,14 @@ class ProfileLoader(object):
 								   self.set_exceptions,
 								   wx.ITEM_NORMAL, None, None),
 								  ("-", None, False, None, None)]
+					menu_items.append(("profile_associations",
+									   self.pl._set_profile_associations,
+									   wx.ITEM_NORMAL, None, None))
 					if sys.getwindowsversion() >= (6, ):
-						menu_items.extend([("profile_associations",
-											self.pl._set_profile_associations,
-											wx.ITEM_NORMAL, None, None),
-										   ("mswin.open_display_settings",
+						menu_items.append(("mswin.open_display_settings",
 											self.open_display_settings,
-											wx.ITEM_NORMAL, None, None),
-										   ("-", None, False, None, None)])
+											wx.ITEM_NORMAL, None, None))
+					menu_items.append(("-", None, False, None, None))
 					menu_items.append(("menuitem.quit", self.pl.exit,
 									   wx.ITEM_NORMAL, None, None))
 					for (label, method, kind, option, oxform) in menu_items:
@@ -1337,6 +1336,16 @@ class ProfileLoader(object):
 		if "--force" in sys.argv[1:]:
 			title += " (%s)" % lang.getstr("forced")
 		return title
+
+	def _can_fix_profile_associations(self):
+		if len(self.monitors) > 1:
+			return True
+		for i, (display, edid,
+				moninfo, device0) in enumerate(self.monitors):
+			displays = get_display_devices(moninfo["Device"])
+			if len(displays) > 1:
+				return True
+		return False
 
 	def _check_keep_running(self):
 		windows = []
@@ -1837,7 +1846,8 @@ class ProfileLoader(object):
 													ICCP.ADict({"DeviceString":
 																moninfo["Device"][4:]}))
 			display, edid = get_display_name_edid(device, moninfo)
-			self.display_devices[device.DeviceKey][0] = display
+			if device:
+				self.display_devices[device.DeviceKey][0] = display
 			if self._is_buggy_video_driver(moninfo):
 				safe_print("Buggy video driver detected: %s." %
 						   moninfo["_adapter"].DeviceString,
