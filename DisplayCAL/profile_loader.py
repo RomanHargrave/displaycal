@@ -75,15 +75,12 @@ if sys.platform == "win32":
 									wx.FRAME_NO_TASKBAR | wx.NO_BORDER,
 							  name="DisplayIdentification")
 			self.SetTransparent(240)
-			self.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
 			self.Sizer = wx.BoxSizer()
 			panel_outer = wx.Panel(self)
-			panel_outer.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
 			panel_outer.BackgroundColour = "#303030"
 			panel_outer.Sizer = wx.BoxSizer()
 			self.Sizer.Add(panel_outer, 1, flag=wx.EXPAND)
 			panel_inner = wx.Panel(panel_outer)
-			panel_inner.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
 			panel_inner.BackgroundColour = "#0078d7"
 			panel_inner.Sizer = wx.BoxSizer()
 			panel_outer.Sizer.Add(panel_inner, 1, flag=wx.ALL | wx.EXPAND,
@@ -92,10 +89,10 @@ if sys.platform == "win32":
 			if len(display_parts) > 1:
 				info = display_parts[1].split(" - ", 1)
 				display_parts[1] = "@" + " ".join(info[:1])
-				display_parts.append(" ".join(info[1:]))
+				if info[1:]:
+					display_parts.append(" ".join(info[1:]))
 			label = "\n".join(display_parts)
 			text = wx.StaticText(panel_inner, -1, label, style=wx.ALIGN_CENTER)
-			text.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
 			text.ForegroundColour = "#FFFFFF"
 			font = wx.Font(text.Font.PointSize * size[0] / 12. / 16,
 						   wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL,
@@ -106,6 +103,11 @@ if sys.platform == "win32":
 				font.weight = wx.FONTWEIGHT_LIGHT
 			text.Font = font
 			panel_inner.Sizer.Add(text, 1, flag=wx.ALIGN_CENTER_VERTICAL)
+			for element in (self, panel_outer, panel_inner, text):
+				element.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
+				element.Bind(wx.EVT_MIDDLE_UP, lambda e: self.Close())
+				element.Bind(wx.EVT_RIGHT_UP, lambda e: self.Close())
+			self.Bind(wx.EVT_CHAR_HOOK, lambda e: e.KeyCode == wx.WXK_ESCAPE and self.Close())
 			self.Layout()
 			self.Show()
 			self.close_timer = wx.CallLater(3000, lambda: self and self.Close())
@@ -2229,7 +2231,7 @@ class ProfileLoader(object):
 						options=("profile.load_on_login", "profile_loader"))
 
 
-def get_display_name_edid(device, moninfo=None):
+def get_display_name_edid(device, moninfo=None, include_adapter=False):
 	edid = {}
 	if device:
 		display = safe_unicode(device.DeviceString)
@@ -2250,7 +2252,7 @@ def get_display_name_edid(device, moninfo=None):
 							   m_height)])
 		if moninfo["Flags"] & MONITORINFOF_PRIMARY:
 			display += " " + lang.getstr("display.primary")
-		if moninfo.get("_adapter"):
+		if moninfo.get("_adapter") and include_adapter:
 			display += u" - %s" % moninfo["_adapter"].DeviceString
 	return display, edid
 
