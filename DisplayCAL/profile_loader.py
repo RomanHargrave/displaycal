@@ -742,6 +742,9 @@ class ProfileLoader(object):
 								config.getcfg("profile_loader.known_apps").split(";")])
 		self._known_window_classes = set(config.defaults["profile_loader.known_window_classes"].split(";") +
 										 config.getcfg("profile_loader.known_window_classes").split(";"))
+		self._buggy_video_drivers = set(buggy_video_driver.lower() for buggy_video_driver in
+										config.defaults["profile_loader.buggy_video_drivers"].split(";") +
+										config.getcfg("profile_loader.buggy_video_drivers").split(";"))
 		self._set_exceptions()
 		self._madvr_instances = []
 		self._timestamp = time.time()
@@ -1910,7 +1913,11 @@ class ProfileLoader(object):
 		# previously loaded calibration was the same.
 		# Work-around by first loading a slightly changed
 		# gamma ramp.
-		return "INTEL" in moninfo["_adapter"].DeviceString.upper()
+		adapter = moninfo["_adapter"].DeviceString.lower()
+		for buggy_video_driver in self._buggy_video_drivers:
+			if buggy_video_driver in adapter:
+				return True
+		return False
 
 	def _is_displaycal_running(self):
 		displaycal_lockfile = os.path.join(confighome, appbasename + ".lock")
