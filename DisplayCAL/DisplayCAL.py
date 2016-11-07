@@ -13717,7 +13717,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									   size=(100, 100))
 		self.aboutdialog.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		items = []
-		scale = getcfg("app.dpi") / config.get_default_dpi()
+		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 		items.append(wx_Panel(self.aboutdialog, -1,
 							  size=(-1, int(round(6 * scale)))))
 		items[-1].BackgroundColour = "#66CC00"
