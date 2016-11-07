@@ -91,7 +91,7 @@ if sys.platform == "win32":
 			display_parts = display.split("@", 1)
 			if len(display_parts) > 1:
 				info = display_parts[1].split(" - ", 1)
-				display_parts[1] = "@ " + " ".join(info[:1])
+				display_parts[1] = "@" + " ".join(info[:1])
 				display_parts.append(" ".join(info[1:]))
 			label = "\n".join(display_parts)
 			text = wx.StaticText(panel_inner, -1, label, style=wx.ALIGN_CENTER)
@@ -1870,7 +1870,7 @@ class ProfileLoader(object):
 			display_parts = display.split("@", 1)
 			if len(display_parts) > 1:
 				info = display_parts[1].split(" - ", 1)
-				display_parts[1] = "@ " + " ".join(info[:1])
+				display_parts[1] = "@" + " ".join(info[:1])
 			safe_print("  |-", "".join(display_parts))
 		safe_print("-" * 80)
 
