@@ -523,6 +523,7 @@ if sys.platform == "win32":
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
 						   lambda e: (dlg.remove_btn.Disable(),
 									  dlg.set_as_default_btn.Disable()))
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, dlg.set_as_default)
 			dlg.sizer3.Add(list_panel, flag=wx.BOTTOM | wx.ALIGN_LEFT,
 						   border=12)
 			dlg.profiles_ctrl = list_ctrl
@@ -1536,7 +1537,7 @@ class ProfileLoader(object):
 						device = get_active_display_device(moninfo["Device"])
 						if device:
 							display_edid = get_display_name_edid(device,
-																 moninfo)
+																 moninfo, i)
 							if self.monitoring:
 								self.devices2profiles[device.DeviceKey] = (display_edid,
 																		   profile)
@@ -1845,7 +1846,7 @@ class ProfileLoader(object):
 			moninfo["_adapter"] = self.adapters.get(moninfo["Device"],
 													ICCP.ADict({"DeviceString":
 																moninfo["Device"][4:]}))
-			display, edid = get_display_name_edid(device, moninfo)
+			display, edid = get_display_name_edid(device, moninfo, i)
 			if device:
 				self.display_devices[device.DeviceKey][0] = display
 			if self._is_buggy_video_driver(moninfo):
@@ -2117,7 +2118,7 @@ class ProfileLoader(object):
 					active_moninfo = moninfo
 				else:
 					active_moninfo = None
-				display_edid = get_display_name_edid(device, active_moninfo)
+				display_edid = get_display_name_edid(device, active_moninfo, i)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile or "")
 				if debug:
@@ -2241,7 +2242,8 @@ class ProfileLoader(object):
 						options=("profile.load_on_login", "profile_loader"))
 
 
-def get_display_name_edid(device, moninfo=None, include_adapter=False):
+def get_display_name_edid(device, moninfo=None, index=None,
+						  include_adapter=False):
 	edid = {}
 	if device:
 		display = safe_unicode(device.DeviceString)
@@ -2264,6 +2266,8 @@ def get_display_name_edid(device, moninfo=None, include_adapter=False):
 			display += " " + lang.getstr("display.primary")
 		if moninfo.get("_adapter") and include_adapter:
 			display += u" - %s" % moninfo["_adapter"].DeviceString
+	if index is not None:
+		display = "%i. %s" % (index + 1, display)
 	return display, edid
 
 def main():
