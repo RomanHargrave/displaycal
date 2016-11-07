@@ -40,7 +40,8 @@ if sys.platform == "win32":
 	from ordereddict import OrderedDict
 	from util_os import getenvu
 	from util_str import safe_unicode
-	from util_win import (calibration_management_isenabled,
+	from util_win import (MONITORINFOF_PRIMARY,
+						  calibration_management_isenabled,
 						  enable_per_user_profiles,
 						  get_active_display_device, get_display_devices,
 						  get_file_info, get_pids, get_process_filename,
@@ -89,9 +90,9 @@ if sys.platform == "win32":
 								  border=int(math.ceil(size[0] / 12. / 40)))
 			display_parts = display.split("@", 1)
 			if len(display_parts) > 1:
-				info = display_parts[1].split()
-				display_parts[1] = "@ " + " ".join(info[:3])
-				display_parts.append(" ".join(info[3:]).strip(" -"))
+				info = display_parts[1].split(" - ", 1)
+				display_parts[1] = "@ " + " ".join(info[:1])
+				display_parts.append(" ".join(info[1:]))
 			label = "\n".join(display_parts)
 			text = wx.StaticText(panel_inner, -1, label, style=wx.ALIGN_CENTER)
 			text.Bind(wx.EVT_LEFT_UP, lambda e: self.Close())
@@ -1868,8 +1869,8 @@ class ProfileLoader(object):
 														 device_name[4:]})).DeviceString)
 			display_parts = display.split("@", 1)
 			if len(display_parts) > 1:
-				info = display_parts[1].split()
-				display_parts[1] = "@ " + " ".join(info[:3])
+				info = display_parts[1].split(" - ", 1)
+				display_parts[1] = "@ " + " ".join(info[:1])
 			safe_print("  |-", "".join(display_parts))
 		safe_print("-" * 80)
 
@@ -2247,6 +2248,8 @@ def get_display_name_edid(device, moninfo=None):
 							  "%i, %i, %ix%i" %
 							  (m_left, m_top, m_width,
 							   m_height)])
+		if moninfo["Flags"] & MONITORINFOF_PRIMARY:
+			display += " " + lang.getstr("display.primary")
 		if moninfo.get("_adapter"):
 			display += u" - %s" % moninfo["_adapter"].DeviceString
 	return display, edid
