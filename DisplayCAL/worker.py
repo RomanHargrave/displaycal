@@ -7047,11 +7047,21 @@ usage: spotread [-options] [logfile]
 			else:
 				# If profile type is X (XYZ cLUT + matrix) add the matrix tags
 				# from a forward lookup of a smaller testchart (faster
-				# computation!)
-				if getcfg("profile.type") == "X":
-					result = self._create_matrix_profile(args[-1], profile)
+				# computation!). If profile is a shaper+matrix profile,
+				# re-generate shaper curves from testchart with only
+				# gray+primaries (better curve smoothness and neutrality)
+				if getcfg("profile.type") in ("X", "s", "S", "g", "G"):
+					if getcfg("profile.type") == "X":
+						ptype = "S" if getcfg("trc") else "s"
+						omit = None
+					else:
+						ptype = getcfg("profile.type")
+						omit = "XYZ"  # Don't re-create matrix
+					result = self._create_matrix_profile(args[-1], profile,
+														 ptype, omit)
 					if isinstance(result, ICCP.ICCProfile):
 						result = True
+						profchanged = True
 			if not isinstance(result, Exception) and result:
 				# Hires CIECAM02 gamut mapping - perceptual and saturation
 				# tables, also colorimetric table for non-RGB profiles
@@ -7317,7 +7327,7 @@ usage: spotread [-options] [logfile]
 					profile.write()
 				except Exception, exception:
 					return exception
-				if bpc_applied:
+				if bpc_applied or getcfg("profile.type") in ("s", "S", "g", "G"):
 					# We need to re-do profile self check
 					self.exec_cmd(get_argyll_util("profcheck"),
 								  [args[-1] + ".ti3", args[-1] + profile_ext],
@@ -7362,7 +7372,7 @@ usage: spotread [-options] [logfile]
 			setcfg("last_icc_path", dst_path)
 		return result
 
-	def _create_matrix_profile(self, outname, profile=None, ptype=None,
+	def _create_matrix_profile(self, outname, profile=None, ptype="s",
 							   omit=None):
 		"""
 		Create matrix profile from lookup through ti3
@@ -7380,6 +7390,11 @@ usage: spotread [-options] [logfile]
 		Returns an ICCProfile with fileName set to <outname>.ic[cm].
 		
 		"""
+		if omit == "XYZ":
+			tags = "shaper"
+		else:
+			tags = "shaper+matrix"
+		self.log(u"%s: Creating %s tags in separate step" % (appname, tags))
 		fakeread = get_argyll_util("fakeread")
 		if not fakeread:
 			return Error(lang.getstr("argyll.util.not_found", "fakeread"))
@@ -7396,37 +7411,72 @@ usage: spotread [-options] [logfile]
 		else:
 			if 0 in ti3:
 				ti3 = ti3[0]
-				ti3.write(outname + ".0.ti3")
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
 										 outname + ".ti3"))
-		for ti1name, tagcls in [("d3-e4-s2-g49-m0-b0-f0", "TRC"),
-								("d3-e4-s17-g49-m5-b5-f0", "XYZ")]:
+		for ti1name, tagcls in [("d3-e4-s17-g49-m5-b5-f0", "XYZ"),
+								(None, "TRC")]:
 			if tagcls == omit:
 				continue
-			ti1 = get_data_path("ti1/%s.ti1" % ti1name)
-			if not ti1:
-				return Error(lang.getstr("file.missing", "ti1/%s.ti1" % ti1name))
-			fakeout = (outname + "." +
-					   os.path.splitext(os.path.basename(ti1))[0])
-			try:
-				shutil.copyfile(ti1, fakeout + ".ti1")
-			except EnvironmentError, exception:
-				return exception
-			# Lookup ti1 through ti3
-			result = self.exec_cmd(fakeread, [outname + ".0.ti3", fakeout],
-								   capture_output=True, skip_scripts=True,
-								   sessionlogfile=self.sessionlogfile)
-			try:
-				os.remove(fakeout + ".ti1")
-			except EnvironmentError, exception:
-				self.log(exception)
-			if not result:
-				return UnloggedError("\n".join(self.errors))
-			elif isinstance(result, Exception):
-				return result
-			if not ptype:
-				ptype = "S" if getcfg("trc") else "s"
+			if not ti1name:
+				# Extract gray+primaries into new TI3
+				self.log(u"%s: Extracting neutrals and primaries from %s" %
+						 (appname, outname + ".ti3"))
+				ti3_extracted = CGATS.CGATS("""CTI3
+BEGIN_DATA_FORMAT
+END_DATA_FORMAT
+BEGIN_DATA
+END_DATA""")[0]
+				ti3_extracted.DATA_FORMAT.update(ti3.DATA_FORMAT)
+				n = 0
+				for i, item in ti3.DATA.iteritems():
+					if not i:
+						# Check if fields are missing
+						for prefix in ("RGB", "XYZ"):
+							for suffix in prefix:
+								key = "%s_%s" % (prefix, suffix)
+								if not key in item:
+									return Error(lang.getstr("error.testchart.missing_fields",
+															 (outname + ".ti3", key)))
+					if (item["RGB_R"] == item["RGB_G"] == item["RGB_B"] or
+						(item["RGB_R"], item["RGB_G"], item["RGB_B"]) in
+						((100.0, 0.0, 0.0), (0.0, 100.0, 0.0), (0.0, 0.0, 100.0))):
+						ti3_extracted.DATA[n] = item
+						ti3_extracted.DATA[n].key = n
+						n += 1
+				ti3.DATA.clear()
+				ti3.DATA.update(ti3_extracted.DATA)
+				self.log(ti3.DATA)
+			ti3.write(outname + ".0.ti3")	
+			if ti1name:
+				ti1 = get_data_path("ti1/%s.ti1" % ti1name)
+				if not ti1:
+					return Error(lang.getstr("file.missing", "ti1/%s.ti1" % ti1name))
+				fakeout = (outname + "." +
+						   os.path.splitext(os.path.basename(ti1))[0])
+				try:
+					shutil.copyfile(ti1, fakeout + ".ti1")
+				except EnvironmentError, exception:
+					return exception
+				# Lookup ti1 through ti3
+				result = self.exec_cmd(fakeread, [outname + ".0.ti3", fakeout],
+									   capture_output=True, skip_scripts=True,
+									   sessionlogfile=self.sessionlogfile)
+				try:
+					os.remove(fakeout + ".ti1")
+				except EnvironmentError, exception:
+					self.log(exception)
+				try:
+					os.remove(outname + ".0.ti3")
+				except EnvironmentError, exception:
+					self.log(exception)
+				if not result:
+					return UnloggedError("\n".join(self.errors))
+				elif isinstance(result, Exception):
+					return result
+			else:
+				# Use gray+primaries from existing ti3
+				fakeout = outname + ".0"
 			result = self.exec_cmd(colprof, ["-v", "-q" +
 												   getcfg("profile.quality"),
 											 "-a" + ptype, fakeout],
@@ -7447,6 +7497,8 @@ usage: spotread [-options] [logfile]
 					tagname = channel + tagcls
 					tag = matrix_profile.tags.get(tagname)
 					if tag:
+						self.log(u"%s: Adding %s from matrix profile to %s" %
+								 (appname, tagname, profile.getDescription()))
 						profile.tags[tagname] = tag
 					else:
 						self.log(lang.getstr("profile.required_tags_missing",
@@ -7458,10 +7510,6 @@ usage: spotread [-options] [logfile]
 				os.remove(fakeout + profile_ext)
 			except EnvironmentError, exception:
 				self.log(exception)
-		try:
-			os.remove(outname + ".0.ti3")
-		except EnvironmentError, exception:
-			self.log(exception)
 		return profile
 	
 	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
@@ -7885,8 +7933,10 @@ usage: spotread [-options] [logfile]
 			result = True
 			if getcfg("testchart.file") == "auto" and auto < 5:
 				# Use pre-baked testchart
-				if auto == 3:
-					testchart = "ti1/d3-e4-s2-g49-m0-b0-f0.ti1"
+				if auto == 2:
+					testchart = "ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1"
+				elif auto == 3:
+					testchart = "ti1/d3-e4-s13-g37-m4-b4-f0.ti1"
 				else:
 					testchart = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
 				testchart_path = get_data_path(testchart)

@@ -12363,19 +12363,22 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("testchart.auto_optimize", auto)
 			self.profile_settings_changed()
 		proftype = getcfg("profile.type")
-		if auto >= 4:
+		if auto >= 3:
 			s = min(auto, 11) * 4 - 3
 			g = s * 3 - 2
 			patches_amount = get_total_patches(4, 4, s, g, auto, auto, 0) + 34
 			if auto > 4:
 				patches_amount += 120
-			else:
+			elif auto > 3:
 				# Increment to 271 patches of default testchart for LUT profiles
 				patches_amount += 83
+			else:
+				# Increment to 154 patches of small testchart for LUT profiles
+				patches_amount += 41
 			if event and proftype not in ("l", "x", "X"):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		else:
-			patches_amount = 58
+			patches_amount = 73
 			if event and proftype not in ("g", "G", "s", "S"):
 				setcfg("profile.type", "S" if getcfg("trc") else "s")
 		if proftype != getcfg("profile.type"):
@@ -12408,12 +12411,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		##print "set_default_testchart", path
 		if getcfg("profile.type") in ("l", "x", "X"):
 			# cLUT
-			if getcfg("testchart.auto_optimize") < 4:
+			if getcfg("testchart.auto_optimize") < 3:
 				setcfg("testchart.auto_optimize", 5)
 		else:
 			# Gamma or shaper + matrix
-			if getcfg("testchart.auto_optimize") > 3:
-				setcfg("testchart.auto_optimize", 3)
+			if getcfg("testchart.auto_optimize") > 2:
+				setcfg("testchart.auto_optimize", 2)
 		if path == "auto":
 			self.set_testchart(path)
 			return
