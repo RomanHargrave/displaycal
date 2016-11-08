@@ -2252,7 +2252,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.Bind(wx.EVT_MENU, self.set_language_handler, menuitem)
 
 		help = self.menubar.GetMenu(self.menubar.FindMenu("menu.help"))
-		self.menuitem_about = help.Insert(0,
+		self.menuitem_about = help.Append(
 			-1 if wx.VERSION < (2, 9) else wx.ID_ABOUT, "&menu.about")
 		self.Bind(wx.EVT_MENU, self.aboutdialog_handler, self.menuitem_about)
 		self.menuitem_readme = help.FindItemById(help.FindItem("readme"))

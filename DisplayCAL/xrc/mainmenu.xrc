@@ -229,6 +229,7 @@
       <object class="wxMenuItem" name="update_check">
         <label>update_check</label>
       </object>
+      <object class="separator"/>
       <label>menu.help</label>
     </object>
   </object>
