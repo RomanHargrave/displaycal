@@ -7007,6 +7007,12 @@ usage: spotread [-options] [logfile]
 			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
 			display_manufacturer)
 		if not isinstance(cmd, Exception): 
+			if "-aX" in args:
+				# If profile type is X (XYZ cLUT + matrix), only create the
+				# cLUT, then add the matrix tags later from a forward lookup of
+				# a smaller testchart (faster computation!)
+				args.insert(args.index("-aX"), "-ax")
+				args.remove("-aX")
 			result = self.exec_cmd(cmd, args, low_contrast=False, 
 								   skip_scripts=skip_scripts)
 			if (os.path.isfile(args[-1] + ".ti3.backup") and
@@ -7030,12 +7036,23 @@ usage: spotread [-options] [logfile]
 		bpc_applied = False
 		profchanged = False
 		if not isinstance(result, Exception) and result:
+			errors = self.errors
+			output = self.output
+			retcode = self.retcode
 			profile_path = args[-1] + profile_ext
 			try:
 				profile = ICCP.ICCProfile(profile_path)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
+				# If profile type is X (XYZ cLUT + matrix) add the matrix tags
+				# from a forward lookup of a smaller testchart (faster
+				# computation!)
+				if getcfg("profile.type") == "X":
+					result = self._create_matrix_profile(args[-1], profile)
+					if isinstance(result, ICCP.ICCProfile):
+						result = True
+			if not isinstance(result, Exception) and result:
 				# Hires CIECAM02 gamut mapping - perceptual and saturation
 				# tables, also colorimetric table for non-RGB profiles
 				# Use collink for smoother result.
@@ -7199,6 +7216,9 @@ usage: spotread [-options] [logfile]
 										   logfile=logfiles):
 							smooth_tables.append(table)
 							profchanged = True
+			self.errors = errors
+			self.output = output
+			self.retcode = retcode
 			if not isinstance(result, Exception) and result:
 				if (gamap_profile and
 					os.path.dirname(gamap_profile.fileName) == self.tempdir):
@@ -7341,6 +7361,108 @@ usage: spotread [-options] [logfile]
 			setcfg("last_cal_or_icc_path", dst_path)
 			setcfg("last_icc_path", dst_path)
 		return result
+
+	def _create_matrix_profile(self, outname, profile=None, ptype=None,
+							   omit=None):
+		"""
+		Create matrix profile from lookup through ti3
+		
+		<outname>.ti3 has to exist.
+		If <profile> is given, it has to be an ICCProfile instance, and the
+		matrix tags will be added to this profile.
+		<ptype> should be the type of profile, i.e. one of g, G, s or S.
+		<omit> if given should be the tag to omit, either 'TRC' or 'XYZ'.
+		
+		We use a testchart with only gray + primaries for TRC,
+		and larger testchart for the matrix. This should give the smoothest
+		overall result.
+		
+		Returns an ICCProfile with fileName set to <outname>.ic[cm].
+		
+		"""
+		fakeread = get_argyll_util("fakeread")
+		if not fakeread:
+			return Error(lang.getstr("argyll.util.not_found", "fakeread"))
+		colprof = get_argyll_util("colprof")
+		if not colprof:
+			return Error(lang.getstr("argyll.util.not_found", "colprof"))
+		# Strip potential CAL from Ti3
+		ti3 = CGATS.CGATS(outname + ".ti3")
+		
+		try:
+			ti3 = CGATS.CGATS(outname + ".ti3")
+		except (IOError, CGATS.CGATSError), exception:
+			return exception
+		else:
+			if 0 in ti3:
+				ti3 = ti3[0]
+				ti3.write(outname + ".0.ti3")
+			else:
+				return Error(lang.getstr("error.measurement.file_invalid",
+										 outname + ".ti3"))
+		for ti1name, tagcls in [("d3-e4-s2-g49-m0-b0-f0", "TRC"),
+								("d3-e4-s17-g49-m5-b5-f0", "XYZ")]:
+			if tagcls == omit:
+				continue
+			ti1 = get_data_path("ti1/%s.ti1" % ti1name)
+			if not ti1:
+				return Error(lang.getstr("file.missing", "ti1/%s.ti1" % ti1name))
+			fakeout = (outname + "." +
+					   os.path.splitext(os.path.basename(ti1))[0])
+			try:
+				shutil.copyfile(ti1, fakeout + ".ti1")
+			except EnvironmentError, exception:
+				return exception
+			# Lookup ti1 through ti3
+			result = self.exec_cmd(fakeread, [outname + ".0.ti3", fakeout],
+								   capture_output=True, skip_scripts=True,
+								   sessionlogfile=self.sessionlogfile)
+			try:
+				os.remove(fakeout + ".ti1")
+			except EnvironmentError, exception:
+				self.log(exception)
+			if not result:
+				return UnloggedError("\n".join(self.errors))
+			elif isinstance(result, Exception):
+				return result
+			if not ptype:
+				ptype = "S" if getcfg("trc") else "s"
+			result = self.exec_cmd(colprof, ["-v", "-q" +
+												   getcfg("profile.quality"),
+											 "-a" + ptype, fakeout],
+								   sessionlogfile=self.sessionlogfile)
+			try:
+				os.remove(fakeout + ".ti3")
+			except EnvironmentError, exception:
+				self.log(exception)
+			if isinstance(result, Exception) or not result:
+				return result
+			try:
+				matrix_profile = ICCP.ICCProfile(fakeout + profile_ext)
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				return Error(lang.getstr("profile.invalid") + "\n" + fakeout +
+							 profile_ext)
+			if profile:
+				for channel in "rgb":
+					tagname = channel + tagcls
+					tag = matrix_profile.tags.get(tagname)
+					if tag:
+						profile.tags[tagname] = tag
+					else:
+						self.log(lang.getstr("profile.required_tags_missing",
+											 tagname))
+			else:
+				profile = matrix_profile
+				profile.fileName = outname + profile_ext
+			try:
+				os.remove(fakeout + profile_ext)
+			except EnvironmentError, exception:
+				self.log(exception)
+		try:
+			os.remove(outname + ".0.ti3")
+		except EnvironmentError, exception:
+			self.log(exception)
+		return profile
 	
 	def update_profile(self, profile, ti3=None, chrm=None, tags=None,
 					   avg=None, peak=None, rms=None, gamut_volume=None,
