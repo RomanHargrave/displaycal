@@ -7466,14 +7466,14 @@ END_DATA""")[0]
 					os.remove(fakeout + ".ti1")
 				except EnvironmentError, exception:
 					self.log(exception)
-				try:
-					os.remove(outname + ".0.ti3")
-				except EnvironmentError, exception:
-					self.log(exception)
 				if not result:
 					return UnloggedError("\n".join(self.errors))
 				elif isinstance(result, Exception):
 					return result
+				try:
+					os.remove(outname + ".0.ti3")
+				except EnvironmentError, exception:
+					self.log(exception)
 			else:
 				# Use gray+primaries from existing ti3
 				fakeout = outname + ".0"
