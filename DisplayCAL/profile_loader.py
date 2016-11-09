@@ -519,7 +519,7 @@ if sys.platform == "win32":
 			list_ctrl.SetColumnWidth(0, int(620 * scale))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
 						   lambda e: (dlg.remove_btn.Enable(self.current_user),
-									  dlg.set_as_default_btn.Enable()))
+									  dlg.set_as_default_btn.Enable(e.GetIndex() != 0)))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
 						   lambda e: (dlg.remove_btn.Disable(),
 									  dlg.set_as_default_btn.Disable()))
@@ -565,6 +565,12 @@ if sys.platform == "win32":
 			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
 			list_ctrl.InsertColumn(0, lang.getstr("profile"))
 			list_ctrl.SetColumnWidth(0, int(620 * scale))
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
+						   lambda e: dlg.ok.Enable())
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
+						   lambda e: dlg.ok.Disable())
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED,
+						   lambda e: dlg.EndModal(wx.ID_OK))
 			profiles = []
 			for pth in glob.glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
 				try:
@@ -581,6 +587,7 @@ if sys.platform == "win32":
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
+			dlg.ok.Disable()
 			dlg.Center()
 			result = dlg.ShowModal()
 			if result == wx.ID_OK:
@@ -689,20 +696,13 @@ if sys.platform == "win32":
 				self.use_my_settings_cb.SetValue(self.current_user)
 			self.profiles = ICCP._winreg_get_display_profiles(monkey, self.current_user)
 			self.profiles.reverse()
-			try:
-				current_profile = ICCP.get_display_profile(win_get_correct_profile=True,
-														   path_only=True,
-														   devicekey=device.DeviceKey)
-			except Exception, exception:
-				current_profile = None
-			i = 0
-			for profile in self.profiles:
+			for i, profile in enumerate(self.profiles):
 				pindex = self.profiles_ctrl.InsertStringItem(i, "")
 				description = profile
-				if profile == os.path.basename(current_profile or ""):
+				if not i:
+					# First profile is always default
 					description += " (%s)" % lang.getstr("default")
 				self.profiles_ctrl.SetStringItem(pindex, 0, description)
-				i += 1
 			self.add_btn.Enable(self.current_user)
 
 		def use_my_settings(self, event):
