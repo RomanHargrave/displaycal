@@ -7886,7 +7886,7 @@ END_DATA""")[0]
 			# simple profile for preconditioning
 			if config.get_display_name() == "Untethered":
 				return Error(lang.getstr("testchart.auto_optimize.untethered.unsupported"))
-			# Use default testchart for shaper+matrix (34 patches)
+			# Use small testchart for grayscale+primaries (34 patches)
 			setcfg("testchart.file",
 				   get_data_path("ti1/d3-e4-s2-g25-m0-b0-f0.ti1"))
 			cmd, args = self.prepare_dispread(apply_calibration)
