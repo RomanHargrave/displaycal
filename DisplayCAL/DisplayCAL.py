@@ -8585,7 +8585,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				 "measure", "measure-uniformity",
 				 "measurement-report [filename]", "profile",
 				 "profile-info [filename]", "report-calibrated",
-				 "report-uncalibrated", "synthprofile [filename]",
+				 "report-uncalibrated", "set-argyll-dir [dirname]",
+				 "synthprofile [filename]",
 				 "testchart-editor [filename | create filename]",
 				 "verify-calibration"])
 
@@ -8760,6 +8761,15 @@ class MainFrame(ReportFrame, BaseFrame):
 						  "verify-calibration")) and len(data) == 1:
 			wx.CallAfter(getattr(self, data[0].replace("-", "_") + "_handler"),
 						 True)
+		elif data[0] == "set-argyll-dir" and len(data) <= 2:
+			if (getattr(self.worker, "thread", None) and
+				self.worker.thread.isAlive()):
+				return "blocked"
+			if len(data) == 2:
+				setcfg("argyll.dir", data[1])
+				wx.CallAfter(self.check_update_controls, True)
+			else:
+				wx.CallAfter(self.set_argyll_bin_handler, True)
 		else:
 			response = "invalid"
 		return response
@@ -12638,6 +12648,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			(not event and check_argyll_bin())):
 			self.check_update_controls(True, callafter=callafter,
 									   callafter_args=callafter_args)
+			if sys.platform == "win32":
+				self.send_command("apply-profiles",
+								  'setcfg argyll.dir "%s" force' %
+								  getcfg("argyll.dir"))
 
 	def check_update_controls(self, event=None, silent=False, callafter=None,
 							  callafter_args=()):

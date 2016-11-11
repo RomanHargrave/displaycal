@@ -47,9 +47,10 @@ if sys.platform == "win32":
 						  get_file_info, get_pids, get_process_filename,
 						  get_real_display_devices_info,
 						  per_user_profiles_isenabled)
-	from worker import UnloggedError, show_result_dialog
+	from worker import (Error, UnloggedError, check_set_argyll_bin,
+						show_result_dialog)
 	from wxaddons import CustomGridCellEvent
-	from wxfixes import ThemedGenButton
+	from wxfixes import ThemedGenButton, set_bitmap_labels
 	from wxwindows import (BaseFrame, ConfirmDialog, CustomCellBoolRenderer,
 						   CustomGrid, InfoDialog, TaskBarNotification, wx)
 	import ICCProfile as ICCP
@@ -455,6 +456,7 @@ if sys.platform == "win32":
 		def __init__(self, pl):
 			self.monitors = []
 			self.pl = pl
+			self.profile_info = {}
 			self.current_user = False
 			self.display_identification_frames = {}
 			InfoDialog.__init__(self, None,
@@ -471,6 +473,16 @@ if sys.platform == "win32":
 			dlg.sizer2.Insert(1, dlg.set_as_default_btn, flag=wx.RIGHT, border=12)
 			dlg.set_as_default_btn.Bind(wx.EVT_BUTTON, dlg.set_as_default)
 			dlg.set_as_default_btn.Disable()
+			dlg.profile_info_btn = wx.BitmapButton(dlg.buttonpanel, -1,
+												   geticon(16, "info"),
+												   style=wx.NO_BORDER)
+			set_bitmap_labels(dlg.profile_info_btn)
+			dlg.profile_info_btn.SetToolTipString(lang.getstr("profile.info"))
+			dlg.sizer2.Insert(0, dlg.profile_info_btn,
+							  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+							  border=12)
+			dlg.profile_info_btn.Bind(wx.EVT_BUTTON, dlg.show_profile_info)
+			dlg.profile_info_btn.Disable()
 			dlg.remove_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("remove"))
 			dlg.sizer2.Insert(0, dlg.remove_btn, flag=wx.RIGHT | wx.LEFT, border=12)
 			dlg.remove_btn.Bind(wx.EVT_BUTTON, dlg.remove_profile)
@@ -519,10 +531,12 @@ if sys.platform == "win32":
 			list_ctrl.SetColumnWidth(0, int(620 * scale))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
 						   lambda e: (dlg.remove_btn.Enable(self.current_user),
-									  dlg.set_as_default_btn.Enable(e.GetIndex() != 0)))
+									  dlg.set_as_default_btn.Enable(e.GetIndex() != 0),
+									  dlg.profile_info_btn.Enable()))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
 						   lambda e: (dlg.remove_btn.Disable(),
-									  dlg.set_as_default_btn.Disable()))
+									  dlg.set_as_default_btn.Disable(),
+									  dlg.profile_info_btn.Disable()))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED, dlg.set_as_default)
 			dlg.sizer3.Add(list_panel, flag=wx.BOTTOM | wx.ALIGN_LEFT,
 						   border=12)
@@ -616,6 +630,58 @@ if sys.platform == "win32":
 					size = (m_width / 2, m_height / 2)
 					frame = DisplayIdentificationFrame(display, pos, size)
 					self.display_identification_frames[display] = frame
+
+		def show_profile_info(self, event):
+			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+													wx.LIST_STATE_SELECTED)
+			if pindex < 0:
+				wx.Bell()
+				return
+			argyll_dir = getcfg("argyll.dir")
+			if not check_set_argyll_bin():
+				return
+			if getcfg("argyll.dir") != argyll_dir:
+				if self.pl.frame:
+					result = self.pl.frame.send_command(None,
+														'set-argyll-dir "%s"' %
+														getcfg("argyll.dir"))
+				else:
+					result = "ok"
+				if result == "ok":
+					self.pl.writecfg()
+			try:
+				profile = ICCP.ICCProfile(self.profiles[pindex])
+			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				show_result_dialog(Error(lang.getstr("profile.invalid") + 
+										 "\n" + profile), self)
+				return
+			if profile.ID == "\0" * 16:
+				id = profile.calculateID(False)
+			else:
+				id = profile.ID
+			if not id in self.profile_info:
+				# Create profile info window and store in hash table
+				from wxProfileInfo import ProfileInfoFrame
+				self.profile_info[id] = ProfileInfoFrame(None, -1)
+				self.profile_info[id].Unbind(wx.EVT_CLOSE)
+				self.profile_info[id].Bind(wx.EVT_CLOSE,
+										   self.close_profile_info)
+			if (not self.profile_info[id].profile or
+				self.profile_info[id].profile.calculateID(False) != id):
+				# Load profile if info window has no profile or ID is different
+				self.profile_info[id].profileID = id
+				self.profile_info[id].LoadProfile(profile)
+			if self.profile_info[id].IsIconized():
+				self.profile_info[id].Restore()
+			else:
+				self.profile_info[id].Show()
+				self.profile_info[id].Raise()
+	
+		def close_profile_info(self, event):
+			# Remove the frame from the hash table
+			self.profile_info.pop(event.GetEventObject().profileID)
+			# Closes the window
+			event.Skip()
 
 		def remove_profile(self, event):
 			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
@@ -1362,7 +1428,8 @@ class ProfileLoader(object):
 			pass
 		windows.extend(filter(lambda window: not isinstance(window, wx.Dialog) and
 											 window.Name != "TaskBarNotification" and
-											 window.Name != "DisplayIdentification",
+											 window.Name != "DisplayIdentification" and
+											 window.Name != "profile_info",
 							  wx.GetTopLevelWindows()))
 		numwindows = len(windows)
 		if numwindows < self.numwindows:
@@ -1807,6 +1874,7 @@ class ProfileLoader(object):
 			self.monitoring = False
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
+		self.writecfg()
 
 	def _enumerate_monitors(self):
 		safe_print("-" * 80)
@@ -2246,7 +2314,8 @@ class ProfileLoader(object):
 
 	def writecfg(self):
 		config.writecfg(module="apply-profiles",
-						options=("profile.load_on_login", "profile_loader"))
+						options=("argyll.dir", "profile.load_on_login",
+								 "profile_loader"))
 
 
 def get_display_name_edid(device, moninfo=None, index=None,

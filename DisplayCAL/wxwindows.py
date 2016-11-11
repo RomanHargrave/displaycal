@@ -1018,12 +1018,17 @@ class BaseFrame(wx.Frame):
 			return
 		state = self.get_app_state("plain")
 		dialog = isinstance(self.get_top_window(), wx.Dialog)
+		if data[0] == "setcfg" and len(data) == 4 and data[-1] == "force":
+			force_setcfg = data.pop()
+		else:
+			force_setcfg = False
 		if ((state in ("blocked", "busy") or dialog) and
 			data[0] not in ("abort", "alt", "cancel", "close",
 							"getactivewindow", "getcellvalues",
 							"getmenus", "getmenuitems",
 							"getstate", "getuielement", "getuielements",
-							"getwindows", "interact", "ok")):
+							"getwindows", "interact", "ok") and
+			not force_setcfg):
 			if dialog:
 				state = "blocked"
 			self.send_response(state, data, conn, command_timestamp)
@@ -1533,10 +1538,15 @@ class BaseFrame(wx.Frame):
 			safe_print(exception)
 
 	def send_command(self, scripting_host_name_suffix, command):
+		lock_name = appbasename
+		scripting_host = appname
+		if scripting_host_name_suffix:
+			lock_name += "-" + scripting_host_name_suffix
+			scripting_host += "-" + scripting_host_name_suffix
 		try:
 			for host in self.get_scripting_hosts():
 				ip_port, name = host.split(None, 1)
-				if name == appbasename + "-" + scripting_host_name_suffix:
+				if name == lock_name:
 					ip, port = ip_port.split(":", 1)
 					port = int(port)
 					conn = self.connect(ip, port)
@@ -1547,24 +1557,21 @@ class BaseFrame(wx.Frame):
 					# else may have grabbed the port)
 					conn.send_command("getappname")
 					response = conn.get_single_response()
-					if response == appname + "-" + scripting_host_name_suffix:
+					if response == scripting_host:
 						conn.send_command(command)
 						response = conn.get_single_response()
-						safe_print("%s-%s %s returned" %
-								   (appname, scripting_host_name_suffix,
-									command), response)
+						safe_print("%s %s returned" % (scripting_host, command),
+								   response)
 					else:
-						safe_print("Warning - %s-%s not running "
-								   "under expected port" %
-								   (appname, scripting_host_name_suffix), port)
+						safe_print("Warning - %s not running "
+								   "under expected port" % scripting_host, port)
 					del conn
 					return response
 			else:
-				safe_print("Warning - %s-%s not running?" %
-						   (appname, scripting_host_name_suffix))
+				safe_print("Warning - %s not running?" % scripting_host)
 		except Exception, exception:
-			safe_print("Warning - couldn't talk to %s-%s:" %
-					   (appname, scripting_host_name_suffix), exception)
+			safe_print("Warning - couldn't talk to %s:" % scripting_host,
+					   exception)
 			return exception
 
 	def focus_handler(self, event=None):

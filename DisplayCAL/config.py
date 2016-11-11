@@ -1497,9 +1497,10 @@ def initcfg(module=None):
 		setcfg("calibration.file", defaults["calibration.file"])
 	# Read cfg
 	cfgnames = []
-	if module != "3DLUT-maker" and (module != "apply-profiles" or
-									sys.platform != "win32"):
-		# Never read base app cfg for 3D LUT maker or for Windows profile loader
+	if module not in ("3DLUT-maker", "VRML-to-X3D-converter",
+					  "scripting-client"):
+		# Never read base app cfg for 3D LUT maker, VRML converter and
+		# scripting client
 		cfgnames.append(appbasename)
 	if module:
 		cfgnames.append(cfgbasename)
@@ -1517,7 +1518,10 @@ def initcfg(module=None):
 				cfgfiles.append(cfgfile)
 				# Make user config take precedence
 				break
-	cfgfiles.sort(key=lambda cfgfile: os.stat(cfgfile).st_mtime)
+	if len(cfgfiles) > 1 and (module != "apply-profiles" or
+							  sys.platform != "win32"):
+		# Make most recent file take precedence
+		cfgfiles.sort(key=lambda cfgfile: os.stat(cfgfile).st_mtime)
 	try:
 		cfg.read(cfgfiles)
 		# This won't raise an exception if the file does not exist, only
