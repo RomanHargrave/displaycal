@@ -3472,6 +3472,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		update_profile = update_cal and is_profile()
 
+		self.visual_whitepoint_editor_btn.Enable(bool(self.worker.displays) and
+												 bool(self.worker.instruments) and
+												 not update_cal)
 		self.whitepoint_measure_btn.Enable(bool(self.worker.instruments) and
 										   not update_cal)
 		self.ambient_measure_btn.Enable(bool(self.worker.instruments) and
@@ -4214,6 +4217,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.whitepoint_x_label.Hide()
 			self.whitepoint_y_textctrl.Hide()
 			self.whitepoint_y_label.Hide()
+			self.visual_whitepoint_editor_btn.Hide()
 			self.whitepoint_measure_btn.Hide()
 			self.luminance_ctrl.SetSelection(0)
 			self.luminance_textctrl.Hide()
@@ -5186,6 +5190,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					str(stripzeros(getcfg("whitepoint.colortemp"))))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
+		self.visual_whitepoint_editor_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
