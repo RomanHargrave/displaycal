@@ -743,6 +743,7 @@ if sys.platform == "win32":
 			self.profiles_ctrl.DeleteAllItems()
 			self.add_btn.Disable()
 			self.remove_btn.Disable()
+			self.profile_info_btn.Disable()
 			self.set_as_default_btn.Disable()
 			if not monitor:
 				dindex = self.display_ctrl.GetSelection()
