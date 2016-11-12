@@ -960,7 +960,14 @@ class VisualWhitepointEditor(wx.Frame):
         
     def SetProperties(self):
         """ Sets some initial properties for :class:`VisualWhitepointEditor` (sizes, values). """
-        min_w = s(60)
+        min_w = s(30)
+        if not getattr(wx.SpinCtrl, "_spinwidth", 0):
+            spin = wx.SpinCtrl(self, -1)
+            text = wx.TextCtrl(self, -1)
+            wx.SpinCtrl._spinwidth = spin.Size[0] - text.Size[0] + 11
+            spin.Destroy()
+            text.Destroy()
+        min_w += wx.SpinCtrl._spinwidth
         self.redSpin.SetMinSize((min_w, -1))
         self.greenSpin.SetMinSize((min_w, -1))
         self.blueSpin.SetMinSize((min_w, -1))
