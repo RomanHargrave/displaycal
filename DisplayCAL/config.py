@@ -817,6 +817,7 @@ defaults = {
 																	  version),
 	"dimensions.measureframe": "0.5,0.5,1.5",
 	"dimensions.measureframe.unzoomed": "0.5,0.5,1.5",
+	"dimensions.measureframe.whitepoint.visual_editor": "0.5,0.5,1.5",
 	"display.number": 1,
 	"display_lut.link": 1,
 	"display_lut.number": 1,

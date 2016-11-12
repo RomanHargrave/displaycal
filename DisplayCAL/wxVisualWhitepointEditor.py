@@ -11,9 +11,9 @@ import colorsys
 import sys
 from math import pi, sin, cos, sqrt, atan2
 
-from wxfixes import wx, wx_Panel
+from wxfixes import wx, wx_Panel, GenBitmapButton as BitmapButton
 from config import (defaults, getbitmap, getcfg, get_default_dpi,
-                    get_icon_bundle, initcfg, setcfg)
+                    get_icon_bundle, geticon, initcfg, setcfg)
 from meta import name as appname
 from wxMeasureFrame import get_default_size
 import localization as lang
@@ -533,7 +533,7 @@ class HSVWheel(BasePyControl):
         :param `pt`: an instance of :class:`Point`.
         """
 
-        return Distance(pt, self._mainFrame._centre) <= (self._bitmap.Size[0] - s(12)) / 2
+        return Distance(pt, self._mainFrame._centre) <= (self._bitmap.Size[0]) / 2
 
 
     def TrackPoint(self, pt):
@@ -555,7 +555,7 @@ class HSVWheel(BasePyControl):
         if colour.h < 0:
             colour.h += 360
 
-        colour.s = int(round(Distance(pt, mainFrame._centre)*255.0/((self._bitmap.Size[0] - s(12)) / 2)*0.125))
+        colour.s = int(round(Distance(pt, mainFrame._centre)*255.0/((self._bitmap.Size[0] - s(12)) / 2)*0.2))
         if colour.s > 255:
             colour.s = 255
 
@@ -581,7 +581,7 @@ class BaseLineCtrl(wx.PyControl):
         :param `parent`: the control parent window.
         """
 
-        wx.PyControl.__init__(self, parent, size=(s(20), s(100)),
+        wx.PyControl.__init__(self, parent, size=(s(20), s(102)),
                               style=wx.NO_BORDER)
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)    
 
@@ -894,11 +894,33 @@ class VisualWhitepointEditor(wx.Frame):
         self.brightnessSpin = wx.SpinCtrl(self.mainPanel, -1, "", min=0, max=255,
                                           style=wx.SP_ARROW_KEYS)
         self.reset_btn = wx.Button(self.mainPanel, -1, lang.getstr("reset"))
-        scale = float(getcfg("dimensions.measureframe").split(",")[2])
-        self.area_slider = wx.Slider(self.mainPanel, -1, min(scale * 100, 1500),
-                                     100, 1500)
+        x, y, scale = (float(v) for v in getcfg("dimensions.measureframe.whitepoint.visual_editor").split(","))
+        self.area_size_slider = wx.Slider(self.mainPanel, -1,
+                                          min(scale * 100, 1500), 100, 1500)
+        self.zoomnormalbutton = BitmapButton(self.mainPanel, -1, 
+                                             geticon(16, "zoom-original"), 
+                                             style=wx.NO_BORDER)
+        self.Bind(wx.EVT_BUTTON, self.zoomnormal_handler, self.zoomnormalbutton)
+        self.zoomnormalbutton.SetToolTipString(lang.getstr("measureframe."
+                                                           "zoomnormal"))
+        self.area_x_slider = wx.Slider(self.mainPanel, -1,
+                                       int(round(x * 1000)), 0, 1000)
+        self.center_x_button = BitmapButton(self.mainPanel, -1, 
+                                            geticon(16, "window-center"), 
+                                            style=wx.NO_BORDER)
+        self.Bind(wx.EVT_BUTTON, self.center_x_handler, self.center_x_button)
+        self.center_x_button.SetToolTipString(lang.getstr("measureframe.center"))
+        self.area_y_slider = wx.Slider(self.mainPanel, -1,
+                                       int(round(y * 1000)), 0, 1000)
+        self.center_y_button = BitmapButton(self.mainPanel, -1, 
+                                            geticon(16, "window-center"), 
+                                            style=wx.NO_BORDER)
+        self.Bind(wx.EVT_BUTTON, self.center_y_handler, self.center_y_button)
+        self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
         self.measure_btn = wx.Button(self.mainPanel, -1, lang.getstr("measure"),
                                      name="visual_whitepoint_editor_measure_btn")
+        
+        self.Bind(wx.EVT_SIZE, self.area_handler)
         
         self.SetProperties()
         self.DoLayout()
@@ -910,10 +932,12 @@ class VisualWhitepointEditor(wx.Frame):
             spin.Bind(wx.EVT_SPINCTRL, self.OnSpinCtrl)
 
         self.reset_btn.Bind(wx.EVT_BUTTON, self.reset_handler)
-        self.area_slider.Bind(wx.EVT_SLIDER, self.area_slider_handler)
+        self.area_size_slider.Bind(wx.EVT_SLIDER, self.area_handler)
+        self.area_x_slider.Bind(wx.EVT_SLIDER, self.area_handler)
+        self.area_y_slider.Bind(wx.EVT_SLIDER, self.area_handler)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-        self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyUp)
+        self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
         self.Centre(wx.BOTH)
 
@@ -930,7 +954,6 @@ class VisualWhitepointEditor(wx.Frame):
         
     def SetProperties(self):
         """ Sets some initial properties for :class:`VisualWhitepointEditor` (sizes, values). """
-        self.area_slider_handler(None)
         min_w = s(60)
         self.redSpin.SetMinSize((min_w, -1))
         self.greenSpin.SetMinSize((min_w, -1))
@@ -953,10 +976,6 @@ class VisualWhitepointEditor(wx.Frame):
         hsvGridSizer = wx.FlexGridSizer(2, 3, 4, margin)
         rgbValueSizer = wx.BoxSizer(wx.HORIZONTAL)
         rgbGridSizer = wx.FlexGridSizer(2, 3, 4, margin)
-        panelSizer = wx.FlexGridSizer(1, 1, 0, 0)
-        panelSizer.AddGrowableRow(0)
-        panelSizer.AddGrowableCol(0)
-        self.bgPanel.Sizer = panelSizer
         
         hsvSizer = wx.BoxSizer(wx.HORIZONTAL)
         rgbSizer = wx.BoxSizer(wx.VERTICAL)
@@ -967,7 +986,6 @@ class VisualWhitepointEditor(wx.Frame):
         hsvSizer.Add(self.bgBrightCtrl, 0, wx.RIGHT|wx.TOP|wx.BOTTOM, margin + s(5) + 2)
         mainSizer.Add(hsvSizer, 0, wx.ALL|wx.EXPAND, margin)
         
-        panelSizer.Add(self.newColourPanel, 0, wx.ALIGN_CENTER|wx.ALL, margin)
         redLabel = wx.StaticText(self.mainPanel, -1, lang.getstr("red"))
         rgbGridSizer.Add(redLabel, 0)
         greenLabel = wx.StaticText(self.mainPanel, -1, lang.getstr("green"))
@@ -994,9 +1012,26 @@ class VisualWhitepointEditor(wx.Frame):
         area_slider_label = wx.StaticText(self.mainPanel, -1,
                                           lang.getstr("measureframe.title"))
         mainSizer.Add(area_slider_label, 0, wx.TOP | wx.LEFT, margin)
-        mainSizer.Add((1, 4))
-        mainSizer.Add(self.area_slider, 0, wx.BOTTOM | wx.LEFT | wx.RIGHT |
-                                           wx.EXPAND, margin)
+        mainSizer.Add((1, 8))
+        slider_sizer = wx.FlexGridSizer(3, 3, s(4), margin)
+        slider_sizer.AddGrowableCol(1)
+        mainSizer.Add(slider_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT |
+                                       wx.BOTTOM, margin)
+        slider_sizer.Add(wx.StaticText(self.mainPanel, -1, lang.getstr("size")),
+                         0, wx.ALIGN_CENTER_VERTICAL)
+        slider_sizer.Add(self.area_size_slider, 0, wx.ALIGN_CENTER_VERTICAL |
+                                                   wx.EXPAND)
+        slider_sizer.Add(self.zoomnormalbutton, 0, wx.ALIGN_CENTER_VERTICAL)
+        slider_sizer.Add(wx.StaticText(self.mainPanel, -1, "X"),
+                         0, wx.ALIGN_CENTER_VERTICAL)
+        slider_sizer.Add(self.area_x_slider, 0, wx.ALIGN_CENTER_VERTICAL |
+                                                wx.EXPAND)
+        slider_sizer.Add(self.center_x_button, 0, wx.ALIGN_CENTER_VERTICAL)
+        slider_sizer.Add(wx.StaticText(self.mainPanel, -1, "Y"),
+                         0, wx.ALIGN_CENTER_VERTICAL)
+        slider_sizer.Add(self.area_y_slider, 0, wx.ALIGN_CENTER_VERTICAL |
+                                                wx.EXPAND)
+        slider_sizer.Add(self.center_y_button, 0, wx.ALIGN_CENTER_VERTICAL)
         mainSizer.Add(self.measure_btn, 0, wx.ALL | wx.ALIGN_CENTER, margin)
 
         self.mainPanel.SetAutoLayout(True)
@@ -1101,7 +1136,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.Destroy()
     
     
-    def OnKeyUp(self, event):
+    def OnKeyDown(self, event):
         """
         Handles the ``wx.EVT_CHAR_HOOK`` event for :class:`VisualWhitepointEditor`.
         
@@ -1110,8 +1145,29 @@ class VisualWhitepointEditor(wx.Frame):
 
         if event.GetKeyCode() == wx.WXK_ESCAPE:
             self.Close()
-
-        event.Skip()
+        #elif event.KeyCode in (wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP,
+                               #wx.WXK_DOWN):
+            #self._colour.h += {wx.WXK_LEFT: 1,
+                     #wx.WXK_RIGHT: -1,
+                     #wx.WXK_UP: 0,
+                     #wx.WXK_DOWN: 0}[event.KeyCode]
+            #if self._colour.h > 359:
+                #self._colour.h = 0
+            #elif self._colour.h < 0:
+                #self._colour.h = 359
+            #self._colour.s += {wx.WXK_LEFT: 0,
+                     #wx.WXK_RIGHT: 0,
+                     #wx.WXK_UP: 1,
+                     #wx.WXK_DOWN: -1}[event.KeyCode]
+            #if self._colour.s > 255:
+                #self._colour.s = 255
+            #elif self._colour.s < 0:
+                #self._colour.s = 0
+            #print self._colour.h, self._colour.s
+            #self._colour.ToRGB()
+            #self.DrawAll()
+        else:
+            event.Skip()
     
 
     def PtFromAngle(self, angle, sat, center):
@@ -1125,7 +1181,8 @@ class VisualWhitepointEditor(wx.Frame):
         """
 
         angle = deg2rad(angle)
-        sat = sat*((self.hsvBitmap._bitmap.Size[0] - s(12)) / 2)/255.0
+        sat = min(sat*((self.hsvBitmap._bitmap.Size[0] - s(12)) / 2)/51.0,
+                  ((self.hsvBitmap._bitmap.Size[0] - s(12)) / 2))
 
         x = sat*cos(angle)
         y = sat*sin(angle)
@@ -1237,10 +1294,30 @@ class VisualWhitepointEditor(wx.Frame):
         return self.Pulse(msg)
 
 
-    def area_slider_handler(self, event):
-        scale = self.area_slider.Value / 100.0
-        self.newColourPanel.MinSize = (int(round(get_default_size() * scale)), ) * 2
-        self.Layout()
+    def area_handler(self, event=None):
+        scale = self.area_size_slider.Value / 100.0
+        x = self.area_x_slider.Value / 1000.0
+        y = self.area_y_slider.Value / 1000.0
+        w, h = (int(round(get_default_size() * scale)), ) * 2
+        self.bgPanel.MinSize = -1, -1
+        self.newColourPanel.Size = w, h
+        self.bgPanel.MinSize = w + s(24), h + s(24)
+        bg_w, bg_h = (float(v) for v in self.bgPanel.Size)
+        self.newColourPanel.Position = ((bg_w - (w)) * x), ((bg_h - (h)) * y)
+        if event:
+            event.Skip()
+            if event.GetEventType() == wx.EVT_SIZE.evtType[0]:
+                wx.CallAfter(self.area_handler)
+
+
+    def center_x_handler(self, event):
+        self.area_x_slider.SetValue(500)
+        self.area_handler()
+
+
+    def center_y_handler(self, event):
+        self.area_y_slider.SetValue(500)
+        self.area_handler()
 
 
     def flush(self):
@@ -1271,10 +1348,21 @@ class VisualWhitepointEditor(wx.Frame):
             value = getattr(self._colour, attribute)
             setcfg("whitepoint.visual_editor." + attribute, value)
         setcfg("whitepoint.visual_editor.bg_v", self._bgcolour.v)
+        x, y = (ctrl.Value / 1000.0 for ctrl in (self.area_x_slider,
+                                                 self.area_y_slider))
+        scale = self.area_size_slider.Value / 100.0
+        setcfg("dimensions.measureframe.whitepoint.visual_editor",
+               "%f,%f,%f" % (x, y, scale))
 
 
     def write(self, txt):
         pass
+
+
+    def zoomnormal_handler(self, event):
+        scale = float(defaults["dimensions.measureframe.whitepoint.visual_editor"].split(",")[2])
+        self.area_size_slider.SetValue(int(round(scale * 100)))
+        self.area_handler()
 
 
 if __name__ == "__main__":
