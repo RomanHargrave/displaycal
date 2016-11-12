@@ -2258,35 +2258,39 @@ class Worker(object):
 					break
 		return oyranos
 	
-	def check_is_ambient_measuring(self, txt):
+	def check_is_single_measurement(self, txt):
 		if (("ambient light measuring" in txt.lower() or
 			 "Will use emissive mode instead" in txt) and
-			not getattr(self, "is_ambient_measuring", False)):
-			self.is_ambient_measuring = True
-		if (getattr(self, "is_ambient_measuring", False) and
+			not getattr(self, "is_ambient_measurement", False)):
+			self.is_ambient_measurement = True
+			self.is_single_measurement = True
+		if (getattr(self, "is_single_measurement", False) and
 			"Place instrument on spot to be measured" in txt):
-			self.is_ambient_measuring = False
-			self.do_ambient_measurement()
+			self.is_single_measurement = False
+			self.do_single_measurement()
+			self.is_ambient_measurement = False
 	
-	def do_ambient_measurement(self):
+	def do_single_measurement(self):
 		if getattr(self, "subprocess_abort", False) or \
 		   getattr(self, "thread_abort", False):
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
-		dlg = ConfirmDialog(self.progress_wnd,
-							msg=lang.getstr("instrument.measure_ambient"), 
-							ok=lang.getstr("ok"), 
-							cancel=lang.getstr("cancel"), 
-							bitmap=geticon(32, "dialog-information"))
-		self.progress_wnd.dlg = dlg
-		dlg_result = dlg.ShowModal()
-		dlg.Destroy()
-		if self.finished:
-			return
-		if dlg_result != wx.ID_OK:
-			self.abort_subprocess()
-			return False
+		if self.is_ambient_measurement:
+			self.is_ambient_measurement = False
+			dlg = ConfirmDialog(self.progress_wnd,
+								msg=lang.getstr("instrument.measure_ambient"), 
+								ok=lang.getstr("ok"), 
+								cancel=lang.getstr("cancel"), 
+								bitmap=geticon(32, "dialog-information"))
+			self.progress_wnd.dlg = dlg
+			dlg_result = dlg.ShowModal()
+			dlg.Destroy()
+			if self.finished:
+				return
+			if dlg_result != wx.ID_OK:
+				self.abort_subprocess()
+				return False
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("please_wait"))
 	
@@ -2343,6 +2347,7 @@ class Worker(object):
 					wx.CallLater(1500, self.instrument_on_screen_continue)
 
 	def instrument_on_screen_continue(self):
+		self.log("%s: Skipping place instrument on screen message..." % appname)
 		self.safe_send(" ")
 		self.pauseable_now = True
 		self.instrument_on_screen = True
@@ -2367,6 +2372,8 @@ class Worker(object):
 			 in self.recent.read()) and
 			not self.subprocess_abort):
 			self.retrycount += 1
+			self.log("%s: Retrying (%s)..." % 
+					 (appname, self.retrycount))
 			self.recent.write("\r\n%s: Retrying (%s)..." % 
 							  (appname, self.retrycount))
 			self.safe_send(" ")
@@ -2374,7 +2381,8 @@ class Worker(object):
 	def check_spotread_result(self, txt):
 		""" Check if spotread returned a result """
 		if (self.cmdname == get_argyll_utilname("spotread") and
-			self.progress_wnd is not getattr(self, "terminal", None) and
+			(self.progress_wnd is not getattr(self, "terminal", None) or
+			 getattr(self.terminal, "Name", None) == "VisualWhitepointEditor") and
 			("Result is XYZ:" in txt or "Result is Y:" in txt or
 			 (self.instrument_calibration_complete and
 			  self.spotread_just_do_instrument_calibration))):
@@ -8021,7 +8029,7 @@ END_DATA""")[0]
 		self.check_instrument_place_on_screen(txt)
 		self.check_instrument_sensor_position(txt)
 		self.check_retry_measurement(txt)
-		self.check_is_ambient_measuring(txt)
+		self.check_is_single_measurement(txt)
 		self.check_spotread_result(txt)
 		if self.cmdname in (get_argyll_utilname("dispcal"),
 							get_argyll_utilname("dispread"),
@@ -8043,7 +8051,9 @@ END_DATA""")[0]
 				else:
 					if (getcfg("measurement.play_sound") and
 						(hasattr(self.progress_wnd, "sound_on_off_btn")
-						 or isinstance(self.progress_wnd, DisplayUniformityFrame))):
+						 or isinstance(self.progress_wnd, DisplayUniformityFrame)
+						 or getattr(self.progress_wnd, "Name", None) ==
+						 "VisualWhitepointEditor")):
 						self.commit_sound.safe_play()
 					if hasattr(self.progress_wnd, "animbmp"):
 						self.progress_wnd.animbmp.frame = 0
@@ -8128,10 +8138,12 @@ END_DATA""")[0]
 		if (getattr(self.progress_wnd, "paused", False) and
 			  not getattr(self, "paused", False)):
 			self.paused = True
+			self.log("%s: Pausing..." % appname)
 			self.safe_send("\x1b")
 		elif (not getattr(self.progress_wnd, "paused", False) and
 			  getattr(self, "paused", False)):
 			self.paused = False
+			self.log("%s: Continuing..." % appname)
 			self.safe_send(" ")
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
@@ -9415,7 +9427,11 @@ END_DATA""")[0]
 		self.instrument_place_on_screen_msg = False
 		self.instrument_sensor_position_msg = False
 		self.interactive_frame = interactive_frame
-		self.is_ambient_measuring = interactive_frame == "ambient"
+		self.is_single_measurement = (interactive_frame == "ambient" or
+									  (isinstance(interactive_frame,
+												  wx.TopLevelWindow) and
+									   interactive_frame.Name == "VisualWhitepointEditor"))
+		self.is_ambient_measurement = interactive_frame == "ambient"
 		self.lastcmdname = None
 		self.pauseable = pauseable
 		self.paused = False
@@ -9427,8 +9443,9 @@ END_DATA""")[0]
 		self.abort_requested = False
 		self.starttime = time()
 		self.thread_abort = False
-		if fancy and (not self.interactive or
-					  interactive_frame not in ("uniformity", "untethered")):
+		if (fancy and (not self.interactive or
+					   interactive_frame not in ("uniformity", "untethered")) and
+			not isinstance(interactive_frame, wx.TopLevelWindow)):
 			# Pre-init progress dialog bitmaps
 			ProgressDialog.get_bitmaps(0)
 			ProgressDialog.get_bitmaps(1)
@@ -9486,6 +9503,8 @@ END_DATA""")[0]
 					self.terminal = UntetheredFrame(parent,
 													handler=self.progress_handler,
 													keyhandler=self.terminal_key_handler)
+				elif isinstance(interactive_frame, wx.TopLevelWindow):
+					self.terminal = interactive_frame
 				else:
 					self.terminal = SimpleTerminal(parent, title=progress_title,
 												   handler=self.progress_handler,

@@ -656,10 +656,19 @@
                                   <border>4</border>
                                 </object>
                                 <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="visual_whitepoint_editor_btn">
+                                    <bitmap>../theme/icons/16x16/calibration.png</bitmap>
+                                    <style>wxNO_BORDER</style>
+                                    <tooltip>whitepoint.visual_editor</tooltip>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>10</border>
+                                </object>
+                                <object class="sizeritem">
                                   <object class="wxBitmapButton" name="whitepoint_measure_btn">
                                     <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
                                     <style>wxNO_BORDER</style>
-                                    <tooltip>measure</tooltip>
+                                    <tooltip>ambient.measure</tooltip>
                                   </object>
                                   <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>8</border>
@@ -895,7 +904,7 @@
                                   <object class="wxBitmapButton" name="ambient_measure_btn">
                                     <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
                                     <style>wxNO_BORDER</style>
-                                    <tooltip>measure</tooltip>
+                                    <tooltip>ambient.measure</tooltip>
                                   </object>
                                   <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>4</border>

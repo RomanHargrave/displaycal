@@ -127,6 +127,7 @@ from wxProfileInfo import ProfileInfoFrame
 from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
+from wxVisualWhitepointEditor import VisualWhitepointEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
@@ -2477,6 +2478,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										self.whitepoint_ctrl_handler)
 		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler, 
 				  id=self.whitepoint_measure_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.visual_whitepoint_editor_handler, 
+				  id=self.visual_whitepoint_editor_btn.GetId())
 
 		# White luminance
 		self.Bind(wx.EVT_CHOICE, self.luminance_ctrl_handler, 
@@ -4796,6 +4799,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_profile_name()
 			self.update_trc_control()
 			self.show_trc_controls(True)
+
+	def visual_whitepoint_editor_handler(self, event):
+		editor = VisualWhitepointEditor(self)
+		editor.Show()
 	
 	def ambient_measure_handler(self, event):
 		""" Start measuring ambient illumination """
@@ -4808,28 +4815,40 @@ class MainFrame(ReportFrame, BaseFrame):
 		safe_print("-" * 80)
 		safe_print(lang.getstr("ambient.measure"))
 		self.stop_timers()
-		self.worker.interactive = False
+		evtobjname = event.GetEventObject().Name
+		if evtobjname == "visual_whitepoint_editor_measure_btn":
+			interactive_frame = event.GetEventObject().TopLevelParent
+		else:
+			interactive_frame = "ambient"
+		self.worker.interactive = interactive_frame != "ambient"
 		self.worker.start(self.ambient_measure_consumer, 
 						  self.ambient_measure_producer, 
-						  ckwargs={"event_id": event.GetId()},
+						  ckwargs={"evtobjname": evtobjname},
+						  wkwargs={"evtobjname": evtobjname},
 						  progress_title=lang.getstr("ambient.measure"),
-						  interactive_frame="ambient")
+						  interactive_frame=interactive_frame)
 	
-	def ambient_measure_producer(self):
+	def ambient_measure_producer(self, evtobjname):
 		""" Process spotread output for ambient readings """
 		cmd = get_argyll_util("spotread")
-		args = ["-v", "-a", "-x"]
+		if evtobjname == "visual_whitepoint_editor_measure_btn":
+			# Emissive
+			mode = "-e"
+		else:
+			# Ambient
+			mode = "-a"
+		args = ["-v", mode, "-x"]
 		if getcfg("extra_args.spotread").strip():
 			args += parse_argument_string(getcfg("extra_args.spotread"))
 		result = self.worker.add_measurement_features(args, False,
 													  allow_nondefault_observer=True,
-													  ambient=True)
+													  ambient=mode == "-a")
 		if isinstance(result, Exception):
 			return result
 		return self.worker.exec_cmd(cmd, args, capture_output=True,
 									skip_scripts=True)
 	
-	def ambient_measure_consumer(self, result=None, event_id=None):
+	def ambient_measure_consumer(self, result=None, evtobjname=None):
 		self.start_timers()
 		if not result or isinstance(result, Exception):
 			if getattr(self.worker, "subprocess", None):
@@ -4852,8 +4871,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
 						result)
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
-		set_whitepoint = event_id == self.whitepoint_measure_btn.GetId()
-		set_ambient = event_id == self.ambient_measure_btn.GetId()
+		set_whitepoint = evtobjname in ("visual_whitepoint_editor_measure_btn",
+										"whitepoint_measure_btn")
+		set_ambient = evtobjname == "ambient_measure_btn"
 		if (set_whitepoint and not set_ambient and lux and
 			getcfg("show_advanced_options")):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 

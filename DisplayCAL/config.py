@@ -653,6 +653,10 @@ valid_ranges = {
 	"tc_vrml_black_offset": [0, 40],
 	"webserver.portnumber": [1, 65535],
 	"whitepoint.colortemp": [1000, 15000],
+	"whitepoint.visual_editor.bg_v": [0, 255],
+	"whitepoint.visual_editor.b": [0, 255],
+	"whitepoint.visual_editor.g": [0, 255],
+	"whitepoint.visual_editor.r": [0, 255],
 }
 
 valid_values = {
@@ -1067,6 +1071,10 @@ defaults = {
 	"whitepoint.colortemp": 5000,
 	"whitepoint.colortemp.backup": 5000,
 	"whitepoint.colortemp.locus": "t",
+	"whitepoint.visual_editor.bg_v": 255,
+	"whitepoint.visual_editor.b": 255,
+	"whitepoint.visual_editor.g": 255,
+	"whitepoint.visual_editor.r": 255,
 	"whitepoint.x": 0.345741,
 	"whitepoint.x.backup": 0.345741,
 	"whitepoint.y": 0.358666,
