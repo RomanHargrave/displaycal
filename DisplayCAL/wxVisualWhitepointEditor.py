@@ -281,8 +281,6 @@ class BasePyControl(wx.PyControl):
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 
         self._bitmap = bitmap
-        mask = wx.Mask(self._bitmap, wx.Colour(192, 192, 192))
-        self._bitmap.SetMask(mask)
         
         self._mainFrame = wx.GetTopLevelParent(self)
 
@@ -462,7 +460,9 @@ class HSVWheel(BasePyControl):
         """
 
         if dc is None:
-            dc = wx.BufferedDC(wx.ClientDC(self))
+            dc = wx.ClientDC(self)
+            if sys.platform != "darwin":
+                dc = wx.BufferedDC(dc)
         self.Draw(dc)
 
         #oldPen, oldBrush, oldMode = dc.GetPen(), dc.GetBrush(), dc.GetLogicalFunction()
@@ -805,7 +805,9 @@ class BrightCtrl(BaseLineCtrl):
         """
 
         if dc is None:
-            dc = wx.BufferedDC(wx.ClientDC(self))
+            dc = wx.ClientDC(self)
+            if sys.platform != "darwin":
+                dc = wx.BufferedDC(dc)
         self.Draw(dc)
             
         colour = self._colour
@@ -871,13 +873,15 @@ class VisualWhitepointEditor(wx.Frame):
         self.bgPanel = wx_Panel(self, -1)
 
         self.hsvBitmap = HSVWheel(self.mainPanel)
+        self.brightCtrl = BrightCtrl(self.mainPanel)
+        self.bgBrightCtrl = BrightCtrl(self.mainPanel, self._bgcolour)
         if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
             # No need to enable double buffering under Linux and Mac OS X.
             # Under Windows, enabling double buffering on the panel seems
             # to work best to reduce flicker.
             self.hsvBitmap.SetDoubleBuffered(True)
-        self.brightCtrl = BrightCtrl(self.mainPanel)
-        self.bgBrightCtrl = BrightCtrl(self.mainPanel, self._bgcolour)
+            self.brightCtrl.SetDoubleBuffered(True)
+            self.bgBrightCtrl.SetDoubleBuffered(True)
 
         self.newColourPanel = wx_Panel(self.bgPanel, style=wx.SIMPLE_BORDER)
         
