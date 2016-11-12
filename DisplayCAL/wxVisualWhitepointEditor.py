@@ -900,7 +900,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.reset_btn = wx.Button(self.mainPanel, -1, lang.getstr("reset"))
         x, y, scale = (float(v) for v in getcfg("dimensions.measureframe.whitepoint.visual_editor").split(","))
         self.area_size_slider = wx.Slider(self.mainPanel, -1,
-                                          min(scale * 100, 1500), 100, 1500)
+                                          min(scale * 100, 1500), 50, 1500)
         self.zoomnormalbutton = BitmapButton(self.mainPanel, -1, 
                                              geticon(16, "zoom-original"), 
                                              style=wx.NO_BORDER)
@@ -923,6 +923,8 @@ class VisualWhitepointEditor(wx.Frame):
         self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
         self.measure_btn = wx.Button(self.mainPanel, -1, lang.getstr("measure"),
                                      name="visual_whitepoint_editor_measure_btn")
+
+        self.default_size = get_default_size()
         
         self.Bind(wx.EVT_SIZE, self.area_handler)
         
@@ -1302,7 +1304,7 @@ class VisualWhitepointEditor(wx.Frame):
         scale = self.area_size_slider.Value / 100.0
         x = self.area_x_slider.Value / 1000.0
         y = self.area_y_slider.Value / 1000.0
-        w, h = (int(round(get_default_size() * scale)), ) * 2
+        w, h = (int(round(self.default_size * scale)), ) * 2
         self.bgPanel.MinSize = -1, -1
         self.newColourPanel.Size = w, h
         self.bgPanel.MinSize = w + s(24), h + s(24)
