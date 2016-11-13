@@ -983,9 +983,6 @@ class VisualWhitepointEditor(wx.Frame):
         dialogSizer.AddGrowableCol(1)
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         hsvGridSizer = wx.FlexGridSizer(2, 3, margin, margin)
-        hsvGridSizer.AddGrowableCol(0)
-        hsvGridSizer.AddGrowableCol(1)
-        hsvGridSizer.AddGrowableCol(2)
         
         hsvSizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -1004,7 +1001,7 @@ class VisualWhitepointEditor(wx.Frame):
             sizer.Add(label)
             sizer.Add(getattr(self, channel + "Spin"), 0, wx.TOP, s(4))
             hsvGridSizer.Add(sizer, 0, wx.EXPAND)
-        mainSizer.Add(hsvGridSizer, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, margin)
+        mainSizer.Add(hsvGridSizer, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER, margin)
         mainSizer.Add(self.reset_btn, 0, wx.ALL | wx.ALIGN_CENTER, margin)
         area_slider_label = wx.StaticText(self.mainPanel, -1,
                                           lang.getstr("measureframe.title"))
