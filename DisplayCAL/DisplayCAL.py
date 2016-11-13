@@ -4872,6 +4872,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			K = re.search("Daylight temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)
+		XYZ = re.search("XYZ: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
+						result)
 		Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
 						result)
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
@@ -4904,6 +4906,18 @@ class MainFrame(ReportFrame, BaseFrame):
 				set_whitepoint = dlg.ShowModal() == wx.ID_OK
 				dlg.Destroy()
 		if set_whitepoint:
+			if evtobjname == "visual_whitepoint_editor_measure_btn" and XYZ:
+				RGB = []
+				for attribute in "rgb":
+					RGB.append(getcfg("whitepoint.visual_editor." + attribute))
+				if max(RGB) < 255:
+					# Set luminance
+					self.luminance_ctrl.SetSelection(1)
+					self.luminance_textctrl.SetValue(float(XYZ.group(2)))
+				else:
+					self.luminance_ctrl.SetSelection(0)
+				self.luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
+														self.luminance_ctrl))
 			if not K and not Yxy:
 				# Monochrome reading?
 				show_result_dialog(Error(lang.getstr("ambient.measure.color.unsupported",
