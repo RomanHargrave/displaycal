@@ -58,14 +58,12 @@ if sys.platform == "win32":
 	import madvr
 
 
-	def get_dialog():
-		""" If there are any dialogs open, return the first one """
-		dialogs = filter(lambda window: window and
-										isinstance(window, wx.Dialog) and
-										window.IsShown(),
-						 wx.GetTopLevelWindows())
-		if dialogs:
-			return dialogs[0]
+	def get_dialogs():
+		""" If there are any dialogs open, return them """
+		return filter(lambda window: window and
+									 isinstance(window, wx.Dialog) and
+									 window.IsShown(),
+					  wx.GetTopLevelWindows())
 
 
 	class DisplayIdentificationFrame(wx.Frame):
@@ -115,13 +113,12 @@ if sys.platform == "win32":
 
 	class FixProfileAssociationsDialog(ConfirmDialog):
 
-		def __init__(self, pl):
+		def __init__(self, pl, parent=None):
 			self.pl = pl
-			ConfirmDialog.__init__(self, None,
+			ConfirmDialog.__init__(self, parent,
 								msg=lang.getstr("profile_loader.fix_profile_associations_warning"), 
 								title=pl.get_title(),
 								ok=lang.getstr("profile_loader.fix_profile_associations"), 
-								alt=lang.getstr("profile_associations"),
 								bitmap=geticon(32, "dialog-warning"), wrap=128)
 			dlg = self
 			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
@@ -718,11 +715,8 @@ if sys.platform == "win32":
 				wx.Bell()
 
 		def toggle_fix_profile_associations(self, event):
-			restart = event.IsChecked()
-			if restart:
-				self.EndModal(wx.ID_OK)
-			self.pl._toggle_fix_profile_associations(event)
-			if not restart:
+			self.fix_profile_associations_cb.Value = self.pl._toggle_fix_profile_associations(event, self)
+			if self.fix_profile_associations_cb.Value == event.IsChecked():
 				self.update_profiles()
 
 		def update(self, event=None):
@@ -1025,11 +1019,11 @@ class ProfileLoader(object):
 					wx.CallLater(100, self.check_user_attention)
 				
 				def check_user_attention(self):
-					dlg = get_dialog()
-					if dlg:
+					dlgs = get_dialogs()
+					if dlgs:
 						wx.Bell()
-						dlg.Raise()
-						dlg.RequestUserAttention()
+						for dlg in dlgs:
+							dlg.RequestUserAttention()
 
 				def open_display_settings(self, event):
 					safe_print("Menu command: Open display settings")
@@ -1360,8 +1354,8 @@ class ProfileLoader(object):
 
 	def exit(self, event=None):
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
-		dlg = get_dialog()
-		if dlg:
+		dlg = None
+		for dlg in get_dialogs():
 			if (not isinstance(dlg, ProfileLoaderExceptionsDialog) or
 				(event and not event.CanVeto())):
 				try:
@@ -1371,9 +1365,11 @@ class ProfileLoader(object):
 				else:
 					dlg = None
 			if dlg and event and event.CanVeto():
+				dlg.RequestUserAttention()
+		else:
+			if dlg and event and event.CanVeto():
 				event.Veto()
 				safe_print("Vetoed", event)
-				dlg.RequestUserAttention()
 				return
 		if (event and self.frame and
 			event.GetEventType() == wx.EVT_MENU.typeId and
@@ -2191,7 +2187,7 @@ class ProfileLoader(object):
 					active_moninfo = moninfo
 				else:
 					active_moninfo = None
-				display_edid = get_display_name_edid(device, active_moninfo, i)
+				display_edid = get_display_name_edid(device, active_moninfo)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile or "")
 				if debug:
@@ -2256,21 +2252,18 @@ class ProfileLoader(object):
 				 self._manual_restore == manual_override) and
 				not self._is_other_running(enumerate_windows_and_processes))
 
-	def _toggle_fix_profile_associations(self, event, alt=True):
+	def _toggle_fix_profile_associations(self, event, parent=None):
 		if event:
 			safe_print("Menu command:", end=" ")
 		safe_print("Toggle fix profile associations", event.IsChecked())
 		if event.IsChecked():
-			dlg = FixProfileAssociationsDialog(self)
+			dlg = FixProfileAssociationsDialog(self, parent)
 			self.fix_profile_associations_dlg = dlg
 			result = dlg.ShowModal()
 			dlg.Destroy()
 			if result == wx.ID_CANCEL:
 				safe_print("Cancelled toggling fix profile associations")
-				return
-			elif result != wx.ID_OK:
-				self._set_profile_associations(None)
-				return
+				return False
 		with self.lock:
 			setcfg("profile_loader.fix_profile_associations",
 				   int(event.IsChecked()))
@@ -2280,6 +2273,7 @@ class ProfileLoader(object):
 				self._reset_display_profile_associations()
 			self._manual_restore = True
 			self.writecfg()
+		return event.IsChecked()
 
 	def _set_exceptions(self):
 		self._exceptions = {}
