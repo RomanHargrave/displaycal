@@ -988,13 +988,13 @@ class VisualWhitepointEditor(wx.Frame):
         hsvGridSizer.AddGrowableCol(2)
         
         hsvSizer = wx.BoxSizer(wx.HORIZONTAL)
-        rgbSizer = wx.BoxSizer(wx.VERTICAL)
 
-        mainSizer.Add(rgbSizer, 0, wx.ALL|wx.EXPAND, margin)
         hsvSizer.Add(self.hsvBitmap, 0, wx.ALL, margin)
-        hsvSizer.Add(self.brightCtrl, 0, wx.RIGHT|wx.TOP|wx.BOTTOM, margin + s(5) + 2)
-        hsvSizer.Add(self.bgBrightCtrl, 0, wx.RIGHT|wx.TOP|wx.BOTTOM, margin + s(5) + 2)
-        mainSizer.Add(hsvSizer, 0, wx.ALL|wx.EXPAND, margin)
+        hsvSizer.Add(self.brightCtrl, 0, wx.TOP|wx.BOTTOM, margin + s(5) + 2)
+        hsvSizer.Add((margin + s(5), 1))
+        hsvSizer.Add(self.bgBrightCtrl, 0, wx.TOP|wx.BOTTOM, margin + s(5) + 2)
+        hsvSizer.Add((margin + s(5), 1))
+        mainSizer.Add(hsvSizer, 0, wx.ALL|wx.ALIGN_CENTER, margin)
         
         for channel in ("red", "green", "blue", "hue", "saturation",
                         "brightness"):
