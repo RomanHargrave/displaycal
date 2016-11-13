@@ -951,11 +951,7 @@ class VisualWhitepointEditor(wx.Frame):
 
         self.keepGoing = True
         
-        if hasattr(parent, "ambient_measure_handler"):
-            self.measure_btn.Bind(wx.EVT_BUTTON,
-                                  lambda e: (self.measure_btn.Disable(),
-                                             self.setcfg(),
-                                             parent.ambient_measure_handler(e)))
+        self.measure_btn.Bind(wx.EVT_BUTTON, self.measure)
         
         
     def SetProperties(self):
@@ -1335,6 +1331,18 @@ class VisualWhitepointEditor(wx.Frame):
 
     def flush(self):
         pass
+
+
+    def measure(self, event):
+        if (not self.Parent or
+            not hasattr(self.Parent, "ambient_measure_handler") or
+            not self.Parent.worker.displays or
+            not self.Parent.worker.instruments):
+            wx.Bell()
+            return
+        self.measure_btn.Disable()
+        self.setcfg()
+        self.Parent.ambient_measure_handler(event)
 
 
     def start_timer(self, ms=50):
