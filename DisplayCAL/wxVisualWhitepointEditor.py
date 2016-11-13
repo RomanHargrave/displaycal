@@ -1005,7 +1005,7 @@ class VisualWhitepointEditor(wx.Frame):
         rgbGridSizer.Add(self.redSpin, 0, wx.EXPAND)
         rgbGridSizer.Add(self.greenSpin, 0, wx.EXPAND)
         rgbGridSizer.Add(self.blueSpin, 0, wx.EXPAND)
-        rgbValueSizer.Add(rgbGridSizer, 1, 0, 0)
+        rgbValueSizer.Add(rgbGridSizer, 1, wx.EXPAND)
         mainSizer.Add(rgbValueSizer, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, margin)
         hueLabel = wx.StaticText(self.mainPanel, -1, lang.getstr("hue"))
         hsvGridSizer.Add(hueLabel, 0)
