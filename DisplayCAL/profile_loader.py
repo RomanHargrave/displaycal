@@ -473,11 +473,8 @@ if sys.platform == "win32":
 			dlg.sizer2.Insert(1, dlg.set_as_default_btn, flag=wx.RIGHT, border=12)
 			dlg.set_as_default_btn.Bind(wx.EVT_BUTTON, dlg.set_as_default)
 			dlg.set_as_default_btn.Disable()
-			dlg.profile_info_btn = wx.BitmapButton(dlg.buttonpanel, -1,
-												   geticon(16, "info"),
-												   style=wx.NO_BORDER)
-			set_bitmap_labels(dlg.profile_info_btn)
-			dlg.profile_info_btn.SetToolTipString(lang.getstr("profile.info"))
+			dlg.profile_info_btn = wx.Button(dlg.buttonpanel, -1,
+											 lang.getstr("profile.info"))
 			dlg.sizer2.Insert(0, dlg.profile_info_btn,
 							  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 							  border=12)
