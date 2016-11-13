@@ -899,6 +899,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.brightnessSpin = wx.SpinCtrl(self.mainPanel, -1, "", min=0, max=255,
                                           style=wx.SP_ARROW_KEYS)
         self.reset_btn = wx.Button(self.mainPanel, -1, lang.getstr("reset"))
+        self.reset_btn.SetMaxFontSize(11)
         x, y, scale = (float(v) for v in getcfg("dimensions.measureframe.whitepoint.visual_editor").split(","))
         self.area_size_slider = wx.Slider(self.mainPanel, -1,
                                           min(scale * 100, 1500), 50, 1500)
@@ -924,6 +925,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
         self.measure_btn = wx.Button(self.mainPanel, -1, lang.getstr("measure"),
                                      name="visual_whitepoint_editor_measure_btn")
+        self.measure_btn.SetMaxFontSize(11)
 
         self.default_size = get_default_size()
         
@@ -999,6 +1001,7 @@ class VisualWhitepointEditor(wx.Frame):
         for channel in ("red", "green", "blue", "hue", "saturation",
                         "brightness"):
             label = wx.StaticText(self.mainPanel, -1, lang.getstr(channel))
+            label.SetMaxFontSize(11)
             sizer = wx.BoxSizer(wx.VERTICAL)
             sizer.Add(label)
             sizer.Add(getattr(self, channel + "Spin"), 0, wx.TOP, s(4))
@@ -1007,24 +1010,28 @@ class VisualWhitepointEditor(wx.Frame):
         mainSizer.Add(self.reset_btn, 0, wx.ALL | wx.ALIGN_CENTER, margin)
         area_slider_label = wx.StaticText(self.mainPanel, -1,
                                           lang.getstr("measureframe.title"))
+        area_slider_label.SetMaxFontSize(11)
         mainSizer.Add(area_slider_label, 0, wx.TOP | wx.LEFT, margin)
         mainSizer.Add((1, 8))
         slider_sizer = wx.FlexGridSizer(3, 3, s(4), margin)
         slider_sizer.AddGrowableCol(1)
         mainSizer.Add(slider_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT |
                                        wx.BOTTOM, margin)
-        slider_sizer.Add(wx.StaticText(self.mainPanel, -1, lang.getstr("size")),
-                         0, wx.ALIGN_CENTER_VERTICAL)
+        area_size_label = wx.StaticText(self.mainPanel, -1, lang.getstr("size"))
+        area_size_label.SetMaxFontSize(11)
+        slider_sizer.Add(area_size_label, 0, wx.ALIGN_CENTER_VERTICAL)
         slider_sizer.Add(self.area_size_slider, 0, wx.ALIGN_CENTER_VERTICAL |
                                                    wx.EXPAND)
         slider_sizer.Add(self.zoomnormalbutton, 0, wx.ALIGN_CENTER_VERTICAL)
-        slider_sizer.Add(wx.StaticText(self.mainPanel, -1, "X"),
-                         0, wx.ALIGN_CENTER_VERTICAL)
+        area_x_label = wx.StaticText(self.mainPanel, -1, "X")
+        area_x_label.SetMaxFontSize(11)
+        slider_sizer.Add(area_x_label, 0, wx.ALIGN_CENTER_VERTICAL)
         slider_sizer.Add(self.area_x_slider, 0, wx.ALIGN_CENTER_VERTICAL |
                                                 wx.EXPAND)
         slider_sizer.Add(self.center_x_button, 0, wx.ALIGN_CENTER_VERTICAL)
-        slider_sizer.Add(wx.StaticText(self.mainPanel, -1, "Y"),
-                         0, wx.ALIGN_CENTER_VERTICAL)
+        area_y_label = wx.StaticText(self.mainPanel, -1, "Y")
+        area_y_label.SetMaxFontSize(11)
+        slider_sizer.Add(area_y_label, 0, wx.ALIGN_CENTER_VERTICAL)
         slider_sizer.Add(self.area_y_slider, 0, wx.ALIGN_CENTER_VERTICAL |
                                                 wx.EXPAND)
         slider_sizer.Add(self.center_y_button, 0, wx.ALIGN_CENTER_VERTICAL)
