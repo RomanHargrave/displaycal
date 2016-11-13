@@ -899,7 +899,6 @@ class VisualWhitepointEditor(wx.Frame):
         self.brightnessSpin = wx.SpinCtrl(self.mainPanel, -1, "", min=0, max=255,
                                           style=wx.SP_ARROW_KEYS)
         self.reset_btn = wx.Button(self.mainPanel, -1, lang.getstr("reset"))
-        self.reset_btn.SetMaxFontSize(11)
         x, y, scale = (float(v) for v in getcfg("dimensions.measureframe.whitepoint.visual_editor").split(","))
         self.area_size_slider = wx.Slider(self.mainPanel, -1,
                                           min(scale * 100, 1500), 50, 1500)
@@ -925,7 +924,6 @@ class VisualWhitepointEditor(wx.Frame):
         self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
         self.measure_btn = wx.Button(self.mainPanel, -1, lang.getstr("measure"),
                                      name="visual_whitepoint_editor_measure_btn")
-        self.measure_btn.SetMaxFontSize(11)
 
         self.default_size = get_default_size()
         
