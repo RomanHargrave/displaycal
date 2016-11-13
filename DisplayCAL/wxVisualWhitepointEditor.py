@@ -633,6 +633,7 @@ class BaseLineCtrl(wx.PyControl):
 
         if self.GetCapture():
             self.ReleaseMouse()
+        self.Refresh()  # Needed for proper redrawing after click under OS X
             
 
     def OnMotion(self, event):
