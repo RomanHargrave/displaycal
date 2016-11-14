@@ -303,10 +303,11 @@ class BasePyControl(wx.PyControl):
         """
 
         dc = wx.AutoBufferedPaintDC(self)
-        self.Draw(dc)
 
         if self._mainFrame._initOver:
             self.DrawMarkers(dc)
+        else:
+            self.Draw(dc)
 
 
     def Draw(self, dc):
@@ -744,7 +745,6 @@ class BrightCtrl(BaseLineCtrl):
         """
 
         dc = wx.AutoBufferedPaintDC(self)
-        self.Draw(dc)
         
         self.DrawMarkers(dc)
 
