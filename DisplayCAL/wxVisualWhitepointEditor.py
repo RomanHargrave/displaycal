@@ -136,10 +136,10 @@ def DrawCheckerBoard(dc, rect, checkColour, box=5):
         
 
 
-class Colour(wx.Colour):
+class Colour(object):
     """
-    This is a subclass of :class:`Colour`, which adds Hue, Saturation and Brightness
-    capability to the base class. It contains also methods to convert RGB triplets
+    This is a class similar to :class:`Colour`, which adds Hue, Saturation and
+    Brightness capability. It contains also methods to convert RGB triplets
     into HSB triplets and vice-versa.
     """
 
@@ -149,8 +149,6 @@ class Colour(wx.Colour):
 
         :param `colour`: a standard :class:`Colour`.
         """
-
-        wx.Colour.__init__(self)
 
         self.r = colour.Red()
         self.g = colour.Green()
@@ -1451,9 +1449,10 @@ class VisualWhitepointEditor(wx.Frame):
 
 
 if __name__ == "__main__":
+    from wxwindows import BaseApp
     initcfg()
     lang.init()
-    app = wx.App(0)
-    dlg = VisualWhitepointEditor(None)
-    dlg.Show()
+    app = BaseApp(0)
+    app.TopWindow = VisualWhitepointEditor(None)
+    app.TopWindow.Show()
     app.MainLoop()

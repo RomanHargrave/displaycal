@@ -609,6 +609,7 @@ class BaseApp(wx.App):
 			if BaseApp._exithandlers:
 				safe_print("Running application exit handlers")
 				BaseApp._run_exitfuncs()
+		return wx.App.OnExit(self)
 
 	@staticmethod
 	def _run_exitfuncs():
@@ -634,7 +635,6 @@ class BaseApp(wx.App):
 				import traceback
 				safe_print("Error in BaseApp._run_exitfuncs:")
 				safe_print(traceback.format_exc())
-				exc_info = sys.exc_info()
 
 		if exc_info is not None:
 			raise exc_info[0], exc_info[1], exc_info[2]
@@ -3958,7 +3958,7 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 		self._init = False
 
 	def OnPaint(self, event):
-		if self.GetBitmap() and self.GetBitmap().IsOk():
+		if self and self.GetBitmap() and self.GetBitmap().IsOk():
 			if hasattr(self, "_bmp"):
 				bmp = self._bmp
 			else:
