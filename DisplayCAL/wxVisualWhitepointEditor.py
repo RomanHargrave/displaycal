@@ -960,8 +960,6 @@ class VisualWhitepointEditor(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
-        self.Centre(wx.BOTH)
-
         # Set up panes
         self.mainPanel.Fit()
         self._mgr.AddPane(self.mainPanel, aui.AuiPaneInfo().
@@ -987,7 +985,15 @@ class VisualWhitepointEditor(wx.Frame):
 
         # Account for pane titlebar
         self.Sizer.SetSizeHints(self)
+        self.Sizer.MinSize = max(self.Sizer.MinSize) + self.mainPanel.Size[0], max(self.Sizer.MinSize)
+        self.Sizer.Fit(self)
         self.Layout()
+
+        self.Centre(wx.BOTH)
+
+        if (self.newColourPanel.Size[0] > self.bgPanel.Size[0] and
+            self.newColourPanel.Size[1] > self.bgPanel.Size[1]):
+            self.Maximize()
 
         wx.CallAfter(self.InitFrame)
 
