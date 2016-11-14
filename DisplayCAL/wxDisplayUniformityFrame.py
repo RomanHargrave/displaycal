@@ -170,7 +170,7 @@ class DisplayUniformityFrame(BaseFrame):
 			wx.CallAfter(self.Maximize)
 		wx.Frame.Show(self, show)
 	
-	def Update(self, value, msg=""):
+	def UpdateProgress(self, value, msg=""):
 		return self.Pulse(msg)
 	
 	def UpdatePulse(self, msg=""):

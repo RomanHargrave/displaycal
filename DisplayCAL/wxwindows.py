@@ -4991,10 +4991,10 @@ class ProgressDialog(wx.Dialog):
 			if self.paused:
 				return
 			if self._fpprogress < self.gauge.GetRange():
-				self.Update(self._fpprogress + self.gauge.GetRange() / 1000.0)
+				self.UpdateProgress(self._fpprogress + self.gauge.GetRange() / 1000.0)
 			else:
 				self.stop_timer(False)
-				self.Update(self.gauge.GetRange(),
+				self.UpdateProgress(self.gauge.GetRange(),
 							"Finished. You may now close this window.")
 				self.pause_continue.Disable()
 				if hasattr(self, "cancel"):
@@ -5010,7 +5010,7 @@ class ProgressDialog(wx.Dialog):
 		return self._fpprogress
 
 	def SetValue(self, value):
-		self.Update(value)
+		self.UpdateProgress(value)
 
 	Value = property(GetValue, SetValue)
 	
@@ -5039,7 +5039,7 @@ class ProgressDialog(wx.Dialog):
 		else:
 			self.pause_continue.Enable()
 	
-	def Update(self, value, msg=None):
+	def UpdateProgress(self, value, msg=None):
 		self.indeterminate = False
 		if msg and msg != self.msg.Label:
 			self.msg.SetLabel(msg)
@@ -5501,7 +5501,7 @@ class SimpleTerminal(InvincibleFrame):
 	def Resume(self):
 		self.keepGoing = True
 	
-	def Update(self, value, msg=""):
+	def UpdateProgress(self, value, msg=""):
 		return self.Pulse(msg)
 	
 	def UpdatePulse(self, msg=""):

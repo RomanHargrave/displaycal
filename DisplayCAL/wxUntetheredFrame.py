@@ -254,7 +254,7 @@ class UntetheredFrame(BaseFrame):
 	def Resume(self):
 		self.keepGoing = True
 	
-	def Update(self, value, msg=""):
+	def UpdateProgress(self, value, msg=""):
 		return self.Pulse(msg)
 	
 	def UpdatePulse(self, msg=""):
