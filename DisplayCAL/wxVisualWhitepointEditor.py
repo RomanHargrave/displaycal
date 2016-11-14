@@ -310,7 +310,11 @@ class BasePyControl(wx.PyControl):
 
 
     def Draw(self, dc):
-        dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+        if "gtk3" in wx.PlatformInfo:
+            bgcolour = self.Parent.BackgroundColour
+        else:
+            bgcolour = self.BackgroundColour
+        dc.SetBackground(wx.Brush(bgcolour))
         
         dc.Clear()
         dc.DrawBitmap(self._bitmap, 0, 0, True)
@@ -746,7 +750,11 @@ class BrightCtrl(BaseLineCtrl):
 
 
     def Draw(self, dc):
-        dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))
+        if "gtk3" in wx.PlatformInfo:
+            bgcolour = self.Parent.BackgroundColour
+        else:
+            bgcolour = self.BackgroundColour
+        dc.SetBackground(wx.Brush(bgcolour))
         dc.Clear()
         
         colour = self._colour.GetPyColour()
