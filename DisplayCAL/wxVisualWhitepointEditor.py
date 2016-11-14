@@ -963,6 +963,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.Centre(wx.BOTH)
 
         # Set up panes
+        self.mainPanel.Fit()
         self._mgr.AddPane(self.mainPanel, aui.AuiPaneInfo().
                                           Name("mainPanel").
                                           Fixed().
@@ -971,7 +972,8 @@ class VisualWhitepointEditor(wx.Frame):
                                           BottomDockable(False).
                                           PaneBorder(False).
                                           CloseButton(False).
-                                          PinButton(True))
+                                          PinButton(True).
+                                          BestSize(self.mainPanel.Size))
         self._mgr.AddPane(self.bgPanel, aui.AuiPaneInfo().
                                         Name("bgPanel").
                                         CenterPane().
@@ -984,7 +986,6 @@ class VisualWhitepointEditor(wx.Frame):
         self.Bind(aui.EVT_AUI_PANE_DOCKED, self.float_pane_handler)
 
         # Account for pane titlebar
-        self.Sizer.Fit(self)
         self.Sizer.SetSizeHints(self)
         self.Layout()
 
