@@ -731,7 +731,7 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 64), x=80, y=44,
 	header.label_y = y
 	header.scalebitmap = (False, ) * 2
 	header.textshadow = False
-	header.SetBackgroundColour("#003399")
+	header.SetBackgroundColour("#0e59a9")
 	header.SetForegroundColour("#FFFFFF")
 	header.SetMaxFontSize(11)
 	label = label or lang.getstr("header")
@@ -1511,7 +1511,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if scale > 1:
 			y, w, h = [int(math.floor(v * scale)) for v in (y, w, h)]
 		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(w, -1))
-		self.header_btm.BackgroundColour = "#003399"
+		self.header_btm.BackgroundColour = "#0e59a9"
 		self.header_btm.scalebitmap = False, False
 		header_bmp = getbitmap("theme/header", False)
 		if header_bmp.Size[0] >= w and header_bmp.Size[1] >= h + y:
