@@ -555,7 +555,6 @@ class HSVWheel(BasePyControl):
             return
 
         dc = wx.ClientDC(self)
-        self.DrawMarkers(dc)
         mainFrame = self._mainFrame
         colour = mainFrame._colour
                 
@@ -800,13 +799,11 @@ class BrightCtrl(BaseLineCtrl):
         mainFrame = self._mainFrame
         colour = self._colour
 
-        mainFrame.DrawMarkers()        
         colour.v = int(round(d))
+        mainFrame.DrawMarkers()
 
         colour.ToRGB()
         mainFrame.SetSpinVals()
-
-        #mainFrame.DrawMarkers()
 
 
     def DrawMarkers(self, dc=None):
