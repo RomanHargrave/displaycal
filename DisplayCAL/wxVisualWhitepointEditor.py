@@ -985,7 +985,7 @@ class VisualWhitepointEditor(wx.Frame):
 
         # Account for pane titlebar
         self.Sizer.SetSizeHints(self)
-        self.Sizer.MinSize = max(self.Sizer.MinSize) + self.mainPanel.Size[0], max(self.Sizer.MinSize)
+        self.Sizer.MinSize = min(self.Sizer.MinSize) + self.mainPanel.Size[0], min(self.Sizer.MinSize)
         self.Sizer.Fit(self)
         self.Layout()
 
