@@ -11,11 +11,16 @@ import colorsys
 import sys
 from math import pi, sin, cos, sqrt, atan2
 
-from wxfixes import wx, wx_Panel, GenBitmapButton as BitmapButton
+from wxfixes import wx
+
+from wx.lib.agw import aui
+
 from config import (defaults, getbitmap, getcfg, get_default_dpi,
                     get_icon_bundle, geticon, initcfg, setcfg)
 from meta import name as appname
 from wxMeasureFrame import get_default_size
+from wxfixes import wx_Panel, GenBitmapButton as BitmapButton
+from wxwindows import HStretchStaticBitmap
 import localization as lang
 
 
@@ -850,6 +855,12 @@ class VisualWhitepointEditor(wx.Frame):
                           title=lang.getstr("whitepoint.visual_editor"),
                           pos=wx.DefaultPosition, style=wx.DEFAULT_FRAME_STYLE,
                           name="VisualWhitepointEditor")
+
+        self._mgr = aui.AuiManager(self, aui.AUI_MGR_DEFAULT |
+                                         aui.AUI_MGR_TRANSPARENT_DRAG |
+                                         aui.AUI_MGR_LIVE_RESIZE |
+                                         aui.AUI_MGR_SMOOTH_DOCKING)
+
         self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 
         if colourData:
@@ -880,9 +891,8 @@ class VisualWhitepointEditor(wx.Frame):
             # No need to enable double buffering under Linux and Mac OS X.
             # Under Windows, enabling double buffering on the panel seems
             # to work best to reduce flicker.
-            self.hsvBitmap.SetDoubleBuffered(True)
-            self.brightCtrl.SetDoubleBuffered(True)
-            self.bgBrightCtrl.SetDoubleBuffered(True)
+            self.mainPanel.SetDoubleBuffered(True)
+            self.bgPanel.SetDoubleBuffered(True)
 
         self.newColourPanel = wx_Panel(self.bgPanel, style=wx.SIMPLE_BORDER)
         
@@ -924,6 +934,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
         self.measure_btn = wx.Button(self.mainPanel, -1, lang.getstr("measure"),
                                      name="visual_whitepoint_editor_measure_btn")
+        self.measure_btn.SetDefault()
 
         self.default_size = get_default_size()
         
@@ -947,6 +958,32 @@ class VisualWhitepointEditor(wx.Frame):
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
         self.Centre(wx.BOTH)
+
+        # Set up panes
+        self._mgr.AddPane(self.mainPanel, aui.AuiPaneInfo().
+                                          Name("mainPanel").
+                                          Fixed().
+                                          Left().
+                                          TopDockable(False).
+                                          BottomDockable(False).
+                                          PaneBorder(False).
+                                          CloseButton(False).
+                                          PinButton(True))
+        self._mgr.AddPane(self.bgPanel, aui.AuiPaneInfo().
+                                        Name("bgPanel").
+                                        CenterPane().
+                                        CloseButton(False).
+                                        PaneBorder(False))
+        self._mgr.Update()
+
+        self.Bind(aui.EVT_AUI_PANE_CLOSE, self.close_pane_handler)
+        self.Bind(aui.EVT_AUI_PANE_FLOATED, self.float_pane_handler)
+        self.Bind(aui.EVT_AUI_PANE_DOCKED, self.float_pane_handler)
+
+        # Account for pane titlebar
+        self.Sizer.Fit(self)
+        self.Sizer.SetSizeHints(self)
+        self.Layout()
 
         wx.CallAfter(self.InitFrame)
 
@@ -982,8 +1019,18 @@ class VisualWhitepointEditor(wx.Frame):
         dialogSizer.AddGrowableRow(0)
         dialogSizer.AddGrowableCol(1)
         mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        shadow = HStretchStaticBitmap(self.mainPanel, -1,
+                                      getbitmap("theme/shadow-bordertop"))
+        mainSizer.Add(shadow, 0, wx.EXPAND)
+        label = wx.StaticText(self.mainPanel, -1, lang.getstr("whitepoint"))
+        label.SetMaxFontSize(11)
+        font = label.Font
+        font.SetWeight(wx.BOLD)
+        label.Font = font
+        mainSizer.Add(label, 0, wx.LEFT, margin)
+
         hsvGridSizer = wx.FlexGridSizer(2, 3, margin, margin)
-        
         hsvSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         hsvSizer.Add(self.hsvBitmap, 0, wx.ALL, margin)
@@ -991,7 +1038,7 @@ class VisualWhitepointEditor(wx.Frame):
         hsvSizer.Add((margin + s(5), 1))
         hsvSizer.Add(self.bgBrightCtrl, 0, wx.TOP|wx.BOTTOM, margin + s(5) + 2)
         hsvSizer.Add((margin + s(5), 1))
-        mainSizer.Add(hsvSizer, 0, wx.ALL|wx.ALIGN_CENTER, margin)
+        mainSizer.Add(hsvSizer, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER, margin)
         
         for channel in ("red", "green", "blue", "hue", "saturation",
                         "brightness"):
@@ -1003,15 +1050,20 @@ class VisualWhitepointEditor(wx.Frame):
             hsvGridSizer.Add(sizer, 0, wx.EXPAND)
         mainSizer.Add(hsvGridSizer, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER, margin)
         mainSizer.Add(self.reset_btn, 0, wx.ALL | wx.ALIGN_CENTER, margin)
+
+        shadow = HStretchStaticBitmap(self.mainPanel, -1,
+                                      getbitmap("theme/shadow-bordertop"))
+        mainSizer.Add(shadow, 0, wx.EXPAND, margin)
         area_slider_label = wx.StaticText(self.mainPanel, -1,
                                           lang.getstr("measureframe.title"))
         area_slider_label.SetMaxFontSize(11)
-        mainSizer.Add(area_slider_label, 0, wx.TOP | wx.LEFT, margin)
-        mainSizer.Add((1, 8))
+        font = area_slider_label.Font
+        font.SetWeight(wx.BOLD)
+        area_slider_label.Font = font
+        mainSizer.Add(area_slider_label, 0, wx.LEFT | wx.BOTTOM, margin)
         slider_sizer = wx.FlexGridSizer(3, 3, s(4), margin)
         slider_sizer.AddGrowableCol(1)
-        mainSizer.Add(slider_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT |
-                                       wx.BOTTOM, margin)
+        mainSizer.Add(slider_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin)
         area_size_label = wx.StaticText(self.mainPanel, -1, lang.getstr("size"))
         area_size_label.SetMaxFontSize(11)
         slider_sizer.Add(area_size_label, 0, wx.ALIGN_CENTER_VERTICAL)
@@ -1284,7 +1336,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.keepGoing = True
 
 
-    def Update(self, value, msg=""):
+    def UpdateProgress(self, value=None, msg=""):
         return self.Pulse(msg)
 
 
@@ -1316,6 +1368,29 @@ class VisualWhitepointEditor(wx.Frame):
     def center_y_handler(self, event):
         self.area_y_slider.SetValue(500)
         self.area_handler()
+
+
+    def close_pane_handler(self, event):
+        event.Veto()  # Prevent closing of pane
+        self.dock_pane()
+
+
+    def dock_pane(self):
+        self._mgr.GetPane("mainPanel").Dock().CloseButton(False)
+        self._mgr.Update()
+        self.area_handler()
+
+
+    def float_pane_handler(self, event):
+        if event.GetEventType() == aui.EVT_AUI_PANE_FLOATED.evtType[0]:
+            pos = [self.Position[i] + (self.Size[i] - self.ClientSize[i]) /
+                                      {0: 2, 1: 1}[i] + s(10) for i in (0, 1)]
+            pos[0] += self.mainPanel.Position[0]
+            pos[1] -= (self.Size[0] - self.ClientSize[0]) / 2
+            self._mgr.GetPane("mainPanel").FloatingPosition(pos).CloseButton(True)
+            wx.CallAfter(self.area_handler)
+        else:
+            wx.CallAfter(self.dock_pane)
 
 
     def flush(self):
