@@ -609,7 +609,10 @@ class BaseApp(wx.App):
 			if BaseApp._exithandlers:
 				safe_print("Running application exit handlers")
 				BaseApp._run_exitfuncs()
-		return wx.App.OnExit(self)
+		if hasattr(wx.App, "OnExit"):
+			return wx.App.OnExit(self)
+		else:
+			return 0
 
 	@staticmethod
 	def _run_exitfuncs():
