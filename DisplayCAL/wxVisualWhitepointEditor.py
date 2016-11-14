@@ -1420,7 +1420,7 @@ class VisualWhitepointEditor(wx.Frame):
         for attribute in "rgb":
             RGB.append(defaults["whitepoint.visual_editor." + attribute])
         self._colourData.SetColour(wx.Colour(*RGB))
-        self._colour.r, self._colour.g, self._colour.b = self._colourData.GetColour()
+        self._colour.r, self._colour.g, self._colour.b = self._colourData.GetColour()[:3]
         self._colour.ToHSV()
         self._bgcolour.v = defaults["whitepoint.visual_editor.bg_v"]
         self.DrawAll()
