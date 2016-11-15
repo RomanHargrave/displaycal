@@ -558,7 +558,6 @@ class HSVWheel(BasePyControl):
         if not self._mouseIn:
             return
 
-        dc = wx.ClientDC(self)
         mainFrame = self._mainFrame
         colour = mainFrame._colour
                 
@@ -571,7 +570,7 @@ class HSVWheel(BasePyControl):
             colour.s = 255
 
         mainFrame.CalcRects()
-        self.DrawMarkers(dc)
+        self.DrawMarkers()
         colour.ToRGB()
         mainFrame.SetSpinVals()
         
@@ -1323,11 +1322,9 @@ class VisualWhitepointEditor(wx.Frame):
         if self._initOver and not self._inDrawAll:
             self._inDrawAll = True
 
-            dc1 = wx.ClientDC(self.hsvBitmap)
-            self.hsvBitmap.DrawMarkers(dc1)
+            self.hsvBitmap.DrawMarkers()
 
-            dc3 = wx.ClientDC(self.brightCtrl)
-            self.brightCtrl.DrawMarkers(dc3)
+            self.brightCtrl.DrawMarkers()
 
             self.CalcRects()
 
