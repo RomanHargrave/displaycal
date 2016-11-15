@@ -995,7 +995,7 @@ class VisualWhitepointEditor(wx.Frame):
         w, h = self.newColourPanel.Size
         self.ClientSize = mainPanelSize[0] + w + s(26), max(minClientSize[1], h + s(26))
         if sys.platform not in ("win32", "darwin"):
-            correction = 26
+            correction = 40
         else:
             correction = 0
         w, h = (int(round(self.default_size)), ) * 2
