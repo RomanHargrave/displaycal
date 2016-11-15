@@ -1391,6 +1391,8 @@ class VisualWhitepointEditor(wx.Frame):
             event.Skip()
             if event.GetEventType() == wx.EVT_SIZE.evtType[0]:
                 wx.CallAfter(self.area_handler)
+            else:
+                self.bgPanel.Refresh()
 
 
     def center_x_handler(self, event):
