@@ -4822,6 +4822,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		evtobjname = event.GetEventObject().Name
 		if evtobjname == "visual_whitepoint_editor_measure_btn":
 			interactive_frame = event.GetEventObject().TopLevelParent
+			while not isinstance(interactive_frame, VisualWhitepointEditor):
+				# Floated panel
+				interactive_frame = interactive_frame.Parent
 		else:
 			interactive_frame = "ambient"
 		self.worker.interactive = interactive_frame != "ambient"
