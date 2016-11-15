@@ -458,6 +458,10 @@ class HSVWheel(BasePyControl):
 
         BasePyControl.__init__(self, parent, bitmap=getbitmap("theme/colorwheel"))
         self._mouseIn = False
+        self._buffer = wx.EmptyBitmap(self._bitmap.Width, self._bitmap.Height)
+        self._bg = wx.EmptyBitmap(self._bitmap.Width, self._bitmap.Height)
+        self._bgdc = wx.MemoryDC(self._bg)
+        self.Draw(self._bgdc)
 
 
     def DrawMarkers(self, dc=None):
@@ -470,10 +474,12 @@ class HSVWheel(BasePyControl):
         if dc is None:
             dc = wx.ClientDC(self)
             if sys.platform != "darwin":
-                dc = wx.BufferedDC(dc)
-        self.Draw(dc)
+                dc = wx.BufferedDC(dc, self._buffer)
 
-        #oldPen, oldBrush, oldMode = dc.GetPen(), dc.GetBrush(), dc.GetLogicalFunction()
+        # Blit the DC with our background to the current DC.
+        # Much faster than redrawing the background every time.
+        dc.Blit(0, 0, self._bg.Width, self._bg.Height, self._bgdc, 0, 0)
+
         brightMark = self._mainFrame._currentRect
         darkMarkOuter = wx.Rect(brightMark.x-1, brightMark.y-1,
                                 brightMark.width+2, brightMark.height+2)
@@ -485,10 +491,8 @@ class HSVWheel(BasePyControl):
                                 (wx.WHITE, brightMark),
                                 (wx.BLACK, darkMarkInner)):
             dc.SetPen(wx.Pen(pencolour, 1))
-            #dc.SetLogicalFunction(wx.XOR)
             
             dc.DrawRectangleRect(rect)
-        #RestoreOldDC(dc, oldPen, oldBrush, oldMode)
         
 
     def OnLeftDown(self, event):
