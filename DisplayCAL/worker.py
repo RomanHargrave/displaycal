@@ -9548,7 +9548,10 @@ END_DATA""")[0]
 					self.progress_wnd.dlg.EndModal(wx.ID_CANCEL)
 				self.progress_wnd.dlg = None
 			self.progress_wnd.stop_timer()
-			self.progress_wnd.Hide()
+			if getattr(self.progress_wnd, "Name", None) == "VisualWhitepointEditor":
+				self.progress_wnd.Close()
+			else:
+				self.progress_wnd.Hide()
 			self.subprocess_abort = False
 			self.thread_abort = False
 			self.interactive = False
