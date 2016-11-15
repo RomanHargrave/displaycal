@@ -1389,10 +1389,10 @@ class VisualWhitepointEditor(wx.Frame):
         self.newColourPanel.Position = ((bg_w - (w)) * x), ((bg_h - (h)) * y)
         if event:
             event.Skip()
-            if event.GetEventType() == wx.EVT_SIZE.evtType[0]:
-                wx.CallAfter(self.area_handler)
-            else:
-                self.bgPanel.Refresh()
+        if event and event.GetEventType() == wx.EVT_SIZE.evtType[0]:
+            wx.CallAfter(self.area_handler)
+        else:
+            self.bgPanel.Refresh()
 
 
     def center_x_handler(self, event):
