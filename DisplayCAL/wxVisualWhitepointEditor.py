@@ -962,6 +962,7 @@ class VisualWhitepointEditor(wx.Frame):
 
         # Set up panes
         self.mainPanel.Fit()
+        mainPanelSize = self.mainPanel.Size
         self._mgr.AddPane(self.mainPanel, aui.AuiPaneInfo().
                                           Name("mainPanel").
                                           Fixed().
@@ -971,7 +972,7 @@ class VisualWhitepointEditor(wx.Frame):
                                           PaneBorder(False).
                                           CloseButton(False).
                                           PinButton(True).
-                                          BestSize(self.mainPanel.Size))
+                                          MinSize(mainPanelSize))
         self._mgr.AddPane(self.bgPanel, aui.AuiPaneInfo().
                                         Name("bgPanel").
                                         CenterPane().
@@ -985,14 +986,36 @@ class VisualWhitepointEditor(wx.Frame):
 
         # Account for pane titlebar
         self.Sizer.SetSizeHints(self)
-        self.Sizer.MinSize = min(self.Sizer.MinSize) + self.mainPanel.Size[0], min(self.Sizer.MinSize)
-        self.Sizer.Fit(self)
-        self.Layout()
+        self.Sizer.Layout()
+        if hasattr(self, "MinClientSize"):
+            # wxPython 2.9+
+            minClientSize = self.MinClientSize
+        else:
+            minClientSize = wx.Frame.WindowToClientSize(self.MinSize)
+        w, h = self.newColourPanel.Size
+        self.ClientSize = mainPanelSize[0] + w + s(26), max(minClientSize[1], h + s(26))
+        if sys.platform not in ("win32", "darwin"):
+            correction = 26
+        else:
+            correction = 0
+        w, h = (int(round(self.default_size)), ) * 2
+        minClientSize = mainPanelSize[0] + max(minClientSize[1], w + s(26)), max(minClientSize[1], h + s(26)) + correction
+        if hasattr(self, "MinClientSize"):
+            # wxPython 2.9+
+            self.MinClientSize = minClientSize
+        else:
+            self.MinSize = self.ClientToWindowSize(minClientSize)
+        x, y = self.Position
+        w, h = self.Size
+        self.SetSaneGeometry(x, y, w, h)
 
         self.Centre(wx.BOTH)
 
-        if (self.newColourPanel.Size[0] > self.bgPanel.Size[0] and
-            self.newColourPanel.Size[1] > self.bgPanel.Size[1]):
+        if (self.newColourPanel.Size[0] > min(self.bgPanel.Size[0],
+                                              self.GetDisplay().ClientArea[2] -
+                                              mainPanelSize[0]) or
+            self.newColourPanel.Size[1] > min(self.bgPanel.Size[1],
+                                              self.GetDisplay().ClientArea[3])):
             self.Maximize()
 
         wx.CallAfter(self.InitFrame)
