@@ -650,6 +650,41 @@ def get_gcdc_font_size(size):
 	return get_dc_font_size(size, dc)
 
 
+def get_bitmap_disabled(bitmap):
+	# Use Rec. 709 luma coefficients to convert to grayscale
+	image = bitmap.ConvertToImage().ConvertToGreyscale(.2126, .7152, .0722)
+	if image.HasMask() and not image.HasAlpha():
+		image.InitAlpha()
+	if image.HasAlpha():
+		alphabuffer = image.GetAlphaBuffer()
+		for i, byte in enumerate(alphabuffer):
+			if byte > "\0":
+				alphabuffer[i] = chr(int(round(ord(byte) * .3)))
+	return image.ConvertToBitmap()
+
+
+def get_bitmap_hover(bitmap):
+	image = bitmap.ConvertToImage()
+	if image.HasMask() and not image.HasAlpha():
+		image.InitAlpha()
+	databuffer = image.GetDataBuffer()
+	for i, byte in enumerate(databuffer):
+		if byte > "\0":
+			databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
+	return image.ConvertToBitmap()
+
+
+def get_bitmap_pressed(bitmap):
+	image = bitmap.ConvertToImage()
+	if image.HasMask() and not image.HasAlpha():
+		image.InitAlpha()
+	databuffer = image.GetDataBuffer()
+	for i, byte in enumerate(databuffer):
+		if byte > "\0":
+			databuffer[i] = chr(int(round(ord(byte) * .6)))
+	return image.ConvertToBitmap()
+
+
 def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 	bitmap = btn.BitmapLabel
 	if not bitmap.IsOk():
@@ -661,28 +696,12 @@ def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 
 	# Disabled
 	if disabled:
-		# Use Rec. 709 luma coefficients to convert to grayscale
-		image = bitmap.ConvertToImage().ConvertToGreyscale(.2126, .7152, .0722)
-		if image.HasMask() and not image.HasAlpha():
-			image.InitAlpha()
-		if image.HasAlpha():
-			alphabuffer = image.GetAlphaBuffer()
-			for i, byte in enumerate(alphabuffer):
-				if byte > "\0":
-					alphabuffer[i] = chr(int(round(ord(byte) * .3)))
-		btn.SetBitmapDisabled(image.ConvertToBitmap())
+		btn.SetBitmapDisabled(get_bitmap_disabled(bitmap))
 
 	# Focus/Hover
 	if sys.platform != "darwin" and focus:
 		# wxMac applies hover state also to disabled buttons...
-		image = bitmap.ConvertToImage()
-		if image.HasMask() and not image.HasAlpha():
-			image.InitAlpha()
-		databuffer = image.GetDataBuffer()
-		for i, byte in enumerate(databuffer):
-			if byte > "\0":
-				databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
-		bmp = image.ConvertToBitmap()
+		bmp = get_bitmap_hover(bitmap)
 		btn.SetBitmapFocus(bmp)
 		if hasattr(btn, "SetBitmapCurrent"):
 			# Phoenix
@@ -693,14 +712,7 @@ def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 
 	# Selected
 	if pressed:
-		image = bitmap.ConvertToImage()
-		if image.HasMask() and not image.HasAlpha():
-			image.InitAlpha()
-		databuffer = image.GetDataBuffer()
-		for i, byte in enumerate(databuffer):
-			if byte > "\0":
-				databuffer[i] = chr(int(round(ord(byte) * .6)))
-		bmp = image.ConvertToBitmap()
+		bmp = get_bitmap_pressed(bitmap)
 		if hasattr(btn, "SetBitmapPressed"):
 			# Phoenix
 			btn.SetBitmapPressed(bmp)
