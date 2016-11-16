@@ -5550,19 +5550,20 @@ class TaskBarNotification(wx.Frame):
 	
 	"""
 
-	def __init__(self, icon=None, title="Notification", text=""):
-		wx.Frame.__init__(self, None, -1, style=wx.FRAME_NO_TASKBAR |
+	def __init__(self, icon=None, title="Notification", text="", parent=None,
+				 pos=wx.DefaultPosition):
+		wx.Frame.__init__(self, parent, -1, style=wx.FRAME_NO_TASKBAR |
 												wx.NO_BORDER |
 												wx.STAY_ON_TOP,
 						  name="TaskBarNotification")
 		self.SetTransparent(0)
 		border = wx.Panel(self)
-		if sys.getwindowsversion() >= (6, ):
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 			border.SetDoubleBuffered(True)
 		border.BackgroundColour = "#484848"
 		border.Sizer = wx.BoxSizer(wx.HORIZONTAL)
 		panel = wx.Panel(border)
-		if sys.getwindowsversion() >= (6, ):
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 			panel.SetDoubleBuffered(True)
 		border.Sizer.Add(panel, flag=wx.ALL, border=1)
 		panel.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
@@ -5576,6 +5577,7 @@ class TaskBarNotification(wx.Frame):
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		panel.Sizer.Add(sizer, flag=wx.ALL, border=12)
 		title = wx.StaticText(panel, -1, title)
+		title.SetMaxFontSize(11)
 		title.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
 		title.ForegroundColour = wx.WHITE
 		font = title.Font
@@ -5583,6 +5585,7 @@ class TaskBarNotification(wx.Frame):
 		title.Font = font
 		sizer.Add(title)
 		msg = wx.StaticText(panel, -1, text)
+		msg.SetMaxFontSize(11)
 		msg.Bind(wx.EVT_LEFT_DOWN, lambda event: self.fade("out"))
 		sizer.Add(msg)
 		close = wx.BitmapButton(panel, -1,
@@ -5595,8 +5598,12 @@ class TaskBarNotification(wx.Frame):
 						border=12)
 		border.Sizer.SetSizeHints(self)
 		border.Sizer.Layout()
+		opos = pos
 		display = self.GetDisplay()
-		client_area = display.ClientArea
+		if parent:
+			client_area = parent.ClientRect
+		else:
+			client_area = display.ClientArea
 		geometry = display.Geometry
 		# Determine tray position so we can show our popup
 		# next to it
@@ -5636,6 +5643,9 @@ class TaskBarNotification(wx.Frame):
 			pos[0] = client_area[0] + client_area[2] - self.Size[0] - 12
 		if pos[1] + self.Size[1] >= client_area[1] + client_area[3]:
 			pos[1] = client_area[1] + client_area[3] - self.Size[1] - 12
+		for i in (0, 1):
+			if opos[i] != -1:
+				pos[i] = opos[i]
 		self.SetPosition(pos)
 		self._fadeout_timer = wx.CallLater(6250, lambda: self and
 														 self.fade("out"))

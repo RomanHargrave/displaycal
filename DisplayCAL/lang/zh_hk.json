@@ -537,6 +537,7 @@
 		"*focal_plane_colorimetry_estimates": "Focal plane colorimetry estimates",
 		"*forced": "forced",
 	"format.select": "請選擇你喜歡的格式。",
+		"*fullscreen.message": "Fullscreen mode activated.\nPress ESC to leave fullscreen.",
 	"gamap.default_intent": "預設渲染目的",
 	"gamap.intents.a": "絕對色彩濃度",
 	"gamap.intents.aa": "絕對觀感",

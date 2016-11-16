@@ -537,6 +537,7 @@
 	"focal_plane_colorimetry_estimates": "Fokusebene-Farbmetrik-Anhaltswerte",
 	"forced": "forciert",
 	"format.select": "Bitte wählen Sie das gewünschte Format.",
+	"fullscreen.message": "Vollbildmodus aktiviert.\nDrücken Sie die ESC-Taste, um den Vollbildmodus zu verlassen.",
 	"gamap.default_intent": "Standard-Farbübertragung",
 	"gamap.intents.a": "Absolut farbmetrisch",
 	"gamap.intents.aa": "Absolutes Erscheinungsbild",

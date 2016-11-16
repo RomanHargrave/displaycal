@@ -23,7 +23,7 @@ from meta import name as appname
 from wxMeasureFrame import get_default_size
 from wxfixes import (wx_Panel, GenBitmapButton as BitmapButton,
                      get_bitmap_disabled, get_bitmap_hover, get_bitmap_pressed)
-from wxwindows import FlatShadedButton, HStretchStaticBitmap
+from wxwindows import FlatShadedButton, HStretchStaticBitmap, TaskBarNotification
 import localization as lang
 
 
@@ -1525,7 +1525,7 @@ class VisualWhitepointEditor(wx.Frame):
 
         self.default_size = get_default_size()
         
-        self.Bind(wx.EVT_SIZE, self.area_handler)
+        self.Bind(wx.EVT_SIZE, self.size_handler)
         
         self.SetProperties()
         self.DoLayout()
@@ -1539,6 +1539,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.reset_btn.Bind(wx.EVT_BUTTON, self.reset_handler)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        self.Bind(wx.EVT_MAXIMIZE, self.maximize_handler)
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
         # Set up panes
@@ -1797,7 +1798,9 @@ class VisualWhitepointEditor(wx.Frame):
         :param `event`: a :class:`CloseEvent` event to be processed.
         """
 
-        self.Destroy()
+        if sys.platform == "darwin" and self.IsFullScreen():
+            self.ShowFullScreen(False)
+        event.Skip()
     
     
     def OnKeyDown(self, event):
@@ -1808,7 +1811,11 @@ class VisualWhitepointEditor(wx.Frame):
         """
 
         if event.GetKeyCode() == wx.WXK_ESCAPE:
-            self.Close()
+            if self.IsFullScreen():
+                self.ShowFullScreen(False)
+                self.Restore()
+            else:
+                self.Close()
         #elif event.KeyCode in (wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP,
                                #wx.WXK_DOWN):
             #self._colour.h += {wx.WXK_LEFT: 1,
@@ -2016,6 +2023,20 @@ class VisualWhitepointEditor(wx.Frame):
         pass
 
 
+    def maximize_handler(self, event):
+        """
+        Handles maximize and fullscreen events
+        
+        """
+        #print '_isfullscreen?', getattr(self, "_isfullscreen", False)
+        if not getattr(self, "_isfullscreen", False):
+            self._isfullscreen = True
+            #print 'Setting fullscreen...'
+            self.ShowFullScreen(True)
+            #print '...done setting fullscreen.'
+            wx.CallAfter(self.notify_fullscreen)
+
+
     def measure(self, event):
         if (not self.Parent or
             not hasattr(self.Parent, "ambient_measure_handler") or
@@ -2026,6 +2047,33 @@ class VisualWhitepointEditor(wx.Frame):
         self.measure_btn.Disable()
         self.setcfg()
         self.Parent.ambient_measure_handler(event)
+
+
+    def notify_fullscreen(self):
+        # Notification needs to have this frame as toplevel parent so key events
+        # bubble to parent
+        #print 'Showing fullscreen notification'
+        self.notification = TaskBarNotification(geticon(32, appname),
+                                                self.Title,
+                                                lang.getstr("fullscreen.message"),
+                                                self.bgPanel, (-1, s(12)))
+        self.notification.Center(wx.HORIZONTAL)
+
+
+    def size_handler(self, event):
+        if getattr(self, "_isfullscreen", False):
+            if getattr(self, "notification", None):
+                #print 'Fading out notification'
+                self.notification.fade("out")
+        wx.CallAfter(self._check_fullscreen)
+        self.area_handler(event)
+
+
+    def _check_fullscreen(self):
+        #print '_isfullscreen?', getattr(self, "_isfullscreen", False)
+        if getattr(self, "_isfullscreen", False):
+            self._isfullscreen = self.IsFullScreen()
+            #print 'IsFullScreen()?', self._isfullscreen
 
 
     def start_timer(self, ms=50):

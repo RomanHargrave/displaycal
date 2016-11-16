@@ -537,6 +537,7 @@
 		"*focal_plane_colorimetry_estimates": "Focal plane colorimetry estimates",
 		"*forced": "forced",
 		"*format.select": "Please select the desired format.",
+		"*fullscreen.message": "Fullscreen mode activated.\nPress ESC to leave fullscreen.",
 	"gamap.default_intent": "Intento de renderizado por defecto para el perfil de la pantalla",
 	"gamap.intents.a": "Absoluto colorimetrico",
 	"gamap.intents.aa": "Apariencia absoluto",
