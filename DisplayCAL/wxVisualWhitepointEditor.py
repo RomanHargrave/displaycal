@@ -28,7 +28,7 @@ import localization as lang
 
 
 # Use non-native mini frames on all platforms
-aui.framemanager.AuiManager_UseNativeMiniframes = lambda manager: False
+aui.framemanager.AuiManager_UseNativeMiniframes = lambda manager: (manager.GetAGWFlags() & aui.AUI_MGR_USE_NATIVE_MINIFRAMES) == aui.AUI_MGR_USE_NATIVE_MINIFRAMES
 
 colourAttributes = ["r", "g", "b", "h", "s", "v"]
 colourMaxValues = [255, 255, 255, 359, 255, 255]
@@ -190,6 +190,203 @@ class AuiDarkDockArt(aui.dockart.AuiDefaultDockArt):
 
         # draw the button itself
         dc.DrawBitmap(bmp, rect.x, rect.y, True)
+
+
+class AuiManager_LRDocking(aui.AuiManager):
+    
+    """
+    AuiManager with only left/right docking.
+    
+    Also, it is not necessary to hover the drop guide, a drop hint will show
+    near the edges regardless.
+    
+    """
+
+    def CreateGuideWindows(self):
+        self.DestroyGuideWindows()
+
+
+    def DoDrop(self, docks, panes, target, pt, offset=wx.Point(0, 0)):
+        """
+        This is an important function. It basically takes a mouse position,
+        and determines where the panes new position would be. If the pane is to be
+        dropped, it performs the drop operation using the specified dock and pane
+        arrays. By specifying copy dock and pane arrays when calling, a "what-if"
+        scenario can be performed, giving precise coordinates for drop hints.
+
+        :param `docks`: a list of :class:`AuiDockInfo` classes;
+        :param `panes`: a list of :class:`AuiPaneInfo` instances;
+        :param Point `pt`: a mouse position to check for a drop operation;
+        :param Point `offset`: a possible offset from the input point `pt`.
+        """
+
+        if target.IsToolbar():
+            return self.DoDropToolbar(docks, panes, target, pt, offset)
+        else:
+            if target.IsFloating():
+                allow, hint = self.DoDropFloatingPane(docks, panes, target, pt)
+                if allow:
+                    return allow, hint
+            return self.DoDropNonFloatingPane(docks, panes, target, pt)
+
+
+    def DoDropNonFloatingPane(self, docks, panes, target, pt):
+        """
+        Handles the situation in which the dropped pane is not floating.
+
+        :param `docks`: a list of :class:`AuiDockInfo` classes;
+        :param `panes`: a list of :class:`AuiPaneInfo` instances;
+        :param AuiPaneInfo `target`: the target pane containing the toolbar;
+        :param Point `pt`: a mouse position to check for a drop operation.
+        """
+        # The ONLY change from
+        # wx.lib.framemanager.FrameManager.DoDropNonFloatingPane
+        # is the removal of top offset by setting new_row_pixels_y to 0.
+        # This way, the drag hint is shown when the mouse is near the right
+        # frame side irrespective of mouse Y position.
+
+        screenPt = self._frame.ClientToScreen(pt)
+        clientSize = self._frame.GetClientSize()
+        frameRect = aui.GetInternalFrameRect(self._frame, self._docks)
+
+        drop = self.CopyTarget(target)
+
+        # The result should always be shown
+        drop.Show()
+
+        part = self.HitTest(pt.x, pt.y)
+
+        if not part:
+            return False, target
+
+        if part.type == aui.AuiDockUIPart.typeDockSizer:
+
+            if len(part.dock.panes) != 1:
+                return False, target
+
+            part = self.GetPanePart(part.dock.panes[0].window)
+            if not part:
+                return False, target
+
+        if not part.pane:
+            return False, target
+
+        part = self.GetPanePart(part.pane.window)
+        if not part:
+            return False, target
+
+        insert_dock_row = False
+        insert_row = part.pane.dock_row
+        insert_dir = part.pane.dock_direction
+        insert_layer = part.pane.dock_layer
+
+        direction = part.pane.dock_direction
+
+        if direction == aui.AUI_DOCK_TOP:
+            if pt.y >= part.rect.y and pt.y < part.rect.y+aui.auiInsertRowPixels:
+                insert_dock_row = True
+
+        elif direction == aui.AUI_DOCK_BOTTOM:
+            if pt.y > part.rect.y+part.rect.height-aui.auiInsertRowPixels and \
+               pt.y <= part.rect.y + part.rect.height:
+                insert_dock_row = True
+
+        elif direction == aui.AUI_DOCK_LEFT:
+            if pt.x >= part.rect.x and pt.x < part.rect.x+aui.auiInsertRowPixels:
+                insert_dock_row = True
+
+        elif direction == aui.AUI_DOCK_RIGHT:
+            if pt.x > part.rect.x+part.rect.width-aui.auiInsertRowPixels and \
+               pt.x <= part.rect.x+part.rect.width:
+                insert_dock_row = True
+
+        elif direction == aui.AUI_DOCK_CENTER:
+
+                # "new row pixels" will be set to the default, but
+                # must never exceed 20% of the window size
+                new_row_pixels_x = s(20)
+                new_row_pixels_y = 0
+
+                if new_row_pixels_x > (part.rect.width*20)/100:
+                    new_row_pixels_x = (part.rect.width*20)/100
+
+                if new_row_pixels_y > (part.rect.height*20)/100:
+                    new_row_pixels_y = (part.rect.height*20)/100
+
+                # determine if the mouse pointer is in a location that
+                # will cause a new row to be inserted.  The hot spot positions
+                # are along the borders of the center pane
+
+                insert_layer = 0
+                insert_dock_row = True
+                pr = part.rect
+
+                if pt.x >= pr.x and pt.x < pr.x + new_row_pixels_x:
+                    insert_dir = aui.AUI_DOCK_LEFT
+                elif pt.y >= pr.y and pt.y < pr.y + new_row_pixels_y:
+                    insert_dir = aui.AUI_DOCK_TOP
+                elif pt.x >= pr.x + pr.width - new_row_pixels_x and pt.x < pr.x + pr.width:
+                    insert_dir = aui.AUI_DOCK_RIGHT
+                elif pt.y >= pr.y+ pr.height - new_row_pixels_y and pt.y < pr.y + pr.height:
+                    insert_dir = aui.AUI_DOCK_BOTTOM
+                else:
+                    return False, target
+
+                insert_row = aui.GetMaxRow(panes, insert_dir, insert_layer) + 1
+
+        if insert_dock_row:
+
+            panes = aui.DoInsertDockRow(panes, insert_dir, insert_layer, insert_row)
+            drop.Dock().Direction(insert_dir).Layer(insert_layer). \
+                Row(insert_row).Position(0)
+
+            return self.ProcessDockResult(target, drop)
+
+        # determine the mouse offset and the pane size, both in the
+        # direction of the dock itself, and perpendicular to the dock
+
+        if part.orientation == wx.VERTICAL:
+
+            offset = pt.y - part.rect.y
+            size = part.rect.GetHeight()
+
+        else:
+
+            offset = pt.x - part.rect.x
+            size = part.rect.GetWidth()
+
+        drop_position = part.pane.dock_pos
+
+        # if we are in the top/left part of the pane,
+        # insert the pane before the pane being hovered over
+        if offset <= size/2:
+
+            drop_position = part.pane.dock_pos
+            panes = aui.DoInsertPane(panes,
+                                 part.pane.dock_direction,
+                                 part.pane.dock_layer,
+                                 part.pane.dock_row,
+                                 part.pane.dock_pos)
+
+        # if we are in the bottom/right part of the pane,
+        # insert the pane before the pane being hovered over
+        if offset > size/2:
+
+            drop_position = part.pane.dock_pos+1
+            panes = aui.DoInsertPane(panes,
+                                 part.pane.dock_direction,
+                                 part.pane.dock_layer,
+                                 part.pane.dock_row,
+                                 part.pane.dock_pos+1)
+
+
+        drop.Dock(). \
+                     Direction(part.dock.dock_direction). \
+                     Layer(part.dock.dock_layer).Row(part.dock.dock_row). \
+                     Position(drop_position)
+
+        return self.ProcessDockResult(target, drop)
+
 
 
 class Colour(object):
@@ -1228,8 +1425,7 @@ class VisualWhitepointEditor(wx.Frame):
                           pos=wx.DefaultPosition, style=wx.DEFAULT_FRAME_STYLE,
                           name="VisualWhitepointEditor")
 
-        self._mgr = aui.AuiManager(self, aui.AUI_MGR_DEFAULT |
-                                         aui.AUI_MGR_TRANSPARENT_DRAG |
+        self._mgr = AuiManager_LRDocking(self, aui.AUI_MGR_DEFAULT |
                                          aui.AUI_MGR_LIVE_RESIZE |
                                          aui.AUI_MGR_SMOOTH_DOCKING)
         self._mgr.SetArtProvider(AuiDarkDockArt())
