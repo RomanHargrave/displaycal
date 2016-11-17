@@ -1739,8 +1739,9 @@ class ProfileLoader(object):
 					# launching and resetting video card gamma table
 					apply_profiles = self._should_apply_profiles()
 				if not apply_profiles:
-					self._next = False
-					break
+					# Important: Do not break here because we still want to
+					# detect changed profile associations
+					continue
 				# Now actually reload or reset calibration
 				if (self._manual_restore or profile_association_changed or
 					getcfg("profile_loader.check_gamma_ramps")):
