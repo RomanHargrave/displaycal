@@ -681,7 +681,7 @@ def get_bitmap_pressed(bitmap):
 	databuffer = image.GetDataBuffer()
 	for i, byte in enumerate(databuffer):
 		if byte > "\0":
-			databuffer[i] = chr(int(round(ord(byte) * .6)))
+			databuffer[i] = chr(int(round(ord(byte) * .85)))
 	return image.ConvertToBitmap()
 
 

@@ -557,10 +557,7 @@ class BasePyControl(wx.PyControl):
 
         dc = wx.AutoBufferedPaintDC(self)
 
-        if self._mainFrame._initOver:
-            self.DrawMarkers(dc)
-        else:
-            self.Draw(dc)
+        self.Draw(dc)
 
 
     def Draw(self, dc):
@@ -693,8 +690,62 @@ class BasePyControl(wx.PyControl):
         """
 
         return wx.Size(self._bitmap.GetWidth(), self._bitmap.GetHeight())
-        
-    
+
+
+class BasePyButton(BasePyControl):
+
+    def __init__(self, parent, bitmap):
+        BasePyControl.__init__(self, parent, bitmap)
+        self._bitmap_enabled = bitmap
+        self._bitmap_disabled = get_bitmap_disabled(bitmap)
+        self._bitmap_hover = get_bitmap_hover(bitmap)
+        self._bitmap_pressed = get_bitmap_pressed(bitmap)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
+
+
+    def OnLeftDown(self, event):
+        if self.Enabled:
+            self._bitmap = self._bitmap_pressed
+            self.Refresh()
+        event.Skip()
+
+
+    def OnLeftUp(self, event):
+        if self.Enabled:
+            self._bitmap = self._bitmap_hover
+            self.Refresh()
+        event.Skip()
+
+
+    def OnMouseEnter(self, event):
+        if self.Enabled:
+            if self.HasCapture():
+                self._bitmap = self._bitmap_pressed
+            else:
+                self._bitmap = self._bitmap_hover
+            self.Refresh()
+        event.Skip()
+
+
+    def OnMouseLeave(self, event):
+        if self.Enabled:
+            self._bitmap = self._bitmap_enabled
+            self.Refresh()
+        event.Skip()
+
+
+    def Enable(self, enable=True):
+        if enable != self.Enabled:
+            BasePyControl.Enable(self, enable)
+            if self.Enabled:
+                self._bitmap = self._bitmap_enabled
+            else:
+                self._bitmap = self._bitmap_disabled
+            self.Refresh()
+            
+
+
 class HSVWheel(BasePyControl):
     """
     Implements the drawing, mouse handling and sizing routines for the HSV
@@ -791,6 +842,21 @@ class HSVWheel(BasePyControl):
 
         if self.GetCapture() and self._mouseIn:
             self.TrackPoint(point)
+
+
+    def OnPaint(self, event):
+        """
+        Handles the ``wx.EVT_PAINT`` for :class:`BasePyControl`.
+
+        :param `event`: a :class:`PaintEvent` event to be processed.
+        """
+
+        dc = wx.AutoBufferedPaintDC(self)
+
+        if self._mainFrame._initOver:
+            self.DrawMarkers(dc)
+        else:
+            self.Draw(dc)
         
 
     def InCircle(self, pt):
@@ -1285,20 +1351,12 @@ class NumSpin(wx_Panel):
         self.Sizer.Add(self.numctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL, s(5))
         vsizer = wx.BoxSizer(wx.VERTICAL)
         self.Sizer.Add(vsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, s(2))
-        if "gtk3" in wx.PlatformInfo:
-            size = (10, 10)
-        else:
-            size = (-1, -1)
-        self.spinup = BitmapButton(self, -1, 
-                                   geticon(10, "spin_up"), 
-                                   size=size, style=wx.NO_BORDER)
+        self.spinup = BasePyButton(self, geticon(10, "spin_up"))
         self.spinup.BackgroundColour = self.BackgroundColour
         self.spinup.Bind(wx.EVT_LEFT_DOWN, self.left_down_handler)
         self.spinup.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
         vsizer.Add(self.spinup, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, s(1))
-        self.spindn = BitmapButton(self, -1, 
-                                   geticon(10, "spin_down"), 
-                                   size=size, style=wx.NO_BORDER)
+        self.spindn = BasePyButton(self, geticon(10, "spin_down"))
         self.spindn.BackgroundColour = self.BackgroundColour
         self.spindn.Bind(wx.EVT_LEFT_DOWN, self.left_down_handler)
         self.spindn.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
@@ -1326,6 +1384,7 @@ class NumSpin(wx_Panel):
                 self._spin(1, event, bell=False)
             else:
                 self._spin(-1, event, bell=False)
+        event.Skip()
 
 
     def left_up_handler(self, event):
@@ -1337,6 +1396,7 @@ class NumSpin(wx_Panel):
         obj = event.GetEventObject()
         if obj.HasCapture():
             obj.ReleaseMouse()
+        event.Skip()
 
 
     def key_handler(self, event):
@@ -1362,8 +1422,6 @@ class NumSpin(wx_Panel):
             if obj.ClientRect.Contains(point):
                 obj.CaptureMouse()
                 return True
-            else:
-                event.Skip()
         return obj.Enabled and obj.HasCapture()
 
 
