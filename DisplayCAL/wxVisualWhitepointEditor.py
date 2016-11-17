@@ -1833,8 +1833,8 @@ class VisualWhitepointEditor(wx.Frame):
             # It is possible to switch back to normal view by alt-tabbing,
             # but users need to be made aware of it.
             wx.CallAfter(self.notify,
-                         wrap(lang.getstr("fullscreen.osx.warning")),
-                         icon=geticon(32, "dialog-warning"))
+                         wrap(lang.getstr("fullscreen.osx.warning"), 80),
+                         icon=geticon(32, "dialog-warning"), timeout=0)
                 
 
     def CalcRects(self):
@@ -2157,14 +2157,17 @@ class VisualWhitepointEditor(wx.Frame):
         self.Parent.ambient_measure_handler(event)
 
 
-    def notify(self, msg, title=None, icon=None):
+    def notify(self, msg, title=None, icon=None, timeout=-1):
         # Notification needs to have this frame as toplevel parent so key events
         # bubble to parent
         #print 'Showing fullscreen notification'
+        if getattr(self, "notification", None):
+            self.notification.fade("out")
         self.notification = TaskBarNotification(icon or
                                                 geticon(32, "dialog-information"),
                                                 title or self.Title, msg,
-                                                self.bgPanel, (-1, s(12)))
+                                                self.bgPanel, (-1, s(12)),
+                                                timeout)
         self.notification.Center(wx.HORIZONTAL)
 
 

@@ -5551,7 +5551,7 @@ class TaskBarNotification(wx.Frame):
 	"""
 
 	def __init__(self, icon=None, title="Notification", text="", parent=None,
-				 pos=wx.DefaultPosition):
+				 pos=wx.DefaultPosition, timeout=-1):
 		wx.Frame.__init__(self, parent, -1, style=wx.FRAME_NO_TASKBAR |
 												wx.NO_BORDER |
 												wx.STAY_ON_TOP,
@@ -5647,8 +5647,11 @@ class TaskBarNotification(wx.Frame):
 			if opos[i] != -1:
 				pos[i] = opos[i]
 		self.SetPosition(pos)
-		self._fadeout_timer = wx.CallLater(6250, lambda: self and
-														 self.fade("out"))
+		if timeout == -1:
+			timeout = 6250
+		if timeout:
+			self._fadeout_timer = wx.CallLater(timeout, lambda: self and
+																self.fade("out"))
 		self.Show()
 		self.fade()
 
