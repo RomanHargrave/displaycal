@@ -5661,7 +5661,8 @@ class TaskBarNotification(wx.Frame):
 			self._fade_timer.Stop()
 			i = self._fade_timer_i
 		if direction != "in":
-			if self._fadeout_timer.IsRunning():
+			if (hasattr(self, "_fadeout_timer") and
+				self._fadeout_timer.IsRunning()):
 				self._fadeout_timer.Stop()
 			t = 10 - i
 		else:
