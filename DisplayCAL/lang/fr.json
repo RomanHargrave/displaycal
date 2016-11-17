@@ -538,6 +538,7 @@
 	"forced": "forcé",
 	"format.select": "Veuillez sélectionner le format désiré.",
 		"*fullscreen.message": "Fullscreen mode activated.\nPress ESC to leave fullscreen.",
+		"*fullscreen.osx.warning": "If you enter fullscreen mode using the zoom button in the window title bar, please press CMD + TAB to switch back to normal mode after the window has been closed. Alternatively, you can go fullscreen by double-clicking the title bar or holding the OPTION key while clicking the zoom button.",
 	"gamap.default_intent": "Intention de rendu par défaut",
 	"gamap.intents.a": "colorimétrie absolue",
 	"gamap.intents.aa": "apparence absolue",

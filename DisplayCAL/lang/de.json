@@ -538,6 +538,7 @@
 	"forced": "forciert",
 	"format.select": "Bitte wählen Sie das gewünschte Format.",
 	"fullscreen.message": "Vollbildmodus aktiviert.\nDrücken Sie die ESC-Taste, um den Vollbildmodus zu verlassen.",
+	"fullscreen.osx.warning": "Falls Sie das Fenster über die Zoom-Taste in der Titelleiste in den Vollbildmodus schalten, drücken Sie bitte CMD + TAB, um in den Normalmodus zurückzukehren, nachdem das Fenster geschlossen wurde. Alternativ betreten Sie den Vollbildmodus, indem Sie die Titelleiste doppelklicken oder die Wahltaste halten, während Sie die Zoom-Taste klicken.",
 	"gamap.default_intent": "Standard-Farbübertragung",
 	"gamap.intents.a": "Absolut farbmetrisch",
 	"gamap.intents.aa": "Absolutes Erscheinungsbild",

@@ -10,6 +10,8 @@ License: wxPython license
 import colorsys
 import sys
 from math import pi, sin, cos, sqrt, atan2
+if sys.platform == "darwin":
+	from platform import mac_ver
 
 from wxfixes import wx
 
@@ -20,6 +22,8 @@ from config import (defaults, getbitmap, getcfg, get_default_dpi,
                     get_icon_bundle, geticon, initcfg, setcfg)
 from log import safe_print
 from meta import name as appname
+from util_list import intlist
+from util_str import wrap
 from wxMeasureFrame import get_default_size
 from wxfixes import (wx_Panel, GenBitmapButton as BitmapButton,
                      get_bitmap_disabled, get_bitmap_hover, get_bitmap_pressed)
@@ -1820,6 +1824,17 @@ class VisualWhitepointEditor(wx.Frame):
 
         self._initOver = True
         wx.CallAfter(self.Refresh)
+        
+        if (sys.platform == "darwin" and
+            intlist(mac_ver()[0].split(".")) >= [10, 10]):
+            # Under Yosemite and up, if users use the default titlebar zoom
+            # button to go fullscreen, they will be left with a black screen
+            # after the window has been closed (shortcoming of wxMac).
+            # It is possible to switch back to normal view by alt-tabbing,
+            # but users need to be made aware of it.
+            wx.CallAfter(self.notify,
+                         wrap(lang.getstr("fullscreen.osx.warning")),
+                         icon=geticon(32, "dialog-warning"))
                 
 
     def CalcRects(self):
@@ -2127,7 +2142,7 @@ class VisualWhitepointEditor(wx.Frame):
             #print 'Setting fullscreen...'
             self.ShowFullScreen(True)
             #print '...done setting fullscreen.'
-            wx.CallAfter(self.notify_fullscreen)
+            wx.CallAfter(self.notify, lang.getstr("fullscreen.message"))
 
 
     def measure(self, event):
@@ -2142,13 +2157,13 @@ class VisualWhitepointEditor(wx.Frame):
         self.Parent.ambient_measure_handler(event)
 
 
-    def notify_fullscreen(self):
+    def notify(self, msg, title=None, icon=None):
         # Notification needs to have this frame as toplevel parent so key events
         # bubble to parent
         #print 'Showing fullscreen notification'
-        self.notification = TaskBarNotification(geticon(32, appname),
-                                                self.Title,
-                                                lang.getstr("fullscreen.message"),
+        self.notification = TaskBarNotification(icon or
+                                                geticon(32, "dialog-information"),
+                                                title or self.Title, msg,
                                                 self.bgPanel, (-1, s(12)))
         self.notification.Center(wx.HORIZONTAL)
 
