@@ -1843,7 +1843,8 @@ class VisualWhitepointEditor(wx.Frame):
 
 
     def show_handler(self, event):
-        if (sys.platform == "darwin" and
+        if (getattr(event, "IsShown", getattr(event, "GetShow", bool))() and 
+            sys.platform == "darwin" and
             intlist(mac_ver()[0].split(".")) >= [10, 10]):
             # Under Yosemite and up, if users use the default titlebar zoom
             # button to go fullscreen, they will be left with a black screen
@@ -2267,7 +2268,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.notification = TaskBarNotification(icon or
                                                 geticon(32, "dialog-information"),
                                                 title or self.Title, msg,
-                                                self.bgPanel, (-1, s(12)),
+                                                self.bgPanel, (-1, s(32)),
                                                 timeout)
         self.notification.Center(wx.HORIZONTAL)
 
