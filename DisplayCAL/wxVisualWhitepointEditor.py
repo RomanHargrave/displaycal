@@ -1531,7 +1531,7 @@ class VisualWhitepointEditor(wx.Frame):
                                           "Temporary Profile")
         self._srgb_profile.calculateID()
         
-        self.worker = worker.Worker(self)
+        self._worker = worker.Worker(self)
 
         self._mgr = AuiManager_LRDocking(self, aui.AUI_MGR_DEFAULT |
                                          aui.AUI_MGR_LIVE_RESIZE |
@@ -1926,7 +1926,7 @@ class VisualWhitepointEditor(wx.Frame):
         """
 
         self._restore_display_profiles()
-        self.worker.wrapup(False)  # Remove temporary profiles
+        self._worker.wrapup(False)  # Remove temporary profiles
         event.Skip()
 
 
@@ -1994,7 +1994,7 @@ class VisualWhitepointEditor(wx.Frame):
                                                  "dispwin")), self)
             return
         if not profile.fileName or not os.path.isfile(profile.fileName):
-            temp = self.worker.create_tempdir()
+            temp = self._worker.create_tempdir()
             if isinstance(temp, Exception):
                 show_result_dialog(temp, self)
                 return
@@ -2004,11 +2004,11 @@ class VisualWhitepointEditor(wx.Frame):
                 basename = profile.getDescription() + profile_ext
             profile.fileName = os.path.join(temp, basename)
             profile.write()
-        result = self.worker.exec_cmd(dispwin, ["-v", "-d%i" % (display_no + 1),
+        result = self._worker.exec_cmd(dispwin, ["-v", "-d%i" % (display_no + 1),
                                                 "-I", profile.fileName],
-                                      capture_output=True, dry_run=False)
+                                       capture_output=True, dry_run=False)
         if not result:
-            result = Error("".join(self.worker.errors))
+            result = Error("".join(self._worker.errors))
         if isinstance(result, Exception):
             show_result_dialog(result, self, wrap=120)
     

@@ -9513,6 +9513,10 @@ END_DATA""")[0]
 					self.terminal = SimpleTerminal(parent, title=progress_title,
 												   handler=self.progress_handler,
 												   keyhandler=self.terminal_key_handler)
+				if getattr(self.terminal, "worker", self) is not self:
+					safe_print("DEBUG: In worker.Worker.start: worker.Worker()."
+							   "terminal.worker is not self! This is probably a"
+							   "bug.")
 				self.terminal.worker = self
 				self.progress_wnd = self.terminal
 		else:
