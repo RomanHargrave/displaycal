@@ -1010,16 +1010,6 @@ class BaseLineCtrl(wx.PyControl):
         self.Refresh()
 
 
-    #def DoGetBestSize(self):
-        #"""
-        #Overridden base class virtual. Determines the best size of the control.
-
-        #:note: Overridden from :class:`PyControl`.
-        #"""
-
-        #return wx.Size(s(24), s(104))    
-
-
     def BuildRect(self):
         """ Internal method. """
 
@@ -1091,6 +1081,16 @@ class BrightCtrl(BaseLineCtrl):
         dc = wx.AutoBufferedPaintDC(self)
         
         self.DrawMarkers(dc)
+
+
+    def DoGetBestSize(self):
+        """
+        Overridden base class virtual. Determines the best size of the control.
+
+        :note: Overridden from :class:`PyControl`.
+        """
+
+        return wx.Size(s(20), s(102))
 
 
     def Draw(self, dc):
@@ -1239,6 +1239,16 @@ class HSlider(BaseLineCtrl):
         dc = wx.AutoBufferedPaintDC(self)
         
         self.DrawMarkers(dc)
+
+
+    def DoGetBestSize(self):
+        """
+        Overridden base class virtual. Determines the best size of the control.
+
+        :note: Overridden from :class:`PyControl`.
+        """
+
+        return wx.Size(s(140), s(8))
 
 
     def BuildRect(self):
