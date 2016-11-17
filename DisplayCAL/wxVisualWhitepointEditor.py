@@ -1353,13 +1353,14 @@ class NumSpin(wx_Panel):
 
     def _capture_mouse(self, event):
         obj = event.GetEventObject()
-        point = wx.Point(event.GetX(), event.GetY())
-        if obj.ClientRect.Contains(point):
-            obj.CaptureMouse()
-            return True
-        else:
-            event.Skip()
-        return False
+        if obj.Enabled and not obj.HasCapture():
+            point = wx.Point(event.GetX(), event.GetY())
+            if obj.ClientRect.Contains(point):
+                obj.CaptureMouse()
+                return True
+            else:
+                event.Skip()
+        return obj.Enabled and obj.HasCapture()
 
 
     def _spin(self, inc, event, n=None, delay=500, bell=True):
