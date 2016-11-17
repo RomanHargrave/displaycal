@@ -3646,7 +3646,7 @@ class Worker(object):
 	def exec_cmd(self, cmd, args=[], capture_output=False, 
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
-				 title=appname, shell=False, working_dir=None, dry_run=False,
+				 title=appname, shell=False, working_dir=None, dry_run=None,
 				 sessionlogfile=None):
 		"""
 		Execute a command.
@@ -3675,6 +3675,8 @@ class Worker(object):
 		the basename. If False, no working dir will be used and file arguments
 		not changed.
 		"""
+		# If dry_run is explicitly set to False, ignore dry_run config value
+		dry_run = dry_run is not False and (dry_run or getcfg("dry_run"))
 		if not capture_output:
 			capture_output = not sys.stdout.isatty()
 		self.clear_cmd_output()
@@ -3748,7 +3750,7 @@ class Worker(object):
 				self.tmpfiles[filename] = os.stat(os.path.join(working_dir,
 															   filename)).st_mtime
 		if (working_basename and working_dir == self.tempdir and not silent
-			and log_output and not getcfg("dry_run")):
+			and log_output and not dry_run):
 			if sessionlogfile:
 				self.sessionlogfile = sessionlogfile
 			else:
@@ -4103,7 +4105,7 @@ while 1:
 											  os.path.basename(waitfilename))
 		if verbose >= 1 or not silent:
 			if not silent or verbose >= 3:
-				if (not silent and (dry_run or getcfg("dry_run")) and
+				if (not silent and dry_run and
 					not self.cmdrun):
 					safe_print(lang.getstr("dry_run"))
 					safe_print("")
@@ -4123,7 +4125,7 @@ while 1:
 				printcmdline(cmd if verbose >= 2 else os.path.basename(cmd), 
 							 args, fn=self.log, cwd=working_dir)
 				self.log("")
-				if not silent and (dry_run or getcfg("dry_run")):
+				if not silent and dry_run:
 					if not self.lastcmdname or self.lastcmdname == cmdname:
 						safe_print(lang.getstr("dry_run.end"))
 					if self.owner and hasattr(self.owner, "infoframe_toggle_handler"):
