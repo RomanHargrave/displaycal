@@ -1289,16 +1289,18 @@ class NumSpin(wx_Panel):
                                    geticon(10, "spin_up"), 
                                    size=(10, 10), style=wx.NO_BORDER)
         self.spinup.BackgroundColour = self.BackgroundColour
-        self.spinup.Bind(wx.EVT_LEFT_DOWN, self.spin_up)
+        self.spinup.Bind(wx.EVT_LEFT_DOWN, self.left_down_handler)
         self.spinup.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
         vsizer.Add(self.spinup, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, s(1))
         self.spindn = BitmapButton(self, -1, 
                                    geticon(10, "spin_down"), 
                                    size=(10, 10), style=wx.NO_BORDER)
         self.spindn.BackgroundColour = self.BackgroundColour
-        self.spindn.Bind(wx.EVT_LEFT_DOWN, self.spin_dn)
+        self.spindn.Bind(wx.EVT_LEFT_DOWN, self.left_down_handler)
         self.spindn.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
         vsizer.Add(self.spindn, 0, wx.ALIGN_TOP | wx.TOP, s(1))
+        self._left_down_count = 0
+        self._left_up_count = 0
 
 
     def __getattr__(self, name):
@@ -1313,56 +1315,54 @@ class NumSpin(wx_Panel):
                                                             mousestate.Y))))
 
 
+    def left_down_handler(self, event):
+        self._left_down_count += 1
+        if self._capture_mouse(event):
+            if event.GetEventObject() is self.spinup:
+                self._spin(1, event, bell=False)
+            else:
+                self._spin(-1, event, bell=False)
+
+
     def left_up_handler(self, event):
+        self._left_up_count += 1
+        while self._left_up_count > self._left_down_count:
+            # Broken platform (wxMac?) :-(
+            #print 'UP', self._left_up_count, 'DN', self._left_down_count
+            self.left_down_handler(event)
         obj = event.GetEventObject()
-        return obj.HasCapture() and obj.ReleaseMouse()
+        if obj.HasCapture():
+            obj.ReleaseMouse()
 
 
     def key_handler(self, event):
         if event.KeyCode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
-            self.spin_up(event, bell=False)
+            self._spin(1, event, bell=False)
         elif event.KeyCode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN):
-            self.spin_dn(event, bell=False)
+            self._spin(-1, event, bell=False)
         else:
             event.Skip()
 
 
     def mousewheel_handler(self, event):
         if event.GetWheelRotation() > 0:
-            self.spin_up(event, bell=False)
+            self._spin(1, event, bell=False)
         else:
-            self.spin_dn(event, bell=False)
-
-
-    def spin_up(self, event, bell=True):
-        #print 'spin_up'
-        if self._capture_mouse(event) is False:
-            return
-        self._spin(1, bell=bell)
-
-
-    def spin_dn(self, event, bell=True):
-        #print 'spin_dn'
-        if self._capture_mouse(event) is False:
-            return
-        self._spin(-1, bell=bell)
+            self._spin(-1, event, bell=False)
 
 
     def _capture_mouse(self, event):
-        self._obj = event.GetEventObject()
-        if (isinstance(event, wx.MouseEvent) and
-            self._obj in (self.spinup, self.spindn) and self._obj.Enabled and
-            not self._obj.HasCapture()):
-            point = wx.Point(event.GetX(), event.GetY())
-
-            if not self._obj.ClientRect.Contains(point):
-                event.Skip()
-                return False
-
-            self._obj.CaptureMouse()
+        obj = event.GetEventObject()
+        point = wx.Point(event.GetX(), event.GetY())
+        if obj.ClientRect.Contains(point):
+            obj.CaptureMouse()
+            return True
+        else:
+            event.Skip()
+        return False
 
 
-    def _spin(self, inc, n=None, delay=500, bell=True):
+    def _spin(self, inc, event, n=None, delay=500, bell=True):
         current = self.numctrl.GetValue()
         if n is None:
             n = current + inc
@@ -1370,9 +1370,8 @@ class NumSpin(wx_Panel):
             btn = self.spinup
         else:
             btn = self.spindn
-        if (self._obj not in (self.spinup, self.spindn) or
-            self.is_button_pressed(btn)):
-            if n == current or inc > 0 and n < current or inc < 0 and n > current:
+        if event or self.is_button_pressed(btn):
+            if n == current or (inc > 0 and n < current) or (inc < 0 and n > current):
                 #print '!_spin', current, inc, n, delay, bell
                 pass
             elif self.numctrl.GetMin() <= n <= self.numctrl.GetMax():
@@ -1382,7 +1381,7 @@ class NumSpin(wx_Panel):
                 wx.Bell()
         if btn.Enabled and btn.HasCapture():
             current = self.numctrl.GetValue()
-            wx.CallLater(delay, self._spin, inc, current + inc, 100)
+            wx.CallLater(delay, self._spin, inc, None, current + inc, 100)
 
 
     def GetValue(self):
