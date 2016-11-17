@@ -1925,6 +1925,8 @@ class VisualWhitepointEditor(wx.Frame):
         :param `event`: a :class:`CloseEvent` event to be processed.
         """
 
+        if self.IsFullScreen():
+            self.ShowFullScreen(False)
         self._restore_display_profiles()
         self._worker.wrapup(False)  # Remove temporary profiles
         event.Skip()
