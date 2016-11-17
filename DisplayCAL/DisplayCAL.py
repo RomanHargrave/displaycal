@@ -2803,6 +2803,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"colorimeter_correction_matrix_file",
 			"comport.number",
 			"copyright",
+			"dimensions.measureframe.whitepoint.visual_editor",
 			"display.number",
 			"display.technology",
 			"display_lut.link",
@@ -2897,6 +2898,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			"untethered.min_delta.lightness",
 			"update_check",
 			"webserver.portnumber",
+			"whitepoint.visual_editor.bg_v",
+			"whitepoint.visual_editor.b",
+			"whitepoint.visual_editor.g",
+			"whitepoint.visual_editor.r",
 			"x3dom.cache",
 			"x3dom.embed"
 		]
