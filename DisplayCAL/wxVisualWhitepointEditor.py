@@ -1609,14 +1609,7 @@ class VisualWhitepointEditor(wx.Frame):
         
     def SetProperties(self):
         """ Sets some initial properties for :class:`VisualWhitepointEditor` (sizes, values). """
-        min_w = s(30)
-        if not getattr(wx.SpinCtrl, "_spinwidth", 0):
-            spin = wx.SpinCtrl(self, -1)
-            text = wx.TextCtrl(self, -1)
-            wx.SpinCtrl._spinwidth = spin.Size[0] - text.Size[0] + 11
-            spin.Destroy()
-            text.Destroy()
-        min_w += wx.SpinCtrl._spinwidth
+        min_w = self.redSpin.numctrl.GetTextExtent("255")[0] + s(30)
         self.redSpin.SetMinSize((min_w, -1))
         self.greenSpin.SetMinSize((min_w, -1))
         self.blueSpin.SetMinSize((min_w, -1))
@@ -1645,7 +1638,7 @@ class VisualWhitepointEditor(wx.Frame):
         label.Font = font
         mainSizer.Add(label, 0, wx.LEFT, margin)
 
-        hsvGridSizer = wx.FlexGridSizer(2, 3, margin, margin)
+        hsvGridSizer = wx.GridSizer(2, 3, margin, margin)
         hsvSizer = wx.BoxSizer(wx.HORIZONTAL)
 
         hsvSizer.Add(self.hsvBitmap, 0, wx.ALL, margin)
@@ -1661,7 +1654,7 @@ class VisualWhitepointEditor(wx.Frame):
             label.SetMaxFontSize(11)
             sizer = wx.BoxSizer(wx.VERTICAL)
             sizer.Add(label)
-            sizer.Add(getattr(self, channel + "Spin"), 0, wx.TOP, s(4))
+            sizer.Add(getattr(self, channel + "Spin"), 0, wx.TOP|wx.EXPAND, s(4))
             hsvGridSizer.Add(sizer, 0, wx.EXPAND)
         mainSizer.Add(hsvGridSizer, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER, margin)
         mainSizer.Add(self.reset_btn, 0, wx.ALL | wx.ALIGN_CENTER, margin)
