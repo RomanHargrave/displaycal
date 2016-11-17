@@ -118,6 +118,21 @@ class AuiDarkDockArt(aui.dockart.AuiDefaultDockArt):
                                  aui.dockart.AUI_BUTTON_PIN, False)
 
 
+    def DrawBackground(self, dc, window, orient, rect):
+        """
+        Draws a background.
+
+        :param `dc`: a :class:`DC` device context;
+        :param `window`: an instance of :class:`Window`;
+        :param integer `orient`: the gradient (if any) orientation;
+        :param Rect `rect`: the background rectangle.
+        """
+
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        dc.SetBrush(wx.Brush(wx.Colour(51, 51, 51)))
+        dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
+
+
     def DrawPaneButton(self, dc, window, button, button_state, _rect, pane):
         """
         Draws a pane button in the pane caption area.
