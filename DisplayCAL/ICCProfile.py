@@ -62,7 +62,7 @@ if sys.platform not in ("darwin", "win32"):
 		import xrandr
 	except ImportError:
 		xrandr = None
-		from util_os import which
+	from util_os import which
 elif sys.platform == "win32":
 	import util_win
 	if sys.getwindowsversion() < (6, ):
