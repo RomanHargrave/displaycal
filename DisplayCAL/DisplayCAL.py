@@ -4810,7 +4810,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.show_trc_controls(True)
 
 	def visual_whitepoint_editor_handler(self, event):
-		editor = VisualWhitepointEditor(self)
+		display_no = config.get_display_number(getcfg("display.number") - 1)
+		try:
+			pos = wx.Display(display_no).ClientArea[:2]
+		except:
+			pos = self.GetDisplay().ClientArea[:2]
+		editor = VisualWhitepointEditor(self, pos=pos)
+		editor.RealCenterOnScreen()
 		editor.Show()
 	
 	def ambient_measure_handler(self, event):
@@ -13985,6 +13991,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				win.Raise()
 				wx.Bell()
 				return
+			for win in wx.GetTopLevelWindows():
+				if win and not win.IsBeingDeleted():
+					if isinstance(win, VisualWhitepointEditor):
+						win._restore_display_profiles()
+						win.worker.wrapup(False)
+						win.Close()
 			writecfg()
 			if getattr(self, "thread", None) and self.thread.isAlive():
 				self.Disable()

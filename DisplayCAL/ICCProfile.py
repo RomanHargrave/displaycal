@@ -4614,6 +4614,22 @@ class ICCProfile:
 		"""
 		if self._file and not self._file.closed:
 			self._file.close()
+
+	@staticmethod
+	def from_named_rgb_space(rgb_space_name, iccv4=False, cat="Bradford"):
+		rgb_space = colormath.get_rgb_space(rgb_space_name)
+		return ICCProfile.from_rgb_space(rgb_space, rgb_space_name, iccv4, cat)
+
+	@staticmethod
+	def from_rgb_space(rgb_space, description, iccv4=False, cat="Bradford"):
+		rx, ry = rgb_space[2:][0][:2]
+		gx, gy = rgb_space[2:][1][:2]
+		bx, by = rgb_space[2:][2][:2]
+		wx, wy = colormath.XYZ2xyY(*rgb_space[1])[:2]
+		return ICCProfile.from_chromaticities(rx, ry, gx, gy,  bx, by, wx, wy,
+											  rgb_space[0], description,
+											  "No copyright")
+		
 	
 	@staticmethod
 	def from_edid(edid, iccv4=False, cat="Bradford"):

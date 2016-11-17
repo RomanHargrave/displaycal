@@ -8,6 +8,7 @@ License: wxPython license
 """
 
 import colorsys
+import os
 import sys
 from math import pi, sin, cos, sqrt, atan2
 if sys.platform == "darwin":
@@ -19,16 +20,19 @@ from wx.lib.agw import aui
 from wx.lib.intctrl import IntCtrl
 
 from config import (defaults, getbitmap, getcfg, get_default_dpi,
-                    get_icon_bundle, geticon, initcfg, setcfg)
+                    get_icon_bundle, geticon, initcfg, profile_ext, setcfg)
 from log import safe_print
 from meta import name as appname
 from util_list import intlist
 from util_str import wrap
+from worker import Error, Warn, get_argyll_util, show_result_dialog
 from wxMeasureFrame import get_default_size
 from wxfixes import (wx_Panel, GenBitmapButton as BitmapButton,
                      get_bitmap_disabled, get_bitmap_hover, get_bitmap_pressed)
 from wxwindows import FlatShadedButton, HStretchStaticBitmap, TaskBarNotification
 import localization as lang
+import ICCProfile as ICCP
+import worker
 
 
 # Use non-native mini frames on all platforms
@@ -1507,7 +1511,7 @@ class VisualWhitepointEditor(wx.Frame):
     This is the VisualWhitepointEditor main class implementation.
     """
 
-    def __init__(self, parent, colourData=None):
+    def __init__(self, parent, colourData=None, pos=wx.DefaultPosition):
         """
         Default class constructor.
 
@@ -1517,8 +1521,17 @@ class VisualWhitepointEditor(wx.Frame):
 
         wx.Frame.__init__(self, parent, id=wx.ID_ANY,
                           title=lang.getstr("whitepoint.visual_editor"),
-                          pos=wx.DefaultPosition, style=wx.DEFAULT_FRAME_STYLE,
+                          pos=pos, style=wx.DEFAULT_FRAME_STYLE,
                           name="VisualWhitepointEditor")
+
+        self._display = None
+        self._profiles = {}
+        self._srgb_profile = ICCP.ICCProfile.from_named_rgb_space("sRGB")
+        self._srgb_profile.setDescription(appname + " Visual Whitepoint Editor "
+                                          "Temporary Profile")
+        self._srgb_profile.calculateID()
+        
+        self.worker = worker.Worker(self)
 
         self._mgr = AuiManager_LRDocking(self, aui.AUI_MGR_DEFAULT |
                                          aui.AUI_MGR_LIVE_RESIZE |
@@ -1638,7 +1651,10 @@ class VisualWhitepointEditor(wx.Frame):
         self.reset_btn.Bind(wx.EVT_BUTTON, self.reset_handler)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        self.Bind(wx.EVT_SHOW, self.show_handler)
         self.Bind(wx.EVT_MAXIMIZE, self.maximize_handler)
+        self.Bind(wx.EVT_MOVE, self.move_handler)
+        self.Bind(wx.EVT_DISPLAY_CHANGED, self.display_changed_handler)
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
         # Set up panes
@@ -1686,18 +1702,18 @@ class VisualWhitepointEditor(wx.Frame):
             self.MinClientSize = minClientSize
         else:
             self.MinSize = self.ClientToWindowSize(minClientSize)
+
         x, y = self.Position
         w, h = self.Size
-        self.SetSaneGeometry(x, y, w, h)
-
-        self.Centre(wx.BOTH)
 
         if (self.newColourPanel.Size[0] > min(self.bgPanel.Size[0],
                                               self.GetDisplay().ClientArea[2] -
                                               mainPanelSize[0]) or
             self.newColourPanel.Size[1] > min(self.bgPanel.Size[1],
                                               self.GetDisplay().ClientArea[3])):
-            self.Maximize()
+            w, h = self.GetDisplay().ClientArea[2:]
+
+        self.SetSaneGeometry(x, y, w, h)
 
         wx.CallAfter(self.InitFrame)
 
@@ -1824,7 +1840,9 @@ class VisualWhitepointEditor(wx.Frame):
 
         self._initOver = True
         wx.CallAfter(self.Refresh)
-        
+
+
+    def show_handler(self, event):
         if (sys.platform == "darwin" and
             intlist(mac_ver()[0].split(".")) >= [10, 10]):
             # Under Yosemite and up, if users use the default titlebar zoom
@@ -1835,6 +1853,7 @@ class VisualWhitepointEditor(wx.Frame):
             wx.CallAfter(self.notify,
                          wrap(lang.getstr("fullscreen.osx.warning"), 80),
                          icon=geticon(32, "dialog-warning"), timeout=0)
+        event.Skip()
                 
 
     def CalcRects(self):
@@ -1905,9 +1924,91 @@ class VisualWhitepointEditor(wx.Frame):
         :param `event`: a :class:`CloseEvent` event to be processed.
         """
 
-        if sys.platform == "darwin" and self.IsFullScreen():
-            self.ShowFullScreen(False)
+        self._restore_display_profiles()
+        self.worker.wrapup(False)  # Remove temporary profiles
         event.Skip()
+
+
+    def display_changed_handler(self, event):
+        # Houston, we (may) have a problem! Memorized profile associations may
+        # no longer be correct. 
+        msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
+        wx.CallLater(1000, show_result_dialog, Warn(msg), self)
+
+
+    def move_handler(self, event):
+        # Remember the profile of the display we're on and reset calibration
+        display = self.GetDisplay()
+        if not self._display or display.Geometry != self._display.Geometry:
+            if (hasattr(self, "_clear_calibration_timer") and
+                self._clear_calibration_timer.IsRunning()):
+                self._clear_calibration_timer.Stop()
+            self._clear_calibration_timer = wx.CallLater(50,
+                                                         self._clear_calibration,
+                                                         display)
+    
+    
+    def _clear_calibration(self, display):
+        # Reset calibration on the display we're on
+        self._restore_display_profiles()
+        if not display.IsOk():
+            safe_print("WARNING - Display not OK")
+            return
+        self._display = display
+        for display_no in xrange(wx.Display.GetCount()):
+            if wx.Display(display_no).Geometry != display.Geometry:
+                continue
+            try:
+                profile = ICCP.get_display_profile(display_no)
+            except (ICCP.ICCProfileInvalidError, IOError,
+                    IndexError), exception:
+                safe_print("Could not get display profile for display %i" %
+                           (display_no + 1), "@ %i, %i, %ix%i:" %
+                           display.Geometry.Get(), exception)
+            else:
+                # Remember profile, but discard profile filename
+                # (Important - can't re-install profile from same path where
+                # it is installed!)
+                profile.fileName = None
+                self._profiles[display.Geometry] = profile
+                self._install_profile(display_no, self._srgb_profile)
+            break
+
+
+    def _restore_display_profiles(self):
+        # Reinstall memorized display profiles
+        while self._profiles:
+            geometry, profile = self._profiles.popitem()
+            for display_no in xrange(wx.Display.GetCount()):
+                if wx.Display(display_no).Geometry == geometry:
+                    self._install_profile(display_no, profile)
+                    break
+
+
+    def _install_profile(self, display_no, profile):
+        dispwin = get_argyll_util("dispwin")
+        if not dispwin:
+            show_result_dialog(Error(lang.getstr("argyll.util.not_found",
+                                                 "dispwin")), self)
+            return
+        if not profile.fileName or not os.path.isfile(profile.fileName):
+            temp = self.worker.create_tempdir()
+            if isinstance(temp, Exception):
+                show_result_dialog(temp, self)
+                return
+            if profile.fileName:
+                basename = os.path.basename(profile.fileName)
+            else:
+                basename = profile.getDescription() + profile_ext
+            profile.fileName = os.path.join(temp, basename)
+            profile.write()
+        result = self.worker.exec_cmd(dispwin, ["-v", "-d%i" % (display_no + 1),
+                                                "-I", profile.fileName],
+                                      capture_output=True, dry_run=False)
+        if not result:
+            result = Error("".join(self.worker.errors))
+        if isinstance(result, Exception):
+            show_result_dialog(result, self, wrap=120)
     
     
     def OnKeyDown(self, event):

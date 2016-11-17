@@ -1092,6 +1092,7 @@
 	"whitepoint.simulate": "Weißpunkt simulieren",
 	"whitepoint.simulate.relative": "Relativ zum Zielprofil-Weißpunkt",
 	"whitepoint.visual_editor": "Visueller Weißpunkt-Editor",
+	"whitepoint.visual_editor.display_changed.warning": "Achtung: Die Anzeigegeräte-Konfiguration hat sich geändert und der visuelle Weißpunkt-Editor ist eventuell nicht länger in der Lage, Anzeigegeräteprofile korrekt wiederherzustellen. Bitte überprüfen Sie die Anzeigegeräte-Profilzuweisungen sorgfältig, nachdem Sie den Editor geschlossen haben, und starten Sie DisplayCAL neu.",
 	"whitepoint.xy": "Farbort",
 	"window.title": "DisplayCAL",
 	"windows.version.unsupported": "Diese Version von Windows wird nicht unterstützt.",

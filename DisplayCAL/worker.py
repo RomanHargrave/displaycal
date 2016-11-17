@@ -1059,7 +1059,7 @@ def set_argyll_bin(parent=None, silent=False, callafter=None, callafter_args=())
 	return result
 
 
-def show_result_dialog(result, parent=None, pos=None, confirm=False):
+def show_result_dialog(result, parent=None, pos=None, confirm=False, wrap=70):
 	""" Show dialog depending on type of result. Result should be an
 	exception type. An appropriate visual representation will be chosen
 	whether result is of exception type 'Info', 'Warning' or other error. """
@@ -1083,9 +1083,11 @@ def show_result_dialog(result, parent=None, pos=None, confirm=False):
 	else:
 		cls = InfoDialog
 		ok = lang.getstr("ok")
+	nowrap = wrap is None
 	dlg = cls(parent, pos=pos, msg=msg, ok=ok, bitmap=bitmap, 
 			  log=not isinstance(result, (UnloggedError, UnloggedInfo,
-										  UnloggedWarning)))
+										  UnloggedWarning)), nowrap=nowrap,
+										  wrap=wrap)
 	if confirm:
 		returncode = dlg.ShowModal()
 		dlg.Destroy()

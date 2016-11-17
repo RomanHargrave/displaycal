@@ -1092,6 +1092,7 @@
 	"whitepoint.simulate": "Simuler le point blanc",
 	"whitepoint.simulate.relative": "Par rapport au point blanc du profil cible",
 		"*whitepoint.visual_editor": "Visual whitepoint editor",
+		"*whitepoint.visual_editor.display_changed.warning": "Attention: The display configuration has changed and the visual whitepoint editor may no longer be able to correctly restore display profiles. Please check display profile associations carefully after closing the editor and restart DisplayCAL.",
 	"whitepoint.xy": "coordonnées de chromaticité",
 	"window.title": "dispcalGUI",
 	"windows.version.unsupported": "Cette version de Windows n'est pas supportée.",

@@ -79,6 +79,24 @@ def SetMaxFontSize(self, pointsize=11):
 wx.Window.SetMaxFontSize = SetMaxFontSize
 
 
+def RealCenterOnScreen(self, dir=wx.BOTH):
+	"""
+	Center the window on the screen it is on, unlike CenterOnScreen which
+	always centers on 1st screen.
+	
+	"""
+	x, y = self.Position
+	left, top, w, h = self.GetDisplay().ClientArea
+	if dir & wx.HORIZONTAL:
+		x = left + w / 2 - self.Size[0] / 2
+	if dir & wx.VERTICAL:
+		y = top + h / 2 - self.Size[1] / 2
+	self.Position = x, y
+
+
+wx.TopLevelWindow.RealCenterOnScreen = RealCenterOnScreen
+
+
 def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
 	"""
 	Set a 'sane' window position and/or size (within visible screen area).
