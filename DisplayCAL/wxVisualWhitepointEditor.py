@@ -103,13 +103,18 @@ class AuiDarkDockArt(aui.dockart.AuiDefaultDockArt):
 
     def __init__(self, *args, **kwargs):
         aui.dockart.AuiDefaultDockArt.__init__(self, *args, **kwargs)
-        self.SetDefaultColours(wx.Colour(51, 51, 51))
+        if hasattr(self, "SetDefaultColours"):
+            self.SetDefaultColours(wx.Colour(51, 51, 51))
+        else:
+            self.SetColour(aui.dockart.AUI_DOCKART_INACTIVE_CAPTION_COLOUR,
+                           wx.Colour(43, 43, 43))
         self.SetColour(aui.dockart.AUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR,
                        wx.Colour(153, 153, 153))
         self.SetColour(aui.dockart.AUI_DOCKART_BORDER_COLOUR,
                        wx.Colour(51, 102, 204))
-        self.SetColour(aui.dockart.AUI_DOCKART_HINT_WINDOW_COLOUR,
-                       wx.Colour(102, 153, 204))
+        if hasattr(aui, "AUI_DOCKART_HINT_WINDOW_COLOUR"):
+            self.SetColour(aui.dockart.AUI_DOCKART_HINT_WINDOW_COLOUR,
+                           wx.Colour(102, 153, 204))
         self.SetMetric(aui.AUI_DOCKART_GRADIENT_TYPE,
                                              aui.AUI_GRADIENT_NONE)
         self.SetCustomPaneBitmap(geticon(16, "button-pin"),
@@ -1385,11 +1390,8 @@ class NumSpin(wx_Panel):
 
 
     def is_button_pressed(self, btn):
-        mousestate = wx.GetMouseState()
-        return (mousestate.LeftIsDown() and
-                btn.Enabled and btn.HasCapture() and
-                btn.ClientRect.Contains(btn.ScreenToClient((mousestate.X,
-                                                            mousestate.Y))))
+        return (btn.Enabled and btn.HasCapture() and
+                btn.ClientRect.Contains(btn.ScreenToClient(wx.GetMousePosition())))
 
 
     def left_down_handler(self, event):
@@ -1656,7 +1658,7 @@ class VisualWhitepointEditor(wx.Frame):
             # wxPython 2.9+
             minClientSize = self.MinClientSize
         else:
-            minClientSize = wx.Frame.WindowToClientSize(self.MinSize)
+            minClientSize = self.WindowToClientSize(self.MinSize)
         w, h = self.newColourPanel.Size
         self.ClientSize = mainPanelSize[0] + w + s(26), max(minClientSize[1], h + s(26))
         if sys.platform not in ("win32", "darwin"):
