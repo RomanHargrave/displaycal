@@ -1967,12 +1967,13 @@ class VisualWhitepointEditor(wx.Frame):
                            (display_no + 1), "@ %i, %i, %ix%i:" %
                            display.Geometry.Get(), exception)
             else:
-                # Remember profile, but discard profile filename
-                # (Important - can't re-install profile from same path where
-                # it is installed!)
-                profile.fileName = None
-                self._profiles[display.Geometry] = profile
-                self._install_profile(display_no, self._srgb_profile)
+                if profile:
+                    # Remember profile, but discard profile filename
+                    # (Important - can't re-install profile from same path
+                    # where it is installed!)
+                    profile.fileName = None
+                    self._profiles[display.Geometry] = profile
+                    self._install_profile(display_no, self._srgb_profile)
             break
 
 
