@@ -861,7 +861,7 @@ class ProfileLoader(object):
 									# Normally calibration loading is disabled while
 									# DisplayCAL is running. Override this when the
 									# display has changed
-									self.pl._manual_restore = 2
+									self.pl._manual_restore = getcfg("profile.load_on_login") and 2
 						else:
 							if data[0] == "reset-vcgt":
 								self.pl._set_reset_gamma_ramps(None)
@@ -1507,7 +1507,7 @@ class ProfileLoader(object):
 						# Normally calibration loading is disabled while
 						# DisplayCAL is running. Override this when the
 						# display has changed
-						self._manual_restore = 2
+						self._manual_restore = getcfg("profile.load_on_login") and 2
 				if not dry_run:
 					self._current_display = display
 					self._current_timestamp = timestamp
@@ -1627,7 +1627,7 @@ class ProfileLoader(object):
 						# Normally calibration loading is disabled while
 						# DisplayCAL is running. Override this when the
 						# display has changed
-						self._manual_restore = 2
+						self._manual_restore = getcfg("profile.load_on_login") and 2
 				# Check video card gamma table and (re)load calibration if
 				# necessary
 				if not self.gdi32:
@@ -2089,7 +2089,7 @@ class ProfileLoader(object):
 								show_notification=component_name != "madVR")
 				else:
 					self._app_detection_msg = msg
-					self._manual_restore = 2
+					self._manual_restore = getcfg("profile.load_on_login") and 2
 		return (self.__other_component[0:2] != (None, None) and
 				not self.__other_component[2])
 
