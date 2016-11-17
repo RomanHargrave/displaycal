@@ -1291,7 +1291,6 @@ class NumSpin(wx_Panel):
         self.spinup.BackgroundColour = self.BackgroundColour
         self.spinup.Bind(wx.EVT_LEFT_DOWN, self.spin_up)
         self.spinup.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
-        self.spinup.Bind(wx.EVT_MOUSE_CAPTURE_LOST, lambda e: None)
         vsizer.Add(self.spinup, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, s(1))
         self.spindn = BitmapButton(self, -1, 
                                    geticon(10, "spin_down"), 
@@ -1299,7 +1298,6 @@ class NumSpin(wx_Panel):
         self.spindn.BackgroundColour = self.BackgroundColour
         self.spindn.Bind(wx.EVT_LEFT_DOWN, self.spin_dn)
         self.spindn.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
-        self.spindn.Bind(wx.EVT_MOUSE_CAPTURE_LOST, lambda e: None)
         vsizer.Add(self.spindn, 0, wx.ALIGN_TOP | wx.TOP, s(1))
 
 
@@ -1393,6 +1391,10 @@ class NumSpin(wx_Panel):
 
     def SetValue(self, value):
         self.numctrl.SetValue(value)
+        if self.numctrl.GetMax() <= value:
+            self.spinup.HasCapture() and self.spinup.ReleaseMouse()
+        if self.numctrl.GetMin() >= value:
+            self.spindn.HasCapture() and self.spindn.ReleaseMouse()
         self.spinup.Enable(self.numctrl.GetMax() > value)
         self.spindn.Enable(self.numctrl.GetMin() < value)
 
