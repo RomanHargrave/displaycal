@@ -10,9 +10,11 @@ License: wxPython license
 import colorsys
 import os
 import sys
+import threading
 from math import pi, sin, cos, sqrt, atan2
 if sys.platform == "darwin":
 	from platform import mac_ver
+from time import sleep
 
 from wxfixes import wx
 
@@ -72,6 +74,21 @@ def s(i):
     
     """
     return i * max(getcfg("app.dpi") / get_default_dpi(), 1)
+
+
+def _show_result_after(*args, **kwargs):
+    wx.CallAfter(show_result_dialog, *args, **kwargs)
+
+
+def _wait_thread(fn, *args, **kwargs):
+    # Wait until thread is finished. Yield while waiting.
+    thread = threading.Thread(target=fn,
+                              name="VisualWhitepointEditorMaintenance",
+                              args=args, kwargs=kwargs)
+    thread.start()
+    while thread.isAlive():
+        wx.Yield()
+        sleep(0.05)
 
 
 def Distance(pt1, pt2):
@@ -1927,8 +1944,7 @@ class VisualWhitepointEditor(wx.Frame):
 
         if self.IsFullScreen():
             self.ShowFullScreen(False)
-        self._restore_display_profiles()
-        self._worker.wrapup(False)  # Remove temporary profiles
+        self._restore_display_profiles(True)
         event.Skip()
 
 
@@ -1961,44 +1977,52 @@ class VisualWhitepointEditor(wx.Frame):
         for display_no in xrange(wx.Display.GetCount()):
             if wx.Display(display_no).Geometry != display.Geometry:
                 continue
-            try:
-                profile = ICCP.get_display_profile(display_no)
-            except (ICCP.ICCProfileInvalidError, IOError,
-                    IndexError), exception:
-                safe_print("Could not get display profile for display %i" %
-                           (display_no + 1), "@ %i, %i, %ix%i:" %
-                           display.Geometry.Get(), exception)
-            else:
-                if profile:
-                    # Remember profile, but discard profile filename
-                    # (Important - can't re-install profile from same path
-                    # where it is installed!)
-                    profile.fileName = None
-                    self._profiles[display.Geometry] = profile
-                    self._install_profile(display_no, self._srgb_profile)
+            _wait_thread(self._set_profile, display_no, display.Geometry.Get())
             break
 
 
-    def _restore_display_profiles(self):
+    def _set_profile(self, display_no, geometry):
+        # Has to be thread-safe!
+        try:
+            profile = ICCP.get_display_profile(display_no)
+        except (ICCP.ICCProfileInvalidError, IOError,
+                IndexError), exception:
+            safe_print("Could not get display profile for display %i" %
+                       (display_no + 1), "@ %i, %i, %ix%i:" %
+                       geometry, exception)
+        else:
+            if profile:
+                # Remember profile, but discard profile filename
+                # (Important - can't re-install profile from same path
+                # where it is installed!)
+                profile.fileName = None
+                self._profiles[geometry] = profile
+                self._install_profile(display_no, self._srgb_profile)
+
+
+    def _restore_display_profiles(self, wrapup=False):
         # Reinstall memorized display profiles
         while self._profiles:
             geometry, profile = self._profiles.popitem()
             for display_no in xrange(wx.Display.GetCount()):
-                if wx.Display(display_no).Geometry == geometry:
-                    self._install_profile(display_no, profile)
+                if wx.Display(display_no).Geometry.Get() == geometry:
+                    _wait_thread(self._install_profile, display_no, profile)
                     break
+        if wrapup:
+            self._worker.wrapup(False)  # Remove temporary profiles
 
 
     def _install_profile(self, display_no, profile):
+        # Has to be thread-safe!
         dispwin = get_argyll_util("dispwin")
         if not dispwin:
-            show_result_dialog(Error(lang.getstr("argyll.util.not_found",
+            _show_result_after(Error(lang.getstr("argyll.util.not_found",
                                                  "dispwin")), self)
             return
         if not profile.fileName or not os.path.isfile(profile.fileName):
             temp = self._worker.create_tempdir()
             if isinstance(temp, Exception):
-                show_result_dialog(temp, self)
+                _show_result_after(temp, self)
                 return
             if profile.fileName:
                 basename = os.path.basename(profile.fileName)
@@ -2012,7 +2036,7 @@ class VisualWhitepointEditor(wx.Frame):
         if not result:
             result = Error("".join(self._worker.errors))
         if isinstance(result, Exception):
-            show_result_dialog(result, self, wrap=120)
+            _show_result_after(result, self, wrap=120)
     
     
     def OnKeyDown(self, event):

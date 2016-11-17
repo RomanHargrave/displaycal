@@ -13994,8 +13994,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			for win in wx.GetTopLevelWindows():
 				if win and not win.IsBeingDeleted():
 					if isinstance(win, VisualWhitepointEditor):
-						win._restore_display_profiles()
-						win.worker.wrapup(False)
+						win._restore_display_profiles(True)
 						win.Close()
 			writecfg()
 			if getattr(self, "thread", None) and self.thread.isAlive():
