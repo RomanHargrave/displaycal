@@ -1732,6 +1732,9 @@ class VisualWhitepointEditor(wx.Frame):
 
         self.SetSaneGeometry(x, y, w, h)
 
+        if not self._display:
+            self.move_handler(None)
+
         wx.CallAfter(self.InitFrame)
 
         self.keepGoing = True
