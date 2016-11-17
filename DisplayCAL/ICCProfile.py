@@ -62,6 +62,7 @@ if sys.platform not in ("darwin", "win32"):
 		import xrandr
 	except ImportError:
 		xrandr = None
+		from util_os import which
 elif sys.platform == "win32":
 	import util_win
 	if sys.getwindowsversion() < (6, ):
@@ -1653,9 +1654,12 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				# Read up to 8 MB of any X properties
 				if debug:
 					safe_print("Using xprop")
+				xprop = which("xprop")
+				if not xprop:
+					return
 				atom = "%s%s" % (option, "" if display_no == 0 else 
 									   "_%s" % display_no)
-				tgt_proc = sp.Popen(["xprop", "-display", "%s:%s.%s" % 
+				tgt_proc = sp.Popen([xprop, "-display", "%s:%s.%s" % 
 														  (x_hostname, 
 														   x_display, 
 														   x_screen), 
