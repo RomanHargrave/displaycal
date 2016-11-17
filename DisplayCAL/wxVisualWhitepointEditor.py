@@ -1271,11 +1271,11 @@ class HSlider(BaseLineCtrl):
         self._mainFrame.area_handler()
 
 
-class NumSpin(wx.PyPanel):
+class NumSpin(wx_Panel):
 
     def __init__(self, parent, id=-1, *args, **kwargs):
-        wx.PyPanel.__init__(self, parent)
-        self.BackgroundColour = "#4c4c4c"
+        wx_Panel.__init__(self, parent)
+        self.BackgroundColour = "#404040"
         self.Sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.numctrl = IntCtrl(self, -1, *args, **kwargs)
         self.numctrl.BackgroundColour = self.BackgroundColour
@@ -1287,7 +1287,7 @@ class NumSpin(wx.PyPanel):
         self.Sizer.Add(vsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, s(2))
         self.spinup = BitmapButton(self, -1, 
                                    geticon(10, "spin_up"), 
-                                   style=wx.NO_BORDER)
+                                   size=(10, 10), style=wx.NO_BORDER)
         self.spinup.BackgroundColour = self.BackgroundColour
         self.spinup.Bind(wx.EVT_LEFT_DOWN, self.spin_up)
         self.spinup.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
@@ -1295,7 +1295,7 @@ class NumSpin(wx.PyPanel):
         vsizer.Add(self.spinup, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, s(1))
         self.spindn = BitmapButton(self, -1, 
                                    geticon(10, "spin_down"), 
-                                   style=wx.NO_BORDER)
+                                   size=(10, 10), style=wx.NO_BORDER)
         self.spindn.BackgroundColour = self.BackgroundColour
         self.spindn.Bind(wx.EVT_LEFT_DOWN, self.spin_dn)
         self.spindn.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
@@ -1450,7 +1450,7 @@ class VisualWhitepointEditor(wx.Frame):
         self._initOver = False
         self._inDrawAll = False
 
-        self.mainPanel = wx.Panel(self, -1)
+        self.mainPanel = wx_Panel(self, -1)
         self.mainPanel.BackgroundColour = "#333333"
         self.mainPanel.ForegroundColour = "#999999"
         self.bgPanel = wx_Panel(self, -1)
@@ -1492,7 +1492,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.area_size_slider.BackgroundColour = self.mainPanel.BackgroundColour
         self.zoomnormalbutton = BitmapButton(self.mainPanel, -1, 
                                              geticon(16, "zoom-original-outline"), 
-                                             style=wx.NO_BORDER)
+                                             size=(16, 16), style=wx.NO_BORDER)
         self.zoomnormalbutton.BackgroundColour = self.mainPanel.BackgroundColour
         self.Bind(wx.EVT_BUTTON, self.zoomnormal_handler, self.zoomnormalbutton)
         self.zoomnormalbutton.SetToolTipString(lang.getstr("measureframe."
@@ -1503,7 +1503,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.area_x_slider.BackgroundColour = self.mainPanel.BackgroundColour
         self.center_x_button = BitmapButton(self.mainPanel, -1, 
                                             geticon(16, "window-center-outline"), 
-                                            style=wx.NO_BORDER)
+                                            size=(16, 16), style=wx.NO_BORDER)
         self.center_x_button.BackgroundColour = self.mainPanel.BackgroundColour
         self.Bind(wx.EVT_BUTTON, self.center_x_handler, self.center_x_button)
         self.center_x_button.SetToolTipString(lang.getstr("measureframe.center"))
@@ -1513,7 +1513,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.area_y_slider.BackgroundColour = self.mainPanel.BackgroundColour
         self.center_y_button = BitmapButton(self.mainPanel, -1, 
                                             geticon(16, "window-center-outline"), 
-                                            style=wx.NO_BORDER)
+                                            size=(16, 16), style=wx.NO_BORDER)
         self.center_y_button.BackgroundColour = self.mainPanel.BackgroundColour
         self.Bind(wx.EVT_BUTTON, self.center_y_handler, self.center_y_button)
         self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
@@ -2004,6 +2004,7 @@ class VisualWhitepointEditor(wx.Frame):
     def dock_pane(self):
         self._mgr.GetPane("mainPanel").Dock().CloseButton(False)
         self._mgr.Update()
+        self.mainPanel.Refresh()
         self.area_handler()
 
 
