@@ -1285,16 +1285,20 @@ class NumSpin(wx_Panel):
         self.Sizer.Add(self.numctrl, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL, s(5))
         vsizer = wx.BoxSizer(wx.VERTICAL)
         self.Sizer.Add(vsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT | wx.RIGHT, s(2))
+        if "gtk3" in wx.PlatformInfo:
+            size = (10, 10)
+        else:
+            size = (-1, -1)
         self.spinup = BitmapButton(self, -1, 
                                    geticon(10, "spin_up"), 
-                                   size=(10, 10), style=wx.NO_BORDER)
+                                   size=size, style=wx.NO_BORDER)
         self.spinup.BackgroundColour = self.BackgroundColour
         self.spinup.Bind(wx.EVT_LEFT_DOWN, self.left_down_handler)
         self.spinup.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
         vsizer.Add(self.spinup, 0, wx.ALIGN_BOTTOM | wx.BOTTOM, s(1))
         self.spindn = BitmapButton(self, -1, 
                                    geticon(10, "spin_down"), 
-                                   size=(10, 10), style=wx.NO_BORDER)
+                                   size=size, style=wx.NO_BORDER)
         self.spindn.BackgroundColour = self.BackgroundColour
         self.spindn.Bind(wx.EVT_LEFT_DOWN, self.left_down_handler)
         self.spindn.Bind(wx.EVT_LEFT_UP, self.left_up_handler)
@@ -1492,9 +1496,13 @@ class VisualWhitepointEditor(wx.Frame):
                                         min(scale * 100, 1500), 50, 1500,
                                         self.area_handler)
         self.area_size_slider.BackgroundColour = self.mainPanel.BackgroundColour
+        if "gtk3" in wx.PlatformInfo:
+            size = (16, 16)
+        else:
+            size = (-1, -1)
         self.zoomnormalbutton = BitmapButton(self.mainPanel, -1, 
                                              geticon(16, "zoom-original-outline"), 
-                                             size=(16, 16), style=wx.NO_BORDER)
+                                             size=size, style=wx.NO_BORDER)
         self.zoomnormalbutton.BackgroundColour = self.mainPanel.BackgroundColour
         self.Bind(wx.EVT_BUTTON, self.zoomnormal_handler, self.zoomnormalbutton)
         self.zoomnormalbutton.SetToolTipString(lang.getstr("measureframe."
@@ -1505,7 +1513,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.area_x_slider.BackgroundColour = self.mainPanel.BackgroundColour
         self.center_x_button = BitmapButton(self.mainPanel, -1, 
                                             geticon(16, "window-center-outline"), 
-                                            size=(16, 16), style=wx.NO_BORDER)
+                                            size=size, style=wx.NO_BORDER)
         self.center_x_button.BackgroundColour = self.mainPanel.BackgroundColour
         self.Bind(wx.EVT_BUTTON, self.center_x_handler, self.center_x_button)
         self.center_x_button.SetToolTipString(lang.getstr("measureframe.center"))
@@ -1515,7 +1523,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.area_y_slider.BackgroundColour = self.mainPanel.BackgroundColour
         self.center_y_button = BitmapButton(self.mainPanel, -1, 
                                             geticon(16, "window-center-outline"), 
-                                            size=(16, 16), style=wx.NO_BORDER)
+                                            size=size, style=wx.NO_BORDER)
         self.center_y_button.BackgroundColour = self.mainPanel.BackgroundColour
         self.Bind(wx.EVT_BUTTON, self.center_y_handler, self.center_y_button)
         self.center_y_button.SetToolTipString(lang.getstr("measureframe.center"))
@@ -1671,7 +1679,11 @@ class VisualWhitepointEditor(wx.Frame):
         font.SetWeight(wx.BOLD)
         area_slider_label.Font = font
         mainSizer.Add(area_slider_label, 0, wx.LEFT | wx.BOTTOM, margin)
-        slider_sizer = wx.FlexGridSizer(3, 3, margin, margin)
+        if "gtk3" in wx.PlatformInfo:
+            vmargin = margin
+        else:
+            vmargin = s(6)
+        slider_sizer = wx.FlexGridSizer(3, 3, vmargin, margin)
         slider_sizer.AddGrowableCol(1)
         mainSizer.Add(slider_sizer, 0, wx.EXPAND | wx.LEFT | wx.RIGHT, margin)
         area_size_label = wx.StaticText(self.mainPanel, -1, lang.getstr("size"))
