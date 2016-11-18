@@ -6446,25 +6446,26 @@ usage: spotread [-options] [logfile]
 			if not isinstance(result, Exception) and result:
 				self.output = ["Installed"]
 		else:
-			if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
-				try:
-					per_user_profiles = util_win.per_user_profiles_isenabled(getcfg("display.number") - 1)
-				except Exception, exception:
-					per_user_profiles = None
-					self.log("util_win.per_user_profiles_isenabled(%s): %s" %
-							 (getcfg("display.number") - 1,
-							  safe_unicode(exception)))
-				if not per_user_profiles:
-					# Enable per-user profiles under Vista / Windows 7
-					try:
-						util_win.enable_per_user_profiles(True,
-														  getcfg("display.number") - 1)
-					except Exception, exception:
-						self.log("util_win.enable_per_user_profiles(True, %s): %s" %
-								   (getcfg("display.number") - 1,
-									safe_unicode(exception)))
 			cmd, args = self.prepare_dispwin(None, profile_path, True)
 			if not isinstance(cmd, Exception):
+				if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+					# Set/unset per-user profiles under Vista / Windows 7
+					idx = getcfg("display.number") - 1
+					try:
+						device0 = util_win.get_display_device(idx)
+						devicea = util_win.get_display_device(idx, True)
+					except Exception, exception:
+						self.log("util_win.get_display_device(%s):" % idx,
+								 exception)
+					else:
+						per_user = not "-Sl" in args
+						for device in (device0, devicea):
+							try:
+								util_win.enable_per_user_profiles(per_user,
+																  devicekey=device.DeviceKey)
+							except Exception, exception:
+								self.log("util_win.enable_per_user_profiles(%s, devicekey=%r): %s" %
+										 (per_user, device.DeviceKey, exception))
 				if "-Sl" in args and (sys.platform != "darwin" or 
 									  intlist(mac_ver()[0].split(".")) >= [10, 6]):
 					# If a 'system' install is requested under Linux,
