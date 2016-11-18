@@ -1547,6 +1547,7 @@ class ProfileManager(object):
         self._window = window
         self._window.Bind(wx.EVT_CLOSE, self.window_close_handler)
         self._window.Bind(wx.EVT_MOVE, self.window_move_handler)
+        self._window.Bind(wx.EVT_DISPLAY_CHANGED, self.display_changed_handler)
         self._worker = worker.Worker()
         ProfileManager.managers.append(self)
         self.update()
@@ -1645,6 +1646,14 @@ class ProfileManager(object):
                     if wait:
                         thread.join()
                     break
+
+
+    def display_changed_handler(self, event):
+        # Houston, we (may) have a problem! Memorized profile associations may
+        # no longer be correct. 
+        self.update()
+        msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
+        wx.CallLater(1000, show_result_dialog, Warn(msg))
 
 
     def window_close_handler(self, event):
@@ -1812,7 +1821,6 @@ class VisualWhitepointEditor(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(wx.EVT_SHOW, self.show_handler)
         self.Bind(wx.EVT_MAXIMIZE, self.maximize_handler)
-        self.Bind(wx.EVT_DISPLAY_CHANGED, self.display_changed_handler)
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
         # Set up panes
@@ -2089,13 +2097,6 @@ class VisualWhitepointEditor(wx.Frame):
         if self.IsFullScreen():
             self.ShowFullScreen(False)
         event.Skip()
-
-
-    def display_changed_handler(self, event):
-        # Houston, we (may) have a problem! Memorized profile associations may
-        # no longer be correct. 
-        msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
-        wx.CallLater(1000, show_result_dialog, Warn(msg), self)
     
     
     def OnKeyDown(self, event):
