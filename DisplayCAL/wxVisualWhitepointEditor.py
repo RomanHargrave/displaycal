@@ -1537,7 +1537,7 @@ class ProfileManager(object):
     managers = []
 
     def __init__(self, window):
-        self._display = None
+        self._display = window.GetDisplay()
         self._lock = threading.Lock()
         self._profiles = {}
         self._srgb_profile = ICCP.ICCProfile.from_named_rgb_space("sRGB")
@@ -1549,6 +1549,7 @@ class ProfileManager(object):
         self._window.Bind(wx.EVT_MOVE, self.window_move_handler)
         self._worker = worker.Worker()
         ProfileManager.managers.append(self)
+        self.update()
 
 
     def _manage_display(self, display_no, geometry):
