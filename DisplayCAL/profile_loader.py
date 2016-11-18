@@ -38,7 +38,7 @@ if sys.platform == "win32":
 	from debughelpers import handle_error
 	from edid import get_edid
 	from ordereddict import OrderedDict
-	from util_os import getenvu
+	from util_os import getenvu, is_superuser
 	from util_str import safe_unicode
 	from util_win import (MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
@@ -2170,6 +2170,11 @@ class ProfileLoader(object):
 					safe_print("Resetting profile association for %s:" %
 							   display_edid[0], current_profile, "->", profile)
 					try:
+						if (not is_superuser() and
+							not per_user_profiles_isenabled(devicekey=devicekey)):
+							# Can only associate profiles to the display if
+							# per-user-profiles are enabled or if running as admin
+							enable_per_user_profiles(devicekey=devicekey)
 						ICCP.set_display_profile(profile, devicekey=devicekey)
 					except WindowsError, exception:
 						safe_print(exception)
@@ -2246,6 +2251,11 @@ class ProfileLoader(object):
 				safe_print("Fixing profile association for %s:" % display,
 						   current_profile, "->", correct_profile)
 				try:
+					if (not is_superuser() and
+						not per_user_profiles_isenabled(devicekey=device.DeviceKey)):
+						# Can only associate profiles to the display if
+						# per-user-profiles are enabled or if running as admin
+						enable_per_user_profiles(devicekey=device.DeviceKey)
 					ICCP.set_display_profile(os.path.basename(correct_profile),
 											 devicekey=device.DeviceKey)
 				except WindowsError, exception:
