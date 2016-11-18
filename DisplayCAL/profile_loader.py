@@ -1013,6 +1013,13 @@ class ProfileLoader(object):
 					return icon
 
 				def on_left_down(self, event):
+					if not getattr(self, "_notification", None):
+						# Make sure the displayed info is up-to-date
+						with self.pl.lock:
+							self.pl._next = True
+						time.sleep(.11)
+						with self.pl.lock:
+							pass
 					self.show_notification(toggle=True)
 
 				def on_right_down(self, event):
