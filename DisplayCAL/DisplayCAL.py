@@ -5117,6 +5117,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		   round(getcfg("whitepoint.y"), 4) == round(self.whitepoint_y_textctrl.GetValue(), 4)):
 			event.Skip()
 			return
+		if (event.GetEventObject() and
+			hasattr(event.GetEventObject(), "IsShown") and
+			not event.GetEventObject().IsShown()):
+			event.Skip()
+			return
 		if debug:
 			safe_print("[D] whitepoint_ctrl_handler called for ID %s %s event "
 					   "type %s %s" % (event.GetId(), 
