@@ -27,7 +27,7 @@ from log import safe_print
 from meta import name as appname
 from util_list import intlist
 from util_str import wrap
-from worker import Error, Warn, get_argyll_util, show_result_dialog
+from worker import Error, UnloggedError, Warn, get_argyll_util, show_result_dialog
 from wxMeasureFrame import get_default_size
 from wxfixes import (wx_Panel, GenBitmapButton as BitmapButton,
                      get_bitmap_disabled, get_bitmap_hover, get_bitmap_pressed)
@@ -2020,12 +2020,12 @@ class VisualWhitepointEditor(wx.Frame):
         dispwin = get_argyll_util("dispwin")
         if not dispwin:
             _show_result_after(Error(lang.getstr("argyll.util.not_found",
-                                                 "dispwin")), self)
+                                                 "dispwin")))
             return
         if not profile.fileName or not os.path.isfile(profile.fileName):
             temp = self._worker.create_tempdir()
             if isinstance(temp, Exception):
-                _show_result_after(temp, self)
+                _show_result_after(temp)
                 return
             if profile.fileName:
                 basename = os.path.basename(profile.fileName)
@@ -2037,9 +2037,9 @@ class VisualWhitepointEditor(wx.Frame):
                                                 "-I", profile.fileName],
                                        capture_output=True, dry_run=False)
         if not result:
-            result = Error("".join(self._worker.errors))
+            result = UnloggedError("".join(self._worker.errors))
         if isinstance(result, Exception):
-            _show_result_after(result, self, wrap=120)
+            _show_result_after(result, wrap=120)
     
     
     def OnKeyDown(self, event):
