@@ -22,20 +22,21 @@ from wxfixes import wx
 from wx.lib.agw import aui
 from wx.lib.intctrl import IntCtrl
 
-from config import (defaults, getbitmap, getcfg, get_default_dpi,
-                    get_icon_bundle, geticon, initcfg, profile_ext, setcfg)
+from config import (defaults, getbitmap, getcfg, get_argyll_display_number,
+                    get_default_dpi, get_icon_bundle, geticon, initcfg,
+                    profile_ext, setcfg)
 from log import safe_print
 from meta import name as appname
 from util_list import intlist
 from util_str import wrap
-from worker import Error, UnloggedError, Warn, get_argyll_util, show_result_dialog
+from worker import (Error, UnloggedError, Warn, Worker, get_argyll_util,
+                    show_result_dialog)
 from wxMeasureFrame import get_default_size
 from wxfixes import (wx_Panel, GenBitmapButton as BitmapButton,
                      get_bitmap_disabled, get_bitmap_hover, get_bitmap_pressed)
 from wxwindows import FlatShadedButton, HStretchStaticBitmap, TaskBarNotification
 import localization as lang
 import ICCProfile as ICCP
-import worker
 
 
 # Use non-native mini frames on all platforms
@@ -1548,7 +1549,7 @@ class ProfileManager(object):
         self._window.Bind(wx.EVT_CLOSE, self.window_close_handler)
         self._window.Bind(wx.EVT_MOVE, self.window_move_handler)
         self._window.Bind(wx.EVT_DISPLAY_CHANGED, self.display_changed_handler)
-        self._worker = worker.Worker()
+        self._worker = Worker()
         ProfileManager.managers.append(self)
         self.update()
 
@@ -1623,12 +1624,13 @@ class ProfileManager(object):
         
         """
         self.restore_display_profiles()
-        for display_no in xrange(wx.Display.GetCount()):
-            if wx.Display(display_no).Geometry != self._display.Geometry:
-                continue
+        display_no = get_argyll_display_number(self._display.Geometry)
+        if display_no is not None:
             threading.Thread(target=self._manage_display,
                              args=(display_no, self._display.Geometry.Get())).start()
-            break
+        else:
+            msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
+            safe_print(msg)
 
 
     def restore_display_profiles(self, wrapup=False, wait=False):
@@ -1638,22 +1640,26 @@ class ProfileManager(object):
         """
         while self._profiles:
             geometry, profile = self._profiles.popitem()
-            for display_no in xrange(wx.Display.GetCount()):
-                if wx.Display(display_no).Geometry.Get() == geometry:
-                    thread = threading.Thread(target=self._install_profile_locked,
-                                              args=(display_no, profile, wrapup))
-                    thread.start()
-                    if wait:
-                        thread.join()
-                    break
+            display_no = get_argyll_display_number(geometry)
+            if display_no is not None:
+                thread = threading.Thread(target=self._install_profile_locked,
+                                          args=(display_no, profile, wrapup))
+                thread.start()
+                if wait:
+                    thread.join()
+            else:
+                msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
+                safe_print(msg)
 
 
     def display_changed_handler(self, event):
         # Houston, we (may) have a problem! Memorized profile associations may
         # no longer be correct. 
-        self.update()
-        msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
-        wx.CallLater(1000, show_result_dialog, Warn(msg))
+        def warn_update():
+            msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
+            show_result_dialog(Warn(msg))
+            self and self.update()
+        wx.CallLater(1000, warn_update)
 
 
     def window_close_handler(self, event):
@@ -2422,6 +2428,9 @@ if __name__ == "__main__":
     initcfg()
     lang.init()
     app = BaseApp(0)
+    worker = Worker()
+    worker.enumerate_displays_and_ports(check_lut_access=False,
+                                        enumerate_ports=False)
     app.TopWindow = VisualWhitepointEditor(None)
     app.TopWindow.Show()
     app.MainLoop()
