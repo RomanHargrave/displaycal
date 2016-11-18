@@ -4245,8 +4245,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if getcfg("whitepoint.colortemp", False):
 			self.whitepoint_ctrl.SetSelection(1)
 		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
-			self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 6))
-			self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 6))
+			self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 4))
+			self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 4))
 			self.whitepoint_ctrl.SetSelection(2)
 		else:
 			self.whitepoint_ctrl.SetSelection(0)
@@ -4946,8 +4946,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				if not K:
 					self.whitepoint_ctrl.SetSelection(2)
 				Y, x, y = Yxy.groups()
-				self.whitepoint_x_textctrl.SetValue(round(float(x), 6))
-				self.whitepoint_y_textctrl.SetValue(round(float(y), 6))
+				self.whitepoint_x_textctrl.SetValue(round(float(x), 4))
+				self.whitepoint_y_textctrl.SetValue(round(float(y), 4))
 			self.whitepoint_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
 													 self.whitepoint_ctrl))
 
@@ -5109,12 +5109,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			return
 		if event.GetId() == self.whitepoint_x_textctrl.GetId() and (
 		   self.whitepoint_ctrl.GetSelection() != 2 or 
-		   round(getcfg("whitepoint.x"), 6) == round(self.whitepoint_x_textctrl.GetValue(), 6)):
+		   round(getcfg("whitepoint.x"), 4) == round(self.whitepoint_x_textctrl.GetValue(), 4)):
 			event.Skip()
 			return
 		if event.GetId() == self.whitepoint_y_textctrl.GetId() and (
 		   self.whitepoint_ctrl.GetSelection() != 2 or 
-		   round(getcfg("whitepoint.y"), 6) == round(self.whitepoint_y_textctrl.GetValue(), 6)):
+		   round(getcfg("whitepoint.y"), 4) == round(self.whitepoint_y_textctrl.GetValue(), 4)):
 			event.Skip()
 			return
 		if debug:
@@ -5140,14 +5140,14 @@ class MainFrame(ReportFrame, BaseFrame):
 					raise ValueError()
 			except ValueError:
 				wx.Bell()
-				self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 6))
+				self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 4))
 			try:
 				v = self.whitepoint_y_textctrl.GetValue()
 				if v < 0 or v > 1:
 					raise ValueError()
 			except ValueError:
 				wx.Bell()
-				self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 6))
+				self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 4))
 			x = self.whitepoint_x_textctrl.GetValue()
 			y = self.whitepoint_y_textctrl.GetValue()
 			k = xyY2CCT(x, y, 1.0)
@@ -5232,8 +5232,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				# Daylight locus
 				xyY = CIEDCCT2xyY(getcfg("whitepoint.colortemp"))
 			if xyY:
-				self.whitepoint_x_textctrl.SetValue(round(xyY[0], 6))
-				self.whitepoint_y_textctrl.SetValue(round(xyY[1], 6))
+				self.whitepoint_x_textctrl.SetValue(round(xyY[0], 4))
+				self.whitepoint_y_textctrl.SetValue(round(xyY[1], 4))
 			else:
 				self.whitepoint_x_textctrl.SetValue(0)
 				self.whitepoint_y_textctrl.SetValue(0)
@@ -13544,8 +13544,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						k = XYZ2CCT(XYZ[0], XYZ[1], XYZ[2])
 						if not lang.getstr("whitepoint") in settings:
 							setcfg("whitepoint.colortemp", None)
-							setcfg("whitepoint.x", round(x, 6))
-							setcfg("whitepoint.y", round(y, 6))
+							setcfg("whitepoint.x", round(x, 4))
+							setcfg("whitepoint.y", round(y, 4))
 							self.worker.options_dispcal.append(
 								"-w%s,%s" % (getcfg("whitepoint.x"), 
 											 getcfg("whitepoint.y")))
