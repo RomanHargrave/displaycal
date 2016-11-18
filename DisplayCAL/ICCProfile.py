@@ -104,7 +104,7 @@ COLORPROFILETYPE = {"ICC": 0,
 WCS_PROFILE_MANAGEMENT_SCOPE = {"SYSTEM_WIDE": 0,
 								"CURRENT_USER": 1}
 
-debug = "-d" in sys.argv[1:] or "--debug" in sys.argv[1:]
+debug = False
 
 enc, fs_enc = get_encodings()
 
