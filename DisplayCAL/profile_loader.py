@@ -705,10 +705,25 @@ if sys.platform == "win32":
 			display, edid, moninfo, device0 = self.monitors[dindex]
 			device = get_active_display_device(moninfo["Device"])
 			if device0 and device:
+				device0key = device0.DeviceKey
 				with self.pl.lock:
-					fn(arg0,  devicekey=device0.DeviceKey)
-					if device.DeviceKey != device0.DeviceKey:
+					if (fn is enable_per_user_profiles and
+						not per_user_profiles_isenabled(devicekey=device0key)):
+						# We need to re-associate per-user profiles to the
+						# display, otherwise the associations will be lost
+						# after enabling per-user if a system default profile
+						# was set
+						monkey = device0key.split("\\")[-2:]
+						profiles = ICCP._winreg_get_display_profiles(monkey,
+																	 True)
+					else:
+						profiles = []
+					fn(arg0,  devicekey=device0key)
+					if device.DeviceKey != device0key:
 						fn(arg0,  devicekey=device.DeviceKey)
+					for profile_name in profiles:
+						ICCP.set_display_profile(profile_name,
+												 devicekey=device0key)
 					self.update_profiles(monitor=self.monitors[dindex])
 					self.pl._next = True
 			else:

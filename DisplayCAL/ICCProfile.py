@@ -1483,9 +1483,7 @@ def _winreg_get_display_profiles(monkey, current_user=False):
 				while "" in value:
 					value.remove("")
 				filenames.extend(value)
-			elif name == "UsePerUserProfiles" and not value:
-				filenames = []
-				break
+		_winreg.CloseKey(key)
 	except WindowsError, exception:
 		if exception.args[0] == 2:
 			# Key does not exist
