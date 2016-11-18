@@ -7,6 +7,7 @@ License: wxPython license
 
 """
 
+from __future__ import with_statement
 import colorsys
 import os
 import sys
@@ -1523,6 +1524,155 @@ class NumSpin(wx_Panel):
         return locals()
 
 
+class ProfileManager(object):
+    
+    """
+    Manages profiles associated with the display that a window is on.
+    
+    Clears calibration on the display we're on, and restores it when moved
+    to another display or the window is closed.
+    
+    """
+
+    managers = []
+
+    def __init__(self, window):
+        self._display = None
+        self._lock = threading.Lock()
+        self._profiles = {}
+        self._srgb_profile = ICCP.ICCProfile.from_named_rgb_space("sRGB")
+        self._srgb_profile.setDescription(appname + " Visual Whitepoint Editor "
+                                          "Temporary Profile")
+        self._srgb_profile.calculateID()
+        self._window = window
+        self._window.Bind(wx.EVT_CLOSE, self.window_close_handler)
+        self._window.Bind(wx.EVT_MOVE, self.window_move_handler)
+        self._worker = worker.Worker()
+        ProfileManager.managers.append(self)
+
+
+    def _manage_display(self, display_no, geometry):
+        # Has to be thread-safe!
+        with self._lock:
+            try:
+                profile = ICCP.get_display_profile(display_no)
+            except (ICCP.ICCProfileInvalidError, IOError,
+                    IndexError), exception:
+                safe_print("Could not get display profile for display %i" %
+                           (display_no + 1), "@ %i, %i, %ix%i:" %
+                           geometry, exception)
+            else:
+                if profile:
+                    # Remember profile, but discard profile filename
+                    # (Important - can't re-install profile from same path
+                    # where it is installed!)
+                    profile.fileName = None
+                    self._profiles[geometry] = profile
+                    self._install_profile(display_no, self._srgb_profile)
+
+
+    def _install_profile(self, display_no, profile, wrapup=False):
+        # Has to be thread-safe!
+        dispwin = get_argyll_util("dispwin")
+        if not dispwin:
+            _show_result_after(Error(lang.getstr("argyll.util.not_found",
+                                                 "dispwin")))
+            return
+        if not profile.fileName or not os.path.isfile(profile.fileName):
+            temp = self._worker.create_tempdir()
+            if isinstance(temp, Exception):
+                _show_result_after(temp)
+                return
+            if profile.fileName:
+                basename = os.path.basename(profile.fileName)
+            else:
+                basename = profile.getDescription() + profile_ext
+            profile.fileName = os.path.join(temp, basename)
+            profile.write()
+        result = self._worker.exec_cmd(dispwin, ["-v", "-d%i" %
+                                                 (display_no + 1),
+                                                "-I", profile.fileName],
+                                       capture_output=True, dry_run=False)
+        if not result:
+            result = UnloggedError("".join(self._worker.errors))
+        if isinstance(result, Exception):
+            _show_result_after(result, wrap=120)
+        if wrapup:
+            self._worker.wrapup(False)  # Remove temporary profiles
+            ProfileManager.managers.remove(self)
+
+
+    def _install_profile_locked(self, display_no, profile, wrapup=False):
+        # Has to be thread-safe!
+        with self._lock:
+            self._install_profile(display_no, profile, wrapup)
+
+
+    def _stop_timer(self):
+        if (hasattr(self, "_update_timer") and
+            self._update_timer.IsRunning()):
+            self._update_timer.Stop()
+    
+    
+    def update(self):
+        """
+        Clear calibration on the current display, and restore it on
+        the previous one (if any)
+        
+        """
+        self.restore_display_profiles()
+        for display_no in xrange(wx.Display.GetCount()):
+            if wx.Display(display_no).Geometry != self._display.Geometry:
+                continue
+            threading.Thread(target=self._manage_display,
+                             args=(display_no, self._display.Geometry.Get())).start()
+            break
+
+
+    def restore_display_profiles(self, wrapup=False, wait=False):
+        """
+        Reinstall memorized display profiles, restore calibration
+        
+        """
+        while self._profiles:
+            geometry, profile = self._profiles.popitem()
+            for display_no in xrange(wx.Display.GetCount()):
+                if wx.Display(display_no).Geometry.Get() == geometry:
+                    thread = threading.Thread(target=self._install_profile_locked,
+                                              args=(display_no, profile, wrapup))
+                    thread.start()
+                    if wait:
+                        thread.join()
+                    break
+
+
+    def window_close_handler(self, event):
+        """
+        Restores profile(s) when the managed window is closed.
+        
+        """
+        self._stop_timer()
+        self.restore_display_profiles(True, True)
+        event.Skip()
+
+
+    def window_move_handler(self, event):
+        """
+        Clear calibration on the current display, and restore it on
+        the previous one (if any) when the window is moved from one to
+        another display.
+        
+        """
+        display = self._window.GetDisplay()
+        if not self._display or display.Geometry != self._display.Geometry:
+            self._display = display
+            self._stop_timer()
+            def update():
+                self._window and self.update()
+            self._update_timer = wx.CallLater(50, update)
+        event.Skip()
+
+
 class VisualWhitepointEditor(wx.Frame):
     """
     This is the VisualWhitepointEditor main class implementation.
@@ -1540,15 +1690,6 @@ class VisualWhitepointEditor(wx.Frame):
                           title=lang.getstr("whitepoint.visual_editor"),
                           pos=pos, style=wx.DEFAULT_FRAME_STYLE,
                           name="VisualWhitepointEditor")
-
-        self._display = None
-        self._profiles = {}
-        self._srgb_profile = ICCP.ICCProfile.from_named_rgb_space("sRGB")
-        self._srgb_profile.setDescription(appname + " Visual Whitepoint Editor "
-                                          "Temporary Profile")
-        self._srgb_profile.calculateID()
-        
-        self._worker = worker.Worker(self)
 
         self._mgr = AuiManager_LRDocking(self, aui.AUI_MGR_DEFAULT |
                                          aui.AUI_MGR_LIVE_RESIZE |
@@ -1670,7 +1811,6 @@ class VisualWhitepointEditor(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         self.Bind(wx.EVT_SHOW, self.show_handler)
         self.Bind(wx.EVT_MAXIMIZE, self.maximize_handler)
-        self.Bind(wx.EVT_MOVE, self.move_handler)
         self.Bind(wx.EVT_DISPLAY_CHANGED, self.display_changed_handler)
         self.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDown)
 
@@ -1732,8 +1872,8 @@ class VisualWhitepointEditor(wx.Frame):
 
         self.SetSaneGeometry(x, y, w, h)
 
-        if not self._display:
-            self.move_handler(None)
+
+        ProfileManager(self)
 
         wx.CallAfter(self.InitFrame)
 
@@ -1947,7 +2087,6 @@ class VisualWhitepointEditor(wx.Frame):
 
         if self.IsFullScreen():
             self.ShowFullScreen(False)
-        self._restore_display_profiles(True)
         event.Skip()
 
 
@@ -1956,90 +2095,6 @@ class VisualWhitepointEditor(wx.Frame):
         # no longer be correct. 
         msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
         wx.CallLater(1000, show_result_dialog, Warn(msg), self)
-
-
-    def move_handler(self, event):
-        # Remember the profile of the display we're on and reset calibration
-        display = self.GetDisplay()
-        if not self._display or display.Geometry != self._display.Geometry:
-            if (hasattr(self, "_clear_calibration_timer") and
-                self._clear_calibration_timer.IsRunning()):
-                self._clear_calibration_timer.Stop()
-            self._clear_calibration_timer = wx.CallLater(50,
-                                                         self._clear_calibration,
-                                                         display)
-    
-    
-    def _clear_calibration(self, display):
-        # Reset calibration on the display we're on
-        self._restore_display_profiles()
-        if not display.IsOk():
-            safe_print("WARNING - Display not OK")
-            return
-        self._display = display
-        for display_no in xrange(wx.Display.GetCount()):
-            if wx.Display(display_no).Geometry != display.Geometry:
-                continue
-            _wait_thread(self._set_profile, display_no, display.Geometry.Get())
-            break
-
-
-    def _set_profile(self, display_no, geometry):
-        # Has to be thread-safe!
-        try:
-            profile = ICCP.get_display_profile(display_no)
-        except (ICCP.ICCProfileInvalidError, IOError,
-                IndexError), exception:
-            safe_print("Could not get display profile for display %i" %
-                       (display_no + 1), "@ %i, %i, %ix%i:" %
-                       geometry, exception)
-        else:
-            if profile:
-                # Remember profile, but discard profile filename
-                # (Important - can't re-install profile from same path
-                # where it is installed!)
-                profile.fileName = None
-                self._profiles[geometry] = profile
-                self._install_profile(display_no, self._srgb_profile)
-
-
-    def _restore_display_profiles(self, wrapup=False):
-        # Reinstall memorized display profiles
-        while self._profiles:
-            geometry, profile = self._profiles.popitem()
-            for display_no in xrange(wx.Display.GetCount()):
-                if wx.Display(display_no).Geometry.Get() == geometry:
-                    _wait_thread(self._install_profile, display_no, profile)
-                    break
-        if wrapup:
-            self._worker.wrapup(False)  # Remove temporary profiles
-
-
-    def _install_profile(self, display_no, profile):
-        # Has to be thread-safe!
-        dispwin = get_argyll_util("dispwin")
-        if not dispwin:
-            _show_result_after(Error(lang.getstr("argyll.util.not_found",
-                                                 "dispwin")))
-            return
-        if not profile.fileName or not os.path.isfile(profile.fileName):
-            temp = self._worker.create_tempdir()
-            if isinstance(temp, Exception):
-                _show_result_after(temp)
-                return
-            if profile.fileName:
-                basename = os.path.basename(profile.fileName)
-            else:
-                basename = profile.getDescription() + profile_ext
-            profile.fileName = os.path.join(temp, basename)
-            profile.write()
-        result = self._worker.exec_cmd(dispwin, ["-v", "-d%i" % (display_no + 1),
-                                                "-I", profile.fileName],
-                                       capture_output=True, dry_run=False)
-        if not result:
-            result = UnloggedError("".join(self._worker.errors))
-        if isinstance(result, Exception):
-            _show_result_after(result, wrap=120)
     
     
     def OnKeyDown(self, event):
