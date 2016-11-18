@@ -31,12 +31,15 @@ from util_list import intlist
 from util_str import wrap
 from worker import (Error, UnloggedError, Warn, Worker, get_argyll_util,
                     show_result_dialog)
-from wxMeasureFrame import get_default_size
 from wxfixes import (wx_Panel, GenBitmapButton as BitmapButton,
                      get_bitmap_disabled, get_bitmap_hover, get_bitmap_pressed)
 from wxwindows import FlatShadedButton, HStretchStaticBitmap, TaskBarNotification
 import localization as lang
 import ICCProfile as ICCP
+try:
+    import RealDisplaySizeMM as RDSMM
+except ImportError:
+    RDSMM = None
 
 
 # Use non-native mini frames on all platforms
@@ -1366,6 +1369,25 @@ class HSlider(BaseLineCtrl):
         return locals()
 
 
+    def GetMax(self):
+        return self.maxval
+
+
+    def SetMax(self, maxval):
+        self.maxval = maxval
+        self.Refresh()
+
+    @Property
+    def Max():
+        def fget(self):
+            return self.GetMax()
+
+        def fset(self, value):
+            self.SetMax(value)
+
+        return locals()
+
+
     def focus_handler(self, event):
         self._hasfocus = event.GetEventType() == wx.EVT_SET_FOCUS.evtType[0]
 
@@ -1768,10 +1790,17 @@ class VisualWhitepointEditor(wx.Frame):
                                           label=lang.getstr("reset"),
                                           fgcolour="#999999")
         x, y, scale = (float(v) for v in getcfg("dimensions.measureframe.whitepoint.visual_editor").split(","))
+        
         self.area_size_slider = HSlider(self.mainPanel,
-                                        min(scale * 100, 1500), 50, 1500,
+                                        min(scale * 100, 1000), 50, 1000,
                                         self.area_handler)
+
+        self.display_size_mm = {}
+        self.set_area_size_slider_max()
+        self.set_default_size()
+
         self.area_size_slider.BackgroundColour = self.mainPanel.BackgroundColour
+
         if "gtk3" in wx.PlatformInfo:
             size = (16, 16)
         else:
@@ -1808,8 +1837,6 @@ class VisualWhitepointEditor(wx.Frame):
                                             name="visual_whitepoint_editor_measure_btn",
                                             fgcolour="#999999")
         self.measure_btn.SetDefault()
-
-        self.default_size = get_default_size()
         
         self.Bind(wx.EVT_SIZE, self.size_handler)
         
@@ -1888,7 +1915,8 @@ class VisualWhitepointEditor(wx.Frame):
         self.SetSaneGeometry(x, y, w, h)
 
 
-        ProfileManager(self)
+        self._pm = ProfileManager(self)
+        self.Bind(wx.EVT_MOVE, self.move_handler)
 
         wx.CallAfter(self.InitFrame)
 
@@ -2340,6 +2368,15 @@ class VisualWhitepointEditor(wx.Frame):
             wx.CallAfter(self.notify, lang.getstr("fullscreen.message"))
 
 
+    def move_handler(self, event):
+        event.Skip()
+        display = self.GetDisplay()
+        if not self._pm._display or display.Geometry != self._pm._display.Geometry:
+            self.set_area_size_slider_max()
+            self.set_default_size()
+            self.area_handler()
+
+
     def measure(self, event):
         if (not self.Parent or
             not hasattr(self.Parent, "ambient_measure_handler") or
@@ -2399,6 +2436,32 @@ class VisualWhitepointEditor(wx.Frame):
         self._colour.ToHSV()
         self._bgcolour.v = defaults["whitepoint.visual_editor.bg_v"]
         self.DrawAll()
+
+
+    def set_area_size_slider_max(self):
+        # Set max value according to display size
+        maxv = 1000
+        if RDSMM:
+            geometry = self.GetDisplay().Geometry.Get()
+            display_no = get_argyll_display_number(geometry)
+            if display_no is not None:
+                size_mm = RDSMM.RealDisplaySizeMM(display_no)
+                self.display_size_mm[geometry] = [float(v) for v in size_mm]
+                maxv = int(round(max(size_mm) / 100.0 * 100))
+        if maxv > 100:
+            self.area_size_slider.SetMax(maxv)
+            if self.area_size_slider.GetValue() > self.area_size_slider.GetMax():
+                self.area_size_slider.SetValue(maxv)
+
+
+    def set_default_size(self):
+        geometry = self.GetDisplay().Geometry.Get()
+        size_mm = self.display_size_mm.get(geometry)
+        if size_mm:
+            px_per_mm = max(geometry[2] / size_mm[0], geometry[3] / size_mm[1])
+            self.default_size = px_per_mm * 100
+        else:
+            self.default_size = 300
 
 
     def setcfg(self):
