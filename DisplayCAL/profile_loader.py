@@ -1553,6 +1553,7 @@ class ProfileLoader(object):
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
+			profile_associations_changed = 0
 			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 				if device0:
 					devicekey = device0.DeviceKey
@@ -1630,6 +1631,7 @@ class ProfileLoader(object):
 					self.profiles[key] = None
 					self.ramps[key] = (None, None, None)
 					profile_association_changed = True
+					profile_associations_changed += 1
 					if not first_run and self._is_displaycal_running():
 						# Normally calibration loading is disabled while
 						# DisplayCAL is running. Override this when the
@@ -1849,6 +1851,13 @@ class ProfileLoader(object):
 										 self.taskbar_icon.set_visual_state())
 			self.__apply_profiles = apply_profiles
 			first_run = False
+			if profile_associations_changed and not self._has_display_changed:
+				if getattr(self, "profile_associations_dlg", None):
+					wx.CallAfter(lambda: self.profile_associations_dlg and
+										 self.profile_associations_dlg.update_profiles())
+				if getattr(self, "fix_profile_associations_dlg", None):
+					wx.CallAfter(lambda: self.fix_profile_associations_dlg and
+										 self.fix_profile_associations_dlg.update())
 			if result:
 				self._has_display_changed = False
 			self._manual_restore = False
