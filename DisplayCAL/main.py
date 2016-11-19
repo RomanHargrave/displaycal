@@ -139,8 +139,13 @@ def main(module=None):
 								if incoming.rstrip("\4") != pyname:
 									incoming = None
 						if incoming:
-							# Send module/appname and args as UTF-8
-							data = [module or appname]
+							# Send args as UTF-8
+							if module == "apply-profiles":
+								# Always try to close currently running instance
+								data = ["close"]
+							else:
+								# Send module/appname to notify running app
+								data = [module or appname]
 							if module != "3DLUT-maker":
 								for arg in sys.argv[1:]:
 									data.append(safe_str(safe_unicode(arg),
@@ -151,6 +156,15 @@ def main(module=None):
 						appsocket.close()
 						if incoming and incoming.rstrip("\4") == "ok":
 							# Successfully sent our request
+							break
+						elif incoming == "" and module == "apply-profiles":
+							# Successfully sent our close request.
+							# Wait for lockfile to be removed, in which case
+							# we know the running instance has successfully
+							# closed.
+							while os.path.isfile(lockfilename):
+								sleep(.05)
+							incoming = None
 							break
 			if incoming is not None:
 				# Other instance running?
@@ -384,13 +398,16 @@ class AppSocket(object):
 		incoming = ""
 		while not "\4" in incoming:
 			try:
-				incoming += self.socket.recv(1024)
+				data = self.socket.recv(1024)
 			except socket.error, exception:
 				if exception.errno == errno.EWOULDBLOCK:
 					sleep(.05)
 					continue
 				safe_print("Warning - could not receive data:", exception)
 				break
+			if not data:
+				break
+			incoming += data
 		return incoming
 
 	def send(self, data):
