@@ -454,6 +454,7 @@ if sys.platform == "win32":
 			self.monitors = []
 			self.pl = pl
 			self.profile_info = {}
+			self.profiles = []
 			self.current_user = False
 			self.display_identification_frames = {}
 			InfoDialog.__init__(self, None,
@@ -541,10 +542,18 @@ if sys.platform == "win32":
 			dlg.fix_profile_associations_cb.Bind(wx.EVT_CHECKBOX,
 												 self.toggle_fix_profile_associations)
 			dlg.sizer3.Add(dlg.fix_profile_associations_cb, flag=wx.ALIGN_LEFT)
+			dlg.disable_btns()
 			dlg.update()
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
+			dlg.update_profiles_timer = wx.Timer(dlg)
+			dlg.Bind(wx.EVT_TIMER, dlg.update_profiles, dlg.update_profiles_timer)
+			dlg.update_profiles_timer.Start(1000)
+
+		def OnClose(self, event):
+			self.update_profiles_timer.Stop()
+			InfoDialog.OnClose(self, event)
 
 		def add_profile(self, event):
 			dlg = ConfirmDialog(self,
@@ -677,6 +686,12 @@ if sys.platform == "win32":
 			# Closes the window
 			event.Skip()
 
+		def disable_btns(self):
+			self.add_btn.Disable()
+			self.remove_btn.Disable()
+			self.profile_info_btn.Disable()
+			self.set_as_default_btn.Disable()
+
 		def remove_profile(self, event):
 			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 													wx.LIST_STATE_SELECTED)
@@ -706,33 +721,32 @@ if sys.platform == "win32":
 			device = get_active_display_device(moninfo["Device"])
 			if device0 and device:
 				device0key = device0.DeviceKey
-				with self.pl.lock:
-					if (fn is enable_per_user_profiles and
-						not per_user_profiles_isenabled(devicekey=device0key)):
-						# We need to re-associate per-user profiles to the
-						# display, otherwise the associations will be lost
-						# after enabling per-user if a system default profile
-						# was set
-						monkey = device0key.split("\\")[-2:]
-						profiles = ICCP._winreg_get_display_profiles(monkey,
-																	 True)
-					else:
-						profiles = []
-					fn(arg0,  devicekey=device0key)
-					if device.DeviceKey != device0key:
-						fn(arg0,  devicekey=device.DeviceKey)
-					for profile_name in profiles:
-						ICCP.set_display_profile(profile_name,
-												 devicekey=device0key)
-					self.update_profiles(monitor=self.monitors[dindex])
-					self.pl._next = True
+				if (fn is enable_per_user_profiles and
+					not per_user_profiles_isenabled(devicekey=device0key)):
+					# We need to re-associate per-user profiles to the
+					# display, otherwise the associations will be lost
+					# after enabling per-user if a system default profile
+					# was set
+					monkey = device0key.split("\\")[-2:]
+					profiles = ICCP._winreg_get_display_profiles(monkey,
+																 True)
+				else:
+					profiles = []
+				fn(arg0,  devicekey=device0key)
+				if device.DeviceKey != device0key:
+					fn(arg0,  devicekey=device.DeviceKey)
+				for profile_name in profiles:
+					ICCP.set_display_profile(profile_name,
+											 devicekey=device0key)
+				self.update_profiles(True, monitor=self.monitors[dindex],
+									 next=True)
 			else:
 				wx.Bell()
 
 		def toggle_fix_profile_associations(self, event):
 			self.fix_profile_associations_cb.Value = self.pl._toggle_fix_profile_associations(event, self)
 			if self.fix_profile_associations_cb.Value == event.IsChecked():
-				self.update_profiles()
+				self.update_profiles(True)
 
 		def update(self, event=None):
 			self.monitors = list(self.pl.monitors)
@@ -741,42 +755,54 @@ if sys.platform == "win32":
 				self.display_ctrl.SetSelection(0)
 			fix = self.pl._can_fix_profile_associations()
 			self.fix_profile_associations_cb.Enable(fix)
-			self.update_profiles()
+			self.update_profiles(event)
 			if event and not self.IsActive():
 				self.RequestUserAttention()
 
-		def update_profiles(self, event=None, monitor=None):
-			self.profiles_ctrl.DeleteAllItems()
-			self.add_btn.Disable()
-			self.remove_btn.Disable()
-			self.profile_info_btn.Disable()
-			self.set_as_default_btn.Disable()
+		def update_profiles(self, event=None, monitor=None, next=False):
 			if not monitor:
 				dindex = self.display_ctrl.GetSelection()
-				if dindex > -1:
+				if dindex > -1 and dindex < len(self.monitors):
 					monitor = self.monitors[dindex]
 				else:
-					wx.Bell()
+					if event and not isinstance(event, wx.TimerEvent):
+						wx.Bell()
 					return
 			display, edid, moninfo, device0 = monitor
 			device = device0
 			if not device:
-				wx.Bell()
+				if event and not isinstance(event, wx.TimerEvent):
+					wx.Bell()
 				return
 			monkey = device.DeviceKey.split("\\")[-2:]
-			self.current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
-			if sys.getwindowsversion() >= (6, ):
-				self.use_my_settings_cb.SetValue(self.current_user)
-			self.profiles = ICCP._winreg_get_display_profiles(monkey, self.current_user)
-			self.profiles.reverse()
-			for i, profile in enumerate(self.profiles):
-				pindex = self.profiles_ctrl.InsertStringItem(i, "")
-				description = profile
-				if not i:
-					# First profile is always default
-					description += " (%s)" % lang.getstr("default")
-				self.profiles_ctrl.SetStringItem(pindex, 0, description)
-			self.add_btn.Enable(self.current_user)
+			current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
+			scope_changed = (sys.getwindowsversion() >= (6, ) and
+							 current_user != self.current_user)
+			if scope_changed:
+				self.current_user = current_user
+				self.use_my_settings_cb.SetValue(current_user)
+			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
+			profiles.reverse()
+			profiles_changed = profiles != self.profiles
+			if profiles_changed:
+				self.profiles = profiles
+				self.disable_btns()
+				self.profiles_ctrl.DeleteAllItems()
+				for i, profile in enumerate(self.profiles):
+					pindex = self.profiles_ctrl.InsertStringItem(i, "")
+					description = profile
+					if not i:
+						# First profile is always default
+						description += " (%s)" % lang.getstr("default")
+					self.profiles_ctrl.SetStringItem(pindex, 0, description)
+				self.add_btn.Enable(current_user)
+			if scope_changed or profiles_changed:
+				if next or isinstance(event, wx.TimerEvent):
+					wx.CallAfter(self._next)
+
+		def _next(self):
+			with self.pl.lock:
+				self.pl._next = True
 
 		def use_my_settings(self, event):
 			self._update_configuration(enable_per_user_profiles,
