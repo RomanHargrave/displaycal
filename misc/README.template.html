@@ -423,6 +423,11 @@
 								<a href="${URL}download/SLE_12_SP1/x86_64/${APPNAME}.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>SLE 12 SP2</span>
+								<span>
+								<a href="${URL}download/SLE_12_SP2/x86_64/${APPNAME}.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>Ubuntu 12.04 (Precise)</span>
 								<span><a href="${URL}download/xUbuntu_12.04/i386/${APPNAME}.deb">x86</a> | 
 								<a href="${URL}download/xUbuntu_12.04/amd64/${APPNAME}.deb">x86_64</a></span>
@@ -1241,7 +1246,10 @@ Enter the IP address in the window that opens (port should already be filled) an
 
 							<p>If you want to find out the current uncalibrated whitepoint of your display, you can run “Report on uncalibrated display device” from the “Tools” menu to measure it.</p>
 
-							<p>If you want to adjust the whitepoint to the chromaticities of your ambient lighting, or those of a viewing booth as used in prepress and photography, and your measurement device has ambient measuring capability (e.g. like the i1 Pro or i1 Display with their respective ambient measurement heads), you can use the “Measure” button next to the whitepoint settings. If you want to measure ambient lighting, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation.</p>
+							<p>If you want to adjust the whitepoint to the chromaticities of your ambient lighting, or those of a viewing booth as used in prepress and photography, and your measurement device has ambient measuring capability (e.g. like the i1 Pro or i1 Display with their respective ambient measurement heads), you can use the “Measure ambient” button next to the whitepoint settings. If you want to measure ambient lighting, place the instrument upwards, beside the display. Or if you want to measure a viewing booth, put a metamerism-free gray card inside the booth and point the instrument towards it. Further instructions how to measure ambient may be available in your instrument's documentation.</p>
+
+							<h4>Visual whitepoint editor</h4>
+							<p>The visual whitepoint editor allows visually adjusting the whitepoint on display devices that lack hardware controls as well as match several displays to one another (or a reference). To use it, set the whitepoint to “Chromaticity” and click the visual whitepoint editor button (you can open as many visual whitepoint editors simultaneously as you like, so that e.g. one can be left unchanged as reference, while the other can be adjusted to match said reference). The editor window can be put into a distraction-free fullscreen mode by maximizing it (press ESC to leave fullscreen again). Adjust the whitepoint using the controls on the editor tool pane until you have achieved a visual match. Then, place your instrument on the measurement area and click “Measure”. The measured whitepoint will be set as calibration target.</p>
 						</dd>
 
 					<dt id="settings_calibration_white_level">White level</dt>
@@ -2513,13 +2521,13 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<!--li><strong>Calibration whitepoint editor.</strong> This allows manually adjusting the whitepoint on display devices that lack hardware controls as well as match several whitepoints to one another (or a reference).</li-->
+							<li><strong>Visual whitepoint editor.</strong> This allows visually adjusting the whitepoint on display devices that lack hardware controls as well as match several displays to one another (or a reference). To use it, set the whitepoint to “Chromaticity” on the “Calibration” tab and click the visual whitepoint editor button (you can open as many visual whitepoint editors simultaneously as you like, so that e.g. one can be left unchanged as reference, while the other can be adjusted to match said reference). The editor window can be put into a distraction-free fullscreen mode by maximizing it (press ESC to leave fullscreen again). Adjust the whitepoint using the controls on the editor tool pane until you have achieved a visual match. Then, place your instrument on the measurement area and click “Measure”. The measured whitepoint will be set as calibration target.</li>
 							<li>Another “Auto” testchart slider step with 154 patches (equal to small testchart for LUT profiles) for XYZ LUT + matrix profile type.</li>
 						</ul>
 
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li>UI: Menu overhaul. Menus are now better organized using categorized sub-menus and some menu items have been moved to more appropriate locations:
+							<li><strong>Menu overhaul.</strong> Menus are now better organized using categorized sub-menus and some menu items have been moved to more appropriate locations:
 								<ul>
 									<li>The “Options” menu no longer contains any functionality besides actual options. Advanced options have been moved to a sub-menu.</li>
 									<li>Profile creation from existing measurement files or EDID, profile installation as well as profile upload (sharing) functionality can now be found in the “File” menu.</li>
@@ -2527,11 +2535,14 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 									<li>Measuring the selected testchart, enhancing the effective resolution of a colorimetric PCS-to-device table, loading calibration and resetting the video card gamma tables, detecting displays &amp; instruments, as well as user-initiated spectrometer self-calibration functionality has been moved to the “Tools” menu and respective sub-menus where applicable.</li>
 								</ul>
 							</li>
-							<li>Changed default curves + matrix profile testchart as well as first “Auto” testchart slider step back to pre-3.1.7 “hybrid” chart with 73 patches.</li>
-							<li>The matrix and shaper curves of gamma + matrix, curves + matrix as well as XYZ LUT + matrix profiles are now generated in separate steps which improves the shape and grayscale neutrality of the curves as well as the accuracy of the matrix. XYZ LUT + matrix profiles should now compute faster and take around the same time as XYZ LUT + swapped matrix profiles, meaning a typical overall computation speed increase of around +33% (+100% if just looking at the time needed when not creating PCS-to-device tables) for a profile computed from 1148 patches. XYZ LUT + matrix profiles computed from more patches should see a larger computation speed increase of up to +100% depending on patch count.</li>
-							<li>Profile loader (Windows): Detect and work-around buggy Intel video drivers which, despite reverting to linear gamma tables at certain points (e.g. UAC prompts), will effectively ignore attempts to restore the gamma table calibration if it is considered to be already loaded by the driver.</li>
-							<li>Profile loader (Windows): Replaced “Open Windows color management settings...” pop-up menu item with own “Profile associations...” implementation which should work properly with multi-display configurations (in contrast to its awkward Windows built-in counterpart), i.e. it lists display devices under their EDID name (if available) as well as their viewport position and size on the virtual desktop and not only their often meaningless generic driver name like “PnP-Monitor”. Also, it won't list multiple entries for the same display device or show the ambiguous “1|2” identification if there is a display connected that is currently not part of the desktop due to being disabled in Windows display settings. Changing profile associations around is of course still using Windows color management functionality, but the custom UI will look and act more sane than what Windows color management settings has to offer.</li>
+							<li>Changed default curves + matrix profile testchart as well as first “Auto” testchart slider step back to pre-3.1.7 chart with 73 patches.</li>
+							<li><strong>Better curves + matrix profiles as well as faster computation of XYZ LUT + matrix profiles.</strong> The matrix and shaper curves of gamma + matrix, curves + matrix as well as XYZ LUT + matrix profiles are now generated in separate steps which improves the shape and grayscale neutrality of the curves on less well-behaved displays. XYZ LUT + matrix profiles will compute faster, because the curves and matrix are created from a sub-set of the profiling patches, and take around the same time as XYZ LUT + swapped matrix profiles, resulting in a typical overall computation speed increase of around +33% (+100% if just looking at the time needed when not creating PCS-to-device tables) for a XYZ LUT + matrix profile computed from 1148 patches. XYZ LUT + matrix profiles computed from more patches should see a larger computation speed increase of up to +100% depending on patch count.</li>
 							<li>Resolve pattern generator and non-native madVR network implementation: Determine the computer's local network IP address in a way that is hopefully more reliable across platforms.</li>
+							<li>Profile loader (Windows): Detect and work-around buggy Intel video drivers which, despite reverting to linear gamma tables at certain points (e.g. UAC prompts), will effectively ignore attempts to restore the gamma table calibration if it is considered to be already loaded by the driver.</li>
+							<li><strong>Profile loader (Windows): Replaced “Open Windows color management settings...” pop-up menu item with own “Profile associations...” implementation.</strong> This should work better with multi-display configurations in contrast to Windows' braindead built-in counterpart, i.e. display devices will be listed under their EDID name (if available) as well as their viewport position and size on the virtual desktop and not only their often meaningless generic driver name like “PnP-Monitor”. Also, there won't be multiple entries for the same display device or ambiguous “1|2” identifications if there are display devices that are currently not part of the desktop due to being disabled in Windows display settings. Changing profile associations around is of course still using Windows color management functionality, but the custom UI will look and act more sane than what Windows color management settings has to offer.</li>
+							<li>Profile loader (Windows): Clicking the task bar tray icon will now always show up-to-date (at the time of clicking) information in the notification popup even if the profile loader is disabled.</li>
+							<li>Profile loader (Windows): Starting a new instance of the profile loader will now always attempt to close an already running instance instead of just notifying it, allowing for easy re-starting.</li>
+							<li>Windows (Vista and later): Installing a profile as system default will now automatically turn off “Use my settings for this device” for the current user, so that if the system default profile is changed by another user, the change is propagated to all users that have opted to use the system default profile (which is the whole point of installing a profile as system default).</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
@@ -2553,8 +2564,10 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 							<li>0install (Linux): <code>(un)install-standalone-tools-icons</code> command was broken with 3.1 release.</li>
 							<li>Profile loader (Linux): Unhandled exception if oyranos-monitor is present (regression of late initialization change made in 3.1.7).</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.1.7.2">2016-10-21 12:26 (UTC) 3.1.7.2 </p>
+				<dt id="changelog-3.1.7.2">2016-10-21 12:26 (UTC) 3.1.7.2 </dt>
+					<dd>
 						<h3>3.1.7.2 </h3>
 
 						<h4>Changed in this release:</h4>
@@ -2567,16 +2580,20 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 						<ul>
 							<li>Profile loader (Windows): User-defined exceptions could be lost if exiting the profile loader followed by (re-)loading settings or restoring defaults in DisplayCAL.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.1.7.1">2016-10-18 10:00 (UTC) 3.1.7.1 </p>
+				<dt id="changelog-3.1.7.1">2016-10-18 10:00 (UTC) 3.1.7.1 </dt>
+					<dd>
 						<h3>3.1.7.1 </h3>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>Profile loader (Windows): Setting calibration state to reset video card gamma tables overwrote cached gamma ramps for the 2nd display in a multi-display configuration.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </p>
+				<dt id="changelog-3.1.7">2016-10-04 20:49 (UTC) 3.1.7 </dt>
+					<dd>
 						<h3>3.1.7 </h3>
 
 						<h4>Added in this release:</h4>
