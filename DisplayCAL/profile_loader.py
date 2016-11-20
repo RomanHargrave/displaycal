@@ -525,8 +525,11 @@ if sys.platform == "win32":
 			list_ctrl.InsertColumn(0, lang.getstr("profile"))
 			list_ctrl.SetColumnWidth(0, int(620 * scale))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
-						   lambda e: (dlg.remove_btn.Enable(self.current_user),
-									  dlg.set_as_default_btn.Enable(e.GetIndex() != 0),
+						   lambda e: (dlg.remove_btn.Enable(self.current_user or
+															is_superuser()),
+									  dlg.set_as_default_btn.Enable((self.current_user or
+																	 is_superuser()) and
+																	e.GetIndex() > 0),
 									  dlg.profile_info_btn.Enable()))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
 						   lambda e: (dlg.remove_btn.Disable(),
@@ -776,6 +779,7 @@ if sys.platform == "win32":
 				return
 			monkey = device.DeviceKey.split("\\")[-2:]
 			current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
+			self.add_btn.Enable(current_user)
 			scope_changed = (sys.getwindowsversion() >= (6, ) and
 							 current_user != self.current_user)
 			if scope_changed:
@@ -795,7 +799,6 @@ if sys.platform == "win32":
 						# First profile is always default
 						description += " (%s)" % lang.getstr("default")
 					self.profiles_ctrl.SetStringItem(pindex, 0, description)
-				self.add_btn.Enable(current_user)
 			if scope_changed or profiles_changed:
 				if next or isinstance(event, wx.TimerEvent):
 					wx.CallAfter(self._next)
