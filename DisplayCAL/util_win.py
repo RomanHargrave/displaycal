@@ -173,6 +173,17 @@ def get_display_devices(devicename):
 	return devices
 
 
+def get_first_display_device(devicename):
+	"""
+	Get the first display of device <devicename>.
+	
+	"""
+	try:
+		return win32api.EnumDisplayDevices(devicename, 0)
+	except pywintypes.error:
+		pass
+	
+
 def get_active_display_device(devicename, devices=None):
 	"""
 	Get active display device of an output (there can only be one per output)
@@ -201,10 +212,7 @@ def get_display_device(display_no=0, use_active_display_device=False):
 	if use_active_display_device:
 		return get_active_display_device(moninfo["Device"])
 	else:
-		try:
-			return win32api.EnumDisplayDevices(moninfo["Device"], 0)
-		except pywintypes.error:
-			pass
+		return get_first_display_device(moninfo["Device"])
 
 
 def get_process_filename(pid):

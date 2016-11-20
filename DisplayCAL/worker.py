@@ -6092,8 +6092,21 @@ usage: spotread [-options] [logfile]
 		if argyll_install and sys.platform == "win32":
 			# Assign profile to active display
 			display_no = min(len(self.displays), getcfg("display.number")) - 1
-			ICCP.set_display_profile(os.path.basename(profile_path), display_no,
-									 use_active_display_device=True)
+			monitors = util_win.get_real_display_devices_info()
+			moninfo = monitors[display_no]
+			displays = util_win.get_display_devices(moninfo["Device"])
+			active_display = util_win.get_active_display_device(None, displays)
+			if active_display.DeviceKey != displays[0].DeviceKey:
+				self.log(appname + ": Setting profile for active display device...")
+				try:
+					ICCP.set_display_profile(os.path.basename(profile_path),
+											 devicekey=active_display.DeviceKey)
+				except Exception, exception:
+					# Not a critical error. Only log the exception.
+					self.log(appname + ": Warning - could not set profile for "
+							 "active display device:", exception)
+				else:
+					self.log(appname + ": ...ok")
 		loader_install = None
 		profile = None
 		try:
