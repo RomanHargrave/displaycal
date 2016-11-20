@@ -2446,8 +2446,9 @@ class VisualWhitepointEditor(wx.Frame):
             display_no = get_argyll_display_number(geometry)
             if display_no is not None:
                 size_mm = RDSMM.RealDisplaySizeMM(display_no)
-                self.display_size_mm[geometry] = [float(v) for v in size_mm]
-                maxv = int(round(max(size_mm) / 100.0 * 100))
+                if not 0 in size_mm:
+                    self.display_size_mm[geometry] = [float(v) for v in size_mm]
+                    maxv = int(round(max(size_mm) / 100.0 * 100))
         if maxv > 100:
             self.area_size_slider.SetMax(maxv)
             if self.area_size_slider.GetValue() > self.area_size_slider.GetMax():
