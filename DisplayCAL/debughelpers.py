@@ -55,9 +55,9 @@ def handle_error(error, parent=None, silent=False):
 		 not getattr(error, "filename", None))):
 		# Print a traceback if in debug mode, for non environment errors, and
 		# for environment errors not related to files
-		safe_print(tbstr)
+		safe_print(safe_unicode(tbstr))
 	else:
-		safe_print(error)
+		safe_print(safe_unicode(error))
 	if not silent:
 		try:
 			from wxaddons import wx
