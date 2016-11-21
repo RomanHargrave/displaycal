@@ -780,7 +780,6 @@ if sys.platform == "win32":
 				return
 			monkey = device.DeviceKey.split("\\")[-2:]
 			current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
-			self.add_btn.Enable(current_user)
 			scope_changed = (sys.getwindowsversion() >= (6, ) and
 							 current_user != self.current_user)
 			if scope_changed:
@@ -789,6 +788,7 @@ if sys.platform == "win32":
 			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
 			profiles.reverse()
 			profiles_changed = profiles != self.profiles
+			self.Freeze()
 			if profiles_changed:
 				self.profiles = profiles
 				self.disable_btns()
@@ -800,6 +800,8 @@ if sys.platform == "win32":
 						# First profile is always default
 						description += " (%s)" % lang.getstr("default")
 					self.profiles_ctrl.SetStringItem(pindex, 0, description)
+			self.add_btn.Enable(current_user or is_superuser())
+			self.Thaw()
 			if scope_changed or profiles_changed:
 				if next or isinstance(event, wx.TimerEvent):
 					wx.CallAfter(self._next)
