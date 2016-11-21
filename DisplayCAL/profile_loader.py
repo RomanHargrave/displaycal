@@ -685,7 +685,8 @@ if sys.platform == "win32":
 	
 		def close_profile_info(self, event):
 			# Remove the frame from the hash table
-			self.profile_info.pop(event.GetEventObject().profileID)
+			if self:
+				self.profile_info.pop(event.GetEventObject().profileID)
 			# Closes the window
 			event.Skip()
 
