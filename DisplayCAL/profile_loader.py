@@ -759,7 +759,13 @@ if sys.platform == "win32":
 					profiles = []
 				fn(arg0,  devicekey=device0key)
 				if device.DeviceKey != device0key:
-					fn(arg0,  devicekey=device.DeviceKey)
+					try:
+						fn(arg0,  devicekey=device.DeviceKey)
+					except WindowsError, exception:
+						safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
+															  arg0,
+															  device.DeviceKey),
+								   exception)
 				for profile_name in profiles:
 					ICCP.set_display_profile(profile_name,
 											 devicekey=device0key)
