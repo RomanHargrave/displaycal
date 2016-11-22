@@ -507,6 +507,7 @@
 	"file.missing": "檔案“%s”並不存在",
 	"file.notfile": "“%s”並不是一個檔案。",
 	"file.select": "選擇檔案",
+		"*filename": "File name",
 	"filename.upload": "上載檔案名稱",
 	"filetype.7z": "7-Zip檔案",
 	"filetype.any": "所有檔案類型",

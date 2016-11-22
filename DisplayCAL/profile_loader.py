@@ -21,6 +21,7 @@ if sys.platform == "win32":
 	import ctypes
 	import glob
 	import math
+	import re
 	import struct
 	import subprocess as sp
 	import traceback
@@ -39,7 +40,7 @@ if sys.platform == "win32":
 	from edid import get_edid
 	from ordereddict import OrderedDict
 	from util_os import getenvu, is_superuser
-	from util_str import safe_unicode
+	from util_str import safe_asciize, safe_unicode
 	from util_win import (MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
 						  enable_per_user_profiles,
@@ -163,10 +164,11 @@ if sys.platform == "win32":
 			list_ctrl.MinSize = size
 			list_ctrl.DeleteAllItems()
 			for i, (display_edid,
-					profile) in enumerate(self.pl.devices2profiles.itervalues()):
+					profile,
+					desc) in enumerate(self.pl.devices2profiles.itervalues()):
 				index = list_ctrl.InsertStringItem(i, "")
 				list_ctrl.SetStringItem(index, 0, display_edid[0])
-				list_ctrl.SetStringItem(index, 1, profile)
+				list_ctrl.SetStringItem(index, 1, desc)
 				try:
 					profile = ICCP.ICCProfile(profile)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
@@ -522,8 +524,10 @@ if sys.platform == "win32":
 										  wx.BORDER_THEME,
 									name="displays2profiles")
 			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
-			list_ctrl.InsertColumn(0, lang.getstr("profile"))
-			list_ctrl.SetColumnWidth(0, int(620 * scale))
+			list_ctrl.InsertColumn(0, lang.getstr("description"))
+			list_ctrl.InsertColumn(1, lang.getstr("filename"))
+			list_ctrl.SetColumnWidth(0, int(430 * scale))
+			list_ctrl.SetColumnWidth(1, int(210 * scale))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
 						   lambda e: (dlg.remove_btn.Enable(self.current_user or
 															is_superuser()),
@@ -583,8 +587,10 @@ if sys.platform == "win32":
 										  wx.BORDER_THEME,
 									name="displays2profiles")
 			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
-			list_ctrl.InsertColumn(0, lang.getstr("profile"))
-			list_ctrl.SetColumnWidth(0, int(620 * scale))
+			list_ctrl.InsertColumn(0, lang.getstr("description"))
+			list_ctrl.InsertColumn(1, lang.getstr("filename"))
+			list_ctrl.SetColumnWidth(0, int(430 * scale))
+			list_ctrl.SetColumnWidth(1, int(210 * scale))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
 						   lambda e: dlg.ok.Enable())
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
@@ -592,16 +598,31 @@ if sys.platform == "win32":
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED,
 						   lambda e: dlg.EndModal(wx.ID_OK))
 			profiles = []
+			alphanumeric = re.compile("\D+|\d+(?:\.\d+)?")
+			numeric = re.compile("^\d+(?:\.\d+)?$")
 			for pth in glob.glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
 				try:
-					profile = ICCP.ICCProfile(pth, False)
-				except (IOError, ICCP.ICCProfileInvalidError, exception):
-					continue
+					profile = ICCP.ICCProfile(pth)
+				except ICCP.ICCProfileInvalidError, exception:
+					safe_print("%s:" % pth, exception)
+				except IOError, exception:
+					safe_print(exception)
 				if profile.profileClass == "mntr":
-					profiles.append(os.path.basename(pth))
-			for i, profile in enumerate(profiles):
+					desc = profile.getDescription()
+					match = alphanumeric.findall(desc)
+					sortkey = []
+					for part in match:
+						if numeric.match(part):
+							sortkey.append((float(part), part))
+						else:
+							sortkey.append((part, None))
+					profiles.append((sortkey,
+									 profile.getDescription(),
+									 os.path.basename(pth)))
+			for i, (sortkey, desc, profile) in enumerate(sorted(profiles)):
 				pindex = list_ctrl.InsertStringItem(i, "")
-				list_ctrl.SetStringItem(pindex, 0, profile)
+				list_ctrl.SetStringItem(pindex, 0, desc)
+				list_ctrl.SetStringItem(pindex, 1, profile)
 			dlg.profiles_ctrl = list_ctrl
 			dlg.sizer3.Add(list_panel, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 			dlg.sizer0.SetSizeHints(dlg)
@@ -788,20 +809,21 @@ if sys.platform == "win32":
 			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
 			profiles.reverse()
 			profiles_changed = profiles != self.profiles
-			self.Freeze()
 			if profiles_changed:
+				self.profiles_ctrl.Freeze()
 				self.profiles = profiles
 				self.disable_btns()
 				self.profiles_ctrl.DeleteAllItems()
 				for i, profile in enumerate(self.profiles):
 					pindex = self.profiles_ctrl.InsertStringItem(i, "")
-					description = profile
+					description = get_profile_desc(profile, False)
 					if not i:
 						# First profile is always default
 						description += " (%s)" % lang.getstr("default")
 					self.profiles_ctrl.SetStringItem(pindex, 0, description)
+					self.profiles_ctrl.SetStringItem(pindex, 1, profile)
+				self.profiles_ctrl.Thaw()
 			self.add_btn.Enable(current_user or is_superuser())
-			self.Thaw()
 			if scope_changed or profiles_changed:
 				if next or isinstance(event, wx.TimerEvent):
 					wx.CallAfter(self._next)
@@ -1162,23 +1184,22 @@ class ProfileLoader(object):
 							else:
 								devicekey = None
 							key = devicekey or str(i)
-							(profile,
-							 mtime) = self.pl.profile_associations.get(key,
-																	   (False,
-																		None))
-							profile_name = profile
+							(profile, mtime,
+							 desc) = self.pl.profile_associations.get(key,
+																	  (False,
+																	   0, ""))
 							if profile is False:
-								profile = "?"
+								desc = "?"
 							elif profile == "?":
-								profile = lang.getstr("unassigned").lower()
+								desc = lang.getstr("unassigned").lower()
 							if not self.pl.setgammaramp_success.get(i):
-								profile = (lang.getstr("unknown") +
-										   u" (%s)" % profile)
+								desc = (lang.getstr("unknown") +
+										u" (%s)" % desc)
 							elif (self.pl._reset_gamma_ramps or
-								  profile_name == "?"):
-								profile = (lang.getstr("linear").capitalize() +
-										   u" (%s)" % profile)
-							text += u"\n%s: %s" % (display, profile)
+								  profile == "?"):
+								desc = (lang.getstr("linear").capitalize() +
+										u" (%s)" % desc)
+							text += u"\n%s: %s" % (display, desc)
 					if not show_notification:
 						return
 					if getattr(self, "_notification", None):
@@ -1626,7 +1647,7 @@ class ProfileLoader(object):
 				profile_name = profile
 				if profile_name == "?":
 					profile_name = safe_unicode(exception or "?")
-				association = self.profile_associations.get(key, (None, 0))
+				association = self.profile_associations.get(key, (None, 0, ""))
 				if (getcfg("profile_loader.fix_profile_associations") and
 					not first_run and not self._has_display_changed and
 					not self._next and association[0] != profile):
@@ -1649,7 +1670,8 @@ class ProfileLoader(object):
 				else:
 					mtime = 0
 				profile_association_changed = False
-				if association != (profile, mtime):
+				if association[:2] != (profile, mtime):
+					desc = get_profile_desc(profile)
 					if not first_run:
 						safe_print("A profile change has been detected")
 						safe_print(display, "->", profile_name)
@@ -1659,7 +1681,8 @@ class ProfileLoader(object):
 																 moninfo, i)
 							if self.monitoring:
 								self.devices2profiles[device.DeviceKey] = (display_edid,
-																		   profile)
+																		   profile,
+																		   desc)
 						if debug and device:
 							safe_print("Monitor %r active display device name:" %
 									   moninfo["Device"], device.DeviceName)
@@ -1674,7 +1697,7 @@ class ProfileLoader(object):
 						elif debug:
 							safe_print("WARNING: Monitor %r has no active display device" %
 									   moninfo["Device"])
-					self.profile_associations[key] = (profile, mtime)
+					self.profile_associations[key] = (profile, mtime, desc)
 					self.profiles[key] = None
 					self.ramps[key] = (None, None, None)
 					profile_association_changed = True
@@ -2186,7 +2209,7 @@ class ProfileLoader(object):
 
 	def _reset_display_profile_associations(self):
 		for devicekey, (display_edid,
-						profile) in self.devices2profiles.iteritems():
+						profile, desc) in self.devices2profiles.iteritems():
 			if profile and profile != "?":
 				try:
 					current_profile = ICCP.get_display_profile(path_only=True,
@@ -2258,7 +2281,8 @@ class ProfileLoader(object):
 					active_moninfo = None
 				display_edid = get_display_name_edid(device, active_moninfo)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
-														   profile or "")
+														   profile or "",
+														   get_profile_desc(profile))
 				if debug:
 					safe_print("%s (%s) -> %s" % (display_edid[0],
 												  device.DeviceKey,
@@ -2411,6 +2435,29 @@ def get_display_name_edid(device, moninfo=None, index=None,
 	if index is not None:
 		display = "%i. %s" % (index + 1, display)
 	return display, edid
+
+
+def get_profile_desc(profile_path, include_basename_if_different=True):
+	"""
+	Return profile description or path if not available
+	
+	"""
+	try:
+		profile = ICCP.ICCProfile(profile_path)
+		profile_desc = profile.getDescription()
+	except Exception, exception:
+		if not isinstance(exception, IOError):
+			exception = traceback.format_exc()
+		safe_print("Could not get description of profile %s:" % profile_path,
+				   exception)
+	else:
+		basename = os.path.basename(profile_path)
+		name = os.path.splitext(basename)[0]
+		if include_basename_if_different and name != safe_asciize(profile_desc):
+			return u"%s (%s)" % (profile_desc, basename)
+		return profile_desc
+	return profile_path
+
 
 def main():
 	unknown_option = None

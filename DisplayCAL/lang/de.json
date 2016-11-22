@@ -507,6 +507,7 @@
 	"file.missing": "Die Datei „%s“ existiert nicht.",
 	"file.notfile": "„%s“ ist keine Datei.",
 	"file.select": "Datei auswählen",
+	"filename": "Dateiname",
 	"filename.upload": "Upload-Dateiname",
 	"filetype.7z": "7-Zip-Dateien",
 	"filetype.any": "Alle Dateitypen",
