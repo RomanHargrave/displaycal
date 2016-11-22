@@ -1918,6 +1918,59 @@ class AODict(ADict, OrderedDict):
 			self[name] = value
 
 
+class LazyLoadTagAODict(AODict):
+
+	"""
+	Lazy-load (and parse) tag data on access
+	
+	"""
+
+	def __init__(self, profile, *args, **kwargs):
+		self.profile = profile
+		AODict.__init__(self)
+
+	def __getitem__(self, key):
+		tag = AODict.__getitem__(self, key)
+		if isinstance(tag, ICCProfileTag):
+			# Return already parsed tag
+			return tag
+		# Load and parse tag data
+		tagSignature, typeSignature, tagDataOffset, tagDataSize, tagData = tag
+		try:
+			if tagSignature in tagSignature2Tag:
+				tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
+			elif typeSignature in typeSignature2Type:
+				args = tagData, tagSignature
+				if typeSignature in ("clrt", "ncl2"):
+					args += (self.profile.connectionColorSpace, )
+					if typeSignature == "ncl2":
+						args += (self.profile.colorSpace, )
+				elif typeSignature in ("XYZ ", "mft2", "curv"):
+					args += (self.profile, )
+				tag = typeSignature2Type[typeSignature](*args)
+			else:
+				tag = ICCProfileTag(tagData, tagSignature)
+		except Exception, exception:
+			raise ICCProfileInvalidError("Couldn't parse tag %r (type %r, offet %i, size %i): %r" % (tagSignature,
+																									 typeSignature,
+																									 tagDataOffset,
+																									 tagDataSize,
+																									 exception))
+		self[key] = tag
+		return tag
+
+	def __setattr__(self, name, value):
+		if name == "profile":
+			object.__setattr__(self, name, value)
+		else:
+			AODict.__setattr__(self, name, value)
+
+	def get(self, key, default=None):
+		if key in self:
+			return self[key]
+		return default
+
+
 class ICCProfileTag(object):
 
 	def __init__(self, tagData, tagSignature):
@@ -4324,7 +4377,7 @@ class ICCProfile:
 		self.ID = "\0" * 16
 		self._data = ""
 		self._file = None
-		self._tags = AODict()
+		self._tags = LazyLoadTagAODict(self)
 		self.fileName = None
 		self.is_loaded = False
 		self.size = 0
@@ -4546,7 +4599,6 @@ class ICCProfile:
 					else:
 						if (tagDataOffset, tagDataSize) in tags:
 							if debug: print "    tagDataOffset and tagDataSize indicate shared tag"
-							self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)]
 						else:
 							start = tagDataOffset - discard_len
 							if debug: print "    tagData start:", start
@@ -4563,27 +4615,13 @@ class ICCProfile:
 																																 tagDataOffset,
 																																 tagDataSize))
 							if debug: print "    typeSignature:", typeSignature
-							try:
-								if tagSignature in tagSignature2Tag:
-									tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
-								elif typeSignature in typeSignature2Type:
-									args = tagData, tagSignature
-									if typeSignature in ("clrt", "ncl2"):
-										args += (self.connectionColorSpace, )
-										if typeSignature == "ncl2":
-											args += (self.colorSpace, )
-									elif typeSignature in ("XYZ ", "mft2", "curv"):
-										args += (self, )
-									tag = typeSignature2Type[typeSignature](*args)
-								else:
-									tag = ICCProfileTag(tagData, tagSignature)
-							except Exception, exception:
-								raise ICCProfileInvalidError("Couldn't parse tag %r (type %r, offet %i, size %i): %r" % (tagSignature,
-																														 typeSignature,
-																														 tagDataOffset,
-																														 tagDataSize,
-																														 exception))
-							self._tags[tagSignature] = tags[(tagDataOffset, tagDataSize)] = tag
+							tags[(tagDataOffset, tagDataSize)] = (tagSignature,
+																  typeSignature,
+																  tagDataOffset,
+																  tagDataSize,
+																  tagData)
+						self._tags[tagSignature] = tags[(tagDataOffset,
+														 tagDataSize)]
 					tagTable = tagTable[12:]
 				self._data = self._data[:128]
 		return self._tags
