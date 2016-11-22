@@ -619,7 +619,8 @@ if sys.platform == "win32":
 					profiles.append((sortkey,
 									 profile.getDescription(),
 									 os.path.basename(pth)))
-			for i, (sortkey, desc, profile) in enumerate(sorted(profiles)):
+			profiles.sort()
+			for i, (sortkey, desc, profile) in enumerate(profiles):
 				pindex = list_ctrl.InsertStringItem(i, "")
 				list_ctrl.SetStringItem(pindex, 0, desc)
 				list_ctrl.SetStringItem(pindex, 1, profile)
