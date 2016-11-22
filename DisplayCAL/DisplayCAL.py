@@ -227,16 +227,18 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 				chglog = re.search('<div id="(?:changelog|history)">'
 								   '.+?<h2>.+?</h2>'
 								   '.+?<dl>.+?</dd>', readme, re.S)
-				chglog = chglog.group()
-				chglog = re.sub('<div id="(?:changelog|history)">', "", chglog)
-				chglog = re.sub("<\/?d[l|d]>", "", chglog)
-				chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
-				chglog = re.sub("<h3>.+?</h3>", "", chglog)
-			chglog = re.sub(re.compile(r"<h\d>(.+?)</h\d>",
-									   flags=re.I | re.S),
-							r"<p><strong>\1</strong></p>", chglog)
-			chglog = re.sub(re.compile('<a\s+(?:.+?\s+)?href="#[^"]+"(?:\s+.*?)?>(.+?)</a>',
-									   flags=re.I | re.S), r"\1", chglog)
+				if chglog:
+					chglog = chglog.group()
+					chglog = re.sub('<div id="(?:changelog|history)">', "", chglog)
+					chglog = re.sub("<\/?d[l|d]>", "", chglog)
+					chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
+					chglog = re.sub("<h3>.+?</h3>", "", chglog)
+			if chglog:
+				chglog = re.sub(re.compile(r"<h\d>(.+?)</h\d>",
+										   flags=re.I | re.S),
+								r"<p><strong>\1</strong></p>", chglog)
+				chglog = re.sub(re.compile('href="(#[^"]+)"', flags=re.I),
+								r'href="https://%s/\1"' % domain, chglog)
 		if not wx.GetApp():
 			return
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
