@@ -41,7 +41,7 @@ if sys.platform == "win32":
 	from ordereddict import OrderedDict
 	from util_os import getenvu, is_superuser
 	from util_str import safe_asciize, safe_unicode
-	from util_win import (MONITORINFOF_PRIMARY,
+	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
 						  enable_per_user_profiles,
 						  get_active_display_device, get_display_devices,
@@ -1651,9 +1651,6 @@ class ProfileLoader(object):
 								   "%s (%s):" % (key, display), exception)
 					profile_path = "?"
 				profile = os.path.basename(profile_path)
-				profile_name = profile
-				if profile_name == "?":
-					profile_name = safe_unicode(exception or "?")
 				association = self.profile_associations.get(key, (None, 0, ""))
 				if (getcfg("profile_loader.fix_profile_associations") and
 					not first_run and not self._has_display_changed and
@@ -1678,10 +1675,13 @@ class ProfileLoader(object):
 					mtime = 0
 				profile_association_changed = False
 				if association[:2] != (profile, mtime):
-					desc = get_profile_desc(profile)
+					if profile == "?":
+						desc = safe_unicode(exception or "?")
+					else:
+						desc = get_profile_desc(profile)
 					if not first_run:
 						safe_print("A profile change has been detected")
-						safe_print(display, "->", profile_name)
+						safe_print(display, "->", desc)
 						device = get_active_display_device(moninfo["Device"])
 						if device:
 							display_edid = get_display_name_edid(device,
@@ -1772,10 +1772,10 @@ class ProfileLoader(object):
 							safe_print("Caching linear gamma ramps")
 						else:
 							safe_print("Caching implicit linear gamma ramps for profile",
-									   profile_name)
+									   desc)
 					else:
 						safe_print("Caching gamma ramps for profile",
-								   profile_name)
+								   desc)
 					# Convert vcgt to ushort_Array_256_Array_3
 					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
 					vcgt_ramp_hack = ((ctypes.c_ushort * 256) * 3)()
@@ -1838,7 +1838,7 @@ class ProfileLoader(object):
 						safe_print(display)
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display, "->", profile_name)
+						safe_print(display, "->", desc)
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
@@ -2045,6 +2045,8 @@ class ProfileLoader(object):
 			if len(display_parts) > 1:
 				info = display_parts[1].split(" - ", 1)
 				display_parts[1] = "@" + " ".join(info[:1])
+			if not device.StateFlags & DISPLAY_DEVICE_ACTIVE:
+				display_parts.append(u" (%s)" % lang.getstr("deactivated"))
 			safe_print("  |-", "".join(display_parts))
 		safe_print("-" * 80)
 
