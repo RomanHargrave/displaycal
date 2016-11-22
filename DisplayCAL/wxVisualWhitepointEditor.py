@@ -10,6 +10,7 @@ License: wxPython license
 from __future__ import with_statement
 import colorsys
 import os
+import re
 import sys
 import threading
 from math import pi, sin, cos, sqrt, atan2
@@ -22,7 +23,7 @@ from wxfixes import wx
 from wx.lib.agw import aui
 from wx.lib.intctrl import IntCtrl
 
-from config import (defaults, getbitmap, getcfg, get_argyll_display_number,
+from config import (defaults, fs_enc, getbitmap, getcfg, get_argyll_display_number,
                     get_default_dpi, get_icon_bundle, geticon, initcfg,
                     profile_ext, setcfg)
 from log import safe_print
@@ -1591,7 +1592,8 @@ class ProfileManager(object):
                     # Remember profile, but discard profile filename
                     # (Important - can't re-install profile from same path
                     # where it is installed!)
-                    profile.fileName = None
+                    if not self._set_profile_temp_filename(profile):
+                        return
                     self._profiles[geometry] = profile
                     self._install_profile(display_no, self._srgb_profile)
 
@@ -1604,15 +1606,8 @@ class ProfileManager(object):
                                                  "dispwin")))
             return
         if not profile.fileName or not os.path.isfile(profile.fileName):
-            temp = self._worker.create_tempdir()
-            if isinstance(temp, Exception):
-                _show_result_after(temp)
+            if not self._set_profile_temp_filename(profile):
                 return
-            if profile.fileName:
-                basename = os.path.basename(profile.fileName)
-            else:
-                basename = profile.getDescription() + profile_ext
-            profile.fileName = os.path.join(temp, basename)
             profile.write()
         result = self._worker.exec_cmd(dispwin, ["-v", "-d%i" %
                                                  (display_no + 1),
@@ -1631,6 +1626,22 @@ class ProfileManager(object):
         # Has to be thread-safe!
         with self._lock:
             self._install_profile(display_no, profile, wrapup)
+
+
+    def _set_profile_temp_filename(self, profile):
+        temp = self._worker.create_tempdir()
+        if isinstance(temp, Exception):
+            _show_result_after(temp)
+            return
+        if profile.fileName:
+            profile_name = os.path.basename(profile.fileName)
+        else:
+            profile_name = profile.getDescription() + profile_ext
+        if (sys.platform in ("win32", "darwin") or fs_enc.upper() not in
+            ("UTF8", "UTF-8")) and re.search("[^\x20-\x7e]", profile_name):
+            profile_name = safe_asciize(profile_name)
+        profile.fileName = os.path.join(temp, profile_name)
+        return True
 
 
     def _stop_timer(self):
