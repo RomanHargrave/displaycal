@@ -2464,7 +2464,8 @@ def get_profile_desc(profile_path, include_basename_if_different=True):
 	else:
 		basename = os.path.basename(profile_path)
 		name = os.path.splitext(basename)[0]
-		if include_basename_if_different and name != safe_asciize(profile_desc):
+		if (include_basename_if_different and
+			name not in (profile_desc, safe_asciize(profile_desc))):
 			return u"%s (%s)" % (profile_desc, basename)
 		return profile_desc
 	return profile_path
