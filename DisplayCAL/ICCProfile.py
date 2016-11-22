@@ -4513,7 +4513,11 @@ class ICCProfile:
 		tagsDataOffset = []
 		tagDataOffset = 128 + 4 + tagTableSize
 		for tagSignature in self.tags:
-			tagData = self.tags[tagSignature].tagData
+			tag = AODict.__getitem__(self.tags, tagSignature)
+			if isinstance(tag, ICCProfileTag):
+				tagData = self.tags[tagSignature].tagData
+			else:
+				tagData = tag[4]
 			tagDataSize = len(tagData)
 			# Pad all data with binary zeros so it lies on 4-byte boundaries
 			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
