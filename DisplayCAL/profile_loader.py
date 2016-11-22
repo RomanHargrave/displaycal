@@ -1707,6 +1707,8 @@ class ProfileLoader(object):
 						# DisplayCAL is running. Override this when the
 						# display has changed
 						self._manual_restore = getcfg("profile.load_on_login") and 2
+				else:
+					desc = association[2]
 				# Check video card gamma table and (re)load calibration if
 				# necessary
 				if not self.gdi32:
@@ -1867,7 +1869,7 @@ class ProfileLoader(object):
 						if self._reset_gamma_ramps:
 							text += lang.getstr("linear").capitalize()
 						else:
-							text += os.path.basename(profile_path)
+							text += os.path.basename(desc)
 						results.append(text)
 			else:
 				# We only arrive here if the loop was completed
