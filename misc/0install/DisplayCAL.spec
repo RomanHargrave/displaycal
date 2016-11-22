@@ -42,7 +42,7 @@ Group:          %{correct_group}
 Name:           ${PACKAGE}-0install
 Version:        ${VERSION}
 Release:        0
-Source0:        ${URL}download/${PACKAGE}-%version.tar.gz
+Source0:        ${HTTPURL}download/${PACKAGE}-%version.tar.gz
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch

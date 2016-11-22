@@ -42,7 +42,7 @@ Group:          %{correct_group}
 Name:           ${PACKAGE}
 Version:        ${VERSION}
 Release:        0
-Source0:        ${URL}download/%{name}-%version.tar.gz
+Source0:        ${HTTPURL}download/%{name}-%version.tar.gz
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Requires:       p7zip

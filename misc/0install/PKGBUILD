@@ -14,7 +14,7 @@ optdepends=('argyllcms: calibration & profiling support')
 conflicts=('dispcalgui' 'dispcalgui-0install' '${APPNAME_LOWER}')
 install=${pkgname}.install
 
-source=("${URL}download/${_pkgname}-${pkgver}.tar.gz")
+source=("${HTTPURL}download/${_pkgname}-${pkgver}.tar.gz")
 
 md5sums=('${MD5}')
 

@@ -17,8 +17,11 @@ for /F usebackq %%a in (`python -c "from DisplayCAL.meta import version_tuple;pr
 
 REM Source tarball
 if not exist dist\DisplayCAL-%version%.tar.gz if not exist dist\%version%\DisplayCAL-%version%.tar.gz (
-	python setup.py sdist 0install --stability=stable --format=gztar --use-distutils 2>&1 | tee DisplayCAL-%version%.sdist.log
+	python setup.py sdist --format=gztar --use-distutils 2>&1 | tee DisplayCAL-%version%.sdist.log
 )
+
+REM Create openSUSE build service control files and update 0install feeds
+python setup.py buildservice 0install --stability=stable
 
 REM Standalone executable
 if not exist dist\py2exe.win32-py%python_version%\DisplayCAL-%version% (
