@@ -1201,11 +1201,11 @@ class ProfileLoader(object):
 								desc = lang.getstr("unassigned").lower()
 							if not self.pl.setgammaramp_success.get(i):
 								desc = (lang.getstr("unknown") +
-										u" (%s)" % desc)
+										u" / %s" % desc)
 							elif (self.pl._reset_gamma_ramps or
 								  profile == "?"):
 								desc = (lang.getstr("linear").capitalize() +
-										u" (%s)" % desc)
+										u" / %s" % desc)
 							text += u"\n%s: %s" % (display, desc)
 					if not show_notification:
 						return
