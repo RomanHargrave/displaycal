@@ -635,7 +635,7 @@ if sys.platform == "win32":
 				pindex = list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 											   wx.LIST_STATE_SELECTED)
 				if pindex > -1:
-					self.set_profile(list_ctrl.GetItemText(pindex))
+					self.set_profile(profiles[pindex][2])
 				else:
 					wx.Bell()
 			dlg.Destroy()
