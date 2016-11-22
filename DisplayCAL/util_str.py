@@ -5,6 +5,7 @@ import exceptions
 import locale
 import string
 import sys
+import unicodedata
 try:
 	from functools import reduce
 except ImportError:
@@ -29,20 +30,34 @@ control_chars = "".join([chr(i) for i in range(0, 9) + range(14, 32) + [127]])
 
 # Safe character substitution - can be used for filenames
 # i.e. no \/:*?"<>| will be added through substitution
-safesubst = {u"\u00a9": u"(C)", # U+00A9 copyright sign
+# Contains only chars that are not normalizable
+safesubst = {# Latin-1 supplement
+			 u"\u00a2": u"c", # Cent sign
+			 u"\u00a3": u"GBP", # Pound sign
+			 u"\u00a5": u"JPY", # Yen sign
+			 u"\u00a9": u"(C)", # U+00A9 copyright sign
+			 u"\u00ac": u"!", # Not sign
 			 u"\u00ae": u"(R)", # U+00AE registered sign
+			 u"\u00b0": u"deg", # Degree symbol
 			 u"\u00b1": u"+-",
-			 u"\u00b2": u"^2", # U+00B2 superscript two
-			 u"\u00b3": u"^3", # U+00B3 superscript three
-			 u"\u00b9": u"^1", # U+00B9 superscript one
+			 u"\u00c4": u"Ae", # Capital letter A with diaresis (Umlaut)
+			 u"\u00c5": u"Aa", # Capital letter A with ring above
+			 u"\u00c6": u"AE",
+			 u"\u00d6": u"Oe", # Capital letter O with diaresis (Umlaut)
+			 u"\u00dc": u"Ue", # Capital letter U with diaresis (Umlaut)
 			 u"\u00d7": u"x", # U+00D7 multiplication sign
 			 u"\u00df": u"ss",
+			 u"\u00e4": u"ae", # Small letter a with diaresis (Umlaut)
+			 u"\u00e5": u"aa", # Small letter a with ring above
 			 u"\u00e6": u"ae",
+			 u"\u00f6": u"oe", # Small letter o with diaresis (Umlaut)
+			 u"\u00fc": u"ue", # Small letter u with diaresis (Umlaut)
+			 # Latin extended A
+			 u"\u0152": u"OE",
 			 u"\u0153": u"oe",
-			 u"\u0192": u"f",
-			 u"\u02dc": u"~",
-			 u"\u02c6": u"^",
+			 # General punctuation
 			 u"\u2010": u"-",
+			 u"\u2011": u"-",
 			 u"\u2012": u"-",
 			 u"\u2013": u"-", # U+2013 en dash
 			 u"\u2014": u"--", # U+2014 em dash
@@ -51,25 +66,86 @@ safesubst = {u"\u00a9": u"(C)", # U+00A9 copyright sign
 			 u"\u2019": u"'",
 			 u"\u201a": u",",
 			 u"\u201b": u"'",
+			 u"\u201c": u"''",
+			 u"\u201d": u"''",
 			 u"\u201e": u",,",
-			 u"\u2026": u"...", # U+2026 ellipsis
+			 u"\u201f": u"''",
+			 u"\u2032": u"'",
+			 u"\u2033": u"''",
 			 u"\u2034": u"'''",
-			 u"\u203C": u"!!",
-			 u"\u2070": u"^0",
-			 u"\u2074": u"^4",
-			 u"\u2075": u"^5",
-			 u"\u2076": u"^6",
-			 u"\u2077": u"^7",
-			 u"\u2078": u"^8",
-			 u"\u2079": u"^9",
-			 u"\u20a7": u"Pts",
-			 u"\u20a8": u"Rs",
-			 u"\u2113": u"l",
-			 u"\u2116": u"No.",
+			 u"\u2035": u"'",
+			 u"\u2036": u"''",
+			 u"\u2037": u"'''",
+			 u"\u2053": u"~",
+			 # Superscripts and subscripts
+			 u"\u207b": u"-", # Superscript minus
+			 u"\u208b": u"-", # Subscript minus
+			 # Currency symbols
+			 u"\u20a1": u"CRC", # Costa Rica 'Colon'
+			 u"\u20a6": u"NGN", # Nigeria 'Naira'
+			 u"\u20a9": u"KRW", # South Korea 'Won'
+			 u"\u20aa": u"ILS", # Isreael 'Sheqel'
+			 u"\u20ab": u"VND", # Vietnam 'Dong'
+			 u"\u20ac": u"EUR",
+			 u"\u20ad": u"LAK", # Laos 'Kip'
+			 u"\u20ae": u"MNT", # Mongolia 'Tugrik'
+			 u"\u20b2": u"PYG", # Paraguay 'Guarani'
+			 u"\u20b4": u"UAH", # Ukraine 'Hryvnja'
+			 u"\u20b5": u"GHS", # Ghana 'Cedi'
+			 u"\u20b8": u"KZT", # Kasachstan 'Tenge'
+			 u"\u20b9": u"INR", # Indian 'Rupee'
+			 u"\u20ba": u"TRY", # Turkey 'Lira'
+			 u"\u20bc": u"AZN", # Aserbaidchan 'Manat'
+			 u"\u20bd": u"RUB", # Russia 'Ruble'
+			 u"\u20be": u"GEL", # Georgia 'Lari'
+			 # Letter-like symbols
 			 u"\u2117": u"(P)",
-			 u"\u2122": u"TM",
-			 u"\u2212": u"-",
+			 # Mathematical operators
+			 u"\u2212": u"-", # U+2212 minus sign
 			 u"\u2260": u"!=",
+			 # Enclosed alphanumerics
+			 u"\u2460": u"(1)",
+			 u"\u2461": u"(2)",
+			 u"\u2462": u"(3)",
+			 u"\u2463": u"(4)",
+			 u"\u2464": u"(5)",
+			 u"\u2465": u"(6)",
+			 u"\u2466": u"(7)",
+			 u"\u2467": u"(8)",
+			 u"\u2468": u"(9)",
+			 u"\u2469": u"(10)",
+			 u"\u246a": u"(11)",
+			 u"\u246b": u"(12)",
+			 u"\u246c": u"(13)",
+			 u"\u246d": u"(14)",
+			 u"\u246e": u"(15)",
+			 u"\u246f": u"(16)",
+			 u"\u2470": u"(17)",
+			 u"\u2471": u"(18)",
+			 u"\u2472": u"(19)",
+			 u"\u2473": u"(20)",
+			 u"\u24eb": u"(11)",
+			 u"\u24ec": u"(12)",
+			 u"\u24ed": u"(13)",
+			 u"\u24ee": u"(14)",
+			 u"\u24ef": u"(15)",
+			 u"\u24f0": u"(16)",
+			 u"\u24f1": u"(17)",
+			 u"\u24f2": u"(18)",
+			 u"\u24f3": u"(19)",
+			 u"\u24f4": u"(20)",
+			 u"\u24f5": u"(1)",
+			 u"\u24f6": u"(2)",
+			 u"\u24f7": u"(3)",
+			 u"\u24f8": u"(4)",
+			 u"\u24f9": u"(5)",
+			 u"\u24fa": u"(6)",
+			 u"\u24fb": u"(7)",
+			 u"\u24fc": u"(8)",
+			 u"\u24fd": u"(9)",
+			 u"\u24fe": u"(10)",
+			 u"\u24ff": u"(0)",
+			 # Dingbats
 			 u"\u2776": u"(1)",
 			 u"\u2777": u"(2)",
 			 u"\u2778": u"(3)",
@@ -80,34 +156,62 @@ safesubst = {u"\u00a9": u"(C)", # U+00A9 copyright sign
 			 u"\u277d": u"(8)",
 			 u"\u277e": u"(9)",
 			 u"\u277f": u"(10)",
-			 u"\ufb01": u"fi",
-			 u"\ufb02": u"fl",} # U+2212 minus sign
+			 u"\u2780": u"(1)",
+			 u"\u2781": u"(2)",
+			 u"\u2782": u"(3)",
+			 u"\u2783": u"(4)",
+			 u"\u2784": u"(5)",
+			 u"\u2785": u"(6)",
+			 u"\u2786": u"(7)",
+			 u"\u2787": u"(8)",
+			 u"\u2788": u"(9)",
+			 u"\u2789": u"(10)",
+			 u"\u278a": u"(1)",
+			 u"\u278b": u"(2)",
+			 u"\u278c": u"(3)",
+			 u"\u278d": u"(4)",
+			 u"\u278e": u"(5)",
+			 u"\u278f": u"(6)",
+			 u"\u2790": u"(7)",
+			 u"\u2791": u"(8)",
+			 u"\u2792": u"(9)",
+			 u"\u2793": u"(10)",}
 
 # Extended character substitution - can NOT be used for filenames
+# Contains only chars that are not normalizable
 subst = dict(safesubst)
-subst.update({u"\u00a6": u"|",
+subst.update({# Latin-1 supplement
+			  u"\u00a6": u"|",
 			  u"\u00ab": u"<<",
 			  u"\u00bb": u">>",
 			  u"\u00bc": u"1/4",
 			  u"\u00bd": u"1/2",
 			  u"\u00be": u"3/4",
 			  u"\u00f7": u":",
+			  # General punctuation
 			  u"\u201c": u"\x22",
 			  u"\u201d": u"\x22",
 			  u"\u201f": u"\x22",
+			  u"\u2033": u"\x22",
+			  u"\u2036": u"\x22",
 			  u"\u2039": u"<",
 			  u"\u203a": u">",
+			  u"\u203d": u"!?",
 			  u"\u2044": u"/",
-			  u"\u2105": u"c/o",
+			  # Number forms
 			  u"\u2153": u"1/3",
 			  u"\u2154": u"2/3",
 			  u"\u215b": u"1/8",
 			  u"\u215c": u"3/8",
 			  u"\u215d": u"5/8",
 			  u"\u215e": u"7/8",
+			  # Arrows
 			  u"\u2190": u"<-",
 			  u"\u2192": u"->",
 			  u"\u2194": u"<->",
+			  # Mathematical operators
+			  u"\u226a": u"<<",
+			  u"\u226b": u">>",
 			  u"\u2264": u"<=",
 			  u"\u2265": u"=>",})
 
@@ -142,7 +246,7 @@ def asciize(obj):
 	chars = u""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
-			chars += subst.get(char, u"?")
+			chars += subst.get(char, normalencode(char).strip() or u"?")
 		return chars, obj.end
 	else:
 		return obj.encode("ASCII", "asciize")
@@ -161,7 +265,13 @@ def safe_asciize(obj):
 	chars = u""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
-			chars += safesubst.get(char, u"_")
+			if char in safesubst:
+				subst_char = safesubst[char]
+			else:
+				subst_char = u"_"
+				if char not in subst:
+					subst_char = normalencode(char).strip() or subst_char
+			chars += subst_char
 		return chars, obj.end
 	else:
 		return obj.encode("ASCII", "safe_asciize")
@@ -190,6 +300,14 @@ codecs.register_error("escape", escape)
 
 def make_ascii_printable(text, subst=""):
 	return "".join([char if char in ascii_printable else subst for char in text])
+
+
+def normalencode(unistr, form="NFKD", encoding="ASCII", errors="ignore"):
+	"""
+	Return encoded normal form of unicode string
+	
+	"""
+	return unicodedata.normalize(form, unistr).encode(encoding, errors)
 
 
 def center(text, width = None):

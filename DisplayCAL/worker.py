@@ -107,8 +107,8 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 	import win_knownpaths
-from util_str import (safe_basestring, safe_str, safe_unicode, strtr,
-					  universal_newlines)
+from util_str import (safe_basestring, safe_asciize, safe_str, safe_unicode,
+					  strtr, universal_newlines)
 from wxaddons import BetterCallLater, BetterWindowDisabler, wx
 from wxwindows import (ConfirmDialog, HtmlInfoDialog, InfoDialog,
 					   ProgressDialog, SimpleTerminal)
@@ -6089,24 +6089,33 @@ usage: spotread [-options] [logfile]
 		argyll_install = self._install_profile_argyll(profile_path,
 													  capture_output,
 													  skip_scripts, silent)
-		if argyll_install and sys.platform == "win32":
-			# Assign profile to active display
-			display_no = min(len(self.displays), getcfg("display.number")) - 1
-			monitors = util_win.get_real_display_devices_info()
-			moninfo = monitors[display_no]
-			displays = util_win.get_display_devices(moninfo["Device"])
-			active_display = util_win.get_active_display_device(None, displays)
-			if active_display.DeviceKey != displays[0].DeviceKey:
-				self.log(appname + ": Setting profile for active display device...")
-				try:
-					ICCP.set_display_profile(os.path.basename(profile_path),
-											 devicekey=active_display.DeviceKey)
-				except Exception, exception:
-					# Not a critical error. Only log the exception.
-					self.log(appname + ": Warning - could not set profile for "
-							 "active display device:", exception)
-				else:
-					self.log(appname + ": ...ok")
+		if isinstance(argyll_install, basestring):
+			# The installed name may be different due to escaping non-ASCII
+			# chars (see prepare_dispwin), so get the profile path
+			profile_path = argyll_install
+			argyll_install = True
+			if sys.platform == "win32":
+				# Assign profile to active display
+				display_no = min(len(self.displays), getcfg("display.number")) - 1
+				monitors = util_win.get_real_display_devices_info()
+				moninfo = monitors[display_no]
+				displays = util_win.get_display_devices(moninfo["Device"])
+				active_display = util_win.get_active_display_device(None, displays)
+				if active_display.DeviceKey != displays[0].DeviceKey:
+					self.log(appname + ": Setting profile for active display device...")
+					try:
+						ICCP.set_display_profile(os.path.basename(profile_path),
+												 devicekey=active_display.DeviceKey)
+					except Exception, exception:
+						# Not a critical error. Only log the exception.
+						if (isinstance(exception, EnvironmentError) and
+							not exception.filename and
+							not os.path.isfile(profile_path)):
+							exception.filename = profile_path
+						self.log(appname + ": Warning - could not set profile for "
+								 "active display device:", exception)
+					else:
+						self.log(appname + ": ...ok")
 		loader_install = None
 		profile = None
 		try:
@@ -6431,7 +6440,12 @@ usage: spotread [-options] [logfile]
 	
 	def _install_profile_argyll(self, profile_path, capture_output=False,
 								skip_scripts=False, silent=False):
-		""" Install profile using dispwin """
+		"""
+		Install profile using dispwin.
+		
+		Return the profile path, an error or False
+		
+		"""
 		if (sys.platform == "darwin" and False):  # NEVER
 			# Alternate way of 'installing' the profile under OS X by just
 			# copying it
@@ -6461,6 +6475,7 @@ usage: spotread [-options] [logfile]
 		else:
 			cmd, args = self.prepare_dispwin(None, profile_path, True)
 			if not isinstance(cmd, Exception):
+				profile_path = args[-1]
 				if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 					# Set/unset per-user profiles under Vista / Windows 7
 					idx = getcfg("display.number") - 1
@@ -6564,6 +6579,8 @@ usage: spotread [-options] [logfile]
 					break
 			if not result and self.errors:
 				result = Error("".join(self.errors).strip())
+			else:
+				result = profile_path
 		# DO NOT call wrapup() here, it'll remove the profile in the temp
 		# directory before dispwin can get a hold of it when running with UAC
 		# under Windows, because that makes the call to dispwin run in a
@@ -8854,14 +8871,10 @@ END_DATA""")[0]
 					if (sys.platform in ("win32", "darwin") or 
 						fs_enc.upper() not in ("UTF8", "UTF-8")) and \
 					   re.search("[^\x20-\x7e]", profile_name):
-						# Copy to temp dir and give unique ASCII-only name to
+						# Copy to temp dir and give ASCII-only name to
 						# avoid profile install issues
-						# profile name: 'display<n>-<hexmd5sum>.icc'
-						profile_tmp_path = os.path.join(tmp_dir, "display" + 
-														self.get_display() + 
-														"-" + 
-														md5(profile.data).hexdigest() + 
-														profile_ext)
+						profile_tmp_path = os.path.join(tmp_dir,
+														safe_asciize(profile_name))
 					else:
 						profile_tmp_path = os.path.join(tmp_dir, profile_name)
 					shutil.copyfile(profile_path, profile_tmp_path)
