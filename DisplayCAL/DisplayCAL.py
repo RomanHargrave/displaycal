@@ -13986,6 +13986,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def OnClose(self, event=None):
 		if (getattr(self.worker, "thread", None) and
 			self.worker.thread.isAlive()):
+			if isinstance(event, wx.CloseEvent) and event.CanVeto():
+				event.Veto()
 			self.worker.abort_subprocess(True)
 			return
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
@@ -13995,8 +13997,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			# application, this dialog will hinder exiting the main loop.
 			win = self.get_top_window()
 			if isinstance(win, wx.Dialog) and win.IsModal():
+				win.RequestUserAttention()
 				win.Raise()
-				wx.Bell()
+				if isinstance(event, wx.CloseEvent) and event.CanVeto():
+					event.Veto()
 				return
 			for win in wx.GetTopLevelWindows():
 				if win and not win.IsBeingDeleted():
