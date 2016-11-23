@@ -1457,8 +1457,6 @@ class ProfileLoader(object):
 				dlg.RequestUserAttention()
 		else:
 			if dlg and event and event.CanVeto():
-				wx.Bell()
-				dlg.Raise()
 				event.Veto()
 				safe_print("Vetoed", event)
 				return
