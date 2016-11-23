@@ -1106,7 +1106,11 @@ class ProfileLoader(object):
 					if dlgs:
 						wx.Bell()
 						for dlg in dlgs:
+							# Need to request user attention for all open
+							# dialogs because calling it only on the topmost
+							# one does not guarantee taskbar flash
 							dlg.RequestUserAttention()
+						dlg.Raise()
 
 				def open_display_settings(self, event):
 					safe_print("Menu command: Open display settings")
@@ -1447,9 +1451,14 @@ class ProfileLoader(object):
 				else:
 					dlg = None
 			if dlg and event and event.CanVeto():
+				# Need to request user attention for all open
+				# dialogs because calling it only on the topmost
+				# one does not guarantee taskbar flash
 				dlg.RequestUserAttention()
 		else:
 			if dlg and event and event.CanVeto():
+				wx.Bell()
+				dlg.Raise()
 				event.Veto()
 				safe_print("Vetoed", event)
 				return
