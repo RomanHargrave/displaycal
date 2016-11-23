@@ -849,7 +849,7 @@ class ProfileLoader(object):
 	def __init__(self):
 		from wxwindows import BaseApp, wx
 		if not wx.GetApp():
-			app = BaseApp(0)
+			app = BaseApp(0, clearSigInt=sys.platform != "win32")
 			BaseApp.register_exitfunc(self.shutdown)
 		else:
 			app = None

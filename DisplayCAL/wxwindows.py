@@ -7,6 +7,7 @@ import errno
 import math
 import os
 import re
+import signal
 import socket
 import string
 import subprocess as sp
@@ -554,6 +555,25 @@ class BaseApp(wx.App):
 		# Restore prefix
 		sys.prefix = prefix
 
+		if (not kwargs.get("clearSigInt", True) or
+			len(args) == 4 and not args[3]):
+			# Install our own SIGINT handler so we can do cleanup on receiving
+			# SIGINT
+			safe_print("Installing SIGINT handler")
+			signal.signal(signal.SIGINT, self.signal_handler)
+			# This timer allows processing of SIGINT / CTRL+C, because normally
+			# with clearSigInt=False, SIGINT / CTRL+C are only processed during
+			# UI events
+			self._signal_timer = wx.Timer(self)
+			self.Bind(wx.EVT_TIMER, lambda e: None, self._signal_timer)
+			self._signal_timer.Start(100)
+
+	def signal_handler(self, signum, frame):
+		if signum == signal.SIGINT:
+			safe_print("Received SIGINT")
+			safe_print("Sending query to end session...")
+			self.ProcessEvent(wx.CloseEvent(wx.EVT_QUERY_END_SESSION.evtType[0]))
+
 	def OnInit(self):
 		self.AppName = pyname
 		set_default_app_dpi()
@@ -648,13 +668,17 @@ class BaseApp(wx.App):
 
 	def query_end_session(self, event):
 		safe_print("Received query to end session")
+		if event.CanVeto():
+			safe_print("Can veto")
+		else:
+			safe_print("Cannot veto")
 		if self.TopWindow and self.TopWindow is not self._query_end_session:
 			if not isinstance(self.TopWindow, wx.Dialog):
-				safe_print("Trying to close main top-level application window")
+				safe_print("Trying to close main top-level application window...")
 				if self.TopWindow.Close(force=not event.CanVeto()):
 					self.TopWindow.listening = False
 					self._query_end_session = self.TopWindow
-					safe_print("Closed main top-level application window")
+					safe_print("Main top-level application window processed close event")
 					return
 				else:
 					safe_print("Failed to close main top-level application window")
