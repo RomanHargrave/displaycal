@@ -871,8 +871,15 @@ if sys.platform == "win32":
 					wx.CallAfter(self._next)
 
 		def _next(self):
+			locked = self.pl.lock.locked()
+			if locked:
+				safe_print("ProfileAssociationsDialog: Waiting to acquire lock...")
 			with self.pl.lock:
+				if locked:
+					safe_print("ProfileAssociationsDialog: Acquired lock")
 				self.pl._next = True
+				if locked:
+					safe_print("ProfileAssociationsDialog: Releasing lock")
 
 		def use_my_settings(self, event):
 			self._update_configuration(enable_per_user_profiles,
@@ -901,6 +908,7 @@ class ProfileLoader(object):
 		self.setgammaramp_success = {}
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
 		self._has_display_changed = False
+		self._last_exception_args = ()
 		self._shutdown = False
 		self._skip = "--skip" in sys.argv[1:]
 		apply_profiles = bool("--force" in sys.argv[1:] or
@@ -968,19 +976,21 @@ class ProfileLoader(object):
 							self.pl._is_other_running()):
 							return "forbidden"
 						elif data[-1] == "display-changed":
+							if self.pl.lock.locked():
+								safe_print("PLFrame.process_data: Waiting to acquire lock...")
 							with self.pl.lock:
+								safe_print("PLFrame.process_data: Acquired lock")
 								if self.pl._has_display_changed:
 									# Normally calibration loading is disabled while
 									# DisplayCAL is running. Override this when the
 									# display has changed
 									self.pl._manual_restore = getcfg("profile.load_on_login") and 2
+								safe_print("PLFrame.process_data: Releasing lock")
 						else:
 							if data[0] == "reset-vcgt":
-								self.pl._set_reset_gamma_ramps(None)
+								self.pl._set_reset_gamma_ramps(None, len(data))
 							else:
-								self.pl._set_manual_restore(None)
-							with self.pl.lock:
-								self.pl._manual_restore = len(data)
+								self.pl._set_manual_restore(None, len(data))
 						return "ok"
 					elif data[0] == "notify" and (len(data) == 2 or
 												  (len(data) == 3 and
@@ -1127,11 +1137,25 @@ class ProfileLoader(object):
 				def on_left_down(self, event):
 					if not getattr(self, "_notification", None):
 						# Make sure the displayed info is up-to-date
+						locked = self.pl.lock.locked()
+						if locked:
+							safe_print("TaskBarIcon.on_left_down: Waiting to acquire lock...")
 						with self.pl.lock:
+							if locked:
+								safe_print("TaskBarIcon.on_left_down: Acquired lock")
 							self.pl._next = True
+							if locked:
+								safe_print("TaskBarIcon.on_left_down: Releasing lock")
 						time.sleep(.11)
+						locked = self.pl.lock.locked()
+						if locked:
+							safe_print("TaskBarIcon.on_left_down: Waiting to acquire lock...")
 						with self.pl.lock:
+							if locked:
+								safe_print("TaskBarIcon.on_left_down: Acquired lock")
 							pass
+							if locked:
+								safe_print("TaskBarIcon.on_left_down: Releasing lock")
 					self.show_notification(toggle=True)
 
 				def on_right_down(self, event):
@@ -1164,8 +1188,12 @@ class ProfileLoader(object):
 								  int(event.IsChecked()))
 					self.pl.writecfg()
 					if event.IsChecked():
+						if self.pl.lock.locked():
+							safe_print("TaskBarIcon: Waiting to acquire lock...")
 						with self.pl.lock:
+							safe_print("TaskBarIcon: Acquired lock")
 							self.pl._next = event.IsChecked()
+							safe_print("TaskBarIcon: Releasing lock")
 					else:
 						self.set_visual_state()
 
@@ -1618,8 +1646,15 @@ class ProfileLoader(object):
 
 	def _display_changed(self, event):
 		safe_print(event)
+		
+		threading.Thread(target=self._process_display_changed,
+						 name="ProcessDisplayChangedEvent").start()
 
+	def _process_display_changed(self):
+		if self.lock.locked():
+			safe_print("ProcessDisplayChangedEvent: Waiting to acquire lock...")
 		with self.lock:
+			safe_print("ProcessDisplayChangedEvent: Acquired lock")
 			self._next = True
 			self._enumerate_monitors()
 			if sys.getwindowsversion() < (6, ):
@@ -1633,6 +1668,7 @@ class ProfileLoader(object):
 			if getattr(self, "fix_profile_associations_dlg", None):
 				wx.CallLater(1000, lambda: self.fix_profile_associations_dlg and
 										   self.fix_profile_associations_dlg.update(True))
+			safe_print("ProcessDisplayChangedEvent: Releasing lock")
 
 	def _check_display_changed(self, first_run=False, dry_run=False):
 		# Check registry if display configuration changed (e.g. if a display
@@ -1713,7 +1749,12 @@ class ProfileLoader(object):
 			result = None
 			results = []
 			errors = []
+			locked = self.lock.locked()
+			if locked:
+				safe_print("DisplayConfigurationMonitoringThread: Waiting to acquire lock...")
 			self.lock.acquire()
+			if locked:
+				safe_print("DisplayConfigurationMonitoringThread: Acquired lock")
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
@@ -1889,8 +1930,10 @@ class ProfileLoader(object):
 					try:
 						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 					except Exception, exception:
-						safe_print("Couldn't create DC for", moninfo["Device"],
-								   "(%s)" % display)
+						if exception.args != self._last_exception_args:
+							self._last_exception_args = exception.args
+							safe_print("Couldn't create DC for", moninfo["Device"],
+									   "(%s)" % display)
 						continue
 					ramp = ((ctypes.c_ushort * 256) * 3)()
 					try:
@@ -1931,8 +1974,10 @@ class ProfileLoader(object):
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
-					safe_print("Couldn't create DC for", moninfo["Device"],
-							   "(%s)" % display)
+					if exception.args != self._last_exception_args:
+						self._last_exception_args = exception.args
+						safe_print("Couldn't create DC for", moninfo["Device"],
+								   "(%s)" % display)
 					continue
 				try:
 					if self._is_buggy_video_driver(moninfo):
@@ -1973,7 +2018,11 @@ class ProfileLoader(object):
 			if self._next:
 				# We only arrive here if a change in profile associations was
 				# detected and we exited the loop early
+				if locked:
+					safe_print("DisplayConfigurationMonitoringThread: Releasing lock")
 				self.lock.release()
+				if locked:
+					safe_print("DisplayConfigurationMonitoringThread: Released lock")
 				continue
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
@@ -2029,7 +2078,11 @@ class ProfileLoader(object):
 			if result:
 				self._has_display_changed = False
 			self._manual_restore = False
+			if locked:
+				safe_print("DisplayConfigurationMonitoringThread: Releasing lock")
 			self.lock.release()
+			if locked:
+				safe_print("DisplayConfigurationMonitoringThread: Released lock")
 			if "--oneshot" in sys.argv[1:]:
 				wx.CallAfter(self.exit)
 				break
@@ -2285,7 +2338,10 @@ class ProfileLoader(object):
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
+		if self.lock.locked():
+			safe_print("Waiting to acquire lock...")
 		with self.lock:
+			safe_print("Acquired lock")
 			if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
 				args = (param, connection, ip, pid, module, component, instance)
 				try:
@@ -2310,6 +2366,7 @@ class ProfileLoader(object):
 										  component)
 						safe_print(msg)
 						self.notify([msg], [], show_notification=False)
+			safe_print("Releasing lock")
 
 	def _reset_display_profile_associations(self):
 		for devicekey, (display_edid,
@@ -2421,25 +2478,33 @@ class ProfileLoader(object):
 				except WindowsError, exception:
 					safe_print(exception)
 
-	def _set_manual_restore(self, event):
+	def _set_manual_restore(self, event, manual_restore=True):
 		if event:
 			safe_print("Menu command:", end=" ")
 		safe_print("Set calibration state to load profile vcgt")
+		if self.lock.locked():
+			safe_print("Waiting to acquire lock...")
 		with self.lock:
+			safe_print("Acquired lock")
 			setcfg("profile_loader.reset_gamma_ramps", 0)
-			self._manual_restore = True
+			self._manual_restore = manual_restore
 			self._reset_gamma_ramps = False
+			safe_print("Releasing lock")
 		self.taskbar_icon.set_visual_state()
 		self.writecfg()
 
-	def _set_reset_gamma_ramps(self, event):
+	def _set_reset_gamma_ramps(self, event, manual_restore=True):
 		if event:
 			safe_print("Menu command:", end=" ")
 		safe_print("Set calibration state to reset vcgt")
+		if self.lock.locked():
+			safe_print("Waiting to acquire lock...")
 		with self.lock:
+			safe_print("Acquired lock")
 			setcfg("profile_loader.reset_gamma_ramps", 1)
-			self._manual_restore = True
+			self._manual_restore = manual_restore
 			self._reset_gamma_ramps = True
+			safe_print("Releasing lock")
 		self.taskbar_icon.set_visual_state()
 		self.writecfg()
 
@@ -2466,7 +2531,10 @@ class ProfileLoader(object):
 			if result == wx.ID_CANCEL:
 				safe_print("Cancelled toggling fix profile associations")
 				return False
+		if self.lock.locked():
+			safe_print("Waiting to acquire lock...")
 		with self.lock:
+			safe_print("Acquired lock")
 			setcfg("profile_loader.fix_profile_associations",
 				   int(event.IsChecked()))
 			if event.IsChecked():
@@ -2475,6 +2543,7 @@ class ProfileLoader(object):
 				self._reset_display_profile_associations()
 			self._manual_restore = True
 			self.writecfg()
+			safe_print("Releasing lock")
 		return event.IsChecked()
 
 	def _set_exceptions(self):
