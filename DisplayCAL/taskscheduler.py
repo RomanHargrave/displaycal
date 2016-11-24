@@ -132,8 +132,11 @@ class TaskScheduler(object):
 
 	def run(self, name):
 		""" Run existing task """
+		startupinfo = sp.STARTUPINFO()
+		startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+		startupinfo.wShowWindow = sp.SW_HIDE
 		p = sp.Popen(["schtasks.exe", "/Run", "/TN", name], stdin=sp.PIPE,
-					 stdout=sp.PIPE, stderr=sp.STDOUT)
+					 stdout=sp.PIPE, stderr=sp.STDOUT, startupinfo=startupinfo)
 		stdout, stderr = p.communicate()
 		safe_print(stdout)
 		return p.returncode
