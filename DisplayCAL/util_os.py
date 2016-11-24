@@ -203,10 +203,7 @@ def expanduseru(path):
 		elif not 'HOMEPATH' in os.environ:
 			return path
 		else:
-			try:
-				drive = getenvu('HOMEDRIVE')
-			except KeyError:
-				drive = ''
+			drive = getenvu('HOMEDRIVE', '')
 			userhome = join(drive, getenvu('HOMEPATH'))
 
 		if i != 1: #~user
