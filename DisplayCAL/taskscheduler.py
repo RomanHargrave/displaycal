@@ -46,7 +46,9 @@ import win32api
 from win32com.taskscheduler.taskscheduler import *
 
 from log import safe_print
+from safe_print import enc
 from util_os import getenvu
+from util_str import safe_unicode
 
 
 class TaskScheduler(object):
@@ -138,7 +140,7 @@ class TaskScheduler(object):
 		p = sp.Popen(["schtasks.exe", "/Run", "/TN", name], stdin=sp.PIPE,
 					 stdout=sp.PIPE, stderr=sp.STDOUT, startupinfo=startupinfo)
 		stdout, stderr = p.communicate()
-		safe_print(stdout)
+		safe_print(safe_unicode(stdout, enc))
 		return p.returncode
 
 	def has_task(self, name):
