@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import inspect
 import sys
 import traceback
 
@@ -100,6 +99,7 @@ def handle_error(error, parent=None, silent=False):
 
 def print_callstack():
 	""" Print call stack """
+	import inspect
 	stack = inspect.stack()
 	indent = ""
 	for frame, filename, linenum, funcname, line, exc in reversed(stack[1:]):
@@ -109,4 +109,28 @@ def print_callstack():
 
 
 class ResourceError(Exception):
+	pass
+
+
+class Error(Exception):
+	pass
+
+
+class Info(UserWarning):
+	pass
+
+
+class UnloggedError(Error):
+	pass
+
+
+class UnloggedInfo(Info):
+	pass
+
+
+class UnloggedWarning(UserWarning):
+	pass
+
+
+class Warn(UserWarning):
 	pass

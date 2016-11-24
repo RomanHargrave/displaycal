@@ -26,7 +26,9 @@ import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 					get_default_dpi, get_verified_path, pyname, setcfg,
 					confighome, appbasename, logdir, set_default_app_dpi)
-from debughelpers import getevtobjname, getevttype, handle_error
+from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
+						  UnloggedWarning, Warn, getevtobjname, getevttype,
+						  handle_error)
 from log import log as log_, safe_print
 from meta import name as appname
 from network import get_valid_host
@@ -6255,6 +6257,41 @@ def format_ui_element(child, format="plain"):
 def restore_path_dialog_classes():
 	wx.DirDialog = _DirDialog
 	wx.FileDialog = _FileDialog
+
+
+def show_result_dialog(result, parent=None, pos=None, confirm=False, wrap=70):
+	""" Show dialog depending on type of result. Result should be an
+	exception type. An appropriate visual representation will be chosen
+	whether result is of exception type 'Info', 'Warning' or other error. """
+	if (result.__class__ is Exception and result.args and
+		result.args[0] == "aborted"):
+		# Special case - aborted
+		msg = lang.getstr("aborted")
+	else:
+		msg = safe_unicode(result)
+	if not pos:
+		pos=(-1, -1)
+	if isinstance(result, Info):
+		bitmap = geticon(32, "dialog-information")
+	elif isinstance(result, Warning):
+		bitmap = geticon(32, "dialog-warning")
+	else:
+		bitmap = geticon(32, "dialog-error")
+	if confirm:
+		cls = ConfirmDialog
+		ok = confirm
+	else:
+		cls = InfoDialog
+		ok = lang.getstr("ok")
+	nowrap = wrap is None
+	dlg = cls(parent, pos=pos, msg=msg, ok=ok, bitmap=bitmap, 
+			  log=not isinstance(result, (UnloggedError, UnloggedInfo,
+										  UnloggedWarning)), nowrap=nowrap,
+										  wrap=wrap)
+	if confirm:
+		returncode = dlg.ShowModal()
+		dlg.Destroy()
+		return returncode == wx.ID_OK
 
 
 def test():

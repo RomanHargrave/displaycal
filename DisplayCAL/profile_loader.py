@@ -36,7 +36,7 @@ if sys.platform == "win32":
 	from colord import device_id_from_edid
 	from config import (exe, exedir, fs_enc, get_data_path, get_default_dpi,
 						get_icon_bundle, geticon, iccprofiles, pydir)
-	from debughelpers import handle_error
+	from debughelpers import Error, UnloggedError, handle_error
 	from edid import get_edid
 	from meta import domain
 	from ordereddict import OrderedDict
@@ -49,12 +49,11 @@ if sys.platform == "win32":
 						  get_file_info, get_pids, get_process_filename,
 						  get_real_display_devices_info,
 						  per_user_profiles_isenabled)
-	from worker import (Error, UnloggedError, check_set_argyll_bin,
-						show_result_dialog)
 	from wxaddons import CustomGridCellEvent
 	from wxfixes import ThemedGenButton, set_bitmap_labels
 	from wxwindows import (BaseFrame, ConfirmDialog, CustomCellBoolRenderer,
-						   CustomGrid, InfoDialog, TaskBarNotification, wx)
+						   CustomGrid, InfoDialog, TaskBarNotification, wx,
+						   show_result_dialog)
 	import ICCProfile as ICCP
 	import localization as lang
 	import madvr
@@ -678,18 +677,6 @@ if sys.platform == "win32":
 			if pindex < 0:
 				wx.Bell()
 				return
-			argyll_dir = getcfg("argyll.dir")
-			if not check_set_argyll_bin():
-				return
-			if getcfg("argyll.dir") != argyll_dir:
-				if self.pl.frame:
-					result = self.pl.frame.send_command(None,
-														'set-argyll-dir "%s"' %
-														getcfg("argyll.dir"))
-				else:
-					result = "ok"
-				if result == "ok":
-					self.pl.writecfg()
 			try:
 				profile = ICCP.ICCProfile(self.profiles[pindex])
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
@@ -717,6 +704,16 @@ if sys.platform == "win32":
 			else:
 				self.profile_info[id].Show()
 				self.profile_info[id].Raise()
+			argyll_dir = getcfg("argyll.dir")
+			if getcfg("argyll.dir") != argyll_dir:
+				if self.pl.frame:
+					result = self.pl.frame.send_command(None,
+														'set-argyll-dir "%s"' %
+														getcfg("argyll.dir"))
+				else:
+					result = "ok"
+				if result == "ok":
+					self.pl.writecfg()
 	
 		def close_profile_info(self, event):
 			# Remove the frame from the hash table

@@ -78,6 +78,8 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
 					split_display_name, writecfg, appbasename)
+from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
+						  UnloggedWarning, Warn)
 from defaultpaths import cache, iccprofiles_home, iccprofiles_display_home
 from edid import WMIError, get_edid
 from jsondict import JSONDict
@@ -111,7 +113,7 @@ from util_str import (safe_basestring, safe_asciize, safe_str, safe_unicode,
 					  strtr, universal_newlines)
 from wxaddons import BetterCallLater, BetterWindowDisabler, wx
 from wxwindows import (ConfirmDialog, HtmlInfoDialog, InfoDialog,
-					   ProgressDialog, SimpleTerminal)
+					   ProgressDialog, SimpleTerminal, show_result_dialog)
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
 from wxUntetheredFrame import UntetheredFrame
@@ -1057,65 +1059,6 @@ def set_argyll_bin(parent=None, silent=False, callafter=None, callafter_args=())
 	if not result and callafter:
 		callafter(*callafter_args)
 	return result
-
-
-def show_result_dialog(result, parent=None, pos=None, confirm=False, wrap=70):
-	""" Show dialog depending on type of result. Result should be an
-	exception type. An appropriate visual representation will be chosen
-	whether result is of exception type 'Info', 'Warning' or other error. """
-	if (result.__class__ is Exception and result.args and
-		result.args[0] == "aborted"):
-		# Special case - aborted
-		msg = lang.getstr("aborted")
-	else:
-		msg = safe_unicode(result)
-	if not pos:
-		pos=(-1, -1)
-	if isinstance(result, Info):
-		bitmap = geticon(32, "dialog-information")
-	elif isinstance(result, Warning):
-		bitmap = geticon(32, "dialog-warning")
-	else:
-		bitmap = geticon(32, "dialog-error")
-	if confirm:
-		cls = ConfirmDialog
-		ok = confirm
-	else:
-		cls = InfoDialog
-		ok = lang.getstr("ok")
-	nowrap = wrap is None
-	dlg = cls(parent, pos=pos, msg=msg, ok=ok, bitmap=bitmap, 
-			  log=not isinstance(result, (UnloggedError, UnloggedInfo,
-										  UnloggedWarning)), nowrap=nowrap,
-										  wrap=wrap)
-	if confirm:
-		returncode = dlg.ShowModal()
-		dlg.Destroy()
-		return returncode == wx.ID_OK
-
-
-class Error(Exception):
-	pass
-
-
-class Info(UserWarning):
-	pass
-
-
-class UnloggedError(Error):
-	pass
-
-
-class UnloggedInfo(Info):
-	pass
-
-
-class UnloggedWarning(UserWarning):
-	pass
-
-
-class Warn(UserWarning):
-	pass
 
 
 class EvalFalse(object):
