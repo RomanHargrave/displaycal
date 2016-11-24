@@ -6748,6 +6748,17 @@ usage: spotread [-options] [logfile]
 		if not_main_thread:
 			# If running in a thread, need to call pythoncom.CoInitialize
 			pythoncom.CoInitialize()
+
+			import taskscheduler
+			try:
+				ts = taskscheduler.TaskScheduler()
+			except Exception, exception:
+				safe_print("Warning - could not access task scheduler:",
+						   exception)
+			else:
+				if ts.query_task(appname + " Profile Loader Launcher"):
+					pythoncom.CoUninitialize()
+					return True
 		try:
 			scut = pythoncom.CoCreateInstance(win32com_shell.CLSID_ShellLink, None,
 											  pythoncom.CLSCTX_INPROC_SERVER, 

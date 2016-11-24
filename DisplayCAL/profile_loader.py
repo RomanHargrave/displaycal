@@ -35,7 +35,7 @@ if sys.platform == "win32":
 	import win32process
 
 	from colord import device_id_from_edid
-	from config import (exe, exedir, fs_enc, get_data_path, get_default_dpi,
+	from config import (exe, exedir, get_data_path, get_default_dpi,
 						get_icon_bundle, geticon, iccprofiles, pydir)
 	from debughelpers import Error, UnloggedError, handle_error
 	from edid import get_edid
@@ -1497,7 +1497,6 @@ class ProfileLoader(object):
 						loader_args.extend(["run", "--batch", "--no-wait",
 											"--offline",
 											"--command=run-apply-profiles",
-											"--",
 											"http://%s/0install/%s.xml" %
 											(domain.lower(), appname)])
 					else:
@@ -1505,11 +1504,10 @@ class ProfileLoader(object):
 						loader_args.append(pyw)
 				else:
 					# Regular install
-					loader_args.append(get_data_path(os.path.join("scripts", 
-																  appname + "-apply-profiles")))
+					loader_args.append(get_data_path("/".join(["scripts", 
+															   appname + "-apply-profiles"])))
 			else:
 				cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
-			loader_args.append("--task")
 
 			try:
 				p = win32com_shell.ShellExecuteEx(lpVerb="runas",
@@ -2606,7 +2604,7 @@ def main():
 			not "--task" in sys.argv[1:]):
 			import taskscheduler
 			
-			taskname = appname + " Profile Loader"
+			taskname = appname + " Profile Loader Launcher"
 
 			try:
 				ts = taskscheduler.TaskScheduler()
@@ -2614,7 +2612,7 @@ def main():
 				safe_print("Warning - could not access task scheduler:",
 						   exception)
 			else:
-				if not taskname in ts and is_superuser():
+				if is_superuser() and not ts.query_task(taskname):
 					# Check if our task exists, and if it does not, create it.
 					# (requires admin privileges)
 					safe_print("Trying to create task %r..." % taskname)
@@ -2628,8 +2626,8 @@ def main():
 						pyw = os.path.normpath(os.path.join(pydir, "..",
 															appname +
 															"-apply-profiles.pyw"))
-						stub = ("import subprocess as sp;"
-							    "sp.Popen([%r, %r, '--task'], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)")
+						script = get_data_path("/".join(["scripts", 
+														 appname + "-apply-profiles-launcher"]))
 						if os.path.exists(pyw):
 							# Running from source or 0install
 							# Check if this is a 0install implementation, in which
@@ -2648,17 +2646,10 @@ def main():
 													"--task"])
 							else:
 								# Running from source
-								loader_args.extend(["-c",
-													stub %
-													(cmd.encode(fs_enc),
-													 pyw.encode(fs_enc))])
+								loader_args.append(script)
 						else:
 							# Regular (site-packages) install
-							loader_args.extend(["-c",
-												stub %
-												(cmd.encode(fs_enc),
-											     get_data_path(os.path.join("scripts", 
-																		    appname + "-apply-profiles")).encode(fs_enc))])
+							loader_args.append(script)
 					else:
 						# Standalone executable
 						cmd = os.path.join(pydir,
@@ -2667,32 +2658,24 @@ def main():
 					try:
 						# We create a disabled task because our autostart
 						# entry will run it
-						ts.create(taskname,
-								  cmd,
-								  loader_args,
-								  trigger_type=taskscheduler.TASK_EVENT_TRIGGER_AT_LOGON,
-								  trigger_flags=taskscheduler.TASK_TRIGGER_FLAG_DISABLED,
-								  replace_existing=True)
+						ts.create_logon_task(taskname,
+											 cmd,
+											 loader_args,
+											 u"Open Source Developer, "
+											 u"Florian Höch",
+											 "This task launches the profile "
+											 "loader with the applicable "
+											 "privileges for logged in users",
+											 replace_existing=True)
 					except Exception, exception:
+						if debug:
+							exception = traceback.format_exc()
 						safe_print("Warning - Could not create task %r:" %
 								   taskname, exception)
 					else:
-						if taskname in ts:
+						if ts.query_task(taskname):
 							safe_print("Successfully created task %r" %
 									   taskname)
-				if not is_superuser() and taskname in ts:
-					# The whole point of running the task is to gain admin
-					# privileges, if we're already admin, there's no point
-					safe_print("Trying to run task %r..." % taskname)
-					try:
-						exitcode = ts.run(taskname)
-					except Exception, exception:
-						safe_print("Warning - Could not run task %r:" %
-								   taskname, exception)
-					else:
-						if exitcode == 0:
-							BaseApp._run_exitfuncs()
-							sys.exit(0)
 
 		config.initcfg("apply-profiles")
 

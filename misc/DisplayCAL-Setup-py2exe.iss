@@ -72,14 +72,14 @@ Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\%(AppName)s; Filena
 Name: {group}\LICENSE; Filename: {app}\LICENSE.txt
 Name: {group}\README (EN); Filename: {app}\README.html; Tasks: ; Languages: 
 Name: {group}\README (FR); Filename: {app}\README-fr.html; Tasks: ; Languages: french
-Name: "{commonstartup}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-apply-profiles.exe; Tasks: calibrationloadinghandledbydisplaycal; 
+Name: "{commonstartup}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-apply-profiles.exe; OnlyBelowVersion: 0,6.0; Tasks: calibrationloadinghandledbydisplaycal; 
 
 [Run]
 Filename: {app}\%(AppName)s.exe; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent;
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
 Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDisplayCAL}; Tasks: calibrationloadinghandledbydisplaycal; 
-Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader"" /F"; Flags: RunHidden RunAsCurrentUser;
+Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
 Filename: {app}\%(AppName)s-apply-profiles.exe; Flags: nowait RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal; 
 MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
 
@@ -97,7 +97,8 @@ Type: files; Name: "{app}\theme\icons\dispcalGUI*.ico"
 Type: files; Name: "{app}\theme\icons\16x16\dispcalGUI*.png"
 Type: files; Name: "{app}\theme\icons\32x32\dispcalGUI*.png"
 Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
+Type: files; Name: "{commonstartup}\%(AppName)s Profile Loader.lnk"
 
 [UninstallRun]
 Filename: taskkill.exe; parameters: /im %(AppName)s-apply-profiles.exe; Flags: RunHidden RunAsCurrentUser;
-Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader"" /F"; Flags: RunHidden RunAsCurrentUser;
+Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
