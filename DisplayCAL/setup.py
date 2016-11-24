@@ -618,11 +618,16 @@ def setup():
 			# desktop entry under Linux
 			icons = []
 			desktopicons = []
+			if sys.platform == "darwin":
+				largest_icon_size = "128x128"
+			else:
+				largest_icon_size = "256x256"
 			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
 												   dname, "*.png")):
 				if not os.path.basename(iconpath).startswith(name.lower()) or (
 					sys.platform in ("darwin", "win32") and 
-					dname in ("16x16", "32x32")):
+					dname in ("16x16", "32x32", "48x48", largest_icon_size)):
+					# We need all the sizes we use in get_icon_bundle
 					icons.append(iconpath)
 				elif sys.platform not in ("darwin", "win32"):
 					desktopicons.append(iconpath)
