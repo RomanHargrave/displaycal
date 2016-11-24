@@ -2599,14 +2599,9 @@ def main():
 																		    appname + "-apply-profiles")).encode(fs_enc))])
 					else:
 						# Standalone executable
-						cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
-						loader_args.extend(["-S", "-c",
-											r"import sys;"
-											r"sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip');"
-											r"import subprocess as sp;"
-											r"sp.Popen([%r, '--task'], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)" %
-											cmd.encode(fs_enc)])
-						cmd = os.path.join(pydir, "lib", "pythonw.exe")
+						cmd = os.path.join(pydir,
+										   appname +
+										   "-apply-profiles-launcher.exe")
 					try:
 						# We create a disabled task because our autostart
 						# entry will run it

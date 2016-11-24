@@ -826,7 +826,9 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		tmp_scripts_dir = os.path.join(basedir, "build", "temp.scripts")
 		if not os.path.isdir(tmp_scripts_dir):
 			os.makedirs(tmp_scripts_dir)
-		for script, desc in scripts:
+		apply_profiles_launcher = (appname.lower() + "-apply-profiles-launcher",
+								   appname + " Profile Loader Launcher")
+		for script, desc in scripts + [apply_profiles_launcher]:
 			shutil.copy(os.path.join(basedir, "scripts", script),
 						os.path.join(tmp_scripts_dir, script2pywname(script)))
 		attrs["windows"] = [Target(**{
@@ -838,6 +840,17 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": desc
 		}) for script, desc in scripts]
+		# Add profile loader launcher
+		attrs["windows"].append(Target(**{
+			"script": os.path.join(tmp_scripts_dir,
+								   script2pywname(apply_profiles_launcher[0])),
+			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
+												appname.lower() + "-apply-profiles" +
+												".ico"))],
+			"other_resources": [(24, 1, manifest_xml)],
+			"copyright": u"© %s %s" % (strftime("%Y"), author),
+			"description": apply_profiles_launcher[1]
+		}))
 		console_scripts = [name + "-VRML-to-X3D-converter"]
 		for console_script in console_scripts:
 			console_script_path = os.path.join(tmp_scripts_dir,
