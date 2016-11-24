@@ -4,12 +4,6 @@
 import sys
 
 
-for arg in sys.argv[1:]:
-	if arg not in ("--help", "--force", "--verify", "--silent",
-				   "--error-dialog", "-V", "--version"):
-		unknown_option = arg
-		break
-
 if sys.platform == "win32" and not ("--help" in sys.argv[1:] or
 									"-V" in sys.argv[1:] or
 									"--version" in sys.argv[1:]):

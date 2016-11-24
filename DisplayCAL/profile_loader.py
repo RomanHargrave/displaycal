@@ -30,6 +30,7 @@ if sys.platform == "win32":
 
 	import pywintypes
 	import win32api
+	import win32event
 	import win32gui
 	import win32process
 
@@ -40,20 +41,20 @@ if sys.platform == "win32":
 	from edid import get_edid
 	from meta import domain
 	from ordereddict import OrderedDict
-	from util_os import getenvu, is_superuser, which
+	from util_os import getenvu, is_superuser, quote_args, which
 	from util_str import safe_asciize, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
 						  enable_per_user_profiles,
 						  get_active_display_device, get_display_devices,
 						  get_file_info, get_pids, get_process_filename,
-						  get_real_display_devices_info,
+						  get_real_display_devices_info, get_windows_error,
 						  per_user_profiles_isenabled)
 	from wxaddons import CustomGridCellEvent
 	from wxfixes import ThemedGenButton, set_bitmap_labels
-	from wxwindows import (BaseFrame, ConfirmDialog, CustomCellBoolRenderer,
-						   CustomGrid, InfoDialog, TaskBarNotification, wx,
-						   show_result_dialog)
+	from wxwindows import (BaseApp, BaseFrame, ConfirmDialog,
+						   CustomCellBoolRenderer, CustomGrid, InfoDialog,
+						   TaskBarNotification, wx, show_result_dialog)
 	import ICCProfile as ICCP
 	import localization as lang
 	import madvr
@@ -541,11 +542,8 @@ if sys.platform == "win32":
 			list_ctrl.SetColumnWidth(0, int(430 * scale))
 			list_ctrl.SetColumnWidth(1, int(210 * scale))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
-						   lambda e: (dlg.remove_btn.Enable(self.current_user or
-															is_superuser()),
-									  dlg.set_as_default_btn.Enable((self.current_user or
-																	 is_superuser()) and
-																	e.GetIndex() > 0),
+						   lambda e: (dlg.remove_btn.Enable(),
+									  dlg.set_as_default_btn.Enable(e.GetIndex() > 0),
 									  dlg.profile_info_btn.Enable()))
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_DESELECTED,
 						   lambda e: (dlg.remove_btn.Disable(),
@@ -575,6 +573,10 @@ if sys.platform == "win32":
 			InfoDialog.OnClose(self, event)
 
 		def add_profile(self, event):
+			if self.add_btn.GetAuthNeeded():
+				if self.pl.elevate():
+					self.EndModal(wx.ID_CANCEL)
+				return
 			dlg = ConfirmDialog(self,
 								msg=lang.getstr("profile.choose"),
 								title=lang.getstr("add"),
@@ -723,12 +725,15 @@ if sys.platform == "win32":
 			event.Skip()
 
 		def disable_btns(self):
-			self.add_btn.Disable()
 			self.remove_btn.Disable()
 			self.profile_info_btn.Disable()
 			self.set_as_default_btn.Disable()
 
 		def remove_profile(self, event):
+			if self.remove_btn.GetAuthNeeded():
+				if self.pl.elevate():
+					self.EndModal(wx.ID_CANCEL)
+				return
 			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 													wx.LIST_STATE_SELECTED)
 			if pindex > -1:
@@ -737,6 +742,10 @@ if sys.platform == "win32":
 				wx.Bell()
 
 		def set_as_default(self, event):
+			if self.set_as_default_btn.GetAuthNeeded():
+				if self.pl.elevate():
+					self.EndModal(wx.ID_CANCEL)
+				return
 			pindex = self.profiles_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 													wx.LIST_STATE_SELECTED)
 			if pindex > -1:
@@ -823,19 +832,21 @@ if sys.platform == "win32":
 			if scope_changed:
 				self.current_user = current_user
 				self.use_my_settings_cb.SetValue(current_user)
-			warn = not current_user and is_superuser()
+			superuser = is_superuser()
+			warn = not current_user and superuser
 			update_layout = warn is not self.warning.IsShown()
 			if update_layout:
 				self.warn_bmp.Show(warn)
 				self.warning.Show(warn)
 				self.sizer3.Layout()
 			if sys.getwindowsversion() >= (6, ):
-				update_layout = self.add_btn.GetAuthNeeded() is current_user
+				auth_needed = not (current_user or superuser)
+				update_layout = self.add_btn.GetAuthNeeded() is not auth_needed
 				if update_layout:
 					self.buttonpanel.Freeze()
-					self.add_btn.SetAuthNeeded(not current_user)
-					self.remove_btn.SetAuthNeeded(not current_user)
-					self.set_as_default_btn.SetAuthNeeded(not current_user)
+					self.add_btn.SetAuthNeeded(auth_needed)
+					self.remove_btn.SetAuthNeeded(auth_needed)
+					self.set_as_default_btn.SetAuthNeeded(auth_needed)
 					self.buttonpanel.Layout()
 					self.buttonpanel.Thaw()
 			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
@@ -855,7 +866,6 @@ if sys.platform == "win32":
 					self.profiles_ctrl.SetStringItem(pindex, 0, description)
 					self.profiles_ctrl.SetStringItem(pindex, 1, profile)
 				self.profiles_ctrl.Thaw()
-			self.add_btn.Enable(current_user or is_superuser())
 			if scope_changed or profiles_changed:
 				if next or isinstance(event, wx.TimerEvent):
 					wx.CallAfter(self._next)
@@ -891,6 +901,7 @@ class ProfileLoader(object):
 		self.setgammaramp_success = {}
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
 		self._has_display_changed = False
+		self._shutdown = False
 		self._skip = "--skip" in sys.argv[1:]
 		apply_profiles = bool("--force" in sys.argv[1:] or
 							  config.getcfg("profile.load_on_login"))
@@ -1463,6 +1474,54 @@ class ProfileLoader(object):
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy()
 
+	def elevate(self):
+		if sys.getwindowsversion() >= (6, ):
+			from win32com.shell import shell as win32com_shell
+			from win32con import SW_SHOW
+
+			loader_args = []
+			if os.path.basename(exe).lower() in ("python.exe", "pythonw.exe"):
+				#cmd = os.path.join(exedir, "pythonw.exe")
+				cmd = exe
+				pyw = os.path.normpath(os.path.join(pydir, "..",
+													appname +
+													"-apply-profiles.pyw"))
+				if os.path.exists(pyw):
+					# Running from source or 0install
+					# Check if this is a 0install implementation, in which
+					# case we want to call 0launch with the appropriate
+					# command
+					if re.match("sha\d+(?:new)?",
+								os.path.basename(os.path.dirname(pydir))):
+						cmd = which("0install-win.exe") or "0install-win.exe"
+						loader_args.extend(["run", "--batch", "--no-wait",
+											"--offline",
+											"--command=run-apply-profiles",
+											"--",
+											"http://%s/0install/%s.xml" %
+											(domain.lower(), appname)])
+					else:
+						# Running from source
+						loader_args.append(pyw)
+				else:
+					# Regular install
+					loader_args.append(get_data_path(os.path.join("scripts", 
+																  appname + "-apply-profiles")))
+			else:
+				cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
+			loader_args.append("--task")
+
+			try:
+				p = win32com_shell.ShellExecuteEx(lpVerb="runas",
+												  lpFile=cmd,
+												  lpParameters=" ".join(quote_args(loader_args)),
+												  nShow=SW_SHOW)
+			except pywintypes.error, exception:
+				if exception.args[0] != winerror.ERROR_CANCELLED:
+					show_result_dialog(exception)
+			else:
+				return True
+
 	def exit(self, event=None):
 		safe_print("Executing ProfileLoader.exit(%s)" % event)
 		dlg = None
@@ -1983,13 +2042,16 @@ class ProfileLoader(object):
 				if (round(timeout * 100) % 25 == 0 and
 					not self._check_keep_running()):
 					self.monitoring = False
-					wx.CallAfter(lambda: self.frame and self.frame.Close())
+					wx.CallAfter(lambda: self.frame and self.frame.Close(force=True))
 					break
 				time.sleep(.1)
 				timeout += .1
 		safe_print("Display configuration monitoring thread finished")
+		self.shutdown()
 
 	def shutdown(self):
+		if self._shutdown:
+			return
 		safe_print("Shutting down profile loader")
 		if self.monitoring:
 			safe_print("Shutting down display configuration monitoring thread")
@@ -1997,6 +2059,7 @@ class ProfileLoader(object):
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
 		self.writecfg()
+		self._shutdown = True
 
 	def _enumerate_monitors(self):
 		safe_print("-" * 80)
@@ -2520,7 +2583,6 @@ def main():
 			safe_print("%s: unrecognized option `%s'" %
 					   (os.path.basename(sys.argv[0]), unknown_option))
 			if sys.platform == "win32":
-				from wxwindows import BaseApp
 				BaseApp._run_exitfuncs()
 		safe_print("Usage: %s [OPTION]..." % os.path.basename(sys.argv[0]))
 		safe_print("Apply profiles to configured display devices and load calibration")
@@ -2629,6 +2691,7 @@ def main():
 								   taskname, exception)
 					else:
 						if exitcode == 0:
+							BaseApp._run_exitfuncs()
 							sys.exit(0)
 
 		config.initcfg("apply-profiles")

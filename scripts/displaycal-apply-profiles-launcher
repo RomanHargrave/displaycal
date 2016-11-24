@@ -1,18 +1,29 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-# Only used on Windows to create standalone executable for task scheduler task
-
 import sys
 
-if sys.platform != "win32" or not getattr(sys, "frozen", False):
-	print "This stub is only used by py2exe on Windows."
+if sys.platform != "win32":
+	print "This stub is only used on Windows."
 	sys.exit(1)
 
+import os
 import subprocess as sp
 
-# Strip "-launcher" from executable name
-apply_profiles = sys.executable[:-13] + ".exe"
+appname = "DisplayCAL"
 
-sp.Popen([apply_profiles, "--task"], stdin=sp.PIPE, stdout=sp.PIPE,
-		 stderr=sp.STDOUT)
+if getattr(sys, "frozen", False):
+	args = [os.path.join(os.path.dirname(sys.executable),
+			appname + "-apply-profiles.exe")]
+else:
+	args = [sys.executable]
+	dirname = os.path.dirname(__file__)
+	apply_profiles = os.path.join(dirname, "..", appname + "-apply-profiles.pyw")
+	if os.path.isfile(apply_profiles):
+		args.append(os.path.normpath(apply_profiles))
+	else:
+		args.append(os.path.join(dirname, appname.lower() + "-apply-profiles"))
+
+args.append("--task")
+
+sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)
