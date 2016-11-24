@@ -2626,6 +2626,7 @@ def main():
 				if not is_superuser() and taskname in ts:
 					# The whole point of running the task is to gain admin
 					# privileges, if we're already admin, there's no point
+					safe_print("Trying to run task %r..." % taskname)
 					try:
 						exitcode = ts.run(taskname)
 					except Exception, exception:
