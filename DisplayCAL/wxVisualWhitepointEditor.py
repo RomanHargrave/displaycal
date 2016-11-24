@@ -243,6 +243,50 @@ class AuiDarkDockArt(aui.dockart.AuiDefaultDockArt):
         dc.DrawBitmap(bmp, rect.x, rect.y, True)
 
 
+    def SetCustomPaneBitmap(self, bmp, button, active, maximize=False):
+        """
+        Sets a custom button bitmap for the pane button.
+
+        :param Bitmap `bmp`: the actual bitmap to set;
+        :param integer `button`: the button identifier;
+        :param bool `active`: whether it is the bitmap for the active button or not;
+        :param bool `maximize`: used to distinguish between the maximize and restore bitmaps.
+        """
+
+        if button == aui.dockart.AUI_BUTTON_CLOSE:
+            if active:
+                self._active_close_bitmap = bmp
+            else:
+                self._inactive_close_bitmap = bmp
+
+            if wx.Platform == "__WXMAC__":
+                self._custom_pane_bitmaps = True
+
+        elif button == aui.dockart.AUI_BUTTON_PIN:
+            if active:
+                self._active_pin_bitmap = bmp
+            else:
+                self._inactive_pin_bitmap = bmp
+
+        elif button == aui.dockart.AUI_BUTTON_MAXIMIZE_RESTORE:
+            if maximize:
+                if active:
+                    self._active_maximize_bitmap = bmp
+                else:
+                    self._inactive_maximize_bitmap = bmp
+            else:
+                if active:
+                    self._active_restore_bitmap = bmp
+                else:
+                    self._inactive_restore_bitmap = bmp
+
+        elif button == aui.dockart.AUI_BUTTON_MINIMIZE:
+            if active:
+                self._active_minimize_bitmap = bmp
+            else:
+                self._inactive_minimize_bitmap = bmp
+
+
 class AuiManager_LRDocking(aui.AuiManager):
     
     """
