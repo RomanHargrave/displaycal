@@ -174,6 +174,8 @@ class TaskScheduler(object):
 
 	def __init__(self):
 		self.__ts = None
+		self.stdout = ""
+		self.lastreturncode = None
 
 	@property
 	def _ts(self):
@@ -322,9 +324,9 @@ class TaskScheduler(object):
 		startupinfo.wShowWindow = sp.SW_HIDE
 		p = sp.Popen([safe_str(arg) for arg in args], stdin=sp.PIPE,
 					 stdout=sp.PIPE, stderr=sp.STDOUT, startupinfo=startupinfo)
-		stdout, stderr = p.communicate()
+		self.stdout, stderr = p.communicate()
 		if echo:
-			safe_print(safe_unicode(stdout, enc))
+			safe_print(safe_unicode(self.stdout, enc))
 		self.lastreturncode = p.returncode
 		return p.returncode == 0
 	

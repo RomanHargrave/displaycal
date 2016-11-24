@@ -35,8 +35,9 @@ if sys.platform == "win32":
 	import win32process
 
 	from colord import device_id_from_edid
-	from config import (exe, exedir, get_data_path, get_default_dpi,
-						get_icon_bundle, geticon, iccprofiles, pydir)
+	from config import (autostart, autostart_home, exe, exedir, get_data_path,
+						get_default_dpi, get_icon_bundle, geticon, iccprofiles,
+						pydir)
 	from debughelpers import Error, UnloggedError, handle_error
 	from edid import get_edid
 	from meta import domain
@@ -2731,7 +2732,7 @@ def main():
 					try:
 						# We create a disabled task because our autostart
 						# entry will run it
-						ts.create_logon_task(taskname,
+						created = ts.create_logon_task(taskname,
 											 cmd,
 											 loader_args,
 											 u"Open Source Developer, "
@@ -2745,10 +2746,27 @@ def main():
 							exception = traceback.format_exc()
 						safe_print("Warning - Could not create task %r:" %
 								   taskname, exception)
+						if ts.stdout:
+							safe_print(ts.stdout)
 					else:
-						if ts.query_task(taskname):
-							safe_print("Successfully created task %r" %
-									   taskname)
+						safe_print(ts.stdout)
+						if created:
+							# Remove autostart entries, if any
+							name = appname + " Profile Loader"
+							entries = []
+							if autostart:
+								entries.append(os.path.join(autostart,
+															name + ".lnk"))
+							if autostart_home:
+								entries.append(os.path.join(autostart_home, 
+															name + ".lnk"))
+							for entry in entries:
+								if os.path.isfile(entry):
+									safe_print("Removing", entry)
+									try:
+										os.remove(entry)
+									except EnvironmentError, exception:
+										safe_print(exception)
 
 		config.initcfg("apply-profiles")
 
