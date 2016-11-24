@@ -537,7 +537,9 @@ def setup():
 		data_files += get_data(data, "data")
 		data_files += get_data(data, "xtra_package_data", name, sys.platform)
 		if sys.platform == "win32":
-			data_files.extend([(os.path.join(data, "lib"), [sys.executable])])
+			# Add python and pythonw
+			data_files.extend([(os.path.join(data, "lib"), [sys.executable,
+				os.path.join(os.path.dirname(sys.executable), "pythonw.exe")])])
 			# OpenAL DLLs for pyglet
 			openal32 = ctypes.util.find_library("OpenAL32.dll")
 			wrap_oal = ctypes.util.find_library("wrap_oal.dll")

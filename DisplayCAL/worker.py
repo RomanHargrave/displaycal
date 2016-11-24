@@ -74,7 +74,7 @@ from argyll_instruments import (get_canonical_instrument_name,
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds, intents)
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
-					exe_ext, fs_enc, getcfg, geticon, get_data_path,
+					exedir, exe_ext, fs_enc, getcfg, geticon, get_data_path,
 					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
 					split_display_name, writecfg, appbasename)
@@ -6773,10 +6773,9 @@ usage: spotread [-options] [logfile]
 			autostart_home_lnkname = os.path.join(autostart_home, 
 												  name + ".lnk")
 		loader_args = []
-		if os.path.basename(sys.executable).lower() in ("python.exe", 
+		if os.path.basename(exe).lower() in ("python.exe", 
 														"pythonw.exe"):
-			cmd = os.path.join(os.path.dirname(sys.executable),
-							   "pythonw.exe")
+			cmd = os.path.join(exedir, "pythonw.exe")
 			pyw = os.path.normpath(os.path.join(pydir, "..",
 												appname +
 												"-apply-profiles.pyw"))
@@ -6795,11 +6794,11 @@ usage: spotread [-options] [logfile]
 										(domain.lower(), appname)])
 				else:
 					# Running from source
-					loader_args.append(u'"%s"' % pyw)
+					loader_args.append(pyw)
 			else:
 				# Regular install
-				loader_args.append(u'"%s"' % get_data_path(os.path.join("scripts", 
-																		appname + "-apply-profiles")))
+				loader_args.append(get_data_path(os.path.join("scripts", 
+															  appname + "-apply-profiles")))
 		else:
 			cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
 		not_main_thread = currentThread().__class__ is not _MainThread
@@ -6820,7 +6819,7 @@ usage: spotread [-options] [logfile]
 																"icons", 
 																appname +
 																"-apply-profiles.ico")), 0)
-			scut.SetArguments(" ".join(loader_args))
+			scut.SetArguments(sp.list2cmdline(loader_args))
 			scut.SetShowCmd(win32con.SW_SHOWDEFAULT)
 			if is_superuser():
 				if autostart:
@@ -6868,7 +6867,7 @@ usage: spotread [-options] [logfile]
 										   appbasename + "-apply-profiles.lock")):
 			# Run profile loader TSR program if not yet loaded
 			if loader_args:
-				cmdline = '%s" %s "--skip' % (cmd, " ".join(loader_args))
+				cmdline = '%s" %s "--skip' % (cmd, sp.list2cmdline(loader_args))
 			else:
 				cmdline = '%s" "--skip' % cmd
 			launch_file(cmdline)

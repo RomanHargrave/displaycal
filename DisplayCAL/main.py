@@ -146,10 +146,10 @@ def main(module=None):
 							else:
 								# Send module/appname to notify running app
 								data = [module or appname]
-							if module != "3DLUT-maker":
-								for arg in sys.argv[1:]:
-									data.append(safe_str(safe_unicode(arg),
-														 "UTF-8"))
+								if module != "3DLUT-maker":
+									for arg in sys.argv[1:]:
+										data.append(safe_str(safe_unicode(arg),
+															 "UTF-8"))
 							data = sp.list2cmdline(data)
 							if appsocket.send(data):
 								incoming = appsocket.read()

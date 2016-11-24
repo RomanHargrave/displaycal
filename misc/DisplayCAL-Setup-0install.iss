@@ -71,12 +71,34 @@ Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zer
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
 Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden;
 Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading %(HTTPURL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
-Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --command=run-apply-profiles %(HTTPURL)s0install/%(AppName)s.xml"; Tasks: calibrationloadinghandledbydisplaycal;
+Filename: taskkill.exe; parameters: /im %(AppName)s-apply-profiles.exe; Flags: RunHidden RunAsCurrentUser;
+Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader"" /F"; Flags: RunHidden RunAsCurrentUser;
+Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --command=run-apply-profiles %(HTTPURL)s0install/%(AppName)s.xml"; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
 ; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --machine --add=auto-start --batch %(HTTPURL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
 Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading -- %(HTTPURL)s0install/%(AppName)s.xml --os"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbyos;
 
 [Dirs]
 Name: {commonappdata}\%(AppName)s; Permissions: users-modify;
+
+[InstallDelete]
+Type: files; Name: "{commonstartup}\dispcalGUI Profile Loader.lnk"
+Type: files; Name: "{group}\*dispcalGUI*"
+Type: files; Name: "{app}\dispcalGUI*.exe"
+Type: files; Name: "{app}\lib\dispcalGUI*"
+Type: files; Name: "{app}\screenshots\dispcalGUI*.png"
+Type: files; Name: "{app}\theme\dispcalGUI*.png"
+Type: files; Name: "{app}\theme\icons\dispcalGUI*.ico"
+Type: files; Name: "{app}\theme\icons\16x16\dispcalGUI*.png"
+Type: files; Name: "{app}\theme\icons\32x32\dispcalGUI*.png"
+Type: files; Name: "{app}\%(AppName)s*.exe"
+Type: files; Name: "{app}\python*.dll"
+Type: files; Name: "{app}\lib\*.dll"
+Type: files; Name: "{app}\lib\*.pyd"
+Type: dirifempty; Name: "{app}\lib"
+Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
+
+[UninstallRun]
+Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader"" /F"; Flags: RunHidden RunAsCurrentUser;
 
 [Code]
 function Get_RunEntryShellExec_Message(Value: string): string;

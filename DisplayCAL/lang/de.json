@@ -847,6 +847,7 @@
 	"profile.unsupported": "Nicht unterstützter Profil-Typ (%s) und/oder -Farbraum (%s).",
 	"profile.update": "Profil aktualisieren",
 	"profile_associations": "Profilzuweisungen...",
+	"profile_associations.changing_system_defaults.warning": "Sie ändern zur Zeit die Systemstandards",
 	"profile_associations.use_my_settings": "Eigene Einstellungen für das Anzeigegerät verwenden",
 	"profile_class": "Profilklasse",
 	"profile_connection_space_pcs": "Bezugsfarbraum (PCS)",

@@ -847,6 +847,7 @@
 	"profile.unsupported": "Type de profil (%s) ou espace de couleurs (%s) non pris en charge.",
 	"profile.update": "Mettre à jour le profil",
 		"*profile_associations": "Profile associations...",
+		"*profile_associations.changing_system_defaults.warning": "You are currently changing system defaults",
 		"*profile_associations.use_my_settings": "Use my settings for this display device",
 	"profile_class": "Classe de profil",
 	"profile_connection_space_pcs": "Espace de connexion du profil (PCS)",

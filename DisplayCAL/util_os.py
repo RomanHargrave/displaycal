@@ -342,10 +342,10 @@ def islink(path):
 def is_superuser():
 	if sys.platform == "win32":
 		if sys.getwindowsversion() >= (5, 1):
-			return ctypes.windll.shell32.IsUserAnAdmin()
+			return bool(ctypes.windll.shell32.IsUserAnAdmin())
 		else:
 			try:
-				return ctypes.windll.advpack.IsNTAdmin(0, 0)
+				return bool(ctypes.windll.advpack.IsNTAdmin(0, 0))
 			except Exception:
 				return False
 	else:

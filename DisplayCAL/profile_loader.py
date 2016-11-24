@@ -34,12 +34,13 @@ if sys.platform == "win32":
 	import win32process
 
 	from colord import device_id_from_edid
-	from config import (exe, get_default_dpi, get_icon_bundle, geticon,
-						iccprofiles)
+	from config import (exe, exedir, fs_enc, get_data_path, get_default_dpi,
+						get_icon_bundle, geticon, iccprofiles, pydir)
 	from debughelpers import handle_error
 	from edid import get_edid
+	from meta import domain
 	from ordereddict import OrderedDict
-	from util_os import getenvu, is_superuser
+	from util_os import getenvu, is_superuser, which
 	from util_str import safe_asciize, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
@@ -492,12 +493,19 @@ if sys.platform == "win32":
 				scale = 1
 			dlg.display_ctrl = wx.Choice(dlg, -1)
 			dlg.display_ctrl.Bind(wx.EVT_CHOICE, dlg.update_profiles)
-			dlg.sizer3.Insert(0, dlg.display_ctrl, 1, flag=wx.ALIGN_LEFT |
-														   wx.EXPAND | wx.TOP,
-							  border=5)
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
-			dlg.sizer3.Insert(1, hsizer, flag=wx.ALIGN_LEFT | wx.EXPAND)
+			dlg.sizer3.Add(hsizer, 1, flag=wx.ALIGN_LEFT | wx.EXPAND | wx.TOP,
+						   border=5)
+			hsizer.Add(dlg.display_ctrl, 1, wx.ALIGN_CENTER_VERTICAL)
+			identify_btn = ThemedGenButton(dlg, -1,
+										   lang.getstr("displays.identify"))
+			identify_btn.MinSize = -1, dlg.display_ctrl.Size[1] + 2
+			identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
+			hsizer.Add(identify_btn, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+										  border=8)
 			if sys.getwindowsversion() >= (6, ):
+				hsizer = wx.BoxSizer(wx.HORIZONTAL)
+				dlg.sizer3.Add(hsizer, flag=wx.ALIGN_LEFT | wx.EXPAND)
 				dlg.use_my_settings_cb = wx.CheckBox(dlg, -1,
 													 lang.getstr("profile_associations.use_my_settings"))
 				dlg.use_my_settings_cb.Bind(wx.EVT_CHECKBOX, self.use_my_settings)
@@ -505,13 +513,18 @@ if sys.platform == "win32":
 														wx.ALIGN_LEFT |
 														wx.ALIGN_CENTER_VERTICAL,
 						   border=12)
-			hsizer.Add((1, 1), 1)
-			identify_btn = ThemedGenButton(dlg, -1,
-										   lang.getstr("displays.identify"))
-			identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
-			hsizer.Add(identify_btn, flag=wx.ALIGN_RIGHT |
-										  wx.ALIGN_CENTER_VERTICAL | wx.TOP |
-										  wx.BOTTOM, border=8)
+				dlg.warn_bmp = wx.StaticBitmap(dlg, -1,
+											   geticon(16, "dialog-warning"))
+				dlg.warning = wx.StaticText(dlg, -1,
+											lang.getstr("profile_associations.changing_system_defaults.warning"))
+				warnsizer = wx.BoxSizer(wx.HORIZONTAL)
+				hsizer.Add(warnsizer, 0, wx.LEFT | wx.ALIGN_CENTER_VERTICAL,
+						   border=12)
+				warnsizer.Add(dlg.warn_bmp, 0, wx.ALIGN_CENTER_VERTICAL)
+				warnsizer.Add(dlg.warning, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+							  border=4)
+			else:
+				dlg.sizer3.Add((1, 12))
 			list_panel = wx.Panel(dlg, -1)
 			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -813,6 +826,21 @@ if sys.platform == "win32":
 			if scope_changed:
 				self.current_user = current_user
 				self.use_my_settings_cb.SetValue(current_user)
+			warn = not current_user and is_superuser()
+			update_layout = warn is not self.warning.IsShown()
+			if update_layout:
+				self.warn_bmp.Show(warn)
+				self.warning.Show(warn)
+				self.sizer3.Layout()
+			if sys.getwindowsversion() >= (6, ):
+				update_layout = self.add_btn.GetAuthNeeded() is current_user
+				if update_layout:
+					self.buttonpanel.Freeze()
+					self.add_btn.SetAuthNeeded(not current_user)
+					self.remove_btn.SetAuthNeeded(not current_user)
+					self.set_as_default_btn.SetAuthNeeded(not current_user)
+					self.buttonpanel.Layout()
+					self.buttonpanel.Thaw()
 			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
 			profiles.reverse()
 			profiles_changed = profiles != self.profiles
@@ -2482,7 +2510,7 @@ def main():
 	unknown_option = None
 	for arg in sys.argv[1:]:
 		if (arg not in ("--help", "--force", "-V", "--version") and
-			(arg not in ("--oneshot", "--debug", "-d") or
+			(arg not in ("--oneshot", "--debug", "-d", "--task") or
 			 sys.platform != "win32") and
 			(arg not in ("--verify", "--silent", "--error-dialog", "--skip") or
 			 sys.platform == "win32")):
@@ -2515,6 +2543,101 @@ def main():
 	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
 		safe_print("%s %s" % (os.path.basename(sys.argv[0]), version))
 	else:
+		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+			not "--task" in sys.argv[1:]):
+			import taskscheduler
+			
+			taskname = appname + " Profile Loader"
+
+			try:
+				ts = taskscheduler.TaskScheduler()
+			except Exception, exception:
+				safe_print("Warning - could not access task scheduler:",
+						   exception)
+			else:
+				if not taskname in ts and is_superuser():
+					# Check if our task exists, and if it does not, create it.
+					# (requires admin privileges)
+					safe_print("Trying to create task %r..." % taskname)
+					# Note that we use a stub so the task cannot be accidentally
+					# stopped (the stub launches the actual profile loader and
+					# then immediately exits)
+					loader_args = []
+					if os.path.basename(exe).lower() in ("python.exe", 
+														 "pythonw.exe"):
+						cmd = os.path.join(exedir, "pythonw.exe")
+						pyw = os.path.normpath(os.path.join(pydir, "..",
+															appname +
+															"-apply-profiles.pyw"))
+						stub = ("import subprocess as sp;"
+							    "sp.Popen([%r, %r, '--task'], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)")
+						if os.path.exists(pyw):
+							# Running from source or 0install
+							# Check if this is a 0install implementation, in which
+							# case we want to call 0launch with the appropriate
+							# command
+							if re.match("sha\d+(?:new)?",
+										os.path.basename(os.path.dirname(pydir))):
+								# No stub needed as 0install-win acts as stub
+								cmd = which("0install-win.exe") or "0install-win.exe"
+								loader_args.extend(["run", "--batch", "--no-wait",
+													"--offline",
+													"--command=run-apply-profiles",
+													"--",
+													"http://%s/0install/%s.xml" %
+													(domain.lower(), appname),
+													"--task"])
+							else:
+								# Running from source
+								loader_args.extend(["-c",
+													stub %
+													(cmd.encode(fs_enc),
+													 pyw.encode(fs_enc))])
+						else:
+							# Regular (site-packages) install
+							loader_args.extend(["-c",
+												stub %
+												(cmd.encode(fs_enc),
+											     get_data_path(os.path.join("scripts", 
+																		    appname + "-apply-profiles")).encode(fs_enc))])
+					else:
+						# Standalone executable
+						cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
+						loader_args.extend(["-S", "-c",
+											r"import sys;"
+											r"sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip');"
+											r"import subprocess as sp;"
+											r"sp.Popen([%r, '--task'], stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)" %
+											cmd.encode(fs_enc)])
+						cmd = os.path.join(pydir, "lib", "pythonw.exe")
+					try:
+						# We create a disabled task because our autostart
+						# entry will run it
+						ts.create(taskname,
+								  cmd,
+								  loader_args,
+								  trigger_type=taskscheduler.TASK_EVENT_TRIGGER_AT_LOGON,
+								  trigger_flags=taskscheduler.TASK_TRIGGER_FLAG_DISABLED,
+								  replace_existing=True)
+					except Exception, exception:
+						safe_print("Warning - Could not create task %r:" %
+								   taskname, exception)
+					else:
+						if taskname in ts:
+							safe_print("Successfully created task %r" %
+									   taskname)
+				if not is_superuser() and taskname in ts:
+					# The whole point of running the task is to gain admin
+					# privileges, if we're already admin, there's no point
+					try:
+						exitcode = ts.run(taskname)
+					except Exception, exception:
+						safe_print("Warning - Could not run task %r:" %
+								   taskname, exception)
+					else:
+						if exitcode == 0:
+							sys.exit(0)
+
 		config.initcfg("apply-profiles")
 
 		if (not "--force" in sys.argv[1:] and
