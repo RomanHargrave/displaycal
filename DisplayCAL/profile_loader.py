@@ -1536,7 +1536,7 @@ class ProfileLoader(object):
 															   appname + "-apply-profiles"])))
 			else:
 				cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
-
+			loader_args.append("--profile-associations")
 			try:
 				p = win32com_shell.ShellExecuteEx(lpVerb="runas",
 												  lpFile=cmd,
@@ -2086,6 +2086,9 @@ class ProfileLoader(object):
 			if "--oneshot" in sys.argv[1:]:
 				wx.CallAfter(self.exit)
 				break
+			elif "--profile-associations" in sys.argv[1:]:
+				sys.argv.remove("--profile-associations")
+				wx.CallAfter(self._set_profile_associations, None)
 			# Wait three seconds
 			timeout = 0
 			while (self and self.monitoring and timeout < 3 and
@@ -2637,7 +2640,8 @@ def main():
 	unknown_option = None
 	for arg in sys.argv[1:]:
 		if (arg not in ("--help", "--force", "-V", "--version") and
-			(arg not in ("--oneshot", "--debug", "-d", "--task") or
+			(arg not in ("--oneshot", "--debug", "-d", "--task",
+						 "--profile-associations") or
 			 sys.platform != "win32") and
 			(arg not in ("--verify", "--silent", "--error-dialog", "--skip") or
 			 sys.platform == "win32")):
