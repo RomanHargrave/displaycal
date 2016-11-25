@@ -120,6 +120,8 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.DC.DrawRoundedRectangleRect = lambda dc, rect, radius: dc.DrawRoundedRectangle(rect, radius)
 	wx.DC.EndDrawing = lambda self: None
 
+	wx.IconBundle.AddIconFromFile = lambda file, type=wx.BITMAP_TYPE_ANY: wx.IconBundle.AddIcon(file, type)
+
 	def ContainsRect(self, *args):
 		if len(args) > 1:
 			rect = wx.Rect(*args)

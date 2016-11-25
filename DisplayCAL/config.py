@@ -466,6 +466,12 @@ def get_icon_bundle(sizes, name):
 	""" Return a wx.IconBundle with given icon sizes """
 	from wxaddons import wx
 	iconbundle = wx.IconBundle()
+	if not sizes:
+		# Assume ICO format
+		ico = get_data_path("theme/icons/%s.ico" % name)
+		if ico:
+			iconbundle.AddIconFromFile(ico, wx.BITMAP_TYPE_ICO)
+			return iconbundle
 	for size in sizes:
 		iconbundle.AddIcon(get_bitmap_as_icon(size, name, False))
 	return iconbundle
