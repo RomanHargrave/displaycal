@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.2 </h2>
-					<p>2016-11-19 11:01 UTC</p>
+					<h2 id="version">3.2.1 </h2>
+					<p>2016-11-25 13:35 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Télécharger</a></li>
 						<li class="requirements"><a href="#requirements" style="font-size: 11px">Exigences du système</a></li>
@@ -473,6 +473,9 @@
 					<div>
 						<p>
 							<a href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Image disque</a>
+						</p>
+						<p>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.2.1.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.2.1.0/*.app</code>
 						</p>
 					</div>
 				</li>
@@ -2434,10 +2437,31 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 
 		<div id="changelog">
 			<h2>Journaux des modifications</h2>
-			<!-- 2016-11-19 11:01 (UTC) 3.2  -->
+			<!-- 2016-11-25 13:35 (UTC) 3.2.1  -->
 			<dl>
-				<dt id="changelog-3.2">2016-11-19 11:01 (UTC) 3.2 </dt>
+				<dt id="changelog-3.2.1">2016-11-25 13:35 (UTC) 3.2.1 </dt>
 					<dd>
+						<h3>3.2.1 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Profile loader (Windows Vista and later): The profile loader process now auto-starts with the highest available privileges if installed as administrator. This allows changing system default profile associations whenever logged in with administrative privileges.</li>
+							<li>Profile loader (Windows Vista and later): If running under a restricted user account and using system defaults, clicking any of the “Add...”, “Remove” and “Set as default” buttons will allow to restart the profile loader with elevated privileges.</li>
+							<li>Profile loader (Windows): Show profile description in addition to profile file name in profile associations dialog.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Linux, Windows: Visual whitepoint editor was not working in HiDPI mode.</li>
+							<li>Windows: Irritating “File not found” error after installing a profile with special characters in the profile name (note that the profile was installed regardless).</li>
+							<li>[Cosmetic] Standalone executables (Windows): In HiDPI mode, taskbar and task switcher icons could be showing placeholders due to missing icon files.</li>
+							<li>[Minor] Profile loader (Windows): Enable the profile associations dialog “Add...” button irrespective of the current list of profiles being empty.</li>
+							<li>[Minor] Profile loader (Windows): Suppress error message when trying to remove a profile from the active display device if the profile is the system default for said device (and thus cannot be removed unless running as administrator) but not for the current one.</li>
+							<li>Profile loader (Windows): Do not fail to close profile information windows if the profile associations dialog has already been closed.</li>>
+							<li>Profile loader (Windows): If logging into another user account with different DPI settings while keeping the original session running, then logging out of the other account and returning to the original session, the profile loader could deadlock.</li>
+						</ul>
+
+						<p id="changelog-3.2">2016-11-19 11:01 (UTC) 3.2 </p>
 						<h3>3.2 </h3>
 
 						<h4>Added in this release:</h4>
@@ -2494,7 +2518,7 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Windows: Toggling the “Load calibration on login” checkbox in the profile installation dialog now also toggles preserving calibration state in the profile loader and vice versa, thus actually affecting if calibration is loaded on login or not (this restores functionality that was lost with the initial DisplayCAL 3.1 release).</li>
-							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.2 from October 21, 2016).</li>
+							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.2.1 from October 21, 2016).</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>

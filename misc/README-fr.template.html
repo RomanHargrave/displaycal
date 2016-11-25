@@ -474,6 +474,9 @@
 						<p>
 							<a href="${URL}download/standalone/${APPNAME}.dmg">Image disque</a>
 						</p>
+						<p>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/${APPNAME}-${VERSION}/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/${APPNAME}-${VERSION}/*.app</code>
+						</p>
 					</div>
 				</li>
 				<li>
@@ -2439,6 +2442,27 @@ Tell, Simon Ryan, Alain Rossmann, Oliver Kitzing, Christian Schwinn</span></p>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Profile loader (Windows Vista and later): The profile loader process now auto-starts with the highest available privileges if installed as administrator. This allows changing system default profile associations whenever logged in with administrative privileges.</li>
+							<li>Profile loader (Windows Vista and later): If running under a restricted user account and using system defaults, clicking any of the “Add...”, “Remove” and “Set as default” buttons will allow to restart the profile loader with elevated privileges.</li>
+							<li>Profile loader (Windows): Show profile description in addition to profile file name in profile associations dialog.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Linux, Windows: Visual whitepoint editor was not working in HiDPI mode.</li>
+							<li>Windows: Irritating “File not found” error after installing a profile with special characters in the profile name (note that the profile was installed regardless).</li>
+							<li>[Cosmetic] Standalone executables (Windows): In HiDPI mode, taskbar and task switcher icons could be showing placeholders due to missing icon files.</li>
+							<li>[Minor] Profile loader (Windows): Enable the profile associations dialog “Add...” button irrespective of the current list of profiles being empty.</li>
+							<li>[Minor] Profile loader (Windows): Suppress error message when trying to remove a profile from the active display device if the profile is the system default for said device (and thus cannot be removed unless running as administrator) but not for the current one.</li>
+							<li>Profile loader (Windows): Do not fail to close profile information windows if the profile associations dialog has already been closed.</li>>
+							<li>Profile loader (Windows): If logging into another user account with different DPI settings while keeping the original session running, then logging out of the other account and returning to the original session, the profile loader could deadlock.</li>
+						</ul>
+
+						<p id="changelog-3.2">2016-11-19 11:01 (UTC) 3.2 </p>
+						<h3>3.2 </h3>
 
 						<h4>Added in this release:</h4>
 						<ul>
