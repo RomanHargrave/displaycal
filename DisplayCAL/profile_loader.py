@@ -1777,7 +1777,9 @@ class ProfileLoader(object):
 					self._next = False
 					break
 				except Exception, exception:
-					if exception.args[0] != errno.ENOENT or debug:
+					if (exception.args[0] != errno.ENOENT and
+						exception.args != self._last_exception_args) or debug:
+						self._last_exception_args = exception.args
 						safe_print("Could not get display profile for display "
 								   "%s (%s):" % (key, display), exception)
 					profile_path = "?"
@@ -1931,7 +1933,7 @@ class ProfileLoader(object):
 					try:
 						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 					except Exception, exception:
-						if exception.args != self._last_exception_args:
+						if exception.args != self._last_exception_args or debug:
 							self._last_exception_args = exception.args
 							safe_print("Couldn't create DC for", moninfo["Device"],
 									   "(%s)" % display)
@@ -1975,7 +1977,7 @@ class ProfileLoader(object):
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
-					if exception.args != self._last_exception_args:
+					if exception.args != self._last_exception_args or debug:
 						self._last_exception_args = exception.args
 						safe_print("Couldn't create DC for", moninfo["Device"],
 								   "(%s)" % display)
