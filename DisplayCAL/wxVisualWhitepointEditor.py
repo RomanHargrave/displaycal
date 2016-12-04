@@ -1632,7 +1632,7 @@ class ProfileManager(object):
                            (display_no + 1), "@ %i, %i, %ix%i:" %
                            geometry, exception)
             else:
-                if profile:
+                if profile and profile.ID != self._srgb_profile.ID:
                     # Remember profile, but discard profile filename
                     # (Important - can't re-install profile from same path
                     # where it is installed!)
