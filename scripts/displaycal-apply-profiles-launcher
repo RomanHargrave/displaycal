@@ -25,5 +25,7 @@ else:
 		args.append(os.path.join(dirname, appname.lower() + "-apply-profiles"))
 
 args.append("--task")
+if "--oneshot" in sys.argv[1:]:
+	args.append("--oneshot")
 
 sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)
