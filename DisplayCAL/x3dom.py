@@ -122,9 +122,13 @@ class Tag(object):
 					body = cachefile.read()
 			if not body.strip():
 				_safe_print("Requesting:", url)
-				response = urllib2.urlopen(url)
-				body = response.read()
-				response.close()
+				try:
+					response = urllib2.urlopen(url)
+				except urllib2.URLError, exception:
+					_safe_print(exception)
+				else:
+					body = response.read()
+					response.close()
 			if not body.strip():
 				# Fallback to local copy
 				url = get_data_path("x3d-viewer/" + basename)
