@@ -121,14 +121,16 @@ class Tag(object):
 				with open(cachefilename, "rb") as cachefile:
 					body = cachefile.read()
 			if not body.strip():
-				_safe_print("Requesting:", url)
-				try:
-					response = urllib2.urlopen(url)
-				except urllib2.URLError, exception:
-					_safe_print(exception)
-				else:
-					body = response.read()
-					response.close()
+				for url in (url, url.replace("https://", "http://")):
+					_safe_print("Requesting:", url)
+					try:
+						response = urllib2.urlopen(url)
+					except urllib2.URLError, exception:
+						_safe_print(exception)
+					else:
+						body = response.read()
+						response.close()
+						break
 			if not body.strip():
 				# Fallback to local copy
 				url = get_data_path("x3d-viewer/" + basename)
@@ -156,7 +158,7 @@ class Tag(object):
 					_safe_print("Removing", cachefilename)
 					os.remove(cachefilename)
 		# Get HTML template from cache or online
-		html = get_resource("http://%s/x3d-viewer/release/x3d-viewer.html" %
+		html = get_resource("https://%s/x3d-viewer/release/x3d-viewer.html" %
 							domain.lower(), True)
 		if cache or embed:
 			# Update resources in HTML
