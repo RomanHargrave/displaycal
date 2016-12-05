@@ -2126,15 +2126,17 @@ class ProfileLoader(object):
 							   get_display_devices(None)])
 		self.monitors = []
 		self.display_devices = OrderedDict()
+		# Enumerate per-adapter devices
 		for adapter in self.adapters:
 			for i, device in enumerate(get_display_devices(adapter)):
 				if not i:
 					device0 = device
-				if self.display_devices.get(device.DeviceKey):
+				if device.DeviceKey in self.display_devices:
 					continue
 				display, edid = get_display_name_edid(device)
 				self.display_devices[device.DeviceKey] = [display, edid, device,
 														  device0]
+		# Enumerate monitors
 		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
@@ -2160,8 +2162,6 @@ class ProfileLoader(object):
 													ICCP.ADict({"DeviceString":
 																moninfo["Device"][4:]}))
 			display, edid = get_display_name_edid(device, moninfo, i)
-			if device:
-				self.display_devices[device.DeviceKey][0] = display
 			if self._is_buggy_video_driver(moninfo):
 				safe_print("Buggy video driver detected: %s." %
 						   moninfo["_adapter"].DeviceString,
@@ -2186,6 +2186,22 @@ class ProfileLoader(object):
 						   device0.DeviceID)
 				safe_print("Monitor %i 1st display device key:" % i,
 						   device0.DeviceKey)
+			if (device0 and
+				(not device or device0.DeviceKey != device.DeviceKey) and
+				not device0.DeviceKey in self.display_devices):
+				# Key may not exist if device was added after enumerating
+				# per-adapters devices
+				display0, edid0 = get_display_name_edid(device0)
+				self.display_devices[device0.DeviceKey] = [display0, edid0,
+														   device0, device0]
+			if device:
+				if device.DeviceKey in self.display_devices:
+					self.display_devices[device.DeviceKey][0] = display
+				else:
+					# Key may not exist if device was added after enumerating
+					# per-adapters devices
+					self.display_devices[device.DeviceKey] = [display, edid,
+															  device, device0]
 			self.monitors.append((display, edid, moninfo, device0))
 		for display, edid, device, device0 in self.display_devices.itervalues():
 			if device.DeviceKey == device0.DeviceKey:
