@@ -6335,11 +6335,19 @@ usage: spotread [-options] [logfile]
 				wmi_connection = wmi.WMI()
 				query = "Select * From Win32_USBControllerDevice"
 				for item in wmi_connection.query(query):
-					for usb_id in usb_ids:
+					for usb_id, instrument_names in usb_ids.iteritems():
 						hardware_id = ur"USB\VID_%04X&PID_%04X" % usb_id
-						if item.Dependent.DeviceID.startswith(hardware_id):
+						try:
+							device_id = item.Dependent.DeviceID
+						except wmi.x_wmi, exception:
+							self.log(exception)
+							continue
+						if device_id.startswith(hardware_id):
 							# Found supported instrument
-							self.log(item.Dependent.Caption)
+							try:
+								self.log(item.Dependent.Caption)
+							except wmi.x_wmi, exception:
+								self.log(", ".join(instrument_names))
 							# Install driver for specific device
 							result = self.exec_cmd(installer, ["--noprompt",
 															   "--usealldevices",
@@ -6355,6 +6363,8 @@ usage: spotread [-options] [logfile]
 								return result
 							elif not result or "Failed to install driver" in output:
 								return Error(lang.getstr("argyll.instrument.drivers.install.failure"))
+			except wmi.x_wmi, exception:
+				self.log(exception)
 			finally:
 				if not_main_thread:
 					# If running in a thread, need to call pythoncom.CoUninitialize
