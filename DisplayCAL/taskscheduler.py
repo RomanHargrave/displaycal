@@ -229,7 +229,7 @@ class TaskScheduler(object):
 		del kwargs["self"]
 		del kwargs["replace_existing"]
 
-		if name in self and not replace_existing:
+		if not replace_existing and name in self:
 			raise KeyError("The task %s already exists" % name)
 
 		tempdir = tempfile.mkdtemp(prefix=appname + u"-")
