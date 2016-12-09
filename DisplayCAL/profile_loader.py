@@ -2748,8 +2748,7 @@ def main():
 										   appname +
 										   "-apply-profiles-launcher.exe")
 					try:
-						# We create a disabled task because our autostart
-						# entry will run it
+						# Create the task
 						created = ts.create_logon_task(taskname,
 											 cmd,
 											 loader_args,
