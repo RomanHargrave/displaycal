@@ -10229,7 +10229,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		spyd4en = None
 		icd = None
 		oeminst = get_argyll_util("oeminst")
-		importers = []
+		importers = OrderedDict()
 		if not oeminst:
 			i1d3ccss = get_argyll_util("i1d3ccss")
 			spyd4en = get_argyll_util("spyd4en")
@@ -10240,6 +10240,13 @@ class MainFrame(ReportFrame, BaseFrame):
 							bitmap=geticon(32, "dialog-information"),
 							alt=lang.getstr("file.select"))
 		dlg.sizer3.Add((1, 8))
+		def check_importers(event):
+			result = False
+			for name in ("i1d3", "icd", "spyd4"):
+				if getattr(dlg, name).IsChecked():
+					result = True
+					break
+			dlg.ok.Enable(result)
 		for (name, desc, instruments,
 			 importer) in [("i1d3", "i1 Profiler",
 							("i1 DisplayPro, ColorMunki Display",
@@ -10269,6 +10276,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer3.Add(getattr(dlg, name), flag=wx.TOP |
 														wx.ALIGN_LEFT,
 								   border=8)
+				getattr(dlg, name).Bind(wx.EVT_CHECKBOX, check_importers)
 		dlg.install_user = wx.RadioButton(dlg, -1, lang.getstr("install_user"), 
 										  style=wx.RB_GROUP)
 		dlg.install_user.SetValue(True)
@@ -10279,6 +10287,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		dlg.install_systemwide.Bind(wx.EVT_RADIOBUTTON,
 									install_scope_handler)
 		install_scope_handler(dlg=dlg)
+		check_importers(None)
 		dlg.sizer3.Add(dlg.install_systemwide, flag=wx.TOP | wx.ALIGN_LEFT,
 					   border=4)
 		dlg.sizer0.SetSizeHints(dlg)
@@ -10293,7 +10302,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							   ("spyd4", spyd4en or oeminst),
 							   ("icd", True)]:
 			if importer and getattr(dlg, name).GetValue():
-				importers.append((name, importer))
+				importers[name] = importer
 		asroot = dlg.install_systemwide.GetValue()
 		dlg.Destroy()
 		if choice == wx.ID_CANCEL:
@@ -10495,45 +10504,23 @@ class MainFrame(ReportFrame, BaseFrame):
 											   spyd4, spyd4en, icd, oeminst,
 											   paths, auto, asroot, importers):
 		""" Import colorimetercorrections from paths """
-		if (oeminst or i1d3ccss or spyd4en) and auto:
-			# Automatically import OEM files
-			self.worker.create_tempdir()
-			for importer in filter(lambda importer: importer, [oeminst,
-															   i1d3ccss,
-															   spyd4en]):
-				if asroot and sys.platform == "win32":
-					ccss = self.get_argyll_data_files("l", "*.ccss", True)
-				result = self.worker.import_colorimeter_corrections(importer,
-																	asroot=asroot)
-				if isinstance(result, Exception) or not result:
-					continue
-				if (".ccss" in "".join(self.worker.output) or
-					(asroot and sys.platform == "win32" and
-					 self.get_argyll_data_files("l", "*.ccss", True) != ccss)):
-					i1d3 = result
-				if ("spyd4cal.bin" in "".join(self.worker.output) or
-					(asroot and sys.platform == "win32" and
-					 self.get_argyll_data_files("l", "spyd4cal.bin"))):
-					spyd4 = result
-				if importer == oeminst:
-					break
-			self.worker.wrapup(False)
 		if auto and not paths:
 			paths = []
-			# Look for iColorDisplay
-			if sys.platform == "win32":
-				paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
-												"Quato", "iColorDisplay",
-												"DeviceCorrections.txt"))
-			elif sys.platform == "darwin":
-				paths += glob.glob(os.path.join(os.path.sep, "Applications", 
-											   "iColorDisplay*.app",
-											   "DeviceCorrections.txt"))
-				paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
-												"iColorDisplay*", 
-												"iColorDisplay*.app",
-												"DeviceCorrections.txt"))
-			if (oeminst or i1d3ccss) and not i1d3:
+			if importers.get("icd"):
+				# Look for iColorDisplay
+				if sys.platform == "win32":
+					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+													"Quato", "iColorDisplay",
+													"DeviceCorrections.txt"))
+				elif sys.platform == "darwin":
+					paths += glob.glob(os.path.join(os.path.sep, "Applications", 
+												   "iColorDisplay*.app",
+												   "DeviceCorrections.txt"))
+					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+													"iColorDisplay*", 
+													"iColorDisplay*.app",
+													"DeviceCorrections.txt"))
+			if importers.get("i1d3") and (oeminst or i1d3ccss) and not i1d3:
 				# Look for *.edr files
 				if sys.platform == "win32":
 					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
@@ -10549,7 +10536,7 @@ class MainFrame(ReportFrame, BaseFrame):
 													"i1Profiler", "*.exe"))
 					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
 													"ColorMunki Display", "*.exe"))
-			if (oeminst or spyd4en) and not spyd4:
+			if importers.get("spyd4") and (oeminst or spyd4en) and not spyd4:
 				# Look for dccmtr.dll
 				if sys.platform == "win32":
 					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
@@ -10574,7 +10561,7 @@ class MainFrame(ReportFrame, BaseFrame):
 													   spyd4, spyd4en, icd,
 													   oeminst, path, asroot)
 		paths = []
-		for name, importer in importers:
+		for name, importer in importers.iteritems():
 			imported = locals().get(name, False)
 			if not imported and auto:
 				# Automatic download
