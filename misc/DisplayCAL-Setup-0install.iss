@@ -161,8 +161,11 @@ begin
 		end;
 		UninstallString := Get_UninstallString(ExpandConstant('{#emit SetupSetting("AppId")}'));
 		if UninstallString <> '' then begin
-			if not Exec(UninstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(UninstallString, '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then begin
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
+			end else begin
+				Sleep(2000);
+			end;
 		end;
 	end;
 end;
