@@ -9111,6 +9111,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			filetype = 'ccmx'
 		params = {'get': True,
 				  'type': filetype,
+				  'manufacturer_id': self.worker.get_display_edid().get("manufacturer_id", ""),
 				  'display': self.worker.get_display_name(False, True) or "Unknown",
 				  'instrument': self.worker.get_instrument_name() or "Unknown"}
 		self.worker.interactive = False
