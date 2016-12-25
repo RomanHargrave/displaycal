@@ -5,6 +5,27 @@
 # and remove   /usr/lib/udev/rules.d/69-cd-sensors.rules
 # as appropriate for your system
 
+#--------------------------------------------------------------------------
+# Copyright 2012 Graeme W. Gill.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this file, to deal in this file without restriction, including without
+# limitation the rights to use, copy, modify, merge, publish, distribute,
+# sublicense, and/or sell copies of this file, and to permit persons to whom
+# this file is furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of this file.
+# 
+# THIS FILE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THIS FILE OR THE USE OR OTHER DEALINGS IN
+# THIS FILE.
+#--------------------------------------------------------------------------
+
 # Skip all this to speed things up if it'a not a usb add.
 ACTION!="add", GOTO="argyll_rules_end"
 SUBSYSTEM!="usb", GOTO="argyll_rules_end"
@@ -102,22 +123,26 @@ ATTRS{idVendor}=="273f", ATTRS{idProduct}=="1002", ENV{COLORD_SENSOR_KIND}="colo
 ATTRS{idVendor}=="2457", ATTRS{idProduct}=="4000", ENV{COLORD_SENSOR_KIND}="ex1", ENV{COLORD_SENSOR_CAPS}="lcd crt ambient"
 
 #########################################################
-# color calibration device
-ENV{COLORD_SENSOR_KIND}=="*?", ENV{COLOR_MEASUREMENT_DEVICE}="1"
 
 # Set ID_VENDOR and ID_MODEL acording to VID and PID
 #TEST=="/lib/udev/usb-db", IMPORT{program}="usb-db %p"
 ENV{COLORD_SENSOR_KIND}=="*?", ENV{ID_MODEL}=="", IMPORT{program}="usb_id --export %p"
 ENV{COLORD_SENSOR_KIND}=="*?", ENV{ID_MODEL_FROM_DATABASE}=="", IMPORT{program}="usb-db %p"
 
-# Debian has
-# ...., TAG+="uaccess", TAG+="udev-acl" # Debian, but should be in 70-uaccess.rules
+# Is a color calibration device. 70-uaccess.rules may use this to set TAG+="uaccess",
+# but there is no way to know if this is the case from here.
+# May also be used by other rules to avoid claiming this device.
+ENV{COLORD_SENSOR_KIND}=="*?", ENV{COLOR_MEASUREMENT_DEVICE}="1"
 
-# Let udev-acl manage these devices, if it's available
-TEST=="/var/run/ConsoleKit/database", ENV{COLOR_MEASUREMENT_DEVICE}=="*?", ENV{ACL_MANAGE}="1"
+# Let ConsoleKit udev-acl manage these devices, if it's available.
+# (Except that this stuffs up on Slackware 14.1 because
+#  ConsoleKit/database is present even when ACL is not enabled).
+# Some recent systems no longer use ConsoleKit or ACL_MANAGE - acl is done by systemd ?
+# TEST=="/var/run/ConsoleKit/database", ENV{COLOR_MEASUREMENT_DEVICE}=="*?", ENV{ACL_MANAGE}="1"
+ENV{COLOR_MEASUREMENT_DEVICE}=="*?", ENV{ACL_MANAGE}="1"
 
-# Otherwise, restrict access to members of the colord group,
-# which the user may have to add to the system and add themselves to.
-ENV{COLOR_MEASUREMENT_DEVICE}=="*?", ENV{ACL_MANAGE}!="*?", MODE="660", GROUP="colord"
+# In any case, make color instruments accessible to members of the colord group,
+# which the user may have to add to the system and add themselves to if ACL isn't present.
+ENV{COLOR_MEASUREMENT_DEVICE}=="*?", MODE="660", GROUP="colord"
 
 LABEL="argyll_rules_end"
