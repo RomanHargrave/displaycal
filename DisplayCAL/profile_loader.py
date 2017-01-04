@@ -171,6 +171,8 @@ if sys.platform == "win32":
 				index = list_ctrl.InsertStringItem(i, "")
 				list_ctrl.SetStringItem(index, 0, display_edid[0])
 				list_ctrl.SetStringItem(index, 1, desc)
+				if not profile:
+					continue
 				try:
 					profile = ICCP.ICCProfile(profile)
 				except (IOError, ICCP.ICCProfileInvalidError), exception:
@@ -620,8 +622,10 @@ if sys.platform == "win32":
 					profile = ICCP.ICCProfile(pth)
 				except ICCP.ICCProfileInvalidError, exception:
 					safe_print("%s:" % pth, exception)
+					continue
 				except IOError, exception:
 					safe_print(exception)
+					continue
 				if profile.profileClass == "mntr":
 					desc = profile.getDescription()
 					match = alphanumeric.findall(desc)
