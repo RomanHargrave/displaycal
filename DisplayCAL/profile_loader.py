@@ -1265,14 +1265,14 @@ class ProfileLoader(object):
 																	  (False,
 																	   0, ""))
 							if profile is False:
-								desc = "?"
-							elif profile == "?":
+								desc = lang.getstr("unknown")
+							elif profile is None:
 								desc = lang.getstr("unassigned").lower()
 							if not self.pl.setgammaramp_success.get(i):
 								desc = (lang.getstr("unknown") +
 										u" / %s" % desc)
 							elif (self.pl._reset_gamma_ramps or
-								  profile == "?"):
+								  profile is None):
 								desc = (lang.getstr("linear").capitalize() +
 										u" / %s" % desc)
 							text += u"\n%s: %s" % (display, desc)
@@ -1782,9 +1782,10 @@ class ProfileLoader(object):
 						self._last_exception_args = exception.args
 						safe_print("Could not get display profile for display "
 								   "%s (%s):" % (key, display), exception)
-					profile_path = "?"
-				profile = os.path.basename(profile_path)
-				association = self.profile_associations.get(key, (None, 0, ""))
+					profile_path = profile = None
+				else:
+					profile = os.path.basename(profile_path)
+				association = self.profile_associations.get(key, (False, 0, ""))
 				if (getcfg("profile_loader.fix_profile_associations") and
 					not first_run and not self._has_display_changed and
 					not self._next and association[0] != profile):
@@ -1802,13 +1803,13 @@ class ProfileLoader(object):
 							timeout += .1
 						self._next = True
 					break
-				if os.path.isfile(profile_path):
+				if profile_path and os.path.isfile(profile_path):
 					mtime = os.stat(profile_path).st_mtime
 				else:
 					mtime = 0
 				profile_association_changed = False
 				if association[:2] != (profile, mtime):
-					if profile == "?":
+					if profile is None:
 						desc = safe_unicode(exception or "?")
 					else:
 						desc = get_profile_desc(profile)
@@ -1863,8 +1864,6 @@ class ProfileLoader(object):
 					if not self._reset_gamma_ramps:
 						# Get display profile
 						if not self.profiles.get(key):
-							if profile == "?":
-								profile = None
 							try:
 								self.profiles[key] = ICCP.ICCProfile(profile)
 								self.profiles[key].tags.get("vcgt")
@@ -2010,10 +2009,10 @@ class ProfileLoader(object):
 						errors.append(": ".join([display, errstr]))
 					else:
 						text = display + u": "
-						if self._reset_gamma_ramps:
+						if self._reset_gamma_ramps or not profile:
 							text += lang.getstr("linear").capitalize()
 						else:
-							text += os.path.basename(desc)
+							text += desc
 						results.append(text)
 			else:
 				# We only arrive here if the loop was completed
@@ -2393,7 +2392,7 @@ class ProfileLoader(object):
 	def _reset_display_profile_associations(self):
 		for devicekey, (display_edid,
 						profile, desc) in self.devices2profiles.iteritems():
-			if profile and profile != "?":
+			if profile:
 				try:
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)
@@ -2456,7 +2455,7 @@ class ProfileLoader(object):
 					safe_print("Could not get display profile for display "
 							   "device %r:" % device.DeviceKey, exception)
 					profile = None
-				if profile:
+				else:
 					profile = os.path.basename(profile)
 				if active_device and device.DeviceID == active_device.DeviceID:
 					active_moninfo = moninfo
@@ -2464,12 +2463,12 @@ class ProfileLoader(object):
 					active_moninfo = None
 				display_edid = get_display_name_edid(device, active_moninfo)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
-														   profile or "",
+														   profile,
 														   get_profile_desc(profile))
 				if debug:
 					safe_print("%s (%s) -> %s" % (display_edid[0],
 												  device.DeviceKey,
-												  profile or "none"))
+												  profile))
 			# Set the active profile
 			device = active_device
 			if not device:
@@ -2638,7 +2637,7 @@ def get_profile_desc(profile_path, include_basename_if_different=True):
 	
 	"""
 	if not profile_path:
-		return lang.getstr("unknown")
+		return ""
 	try:
 		profile = ICCP.ICCProfile(profile_path)
 		profile_desc = profile.getDescription()
