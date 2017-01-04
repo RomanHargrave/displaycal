@@ -2637,6 +2637,8 @@ def get_profile_desc(profile_path, include_basename_if_different=True):
 	Return profile description or path if not available
 	
 	"""
+	if not profile_path:
+		return lang.getstr("unknown")
 	try:
 		profile = ICCP.ICCProfile(profile_path)
 		profile_desc = profile.getDescription()
