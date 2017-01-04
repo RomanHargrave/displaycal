@@ -6,6 +6,13 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
   * See README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
+Tue Dec 13 22:29:24 UTC 2016 - florian@displaycal.net
+
+- Update to 3.2.2.0:
+  * Maintenance/bugfix release
+  * See README.html#changelog-3.2.2
+
+-------------------------------------------------------------------
 Fri Nov 25 14:05:19 UTC 2016 - florian@displaycal.net
 
 - update to 3.2.1.0: see README.html#changelog-3.2.1

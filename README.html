@@ -50,8 +50,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.2.2 </h2>
-					<p>2016-12-13 22:27 UTC</p>
+					<h2 id="version">3.2.3 </h2>
+					<p>2017-01-04 14:10 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -482,7 +482,7 @@
 							<a href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Disk image</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.2.2.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.2.2.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.2.3.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.2.3.0/*.app</code>
 						</p>
 					</div>
 				</li>
@@ -2413,7 +2413,8 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			<ul>
 				<li>Try to give a <strong>short, but concise summary of the problem</strong>.</li>
 				<li>Try to give some <strong>steps to reproduce the problem</strong>.</li>
-				<li>Always <strong>attach logfiles</strong> if possible. They are usually automatically created by DisplayCAL as part of normal program operation. The easiest way to do that is to choose “Show log” from the “Tools” menu and then click the “Create compressed archive...” button (<strong>not</strong> the “Save as...” button as this will only save the session log) on the log window. You can also find the logfiles here:
+				<li>Always <strong>attach logfiles</strong> if possible. They are usually automatically created by DisplayCAL as part of normal program operation. If you're having a problem with a particular instrument, it would be great if you could do a run with Argyll CMS debug output enabled in the “Advanced” sub-menu under the “Options” menu to generate a more verbose debug log - note that you have to enable advanced options first.<br />
+The easiest way to get a complete set of logfiles is to choose “Show log” from the “Tools” menu and then click the “Create compressed archive...” button on the log window (<strong>not</strong> the “Save as...” button as this will only save the session log). You can also find the logfiles here:
 					<ul>
 						<li>Linux:
 							<samp>/home/<var>Your Username</var>/.local/share/DisplayCAL/logs</samp></li>
@@ -2425,6 +2426,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 						<li>Windows XP:
 							<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\DisplayCAL\logs</samp></li>
 					</ul>
+					<p><strong>Note</strong> that if you have upgraded to DisplayCAL from dispcalGUI, that DisplayCAL will continue to use the existing dispcalGUI directories (so replace DisplayCAL with dispcalGUI in the locations above).</p>
 					<p>As the folder may contain several logfiles, it is a good idea to compress the whole folder to a ZIP or tar.gz archive that you can easily attach to a bug report.</p>
 					<p><em>Please note the logfiles may contain your username as well as paths of files you may have used in DisplayCAL. I will respect your privacy at all times, but you may want to consider this when attaching logfiles to public places like the <a href="https://displaycal.net/issues/">issue tracker</a>.</em></p>
 				</li>
@@ -2503,22 +2505,21 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			楊添明 (traditional chinese translation)</p>
 
 			<p>Recent contributors:
+Karl Wolf, Matthias Neumaier, Alexey Osetyanov, William Walters, Tobias
+Brausen, Elio Di Claudio, 景斌 高, Michael Kuhn, Серафим Сальников, Alexandre
+Malhao, Horst Wandres, Bruno Louis, Yothin Morakot-Amporn, Michel Lapointe,
+Dieter Pongratz, Pier Bover Branze, Niku Toivola, Minh Nguyen, Wam Beuwer,
+Julian Brossat, Lutz Winkelmann, Andrew Drewitt, Matthew Park, ピナピクス株式会社, Lee
+Stripp, Stanislas Szlapka, Evgeny Kalachikhin, Noel Lee, Mark Aligbe, Mauro
+Salvini, Ketil Skogen, David Goman, Luis Lainez, Tsai Yu-Fa, Renaud Jandin
+<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
 義興 陳, John Wong, High-Que LLC, Matthew Gorrie, 2000Px Media Inc.,
 Markus Filsinger, Andreas Simionovici, The Denmark Group, Inc., Terry Rowse,
 Grace Kim, Jd Albers, Xavier Arnau, 俊良 陆, Jonathan Puckrin, Hans Henrik Baek
 Thogersen, Mikko Rahikainen, Christopher Barry, Andrea Bellucci, Луи Шильп, Alberto Rodriguez Sánchez, Alesksey Yashin, Flinders Street Photography,
 Ashley Bradford, Dominique Haeber, Risto Jokinen, Stefan Engstrom, Jean-Paul
 Moreau, Christoph Konermann, Morgan Langley, Riley Brandt Photography, Rem
-Perrot, Calex Gonzalez, Joseph Tan
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
-Boleslaw Ciesielski, Acoustic Masters, Pepijn Klijs, Christopher Rogers, Eduard
-Stark, Demetrios Dourambeis, Mickaël Durindel, Gary Roylance, Dow Hurst, Allen
-Gabriele, Adam Easton Voice Acting, Pierre Marsault, Morgan Rogers, Thomas
-Kagle, Patrick Woods, Tom Reimann, Kris Melnyk, Jonathan Moerman, Soeren Witt,
-Patrik Jakab, Brandon Tresenriter, Michal Golczewski, Antonio D'Alisa, Benjamin
-Weber, Uche Obiwe, Florian Richter, Matti Rintala, Stephen Smith, Mykola
-Podolianiuk, Hans Vonsild, David Huber, Björn Linzer, James
-Greg, Owen Clarke</span></p>
+Perrot, Calex Gonzalez, Joseph Tan</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses DisplayCAL.</p>
 
@@ -2529,10 +2530,25 @@ Greg, Owen Clarke</span></p>
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2016-12-13 22:27 (UTC) 3.2.2  -->
+			<!-- 2017-01-04 14:10 (UTC) 3.2.3  -->
 			<dl>
-				<dt id="changelog-3.2.2">2016-12-13 22:27 (UTC) 3.2.2 </dt>
+				<dt id="changelog-3.2.3">2017-01-04 14:10 (UTC) 3.2.3 </dt>
 					<dd>
+						<h3>3.2.3 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Updated traditional chinese translation (thanks to 楊添明).</li>
+							<li>Profile loader (Windows): When creating the profile loader launcher task, set it to stop existing instance of the task when launching to circumvent a possible Windows bug where a task would not start even if no previous instance was running.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>When querying the online colorimeter corrections database for matching corrections, only query for corrections with a matching manufacturer ID in addition to a matching display model name (fixes corrections being offered for displays from different manufacturers, but matching model names).</li>
+							<li>Profile loader (Windows): Fix unhandled exception if no profile is assigned to a display (regression of a change to show the profile description instead of just the file name in DisplayCAL 3.2.1).</li>
+						</ul>
+				
+						<p id="changelog-3.2.2">2016-12-13 22:27 (UTC) 3.2.2 </p>
 						<h3>3.2.2 </h3>
 
 						<h4>Changed in this release:</h4>
@@ -2956,7 +2972,7 @@ Greg, Owen Clarke</span></p>
 		
 		<hr />
 		
-		<p id="copyright">DisplayCAL © 2008-2016 Florian Höch | <a href="https://displaycal.net/imprint/">Imprint</a> | <a href="https://displaycal.net/privacy/">Privacy</a> | <a href="https://displaycal.net/tos/">Terms of Service</a></p>
+		<p id="copyright">DisplayCAL © 2008-2017 Florian Höch | <a href="https://displaycal.net/imprint/">Imprint</a> | <a href="https://displaycal.net/privacy/">Privacy</a> | <a href="https://displaycal.net/tos/">Terms of Service</a></p>
 
 		<div id="footer-container">
 			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>

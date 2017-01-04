@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.2.2 </h2>
-					<p>2016-12-13 22:27 UTC</p>
+					<h2 id="version">3.2.3 </h2>
+					<p>2017-01-04 14:10 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Télécharger</a></li>
 						<li class="requirements"><a href="#requirements" style="font-size: 11px">Exigences du système</a></li>
@@ -480,7 +480,7 @@
 							<a href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Image disque</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.2.2.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.2.2.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.2.3.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.2.3.0/*.app</code>
 						</p>
 					</div>
 				</li>
@@ -2424,22 +2424,21 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			楊添明 (traduction chinois traditionnel)</p>
 
 			<p>Les donateurs récents :
+Karl Wolf, Matthias Neumaier, Alexey Osetyanov, William Walters, Tobias
+Brausen, Elio Di Claudio, 景斌 高, Michael Kuhn, Серафим Сальников, Alexandre
+Malhao, Horst Wandres, Bruno Louis, Yothin Morakot-Amporn, Michel Lapointe,
+Dieter Pongratz, Pier Bover Branze, Niku Toivola, Minh Nguyen, Wam Beuwer,
+Julian Brossat, Lutz Winkelmann, Andrew Drewitt, Matthew Park, ピナピクス株式会社, Lee
+Stripp, Stanislas Szlapka, Evgeny Kalachikhin, Noel Lee, Mark Aligbe, Mauro
+Salvini, Ketil Skogen, David Goman, Luis Lainez, Tsai Yu-Fa, Renaud Jandin
+<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
 義興 陳, John Wong, High-Que LLC, Matthew Gorrie, 2000Px Media Inc.,
 Markus Filsinger, Andreas Simionovici, The Denmark Group, Inc., Terry Rowse,
 Grace Kim, Jd Albers, Xavier Arnau, 俊良 陆, Jonathan Puckrin, Hans Henrik Baek
 Thogersen, Mikko Rahikainen, Christopher Barry, Andrea Bellucci, Луи Шильп, Alberto Rodriguez Sánchez, Alesksey Yashin, Flinders Street Photography,
 Ashley Bradford, Dominique Haeber, Risto Jokinen, Stefan Engstrom, Jean-Paul
 Moreau, Christoph Konermann, Morgan Langley, Riley Brandt Photography, Rem
-Perrot, Calex Gonzalez, Joseph Tan
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
-Boleslaw Ciesielski, Acoustic Masters, Pepijn Klijs, Christopher Rogers, Eduard
-Stark, Demetrios Dourambeis, Mickaël Durindel, Gary Roylance, Dow Hurst, Allen
-Gabriele, Adam Easton Voice Acting, Pierre Marsault, Morgan Rogers, Thomas
-Kagle, Patrick Woods, Tom Reimann, Kris Melnyk, Jonathan Moerman, Soeren Witt,
-Patrik Jakab, Brandon Tresenriter, Michal Golczewski, Antonio D'Alisa, Benjamin
-Weber, Uche Obiwe, Florian Richter, Matti Rintala, Stephen Smith, Mykola
-Podolianiuk, Hans Vonsild, David Huber, Björn Linzer, James
-Greg, Owen Clarke</span></p>
+Perrot, Calex Gonzalez, Joseph Tan</span></p>
 
 			<p>Et tous ceux qui m’ont envoyé des retours ou signalé des bogues, suggéré des fonctionnalités ou qui, simplement, utilisent DisplayCAL.</p>
 
@@ -2450,10 +2449,25 @@ Greg, Owen Clarke</span></p>
 
 		<div id="changelog">
 			<h2>Journaux des modifications</h2>
-			<!-- 2016-12-13 22:27 (UTC) 3.2.2  -->
+			<!-- 2017-01-04 14:10 (UTC) 3.2.3  -->
 			<dl>
-				<dt id="changelog-3.2.2">2016-12-13 22:27 (UTC) 3.2.2 </dt>
+				<dt id="changelog-3.2.3">2017-01-04 14:10 (UTC) 3.2.3 </dt>
 					<dd>
+						<h3>3.2.3 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Updated traditional chinese translation (thanks to 楊添明).</li>
+							<li>Profile loader (Windows): When creating the profile loader launcher task, set it to stop existing instance of the task when launching to circumvent a possible Windows bug where a task would not start even if no previous instance was running.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>When querying the online colorimeter corrections database for matching corrections, only query for corrections with a matching manufacturer ID in addition to a matching display model name (fixes corrections being offered for displays from different manufacturers, but matching model names).</li>
+							<li>Profile loader (Windows): Fix unhandled exception if no profile is assigned to a display (regression of a change to show the profile description instead of just the file name in DisplayCAL 3.2.1).</li>
+						</ul>
+				
+						<p id="changelog-3.2.2">2016-12-13 22:27 (UTC) 3.2.2 </p>
 						<h3>3.2.2 </h3>
 
 						<h4>Changed in this release:</h4>
@@ -2548,7 +2562,7 @@ Greg, Owen Clarke</span></p>
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li>Windows: Toggling the “Load calibration on login” checkbox in the profile installation dialog now also toggles preserving calibration state in the profile loader and vice versa, thus actually affecting if calibration is loaded on login or not (this restores functionality that was lost with the initial DisplayCAL 3.1 release).</li>
-							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.2.2 from October 21, 2016).</li>
+							<li>Windows: The application, setup and Argyll USB driver installer executables are now digitally signed (starting from October 18, 2016 with SHA-1 digest for 3.1.7.1 and dual SHA-1 and SHA-256 digests for 3.2.3 from October 21, 2016).</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
@@ -2877,7 +2891,7 @@ Greg, Owen Clarke</span></p>
 		
 		<hr />
 		
-		<p id="copyright">DisplayCAL © 2008-2016 Florian Höch | <a href="https://displaycal.net/imprint/">Impressum</a> | <a href="https://displaycal.net/privacy/">Respect de la vie privée</a> | <a href="https://displaycal.net/tos/">Conditions de Service</a></p>
+		<p id="copyright">DisplayCAL © 2008-2017 Florian Höch | <a href="https://displaycal.net/imprint/">Impressum</a> | <a href="https://displaycal.net/privacy/">Respect de la vie privée</a> | <a href="https://displaycal.net/tos/">Conditions de Service</a></p>
 		<div id="footer-container">
 			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>
 		</div>
