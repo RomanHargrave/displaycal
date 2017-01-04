@@ -2762,6 +2762,7 @@ def main():
 											 "This task launches the profile "
 											 "loader with the applicable "
 											 "privileges for logged in users",
+											 multiple_instances=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
 											 replace_existing=True)
 					except Exception, exception:
 						if debug:
