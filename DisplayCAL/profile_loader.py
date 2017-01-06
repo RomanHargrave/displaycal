@@ -57,7 +57,6 @@ if sys.platform == "win32":
 						   CustomCellBoolRenderer, CustomGrid, InfoDialog,
 						   TaskBarNotification, wx, show_result_dialog)
 	import ICCProfile as ICCP
-	import localization as lang
 	import madvr
 
 
@@ -1333,7 +1332,6 @@ class ProfileLoader(object):
 				app.MainLoop()
 
 	def apply_profiles(self, event=None, index=None):
-		import localization as lang
 		from util_os import which
 		from worker import Worker, get_argyll_util
 
@@ -1482,7 +1480,6 @@ class ProfileLoader(object):
 		if (errors and (config.getcfg("profile_loader.error.show_msg") or
 						"--error-dialog" in sys.argv[1:]) and
 			not "--silent" in sys.argv[1:]):
-			import localization as lang
 			from wxwindows import InfoDialog, wx
 			dlg = InfoDialog(None, msg="\n".join(errors), 
 							 title=self.get_title(),
@@ -2805,6 +2802,7 @@ def main():
 							options=("argyll.dir", "profile.load_on_login",
 									 "profile_loader"))
 
+		global lang
 		import localization as lang
 		lang.init()
 
