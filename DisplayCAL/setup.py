@@ -358,6 +358,8 @@ def setup():
 
 	sys.path.insert(1, os.path.join(os.path.dirname(pydir), "util"))
 
+	current_findall = distutils.filelist.findall
+
 	if use_setuptools:
 		if "--use-setuptools" in sys.argv[1:] and not \
 		   os.path.exists("use-setuptools"):
@@ -371,11 +373,27 @@ def setup():
 			from setuptools import setup, Extension
 			setuptools = True
 			print "using setuptools"
+			current_findall = distutils.filelist.findall
 		except ImportError:
 			pass
 	else:
 		if os.path.exists("use-setuptools"):
 			os.remove("use-setuptools")
+
+	if distutils.filelist.findall is current_findall:
+		# Fix traversing unneeded dirs which can take a long time (minutes)
+		def findall(dir=os.curdir, original=distutils.filelist.findall, listdir=os.listdir,
+					basename=os.path.basename):
+			os.listdir = lambda path: filter(lambda entry: entry not in ("build",
+																		 "dist") and
+														   not entry.startswith("."),
+											 listdir(path))
+			try:
+				return original(dir)
+			finally:
+				os.listdir = listdir
+
+		distutils.filelist.findall = findall
 
 	if not setuptools:
 		from distutils.core import setup, Extension
