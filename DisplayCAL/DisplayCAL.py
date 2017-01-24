@@ -3420,6 +3420,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		use_ccmx = (self.worker.instrument_can_use_ccxx(False) and
 					len(ccmx) > 1 and ccmx[1])
 		tech = None
+		observer = None
 		if use_ccmx:
 			mode = None
 			try:
@@ -3438,6 +3439,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if observer in self.observers_ab:
 					setcfg("observer", observer)
 					self.update_observer_ctrl()
+					self.observer_ctrl.Disable()
 			if mode or (getcfg("measurement_mode") != "auto" and
 						not self.worker.instrument_can_use_ccxx()):
 				if (update_measurement_mode or
@@ -3464,6 +3466,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_main_controls()
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
 		self.update_estimated_measurement_times()
+		if not observer in self.observers_ab:
+			self.observer_ctrl.Enable()
 		self.show_observer_ctrl()
 
 	def update_main_controls(self):
