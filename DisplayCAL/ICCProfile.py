@@ -1433,12 +1433,9 @@ def _wcs_get_display_profile(devicekey,
 def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 	filename = None
 	filenames = _winreg_get_display_profiles(monkey, current_user)
-	while filenames:
+	if filenames:
 		# last existing file in the list is active
-		if os.path.isfile(os.path.join(iccprofiles[0], 
-									   filenames[-1])):
-			filename = filenames.pop()
-			break
+		filename = filenames.pop()
 	if not filename and not current_user:
 		# fall back to sRGB
 		filename = os.path.join(iccprofiles[0], 
@@ -1490,7 +1487,9 @@ def _winreg_get_display_profiles(monkey, current_user=False):
 			pass
 		else:
 			raise
-	return filenames
+	return filter(lambda filename: os.path.isfile(os.path.join(iccprofiles[0], 
+															   filename)),
+				  filenames)
 
 
 def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0, 
