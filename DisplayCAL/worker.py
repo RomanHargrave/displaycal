@@ -6220,7 +6220,9 @@ usage: spotread [-options] [logfile]
 				break
 		if result is True and dst == udevrules:
 			# Reload udev rules
-			udevadm = which("udevadm", ["/sbin"])
+			paths = ["/sbin"]
+			paths.extend(getenvu("PATH", os.defpath).split(os.pathsep))
+			udevadm = which("udevadm", paths)
 			if udevadm:
 				result = self.exec_cmd(udevadm, ["control", "--reload-rules"],
 									   capture_output=True,
