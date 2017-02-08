@@ -3,6 +3,7 @@
 import codecs
 import exceptions
 import locale
+import re
 import string
 import sys
 import unicodedata
@@ -300,6 +301,23 @@ codecs.register_error("escape", escape)
 
 def make_ascii_printable(text, subst=""):
 	return "".join([char if char in ascii_printable else subst for char in text])
+
+
+def make_filename_safe(unistr, encoding=fs_enc, subst="_"):
+	"""
+	Make sure unicode string is safe to use as filename.
+	
+	I.e. turn characters that are invalid in the filesystem encoding into ASCII
+	equivalents and replace characters that are invalid in filenames with
+	substitution character.
+	
+	"""
+	# Turn characters that are invalid in the filesystem encoding into ASCII
+	# equivalents
+	unistr = unistr.encode(encoding, "safe_asciize").decode(encoding)
+	# Remove invalid chars
+	unistr = re.sub(r"[\\/:*?\"<>|]+", subst, unistr)
+	return unistr
 
 
 def normalencode(unistr, form="NFKD", encoding="ASCII", errors="ignore"):

@@ -109,8 +109,8 @@ from util_os import (expanduseru, getenvu, is_superuser, launch_file,
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 	import win_knownpaths
-from util_str import (safe_basestring, safe_asciize, safe_str, safe_unicode,
-					  strtr, universal_newlines)
+from util_str import (make_filename_safe, safe_basestring, safe_asciize,
+					  safe_str, safe_unicode, strtr, universal_newlines)
 from wxaddons import BetterCallLater, BetterWindowDisabler, wx
 from wxwindows import (ConfirmDialog, HtmlInfoDialog, InfoDialog,
 					   ProgressDialog, SimpleTerminal, show_result_dialog)
@@ -916,7 +916,6 @@ def make_argyll_compatible_path(path):
 	underscores.
 	
 	"""
-	make_compat_enc = fs_enc
 	skip = -1
 	if re.match(r'\\\\\?\\', path, re.I):
 		# Don't forget about UNC paths: 
@@ -926,9 +925,7 @@ def make_argyll_compatible_path(path):
 	parts = path.split(os.path.sep)
 	for i, part in enumerate(parts):
 		if i > skip:
-			parts[i] = unicode(part.encode(make_compat_enc, "safe_asciize"), 
-							   make_compat_enc).replace("/", "_").replace("?", 
-																		  "_")
+			parts[i] = make_filename_safe(part)
 	return os.path.sep.join(parts)
 
 

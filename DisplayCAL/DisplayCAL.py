@@ -101,8 +101,8 @@ from util_io import StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
 					 launch_file, listdir_re, waccess, whereis, which)
-from util_str import (ellipsis, safe_str, safe_unicode, strtr,
-					  universal_newlines, wrap)
+from util_str import (ellipsis, make_filename_safe, safe_str, safe_unicode,
+					  strtr, universal_newlines, wrap)
 import util_x
 from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					Warn, Worker, check_create_dir, check_file_isfile,
@@ -7912,10 +7912,11 @@ class MainFrame(ReportFrame, BaseFrame):
 														 path)), self)
 					return
 				setcfg("measurement.save_path", path)
-				setcfg("measurement.name.expanded", "%s & %s %s" %
-													(self.worker.get_instrument_name(),
-													 self.worker.get_display_name(),
-													 strftime("%Y-%m-%d %H-%M-%S")))
+				setcfg("measurement.name.expanded",
+					   make_filename_safe("%s & %s %s" %
+										  (self.worker.get_instrument_name(),
+										   self.worker.get_display_name(),
+										   strftime("%Y-%m-%d %H-%M-%S"))))
 			else:
 				self.restore_measurement_mode()
 				self.restore_testchart()
