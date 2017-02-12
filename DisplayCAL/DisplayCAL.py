@@ -7230,6 +7230,29 @@ class MainFrame(ReportFrame, BaseFrame):
 						  **pending_function_kwargs):
 		if not self.setup_patterngenerator(self):
 			return
+		if is_ccxx_testchart():
+			# Allow different location to store measurements
+			path = getcfg("profile.save_path")
+			if not path:
+				self.profile_save_path_btn_handler(None)
+				path = getcfg("profile.save_path")
+			if path:
+				if not waccess(path, os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 path)), self)
+					self.restore_measurement_mode()
+					self.restore_testchart()
+					return
+				setcfg("measurement.save_path", path)
+				setcfg("measurement.name.expanded",
+					   make_filename_safe("%s & %s %s" %
+										  (self.worker.get_instrument_name(),
+										   self.worker.get_display_name(),
+										   strftime("%Y-%m-%d %H-%M-%S"))))
+			else:
+				self.restore_measurement_mode()
+				self.restore_testchart()
+				return
 		writecfg()
 		if pending_function_kwargs.get("wrapup", True):
 			self.worker.wrapup(False)
@@ -7903,24 +7926,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.measure_auto_after = None
 	
 	def measure_handler(self, event=None):
-		if is_ccxx_testchart():
-			# Allow different location to store measurements
-			path = getcfg("profile.save_path")
-			if path:
-				if not waccess(path, os.W_OK):
-					show_result_dialog(Error(lang.getstr("error.access_denied.write",
-														 path)), self)
-					return
-				setcfg("measurement.save_path", path)
-				setcfg("measurement.name.expanded",
-					   make_filename_safe("%s & %s %s" %
-										  (self.worker.get_instrument_name(),
-										   self.worker.get_display_name(),
-										   strftime("%Y-%m-%d %H-%M-%S"))))
-			else:
-				self.restore_measurement_mode()
-				self.restore_testchart()
-				return
 		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
 			if is_ccxx_testchart():
@@ -9894,7 +9899,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = wx.ID_OK
 			description += " AUTO"
 		args.extend(["-E", description])
-		args.extend(["-I", safe_str(display.strip(), "UTF-8")])
+		if display:
+			args.extend(["-I", safe_str(display.strip(), "UTF-8")])
 		ccxxmake_version = get_argyll_version("ccxxmake")
 		if reference_ti3 and (not colorimeter_ti3 or
 							  ccxxmake_version >= [1, 7]):
