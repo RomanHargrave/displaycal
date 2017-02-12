@@ -7169,14 +7169,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			result = None
 		self.worker.dispcal_create_fast_matrix_shaper = result == wx.ID_OK
-		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".cal") and \
 		   ((not getcfg("profile.update") and 
 			 not self.worker.dispcal_create_fast_matrix_shaper) or 
 			self.check_overwrite(profile_ext)):
 			self.setup_measurement(self.just_calibrate)
-		else:
-			self.update_profile_name_timer.Start(1000)
 
 	def just_calibrate(self):
 		""" Just calibrate, optionally creating a fast matrix shaper profile """
@@ -7595,12 +7592,9 @@ class MainFrame(ReportFrame, BaseFrame):
 	def calibrate_and_profile_btn_handler(self, event):
 		""" Setup calibration and characterization measurements """
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
-		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".cal") and \
 		   self.check_overwrite(".ti3") and self.check_overwrite(profile_ext):
 			self.setup_measurement(self.calibrate_and_profile)
-		else:
-			self.update_profile_name_timer.Start(1000)
 
 	def calibrate_and_profile(self):
 		""" Start calibration measurements """
@@ -7926,7 +7920,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.measure_auto_after = None
 	
 	def measure_handler(self, event=None):
-		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
 			if is_ccxx_testchart():
 				# Use linear calibration for measuring CCXX testchart
@@ -7938,19 +7931,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			self.restore_measurement_mode()
 			self.restore_testchart()
-			self.update_profile_name_timer.Start(1000)
 
 	def profile_btn_handler(self, event):
 		""" Setup characterization measurements """
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
-		self.update_profile_name_timer.Stop()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3") and \
 		   self.check_overwrite(profile_ext):
 			apply_calibration = self.current_cal_choice(silent=isinstance(event, CustomEvent))
 			if apply_calibration != wx.ID_CANCEL:
 				self.setup_measurement(self.just_profile, apply_calibration)
-		else:
-			self.update_profile_name_timer.Start(1000)
 
 	def just_measure(self, apply_calibration, consumer=None):
 		if self.measure_auto(self.just_measure, apply_calibration):
