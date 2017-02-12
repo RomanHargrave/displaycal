@@ -7227,29 +7227,6 @@ class MainFrame(ReportFrame, BaseFrame):
 						  **pending_function_kwargs):
 		if not self.setup_patterngenerator(self):
 			return
-		if is_ccxx_testchart():
-			# Allow different location to store measurements
-			path = getcfg("profile.save_path")
-			if not path:
-				self.profile_save_path_btn_handler(None)
-				path = getcfg("profile.save_path")
-			if path:
-				if not waccess(path, os.W_OK):
-					show_result_dialog(Error(lang.getstr("error.access_denied.write",
-														 path)), self)
-					self.restore_measurement_mode()
-					self.restore_testchart()
-					return
-				setcfg("measurement.save_path", path)
-				setcfg("measurement.name.expanded",
-					   make_filename_safe("%s & %s %s" %
-										  (self.worker.get_instrument_name(),
-										   self.worker.get_display_name(),
-										   strftime("%Y-%m-%d %H-%M-%S"))))
-			else:
-				self.restore_measurement_mode()
-				self.restore_testchart()
-				return
 		writecfg()
 		if pending_function_kwargs.get("wrapup", True):
 			self.worker.wrapup(False)
@@ -7942,6 +7919,25 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.setup_measurement(self.just_profile, apply_calibration)
 
 	def just_measure(self, apply_calibration, consumer=None):
+		if is_ccxx_testchart():
+			# Allow different location to store measurements
+			path = getcfg("profile.save_path")
+			if not path:
+				self.profile_save_path_btn_handler(None)
+				path = getcfg("profile.save_path")
+			if path:
+				if not waccess(path, os.W_OK):
+					show_result_dialog(Error(lang.getstr("error.access_denied.write",
+														 path)), self)
+					return
+				setcfg("measurement.save_path", path)
+				setcfg("measurement.name.expanded",
+					   make_filename_safe("%s & %s %s" %
+										  (self.worker.get_instrument_name(),
+										   self.worker.get_display_name(),
+										   strftime("%Y-%m-%d %H-%M-%S"))))
+			else:
+				return
 		if self.measure_auto(self.just_measure, apply_calibration):
 			return
 		safe_print("-" * 80)
