@@ -168,7 +168,9 @@ if sys.platform == "win32":
 					profile,
 					desc) in enumerate(self.pl.devices2profiles.itervalues()):
 				index = list_ctrl.InsertStringItem(i, "")
-				list_ctrl.SetStringItem(index, 0, display_edid[0])
+				display = display_edid[0].replace("[PRIMARY]", 
+												  lang.getstr("display.primary"))
+				list_ctrl.SetStringItem(index, 0, display)
 				list_ctrl.SetStringItem(index, 1, desc)
 				if not profile:
 					continue
@@ -674,7 +676,9 @@ if sys.platform == "win32":
 					m_height = abs(m_bottom - m_top)
 					pos = m_left + m_width / 4, m_top + m_height / 4
 					size = (m_width / 2, m_height / 2)
-					frame = DisplayIdentificationFrame(display, pos, size)
+					display_desc = display.replace("[PRIMARY]", 
+												   lang.getstr("display.primary"))
+					frame = DisplayIdentificationFrame(display_desc, pos, size)
 					self.display_identification_frames[display] = frame
 
 		def show_profile_info(self, event):
@@ -805,7 +809,9 @@ if sys.platform == "win32":
 
 		def update(self, event=None):
 			self.monitors = list(self.pl.monitors)
-			self.display_ctrl.SetItems([entry[0] for entry in self.monitors])
+			self.display_ctrl.SetItems([entry[0].replace("[PRIMARY]", 
+														 lang.getstr("display.primary"))
+										for entry in self.monitors])
 			if self.monitors:
 				self.display_ctrl.SetSelection(0)
 			fix = self.pl._can_fix_profile_associations()
@@ -1278,6 +1284,8 @@ class ProfileLoader(object):
 								  profile is None):
 								desc = (lang.getstr("linear").capitalize() +
 										u" / %s" % desc)
+							display = display.replace("[PRIMARY]", 
+													  lang.getstr("display.primary"))
 							text += u"\n%s: %s" % (display, desc)
 					if not show_notification:
 						return
@@ -2624,7 +2632,7 @@ def get_display_name_edid(device, moninfo=None, index=None,
 							  (m_left, m_top, m_width,
 							   m_height)])
 		if moninfo["Flags"] & MONITORINFOF_PRIMARY:
-			display += " " + lang.getstr("display.primary")
+			display += " [PRIMARY]"
 		if moninfo.get("_adapter") and include_adapter:
 			display += u" - %s" % moninfo["_adapter"].DeviceString
 	if index is not None:
