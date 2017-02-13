@@ -1732,6 +1732,14 @@ class BaseFrame(wx.Frame):
 				if translated != label:
 					if isinstance(child, wx.Button):
 						translated = translated.replace("&", "&&")
+					elif (isinstance(child, BetterStaticFancyText) and
+						  child.Name.endswith("_info_text")):
+						if lang.getcode() == "ko":
+							# Korean text runs too wide on info panels with
+							# default wrap of 119
+							child.maxlen = 70
+						else:
+							child.maxlen = 119
 					child.Label = translated
 				if child.ToolTip:
 					if not child in self._tooltipstrings:
@@ -4321,6 +4329,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 
 	_enabled = True
 	_textlabel = ""
+	maxlen = 119
 
 	def __init__(self, window, id, text, *args, **kargs):
 		args = list(args)
@@ -4394,7 +4403,6 @@ class BetterStaticFancyText(GenStaticBitmap):
 		wrapped = ""
 		llen = 0
 		intag = False
-		maxlen = 119
 		hyphens = u"-\u2012\u2013\u2014\u2015"
 		whitespace = "\n\t "
 		for c in label:
@@ -4408,10 +4416,10 @@ class BetterStaticFancyText(GenStaticBitmap):
 				intag = False
 			elif not intag:
 				llen += 1
-				if llen > maxlen and (c in whitespace or hyphen):
+				if llen > self.maxlen and (c in whitespace or hyphen):
 					if hyphen:
 						wrapped += c
-					elif llen > maxlen + 1:
+					elif llen > self.maxlen + 1:
 						for i, rc in enumerate(reversed(wrapped)):
 							if rc == ">":
 								intag = True
@@ -4429,7 +4437,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 								break
 							elif intag and rc == "<":
 								intag = False
-					if llen > maxlen:
+					if llen > self.maxlen:
 						c = "\n"
 				if c == "\n":
 					llen = 0

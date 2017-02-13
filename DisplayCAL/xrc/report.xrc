@@ -364,7 +364,7 @@
                   <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="StaticFancyText">
+                  <object class="StaticFancyText" name="mr_settings_info_text">
                     <label>info.mr_settings</label>
                   </object>
                   <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>

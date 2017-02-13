@@ -448,7 +448,7 @@
                                     <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                   </object>
                                   <object class="sizeritem">
-                                    <object class="StaticFancyText">
+                                    <object class="StaticFancyText" name="display_instrument_warmup_info_text">
                                       <label>info.display_instrument.warmup</label>
                                     </object>
                                     <flag>wxTOP|wxALIGN_LEFT|wxALIGN_TOP</flag>
@@ -461,7 +461,7 @@
                                     <flag>wxALIGN_TOP|wxALIGN_RIGHT</flag>
                                   </object>
                                   <object class="sizeritem">
-                                    <object class="StaticFancyText">
+                                    <object class="StaticFancyText" name="display_instrument_info_text">
                                       <label>info.display_instrument</label>
                                     </object>
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
@@ -1070,7 +1070,7 @@
                                     <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
                                   </object>
                                   <object class="sizeritem">
-                                    <object class="StaticFancyText">
+                                    <object class="StaticFancyText" name="calibration_settings_info_text">
                                       <label>info.calibration_settings</label>
                                     </object>
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
@@ -1391,7 +1391,7 @@
                                     <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
                                   </object>
                                   <object class="sizeritem">
-                                    <object class="StaticFancyText">
+                                    <object class="StaticFancyText" name="profile_settings_info_text">
                                       <label>info.profile_settings</label>
                                     </object>
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
@@ -1972,7 +1972,7 @@
                                     <flag>wxALIGN_TOP|wxALIGN_CENTRE_HORIZONTAL</flag>
                                   </object>
                                   <object class="sizeritem">
-                                    <object class="StaticFancyText">
+                                    <object class="StaticFancyText" name="lut3d_settings_info_text">
                                       <label>info.3dlut_settings</label>
                                     </object>
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
