@@ -9572,14 +9572,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				try:
 					if os.path.splitext(path.lower())[1] in (".icm", ".icc"):
 						profile = ICCP.ICCProfile(path)
+						meta = profile.tags.get("meta", {})
 						cgats = self.worker.ti1_lookup_to_ti3(ccxx, profile,
 															  pcs="x",
 															  intent="a")[1]
 						cgats.add_keyword("DATA_SOURCE",
-										  profile.tags.get("meta",
-														   {}).get("DATA_source",
-																   {}).get("value",
-																		   "").upper() or
+										  meta.get("DATA_source",
+												   {}).get("value",
+														   "").upper() or
 										  "Unknown")
 						if cgats.DATA_SOURCE == "EDID":
 							instrument = "EDID"
@@ -9591,10 +9591,9 @@ class MainFrame(ReportFrame, BaseFrame):
 								targ = CGATS.CGATS(targ)
 								instrument = targ.queryv1("TARGET_INSTRUMENT")
 							if not instrument:
-								instrument = profile.tags.get("meta",
-															  {}).get("MEASUREMENT_device",
-																	  {}).get("value",
-																			  "Unknown")
+								instrument = meta.get("MEASUREMENT_device",
+													  {}).get("value",
+															  "Unknown")
 						cgats.add_keyword("TARGET_INSTRUMENT", instrument)
 						spectral = "YES" if instruments.get(get_canonical_instrument_name(cgats.TARGET_INSTRUMENT),
 															{}).get("spectral", False) else "NO"
@@ -9604,14 +9603,13 @@ class MainFrame(ReportFrame, BaseFrame):
 						cgats.ARGYLL_COLPROF_ARGS.parent = cgats
 						cgats.ARGYLL_COLPROF_ARGS.root = cgats
 						cgats.ARGYLL_COLPROF_ARGS.type = "SECTION"
-						display = profile.tags.get("meta",
-												   {}).get("EDID_model",
-														   {}).get("value",
-																   "").encode("UTF-7")
-						manufacturer = profile.tags.get("meta",
-												   {}).get("EDID_manufacturer",
-														   {}).get("value",
-																   "").encode("UTF-7")
+						display = meta.get("EDID_model",
+										   meta.get("EDID_model_id",
+													{})).get("value",
+															 "").encode("UTF-7")
+						manufacturer = meta.get("EDID_manufacturer",
+											    {}).get("value",
+													    "").encode("UTF-7")
 						cgats.ARGYLL_COLPROF_ARGS.add_data('-M "%s" -A "%s"' %
 														   (display,
 															manufacturer))
