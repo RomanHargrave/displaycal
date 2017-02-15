@@ -9224,15 +9224,23 @@ class MainFrame(ReportFrame, BaseFrame):
 					else:
 						measurement_mode = None
 					observer_ctrl = dlg.observer_reference_ctrl
+				if debug or verbose >= 2:
+					safe_print("check_last_ccxx_ti3", name)
+					safe_print("instrument =", instrument)
+					safe_print("measurement_mode =", measurement_mode)
 				if self.worker.instrument_can_use_nondefault_observer(instrument):
 					observer = self.observers_ba[observer_ctrl.GetStringSelection()]
 				else:
-					observer = None
+					observer = defaults["observer"]
+				if debug or verbose >= 2:
+					safe_print("observer =", observer)
 				if getcfg("last_%s_ti3_path.backup" % name, False):
 					setcfg("last_%s_ti3_path" % name,
 						   getcfg("last_%s_ti3_path.backup" % name))
 					setcfg("last_%s_ti3_path.backup" % name, None)
 				ti3 = getcfg("last_%s_ti3_path" % name, False)
+				if debug or verbose >= 2:
+					safe_print("last_%s_ti3_path =" % name, ti3)
 				if ti3:
 					if os.path.isfile(ti3):
 						try:
@@ -9244,6 +9252,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						if cgats_instrument:
 							cgats_instrument = get_canonical_instrument_name(
 								cgats_instrument)
+						if debug or verbose >= 2:
+							safe_print("cgats_instrument =", cgats_instrument)
 						if name == "reference":
 							if getcfg(cfgname + ".projector"):
 								cgats_measurement_mode = "p"
@@ -9260,7 +9270,13 @@ class MainFrame(ReportFrame, BaseFrame):
 							if (instrument_features.get("highres_mode") and
 								cgats.queryv1("SPECTRAL_BANDS") > 36):
 								cgats_measurement_mode += "H"
+						if debug or verbose >= 2:
+							safe_print("cgats_measurement_mode =", cgats_measurement_mode)
 						cgats_observer = cgats.queryv1("OBSERVER")
+						if not cgats_observer:
+							cgats_observer = defaults["observer"]
+						if debug or verbose >= 2:
+							safe_print("cgats_observer =", cgats_observer)
 						if (cgats_instrument != instrument or
 							cgats_measurement_mode != measurement_mode or
 							cgats_observer != observer):
@@ -9270,6 +9286,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					else:
 						setcfg("last_%s_ti3_path" % name, None)
 				ti3 = getcfg("last_%s_ti3_path" % name, False)
+				if debug or verbose >= 2:
+					safe_print("last_%s_ti3_path =" % name, ti3)
 				if ti3:
 					bmp = geticon(16, "checkmark")
 				else:
