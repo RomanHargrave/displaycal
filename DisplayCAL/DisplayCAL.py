@@ -7810,6 +7810,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					return True
 				setcfg("testchart.file.backup", getcfg("testchart.file"))
 				self.set_testchart(ccxx_testchart)
+			self.setup_ccxx_measurement()
 			self.just_measure(get_data_path("linear.cal"),
 							  self.measure_auto_finish)
 			return True
@@ -7897,6 +7898,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.measure_auto_after = None
 	
 	def measure_handler(self, event=None):
+		self.setup_ccxx_measurement()
 		if check_set_argyll_bin() and self.check_overwrite(".ti3"):
 			if is_ccxx_testchart():
 				# Use linear calibration for measuring CCXX testchart
@@ -7918,7 +7920,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if apply_calibration != wx.ID_CANCEL:
 				self.setup_measurement(self.just_profile, apply_calibration)
 
-	def just_measure(self, apply_calibration, consumer=None):
+	def setup_ccxx_measurement(self):
 		if is_ccxx_testchart():
 			# Allow different location to store measurements
 			path = getcfg("profile.save_path")
@@ -7938,6 +7940,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										   strftime("%Y-%m-%d %H-%M-%S"))))
 			else:
 				return
+
+	def just_measure(self, apply_calibration, consumer=None):
 		if self.measure_auto(self.just_measure, apply_calibration):
 			return
 		safe_print("-" * 80)
