@@ -292,6 +292,7 @@
 	"colorimeter_correction.web_check": "Online nach Colorimeter-Korrektur suchen...",
 	"colorimeter_correction.web_check.choose": "Für das gewählte Anzeige- und Messgerät wurden folgende Colorimeter-Korrekturen gefunden:",
 	"colorimeter_correction.web_check.failure": "Für das gewählte Anzeige- und Messgerät wurden keine Colorimeter-Korrekturen gefunden.",
+	"colorimeter_correction.web_check.info": "Bitte beachten Sie, dass alle Colorimeter-Korrekturen von Nutzern bereitgestellt wurden. Die Brauchbarkeit der Korrekturen für Ihre Situation zu beurteilen, liegt in Ihrer eigenen Verantwortung. Diese Korrekturen können die absolute Genauigkeit Ihres Colorimeters mit Ihrem Anzeigegerät verbessern oder auch nicht.",
 	"colorimeter_correction_matrix_file": "Korrektur",
 	"colorimeter_correction_matrix_file.choose": "Colorimeter-Korrektur auswählen",
 	"colorimetric_intent_image_state": "Farbmetrischer Abbildungs-Zustand",

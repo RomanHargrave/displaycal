@@ -608,6 +608,10 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda event: dlg.EndModal(wx.ID_OK),
 			 dlg_list_ctrl)
 	dlg.sizer3.Add(dlg_list_ctrl, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+	info_txt = wx.StaticText(dlg, -1,
+							 lang.getstr("colorimeter_correction.web_check.info"))
+	info_txt.Wrap(640 * scale)
+	dlg.sizer3.Add(info_txt, 1, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 	if len(cgats) > 1:
 		# We got several matches
 		dlg.ok.Disable()

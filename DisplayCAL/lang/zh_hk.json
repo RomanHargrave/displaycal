@@ -292,6 +292,7 @@
 	"colorimeter_correction.web_check": "撿查網上的色度計修正...",
 	"colorimeter_correction.web_check.choose": "已找到以下用於所選顯示器及儀器的色度計修正：",
 	"colorimeter_correction.web_check.failure": "找不到用於所選顯示器及儀器的色度計修正。",
+		"*colorimeter_correction.web_check.info": "Please note that all colorimeter corrections have been contributed by various users, and their usefulness to your particular situation is up to you to evaluate. They may or may not improve the absolute accuracy of your colorimeter with your display.",
 	"colorimeter_correction_matrix_file": "修正",
 	"colorimeter_correction_matrix_file.choose": "選擇色度計修正",
 	"colorimetric_intent_image_state": "影像色度狀態",

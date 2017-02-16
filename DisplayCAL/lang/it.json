@@ -292,6 +292,7 @@
 		"*colorimeter_correction.web_check": "Check online for colorimeter correction...",
 		"*colorimeter_correction.web_check.choose": "The following colorimeter corrections for the selected display and instrument have been found:",
 		"*colorimeter_correction.web_check.failure": "No colorimeter corrections for the selected display and instrument have been found.",
+		"*colorimeter_correction.web_check.info": "Please note that all colorimeter corrections have been contributed by various users, and their usefulness to your particular situation is up to you to evaluate. They may or may not improve the absolute accuracy of your colorimeter with your display.",
 		"*colorimeter_correction_matrix_file": "Correction",
 		"*colorimeter_correction_matrix_file.choose": "Choose colorimeter correction",
 		"*colorimetric_intent_image_state": "Colorimetric image state",
