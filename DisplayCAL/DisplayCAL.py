@@ -2731,6 +2731,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
+				for progress_wnd in self.worker.progress_wnds:
+					progress_wnd.Destroy()
 				wx.CallAfter(self.Raise)
 				threading.Thread(target=self.set_remote_language).start()
 				break
