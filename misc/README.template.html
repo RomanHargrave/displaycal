@@ -143,7 +143,8 @@
 			<span>(For other means of contributing, please contact me under <a>florian ‹at› displaycal . net</a>)</span>
 			<p><a href="#thanks">Thanks to all contributors!</a></p>
 			<p>Special thanks to the following people and organizations:</p>
-			<p><a href="https://uptimepal.net"><img src="${URL}img/uptimepal-logo-icon-only-22.png" alt="" style="vertical-align: bottom" /></a> <a href="https://uptimepal.net">Uptime Pal - Website Monitoring</a></p>
+			<p><a
+href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 			<p>Riley Brandt Photography—<a href="http://www.rileybrandt.com/lessons/">The Open Source Photography Course</a></p>
 			</div>
 		</div>
@@ -805,7 +806,7 @@
 			<div id="requirements-unattended">
 				<h3>Additional requirements for unattended calibration and profiling</h3>
 
-				<p>When using a spectrometer that is supported by the unattended feature (see below), having to take the instrument off the screen to do a sensor self-calibration again after display calibration before starting the measurements for profiling may be avoided if the menu item “Allow skipping of spectrometer self-calibration” in the “Options” menu is checked (colorimeter measurements are always unattended because they generally do not require a sensor calibration away from the screen, with the exception of the i1 Display 1).</p>
+				<p>When using a spectrometer that is supported by the unattended feature (see below), having to take the instrument off the screen to do a sensor self-calibration again after display calibration before starting the measurements for profiling may be avoided if the menu item “Allow skipping of spectrometer self-calibration” under the “Advanced” sub-menu in the “Options” menu is checked (colorimeter measurements are always unattended because they generally do not require a sensor calibration away from the screen, with the exception of the i1 Display 1).</p>
 
 				<p>Unattended calibration and profiling currently supports the following spectrometers in addition to most colorimeters:</p>
 
@@ -1211,7 +1212,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 				
 				<h4 id="settings_measurement_modes">Choosing a measurement mode</h4>
 				
-				<p>Some instruments may support different measurement modes for different types of display devices. In general, there are three base measurement modes: “LCD”, “Refresh” (e.g. CRT and Plasma are refresh-type displays) and “Projector” (the latter is only available if supported by the instrument). Some instruments like the Spyder 4/5 and ColorHug support additional measurement modes, where a mode is coupled with a predefined colorimeter correction (in that case, the <a href="#settings_colorimeter_correction">colorimeter correction</a> dropdown will automatically be set to “None”).<br />
+				<p>Some instruments may support different measurement modes for different types of display devices. In general, there are two base measurement modes: “LCD” and “Refresh” (e.g. CRT and Plasma are refresh-type displays). Some instruments like the Spyder 4/5 and ColorHug support additional measurement modes, where a mode is coupled with a predefined colorimeter correction (in that case, the <a href="#settings_colorimeter_correction">colorimeter correction</a> dropdown will automatically be set to “None”).<br />
 				Variations of these measurement modes may be available depending on the instrument: “Adaptive” measurement mode for spectrometers uses varying integration times (always used by colorimeters) to increase accuracy of dark readings. “HiRes” turns on high resolution spectral mode for spectrometers like the i1 Pro, which may increase the accuracy of measurements.</p>
 
 				<h4 id="settings_drift_compensation">Drift compensation during measurements (only available if using Argyll CMS &gt;= 1.3.0)</h4>
@@ -2342,7 +2343,7 @@ The underlying issue seems to be that while USB 3.0 has been designed to be back
 				<dd><strong>Solution:</strong> Adobe ACE, Adobe's color conversion engine, contains monitor profile validation functionality which attempts to filter out bad profiles. With XYZ LUT profiles created in Argyll CMS versions up to 1.3.2, the B2A white point mapping is sometimes not particularly accurate, just enough so that ACE will see it as a problem, but in actual use it may only have little impact that the whitepoint is a bit off. So if you get a similar message when launching Photoshop, with the options “Use profile regardless” and “Ignore profile”, you may choose “Use profile regardless” and check visually or with the pipette in Photoshop if the inaccurate whitepoint poses a problem. This issue is fixed in Argyll CMS 1.3.3 and newer. Alternatively, you can create a L*a*b* LUT profile.</dd>
 
 				<dt id="issue-win-uac-cal-reset"><span>MS Windows Vista:</span> The calibration gets unloaded when a User Access Control prompt is shown</dt>
-				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7 (and later), and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open ${APPNAME} and select “Load calibration curves from current display profile” in the “Options” menu, or (quicker) open the Windows start menu and select “${APPNAME} Profile Loader” in the “Startup” subfolder. To disable <abbr title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></abbr> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
+				<dd><strong>Solution:</strong> (Intel and Intel/AMD hybrid graphics users please see <a href="#issue-win-intel-cal-reset">“The Calibration gets unloaded after login/resume/User Access Control prompt”</a> first) This Windows Vista bug seems to have been fixed under Windows 7 (and later), and can be remedied under Vista by either manually reloading calibration, or disabling UAC—but please note that you sacrifice security by doing this. To manually reload the calibration, either open ${APPNAME} and select “Load calibration curves from current display profile” under the “Video card gamma table” sub-menu in the “Tools” menu, or (quicker) open the Windows start menu and select “${APPNAME} Profile Loader” in the “Startup” subfolder. To disable <abbr title="User Access Control">UAC<sup><a href="#definition_UAC">[9]</a></sup></abbr> (not recommended!), open the Windows start menu and enter “msconfig” in the search box. Click on the Tools tab. Select the line “Disable UAC” and click the “Launch” button. Close msconfig. You need to reboot your system for changes to apply.</dd>
 				
 				<dt id="issue-win-intel-cal-reset"><span>MS Windows with Intel graphics (also Intel/AMD hybrid):</span> The Calibration gets unloaded after login/resume/User Access Control prompt</dt>
 				<dd><strong>Solution:</strong> The Intel graphics drivers contain several utilities that interfere with correct calibration loading. A workaround is to rename, move or disable (e.g. using a tool like <a href="https://technet.microsoft.com/en-us/sysinternals/bb963902">AutoRuns</a>) the following files:
@@ -2379,7 +2380,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dd><strong>Solution:</strong> Go to the “Security &amp; Privacy” settings in System Preferences and set “Allow applications downloaded from” (under the “General” tab) to the “Anywhere” setting. After you have successfully launched ${APPNAME}, you can change the setting back to a more secure option and ${APPNAME} will continue to run properly.</dd>
 
 				<dt id="issue-mac-pscursor"><span>Photoshop CS3 (Mac OS X):</span> Under Mac OS X, the brush cursor in Photoshop CS3 looks funny (box around brush)</dt>
-				<dd><strong>Solution:</strong> This seems to be a bug which shows with <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table” or “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “Options” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
+				<dd><strong>Solution:</strong> This seems to be a bug which shows with <abbr title="Look Up Table">LUT<sup><a href="#definition_LUT">[7]</a></sup></abbr>-type profiles that have only one rendering intent. You can try to overcome it by selecting “Advanced...” next to the profile type dropdown, selecting an existing <abbr title="International Color Consortium">ICC<sup><a href="#definition_ICC">[5]</a></sup></abbr> profile as source (for hints as to which profile to select, see  “<a href="#settings_profiling_gamutmapping">Advanced gamut mapping options</a>”) and tick at least one of the “Enhance effective resolution of colorimetric <abbr title="Profile Connection Space">PCS<sup><a href="#definition_PCS">[11]</a></sup></abbr>-to-device table” or “Apply gamut mapping to” checkboxes before profiling. To do that for an existing profile, adjust quality and profile name if you want, choose “Create profile from measurement data...” from the “File” menu and select the profile. Note that this does not always solve the issue. Trying another profile type (XYZ LUT instead of L*a*b* LUT) might also help.</dd>				
 
 				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</dt>
 				<dd><strong>Solution:</strong> Make sure you have not selected a display that doesn't support calibration (i.e. “Web @ localhost” or “Untethered”) and that you have enabled “Interactive display adjustment” or set the tone curve to a different value than “As measured”. Under Linux, please refer to the Argyll CMS documentation, “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows and make sure you have a recent driver for your video card installed.</dd>
@@ -2502,9 +2503,18 @@ The easiest way to get a complete set of logfiles is to choose “Show log” fr
 			<p>Translators: Loïc Guégant, François Leclerc, Jean-Luc Coulon (french translation),
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation),
-			楊添明 (traditional chinese translation)</p>
+			楊添明 (traditional chinese translation),
+			김환(Howard Kim) (korean translation)</p>
 
 			<p>Recent contributors:
+Jani Vainiomäki, Mike Mccormick, Michael Riha, Florian Schaerer, Philippe
+Anctil, Gregory Adams, Nils Caneele, Samuel Butler, Tony Meneses, Alexander
+Kunz, Tony Meneses, Maximilian Wende, Patrick Kenny, Barbara Breitsameter,
+Patrick Coray, Monceros, Jean-Pierre Verrue, John Mckenzie, Jani Rautiainen,
+Mario Wittmann, Ian Harrison, James Marsden, Jan Ruszkiewicz, Martin Hickley,
+Ernst Molitor, Przemyslaw Szymanski-Klyszejko, Bernardus Schut, 啸 罗, Steen
+Knarberg, Dietmar Hentzschel, Brett Antony Patching, Vivek Chowdhary
+<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
 Karl Wolf, Matthias Neumaier, Alexey Osetyanov, William Walters, Tobias
 Brausen, Elio Di Claudio, 景斌 高, Michael Kuhn, Серафим Сальников, Alexandre
 Malhao, Horst Wandres, Bruno Louis, Yothin Morakot-Amporn, Michel Lapointe,
@@ -2512,14 +2522,7 @@ Dieter Pongratz, Pier Bover Branze, Niku Toivola, Minh Nguyen, Wam Beuwer,
 Julian Brossat, Lutz Winkelmann, Andrew Drewitt, Matthew Park, ピナピクス株式会社, Lee
 Stripp, Stanislas Szlapka, Evgeny Kalachikhin, Noel Lee, Mark Aligbe, Mauro
 Salvini, Ketil Skogen, David Goman, Luis Lainez, Tsai Yu-Fa, Renaud Jandin
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
-義興 陳, John Wong, High-Que LLC, Matthew Gorrie, 2000Px Media Inc.,
-Markus Filsinger, Andreas Simionovici, The Denmark Group, Inc., Terry Rowse,
-Grace Kim, Jd Albers, Xavier Arnau, 俊良 陆, Jonathan Puckrin, Hans Henrik Baek
-Thogersen, Mikko Rahikainen, Christopher Barry, Andrea Bellucci, Луи Шильп, Alberto Rodriguez Sánchez, Alesksey Yashin, Flinders Street Photography,
-Ashley Bradford, Dominique Haeber, Risto Jokinen, Stefan Engstrom, Jean-Paul
-Moreau, Christoph Konermann, Morgan Langley, Riley Brandt Photography, Rem
-Perrot, Calex Gonzalez, Joseph Tan</span></p>
+</span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses ${APPNAME}.</p>
 
@@ -2535,6 +2538,32 @@ Perrot, Calex Gonzalez, Joseph Tan</span></p>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Korean translation thanks to 김환(Howard Kim).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Disable observer selection if observer is set by a colorimeter correction.</li>
+							<li>3D LUT maker: Enable black output offset choice for 16-bit table-based source profiles.</li>
+							<li>Profile loader (Windows): “Automatically fix profile associations” is now enabled by default.</li>
+							<li>Build system: Filter out “build”, “dist” as well as entries starting with a dot (“.”) to speed up traversing the source directory tree (distutils/setuptools hack).</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Could not create colorimeter correction from existing measurements for instruments that don't support alternative standard observers.</li>
+							<li>ColorHug / ColorHug2 “Auto” measurement mode threw an error if the extended display identification data did not contain a model name.</li>
+							<li>[Trivial/cosmetic] Testchart editor: When adding reference patches, resize row labels if needed.</li>
+							<li>Profile loader (Linux): When errors occured during calibration loading, there was no longer any message popup.</li>
+							<li>Profile loader (Windows): Filter non-existing profiles (e.g. ones that have been deleted via Windows Explorer without first disassociating them from the display device) from the list of associated profiles (same behavior as Windows color management settings).</li>
+							<li>Profile loader (Windows): When changing the language on-the-fly via ${APPNAME}, update primary display device identfier string.</li>
+						</ul>
+
+						<p id="changelog-3.2.3">2017-01-04 14:10 (UTC) 3.2.3 </p>
+						<h3>3.2.3 </h3>
 
 						<h4>Changed in this release:</h4>
 						<ul>

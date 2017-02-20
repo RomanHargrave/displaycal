@@ -145,7 +145,8 @@
 			<span>(Pour d’autres moyens de contribution, veuillez me contacter sous <a>florian ‹at› displaycal . net</a>)</span>
 			<p><a href="#thanks">Merci à tous les contributeurs !</a></p>
 			<p>Remerciements particuliers aux personnes et organisations suivantes :</p>
-			<p><a href="https://uptimepal.net"><img src="${URL}img/uptimepal-logo-icon-only-22.png" alt="" style="vertical-align: bottom" /></a> <a href="https://uptimepal.net">Uptime Pal - Website Monitoring</a></p>
+			<p><a
+href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 			<p>Riley Brandt Photography—<a href="http://www.rileybrandt.com/lessons/">The Open Source Photography Course</a></p>
 			</div>
 		</div>
@@ -2424,6 +2425,14 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			楊添明 (traduction chinois traditionnel)</p>
 
 			<p>Les donateurs récents :
+Jani Vainiomäki, Mike Mccormick, Michael Riha, Florian Schaerer, Philippe
+Anctil, Gregory Adams, Nils Caneele, Samuel Butler, Tony Meneses, Alexander
+Kunz, Tony Meneses, Maximilian Wende, Patrick Kenny, Barbara Breitsameter,
+Patrick Coray, Monceros, Jean-Pierre Verrue, John Mckenzie, Jani Rautiainen,
+Mario Wittmann, Ian Harrison, James Marsden, Jan Ruszkiewicz, Martin Hickley,
+Ernst Molitor, Przemyslaw Szymanski-Klyszejko, Bernardus Schut, 啸 罗, Steen
+Knarberg, Dietmar Hentzschel, Brett Antony Patching, Vivek Chowdhary
+<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
 Karl Wolf, Matthias Neumaier, Alexey Osetyanov, William Walters, Tobias
 Brausen, Elio Di Claudio, 景斌 高, Michael Kuhn, Серафим Сальников, Alexandre
 Malhao, Horst Wandres, Bruno Louis, Yothin Morakot-Amporn, Michel Lapointe,
@@ -2431,14 +2440,7 @@ Dieter Pongratz, Pier Bover Branze, Niku Toivola, Minh Nguyen, Wam Beuwer,
 Julian Brossat, Lutz Winkelmann, Andrew Drewitt, Matthew Park, ピナピクス株式会社, Lee
 Stripp, Stanislas Szlapka, Evgeny Kalachikhin, Noel Lee, Mark Aligbe, Mauro
 Salvini, Ketil Skogen, David Goman, Luis Lainez, Tsai Yu-Fa, Renaud Jandin
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
-義興 陳, John Wong, High-Que LLC, Matthew Gorrie, 2000Px Media Inc.,
-Markus Filsinger, Andreas Simionovici, The Denmark Group, Inc., Terry Rowse,
-Grace Kim, Jd Albers, Xavier Arnau, 俊良 陆, Jonathan Puckrin, Hans Henrik Baek
-Thogersen, Mikko Rahikainen, Christopher Barry, Andrea Bellucci, Луи Шильп, Alberto Rodriguez Sánchez, Alesksey Yashin, Flinders Street Photography,
-Ashley Bradford, Dominique Haeber, Risto Jokinen, Stefan Engstrom, Jean-Paul
-Moreau, Christoph Konermann, Morgan Langley, Riley Brandt Photography, Rem
-Perrot, Calex Gonzalez, Joseph Tan</span></p>
+</span></p>
 
 			<p>Et tous ceux qui m’ont envoyé des retours ou signalé des bogues, suggéré des fonctionnalités ou qui, simplement, utilisent ${APPNAME}.</p>
 
@@ -2454,6 +2456,32 @@ Perrot, Calex Gonzalez, Joseph Tan</span></p>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Korean translation thanks to 김환(Howard Kim).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li>Disable observer selection if observer is set by a colorimeter correction.</li>
+							<li>3D LUT maker: Enable black output offset choice for 16-bit table-based source profiles.</li>
+							<li>Profile loader (Windows): “Automatically fix profile associations” is now enabled by default.</li>
+							<li>Build system: Filter out “build”, “dist” as well as entries starting with a dot (“.”) to speed up traversing the source directory tree (distutils/setuptools hack).</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li>Could not create colorimeter correction from existing measurements for instruments that don't support alternative standard observers.</li>
+							<li>ColorHug / ColorHug2 “Auto” measurement mode threw an error if the extended display identification data did not contain a model name.</li>
+							<li>[Trivial/cosmetic] Testchart editor: When adding reference patches, resize row labels if needed.</li>
+							<li>Profile loader (Linux): When errors occured during calibration loading, there was no longer any message popup.</li>
+							<li>Profile loader (Windows): Filter non-existing profiles (e.g. ones that have been deleted via Windows Explorer without first disassociating them from the display device) from the list of associated profiles (same behavior as Windows color management settings).</li>
+							<li>Profile loader (Windows): When changing the language on-the-fly via ${APPNAME}, update primary display device identfier string.</li>
+						</ul>
+
+						<p id="changelog-3.2.3">2017-01-04 14:10 (UTC) 3.2.3 </p>
+						<h3>3.2.3 </h3>
 
 						<h4>Changed in this release:</h4>
 						<ul>
