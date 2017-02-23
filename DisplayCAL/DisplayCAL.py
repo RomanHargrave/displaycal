@@ -14029,7 +14029,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						  madvr.MadTPG_Net):
 				self.worker.madtpg.shutdown()
 			self.HideAll()
-			if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
+			if (self.worker.tempdir and os.path.isdir(self.worker.tempdir) and
+				not os.listdir(self.worker.tempdir)):
 				self.worker.wrapup(False)
 			wx.GetApp().ExitMainLoop()
 		elif isinstance(event, wx.CloseEvent) and event.CanVeto():

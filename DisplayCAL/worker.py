@@ -11040,8 +11040,17 @@ BEGIN_DATA
 									try:
 										shutil.copyfile(src, dst)
 									except Exception, exception:
-										result = Error(lang.getstr("error.copy_failed",
-																   (src, dst)))
+										result2 = Error(lang.getstr("error.copy_failed",
+																	(src, dst)) +
+													    "\n" +
+													    safe_unicode(exception))
+										if isinstance(result, Exception):
+											result = "\n".join(safe_unicode(error)
+															   for error in
+															   (result, result2))
+										else:
+											result = result2
+										remove = False
 							else:
 								if os.path.isdir(src):
 									if verbose >= 2:
