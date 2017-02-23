@@ -1770,6 +1770,8 @@ class ProfileLoader(object):
 			# Check profile associations
 			profile_associations_changed = 0
 			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
+				display_desc = display.replace("[PRIMARY]", 
+											   lang.getstr("display.primary"))
 				if device0:
 					devicekey = device0.DeviceKey
 				else:
@@ -1892,11 +1894,11 @@ class ProfileLoader(object):
 							 profile_association_changed) and
 							profile.tags.get("vcgt")):
 							safe_print(lang.getstr("calibration.loading_from_display_profile"))
-							safe_print(display)
+							safe_print(display_desc)
 							safe_print(lang.getstr("vcgt.unknown_format",
 												   os.path.basename(profile.fileName)))
 							safe_print(lang.getstr("failure"))
-							results.append(display)
+							results.append(display_desc)
 							errors.append(lang.getstr("vcgt.unknown_format",
 													  os.path.basename(profile.fileName)))
 						# Fall back to linear calibration
@@ -1963,7 +1965,7 @@ class ProfileLoader(object):
 					# Check if video card matches profile vcgt
 					if values == vcgt_values:
 						continue
-					safe_print(lang.getstr("vcgt.mismatch", display))
+					safe_print(lang.getstr("vcgt.mismatch", display_desc))
 					recheck = True
 				if recheck:
 					# Try and prevent race condition with madVR
@@ -1978,10 +1980,10 @@ class ProfileLoader(object):
 					getcfg("profile_loader.check_gamma_ramps")):
 					if self._reset_gamma_ramps:
 						safe_print(lang.getstr("calibration.resetting"))
-						safe_print(display)
+						safe_print(display_desc)
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display, "->", desc)
+						safe_print(display_desc, "->", desc)
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
@@ -2015,9 +2017,9 @@ class ProfileLoader(object):
 					getcfg("profile_loader.check_gamma_ramps")):
 					if isinstance(result, Exception) or not result:
 						errstr = lang.getstr("calibration.load_error")
-						errors.append(": ".join([display, errstr]))
+						errors.append(": ".join([display_desc, errstr]))
 					else:
-						text = display + u": "
+						text = display_desc + u": "
 						if self._reset_gamma_ramps or not profile:
 							text += lang.getstr("linear").capitalize()
 						else:
