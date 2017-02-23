@@ -727,8 +727,11 @@ class LUT3DFrame(BaseFrame):
 														"ColorLookupTable.fx")
 							with open(clut_fx_path, "wb") as clut_fx_file:
 								clut_fx_file.write(clut_fx)
-							with open(reshade_fx_path, "wb") as reshade_fx_file:
-								reshade_fx_file.write(reshade_fx)
+							if not os.path.isdir(os.path.join(dst_dir,
+															  "reshade-shaders")):
+								# ReShade < 3.0
+								with open(reshade_fx_path, "wb") as reshade_fx_file:
+									reshade_fx_file.write(reshade_fx)
 					for src_path, dst_path in zip(src_paths, dst_paths):
 						shutil.copyfile(src_path, dst_path)
 					return
