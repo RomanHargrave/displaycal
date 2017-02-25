@@ -145,6 +145,99 @@ def DICOM(j, inverse=False):
 				 h * math.pow(logj, 4) + k * math.pow(logj, 5)))
 
 
+class HLG(object):
+	"""
+	Hybrid Log Gamma (HLG) as defined in Rec BT.2100
+	
+	"""
+
+	def __init__(self, black_cdm2=0.0, white_cdm2=1000.0, system_gamma=1.2,
+				 rgb_space="Rec. 2020"):
+		self.black_cdm2 = black_cdm2
+		self.white_cdm2 = white_cdm2
+		self.rgb_space = get_rgb_space(rgb_space)
+		self.system_gamma = system_gamma
+		
+	def oetf(self, v, inverse=False, normalize=1, apply_system_gamma=True,
+			 apply_black_offset=True):
+		"""
+		Hybrid Log Gamma (HLG) OETF
+		
+		"""
+		if normalize == 1:
+			# Normalized to 0..1 range
+			c = 1.00429347
+			d = 1.0
+			e = 3.0
+			k = 1.0 / 12
+			r = 1.0
+		elif normalize == 12:
+			# Normalized to 0..12 range
+			c = 0.55991073
+			d = 4.0
+			e = 1.0
+			k = 1.0
+			r = 0.5
+		else:
+			raise ValueError("Cannot normalize to %s" % normalize)
+		a = 0.17883277
+		b = 0.02372241 * normalize
+		if inverse:
+			# Inverse OETF, RGB -> XYZ
+			E_ = v
+			if 0 <= E_ <= 0.5:
+				E = d * E_ ** 2 / e
+			else:
+				E = math.exp((E_ - c) / a) + b
+			v = E
+			if apply_system_gamma:
+				gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
+				v = v ** gamma
+			if apply_black_offset:
+				LB = self.black_cdm2 / self.white_cdm2
+				alpha = (1.0 - LB)
+				v = alpha * v + LB
+		else:
+			# OETF, XYZ -> RGB
+			if apply_system_gamma:
+				gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
+				v = (v / normalize) ** (1 / gamma) * normalize
+			E = v
+			if 0 <= E <= k:
+				E_ = r * math.sqrt(e * E)
+			else:
+				E_ = a * math.log(E - b) + c
+			v = E_
+		return min(v, normalize)
+
+	def eotf(self, R, G, B):
+		"""
+		Hybrid Log Gamma (HLG) EOTF
+
+		Return luminance of displayed components (in cd/m2) or XYZ
+		(normalized to 0..1) if rgb_space is given
+		
+		"""
+		RGB_S = tuple(self.oetf(v, True, 1, False, False) for v in (R, G, B))
+		gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
+		if self.rgb_space:
+			X, Y, Z = self.rgb_space[-1] * RGB_S
+			if Y:
+				# Apply system gamma
+				Yy = Y ** gamma
+				X, Y, Z = (v / Y * Yy for v in (X, Y, Z))
+			# Apply black offset
+			beta = self.black_cdm2 / self.white_cdm2
+			bp = [E * beta for E in get_whitepoint(self.rgb_space[1])]
+			X, Y, Z = blend_blackpoint(X, Y, Z, (0, 0, 0), bp)
+			return X, Y, Z
+		else:
+			alpha = (self.white_cdm2 - self.black_cdm2)
+			# Rec. 2020 relative luminance coefficients
+			YS = 0.2627 * RGB_S[0] + 0.6780 * RGB_S[1] + 0.0593 * RGB_S[2]
+			return alpha * YS ** gamma + self.black_cdm2
+
+
 rgb_spaces = {
 	# http://brucelindbloom.com/WorkingSpaceInfo.html
 	# ACES: https://github.com/ampas/aces-dev/blob/master/docs/ACES_1.0.1.pdf?raw=true
