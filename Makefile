@@ -7,9 +7,6 @@ clean:
 dist:
 	util/sdist.sh
 
-dist-autopackage:
-	util/dist_autopackage.sh
-
 distclean: clean
 	-rm -f INSTALLED_FILES
 	-rm -f setuptools-*.egg

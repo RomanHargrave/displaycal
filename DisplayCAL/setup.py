@@ -1190,7 +1190,6 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		manifest_in.append("recursive-include %s %s %s" % 
 						   (os.path.join(name, "theme", "icons"), 
 						   "*.icns", "*.ico"))
-		manifest_in.append("recursive-include %s %s" % ("autopackage", "*"))
 		manifest_in.append("include " + os.path.join("man", "*.1"))
 		manifest_in.append("recursive-include %s %s" % ("misc", "*"))
 		if skip_instrument_conf_files:
