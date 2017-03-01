@@ -13994,6 +13994,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.start_timers()
 		self.enable_menus()
 		wx.Frame.Show(self, show)
+		if self.worker.progress_wnd and self.worker.progress_wnd.IsShown():
+			self.worker.progress_wnd.Raise()
 
 	def OnClose(self, event=None):
 		if (getattr(self.worker, "thread", None) and
