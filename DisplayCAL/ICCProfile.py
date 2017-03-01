@@ -5359,15 +5359,18 @@ class ICCProfile:
 		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
 		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 
-	def apply_black_offset(self, XYZbp, power=40.0):
+	def apply_black_offset(self, XYZbp, power=40.0, include_A2B=True,
+						   set_blackpoint=True):
 		# Apply only the black point blending portion of BT.1886 mapping
-		tables = []
-		for i in xrange(3):
-			a2b = self.tags.get("A2B%i" % i)
-			if isinstance(a2b, LUT16Type) and not a2b in tables:
-				a2b.apply_black_offset(XYZbp)
-				tables.append(a2b)
-		self.set_blackpoint(XYZbp)
+		if include_A2B:
+			tables = []
+			for i in xrange(3):
+				a2b = self.tags.get("A2B%i" % i)
+				if isinstance(a2b, LUT16Type) and not a2b in tables:
+					a2b.apply_black_offset(XYZbp)
+					tables.append(a2b)
+		if set_blackpoint:
+			self.set_blackpoint(XYZbp)
 		if not self.tags.get("rTRC"):
 			return
 		rXYZ = self.tags.rXYZ.values()

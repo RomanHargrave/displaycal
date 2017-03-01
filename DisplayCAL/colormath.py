@@ -401,7 +401,7 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, power=40.0):
 	L, a, b = XYZ2Lab(*[v * 100 for v in (X, Y, Z)])
 
 	for bp in (bp_in, bp_out):
-		if not bp:
+		if not bp or tuple(bp) == (0, 0, 0):
 			continue
 		bpLab = XYZ2Lab(*[v * 100 for v in bp])
 		if bp is bp_in:

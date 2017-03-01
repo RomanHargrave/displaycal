@@ -324,8 +324,8 @@ def check_ti3_criteria1(RGB, XYZ, black_XYZ, white_XYZ,
 			if black_Lab[0] < 3 and black_C < 3:
 				# Sanity check: Is this color reasonably dark and achromatic?
 				# Then do BPC so we can compare better to perfect black sRGB
-				XYZ = colormath.apply_bpc(XYZ[0], XYZ[1], XYZ[2], black_XYZ,
-										  (0, 0, 0), white_XYZ)
+				XYZ = colormath.blend_blackpoint(XYZ[0], XYZ[1], XYZ[2],
+												 black_XYZ)
 		XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2], white_XYZ)
 	Lab = colormath.XYZ2Lab(*XYZ)
 
@@ -4758,7 +4758,7 @@ while 1:
 				if logfile:
 					logfile.write("\r%i%%" % round(i / (numrows - 1.0) * 100))
 			# Apply black point compensation
-			XYZ = colormath.apply_bpc(X, Y, Z, XYZbp, (0, 0, 0), XYZwp)
+			XYZ = colormath.blend_blackpoint(X, Y, Z, XYZbp)
 			XYZ = [v / XYZwp[1] for v in XYZ]
 			A2B0.clut[-1].append([max(v * 32768, 0) for v in XYZ])
 		if logfile:
@@ -4888,7 +4888,7 @@ while 1:
 						b += vv * bbp
 					else:
 						X, Y, Z = colormath.Lab2XYZ(L, a, b)
-						XYZ = colormath.apply_bpc(X, Y, Z, (0, 0, 0), XYZbp)
+						XYZ = colormath.blend_blackpoint(X, Y, Z, None, XYZbp)
 						a, b = colormath.XYZ2Lab(*[v * 100 for v in XYZ])[1:]
 				idata.append((L, a, b))
 		
@@ -4936,7 +4936,7 @@ while 1:
 				logfile.write("Applying BPC to input curve PCS values...\n")
 			for i, (L, a, b) in enumerate(idata):
 				X, Y, Z = colormath.Lab2XYZ(L, a, b)
-				X, Y, Z = colormath.apply_bpc(X, Y, Z, (0, 0, 0), XYZbp, XYZwp)
+				X, Y, Z = colormath.blend_blackpoint(X, Y, Z, None, XYZbp)
 				idata[i] = colormath.XYZ2Lab(X * 100, Y * 100, Z * 100)
 
 		if logfile:
@@ -5347,8 +5347,8 @@ while 1:
 							# Scale into device colorspace
 							v = m2.inverted() * XYZ
 							if bpc and XYZbp != [0, 0, 0]:
-								v = colormath.apply_bpc(v[0], v[1], v[2],
-														(0, 0, 0), XYZbp, XYZwp)
+								v = colormath.blend_blackpoint(v[0], v[1], v[2],
+														None, XYZbp)
 							##print "%3.6f %3.6f %3.6f" % tuple(v)
 							##raw_input()
 							if intent == "a":
@@ -7280,7 +7280,8 @@ usage: spotread [-options] [logfile]
 					for component in ("r", "g", "b"):
 						self.log("%s: Applying black point compensation to "
 								 "%sTRC" % (appname, component))
-						profile.tags["%sTRC" % component].apply_bpc()
+					profile.apply_black_offset((0, 0, 0), include_A2B=False,
+											   set_blackpoint=False)
 					bpc_applied = True
 					profchanged = True
 				if process_A2B:
@@ -7294,7 +7295,7 @@ usage: spotread [-options] [logfile]
 							self.log("%s: Applying black point "
 									 "compensation to %s table" % (appname,
 																   table))
-							profile.tags[table].apply_bpc()
+							profile.tags[table].apply_black_offset((0, 0, 0))
 							bpc_applied = True
 							profchanged = True
 						else:
@@ -7743,8 +7744,9 @@ END_DATA""")[0]
 						table.clut.append([])
 						for row in block:
 							table.clut[-1].append(list(row))
-					logfiles.write("Applying BPC to temporary A2B tables...\n")
-					table.apply_bpc()
+					logfiles.write("Applying BPC to temporary A2B%i table...\n"
+								   % tableno)
+					table.apply_black_offset((0, 0, 0))
 					bpc_applied = True
 				elif bpc:
 					# BPC not needed, copy existing B2A
