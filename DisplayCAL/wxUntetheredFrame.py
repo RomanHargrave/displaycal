@@ -427,7 +427,7 @@ class UntetheredFrame(BaseFrame):
 			self.update(self.index + 1)
 
 	def parse_txt(self, txt):
-		if not txt or not self.keepGoing:
+		if not txt:
 			return
 		self.logger.info("%r" % txt)
 		data_len = len(self.cgats[0].DATA)
@@ -535,7 +535,7 @@ class UntetheredFrame(BaseFrame):
 							self.grid.MakeCellVisible(self.index, 0)
 		if "key to take a reading" in txt and not self.last_error:
 			if getcfg("untethered.measure.auto") and self.is_measuring:
-				if not self.finished:
+				if not self.finished and self.keepGoing:
 					self.measure()
 				else:
 					self.enable_btns()
