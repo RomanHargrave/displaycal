@@ -66,6 +66,13 @@ from wx.lib import fancytext
 from wx.lib.statbmp import GenStaticBitmap
 import wx.html
 
+taskbar = None
+if sys.platform == "win32" and sys.getwindowsversion() >= (6, 1):
+	try:
+		import taskbar
+	except Exception, exception:
+		pass
+
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD1,
@@ -1917,9 +1924,19 @@ class BaseInteractiveDialog(wx.Dialog):
 		if scale > 1 and size == (400, -1):
 			size = size[0] * scale, size[1]
 		wx.Dialog.__init__(self, parent, id, title, pos, size, style, name)
+		self.taskbar = None
 		if sys.platform == "win32":
 			bgcolor = self.BackgroundColour
 			self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+			if taskbar:
+				if parent and parent.IsShownOnScreen():
+					taskbarframe = parent
+				else:
+					taskbarframe = self
+				if hasattr(taskbarframe, "taskbar"):
+					self.taskbar = taskbarframe.taskbar
+				else:
+					self.taskbar = taskbar.Taskbar(taskbarframe)
 		self.SetPosition(pos)  # yes, this is needed
 		self.set_icons()
 		
@@ -1959,6 +1976,19 @@ class BaseInteractiveDialog(wx.Dialog):
 		if bitmap:
 			self.bitmap = wx.StaticBitmap(self, -1, bitmap)
 			self.sizer1.Add(self.bitmap, flag=flags, border=margin)
+			if self.taskbar:
+				state = None
+				if bitmap is geticon(bitmap.Width, "dialog-error"):
+					state = taskbar.TBPF_ERROR
+				elif bitmap is geticon(bitmap.Width, "dialog-warning"):
+					state = taskbar.TBPF_PAUSED
+				if state is not None:
+					if (state == taskbar.TBPF_ERROR or
+						not isinstance(self.Parent, ProgressDialog) or
+						self.Parent.paused):
+						self.taskbar.set_progress_state(state)
+					if not isinstance(self.Parent, ProgressDialog):
+						self.taskbar.set_progress_value(self.taskbar.maxv)
 
 		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT | wx.TOP, border=margin)
 		msg = msg.replace("&", "&&")
@@ -2014,7 +2044,19 @@ class BaseInteractiveDialog(wx.Dialog):
 
 	def ShowModal(self):
 		self.set_position()
-		return wx.Dialog.ShowModal(self)
+		result = wx.Dialog.ShowModal(self)
+		if self.taskbar:
+			state = None
+			if isinstance(self.Parent, ProgressDialog):
+				if self.Parent.indeterminate:
+					state = taskbar.TBPF_INDETERMINATE
+				elif not self.Parent.paused:
+					state = taskbar.TBPF_NORMAL
+			else:
+				state = taskbar.TBPF_NOPROGRESS
+			if state is not None:
+				self.taskbar.set_progress_state(state)
+		return result
 
 	def set_icons(self):
 		parent = self.Parent
@@ -4170,6 +4212,11 @@ fancytext.RenderToRenderer = fancytext_RenderToRenderer
 class BetterPyGauge(pygauge.PyGauge):
 
 	def __init__(self, *args, **kwargs):
+		if "pd" in kwargs:
+			self.pd = kwargs["pd"]
+			del kwargs["pd"]
+		else:
+			self.pd = None
 		pygauge.PyGauge.__init__(self, *args, **kwargs)
 		self._indeterminate = False
 		self.gradientindex = 0
@@ -4252,6 +4299,8 @@ class BetterPyGauge(pygauge.PyGauge):
 					if self._value[i] < self._update_value[i]:
 						self._value[i] = self._update_value[i]
 					else: stop = False
+			if self.pd.taskbar:
+				self.pd.taskbar.set_progress_value(int(round(self.GetValue())))
 			if stop:
 				del self._update_step
 			updated = True
@@ -4771,6 +4820,7 @@ class ProgressDialog(wx.Dialog):
 		if fancy:
 			self.BackgroundColour = "#141414"
 			self.ForegroundColour = "#FFFFFF"
+		self.taskbar = None
 		if sys.platform == "win32":
 			if not fancy:
 				bgcolor = self.BackgroundColour
@@ -4842,7 +4892,7 @@ class ProgressDialog(wx.Dialog):
 		self._fpprogress = 0.0
 		if fancy:
 			self.gauge = BetterPyGauge(self, wx.ID_ANY, range=maximum,
-									   size=(-1, 4))
+									   size=(-1, 4), pd=self)
 			self.gauge.BackgroundColour = "#003366"
 			self.gauge.SetBarGradients([("#0099CC", "#00CCFF"),
 									    ("#0088BB", "#00BBEE"),
@@ -5064,6 +5114,8 @@ class ProgressDialog(wx.Dialog):
 			self.indeterminate = True
 			if hasattr(self, "remaining_time"):
 				self.remaining_time.Label = u"––:––:––"
+			if self.taskbar and not self.paused:
+				self.taskbar.set_progress_state(taskbar.TBPF_INDETERMINATE)
 		self.gauge.Pulse()
 		return self.keepGoing, self.skip
 	
@@ -5256,11 +5308,21 @@ class ProgressDialog(wx.Dialog):
 		pass
 
 	def pause_continue_handler(self, event=None):
+		if not self.pause_continue.IsShown():
+			return
 		self.paused = not self.paused
 		if self.paused:
 			self.pause_continue.Label = lang.getstr("continue")
+			if self.taskbar:
+				self.taskbar.set_progress_state(taskbar.TBPF_PAUSED)
 		else:
 			self.pause_continue.Label = lang.getstr("pause")
+			if self.taskbar:
+				if self.indeterminate:
+					state = taskbar.TBPF_INDETERMINATE
+				else:
+					state = taskbar.TBPF_NORMAL
+				self.taskbar.set_progress_state(state)
 		self.pause_continue.Enable(not event)
 		self.Layout()
 		if getattr(self, "time2", 0):
@@ -5356,6 +5418,13 @@ class ProgressDialog(wx.Dialog):
 		if hasattr(self, "sound") and self.progress_type in (0, 2):
 			self.set_sound(self.progress_type)
 			self.sound_fadein()
+		if taskbar:
+			if self.Parent and self.Parent.IsShownOnScreen():
+				taskbarframe = self.Parent
+			else:
+				taskbarframe = self
+			self.taskbar = taskbar.Taskbar(taskbarframe, self.gauge.GetRange())
+			self.taskbar.set_progress_state(taskbar.TBPF_INDETERMINATE)
 	
 	def stop_timer(self, immediate=True):
 		self.timer.Stop()
@@ -5370,6 +5439,8 @@ class ProgressDialog(wx.Dialog):
 				self.anim_fadeout()
 		if hasattr(self, "sound"):
 			self.sound_fadeout()
+		if self.taskbar:
+			self.taskbar.set_progress_state(taskbar.TBPF_NOPROGRESS)
 
 
 class FancyProgressDialog(ProgressDialog):
