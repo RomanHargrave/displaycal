@@ -21,6 +21,7 @@ ${DESC}</description>
 		<requires interface="${URL}0install/pywin32.xml" />
 		<requires interface="${URL}0install/wmi.xml" />
 		<requires interface="${URL}0install/7z.xml" />
+		<requires interface="${URL}0install/comtypes.xml" />
 		<command name="change-display-profile-cal-whitepoint" path="util/change_display_profile_cal_whitepoint.py">
 			<runner interface="${URL}0install/python.xml" version="2.6..!3.0" />
 		</command>

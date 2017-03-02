@@ -791,7 +791,8 @@ def setup():
 		for tmpl_name in ("7z.xml", "argyllcms.xml", name + ".xml",
 						  name + "-linux.xml", name + "-mac.xml",
 						  name + "-win32.xml", "numpy.xml", "pygame.xml",
-						  "pywin32.xml", "wmi.xml", "wxpython.xml"):
+						  "pywin32.xml", "wmi.xml", "wxpython.xml",
+						  "comtypes.xml"):
 			dist_path = os.path.join(pydir, "dist", "0install", tmpl_name)
 			create = not os.path.isfile(dist_path)
 			if create:

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/comtypes.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<name>comtypes</name>
+	<summary xml:lang="en">Pure Python COM package</summary>
+	<description xml:lang="en">comtypes is a lightweight Python COM package, based on the ctypes FFI library, in less than 10000 lines of code (not counting the tests).
+
+comtypes allows to define, call, and implement custom and dispatch-based COM interfaces in pure Python. It works on Windows, 64-bit Windows, and Windows CE.</description>
+	<homepage>https://pypi.python.org/pypi/comtypes</homepage>
+	<group arch="Windows-*" license="MIT License">
+		<requires interface="${URL}0install/python.xml" version="2.7..!3.0">
+			<version not-before="2.7" before="3.0" />
+		</requires>
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+		</implementation>
+	</group>
+</interface>
