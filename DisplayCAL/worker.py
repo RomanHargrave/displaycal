@@ -2410,7 +2410,12 @@ class Worker(object):
 				self.progress_wnd.dlg = prev_dlg
 			dlg.Destroy()
 			if dlg_result != wx.ID_OK:
-				self.progress_wnd.Resume()
+				if pause:
+					self.progress_wnd.Resume()
+				else:
+					self.progress_wnd.keepGoing = True
+					if hasattr(self.progress_wnd, "cancel"):
+						self.progress_wnd.cancel.Enable()
 				self.abort_requested = False
 				return
 		self.patch_count = 0
