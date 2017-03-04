@@ -10774,8 +10774,7 @@ BEGIN_DATA
 				unit = "KiB"
 				unit_size = 1024.0
 
-			ts = 0
-			bytes_last_second = 0
+			ts = time()
 			bps = 0
 
 			while True:
@@ -10791,20 +10790,20 @@ BEGIN_DATA
 
 				bytes.append(chunk)
 
-				if int(time()) > ts:
-					# Determine data rate
-					ts = int(time())
-					bps_unit = "Bytes"
-					bps_unit_size = 1.0
-					if bytes_last_second > 1048576:
-						bps_unit = "MiB"
-						bps_unit_size = 1048576.0
-					elif bytes_last_second > 1024:
-						bps_unit = "KiB"
-						bps_unit_size = 1024.0
-					bps = bytes_last_second
-					bytes_last_second = 0
-				bytes_last_second += len(chunk)
+				# Determine data rate
+				tdiff = time() - ts
+				if tdiff:
+					bps = bytes_so_far / tdiff
+				else:
+					bps = bytes_so_far
+				bps_unit = "Bytes"
+				bps_unit_size = 1.0
+				if bps > 1048576:
+					bps_unit = "MiB"
+					bps_unit_size = 1048576.0
+				elif bps > 1024:
+					bps_unit = "KiB"
+					bps_unit_size = 1024.0
 
 				if total_size:
 					percent = float(bytes_so_far) / total_size
