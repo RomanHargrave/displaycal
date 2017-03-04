@@ -1267,15 +1267,16 @@ class LineCache():
 		return "\n".join(filter(lambda line: line, lines)[-self.maxlines:])
 	
 	def write(self, data):
+		cache = list(self.cache)
 		for char in data:
 			if char == "\r":
-				self.cache[-1] = ""
+				cache[-1] = ""
 			elif char == "\n":
-				self.cache.append("")
+				cache.append("")
 			else:
-				self.cache[-1] += char
-		self.cache = (filter(lambda line: line, self.cache[:-1]) + 
-					  self.cache[-1:])[-self.maxlines - 1:]
+				cache[-1] += char
+		self.cache = (filter(lambda line: line, cache[:-1]) + 
+					  cache[-1:])[-self.maxlines - 1:]
 
 
 class Producer(object):
