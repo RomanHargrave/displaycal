@@ -6437,14 +6437,21 @@ usage: spotread [-options] [logfile]
 					# Set/unset per-user profiles under Vista / Windows 7
 					idx = getcfg("display.number") - 1
 					try:
-						device0 = util_win.get_display_device(idx)
+						device0 = util_win.get_display_device(idx,
+															  exception=None)
 						devicea = util_win.get_display_device(idx, True)
 					except Exception, exception:
 						self.log("util_win.get_display_device(%s):" % idx,
 								 exception)
 					else:
 						per_user = not "-Sl" in args
-						for device in (device0, devicea):
+						for i, device in enumerate((device0, devicea)):
+							if not device:
+								self.log("Warning: There is no %s display "
+										 "device to %s per-user profiles" %
+										 ("1st" if i == 0 else "active",
+										  "enable" if per_user else "disable"))
+								continue
 							try:
 								util_win.enable_per_user_profiles(per_user,
 																  devicekey=device.DeviceKey)

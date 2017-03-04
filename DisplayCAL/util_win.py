@@ -173,14 +173,14 @@ def get_display_devices(devicename):
 	return devices
 
 
-def get_first_display_device(devicename):
+def get_first_display_device(devicename, exception=pywintypes.error):
 	"""
 	Get the first display of device <devicename>.
 	
 	"""
 	try:
 		return win32api.EnumDisplayDevices(devicename, 0)
-	except pywintypes.error:
+	except exception:
 		pass
 	
 
@@ -204,7 +204,8 @@ def get_active_display_device(devicename, devices=None):
 			return device
 
 
-def get_display_device(display_no=0, use_active_display_device=False):
+def get_display_device(display_no=0, use_active_display_device=False,
+					   exception=pywintypes.error):
 	# The ordering will work as long as Argyll continues using
 	# EnumDisplayMonitors
 	monitors = get_real_display_devices_info()
@@ -212,7 +213,7 @@ def get_display_device(display_no=0, use_active_display_device=False):
 	if use_active_display_device:
 		return get_active_display_device(moninfo["Device"])
 	else:
-		return get_first_display_device(moninfo["Device"])
+		return get_first_display_device(moninfo["Device"], exception)
 
 
 def get_process_filename(pid):
