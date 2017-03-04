@@ -5168,6 +5168,8 @@ class ProgressDialog(wx.Dialog):
 				self.gauge.Update(self._fpprogress, 50)
 		else:
 			self.gauge.SetValue(value)
+			if self.taskbar:
+				self.taskbar.set_progress_value(value)
 		return self.keepGoing, self.skip
 	
 	UpdatePulse = Pulse
