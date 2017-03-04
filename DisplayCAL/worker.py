@@ -10774,6 +10774,10 @@ BEGIN_DATA
 				unit = "KiB"
 				unit_size = 1024.0
 
+			ts = 0
+			bytes_last_second = 0
+			bps = 0
+
 			while True:
 				if self.thread_abort:
 					return False
@@ -10787,12 +10791,28 @@ BEGIN_DATA
 
 				bytes.append(chunk)
 
+				if int(time()) > ts:
+					# Determine data rate
+					ts = int(time())
+					bps_unit = "Bytes"
+					bps_unit_size = 1.0
+					if bytes_last_second > 1048576:
+						bps_unit = "MiB"
+						bps_unit_size = 1048576.0
+					elif bytes_last_second > 1024:
+						bps_unit = "KiB"
+						bps_unit_size = 1024.0
+					bps = bytes_last_second
+					bytes_last_second = 0
+				bytes_last_second += len(chunk)
+
 				if total_size:
 					percent = float(bytes_so_far) / total_size
 					percent = round(percent * 100, 2)
-					self.lastmsg.write("\r%i%% (%.1f / %.1f %s)" %
+					self.lastmsg.write("\r%i%% (%.1f / %.1f %s, %.1f %s/s)" %
 									   (percent, bytes_so_far / unit_size,
-										total_size / unit_size, unit))
+										total_size / unit_size, unit,
+										bps / bps_unit_size, bps_unit))
 				else:
 					if bytes_so_far > 1048576 and unit_size < 1048576:
 						unit = "MiB"
@@ -10800,8 +10820,9 @@ BEGIN_DATA
 					elif bytes_so_far > 1024 and unit_size < 1024:
 						unit = "KiB"
 						unit_size = 1024.0
-					self.lastmsg.write("\r%.1f %s" % (bytes_so_far / unit_size,
-													unit))
+					self.lastmsg.write("\r%.1f %s (%.1f %s/s)" %
+									   (bytes_so_far / unit_size, unit,
+										bps / bps_unit_size, bps_unit))
 
 			response.close()
 			if not bytes:
