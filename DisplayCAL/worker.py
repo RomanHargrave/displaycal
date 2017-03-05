@@ -10762,9 +10762,10 @@ BEGIN_DATA
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
 			self.recent.write(lang.getstr("downloading") + " " + filename + "\n")
-			chunk_size = 8192
+			min_chunk_size = 1024 * 8
+			chunk_size = min_chunk_size
 			bytes_so_far = 0
-			bytes = []
+			prev_bytes_so_far = 0
 			unit = "Bytes"
 			unit_size = 1.0
 			if total_size > 1048576:
@@ -10776,63 +10777,92 @@ BEGIN_DATA
 
 			ts = time()
 			bps = 0
+			
+			prev_percent = -1
+			update_ts = time()
+			fps = 20
+			frametime = 1.0 / fps
 
-			while True:
-				if self.thread_abort:
-					return False
-
-				chunk = response.read(chunk_size)
-
-				if not chunk:
-					break
-
-				bytes_so_far += len(chunk)
-
-				bytes.append(chunk)
-
-				# Determine data rate
-				tdiff = time() - ts
-				if tdiff:
-					bps = bytes_so_far / tdiff
-				else:
-					bps = bytes_so_far
-				bps_unit = "Bytes"
-				bps_unit_size = 1.0
-				if bps > 1048576:
-					bps_unit = "MiB"
-					bps_unit_size = 1048576.0
-				elif bps > 1024:
-					bps_unit = "KiB"
-					bps_unit_size = 1024.0
-
-				if total_size:
-					percent = float(bytes_so_far) / total_size
-					percent = round(percent * 100, 2)
-					self.lastmsg.write("\r%i%% (%.1f / %.1f %s, %.1f %s/s)" %
-									   (percent, bytes_so_far / unit_size,
-										total_size / unit_size, unit,
-										bps / bps_unit_size, bps_unit))
-				else:
-					if bytes_so_far > 1048576 and unit_size < 1048576:
-						unit = "MiB"
-						unit_size = 1048576.0
-					elif bytes_so_far > 1024 and unit_size < 1024:
-						unit = "KiB"
-						unit_size = 1024.0
-					self.lastmsg.write("\r%.1f %s (%.1f %s/s)" %
-									   (bytes_so_far / unit_size, unit,
-										bps / bps_unit_size, bps_unit))
-
-			response.close()
-			if not bytes:
-				return Error(lang.getstr("download_fail_empty_response", uri))
-			if total_size is not None and bytes_so_far != total_size:
-				return Error(lang.getstr("download_fail_wrong_size",
-										 (total_size, bytes_so_far)))
 			if not os.path.isdir(download_dir):
 				os.makedirs(download_dir)
-			with open(download_path, "wb") as download_file:
-				download_file.write("".join(bytes))
+
+			try:
+				with open(download_path + ".download", "wb") as download_file:
+					while True:
+						if self.thread_abort:
+							return False
+
+						chunk = response.read(chunk_size)
+
+						if not chunk:
+							break
+
+						bytes_read = len(chunk)
+
+						bytes_so_far += bytes_read
+
+						download_file.write(chunk)
+
+						# Determine data rate
+						tdiff = time() - ts
+						if tdiff >= 1:
+							bps = (bytes_so_far - prev_bytes_so_far) / tdiff
+							prev_bytes_so_far = bytes_so_far
+							ts = time()
+						elif not bps:
+							if tdiff:
+								bps = bytes_so_far / tdiff
+							else:
+								bps = bytes_read
+						bps_unit = "Bytes"
+						bps_unit_size = 1.0
+						if bps > 1048576:
+							bps_unit = "MiB"
+							bps_unit_size = 1048576.0
+						elif bps > 1024:
+							bps_unit = "KiB"
+							bps_unit_size = 1024.0
+
+						if total_size:
+							percent = math.floor(float(bytes_so_far) / total_size * 100)
+							if percent > prev_percent or time() >= update_ts + frametime:
+								self.lastmsg.write("\r%i%% (%.1f / %.1f %s, %.2f %s/s)" %
+												   (percent, bytes_so_far / unit_size,
+													total_size / unit_size, unit,
+													round(bps / bps_unit_size, 2), bps_unit))
+								prev_percent = percent
+								update_ts = time()
+						elif time() >= update_ts + frametime:
+							if bytes_so_far > 1048576 and unit_size < 1048576:
+								unit = "MiB"
+								unit_size = 1048576.0
+							elif bytes_so_far > 1024 and unit_size < 1024:
+								unit = "KiB"
+								unit_size = 1024.0
+							self.lastmsg.write("\r%.1f %s (%.2f %s/s)" %
+											   (bytes_so_far / unit_size, unit,
+												round(bps / bps_unit_size, 2), bps_unit))
+							update_ts = time()
+				
+						# Adjust chunk size based on DL rate
+						if (int(bps / fps) > chunk_size or
+							min_chunk_size <= int(bps / fps) < int(chunk_size * 0.75)):
+							if debug or test or verbose > 1:
+								safe_print("Download buffer size changed from %i KB to %i KB" %
+										   (chunk_size / 1024.0, bps / fps / 1024))
+							chunk_size = int(bps / fps)
+
+				response.close()
+				if not bytes_so_far:
+					return Error(lang.getstr("download_fail_empty_response", uri))
+				if total_size is not None and bytes_so_far != total_size:
+					return Error(lang.getstr("download_fail_wrong_size",
+											 (total_size, bytes_so_far)))
+			finally:
+				if bytes_so_far == total_size:
+					shutil.move(download_path + ".download", download_path)
+				elif self.thread_abort:
+					os.remove(download_path + ".download")
 		return download_path
 
 	def process_argyll_download(self, result, exit=False):
