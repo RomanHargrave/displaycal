@@ -1300,12 +1300,15 @@ class LUT3DFrame(BaseFrame):
 			getcfg("3dlut.trc_output_offset") == 0 and
 			getcfg("3dlut.trc_gamma") == 2.4):
 			self.lut3d_trc_ctrl.SetSelection(1)  # BT.1886
+			setcfg("3dlut.trc", "bt1886")
 		elif (getcfg("3dlut.trc_gamma_type") == "b" and
 			getcfg("3dlut.trc_output_offset") == 1 and
 			getcfg("3dlut.trc_gamma") == 2.2):
 			self.lut3d_trc_ctrl.SetSelection(0)  # Pure power gamma 2.2
+			setcfg("3dlut.trc", "gamma2.2")
 		else:
 			self.lut3d_trc_ctrl.SetSelection(4)  # Custom
+			setcfg("3dlut.trc", "customgamma")
 
 	def lut3d_update_trc_controls(self):
 		self.lut3d_update_trc_control()
