@@ -4299,7 +4299,7 @@ class BetterPyGauge(pygauge.PyGauge):
 					if self._value[i] < self._update_value[i]:
 						self._value[i] = self._update_value[i]
 					else: stop = False
-			if self.pd.taskbar:
+			if self.pd and self.pd.taskbar:
 				self.pd.taskbar.set_progress_value(int(round(self.GetValue())))
 			if stop:
 				del self._update_step
