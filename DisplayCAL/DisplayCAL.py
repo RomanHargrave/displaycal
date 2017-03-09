@@ -4345,6 +4345,17 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("profile.black_point_compensation", 0)
 				self.update_bpc()
 
+	def lut3d_confirm_relcol_rendering_intent(self):
+		dlg = ConfirmDialog(self,
+							msg=lang.getstr("3dlut.confirm_relcol_rendering_intent"),
+							ok=lang.getstr("yes"), cancel=lang.getstr("no"),
+							bitmap=geticon(32, "dialog-warning"))
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result == wx.ID_OK:
+			self.lut3d_set_option("3dlut.rendering_intent", "r")
+			self.lut3d_rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
+
 	def lut3d_create_cb_handler(self, event):
 		v = int(self.lut3d_create_cb.GetValue())
 		if v != getcfg("3dlut.create"):
@@ -5237,6 +5248,11 @@ class MainFrame(ReportFrame, BaseFrame):
 					str(stripzeros(getcfg("whitepoint.colortemp"))))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
+			# Should change 3D LUT rendering intent to rel col?
+			if (event and not isinstance(event, CustomEvent) and
+				getcfg("3dlut.tab.enable") and
+				getcfg("3dlut.rendering_intent") in ("a", "aw")):
+				wx.CallAfter(self.lut3d_confirm_relcol_rendering_intent)
 		self.visual_whitepoint_editor_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.calpanel.Layout()

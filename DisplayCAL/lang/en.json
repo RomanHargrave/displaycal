@@ -10,6 +10,7 @@
 	"3dlut.content.colorspace": "Content colorspace",
 	"3dlut.create": "Create 3D LUT...",
 	"3dlut.create_after_profiling": "Create 3D LUT after profiling",
+	"3dlut.confirm_relcol_rendering_intent": "Do you want the 3D LUT to use the measured white point as well (3D LUT rendering intent will be set to relative colorimetric)?",
 	"3dlut.enable": "Enable 3D LUT",
 	"3dlut.encoding.input": "Input encoding",
 	"3dlut.encoding.output": "Output encoding",
