@@ -4257,11 +4257,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(int(getcfg("calibration.interactive_display_adjustment"))))
 		self.whitepoint_colortemp_textctrl.SetValue(
 			str(stripzeros(getcfg("whitepoint.colortemp"))))
+		self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 4))
+		self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 4))
 		if getcfg("whitepoint.colortemp", False):
 			self.whitepoint_ctrl.SetSelection(1)
 		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
-			self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 4))
-			self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 4))
 			self.whitepoint_ctrl.SetSelection(2)
 		else:
 			self.whitepoint_ctrl.SetSelection(0)
@@ -5188,7 +5188,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				self.whitepoint_colortemp_textctrl.SetValue("")
 			if cal_changed:
-				if not getcfg("whitepoint.colortemp") and \
+				if not getcfg("whitepoint.colortemp", False) and \
 				   x == getcfg("whitepoint.x") and \
 				   y == getcfg("whitepoint.y"):
 					cal_changed = False
@@ -5219,10 +5219,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				wx.Bell()
 				self.whitepoint_colortemp_textctrl.SetValue(
 					str(stripzeros(getcfg("whitepoint.colortemp"))))
+			v = float(self.whitepoint_colortemp_textctrl.GetValue())
 			if cal_changed:
-				v = float(self.whitepoint_colortemp_textctrl.GetValue())
 				if getcfg("whitepoint.colortemp") == v and not \
-				   getcfg("whitepoint.x") and not getcfg("whitepoint.y"):
+				   getcfg("whitepoint.x", False) and not getcfg("whitepoint.y", False):
 					cal_changed = False
 			setcfg("whitepoint.colortemp", int(v))
 			setcfg("whitepoint.x", None)
@@ -5241,8 +5241,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.whitepoint_x_label.Hide()
 			self.whitepoint_y_textctrl.Hide()
 			self.whitepoint_y_label.Hide()
-			if not getcfg("whitepoint.colortemp") and \
-			   not getcfg("whitepoint.x") and not getcfg("whitepoint.y"):
+			if not getcfg("whitepoint.colortemp", False) and \
+			   not getcfg("whitepoint.x", False) and not getcfg("whitepoint.y", False):
 				cal_changed = False
 			setcfg("whitepoint.colortemp", None)
 			self.whitepoint_colortemp_textctrl.SetValue(
@@ -5260,7 +5260,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
 		self.show_observer_ctrl()
-		if self.whitepoint_ctrl.GetSelection() != 2:
+		if self.whitepoint_ctrl.GetSelection() == 1:
 			if getcfg("whitepoint.colortemp.locus") == "T":
 				# Planckian locus
 				xyY = planckianCT2xyY(getcfg("whitepoint.colortemp"))
