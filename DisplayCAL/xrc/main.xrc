@@ -973,6 +973,7 @@
                                     <value>400</value>
                                     <min>5</min>
                                     <max>2000</max>
+                                    <pagesize>100</pagesize>
                                     <XRCED>
                                       <events>EVT_SLIDER</events>
                                     </XRCED>
@@ -1271,6 +1272,7 @@
                                   <object class="wxBoxSizer">
                                     <object class="sizeritem">
                                       <object class="wxSlider" name="testchart_patches_amount_ctrl">
+                                          <pagesize>1</pagesize>
                                       </object>
                                       <option>1</option>
                                       <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
