@@ -2047,7 +2047,8 @@ class BaseInteractiveDialog(wx.Dialog):
 		result = wx.Dialog.ShowModal(self)
 		if self.taskbar:
 			state = None
-			if isinstance(self.Parent, ProgressDialog):
+			if (isinstance(self.Parent, ProgressDialog) and
+				self.Parent.timer.IsRunning()):
 				if self.Parent.indeterminate:
 					state = taskbar.TBPF_INDETERMINATE
 				elif not self.Parent.paused:
