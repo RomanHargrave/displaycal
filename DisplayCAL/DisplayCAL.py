@@ -2345,8 +2345,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_advanced_options.Enable(bool(getcfg("show_advanced_options")))
 		spyd2en = get_argyll_util("spyd2en")
 		spyder2_firmware_exists = self.worker.spyder2_firmware_exists()
-		if sys.platform == "win32" or test:
-			self.menuitem_install_argyll_instrument_drivers.Enable(bool(get_data_path("usb/ArgyllCMS.inf")))
 		if sys.platform not in ("darwin", "win32") or test:
 			installed = self.worker.get_argyll_instrument_conf("installed")
 			installable = self.worker.get_argyll_instrument_conf()
