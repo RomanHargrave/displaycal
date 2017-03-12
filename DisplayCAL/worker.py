@@ -103,9 +103,9 @@ elif sys.platform == "win32":
 	import util_win
 	from util_win import win_ver
 import colord
-from util_os import (expanduseru, getenvu, is_superuser, launch_file,
-					 make_win32_compatible_long_path, quote_args, which,
-					 whereis)
+from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
+					 make_win32_compatible_long_path, mkstemp_bypath,
+					 quote_args, which, whereis)
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 	import win_knownpaths
@@ -7116,8 +7116,8 @@ usage: spotread [-options] [logfile]
 							gamap_profile.tags.gTRC = gamap_profile.tags.rTRC
 							gamap_profile.tags.bTRC = gamap_profile.tags.rTRC
 							# Write to temp file
-							fd, gamap_profile.fileName = tempfile.mkstemp(profile_ext,
-																		  dir=self.tempdir)
+							fd, gamap_profile.fileName = mkstemp_bypath(gamap_profile.fileName,
+																		dir=self.tempdir)
 							stream = os.fdopen(fd, "wb")
 							gamap_profile.write(stream)
 							stream.close()
