@@ -5905,8 +5905,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlgs = []
 				dlg = ConfirmDialog(self,
 									title=lang.getstr("argyll.instrument.configuration_files.uninstall"),
-									msg=lang.getstr("dialog.confirm_delete"), 
-									ok=lang.getstr("delete"),
+									msg=lang.getstr("dialog.confirm_uninstall"), 
+									ok=lang.getstr("uninstall"),
 									cancel=lang.getstr("cancel"), 
 									bitmap=geticon(32, "dialog-warning"))
 				dlgs.append(dlg)
