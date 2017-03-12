@@ -7444,7 +7444,7 @@ usage: spotread [-options] [logfile]
 				continue
 			elif tagcls == "TRC" and profile and "A2B0" in profile.tags:
 				# Create TRC from forward lookup through A2B
-				numentries = 4096
+				numentries = 256
 				maxval = numentries - 1.0
 				RGBin = []
 				for i in xrange(numentries):
