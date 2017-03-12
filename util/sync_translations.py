@@ -34,12 +34,16 @@ def langmerge(infilename1, infilename2, outfilename):
 	dictin2.load()
 	
 	added = []
+	same = []
 	for key, value in dictin2.iteritems():
 		if not key in dictin1:
 			dictin1[key] = value
 			added.append(key.encode("UTF-8"))
 			if not "*" + key in dictin1:
 				safe_print("Added: '%s' '%s'" % (key, value))
+		#elif dictin1[key] == value and not key.startswith("*") and not key.startswith("!") and value.strip():
+			#same.append(key.encode("UTF-8"))
+			#safe_print("Same: '%s' '%s'" % (key, value))
 	
 	merged = ordereddict.OrderedDict()
 	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*) and are indented with two tabs instead of one. Please remove the asterisk when translated."
@@ -63,6 +67,8 @@ def langmerge(infilename1, infilename2, outfilename):
 	outstream.seek(0)
 	formatted = outstream.read()
 	for key in added:
+		formatted = formatted.replace('"%s":' % key, '\t"*%s":' % key)
+	for key in same:
 		formatted = formatted.replace('"%s":' % key, '\t"*%s":' % key)
 	safe_print("writing", outfilename)
 	outfile = open(outfilename, "wb")

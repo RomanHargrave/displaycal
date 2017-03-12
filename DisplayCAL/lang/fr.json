@@ -7,6 +7,7 @@
 	"3dlut.1dlut.videolut.nonlinear": "L’étalonnage des tables de gamma de la table de correspondance (« LUT ») 1D de la carte vidéo du périphérique d’affichage n’est pas linéaire, mais la table de correspondance 3D contient l’étalonnage appliqué de la table de correspondance 1D. Assurez-vous de réinitialiser manuellement les tables de gamma de la carte vidéo à une valeur linéaire avant d’utiliser la table de correspondance 3D, ou créez une table de correspondance 3D sans avoir d’étalonnage appliqué (pour ce faire, activez « Afficher les options avancées » dans le menu « Options » et désactivez « Appliquer l’étalonnage (vcgt) » ainsi que « Créer une table de correspondance 3D après la caractérisation » dans les paramètres de table de correspondance 3D, créez ensuite une nouvelle table de correspondance 3D).",
 	"3dlut.bitdepth.input": "Profondeur des couleurs d’entrée de la table de correspondance 3D",
 	"3dlut.bitdepth.output": "Profondeur des couleurs de sortie de la table de correspondance 3D",
+		"*3dlut.confirm_relcol_rendering_intent": "Do you want the 3D LUT to use the measured white point as well (3D LUT rendering intent will be set to relative colorimetric)?",
 		"*3dlut.content.colorspace": "Content colorspace",
 	"3dlut.create": "Créer une table de correspondance 3D…",
 	"3dlut.create_after_profiling": "Créer la table de correspondance 3D après la caractérisation",
