@@ -11,6 +11,27 @@ import tempfile
 import time
 from os.path import join
 
+try:
+	reloaded
+except NameError:
+	# First import. All fine
+	reloaded = 0
+else:
+	# Module is being reloaded. NOT recommended.
+	reloaded += 1
+	import warnings
+	warnings.warn("Module %s is being reloaded. This is NOT recommended." %
+				  __name__, RuntimeWarning)
+	warnings.warn("Implicitly reloading builtins", RuntimeWarning)
+	reload(__builtin__)
+	warnings.warn("Implicitly reloading os", RuntimeWarning)
+	reload(os)
+	warnings.warn("Implicitly reloading os.path", RuntimeWarning)
+	reload(os.path)
+	if sys.platform == "win32":
+		warnings.warn("Implicitly reloading win32api", RuntimeWarning)
+		reload(win32api)
+
 if sys.platform == "win32":
 	import ctypes
 	from win32file import *
