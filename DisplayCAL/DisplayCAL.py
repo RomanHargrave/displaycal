@@ -5916,8 +5916,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					dlg.sizer3.Add((0, 4))
 					chk = wx.CheckBox(dlg, -1, filename)
 					chks.append(chk)
-					chk.SetValue(os.path.basename(filename) !=
-								 "69-cd-sensors.rules")
+					chk.SetValue(True)
 					dlg.sizer3.Add(chk, flag=wx.ALIGN_LEFT)
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
@@ -5929,7 +5928,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						if chk.GetValue():
 							filenames.append(chk.Label)
 				for filename in filenames:
-					if os.path.basename(filename) == "69-cd-sensors.rules":
+					if os.path.dirname(filename) == "/lib/udev/rules.d":
 						dlg = ConfirmDialog(self,
 											title=lang.getstr("argyll.instrument.configuration_files.uninstall"),
 											msg=lang.getstr("warning.system_file",
