@@ -57,6 +57,7 @@ if sys.platform == "win32":
 
 
 	def open(path, *args, **kwargs):
+		""" Wrapper around __builtin__.open dealing with win32 long paths """
 		return _open(make_win32_compatible_long_path(path), *args,
 								 **kwargs)
 
@@ -292,6 +293,11 @@ def expandvarsu(path):
 	return unicode(os.path.expandvars(path), fs_enc)
 
 
+def fname_ext(path):
+	""" Get filename and extension """
+	return os.path.splitext(os.path.basename(path))
+
+
 def get_program_file(name, foldername):
 	""" Get path to program file """
 	if sys.platform == "win32":
@@ -390,6 +396,19 @@ def make_win32_compatible_long_path(path, maxpath=259):
 		os.path.isabs(path) and not path.startswith("\\\\?\\")):
 		path = "\\\\?\\" + path
 	return path
+
+
+def mkstemp_bypath(path, dir=None, text=False):
+	"""
+	Wrapper around mkstemp that uses filename and extension from path as prefix 
+	and suffix for the temporary file, and the directory component as temporary
+	file directory if 'dir' is not given.
+	
+	"""
+	fname, ext = fname_ext(path)
+	if not dir:
+		dir = os.path.dirname(path)
+	return tempfile.mkstemp(ext, fname + "-", dir, text)
 
 
 def movefile(src, dst, overwrite=True):
