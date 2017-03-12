@@ -6199,6 +6199,9 @@ usage: spotread [-options] [logfile]
 			return Error("\n".join(lang.getstr("file.missing", filename)
 								   for filename in
 								   self.get_argyll_instrument_conf("expected")))
+		if uninstall:
+			backupbase = os.path.join(config.datahome, "backup",
+									  strftime("%Y%m%dT%H%M%S"))
 		for filename in filenames:
 			if filename.endswith(".rules"):
 				dst = udevrules
@@ -6206,8 +6209,6 @@ usage: spotread [-options] [logfile]
 				dst = hotplug
 			if uninstall:
 				# Move file to backup location
-				backupbase = os.path.join(config.datahome, "backup",
-										  strftime("%Y%m%dT%H%M%S"))
 				backupdir = "".join([backupbase,
 									 os.path.dirname(filename)])
 				if not os.path.isdir(backupdir):
