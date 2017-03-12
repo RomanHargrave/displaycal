@@ -11082,11 +11082,10 @@ BEGIN_DATA
 					# DON'T use os.path.join due to how it works under Windows:
 					# os.path.join("c:", "foo") represents a path relative to
 					# the current directory on drive C: (c:foo), not c:\foo.
-					if os.sep.join(parts[:-2]) == os.path.normpath(save_path):
-						# If storage directory, save incomplete runs to
-						# different directory
-						parts = [config.datahome, "incomplete"] + parts[-2:]
-						dst_path = os.sep.join(parts)
+					
+					# Save incomplete runs to different directory
+					parts = [config.datahome, "incomplete"] + parts[-2:]
+					dst_path = os.sep.join(parts)
 				result = check_create_dir(os.path.dirname(dst_path))
 				if isinstance(result, Exception):
 					remove = False
