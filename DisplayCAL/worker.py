@@ -7442,6 +7442,29 @@ usage: spotread [-options] [logfile]
 								(None, "TRC")]:
 			if tagcls == omit:
 				continue
+			elif tagcls == "TRC" and profile and "A2B0" in profile.tags:
+				# Create TRC from forward lookup through A2B
+				numentries = 4096
+				maxval = numentries - 1.0
+				RGBin = []
+				for i in xrange(numentries):
+					RGBin.append((i / maxval, ) * 3)
+				XYZout = self.xicclu(profile, RGBin, "a", pcs="x")
+				# Get RGB space from already added matrix column tags
+				rgb_space = colormath.get_rgb_space(profile.get_rgb_space())
+				mtx = rgb_space[-1].inverted()
+				self.log("-" * 80)
+				for channel in "rgb":
+					tagname = channel + tagcls
+					self.log(u"Adding %s from forward A2B lookup to %s" %
+							 (tagname, profile.getDescription()))
+					profile.tags[tagname] = ICCP.CurveType()
+				for XYZ in XYZout:
+					RGB = mtx * XYZ
+					for i, channel in enumerate("rgb"):
+						tagname = channel + tagcls
+						profile.tags[tagname].append(min(max(RGB[i], 0), 1) * 65535)
+				break
 			if not ti1name:
 				# Extract gray+primaries into new TI3
 				self.log(u"Extracting neutrals and primaries from %s" %

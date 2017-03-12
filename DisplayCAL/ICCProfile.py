@@ -5947,18 +5947,18 @@ class ICCProfile:
 												  len(tag.tagData))
 		return info
 	
-	def get_rgb_space(self):
+	def get_rgb_space(self, relation="ir"):
 		tags = self.tags
 		if not "wtpt" in tags:
 			return False
-		rgb_space = [[], tags.wtpt.ir.values()]
+		rgb_space = [[], getattr(tags.wtpt, relation).values()]
 		for component in ("r", "g", "b"):
 			if (not "%sXYZ" % component in tags or
 				not "%sTRC" % component in tags or
 				not isinstance(tags["%sTRC" % component],
 							   CurveType)):
 				return False
-			rgb_space.append(tags["%sXYZ" % component].ir.xyY)
+			rgb_space.append(getattr(tags["%sXYZ" % component], relation).xyY)
 			if len(tags["%sTRC" % component]) > 1:
 				rgb_space[0].append([v / 65535.0 for v in
 									 tags["%sTRC" % component]])
