@@ -7130,8 +7130,8 @@ usage: spotread [-options] [logfile]
 							gamap_profile = None
 				tables = []
 				if gamap_profile or (collink and profile.colorSpace != "RGB"):
-					self.log(appname + ": Creating CIECAM02 gamut mapping "
-							 "using collink...")
+					self.log("-" * 80)
+					self.log("Creating CIECAM02 gamut mapping using collink")
 					size = getcfg("profile.b2a.hires.size")
 					# Make sure to map 'auto' value (-1) to an actual size
 					size = {-1: 33}.get(size, size)
@@ -7292,9 +7292,10 @@ usage: spotread [-options] [logfile]
 					len(profile.tags.rTRC) > 1 and
 					len(profile.tags.gTRC) > 1 and
 					len(profile.tags.bTRC) > 1):
+					self.log("-" * 80)
 					for component in ("r", "g", "b"):
-						self.log("%s: Applying black point compensation to "
-								 "%sTRC" % (appname, component))
+						self.log("Applying black point compensation to "
+								 "%sTRC" % component)
 					profile.apply_black_offset((0, 0, 0), include_A2B=False,
 											   set_blackpoint=False)
 					bpc_applied = True
@@ -7307,16 +7308,15 @@ usage: spotread [-options] [logfile]
 						else:
 							table = "A2B0"
 						if isinstance(profile.tags[table], ICCP.LUT16Type):
-							self.log("%s: Applying black point "
-									 "compensation to %s table" % (appname,
-																   table))
+							self.log("Applying black point "
+									 "compensation to %s table" % table)
 							profile.tags[table].apply_black_offset((0, 0, 0))
 							bpc_applied = True
 							profchanged = True
 						else:
-							self.log("%s: Can't apply black point "
+							self.log("Can't apply black point "
 									 "compensation to non-LUT16Type %s "
-									 "table" % (appname, table))
+									 "table" % table)
 					if getcfg("profile.b2a.hires"):
 						if profchanged:
 							# We need to write the changed profile before
@@ -7415,7 +7415,8 @@ usage: spotread [-options] [logfile]
 			tags = "shaper"
 		else:
 			tags = "shaper+matrix"
-		self.log(u"%s: Creating %s tags in separate step" % (appname, tags))
+		self.log("-" * 80)
+		self.log(u"Creating %s tags in separate step" % tags)
 		fakeread = get_argyll_util("fakeread")
 		if not fakeread:
 			return Error(lang.getstr("argyll.util.not_found", "fakeread"))
@@ -7441,8 +7442,8 @@ usage: spotread [-options] [logfile]
 				continue
 			if not ti1name:
 				# Extract gray+primaries into new TI3
-				self.log(u"%s: Extracting neutrals and primaries from %s" %
-						 (appname, outname + ".ti3"))
+				self.log(u"Extracting neutrals and primaries from %s" %
+						 (outname + ".ti3"))
 				ti3_extracted = CGATS.CGATS("""CTI3
 BEGIN_DATA_FORMAT
 END_DATA_FORMAT
@@ -7514,12 +7515,13 @@ END_DATA""")[0]
 				return Error(lang.getstr("profile.invalid") + "\n" + fakeout +
 							 profile_ext)
 			if profile:
+				self.log("-" * 80)
 				for channel in "rgb":
 					tagname = channel + tagcls
 					tag = matrix_profile.tags.get(tagname)
 					if tag:
-						self.log(u"%s: Adding %s from matrix profile to %s" %
-								 (appname, tagname, profile.getDescription()))
+						self.log(u"Adding %s from matrix profile to %s" %
+								 (tagname, profile.getDescription()))
 						profile.tags[tagname] = tag
 					else:
 						self.log(lang.getstr("profile.required_tags_missing",
@@ -8220,8 +8222,7 @@ END_DATA""")[0]
 					"rXYZ" in gamap_profile.tags and
 					"gXYZ" in gamap_profile.tags and
 					"bXYZ" in gamap_profile.tags):
-					self.log(appname + ": Delegating CIECAM02 gamut mapping "
-							 "to collink")
+					self.log("-> Delegating CIECAM02 gamut mapping to collink")
 					# Make a copy so we can store options without adding them
 					# to actual colprof arguments
 					gamap_args = []
@@ -8270,7 +8271,7 @@ END_DATA""")[0]
 		if ti3:
 			color_rep = (ti3.queryv1("COLOR_REP") or "").split("_")
 			# Prepare ChromaticityType tag
-			self.log(appname + ": Preparing ChromaticityType tag...")
+			self.log("-> Preparing ChromaticityType tag from TI3 colorants")
 			colorants = ti3.get_colorants()
 			if colorants and not None in colorants:
 				chrm = ICCP.ChromaticityType()
@@ -8286,7 +8287,7 @@ END_DATA""")[0]
 					chrm.channels.append(colormath.XYZ2xyY(*XYZ)[:-1])
 				with open(inoutfile + ".chrm", "wb") as blob:
 					blob.write(chrm.tagData)
-			self.log(appname + ": Storing options in TI3...")
+			self.log("-> Storing settings in TI3")
 			# Black point compensation
 			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
 							   "YES" if getcfg("profile.black_point_compensation")
