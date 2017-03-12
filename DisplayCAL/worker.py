@@ -7130,6 +7130,8 @@ usage: spotread [-options] [logfile]
 							gamap_profile = None
 				tables = []
 				if gamap_profile or (collink and profile.colorSpace != "RGB"):
+					self.log(appname + ": Creating CIECAM02 gamut mapping "
+							 "using collink...")
 					size = getcfg("profile.b2a.hires.size")
 					# Make sure to map 'auto' value (-1) to an actual size
 					size = {-1: 33}.get(size, size)
@@ -8218,6 +8220,8 @@ END_DATA""")[0]
 					"rXYZ" in gamap_profile.tags and
 					"gXYZ" in gamap_profile.tags and
 					"bXYZ" in gamap_profile.tags):
+					self.log(appname + ": Delegating CIECAM02 gamut mapping "
+							 "to collink")
 					# Make a copy so we can store options without adding them
 					# to actual colprof arguments
 					gamap_args = []
@@ -8266,6 +8270,7 @@ END_DATA""")[0]
 		if ti3:
 			color_rep = (ti3.queryv1("COLOR_REP") or "").split("_")
 			# Prepare ChromaticityType tag
+			self.log(appname + ": Preparing ChromaticityType tag...")
 			colorants = ti3.get_colorants()
 			if colorants and not None in colorants:
 				chrm = ICCP.ChromaticityType()
@@ -8281,6 +8286,7 @@ END_DATA""")[0]
 					chrm.channels.append(colormath.XYZ2xyY(*XYZ)[:-1])
 				with open(inoutfile + ".chrm", "wb") as blob:
 					blob.write(chrm.tagData)
+			self.log(appname + ": Storing options in TI3...")
 			# Black point compensation
 			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
 							   "YES" if getcfg("profile.black_point_compensation")
