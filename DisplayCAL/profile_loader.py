@@ -2148,6 +2148,12 @@ class ProfileLoader(object):
 														  device0]
 		# Enumerate monitors
 		for i, moninfo in enumerate(get_real_display_devices_info()):
+			if moninfo["Device"] == "WinDisc":
+				# If e.g. we physically disconnect the display device, we will
+				# get a 'WinDisc' temporary monitor we cannot do anything with
+				# (MS, why is this not documented?)
+				safe_print("Skipping 'WinDisc' temporary monitor %i" % i)
+				continue
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
 			if debug:
