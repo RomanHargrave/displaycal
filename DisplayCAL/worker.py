@@ -7438,7 +7438,7 @@ usage: spotread [-options] [logfile]
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
 										 outname + ".ti3"))
-		for ti1name, tagcls in [("d3-e4-s17-g49-m5-b5-f0", "XYZ"),
+		for ti1name, tagcls in [(None, "XYZ"),
 								(None, "TRC")]:
 			if tagcls == omit:
 				continue
@@ -7449,9 +7449,9 @@ usage: spotread [-options] [logfile]
 				RGBin = []
 				for i in xrange(numentries):
 					RGBin.append((i / maxval, ) * 3)
-				XYZout = self.xicclu(profile, RGBin, "a", pcs="x")
+				XYZout = self.xicclu(profile, RGBin, "r", pcs="x")
 				# Get RGB space from already added matrix column tags
-				rgb_space = colormath.get_rgb_space(profile.get_rgb_space())
+				rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs"))
 				mtx = rgb_space[-1].inverted()
 				self.log("-" * 80)
 				for channel in "rgb":
@@ -7467,15 +7467,25 @@ usage: spotread [-options] [logfile]
 				break
 			if not ti1name:
 				# Extract gray+primaries into new TI3
-				self.log(u"Extracting neutrals and primaries from %s" %
-						 (outname + ".ti3"))
 				ti3_extracted = CGATS.CGATS("""CTI3
 BEGIN_DATA_FORMAT
 END_DATA_FORMAT
 BEGIN_DATA
 END_DATA""")[0]
 				ti3_extracted.DATA_FORMAT.update(ti3.DATA_FORMAT)
-				n = 0
+				subset = [(100.0, 100.0, 100.0),
+						  (0.0, 0.0, 0.0)]
+				if tagcls == "XYZ":
+					subset.extend([(100.0, 0.0, 0.0),
+								   (0.0, 100.0, 0.0),
+								   (0.0, 0.0, 100.0),
+								   (50.0, 50.0, 50.0)])
+					self.log(u"Extracting neutrals and primaries from %s" %
+							 (outname + ".ti3"))
+				else:
+					self.log(u"Extracting neutrals from %s" %
+							 (outname + ".ti3"))
+				RGB_XYZ = OrderedDict()
 				for i, item in ti3.DATA.iteritems():
 					if not i:
 						# Check if fields are missing
@@ -7485,15 +7495,82 @@ END_DATA""")[0]
 								if not key in item:
 									return Error(lang.getstr("error.testchart.missing_fields",
 															 (outname + ".ti3", key)))
-					if (item["RGB_R"] == item["RGB_G"] == item["RGB_B"] or
-						(item["RGB_R"], item["RGB_G"], item["RGB_B"]) in
-						((100.0, 0.0, 0.0), (0.0, 100.0, 0.0), (0.0, 0.0, 100.0))):
-						ti3_extracted.DATA[n] = item
-						ti3_extracted.DATA[n].key = n
-						n += 1
+					RGB = (item["RGB_R"], item["RGB_G"], item["RGB_B"])
+					# Quantize RGB to 8-bit
+					RGBq = tuple(round(v * 2.55) for v in RGB)
+					XYZ = (item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"])
+					if ((tagcls == "TRC" and
+						 item["RGB_R"] == item["RGB_G"] == item["RGB_B"] and
+						 not RGB in [(100.0, 100.0, 100.0),
+									 (0.0, 0.0, 0.0)]) or
+						RGB in subset):
+						ti3_extracted.DATA.add_data(item)
+						RGB_XYZ[RGBq] = XYZ
+						if RGB in subset:
+							subset.remove(RGB)
+							if tagcls == "XYZ" and not subset:
+								break
 				ti3.DATA.clear()
 				ti3.DATA.update(ti3_extracted.DATA)
 				self.log(ti3.DATA)
+				if tagcls == "TRC" and profile:
+					RGB_XYZ.sort()
+					R_R = []
+					G_G = []
+					B_B = []
+					R_X = []
+					G_Y = []
+					B_Z = []
+					for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
+						R_R.append(R / 255.0)
+						G_G.append(G / 255.0)
+						B_B.append(B / 255.0)
+						X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(255, 255, 255)])
+						R_X.append(X / 100.0)
+						G_Y.append(Y / 100.0)
+						B_Z.append(Z / 100.0)
+
+					rinterp = colormath.Interp(R_R, range(len(R_R)))
+					ginterp = colormath.Interp(G_G, range(len(G_G)))
+					binterp = colormath.Interp(B_B, range(len(B_B)))
+					rcrinterp = ICCP.CRInterpolation(R_X)
+					gcrinterp = ICCP.CRInterpolation(G_Y)
+					bcrinterp = ICCP.CRInterpolation(B_Z)
+
+					rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs"))
+					fwd_mtx = rgb_space[-1]
+					bwd_mtx = fwd_mtx.inverted()
+					self.log("-" * 80)
+					for channel in "rgb":
+						tagname = channel + tagcls
+						self.log(u"Adding %s from interpolation to %s" %
+						         (tagname, profile.getDescription()))
+						profile.tags[tagname] = ICCP.CurveType()
+
+					# Interpolate TRC
+					numentries = 256
+					maxval = numentries - 1.0
+					XYZw = fwd_mtx * (1, 1, 1)
+					for n in xrange(numentries):
+						Y = gcrinterp(ginterp(n / maxval))
+						if ptype == "S":
+							# Single shaper curve
+							X, Y, Z = (v * Y for v in XYZw)
+						else:
+							# 3x shaper curves
+							X = rcrinterp(rinterp(n / maxval))
+							Z = bcrinterp(binterp(n / maxval))
+						RGB = bwd_mtx * (X, Y, Z)
+						for i, channel in enumerate("rgb"):
+							tagname = channel + tagcls
+							profile.tags[tagname].append(min(max(RGB[i], 0), 1) * 65535)
+
+					# Smoothing pass
+					profile.tags.rTRC.smooth_avg(5, [1, 1, 1, 1, 1])
+					profile.tags.gTRC.smooth_avg(5, [1, 1, 1, 1, 1])
+					profile.tags.bTRC.smooth_avg(5, [1, 1, 1, 1, 1])
+
+					break
 			ti3.write(outname + ".0.ti3")	
 			if ti1name:
 				ti1 = get_data_path("ti1/%s.ti1" % ti1name)

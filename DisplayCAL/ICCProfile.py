@@ -3469,6 +3469,24 @@ class CurveType(ICCProfileTag, list):
 		for i in xrange(0, size):
 			self.append(vmin + colormath.specialpow(float(i) / (size - 1), power) * (vmax - vmin))
 	
+	def smooth_cr(self, length=64):
+		"""
+		Smooth curves (Catmull-Rom).
+		"""
+		raise NotImplementedError()
+	
+	def smooth_avg(self, passes=1, window=None):
+		"""
+		Smooth curves (moving average).
+		
+		passses   Number of passes
+		window    Tuple or list containing weighting factors. Its length
+		          determines the size of the window to use.
+		          Defaults to (1.0, 1.0, 1.0)
+		
+		"""
+		self[:] = colormath.smooth_avg(self, passes, window)
+	
 	def sort(self, cmp=None, key=None, reverse=False):
 		list.sort(self, cmp, key, reverse)
 		self._transfer_function = {}
@@ -4381,28 +4399,9 @@ class VideoCardGammaTableType(VideoCardGammaType):
 		          Defaults to (1.0, 1.0, 1.0)
 		
 		"""
-		if not window or len(window) < 3 or len(window) % 2 != 1:
-			window = (1.0, 1.0, 1.0)
-		for x in xrange(0, passes):
-			data = [[], [], []]
-			for i, channel in enumerate(self.data):
-				for j, v in enumerate(channel):
-					tmpwindow = window
-					while j > 0 and j < len(channel) - 1 and len(tmpwindow) >= 3:
-						tl = (len(tmpwindow) - 1) / 2
-						# print j, tl, tmpwindow
-						if tl > 0 and j - tl >= 0 and j + tl <= len(channel) - 1:
-							windowslice = channel[j - tl:j + tl + 1]
-							windowsize = 0
-							for k, weight in enumerate(tmpwindow):
-								windowsize += float(weight) * windowslice[k]
-							v = windowsize / sum(tmpwindow)
-							break
-						else:
-							tmpwindow = tmpwindow[1:-1]
-					data[i].append(v)
-			self.data = data
-			self.entryCount = len(data[0])
+		for i, channel in enumerate(self.data):
+			self.data[i] = colormath.smooth_avg(channel, passes, window)
+		self.entryCount = len(self.data[0])
 	
 	@Property
 	def tagData():
