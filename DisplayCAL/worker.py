@@ -6244,7 +6244,8 @@ usage: spotread [-options] [logfile]
 				if "colord" not in getgroups(getpass.getuser(), True):
 					usermod = which("usermod", paths)
 					if usermod:
-						result = self.exec_cmd(usermod, ["-a", "-G", "colord"],
+						result = self.exec_cmd(usermod, ["-a", "-G", "colord",
+														 getpass.getuser()],
 											   capture_output=True,
 											   skip_scripts=True, asroot=True)
 		if install_result is True and dst == udevrules:
