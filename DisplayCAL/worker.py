@@ -34,6 +34,8 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	from ctypes import windll
 	import _winreg
+else:
+	import grp
 
 # 3rd party
 if sys.platform == "win32":
@@ -106,6 +108,8 @@ import colord
 from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
 					 make_win32_compatible_long_path, mkstemp_bypath,
 					 quote_args, which, whereis)
+if sys.platform not in ("darwin", "win32"):
+	from util_os import getgroups
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 	import win_knownpaths
@@ -6223,10 +6227,28 @@ usage: spotread [-options] [logfile]
 								   skip_scripts=True, asroot=True)
 			if result is not True:
 				break
-		if result is True and dst == udevrules:
+		install_result = result
+		paths = ["/sbin", "/usr/sbin"]
+		paths.extend(getenvu("PATH", os.defpath).split(os.pathsep))
+		if not uninstall:
+			if not isinstance(result, Exception) and result:
+				# Add colord group if it does not exist
+				if "colord" not in [g.gr_name for g in grp.getgrall()]:
+					groupadd = which("groupadd", paths)
+					if groupadd:
+						result = self.exec_cmd(groupadd, ["colord"],
+											   capture_output=True,
+											   skip_scripts=True, asroot=True)
+			if not isinstance(result, Exception) and result:
+				# Add user to colord group if not yet a member
+				if "colord" not in getgroups(getpass.getuser()):
+					usermod = which("usermod", paths)
+					if usermod:
+						result = self.exec_cmd(usermod, ["-a", "-G", "colord"],
+											   capture_output=True,
+											   skip_scripts=True, asroot=True)
+		if install_result is True and dst == udevrules:
 			# Reload udev rules
-			paths = ["/sbin"]
-			paths.extend(getenvu("PATH", os.defpath).split(os.pathsep))
 			udevadm = which("udevadm", paths)
 			if udevadm:
 				result = self.exec_cmd(udevadm, ["control", "--reload-rules"],

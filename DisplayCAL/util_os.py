@@ -9,7 +9,11 @@ import subprocess as sp
 import sys
 import tempfile
 import time
-from os.path import join
+
+if sys.platform not in ("darwin", "win32"):
+	# Linux
+	import grp
+	import pwd
 
 try:
 	reloaded
@@ -226,10 +230,10 @@ def expanduseru(path):
 			return path
 		else:
 			drive = getenvu('HOMEDRIVE', '')
-			userhome = join(drive, getenvu('HOMEPATH'))
+			userhome = os.path.join(drive, getenvu('HOMEPATH'))
 
 		if i != 1: #~user
-			userhome = join(dirname(userhome), path[1:i])
+			userhome = os.path.join(dirname(userhome), path[1:i])
 
 		return userhome + path[i:]
 	return unicode(os.path.expanduser(path), fs_enc)
@@ -348,6 +352,23 @@ def getenvu(name, default = None):
 	var = os.getenv(name, default)
 	if isinstance(var, basestring):
 		return var if isinstance(var, unicode) else unicode(var, fs_enc)
+
+
+def getgroups(username=None, names_only=False):
+	"""
+	Return a list of groups that user is member of, or groups of current
+	process if username not given
+	
+	"""
+	if username is None:
+		groups = [grp.getgrgid(g) for g in os.getgroups()]
+	else:
+		groups = [g for g in grp.getgrall() if username in g.gr_mem]
+		gid = pwd.getpwnam(username).pw_gid
+		groups.append(grp.getgrgid(gid))
+	if names_only:
+		groups = [g.gr_name for g in groups]
+	return groups
 
 
 def islink(path):
