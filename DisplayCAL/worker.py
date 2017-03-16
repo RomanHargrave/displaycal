@@ -6241,7 +6241,7 @@ usage: spotread [-options] [logfile]
 											   skip_scripts=True, asroot=True)
 			if not isinstance(result, Exception) and result:
 				# Add user to colord group if not yet a member
-				if "colord" not in getgroups(getpass.getuser()):
+				if "colord" not in getgroups(getpass.getuser(), True):
 					usermod = which("usermod", paths)
 					if usermod:
 						result = self.exec_cmd(usermod, ["-a", "-G", "colord"],
