@@ -6227,6 +6227,9 @@ usage: spotread [-options] [logfile]
 								   skip_scripts=True, asroot=True)
 			if result is not True:
 				break
+			elif not uninstall:
+				self.exec_cmd("chmod", ["0644", args[-1]], capture_output=True,
+							  skip_scripts=True, asroot=True)
 		install_result = result
 		paths = ["/sbin", "/usr/sbin"]
 		paths.extend(getenvu("PATH", os.defpath).split(os.pathsep))
