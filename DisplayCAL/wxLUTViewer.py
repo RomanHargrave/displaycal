@@ -227,6 +227,8 @@ class LUTCanvas(plot.PlotCanvas):
 			axis_x = 100.0
 		else:
 			axis_x = 255.0
+		if getattr(self, "axis_x", None) != (0, axis_x):
+			wx.CallAfter(self.center)
 		self.axis_x, self.axis_y = (0, axis_x), (0, axis_y)
 		if not self.last_draw:
 			self.center_x = axis_x / 2.0
@@ -1165,8 +1167,13 @@ class LUTFrame(BaseFrame):
 	
 	def lookup_tone_response_curves(self, intent="r"):
 		""" Lookup Y -> RGB tone values through TRC tags or LUT """
-		
-		mult = 2
+
+		profile = self.profile
+
+		if profile.connectionColorSpace == "RGB":
+			mult = 1
+		else:
+			mult = 2
 		size = 256 * mult  # Final number of coordinates
 
 		if hasattr(self, "rendering_intent_select"):
@@ -1186,15 +1193,13 @@ class LUTFrame(BaseFrame):
 						len(self.bTRC))
 		has_same_trc = self.rTRC == self.gTRC == self.bTRC
 
-		profile = self.profile
-
 		if profile.version >= 4:
 			self.client.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
 													   profile.getDescription()])))
 			return
 
 		if (profile.colorSpace not in ("RGB", "GRAY") or
-			profile.connectionColorSpace not in ("Lab", "XYZ")):
+			profile.connectionColorSpace not in ("Lab", "XYZ", "RGB")):
 			if profile.colorSpace not in ("RGB", "GRAY"):
 				unsupported_colorspace = profile.colorSpace
 			else:
@@ -1206,6 +1211,8 @@ class LUTFrame(BaseFrame):
 		
 		if profile.colorSpace == "GRAY":
 			direction = "b"
+		elif profile.connectionColorSpace == "RGB":
+			direction = "f"
 		elif "B2A0" in profile.tags:
 			direction = {0: "b",
 						 1: "if",
@@ -1237,6 +1244,10 @@ class LUTFrame(BaseFrame):
 			pcs = "x"
 			for Lab in Lab_triplets:
 				XYZ_triplets.append(colormath.Lab2XYZ(*Lab))
+		elif profile.connectionColorSpace == "RGB":
+			use_icclu = False
+			pcs = None
+			intent = None
 		else:
 			use_icclu = False
 			pcs = "l"
@@ -1264,7 +1275,7 @@ class LUTFrame(BaseFrame):
 		if self.client.errors:
 			return
 
-		if direction in ("b", "if"):
+		if direction in ("b", "if") or profile.connectionColorSpace == "RGB":
 			RGB_triplets = odata
 		else:
 			Lab_triplets = odata
@@ -1279,18 +1290,29 @@ class LUTFrame(BaseFrame):
 					not min(RGB_triplets[j + 1][i], 1.0)):
 					continue
 				v *= 255
-				X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], **{"scale": 100})
-				if direction in ("b", "if"):
-					X = Z = Y
-				elif intent == "a":
-					wp = profile.tags.wtpt.ir.values()
-					X, Y, Z = colormath.adapt(X, Y, Z, wp, (1, 1, 1))
-				if i == 0:
-					self.rTRC.append([X, v])
-				elif i == 1:
-					self.gTRC.append([Y, v])
-				elif i == 2:
-					self.bTRC.append([Z, v])
+				if profile.connectionColorSpace == "RGB":
+					x = j / (size - 1.0) * 255
+					if i == 0:
+						self.rTRC.append([x, v])
+					elif i == 1:
+						self.gTRC.append([x, v])
+					elif i == 2:
+						self.bTRC.append([x, v])
+				else:
+					X, Y, Z = colormath.Lab2XYZ(*Lab_triplets[j], **{"scale": 100})
+					if direction in ("b", "if"):
+						X = Z = Y
+					elif intent == "a":
+						wp = profile.tags.wtpt.ir.values()
+						X, Y, Z = colormath.adapt(X, Y, Z, wp, (1, 1, 1))
+					if i == 0:
+						self.rTRC.append([X, v])
+					elif i == 1:
+						self.gTRC.append([Y, v])
+					elif i == 2:
+						self.bTRC.append([Z, v])
+		if profile.connectionColorSpace == "RGB":
+			return
 		if use_trc_tags:
 			if has_same_trc:
 				self.bTRC = self.gTRC = self.rTRC
@@ -1334,7 +1356,6 @@ class LUTFrame(BaseFrame):
 	def plot_mode_select_handler(self, event):
 		self.client.resetzoom()
 		self.DrawLUT()
-		wx.CallAfter(self.client.center)
 
 	def get_commands(self):
 		return self.get_common_commands() + ["curve-viewer [filename]",
@@ -1437,7 +1458,7 @@ class LUTFrame(BaseFrame):
 			'vcgt' in self.profile.tags):
 			if 'R' in colorants or 'G' in colorants or 'B' in colorants:
 				legend.append(lang.getstr("tone_values"))
-				if '=' in colorants:
+				if '=' in colorants and 0:  # NEVER
 					unique = []
 					if 'R' in colorants:
 						unique.append(self.client.r_unique)
@@ -1585,7 +1606,8 @@ class LUTFrame(BaseFrame):
 			yLabel.append("G")
 		if self.toggle_blue.GetValue():
 			yLabel.append("B")
-		if self.plot_mode_select.GetSelection() == 0:
+		if (self.plot_mode_select.GetSelection() == 0 or
+			(self.profile and self.profile.connectionColorSpace == "RGB")):
 			self.xLabel = "".join(yLabel)
 		else:
 			if self.show_as_L.GetValue():
@@ -1598,11 +1620,14 @@ class LUTFrame(BaseFrame):
 		self.toggle_green.Enable(bool(curves))
 		self.toggle_blue.Enable(bool(curves))
 		self.show_as_L.Enable(bool(curves))
-		self.show_as_L.Show(self.plot_mode_select.GetSelection() != 0)
-		self.toggle_clut.Show(self.plot_mode_select.GetSelection() == 1 and
+		self.show_as_L.Show(self.plot_mode_select.GetSelection() != 0 and
+							self.profile.connectionColorSpace != "RGB")
+		self.toggle_clut.Show(self.profile.connectionColorSpace != "RGB" and
+							  self.plot_mode_select.GetSelection() == 1 and
 							  ("B2A0" in self.profile.tags or
 							   "A2B0" in self.profile.tags))
-		self.toggle_clut.Enable(self.plot_mode_select.GetSelection() == 1 and
+		self.toggle_clut.Enable(self.profile.connectionColorSpace != "RGB" and
+								self.plot_mode_select.GetSelection() == 1 and
 								isinstance(self.profile.tags.get("rTRC"),
 										   ICCP.CurveType) and
 								isinstance(self.profile.tags.get("gTRC"),
@@ -1638,7 +1663,8 @@ class LUTFrame(BaseFrame):
 		if hasattr(self, "show_actual_lut_cb"):
 			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
 		if hasattr(self, "rendering_intent_select"):
-			self.rendering_intent_select.Show(self.plot_mode_select.GetSelection() == 1)
+			self.rendering_intent_select.Show(self.plot_mode_select.GetSelection() == 1 and
+											  self.profile.connectionColorSpace != "RGB")
 		if hasattr(self, "direction_select"):
 			self.direction_select.Show(self.toggle_clut.IsShown() and
 									   self.toggle_clut.GetValue() and
@@ -1801,19 +1827,30 @@ class LUTFrame(BaseFrame):
 							0 if self.toggle_green.GetValue() else None),
 						   self.client.point_grid[2].get(pointXY[0],
 							0 if self.toggle_blue.GetValue() else None))
-				if (self.plot_mode_select.GetSelection() == 0 or
-					R == G == B or ((R == G or G == B or R == B) and
+				if (R == G == B or ((R == G or G == B or R == B) and
 									None in (R, G ,B))):
 					rgb = ""
 				else:
 					rgb = legend[0] + " "
-				if self.plot_mode_select.GetSelection() == 1:
+				if 1:
 					joiner = u" \u2192 "
-					if self.show_as_L.GetValue():
-						format = "L* %.4f", "%s %.2f"
+					if (self.plot_mode_select.GetSelection() == 1 and
+						self.profile.connectionColorSpace != "RGB"):
+						if self.show_as_L.GetValue():
+							format = "L* %.4f", "%s %.2f"
+						else:
+							format = "Y %.4f", "%s %.2f"
+						axis_y = 100.0
 					else:
-						format = "Y %.4f", "%s %.2f"
-					axis_y = 100.0
+						label = []
+						if R is not None:
+							label.append("R")
+						if G is not None:
+							label.append("G")
+						if B is not None:
+							label.append("B")
+						format = "%s %%.2f" % "=".join(label), "%s %.2f"
+						axis_y = 255.0
 					if R == G == B or ((R == G or G == B or R == B) and
 									   None in (R, G ,B)):
 						#if R is None:
@@ -1828,7 +1865,9 @@ class LUTFrame(BaseFrame):
 										filter(lambda v: v[1] is not None,
 											   (("R", R), ("G", G), ("B", B)))])
 					legend[0] = joiner.join([format[0] % pointXY[0], RGB])
-					pointXY = pointXY[1], pointXY[0]
+					if (self.plot_mode_select.GetSelection() == 1 and
+						self.profile.connectionColorSpace != "RGB"):
+						pointXY = pointXY[1], pointXY[0]
 				else:
 					joiner = u" \u2192 "
 					format = "%.2f", "%.2f"
@@ -1838,12 +1877,30 @@ class LUTFrame(BaseFrame):
 													enumerate(pointXY)])
 				if (len(legend) == 1 and pointXY[0] > 0 and
 					pointXY[0] < 255 and pointXY[1] > 0):
-					y = pointXY[1]
-					if (self.plot_mode_select.GetSelection() == 1 and
-						self.show_as_L.GetValue()):
-						y = colormath.Lab2XYZ(y, 0, 0)[1] * 100
-					legend.append(rgb + "Gamma %.2f" % (math.log(y / axis_y) / math.log(pointXY[0] / 255.0)))
-				self.add_tone_values(legend)
+					gamma = []
+					for label, v in (("R", R), ("G", G), ("B", B)):
+						if v is None:
+							continue
+						if (self.plot_mode_select.GetSelection() == 1 and
+							self.profile.connectionColorSpace != "RGB"):
+							x = v
+							y = pointXY[1]
+							if self.show_as_L.GetValue():
+								y = colormath.Lab2XYZ(pointXY[1], 0, 0)[1] * 100
+						else:
+							x = pointXY[0]
+							y = v
+						if R == G == B or ((R == G or G == B or R == B) and
+										   None in (R, G ,B)):
+							label = "=".join(["%s" % s for s, v in
+											  filter(lambda (s, v): v is not None,
+													 (("R", R), ("G", G), ("B", B)))])
+						gamma.append(label + " %.2f" % (math.log(y / axis_y) / math.log(x / 255.0)))
+						if "=" in label:
+							break
+					legend.append("Gamma " + " ".join(gamma))
+				if self.profile.connectionColorSpace != "RGB":
+					self.add_tone_values(legend)
 				legend = [", ".join(legend[:-1])] + [legend[-1]]
 				self.SetStatusText("\n".join(legend))
 				# Make up dictionary to pass to DrawPointLabel
