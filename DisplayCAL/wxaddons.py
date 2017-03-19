@@ -189,6 +189,81 @@ def get_platform_window_decoration_size():
 	return border, titlebar
 
 
+def draw_granger_rainbow(dc, x=0, y=0, width=1920, height=1080):
+	""" Draw a granger rainbow to a DC """
+	if not isinstance(dc, wx.GCDC):
+		raise NotImplementedError("%s lacks alpha transparency support" % dc.__class__)
+
+	# Widths
+	column_width = int(1.0 / 12 * width)
+	rainbow_width = width - column_width * 2
+	strip_width = round(rainbow_width / 6.0)
+	rainbow_width = strip_width * 6
+	column_width = (width - rainbow_width) / 2
+
+	# Gray columns left/right
+	dc.GradientFillLinear(wx.Rect(x, y, width, height),
+						  wx.Colour(0, 0, 0),
+						  wx.Colour(255, 255, 255),
+						  wx.UP)
+
+	# Granger rainbow
+	rainbow = [(255, 0, 255), (0, 0, 255), (0, 255, 255),
+			   (0, 255, 0), (255, 255, 0), (255, 0, 0)]
+	start = rainbow[-1]
+	for i, end in enumerate(rainbow):
+		dc.GradientFillLinear(wx.Rect(x + column_width + strip_width * i, y,
+									  strip_width, height),
+							  wx.Colour(*start),
+							  wx.Colour(*end),
+							  wx.RIGHT)
+		start = end
+
+	# White-to-black gradient with transparency for shading
+	# Top half - white to transparent
+	dc.GradientFillLinear(wx.Rect(x + column_width, y,
+								  rainbow_width, height / 2),
+						  wx.Colour(0, 0, 0, 0),
+						  wx.Colour(255, 255, 255, 255),
+						  wx.UP)
+	# Bottom half - transparent to black
+	dc.GradientFillLinear(wx.Rect(x + column_width, y + height / 2,
+								  rainbow_width, height / 2),
+						  wx.Colour(0, 0, 0, 255),
+						  wx.Colour(255, 255, 255, 0),
+						  wx.UP)
+
+
+def create_granger_rainbow_bitmap(width=1920, height=1080, filename=None):
+	""" Create a granger rainbow bitmap """
+	# Main bitmap
+	bmp = wx.EmptyBitmap(width, height)
+	mdc = wx.MemoryDC(bmp)
+	dc = wx.GCDC(mdc)
+
+	draw_granger_rainbow(dc, 0, 0, width, height)
+
+	mdc.SelectObject(wx.NullBitmap)
+
+	if filename:
+		name, ext = os.path.splitext(filename)
+		ext = ext.lower()
+		bmp_type = {".bmp": wx.BITMAP_TYPE_BMP,
+					".jpe": wx.BITMAP_TYPE_JPEG,
+					".jpg": wx.BITMAP_TYPE_JPEG,
+					".jpeg": wx.BITMAP_TYPE_JPEG,
+					".jfif": wx.BITMAP_TYPE_JPEG,
+					".pcx": wx.BITMAP_TYPE_PCX,
+					".png": wx.BITMAP_TYPE_PNG,
+					".tga": wx.BITMAP_TYPE_TGA,
+					".tif": wx.BITMAP_TYPE_TIFF,
+					".tiff": wx.BITMAP_TYPE_TIFF,
+					".xpm": wx.BITMAP_TYPE_XPM}.get(ext, wx.BITMAP_TYPE_PNG)
+		bmp.SaveFile(filename, bmp_type)
+	else:
+		return bmp
+
+
 class CustomEvent(wx.PyEvent):
 
 	def __init__(self, typeId, object, window=None):
