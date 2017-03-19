@@ -1875,8 +1875,7 @@ class LUTFrame(BaseFrame):
 					legend[0] += " " + joiner.join([format[i] % point
 													for i, point in
 													enumerate(pointXY)])
-				if (len(legend) == 1 and pointXY[0] > 0 and
-					pointXY[0] < 255 and pointXY[1] > 0):
+				if len(legend) == 1:
 					gamma = []
 					for label, v in (("R", R), ("G", G), ("B", B)):
 						if v is None:
@@ -1886,10 +1885,12 @@ class LUTFrame(BaseFrame):
 							x = v
 							y = pointXY[1]
 							if self.show_as_L.GetValue():
-								y = colormath.Lab2XYZ(pointXY[1], 0, 0)[1] * 100
+								y = colormath.Lab2XYZ(y, 0, 0)[1] * 100
 						else:
 							x = pointXY[0]
 							y = v
+						if x <= 0 or x >= 255 or y <= 0 or y >= axis_y:
+							continue
 						if R == G == B or ((R == G or G == B or R == B) and
 										   None in (R, G ,B)):
 							label = "=".join(["%s" % s for s, v in
@@ -1898,7 +1899,8 @@ class LUTFrame(BaseFrame):
 						gamma.append(label + " %.2f" % (math.log(y / axis_y) / math.log(x / 255.0)))
 						if "=" in label:
 							break
-					legend.append("Gamma " + " ".join(gamma))
+					if gamma:
+						legend.append("Gamma " + " ".join(gamma))
 				if self.profile.connectionColorSpace != "RGB":
 					self.add_tone_values(legend)
 				legend = [", ".join(legend[:-1])] + [legend[-1]]
