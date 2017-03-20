@@ -195,10 +195,10 @@ def draw_granger_rainbow(dc, x=0, y=0, width=1920, height=1080):
 		raise NotImplementedError("%s lacks alpha transparency support" % dc.__class__)
 
 	# Widths
-	column_width = int(1.0 / 12 * width)
+	column_width = int(162.0 / 1920.0 * width)
 	rainbow_width = width - column_width * 2
-	strip_width = round(rainbow_width / 6.0)
-	rainbow_width = strip_width * 6
+	strip_width = int(rainbow_width / 7.0)
+	rainbow_width = strip_width * 7
 	column_width = (width - rainbow_width) / 2
 
 	# Gray columns left/right
@@ -209,8 +209,8 @@ def draw_granger_rainbow(dc, x=0, y=0, width=1920, height=1080):
 
 	# Granger rainbow
 	rainbow = [(255, 0, 255), (0, 0, 255), (0, 255, 255),
-			   (0, 255, 0), (255, 255, 0), (255, 0, 0)]
-	start = rainbow[-1]
+			   (0, 255, 0), (255, 255, 0), (255, 0, 0), (255, 0, 255)]
+	start = rainbow[-2]
 	for i, end in enumerate(rainbow):
 		dc.GradientFillLinear(wx.Rect(x + column_width + strip_width * i, y,
 									  strip_width, height),
