@@ -7591,10 +7591,23 @@ END_DATA""")[0]
 							tagname = channel + tagcls
 							profile.tags[tagname].append(min(max(RGB[i], 0), 1) * 65535)
 
-					# Smoothing pass
-					profile.tags.rTRC.smooth_avg(5, [1, 1, 1, 1, 1])
-					profile.tags.gTRC.smooth_avg(5, [1, 1, 1, 1, 1])
-					profile.tags.bTRC.smooth_avg(5, [1, 1, 1, 1, 1])
+					# Smoothing
+					for channel in "rgb":
+						tag = profile.tags[channel + "TRC"]
+						# 1st smoothing pass - curve above zero
+						for start, v in enumerate(tag):
+							if start:
+								break
+						tag[start:] = colormath.smooth_avg(tag[start:],
+														   1, [1, 1, 1, 1, 1])
+						# Smooth above black part of curve more
+						avg_gamma = 1.0 / tag.get_transfer_function()[0][1]
+						# Set start point to roughly above end of near-black
+						# slope in L*
+						start += int(round(4 / colormath.specialpow(avg_gamma,
+																    -3.0)))
+						tag[start:] = colormath.smooth_avg(tag[start:],
+														   4, [1, 1, 1, 1, 1])
 
 					break
 			ti3.write(outname + ".0.ti3")	
