@@ -5120,6 +5120,73 @@ while 1:
 			# ICC Profile Taxi database aswell as other user contributions
 			rgb_spaces = []
 
+			rgb = [("R", (1.0, 0.0, 0.0)),
+				   ("G", (0.0, 1.0, 0.0)),
+				   ("B", (0.0, 0.0, 1.0))]
+
+			# Add matrix from just white + 50% gray + black + primaries
+			# as first entry
+			##outname = os.path.splitext(profile.fileName)[0]
+			##if not os.path.isfile(outname + ".ti3"):
+				##if isinstance(profile.tags.get("targ"), ICCP.Text):
+					##with open(outname + ".ti3", "wb") as ti3:
+						##ti3.write(profile.tags.targ)
+				##else:
+					##ti1name = "ti1/d3-e4-s2-g25-m0-b0-f0.ti1"
+					##ti1 = get_data_path(ti1name)
+					##if not ti1:
+						##raise Error(lang.getstr("file.missing", ti1name))
+					##ti1, ti3, gray = self.ti1_lookup_to_ti3(ti1, profile,
+															##intent="a",
+															##white_patches=1)
+					##outname += "." + ti1name
+					##ti3.write(outname + ".ti3")
+			##result = self._create_matrix_profile(outname, omit="TRC")
+			result = True
+			if isinstance(result, Exception) or not result:
+				if logfile:
+					logfile.write("Warning - could not compute RGBW matrix")
+					if result:
+						logfile.write(": " + safe_unicode(result))
+					else:
+						logfile.write("\n")
+			else:
+				comp_rgb_space = [2.2, "D50"]
+				# Oversaturate primaries to add headroom
+				wx, wy = colormath.XYZ2xyY(*XYZwp)[:2]
+				# Determine saturation factor by looking at distance between
+				# Rec. 2020 blue and actual blue primary
+				bx, by, bY = colormath.XYZ2xyY(
+					*colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, "Rec. 2020"),
+									 whitepoint_source="D65"))
+				bx2, by2, bY2 = xyYrgb[2]
+				bu, bv = colormath.xyY2Lu_v_(bx, by, bY)[1:]
+				bu2, bv2 = colormath.xyY2Lu_v_(bx2, by2, bY2)[1:]
+				dist = math.sqrt((bx - bx2) ** 2 + (by - by2) ** 2)
+				sat = 1 + math.ceil(dist * 100) / 100.0
+				if logfile:
+					logfile.write("Increasing saturation of actual "
+								  "primaries for PCS candidate to "
+								  "%i%%...\n" % round(sat * 100))
+				for i, channel in enumerate("rgb"):
+					##x, y, Y = result.tags[channel + "XYZ"].pcs.xyY
+					x, y, Y = xyYrgb[i]
+					if logfile:
+						logfile.write(channel.upper() + " xy %.6f %.6f -> " %
+									  (x, y))
+					x, y, Y = colormath.xyYsaturation(x, y, Y, wx, wy, sat)
+					if logfile:
+						logfile.write("%.6f %.6f\n" % (x, y))
+					xyYrgb[i] = x, y, Y
+				(rx, ry, rY), (gx, gy, gY), (bx, by, bY) = xyYrgb
+				mtx = colormath.rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, XYZwp)
+				for i, (channel, components) in enumerate(rgb):
+					X, Y, Z = mtx * components
+					comp_rgb_space.append(colormath.XYZ2xyY(X, Y, Z))
+				comp_rgb_space.append("PCS candidate based on actual "
+										  "primaries")
+				rgb_spaces.append(comp_rgb_space)
+
 			# A colorspace that encompasses Rec709. Uses Rec. 2020 blue.
 			rgb_spaces.append([2.2, "D50",
 							   [0.68280181011, 0.315096403371, 0.224182128906],
@@ -5220,6 +5287,11 @@ while 1:
 				logfile.write("Checking for suitable PCS candidate...\n")
 			pcs_candidate = None
 			pcs_candidates = []
+			XYZsrgb = []
+			for channel, components in rgb:
+				XYZsrgb.append(colormath.adapt(*colormath.RGB2XYZ(*components),
+											   whitepoint_source="D65"))
+			XYZrgb_sequence = [XYZrgb, XYZsrgb]
 			for rgb_space in rgb_spaces:
 				if rgb_space[1] not in ("D50", colormath.get_whitepoint("D50")):
 					# Adapt to D50
@@ -5229,16 +5301,38 @@ while 1:
 						rgb_space[2 + i] = colormath.XYZ2xyY(X, Y, Z)
 
 				extremes = []
-				for i in xrange(3):
-					RGB = colormath.XYZ2RGB(XYZrgb[i][0], XYZrgb[i][1],
-											XYZrgb[i][2],
-											rgb_space=rgb_space,
-											clamp=False)
-					maxima = max(RGB)
-					minima = min(RGB)
-					if minima < 0:
-						maxima += abs(minima)
-					extremes.append(maxima)
+				skip = False
+				for XYZrgb in XYZrgb_sequence:
+					for i, color in enumerate(["red", "green", "blue"]):
+						RGB = colormath.XYZ2RGB(XYZrgb[i][0], XYZrgb[i][1],
+												XYZrgb[i][2],
+												rgb_space=rgb_space,
+												clamp=False)
+						maxima = max(RGB)
+						minima = min(RGB)
+						if minima < 0:
+							maxima += abs(minima)
+						if XYZrgb is XYZsrgb:
+							if maxima > 1 and color == "blue":
+								# We want our PCS candiate to contain Rec. 709
+								# blue, which may not be the case for our
+								# candidate based off the actual display
+								# primaries. Blue region is typically the one
+								# where the most artifacts would be visible in
+								# color conversions if the source blue is
+								# clipped
+								if logfile:
+									logfile.write("Skipping %s because it does "
+												  "not encompass Rec. 709 %s\n"
+												  % (rgb_space[-1], color))
+								skip = True
+								break
+						else:
+							extremes.append(maxima)
+					if skip:
+						break
+				if skip:
+					continue
 				# Check area % (in xy for simplicity's sake)
 				xyYrgb = rgb_space[2:5]
 				area2 = 0.5 * abs(sum(x0 * y1 - x1 * y0
@@ -5255,6 +5349,7 @@ while 1:
 				if max(extremes) <= 1.0:
 					break
 
+			XYZrgb = []
 			if not pcs_candidate and False:  # NEVER?
 				# Create quick medium quality shaper+matrix profile and use the
 				# matrix from that
@@ -5285,7 +5380,6 @@ while 1:
 					raise result
 				if result:
 					mtx = ICCP.ICCProfile(basepath + profile_ext)
-					XYZrgb = []
 					for column in "rgb":
 						tag = mtx.tags.get(column + "XYZ")
 						if isinstance(tag, ICCP.XYZType):
@@ -5313,9 +5407,9 @@ while 1:
 						break
 				if logfile:
 					logfile.write("Using primaries: %s\n" % rgb_space[-1])
-				XYZrgb[0] = colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space)
-				XYZrgb[1] = colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space)
-				XYZrgb[2] = colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space)
+				for channel, components in rgb:
+					XYZrgb.append(colormath.RGB2XYZ(*components,
+													rgb_space=rgb_space))
 				pcs_candidate = rgb_space[-1]
 
 			for i in xrange(3):
