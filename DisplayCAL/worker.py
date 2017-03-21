@@ -8,6 +8,7 @@ import getpass
 import glob
 import httplib
 import math
+import multiprocessing as mp
 import os
 import pipes
 import platform
@@ -19,6 +20,7 @@ import subprocess as sp
 import sys
 import tempfile
 import textwrap
+import threading
 import traceback
 import urllib
 import urllib2
@@ -177,6 +179,93 @@ workers = []
 
 def Property(func):
 	return property(**func())
+
+
+def _mp_generate_B2A_clut(process_index, idata_queue, odata1_queue, odata2_queue,
+						  profile_filename, intent, direction, pcs,
+						  use_cam_clipping, clutres, step, threshold, threshold2,
+						  start, end, interp, Linterp, m2, XYZbp, XYZwp, bpc,
+						  progress_queue, thread_abort_event,
+						  process_finished_event, abortmessage="Aborted"):
+	"""
+	B2A cLUT generation worker
+	
+	This should be spawned as a multiprocessing process
+	
+	"""
+	try:
+		if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
+			config.initcfg()
+		idata = []
+		abmaxval = 255 + (255 / 256.0)
+		profile = ICCP.ICCProfile(profile_filename)
+		xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
+		if use_cam_clipping:
+			# Use CAM Jab for clipping for cLUT grid points after a given
+			# threshold
+			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
+							 use_cam_clipping=True)
+		prevperc = 0
+		count = 0
+		for a in xrange(start, end):
+			if thread_abort_event.is_set():
+				if use_cam_clipping:
+					xicclu2.exit()
+				xicclu1.exit()
+				idata_queue.put(Info(abortmessage))
+				return
+			for b in xrange(clutres):
+				for c in xrange(clutres):
+					d, e, f = [v * step for v in (a, b, c)]
+					if profile.connectionColorSpace == "XYZ":
+						# Apply TRC to XYZ values to distribute them optimally
+						# across cLUT grid points.
+						XYZ = [interp[i](v) for i, v in enumerate((d, e, f))]
+						##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
+						# Scale into device colorspace
+						v = m2.inverted() * XYZ
+						if bpc and XYZbp != [0, 0, 0]:
+							v = colormath.blend_blackpoint(v[0], v[1], v[2],
+													None, XYZbp)
+						##print "%3.6f %3.6f %3.6f" % tuple(v)
+						##raw_input()
+						if intent == "a":
+							v = colormath.adapt(*v + [XYZwp,
+													  profile.tags.wtpt.ir.values()])
+					else:
+						# Legacy CIELAB
+						L = Linterp(d * 100)
+						v = L, -128 + e * abmaxval, -128 + f * abmaxval
+					idata.append("%.6f %.6f %.6f" % tuple(v))
+					# Lookup CIE -> device values through profile using xicclu
+					if not use_cam_clipping or (pcs == "x" and
+												a <= threshold and
+												b <= threshold and
+												c <= threshold):
+						xicclu1(v)
+					if use_cam_clipping and (pcs == "l" or
+											 a > threshold2 or
+											 b > threshold2 or
+											 c > threshold2):
+						xicclu2(v)
+					count += 1.0
+				perc = round(count / ((end - start) * clutres ** 2) * 100)
+				if progress_queue and perc > prevperc:
+					progress_queue.put(perc - prevperc)
+					prevperc = perc
+		idata_queue.put((process_index, idata))
+		if use_cam_clipping:
+			xicclu2.exit()
+			data = xicclu2.get()
+			odata2_queue.put((process_index, data))
+		xicclu1.exit()
+		data = xicclu1.get()
+		odata1_queue.put((process_index, data))
+	except Exception, exception:
+		safe_print(traceback.format_exc())
+		idata_queue.put(exception)
+	finally:
+		process_finished_event.set()
 
 
 def add_keywords_to_cgats(cgats, keywords):
@@ -1536,6 +1625,22 @@ class Sudo(object):
 			sp.call([safe_str(self.sudo), kill_arg])
 
 
+class ThreadAbort(object):
+
+	def __init__(self):
+		self.event = mp.Event()
+
+	def __nonzero__(self):
+		return self.event.is_set()
+    
+	def __cmp__(self, other):
+		if self.event.is_set() < other:
+			return -1
+		if self.event.is_set() > other:
+			return 1
+		return 0
+
+
 class WPopen(sp.Popen):
 	
 	def __init__(self, *args, **kwargs):
@@ -1659,7 +1764,7 @@ class Worker(object):
 		self.auth_timestamp = 0
 		self.sessionlogfiles = {}
 		self.tempdir = None
-		self.thread_abort = False
+		self._thread_abort = ThreadAbort()
 		self.triggers = ["Password:"]
 		self.recent = FilteredStream(LineCache(maxlines=3), self.pty_encoding, 
 									 discard=self.recent_discard,
@@ -1678,6 +1783,19 @@ class Worker(object):
 		self._progress_wnd = None
 		self._pwdstr = ""
 		workers.append(self)
+
+	@Property
+	def thread_abort():
+		def fget(self):
+			return self._thread_abort
+		
+		def fset(self, abort):
+			if abort:
+				self._thread_abort.event.set()
+			else:
+				self._thread_abort.event.clear()
+		
+		return locals()
 
 	def _init_sounds(self, dummy=False):
 		if dummy:
@@ -2012,7 +2130,9 @@ class Worker(object):
 				profile1.tags.DBG2 = profile.tags.DBG2
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
-			profile1.apply_black_offset(XYZbp)
+			profile1.apply_black_offset(XYZbp, logfiles=self.get_logfiles(),
+										thread_abort_event=self.thread_abort.event,
+										abortmessage=lang.getstr("aborted"))
 			return
 		if gamma_type in ("b", "g"):
 			# Get technical gamma needed to achieve effective gamma
@@ -5261,6 +5381,7 @@ while 1:
 			rinterp = (colormath.Interp(rX, xpR),
 					   colormath.Interp(rY, xpG),
 					   colormath.Interp(rZ, xpB))
+			Linterp = None
 		else:
 			Lscale = 65280.0 / 65535.0
 			oldmin = (xpR[0] + xpG[0] + xpB[0]) / 3.0
@@ -5320,73 +5441,104 @@ while 1:
 		do_lookup = True
 		if do_lookup:
 			# Generate inverse table lookup input values
+			num_workers = min(max(mp.cpu_count(), 1), clutres)
+			if num_workers > 1:
+				worker_cls = mp.Process
+			else:
+				worker_cls = threading.Thread
+			processes = []
+			start = 0
+
 			if logfile:
 				logfile.write("Generating %s%i table lookup input values...\n" %
 							  (source, tableno))
 				logfile.write("cLUT grid res: %i\n" % clutres)
-				logfile.write("Looking up input values through %s%i table...\n" %
-							  (source, tableno))
-			idata = []
-			odata = []
-			abmaxval = 255 + (255 / 256.0)
-			xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
-			if logfile:
+				logfile.write("Looking up input values through %s%i table (%i workers)...\n" %
+							  (source, tableno, num_workers))
 				logfile.write("%s CAM Jab for clipping\n" %
 							  (use_cam_clipping and "Using" or "Not using"))
-			if use_cam_clipping:
-				# Use CAM Jab for clipping for cLUT grid points after a given
-				# threshold
-				xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
-								 use_cam_clipping=True)
+
+			idata = []
+			odata1 = []
+			odata2 = []
+			idata_queue = mp.Queue()
+			odata1_queue = mp.Queue()
+			odata2_queue = mp.Queue()
+			
 			threshold = int((clutres - 1) * 0.75)
 			threshold2 = int((clutres - 1) / 3)
-			for a in xrange(clutres):
-				if self.thread_abort:
-					if use_cam_clipping:
-						xicclu2.exit()
-					xicclu1.exit()
-					raise Info(lang.getstr("aborted"))
-				for b in xrange(clutres):
-					for c in xrange(clutres):
-						d, e, f = [v * step for v in (a, b, c)]
-						if profile.connectionColorSpace == "XYZ":
-							# Apply TRC to XYZ values to distribute them optimally
-							# across cLUT grid points.
-							XYZ = [interp[i](v) for i, v in enumerate((d, e, f))]
-							##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
-							# Scale into device colorspace
-							v = m2.inverted() * XYZ
-							if bpc and XYZbp != [0, 0, 0]:
-								v = colormath.blend_blackpoint(v[0], v[1], v[2],
-														None, XYZbp)
-							##print "%3.6f %3.6f %3.6f" % tuple(v)
-							##raw_input()
-							if intent == "a":
-								v = colormath.adapt(*v + [XYZwp,
-														  profile.tags.wtpt.ir.values()])
-						else:
-							# Legacy CIELAB
-							L = Linterp(d * 100)
-							v = L, -128 + e * abmaxval, -128 + f * abmaxval
-						idata.append("%.6f %.6f %.6f" % tuple(v))
-						# Lookup CIE -> device values through profile using xicclu
-						if not use_cam_clipping or (pcs == "x" and
-													a <= threshold and
-													b <= threshold and
-													c <= threshold):
-							xicclu1(v)
-						if use_cam_clipping and (pcs == "l" or
-												 a > threshold2 or
-												 b > threshold2 or
-												 c > threshold2):
-							xicclu2(v)
-					if logfile:
-						logfile.write("\r%i%%" % round(len(idata) /
-													   clutres ** 3.0 *
-													   100))
-			if use_cam_clipping:
-				xicclu2.exit()
-			xicclu1.exit()
+
+			progress_queue = mp.Queue()
+
+			if logfile:
+				def progress_logger(num_workers):
+					progress = 0
+					while True:
+						try:
+							progress += progress_queue.get(True, 0.1)
+						except mp.queues.Empty:
+							continue
+						except IOError:
+							break
+						logfile.write("\r%i%%" % (progress / 100.0 *
+												  (100.0 / num_workers)))
+
+				threading.Thread(target=progress_logger, args=(num_workers, ),
+								 name="ProcessProgressLogger").start()
+
+			for process_index in xrange(num_workers):
+				end = int(math.ceil(float(clutres) / num_workers *
+									(process_index + 1)))
+				process_finished_event = mp.Event()
+				p = worker_cls(target=_mp_generate_B2A_clut,
+							   args=(process_index, idata_queue, odata1_queue,
+									 odata2_queue, profile.fileName, intent,
+									 direction, pcs, use_cam_clipping, clutres,
+									 step, threshold, threshold2, start, end,
+									 interp, Linterp, m2, XYZbp, XYZwp, bpc,
+									 progress_queue, self.thread_abort.event,
+									 process_finished_event,
+									 lang.getstr("aborted")))
+				processes.append((p, process_finished_event))
+				if logfile and debug:
+					logfile.write("Starting worker process %s\n" % p.name)
+				p.start()
+				start = end
+
+			# Wait for processes to finish
+			for p, process_finished_event in processes:
+				process_finished_event.wait()
+				if p.is_alive():
+					if logfile and debug:
+						logfile.write("\n%s is still alive!" % p.name)
+					##p.terminate()
+
+			progress_queue.close()
+			progress_queue.join_thread()
+
+			exception = None
+			for queue_out, queue, data in [([], idata_queue, idata),
+										   ([], odata1_queue, odata1),
+										   ([], odata2_queue, odata2)]:
+				for i in xrange(num_workers):
+					try:
+						incoming = queue.get(True, 0 if exception else None)
+					except mp.queues.Empty:
+						continue
+					if isinstance(incoming, Exception):
+						exception = incoming
+						continue
+					queue_out.append(incoming)
+				if not exception:
+					# Make sure it doesn't matter in which order processes finished
+					queue_out.sort()
+					for process_index, values in queue_out:
+						data.extend(values)
+				queue.close()
+				queue.join_thread()
+			if exception:
+				raise exception
+
 			if logfile:
 				logfile.write("\n")
 			if logfile and (pcs == "x" or clutres // 2 != clutres / 2.0):
@@ -5402,15 +5554,14 @@ while 1:
 					logfile.write("Input black L*a*b*: %s\n" % iLabbp)
 					logfile.write("Input white L*a*b*: %s\n" % iLabwp)
 
-			odata1 = xicclu1.get()
 			if not use_cam_clipping:
 				odata = odata1
 			elif pcs == "l":
-				odata = xicclu2.get()
+				odata = odata2
 			else:
 				# Linearly interpolate the crossover to CAM Jab clipping region
 				cam_diag = False
-				odata2 = xicclu2.get()
+				odata = []
 				j, k = 0, 0
 				r = float(threshold - threshold2)
 				for a in xrange(clutres):
@@ -7338,9 +7489,16 @@ usage: spotread [-options] [logfile]
 						if isinstance(profile.tags[table], ICCP.LUT16Type):
 							self.log("Applying black point "
 									 "compensation to %s table" % table)
-							profile.tags[table].apply_black_offset((0, 0, 0))
-							bpc_applied = True
-							profchanged = True
+							try:
+								profile.tags[table].apply_black_offset((0, 0, 0),
+														self.get_logfiles(),
+														self.thread_abort.event,
+														lang.getstr("aborted"))
+							except Exception, exception:
+								result = exception
+							else:
+								bpc_applied = True
+								profchanged = True
 						else:
 							self.log("Can't apply black point "
 									 "compensation to non-LUT16Type %s "
@@ -7808,10 +7966,8 @@ END_DATA""")[0]
 		except Exception, exception:
 			return exception
 		return True
-	
-	def update_profile_B2A(self, profile, generate_perceptual_table=True):
-		# Use reverse A2B interpolation to generate B2A table
-		clutres = getcfg("profile.b2a.hires.size")
+
+	def get_logfiles(self):
 		linebuffered_logfiles = []
 		if sys.stdout.isatty():
 			linebuffered_logfiles.append(safe_print)
@@ -7819,12 +7975,17 @@ END_DATA""")[0]
 			linebuffered_logfiles.append(log)
 		if self.sessionlogfile:
 			linebuffered_logfiles.append(self.sessionlogfile)
-		logfiles = Files([LineBufferedStream(
+		return Files([LineBufferedStream(
 							FilteredStream(Files(linebuffered_logfiles),
 										   enc, discard="",
 										   linesep_in="\n", 
 										   triggers=[])), self.recent,
 							self.lastmsg])
+	
+	def update_profile_B2A(self, profile, generate_perceptual_table=True):
+		# Use reverse A2B interpolation to generate B2A table
+		clutres = getcfg("profile.b2a.hires.size")
+		logfiles = self.get_logfiles()
 		tables = [1]
 		self.log("-" * 80)
 		# Add perceptual tables if not present
@@ -7904,7 +8065,12 @@ END_DATA""")[0]
 							table.clut[-1].append(list(row))
 					logfiles.write("Applying BPC to temporary A2B%i table...\n"
 								   % tableno)
-					table.apply_black_offset((0, 0, 0))
+					try:
+						table.apply_black_offset((0, 0, 0), logfiles,
+												 self.thread_abort.event,
+												 lang.getstr("aborted"))
+					except Exception, exception:
+						return exception
 					bpc_applied = True
 				elif bpc:
 					# BPC not needed, copy existing B2A

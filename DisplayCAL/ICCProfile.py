@@ -7,10 +7,13 @@ import ctypes
 import datetime
 import locale
 import math
+import multiprocessing as mp
 import os
 import re
 import struct
 import sys
+import threading
+import traceback
 import warnings
 import zlib
 from itertools import izip, imap
@@ -2298,6 +2301,83 @@ def unset_display_profile(profile_name, display_no=0,
 		return False
 
 
+def _blend_blackpoint(pcs, row, bp_in, bp_out, wp=None, use_bpc=False,
+					  weight=False, D50="D50"):
+	if pcs == "Lab":
+		L, a, b = PCSLab_uInt16_to_dec(*row)
+		X, Y, Z = colormath.Lab2XYZ(L, a, b, D50)
+	else:
+		X, Y, Z = [v / 32768.0 for v in row]
+	if use_bpc:
+		X, Y, Z = colormath.apply_bpc(X, Y, Z, bp_in, bp_out, wp,
+									  weight=weight)
+	else:
+		if wp:
+			X, Y, Z = colormath.adapt(X, Y, Z, wp, D50)
+			if bp_in:
+				bp_in = colormath.adapt(*bp_in,
+										whitepoint_source=wp,
+										whitepoint_destination=D50)
+			if bp_out:
+				bp_out = colormath.adapt(*bp_out,
+										whitepoint_source=wp,
+										whitepoint_destination=D50)
+		X, Y, Z = colormath.blend_blackpoint(X, Y, Z, bp_in,
+											 bp_out)
+		if wp:
+			X, Y, Z = colormath.adapt(X, Y, Z, D50, wp)
+	if pcs == "Lab":
+		L, a, b = colormath.XYZ2Lab(X, Y, Z, D50)
+		row = [min(max(0, v), 65535) for v in
+			   PCSLab_dec_to_uInt16(L, a, b)]
+	else:
+		row = [min(max(0, v) * 32768.0, 65535) for v in (X, Y, Z)]
+	return row
+
+
+def _mp_apply_black(process_index, data_queue, pcs, blocks, bp, bp_out, wp,
+					nonzero_bp, use_bpc, weight, D50, interp, rinterp,
+					progress_queue, thread_abort_event, process_finished_event,
+					abortmessage="Aborted"):
+	"""
+	Worker for applying black point compensation or offset
+	
+	This should be spawned as a multiprocessing process
+	
+	"""
+	try:
+		from debughelpers import Info
+		prevperc = 0
+		count = 0
+		for block in blocks:
+			if thread_abort_event.is_set():
+				data_queue.put(Info(abortmessage))
+				return
+			for i, row in enumerate(block):
+				if not use_bpc or nonzero_bp:
+					for column, value in enumerate(row):
+						row[column] = interp[column](value)
+				row = _blend_blackpoint(pcs, row, bp,
+										bp_out,
+										wp if use_bpc else None,
+										use_bpc, weight, D50)
+				if not use_bpc or nonzero_bp:
+					for column, value in enumerate(row):
+						row[column] = rinterp[column](value)
+				block[i] = row
+			count += 1.0
+			perc = round(count / len(blocks) * 100)
+			if progress_queue and perc > prevperc:
+				progress_queue.put(perc - prevperc)
+				prevperc = perc
+		data_queue.put((process_index, blocks))
+	except Exception, exception:
+		safe_print(traceback.format_exc())
+		data_queue.put(exception)
+	finally:
+		process_finished_event.set()
+
+
 def hexrepr(bytestring, mapping=None):
 	hexrepr = "0x%s" % binascii.hexlify(bytestring).upper()
 	ascii = safe_unicode(re.sub("[^\x20-\x7e]", "", bytestring)).encode("ASCII",
@@ -2694,14 +2774,19 @@ class LUT16Type(ICCProfileTag):
 		self._n = (tagData and uInt16Number(tagData[48:50])) or 0  # Input channel entries count
 		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
 
-	def apply_black_offset(self, XYZbp):
+	def apply_black_offset(self, XYZbp, logfile=None, thread_abort_event=None,
+						   abortmessage="Aborted"):
 		# Apply only the black point blending portion of BT.1886 mapping
-		self._apply_black(XYZbp, False)
+		self._apply_black(XYZbp, False, False, logfile, thread_abort_event,
+						  abortmessage)
 
-	def apply_bpc(self, bp_out=(0, 0, 0), weight=False):
-		return self._apply_black(bp_out, True, weight)
+	def apply_bpc(self, bp_out=(0, 0, 0), weight=False, logfile=None,
+				  thread_abort_event=None, abortmessage="Aborted"):
+		return self._apply_black(bp_out, True, weight, logfile,
+								 thread_abort_event, abortmessage)
 
-	def _apply_black(self, bp_out, use_bpc=False, weight=False):
+	def _apply_black(self, bp_out, use_bpc=False, weight=False, logfile=None,
+					 thread_abort_event=None, abortmessage="Aborted"):
 		pcs = self.profile and self.profile.connectionColorSpace
 		bp_row = list(self.clut[0][0])
 		wp_row = list(self.clut[-1][-1])
@@ -2735,50 +2820,85 @@ class LUT16Type(ICCProfileTag):
 			raise ValueError("LUT16Type.%s: Unsupported PCS %r" % (method, pcs))
 		if [round(v * 32768) for v in bp] != [round(v * 32768) for v in bp_out]:
 			D50 = colormath.get_whitepoint("D50")
-			def blend_blackpoint(row, bp_in, bp_out, wp=None):
-				if pcs == "Lab":
-					L, a, b = PCSLab_uInt16_to_dec(*row)
-					X, Y, Z = colormath.Lab2XYZ(L, a, b, D50)
-				else:
-					X, Y, Z = [v / 32768.0 for v in row]
-				if use_bpc:
-					X, Y, Z = colormath.apply_bpc(X, Y, Z, bp_in, bp_out, wp,
-												  weight=weight)
-				else:
-					if wp:
-						X, Y, Z = colormath.adapt(X, Y, Z, wp, D50)
-						if bp_in:
-							bp_in = colormath.adapt(*bp_in,
-													whitepoint_source=wp,
-													whitepoint_destination=D50)
-						if bp_out:
-							bp_out = colormath.adapt(*bp_out,
-													whitepoint_source=wp,
-													whitepoint_destination=D50)
-					X, Y, Z = colormath.blend_blackpoint(X, Y, Z, bp_in,
-														 bp_out)
-					if wp:
-						X, Y, Z = colormath.adapt(X, Y, Z, D50, wp)
-				if pcs == "Lab":
-					L, a, b = colormath.XYZ2Lab(X, Y, Z, D50)
-					row = [min(max(0, v), 65535) for v in
-						   PCSLab_dec_to_uInt16(L, a, b)]
-				else:
-					row = [min(max(0, v) * 32768.0, 65535) for v in (X, Y, Z)]
-				return row
+
 			# Blend original black to zero
-			for block in self.clut:
-				for i, row in enumerate(block):
-					if not use_bpc or nonzero_bp:
-						for column, value in enumerate(row):
-							row[column] = interp[column](value)
-					row = blend_blackpoint(row, bp,
-										   bp_out,
-										   wp if use_bpc else None)
-					if not use_bpc or nonzero_bp:
-						for column, value in enumerate(row):
-							row[column] = rinterp[column](value)
-					block[i] = row
+			num_workers = min(max(mp.cpu_count(), 1), len(self.clut))
+			if num_workers > 1:
+				worker_cls = mp.Process
+			else:
+				worker_cls = threading.Thread
+			processes = []
+			start = 0
+
+			progress_queue = mp.Queue()
+
+			if logfile:
+				def progress_logger(num_workers):
+					progress = 0
+					while True:
+						try:
+							progress += progress_queue.get(True, 0.1)
+						except mp.queues.Empty:
+							continue
+						except IOError:
+							break
+						logfile.write("\r%i%%" % (progress / 100.0 *
+												  (100.0 / num_workers)))
+
+				threading.Thread(target=progress_logger, args=(num_workers, ),
+								 name="ProcessProgressLogger").start()
+
+			data_queue = mp.Queue()
+
+			for process_index in xrange(num_workers):
+				end = int(math.ceil(float(len(self.clut)) / num_workers *
+									(process_index + 1)))
+				process_finished_event = mp.Event()
+				p = worker_cls(target=_mp_apply_black,
+							   args=(process_index, data_queue, pcs,
+									 self.clut[start:end], bp, bp_out, wp,
+									 nonzero_bp, use_bpc, weight, D50, interp,
+									 rinterp, progress_queue, thread_abort_event,
+									 process_finished_event, abortmessage))
+				processes.append((p, process_finished_event))
+				if debug:
+					safe_print("Starting worker process %s\n" % p.name)
+				p.start()
+				start = end
+
+			# Wait for processes to finish
+			for p, process_finished_event in processes:
+				process_finished_event.wait()
+				if p.is_alive():
+					if debug:
+						safe_print("%s is still alive!" % p.name)
+					##p.terminate()
+
+			progress_queue.close()
+			progress_queue.join_thread()
+
+			exception = None
+			for queue_out, queue, data in [([], data_queue, [])]:
+				for i in xrange(num_workers):
+					try:
+						incoming = queue.get(True, 0 if exception else None)
+					except mp.queues.Empty:
+						continue
+					if isinstance(incoming, Exception):
+						exception = incoming
+						continue
+					queue_out.append(incoming)
+				if not exception:
+					# Make sure it doesn't matter in which order processes finished
+					queue_out.sort()
+					for process_index, values in queue_out:
+						data.extend(values)
+				queue.close()
+				queue.join_thread()
+			if exception:
+				raise exception
+			self.clut = data
+
 			#if pcs != "Lab" and nonzero_bp:
 				## Apply black offset to output curves
 				#out = [[], [], []]
@@ -5359,14 +5479,16 @@ class ICCProfile:
 		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 
 	def apply_black_offset(self, XYZbp, power=40.0, include_A2B=True,
-						   set_blackpoint=True):
+						   set_blackpoint=True, logfiles=None,
+						   thread_abort_event=None, abortmessage="Aborted"):
 		# Apply only the black point blending portion of BT.1886 mapping
 		if include_A2B:
 			tables = []
 			for i in xrange(3):
 				a2b = self.tags.get("A2B%i" % i)
 				if isinstance(a2b, LUT16Type) and not a2b in tables:
-					a2b.apply_black_offset(XYZbp)
+					a2b.apply_black_offset(XYZbp, logfiles, thread_abort_event,
+										   abortmessage)
 					tables.append(a2b)
 		if set_blackpoint:
 			self.set_blackpoint(XYZbp)

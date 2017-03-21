@@ -6,6 +6,7 @@ import atexit
 import errno
 import logging
 import os
+import multiprocessing as mp
 import platform
 import socket
 import sys
@@ -290,6 +291,10 @@ def main(module=None):
 
 
 def _exit(lockfilename, port):
+	for process in mp.active_children():
+		safe_print("Terminating zombie process", process.name)
+		process.terminate()
+		safe_print(process.name, "terminated")
 	for thread in threading.enumerate():
 		if (thread.isAlive() and thread is not threading.currentThread() and
 			not thread.isDaemon()):
@@ -424,4 +429,5 @@ class Error(Exception):
 	pass
 
 if __name__ == "__main__":
+	mp.freeze_support()
 	main()
