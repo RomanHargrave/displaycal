@@ -7704,8 +7704,6 @@ usage: spotread [-options] [logfile]
 		if not colprof:
 			return Error(lang.getstr("argyll.util.not_found", "colprof"))
 		# Strip potential CAL from Ti3
-		ti3 = CGATS.CGATS(outname + ".ti3")
-		
 		try:
 			ti3 = CGATS.CGATS(outname + ".ti3")
 		except (IOError, CGATS.CGATSError), exception:
@@ -7867,8 +7865,7 @@ END_DATA""")[0]
 				ti1 = get_data_path("ti1/%s.ti1" % ti1name)
 				if not ti1:
 					return Error(lang.getstr("file.missing", "ti1/%s.ti1" % ti1name))
-				fakeout = (outname + "." +
-						   os.path.splitext(os.path.basename(ti1))[0])
+				fakeout = outname + "." + ti1name
 				try:
 					shutil.copyfile(ti1, fakeout + ".ti1")
 				except EnvironmentError, exception:
