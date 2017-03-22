@@ -1314,7 +1314,7 @@ def get_standard_profiles(paths_only=False):
 						filename.startswith("gracol") or
 						filename.startswith("iso") or
 						filename.startswith("lstar-") or
-						filename.startswith("pso_") or
+						filename.startswith("pso") or
 						filename.startswith("prophoto") or
 						filename.startswith("psr_") or
 						filename.startswith("psrgravure") or
