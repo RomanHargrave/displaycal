@@ -229,6 +229,7 @@
 	"can_be_used_independently": "Can be used independently",
 	"cancel": "Cancel",
 	"cathode_ray_tube_display": "Cathode ray tube display",
+	"ccmx.use_nist_four_color_matrix_method": "NIST four-color method",
 	"ccxx.ti1": "Testchart for colorimeter correction",
 	"centered": "Centered",
 	"channel_1_c_xy": "Channel 1 (C) xy",

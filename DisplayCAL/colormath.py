@@ -677,6 +677,43 @@ def is_similar_matrix(matrix1, matrix2, digits=3):
 	return matrix1.rounded(digits) == matrix2.rounded(digits)
 
 
+def four_color_matrix(XrR, YrR, ZrR, XrG, YrG, ZrG, XrB, YrB, ZrB, XrW, YrW, ZrW,
+					  XmR, YmR, ZmR, XmG, YmG, ZmG, XmB, YmB, ZmB, XmW, YmW, ZmW,
+					  Y_correction=True):
+	"""
+	Four-Color Matrix Method for Correction of Tristimulus Colorimeters
+	
+	Based on paper published in Proc., IS&T Fifth Color Imaging Conference,
+	301-305 (1997) and IS&T Sixth Color Imaging Conference (1998).
+	
+	"""
+	XYZ = locals()
+	xyz = {}
+	M = {}
+	k = {}
+	for s in "mr":
+		xyz[s] = {}
+		for color in "RGBW":
+			X, Y, Z = (XYZ[component + s + color] for component in "XYZ")
+			x, y = XYZ2xyY(X, Y, Z)[:2]
+			xyz[s][color] = x, y, 1 - x - y
+		M[s] = Matrix3x3([xyz[s][color] for color in "RGB"]).transposed()
+		k[s] = M[s].inverted() * xyz[s]["W"]
+		M[s + "RGB"] = M[s] * Matrix3x3([[k[s][0], 0, 0],
+										 [0, k[s][1], 0],
+										 [0, 0, k[s][2]]])
+	R = M["rRGB"] * M["mRGB"].inverted()
+	if Y_correction:
+		# The Y calibration factor kY is obtained as the ratio of the reference
+		# luminance value to the matrix-corrected Y value, as defined in
+		# Four-Color Matrix Method for Correction of Tristimulus Colorimeters –
+		# Part 2
+		MW = XmW, YmW, ZmW
+		kY = YrW / (R * MW)[1]
+		R[:] = [[kY * v for v in row] for row in R]
+	return R
+
+
 def get_gamma(values, scale=1.0, vmin=0.0, vmax=1.0, average=True, least_squares=False):
 	""" Return average or least squares gamma or a list of gamma values """
 	if least_squares:

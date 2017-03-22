@@ -9179,8 +9179,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.correction_type_matrix = wx.RadioButton(dlg, -1,
 														lang.getstr("matrix"), 
 														style=wx.RB_GROUP)
-			boxsizer.Add(dlg.correction_type_matrix, flag=wx.ALL | wx.EXPAND,
+			hsizer = wx.BoxSizer(wx.HORIZONTAL)
+			boxsizer.Add(hsizer, flag=wx.ALL | wx.EXPAND,
 						 border=4)
+			hsizer.Add(dlg.correction_type_matrix)
+			dlg.four_color_matrix = wx.CheckBox(dlg, -1,
+				lang.getstr("ccmx.use_nist_four_color_matrix_method"))
+			dlg.four_color_matrix.SetValue(
+				bool(getcfg("ccmx.use_nist_four_color_matrix_method")))
+			hsizer.Add(dlg.four_color_matrix, flag=wx.LEFT, border=8)
 			dlg.correction_type_spectral = wx.RadioButton(dlg, -1,
 														  lang.getstr("spectral") +
 														  " (i1 DisplayPro, "
@@ -9516,6 +9523,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				paths = [getcfg("last_reference_ti3_path")]
 				if dlg.correction_type_matrix.GetValue():
 					paths.append(getcfg("last_colorimeter_ti3_path"))
+			setcfg("ccmx.use_nist_four_color_matrix_method",
+				   int(dlg.four_color_matrix.GetValue()))
 			# Restore previous TI3 paths (if any)
 			for name in ("colorimeter", "reference"):
 				if getcfg("last_%s_ti3_path.backup" % name, False):
@@ -9969,6 +9978,38 @@ class MainFrame(ReportFrame, BaseFrame):
 		args.append(name + ext)
 		result = self.worker.create_ccxx(args, cwd)
 		source = os.path.join(self.worker.tempdir, name + ext)
+		if colorimeter_ti3:
+			white_abs = []
+			for j, meas in enumerate((reference_ti3,
+									  colorimeter_ti3)):
+				# Get absolute whitepoint
+				white = (meas.queryv1("LUMINANCE_XYZ_CDM2") or
+						 colormath.get_whitepoint("D65", scale=100))
+				if isinstance(white, basestring):
+					white = [float(v) for v in white.split()]
+				white_abs.append(white)
+			white_ref = [v / white_abs[0][1] for v in white_abs[0]]
+			if getcfg("ccmx.use_nist_four_color_matrix_method"):
+				safe_print(appname + ": Creating four-color matrix using NIST method")
+				XYZ = []
+				for j, meas in enumerate((reference_ti3, colorimeter_ti3)):
+					for R, G, B in [(100, 0, 0), (0, 100, 0), (0, 0, 100),
+									(100, 100, 100)]:
+						item = meas.queryi1("DATA").queryi1({"RGB_R": R,
+															 "RGB_G": G,
+															 "RGB_B": B})
+						X, Y, Z = item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"]
+						X, Y, Z = (v * white_abs[j][1] / 100.0
+								   for v in (X, Y, Z))
+						XYZ.extend((X, Y, Z))
+				R = colormath.four_color_matrix(*XYZ)
+				safe_print(appname + ": Correction matrix is:")
+				ccmx = CGATS.CGATS(source)
+				for i in xrange(3):
+					safe_print("  %.6f %.6f %.6f" % tuple(R[i]))
+					for j, component in enumerate("XYZ"):
+						ccmx[0].DATA[i]["XYZ_" + component] = R[i][j]
+				ccmx.write()
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result and os.path.isfile(source):
@@ -10028,7 +10069,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(result, self)
 				self.worker.wrapup(False)
 				return
-			if event:
+			if True:
 				if colorimeter_ti3:
 					# CCMX
 					# Show reference vs corrected colorimeter values along with
@@ -10098,18 +10139,15 @@ class MainFrame(ReportFrame, BaseFrame):
 						grid.SetColSize(i, size)
 						grid.SetColLabelValue(i, label)
 					grid.BeginBatch()
-					white_abs = []
-					for j, meas in enumerate((reference_ti3,
-											  colorimeter_ti3)):
-						# Get absolute whitepoint
-						white = (meas.queryv1("LUMINANCE_XYZ_CDM2") or
-								 colormath.get_whitepoint("D65", scale=100))
-						if isinstance(white, basestring):
-							white = [float(v) for v in white.split()]
-						white_abs.append(white)
-					white_ref = [v / white_abs[0][1] for v in white_abs[0]]
 					ref_data = reference_ti3.queryv1("DATA")
 					tgt_data = colorimeter_ti3.queryv1("DATA")
+					deltaE_94 = []
+					deltaE_00 = []
+					safe_print("")
+					safe_print("      Reference xyY         |"
+							   "      Corrected xyY         |"
+							   "   DE94   |   DE00   ")
+					safe_print("-" * 80)
 					for i, ref in ref_data.iteritems():
 						tgt = tgt_data[i]
 						grid.AppendRows(1)
@@ -10117,6 +10155,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						grid.SetRowLabelValue(row, "%d" % ref.SAMPLE_ID)
 						XYZ = []
 						XYZabs = []
+						xyYabs = []
 						for j, sample in enumerate((ref, tgt)):
 							# Get samples
 							XYZ.append([])
@@ -10129,8 +10168,9 @@ class MainFrame(ReportFrame, BaseFrame):
 							if j == 1:
 								# Apply matrix to colorimeter measurements
 								XYZabs[j] = matrix * XYZabs[j]
+							xyYabs.append(colormath.XYZ2xyY(*XYZabs[j]))
 							# Set cell values
-							for k, value in enumerate(colormath.XYZ2xyY(*XYZabs[j])):
+							for k, value in enumerate(xyYabs[j]):
 								grid.SetCellValue(row, j * 5 + k, "%.4f" % value)
 							# Show sRGB approximation of measured patch
 							X, Y, Z = [v / max(white_abs[0][1],
@@ -10142,23 +10182,37 @@ class MainFrame(ReportFrame, BaseFrame):
 							RGB = [int(round(v)) for v in
 								   colormath.XYZ2RGB(X, Y, Z, scale=255)]
 							grid.SetCellBackgroundColour(row, 3 + j, wx.Colour(*RGB))
-						if debug or verbose > 1:
-							safe_print("ref %.6f %.6f %.6f, " % tuple(XYZabs[0]),
-									   "col %.6f %.6f %.6f" % tuple(XYZabs[1]))
 						Lab_ref = colormath.XYZ2Lab(*XYZabs[0] + [white_abs[0]])
 						Lab_tgt = colormath.XYZ2Lab(*XYZabs[1] + [white_abs[0]])
-						if debug or verbose > 1:
-							safe_print("ref Lab %.6f %.6f %.6f, " % Lab_ref,
-									   "col Lab %.6f %.6f %.6f" % Lab_tgt)
-						grid.SetCellValue(row, 8, "%.4f" %
-												  colormath.delta(*Lab_ref +
-																  Lab_tgt +
-																  ("00", ))["E"])
+						# For comparison to Argyll DE94 values
+						deltaE = colormath.delta(*Lab_ref +
+												 Lab_tgt +
+												 ("94", ))["E"]
+						deltaE_94.append(deltaE)
+						deltaE = colormath.delta(*Lab_ref +
+												 Lab_tgt +
+												 ("00", ))["E"]
+						deltaE_00.append(deltaE)
+						safe_print(" %.6f %.6f %8.4f |"
+								   " %.6f %.6f %8.4f | %.6f | %.6f " %
+								   (tuple(xyYabs[0]) + tuple(xyYabs[1]) +
+								    (deltaE_94[-1], deltaE_00[-1])))
+						grid.SetCellValue(row, 8, "%.4f" % deltaE)
+					safe_print("")
+					safe_print(appname + ": Fit error is max %.6f, avg %.6f DE94" %
+							   (max(deltaE_94), sum(deltaE_94) / len(deltaE_94)))
+					safe_print(appname + ": Fit error is max %.6f, avg %.6f DE00" %
+							   (max(deltaE_00), sum(deltaE_00) / len(deltaE_00)))
 					grid.DefaultCellBackgroundColour = grid.LabelBackgroundColour
 					grid.EndBatch()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
-					if dlg.ShowModal() != wx.ID_OK:
+					if event:
+						result = dlg.ShowModal()
+					else:
+						result = wx.ID_OK
+					dlg.Destroy()
+					if result != wx.ID_OK:
 						self.worker.wrapup(False)
 						return
 				if colorimeter_correction_check_overwrite(self, cgats, True):
