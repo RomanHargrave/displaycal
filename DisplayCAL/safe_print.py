@@ -12,6 +12,30 @@ original_codepage = None
 enc, fs_enc = get_encodings()
 
 
+_conwidth = None
+
+def _get_console_width():
+	global _conwidth
+	if _conwidth is None:
+		_conwidth = 80
+		try:
+			if sys.platform == "win32":
+				from ctypes import windll, create_string_buffer
+				import struct
+				# Use stderr handle so that pipes don't affect the reported size
+				stderr_handle = windll.kernel32.GetStdHandle(-12)
+				buf = create_string_buffer(22)
+				consinfo = windll.kernel32.GetConsoleScreenBufferInfo(stderr_handle,
+																	  buf)
+				if consinfo:
+					_conwidth = struct.unpack("hhhhHhhhhhh", buf.raw)[0]
+			else:
+				_conwidth = int(os.getenv("COLUMNS"))
+		except:
+			pass
+	return _conwidth
+
+
 class SafePrinter():
 	
 	def __init__(self, pad=False, padchar=" ", sep=" ", end="\n", 
@@ -67,13 +91,9 @@ class SafePrinter():
 				arg = arg.encode(encoding, "asciize")
 			strargs.append(arg)
 		line = sep.join(strargs).rstrip(end)
-		try:
-			conwidth = int(os.getenv("COLUMNS"))
-		except (TypeError, ValueError):
-			conwidth = 80
 		if pad is not False:
 			if pad is True:
-				width = conwidth
+				width = _get_console_width()
 			else:
 				width = int(pad)
 			line = line.ljust(width, padchar)
@@ -81,12 +101,7 @@ class SafePrinter():
 			fn(line)
 		else:
 			file_.write(line)
-			if end and (sys.platform != "win32" or len(line) != conwidth or 
-						not (hasattr(file_, "isatty") and file_.isatty()) or 
-						end != "\n"):
-				# On Windows, if a line is exactly the width of the buffer, a line 
-				# break would insert an empty line between this line and the next.
-				# To avoid this, skip the newline in that case.
+			if end:
 				file_.write(end)
 
 safe_print = SafePrinter()
