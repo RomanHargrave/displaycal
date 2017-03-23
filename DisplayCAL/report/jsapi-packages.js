@@ -976,9 +976,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					SL = 1,
 					K1 = textiles ? 0.048 : 0.045,
 					K2 = textiles ? 0.014 : 0.015,
-					C_ = (Math.sqrt((1 + (K1 * C1)) * (1 + (K1 * C2))) - 1) / K1, // www.farbmetrik-gall.de/cielab/korrcielab/cie94.html
-					SC = 1 + K1 * C_, // brucelindbloom.com formula originally used C1 instead of C_, but the results are different from ProfileMaker/MeasureTool implementation, so use this instead (found on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html)
-					SH = 1 + K2 * C_, // brucelindbloom.com formula originally used C1 instead of C_, but the results are different from ProfileMaker/MeasureTool implementation, so use this instead (found on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html)
+					C_ = Math.sqrt(C1 * C2),  // symmetric chrominance
+					SC = 1 + K1 * C_,
+					SH = 1 + K2 * C_,
 					KL = textiles ? 2 : 1,
 					KC = 1,
 					KH = 1,

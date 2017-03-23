@@ -536,7 +536,8 @@ def compute_bpc(bp_in, bp_out):
 	return matrix, offset
 
 
-def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None):
+def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
+		  cie94_use_symmetric_chrominance=True):
 		"""
 		Compute the delta of two samples
 
@@ -580,11 +581,10 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None):
 			SL = 1.0
 			K1 = 0.048 if textiles else 0.045
 			K2 = 0.014 if textiles else 0.015
-			# brucelindbloom.com formula originally used C1 instead of C_,
-			# but the results are different from ProfileMaker/MeasureTool 
-			# implementation, so use this instead
-			# (found on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html)
-			C_ = (math.sqrt((1 + (K1 * C1)) * (1 + (K1 * C2))) - 1) / K1
+			if cie94_use_symmetric_chrominance:
+				C_ = math.sqrt(C1 * C2)
+			else:
+				C_ = C1
 			SC = 1.0 + K1 * C_
 			SH = 1.0 + K2 * C_
 			KL = 2.0 if textiles else 1.0
