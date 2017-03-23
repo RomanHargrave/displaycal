@@ -3,6 +3,7 @@ import sys
 
 import subprocess26
 from subprocess26 import Popen as _Popen, list2cmdline
+from subprocess26 import _args_from_interpreter_flags
 
 
 class Popen(_Popen):

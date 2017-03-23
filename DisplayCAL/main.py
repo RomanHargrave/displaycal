@@ -49,6 +49,7 @@ sys.excepthook = _excepthook
 
 
 def main(module=None):
+	mp.freeze_support()
 	if module:
 		name = "%s-%s" % (appbasename, module)
 	else:
@@ -429,5 +430,4 @@ class Error(Exception):
 	pass
 
 if __name__ == "__main__":
-	mp.freeze_support()
 	main()
