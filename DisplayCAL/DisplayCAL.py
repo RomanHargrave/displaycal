@@ -9984,10 +9984,21 @@ class MainFrame(ReportFrame, BaseFrame):
 									  colorimeter_ti3)):
 				# Get absolute whitepoint
 				white = (meas.queryv1("LUMINANCE_XYZ_CDM2") or
-						 colormath.get_whitepoint("D65", scale=100))
+						 meas.queryi1({"RGB_R": 100,
+									   "RGB_G": 100,
+									   "RGB_B": 100}))
 				if isinstance(white, basestring):
 					white = [float(v) for v in white.split()]
+				elif isinstance(white, CGATS.CGATS):
+					white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+				else:
+					# This shouldn't happen
+					white = colormath.get_whitepoint("D65", scale=100)
+					safe_print(appname + ": Warning - could not find white - "
+							   "dE calculation will be inaccurate")
 				white_abs.append(white)
+			if debug or verbose > 1:
+				safe_print("ref white %.6f %.6f %.6f" % tuple(white_abs[0]))
 			white_ref = [v / white_abs[0][1] for v in white_abs[0]]
 			if getcfg("ccmx.use_nist_four_color_matrix_method"):
 				safe_print(appname + ": Creating four-color matrix using NIST method")
@@ -10182,8 +10193,14 @@ class MainFrame(ReportFrame, BaseFrame):
 							RGB = [int(round(v)) for v in
 								   colormath.XYZ2RGB(X, Y, Z, scale=255)]
 							grid.SetCellBackgroundColour(row, 3 + j, wx.Colour(*RGB))
+						if debug or verbose > 1:
+							safe_print("ref %.6f %.6f %.6f, " % tuple(XYZabs[0]),
+									   "col %.6f %.6f %.6f" % tuple(XYZabs[1]))
 						Lab_ref = colormath.XYZ2Lab(*XYZabs[0] + [white_abs[0]])
 						Lab_tgt = colormath.XYZ2Lab(*XYZabs[1] + [white_abs[0]])
+						if debug or verbose > 1:
+							safe_print("ref Lab %.6f %.6f %.6f, " % Lab_ref,
+									   "col Lab %.6f %.6f %.6f" % Lab_tgt)
 						# For comparison to Argyll DE94 values
 						deltaE = colormath.delta(*Lab_ref +
 												 Lab_tgt +
