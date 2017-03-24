@@ -758,7 +758,7 @@ def get_profile_load_on_login_label(os_cal):
 	label = lang.getstr("profile.load_on_login")
 	if sys.platform == "win32" and not os_cal:
 		lstr = lang.getstr("calibration.preserve")
-		if getcfg("lang") != "de":
+		if lang.getcode() != "de":
 			lstr = lstr[0].lower() + lstr[1:]
 		label += u" && " + lstr
 	return label
@@ -2757,7 +2757,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					safe_print("Warning - connected to self, skipping")
 					del conn
 					continue
-				conn.send_command("setlanguage %s" % getcfg("lang"))
+				conn.send_command("setlanguage %s" % lang.getcode())
 				response = conn.get_single_response()
 				if response not in ("ok", "invalid"):
 					safe_print("Warning - couldn't set language for", name,

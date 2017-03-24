@@ -1063,7 +1063,10 @@ class ProfileLoader(object):
 						calibration_management_isenabled()):
 						restore_auto_kind = apply_kind = wx.ITEM_NORMAL
 					else:
-						apply_kind = wx.ITEM_RADIO
+						if config.getcfg("profile.load_on_login"):
+							apply_kind = wx.ITEM_RADIO
+						else:
+							apply_kind = wx.ITEM_NORMAL
 						restore_auto_kind = wx.ITEM_CHECK
 
 					fix = self.pl._can_fix_profile_associations()
@@ -1105,7 +1108,13 @@ class ProfileLoader(object):
 						if label == "-":
 							menu.AppendSeparator()
 						else:
-							item = wx.MenuItem(menu, -1, lang.getstr(label),
+							label = lang.getstr(label)
+							if method is restore_auto:
+								lstr = lang.getstr("profile.load_on_login")
+								if lang.getcode() != "de":
+									label = label[0].lower() + label[1:]
+								label = lstr + u" && " + label
+							item = wx.MenuItem(menu, -1, label,
 											   kind=kind)
 							if not method:
 								item.Enable(False)
