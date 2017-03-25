@@ -5239,11 +5239,18 @@ class ICCProfile:
 						  "color": 8}.iteritems():
 			if not self.device["attributes"][name]:
 				deviceAttributes += bit
+		if sys.platform == "darwin" and self.version < 4:
+			# Dont't include ID under Mac OS X unless v4 profile
+			# to stop pedantic ColorSync utility from complaining
+			# about header padding not being null
+			id = ""
+		else:
+			id = self.ID[:16]
 		header.extend([uInt64Number_tohex(deviceAttributes),
 					   uInt32Number_tohex(self.intent),
 					   self.illuminant.tohex(),
 					   self.creator[:4].ljust(4, " ") if self.creator else "\0" * 4,
-					   self.ID[:16].ljust(16, "\0"),
+					   id.ljust(16, "\0"),
 					   self._data[100:128] if len(self._data[100:128]) == 28 else "\0" * 28])
 		return "".join(header)
 	
