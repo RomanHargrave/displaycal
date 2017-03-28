@@ -982,6 +982,7 @@ defaults = {
 										   "spyder5pro.exe",
 										   "dispcal.exe",
 										   "dispread.exe",
+										   "dispwin.exe",
 										   "flux.exe"]),
 	"profile_loader.known_window_classes": ";".join(["CalClient.exe"]),
 	"profile_loader.reset_gamma_ramps": 0,
