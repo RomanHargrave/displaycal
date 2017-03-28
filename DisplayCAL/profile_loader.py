@@ -42,6 +42,7 @@ if sys.platform == "win32":
 	from edid import get_edid
 	from meta import domain
 	from ordereddict import OrderedDict
+	from systrayicon import Menu, MenuItem, SysTrayIcon
 	from util_os import getenvu, is_superuser, quote_args, which
 	from util_str import safe_asciize, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
@@ -1020,7 +1021,7 @@ class ProfileLoader(object):
 						return "ok"
 					return "invalid"
 
-			class TaskBarIcon(wx.TaskBarIcon):
+			class TaskBarIcon(SysTrayIcon):
 
 				def __init__(self, pl):
 					super(TaskBarIcon, self).__init__()
@@ -1041,11 +1042,10 @@ class ProfileLoader(object):
 					self._error_icon = config.get_bitmap_as_icon(16, "apply-profiles-error")
 					self.set_visual_state(True)
 					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
-					self.Bind(wx.EVT_TASKBAR_RIGHT_DOWN, self.on_right_down)
 
 				def CreatePopupMenu(self):
 					# Popup menu appears on right-click
-					menu = wx.Menu()
+					menu = Menu()
 					
 					if (os.path.isfile(os.path.join(config.confighome,
 												   appbasename + ".lock")) or
@@ -1114,7 +1114,7 @@ class ProfileLoader(object):
 								if lang.getcode() != "de":
 									label = label[0].lower() + label[1:]
 								label = lstr + u" && " + label
-							item = wx.MenuItem(menu, -1, label,
+							item = MenuItem(menu, -1, label,
 											   kind=kind)
 							if not method:
 								item.Enable(False)
@@ -1135,6 +1135,10 @@ class ProfileLoader(object):
 									item.Check(oxform(value))
 
 					return menu
+
+				def PopupMenu(self, menu):
+					if not self.check_user_attention():
+						SysTrayIcon.PopupMenu(self, menu)
 
 				def get_icon(self, enumerate_windows_and_processes=False):
 					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
@@ -1176,9 +1180,6 @@ class ProfileLoader(object):
 							if locked:
 								safe_print("TaskBarIcon.on_left_down: Releasing lock")
 					self.show_notification(toggle=True)
-
-				def on_right_down(self, event):
-					wx.CallLater(100, self.check_user_attention)
 				
 				def check_user_attention(self):
 					dlgs = get_dialogs()
@@ -1190,6 +1191,7 @@ class ProfileLoader(object):
 							# one does not guarantee taskbar flash
 							dlg.RequestUserAttention()
 						dlg.Raise()
+						return dlg
 
 				def open_display_settings(self, event):
 					safe_print("Menu command: Open display settings")
@@ -1572,20 +1574,20 @@ class ProfileLoader(object):
 		dlg = None
 		for dlg in get_dialogs():
 			if (not isinstance(dlg, ProfileLoaderExceptionsDialog) or
-				(event and not event.CanVeto())):
+				(event and hasattr(event, "CanVeto") and not event.CanVeto())):
 				try:
 					dlg.EndModal(wx.ID_CANCEL)
 				except:
 					pass
 				else:
 					dlg = None
-			if dlg and event and event.CanVeto():
+			if dlg and event and hasattr(event, "CanVeto") and event.CanVeto():
 				# Need to request user attention for all open
 				# dialogs because calling it only on the topmost
 				# one does not guarantee taskbar flash
 				dlg.RequestUserAttention()
 		else:
-			if dlg and event and event.CanVeto():
+			if dlg and event and hasattr(event, "CanVeto") and event.CanVeto():
 				event.Veto()
 				safe_print("Vetoed", event)
 				return
@@ -1659,7 +1661,7 @@ class ProfileLoader(object):
 		#print cls
 		if (cls in ("madHcNetQueueWindow",
 					"wxTLWHiddenParent", "wxTimerHiddenWindow",
-					"wxDisplayHiddenWindow") or
+					"wxDisplayHiddenWindow", "SysTrayIcon") or
 			cls.startswith("madToolsMsgHandlerWindow")):
 			windowlist.append(cls)
 
@@ -2128,6 +2130,7 @@ class ProfileLoader(object):
 	def shutdown(self):
 		if self._shutdown:
 			return
+		self._shutdown = True
 		safe_print("Shutting down profile loader")
 		if self.monitoring:
 			safe_print("Shutting down display configuration monitoring thread")
@@ -2135,7 +2138,8 @@ class ProfileLoader(object):
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
 		self.writecfg()
-		self._shutdown = True
+		if self.frame:
+			self.frame.listening = False
 
 	def _enumerate_monitors(self):
 		safe_print("-" * 80)
