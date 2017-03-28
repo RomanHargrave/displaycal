@@ -908,6 +908,7 @@ class ProfileLoader(object):
 			app = None
 		self.reload_count = 0
 		self.lock = threading.Lock()
+		self._is_other_running_lock = threading.Lock()
 		self.monitoring = True
 		self.monitors = []  # Display devices that can be represented as ON
 		self.display_devices = {}  # All display devices
@@ -2290,6 +2291,7 @@ class ProfileLoader(object):
 			return
 		if len(self._madvr_instances):
 			return True
+		self._is_other_running_lock.acquire()
 		if enumerate_windows_and_processes:
 			# At launch, we won't be able to determine if madVR is running via
 			# the callback API, and we can only determine if another
@@ -2384,8 +2386,10 @@ class ProfileLoader(object):
 				else:
 					self._app_detection_msg = msg
 					self._manual_restore = getcfg("profile.load_on_login") and 2
-		return (self.__other_component[0:2] != (None, None) and
-				not self.__other_component[2])
+		result = (self.__other_component[0:2] != (None, None) and
+				  not self.__other_component[2])
+		self._is_other_running_lock.release()
+		return result
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
