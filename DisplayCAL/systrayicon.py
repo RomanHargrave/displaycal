@@ -67,7 +67,7 @@ class Menu(wx.EvtHandler):
 				first_item = menuitems.pop()
 				if first_item.Kind == wx.ITEM_RADIO:
 					id1 = first_item.Id
-					self._menuitems[id].Checked = False
+					first_item.Checked = False
 				else:
 					break
 			menuitems = self.MenuItems[index:]
@@ -76,7 +76,7 @@ class Menu(wx.EvtHandler):
 				last_item = menuitems.pop()
 				if last_item.Kind == wx.ITEM_RADIO:
 					id2 = last_item.Id
-					self._menuitems[id].Checked = False
+					last_item.Checked = False
 				else:
 					break
 			win32gui.CheckMenuRadioItem(self.hmenu, id1, id2, id, flags)
