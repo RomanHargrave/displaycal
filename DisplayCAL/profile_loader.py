@@ -940,6 +940,7 @@ class ProfileLoader(object):
 		self._timestamp = time.time()
 		self._component_name = None
 		self._app_detection_msg = None
+		self._hwnds_pids = set()
 		self.__other_component = None, None, 0
 		self.__apply_profiles = None
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -1030,9 +1031,14 @@ class ProfileLoader(object):
 					self.balloon_text = None
 					self.flags = 0
 					bitmap = config.geticon(16, appname + "-apply-profiles")
-					icon = wx.EmptyIcon()
-					icon.CopyFromBitmap(bitmap)
-					self._active_icon = icon
+					image = bitmap.ConvertToImage()
+					self._active_icons = []
+					self._icon_index = 0
+					self._active_icon = wx.IconFromBitmap(image.ConvertToBitmap())
+					for i in xrange(3):
+						image.RotateHue(0.25)
+						self._active_icon = wx.IconFromBitmap(image.ConvertToBitmap())
+					self._idle_icon = self._active_icon
 					# Use Rec. 709 luma coefficients to convert to grayscale
 					image = bitmap.ConvertToImage().ConvertToGreyscale(.2126,
 																	   .7152,
@@ -1041,8 +1047,26 @@ class ProfileLoader(object):
 					self._inactive_icon = icon
 					self._active_icon_reset = config.get_bitmap_as_icon(16, "apply-profiles-reset")
 					self._error_icon = config.get_bitmap_as_icon(16, "apply-profiles-error")
+					self._animate = False
 					self.set_visual_state(True)
-					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
+					self.Bind(wx.EVT_TASKBAR_LEFT_UP, self.on_left_up)
+					self.Bind(wx.EVT_TASKBAR_LEFT_DCLICK, self.on_left_dclick)
+					self._dclick = False
+					self._show_notification_later = None
+				
+				@Property
+				def _active_icon():
+					def fget(self):
+						if debug > 1:
+							safe_print("[DEBUG] _active_icon[%i]" %
+									   self._icon_index)
+						icon = self._active_icons[self._icon_index]
+						return icon
+
+					def fset(self, icon):
+						self._active_icons.append(icon)
+
+					return locals()
 
 				def CreatePopupMenu(self):
 					# Popup menu appears on right-click
@@ -1141,11 +1165,34 @@ class ProfileLoader(object):
 					if not self.check_user_attention():
 						SysTrayIcon.PopupMenu(self, menu)
 
-				def get_icon(self, enumerate_windows_and_processes=False):
+				def animate(self, enumerate_windows_and_processes=False,
+							idle=False):
+					if debug > 1:
+						safe_print("[DEBUG] animate(enumerate_windows_and_processes=%s, idle=%s)" %
+								   (enumerate_windows_and_processes, idle))
+					if self._icon_index < len(self._active_icons) - 1:
+						self._animate = True
+						self._icon_index += 1
+					else:
+						self._animate = False
+						self._icon_index = 0
+					self.set_visual_state(enumerate_windows_and_processes, idle)
+					if self._icon_index > 0:
+						wx.CallLater(50, lambda enumerate_windows_and_processes,
+												idle: self and
+													  self.animate(enumerate_windows_and_processes,
+																   idle),
+									 enumerate_windows_and_processes, idle)
+					if debug > 1:
+						safe_print("[DEBUG] /animate")
+
+				def get_icon(self, enumerate_windows_and_processes=False,
+							 idle=False):
+					if debug > 1:
+						safe_print("[DEBUG] get_icon(enumerate_windows_and_processes=%s, idle=%s)" %
+								   (enumerate_windows_and_processes, idle))
 					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
-													   manual_override=None) and
-						("--force" in sys.argv[1:] or
-						 config.getcfg("profile.load_on_login"))):
+													   manual_override=None) or self._animate):
 						count = len(self.pl.monitors)
 						if len(filter(lambda (i, success): success,
 									  sorted(self.pl.setgammaramp_success.items())[:count])) != count:
@@ -1153,12 +1200,20 @@ class ProfileLoader(object):
 						elif self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
 						else:
-							icon = self._active_icon
+							if idle:
+								icon = self._idle_icon
+							else:
+								icon = self._active_icon
 					else:
 						icon = self._inactive_icon
+					if debug > 1:
+						safe_print("[DEBUG] /get_icon")
 					return icon
 
-				def on_left_down(self, event):
+				def on_left_up(self, event):
+					if self._dclick:
+						self._dclick = False
+						return
 					if not getattr(self, "_notification", None):
 						# Make sure the displayed info is up-to-date
 						locked = self.pl.lock.locked()
@@ -1180,7 +1235,26 @@ class ProfileLoader(object):
 							pass
 							if locked:
 								safe_print("TaskBarIcon.on_left_down: Releasing lock")
-					self.show_notification(toggle=True)
+						self._show_notification_later = wx.CallLater(40,
+																	 self.show_notification)
+					else:
+						self.show_notification(toggle=True)
+
+				def on_left_dclick(self, event):
+					self._dclick = True
+					if not self.pl._is_other_running():
+						if self._show_notification_later and self._show_notification_later.IsRunning():
+							self._show_notification_later.Stop()
+						locked = self.pl.lock.locked()
+						if locked:
+							safe_print("TaskBarIcon.on_left_dclick: Waiting to acquire lock...")
+						with self.pl.lock:
+							if locked:
+								safe_print("TaskBarIcon.on_left_dclick: Acquired lock")
+							self.pl._manual_restore = True
+							self.pl._next = True
+							if locked:
+								safe_print("TaskBarIcon.on_left_dclick: Releasing lock")
 				
 				def check_user_attention(self):
 					dlgs = get_dialogs()
@@ -1214,7 +1288,8 @@ class ProfileLoader(object):
 							safe_print("TaskBarIcon: Waiting to acquire lock...")
 						with self.pl.lock:
 							safe_print("TaskBarIcon: Acquired lock")
-							self.pl._next = event.IsChecked()
+							self.pl._manual_restore = True
+							self.pl._next = True
 							safe_print("TaskBarIcon: Releasing lock")
 					else:
 						self.set_visual_state()
@@ -1244,9 +1319,16 @@ class ProfileLoader(object):
 						safe_print("Cancelled setting exceptions")
 					dlg.Destroy()
 
-				def set_visual_state(self, enumerate_windows_and_processes=False):
-					self.SetIcon(self.get_icon(enumerate_windows_and_processes),
+				def set_visual_state(self, enumerate_windows_and_processes=False,
+									 idle=False):
+					if debug > 1:
+						safe_print("[DEBUG] set_visual_state(enumerate_windows_and_processes=%s, idle=%s)" %
+								   (enumerate_windows_and_processes, idle))
+					self.SetIcon(self.get_icon(enumerate_windows_and_processes,
+											   idle),
 								 self.pl.get_title())
+					if debug > 1:
+						safe_print("[DEBUG] /set_visual_state")
 
 				def show_notification(self, text=None, sticky=False,
 									  show_notification=True,
@@ -1254,6 +1336,9 @@ class ProfileLoader(object):
 					if wx.VERSION < (3, ) or not self.pl._check_keep_running():
 						wx.Bell()
 						return
+					if debug > 1:
+						safe_print("[DEBUG] show_notification(text=%r, sticky=%s, show_notification=%s, flags=%r, toggle=%s)" %
+								   (text, sticky, show_notification, flags, toggle))
 					if sticky:
 						self.balloon_text = text
 						self.flags = flags
@@ -1300,15 +1385,21 @@ class ProfileLoader(object):
 													  lang.getstr("display.primary"))
 							text += u"\n%s: %s" % (display, desc)
 					if not show_notification:
+						if debug > 1:
+							safe_print("[DEBUG] /show_notification")
 						return
 					if getattr(self, "_notification", None):
 						self._notification.fade("out")
 						if toggle:
+							if debug > 1:
+								safe_print("[DEBUG] /show_notification")
 							return
 					bitmap = wx.BitmapFromIcon(self.get_icon())
 					self._notification = TaskBarNotification(bitmap,
 															 self.pl.get_title(),
 															 text)
+					if debug > 1:
+						safe_print("[DEBUG] /show_notification")
 
 			self.taskbar_icon = TaskBarIcon(self)
 
@@ -1485,6 +1576,8 @@ class ProfileLoader(object):
 												   show_notification))
 
 	def _notify(self, results, errors, sticky=False, show_notification=False):
+		if debug > 1:
+			safe_print("[DEBUG] notify(results=%r, errors=%r, sticky=%s, show_notification=%s)" % (results, errors, sticky, show_notification))
 		self.taskbar_icon.set_visual_state()
 		results.extend(errors)
 		if errors:
@@ -1493,6 +1586,8 @@ class ProfileLoader(object):
 			flags = wx.ICON_INFORMATION
 		self.taskbar_icon.show_notification("\n".join(results), sticky,
 											show_notification, flags)
+		if debug > 1:
+			safe_print("[DEBUG] /notify")
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		# wx.App must already be initialized at this point!
@@ -1767,10 +1862,12 @@ class ProfileLoader(object):
 		first_run = True
 		apply_profiles = self._should_apply_profiles()
 		displaycal_running = self._is_displaycal_running()
+		previous_hwnds_pids = set()
 		while self and self.monitoring:
 			result = None
 			results = []
 			errors = []
+			idle = True
 			locked = self.lock.locked()
 			if locked:
 				safe_print("DisplayConfigurationMonitoringThread: Waiting to acquire lock...")
@@ -1949,7 +2046,10 @@ class ProfileLoader(object):
 																  vcgt_ramp_hack,
 																  vcgt_values)
 					recheck = True
+				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
 				if (not self._manual_restore and
+					not profile_association_changed and
+					not is_buggy_video_driver and
 					getcfg("profile_loader.check_gamma_ramps")):
 					# Get video card gamma ramp
 					try:
@@ -1976,26 +2076,35 @@ class ProfileLoader(object):
 							values[j].append([float(k), v])
 					# Check if video card matches profile vcgt
 					if values == vcgt_values:
+						idle = True
 						continue
+					idle = False
 					safe_print(lang.getstr("vcgt.mismatch", display_desc))
-					recheck = True
+				elif idle:
+					idle = (self._hwnds_pids == previous_hwnds_pids and
+							not self._manual_restore and
+							not profile_association_changed)
 				if recheck:
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
 					apply_profiles = self._should_apply_profiles()
-				if not apply_profiles:
+				if not apply_profiles or idle:
 					# Important: Do not break here because we still want to
 					# detect changed profile associations
 					continue
 				# Now actually reload or reset calibration
 				if (self._manual_restore or profile_association_changed or
-					getcfg("profile_loader.check_gamma_ramps")):
+					(not is_buggy_video_driver and
+					 getcfg("profile_loader.check_gamma_ramps"))):
 					if self._reset_gamma_ramps:
 						safe_print(lang.getstr("calibration.resetting"))
 						safe_print(display_desc)
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
 						safe_print(display_desc, "->", desc)
+				else:
+					safe_print("Preserving calibration state for display",
+							   display_desc)
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
@@ -2005,7 +2114,7 @@ class ProfileLoader(object):
 								   "(%s)" % display)
 					continue
 				try:
-					if self._is_buggy_video_driver(moninfo):
+					if is_buggy_video_driver:
 						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp_hack)
 					result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
 				except Exception, exception:
@@ -2016,7 +2125,8 @@ class ProfileLoader(object):
 												not isinstance(result,
 															   Exception))
 				if (self._manual_restore or profile_association_changed or
-					getcfg("profile_loader.check_gamma_ramps")):
+					(not is_buggy_video_driver and
+					 getcfg("profile_loader.check_gamma_ramps"))):
 					if isinstance(result, Exception) or not result:
 						if result:
 							safe_print(result)
@@ -2025,8 +2135,7 @@ class ProfileLoader(object):
 						safe_print(lang.getstr("success"))
 				if (self._manual_restore or
 					(profile_association_changed and
-					 (isinstance(result, Exception) or not result)) or
-					getcfg("profile_loader.check_gamma_ramps")):
+					 (isinstance(result, Exception) or not result))):
 					if isinstance(result, Exception) or not result:
 						errstr = lang.getstr("calibration.load_error")
 						errors.append(": ".join([display_desc, errstr]))
@@ -2049,6 +2158,7 @@ class ProfileLoader(object):
 				if locked:
 					safe_print("DisplayConfigurationMonitoringThread: Released lock")
 				continue
+			previous_hwnds_pids = self._hwnds_pids
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
 			localtime[3:6] = 23, 59, 59
@@ -2071,8 +2181,9 @@ class ProfileLoader(object):
 							show_notification=(not first_run or errors) and
 											  self.__other_component[1] != "madHcNetQueueWindow")
 			else:
-				if (apply_profiles != self.__apply_profiles or
-					profile_association_changed):
+				##if (apply_profiles != self.__apply_profiles or
+					##profile_association_changed):
+				if not idle:
 					if apply_profiles and (not profile_association_changed or
 										   not self._reset_gamma_ramps):
 						self.reload_count += 1
@@ -2089,8 +2200,11 @@ class ProfileLoader(object):
 								show_notification=False)
 				elif (apply_profiles != self.__apply_profiles or
 					  profile_association_changed):
-					wx.CallAfter(lambda: self and
-										 self.taskbar_icon.set_visual_state())
+						wx.CallAfter(lambda: self and
+											 self.taskbar_icon.set_visual_state())
+			if apply_profiles and not idle:
+				wx.CallAfter(lambda: self and
+									 self.taskbar_icon.animate())
 			self.__apply_profiles = apply_profiles
 			first_run = False
 			if profile_associations_changed and not self._has_display_changed:
@@ -2139,7 +2253,7 @@ class ProfileLoader(object):
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
 		self.writecfg()
-		if self.frame:
+		if getattr(self, "frame", None):
 			self.frame.listening = False
 
 	def _enumerate_monitors(self):
@@ -2251,6 +2365,7 @@ class ProfileLoader(object):
 	def _enumerate_windows_callback(self, hwnd, extra):
 		cls = win32gui.GetClassName(hwnd)
 		if cls == "madHcNetQueueWindow" or self._is_known_window_class(cls):
+			self._hwnds_pids.add(hwnd)
 			try:
 				thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
 				filename = get_process_filename(pid)
@@ -2301,6 +2416,7 @@ class ProfileLoader(object):
 			self.__other_component = None, None, 0
 			# Look for known window classes
 			# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes): ~ 1ms
+			self._hwnds_pids = set()
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
@@ -2314,6 +2430,7 @@ class ProfileLoader(object):
 				except WindowsError, exception:
 					safe_print("Enumerating processes failed:", exception)
 				else:
+					self._hwnds_pids.update(pids)
 					for pid in pids:
 						try:
 							filename = get_process_filename(pid)
@@ -2635,6 +2752,10 @@ class ProfileLoader(object):
 						options=("argyll.dir", "profile.load_on_login",
 								 "profile_loader"))
 
+
+def Property(func):
+    return property(**func())
+   
 
 def get_display_name_edid(device, moninfo=None, index=None,
 						  include_adapter=False):
