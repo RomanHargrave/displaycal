@@ -229,6 +229,7 @@
 	"can_be_used_independently": "독립적으로 사용 가능",
 	"cancel": "취소",
 	"cathode_ray_tube_display": "CRT 디스플레이",
+		"*ccmx.use_four_color_matrix_method": "Minimize xy chromaticity difference instead of delta E",
 	"ccxx.ti1": "컬러리미터 보정을 위한 테스트차트",
 	"centered": "중심",
 	"channel_1_c_xy": "채널 1 (C) xy",

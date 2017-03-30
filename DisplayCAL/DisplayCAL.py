@@ -9184,9 +9184,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						 border=4)
 			hsizer.Add(dlg.correction_type_matrix)
 			dlg.four_color_matrix = wx.CheckBox(dlg, -1,
-				lang.getstr("ccmx.use_nist_four_color_matrix_method"))
+				lang.getstr("ccmx.use_four_color_matrix_method"))
 			dlg.four_color_matrix.SetValue(
-				bool(getcfg("ccmx.use_nist_four_color_matrix_method")))
+				bool(getcfg("ccmx.use_four_color_matrix_method")))
 			hsizer.Add(dlg.four_color_matrix, flag=wx.LEFT, border=8)
 			dlg.correction_type_spectral = wx.RadioButton(dlg, -1,
 														  lang.getstr("spectral") +
@@ -9523,7 +9523,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				paths = [getcfg("last_reference_ti3_path")]
 				if dlg.correction_type_matrix.GetValue():
 					paths.append(getcfg("last_colorimeter_ti3_path"))
-			setcfg("ccmx.use_nist_four_color_matrix_method",
+			setcfg("ccmx.use_four_color_matrix_method",
 				   int(dlg.four_color_matrix.GetValue()))
 			# Restore previous TI3 paths (if any)
 			for name in ("colorimeter", "reference"):
@@ -10000,8 +10000,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if debug or verbose > 1:
 				safe_print("ref white %.6f %.6f %.6f" % tuple(white_abs[0]))
 			white_ref = [v / white_abs[0][1] for v in white_abs[0]]
-			if getcfg("ccmx.use_nist_four_color_matrix_method"):
-				safe_print(appname + ": Creating four-color matrix using NIST method")
+			if getcfg("ccmx.use_four_color_matrix_method"):
+				safe_print(appname + ": Creating matrix using four-color method")
 				XYZ = []
 				for j, meas in enumerate((reference_ti3, colorimeter_ti3)):
 					for R, G, B in [(100, 0, 0), (0, 100, 0), (0, 0, 100),

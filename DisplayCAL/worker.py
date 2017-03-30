@@ -7267,7 +7267,7 @@ usage: spotread [-options] [logfile]
 					getcfg("measurement_mode.projector")):
 					displaytech.append("Projector")
 				args.insert(1, " ".join(displaytech))
-		if not getcfg("ccmx.use_nist_four_color_matrix_method"):
+		if not getcfg("ccmx.use_four_color_matrix_method"):
 			args.insert(0, "-v")
 		return self.exec_cmd(cmd, args, capture_output=True, 
 							 skip_scripts=True, silent=False,

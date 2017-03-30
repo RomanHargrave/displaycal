@@ -804,7 +804,7 @@ defaults = {
 	"calibration.update": 0,
 	"calibration.use_video_lut": 1,
 	"calibration.use_video_lut.backup": 1,
-	"ccmx.use_nist_four_color_matrix_method": 0,
+	"ccmx.use_four_color_matrix_method": 0,
 	"colorimeter_correction.instrument": None,
 	"colorimeter_correction.instrument.reference": None,
 	"colorimeter_correction.measurement_mode": "l",
