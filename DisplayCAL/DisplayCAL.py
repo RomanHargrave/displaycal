@@ -9476,6 +9476,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				for item in list(boxsizer.Children) + [boxsizer.StaticBox]:
 					if isinstance(item, (wx.SizerItem, wx.Window)):
 						item.Show(dlg.correction_type_matrix.GetValue())
+				matrix = dlg.correction_type_matrix.GetValue()
+				dlg.four_color_matrix.Enable(matrix)
+				if not matrix:
+					dlg.four_color_matrix.SetValue(False)
 				show_observer_ctrl()
 				set_ok_btn_state()
 				dlg.sizer0.SetSizeHints(dlg)
