@@ -571,7 +571,11 @@ class TestchartEditor(BaseFrame):
 					 "testchart.sort_by_L",
 					 "testchart.sort_by_RGB",
 					 "testchart.sort_by_RGB_sum",
-					 "testchart.optimize_for_untethered_auto_mode"):
+					 "testchart.interleave",
+					 "testchart.shift_interleave",
+					 "testchart.maximize_lightness_difference",
+					 "testchart.maximize_RGB_difference",
+					 "testchart.vary_RGB_difference"):
 			patch_order_choices.append(lang.getstr(lstr))
 		self.change_patch_order_ctrl = wx.Choice(panel, -1,
 												 choices=patch_order_choices)
@@ -1001,7 +1005,21 @@ END_DATA""")
 		elif idx == 13:
 			self.ti1.sort_by_RGB_sum()
 		elif idx == 14:
+			# Interleave
+			self.ti1.checkerboard(None, None)
+		elif idx == 15:
+			# Shift & interleave
+			self.ti1.checkerboard(None, None, split_grays=True, shift=True)
+		elif idx == 16:
+			# Maximize L* difference
 			self.ti1.checkerboard()
+		elif idx == 17:
+			# Maximize RGB difference
+			self.ti1.checkerboard(CGATS.sort_by_RGB_sum)
+		elif idx == 18:
+			# Vary RGB difference
+			self.ti1.checkerboard(CGATS.sort_by_RGB, None, split_grays=True,
+								  shift=True)
 		self.tc_clear(False)
 		self.tc_preview(True)
 	

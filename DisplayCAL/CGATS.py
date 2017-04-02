@@ -12,6 +12,7 @@ import math, os, re, sys
 import colormath
 import x3dom
 from log import safe_print
+from options import debug, verbose
 from util_io import GzipFileProper, StringIOu as StringIO
 
 
@@ -578,24 +579,152 @@ class CGATS(dict):
 			for j, field_name in enumerate(field_names):
 				self[i][field_name] = values[j]
 	
-	def checkerboard(self):
+	def checkerboard(self, sort1=sort_by_L, sort2=sort_RGB_white_to_top,
+					 split_grays=False, shift=False):
 		data, valueslist = self.get_RGB_XYZ_values()
 		if not valueslist:
 			return False
-		valueslist *= 2
-		valueslist.sort(sort_by_L)
-		valueslist.sort(sort_RGB_white_to_top)
-		split = len(valueslist) / 2
-		valueslist1 = valueslist[:split]
-		valueslist2 = valueslist[split:]
-		valueslist2.reverse()
-		valueslist = valueslist1 + valueslist2
+		numvalues = len(valueslist)
+		if sort1:
+			valueslist.sort(sort1)
+		if sort2:
+			valueslist.sort(sort2)
+		gray = []
+		if split_grays:
+			# Split values into gray and color. First gray in a consecutive
+			# sequence of two or more grays will be added to color list,
+			# following grays will be added to gray list.
+			color = []
+			prev_i = -1
+			prev_values = []
+			added = {prev_i: True}  # Keep track of entries we have added
+			for i, values in enumerate(valueslist):
+				if debug:
+					safe_print(i + 1, "IN", values[:3])
+				is_gray = values[:3] == [values[:3][0]] * 3
+				prev = color
+				cur = color
+				if is_gray:
+					if not prev_values:
+						if debug:
+							safe_print("WARNING - skipping gray because no prev")
+					elif values[:3] == prev_values[:3]:
+						# Same gray as prev value
+						prev = color
+						cur = gray
+						if prev_i not in added:
+							if debug:
+								safe_print("INFO - appending prev %s to color "
+										   "because prev was same gray but got "
+										   "skipped" % prev_values[:3])
+						if debug:
+							safe_print("INFO - appending cur to gray because "
+									   "prev %s was same gray" %
+									   prev_values[:3])
+					elif prev_values[:3] == [prev_values[:3][0]] * 3:
+						# Prev value was different gray
+						prev = gray
+						cur = gray
+						if prev_i not in added:
+							if debug:
+								safe_print("INFO - appending prev %s to gray "
+										   "because prev was different gray "
+										   "but got skipped" % prev_values[:3])
+						if debug:
+							safe_print("INFO - appending cur to gray because "
+									   "prev %s was different gray" %
+									   prev_values[:3])
+					elif i < numvalues - 1:
+						if debug:
+							safe_print("WARNING - skipping gray because "
+									   "prev %s was not gray" %
+									   prev_values[:3])
+					else:
+						# Last
+						if debug:
+							safe_print("INFO - appending cur to color "
+									   "because prev %s was not gray but "
+									   "cur is last" % prev_values[:3])
+				if not is_gray or cur is gray or i == numvalues - 1:
+					if prev_i not in added:
+						if debug and prev is cur is color:
+							safe_print("INFO - appending prev %s to color because "
+									   "prev got skipped" % prev_values[:3])
+						prev.append(prev_values)
+						added[prev_i] = True
+					if debug and not is_gray and cur is color:
+						safe_print("INFO - appending cur to color")
+					cur.append(values)
+					added[i] = True
+				prev_i = i
+				prev_values = values
+			if (len(color) == 2 and color[0][:3] == [0, 0, 0] and
+				color[1][:3] == [100, 100, 100]):
+				if debug:
+					safe_print("INFO - appending color to gray because color "
+							   "is only black and white")
+				gray.extend(color)
+				color = []
+				if sort1:
+					gray.sort(sort1)
+				if sort2:
+					gray.sort(sort2)
+			if debug:
+				for i, values in enumerate(gray):
+					safe_print("%4i" % (i + 1), "GRAY", ("%8.4f " * 3) %
+							   tuple(values[:3]))
+				for i, values in enumerate(color):
+					safe_print("%4i" % (i + 1), "COLOR", ("%8.4f " * 3) %
+							   tuple(values[:3]))
+		else:
+			color = valueslist
 		checkerboard = []
-		for i in xrange(split):
-			if i % 2 == 1:
-				i = len(valueslist) - 1 - i
-			values = valueslist[i]
-			checkerboard.append(values)
+		for valueslist in [gray, color]:
+			if not valueslist:
+				continue
+			split = int(round(len(valueslist) / 2.0))
+			valueslist1 = valueslist[:split]
+			valueslist2 = valueslist[split:]
+			if shift:
+				# Shift values.
+				#
+				# If split is even:
+				#   A1 A2 A3 A4 -> A1 B2 B3 B1 B4
+				#   B1 B2 B3 B4 -> A3 A4 A2
+				#
+				# If split is uneven:
+				#   A1 A2 A3 -> A1 B1 B2 B3 B4
+				#   B1 B2 B3 B4 -> A2 A3
+				offset = 0
+				if split == len(valueslist) / 2.0:
+					# Even split
+					offset += 1
+				valueslist1_orig = list(valueslist1)
+				valueslist2_orig = list(valueslist2)
+				valueslist1 = valueslist2_orig[offset:]
+				valueslist2 = valueslist1_orig[offset + 1:]
+				valueslist1.insert(0, valueslist1_orig[0])
+				if offset:
+					valueslist1.insert(-1, valueslist2_orig[0])
+					valueslist2.extend(valueslist1_orig[1:2])
+			# Interleave.
+			# 1 2 3 4 5 6 7 8 -> 1 5 2 6 3 7 4 8
+			while valueslist1 or valueslist2:
+				for valueslist in (valueslist1, valueslist2):
+					if valueslist:
+						values = valueslist.pop(0)
+						checkerboard.append(values)
+		if (shift and
+			checkerboard[-1][:3] == [100, 100, 100]):
+			# Move white patch to front
+			if debug:
+				safe_print("INFO - moving white to front")
+			checkerboard.insert(0, checkerboard.pop())
+		if len(checkerboard) != numvalues:
+			# This should never happen
+			safe_print("Number of patches incorrect after re-ordering (is %i, "
+					   "should be %i)" % (len(checkerboard), numvalues))
+			return False
 		return data.set_RGB_XYZ_values(checkerboard)
 	
 	def sort_RGB_gray_to_top(self):
