@@ -67,8 +67,8 @@ def rcut(value, width):
 
 def sort_RGB_gray_to_top(a, b):
 	if a[0] == a[1] == a[2]:
-		if b[0] == b[1] == b[2] and a[0] > b[0]:
-			return 1
+		if b[0] == b[1] == b[2]:
+			return 0
 		return -1
 	else:
 		return 0
@@ -76,9 +76,9 @@ def sort_RGB_gray_to_top(a, b):
 
 def sort_RGB_to_top_factory(i1, i2, i3, i4):
 	def sort_RGB_to_top(a, b):
-		if a[i1] == a[i2] and not a[i3] and a[i4]:
-			if b[i1] == b[i2] and not b[i3] and b[i4] and a[i4] > b[i4]:
-				return 1
+		if a[i1] == a[i2] and 0 <= a[i3] < a[i4]:
+			if b[i1] == b[i2] and 0 <= b[i3] < b[i4]:
+				return 0
 			return -1
 		else:
 			return 0
