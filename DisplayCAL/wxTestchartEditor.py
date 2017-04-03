@@ -574,6 +574,7 @@ class TestchartEditor(BaseFrame):
 					 "testchart.interleave",
 					 "testchart.shift_interleave",
 					 "testchart.maximize_lightness_difference",
+					 "testchart.maximize_rec709_luma_difference",
 					 "testchart.maximize_RGB_difference",
 					 "testchart.vary_RGB_difference"):
 			patch_order_choices.append(lang.getstr(lstr))
@@ -1014,9 +1015,12 @@ END_DATA""")
 			# Maximize L* difference
 			self.ti1.checkerboard()
 		elif idx == 17:
+			# Maximize Rec. 709 luma difference
+			self.ti1.checkerboard(CGATS.sort_by_rec709_luma)
+		elif idx == 18:
 			# Maximize RGB difference
 			self.ti1.checkerboard(CGATS.sort_by_RGB_sum)
-		elif idx == 18:
+		elif idx == 19:
 			# Vary RGB difference
 			self.ti1.checkerboard(CGATS.sort_by_RGB, None, split_grays=True,
 								  shift=True)

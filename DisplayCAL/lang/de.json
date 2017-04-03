@@ -983,6 +983,7 @@
 	"testchart.interleave": "Verschränken",
 	"testchart.maximize_RGB_difference": "RGB-Unterschiede maximieren",
 	"testchart.maximize_lightness_difference": "Helligkeitsunterschiede maximieren",
+	"testchart.maximize_rec709_luma_difference": "Luma-Unterschiede maximieren",
 	"testchart.optimize_display_response_delay": "Anzeigegerät-Aktualisierungsverzögerung minimieren",
 	"testchart.patches_amount": "Feldanzahl",
 	"testchart.read": "Lese Testform...",

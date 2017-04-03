@@ -162,6 +162,22 @@ def sort_by_L(a, b):
 		return 0
 
 
+def sort_by_luma_factory(RY, GY, BY, gamma=1):
+	def sort_by_luma(a, b):
+		a = RY * a[0] ** gamma + GY * a[1] ** gamma + BY * a[2] ** gamma
+		b = RY * b[0] ** gamma + GY * b[1] ** gamma + BY * b[2] ** gamma
+		if a > b:
+			return 1
+		elif a < b:
+			return -1
+		else:
+			return 0
+	return sort_by_luma
+
+
+sort_by_rec709_luma = sort_by_luma_factory(0.2126, 0.7152, 0.0722)
+
+
 class CGATSError(Exception):
 	pass
 

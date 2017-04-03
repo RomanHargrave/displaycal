@@ -984,6 +984,7 @@
 	"testchart.shift_interleave": "Shift & interleave",
 	"testchart.maximize_lightness_difference": "Maximize lightness difference",
 	"testchart.maximize_RGB_difference": "Maximize RGB difference",
+	"testchart.maximize_rec709_luma_difference": "Maximize luma difference",
 	"testchart.optimize_display_response_delay": "Minimize display response delay",
 	"testchart.patches_amount": "Amount of patches",
 	"testchart.read": "Reading testchart...",

@@ -983,6 +983,7 @@
 		"*testchart.interleave": "Interleave",
 		"*testchart.maximize_RGB_difference": "Maximize RGB difference",
 		"*testchart.maximize_lightness_difference": "Maximize lightness difference",
+		"*testchart.maximize_rec709_luma_difference": "Maximize luma difference",
 		"*testchart.optimize_display_response_delay": "Minimize display response delay",
 	"testchart.patches_amount": "패치 규모",
 	"testchart.read": "테스트차트 읽는 중...",
