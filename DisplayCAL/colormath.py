@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""
+Diverse color mathematical functions.
+
+Note:
+In most cases, unless otherwise stated RGB is R'G'B' (gamma-compressed)
+
+"""
+
 import logging
 import math
 import sys
@@ -1298,6 +1306,83 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 			RGB[i] = specialpow(v, gamma)
 	XYZ = matrix * RGB
 	return tuple(v * scale for v in XYZ)
+
+
+def RGB2YCbCr(R, G, B, rgb_space="NTSC 1953", bits=8):
+	""" R'G'B' to Y'CbCr quantized to n bits """
+	return YPbPr2YCbCr(*RGB2YPbPr(R, G, B, rgb_space), bits=bits)
+
+
+def RGB2YPbPr(R, G, B, rgb_space="NTSC 1953"):
+	""" R'G'B' to Y'PbPr """
+	return RGB2YPbPr_matrix(rgb_space) * (R, G, B)
+
+
+def RGB2YPbPr_matrix(rgb_space="NTSC 1953"):
+	(trc, whitepoint, (rx, ry, rY), (gx, gy, gY), (bx, by, bY),
+	 matrix) = get_rgb_space(rgb_space)
+	if matrix == get_rgb_space("NTSC 1953")[-1]:
+		ndigits = 3
+	else:
+		ndigits = 4
+	KR = round(rY, ndigits)
+	KB = round(bY, ndigits)
+	KG = 1.0 - KR - KB
+	Pb_scale = ((1 - KB) / 0.5)
+	Pr_scale = ((1 - KR) / 0.5)
+	return Matrix3x3([[KR, KG, KB],
+					  [-KR / Pb_scale, -KG / Pb_scale, 0.5],
+					  [0.5, -KG / Pr_scale, -KB / Pr_scale]])
+
+
+def YCbCr2YPbPr(Y, Cb, Cr, bits=8):
+	""" Y'CbCr to Y'PbPr """
+	bitlevels = 2 ** bits
+	Yblack = 16 / 256.0 * bitlevels
+	Yscale = 219 / 256.0 * bitlevels
+	Y -= Yblack
+	Y /= Yscale
+	Cneutral = 128 / 256.0 * bitlevels
+	Cscale = 224 / 256.0 * bitlevels
+	Cb -= Cneutral
+	Cb /= Cscale
+	Cr -= Cneutral
+	Cr /= Cscale
+	return Y, Cb, Cr
+
+
+def YCbCr2RGB(Y, Cb, Cr, rgb_space="NTSC 1953", bits=8, scale=1.0, round_=False,
+			  clamp=True):
+	""" Y'CbCr to R'G'B' """
+	Y, Pb, Pr = YCbCr2YPbPr(Y, Cb, Cr, bits)
+	return YPbPr2RGB(Y, Pb, Pr, rgb_space, scale, round_, clamp)
+
+
+def YPbPr2RGB(Y, Pb, Pr, rgb_space="NTSC 1953", scale=1.0, round_=False,
+			  clamp=True):
+	""" Y'PbPr to R'G'B' """
+	RGB = RGB2YPbPr_matrix(rgb_space).inverted() * (Y, Pb, Pr)
+	for i in xrange(3):
+		if clamp:
+			RGB[i] = min(1.0, max(0.0, RGB[i]))
+		RGB[i] *= scale
+		if round_ is not False:
+			RGB[i] = round(RGB[i], round_)
+	return RGB
+
+
+def YPbPr2YCbCr(Y, Pb, Pr, bits=8):
+	""" Y'PbPr' to Y'CbCr quantized to n bits """
+	bitlevels = 2 ** bits
+	Yblack = 16 / 256.0 * bitlevels
+	Yscale = 219 / 256.0 * bitlevels
+	Y = Yblack + Yscale * Y
+	Cneutral = 128 / 256.0 * bitlevels
+	Cscale = 224 / 256.0 * bitlevels
+	Cb = Cneutral + Cscale * Pb
+	Cr = Cneutral + Cscale * Pr
+	Y, Cb, Cr = (int(round(v)) for v in (Y, Cb, Cr))
+	return Y, Cb, Cr
 
 
 def RGBsaturation(R, G, B, saturation, rgb_space=None):
