@@ -14,11 +14,11 @@ try:
 except ImportError:
 	pass
 else:
-	if not getattr(sys, "frozen", False):
+	if not getattr(sys, "frozen", False) and not "wx" in sys.modules:
 		wxversion.ensureMinimal("%i.%i" % wx_minversion[:2])
 import wx
 if wx.VERSION < wx_minversion:
-	app = wx.PySimpleApp()
+	app = wx.GetApp() or wx.App(0)
 	result = wx.MessageBox("This application requires a version of wxPython "
 						   "greater than or equal to %s, but your most recent "
 						   "version is %s.\n\n"
