@@ -10,7 +10,6 @@ from __future__ import with_statement
 import math, os, re, sys
 
 import colormath
-import x3dom
 from log import safe_print
 from options import debug, verbose
 from util_io import GzipFileProper, StringIOu as StringIO
@@ -1024,6 +1023,7 @@ class CGATS(dict):
 							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY",
 							  "HSI", "HSL", "HSV", "ICtCp"):
 			raise ValueError("export_3d: Unknown colorspace %r" % colorspace)
+		import x3dom
 		data = self.queryv1("DATA")
 		if self.queryv1("ACCURATE_EXPECTED_VALUES") == "true":
 			cat = "Bradford"

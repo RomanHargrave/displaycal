@@ -39,8 +39,6 @@ from util_str import safe_str, safe_unicode
 if sys.platform == "win32":
 	from util_win import win_ver
 	import ctypes
-from wxaddons import wx
-from wxwindows import BaseApp
 
 def _excepthook(etype, value, tb):
 	handle_error((etype, value, tb))
@@ -50,6 +48,8 @@ sys.excepthook = _excepthook
 
 def main(module=None):
 	mp.freeze_support()
+	from wxaddons import wx
+	from wxwindows import BaseApp
 	if module:
 		name = "%s-%s" % (appbasename, module)
 	else:
