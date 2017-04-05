@@ -499,7 +499,7 @@ class CGATS(dict):
 			if self.type == 'SECTION' or data:
 				result.append('')
 		if data and data.parent['DATA_FORMAT']:
-			if 'KEYWORDS' in data.parent:
+			if 'KEYWORDS' in data.parent and self.emit_keywords:
 				for item in data.parent['DATA_FORMAT'].values():
 					if item in data.parent['KEYWORDS'].values():
 						result.append('KEYWORD "%s"' % item)
