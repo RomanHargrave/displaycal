@@ -224,7 +224,8 @@ class CGATS(dict):
 	type = 'ROOT'
 	vmaxlen = 0
 	
-	def __init__(self, cgats=None, normalize_fields=False, file_identifier="CTI3"):
+	def __init__(self, cgats=None, normalize_fields=False, file_identifier="CTI3",
+				 emit_keywords=False):
 		"""
 		Return a CGATS instance.
 		
@@ -240,6 +241,7 @@ class CGATS(dict):
 		
 		self.normalize_fields = normalize_fields
 		self.file_identifier = file_identifier
+		self.emit_keywords = emit_keywords
 		self.root = self
 		self._keys = []
 		
@@ -424,7 +426,7 @@ class CGATS(dict):
 			self.setmodified(value)
 		elif name in ('datetime', 'filename', 'fileName', 'file_identifier', 'key', 
 					  'mtime', 'normalize_fields', 'parent', 'root', 'type', 
-					  'vmaxlen'):
+					  'vmaxlen', 'emit_keywords'):
 			object.__setattr__(self, name, value)
 			self.setmodified()
 		else:
@@ -480,7 +482,8 @@ class CGATS(dict):
 						else:
 							if 'KEYWORDS' in self and \
 								key in self['KEYWORDS'].values():
-								result.append('KEYWORD "%s"' % key)
+								if self.emit_keywords:
+									result.append('KEYWORD "%s"' % key)
 								result.append('%s "%s"' % (key, value))
 							elif type(value) in (int, float):
 								result.append('%s %s' % (key, value))
@@ -981,6 +984,7 @@ class CGATS(dict):
 							elif value == 'SAMPLENAME':
 								value = 'SAMPLE_NAME'
 						if var == 'KEYWORD':
+							self.emit_keywords = True
 							if value != 'KEYWORD':
 								self.add_keyword(value)
 							else:
