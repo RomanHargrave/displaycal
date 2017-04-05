@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 from codecs import EncodedFile
 from hashlib import md5
+import atexit
+import glob
 import logging
 import logging.handlers
+import multiprocessing as mp
 import os
 import re
 import sys
@@ -175,10 +179,10 @@ safe_print = SafeLogger()
 
 
 def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
-					logdir=None, filename=None):
+					logdir=None, filename=None, confighome=None):
 	""" Return logger object.
 	
-	A TimedRotatingFileHandler (if when == "never") or FileHandler will be used.
+	A TimedRotatingFileHandler or FileHandler (if when == "never") will be used.
 	
 	"""
 	global _logdir
@@ -187,6 +191,57 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 	logger = logging.getLogger(name)
 	if not filename:
 		filename = name
+	mode = "a"
+	if confighome:
+		# Use different logfile name (append number) for each additional
+		# instance
+		is_main_process = mp.current_process().name == "MainProcess"
+		if os.path.basename(confighome).lower() == "dispcalgui":
+			lockbasename = filename.replace(appname, "dispcalGUI")
+		else:
+			lockbasename = filename
+		lockfilepath = os.path.join(confighome, lockbasename + ".lock")
+		if os.path.isfile(lockfilepath):
+			try:
+				with open(lockfilepath, "r") as lockfile:
+					instances = len(filter(lambda s: s.strip(),
+										   lockfile.readlines()))
+			except:
+				pass
+			else:
+				if not is_main_process:
+					# Running as child from multiprocessing
+					instances -= 1
+				if instances:
+					filename += ".%i" % instances
+		if is_main_process:
+			for lockfilepath in glob.glob(os.path.join(confighome,
+													   lockbasename +
+													   ".mp-worker-*.lock")):
+				try:
+					os.remove(lockfilepath)
+				except:
+					pass
+		else:
+			# Running as child from multiprocessing
+			lockbasename += ".mp-worker-"
+			process_num = 1
+			while os.path.isfile(os.path.join(confighome,
+											  lockbasename + "%i.lock" % 
+											  process_num)):
+				process_num += 1
+			lockfilepath = os.path.join(confighome,
+										lockbasename + "%i.lock" % process_num)
+			try:
+				with open(lockfilepath, "w") as lockfile:
+					pass
+			except:
+				pass
+			else:
+				atexit.register(os.remove, lockfilepath)
+			when = "never"
+			filename += ".mp-worker-%i" % process_num
+			mode = "w"
 	logfile = os.path.join(logdir, filename + ".log")
 	for handler in logger.handlers:
 		if (isinstance(handler, logging.FileHandler) and
@@ -287,7 +342,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 																		when=when,
 																		backupCount=backupCount)
 			else:
-				filehandler = logging.FileHandler(logfile)
+				filehandler = logging.FileHandler(logfile, mode)
 			fileformatter = logging.Formatter("%(asctime)s %(message)s")
 			filehandler.setFormatter(fileformatter)
 			logger.addHandler(filehandler)
@@ -297,7 +352,8 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 	return logger
 
 
-def setup_logging(logdir, name=appname, ext=".py", backupCount=5):
+def setup_logging(logdir, name=appname, ext=".py", backupCount=5,
+				  confighome=None):
 	"""
 	Setup the logging facility.
 	"""
@@ -307,7 +363,8 @@ def setup_logging(logdir, name=appname, ext=".py", backupCount=5):
 	if (name.startswith(appname) or name.startswith("dispcalGUI") or
 		ext in (".app", ".exe", ".pyw")):
 		logger = get_file_logger(None, loglevel, "midnight",
-								 backupCount, filename=name)
+								 backupCount, filename=name,
+								 confighome=confighome)
 		if name == appname or name == "dispcalGUI":
 			streamhandler = logging.StreamHandler(logbuffer)
 			streamformatter = logging.Formatter("%(asctime)s %(message)s")

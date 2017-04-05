@@ -2,6 +2,7 @@
 
 from copy import copy
 from hashlib import md5
+import atexit
 import binascii
 import ctypes
 import datetime
@@ -2376,6 +2377,7 @@ def _mp_apply_black(process_index, data_queue, pcs, blocks, bp, bp_out, wp,
 		data_queue.put(exception)
 	finally:
 		process_finished_event.set()
+		atexit._run_exitfuncs()
 
 
 def hexrepr(bytestring, mapping=None):

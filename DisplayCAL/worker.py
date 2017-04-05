@@ -3,6 +3,7 @@
 # stdlib
 from __future__ import with_statement
 from binascii import hexlify
+import atexit
 import ctypes
 import getpass
 import glob
@@ -266,6 +267,7 @@ def _mp_generate_B2A_clut(process_index, idata_queue, odata1_queue, odata2_queue
 		idata_queue.put(exception)
 	finally:
 		process_finished_event.set()
+		atexit._run_exitfuncs()
 
 
 def add_keywords_to_cgats(cgats, keywords):

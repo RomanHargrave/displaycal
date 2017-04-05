@@ -575,7 +575,7 @@ def runtimeconfig(pyfile):
 	
 	"""
 	from log import setup_logging
-	setup_logging(logdir, pyname, pyext)
+	setup_logging(logdir, pyname, pyext, confighome=confighome)
 	if debug or verbose >= 1:
 		from log import safe_print
 	if debug:
