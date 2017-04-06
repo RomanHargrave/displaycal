@@ -547,7 +547,9 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.InsertColumn(4, lang.getstr("instrument"))
 	dlg_list_ctrl.InsertColumn(5, lang.getstr("reference"))
 	dlg_list_ctrl.InsertColumn(6, lang.getstr("observer"))
-	dlg_list_ctrl.InsertColumn(7, lang.getstr("created"))
+	dlg_list_ctrl.InsertColumn(7, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
+	dlg_list_ctrl.InsertColumn(8, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
+	dlg_list_ctrl.InsertColumn(9, lang.getstr("created"))
 	dlg_list_ctrl.SetColumnWidth(0, 50)
 	dlg_list_ctrl.SetColumnWidth(1, 250)
 	dlg_list_ctrl.SetColumnWidth(2, 150)
@@ -555,7 +557,9 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.SetColumnWidth(4, 75)
 	dlg_list_ctrl.SetColumnWidth(5, 75)
 	dlg_list_ctrl.SetColumnWidth(6, 75)
-	dlg_list_ctrl.SetColumnWidth(7, 150)
+	dlg_list_ctrl.SetColumnWidth(7, 100)
+	dlg_list_ctrl.SetColumnWidth(8, 100)
+	dlg_list_ctrl.SetColumnWidth(9, 150)
 	types = {"CCSS": lang.getstr("spectral").replace(":", ""),
 			 "CCMX": lang.getstr("matrix").replace(":", "")}
 	for i in cgats:
@@ -600,7 +604,11 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 									parent.observers_ab.get(cgats[i].queryv1("REFERENCE_OBSERVER"),
 															lang.getstr("unknown" if ccxx_type == "CCMX"
 																		else "not_applicable")))
-		dlg_list_ctrl.SetStringItem(index, 7, created or "")
+		dlg_list_ctrl.SetStringItem(index, 7,
+									cgats[i].queryv1("FIT_AVG_DE00") or "")
+		dlg_list_ctrl.SetStringItem(index, 8,
+									cgats[i].queryv1("FIT_MAX_DE00") or "")
+		dlg_list_ctrl.SetStringItem(index, 9, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
@@ -10236,6 +10244,28 @@ class MainFrame(ReportFrame, BaseFrame):
 					if result != wx.ID_OK:
 						self.worker.wrapup(False)
 						return
+					# Add dE fit error to CGATS as meta
+					for label, fit_error in (("MAX_DE94", max(deltaE_94)),
+											 ("AVG_DE94", sum(deltaE_94) /
+														  len(deltaE_94)),
+											 ("MAX_DE00", max(deltaE_00)),
+											 ("AVG_DE00", sum(deltaE_00) /
+														  len(deltaE_00))):
+						cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
+									   '\\1FIT_%s "%.6f"\n' %
+									   (label, fit_error), cgats)
+					# Add original measurement data to CGATS as meta
+					metadata = []
+					for label, meas in (("REFERENCE", reference_ti3),
+										("INSTRUMENT", colorimeter_ti3)):
+						metadata.append(label + '_DATA_FORMAT "%s"' %
+										meas.queryv1("DATA_FORMAT"))
+						for i, sample in meas.queryv1("DATA").iteritems():
+							metadata.append(label + '_DATA_%i "%s"' %
+											(i + 1, sample))
+					cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
+								   '\\1%s\n' %
+								   "\n".join(metadata), cgats)
 				if colorimeter_correction_check_overwrite(self, cgats, True):
 					self.upload_colorimeter_correction(cgats)
 			else:
