@@ -10092,180 +10092,180 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(result, self)
 				self.worker.wrapup(False)
 				return
-			if True:
-				if colorimeter_ti3:
-					# CCMX
-					# Show reference vs corrected colorimeter values along with
-					# delta E
-					matrix = colormath.Matrix3x3()
-					ccmx = CGATS.CGATS(cgats)
-					for i, sample in ccmx.queryv1("DATA").iteritems():
-						matrix.append([])
+			if colorimeter_ti3:
+				# CCMX
+				# Show reference vs corrected colorimeter values along with
+				# delta E
+				matrix = colormath.Matrix3x3()
+				ccmx = CGATS.CGATS(cgats)
+				for i, sample in ccmx.queryv1("DATA").iteritems():
+					matrix.append([])
+					for component in "XYZ":
+						matrix[i].append(sample["XYZ_%s" % component])
+				dlg = ConfirmDialog(parent,
+									msg=lang.getstr("colorimeter_correction.create.success"),
+									ok=lang.getstr("save"),
+									cancel=lang.getstr("testchart.discard"),
+									bitmap=geticon(32, "dialog-information"))
+				sizer = wx.BoxSizer(wx.HORIZONTAL)
+				dlg.sizer3.Add(sizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+				labels = ("%s (%s)" % (get_canonical_instrument_name(
+										reference_ti3.queryv1("TARGET_INSTRUMENT") or
+										lang.getstr("instrument")),
+									   lang.getstr("reference")),
+						  "%s (%s)" % (get_canonical_instrument_name(
+										ccmx.queryv1("INSTRUMENT") or
+										lang.getstr("instrument")),
+									   lang.getstr("corrected")))
+				scale = getcfg("app.dpi") / config.get_default_dpi()
+				if scale < 1:
+					scale = 1
+				for i, label in enumerate(labels):
+					txt = wx.StaticText(dlg, -1, label, size=(80 * scale * (3 + i),
+															  -1),
+										style=wx.ALIGN_CENTER_HORIZONTAL)
+					font = txt.Font
+					font.SetWeight(wx.BOLD)
+					txt.Font = font
+					sizer.Add(txt, flag=wx.LEFT, border=40)
+				if "gtk3" in wx.PlatformInfo:
+					style = wx.BORDER_SIMPLE
+				else:
+					style = wx.BORDER_THEME
+				grid = CustomGrid(dlg, -1, size=(640 * scale + wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+												 -1), style=style)
+				grid.Size = grid.Size[0], grid.GetDefaultRowSize() * 4
+				dlg.sizer3.Add(grid, flag=wx.TOP | wx.ALIGN_LEFT, border=4)
+				grid.DisableDragColSize()
+				grid.DisableDragRowSize()
+				grid.SetCellHighlightPenWidth(0)
+				grid.SetCellHighlightROPenWidth(0)
+				grid.SetColLabelSize(grid.GetDefaultRowSize())
+				grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+				grid.SetMargins(0, 0)
+				grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
+				grid.SetRowLabelSize(40)
+				grid.SetScrollRate(0, 5)
+				grid.draw_horizontal_grid_lines = False
+				grid.draw_vertical_grid_lines = False
+				grid.EnableEditing(False)
+				grid.EnableGridLines(False)
+				grid.CreateGrid(0, 9)
+				for i, label in enumerate(["x", "y", "Y", "", "", "x", "y",
+										   "Y", u"ΔE*00"]):
+					if i in (3, 4):
+						# Rectangular (width = height)
+						size = grid.GetDefaultRowSize()
+					else:
+						size = 80 * scale
+					grid.SetColSize(i, size)
+					grid.SetColLabelValue(i, label)
+				grid.BeginBatch()
+				ref_data = reference_ti3.queryv1("DATA")
+				tgt_data = colorimeter_ti3.queryv1("DATA")
+				deltaE_94 = []
+				deltaE_00 = []
+				safe_print("")
+				safe_print("      Reference xyY         |"
+						   "      Corrected xyY         |"
+						   "   DE94   |   DE00   ")
+				safe_print("-" * 80)
+				for i, ref in ref_data.iteritems():
+					tgt = tgt_data[i]
+					grid.AppendRows(1)
+					row = grid.GetNumberRows() - 1
+					grid.SetRowLabelValue(row, "%d" % ref.SAMPLE_ID)
+					XYZ = []
+					XYZabs = []
+					xyYabs = []
+					for j, sample in enumerate((ref, tgt)):
+						# Get samples
+						XYZ.append([])
 						for component in "XYZ":
-							matrix[i].append(sample["XYZ_%s" % component])
-					dlg = ConfirmDialog(parent,
-										msg=lang.getstr("colorimeter_correction.create.success"),
-										ok=lang.getstr("save"),
-										cancel=lang.getstr("testchart.discard"),
-										bitmap=geticon(32, "dialog-information"))
-					sizer = wx.BoxSizer(wx.HORIZONTAL)
-					dlg.sizer3.Add(sizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
-					labels = ("%s (%s)" % (get_canonical_instrument_name(
-											reference_ti3.queryv1("TARGET_INSTRUMENT") or
-											lang.getstr("instrument")),
-										   lang.getstr("reference")),
-							  "%s (%s)" % (get_canonical_instrument_name(
-											ccmx.queryv1("INSTRUMENT") or
-											lang.getstr("instrument")),
-										   lang.getstr("corrected")))
-					scale = getcfg("app.dpi") / config.get_default_dpi()
-					if scale < 1:
-						scale = 1
-					for i, label in enumerate(labels):
-						txt = wx.StaticText(dlg, -1, label, size=(80 * scale * (3 + i),
-																  -1),
-											style=wx.ALIGN_CENTER_HORIZONTAL)
-						font = txt.Font
-						font.SetWeight(wx.BOLD)
-						txt.Font = font
-						sizer.Add(txt, flag=wx.LEFT, border=40)
-					if "gtk3" in wx.PlatformInfo:
-						style = wx.BORDER_SIMPLE
-					else:
-						style = wx.BORDER_THEME
-					grid = CustomGrid(dlg, -1, size=(640 * scale + wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
-												     -1), style=style)
-					grid.Size = grid.Size[0], grid.GetDefaultRowSize() * 4
-					dlg.sizer3.Add(grid, flag=wx.TOP | wx.ALIGN_LEFT, border=4)
-					grid.DisableDragColSize()
-					grid.DisableDragRowSize()
-					grid.SetCellHighlightPenWidth(0)
-					grid.SetCellHighlightROPenWidth(0)
-					grid.SetColLabelSize(grid.GetDefaultRowSize())
-					grid.SetDefaultCellAlignment(wx.ALIGN_CENTER, wx.ALIGN_CENTER)
-					grid.SetMargins(0, 0)
-					grid.SetRowLabelAlignment(wx.ALIGN_RIGHT, wx.ALIGN_CENTER)
-					grid.SetRowLabelSize(40)
-					grid.SetScrollRate(0, 5)
-					grid.draw_horizontal_grid_lines = False
-					grid.draw_vertical_grid_lines = False
-					grid.EnableEditing(False)
-					grid.EnableGridLines(False)
-					grid.CreateGrid(0, 9)
-					for i, label in enumerate(["x", "y", "Y", "", "", "x", "y",
-											   "Y", u"ΔE*00"]):
-						if i in (3, 4):
-							# Rectangular (width = height)
-							size = grid.GetDefaultRowSize()
-						else:
-							size = 80 * scale
-						grid.SetColSize(i, size)
-						grid.SetColLabelValue(i, label)
-					grid.BeginBatch()
-					ref_data = reference_ti3.queryv1("DATA")
-					tgt_data = colorimeter_ti3.queryv1("DATA")
-					deltaE_94 = []
-					deltaE_00 = []
-					safe_print("")
-					safe_print("      Reference xyY         |"
-							   "      Corrected xyY         |"
-							   "   DE94   |   DE00   ")
-					safe_print("-" * 80)
-					for i, ref in ref_data.iteritems():
-						tgt = tgt_data[i]
-						grid.AppendRows(1)
-						row = grid.GetNumberRows() - 1
-						grid.SetRowLabelValue(row, "%d" % ref.SAMPLE_ID)
-						XYZ = []
-						XYZabs = []
-						xyYabs = []
-						for j, sample in enumerate((ref, tgt)):
-							# Get samples
-							XYZ.append([])
-							for component in "XYZ":
-								XYZ[j].append(sample["XYZ_%s" % component])
-							# Scale to absolute brightness
-							XYZabs.append(list(XYZ[j]))
-							for k, value in enumerate(XYZabs[j]):
-								XYZabs[j][k] = value * white_abs[j][1] / 100.0
-							if j == 1:
-								# Apply matrix to colorimeter measurements
-								XYZabs[j] = matrix * XYZabs[j]
-							xyYabs.append(colormath.XYZ2xyY(*XYZabs[j]))
-							# Set cell values
-							for k, value in enumerate(xyYabs[j]):
-								grid.SetCellValue(row, j * 5 + k, "%.4f" % value)
-							# Show sRGB approximation of measured patch
-							X, Y, Z = [v / max(white_abs[0][1],
-											   (matrix * white_abs[1])[1])
-									   for v in XYZabs[j]]
-							# Adapt from reference white to D65
-							X, Y, Z = colormath.adapt(X, Y, Z, white_ref, "D65")
-							# Convert XYZ to sRGB
-							RGB = [int(round(v)) for v in
-								   colormath.XYZ2RGB(X, Y, Z, scale=255)]
-							grid.SetCellBackgroundColour(row, 3 + j, wx.Colour(*RGB))
-						if debug or verbose > 1:
-							safe_print("ref %.6f %.6f %.6f, " % tuple(XYZabs[0]),
-									   "col %.6f %.6f %.6f" % tuple(XYZabs[1]))
-						Lab_ref = colormath.XYZ2Lab(*XYZabs[0] + [white_abs[0]])
-						Lab_tgt = colormath.XYZ2Lab(*XYZabs[1] + [white_abs[0]])
-						if debug or verbose > 1:
-							safe_print("ref Lab %.6f %.6f %.6f, " % Lab_ref,
-									   "col Lab %.6f %.6f %.6f" % Lab_tgt)
-						# For comparison to Argyll DE94 values
-						deltaE = colormath.delta(*Lab_ref +
-												 Lab_tgt +
-												 ("94", ))["E"]
-						deltaE_94.append(deltaE)
-						deltaE = colormath.delta(*Lab_ref +
-												 Lab_tgt +
-												 ("00", ))["E"]
-						deltaE_00.append(deltaE)
-						safe_print(" %.6f %.6f %8.4f |"
-								   " %.6f %.6f %8.4f | %.6f | %.6f " %
-								   (tuple(xyYabs[0]) + tuple(xyYabs[1]) +
-								    (deltaE_94[-1], deltaE_00[-1])))
-						grid.SetCellValue(row, 8, "%.4f" % deltaE)
-					safe_print("")
-					safe_print(appname + ": Fit error is max %.6f, avg %.6f DE94" %
-							   (max(deltaE_94), sum(deltaE_94) / len(deltaE_94)))
-					safe_print(appname + ": Fit error is max %.6f, avg %.6f DE00" %
-							   (max(deltaE_00), sum(deltaE_00) / len(deltaE_00)))
-					grid.DefaultCellBackgroundColour = grid.LabelBackgroundColour
-					grid.EndBatch()
-					dlg.sizer0.SetSizeHints(dlg)
-					dlg.sizer0.Layout()
-					if event:
-						result = dlg.ShowModal()
-					else:
-						result = wx.ID_OK
-					dlg.Destroy()
-					if result != wx.ID_OK:
-						self.worker.wrapup(False)
-						return
-					# Add dE fit error to CGATS as meta
-					for label, fit_error in (("MAX_DE94", max(deltaE_94)),
-											 ("AVG_DE94", sum(deltaE_94) /
-														  len(deltaE_94)),
-											 ("MAX_DE00", max(deltaE_00)),
-											 ("AVG_DE00", sum(deltaE_00) /
-														  len(deltaE_00))):
-						cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
-									   '\\1FIT_%s "%.6f"\n' %
-									   (label, fit_error), cgats)
-					# Add original measurement data to CGATS as meta
-					metadata = []
-					for label, meas in (("REFERENCE", reference_ti3),
-										("INSTRUMENT", colorimeter_ti3)):
-						metadata.append(label + '_DATA_FORMAT "%s"' %
-										meas.queryv1("DATA_FORMAT"))
-						for i, sample in meas.queryv1("DATA").iteritems():
-							metadata.append(label + '_DATA_%i "%s"' %
-											(i + 1, sample))
+							XYZ[j].append(sample["XYZ_%s" % component])
+						# Scale to absolute brightness
+						XYZabs.append(list(XYZ[j]))
+						for k, value in enumerate(XYZabs[j]):
+							XYZabs[j][k] = value * white_abs[j][1] / 100.0
+						if j == 1:
+							# Apply matrix to colorimeter measurements
+							XYZabs[j] = matrix * XYZabs[j]
+						xyYabs.append(colormath.XYZ2xyY(*XYZabs[j]))
+						# Set cell values
+						for k, value in enumerate(xyYabs[j]):
+							grid.SetCellValue(row, j * 5 + k, "%.4f" % value)
+						# Show sRGB approximation of measured patch
+						X, Y, Z = [v / max(white_abs[0][1],
+										   (matrix * white_abs[1])[1])
+								   for v in XYZabs[j]]
+						# Adapt from reference white to D65
+						X, Y, Z = colormath.adapt(X, Y, Z, white_ref, "D65")
+						# Convert XYZ to sRGB
+						RGB = [int(round(v)) for v in
+							   colormath.XYZ2RGB(X, Y, Z, scale=255)]
+						grid.SetCellBackgroundColour(row, 3 + j, wx.Colour(*RGB))
+					if debug or verbose > 1:
+						safe_print("ref %.6f %.6f %.6f, " % tuple(XYZabs[0]),
+								   "col %.6f %.6f %.6f" % tuple(XYZabs[1]))
+					Lab_ref = colormath.XYZ2Lab(*XYZabs[0] + [white_abs[0]])
+					Lab_tgt = colormath.XYZ2Lab(*XYZabs[1] + [white_abs[0]])
+					if debug or verbose > 1:
+						safe_print("ref Lab %.6f %.6f %.6f, " % Lab_ref,
+								   "col Lab %.6f %.6f %.6f" % Lab_tgt)
+					# For comparison to Argyll DE94 values
+					deltaE = colormath.delta(*Lab_ref +
+											 Lab_tgt +
+											 ("94", ))["E"]
+					deltaE_94.append(deltaE)
+					deltaE = colormath.delta(*Lab_ref +
+											 Lab_tgt +
+											 ("00", ))["E"]
+					deltaE_00.append(deltaE)
+					safe_print(" %.6f %.6f %8.4f |"
+							   " %.6f %.6f %8.4f | %.6f | %.6f " %
+							   (tuple(xyYabs[0]) + tuple(xyYabs[1]) +
+								(deltaE_94[-1], deltaE_00[-1])))
+					grid.SetCellValue(row, 8, "%.4f" % deltaE)
+				safe_print("")
+				safe_print(appname + ": Fit error is max %.6f, avg %.6f DE94" %
+						   (max(deltaE_94), sum(deltaE_94) / len(deltaE_94)))
+				safe_print(appname + ": Fit error is max %.6f, avg %.6f DE00" %
+						   (max(deltaE_00), sum(deltaE_00) / len(deltaE_00)))
+				grid.DefaultCellBackgroundColour = grid.LabelBackgroundColour
+				grid.EndBatch()
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+				if event:
+					result = dlg.ShowModal()
+				else:
+					result = wx.ID_OK
+				dlg.Destroy()
+				if result != wx.ID_OK:
+					self.worker.wrapup(False)
+					return
+				# Add dE fit error to CGATS as meta
+				for label, fit_error in (("MAX_DE94", max(deltaE_94)),
+										 ("AVG_DE94", sum(deltaE_94) /
+													  len(deltaE_94)),
+										 ("MAX_DE00", max(deltaE_00)),
+										 ("AVG_DE00", sum(deltaE_00) /
+													  len(deltaE_00))):
 					cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
-								   '\\1%s\n' %
-								   "\n".join(metadata), cgats)
+								   '\\1FIT_%s "%.6f"\n' %
+								   (label, fit_error), cgats)
+				# Add original measurement data to CGATS as meta
+				metadata = []
+				for label, meas in (("REFERENCE", reference_ti3),
+									("INSTRUMENT", colorimeter_ti3)):
+					metadata.append(label + '_DATA_FORMAT "%s"' %
+									meas.queryv1("DATA_FORMAT"))
+					for i, sample in meas.queryv1("DATA").iteritems():
+						metadata.append(label + '_DATA_%i "%s"' %
+										(i + 1, sample))
+				cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
+							   '\\1%s\n' %
+							   "\n".join(metadata), cgats)
+			if event:
 				if colorimeter_correction_check_overwrite(self, cgats, True):
 					self.upload_colorimeter_correction(cgats)
 			else:
