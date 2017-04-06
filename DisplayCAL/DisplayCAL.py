@@ -9882,7 +9882,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												   size=(400, -1))
 			boxsizer.Add(dlg.description_txt_ctrl, 1, 
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			if not display:
+			if not display or config.is_virtual_display(display):
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display")),
 											 wx.VERTICAL)
@@ -9890,12 +9890,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				if sys.platform not in ("darwin", "win32"):
 					boxsizer.Add((1, 8))
 				dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
-												   self.worker.get_display_name(True,
-																				True), 
+												   display or
+												   self.worker.get_display_name(False,
+																				True,
+																				False), 
 												   size=(400, -1))
 				boxsizer.Add(dlg.display_txt_ctrl, 1, 
 							 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			if not manufacturer:
+			if not manufacturer or config.is_virtual_display(display):
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display.manufacturer")),
 											 wx.VERTICAL)
@@ -9903,6 +9905,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if sys.platform not in ("darwin", "win32"):
 					boxsizer.Add((1, 8))
 				dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
+														manufacturer or
 														self.worker.get_display_edid().get("manufacturer", ""), 
 														size=(400, -1))
 				boxsizer.Add(dlg.manufacturer_txt_ctrl, 1, 
@@ -9935,12 +9938,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = dlg.ShowModal()
 			description = safe_str(dlg.description_txt_ctrl.GetValue().strip(),
 								   "UTF-8")
-			if not display:
+			if not display or config.is_virtual_display(display):
 				display = dlg.display_txt_ctrl.GetValue()
 			if (dlg.display_tech_ctrl.IsEnabled() and
 				dlg.display_tech_ctrl.GetStringSelection()):
 				tech = loctech[dlg.display_tech_ctrl.GetStringSelection()]
-			if not manufacturer:
+			if not manufacturer or config.is_virtual_display(display):
 				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
 			dlg.Destroy()
 		else:

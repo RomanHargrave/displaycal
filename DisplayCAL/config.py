@@ -188,32 +188,33 @@ untethered_displays = non_argyll_displays + ("Web$", "Chromecast ", "Prisma ",
 virtual_displays = untethered_displays + ("madVR$", )
 
 
-def is_special_display(display_no=None, tests=virtual_displays):
-	display_name = get_display_name(display_no)
+def is_special_display(display=None, tests=virtual_displays):
+	if not isinstance(display, basestring):
+		display = get_display_name(display)
 	for test in tests:
-		if re.match(test, display_name):
+		if re.match(test, display):
 			return True
 	return False
 
 
-def is_uncalibratable_display(display_no=None):
-	return is_special_display(display_no, uncalibratable_displays)
+def is_uncalibratable_display(display=None):
+	return is_special_display(display, uncalibratable_displays)
 
 
-def is_patterngenerator(display_no=None):
-	return is_special_display(display_no, patterngenerators)
+def is_patterngenerator(display=None):
+	return is_special_display(display, patterngenerators)
 
 
-def is_non_argyll_display(display_no=None):
-	return is_special_display(display_no, non_argyll_displays)
+def is_non_argyll_display(display=None):
+	return is_special_display(display, non_argyll_displays)
 
 
-def is_untethered_display(display_no=None):
-	return is_special_display(display_no, untethered_displays)
+def is_untethered_display(display=None):
+	return is_special_display(display, untethered_displays)
 
 
-def is_virtual_display(display_no=None):
-	return is_special_display(display_no, virtual_displays)
+def is_virtual_display(display=None):
+	return is_special_display(display, virtual_displays)
 
 
 def check_3dlut_format(devicename):
