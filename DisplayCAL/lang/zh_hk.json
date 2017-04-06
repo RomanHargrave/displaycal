@@ -229,7 +229,7 @@
 	"can_be_used_independently": "可獨立使用",
 	"cancel": "取消",
 	"cathode_ray_tube_display": "陰極射線管顯示器",
-		"*ccmx.use_four_color_matrix_method": "Minimize xy chromaticity difference instead of delta E",
+		"*ccmx.use_four_color_matrix_method": "Minimize xy chromaticity difference",
 	"ccxx.ti1": "用於色度計修正的測色板 ",
 	"centered": "置中",
 	"channel_1_c_xy": "頻道1(C) xy",

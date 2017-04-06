@@ -229,7 +229,7 @@
 	"can_be_used_independently": "Ne peut pas être utilisé indépendamment",
 	"cancel": "Annuler",
 	"cathode_ray_tube_display": "Écran à tube à rayons cathodiques",
-		"*ccmx.use_four_color_matrix_method": "Minimize xy chromaticity difference instead of delta E",
+		"*ccmx.use_four_color_matrix_method": "Minimize xy chromaticity difference",
 	"ccxx.ti1": "mire de test pour la correction du colorimètre",
 	"centered": "Centré",
 	"channel_1_c_xy": "Canal 1 (C) xy",

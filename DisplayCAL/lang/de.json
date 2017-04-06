@@ -229,7 +229,7 @@
 	"can_be_used_independently": "Kann unabhängig verwendet werden",
 	"cancel": "Abbrechen",
 	"cathode_ray_tube_display": "Kathodenstrahlröhrenmonitor",
-	"ccmx.use_four_color_matrix_method": "Minimiere xy-Farbortunterschiede anstatt von Delta E",
+	"ccmx.use_four_color_matrix_method": "Minimiere xy-Farbortunterschiede",
 	"ccxx.ti1": "Testform für Colorimeter-Korrektur",
 	"centered": "Zentriert",
 	"channel_1_c_xy": "Kanal 1 (C) xy",
