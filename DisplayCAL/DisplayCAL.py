@@ -10337,6 +10337,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
 								   '\\1FIT_%s "%.6f"\n' %
 								   (label, fit_error), cgats)
+			if debug or test:
 				# Add original measurement data to CGATS as meta
 				metadata = []
 				ccmx_data_format = []
@@ -10345,6 +10346,12 @@ class MainFrame(ReportFrame, BaseFrame):
 						ccmx_data_format.append(colorspace + "_" + component)
 				for label, meas in (("REFERENCE", reference_ti3),
 									("INSTRUMENT", colorimeter_ti3)):
+					XYZ_CDM2 = meas.queryv1("LUMINANCE_XYZ_CDM2")
+					if XYZ_CDM2:
+						metadata.append(label + '_LUMINANCE_XYZ_CDM2 "%s"' %
+										XYZ_CDM2)
+					if not colorimeter_ti3:
+						break
 					metadata.append(label + '_DATA_FORMAT "%s"' %
 									" ".join(ccmx_data_format))
 					data_format = meas.queryv1("DATA_FORMAT")
