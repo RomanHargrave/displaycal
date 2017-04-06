@@ -9994,7 +9994,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					show_result_dialog(Error(lang.getstr("argyll.util.not_found",
 														 "spec2cie")))
 					self.worker.wrapup(False)
-					return True
+					return
 				os.rename(os.path.join(cwd, "reference.ti3"),
 						  os.path.join(cwd, "reference_orig.ti3"))
 				result = self.worker.exec_cmd(spec2cie,
@@ -10054,52 +10054,52 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not isinstance(result, Exception) and result:
 			result = self.worker.create_ccxx(args, cwd)
 		source = os.path.join(self.worker.tempdir, name + ext)
-		if colorimeter_ti3:
-			white_abs = []
-			for j, meas in enumerate((reference_ti3,
-									  colorimeter_ti3)):
-				# Get absolute whitepoint
-				white = (meas.queryv1("LUMINANCE_XYZ_CDM2") or
-						 meas.queryi1({"RGB_R": 100,
-									   "RGB_G": 100,
-									   "RGB_B": 100}))
-				if isinstance(white, basestring):
-					white = [float(v) for v in white.split()]
-				elif isinstance(white, CGATS.CGATS):
-					white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
-				else:
-					# This shouldn't happen
-					white = colormath.get_whitepoint("D65", scale=100)
-					safe_print(appname + ": Warning - could not find white - "
-							   "dE calculation will be inaccurate")
-				white_abs.append(white)
-			if debug or verbose > 1:
-				safe_print("ref white %.6f %.6f %.6f" % tuple(white_abs[0]))
-			white_ref = [v / white_abs[0][1] for v in white_abs[0]]
-			if getcfg("ccmx.use_four_color_matrix_method"):
-				safe_print(appname + ": Creating matrix using four-color method")
-				XYZ = []
-				for j, meas in enumerate((reference_ti3, colorimeter_ti3)):
-					for R, G, B in [(100, 0, 0), (0, 100, 0), (0, 0, 100),
-									(100, 100, 100)]:
-						item = meas.queryi1("DATA").queryi1({"RGB_R": R,
-															 "RGB_G": G,
-															 "RGB_B": B})
-						X, Y, Z = item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"]
-						X, Y, Z = (v * white_abs[j][1] / 100.0
-								   for v in (X, Y, Z))
-						XYZ.extend((X, Y, Z))
-				R = colormath.four_color_matrix(*XYZ)
-				safe_print(appname + ": Correction matrix is:")
-				ccmx = CGATS.CGATS(source)
-				for i in xrange(3):
-					safe_print("  %.6f %.6f %.6f" % tuple(R[i]))
-					for j, component in enumerate("XYZ"):
-						ccmx[0].DATA[i]["XYZ_" + component] = R[i][j]
-				ccmx.write()
 		if isinstance(result, Exception):
 			show_result_dialog(result, self)
 		elif result and os.path.isfile(source):
+			if colorimeter_ti3:
+				white_abs = []
+				for j, meas in enumerate((reference_ti3,
+										  colorimeter_ti3)):
+					# Get absolute whitepoint
+					white = (meas.queryv1("LUMINANCE_XYZ_CDM2") or
+							 meas.queryi1({"RGB_R": 100,
+										   "RGB_G": 100,
+										   "RGB_B": 100}))
+					if isinstance(white, basestring):
+						white = [float(v) for v in white.split()]
+					elif isinstance(white, CGATS.CGATS):
+						white = white["XYZ_X"], white["XYZ_Y"], white["XYZ_Z"]
+					else:
+						# This shouldn't happen
+						white = colormath.get_whitepoint("D65", scale=100)
+						safe_print(appname + ": Warning - could not find white - "
+								   "dE calculation will be inaccurate")
+					white_abs.append(white)
+				if debug or verbose > 1:
+					safe_print("ref white %.6f %.6f %.6f" % tuple(white_abs[0]))
+				white_ref = [v / white_abs[0][1] for v in white_abs[0]]
+				if getcfg("ccmx.use_four_color_matrix_method"):
+					safe_print(appname + ": Creating matrix using four-color method")
+					XYZ = []
+					for j, meas in enumerate((reference_ti3, colorimeter_ti3)):
+						for R, G, B in [(100, 0, 0), (0, 100, 0), (0, 0, 100),
+										(100, 100, 100)]:
+							item = meas.queryi1("DATA").queryi1({"RGB_R": R,
+																 "RGB_G": G,
+																 "RGB_B": B})
+							X, Y, Z = item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"]
+							X, Y, Z = (v * white_abs[j][1] / 100.0
+									   for v in (X, Y, Z))
+							XYZ.extend((X, Y, Z))
+					R = colormath.four_color_matrix(*XYZ)
+					safe_print(appname + ": Correction matrix is:")
+					ccmx = CGATS.CGATS(source)
+					for i in xrange(3):
+						safe_print("  %.6f %.6f %.6f" % tuple(R[i]))
+						for j, component in enumerate("XYZ"):
+							ccmx[0].DATA[i]["XYZ_" + component] = R[i][j]
+					ccmx.write()
 			# Important: Do not use parsed CGATS, order of keywords may be 
 			# different than raw data so MD5 will be different
 			try:
