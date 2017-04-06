@@ -9906,9 +9906,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				if sys.platform not in ("darwin", "win32"):
 					boxsizer.Add((1, 8))
 				dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
-														manufacturer or
-														self.worker.get_display_edid().get("manufacturer", ""), 
+														manufacturer or "", 
 														size=(400, -1))
+				if (not manufacturer and
+					display == self.worker.get_display_name(False, True, False)):
+					dlg.manufacturer_txt_ctrl.Value = self.worker.get_display_edid().get("manufacturer", "")
 				boxsizer.Add(dlg.manufacturer_txt_ctrl, 1, 
 							 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			# Display technology
