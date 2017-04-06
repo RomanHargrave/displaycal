@@ -10255,13 +10255,29 @@ class MainFrame(ReportFrame, BaseFrame):
 								   (label, fit_error), cgats)
 				# Add original measurement data to CGATS as meta
 				metadata = []
+				ccmx_data_format = []
+				for colorspace in ("RGB", "XYZ"):
+					for component in colorspace:
+						ccmx_data_format.append(colorspace + "_" + component)
 				for label, meas in (("REFERENCE", reference_ti3),
 									("INSTRUMENT", colorimeter_ti3)):
 					metadata.append(label + '_DATA_FORMAT "%s"' %
-									meas.queryv1("DATA_FORMAT"))
-					for i, sample in meas.queryv1("DATA").iteritems():
+									" ".join(ccmx_data_format))
+					data_format = meas.queryv1("DATA_FORMAT")
+					data = meas.queryv1("DATA")
+					for i, sample in data.iteritems():
+						RGB_XYZ = []
+						for column in ccmx_data_format:
+							RGB_XYZ.append(str(sample[column]))
 						metadata.append(label + '_DATA_%i "%s"' %
-										(i + 1, sample))
+										(i + 1, " ".join(RGB_XYZ)))
+						# Line length limit for CGATS keywords 1024 chars, add
+						# spectral data as individual keywords
+						for column in data_format.itervalues():
+							if (column not in ccmx_data_format and
+								column != "SAMPLE_ID"):
+								metadata.append(label + '_DATA_%i_%s "%s"' %
+										(i + 1, column, sample[column]))
 				cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
 							   '\\1%s\n' %
 							   "\n".join(metadata), cgats)
