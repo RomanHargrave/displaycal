@@ -7963,11 +7963,20 @@ class MainFrame(ReportFrame, BaseFrame):
 														 path)), self)
 					return
 				setcfg("measurement.save_path", path)
-				setcfg("measurement.name.expanded",
-					   make_filename_safe("%s & %s %s" %
-										  (self.worker.get_instrument_name(),
-										   self.worker.get_display_name(),
-										   strftime("%Y-%m-%d %H-%M-%S"))))
+				if getcfg("observer") == "1931_2":
+					basename = ("%s & %s %s" %
+								(self.worker.get_instrument_name(),
+								 self.worker.get_display_name(True, True),
+								 strftime("%Y-%m-%d %H-%M-%S")))
+				else:
+					basename = ("%s (%s %s) & %s %s" %
+								(self.worker.get_instrument_name(),
+								 lang.getstr("observer." +
+											 getcfg("observer")),
+								 lang.getstr("observer"),
+								 self.worker.get_display_name(True, True),
+								 strftime("%Y-%m-%d %H-%M-%S")))
+				setcfg("measurement.name.expanded", make_filename_safe(basename))
 			else:
 				return
 
@@ -9846,10 +9855,21 @@ class MainFrame(ReportFrame, BaseFrame):
 			if instrument:
 				instrument = safe_unicode(instrument, "UTF-8")
 				instrument = get_canonical_instrument_name(instrument)
-			description = "%s & %s" % (instrument or 
-									   self.worker.get_instrument_name(),
-									   manufacturer_display or
-									   self.worker.get_display_name(True))
+			observer = getcfg("colorimeter_correction.observer.reference")
+			if observer == "1931_2":
+				description = "%s & %s" % (instrument or 
+										   self.worker.get_instrument_name(),
+										   manufacturer_display or
+										   self.worker.get_display_name(True,
+																		True))
+			else:
+				description = "%s (%s %s) & %s" % (instrument or 
+										   self.worker.get_instrument_name(),
+										   lang.getstr("observer." + observer),
+										   lang.getstr("observer"),
+										   manufacturer_display or
+										   self.worker.get_display_name(True,
+																		True))
 		else:
 			description = manufacturer_display or self.worker.get_display_name(True)
 		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
