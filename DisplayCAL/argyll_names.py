@@ -25,12 +25,13 @@ names = [
 	"i1d3ccss",
 	"viewgam",
 	"oeminst",
-	"profcheck"
+	"profcheck",
+	"spec2cie"
 ]
 
 # Argyll CMS tools optionally used by DisplayCAL
 optional = ["applycal", "average", "cctiff", "ccxxmake", "i1d3ccss", "oeminst",
-			"spyd2en", "spyd4en", "tiffgamut", "timage"]
+			"spec2cie", "spyd2en", "spyd4en", "tiffgamut", "timage"]
 
 prefixes_suffixes = ["argyll"]
 

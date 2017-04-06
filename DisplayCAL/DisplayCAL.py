@@ -9503,6 +9503,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			check_last_ccxx_ti3(dlg.measurement_mode)
 			correction_type_handler(None)
 			result = dlg.ShowModal()
+			if result != wx.ID_CANCEL:
+				observer = self.observers_ba.get(dlg.observer_reference_ctrl.GetStringSelection())
+				setcfg("colorimeter_correction.observer.reference", observer)
 			if result in (id_measure_reference, id_measure_colorimeter):
 				setcfg("colorimeter_correction.instrument.reference",
 					   dlg.reference_instrument.GetStringSelection())
@@ -9520,8 +9523,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					   1 if mode and "H" in mode else 0)
 				setcfg("colorimeter_correction.measurement_mode.reference.projector",
 					   1 if mode and "p" in mode else None)
-				observer = self.observers_ba.get(dlg.observer_reference_ctrl.GetStringSelection())
-				setcfg("colorimeter_correction.observer.reference", observer)
 				observer = self.observers_ba.get(dlg.observer_ctrl.GetStringSelection())
 				setcfg("colorimeter_correction.observer", observer)
 				setcfg("colorimeter_correction.instrument",
@@ -9968,6 +9969,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if reference_ti3:
 			reference_ti3.write(os.path.join(cwd, 'reference.ti3'))
 			ti3_tmp_names.append('reference.ti3')
+		result = True
 		if colorimeter_ti3:
 			# Create CCMX
 			colorimeter_ti3.write(os.path.join(cwd, 'colorimeter.ti3'))
@@ -9980,7 +9982,63 @@ class MainFrame(ReportFrame, BaseFrame):
 			# To get correct readings (= matching reference observer B) when
 			# using such a CCMX, observer A needs to be used, not observer B.
 			observer = colorimeter_ti3.queryv1("OBSERVER")
-			reference_observer = reference_ti3.queryv1("OBSERVER")
+			reference_observer = getcfg("colorimeter_correction.observer.reference")
+			if spectral and reference_observer != reference_ti3.queryv1("OBSERVER"):
+				# We can override the observer if we have spectral data
+				# Need to use spec2cie to convert spectral data to
+				# CIE XYZ with given observer, because we later use the XYZ
+				spec2cie = get_argyll_util("spec2cie")
+				if not spec2cie:
+					show_result_dialog(Error(lang.getstr("argyll.util.not_found",
+														 "spec2cie")))
+					self.worker.wrapup(False)
+					return True
+				os.rename(os.path.join(cwd, "reference.ti3"),
+						  os.path.join(cwd, "reference_orig.ti3"))
+				result = self.worker.exec_cmd(spec2cie,
+									 ["-o", reference_observer,
+									  os.path.join(cwd, "reference_orig.ti3"),
+									  os.path.join(cwd, "reference.ti3")],
+									 capture_output=True, skip_scripts=True,
+									 silent=False, working_dir=cwd)
+				if not isinstance(result, Exception) and result:
+					reference_ti3 = CGATS.CGATS(os.path.join(cwd, "reference.ti3"))
+					# spec2cie doesn't update "LUMINANCE_XYZ_CDM2", and doesn't
+					# normalize measurement data to Y=100
+					XYZ_CDM2 = reference_ti3.queryv1("LUMINANCE_XYZ_CDM2")
+					white = reference_ti3.queryi1({"RGB_R": 100,
+												   "RGB_G": 100,
+												   "RGB_B": 100})
+					scale = white["XYZ_Y"] / 100.0
+					if XYZ_CDM2:
+						# Fix LUMINANCE_XYZ_CDM2
+						# Note that for oberservers other than 1931 2 degree,
+						# Y is not in cd/m2, but we try and keep the same
+						# relationship
+						XYZ_CDM2 = [float(v) for v in XYZ_CDM2.split()]
+						XYZ_CDM2 = ["%.6f" % (v * XYZ_CDM2[1] / 100.0)
+									for v in white.queryv1(("XYZ_X", "XYZ_Y",
+															"XYZ_Z")).values()]
+						reference_ti3[0].LUMINANCE_XYZ_CDM2 = " ".join(XYZ_CDM2)
+					data_format = reference_ti3.queryv1("DATA_FORMAT")
+					# Remove L*a*b*. Do not use iter, as we change the
+					# dictionary in-place
+					for i, column in data_format.items():
+						if column.startswith("LAB_"):
+							del data_format[i]
+					# Normalize to Y=100
+					data = reference_ti3.queryv1("DATA")
+					for i, sample in data.iteritems():
+						for column in data_format.itervalues():
+							if column.startswith("XYZ_") or column.startswith("SPEC_"):
+								sample[column] /= scale
+					reference_ti3.write()
+					# The -o observer argument for ccxxmake isn't really needed
+					# when we used spec2cie. Add it regardless for good measure
+					args.append("-o")
+					args.append(reference_observer)
+			else:
+				reference_observer = reference_ti3.queryv1("OBSERVER")
 		else:
 			# Create CCSS
 			args.append("-S")
@@ -9991,7 +10049,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		args.append("-f")
 		args.append(",".join(ti3_tmp_names))
 		args.append(name + ext)
-		result = self.worker.create_ccxx(args, cwd)
+		if not isinstance(result, Exception) and result:
+			result = self.worker.create_ccxx(args, cwd)
 		source = os.path.join(self.worker.tempdir, name + ext)
 		if colorimeter_ti3:
 			white_abs = []
@@ -10296,9 +10355,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			InfoDialog(self,
 					   title=lang.getstr("colorimeter_correction.create"),
 					   msg=lang.getstr("colorimeter_correction.create.failure") +
-						   "\n" + "\n".join(self.worker.errors), 
+						   "\n" + "".join(self.worker.errors), 
 					   ok=lang.getstr("cancel"), 
-					   bitmap=geticon(32, "dialog-error"))
+					   bitmap=geticon(32, "dialog-error"), log=False)
 		self.worker.wrapup(False)
 		return True
 	
