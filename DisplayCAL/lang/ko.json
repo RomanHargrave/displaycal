@@ -724,6 +724,7 @@
 	"menuitem.quit": "종료",
 	"menuitem.set_argyll_bin": "Argyll CMS 실행파일 위치지정...",
 		"*metadata": "Metadata",
+		"*method": "Method",
 		"*min": "Min",
 		"*minimal": "Minimal",
 	"model": "모델",

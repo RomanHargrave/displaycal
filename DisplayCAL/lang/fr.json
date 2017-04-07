@@ -724,6 +724,7 @@
 	"menuitem.quit": "Quitter",
 	"menuitem.set_argyll_bin": "Localiser les exécutables d’Argyll CMS…",
 	"metadata": "Métadonnées",
+		"*method": "Method",
 	"min": "Min",
 	"minimal": "Minimal",
 	"model": "Modèle",

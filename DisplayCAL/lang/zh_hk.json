@@ -724,6 +724,7 @@
 	"menuitem.quit": "離開",
 	"menuitem.set_argyll_bin": "設定 Argyll CMS 執行檔位置...",
 	"metadata": "數據描述資訊",
+		"*method": "Method",
 	"min": "最小",
 	"minimal": "縮小",
 	"model": "型號",

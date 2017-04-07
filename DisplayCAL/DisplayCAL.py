@@ -547,9 +547,10 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.InsertColumn(4, lang.getstr("instrument"))
 	dlg_list_ctrl.InsertColumn(5, lang.getstr("reference"))
 	dlg_list_ctrl.InsertColumn(6, lang.getstr("observer"))
-	dlg_list_ctrl.InsertColumn(7, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
-	dlg_list_ctrl.InsertColumn(8, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
-	dlg_list_ctrl.InsertColumn(9, lang.getstr("created"))
+	dlg_list_ctrl.InsertColumn(7, lang.getstr("method"))
+	dlg_list_ctrl.InsertColumn(8, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
+	dlg_list_ctrl.InsertColumn(9, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
+	dlg_list_ctrl.InsertColumn(10, lang.getstr("created"))
 	dlg_list_ctrl.SetColumnWidth(0, 50)
 	dlg_list_ctrl.SetColumnWidth(1, 250)
 	dlg_list_ctrl.SetColumnWidth(2, 150)
@@ -557,9 +558,10 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.SetColumnWidth(4, 75)
 	dlg_list_ctrl.SetColumnWidth(5, 75)
 	dlg_list_ctrl.SetColumnWidth(6, 75)
-	dlg_list_ctrl.SetColumnWidth(7, 100)
+	dlg_list_ctrl.SetColumnWidth(7, 75)
 	dlg_list_ctrl.SetColumnWidth(8, 100)
-	dlg_list_ctrl.SetColumnWidth(9, 150)
+	dlg_list_ctrl.SetColumnWidth(9, 100)
+	dlg_list_ctrl.SetColumnWidth(10, 150)
 	types = {"CCSS": lang.getstr("spectral").replace(":", ""),
 			 "CCMX": lang.getstr("matrix").replace(":", "")}
 	for i in cgats:
@@ -605,10 +607,12 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 															lang.getstr("unknown" if ccxx_type == "CCMX"
 																		else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 7,
-									cgats[i].queryv1("FIT_AVG_DE00") or "")
+									cgats[i].queryv1("FIT_METHOD") or u"ΔE*")
 		dlg_list_ctrl.SetStringItem(index, 8,
+									cgats[i].queryv1("FIT_AVG_DE00") or "")
+		dlg_list_ctrl.SetStringItem(index, 9,
 									cgats[i].queryv1("FIT_MAX_DE00") or "")
-		dlg_list_ctrl.SetStringItem(index, 9, created or "")
+		dlg_list_ctrl.SetStringItem(index, 10, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
@@ -10337,9 +10341,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
 								   '\\1FIT_%s "%.6f"\n' %
 								   (label, fit_error), cgats)
+			metadata = []
 			if debug or test:
 				# Add original measurement data to CGATS as meta
-				metadata = []
 				ccmx_data_format = []
 				for colorspace in ("RGB", "XYZ"):
 					for component in colorspace:
@@ -10369,6 +10373,9 @@ class MainFrame(ReportFrame, BaseFrame):
 								column != "SAMPLE_ID"):
 								metadata.append(label + '_DATA_%i_%s "%s"' %
 										(i + 1, column, sample[column]))
+			if colorimeter_ti3 and getcfg("ccmx.use_four_color_matrix_method"):
+				metadata.append('FIT_METHOD "xy"')
+			if metadata:
 				cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
 							   '\\1%s\n' %
 							   "\n".join(metadata), cgats)
