@@ -663,7 +663,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None,
 							msg=lang.getstr("dialog.confirm_overwrite", path), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
-							bitmap=geticon(32, "dialog-information"))
+							bitmap=geticon(32, "dialog-warning"))
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result != wx.ID_OK:
@@ -10387,6 +10387,14 @@ class MainFrame(ReportFrame, BaseFrame):
 								   '\\1FIT_%s "%.6f"\n' %
 								   (label, fit_error), cgats)
 			metadata = []
+			# Add measurement file names and checksum to CCXX
+			for label, meas in (("REFERENCE", reference_ti3),
+								("TARGET", colorimeter_ti3)):
+				if meas.filename:
+					metadata.append(label + '_FILENAME "%s"' %
+									safe_str(meas.filename, "UTF-8"))
+					metadata.append(label + '_HASH "md5:%s"' %
+									md5(str(meas).strip()).hexdigest())
 			if debug or test:
 				# Add original measurement data to CGATS as meta
 				ccmx_data_format = []
@@ -10394,7 +10402,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					for component in colorspace:
 						ccmx_data_format.append(colorspace + "_" + component)
 				for label, meas in (("REFERENCE", reference_ti3),
-									("INSTRUMENT", colorimeter_ti3)):
+									("TARGET", colorimeter_ti3)):
 					XYZ_CDM2 = meas.queryv1("LUMINANCE_XYZ_CDM2")
 					if XYZ_CDM2:
 						metadata.append(label + '_LUMINANCE_XYZ_CDM2 "%s"' %
@@ -10453,7 +10461,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_OK:
+			ccxx = CGATS.CGATS(cgats)
+			# Remove platform-specific/potentially sensitive information
+			cgats = re.sub(r'\n(?:REFERENCE|TARGET)_FILENAME\s+"[^"]+"\n', "\n",
+						   cgats)
 			params = {"cgats": cgats}
+			# Also upload reference and target CGATS (if available)
+			for label in ("REFERENCE", "TARGET"):
+				filename = safe_unicode(ccxx.queryv1(label + "_FILENAME") or
+										"", "UTF-8")
+				algo, hash = (ccxx.queryv1(label + "_HASH") or "").split(":", 1)
+				if filename and os.path.isfile(filename) and algo in globals():
+					meas = str(CGATS.CGATS(filename)).strip()
+					# Check hash
+					if globals()[algo](meas).hexdigest() == hash:
+						params[label.lower() + "_cgats"] = meas
+			safe_print(params.keys())
 			# Upload correction
 			self.worker.interactive = False
 			self.worker.start(lambda result: result, 
