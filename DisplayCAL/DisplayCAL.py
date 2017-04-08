@@ -608,11 +608,14 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 															lang.getstr("unknown" if ccxx_type == "CCMX"
 																		else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 7,
-									cgats[i].queryv1("FIT_METHOD") or u"ΔE*")
+									safe_unicode(cgats[i].queryv1("FIT_METHOD") or
+												 u"ΔE*", "UTF-8"))
 		dlg_list_ctrl.SetStringItem(index, 8,
-									cgats[i].queryv1("FIT_AVG_DE00") or "")
+									safe_unicode(cgats[i].queryv1("FIT_AVG_DE00") or
+												 ""))
 		dlg_list_ctrl.SetStringItem(index, 9,
-									cgats[i].queryv1("FIT_MAX_DE00") or "")
+									safe_unicode(cgats[i].queryv1("FIT_MAX_DE00") or
+												 ""))
 		dlg_list_ctrl.SetStringItem(index, 10, created or "")
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
