@@ -10476,7 +10476,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					# Check hash
 					if globals()[algo](meas).hexdigest() == hash:
 						params[label.lower() + "_cgats"] = meas
-			safe_print(params.keys())
+			if debug or test:
+				safe_print(params.keys())
 			# Upload correction
 			self.worker.interactive = False
 			self.worker.start(lambda result: result, 
