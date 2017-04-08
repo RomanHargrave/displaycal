@@ -9283,14 +9283,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					safe_print("check_last_ccxx_ti3", name)
 					safe_print("instrument =", instrument)
 					safe_print("measurement_mode =", measurement_mode)
-				if self.worker.instrument_can_use_nondefault_observer(instrument):
-					observer = self.observers_ba[observer_ctrl.GetStringSelection()]
-				else:
-					observer = defaults["observer"]
-				if debug or verbose >= 2:
-					safe_print("observer =", observer)
-				if event.GetId() in (dlg.reference_ti3.textControl.Id,
-									 dlg.colorimeter_ti3.textControl.Id):
+				if event.GetId() == getattr(dlg, name + "_ti3").textControl.Id:
 					setcfg("last_%s_ti3_path" % name,
 						   getattr(dlg, name + "_ti3").GetValue())
 				ti3 = getcfg("last_%s_ti3_path" % name, False)
@@ -9330,6 +9323,17 @@ class MainFrame(ReportFrame, BaseFrame):
 						cgats_observer = cgats.queryv1("OBSERVER")
 						if not cgats_observer:
 							cgats_observer = defaults["observer"]
+						if event.GetId() == dlg.reference_ti3.textControl.Id:
+							setcfg("colorimeter_correction.observer.reference",
+								   cgats_observer)
+							observer_ctrl.SetStringSelection(
+								self.observers_ab[getcfg("colorimeter_correction.observer.reference")])
+						if self.worker.instrument_can_use_nondefault_observer(instrument):
+							observer = self.observers_ba[observer_ctrl.GetStringSelection()]
+						else:
+							observer = defaults["observer"]
+						if debug or verbose >= 2:
+							safe_print("observer =", observer)
 						if debug or verbose >= 2:
 							safe_print("cgats_observer =", cgats_observer)
 						if (cgats_instrument != instrument or
@@ -9515,6 +9519,12 @@ class MainFrame(ReportFrame, BaseFrame):
 							getcfg("colorimeter_correction.observer") != defaults["colorimeter_correction.observer"])
 				dlg.observer_label.Show(show)
 				dlg.observer_ctrl.Show(show)
+				instrument_name = dlg.reference_instrument.GetStringSelection()
+				show = bool(dlg.correction_type_matrix.GetValue() and
+							getcfg("show_advanced_options") and
+							self.worker.instrument_can_use_nondefault_observer(instrument_name))
+				dlg.observer_reference_label.Show(show)
+				dlg.observer_reference_ctrl.Show(show)
 			def instrument_handler(event):
 				dlg.Freeze()
 				modes = self.get_ccxx_measurement_modes(
