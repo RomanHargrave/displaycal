@@ -136,6 +136,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
+					   FileBrowseBitmapButtonWithChoiceHistory,
 					   FileDrop, HyperLinkCtrl, InfoDialog,
 					   LogWindow, ProgressDialog, TooltipWindow,
 					   get_gradient_panel)
@@ -9183,7 +9184,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								msg=lang.getstr("colorimeter_correction.create.info"), 
 								ok=lang.getstr("colorimeter_correction.create"),
 								cancel=lang.getstr("cancel"), 
-								alt=lang.getstr("browse"), 
+								##alt=lang.getstr("browse"), 
 								bitmap=geticon(32, "dialog-information"),
 								wrap=90)
 			# Colorimeter correction type
@@ -9258,7 +9259,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				cfgname = "colorimeter_correction.measurement_mode"
 				if event.GetId() in (dlg.instrument.Id,
 									 dlg.measurement_mode.Id,
-									 dlg.observer_ctrl.Id):
+									 dlg.observer_ctrl.Id,
+									 dlg.colorimeter_ti3.textControl.Id):
 					name = "colorimeter"
 					instrument = dlg.instrument.GetStringSelection()
 					measurement_mode = self.get_ccxx_measurement_modes(
@@ -9284,10 +9286,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					observer = defaults["observer"]
 				if debug or verbose >= 2:
 					safe_print("observer =", observer)
-				if getcfg("last_%s_ti3_path.backup" % name, False):
+				if event.GetId() in (dlg.reference_ti3.textControl.Id,
+									 dlg.colorimeter_ti3.textControl.Id):
 					setcfg("last_%s_ti3_path" % name,
-						   getcfg("last_%s_ti3_path.backup" % name))
-					setcfg("last_%s_ti3_path.backup" % name, None)
+						   getattr(dlg, name + "_ti3").GetValue())
 				ti3 = getcfg("last_%s_ti3_path" % name, False)
 				if debug or verbose >= 2:
 					safe_print("last_%s_ti3_path =" % name, ti3)
@@ -9330,12 +9332,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						if (cgats_instrument != instrument or
 							cgats_measurement_mode != measurement_mode or
 							cgats_observer != observer):
-							setcfg("last_%s_ti3_path.backup" % name,
-								   getcfg("last_%s_ti3_path" % name))
-							setcfg("last_%s_ti3_path" % name, None)
+							ti3 = None
 					else:
-						setcfg("last_%s_ti3_path" % name, None)
-				ti3 = getcfg("last_%s_ti3_path" % name, False)
+						ti3 = None
 				if debug or verbose >= 2:
 					safe_print("last_%s_ti3_path =" % name, ti3)
 				if ti3:
@@ -9370,7 +9369,7 @@ class MainFrame(ReportFrame, BaseFrame):
 											  reference_instruments))
 			dlg.observer_reference_label = wx.StaticText(dlg, -1, lang.getstr("observer"))
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
-			boxsizer.Add(hsizer, flag=wx.BOTTOM, border=8)
+			boxsizer.Add(hsizer, flag=wx.BOTTOM, border=4)
 			hsizer.Add(dlg.observer_reference_label,
 					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=4)
 			dlg.observer_reference_ctrl = wx.Choice(dlg, -1,
@@ -9383,6 +9382,32 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.observers_ab[getcfg("colorimeter_correction.observer.reference")])
 			dlg.observer_reference_label.Show(bool(getcfg("show_advanced_options")))
 			dlg.observer_reference_ctrl.Show(bool(getcfg("show_advanced_options")))
+
+			# Reference TI3
+			defaultDir, defaultFile = get_verified_path("last_reference_ti3_path")
+			dlg.reference_ti3 = FileBrowseBitmapButtonWithChoiceHistory(dlg, -1,
+				dialogTitle=lang.getstr("measurement_file.choose.reference"),
+				toolTip=lang.getstr("browse"),
+				startDirectory=defaultDir,
+				fileMask=lang.getstr("filetype.ti3") + "|*.ti3;*.icm;*.icc")
+			if defaultFile:
+				dlg.reference_ti3.SetPath(os.path.join(defaultDir, defaultFile))
+			dlg.reference_ti3.changeCallback = check_last_ccxx_ti3
+			dlg.reference_ti3.SetMaxFontSize(11)
+			dlg.reference_ti3_droptarget = FileDrop(dlg)
+			def reference_ti3_drop_handler(path):
+				dlg.reference_ti3.SetPath(path)
+				check_last_ccxx_ti3(dlg.reference_ti3.textControl)
+				set_ok_btn_state()
+			dlg.reference_ti3_droptarget.drophandlers = {
+				".icc": reference_ti3_drop_handler,
+				".icm": reference_ti3_drop_handler,
+				".ti3": reference_ti3_drop_handler
+			}
+			dlg.reference_ti3.SetDropTarget(dlg.reference_ti3_droptarget)
+			boxsizer.Add(dlg.reference_ti3, flag=wx.RIGHT | wx.BOTTOM |
+												 wx.LEFT | wx.EXPAND, border=4)
+
 			def reference_instrument_handler(event):
 				mode, modes, dlg.modes_ab, modes_ba = self.get_measurement_modes(
 					dlg.reference_instrument.GetStringSelection(), "spect",
@@ -9444,7 +9469,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												colorimeters))
 			dlg.observer_label = wx.StaticText(dlg, -1, lang.getstr("observer"))
 			hsizer = wx.BoxSizer(wx.HORIZONTAL)
-			boxsizer.Add(hsizer, flag=wx.BOTTOM, border=8)
+			boxsizer.Add(hsizer, flag=wx.BOTTOM, border=4)
 			hsizer.Add(dlg.observer_label,
 					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=4)
 			dlg.observer_ctrl = wx.Choice(dlg, -1,
@@ -9454,6 +9479,32 @@ class MainFrame(ReportFrame, BaseFrame):
 					   flag=wx.LEFT | wx.ALIGN_CENTER_VERTICAL, border=8)
 			dlg.observer_ctrl.SetStringSelection(
 				self.observers_ab[getcfg("colorimeter_correction.observer")])
+
+			# Colorimeter TI3
+			defaultDir, defaultFile = get_verified_path("last_colorimeter_ti3_path")
+			dlg.colorimeter_ti3 = FileBrowseBitmapButtonWithChoiceHistory(dlg, -1,
+				dialogTitle=lang.getstr("measurement_file.choose.colorimeter"),
+				toolTip=lang.getstr("browse"),
+				startDirectory=defaultDir,
+				fileMask=lang.getstr("filetype.ti3") + "|*.ti3;*.icm;*.icc")
+			if defaultFile:
+				dlg.colorimeter_ti3.SetPath(os.path.join(defaultDir, defaultFile))
+			dlg.colorimeter_ti3.changeCallback = check_last_ccxx_ti3
+			dlg.colorimeter_ti3.SetMaxFontSize(11)
+			dlg.colorimeter_ti3_droptarget = FileDrop(dlg)
+			def colorimeter_ti3_drop_handler(path):
+				dlg.colorimeter_ti3.SetPath(path)
+				check_last_ccxx_ti3(dlg.colorimeter_ti3.textControl)
+				set_ok_btn_state()
+			dlg.colorimeter_ti3_droptarget.drophandlers = {
+				".icc": colorimeter_ti3_drop_handler,
+				".icm": colorimeter_ti3_drop_handler,
+				".ti3": colorimeter_ti3_drop_handler
+			}
+			dlg.colorimeter_ti3.SetDropTarget(dlg.colorimeter_ti3_droptarget)
+			boxsizer.Add(dlg.colorimeter_ti3, flag=wx.RIGHT | wx.BOTTOM |
+												 wx.LEFT | wx.EXPAND, border=4)
+
 			def show_observer_ctrl():
 				instrument_name = dlg.instrument.GetStringSelection()
 				show = bool(getcfg("show_advanced_options") and
@@ -9551,12 +9602,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					paths.append(getcfg("last_colorimeter_ti3_path"))
 			setcfg("ccmx.use_four_color_matrix_method",
 				   int(dlg.four_color_matrix.GetValue()))
-			# Restore previous TI3 paths (if any)
-			for name in ("colorimeter", "reference"):
-				if getcfg("last_%s_ti3_path.backup" % name, False):
-					setcfg("last_%s_ti3_path" % name,
-						   getcfg("last_%s_ti3_path.backup" % name))
-					setcfg("last_%s_ti3_path.backup" % name, None)
 			if result != wx.ID_CANCEL:
 				setcfg("colorimeter_correction.type",
 					   {True: "matrix",
