@@ -990,7 +990,8 @@ class CGATS(dict):
 								safe_print('Warning: cannot add keyword '
 											'"KEYWORD"')
 						else:
-							if isinstance(value, basestring):
+							if self.type == "DATA" and isinstance(value,
+																  basestring):
 								match = re.match(
 									'(?:\d+|((?:\d*\.\d+|\d+)(?:e[+-]?\d+)?))$', value)
 								if match:
@@ -998,15 +999,6 @@ class CGATS(dict):
 										value = float(value)
 									else:
 										value = int(value)
-									if self.type in ('DATA_FORMAT', 
-														'KEYWORDS'):
-										raise CGATSTypeError('Invalid data '
-															 'type for %s '
-															 '(expected str '
-															 'or unicode, got '
-															 '%s)' % 
-															 (self.type, 
-															  type(value)))
 							self[key] = value
 			else:
 				raise CGATSTypeError('Invalid data type for %s (expected '
