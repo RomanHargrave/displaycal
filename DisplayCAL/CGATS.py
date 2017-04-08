@@ -483,11 +483,7 @@ class CGATS(dict):
 								key in self['KEYWORDS'].values():
 								if self.emit_keywords:
 									result.append('KEYWORD "%s"' % key)
-								result.append('%s "%s"' % (key, value))
-							elif type(value) in (int, float):
-								result.append('%s %s' % (key, value))
-							else:
-								result.append('%s "%s"' % (key, value))
+							result.append('%s "%s"' % (key, value))
 				elif key not in ('DATA_FORMAT', 'KEYWORDS'):
 					if (value.type == 'SECTION' and result[-1:] and 
 						result[-1:][0] != ''):
@@ -990,8 +986,17 @@ class CGATS(dict):
 								safe_print('Warning: cannot add keyword '
 											'"KEYWORD"')
 						else:
-							if self.type == "DATA" and isinstance(value,
-																  basestring):
+							if (isinstance(value, basestring) and
+								key not in ("DESCRIPTOR", "ORIGINATOR",
+										    "CREATED", "DEVICE_CLASS",
+										    "COLOR_REP", "TARGET_INSTRUMENT",
+										    "LUMINANCE_XYZ_CDM2", "OBSERVER",
+											"INSTRUMENT", "MANUFACTURER_ID",
+											"MANUFACTURER", "REFERENCE",
+											"REFERENCE_OBSERVER", "DISPLAY",
+											"TECHNOLOGY", "REFERENCE_FILENAME",
+											"REFERENCE_HASH", "TARGET_FILENAME",
+											"TARGET_HASH", "FIT_METHOD")):
 								match = re.match(
 									'(?:\d+|((?:\d*\.\d+|\d+)(?:e[+-]?\d+)?))$', value)
 								if match:
@@ -999,6 +1004,15 @@ class CGATS(dict):
 										value = float(value)
 									else:
 										value = int(value)
+									if self.type in ('DATA_FORMAT', 
+													'KEYWORDS'):
+										raise CGATSTypeError('Invalid data '
+															 'type for %s '
+															 '(expected str '
+															 'or unicode, got '
+															 '%s)' % 
+															 (self.type, 
+															  type(value)))
 							self[key] = value
 			else:
 				raise CGATSTypeError('Invalid data type for %s (expected '
