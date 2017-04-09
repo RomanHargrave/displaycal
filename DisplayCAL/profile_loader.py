@@ -2632,7 +2632,7 @@ class ProfileLoader(object):
 				correct_profile = ICCP.get_display_profile(path_only=True,
 														   devicekey=device.DeviceKey)
 			except Exception, exception:
-				safe_print("Could not get display profile for display "
+				safe_print("Could not get display profile for active display "
 						   "device %r:" % device.DeviceKey, exception)
 				continue
 			if correct_profile:
