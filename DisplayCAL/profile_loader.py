@@ -2046,6 +2046,10 @@ class ProfileLoader(object):
 																  vcgt_ramp_hack,
 																  vcgt_values)
 					recheck = True
+				if not apply_profiles:
+					# Important: Do not break here because we still want to
+					# detect changed profile associations
+					continue
 				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
 				if (not self._manual_restore and
 					not profile_association_changed and
