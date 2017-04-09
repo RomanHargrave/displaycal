@@ -6687,6 +6687,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			calprof = oprof
 		else:
 			calprof = profile
+		# Convert calibration information from embedded WCS profile
+		# (if present) to VideCardFormulaType if the latter is not present
+		if (isinstance(calprof.tags.get("MS00"), ICCP.WcsProfilesTagType) and
+			not "vcgt" in calprof.tags):
+			calprof.tags["vcgt"] = calprof.tags["MS00"].get_vcgt()
 		if isinstance(calprof.tags.get("vcgt"), ICCP.VideoCardGammaType):
 			# Extract calibration from profile
 			try:

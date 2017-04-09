@@ -1986,6 +1986,10 @@ class ProfileLoader(object):
 						if not self.profiles.get(key):
 							try:
 								self.profiles[key] = ICCP.ICCProfile(profile)
+								if (isinstance(self.profiles[key].tags.get("MS00"),
+											   ICCP.WcsProfilesTagType) and
+									not "vcgt" in self.profiles[key].tags):
+									self.profiles[key].tags["vcgt"] = self.profiles[key].tags["MS00"].get_vcgt()
 								self.profiles[key].tags.get("vcgt")
 							except Exception, exception:
 								safe_print(exception)

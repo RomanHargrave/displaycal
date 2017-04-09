@@ -2580,7 +2580,7 @@ class LazyLoadTagAODict(AODict):
 					args += (self.profile.connectionColorSpace, )
 					if typeSignature == "ncl2":
 						args += (self.profile.colorSpace, )
-				elif typeSignature in ("XYZ ", "mft2", "curv"):
+				elif typeSignature in ("XYZ ", "mft2", "curv", "MS10"):
 					args += (self.profile, )
 				tag = typeSignature2Type[typeSignature](*args)
 			else:
@@ -4565,6 +4565,67 @@ class ViewingConditionsType(ICCProfileTag, ADict):
 		})
 
 
+class TagData(object):
+
+	def __init__(self, tagData, offset, size):
+		self.tagData = tagData
+		self.offset = offset
+		self.size = size
+
+	def __contains__(self, item):
+		return item in str(self)
+
+	def __str__(self):
+		return self.tagData[self.offset:self.offset + self.size]
+
+
+class WcsProfilesTagType(ICCProfileTag, ADict):
+
+	def __init__(self, tagData, tagSignature, profile):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self.profile = profile
+		for i, modelname in enumerate(["ColorDeviceModel",
+									   "ColorAppearanceModel", "GamutMapModel"]):
+			j = i * 8
+			offset = uInt32Number(tagData[8 + j:12 + j])
+			size = uInt32Number(tagData[12 + j:16 + j])
+			if offset and size:
+				from StringIO import StringIO
+				from xml.etree import ElementTree
+				it = ElementTree.iterparse(StringIO(tagData[offset:offset + size]))
+				for event, elem in it:
+					elem.tag = elem.tag.split('}', 1)[-1]  # Strip all namespaces
+				self[modelname] = it.root
+
+	def get_vcgt(self):
+		"""
+		Return calibration information (if present) as VideCardFormulaType
+		
+		"""
+		if "ColorDeviceModel" in self:
+			# Parse calibration information to VCGT
+			cal = self.ColorDeviceModel.find("Calibration")
+			if cal is None:
+				return
+			agammaconf = cal.find("AdapterGammaConfiguration")
+			if agammaconf is None:
+				return
+			pcurves = agammaconf.find("ParameterizedCurves")
+			if pcurves is None:
+				return
+			vcgtData = "vcgt"
+			vcgtData += "\0" * 8
+			for color in ("Red", "Green", "Blue"):
+				trc = pcurves.find(color + "TRC")
+				if trc is None:
+					trc = {}
+				vcgtData += u16Fixed16Number_tohex(float(trc.get("Gamma", 1)))
+				vcgtData += u16Fixed16Number_tohex(float(trc.get("Offset1", 0)))
+				vcgtData += u16Fixed16Number_tohex(float(trc.get("Gain", 1)))
+			vcgt = VideoCardGammaFormulaType(vcgtData, "vcgt")
+			return vcgt
+
+
 class XYZNumber(AODict):
 
 	"""
@@ -5026,6 +5087,7 @@ typeSignature2Type = {
 	"text": TextType,
 	"vcgt": videoCardGamma,
 	"view": ViewingConditionsType,
+	"MS10": WcsProfilesTagType,
 	"XYZ ": XYZType
 }
 
