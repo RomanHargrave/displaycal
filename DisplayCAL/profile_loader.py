@@ -2491,8 +2491,12 @@ class ProfileLoader(object):
 					except:
 						info = None
 					if info:
-						component_name = info[0].get("ProductName",
-													 info[0].get("FileDescription",
+						# Use FileDescription over ProductName (the former may
+						# be more specific, e.g. Windows Display Color
+						# Calibration, the latter more generic, e.g. Microsoft
+						# Windows)
+						component_name = info[0].get("FileDescription",
+													 info[0].get("ProductName",
 																 component_name))
 				else:
 					component_name = lang.getstr("unknown")
