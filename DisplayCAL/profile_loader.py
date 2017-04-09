@@ -2079,7 +2079,8 @@ class ProfileLoader(object):
 						for k, v in enumerate(channel):
 							values[j].append([float(k), v])
 					# Check if video card matches profile vcgt
-					if values == vcgt_values:
+					if (values == vcgt_values and
+						i in self.setgammaramp_success):
 						idle = True
 						continue
 					idle = False
