@@ -4428,6 +4428,9 @@ class VideoCardGammaTableType(VideoCardGammaType):
 			4: uInt32Number,
 			8: uInt64Number
 		}
+		if entrySize not in hex2int:
+			raise ValueError("Invalid VideoCardGammaTableType entry size %i" %
+							 entrySize)
 		i = 0
 		while i < channels:
 			self.data.append([])
@@ -4614,7 +4617,8 @@ class WcsProfilesTagType(ICCProfileTag, ADict):
 			if pcurves is None:
 				return
 			vcgtData = "vcgt"
-			vcgtData += "\0" * 8
+			vcgtData += "\0" * 4
+			vcgtData += uInt32Number_tohex(1)  # Type 1 = formula
 			for color in ("Red", "Green", "Blue"):
 				trc = pcurves.find(color + "TRC")
 				if trc is None:

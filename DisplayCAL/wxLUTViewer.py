@@ -1567,6 +1567,14 @@ class LUTFrame(BaseFrame):
 		curves = None
 		if self.profile:
 			if self.plot_mode_select.GetSelection() == 0:
+				# Convert calibration information from embedded WCS profile
+				# (if present) to VideCardFormulaType if the latter is not present
+				if (isinstance(self.profile.tags.get("MS00"),
+							   ICCP.WcsProfilesTagType) and
+					not "vcgt" in self.profile.tags):
+					vcgt = self.profile.tags["MS00"].get_vcgt()
+					if vcgt:
+						self.profile.tags["vcgt"] = vcgt
 				if 'vcgt' in self.profile.tags:
 					curves = self.profile.tags['vcgt']
 				else:
@@ -1896,7 +1904,9 @@ class LUTFrame(BaseFrame):
 							label = "=".join(["%s" % s for s, v in
 											  filter(lambda (s, v): v is not None,
 													 (("R", R), ("G", G), ("B", B)))])
-						gamma.append(label + " %.2f" % (math.log(y / axis_y) / math.log(x / 255.0)))
+						# Note: We need to make sure each point is a float because it
+						# might be a decimal.Decimal, which can't be divided by floats!
+						gamma.append(label + " %.2f" % (math.log(float(y) / axis_y) / math.log(x / 255.0)))
 						if "=" in label:
 							break
 					if gamma:
