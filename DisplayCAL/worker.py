@@ -85,7 +85,8 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					split_display_name, writecfg, appbasename)
 from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
 						  UnloggedWarning, Warn)
-from defaultpaths import cache, iccprofiles_home, iccprofiles_display_home
+from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
+						  iccprofiles_display_home)
 from edid import WMIError, get_edid
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
@@ -115,7 +116,6 @@ if sys.platform not in ("darwin", "win32"):
 	from util_os import getgroups
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
-	import win_knownpaths
 from util_str import (make_filename_safe, safe_basestring, safe_asciize,
 					  safe_str, safe_unicode, strtr, universal_newlines)
 from worker_base import (WorkerBase, Xicclu, _mp_generate_B2A_clut,
@@ -6276,31 +6276,42 @@ usage: spotread [-options] [logfile]
 
 			installer_basename = ("Argyll_V%s_USB_driver_installer.exe" %
 								  argyll_version_string)
-			installer_zip = self.download("https://%s/Argyll/%s.zip" %
-										  (domain, installer_basename))
-			if isinstance(installer_zip, Exception):
-				return installer_zip
-			elif not installer_zip:
-				# Cancelled
-				return
 
-			installer = os.path.splitext(installer_zip)[0]
-			# Open installer ZIP archive
-			try:
-				with zipfile.ZipFile(installer_zip) as z:
-					# Extract installer if it does not exist or if the existing
-					# file is different from the one in the archive
-					if os.path.isfile(installer):
-						with open(installer, "rb") as f:
-							crc = zlib.crc32(f.read())
-					else:
-						crc = None
-					if (not os.path.isfile(installer) or
-						crc != z.getinfo(installer_basename).CRC):
-						z.extract(installer_basename,
-								  os.path.dirname(installer_zip))
-			except Exception, exception:
-				return exception
+			download_dir = os.path.join(expanduseru("~"), "Downloads")
+			installer = os.path.join(download_dir, installer_basename)
+			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+				not os.path.isfile(installer)):
+				# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
+				# regardless of Known Folder path, so files may already exist
+				download_dir = get_known_folder_path("Downloads")
+				installer = os.path.join(download_dir, installer_basename)
+
+			if not os.path.isfile(installer):
+				installer_zip = self.download("https://%s/Argyll/%s.zip" %
+											  (domain, installer_basename))
+				if isinstance(installer_zip, Exception):
+					return installer_zip
+				elif not installer_zip:
+					# Cancelled
+					return
+
+				installer = os.path.splitext(installer_zip)[0]
+				# Open installer ZIP archive
+				try:
+					with zipfile.ZipFile(installer_zip) as z:
+						# Extract installer if it does not exist or if the existing
+						# file is different from the one in the archive
+						if os.path.isfile(installer):
+							with open(installer, "rb") as f:
+								crc = zlib.crc32(f.read())
+						else:
+							crc = None
+						if (not os.path.isfile(installer) or
+							crc != z.getinfo(installer_basename).CRC):
+							z.extract(installer_basename,
+									  os.path.dirname(installer_zip))
+				except Exception, exception:
+					return exception
 
 			# Get supported instruments USB device IDs
 			usb_ids = {}
@@ -10827,37 +10838,43 @@ BEGIN_DATA
 		finally:
 			socket.setdefaulttimeout(default_timeout)
 
-	def _download(self, uri):
-		try:
-			response = urllib2.urlopen(uri)
-		except urllib2.URLError, exception:
-			return exception
-		total_size = response.info().getheader("Content-Length")
-		if total_size is not None:
-			try:
-				total_size = int(total_size)
-			except (TypeError, ValueError):
-				return Error(lang.getstr("download_fail_wrong_size",
-										 ("<%s>" % lang.getstr("unknown"), ) * 2))
-		uri = response.geturl()
+	def _download(self, uri, force=False):
+		total_size = None
 		filename = os.path.basename(uri)
-		contentdispo = response.info().getheader("Content-Disposition")
-		if contentdispo:
-			filename = re.search('filename="([^"]+)"', contentdispo)
-			if filename:
-				filename = filename.groups()[0]
 		download_dir = os.path.join(expanduseru("~"), "Downloads")
 		download_path = os.path.join(download_dir, filename)
 		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
 			not os.path.isfile(download_path)):
 			# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
 			# regardless of Known Folder path, so files may already exist
+			download_dir = get_known_folder_path("Downloads")
+			download_path = os.path.join(download_dir, filename)
+		if not os.path.isfile(download_path) or force:
 			try:
-				download_dir = win_knownpaths.get_path(win_knownpaths.FOLDERID.Downloads,
-													   win_knownpaths.UserHandle.current)
-			except Exception, exception:
-				safe_print(exception)
-			else:
+				response = urllib2.urlopen(uri)
+			except urllib2.URLError, exception:
+				return exception
+			total_size = response.info().getheader("Content-Length")
+			if total_size is not None:
+				try:
+					total_size = int(total_size)
+				except (TypeError, ValueError):
+					return Error(lang.getstr("download_fail_wrong_size",
+											 ("<%s>" % lang.getstr("unknown"), ) * 2))
+			uri = response.geturl()
+			filename = os.path.basename(uri)
+			contentdispo = response.info().getheader("Content-Disposition")
+			if contentdispo:
+				filename = re.search('filename="([^"]+)"', contentdispo)
+				if filename:
+					filename = filename.groups()[0]
+			download_dir = os.path.join(expanduseru("~"), "Downloads")
+			download_path = os.path.join(download_dir, filename)
+			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+				not os.path.isfile(download_path)):
+				# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
+				# regardless of Known Folder path, so files may already exist
+				download_dir = get_known_folder_path("Downloads")
 				download_path = os.path.join(download_dir, filename)
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and

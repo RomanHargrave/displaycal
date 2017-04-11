@@ -31,6 +31,20 @@ if sys.platform == "win32":
 
 from util_os import expanduseru, expandvarsu, getenvu
 
+
+def get_known_folder_path(folderid, user=True):
+	folder_path = os.path.join(expanduseru("~"), folderid)
+	if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+		import win_knownpaths
+		try:
+			folder_path = win_knownpaths.get_path(getattr(win_knownpaths.FOLDERID, folderid),
+												  getattr(win_knownpaths.UserHandle,
+														  "current" if user else "common"))
+		except Exception, exception:
+			pass
+	return folder_path
+
+
 home = expanduseru("~")
 if sys.platform == "win32":
 	# Always specify create=1 for SHGetSpecialFolderPath so we don't get an
