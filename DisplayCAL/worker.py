@@ -7554,17 +7554,22 @@ END_DATA""")[0]
 					XYZw = fwd_mtx * (1, 1, 1)
 					for n in xrange(numentries):
 						Y = gcrinterp(ginterp(n / maxval))
-						if ptype == "S":
-							# Single shaper curve
-							X, Y, Z = (v * Y for v in XYZw)
-						else:
-							# 3x shaper curves
-							X = rcrinterp(rinterp(n / maxval))
-							Z = bcrinterp(binterp(n / maxval))
+						X = rcrinterp(rinterp(n / maxval))
+						Z = bcrinterp(binterp(n / maxval))
 						RGB = bwd_mtx * (X, Y, Z)
+						if not n and ptype == "S":
+							RGBmin = sum(RGB) / 3.0
+							Gmin = RGB[1]
 						for i, channel in enumerate("rgb"):
 							tagname = channel + tagcls
-							profile.tags[tagname].append(min(max(RGB[i], 0), 1) * 65535)
+							if ptype == "S":
+								# Single shaper curve
+								v = colormath.convert_range(sum(RGB) / 3.0,
+															RGBmin, 1, Gmin, 1)
+							else:
+								# 3x shaper curves
+								v = RGB[i]
+							profile.tags[tagname].append(min(max(v, 0), 1) * 65535)
 
 					# Smoothing
 					for channel in "rgb":
