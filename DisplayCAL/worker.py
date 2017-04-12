@@ -7436,6 +7436,7 @@ usage: spotread [-options] [logfile]
 		else:
 			if 0 in ti3:
 				ti3 = ti3[0]
+				ti3.remove_zero_measurements(logfile=self.get_logfiles(False))
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
 										 outname + ".ti3"))
@@ -7788,7 +7789,7 @@ END_DATA""")[0]
 			return exception
 		return True
 
-	def get_logfiles(self):
+	def get_logfiles(self, include_progress_buffers=True):
 		linebuffered_logfiles = []
 		if sys.stdout.isatty():
 			linebuffered_logfiles.append(safe_print)
@@ -7796,12 +7797,14 @@ END_DATA""")[0]
 			linebuffered_logfiles.append(log)
 		if self.sessionlogfile:
 			linebuffered_logfiles.append(self.sessionlogfile)
-		return Files([LineBufferedStream(
+		logfiles = LineBufferedStream(
 							FilteredStream(Files(linebuffered_logfiles),
 										   enc, discard="",
 										   linesep_in="\n", 
-										   triggers=[])), self.recent,
-							self.lastmsg])
+										   triggers=[]))
+		if include_progress_buffers:
+			logfiles = Files([logfiles, self.recent, self.lastmsg])
+		return logfiles
 	
 	def update_profile_B2A(self, profile, generate_perceptual_table=True):
 		# Use reverse A2B interpolation to generate B2A table
@@ -8466,43 +8469,6 @@ END_DATA""")[0]
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 				elif keyword in ti3[0]:
 					ti3[0].remove_keyword(keyword)
-			data = ti3[0].get("DATA")
-			if len(color_rep) == 2 and data:
-				# Check for XYZ/Lab = 0 readings
-				query = {}
-				for channel in color_rep[1]:
-					query[color_rep[1] + "_" + channel] = 0
-				device_labels = []
-				for channel in color_rep[0]:
-					device_labels.append(color_rep[0] + "_" + channel)
-				zeros = data.queryi(query)
-				errors = []
-				remove = []
-				for key in zeros.keys():
-					sample = zeros[key]
-					device_values = [sample[label] for label in device_labels]
-					device_sum = 0
-					for value in device_values:
-						if value >= 5:
-							# Error on device values >= 5
-							errors.append(sample)
-							self.log("Warning: Sample ID %i has %s = 0 and %s >= 5%%! (%s)" %
-									 (sample.SAMPLE_ID, color_rep[1], color_rep[0],
-									  " ".join(str(sample.queryv1(device_labels)).split())))
-							device_sum = 0
-							break
-						device_sum += value
-					if not device_sum:
-						# Skip device black and device values >= 5
-						continue
-					# Queue sample for removal
-					remove.insert(0, sample)
-					self.log("Removed sample ID %i with %s = 0 and %s < 5%% (%s)" %
-							 (sample.SAMPLE_ID, color_rep[1], color_rep[0],
-							  " ".join(str(sample.queryv1(device_labels)).split())))
-				for sample in remove:
-					# Remove sample
-					data.pop(sample)
 			ti3.write()
 		return cmd, args
 

@@ -1611,6 +1611,49 @@ Transform {
 		dict.pop(self, name)
 		self.setmodified()
 		return result
+
+	def remove_zero_measurements(self, warn_only=False, logfile=safe_print):
+		""" Remove (or warn about) XYZ/Lab = 0 measurements """
+		color_rep = (self.queryv1("COLOR_REP") or "").split("_")
+		data = self.queryv1("DATA")
+		if len(color_rep) == 2 and data:
+			# Check for XYZ/Lab = 0 readings
+			query = {}
+			for channel in color_rep[1]:
+				query[color_rep[1] + "_" + channel] = 0
+			device_labels = []
+			for channel in color_rep[0]:
+				device_labels.append(color_rep[0] + "_" + channel)
+			zeros = data.queryi(query)
+			errors = []
+			remove = []
+			for key in zeros.keys():
+				sample = zeros[key]
+				device_values = [sample[label] for label in device_labels]
+				device_sum = 0
+				for value in device_values:
+					if value > 0:
+						# Error on device values > 0
+						errors.append(sample)
+					device_sum += value
+				if not device_sum:
+					# Skip device black
+					continue
+				if warn_only:
+					if logfile:
+						logfile.write("Warning: Sample ID %i has %s = 0 and %s > 0%%! (%s)\n" %
+									  (sample.SAMPLE_ID, color_rep[1], color_rep[0],
+									   " ".join(str(sample.queryv1(device_labels)).split())))
+				else:
+					# Queue sample for removal
+					remove.insert(0, sample)
+					if logfile:
+						logfile.write("Removed sample ID %i with %s = 0 and %s > 0%% (%s)\n" %
+									  (sample.SAMPLE_ID, color_rep[1], color_rep[0],
+									   " ".join(str(sample.queryv1(device_labels)).split())))
+			for sample in remove:
+				# Remove sample
+				data.pop(sample)
 	
 	def fix_device_values_scaling(self, color_rep=None):
 		"""
