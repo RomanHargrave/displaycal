@@ -14316,6 +14316,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.enable_menus()
 		wx.Frame.Show(self, show)
 		if self.worker.progress_wnd and self.worker.progress_wnd.IsShown():
+			self.Lower()
 			self.worker.progress_wnd.Raise()
 
 	def OnClose(self, event=None):
