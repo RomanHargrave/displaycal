@@ -9938,7 +9938,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										   self.worker.get_display_name(True,
 																		True))
 		else:
-			description = manufacturer_display or self.worker.get_display_name(True)
+			description = manufacturer_display or self.worker.get_display_name(True,
+																			   True)
 		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
 		if target_instrument:
 			target_instrument = safe_unicode(target_instrument, "UTF-8")
