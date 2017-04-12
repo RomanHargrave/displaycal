@@ -1406,6 +1406,12 @@ def xyYsaturation(x, y, Y, wx, wy, saturation):
 	return wx + (x - wx) * saturation,  wy + (y - wy) * saturation, Y
 
 
+def convert_range(v, oldmin=0, oldmax=1, newmin=0, newmax=1):
+	oldrange = oldmax - oldmin
+	newrange = newmax - newmin
+	return (((v - oldmin) * newrange) / oldrange) + newmin
+
+
 def rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
 	""" Create and return an RGB to XYZ matrix. """
 	whitepoint = get_whitepoint(whitepoint, scale)
