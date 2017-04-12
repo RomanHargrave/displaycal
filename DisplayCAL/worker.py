@@ -9178,13 +9178,15 @@ END_DATA""")[0]
 			return
 		pauseable = getattr(self, "pauseable", False)
 		fancy = fancy and getcfg("use_fancy_progress")
-		if self._progress_dlgs.get((self.show_remaining_time, self.cancelable,
-									fancy, parent, parent and
-									parent.IsShownOnScreen())):
-			self.progress_wnd = self._progress_dlgs[(self.show_remaining_time,
-													 self.cancelable, fancy,
-													 parent, parent and
-													 parent.IsShownOnScreen())]
+		if resume and self._progress_wnd:
+			progress_wnd = self._progress_wnd
+		else:
+			key = (self.show_remaining_time, self.cancelable, fancy, parent,
+				   parent and parent.IsShownOnScreen())
+			progress_wnd = self._progress_dlgs.get(key)
+		if progress_wnd:
+			if self._progress_wnd is not progress_wnd:
+				self.progress_wnd = progress_wnd
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 			# segfault under Arch Linux when setting the window title
 			# This has a chance of throwing a IOError: [Errno 9] Bad file
@@ -9210,9 +9212,7 @@ END_DATA""")[0]
 				style |= wx.PD_CAN_ABORT
 			# Set maximum to 101 to prevent the 'cancel' changing to 'close'
 			# when 100 is reached
-			self._progress_dlgs[(self.show_remaining_time, self.cancelable,
-								 fancy, parent, parent and
-								 parent.IsShownOnScreen())] = ProgressDialog(
+			self._progress_dlgs[key] = ProgressDialog(
 											   progress_title,
 											   progress_msg, 
 											   maximum=101, 
@@ -9222,10 +9222,7 @@ END_DATA""")[0]
 											   pauseable=pauseable,
 											   style=style, start_timer=False,
 											   fancy=fancy)
-			self.progress_wnd = self._progress_dlgs[(self.show_remaining_time,
-													 self.cancelable, fancy,
-													 parent, parent and
-													 parent.IsShownOnScreen())]
+			self.progress_wnd = self._progress_dlgs[key]
 		if hasattr(self.progress_wnd, "progress_type"):
 			if pauseable or getattr(self, "interactive_frame", "") == "ambient":
 				# If pauseable, we assume it's a measurement
