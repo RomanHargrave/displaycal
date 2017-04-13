@@ -4374,7 +4374,7 @@ class VideoCardGammaFormulaType(VideoCardGammaType):
 								float(self[key + "Max"] - self[key + "Min"]))
 		return zip(*rgb.values())
 	
-	def getTableType(self, entryCount=256, entrySize=2):
+	def getTableType(self, entryCount=256, entrySize=2, quantizer=round):
 		"""
 		Return gamma as table type.
 		"""
@@ -4398,7 +4398,7 @@ class VideoCardGammaFormulaType(VideoCardGammaType):
 				v = (vmin + 
 					 math.pow(1.0 / (entryCount - 1) * i, gamma) * 
 					 float(vmax - vmin))
-				tagData.append(int2hex[entrySize](round(v * maxValue)))
+				tagData.append(int2hex[entrySize](quantizer(v * maxValue)))
 		return VideoCardGammaTableType("".join(tagData), self.tagSignature)
 
 
@@ -4479,6 +4479,25 @@ class VideoCardGammaTableType(VideoCardGammaType):
 			tagData.append(u16Fixed16Number_tohex(vmin))
 			tagData.append(u16Fixed16Number_tohex(vmax))
 		return VideoCardGammaFormulaType("".join(tagData), self.tagSignature)
+
+	def quantize(self, bits=16, quantizer=round):
+		"""
+		Quantize to n bits of precision.
+		
+		Note that when the quantize bits are not 8, 16, 32 or 64, double
+		quantization will occur: First from the table precision bits according
+		to entrySize to the chosen quantization bits, and then back to the
+		table precision bits.
+		
+		"""
+		oldmax = math.pow(256, self.entrySize) - 1
+		if bits in (8, 16, 32, 64):
+			self.entrySize = bits / 8
+		bitv = 2.0 ** bits
+		newmax = math.pow(256, self.entrySize) - 1
+		for i, channel in enumerate(self.data):
+			for j, value in enumerate(channel):
+				channel[j] = int(quantizer(value / oldmax * bitv) / bitv * newmax)
 	
 	def resize(self, length=128):
 		data = [[], [], []]
@@ -4600,11 +4619,20 @@ class WcsProfilesTagType(ICCProfileTag, ADict):
 					elem.tag = elem.tag.split('}', 1)[-1]  # Strip all namespaces
 				self[modelname] = it.root
 
-	def get_vcgt(self):
+	def get_vcgt(self, quantize=False, quantizer=round):
 		"""
-		Return calibration information (if present) as VideCardFormulaType
+		Return calibration information (if present) as VideoCardGammaType
 		
+		If quantize is set, a table quantized to <quantize> bits is returned.
+		
+		Note that when the quantize bits are not 8, 16, 32 or 64, multiple
+		quantizations will occur: For quantization bits below 32, first to 32
+		bits, then to the chosen quantization bits, then back to 32 bits (which
+		will be the final table precision bits).
+
 		"""
+		if quantize and not isinstance(quantize, int):
+			raise ValueError("Invalid quantization bits: %r" % quantize)
 		if "ColorDeviceModel" in self:
 			# Parse calibration information to VCGT
 			cal = self.ColorDeviceModel.find("Calibration")
@@ -4627,6 +4655,17 @@ class WcsProfilesTagType(ICCProfileTag, ADict):
 				vcgtData += u16Fixed16Number_tohex(float(trc.get("Offset1", 0)))
 				vcgtData += u16Fixed16Number_tohex(float(trc.get("Gain", 1)))
 			vcgt = VideoCardGammaFormulaType(vcgtData, "vcgt")
+			if quantize:
+				if quantize in (8, 16, 32, 64):
+					entrySize = quantize / 8
+				elif quantize < 32:
+					entrySize = 4
+				else:
+					entrySize = 8
+				vcgt = vcgt.getTableType(entrySize=entrySize,
+										 quantizer=quantizer)
+				if quantize not in (8, 16, 32, 64):
+					vcgt.quantize(quantize, quantizer)
 			return vcgt
 
 
