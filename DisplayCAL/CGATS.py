@@ -578,7 +578,7 @@ class CGATS(dict):
 		field_names = ("RGB_R", "RGB_G", "RGB_B", "XYZ_X", "XYZ_Y", "XYZ_Z")
 		data = self.get_data(field_names)
 		if not data:
-			return False
+			return False, False
 		valueslist = []
 		for key, item in data.iteritems():
 			values = []

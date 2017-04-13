@@ -1501,6 +1501,54 @@ def get_whitepoint(whitepoint=None, scale=1.0):
 get_whitepoint.cache = {}
 
 
+def make_monotonically_increasing(iterable, passes=0, window=None):
+	"""
+	Given an iterable or sequence, make the values monotonically increasing
+	by linear interpolation.
+	
+	If iterable is a dict, keep the keys of the original.
+	
+	If passes is non-zero, apply moving average smoothing to the values
+	before making them monotonically increasing.
+	
+	"""
+	if isinstance(iterable, dict):
+		keys = iterable.keys()
+		values = iterable.values()
+	else:
+		if hasattr(iterable, "next"):
+			values = list(iterable)
+		else:
+			values = iterable
+		keys = xrange(len(values))
+	if passes:
+		values = smooth_avg(values, passes, window)
+	sequence = zip(keys, values)
+	numvalues = len(sequence)
+	i = 0
+	while len(sequence) > i and i < len(sequence) - 2:
+		# Do not remove the last value if it identical to the second to last
+		while len(sequence) > i + 1 and sequence[i + 1][1] <= sequence[i][1]:
+			# Decreasing or identical
+			sequence.pop(i + 1)
+		i += 1
+	if len(sequence) > 1:
+		# Remove the second to last value if it is identical to the last
+		if sequence[-2][1] >= sequence[-1][1]:
+			# Decreasing or identical
+			sequence.pop(-2)
+	# Interpolate to original size
+	x_new = [item[0] for item in sequence]
+	y = [item[1] for item in sequence]
+	values = []
+	for i in xrange(numvalues):
+		values.append(interp(i, x_new, y))
+	if isinstance(iterable, dict):
+		# Add in original keys
+		return iterable.__class__(zip(keys, values))
+	return values
+
+
 def planckianCT2XYZ(T, scale=1.0):
 	""" Convert from planckian temperature to XYZ.
 	

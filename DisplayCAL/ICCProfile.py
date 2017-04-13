@@ -5638,7 +5638,7 @@ class ICCProfile:
 			XYZ = colormath.blend_blackpoint(X, Y, Z, bp_in, XYZbp, power)
 			rgb = imtx * XYZ
 			for j in xrange(3):
-				self.tags["%sTRC" % "rgb"[j]][i] = min(rgb[j] * 65535, 65535)
+				self.tags["%sTRC" % "rgb"[j]][i] = min(max(rgb[j], 0), 1) * 65535
 	
 	def set_bt1886_trc(self, XYZbp, outoffset=0.0, gamma=2.4, gamma_type="B",
 					   size=None):
