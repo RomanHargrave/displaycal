@@ -145,6 +145,7 @@ class SysTrayIcon(wx.EvtHandler):
 										  None)
 		win32gui.UpdateWindow(self.hwnd)
 		self._nid = None
+		self.in_popup = False
 		self.menu = None
 		self.Bind(wx.EVT_TASKBAR_RIGHT_UP, self.OnRightUp)
 
@@ -215,13 +216,19 @@ class SysTrayIcon(wx.EvtHandler):
 		return 1
 
 	def PopupMenu(self, menu):
+		if self.in_popup:
+			return
+		self.in_popup = True
 		self.menu = menu
-		pos = win32gui.GetCursorPos()
-		# See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/menus_0hdi.asp
-		win32gui.SetForegroundWindow(self.hwnd)
-		win32gui.TrackPopupMenu(menu.hmenu, win32con.TPM_LEFTALIGN, pos[0],
-								pos[1], 0, self.hwnd, None)
-		win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
+		try:
+			pos = win32gui.GetCursorPos()
+			# See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/menus_0hdi.asp
+			win32gui.SetForegroundWindow(self.hwnd)
+			win32gui.TrackPopupMenu(menu.hmenu, win32con.TPM_LEFTALIGN, pos[0],
+									pos[1], 0, self.hwnd, None)
+			win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
+		finally:
+			self.in_popup = False
 
 	def RemoveIcon(self):
 		if self._nid:
