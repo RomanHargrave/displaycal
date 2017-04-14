@@ -128,7 +128,10 @@ def _mp_generate_B2A_clut(process_index, idata_queue, odata1_queue, odata2_queue
 		idata_queue.put(exception)
 	finally:
 		process_finished_event.set()
-		atexit._run_exitfuncs()
+		if "--multiprocessing-fork" in sys.argv[1:]:
+			atexit._run_exitfuncs()
+		else:
+			progress_queue.put(EOFError())
 
 
 def check_argyll_bin(paths=None):

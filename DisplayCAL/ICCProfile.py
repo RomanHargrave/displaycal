@@ -10,6 +10,7 @@ import locale
 import math
 import multiprocessing as mp
 import os
+import Queue as queues
 import re
 import struct
 import sys
@@ -50,6 +51,7 @@ import imfile
 from colormath import NumberTuple
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
+from fakethread import FakeQueue, FakeThread
 from ordereddict import OrderedDict
 try:
 	from log import safe_print
@@ -2377,7 +2379,10 @@ def _mp_apply_black(process_index, data_queue, pcs, blocks, bp, bp_out, wp,
 		data_queue.put(exception)
 	finally:
 		process_finished_event.set()
-		atexit._run_exitfuncs()
+		if "--multiprocessing-fork" in sys.argv[1:]:
+			atexit._run_exitfuncs()
+		else:
+			progress_queue.put(EOFError())
 
 
 def hexrepr(bytestring, mapping=None):
@@ -2827,30 +2832,40 @@ class LUT16Type(ICCProfileTag):
 			num_workers = min(max(mp.cpu_count(), 1), len(self.clut))
 			if num_workers > 1:
 				worker_cls = mp.Process
+				Queue = mp.Queue
 			else:
-				worker_cls = threading.Thread
+				worker_cls = FakeThread
+				Queue = FakeQueue
 			processes = []
 			start = 0
 
-			progress_queue = mp.Queue()
+			progress_queue = Queue()
 
 			if logfile:
 				def progress_logger(num_workers):
+					eof_count = 0
 					progress = 0
 					while True:
 						try:
-							progress += progress_queue.get(True, 0.1)
-						except mp.queues.Empty:
+							inc = progress_queue.get(True, 0.1)
+							if isinstance(inc, Exception):
+								raise inc
+							progress += inc
+						except queues.Empty:
 							continue
 						except IOError:
 							break
+						except EOFError:
+							eof_count += 1
+							if eof_count == num_workers:
+								break
 						logfile.write("\r%i%%" % (progress / 100.0 *
 												  (100.0 / num_workers)))
 
 				threading.Thread(target=progress_logger, args=(num_workers, ),
 								 name="ProcessProgressLogger").start()
 
-			data_queue = mp.Queue()
+			data_queue = Queue()
 
 			for process_index in xrange(num_workers):
 				end = int(math.ceil(float(len(self.clut)) / num_workers *
@@ -2884,7 +2899,7 @@ class LUT16Type(ICCProfileTag):
 				for i in xrange(num_workers):
 					try:
 						incoming = queue.get(True, 0 if exception else None)
-					except mp.queues.Empty:
+					except queues.Empty:
 						continue
 					if isinstance(incoming, Exception):
 						exception = incoming

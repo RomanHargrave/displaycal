@@ -13,6 +13,7 @@ import multiprocessing as mp
 import os
 import pipes
 import platform
+import Queue as queues
 import re
 import socket
 import shutil
@@ -88,6 +89,7 @@ from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
 						  iccprofiles_display_home)
 from edid import WMIError, get_edid
+from fakethread import FakeQueue, FakeThread
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
@@ -5203,6 +5205,7 @@ while 1:
 				xpL.append(v)
 			Linterp = colormath.Interp(xpL, fpL)
 			rLinterp = colormath.Interp(fpL, xpL)
+			interp = None
 		# Set input curves
 		# Apply inverse TRC to input values to distribute them
 		# optimally across cLUT grid points
@@ -5250,8 +5253,10 @@ while 1:
 			num_workers = min(max(mp.cpu_count(), 1), clutres)
 			if num_workers > 1:
 				worker_cls = mp.Process
+				Queue = mp.Queue
 			else:
-				worker_cls = threading.Thread
+				worker_cls = FakeThread
+				Queue = FakeQueue
 			processes = []
 			start = 0
 
@@ -5267,25 +5272,33 @@ while 1:
 			idata = []
 			odata1 = []
 			odata2 = []
-			idata_queue = mp.Queue()
-			odata1_queue = mp.Queue()
-			odata2_queue = mp.Queue()
+			idata_queue = Queue()
+			odata1_queue = Queue()
+			odata2_queue = Queue()
 			
 			threshold = int((clutres - 1) * 0.75)
 			threshold2 = int((clutres - 1) / 3)
 
-			progress_queue = mp.Queue()
+			progress_queue = Queue()
 
 			if logfile:
 				def progress_logger(num_workers):
+					eof_count = 0
 					progress = 0
 					while True:
 						try:
-							progress += progress_queue.get(True, 0.1)
-						except mp.queues.Empty:
+							inc = progress_queue.get(True, 0.1)
+							if isinstance(inc, Exception):
+								raise inc
+							progress += inc
+						except queues.Empty:
 							continue
 						except IOError:
 							break
+						except EOFError:
+							eof_count += 1
+							if eof_count == num_workers:
+								break
 						logfile.write("\r%i%%" % (progress / 100.0 *
 												  (100.0 / num_workers)))
 
@@ -5329,7 +5342,7 @@ while 1:
 				for i in xrange(num_workers):
 					try:
 						incoming = queue.get(True, 0 if exception else None)
-					except mp.queues.Empty:
+					except queues.Empty:
 						continue
 					if isinstance(incoming, Exception):
 						exception = incoming
