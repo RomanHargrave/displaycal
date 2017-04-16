@@ -112,7 +112,7 @@ class Log():
 		if fn:
 			for line in msg.split("\n"):
 				fn(line)
-		if "wx" in sys.modules:
+		if "wx" in sys.modules and mp.current_process().name == "MainProcess":
 			from wxaddons import wx
 			if wx.GetApp() is not None and \
 			   hasattr(wx.GetApp(), "frame") and \
@@ -210,7 +210,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 				pass
 			else:
 				if not is_main_process:
-					# Running as child from multiprocessing
+					# Running as child from multiprocessing under Windows
 					instances -= 1
 				if instances:
 					filename += ".%i" % instances
@@ -223,7 +223,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 				except:
 					pass
 		else:
-			# Running as child from multiprocessing
+			# Running as child from multiprocessing under Windows
 			lockbasename += ".mp-worker-"
 			process_num = 1
 			while os.path.isfile(os.path.join(confighome,

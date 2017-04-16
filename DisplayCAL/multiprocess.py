@@ -2,10 +2,12 @@
 
 from Queue import Empty
 import atexit
+import logging
 import math
 import multiprocessing as mp
 import multiprocessing.managers
 import multiprocessing.pool
+import sys
 import threading
 
 from log import safe_print
@@ -120,11 +122,22 @@ class WorkerFunc(object):
 		finally:
 			progress_queue.put(EOFError())
 			safe_print("Exiting worker process",  mp.current_process().name)
-			if mp.current_process().name != "MainProcess":
-				atexit.register(lambda: safe_print("Ran worker process exit "
-												   "handlers"))
-				safe_print("Running worker process exit handlers")
-				atexit._run_exitfuncs()
+			if (sys.platform == "win32" and
+				mp.current_process().name != "MainProcess"):
+				# Exit handlers registered with atexit will not normally run
+				# when a multiprocessing subprocess exits. We are only
+				# interested in our own exit handler though.
+				# Note all of this only applies to Windows, as it doesn't have
+				# fork().
+				for func, targs, kargs in atexit._exithandlers:
+					# Find our lockfile removal exit handler
+					if (targs and isinstance(targs[0], basestring) and
+						targs[0].endswith(".lock")):
+						safe_print("Removing lockfile", targs[0])
+						func(*targs, **kargs)
+				# Logging is normally shutdown by atexit, as well. Do
+				# it explicitly instead.
+				logging.shutdown()
 
 
 class Mapper(object):
