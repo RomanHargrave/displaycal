@@ -38,12 +38,11 @@ def Property(func):
 	return property(**func())
 
 
-def _mp_generate_B2A_clut(process_index, idata_queue, odata1_queue, odata2_queue,
+def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 						  profile_filename, intent, direction, pcs,
-						  use_cam_clipping, clutres, step, threshold, threshold2,
-						  start, end, interp, Linterp, m2, XYZbp, XYZwp, bpc,
-						  progress_queue, thread_abort_event,
-						  process_finished_event, abortmessage="Aborted"):
+						  use_cam_clipping, clutres, step, threshold,
+						  threshold2, interp, Linterp, m2, XYZbp, XYZwp, bpc,
+						  abortmessage="Aborted"):
 	"""
 	B2A cLUT generation worker
 	
@@ -69,12 +68,13 @@ def _mp_generate_B2A_clut(process_index, idata_queue, odata1_queue, odata2_queue
 							 use_cam_clipping=True)
 		prevperc = 0
 		count = 0
-		for a in xrange(start, end):
+		chunksize = len(chunk)
+		for a in chunk:
 			if thread_abort_event.is_set():
 				if use_cam_clipping:
 					xicclu2.exit()
 				xicclu1.exit()
-				idata_queue.put(Info(abortmessage))
+				return Info(abortmessage)
 				return
 			for b in xrange(clutres):
 				for c in xrange(clutres):
@@ -111,27 +111,25 @@ def _mp_generate_B2A_clut(process_index, idata_queue, odata1_queue, odata2_queue
 											 c > threshold2):
 						xicclu2(v)
 					count += 1.0
-				perc = round(count / ((end - start) * clutres ** 2) * 100)
+				perc = round(count / (chunksize * clutres ** 2) * 100)
 				if progress_queue and perc > prevperc:
 					progress_queue.put(perc - prevperc)
 					prevperc = perc
-		idata_queue.put((process_index, idata))
 		if use_cam_clipping:
 			xicclu2.exit()
-			data = xicclu2.get()
-			odata2_queue.put((process_index, data))
+			data2 = xicclu2.get()
+		else:
+			data2 = []
 		xicclu1.exit()
-		data = xicclu1.get()
-		odata1_queue.put((process_index, data))
+		data1 = xicclu1.get()
+		return idata, data1, data2
 	except Exception, exception:
 		safe_print(traceback.format_exc())
-		idata_queue.put(exception)
+		return exception
 	finally:
-		process_finished_event.set()
+		progress_queue.put(EOFError())
 		if "--multiprocessing-fork" in sys.argv[1:]:
 			atexit._run_exitfuncs()
-		else:
-			progress_queue.put(EOFError())
 
 
 def check_argyll_bin(paths=None):
@@ -307,7 +305,8 @@ def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 class ThreadAbort(object):
 
 	def __init__(self):
-		self.event = mp.Event()
+		self.manager = mp.Manager()
+		self.event = self.manager.Event()
 
 	def __nonzero__(self):
 		return self.event.is_set()

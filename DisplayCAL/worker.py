@@ -13,7 +13,6 @@ import multiprocessing as mp
 import os
 import pipes
 import platform
-import Queue as queues
 import re
 import socket
 import shutil
@@ -89,11 +88,11 @@ from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
 						  iccprofiles_display_home)
 from edid import WMIError, get_edid
-from fakethread import FakeQueue, FakeThread
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
+from multiprocess import pool_map
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
@@ -5250,15 +5249,8 @@ while 1:
 		do_lookup = True
 		if do_lookup:
 			# Generate inverse table lookup input values
+
 			num_workers = min(max(mp.cpu_count(), 1), clutres)
-			if num_workers > 1:
-				worker_cls = mp.Process
-				Queue = mp.Queue
-			else:
-				worker_cls = FakeThread
-				Queue = FakeQueue
-			processes = []
-			start = 0
 
 			if logfile:
 				logfile.write("Generating %s%i table lookup input values...\n" %
@@ -5272,91 +5264,22 @@ while 1:
 			idata = []
 			odata1 = []
 			odata2 = []
-			idata_queue = Queue()
-			odata1_queue = Queue()
-			odata2_queue = Queue()
 			
 			threshold = int((clutres - 1) * 0.75)
 			threshold2 = int((clutres - 1) / 3)
-
-			progress_queue = Queue()
-
-			if logfile:
-				def progress_logger(num_workers):
-					eof_count = 0
-					progress = 0
-					while True:
-						try:
-							inc = progress_queue.get(True, 0.1)
-							if isinstance(inc, Exception):
-								raise inc
-							progress += inc
-						except queues.Empty:
-							continue
-						except IOError:
-							break
-						except EOFError:
-							eof_count += 1
-							if eof_count == num_workers:
-								break
-						logfile.write("\r%i%%" % (progress / 100.0 *
-												  (100.0 / num_workers)))
-
-				threading.Thread(target=progress_logger, args=(num_workers, ),
-								 name="ProcessProgressLogger").start()
-
-			for process_index in xrange(num_workers):
-				end = int(math.ceil(float(clutres) / num_workers *
-									(process_index + 1)))
-				process_finished_event = mp.Event()
-				p = worker_cls(target=_mp_generate_B2A_clut,
-							   args=(process_index, idata_queue, odata1_queue,
-									 odata2_queue, profile.fileName, intent,
-									 direction, pcs, use_cam_clipping, clutres,
-									 step, threshold, threshold2, start, end,
-									 interp, Linterp, m2, XYZbp, XYZwp, bpc,
-									 progress_queue, self.thread_abort.event,
-									 process_finished_event,
-									 lang.getstr("aborted")))
-				processes.append((p, process_finished_event))
-				if logfile and debug:
-					logfile.write("Starting worker process %s\n" % p.name)
-				p.start()
-				start = end
-
-			# Wait for processes to finish
-			for p, process_finished_event in processes:
-				process_finished_event.wait()
-				if p.is_alive():
-					if logfile and debug:
-						logfile.write("\n%s is still alive!" % p.name)
-					##p.terminate()
-
-			progress_queue.close()
-			progress_queue.join_thread()
-
-			exception = None
-			for queue_out, queue, data in [([], idata_queue, idata),
-										   ([], odata1_queue, odata1),
-										   ([], odata2_queue, odata2)]:
-				for i in xrange(num_workers):
-					try:
-						incoming = queue.get(True, 0 if exception else None)
-					except queues.Empty:
-						continue
-					if isinstance(incoming, Exception):
-						exception = incoming
-						continue
-					queue_out.append(incoming)
-				if not exception:
-					# Make sure it doesn't matter in which order processes finished
-					queue_out.sort()
-					for process_index, values in queue_out:
-						data.extend(values)
-				queue.close()
-				queue.join_thread()
-			if exception:
-				raise exception
+			
+			for slices in pool_map(_mp_generate_B2A_clut,
+											 range(clutres),
+											 (profile.fileName, intent,
+											  direction, pcs, use_cam_clipping,
+											  clutres, step, threshold,
+											  threshold2, interp, Linterp, m2,
+											  XYZbp, XYZwp, bpc,
+											  lang.getstr("aborted")), {}, None,
+											 self.thread_abort.event,
+											 logfile):
+				for i, data in enumerate((idata, odata1, odata2)):
+					data.extend(slices[i])
 
 			if logfile:
 				logfile.write("\n")

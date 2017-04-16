@@ -8,14 +8,10 @@ import ctypes
 import datetime
 import locale
 import math
-import multiprocessing as mp
 import os
-import Queue as queues
 import re
 import struct
 import sys
-import threading
-import traceback
 import warnings
 import zlib
 from itertools import izip, imap
@@ -51,7 +47,6 @@ import imfile
 from colormath import NumberTuple
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
-from fakethread import FakeQueue, FakeThread
 from ordereddict import OrderedDict
 try:
 	from log import safe_print
@@ -2338,9 +2333,8 @@ def _blend_blackpoint(pcs, row, bp_in, bp_out, wp=None, use_bpc=False,
 	return row
 
 
-def _mp_apply_black(process_index, data_queue, pcs, blocks, bp, bp_out, wp,
-					nonzero_bp, use_bpc, weight, D50, interp, rinterp,
-					progress_queue, thread_abort_event, process_finished_event,
+def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
+					wp, nonzero_bp, use_bpc, weight, D50, interp, rinterp,
 					abortmessage="Aborted"):
 	"""
 	Worker for applying black point compensation or offset
@@ -2352,10 +2346,10 @@ def _mp_apply_black(process_index, data_queue, pcs, blocks, bp, bp_out, wp,
 		from debughelpers import Info
 		prevperc = 0
 		count = 0
+		numblocks = len(blocks)
 		for block in blocks:
-			if thread_abort_event.is_set():
-				data_queue.put(Info(abortmessage))
-				return
+			if thread_abort_event and thread_abort_event.is_set():
+				return Info(abortmessage)
 			for i, row in enumerate(block):
 				if not use_bpc or nonzero_bp:
 					for column, value in enumerate(row):
@@ -2369,20 +2363,19 @@ def _mp_apply_black(process_index, data_queue, pcs, blocks, bp, bp_out, wp,
 						row[column] = rinterp[column](value)
 				block[i] = row
 			count += 1.0
-			perc = round(count / len(blocks) * 100)
+			perc = round(count / numblocks * 100)
 			if progress_queue and perc > prevperc:
 				progress_queue.put(perc - prevperc)
 				prevperc = perc
-		data_queue.put((process_index, blocks))
+		return blocks
 	except Exception, exception:
+		import traceback
 		safe_print(traceback.format_exc())
-		data_queue.put(exception)
+		return exception
 	finally:
-		process_finished_event.set()
+		progress_queue.put(EOFError())
 		if "--multiprocessing-fork" in sys.argv[1:]:
 			atexit._run_exitfuncs()
-		else:
-			progress_queue.put(EOFError())
 
 
 def hexrepr(bytestring, mapping=None):
@@ -2828,93 +2821,13 @@ class LUT16Type(ICCProfileTag):
 		if [round(v * 32768) for v in bp] != [round(v * 32768) for v in bp_out]:
 			D50 = colormath.get_whitepoint("D50")
 
-			# Blend original black to zero
-			num_workers = min(max(mp.cpu_count(), 1), len(self.clut))
-			if num_workers > 1:
-				worker_cls = mp.Process
-				Queue = mp.Queue
-			else:
-				worker_cls = FakeThread
-				Queue = FakeQueue
-			processes = []
-			start = 0
+			from multiprocess import pool_map
 
-			progress_queue = Queue()
-
-			if logfile:
-				def progress_logger(num_workers):
-					eof_count = 0
-					progress = 0
-					while True:
-						try:
-							inc = progress_queue.get(True, 0.1)
-							if isinstance(inc, Exception):
-								raise inc
-							progress += inc
-						except queues.Empty:
-							continue
-						except IOError:
-							break
-						except EOFError:
-							eof_count += 1
-							if eof_count == num_workers:
-								break
-						logfile.write("\r%i%%" % (progress / 100.0 *
-												  (100.0 / num_workers)))
-
-				threading.Thread(target=progress_logger, args=(num_workers, ),
-								 name="ProcessProgressLogger").start()
-
-			data_queue = Queue()
-
-			for process_index in xrange(num_workers):
-				end = int(math.ceil(float(len(self.clut)) / num_workers *
-									(process_index + 1)))
-				process_finished_event = mp.Event()
-				p = worker_cls(target=_mp_apply_black,
-							   args=(process_index, data_queue, pcs,
-									 self.clut[start:end], bp, bp_out, wp,
-									 nonzero_bp, use_bpc, weight, D50, interp,
-									 rinterp, progress_queue, thread_abort_event,
-									 process_finished_event, abortmessage))
-				processes.append((p, process_finished_event))
-				if debug:
-					safe_print("Starting worker process %s\n" % p.name)
-				p.start()
-				start = end
-
-			# Wait for processes to finish
-			for p, process_finished_event in processes:
-				process_finished_event.wait()
-				if p.is_alive():
-					if debug:
-						safe_print("%s is still alive!" % p.name)
-					##p.terminate()
-
-			progress_queue.close()
-			progress_queue.join_thread()
-
-			exception = None
-			for queue_out, queue, data in [([], data_queue, [])]:
-				for i in xrange(num_workers):
-					try:
-						incoming = queue.get(True, 0 if exception else None)
-					except queues.Empty:
-						continue
-					if isinstance(incoming, Exception):
-						exception = incoming
-						continue
-					queue_out.append(incoming)
-				if not exception:
-					# Make sure it doesn't matter in which order processes finished
-					queue_out.sort()
-					for process_index, values in queue_out:
-						data.extend(values)
-				queue.close()
-				queue.join_thread()
-			if exception:
-				raise exception
-			self.clut = data
+			self.clut = sum(pool_map(_mp_apply_black, self.clut,
+									 (pcs, bp, bp_out, wp, nonzero_bp, use_bpc,
+									  weight, D50, interp, rinterp,
+									  abortmessage), {}, None,
+									  thread_abort_event, logfile), [])
 
 			#if pcs != "Lab" and nonzero_bp:
 				## Apply black offset to output curves
