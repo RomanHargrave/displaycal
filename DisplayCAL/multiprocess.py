@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from Queue import Empty
+import atexit
 import math
 import multiprocessing as mp
 import multiprocessing.managers
 import multiprocessing.pool
 import threading
+
+from log import safe_print
 
 
 manager = None
@@ -78,9 +81,10 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 	chunksize = float(len(data_in)) / num_workers
 	for i in xrange(num_workers):
 		end = int(math.ceil(chunksize * (i + 1)))
-		results.append(pool.apply_async(func, (data_in[start:end],
-											   thread_abort.event,
-											   progress_queue) + args, kwds))
+		results.append(pool.apply_async(WorkerFunc(func), (data_in[start:end],
+														   thread_abort.event,
+														   progress_queue) +
+														   args, kwds))
 		start = end
 	pool.close()
 
@@ -100,6 +104,29 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 	return data_out
 
 
+class WorkerFunc(object):
+    
+	def __init__(self, func):
+		self.func = func
+
+	def __call__(self, data, thread_abort_event, progress_queue, *args, **kwds):
+		try:
+			return self.func(data, thread_abort_event, progress_queue, *args,
+							 **kwds)
+		except Exception, exception:
+			import traceback
+			safe_print(traceback.format_exc())
+			return exception
+		finally:
+			progress_queue.put(EOFError())
+			safe_print("Exiting worker process",  mp.current_process().name)
+			if mp.current_process().name != "MainProcess":
+				atexit.register(lambda: safe_print("Ran worker process exit "
+												   "handlers"))
+				safe_print("Running worker process exit handlers")
+				atexit._run_exitfuncs()
+
+
 class Mapper(object):
 
 	"""
@@ -110,7 +137,7 @@ class Mapper(object):
 	"""
     
 	def __init__(self, func, *args, **kwds):
-		self.func = func
+		self.func = WorkerFunc(func)
 		self.args = args
 		self.kwds = kwds
 

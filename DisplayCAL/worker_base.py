@@ -54,82 +54,73 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 		safe_print("numpy?", "numpy" in str(sys.modules.keys()))
 		safe_print("wx?", "wx" in str(sys.modules.keys()))
 		safe_print("x3dom?", "x3dom" in str(sys.modules.keys()))
-	try:
-		if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
-			config.initcfg()
-		idata = []
-		abmaxval = 255 + (255 / 256.0)
-		profile = ICCP.ICCProfile(profile_filename)
-		xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
-		if use_cam_clipping:
-			# Use CAM Jab for clipping for cLUT grid points after a given
-			# threshold
-			xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
-							 use_cam_clipping=True)
-		prevperc = 0
-		count = 0
-		chunksize = len(chunk)
-		for a in chunk:
-			if thread_abort_event.is_set():
-				if use_cam_clipping:
-					xicclu2.exit()
-				xicclu1.exit()
-				return Info(abortmessage)
-				return
-			for b in xrange(clutres):
-				for c in xrange(clutres):
-					d, e, f = [v * step for v in (a, b, c)]
-					if profile.connectionColorSpace == "XYZ":
-						# Apply TRC to XYZ values to distribute them optimally
-						# across cLUT grid points.
-						XYZ = [interp[i](v) for i, v in enumerate((d, e, f))]
-						##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
-						# Scale into device colorspace
-						v = m2.inverted() * XYZ
-						if bpc and XYZbp != [0, 0, 0]:
-							v = colormath.blend_blackpoint(v[0], v[1], v[2],
-													None, XYZbp)
-						##print "%3.6f %3.6f %3.6f" % tuple(v)
-						##raw_input()
-						if intent == "a":
-							v = colormath.adapt(*v + [XYZwp,
-													  profile.tags.wtpt.ir.values()])
-					else:
-						# Legacy CIELAB
-						L = Linterp(d * 100)
-						v = L, -128 + e * abmaxval, -128 + f * abmaxval
-					idata.append("%.6f %.6f %.6f" % tuple(v))
-					# Lookup CIE -> device values through profile using xicclu
-					if not use_cam_clipping or (pcs == "x" and
-												a <= threshold and
-												b <= threshold and
-												c <= threshold):
-						xicclu1(v)
-					if use_cam_clipping and (pcs == "l" or
-											 a > threshold2 or
-											 b > threshold2 or
-											 c > threshold2):
-						xicclu2(v)
-					count += 1.0
-				perc = round(count / (chunksize * clutres ** 2) * 100)
-				if progress_queue and perc > prevperc:
-					progress_queue.put(perc - prevperc)
-					prevperc = perc
-		if use_cam_clipping:
-			xicclu2.exit()
-			data2 = xicclu2.get()
-		else:
-			data2 = []
-		xicclu1.exit()
-		data1 = xicclu1.get()
-		return idata, data1, data2
-	except Exception, exception:
-		safe_print(traceback.format_exc())
-		return exception
-	finally:
-		progress_queue.put(EOFError())
-		if "--multiprocessing-fork" in sys.argv[1:]:
-			atexit._run_exitfuncs()
+	if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
+		config.initcfg()
+	idata = []
+	abmaxval = 255 + (255 / 256.0)
+	profile = ICCP.ICCProfile(profile_filename)
+	xicclu1 = Xicclu(profile, intent, direction, "n", pcs, 100)
+	if use_cam_clipping:
+		# Use CAM Jab for clipping for cLUT grid points after a given
+		# threshold
+		xicclu2 = Xicclu(profile, intent, direction, "n", pcs, 100,
+						 use_cam_clipping=True)
+	prevperc = 0
+	count = 0
+	chunksize = len(chunk)
+	for a in chunk:
+		if thread_abort_event.is_set():
+			if use_cam_clipping:
+				xicclu2.exit()
+			xicclu1.exit()
+			return Info(abortmessage)
+		for b in xrange(clutres):
+			for c in xrange(clutres):
+				d, e, f = [v * step for v in (a, b, c)]
+				if profile.connectionColorSpace == "XYZ":
+					# Apply TRC to XYZ values to distribute them optimally
+					# across cLUT grid points.
+					XYZ = [interp[i](v) for i, v in enumerate((d, e, f))]
+					##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
+					# Scale into device colorspace
+					v = m2.inverted() * XYZ
+					if bpc and XYZbp != [0, 0, 0]:
+						v = colormath.blend_blackpoint(v[0], v[1], v[2],
+												None, XYZbp)
+					##print "%3.6f %3.6f %3.6f" % tuple(v)
+					##raw_input()
+					if intent == "a":
+						v = colormath.adapt(*v + [XYZwp,
+												  profile.tags.wtpt.ir.values()])
+				else:
+					# Legacy CIELAB
+					L = Linterp(d * 100)
+					v = L, -128 + e * abmaxval, -128 + f * abmaxval
+				idata.append("%.6f %.6f %.6f" % tuple(v))
+				# Lookup CIE -> device values through profile using xicclu
+				if not use_cam_clipping or (pcs == "x" and
+											a <= threshold and
+											b <= threshold and
+											c <= threshold):
+					xicclu1(v)
+				if use_cam_clipping and (pcs == "l" or
+										 a > threshold2 or
+										 b > threshold2 or
+										 c > threshold2):
+					xicclu2(v)
+				count += 1.0
+			perc = round(count / (chunksize * clutres ** 2) * 100)
+			if progress_queue and perc > prevperc:
+				progress_queue.put(perc - prevperc)
+				prevperc = perc
+	if use_cam_clipping:
+		xicclu2.exit()
+		data2 = xicclu2.get()
+	else:
+		data2 = []
+	xicclu1.exit()
+	data1 = xicclu1.get()
+	return idata, data1, data2
 
 
 def check_argyll_bin(paths=None):

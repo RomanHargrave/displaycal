@@ -2342,52 +2342,43 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 	This should be spawned as a multiprocessing process
 	
 	"""
-	try:
-		from debughelpers import Info
-		for interp_tuple in (interp, rinterp):
-			if interp_tuple:
-				# Use numpy for speed
-				interp_list = list(interp_tuple)
-				for i, ointerp in enumerate(interp_list):
-					interp_list[i] = colormath.Interp(ointerp.xp, ointerp.fp,
-													  use_numpy=True)
-					interp_list[i].lookup = ointerp.lookup
-				if interp_tuple is interp:
-					interp = interp_list
-				else:
-					rinterp = interp_list
-		prevperc = 0
-		count = 0
-		numblocks = len(blocks)
-		for block in blocks:
-			if thread_abort_event and thread_abort_event.is_set():
-				return Info(abortmessage)
-			for i, row in enumerate(block):
-				if not use_bpc or nonzero_bp:
-					for column, value in enumerate(row):
-						row[column] = interp[column](value)
-				row = _blend_blackpoint(pcs, row, bp,
-										bp_out,
-										wp if use_bpc else None,
-										use_bpc, weight, D50)
-				if not use_bpc or nonzero_bp:
-					for column, value in enumerate(row):
-						row[column] = rinterp[column](value)
-				block[i] = row
-			count += 1.0
-			perc = round(count / numblocks * 100)
-			if progress_queue and perc > prevperc:
-				progress_queue.put(perc - prevperc)
-				prevperc = perc
-		return blocks
-	except Exception, exception:
-		import traceback
-		safe_print(traceback.format_exc())
-		return exception
-	finally:
-		progress_queue.put(EOFError())
-		if "--multiprocessing-fork" in sys.argv[1:]:
-			atexit._run_exitfuncs()
+	from debughelpers import Info
+	for interp_tuple in (interp, rinterp):
+		if interp_tuple:
+			# Use numpy for speed
+			interp_list = list(interp_tuple)
+			for i, ointerp in enumerate(interp_list):
+				interp_list[i] = colormath.Interp(ointerp.xp, ointerp.fp,
+												  use_numpy=True)
+				interp_list[i].lookup = ointerp.lookup
+			if interp_tuple is interp:
+				interp = interp_list
+			else:
+				rinterp = interp_list
+	prevperc = 0
+	count = 0
+	numblocks = len(blocks)
+	for block in blocks:
+		if thread_abort_event and thread_abort_event.is_set():
+			return Info(abortmessage)
+		for i, row in enumerate(block):
+			if not use_bpc or nonzero_bp:
+				for column, value in enumerate(row):
+					row[column] = interp[column](value)
+			row = _blend_blackpoint(pcs, row, bp,
+									bp_out,
+									wp if use_bpc else None,
+									use_bpc, weight, D50)
+			if not use_bpc or nonzero_bp:
+				for column, value in enumerate(row):
+					row[column] = rinterp[column](value)
+			block[i] = row
+		count += 1.0
+		perc = round(count / numblocks * 100)
+		if progress_queue and perc > prevperc:
+			progress_queue.put(perc - prevperc)
+			prevperc = perc
+	return blocks
 
 
 def hexrepr(bytestring, mapping=None):
