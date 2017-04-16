@@ -293,9 +293,10 @@ def main(module=None):
 
 def _exit(lockfilename, port):
 	for process in mp.active_children():
-		safe_print("Terminating zombie process", process.name)
-		process.terminate()
-		safe_print(process.name, "terminated")
+		if not "Manager" in process.name:
+			safe_print("Terminating zombie process", process.name)
+			process.terminate()
+			safe_print(process.name, "terminated")
 	for thread in threading.enumerate():
 		if (thread.isAlive() and thread is not threading.currentThread() and
 			not thread.isDaemon()):
