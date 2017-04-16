@@ -457,8 +457,15 @@ def safe_basestring(obj):
 				obj = str(obj)
 			except UnicodeEncodeError:
 				obj = repr(obj)
-	if isinstance(oobj, Exception) and oobj.__class__.__name__ in dir(exceptions):
-		obj = obj[0].capitalize() + obj[1:]
+	if isinstance(oobj, Exception):
+		if obj and oobj.__class__.__name__ in dir(exceptions):
+			obj = obj[0].capitalize() + obj[1:]
+		module = getattr(oobj, "__module__", "")
+		package = safe_basestring.__module__.split(".")[0]  # Our own package
+		if not module.startswith(package + "."):
+			clspth = ".".join(filter(None, [module, oobj.__class__.__name__]))
+			if not obj.startswith(clspth + ":") and obj != clspth:
+				obj = ": ".join(filter(None, [clspth, obj]))
 	return obj
 
 
