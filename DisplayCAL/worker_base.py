@@ -305,8 +305,7 @@ def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 class ThreadAbort(object):
 
 	def __init__(self):
-		self.manager = mp.Manager()
-		self.event = self.manager.Event()
+		self.event = mp.Event()
 
 	def __nonzero__(self):
 		return self.event.is_set()

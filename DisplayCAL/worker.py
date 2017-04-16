@@ -1864,7 +1864,7 @@ class Worker(WorkerBase):
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
 			profile1.apply_black_offset(XYZbp, logfiles=self.get_logfiles(),
-										thread_abort_event=self.thread_abort.event,
+										thread_abort=self.thread_abort,
 										abortmessage=lang.getstr("aborted"))
 			return
 		if gamma_type in ("b", "g"):
@@ -5276,7 +5276,7 @@ while 1:
 											  threshold2, interp, Linterp, m2,
 											  XYZbp, XYZwp, bpc,
 											  lang.getstr("aborted")), {}, None,
-											 self.thread_abort.event,
+											 self.thread_abort,
 											 logfile):
 				for i, data in enumerate((idata, odata1, odata2)):
 					data.extend(slices[i])
@@ -7247,7 +7247,7 @@ usage: spotread [-options] [logfile]
 							try:
 								profile.tags[table].apply_black_offset((0, 0, 0),
 														self.get_logfiles(),
-														self.thread_abort.event,
+														self.thread_abort,
 														lang.getstr("aborted"))
 							except Exception, exception:
 								result = exception
@@ -7855,10 +7855,12 @@ END_DATA""")[0]
 								   % tableno)
 					try:
 						table.apply_black_offset((0, 0, 0), logfiles,
-												 self.thread_abort.event,
+												 self.thread_abort,
 												 lang.getstr("aborted"))
 					except Exception, exception:
 						return exception
+					finally:
+						logfiles.write("\n")
 					bpc_applied = True
 				elif bpc:
 					# BPC not needed, copy existing B2A

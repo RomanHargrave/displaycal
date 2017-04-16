@@ -2786,19 +2786,19 @@ class LUT16Type(ICCProfileTag):
 		self._n = (tagData and uInt16Number(tagData[48:50])) or 0  # Input channel entries count
 		self._m = (tagData and uInt16Number(tagData[50:52])) or 0  # Output channel entries count
 
-	def apply_black_offset(self, XYZbp, logfile=None, thread_abort_event=None,
+	def apply_black_offset(self, XYZbp, logfile=None, thread_abort=None,
 						   abortmessage="Aborted"):
 		# Apply only the black point blending portion of BT.1886 mapping
-		self._apply_black(XYZbp, False, False, logfile, thread_abort_event,
+		self._apply_black(XYZbp, False, False, logfile, thread_abort,
 						  abortmessage)
 
 	def apply_bpc(self, bp_out=(0, 0, 0), weight=False, logfile=None,
-				  thread_abort_event=None, abortmessage="Aborted"):
+				  thread_abort=None, abortmessage="Aborted"):
 		return self._apply_black(bp_out, True, weight, logfile,
-								 thread_abort_event, abortmessage)
+								 thread_abort, abortmessage)
 
 	def _apply_black(self, bp_out, use_bpc=False, weight=False, logfile=None,
-					 thread_abort_event=None, abortmessage="Aborted"):
+					 thread_abort=None, abortmessage="Aborted"):
 		pcs = self.profile and self.profile.connectionColorSpace
 		bp_row = list(self.clut[0][0])
 		wp_row = list(self.clut[-1][-1])
@@ -2839,7 +2839,7 @@ class LUT16Type(ICCProfileTag):
 									 (pcs, bp, bp_out, wp, nonzero_bp, use_bpc,
 									  weight, D50, interp, rinterp,
 									  abortmessage), {}, None,
-									  thread_abort_event, logfile), [])
+									  thread_abort, logfile), [])
 
 			#if pcs != "Lab" and nonzero_bp:
 				## Apply black offset to output curves
@@ -5534,14 +5534,14 @@ class ICCProfile:
 
 	def apply_black_offset(self, XYZbp, power=40.0, include_A2B=True,
 						   set_blackpoint=True, logfiles=None,
-						   thread_abort_event=None, abortmessage="Aborted"):
+						   thread_abort=None, abortmessage="Aborted"):
 		# Apply only the black point blending portion of BT.1886 mapping
 		if include_A2B:
 			tables = []
 			for i in xrange(3):
 				a2b = self.tags.get("A2B%i" % i)
 				if isinstance(a2b, LUT16Type) and not a2b in tables:
-					a2b.apply_black_offset(XYZbp, logfiles, thread_abort_event,
+					a2b.apply_black_offset(XYZbp, logfiles, thread_abort,
 										   abortmessage)
 					tables.append(a2b)
 		if set_blackpoint:

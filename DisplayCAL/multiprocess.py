@@ -8,8 +8,11 @@ import multiprocessing.pool
 import threading
 
 
+manager = None
+
+
 def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
-			 abort_event=None, logfile=None):
+			 thread_abort=None, logfile=None):
 	"""
 	Wrapper around multiprocessing.Pool.apply_async
 
@@ -20,21 +23,28 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 	percentage into the queue which is the first argument to 'func'.
 	
 	"""
+	global manager
 
 	if num_workers is None:
-		num_workers = min(max(mp.cpu_count(), 1), len(data_in))
+		num_workers = mp.cpu_count()
+	num_workers = max(min(num_workers, len(data_in)), 1)
 
 	if num_workers > 1:
 		Pool = NonDaemonicPool
-		if hasattr(abort_event, "manager"):
-			manager = abort_event.manager
-		else:
+		if not manager:
 			manager = mp.Manager()
+		if thread_abort is not None and not isinstance(thread_abort.event,
+													   mp.managers.EventProxy):
+			# Replace the event with a managed instance that is compatible
+			# with pool
+			event = thread_abort.event
+			thread_abort.event = manager.Event()
+			if event.is_set():
+				thread_abort.event.set()
 		Queue = manager.Queue
 	else:
 		# Do it all in in the main thread of the current instance
 		Pool = FakePool
-		manager = None
 		Queue = FakeQueue
 
 	progress_queue = Queue()
@@ -68,7 +78,8 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 	chunksize = float(len(data_in)) / num_workers
 	for i in xrange(num_workers):
 		end = int(math.ceil(chunksize * (i + 1)))
-		results.append(pool.apply_async(func, (data_in[start:end], abort_event,
+		results.append(pool.apply_async(func, (data_in[start:end],
+											   thread_abort.event,
 											   progress_queue) + args, kwds))
 		start = end
 	pool.close()
@@ -82,9 +93,6 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 			exception = result
 			continue
 		data_out.append(result)
-
-	if manager:
-		manager.shutdown()
 
 	if exception:
 		raise exception
