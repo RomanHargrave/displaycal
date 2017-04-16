@@ -201,6 +201,9 @@ class FakePool(object):
 	def map(self, func, iterable, chunksize=None):
 		return func(iterable)
 
+	def terminate(self):
+		pass
+
 
 class FakeQueue(object):
 
