@@ -2344,6 +2344,18 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 	"""
 	try:
 		from debughelpers import Info
+		for interp_tuple in (interp, rinterp):
+			if interp_tuple:
+				# Use numpy for speed
+				interp_list = list(interp_tuple)
+				for i, ointerp in enumerate(interp_list):
+					interp_list[i] = colormath.Interp(ointerp.xp, ointerp.fp,
+													  use_numpy=True)
+					interp_list[i].lookup = ointerp.lookup
+				if interp_tuple is interp:
+					interp = interp_list
+				else:
+					rinterp = interp_list
 		prevperc = 0
 		count = 0
 		numblocks = len(blocks)

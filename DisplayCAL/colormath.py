@@ -2462,17 +2462,31 @@ class gam_fits(object):
 
 class Interp(object):
 
-	def __init__(self, xp, fp, left=None, right=None):
+	def __init__(self, xp, fp, left=None, right=None, use_numpy=False):
+		if use_numpy:
+			# Use numpy for speed
+			import numpy
+			xp = numpy.array(xp)
+			fp = numpy.array(fp)
+			self.numpy = numpy
 		self.xp = xp
 		self.fp = fp
 		self.left = left
 		self.right = right
 		self.lookup = {}
+		self.use_numpy = use_numpy
 
 	def __call__(self, x):
 		if not x in self.lookup:
-			self.lookup[x] = interp(x, self.xp, self.fp, self.left, self.right)
+			self.lookup[x] = self._interp(x)
 		return self.lookup[x]
+
+	def _interp(self, x):
+		if self.use_numpy:
+			return self.numpy.interp(x, self.xp, self.fp, self.left, self.right)
+		else:
+			return interp(x, self.xp, self.fp, self.left, self.right)
+		
 
 
 class BT1886(object):
