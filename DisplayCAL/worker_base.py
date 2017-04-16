@@ -3,7 +3,6 @@
 from __future__ import with_statement
 from binascii import hexlify
 import atexit
-import multiprocessing as mp
 import os
 import pipes
 import re
@@ -24,6 +23,7 @@ from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
 						  UnloggedWarning, Warn)
 from log import LogFile, safe_print
 from meta import name as appname
+from multiprocess import mp
 from options import debug, verbose
 from util_os import getenvu, quote_args, which
 from util_str import safe_basestring, safe_str, safe_unicode

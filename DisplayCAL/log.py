@@ -7,7 +7,6 @@ import atexit
 import glob
 import logging
 import logging.handlers
-import multiprocessing as mp
 import os
 import re
 import sys
@@ -15,6 +14,7 @@ import warnings
 from time import localtime, strftime, time
 
 from meta import name as appname, script2pywname
+from multiprocess import mp
 from options import debug
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO

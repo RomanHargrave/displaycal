@@ -9,7 +9,6 @@ import getpass
 import glob
 import httplib
 import math
-import multiprocessing as mp
 import os
 import pipes
 import platform
@@ -92,7 +91,7 @@ from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
-from multiprocess import pool_map
+from multiprocess import mp, pool_map
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,

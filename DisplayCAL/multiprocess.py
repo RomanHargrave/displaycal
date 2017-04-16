@@ -10,8 +10,6 @@ import multiprocessing.pool
 import sys
 import threading
 
-from log import safe_print
-
 
 manager = None
 
@@ -88,7 +86,6 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 														   progress_queue) +
 														   args, kwds))
 		start = end
-	pool.close()
 
 	# Get results
 	exception = None
@@ -99,6 +96,8 @@ def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
 			exception = result
 			continue
 		data_out.append(result)
+
+	pool.terminate()
 
 	if exception:
 		raise exception
@@ -112,6 +111,7 @@ class WorkerFunc(object):
 		self.func = func
 
 	def __call__(self, data, thread_abort_event, progress_queue, *args, **kwds):
+		from log import safe_print
 		try:
 			return self.func(data, thread_abort_event, progress_queue, *args,
 							 **kwds)

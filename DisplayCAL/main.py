@@ -6,7 +6,6 @@ import atexit
 import errno
 import logging
 import os
-import multiprocessing as mp
 import platform
 import socket
 import sys
@@ -34,6 +33,7 @@ from config import (autostart_home, confighome, datahome, enc, exe, exe_ext,
 from debughelpers import ResourceError, handle_error
 from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
+from multiprocess import mp
 from options import debug, verbose
 from util_str import safe_str, safe_unicode
 if sys.platform == "win32":
