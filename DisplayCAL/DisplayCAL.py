@@ -10516,11 +10516,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			for label in ("REFERENCE", "TARGET"):
 				filename = safe_unicode(ccxx.queryv1(label + "_FILENAME") or
 										"", "UTF-8")
-				algo, hash = (ccxx.queryv1(label + "_HASH") or "").split(":", 1)
-				if filename and os.path.isfile(filename) and algo in globals():
+				algo_hash = (ccxx.queryv1(label + "_HASH") or "").split(":", 1)
+				if (filename and os.path.isfile(filename) and
+					algo_hash[0] in globals()):
 					meas = str(CGATS.CGATS(filename)).strip()
 					# Check hash
-					if globals()[algo](meas).hexdigest() == hash:
+					if globals()[algo_hash[0]](meas).hexdigest() == algo_hash[-1]:
 						params[label.lower() + "_cgats"] = meas
 			if debug or test:
 				safe_print(params.keys())
