@@ -9132,7 +9132,8 @@ END_DATA""")[0]
 			return
 		pauseable = getattr(self, "pauseable", False)
 		fancy = fancy and getcfg("use_fancy_progress")
-		if resume and self._progress_wnd:
+		if (resume and self._progress_wnd and
+			self._progress_wnd in self._progress_dlgs.values()):
 			progress_wnd = self._progress_wnd
 		else:
 			key = (self.show_remaining_time, self.cancelable, fancy, parent,
