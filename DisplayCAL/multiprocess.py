@@ -11,9 +11,6 @@ import sys
 import threading
 
 
-manager = None
-
-
 def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 			   thread_abort=None, logfile=None):
 	"""
@@ -30,7 +27,6 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	percentage into the queue which is passed as the second argument to 'func'.
 	
 	"""
-	global manager
 
 	if num_workers is None:
 		num_workers = mp.cpu_count()
@@ -38,8 +34,7 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 
 	if num_workers > 1:
 		Pool = NonDaemonicPool
-		if not manager:
-			manager = mp.Manager()
+		manager = mp.Manager()
 		if thread_abort is not None and not isinstance(thread_abort.event,
 													   mp.managers.EventProxy):
 			# Replace the event with a managed instance that is compatible
@@ -48,10 +43,13 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 			thread_abort.event = manager.Event()
 			if event.is_set():
 				thread_abort.event.set()
+		else:
+			event = None
 		Queue = manager.Queue
 	else:
 		# Do it all in in the main thread of the current instance
 		Pool = FakePool
+		manager = None
 		Queue = FakeQueue
 
 	progress_queue = Queue()
@@ -102,6 +100,15 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 		data_out.append(result)
 
 	pool.terminate()
+
+	if manager:
+		# Need to shutdown manager so it doesn't hold files in use
+		if event:
+			# Restore original event
+			if thread_abort.event.is_set():
+				event.set()
+			thread_abort.event = event
+		manager.shutdown()
 
 	if exception:
 		raise exception
