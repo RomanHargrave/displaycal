@@ -774,6 +774,13 @@ class ReportFrame(BaseFrame):
 				seconds += math.ceil(oseconds / 60.0) * tpp[1]
 				# Assume white patch every n samples
 				seconds += math.ceil(opatches / 40.0) * tpp[1]
+			if (which in ("testchart", "chart") and
+				getcfg("testchart.patch_sequence") !=
+				"optimize_display_response_delay"):
+				# Roughly 650s patch response delay per 1000 patches
+				# reduced by roughly 1 / 1.75 through optimization.
+				seconds -= 0.65 / 1.75 * patches
+				seconds += 0.65 * patches
 			timestamp = gmtime(seconds)
 			hours = int(strftime("%H", timestamp))
 			minutes = int(strftime("%M", timestamp))

@@ -8009,6 +8009,11 @@ END_DATA""")[0]
 							args.extend(["-B4", "-b0"])
 						if self.argyll_version >= [1, 6, 2]:
 							args.append("-V1.6")
+						if (self.argyll_version >= [1, 7, 0] and
+							getcfg("testchart.patch_sequence") !=
+							"optimize_display_response_delay"):
+							# Don't re-order for minimum delay
+							args.append("-O")
 						args.extend(["-c", basename + profile_ext, basename])
 						result = self.exec_cmd(cmd, args)
 						self.pauseable = True
@@ -8097,6 +8102,32 @@ END_DATA""")[0]
 			else:
 				result = result2
 		return result
+
+	def ensure_patch_sequence(self, ti1_path):
+		"""
+		Ensure correct patch sequence of TI1 file
+		
+		Return either the changed CGATS object or the original path
+		
+		"""
+		if self.tempdir and ti1_path.startswith(self.tempdir):
+			# This should normally ALWAYS be the case
+			patch_sequence = getcfg("testchart.patch_sequence")
+			if patch_sequence != "optimize_display_response_delay":
+				# Need to re-order patches
+				ti1 = CGATS.CGATS(ti1_path)
+				if patch_sequence == "maximize_lightness_difference":
+					ti1.checkerboard()
+				elif patch_sequence == "maximize_rec709_luma_difference":
+					ti1.checkerboard(CGATS.sort_by_rec709_luma)
+				elif patch_sequence == "maximize_RGB_difference":
+					ti1.checkerboard(CGATS.sort_by_RGB_sum)
+				elif patch_sequence == "vary_RGB_difference":
+					ti1.checkerboard(CGATS.sort_by_RGB, None,
+									   split_grays=True, shift=True)
+				ti1.write()
+				return ti1
+		return ti1_path
 	
 	def parse(self, txt):
 		if not txt:
@@ -8373,6 +8404,9 @@ END_DATA""")[0]
 			# Remove AUTO_OPTIMIZE
 			if ti3[0].queryv1("AUTO_OPTIMIZE"):
 				ti3[0].remove_keyword("AUTO_OPTIMIZE")
+			# Patch sequence
+			ti3[0].add_keyword("PATCH_SEQUENCE",
+							   getcfg("testchart.patch_sequence").upper())
 			# Add 3D LUT options if set, else remove them
 			for keyword, cfgname in {"3DLUT_SOURCE_PROFILE":
 									 "3dlut.input.profile",
@@ -8772,9 +8806,10 @@ END_DATA""")[0]
 		if getcfg("extra_args.dispread").strip():
 			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)
+		cgats = self.ensure_patch_sequence(inoutfile + ".ti1")
 		if getattr(self, "terminal", None) and isinstance(self.terminal,
 														  UntetheredFrame):
-			result = self.set_terminal_cgats(inoutfile + ".ti1")
+			result = self.set_terminal_cgats(cgats)
 			if isinstance(result, Exception):
 				return result, None
 		return cmd, self.options_dispread + [inoutfile]
@@ -9358,13 +9393,15 @@ END_DATA""")[0]
 			writecfg()
 		self.argyll_version = parse_argyll_version_string(argyll_version_string)
 	
-	def set_terminal_cgats(self, cgats_filename):
-		try:
-			self.terminal.cgats = CGATS.CGATS(cgats_filename)
-		except (IOError, CGATS.CGATSInvalidError, 
-				CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-				CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-			return exception
+	def set_terminal_cgats(self, cgats):
+		if not isinstance(cgats, CGATS.CGATS):
+			try:
+				cgats = CGATS.CGATS(cgats)
+			except (IOError, CGATS.CGATSInvalidError, 
+					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
+					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
+				return exception
+		self.terminal.cgats = cgats
 	
 	def argyll_support_file_exists(self, name):
 		""" Check if named file exists in any of the known Argyll support
@@ -10996,11 +11033,12 @@ BEGIN_DATA
 
 	def measure_ti1(self, ti1_path, cal_path=None, colormanaged=False):
 		""" Measure a TI1 testchart file """
+		cgats = self.ensure_patch_sequence(ti1_path)
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 			if getcfg("extra_args.spotread").strip():
 				args += parse_argument_string(getcfg("extra_args.spotread"))
-			result = self.set_terminal_cgats(ti1_path)
+			result = self.set_terminal_cgats(cgats)
 			if isinstance(result, Exception):
 				return result
 		else:

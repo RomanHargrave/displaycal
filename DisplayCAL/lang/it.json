@@ -986,6 +986,7 @@
 		"*testchart.maximize_lightness_difference": "Maximize lightness difference",
 		"*testchart.maximize_rec709_luma_difference": "Maximize luma difference",
 		"*testchart.optimize_display_response_delay": "Minimize display response delay",
+		"*testchart.patch_sequence": "Patch sequence",
 		"*testchart.patches_amount": "Amount of patches",
 	"testchart.read": "Lettura testchart...",
 	"testchart.save_or_discard": "Il testchart non è stato salvato.",

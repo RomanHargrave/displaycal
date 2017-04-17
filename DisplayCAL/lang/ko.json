@@ -986,6 +986,7 @@
 		"*testchart.maximize_lightness_difference": "Maximize lightness difference",
 		"*testchart.maximize_rec709_luma_difference": "Maximize luma difference",
 		"*testchart.optimize_display_response_delay": "Minimize display response delay",
+		"*testchart.patch_sequence": "Patch sequence",
 	"testchart.patches_amount": "패치 규모",
 	"testchart.read": "테스트차트 읽는 중...",
 	"testchart.save_or_discard": "테스트차트가 저장되지 않았습니다.",

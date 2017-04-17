@@ -986,6 +986,7 @@
 	"testchart.maximize_lightness_difference": "Helligkeitsunterschiede maximieren",
 	"testchart.maximize_rec709_luma_difference": "Luma-Unterschiede maximieren",
 	"testchart.optimize_display_response_delay": "Anzeigegerät-Aktualisierungsverzögerung minimieren",
+	"testchart.patch_sequence": "Testfeld-Abfolge",
 	"testchart.patches_amount": "Feldanzahl",
 	"testchart.read": "Lese Testform...",
 	"testchart.save_or_discard": "Die Testform wurde nicht gesichert.",

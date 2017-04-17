@@ -1939,6 +1939,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				if not chart in self.default_testchart_names:
 					self.default_testchart_names.append(chart)
 
+		items = [lang.getstr("testchart." + v) for v in
+				 config.valid_values["testchart.patch_sequence"]]
+		self.testchart_patch_sequence_ctrl.Items = items
+
 		self.lut3d_setup_language()
 		self.mr_setup_language()
 
@@ -2608,6 +2612,10 @@ class MainFrame(ReportFrame, BaseFrame):
 													config.valid_values["testchart.auto_optimize"][-1])
 		self.testchart_patches_amount_ctrl.Bind(wx.EVT_SLIDER,
 			self.testchart_patches_amount_ctrl_handler)
+
+		# Patch sequence
+		self.Bind(wx.EVT_CHOICE, self.testchart_patch_sequence_ctrl_handler, 
+				  id=self.testchart_patch_sequence_ctrl.GetId())
 
 		# Profile quality
 		self.Bind(wx.EVT_SLIDER, self.profile_quality_ctrl_handler, 
@@ -3810,6 +3818,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.testchart_ctrl.Enable(enable_profile)
 		if self.set_default_testchart() is None:
 			self.set_testchart(update_profile_name=not update_profile_name)
+
+		self.testchart_patch_sequence_ctrl.SetStringSelection(
+			lang.getstr("testchart." + getcfg("testchart.patch_sequence")))
 
 		simple_gamma_model = self.get_profile_type() in ("g", "G")
 		if simple_gamma_model:
@@ -9028,7 +9039,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.black_point_compensation_cb,
 					 self.profile_type_label,
 					 self.profile_type_ctrl,
-					 self.gamap_btn):
+					 self.gamap_btn,
+					 # Patch sequence
+					 self.testchart_patch_sequence_label,
+					 self.testchart_patch_sequence_ctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_options)
 		self.whitepoint_colortemp_locus_label.Show(show_advanced_options and
@@ -12822,6 +12836,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_estimated_measurement_time("testchart")
 		self.update_profile_name()
 
+	def testchart_patch_sequence_ctrl_handler(self, event):
+		sel = self.testchart_patch_sequence_ctrl.Selection
+		setcfg("testchart.patch_sequence",
+			   config.valid_values["testchart.patch_sequence"][sel])
+		self.profile_settings_changed()
+		self.update_estimated_measurement_time("testchart")
+
 	def create_testchart_btn_handler(self, event):
 		if not hasattr(self, "tcframe"):
 			self.init_tcframe()
@@ -13664,6 +13685,8 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "measure.display_settle_time_mult",
 											 "AUTO_OPTIMIZE":
 											 "testchart.auto_optimize",
+											 "PATCH_SEQUENCE":
+											 "testchart.patch_sequence",
 											 "3DLUT_SOURCE_PROFILE":
 											 "3dlut.input.profile",
 											 "3DLUT_TRC":
@@ -13726,6 +13749,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						elif cfgvalue is not None:
 							if keyword == "AUTO_OPTIMIZE" and cfgvalue:
 								setcfg("testchart.file", "auto")
+							elif keyword == "PATCH_SEQUENCE":
+								cfgvalue = cfgvalue.lower().replace("_rgb_",
+																	"_RGB_")
 							elif keyword == "3DLUT_GAMMA":
 								try:
 									cfgvalue = float(cfgvalue)

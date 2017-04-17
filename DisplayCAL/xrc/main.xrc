@@ -1286,6 +1286,22 @@
                                 <object class="spacer"/>
                                 <object class="spacer"/>
                                 <object class="spacer"/>
+                                <object class="sizeritem">
+                                  <object class="wxStaticText" name="testchart_patch_sequence_label">
+                                    <label>testchart.patch_sequence</label>
+                                  </object>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>12</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxChoice" name="testchart_patch_sequence_ctrl">
+                                  </object>
+                                  <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>5</border>
+                                </object>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
+                                <object class="spacer"/>
                                 <object class="spacer"/>
                                 <object class="sizeritem">
                                   <object class="wxStaticText" name="testchart_meas_time"/>
