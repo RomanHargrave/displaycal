@@ -10436,7 +10436,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Add measurement file names and checksum to CCXX
 			for label, meas in (("REFERENCE", reference_ti3),
 								("TARGET", colorimeter_ti3)):
-				if meas.filename:
+				if meas and meas.filename:
 					metadata.append(label + '_FILENAME "%s"' %
 									safe_str(meas.filename, "UTF-8"))
 					metadata.append(label + '_HASH "md5:%s"' %
