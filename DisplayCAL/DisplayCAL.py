@@ -553,7 +553,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.InsertColumn(9, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
 	dlg_list_ctrl.InsertColumn(10, lang.getstr("created"))
 	dlg_list_ctrl.SetColumnWidth(0, 50)
-	dlg_list_ctrl.SetColumnWidth(1, 250)
+	dlg_list_ctrl.SetColumnWidth(1, 350)
 	dlg_list_ctrl.SetColumnWidth(2, 150)
 	dlg_list_ctrl.SetColumnWidth(3, 100)
 	dlg_list_ctrl.SetColumnWidth(4, 75)
@@ -568,12 +568,29 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	for i in cgats:
 		index = dlg_list_ctrl.InsertStringItem(i, "")
 		ccxx_type = cgats[i].type.strip()
-		dlg_list_ctrl.SetStringItem(index, 0, types.get(ccxx_type, ccxx_type))
-		dlg_list_ctrl.SetStringItem(index, 1, get_canonical_instrument_name(cgats[i].queryv1("DESCRIPTOR") or ""))
-		dlg_list_ctrl.SetStringItem(index, 2, cgats[i].queryv1("MANUFACTURER") or "")
-		dlg_list_ctrl.SetStringItem(index, 3, cgats[i].queryv1("DISPLAY"))
-		dlg_list_ctrl.SetStringItem(index, 4, get_canonical_instrument_name(cgats[i].queryv1("INSTRUMENT") or ""))
-		dlg_list_ctrl.SetStringItem(index, 5, get_canonical_instrument_name(cgats[i].queryv1("REFERENCE") or ""))
+		dlg_list_ctrl.SetStringItem(index, 0,
+									types.get(ccxx_type,
+											  safe_unicode(ccxx_type, "UTF-8")))
+		dlg_list_ctrl.SetStringItem(index, 1,
+									get_canonical_instrument_name(safe_unicode(cgats[i].queryv1("DESCRIPTOR") or
+																			   lang.getstr("unknown"),
+																			   "UTF-8")))
+		dlg_list_ctrl.SetStringItem(index, 2,
+									safe_unicode(cgats[i].queryv1("MANUFACTURER") or
+												 lang.getstr("unknown"), "UTF-8"))
+		dlg_list_ctrl.SetStringItem(index, 3,
+									safe_unicode(cgats[i].queryv1("DISPLAY") or
+												 lang.getstr("unknown"), "UTF-8"))
+		dlg_list_ctrl.SetStringItem(index, 4,
+									get_canonical_instrument_name(safe_unicode(cgats[i].queryv1("INSTRUMENT") or
+																			   lang.getstr("unknown")
+																			   if ccxx_type == "CCMX"
+																			   else "i1 DisplayPro, ColorMunki Display, Spyder4/5",
+																			   "UTF-8")))
+		dlg_list_ctrl.SetStringItem(index, 5,
+									get_canonical_instrument_name(safe_unicode(cgats[i].queryv1("REFERENCE") or
+																			   lang.getstr("unknown"),
+																			   "UTF-8")))
 		created = cgats[i].queryv1("CREATED")
 		if created:
 			try:
@@ -609,14 +626,24 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 																		else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 7,
 									safe_unicode(cgats[i].queryv1("FIT_METHOD") or
-												 u"ΔE*", "UTF-8"))
+												 lang.getstr("unknown"
+															 if ccxx_type == "CCMX"
+															 else "not_applicable"),
+												 "UTF-8"))
 		dlg_list_ctrl.SetStringItem(index, 8,
 									safe_unicode(cgats[i].queryv1("FIT_AVG_DE00") or
-												 ""))
+												 lang.getstr("unknown"
+															 if ccxx_type == "CCMX"
+															 else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 9,
 									safe_unicode(cgats[i].queryv1("FIT_MAX_DE00") or
-												 ""))
-		dlg_list_ctrl.SetStringItem(index, 10, created or "")
+												 lang.getstr("unknown"
+															 if ccxx_type == "CCMX"
+															 else "not_applicable")))
+		dlg_list_ctrl.SetStringItem(index, 10,
+									safe_unicode(created or
+												 lang.getstr("unknown"),
+												 "UTF-8"))
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
