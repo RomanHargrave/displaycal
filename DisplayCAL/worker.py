@@ -4611,7 +4611,8 @@ while 1:
 	def generate_B2A_from_inverse_table(self, profile, clutres=None,
 										source="A2B", tableno=None, bpc=False,
 										smooth=True, rgb_space=None,
-										logfile=None, filename=None):
+										logfile=None, filename=None,
+										only_input_curves=False):
 		"""
 		Generate a profile's B2A table by inverting the A2B table 
 		(default A2B1 or A2B0)
@@ -4805,12 +4806,24 @@ while 1:
 		xpB = [v[2] for v in odata]
 
 		# Initialize B2A
-		itable = ICCP.LUT16Type(None, "B2A%i" % tableno, profile)
+		if only_input_curves:
+			# Use existing B2A table
+			itable = profile.tags["B2A%i" % tableno]
+		else:
+			# Create new B2A table
+			itable = ICCP.LUT16Type(None, "B2A%i" % tableno, profile)
 
 		use_cam_clipping = True
 		
 		# Setup matrix
-		if profile.connectionColorSpace == "XYZ":
+		scale = 1 + (32767 / 32768.0)
+		m3 = colormath.Matrix3x3(((scale, 0, 0),
+								  (0, scale, 0),
+								  (0, 0, scale)))
+		if only_input_curves:
+			# Use existing matrix
+			m2 = itable.matrix * m3.inverted()
+		elif profile.connectionColorSpace == "XYZ":
 			# Use a matrix that scales the profile colorspace into the XYZ
 			# encoding range, to make optimal use of the cLUT grid points
 
@@ -5147,10 +5160,6 @@ while 1:
 									  (Sr * Yr, Sg * Yg, Sb * Yb),
 									  (Sr * Zr, Sg * Zg, Sb * Zb))).inverted()
 			matrices.append(m2)
-			scale = 1 + (32767 / 32768.0)
-			m3 = colormath.Matrix3x3(((scale, 0, 0),
-									  (0, scale, 0),
-									  (0, 0, scale)))
 			matrices.append(m3)
 			
 			for m, matrix in enumerate(matrices):
@@ -5240,6 +5249,10 @@ while 1:
 						logfile.write("#%i %i -> %i\n" %
 									  (j, itable.input[i][j], v))
 					itable.input[i][j] = v
+
+		if only_input_curves:
+			# We are done
+			return True
 
 		if clutres == -1:
 			# Auto
@@ -7811,13 +7824,12 @@ END_DATA""")[0]
 			# re-generate B2A0 because it was not created by Argyll CMS.
 			tables.append(0)
 		# Invert A2B tables if present. Always invert colorimetric A2B table.
-		results = []
-		bpc_applied = False
+		rtables = []
 		filename = profile.fileName
 		for tableno in tables:
 			if "A2B%i" % tableno in profile.tags:
 				if ("B2A%i" % tableno in profile.tags and
-					profile.tags["B2A%i" % tableno] in results):
+					profile.tags["B2A%i" % tableno] in rtables):
 					continue
 				if not isinstance(profile.tags["A2B%i" % tableno],
 								  ICCP.LUT16Type):
@@ -7828,44 +7840,18 @@ END_DATA""")[0]
 				bpc = tableno != 1
 				if (bpc and
 					profile.tags["A2B%i" % tableno].clut[0][0] != [0, 0, 0]):
-					# Need to apply BPC. Use temporary copy of A2B.
-					otables = {}
+					# Need to apply BPC
 					table = ICCP.LUT16Type(profile=profile)
-					for i in xrange(3):
-						if "A2B%i" % i in profile.tags:
-							otables[i] = profile.tags["A2B%i" % i]
-							profile.tags["A2B%i" % i] = table
-					otable = otables[tableno]
-					# Copy table
-					table.matrix = []
-					for row in otable.matrix:
-						table.matrix.append(list(row))
-					table.input = []
-					table.output = []
-					for curves in ("input", "output"):
-						for channel in getattr(otable, curves):
-							getattr(table, curves).append(list(channel))
-					table.clut = []
-					for block in otable.clut:
-						table.clut.append([])
-						for row in block:
-							table.clut[-1].append(list(row))
-					logfiles.write("Applying BPC to temporary A2B%i table...\n"
-								   % tableno)
-					try:
-						table.apply_black_offset((0, 0, 0), logfiles,
-												 self.thread_abort,
-												 lang.getstr("aborted"))
-					except Exception, exception:
-						return exception
-					finally:
-						logfiles.write("\n")
-					bpc_applied = True
+					# Copy existing B2A1 table matrix, cLUT and output curves
+					table.matrix = rtables[0].matrix
+					table.clut = rtables[0].clut
+					table.output = rtables[0].output
+					profile.tags["B2A%i" % tableno] = table
 				elif bpc:
 					# BPC not needed, copy existing B2A
-					profile.tags["B2A%i" % tableno] = results[0]
-					return results
-				if not filename or not os.path.isfile(filename) or bpc_applied:
+					profile.tags["B2A%i" % tableno] = rtables[0]
+					return rtables
+				if not filename or not os.path.isfile(filename) or bpc:
 					# Write profile to temp dir
 					tempdir = self.create_tempdir()
 					if isinstance(tempdir, Exception):
@@ -7888,7 +7874,8 @@ END_DATA""")[0]
 																  getcfg("profile.b2a.hires.smooth"),
 																  None,
 																  logfiles,
-																  filename)
+																  filename,
+																  bpc)
 				except (Error, Info), exception:
 					return exception
 				except Exception, exception:
@@ -7896,20 +7883,16 @@ END_DATA""")[0]
 					return exception
 				else:
 					if result:
-						results.append(profile.tags["B2A%i" % tableno])
+						rtables.append(profile.tags["B2A%i" % tableno])
 					else:
 						return False
 				finally:
-					if bpc_applied:
-						logfiles.write("Restoring original A2B tables...\n")
-						for i, otable in otables.iteritems():
-							profile.tags["A2B%i" % i] = otable
 					if temp:
 						os.remove(profile.fileName)
 						if self.tempdir and not os.listdir(self.tempdir):
 							self.wrapup(False)
 						profile.fileName = filename
-		return results
+		return rtables
 
 	def is_working(self):
 		""" Check if any Worker instance is busy. Return True or False. """
