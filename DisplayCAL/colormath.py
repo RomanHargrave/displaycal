@@ -475,6 +475,16 @@ def interp(x, xp, fp, left=None, right=None):
 		return fp[lower] + (fp[higher] - fp[lower]) / steps
 
 
+def interp_resize(iterable, new_size, use_numpy=False):
+	""" Change size of iterable through linear interpolation """
+	result = []
+	x_new = range(len(iterable))
+	interp = Interp(x_new, iterable, use_numpy=use_numpy)
+	for i in xrange(new_size):
+		result.append(interp(i / (new_size - 1.0) * (len(iterable) - 1.0)))
+	return result
+
+
 def smooth_avg(values, passes=1, window=None):
 	"""
 	Smooth values (moving average).
