@@ -2824,13 +2824,13 @@ class LUT16Type(ICCProfileTag):
 		if [round(v * 32768) for v in bp] != [round(v * 32768) for v in bp_out]:
 			D50 = colormath.get_whitepoint("D50")
 
-			from multiprocess import pool_map
+			from multiprocess import pool_slice
 
-			self.clut = sum(pool_map(_mp_apply_black, self.clut,
-									 (pcs, bp, bp_out, wp, nonzero_bp, use_bpc,
-									  weight, D50, interp, rinterp,
-									  abortmessage), {}, None,
-									  thread_abort, logfile), [])
+			self.clut = sum(pool_slice(_mp_apply_black, self.clut,
+									   (pcs, bp, bp_out, wp, nonzero_bp, use_bpc,
+									    weight, D50, interp, rinterp,
+									    abortmessage), {}, None,
+									    thread_abort, logfile), [])
 
 			#if pcs != "Lab" and nonzero_bp:
 				## Apply black offset to output curves

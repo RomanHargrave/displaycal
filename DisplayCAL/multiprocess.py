@@ -14,16 +14,20 @@ import threading
 manager = None
 
 
-def pool_map(func, data_in, args=(), kwds={}, num_workers=None,
-			 thread_abort=None, logfile=None):
+def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
+			   thread_abort=None, logfile=None):
 	"""
-	Wrapper around multiprocessing.Pool.apply_async
-
-	Processes data_in in slices.
+	Process data in slices using a pool of workers and return the results.
 	
-	Progress percentage is written to optional logfile.
-	Note that each subproccess is supposed to periodically put its progress
-	percentage into the queue which is the first argument to 'func'.
+	The individual worker results are returned in the same order as the
+	original input data, irrespective of the order in which the workers
+	finished (FIFO).
+	
+	Progress percentage is written to optional logfile using a background
+	thread that monitors a queue.
+	Note that 'func' is supposed to periodically check thread_abort.event
+	which is passed as the first argument to 'func', and put its progress
+	percentage into the queue which is passed as the second argument to 'func'.
 	
 	"""
 	global manager

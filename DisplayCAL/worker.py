@@ -91,7 +91,7 @@ from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
-from multiprocess import mp, pool_map
+from multiprocess import mp, pool_slice
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
@@ -5267,16 +5267,16 @@ while 1:
 			threshold = int((clutres - 1) * 0.75)
 			threshold2 = int((clutres - 1) / 3)
 			
-			for slices in pool_map(_mp_generate_B2A_clut,
-											 range(clutres),
-											 (profile.fileName, intent,
-											  direction, pcs, use_cam_clipping,
-											  clutres, step, threshold,
-											  threshold2, interp, Linterp, m2,
-											  XYZbp, XYZwp, bpc,
-											  lang.getstr("aborted")), {}, None,
-											 self.thread_abort,
-											 logfile):
+			for slices in pool_slice(_mp_generate_B2A_clut,
+									 range(clutres),
+									 (profile.fileName, intent,
+									  direction, pcs, use_cam_clipping,
+									  clutres, step, threshold,
+									  threshold2, interp, Linterp, m2,
+									  XYZbp, XYZwp, bpc,
+									  lang.getstr("aborted")), {}, None,
+									 self.thread_abort,
+									 logfile):
 				for i, data in enumerate((idata, odata1, odata2)):
 					data.extend(slices[i])
 
