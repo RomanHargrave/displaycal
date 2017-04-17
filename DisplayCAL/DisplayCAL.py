@@ -6475,6 +6475,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		except (IOError, CGATS.CGATSError), exception:
 			show_result_dialog(exception, getattr(self, "reportframe", self))
 			return
+
+		chart = self.worker.ensure_patch_sequence(chart, False)
 		
 		fields = getcfg("measurement_report.chart.fields")
 		

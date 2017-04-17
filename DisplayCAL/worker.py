@@ -8103,30 +8103,34 @@ END_DATA""")[0]
 				result = result2
 		return result
 
-	def ensure_patch_sequence(self, ti1_path):
+	def ensure_patch_sequence(self, ti1, write=True):
 		"""
 		Ensure correct patch sequence of TI1 file
 		
 		Return either the changed CGATS object or the original path
 		
 		"""
-		if self.tempdir and ti1_path.startswith(self.tempdir):
-			# This should normally ALWAYS be the case
-			patch_sequence = getcfg("testchart.patch_sequence")
-			if patch_sequence != "optimize_display_response_delay":
-				# Need to re-order patches
-				ti1 = CGATS.CGATS(ti1_path)
-				if patch_sequence == "maximize_lightness_difference":
-					ti1.checkerboard()
-				elif patch_sequence == "maximize_rec709_luma_difference":
-					ti1.checkerboard(CGATS.sort_by_rec709_luma)
-				elif patch_sequence == "maximize_RGB_difference":
-					ti1.checkerboard(CGATS.sort_by_RGB_sum)
-				elif patch_sequence == "vary_RGB_difference":
-					ti1.checkerboard(CGATS.sort_by_RGB, None,
-									   split_grays=True, shift=True)
+		if isinstance(ti1, CGATS.CGATS):
+			ti1_path = ti1.filename
+		else:
+			ti1_path = ti1
+		patch_sequence = getcfg("testchart.patch_sequence")
+		if patch_sequence != "optimize_display_response_delay":
+			# Need to re-order patches
+			if not isinstance(ti1, CGATS.CGATS):
+				ti1 = CGATS.CGATS(ti1)
+			if patch_sequence == "maximize_lightness_difference":
+				ti1.checkerboard()
+			elif patch_sequence == "maximize_rec709_luma_difference":
+				ti1.checkerboard(CGATS.sort_by_rec709_luma)
+			elif patch_sequence == "maximize_RGB_difference":
+				ti1.checkerboard(CGATS.sort_by_RGB_sum)
+			elif patch_sequence == "vary_RGB_difference":
+				ti1.checkerboard(CGATS.sort_by_RGB, None,
+								   split_grays=True, shift=True)
+			if write:
 				ti1.write()
-				return ti1
+			return ti1
 		return ti1_path
 	
 	def parse(self, txt):
@@ -11034,12 +11038,11 @@ BEGIN_DATA
 
 	def measure_ti1(self, ti1_path, cal_path=None, colormanaged=False):
 		""" Measure a TI1 testchart file """
-		cgats = self.ensure_patch_sequence(ti1_path)
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 			if getcfg("extra_args.spotread").strip():
 				args += parse_argument_string(getcfg("extra_args.spotread"))
-			result = self.set_terminal_cgats(cgats)
+			result = self.set_terminal_cgats(ti1_path)
 			if isinstance(result, Exception):
 				return result
 		else:
