@@ -794,6 +794,50 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 	return resp
 
 
+def insert_ti_patches_omitting_RGB_duplicates(cgats1, cgats2_path,
+											  logfn=safe_print):
+	"""
+	Insert patches from first TI file after first patch of second TI,
+	ignoring RGB duplicates. Return second TI as CGATS instance.
+	
+	"""
+	cgats2 = CGATS.CGATS(cgats2_path)
+	cgats1_data = cgats1.queryv1("DATA")
+	data = cgats2.queryv1("DATA")
+	data_format = cgats2.queryv1("DATA_FORMAT")
+	# Get only RGB data
+	data.parent.DATA_FORMAT = CGATS.CGATS()
+	data.parent.DATA_FORMAT.key = "DATA_FORMAT"
+	data.parent.DATA_FORMAT.parent = data
+	data.parent.DATA_FORMAT.root = data.root
+	data.parent.DATA_FORMAT.type = "DATA_FORMAT"
+	for i, label in enumerate(("RGB_R", "RGB_G", "RGB_B")):
+		data.parent.DATA_FORMAT[i] = label
+	cgats1_data.parent.DATA_FORMAT = data.parent.DATA_FORMAT
+	rgbdata = str(data)
+	# Restore DATA_FORMAT
+	data.parent.DATA_FORMAT = data_format
+	# Collect all preconditioning point datasets not in data
+	cgats1_data.vmaxlen = data.vmaxlen
+	cgats1_datasets = []
+	for i, dataset in cgats1_data.iteritems():
+		if not str(dataset) in rgbdata:
+			# Not a duplicate
+			cgats1_datasets.append(dataset)
+	if cgats1_datasets:
+		# Insert preconditioned point datasets after first patch
+		if logfn:
+			logfn("%s: Adding %i fixed points to %s" %
+				  (appname, len(cgats1_datasets), cgats2_path))
+		data.moveby1(1, len(cgats1_datasets))
+		for i, dataset in enumerate(cgats1_datasets):
+			dataset.key = i + 1
+			dataset.parent = data
+			dataset.root = data.root
+			data[dataset.key] = dataset
+	return cgats2
+
+
 def make_argyll_compatible_path(path):
 	"""
 	Make the path compatible with the Argyll utilities.
@@ -2497,8 +2541,7 @@ class Worker(WorkerBase):
 			device_model = profile_out.device["model"]
 			mmod = profile_out.tags.get("mmod")
 			
-			self.sessionlogfile = LogFile(name, cwd)
-			self.sessionlogfiles[name] = self.sessionlogfile
+			self.set_sessionlogfile(None, name, cwd)
 			
 			# Apply calibration?
 			if apply_cal:
@@ -3535,11 +3578,8 @@ class Worker(WorkerBase):
 															   filename)).st_mtime
 		if (working_basename and working_dir == self.tempdir and not silent
 			and log_output and not dry_run):
-			if sessionlogfile:
-				self.sessionlogfile = sessionlogfile
-			else:
-				self.sessionlogfile = LogFile(working_basename, working_dir)
-			self.sessionlogfiles[working_basename] = self.sessionlogfile
+			self.set_sessionlogfile(sessionlogfile, working_basename,
+									working_dir)
 		if not silent or verbose >= 3:
 			self.log("-" * 80)
 			if self.sessionlogfile:
@@ -7963,6 +8003,7 @@ END_DATA""")[0]
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
+		precond_ti1 = None
 		precond_ti3 = None
 		auto = getcfg("testchart.auto_optimize") or 7
 		if getcfg("testchart.file") == "auto" and auto > 4:
@@ -7972,8 +8013,9 @@ END_DATA""")[0]
 			if config.get_display_name() == "Untethered":
 				return Error(lang.getstr("testchart.auto_optimize.untethered.unsupported"))
 			# Use small testchart for grayscale+primaries (34 patches)
-			setcfg("testchart.file",
-				   get_data_path("ti1/d3-e4-s2-g25-m0-b0-f0.ti1"))
+			precond_ti1_path = get_data_path("ti1/d3-e4-s2-g25-m0-b0-f0.ti1")
+			precond_ti1 = CGATS.CGATS(precond_ti1_path)
+			setcfg("testchart.file", precond_ti1_path)
 			cmd, args = self.prepare_dispread(apply_calibration)
 			setcfg("testchart.file", "auto")
 			if not isinstance(cmd, Exception):
@@ -8055,42 +8097,36 @@ END_DATA""")[0]
 				ti3 = args[-1] + ".ti3"
 				if precond_ti3:
 					# Add patches from preconditioning measurements
-					ti3 = CGATS.CGATS(ti3)
-					precond_data = precond_ti3.queryv1("DATA")
-					data = ti3.queryv1("DATA")
-					data_format = ti3.queryv1("DATA_FORMAT")
-					# Get only RGB data
-					data.parent.DATA_FORMAT = CGATS.CGATS()
-					data.parent.DATA_FORMAT.key = "DATA_FORMAT"
-					data.parent.DATA_FORMAT.parent = data
-					data.parent.DATA_FORMAT.root = data.root
-					data.parent.DATA_FORMAT.type = "DATA_FORMAT"
-					for i, label in enumerate(("RGB_R", "RGB_G", "RGB_B")):
-						data.parent.DATA_FORMAT[i] = label
-					precond_data.parent.DATA_FORMAT = data.parent.DATA_FORMAT
-					rgbdata = str(data)
-					# Restore DATA_FORMAT
-					data.parent.DATA_FORMAT = data_format
-					# Collect all preconditioning point datasets not in data
-					precond_data.vmaxlen = data.vmaxlen
-					precond_datasets = []
-					for i, dataset in precond_data.iteritems():
-						if not str(dataset) in rgbdata:
-							precond_datasets.append(dataset)
-					if precond_datasets:
-						# Insert preconditioned point datasets after first patch
-						self.log("%s: Adding %i fixed points" %
-								   (appname, len(precond_datasets)))
-						data.moveby1(1, len(precond_datasets))
-						for i, dataset in enumerate(precond_datasets):
-							dataset.key = i + 1
-							dataset.parent = data
-							dataset.root = data.root
-							data[dataset.key] = dataset
+					ti3 = insert_ti_patches_omitting_RGB_duplicates(precond_ti3,
+																	ti3,
+																	self.log)
 				options = {"OBSERVER": get_cfg_option_from_args("observer", "-Q",
 																args[:-1])}
 				ti3 = add_keywords_to_cgats(ti3, options)
 				ti3.write()
+				# Restore original TI1
+				ti1_orig = args[-1] + ".original.ti1"
+				ti1 = args[-1] + ".ti1"
+				if os.path.isfile(ti1_orig):
+					try:
+						if os.path.isfile(ti1):
+							# Should always exist
+							os.remove(ti1)
+						os.rename(ti1_orig, ti1)
+					except Exception, exception:
+						self.log("Warning - could not restore "
+								 "backup of original TI1 file %s:" %
+								 safe_unicode(ti1_orig), exception)
+					else:
+						self.log("Restored backup of original TI1 file")
+				if precond_ti1 and os.path.isfile(ti1):
+					# Need to add precond TI1 patches to TI1.
+					# Do this AFTER the measurements because we don't want to
+					# measure precond patches twice.
+					ti1 = insert_ti_patches_omitting_RGB_duplicates(precond_ti1,
+																	ti1,
+																	self.log)
+					ti1.write()
 		else:
 			result = cmd
 		result2 = self.wrapup(not isinstance(result, UnloggedInfo) and result,
@@ -8107,31 +8143,48 @@ END_DATA""")[0]
 		"""
 		Ensure correct patch sequence of TI1 file
 		
-		Return either the changed CGATS object or the original path
+		Return either the changed CGATS object or the original path/TI1
 		
 		"""
-		if isinstance(ti1, CGATS.CGATS):
-			ti1_path = ti1.filename
-		else:
-			ti1_path = ti1
 		patch_sequence = getcfg("testchart.patch_sequence")
 		if patch_sequence != "optimize_display_response_delay":
 			# Need to re-order patches
 			if not isinstance(ti1, CGATS.CGATS):
-				ti1 = CGATS.CGATS(ti1)
+				try:
+					ti1 = CGATS.CGATS(ti1)
+				except Exception, exception:
+					self.log("Warning - could not process TI1 file %s:" %
+							 safe_unicode(ti1), exception)
+					return ti1
+			self.log("Changing patch sequence:",
+					 lang.getstr("testchart." + patch_sequence))
 			if patch_sequence == "maximize_lightness_difference":
-				ti1.checkerboard()
+				result = ti1.checkerboard()
 			elif patch_sequence == "maximize_rec709_luma_difference":
-				ti1.checkerboard(CGATS.sort_by_rec709_luma)
+				result = ti1.checkerboard(CGATS.sort_by_rec709_luma)
 			elif patch_sequence == "maximize_RGB_difference":
-				ti1.checkerboard(CGATS.sort_by_RGB_sum)
+				result = ti1.checkerboard(CGATS.sort_by_RGB_sum)
 			elif patch_sequence == "vary_RGB_difference":
-				ti1.checkerboard(CGATS.sort_by_RGB, None,
-								   split_grays=True, shift=True)
-			if write:
-				ti1.write()
-			return ti1
-		return ti1_path
+				result = ti1.checkerboard(CGATS.sort_by_RGB, None,
+										  split_grays=True, shift=True)
+			if not result:
+				self.log("Warning - patch sequence was not changed")
+			elif write:
+				# Make a copy
+				try:
+					shutil.copyfile(ti1.filename,
+									os.path.splitext(ti1.filename)[0] +
+									".original.ti1")
+				except Exception, exception:
+					self.log("Warning - could not make backup of TI1 file %s:" %
+							 safe_unicode(ti1.filename), exception)
+				# Write new TI1 to original filename
+				try:
+					ti1.write()
+				except Exception, exception:
+					self.log("Warning - could not write TI1 file %s:" %
+							 safe_unicode(ti1.filename), exception)
+		return ti1
 	
 	def parse(self, txt):
 		if not txt:
@@ -8810,6 +8863,8 @@ END_DATA""")[0]
 		if getcfg("extra_args.dispread").strip():
 			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)
+		self.set_sessionlogfile(None, os.path.basename(inoutfile),
+								os.path.dirname(inoutfile))
 		cgats = self.ensure_patch_sequence(inoutfile + ".ti1")
 		if getattr(self, "terminal", None) and isinstance(self.terminal,
 														  UntetheredFrame):
@@ -9397,6 +9452,13 @@ END_DATA""")[0]
 			setcfg("argyll.version", argyll_version_string)
 			writecfg()
 		self.argyll_version = parse_argyll_version_string(argyll_version_string)
+
+	def set_sessionlogfile(self, sessionlogfile, basename, dirname):
+		if sessionlogfile:
+			self.sessionlogfile = sessionlogfile
+		else:
+			self.sessionlogfile = LogFile(basename, dirname)
+		self.sessionlogfiles[basename] = self.sessionlogfile
 	
 	def set_terminal_cgats(self, cgats):
 		if not isinstance(cgats, CGATS.CGATS):
