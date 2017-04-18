@@ -7537,12 +7537,9 @@ END_DATA""")[0]
 															  G_Y[i],
 															  B_Z[i], XYZbp)
 
-					rinterp = colormath.Interp(R_R, range(len(R_R)))
-					ginterp = colormath.Interp(G_G, range(len(G_G)))
-					binterp = colormath.Interp(B_B, range(len(B_B)))
-					rcrinterp = ICCP.CRInterpolation(R_X)
-					gcrinterp = ICCP.CRInterpolation(G_Y)
-					bcrinterp = ICCP.CRInterpolation(B_Z)
+					rinterp = colormath.Interp(R_R, R_X)
+					ginterp = colormath.Interp(G_G, G_Y)
+					binterp = colormath.Interp(B_B, B_Z)
 
 					rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs"))
 					fwd_mtx = rgb_space[-1]
@@ -7555,16 +7552,22 @@ END_DATA""")[0]
 						profile.tags[tagname] = ICCP.CurveType()
 
 					# Interpolate TRC
-					numentries = 49
+					numentries = 30
 					maxval = numentries - 1.0
 					XYZw = fwd_mtx * (1, 1, 1)
+					powinterp = {"r": colormath.Interp([], []),
+								 "g": colormath.Interp([], []),
+								 "b": colormath.Interp([], [])}
 					for n in xrange(numentries):
-						Y = gcrinterp(ginterp(n / maxval))
-						X = rcrinterp(rinterp(n / maxval))
-						Z = bcrinterp(binterp(n / maxval))
+						n /= maxval
+						# Apply slight power to input value so we sample near
+						# black more accurately
+						n **= 1.2
+						Y = ginterp(n)
+						X = rinterp(n)
+						Z = binterp(n)
 						RGB = bwd_mtx * (X, Y, Z)
 						for i, channel in enumerate("rgb"):
-							tagname = channel + tagcls
 							if ptype == "S":
 								# Single shaper curve
 								v = RGB[1]
@@ -7573,35 +7576,26 @@ END_DATA""")[0]
 								v = RGB[i]
 							v = min(max(v, 0), 1)
 							# Slope limit
-							v = max(v, (n / maxval) / 64.25)
+							v = max(v, n / 64.25)
+							powinterp[channel].xp.append(n)
+							powinterp[channel].fp.append(v)
+					for n in xrange(numentries):
+						for i, channel in enumerate("rgb"):
+							v = powinterp[channel](n / maxval)
+							tagname = channel + tagcls
 							profile.tags[tagname].append(v * 65535)
 
 					# Smoothing
 					for channel in "rgb":
 						tag = profile.tags[channel + "TRC"]
 						# Make monotonically increasing + 1st smoothing pass
-						tag[:] = colormath.make_monotonically_increasing(tag, 1, [.75, 1.5, .75])
+						tag[:] = colormath.make_monotonically_increasing(tag)
 						# Spline interpolation to larger size
 						x = (i / 255.0 * (len(tag) - 1)  for i in xrange(256))
 						spline = ICCP.CRInterpolation(tag)
 						tag[:] = (min(max(spline(v), 0), 65535) for v in x)
 						# Ensure still monotonically increasing
 						tag[:] = colormath.make_monotonically_increasing(tag)
-						# Smooth above near-black part of curve more
-						avg_gamma = 1.0 / tag.get_transfer_function()[0][1]
-						# Set start point to roughly above end of near-black
-						# slope in L*
-						start = int(round(6 / colormath.specialpow(avg_gamma,
-																    -3.0)))
-						# Apply incrementally more smoothing as we move towards
-						# white (max 5 passes)
-						inc = 15
-						passes = 5
-						while passes and tag[start:]:
-							tag[start:] = colormath.smooth_avg(tag[start:],
-															   1, [1, 1, 1, 1, 1])
-							passes -= 1
-							start += inc
 					if XYZbp:
 						# Add black back in
 						profile.apply_black_offset(XYZbp, include_A2B=False)
