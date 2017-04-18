@@ -1008,6 +1008,7 @@
 		"*testchart.sort_by_L": "Sort by L*",
 		"*testchart.sort_by_RGB": "Sort by RGB",
 		"*testchart.sort_by_RGB_sum": "Sort by sum of RGB",
+		"*testchart.sort_by_rec709_luma": "Sort by luma",
 		"*testchart.vary_RGB_difference": "Vary RGB difference",
 		"*testchart_or_reference": "Testchart or reference",
 		"*thermal_wax_printer": "Thermal wax printer",

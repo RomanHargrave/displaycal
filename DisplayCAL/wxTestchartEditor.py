@@ -569,6 +569,7 @@ class TestchartEditor(BaseFrame):
 					 "testchart.sort_by_HSL",
 					 "testchart.sort_by_HSV",
 					 "testchart.sort_by_L",
+					 "testchart.sort_by_rec709_luma",
 					 "testchart.sort_by_RGB",
 					 "testchart.sort_by_RGB_sum",
 					 "testchart.interleave",
@@ -1002,25 +1003,27 @@ END_DATA""")
 		elif idx == 11:
 			self.ti1.sort_by_L()
 		elif idx == 12:
-			self.ti1.sort_by_RGB()
+			self.ti1.sort_by_rec709_luma()
 		elif idx == 13:
-			self.ti1.sort_by_RGB_sum()
+			self.ti1.sort_by_RGB()
 		elif idx == 14:
+			self.ti1.sort_by_RGB_sum()
+		elif idx == 15:
 			# Interleave
 			self.ti1.checkerboard(None, None)
-		elif idx == 15:
+		elif idx == 16:
 			# Shift & interleave
 			self.ti1.checkerboard(None, None, split_grays=True, shift=True)
-		elif idx == 16:
+		elif idx == 17:
 			# Maximize L* difference
 			self.ti1.checkerboard()
-		elif idx == 17:
+		elif idx == 18:
 			# Maximize Rec. 709 luma difference
 			self.ti1.checkerboard(CGATS.sort_by_rec709_luma)
-		elif idx == 18:
+		elif idx == 19:
 			# Maximize RGB difference
 			self.ti1.checkerboard(CGATS.sort_by_RGB_sum)
-		elif idx == 19:
+		elif idx == 20:
 			# Vary RGB difference
 			self.ti1.checkerboard(CGATS.sort_by_RGB, None, split_grays=True,
 								  shift=True)

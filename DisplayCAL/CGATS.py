@@ -95,8 +95,8 @@ def sort_RGB_white_to_top(a, b):
 def sort_by_HSI(a, b):
 	a = list(colormath.RGB2HSI(*a[:3]))
 	b = list(colormath.RGB2HSI(*b[:3]))
-	a[0] = round(a[0], 12)
-	b[0] = round(b[0], 12)
+	a[0] = round(math.degrees(a[0]))
+	b[0] = round(math.degrees(b[0]))
 	if a > b:
 		return 1
 	elif a < b:
@@ -108,8 +108,8 @@ def sort_by_HSI(a, b):
 def sort_by_HSL(a, b):
 	a = list(colormath.RGB2HSL(*a[:3]))
 	b = list(colormath.RGB2HSL(*b[:3]))
-	a[0] = round(a[0], 12)
-	b[0] = round(b[0], 12)
+	a[0] = round(math.degrees(a[0]))
+	b[0] = round(math.degrees(b[0]))
 	if a > b:
 		return 1
 	elif a < b:
@@ -121,8 +121,8 @@ def sort_by_HSL(a, b):
 def sort_by_HSV(a, b):
 	a = list(colormath.RGB2HSV(*a[:3]))
 	b = list(colormath.RGB2HSV(*b[:3]))
-	a[0] = round(a[0], 12)
-	b[0] = round(b[0], 12)
+	a[0] = round(math.degrees(a[0]))
+	b[0] = round(math.degrees(b[0]))
 	if a > b:
 		return 1
 	elif a < b:
@@ -142,6 +142,16 @@ def sort_by_RGB(a, b):
 
 def sort_by_RGB_sum(a, b):
 	sum1, sum2 = sum(a[:3]), sum(b[:3])
+	if sum1 > sum2:
+		return 1
+	elif sum1 < sum2:
+		return -1
+	else:
+		return 0
+
+
+def sort_by_RGB_pow_sum(a, b):
+	sum1, sum2 = sum(v ** 2.2 for v in a[:3]), sum(v ** 2.2 for v in b[:3])
 	if sum1 > sum2:
 		return 1
 	elif sum1 < sum2:
@@ -592,6 +602,7 @@ class CGATS(dict):
 		for i, values in enumerate(valueslist):
 			for j, field_name in enumerate(field_names):
 				self[i][field_name] = values[j]
+		return True
 	
 	def checkerboard(self, sort1=sort_by_L, sort2=sort_RGB_white_to_top,
 					 split_grays=False, shift=False):
@@ -742,11 +753,7 @@ class CGATS(dict):
 		return data.set_RGB_XYZ_values(checkerboard)
 	
 	def sort_RGB_gray_to_top(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_RGB_gray_to_top)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_RGB_gray_to_top)
 	
 	def sort_RGB_to_top(self, r=0, g=0, b=0):
 		"""
@@ -756,9 +763,6 @@ class CGATS(dict):
 		Example: sort_RGB_to_top(0, True, True) - sort cyan values to top
 		
 		"""
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
 		if r and g and b:
 			fn = sort_RGB_gray_to_top
 		elif r and g:
@@ -773,56 +777,41 @@ class CGATS(dict):
 			fn = sort_RGB_to_top_factory(0, 2, 0, 1)
 		elif b:
 			fn = sort_RGB_to_top_factory(0, 1, 0, 2)
-		valueslist.sort(fn)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(fn)
 	
 	def sort_RGB_white_to_top(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_RGB_white_to_top)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_RGB_white_to_top)
 	
 	def sort_by_HSI(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_by_HSI)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_by_HSI)
 	
 	def sort_by_HSL(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_by_HSL)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_by_HSL)
 	
 	def sort_by_HSV(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_by_HSV)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_by_HSV)
 	
 	def sort_by_L(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_by_L)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_by_L)
 	
 	def sort_by_RGB(self):
-		data, valueslist = self.get_RGB_XYZ_values()
-		if not valueslist:
-			return False
-		valueslist.sort(sort_by_RGB)
-		return data.set_RGB_XYZ_values(valueslist)
+		return self.sort_data_RGB_XYZ(sort_by_RGB)
+	
+	def sort_by_RGB_pow_sum(self):
+		return self.sort_data_RGB_XYZ(sort_by_RGB_pow_sum)
 	
 	def sort_by_RGB_sum(self):
+		return self.sort_data_RGB_XYZ(sort_by_RGB_sum)
+	
+	def sort_by_rec709_luma(self):
+		return self.sort_data_RGB_XYZ(sort_by_rec709_luma)
+
+	def sort_data_RGB_XYZ(self, cmp=None, key=None, reverse=False):
+		""" Sort RGB/XYZ data """
 		data, valueslist = self.get_RGB_XYZ_values()
 		if not valueslist:
 			return False
-		valueslist.sort(sort_by_RGB_sum)
+		valueslist.sort(cmp, key, reverse)
 		return data.set_RGB_XYZ_values(valueslist)
 	
 	@property
