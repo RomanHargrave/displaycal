@@ -13625,7 +13625,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.restore_defaults_handler(
 						include=("profile", "gamap_", "3dlut.create",
 								 "3dlut.output.profile.apply_cal",
-								 "3dlut.trc", "testchart.auto_optimize"), 
+								 "3dlut.trc", "testchart.auto_optimize",
+								 "testchart.patch_sequence"), 
 						exclude=("3dlut.tab.enable.backup", "profile.update",
 								 "profile.name", "gamap_default_intent"))
 					for o in options_colprof:
