@@ -6990,6 +6990,7 @@ usage: spotread [-options] [logfile]
 		if getcfg("profile.create_gamut_views"):
 			self.log("-" * 80)
 			self.log(lang.getstr("gamut.view.create"))
+			self.lastmsg.clear()
 			self.recent.clear()
 			self.recent.write(lang.getstr("gamut.view.create"))
 			sleep(.75)  # Allow time for progress window to update
