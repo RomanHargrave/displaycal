@@ -8051,11 +8051,6 @@ END_DATA""")[0]
 							args.extend(["-B4", "-b0"])
 						if self.argyll_version >= [1, 6, 2]:
 							args.append("-V1.6")
-						if (self.argyll_version >= [1, 7, 0] and
-							getcfg("testchart.patch_sequence") !=
-							"optimize_display_response_delay"):
-							# Don't re-order for minimum delay
-							args.append("-O")
 						args.extend(["-c", basename + profile_ext, basename])
 						result = self.exec_cmd(cmd, args)
 						self.pauseable = True

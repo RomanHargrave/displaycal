@@ -12916,6 +12916,11 @@ class MainFrame(ReportFrame, BaseFrame):
 	def set_testchart(self, path=None, update_profile_name=True):
 		if path is None:
 			path = getcfg("testchart.file")
+		filename, ext = os.path.splitext(path)
+		ti1_path = filename + ".ti1"
+		if ext.lower() in (".icc", ".icm") and os.path.isfile(ti1_path):
+			# Use actual testchart file
+			path = ti1_path
 		##print "set_testchart", path
 		if path == "auto" and config.get_display_name() == "Untethered":
 			self._current_testchart_path = path
