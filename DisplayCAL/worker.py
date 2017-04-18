@@ -11147,6 +11147,7 @@ BEGIN_DATA
 			self.sessionlogfile.write(safe_basestring(copy))
 		while self.sessionlogfiles:
 			self.sessionlogfiles.popitem()[1].close()
+		self.sessionlogfile = None
 		if isinstance(copy, Exception):
 			# This is an incomplete run, check if any files have been added or
 			# modified (except log files and 'hidden' temporary files)
