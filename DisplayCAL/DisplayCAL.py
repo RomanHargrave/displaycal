@@ -12918,8 +12918,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			path = getcfg("testchart.file")
 		filename, ext = os.path.splitext(path)
 		ti1_path = filename + ".ti1"
-		if ext.lower() in (".icc", ".icm") and os.path.isfile(ti1_path):
-			# Use actual testchart file
+		if (ext.lower() in (".icc", ".icm") and
+			getcfg("testchart.patch_sequence") !=
+			"optimize_display_response_delay" and
+			os.path.isfile(ti1_path)):
+			# Use actual testchart file so choosing the default patch
+			# sequence of optimizing response delay will actually work
+			# (because the ti1 is guaranteed to be in that sequence if created
+			# via targen by DisplayCAL)
 			path = ti1_path
 		##print "set_testchart", path
 		if path == "auto" and config.get_display_name() == "Untethered":
