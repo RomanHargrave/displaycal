@@ -1633,6 +1633,25 @@ class ProfileManager(object):
                            geometry, exception)
             else:
                 if profile and profile.ID != self._srgb_profile.ID:
+                    # Set initial whitepoint according to vcgt
+                    # Convert calibration information from embedded WCS
+                    # profile (if present) to VideCardGammaType if the
+                    # latter is not present
+                    if (isinstance(profile.tags.get("MS00"),
+                                   ICCP.WcsProfilesTagType) and
+                        not "vcgt" in profile.tags):
+                        profile.tags["vcgt"] = profile.tags["MS00"].get_vcgt()
+                    if isinstance(profile.tags.get("vcgt"),
+                                  ICCP.VideoCardGammaType):
+                        values = profile.tags.vcgt.getNormalizedValues()
+                        RGB = []
+                        for i in xrange(3):
+                            RGB.append(int(round(values[-1][i] * 255)))
+                        (self._window._colour.r,
+                         self._window._colour.g,
+                         self._window._colour.b) = RGB
+                        self._window._colour.ToHSV()
+                        self._window.DrawAll()
                     # Remember profile, but discard profile filename
                     # (Important - can't re-install profile from same path
                     # where it is installed!)
