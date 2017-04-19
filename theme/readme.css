@@ -1434,6 +1434,50 @@ div.info,
 	display: block;
 }
 
+.changelog-label {
+	background: #333;
+	border-radius: 3px;
+	color: #fff;
+	display: inline-block;
+	font-size: 10px;
+	line-height: 12px;
+	padding: 1px 4px;
+	text-shadow: 1px 1px 0 rgba(0, 0, 0, .25);
+	text-transform: uppercase;
+}
+
+.changelog-label.enhancement {
+	background: #9c6;
+}
+
+.changelog-label.feature {
+	background: #99f;
+}
+
+.changelog-label.ui {
+	background: #ec3;
+}
+
+.changelog-label.trivial {
+	background: #9cf;
+}
+
+.changelog-label.cosmetic {
+	background: #c9f;
+}
+
+.changelog-label.minor {
+	background: #f93;
+}
+
+.changelog-label.major {
+	background: #e86;
+}
+
+.changelog-label span {
+	display: none;
+}
+
 .fixed-bottom,
 #footer-container {
 	bottom: 0;
