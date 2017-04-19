@@ -588,13 +588,15 @@ class spawn_unix (object):
 
             if self.cwd is not None:
                 os.chdir(self.cwd)
-            if self.env is None:
-                os.execv(self.command, self.args)
-            else:
-                os.execvpe(self.command, self.args, self.env)
-            if self.cwd is not None:
-                # Restore the original working dir
-                os.chdir(self.ocwd)
+            try:
+                if self.env is None:
+                    os.execv(self.command, self.args)
+                else:
+                    os.execvpe(self.command, self.args, self.env)
+            finally:
+                if self.cwd is not None:
+                    # Restore the original working dir
+                    os.chdir(self.ocwd)
 
         # Parent
         self.terminated = False
@@ -1726,16 +1728,9 @@ class spawn_windows (spawn_unix, object):
         #assert self.command is not None, 'The command member should not be None.'
 
         self.wtty = Wtty(timeout=self.timeout, codepage=self.codepage,
-                         columns=self.columns, rows=self.rows)        
-    
-        if self.cwd is not None:
-            os.chdir(self.cwd)
+                         columns=self.columns, rows=self.rows, cwd=self.cwd)        
         
         self.child_fd = self.wtty.spawn(self.command, self.args, self.env)
-        
-        if self.cwd is not None:
-            # Restore the original working dir
-            os.chdir(self.ocwd)
             
         self.terminated = False
         self.closed = False
@@ -1933,7 +1928,8 @@ class spawn_windows (spawn_unix, object):
 
 class Wtty:
 
-    def __init__(self, timeout=30, codepage=None, columns=None, rows=None):
+    def __init__(self, timeout=30, codepage=None, columns=None, rows=None,
+                 cwd=None):
         self.__buffer = StringIO()
         self.__bufferY = 0
         self.__currentReadCo = PyCOORDType(0, 0)
@@ -1947,6 +1943,7 @@ class Wtty:
                          windll.kernel32.GetOEMCP())
         log("Code page: %s" % self.codepage)
         self.columns = columns
+        self.cwd = cwd
         self.rows = rows
         self.console = False
         self.lastRead = 0
@@ -2047,7 +2044,7 @@ class Wtty:
                      
         log(commandLine)
         self.__oproc, _, self.conpid, self.__otid = CreateProcess(None, commandLine, None, None, False, 
-                                                                  CREATE_NEW_CONSOLE, env, None, si)
+                                                                  CREATE_NEW_CONSOLE, env, self.cwd, si)
             
    
     def switchTo(self, attached=True):
