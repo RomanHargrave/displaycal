@@ -27,10 +27,17 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	percentage into the queue which is passed as the second argument to 'func'.
 	
 	"""
+	from config import getcfg
 
 	if num_workers is None:
-		num_workers = mp.cpu_count()
+		try:
+			num_workers = mp.cpu_count()
+		except:
+			num_workers = 1
 	num_workers = max(min(num_workers, len(data_in)), 1)
+	max_workers = getcfg("multiprocessing.max_cpus")
+	if max_workers:
+		num_workers = min(num_workers, max_workers)
 
 	if num_workers > 1:
 		Pool = NonDaemonicPool

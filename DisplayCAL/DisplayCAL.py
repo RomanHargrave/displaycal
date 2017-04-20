@@ -2894,6 +2894,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"measurement.name.expanded",
 			"measurement.play_sound",
 			"measurement.save_path",
+			"multiprocessing.max_cpus",
 			"patterngenerator.apl",
 			"patterngenerator.resolve",
 			"patterngenerator.resolve.port",
