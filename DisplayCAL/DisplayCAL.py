@@ -82,7 +82,7 @@ if sys.platform == "win32":
 	import util_win
 import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
-						  ti3_to_ti1, vcgt_to_cal,
+						  ti3_to_ti1, extract_cal_from_profile,
 						  verify_ti1_rgb_xyz)
 from argyll_instruments import (get_canonical_instrument_name, instruments)
 from argyll_names import viewconds
@@ -3311,6 +3311,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				break
 		if delete:
 			del self.ccmx_mapping[key]
+
+	def detect_video_levels(self):
+		if getcfg("patterngenerator.detect_video_levels"):
+			result = self.worker.detect_video_levels()
+			if isinstance(result, Exception):
+				show_result_dialog(result)
+				return False
+		return True
 	
 	def update_colorimeter_correction_matrix_ctrl_items(self, force=False,
 														warn_on_mismatch=False,
@@ -6378,6 +6386,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.setup_measurement(self.verify_calibration)
 
 	def verify_calibration(self):
+		if not self.detect_video_levels():
+			return
 		if self.measure_auto(self.verify_calibration):
 			return
 		safe_print("-" * 80)
@@ -6728,26 +6738,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			calprof = oprof
 		else:
 			calprof = profile
-		# Convert calibration information from embedded WCS profile
-		# (if present) to VideCardFormulaType if the latter is not present
-		if (isinstance(calprof.tags.get("MS00"), ICCP.WcsProfilesTagType) and
-			not "vcgt" in calprof.tags):
-			calprof.tags["vcgt"] = calprof.tags["MS00"].get_vcgt()
-		if isinstance(calprof.tags.get("vcgt"), ICCP.VideoCardGammaType):
+
+		cal_path = os.path.join(temp, name + ".cal")
+		try:
 			# Extract calibration from profile
-			try:
-				cgats = vcgt_to_cal(calprof)
-			except (IOError, CGATS.CGATSInvalidError, 
-					CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-				wx.CallAfter(show_result_dialog,
-							 Error(lang.getstr("cal_extraction_failed")),
-							 getattr(self, "reportframe", self))
-				self.Show()
-				return
-			cal_path = os.path.join(temp, name + ".cal")
-			cgats.write(cal_path)
-		else:
+			cal = extract_cal_from_profile(calprof, cal_path, False)
+		except Exception, exception:
+			wx.CallAfter(show_result_dialog,
+						 Error(lang.getstr("cal_extraction_failed")),
+						 getattr(self, "reportframe", self))
+			self.Show()
+			return
+		if not cal:
 			# Use linear calibration
 			cal_path = get_data_path("linear.cal")
 		
@@ -7199,6 +7201,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def report(self, report_calibrated=True):
 		if check_set_argyll_bin():
+			if not self.detect_video_levels():
+				return
 			if self.measure_auto(self.report, report_calibrated):
 				return
 			safe_print("-" * 80)
@@ -7261,6 +7265,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def just_calibrate(self):
 		""" Just calibrate, optionally creating a fast matrix shaper profile """
+		if not self.detect_video_levels():
+			return
 		if self.measure_auto(self.just_calibrate):
 			return
 		safe_print("-" * 80)
@@ -7659,6 +7665,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def calibrate_and_profile(self):
 		""" Start calibration measurements """
+		if not self.detect_video_levels():
+			return
 		if self.measure_auto(self.calibrate_and_profile):
 			return
 		safe_print("-" * 80)
@@ -8035,6 +8043,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 
 	def just_measure(self, apply_calibration, consumer=None):
+		if not self.detect_video_levels():
+			return
 		if self.measure_auto(self.just_measure, apply_calibration):
 			return
 		safe_print("-" * 80)
@@ -8108,6 +8118,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def just_profile(self, apply_calibration):
 		""" Start characterization measurements """
+		if not self.detect_video_levels():
+			return
 		if self.measure_auto(self.just_profile, apply_calibration):
 			return
 		safe_print("-" * 80)
@@ -12132,6 +12144,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					if source_ext.lower() == ".ti3":
 						if path != ti3_tmp_path:
 							shutil.copyfile(path, ti3_tmp_path)
+						# Get dispcal options if present
+						self.worker.options_dispcal = [
+							"-" + arg for arg in 
+							get_options_from_ti3(path)[0]]
 					else:
 						# Binary mode because we want to avoid automatic 
 						# newlines conversion
@@ -13615,6 +13631,9 @@ class MainFrame(ReportFrame, BaseFrame):
 							# comport_ctrl_handler already did because CCMX
 							# observer may override calibration observer
 							update_ccmx_items = True
+							continue
+						if o[0] == "E":
+							setcfg("patterngenerator.use_video_levels", 1)
 							continue
 					if trc and not black_point_correction:
 						setcfg("calibration.black_point_correction.auto", 1)

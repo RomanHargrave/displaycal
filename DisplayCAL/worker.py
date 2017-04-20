@@ -70,9 +70,9 @@ import imfile
 import localization as lang
 import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
-						  cal_to_fake_profile,
-						  extract_fix_copy_cal, ti3_to_ti1, vcgt_to_cal,
-						  verify_cgats)
+						  cal_to_fake_profile, cal_to_vcgt,
+						  extract_cal_from_profile, extract_fix_copy_cal,
+						  ti3_to_ti1, verify_cgats)
 from argyll_instruments import (get_canonical_instrument_name,
 								instruments as all_instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
@@ -544,7 +544,7 @@ def get_options_from_args(dispcal_args=None, colprof_args=None):
 	Extract options used for dispcal and colprof from argument strings.
 	"""
 	re_options_dispcal = [
-		"[moupHVF]",
+		"[moupHVFE]",
 		"d(?:\d+(?:,\d+)?|madvr|web)",
 		"[cv]\d+",
 		"q(?:%s)" % "|".join(config.valid_values["calibration.quality"]),
@@ -1586,10 +1586,12 @@ class Worker(WorkerBase):
 	def add_measurement_features(self, args, display=True,
 								 ignore_display_name=False,
 								 allow_nondefault_observer=False,
-								 ambient=False):
+								 ambient=False, allow_video_levels=True):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
+		if allow_video_levels:
+			self.add_video_levels_arg(args)
 		if not get_arg("-c", args):
 			args.append("-c%s" % getcfg("comport.number"))
 		instrument_name = self.get_instrument_name()
@@ -1751,6 +1753,12 @@ class Worker(WorkerBase):
 			not self.spotread_just_do_instrument_calibration):
 			args.append("-N")
 		return True
+
+	def add_video_levels_arg(self, args):
+		if (config.get_display_name() != "madVR" and
+			getcfg("patterngenerator.use_video_levels") and
+			self.argyll_version >= [1, 6]):
+			args.append("-E")
 	
 	def authenticate(self, cmd, title=appname, parent=None):
 		"""
@@ -2231,6 +2239,64 @@ class Worker(WorkerBase):
 			  self.spotread_just_do_instrument_calibration))):
 			# Single spotread reading, we are done
 			wx.CallLater(1000, self.quit_terminate_cmd)
+
+	def detect_video_levels(self):
+		""" Detect wether we need video (16..235) or data (0..255) levels """
+		if config.get_display_name() == "Untethered":
+			return
+		ti1 = """CTI1   
+
+DESCRIPTOR "Argyll Calibration Target chart information 1"
+ORIGINATOR "Argyll targen"
+CREATED "Thu Apr 20 12:22:05 2017"
+APPROX_WHITE_POINT "95.045781 100.000003 108.905751"
+COLOR_REP "RGB"
+
+NUMBER_OF_FIELDS 7
+BEGIN_DATA_FORMAT
+SAMPLE_ID RGB_R RGB_G RGB_B XYZ_X XYZ_Y XYZ_Z 
+END_DATA_FORMAT
+
+NUMBER_OF_SETS 3
+BEGIN_DATA
+1 100.00 100.00 100.00 95.046 100.00 108.91 
+2 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
+3 6.2745 6.2745 6.2745 5.9636 6.2745 6.8333
+END_DATA
+"""
+		tempdir = self.create_tempdir()
+		if isinstance(tempdir, Exception):
+			return tempdir
+		ti1_path = os.path.join(tempdir, "0_16.ti1")
+		ti1.write(ti1_path)
+		result = self.measure_ti1(ti1_path, allow_video_levels=False)
+		if isinstance(result, Exception) or not result:
+			return result
+		ti3_path = os.path.join(tempdir, "0_16.ti3")
+		try:
+			ti3 = CGATS.CGATS(ti3_path)
+		except (IOError, CGATS.CGATSError),  exception:
+			return exception
+		try:
+			verify_ti1_rgb_xyz(ti3)
+		except CGATS.CGATSError, exception:
+			return exception
+		black_0 = ti3.queryv1({"RGB_R": 0,
+							   "RGB_G": 0,
+							   "RGB_B": 0})
+		black_16 = ti3.queryv1({"RGB_R": 6.2745,
+								"RGB_G": 6.2745,
+								"RGB_B": 6.2745})
+		if black_0 and black_16:
+			# Check delta Y to determine if data or video levels
+			assume_video_levels = black_16["XYZ_Y"] - black_0["XYZ_Y"] < 0.02
+			if assume_video_levels and config.get_display_name() == "madVR":
+				# This is an error
+				return Error(lang.getstr("madtpg.wrong_levels_detected"))
+			setcfg("patterngenerator.use_video_levels", assume_video_levels)
+		else:
+			return Error(lang.getstr("error.testchart.missing_fields",
+									 (ti3_path, ", ".join(black_0.keys()))))
 	
 	def do_instrument_calibration(self, failed=False):
 		""" Ask user to initiate sensor calibration and execute.
@@ -2545,16 +2611,7 @@ class Worker(WorkerBase):
 			
 			# Apply calibration?
 			if apply_cal:
-				# Get the calibration from profile vcgt
-				if not profile_out.tags.get("vcgt", None):
-					raise Error(lang.getstr("profile.no_vcgt"))
-				try:
-					cgats = vcgt_to_cal(profile_out)
-				except (IOError, CGATS.CGATSInvalidError, 
-						CGATS.CGATSInvalidOperationError, CGATS.CGATSKeyError, 
-						CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
-					raise Error(lang.getstr("cal_extraction_failed"))
-				cgats.write(profile_out_cal_path)
+				extract_cal_from_profile(profile_out, profile_out_cal_path)
 				
 				if self.argyll_version < [1, 6]:
 					# Can't apply the calibration with old collink versions -
@@ -3694,11 +3751,9 @@ BEGIN_DATA
 									self.madtpg_disconnect(False)
 									return exception
 						if profile:
-							# Load calibration from ICC profile vcgt (if present)
-							if isinstance(profile.tags.get("vcgt"),
-										  ICCP.VideoCardGammaType):
-								cal = vcgt_to_cal(profile)
-							else:
+							# Load calibration from ICC profile (if present)
+							cal = extract_cal_from_profile(profile, None, False)
+							if not cal:
 								# Linear
 								ramp = None
 						if cal:
@@ -7792,6 +7847,27 @@ END_DATA""")[0]
 							  "r": 1,
 							  "s": 2,
 							  "a": 3}[getcfg("gamap_default_intent")]
+		# Check if we need to video scale vcgt
+		if isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType):
+			try:
+				cal = extract_cal_from_profile(profile, None, False)
+			except Exception, exception:
+				self.log(exception)
+			else:
+				if cal and cal.queryv1("TV_OUTPUT_ENCODING") == "YES":
+					self.log("Need to scale vcgt to video levels (16..235)")
+					# Need to create videoscaled vcgt from calibration 
+					data = cal.queryv1("DATA")
+					if data:
+						self.log("Scaling vcgt to video levels (16..235)")
+						for entry in data.itervalues():
+							for column in "RGB":
+								v_old = entry["RGB_" + column]
+								v_new = colormath.convert_range(v_old, 0, 1,
+																16 / 255.0,
+																235 / 255.0)
+								entry["RGB_" + column] = v_new
+						profile.tags.vcgt = cal_to_vcgt(cal)
 		# Calculate profile ID
 		profile.calculateID()
 		try:
@@ -8498,6 +8574,9 @@ END_DATA""")[0]
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 				elif keyword in ti3[0]:
 					ti3[0].remove_keyword(keyword)
+			if 1 in ti3 and "-E" in options_dispcal:
+				# Need to add video level encoding flag back in
+				ti3[1].add_keyword("TV_OUTPUT_ENCODING", "YES")
 			ti3.write()
 		return cmd, args
 
@@ -10175,7 +10254,7 @@ END_DATA""")[0]
 							  not profile.tags.vcgt.is_linear())
 		if has_nonlinear_vcgt:
 			# Apply cal
-			ocal = vcgt_to_cal(profile)
+			ocal = extract_cal_from_profile(profile)
 			bp_out = ocal.queryv1({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0}).values()
 			ocalpath = temppathname + ".cal"
 			ocal.filename = ocalpath
@@ -11088,7 +11167,8 @@ BEGIN_DATA
 			result = cmd
 		return result
 
-	def measure_ti1(self, ti1_path, cal_path=None, colormanaged=False):
+	def measure_ti1(self, ti1_path, cal_path=None, colormanaged=False,
+					allow_video_levels=True):
 		""" Measure a TI1 testchart file """
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
@@ -11114,7 +11194,8 @@ BEGIN_DATA
 				args += parse_argument_string(getcfg("extra_args.dispread"))
 		result = self.add_measurement_features(args,
 											   cmd == get_argyll_util("dispread"),
-											   allow_nondefault_observer=is_ccxx_testchart())
+											   allow_nondefault_observer=is_ccxx_testchart(),
+											   allow_video_levels=allow_video_levels)
 		if isinstance(result, Exception):
 			return result
 		self.options_dispread = list(args)

@@ -6,12 +6,14 @@ import os
 import traceback
 from time import strftime
 
+from debughelpers import Error
 from options import debug
 from safe_print import safe_print
 from util_io import StringIOu as StringIO
 from util_str import safe_unicode
 import CGATS
 import ICCProfile as ICCP
+import localization as lang
 
 cals = {}
 
@@ -67,6 +69,30 @@ def cal_to_fake_profile(cal):
 	or a filename.
 	
 	"""
+	vcgt, cal = cal_to_vcgt(cal, True)
+	if not vcgt:
+		return
+	profile = ICCP.ICCProfile()
+	profile.fileName = cal.filename
+	profile._data = "\0" * 128
+	profile._tags.desc = ICCP.TextDescriptionType("", "desc")
+	profile._tags.desc.ASCII = safe_unicode(
+				os.path.basename(cal.filename)).encode("ascii", "asciize")
+	profile._tags.desc.Unicode = safe_unicode(os.path.basename(cal.filename))
+	profile._tags.vcgt = vcgt
+	profile.size = len(profile.data)
+	profile.is_loaded = True
+	return profile
+
+
+def cal_to_vcgt(cal, return_cgats=False):
+	""" 
+	Create a vcgt tag from calibration data.
+	
+	cal must refer to a valid Argyll CAL file and can be a CGATS instance 
+	or a filename.
+	
+	"""
 	if not isinstance(cal, CGATS.CGATS):
 		try:
 			cal = CGATS.CGATS(cal)
@@ -89,17 +115,11 @@ def cal_to_fake_profile(cal):
 				return None
 	entries = cal.queryv(required_fields)
 	if len(entries) < 1:
-		if debug: safe_print("[D] No entries found in", cal.filename)
+		if debug: safe_print("[D] No entries found in calibration",
+							 cal.filename)
 		return None
-	profile = ICCP.ICCProfile()
-	profile.fileName = cal.filename
-	profile._data = "\0" * 128
-	profile._tags.desc = ICCP.TextDescriptionType("", "desc")
-	profile._tags.desc.ASCII = safe_unicode(
-				os.path.basename(cal.filename)).encode("ascii", "asciize")
-	profile._tags.desc.Unicode = safe_unicode(os.path.basename(cal.filename))
-	profile._tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
-	profile._tags.vcgt.update({
+	vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
+	vcgt.update({
 		"channels": 3,
 		"entryCount": len(entries),
 		"entrySize": 2,
@@ -107,10 +127,11 @@ def cal_to_fake_profile(cal):
 	})
 	for n in entries:
 		for i in range(3):
-			profile._tags.vcgt.data[i].append(entries[n][i + 1] * 65535.0)
-	profile.size = len(profile.data)
-	profile.is_loaded = True
-	return profile
+			vcgt.data[i].append(entries[n][i + 1] * 65535.0)
+	if return_cgats:
+		return vcgt, cal
+	return vcgt
+	
 
 
 def can_update_cal(path):
@@ -139,6 +160,45 @@ def can_update_cal(path):
 				cal.queryv1("QUALITY")):
 				cals[path] = cal
 	return path in cals and cals[path].mtime == calstat.st_mtime
+
+
+def extract_cal_from_profile(profile, out_cal_path=None,
+							 raise_on_missing_cal=True):
+	""" Extract calibration from 'targ' tag in profile or vcgt as fallback """
+
+	# Check if calibration is included in TI3
+	targ = profile.tags.get("targ", profile.tags.get("CIED"))
+	if isinstance(targ, ICCP.Text):
+		cal = extract_cal_from_ti3(targ)
+		check = cal
+		get_cgats = CGATS.CGATS
+		arg = cal
+	else:
+		# Convert calibration information from embedded WCS profile
+		# (if present) to VideCardFormulaType if the latter is not present
+		if (isinstance(calprof.tags.get("MS00"), ICCP.WcsProfilesTagType) and
+			not "vcgt" in calprof.tags):
+			calprof.tags["vcgt"] = calprof.tags["MS00"].get_vcgt()
+
+		# Get the calibration from profile vcgt
+		check = isinstance(profile.tags.get("vcgt"),
+						   ICCP.VideoCardGammaType)
+		get_cgats = vcgt_to_cal
+		arg = profile
+
+	if not check:
+		if raise_on_missing_cal:
+			raise Error(lang.getstr("profile.no_vcgt"))
+		else:
+			return False
+	else:
+		try:
+			cgats = get_cgats(arg)
+		except (IOError, CGATS.CGATSError), exception:
+			raise Error(lang.getstr("cal_extraction_failed"))
+	if out_cal_path:
+		cgats.write(out_cal_path)
+	return cgats
 
 
 def extract_cal_from_ti3(ti3_data):

@@ -660,6 +660,7 @@
 	"madtpg.launch.failure": "madTPG was not found or could not be launched.",
 	"madvr.not_found": "madVR DirectShow filter was not found in the registry. Please make sure it is installed.",
 	"madvr.outdated": "The used version of madVR is outdated. Please update to the latest version (at least %i.%i.%i.%i).",
+	"madvr.wrong_levels_detected": "The madVR output levels configuration is wrong. Please change to TV levels (16-235).",
 	"magenta": "Magenta",
 	"make_and_model": "Make and model",
 	"manufacturer": "Manufacturer",
