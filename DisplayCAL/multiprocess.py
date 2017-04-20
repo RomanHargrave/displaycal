@@ -21,7 +21,7 @@ def cpu_count():
 	try:
 		return mp.cpu_count()
 	except:
-		return = 1
+		return 1
 
 
 def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
