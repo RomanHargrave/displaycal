@@ -11,6 +11,19 @@ import sys
 import threading
 
 
+def cpu_count():
+	"""
+	Returns the number of CPUs in the system
+	
+	Return fallback value of 1 if CPU count cannot be determined.
+	
+	"""
+	try:
+		return mp.cpu_count()
+	except:
+		return = 1
+
+
 def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 			   thread_abort=None, logfile=None):
 	"""
@@ -30,10 +43,7 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	from config import getcfg
 
 	if num_workers is None:
-		try:
-			num_workers = mp.cpu_count()
-		except:
-			num_workers = 1
+		num_workers = cpu_count()
 	num_workers = max(min(num_workers, len(data_in)), 1)
 	max_workers = getcfg("multiprocessing.max_cpus")
 	if max_workers:

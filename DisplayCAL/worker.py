@@ -91,7 +91,7 @@ from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
-from multiprocess import mp, pool_slice
+from multiprocess import cpu_count, pool_slice
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
@@ -5302,7 +5302,7 @@ while 1:
 		if do_lookup:
 			# Generate inverse table lookup input values
 
-			num_workers = min(max(mp.cpu_count(), 1), clutres)
+			num_workers = min(max(cpu_count(), 1), clutres)
 
 			if logfile:
 				logfile.write("Generating %s%i table lookup input values...\n" %
