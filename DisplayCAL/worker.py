@@ -7870,12 +7870,26 @@ END_DATA""")[0]
 			except Exception, exception:
 				self.log(exception)
 			else:
-				if cal and cal.queryv1("TV_OUTPUT_ENCODING") == "YES":
-					self.log("Need to scale vcgt to video levels (16..235)")
+				white = False
+				if cal:
+					if cal.queryv1("TV_OUTPUT_ENCODING") == "YES":
+						black, white = (16, 235)
+					else:
+						output_enc = cal.queryv1("OUTPUT_ENCODING")
+						if output_enc:
+							try:
+								black, white = (float(v) for v in
+											    output_enc.split())
+							except (TypeError, ValueError):
+								white = False
+				if white and (black, white) != (0, 255):
+					self.log("Need to scale vcgt to video levels (%s..%s)" %
+							 (black, white))
 					# Need to create videoscaled vcgt from calibration 
 					data = cal.queryv1("DATA")
 					if data:
-						self.log("Scaling vcgt to video levels (16..235)")
+						self.log("Scaling vcgt to video levels (%s..%s)" %
+							     (black, white))
 						for entry in data.itervalues():
 							for column in "RGB":
 								v_old = entry["RGB_" + column]
@@ -7883,13 +7897,16 @@ END_DATA""")[0]
 								# precision are created by bit shifting rather
 								# than scaling, so we need to scale the fp
 								# value to account for this
-								newmin = (16 / 256.0) * (65536 / 65535.)
-								newmax = (235 / 256.0) * (65536 / 65535.)
+								newmin = (black / 256.0) * (65536 / 65535.)
+								newmax = (white / 256.0) * (65536 / 65535.)
 								v_new = colormath.convert_range(v_old, 0, 1,
 																newmin,
 																newmax)
 								entry["RGB_" + column] = v_new
 						profile.tags.vcgt = cal_to_vcgt(cal)
+					else:
+						self.log("Warning - no scaling applied - no "
+								 "calibration data!")
 		# Calculate profile ID
 		profile.calculateID()
 		try:
@@ -8599,9 +8616,21 @@ END_DATA""")[0]
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 				elif keyword in ti3[0]:
 					ti3[0].remove_keyword(keyword)
-			if 1 in ti3 and "-E" in options_dispcal:
-				# Need to add video level encoding flag back in
-				ti3[1].add_keyword("TV_OUTPUT_ENCODING", "YES")
+			if 1 in ti3:
+				# Add video level encoding flag if needed
+				black_white = False
+				if "-E" in options_dispcal:
+					black_white = (16, 235)
+				elif (config.get_display_name() == "madVR" and
+					  self.madtpg_connect()):
+					# Get output encoding from madVR
+					black_white = self.madtpg.get_black_and_white_level()
+					self.madtpg_disconnect(False)
+				if black_white == (16, 235):
+					ti3[1].add_keyword("TV_OUTPUT_ENCODING", "YES")
+				elif black_white and black_white != (0, 255):
+					ti3[1].add_keyword("OUTPUT_ENCODING",
+									   " ".join(str(v) for v in black_white))
 			ti3.write()
 		return cmd, args
 
