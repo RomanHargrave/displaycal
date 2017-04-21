@@ -2499,6 +2499,14 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(floatspin.EVT_FLOATSPIN, self.display_delay_handler, 
 				   id=self.display_settle_time_mult.GetId())
 
+		# Output levels
+		self.output_levels_auto.Bind(wx.EVT_RADIOBUTTON,
+									 self.output_levels_handler)
+		self.output_levels_full_range.Bind(wx.EVT_RADIOBUTTON,
+										   self.output_levels_handler)
+		self.output_levels_limited_range.Bind(wx.EVT_RADIOBUTTON,
+											  self.output_levels_handler)
+
 		# Observer
 		self.observer_ctrl.Bind(wx.EVT_CHOICE, self.observer_ctrl_handler)
 		
@@ -2898,7 +2906,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			"patterngenerator.apl",
 			"patterngenerator.resolve",
 			"patterngenerator.resolve.port",
-			"patterngenerator.resolve.use_video_levels",
 			"profile.b2a.hires.diagpng",
 			"profile.create_gamut_views",
 			"profile.install_scope",
@@ -7394,7 +7401,7 @@ class MainFrame(ReportFrame, BaseFrame):
 											  lang.getstr("3dlut.encoding.type_n"))
 				dlg.sizer3.Add(dlg.pclevels, 0, flag=wx.TOP | wx.ALIGN_LEFT,
 							   border=4)
-				if getcfg("patterngenerator.prisma.use_video_levels"):
+				if getcfg("patterngenerator.use_video_levels"):
 					dlg.tvlevels.SetValue(True)
 				else:
 					dlg.pclevels.SetValue(True)
@@ -7468,7 +7475,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						   preset.GetStringSelection())
 					retval = filename
 				else:
-					setcfg("patterngenerator.prisma.use_video_levels",
+					setcfg("patterngenerator.use_video_levels",
 						   int(dlg.tvlevels.GetValue()))
 			dlg.Destroy()
 			if result != wx.ID_OK or not host:
@@ -8946,6 +8953,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		observer = self.observers_ba.get(self.observer_ctrl.GetStringSelection())
 		setcfg("observer", observer)
 
+	def output_levels_handler(self, event):
+		auto = self.output_levels_auto.GetValue()
+		setcfg("patterngenerator.detect_video_levels", int(auto))
+		if not auto:
+			setcfg("patterngenerator.use_video_levels",
+				   int(self.output_levels_limited_range.GetValue()))
+
 	def init_lut_viewer(self, event=None, profile=None, show=None):
 		if debug:
 			safe_print("[D] init_lut_viewer", 
@@ -9048,6 +9062,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		for ctrl in (self.override_min_display_update_delay_ms,
 					 self.min_display_update_delay_ms,
 					 self.min_display_update_delay_ms_label,
+					 self.output_levels_label,
+					 self.output_levels_auto,
+					 self.output_levels_full_range,
+					 self.output_levels_limited_range,
 					 self.black_luminance_label,
 					 self.black_luminance_ctrl,
 					 # Profiling options
@@ -11221,6 +11239,18 @@ class MainFrame(ReportFrame, BaseFrame):
 					"override_min_display_update_delay_ms").SetValue(override)
 			self.update_display_delay_ctrl("min_display_update_delay_ms",
 										   override)
+		show_levels_config = (config.get_display_name() != "madVR" and
+							  getcfg("show_advanced_options"))
+		self.output_levels_label.Show(show_levels_config)
+		self.output_levels_auto.Show(show_levels_config)
+		self.output_levels_full_range.Show(show_levels_config)
+		self.output_levels_limited_range.Show(show_levels_config)
+		if getcfg("patterngenerator.detect_video_levels"):
+			self.output_levels_auto.SetValue(True)
+		else:
+			use_video_levels = bool(getcfg("patterngenerator.use_video_levels"))
+			self.output_levels_full_range.SetValue(not use_video_levels)
+			self.output_levels_limited_range.SetValue(use_video_levels)
 		# Check if display is calibratable at all. Unset calibration update
 		# checkbox if this is not the case.
 		if config.is_uncalibratable_display():

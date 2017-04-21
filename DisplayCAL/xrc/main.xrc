@@ -370,6 +370,42 @@
                         </object>
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
+                            <orient>wxHORIZONTAL</orient>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="output_levels_label">
+                                <label>output_levels</label>
+                              </object>
+                              <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>16</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxRadioButton" name="output_levels_auto">
+                                <label>auto</label>
+                                <style>wxRB_GROUP</style>
+                              </object>
+                              <flag>wxTOP|wxBOTTOM|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>4</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxRadioButton" name="output_levels_full_range">
+                                <label>3dlut.encoding.type_n</label>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>8</border>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxRadioButton" name="output_levels_limited_range">
+                                <label>3dlut.encoding.type_t</label>
+                              </object>
+                              <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                              <border>8</border>
+                            </object>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL|wxTOP</flag>
+                          <border>8</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxBoxSizer">
                             <object class="sizeritem">
                               <object class="wxBoxSizer">
                                 <object class="sizeritem">

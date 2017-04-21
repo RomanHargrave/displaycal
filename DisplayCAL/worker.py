@@ -1672,11 +1672,6 @@ class Worker(WorkerBase):
 					args = args[:farg[0]] + args[farg[0] + 1:]
 			elif getcfg("measure.darken_background") and not farg:
 				args.append("-F")
-		if (display and config.get_display_name() == "Prisma" and
-			defaults["patterngenerator.prisma.argyll"] and
-			getcfg("patterngenerator.prisma.use_video_levels") and
-			not get_arg("-E", args, True)):
-			args.append("-E")
 		if getcfg("measurement_mode.highres") and \
 		   instrument_features.get("highres_mode") and not get_arg("-H", args,
 																   True):
@@ -4306,7 +4301,7 @@ while 1:
 					if self.patterngenerator:
 						# Use existing pattern generator instance
 						self.patterngenerator.logfile = logfiles
-						self.patterngenerator.use_video_levels = getcfg("patterngenerator.%s.use_video_levels" % pgname.lower())
+						self.patterngenerator.use_video_levels = getcfg("patterngenerator.use_video_levels")
 						if hasattr(self.patterngenerator, "conn"):
 							# Try to use existing connection
 							try:
@@ -8295,7 +8290,7 @@ END_DATA""")[0]
 			self.patterngenerator = patterngenerator(
 				host=getcfg("patterngenerator.prisma.host"),
 				port=getcfg("patterngenerator.prisma.port"),
-				use_video_levels=getcfg("patterngenerator.prisma.use_video_levels"),
+				use_video_levels=getcfg("patterngenerator.use_video_levels"),
 				logfile=logfile)
 		else:
 			# Resolve
@@ -8305,7 +8300,7 @@ END_DATA""")[0]
 				patterngenerator = ResolveCMPatternGeneratorServer
 			self.patterngenerator = patterngenerator(
 				port=getcfg("patterngenerator.resolve.port"),
-				use_video_levels=getcfg("patterngenerator.resolve.use_video_levels"),
+				use_video_levels=getcfg("patterngenerator.use_video_levels"),
 				logfile=logfile)
 
 	@Property

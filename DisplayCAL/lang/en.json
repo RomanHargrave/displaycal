@@ -765,6 +765,7 @@
 	"out_of_gamut_tag": "Out of gamut tag",
 	"output.profile": "Target profile",
 	"output_device_profile": "Output device profile",
+	"output_levels": "Output levels",
 	"output_offset": "Output offset",
 	"output_table": "Output Table",
 	"overwrite": "Overwrite",
