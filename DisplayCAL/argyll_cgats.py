@@ -176,9 +176,9 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 	else:
 		# Convert calibration information from embedded WCS profile
 		# (if present) to VideCardFormulaType if the latter is not present
-		if (isinstance(calprof.tags.get("MS00"), ICCP.WcsProfilesTagType) and
-			not "vcgt" in calprof.tags):
-			calprof.tags["vcgt"] = calprof.tags["MS00"].get_vcgt()
+		if (isinstance(profile.tags.get("MS00"), ICCP.WcsProfilesTagType) and
+			not "vcgt" in profile.tags):
+			profile.tags["vcgt"] = profile.tags["MS00"].get_vcgt()
 
 		# Get the calibration from profile vcgt
 		check = isinstance(profile.tags.get("vcgt"),
