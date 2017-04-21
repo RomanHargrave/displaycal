@@ -3318,14 +3318,6 @@ class MainFrame(ReportFrame, BaseFrame):
 				break
 		if delete:
 			del self.ccmx_mapping[key]
-
-	def detect_video_levels(self):
-		if getcfg("patterngenerator.detect_video_levels"):
-			result = self.worker.detect_video_levels()
-			if isinstance(result, Exception):
-				show_result_dialog(result)
-				return False
-		return True
 	
 	def update_colorimeter_correction_matrix_ctrl_items(self, force=False,
 														warn_on_mismatch=False,
@@ -6393,8 +6385,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.setup_measurement(self.verify_calibration)
 
 	def verify_calibration(self):
-		if not self.detect_video_levels():
-			return
 		if self.measure_auto(self.verify_calibration):
 			return
 		safe_print("-" * 80)
@@ -7208,8 +7198,6 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def report(self, report_calibrated=True):
 		if check_set_argyll_bin():
-			if not self.detect_video_levels():
-				return
 			if self.measure_auto(self.report, report_calibrated):
 				return
 			safe_print("-" * 80)
@@ -7272,8 +7260,6 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def just_calibrate(self):
 		""" Just calibrate, optionally creating a fast matrix shaper profile """
-		if not self.detect_video_levels():
-			return
 		if self.measure_auto(self.just_calibrate):
 			return
 		safe_print("-" * 80)
@@ -7672,8 +7658,6 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def calibrate_and_profile(self):
 		""" Start calibration measurements """
-		if not self.detect_video_levels():
-			return
 		if self.measure_auto(self.calibrate_and_profile):
 			return
 		safe_print("-" * 80)
@@ -8050,8 +8034,6 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 
 	def just_measure(self, apply_calibration, consumer=None):
-		if not self.detect_video_levels():
-			return
 		if self.measure_auto(self.just_measure, apply_calibration):
 			return
 		safe_print("-" * 80)
@@ -8125,8 +8107,6 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def just_profile(self, apply_calibration):
 		""" Start characterization measurements """
-		if not self.detect_video_levels():
-			return
 		if self.measure_auto(self.just_profile, apply_calibration):
 			return
 		safe_print("-" * 80)

@@ -72,7 +72,7 @@ import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, cal_to_vcgt,
 						  extract_cal_from_profile, extract_fix_copy_cal,
-						  ti3_to_ti1, verify_cgats)
+						  ti3_to_ti1, verify_cgats, verify_ti1_rgb_xyz)
 from argyll_instruments import (get_canonical_instrument_name,
 								instruments as all_instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
@@ -1551,6 +1551,7 @@ class Worker(WorkerBase):
 				   r"[\*\.]+",
 				   r"\s*\d*%?"]
 		self.recent_discard = re.compile("|".join(discard), re.I)
+		self.resume = False
 		self.sudo = None
 		self.auth_timestamp = 0
 		self.sessionlogfiles = {}
@@ -1567,6 +1568,7 @@ class Worker(WorkerBase):
 		self.clear_argyll_info()
 		self.set_argyll_version_from_string(getcfg("argyll.version"), False)
 		self.clear_cmd_output()
+		self._detecting_video_levels = False
 		self._patterngenerators = {}
 		self._progress_dlgs = {}
 		self._progress_wnd = None
@@ -2237,9 +2239,24 @@ class Worker(WorkerBase):
 
 	def detect_video_levels(self):
 		""" Detect wether we need video (16..235) or data (0..255) levels """
-		if config.get_display_name() == "Untethered":
+		if (self.resume or not getcfg("patterngenerator.detect_video_levels") or
+			config.get_display_name() == "Untethered"):
 			return
-		ti1 = """CTI1   
+		self._detecting_video_levels = True
+		try:
+			return self._detect_video_levels()
+		finally:
+			self._detecting_video_levels = False
+
+	def _detect_video_levels(self):
+		self.log("Detecting output levels range...")
+		tempdir = self.create_tempdir()
+		if isinstance(tempdir, Exception):
+			return tempdir
+		ti1_path = os.path.join(tempdir, "0_16.ti1")
+		try:
+			with open(ti1_path, "wb") as ti1:
+				ti1.write("""CTI1   
 
 DESCRIPTOR "Argyll Calibration Target chart information 1"
 ORIGINATOR "Argyll targen"
@@ -2256,15 +2273,13 @@ NUMBER_OF_SETS 3
 BEGIN_DATA
 1 100.00 100.00 100.00 95.046 100.00 108.91 
 2 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
-3 6.2745 6.2745 6.2745 5.9636 6.2745 6.8333
+3 6.2500 6.2500 6.2500 0.2132 0.2241 0.2443
 END_DATA
-"""
-		tempdir = self.create_tempdir()
-		if isinstance(tempdir, Exception):
-			return tempdir
-		ti1_path = os.path.join(tempdir, "0_16.ti1")
-		ti1.write(ti1_path)
-		result = self.measure_ti1(ti1_path, allow_video_levels=False)
+""")
+		except Exception, exception:
+			return exception
+		result = self.measure_ti1(ti1_path, get_data_path("linear.cal"),
+								  allow_video_levels=False)
 		if isinstance(result, Exception) or not result:
 			return result
 		ti3_path = os.path.join(tempdir, "0_16.ti3")
@@ -2276,19 +2291,25 @@ END_DATA
 			verify_ti1_rgb_xyz(ti3)
 		except CGATS.CGATSError, exception:
 			return exception
-		black_0 = ti3.queryv1({"RGB_R": 0,
+		black_0 = ti3.queryi1({"RGB_R": 0,
 							   "RGB_G": 0,
 							   "RGB_B": 0})
-		black_16 = ti3.queryv1({"RGB_R": 6.2745,
-								"RGB_G": 6.2745,
-								"RGB_B": 6.2745})
+		black_16 = ti3.queryi1({"RGB_R": 6.2500,
+								"RGB_G": 6.2500,
+								"RGB_B": 6.2500})
 		if black_0 and black_16:
+			self.log("RGB level 0 is Y =", black_0["XYZ_Y"])
+			self.log("RGB level 16 is Y =", black_16["XYZ_Y"])
 			# Check delta Y to determine if data or video levels
 			assume_video_levels = black_16["XYZ_Y"] - black_0["XYZ_Y"] < 0.02
 			if assume_video_levels and config.get_display_name() == "madVR":
 				# This is an error
-				return Error(lang.getstr("madtpg.wrong_levels_detected"))
-			setcfg("patterngenerator.use_video_levels", assume_video_levels)
+				return Error(lang.getstr("madvr.wrong_levels_detected"))
+			setcfg("patterngenerator.use_video_levels", int(assume_video_levels))
+			if assume_video_levels:
+				self.log("Detected limited range output levels")
+			else:
+				self.log("Assuming full range output levels")
 		else:
 			return Error(lang.getstr("error.testchart.missing_fields",
 									 (ti3_path, ", ".join(black_0.keys()))))
@@ -7858,9 +7879,15 @@ END_DATA""")[0]
 						for entry in data.itervalues():
 							for column in "RGB":
 								v_old = entry["RGB_" + column]
+								# For video encoding the extra bits of
+								# precision are created by bit shifting rather
+								# than scaling, so we need to scale the fp
+								# value to account for this
+								newmin = (16 / 256.0) * (65536 / 65535.)
+								newmax = (235 / 256.0) * (65536 / 65535.)
 								v_new = colormath.convert_range(v_old, 0, 1,
-																16 / 255.0,
-																235 / 255.0)
+																newmin,
+																newmax)
 								entry["RGB_" + column] = v_new
 						profile.tags.vcgt = cal_to_vcgt(cal)
 		# Calculate profile ID
@@ -8069,6 +8096,9 @@ END_DATA""")[0]
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
+		result = self.detect_video_levels()
+		if isinstance(result, Exception):
+			return result
 		precond_ti1 = None
 		precond_ti3 = None
 		auto = getcfg("testchart.auto_optimize") or 7
@@ -9167,7 +9197,8 @@ END_DATA""")[0]
 					percentage = min(start, 20.0) / end * 100
 					lastmsg = ""
 		if (percentage is not None and time() > self.starttime + 3 and
-			self.progress_wnd is getattr(self, "terminal", None)):
+			self.progress_wnd is getattr(self, "terminal", None) and
+			not self._detecting_video_levels):
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
@@ -9770,6 +9801,7 @@ END_DATA""")[0]
 			self.subprocess_abort = False
 			self.thread_abort = False
 			self.interactive = False
+		self.resume = False
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
@@ -9976,6 +10008,9 @@ END_DATA""")[0]
 
 	def calibrate(self, remove=False):
 		""" Calibrate the screen and process the generated file(s). """
+		result = self.detect_video_levels()
+		if isinstance(result, Exception):
+			return result
 		capture_output = not sys.stdout.isatty()
 		cmd, args = self.prepare_dispcal()
 		if not isinstance(cmd, Exception):
@@ -11165,6 +11200,10 @@ BEGIN_DATA
 	def measure_ti1(self, ti1_path, cal_path=None, colormanaged=False,
 					allow_video_levels=True):
 		""" Measure a TI1 testchart file """
+		if allow_video_levels:
+			result = self.detect_video_levels()
+			if isinstance(result, Exception):
+				return result
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
 			if getcfg("extra_args.spotread").strip():
