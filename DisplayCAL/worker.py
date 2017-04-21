@@ -3847,7 +3847,8 @@ BEGIN_DATA
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
-						  ("-m" in args or "-u" in args))) and
+						  ("-m" in args or "-u" in args)) or
+						  self._detecting_video_levels) and
 						self.madtpg_fullscreen and
 						not self.instrument_on_screen):
 						# Show place instrument on screen message with countdown
