@@ -948,6 +948,9 @@ END_DATA""")
 						else:
 							self.tc_delete_rows(rows)
 						return
+				elif key == 86 and self.grid.IsEditable():
+					# V
+					wx.CallAfter(self.tc_save_check)
 			if key == 83: # S
 				if (hasattr(self, "ti1")):
 					if (event.ShiftDown() or event.AltDown() or
