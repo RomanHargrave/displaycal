@@ -134,6 +134,12 @@
       </object>
       <object class="wxMenu" name="colorimeter_correction_matrix_file">
         <label>colorimeter_correction_matrix_file</label>
+        <object class="wxMenuItem" name="colorimeter_correction_matrix_file.choose">
+          <label>colorimeter_correction_matrix_file.choose</label>
+        </object>
+        <object class="wxMenuItem" name="colorimeter_correction.web_check">
+          <label>colorimeter_correction.web_check</label>
+        </object>
         <object class="wxMenuItem" name="colorimeter_correction.import">
           <label>colorimeter_correction.import</label>
         </object>

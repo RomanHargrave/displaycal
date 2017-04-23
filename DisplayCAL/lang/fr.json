@@ -296,7 +296,7 @@
 	"colorimeter_correction.web_check.failure": "Aucune correction de colorimètre pour l’écran et la sonde de mesure sélectionnés n'a été trouvée.",
 		"*colorimeter_correction.web_check.info": "Please note that all colorimeter corrections have been contributed by various users, and their usefulness to your particular situation is up to you to evaluate. They may or may not improve the absolute accuracy of your colorimeter with your display.",
 	"colorimeter_correction_matrix_file": "Matrice de correction",
-	"colorimeter_correction_matrix_file.choose": "Choisir une matrice de correction",
+	"colorimeter_correction_matrix_file.choose": "Choisir une matrice de correction...",
 	"colorimetric_intent_image_state": "État de l’image colorimétrique",
 	"colors_pcs_relative": "Couleurs (par rapport à PCS)",
 	"colorspace": "Espace de couleurs",

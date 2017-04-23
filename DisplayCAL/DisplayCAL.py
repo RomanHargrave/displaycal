@@ -2212,6 +2212,14 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_MENU, self.measurement_file_check_auto_handler, 
 				  self.menuitem_measurement_file_check_auto)
 
+		self.menuitem_choose_colorimeter_correction = tools_ccxx.FindItemById(
+			tools_ccxx.FindItem("colorimeter_correction_matrix_file.choose"))
+		self.Bind(wx.EVT_MENU, self.colorimeter_correction_matrix_ctrl_handler, 
+				  self.menuitem_choose_colorimeter_correction)
+		self.menuitem_colorimeter_correction_web = tools_ccxx.FindItemById(
+			tools_ccxx.FindItem("colorimeter_correction.web_check"))
+		self.Bind(wx.EVT_MENU, self.colorimeter_correction_web_handler, 
+				  self.menuitem_colorimeter_correction_web)
 		self.menuitem_import_colorimeter_correction = tools_ccxx.FindItemById(
 			tools_ccxx.FindItem("colorimeter_correction.import"))
 		self.Bind(wx.EVT_MENU, self.import_colorimeter_corrections_handler, 
@@ -10604,6 +10612,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_calibrate_instrument.Enable(
 			bool(self.worker.get_instrument_features().get("sensor_cal")))
 		self.update_measurement_modes()
+		enable_ccxx = (self.worker.instrument_can_use_ccxx(False) and
+						not is_ccxx_testchart() and
+						getcfg("measurement_mode") != "auto")
+		self.menuitem_choose_colorimeter_correction.Enable(enable_ccxx)
+		self.menuitem_colorimeter_correction_web.Enable(enable_ccxx)
 		self.update_colorimeter_correction_matrix_ctrl()
 		self.update_colorimeter_correction_matrix_ctrl_items(force)
 	
