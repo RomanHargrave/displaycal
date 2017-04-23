@@ -474,78 +474,6 @@ def check_ti3(ti3, print_debuginfo=True):
 	return suspicious
 
 
-def create_RGB_XYZ_cLUT_fwd_profile(ti3, description, copyright, manufacturer,
-									model, logfn=None):
-	""" Create a RGB to XYZ forward profile """
-	# Extract grays
-	(ti3_extracted, RGB_XYZ,
-	 remaining) = extract_device_gray_primaries(ti3, True, logfn)
-	bwd_matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-	
-	# Interpolate shaper curves from grays
-	curves = create_shaper_curves(RGB_XYZ, bwd_matrix, False, True, logfn)
-	
-	# Create profile
-	profile = ICCP.ICCProfile()
-	profile.setDescription(description)
-	profile.setCopyright(copyright)
-	if manufacturer:
-		profile.setDeviceManufacturerDescription(manufacturer)
-	if model:
-		profile.setDeviceModelDescription(model)
-	luminance_XYZ_cdm2 = ti3.queryv1("LUMINANCE_XYZ_CDM2")
-	if luminance_XYZ_cdm2:
-		profile.tags.lumi = ICCP.XYZType(profile=profile)
-		profile.tags.lumi.Y = float(luminance_XYZ_cdm2.split()[1])
-	profile.tags.wtpt = ICCP.XYZType(profile=profile)
-	white_XYZ = [v / 100.0 for v in RGB_XYZ[(100, 100, 100)]]
-	(profile.tags.wtpt.X,
-	 profile.tags.wtpt.Y,
-	 profile.tags.wtpt.Z) = white_XYZ
-	profile.tags.bkpt = ICCP.XYZType(profile=profile)
-	black_XYZ = [v / 100.0 for v in RGB_XYZ[(0, 0, 0)]]
-	(profile.tags.bkpt.X,
-	 profile.tags.bkpt.Y,
-	 profile.tags.bkpt.Z) = black_XYZ
-	
-	# Check if we have calibration, if so, add vcgt
-	for cgats in ti3.itervalues():
-		if cgats.type == "CAL":
-			profile.tags.vcgt = cal_to_vcgt(cgats)
-	
-	# Add black, gray and white back to remaining
-	remaining[(0, 0, 0)] = RGB_XYZ[(0, 0, 0)]
-	def get_XYZ(n):
-		XYZ = colormath.adapt(*(curve[int(round((len(curve) - 1.0) / 4 * n))]
-								for curve in curves),
-							  whitepoint_destination=white_XYZ)
-		return [v * 100 for v in XYZ]
-	remaining[(25, 25, 25)] = get_XYZ(1)
-	remaining[(50, 50, 50)] = get_XYZ(2)
-	remaining[(75, 75, 75)] = get_XYZ(3)
-	remaining[(100, 100, 100)] = RGB_XYZ[(100, 100, 100)]
-	
-	# Fill cLUT
-	remaining.sort()
-	clut = [[]]
-	for RGB, XYZ in remaining.iteritems():
-		X, Y, Z = (v / 100.0 for v in XYZ)
-		X, Y, Z = colormath.blend_blackpoint(X, Y, Z, black_XYZ)
-		clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
-		if len(clut[-1]) == 5:
-			clut.append([])
-	
-	if clut.pop(-1):
-		raise ValueError("cLUT has wrong size")
-	
-	profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
-
-	# Add black back in
-	profile.tags.A2B0.apply_black_offset(black_XYZ)
-	
-	return profile
-
-
 def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 						 logfn=None):
 	""" Create input (device to PCS) shaper curves """
@@ -595,11 +523,12 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 	powinterp = {"r": colormath.Interp([], []),
 				 "g": colormath.Interp([], []),
 				 "b": colormath.Interp([], [])}
+	RGBwp = bwd_mtx * XYZwp
 	for n in xrange(numentries):
 		n /= maxval
-		### Apply slight power to input value so we sample near
-		### black more accurately
-		##n **= 1.2
+		# Apply slight power to input value so we sample near
+		# black more accurately
+		n **= 1.2
 		Y = ginterp(n)
 		X = rinterp(n)
 		Z = binterp(n)
@@ -607,18 +536,18 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		for i, channel in enumerate("rgb"):
 			if single_curve:
 				# Single shaper curve
-				v = RGB[1]
+				v = RGB[1] * RGBwp[i]
 			else:
 				# 3x shaper curves
 				v = RGB[i]
 			v = min(max(v, 0), 1)
 			# Slope limit
 			v = max(v, n / 64.25)
-			##powinterp[channel].xp.append(n)
-			##powinterp[channel].fp.append(v)
-	##for n in xrange(numentries):
-		##for i, channel in enumerate("rgb"):
-			##v = powinterp[channel](n / maxval)
+			powinterp[channel].xp.append(n)
+			powinterp[channel].fp.append(v)
+	for n in xrange(numentries):
+		for i, channel in enumerate("rgb"):
+			v = powinterp[channel](n / maxval)
 			curves[i].append(v)
 
 	# Smoothing
@@ -7264,21 +7193,30 @@ usage: spotread [-options] [logfile]
 				args.insert(args.index("-aX"), "-ax")
 				args.remove("-aX")
 			if getcfg("profile.type") in ("X", "x"):
-				# Check if TI3 RGB matches our 5^3 TI1 RGB
+				# Check if TI3 RGB matches one of our 5^3 TI1 RGB charts
 				ti3 = CGATS.CGATS(args[-1] + ".ti3")
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				ti1 = CGATS.CGATS(get_data_path("ti1/d3-e1-s3-g33-m5-b0-f0-gV1.6.ti1"))
-				(ti1_extracted,
-				 ti1_RGB_XYZ,
-				 ti1_remaining) = extract_device_gray_primaries(ti1)
-				is_5x5x5 = sorted(ti3_remaining.keys()) == sorted(ti1_remaining.keys())
+				for ti1_name in ("d3-e1-s3-g33-m5-b0-f0",
+								 "d3-e4-s17-g49-m5-b5-f0"):
+					ti1_name = "ti1/%s.ti1" % ti1_name
+					ti1_path = get_data_path(ti1_name)
+					if not ti1_path:
+						return Error(lang.getstr("file.missing", ti1_name))
+					ti1 = CGATS.CGATS(ti1_path)
+					(ti1_extracted,
+					 ti1_RGB_XYZ,
+					 ti1_remaining) = extract_device_gray_primaries(ti1)
+					is_5x5x5 = (sorted(ti3_remaining.keys()) ==
+								sorted(ti1_remaining.keys()))
+					if is_5x5x5:
+						break
 			else:
 				is_5x5x5 = False
 			if is_5x5x5:
 				# Use our own forward profile code
-				profile = create_RGB_XYZ_cLUT_fwd_profile(ti3,
+				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
 														  os.path.basename(args[-1]),
 														  getcfg("copyright"),
 														  display_manufacturer,
@@ -7660,6 +7598,137 @@ usage: spotread [-options] [logfile]
 			setcfg("last_cal_or_icc_path", dst_path)
 			setcfg("last_icc_path", dst_path)
 		return result
+
+	def create_RGB_XYZ_cLUT_fwd_profile(self, ti3, description, copyright,
+										manufacturer, model, logfn=None):
+		""" Create a RGB to XYZ forward profile """
+		# Extract grays and remaining colors
+		(ti3_extracted, RGB_XYZ,
+		 remaining) = extract_device_gray_primaries(ti3, True, logfn)
+		bwd_matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+		
+		# Check if we have calibration, if so, add vcgt
+		vcgt = False
+		for cgats in ti3.itervalues():
+			if cgats.type == "CAL":
+				vcgt = cal_to_vcgt(cgats)
+		
+		# Interpolate shaper curves from grays - returned curves are adapted
+		# to D50
+		curves = create_shaper_curves(RGB_XYZ, bwd_matrix,
+									  vcgt and not vcgt.is_linear(), True,
+									  logfn)
+		
+		# Create profile
+		profile = ICCP.ICCProfile()
+		profile.setDescription(description)
+		profile.setCopyright(copyright)
+		if manufacturer:
+			profile.setDeviceManufacturerDescription(manufacturer)
+		if model:
+			profile.setDeviceModelDescription(model)
+		luminance_XYZ_cdm2 = ti3.queryv1("LUMINANCE_XYZ_CDM2")
+		if luminance_XYZ_cdm2:
+			profile.tags.lumi = ICCP.XYZType(profile=profile)
+			profile.tags.lumi.Y = float(luminance_XYZ_cdm2.split()[1])
+		profile.tags.wtpt = ICCP.XYZType(profile=profile)
+		white_XYZ = [v / 100.0 for v in RGB_XYZ[(100, 100, 100)]]
+		(profile.tags.wtpt.X,
+		 profile.tags.wtpt.Y,
+		 profile.tags.wtpt.Z) = white_XYZ
+		profile.tags.bkpt = ICCP.XYZType(profile=profile)
+		black_XYZ = [v / 100.0 for v in RGB_XYZ[(0, 0, 0)]]
+		(profile.tags.bkpt.X,
+		 profile.tags.bkpt.Y,
+		 profile.tags.bkpt.Z) = black_XYZ
+		
+		# Check if we have calibration, if so, add vcgt
+		if vcgt:
+			profile.tags.vcgt = vcgt
+		
+		def get_XYZ_from_curves(n, m):
+			# Curves are adapted to D50, need to go back to original white
+			XYZ = colormath.adapt(*(curve[int(round((len(curve) - 1.0) / m * n))]
+									for curve in curves),
+								  whitepoint_destination=white_XYZ)
+			return [v * 100 for v in XYZ]
+		
+		# Need to sort so columns increase (fastest to slowest) B G R
+		remaining.sort()
+
+		# Build initial 5x5x5 cLUT
+		clut = []
+		for a in xrange(5):
+			for b in xrange(5):
+				clut.append([])
+				for c in xrange(5):
+					RGB = (a * 25, b * 25, c * 25)
+					# Prefer actual measurements over interpolated values
+					XYZ = remaining.get(RGB)
+					if not XYZ:
+						if a == b == c:
+							# Fall back to interpolated values for gray
+							XYZ = get_XYZ_from_curves(a, 4)
+						else:
+							raise ValueError("Measurement data is missing "
+											 "RGB %.4f %.4f %.4f" % RGB)
+					X, Y, Z = (v / 100.0 for v in XYZ)
+					X, Y, Z = colormath.blend_blackpoint(X, Y, Z, black_XYZ)
+					# Range 0..1
+					clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+		
+		profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+
+		# Interpolate to higher cLUT resolution
+		quality = getcfg("profile.quality")
+		clutres = {"m": 9,
+				   "l": 5}.get(quality, 17)
+
+		# Lookup input RGB to interpolated XYZ
+		RGB_in = []
+		step = 100 / (clutres - 1.0)
+		for a in xrange(clutres):
+			for b in xrange(clutres):
+				for c in xrange(clutres):
+					RGB_in.append([a * step, b * step, c * step])
+		XYZ_out = self.xicclu(profile, RGB_in, "a", pcs="X", scale=100)
+		profile.fileName = None
+
+		# Create new cLUT
+		clut = []
+		i = 0
+		actual = 0
+		interpolated = 0
+		for a in xrange(clutres):
+			for b in xrange(clutres):
+				clut.append([])
+				for c in xrange(clutres):
+					RGB = (a * step, b * step, c * step)
+					# Prefer actual measurements over interpolated values
+					XYZ = remaining.get(RGB)
+					if not XYZ:
+						# Fall back to interpolated values
+						XYZ = XYZ_out[i]
+						interpolated += 1
+					else:
+						actual += 1
+					i += 1
+					X, Y, Z = (v / 100.0 for v in XYZ)
+					X, Y, Z = colormath.blend_blackpoint(X, Y, Z, black_XYZ)
+					# Range 0..1
+					clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+		if actual > 5 ** 3:
+			# Did we get any additional actual measured cLUT points?
+			self.log("Got %i values from actual measurements out of %i total" %
+					 (actual, clutres ** 3))
+
+			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+
+		# Add black back in
+		black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
+		profile.tags.A2B0.apply_black_offset(black_XYZ_D50)
+		
+		return profile
 
 	def _create_matrix_profile(self, outname, profile=None, ptype="s",
 							   omit=None, bpc=False):
@@ -8273,7 +8342,7 @@ usage: spotread [-options] [logfile]
 				if auto == 2:
 					testchart = "ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1"
 				elif auto == 3:
-					testchart = "ti1/d3-e4-s13-g37-m4-b4-f0.ti1"
+					testchart = "ti1/d3-e1-s3-g33-m5-b0-f0.ti1"
 				else:
 					testchart = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
 				testchart_path = get_data_path(testchart)

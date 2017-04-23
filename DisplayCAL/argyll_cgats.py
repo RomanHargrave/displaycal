@@ -347,7 +347,9 @@ def extract_device_gray_primaries(ti3, gray=True, logfn=None):
 	Return extracted ti3, extracted RGB to XYZ mapping and remaining RGB to XYZ
 
 	"""
+	filename = ti3.filename
 	ti3 = ti3.queryi1("DATA")
+	ti3.filename = filename
 	ti3_extracted = CGATS.CGATS("""CTI3
 DEVICE_CLASS "DISPLAY"
 COLOR_REP "RGB_XYZ"
@@ -394,7 +396,8 @@ END_DATA""")[0]
 				subset.remove(RGB)
 				if not gray and not subset:
 					break
-		else:
+		elif not RGB in [(100.0, 100.0, 100.0),
+						 (0.0, 0.0, 0.0)]:
 			RGB_XYZ_remaining[RGB] = XYZ
 	return ti3_extracted, RGB_XYZ_extracted, RGB_XYZ_remaining
 

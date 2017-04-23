@@ -157,7 +157,7 @@ resfiles = [
 	"ti1/d3-e4-s2-g25-m0-b0-f0.ti1",
 	"ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1",
 	"ti1/d3-e4-s0-g49-m3-b3-f0-crossover.ti1",
-	"ti1/d3-e4-s13-g37-m4-b4-f0.ti1",
+	"ti1/d3-e1-s3-g33-m5-b0-f0.ti1",
 	"ti1/d3-e4-s17-g49-m5-b5-f0.ti1",
 	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
