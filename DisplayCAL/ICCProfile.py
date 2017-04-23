@@ -418,6 +418,90 @@ def Property(func):
 	return property(**func())
 
 
+def create_RGB_A2B_XYZ(input_curves, clut):
+	"""
+	Create RGB device A2B from input curve XYZ values and cLUT
+	
+	Note that input curves and cLUT should already be adapted to D50.
+	
+	"""
+	if len(input_curves) != 3:
+		raise ValueError("Wrong number of input curves: %i" % len(input_curves))
+
+	white_XYZ = clut[-1][-1]
+
+	clutres = len(clut[0])
+
+	itable = LUT16Type(None, "A2B0")
+	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+	
+	# Input curve interpolation
+	# Normlly the input curves would either be linear (= 1:1 mapping to
+	# cLUT) or the respective tone response curve.
+	# We use a overall linear curve that is 'bent' in <clutres> intervals
+	# to accomodate the non-linear TRC. Thus, we can get away with much
+	# fewer cLUT grid points.
+	
+	# Use higher interpolation size than actual number of curve entries
+	steps = 2 ** 15
+	maxv = steps - 1.0
+	
+	fwd = []
+	bwd = []
+	for i, input_curve in enumerate(input_curves):
+		if isinstance(input_curve, (tuple, list)):
+			linear = [v / (len(input_curve) - 1.0)
+					  for v in xrange(len(input_curve))]
+			fwd.append(colormath.Interp(linear, input_curve, use_numpy=True))
+			bwd.append(colormath.Interp(input_curve, linear, use_numpy=True))
+		else:
+			# Gamma
+			fwd.append(lambda v, p=input_curve: colormath.specialpow(v, p))
+			bwd.append(lambda v, p=input_curve: colormath.specialpow(v, 1.0 / p))
+		itable.input.append([])
+		itable.output.append([0, 65535])
+
+	for i in xrange(3):
+		maxi = bwd[i](white_XYZ[1])
+		segment = 1.0 / (clutres - 1.0) * maxi
+		iv = 0.0
+		prevpow = 0.0
+		nextpow = fwd[i](segment)
+		xp = []
+		for j in xrange(steps):
+			v = (j / maxv) * maxi
+			if v > iv + segment:
+				iv += segment
+				prevpow = nextpow
+				nextpow = fwd[i](iv + segment)
+			prevs = 1.0 - (v - iv) / segment
+			nexts = (v - iv) / segment
+			vv = (prevs * prevpow + nexts * nextpow)
+			out = bwd[i](vv)
+			xp.append(out)
+		# Fill input curves from interpolated values
+		interp = colormath.Interp(xp, range(steps), use_numpy=True)
+		entries = 2049
+		for j in xrange(entries):
+			v = j / (entries - 1.0)
+			itable.input[i].append(interp(v) / maxv * 65535)
+	
+	# Fill cLUT
+	clut = list(clut)
+	itable.clut = []
+	step = 1.0 / (clutres - 1.0)
+	for R in xrange(clutres):
+		for G in xrange(clutres):
+			row = list(clut.pop(0))
+			itable.clut.append([])
+			for B in xrange(clutres):
+				X, Y, Z = row.pop(0)
+				itable.clut[-1].append([max(v / white_XYZ[1] * 32768, 0)
+										for v in (X, Y, Z)])
+	
+	return itable
+
+
 def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 								  white_Y=1.0, clutres=9):
 	"""
@@ -2362,14 +2446,14 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 		if thread_abort_event and thread_abort_event.is_set():
 			return Info(abortmessage)
 		for i, row in enumerate(block):
-			if not use_bpc or nonzero_bp:
+			if nonzero_bp:
 				for column, value in enumerate(row):
 					row[column] = interp[column](value)
 			row = _blend_blackpoint(pcs, row, bp,
 									bp_out,
 									wp if use_bpc else None,
 									use_bpc, weight, D50)
-			if not use_bpc or nonzero_bp:
+			if nonzero_bp and pcs != "Lab":
 				for column, value in enumerate(row):
 					row[column] = rinterp[column](value)
 			block[i] = row
@@ -2826,22 +2910,39 @@ class LUT16Type(ICCProfileTag):
 
 			from multiprocess import pool_slice
 
-			self.clut = sum(pool_slice(_mp_apply_black, self.clut,
-									   (pcs, bp, bp_out, wp, nonzero_bp, use_bpc,
-									    weight, D50, interp, rinterp,
-									    abortmessage), {}, None,
-									    thread_abort, logfile), [])
+			if len(self.clut[0]) < 33:
+				num_workers = 1
+			else:
+				num_workers = None
 
-			#if pcs != "Lab" and nonzero_bp:
-				## Apply black offset to output curves
-				#out = [[], [], []]
-				#for j in xrange(4096):
-					#v = j / 4095.0 * 65535
-					#row = blend_blackpoint([rinterp[i](v) for i in xrange(3)],
-										   #(0, 0, 0), bp_out, (1, 1, 1))
-					#for i in xrange(3):
-						#out[i].append(interp[i](row[i]))
-				#self.output = out
+			if pcs != "Lab" and nonzero_bp:
+				bp_out_offset = bp_out
+				bp_out = (0, 0, 0)
+
+			if bp != bp_out:
+				self.clut = sum(pool_slice(_mp_apply_black, self.clut,
+										   (pcs, bp, bp_out, wp, nonzero_bp,
+										    use_bpc, weight, D50, interp,
+										    rinterp, abortmessage), {},
+										   num_workers, thread_abort, logfile),
+										   [])
+
+			if pcs != "Lab" and nonzero_bp:
+				# Apply black offset to output curves
+				out = [[], [], []]
+				for i in xrange(2049):
+					v = i / 2048.0
+					X, Y, Z = colormath.blend_blackpoint(v, v, v, (0, 0, 0),
+														 bp_out_offset)
+					out[0].append(X * 2048 / 4095.0 * 65535)
+					out[1].append(Y * 2048 / 4095.0 * 65535)
+					out[2].append(Z * 2048 / 4095.0 * 65535)
+				for i in xrange(2049, 4096):
+					v = i / 4095.0
+					out[0].append(v * 65535)
+					out[1].append(v * 65535)
+					out[2].append(v * 65535)
+				self.output = out
 
 	@Property
 	def clut():
@@ -6113,23 +6214,24 @@ class ICCProfile:
 												  len(tag.tagData))
 		return info
 	
-	def get_rgb_space(self, relation="ir"):
+	def get_rgb_space(self, relation="ir", gamma=None):
 		tags = self.tags
 		if not "wtpt" in tags:
 			return False
-		rgb_space = [[], getattr(tags.wtpt, relation).values()]
+		rgb_space = [gamma or [], getattr(tags.wtpt, relation).values()]
 		for component in ("r", "g", "b"):
 			if (not "%sXYZ" % component in tags or
-				not "%sTRC" % component in tags or
-				not isinstance(tags["%sTRC" % component],
-							   CurveType)):
+				(not gamma and (not "%sTRC" % component in tags or
+								not isinstance(tags["%sTRC" % component],
+											   CurveType)))):
 				return False
 			rgb_space.append(getattr(tags["%sXYZ" % component], relation).xyY)
-			if len(tags["%sTRC" % component]) > 1:
-				rgb_space[0].append([v / 65535.0 for v in
-									 tags["%sTRC" % component]])
-			else:
-				rgb_space[0].append(tags["%sTRC" % component][0])
+			if not gamma:
+				if len(tags["%sTRC" % component]) > 1:
+					rgb_space[0].append([v / 65535.0 for v in
+										 tags["%sTRC" % component]])
+				else:
+					rgb_space[0].append(tags["%sTRC" % component][0])
 		return rgb_space
 	
 	def read(self, profile):

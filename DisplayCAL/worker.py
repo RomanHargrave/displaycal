@@ -71,7 +71,8 @@ import localization as lang
 import wexpect
 from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 						  cal_to_fake_profile, cal_to_vcgt,
-						  extract_cal_from_profile, extract_fix_copy_cal,
+						  extract_cal_from_profile, extract_cal_from_ti3,
+						  extract_device_gray_primaries, extract_fix_copy_cal,
 						  ti3_to_ti1, verify_cgats, verify_ti1_rgb_xyz)
 from argyll_instruments import (get_canonical_instrument_name,
 								instruments as all_instruments)
@@ -471,6 +472,176 @@ def check_ti3(ti3, print_debuginfo=True):
 		prev["Lab"] = Lab
 		prev["delta_to_sRGB"] = delta_to_sRGB
 	return suspicious
+
+
+def create_RGB_XYZ_cLUT_fwd_profile(ti3, description, copyright, manufacturer,
+									model, logfn=None):
+	""" Create a RGB to XYZ forward profile """
+	# Extract grays
+	(ti3_extracted, RGB_XYZ,
+	 remaining) = extract_device_gray_primaries(ti3, True, logfn)
+	bwd_matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+	
+	# Interpolate shaper curves from grays
+	curves = create_shaper_curves(RGB_XYZ, bwd_matrix, False, True, logfn)
+	
+	# Create profile
+	profile = ICCP.ICCProfile()
+	profile.setDescription(description)
+	profile.setCopyright(copyright)
+	if manufacturer:
+		profile.setDeviceManufacturerDescription(manufacturer)
+	if model:
+		profile.setDeviceModelDescription(model)
+	luminance_XYZ_cdm2 = ti3.queryv1("LUMINANCE_XYZ_CDM2")
+	if luminance_XYZ_cdm2:
+		profile.tags.lumi = ICCP.XYZType(profile=profile)
+		profile.tags.lumi.Y = float(luminance_XYZ_cdm2.split()[1])
+	profile.tags.wtpt = ICCP.XYZType(profile=profile)
+	white_XYZ = [v / 100.0 for v in RGB_XYZ[(100, 100, 100)]]
+	(profile.tags.wtpt.X,
+	 profile.tags.wtpt.Y,
+	 profile.tags.wtpt.Z) = white_XYZ
+	profile.tags.bkpt = ICCP.XYZType(profile=profile)
+	black_XYZ = [v / 100.0 for v in RGB_XYZ[(0, 0, 0)]]
+	(profile.tags.bkpt.X,
+	 profile.tags.bkpt.Y,
+	 profile.tags.bkpt.Z) = black_XYZ
+	
+	# Check if we have calibration, if so, add vcgt
+	for cgats in ti3.itervalues():
+		if cgats.type == "CAL":
+			profile.tags.vcgt = cal_to_vcgt(cgats)
+	
+	# Add black, gray and white back to remaining
+	remaining[(0, 0, 0)] = RGB_XYZ[(0, 0, 0)]
+	def get_XYZ(n):
+		XYZ = colormath.adapt(*(curve[int(round((len(curve) - 1.0) / 4 * n))]
+								for curve in curves),
+							  whitepoint_destination=white_XYZ)
+		return [v * 100 for v in XYZ]
+	remaining[(25, 25, 25)] = get_XYZ(1)
+	remaining[(50, 50, 50)] = get_XYZ(2)
+	remaining[(75, 75, 75)] = get_XYZ(3)
+	remaining[(100, 100, 100)] = RGB_XYZ[(100, 100, 100)]
+	
+	# Fill cLUT
+	remaining.sort()
+	clut = [[]]
+	for RGB, XYZ in remaining.iteritems():
+		X, Y, Z = (v / 100.0 for v in XYZ)
+		X, Y, Z = colormath.blend_blackpoint(X, Y, Z, black_XYZ)
+		clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+		if len(clut[-1]) == 5:
+			clut.append([])
+	
+	if clut.pop(-1):
+		raise ValueError("cLUT has wrong size")
+	
+	profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+
+	# Add black back in
+	profile.tags.A2B0.apply_black_offset(black_XYZ)
+	
+	return profile
+
+
+def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
+						 logfn=None):
+	""" Create input (device to PCS) shaper curves """
+	RGB_XYZ.sort()
+	R_R = []
+	G_G = []
+	B_B = []
+	R_X = []
+	G_Y = []
+	B_Z = []
+	XYZbp = None
+	XYZwp = None
+	for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
+		R_R.append(R / 100.0)
+		G_G.append(G / 100.0)
+		B_B.append(B / 100.0)
+		X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(100, 100, 100)])
+		R_X.append(X / 100.0)
+		G_Y.append(Y / 100.0)
+		B_Z.append(Z / 100.0)
+		if R == G == B == 0:
+			XYZbp = [v / 100 for v in (X, Y, Z)]
+		elif R == G == B == 100:
+			XYZwp = [v / 100 for v in (X, Y, Z)]
+
+	numvalues = len(R_R)
+
+	# Scale black to zero
+	for i in xrange(numvalues):
+		(R_X[i],
+		 G_Y[i],
+		 B_Z[i]) = colormath.blend_blackpoint(R_X[i],
+											  G_Y[i],
+											  B_Z[i], XYZbp)
+
+	rinterp = colormath.Interp(R_R, R_X)
+	ginterp = colormath.Interp(G_G, G_Y)
+	binterp = colormath.Interp(B_B, B_Z)
+
+	curves = []
+	for i in xrange(3):
+		curves.append([])
+
+	# Interpolate TRC
+	numentries = 33
+	maxval = numentries - 1.0
+	powinterp = {"r": colormath.Interp([], []),
+				 "g": colormath.Interp([], []),
+				 "b": colormath.Interp([], [])}
+	for n in xrange(numentries):
+		n /= maxval
+		### Apply slight power to input value so we sample near
+		### black more accurately
+		##n **= 1.2
+		Y = ginterp(n)
+		X = rinterp(n)
+		Z = binterp(n)
+		RGB = bwd_mtx * (X, Y, Z)
+		for i, channel in enumerate("rgb"):
+			if single_curve:
+				# Single shaper curve
+				v = RGB[1]
+			else:
+				# 3x shaper curves
+				v = RGB[i]
+			v = min(max(v, 0), 1)
+			# Slope limit
+			v = max(v, n / 64.25)
+			##powinterp[channel].xp.append(n)
+			##powinterp[channel].fp.append(v)
+	##for n in xrange(numentries):
+		##for i, channel in enumerate("rgb"):
+			##v = powinterp[channel](n / maxval)
+			curves[i].append(v)
+
+	# Smoothing
+	for curve in curves:
+		# Make monotonically increasing + 1st smoothing pass
+		curve[:] = colormath.make_monotonically_increasing(curve)
+		# Spline interpolation to larger size
+		x = (i / 4095.0 * (len(curve) - 1)  for i in xrange(4096))
+		spline = ICCP.CRInterpolation(curve)
+		curve[:] = (min(max(spline(v), 0), 1) for v in x)
+		# Ensure still monotonically increasing
+		curve[:] = colormath.make_monotonically_increasing(curve)
+
+	if XYZbp and not bpc:
+		# Add black back in
+		for i in xrange(4096):
+			(curves[0][i],
+			 curves[1][i],
+			 curves[2][i]) = colormath.blend_blackpoint(*(curve[i] for curve in curves),
+														bp_in=(0, 0, 0),
+														bp_out=XYZbp)
+
+	return curves
 
 
 def get_argyll_version(name, silent=False, paths=None):
@@ -7084,14 +7255,40 @@ usage: spotread [-options] [logfile]
 			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
 			display_manufacturer)
 		if not isinstance(cmd, Exception): 
+			profile = None
+			profile_path = args[-1] + profile_ext
 			if "-aX" in args:
 				# If profile type is X (XYZ cLUT + matrix), only create the
 				# cLUT, then add the matrix tags later from a forward lookup of
 				# a smaller testchart (faster computation!)
 				args.insert(args.index("-aX"), "-ax")
 				args.remove("-aX")
-			result = self.exec_cmd(cmd, args, low_contrast=False, 
-								   skip_scripts=skip_scripts)
+			if getcfg("profile.type") in ("X", "x"):
+				# Check if TI3 RGB matches our 5^3 TI1 RGB
+				ti3 = CGATS.CGATS(args[-1] + ".ti3")
+				(ti3_extracted,
+				 ti3_RGB_XYZ,
+				 ti3_remaining) = extract_device_gray_primaries(ti3)
+				ti1 = CGATS.CGATS(get_data_path("ti1/d3-e1-s3-g33-m5-b0-f0-gV1.6.ti1"))
+				(ti1_extracted,
+				 ti1_RGB_XYZ,
+				 ti1_remaining) = extract_device_gray_primaries(ti1)
+				is_5x5x5 = sorted(ti3_remaining.keys()) == sorted(ti1_remaining.keys())
+			else:
+				is_5x5x5 = False
+			if is_5x5x5:
+				# Use our own forward profile code
+				profile = create_RGB_XYZ_cLUT_fwd_profile(ti3,
+														  os.path.basename(args[-1]),
+														  getcfg("copyright"),
+														  display_manufacturer,
+														  display_name,
+														  self.log)
+				profile.write(profile_path)
+				result = True
+			else:
+				result = self.exec_cmd(cmd, args, low_contrast=False, 
+									   skip_scripts=skip_scripts)
 			if (os.path.isfile(args[-1] + ".ti3.backup") and
 				os.path.isfile(args[-1] + ".ti3")):
 				# Restore backed up TI3
@@ -7100,7 +7297,7 @@ usage: spotread [-options] [logfile]
 				ti3_file = open(args[-1] + ".ti3", "rb")
 				ti3 = ti3_file.read()
 				ti3_file.close()
-			else:
+			elif not is_5x5x5:
 				ti3 = None
 			if os.path.isfile(args[-1] + ".chrm"):
 				# Get ChromaticityType tag
@@ -7116,9 +7313,9 @@ usage: spotread [-options] [logfile]
 			errors = self.errors
 			output = self.output
 			retcode = self.retcode
-			profile_path = args[-1] + profile_ext
 			try:
-				profile = ICCP.ICCProfile(profile_path)
+				if not profile:
+					profile = ICCP.ICCProfile(profile_path)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
@@ -7135,7 +7332,8 @@ usage: spotread [-options] [logfile]
 						ptype = getcfg("profile.type")
 						omit = "XYZ"  # Don't re-create matrix
 					result = self._create_matrix_profile(args[-1], profile,
-														 ptype, omit)
+														 ptype, omit,
+														 getcfg("profile.black_point_compensation"))
 					if isinstance(result, ICCP.ICCProfile):
 						result = True
 						profchanged = True
@@ -7334,11 +7532,13 @@ usage: spotread [-options] [logfile]
 					if not "B2A2" in profile.tags:
 						profile.tags.B2A2 = profile.tags.B2A0
 				# A2B processing
+				has_B2A = "B2A0" in profile.tags
 				process_A2B = ("A2B0" in profile.tags and
 							   profile.colorSpace == "RGB" and
 							   profile.connectionColorSpace in ("XYZ", "Lab") and
 							   (getcfg("profile.b2a.hires") or
-								getcfg("profile.quality.b2a") in ("l", "n")))
+								getcfg("profile.quality.b2a") in ("l", "n")
+								or not has_B2A))
 				if ("rTRC" in profile.tags and
 					"gTRC" in profile.tags and
 					"bTRC" in profile.tags and
@@ -7383,7 +7583,8 @@ usage: spotread [-options] [logfile]
 							self.log("Can't apply black point "
 									 "compensation to non-LUT16Type %s "
 									 "table" % table)
-					if getcfg("profile.b2a.hires"):
+					if (getcfg("profile.b2a.hires") or
+						not has_B2A):
 						if profchanged:
 							# We need to write the changed profile before
 							# enhancing B2A resolution!
@@ -7414,7 +7615,8 @@ usage: spotread [-options] [logfile]
 					profile.write()
 				except Exception, exception:
 					return exception
-				if bpc_applied or getcfg("profile.type") in ("s", "S", "g", "G"):
+				if (bpc_applied or not has_B2A or
+					getcfg("profile.type") in ("s", "S", "g", "G")):
 					# We need to re-do profile self check
 					self.exec_cmd(get_argyll_util("profcheck"),
 								  [args[-1] + ".ti3", args[-1] + profile_ext],
@@ -7460,7 +7662,7 @@ usage: spotread [-options] [logfile]
 		return result
 
 	def _create_matrix_profile(self, outname, profile=None, ptype="s",
-							   omit=None):
+							   omit=None, bpc=False):
 		"""
 		Create matrix profile from lookup through ti3
 		
@@ -7496,6 +7698,7 @@ usage: spotread [-options] [logfile]
 			return exception
 		else:
 			if 0 in ti3:
+				ti3[0].filename = ti3.filename  # So we can log the name
 				ti3 = ti3[0]
 				ti3.remove_zero_measurements(logfile=self.get_logfiles(False))
 			else:
@@ -7514,7 +7717,8 @@ usage: spotread [-options] [logfile]
 					RGBin.append((i / maxval, ) * 3)
 				XYZout = self.xicclu(profile, RGBin, "r", pcs="x")
 				# Get RGB space from already added matrix column tags
-				rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs"))
+				rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs",
+																		  1))
 				mtx = rgb_space[-1].inverted()
 				self.log("-" * 80)
 				for channel in "rgb":
@@ -7530,148 +7734,34 @@ usage: spotread [-options] [logfile]
 				break
 			if not ti1name:
 				# Extract gray+primaries into new TI3
-				ti3_extracted = CGATS.CGATS("""CTI3
-BEGIN_DATA_FORMAT
-END_DATA_FORMAT
-BEGIN_DATA
-END_DATA""")[0]
-				ti3_extracted.DATA_FORMAT.update(ti3.DATA_FORMAT)
-				subset = [(100.0, 100.0, 100.0),
-						  (0.0, 0.0, 0.0)]
-				if tagcls == "XYZ":
-					subset.extend([(100.0, 0.0, 0.0),
-								   (0.0, 100.0, 0.0),
-								   (0.0, 0.0, 100.0),
-								   (50.0, 50.0, 50.0)])
-					self.log(u"Extracting neutrals and primaries from %s" %
-							 (outname + ".ti3"))
-				else:
-					self.log(u"Extracting neutrals from %s" %
-							 (outname + ".ti3"))
-				RGB_XYZ = OrderedDict()
-				for i, item in ti3.DATA.iteritems():
-					if not i:
-						# Check if fields are missing
-						for prefix in ("RGB", "XYZ"):
-							for suffix in prefix:
-								key = "%s_%s" % (prefix, suffix)
-								if not key in item:
-									return Error(lang.getstr("error.testchart.missing_fields",
-															 (outname + ".ti3", key)))
-					RGB = (item["RGB_R"], item["RGB_G"], item["RGB_B"])
-					# Quantize RGB to 8-bit
-					RGBq = tuple(round(v * 2.55) for v in RGB)
-					XYZ = (item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"])
-					if ((tagcls == "TRC" and
-						 item["RGB_R"] == item["RGB_G"] == item["RGB_B"] and
-						 not RGB in [(100.0, 100.0, 100.0),
-									 (0.0, 0.0, 0.0)]) or
-						RGB in subset):
-						ti3_extracted.DATA.add_data(item)
-						RGB_XYZ[RGBq] = XYZ
-						if RGB in subset:
-							subset.remove(RGB)
-							if tagcls == "XYZ" and not subset:
-								break
-				ti3.DATA.clear()
-				ti3.DATA.update(ti3_extracted.DATA)
+				(ti3, RGB_XYZ,
+				 remaining) = extract_device_gray_primaries(ti3, tagcls == "TRC",
+														    self.log)
 				ti3.sort_by_RGB()
 				self.log(ti3.DATA)
 				if tagcls == "TRC" and profile:
-					RGB_XYZ.sort()
-					R_R = []
-					G_G = []
-					B_B = []
-					R_X = []
-					G_Y = []
-					B_Z = []
-					XYZbp = None
-					XYZwp = None
-					for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
-						R_R.append(R / 255.0)
-						G_G.append(G / 255.0)
-						B_B.append(B / 255.0)
-						X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(255, 255, 255)])
-						R_X.append(X / 100.0)
-						G_Y.append(Y / 100.0)
-						B_Z.append(Z / 100.0)
-						if R == G == B == 0:
-							XYZbp = [v / 100 for v in (X, Y, Z)]
-						elif R == G == B == 100:
-							XYZwp = [v / 100 for v in (X, Y, Z)]
-
-					numvalues = len(R_R)
-
-					# Scale black to zero
-					for i in xrange(numvalues):
-						(R_X[i],
-						 G_Y[i],
-						 B_Z[i]) = colormath.blend_blackpoint(R_X[i],
-															  G_Y[i],
-															  B_Z[i], XYZbp)
-
-					rinterp = colormath.Interp(R_R, R_X)
-					ginterp = colormath.Interp(G_G, G_Y)
-					binterp = colormath.Interp(B_B, B_Z)
-
 					rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs"))
 					fwd_mtx = rgb_space[-1]
 					bwd_mtx = fwd_mtx.inverted()
+
+					curves = create_shaper_curves(RGB_XYZ, bwd_mtx,
+												  ptype == "S", bpc, self.log)
+
 					self.log("-" * 80)
-					for channel in "rgb":
+					for i, channel in enumerate("rgb"):
 						tagname = channel + tagcls
 						self.log(u"Adding %s from interpolation to %s" %
 						         (tagname, profile.getDescription()))
 						profile.tags[tagname] = ICCP.CurveType()
+						profile.tags[tagname][:] = [v * 65535 for v in curves[i]]
 
-					# Interpolate TRC
-					numentries = 30
-					maxval = numentries - 1.0
-					XYZw = fwd_mtx * (1, 1, 1)
-					powinterp = {"r": colormath.Interp([], []),
-								 "g": colormath.Interp([], []),
-								 "b": colormath.Interp([], [])}
-					for n in xrange(numentries):
-						n /= maxval
-						# Apply slight power to input value so we sample near
-						# black more accurately
-						n **= 1.2
-						Y = ginterp(n)
-						X = rinterp(n)
-						Z = binterp(n)
-						RGB = bwd_mtx * (X, Y, Z)
-						for i, channel in enumerate("rgb"):
-							if ptype == "S":
-								# Single shaper curve
-								v = RGB[1]
-							else:
-								# 3x shaper curves
-								v = RGB[i]
-							v = min(max(v, 0), 1)
-							# Slope limit
-							v = max(v, n / 64.25)
-							powinterp[channel].xp.append(n)
-							powinterp[channel].fp.append(v)
-					for n in xrange(numentries):
-						for i, channel in enumerate("rgb"):
-							v = powinterp[channel](n / maxval)
-							tagname = channel + tagcls
-							profile.tags[tagname].append(v * 65535)
-
-					# Smoothing
-					for channel in "rgb":
-						tag = profile.tags[channel + "TRC"]
-						# Make monotonically increasing + 1st smoothing pass
-						tag[:] = colormath.make_monotonically_increasing(tag)
-						# Spline interpolation to larger size
-						x = (i / 255.0 * (len(tag) - 1)  for i in xrange(256))
-						spline = ICCP.CRInterpolation(tag)
-						tag[:] = (min(max(spline(v), 0), 65535) for v in x)
-						# Ensure still monotonically increasing
-						tag[:] = colormath.make_monotonically_increasing(tag)
-					if XYZbp:
-						# Add black back in
-						profile.apply_black_offset(XYZbp, include_A2B=False)
+					##XYZbp = None
+					##for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
+						##if R == G == B == 0:
+							##XYZbp = [v / 100 for v in (X, Y, Z)]
+					##if XYZbp:
+						### Add black back in
+						##profile.apply_black_offset(XYZbp, include_A2B=False)
 
 					break
 			ti3.write(outname + ".0.ti3")	
@@ -7758,7 +7848,7 @@ END_DATA""")[0]
 		if ti3:
 			# Embed original TI3
 			profile.tags.targ = profile.tags.DevD = profile.tags.CIED = ICCP.TextType(
-											"text\0\0\0\0" + ti3 + "\0", 
+											"text\0\0\0\0" + str(ti3) + "\0", 
 											"targ")
 		if chrm:
 			# Add ChromaticityType tag
@@ -7990,7 +8080,13 @@ END_DATA""")[0]
 				# Check if we want to apply BPC
 				bpc = tableno != 1
 				if (bpc and
-					profile.tags["A2B%i" % tableno].clut[0][0] != [0, 0, 0]):
+					(profile.tags["A2B%i" % tableno].clut[0][0] != [0, 0, 0] or
+					 profile.tags["A2B%i" % tableno].input[0][0] != 0 or
+					 profile.tags["A2B%i" % tableno].input[1][0] != 0 or
+					 profile.tags["A2B%i" % tableno].input[2][0] != 0 or
+					 profile.tags["A2B%i" % tableno].output[0][0] != 0 or
+					 profile.tags["A2B%i" % tableno].output[1][0] != 0 or
+					 profile.tags["A2B%i" % tableno].output[2][0] != 0)):
 					# Need to apply BPC
 					table = ICCP.LUT16Type(profile=profile)
 					# Copy existing B2A1 table matrix, cLUT and output curves

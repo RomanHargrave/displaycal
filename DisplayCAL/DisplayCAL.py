@@ -12155,9 +12155,17 @@ class MainFrame(ReportFrame, BaseFrame):
 						if path != ti3_tmp_path:
 							shutil.copyfile(path, ti3_tmp_path)
 						# Get dispcal options if present
+						(options_dispcal,
+						 options_colprof) = get_options_from_ti3(path)
 						self.worker.options_dispcal = [
 							"-" + arg for arg in 
-							get_options_from_ti3(path)[0]]
+							options_dispcal]
+						arg = get_arg("M", options_colprof)
+						if arg:
+							display_name = arg[1][2:].strip('"')
+						arg = get_arg("A", options_colprof)
+						if arg:
+							display_manufacturer = arg[1][2:].strip('"')
 					else:
 						# Binary mode because we want to avoid automatic 
 						# newlines conversion

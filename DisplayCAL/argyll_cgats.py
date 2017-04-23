@@ -8,6 +8,7 @@ from time import strftime
 
 from debughelpers import Error
 from options import debug
+from ordereddict import OrderedDict
 from safe_print import safe_print
 from util_io import StringIOu as StringIO
 from util_str import safe_unicode
@@ -201,17 +202,17 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 	return cgats
 
 
-def extract_cal_from_ti3(ti3_data):
+def extract_cal_from_ti3(ti3):
 	"""
 	Extract and return the CAL section of a TI3.
 	
-	ti3_data can be a file object or a string holding the data.
+	ti3 can be a file object or a string holding the data.
 	
 	"""
-	if isinstance(ti3_data, (str, unicode)):
-		ti3 = StringIO(ti3_data)
-	else:
-		ti3 = ti3_data
+	if isinstance(ti3, CGATS.CGATS):
+		ti3 = str(ti3)
+	if isinstance(ti3, basestring):
+		ti3 = StringIO(ti3)
 	cal = False
 	cal_lines = []
 	for line in ti3:
@@ -337,6 +338,65 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 			return cal_lines
 	else:
 		return None
+
+
+def extract_device_gray_primaries(ti3, gray=True, logfn=None):
+	"""
+	Extract gray or primaries into new TI3
+	
+	Return extracted ti3, extracted RGB to XYZ mapping and remaining RGB to XYZ
+
+	"""
+	ti3 = ti3.queryi1("DATA")
+	ti3_extracted = CGATS.CGATS("""CTI3
+DEVICE_CLASS "DISPLAY"
+COLOR_REP "RGB_XYZ"
+BEGIN_DATA_FORMAT
+END_DATA_FORMAT
+BEGIN_DATA
+END_DATA""")[0]
+	ti3_extracted.DATA_FORMAT.update(ti3.DATA_FORMAT)
+	subset = [(100.0, 100.0, 100.0),
+			  (0.0, 0.0, 0.0)]
+	if not gray:
+		subset.extend([(100.0, 0.0, 0.0),
+					   (0.0, 100.0, 0.0),
+					   (0.0, 0.0, 100.0),
+					   (50.0, 50.0, 50.0)])
+		if logfn:
+			logfn(u"Extracting neutrals and primaries from %s" %
+				  ti3.filename)
+	else:
+		if logfn:
+			logfn(u"Extracting neutrals from %s" %
+				  ti3.filename)
+	RGB_XYZ_extracted = OrderedDict()
+	RGB_XYZ_remaining = OrderedDict()
+	for i, item in ti3.DATA.iteritems():
+		if not i:
+			# Check if fields are missing
+			for prefix in ("RGB", "XYZ"):
+				for suffix in prefix:
+					key = "%s_%s" % (prefix, suffix)
+					if not key in item:
+						return Error(lang.getstr("error.testchart.missing_fields",
+												 (ti3.filename, key)))
+		RGB = (item["RGB_R"], item["RGB_G"], item["RGB_B"])
+		XYZ = (item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"])
+		if ((gray and
+			 item["RGB_R"] == item["RGB_G"] == item["RGB_B"] and
+			 not RGB in [(100.0, 100.0, 100.0),
+						 (0.0, 0.0, 0.0)]) or
+			RGB in subset):
+			ti3_extracted.DATA.add_data(item)
+			RGB_XYZ_extracted[RGB] = XYZ
+			if RGB in subset:
+				subset.remove(RGB)
+				if not gray and not subset:
+					break
+		else:
+			RGB_XYZ_remaining[RGB] = XYZ
+	return ti3_extracted, RGB_XYZ_extracted, RGB_XYZ_remaining
 
 
 def ti3_to_ti1(ti3_data):

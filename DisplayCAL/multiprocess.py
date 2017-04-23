@@ -69,6 +69,11 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 		manager = None
 		Queue = FakeQueue
 
+	if thread_abort is not None:
+		thread_abort_event = thread_abort.event
+	else:
+		thread_abort_event = None
+
 	progress_queue = Queue()
 
 	if logfile:
@@ -101,7 +106,7 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	for i in xrange(num_workers):
 		end = int(math.ceil(chunksize * (i + 1)))
 		results.append(pool.apply_async(WorkerFunc(func), (data_in[start:end],
-														   thread_abort.event,
+														   thread_abort_event,
 														   progress_queue) +
 														   args, kwds))
 		start = end
