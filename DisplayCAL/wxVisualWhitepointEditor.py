@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Visual whitepoint editor
 
@@ -23,8 +25,9 @@ from wxfixes import wx
 from wx.lib.agw import aui
 from wx.lib.intctrl import IntCtrl
 
-from config import (defaults, fs_enc, getbitmap, getcfg, get_argyll_display_number,
-                    get_default_dpi, get_icon_bundle, geticon, initcfg,
+from config import (defaults, fs_enc, getbitmap, getcfg,
+                    get_argyll_display_number, get_default_dpi,
+                    get_display_name, get_icon_bundle, geticon, initcfg,
                     profile_ext, setcfg)
 from log import safe_print
 from meta import name as appname
@@ -80,6 +83,20 @@ def s(i):
     
     """
     return i * max(getcfg("app.dpi") / get_default_dpi(), 1)
+
+
+def update_patterngenerator(self):
+    while self and wx.App.IsMainLoopRunning():
+        if self.update_patterngenerator_event.wait(0.05):
+            self.update_patterngenerator_event.clear()
+            x, y, size = self.patterngenerator_config
+            self.patterngenerator.send((self._colour.r / 255.0,
+                                        self._colour.g / 255.0,
+                                        self._colour.b / 255.0),
+                                       (self._bgcolour.r / 255.0,
+                                        self._bgcolour.g / 255.0,
+                                        self._bgcolour.b / 255.0),
+                                       x=x, y=y, w=size, h=size)
 
 
 def _show_result_after(*args, **kwargs):
@@ -1417,6 +1434,8 @@ class HSlider(BaseLineCtrl):
     def GetMax(self):
         return self.maxval
 
+    def GetMin(self):
+        return self.minval
 
     def SetMax(self, maxval):
         self.maxval = maxval
@@ -1651,7 +1670,7 @@ class ProfileManager(object):
                          self._window._colour.g,
                          self._window._colour.b) = RGB
                         self._window._colour.ToHSV()
-                        self._window.DrawAll()
+                        wx.CallAfter(self._window.DrawAll)
                     # Remember profile, but discard profile filename
                     # (Important - can't re-install profile from same path
                     # where it is installed!)
@@ -1663,6 +1682,8 @@ class ProfileManager(object):
 
     def _install_profile(self, display_no, profile, wrapup=False):
         # Has to be thread-safe!
+        if self._window.patterngenerator:
+            return
         dispwin = get_argyll_util("dispwin")
         if not dispwin:
             _show_result_after(Error(lang.getstr("argyll.util.not_found",
@@ -1724,6 +1745,13 @@ class ProfileManager(object):
         if display_no is not None:
             threading.Thread(target=self._manage_display,
                              args=(display_no, self._display.Geometry.Get())).start()
+            if not self._window.patterngenerator:
+                display_name = get_display_name(display_no, True)
+                if display_name:
+                    display_name = display_name.replace("[PRIMARY]",
+                                                        lang.getstr("display.primary"))
+                    self._window.SetTitle(display_name + u" ‒ " +
+                                          lang.getstr("whitepoint.visual_editor"))
         else:
             msg = lang.getstr("whitepoint.visual_editor.display_changed.warning")
             safe_print(msg)
@@ -1790,23 +1818,32 @@ class VisualWhitepointEditor(wx.Frame):
     This is the VisualWhitepointEditor main class implementation.
     """
 
-    def __init__(self, parent, colourData=None, pos=wx.DefaultPosition):
+    def __init__(self, parent, colourData=None, title=wx.EmptyString,
+                 pos=wx.DefaultPosition, patterngenerator=None):
         """
         Default class constructor.
 
         :param `colourData`: a standard :class:`ColourData` (as used in :class:`ColourFrame`);
          to hide the alpha channel control or not.
         """
+        
+        self.patterngenerator = patterngenerator
+        self.update_patterngenerator_event = threading.Event()
+        
+        style = wx.DEFAULT_FRAME_STYLE
+        if patterngenerator:
+            style &= ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
 
         wx.Frame.__init__(self, parent, id=wx.ID_ANY,
-                          title=lang.getstr("whitepoint.visual_editor"),
-                          pos=pos, style=wx.DEFAULT_FRAME_STYLE,
+                          title=title or lang.getstr("whitepoint.visual_editor"),
+                          pos=pos, style=style,
                           name="VisualWhitepointEditor")
 
-        self._mgr = AuiManager_LRDocking(self, aui.AUI_MGR_DEFAULT |
-                                         aui.AUI_MGR_LIVE_RESIZE |
-                                         aui.AUI_MGR_SMOOTH_DOCKING)
-        self._mgr.SetArtProvider(AuiDarkDockArt())
+        if not patterngenerator:
+            self._mgr = AuiManager_LRDocking(self, aui.AUI_MGR_DEFAULT |
+                                             aui.AUI_MGR_LIVE_RESIZE |
+                                             aui.AUI_MGR_SMOOTH_DOCKING)
+            self._mgr.SetArtProvider(AuiDarkDockArt())
 
         self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 
@@ -1832,6 +1869,7 @@ class VisualWhitepointEditor(wx.Frame):
         self.mainPanel.BackgroundColour = "#333333"
         self.mainPanel.ForegroundColour = "#999999"
         self.bgPanel = wx_Panel(self, -1)
+        self.bgPanel.Show(not patterngenerator)
 
         self.hsvBitmap = HSVWheel(self.mainPanel,
                                   self.mainPanel.BackgroundColour)
@@ -1866,7 +1904,7 @@ class VisualWhitepointEditor(wx.Frame):
         x, y, scale = (float(v) for v in getcfg("dimensions.measureframe.whitepoint.visual_editor").split(","))
         
         self.area_size_slider = HSlider(self.mainPanel,
-                                        min(scale * 100, 1000), 50, 1000,
+                                        min(scale * 100, 1000), 10, 1000,
                                         self.area_handler)
 
         self.display_size_mm = {}
@@ -1933,61 +1971,71 @@ class VisualWhitepointEditor(wx.Frame):
         # Set up panes
         self.mainPanel.Fit()
         mainPanelSize = (self.mainPanel.Size[0], self.mainPanel.Size[1] + s(10))
-        self._mgr.AddPane(self.mainPanel, aui.AuiPaneInfo().
-                                          Name("mainPanel").
-                                          Fixed().
-                                          Left().
-                                          TopDockable(False).
-                                          BottomDockable(False).
-                                          PaneBorder(False).
-                                          CloseButton(False).
-                                          PinButton(True).
-                                          MinSize(mainPanelSize))
-        self._mgr.AddPane(self.bgPanel, aui.AuiPaneInfo().
-                                        Name("bgPanel").
-                                        CenterPane().
-                                        CloseButton(False).
-                                        PaneBorder(False))
-        self._mgr.Update()
+        if not patterngenerator:
+            self._mgr.AddPane(self.mainPanel, aui.AuiPaneInfo().
+                                              Name("mainPanel").
+                                              Fixed().
+                                              Left().
+                                              TopDockable(False).
+                                              BottomDockable(False).
+                                              PaneBorder(False).
+                                              CloseButton(False).
+                                              PinButton(True).
+                                              MinSize(mainPanelSize))
+            self._mgr.AddPane(self.bgPanel, aui.AuiPaneInfo().
+                                            Name("bgPanel").
+                                            CenterPane().
+                                            CloseButton(False).
+                                            PaneBorder(False))
+            self._mgr.Update()
 
-        self.Bind(aui.EVT_AUI_PANE_CLOSE, self.close_pane_handler)
-        self.Bind(aui.EVT_AUI_PANE_FLOATED, self.float_pane_handler)
-        self.Bind(aui.EVT_AUI_PANE_DOCKED, self.float_pane_handler)
+            self.Bind(aui.EVT_AUI_PANE_CLOSE, self.close_pane_handler)
+            self.Bind(aui.EVT_AUI_PANE_FLOATED, self.float_pane_handler)
+            self.Bind(aui.EVT_AUI_PANE_DOCKED, self.float_pane_handler)
 
         # Account for pane titlebar
         self.Sizer.SetSizeHints(self)
         self.Sizer.Layout()
-        if hasattr(self, "MinClientSize"):
-            # wxPython 2.9+
-            minClientSize = self.MinClientSize
-        else:
-            minClientSize = self.WindowToClientSize(self.MinSize)
-        w, h = self.newColourPanel.Size
-        self.ClientSize = mainPanelSize[0] + w + s(26), max(minClientSize[1], h + s(26))
-        if sys.platform not in ("win32", "darwin"):
-            correction = s(40)
-        else:
-            correction = 0
-        w, h = (int(round(self.default_size)), ) * 2
-        minClientSize = mainPanelSize[0] + max(minClientSize[1], w + s(26)), max(minClientSize[1], h + s(26)) + correction
-        if hasattr(self, "MinClientSize"):
-            # wxPython 2.9+
-            self.MinClientSize = minClientSize
-        else:
-            self.MinSize = self.ClientToWindowSize(minClientSize)
+        if not patterngenerator:
+            if hasattr(self, "MinClientSize"):
+                # wxPython 2.9+
+                minClientSize = self.MinClientSize
+            else:
+                minClientSize = self.WindowToClientSize(self.MinSize)
+            w, h = self.newColourPanel.Size
+            self.ClientSize = mainPanelSize[0] + w + s(26), max(minClientSize[1], h + s(26))
+            if sys.platform not in ("win32", "darwin"):
+                correction = s(40)
+            else:
+                correction = 0
+            w, h = (int(round(self.default_size)), ) * 2
+            minClientSize = mainPanelSize[0] + max(minClientSize[1], w + s(26)), max(minClientSize[1], h + s(26)) + correction
+            if hasattr(self, "MinClientSize"):
+                # wxPython 2.9+
+                self.MinClientSize = minClientSize
+            else:
+                self.MinSize = self.ClientToWindowSize(minClientSize)
 
         x, y = self.Position
         w, h = self.Size
 
-        if (self.newColourPanel.Size[0] > min(self.bgPanel.Size[0],
-                                              self.GetDisplay().ClientArea[2] -
-                                              mainPanelSize[0]) or
-            self.newColourPanel.Size[1] > min(self.bgPanel.Size[1],
-                                              self.GetDisplay().ClientArea[3])):
+        if (not patterngenerator and
+            (self.newColourPanel.Size[0] > min(self.bgPanel.Size[0],
+                                               self.GetDisplay().ClientArea[2] -
+                                               mainPanelSize[0]) or
+             self.newColourPanel.Size[1] > min(self.bgPanel.Size[1],
+                                               self.GetDisplay().ClientArea[3]))):
             w, h = self.GetDisplay().ClientArea[2:]
 
         self.SetSaneGeometry(x, y, w, h)
 
+
+        if patterngenerator:
+            self.update_patterngenerator_thread = threading.Thread(
+                target=update_patterngenerator,
+                name="VisualWhitepointEditorPatternGeneratorUpdateThread",
+                args=(self,))
+            self.update_patterngenerator_thread.start()
 
         self._pm = ProfileManager(self)
         self.Bind(wx.EVT_MOVE, self.move_handler)
@@ -2094,7 +2142,8 @@ class VisualWhitepointEditor(wx.Frame):
         mainSizer.SetSizeHints(self.mainPanel)
         
         dialogSizer.Add(self.mainPanel, 0, wx.EXPAND)
-        dialogSizer.Add(self.bgPanel, 1, wx.EXPAND, 0)
+        if self.bgPanel.IsShown():
+            dialogSizer.Add(self.bgPanel, 1, wx.EXPAND, 0)
         self.SetAutoLayout(True)
         self.SetSizer(dialogSizer)
         dialogSizer.Fit(self)
@@ -2182,6 +2231,19 @@ class VisualWhitepointEditor(wx.Frame):
         self.brightnessSpin.SetValue(self._colour.v)     
 
         self.SetPanelColours()
+        self.update_patterngenerator()
+
+    def update_patterngenerator(self):
+        if self.patterngenerator:
+            size = min((self.area_size_slider.GetValue() /
+                        float(self.area_size_slider.GetMax() -
+                              self.area_size_slider.GetMin())), 1)
+            x = max(self.area_x_slider.GetValue() /
+                    float(self.area_x_slider.GetMax()) * (1 - size), 0)
+            y = max(self.area_y_slider.GetValue() /
+                    float(self.area_y_slider.GetMax()) * (1 - size), 0)
+            self.patterngenerator_config = x, y, size
+            self.update_patterngenerator_event.set()
         
 
     def SetPanelColours(self):
@@ -2388,6 +2450,7 @@ class VisualWhitepointEditor(wx.Frame):
             wx.CallAfter(self.area_handler)
         else:
             self.bgPanel.Refresh()
+        self.update_patterngenerator()
 
 
     def center_x_handler(self, event):

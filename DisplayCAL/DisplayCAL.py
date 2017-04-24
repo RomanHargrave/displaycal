@@ -97,7 +97,7 @@ from options import debug, test, verbose
 from ordereddict import OrderedDict
 from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
-from util_io import StringIOu as StringIO, TarFileProper
+from util_io import LineCache, StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
 					 launch_file, listdir_re, waccess, whereis, which)
@@ -4904,14 +4904,43 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.show_trc_controls(True)
 
 	def visual_whitepoint_editor_handler(self, event):
-		display_no = config.get_display_number(getcfg("display.number") - 1)
-		try:
-			pos = wx.Display(display_no).ClientArea[:2]
-		except:
-			pos = self.GetDisplay().ClientArea[:2]
-		editor = VisualWhitepointEditor(self, pos=pos)
-		editor.RealCenterOnScreen()
-		editor.Show()
+		if not self.setup_patterngenerator():
+			return
+		display_name = config.get_display_name(None, True)
+		if display_name == "madVR":
+			# Disable gamma ramp
+			self.worker.madtpg.set_device_gamma_ramp(None)
+			# Disable 3D LUT
+			self.worker.madtpg.disable_3dlut()
+			if self.worker.madtpg.is_fullscreen():
+				# Leave fullscreen
+				self.worker.madtpg.leave_fullscreen()
+		elif display_name == "Prisma":
+			# Disable 3D LUT
+			try:
+				self.worker.patterngenerator.connect()
+				self.worker.patterngenerator.disable_processing()
+			except socket.error, exception:
+				show_result_dialog(exception)
+				return
+		pos = self.GetDisplay().ClientArea[:2]
+		if display_name in ("madVR", "Prisma", "Resolve"):
+			patterngenerator = self.worker.patterngenerator
+		else:
+			patterngenerator = None
+			display_no = config.get_display_number(getcfg("display.number") - 1)
+			try:
+				pos = wx.Display(display_no).ClientArea[:2]
+			except:
+				pass
+		display_name = display_name.replace("[PRIMARY]",
+											lang.getstr("display.primary"))
+		title = display_name + u" ‒ " + lang.getstr("whitepoint.visual_editor")
+		self.wpeditor = VisualWhitepointEditor(self, pos=pos, title=title,
+											   patterngenerator=patterngenerator)
+		self.wpeditor.RealCenterOnScreen()
+		self.wpeditor.Show()
+		self.wpeditor.Raise()
 	
 	def ambient_measure_handler(self, event):
 		""" Start measuring ambient illumination """
@@ -7476,6 +7505,36 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 			setcfg("patterngenerator.prisma.host", host)
 			self.worker.patterngenerator.host = host
+		elif config.get_display_name(None, True) == "madVR":
+			# Connect to madTPG (launch local instance under Windows)
+			self.worker.madtpg_connect()
+		elif config.get_display_name(None, True) == "Resolve":
+			logfile = LineCache(3)
+			try:
+				self.worker.setup_patterngenerator(logfile)
+			except socket.error, exception:
+				show_result_dialog(exception, self)
+				return
+			if not hasattr(self.worker.patterngenerator, "conn"):
+				# Wait for Resolve connection
+				def closedlg(self):
+					win = self.get_top_window()
+					if isinstance(win, ConfirmDialog):
+						win.EndModal(wx.ID_CANCEL)
+				def waitforcon(self):
+					self.worker.patterngenerator.wait()
+					if hasattr(self.worker.patterngenerator, "conn"):
+						# Close dialog
+						wx.CallAfter(closedlg, self)
+				threading.Thread(target=waitforcon,
+								 name="ResolveConnectionListener",
+								 args=(self, )).start()
+				while not logfile.read():
+					sleep(.1)
+				if show_result_dialog(Info(logfile.read()), self,
+									  confirm=lang.getstr("cancel")):
+					self.worker.patterngenerator.listening = False
+					return
 		return retval
 	
 	def start_measureframe_subprocess(self):
@@ -14407,6 +14466,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.reportframe.Hide()
 		if getattr(self, "synthiccframe", None):
 			self.synthiccframe.Hide()
+		if getattr(self, "wpeditor", None):
+			self.wpeditor.Close()
 		for profile_info in self.profile_info.values():
 			profile_info.Close()
 		self.Hide()

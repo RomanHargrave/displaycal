@@ -199,6 +199,8 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		self._event_handlers = {"on_client_added": []}
 		self.broadcast_ip = "255.255.255.255"
 		self.prismas = {}
+		self._size = 10
+		self._enable_processing = True
 
 	def listen(self):
 		self.listening = True
@@ -402,6 +404,10 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
 		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
 		self.invoke("window", "color", {"bg": bgrgb, "fg": rgb})
+		size = (w + h) / 2.0
+		if size != self._size:
+			self._size = size
+			self.enable_processing(self._enable_processing, size)
 
 
 class ResolveLSPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
@@ -417,7 +423,7 @@ class ResolveLSPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
 		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
 		xml = ('<?xml version="1.0" encoding="UTF-8" ?><calibration><shapes>'
 			   '<rectangle><color red="%i" green="%i" blue="%i" />'
-			   '<geometry x="%.2f" y="%.2f" cx="%.2f" cy="%.2f" /></rectangle>'
+			   '<geometry x="%.4f" y="%.4f" cx="%.4f" cy="%.4f" /></rectangle>'
 			   '</shapes></calibration>' % tuple(rgb + [x, y,  w, h]))
 		self.conn.sendall("%s%s" % (struct.pack(">I", len(xml)), xml))
 
@@ -436,7 +442,7 @@ class ResolveCMPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
 		xml = ('<?xml version="1.0" encoding="utf-8"?><calibration>'
 			   '<color red="%i" green="%i" blue="%i" bits="%i"/>'
 			   '<background red="%i" green="%i" blue="%i" bits="%i"/>'
-			   '<geometry x="%.2f" y="%.2f" cx="%.2f" cy="%.2f"/>'
+			   '<geometry x="%.4f" y="%.4f" cx="%.4f" cy="%.4f"/>'
 			   '</calibration>' % tuple(rgb + [bits] + bgrgb + [bits, x, y,
 																  w, h]))
 		self.conn.sendall("%s%s" % (struct.pack(">I", len(xml)), xml))

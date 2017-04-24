@@ -2363,10 +2363,11 @@ class ConfirmDialog(BaseInteractiveDialog):
 			self.sizer2.Insert(1, self.alt)
 			self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.alt.GetId())
 
-		self.cancel = wx.Button(self.buttonpanel, wx.ID_CANCEL, cancel)
-		self.sizer2.Insert(1, (margin, margin))
-		self.sizer2.Insert(1, self.cancel)
-		self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
+		if ok != cancel:
+			self.cancel = wx.Button(self.buttonpanel, wx.ID_CANCEL, cancel)
+			self.sizer2.Insert(1, (margin, margin))
+			self.sizer2.Insert(1, self.cancel)
+			self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
 		
 		self.buttonpanel.Layout()
 		self.sizer0.SetSizeHints(self)

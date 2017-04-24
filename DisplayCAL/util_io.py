@@ -133,6 +133,95 @@ class GzipFileProper(gzip.GzipFile):
 		self.close()
 
 
+class LineBufferedStream():
+	
+	""" Buffer lines and only write them to stream if line separator is 
+		detected """
+		
+	def __init__(self, stream, data_encoding=None, file_encoding=None,
+				 errors="replace", linesep_in="\r\n", linesep_out="\n"):
+		self.buf = ""
+		self.data_encoding = data_encoding
+		self.file_encoding = file_encoding
+		self.errors = errors
+		self.linesep_in = linesep_in
+		self.linesep_out = linesep_out
+		self.stream = stream
+	
+	def __del__(self):
+		self.commit()
+	
+	def __getattr__(self, name):
+		return getattr(self.stream, name)
+	
+	def close(self):
+		self.commit()
+		self.stream.close()
+	
+	def commit(self):
+		if self.buf:
+			if self.data_encoding and not isinstance(self.buf, unicode):
+				self.buf = self.buf.decode(self.data_encoding, self.errors)
+			if self.file_encoding:
+				self.buf = self.buf.encode(self.file_encoding, self.errors)
+			self.stream.write(self.buf)
+			self.buf = ""
+	
+	def write(self, data):
+		data = data.replace(self.linesep_in, "\n")
+		for char in data:
+			if char == "\r":
+				while self.buf and not self.buf.endswith(self.linesep_out):
+					self.buf = self.buf[:-1]
+			else:
+				if char == "\n":
+					self.buf += self.linesep_out
+					self.commit()
+				else:
+					self.buf += char
+
+
+class LineCache():
+	
+	""" When written to it, stores only the last n + 1 lines and
+		returns only the last n non-empty lines when read. """
+	
+	def __init__(self, maxlines=1):
+		self.clear()
+		self.maxlines = maxlines
+	
+	def clear(self):
+		self.cache = [""]
+	
+	def flush(self):
+		pass
+	
+	def read(self, triggers=None):
+		lines = [""]
+		for line in self.cache:
+			read = True
+			if triggers:
+				for trigger in triggers:
+					if trigger.lower() in line.lower():
+						read = False
+						break
+			if read and line:
+				lines.append(line)
+		return "\n".join(filter(lambda line: line, lines)[-self.maxlines:])
+	
+	def write(self, data):
+		cache = list(self.cache)
+		for char in data:
+			if char == "\r":
+				cache[-1] = ""
+			elif char == "\n":
+				cache.append("")
+			else:
+				cache[-1] += char
+		self.cache = (filter(lambda line: line, cache[:-1]) + 
+					  cache[-1:])[-self.maxlines - 1:]
+
+
 class StringIOu(StringIO):
 
 	"""

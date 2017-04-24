@@ -53,12 +53,12 @@ CM_ShowIpAddrDialog = 4
 CM_Fail = 5
 
 
-_methodnames = ("ConnectEx", "Disable3dlut", "Enable3dlut",
+_methodnames = ("ConnectEx", "Disable3dlut", "Enable3dlut", "EnterFullscreen",
 				"GetBlackAndWhiteLevel", "GetDeviceGammaRamp",
 				"GetSelected3dlut", "GetVersion",
-				"IsDisableOsdButtonPressed",
+				"IsDisableOsdButtonPressed", "IsFullscreen",
 				"IsStayOnTopButtonPressed",
-				"IsUseFullscreenButtonPressed",
+				"IsUseFullscreenButtonPressed", "LeaveFullscreen",
 				"SetDisableOsdButton",
 				"SetDeviceGammaRamp", "SetOsdText",
 				"GetPatternConfig", "SetPatternConfig",
@@ -188,11 +188,31 @@ class H3DLUT(object):
 			stream.close()
 
 
-class MadTPG(object):
+class MadTPGBase(object):
+
+	""" Generic pattern generator compatibility layer """
+
+	def wait(self):
+		self.connect(method2=CM_StartLocalInstance)
+
+	def disconnect_client(self):
+		self.disconnect()
+
+	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
+			 use_video_levels=None, x=0, y=0, w=1, h=1):
+		cfg = self.get_pattern_config()
+		self.set_pattern_config(int(round((w + h) / 2.0 * 100)),
+								int(round(sum(bgrgb) / 3.0 * 100)), cfg[2],
+								cfg[3])
+		self.show_rgb(*rgb + bgrgb)
+
+
+class MadTPG(MadTPGBase):
 
 	""" Minimal madTPG controller class """
 
 	def __init__(self):
+		MadTPGBase.__init__(self)
 		self._connection_callbacks = []
 
 		# We only expose stuff we might actually use.
@@ -331,7 +351,7 @@ class MadTPG(object):
 		return self.dllpath
 
 
-class MadTPG_Net(object):
+class MadTPG_Net(MadTPGBase):
 
 	""" Implementation of madVR network protocol in pure python """
 
@@ -339,6 +359,7 @@ class MadTPG_Net(object):
 	# (tcp.dstport != 1900 and tcp.dstport != 443) or (udp.dstport != 1900 and udp.dstport != 137 and udp.dstport != 138 and udp.dstport != 5355 and udp.dstport != 547 and udp.dstport != 10111)
 
 	def __init__(self):
+		MadTPGBase.__init__(self)
 		self._cast_sockets = {}
 		self._casts = []
 		self._client_sockets = OrderedDict()

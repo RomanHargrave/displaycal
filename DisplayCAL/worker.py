@@ -100,8 +100,8 @@ from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveCMPatternGeneratorServer)
 from trash import trash
 from util_http import encode_multipart_formdata
-from util_io import (EncodedWriter, Files, GzipFileProper,
-					 StringIOu as StringIO, TarFileProper)
+from util_io import (EncodedWriter, Files, GzipFileProper, LineBufferedStream,
+					 LineCache, StringIOu as StringIO, TarFileProper)
 from util_list import get as listget, intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
@@ -1188,95 +1188,6 @@ class FilteredStream():
 				lines.append(line)
 		if lines:
 			self.stream.write(self.linesep_out.join(lines))
-
-
-class LineBufferedStream():
-	
-	""" Buffer lines and only write them to stream if line separator is 
-		detected """
-		
-	def __init__(self, stream, data_encoding=None, file_encoding=None,
-				 errors="replace", linesep_in="\r\n", linesep_out="\n"):
-		self.buf = ""
-		self.data_encoding = data_encoding
-		self.file_encoding = file_encoding
-		self.errors = errors
-		self.linesep_in = linesep_in
-		self.linesep_out = linesep_out
-		self.stream = stream
-	
-	def __del__(self):
-		self.commit()
-	
-	def __getattr__(self, name):
-		return getattr(self.stream, name)
-	
-	def close(self):
-		self.commit()
-		self.stream.close()
-	
-	def commit(self):
-		if self.buf:
-			if self.data_encoding and not isinstance(self.buf, unicode):
-				self.buf = self.buf.decode(self.data_encoding, self.errors)
-			if self.file_encoding:
-				self.buf = self.buf.encode(self.file_encoding, self.errors)
-			self.stream.write(self.buf)
-			self.buf = ""
-	
-	def write(self, data):
-		data = data.replace(self.linesep_in, "\n")
-		for char in data:
-			if char == "\r":
-				while self.buf and not self.buf.endswith(self.linesep_out):
-					self.buf = self.buf[:-1]
-			else:
-				if char == "\n":
-					self.buf += self.linesep_out
-					self.commit()
-				else:
-					self.buf += char
-
-
-class LineCache():
-	
-	""" When written to it, stores only the last n + 1 lines and
-		returns only the last n non-empty lines when read. """
-	
-	def __init__(self, maxlines=1):
-		self.clear()
-		self.maxlines = maxlines
-	
-	def clear(self):
-		self.cache = [""]
-	
-	def flush(self):
-		pass
-	
-	def read(self, triggers=None):
-		lines = [""]
-		for line in self.cache:
-			read = True
-			if triggers:
-				for trigger in triggers:
-					if trigger.lower() in line.lower():
-						read = False
-						break
-			if read and line:
-				lines.append(line)
-		return "\n".join(filter(lambda line: line, lines)[-self.maxlines:])
-	
-	def write(self, data):
-		cache = list(self.cache)
-		for char in data:
-			if char == "\r":
-				cache[-1] = ""
-			elif char == "\n":
-				cache.append("")
-			else:
-				cache[-1] += char
-		self.cache = (filter(lambda line: line, cache[:-1]) + 
-					  cache[-1:])[-self.maxlines - 1:]
 
 
 class Producer(object):
@@ -2378,6 +2289,7 @@ END_DATA
 """)
 		except Exception, exception:
 			return exception
+		setcfg("patterngenerator.use_video_levels", 0)
 		result = self.measure_ti1(ti1_path, get_data_path("linear.cal"),
 								  allow_video_levels=False)
 		if isinstance(result, Exception) or not result:
@@ -4420,18 +4332,7 @@ while 1:
 				logfiles = Files(logfiles)
 				if self.use_patterngenerator:
 					pgname = config.get_display_name()
-					if self.patterngenerator:
-						# Use existing pattern generator instance
-						self.patterngenerator.logfile = logfiles
-						self.patterngenerator.use_video_levels = getcfg("patterngenerator.use_video_levels")
-						if hasattr(self.patterngenerator, "conn"):
-							# Try to use existing connection
-							try:
-								self.patterngenerator_send((.5, ) * 3, True)
-							except socket.error:
-								self.patterngenerator.disconnect_client()
-					else:
-						self.setup_patterngenerator(logfiles)
+					self.setup_patterngenerator(logfiles)
 					if not hasattr(self.patterngenerator, "conn"):
 						# Wait for connection - blocking
 						self.patterngenerator.wait()
@@ -8244,6 +8145,7 @@ usage: spotread [-options] [logfile]
 				# Using madVR net-protocol pure python implementation
 				self.madtpg = madvr.MadTPG_Net()
 				self.madtpg.debug = verbose
+		self.patterngenerator = self.madtpg
 		return self.madtpg.connect(method2=madvr.CM_StartLocalInstance)
 
 	def madtpg_disconnect(self, restore_settings=True):
@@ -8498,7 +8400,17 @@ usage: spotread [-options] [logfile]
 						self.progress_wnd.animbmp.frame = 0
 
 	def setup_patterngenerator(self, logfile=None):
-		if config.get_display_name() == "Prisma":
+		if self.patterngenerator:
+			# Use existing pattern generator instance
+			self.patterngenerator.logfile = logfile
+			self.patterngenerator.use_video_levels = getcfg("patterngenerator.use_video_levels")
+			if hasattr(self.patterngenerator, "conn"):
+				# Try to use existing connection
+				try:
+					self.patterngenerator_send((.5, ) * 3, True)
+				except socket.error:
+					self.patterngenerator.disconnect_client()
+		elif config.get_display_name() == "Prisma":
 			patterngenerator = PrismaPatternGeneratorClient
 			self.patterngenerator = patterngenerator(
 				host=getcfg("patterngenerator.prisma.host"),
