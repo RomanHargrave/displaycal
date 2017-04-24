@@ -8,6 +8,7 @@ In most cases, unless otherwise stated RGB is R'G'B' (gamma-compressed)
 
 """
 
+import colorsys
 import logging
 import math
 import sys
@@ -899,42 +900,12 @@ def DIN99familyab2DIN99CH(a99, b99):
 	return C99, H99
 
 
+def HSL2RGB(H, S, L, scale=1.0):
+    return tuple(v * scale for v in colorsys.hls_to_rgb(H, L, S))
+
+
 def HSV2RGB(H, S, V, scale=1.0):
-	if S == 0:
-		return (V * scale, ) * 3
-	else:
-		h = H * 6.0
-		if h == 6:
-			h = 0
-		i = int(h)
-		component_1 = V * (1.0 - S)
-		component_2 = V * (1.0 - S * (h - i))
-		component_3 = V * (1.0 - S * (1.0 - (h - i)))
-		if i == 0:
-			R = V
-			G = component_3
-			B = component_1
-		elif i == 1:
-			R = component_2
-			G = V
-			B = component_1
-		elif i == 2:
-			R = component_1
-			G = V
-			B = component_3
-		elif i == 3:
-			R = component_1
-			G = component_2
-			B = V
-		elif i == 4:
-			R = component_3
-			G = component_1
-			B = V
-		else:
-			R = V
-			G = component_1
-			B = component_2
-		return R * scale, G * scale, B * scale
+	return tuple(v * scale for v in colorsys.hsv_to_rgb(H, S, V))
 
 
 def get_DBL_MIN():
@@ -1158,60 +1129,12 @@ def RGB2HSI(R, G, B, scale=1.0):
 
 
 def RGB2HSL(R, G, B, scale=1.0):
-	RGB_min = min(R, G, B)
-	RGB_max = max(R, G, B)
-	delta = RGB_max - RGB_min
-	L = (RGB_max + RGB_min) / 2.0
-	if delta == 0:
-		# Gray
-		H = 0
-		S = 0
-	else:
-		if L < .5:
-			S = delta / (RGB_max + RGB_min)
-		else:
-			S = delta / (2.0 - RGB_max - RGB_min)
-		delta_R = (((RGB_max - R) / 6.0) + (delta / 2.0) ) / delta
-		delta_G = (((RGB_max - G) / 6.0) + (delta / 2.0) ) / delta
-		delta_B = (((RGB_max - B) / 6.0) + (delta / 2.0) ) / delta
-		if R == RGB_max:
-			H = delta_B - delta_G
-		elif G == RGB_max:
-			H = (1.0 / 3.0) + delta_R - delta_B
-		elif B == RGB_max:
-			H = (2.0 / 3.0) + delta_G - delta_R
-		if H < 0:
-			H += 1.0
-		if H > 1:
-			H -= 1.0
-	return H * scale, S * scale, L * scale
+	H, L, S = colorsys.rgb_to_hls(R, G, B)
+	return tuple(v * scale for v in (H, S, L))
 
 
 def RGB2HSV(R, G, B, scale=1.0):
-	RGB_min = min( R, G, B )
-	RGB_max = max( R, G, B )
-	delta = RGB_max - RGB_min
-	V = RGB_max
-	if ( delta == 0 ):
-		# Gray
-		H = 0
-		S = 0
-	else:
-		S = delta / RGB_max
-		delta_R = (((RGB_max - R) / 6.0) + (delta / 2.0) ) / delta
-		delta_G = (((RGB_max - G) / 6.0) + (delta / 2.0) ) / delta
-		delta_B = (((RGB_max - B) / 6.0) + (delta / 2.0) ) / delta
-		if R == RGB_max:
-			H = delta_B - delta_G
-		elif G == RGB_max:
-			H = (1.0 / 3.0) + delta_R - delta_B
-		elif B == RGB_max:
-			H = (2.0 / 3.0) + delta_G - delta_R
-		if H < 0:
-			H += 1.0
-		if H > 1:
-			H -= 1.0
-	return H * scale, S * scale, V * scale
+	return tuple(v * scale for v in colorsys.rgb_to_hsv(R, G, B))
 
 
 def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 ST2084"):
