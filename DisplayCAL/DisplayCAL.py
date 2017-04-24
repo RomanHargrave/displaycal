@@ -7412,21 +7412,6 @@ class MainFrame(ReportFrame, BaseFrame):
 													   filename)),
 							   flag=wx.TOP | wx.ALIGN_LEFT,
 							   border=12)
-			else:
-				# Show levels selection
-				dlg.tvlevels = wx.RadioButton(dlg, -1,
-											  lang.getstr("3dlut.encoding.type_t"),
-											  style=wx.RB_GROUP)
-				dlg.sizer3.Add(dlg.tvlevels, 0, flag=wx.TOP | wx.ALIGN_LEFT,
-							   border=12)
-				dlg.pclevels = wx.RadioButton(dlg, -1,
-											  lang.getstr("3dlut.encoding.type_n"))
-				dlg.sizer3.Add(dlg.pclevels, 0, flag=wx.TOP | wx.ALIGN_LEFT,
-							   border=4)
-				if getcfg("patterngenerator.use_video_levels"):
-					dlg.tvlevels.SetValue(True)
-				else:
-					dlg.pclevels.SetValue(True)
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			def check_host(host):
@@ -7507,9 +7492,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					setcfg("patterngenerator.prisma.preset",
 						   preset.GetStringSelection())
 					retval = filename
-				else:
-					setcfg("patterngenerator.use_video_levels",
-						   int(dlg.tvlevels.GetValue()))
 			dlg.Destroy()
 			if result != wx.ID_OK or not host:
 				return
