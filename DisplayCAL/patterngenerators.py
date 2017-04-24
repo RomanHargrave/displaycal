@@ -404,7 +404,7 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
 		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
 		self.invoke("window", "color", {"bg": bgrgb, "fg": rgb})
-		size = (w + h) / 2.0
+		size = (w + h) / 2.0 * 100
 		if size != self._size:
 			self._size = size
 			self.enable_processing(self._enable_processing, size)
