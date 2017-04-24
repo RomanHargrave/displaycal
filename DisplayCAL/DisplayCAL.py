@@ -4904,7 +4904,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.show_trc_controls(True)
 
 	def visual_whitepoint_editor_handler(self, event):
-		if not self.setup_patterngenerator():
+		if not self.setup_patterngenerator(self):
 			return
 		display_name = config.get_display_name(None, True)
 		if display_name == "madVR":
@@ -4918,7 +4918,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif display_name == "Prisma":
 			# Disable 3D LUT
 			try:
-				self.worker.patterngenerator.connect()
 				self.worker.patterngenerator.disable_processing()
 			except socket.error, exception:
 				show_result_dialog(exception)
@@ -7433,6 +7432,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			def check_host(host):
 				try:
 					ip = socket.gethostbyname(host)
+					self.worker.patterngenerator.host = ip
+					self.worker.patterngenerator.connect()
 				except socket.error, exception:
 					result = exception
 				else:
@@ -7443,9 +7444,17 @@ class MainFrame(ReportFrame, BaseFrame):
 					return
 				if isinstance(result, Exception):
 					dlg.Freeze()
-					dlg.errormsg.Label = lang.getstr("host.invalid.lookup_failed")
+					if isinstance(result, socket.gaierror):
+						dlg.errormsg.Label = lang.getstr("host.invalid.lookup_failed")
+					else:
+						width = dlg.errormsg.Size[0]
+						dlg.errormsg.Label = safe_unicode(result)
+						dlg.errormsg.Wrap(width)
 					dlg.errormsg.ForegroundColour = wx.Colour(204, 0, 0)
 					dlg.ok.Enable()
+					dlg.sizer0.SetSizeHints(dlg)
+					dlg.sizer0.Layout()
+					dlg.Refresh()
 					dlg.Thaw()
 					wx.Bell()
 				else:
@@ -7459,6 +7468,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					dlg.ok.Disable()
 					dlg.sizer0.SetSizeHints(dlg)
 					dlg.sizer0.Layout()
+					dlg.Refresh()
 					dlg.Thaw()
 					thread = threading.Thread(target=check_host, args=(host, ))
 					thread.start()
@@ -7504,7 +7514,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			if result != wx.ID_OK or not host:
 				return
 			setcfg("patterngenerator.prisma.host", host)
-			self.worker.patterngenerator.host = host
 		elif config.get_display_name(None, True) == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
 			self.worker.madtpg_connect()

@@ -80,7 +80,11 @@ class GenHTTPPatternGeneratorClient(object):
 	def connect(self):
 		self.ip = gethostbyname(self.host)
 		self.conn = httplib.HTTPConnection(self.ip, self.port)
-		self.conn.connect()
+		try:
+			self.conn.connect()
+		except (error, httplib.HTTPException):
+			del self.conn
+			raise
 
 	def disconnect_client(self):
 		self.listening = False
