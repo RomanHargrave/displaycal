@@ -1603,7 +1603,7 @@ class Worker(WorkerBase):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
-		if allow_video_levels:
+		if display and allow_video_levels:
 			self.add_video_levels_arg(args)
 		if not get_arg("-c", args):
 			args.append("-c%s" % getcfg("comport.number"))
