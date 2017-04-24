@@ -2103,7 +2103,7 @@ class HtmlInfoDialog(BaseInteractiveDialog):
 		else:
 			size = -1
 		htmlwnd.SetStandardFonts(size)
-		htmlwnd.SetPage(html)
+		htmlwnd.SetPage(safe_unicode(html, "UTF-8"))
 		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
 					 lambda event: launch_file(event.GetLinkInfo().Href))
 		self.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
