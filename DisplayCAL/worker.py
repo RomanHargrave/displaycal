@@ -8401,6 +8401,7 @@ usage: spotread [-options] [logfile]
 						self.progress_wnd.animbmp.frame = 0
 
 	def setup_patterngenerator(self, logfile=None):
+		pgname = config.get_display_name(None, True)
 		if self.patterngenerator:
 			# Use existing pattern generator instance
 			self.patterngenerator.logfile = logfile
@@ -8411,17 +8412,22 @@ usage: spotread [-options] [logfile]
 					self.patterngenerator_send((.5, ) * 3, True)
 				except socket.error:
 					self.patterngenerator.disconnect_client()
-		elif config.get_display_name() == "Prisma":
+		elif pgname == "Prisma":
 			patterngenerator = PrismaPatternGeneratorClient
 			self.patterngenerator = patterngenerator(
 				host=getcfg("patterngenerator.prisma.host"),
 				port=getcfg("patterngenerator.prisma.port"),
 				use_video_levels=getcfg("patterngenerator.use_video_levels"),
 				logfile=logfile)
-		elif config.get_display_name(None, True) == "Web @ localhost":
+		elif pgname == "Web @ localhost":
 			patterngenerator = WebWinHTTPPatternGeneratorServer
 			self.patterngenerator = patterngenerator(
 				port=getcfg("webserver.portnumber"),
+				logfile=logfile)
+		elif pgname.startswith("Chromecast "):
+			from chromecast_patterngenerator import ChromeCastPatternGenerator
+			self.patterngenerator = ChromeCastPatternGenerator(
+				name=self.get_display_name(),
 				logfile=logfile)
 		else:
 			# Resolve

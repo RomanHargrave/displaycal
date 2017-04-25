@@ -97,6 +97,7 @@ def update_patterngenerator(self):
                                         self._bgcolour.g / 255.0,
                                         self._bgcolour.b / 255.0),
                                        x=x, y=y, w=size, h=size)
+        sleep(0.05)
 
 
 def _show_result_after(*args, **kwargs):

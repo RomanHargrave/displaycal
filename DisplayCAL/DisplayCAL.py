@@ -96,6 +96,10 @@ from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
 from options import debug, test, verbose
 from ordereddict import OrderedDict
 from patterngenerators import WebWinHTTPPatternGeneratorServer
+try:
+	from chromecast_patterngenerator import ChromeCastPatternGenerator as CCPG
+except ImportError:
+	CCPG = None.__class__
 from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_io import LineCache, StringIOu as StringIO, TarFileProper
@@ -4934,7 +4938,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(exception)
 				return
 		pos = self.GetDisplay().ClientArea[:2]
-		if display_name in ("madVR", "Prisma", "Resolve", "Web @ localhost"):
+		if (display_name in ("madVR", "Prisma", "Resolve", "Web @ localhost") or
+			display_name.startswith("Chromecast ")):
 			patterngenerator = self.worker.patterngenerator
 		else:
 			patterngenerator = None
@@ -4948,9 +4953,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		title = display_name + u" ‒ " + lang.getstr("whitepoint.visual_editor")
 		self.wpeditor = VisualWhitepointEditor(self, pos=pos, title=title,
 											   patterngenerator=patterngenerator)
+		if CCPG and isinstance(patterngenerator, CCPG):
+			self.wpeditor.Bind(wx.EVT_CLOSE, self.patterngenerator_disconnect)
 		self.wpeditor.RealCenterOnScreen()
 		self.wpeditor.Show()
 		self.wpeditor.Raise()
+
+	def patterngenerator_disconnect(self, event):
+		try:
+			self.worker.patterngenerator.disconnect_client()
+		except Exception, exception:
+			safe_print(exception)
+		event.Skip()
 
 	def luminance_measure_handler(self, event):
 		frame = wx.Frame(self, title=lang.getstr("measureframe.title"),
@@ -7409,13 +7423,17 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
-		if config.get_display_name(None, True) == "Web @ localhost":
+		display_name = config.get_display_name(None, True)
+		if (display_name == "Web @ localhost" or
+			display_name.startswith("Chromecast ")):
 			for name, patterngenerator in self.worker.patterngenerators.items():
 				if isinstance(patterngenerator,
-							  WebWinHTTPPatternGeneratorServer):
-					# Need to shutdown web server to free port for dispwin
+							  (WebWinHTTPPatternGeneratorServer, CCPG)):
+					# Need to free connection for dispwin
 					patterngenerator.disconnect_client()
-					patterngenerator.server_close()
+					if isinstance(patterngenerator,
+								  WebWinHTTPPatternGeneratorServer):
+						patterngenerator.server_close()
 					self.worker.patterngenerators.pop(name)
 		elif not self.setup_patterngenerator(self):
 			return
@@ -7428,9 +7446,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.set_pending_function(pending_function, *pending_function_args, 
 								  **pending_function_kwargs)
 		if ((config.is_virtual_display() and
-			 config.get_display_name() not in ("Resolve", "Prisma") and
-			 not config.get_display_name().startswith("Chromecast ") and
-			 not config.get_display_name().startswith("Prisma ")) or
+			 display_name not in ("Resolve", "Prisma") and
+			 not display_name.startswith("Chromecast ") and
+			 not display_name.startswith("Prisma ")) or
 			getcfg("dry_run")):
 			self.call_pending_function()
 		elif sys.platform in ("darwin", "win32") or isexe:
@@ -7440,7 +7458,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def setup_patterngenerator(self, parent=None, title=appname, upload=False):
 		retval = True
-		if config.get_display_name(None, True) == "Prisma":
+		display_name = config.get_display_name(None, True)
+		if display_name == "Prisma":
 			# Ask for prisma hostname or IP
 			dlg = ConfirmDialog(parent, title=title,
 								msg=lang.getstr("patterngenerator.prisma.specify_host"),
@@ -7569,11 +7588,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			if result != wx.ID_OK or not host:
 				return
 			setcfg("patterngenerator.prisma.host", host)
-		elif config.get_display_name(None, True) == "madVR":
+		elif display_name == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
 			self.worker.madtpg_connect()
-		elif config.get_display_name(None, True) in ("Resolve",
-													 "Web @ localhost"):
+		elif (display_name in ("Resolve", "Web @ localhost") or
+			  display_name.startswith("Chromecast ")):
 			logfile = LineCache(3)
 			try:
 				self.worker.setup_patterngenerator(logfile)
