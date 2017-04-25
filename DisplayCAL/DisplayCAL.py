@@ -7596,7 +7596,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			logfile = LineCache(3)
 			try:
 				self.worker.setup_patterngenerator(logfile)
-			except socket.error, exception:
+			except Exception, exception:
 				show_result_dialog(exception, self)
 				return
 			if not hasattr(self.worker.patterngenerator, "conn"):
