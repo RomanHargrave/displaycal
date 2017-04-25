@@ -123,6 +123,7 @@ except ImportError:
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
+from wxMeasureFrame import get_default_size
 from wxProfileInfo import ProfileInfoFrame
 from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
@@ -137,7 +138,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileBrowseBitmapButtonWithChoiceHistory,
-					   FileDrop, HyperLinkCtrl, InfoDialog,
+					   FileDrop, FlatShadedButton, HyperLinkCtrl, InfoDialog,
 					   LogWindow, ProgressDialog, TooltipWindow,
 					   get_gradient_panel)
 import floatspin
@@ -1728,6 +1729,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.tab_select_handler(self.display_instrument_btn)
 		
 		self.profile_info = {}
+		self.measureframes = []
 	
 	def init_timers(self):
 		"""
@@ -2557,6 +2559,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									 self.luminance_ctrl_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.whitelevel_drift_compensation_handler, 
 				  id=self.whitelevel_drift_compensation.GetId())
+		self.Bind(wx.EVT_BUTTON, self.luminance_measure_handler, 
+				  id=self.luminance_measure_btn.GetId())
 
 		# Black luminance
 		self.Bind(wx.EVT_CHOICE, self.black_luminance_ctrl_handler, 
@@ -2565,6 +2569,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										   self.black_luminance_ctrl_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.blacklevel_drift_compensation_handler, 
 				  id=self.blacklevel_drift_compensation.GetId())
+		self.Bind(wx.EVT_BUTTON, self.luminance_measure_handler, 
+				  id=self.black_luminance_measure_btn.GetId())
 
 		# Tonal response curve (TRC)
 		self.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler, 
@@ -3564,6 +3570,10 @@ class MainFrame(ReportFrame, BaseFrame):
 										   not update_cal)
 		self.ambient_measure_btn.Enable(bool(self.worker.instruments) and
 										not update_cal)
+		self.luminance_measure_btn.Enable(bool(self.worker.instruments) and
+										  not update_cal)
+		self.black_luminance_measure_btn.Enable(bool(self.worker.instruments) and
+												not update_cal)
 
 		lut3d_create_btn_show = (self.lut3d_settings_panel.IsShown()
 								 and not getcfg("3dlut.create"))
@@ -4940,6 +4950,43 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.wpeditor.RealCenterOnScreen()
 		self.wpeditor.Show()
 		self.wpeditor.Raise()
+
+	def luminance_measure_handler(self, event):
+		frame = wx.Frame(self, title=lang.getstr("measureframe.title"),
+						 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW |
+							   wx.FRAME_FLOAT_ON_PARENT)
+		frame.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		panel = wx.Panel(frame, size=(int(get_default_size()),) * 2)
+		evtobjname = event.GetEventObject().Name
+		if evtobjname == "luminance_measure_btn":
+			color = wx.WHITE
+		else:
+			color = wx.BLACK
+		panel.SetBackgroundColour(color)
+		if wx.Platform == "__WXMSW__":
+			btncls = ThemedGenButton
+		else:
+			btncls = wx.Button
+		measure_btn = btncls(panel, label=lang.getstr("measure"),
+							 name=evtobjname)
+		measure_btn.Bind(wx.EVT_BUTTON, self.ambient_measure_handler)
+		panel.Sizer = wx.FlexGridSizer(2, 3)
+		panel.Sizer.Add((1,1))
+		panel.Sizer.Add((1,1))
+		panel.Sizer.Add((1,1))
+		panel.Sizer.AddGrowableRow(0)
+		panel.Sizer.Add((1,1))
+		panel.Sizer.Add(measure_btn, flag=wx.ALL | wx.ALIGN_CENTER,
+						border=12)
+		panel.Sizer.Add((1,1))
+		panel.Sizer.AddGrowableCol(0)
+		panel.Sizer.AddGrowableCol(2)
+		frame.Sizer = wx.BoxSizer(wx.VERTICAL)
+		frame.Sizer.Add(panel, 1, flag=wx.EXPAND)
+		frame.Sizer.SetSizeHints(frame)
+		frame.Sizer.Layout()
+		frame.Show()
+		self.measureframes.append(frame)
 	
 	def ambient_measure_handler(self, event):
 		""" Start measuring ambient illumination """
@@ -4958,20 +5005,24 @@ class MainFrame(ReportFrame, BaseFrame):
 			while not isinstance(interactive_frame, VisualWhitepointEditor):
 				# Floated panel
 				interactive_frame = interactive_frame.Parent
+		elif evtobjname in ("luminance_measure_btn",
+							"black_luminance_measure_btn"):
+			interactive_frame = "luminance"
 		else:
 			interactive_frame = "ambient"
-		self.worker.interactive = interactive_frame != "ambient"
+		self.worker.interactive = interactive_frame not in ("ambient",
+															"luminance")
 		self.worker.start(self.ambient_measure_consumer, 
 						  self.ambient_measure_producer, 
 						  ckwargs={"evtobjname": evtobjname},
-						  wkwargs={"evtobjname": evtobjname},
+						  wkwargs={"interactive_frame": interactive_frame},
 						  progress_title=lang.getstr("ambient.measure"),
 						  interactive_frame=interactive_frame)
 	
-	def ambient_measure_producer(self, evtobjname):
+	def ambient_measure_producer(self, interactive_frame):
 		""" Process spotread output for ambient readings """
 		cmd = get_argyll_util("spotread")
-		if evtobjname == "visual_whitepoint_editor_measure_btn":
+		if interactive_frame != "ambient":
 			# Emissive
 			mode = "-e"
 		else:
@@ -5041,6 +5092,15 @@ class MainFrame(ReportFrame, BaseFrame):
 									bitmap=geticon(32, "dialog-question"))
 				set_whitepoint = dlg.ShowModal() == wx.ID_OK
 				dlg.Destroy()
+		elif XYZ:
+			if evtobjname == "luminance_measure_btn":
+				self.luminance_textctrl.SetValue(float(XYZ.group(2)))
+				self.luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
+														self.luminance_ctrl))
+			elif evtobjname == "black_luminance_measure_btn":
+				self.black_luminance_textctrl.SetValue(float(XYZ.group(2)))
+				self.black_luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
+															  self.black_luminance_ctrl))
 		if set_whitepoint:
 			if evtobjname == "visual_whitepoint_editor_measure_btn" and XYZ:
 				RGB = []
@@ -5138,6 +5198,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if self.black_luminance_ctrl.GetSelection() == 1: # cd/m2
 			self.black_luminance_textctrl.Show()
 			self.black_luminance_textctrl_label.Show()
+			self.black_luminance_measure_btn.Show()
 			try:
 				v = self.black_luminance_textctrl.GetValue()
 				if v < 0.000001 or v > 100000:
@@ -5152,6 +5213,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			self.black_luminance_textctrl.Hide()
 			self.black_luminance_textctrl_label.Hide()
+			self.black_luminance_measure_btn.Hide()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
@@ -5180,6 +5242,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if self.luminance_ctrl.GetSelection() == 1: # cd/m2
 			self.luminance_textctrl.Show()
 			self.luminance_textctrl_label.Show()
+			self.luminance_measure_btn.Show()
 			try:
 				v = self.luminance_textctrl.GetValue()
 				if v < 0.000001 or v > 100000:
@@ -5194,6 +5257,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			self.luminance_textctrl.Hide()
 			self.luminance_textctrl_label.Hide()
+			self.luminance_measure_btn.Hide()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
@@ -14461,6 +14525,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.wpeditor.Close()
 		for profile_info in self.profile_info.values():
 			profile_info.Close()
+		while self.measureframes:
+			measureframe = self.measureframes.pop()
+			if measureframe:
+				measureframe.Close()
 		self.Hide()
 		self.enable_menus(False)
 

@@ -757,6 +757,15 @@
                                   <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>4</border>
                                 </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="luminance_measure_btn">
+                                    <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                                    <style>wxNO_BORDER</style>
+                                    <tooltip>measure</tooltip>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>4</border>
+                                </object>
                                 <orient>wxHORIZONTAL</orient>
                               </object>
                               <flag>wxALIGN_CENTRE_VERTICAL</flag>
@@ -803,6 +812,15 @@
                                     <label>cd/m²</label>
                                   </object>
                                   <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>4</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="black_luminance_measure_btn">
+                                    <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                                    <style>wxNO_BORDER</style>
+                                    <tooltip>measure</tooltip>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>4</border>
                                 </object>
                                 <orient>wxHORIZONTAL</orient>

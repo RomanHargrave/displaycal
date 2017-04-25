@@ -9310,7 +9310,9 @@ usage: spotread [-options] [logfile]
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
 		if hasattr(self.progress_wnd, "progress_type"):
-			if self.pauseable or getattr(self, "interactive_frame", "") == "ambient":
+			if (self.pauseable or
+				getattr(self, "interactive_frame", "") in ("ambient",
+														   "luminance")):
 				# If pauseable, we assume it's a measurement
 				progress_type = 1  # Measuring
 			elif self.cmdname == get_argyll_utilname("targen"):
@@ -9440,7 +9442,9 @@ usage: spotread [-options] [logfile]
 											   fancy=fancy)
 			self.progress_wnd = self._progress_dlgs[key]
 		if hasattr(self.progress_wnd, "progress_type"):
-			if pauseable or getattr(self, "interactive_frame", "") == "ambient":
+			if (pauseable or
+				getattr(self, "interactive_frame", "") in ("ambient",
+														   "luminance")):
 				# If pauseable, we assume it's a measurement
 				self.progress_wnd.progress_type = 1  # Measuring
 			elif self.cmdname == get_argyll_utilname("targen"):
@@ -9777,6 +9781,7 @@ usage: spotread [-options] [logfile]
 		self.instrument_sensor_position_msg = False
 		self.interactive_frame = interactive_frame
 		self.is_single_measurement = (interactive_frame == "ambient" or
+									  interactive_frame == "luminance" or
 									  (isinstance(interactive_frame,
 												  wx.TopLevelWindow) and
 									   interactive_frame.Name == "VisualWhitepointEditor"))
