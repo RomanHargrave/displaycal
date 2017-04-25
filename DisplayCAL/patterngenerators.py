@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from SocketServer import TCPServer, _eintr_retry
 from socket import (AF_INET, SHUT_RDWR, SO_BROADCAST, SO_REUSEADDR, SOCK_DGRAM,
 					SOCK_STREAM, SOL_SOCKET, error, gethostname, gethostbyname,
 					socket, timeout)
 from time import sleep
 import errno
 import httplib
+import select
 import struct
+import sys
 import threading
 import urllib
 import urlparse
@@ -18,9 +21,14 @@ from log import safe_print
 from network import get_network_addr
 from util_http import encode_multipart_formdata
 from util_str import safe_unicode
+import webwin
 
 
 _lock = threading.RLock()
+
+
+def Property(func):
+	return property(**func())
 
 
 def _shutdown(sock, addr):
@@ -30,7 +38,7 @@ def _shutdown(sock, addr):
 		sock.shutdown(SHUT_RDWR)
 	except error, exception:
 		if exception.errno != errno.ENOTCONN:
-			safe_print("MadTPG_Net: SHUT_RDWR for %s:%i failed:" %
+			safe_print("PatternGenerator: SHUT_RDWR for %s:%i failed:" %
 					   addr[:2], exception)
 	sock.close()
 
@@ -131,8 +139,7 @@ class GenTCPSockPatternGeneratorServer(object):
 			self.conn.settimeout(1)
 			break
 		if self.listening:
-			if self.logfile:
-				self.logfile.write(lang.getstr("connection.established") + "\n")
+			safe_print(lang.getstr("connection.established"))
 
 	def __del__(self):
 		self.disconnect_client()
@@ -450,6 +457,113 @@ class ResolveCMPatternGeneratorServer(GenTCPSockPatternGeneratorServer):
 			   '</calibration>' % tuple(rgb + [bits] + bgrgb + [bits, x, y,
 																  w, h]))
 		self.conn.sendall("%s%s" % (struct.pack(">I", len(xml)), xml))
+
+
+class WebWinHTTPPatternGeneratorServer(TCPServer, object):
+
+	def __init__(self, port, logfile=None):
+		self.port = port
+		Handler = webwin.WebWinHTTPRequestHandler
+		TCPServer.__init__(self, ("", port), Handler)
+		self.socket.settimeout(1)
+		self.timeout = 1
+		self.patterngenerator = self
+		self._listening = threading.Event()
+		self.logfile = logfile
+		self.pattern = "808080 808080 0 0 1 1"
+
+	def disconnect_client(self):
+		self.listening = False
+
+	def handle_error(self, request, client_address):
+		safe_print("Exception happened during processing of "
+				   "request from %s:%s:" % client_address,
+				   sys.exc_info()[1])
+
+	@Property
+	def listening():
+		def fget(self):
+			return self._listening.is_set()
+
+		def fset(self, value):
+			if value:
+				self._listening.set()
+			else:
+				self._listening.clear()
+				if hasattr(self, "conn"):
+					self.shutdown_request(self.conn)
+					del self.conn
+				if hasattr(self, "_thread") and self._thread.isAlive():
+					self.shutdown()
+		
+		return locals()
+
+	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
+			 use_video_levels=None, x=0, y=0, w=1, h=1):
+		pattern = ["%02X%02X%02X" % tuple(round(v * 255) for v in rgb),
+				   "%02X%02X%02X" % tuple(round(v * 255) for v in bgrgb),
+				   "%.4f %.4f %.4f %.4f" % (x, y, w, h)]
+		self.pattern = " ".join(pattern)
+
+	def serve_forever(self, poll_interval=0.5):
+		"""Handle one request at a time until shutdown.
+
+		Polls for shutdown every poll_interval seconds. Ignores
+		self.timeout. If you need to do periodic tasks, do them in
+		another thread.
+		"""
+		try:
+			while self._listening.is_set():
+				# XXX: Consider using another file descriptor or
+				# connecting to the socket to wake this up instead of
+				# polling. Polling reduces our responsiveness to a
+				# shutdown request and wastes cpu at all other times.
+				r, w, e = _eintr_retry(select.select, [self], [], [],
+									   poll_interval)
+				if self in r:
+					self._handle_request_noblock()
+		except Exception, exception:
+			safe_print("Exception in WebWinHTTPPatternGeneratorServer.serve_forever:",
+					   exception)
+			self._listening.clear()
+
+	def shutdown(self):
+		"""Stops the serve_forever loop.
+
+		Blocks until the loop has finished. This must be called while
+		serve_forever() is running in another thread.
+		"""
+		self._listening.clear()
+		while self._thread.isAlive():
+			sleep(0.05)
+
+	def wait(self):
+		self.listening = True
+		if self.logfile:
+			try:
+				host = get_network_addr()
+			except error:
+				host = gethostname()
+			self.logfile.write(lang.getstr("webserver.waiting") +
+							   (" %s:%s\n" % (host, self.port)))
+		while self.listening:
+			try:
+				self.conn, addr = self.get_request()
+			except timeout:
+				continue
+			self.conn.settimeout(1)
+			break
+		if self.listening:
+			try:
+				self.process_request(self.conn, addr)
+			except:
+				self.handle_error(self.conn, addr)
+				self.disconnect_client()
+			else:
+				self._thread = threading.Thread(target=self.serve_forever,
+												name="WebWinHTTPPatternGeneratorServerThread")
+				self._thread.start()
+				safe_print(lang.getstr("connection.established"))
 	
 
 if __name__ == "__main__":

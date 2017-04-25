@@ -95,6 +95,7 @@ from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
 				  version, version_short)
 from options import debug, test, verbose
 from ordereddict import OrderedDict
+from patterngenerators import WebWinHTTPPatternGeneratorServer
 from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_io import LineCache, StringIOu as StringIO, TarFileProper
@@ -4933,7 +4934,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(exception)
 				return
 		pos = self.GetDisplay().ClientArea[:2]
-		if display_name in ("madVR", "Prisma", "Resolve"):
+		if display_name in ("madVR", "Prisma", "Resolve", "Web @ localhost"):
 			patterngenerator = self.worker.patterngenerator
 		else:
 			patterngenerator = None
@@ -7408,7 +7409,15 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def setup_measurement(self, pending_function, *pending_function_args, 
 						  **pending_function_kwargs):
-		if not self.setup_patterngenerator(self):
+		if config.get_display_name(None, True) == "Web @ localhost":
+			for name, patterngenerator in self.worker.patterngenerators.items():
+				if isinstance(patterngenerator,
+							  WebWinHTTPPatternGeneratorServer):
+					# Need to shutdown web server to free port for dispwin
+					patterngenerator.disconnect_client()
+					patterngenerator.server_close()
+					self.worker.patterngenerators.pop(name)
+		elif not self.setup_patterngenerator(self):
 			return
 		writecfg()
 		if pending_function_kwargs.get("wrapup", True):
@@ -7563,7 +7572,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif config.get_display_name(None, True) == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
 			self.worker.madtpg_connect()
-		elif config.get_display_name(None, True) == "Resolve":
+		elif config.get_display_name(None, True) in ("Resolve",
+													 "Web @ localhost"):
 			logfile = LineCache(3)
 			try:
 				self.worker.setup_patterngenerator(logfile)
@@ -7571,7 +7581,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(exception, self)
 				return
 			if not hasattr(self.worker.patterngenerator, "conn"):
-				# Wait for Resolve connection
+				# Wait for connection
 				def closedlg(self):
 					win = self.get_top_window()
 					if isinstance(win, ConfirmDialog):
@@ -7582,7 +7592,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						# Close dialog
 						wx.CallAfter(closedlg, self)
 				threading.Thread(target=waitforcon,
-								 name="ResolveConnectionListener",
+								 name="PatternGeneratorConnectionListener",
 								 args=(self, )).start()
 				while not logfile.read():
 					sleep(.1)
@@ -14591,6 +14601,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if isinstance(getattr(self.worker, "madtpg", None),
 						  madvr.MadTPG_Net):
 				self.worker.madtpg.shutdown()
+			for patterngenerator in self.worker.patterngenerators.values():
+				patterngenerator.listening = False
 			self.HideAll()
 			if (self.worker.tempdir and os.path.isdir(self.worker.tempdir) and
 				not os.listdir(self.worker.tempdir)):

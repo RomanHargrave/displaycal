@@ -97,7 +97,8 @@ from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveLSPatternGeneratorServer,
-							   ResolveCMPatternGeneratorServer)
+							   ResolveCMPatternGeneratorServer,
+							   WebWinHTTPPatternGeneratorServer)
 from trash import trash
 from util_http import encode_multipart_formdata
 from util_io import (EncodedWriter, Files, GzipFileProper, LineBufferedStream,
@@ -8417,6 +8418,11 @@ usage: spotread [-options] [logfile]
 				port=getcfg("patterngenerator.prisma.port"),
 				use_video_levels=getcfg("patterngenerator.use_video_levels"),
 				logfile=logfile)
+		elif config.get_display_name(None, True) == "Web @ localhost":
+			patterngenerator = WebWinHTTPPatternGeneratorServer
+			self.patterngenerator = patterngenerator(
+				port=getcfg("webserver.portnumber"),
+				logfile=logfile)
 		else:
 			# Resolve
 			if getcfg("patterngenerator.resolve") == "LS":
@@ -8439,6 +8445,10 @@ usage: spotread [-options] [logfile]
 			self._patterngenerators[pgname] = patterngenerator
 
 		return locals()
+
+	@property
+	def patterngenerators(self):
+		return self._patterngenerators
 
 	def patterngenerator_send(self, rgb, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
