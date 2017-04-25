@@ -36,7 +36,7 @@ CALLBACK = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.POINTER(None),
 							ctypes.c_char_p, ctypes.c_ulonglong, ctypes.c_bool)
 
 
-min_version = (0, 87, 14, 0)
+min_version = (0, 88, 14, 0)
 
 
 # Search for madTPG on the local PC, connect to the first found instance
