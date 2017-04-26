@@ -222,8 +222,14 @@ class SysTrayIcon(wx.EvtHandler):
 		self.menu = menu
 		try:
 			pos = win32gui.GetCursorPos()
-			# See http://msdn.microsoft.com/library/default.asp?url=/library/en-us/winui/menus_0hdi.asp
-			win32gui.SetForegroundWindow(self.hwnd)
+			# See remarks section under
+			# https://msdn.microsoft.com/en-us/library/windows/desktop/ms648002(v=vs.85).aspx
+			try:
+				win32gui.SetForegroundWindow(self.hwnd)
+			except win32gui.error:
+				# Calls to SetForegroundWindow will fail if (e.g.) the Win10
+				# start menu is currently shown
+				pass
 			win32gui.TrackPopupMenu(menu.hmenu, win32con.TPM_LEFTALIGN, pos[0],
 									pos[1], 0, self.hwnd, None)
 			win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
@@ -262,7 +268,7 @@ def main():
 	try:
 		hicon = win32gui.LoadImage(hinst, 1, win32con.IMAGE_ICON, 0, 0,
 								   win32con.LR_DEFAULTSIZE)
-	except pywintypes.error:
+	except win32gui.error:
 		hicon = win32gui.LoadIcon(0, win32con.IDI_APPLICATION)
 	tooltip = os.path.basename(sys.executable)
 	icon = SysTrayIcon()
