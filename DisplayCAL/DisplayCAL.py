@@ -4964,7 +4964,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			color = wx.BLACK
 		if self.worker.patterngenerator:
-			self.worker.patterngenerator.send(tuple(v / 255.0 for v in color),
+			self.worker.patterngenerator.send(tuple(v / 255.0 for v in color[:3]),
 											  (0, 0, 0), x=0.25, y=0.25,
 											  w=0.5, h=0.5)
 		frame = wx.Frame(self, title=lang.getstr("measureframe.title"),

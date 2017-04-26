@@ -22,7 +22,9 @@ class Taskbar(object):
 		self.maxv = maxv
 
 	def set_progress_value(self, value):
-		taskbar.SetProgressValue(self.frame.GetHandle(), value, self.maxv)
+		if self.frame:
+			taskbar.SetProgressValue(self.frame.GetHandle(), value, self.maxv)
 
 	def set_progress_state(self, state):
-		taskbar.SetProgressState(self.frame.GetHandle(), state)    
+		if self.frame:
+			taskbar.SetProgressState(self.frame.GetHandle(), state)    

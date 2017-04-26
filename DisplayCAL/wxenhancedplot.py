@@ -139,6 +139,12 @@ else:
 from wxfixes import get_dc_font_scale
 
 
+def convert_to_list_of_tuples(iterable):
+    points = []
+    for p in iterable:
+        points.append(tuple(p))
+    return points
+
 #
 # Plotting classes...
 #
@@ -262,7 +268,13 @@ class PolyLine(PolyPoints):
         dc.SetPen(pen)
         if coord is None:
             if len(self.scaled): # bugfix for Mac OS X
-                dc.DrawLines(self.scaled)
+                if (wx.VERSION >= (4,) and
+                    isinstance(self.scaled, _Numeric.ndarray)):
+                    # Need to convert to list of tuples
+                    scaled = convert_to_list_of_tuples(self.scaled)
+                    dc.DrawLines(scaled)
+                else:
+                    dc.DrawLines(self.scaled)
         else:
             dc.DrawLines(coord) # draw legend line
 
@@ -305,7 +317,13 @@ class PolySpline(PolyLine):
         dc.SetPen(pen)
         if coord is None:
             if len(self.scaled): # bugfix for Mac OS X
-                dc.DrawSpline(self.scaled)
+                if (wx.VERSION >= (4,) and
+                    isinstance(self.scaled, _Numeric.ndarray)):
+                    # Need to convert to list of tuples
+                    scaled = convert_to_list_of_tuples(self.scaled)
+                    dc.DrawSpline(scaled)
+                else:
+                    dc.DrawSpline(self.scaled)
         else:
             dc.DrawLines(coord) # draw legend line
 
