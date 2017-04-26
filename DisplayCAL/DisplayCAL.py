@@ -4967,16 +4967,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		event.Skip()
 
 	def luminance_measure_handler(self, event):
-		frame = wx.Frame(self, title=lang.getstr("measureframe.title"),
-						 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW |
-							   wx.FRAME_FLOAT_ON_PARENT)
-		frame.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
-		panel = wx.Panel(frame, size=(int(get_default_size()),) * 2)
+		if not self.setup_patterngenerator(self):
+			return
 		evtobjname = event.GetEventObject().Name
 		if evtobjname == "luminance_measure_btn":
 			color = wx.WHITE
 		else:
 			color = wx.BLACK
+		if self.worker.patterngenerator:
+			self.worker.patterngenerator.send(tuple(v / 255.0 for v in color),
+											  (0, 0, 0), x=0.25, y=0.25,
+											  w=0.5, h=0.5)
+		frame = wx.Frame(self, title=lang.getstr("measureframe.title"),
+						 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW |
+							   wx.FRAME_FLOAT_ON_PARENT)
+		frame.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+		panel = wx.Panel(frame, size=(int(get_default_size()),) * 2)
 		panel.SetBackgroundColour(color)
 		if wx.Platform == "__WXMSW__":
 			btncls = ThemedGenButton
@@ -5000,6 +5006,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		frame.Sizer.Add(panel, 1, flag=wx.EXPAND)
 		frame.Sizer.SetSizeHints(frame)
 		frame.Sizer.Layout()
+		if CCPG and isinstance(patterngenerator, CCPG):
+			frame.Bind(wx.EVT_CLOSE, self.patterngenerator_disconnect)
 		frame.Show()
 		self.measureframes.append(frame)
 	
