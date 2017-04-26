@@ -4358,28 +4358,17 @@ class MainFrame(ReportFrame, BaseFrame):
 					  not auto and do_cal and
 					  show_advanced_options)
 
-		if getcfg("calibration.luminance", False):
-			self.luminance_ctrl.SetSelection(1)
-		else:
-			self.luminance_ctrl.SetSelection(0)
-		self.luminance_textctrl.SetValue(getcfg("calibration.luminance"))
-		self.luminance_textctrl.Show(bool(getcfg("calibration.luminance", 
-												 False)))
-		self.luminance_textctrl_label.Show(bool(getcfg("calibration.luminance", 
-													   False)))
-
-		if getcfg("calibration.black_luminance", False):
-			self.black_luminance_ctrl.SetSelection(1)
-		else:
-			self.black_luminance_ctrl.SetSelection(0)
-		self.black_luminance_textctrl.SetValue(
-			getcfg("calibration.black_luminance"))
-		self.black_luminance_textctrl.Show(
-			bool(show_advanced_options and
-				 getcfg("calibration.black_luminance", False)))
-		self.black_luminance_textctrl_label.Show(
-			bool(show_advanced_options and
-				 getcfg("calibration.black_luminance", False)))
+		for name in ("luminance", "black_luminance"):
+			userconf = bool(getcfg("calibration." + name, False))
+			getattr(self,
+					name + "_ctrl").SetSelection(int(userconf))
+			getattr(self,
+					name + "_textctrl").SetValue(getcfg("calibration." + name))
+			if name == "black_luminance":
+				userconf = show_advanced_options and userconf
+			getattr(self, name + "_textctrl").Show(userconf)
+			getattr(self, name + "_textctrl_label").Show(userconf)
+			getattr(self, name + "_measure_btn").Show(userconf)
 
 	def enable_3dlut_tab_handler(self, event):
 		setcfg("3dlut.tab.enable", 
