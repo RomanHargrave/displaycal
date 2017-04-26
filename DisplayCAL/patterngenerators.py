@@ -465,7 +465,6 @@ class WebWinHTTPPatternGeneratorServer(TCPServer, object):
 		self.port = port
 		Handler = webwin.WebWinHTTPRequestHandler
 		TCPServer.__init__(self, ("", port), Handler)
-		self.socket.settimeout(1)
 		self.timeout = 1
 		self.patterngenerator = self
 		self._listening = threading.Event()
@@ -546,6 +545,7 @@ class WebWinHTTPPatternGeneratorServer(TCPServer, object):
 				host = gethostname()
 			self.logfile.write(lang.getstr("webserver.waiting") +
 							   (" %s:%s\n" % (host, self.port)))
+		self.socket.settimeout(1)
 		while self.listening:
 			try:
 				self.conn, addr = self.get_request()
@@ -553,6 +553,7 @@ class WebWinHTTPPatternGeneratorServer(TCPServer, object):
 				continue
 			self.conn.settimeout(1)
 			break
+		self.socket.settimeout(None)
 		if self.listening:
 			try:
 				self.process_request(self.conn, addr)
