@@ -230,7 +230,7 @@ class SysTrayIcon(wx.EvtHandler):
 				# Calls to SetForegroundWindow will fail if (e.g.) the Win10
 				# start menu is currently shown
 				pass
-			win32gui.TrackPopupMenu(menu.hmenu, win32con.TPM_LEFTALIGN, pos[0],
+			win32gui.TrackPopupMenu(menu.hmenu, win32con.TPM_RIGHTBUTTON, pos[0],
 									pos[1], 0, self.hwnd, None)
 			win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
 		finally:
