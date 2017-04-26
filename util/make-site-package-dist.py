@@ -71,7 +71,14 @@ else:
 pkgs = {'numpy': ['numpy'],
 		'pygame': ['pygame'],
 	    'wx': [wx_pth,
-			   'wxversion']}
+			   'wxversion'],
+		'enum': ['enum'],  # enum/enum34 compatibility package
+		'netifaces': ['netifaces'],
+		'google.protobuf': ['google.protobuf'],
+		'pychromecast': ['pychromecast'],
+		'requests': ['requests'],
+		'six': ['six'],
+		'zeroconf': ['zeroconf']}
 if sys.platform == 'win32':
 	pkgs['wmi'] = ['wmi']
 if sys.platform == 'darwin':
@@ -112,13 +119,19 @@ python_lib = get_python_lib(True)
 for pkg_name, data in pkgs.iteritems():
 	print('Checking for package: %s' % pkg_name)
 	dylibs = filter(lambda entry: entry.endswith('.dylib'), data)
+	fromlist = pkg_name.split(".")
 	try:
-		pkg = __import__(pkg_name)
+		pkg = __import__(pkg_name, fromlist=fromlist)
 	except ImportError, exception:
 		print exception
 		continue
+	version = getattr(pkg, "__version__",
+					  getattr(pkg, "version",
+							  getattr(pkg, "VERSION", "UNKNOWN")))
+	if isinstance(version, tuple):
+		version = ".".join(str(item) for item in version)
 	dist_dir = os.path.join('dist', '%s-%s-%s-py%i.%i' % ((pkg_name,
-														   pkg.__version__,
+														   version,
 														   sys.platform) +
 														  sys.version_info[:2]))
 	print('Destination: %s' % dist_dir)
@@ -133,8 +146,9 @@ for pkg_name, data in pkgs.iteritems():
 				pth = os.path.join(os.path.dirname(pth), pthfile.read().strip())
 		if not os.path.exists(pth):
 			print('  Checking for module: %s' % pth)
+			fromlist = pkg_name.split(".")
 			try:
-				module = __import__(entry)
+				module = __import__(entry, fromlist=fromlist)
 			except ImportError, exception:
 				print exception
 				continue
