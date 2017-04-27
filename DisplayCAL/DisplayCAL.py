@@ -2167,6 +2167,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		tools_advanced = tools.FindItemById(tools.FindItem("advanced")).SubMenu
 		tools_instrument = tools.FindItemById(tools.FindItem("instrument")).SubMenu
 		tools_ccxx = tools.FindItemById(tools.FindItem("colorimeter_correction_matrix_file")).SubMenu
+
 		self.menuitem_load_lut_from_cal_or_profile = tools_vcgt.FindItemById(
 			tools_vcgt.FindItem("calibration.load_from_cal_or_profile"))
 		self.Bind(wx.EVT_MENU, self.load_profile_cal_handler, 
@@ -2178,6 +2179,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_lut_reset = tools_vcgt.FindItemById(
 			tools_vcgt.FindItem("calibration.reset"))
 		self.Bind(wx.EVT_MENU, self.reset_cal, self.menuitem_lut_reset)
+
+		self.menuitem_measurement_report = tools_reports.FindItemById(
+			tools_reports.FindItem("measurement_report"))
+		self.Bind(wx.EVT_MENU, self.measurement_report_handler, 
+			self.menuitem_measurement_report)
 		self.menuitem_report_uncalibrated = tools_reports.FindItemById(
 			tools_reports.FindItem("report.uncalibrated"))
 		self.Bind(wx.EVT_MENU, self.report_uncalibrated_handler, 
@@ -2426,6 +2432,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   calibration_loading_supported)
+		mr_enable = getcfg("calibration.file", False) not in self.presets[1:]
+		self.menuitem_measurement_report.Enable(mr_enable)
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
 											   not config.is_non_argyll_display())

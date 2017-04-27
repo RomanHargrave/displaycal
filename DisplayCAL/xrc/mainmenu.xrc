@@ -152,6 +152,16 @@
       </object>
       <object class="wxMenu" name="menu.tools.report">
         <label>report</label>
+        <object class="wxMenuItem" name="measurement_report">
+          <label>measurement_report</label>
+        </object>
+        <object class="wxMenuItem" name="report.uniformity">
+          <label>report.uniformity</label>
+        </object>
+        <object class="wxMenuItem" name="measurement_report.update">
+          <label>measurement_report.update</label>
+        </object>
+        <object class="separator"/>
         <object class="wxMenuItem" name="report.uncalibrated">
           <label>report.uncalibrated</label>
         </object>
@@ -160,13 +170,6 @@
         </object>
         <object class="wxMenuItem" name="calibration.verify">
           <label>calibration.verify</label>
-        </object>
-        <object class="wxMenuItem" name="report.uniformity">
-          <label>report.uniformity</label>
-        </object>
-        <object class="separator"/>
-        <object class="wxMenuItem" name="measurement_report.update">
-          <label>measurement_report.update</label>
         </object>
       </object>
       <object class="separator"/>
