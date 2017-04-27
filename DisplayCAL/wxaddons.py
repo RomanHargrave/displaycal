@@ -456,11 +456,12 @@ class BetterWindowDisabler(object):
 	""" Also disables child windows instead of only top level windows. This is
 	actually needed under Mac OS X where disabling a top level window will
 	not prevent interaction with its children. """
+	
+	windows = set()
 
 	def __init__(self, skip=None):
 		self._windows = []
 		self.skip = skip
-		self.id = id(self)
 		self.disable()
 
 	def __del__(self):
@@ -477,11 +478,13 @@ class BetterWindowDisabler(object):
 					skip = [skip]
 			toplevel = list(wx.GetTopLevelWindows())
 			for w in toplevel:
-				if w and w not in skip and "Inspection" not in "%s" % w:
+				if (w and w not in skip and "Inspection" not in "%s" % w and
+					w not in BetterWindowDisabler.windows):
 					self._windows.append(w)
 					for child in w.GetAllChildren(skip + toplevel):
-						if child and not isinstance(child, (wx.Panel,
-															wx.PyPanel)):
+						if (child and not isinstance(child, (wx.Panel,
+															 wx.PyPanel)) and
+							child not in BetterWindowDisabler.windows):
 							# Don't disable panels, this can have weird side
 							# effects for contained controls
 							self._windows.append(child)
@@ -490,9 +493,7 @@ class BetterWindowDisabler(object):
 			def Disable(w):
 				w._BetterWindowDisabler_enabled = False
 			for w in reversed(self._windows):
-				if hasattr(w, "_BetterWindowDisabler_disabler_id"):
-					continue
-				w._BetterWindowDisabler_disabler_id = self.id
+				BetterWindowDisabler.windows.add(w)
 				enabled = w.IsEnabled()
 				w.Disable()
 				w._BetterWindowDisabler_Disable = w.Disable
@@ -502,16 +503,14 @@ class BetterWindowDisabler(object):
 				w.Enable(enabled)
 			return
 		for w in self._windows:
+			BetterWindowDisabler.windows.remove(w)
 			if w:
-				if getattr(w, "_BetterWindowDisabler_disabler_id", None) != self.id:
-					continue
 				if hasattr(w, "_BetterWindowDisabler_Disable"):
 					w.Disable = w._BetterWindowDisabler_Disable
 				if hasattr(w, "_BetterWindowDisabler_Enable"):
 					w.Enable = w._BetterWindowDisabler_Enable
 				if hasattr(w, "_BetterWindowDisabler_enabled"):
 					w.Enable(w._BetterWindowDisabler_enabled)
-				del w._BetterWindowDisabler_disabler_id
 
 
 class CustomGridCellEvent(CustomEvent):
