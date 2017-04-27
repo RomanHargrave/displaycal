@@ -243,7 +243,7 @@ if sys.platform == "win32":
 			grid.draw_horizontal_grid_lines = False
 			grid.draw_vertical_grid_lines = False
 			grid.CreateGrid(0, 4)
-			grid.SetSelectionMode(wx.grid.Grid.SelectRows)
+			grid.SetSelectionMode(wx.grid.Grid.wxGridSelectRows)
 			font = grid.GetDefaultCellFont()
 			if font.PointSize > 11:
 				font.PointSize = 11

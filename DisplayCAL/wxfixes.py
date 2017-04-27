@@ -91,9 +91,22 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.VERTICAL_HATCH      = wx.BRUSHSTYLE_VERTICAL_HATCH
 
 	embeddedimage.PyEmbeddedImage.getBitmap = embeddedimage.PyEmbeddedImage.GetBitmap
+
+	def BitmapFromIcon(icon):
+		bmp = wx.Bitmap()
+		bmp.CopyFromIcon(icon)
+		return bmp
+
+	def IconFromBitmap(bmp):
+		icon = wx.Icon()
+		icon.CopyFromBitmap(bmp)
+		return bmp
+
+	wx.BitmapFromIcon = BitmapFromIcon
 	wx.CursorFromImage = wx.Cursor
 	wx.EmptyBitmap = wx.Bitmap
 	wx.EmptyIcon = wx.Icon
+	wx.IconFromBitmap = wx.Icon
 	wx.ImageFromStream = wx.Image
 	wx.ListCtrl.InsertStringItem = lambda self, index, label: self.InsertItem(index, label)
 	wx.ListCtrl.SetStringItem = lambda self, index, col, label: self.SetItem(index, col, label)
@@ -110,8 +123,31 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.HL_DEFAULT_STYLE = wx.adv.HL_DEFAULT_STYLE
 	wx.HyperlinkCtrl = wx.adv.HyperlinkCtrl
 	wx.HyperlinkCtrlNameStr = wx.adv.HyperlinkCtrlNameStr
+
 	wx.SOUND_ASYNC = wx.adv.SOUND_ASYNC
 	wx.Sound = wx.adv.Sound
+	
+	wx.wxEVT_TASKBAR_BALLOON_CLICK = wx.adv.wxEVT_TASKBAR_BALLOON_CLICK
+	wx.wxEVT_TASKBAR_BALLOON_TIMEOUT = wx.adv.wxEVT_TASKBAR_BALLOON_TIMEOUT
+	wx.wxEVT_TASKBAR_CLICK = wx.adv.wxEVT_TASKBAR_CLICK
+	wx.wxEVT_TASKBAR_LEFT_DCLICK = wx.adv.wxEVT_TASKBAR_LEFT_DCLICK
+	wx.wxEVT_TASKBAR_LEFT_DOWN = wx.adv.wxEVT_TASKBAR_LEFT_DOWN
+	wx.wxEVT_TASKBAR_LEFT_UP = wx.adv.wxEVT_TASKBAR_LEFT_UP
+	wx.wxEVT_TASKBAR_MOVE = wx.adv.wxEVT_TASKBAR_MOVE
+	wx.wxEVT_TASKBAR_RIGHT_DOWN = wx.adv.wxEVT_TASKBAR_RIGHT_DOWN
+	wx.wxEVT_TASKBAR_RIGHT_UP = wx.adv.wxEVT_TASKBAR_RIGHT_UP
+	wx.wxEVT_TASKBAR_RIGHT_DCLICK = wx.adv.wxEVT_TASKBAR_RIGHT_DCLICK
+	
+	wx.EVT_TASKBAR_BALLOON_CLICK = wx.adv.EVT_TASKBAR_BALLOON_CLICK
+	wx.EVT_TASKBAR_BALLOON_TIMEOUT = wx.adv.EVT_TASKBAR_BALLOON_TIMEOUT
+	wx.EVT_TASKBAR_CLICK = wx.adv.EVT_TASKBAR_CLICK
+	wx.EVT_TASKBAR_LEFT_DCLICK = wx.adv.EVT_TASKBAR_LEFT_DCLICK
+	wx.EVT_TASKBAR_LEFT_DOWN = wx.adv.EVT_TASKBAR_LEFT_DOWN
+	wx.EVT_TASKBAR_LEFT_UP = wx.adv.EVT_TASKBAR_LEFT_UP
+	wx.EVT_TASKBAR_MOVE = wx.adv.EVT_TASKBAR_MOVE
+	wx.EVT_TASKBAR_RIGHT_DOWN = wx.adv.EVT_TASKBAR_RIGHT_DOWN
+	wx.EVT_TASKBAR_RIGHT_UP = wx.adv.EVT_TASKBAR_RIGHT_UP
+	wx.EVT_TASKBAR_RIGHT_DCLICK = wx.adv.EVT_TASKBAR_RIGHT_DCLICK
 
 	# Removed items
 
