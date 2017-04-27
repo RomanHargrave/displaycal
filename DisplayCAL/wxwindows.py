@@ -2795,7 +2795,10 @@ class FlatShadedButton(GradientButton):
 		label = self.GetLabel()
 		if label and self._bitmap:
 			label = " " + label
-		tw, th = gc.GetTextExtent(label)
+		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
+		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
+		# TODO: Figure out why this is the case.
+		tw, th = self.GetTextExtent(label)
 
 		if self._bitmap:
 			bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()
@@ -2937,7 +2940,10 @@ class BorderGradientButton(GradientButton):
 		label = self.GetLabel()
 		if label and self._bitmap:
 			label = " " + label
-		tw, th = gc.GetTextExtent(label)
+		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
+		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
+		# TODO: Figure out why this is the case.
+		tw, th = self.GetTextExtent(label)
 
 		if self._bitmap:
 			bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()
