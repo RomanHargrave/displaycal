@@ -1134,7 +1134,7 @@ class ProfileLoader(object):
 							menu.AppendSeparator()
 						else:
 							label = lang.getstr(label)
-							if method is restore_auto:
+							if option == "profile.load_on_login":
 								lstr = lang.getstr("profile.load_on_login")
 								if lang.getcode() != "de":
 									label = label[0].lower() + label[1:]
