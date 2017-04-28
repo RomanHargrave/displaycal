@@ -40,6 +40,14 @@ if sys.platform == "win32":
 	from util_win import win_ver
 	import ctypes
 
+
+if "py2exe" in sys.argv[1:]:
+	# py2exe helper so wx.xml gets picked up
+	from wxaddons import wx
+	if u"phoenix" in wx.PlatformInfo:
+		from wx import xml
+
+
 def _excepthook(etype, value, tb):
 	handle_error((etype, value, tb))
 
