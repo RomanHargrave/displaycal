@@ -13,35 +13,32 @@ import subprocess as sp
 import sys
 from distutils.sysconfig import get_python_lib
 
-try:
-	import wxversion
-except:
-	class WxVersion(object):
-		__file__ = ''
-		def getInstalled(self):
-			return []
-
-	wxversion = WxVersion()
-
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from DisplayCAL.meta import wx_minversion
 
 # Search for a suitable wx version
 wx_minversion_str = '.'.join(str(n) for n in wx_minversion[:2])
-wxversions_all = wxversion.getInstalled()
 wxversions_candidates = []
-for wxv in wxversions_all:
-	if wxv >= wx_minversion_str:
-		wxversions_candidates.append(wxv)
+for pth in sys.path:
+	if not pth:
+		pth = '.'
+	if os.path.isdir(pth):
+		for name in glob.glob(os.path.join(pth, 'wx*')):
+			base = os.path.basename(name)
+			if (os.path.isdir(name) and
+				((os.path.isdir(os.path.join(name, 'wx')) and
+				  base[3:] >= wx_minversion_str) or
+				 base == 'wx')):
+				wxversions_candidates.append(name)
 if not wxversions_candidates:
 	print 'No wxPython versions >= %s found' % wx_minversion_str
 choice = 1
 if len(wxversions_candidates) > 1:
 	print('Several wxPython versions >= %s found.' % wx_minversion_str)
 	print('')
-	for i, wxv in enumerate(wxversions_candidates):
-		print('%2i: wx-%s' % (i + 1, wxv))
+	for i, pth in enumerate(wxversions_candidates):
+		print('%2i: %s' % (i + 1, os.path.basename(pth)))
 	print('')
 	while choice:
 		choice = raw_input('Please select (1..%i) and press <ENTER>,\n'
@@ -56,22 +53,19 @@ if len(wxversions_candidates) > 1:
 				  % (1, len(wxversions_candidates)))
 		else:
 			break
-	wx_pth = os.path.join(os.path.dirname(wxversion.__file__),
-						  'wx-%s' % wxversions_candidates[choice - 1])
+	wx_pth = wxversions_candidates[choice - 1]
 	print('Your choice: %s' % wx_pth)
 	if raw_input('Press <ENTER> to continue, X <ENTER> to abort: ').upper() == 'X':
 		sys.exit()
 elif wxversions_candidates:
-	wx_pth = os.path.join(os.path.dirname(wxversion.__file__),
-						  'wx-%s' % wxversions_candidates[0])
+	wx_pth = wxversions_candidates[0]
 else:
 	wx_pth = 'wx'
 
 # Packages to collect
 pkgs = {'numpy': ['numpy'],
 		'pygame': ['pygame'],
-	    'wx': [wx_pth,
-			   'wxversion'],
+	    'wx': [wx_pth],
 		'enum': ['enum'],  # enum/enum34 compatibility package
 		'netifaces': ['netifaces'],
 		'google.protobuf': ['google.protobuf'],
@@ -79,6 +73,10 @@ pkgs = {'numpy': ['numpy'],
 		'requests': ['requests'],
 		'six': ['six'],
 		'zeroconf': ['zeroconf']}
+if os.path.isdir(os.path.join(wx_pth, 'wx')):
+	# Not Phoenix
+	sys.path.insert(0, wx_pth)
+	pkgs['wx'].append('wxversion')
 if sys.platform == 'win32':
 	pkgs['wmi'] = ['wmi']
 if sys.platform == 'darwin':
@@ -146,7 +144,7 @@ for pkg_name, data in pkgs.iteritems():
 				pth = os.path.join(os.path.dirname(pth), pthfile.read().strip())
 		if not os.path.exists(pth):
 			print('  Checking for module: %s' % pth)
-			fromlist = pkg_name.split(".")
+			fromlist = entry.split(".")
 			try:
 				module = __import__(entry, fromlist=fromlist)
 			except ImportError, exception:
