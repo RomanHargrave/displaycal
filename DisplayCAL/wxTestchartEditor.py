@@ -679,12 +679,7 @@ class TestchartEditor(BaseFrame):
 
 		# status
 		status = wx.StatusBar(self, -1)
-		if u"phoenix" in wx.PlatformInfo:
-			# Phoenix
-			status.SetStatusStyles(1, wx.SB_FLAT)
-		else:
-			# Classic
-			status.SetStatusStyles([wx.SB_FLAT])
+		status.SetStatusStyles([wx.SB_FLAT])
 		self.SetStatusBar(status)
 
 		# layout
