@@ -41,13 +41,6 @@ if sys.platform == "win32":
 	import ctypes
 
 
-if "py2exe" in sys.argv[1:]:
-	# py2exe helper so wx.xml gets picked up
-	from wxaddons import wx
-	if u"phoenix" in wx.PlatformInfo:
-		from wx import xml
-
-
 def _excepthook(etype, value, tb):
 	handle_error((etype, value, tb))
 
@@ -56,8 +49,6 @@ sys.excepthook = _excepthook
 
 def main(module=None):
 	mp.freeze_support()
-	from wxaddons import wx
-	from wxwindows import BaseApp
 	if module:
 		name = "%s-%s" % (appbasename, module)
 	else:
@@ -80,6 +71,24 @@ def main(module=None):
 		# Linux
 		safe_print(' '.join(platform.dist()), platform.machine())
 	safe_print("Python " + sys.version)
+	# Enable faulthandler
+	try:
+		import faulthandler
+	except Exception, exception:
+		safe_print(exception)
+	else:
+		try:
+			faulthandler.enable(open(os.path.join(logdir, pyname +
+														  "-fault.log"), "w"))
+		except Exception, exception:
+			safe_print(exception)
+		else:
+			safe_print("Faulthandler", getattr(faulthandler, "__version__", ""))
+	from wxaddons import wx
+	if u"phoenix" in wx.PlatformInfo:
+		# py2exe helper so wx.xml gets picked up
+		from wx import xml
+	from wxwindows import BaseApp
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
 	safe_print("File system encoding: " + fs_enc)
