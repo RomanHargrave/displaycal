@@ -7084,7 +7084,7 @@ usage: spotread [-options] [logfile]
 									profile_ext)
 		cmd, args = self.prepare_colprof(
 			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
-			display_manufacturer)
+			display_manufacturer, tags)
 		if not isinstance(cmd, Exception): 
 			profile = None
 			profile_path = args[-1] + profile_ext
@@ -8514,7 +8514,7 @@ usage: spotread [-options] [logfile]
 			self.safe_send(" ")
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
-						display_manufacturer=None):
+						display_manufacturer=None, tags=None):
 		"""
 		Prepare a colprof commandline.
 		
@@ -8716,8 +8716,11 @@ usage: spotread [-options] [logfile]
 				if "-E" in options_dispcal:
 					black_white = (16, 235)
 				elif (config.get_display_name() == "madVR" and
-					  self.madtpg_connect()):
+					  tags is True and self.madtpg_connect()):
 					# Get output encoding from madVR
+					# Note: 'tags' will only be True if creating profile
+					# directly after measurements, and only in that case will
+					# we want to query madVR
 					black_white = self.madtpg.get_black_and_white_level()
 					self.madtpg_disconnect(False)
 				if black_white == (16, 235):
