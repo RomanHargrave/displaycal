@@ -10656,7 +10656,11 @@ class MainFrame(ReportFrame, BaseFrame):
 								metadata.append(label + '_DATA_%i_%s "%s"' %
 										(i + 1, column, sample[column]))
 			if colorimeter_ti3 and getcfg("ccmx.use_four_color_matrix_method"):
+				cgats = re.sub(r'(\nORIGINATOR\s+)"Argyll[^"]+"',
+							   r'\1"%s %s"' % (appname, version), cgats)
 				metadata.append('FIT_METHOD "xy"')
+			else:
+				metadata.append(u'FIT_METHOD "ΔE*94"'.encode("UTF-8"))
 			if metadata:
 				cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
 							   '\\1%s\n' %
@@ -10740,6 +10744,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			cgats = cgatsfile.read()
 			cgatsfile.close()
 			originator = re.search('\nORIGINATOR\s+"Argyll', cgats)
+			if not originator:
+				originator = re.search('\nORIGINATOR\s+"' + appname, cgats)
 			if not originator:
 				InfoDialog(self,
 						   msg=lang.getstr("colorimeter_correction.upload.deny"), 
