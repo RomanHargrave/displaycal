@@ -96,8 +96,8 @@ def main(module=None):
 		# HighDPI support
 		try:
 			shcore = ctypes.windll.shcore
-		except:
-			pass
+		except Exception, exception:
+			safe_print("Warning - could not load shcore:", exception)
 		else:
 			if hasattr(shcore, "SetProcessDpiAwareness"):
 				try:
@@ -107,6 +107,8 @@ def main(module=None):
 				except Exception, exception:
 					safe_print("Warning - SetProcessDpiAwareness() failed:",
 							   exception)
+			else:
+				safe_print("Warning - SetProcessDpiAwareness not found in shcore")
 	lockfilename = None
 	port = 0
 	# Allow multiple instances only for curve viewer, profile info,
