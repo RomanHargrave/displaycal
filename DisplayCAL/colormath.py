@@ -331,10 +331,10 @@ def LMS_wp_adaption_matrix(whitepoint_source=None,
 	XYZWD = get_whitepoint(whitepoint_destination)
 	if XYZWS[1] <= 1.0 and XYZWD[1] > 1.0:
 		# make sure the scaling is identical
-		XYZWS = [v * 100 for v in XYZWS]
+		XYZWD = [v / XYZWD[1] * XYZWS[1] for v in XYZWD]
 	if XYZWD[1] <= 1.0 and XYZWS[1] > 1.0:
 		# make sure the scaling is identical
-		XYZWD = [v * 100 for v in XYZWD]
+		XYZWS = [v / XYZWS[1] * XYZWD[1] for v in XYZWS]
 	Ls, Ms, Ss = XYZ2LMS(XYZWS[0], XYZWS[1], XYZWS[2], cat)
 	Ld, Md, Sd = XYZ2LMS(XYZWD[0], XYZWD[1], XYZWD[2], cat)
 	return Matrix3x3([[Ld/Ls, 0, 0], [0, Md/Ms, 0], [0, 0, Sd/Ss]])
