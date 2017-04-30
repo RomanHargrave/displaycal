@@ -13028,8 +13028,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		else:
 			patches_amount = 73
-			if event and proftype not in ("g", "G", "s", "S"):
-				setcfg("profile.type", "S" if getcfg("trc") else "s")
+			if event and proftype not in ("g", "G", "s", "S", "x", "X"):
+				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		if proftype != getcfg("profile.type"):
 			self.update_profile_type_ctrl()
 			# Reset profile type to previous value so the handler method will

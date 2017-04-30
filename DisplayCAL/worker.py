@@ -7100,7 +7100,8 @@ usage: spotread [-options] [logfile]
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				for ti1_name in ("d3-e1-s3-g33-m5-b0-f0",
+				for ti1_name in ("d3-e4-s0-g25-m3-b3-f0-crossover",
+								 "d3-e1-s3-g33-m5-b0-f0",
 								 "d3-e4-s17-g49-m5-b5-f0"):
 					ti1_name = "ti1/%s.ti1" % ti1_name
 					ti1_path = get_data_path(ti1_name)
@@ -7553,31 +7554,46 @@ usage: spotread [-options] [logfile]
 			XYZ = colormath.adapt(*(curve[int(round((len(curve) - 1.0) / m * n))]
 									for curve in curves),
 								  whitepoint_destination=white_XYZ)
-			return [v * 100 for v in XYZ]
+			return XYZ
 		
 		# Need to sort so columns increase (fastest to slowest) B G R
 		remaining.sort()
 
-		# Build initial 5x5x5 cLUT
-		clut = []
-		for a in xrange(5):
-			for b in xrange(5):
-				clut.append([])
-				for c in xrange(5):
-					RGB = (a * 25, b * 25, c * 25)
-					# Prefer actual measurements over interpolated values
-					XYZ = remaining.get(RGB)
-					if not XYZ:
-						if a == b == c:
-							# Fall back to interpolated values for gray
-							XYZ = get_XYZ_from_curves(a, 4)
+		# Build initial cLUT
+		# Try to fill a 5x5x5 or 3x3x3 cLUT
+		for iclutres in (5, 3):
+			clut = []
+			step = 100 / (iclutres - 1.0)
+			for a in xrange(iclutres):
+				for b in xrange(iclutres):
+					clut.append([])
+					for c in xrange(iclutres):
+						RGB = (a * step, b * step, c * step)
+						# Prefer actual measurements over interpolated values
+						XYZ = remaining.get(RGB)
+						if not XYZ:
+							if a == b == c:
+								# Fall back to interpolated values for gray
+								X, Y, Z = get_XYZ_from_curves(a, iclutres - 1)
+							elif iclutres == 5:
+								# Try next smaller cLUT res
+								break
+							else:
+								raise ValueError("Measurement data is missing "
+												 "RGB %.4f %.4f %.4f" % RGB)
 						else:
-							raise ValueError("Measurement data is missing "
-											 "RGB %.4f %.4f %.4f" % RGB)
-					X, Y, Z = (v / 100.0 for v in XYZ)
-					X, Y, Z = colormath.blend_blackpoint(X, Y, Z, black_XYZ)
-					# Range 0..1
-					clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+							X, Y, Z = (v / 100.0 for v in XYZ)
+							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
+																 black_XYZ)
+						# Range 0..1
+						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+					if c < iclutres - 1:
+						break
+				if b < iclutres - 1:
+					break
+			if a == iclutres - 1:
+				break
+		self.log("Initial cLUT resolution %ix%ix%i" % ((iclutres,) * 3))
 		
 		profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
 
@@ -7586,45 +7602,50 @@ usage: spotread [-options] [logfile]
 		clutres = {"m": 9,
 				   "l": 5}.get(quality, 17)
 
-		# Lookup input RGB to interpolated XYZ
-		RGB_in = []
-		step = 100 / (clutres - 1.0)
-		for a in xrange(clutres):
-			for b in xrange(clutres):
-				for c in xrange(clutres):
-					RGB_in.append([a * step, b * step, c * step])
-		XYZ_out = self.xicclu(profile, RGB_in, "a", pcs="X", scale=100)
-		profile.fileName = None
+		if clutres > iclutres:
+			# Lookup input RGB to interpolated XYZ
+			RGB_in = []
+			step = 100 / (clutres - 1.0)
+			for a in xrange(clutres):
+				for b in xrange(clutres):
+					for c in xrange(clutres):
+						RGB_in.append([a * step, b * step, c * step])
+			XYZ_out = self.xicclu(profile, RGB_in, "a", pcs="X", scale=100)
+			profile.fileName = None
 
-		# Create new cLUT
-		clut = []
-		i = 0
-		actual = 0
-		interpolated = 0
-		for a in xrange(clutres):
-			for b in xrange(clutres):
-				clut.append([])
-				for c in xrange(clutres):
-					RGB = (a * step, b * step, c * step)
-					# Prefer actual measurements over interpolated values
-					XYZ = remaining.get(RGB)
-					if not XYZ:
-						# Fall back to interpolated values
-						XYZ = XYZ_out[i]
-						interpolated += 1
-					else:
-						actual += 1
-					i += 1
-					X, Y, Z = (v / 100.0 for v in XYZ)
-					X, Y, Z = colormath.blend_blackpoint(X, Y, Z, black_XYZ)
-					# Range 0..1
-					clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
-		if actual > 5 ** 3:
-			# Did we get any additional actual measured cLUT points?
-			self.log("Got %i values from actual measurements out of %i total" %
-					 (actual, clutres ** 3))
+			# Create new cLUT
+			clut = []
+			i = 0
+			actual = 0
+			interpolated = 0
+			for a in xrange(clutres):
+				for b in xrange(clutres):
+					clut.append([])
+					for c in xrange(clutres):
+						RGB = (a * step, b * step, c * step)
+						# Prefer actual measurements over interpolated values
+						XYZ = remaining.get(RGB)
+						if not XYZ:
+							# Fall back to interpolated values
+							XYZ = XYZ_out[i]
+							if a == b == c:
+								actual += 1  # Count as actual
+							else:
+								interpolated += 1
+						else:
+							actual += 1
+						i += 1
+						X, Y, Z = (v / 100.0 for v in XYZ)
+						# Range 0..1
+						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+			if actual > iclutres ** 3:
+				# Did we get any additional actual measured cLUT points?
+				self.log("Final interpolated cLUT resolution %ix%ix%i" %
+						 ((clutres,) * 3))
+				self.log("Got %i additional values from actual measurements" %
+						 (actual - iclutres ** 3))
 
-			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+				profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
 
 		# Add black back in
 		black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
