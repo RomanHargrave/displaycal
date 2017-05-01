@@ -7100,8 +7100,8 @@ usage: spotread [-options] [logfile]
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				for ti1_name in ("d3-e4-s0-g25-m3-b3-f0-crossover",
-								 "d3-e1-s3-g33-m5-b0-f0",
+				for ti1_name in ("d3-e4-s3-g25-m3-b3-f0-crossover",
+								 "d3-e4-s5-g33-m5-b0-f0-crossover",
 								 "d3-e4-s17-g49-m5-b5-f0"):
 					ti1_name = "ti1/%s.ti1" % ti1_name
 					ti1_path = get_data_path(ti1_name)
@@ -7599,8 +7599,8 @@ usage: spotread [-options] [logfile]
 
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
-		clutres = {"m": 9,
-				   "l": 5}.get(quality, 17)
+		clutres = {"m": iclutres * 2 - 1,
+				   "l": iclutres}.get(quality, iclutres * 4 - 3)
 
 		if clutres > iclutres:
 			# Lookup input RGB to interpolated XYZ
@@ -7628,10 +7628,7 @@ usage: spotread [-options] [logfile]
 						if not XYZ:
 							# Fall back to interpolated values
 							XYZ = XYZ_out[i]
-							if a == b == c:
-								actual += 1  # Count as actual
-							else:
-								interpolated += 1
+							interpolated += 1
 						else:
 							actual += 1
 						i += 1
@@ -8264,9 +8261,9 @@ usage: spotread [-options] [logfile]
 			if getcfg("testchart.file") == "auto" and auto < 5:
 				# Use pre-baked testchart
 				if auto == 2:
-					testchart = "ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1"
+					testchart = "ti1/d3-e4-s3-g25-m3-b3-f0-crossover.ti1"
 				elif auto == 3:
-					testchart = "ti1/d3-e1-s3-g33-m5-b0-f0.ti1"
+					testchart = "ti1/d3-e4-s5-g33-m5-b0-f0-crossover.ti1"
 				else:
 					testchart = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
 				testchart_path = get_data_path(testchart)
