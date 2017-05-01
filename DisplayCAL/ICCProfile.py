@@ -2655,7 +2655,8 @@ class LazyLoadTagAODict(AODict):
 			# Return already parsed tag
 			return tag
 		# Load and parse tag data
-		tagSignature, typeSignature, tagDataOffset, tagDataSize, tagData = tag
+		tagSignature = key
+		typeSignature, tagDataOffset, tagDataSize, tagData = tag
 		try:
 			if tagSignature in tagSignature2Tag:
 				tag = tagSignature2Tag[tagSignature](tagData, tagSignature)
@@ -5328,7 +5329,7 @@ class ICCProfile:
 			if isinstance(tag, ICCProfileTag):
 				tagData = self.tags[tagSignature].tagData
 			else:
-				tagData = tag[4]
+				tagData = tag[3]
 			tagDataSize = len(tagData)
 			# Pad all data with binary zeros so it lies on 4-byte boundaries
 			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
@@ -5437,8 +5438,7 @@ class ICCProfile:
 																																 tagDataOffset,
 																																 tagDataSize))
 							if debug: print "    typeSignature:", typeSignature
-							tags[(tagDataOffset, tagDataSize)] = (tagSignature,
-																  typeSignature,
+							tags[(tagDataOffset, tagDataSize)] = (typeSignature,
 																  tagDataOffset,
 																  tagDataSize,
 																  tagData)
