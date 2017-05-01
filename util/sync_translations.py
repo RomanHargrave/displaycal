@@ -16,6 +16,7 @@ from DisplayCAL import demjson
 from DisplayCAL import jsondict
 from DisplayCAL import ordereddict
 from DisplayCAL.safe_print import safe_print
+from DisplayCAL.util_list import natsort
 from DisplayCAL.util_os import listdir_re
 
 
@@ -48,11 +49,11 @@ def langmerge(infilename1, infilename2, outfilename):
 	merged = ordereddict.OrderedDict()
 	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*) and are indented with two tabs instead of one. Please remove the asterisk when translated."
 	
-	for key in sorted(dictin2.keys()):
+	for key in natsort(dictin2.keys(), False):
 		#merged[key] = dictin1[key]
 		merged[key.encode("UTF-8")] = dictin1[key].encode("UTF-8")
 	
-	for key in sorted(dictin1.keys()):
+	for key in natsort(dictin1.keys(), False):
 		if key not in dictin2 and not key.startswith("*"):
 			if not "ORPHANED KEY-VALUE PAIRS" in merged:
 				merged["ORPHANED KEY-VALUE PAIRS"] = "Note to translators: Key-value pairs below this point are no longer used. You may consider removing them."

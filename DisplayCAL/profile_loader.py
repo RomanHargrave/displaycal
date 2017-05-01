@@ -43,6 +43,7 @@ if sys.platform == "win32":
 	from meta import domain
 	from ordereddict import OrderedDict
 	from systrayicon import Menu, MenuItem, SysTrayIcon
+	from util_list import natsort_key_factory
 	from util_os import getenvu, is_superuser, quote_args, which
 	from util_str import safe_asciize, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
@@ -617,8 +618,6 @@ if sys.platform == "win32":
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED,
 						   lambda e: dlg.EndModal(wx.ID_OK))
 			profiles = []
-			alphanumeric = re.compile("\D+|\d+(?:\.\d+)?")
-			numeric = re.compile("^\d+(?:\.\d+)?$")
 			for pth in glob.glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
 				try:
 					profile = ICCP.ICCProfile(pth)
@@ -629,19 +628,11 @@ if sys.platform == "win32":
 					safe_print(exception)
 					continue
 				if profile.profileClass == "mntr":
-					desc = profile.getDescription()
-					match = alphanumeric.findall(desc)
-					sortkey = []
-					for part in match:
-						if numeric.match(part):
-							sortkey.append((float(part), part))
-						else:
-							sortkey.append((part, None))
-					profiles.append((sortkey,
-									 profile.getDescription(),
+					profiles.append((profile.getDescription(),
 									 os.path.basename(pth)))
-			profiles.sort()
-			for i, (sortkey, desc, profile) in enumerate(profiles):
+			natsort_key = natsort_key_factory()
+			profiles.sort(key=lambda item: natsort_key(item[0]))
+			for i, (desc, profile) in enumerate(profiles):
 				pindex = list_ctrl.InsertStringItem(i, "")
 				list_ctrl.SetStringItem(pindex, 0, desc)
 				list_ctrl.SetStringItem(pindex, 1, profile)

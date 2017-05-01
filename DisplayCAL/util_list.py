@@ -45,35 +45,42 @@ def intlist(alist):
 	return result
 
 
-def natsort(list_in):
-	""" Sort a list which (also) contains integers naturally. """
-	list_out = []
-	# decorate
-	alphanumeric = re.compile("\D+|\d+")
-	numeric = re.compile("^\d+$")
-	for i in list_in:
-		match = alphanumeric.findall(i)
-		tmp = []
-		for j in match:
-			if numeric.match(j):
-				tmp.append((int(j), j))
-			else:
-				tmp.append((j, None))
-		list_out.append(tmp)
-	list_out.sort(key=lambda item: [((v.lower() if isinstance(v, basestring)
-									  else v), j) for v, j in item])
-	list_in = list_out
-	list_out = []
-	# undecorate
-	for i in list_in:
-		tmp = []
-		for j in i:
-			if type(j[0]) in (int, long):
-				tmp.append(j[1])
-			else:
-				tmp.append(j[0])
-		list_out.append("".join(tmp))
-	return list_out
+alphanumeric_re = re.compile("\D+|\d+")
+
+
+def natsort_key_factory(ignorecase=True, n=10):
+	"""
+	Create natural sort key function.
+	
+	Note that if integer parts are longer than n digits, sort order may no
+	longer be entirely natural.
+	
+	"""
+
+	def natsort_key(item):
+		matches = alphanumeric_re.findall(item)
+		key = []
+		for match in matches:
+			if match.isdigit():
+				match = match.rjust(n, "0")
+			elif ignorecase:
+				match = match.lower()
+			key.append(match)
+		return key
+
+	return natsort_key
+
+
+def natsort(list_in, ignorecase=True, reverse=False, n=10):
+	"""
+	Sort a list which (also) contains integers naturally.
+	
+	Note that if integer parts are longer than n digits, sort order will no
+	longer be entirely natural.
+	
+	"""
+	return sorted(list_in, key=natsort_key_factory(ignorecase, n),
+				  reverse=reverse)
 
 
 def strlist(alist):
