@@ -1305,6 +1305,9 @@ class LUTFrame(BaseFrame):
 					elif intent == "a":
 						wp = profile.tags.wtpt.ir.values()
 						X, Y, Z = colormath.adapt(X, Y, Z, wp, (1, 1, 1))
+					elif intent != "a":
+						wp = profile.tags.wtpt.ir.values()
+						X, Y, Z = colormath.adapt(X, Y, Z, "D50", (1, 1, 1))
 					if i == 0:
 						self.rTRC.append([X, v])
 					elif i == 1:
