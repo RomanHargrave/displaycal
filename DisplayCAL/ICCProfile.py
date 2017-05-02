@@ -2916,9 +2916,9 @@ class LUT16Type(ICCProfileTag):
 			else:
 				num_workers = None
 
-			if pcs != "Lab" and nonzero_bp:
-				bp_out_offset = bp_out
-				bp_out = (0, 0, 0)
+			##if pcs != "Lab" and nonzero_bp:
+				##bp_out_offset = bp_out
+				##bp_out = (0, 0, 0)
 
 			if bp != bp_out:
 				self.clut = sum(pool_slice(_mp_apply_black, self.clut,
@@ -2928,22 +2928,22 @@ class LUT16Type(ICCProfileTag):
 										   num_workers, thread_abort, logfile),
 										   [])
 
-			if pcs != "Lab" and nonzero_bp:
-				# Apply black offset to output curves
-				out = [[], [], []]
-				for i in xrange(2049):
-					v = i / 2048.0
-					X, Y, Z = colormath.blend_blackpoint(v, v, v, (0, 0, 0),
-														 bp_out_offset)
-					out[0].append(X * 2048 / 4095.0 * 65535)
-					out[1].append(Y * 2048 / 4095.0 * 65535)
-					out[2].append(Z * 2048 / 4095.0 * 65535)
-				for i in xrange(2049, 4096):
-					v = i / 4095.0
-					out[0].append(v * 65535)
-					out[1].append(v * 65535)
-					out[2].append(v * 65535)
-				self.output = out
+			##if pcs != "Lab" and nonzero_bp:
+				### Apply black offset to output curves
+				##out = [[], [], []]
+				##for i in xrange(2049):
+					##v = i / 2048.0
+					##X, Y, Z = colormath.blend_blackpoint(v, v, v, (0, 0, 0),
+														 ##bp_out_offset)
+					##out[0].append(X * 2048 / 4095.0 * 65535)
+					##out[1].append(Y * 2048 / 4095.0 * 65535)
+					##out[2].append(Z * 2048 / 4095.0 * 65535)
+				##for i in xrange(2049, 4096):
+					##v = i / 4095.0
+					##out[0].append(v * 65535)
+					##out[1].append(v * 65535)
+					##out[2].append(v * 65535)
+				##self.output = out
 
 	@Property
 	def clut():
