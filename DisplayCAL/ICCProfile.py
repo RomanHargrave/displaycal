@@ -3123,7 +3123,7 @@ class LUT16Type(ICCProfileTag):
 					RGB = [[v] for v in grid[y][x]]
 					# Use either "plus"-shaped or box filter depending if one
 					# channel is fully saturated
-					if [65535.0] in RGB:
+					if clutres - 1 in (i, y, x):
 						# Filter with a "plus" (+) shape
 						if (pcs == "Lab" and
 							i > clutres / 2.0):
