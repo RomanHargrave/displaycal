@@ -554,7 +554,7 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	iv = 0.0
 	prevpow = 0.0
 	nextpow = colormath.specialpow(segment, gamma)
-	interp = colormath.Interp([], range(steps))
+	xp = []
 	for j in xrange(steps):
 		v = (j / maxv) * maxi
 		if v > iv + segment:
@@ -565,7 +565,8 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
 		out = colormath.specialpow(vv, 1.0 / gamma)
-		interp.xp.append(out)
+		xp.append(out)
+	interp = colormath.Interp(xp, range(steps), use_numpy=True)
 	
 	# Create input and output curves
 	for i in xrange(3):
@@ -728,9 +729,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	iv = 0.0
 	prevpow = 0.0
 	nextpow = colormath.specialpow(apply_rolloff(segment), gamma)
-	interp = colormath.Interp([], range(steps))
+	xp = []
 	if generate_B2A:
-		ointerp = colormath.Interp([], range(steps))
+		oxp = []
 	for j in xrange(steps):
 		v = (j / maxstep)
 		if v > iv + segment:
@@ -741,10 +742,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
 		out = colormath.specialpow(apply_bpc(vv, 0.0, minv, maxv), 1.0 / gamma)
-		interp.xp.append(out)
+		xp.append(out)
 		if generate_B2A:
-			ointerp.xp.append(colormath.specialpow(apply_rolloff(v), gamma) /
-							  maxv)
+			oxp.append(colormath.specialpow(apply_rolloff(v), gamma) / maxv)
+	interp = colormath.Interp(xp, range(steps), use_numpy=True)
+	if generate_B2A:
+		ointerp = colormath.Interp(oxp, range(steps), use_numpy=True)
 	
 	# Create input and output curves
 	for i in xrange(3):
@@ -1564,9 +1567,9 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	iv = 0.0
 	prevpow = 0.0
 	nextpow = hlg.oetf(apply_rolloff(segment), True, 1, True, False)
-	interp = colormath.Interp([], range(steps))
+	xp = []
 	if generate_B2A:
-		ointerp = colormath.Interp([], range(steps))
+		oxp = []
 	for j in xrange(steps):
 		v = (j / maxstep)
 		if v > iv + segment:
@@ -1577,10 +1580,12 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
 		out = hlg.oetf(vv)
-		interp.xp.append(out)
+		xp.append(out)
 		if generate_B2A:
-			ointerp.xp.append(hlg.oetf(apply_rolloff(v), True, 1, True, False) /
-							  maxv)
+			oxp.append(hlg.oetf(apply_rolloff(v), True, 1, True, False) / maxv)
+	interp = colormath.Interp(xp, range(steps), use_numpy=True)
+	if generate_B2A:
+		ointerp = colormath.Interp(oxp, range(steps), use_numpy=True)
 	
 	# Create input and output curves
 	for i in xrange(3):
