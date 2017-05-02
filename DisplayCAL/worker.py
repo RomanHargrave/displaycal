@@ -7123,6 +7123,17 @@ usage: spotread [-options] [logfile]
 														  display_manufacturer,
 														  display_name,
 														  self.log)
+				if getcfg("profile.type") == "x":
+					# Swapped matrix - need to create it ourselves
+					# Start with sRGB
+					sRGB = profile.from_named_rgb_space("sRGB")
+					for channel in "rgb":
+						tagname = channel + "TRC"
+						profile.tags[tagname] = sRGB.tags[tagname]
+					# Swap RGB -> BRG
+					profile.tags.rXYZ = sRGB.tags.bXYZ
+					profile.tags.gXYZ = sRGB.tags.rXYZ
+					profile.tags.bXYZ = sRGB.tags.gXYZ
 				profile.write(profile_path)
 				result = True
 			else:
