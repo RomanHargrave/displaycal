@@ -7756,6 +7756,10 @@ usage: spotread [-options] [logfile]
 						profile.tags[tagname] = ICCP.CurveType()
 						profile.tags[tagname][:] = [v * 65535 for v in curves[i]]
 
+					if ptype == "S":
+						# Single curve
+						profile.tags["rTRC"][:] = profile.tags["gTRC"][:]
+						profile.tags["bTRC"][:] = profile.tags["gTRC"][:]
 					if not bpc:
 						XYZbp = None
 						for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
