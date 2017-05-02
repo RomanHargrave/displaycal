@@ -533,14 +533,11 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		Y = ginterp(n)
 		X = rinterp(n)
 		Z = binterp(n)
+		if single_curve:
+			X, Y, Z = [v * Y for v in XYZwp]
 		RGB = bwd_mtx * (X, Y, Z)
 		for i, channel in enumerate("rgb"):
-			if single_curve:
-				# Single shaper curve
-				v = RGB[1] * RGBwp[i]
-			else:
-				# 3x shaper curves
-				v = RGB[i]
+			v = RGB[i]
 			v = min(max(v, 0), 1)
 			# Slope limit
 			v = max(v, n / 64.25)
@@ -7100,10 +7097,11 @@ usage: spotread [-options] [logfile]
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				for ti1_name in ("d3-e4-s3-g25-m3-b3-f0-crossover",
-								 "d3-e4-s5-g33-m5-b0-f0-crossover",
-								 "d3-e4-s17-g49-m5-b5-f0"):
-					ti1_name = "ti1/%s.ti1" % ti1_name
+				for ti1_name in ("ti1/d3-e4-s3-g25-m3-b3-f0-crossover",
+								 "ref/ISO_12646-2008_color_accuracy_and_gray_balance",
+								 "ti1/d3-e4-s5-g33-m5-b0-f0-crossover",
+								 "ti1/d3-e4-s17-g49-m5-b5-f0"):
+					ti1_name = "%s.ti1" % ti1_name
 					ti1_path = get_data_path(ti1_name)
 					if not ti1_path:
 						return Error(lang.getstr("file.missing", ti1_name))
@@ -7550,11 +7548,12 @@ usage: spotread [-options] [logfile]
 			profile.tags.vcgt = vcgt
 		
 		def get_XYZ_from_curves(n, m):
-			# Curves are adapted to D50, need to go back to original white
-			XYZ = colormath.adapt(*(curve[int(round((len(curve) - 1.0) / m * n))]
-									for curve in curves),
-								  whitepoint_destination=white_XYZ)
-			return XYZ
+			# Curves are adapted to D50
+			XYZ1 = [curve[int(math.floor((len(curve) - 1.0) / m * n))]
+				    for curve in curves]
+			XYZ2 = [curve[int(math.ceil((len(curve) - 1.0) / m * n))]
+				    for curve in curves]
+			return [(XYZ1[i] + XYZ2[i]) / 2.0 for i in xrange(3)]
 		
 		# Need to sort so columns increase (fastest to slowest) B G R
 		remaining.sort()
@@ -7574,7 +7573,9 @@ usage: spotread [-options] [logfile]
 						if not XYZ:
 							if a == b == c:
 								# Fall back to interpolated values for gray
-								X, Y, Z = get_XYZ_from_curves(a, iclutres - 1)
+								XYZ = get_XYZ_from_curves(a, iclutres - 1)
+								# Range 0..1
+								clut[-1].append(XYZ)
 							elif iclutres == 5:
 								# Try next smaller cLUT res
 								break
@@ -7585,8 +7586,8 @@ usage: spotread [-options] [logfile]
 							X, Y, Z = (v / 100.0 for v in XYZ)
 							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
 																 black_XYZ)
-						# Range 0..1
-						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+							# Range 0..1
+							clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
 					if c < iclutres - 1:
 						break
 				if b < iclutres - 1:
@@ -7635,14 +7636,14 @@ usage: spotread [-options] [logfile]
 						X, Y, Z = (v / 100.0 for v in XYZ)
 						# Range 0..1
 						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+			self.log("Final interpolated cLUT resolution %ix%ix%i" %
+					 ((clutres,) * 3))
 			if actual > iclutres ** 3:
 				# Did we get any additional actual measured cLUT points?
-				self.log("Final interpolated cLUT resolution %ix%ix%i" %
-						 ((clutres,) * 3))
 				self.log("Got %i additional values from actual measurements" %
 						 (actual - iclutres ** 3))
 
-				profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
 
 		# Add black back in
 		black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
@@ -7734,7 +7735,7 @@ usage: spotread [-options] [logfile]
 					bwd_mtx = fwd_mtx.inverted()
 
 					curves = create_shaper_curves(RGB_XYZ, bwd_mtx,
-												  ptype == "S", bpc, self.log)
+												  ptype == "S", True, self.log)
 
 					self.log("-" * 80)
 					for i, channel in enumerate("rgb"):
@@ -7744,13 +7745,16 @@ usage: spotread [-options] [logfile]
 						profile.tags[tagname] = ICCP.CurveType()
 						profile.tags[tagname][:] = [v * 65535 for v in curves[i]]
 
-					##XYZbp = None
-					##for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
-						##if R == G == B == 0:
-							##XYZbp = [v / 100 for v in (X, Y, Z)]
-					##if XYZbp:
-						### Add black back in
-						##profile.apply_black_offset(XYZbp, include_A2B=False)
+					if not bpc:
+						XYZbp = None
+						for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
+							if R == G == B == 0:
+								XYZbp = [v / 100 for v in (X, Y, Z)]
+								XYZbp = colormath.adapt(*XYZbp,
+														whitepoint_source=RGB_XYZ[(100, 100, 100)])
+						if XYZbp:
+							# Add black back in
+							profile.apply_black_offset(XYZbp, include_A2B=False)
 
 					break
 			ti3.write(outname + ".0.ti3")	
