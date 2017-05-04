@@ -71,7 +71,7 @@ if sys.platform == "win32" and sys.getwindowsversion() >= (6, 1):
 	try:
 		import taskbar
 	except Exception, exception:
-		pass
+		safe_print(exception)
 
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
