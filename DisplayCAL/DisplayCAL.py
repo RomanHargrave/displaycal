@@ -13022,8 +13022,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				# Increment to 271 patches of default testchart for LUT profiles
 				patches_amount += 83
 			else:
-				# Increment to 153 patches of small testchart for LUT profiles
-				patches_amount += 40
+				# Increment to 165 patches of small testchart for LUT profiles
+				patches_amount += 52
 			if event and proftype not in ("l", "x", "X"):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		else:
