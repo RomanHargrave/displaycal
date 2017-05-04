@@ -13634,8 +13634,12 @@ class MainFrame(ReportFrame, BaseFrame):
 					if display_index is not None:
 						# Found it
 						display_match = True
-						setcfg("display.number", display_index + 1)
-						self.get_set_display()
+						if (config.get_display_name(None, False) !=
+							config.get_display_name(display_index, False)):
+							# Only need to update if currently selected display
+							# does not match found one
+							setcfg("display.number", display_index + 1)
+							self.get_set_display()
 						if config.get_display_name() in ("madVR", "Resolve",
 														 "SII REPEATER"):
 							# Don't disable 3D LUT tab when switching from
@@ -13650,6 +13654,10 @@ class MainFrame(ReportFrame, BaseFrame):
 						if instrument.lower() == instrument_id:
 							# Found it
 							instrument_match = True
+							if (self.worker.get_instrument_name().lower() ==
+								instrument_id):
+								# No need to update anything
+								break
 							setcfg("comport.number", i + 1)
 							self.update_comports()
 							# No need to update ccmx items in update_controls,
