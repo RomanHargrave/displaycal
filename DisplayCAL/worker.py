@@ -705,10 +705,12 @@ def get_options_from_cprt(cprt):
 def get_options_from_cal(cal):
 	if not isinstance(cal, CGATS.CGATS):
 		cal = CGATS.CGATS(cal)
-	if not cal or not "ARGYLL_DISPCAL_ARGS" in cal[0] or \
-	   not cal[0].ARGYLL_DISPCAL_ARGS:
+	if 0 in cal:
+		cal = cal[0]
+	if not cal or not "ARGYLL_DISPCAL_ARGS" in cal or \
+	   not cal.ARGYLL_DISPCAL_ARGS:
 		return [], []
-	dispcal_args = cal[0].ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", "replace")
+	dispcal_args = cal.ARGYLL_DISPCAL_ARGS[0].decode("UTF-7", "replace")
 	return get_options_from_args(dispcal_args)
 
 
@@ -7521,14 +7523,19 @@ usage: spotread [-options] [logfile]
 		
 		# Check if we have calibration, if so, add vcgt
 		vcgt = False
+		is_hq_cal = False
 		for cgats in ti3.itervalues():
 			if cgats.type == "CAL":
 				vcgt = cal_to_vcgt(cgats)
+				is_hq_cal = "qh" in get_options_from_cal(cgats)[0]
 		
 		# Interpolate shaper curves from grays - returned curves are adapted
 		# to D50
-		curves = create_shaper_curves(RGB_XYZ, bwd_matrix,
-									  vcgt and not vcgt.is_linear(), True,
+		single_curve = is_hq_cal and not vcgt.is_linear()
+		if single_curve:
+			self.log("Got high quality calibration, using single device to PCS "
+					 "shaper curve for cLUT")
+		curves = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve, True,
 									  logfn)
 		
 		# Create profile
