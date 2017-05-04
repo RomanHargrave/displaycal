@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/protobuf.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>Protocol Buffers</name>
+	<summary xml:lang="en">Protocol Buffers are Google’s data interchange format</summary>
+	<description xml:lang="en"></description>
+	<homepage>https://developers.google.com/protocol-buffers/</homepage>
+	<package-implementation package="protobuf-python" distributions="RPM" />
+	<package-implementation package="python-protobuf" distributions="RPM" />
+	<package-implementation package="python-protobuf" distributions="Debian" />
+	<package-implementation package="dev-python/protobuf-python" distributions="Gentoo" />
+	<package-implementation package="python2-protobuf" distributions="Arch" />
+	<group license="BSD License">
+		<requires interface="${URL}0install/python.xml" version="2.6..!4.0">
+			<version not-before="2.6" before="4.0" />
+		</requires>
+		<requires interface="${URL}0install/six.xml" />
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<environment name="PYTHONPATH" insert="." />
+		</implementation>
+	</group>
+</interface>

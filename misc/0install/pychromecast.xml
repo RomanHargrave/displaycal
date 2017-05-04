@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/pychromecast.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>PyChromecast</name>
+	<summary xml:lang="en">Python module to talk to Google Chromecast.</summary>
+	<description xml:lang="en">Library for Python 2 and 3 to communicate with the Google Chromecast. It currently supports:
+
+    Auto discovering connected Chromecasts on the network
+    Start the default media receiver and play any online media
+    Control playback of current playing media
+    Implement Google Chromecast api v2
+    Communicate with apps via channels
+    Easily extendable to add support for unsupported namespaces
+    Multi-room setups with Audio cast devices
+
+Check out [Home Assistant](https://home-assistant.io) for a ready-made solution using PyChromecast for controlling and automating your Chromecast or Cast-enabled device like Google Home.</description>
+	<homepage>https://github.com/balloob/pychromecast</homepage>
+	<package-implementation package="python-pychromecast" distributions="RPM" />
+	<package-implementation package="python-pychromecast" distributions="Debian" />
+	<package-implementation package="dev-python/pychromecast" distributions="Gentoo" />
+	<package-implementation package="python2-pychromecast" distributions="Arch" />
+	<group license="MIT License">
+		<requires interface="${URL}0install/python.xml" version="2.6..!4.0">
+			<version not-before="2.6" before="4.0" />
+		</requires>
+		<requires interface="${URL}0install/protobuf.xml" />
+		<requires interface="${URL}0install/requests.xml" />
+		<requires interface="${URL}0install/six.xml" />
+		<requires interface="${URL}0install/zeroconf.xml" />
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<environment name="PYTHONPATH" insert="." />
+		</implementation>
+	</group>
+</interface>

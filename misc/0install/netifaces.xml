@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/netifaces.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>netifaces</name>
+	<summary xml:lang="en">Portable network interface information.</summary>
+	<description xml:lang="en">It’s been annoying me for some time that there’s no easy way to get the address(es) of the machine’s network interfaces from Python. There is a good reason for this difficulty, which is that it is virtually impossible to do so in a portable manner. However, it seems to me that there should be a package you can easy_install that will take care of working out the details of doing so on the machine you’re using, then you can get on with writing Python code without concerning yourself with the nitty gritty of system-dependent low-level networking APIs.
+
+This package attempts to solve that problem.</description>
+	<homepage>https://bitbucket.org/al45tair/netifaces</homepage>
+	<package-implementation package="python2-netifaces" distributions="RPM" />
+	<package-implementation package="python-netifaces" distributions="Debian" />
+	<package-implementation package="dev-python/netifaces" distributions="Gentoo" />
+	<package-implementation package="python2-netifaces" distributions="Arch" />
+	<group license="MIT License">
+		<requires interface="${URL}0install/python.xml" version="2.6..!4.0">
+			<version not-before="2.6" before="4.0" />
+		</requires>
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<environment name="PYTHONPATH" insert="." />
+		</implementation>
+	</group>
+</interface>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/faulthandler.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<publish mode="package" xmlns="${URL}" />
+	<name>faulthandler</name>
+	<summary xml:lang="en">Display the Python traceback on a crash</summary>
+	<description xml:lang="en">Fault handler for SIGSEGV, SIGFPE, SIGABRT, SIGBUS and SIGILL signals: display the Python traceback and restore the previous handler. Allocate an alternate stack for this handler, if sigaltstack() is available, to be able to allocate memory on the stack, even on stack overflow (not available on Windows).</description>
+	<homepage>https://faulthandler.readthedocs.io/</homepage>
+	<package-implementation package="python-faulthandler" distributions="RPM" />
+	<package-implementation package="python2-faulthandler" distributions="RPM" />
+	<package-implementation package="python-faulthandler" distributions="Debian" />
+	<package-implementation package="dev-python/faulthandler" distributions="Gentoo" />
+	<package-implementation package="python2-faulthandler" distributions="Arch" />
+	<group license="BSD License">
+		<requires interface="${URL}0install/python.xml" version="2.6..!3.3">
+			<version not-before="2.6" before="3.3" />
+		</requires>
+		<implementation version="0.0.0" released="0000-00-00" stability="stable">
+			<environment name="PYTHONPATH" insert="." />
+		</implementation>
+	</group>
+</interface>
