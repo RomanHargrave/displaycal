@@ -7578,6 +7578,7 @@ usage: spotread [-options] [logfile]
 
 		# Build initial cLUT
 		# Try to fill a 5x5x5 or 3x3x3 cLUT
+		clut_actual = 0
 		for iclutres in (5, 3):
 			clut = []
 			step = 100 / (iclutres - 1.0)
@@ -7602,6 +7603,7 @@ usage: spotread [-options] [logfile]
 								raise ValueError("Measurement data is missing "
 												 "RGB %.4f %.4f %.4f" % RGB)
 						else:
+							clut_actual += 1
 							X, Y, Z = (v / 100.0 for v in XYZ)
 							# Need to black scale actual measurements
 							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
@@ -7620,7 +7622,6 @@ usage: spotread [-options] [logfile]
 
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
-		clut_actual = iclutres ** 3
 		clutres = iclutres
 		iterations = {"m": 2, "l": 1}.get(quality, 3)
 
