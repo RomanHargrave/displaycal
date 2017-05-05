@@ -68,6 +68,18 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 	prevperc = 0
 	count = 0
 	chunksize = len(chunk)
+	for interp_tuple in (interp, Linterp):
+		if interp_tuple:
+			# Use numpy for speed
+			interp_list = list(interp_tuple)
+			for i, ointerp in enumerate(interp_list):
+				interp_list[i] = colormath.Interp(ointerp.xp, ointerp.fp,
+												  use_numpy=True)
+			if interp_tuple is interp:
+				interp = interp_list
+			else:
+				Linterp = interp_list
+	m2i = m2.inverted()
 	for a in chunk:
 		if thread_abort_event.is_set():
 			if use_cam_clipping:
@@ -82,8 +94,8 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 					# across cLUT grid points.
 					XYZ = [interp[i](v) for i, v in enumerate((d, e, f))]
 					##print "%3.6f %3.6f %3.6f" % tuple(XYZ), '->',
-					# Scale into device colorspace
-					v = m2.inverted() * XYZ
+					# Scale into PCS
+					v = m2i * XYZ
 					if bpc and XYZbp != [0, 0, 0]:
 						v = colormath.blend_blackpoint(v[0], v[1], v[2],
 												None, XYZbp)
