@@ -553,7 +553,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		# Make monotonically increasing + 1st smoothing pass
 		curve[:] = colormath.make_monotonically_increasing(curve)
 		# Spline interpolation to larger size
-		x = (i / 4095.0 * (len(curve) - 1)  for i in xrange(4096))
+		x = (i / 255.0 * (len(curve) - 1)  for i in xrange(256))
 		spline = ICCP.CRInterpolation(curve)
 		curve[:] = (min(max(spline(v), 0), 1) for v in x)
 		# Ensure still monotonically increasing
@@ -561,7 +561,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 
 	if XYZbp and not bpc:
 		# Add black back in
-		for i in xrange(4096):
+		for i in xrange(256):
 			(curves[0][i],
 			 curves[1][i],
 			 curves[2][i]) = colormath.blend_blackpoint(*(curve[i] for curve in curves),
@@ -7591,6 +7591,7 @@ usage: spotread [-options] [logfile]
 						if not XYZ:
 							if a == b == c:
 								# Fall back to interpolated values for gray
+								# (already black scaled)
 								XYZ = get_XYZ_from_curves(a, iclutres - 1)
 								# Range 0..1
 								clut[-1].append(XYZ)
@@ -7602,6 +7603,7 @@ usage: spotread [-options] [logfile]
 												 "RGB %.4f %.4f %.4f" % RGB)
 						else:
 							X, Y, Z = (v / 100.0 for v in XYZ)
+							# Need to black scale actual measurements
 							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
 																 black_XYZ)
 							# Range 0..1
@@ -7618,10 +7620,13 @@ usage: spotread [-options] [logfile]
 
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
-		clutres = {"m": iclutres * 2 - 1,
-				   "l": iclutres}.get(quality, iclutres * 4 - 3)
+		clut_actual = iclutres ** 3
+		clutres = iclutres
+		iterations = {"m": 2, "l": 1}.get(quality, 3)
 
-		if clutres > iclutres:
+		for n in xrange(iterations):
+			clutres += clutres - 1
+
 			# Lookup input RGB to interpolated XYZ
 			RGB_in = []
 			step = 100 / (clutres - 1.0)
@@ -7643,25 +7648,37 @@ usage: spotread [-options] [logfile]
 					for c in xrange(clutres):
 						RGB = (a * step, b * step, c * step)
 						# Prefer actual measurements over interpolated values
+						prev_actual = actual
 						XYZ = remaining.get(RGB)
 						if not XYZ:
 							# Fall back to interpolated values
+							# (already black scaled)
 							XYZ = XYZ_out[i]
 							interpolated += 1
 						else:
 							actual += 1
 						i += 1
 						X, Y, Z = (v / 100.0 for v in XYZ)
+						if actual > prev_actual:
+							# Need to black scale actual measurements
+							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
+																 black_XYZ)
 						# Range 0..1
 						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
-			self.log("Final interpolated cLUT resolution %ix%ix%i" %
-					 ((clutres,) * 3))
-			if actual > iclutres ** 3:
+			if actual > clut_actual:
 				# Did we get any additional actual measured cLUT points?
-				self.log("Got %i additional values from actual measurements" %
-						 (actual - iclutres ** 3))
+				self.log("Iteration #%i, cLUT resolution %ix%ix%i: Got %i "
+						 "additional values from actual measurements" %
+						 (n + 1, clutres, clutres, clutres,
+						  actual - clut_actual))
+			else:
+				break
 
 			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+			clut_actual = actual
+
+		self.log("Final interpolated cLUT resolution %ix%ix%i" %
+				 ((len(profile.tags.A2B0.clut[0]),) * 3))
 
 		# Add black back in
 		black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
