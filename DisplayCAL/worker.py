@@ -103,7 +103,7 @@ from trash import trash
 from util_http import encode_multipart_formdata
 from util_io import (EncodedWriter, Files, GzipFileProper, LineBufferedStream,
 					 LineCache, StringIOu as StringIO, TarFileProper)
-from util_list import get as listget, intlist
+from util_list import intlist
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
 						  mac_terminal_set_colors, osascript)
@@ -3192,11 +3192,9 @@ END_DATA
 			if verbose >= 1:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
 			instruments = []
-			current_display = listget(getcfg("displays"),
-									  getcfg("display.number") - 1)
+			current_display_name = config.get_display_name()
 			cfg_instruments = getcfg("instruments")
-			current_instrument = listget(cfg_instruments,
-										 getcfg("comport.number") - 1)
+			current_instrument = config.get_instrument_name()
 			if enumerate_ports:
 				cmd = get_argyll_util("dispcal")
 			else:
@@ -3338,7 +3336,8 @@ END_DATA
 			if instruments != self.instruments:
 				self.instruments = instruments
 				setcfg("instruments", instruments)
-				if current_instrument in instruments:
+				if (current_instrument != self.get_instrument_name() and
+					current_instrument in instruments):
 					setcfg("comport.number",
 						   instruments.index(current_instrument) + 1)
 			if displays != self._displays:
@@ -3446,9 +3445,10 @@ END_DATA
 				#
 				self.displays = displays
 				setcfg("displays", displays)
-				if current_display in displays:
+				if (current_display_name != config.get_display_name() and
+					current_display_name in self.display_names):
 					setcfg("display.number",
-						   displays.index(current_display) + 1)
+						   self.display_names.index(current_display_name) + 1)
 				# Filter out Prisma (via DisplayCAL), Resolve and Untethered
 				# IMPORTANT: Also make changes to display filtering in
 				# worker.Worker.has_separate_lut_access
