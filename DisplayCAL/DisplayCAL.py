@@ -5134,6 +5134,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					self.luminance_ctrl.SetSelection(0)
 				self.luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
 														self.luminance_ctrl))
+				setcfg("calibration.interactive_display_adjustment", 0)
+				self.interactive_display_adjustment_cb.SetValue(False)
 			if not K and not Yxy:
 				# Monochrome reading?
 				show_result_dialog(Error(lang.getstr("ambient.measure.color.unsupported",
