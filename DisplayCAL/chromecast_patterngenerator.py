@@ -2,6 +2,18 @@
 
 from time import sleep
 
+# 0install: Make sure imported protobuf is from implementation to ensure
+# correct version
+import sys
+if not getattr(sys, "frozen", False) and "google" in sys.modules:
+	import os
+	import re
+	for pth in sys.path:
+		if (os.path.basename(pth).startswith("protobuf-") and
+			re.match("sha\d+(?:new)?", os.path.basename(os.path.dirname(pth)))):
+			del sys.modules["google"]
+			break
+
 from pychromecast import get_chromecasts
 from pychromecast.controllers import BaseController
 
