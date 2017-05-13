@@ -1872,6 +1872,7 @@ class ProfileLoader(object):
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
+			profile_association_changed = False
 			profile_associations_changed = 0
 			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 				display_desc = display.replace("[PRIMARY]", 
