@@ -10,6 +10,7 @@ from StringIO import StringIO
 import shutil
 import threading
 import time
+from urllib import unquote
 
 from meta import name as appname, version as appversion
 
@@ -54,12 +55,12 @@ WEBDISP_JS = r"""if (typeof XMLHttpRequest == "undefined") {
 	};
 }
 
-var cpat = ["000"];
+var cpat = ["#000"];
 var oXHR;
 var pat;
 
 function XHR_request() {
-	oXHR.open("GET", "/ajax/messages?" + cpat.join("+") + "+" + Math.random(), true);
+	oXHR.open("GET", "/ajax/messages?" + encodeURIComponent(cpat.join("|") + "|" + Math.random()), true);
 	oXHR.onreadystatechange = XHR_response;
 	oXHR.send();
 }
@@ -74,12 +75,11 @@ function XHR_response() {
 	var rt = oXHR.responseText;
 	if (rt.charAt(0) == '\r' && rt.charAt(1) == '\n')
 		rt = rt.slice(2);
-	rt = rt.split(" ")
+	rt = rt.split("|")
 	if (rt[0] && cpat != rt) {
-		rt[0] = rt[0].replace('#', '')
 		cpat = rt;
-		pat.style.background = rt[1] ? "#" + rt[0] : "transparent";  // dispwin compat
-		document.body.style.background = "#" + (rt[1] || rt[0]);  // dispwin compat
+		pat.style.background = rt[1] ? rt[0] : "transparent";  // Older dispwin compat
+		document.body.style.background = (rt[1] || rt[0]);  // Older dispwin compat
 		if (rt.length == 6) {
 			pat.style.left = (rt[2] * 100) + "%";
 			pat.style.top = (rt[3] * 100) + "%";
@@ -138,7 +138,7 @@ class WebWinHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			s = WEBDISP_JS
 			ctype = "application/javascript"
 		elif self.path.startswith("/ajax/messages?"):
-			curpat = " ".join(self.path.split("?").pop().split("+")[:6])
+			curpat = "|".join(unquote(self.path.split("?").pop()).split("|")[:6])
 			while (self.server.patterngenerator.listening and
 				   self.server.patterngenerator.pattern == curpat):
 				time.sleep(0.05)

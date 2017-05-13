@@ -469,7 +469,7 @@ class WebWinHTTPPatternGeneratorServer(TCPServer, object):
 		self.patterngenerator = self
 		self._listening = threading.Event()
 		self.logfile = logfile
-		self.pattern = "808080 808080 0 0 1 1"
+		self.pattern = "#808080|#808080|0|0|1|1"
 
 	def disconnect_client(self):
 		self.listening = False
@@ -499,10 +499,10 @@ class WebWinHTTPPatternGeneratorServer(TCPServer, object):
 
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
-		pattern = ["%02X%02X%02X" % tuple(round(v * 255) for v in rgb),
-				   "%02X%02X%02X" % tuple(round(v * 255) for v in bgrgb),
-				   "%.4f %.4f %.4f %.4f" % (x, y, w, h)]
-		self.pattern = " ".join(pattern)
+		pattern = ["#%02X%02X%02X" % tuple(round(v * 255) for v in rgb),
+				   "#%02X%02X%02X" % tuple(round(v * 255) for v in bgrgb),
+				   "%.4f|%.4f|%.4f|%.4f" % (x, y, w, h)]
+		self.pattern = "|".join(pattern)
 
 	def serve_forever(self, poll_interval=0.5):
 		"""Handle one request at a time until shutdown.
