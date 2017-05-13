@@ -113,6 +113,7 @@ elif sys.platform == "win32":
 		import wmi
 	except Exception, exception:
 		safe_print("Error - could not import WMI:", exception)
+		wmi = None
 import colord
 from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
 					 make_win32_compatible_long_path, mkstemp_bypath,
@@ -6397,6 +6398,8 @@ usage: spotread [-options] [logfile]
 				# If running in a thread, need to call pythoncom.CoInitialize
 				pythoncom.CoInitialize()
 			try:
+				if not wmi:
+					raise NotImplementedError("WMI not available")
 				wmi_connection = wmi.WMI()
 				query = "Select * From Win32_USBControllerDevice"
 				for item in wmi_connection.query(query):
@@ -6428,7 +6431,7 @@ usage: spotread [-options] [logfile]
 								return result
 							elif not result or "Failed to install driver" in output:
 								return Error(lang.getstr("argyll.instrument.drivers.install.failure"))
-			except wmi.x_wmi, exception:
+			except Exception, exception:
 				self.log(exception)
 			finally:
 				if not_main_thread:
