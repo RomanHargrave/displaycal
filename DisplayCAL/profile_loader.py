@@ -2558,7 +2558,8 @@ class ProfileLoader(object):
 															   devicekey=devicekey)
 				except Exception, exception:
 					safe_print("Could not get display profile for display "
-							   "device %r:" % devicekey, exception)
+							   "device %s (%s):" % (devicekey,
+													display_edid[0]), exception)
 					continue
 				if not current_profile:
 					continue
@@ -2608,20 +2609,21 @@ class ProfileLoader(object):
 					safe_print("WARNING: Monitor %i has no active display device" %
 							   i)
 			for device in devices:
-				try:
-					profile = ICCP.get_display_profile(path_only=True,
-													   devicekey=device.DeviceKey)
-				except Exception, exception:
-					safe_print("Could not get display profile for display "
-							   "device %r:" % device.DeviceKey, exception)
-					profile = None
-				else:
-					profile = os.path.basename(profile)
 				if active_device and device.DeviceID == active_device.DeviceID:
 					active_moninfo = moninfo
 				else:
 					active_moninfo = None
 				display_edid = get_display_name_edid(device, active_moninfo)
+				try:
+					profile = ICCP.get_display_profile(path_only=True,
+													   devicekey=device.DeviceKey)
+				except Exception, exception:
+					safe_print("Could not get display profile for display "
+							   "device %s (%s):" % (device.DeviceKey,
+													display_edid[0]), exception)
+					profile = None
+				else:
+					profile = os.path.basename(profile)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile,
 														   get_profile_desc(profile))
@@ -2638,7 +2640,8 @@ class ProfileLoader(object):
 														   devicekey=device.DeviceKey)
 			except Exception, exception:
 				safe_print("Could not get display profile for active display "
-						   "device %r:" % device.DeviceKey, exception)
+						   "device %s (%s):" % (device.DeviceKey,
+												display), exception)
 				continue
 			if correct_profile:
 				correct_profile = os.path.basename(correct_profile)
