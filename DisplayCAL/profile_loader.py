@@ -2051,9 +2051,13 @@ class ProfileLoader(object):
 					# detect changed profile associations
 					continue
 				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
+				if idle:
+					idle = (self._hwnds_pids == previous_hwnds_pids and
+							not self._manual_restore and
+							not profile_association_changed)
 				if (not self._manual_restore and
 					not profile_association_changed and
-					not is_buggy_video_driver and
+					idle and
 					getcfg("profile_loader.check_gamma_ramps")):
 					# Get video card gamma ramp
 					try:
@@ -2085,10 +2089,6 @@ class ProfileLoader(object):
 						continue
 					idle = False
 					safe_print(lang.getstr("vcgt.mismatch", display_desc))
-				elif idle:
-					idle = (self._hwnds_pids == previous_hwnds_pids and
-							not self._manual_restore and
-							not profile_association_changed)
 				if recheck:
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
@@ -2393,7 +2393,7 @@ class ProfileLoader(object):
 		# gamma ramp.
 		adapter = moninfo["_adapter"].DeviceString.lower()
 		for buggy_video_driver in self._buggy_video_drivers:
-			if buggy_video_driver in adapter:
+			if buggy_video_driver == "*" or buggy_video_driver in adapter:
 				return True
 		return False
 

@@ -962,7 +962,7 @@ defaults = {
 	"profile.save_path": storage, # directory
 	"profile.type": "X",
 	"profile.update": 0,
-	"profile_loader.buggy_video_drivers":  ";".join(["intel"]),
+	"profile_loader.buggy_video_drivers":  ";".join(["*"]),
 	"profile_loader.check_gamma_ramps": 1,
 	"profile_loader.error.show_msg": 1,
 	"profile_loader.exceptions": "",
