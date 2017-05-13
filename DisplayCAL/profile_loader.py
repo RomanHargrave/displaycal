@@ -1645,8 +1645,10 @@ class ProfileLoader(object):
 			else:
 				cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
 			loader_args.append("--profile-associations")
+			SEE_MASK_NOASYNC = 0x00000100
 			try:
-				p = win32com_shell.ShellExecuteEx(lpVerb="runas",
+				p = win32com_shell.ShellExecuteEx(fMask=SEE_MASK_NOASYNC,
+												  lpVerb="runas",
 												  lpFile=cmd,
 												  lpParameters=" ".join(quote_args(loader_args)),
 												  nShow=SW_SHOW)
@@ -1654,6 +1656,8 @@ class ProfileLoader(object):
 				if exception.args[0] != winerror.ERROR_CANCELLED:
 					show_result_dialog(exception)
 			else:
+				self.shutdown()
+				wx.CallLater(50, self.exit)
 				return True
 
 	def exit(self, event=None):
