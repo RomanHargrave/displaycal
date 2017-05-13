@@ -46,7 +46,6 @@ if sys.platform == "win32":
 	import win32api
 	import win32con
 	import win32event
-	import wmi
 elif sys.platform != "darwin":
 	try:
 		import dbus
@@ -110,6 +109,10 @@ if sys.platform == "darwin":
 elif sys.platform == "win32":
 	import util_win
 	from util_win import win_ver
+	try:
+		import wmi
+	except Exception, exception:
+		safe_print("Error - could not import WMI:", exception)
 import colord
 from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
 					 make_win32_compatible_long_path, mkstemp_bypath,
