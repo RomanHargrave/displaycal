@@ -1872,7 +1872,6 @@ class ProfileLoader(object):
 			# Check if display configuration changed
 			self._check_display_changed(first_run)
 			# Check profile associations
-			profile_association_changed = False
 			profile_associations_changed = 0
 			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 				display_desc = display.replace("[PRIMARY]", 
@@ -2187,9 +2186,9 @@ class ProfileLoader(object):
 											  self.__other_component[1] != "madHcNetQueueWindow")
 			else:
 				##if (apply_profiles != self.__apply_profiles or
-					##profile_association_changed):
+					##profile_associations_changed):
 				if not idle:
-					if apply_profiles and (not profile_association_changed or
+					if apply_profiles and (not profile_associations_changed or
 										   not self._reset_gamma_ramps):
 						self.reload_count += 1
 				if displaycal_running != self._is_displaycal_running():
@@ -2204,7 +2203,7 @@ class ProfileLoader(object):
 					self.notify([msg], [], displaycal_running,
 								show_notification=False)
 				elif (apply_profiles != self.__apply_profiles or
-					  profile_association_changed):
+					  profile_associations_changed):
 						wx.CallAfter(lambda: self and
 											 self.taskbar_icon.set_visual_state())
 			if apply_profiles and not idle:
