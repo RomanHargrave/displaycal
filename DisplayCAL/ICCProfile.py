@@ -1260,11 +1260,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 										C = HCmax * Cc2
 									else:
 										C = Cd
-										safe_print("CLUT grid point %i %i %i: "
-												   "C %6.4f HCmax %6.4f maxCc "
-												   "%6.4f KSCc %6.4f Cc1 %6.4f" %
-												   (col_0, col_1, col_2, C,
-												    HCmax, maxCc, KSCc, Cc1))
+										if debug:
+											safe_print("CLUT grid point %i %i %i: "
+													   "C %6.4f HCmax %6.4f maxCc "
+													   "%6.4f KSCc %6.4f Cc1 %6.4f" %
+													   (col_0, col_1, col_2, C,
+														HCmax, maxCc, KSCc, Cc1))
 							else:
 								Cc = general_compression_factor
 								Cc **= (C / Cmaxv)
