@@ -13263,7 +13263,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			testchart_dir = os.path.dirname(path)
 			try:
 				testcharts = listdir_re(testchart_dir, 
-										"\.(?:icc|icm|ti1|ti3)$")
+										re.escape(os.path.splitext(os.path.basename(path))[0]) +
+										r"\.(?:icc|icm|ti1|ti3)$")
 			except Exception, exception:
 				safe_print(u"Error - directory '%s' listing failed: %s" % 
 						   tuple(safe_unicode(s) for s in (testchart_dir, 
