@@ -13646,6 +13646,7 @@ class MainFrame(ReportFrame, BaseFrame):
 														 "SII REPEATER"):
 							# Don't disable 3D LUT tab when switching from
 							# madVR / Resolve / eeColor
+							setcfg("3dlut.tab.enable", 1)
 							setcfg("3dlut.tab.enable.backup", 1)
 				# Get and set the instrument
 				instrument_id = profile.tags.get("meta",
