@@ -19,7 +19,8 @@ from meta import name as appname, version
 from options import debug
 from util_os import islink, readlink, waccess
 from util_str import safe_unicode, strtr
-from worker import Error, Info, get_current_profile_path, show_result_dialog
+from worker import (Error, Info, UnloggedInfo, get_current_profile_path,
+					show_result_dialog)
 import ICCProfile as ICCP
 import colormath
 import config
@@ -145,6 +146,7 @@ class LUT3DFrame(BaseFrame):
 											  self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_TEXT,
 											self.lut3d_hdr_peak_luminance_handler)
+		self.lut3d_hdr_display_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_hdr_display_handler)
 		self.lut3d_hdr_maxcll_ctrl.Bind(wx.EVT_TEXT,
 										self.lut3d_hdr_maxcll_handler)
 		self.lut3d_content_colorspace_ctrl.Bind(wx.EVT_CHOICE,
@@ -233,6 +235,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_black_output_offset_intctrl.Enable(v)
 		self.lut3d_trc_black_output_offset_intctrl_label.Enable(v)
 		self.lut3d_show_input_value_clipping_warning(event)
+		self.lut3d_show_hdr_display_control()
 
 	def lut3d_show_input_value_clipping_warning(self, layout):
 		self.panel.Freeze()
@@ -250,6 +253,15 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
 			   int(self.lut3d_apply_cal_cb.GetValue()))
+
+	def lut3d_hdr_display_handler(self, event):
+		if (self.lut3d_hdr_display_ctrl.GetSelection() and
+			not getcfg("3dlut.hdr_display")):
+			if not show_result_dialog(UnloggedInfo(lang.getstr("3dlut.format.madVR.hdr.confirm")),
+									  self, confirm=lang.getstr("ok")):
+				self.lut3d_hdr_display_ctrl.SetSelection(0)
+				return
+		setcfg("3dlut.hdr_display", self.lut3d_hdr_display_ctrl.GetSelection())
 
 	def lut3d_hdr_peak_luminance_handler(self, event):
 		setcfg("3dlut.hdr_peak_luminance",
@@ -793,7 +805,8 @@ class LUT3DFrame(BaseFrame):
 									 apply_black_offset=apply_black_offset,
 									 use_b2a=use_b2a, white_cdm2=white_cdm2,
 									 maxcll=maxcll,
-									 content_rgb_space=content_rgb_space)
+									 content_rgb_space=content_rgb_space,
+									 hdr_display=getcfg("3dlut.hdr_display"))
 		except Exception, exception:
 			return exception
 		return True
@@ -866,8 +879,14 @@ class LUT3DFrame(BaseFrame):
 			if getattr(self, "lut3dframe", None):
 				self.lut3dframe.lut3d_update_shared_controls()
 			return
-		elif self.Parent:
-			self.Parent.lut3d_update_shared_controls()
+		else:
+			self.panel.Freeze()
+			self.lut3d_show_hdr_display_control()
+			self.panel.Layout()
+			self.panel.Thaw()
+			self.update_layout()
+			if self.Parent:
+				self.Parent.lut3d_update_shared_controls()
 		self.lut3d_create_btn.Enable(format != "madVR" or
 									 self.output_profile_ctrl.IsShown())
 	
@@ -1183,6 +1202,11 @@ class LUT3DFrame(BaseFrame):
 				self.lut3d_formats_ab[i] = format
 				self.lut3d_formats_ba[format] = i
 				i += 1
+
+		self.lut3d_hdr_display_ctrl.SetItems([lang.getstr(item)
+											  for item in
+											  ("3dlut.format.madVR.hdr_to_sdr",
+											   "3dlut.format.madVR.hdr")])
 		
 		self.lut3d_size_ab = {}
 		self.lut3d_size_ba = {}
@@ -1281,6 +1305,7 @@ class LUT3DFrame(BaseFrame):
 			format = "cube"
 			setcfg("3dlut.format", format)
 		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
+		self.lut3d_hdr_display_ctrl.SetSelection(getcfg("3dlut.hdr_display"))
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_enable_size_controls()
 		self.lut3d_bitdepth_input_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.input")])
@@ -1425,6 +1450,12 @@ class LUT3DFrame(BaseFrame):
 		if not frozen:
 			self.Thaw()
 
+	def lut3d_show_hdr_display_control(self):
+		self.lut3d_hdr_display_ctrl.Show((getcfg("3dlut.apply_trc") or
+								not hasattr(self, "lut3d_trc_apply_none_ctrl")) and
+							   getcfg("3dlut.trc").startswith("smpte2084") and
+							   getcfg("3dlut.format") == "madVR")
+
 	def lut3d_show_trc_controls(self, show=True):
 		self.panel.Freeze()
 		show = show and self.worker.argyll_version >= [1, 6]
@@ -1460,6 +1491,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_peak_luminance_label.Show(smpte2084)
 		self.lut3d_hdr_peak_luminance_ctrl.Show(smpte2084)
 		self.lut3d_hdr_peak_luminance_ctrl_label.Show(smpte2084)
+		self.lut3d_show_hdr_display_control()
 		self.panel.Layout()
 		self.panel.Thaw()
 		if isinstance(self, LUT3DFrame):

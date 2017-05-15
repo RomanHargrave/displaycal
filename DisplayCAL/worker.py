@@ -2566,7 +2566,7 @@ END_DATA
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
 					 use_b2a=False, white_cdm2=100, maxcll=10000,
-					 content_rgb_space="DCI P3"):
+					 content_rgb_space="DCI P3", hdr_display=False):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2956,6 +2956,8 @@ END_DATA
 							cstart, cend = input_primaries.span()
 							parametersData[cstart + 16:cend] = " ".join(components_new)
 							h3d.parametersData = "Input_Transfer_Function PQ\r\n"
+							if hdr_display:
+								h3d.parametersData += "Output_Transfer_Function PQ\r\n"
 							h3d.parametersData += "".join(parametersData)
 							h3d.write()
 						else:
@@ -8756,6 +8758,8 @@ usage: spotread [-options] [logfile]
 									 "3dlut.hdr_peak_luminance",
 									 "3DLUT_HDR_MAXCLL":
 									 "3dlut.hdr_maxcll",
+									 "3DLUT_HDR_DISPLAY":
+									 "3dlut.hdr_display",
 									 "3DLUT_GAMMA":
 									 "3dlut.trc_gamma",
 									 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":

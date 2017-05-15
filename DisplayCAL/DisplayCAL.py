@@ -1291,12 +1291,14 @@ class MainFrame(ReportFrame, BaseFrame):
 	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
 	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
 	lut3d_hdr_peak_luminance_handler = LUT3DFrame.__dict__["lut3d_hdr_peak_luminance_handler"]
+	lut3d_hdr_display_handler = LUT3DFrame.__dict__["lut3d_hdr_display_handler"]
 	lut3d_hdr_maxcll_handler = LUT3DFrame.__dict__["lut3d_hdr_maxcll_handler"]
 	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
 	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
 	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
 	lut3d_show_bitdepth_controls = LUT3DFrame.__dict__["lut3d_show_bitdepth_controls"]
 	lut3d_show_encoding_controls = LUT3DFrame.__dict__["lut3d_show_encoding_controls"]
+	lut3d_show_hdr_display_control = LUT3DFrame.__dict__["lut3d_show_hdr_display_control"]
 	lut3d_show_trc_controls = LUT3DFrame.__dict__["lut3d_show_trc_controls"]
 	lut3d_set_option = LUT3DFrame.__dict__["lut3d_set_option"]
 	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
@@ -13923,6 +13925,8 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3dlut.trc",
 											 "3DLUT_HDR_PEAK_LUMINANCE":
 											 "3dlut.hdr_peak_luminance",
+											 "3DLUT_HDR_DISPLAY":
+											 "3dlut.hdr_display",
 											 "3DLUT_HDR_MAXCLL":
 											 "3dlut.hdr_maxcll",
 											 "3DLUT_GAMMA":

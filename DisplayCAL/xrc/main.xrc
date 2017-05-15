@@ -1943,10 +1943,26 @@
                               <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxChoice" name="lut3d_format_ctrl">
-                                <selection>0</selection>
+                              <object class="wxBoxSizer">
+                                <object class="sizeritem">
+                                  <object class="wxChoice" name="lut3d_format_ctrl">
+                                    <selection>0</selection>
+                                  </object>
+                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxChoice" name="lut3d_hdr_display_ctrl">
+                                    <content>
+                                      <item>3dlut.format.madVR.hdr_to_sdr</item>
+                                      <item>3dlut.format.madVR.hdr</item>
+                                    </content>
+                                    <selection>0</selection>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
+                                </object>
+                                <orient>wxHORIZONTAL</orient>
                               </object>
-                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="spacer"/>
                             <object class="sizeritem">
