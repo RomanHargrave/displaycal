@@ -8792,6 +8792,12 @@ usage: spotread [-options] [logfile]
 					elif cfgname == "3dlut.trc_gamma":
 						if getcfg("3dlut.trc_gamma_type") == "B":
 							value = -value
+					elif (cfgname == "3dlut.input.profile" and
+						  os.path.basename(os.path.dirname(value)) == "ref" and
+						  get_data_path("ref/" + os.path.basename(value)) == value):
+						# Store relative path instead of absolute path if
+						# ref file
+						value = "ref/" + os.path.basename(value)
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 				elif keyword in ti3[0]:
 					ti3[0].remove_keyword(keyword)

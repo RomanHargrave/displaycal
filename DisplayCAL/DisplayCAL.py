@@ -14014,6 +14014,15 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("3dlut.tab.enable.backup", 1)
 						if cfgvalue is not None:
 							cfgvalue = safe_unicode(cfgvalue, "UTF-7")
+							if (cfgname == "3dlut.input.profile" and
+								(not os.path.isabs(cfgvalue) or
+								 not os.path.isfile(cfgvalue)) and
+								os.path.basename(os.path.dirname(cfgvalue)) == "ref"):
+								# Fall back to ref file if not absolute
+								# path or not found
+								cfgvalue = (get_data_path("ref/" +
+														  os.path.basename(cfgvalue)) or
+											cfgvalue)
 							setcfg(cfgname, cfgvalue)
 							# Sync measurement report settings
 							if cfgname == "3dlut.input.profile":
