@@ -2264,6 +2264,7 @@ class Worker(WorkerBase):
 			self._detecting_video_levels = False
 
 	def _detect_video_levels(self):
+		""" Detect black clipping due to incorrect levels """
 		self.log("Detecting output levels range...")
 		tempdir = self.create_tempdir()
 		if isinstance(tempdir, Exception):
@@ -2307,6 +2308,14 @@ END_DATA
 			verify_ti1_rgb_xyz(ti3)
 		except CGATS.CGATSError, exception:
 			return exception
+		luminance_XYZ_cdm2 = ti3.queryv1("LUMINANCE_XYZ_CDM2")
+		if not luminance_XYZ_cdm2:
+			return Error(lang.getstr("error.testchart.missing_fields",
+									 (ti3_path, "LUMINANCE_XYZ_CDM2")))
+		try:
+			Y_cdm2 = float(luminance_XYZ_cdm2.split()[1])
+		except (IndexError, ValueError):
+			return Error(lang.getstr("error.testchart.invalid", ti3_path))
 		black_0 = ti3.queryi1({"RGB_R": 0,
 							   "RGB_G": 0,
 							   "RGB_B": 0})
@@ -2314,10 +2323,14 @@ END_DATA
 								"RGB_G": 6.2500,
 								"RGB_B": 6.2500})
 		if black_0 and black_16:
-			self.log("RGB level 0 is Y =", black_0["XYZ_Y"])
-			self.log("RGB level 16 is Y =", black_16["XYZ_Y"])
-			# Check delta Y to determine if data or video levels
-			assume_video_levels = black_16["XYZ_Y"] - black_0["XYZ_Y"] < 0.02
+			self.log("RGB level 0 is %.6f cd/m2" %
+					 (black_0["XYZ_Y"] / 100.0 * Y_cdm2))
+			self.log("RGB level 16 is %.6f cd/m2" %
+					 (black_16["XYZ_Y"] / 100.0 * Y_cdm2))
+			# Check delta cd/m2 to determine if data or video levels
+			# We need to take the display white luminance into account
+			threshold = 0.02 / Y_cdm2 * 100  # Threshold 0.02 cd/m2
+			assume_video_levels = black_16["XYZ_Y"] - black_0["XYZ_Y"] < threshold
 			if assume_video_levels and config.get_display_name() == "madVR":
 				# This is an error
 				return Error(lang.getstr("madvr.wrong_levels_detected"))
