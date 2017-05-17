@@ -908,6 +908,10 @@ class ProfileLoader(object):
 		self.profiles = {}
 		self.devices2profiles = {}
 		self.ramps = {}
+		self.linear_vcgt_values = ([], [], [])
+		for j in xrange(3):
+			for k in xrange(256):
+				self.linear_vcgt_values[j].append([float(k), k * 257])
 		self.setgammaramp_success = {}
 		self.use_madhcnet = bool(config.getcfg("profile_loader.use_madhcnet"))
 		self._has_display_changed = False
@@ -928,6 +932,7 @@ class ProfileLoader(object):
 										config.getcfg("profile_loader.buggy_video_drivers").split(";"))
 		self._set_exceptions()
 		self._madvr_instances = []
+		self._madvr_reset_cal = True
 		self._timestamp = time.time()
 		self._component_name = None
 		self._app_detection_msg = None
@@ -2045,18 +2050,21 @@ class ProfileLoader(object):
 																  vcgt_ramp_hack,
 																  vcgt_values)
 					recheck = True
-				if not apply_profiles:
+				if (not apply_profiles and
+					self.__other_component[1] != "madHcNetQueueWindow"):
 					# Important: Do not break here because we still want to
 					# detect changed profile associations
 					continue
 				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
+				hwnds_pids_changed = self._hwnds_pids != previous_hwnds_pids
 				if idle:
-					idle = (self._hwnds_pids == previous_hwnds_pids and
+					idle = (not hwnds_pids_changed and
 							not self._manual_restore and
 							not profile_association_changed)
 				if (not self._manual_restore and
 					not profile_association_changed and
-					idle and
+					(idle or
+					 self.__other_component[1] == "madHcNetQueueWindow") and
 					getcfg("profile_loader.check_gamma_ramps")):
 					# Get video card gamma ramp
 					try:
@@ -2081,13 +2089,38 @@ class ProfileLoader(object):
 					for j, channel in enumerate(ramp):
 						for k, v in enumerate(channel):
 							values[j].append([float(k), v])
+					if self.__other_component[1] == "madHcNetQueueWindow":
+						madvr_reset_cal = self._madvr_reset_cal
+						if (not self._madvr_reset_cal and
+							values == self.linear_vcgt_values):
+							# madVR has reset vcgt
+							self._madvr_reset_cal = True
+							safe_print("madVR did reset gamma ramps, do not "
+									   "preserve calibration state")
+						elif (self._madvr_reset_cal and
+							  values == vcgt_values):
+							# madVR did not reset vcgt
+							self._madvr_reset_cal = False
+							safe_print("madVR did not reset gamma ramps, "
+									   "preserve calibration state")
+							self.setgammaramp_success[i] = True
+						if self._madvr_reset_cal != madvr_reset_cal:
+							if self._madvr_reset_cal:
+								msg = lang.getstr("app.detected.calibration_loading_disabled",
+												  self._component_name)
+								self.notify([msg], [], True, False)
+								continue
+							else:
+								self.notify([], [], True, False)
 					# Check if video card matches profile vcgt
-					if (values == vcgt_values and
+					if (not hwnds_pids_changed and
+						values == vcgt_values and
 						i in self.setgammaramp_success):
 						idle = True
 						continue
 					idle = False
-					safe_print(lang.getstr("vcgt.mismatch", display_desc))
+					if apply_profiles and not hwnds_pids_changed:
+						safe_print(lang.getstr("vcgt.mismatch", display_desc))
 				if recheck:
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
@@ -2408,8 +2441,6 @@ class ProfileLoader(object):
 		"""
 		if sys.platform != "win32":
 			return
-		if len(self._madvr_instances):
-			return True
 		self._is_other_running_lock.acquire()
 		if enumerate_windows_and_processes:
 			# At launch, we won't be able to determine if madVR is running via
@@ -2425,7 +2456,8 @@ class ProfileLoader(object):
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
 				safe_print("Enumerating windows failed:", exception)
-			if not self.__other_component[1]:
+			if (not self.__other_component[1] or
+				self.__other_component[1] == "madHcNetQueueWindow"):
 				# Look for known processes
 				# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes):
 				# ~ 6-9ms (1ms to get PIDs)
@@ -2434,7 +2466,7 @@ class ProfileLoader(object):
 				except WindowsError, exception:
 					safe_print("Enumerating processes failed:", exception)
 				else:
-					self._hwnds_pids.update(pids)
+					skip = False
 					for pid in pids:
 						try:
 							filename = get_process_filename(pid)
@@ -2447,13 +2479,18 @@ class ProfileLoader(object):
 										   "process %s:" % pid, exception)
 							continue
 						basename = os.path.basename(filename)
+						if basename.lower() != "madHcCtrl.exe".lower():
+							# Skip madVR Home Cinema Control
+							self._hwnds_pids.add(pid)
+						if skip:
+							continue
 						known_app = basename.lower() in self._known_apps
 						enabled, reset, path = self._exceptions.get(filename.lower(),
 																	(0, 0, ""))
 						if known_app or enabled:
 							if known_app or not reset:
 								self.__other_component = filename, None, 0
-								break
+								skip = True
 							elif other_component != (filename, None, reset):
 								self._reset_gamma_ramps = True
 							self.__other_component = filename, None, reset
@@ -2483,6 +2520,7 @@ class ProfileLoader(object):
 						component = other_component
 				if component[1] == "madHcNetQueueWindow":
 					component_name = "madVR"
+					self._madvr_reset_cal = True
 				elif component[0]:
 					component_name = os.path.basename(component[0])
 					try:
@@ -2514,6 +2552,8 @@ class ProfileLoader(object):
 		result = (self.__other_component[0:2] != (None, None) and
 				  not self.__other_component[2])
 		self._is_other_running_lock.release()
+		if self.__other_component[1] == "madHcNetQueueWindow":
+			return self._madvr_reset_cal
 		return result
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
@@ -2538,15 +2578,26 @@ class ProfileLoader(object):
 										  component)
 						safe_print(msg)
 						self.notify([msg], [], True, show_notification=False)
+					wx.CallAfter(wx.CallLater, 1500,
+								 self._check_madvr_reset_cal, args)
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
 					safe_print("madVR instance disconnected:", "PID", pid, filename)
-					if self._should_apply_profiles(manual_override=None):
+					if (not self._madvr_instances and
+						self._should_apply_profiles(manual_override=None)):
 						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  component)
 						safe_print(msg)
 						self.notify([msg], [], show_notification=False)
 			safe_print("Releasing lock")
+			
+	def _check_madvr_reset_cal(self, madvr_instance):
+		if not madvr_instance in self._madvr_instances:
+			return
+		# Check if madVR did reset the video card gamma tables.
+		# If it didn't, assume we can keep preserving calibration state
+		with self.lock:
+			self._next = True
 
 	def _reset_display_profile_associations(self):
 		for devicekey, (display_edid,
