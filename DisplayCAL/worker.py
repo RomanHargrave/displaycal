@@ -2627,7 +2627,7 @@ END_DATA
 				b2a = profile_out.tags.get("B2A1", profile_out.tags.get("B2A0"))
 				if not b2a or (isinstance(b2a, ICCP.LUT16Type) and
 							   b2a.clut_grid_steps < 17):
-					b2aresult = self.update_profile_B2A(profile_out, False)
+					b2aresult = self.update_profile_B2A(profile_out)
 					if isinstance(b2aresult, Exception):
 						raise b2aresult
 					profile_out.write()
