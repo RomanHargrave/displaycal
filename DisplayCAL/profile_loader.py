@@ -44,7 +44,8 @@ if sys.platform == "win32":
 	from ordereddict import OrderedDict
 	from systrayicon import Menu, MenuItem, SysTrayIcon
 	from util_list import natsort_key_factory
-	from util_os import getenvu, is_superuser, quote_args, which
+	from util_os import (getenvu, is_superuser, islink, quote_args, readlink,
+						 which)
 	from util_str import safe_asciize, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
@@ -60,6 +61,14 @@ if sys.platform == "win32":
 						   TaskBarNotification, wx, show_result_dialog)
 	import ICCProfile as ICCP
 	import madvr
+
+	if islink(exe):
+		try:
+			exe = readlink(exe)
+		except:
+			pass
+		else:
+			exedir = os.path.dirname(exe)
 
 
 	def get_dialogs():
