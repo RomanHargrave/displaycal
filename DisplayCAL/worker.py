@@ -7586,13 +7586,13 @@ usage: spotread [-options] [logfile]
 		if vcgt:
 			profile.tags.vcgt = vcgt
 		
-		def get_XYZ_from_curves(n, m):
+		def get_XYZ_from_curves(n, m, scale=1):
 			# Curves are adapted to D50
 			XYZ1 = [curve[int(math.floor((len(curve) - 1.0) / m * n))]
 				    for curve in curves]
 			XYZ2 = [curve[int(math.ceil((len(curve) - 1.0) / m * n))]
 				    for curve in curves]
-			return [(XYZ1[i] + XYZ2[i]) / 2.0 for i in xrange(3)]
+			return [(XYZ1[i] + XYZ2[i]) / 2.0 * scale for i in xrange(3)]
 		
 		# Need to sort so columns increase (fastest to slowest) B G R
 		remaining.sort()
@@ -7675,7 +7675,10 @@ usage: spotread [-options] [logfile]
 						if not XYZ:
 							# Fall back to interpolated values
 							# (already black scaled)
-							XYZ = XYZ_out[i]
+							if a == b == c:
+								XYZ = get_XYZ_from_curves(a, clutres - 1, 100)
+							else:
+								XYZ = XYZ_out[i]
 							interpolated += 1
 						else:
 							actual += 1
