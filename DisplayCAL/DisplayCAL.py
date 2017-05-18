@@ -11659,14 +11659,14 @@ class MainFrame(ReportFrame, BaseFrame):
 		if patch count is lower. """
 		recommended = {"G": 6,
 					   "g": 6,
-					   "l": 238,
-					   "lh": 124,
+					   "l": 125,
+					   "lh": 125,
 					   "S": 12,
 					   "s": 12,
-					   "X": 238,
-					   "Xh": 124,
-					   "x": 238,
-					   "xh": 124}
+					   "X": 73,
+					   "Xh": 73,
+					   "x": 73,
+					   "xh": 73}
 		# lower quality actually needs *higher* patchcount while high quality
 		# can get away with fewer patches and still improved result
 		recommended = recommended.get(self.get_profile_type() + 
