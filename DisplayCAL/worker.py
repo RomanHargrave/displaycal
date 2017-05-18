@@ -7586,13 +7586,13 @@ usage: spotread [-options] [logfile]
 		if vcgt:
 			profile.tags.vcgt = vcgt
 		
-		def get_XYZ_from_curves(n, m, scale=1):
+		def get_XYZ_from_curves(n, m):
 			# Curves are adapted to D50
 			XYZ1 = [curve[int(math.floor((len(curve) - 1.0) / m * n))]
 				    for curve in curves]
 			XYZ2 = [curve[int(math.ceil((len(curve) - 1.0) / m * n))]
 				    for curve in curves]
-			return [(XYZ1[i] + XYZ2[i]) / 2.0 * scale for i in xrange(3)]
+			return [(XYZ1[i] + XYZ2[i]) / 2.0 for i in xrange(3)]
 		
 		# Need to sort so columns increase (fastest to slowest) B G R
 		remaining.sort()
@@ -7661,7 +7661,7 @@ usage: spotread [-options] [logfile]
 
 			# Create new cLUT
 			clut = []
-			i = 0
+			i = -1
 			actual = 0
 			interpolated = 0
 			for a in xrange(clutres):
@@ -7672,17 +7672,20 @@ usage: spotread [-options] [logfile]
 						# Prefer actual measurements over interpolated values
 						prev_actual = actual
 						XYZ = remaining.get(RGB)
+						i += 1
 						if not XYZ:
 							# Fall back to interpolated values
 							# (already black scaled)
 							if a == b == c:
-								XYZ = get_XYZ_from_curves(a, clutres - 1, 100)
+								XYZ = get_XYZ_from_curves(a, clutres - 1)
+								# Range 0..1
+								clut[-1].append(XYZ)
+								continue
 							else:
 								XYZ = XYZ_out[i]
 							interpolated += 1
 						else:
 							actual += 1
-						i += 1
 						X, Y, Z = (v / 100.0 for v in XYZ)
 						if actual > prev_actual:
 							# Need to black scale actual measurements
