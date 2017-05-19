@@ -480,7 +480,7 @@ def check_ti3(ti3, print_debuginfo=True):
 
 
 def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
-						 logfn=None):
+						 logfn=None, slope_limit=False):
 	""" Create input (device to PCS) shaper curves """
 	RGB_XYZ.sort()
 	R_R = []
@@ -543,8 +543,8 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		for i, channel in enumerate("rgb"):
 			v = RGB[i]
 			v = min(max(v, 0), 1)
-			# Slope limit
-			v = max(v, n / 64.25)
+			if slope_limit:
+				v = max(v, n / 64.25)
 			powinterp[channel].xp.append(n)
 			powinterp[channel].fp.append(v)
 	for n in xrange(numentries):
