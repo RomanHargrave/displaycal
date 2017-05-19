@@ -537,7 +537,11 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		Y = ginterp(n)
 		X = rinterp(n)
 		Z = binterp(n)
-		if single_curve:
+		if Y >= 1:
+			# Fix Y >= 1 to whitepoint. Mainly for HDR with PQ clipping,
+			# where input gray < 1 can result in >= white Y
+			X, Y, Z = XYZwp
+		elif single_curve:
 			X, Y, Z = [v * Y for v in XYZwp]
 		RGB = bwd_mtx * (X, Y, Z)
 		for i, channel in enumerate("rgb"):
