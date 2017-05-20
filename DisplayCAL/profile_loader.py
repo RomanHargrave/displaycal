@@ -912,6 +912,7 @@ class ProfileLoader(object):
 		self.monitoring = True
 		self.monitors = []  # Display devices that can be represented as ON
 		self.display_devices = {}  # All display devices
+		self._current_display_key = -1
 		self.numwindows = 0
 		self.profile_associations = {}
 		self.profiles = {}
@@ -941,7 +942,7 @@ class ProfileLoader(object):
 										config.getcfg("profile_loader.buggy_video_drivers").split(";"))
 		self._set_exceptions()
 		self._madvr_instances = []
-		self._madvr_reset_cal = True
+		self._madvr_reset_cal = {}
 		self._timestamp = time.time()
 		self._component_name = None
 		self._app_detection_msg = None
@@ -991,7 +992,7 @@ class ProfileLoader(object):
 						if ((len(data) == 1 and
 							 os.path.isfile(os.path.join(config.confighome,
 														 appbasename + ".lock"))) or
-							self.pl._is_other_running()):
+							self.pl._is_other_running(False)):
 							return "forbidden"
 						elif data[-1] == "display-changed":
 							if self.pl.lock.locked():
@@ -1079,7 +1080,7 @@ class ProfileLoader(object):
 					
 					if (os.path.isfile(os.path.join(config.confighome,
 												   appbasename + ".lock")) or
-						self.pl._is_other_running()):
+						self.pl._is_other_running(False)):
 						restore_auto = restore_manual = reset = None
 					else:
 						restore_manual = self.pl._set_manual_restore
@@ -1247,7 +1248,7 @@ class ProfileLoader(object):
 
 				def on_left_dclick(self, event):
 					self._dclick = True
-					if not self.pl._is_other_running():
+					if not self.pl._is_other_running(False):
 						if self._show_notification_later and self._show_notification_later.IsRunning():
 							self._show_notification_later.Stop()
 						locked = self.pl.lock.locked()
@@ -1895,6 +1896,7 @@ class ProfileLoader(object):
 				else:
 					devicekey = None
 				key = devicekey or str(i)
+				self._current_display_key = key
 				exception = None
 				try:
 					profile_path = ICCP.get_display_profile(i, path_only=True,
@@ -2099,22 +2101,23 @@ class ProfileLoader(object):
 						for k, v in enumerate(channel):
 							values[j].append([float(k), v])
 					if self.__other_component[1] == "madHcNetQueueWindow":
-						madvr_reset_cal = self._madvr_reset_cal
-						if (not self._madvr_reset_cal and
+						madvr_reset_cal = self._madvr_reset_cal.get(key, True)
+						if (not madvr_reset_cal and
 							values == self.linear_vcgt_values):
 							# madVR has reset vcgt
-							self._madvr_reset_cal = True
-							safe_print("madVR did reset gamma ramps, do not "
-									   "preserve calibration state")
-						elif (self._madvr_reset_cal and
+							self._madvr_reset_cal[key] = True
+							safe_print("madVR did reset gamma ramps for %s, "
+									   "do not preserve calibration state" %
+									   display)
+						elif (madvr_reset_cal and
 							  values == vcgt_values):
 							# madVR did not reset vcgt
-							self._madvr_reset_cal = False
-							safe_print("madVR did not reset gamma ramps, "
-									   "preserve calibration state")
+							self._madvr_reset_cal[key] = False
+							safe_print("madVR did not reset gamma ramps for %s, "
+									   "preserve calibration state" % display)
 							self.setgammaramp_success[i] = True
-						if self._madvr_reset_cal != madvr_reset_cal:
-							if self._madvr_reset_cal:
+						if self._madvr_reset_cal.get(key, True) != madvr_reset_cal:
+							if self._madvr_reset_cal.get(key, True):
 								msg = lang.getstr("app.detected.calibration_loading_disabled",
 												  self._component_name)
 								self.notify([msg], [], True, False)
@@ -2150,7 +2153,7 @@ class ProfileLoader(object):
 						safe_print(display_desc, "->", desc)
 				else:
 					safe_print("Preserving calibration state for display",
-							   display_desc)
+							   display)
 				try:
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 				except Exception, exception:
@@ -2529,7 +2532,7 @@ class ProfileLoader(object):
 						component = other_component
 				if component[1] == "madHcNetQueueWindow":
 					component_name = "madVR"
-					self._madvr_reset_cal = True
+					self._madvr_reset_cal = {}
 				elif component[0]:
 					component_name = os.path.basename(component[0])
 					try:
@@ -2562,7 +2565,13 @@ class ProfileLoader(object):
 				  not self.__other_component[2])
 		self._is_other_running_lock.release()
 		if self.__other_component[1] == "madHcNetQueueWindow":
-			return self._madvr_reset_cal
+			if enumerate_windows_and_processes:
+				# Check if gamma ramps were reset for current display
+				return self._madvr_reset_cal.get(self._current_display_key, True)
+			else:
+				# Check if gamma ramps were reset for any display
+				return (len(self._madvr_reset_cal) < len(self.monitors) or
+						True in self._madvr_reset_cal.values())
 		return result
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
