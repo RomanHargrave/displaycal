@@ -508,11 +508,15 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 
 	# Scale black to zero
 	for i in xrange(numvalues):
-		(R_X[i],
-		 G_Y[i],
-		 B_Z[i]) = colormath.blend_blackpoint(R_X[i],
-											  G_Y[i],
-											  B_Z[i], XYZbp)
+		if bwd_mtx * [1, 1, 1] == [1, 1, 1]:
+			(R_X[i],
+			 G_Y[i],
+			 B_Z[i]) = colormath.apply_bpc(R_X[i], G_Y[i], B_Z[i], XYZbp,
+										   (0, 0, 0), XYZwp)
+		else:
+			(R_X[i],
+			 G_Y[i],
+			 B_Z[i]) = colormath.blend_blackpoint(R_X[i], G_Y[i], B_Z[i], XYZbp)
 
 	rinterp = colormath.Interp(R_R, R_X)
 	ginterp = colormath.Interp(G_G, G_Y)
@@ -570,11 +574,18 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 	if XYZbp and not bpc:
 		# Add black back in
 		for i in xrange(256):
-			(curves[0][i],
-			 curves[1][i],
-			 curves[2][i]) = colormath.blend_blackpoint(*(curve[i] for curve in curves),
-														bp_in=(0, 0, 0),
-														bp_out=XYZbp)
+			if bwd_mtx * [1, 1, 1] == [1, 1, 1]:
+				(curves[0][i],
+				 curves[1][i],
+				 curves[2][i]) = colormath.apply_bpc(*(curve[i] for curve in curves),
+													 bp_in=(0, 0, 0),
+													 bp_out=XYZbp, wp_out=XYZwp)
+			else:
+				(curves[0][i],
+				 curves[1][i],
+				 curves[2][i]) = colormath.blend_blackpoint(*(curve[i] for curve in curves),
+															bp_in=(0, 0, 0),
+															bp_out=XYZbp)
 
 	return curves
 
@@ -5218,7 +5229,7 @@ while 1:
 					logfile.write("No suitable PCS candidate. "
 								  "Computing best fit matrix...\n")
 				# Lookup small testchart so profile computation finishes quickly
-				ti1name = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
+				ti1name = "ti1/d3-e4-s5-g49-m5-b0-f0.ti1"
 				ti1 = get_data_path(ti1name)
 				if not ti1:
 					raise Error(lang.getstr("file.missing", ti1name))
@@ -7124,10 +7135,8 @@ usage: spotread [-options] [logfile]
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				for ti1_name in ("ti1/d3-e4-s3-g25-m3-b3-f0-crossover",
-								 "ref/ISO_12646-2008_color_accuracy_and_gray_balance",
-								 "ti1/d3-e4-s5-g33-m5-b0-f0-crossover",
-								 "ti1/d3-e4-s17-g49-m5-b5-f0"):
+				for ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
+								 "ti1/d3-e4-s5-g49-m5-b0-f0"):
 					ti1_name = "%s.ti1" % ti1_name
 					ti1_path = get_data_path(ti1_name)
 					if not ti1_path:
@@ -7562,6 +7571,8 @@ usage: spotread [-options] [logfile]
 					 "shaper curve for cLUT")
 		curves = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve, True,
 									  logfn)
+		gray = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve, False,
+									logfn)
 		
 		# Create profile
 		profile = ICCP.ICCProfile()
@@ -7593,10 +7604,14 @@ usage: spotread [-options] [logfile]
 		def get_XYZ_from_curves(n, m):
 			# Curves are adapted to D50
 			XYZ1 = [curve[int(math.floor((len(curve) - 1.0) / m * n))]
-				    for curve in curves]
+				    for curve in gray]
 			XYZ2 = [curve[int(math.ceil((len(curve) - 1.0) / m * n))]
-				    for curve in curves]
+				    for curve in gray]
 			return [(XYZ1[i] + XYZ2[i]) / 2.0 for i in xrange(3)]
+
+		# Quantize RGB to make lookup easier
+		remaining = OrderedDict([(tuple(round(k, 3) for k in RGB), XYZ)
+								 for RGB, XYZ in remaining.iteritems()])
 		
 		# Need to sort so columns increase (fastest to slowest) B G R
 		remaining.sort()
@@ -7611,7 +7626,7 @@ usage: spotread [-options] [logfile]
 				for b in xrange(iclutres):
 					clut.append([])
 					for c in xrange(iclutres):
-						RGB = (a * step, b * step, c * step)
+						RGB = tuple(round(k * step, 3) for k in (a, b, c))
 						# Prefer actual measurements over interpolated values
 						XYZ = remaining.get(RGB)
 						if not XYZ:
@@ -7621,7 +7636,7 @@ usage: spotread [-options] [logfile]
 								XYZ = get_XYZ_from_curves(a, iclutres - 1)
 								# Range 0..1
 								clut[-1].append(XYZ)
-							elif iclutres == 5:
+							elif iclutres > 3:
 								# Try next smaller cLUT res
 								break
 							else:
@@ -7630,9 +7645,9 @@ usage: spotread [-options] [logfile]
 						else:
 							clut_actual += 1
 							X, Y, Z = (v / 100.0 for v in XYZ)
-							# Need to black scale actual measurements
-							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
-																 black_XYZ)
+							### Need to black scale actual measurements
+							##X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
+																 ##black_XYZ)
 							# Range 0..1
 							clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
 					if c < iclutres - 1:
@@ -7648,7 +7663,8 @@ usage: spotread [-options] [logfile]
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
 		clutres = iclutres
-		iterations = {"m": 2, "l": 1}.get(quality, 3)
+		# XXX: Need to implement proper 3D interpolation
+		iterations = 0 ##{"m": 2, "l": 1}.get(quality, 3)
 
 		for n in xrange(iterations):
 			clutres += clutres - 1
@@ -7691,10 +7707,10 @@ usage: spotread [-options] [logfile]
 						else:
 							actual += 1
 						X, Y, Z = (v / 100.0 for v in XYZ)
-						if actual > prev_actual:
-							# Need to black scale actual measurements
-							X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
-																 black_XYZ)
+						##if actual > prev_actual:
+							### Need to black scale actual measurements
+							##X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
+																 ##black_XYZ)
 						# Range 0..1
 						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
 			if actual > clut_actual:
@@ -7712,9 +7728,9 @@ usage: spotread [-options] [logfile]
 		self.log("Final interpolated cLUT resolution %ix%ix%i" %
 				 ((len(profile.tags.A2B0.clut[0]),) * 3))
 
-		# Add black back in
-		black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
-		profile.tags.A2B0.apply_black_offset(black_XYZ_D50)
+		### Add black back in
+		##black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
+		##profile.tags.A2B0.apply_black_offset(black_XYZ_D50)
 		
 		return profile
 
@@ -8336,11 +8352,11 @@ usage: spotread [-options] [logfile]
 			if getcfg("testchart.file") == "auto" and auto < 5:
 				# Use pre-baked testchart
 				if auto == 2:
-					testchart = "ti1/d3-e4-s3-g25-m3-b3-f0-crossover.ti1"
+					testchart = "ti1/d3-e4-s2-g25-m0-b0-f0.ti1"
 				elif auto == 3:
-					testchart = "ti1/d3-e4-s5-g33-m5-b0-f0-crossover.ti1"
+					testchart = "ti1/d3-e4-s3-g49-m3-b0-f0.ti1"
 				else:
-					testchart = "ti1/d3-e4-s17-g49-m5-b5-f0.ti1"
+					testchart = "ti1/d3-e4-s5-g49-m5-b0-f0.ti1"
 				testchart_path = get_data_path(testchart)
 				if testchart_path:
 					setcfg("testchart.file", testchart_path)

@@ -13016,24 +13016,25 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("testchart.auto_optimize", auto)
 			self.profile_settings_changed()
 		proftype = getcfg("profile.type")
-		if auto >= 3:
+		if auto > 4:
 			s = min(auto, 11) * 4 - 3
 			g = s * 3 - 2
 			patches_amount = get_total_patches(4, 4, s, g, auto, auto, 0) + 34
-			if auto > 4:
-				patches_amount += 120
-			elif auto > 3:
-				# Increment to 271 patches of default testchart for LUT profiles
-				patches_amount += 83
-			else:
-				# Increment to 165 patches of small testchart for LUT profiles
-				patches_amount += 52
+			patches_amount += 120
 			if event and proftype not in ("l", "x", "X"):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		else:
-			patches_amount = 73
-			if event and proftype not in ("g", "G", "s", "S", "x", "X"):
-				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
+			if auto == 2:
+				patches_amount = 34
+			elif auto == 3:
+				patches_amount = 79
+			else:
+				patches_amount = 175
+			if event:
+				if auto > 2 and proftype not in ("x", "X"):
+					setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
+				elif auto == 2 and proftype not in ("g", "G", "s", "S"):
+					setcfg("profile.type", "S" if getcfg("trc") else "s")
 		if proftype != getcfg("profile.type"):
 			self.update_profile_type_ctrl()
 			# Reset profile type to previous value so the handler method will
@@ -13069,9 +13070,13 @@ class MainFrame(ReportFrame, BaseFrame):
 	def set_default_testchart(self, alert=True, force=False):
 		path = getcfg("testchart.file")
 		##print "set_default_testchart", path
-		if getcfg("profile.type") in ("l", "x", "X"):
-			# cLUT
+		if getcfg("profile.type") in ("x", "X"):
+			# XYZ cLUT
 			if getcfg("testchart.auto_optimize") < 3:
+				setcfg("testchart.auto_optimize", 3)
+		elif getcfg("profile.type") == "l":
+			# L*a*b* cLUT
+			if getcfg("testchart.auto_optimize") < 5:
 				setcfg("testchart.auto_optimize", 5)
 		else:
 			# Gamma or shaper + matrix
