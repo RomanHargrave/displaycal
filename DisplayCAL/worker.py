@@ -8219,8 +8219,6 @@ usage: spotread [-options] [logfile]
 				finally:
 					if temp:
 						os.remove(profile.fileName)
-						if self.tempdir and not os.listdir(self.tempdir):
-							self.wrapup(False)
 						profile.fileName = filename
 		return rtables
 
