@@ -7129,6 +7129,7 @@ usage: spotread [-options] [logfile]
 				# a smaller testchart (faster computation!)
 				args.insert(args.index("-aX"), "-ax")
 				args.remove("-aX")
+			is_5x5x5 = False
 			if getcfg("profile.type") in ("X", "x"):
 				# Check if TI3 RGB matches one of our 5^3 TI1 RGB charts
 				ti3 = CGATS.CGATS(args[-1] + ".ti3")
@@ -7136,11 +7137,17 @@ usage: spotread [-options] [logfile]
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
 				for ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
-								 "ti1/d3-e4-s5-g49-m5-b0-f0"):
+								 "ti1/d3-e4-s5-g49-m5-b0-f0",
+								 "ti1/d3-e4-s9-g49-m9-b0-f0",
+								 "ti1/d3-e4-s17-g49-m17-b0-f0"):
 					ti1_name = "%s.ti1" % ti1_name
 					ti1_path = get_data_path(ti1_name)
 					if not ti1_path:
-						return Error(lang.getstr("file.missing", ti1_name))
+						if ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
+										"ti1/d3-e4-s5-g49-m5-b0-f0"):
+							return Error(lang.getstr("file.missing", ti1_name))
+						else:
+							continue
 					ti1 = CGATS.CGATS(ti1_path)
 					(ti1_extracted,
 					 ti1_RGB_XYZ,
@@ -7149,8 +7156,6 @@ usage: spotread [-options] [logfile]
 								sorted(ti1_remaining.keys()))
 					if is_5x5x5:
 						break
-			else:
-				is_5x5x5 = False
 			if is_5x5x5:
 				# Use our own forward profile code
 				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
@@ -7619,7 +7624,7 @@ usage: spotread [-options] [logfile]
 		# Build initial cLUT
 		# Try to fill a 5x5x5 or 3x3x3 cLUT
 		clut_actual = 0
-		for iclutres in (5, 3):
+		for iclutres in (17, 9, 5, 3):
 			clut = []
 			step = 100 / (iclutres - 1.0)
 			for a in xrange(iclutres):
