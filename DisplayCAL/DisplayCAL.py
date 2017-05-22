@@ -13600,6 +13600,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			update_ccmx_items = True
 			set_size = True
 			display_match = False
+			display_changed = False
 			instrument_id = None
 			instrument_match = False
 			if ext.lower() in (".icc", ".icm"):
@@ -13650,11 +13651,11 @@ class MainFrame(ReportFrame, BaseFrame):
 							# does not match found one
 							setcfg("display.number", display_index + 1)
 							self.get_set_display()
+							display_changed = True
 						if config.get_display_name() in ("madVR", "Resolve",
 														 "SII REPEATER"):
 							# Don't disable 3D LUT tab when switching from
 							# madVR / Resolve / eeColor
-							setcfg("3dlut.tab.enable", 1)
 							setcfg("3dlut.tab.enable.backup", 1)
 				# Get and set the instrument
 				instrument_id = profile.tags.get("meta",
@@ -13728,12 +13729,13 @@ class MainFrame(ReportFrame, BaseFrame):
 							# Special case web and madvr so it can be used in
 							# preset templates which are TI3 files
 							for i, display_name in enumerate(self.worker.display_names):
-								if (display_name.lower() == o[1:] and
-									getcfg("display.number") != i + 1):
+								if display_name.lower() == o[1:]:
 									# Found it
 									display_match = True
-									setcfg("display.number", i + 1)
-									self.get_set_display()
+									if getcfg("display.number") != i + 1:
+										setcfg("display.number", i + 1)
+										self.get_set_display()
+										display_changed = True
 									break
 							continue
 						if o[0] == "m":
@@ -14061,7 +14063,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							setcfg("3dlut.trc", "gamma2.2")  # Pure power gamma 2.2
 						else:
 							setcfg("3dlut.trc", "customgamma")  # Custom
-				if not display_match:
+				if not display_changed:
 					self.update_menus()
 					if not update_ccmx_items:
 						self.update_estimated_measurement_time("cal")
