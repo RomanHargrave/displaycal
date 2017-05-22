@@ -2581,7 +2581,8 @@ END_DATA
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
 					 use_b2a=False, white_cdm2=100, maxcll=10000,
-					 content_rgb_space="DCI P3", hdr_display=False):
+					 content_rgb_space="DCI P3", hdr_display=False,
+					 XYZwp=None):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -2727,6 +2728,16 @@ END_DATA
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
 											  apply_trc=False)
+
+			# Deal with whitepoint
+			profile_in_wtpt_XYZ = profile_in.tags.wtpt.ir.values()
+			if XYZwp:
+				self.log("Using whitepoint chromaticity %.4f %.4f for input" %
+						 tuple(colormath.XYZ2xyY(*XYZwp)[:2]))
+				(profile_in.tags.wtpt.X,
+				 profile_in.tags.wtpt.Y,
+				 profile_in.tags.wtpt.Z) = XYZwp
+
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 
@@ -2954,15 +2965,20 @@ END_DATA
 						# the input profile is a gamut mapped CLUT)
 						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
 						input_primaries = re.search("Input_Primaries" +
-													"\s+(\d\.\d+)" * 6,
+													"\s+(\d\.\d+)" * 8,
 													h3d.parametersData)
 						if input_primaries:
 							components = list(input_primaries.groups())
+							(profile_in.tags.wtpt.X,
+							 profile_in.tags.wtpt.Y,
+							 profile_in.tags.wtpt.Z) = profile_in_wtpt_XYZ
 							rgb_space = profile_in.get_rgb_space()
 							components_new = []
 							for i in xrange(3):
 								for j in xrange(2):
 									components_new.append(rgb_space[2 + i][j])
+							components_new.append(profile_in.tags.wtpt.ir.xyY[0])
+							components_new.append(profile_in.tags.wtpt.ir.xyY[1])
 							for i, component in enumerate(components_new):
 								frac = len(components[i].split(".").pop())
 								numberformat = "%%.%if" % frac

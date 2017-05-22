@@ -773,6 +773,12 @@ class LUT3DFrame(BaseFrame):
 				trc_gamma = getcfg("3dlut.trc_gamma")
 		else:
 			trc_gamma = None
+		XYZwp = None
+		if not isinstance(self, LUT3DFrame):
+			x = getcfg("3dlut.whitepoint.x", False)
+			y = getcfg("3dlut.whitepoint.y", False)
+			if x and y:
+				XYZwp = colormath.xyY2XYZ(x, y)
 		trc_gamma_type = getcfg("3dlut.trc_gamma_type")
 		outoffset = getcfg("3dlut.trc_output_offset")
 		intent = getcfg("3dlut.rendering_intent")
@@ -808,7 +814,8 @@ class LUT3DFrame(BaseFrame):
 									 use_b2a=use_b2a, white_cdm2=white_cdm2,
 									 maxcll=maxcll,
 									 content_rgb_space=content_rgb_space,
-									 hdr_display=getcfg("3dlut.hdr_display"))
+									 hdr_display=getcfg("3dlut.hdr_display"),
+									 XYZwp=XYZwp)
 		except Exception, exception:
 			return exception
 		return True

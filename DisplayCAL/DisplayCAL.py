@@ -4428,6 +4428,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("profile.black_point_compensation", 0)
 				self.update_bpc()
 
+	def check_3dlut_relcol_rendering_intent(self, event):
+		if (event and not isinstance(event, CustomEvent) and
+			getcfg("3dlut.tab.enable") and
+			getcfg("3dlut.rendering_intent") in ("a", "aa", "aw", "pa")):
+			wx.CallAfter(self.lut3d_confirm_relcol_rendering_intent)
+
 	def lut3d_confirm_relcol_rendering_intent(self):
 		dlg = ConfirmDialog(self,
 							msg=lang.getstr("3dlut.confirm_relcol_rendering_intent"),
@@ -5307,7 +5313,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.whitepoint_ctrl_handler(
 				CustomEvent(wx.EVT_CHOICE.evtType[0], 
 				self.whitepoint_ctrl), False)
-			self.cal_changed()
+			self.profile_settings_changed()
 		self.update_profile_name()
 
 	def whitepoint_ctrl_handler(self, event, cal_changed=True):
@@ -5340,7 +5346,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									   getevttype(event)))
 		self.calpanel.Freeze()
 		show_advanced_options = bool(getcfg("show_advanced_options"))
-		if self.whitepoint_ctrl.GetSelection() == 2: # x,y chromaticity coordinates
+		if self.whitepoint_ctrl.GetSelection() == 2:
+			# x,y chromaticity coordinates
 			self.whitepoint_colortemp_locus_label.Hide()
 			self.whitepoint_colortemp_locus_ctrl.Hide()
 			self.whitepoint_colortemp_textctrl.Hide()
@@ -5379,11 +5386,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", x)
 			setcfg("whitepoint.y", y)
+			setcfg("3dlut.whitepoint.x", x)
+			setcfg("3dlut.whitepoint.y", y)
 			if (event.GetId() == self.whitepoint_ctrl.GetId() and
 				self.whitepoint_ctrl.GetSelection() == 2 and
 				not self.updatingctrls):
 				self.whitepoint_x_textctrl.SetFocus()
 		elif self.whitepoint_ctrl.GetSelection() == 1:
+			# Color temperature
 			self.whitepoint_colortemp_locus_label.Show(show_advanced_options)
 			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_options)
 			self.whitepoint_colortemp_textctrl.Show()
@@ -5417,6 +5427,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.whitepoint_colortemp_textctrl.SetFocus()
 				self.whitepoint_colortemp_textctrl.SelectAll()
 		else:
+			# "As measured"
 			self.whitepoint_colortemp_locus_label.Show(show_advanced_options)
 			self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_options)
 			self.whitepoint_colortemp_textctrl.Hide()
@@ -5433,11 +5444,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					str(stripzeros(getcfg("whitepoint.colortemp"))))
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
+			setcfg("3dlut.whitepoint.x", None)
+			setcfg("3dlut.whitepoint.y", None)
 			# Should change 3D LUT rendering intent to rel col?
-			if (event and not isinstance(event, CustomEvent) and
-				getcfg("3dlut.tab.enable") and
-				getcfg("3dlut.rendering_intent") in ("a", "aw")):
-				wx.CallAfter(self.lut3d_confirm_relcol_rendering_intent)
+			self.check_3dlut_relcol_rendering_intent(event)
 		self.visual_whitepoint_editor_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.calpanel.Layout()
@@ -5445,6 +5455,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.calpanel.Thaw()
 		self.show_observer_ctrl()
 		if self.whitepoint_ctrl.GetSelection() == 1:
+			# Color temperature
 			if getcfg("whitepoint.colortemp.locus") == "T":
 				# Planckian locus
 				xyY = planckianCT2xyY(getcfg("whitepoint.colortemp"))
@@ -5454,11 +5465,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			if xyY:
 				self.whitepoint_x_textctrl.SetValue(round(xyY[0], 4))
 				self.whitepoint_y_textctrl.SetValue(round(xyY[1], 4))
+				setcfg("3dlut.whitepoint.x", xyY[0])
+				setcfg("3dlut.whitepoint.y", xyY[1])
 			else:
 				self.whitepoint_x_textctrl.SetValue(0)
 				self.whitepoint_y_textctrl.SetValue(0)
+				# Should change 3D LUT rendering intent to rel col?
+				self.check_3dlut_relcol_rendering_intent(event)
 		if cal_changed and not self.updatingctrls:
-			self.cal_changed()
+			self.profile_settings_changed()
 			self.update_profile_name()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()

@@ -779,6 +779,8 @@ defaults = {
 	"3dlut.size": 65,
 	"3dlut.tab.enable": 0,
 	"3dlut.tab.enable.backup": 0,
+	"3dlut.whitepoint.x": 0.3127,
+	"3dlut.whitepoint.y": 0.329,
 	"allow_skip_sensor_cal": 0,
 	"app.allow_network_clients": 0,
 	"app.dpi": get_default_dpi(),
