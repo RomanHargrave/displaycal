@@ -261,15 +261,16 @@ class LUT3DFrame(BaseFrame):
 									  self, confirm=lang.getstr("ok")):
 				self.lut3d_hdr_display_ctrl.SetSelection(0)
 				return
-		setcfg("3dlut.hdr_display", self.lut3d_hdr_display_ctrl.GetSelection())
+		self.lut3d_set_option("3dlut.hdr_display",
+							  self.lut3d_hdr_display_ctrl.GetSelection())
 
 	def lut3d_hdr_peak_luminance_handler(self, event):
-		setcfg("3dlut.hdr_peak_luminance",
-			   self.lut3d_hdr_peak_luminance_ctrl.GetValue())
+		self.lut3d_set_option("3dlut.hdr_peak_luminance",
+							  self.lut3d_hdr_peak_luminance_ctrl.GetValue())
 
 	def lut3d_hdr_maxcll_handler(self, event):
-		setcfg("3dlut.hdr_maxcll",
-			   self.lut3d_hdr_maxcll_ctrl.GetValue())
+		self.lut3d_set_option("3dlut.hdr_maxcll",
+							  self.lut3d_hdr_maxcll_ctrl.GetValue())
 
 	def lut3d_trc_black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.lut3d_trc_black_output_offset_intctrl.GetId():
@@ -309,27 +310,26 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.trc_gamma", 2.4)
 			self.lut3d_set_option("3dlut.trc_gamma_type", "B")
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
-			setcfg("3dlut.trc", "bt1886")
-			self.lut3d_update_trc_controls()
+			trc = "bt1886"
 		elif self.lut3d_trc_ctrl.GetSelection() == 0:
 			# Pure power gamma 2.2
 			self.lut3d_set_option("3dlut.trc_gamma", 2.2)
 			self.lut3d_set_option("3dlut.trc_gamma_type", "b")
 			self.lut3d_set_option("3dlut.trc_output_offset", 1.0)
-			setcfg("3dlut.trc", "gamma2.2")
-			self.lut3d_update_trc_controls()
+			trc = "gamma2.2"
 		elif self.lut3d_trc_ctrl.GetSelection() == 2:  # SMPTE 2084, hard clip
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
-			setcfg("3dlut.trc", "smpte2084.hardclip")
-			setcfg("3dlut.hdr_maxcll", 10000)
-			self.lut3d_update_trc_controls()
+			trc = "smpte2084.hardclip"
+			self.lut3d_set_option("3dlut.hdr_maxcll", 10000)
 		elif self.lut3d_trc_ctrl.GetSelection() == 3:  # SMPTE 2084, roll-off clip
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
-			setcfg("3dlut.trc", "smpte2084.rolloffclip")
-			setcfg("3dlut.hdr_maxcll", 10000)
-			self.lut3d_update_trc_controls()
+			trc = "smpte2084.rolloffclip"
+			self.lut3d_set_option("3dlut.hdr_maxcll", 10000)
 		else:
-			setcfg("3dlut.trc", "customgamma")
+			trc = "customgamma"
+		self.lut3d_set_option("3dlut.trc", trc)
+		if trc != "customgamma":
+			self.lut3d_update_trc_controls()
 		self.lut3d_show_trc_controls()
 		self.Thaw()
 
@@ -442,8 +442,9 @@ class LUT3DFrame(BaseFrame):
 				else:
 					xyY = rgb_space[2:][i - 1]
 				for j, coord in enumerate("xy"):
-					v = xyY[j]
-					setcfg("3dlut.content.colorspace.%s.%s" % (color, coord), v)
+					v = round(xyY[j], 4)
+					self.lut3d_set_option("3dlut.content.colorspace.%s.%s" %
+										  (color, coord), v)
 			self.lut3d_update_trc_controls()
 		self.panel.Freeze()
 		sizer = self.lut3d_content_colorspace_red_x.ContainingSizer
@@ -455,7 +456,8 @@ class LUT3DFrame(BaseFrame):
 
 	def lut3d_content_colorspace_xy_handler(self, event):
 		option = event.GetEventObject().Name.replace("_", ".")[5:]
-		setcfg("3dlut" + option, event.GetEventObject().GetValue())
+		self.lut3d_set_option("3dlut" + option,
+							  event.GetEventObject().GetValue())
 		self.lut3d_update_trc_controls()
 	
 	def lut3d_create_consumer(self, result=None):

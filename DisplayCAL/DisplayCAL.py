@@ -14059,6 +14059,10 @@ class MainFrame(ReportFrame, BaseFrame):
 							if cfgvalue is None:
 								continue
 							cfgvalue = safe_unicode(cfgvalue, "UTF-7")
+							try:
+								cfgvalue = round(float(cfgvalue), 4)
+							except ValueError:
+								pass
 							setcfg("3dlut.content.colorspace.%s.%s" % (color,
 																	   coord),
 								   cfgvalue)
