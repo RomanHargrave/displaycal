@@ -14050,6 +14050,18 @@ class MainFrame(ReportFrame, BaseFrame):
 									setcfg("measurement_report.use_devlink_profile", 0)
 							elif cfgname == "3dlut.trc":
 								lut3d_trc_set = True
+					# Content color space (currently only used for HDR)
+					for color in ("white", "red", "green", "blue"):
+						for coord in "xy":
+							keyword = ("3DLUT_CONTENT_COLORSPACE_%s_%s" %
+									   (color.upper(), coord.upper()))
+							cfgvalue = cfgpart.queryv1(keyword)
+							if cfgvalue is None:
+								continue
+							cfgvalue = safe_unicode(cfgvalue, "UTF-7")
+							setcfg("3dlut.content.colorspace.%s.%s" % (color,
+																	   coord),
+								   cfgvalue)
 					# Make sure 3D LUT TRC enumeration matches parameters for
 					# older profiles not containing 3DLUT_TRC
 					if not lut3d_trc_set:
