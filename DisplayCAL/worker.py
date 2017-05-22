@@ -7158,6 +7158,8 @@ usage: spotread [-options] [logfile]
 						break
 			if is_5x5x5:
 				# Use our own forward profile code
+				self.set_sessionlogfile(None, os.path.basename(args[-1]),
+										os.path.dirname(args[-1]))
 				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
 														  os.path.basename(args[-1]),
 														  getcfg("copyright"),
