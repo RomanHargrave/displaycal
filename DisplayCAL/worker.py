@@ -7662,12 +7662,10 @@ usage: spotread [-options] [logfile]
 
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
-		clutres = iclutres
+		clutres = {"m": 17, "l": 9}.get(quality, 33)
 		# XXX: Need to implement proper 3D interpolation
-		iterations = 0 ##{"m": 2, "l": 1}.get(quality, 3)
 
-		for n in xrange(iterations):
-			clutres += clutres - 1
+		if clutres > iclutres:
 
 			# Lookup input RGB to interpolated XYZ
 			RGB_in = []
@@ -7688,7 +7686,7 @@ usage: spotread [-options] [logfile]
 				for b in xrange(clutres):
 					clut.append([])
 					for c in xrange(clutres):
-						RGB = (a * step, b * step, c * step)
+						RGB = tuple(round(k * step, 3) for k in (a, b, c))
 						# Prefer actual measurements over interpolated values
 						prev_actual = actual
 						XYZ = remaining.get(RGB)
@@ -7715,12 +7713,10 @@ usage: spotread [-options] [logfile]
 						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
 			if actual > clut_actual:
 				# Did we get any additional actual measured cLUT points?
-				self.log("Iteration #%i, cLUT resolution %ix%ix%i: Got %i "
+				self.log("cLUT resolution %ix%ix%i: Got %i "
 						 "additional values from actual measurements" %
-						 (n + 1, clutres, clutres, clutres,
+						 (clutres, clutres, clutres,
 						  actual - clut_actual))
-			else:
-				break
 
 			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
 			clut_actual = actual
