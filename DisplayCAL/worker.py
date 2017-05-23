@@ -7792,7 +7792,7 @@ usage: spotread [-options] [logfile]
 			if 0 in ti3:
 				ti3[0].filename = ti3.filename  # So we can log the name
 				ti3 = ti3[0]
-				ti3.remove_zero_measurements(logfile=self.get_logfiles(False))
+				ti3.fix_zero_measurements(logfile=self.get_logfiles(False))
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
 										 outname + ".ti3"))
@@ -8334,6 +8334,8 @@ usage: spotread [-options] [logfile]
 					self.pauseable = False
 					basename = args[-1]
 					precond_ti3 = CGATS.CGATS(basename + ".ti3")
+					precond_ti3.fix_zero_measurements(logfile=self.get_logfiles(False))
+					precond_ti3.write()
 					cmd, args = get_argyll_util("colprof"), ["-v", "-qh", "-as",
 															 basename]
 					result = self.exec_cmd(cmd, args)
@@ -8852,6 +8854,7 @@ usage: spotread [-options] [logfile]
 					ti3[0].add_keyword("3DLUT_CONTENT_COLORSPACE_%s_%s" %
 									   (color.upper(), coord.upper()),
 									   safe_str(value, "UTF-7"))
+			ti3[0].fix_zero_measurements(logfile=self.get_logfiles(False))
 			if 1 in ti3:
 				# Add video level encoding flag if needed
 				black_white = False
