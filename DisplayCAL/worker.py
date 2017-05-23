@@ -7796,7 +7796,7 @@ usage: spotread [-options] [logfile]
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
 										 outname + ".ti3"))
-		for ti1name, tagcls in [("d3-e4-s2-g25-m0-b0-f0", "XYZ"),
+		for ti1name, tagcls in [("d3-e4-s3-g49-m3-b0-f0", "XYZ"),
 								(None, "TRC")]:
 			if tagcls == omit:
 				continue
