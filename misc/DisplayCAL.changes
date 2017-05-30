@@ -2,8 +2,15 @@
 ${DATETIME} - ${MAINTAINER_EMAIL}
 
 - Update to ${VERSION}:
-  * Maintenance/bugfix release
+  * High octane release: Efficiency. Accuracy. Speed. Awesome.
   * See README.html#changelog-${VERSION_SHORT}
+
+-------------------------------------------------------------------
+Sun Feb 19 16:46:26 UTC 2017 - florian@displaycal.net
+
+- Update to 3.2.4.0:
+  * Maintenance/bugfix release
+  * See README.html#changelog-3.2.4
 
 -------------------------------------------------------------------
 Wed Jan 04 14:12:01 UTC 2017 - florian@displaycal.net

@@ -1451,11 +1451,11 @@ div.info,
 }
 
 .changelog-label.feature {
-	background: #99f;
+	background: #db3;
 }
 
 .changelog-label.ui {
-	background: #ec3;
+	background: #99f;
 }
 
 .changelog-label.trivial {
@@ -1467,7 +1467,7 @@ div.info,
 }
 
 .changelog-label.minor {
-	background: #f93;
+	background: #e93;
 }
 
 .changelog-label.major {
