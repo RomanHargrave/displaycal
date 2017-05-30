@@ -830,8 +830,8 @@ defaults = {
 	"comport.number": 1,
 	"comport.number.backup": 1,
 	# Note: worker.Worker.enumerate_displays_and_ports() overwrites copyright
-	"copyright": "No copyright. Created with %s %s and Argyll CMS" % (appname, 
-																	  version),
+	"copyright": "No copyright. Created with %s %s and ArgyllCMS" % (appname, 
+																	 version),
 	"dimensions.measureframe": "0.5,0.5,1.5",
 	"dimensions.measureframe.unzoomed": "0.5,0.5,1.5",
 	"dimensions.measureframe.whitepoint.visual_editor": "0.5,0.5,1.5",

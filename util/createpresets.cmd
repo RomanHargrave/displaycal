@@ -23,7 +23,7 @@ goto :EOF
 :single
 :createpreset
 echo %1
-colprof  -ql -aG -C "Created with DisplayCAL and Argyll CMS" -D "DisplayCAL calibration preset: %~1" "%~dp0..\misc\ti3\%~2"
+colprof  -ql -aG -C "Created with DisplayCAL and ArgyllCMS" -D "DisplayCAL calibration preset: %~1" "%~dp0..\misc\ti3\%~2"
 move /-Y "%~dp0..\misc\ti3\%~2.ic?" "%~dp0..\DisplayCAL\presets\%~2.icc" && if not exist "%~dp0..\misc\ti3\%~2.ic?" python "%~dp0update_presets.py" "%~2"
 echo.
 goto :EOF

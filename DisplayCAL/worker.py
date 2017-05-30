@@ -3291,9 +3291,9 @@ END_DATA
 													 + 8:]
 						if (argyll_version_string != self.argyll_version_string):
 							self.set_argyll_version_from_string(argyll_version_string)
-						safe_print("Argyll CMS " + self.argyll_version_string)
+						safe_print("ArgyllCMS " + self.argyll_version_string)
 						config.defaults["copyright"] = ("No copyright. Created "
-														"with %s %s and Argyll "
+														"with %s %s and Argyll"
 														"CMS %s" % 
 														(appname, version, 
 														 argyll_version_string))
@@ -4849,7 +4849,7 @@ while 1:
 		for i, XYZ in enumerate(XYZrgb):
 			for j, v in enumerate(XYZ):
 				if v > XYZ[i]:
-					raise Error("Argyll CMS xicclu: Invalid primary %s XYZ: "
+					raise Error("xicclu: Invalid primary %s XYZ: "
 								"%.4f %.4f %.4f" % (("RGB"[i], ) + tuple(XYZ)))
 
 		if logfile:
@@ -4957,7 +4957,7 @@ while 1:
 			# Sanity check white
 			if (round(odata[-1][0], 3) != 1 or round(odata[-1][1], 3) != 1 or
 				round(odata[-1][2], 3) != 1):
-				wrgb_warning = ("Warning: Argyll CMS xicclu: Suspicious white "
+				wrgb_warning = ("Warning: xicclu: Suspicious white "
 								"RGB: %.4f %.4f %.4f\n" % tuple(odata[-1]))
 				if logfile:
 					logfile.write(wrgb_warning)
@@ -10891,7 +10891,7 @@ BEGIN_DATA
 			if (self.argyll_version < [1, 6] and
 				not (input_encoding == output_encoding == "n")):
 				# Fail if encoding is not n (data levels)
-				raise ValueError("The used version of Argyll CMS only"
+				raise ValueError("The used version of ArgyllCMS only"
 								 "supports full range RGB encoding.")
 			
 		odata = self.xicclu(profile, idata, intent, function, pcs=pcs,
@@ -11793,7 +11793,7 @@ BEGIN_DATA
 						   in txt.lower()):
 			self.patch_count += 1
 			if use_patterngenerator or self.use_madnet_tpg:
-				self.log("%s: Argyll CMS patch update count: %i" %
+				self.log("%s: Patch update count: %i" %
 						 (appname, self.patch_count))
 			if self.use_madnet_tpg and re.match("Patch \\d+ of \\d+", txt, re.I):
 				# Set madTPG progress bar

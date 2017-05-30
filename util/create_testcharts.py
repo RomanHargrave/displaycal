@@ -53,4 +53,4 @@ if __name__ == "__main__":
 	if check_argyll_bin():
 		create_testcharts("--overwrite" in sys.argv[1:])
 	else:
-		print "Argyll CMS not found"
+		print "ArgyllCMS not found"

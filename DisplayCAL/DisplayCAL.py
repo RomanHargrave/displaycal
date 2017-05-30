@@ -266,7 +266,7 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	elif not silent:
 		wx.CallAfter(app_uptodate, parent)
 	else:
-		safe_print(lang.getstr("update_check.uptodate", "Argyll CMS"))
+		safe_print(lang.getstr("update_check.uptodate", "ArgyllCMS"))
 		# Check if we need to run instrument setup
 		wx.CallAfter(parent.check_instrument_setup, check_donation,
 					 (parent, snapshot))
@@ -323,7 +323,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 		alt = None
 	newversion = ".".join(str(n) for n in newversion_tuple)
 	if argyll:
-		newversion_desc = "Argyll CMS"
+		newversion_desc = "ArgyllCMS"
 	else:
 		newversion_desc = appname
 	newversion_desc += " " + newversion
@@ -8803,7 +8803,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not allgood and linux:
 				sizer = wx.FlexGridSizer(0, 2, 8, 8)
 				dlg.sizer3.Add(sizer, 1, flag=wx.TOP, border=12)
-				for name, result in (("Argyll CMS", argyll_install),
+				for name, result in (("ArgyllCMS", argyll_install),
 									 ("colord", colord_install),
 									 ("Oyranos", oy_install),
 									 (lang.getstr("profile_loader"),
@@ -14499,7 +14499,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			URL="https://%s/" % domain))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1,
-								   u"Argyll CMS %s © Graeme Gill" %
+								   u"ArgyllCMS %s © Graeme Gill" %
 								   self.worker.argyll_version_string))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="argyllcms.com", 

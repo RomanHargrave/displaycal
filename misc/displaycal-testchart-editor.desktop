@@ -10,5 +10,5 @@ Exec=displaycal-testchart-editor
 Icon=displaycal-testchart-editor
 Terminal=false
 Categories=Graphics;
-Comment[de]=Ein Testform-Editor und -Erzeuger für RGB-Testformen im Argyll-CMS-CGATS-Format
-Comment=A testchart editor and creator for RGB testcharts in Argyll CMS CGATS format
+Comment[de]=Ein Testform-Editor und -Erzeuger für RGB-Testformen im ArgyllCMS-CGATS-Format
+Comment=A testchart editor and creator for RGB testcharts in ArgyllCMS CGATS format

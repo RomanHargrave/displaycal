@@ -109,7 +109,7 @@ debug = False
 
 enc, fs_enc = get_encodings()
 
-cmms = {"argl": "Argyll CMS",
+cmms = {"argl": "ArgyllCMS",
 		"ADBE": "Adobe",
 		"ACMS": "Agfa",
 		"Agfa": "Agfa",
@@ -307,7 +307,7 @@ observers = {
 manufacturers = {"ADBE": "Adobe Systems Incorporated",
 				 "APPL": "Apple Computer, Inc.",
 				 "agfa": "Agfa Graphics N.V.",
-				 "argl": "Argyll CMS",
+				 "argl": "ArgyllCMS",
 				 "bICC": "basICColor GmbH",
 				 "DL&C": "Digital Light & Color",
 				 "EPSO": "Seiko Epson Corporation",
