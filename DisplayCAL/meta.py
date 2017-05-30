@@ -21,8 +21,8 @@ if sys.version_info[:2] < (3, ):
 else:
 	author = "Florian Höch"
 author_ascii = "Florian Hoech"
-description = ("A display calibration and profiling solution with a focus on "
-			   "accuracy and versatility, powered by ArgyllCMS")
+description = ("Display calibration and profiling with a focus on accuracy and "
+			   "versatility")
 longdesc = "\n".join(["Calibrate and characterize your display devices using "
 					  "one of many supported measurement instruments, with "
 					  "support for multi-display setups and a variety of "
