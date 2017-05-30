@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from SocketServer import TCPServer, _eintr_retry
+from SocketServer import TCPServer
 from socket import (AF_INET, SHUT_RDWR, SO_BROADCAST, SO_REUSEADDR, SOCK_DGRAM,
 					SOCK_STREAM, SOL_SOCKET, error, gethostname, gethostbyname,
 					socket, timeout)
@@ -29,6 +29,16 @@ _lock = threading.RLock()
 
 def Property(func):
 	return property(**func())
+
+
+def _eintr_retry(func, *args):
+	"""restart a system call interrupted by EINTR"""
+	while True:
+		try:
+			return func(*args)
+		except (OSError, select.error) as e:
+			if e.args[0] != errno.EINTR:
+				raise
 
 
 def _shutdown(sock, addr):
