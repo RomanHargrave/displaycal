@@ -89,6 +89,20 @@ Requires:       numpy >= %{numpy_version}
 Requires:       p7zip-plugins
 Requires:       pygame
 Requires:       wxPython >= %{wx_minversion}
+%else
+# Mageia
+%define mageia_version 5
+BuildRequires:  gcc
+BuildRequires:  libx11-devel
+BuildRequires:  libxinerama-devel
+BuildRequires:  libxrandr-devel
+BuildRequires:  libxxf86vm-devel
+BuildRequires:  libpython-devel
+BuildRequires:  udev
+Requires:       argyllcms
+Requires:       pygame
+Requires:       python-numpy >= %{numpy_version}
+Requires:       wxPython >= %{wx_minversion}
 %endif
 %endif
 %endif
@@ -175,9 +189,11 @@ for path in list(paths):
 		# Mandriva 2010.1 got rid of byte-compilation
 		paths.append(path + 'c')
 		if (int('0%{?fedora_version}') > 0 or int('0%{?rhel_version}') > 0 or
-        	int('0%{?centos_version}') > 0 or int('0%{?scientificlinux_version}') > 0):
+        	int('0%{?centos_version}') > 0 or int('0%{?scientificlinux_version}') > 0 or
+            int('0%{?mageia_version}') > 0):
 			paths.append(path + 'o')
 	if os.path.basename(path) in executables:
+		paths.remove(path)
 		paths.append('%attr(755, root, root) ' + path)
 	while True:
 		path = os.path.dirname(path)
