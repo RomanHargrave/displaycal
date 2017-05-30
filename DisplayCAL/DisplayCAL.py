@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-DisplayCAL
-
-A graphical user interface for the Argyll CMS display calibration utilities
+DisplayCAL - display calibration and characterization powered by ArgyllCMS
 
 Copyright (C) 2008, 2009 Florian Hoech
 

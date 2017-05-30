@@ -10,5 +10,5 @@ Exec=displaycal
 Icon=displaycal
 Terminal=false
 Categories=Graphics;
-Comment[de]=Eine grafische Benutzeroberfläche für die Argyll CMS Anzeigegerätekalibrierungs-Programme
-Comment=A graphical user interface for the Argyll CMS display calibration utilities
+Comment[de]=Eine Anzeigegeräte-Kalibrierungs- und Profilierungslösung mit einem Fokus auf Genauigkeit und Vielseitigkeit
+Comment=A display calibration and profiling solution with a focus on accuracy and versatility

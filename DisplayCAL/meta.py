@@ -21,18 +21,16 @@ if sys.version_info[:2] < (3, ):
 else:
 	author = "Florian Höch"
 author_ascii = "Florian Hoech"
-description = ("A graphical front-end for display calibration and profiling "
-			   "using Argyll CMS")
-longdesc = "\n".join(["Calibrates and characterizes display devices using a hardware sensor,",
-					  "driven by the open source color management system Argyll CMS.",
-					  "Supports multi-display setups and a variety of available settings like ",
-					  "customizable whitepoint, luminance, black level, tone response curve ",
-					  "as well as the creation of matrix and look-up-table ICC profiles with ",
-					  "optional gamut mapping. Calibrations and profiles can be verified ",
-					  "through measurements, and profiles can be installed to make them ",
-					  "available to color management aware applications.",
-					  "Profile installation can utilize Argyll CMS, Oyranos and/or GNOME ",
-					  "Color Manager if available, for flexible integration."])
+description = ("A display calibration and profiling solution with a focus on "
+			   "accuracy and versatility, powered by ArgyllCMS")
+longdesc = "\n".join(["Calibrate and characterize your display devices using "
+					  "one of many supported measurement instruments, with "
+					  "support for multi-display setups and a variety of "
+					  "available options for advanced users, such as "
+					  "verification and reporting functionality to evaluate "
+					  "ICC profiles and display devices, creating video 3D "
+					  "LUTs, as well as optional CIECAM02 gamut mapping to "
+					  "take into account varying viewing conditions."])
 domain = "displaycal.net"
 author_email = "florian" + chr(0100) + domain
 name = "DisplayCAL"
