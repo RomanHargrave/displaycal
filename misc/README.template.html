@@ -1537,6 +1537,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 					<li><strong>Reset video card gamma table</strong>. Selecting this resets the video card gamma tables instantly, and also sets the desired calibration state (see “Preserve calibration state” below).</li>
 					<li><strong>Load calibration on login &amp; preserve calibration state</strong>. This periodically checks if the video card gamma tables match the desired calibration state. It may take up to three seconds until the selected calibration state is automatically re-applied.</li>
 					<li><strong>Fix profile associations automatically</strong> when only one display is active in a multi-display setup. This is a work-around for applications (and Windows itself) querying the display profile in a way that does not take into account the active display, which can lead to a wrong profile being used. A pre-requisite for this working correctly is that the profile loader has to be running <strong>before</strong> you switch from a multi-display to a single-display configuration in Windows, and the profile associations have to be correct at this point. Note that quitting the profile loader will restore profile associations to what they were (honoring any changes to profile associations during its runtime).</li>
+					<li><strong>Bitdepth</strong>. Some graphics drivers may internally quantize the video card gamma table values to a lower bitdepth than the nominal 16 bits per channel that are encoded in the video card gamma table tag of ${APPNAME}-generated profiles. If this quantization is done using integer truncating instead of rounding, this may pronounce banding. In that case, you can let the profile loader quantize to the target bitdepth by using rounding, which may produce a smoother result.</li>
 					<li><strong>Exceptions</strong>. You can override the global profile loader state on a per application basis.</li>
 					<li><strong>Profile associations</strong>. Brings up a dialog where you can associate profiles to your display devices.</li>
 					<li><strong>Open Windows display settings</strong>.</li>
@@ -2501,6 +2502,7 @@ Knarberg, Dietmar Hentzschel, Brett Antony Patching, Vivek Chowdhary
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> 3D LUT generator ReShade 3.0 compatibility.</li>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Support calibration from WCS profiles embedded in ICC profiles (like the ones created by the Windows Display Color Calibration Tool).</li>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Profile loader (Windows): Detect the Windows Display Color Calibration Tool.</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Profile loader (Windows): The quantization bitdepth can now be selected.</li>
 						</ul>
 
 						<h4>Changed in this release:</h4>
