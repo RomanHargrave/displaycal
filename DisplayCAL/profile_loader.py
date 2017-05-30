@@ -943,6 +943,7 @@ class ProfileLoader(object):
 		self._set_exceptions()
 		self._madvr_instances = []
 		self._madvr_reset_cal = {}
+		self._quantize = 2 ** getcfg("profile_loader.quantize_bits") - 1.0
 		self._timestamp = time.time()
 		self._component_name = None
 		self._app_detection_msg = None
@@ -1121,6 +1122,20 @@ class ProfileLoader(object):
 								   "profile_loader.fix_profile_associations",
 								   None),
 								  ("-", None, False, None, None),
+								  ("bitdepth",
+								   (("8", lambda event:
+										  self.set_bitdepth(event, 8)),
+									("10", lambda event:
+										  self.set_bitdepth(event, 10)),
+									("12", lambda event:
+										  self.set_bitdepth(event, 12)),
+									("14", lambda event:
+										  self.set_bitdepth(event, 14)),
+									("16", lambda event:
+										  self.set_bitdepth(event, 16))),
+								   wx.ITEM_CHECK,
+								   "profile_loader.quantize_bits", None),
+								  ("-", None, False, None, None),
 								  ("exceptions",
 								   self.set_exceptions,
 								   wx.ITEM_NORMAL, None, None),
@@ -1149,6 +1164,18 @@ class ProfileLoader(object):
 											   kind=kind)
 							if not method:
 								item.Enable(False)
+							elif isinstance(method, tuple):
+								submenu = Menu()
+								for sublabel, submethod in method:
+									subitem = MenuItem(submenu, -1, sublabel,
+													   kind=kind)
+									if str(getcfg(option)) == sublabel:
+										subitem.Check(True)
+									submenu.AppendItem(subitem)
+									submenu.Bind(wx.EVT_MENU, submethod,
+												 id=subitem.Id)
+								menu.AppendSubMenu(submenu, label)
+								continue
 							else:
 								menu.Bind(wx.EVT_MENU, method, id=item.Id)
 							menu.AppendItem(item)
@@ -1299,6 +1326,13 @@ class ProfileLoader(object):
 							safe_print("TaskBarIcon: Releasing lock")
 					else:
 						self.set_visual_state()
+
+				def set_bitdepth(self, event=None, bits=16):
+					setcfg("profile_loader.quantize_bits", bits)
+					with self.pl.lock:
+						self.pl._quantize = 2 ** bits - 1.0
+						self.pl.ramps = {}
+						self.pl._manual_restore = True
 
 				def set_exceptions(self, event):
 					safe_print("Menu command: Set exceptions")
@@ -2010,6 +2044,13 @@ class ProfileLoader(object):
 									  ICCP.VideoCardGammaType):
 							# Get display profile vcgt
 							vcgt_values = profile.tags.vcgt.get_values()[:3]
+							# Quantize to n bits
+							if self._quantize < 65535.0:
+								for points in vcgt_values:
+									for point in points:
+										point[1] = int(round(point[1] / 65535.0 *
+															 self._quantize) /
+													   self._quantize * 65535)
 					if len(vcgt_values[0]) != 256:
 						# Hmm. Do we need to deal with this?
 						# I've never seen table-based vcgt with != 256 entries
