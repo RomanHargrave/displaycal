@@ -35,10 +35,13 @@ class Menu(wx.EvtHandler):
 		return self.Append(id, text, help, wx.ITEM_CHECK)
 
 	def AppendItem(self, item):
-		flags = 0
 		if item.Kind == wx.ITEM_SEPARATOR:
-			flags |= win32con.MF_SEPARATOR
+			flags = win32con.MF_SEPARATOR
 		else:
+			if item.subMenu:
+				flags = win32con.MF_POPUP | win32con.MF_STRING
+			else:
+				flags = 0
 			if not item.Enabled:
 				flags |= win32con.MF_DISABLED
 		self._Append(flags, item.Id, item.ItemLabel)
@@ -47,6 +50,11 @@ class Menu(wx.EvtHandler):
 		if item.Checked:
 			self.Check(item.Id)
 		return item
+
+	def AppendSubMenu(self, submenu, text, help=u""):
+		item = MenuItem(self, submenu.hmenu, text, help, wx.ITEM_NORMAL,
+						submenu)
+		return self.AppendItem(item)
 
 	def AppendRadioItem(self, id, text, help=u""):
 		return self.Append(id, text, help, wx.ITEM_RADIO)
@@ -96,7 +104,8 @@ class Menu(wx.EvtHandler):
 
 class MenuItem(object):
 
-	def __init__(self, menu, id=-1, text=u"", help=u"", kind=wx.ITEM_NORMAL):
+	def __init__(self, menu, id=-1, text=u"", help=u"", kind=wx.ITEM_NORMAL,
+				 subMenu=None):
 		if id == -1:
 			id = wx.NewId()
 		self.Menu = menu
@@ -106,6 +115,7 @@ class MenuItem(object):
 		self.Kind = kind
 		self.Enabled = True
 		self.Checked = False
+		self.subMenu = subMenu
 
 	def Check(self, check=True):
 		self.Checked = check
@@ -173,6 +183,19 @@ class SysTrayIcon(wx.EvtHandler):
 		item = menu.AppendCheckItem(-1, "Disabled")
 		item.Enable(False)
 		menu.AppendSeparator()
+		submenu = Menu()
+		item = submenu.AppendCheckItem(-1, "Sub menu item")
+		submenu.Bind(wx.EVT_MENU, lambda event: submenu.Check(event.Id,
+														      event.IsChecked()),
+					 id=item.Id)
+		subsubmenu = Menu()
+		item = subsubmenu.AppendCheckItem(-1, "Sub sub menu item")
+		subsubmenu.Bind(wx.EVT_MENU, lambda event: subsubmenu.Check(event.Id,
+																	event.IsChecked()),
+				  id=item.Id)
+		submenu.AppendSubMenu(subsubmenu, "Sub sub menu")
+		menu.AppendSubMenu(submenu, "Sub menu")
+		menu.AppendSeparator()
 		item = menu.Append(-1, "Exit")
 		menu.Bind(wx.EVT_MENU, lambda event: win32gui.DestroyWindow(self.hwnd),
 				  id=item.Id)
@@ -181,12 +204,14 @@ class SysTrayIcon(wx.EvtHandler):
 	def OnCommand(self, hwnd, msg, wparam, lparam):
 		event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
 		event.Id = win32api.LOWORD(wparam)
-		item = self.menu._menuitems[event.Id]
+		item = _get_selected_menu_item(event.Id, self.menu)
+		if not item:
+			return
 		if item.Kind == wx.ITEM_RADIO:
 			event.SetInt(1)
 		elif item.Kind == wx.ITEM_CHECK:
 			event.SetInt(int(not item.Checked))
-		self.menu.ProcessEvent(event)
+		item.Menu.ProcessEvent(event)
 
 	def OnDestroy(self, hwnd, msg, wparam, lparam):
 		self.RemoveIcon()
@@ -260,6 +285,17 @@ class SysTrayIcon(wx.EvtHandler):
 		except win32gui.error:
 			return False
 		return True
+
+
+def _get_selected_menu_item(id, menu):
+	if id in menu._menuitems:
+		return menu._menuitems[id]
+	else:
+		for item in menu.MenuItems:
+			if item.subMenu:
+				item = _get_selected_menu_item(id, item.subMenu)
+				if item:
+					return item
 
 
 def main():
