@@ -8,6 +8,7 @@ from distutils.util import change_root, get_platform
 from hashlib import md5, sha1
 from subprocess import call, Popen
 from time import gmtime, strftime
+from textwrap import fill
 import calendar
 import codecs
 import glob
@@ -341,6 +342,7 @@ def setup():
 					  version, version_lin, version_mac, 
 					  version_src, version_tuple, version_win,
 					  wx_minversion, script2pywname)
+	longdesc = fill(longdesc)
 
 	if not lastmod_time:
 		lastmod_time = calendar.timegm(time.strptime(lastmod,

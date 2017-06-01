@@ -23,14 +23,14 @@ else:
 author_ascii = "Florian Hoech"
 description = ("Display calibration and profiling with a focus on accuracy and "
 			   "versatility")
-longdesc = "\n".join(["Calibrate and characterize your display devices using "
+longdesc = ("Calibrate and characterize your display devices using "
 					  "one of many supported measurement instruments, with "
 					  "support for multi-display setups and a variety of "
 					  "available options for advanced users, such as "
 					  "verification and reporting functionality to evaluate "
 					  "ICC profiles and display devices, creating video 3D "
 					  "LUTs, as well as optional CIECAM02 gamut mapping to "
-					  "take into account varying viewing conditions."])
+					  "take into account varying viewing conditions.")
 domain = "displaycal.net"
 author_email = "florian" + chr(0100) + domain
 name = "DisplayCAL"
