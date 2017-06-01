@@ -1,0 +1,23 @@
+app: ${APPNAME}
+
+build:
+  packages:
+    - python
+  files:
+    - ${APPNAME}-${VERSION}.tar.gz
+
+script:
+  - cd $BUILD_SOURCE_DIR
+  - tar -zxf ${APPNAME}-${VERSION}.tar.gz
+  - cd ${APPNAME}-${VERSION}
+  - cp ${APPNAME}/theme/icons/256x256/${APPNAME_LOWER}.png $BUILD_APPDIR
+  - cp misc/${APPNAME_LOWER}.desktop $BUILD_APPDIR/${APPNAME}.desktop
+  - echo -e '#!/bin/sh\nappdir=`dirname "$0"`\n"$appdir/${APPNAME}.pyw"' > $BUILD_APPDIR/AppRun
+  - chmod +x $BUILD_APPDIR/AppRun *.pyw
+  - mkdir -p $BUILD_APPDIR/usb
+  - cp -f misc/55-Argyll.rules $BUILD_APPDIR/usb
+  - cp -f misc/45-Argyll.rules $BUILD_APPDIR/usb
+  - cp -f misc/Argyll $BUILD_APPDIR/usb
+  - cp -f misc/Argyll.usermap $BUILD_APPDIR/usb
+  - rm ${APPNAME}/theme/icons/*.ico ${APPNAME}/theme/icons/*.icns
+  - mv ${APPNAME} screenshots scripts theme LICENSE.txt README-fr.html README.html *.pyw $BUILD_APPDIR

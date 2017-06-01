@@ -635,6 +635,7 @@ def setup():
 						  "debian.copyright",
 						  "debian.rules", name + ".changes",
 						  name + ".dsc", name + ".spec", 
+						  "appimage.yml",
 						  os.path.join("0install", "PKGBUILD"),
 						  os.path.join("0install", "debian.changelog"),
 						  os.path.join("0install", "debian.control"),
