@@ -2,8 +2,16 @@
 ${DATETIME} - ${MAINTAINER_EMAIL}
 
 - Update to ${VERSION}:
-  * High octane release: Efficiency. Accuracy. Speed. Awesome.
+  * Fix unhandled exception when using CIECAM02 with alternate
+    forward profiler
   * See README.html#changelog-${VERSION_SHORT}
+
+-------------------------------------------------------------------
+Thu Jun 01 16:11:48 UTC 2017 - florian@displaycal.net
+
+- Update to 3.3.0.0:
+  * High octane release: Efficiency. Accuracy. Speed. Awesome.
+  * See README.html#changelog-3.3
 
 -------------------------------------------------------------------
 Sun Feb 19 16:46:26 UTC 2017 - florian@displaycal.net
