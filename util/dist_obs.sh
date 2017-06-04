@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Make sure __version__.py is current
+./setup.py
+
 appname=`python -c "from DisplayCAL import meta;print meta.name"`
 version=`python -c "from DisplayCAL import meta;print meta.version"`
 
