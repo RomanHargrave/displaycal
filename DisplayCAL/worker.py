@@ -7246,6 +7246,8 @@ usage: spotread [-options] [logfile]
 					if isinstance(result, ICCP.ICCProfile):
 						result = True
 						profchanged = True
+				# Do we have a B2A0 table?
+				has_B2A = "B2A0" in profile.tags
 			if not isinstance(result, Exception) and result:
 				# Hires CIECAM02 gamut mapping - perceptual and saturation
 				# tables, also colorimetric table for non-RGB profiles
@@ -7287,7 +7289,7 @@ usage: spotread [-options] [logfile]
 							stream = os.fdopen(fd, "wb")
 							gamap_profile.write(stream)
 							stream.close()
-							if profile.colorSpace == "RGB":
+							if profile.colorSpace == "RGB" and has_B2A:
 								# Only table 0 (colorimetric) in display profile.
 								# Assign it to table 1 as per ICC spec to prepare
 								# for adding table 0 (perceptual) and 2 (saturation)
@@ -7423,25 +7425,11 @@ usage: spotread [-options] [logfile]
 				if profchanged and tables:
 					# Make sure we match Argyll colprof i.e. have a complete
 					# set of tables
-					if profile.colorSpace != "RGB":
-						if len(tables) == 1:
-							# We only created a colorimetric table, the
-							# others are still low quality. Assign 
-							# colorimetric table
-							profile.tags.B2A0 = profile.tags.B2A1
-						if len(tables) < 3:
-							# We only created colorimetric and/or perceptual
-							# tables, saturation table is still low quality.
-							# Assign perceptual table
-							profile.tags.B2A2 = profile.tags.B2A0
 					if not "A2B1" in profile.tags:
 						profile.tags.A2B1 = profile.tags.A2B0
 					if not "A2B2" in profile.tags:
 						profile.tags.A2B2 = profile.tags.A2B0
-					if not "B2A2" in profile.tags:
-						profile.tags.B2A2 = profile.tags.B2A0
 				# A2B processing
-				has_B2A = "B2A0" in profile.tags
 				process_A2B = ("A2B0" in profile.tags and
 							   profile.colorSpace == "RGB" and
 							   profile.connectionColorSpace in ("XYZ", "Lab") and
@@ -7504,6 +7492,22 @@ usage: spotread [-options] [logfile]
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True
+				if profchanged and tables:
+					# Make sure we match Argyll colprof i.e. have a complete
+					# set of tables
+					if profile.colorSpace != "RGB":
+						if len(tables) == 1:
+							# We only created a colorimetric table, the
+							# others are still low quality. Assign 
+							# colorimetric table
+							profile.tags.B2A0 = profile.tags.B2A1
+						if len(tables) < 3:
+							# We only created colorimetric and/or perceptual
+							# tables, saturation table is still low quality.
+							# Assign perceptual table
+							profile.tags.B2A2 = profile.tags.B2A0
+					if not "B2A2" in profile.tags:
+						profile.tags.B2A2 = profile.tags.B2A0
 			if profchanged and not isinstance(result, Exception) and result:
 				if "bkpt" in profile.tags and bpc_applied:
 					# We need to update the blackpoint tag
