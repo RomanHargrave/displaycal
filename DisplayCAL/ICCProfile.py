@@ -813,10 +813,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 	rgb_space_linear = list(rgb_space)
 	rgb_space_linear[0] = 1.0
-	
-	white_L99 = colormath.Lab2DIN99d(100, 0, 0)[0]
-	white_DIN99d_Lab = colormath.DIN99d2Lab(white_L99, 0, 0)
-	white_DIN99d_XYZ = colormath.Lab2XYZ(*white_DIN99d_Lab)
 
 	# Scene RGB -> BT.2390 rolloff -> HDR XYZ -> backward lookup -> display RGB
 	if logfile:
@@ -1070,13 +1066,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				XYZdisp = display_XYZ[-(6 - i)]
 				XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space)
 				XYZc = colormath.adapt(*XYZc,
-										whitepoint_source=content_rgb_space_st2084[1],
-										whitepoint_destination=white_DIN99d_XYZ)
+										whitepoint_source=content_rgb_space_st2084[1])
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v * 100
 													for v in XYZc))
-				XYZdisp99 = colormath.adapt(*XYZdisp,
-											whitepoint_destination=white_DIN99d_XYZ)
-				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
+				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
 				Cdmaxk = tuple(map(round, (Ld, Hd)))
 				if C > Cmax.get(Cdmaxk, -1):
 					Cmax[Cdmaxk] = C
@@ -1088,8 +1081,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						   tuple(v * 100 for v in XYZc))
 				safe_print("Content BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" %
 						   (L, C, H))
-				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
-						   tuple(v * 100 for v in XYZdisp99))
+				safe_print("Display XYZ %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZdisp))
 				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" %
 						   (Ld, Cd, Hd))
 				if logfile:
@@ -1145,13 +1138,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
 			else:
 				XYZc_r202099 = colormath.adapt(*XYZc_r2020,
-											   whitepoint_source=rgb_space[1],
-											   whitepoint_destination=white_DIN99d_XYZ)
+											   whitepoint_source=rgb_space[1])
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v / new_maxv * 100
 													for v in XYZc_r202099))
-				XYZdisp99 = colormath.adapt(*XYZdisp,
-											whitepoint_destination=white_DIN99d_XYZ)
-				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
+				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
 			Cdmaxk = tuple(map(round, (Ld, Hd)))
 			if C > Cmax.get(Cdmaxk, -1):
 				Cmax[Cdmaxk] = C
@@ -1171,8 +1161,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				safe_print("Content BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
 						   tuple(v / new_maxv * 100 for v in XYZc_r202099))
 				safe_print("Content BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" % (L, C, H))
-				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
-						   tuple(v * 100 for v in XYZdisp99))
+				safe_print("Display XYZ %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZdisp))
 				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" % (Ld, Cd, Hd))
 			perc = startperc + math.floor(i / clutres ** 3.0 *
 										  (95 - startperc))
@@ -1240,8 +1230,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						elif blendmode == "ICtCp":
 							L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
 						elif blendmode == "DIN99d":
-							XYZ = colormath.adapt(X, Y, Z,
-												  whitepoint_destination=white_DIN99d_XYZ)
+							XYZ = X, Y, Z
 							L, C, H = colormath.XYZ2DIN99dLCH(*[v * 100
 																for v in XYZ])
 						if blendmode != "XYZ":
@@ -1281,8 +1270,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						elif blendmode == "DIN99d":
 							L, a, b = colormath.DIN99dLCH2Lab(L, C, H)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
-							X, Y, Z = colormath.adapt(X, Y, Z,
-													  whitepoint_source=white_DIN99d_XYZ)
 					else:
 						safe_print("CLUT grid point %i %i %i: blend = 0" %
 								   (col_0, col_1, col_2))
@@ -1298,8 +1285,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					if blendmode == "DIN99b":
 						L99, C99, H99 = colormath.XYZ2DIN99bLCH(*[v * 100 for v in (X, Y, Z)])
 					elif blendmode == "DIN99d":
-						XYZ = colormath.adapt(X, Y, Z,
-											  whitepoint_destination=white_DIN99d_XYZ)
+						XYZ = X, Y, Z
 						L99, C99, H99 = colormath.XYZ2DIN99dLCH(*[v * 100 for v in XYZ])
 					while max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0:
 						# Decrease intensity until in-gamut
@@ -1328,8 +1314,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							C99 *= .99
 							L, a, b = colormath.DIN99dLCH2Lab(L99, C99, H99)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
-							X, Y, Z = colormath.adapt(X, Y, Z,
-													  whitepoint_source=white_DIN99d_XYZ)
 						elif blendmode == "ICtCp":
 							#I *= .99
 							Ct *= .99
@@ -1652,10 +1636,6 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
 		startperc = perc
-	
-	white_L99 = colormath.Lab2DIN99d(100, 0, 0)[0]
-	white_DIN99d_Lab = colormath.DIN99d2Lab(white_L99, 0, 0)
-	white_DIN99d_XYZ = colormath.Lab2XYZ(*white_DIN99d_Lab)
 
 	# Scene RGB -> BT.2390 rolloff -> HDR XYZ -> backward lookup -> display RGB
 	if logfile:
@@ -1838,13 +1818,10 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
 			else:
 				XYZc_r202099 = colormath.adapt(*XYZc_r2020,
-											   whitepoint_source=rgb_space[1],
-											   whitepoint_destination=white_DIN99d_XYZ)
+											   whitepoint_source=rgb_space[1])
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v / new_maxv * 100
 													for v in XYZc_r202099))
-				XYZdisp99 = colormath.adapt(*XYZdisp,
-											whitepoint_destination=white_DIN99d_XYZ)
-				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp99))
+				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
 			Cdmaxk = tuple(map(round, (Ld, Hd)))
 			if C > Cmax.get(Cdmaxk, -1):
 				Cmax[Cdmaxk] = C
@@ -1864,8 +1841,8 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 				safe_print("Content BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
 						   tuple(v / new_maxv * 100 for v in XYZc_r202099))
 				safe_print("Content BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" % (L, C, H))
-				safe_print("Display XYZ (DIN99d) %5.2f %5.2f %5.2f" %
-						   tuple(v * 100 for v in XYZdisp99))
+				safe_print("Display XYZ %5.2f %5.2f %5.2f" %
+						   tuple(v * 100 for v in XYZdisp))
 				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" % (Ld, Cd, Hd))
 			perc = startperc + math.floor(i / clutres ** 3.0 *
 										  (95 - startperc))
@@ -1918,8 +1895,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 						blend = 0
 					if blend:
 						if blendmode == "DIN99d":
-							XYZ = colormath.adapt(X, Y, Z,
-												  whitepoint_destination=white_DIN99d_XYZ)
+							XYZ = X, Y, Z
 							L, C, H = colormath.XYZ2DIN99dLCH(*[v * 100
 																for v in XYZ])
 						if blendmode != "XYZ":
@@ -1950,8 +1926,6 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 						if blendmode == "DIN99d":
 							L, a, b = colormath.DIN99dLCH2Lab(L, C, H)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
-							X, Y, Z = colormath.adapt(X, Y, Z,
-													  whitepoint_source=white_DIN99d_XYZ)
 					else:
 						safe_print("CLUT grid point %i %i %i: blend = 0" %
 								   (col_0, col_1, col_2))
