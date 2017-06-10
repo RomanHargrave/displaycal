@@ -375,6 +375,11 @@ def update_vrml(vrml, colorspace):
 			I, Ct, Cp = colormath.XYZ2ICtCp(X / 100.0, Y / 100.0, Z / 100.0,
 										  clamp=False)
 			z, x, y = I * 100, Ct * 100, Cp * 100
+		elif colorspace == "IPT":
+			I, P, T = colormath.XYZ2IPT(X / 100.0, Y / 100.0, Z / 100.0)
+			z, x, y = I * 100, P * 100, T * 100
+		elif colorspace == "Lpt":
+			z, x, y = colormath.XYZ2Lpt(X, Y, Z)
 		z -= maxz / 2.0
 		return " ".join(["%.6f" % v for v in (x, y, z)])
 	# Update point lists
@@ -483,6 +488,20 @@ Transform {
 			# Blue -> cyan
 			vrml = vrml.replace(axis, re.sub("diffuseColor\s+0\.0+\s+0\.0+\s+1\.0+",
 											 "diffuseColor 0.0 1.0 1.0", axis))
+	elif colorspace == "IPT":
+		# Replace L* a* b* labels with I P T
+		vrml = re.sub(r'(string\s*\["[+\-]?)L\*?',
+					  r"\1I", vrml)
+		vrml = re.sub(r'(string\s*\["[+\-]?)a\*?',
+					  r"\1P", vrml)
+		vrml = re.sub(r'(string\s*\["[+\-]?)b\*?',
+					  r"\1T", vrml)
+	elif colorspace == "Lpt":
+		# Replace a* b* labels with p* t*
+		vrml = re.sub(r'(string\s*\["[+\-]?)a\*?',
+					  r"\1p*", vrml)
+		vrml = re.sub(r'(string\s*\["[+\-]?)b\*?',
+					  r"\1t*", vrml)
 	return vrml
 
 

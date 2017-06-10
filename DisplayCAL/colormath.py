@@ -1723,6 +1723,29 @@ def XYZ2DIN99dLCH(X, Y, Z, whitepoint=None):
 						  whitepoint)
 
 
+def XYZ2IPT(X, Y, Z):
+	XYZ2LMS_matrix = get_cat_matrix("IPT")
+	LMS = XYZ2LMS_matrix * (X, Y, Z)
+	for i, component in enumerate(LMS):
+		if component >= 0:
+			LMS[i] **= 0.43
+		else:
+			LMS[i] = -(-component) ** 0.43
+	return LMS2IPT_matrix * LMS
+
+
+def IPT2XYZ(I, P, T):
+	XYZ2LMS_matrix = get_cat_matrix("IPT")
+	LMS2XYZ_matrix = XYZ2LMS_matrix.inverted()
+	LMS = IPT2LMS_matrix * (I, P, T)
+	for i, component in enumerate(LMS):
+		if component >= 0:
+			LMS[i] **= 1 / 0.43
+		else:
+			LMS[i] = -(-component) ** (1 / 0.43)
+	return LMS2XYZ_matrix * LMS
+
+
 def XYZ2Lab(X, Y, Z, whitepoint=None):
 	"""
 	Convert from XYZ to Lab.
@@ -1750,6 +1773,92 @@ def XYZ2Lab(X, Y, Z, whitepoint=None):
 	b = 200 * (fy - fz)
 	
 	return L, a, b
+
+
+def XYZ2Lpt(X, Y, Z, whitepoint=None):
+	"""
+	Convert from XYZ to L*p*t*
+	
+	This is a modern update to L*a*b*, based on IPT space.
+	
+	Differences to L*a*b* and IPT:
+	- Using inverse CIE 2012 2degree LMS to XYZ matrix instead of
+	  Hunt-Pointer-Estevez Von Kries chromatic adapation in LMS space.
+	- Using L* compression rather than IPT pure 0.43 power.
+	- Tweaked LMS' to IPT matrix to account for change in XYZ to LMS matrix.
+	- Output scaled to L*a*b* type ranges, to maintain 1 JND scale.
+	- L* value is not a non-linear Y value.
+	
+	The input Y value needs to be in the nominal range [0.0, 100.0] and 
+	other input values scaled accordingly.
+	The output L value is in the nominal range [0.0, 100.0].
+	
+	whitepoint can be string (e.g. "D50"), a tuple of XYZ coordinates or 
+	color temperature as float or int. Defaults to D50 if not set.
+	
+	"""
+	# Adapted from Argyll/icc/icc.c
+
+	xyz2lms = get_cat_matrix("CIE2012_2")
+	
+	wlms = xyz2lms * get_whitepoint(whitepoint, 100)
+
+	lms = xyz2lms * (X, Y, Z)
+
+	for j in xrange(3):
+		lms[j] /= wlms[j]
+
+		if (lms[j] > 0.008856451586):
+			lms[j] = pow(lms[j], 1.0 / 3.0);
+		else:
+			lms[j] = 7.787036979 * lms[j] + 16.0 / 116.0
+		lms[j] = 116.0 * lms[j] - 16.0
+
+	return LMS2Lpt_matrix * lms
+
+
+def Lpt2XYZ(L, p, t, whitepoint=None, scale=1.0):
+	"""
+	Convert from L*p*t* to XYZ
+	
+	This is a modern update to L*a*b*, based on IPT space.
+	
+	Differences to L*a*b* and IPT:
+	- Using inverse CIE 2012 2degree LMS to XYZ matrix instead of
+	  Hunt-Pointer-Estevez Von Kries chromatic adapation in LMS space.
+	- Using L* compression rather than IPT pure 0.43 power.
+	- Tweaked LMS' to IPT matrix to account for change in XYZ to LMS matrix.
+	- Output scaled to L*a*b* type ranges, to maintain 1 JND scale.
+	- L* value is not a non-linear Y value.
+	
+	The input L* value needs to be in the nominal range [0.0, 100.0] and 
+	other input values scaled accordingly.
+	The output XYZ values are in the nominal range [0.0, 1.0].
+	
+	whitepoint can be string (e.g. "D50"), a tuple of XYZ coordinates or 
+	color temperature as float or int. Defaults to D50 if not set.
+	
+	"""
+	# Adapted from Argyll/icc/icc.c
+
+	xyz2lms = get_cat_matrix("CIE2012_2")
+	lms2xyz = xyz2lms.inverted()
+
+	wlms = xyz2lms * get_whitepoint(whitepoint, scale)
+
+	lms = Lpt2LMS_matrix * (L, p, t)
+
+	for j in xrange(3):
+		lms[j] = (lms[j] + 16.0) / 116.0
+
+		if lms[j] > 24.0 / 116.0:
+			lms[j] = pow(lms[j], 3.0)
+		else:
+			lms[j] = (lms[j] - 16.0 / 116.0) / 7.787036979
+
+		lms[j] *= wlms[j]
+
+	return lms2xyz * lms
 
 
 def XYZ2Lu_v_(X, Y, Z, whitepoint=None):
@@ -2729,7 +2838,26 @@ cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
 										[ 0.00000,  0.00000,  0.91822]]),
 				"XYZ scaling": Matrix3x3([[1, 0, 0],
 										  [0, 1, 0],
-										  [0, 0, 1]])}
+										  [0, 0, 1]]),
+				"IPT":  Matrix3x3([[ 0.4002, 0.7075, -0.0807],
+								   [-0.2280, 1.1500,  0.0612],
+								   [ 0.0000, 0.0000,  0.9184]]),
+				# Inverse CIE 2012 2deg LMS to XYZ matrix from Argyll/icc/icc.c
+				"CIE2012_2": Matrix3x3([[ 0.2052445519046028,  0.8334486497310412, -0.0386932016356441],
+										[-0.4972221301804286,  1.4034846060306130,  0.0937375241498157],
+										[ 0.0000000000000000,  0.0000000000000000,  1.0000000000000000]])}
+
+LMS2IPT_matrix = Matrix3x3([[ 0.4000,  0.4000,  0.2000],
+							[ 4.4550, -4.8510,  0.3960],
+							[ 0.8056,  0.3572, -1.1628]])
+IPT2LMS_matrix = LMS2IPT_matrix.inverted()
+
+# Tweaked LMS to IPT matrix to account for CIE 2012 2deg XYZ to LMS matrix
+# From Argyll/icc/icc.c
+LMS2Lpt_matrix = Matrix3x3([[ 0.6585034777870502,  0.1424555300344579,  0.1990409921784920],
+							[ 5.6413505933276049, -6.1697985811414187,  0.5284479878138138],
+							[ 1.6370552576322106,  0.0192823194340315, -1.6563375770662419]])
+Lpt2LMS_matrix = LMS2Lpt_matrix.inverted()
 
 standard_illuminants = {
 	# 1st level is the standard name => illuminant definitions

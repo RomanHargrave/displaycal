@@ -284,7 +284,7 @@ class GamutCanvas(LUTCanvas):
 			min_x = -65.0
 			min_y = -65.0
 			step = 25
-		elif self.colorspace == "CtCp":
+		elif self.colorspace == "ICtCp":
 			label_x = "Ct"
 			label_y = "Cp"
 			max_x = 0.4
@@ -292,9 +292,21 @@ class GamutCanvas(LUTCanvas):
 			min_x = -0.5
 			min_y = -0.4
 			step = .1
+		elif self.colorspace == "IPT":
+			label_x = "P"
+			label_y = "T"
+			max_x = 1.0
+			max_y = 1.0
+			min_x = -1.0
+			min_y = -1.0
+			step = .25
 		else:
-			label_x = "a*"
-			label_y = "b*"
+			if self.colorspace == "Lpt":
+				label_x = "p*"
+				label_y = "t*"
+			else:
+				label_x = "a*"
+				label_y = "b*"
 			max_x = 150.0
 			max_y = 150.0
 			min_x = -150.0
@@ -309,8 +321,10 @@ class GamutCanvas(LUTCanvas):
 						  "DIN99b": lambda X, Y, Z: colormath.XYZ2DIN99b(*[v * 100 for v in X, Y, Z])[1:],
 						  "DIN99c": lambda X, Y, Z: colormath.XYZ2DIN99c(*[v * 100 for v in X, Y, Z])[1:],
 						  "DIN99d": lambda X, Y, Z: colormath.XYZ2DIN99d(*[v * 100 for v in X, Y, Z])[1:],
-						  "CtCp": lambda X, Y, Z: colormath.XYZ2ICtCp(X, Y, Z,
-																	  clamp=False)[1:]}[self.colorspace]
+						  "ICtCp": lambda X, Y, Z: colormath.XYZ2ICtCp(X, Y, Z,
+																	  clamp=False)[1:],
+						  "IPT": lambda X, Y, Z: colormath.XYZ2IPT(X, Y, Z)[1:],
+						  "Lpt": lambda X, Y, Z: colormath.XYZ2Lpt(*[v * 100 for v in X, Y, Z])[1:]}[self.colorspace]
 
 		if show_outline and (self.colorspace == "a*b*" or
 							 self.colorspace.startswith("DIN99")):
@@ -720,7 +734,9 @@ class GamutViewOptions(wx_Panel):
 														  "DIN99b",
 														  "DIN99c",
 														  "DIN99d",
-														  "CtCp"])
+														  "ICtCp",
+														  "IPT",
+														  "L*p*t*"])
 		self.options_sizer.Add(self.colorspace_select, 
 							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.colorspace_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
@@ -945,9 +961,10 @@ class GamutViewOptions(wx_Panel):
 				5: "DIN99b",
 				6: "DIN99c",
 				7: "DIN99d",
-				8: "CtCp" if dimensions == 2 else "ICtCp"}.get(
-								  self.colorspace_select.GetSelection(),
-								 "a*b*" if dimensions == 2 else "Lab")
+				8: "ICtCp",
+				9: "IPT",
+				10: "Lpt"}.get(self.colorspace_select.GetSelection(),
+							   "a*b*" if dimensions == 2 else "Lab")
 
 	@property
 	def intent(self):
@@ -1512,8 +1529,14 @@ class ProfileInfoFrame(LUTFrame):
 						# DIN99
 						a, b = colormath.DIN992Lab(L99, xy[0], xy[1])[1:]
 					x, y = colormath.Lab2xyY(100.0, a, b)[:2]
-				elif page.colorspace == "CtCp":
+				elif page.colorspace == "ICtCp":
 					X, Y, Z = colormath.ICtCp2XYZ(1.0, xy[0], xy[1])
+					x, y = colormath.XYZ2xyY(X, Y, Z)[:2]
+				elif page.colorspace == "IPT":
+					X, Y, Z = colormath.IPT2XYZ(1.0, xy[0], xy[1])
+					x, y = colormath.XYZ2xyY(X, Y, Z)[:2]
+				elif page.colorspace == "Lpt":
+					X, Y, Z = colormath.Lpt2XYZ(100.0, xy[0], xy[1])
 					x, y = colormath.XYZ2xyY(X, Y, Z)[:2]
 				else:
 					# xy

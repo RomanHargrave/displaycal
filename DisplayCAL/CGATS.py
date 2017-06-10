@@ -1016,7 +1016,7 @@ class CGATS(dict):
 				  normalize_RGB_white=False, compress=True, format="VRML"):
 		if colorspace not in ("DIN99", "DIN99b", "DIN99c", "DIN99d", "LCH(ab)",
 							  "LCH(uv)", "Lab", "Luv", "Lu'v'", "RGB", "xyY",
-							  "HSI", "HSL", "HSV", "ICtCp"):
+							  "HSI", "HSL", "HSV", "ICtCp", "IPT", "Lpt"):
 			raise ValueError("export_3d: Unknown colorspace %r" % colorspace)
 		import x3dom
 		data = self.queryv1("DATA")
@@ -1079,7 +1079,7 @@ Transform {
 		}
 """
 		axes = ""
-		if (colorspace not in ("Lab", "Luv", "ICtCp") and
+		if (colorspace not in ("Lab", "Luv", "ICtCp", "IPT", "Lpt") and
 			not colorspace.startswith("DIN99")):
 			if colorspace in ("Lu'v'", "xyY"):
 				maxz = scale = 100
@@ -1149,10 +1149,23 @@ Transform {
 				nxcolor = "0.8 1.0 0.0"
 				pycolor = "1.0 0.0 0.25"
 				nycolor = "0.0 1.0 1.0"
+			elif colorspace == "IPT":
+				(pxlabel,
+				 nxlabel,
+				 pylabel,
+				 nylabel,
+				 pllabel) = ('"P", "+%.1f"' % 1,
+							 '"P", "-%.1f"' % 1,
+							 '"T +%.1f"' % 1,
+							 '"T -%.1f"' % 1,
+							 '"I"')
 			else:
 				if colorspace == "Luv":
 					x = "u"
 					y = "v"
+				elif colorspace == "Lpt":
+					x = "p"
+					y = "t"
 				else:
 					x = "a"
 					y = "b"
@@ -1344,6 +1357,8 @@ Transform {
 									  entry["XYZ_Y"],
 									  entry["XYZ_Z"],
 									  white,
+									  "D65" if colorspace in ("ICtCp", "IPT")
+									  else "D50",
 									  cat=cat)
 			L, a, b = colormath.XYZ2Lab(X, Y, Z)
 			if colorspace == "RGB":
@@ -1416,6 +1431,12 @@ Transform {
 				I, Ct, Cp = colormath.XYZ2ICtCp(X / 100.0, Y / 100.0, Z / 100.0,
 												clamp=False)
 				x, y, z = Ct * 100, Cp * 100, I * 100 - 50
+			elif colorspace == "IPT":
+				I, P, T = colormath.XYZ2IPT(X / 100.0, Y / 100.0, Z / 100.0)
+				x, y, z = P * 100, T * 100, I * 100 - 50
+			elif colorspace == "Lpt":
+				L, p, t = colormath.XYZ2Lpt(X, Y, Z)
+				x, y, z = p, t, L - 50
 			if RGB_black_offset != 40:
 				# Keep reference hue and saturation
 				# Lab to sRGB using reference black offset of 40 like Argyll CMS
