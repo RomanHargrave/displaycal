@@ -859,10 +859,16 @@ def DIN99bcdLCH2Lab(L99, C99, H99, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
 	H99 -= deg
 	L, a, b = DIN99familyLHCG2Lab(L99, H99, C99, G, 1.0, l1, l2, deg, f1)
 	if x:
-		X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale=100)
-		X = (X + x * Z) / (1 + x)
+		whitepoint99d = XYZ2DIN99cdXYZ(*get_whitepoint(whitepoint, 100), x=x)
+		X, Y, Z = Lab2XYZ(L, a, b, whitepoint99d, scale=100)
+		X, Y, Z = DIN99cdXYZ2XYZ(X, Y, Z, x)
 		L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
 	return L, a, b
+
+
+def DIN99cdXYZ2XYZ(X, Y, Z, x):
+	X = (X + x * Z) / (1 + x)
+	return X, Y, Z
 
 
 def DIN99familyLHCG2Lab(L99, H99, C99, G, kE, l1, l2, deg, f1):
@@ -1696,9 +1702,15 @@ def XYZ2DIN99cd(X, Y, Z, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
 
 
 def XYZ2DIN99cdLCH(X, Y, Z, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
-	X = (1 + x) * X - x * Z
-	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	X, Y, Z = XYZ2DIN99cdXYZ(X, Y, Z, x)
+	whitepoint99d = XYZ2DIN99cdXYZ(*get_whitepoint(whitepoint, 100), x=x)
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint99d)
 	return Lab2DIN99bcdLCH(L, a, b, l1, l2, deg, f1, c1, c2)
+
+
+def XYZ2DIN99cdXYZ(X, Y, Z, x):
+	X = (1 + x) * X - x * Z
+	return X, Y, Z
 
 
 def XYZ2DIN99d(X, Y, Z, whitepoint=None):
