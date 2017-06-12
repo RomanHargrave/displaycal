@@ -2630,7 +2630,7 @@ END_DATA
 
 			smpte2084_use_src_gamut = (smpte2084 and
 									   profile_in_basename == "Rec2020.icm" and
-									   intent in ("p", "pa", "ms", "s") and
+									   intent in ("la", "lp", "p", "pa", "ms", "s") and
 									   not get_arg("-G", extra_args) and
 									   not get_arg("-g", extra_args))
 
