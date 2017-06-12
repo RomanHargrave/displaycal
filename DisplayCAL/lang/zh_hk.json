@@ -526,7 +526,7 @@
 	"gamap.intents.aa": "絕對觀感",
 	"gamap.intents.aw": "絕對色彩濃度並按比例修正白位",
 		"*gamap.intents.la": "Luminance matched appearance",
-		"*gamap.intents.lp": "Luminance preserving perceptual",
+		"*gamap.intents.lp": "Luminance preserving perceptual appearance",
 	"gamap.intents.ms": "保留飽和度",
 	"gamap.intents.p": "感知",
 	"gamap.intents.pa": "感知觀感",

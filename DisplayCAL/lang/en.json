@@ -526,7 +526,7 @@
 	"gamap.intents.aa": "Absolute appearance",
 	"gamap.intents.aw": "Absolute colorimetric with white point scaling",
 	"gamap.intents.la": "Luminance matched appearance",
-	"gamap.intents.lp": "Luminance preserving perceptual",
+	"gamap.intents.lp": "Luminance preserving perceptual appearance",
 	"gamap.intents.ms": "Preserve saturation",
 	"gamap.intents.p": "Perceptual",
 	"gamap.intents.pa": "Perceptual appearance",
