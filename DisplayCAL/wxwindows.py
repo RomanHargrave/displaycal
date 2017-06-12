@@ -4179,6 +4179,7 @@ class BetterLinkCtrl(wx.StaticText):
 
 
 def fancytext_Renderer_getCurrentFont(self):
+	# Use system font instead of fancytext default font
 	font = self.fonts[-1]
 	_font = self._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
 	if "encoding" in font:
@@ -4196,7 +4197,16 @@ def fancytext_Renderer_getCurrentFont(self):
 		_font.SetWeight(font["weight"])
 	return _font
 
+def fancytext_Renderer_getCurrentColor(self):
+	# Use system text color instead of fancytext default color
+	font = self.fonts[-1]
+	if "color" in font:
+		return wx.TheColourDatabase.FindColour(font["color"])
+	else:
+		return wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+
 fancytext.Renderer._font = None
+fancytext.Renderer.getCurrentColor = fancytext_Renderer_getCurrentColor
 fancytext.Renderer.getCurrentFont = fancytext_Renderer_getCurrentFont
 
 
