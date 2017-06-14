@@ -2577,7 +2577,7 @@ END_DATA""")
 																					  lang.getstr("error.testchart.invalid",
 																								  path) + 
 																					  "\n" + 
-																					  lang.getstr(safe_str(exception)))
+																					  lang.getstr(safe_unicode(exception)))
 				return Error(msg)
 			else:
 				try:

@@ -13215,7 +13215,7 @@ class MainFrame(ReportFrame, BaseFrame):
 																					   lang.getstr("error.testchart.invalid",
 																								   path) + 
 																					   "\n" + 
-																					   lang.getstr(safe_str(exception)))
+																					   lang.getstr(safe_unicode(exception)))
 				InfoDialog(self, 
 						   msg=msg, 
 						   ok=lang.getstr("ok"), 

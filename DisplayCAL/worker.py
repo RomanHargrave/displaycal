@@ -11077,7 +11077,7 @@ BEGIN_DATA
 		except CGATS.CGATSInvalidError, exception:
 			raise ValueError(lang.getstr("error.testchart.invalid", 
 										 ti3_filename) + "\n" +
-										 lang.getstr(safe_str(exception)))
+										 lang.getstr(safe_unicode(exception)))
 		except CGATS.CGATSKeyError:
 			try:
 				if fields:
