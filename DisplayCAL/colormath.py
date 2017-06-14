@@ -1777,7 +1777,7 @@ def XYZ2Lab(X, Y, Z, whitepoint=None):
 
 def XYZ2Lpt(X, Y, Z, whitepoint=None):
 	"""
-	Convert from XYZ to L*p*t*
+	Convert from XYZ to Lpt
 	
 	This is a modern update to L*a*b*, based on IPT space.
 	
@@ -1819,7 +1819,7 @@ def XYZ2Lpt(X, Y, Z, whitepoint=None):
 
 def Lpt2XYZ(L, p, t, whitepoint=None, scale=1.0):
 	"""
-	Convert from L*p*t* to XYZ
+	Convert from Lpt to XYZ
 	
 	This is a modern update to L*a*b*, based on IPT space.
 	

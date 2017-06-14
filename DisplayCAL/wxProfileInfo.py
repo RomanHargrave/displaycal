@@ -736,7 +736,7 @@ class GamutViewOptions(wx_Panel):
 														  "DIN99d",
 														  "ICtCp",
 														  "IPT",
-														  "L*p*t*"])
+														  "Lpt"])
 		self.options_sizer.Add(self.colorspace_select, 
 							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.colorspace_select.Bind(wx.EVT_CHOICE, self.generic_select_handler)
