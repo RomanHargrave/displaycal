@@ -7235,8 +7235,8 @@ usage: spotread [-options] [logfile]
 				# gray+primaries (better curve smoothness and neutrality)
 				if getcfg("profile.type") in ("X", "s", "S"):
 					if getcfg("profile.type") == "X":
-						if (isinstance(profile.tags.get("vcgt"),
-									  ICCP.VideoCardGammaType) and
+						if (not isinstance(profile.tags.get("vcgt"),
+									  ICCP.VideoCardGammaType) or
 							profile.tags.vcgt.is_linear()):
 							# Use matrix from 3x shaper curves profile if vcgt
 							# is linear
