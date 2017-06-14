@@ -7233,7 +7233,7 @@ usage: spotread [-options] [logfile]
 				# computation!). If profile is a shaper+matrix profile,
 				# re-generate shaper curves from testchart with only
 				# gray+primaries (better curve smoothness and neutrality)
-				if getcfg("profile.type") in ("X", "s", "S", "g", "G"):
+				if getcfg("profile.type") in ("X", "s", "S"):
 					if getcfg("profile.type") == "X":
 						ptype = "S" if getcfg("trc") else "s"
 						omit = None
