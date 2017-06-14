@@ -2462,7 +2462,7 @@ END_DATA
 				self.log(exception.originalTraceback, fn=log)
 			else:
 				self.log(traceback.format_exc(), fn=log)
-			result = UnloggedError(exception)
+			result = UnloggedError(safe_str(exception))
 		if isinstance(result, Exception):
 			show_result_dialog(result, getattr(self, "progress_wnd", None))
 			result = False
@@ -4685,7 +4685,7 @@ while 1:
 					self.log(exception.originalTraceback)
 				else:
 					self.log(traceback.format_exc())
-				result = UnloggedError(exception)
+				result = UnloggedError(safe_str(exception))
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
 		self.finished = True

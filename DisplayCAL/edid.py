@@ -34,7 +34,7 @@ else:
 
 import config
 from log import log, safe_print
-from util_str import make_ascii_printable, strtr
+from util_str import make_ascii_printable, safe_str, strtr
 if sys.platform == "win32":
 	import util_win
 
@@ -111,7 +111,7 @@ def get_edid(display_no=0, display_name=None, device=None):
 			except Exception, exception:
 				if not_main_thread:
 					pythoncom.CoUninitialize()
-				raise WMIError(exception)
+				raise WMIError(safe_str(exception))
 			for msmonitor in msmonitors:
 				if msmonitor.InstanceName.split("\\")[1] == id:
 					try:
