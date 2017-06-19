@@ -302,8 +302,8 @@ class GamutCanvas(LUTCanvas):
 			step = .25
 		else:
 			if self.colorspace == "Lpt":
-				label_x = "p*"
-				label_y = "t*"
+				label_x = "p"
+				label_y = "t"
 			else:
 				label_x = "a*"
 				label_y = "b*"

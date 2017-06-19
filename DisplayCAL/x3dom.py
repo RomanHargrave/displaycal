@@ -499,9 +499,9 @@ Transform {
 	elif colorspace == "Lpt":
 		# Replace a* b* labels with p* t*
 		vrml = re.sub(r'(string\s*\["[+\-]?)a\*?',
-					  r"\1p*", vrml)
+					  r"\1p", vrml)
 		vrml = re.sub(r'(string\s*\["[+\-]?)b\*?',
-					  r"\1t*", vrml)
+					  r"\1t", vrml)
 	return vrml
 
 
