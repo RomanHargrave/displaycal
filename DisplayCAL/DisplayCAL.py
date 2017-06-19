@@ -4458,8 +4458,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def lut3d_init_input_profiles(self):
 		self.input_profiles = OrderedDict()
-		for profile_filename in ["ACES.icm", "DCI_XYZ.icm", "Rec709.icm", 
-								 "Rec2020.icm", "EBU3213_PAL.icm",
+		for profile_filename in ["ACES.icm", "ACEScg.icm", "DCDM X'Y'Z'.icm",
+								 "Rec709.icm", "Rec2020.icm", "EBU3213_PAL.icm",
 								 "SMPTE_RP145_NTSC.icm", "SMPTE431_P3.icm",
 								 getcfg("3dlut.input.profile")]:
 			if not os.path.isabs(profile_filename):
