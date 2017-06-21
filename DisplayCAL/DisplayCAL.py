@@ -1205,8 +1205,8 @@ class GamapFrame(BaseFrame):
 		self.gamap_saturation_intent_ctrl.SetItems(
 			self.intents_ab.values())
 		
-		self.viewconds_ab[None] = lang.getstr("default")
-		self.viewconds_ba[lang.getstr("default")] = None
+		self.viewconds_ab[None] = lang.getstr("none")
+		self.viewconds_ba[lang.getstr("none")] = None
 		for v in viewconds:
 			if self.Parent and hasattr(self.Parent, "worker") and (
 				(v == "pc" and self.Parent.worker.argyll_version < [1, 1, 1]) or
@@ -1221,7 +1221,7 @@ class GamapFrame(BaseFrame):
 		self.gamap_src_viewcond_ctrl.SetItems(
 			self.viewconds_ab.values())
 		self.gamap_out_viewcond_ctrl.SetItems(
-			[lang.getstr("default")] + self.viewconds_out_ab.values())
+			[lang.getstr("none")] + self.viewconds_out_ab.values())
 		
 		self.gamap_default_intent_ctrl.SetItems([lang.getstr("gamap.intents." + v)
 												 for v in config.valid_values["gamap_default_intent"]])
