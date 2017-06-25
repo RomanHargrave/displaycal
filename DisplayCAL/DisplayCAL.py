@@ -5009,7 +5009,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		frame.Sizer.Add(panel, 1, flag=wx.EXPAND)
 		frame.Sizer.SetSizeHints(frame)
 		frame.Sizer.Layout()
-		if CCPG and isinstance(patterngenerator, CCPG):
+		if CCPG and isinstance(self.worker.patterngenerator, CCPG):
 			frame.Bind(wx.EVT_CLOSE, self.patterngenerator_disconnect)
 		frame.Show()
 		self.measureframes.append(frame)
