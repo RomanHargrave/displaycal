@@ -11940,8 +11940,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Select filenames
 		filenames = (glob.glob(path_name + "*") +
 					 glob.glob(os.path.join(dirname, "*.ccmx")) +
-					 glob.glob(os.path.join(dirname, "*.ccss")))
-		filenames.sort()
+					 glob.glob(os.path.join(dirname, "*.ccss")) +
+					 glob.glob(os.path.join(dirname, "0_16.ti1")) +
+					 glob.glob(os.path.join(dirname, "0_16.ti3")) +
+					 glob.glob(os.path.join(dirname, "0_16.log")))
+		# Remove duplicates & sort
+		filenames = sorted(set(filenames))
 		lut3d_ext = ["." + strtr(lut3d_format, {"eeColor": "txt",
 												"madVR": "3dlut"})
 					 for lut3d_format in
