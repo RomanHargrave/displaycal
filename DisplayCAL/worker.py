@@ -5337,8 +5337,10 @@ while 1:
 				for row in itable.matrix:
 					logfile.write("%r\n" % row)
 		else:
+			# L*a*b* LUT
 			# Use identity matrix for Lab as mandated by ICC spec
-			itable.matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+			itable.matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+			m2 = None
 
 		if profile.connectionColorSpace == "XYZ":
 			if logfile:

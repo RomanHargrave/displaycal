@@ -71,15 +71,19 @@ def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
 	for interp_tuple in (interp, Linterp):
 		if interp_tuple:
 			# Use numpy for speed
-			interp_list = list(interp_tuple)
+			if interp_tuple is interp:
+				interp_list = list(interp_tuple)
+			else:
+				interp_list = [interp_tuple]
 			for i, ointerp in enumerate(interp_list):
 				interp_list[i] = colormath.Interp(ointerp.xp, ointerp.fp,
 												  use_numpy=True)
 			if interp_tuple is interp:
 				interp = interp_list
 			else:
-				Linterp = interp_list
-	m2i = m2.inverted()
+				Linterp = interp_list[0]
+	if profile.connectionColorSpace == "XYZ":
+		m2i = m2.inverted()
 	for a in chunk:
 		if thread_abort_event.is_set():
 			if use_cam_clipping:
