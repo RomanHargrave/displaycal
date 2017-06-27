@@ -15359,7 +15359,7 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 		if dlg.white:
 			XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2],
 								  dlg.white, "D65")
-		RGB255 = [int(round(float(str(v)))) for v in
+		RGB255 = [int(round(v)) for v in
 				  colormath.XYZ2RGB(XYZ[0] / 100.0,
 									XYZ[1] / 100.0,
 									XYZ[2] / 100.0, scale=255)]

@@ -440,7 +440,7 @@ class UntetheredFrame(BaseFrame):
 				row = self.cgats[0].DATA[i]
 				RGB = []
 				for j, label in enumerate("RGB"):
-					value = int(round(float(str(row["RGB_%s" % label] / 100.0 * 255))))
+					value = int(round(row["RGB_%s" % label] / 100.0 * 255))
 					self.grid.SetCellValue(row.SAMPLE_ID - 1, j, "%i" % value)
 					RGB.append(value)
 				self.grid.SetCellBackgroundColour(row.SAMPLE_ID - 1, 3,
