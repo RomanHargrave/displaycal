@@ -2331,12 +2331,8 @@ END_DATA
 			Y_cdm2 = float(luminance_XYZ_cdm2.split()[1])
 		except (IndexError, ValueError):
 			return Error(lang.getstr("error.testchart.invalid", ti3_path))
-		black_0 = ti3.queryi1({"RGB_R": 0,
-							   "RGB_G": 0,
-							   "RGB_B": 0})
-		black_16 = ti3.queryi1({"RGB_R": 6.2500,
-								"RGB_G": 6.2500,
-								"RGB_B": 6.2500})
+		black_0 = ti3[0].DATA[1]
+		black_16 = ti3[0].DATA[2]
 		if black_0 and black_16:
 			self.log("RGB level 0 is %.6f cd/m2" %
 					 (black_0["XYZ_Y"] / 100.0 * Y_cdm2))
@@ -7170,8 +7166,13 @@ usage: spotread [-options] [logfile]
 					(ti1_extracted,
 					 ti1_RGB_XYZ,
 					 ti1_remaining) = extract_device_gray_primaries(ti1)
-					is_5x5x5 = (sorted(ti3_remaining.keys()) ==
-								sorted(ti1_remaining.keys()))
+					# Quantize to 8 bit for comparison
+					# XXX Note that round(50 * 2.55) = 127, but
+					# round(50 / 100 * 255) = 128 (the latter is what we want)!
+					is_5x5x5 = (sorted(tuple(round(v / 100.0 * 255) for v in RGB)
+									   for RGB in ti3_remaining.keys()) ==
+								sorted(tuple(round(v / 100.0 * 255) for v in RGB)
+									   for RGB in ti1_remaining.keys()))
 					if is_5x5x5:
 						break
 			if is_5x5x5:
@@ -7646,7 +7647,9 @@ usage: spotread [-options] [logfile]
 			return [(XYZ1[i] + XYZ2[i]) / 2.0 for i in xrange(3)]
 
 		# Quantize RGB to make lookup easier
-		remaining = OrderedDict([(tuple(round(k, 3) for k in RGB), XYZ)
+		# XXX Note that round(50 * 2.55) = 127, but
+		# round(50 / 100 * 255) = 128 (the latter is what we want)!
+		remaining = OrderedDict([(tuple(round(k / 100.0 * 255) for k in RGB), XYZ)
 								 for RGB, XYZ in remaining.iteritems()])
 		
 		# Need to sort so columns increase (fastest to slowest) B G R
@@ -7662,7 +7665,9 @@ usage: spotread [-options] [logfile]
 				for b in xrange(iclutres):
 					clut.append([])
 					for c in xrange(iclutres):
-						RGB = tuple(round(k * step, 3) for k in (a, b, c))
+						# XXX Note that round(50 * 2.55) = 127, but
+						# round(50 / 100 * 255) = 128 (the latter is what we want)!
+						RGB = tuple(round((k * step) / 100.0 * 255) for k in (a, b, c))
 						# Prefer actual measurements over interpolated values
 						XYZ = remaining.get(RGB)
 						if not XYZ:
@@ -7722,7 +7727,9 @@ usage: spotread [-options] [logfile]
 				for b in xrange(clutres):
 					clut.append([])
 					for c in xrange(clutres):
-						RGB = tuple(round(k * step, 3) for k in (a, b, c))
+						# XXX Note that round(50 * 2.55) = 127, but
+						# round(50 / 100 * 255) = 128 (the latter is what we want)!
+						RGB = tuple(round((k * step) / 100.0 * 255) for k in (a, b, c))
 						# Prefer actual measurements over interpolated values
 						prev_actual = actual
 						XYZ = remaining.get(RGB)
