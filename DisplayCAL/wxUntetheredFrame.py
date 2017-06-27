@@ -440,7 +440,7 @@ class UntetheredFrame(BaseFrame):
 				row = self.cgats[0].DATA[i]
 				RGB = []
 				for j, label in enumerate("RGB"):
-					value = int(round(float(str(row["RGB_%s" % label] * 2.55))))
+					value = int(round(float(str(row["RGB_%s" % label] / 100.0 * 255))))
 					self.grid.SetCellValue(row.SAMPLE_ID - 1, j, "%i" % value)
 					RGB.append(value)
 				self.grid.SetCellBackgroundColour(row.SAMPLE_ID - 1, 3,
@@ -617,10 +617,10 @@ class UntetheredFrame(BaseFrame):
 	
 	def show_RGB(self, clear_XYZ=True, mark_current_row=True):
 		row = self.cgats[0].DATA[self.index]
-		self.label_RGB.SetLabel("RGB %i %i %i" % (round(row["RGB_R"] * 2.55),
-												  round(row["RGB_G"] * 2.55),
-												  round(row["RGB_B"] * 2.55)))
-		color = [int(round(v * 2.55)) for v in
+		self.label_RGB.SetLabel("RGB %i %i %i" % (round(row["RGB_R"] / 100.0 * 255),
+												  round(row["RGB_G"] / 100.0 * 255),
+												  round(row["RGB_B"] / 100.0 * 255)))
+		color = [int(round(v / 100.0 * 255)) for v in
 				 (row["RGB_R"], row["RGB_G"], row["RGB_B"])]
 		self.panel_RGB.SetBackgroundColour(wx.Colour(*color))
 		self.panel_RGB.SetBitmap(None)

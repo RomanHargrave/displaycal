@@ -15350,7 +15350,10 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 	def update_row(self, row, RGB, XYZ, delta, sRGB_delta, delta_to_sRGB):
 		dlg = self
 		grid = dlg.grid
-		RGB255 = [int(round(float(str(v * 2.55)))) for v in RGB]
+		# XXX: Careful when rounding floats!
+		# Incorrect: int(round(50 * 2.55)) = 127 (127.499999)
+		# Correct: int(round(50 / 100.0 * 255)) = 128 (127.5)
+		RGB255 = [int(round(v / 100.0 * 255)) for v in RGB]
 		dlg.grid.SetCellBackgroundColour(row, 4,
 										 wx.Colour(*RGB255))
 		if dlg.white:

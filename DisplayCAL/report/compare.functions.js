@@ -448,7 +448,9 @@ p.generate_report = function(set_delta_calc_method) {
 				if (rules[j][1][k].length == 4) // Assume CMYK
 					target_rgb = jsapi.math.color.CMYK2RGB(rules[j][1][k][0] / 100, rules[j][1][k][1] / 100, rules[j][1][k][2] / 100, rules[j][1][k][3] / 100, 255);
 				else 
-					target_rgb = [rules[j][1][k][0] * 2.55, rules[j][1][k][1] * 2.55, rules[j][1][k][2] * 2.55];
+					// XXX Note that round(50 * 2.55) = 127, but
+					// round(50 / 100 * 255) = 128 (the latter is what we want)!
+					target_rgb = [rules[j][1][k][0] / 100.0 * 255, rules[j][1][k][1] / 100.0 * 255, rules[j][1][k][2] / 100.0 * 255];
 				target_rgb_html.push('<div class="patch" style="background-color: rgb(' + Math.round(target_rgb[0]) + ', ' + Math.round(target_rgb[1]) + ', ' + Math.round(target_rgb[2]) + ');">&#160;</div>');
 				actual_rgb_html.push('<div class="patch" style="color: red; position: relative;"><span style="position: absolute;">\u2716</span>&#160;</div>');
 			}
@@ -854,7 +856,9 @@ p.generate_report = function(set_delta_calc_method) {
 			var device = current_cmyk;
 		else {
 			var device = current_rgb;
-			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] * 2.55);
+			// XXX Note that round(50 * 2.55) = 127, but
+			// round(50 / 100 * 255) = 128 (the latter is what we want)!
+			for (var j=0; j<device.length; j++) device[j] = Math.round(device[j] / 100.0 * 255);
 		}
 		if ((target.gamma && actual.gamma) ||
 			(current_rgb[0] == 0 && current_rgb[1] == 0 && current_rgb[2] == 0) ||

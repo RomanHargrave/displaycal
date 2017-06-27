@@ -2145,7 +2145,7 @@ END_DATA""")
 						2: 8,
 						3: 16,
 						4: 10}[filter_index]
-			vscale = (2 ** bitdepth - 1) / 100.0
+			vscale = (2 ** bitdepth - 1)
 			repeatmax = getcfg("tc_export_repeat_patch_max")
 			repeatmin = getcfg("tc_export_repeat_patch_min")
 			maxcount = maxlen * repeatmax
@@ -2176,9 +2176,9 @@ END_DATA""")
 			dimensions = w, h
 		else:
 			# CSV
-			vscale = {5: 1.0,
-					  6: 2.55,
-					  7: 10.23}[filter_index]
+			vscale = {5: 100,
+					  6: 255,
+					  7: 1023}[filter_index]
 		is_winnt6 = sys.platform == "win32" and sys.getwindowsversion() >= (6, )
 		use_winnt6_symlinks = is_winnt6 and is_superuser()
 		for i in xrange(maxlen):
@@ -2190,20 +2190,23 @@ END_DATA""")
 			           self.ti1[0].DATA[i]["RGB_B"])
 			if not filter_index < 5:
 				# CSV
-				if vscale != 1:
-					R, G, B = [int(round(v * vscale)) for v in [R, G, B]]
+				if vscale != 100:
+					# XXX: Careful when rounding floats!
+					# Incorrect: int(round(50 * 2.55)) = 127 (127.499999)
+					# Correct: int(round(50 / 100.0 * 255)) = 128 (127.5)
+					R, G, B = [int(round(v / 100.0 * vscale)) for v in [R, G, B]]
 				target.writerow([str(v) for v in [i, R, G, B]])
 				continue
 			# Image format
 			X, Y, Z = colormath.RGB2XYZ(R / 100.0, G / 100.0, B / 100.0,
 										scale=100.0)
 			L, a, b = colormath.XYZ2Lab(X, Y, Z)
-			# Careful when rounding floats!
+			# XXX: Careful when rounding floats!
 			# Incorrect: int(round(50 * 2.55)) = 127 (127.499999)
-			# Correct: int(round(float(str(50 * 2.55)))) = 128 (127.5)
-			color = (int(round(float(str(R * vscale)))),
-					 int(round(float(str(G * vscale)))),
-					 int(round(float(str(B * vscale)))))
+			# Correct: int(round(50 / 100.0 * 255)) = 128 (127.5)
+			color = (int(round(R / 100.0 * vscale)),
+					 int(round(G / 100.0 * vscale)),
+					 int(round(B / 100.0 * vscale)))
 			count += 1
 			filename = filenameformat % (name, count, ext)
 			repeat = int(round(repeatmin + ((repeatmax - repeatmin) / 100.0 * (100 - L))))
@@ -2631,7 +2634,9 @@ END_DATA""")
 				for i in data:
 					if self.worker.thread_abort:
 						return False
-					patch = [round(float(str(v * 2.55)), vmaxlen) for v in (data[i]["RGB_R"], data[i]["RGB_G"], data[i]["RGB_B"])] # normalize to 0...255 range
+					# XXX Note that round(50 * 2.55) = 127, but
+					# round(50 / 100 * 255) = 128 (the latter is what we want)!
+					patch = [round(v / 100.0 * 255, vmaxlen) for v in (data[i]["RGB_R"], data[i]["RGB_G"], data[i]["RGB_B"])] # normalize to 0...255 range
 					strpatch = [str(int(round(round(v, 1)))) for v in patch]
 					if patch[0] == patch[1] == patch[2] == 255: # white
 						white_patches += 1
@@ -3244,8 +3249,7 @@ END_DATA""")
 			self.preview.Refresh()
 
 	def tc_getcolorlabel(self, sample):
-		scale = 2.55
-		colour = wx.Colour(*[int(round(value * scale)) for value in
+		colour = wx.Colour(*[int(round(value / 100.0 * 255)) for value in
 							 (sample.RGB_R, sample.RGB_G, sample.RGB_B)])
 		# mark patches:
 		# W = white (R/G/B == 100)
