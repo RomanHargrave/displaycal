@@ -2483,14 +2483,14 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 		if thread_abort_event and thread_abort_event.is_set():
 			return Info(abortmessage)
 		for i, row in enumerate(block):
-			if nonzero_bp:
+			if not use_bpc or nonzero_bp:
 				for column, value in enumerate(row):
 					row[column] = interp[column](value)
 			row = _blend_blackpoint(pcs, row, bp,
 									bp_out,
 									wp if use_bpc else None,
 									use_bpc, weight, D50)
-			if nonzero_bp and pcs != "Lab":
+			if not use_bpc or nonzero_bp:
 				for column, value in enumerate(row):
 					row[column] = rinterp[column](value)
 			block[i] = row
@@ -2916,12 +2916,12 @@ class LUT16Type(ICCProfileTag):
 		bp_row = list(self.clut[0][0])
 		wp_row = list(self.clut[-1][-1])
 		nonzero_bp = tuple(bp_out) != (0, 0, 0)
+		interp = []
+		rinterp = []
 		if not use_bpc or nonzero_bp:
 			osize = len(self.output[0])
 			omaxv = osize - 1.0
 			orange = [i / omaxv * 65535 for i in xrange(osize)]
-			interp = []
-			rinterp = []
 			for i in xrange(3):
 				interp.append(colormath.Interp(orange, self.output[i]))
 				rinterp.append(colormath.Interp(self.output[i], orange))
