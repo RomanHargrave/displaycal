@@ -7174,8 +7174,6 @@ usage: spotread [-options] [logfile]
 						break
 			if is_5x5x5:
 				# Use our own forward profile code
-				self.set_sessionlogfile(None, os.path.basename(args[-1]),
-										os.path.dirname(args[-1]))
 				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
 														  os.path.basename(args[-1]),
 														  getcfg("copyright"),
@@ -8664,17 +8662,11 @@ usage: spotread [-options] [logfile]
 		corresponding arguments.
 		
 		"""
-		profile_save_path = self.create_tempdir()
-		if not profile_save_path or isinstance(profile_save_path, Exception):
-			return profile_save_path, None
-		# Check directory and in/output file(s)
-		result = check_create_dir(profile_save_path)
-		if isinstance(result, Exception):
-			return result, None
 		if profile_name is None:
 			profile_name = getcfg("profile.name.expanded")
-		inoutfile = os.path.join(profile_save_path, 
-								 make_argyll_compatible_path(profile_name))
+		inoutfile = self.setup_inout(profile_name)
+		if not inoutfile or isinstance(inoutfile, Exception):
+			return inoutfile, None
 		if not os.path.exists(inoutfile + ".ti3"):
 			return Error(lang.getstr("error.measurement.file_missing", 
 									 inoutfile + ".ti3")), None
@@ -8910,15 +8902,9 @@ usage: spotread [-options] [logfile]
 		if calibrate:
 			if getcfg("trc"):
 				args.append("-q" + getcfg("calibration.quality"))
-			profile_save_path = self.create_tempdir()
-			if not profile_save_path or isinstance(profile_save_path, Exception):
-				return profile_save_path, None
-			# Check directory and in/output file(s)
-			result = check_create_dir(profile_save_path)
-			if isinstance(result, Exception):
-				return result, None
-			inoutfile = os.path.join(profile_save_path, 
-									 make_argyll_compatible_path(getcfg("profile.name.expanded")))
+			inoutfile = self.setup_inout()
+			if not inoutfile or isinstance(inoutfile, Exception):
+				return inoutfile, None
 			if getcfg("profile.update") or \
 			   self.dispcal_create_fast_matrix_shaper:
 				args.append("-o")
@@ -9067,15 +9053,9 @@ usage: spotread [-options] [logfile]
 		
 		"""
 		self.lastcmdname = get_argyll_utilname("dispread")
-		profile_save_path = self.create_tempdir()
-		if not profile_save_path or isinstance(profile_save_path, Exception):
-			return profile_save_path, None
-		# Check directory and in/output file(s)
-		result = check_create_dir(profile_save_path)
-		if isinstance(result, Exception):
-			return result, None
-		inoutfile = os.path.join(profile_save_path, 
-								 make_argyll_compatible_path(getcfg("profile.name.expanded")))
+		inoutfile = self.setup_inout()
+		if not inoutfile or isinstance(inoutfile, Exception):
+			return inoutfile, None
 		if not os.path.exists(inoutfile + ".ti1"):
 			filename, ext = os.path.splitext(getcfg("testchart.file"))
 			result = check_file_isfile(filename + ext)
@@ -9241,8 +9221,6 @@ usage: spotread [-options] [logfile]
 		if getcfg("extra_args.dispread").strip():
 			args += parse_argument_string(getcfg("extra_args.dispread"))
 		self.options_dispread = list(args)
-		self.set_sessionlogfile(None, os.path.basename(inoutfile),
-								os.path.dirname(inoutfile))
 		cgats = self.ensure_patch_sequence(inoutfile + ".ti1")
 		if getattr(self, "terminal", None) and isinstance(self.terminal,
 														  UntetheredFrame):
@@ -9852,6 +9830,21 @@ usage: spotread [-options] [logfile]
 					CGATS.CGATSTypeError, CGATS.CGATSValueError), exception:
 				return exception
 		self.terminal.cgats = cgats
+
+	def setup_inout(self, basename=None):
+		""" Setup in/outfile basename and session logfile """
+		dirname = self.create_tempdir()
+		if not dirname or isinstance(dirname, Exception):
+			return dirname
+		# Check directory and in/output file(s)
+		result = check_create_dir(dirname)
+		if isinstance(result, Exception):
+			return result
+		if basename is None:
+			basename = getcfg("profile.name.expanded")
+		basename = make_argyll_compatible_path(basename)
+		self.set_sessionlogfile(None, basename, dirname)
+		return os.path.join(dirname, basename)
 	
 	def argyll_support_file_exists(self, name):
 		""" Check if named file exists in any of the known Argyll support
