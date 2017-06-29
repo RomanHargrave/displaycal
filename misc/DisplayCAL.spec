@@ -178,29 +178,30 @@ done
 # as well as mark files as executable where needed
 %{__python} -c "import os
 f = open('INSTALLED_FILES')
-paths = [path.replace('$RPM_BUILD_ROOT', '').strip() for path in 
+paths = [chr(0x22) + path.replace('$RPM_BUILD_ROOT', '').strip() + chr(0x22) for path in 
 		 filter(lambda path: not '/doc/' in path and not '/etc/' in path and
 				not '/man/' in path, 
 				f.readlines())]
 f.close()
 executables = ['Argyll'] + os.listdir('scripts')
 for path in list(paths):
+	path = path.strip(chr(0x22))
 	if path.endswith('.py') and %{?mandriva_version}.0 < 201010:
 		# Mandriva 2010.1 got rid of byte-compilation
-		paths.append(path + 'c')
+		paths.append(chr(0x22) + path + 'c' + chr(0x22))
 		if (int('0%{?fedora_version}') > 0 or int('0%{?rhel_version}') > 0 or
         	int('0%{?centos_version}') > 0 or int('0%{?scientificlinux_version}') > 0 or
             int('0%{?mageia_version}') > 0):
-			paths.append(path + 'o')
+			paths.append(chr(0x22) + path + 'o' + chr(0x22))
 	if os.path.basename(path) in executables:
-		paths.remove(path)
-		paths.append('%attr(755, root, root) ' + path)
+		paths.remove(chr(0x22) + path + chr(0x22))
+		paths.append('%attr(755, root, root) ' + chr(0x22) + path + chr(0x22))
 	while True:
 		path = os.path.dirname(path)
 		if os.path.isdir(path):
 			break
 		else:
-			directory = '%dir ' + path
+			directory = '%dir ' + chr(0x22) + path + chr(0x22)
 			if not directory in paths:
 				paths.append(directory)
 f = open('INSTALLED_FILES', 'w')
