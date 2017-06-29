@@ -119,6 +119,9 @@ body > div,
 		display: none;
 	}
 }
+.sidebar-wrapper > .sidebar-toggle {
+	font-size: 18px;
+}
 @media screen and (min-width: 600px) {
 	body > div,
 	#title,
@@ -127,6 +130,9 @@ body > div,
 	}
 	#site-navigation {
 		padding: 0;
+	}
+	.sidebar-wrapper > .sidebar-toggle {
+		font-size: 28px;
 	}
 }
 @media screen and (min-width: 760px) {
@@ -369,7 +375,13 @@ sup {
 .faded {
 	opacity: .25;
 }
+@media (-moz-touch-enabled: 1), (pointer: none), (pointer: coarse) {
+	.faded {
+		opacity: 1;
+	}
+}
 .faded:hover,
+.faded:focus,
 .faded.hidden {
 	opacity: 1;
 }
@@ -419,6 +431,9 @@ sup {
 		overflow-y: auto;
 		position: absolute;
 	}
+	.sidebar-wrapper.hidden > .sidebar {
+		box-shadow: none;
+	}
 	.left > .sidebar {
 		border-left: 0;
 		border-top-right-radius: 8px;
@@ -436,11 +451,10 @@ sup {
 		border: 0;
 		cursor: pointer;
 		display: block;
-		font-size: 28px;
 		height: 32px;
 		line-height: 28px;
 		margin-top: -20px;
-		padding: 4px;
+		padding: 4px 2px 4px 4px;
 		position: absolute;
 		text-align: center;
 		top: 50%;
@@ -1467,11 +1481,19 @@ div.info,
 }
 
 .changelog-label.minor {
-	background: #e93;
+	background: #e90;
+}
+
+.changelog-label.moderate {
+	background: #e70;
 }
 
 .changelog-label.major {
-	background: #e86;
+	background: #e50;
+}
+
+.changelog-label.critical {
+	background: #e30;
 }
 
 .changelog-label span {
