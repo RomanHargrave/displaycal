@@ -6117,7 +6117,12 @@ usage: spotread [-options] [logfile]
 				moninfo = monitors[display_no]
 				displays = util_win.get_display_devices(moninfo["Device"])
 				active_display = util_win.get_active_display_device(None, displays)
-				if active_display.DeviceKey != displays[0].DeviceKey:
+				if not active_display:
+					self.log(appname + ": Warning - no active display device!")
+					if not displays:
+						self.log(appname + ": Warning - could not enumerate "
+								 "display devices for %s!" % moninfo["Device"])
+				elif active_display.DeviceKey != displays[0].DeviceKey:
 					self.log(appname + ": Setting profile for active display device...")
 					try:
 						ICCP.set_display_profile(os.path.basename(profile_path),
