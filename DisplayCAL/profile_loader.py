@@ -1406,20 +1406,21 @@ class ProfileLoader(object):
 							else:
 								devicekey = None
 							key = devicekey or str(i)
-							(profile, mtime,
+							(profile_key, mtime,
 							 desc) = self.pl.profile_associations.get(key,
 																	  (False,
 																	   0, ""))
-							if profile is False:
+							if profile_key is False:
 								desc = lang.getstr("unknown")
-							elif profile is None:
+							elif not profile_key:
 								desc = lang.getstr("unassigned").lower()
-							if not self.pl.setgammaramp_success.get(i):
-								desc = (lang.getstr("unknown") +
-										u" / %s" % desc)
-							elif (self.pl._reset_gamma_ramps or
-								  profile is None):
+							if (self.pl.setgammaramp_success.get(i) and
+								self.pl._reset_gamma_ramps):
 								desc = (lang.getstr("linear").capitalize() +
+										u" / %s" % desc)
+							elif (not self.pl.setgammaramp_success.get(i) or
+								  not profile_key):
+								desc = (lang.getstr("unknown") +
 										u" / %s" % desc)
 							display = display.replace("[PRIMARY]", 
 													  lang.getstr("display.primary"))
@@ -1932,7 +1933,7 @@ class ProfileLoader(object):
 				key = devicekey or str(i)
 				self._current_display_key = key
 				exception = None
-				profile_path = profile = None
+				profile_path = profile_name = None
 				try:
 					profile_path = ICCP.get_display_profile(i, path_only=True,
 															devicekey=devicekey)
@@ -1948,13 +1949,20 @@ class ProfileLoader(object):
 						self._last_exception_args = exception.args
 						safe_print("Could not get display profile for display "
 								   "%s (%s):" % (key, display), exception)
+					if exception.args[0] == errno.ENOENT:
+						# Unassigned - don't show error icon
+						self.setgammaramp_success[i] = True
+						exception = None
+					else:
+						self.setgammaramp_success[i] = None
 				else:
 					if profile_path:
-						profile = os.path.basename(profile_path)
+						profile_name = os.path.basename(profile_path)
+				profile_key = safe_unicode(profile_name or exception or "")
 				association = self.profile_associations.get(key, (False, 0, ""))
 				if (getcfg("profile_loader.fix_profile_associations") and
 					not first_run and not self._has_display_changed and
-					not self._next and association[0] != profile):
+					not self._next and association[0] != profile_key):
 					# At this point we do not yet know if only the profile
 					# association has changed or the display configuration.
 					# One second delay to allow display configuration
@@ -1974,11 +1982,11 @@ class ProfileLoader(object):
 				else:
 					mtime = 0
 				profile_association_changed = False
-				if association[:2] != (profile, mtime):
-					if profile is None:
+				if association[:2] != (profile_key, mtime):
+					if profile_name is None:
 						desc = safe_unicode(exception or "?")
 					else:
-						desc = get_profile_desc(profile)
+						desc = get_profile_desc(profile_name)
 					if not first_run:
 						safe_print("A profile change has been detected")
 						safe_print(display, "->", desc)
@@ -1988,7 +1996,7 @@ class ProfileLoader(object):
 																 moninfo, i)
 							if self.monitoring:
 								self.devices2profiles[device.DeviceKey] = (display_edid,
-																		   profile,
+																		   profile_name,
 																		   desc)
 						if debug and device:
 							safe_print("Monitor %r active display device name:" %
@@ -2004,7 +2012,7 @@ class ProfileLoader(object):
 						elif debug:
 							safe_print("WARNING: Monitor %r has no active display device" %
 									   moninfo["Device"])
-					self.profile_associations[key] = (profile, mtime, desc)
+					self.profile_associations[key] = (profile_key, mtime, desc)
 					self.profiles[key] = None
 					self.ramps[key] = (None, None, None)
 					profile_association_changed = True
@@ -2018,7 +2026,8 @@ class ProfileLoader(object):
 					desc = association[2]
 				# Check video card gamma table and (re)load calibration if
 				# necessary
-				if not self.gdi32:
+				if not self.gdi32 or not (profile_name or
+										  self._reset_gamma_ramps):
 					continue
 				apply_profiles = self._should_apply_profiles()
 				recheck = False
@@ -2031,7 +2040,7 @@ class ProfileLoader(object):
 						# Get display profile
 						if not self.profiles.get(key):
 							try:
-								self.profiles[key] = ICCP.ICCProfile(profile)
+								self.profiles[key] = ICCP.ICCProfile(profile_name)
 								if (isinstance(self.profiles[key].tags.get("MS00"),
 											   ICCP.WcsProfilesTagType) and
 									not "vcgt" in self.profiles[key].tags):
@@ -2232,7 +2241,7 @@ class ProfileLoader(object):
 						errors.append(": ".join([display_desc, errstr]))
 					else:
 						text = display_desc + u": "
-						if self._reset_gamma_ramps or not profile:
+						if self._reset_gamma_ramps:
 							text += lang.getstr("linear").capitalize()
 						else:
 							text += desc
