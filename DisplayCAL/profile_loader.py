@@ -1932,6 +1932,7 @@ class ProfileLoader(object):
 				key = devicekey or str(i)
 				self._current_display_key = key
 				exception = None
+				profile_path = profile = None
 				try:
 					profile_path = ICCP.get_display_profile(i, path_only=True,
 															devicekey=devicekey)
@@ -1947,9 +1948,9 @@ class ProfileLoader(object):
 						self._last_exception_args = exception.args
 						safe_print("Could not get display profile for display "
 								   "%s (%s):" % (key, display), exception)
-					profile_path = profile = None
 				else:
-					profile = os.path.basename(profile_path)
+					if profile_path:
+						profile = os.path.basename(profile_path)
 				association = self.profile_associations.get(key, (False, 0, ""))
 				if (getcfg("profile_loader.fix_profile_associations") and
 					not first_run and not self._has_display_changed and
