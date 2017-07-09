@@ -391,6 +391,7 @@ class ReportFrame(BaseFrame):
 			else:
 				path = None
 			setcfg("measurement_report.output_profile", path)
+			XYZbpout = self.XYZbpout
 			# XYZbpout will be set to the blackpoint of the selected profile.
 			# This is used to determine if black output offset controls should
 			# be shown. Set a initial value slightly above zero so output
@@ -399,6 +400,7 @@ class ReportFrame(BaseFrame):
 		else:
 			profile = None
 			if which == "input":
+				XYZbpin = self.XYZbpin
 				self.XYZbpin = [0, 0, 0]
 		if path or profile:
 			if path and not os.path.isfile(path):
@@ -432,6 +434,7 @@ class ReportFrame(BaseFrame):
 					if (not getattr(self, which + "_profile", None) or
 						getattr(self, which + "_profile").fileName !=
 						profile.fileName):
+						# Profile selection has changed
 						if which == "simulation":
 							# Get profile blackpoint so we can check if it makes
 							# sense to show TRC type and output offset controls
@@ -466,6 +469,13 @@ class ReportFrame(BaseFrame):
 									self.set_profile_ctrl_path(which)
 									return
 								self.XYZbpout = odata[0]
+					else:
+						# Profile selection has not changed
+						# Restore cached XYZbp values
+						if which == "output":
+							self.XYZbpout = XYZbpout
+						elif which == "input":
+							self.XYZbpin = XYZbpin
 					setattr(self, "%s_profile" % which, profile)
 					if not silent:
 						setcfg("measurement_report.%s_profile" % which,
