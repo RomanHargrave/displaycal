@@ -590,7 +590,7 @@ class ReportFrame(BaseFrame):
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
 		self.mr_set_testchart(getcfg("measurement_report.chart"))
-		self.use_simulation_profile_ctrl_handler(None)
+		self.use_simulation_profile_ctrl_handler(None, update_trc=False)
 		self.panel.Thaw()
 
 	def mr_update_trc_control(self):
@@ -822,7 +822,7 @@ class ReportFrame(BaseFrame):
 			   int(self.devlink_profile_cb.GetValue()))
 		self.mr_update_main_controls()
 	
-	def use_simulation_profile_ctrl_handler(self, event):
+	def use_simulation_profile_ctrl_handler(self, event, update_trc=True):
 		if event:
 			use_sim_profile = self.simulation_profile_cb.GetValue()
 			setcfg("measurement_report.use_simulation_profile",
@@ -840,27 +840,28 @@ class ReportFrame(BaseFrame):
 				sim_profile.tags.gTRC == sim_profile.tags.bTRC and
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
 				tf = sim_profile.tags.rTRC.get_transfer_function()
-				# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
-				setcfg("measurement_report.apply_trc",
-					   int(tf[0][1] in (-240, -709) or
-						   (tf[0][0].startswith("Gamma") and tf[1] >= .95)))
 				# Use only BT.1886 black output offset
 				setcfg("measurement_report.apply_black_offset",
 					   int(tf[0][1] not in (-240, -709) and
 						   (not tf[0][0].startswith("Gamma") or tf[1] < .95) and
 						   self.XYZbpin != self.XYZbpout))
-				# Set gamma to profile gamma if single gamma profile
-				if tf[0][0].startswith("Gamma") and tf[1] >= .95:
-					if not getcfg("measurement_report.trc_gamma.backup", False):
-						# Backup current gamma
-						setcfg("measurement_report.trc_gamma.backup",
-							   getcfg("measurement_report.trc_gamma"))
-					setcfg("measurement_report.trc_gamma", round(tf[0][1], 2))
-				# Restore previous gamma if not single gamma profile
-				elif getcfg("measurement_report.trc_gamma.backup", False):
-					setcfg("measurement_report.trc_gamma",
-						   getcfg("measurement_report.trc_gamma.backup"))
-					setcfg("measurement_report.trc_gamma.backup", None)
+				if update_trc:
+					# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
+					setcfg("measurement_report.apply_trc",
+						   int(tf[0][1] in (-240, -709) or
+							   (tf[0][0].startswith("Gamma") and tf[1] >= .95)))
+					# Set gamma to profile gamma if single gamma profile
+					if tf[0][0].startswith("Gamma") and tf[1] >= .95:
+						if not getcfg("measurement_report.trc_gamma.backup", False):
+							# Backup current gamma
+							setcfg("measurement_report.trc_gamma.backup",
+								   getcfg("measurement_report.trc_gamma"))
+						setcfg("measurement_report.trc_gamma", round(tf[0][1], 2))
+					# Restore previous gamma if not single gamma profile
+					elif getcfg("measurement_report.trc_gamma.backup", False):
+						setcfg("measurement_report.trc_gamma",
+							   getcfg("measurement_report.trc_gamma.backup"))
+						setcfg("measurement_report.trc_gamma.backup", None)
 				self.mr_update_trc_controls()
 				enable = (tf[0][1] not in (-240, -709) and
 						  self.XYZbpin != self.XYZbpout)
