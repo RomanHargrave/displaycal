@@ -3366,7 +3366,7 @@ END_DATA
 								continue
 							value = value.split(None, 1)
 							if len(value) > 1:
-								value = value[1].strip("()")
+								value = value[1].split("'", 1)[0].strip("()")
 							else:
 								value = value[0]
 							value = get_canonical_instrument_name(value)
