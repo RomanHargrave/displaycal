@@ -476,6 +476,7 @@
 	"error.testchart.read": "The testchart file “%s” could not be read.",
 	"error.tmp_creation": "Could not create temporary working directory.",
 	"error.trashcan_unavailable": "The %s is not available. No files were removed.",
+	"error.zero_luminance": "The measured peak luminance was zero. Make sure the instrument sensor is not blocked, and remove any protective cap (if present).",
 	"errors.none_found": "No errors found.",
 	"estimated_measurement_time": "Estimated measurement time approximately %s hour(s) %s minutes",
 	"exceptions": "Exceptions...",

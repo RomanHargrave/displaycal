@@ -476,6 +476,7 @@
 	"error.testchart.read": "El archivo de carta de ajustes “%s” no se puede leer.",
 	"error.tmp_creation": "No se puede crear directorio de trabajo temporal.",
 	"error.trashcan_unavailable": "El %s no esta disponible. No se eliminaron archivos.",
+		"*error.zero_luminance": "The measured luminance was zero. Make sure light is not blocked from the instrument sensor.",
 		"*errors.none_found": "No errors found.",
 		"*estimated_measurement_time": "Estimated measurement time approximately %s hour(s) %s minutes",
 		"*exceptions": "Exceptions...",

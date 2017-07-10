@@ -476,6 +476,7 @@
 	"error.testchart.read": "Le fichier de mire de test « %s » n'a pas pu être lu.",
 	"error.tmp_creation": "Il n'a pas été possible de créer un répertoire de travail temporaire.",
 	"error.trashcan_unavailable": "La %s n'est pas disponible. Aucun fichier n'a été supprimé.",
+		"*error.zero_luminance": "The measured luminance was zero. Make sure light is not blocked from the instrument sensor.",
 	"errors.none_found": "Aucune erreur trouvée.",
 	"estimated_measurement_time": "Temps de mesure approximatif: %s heure(s) %s minutes",
 		"*exceptions": "Exceptions...",

@@ -476,6 +476,7 @@
 	"error.testchart.read": "測色板檔案 “%s” 無法讀取。",
 	"error.tmp_creation": "無法建立臨時工作目錄。",
 	"error.trashcan_unavailable": "%s 並不可用。 並未移除任何文件。",
+		"*error.zero_luminance": "The measured luminance was zero. Make sure light is not blocked from the instrument sensor.",
 	"errors.none_found": "沒有發現任何錯誤。",
 	"estimated_measurement_time": "預算測量時間約 %s 小時 %s 分鐘",
 		"*exceptions": "Exceptions...",

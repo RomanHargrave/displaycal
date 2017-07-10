@@ -476,6 +476,7 @@
 	"error.testchart.read": "Impossibile leggere il file di  testchart “%s”.",
 	"error.tmp_creation": "Impossibile creare una cartella di lavoro temporanea.",
 		"*error.trashcan_unavailable": "The %s is not available. No files were removed.",
+		"*error.zero_luminance": "The measured luminance was zero. Make sure light is not blocked from the instrument sensor.",
 		"*errors.none_found": "No errors found.",
 		"*estimated_measurement_time": "Estimated measurement time approximately %s hour(s) %s minutes",
 		"*exceptions": "Exceptions...",

@@ -476,6 +476,7 @@
 	"error.testchart.read": "테스트차트 파일 “%s” 을 읽을 수 없습니다.",
 	"error.tmp_creation": "임시 작업 디렉토리를 생성할 수 없습니다.",
 	"error.trashcan_unavailable": "%s 은 사용할 수 없습니다. 파일이 삭제되었습니다.",
+		"*error.zero_luminance": "The measured luminance was zero. Make sure light is not blocked from the instrument sensor.",
 	"errors.none_found": "에러가 발견되지 않았습니다.",
 	"estimated_measurement_time": "예상 측정 소요시간은 약 %s 시간 %s 분 입니다",
 	"exceptions": "예외...",

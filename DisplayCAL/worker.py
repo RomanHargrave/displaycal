@@ -2331,6 +2331,8 @@ END_DATA
 			Y_cdm2 = float(luminance_XYZ_cdm2.split()[1])
 		except (IndexError, ValueError):
 			return Error(lang.getstr("error.testchart.invalid", ti3_path))
+		if not Y_cdm2:
+			return Error(lang.getstr("error.zero_luminance"))
 		black_0 = ti3[0].DATA[1]
 		black_16 = ti3[0].DATA[2]
 		if black_0 and black_16:
