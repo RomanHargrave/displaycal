@@ -1429,7 +1429,10 @@ class LUT3DFrame(BaseFrame):
 						 ICCP.LUT16Type) and
 			  isinstance(self.input_profile.tags.get("A2B2", ICCP.LUT16Type()),
 						 ICCP.LUT16Type)):
-			self.lut3d_trc_apply_black_offset_ctrl.Enable()
+			self.lut3d_trc_apply_black_offset_ctrl.Enable(self.XYZbpin !=
+														  self.XYZbpout)
+			if self.XYZbpin == self.XYZbpout:
+				setcfg("3dlut.apply_black_offset", 0)
 		else:
 			self.lut3d_trc_apply_black_offset_ctrl.Disable()
 			setcfg("3dlut.apply_black_offset", 0)

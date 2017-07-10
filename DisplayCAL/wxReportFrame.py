@@ -840,11 +840,12 @@ class ReportFrame(BaseFrame):
 				sim_profile.tags.gTRC == sim_profile.tags.bTRC and
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
 				tf = sim_profile.tags.rTRC.get_transfer_function()
-				# Use only BT.1886 black output offset
-				setcfg("measurement_report.apply_black_offset",
-					   int(tf[0][1] not in (-240, -709) and
-						   (not tf[0][0].startswith("Gamma") or tf[1] < .95) and
-						   self.XYZbpin != self.XYZbpout))
+				if update_trc or self.XYZbpin == self.XYZbpout:
+					# Use only BT.1886 black output offset
+					setcfg("measurement_report.apply_black_offset",
+						   int(tf[0][1] not in (-240, -709) and
+							   (not tf[0][0].startswith("Gamma") or tf[1] < .95) and
+							   self.XYZbpin != self.XYZbpout))
 				if update_trc:
 					# Use BT.1886 gamma mapping for SMPTE 240M / Rec. 709 TRC
 					setcfg("measurement_report.apply_trc",
