@@ -280,6 +280,8 @@ class CGATS(dict):
 			context = self
 
 			for raw_line in raw_lines:
+				# Replace 1.#IND00 with NaN
+				raw_line = raw_line.replace("1.#IND00", "NaN")
 				# strip control chars and leading/trailing whitespace
 				line = re.sub('[^\x09\x20-\x7E\x80-\xFF]', '', 
 								raw_line.strip())
