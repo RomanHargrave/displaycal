@@ -531,7 +531,8 @@ class ReportFrame(BaseFrame):
 		shown = self.apply_trc_ctrl.IsShown()
 		enable6 = (shown and
 				   bool(getcfg("measurement_report.apply_trc")))
-		show = shown and self.mr_trc_ctrl.GetSelection() == 2
+		show = shown and (self.mr_trc_ctrl.GetSelection() == 2 or
+						  getcfg("show_advanced_options"))
 		self.panel.Freeze()
 		self.mr_trc_ctrl.Enable(enable6)
 		self.mr_trc_ctrl.Show(shown)

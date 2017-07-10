@@ -9240,6 +9240,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.black_luminance_textctrl_label.Show(show_advanced_options and
 												 bool(getcfg("calibration.black_luminance", False)))
 		self.lut3d_show_controls()
+		self.mr_show_trc_controls()
 		if event:
 			self.show_observer_ctrl()
 			self.show_trc_controls()
