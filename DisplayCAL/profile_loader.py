@@ -2465,15 +2465,15 @@ class ProfileLoader(object):
 	def _enumerate_windows_callback(self, hwnd, extra):
 		cls = win32gui.GetClassName(hwnd)
 		if cls == "madHcNetQueueWindow" or self._is_known_window_class(cls):
-			self._hwnds_pids.add(hwnd)
 			try:
 				thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
 				filename = get_process_filename(pid)
 			except pywintypes.error:
 				return
+			self._hwnds_pids.add((filename, pid, thread_id, hwnd))
 			basename = os.path.basename(filename)
 			if (basename.lower() != "madhcctrl.exe" and
-				filename.lower() != exe.lower()):
+				pid != self._pid):
 				self.__other_component = filename, cls, 0
 
 	def _is_known_window_class(self, cls):
@@ -2544,7 +2544,7 @@ class ProfileLoader(object):
 						basename = os.path.basename(filename)
 						if basename.lower() != "madHcCtrl.exe".lower():
 							# Skip madVR Home Cinema Control
-							self._hwnds_pids.add(pid)
+							self._hwnds_pids.add((filename, pid))
 						if skip:
 							continue
 						known_app = basename.lower() in self._known_apps
