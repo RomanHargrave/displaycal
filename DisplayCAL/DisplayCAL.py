@@ -4941,6 +4941,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				show_result_dialog(exception)
 				return
 		pos = self.GetDisplay().ClientArea[:2]
+		geometry = None
+		profile = None
 		if (display_name in ("madVR", "Prisma", "Resolve", "Web @ localhost") or
 			display_name.startswith("Chromecast ")):
 			patterngenerator = self.worker.patterngenerator
@@ -4948,14 +4950,23 @@ class MainFrame(ReportFrame, BaseFrame):
 			patterngenerator = None
 			display_no = config.get_display_number(getcfg("display.number") - 1)
 			try:
-				pos = wx.Display(display_no).ClientArea[:2]
-			except:
-				pass
+				display = wx.Display(display_no)
+			except Exception, exception:
+				safe_print("wx.Display(%s):" % display_no, exception)
+			else:
+				pos = display.ClientArea[:2]
+				profile = config.get_current_profile(True)
+				if profile and profile.fileName in self.presets:
+					profile = None
+				else:
+					geometry = display.Geometry.Get()  # Has to be tuple!
 		display_name = display_name.replace("[PRIMARY]",
 											lang.getstr("display.primary"))
 		title = display_name + u" ‒ " + lang.getstr("whitepoint.visual_editor")
 		self.wpeditor = VisualWhitepointEditor(self, pos=pos, title=title,
-											   patterngenerator=patterngenerator)
+											   patterngenerator=patterngenerator,
+											   geometry=geometry,
+											   profile=profile)
 		if CCPG and isinstance(patterngenerator, CCPG):
 			self.wpeditor.Bind(wx.EVT_CLOSE, self.patterngenerator_disconnect)
 		self.wpeditor.RealCenterOnScreen()

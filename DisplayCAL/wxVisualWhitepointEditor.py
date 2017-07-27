@@ -1624,7 +1624,7 @@ class ProfileManager(object):
 
     managers = []
 
-    def __init__(self, window):
+    def __init__(self, window, geometry=None, profile=None):
         self._display = window.GetDisplay()
         self._lock = threading.Lock()
         self._profiles = {}
@@ -1638,21 +1638,27 @@ class ProfileManager(object):
         self._window.Bind(wx.EVT_DISPLAY_CHANGED, self.display_changed_handler)
         self._worker = Worker()
         ProfileManager.managers.append(self)
-        self.update()
+        self.update(False)
+        self._profiles_overridden = {}
+        if geometry and profile:
+            self._profiles_overridden[geometry] = profile
 
 
     def _manage_display(self, display_no, geometry):
         # Has to be thread-safe!
         with self._lock:
             try:
-                profile = ICCP.get_display_profile(display_no)
+                display_profile = ICCP.get_display_profile(display_no)
             except (ICCP.ICCProfileInvalidError, IOError,
                     IndexError), exception:
                 safe_print("Could not get display profile for display %i" %
                            (display_no + 1), "@ %i, %i, %ix%i:" %
                            geometry, exception)
             else:
-                if profile and profile.ID != self._srgb_profile.ID:
+                profile = self._profiles_overridden.get(geometry)
+                if not profile:
+                    profile = display_profile
+                if display_profile and display_profile.ID != self._srgb_profile.ID:
                     # Set initial whitepoint according to vcgt
                     # Convert calibration information from embedded WCS
                     # profile (if present) to VideCardGammaType if the
@@ -1675,9 +1681,9 @@ class ProfileManager(object):
                     # Remember profile, but discard profile filename
                     # (Important - can't re-install profile from same path
                     # where it is installed!)
-                    if not self._set_profile_temp_filename(profile):
+                    if not self._set_profile_temp_filename(display_profile):
                         return
-                    self._profiles[geometry] = profile
+                    self._profiles[geometry] = display_profile
                     self._install_profile(display_no, self._srgb_profile)
 
 
@@ -1735,13 +1741,14 @@ class ProfileManager(object):
             self._update_timer.Stop()
     
     
-    def update(self):
+    def update(self, restore_display_profiles=True):
         """
         Clear calibration on the current display, and restore it on
         the previous one (if any)
         
         """
-        self.restore_display_profiles()
+        if restore_display_profiles:
+            self.restore_display_profiles()
         display_no = get_argyll_display_number(self._display.Geometry)
         if display_no is not None:
             threading.Thread(target=self._manage_display,
@@ -1820,12 +1827,16 @@ class VisualWhitepointEditor(wx.Frame):
     """
 
     def __init__(self, parent, colourData=None, title=wx.EmptyString,
-                 pos=wx.DefaultPosition, patterngenerator=None):
+                 pos=wx.DefaultPosition, patterngenerator=None,
+                 geometry=None, profile=None):
         """
         Default class constructor.
 
         :param `colourData`: a standard :class:`ColourData` (as used in :class:`ColourFrame`);
          to hide the alpha channel control or not.
+        :param `patterngenerator`: a patterngenerator object
+        :param `geometry`: the geometry of the display the profile is assigned to
+        :param `profile`: the profile of the display with the given geometry
         """
         
         self.patterngenerator = patterngenerator
@@ -2038,7 +2049,7 @@ class VisualWhitepointEditor(wx.Frame):
                 args=(self,))
             self.update_patterngenerator_thread.start()
 
-        self._pm = ProfileManager(self)
+        self._pm = ProfileManager(self, geometry, profile)
         self.Bind(wx.EVT_MOVE, self.move_handler)
 
         wx.CallAfter(self.InitFrame)
