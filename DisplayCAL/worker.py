@@ -6034,7 +6034,7 @@ usage: spotread [-options] [logfile]
 				for presetname in presetnames:
 					self.log("Loading Prisma preset", presetname)
 					preset = self.patterngenerator.load_preset(presetname)
-					assigned_lut = preset["settings"].get("cube", "")
+					assigned_lut = preset["v"].get("cube", "")
 					if not assigned_lut in assigned_luts:
 						assigned_luts[assigned_lut] = 0
 					assigned_luts[assigned_lut] += 1
@@ -6042,7 +6042,7 @@ usage: spotread [-options] [logfile]
 				# assigned to another preset
 				if (assigned_lut.lower().endswith(".3dl") and
 					assigned_luts[assigned_lut] == 1):
-					remove = preset["settings"]["cube"]
+					remove = preset["v"]["cube"]
 				else:
 					remove = False
 				# Check total size of installed 3D LUTs. The Prisma has 1 MB of
@@ -6052,7 +6052,7 @@ usage: spotread [-options] [logfile]
 				rawlen = len(installed["raw"])
 				size = 0
 				numinstalled = 0
-				for table in installed["tables"]:
+				for table in installed["v"]["tables"]:
 					if table.get("n") != remove:
 						size += table.get("s", 0)
 						numinstalled += 1
@@ -6061,17 +6061,11 @@ usage: spotread [-options] [logfile]
 									  (table["n"], table.get("s", 0)))
 				filesize = os.stat(path).st_size
 				size_exceeded = size + filesize > maxsize
-				# NOTE that due to a bug in the Prisma firmware (1.02),
-				# responses are sometimes truncated to 512 bytes, which means
-				# with the current 3D LUT naming scheme we can effectively only
-				# store two of them.
-				response_len_exceeded = rawlen + len('{"n":"%s", "s":%i},' %
-													 (filename, filesize)) > 512
 				# NOTE that the total number of 3D LUT slots seems to be limited
 				# to 32, which includes built-in LUTs.
 				maxluts = 32
 				luts_exceeded = numinstalled >= maxluts
-				if size_exceeded or response_len_exceeded or luts_exceeded:
+				if size_exceeded or luts_exceeded:
 					if size_exceeded:
 						missing = size + filesize - maxsize
 					elif luts_exceeded:
@@ -8565,7 +8559,8 @@ usage: spotread [-options] [logfile]
 				# Try to use existing connection
 				try:
 					self.patterngenerator_send((.5, ) * 3, True)
-				except socket.error:
+				except (socket.error, httplib.HTTPException), exception:
+					self.log(exception)
 					self.patterngenerator.disconnect_client()
 		elif pgname == "Prisma":
 			patterngenerator = PrismaPatternGeneratorClient

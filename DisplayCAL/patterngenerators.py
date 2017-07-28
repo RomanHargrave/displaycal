@@ -71,21 +71,17 @@ class GenHTTPPatternGeneratorClient(object):
 	def __del__(self):
 		self.disconnect_client()
 
-	def _conn_exc(self, exception):
-		msg = lang.getstr("connection.fail", safe_unicode(exception))
-		raise Exception(msg)
-
 	def _request(self, method, url, params=None, headers=None, validate=None):
 		try:
 			self.conn.request(method, url, params, headers or {})
 			resp = self.conn.getresponse()
 		except (error, httplib.HTTPException), exception:
-			self._conn_exc(exception)
+			raise
 		else:
 			if resp.status == httplib.OK:
 				return self._validate(resp, url, validate)
 			else:
-				raise Exception("%s %s" % (resp.status, resp.reason))
+				raise httplib.HTTPException("%s %s" % (resp.status, resp.reason))
 
 	def _shutdown(self):
 		# Override this method in subclass!
@@ -364,19 +360,19 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 			if "m" in query:
 				method = query["m"][0]
 				if data.get(method) == "Error" and "msg" in data:
-					raise Exception("%s: %s" % (self.host, data["msg"]))
+					raise httplib.HTTPException("%s: %s" % (self.host, data["msg"]))
 			for key, value in validate.iteritems():
 				if key not in data:
-					raise Exception(lang.getstr("response.invalid.missing_key",
+					raise httplib.HTTPException(lang.getstr("response.invalid.missing_key",
 												(self.host, key, raw)))
 				elif value is not None and data[key] != value:
-					raise Exception(lang.getstr("response.invalid.value",
+					raise httplib.HTTPException(lang.getstr("response.invalid.value",
 												(self.host, key, value, raw)))
 			data["raw"] = raw
 			return data
 		elif validate:
 			if raw != validate:
-				raise Exception(lang.getstr("response.invalid",
+				raise httplib.HTTPException(lang.getstr("response.invalid",
 											(self.host, raw)))
 		return raw
 
@@ -388,18 +384,18 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 			win = 1
 		else:
 			win = 2
-		self.invoke("window", "win%i" % win, {"sz": size})
+		self.invoke("Window", "win%i" % win, {"sz": size})
 
 	def get_config(self):
-		return self.invoke("setup", validate={"preset": None, "settings": None,
-											  "vpath": None})
+		return self.invoke("Prisma", "settings", validate={"v": None,
+														   "settings": "Ok"})
 
 	def get_installed_3dluts(self):
-		return self.invoke("cube", "list", validate={"list": "Ok", "tables": None})
+		return self.invoke("Cube", "list", validate={"list": "Ok", "v": None})
 
 	def load_preset(self, presetname):
-		return self.invoke("setup", "loadPreset", {"n": presetname},
-						   validate={"settings": None})
+		return self.invoke("Prisma", "loadPreset", {"n": presetname},
+						   validate={"v": None})
 
 	def load_3dlut_file(self, path, filename):
 		with open(path, "rb") as lut3d:
@@ -412,19 +408,19 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		self._request("POST", "/fwupload", params, headers)
 
 	def remove_3dlut(self, filename):
-		self.invoke("cube", "remove", {"n": filename})
+		self.invoke("Cube", "remove", {"n": filename})
 
 	def set_3dlut(self, filename):
 		# Select 3D LUT
-		self.invoke("setup", "setCube", {"n": filename, "f": "null"})
+		self.invoke("Prisma", "setCube", {"n": filename, "f": "null"})
 
 	def set_prismavue(self, value):
-		self.invoke("setup", "setPrismaVue", {"a": value, "t": "null"})
+		self.invoke("Prisma", "setPrismaVue", {"a": value, "t": "null"})
 
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
 		rgb, bgrgb, bits = self._get_rgb(rgb, bgrgb, bits, use_video_levels)
-		self.invoke("window", "color", {"bg": bgrgb, "fg": rgb})
+		self.invoke("Window", "color", {"bg": bgrgb, "fg": rgb})
 		size = (w + h) / 2.0 * 100
 		if size != self._size:
 			self._size = size
