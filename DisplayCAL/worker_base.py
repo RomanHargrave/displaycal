@@ -470,13 +470,23 @@ class Xicclu(WorkerBase):
 					output_encoding = "n"
 				args += ["-e" + input_encoding, "-E" + output_encoding]
 		args.append("-f" + direction)
+		self.output_scale = 1.0
 		if is_profile:
 			if profile.profileClass not in ("abst", "link"):
 				args.append("-i" + intent)
 				if order != "n":
 					args.append("-o" + order)
-			if pcs and profile.profileClass != "link":
-				args.append("-p" + pcs)
+			if profile.profileClass != "link":
+				if (direction in ("f", "ib") and
+					(pcs == "x" or (profile.connectionColorSpace == "XYZ" and
+									not pcs))):
+					# In case of forward lookup with XYZ PCS, use 0..100 scaling
+					# internally so we get extra precision from xicclu for the
+					# decimal part. Scale back to 0..1 later.
+					pcs = "X"
+					self.output_scale = 100.0
+				if pcs:
+					args.append("-p" + pcs)
 		args.append(self.profile_path)
 		if debug or verbose > 1:
 			self.sessionlogfile = LogFile(profile_basename + ".xicclu",
@@ -634,7 +644,7 @@ class Xicclu(WorkerBase):
 			clip = parts.pop() == "(clip)"
 			if clip:
 				parts.pop()
-			parsed.append([float(n) for n in parts])
+			parsed.append([float(n) / self.output_scale for n in parts])
 			if get_clip:
 				parsed[-1].append(clip)
 			j += 1
