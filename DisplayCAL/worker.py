@@ -11230,7 +11230,10 @@ BEGIN_DATA
 			if i > len(wp) - 1:  # don't include whitepoint patches in ti3
 				# set device values in ti3
 				for n, v in enumerate(olabels):
-					ti3v.DATA[i - len(wp)][v] = float(device[n])
+					# Assuming 0..100, 4 decimal digits is
+					# enough for roughly 19 bits integer
+					# device values
+					ti3v.DATA[i - len(wp)][v] = round(float(device[n]), 4)
 				# set PCS values in ti3
 				for n, v in enumerate(cie):
 					ti3v.DATA[i - len(wp)][required[n]] = float(v)

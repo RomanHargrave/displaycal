@@ -889,7 +889,17 @@ class CGATS(dict):
 													  'got %s)' % 
 													  (item, type(value)))
 							else:
-								lencheck = len(str(abs(value)).split("e")[0])
+								strval = str(abs(value))
+								if (item.startswith("RGB_") or
+									item.startswith("CMYK_")):
+									# Assuming 0..100, 4 decimal digits is
+									# enough for roughly 19 bits integer
+									# device values
+									parts = strval.split(".")
+									if len(parts) == 2 and len(parts[-1]) > 4:
+										value = round(value, 4)
+										strval = str(abs(value))
+								lencheck = len(strval.split("e")[0])
 								if lencheck > self.vmaxlen:
 									self.vmaxlen = lencheck
 						elif self.root.normalize_fields and \
