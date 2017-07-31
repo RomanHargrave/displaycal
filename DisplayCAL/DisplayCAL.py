@@ -14336,13 +14336,14 @@ class MainFrame(ReportFrame, BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
-			self.related_files = {}
+			self.related_files = OrderedDict()
 			for entry in dircontents:
 				fn, ext = os.path.splitext(entry)
 				if ext.lower() in (".app", script_ext):
 					fn, ext = os.path.splitext(fn)
 				if (fn.startswith(os.path.splitext(os.path.basename(cal))[0]) or
-					ext.lower() in (".ccss", ".ccmx")):
+					ext.lower() in (".ccss", ".ccmx") or
+					entry.lower() in ("0_16.ti1", "0_16.ti3", "0_16.log")):
 					self.related_files[entry] = True
 			self.dlg = dlg = ConfirmDialog(
 				self, msg=lang.getstr("dialog.confirm_delete"), 
