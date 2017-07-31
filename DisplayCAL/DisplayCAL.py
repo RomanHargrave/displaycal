@@ -13948,6 +13948,14 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "profile.b2a.hires.size",
 											 "HIRES_B2A_SIZE":
 											 "profile.b2a.hires.size",
+											 # NOTE that profile black point
+											 # correction is not the same
+											 # as calibration black point
+											 # correction!
+											 # See Worker.create_profile in
+											 # worker.py
+											 "BLACK_POINT_CORRECTION":
+											 "profile.black_point_correction",
 											 "MIN_DISPLAY_UPDATE_DELAY_MS":
 											 "measure.min_display_update_delay_ms",
 											 "DISPLAY_SETTLE_TIME_MULT":

@@ -936,6 +936,7 @@ defaults = {
 	"position.tcgen.x": 50,
 	"position.tcgen.y": 50,
 	"profile.black_point_compensation": 0,
+	"profile.black_point_correction": 0.0,
 	"profile.create_gamut_views": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
 									 os.geteuid() == 0) # or 

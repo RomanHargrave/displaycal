@@ -7470,15 +7470,47 @@ usage: spotread [-options] [logfile]
 				if process_A2B:
 					bpc_applied = False
 					if getcfg("profile.black_point_compensation"):
+						XYZbp = (0, 0, 0)
+					elif getcfg("profile.black_point_correction") < 1:
+						# Correct black point a* b* and make neutral hues near
+						# black blend over to the new blackpoint. The correction
+						# factor determines the amount of the measured black hue
+						# that should be retained.
+						# It makes the profile slightly less accurate near
+						# black, but the effect is negligible and the visual
+						# benefit is of greater importance (allows for
+						# calibration blackpoint hue correction to have desired
+						# effect, and makes relcol with BPC visually match
+						# perceptual in Photoshop).
+						try:
+							odata = self.xicclu(profile, (0, 0, 0), pcs="l")
+							if len(odata) != 1 or len(odata[0]) != 3:
+								raise ValueError("Blackpoint is invalid: %s" %
+												 odata)
+						except Exception, exception:
+							self.log(exception)
+							XYZbp = None
+						else:
+							bpcorr = getcfg("profile.black_point_correction")
+							Labbp = (odata[0][0], odata[0][1] * bpcorr,
+									 odata[0][2] * bpcorr)
+							XYZbp = colormath.Lab2XYZ(*Labbp)
+					else:
+						XYZbp = None
+					if XYZbp:
 						if "A2B1" in profile.tags:
 							table = "A2B1"
 						else:
 							table = "A2B0"
 						if isinstance(profile.tags[table], ICCP.LUT16Type):
-							self.log("Applying black point "
-									 "compensation to %s table" % table)
+							if getcfg("profile.black_point_compensation"):
+								logmsg = "Applying black point compensation to"
+							else:
+								logmsg = ("Applying %i%% black point "
+										  "correction to" % (bpcorr * 100))
+							self.log("%s %s table" % (logmsg, table))
 							try:
-								profile.tags[table].apply_black_offset((0, 0, 0),
+								profile.tags[table].apply_black_offset(XYZbp,
 														self.get_logfiles(),
 														self.thread_abort,
 														lang.getstr("aborted"))
@@ -7488,8 +7520,8 @@ usage: spotread [-options] [logfile]
 								bpc_applied = True
 								profchanged = True
 						else:
-							self.log("Can't apply black point "
-									 "compensation to non-LUT16Type %s "
+							self.log("Can't change black point "
+									 "in non-LUT16Type %s "
 									 "table" % table)
 					if (getcfg("profile.b2a.hires") or
 						not has_B2A):
@@ -8787,6 +8819,12 @@ usage: spotread [-options] [logfile]
 			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
 							   "YES" if getcfg("profile.black_point_compensation")
 							   else "NO")
+			# Black point correction
+			# NOTE that profile black point correction is not the same as
+			# calibration black point correction!
+			# See Worker.create_profile
+			ti3[0].add_keyword("BLACK_POINT_CORRECTION",
+							   getcfg("profile.black_point_correction"))
 			# Hires B2A with optional smoothing
 			ti3[0].add_keyword("HIRES_B2A",
 							   "YES" if getcfg("profile.b2a.hires")
