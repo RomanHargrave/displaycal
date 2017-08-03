@@ -7633,9 +7633,24 @@ usage: spotread [-options] [logfile]
 				vcgt = cal_to_vcgt(cgats)
 				is_hq_cal = "qh" in get_options_from_cal(cgats)[0]
 		
+		dEs = []
+		RGB_XYZ.sort()
+		for X, Y, Z in RGB_XYZ.itervalues():
+			if Y >= 1:
+				X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(100, 100, 100)])
+				L, a, b = colormath.XYZ2Lab(X, Y, Z)
+				dE = colormath.delta(L, 0, 0, L, a, b, "00")["E"]
+				dEs.append(dE)
+				if debug or verbose > 1:
+					self.log("L* %5.2f a* %5.2f b* %5.2f dE*00 %4.2f" %
+							 (L, a, b, dE))
+		dE_avg = sum(dEs) / len(dEs)
+		dE_max = max(dEs)
+		self.log("R=G=B (>= 1% luminance) dE*00 avg", dE_avg, "peak", dE_max)
+		
 		# Interpolate shaper curves from grays - returned curves are adapted
 		# to D50
-		single_curve = is_hq_cal and not vcgt.is_linear()
+		single_curve = round(dE_max, 2) <= 1.2 and round(dE_avg, 2) <= 0.4
 		if single_curve:
 			self.log("Got high quality calibration, using single device to PCS "
 					 "shaper curve for cLUT")
