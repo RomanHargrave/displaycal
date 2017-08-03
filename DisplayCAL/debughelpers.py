@@ -54,9 +54,10 @@ def handle_error(error, parent=None, silent=False):
 		 not getattr(error, "filename", None))):
 		# Print a traceback if in debug mode, for non environment errors, and
 		# for environment errors not related to files
-		safe_print(safe_unicode(tbstr))
+		msg = "\n\n".join([safe_unicode(v) for v in (error, tbstr)])
 	else:
-		safe_print(safe_unicode(error))
+		msg = safe_unicode(error)
+	safe_print(msg)
 	if not silent:
 		try:
 			from wxaddons import wx
@@ -76,15 +77,15 @@ def handle_error(error, parent=None, silent=False):
 				except:
 					# If the parent is still being constructed, we can't use it
 					parent = None
-			if isinstance(error, Warning):
-				icon = wx.ICON_WARNING
-			elif isinstance(error, Exception):
-				icon = wx.ICON_ERROR
-			else:
-				icon = wx.ICON_INFORMATION
+			icon = wx.ICON_INFORMATION
+			if not isinstance(error, Info):
+				if isinstance(error, Warning):
+					icon = wx.ICON_WARNING
+				elif isinstance(error, Exception):
+					icon = wx.ICON_ERROR
 			dlg = wx.MessageDialog(parent if parent not in (False, None) and 
 								   parent.IsShownOnScreen() else None, 
-								   safe_unicode(error), app.AppName, wx.OK | icon)
+								   msg, app.AppName, wx.OK | icon)
 			if frame:
 				# wxPython 3 bugfix: We need to use CallLater and MainLoop
 				wx.CallLater(1, dlg.ShowModal)
