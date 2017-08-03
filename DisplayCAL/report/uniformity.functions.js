@@ -119,7 +119,7 @@ function generate_report() {
 			line = '<abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K, <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K';
 		}
 		else {
-			var delta_avg = jsapi.math.avg(deltas), Y_diff_percent_avg = jsapi.math.avg(Y_diff_percent),
+			var delta_avg = jsapi.math.avgabs(deltas), Y_diff_percent_avg = jsapi.math.avg(Y_diff_percent),
 				color = 'inherit', mark = '', Y_color = color, Y_mark = mark;
 			if (Math.abs(Y_diff_percent_avg) < 5) {
 				Y_color = 'green';

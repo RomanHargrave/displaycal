@@ -802,6 +802,11 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			for (var i = 0; i < a.length; i ++) r += a[i];
 			return r / a.length
 		},
+		avgabs: function() {
+			var a = jsapi.array.flat(arguments), r = 0;
+			for (var i = 0; i < a.length; i ++) r += Math.abs(a[i]);
+			return r / a.length
+		},
 		cbrt: function(x) {
 			return x >= 0 ? Math.pow (x, 1 / 3) : -Math.pow (-x, 1 / 3)
 		},

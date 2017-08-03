@@ -68,13 +68,13 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 	),
 	CRITERIA_RULES_VERIFY = CRITERIA_RULES_RGB.concat(
 		[
-			["RGB gray balance (>= 1% luminance) average ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
+			["RGB gray balance (>= 1% luminance) average absolute ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE76],
 			["RGB gray balance (>= 1% luminance) combined Δa*76 and Δb*76 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE76],
 			["RGB gray balance (>= 1% luminance) maximum ΔC*76", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE76],
-			["RGB gray balance (>= 1% luminance) average ΔC*94", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE94],
+			["RGB gray balance (>= 1% luminance) average absolute ΔC*94", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE94],
 			["RGB gray balance (>= 1% luminance) combined Δa*94 and Δb*94 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE94],
 			["RGB gray balance (>= 1% luminance) maximum ΔC*94", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE94],
-			["RGB gray balance (>= 1% luminance) average ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE00],
+			["RGB gray balance (>= 1% luminance) average absolute ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE00],
 			["RGB gray balance (>= 1% luminance) combined Δa*00 and Δb*00 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE00],
 			["RGB gray balance (>= 1% luminance) maximum ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE00]
 		]
@@ -194,7 +194,7 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.concat(
 				[0, 0, 100, 0],
 				[0, 0, 0, 100]
 			], DELTA_H_MAX, 2.5, 1.5, CIE76],
-			["CMY grey average ΔH*76", [
+			["CMY grey average absolute ΔH*76", [
 				[100, 85, 85, 0],
 				[80, 65, 65, 0],
 				[60, 45, 45, 0],

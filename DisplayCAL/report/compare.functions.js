@@ -521,7 +521,7 @@ p.generate_report = function(set_delta_calc_method) {
 				result[j].sum = jsapi.math.absmax(result[j].a);
 				break;
 			case DELTA_A_AVG:
-				result[j].sum = jsapi.math.avg(result[j].a);
+				result[j].sum = jsapi.math.avgabs(result[j].a);
 				break;
 			case DELTA_A_MED:
 				result[j].sum = jsapi.math.median(result[j].a);
@@ -544,7 +544,7 @@ p.generate_report = function(set_delta_calc_method) {
 				result[j].sum = jsapi.math.absmax(result[j].b);
 				break;
 			case DELTA_B_AVG:
-				result[j].sum = jsapi.math.avg(result[j].b);
+				result[j].sum = jsapi.math.avgabs(result[j].b);
 				break;
 			case DELTA_B_MED:
 				result[j].sum = jsapi.math.median(result[j].b);
@@ -582,7 +582,7 @@ p.generate_report = function(set_delta_calc_method) {
 				result[j].sum = jsapi.math.absmax(result[j].L);
 				break;
 			case DELTA_L_AVG:
-				result[j].sum = jsapi.math.avg(result[j].L);
+				result[j].sum = jsapi.math.avgabs(result[j].L);
 				break;
 			case DELTA_L_MED:
 				result[j].sum = jsapi.math.median(result[j].L);
@@ -601,7 +601,7 @@ p.generate_report = function(set_delta_calc_method) {
 				result[j].sum = jsapi.math.absmax(result[j].C);
 				break;
 			case DELTA_C_AVG:
-				result[j].sum = jsapi.math.avg(result[j].C);
+				result[j].sum = jsapi.math.avgabs(result[j].C);
 				break;
 			case DELTA_C_MED:
 				result[j].sum = jsapi.math.median(result[j].C);
@@ -620,7 +620,7 @@ p.generate_report = function(set_delta_calc_method) {
 				result[j].sum = jsapi.math.absmax(result[j].H);
 				break;
 			case DELTA_H_AVG:
-				result[j].sum = jsapi.math.avg(result[j].H);
+				result[j].sum = jsapi.math.avgabs(result[j].H);
 				break;
 			case DELTA_H_MED:
 				result[j].sum = jsapi.math.median(result[j].H);
