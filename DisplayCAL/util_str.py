@@ -457,7 +457,7 @@ def safe_basestring(obj):
 				obj = str(obj)
 			except UnicodeEncodeError:
 				obj = repr(obj)
-	if isinstance(oobj, Exception):
+	if isinstance(oobj, Exception) and not isinstance(oobj, Warning):
 		if obj and oobj.__class__.__name__ in dir(exceptions):
 			obj = obj[0].capitalize() + obj[1:]
 		module = getattr(oobj, "__module__", "")
