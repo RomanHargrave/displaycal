@@ -7650,7 +7650,7 @@ usage: spotread [-options] [logfile]
 		
 		# Interpolate shaper curves from grays - returned curves are adapted
 		# to D50
-		single_curve = round(dE_max, 2) <= 1.2 and round(dE_avg, 2) <= 0.4
+		single_curve = round(dE_max, 2) <= 1.2 and round(dE_avg, 2) <= 0.5
 		if single_curve:
 			self.log("Got high quality calibration, using single device to PCS "
 					 "shaper curve for cLUT")
