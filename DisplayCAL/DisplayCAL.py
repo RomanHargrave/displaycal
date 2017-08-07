@@ -5084,12 +5084,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
 			return
-		safe_print(lang.getstr("success"))
 		result = re.sub("[^\t\n\r\x20-\x7f]", "",
 						"".join(self.worker.output)).strip()
-		if not result:
-			wx.Bell()
-			return
 		if getcfg("whitepoint.colortemp.locus") == "T":
 			K = re.search("Planckian temperature += (\d+(?:\.\d+)?)K", 
 						  result, re.I)
@@ -5101,6 +5097,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
 						result)
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
+		if not result or (not K and not XYZ and not Yxy and not lux):
+			show_result_dialog(Error(result + lang.getstr("failure")),
+							   self)
+			return
+		safe_print(lang.getstr("success"))
 		set_whitepoint = evtobjname in ("visual_whitepoint_editor_measure_btn",
 										"whitepoint_measure_btn")
 		set_ambient = evtobjname == "ambient_measure_btn"
