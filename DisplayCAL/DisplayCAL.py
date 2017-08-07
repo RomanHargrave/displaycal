@@ -13053,16 +13053,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			if event and proftype not in ("l", "x", "X"):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
 		else:
-			if auto == 2:
+			if auto == 1:
 				patches_amount = 34
-			elif auto == 3:
+			elif auto == 2:
 				patches_amount = 79
+			elif auto == 3:
+				patches_amount = 115
 			else:
 				patches_amount = 175
 			if event:
 				if auto > 2 and proftype not in ("x", "X"):
 					setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
-				elif auto == 2 and proftype not in ("g", "G", "s", "S"):
+				elif auto < 3 and proftype not in ("g", "G", "s", "S"):
 					setcfg("profile.type", "S" if getcfg("trc") else "s")
 		if proftype != getcfg("profile.type"):
 			self.update_profile_type_ctrl()

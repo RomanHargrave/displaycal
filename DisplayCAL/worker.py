@@ -7144,7 +7144,7 @@ usage: spotread [-options] [logfile]
 				# a smaller testchart (faster computation!)
 				args.insert(args.index("-aX"), "-ax")
 				args.remove("-aX")
-			is_5x5x5 = False
+			is_regular_grid = False
 			if getcfg("profile.type") in ("X", "x"):
 				# Check if TI3 RGB matches one of our 5^3 TI1 RGB charts
 				ti3 = CGATS.CGATS(args[-1] + ".ti3")
@@ -7152,6 +7152,7 @@ usage: spotread [-options] [logfile]
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
 				for ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
+								 "ti1/d3-e4-s4-g49-m4-b0-f0",
 								 "ti1/d3-e4-s5-g49-m5-b0-f0",
 								 "ti1/d3-e4-s9-g49-m9-b0-f0",
 								 "ti1/d3-e4-s17-g49-m17-b0-f0"):
@@ -7159,6 +7160,7 @@ usage: spotread [-options] [logfile]
 					ti1_path = get_data_path(ti1_name)
 					if not ti1_path:
 						if ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
+										"ti1/d3-e4-s4-g49-m4-b0-f0",
 										"ti1/d3-e4-s5-g49-m5-b0-f0"):
 							return Error(lang.getstr("file.missing", ti1_name))
 						else:
@@ -7170,13 +7172,13 @@ usage: spotread [-options] [logfile]
 					# Quantize to 8 bit for comparison
 					# XXX Note that round(50 * 2.55) = 127, but
 					# round(50 / 100 * 255) = 128 (the latter is what we want)!
-					is_5x5x5 = (sorted(tuple(round(v / 100.0 * 255) for v in RGB)
-									   for RGB in ti3_remaining.keys()) ==
-								sorted(tuple(round(v / 100.0 * 255) for v in RGB)
-									   for RGB in ti1_remaining.keys()))
-					if is_5x5x5:
+					if (sorted(tuple(round(v / 100.0 * 255) for v in RGB)
+							   for RGB in ti3_remaining.keys()) ==
+						sorted(tuple(round(v / 100.0 * 255) for v in RGB)
+							   for RGB in ti1_remaining.keys())):
+						is_regular_grid = True
 						break
-			if is_5x5x5:
+			if is_regular_grid:
 				# Use our own forward profile code
 				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
 														  os.path.basename(args[-1]),
@@ -7208,7 +7210,7 @@ usage: spotread [-options] [logfile]
 				ti3_file = open(args[-1] + ".ti3", "rb")
 				ti3 = ti3_file.read()
 				ti3_file.close()
-			elif not is_5x5x5:
+			elif not is_regular_grid:
 				ti3 = None
 			if os.path.isfile(args[-1] + ".chrm"):
 				# Get ChromaticityType tag
@@ -7706,7 +7708,7 @@ usage: spotread [-options] [logfile]
 		# Build initial cLUT
 		# Try to fill a 5x5x5 or 3x3x3 cLUT
 		clut_actual = 0
-		for iclutres in (17, 9, 5, 3):
+		for iclutres in (17, 9, 5, 4, 3):
 			clut = []
 			step = 100 / (iclutres - 1.0)
 			for a in xrange(iclutres):
@@ -8438,10 +8440,12 @@ usage: spotread [-options] [logfile]
 			result = True
 			if getcfg("testchart.file") == "auto" and auto < 5:
 				# Use pre-baked testchart
-				if auto == 2:
+				if auto == 1:
 					testchart = "ti1/d3-e4-s2-g25-m0-b0-f0.ti1"
-				elif auto == 3:
+				elif auto == 2:
 					testchart = "ti1/d3-e4-s3-g49-m3-b0-f0.ti1"
+				elif auto == 3:
+					testchart = "ti1/d3-e4-s4-g49-m4-b0-f0.ti1"
 				else:
 					testchart = "ti1/d3-e4-s5-g49-m5-b0-f0.ti1"
 				testchart_path = get_data_path(testchart)
