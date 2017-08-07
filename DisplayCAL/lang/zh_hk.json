@@ -983,6 +983,7 @@
 	"testchart.sort_RGB_red_to_top": "將 RGB 紅色排列到最頂",
 	"testchart.sort_RGB_white_to_top": "將 RGB 白色排列到最頂",
 	"testchart.sort_RGB_yellow_to_top": "將 RGB 黃色排列到最頂",
+	"testchart.sort_by_BGR": "以 BGR 排序",
 	"testchart.sort_by_HSI": "以 HSI 排序",
 	"testchart.sort_by_HSL": "以 HSL 排序",
 	"testchart.sort_by_HSV": "以 HSV 排序",

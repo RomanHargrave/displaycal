@@ -572,6 +572,8 @@ class TestchartEditor(BaseFrame):
 					 "testchart.sort_by_rec709_luma",
 					 "testchart.sort_by_RGB",
 					 "testchart.sort_by_RGB_sum",
+					 "testchart.sort_by_BGR",
+					 "testchart.optimize_display_response_delay",
 					 "testchart.interleave",
 					 "testchart.shift_interleave",
 					 "testchart.maximize_lightness_difference",
@@ -1007,21 +1009,28 @@ END_DATA""")
 		elif idx == 14:
 			self.ti1.sort_by_RGB_sum()
 		elif idx == 15:
+			self.ti1.sort_by_BGR()
+		elif idx == 16:
+			# Minimize display response delay
+			self.ti1.sort_by_BGR()
+			self.ti1.sort_RGB_gray_to_top()
+			self.ti1.sort_RGB_white_to_top()
+		elif idx == 17:
 			# Interleave
 			self.ti1.checkerboard(None, None)
-		elif idx == 16:
+		elif idx == 18:
 			# Shift & interleave
 			self.ti1.checkerboard(None, None, split_grays=True, shift=True)
-		elif idx == 17:
+		elif idx == 19:
 			# Maximize L* difference
 			self.ti1.checkerboard()
-		elif idx == 18:
+		elif idx == 20:
 			# Maximize Rec. 709 luma difference
 			self.ti1.checkerboard(CGATS.sort_by_rec709_luma)
-		elif idx == 19:
+		elif idx == 21:
 			# Maximize RGB difference
 			self.ti1.checkerboard(CGATS.sort_by_RGB_sum)
-		elif idx == 20:
+		elif idx == 22:
 			# Vary RGB difference
 			self.ti1.checkerboard(CGATS.sort_by_RGB, None, split_grays=True,
 								  shift=True)

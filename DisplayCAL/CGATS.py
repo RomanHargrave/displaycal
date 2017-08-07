@@ -140,6 +140,15 @@ def sort_by_RGB(a, b):
 		return 0
 
 
+def sort_by_BGR(a, b):
+	if a[:3][::-1] > b[:3][::-1]:
+		return 1
+	elif a[:3] == b[:3]:
+		return 0
+	else:
+		return -1
+
+
 def sort_by_RGB_sum(a, b):
 	sum1, sum2 = sum(a[:3]), sum(b[:3])
 	if sum1 > sum2:
@@ -798,6 +807,9 @@ class CGATS(dict):
 	
 	def sort_by_RGB(self):
 		return self.sort_data_RGB_XYZ(sort_by_RGB)
+	
+	def sort_by_BGR(self):
+		return self.sort_data_RGB_XYZ(sort_by_BGR)
 	
 	def sort_by_RGB_pow_sum(self):
 		return self.sort_data_RGB_XYZ(sort_by_RGB_pow_sum)

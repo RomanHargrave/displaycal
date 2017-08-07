@@ -983,6 +983,7 @@
 	"testchart.sort_RGB_red_to_top": "Placer le rouge RVB vers le haut",
 	"testchart.sort_RGB_white_to_top": "Placer le blanc RVB vers le haut",
 	"testchart.sort_RGB_yellow_to_top": "Placer le jaune RVB vers le haut",
+	"testchart.sort_by_BGR": "Trier par BVR",
 	"testchart.sort_by_HSI": "Trier par TSI",
 	"testchart.sort_by_HSL": "Trier par TSL",
 	"testchart.sort_by_HSV": "Trier par TSV",

@@ -983,6 +983,7 @@
 	"testchart.sort_RGB_red_to_top": "RGB-Rot nach oben",
 	"testchart.sort_RGB_white_to_top": "RGB-Weiß nach oben",
 	"testchart.sort_RGB_yellow_to_top": "RGB-Gelb nach oben",
+	"testchart.sort_by_BGR": "Nach BGR sortieren",
 	"testchart.sort_by_HSI": "Nach HSI sortieren",
 	"testchart.sort_by_HSL": "Nach HSL sortieren",
 	"testchart.sort_by_HSV": "Nach HSV sortieren",
