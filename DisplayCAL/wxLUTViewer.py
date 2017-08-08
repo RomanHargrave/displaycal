@@ -1268,7 +1268,8 @@ class LUTFrame(BaseFrame):
 		try:
 			odata = self.worker.xicclu(profile, idata, intent,
 									   direction, order, pcs,
-									   use_icclu=use_icclu)
+									   use_icclu=use_icclu,
+									   get_clip=direction == "if")
 		except Exception, exception:
 			self.client.errors.append(Error(safe_unicode(exception)))
 		
@@ -1276,6 +1277,26 @@ class LUTFrame(BaseFrame):
 			return
 
 		if direction in ("b", "if") or profile.connectionColorSpace == "RGB":
+			if direction == "if":
+				maxval = size - 1.0
+
+				# Deal with values that got clipped (below black as well as white)
+				do_low_clip = True
+				for i, values in enumerate(odata):
+					if values[3] is True:
+						if do_low_clip:
+							# Set to black
+							values[:] = [0.0, 0.0, 0.0]
+						elif (i == maxval and
+							  [round(v, 4) for v in values[:3]] == [1, 1, 1]):
+							# Set to white
+							values[:] = [1.0, 1.0, 1.0]
+					else:
+						# First non-clipping value disables low clipping
+						do_low_clip = False
+					if len(values) > 3:
+						values.pop()
+
 			RGB_triplets = odata
 		else:
 			Lab_triplets = odata

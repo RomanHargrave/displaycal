@@ -4950,7 +4950,31 @@ while 1:
 
 		if method != 2:
 			# Lookup Lab -> RGB values through profile using xicclu to get TRC
-			odata = self.xicclu(profile, idata, intent, direction, pcs="l")
+			odata = self.xicclu(profile, idata, intent, direction, pcs="l",
+								get_clip=True)
+
+			# Deal with values that got clipped (below black as well as white)
+			do_low_clip = True
+			for i, values in enumerate(odata):
+				if values[3] is True:
+					if do_low_clip:
+						# Set to black
+						self.log("Setting curve entry #%i (%.6f %.6f %.6f) to "
+								 "black because it got clipped" %
+								 ((i, ) + tuple(values[:3])))
+						values[:] = [0.0, 0.0, 0.0]
+					elif (i == maxval and
+						  [round(v, 4) for v in values[:3]] == [1, 1, 1]):
+						# Set to white
+						self.log("Setting curve entry #%i (%.6f %.6f %.6f) to "
+								 "white because it got clipped" %
+								 ((i, ) + tuple(values[:3])))
+						values[:] = [1.0, 1.0, 1.0]
+				else:
+					# First non-clipping value disables low clipping
+					do_low_clip = False
+				if len(values) > 3:
+					values.pop()
 
 			# Sanity check white
 			if (round(odata[-1][0], 3) != 1 or round(odata[-1][1], 3) != 1 or
