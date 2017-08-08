@@ -1062,7 +1062,7 @@
 	"video_card_gamma_table": "Grafikkarten-Gammatabelle",
 	"video_eeColor.icc": "Video 3D LUT für eeColor (D65, Rec. 709 / Rec. 1886)",
 	"video_madVR.icc": "Video 3D LUT für madVR (D65, Rec. 709 / Rec. 1886)",
-	"video_madVR_ST2084.icc": "HDR Video 3D LUT für madVR (D65, Rec. 2020 / SMPTE 2084)",
+	"video_madVR_ST2084.icc": "Video 3D LUT für madVR HDR (D65, Rec. 2020 / SMPTE 2084)",
 	"video_monitor": "Video-Monitor",
 	"video_resolve.icc": "Video 3D LUT für Resolve (D65, Rec. 709 / Rec. 1886)",
 	"view.3d": "3D-Ansicht",
