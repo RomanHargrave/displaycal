@@ -374,6 +374,7 @@ END_DATA""")[0]
 				  ti3.filename)
 	RGB_XYZ_extracted = OrderedDict()
 	RGB_XYZ_remaining = OrderedDict()
+	dupes = {}
 	for i, item in ti3.DATA.iteritems():
 		if not i:
 			# Check if fields are missing
@@ -385,6 +386,23 @@ END_DATA""")[0]
 												 (ti3.filename, key)))
 		RGB = (item["RGB_R"], item["RGB_G"], item["RGB_B"])
 		XYZ = (item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"])
+		for RGB_XYZ in (RGB_XYZ_extracted, RGB_XYZ_remaining):
+			if RGB in RGB_XYZ:
+				if RGB != (100.0, 100.0, 100.0):
+					# Add to existing values for averaging later
+					# if it's not white (all other readings are scaled to the
+					# white Y by dispread, so we don't alter it. Note that it's
+					# always the first encountered white that will have Y = 100,
+					# even if subsequent white readings may be higher)
+					XYZ = tuple(RGB_XYZ[RGB][i] + XYZ[i]
+								for i in xrange(3))
+					if not RGB in dupes:
+						dupes[RGB] = 1.0
+					dupes[RGB] += 1.0
+				elif RGB in subset:
+					# We have white already, remove it from the subset so any
+					# additional white readings we encounter are ignored
+					subset.remove(RGB)
 		if ((gray and
 			 item["RGB_R"] == item["RGB_G"] == item["RGB_B"] and
 			 not RGB in [(100.0, 100.0, 100.0),
@@ -392,13 +410,15 @@ END_DATA""")[0]
 			RGB in subset):
 			ti3_extracted.DATA.add_data(item)
 			RGB_XYZ_extracted[RGB] = XYZ
-			if RGB in subset:
-				subset.remove(RGB)
-				if not gray and not subset:
-					break
 		elif not RGB in [(100.0, 100.0, 100.0),
 						 (0.0, 0.0, 0.0)]:
 			RGB_XYZ_remaining[RGB] = XYZ
+	for RGB, count in dupes.iteritems():
+		for RGB_XYZ in (RGB_XYZ_extracted, RGB_XYZ_remaining):
+			if RGB in RGB_XYZ:
+				# Average values
+				XYZ = tuple(RGB_XYZ[RGB][i] / count for i in xrange(3))
+				RGB_XYZ[RGB] = XYZ
 	return ti3_extracted, RGB_XYZ_extracted, RGB_XYZ_remaining
 
 
