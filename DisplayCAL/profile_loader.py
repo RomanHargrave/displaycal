@@ -2118,7 +2118,10 @@ class ProfileLoader(object):
 					# detect changed profile associations
 					continue
 				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
-				hwnds_pids_changed = self._hwnds_pids != previous_hwnds_pids
+				if getcfg("profile_loader.track_other_processes"):
+					hwnds_pids_changed = self._hwnds_pids != previous_hwnds_pids
+				else:
+					hwnds_pids_changed = True
 				if idle:
 					idle = (not hwnds_pids_changed and
 							not self._manual_restore and
@@ -2202,7 +2205,7 @@ class ProfileLoader(object):
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
 						safe_print(display_desc, "->", desc)
-				else:
+				elif getcfg("profile_loader.track_other_processes"):
 					safe_print("Preserving calibration state for display",
 							   display)
 				try:
