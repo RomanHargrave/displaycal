@@ -13,9 +13,9 @@ jsapi.array.flat._args = [Array];
 jsapi.math.median = function () {
 	// http://en.wikipedia.org/wiki/Median
 	var a = jsapi.array.flat(arguments), median,
-		sorted = a.sort(sortNumber);
-	if (sorted.length % 2 == 0) median = (sorted[sorted.length / 2] + sorted[sorted.length / 2 + 1]) / 2;
-	else median = sorted[(sorted.length + 1) / 2];
+		sorted = a.sort(sortNumber), half = sorted.length / 2;
+	if (sorted.length % 2 == 0) median = (sorted[half - 1] + sorted[half]) / 2;
+	else median = sorted[Math.floor(half)];
 	return median
 };
 jsapi.math.mad = function () {
