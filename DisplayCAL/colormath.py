@@ -1416,20 +1416,30 @@ def get_standard_illuminant(illuminant_name="D50",
 get_standard_illuminant.cache = {}
 
 
-def get_whitepoint(whitepoint=None, scale=1.0):
+def get_whitepoint(whitepoint=None, scale=1.0, planckian=False):
 	""" Return a whitepoint as XYZ coordinates """
 	if isinstance(whitepoint, (list, tuple)):
 		return whitepoint
 	if not whitepoint:
 		whitepoint = "D50"
-	cachehash = whitepoint, scale
+	cachehash = whitepoint, scale, planckian
 	cache = get_whitepoint.cache.get(cachehash, None)
 	if cache:
 		return cache
 	if isinstance(whitepoint, basestring):
 		whitepoint = get_standard_illuminant(whitepoint)
 	elif isinstance(whitepoint, (float, int)):
-		whitepoint = CIEDCCT2XYZ(whitepoint)
+		cct = whitepoint
+		if planckian:
+			whitepoint = planckianCT2XYZ(cct)
+			if not whitepoint:
+				raise ValueError("Planckian color temperature %i out of range "
+								 "(1667, 25000)" % cct)
+		else:
+			whitepoint = CIEDCCT2XYZ(cct)
+			if not whitepoint:
+				raise ValueError("Daylight color temperature %i out of range "
+								 "(4000, 25000)" % cct)
 	if scale > 1.0 and whitepoint[1] == 100:
 		scale = 1.0
 	if whitepoint[1] * scale > 100:
