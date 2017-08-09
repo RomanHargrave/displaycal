@@ -537,8 +537,7 @@ p.generate_report = function(set_delta_calc_method) {
 				break;
 				
 			case DELTA_A_B_RANGE:
-				var ab = result[j].a.concat(result[j].b);
-				result[j].sum = Math.abs(jsapi.math.max(ab) - jsapi.math.min(ab));
+				result[j].sum = Math.abs(jsapi.math.absmax(result[j].a)) + Math.abs(jsapi.math.absmax(result[j].b));
 				break;
 				
 			case DELTA_B_MAX:
