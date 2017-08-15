@@ -13361,8 +13361,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		Return True if update was needed and carried out, False otherwise.
 		
 		"""
-		if self.worker.is_working():
-			return
+		if self.worker.is_working() or not self.Shown or not self.Enabled:
+			return False
 		argyll_bin_dir = self.worker.argyll_bin_dir
 		argyll_version = list(self.worker.argyll_version)
 		displays = list(self.worker.displays)
