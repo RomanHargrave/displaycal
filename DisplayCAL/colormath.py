@@ -1348,7 +1348,7 @@ def xyYsaturation(x, y, Y, wx, wy, saturation):
 
 
 def convert_range(v, oldmin=0, oldmax=1, newmin=0, newmax=1):
-	oldrange = oldmax - oldmin
+	oldrange = float(oldmax - oldmin)
 	newrange = newmax - newmin
 	return (((v - oldmin) * newrange) / oldrange) + newmin
 
