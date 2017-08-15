@@ -2055,12 +2055,18 @@ class ProfileLoader(object):
 							# Get display profile vcgt
 							vcgt_values = profile.tags.vcgt.get_values()[:3]
 							# Quantize to n bits
+							# 8 bits can be encoded accurately in a 256-entry
+							# 16 bit vcgt, but all other bitdepths need to be
+							# quantized in such a way that the encoded 16-bit
+							# values lie as close as possible to the ideal ones.
+							# We assume the graphics subsystem quantizes using
+							# integer truncating from the 16 bit encoded value
 							if self._quantize < 65535.0:
 								for points in vcgt_values:
 									for point in points:
-										point[1] = int(round(point[1] / 65535.0 *
-															 self._quantize) /
-													   self._quantize * 65535)
+										point[1] = int(math.ceil(round(point[1] / 65535.0 *
+																	   self._quantize) /
+																 self._quantize * 65535))
 					if len(vcgt_values[0]) != 256:
 						# Hmm. Do we need to deal with this?
 						# I've never seen table-based vcgt with != 256 entries
