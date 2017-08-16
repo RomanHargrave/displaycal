@@ -5449,7 +5449,12 @@ while 1:
 		if do_lookup:
 			# Generate inverse table lookup input values
 
-			num_workers = min(max(cpu_count(), 1), clutres)
+			# Use slightly less than equal the amount of CPUs for workers
+			# for best utilization (each worker has 2 xicclu sub-processes)
+			num_cpus = cpu_count()
+			num_workers = min(max(num_cpus, 1), clutres)
+			if num_cpus > 2:
+				num_workers = int(num_workers * 0.75)
 
 			if logfile:
 				logfile.write("Generating %s%i table lookup input values...\n" %
@@ -5474,9 +5479,9 @@ while 1:
 									  clutres, step, threshold,
 									  threshold2, interp, Linterp, m2,
 									  XYZbp, XYZwp, bpc,
-									  lang.getstr("aborted")), {}, None,
+									  lang.getstr("aborted")), {}, num_workers,
 									 self.thread_abort,
-									 logfile):
+									 logfile, num_batches=clutres // 9):
 				for i, data in enumerate((idata, odata1, odata2)):
 					data.extend(slices[i])
 
