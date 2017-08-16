@@ -3155,7 +3155,7 @@ END_DATA
 				maxval = 1.0
 			lut = []
 			for i, RGB_triplet in enumerate(RGB_out):
-				lut.append(["%.6f" % (float(component) * maxval) for component in RGB_in[i].split()])
+				lut.append(["%.6f" % (component * maxval) for component in RGB_in[i]])
 				for component in (0, 1, 2):
 					lut[-1].append("%.6f" % (RGB_triplet[component] * maxval))
 			linesep = "\r\n"
