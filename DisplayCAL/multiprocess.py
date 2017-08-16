@@ -25,7 +25,7 @@ def cpu_count():
 
 
 def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
-			   thread_abort=None, logfile=None):
+			   thread_abort=None, logfile=None, num_batches=1):
 	"""
 	Process data in slices using a pool of workers and return the results.
 	
@@ -48,6 +48,16 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	max_workers = getcfg("multiprocessing.max_cpus")
 	if max_workers:
 		num_workers = min(num_workers, max_workers)
+
+	if num_workers == 1 or not num_batches:
+		# Splitting the workload into batches only makes sense if there are
+		# multiple workers
+		num_batches = 1
+
+	chunksize = float(len(data_in)) / (num_workers * num_batches)
+	if chunksize < 1:
+		num_batches = 1
+		chunksize = float(len(data_in)) / num_workers
 
 	if num_workers > 1:
 		Pool = NonDaemonicPool
@@ -96,20 +106,21 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 						break
 				logfile.write("\r%i%%" % (progress / num_workers))
 
-		threading.Thread(target=progress_logger, args=(num_workers, ),
+		threading.Thread(target=progress_logger, args=(num_workers * num_batches, ),
 						 name="ProcessProgressLogger").start()
 
 	pool = Pool(num_workers)
 	results = []
 	start = 0
-	chunksize = float(len(data_in)) / num_workers
-	for i in xrange(num_workers):
-		end = int(math.ceil(chunksize * (i + 1)))
-		results.append(pool.apply_async(WorkerFunc(func), (data_in[start:end],
-														   thread_abort_event,
-														   progress_queue) +
-														   args, kwds))
-		start = end
+	for batch in xrange(num_batches):
+		for i in xrange(batch * num_workers, (batch + 1) * num_workers):
+			end = int(math.ceil(chunksize * (i + 1)))
+			results.append(pool.apply_async(WorkerFunc(func,
+													   batch == num_batches - 1),
+											(data_in[start:end],
+											 thread_abort_event,
+											 progress_queue) + args, kwds))
+			start = end
 
 	# Get results
 	exception = None
@@ -140,8 +151,9 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 
 class WorkerFunc(object):
     
-	def __init__(self, func):
+	def __init__(self, func, exit=False):
 		self.func = func
+		self.exit = exit
 
 	def __call__(self, data, thread_abort_event, progress_queue, *args, **kwds):
 		from log import safe_print
@@ -156,7 +168,7 @@ class WorkerFunc(object):
 			progress_queue.put(EOFError())
 			if mp.current_process().name != "MainProcess":
 				safe_print("Exiting worker process",  mp.current_process().name)
-				if sys.platform == "win32":
+				if sys.platform == "win32" and self.exit:
 					# Exit handlers registered with atexit will not normally
 					# run when a multiprocessing subprocess exits. We are only
 					# interested in our own exit handler though.
@@ -167,7 +179,11 @@ class WorkerFunc(object):
 						if (targs and isinstance(targs[0], basestring) and
 							targs[0].endswith(".lock")):
 							safe_print("Removing lockfile", targs[0])
-							func(*targs, **kargs)
+							try:
+								func(*targs, **kargs)
+							except Exception, exception:
+								safe_print("Could not remove lockfile:",
+										   exception)
 					# Logging is normally shutdown by atexit, as well. Do
 					# it explicitly instead.
 					logging.shutdown()
