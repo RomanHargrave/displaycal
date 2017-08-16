@@ -53,7 +53,6 @@ Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledB
 
 [Files]
 Source: ..\%(AppName)s\theme\icons\%(AppName)s-uninstall.ico; DestDir: {app};
-Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly;
 
 [Icons]
 Name: {group}\%(AppName)s; Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --no-wait %(HTTPURL)s0install/%(AppName)s.xml";
@@ -68,8 +67,6 @@ Name: {commonstartup}\%(AppName)s Profile Loader; Filename: {reg:HKLM\Software\Z
 Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(HTTPURL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: runasoriginaluser
 Filename: %(URL)s; Description: {code:Get_RunEntryShellExec_Message|README}; Flags: nowait postinstall shellexec skipifsilent;
 Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run %(HTTPURL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden;
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden;
 Filename: {reg:HKLM\Software\Zero Install,InstallLocation|{reg:HKCU\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --command=set-calibration-loading %(HTTPURL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal;
 Filename: taskkill.exe; parameters: /im %(AppName)s-apply-profiles.exe; Flags: RunHidden RunAsCurrentUser;
 Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;

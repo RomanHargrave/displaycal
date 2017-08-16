@@ -54,7 +54,6 @@ Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\*; De
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\%(AppName)s.exe; DestDir: {app}; Flags: replacesameversion; 
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\README.html; DestDir: {app}; Flags: isreadme; 
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\README-fr.html; DestDir: {app}; Flags: isreadme; Languages: french
-Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly; 
 
 [Icons]
 Name: {group}\%(AppName)s; Filename: {app}\%(AppName)s.exe; IconFilename: {app}\%(AppName)s.exe
@@ -76,8 +75,6 @@ Name: "{commonstartup}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-
 
 [Run]
 Filename: {app}\%(AppName)s.exe; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent;
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
 Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDisplayCAL}; Tasks: calibrationloadinghandledbydisplaycal; 
 Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
 Filename: {app}\%(AppName)s-apply-profiles.exe; Flags: nowait RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal; 
