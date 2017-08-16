@@ -3,6 +3,7 @@
 from __future__ import with_statement
 from binascii import hexlify
 import atexit
+import math
 import os
 import pipes
 import re
@@ -36,6 +37,38 @@ import localization as lang
 
 def Property(func):
 	return property(**func())
+
+
+def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
+			   intent="r", direction="f", order="n",
+			   pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
+			   use_cam_clipping=False, logfile=None,
+			   show_actual_if_clipped=False, input_encoding=None,
+			   output_encoding=None, abortmessage="Aborted"):
+	if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
+		config.initcfg()
+	profile = ICCP.ICCProfile(profile_filename)
+	xicclu = Xicclu(profile, intent, direction, order, pcs, scale, cwd,
+					startupinfo, use_icclu, use_cam_clipping, logfile,
+					None, show_actual_if_clipped, input_encoding,
+					output_encoding)
+	prevperc = 0
+	start = 0
+	num_subchunks = 50
+	subchunksize = float(len(chunk)) / num_subchunks
+	for i in xrange(num_subchunks):
+		if thread_abort_event.is_set():
+			xicclu.exit()
+			return Info(abortmessage)
+		end = int(math.ceil(subchunksize * (i + 1)))
+		xicclu(chunk[start:end])
+		start = end
+		perc = round((i + 1.0) / num_subchunks * 100)
+		if progress_queue and perc > prevperc:
+			progress_queue.put(perc - prevperc)
+			prevperc = perc
+	xicclu.exit()
+	return xicclu.get()
 
 
 def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,

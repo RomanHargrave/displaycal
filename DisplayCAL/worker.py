@@ -124,7 +124,7 @@ if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 from util_str import (make_filename_safe, safe_basestring, safe_asciize,
 					  safe_str, safe_unicode, strtr, universal_newlines)
-from worker_base import (WorkerBase, Xicclu, _mp_generate_B2A_clut,
+from worker_base import (WorkerBase, Xicclu, _mp_generate_B2A_clut, _mp_xicclu,
 						 check_argyll_bin, get_argyll_util, get_argyll_utilname,
 						 get_argyll_version_string as
 						 base_get_argyll_version_string,
@@ -2646,6 +2646,11 @@ END_DATA
 						raise b2aresult
 					profile_out.write()
 
+			use_xicclu = (test and not use_b2a and format != "madVR" and
+						  intent in ("a", "aw", "r") and
+						  input_encoding in ("n", "t", "T") and
+						  output_encoding in ("n", "t"))
+
 			# Prepare building a device link
 			link_basename = name + profile_ext
 			link_filename = os.path.join(cwd, link_basename)
@@ -2672,7 +2677,7 @@ END_DATA
 			if apply_cal:
 				extract_cal_from_profile(profile_out, profile_out_cal_path)
 				
-				if self.argyll_version < [1, 6]:
+				if self.argyll_version < [1, 6] or use_xicclu:
 					# Can't apply the calibration with old collink versions -
 					# apply the calibration to the 'out' profile prior to
 					# device linking instead
@@ -2699,7 +2704,7 @@ END_DATA
 			collink_version_string = get_argyll_version_string("collink")
 			collink_version = parse_argyll_version_string(collink_version_string)
 			if trc_gamma:
-				if (not smpte2084 and
+				if (not smpte2084 and not use_xicclu and
 					(collink_version >= [1, 7] or not trc_output_offset)):
 					# Make sure the profile has the expected Rec. 709 TRC
 					# for BT.1886
@@ -2877,12 +2882,6 @@ END_DATA
 										   lang.getstr("error")))
 
 			# Now build the device link
-			is_argyll_lut_format = (self.argyll_version >= [1, 6] and
-									(((format == "eeColor" or
-									   (format == "cube" and
-										collink_version >= [1, 7])) and
-									  not test) or
-									 format == "madVR") or format == "icc")
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
 					"-r%i" % size, "-n"]
 			if smpte2084_use_src_gamut:
@@ -2920,10 +2919,219 @@ END_DATA
 					args.extend(["-a", os.path.basename(profile_out_cal_path)])
 			if extra_args:
 				args += extra_args
-			result = self.exec_cmd(collink, args + [profile_in_basename,
-													profile_out_basename,
-													link_filename],
-								   capture_output=True, skip_scripts=True)
+			if use_xicclu:
+				# Create device link using xicclu
+				is_argyll_lut_format = format == "icc"
+
+				logfiles = self.get_logfiles()
+
+				# cLUT Input value tweaks to make Video encoded black land on
+				# 65 res grid nodes, which should help 33 and 17 res cLUTs too
+				def cLUT65_to_VidRGB(v):
+					if v <= 236.0 / 256:
+						# Scale up to near black point
+						return v * 256.0 / 255
+					else:
+						return 1 - (1 - v) * (1 - 236.0 / 255) / (1 - 236.0 / 256)
+
+				def VidRGB_to_cLUT65(v):
+					if v <= 236.0 / 255.0:
+						return v * 255.0 / 256
+					else:
+						return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
+
+				RGB_src_in = []
+				maxval = size - 1.0
+				level_16 = 16.0 / 256 * maxval
+				level_236 = 236.0 / 256 * maxval
+				for a in xrange(size):
+					for b in xrange(size):
+						for c in xrange(size):
+							abc = (a, b, c)
+							RGB = [v / maxval for v in abc]
+							if input_encoding in ("t", "T"):
+								# TV levels in
+								if (min(abc) < level_16 or
+									max(abc) > level_236):
+									# Don't lookup out of range values
+									continue
+								else:
+									RGB = [cLUT65_to_VidRGB(v) for v in RGB]
+									if a == b == c and a in (level_16, level_236):
+										self.log("Input RGB (0..255) %f %f %f" %
+												 tuple(v * 255 for v in RGB))
+									# Convert 16..236 to 0..255 for xicclu
+									RGB = [colormath.convert_range(v,
+																   16.0 / 255,
+																   236.0 / 255,
+																   0, 1)
+										   for v in RGB]
+							RGB = [min(max(v, 0), 1) * 255 for v in RGB]
+							RGB_src_in.append(RGB)
+				# Forward lookup input RGB through source profile
+				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
+										  scale=255)
+				if intent == "aw":
+					XYZw = XYZ_src_out[-1]
+					# Lookup scaled down white XYZ
+					logfiles.write("Looking for solution...\n")
+					for n in xrange(9):
+						XYZscaled = []
+						for i in xrange(2001):
+							XYZscaled.append([v * (1 - (n * 2001 + i) / 20000.0) for v in XYZw])
+						RGBscaled = self.xicclu(profile_out, XYZscaled, "a", "if",
+												get_clip=True)
+						# Find point at which it no longer clips
+						XYZwscaled = None
+						for i, RGBclip in enumerate(RGBscaled):
+							if RGBclip[3] is True:
+								# Clipped, skip
+								continue
+							# Found
+							XYZwscaled = XYZscaled[i]
+							logfiles.write("Solution found at index %i "
+										   "(step size %f)\n" % (i, 1 / 2000.0))
+							logfiles.write("RGB white %6.4f %6.4f %6.4f\n" %
+										   tuple(RGBclip[:3]))
+							logfiles.write("XYZ white %6.4f %6.4f %6.4f, "
+										   "CCT %.1f K\n" %
+										   tuple(XYZscaled[i] +
+												 [colormath.XYZ2CCT(*XYZwscaled)]))
+							break
+						else:
+							if n == 8:
+								raise Error("No solution found in %i "
+											"iterations with %i steps" % (n, i))
+						if XYZwscaled:
+							# Found solution
+							break
+					for i, XYZ in enumerate(XYZ_src_out):
+						XYZ[:] = [v / XYZw[1] * XYZwscaled[1] for v in XYZ]
+				# Inverse forward lookup source profile output XYZ through
+				# destination profile
+				num_cpus = cpu_count()
+				num_workers = min(max(num_cpus, 1), size)
+				if num_cpus > 2:
+					num_workers -= 1
+				logfiles.write("Creating 3D LUT from inverse forward lookup "
+							   "(%i workers)...\n" % num_workers)
+				RGB_dst_out = []
+				for slices in pool_slice(_mp_xicclu, XYZ_src_out,
+										 (profile_out.fileName, intent[0], "if"),
+										 {"use_cam_clipping": True,
+										  "abortmessage": lang.getstr("aborted")},
+										 num_workers, self.thread_abort,
+										 logfiles, num_batches=size // 9):
+					RGB_dst_out.extend(slices)
+				logfiles.write("\n")
+				logfiles.write("Assembling cLUT...\n")
+				profile_link = ICCP.ICCProfile()
+				profile_link.profileClass = "link"
+				profile_link.connectionColorSpace = "RGB"
+				profile_link.tags.A2B0 = A2B0 = ICCP.LUT16Type(None, "A2B0",
+															   profile_link)
+				A2B0.matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0],
+												   [0, 0, 1]])
+				if input_encoding in ("t", "T"):
+					A2B0.input = [[]] * 3
+					for i in xrange(2048):
+						A2B0.input[0].append(VidRGB_to_cLUT65(i / 2047.0) * 65535)
+					A2B0.output = [[]] * 3
+					for i in xrange(2049):
+						A2B0.output[0].append(i / 2048.0 * 65535)
+				else:
+					A2B0.input = [[0, 65535]] * 3
+					A2B0.output = [[0, 65535]] * 3
+				A2B0.clut = []
+				clut_16_236 = {}
+				for a in xrange(size):
+					for b in xrange(size):
+						A2B0.clut.append([])
+						for c in xrange(size):
+							abc = (a, b, c)
+							if (input_encoding in ("t", "T") and
+								(min(abc) < level_16 or
+								 max(abc) > level_236)):
+								# TV levels in, no value from lookup
+								if min(abc) < level_16:
+									RGB = [0] * 3
+								else:
+									RGB = [1] * 3
+							else:
+								# Got value from lookup
+								RGB = RGB_dst_out.pop(0)
+								if output_encoding == "t":
+									# TV levels out
+									# Convert 0..255 to 16..236
+									if input_encoding in ("t", "T"):
+										white = 236.0
+									else:
+										white = 235.0
+									RGB = [colormath.convert_range(v, 0, 1,
+																   16.0 / 255,
+																   white / 255)
+										   for v in RGB]
+									if ((input_encoding in ("t", "T") and
+										 a == b == c == level_16) or
+										a == b == c == 0):
+										# Black hack - force black to 16
+										self.log("Black hack - forcing black to 16")
+										RGB = [16.0 / 255] * 3
+									elif input_encoding == "T":
+										RGB = [min(v, 235.0 / 255) for v in RGB]
+									if input_encoding in ("t", "T"):
+										clut_16_236[abc] = RGB[:]
+								elif a == b == c == 0:
+									# Black hack - force black to 0
+									self.log("Black hack - forcing black to 0")
+									RGB = [0] * 3
+								elif input_encoding in ("t", "T"):
+									RGB = [v * (236.0 / 235) for v in RGB]
+							RGB = [min(max(v, 0), 1) * 65535 for v in RGB]
+							A2B0.clut[-1].append(RGB)
+				if input_encoding in ("t", "T") and output_encoding == "t":
+					# TV levels in and out, need to extrapolate
+					for i, block in enumerate(A2B0.clut):
+						a = i // size
+						if i % size == 0:
+							b = 0
+						for c, RGB in enumerate(block):
+							abc = (a, b, c)
+							if min(abc) < level_16 or max(abc) > level_236:
+								key = tuple(min(max(v, level_16), level_236)
+											for column, v in enumerate(abc))
+								RGB_16_236 = clut_16_236[key]
+								for column, v in enumerate(RGB_16_236):
+									if abc[column] < level_16:
+										v *= cLUT65_to_VidRGB(abc[column] / maxval) / (16.0 / 255)
+									elif (input_encoding != "T" and
+										  abc[column] > level_236):
+										v *= cLUT65_to_VidRGB(abc[column] / maxval) / (236.0 / 255)
+										if ((a != b != c and b >= c >= level_236 - 1) or
+											abc[column] == maxval):
+											s = (abc[column] - level_236) / (maxval - level_236)
+											n = abc[column]
+											if c < maxval:
+												n -= 1
+											v = v * (1 - s) + (n / maxval * s)
+									RGB[column] = min(max(v, 0), 1) * 65535
+						b += 1
+				profile_link.write(link_filename)
+				diagpng_filename = os.path.join(cwd, name + ".A2B0.CLUT.png")
+				profile_link.tags.A2B0.clut_writepng(diagpng_filename)
+				result = True
+			else:
+				# Create device link (and 3D LUT, if applicable) using collink
+				is_argyll_lut_format = (self.argyll_version >= [1, 6] and
+										(((format == "eeColor" or
+										   (format == "cube" and
+											collink_version >= [1, 7])) and
+										  not test) or
+										 format == "madVR") or format == "icc")
+				result = self.exec_cmd(collink, args + [profile_in_basename,
+														profile_out_basename,
+														link_filename],
+									   capture_output=True, skip_scripts=True)
 
 			if (result and not isinstance(result, Exception) and
 				save_link_icc and
