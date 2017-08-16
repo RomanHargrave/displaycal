@@ -3111,7 +3111,7 @@ END_DATA
 											abc[column] == maxval):
 											s = (abc[column] - level_236) / (maxval - level_236)
 											n = abc[column]
-											if c < maxval:
+											if max(abc) < maxval:
 												n -= 1
 											v = v * (1 - s) + (n / maxval * s)
 									RGB[column] = min(max(v, 0), 1) * 65535
