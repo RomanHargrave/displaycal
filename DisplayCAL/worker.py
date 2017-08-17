@@ -3107,13 +3107,6 @@ END_DATA
 									elif (input_encoding != "T" and
 										  abc[column] > level_236):
 										v *= cLUT65_to_VidRGB(abc[column] / maxval) / (236.0 / 255)
-										if ((a != b != c and b >= c >= level_236 - 1) or
-											abc[column] == maxval):
-											s = (abc[column] - level_236) / (maxval - level_236)
-											n = abc[column]
-											if max(abc) < maxval:
-												n -= 1
-											v = v * (1 - s) + (n / maxval * s)
 									RGB[column] = min(max(v, 0), 1) * 65535
 						b += 1
 				profile_link.write(link_filename)
