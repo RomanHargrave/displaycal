@@ -2970,7 +2970,7 @@ END_DATA
 							RGB_src_in.append(RGB)
 				# Forward lookup input RGB through source profile
 				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
-										  scale=255)
+										  pcs="x", scale=255)
 				if intent == "aw":
 					XYZw = XYZ_src_out[-1]
 					# Lookup scaled down white XYZ
@@ -2980,7 +2980,7 @@ END_DATA
 						for i in xrange(2001):
 							XYZscaled.append([v * (1 - (n * 2001 + i) / 20000.0) for v in XYZw])
 						RGBscaled = self.xicclu(profile_out, XYZscaled, "a", "if",
-												get_clip=True)
+												pcs="x", get_clip=True)
 						# Find point at which it no longer clips
 						XYZwscaled = None
 						for i, RGBclip in enumerate(RGBscaled):
@@ -3018,7 +3018,7 @@ END_DATA
 				RGB_dst_out = []
 				for slices in pool_slice(_mp_xicclu, XYZ_src_out,
 										 (profile_out.fileName, intent[0], "if"),
-										 {"use_cam_clipping": True,
+										 {"pcs": "x", "use_cam_clipping": True,
 										  "abortmessage": lang.getstr("aborted")},
 										 num_workers, self.thread_abort,
 										 logfiles, num_batches=size // 9):
@@ -10764,7 +10764,7 @@ usage: spotread [-options] [logfile]
 			# Restore original white XYZ
 			profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z = origXYZ
 			# Get white RGB
-			XYZwscaled = self.xicclu(profile, RGBscaled[-1], "a")[0]
+			XYZwscaled = self.xicclu(profile, RGBscaled[-1], "a", pcs="x")[0]
 			logfiles.write("XYZ white %6.4f %6.4f %6.4f, CCT %i\n" %
 						   tuple(XYZwscaled + [colormath.XYZ2CCT(*XYZwscaled)]))
 		else:
@@ -10773,7 +10773,8 @@ usage: spotread [-options] [logfile]
 			XYZscaled = []
 			for i in xrange(2000):
 				XYZscaled.append([v * (1 - i / 1999.0) for v in XYZw])
-			RGBscaled = self.xicclu(profile, XYZscaled, "a", "if", get_clip=True)
+			RGBscaled = self.xicclu(profile, XYZscaled, "a", "if", pcs="x",
+									get_clip=True)
 			# Set filename to copy (used by worker.xicclu to get profile path)
 			profile.fileName = tempcopy
 			# Find point at which it no longer clips
@@ -10803,13 +10804,13 @@ usage: spotread [-options] [logfile]
 			for i in xrange(res):
 				RGBscaled.append([v * (i / (res - 1.0)) for v in (1, 1, 1)])
 			# Lookup RGB -> XYZ through whitepoint adjusted profile
-			RGBscaled2XYZ = self.xicclu(profile, RGBscaled, "a")
+			RGBscaled2XYZ = self.xicclu(profile, RGBscaled, "a", pcs="x")
 			# Restore original XYZ
 			profile.tags.wtpt.X, profile.tags.wtpt.Y, profile.tags.wtpt.Z = origXYZ
 			# Restore original filename (used by worker.xicclu to get profile path)
 			profile.fileName = temporig
 			# Get original black point
-			XYZk = self.xicclu(profile, [0, 0, 0], "a")[0]
+			XYZk = self.xicclu(profile, [0, 0, 0], "a", pcs="x")[0]
 			logfiles.write("XYZ black %6.4f %6.4f %6.4f\n" % tuple(XYZk))
 			logfiles.write("XYZ white after forward lookup %6.4f %6.4f %6.4f\n" %
 						   tuple(RGBscaled2XYZ[-1]))
@@ -10825,7 +10826,7 @@ usage: spotread [-options] [logfile]
 			logfiles.write("XYZ white after scale down %6.4f %6.4f %6.4f\n" %
 						   tuple(XYZscaled[-1]))
 			# Lookup XYZ -> RGB through original profile
-			RGBscaled = self.xicclu(profile, XYZscaled, "a", "if",
+			RGBscaled = self.xicclu(profile, XYZscaled, "a", "if", pcs="x",
 									use_cam_clipping=True)
 			logfiles.write("RGB black after inverse forward lookup %6.4f %6.4f %6.4f\n" %
 						   tuple(RGBscaled[0]))
@@ -10951,7 +10952,8 @@ BEGIN_DATA
 			else:
 				cti3[1] = cal[0]
 			# Lookup scaled RGB -> XYZ through profile
-			RGBscaled2XYZ = self.xicclu(profile, RGBscaled, "a", scale=100)
+			RGBscaled2XYZ = self.xicclu(profile, RGBscaled, "a", pcs="x",
+										scale=100)
 			# Update measurement data
 			if "LUMINANCE_XYZ_CDM2" in cti3[0]:
 				XYZa = [float(v) * XYZwscaled[i] for i, v in enumerate(cti3[0].LUMINANCE_XYZ_CDM2.split())]
