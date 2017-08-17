@@ -1246,12 +1246,6 @@ class LUT3DFrame(BaseFrame):
 			encodings = list(video_encodings)
 			config.defaults["3dlut.encoding.input"] = "n"
 			config.defaults["3dlut.encoding.output"] = "n"
-			if format == "eeColor":
-				# As eeColor usually needs same input & output encoding,
-				# and xvYCC output encoding is not supported generally,
-				# remove xvYCC input encoding choices for eeColor
-				encodings.remove("x")
-				encodings.remove("X")
 		if (self.worker.argyll_version >= [1, 7] and
 			self.worker.argyll_version != [1, 7, 0, "_beta"]):
 			# Argyll 1.7 beta 3 (2015-04-02) added clip WTW on input TV encoding
@@ -1525,8 +1519,7 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_input_ctrl.SetSelection(self.encoding_input_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_input_ctrl.Enable(self.encoding_input_ctrl.Count > 1)
 		self.encoding_output_ctrl.SetSelection(self.encoding_output_ba[getcfg("3dlut.encoding.output")])
-		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") not in ("eeColor",
-																		"madVR"))
+		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") != "madVR")
 	
 	def lut3d_enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
