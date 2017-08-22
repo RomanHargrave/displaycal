@@ -7410,6 +7410,14 @@ usage: spotread [-options] [logfile]
 						break
 			if is_regular_grid:
 				# Use our own forward profile code
+				if not display_name:
+					arg = get_arg("-M", args, True)
+					if arg and len(args) - 1 > arg[0]:
+						display_name = args[arg[0] + 1]
+				if not display_manufacturer:
+					arg = get_arg("-A", args, True)
+					if arg and len(args) - 1 > arg[0]:
+						display_manufacturer = args[arg[0] + 1]
 				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
 														  os.path.basename(args[-1]),
 														  getcfg("copyright"),
