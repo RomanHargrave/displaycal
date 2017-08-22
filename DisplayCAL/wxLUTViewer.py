@@ -1278,7 +1278,7 @@ class LUTFrame(BaseFrame):
 
 		if direction in ("b", "if") or profile.connectionColorSpace == "RGB":
 			if direction == "if":
-				Lbp = self.worker.xicclu(profile, [[0, 0, 0]], intent, direction,
+				Lbp = self.worker.xicclu(profile, [[0, 0, 0]], intent, "f",
 										 order, "l", use_icclu=use_icclu)[0][0]
 				maxval = size - 1.0
 
