@@ -5155,10 +5155,10 @@ while 1:
 								get_clip=True)
 
 			# Deal with values that got clipped (below black as well as white)
-			do_low_clip = True
+			do_low_clip = not bpc
 			for i, values in enumerate(odata):
 				if values[3] is True:
-					if do_low_clip:
+					if do_low_clip and i / maxval * 100 < Lbp:
 						# Set to black
 						self.log("Setting curve entry #%i (%.6f %.6f %.6f) to "
 								 "black because it got clipped" %

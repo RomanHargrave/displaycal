@@ -1278,13 +1278,15 @@ class LUTFrame(BaseFrame):
 
 		if direction in ("b", "if") or profile.connectionColorSpace == "RGB":
 			if direction == "if":
+				Lbp = self.worker.xicclu(profile, [[0, 0, 0]], intent, direction,
+										 order, "l", use_icclu=use_icclu)[0][0]
 				maxval = size - 1.0
 
 				# Deal with values that got clipped (below black as well as white)
 				do_low_clip = True
 				for i, values in enumerate(odata):
 					if values[3] is True:
-						if do_low_clip:
+						if do_low_clip and i / maxval * 100 < Lbp:
 							# Set to black
 							values[:] = [0.0, 0.0, 0.0]
 						elif (i == maxval and
