@@ -8155,10 +8155,6 @@ usage: spotread [-options] [logfile]
 						profile.tags[tagname] = ICCP.CurveType()
 						profile.tags[tagname][:] = [v * 65535 for v in curves[i]]
 
-					if ptype == "S":
-						# Single curve
-						profile.tags["rTRC"][:] = profile.tags["gTRC"][:]
-						profile.tags["bTRC"][:] = profile.tags["gTRC"][:]
 					if not bpc:
 						XYZbp = None
 						for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
@@ -8169,6 +8165,10 @@ usage: spotread [-options] [logfile]
 						if XYZbp:
 							# Add black back in
 							profile.apply_black_offset(XYZbp, include_A2B=False)
+					if ptype == "S":
+						# Single curve
+						profile.tags["rTRC"][:] = profile.tags["gTRC"][:]
+						profile.tags["bTRC"][:] = profile.tags["gTRC"][:]
 
 					break
 			ti3.write(outname + ".0.ti3")	
