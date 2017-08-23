@@ -115,7 +115,7 @@ def specialpow(a, b, slope_limit=0):
 		v = (max(a ** (1.0 / SMPTE2084_M2) - SMPTE2084_C1, 0) /
 			 (SMPTE2084_C2 - SMPTE2084_C3 * a ** (1.0 / SMPTE2084_M2))) ** (1.0 / SMPTE2084_M1)
 	else:
-		raise ValueError("Invalid gamma %s" % b)
+		raise ValueError("Invalid gamma %r" % b)
 	return v * signScale
 
 
