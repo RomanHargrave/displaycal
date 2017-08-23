@@ -3447,7 +3447,7 @@ class CurveType(ICCProfileTag, list):
 						  ("DICOM", -1023),
 						  ("L*", -3.0),
 						  ("sRGB", -2.4),
-						  ("Gamma %.2f" % gamma, gamma)):
+						  ("Gamma %.2f" % round(gamma, 2), gamma)):
 			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
 				if self.profile and isinstance(self.profile.tags.get("lumi"),
 											   XYZType):

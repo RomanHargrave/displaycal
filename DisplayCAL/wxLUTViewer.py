@@ -104,7 +104,7 @@ class CoordinateType(list):
 						  ("DICOM", -1023),
 						  ("L*", -3.0),
 						  ("sRGB", -2.4),
-						  ("Gamma %.2f" % gamma, gamma)):
+						  ("Gamma %.2f" % round(gamma, 2), gamma)):
 			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
 				if self.profile and isinstance(self.profile.tags.get("lumi"),
 											   ICCP.XYZType):
@@ -1932,7 +1932,7 @@ class LUTFrame(BaseFrame):
 													 (("R", R), ("G", G), ("B", B)))])
 						# Note: We need to make sure each point is a float because it
 						# might be a decimal.Decimal, which can't be divided by floats!
-						gamma.append(label + " %.2f" % (math.log(float(y) / axis_y) / math.log(x / 255.0)))
+						gamma.append(label + " %.2f" % round(math.log(float(y) / axis_y) / math.log(x / 255.0), 2))
 						if "=" in label:
 							break
 					if gamma:
