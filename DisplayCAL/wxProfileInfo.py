@@ -859,7 +859,6 @@ class GamutViewOptions(wx_Panel):
 							   flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND)
 		self.direction_select.Bind(wx.EVT_CHOICE, self.direction_select_handler)
 		self.direction_select.SetSelection(0)
-		self.direction_select.Hide()
 
 		self.sizer.Add((0, 0))
 
@@ -991,7 +990,7 @@ class GamutViewOptions(wx_Panel):
 	def toggle_clut_handler(self, event):
 		parent = self.TopLevelParent
 		self.Freeze()
-		self.direction_select.Show(bool(parent.profile) and 
+		self.direction_select.Enable(bool(parent.profile) and 
 								   "B2A0" in parent.profile.tags and
 								   "A2B0" in parent.profile.tags and
 								   self.toggle_clut.GetValue())
@@ -1334,10 +1333,12 @@ class ProfileInfoFrame(LUTFrame):
 													profile.tags.get("kTRC"))
 		self.trc = None
 		
-		self.gamut_view_options.direction_select.Show("B2A0" in
-													  self.profile.tags and
-													  "A2B0" in
-													  self.profile.tags)
+		self.gamut_view_options.direction_select.Enable("B2A0" in
+													    self.profile.tags and
+													    "A2B0" in
+													    self.profile.tags)
+		if not self.gamut_view_options.direction_select.Enabled:
+			self.gamut_view_options.direction_select.SetSelection(0)
 		self.gamut_view_options.toggle_clut.SetValue("B2A0" in profile.tags or
 													 "A2B0" in profile.tags)
 		self.gamut_view_options.toggle_clut.Show("B2A0" in profile.tags or
