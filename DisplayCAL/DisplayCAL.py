@@ -7954,6 +7954,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if config.is_uncalibratable_display():
 			return False
 		cal = getcfg("calibration.file", False)
+		options_dispcal = None
 		if cal:
 			filename, ext = os.path.splitext(cal)
 			if ext.lower() in (".icc", ".icm"):
@@ -7969,7 +7970,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					return wx.ID_CANCEL
 				else:
 					# get dispcal options if present
-					self.worker.options_dispcal = [
+					options_dispcal = [
 						"-" + arg for arg in 
 						get_options_from_profile(profile)[0]]
 			if os.path.isfile(filename + ".cal"):
@@ -8040,6 +8041,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif not (can_use_current_cal or cal) or reset_cal:
 			return get_data_path("linear.cal")
 		elif cal:
+			if options_dispcal:
+				self.worker.options_dispcal = options_dispcal
 			return cal
 	
 	def restore_measurement_mode(self):
