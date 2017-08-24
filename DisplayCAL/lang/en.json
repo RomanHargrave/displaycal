@@ -729,6 +729,8 @@
 	"observer.1964_10": "CIE 1964 10°",
 	"observer.1964_10c": "CIE 1964 10° / 1931 2° hybrid",
 	"observer.1978_2": "Judd & Voss 1978 2°",
+	"observer.2012_2": "CIE 2012 2°",
+	"observer.2012_10": "CIE 2012 10°",
 	"observer.shaw": "Shaw & Fairchild 1997 2°",
 	"oem.import.auto": "If your colorimeter came with a software CD for Windows, please insert it now (abort any possibly automatic software installation).\n\nIf you don't have a CD and the required files cannot be found otherwise, they will be downloaded from the Web.",
 	"oem.import.auto.download_selection": "A preselection was made based on the detected instrument(s). Please select the file(s) to download.",

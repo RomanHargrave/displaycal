@@ -76,7 +76,8 @@ from argyll_cgats import (add_dispcal_options_to_cal, add_options_to_ti3,
 from argyll_instruments import (get_canonical_instrument_name,
 								instruments as all_instruments)
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
-						  optional as argyll_optional, viewconds, intents)
+						  optional as argyll_optional, viewconds, intents,
+						  observers)
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exedir, exe_ext, fs_enc, getcfg, geticon, get_data_path,
 					get_total_patches, get_verified_path, isapp, isexe,
@@ -102,7 +103,7 @@ from trash import trash
 from util_http import encode_multipart_formdata
 from util_io import (EncodedWriter, Files, GzipFileProper, LineBufferedStream,
 					 LineCache, StringIOu as StringIO, TarFileProper)
-from util_list import intlist
+from util_list import intlist, natsort
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
 						  mac_terminal_set_colors, osascript)
@@ -3535,6 +3536,17 @@ END_DATA
 							# Forced black point hack available
 							# (Argyll CMS 1.7)
 							defaults["calibration.black_point_hack"] = 1
+						if self.argyll_version >= [1, 9, 4]:
+							# Add CIE 2012 observers
+							valid_observers = natsort(observers +
+													  ["2012_2", "2012_10"])
+						else:
+							valid_observers = observers
+						for key in ["%s",
+									"colorimeter_correction.%s",
+									"colorimeter_correction.%s.reference"]:
+							key %= "observer"
+							config.valid_values[key] = valid_observers
 						continue
 					line = line.split(None, 1)
 					if len(line) and line[0][0] == "-":

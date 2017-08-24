@@ -1899,11 +1899,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			settings.append(lstr)
 		self.calibration_file_ctrl.SetItems(settings)
 
-		self.observers_ab = OrderedDict()
-		for observer in config.valid_values["observer"]:
-			self.observers_ab[observer] = lang.getstr("observer." + observer)
-		self.observers_ba = swap_dict_keys_values(self.observers_ab)
-		self.observer_ctrl.SetItems(self.observers_ab.values())
+		self.setup_observer_ctrl()
 		
 		self.whitepoint_ctrl.SetItems([lang.getstr("as_measured"),
 									   lang.getstr("whitepoint.colortemp"),
@@ -7489,6 +7485,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.measureframe.Show()
 		else:
 			wx.CallAfter(self.start_measureframe_subprocess)
+
+	def setup_observer_ctrl(self):
+		""" Setup observer control. Choice of available observers varies with
+		ArgyllCMS version. """
+		self.observers_ab = OrderedDict()
+		for observer in config.valid_values["observer"]:
+			self.observers_ab[observer] = lang.getstr("observer." + observer)
+		self.observers_ba = swap_dict_keys_values(self.observers_ab)
+		self.observer_ctrl.SetItems(self.observers_ab.values())
 
 	def setup_patterngenerator(self, parent=None, title=appname, upload=False):
 		retval = True
@@ -13439,6 +13444,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.update_colorimeter_correction_matrix_ctrl()
 			self.update_black_point_rate_ctrl()
 			self.update_drift_compensation_ctrls()
+			self.setup_observer_ctrl()
+			self.update_observer_ctrl()
 			self.update_profile_type_ctrl_items()
 			self.profile_type_ctrl.SetSelection(
 				self.profile_types_ba.get(getcfg("profile.type"), 
