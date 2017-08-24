@@ -88,66 +88,18 @@ class CoordinateType(list):
 		transfer_function = self._transfer_function.get((best, slice))
 		if transfer_function:
 			return transfer_function
-		trc = ICCP.CurveType()
-		match = {}
-		vmin = self[0][0]
-		vmax = self[-1][0]
-		best_yx = (0, 255)
-		for i, (y, x) in enumerate(self):
-			if x - 127.5 > 0 and x < best_yx[1]:
-				best_yx = (y, x)
-		gamma = colormath.get_gamma([(best_yx[1] / 255.0 * 100.0, best_yx[0])], 100.0, vmin, vmax)
-		for name, exp in (("Rec. 709", -709),
-						  ("Rec. 1886", -1886),
-						  ("SMPTE 240M", -240),
-						  ("SMPTE 2084", -2084),
-						  ("DICOM", -1023),
-						  ("L*", -3.0),
-						  ("sRGB", -2.4),
-						  ("Gamma %.2f" % round(gamma, 2), gamma)):
-			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
-				if self.profile and isinstance(self.profile.tags.get("lumi"),
-											   ICCP.XYZType):
-					white_cdm2 = self.profile.tags.lumi.Y
-				else:
-					white_cdm2 = 100.0
-				black_Y = vmin / 100.0
-				black_cdm2 = black_Y * white_cdm2
-				try:
-					if name == "DICOM":
-						trc.set_dicom_trc(black_cdm2, white_cdm2, size=len(self))
-					elif name == "Rec. 1886":
-						trc.set_bt1886_trc(black_Y, size=len(self))
-					elif name == "SMPTE 2084":
-						trc.set_smpte2084_trc(black_cdm2, white_cdm2, size=len(self))
-				except ValueError:
-					continue
-			else:
-				trc.set_trc(exp, len(self), vmin * 655.35, vmax * 655.35)
-			match[(name, exp)] = 0.0
-			count = 0
-			start = slice[0] * 255
-			end = slice[1] * 255
-			for i, (n, x) in enumerate(self):
-				##n = colormath.XYZ2Lab(0, n, 0)[0]
-				if x >= start and x <= end:
-					n = colormath.get_gamma([(x / 255.0 * 100, n)], 100.0, vmin, vmax, False)
-					if n:
-						n = n[0]
-						##n2 = colormath.XYZ2Lab(0, trc[i][0], 0)[0]
-						n2 = colormath.get_gamma([(i / (len(trc) - 1.0) * 65535, trc[i])], 65535, vmin * 655.35, vmax * 655.35, False)
-						if n2 and n2[0]:
-							n2 = n2[0]
-							match[(name, exp)] += 1 - (max(n, n2) - min(n, n2)) / n2
-							count += 1
-			if count:
-				match[(name, exp)] /= count
-		if not best:
-			self._transfer_function[(best, slice)] = match
-			return match
-		match, (name, exp) = sorted(zip(match.values(), match.keys()))[-1]
-		self._transfer_function[(best, slice)] = (name, exp), match
-		return (name, exp), match
+		xp = []
+		fp = []
+		for y, x in self:
+			xp.append(x)
+			fp.append(y)
+		interp = colormath.Interp(xp, fp, use_numpy=True)
+		otrc = ICCP.CurveType(profile=self.profile)
+		for i in xrange(len(self)):
+			otrc.append(interp(i / (len(self) - 1.0) * 255) / 100 * 65535)
+		match = otrc.get_transfer_function(best, slice)
+		self._transfer_function[(best, slice)] = match
+		return match
 	
 	def set_trc(self, power=2.2, values=(), vmin=0, vmax=100):
 		"""

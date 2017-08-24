@@ -3436,10 +3436,13 @@ class CurveType(ICCProfileTag, list):
 			return transfer_function
 		trc = CurveType()
 		match = {}
-		vmin = self[0]
-		vmax = self[-1]
-		gamma = colormath.get_gamma([((len(self) / 2 - 1) / (len(self) - 1.0) * 65535.0,
-									  self[len(self) / 2 - 1])], 65535.0, vmin, vmax)
+		otrc = CurveType()
+		otrc[:] = self
+		otrc.apply_bpc()
+		vmin = otrc[0]
+		vmax = otrc[-1]
+		gamma = colormath.get_gamma([((len(otrc) / 2 - 1) / (len(otrc) - 1.0) * 65535.0,
+									  otrc[len(otrc) / 2 - 1])], 65535.0, vmin, vmax)
 		for name, exp in (("Rec. 709", -709),
 						  ("Rec. 1886", -1886),
 						  ("SMPTE 240M", -240),
@@ -3454,7 +3457,12 @@ class CurveType(ICCProfileTag, list):
 					white_cdm2 = self.profile.tags.lumi.Y
 				else:
 					white_cdm2 = 100.0
-				black_Y = vmin / 65535.0
+				black_Y = self[0] / 65535.0
+				if not black_Y and isinstance(self.profile.tags.get("bkpt"),
+											  XYZType):
+					# Hmm. We may want a more reliable way to get the actual
+					# black point
+					black_Y = self.profile.tags.bkpt.pcs.Y
 				black_cdm2 = black_Y * white_cdm2
 				try:
 					if name == "DICOM":
@@ -3467,14 +3475,15 @@ class CurveType(ICCProfileTag, list):
 					continue
 			else:
 				trc.set_trc(exp, len(self), vmin, vmax)
-			if self == trc:
+			trc.apply_bpc()
+			if otrc == trc:
 				match[(name, exp)] = 1.0
 			else:
 				match[(name, exp)] = 0.0
 				count = 0
 				start = slice[0] * len(self)
 				end = slice[1] * len(self)
-				for i, n in enumerate(self):
+				for i, n in enumerate(otrc):
 					##n = colormath.XYZ2Lab(0, n / 65535.0 * 100, 0)[0]
 					if i >= start and i <= end:
 						n = colormath.get_gamma([(i / (len(self) - 1.0) * 65535.0, n)], 65535.0, vmin, vmax, False)
