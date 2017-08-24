@@ -2941,14 +2941,14 @@ END_DATA
 						return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
 
 				RGB_src_in = []
-				maxval = size - 1.0
-				level_16 = 16.0 / 256 * maxval
-				level_236 = 236.0 / 256 * maxval
+				maxind = size - 1.0
+				level_16 = 16.0 / 256 * maxind
+				level_236 = 236.0 / 256 * maxind
 				for a in xrange(size):
 					for b in xrange(size):
 						for c in xrange(size):
 							abc = (a, b, c)
-							RGB = [v / maxval for v in abc]
+							RGB = [v / maxind for v in abc]
 							if input_encoding in ("t", "T"):
 								# TV levels in
 								if (min(abc) < level_16 or
@@ -3103,10 +3103,10 @@ END_DATA
 								RGB_16_236 = clut_16_236[key]
 								for column, v in enumerate(RGB_16_236):
 									if abc[column] < level_16:
-										v *= cLUT65_to_VidRGB(abc[column] / maxval) / (16.0 / 255)
+										v *= cLUT65_to_VidRGB(abc[column] / maxind) / (16.0 / 255)
 									elif (input_encoding != "T" and
 										  abc[column] > level_236):
-										v *= cLUT65_to_VidRGB(abc[column] / maxval) / (236.0 / 255)
+										v *= cLUT65_to_VidRGB(abc[column] / maxind) / (236.0 / 255)
 									RGB[column] = min(max(v, 0), 1) * 65535
 						b += 1
 				profile_link.write(link_filename)
@@ -3224,6 +3224,37 @@ END_DATA
 
 			if is_argyll_lut_format:
 				# Collink has already written the 3DLUT for us
+				if format == "cube":
+					# Strip any leading whitespace from each line (although
+					# leading/trailing spaces are allowed according to the spec).
+					# Also, Argyll does not write (optional) DOMAIN_MIN/MAX
+					# keywords. Add them after the fact.
+					cube_filename = os.path.join(cwd, name + ".cube")
+					if os.path.isfile(cube_filename):
+						add_domain = True
+						cube_data = []
+						with open(cube_filename, "rb") as cube_file:
+							for line in cube_file:
+								# Strip any leading whitespace
+								line = line.lstrip()
+								if line.startswith("DOMAIN_"):
+									# Account for the possibility that a
+									# future Argyll version might write
+									# DOMAIN_MIN/MAX keywords.
+									add_domain = False
+								elif line.startswith("0.") and add_domain:
+									# 1st cube data entry marks end of keywords.
+									# Add DOMAIN_MIN/MAX keywords
+									cube_data.append("DOMAIN_MIN 0.0 0.0 0.0\n")
+									fp_offset = str(maxval).find(".")
+									domain_max = "DOMAIN_MAX %s %s %s\n" % (("%%.%if" % len(str(maxval)[fp_offset + 1:]), ) * 3)
+									cube_data.append(domain_max % ((maxval ,) * 3))
+									cube_data.append("\n")
+									add_domain = False
+								cube_data.append(line)
+						# Write updated cube
+						with open(cube_filename, "wb") as cube_file:
+							cube_file.write("".join(cube_data))
 				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
 									  result, dst_path=path,
 									  ext_filter=[".3dlut", ".cube",
