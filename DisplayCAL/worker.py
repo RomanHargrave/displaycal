@@ -7375,24 +7375,29 @@ usage: spotread [-options] [logfile]
 				args.insert(args.index("-aX"), "-ax")
 				args.remove("-aX")
 			is_regular_grid = False
-			if getcfg("profile.type") in ("X", "x"):
-				# Check if TI3 RGB matches one of our 5^3 TI1 RGB charts
+			is_primaries_only = False
+			if getcfg("profile.type") in ("X", "x", "S", "s"):
+				# Check if TI3 RGB matches one of our regular grid or
+				# primaries + gray charts
 				ti3 = CGATS.CGATS(args[-1] + ".ti3")
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				for ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
-								 "ti1/d3-e4-s4-g49-m4-b0-f0",
-								 "ti1/d3-e4-s5-g49-m5-b0-f0",
-								 "ti1/d3-e4-s9-g49-m9-b0-f0",
-								 "ti1/d3-e4-s17-g49-m17-b0-f0"):
-					ti1_name = "%s.ti1" % ti1_name
-					ti1_path = get_data_path(ti1_name)
+				for ti1_name in ("ti1/d3-e4-s2-g25-m0-b0-f0",  # Primaries + gray
+								 "ti1/d3-e4-s3-g49-m3-b0-f0",  # 3^3 grid
+								 "ti1/d3-e4-s4-g49-m4-b0-f0",  # 4^3 grid
+								 "ti1/d3-e4-s5-g49-m5-b0-f0",  # 5^3 grid
+								 "ti1/d3-e4-s9-g49-m9-b0-f0",  # 9^3 grid
+								 "ti1/d3-e4-s17-g49-m17-b0-f0"):  # 17^3 grid
+					ti1_filename = "%s.ti1" % ti1_name
+					ti1_path = get_data_path(ti1_filename)
 					if not ti1_path:
-						if ti1_name in ("ti1/d3-e4-s3-g49-m3-b0-f0",
+						if ti1_name in ("ti1/d3-e4-s2-g25-m0-b0-f0",
+										"ti1/d3-e4-s3-g49-m3-b0-f0",
 										"ti1/d3-e4-s4-g49-m4-b0-f0",
 										"ti1/d3-e4-s5-g49-m5-b0-f0"):
-							return Error(lang.getstr("file.missing", ti1_name))
+							return Error(lang.getstr("file.missing",
+													 ti1_filename))
 						else:
 							continue
 					ti1 = CGATS.CGATS(ti1_path)
@@ -7406,18 +7411,21 @@ usage: spotread [-options] [logfile]
 							   for RGB in ti3_remaining.keys()) ==
 						sorted(tuple(round(v / 100.0 * 255) for v in RGB)
 							   for RGB in ti1_remaining.keys())):
-						is_regular_grid = True
+						if ti1_name == "ti1/d3-e4-s2-g25-m0-b0-f0":
+							is_primaries_only = True
+						elif getcfg("profile.type") in ("X", "x"):
+							is_regular_grid = True
 						break
+			if not display_name:
+				arg = get_arg("-M", args, True)
+				if arg and len(args) - 1 > arg[0]:
+					display_name = args[arg[0] + 1]
+			if not display_manufacturer:
+				arg = get_arg("-A", args, True)
+				if arg and len(args) - 1 > arg[0]:
+					display_manufacturer = args[arg[0] + 1]
 			if is_regular_grid:
 				# Use our own forward profile code
-				if not display_name:
-					arg = get_arg("-M", args, True)
-					if arg and len(args) - 1 > arg[0]:
-						display_name = args[arg[0] + 1]
-				if not display_manufacturer:
-					arg = get_arg("-A", args, True)
-					if arg and len(args) - 1 > arg[0]:
-						display_manufacturer = args[arg[0] + 1]
 				profile = self.create_RGB_XYZ_cLUT_fwd_profile(ti3,
 														  os.path.basename(args[-1]),
 														  getcfg("copyright"),
@@ -7435,11 +7443,62 @@ usage: spotread [-options] [logfile]
 					profile.tags.rXYZ = sRGB.tags.bXYZ
 					profile.tags.gXYZ = sRGB.tags.rXYZ
 					profile.tags.bXYZ = sRGB.tags.gXYZ
-				profile.write(profile_path)
-				result = True
-			else:
+			elif not is_primaries_only:
 				result = self.exec_cmd(cmd, args, low_contrast=False, 
 									   skip_scripts=skip_scripts)
+			if is_regular_grid or is_primaries_only:
+				# Use our own matrix
+				self.log("-" * 80)
+				self.log("Creating matrix from primaries")
+				xy = []
+				for R, G, B in [(100, 0, 0),
+								(0, 100, 0),
+								(0, 0, 100),
+								(100, 100, 100)]:
+					if R == G == B:
+						RGB_XYZ = ti3_RGB_XYZ
+					else:
+						RGB_XYZ = ti3_remaining
+					xy.append(colormath.XYZ2xyY(*(v / 100 for v in RGB_XYZ[(R, G, B)]))[:2])
+				mtx = ICCP.ICCProfile.from_chromaticities(xy[0][0], xy[0][1],
+														  xy[1][0], xy[1][1],
+														  xy[2][0], xy[2][1],
+														  xy[3][0], xy[3][1],
+														  2.2,  # Will be replaced
+														  os.path.basename(args[-1]),
+														  getcfg("copyright"),
+														  display_manufacturer,
+														  display_name)
+				if is_primaries_only:
+					# Use matrix profile
+					profile = mtx
+
+					# Add luminance tag
+					luminance_XYZ_cdm2 = ti3.queryv1("LUMINANCE_XYZ_CDM2")
+					if luminance_XYZ_cdm2:
+						profile.tags.lumi = ICCP.XYZType(profile=profile)
+						profile.tags.lumi.Y = float(luminance_XYZ_cdm2.split()[1])
+
+					# Add blackpoint tag
+					profile.tags.bkpt = ICCP.XYZType(profile=profile)
+					black_XYZ = [v / 100.0 for v in ti3_RGB_XYZ[(0, 0, 0)]]
+					(profile.tags.bkpt.X,
+					 profile.tags.bkpt.Y,
+					 profile.tags.bkpt.Z) = black_XYZ
+
+					# Check if we have calibration, if so, add vcgt
+					for cgats in ti3.itervalues():
+						if cgats.type == "CAL":
+							profile.tags.vcgt = cal_to_vcgt(cgats)
+				else:
+					# Add matrix tags to cLUT profile
+					for tagcls in ("XYZ", "TRC"):
+						for channel in "rgb":
+							tagname = channel + tagcls
+							profile.tags[tagname] = mtx.tags[tagname]
+				# Write profile
+				profile.write(profile_path)
+				result = True
 			if (os.path.isfile(args[-1] + ".ti3.backup") and
 				os.path.isfile(args[-1] + ".ti3")):
 				# Restore backed up TI3
@@ -7448,7 +7507,7 @@ usage: spotread [-options] [logfile]
 				ti3_file = open(args[-1] + ".ti3", "rb")
 				ti3 = ti3_file.read()
 				ti3_file.close()
-			elif not is_regular_grid:
+			elif not is_regular_grid and not is_primaries_only:
 				ti3 = None
 			if os.path.isfile(args[-1] + ".chrm"):
 				# Get ChromaticityType tag
@@ -7487,7 +7546,10 @@ usage: spotread [-options] [logfile]
 							# Use matrix from single shaper curve profile if
 							# vcgt is nonlinear
 							ptype = "S"
-						omit = None
+						if is_regular_grid or is_primaries_only:
+							omit = "XYZ"  # Don't re-create matrix
+						else:
+							omit = None
 					else:
 						ptype = getcfg("profile.type")
 						omit = "XYZ"  # Don't re-create matrix
@@ -8093,13 +8155,13 @@ usage: spotread [-options] [logfile]
 			return Error(lang.getstr("argyll.util.not_found", "colprof"))
 		# Strip potential CAL from Ti3
 		try:
-			ti3 = CGATS.CGATS(outname + ".ti3")
+			oti3 = CGATS.CGATS(outname + ".ti3")
 		except (IOError, CGATS.CGATSError), exception:
 			return exception
 		else:
-			if 0 in ti3:
-				ti3[0].filename = ti3.filename  # So we can log the name
-				ti3 = ti3[0]
+			if 0 in oti3:
+				ti3 = oti3[0]
+				ti3.filename = oti3.filename  # So we can log the name
 				ti3.fix_zero_measurements(logfile=self.get_logfiles(False))
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
@@ -8148,12 +8210,120 @@ usage: spotread [-options] [logfile]
 												  ptype == "S", True, self.log)
 
 					self.log("-" * 80)
+
+					# Get black and white luminance
+					if isinstance(profile.tags.get("lumi"),
+								  ICCP.XYZType):
+						white_cdm2 = profile.tags.lumi.Y
+					else:
+						white_cdm2 = 100.0
+					black_Y = RGB_XYZ[(0, 0, 0)][1] / 100.0
+					black_cdm2 = black_Y * white_cdm2
+
+					# Calibration gamma defaults
+					gamma_type = defaults["trc.type"]
+					calgamma = 0
+					outoffset = defaults["calibration.black_output_offset"]
+					# Get actual calibration gamma (if any)
+					options_dispcal = get_options_from_ti3(oti3)[0]
+					calgarg = get_arg("g", options_dispcal)
+					if not calgarg:
+						calgarg = get_arg("G", options_dispcal)
+					if (calgarg and
+						isinstance(profile.tags.get("vcgt"),
+								   ICCP.VideoCardGammaType) and
+						not profile.tags.vcgt.is_linear()):
+						calgamma = {"l": -3.0,
+									"s": -2.4,
+									"709": -709,
+									"240": -240}.get(calgarg[1][1:], calgamma)
+						if not calgamma:
+							try:
+								calgamma = float(calgarg[1][1:])
+							except ValueError:
+								# Not a gamma value
+								pass
+						if calgamma:
+							gamma_type = calgarg[1][0]
+							calfarg = get_arg("f", options_dispcal)
+							if calfarg:
+								try:
+									outoffset = float(calfarg[1][1:])
+								except ValueError:
+									pass
+							caltrc = ICCP.CurveType(profile=profile)
+							if calgamma > 0:
+								caltrc.set_bt1886_trc(black_Y, outoffset,
+													  calgamma, gamma_type)
+							else:
+								caltrc.set_trc(calgamma)
+							caltf = caltrc.get_transfer_function(slice=(0, 1))
+							self.log("Calibration overall transfer function = %s" %
+									 caltf[0][0])
+					tfs = []
 					for i, channel in enumerate("rgb"):
 						tagname = channel + tagcls
 						self.log(u"Adding %s from interpolation to %s" %
 						         (tagname, profile.getDescription()))
-						profile.tags[tagname] = ICCP.CurveType()
-						profile.tags[tagname][:] = [v * 65535 for v in curves[i]]
+						profile.tags[tagname] = trc = ICCP.CurveType(profile=profile)
+						trc[:] = [v * 65535 for v in curves[i]]
+						# Get transfer function and see if we have a good match
+						# to a standard. If we do, use the standard transfer
+						# function instead of our measurement based one.
+						# This avoids artifacts when processing is done in
+						# limited (e.g. 8 bit) precision by a color managed
+						# application and the source profile uses the same
+						# standard transfer function.
+						tf = trc.get_transfer_function(slice=(0, 1))
+						if tf[1] < 0.98:
+							continue
+						label = ["Transfer function", channel.upper()]
+						label.append(u"≈ %s (Δ %.2f%%)" % (tf[0][0],
+														   100 - tf[1] * 100))
+						self.log(" ".join(label))
+						if calgamma:
+							tf = caltf
+						# Only use standard transfer function if we got a good
+						# identical match for all three channels
+						# (round to multiple of 0.05 for comparison)
+						gamma = round(round(tf[0][1] / 0.05) * 0.05, 2)
+						if (tf[1] >= 0.98 and
+							(not tfs or
+							 gamma ==
+							 round(round(tfs[-1][0][1] / 0.05) * 0.05, 2))):
+							# Good match
+							tfs.append(tf)
+					
+					if len(tfs) == 3:
+						# Only use standard transfer function if we got a good
+						# identical match for all three channels.
+						for i, channel in enumerate("rgb"):
+							gamma = round(round(tf[0][1] / 0.05) * 0.05, 2)
+							trc = profile.tags[channel + tagcls]
+							if gamma > 0 and bpc and outoffset == 1.0:
+								# Single gamma value, BPC
+								trc.set_trc(gamma, 1)
+							else:
+								# Complex or gamma with black offset
+								if gamma == -1023:
+									# DICOM is a special case
+									trc.set_dicom_trc(black_cdm2, white_cdm2)
+								elif gamma == -1886:
+									# BT.1886 is a special case
+									trc.set_bt1886_trc(black_Y)
+								elif gamma == -2084:
+									# SMPTE 2084 is a special case
+									trc.set_smpte2084_trc(black_cdm2, white_cdm2)
+								elif gamma > 0:
+									# BT.1886-like or power law gamma
+									trc.set_bt1886_trc(black_Y, outoffset,
+													   gamma, gamma_type)
+								else:
+									# L*, sRGB, Rec. 709, or SMPTE 240M
+									trc.set_trc(gamma)
+							tf = trc.get_transfer_function(slice=(0, 1))
+							self.log("Using %s transfer function for %s" %
+									 (tf[0][0], channel.upper()))
 
 					if not bpc:
 						XYZbp = None
