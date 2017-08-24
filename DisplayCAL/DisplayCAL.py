@@ -13066,9 +13066,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				patches_amount = 175
 			if event:
-				if auto > 2 and proftype not in ("x", "X"):
+				if auto > 1 and proftype not in ("x", "X"):
 					setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
-				elif auto < 3 and proftype not in ("g", "G", "s", "S"):
+				elif auto < 2 and proftype not in ("g", "G", "s", "S"):
 					setcfg("profile.type", "S" if getcfg("trc") else "s")
 		if proftype != getcfg("profile.type"):
 			self.update_profile_type_ctrl()
@@ -13107,7 +13107,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		##print "set_default_testchart", path
 		if getcfg("profile.type") in ("x", "X"):
 			# XYZ cLUT
-			if getcfg("testchart.auto_optimize") < 3:
+			if getcfg("testchart.auto_optimize") < 2:
 				setcfg("testchart.auto_optimize", 3)
 		elif getcfg("profile.type") == "l":
 			# L*a*b* cLUT
@@ -13116,7 +13116,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			# Gamma or shaper + matrix
 			if getcfg("testchart.auto_optimize") > 2:
-				setcfg("testchart.auto_optimize", 2)
+				setcfg("testchart.auto_optimize", 1)
 		if path == "auto":
 			self.set_testchart(path)
 			return
