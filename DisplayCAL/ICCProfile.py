@@ -3493,7 +3493,7 @@ class CurveType(ICCProfileTag, list):
 							n2 = colormath.get_gamma([(i / (len(self) - 1.0) * 65535.0, trc[i])], 65535.0, vmin, vmax, False)
 							if n2 and n2[0]:
 								n2 = n2[0]
-								match[(name, exp)] += 1 - (max(n, n2) - min(n, n2)) / n2
+								match[(name, exp)] += 1 - (max(n, n2) - min(n, n2)) / ((n + n2) / 2.0)
 								count += 1
 				if count:
 					match[(name, exp)] /= count
