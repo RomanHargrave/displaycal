@@ -10,6 +10,7 @@ import sys
 from config import get_data_path, initcfg
 from meta import version
 from safe_print import safe_print
+from util_str import safe_unicode
 import jspacker
 import localization as lang
 
@@ -65,7 +66,8 @@ def create(report_path, placeholders2data, pack=True, templatename="report"):
 	try:
 		report_html_file = codecs.open(report_path, "w", "UTF-8")
 	except (IOError, OSError), exception:
-		raise exception.__class__(lang.getstr("error.file.create", report_path))
+		raise exception.__class__(lang.getstr("error.file.create", report_path) +
+								  "\n\n" + safe_unicode(exception))
 	report_html_file.write(report_html)
 	report_html_file.close()
 
