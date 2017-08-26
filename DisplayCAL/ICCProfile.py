@@ -3420,7 +3420,7 @@ class CurveType(ICCProfileTag, list):
 				vmax = self[-1]
 		return colormath.get_gamma(values, 65535.0, vmin, vmax, average, least_squares)
 	
-	def get_transfer_function(self, best=True, slice=(0.05, 0.95)):
+	def get_transfer_function(self, best=True, slice=(0.05, 0.95), black_Y=None):
 		"""
 		Return transfer function name, exponent and match percentage
 		
@@ -3441,6 +3441,19 @@ class CurveType(ICCProfileTag, list):
 		otrc.apply_bpc()
 		vmin = otrc[0]
 		vmax = otrc[-1]
+		if self.profile and isinstance(self.profile.tags.get("lumi"),
+									   XYZType):
+			white_cdm2 = self.profile.tags.lumi.Y
+		else:
+			white_cdm2 = 100.0
+		if black_Y is None:
+			black_Y = self[0] / 65535.0
+			if (not black_Y and self.profile and
+				isinstance(self.profile.tags.get("bkpt"), XYZType)):
+				# Hmm. We may want a more reliable way to get the actual
+				# black point
+				black_Y = self.profile.tags.bkpt.pcs.Y
+		black_cdm2 = black_Y * white_cdm2
 		gamma = colormath.get_gamma([((len(otrc) / 2 - 1) / (len(otrc) - 1.0) * 65535.0,
 									  otrc[len(otrc) / 2 - 1])], 65535.0, vmin, vmax)
 		for name, exp in (("Rec. 709", -709),
@@ -3452,18 +3465,6 @@ class CurveType(ICCProfileTag, list):
 						  ("sRGB", -2.4),
 						  ("Gamma %.2f" % round(gamma, 2), gamma)):
 			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
-				if self.profile and isinstance(self.profile.tags.get("lumi"),
-											   XYZType):
-					white_cdm2 = self.profile.tags.lumi.Y
-				else:
-					white_cdm2 = 100.0
-				black_Y = self[0] / 65535.0
-				if not black_Y and isinstance(self.profile.tags.get("bkpt"),
-											  XYZType):
-					# Hmm. We may want a more reliable way to get the actual
-					# black point
-					black_Y = self.profile.tags.bkpt.pcs.Y
-				black_cdm2 = black_Y * white_cdm2
 				try:
 					if name == "DICOM":
 						trc.set_dicom_trc(black_cdm2, white_cdm2, size=len(self))
