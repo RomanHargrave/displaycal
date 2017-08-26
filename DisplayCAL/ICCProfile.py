@@ -3454,8 +3454,8 @@ class CurveType(ICCProfileTag, list):
 				# black point
 				black_Y = self.profile.tags.bkpt.pcs.Y
 		black_cdm2 = black_Y * white_cdm2
-		gamma = colormath.get_gamma([((len(otrc) / 2 - 1) / (len(otrc) - 1.0) * 65535.0,
-									  otrc[len(otrc) / 2 - 1])], 65535.0, vmin, vmax)
+		midpoint = colormath.interp((len(otrc) - 1) / 2.0, range(len(otrc)), otrc)
+		gamma = colormath.get_gamma([(0.5 * 65535, midpoint)], 65535.0, vmin, vmax)
 		for name, exp in (("Rec. 709", -709),
 						  ("Rec. 1886", -1886),
 						  ("SMPTE 240M", -240),
