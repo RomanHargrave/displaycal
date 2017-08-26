@@ -8282,13 +8282,29 @@ usage: spotread [-options] [logfile]
 									pass
 							caltrc = ICCP.CurveType(profile=profile)
 							if calgamma > 0:
-								caltrc.set_bt1886_trc(black_Y, outoffset,
-													  calgamma, gamma_type)
+								caltf = (("Gamma %.2f" % round(calgamma, 2),
+										  calgamma), 1.0)
 							else:
 								caltrc.set_trc(calgamma)
-							caltf = caltrc.get_transfer_function(slice=(0, 1))
-							self.log("Calibration overall transfer function = %s" %
-									 caltf[0][0])
+								caltf = caltrc.get_transfer_function(True, (0, 1),
+																	 black_Y)
+								calgamma = caltf[0][1]
+					self.log("Black relative luminance = %.6f" %
+							 round(black_Y, 6))
+					self.log("Black output offset = %.2f" %
+							 round(outoffset, 2))
+					if calgamma:
+						self.log(u"Calibration overall transfer function "
+								 u"≈ %s (Δ %.2f%%)" % (caltf[0][0],
+													   100 - caltf[1] * 100))
+					if calgamma > 0 and black_Y:
+						# Calculate effective gamma
+						caltrc.set_bt1886_trc(black_Y, outoffset, calgamma,
+											  gamma_type)
+						midpoint = colormath.interp((len(caltrc) - 1) / 2.0,
+													range(len(caltrc)), caltrc)
+						gamma = colormath.get_gamma([(0.5, midpoint / 65535.0)])
+						self.log(u"Calibration effective gamma = %.2f" % gamma)
 					tfs = []
 					for i, channel in enumerate("rgb"):
 						tagname = channel + tagcls
@@ -8303,13 +8319,19 @@ usage: spotread [-options] [logfile]
 						# limited (e.g. 8 bit) precision by a color managed
 						# application and the source profile uses the same
 						# standard transfer function.
-						tf = trc.get_transfer_function(slice=(0, 1))
-						if tf[1] < 0.98:
-							continue
+						tf = trc.get_transfer_function(True, (0, 1),
+													   black_Y)
 						label = ["Transfer function", channel.upper()]
 						label.append(u"≈ %s (Δ %.2f%%)" % (tf[0][0],
 														   100 - tf[1] * 100))
 						self.log(" ".join(label))
+						gamma = tf[0][1]
+						if gamma > 0 and black_Y:
+							# Calculate effective gamma
+							gamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
+														vmin=-black_Y)
+							self.log("Effective gamma = %.2f" %
+									 round(gamma, 2))
 						if calgamma:
 							tf = caltf
 						# Only use standard transfer function if we got a good
@@ -8327,13 +8349,19 @@ usage: spotread [-options] [logfile]
 						# Only use standard transfer function if we got a good
 						# identical match for all three channels.
 						for i, channel in enumerate("rgb"):
-							gamma = round(round(tf[0][1] / 0.05) * 0.05, 2)
+							tf = tfs[i]
+							if calgamma > 0:
+								# Use calibration gamma
+								gamma = calgamma
+							elif not calgamma:
+								gamma = round(round(tf[0][1] / 0.05) * 0.05, 2)
 							trc = profile.tags[channel + tagcls]
 							if gamma > 0 and bpc and outoffset == 1.0:
-								# Single gamma value, BPC
+								# Single gamma value, BPC, all output offset
 								trc.set_trc(gamma, 1)
 							else:
-								# Complex or gamma with black offset
+								# Complex, or gamma with input offset or gamma
+								# without BPC
 								if gamma == -1023:
 									# DICOM is a special case
 									trc.set_dicom_trc(black_cdm2, white_cdm2)
@@ -8345,14 +8373,22 @@ usage: spotread [-options] [logfile]
 									trc.set_smpte2084_trc(black_cdm2, white_cdm2)
 								elif gamma > 0:
 									# BT.1886-like or power law gamma
+									if not calgamma:
+										# Use effective gamma
+										gamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
+																	vmin=-black_Y)
+										gamma_type = "g"
 									trc.set_bt1886_trc(black_Y, outoffset,
 													   gamma, gamma_type)
 								else:
 									# L*, sRGB, Rec. 709, or SMPTE 240M
 									trc.set_trc(gamma)
-							tf = trc.get_transfer_function(slice=(0, 1))
-							self.log("Using %s transfer function for %s" %
-									 (tf[0][0], channel.upper()))
+							trc.apply_bpc()
+							if calgamma <= 0:
+								tf = trc.get_transfer_function(True, (0, 1),
+															   black_Y)
+							self.log("Using transfer function for %s: %s" %
+									 (channel.upper(), tf[0][0]))
 
 					if not bpc:
 						XYZbp = None
