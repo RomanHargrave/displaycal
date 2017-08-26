@@ -3420,7 +3420,8 @@ class CurveType(ICCProfileTag, list):
 				vmax = self[-1]
 		return colormath.get_gamma(values, 65535.0, vmin, vmax, average, least_squares)
 	
-	def get_transfer_function(self, best=True, slice=(0.05, 0.95), black_Y=None):
+	def get_transfer_function(self, best=True, slice=(0.05, 0.95), black_Y=None,
+							  outoffset=None):
 		"""
 		Return transfer function name, exponent and match percentage
 		
@@ -3456,14 +3457,31 @@ class CurveType(ICCProfileTag, list):
 		black_cdm2 = black_Y * white_cdm2
 		midpoint = colormath.interp((len(otrc) - 1) / 2.0, range(len(otrc)), otrc)
 		gamma = colormath.get_gamma([(0.5 * 65535, midpoint)], 65535.0, vmin, vmax)
-		for name, exp in (("Rec. 709", -709),
-						  ("Rec. 1886", -1886),
-						  ("SMPTE 240M", -240),
-						  ("SMPTE 2084", -2084),
-						  ("DICOM", -1023),
-						  ("L*", -3.0),
-						  ("sRGB", -2.4),
-						  ("Gamma %.2f" % round(gamma, 2), gamma)):
+		egamma = colormath.get_gamma([(0.5, 0.5 ** gamma)], vmin=-black_Y)
+		outoffset_unspecified = outoffset is None
+		if outoffset_unspecified:
+			outoffset = 1.0
+		tfs = [("Rec. 709", -709, outoffset),
+			   ("Rec. 1886", -1886, outoffset),
+			   ("SMPTE 240M", -240, outoffset),
+			   ("SMPTE 2084", -2084, outoffset),
+			   ("DICOM", -1023, outoffset),
+			   ("L*", -3.0, outoffset),
+			   ("sRGB", -2.4, outoffset),
+			   ("Gamma %.2f %i%%" % (round(gamma, 2), round(outoffset * 100)),
+									gamma, outoffset)]
+		if outoffset_unspecified:
+			tfs.extend([("Gamma %.2f 0%%" % round(gamma, 2), gamma, 0.0),
+						("Gamma %.2f 10%%" % round(gamma, 2), gamma, 0.1),
+						("Gamma %.2f 20%%" % round(gamma, 2), gamma, 0.2),
+						("Gamma %.2f 30%%" % round(gamma, 2), gamma, 0.3),
+						("Gamma %.2f 40%%" % round(gamma, 2), gamma, 0.4),
+						("Gamma %.2f 50%%" % round(gamma, 2), gamma, 0.5),
+						("Gamma %.2f 60%%" % round(gamma, 2), gamma, 0.6),
+						("Gamma %.2f 70%%" % round(gamma, 2), gamma, 0.7),
+						("Gamma %.2f 80%%" % round(gamma, 2), gamma, 0.8),
+						("Gamma %.2f 90%%" % round(gamma, 2), gamma, 0.9)])
+		for name, exp, outoffset in tfs:
 			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
 				try:
 					if name == "DICOM":
@@ -3474,13 +3492,15 @@ class CurveType(ICCProfileTag, list):
 						trc.set_smpte2084_trc(black_cdm2, white_cdm2, size=len(self))
 				except ValueError:
 					continue
+			elif exp > 0 and black_Y:
+				trc.set_bt1886_trc(black_Y, outoffset, egamma, "b")
 			else:
 				trc.set_trc(exp, len(self), vmin, vmax)
 			trc.apply_bpc()
 			if otrc == trc:
-				match[(name, exp)] = 1.0
+				match[(name, exp, outoffset)] = 1.0
 			else:
-				match[(name, exp)] = 0.0
+				match[(name, exp, outoffset)] = 0.0
 				count = 0
 				start = slice[0] * len(self)
 				end = slice[1] * len(self)
@@ -3494,16 +3514,16 @@ class CurveType(ICCProfileTag, list):
 							n2 = colormath.get_gamma([(i / (len(self) - 1.0) * 65535.0, trc[i])], 65535.0, vmin, vmax, False)
 							if n2 and n2[0]:
 								n2 = n2[0]
-								match[(name, exp)] += 1 - (max(n, n2) - min(n, n2)) / ((n + n2) / 2.0)
+								match[(name, exp, outoffset)] += 1 - (max(n, n2) - min(n, n2)) / ((n + n2) / 2.0)
 								count += 1
 				if count:
-					match[(name, exp)] /= count
+					match[(name, exp, outoffset)] /= count
 		if not best:
 			self._transfer_function[(best, slice)] = match
 			return match
-		match, (name, exp) = sorted(zip(match.values(), match.keys()))[-1]
-		self._transfer_function[(best, slice)] = (name, exp), match
-		return (name, exp), match
+		match, (name, exp, outoffset) = sorted(zip(match.values(), match.keys()))[-1]
+		self._transfer_function[(best, slice)] = (name, exp, outoffset), match
+		return (name, exp, outoffset), match
 	
 	def insert(self, object):
 		list.insert(self, object)
