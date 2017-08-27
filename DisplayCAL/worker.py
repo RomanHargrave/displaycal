@@ -10746,6 +10746,8 @@ usage: spotread [-options] [logfile]
 			filename, ext = os.path.splitext(profile_path)
 			comparison_gamuts.append((filename.lower().replace(" ", "-"),
 									  filename + ".gam"))
+		threads = []
+		viewgam = get_argyll_util("viewgam")
 		for key, src in comparison_gamuts:
 			if not isinstance(result, Exception) and result:
 				# Create gamut view and intersection
@@ -10765,26 +10767,25 @@ usage: spotread [-options] [logfile]
 												  for mod in mods])
 				outfilename += ".wrl"
 				tmpfilenames.append(outfilename)
-				result = self.exec_cmd(get_argyll_util("viewgam"),
-									   ["-cw", "-t0", "-w", src_path, "-cn",
-										"-t.3", "-s", gamfilename, "-i",
-										outfilename],
-									   capture_output=True,
-									   skip_scripts=True)
-				if not isinstance(result, Exception) and result:
-					# viewgam output looks like this:
-					# Intersecting volume = xxx.x cubic units
-					# 'path/to/1.gam' volume = xxx.x cubic units, intersect = xx.xx%
-					# 'path/to/2.gam' volume = xxx.x cubic units, intersect = xx.xx%
-					for line in self.output:
-						match = re.search("[\\\/]%s.gam'\s+volume\s*=\s*"
-										  "\d+(?:\.\d+)?\s+cubic\s+units,?"
-										  "\s+intersect\s*=\s*"
-										  "(\d+(?:\.\d+)?)" %
-										  re.escape(src), line)
-						if match:
-							gamut_coverage[key] = float(match.groups()[0]) / 100.0
-							break
+				# Multi-threaded gamut view calculation
+				worker = Worker()
+				args = ["-cw", "-t0", "-w", src_path, "-cn",
+						"-t.3", "-s", gamfilename, "-i", outfilename]
+				thread = threading.Thread(target=self.create_gamut_view_worker,
+										  name="CreateGamutViewWorker",
+										  args=(worker, viewgam, args, key,
+												src, gamut_coverage))
+				threads.append((thread, worker, args))
+				thread.start()
+		# Wait for threads to finish
+		for thread, worker, args in threads:
+			thread.join()
+			self.log("-" * 80)
+			self.log(lang.getstr("commandline"))
+			printcmdline(viewgam if verbose >= 2 else os.path.basename(viewgam), 
+						 args, fn=self.log, cwd=os.path.dirname(args[-1]))
+			self.log("")
+			self.log("".join(worker.output))
 		if not isinstance(result, Exception) and result:
 			for tmpfilename in tmpfilenames:
 				if (tmpfilename == gamfilename and
@@ -10854,6 +10855,31 @@ usage: spotread [-options] [logfile]
 			# Exception
 			self.log(result)
 		return gamut_volume, gamut_coverage
+
+	@staticmethod
+	def create_gamut_view_worker(worker, viewgam, args, key, src,
+								 gamut_coverage):
+		""" Gamut view creation producer """
+		try:
+			result = worker.exec_cmd(viewgam, args, capture_output=True,
+									 skip_scripts=True, silent=True,
+									 log_output=False)
+			if not isinstance(result, Exception) and result:
+				# viewgam output looks like this:
+				# Intersecting volume = xxx.x cubic units
+				# 'path/to/1.gam' volume = xxx.x cubic units, intersect = xx.xx%
+				# 'path/to/2.gam' volume = xxx.x cubic units, intersect = xx.xx%
+				for line in worker.output:
+					match = re.search("[\\\/]%s.gam'\s+volume\s*=\s*"
+									  "\d+(?:\.\d+)?\s+cubic\s+units,?"
+									  "\s+intersect\s*=\s*"
+									  "(\d+(?:\.\d+)?)" %
+									  re.escape(src), line)
+					if match:
+						gamut_coverage[key] = float(match.groups()[0]) / 100.0
+						break
+		except Exception, exception:
+			worker.log(traceback.format_exc())
 
 	def calibrate(self, remove=False):
 		""" Calibrate the screen and process the generated file(s). """
