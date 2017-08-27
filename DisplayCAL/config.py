@@ -858,7 +858,7 @@ defaults = {
 	"gamap_saturation_intent": "s",
 	"gamap_default_intent": "p",
 	"gamma": 2.2,
-	"iccgamut.surface_detail": 6.0,
+	"iccgamut.surface_detail": 10.0,
 	"instruments": "",
 	"last_launch": "99",
 	"log.autoshow": 0,
