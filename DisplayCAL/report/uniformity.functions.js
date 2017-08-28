@@ -39,7 +39,8 @@ function generate_report() {
 		tolerance_nominal_max,
 		tolerance_recommended_max,
 		delta_E_tolerance_nominal = 4,
-		delta_E_tolerance_recommended = 2;
+		delta_E_tolerance_recommended = 2,
+		cls;
 	if (delta == 'E' || delta == 'L') {
 		// ISO 14861: dE*00 shall be equal or less than four and should be equal or less than two
 		tolerance_nominal = tolerance_nominal_max = delta_E_tolerance_nominal;
@@ -131,13 +132,8 @@ function generate_report() {
 		}
 	}
 	// ISO 14861:2015 tone uniformity
-	var delta_E_max = jsapi.math.max(delta_E), delta_E_max_color = 'inherit', delta_E_max_mark = ' \u25cf';
-	if (rows < 5 || cols < 5 || delta == 'C') {
-		// Need at least 5 x 5 to satisfy ISO 14861:2015 requirements
-		delta_E_max_color = '';
-		delta_E_max_mark = '';
-	}
-	else if (delta_E_max <= delta_E_tolerance_recommended)
+	var delta_E_max = jsapi.math.max(delta_E), delta_E_max_color = '', delta_E_max_mark = ' \u25cf';
+	if (delta_E_max <= delta_E_tolerance_recommended)
 		delta_E_max_color = 'green';
 	else if (delta_E_max <= delta_E_tolerance_nominal)
 		delta_E_max_color = 'yellow';
@@ -145,13 +141,10 @@ function generate_report() {
 		delta_E_max_color = 'red';
 	// ISO 14861:2015 deviation from uniform tonality
 	// Technically, ISO 12646:2015 has caught up with ISO 14861
-	var T_max = jsapi.math.max(T), T_max_color = 'inherit', T_max_mark = ' \u25cf',
+	var T_max = jsapi.math.max(T), T_max_color = '', T_max_mark = ' \u25cf',
 		T_tolerance_nominal = 0.1;
-	if (rows < 5 && cols < 5) {
-		// Need at least 5 x 5 to satisfy ISO 14861 requirements
-		T_max_color = '';
+	if (delta != 'E') 
 		T_max_mark = '';
-	}
 	else if (T_max < T_tolerance_nominal)
 		T_max_color = 'green';
 	else
@@ -176,43 +169,31 @@ function generate_report() {
 			CT.push(results[i][j]['C' + locus.substr(0, 1) + 'T']);
 			if (results[i] == reference) {
 				line = '</td><td>' + line;
-				line += ' (' + (reference[j]['XYZ'][1] / reference[0]['XYZ'][1] * 100).accuracy(2) + '%)' + '</td><td>' + (j == 0 ? '<span id="info_toggle" style="color: ' + (selected_index > results[i].length / 2 ? '#fff' : '#000') + ';" onclick="document.body.className = document.body.className == &quot;info&quot; ? &quot;toggle&quot; : &quot;info&quot;;" title="Toggle Information Display">\u2699</span>' : '');
+				line += ' (' + (reference[j]['XYZ'][1] / reference[0]['XYZ'][1] * 100).accuracy(2) + '%)' + '</td><td>' + (j == 0 ? '<span id="info_toggle" onclick="document.body.className = document.body.className == &quot;info&quot; ? &quot;toggle&quot; : &quot;info&quot;;" title="Toggle Information Display"><svg width="12" height="12" viewBox="-0.6 -0.6 176 176"><path d="M0,87.7C0,39.2,39.2,0,87.7,0l0,0v15v15c-16,0-30.3,6.4-40.8,16.9l0,0C36.4,57.4,30,71.7,30,87.7l0,0 c0,16,6.4,30.3,16.9,40.8l0,0c10.5,10.5,24.8,16.9,40.8,16.9l0,0c16,0,30.3-6.4,40.8-16.9l0,0c10.5-10.5,16.9-24.8,16.9-40.8l0,0 c0-16-6.4-30.3-16.9-40.8l0,0C118,36.4,103.6,30,87.7,30l0,0V15V0c48.4,0,87.7,39.2,87.7,87.7l0,0c0,48.4-39.2,87.7-87.7,87.7l0,0 C39.2,175.3,0,136.1,0,87.7L0,87.7z" /><path d="M72.7,115.4v-55c0-8.3,6.7-15,15-15l0,0c8.3,0,15,6.7,15,15l0,0v55c0,8.3-6.7,15-15,15l0,0 C79.4,130.4,72.7,123.6,72.7,115.4L72.7,115.4z" /></svg></span>' : '');
 				//line += '</td></tr>\n<tr><td></td><td><abbr title="Correlated Color Temperature">CCT</abbr>&#160;' + Math.round(CCT[j]) + 'K, <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr>&#160;' + Math.round(CT[j]) + 'K></td><td>';
 			}
 			else {
-				var color = 'inherit', mark = '', Y_color = color, Y_mark = mark;
+				var color = '', mark = ' \u25cf', Y_color = color, Y_mark = mark;
 				CCT_diff.push(-(reference[j]['CCT'] - results[i][j]['CCT']));
 				CCT_diff_percent.push(100.0 / reference[j]['CCT'] * CCT_diff[j]);
 				CT_diff.push(-(reference[j]['C' + locus.substr(0, 1) + 'T'] - CT[j]));
 				CT_diff_percent.push(100.0 / reference[j]['C' + locus.substr(0, 1) + 'T'] * CT_diff[j]);
 				Y_diff.push(-(reference[j]['XYZ'][1] - results[i][j]['XYZ'][1]));
 				Y_diff_percent.push(100.0 / reference[0]['XYZ'][1] * Y_diff[j]);
-				if (delta == 'E' || delta == 'C') {
-				}
-				else if (Math.abs(Y_diff_percent[j]) <= 5) {
+				if (delta == 'E' || delta == 'C')
+					Y_mark = '';
+				else if (Math.abs(Y_diff_percent[j]) <= 5)
 					Y_color = 'green';
-					Y_mark = ' \u25cf';
-				}
-				else if (Math.abs(Y_diff_percent[j]) <= 10) {
+				else if (Math.abs(Y_diff_percent[j]) <= 10)
 					Y_color = 'yellow';
-					Y_mark = ' \u25cf';
-				}
-				else {
+				else
 					Y_color = 'red';
-					Y_mark = ' \u25cf';
-				}
-				if (Math.abs(deltas[i][j][delta]) <= tolerance_recommended_max) {
+				if (Math.abs(deltas[i][j][delta]) <= tolerance_recommended_max)
 					color = 'green';
-					mark = ' \u25cf';
-				}
-				else if (Math.abs(deltas[i][j][delta]) <= tolerance_nominal_max) {
+				else if (Math.abs(deltas[i][j][delta]) <= tolerance_nominal_max)
 					color = 'yellow';
-					mark = ' \u25cf';
-				}
-				else {
+				else
 					color = 'red';
-					mark = ' \u25cf';
-				}
 				line = (Y_mark ? '<span class="mark ' + Y_color + '">' + Y_mark + '</span>' : '') + (mark ? '<span class="mark ' + color + '">' + mark + '</span>' : '') + '</td><td>' + line;
 				line += ' <span' + (Y_mark ? ' title="Nominal &lt;= 10%, recommended &lt;= 5%"' : '') + '>(' + (Y_diff_percent[j] > 0 ? '+' : '') + Y_diff_percent[j].accuracy(2) + '%)</span>, <span class="delta_toggle" onclick="window.delta = &quot;' + delta_cycle[delta] + '&quot;; generate_report()" title="Nominal &lt;= ' + tolerance_nominal_max.accuracy(2) + ', recommended &lt;= ' + tolerance_recommended_max.accuracy(2) + '">' + deltas[i][j][delta].accuracy(2) + ' Δ' + delta + '*00</span>';
 				//line += '</td></tr>\n<tr><td></td><td><abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K (' + (CCT_diff_percent[j] > 0 ? '+' : '') + CCT_diff_percent[j].accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(CT[j]) + 'K (' + (CT_diff_percent[j] > 0 ? '+' : '') + CT_diff_percent[j].accuracy(2) + '%)>';
@@ -223,10 +204,14 @@ function generate_report() {
 					   Math.round(255 * (1 - j / results[i].length)),
 					   Math.round(255 * (1 - j / results[i].length))];
 				if (results[i] == reference) {
-					if (j > results[i].length / 2)
-						document.getElementsByTagName('body')[0].style.color = '#ccc';
+					if (j == 3)
+						cls = 'dark';
+					else if (j == 2)
+						cls = 'dim';
+					else if (j)
+						cls = 'avg';
 					else
-						document.getElementsByTagName('body')[0].style.color = '#000';
+						cls = '';
 				}
 			}
 			cellcontent.push(line);
@@ -239,74 +224,51 @@ function generate_report() {
 			// Technically, ISO 12646:2015 has caught up with ISO 14861
 			line += '</td></tr>\n<tr><td><span class="mark ' + T_max_color + '">' + T_max_mark + '</span></td><td><strong>Maximum tonality deviation:</strong> ' + (T_max * 100).accuracy(2) + '%</td><td>';
 			if (T_max < T_tolerance_nominal && delta_E_max <= delta_E_tolerance_nominal) {
-				var msg_color = 'green', msg_mark = '\u2713';
+				var msg_mark = '\u2713';
 				if (delta_E_max <= delta_E_tolerance_recommended)
-					var msg = 'Recommended tolerance passed';
+					var msg_color = 'green', msg = 'Recommended tolerance passed';
 				else
-					var msg = 'Nominal tolerance passed';
+					var msg_color = 'yellow', msg = 'Nominal tolerance passed';
 			}
 			else
 				var msg_color = 'red', msg_mark = '\u2716', msg = 'Nominal tolerance exceeded';
 			line += '</td></tr>\n<tr><td><strong class="msg ' + msg_color + '">' + msg_mark + '</strong></td><td><strong class="msg ' + msg_color + '">' + msg + '</strong></td><td>';*/
-			line = '</td></tr>\n<tr><td></td><td>&#160;</td><td></td></tr>\n<tr><td></td><td>Evaluation criteria:<br /><select onchange="window.delta = this.options[this.selectedIndex].value; generate_report()"><option value="E"' + (delta == 'E' ? ' selected="selected"' : '') + '>ISO 14861:2015</option><option value="C"' + (delta == 'C' ? ' selected="selected"' : '') + '>Average luminance &amp; ΔC*00</option></select></td><td>';
+			line = '</td></tr>\n<tr><td colspan="3">&#160;</td></tr>\n<tr><td></td><td colspan="2">Evaluation criteria:<br /><select onchange="window.delta = this.options[this.selectedIndex].value; generate_report()"><option value="E"' + (delta == 'E' ? ' selected="selected"' : '') + '>ISO 14861:2015</option><option value="C"' + (delta == 'C' ? ' selected="selected"' : '') + '>Average luminance &amp; ΔC*00</option></select>' + (delta == 'E' && (rows < 5 || cols < 5) ? '</td></tr>\n<tr><td><span class="msg orange">\u26A0</span></td><td colspan="2"><span class="msg orange">ISO 14861:2015 mandates at least a 5 × 5 grid</span>' : '');
 		}
 		else {
 			var delta_avg = jsapi.math.avg(curdeltas[i]),
 				delta_max = jsapi.math.absmax(curdeltas[i]),
 				Y_diff_percent_avg = jsapi.math.avg(Y_diff_percent),
 				Y_diff_percent_max = jsapi.math.absmax(Y_diff_percent),
-				color = 'inherit', mark = '', Y_color = color, Y_mark = mark;
-			if (delta == 'E') {
-			}
-			else if (Math.abs(Y_diff_percent_avg) <= 5) {
+				color = '', mark = ' \u25cf', Y_color = color, Y_mark = mark;
+			if (delta == 'E')
+				Y_mark = '';
+			else if (Math.abs(Y_diff_percent_avg) <= 5)
 				Y_color = 'green';
-				Y_mark = ' \u25cf';
-			}
-			else if (Math.abs(Y_diff_percent_avg) <= 10) {
+			else if (Math.abs(Y_diff_percent_avg) <= 10)
 				Y_color = 'yellow';
-				Y_mark = ' \u25cf';
-			}
-			else {
+			else
 				Y_color = 'red';
-				Y_mark = ' \u25cf';
-			}
-			if (Math.abs(delta_avg) <= tolerance_recommended) {
+			if (Math.abs(delta_avg) <= tolerance_recommended)
 				color = 'green';
-				mark = ' \u25cf';
-			}
-			else if (Math.abs(delta_avg) <= tolerance_nominal) {
+			else if (Math.abs(delta_avg) <= tolerance_nominal)
 				color = 'yellow';
-				mark = ' \u25cf';
-			}
-			else {
+			else
 				color = 'red';
-				mark = ' \u25cf';
-			}
 			line = '</td><td>&#160;</td></tr>\n<tr><td>' + (Y_mark ? '<span class="mark ' + Y_color + '">' + Y_mark + '</span>' : '') + (mark ? '<span class="mark ' + color + '">' + mark + '</span>' : '') + '</td><td><strong>Average:</strong> ' + (Y_diff_percent_avg > 0 ? '+' : '') + jsapi.math.avg(Y_diff).accuracy(2) + ' cd/m² <span' + (Y_mark ? ' title="Nominal &lt;= 10%, recommended &lt;= 5%"' : '') + '>(' + (Y_diff_percent_avg > 0 ? '+' : '') + Y_diff_percent_avg.accuracy(2) + '%)</span>, <span class="delta_toggle" onclick="window.delta = &quot;' + delta_cycle[delta] + '&quot;; generate_report()"' + (delta == 'C' ? ' title="Nominal &lt;= ' + tolerance_nominal.accuracy(2) + ', recommended &lt;= ' + tolerance_recommended.accuracy(2) + '"' : '') + '>' + delta_avg.accuracy(2) + ' Δ' + delta + '*00</span></td>';
 			//line += '</tr>\n<tr><td></td><td><abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K (' + (jsapi.math.avg(CCT_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(CCT_diff_percent).accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K (' + (jsapi.math.avg(CT_diff_percent) > 0 ? '+' : '') + jsapi.math.avg(CT_diff_percent).accuracy(2) + '%)>';
-			if (delta == 'E' || delta == 'C') {
+			Y_mark = mark;
+			if (delta == 'E' || delta == 'C')
 				Y_mark = '';
-			}
-			else if (Math.abs(Y_diff_percent_avg) <= 5) {
+			else if (Math.abs(Y_diff_percent_avg) <= 5)
 				Y_color = 'green';
-				Y_mark = ' \u25cf';
-			}
-			else if (Math.abs(Y_diff_percent_avg) <= 10) {
+			else if (Math.abs(Y_diff_percent_avg) <= 10)
 				Y_color = 'yellow';
-				Y_mark = ' \u25cf';
-			}
-			else {
+			else
 				Y_color = 'red';
-				Y_mark = ' \u25cf';
-			}
 			// ISO 14861:2015 tone uniformity
-			var result_delta_max_color = 'inherit', result_delta_max_mark = '\u25cf';
-			if (rows < 5 && cols < 5) {
-				// Need at least 5 x 5 to satisfy ISO 14861:2015 requirements
-				result_delta_max_color = 'gray';
-				result_delta_max_mark = '';
-			}
-			else if (delta_max <= tolerance_recommended_max)
+			var result_delta_max_color = '', result_delta_max_mark = ' \u25cf';
+			if (delta_max <= tolerance_recommended_max)
 				result_delta_max_color = 'green';
 			else if (delta_max <= tolerance_nominal_max)
 				result_delta_max_color = 'yellow';
@@ -315,11 +277,9 @@ function generate_report() {
 			line += '</tr>\n<tr><td>' + (Y_mark ? '<span class="mark ' + Y_color + '">' + Y_mark + '</span>' : '') + '<span class="mark ' + result_delta_max_color + '">' + result_delta_max_mark + '</span></td><td><strong>Maximum:</strong> ' + (Y_diff_percent_max > 0 ? '+' : '') + jsapi.math.absmax(Y_diff).accuracy(2) + ' cd/m² <span' + (Y_mark ? ' title="Nominal &lt;= 10%, recommended &lt;= 5%"' : '') + '>(' + (Y_diff_percent_max > 0 ? '+' : '') + Y_diff_percent_max.accuracy(2) + '%)</span>, <span class="delta_toggle" onclick="window.delta = &quot;' + delta_cycle[delta] + '&quot;; generate_report()" title="Nominal &lt;= ' + tolerance_nominal_max.accuracy(2) + ', recommended &lt;= ' + tolerance_recommended_max.accuracy(2) + '">' + delta_max.accuracy(2) + ' Δ' + delta + '*00</span>';
 			// ISO 14861:2015 deviation from uniform tonality
 			// Technically, ISO 12646:2015 has caught up with ISO 14861:2015
-			var T_color = 'inherit', T_mark = ' \u25cf';
-			if (rows < 5 || cols < 5 || delta == 'C') {
-				T_color = '';
+			var T_color = '', T_mark = ' \u25cf';
+			if (delta != 'E')
 				T_mark = '';
-			}
 			else if (T[i] < T_tolerance_nominal)
 				T_color = 'green';
 			else
@@ -342,6 +302,6 @@ function generate_report() {
 			cells[cells.length - 1] += '</tr>\n<tr>';
 		}
 	}
-	document.getElementsByTagName('body')[0].innerHTML = '<table><tbody><tr>' + cells.join('') + '</tr></tbody></table>';
+	document.getElementsByTagName('body')[0].innerHTML = '<table id="report"' + (cls ? ' class="' + cls + '"' : '') + '><tbody><tr>' + cells.join('') + '</tr></tbody></table>';
 };
 window.onload = generate_report;

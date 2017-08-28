@@ -1,27 +1,32 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
 	<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
 	<title>Uniformity Check ${REPORT_VERSION} — ${DISPLAY} — ${DATETIME}</title>
 	<style type="text/css">
 		[title] { cursor: help; }
 		body.toggle { color: transparent !important; }
+		body.toggle select { display: none; }
 		body.info abbr { border-bottom: 1px dotted #666; cursor: help; }
-		.rgb_toggle, .locus_toggle, .delta_toggle { cursor: pointer; }
+		.rgb_toggle, .locus_toggle, .delta_toggle, #info_toggle { cursor: pointer; }
 		.rgb_toggle:hover, .locus_toggle:hover, .delta_toggle:hover { text-decoration: underline; }
 		html, body, table { height: 100%; width: 100%; }
 		body, td { margin: 0; padding: 0; vertical-align: top; white-space: nowrap; }
 		body, td, select { font: normal 11px/15px sans-serif; }
-		table { border-collapse: collapse; border-spacing: 0; }
+		table { border: none; border-collapse: collapse; border-spacing: 0; }
 		body > table > tbody > tr > td { text-align: left; }
 		td table { border: 2px solid transparent; border-collapse: separate; border-spacing: 0; padding: 4px; }
 		td table td { padding: 0 2px; }
 		body.info td.reference table { border-color: #c0c0c0; border-style: dashed; }
+		body.info #report.avg td.reference table { border-color: #909090; }
 		body.info td.green table { border-color: #0c0; }
 		body.info td.yellow table { border-color: #f0c000; }
 		body.info td.red table { border-color: red; }
+		body.info #report.avg td.green table { border-color: #090; }
+		body.info #report.avg td.yellow table { border-color: #c09000; }
+		body.info #report.avg td.red table { border-color: #c00; }
 		td tr:last-child td { height: 100%; }
-		td.reference td:last-child { text-align: right; }
+		td.reference td + td + td:last-child { text-align: right; }
 		tbody > tr:first-child > td { border-top: 0; }
 		tbody > tr:last-child > td { border-bottom: 0; }
 		tbody > tr > td:first-child { border-left: 0; }
@@ -31,10 +36,18 @@
 		body.info .mark.green { background-color: #0c0; }
 		body.info .mark.yellow { background-color: #f0c000; }
 		body.info .mark.red { background-color: red; }
-		body.info .msg.green { color: #0c0; }
-		body.info .msg.yellow { color: #0c0; }
+		body.info .msg.green { color: #0b0; }
+		body.info .msg.yellow { color: #0b0; }
+		body.info .msg.orange { color: #f90; }
 		body.info .msg.red { color: red; }
-		.mark { color: transparent; display: inline-block; width: 5px; height: 10px; position: relative; top: 3px; }
+		body.info #report.avg .mark.green { background-color: #090; }
+		body.info #report.avg .mark.yellow { background-color: #c09000; }
+		body.info #report.avg .mark.red { background-color: #c00; }
+		body.info #report.avg .msg.green { color: #080; }
+		body.info #report.avg .msg.yellow { color: #080; }
+		body.info #report.avg .msg.orange { color: #c60; }
+		body.info #report.avg .msg.red { color: #c00; }
+		.mark { color: transparent; display: inline-block; width: 5px; height: 10px; position: relative; top: 2px; }
 		.mark:first-child {
 			border-top-left-radius: 5px;
 			border-bottom-left-radius: 5px;
@@ -47,7 +60,11 @@
 		.mark:only-child {
 			width: 10px;
 		}
-		#info_toggle { cursor: pointer; font-size: 13px; }
+		#info_toggle { position: relative; top: 1px; }
+		body.info #report.dim td { color: #fff; }
+		#report.dim #info_toggle svg path { fill: #fff; }
+		body.info #report.dark td { color: #eee; }
+		#report.dark #info_toggle svg path { fill: #eee; }
 	</style>
 	<script type="text/javascript" src="jsapi-packages.js"></script>
 	<script type="text/javascript" src="jsapi-patches.js"></script>
