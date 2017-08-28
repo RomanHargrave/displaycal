@@ -372,8 +372,6 @@ jsapi.math.color.get_whitepoint = function (whitepoint, scale) {
 		whitepoint = jsapi.math.color.CIEDCorColorTemp2XYZ(whitepoint);
 	if (scale > 1.0 && whitepoint[1] == 100)
 		scale = 1.0;
-	if (whitepoint[1] * scale > 100)
-		throw "Y value out of range after scaling: " + (whitepoint[1] * scale);
 	return jsapi.math.color.get_whitepoint.cache[cachehash] =
 		   [whitepoint[0] * scale, whitepoint[1] * scale, whitepoint[2] * scale];
 };
