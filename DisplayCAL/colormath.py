@@ -770,7 +770,7 @@ def guess_cat(chad, whitepoint_source=None, whitepoint_destination=None):
 	""" Try and guess the chromatic adaption transform used in a chromatic 
 	adaption matrix as found in an ICC profile's 'chad' tag """
 	if chad == [[1, 0, 0], [0, 1, 0], [0, 0, 1]]:
-		return "None"
+		return "XYZ scaling"
 	for cat in cat_matrices:
 		if is_similar_matrix((chad * cat_matrices[cat].inverted() * 
 							  LMS_wp_adaption_matrix(whitepoint_destination, 
