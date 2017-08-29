@@ -139,7 +139,7 @@ function generate_report() {
 		delta_E_max_color = 'yellow';
 	else
 		delta_E_max_color = 'red';
-	// ISO 14861:2015 deviation from uniform tonality
+	// ISO 14861:2015 deviation from uniform tonality (contrast deviation)
 	// Technically, ISO 12646:2015 has caught up with ISO 14861
 	var T_max = jsapi.math.max(T), T_max_color = '', T_max_mark = ' \u25cf',
 		T_tolerance_nominal = 0.1;
@@ -220,9 +220,9 @@ function generate_report() {
 			//line = '</td><td>strong>Average:</strong</td><td></td></tr>\n<tr><td></td><td><abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(jsapi.math.avg(CCT)) + 'K, <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(jsapi.math.avg(CT)) + 'K</td><td';
 			// ISO 14861:2015 tone uniformity
 			/*line = '</td></tr>\n<tr><td></td><td>&#160;</td><td></td></tr>\n<tr><td><span class="mark ' + delta_E_max_color + '">' + delta_E_max_mark + '</span></td><td><strong>Maximum ΔE*00:</strong> ' + delta_E_max.accuracy(2) + '</td><td>';
-			// ISO 14861:2015 deviation from uniform tonality
+			// ISO 14861:2015 deviation from uniform tonality (contrast deviation)
 			// Technically, ISO 12646:2015 has caught up with ISO 14861
-			line += '</td></tr>\n<tr><td><span class="mark ' + T_max_color + '">' + T_max_mark + '</span></td><td><strong>Maximum tonality deviation:</strong> ' + (T_max * 100).accuracy(2) + '%</td><td>';
+			line += '</td></tr>\n<tr><td><span class="mark ' + T_max_color + '">' + T_max_mark + '</span></td><td><strong>Maximum contrast deviation:</strong> ' + (T_max * 100).accuracy(2) + '%</td><td>';
 			if (T_max < T_tolerance_nominal && delta_E_max <= delta_E_tolerance_nominal) {
 				var msg_mark = '\u2713';
 				if (delta_E_max <= delta_E_tolerance_recommended)
@@ -275,7 +275,7 @@ function generate_report() {
 			else
 				result_delta_max_color = 'red';
 			line += '</tr>\n<tr><td>' + (Y_mark ? '<span class="mark ' + Y_color + '">' + Y_mark + '</span>' : '') + '<span class="mark ' + result_delta_max_color + '">' + result_delta_max_mark + '</span></td><td><strong>Maximum:</strong> ' + (Y_diff_percent_max > 0 ? '+' : '') + jsapi.math.absmax(Y_diff).accuracy(2) + ' cd/m² <span' + (Y_mark ? ' title="Nominal &lt;= 10%, recommended &lt;= 5%"' : '') + '>(' + (Y_diff_percent_max > 0 ? '+' : '') + Y_diff_percent_max.accuracy(2) + '%)</span>, <span class="delta_toggle" onclick="window.delta = &quot;' + delta_cycle[delta] + '&quot;; generate_report()" title="Nominal &lt;= ' + tolerance_nominal_max.accuracy(2) + ', recommended &lt;= ' + tolerance_recommended_max.accuracy(2) + '">' + delta_max.accuracy(2) + ' Δ' + delta + '*00</span>';
-			// ISO 14861:2015 deviation from uniform tonality
+			// ISO 14861:2015 deviation from uniform tonality (contrast deviation)
 			// Technically, ISO 12646:2015 has caught up with ISO 14861:2015
 			var T_color = '', T_mark = ' \u25cf';
 			if (delta != 'E')
@@ -284,7 +284,7 @@ function generate_report() {
 				T_color = 'green';
 			else
 				T_color = 'red';
-			line += '</td></tr>\n<tr><td>' + (T_mark ? '<span class="mark ' + T_color + '">' + T_mark + '</span>' : '') + '</td><td><strong>Tonality deviation:</strong> <span' + (delta == 'E' ? ' title="Nominal &lt; 10%"' : '') + '>' + (T[i] * 100).accuracy(2) + '%</span>';
+			line += '</td></tr>\n<tr><td>' + (T_mark ? '<span class="mark ' + T_color + '">' + T_mark + '</span>' : '') + '</td><td><strong>Contrast deviation:</strong> <span' + (delta == 'E' ? ' title="Nominal &lt; 10%"' : '') + '>' + (T[i] * 100).accuracy(2) + '%</span>';
 			if ((delta == 'E' ? T[i] < T_tolerance_nominal : Y_diff_percent_avg < 10) && delta_max <= tolerance_nominal_max && delta_avg <= tolerance_nominal) {
 				var msg_mark = '\u2713';
 				if (delta_max <= tolerance_recommended_max && delta_avg <= tolerance_recommended)
