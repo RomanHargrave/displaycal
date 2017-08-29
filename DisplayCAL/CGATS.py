@@ -902,7 +902,8 @@ class CGATS(dict):
 													  (item, type(value)))
 							else:
 								strval = str(abs(value))
-								if (item.startswith("RGB_") or
+								if (self.parent.type != "CAL" and
+									item.startswith("RGB_") or
 									item.startswith("CMYK_")):
 									# Assuming 0..100, 4 decimal digits is
 									# enough for roughly 19 bits integer
