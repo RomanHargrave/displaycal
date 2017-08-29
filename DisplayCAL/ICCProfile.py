@@ -3455,14 +3455,19 @@ class CurveType(ICCProfileTag, list):
 				# black point
 				black_Y = self.profile.tags.bkpt.pcs.Y
 		black_cdm2 = black_Y * white_cdm2
-		midpoint = colormath.interp((len(otrc) - 1) / 2.0, range(len(otrc)), otrc)
-		gamma = colormath.get_gamma([(0.5 * 65535, midpoint)], 65535.0, vmin, vmax)
+		maxv = len(otrc) - 1.0
+		maxi = int(maxv)
+		starti = int(round(0.2 * maxi))
+		endi = int(round(0.8 * maxi))
+		gamma = colormath.get_gamma(zip([(0.2 + v / maxv) * 65535
+										 for v in xrange(endi - starti)],
+										otrc[starti:endi]), 65535.0, vmin, vmax)
 		egamma = colormath.get_gamma([(0.5, 0.5 ** gamma)], vmin=-black_Y)
 		outoffset_unspecified = outoffset is None
 		if outoffset_unspecified:
 			outoffset = 1.0
 		tfs = [("Rec. 709", -709, outoffset),
-			   ("Rec. 1886", -1886, outoffset),
+			   ("Rec. 1886", -1886, 0),
 			   ("SMPTE 240M", -240, outoffset),
 			   ("SMPTE 2084", -2084, outoffset),
 			   ("DICOM", -1023, outoffset),
@@ -3470,7 +3475,7 @@ class CurveType(ICCProfileTag, list):
 			   ("sRGB", -2.4, outoffset),
 			   ("Gamma %.2f %i%%" % (round(gamma, 2), round(outoffset * 100)),
 									gamma, outoffset)]
-		if outoffset_unspecified:
+		if outoffset_unspecified and black_Y:
 			tfs.extend([("Gamma %.2f 0%%" % round(gamma, 2), gamma, 0.0),
 						("Gamma %.2f 10%%" % round(gamma, 2), gamma, 0.1),
 						("Gamma %.2f 20%%" % round(gamma, 2), gamma, 0.2),
