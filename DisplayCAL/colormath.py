@@ -1442,8 +1442,6 @@ def get_whitepoint(whitepoint=None, scale=1.0, planckian=False):
 								 "(4000, 25000)" % cct)
 	if scale > 1.0 and whitepoint[1] == 100:
 		scale = 1.0
-	if whitepoint[1] * scale > 100:
-		ValueError("Y value out of range after scaling: %s" % (whitepoint[1] * scale))
 	whitepoint = tuple(v * scale for v in whitepoint)
 	get_whitepoint.cache[cachehash] = whitepoint
 	return whitepoint
