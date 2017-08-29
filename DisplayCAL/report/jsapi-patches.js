@@ -26,6 +26,24 @@ jsapi.math.mad = function () {
 		sorted[i] = Math.abs(sorted[i] - median);
 	return jsapi.math.median(sorted);
 };
+jsapi.math.percentile = function (a, n) {
+	// n is assumed to be scaled to 0..1 range without bounds
+	if (a.length === 0) return 0;
+
+	a = jsapi.array.flat(a);
+
+	// Sort numbers ascending
+	a.sort(function (a, b) { return a - b; });
+
+	if (n <= 0) return a[0];
+	if (n >= 1) return a[a.length - 1];
+
+	var index = (a.length - 1) * n, lower = Math.floor(index),
+		upper = lower + 1, weight = index % 1;
+
+	if (upper >= a.length) return a[lower];
+	return a[lower] * (1 - weight) + a[upper] * weight;
+};
 jsapi.math.stddev = function () {
 	// http://en.wikipedia.org/wiki/Standard_deviation
 	// http://jsfromhell.com/array/average

@@ -150,7 +150,10 @@ p.generate_report = function(set_delta_calc_method) {
 	var f = document.forms,
 		e = f['F_data'].elements,
 		criteria = comparison_criteria[f['F_out'].elements['FF_criteria'].value];
-	if (set_delta_calc_method !== false) f['F_out'].elements['FF_delta_calc_method'].selectedIndex = ['CIE76', 'CIE94', 'CIE00'].indexOf(criteria.delta_calc_method);
+	if (set_delta_calc_method !== false) {
+		f['F_out'].elements['FF_delta_calc_method'].selectedIndex = ['CIE76', 'CIE94', 'CIE00'].indexOf(criteria.delta_calc_method);
+		f['F_out'].elements['FF_absolute'].checked = !!criteria.use_absolute_values;
+	}
 	f['F_out'].elements['FF_delta_calc_method'].disabled = criteria.lock_delta_calc_method;
 	var rules = criteria.rules,
 		result = [],
@@ -305,7 +308,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Whitepoint simulation:</th>',
-		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to target profile whitepoint' : '') : (!DEVICELINK_PROFILE ? 'No' : 'N/A')) + '</td>',
+		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to target profile whitepoint' : '') : (!DEVICELINK_PROFILE && SIMULATION_PROFILE ? 'No' : 'N/A')) + '</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Chromatic adaption:</th>',
@@ -529,8 +532,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_A_MAD:
 				result[j].sum = jsapi.math.mad(result[j].a);
 				break;
+			case DELTA_A_PERCENTILE_95:
+				result[j].sum = jsapi.math.percentile(result[j].a, 0.95);
+				break;
+			case DELTA_A_PERCENTILE_99:
+				result[j].sum = jsapi.math.percentile(result[j].a, 0.99);
+				break;
 			case DELTA_A_RANGE:
-				result[j].sum = Math.abs(jsapi.math.max(result[j].a) - jsapi.math.min(result[j].a));
+				result[j].sum = jsapi.math.max(result[j].a) - jsapi.math.min(result[j].a);
 				break;
 			case DELTA_A_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].a);
@@ -553,8 +562,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_B_MAD:
 				result[j].sum = jsapi.math.mad(result[j].b);
 				break;
+			case DELTA_B_PERCENTILE_95:
+				result[j].sum = jsapi.math.percentile(result[j].B, 0.95);
+				break;
+			case DELTA_B_PERCENTILE_99:
+				result[j].sum = jsapi.math.percentile(result[j].B, 0.99);
+				break;
 			case DELTA_B_RANGE:
-				result[j].sum = Math.abs(jsapi.math.max(result[j].b) - jsapi.math.min(result[j].b));
+				result[j].sum = jsapi.math.max(result[j].b) - jsapi.math.min(result[j].b);
 				break;
 			case DELTA_B_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].b);
@@ -572,8 +587,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_E_MAD:
 				result[j].sum = jsapi.math.mad(result[j].E);
 				break;
+			case DELTA_E_PERCENTILE_95:
+				result[j].sum = jsapi.math.percentile(result[j].E, 0.95);
+				break;
+			case DELTA_E_PERCENTILE_99:
+				result[j].sum = jsapi.math.percentile(result[j].E, 0.99);
+				break;
 			case DELTA_E_RANGE:
-				result[j].sum = Math.abs(jsapi.math.max(result[j].E) - jsapi.math.min(result[j].E));
+				result[j].sum = jsapi.math.max(result[j].E) - jsapi.math.min(result[j].E);
 				break;
 			case DELTA_E_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].E);
@@ -591,8 +612,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_L_MAD:
 				result[j].sum = jsapi.math.mad(result[j].L);
 				break;
+			case DELTA_L_PERCENTILE_95:
+				result[j].sum = jsapi.math.percentile(result[j].L, 0.95);
+				break;
+			case DELTA_L_PERCENTILE_99:
+				result[j].sum = jsapi.math.percentile(result[j].L, 0.99);
+				break;
 			case DELTA_L_RANGE:
-				result[j].sum = Math.abs(jsapi.math.max(result[j].L) - jsapi.math.min(result[j].L));
+				result[j].sum = jsapi.math.max(result[j].L) - jsapi.math.min(result[j].L);
 				break;
 			case DELTA_L_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].L);
@@ -610,8 +637,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_C_MAD:
 				result[j].sum = jsapi.math.mad(result[j].C);
 				break;
+			case DELTA_C_PERCENTILE_95:
+				result[j].sum = jsapi.math.percentile(result[j].C, 0.95);
+				break;
+			case DELTA_C_PERCENTILE_99:
+				result[j].sum = jsapi.math.percentile(result[j].C, 0.99);
+				break;
 			case DELTA_C_RANGE:
-				result[j].sum = Math.abs(jsapi.math.max(result[j].C) - jsapi.math.min(result[j].C));
+				result[j].sum = jsapi.math.max(result[j].C) - jsapi.math.min(result[j].C);
 				break;
 			case DELTA_C_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].C);
@@ -629,8 +662,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_H_MAD:
 				result[j].sum = jsapi.math.mad(result[j].H);
 				break;
+			case DELTA_H_PERCENTILE_95:
+				result[j].sum = jsapi.math.percentile(result[j].H, 0.95);
+				break;
+			case DELTA_H_PERCENTILE_99:
+				result[j].sum = jsapi.math.percentile(result[j].H, 0.99);
+				break;
 			case DELTA_H_RANGE:
-				result[j].sum = Math.abs(jsapi.math.max(result[j].H) - jsapi.math.min(result[j].H));
+				result[j].sum = jsapi.math.max(result[j].H) - jsapi.math.min(result[j].H);
 				break;
 			case DELTA_H_STDDEV:
 				result[j].sum = jsapi.math.stddev(result[j].H);
@@ -651,8 +690,14 @@ p.generate_report = function(set_delta_calc_method) {
 			case GAMMA_MAD:
 				if (result[j].g.length) result[j].sum = jsapi.math.mad(result[j].g);
 				break;
+			case GAMMA_PERCENTILE_95:
+				if (result[j].g.length) result[j].sum = jsapi.math.percentile(result[j].g, 0.95);
+				break;
+			case GAMMA_PERCENTILE_99:
+				if (result[j].g.length) result[j].sum = jsapi.math.percentile(result[j].g, 0.99);
+				break;
 			case GAMMA_RANGE:
-				if (result[j].g.length) result[j].sum = Math.abs(jsapi.math.max(result[j].g) - jsapi.math.min(result[j].g));
+				if (result[j].g.length) result[j].sum = jsapi.math.max(result[j].g) - jsapi.math.min(result[j].g);
 				break;
 			case GAMMA_STDDEV:
 				if (result[j].g.length) result[j].sum = jsapi.math.stddev(result[j].g);
@@ -1293,12 +1338,14 @@ function compare(set_delta_calc_method) {
 	catch (e) {
 		alert("Error parsing variable:\n" + e + "\nUsing default values.")
 	};
-	var report = data_in.generate_report(set_delta_calc_method);
+	var report = data_in.generate_report(set_delta_calc_method),
+		criteria = comparison_criteria[fe['FF_criteria'].value];
 	document.getElementById('result').innerHTML = report;
 	layout();
 	document.getElementById('reporttitle').style.visibility = "visible";
 	document.getElementById('report').style.visibility = "visible";
 	form_elements_set_disabled(null, false);
+	form_element_set_disabled(fe['FF_absolute'], !!criteria.lock_use_absolute_values);
 	if (document.getElementsByClassName) {
 		var canvas = document.getElementsByClassName('canvas'),
 			inner_coords, mouse_is_down, mouse_down_coords;
