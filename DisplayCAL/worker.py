@@ -481,7 +481,8 @@ def check_ti3(ti3, print_debuginfo=True):
 
 
 def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
-						 logfn=None, slope_limit=False):
+						 logfn=None, slope_limit=False, profile=None,
+						 options_dispcal=None, optimize=False):
 	""" Create input (device to PCS) shaper curves """
 	RGB_XYZ.sort()
 	R_R = []
@@ -572,21 +573,186 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		# Ensure still monotonically increasing
 		curve[:] = colormath.make_monotonically_increasing(curve)
 
-	if XYZbp and not bpc:
-		# Add black back in
-		for i in xrange(256):
-			if bwd_mtx * [1, 1, 1] == [1, 1, 1]:
-				(curves[0][i],
-				 curves[1][i],
-				 curves[2][i]) = colormath.apply_bpc(*(curve[i] for curve in curves),
-													 bp_in=(0, 0, 0),
-													 bp_out=XYZbp, wp_out=XYZwp)
+	if optimize:
+		curves = _create_optimized_shaper_curves(bwd_mtx, bpc, single_curve,
+												 curves, profile,
+												 options_dispcal, XYZbp, logfn)
+
+	return curves
+
+def _create_optimized_shaper_curves(bwd_mtx, bpc, single_curve, curves,
+									profile, options_dispcal, XYZbp=None,
+									logfn=None):
+	# Get black and white luminance
+	if isinstance(profile.tags.get("lumi"),
+				  ICCP.XYZType):
+		white_cdm2 = profile.tags.lumi.Y
+	else:
+		white_cdm2 = 100.0
+	black_Y = XYZbp and XYZbp[1] or 0
+	black_cdm2 = black_Y * white_cdm2
+
+	# Calibration gamma defaults
+	gamma_type = None
+	calgamma = 0
+	outoffset = None
+	# Get actual calibration gamma (if any)
+	calgarg = get_arg("g", options_dispcal)
+	if not calgarg:
+		calgarg = get_arg("G", options_dispcal)
+	if (calgarg and
+		isinstance(profile.tags.get("vcgt"),
+				   ICCP.VideoCardGammaType) and
+		not profile.tags.vcgt.is_linear()):
+		calgamma = {"l": -3.0,
+					"s": -2.4,
+					"709": -709,
+					"240": -240}.get(calgarg[1][1:], calgamma)
+		if not calgamma:
+			try:
+				calgamma = float(calgarg[1][1:])
+			except ValueError:
+				# Not a gamma value
+				pass
+		if calgamma:
+			gamma_type = calgarg[1][0]
+			outoffset = defaults["calibration.black_output_offset"]
+			calfarg = get_arg("f", options_dispcal)
+			if calfarg:
+				try:
+					outoffset = float(calfarg[1][1:])
+				except ValueError:
+					pass
+			caltrc = ICCP.CurveType(profile=profile)
+			if calgamma > 0:
+				caltrc.set_bt1886_trc(black_Y, outoffset,
+									  calgamma, gamma_type)
 			else:
-				(curves[0][i],
-				 curves[1][i],
-				 curves[2][i]) = colormath.blend_blackpoint(*(curve[i] for curve in curves),
-															bp_in=(0, 0, 0),
-															bp_out=XYZbp)
+				caltrc.set_trc(calgamma)
+			caltf = caltrc.get_transfer_function(True, (0, 1),
+												 black_Y,
+												 outoffset)
+	logfn and logfn("Black relative luminance = %.6f" %
+					round(black_Y, 6))
+	if outoffset is not None:
+		logfn and logfn("Black output offset = %.2f" %
+							round(outoffset, 2))
+	if calgamma > 0:
+		logfn and logfn("Calibration gamma = %.2f %s" %
+						(round(calgamma, 2),
+						 {"g": "relative",
+						  "G": "absolute"}.get(gamma_type)))
+	if calgamma:
+		logfn and logfn(u"Calibration overall transfer function "
+						u"≈ %s (Δ %.2f%%)" % (caltf[0][0],
+											  100 - caltf[1] * 100))
+	if calgamma > 0 and black_Y:
+		# Calculate effective gamma
+		midpoint = colormath.interp((len(caltrc) - 1) / 2.0,
+									range(len(caltrc)), caltrc)
+		gamma = colormath.get_gamma([(0.5, midpoint / 65535.0)])
+		logfn and logfn(u"Calibration effective gamma = %.2f" % gamma)
+	tfs = []
+	for i, channel in enumerate("rgb"):
+		trc = ICCP.CurveType(profile=profile)
+		trc[:] = [v / float(curves[i][-1]) * 65535 for v in curves[i]]
+		# Get transfer function and see if we have a good match
+		# to a standard. If we do, use the standard transfer
+		# function instead of our measurement based one.
+		# This avoids artifacts when processing is done in
+		# limited (e.g. 8 bit) precision by a color managed
+		# application and the source profile uses the same
+		# standard transfer function.
+		tf = trc.get_transfer_function(True, (0, 1), black_Y,
+									   outoffset)
+		label = ["Transfer function", channel.upper()]
+		label.append(u"≈ %s (Δ %.2f%%)" % (tf[0][0],
+										   100 - tf[1] * 100))
+		logfn and logfn(" ".join(label))
+		gamma = tf[0][1]
+		if gamma > 0 and black_Y:
+			# Calculate effective gamma
+			gamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
+										vmin=-black_Y)
+			logfn and logfn("Effective gamma = %.2f" % round(gamma, 2))
+		# Only use standard transfer function if we got a good match
+		if tf[1] >= 0.98:
+			# Good match
+			logfn and logfn("Got good match (+-2%)")
+			if (single_curve and calgamma and
+				round(tf[0][1], 1) == round(caltf[0][1], 1)):
+				# Use calibration gamma
+				tf = caltf
+				logfn and logfn("Using calibration transfer function")
+			tfs.append((tf, trc))
+	
+	if len(tfs) == 3:
+		# Only use standard transfer function if we got a good
+		# identical match for all three channels.
+		optcurves = []
+		for i, channel in enumerate("rgb"):
+			tf, trc = tfs[i]
+			gamma = tf[0][1]
+			if gamma > 0 and black_Y:
+				# Calculate effective gamma
+				egamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
+											 vmin=-black_Y)
+			else:
+				egamma = gamma
+			if outoffset is None:
+				outoffset = tf[0][2]
+			if gamma > 0 and bpc and (outoffset == 1.0 or
+									  not black_Y) and bwd_mtx * [1, 1, 1] != [1, 1, 1]:
+				# Single gamma value, BPC, all output offset or
+				# zero black luminance
+				if gamma_type == "g":
+					gamma = egamma
+				trc.set_trc(gamma, 1)
+			else:
+				# Complex or gamma with offset
+				if gamma == -1023:
+					# DICOM is a special case
+					trc.set_dicom_trc(black_cdm2, white_cdm2)
+				elif gamma == -1886:
+					# BT.1886 is a special case
+					trc.set_bt1886_trc(black_Y)
+				elif gamma == -2084:
+					# SMPTE 2084 is a special case
+					trc.set_smpte2084_trc(black_cdm2, white_cdm2)
+				elif gamma > 0 and black_Y:
+					# BT.1886-like or power law with offset
+					if bpc and gamma_type == "g":
+						# Use effective gamma needed to
+						# achieve target effective gamma
+						# after accounting for BPC
+						eegamma = colormath.get_gamma([(0.5, 0.5 ** egamma)],
+													 vmin=-black_Y)
+					else:
+						eegamma = egamma
+					trc.set_bt1886_trc(black_Y, outoffset,
+									   eegamma, "g")
+				else:
+					# L*, sRGB, Rec. 709, SMPTE 240M, or
+					# power law without offset
+					if bpc and gamma_type == "g":
+						# Use effective gamma
+						gamma = egamma
+					trc.set_trc(gamma)
+			trc.apply_bpc()
+			tf = trc.get_transfer_function(True, (0, 1),
+										   black_Y,
+										   outoffset)
+			logfn and logfn("Using transfer function for %s: %s" %
+							(channel.upper(), tf[0][0]))
+			gamma = tf[0][1]
+			if gamma > 0 and black_Y:
+				# Calculate effective gamma
+				gamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
+											vmin=-black_Y)
+				logfn and logfn("Effective gamma = %.2f" %
+								round(gamma, 2))
+			optcurves.append([v / 65535.0 * curves[i][-1] for v in trc])
+		curves = optcurves
 
 	return curves
 
@@ -7800,7 +7966,8 @@ usage: spotread [-options] [logfile]
 					isinstance(profile.tags.bTRC, ICCP.CurveType) and
 					((getcfg("profile.black_point_compensation") and
 					  not "A2B0" in profile.tags) or
-					 (process_A2B and getcfg("profile.b2a.hires"))) and
+					 (process_A2B and (getcfg("profile.b2a.hires")
+									   or not has_B2A))) and
 					len(profile.tags.rTRC) > 1 and
 					len(profile.tags.gTRC) > 1 and
 					len(profile.tags.bTRC) > 1):
@@ -7958,11 +8125,13 @@ usage: spotread [-options] [logfile]
 		
 		# Check if we have calibration, if so, add vcgt
 		vcgt = False
+		options_dispcal = []
 		is_hq_cal = False
 		for cgats in ti3.itervalues():
 			if cgats.type == "CAL":
 				vcgt = cal_to_vcgt(cgats)
-				is_hq_cal = "qh" in get_options_from_cal(cgats)[0]
+				options_dispcal = get_options_from_cal(cgats)[0]
+				is_hq_cal = "qh" in options_dispcal
 		
 		dEs = []
 		RGB_XYZ.sort()
@@ -7978,17 +8147,6 @@ usage: spotread [-options] [logfile]
 		dE_avg = sum(dEs) / len(dEs)
 		dE_max = max(dEs)
 		self.log("R=G=B (>= 1% luminance) dE*00 avg", dE_avg, "peak", dE_max)
-		
-		# Interpolate shaper curves from grays - returned curves are adapted
-		# to D50
-		single_curve = round(dE_max, 2) <= 1.2 and round(dE_avg, 2) <= 0.5
-		if single_curve:
-			self.log("Got high quality calibration, using single device to PCS "
-					 "shaper curve for cLUT")
-		curves = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve, True,
-									  logfn)
-		gray = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve, False,
-									logfn)
 		
 		# Create profile
 		profile = ICCP.ICCProfile()
@@ -8016,6 +8174,31 @@ usage: spotread [-options] [logfile]
 		# Check if we have calibration, if so, add vcgt
 		if vcgt:
 			profile.tags.vcgt = vcgt
+		
+		# Interpolate shaper curves from grays - returned curves are adapted
+		# to D50
+		single_curve = round(dE_max, 2) <= 1.2 and round(dE_avg, 2) <= 0.5
+		if single_curve:
+			self.log("Got high quality calibration, using single device to PCS "
+					 "shaper curve for cLUT")
+
+		gray = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve,
+									getcfg("profile.black_point_compensation"),
+									logfn, profile=profile,
+									options_dispcal=options_dispcal,
+									optimize=True)
+
+		curves = [curve[:] for curve in gray]
+
+		# Add black back in
+		XYZbp = [v / 100.0 for v in
+				 colormath.adapt(*RGB_XYZ[(0, 0, 0)],
+								 whitepoint_source=RGB_XYZ[(100, 100, 100)])]
+		for i in xrange(len(gray[0])):
+			(gray[0][i],
+			 gray[1][i],
+			 gray[2][i]) = colormath.apply_bpc(*(curve[i] for curve in gray),
+											   bp_in=(0, 0, 0), bp_out=XYZbp)
 		
 		def get_XYZ_from_curves(n, m):
 			# Curves are adapted to D50
@@ -8235,186 +8418,22 @@ usage: spotread [-options] [logfile]
 					fwd_mtx = rgb_space[-1]
 					bwd_mtx = fwd_mtx.inverted()
 
-					curves = create_shaper_curves(RGB_XYZ, bwd_mtx,
-												  ptype == "S", True, self.log)
-
 					self.log("-" * 80)
 
-					# Get black and white luminance
-					if isinstance(profile.tags.get("lumi"),
-								  ICCP.XYZType):
-						white_cdm2 = profile.tags.lumi.Y
-					else:
-						white_cdm2 = 100.0
-					black_Y = RGB_XYZ[(0, 0, 0)][1] / 100.0
-					black_cdm2 = black_Y * white_cdm2
-
-					# Calibration gamma defaults
-					gamma_type = None
-					calgamma = 0
-					outoffset = None
-					# Get actual calibration gamma (if any)
 					options_dispcal = get_options_from_ti3(oti3)[0]
-					calgarg = get_arg("g", options_dispcal)
-					if not calgarg:
-						calgarg = get_arg("G", options_dispcal)
-					if (calgarg and
-						isinstance(profile.tags.get("vcgt"),
-								   ICCP.VideoCardGammaType) and
-						not profile.tags.vcgt.is_linear()):
-						calgamma = {"l": -3.0,
-									"s": -2.4,
-									"709": -709,
-									"240": -240}.get(calgarg[1][1:], calgamma)
-						if not calgamma:
-							try:
-								calgamma = float(calgarg[1][1:])
-							except ValueError:
-								# Not a gamma value
-								pass
-						if calgamma:
-							gamma_type = calgarg[1][0]
-							outoffset = defaults["calibration.black_output_offset"]
-							calfarg = get_arg("f", options_dispcal)
-							if calfarg:
-								try:
-									outoffset = float(calfarg[1][1:])
-								except ValueError:
-									pass
-							caltrc = ICCP.CurveType(profile=profile)
-							if calgamma > 0:
-								caltrc.set_bt1886_trc(black_Y, outoffset,
-													  calgamma, gamma_type)
-							else:
-								caltrc.set_trc(calgamma)
-							caltf = caltrc.get_transfer_function(True, (0, 1),
-																 black_Y,
-																 outoffset)
-					self.log("Black relative luminance = %.6f" %
-							 round(black_Y, 6))
-					if outoffset is not None:
-						self.log("Black output offset = %.2f" %
-								 round(outoffset, 2))
-					if calgamma > 0:
-						self.log("Calibration gamma = %.2f %s" %
-								 (round(calgamma, 2),
-								  {"g": "relative",
-								   "G": "absolute"}.get(gamma_type)))
-					if calgamma:
-						self.log(u"Calibration overall transfer function "
-								 u"≈ %s (Δ %.2f%%)" % (caltf[0][0],
-													   100 - caltf[1] * 100))
-					if calgamma > 0 and black_Y:
-						# Calculate effective gamma
-						midpoint = colormath.interp((len(caltrc) - 1) / 2.0,
-													range(len(caltrc)), caltrc)
-						gamma = colormath.get_gamma([(0.5, midpoint / 65535.0)])
-						self.log(u"Calibration effective gamma = %.2f" % gamma)
-					tfs = []
+
+					curves = create_shaper_curves(RGB_XYZ, bwd_mtx,
+												  ptype == "S", bpc, self.log,
+												  profile=profile,
+												  options_dispcal=options_dispcal,
+												  optimize=True)
+
 					for i, channel in enumerate("rgb"):
 						tagname = channel + tagcls
 						self.log(u"Adding %s from interpolation to %s" %
 						         (tagname, profile.getDescription()))
 						profile.tags[tagname] = trc = ICCP.CurveType(profile=profile)
 						trc[:] = [v * 65535 for v in curves[i]]
-						# Get transfer function and see if we have a good match
-						# to a standard. If we do, use the standard transfer
-						# function instead of our measurement based one.
-						# This avoids artifacts when processing is done in
-						# limited (e.g. 8 bit) precision by a color managed
-						# application and the source profile uses the same
-						# standard transfer function.
-						tf = trc.get_transfer_function(True, (0, 1), black_Y,
-													   outoffset)
-						label = ["Transfer function", channel.upper()]
-						label.append(u"≈ %s (Δ %.2f%%)" % (tf[0][0],
-														   100 - tf[1] * 100))
-						self.log(" ".join(label))
-						gamma = tf[0][1]
-						if gamma > 0 and black_Y:
-							# Calculate effective gamma
-							gamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
-														vmin=-black_Y)
-							self.log("Effective gamma = %.2f" %
-									 round(gamma, 2))
-						if calgamma:
-							tf = caltf
-						# Only use standard transfer function if we got a good
-						# identical match for all three channels
-						# (round to multiple of 0.05 for comparison)
-						gamma = round(round(tf[0][1] / 0.05) * 0.05, 2)
-						if (tf[1] >= 0.98 and
-							(not tfs or
-							 gamma ==
-							 round(round(tfs[-1][0][1] / 0.05) * 0.05, 2))):
-							# Good match
-							tfs.append(tf)
-					
-					if len(tfs) == 3:
-						# Only use standard transfer function if we got a good
-						# identical match for all three channels.
-						for i, channel in enumerate("rgb"):
-							tf = tfs[i]
-							gamma = tf[0][1]
-							if gamma > 0 and black_Y:
-								# Calculate effective gamma
-								egamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
-															 vmin=-black_Y)
-							else:
-								egamma = gamma
-							if outoffset is None:
-								outoffset = tf[0][2]
-							trc = profile.tags[channel + tagcls]
-							if gamma > 0 and bpc and (outoffset == 1.0 or
-													  not black_Y):
-								# Single gamma value, BPC, all output offset or
-								# zero black luminance
-								if gamma_type == "g":
-									gamma = egamma
-								trc.set_trc(gamma, 1)
-							else:
-								# Complex or gamma with offset
-								if gamma == -1023:
-									# DICOM is a special case
-									trc.set_dicom_trc(black_cdm2, white_cdm2)
-								elif gamma == -1886:
-									# BT.1886 is a special case
-									trc.set_bt1886_trc(black_Y)
-								elif gamma == -2084:
-									# SMPTE 2084 is a special case
-									trc.set_smpte2084_trc(black_cdm2, white_cdm2)
-								elif gamma > 0 and black_Y:
-									# BT.1886-like or power law with offset
-									if bpc and gamma_type == "g":
-										# Use effective gamma needed to
-										# achieve target effective gamma
-										# after accounting for BPC
-										eegamma = colormath.get_gamma([(0.5, 0.5 ** egamma)],
-																	 vmin=-black_Y)
-									else:
-										eegamma = egamma
-									trc.set_bt1886_trc(black_Y, outoffset,
-													   eegamma, "g")
-								else:
-									# L*, sRGB, Rec. 709, SMPTE 240M, or
-									# power law without offset
-									if bpc and gamma_type == "g":
-										# Use effective gamma
-										gamma = egamma
-									trc.set_trc(gamma)
-							trc.apply_bpc()
-							tf = trc.get_transfer_function(True, (0, 1),
-														   black_Y,
-														   outoffset)
-							self.log("Using transfer function for %s: %s" %
-									 (channel.upper(), tf[0][0]))
-							gamma = tf[0][1]
-							if gamma > 0 and black_Y:
-								# Calculate effective gamma
-								gamma = colormath.get_gamma([(0.5, 0.5 ** gamma)],
-															vmin=-black_Y)
-								self.log("Effective gamma = %.2f" %
-										 round(gamma, 2))
 
 					if not bpc:
 						XYZbp = None
