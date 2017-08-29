@@ -318,7 +318,7 @@ class SynthICCFrame(BaseFrame):
 				trc = ICCP.CurveType(profile=profile)
 				for XYZ in colors[5:]:
 					trc.append(XYZ[1] / colors[0][1] * 65535)
-				transfer_function = trc.get_transfer_function()
+				transfer_function = trc.get_transfer_function(outoffset=1.0)
 				if transfer_function and transfer_function[1] >= .95:
 					# Use detected transfer function
 					gamma = transfer_function[0][1]

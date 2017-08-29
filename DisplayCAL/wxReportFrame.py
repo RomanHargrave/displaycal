@@ -840,7 +840,7 @@ class ReportFrame(BaseFrame):
 				"bTRC" in sim_profile.tags and sim_profile.tags.rTRC ==
 				sim_profile.tags.gTRC == sim_profile.tags.bTRC and
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
-				tf = sim_profile.tags.rTRC.get_transfer_function()
+				tf = sim_profile.tags.rTRC.get_transfer_function(outoffset=1.0)
 				if update_trc or self.XYZbpin == self.XYZbpout:
 					# Use only BT.1886 black output offset
 					setcfg("measurement_report.apply_black_offset",

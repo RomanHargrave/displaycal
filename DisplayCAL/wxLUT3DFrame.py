@@ -1384,7 +1384,7 @@ class LUT3DFrame(BaseFrame):
 			self.input_profile.tags.bTRC and
 			isinstance(self.input_profile.tags.rTRC,
 					   ICCP.CurveType)):
-			tf = self.input_profile.tags.rTRC.get_transfer_function()
+			tf = self.input_profile.tags.rTRC.get_transfer_function(outoffset=1.0)
 			if (getcfg("3dlut.input.profile") !=
 				self.input_profile.fileName):
 				# Use BT.1886 gamma mapping for SMPTE 240M /

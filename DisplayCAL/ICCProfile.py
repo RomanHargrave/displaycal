@@ -6057,12 +6057,12 @@ class ICCProfile:
 					info[name] = ""
 					info["    Number of entries"] = "%i" % len(tag)
 					#info["    Average gamma"] = "%3.2f" % tag.get_gamma()
-					transfer_function = tag.get_transfer_function(slice=(0, 1.0))
+					transfer_function = tag.get_transfer_function(slice=(0, 1.0),
+																  outoffset=1.0)
 					if round(transfer_function[1], 2) == 1.0:
 						value = u"%s" % (
 							transfer_function[0][0])
 					else:
-						transfer_function = tag.get_transfer_function(slice=(0.00, 1.00))
 						if transfer_function[1] >= .95:
 							value = u"≈ %s (Δ %.2f%%)" % (
 								transfer_function[0][0], 100 - transfer_function[1] * 100)

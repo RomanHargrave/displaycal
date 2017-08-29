@@ -4489,7 +4489,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				lut3d_input_profile.tags.bTRC and
 				isinstance(lut3d_input_profile.tags.rTRC,
 						   ICCP.CurveType)):
-				tf = lut3d_input_profile.tags.rTRC.get_transfer_function()
+				tf = lut3d_input_profile.tags.rTRC.get_transfer_function(outoffset=1.0)
 				# Set gamma to profile gamma if single gamma profile
 				if tf[0][0].startswith("Gamma"):
 					if not getcfg("3dlut.trc_gamma.backup", False):
