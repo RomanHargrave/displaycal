@@ -6649,7 +6649,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			##paths.append(getcfg("measurement_report.output_profile"))
 		if use_sim:
 			if use_sim_as_output and use_devlink:
-				paths.append(getcfg("measurement_report.devlink_profile"))
+				devlink_path = getcfg("measurement_report.devlink_profile")
+				if devlink_path:
+					paths.append(devlink_path)
+				else:
+					use_devlink = False
 			paths.append(getcfg("measurement_report.simulation_profile"))
 		sim_profile = None
 		devlink = None
@@ -6658,9 +6662,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			try:
 				profile = ICCP.ICCProfile(profilepath)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
+				if isinstance(exception, ICCP.ICCProfileInvalidError):
+					msg = lang.getstr("profile.invalid") + "\n" + profilepath
+				else:
+					msg = safe_unicode(exception)
 				InfoDialog(getattr(self, "reportframe", self),
-						   msg=lang.getstr("profile.invalid") + 
-								 "\n" + profilepath, 
+						   msg=msg,
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
@@ -6670,6 +6677,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						devlink = profile
 				else:
 					if profile.colorSpace != "RGB":
+						use_sim_as_output = False
 						devlink = None
 					sim_profile = profile
 					profile = oprof
@@ -6843,11 +6851,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.setup_measurement(self.measurement_report, ti1, oprof, profile,
 							   sim_profile, intent, sim_intent, devlink,
 							   ti3_ref, sim_ti3, save_path, chart, gray,
-							   apply_trc, colormanaged, use_sim_as_output)
+							   apply_trc, colormanaged, use_sim, use_sim_as_output)
 
 	def measurement_report(self, ti1, oprof, profile, sim_profile, intent,
 						   sim_intent, devlink, ti3_ref, sim_ti3, save_path,
-						   chart, gray, apply_trc, colormanaged,
+						   chart, gray, apply_trc, colormanaged, use_sim,
 						   use_sim_as_output):
 		safe_print("-" * 80)
 		progress_msg = lang.getstr("measurement_report")
@@ -6910,14 +6918,14 @@ class MainFrame(ReportFrame, BaseFrame):
 						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
 								 profile, sim_profile, intent, sim_intent,
 								 devlink, ti3_ref, sim_ti3, save_path, chart,
-								 gray, apply_trc),
+								 gray, apply_trc, use_sim, use_sim_as_output),
 						  wargs=(ti1_path, cal_path, colormanaged),
 						  progress_msg=progress_msg, pauseable=True)
 	
 	def measurement_report_consumer(self, result, ti3_path, profile, sim_profile,
 									intent, sim_intent, devlink, ti3_ref,
 									sim_ti3, save_path, chart, gray,
-									apply_trc):
+									apply_trc, use_sim, use_sim_as_output):
 		
 		self.Show()
 		
@@ -7194,8 +7202,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				ccmx = "None"
 		
-		use_sim = getcfg("measurement_report.use_simulation_profile")
-		use_sim_as_output = getcfg("measurement_report.use_simulation_profile_as_output")
 		if not sim_profile and use_sim and use_sim_as_output:
 			sim_profile = profile
 		
