@@ -80,15 +80,13 @@ function generate_report() {
 		// ISO 14861: Calculate 50% gray to white ratio R based on abs. luminance (cd/m2)
 		results[i]['R'] = results[i][results[i].length / 2]['XYZ'][1] / results[i][0]['XYZ'][1];
 	}
-	var D50_100 = jsapi.math.color.get_whitepoint('D50', 100);
 	for (var i = 0; i < rows * cols; i ++) {
 		for (var j = 0; j < results[i].length; j ++) {
 			var XYZ = results[i][j]['XYZ'],
 				XYZ_scaled = results[i][j]['XYZ_scaled'];
 			if (i == reference_index) {
 				// Reference white
-				XYZ_100_D50 = jsapi.math.color.get_whitepoint('D50', reference[j]['XYZ_100'][1]);
-				XYZ_scaled_D50 = jsapi.math.color.get_whitepoint('D50', XYZ_scaled[1]);
+				XYZ_100 = results[i][j]['XYZ_100'];
 			}
 			else {
 				// Scale luminance relative to reference luminance
@@ -97,20 +95,13 @@ function generate_report() {
 													  XYZ[2] / reference[0]['XYZ'][1] * 100];
 				if (location.search.indexOf('debug') > -1)
 					console.log(i, j, 'XYZ', XYZ, '-> XYZ_100', results[i][j]['XYZ_100']);
-				// Adapt to D50 for XYZ to L*a*b* conversion
-				if (location.search.indexOf('debug') > -1)
-					console.log(i, j, 'XYZ_100', XYZ_100, '-> adapt', reference[0]['XYZ_100'], '->');
-				results[i][j]['XYZ_100_D50'] = XYZ_100_D50 = jsapi.math.color.adapt(XYZ_100[0], XYZ_100[1], XYZ_100[2], reference[0]['XYZ_100'], D50_100);
-				if (location.search.indexOf('debug') > -1) {
-					console.log('    -> XYZ_100_D50', XYZ_100_D50);
-					console.log(i, j, 'XYZ_scaled', XYZ_scaled, '-> adapt', reference[0]['XYZ_100'], '->');
-				}
-				results[i][j]['XYZ_scaled_D50'] = XYZ_scaled_D50 = jsapi.math.color.adapt(XYZ_scaled[0], XYZ_scaled[1], XYZ_scaled[2], reference[0]['XYZ_100'], D50_100);
-				if (location.search.indexOf('debug') > -1)
-					console.log('    -> XYZ_scaled_D50', XYZ_scaled_D50);
 			}
-			results[i][j]['Lab'] = jsapi.math.color.XYZ2Lab(XYZ_100_D50[0], XYZ_100_D50[1], XYZ_100_D50[2]);
-			results[i][j]['Lab_scaled'] = jsapi.math.color.XYZ2Lab(XYZ_scaled_D50[0], XYZ_scaled_D50[1], XYZ_scaled_D50[2]);
+			results[i][j]['Lab'] = jsapi.math.color.XYZ2Lab(XYZ_100[0], XYZ_100[1], XYZ_100[2], reference[0]['XYZ_100']);
+			if (location.search.indexOf('debug') > -1)
+				console.log(i, j, 'XYZ_100', XYZ, '-> L*a*b*', results[i][j]['Lab'], 'ref white', reference[0]['XYZ_100']);
+			results[i][j]['Lab_scaled'] = jsapi.math.color.XYZ2Lab(XYZ_scaled[0], XYZ_scaled[1], XYZ_scaled[2], reference[0]['XYZ_100']);
+			if (location.search.indexOf('debug') > -1)
+				console.log(i, j, 'XYZ_100', XYZ, '-> L*a*b* (scaled)', results[i][j]['Lab_scaled'], 'ref white', reference[0]['XYZ_100']);
 		}
 		// ISO 14861: Calculate new ratio T by dividing gray/white ratio by reference gray/white ratio, subtracting one and calculating the absolute value
 		T.push(Math.abs(results[i]['R'] / reference['R'] - 1));
@@ -199,7 +190,7 @@ function generate_report() {
 				//line += '</td></tr>\n<tr><td></td><td><abbr title="Correlated Color Temperature">CCT</abbr> ' + Math.round(CCT[j]) + 'K (' + (CCT_diff_percent[j] > 0 ? '+' : '') + CCT_diff_percent[j].accuracy(2) + '%), <abbr class="locus_toggle" title="Closest ' + locus + ' Temperature" onclick="window.locus = &quot;' + (locus == 'Daylight' ? 'Planckian' : 'Daylight') + '&quot;; generate_report()">C' + locus.substr(0, 1) + 'T</abbr> ' + Math.round(CT[j]) + 'K (' + (CT_diff_percent[j] > 0 ? '+' : '') + CT_diff_percent[j].accuracy(2) + '%)>';
 			}
 			if (j == selected_index) {
-				//rgb = jsapi.math.color.Lab2RGB(Lab_scaled[0], Lab_scaled[1], Lab_scaled[2], 'D50', 255, true);
+				//rgb = jsapi.math.color.Lab2RGB(Lab_scaled[0], Lab_scaled[1], Lab_scaled[2], reference[0]['XYZ_100'], null, 255, true);
 				rgb = [Math.round(255 * (1 - j / results[i].length)),
 					   Math.round(255 * (1 - j / results[i].length)),
 					   Math.round(255 * (1 - j / results[i].length))];
