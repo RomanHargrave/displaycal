@@ -2118,8 +2118,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				  self.menuitem_skip_legacy_serial_ports)
 		self.menuitem_use_separate_lut_access = options_advanced.FindItemById(
 			options_advanced.FindItem("use_separate_lut_access"))
-		self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
-				  self.menuitem_use_separate_lut_access)
+		if sys.platform not in ("darwin", "win32") or test:
+			self.Bind(wx.EVT_MENU, self.use_separate_lut_access_handler, 
+					  self.menuitem_use_separate_lut_access)
+		else:
+			options_advanced.RemoveItem(self.menuitem_use_separate_lut_access)
 		self.menuitem_do_not_use_video_lut = options_advanced.FindItemById(
 			options_advanced.FindItem("calibration.do_not_use_video_lut"))
 		self.Bind(wx.EVT_MENU, self.do_not_use_video_lut_handler, 
@@ -2387,10 +2390,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_load_lut_from_display_profile.Enable(
 			bool(self.worker.displays) and calibration_loading_supported)
 		self.menuitem_skip_legacy_serial_ports.Check(bool(getcfg("skip_legacy_serial_ports")))
-		has_separate_lut_access = self.worker.has_separate_lut_access()
-		self.menuitem_use_separate_lut_access.Check(has_separate_lut_access or
-													bool(getcfg("use_separate_lut_access")))
-		self.menuitem_use_separate_lut_access.Enable(not has_separate_lut_access)
+		if sys.platform not in ("darwin", "win32") or test:
+			has_separate_lut_access = self.worker.has_separate_lut_access()
+			self.menuitem_use_separate_lut_access.Check(has_separate_lut_access or
+														bool(getcfg("use_separate_lut_access")))
+			self.menuitem_use_separate_lut_access.Enable(not has_separate_lut_access)
 		has_lut_access = self.worker.has_lut_access()
 		do_not_use_video_lut = (self.worker.argyll_version >= [1, 3, 3] and
 								(not has_lut_access or
@@ -3092,12 +3096,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
 		comport_sizer = self.comport_ctrl.GetContainingSizer()
-		use_lut_ctrl = self.worker.has_separate_lut_access() or \
-					   bool(getcfg("use_separate_lut_access"))
-		menubar = self.GetMenuBar()
-		menuitem = self.menu_advanced_options.FindItemById(
-			self.menu_advanced_options.FindItem(lang.getstr("use_separate_lut_access")))
-		menuitem.Check(use_lut_ctrl)
+		if sys.platform not in ("darwin", "win32") or test:
+			use_lut_ctrl = (self.worker.has_separate_lut_access() or
+							bool(getcfg("use_separate_lut_access")))
+			menubar = self.GetMenuBar()
+			menuitem = self.menu_advanced_options.FindItemById(
+				self.menu_advanced_options.FindItem(lang.getstr("use_separate_lut_access")))
+			menuitem.Check(use_lut_ctrl)
+		else:
+			use_lut_ctrl = False
 		if use_lut_ctrl:
 			self.display_lut_ctrl.Clear()
 			for i, disp in enumerate(self.displays):

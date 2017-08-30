@@ -6102,10 +6102,11 @@ while 1:
 			return "prisma:%s" % display_name.split("@")[-1].strip()
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
-		if (self.has_separate_lut_access() or 
-			getcfg("use_separate_lut_access")) and (
-		   		not getcfg("display_lut.link") or 
-		   		(display_no > -1 and not self.lut_access[display_no])):
+		if ((sys.platform not in ("darwin", "win32") or test) and
+			(self.has_separate_lut_access() or 
+			 getcfg("use_separate_lut_access")) and
+			(not getcfg("display_lut.link") or 
+		   	 (display_no > -1 and not self.lut_access[display_no]))):
 			display_lut_no = min(len(self.displays), 
 									 getcfg("display_lut.number")) - 1
 			if display_lut_no > -1 and not self.lut_access[display_lut_no]:
@@ -9797,7 +9798,9 @@ usage: spotread [-options] [logfile]
 		if apply_calibration is not False:
 			if (self.argyll_version >= [1, 3, 3] and
 				(not self.has_lut_access() or
-				 not getcfg("calibration.use_video_lut"))):
+				 not getcfg("calibration.use_video_lut")) and
+				len(get_arg("-d", args)[1].split(",")) == 1):
+				# Only use -K if we don't use -d n,m
 				args.append("-K")
 			else:
 				args.append("-k")
