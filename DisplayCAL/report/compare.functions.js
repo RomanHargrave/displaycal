@@ -404,8 +404,8 @@ p.generate_report = function(set_delta_calc_method) {
 					break;
 				case 'WHITEPOINT_MvsA': // Measured vs. assumed
 					if (wp.length == 3) {
-						target_Lab = jsapi.math.color.XYZ2Lab(wp_assumed[0], wp_assumed[1], wp_assumed[2]);
-						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
+						target_Lab = [100, 0, 0];
+						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2], [wp_assumed[0], wp_assumed[1], wp_assumed[2]]);
 						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
 						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
 						result[j].E.push(delta.E);
@@ -423,8 +423,8 @@ p.generate_report = function(set_delta_calc_method) {
 					break;
 				case 'WHITEPOINT_MvsP': // Profile vs. measured
 					if (wp.length == 3 && profile_wp.length == 3) {
-						target_Lab = jsapi.math.color.XYZ2Lab(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]);
-						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2]);
+						target_Lab = [100, 0, 0];
+						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2], [profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]]);
 						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
 						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5]);
 						result[j].E.push(delta.E);
