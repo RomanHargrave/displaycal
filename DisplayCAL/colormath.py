@@ -1018,12 +1018,13 @@ def Lab2Luv(L, a, b, whitepoint=None, scale=100):
 
 
 def Lab2RGB(L, a, b, rgb_space=None, scale=1.0, round_=False, clamp=True,
-			whitepoint=None, noadapt=False, cat="Bradford"):
+			whitepoint=None, whitepoint_source=None, noadapt=False,
+			cat="Bradford"):
 	""" Convert from Lab to RGB """
 	X, Y, Z = Lab2XYZ(L, a, b, whitepoint)
 	if not noadapt:
-		X, Y, Z = adapt(X, Y, Z, whitepoint, rgb_space[1] if rgb_space
-											 else "D65", cat)
+		X, Y, Z = adapt(X, Y, Z, whitepoint_source, rgb_space[1] if rgb_space
+													else "D65", cat)
 	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
 
 
