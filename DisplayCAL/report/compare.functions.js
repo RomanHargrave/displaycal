@@ -171,12 +171,14 @@ p.generate_report = function(set_delta_calc_method) {
 		profile_wp = e['FF_profile_whitepoint'].value.split(/\s+/),
 		profile_wp_round = [],
 		profile_wp_norm = e['FF_profile_whitepoint_normalized'].value.split(/\s+/),
+		profile_wp_norm_1 = [],
 		profile_wp_norm_round = [],
 		profile_colortemp,
 		bp = e['FF_blackpoint'].value.split(/\s+/),
 		wp = e['FF_whitepoint'].value.split(/\s+/),
 		wp_round = [],
 		wp_norm = e['FF_whitepoint_normalized'].value.split(/\s+/),
+		wp_norm_1 = [],
 		wp_norm_round = [],
 		colortemp,
 		colortemp_assumed,
@@ -208,7 +210,8 @@ p.generate_report = function(set_delta_calc_method) {
 			profile_wp_round[i] = profile_wp[i].accuracy(2)
 		};
 		for (var i=0; i<profile_wp.length; i++) {
-			profile_wp_norm[i] = profile_wp[i] / profile_wp[1] * 100;
+			profile_wp_norm_1[i] = profile_wp[i] / profile_wp[1];
+			profile_wp_norm[i] = profile_wp_norm_1[i] * 100;
 			profile_wp_norm_round[i] = profile_wp_norm[i].accuracy(2)
 		};
 		profile_colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]));
@@ -226,7 +229,8 @@ p.generate_report = function(set_delta_calc_method) {
 			wp_round[i] = wp[i].accuracy(2)
 		};
 		for (var i=0; i<wp.length; i++) {
-			wp_norm[i] = wp[i] / wp[1] * 100;
+			wp_norm_1[i] = wp[i] / wp[1];
+			wp_norm[i] = wp_norm_1[i] * 100;
 			wp_norm_round[i] = wp_norm[i].accuracy(2)
 		};
 		colortemp = Math.round(jsapi.math.color.XYZ2CorColorTemp(wp_norm[0], wp_norm[1], wp_norm[2]));
@@ -495,8 +499,8 @@ p.generate_report = function(set_delta_calc_method) {
 									patch_number_html[k] = ('<div class="sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 									haspatchid = true;
 								}
-								target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
-								actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], "D50", 255, true);
+								target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, absolute && profile_wp_norm_1, 255, true);
+								actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, absolute && wp_norm_1, 255, true);
 								target_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 								actual_rgb_html[k] = ('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 							};
@@ -746,8 +750,8 @@ p.generate_report = function(set_delta_calc_method) {
 				var colors = get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, true, profile_wp_norm, wp_norm, absolute, cat);
 				target_Lab = colors.target_Lab;
 				actual_Lab = colors.actual_Lab;
-				target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
-				actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], "D50", 255, true);
+				target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, absolute && profile_wp_norm_1, 255, true);
+				actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, absolute && wp_norm_1, 255, true);
 				target_rgb_html.push('<div class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');">&#160;</div>');
 				actual_rgb_html.push('<div class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');">&#160;</div>');
 			};
@@ -856,8 +860,8 @@ p.generate_report = function(set_delta_calc_method) {
 		actual_Lab = colors.actual_Lab;
 		current_rgb = colors.current_rgb;
 		current_cmyk = colors.current_cmyk;
-		target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], "D50", 255, true);
-		actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], "D50", 255, true);
+		target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], null, absolute && profile_wp_norm_1, 255, true);
+		actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, absolute && wp_norm_1, 255, true);
 		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
 		if (mode == 'Lab') {
 			target_color = target_Lab;
@@ -871,12 +875,12 @@ p.generate_report = function(set_delta_calc_method) {
 			actual_color = [actual_color[0] * 100, actual_color[1] * 100, actual_color[2] * 100];
 			accuracy = 4;
 			if (mode == 'xyY') {
-				target_color = jsapi.math.color.XYZ2xyY(target_color[0], target_color[1], target_color[2]);
-				actual_color = jsapi.math.color.XYZ2xyY(actual_color[0], actual_color[1], actual_color[2]);
+				target_color = jsapi.math.color.XYZ2xyY(target_color[0], target_color[1], target_color[2], absolute && profile_wp_norm_1);
+				actual_color = jsapi.math.color.XYZ2xyY(actual_color[0], actual_color[1], actual_color[2], absolute && wp_norm_1);
 			}
 			else if (mode == "Lu'v'") {
-				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0], target_color[1], target_color[2]);
-				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0], actual_color[1], actual_color[2]);
+				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0], target_color[1], target_color[2], absolute && profile_wp_norm_1);
+				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0], actual_color[1], actual_color[2], absolute && wp_norm_1);
 			}
 		}
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
@@ -1023,8 +1027,8 @@ p.generate_report = function(set_delta_calc_method) {
 		rgb_balance.push('	<table cellspacing="0" id="rgb_balance" style="' + bggridlines(rowh) + 'height: ' + rowh * (rows + 1) + 'px;">');
 		rgb_balance.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">+' + start + '%</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
-			var target_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], 'D50', 100),
-				actual_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], 'D50', 100);
+			var target_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], null, absolute && profile_wp_norm_1, 100),
+				actual_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], null, absolute && wp_norm_1, 100);
 			window.console && console.log(target_rgb.join(', '), actual_rgb.join(', '));
 			rgb_balance.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nR: ' + (actual_rgb[0] - target_rgb[0] > 0 ? '+' : '') + (actual_rgb[0] - target_rgb[0]).accuracy(2) + '% (nominal ' + target_rgb[0].accuracy(2) + '%, measured ' + actual_rgb[0].accuracy(2) + '%)\nG: ' + (actual_rgb[1] - target_rgb[1] > 0 ? '+' : '') + (actual_rgb[1] - target_rgb[1]).accuracy(2) + '% (nominal ' + target_rgb[1].accuracy(2) + '%, measured ' + actual_rgb[1].accuracy(2) + '%)\nB: ' + (actual_rgb[2] - target_rgb[2] > 0 ? '+' : '') + (actual_rgb[2] - target_rgb[2]).accuracy(2) + '% (nominal ' + target_rgb[2].accuracy(2) + '%, measured ' + actual_rgb[2].accuracy(2) + '%)"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + rowh * rows / 2 + 'px;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[0] - target_rgb[0]) * rowh / rstep) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[1] - target_rgb[1]) * rowh / rstep) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[2] - target_rgb[2]) * rowh / rstep) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div></div></td>');
 		}
@@ -1258,12 +1262,14 @@ function analyze(which) {
 };
 
 function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, skip_gamma, profile_wp_norm, wp_norm, absolute, cat) {
-	var target_Lab, actual_Lab, current_rgb, current_cmyk = [];
+	var target_Lab, actual_Lab, target_XYZ, actual_XYZ, current_rgb, current_cmyk = [];
 	target_Lab = [target[fields_extract_indexes_r[o + 1]], target[fields_extract_indexes_r[o + 2]], target[fields_extract_indexes_r[o + 3]]];
 	actual_Lab = [actual[fields_extract_indexes_i[o + 1]], actual[fields_extract_indexes_i[o + 2]], actual[fields_extract_indexes_i[o + 3]]];
 	if (no_Lab && !no_XYZ) {
-		target_Lab = jsapi.math.color.XYZ2Lab(target_Lab[0], target_Lab[1], target_Lab[2]);
-		actual_Lab = jsapi.math.color.XYZ2Lab(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
+		target_XYZ = jsapi.math.color.adapt(target_Lab[0], target_Lab[1], target_Lab[2], profile_wp_norm, [96.42, 100, 82.49], cat);
+		actual_XYZ = jsapi.math.color.adapt(actual_Lab[0], actual_Lab[1], actual_Lab[2], wp_norm, [96.42, 100, 82.49], cat);
+		target_Lab = jsapi.math.color.XYZ2Lab(target_XYZ[0], target_XYZ[1], target_XYZ[2]);
+		actual_Lab = jsapi.math.color.XYZ2Lab(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]);
 	}
 	if (fields_match.join(',').indexOf('RGB') == 0) {
 		current_rgb = [actual[fields_extract_indexes_i[0]], actual[fields_extract_indexes_i[1]], actual[fields_extract_indexes_i[2]]];
@@ -1284,19 +1290,21 @@ function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, sk
 		}
 	}
 	if (absolute) {
-		var target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2], null, 100.0);
+		target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2], null, 100.0);
 		target_XYZ = jsapi.math.color.adapt(target_XYZ[0], target_XYZ[1], target_XYZ[2], [96.42, 100, 82.49], profile_wp_norm, cat);
 		target_Lab = jsapi.math.color.XYZ2Lab(target_XYZ[0], target_XYZ[1], target_XYZ[2]);
-		var actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, 100.0);
+		actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, 100.0);
 		actual_XYZ = jsapi.math.color.adapt(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], [96.42, 100, 82.49], wp_norm, cat);
 		actual_Lab = jsapi.math.color.XYZ2Lab(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]);
 	}
 	if (current_rgb[0] == current_rgb[1] && current_rgb[1] == current_rgb[2]) {
 		if (!skip_gamma && !current_cmyk.length && current_rgb[0] > 0 && current_rgb[0] < 100 && target_Lab[0] > 0 && actual_Lab[0] > 0) {
-			var target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2]),
-				actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2]);
-			target.gamma = Math.log(target_XYZ[1]) / Math.log(current_rgb[0] / 100);
-			actual.gamma = Math.log(actual_XYZ[1]) / Math.log(current_rgb[0] / 100);
+			if (!absolute) {
+				target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2], null, 100.0);
+				actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2], null, 100.0);
+			}
+			target.gamma = Math.log(target_XYZ[1] / 100) / Math.log(current_rgb[0] / 100);
+			actual.gamma = Math.log(actual_XYZ[1] / 100) / Math.log(current_rgb[0] / 100);
 		}
 	}
 	return {target_Lab: target_Lab,

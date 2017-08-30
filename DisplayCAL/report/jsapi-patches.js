@@ -93,9 +93,10 @@ jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_des
 		pybd = MA.multiply(XYZWD);
 	return MA.invert().multiply([[pybd[0]/pybs[0], 0, 0], [0, pybd[1]/pybs[1], 0], [0, 0, pybd[2]/pybs[2]]]).multiply(MA).multiply([XS, YS, ZS]);
 };
-jsapi.math.color.Lab2RGB = function (L, a, b, whitepoint, scale, round_) {
+jsapi.math.color.Lab2RGB = function (L, a, b, whitepoint, whitepoint_source, scale, round_, cat) {
 	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, whitepoint || "D50");
-	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], whitepoint || "D50", scale, round_)
+	XYZ = jsapi.math.color.adapt(XYZ[0], XYZ[1], XYZ[2], whitepoint_source || "D50", "D65", cat);
+	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], "D65", scale, round_)
 };
 jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 	// based on http://www.easyrgb.com/math.php?MATH=M8
