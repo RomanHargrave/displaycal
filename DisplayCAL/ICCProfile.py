@@ -3457,9 +3457,9 @@ class CurveType(ICCProfileTag, list):
 		black_cdm2 = black_Y * white_cdm2
 		maxv = len(otrc) - 1.0
 		maxi = int(maxv)
-		starti = int(round(0.2 * maxi))
-		endi = int(round(0.8 * maxi))
-		gamma = colormath.get_gamma(zip([(0.2 + v / maxv) * 65535
+		starti = int(round(0.4 * maxi))
+		endi = int(round(0.6 * maxi))
+		gamma = colormath.get_gamma(zip([(0.4 + v / maxv) * 65535
 										 for v in xrange(endi - starti)],
 										otrc[starti:endi]), 65535.0, vmin, vmax)
 		egamma = colormath.get_gamma([(0.5, 0.5 ** gamma)], vmin=-black_Y)
