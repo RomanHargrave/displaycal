@@ -80,7 +80,8 @@ class CoordinateType(list):
 				vmax = self[-1][0]
 		return colormath.get_gamma(values, 100.0, vmin, vmax, average, least_squares)
 	
-	def get_transfer_function(self, best=True, slice=(0.05, 0.95)):
+	def get_transfer_function(self, best=True, slice=(0.05, 0.95),
+							  outoffset=None):
 		"""
 		Return transfer function name, exponent and match percentage
 		
@@ -97,7 +98,7 @@ class CoordinateType(list):
 		otrc = ICCP.CurveType(profile=self.profile)
 		for i in xrange(len(self)):
 			otrc.append(interp(i / (len(self) - 1.0) * 255) / 100 * 65535)
-		match = otrc.get_transfer_function(best, slice)
+		match = otrc.get_transfer_function(best, slice, outoffset=outoffset)
 		self._transfer_function[(best, slice)] = match
 		return match
 	
@@ -1505,7 +1506,8 @@ class LUTFrame(BaseFrame):
 										  self.tf_gTRC[i][1] +
 										  self.tf_bTRC[i][1]) / 3.0])
 			if getattr(self, "trc", None):
-				transfer_function = self.trc.get_transfer_function(slice=(0.00, 1.00))
+				transfer_function = self.trc.get_transfer_function(slice=(0.00, 1.00),
+																   outoffset=1.0)
 			#if "R" in colorants and "G" in colorants and "B" in colorants:
 				#if self.profile.tags.rTRC == self.profile.tags.gTRC == self.profile.tags.bTRC:
 					#transfer_function = self.profile.tags.rTRC.get_transfer_function()

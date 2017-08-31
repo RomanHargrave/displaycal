@@ -3476,16 +3476,9 @@ class CurveType(ICCProfileTag, list):
 			   ("Gamma %.2f %i%%" % (round(gamma, 2), round(outoffset * 100)),
 									gamma, outoffset)]
 		if outoffset_unspecified and black_Y:
-			tfs.extend([("Gamma %.2f 0%%" % round(gamma, 2), gamma, 0.0),
-						("Gamma %.2f 10%%" % round(gamma, 2), gamma, 0.1),
-						("Gamma %.2f 20%%" % round(gamma, 2), gamma, 0.2),
-						("Gamma %.2f 30%%" % round(gamma, 2), gamma, 0.3),
-						("Gamma %.2f 40%%" % round(gamma, 2), gamma, 0.4),
-						("Gamma %.2f 50%%" % round(gamma, 2), gamma, 0.5),
-						("Gamma %.2f 60%%" % round(gamma, 2), gamma, 0.6),
-						("Gamma %.2f 70%%" % round(gamma, 2), gamma, 0.7),
-						("Gamma %.2f 80%%" % round(gamma, 2), gamma, 0.8),
-						("Gamma %.2f 90%%" % round(gamma, 2), gamma, 0.9)])
+			for i in xrange(100):
+				tfs.append(("Gamma %.2f %i%%" % (round(gamma, 2), i),
+							gamma, i / 100.0))
 		for name, exp, outoffset in tfs:
 			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
 				try:
