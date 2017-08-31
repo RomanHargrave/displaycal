@@ -879,8 +879,8 @@ p.generate_report = function(set_delta_calc_method) {
 				actual_color = jsapi.math.color.XYZ2xyY(actual_color[0], actual_color[1], actual_color[2], absolute && wp_norm_1);
 			}
 			else if (mode == "Lu'v'") {
-				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0], target_color[1], target_color[2], absolute && profile_wp_norm_1);
-				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0], actual_color[1], actual_color[2], absolute && wp_norm_1);
+				target_color = jsapi.math.color.XYZ2Lu_v_(target_color[0], target_color[1], target_color[2], absolute && profile_wp_norm);
+				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0], actual_color[1], actual_color[2], absolute && wp_norm);
 			}
 		}
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
