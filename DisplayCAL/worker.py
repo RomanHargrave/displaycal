@@ -5452,7 +5452,7 @@ while 1:
 					##with open(outname + ".ti3", "wb") as ti3:
 						##ti3.write(profile.tags.targ)
 				##else:
-					##ti1name = "ti1/d3-e4-s2-g25-m0-b0-f0.ti1"
+					##ti1name = "ti1/d3-e4-s2-g28-m0-b0-f0.ti1"
 					##ti1 = get_data_path(ti1name)
 					##if not ti1:
 						##raise Error(lang.getstr("file.missing", ti1name))
@@ -5677,7 +5677,7 @@ while 1:
 					logfile.write("No suitable PCS candidate. "
 								  "Computing best fit matrix...\n")
 				# Lookup small testchart so profile computation finishes quickly
-				ti1name = "ti1/d3-e4-s5-g49-m5-b0-f0.ti1"
+				ti1name = "ti1/d3-e4-s5-g52-m5-b0-f0.ti1"
 				ti1 = get_data_path(ti1name)
 				if not ti1:
 					raise Error(lang.getstr("file.missing", ti1name))
@@ -7593,19 +7593,19 @@ usage: spotread [-options] [logfile]
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
 				 ti3_remaining) = extract_device_gray_primaries(ti3)
-				for ti1_name in ("ti1/d3-e4-s2-g25-m0-b0-f0",  # Primaries + gray
-								 "ti1/d3-e4-s3-g49-m3-b0-f0",  # 3^3 grid
-								 "ti1/d3-e4-s4-g49-m4-b0-f0",  # 4^3 grid
-								 "ti1/d3-e4-s5-g49-m5-b0-f0",  # 5^3 grid
-								 "ti1/d3-e4-s9-g49-m9-b0-f0",  # 9^3 grid
-								 "ti1/d3-e4-s17-g49-m17-b0-f0"):  # 17^3 grid
+				for ti1_name in ("ti1/d3-e4-s2-g28-m0-b0-f0",  # Primaries + gray
+								 "ti1/d3-e4-s3-g52-m3-b0-f0",  # 3^3 grid
+								 "ti1/d3-e4-s4-g52-m4-b0-f0",  # 4^3 grid
+								 "ti1/d3-e4-s5-g52-m5-b0-f0",  # 5^3 grid
+								 "ti1/d3-e4-s9-g52-m9-b0-f0",  # 9^3 grid
+								 "ti1/d3-e4-s17-g52-m17-b0-f0"):  # 17^3 grid
 					ti1_filename = "%s.ti1" % ti1_name
 					ti1_path = get_data_path(ti1_filename)
 					if not ti1_path:
-						if ti1_name in ("ti1/d3-e4-s2-g25-m0-b0-f0",
-										"ti1/d3-e4-s3-g49-m3-b0-f0",
-										"ti1/d3-e4-s4-g49-m4-b0-f0",
-										"ti1/d3-e4-s5-g49-m5-b0-f0"):
+						if ti1_name in ("ti1/d3-e4-s2-g28-m0-b0-f0",
+										"ti1/d3-e4-s3-g52-m3-b0-f0",
+										"ti1/d3-e4-s4-g52-m4-b0-f0",
+										"ti1/d3-e4-s5-g52-m5-b0-f0"):
 							return Error(lang.getstr("file.missing",
 													 ti1_filename))
 						else:
@@ -7621,7 +7621,7 @@ usage: spotread [-options] [logfile]
 							   for RGB in ti3_remaining.keys()) ==
 						sorted(tuple(round(v / 100.0 * 255) for v in RGB)
 							   for RGB in ti1_remaining.keys())):
-						if ti1_name == "ti1/d3-e4-s2-g25-m0-b0-f0":
+						if ti1_name == "ti1/d3-e4-s2-g28-m0-b0-f0":
 							is_primaries_only = True
 						elif getcfg("profile.type") in ("X", "x"):
 							is_regular_grid = True
@@ -8379,7 +8379,7 @@ usage: spotread [-options] [logfile]
 			else:
 				return Error(lang.getstr("error.measurement.file_invalid",
 										 outname + ".ti3"))
-		for ti1name, tagcls in [("d3-e4-s3-g49-m3-b0-f0", "XYZ"),
+		for ti1name, tagcls in [("d3-e4-s3-g52-m3-b0-f0", "XYZ"),
 								(None, "TRC")]:
 			if tagcls == omit:
 				continue
@@ -8910,7 +8910,7 @@ usage: spotread [-options] [logfile]
 			if config.get_display_name() == "Untethered":
 				return Error(lang.getstr("testchart.auto_optimize.untethered.unsupported"))
 			# Use small testchart for grayscale+primaries (34 patches)
-			precond_ti1_path = get_data_path("ti1/d3-e4-s2-g25-m0-b0-f0.ti1")
+			precond_ti1_path = get_data_path("ti1/d3-e4-s2-g28-m0-b0-f0.ti1")
 			precond_ti1 = CGATS.CGATS(precond_ti1_path)
 			setcfg("testchart.file", precond_ti1_path)
 			cmd, args = self.prepare_dispread(apply_calibration)
@@ -8960,13 +8960,13 @@ usage: spotread [-options] [logfile]
 			if getcfg("testchart.file") == "auto" and auto < 5:
 				# Use pre-baked testchart
 				if auto == 1:
-					testchart = "ti1/d3-e4-s2-g25-m0-b0-f0.ti1"
+					testchart = "ti1/d3-e4-s2-g28-m0-b0-f0.ti1"
 				elif auto == 2:
-					testchart = "ti1/d3-e4-s3-g49-m3-b0-f0.ti1"
+					testchart = "ti1/d3-e4-s3-g52-m3-b0-f0.ti1"
 				elif auto == 3:
-					testchart = "ti1/d3-e4-s4-g49-m4-b0-f0.ti1"
+					testchart = "ti1/d3-e4-s4-g52-m4-b0-f0.ti1"
 				else:
-					testchart = "ti1/d3-e4-s5-g49-m5-b0-f0.ti1"
+					testchart = "ti1/d3-e4-s5-g52-m5-b0-f0.ti1"
 				testchart_path = get_data_path(testchart)
 				if testchart_path:
 					setcfg("testchart.file", testchart_path)
