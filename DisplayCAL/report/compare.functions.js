@@ -152,7 +152,7 @@ p.generate_report = function(set_delta_calc_method) {
 		criteria = comparison_criteria[f['F_out'].elements['FF_criteria'].value];
 	if (set_delta_calc_method !== false) {
 		f['F_out'].elements['FF_delta_calc_method'].selectedIndex = ['CIE76', 'CIE94', 'CIE00'].indexOf(criteria.delta_calc_method);
-		f['F_out'].elements['FF_absolute'].checked = !!criteria.use_absolute_values;
+		f['F_out'].elements['FF_absolute'].checked = WHITEPOINT_SIMULATION && !WHITEPOINT_SIMULATION_RELATIVE;
 	}
 	f['F_out'].elements['FF_delta_calc_method'].disabled = criteria.lock_delta_calc_method;
 	var rules = criteria.rules,

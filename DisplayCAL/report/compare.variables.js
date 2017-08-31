@@ -256,8 +256,6 @@ var CRITERIA_ISO14861_COLOR_ACCURACY = CRITERIA_RGB.clone();
 CRITERIA_ISO14861_COLOR_ACCURACY.id = 'ISO_14861_COLOR_ACCURACY_RGB318';
 CRITERIA_ISO14861_COLOR_ACCURACY.name = "ISO 14861:2015 color accuracy";
 CRITERIA_ISO14861_COLOR_ACCURACY.passrecommendedtext = null;
-CRITERIA_ISO14861_COLOR_ACCURACY.use_absolute_values = true;
-CRITERIA_ISO14861_COLOR_ACCURACY.lock_use_absolute_values = false;
 CRITERIA_ISO14861_COLOR_ACCURACY.lock_delta_calc_method = true;
 for (var i = 0; i < CRITERIA_RULES_RGB.length; i ++) {
 	// Reset tolerances
@@ -298,8 +296,6 @@ comparison_criteria['CMYK_ISO_12647-7_OUTER_GAMUT'] = CRITERIA_ISO14861_OUTER_GA
 CRITERIA_ISO14861_OUTER_GAMUT.id = 'ISO14861_OUTER_GAMUT';
 CRITERIA_ISO14861_OUTER_GAMUT.name = "ISO 14861:2015 outer gamut";
 CRITERIA_ISO14861_OUTER_GAMUT.passrecommendedtext = null;
-CRITERIA_ISO14861_OUTER_GAMUT.use_absolute_values = true;
-CRITERIA_ISO14861_OUTER_GAMUT.lock_use_absolute_values = false;
 CRITERIA_ISO14861_OUTER_GAMUT.lock_delta_calc_method = true;
 CRITERIA_ISO14861_OUTER_GAMUT.warn_deviation = 2.5;
 for (var i = 0; i < CRITERIA_RULES_CMYK.length; i ++) {
