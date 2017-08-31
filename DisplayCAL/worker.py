@@ -8330,6 +8330,8 @@ usage: spotread [-options] [logfile]
 		self.log("Final interpolated cLUT resolution %ix%ix%i" %
 				 ((len(profile.tags.A2B0.clut[0]),) * 3))
 
+		profile.tags.A2B0.profile = profile
+
 		### Add black back in
 		##black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
 		##profile.tags.A2B0.apply_black_offset(black_XYZ_D50)
