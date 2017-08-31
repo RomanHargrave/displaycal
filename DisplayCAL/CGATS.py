@@ -1647,6 +1647,56 @@ Transform {
 		self.setmodified()
 		return result
 
+	def convert_XYZ_to_Lab(self):
+		"""
+		Convert XYZ to D50 L*a*b* and add it as additional fields
+		
+		"""
+		color_rep = (self.queryv1("COLOR_REP") or "").split("_")
+
+		if color_rep[1] == "LAB":
+			# Nothing to do
+			return
+
+		if (len(color_rep) != 2 or color_rep[0] not in ("RGB", "CMYK") or
+			color_rep[1] != "XYZ"):
+			raise NotImplementedError("Got unsupported color representation %s"
+									  % "_".join(color_rep))
+
+		data = self.queryv1("DATA")
+		if not data:
+			raise CGATSError("No data")
+
+		if color_rep[0] == "RGB":
+			white = data.queryv1({"RGB_R": 100, "RGB_G": 100, "RGB_B": 100})
+		elif color_rep[0] == "CMYK":
+			white = data.queryv1({"CMYK_C": 0, "CMYK_M": 0, "CMYK_Y": 0,
+								  "CMYK_K": 0})
+		if not white:
+			raise CGATSError("Missing white patch")
+
+		device_labels = []
+		for channel in color_rep[0]:
+			device_labels.append(color_rep[0] + "_" + channel)
+
+		# Always XYZ
+		cie_labels = []
+		for channel in color_rep[1]:
+			cie_labels.append(color_rep[1] + "_" + channel)
+
+		# Add entries to DATA_FORMAT
+		Lab_data_format = ("LAB_L", "LAB_A", "LAB_B")
+		for label in Lab_data_format:
+			if not label in data.parent.DATA_FORMAT.values():
+				data.parent.DATA_FORMAT.add_data((label, ))
+
+		# Add L*a*b* to each sample
+		for key, sample in data.iteritems():
+			cie_values = [sample[label] for label in cie_labels]
+			Lab = colormath.XYZ2Lab(*cie_values)
+			for i, label in enumerate(Lab_data_format):
+				sample[label] = Lab[i]
+
 	def fix_zero_measurements(self, warn_only=False, logfile=safe_print):
 		"""
 		Fix (or warn about) zero measurements
