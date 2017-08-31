@@ -502,9 +502,9 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		G_Y.append(Y / 100.0)
 		B_Z.append(Z / 100.0)
 		if R == G == B == 0:
-			XYZbp = [v / 100 for v in (X, Y, Z)]
+			XYZbp = [v / 100.0 for v in (X, Y, Z)]
 		elif R == G == B == 100:
-			XYZwp = [v / 100 for v in (X, Y, Z)]
+			XYZwp = [v / 100.0 for v in (X, Y, Z)]
 
 	numvalues = len(R_R)
 
@@ -562,9 +562,9 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 			v = powinterp[channel](n / maxval)
 			curves[i].append(v)
 
-	# Smoothing
+	# Interpolate to final resolution
 	for curve in curves:
-		# Make monotonically increasing + 1st smoothing pass
+		# Make monotonically increasing
 		curve[:] = colormath.make_monotonically_increasing(curve)
 		# Spline interpolation to larger size
 		x = (i / 255.0 * (len(curve) - 1)  for i in xrange(256))
@@ -8187,7 +8187,7 @@ usage: spotread [-options] [logfile]
 									getcfg("profile.black_point_compensation"),
 									logfn, profile=profile,
 									options_dispcal=options_dispcal,
-									optimize=True)
+									optimize=single_curve)
 
 		curves = [curve[:] for curve in gray]
 
@@ -8427,7 +8427,7 @@ usage: spotread [-options] [logfile]
 												  ptype == "S", bpc, self.log,
 												  profile=profile,
 												  options_dispcal=options_dispcal,
-												  optimize=True)
+												  optimize=ptype == "S")
 
 					for i, channel in enumerate("rgb"):
 						tagname = channel + tagcls
