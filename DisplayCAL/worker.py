@@ -9444,14 +9444,17 @@ usage: spotread [-options] [logfile]
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 				elif keyword in ti3[0]:
 					ti3[0].remove_keyword(keyword)
-			# Content color space (currently only used for HDR)
+			# 3D LUT content color space (currently only used for HDR)
 			for color in ("white", "red", "green", "blue"):
 				for coord in "xy":
-					value = getcfg("3dlut.content.colorspace.%s.%s" % (color,
-																	   coord))
-					ti3[0].add_keyword("3DLUT_CONTENT_COLORSPACE_%s_%s" %
-									   (color.upper(), coord.upper()),
-									   safe_str(value, "UTF-7"))
+					keyword = ("3DLUT_CONTENT_COLORSPACE_%s_%s" %
+							   (color.upper(), coord.upper()))
+					if getcfg("3dlut.create"):
+						value = getcfg("3dlut.content.colorspace.%s.%s" %
+									   (color, coord))
+						ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
+					elif keyword in ti3[0]:
+						ti3[0].remove_keyword(keyword)
 			ti3[0].fix_zero_measurements(logfile=self.get_logfiles(False))
 			if 1 in ti3:
 				# Add video level encoding flag if needed
