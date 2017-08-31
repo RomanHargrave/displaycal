@@ -8902,8 +8902,9 @@ usage: spotread [-options] [logfile]
 			return result
 		precond_ti1 = None
 		precond_ti3 = None
+		testchart_file = getcfg("testchart.file")
 		auto = getcfg("testchart.auto_optimize") or 7
-		if getcfg("testchart.file") == "auto" and auto > 4:
+		if testchart_file == "auto" and auto > 4:
 			# Testchart auto-optimization
 			# Create optimized testchart on-the-fly. To do this, create a
 			# simple profile for preconditioning
@@ -8957,7 +8958,7 @@ usage: spotread [-options] [logfile]
 				result = cmd
 		else:
 			result = True
-			if getcfg("testchart.file") == "auto" and auto < 5:
+			if testchart_file == "auto" and auto < 5:
 				# Use pre-baked testchart
 				if auto == 1:
 					testchart = "ti1/d3-e4-s2-g28-m0-b0-f0.ti1"
@@ -8974,6 +8975,9 @@ usage: spotread [-options] [logfile]
 					result = Error(lang.getstr("not_found", testchart))
 		if not isinstance(result, Exception) and result:
 			cmd, args = self.prepare_dispread(apply_calibration)
+			if testchart_file == "auto":
+				# Restore "auto" setting
+				setcfg("testchart.file", "auto")
 		else:
 			cmd = result
 		if not isinstance(cmd, Exception) and cmd:
