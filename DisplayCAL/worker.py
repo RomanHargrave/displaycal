@@ -11891,6 +11891,9 @@ BEGIN_DATA
 				except (TypeError, ValueError):
 					return Error(lang.getstr("download_fail_wrong_size",
 											 ("<%s>" % lang.getstr("unknown"), ) * 2))
+				else:
+					if not total_size:
+						total_size = None
 			uri = response.geturl()
 			filename = os.path.basename(uri)
 			contentdispo = response.info().getheader("Content-Disposition")
@@ -12007,7 +12010,7 @@ BEGIN_DATA
 					return Error(lang.getstr("download_fail_wrong_size",
 											 (total_size, bytes_so_far)))
 			finally:
-				if bytes_so_far == total_size:
+				if total_size is None or bytes_so_far == total_size:
 					shutil.move(download_path + ".download", download_path)
 				elif self.thread_abort:
 					os.remove(download_path + ".download")
