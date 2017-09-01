@@ -28,14 +28,23 @@ var CRITERIA_RULES_NEUTRAL = [
 	],
 	CRITERIA_RULES_DEFAULT = CRITERIA_RULES_NEUTRAL.clone();
 
-CRITERIA_RULES_DEFAULT[0][3] = 2; // Whitepoint ΔE*76 nominal
-CRITERIA_RULES_DEFAULT[0][4] = 1; // Whitepoint ΔE*76 recommended
+CRITERIA_RULES_DEFAULT[0][3] = 2; // Measured vs. assumed whitepoint ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[0][4] = 1; // Measured vs. assumed whitepoint ΔE*76 recommended
 
-CRITERIA_RULES_DEFAULT[1][3] = 2; // Whitepoint ΔE*94 nominal
-CRITERIA_RULES_DEFAULT[1][4] = 1; // Whitepoint ΔE*94 recommended
+CRITERIA_RULES_DEFAULT[1][3] = 2; // Measured vs. assumed whitepoint ΔE*94 nominal
+CRITERIA_RULES_DEFAULT[1][4] = 1; // Measured vs. assumed whitepoint ΔE*94 recommended
 
-CRITERIA_RULES_DEFAULT[2][3] = 2; // Whitepoint ΔE*00 nominal
-CRITERIA_RULES_DEFAULT[2][4] = 1; // Whitepoint ΔE*00 recommended
+CRITERIA_RULES_DEFAULT[2][3] = 2; // Measured vs. assumed whitepoint ΔE*00 nominal
+CRITERIA_RULES_DEFAULT[2][4] = 1; // Measured vs. assumed whitepoint ΔE*00 recommended
+
+CRITERIA_RULES_DEFAULT[3][3] = 3; // Measured vs. profile whitepoint ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[3][4] = 1.5; // Measured vs. profile whitepoint ΔE*76 recommended
+
+CRITERIA_RULES_DEFAULT[4][3] = 3; // Measured vs. profile whitepoint ΔE*94 nominal
+CRITERIA_RULES_DEFAULT[4][4] = 1.5; // Measured vs. profile whitepoint ΔE*94 recommended
+
+CRITERIA_RULES_DEFAULT[5][3] = 3; // Measured vs. profile whitepoint ΔE*00 nominal
+CRITERIA_RULES_DEFAULT[5][4] = 1.5; // Measured vs. profile whitepoint ΔE*00 recommended
 
 CRITERIA_RULES_DEFAULT[6][3] = 3; // Average ΔE*76 nominal
 CRITERIA_RULES_DEFAULT[6][4] = 1.5; // Average ΔE*76 recommended
