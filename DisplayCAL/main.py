@@ -49,6 +49,8 @@ sys.excepthook = _excepthook
 
 def main(module=None):
 	mp.freeze_support()
+	if mp.current_process().name != "MainProcess":
+		return
 	if module:
 		name = "%s-%s" % (appbasename, module)
 	else:
