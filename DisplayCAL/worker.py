@@ -3086,26 +3086,27 @@ END_DATA
 					args.extend(["-a", os.path.basename(profile_out_cal_path)])
 			if extra_args:
 				args += extra_args
+
+			# cLUT Input value tweaks to make Video encoded black land on
+			# 65 res grid nodes, which should help 33 and 17 res cLUTs too
+			def cLUT65_to_VidRGB(v):
+				if v <= 236.0 / 256:
+					# Scale up to near black point
+					return v * 256.0 / 255
+				else:
+					return 1 - (1 - v) * (1 - 236.0 / 255) / (1 - 236.0 / 256)
+
+			def VidRGB_to_cLUT65(v):
+				if v <= 236.0 / 255.0:
+					return v * 255.0 / 256
+				else:
+					return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
+
 			if use_xicclu:
 				# Create device link using xicclu
 				is_argyll_lut_format = format == "icc"
 
 				logfiles = self.get_logfiles()
-
-				# cLUT Input value tweaks to make Video encoded black land on
-				# 65 res grid nodes, which should help 33 and 17 res cLUTs too
-				def cLUT65_to_VidRGB(v):
-					if v <= 236.0 / 256:
-						# Scale up to near black point
-						return v * 256.0 / 255
-					else:
-						return 1 - (1 - v) * (1 - 236.0 / 255) / (1 - 236.0 / 256)
-
-				def VidRGB_to_cLUT65(v):
-					if v <= 236.0 / 255.0:
-						return v * 255.0 / 256
-					else:
-						return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
 
 				RGB_src_in = []
 				maxind = size - 1.0
@@ -3246,18 +3247,18 @@ END_DATA
 										RGB = [16.0 / 255] * 3
 									elif input_encoding == "T":
 										RGB = [min(v, 235.0 / 255) for v in RGB]
-									if input_encoding in ("t", "T"):
-										clut_16_236[abc] = RGB[:]
 								elif a == b == c == 0:
 									# Black hack - force black to 0
 									self.log("Black hack - forcing black to 0")
 									RGB = [0] * 3
 								elif input_encoding in ("t", "T"):
 									RGB = [v * (236.0 / 235) for v in RGB]
+							if input_encoding in ("t", "T"):
+								clut_16_236[abc] = RGB[:]
 							RGB = [min(max(v, 0), 1) * 65535 for v in RGB]
 							A2B0.clut[-1].append(RGB)
-				if input_encoding in ("t", "T") and output_encoding == "t":
-					# TV levels in and out, need to extrapolate
+				if input_encoding in ("t", "T"):
+					# TV levels in, need to extrapolate
 					for i, block in enumerate(A2B0.clut):
 						a = i // size
 						if i % size == 0:
@@ -3444,7 +3445,14 @@ END_DATA
 
 		# We have to create the 3DLUT ourselves
 
+		def VidRGB_to_eeColor(v):
+			return v * 255.0/256.0
+
+		def eeColor_to_VidRGB(v):
+			return v * 256.0/255.0
+
 		# Create input RGB values
+		RGB_oin = []
 		RGB_in = []
 		RGB_indexes = []
 		seen = {}
@@ -3466,29 +3474,35 @@ END_DATA
 			columns = (2, 1, 0)
 		for i in xrange(0, size):
 			# Red
+			if format == "eeColor" and i == size - 1:
+				# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
+				continue
 			RGB_triplet[columns[0]] = step * i
 			RGB_index[columns[0]] = i
 			for j in xrange(0, size):
 				# Green
+				if format == "eeColor" and j == size - 1:
+					# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
+					continue
 				RGB_triplet[columns[1]] = step * j
 				RGB_index[columns[1]] = j
 				for k in xrange(0, size):
 					# Blue
+					if format == "eeColor" and k == size - 1:
+						# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
+						continue
 					RGB_triplet[columns[2]] = step * k
+					RGB_oin.append(list(RGB_triplet))
 					RGB_copy = list(RGB_triplet)
 					if format == "eeColor":
 						# eeColor cLUT is fake 65^3 - only 64^3 is usable.
 						# This affects full range and xvYCC RGB, so un-map
 						# inputs to cLUT to only use 64^3
-						if input_encoding == "n":
+						for l in xrange(3):
+							RGB_copy[l] = eeColor_to_VidRGB(RGB_copy[l])
+						if input_encoding in ("t", "T"):
 							for l in xrange(3):
-								RGB_copy[l] = min(RGB_copy[l] * (size - 1.0) /
-												  (size - 2.0), 100.0)
-						elif input_encoding in ("x", "X"):
-							for l in xrange(2):
-								RGB_copy[1 + l] = min((RGB_copy[1 + l] *
-													   (size - 1.0) -
-													   1.0) / (size - 3.0), 100.0)
+								RGB_copy[l] = VidRGB_to_cLUT65(RGB_copy[l])
 					RGB_index[columns[2]] = k
 					RGB_in.append(RGB_copy)
 					RGB_indexes.append(list(RGB_index))
@@ -3554,9 +3568,11 @@ END_DATA
 				maxval = 1.0
 			lut = []
 			for i, RGB_triplet in enumerate(RGB_out):
-				lut.append(["%.6f" % (component * maxval) for component in RGB_in[i]])
+				lut.append(["%.6f" % (component * maxval) for component in RGB_oin[i]])
 				for component in (0, 1, 2):
-					lut[-1].append("%.6f" % (RGB_triplet[component] * maxval))
+					v = RGB_triplet[component] * maxval
+					v = VidRGB_to_eeColor(v)
+					lut[-1].append("%.6f" % v)
 			linesep = "\r\n"
 		elif format == "mga":
 			lut = [["#HEADER"],
