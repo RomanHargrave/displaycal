@@ -1003,9 +1003,9 @@ class LUT3DFrame(BaseFrame):
 					(which == "abstract" and
 					 (profile.profileClass != "abst" or profile.colorSpace
 					  not in ("Lab", "XYZ")))):
-					show_result_dialog(NotImplementedError(lang.getstr("profile.unsupported", 
-																	   (profile.profileClass, 
-																		profile.colorSpace))),
+					show_result_dialog(Error(lang.getstr("profile.unsupported", 
+														 (profile.profileClass, 
+														  profile.colorSpace))),
 									   parent=self)
 				else:
 					if profile.profileClass == "link":
