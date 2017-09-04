@@ -348,11 +348,6 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_encoding_input_ctrl_handler(self, event):
 		encoding = self.encoding_input_ab[self.encoding_input_ctrl.GetSelection()]
 		self.lut3d_set_option("3dlut.encoding.input", encoding)
-		if getcfg("3dlut.format") == "eeColor":
-			if encoding == "T":
-				encoding = "t"
-			self.encoding_output_ctrl.SetSelection(self.encoding_output_ba[encoding])
-			self.lut3d_set_option("3dlut.encoding.output", encoding)
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_encoding_controls()
 		elif self.Parent:
