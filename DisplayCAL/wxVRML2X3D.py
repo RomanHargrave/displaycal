@@ -27,6 +27,7 @@ class VRML2X3DFrame(BaseFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											  appname +
 											  "-VRML-to-X3D-converter"))
+		self.Bind(wx.EVT_CLOSE, self.OnClose)
 		self.cache = cache
 		self.embed = embed
 		self.force = force
@@ -70,6 +71,12 @@ class VRML2X3DFrame(BaseFrame):
 		self.Fit()
 		self.SetMinSize(self.GetSize())
 		self.SetMaxSize(self.GetSize())
+
+	def OnClose(self, event):
+		# Hide first (looks nicer)
+		self.Hide()
+		# Need to use CallAfter to prevent hang under Windows if minimized
+		wx.CallAfter(self.Destroy)
 
 	def get_commands(self):
 		return (self.get_common_commands() +

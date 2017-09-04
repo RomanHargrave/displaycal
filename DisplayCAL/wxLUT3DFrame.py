@@ -196,7 +196,10 @@ class LUT3DFrame(BaseFrame):
 							options=("3dlut.", "last_3dlut_path",
 									 "position.lut3dframe", "size.lut3dframe"))
 		if event:
-			event.Skip()
+			# Hide first (looks nicer)
+			self.Hide()
+			# Need to use CallAfter to prevent hang under Windows if minimized
+			wx.CallAfter(self.Destroy)
 	
 	def use_abstract_profile_ctrl_handler(self, event):
 		setcfg("3dlut.use_abstract_profile",

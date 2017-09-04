@@ -2514,13 +2514,15 @@ END_DATA""")
 					   getattr(self, "saturation_sweeps_custom_%s_ctrl" %
 							   component).GetValue())
 			self.worker.wrapup(False)
+			# Hide first (looks nicer)
 			self.Hide()
 			if self.Parent:
 				setcfg("tc.show", 0)
 				return True
 			else:
 				self.writecfg()
-				self.Destroy()
+				# Need to use CallAfter to prevent hang under Windows if minimized
+				wx.CallAfter(self.Destroy)
 		elif isinstance(event, wx.CloseEvent) and event.CanVeto():
 			event.Veto()
 

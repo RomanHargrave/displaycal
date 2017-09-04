@@ -112,6 +112,7 @@ class ScriptingClientFrame(SimpleTerminal):
 		while self.busy:
 			wx.Yield()
 			sleep(.05)
+		# Hide first (looks nicer)
 		self.Hide()
 		try:
 			with open(self.historyfilename, "wb") as historyfile:
@@ -121,7 +122,8 @@ class ScriptingClientFrame(SimpleTerminal):
 		except EnvironmentError, exception:
 			safe_print("Warning - couldn't write history file:", exception)
 		self.listening = False
-		self.Destroy()
+		# Need to use CallAfter to prevent hang under Windows if minimized
+		wx.CallAfter(self.Destroy)
 
 	def OnMove(self, event=None):
 		if self.IsShownOnScreen() and not self.IsMaximized() and not \

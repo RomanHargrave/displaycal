@@ -1682,7 +1682,10 @@ class LUTFrame(BaseFrame):
 		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 			self.worker.wrapup(False)
 		config.writecfg(module="curve-viewer", options=("display.number", ))
-		event.Skip()
+		# Hide first (looks nicer)
+		self.Hide()
+		# Need to use CallAfter to prevent hang under Windows if minimized
+		wx.CallAfter(self.Destroy)
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):

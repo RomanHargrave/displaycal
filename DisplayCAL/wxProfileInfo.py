@@ -1483,7 +1483,10 @@ class ProfileInfoFrame(LUTFrame):
 												 "last_icc_path",
 												 "position.profile_info",
 												 "size.profile_info"))
-		event.Skip()
+		# Hide first (looks nicer)
+		self.Hide()
+		# Need to use CallAfter to prevent hang under Windows if minimized
+		wx.CallAfter(self.Destroy)
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
