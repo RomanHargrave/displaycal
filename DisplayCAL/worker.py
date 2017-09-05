@@ -3155,27 +3155,33 @@ END_DATA
 
 					scale = 1.0 / scale
 
-					return clipmask, scale, full, unclipped
+					return clipmask, scale, full, unclipped, RGB
 
+				logfiles.write("Generating input values...\n")
+				clip = {}
 				RGB_src_in = []
 				maxind = size - 1.0
 				level_16 = VidRGB_to_cLUT65(16.0 / 255) * maxind
 				level_235 = VidRGB_to_cLUT65(235.0 / 255) * maxind
+				prevperc = 0
+				cliphack = False  # Clip TV levels BtB/WtW in for full range out?
 				for a in xrange(size):
 					for b in xrange(size):
 						for c in xrange(size):
+							if self.thread_abort:
+								raise Info(lang.getstr("aborted"))
 							abc = (a, b, c)
 							RGB = [v / maxind for v in abc]
 							if input_encoding in ("t", "T"):
 								# TV levels in
-								if (min(abc) < level_16 or
-									max(abc) > math.ceil(level_235)):
+								if (cliphack and output_encoding == "n" and
+									(min(abc) < level_16 or
+									 max(abc) > math.ceil(level_235))):
 									# Don't lookup out of range values
 									continue
 								else:
 									RGB = [cLUT65_to_VidRGB(v) for v in RGB]
-									if output_encoding == "t":
-										clipVidRGB(RGB)
+									clip[abc] = clipVidRGB(RGB)
 									if a == b == c and a in (math.ceil(level_16),
 															 math.ceil(level_235)):
 										self.log("Input RGB (0..255) %f %f %f" %
@@ -3188,9 +3194,15 @@ END_DATA
 										   for v in RGB]
 							RGB = [min(max(v, 0), 1) * 255 for v in RGB]
 							RGB_src_in.append(RGB)
+						perc = round(len(RGB_src_in) / float(size ** 3) * 100)
+						if perc > prevperc:
+							logfiles.write("\r%i%%" % perc)
+							prevperc = perc
+				logfiles.write("\n")
 				# Forward lookup input RGB through source profile
+				logfiles.write("Looking up input values through source profile...\n")
 				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
-										  pcs="x", scale=255)
+										  pcs="x", scale=255, logfile=logfiles)
 				if intent == "aw":
 					XYZw = self.xicclu(profile_in, [[1, 1, 1]], intent[0],
 									   pcs="x")[0]
@@ -3205,6 +3217,8 @@ END_DATA
 						# Find point at which it no longer clips
 						XYZwscaled = None
 						for i, RGBclip in enumerate(RGBscaled):
+							if self.thread_abort:
+								raise Info(lang.getstr("aborted"))
 							if RGBclip[3] is True or max(RGBclip[:3]) > 1:
 								# Clipped, skip
 								continue
@@ -3269,26 +3283,46 @@ END_DATA
 					A2B0.input = [[0, 65535]] * 3
 				A2B0.output = [[0, 65535]] * 3
 				A2B0.clut = []
-				clut_16_235 = {}
+				clut = {}
+				for a in xrange(size):
+					for b in xrange(size):
+						for c in xrange(size):
+							abc = (a, b, c)
+							if (cliphack and input_encoding in ("t", "T") and
+								output_encoding == "n" and
+								(min(abc) < level_16 or
+								 max(abc) > math.ceil(level_235))):
+								# TV levels in, no value from lookup, full
+								# range out
+								continue
+							if max([v / maxind for v in abc]) < 0.5 / maxind:
+								# Black hack
+								self.log("Black hack - forcing level %i to 0" %
+										 (cLUT65_to_VidRGB(a / maxind) * 255))
+								RGB = [0] * 3
+							else:
+								RGB = RGB_dst_out[len(clut)]
+							clut[abc] = RGB
+				preserve_sync = getcfg("3dlut.preserve_sync")
 				prevperc = 0
-				if input_encoding in ("t", "T"):
-					endperc = 90
-				else:
-					endperc = 100
 				for a in xrange(size):
 					for b in xrange(size):
 						A2B0.clut.append([])
 						for c in xrange(size):
 							abc = (a, b, c)
-							if (input_encoding in ("t", "T") and
+							if (cliphack and input_encoding in ("t", "T") and
+								output_encoding == "n" and
 								(min(abc) < level_16 or
 								 max(abc) > math.ceil(level_235))):
-								# TV levels in, no value from lookup
-								RGB = [v / maxind for v in abc]
-								RGB = [cLUT65_to_VidRGB(v) for v in RGB]
+								# TV levels in, no value from lookup, full
+								# range out
+								key = tuple(min(max(v, math.ceil(level_16)),
+												math.ceil(level_235))
+											for v in abc)
+								RGB = clut[key]
 							else:
 								# Got value from lookup
-								RGB = RGB_dst_out.pop(0)
+								RGB = clut[abc]
 								if output_encoding == "t":
 									# TV levels out
 									# Convert 0..255 to 16..235
@@ -3296,81 +3330,45 @@ END_DATA
 																   16.0 / 255,
 																   235.0 / 255)
 										   for v in RGB]
-									if ((input_encoding in ("t", "T") and
-										 a == b == c == level_16) or
-										a == b == c == 0):
-										# Black hack - force black to 16
-										self.log("Black hack - forcing black to 16")
-										RGB = [16.0 / 255] * 3
-								elif a == b == c == 0:
-									# Black hack - force black to 0
-									self.log("Black hack - forcing black to 0")
-									RGB = [0] * 3
-							if input_encoding in ("t", "T"):
-								clut_16_235[abc] = RGB[:]
+
+									if input_encoding in ("t", "T"):
+										# TV levels in, scale/extrapolate clip
+										clipmask, scale, full, uci, cin = clip[abc]
+										for j, v in enumerate(RGB):
+
+											if clipmask:
+
+												if input_encoding != "T" and scale > 1:
+													# We got +ve clipping
+
+													# Re-scale all non-black values
+													if v > 16.0 / 255.0:
+														v = (v - 16.0 / 255.0) * scale + 16.0 / 255.0
+
+												# Deal with -ve clipping and sync
+												if clipmask & (1 << j):
+
+													if full[j] == 0.0:
+														# Only extrapolate in black direction
+														ifull = 1.0 - full[j]  # Opposite limit to full
+										
+														# Do simple extrapolation (Not perfect though)
+														v = ifull + (v - ifull) * (uci[j] - ifull) / (cin[j] - ifull)
+									
+													# Clip or pass sync through
+													if (v < 0.0 or v > 1.0 or
+														(preserve_sync and
+														 abs(uci[j] - full[j]) < 1e-6)):
+														v = full[j]
+
+											RGB[j] = v
+
 							RGB = [min(max(v, 0), 1) * 65535 for v in RGB]
 							A2B0.clut[-1].append(RGB)
-						perc = round(len(A2B0.clut) / float(size ** 2) * endperc)
+						perc = round(len(A2B0.clut) / float(size ** 2) * 100)
 						if perc > prevperc:
 							logfiles.write("\r%i%%" % perc)
 							prevperc = perc
-				if input_encoding in ("t", "T"):
-					# TV levels in, need to extrapolate
-
-					preserve_sync = getcfg("3dlut.preserve_sync")
-
-					for i, block in enumerate(A2B0.clut):
-						a = i // size
-						if i % size == 0:
-							b = 0
-						for c, RGB in enumerate(block):
-							abc = (a, b, c)
-							if (min(abc) < level_16 or
-								max(abc) > math.floor(level_235)):
-								# TV levels in, no value from lookup
-								key = tuple(min(max(v, math.ceil(level_16)),
-													   math.ceil(level_235))
-											for v in abc)
-								RGB_16_235 = clut_16_235[key]
-								if output_encoding == "t":
-									cin = [cLUT65_to_VidRGB(v / maxind) for v in abc]
-									clipmask, scale, full, uci = clipVidRGB(cin)
-								for j, v in enumerate(RGB_16_235):
-
-									if output_encoding == "t" and clipmask:
-
-										if input_encoding != "T" and scale > 1:
-											# We got +ve clipping
-
-											# FIXME: Result doesn't match collink?!?
-
-											# Re-scale all non-black values
-											if v > 16.0 / 255.0:
-												v = (v - 16.0 / 255.0) * scale + 16.0 / 255.0
-
-										# Deal with -ve clipping and sync
-										if clipmask & (1 << j):
-
-											if full[j] == 0.0:
-												# Only extrapolate in black direction
-												ifull = 1.0 - full[j]  # Opposite limit to full
-								
-												# Do simple extrapolation (Not perfect though)
-												v = ifull + (v - ifull) * (uci[j] - ifull) / (cin[j] - ifull)
-							
-											# Clip or pass sync through
-											if (v < 0.0 or v > 1.0 or
-												(preserve_sync and
-												 abs(uci[j] - full[j]) < 1e-6)):
-												v = full[j]
-
-									RGB[j] = min(max(v, 0), 1) * 65535
-						perc = endperc + round(i / (size ** 2 - 1.0) *
-											   (100 - endperc))
-						if perc > prevperc:
-							logfiles.write("\r%i%%" % perc)
-							prevperc = perc
-						b += 1
 				logfiles.write("\n")
 				profile_link.write(link_filename)
 				result = True
@@ -3583,6 +3581,8 @@ END_DATA
 				RGB_index[columns[1]] = j
 				for k in xrange(0, size):
 					# Blue
+					if self.thread_abort:
+						raise Info(lang.getstr("aborted"))
 					if format == "eeColor" and k == size - 1:
 						# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 						continue
