@@ -287,6 +287,12 @@ p.generate_report = function(set_delta_calc_method) {
 		'			<td>' + e['FF_profile'].value + '</td>',
 		'		</tr>'
 	];
+	if (profile_wp[1] != 100) this.report_html = this.report_html.concat([
+		'		<tr>',
+		'			<th>Profile luminance:</th>',
+		'			<td>' + profile_wp[1].accuracy(1) + ' cd/m²</td>',
+		'		</tr>'
+	]);
 	if (profile_wp.length == 3) this.report_html = this.report_html.concat([
 		'		<tr>',
 		'			<th>Profile whitepoint:</th>',
