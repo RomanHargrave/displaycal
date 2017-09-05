@@ -2813,7 +2813,8 @@ END_DATA
 						raise b2aresult
 					profile_out.write()
 
-			use_xicclu = (test and not use_b2a and format != "madVR" and
+			use_xicclu = (test and not profile_abst and
+						  not use_b2a and format != "madVR" and
 						  intent in ("a", "aw", "r") and
 						  input_encoding in ("n", "t", "T") and
 						  output_encoding in ("n", "t"))
@@ -3090,6 +3091,8 @@ END_DATA
 			# cLUT Input value tweaks to make Video encoded black land on
 			# 65 res grid nodes, which should help 33 and 17 res cLUTs too
 			def cLUT65_to_VidRGB(v):
+				if size not in (17, 33, 65):
+					return v
 				if v <= 236.0 / 256:
 					# Scale up to near black point
 					return v * 256.0 / 255
@@ -3097,21 +3100,67 @@ END_DATA
 					return 1 - (1 - v) * (1 - 236.0 / 255) / (1 - 236.0 / 256)
 
 			def VidRGB_to_cLUT65(v):
+				if size not in (17, 33, 65):
+					return v
 				if v <= 236.0 / 255.0:
 					return v * 255.0 / 256
 				else:
 					return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
 
+			logfiles = self.get_logfiles()
+
 			if use_xicclu:
 				# Create device link using xicclu
 				is_argyll_lut_format = format == "icc"
 
-				logfiles = self.get_logfiles()
+				def clipVidRGB(RGB):
+					"""
+					Clip a value to the RGB Video range 16..235 RGB.
+					
+					Clip the incoming value RGB[] in place.
+					Return a bit mask of the channels that have/would clip,
+					scale all non-black values to avoid positive clipping and
+					return the restoring scale factor (> 1.0) if this has occured,
+					return the full value in the clip direction in full[],
+					and return the uncliped value in unclipped[].
+					
+					"""
+
+					clipmask = 0
+					scale = 1.0
+					full = [None] * 3
+					unclipped = list(RGB)
+
+					# Locate the channel with the largest value
+					mx = max(RGB)
+					# One channel positively clipping
+					if mx > 235.0 / 255.0:
+						scale = ((235.0 - 16.0) / 255.0) / (mx - (16.0 / 255.0))
+
+						# Scale all non-black value down towards black, to avoid clipping
+						for i, v in enumerate(RGB):
+							# Note if channel would clip in itself
+							if v > 235.0 / 255.0:
+								full[i] = 1.0
+								clipmask |= 1 << i
+							if v > 16.0 / 255.0:
+								RGB[i] = (v - 16.0 / 255.0) * scale + 16.0 / 255.0
+
+					# See if any values negatively clip
+					for i, v in enumerate(RGB):
+						if v < 16.0 / 255.0:
+							RGB[i] = 16.0 / 255.0
+							full[i] = 0.0
+							clipmask |= 1 << i
+
+					scale = 1.0 / scale
+
+					return clipmask, scale, full, unclipped
 
 				RGB_src_in = []
 				maxind = size - 1.0
-				level_16 = 16.0 / 256 * maxind
-				level_236 = 236.0 / 256 * maxind
+				level_16 = VidRGB_to_cLUT65(16.0 / 255) * maxind
+				level_235 = VidRGB_to_cLUT65(235.0 / 255) * maxind
 				for a in xrange(size):
 					for b in xrange(size):
 						for c in xrange(size):
@@ -3120,18 +3169,21 @@ END_DATA
 							if input_encoding in ("t", "T"):
 								# TV levels in
 								if (min(abc) < level_16 or
-									max(abc) > level_236):
+									max(abc) > math.ceil(level_235)):
 									# Don't lookup out of range values
 									continue
 								else:
 									RGB = [cLUT65_to_VidRGB(v) for v in RGB]
-									if a == b == c and a in (level_16, level_236):
+									if output_encoding == "t":
+										clipVidRGB(RGB)
+									if a == b == c and a in (math.ceil(level_16),
+															 math.ceil(level_235)):
 										self.log("Input RGB (0..255) %f %f %f" %
 												 tuple(v * 255 for v in RGB))
-									# Convert 16..236 to 0..255 for xicclu
+									# Convert 16..235 to 0..255 for xicclu
 									RGB = [colormath.convert_range(v,
 																   16.0 / 255,
-																   236.0 / 255,
+																   235.0 / 255,
 																   0, 1)
 										   for v in RGB]
 							RGB = [min(max(v, 0), 1) * 255 for v in RGB]
@@ -3140,7 +3192,8 @@ END_DATA
 				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
 										  pcs="x", scale=255)
 				if intent == "aw":
-					XYZw = XYZ_src_out[-1]
+					XYZw = self.xicclu(profile_in, [[1, 1, 1]], intent[0],
+									   pcs="x")[0]
 					# Lookup scaled down white XYZ
 					logfiles.write("Looking for solution...\n")
 					for n in xrange(9):
@@ -3152,7 +3205,7 @@ END_DATA
 						# Find point at which it no longer clips
 						XYZwscaled = None
 						for i, RGBclip in enumerate(RGBscaled):
-							if RGBclip[3] is True:
+							if RGBclip[3] is True or max(RGBclip[:3]) > 1:
 								# Clipped, skip
 								continue
 							# Found
@@ -3168,19 +3221,27 @@ END_DATA
 							break
 						else:
 							if n == 8:
-								raise Error("No solution found in %i "
-											"iterations with %i steps" % (n, i))
+								break
 						if XYZwscaled:
 							# Found solution
 							break
+					if not XYZwscaled:
+						raise Error("No solution found in %i "
+									"iterations with %i steps" % (n, i))
 					for i, XYZ in enumerate(XYZ_src_out):
 						XYZ[:] = [v / XYZw[1] * XYZwscaled[1] for v in XYZ]
 				# Inverse forward lookup source profile output XYZ through
 				# destination profile
 				num_cpus = cpu_count()
 				num_workers = min(max(num_cpus, 1), size)
-				if num_cpus > 2:
-					num_workers -= 1
+				if "A2B0" in profile_out.tags:
+					if num_cpus > 2:
+						num_workers = int(num_workers * 0.75)
+					num_batches = size // 9
+				else:
+					if num_cpus > 2:
+						num_workers = 2
+					num_batches = 1
 				logfiles.write("Creating 3D LUT from inverse forward lookup "
 							   "(%i workers)...\n" % num_workers)
 				RGB_dst_out = []
@@ -3189,10 +3250,10 @@ END_DATA
 										 {"pcs": "x", "use_cam_clipping": True,
 										  "abortmessage": lang.getstr("aborted")},
 										 num_workers, self.thread_abort,
-										 logfiles, num_batches=size // 9):
+										 logfiles, num_batches=num_batches):
 					RGB_dst_out.extend(slices)
 				logfiles.write("\n")
-				logfiles.write("Assembling cLUT...\n")
+				logfiles.write("Filling cLUT...\n")
 				profile_link = ICCP.ICCProfile()
 				profile_link.profileClass = "link"
 				profile_link.connectionColorSpace = "RGB"
@@ -3204,14 +3265,16 @@ END_DATA
 					A2B0.input = [[]] * 3
 					for i in xrange(2048):
 						A2B0.input[0].append(VidRGB_to_cLUT65(i / 2047.0) * 65535)
-					A2B0.output = [[]] * 3
-					for i in xrange(2049):
-						A2B0.output[0].append(i / 2048.0 * 65535)
 				else:
 					A2B0.input = [[0, 65535]] * 3
-					A2B0.output = [[0, 65535]] * 3
+				A2B0.output = [[0, 65535]] * 3
 				A2B0.clut = []
-				clut_16_236 = {}
+				clut_16_235 = {}
+				prevperc = 0
+				if input_encoding in ("t", "T"):
+					endperc = 90
+				else:
+					endperc = 100
 				for a in xrange(size):
 					for b in xrange(size):
 						A2B0.clut.append([])
@@ -3219,25 +3282,19 @@ END_DATA
 							abc = (a, b, c)
 							if (input_encoding in ("t", "T") and
 								(min(abc) < level_16 or
-								 max(abc) > level_236)):
+								 max(abc) > math.ceil(level_235))):
 								# TV levels in, no value from lookup
-								if min(abc) < level_16:
-									RGB = [0] * 3
-								else:
-									RGB = [1] * 3
+								RGB = [v / maxind for v in abc]
+								RGB = [cLUT65_to_VidRGB(v) for v in RGB]
 							else:
 								# Got value from lookup
 								RGB = RGB_dst_out.pop(0)
 								if output_encoding == "t":
 									# TV levels out
-									# Convert 0..255 to 16..236
-									if input_encoding in ("t", "T"):
-										white = 236.0
-									else:
-										white = 235.0
+									# Convert 0..255 to 16..235
 									RGB = [colormath.convert_range(v, 0, 1,
 																   16.0 / 255,
-																   white / 255)
+																   235.0 / 255)
 										   for v in RGB]
 									if ((input_encoding in ("t", "T") and
 										 a == b == c == level_16) or
@@ -3245,41 +3302,77 @@ END_DATA
 										# Black hack - force black to 16
 										self.log("Black hack - forcing black to 16")
 										RGB = [16.0 / 255] * 3
-									elif input_encoding == "T":
-										RGB = [min(v, 235.0 / 255) for v in RGB]
 								elif a == b == c == 0:
 									# Black hack - force black to 0
 									self.log("Black hack - forcing black to 0")
 									RGB = [0] * 3
-								elif input_encoding in ("t", "T"):
-									RGB = [v * (236.0 / 235) for v in RGB]
 							if input_encoding in ("t", "T"):
-								clut_16_236[abc] = RGB[:]
+								clut_16_235[abc] = RGB[:]
 							RGB = [min(max(v, 0), 1) * 65535 for v in RGB]
 							A2B0.clut[-1].append(RGB)
+						perc = round(len(A2B0.clut) / float(size ** 2) * endperc)
+						if perc > prevperc:
+							logfiles.write("\r%i%%" % perc)
+							prevperc = perc
 				if input_encoding in ("t", "T"):
 					# TV levels in, need to extrapolate
+
+					preserve_sync = getcfg("3dlut.preserve_sync")
+
 					for i, block in enumerate(A2B0.clut):
 						a = i // size
 						if i % size == 0:
 							b = 0
 						for c, RGB in enumerate(block):
 							abc = (a, b, c)
-							if min(abc) < level_16 or max(abc) > level_236:
-								key = tuple(min(max(v, level_16), level_236)
-											for column, v in enumerate(abc))
-								RGB_16_236 = clut_16_236[key]
-								for column, v in enumerate(RGB_16_236):
-									if abc[column] < level_16:
-										v *= cLUT65_to_VidRGB(abc[column] / maxind) / (16.0 / 255)
-									elif (input_encoding != "T" and
-										  abc[column] > level_236):
-										v *= cLUT65_to_VidRGB(abc[column] / maxind) / (236.0 / 255)
-									RGB[column] = min(max(v, 0), 1) * 65535
+							if (min(abc) < level_16 or
+								max(abc) > math.floor(level_235)):
+								# TV levels in, no value from lookup
+								key = tuple(min(max(v, math.ceil(level_16)),
+													   math.ceil(level_235))
+											for v in abc)
+								RGB_16_235 = clut_16_235[key]
+								if output_encoding == "t":
+									cin = [cLUT65_to_VidRGB(v / maxind) for v in abc]
+									clipmask, scale, full, uci = clipVidRGB(cin)
+								for j, v in enumerate(RGB_16_235):
+
+									if output_encoding == "t" and clipmask:
+
+										if input_encoding != "T" and scale > 1:
+											# We got +ve clipping
+
+											# FIXME: Result doesn't match collink?!?
+
+											# Re-scale all non-black values
+											if v > 16.0 / 255.0:
+												v = (v - 16.0 / 255.0) * scale + 16.0 / 255.0
+
+										# Deal with -ve clipping and sync
+										if clipmask & (1 << j):
+
+											if full[j] == 0.0:
+												# Only extrapolate in black direction
+												ifull = 1.0 - full[j]  # Opposite limit to full
+								
+												# Do simple extrapolation (Not perfect though)
+												v = ifull + (v - ifull) * (uci[j] - ifull) / (cin[j] - ifull)
+							
+											# Clip or pass sync through
+											if (v < 0.0 or v > 1.0 or
+												(preserve_sync and
+												 abs(uci[j] - full[j]) < 1e-6)):
+												v = full[j]
+
+									RGB[j] = min(max(v, 0), 1) * 65535
+						perc = endperc + round(i / (size ** 2 - 1.0) *
+											   (100 - endperc))
+						if perc > prevperc:
+							logfiles.write("\r%i%%" % perc)
+							prevperc = perc
 						b += 1
+				logfiles.write("\n")
 				profile_link.write(link_filename)
-				diagpng_filename = os.path.join(cwd, name + ".A2B0.CLUT.png")
-				profile_link.tags.A2B0.clut_writepng(diagpng_filename)
 				result = True
 			else:
 				# Create device link (and 3D LUT, if applicable) using collink
@@ -3322,6 +3415,7 @@ END_DATA
 											   ("encoding.output", output_encoding)])
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
+				profile_link.tags.A2B0.clut_writepng(filename + ".A2B0.CLUT.png")
 
 				if smpte2084:
 					if format == "madVR":
@@ -3444,6 +3538,7 @@ END_DATA
 				raise UnloggedError(lang.getstr("aborted"))
 
 		# We have to create the 3DLUT ourselves
+		logfiles.write("Generating %s 3D LUT...\n" % format)
 
 		def VidRGB_to_eeColor(v):
 			return v * 255.0/256.0
@@ -3495,13 +3590,9 @@ END_DATA
 					RGB_oin.append(list(RGB_triplet))
 					RGB_copy = list(RGB_triplet)
 					if format == "eeColor":
-						# eeColor cLUT is fake 65^3 - only 64^3 is usable.
-						# This affects full range and xvYCC RGB, so un-map
-						# inputs to cLUT to only use 64^3
 						for l in xrange(3):
 							RGB_copy[l] = eeColor_to_VidRGB(RGB_copy[l])
-						if input_encoding in ("t", "T"):
-							for l in xrange(3):
+							if input_encoding in ("t", "T"):
 								RGB_copy[l] = VidRGB_to_cLUT65(RGB_copy[l])
 					RGB_index[columns[2]] = k
 					RGB_in.append(RGB_copy)
@@ -3510,7 +3601,11 @@ END_DATA
 		# Lookup RGB -> RGB values through devicelink profile using icclu
 		# (Using icclu instead of xicclu because xicclu in versions
 		# prior to Argyll CMS 1.6.0 could not deal with devicelink profiles)
-		RGB_out = self.xicclu(link_filename, RGB_in, use_icclu=True)
+		RGB_out = self.xicclu(link_filename, RGB_in, use_icclu=True,
+							  logfile=logfiles)
+		
+		if format == "eeColor" and output_encoding == "n":
+			RGBw = self.xicclu(link_filename, [[1, 1, 1]], use_icclu=True)[0]
 
 		# Remove temporary files, move log file
 		result2 = self.wrapup(dst_path=path, ext_filter=[".log"])
@@ -3571,6 +3666,12 @@ END_DATA
 				lut.append(["%.6f" % (component * maxval) for component in RGB_oin[i]])
 				for component in (0, 1, 2):
 					v = RGB_triplet[component] * maxval
+					if output_encoding == "n":
+						# For eeColor and full range RGB, make sure that the cLUT
+						# output maps to 1.0
+						# The output curve will correct this
+						v /= RGBw[component]
+						v = min(v, 1)
 					v = VidRGB_to_eeColor(v)
 					lut[-1].append("%.6f" % v)
 			linesep = "\r\n"
@@ -3634,6 +3735,20 @@ END_DATA
 			im = imfile.Image(lut, output_bits)
 			im.write(lut_file)
 		lut_file.close()
+
+		if format == "eeColor":
+			# Write eeColor 1D LUTs
+			for i, color in enumerate(["red", "green", "blue"]):
+				for count, inout in [(1024, "first"), (8192, "second")]:
+					with open(filename + "-" + inout + "1d" + color + ".txt",
+							  "wb") as lut1d:
+						for j in xrange(count):
+							v = j / (count - 1.0)
+							if inout == "second" and output_encoding == "n":
+								# For eeColor and Full range RGB, unmap the
+								# cLUT output maps from 1.0
+								v *= RGBw[i]
+							lut1d.write("%.6f\n" % v)
 
 		if isinstance(result2, Exception):
 			raise result2

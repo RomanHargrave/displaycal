@@ -777,6 +777,7 @@ defaults = {
 	"3dlut.enable": 1,
 	"3dlut.output.profile": "",
 	"3dlut.output.profile.apply_cal": 1,
+	"3dlut.preserve_sync": 0,
 	"3dlut.rendering_intent": "aw",
 	"3dlut.use_abstract_profile": 0,
 	"3dlut.size": 65,
