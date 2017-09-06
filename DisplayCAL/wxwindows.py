@@ -2026,9 +2026,18 @@ class BaseInteractiveDialog(wx.Dialog):
 	def OnShow(self, event):
 		event.Skip()
 		if not getattr(event, "IsShown", getattr(event, "GetShow", bool))():
+			safe_print('Dialog NOT shown')
 			return
-		if not wx.GetApp().IsActive() and wx.GetApp().GetTopWindow():
-			wx.GetApp().GetTopWindow().RequestUserAttention()
+		app = wx.GetApp()
+		topwindow = app.GetTopWindow()
+		topwindow_shown = topwindow and topwindow.IsShown()
+		if topwindow_shown:
+			window = topwindow
+		else:
+			window = self.Parent or self
+		if ((not app.IsActive() or not topwindow_shown) and
+			hasattr(window, "RequestUserAttention")):
+			window.RequestUserAttention()
 
 	def OnClose(self, event):
 		if event.GetEventObject() == self:
