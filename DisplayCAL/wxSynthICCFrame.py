@@ -613,7 +613,7 @@ class SynthICCFrame(BaseFrame):
 											   (XYZ["gX"], XYZ["gY"], XYZ["gZ"]),
 											   (XYZ["bX"], XYZ["bY"], XYZ["bZ"]),
 											   (XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
-											   trc,
+											   1.0,
 											   "",
 											   getcfg("copyright"))
 			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
@@ -692,6 +692,7 @@ class SynthICCFrame(BaseFrame):
 						getcfg("synthprofile.luminance"),
 						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
 						worker=self.worker, logfile=logfiles).tags.A2B0
+					profile.write(path)
 					self.worker.generate_B2A_from_inverse_table(profile, 33,
 																smooth=False,
 																rgb_space=rgb_space,
