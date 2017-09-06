@@ -283,19 +283,19 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		(e['FF_correction_matrix'].value ? '<tr><th>Correction:</th><td>' + e['FF_correction_matrix'].value + '</td></tr>' : ''),
 		'		<tr>',
-		'			<th>Target profile:</th>',
+		'			<th>Display profile:</th>',
 		'			<td>' + e['FF_profile'].value + '</td>',
 		'		</tr>'
 	];
 	if (profile_wp[1] != 100) this.report_html = this.report_html.concat([
 		'		<tr>',
-		'			<th>Profile luminance:</th>',
+		'			<th>Display profile luminance:</th>',
 		'			<td>' + profile_wp[1].accuracy(1) + ' cd/m²</td>',
 		'		</tr>'
 	]);
 	if (profile_wp.length == 3) this.report_html = this.report_html.concat([
 		'		<tr>',
-		'			<th>Profile whitepoint:</th>',
+		'			<th>Display profile whitepoint:</th>',
 		'			<td>' + 'xy ' + profile_wp_xy_round.join(' ') + ' (XYZ ' + profile_wp_norm_round.join(' ') + '), CCT ' + profile_colortemp + 'K</td>',
 		'		</tr>'
 	]);
@@ -339,7 +339,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'		</tr>',
 		'		<tr>',
 		'			<th>Whitepoint simulation:</th>',
-		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to target profile whitepoint' : '') : (!DEVICELINK_PROFILE && SIMULATION_PROFILE ? 'No' : 'N/A')) + '</td>',
+		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to display profile whitepoint' : '') : (!DEVICELINK_PROFILE && SIMULATION_PROFILE ? 'No' : 'N/A')) + '</td>',
 		'		</tr>',
 		'		<tr>',
 		'			<th>Chromatic adaption:</th>',
