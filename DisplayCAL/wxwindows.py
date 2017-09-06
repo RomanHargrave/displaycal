@@ -2026,7 +2026,6 @@ class BaseInteractiveDialog(wx.Dialog):
 	def OnShow(self, event):
 		event.Skip()
 		if not getattr(event, "IsShown", getattr(event, "GetShow", bool))():
-			safe_print('Dialog NOT shown')
 			return
 		app = wx.GetApp()
 		topwindow = app.GetTopWindow()
