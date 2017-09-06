@@ -6918,14 +6918,16 @@ class MainFrame(ReportFrame, BaseFrame):
 						  cargs=(os.path.splitext(ti1_path)[0] + ".ti3", 
 								 profile, sim_profile, intent, sim_intent,
 								 devlink, ti3_ref, sim_ti3, save_path, chart,
-								 gray, apply_trc, use_sim, use_sim_as_output),
+								 gray, apply_trc, use_sim, use_sim_as_output,
+								 oprof),
 						  wargs=(ti1_path, cal_path, colormanaged),
 						  progress_msg=progress_msg, pauseable=True)
 	
 	def measurement_report_consumer(self, result, ti3_path, profile, sim_profile,
 									intent, sim_intent, devlink, ti3_ref,
 									sim_ti3, save_path, chart, gray,
-									apply_trc, use_sim, use_sim_as_output):
+									apply_trc, use_sim, use_sim_as_output,
+									oprof):
 		
 		self.Show()
 		
@@ -7081,10 +7083,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			cat = profile.guess_cat() or cat
 		elif isinstance(profile.tags.get("arts"), ICCP.chromaticAdaptionTag):
 			cat = profile.guess_cat() or cat
-		if "lumi" in profile.tags and isinstance(profile.tags.lumi,
+		if "lumi" in oprof.tags and isinstance(oprof.tags.lumi,
 												 ICCP.XYZType):
 			# calculate unscaled whitepoint
-			scale = profile.tags.lumi.Y / 100.0
+			scale = oprof.tags.lumi.Y / 100.0
 			wtpt_profile = tuple(n * scale for n in wtpt_profile_norm)
 		else:
 			wtpt_profile = wtpt_profile_norm
