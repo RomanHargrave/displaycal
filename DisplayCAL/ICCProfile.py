@@ -3331,7 +3331,7 @@ class CurveType(ICCProfileTag, list):
 	def __init__(self, tagData=None, tagSignature=None, profile=None):
 		ICCProfileTag.__init__(self, tagData, tagSignature)
 		self.profile = profile
-		self._transfer_function = {}
+		self._reset()
 		if not tagData:
 			return
 		curveEntriesCount = uInt32Number(tagData[8:12])
@@ -3350,31 +3350,35 @@ class CurveType(ICCProfileTag, list):
 	
 	def __delitem__(self, y):
 		list.__delitem__(self, y)
-		self._transfer_function = {}
+		self._reset()
 	
 	def __delslice__(self, i, j):
 		list.__delslice__(self, i, j)
-		self._transfer_function = {}
+		self._reset()
 	
 	def __iadd__(self, y):
 		list.__iadd__(self, y)
-		self._transfer_function = {}
+		self._reset()
 	
 	def __imul__(self, y):
 		list.__imul__(self, y)
-		self._transfer_function = {}
+		self._reset()
 	
 	def __setitem__(self, i, y):
 		list.__setitem__(self, i, y)
-		self._transfer_function = {}
+		self._reset()
 	
 	def __setslice__(self, i, j, y):
 		list.__setslice__(self, i, j, y)
+		self._reset()
+
+	def _reset(self):
 		self._transfer_function = {}
+		self._bt1886 = {}
 	
 	def append(self, object):
 		list.append(self, object)
-		self._transfer_function = {}
+		self._reset()
 	
 	def apply_bpc(self, black_Y_out=0, weight=False):
 		if len(self) < 2:
@@ -3390,10 +3394,10 @@ class CurveType(ICCProfileTag, list):
 	
 	def extend(self, iterable):
 		list.extend(self, iterable)
-		self._transfer_function = {}
+		self._reset()
 	
 	def get_gamma(self, use_vmin_vmax=False, average=True, least_squares=False,
-				  slice=(0.01, 0.99)):
+				  slice=(0.01, 0.99), lstar_slice=True):
 		""" Return average or least squares gamma or a list of gamma values """
 		if len(self) <= 1:
 			if len(self):
@@ -3404,7 +3408,7 @@ class CurveType(ICCProfileTag, list):
 			if average or least_squares:
 				return values[0]
 			return [values[0]]
-		else:
+		if lstar_slice:
 			start = slice[0] * 100
 			end = slice[1] * 100
 			values = []
@@ -3412,6 +3416,13 @@ class CurveType(ICCProfileTag, list):
 				n = colormath.XYZ2Lab(0, y / 65535.0 * 100, 0)[0]
 				if n >= start and n <= end:
 					values.append((i / (len(self) - 1.0) * 65535.0, y))
+		else:
+			maxv = len(self) - 1.0
+			maxi = int(maxv)
+			starti = int(round(slice[0] * maxi))
+			endi = int(round(slice[1] * maxi)) + 1
+			values = zip([(v / maxv) * 65535 for v in xrange(starti, endi)],
+						 self[starti:endi])
 		vmin = 0
 		vmax = 65535.0
 		if use_vmin_vmax:
@@ -3428,10 +3439,10 @@ class CurveType(ICCProfileTag, list):
 		"""
 		if len(self) == 1:
 			# Gamma
-			return ("Gamma %.2f" % self[0], self[0]), 1.0
+			return ("Gamma %.2f" % round(self[0], 2), self[0], 1.0), 1.0
 		if not len(self):
 			# Identity
-			return ("Gamma 1.0", 1.0), 1.0
+			return ("Gamma 1.0", 1.0, 1.0), 1.0
 		transfer_function = self._transfer_function.get((best, slice))
 		if transfer_function:
 			return transfer_function
@@ -3439,7 +3450,8 @@ class CurveType(ICCProfileTag, list):
 		match = {}
 		otrc = CurveType()
 		otrc[:] = self
-		otrc.apply_bpc()
+		if otrc[0]:
+			otrc.apply_bpc()
 		vmin = otrc[0]
 		vmax = otrc[-1]
 		if self.profile and isinstance(self.profile.tags.get("lumi"),
@@ -3449,19 +3461,12 @@ class CurveType(ICCProfileTag, list):
 			white_cdm2 = 100.0
 		if black_Y is None:
 			black_Y = self[0] / 65535.0
-			if (not black_Y and self.profile and
-				isinstance(self.profile.tags.get("bkpt"), XYZType)):
-				# Hmm. We may want a more reliable way to get the actual
-				# black point
-				black_Y = self.profile.tags.bkpt.pcs.Y
 		black_cdm2 = black_Y * white_cdm2
 		maxv = len(otrc) - 1.0
 		maxi = int(maxv)
 		starti = int(round(0.4 * maxi))
 		endi = int(round(0.6 * maxi))
-		gamma = colormath.get_gamma(zip([(0.4 + v / maxv) * 65535
-										 for v in xrange(endi - starti)],
-										otrc[starti:endi]), 65535.0, vmin, vmax)
+		gamma = otrc.get_gamma(True, slice=(0.4, 0.6), lstar_slice=False)
 		egamma = colormath.get_gamma([(0.5, 0.5 ** gamma)], vmin=-black_Y)
 		outoffset_unspecified = outoffset is None
 		if outoffset_unspecified:
@@ -3494,7 +3499,8 @@ class CurveType(ICCProfileTag, list):
 				trc.set_bt1886_trc(black_Y, outoffset, egamma, "b")
 			else:
 				trc.set_trc(exp, len(self), vmin, vmax)
-			trc.apply_bpc()
+			if trc[0]:
+				trc.apply_bpc()
 			if otrc == trc:
 				match[(name, exp, outoffset)] = 1.0
 			else:
@@ -3525,19 +3531,19 @@ class CurveType(ICCProfileTag, list):
 	
 	def insert(self, object):
 		list.insert(self, object)
-		self._transfer_function = {}
+		self._reset()
 	
 	def pop(self, index):
 		list.pop(self, index)
-		self._transfer_function = {}
+		self._reset()
 	
 	def remove(self, value):
 		list.remove(self, value)
-		self._transfer_function = {}
+		self._reset()
 	
 	def reverse(self):
 		list.reverse(self)
-		self._transfer_function = {}
+		self._reset()
 	
 	def set_bt1886_trc(self, black_Y=0, outoffset=0.0, gamma=2.4,
 					   gamma_type="B", size=None):
@@ -3548,6 +3554,9 @@ class CurveType(ICCProfileTag, list):
 		level of the display.
 		
 		"""
+		bt1886 = self._bt1886.get((gamma, black_Y, outoffset))
+		if bt1886:
+			return bt1886
 		if gamma_type in ("b", "g"):
 			# Get technical gamma needed to achieve effective gamma
 			gamma = colormath.xicc_tech_gamma(gamma, black_Y, outoffset)
@@ -3561,6 +3570,7 @@ class CurveType(ICCProfileTag, list):
 		x, y = colormath.XYZ2xyY(*wXYZ)[:2]
 		XYZbp = colormath.xyY2XYZ(x, y, black_Y)
 		bt1886 = colormath.BT1886(mtx, XYZbp, outoffset, gamma)
+		self._bt1886[(gamma, black_Y, outoffset)] = bt1886
 		self.set_trc(-709, size)
 		for i, v in enumerate(self):
 			X, Y, Z = colormath.xyY2XYZ(x, y, v / 65535.0)
@@ -3709,7 +3719,7 @@ class CurveType(ICCProfileTag, list):
 	
 	def sort(self, cmp=None, key=None, reverse=False):
 		list.sort(self, cmp, key, reverse)
-		self._transfer_function = {}
+		self._reset()
 	
 	@Property
 	def tagData():
