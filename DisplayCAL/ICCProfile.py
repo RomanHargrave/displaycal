@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 from copy import copy
 from hashlib import md5
 import atexit
@@ -57,13 +58,14 @@ from util_list import intlist
 from util_str import hexunescape, safe_str, safe_unicode
 
 if sys.platform not in ("darwin", "win32"):
+	from defaultpaths import xdg_config_dirs, xdg_config_home
 	from edid import get_edid
 	from util_x import get_display
 	try:
 		import xrandr
 	except ImportError:
 		xrandr = None
-	from util_os import which
+	from util_os import whereis, which
 elif sys.platform == "win32":
 	import util_win
 	if sys.getwindowsversion() < (6, ):
@@ -2081,10 +2083,46 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 						if "hash" in edid:
 							colord.device_ids[edid["hash"]] = device_id
 						if path_only:
+							safe_print("Got profile from colord for display %i "
+									   "(%s):" % (display_no, device_id),
+									   profile_path)
 							return profile_path
 						return ICCProfile(profile_path)
 				break
 	return None
+
+
+def _ucmm_get_display_profile(display_no, x_hostname, x_display, x_screen,
+							  path_only=False):
+	""" Argyll UCMM """
+	search = []
+	edid = get_edid(display_no)
+	if edid:
+		# Look for matching EDID entry first
+		search.append(("EDID", "0x" + binascii.hexlify(edid["edid"]).upper()))
+	# Fallback to X11 name
+	search.append(("NAME", "%s:%s.%s" % (x_hostname, x_display, x_screen)))
+	for path in [xdg_config_home] + xdg_config_dirs:
+		color_jcnf = os.path.join(path, "color.jcnf")
+		if os.path.isfile(color_jcnf):
+			import json
+			with open(color_jcnf) as f:
+				data = json.load(f)
+			displays = data.get("devices", {}).get("display")
+			if isinstance(displays, dict):
+				# Look for matching entry
+				for key, value in search:
+					for item in displays.itervalues():
+						if isinstance(item, dict):
+							if item.get(key) == value:
+								profile_path = item.get("ICC_PROFILE")
+								if path_only:
+									safe_print("Got profile from Argyll UCMM "
+											   "for display %i (%s %s):" %
+											   (display_no, key, value),
+											   profile_path)
+									return profile_path
+								return ICCProfile(profile_path)
 
 
 def _wcs_get_display_profile(devicekey,
@@ -2302,8 +2340,16 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 					if profile:
 						return profile
 				if path_only:
-					# No way to figure out the profile path from X atom
-					return
+					# No way to figure out the profile path from X atom, so use
+					# Argyll's UCMM if libcolordcompat.so is not present
+					if whereis("libcolordcompat.so.*"):
+						# UCMM configuration might be stale, ignore
+						return
+					profile = _ucmm_get_display_profile(display_no,
+														x_hostname,
+														x_display, x_screen,
+														path_only)
+					return profile
 				# Try XrandR
 				if xrandr and option == "_ICC_PROFILE":
 					if debug:
