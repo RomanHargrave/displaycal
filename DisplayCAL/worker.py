@@ -8196,6 +8196,20 @@ usage: spotread [-options] [logfile]
 					if not "B2A2" in profile.tags:
 						profile.tags.B2A2 = profile.tags.B2A0
 			if profchanged and not isinstance(result, Exception) and result:
+				if "bkpt" in profile.tags and bpc_applied:
+					# We need to update the blackpoint tag
+					try:
+						odata = self.xicclu(profile, (0, 0, 0), intent="a",
+											pcs="x")
+						if len(odata) != 1 or len(odata[0]) != 3:
+							raise ValueError("Blackpoint is invalid: %s" %
+											 odata)
+					except Exception, exception:
+						self.log(exception)
+					else:
+						(profile.tags.bkpt.X,
+						 profile.tags.bkpt.Y,
+						 profile.tags.bkpt.Z) = odata[0]
 				# We need to write the changed profile
 				try:
 					profile.write()
