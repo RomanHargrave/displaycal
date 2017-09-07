@@ -685,12 +685,19 @@ def whereis(filename):
 			stdout_lines = stdout.strip().split(os.linesep)
 			if args[0] == "ldconfig":
 				for line in stdout_lines:
-					if filename in line:
-						return line.split("=>").pop().strip()
+					if line.strip().startswith(filename):
+						# libxyz.so /libc6,x86_64) => /lib64/libxyz.so.1
+						return line.split("=>")[-1].strip()
 			else:
-				result = stdout_lines.pop().split(":", 1).pop().strip()
+				# $ whereis libxyz.so
+				# libxyz.so /lib64/libxyz.so /usr/lib/libxyz.so
+				#
+				# $ locate libxyz.so
+				# /usr/lib/libxyz.so
+				# /usr/lib/libxyz.so.1
+				result = stdout_lines[0].split(":", 1)[-1].split()
 				if result:
-					return result
+					return result[-1]
 
 
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
