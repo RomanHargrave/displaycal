@@ -24,6 +24,7 @@ import threading
 import traceback
 import urllib
 import urllib2
+import warnings
 import zipfile
 import zlib
 from UserString import UserString
@@ -6185,18 +6186,18 @@ while 1:
 		display_no = max(0, min(len(self.displays) - 1, 
 								getcfg("display.number") - 1))
 		edid = self.display_edid[display_no]
-		if not edid and xrandr:
-			# XrandR fallback
+		if not edid:
+			# Fall back to XrandR name
 			if not (quirk and use_serial_32 and not truncate_edid_strings and
 					not omit_manufacturer):
 				return
 			try:
-				display_name = xrandr.get_display_name(display_no)
-			except:
-				pass
-			else:
-				if display_name:
-					edid = {"monitor_name": display_name}
+				device_ids = colord.get_display_device_ids()
+			except colord.CDError, exception:
+				warnings.warn(safe_str(exception, enc), Warning)
+				return
+			if device_ids and len(device_ids) > display_no:
+				edid = {"monitor_name": device_ids[display_no].split("-", 1)[-1]}
 		return colord.device_id_from_edid(edid, quirk=quirk,
 										  use_serial_32=use_serial_32,
 										  truncate_edid_strings=truncate_edid_strings,
