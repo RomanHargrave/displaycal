@@ -541,9 +541,7 @@ class Xicclu(WorkerBase):
 					indent += " "
 				self.log("")
 			self.log(lang.getstr("commandline"))
-			printcmdline(xicclu if debug or verbose > 2 else
-						 os.path.basename(xicclu), args[1:], fn=self.log,
-						 cwd=cwd)
+			printcmdline(xicclu, args[1:], fn=self.log, cwd=cwd)
 			self.log("")
 		self.startupinfo = startupinfo
 		self.args = args

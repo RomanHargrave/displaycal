@@ -4620,8 +4620,7 @@ while 1:
 						indent += " "
 					self.log("")
 				self.log(lang.getstr("commandline"))
-				printcmdline(cmd if verbose >= 2 else os.path.basename(cmd), 
-							 args, fn=self.log, cwd=working_dir)
+				printcmdline(cmd, args, fn=self.log, cwd=working_dir)
 				self.log("")
 				if not silent and dry_run:
 					if not self.lastcmdname or self.lastcmdname == cmdname:
@@ -10959,8 +10958,7 @@ usage: spotread [-options] [logfile]
 			thread.join()
 			self.log("-" * 80)
 			self.log(lang.getstr("commandline"))
-			printcmdline(viewgam if verbose >= 2 else os.path.basename(viewgam), 
-						 args, fn=self.log, cwd=os.path.dirname(args[-1]))
+			printcmdline(viewgam, args, fn=self.log, cwd=os.path.dirname(args[-1]))
 			self.log("")
 			self.log("".join(worker.output))
 		if not isinstance(result, Exception) and result:
