@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import fnmatch
 import glob
 import locale
 import os
@@ -674,8 +675,7 @@ def which(executable, paths = None):
 
 
 def whereis(filename):
-	for args in (["whereis", filename], ["locate", filename],
-				 ["ldconfig", "-p"]):
+	for args in (["whereis", filename], ["ldconfig", "-p"]):
 		try:
 			p = sp.Popen(args, stdout=sp.PIPE)
 			stdout, stderr = p.communicate()
@@ -685,16 +685,12 @@ def whereis(filename):
 			stdout_lines = stdout.strip().split(os.linesep)
 			if args[0] == "ldconfig":
 				for line in stdout_lines:
-					if line.strip().startswith(filename):
+					if fnmatch.fnmatch(line, filename):
 						# libxyz.so /libc6,x86_64) => /lib64/libxyz.so.1
 						return line.split("=>")[-1].strip()
 			else:
 				# $ whereis libxyz.so
 				# libxyz.so /lib64/libxyz.so /usr/lib/libxyz.so
-				#
-				# $ locate libxyz.so
-				# /usr/lib/libxyz.so
-				# /usr/lib/libxyz.so.1
 				result = stdout_lines[0].split(":", 1)[-1].split()
 				if result:
 					return result[-1]
