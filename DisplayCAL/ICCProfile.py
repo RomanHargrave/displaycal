@@ -2062,12 +2062,16 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 					  colord.device_id_from_edid(edid, use_serial_32=False,
 												 truncate_edid_strings=True,
 												 omit_manufacturer=True)]
-	elif xrandr:
-		# XrandR fallback
-		display_name = xrandr.get_display_name(display_no)
-		if display_name:
-			edid = {"monitor_name": display_name}
-			device_ids = [colord.device_id_from_edid(edid)]
+	else:
+		# Fall back to XrandR name
+		try:
+			device_ids = colord.get_display_device_ids()
+		except colord.CDError, exception:
+			warnings.warn(safe_str(exception, enc), Warning)
+			return
+		if device_ids and len(device_ids) > display_no:
+			edid = {"monitor_name": device_ids[display_no].split("-", 1)[-1]}
+			device_ids = [device_ids[display_no]]
 	if edid:
 		for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
 			if device_id:
@@ -2089,7 +2093,6 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 							return profile_path
 						return ICCProfile(profile_path)
 				break
-	return None
 
 
 def _ucmm_get_display_profile(display_no, x_hostname, x_display, x_screen,

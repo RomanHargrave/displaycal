@@ -187,6 +187,26 @@ def get_default_profile(device_id):
 	return filename
 
 
+def get_display_device_ids():
+	displays = []
+	colormgr = which("colormgr")
+	if not colormgr:
+		raise CDError("colormgr helper program not found")
+	try:
+		p = sp.Popen([safe_str(colormgr), "get-devices-by-kind", "display"],
+					 stdout=sp.PIPE, stderr=sp.STDOUT)
+		stdout, stderr = p.communicate()
+	except Exception, exception:
+		raise CDError(safe_str(exception))
+	else:
+		for line in stdout.splitlines():
+			item = line.split(":", 1)
+			if len(item) > 1 and item[1].startswith("xrandr-"):
+				# Found device ID
+				displays.append(item[1])
+	return displays
+
+
 def get_object_path(search, object_type):
 	result = find(object_type, search)
 	if result:
