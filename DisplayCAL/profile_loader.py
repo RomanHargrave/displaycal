@@ -14,7 +14,7 @@ from meta import VERSION, VERSION_BASE, name as appname, version, version_short
 import config
 from config import appbasename, confighome, getcfg, setcfg
 from log import safe_print
-from options import debug
+from options import debug, test, verbose
 
 if sys.platform == "win32":
 	import errno
@@ -2211,7 +2211,7 @@ class ProfileLoader(object):
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
 						safe_print(display_desc, "->", desc)
-				elif getcfg("profile_loader.track_other_processes"):
+				elif verbose > 1 and getcfg("profile_loader.track_other_processes"):
 					safe_print("Preserving calibration state for display",
 							   display)
 				try:
