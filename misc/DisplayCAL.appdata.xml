@@ -19,6 +19,7 @@
 	<updatecontact>florian_AT_${DOMAIN}</updatecontact>
 	<provides>
 		${APPDATAPROVIDES}
+		<id>dispcalGUI.desktop</id>
 ​ 	</provides>
 	<releases>
 		​<release version="${VERSION}" timestamp="${TIMESTAMP}">
