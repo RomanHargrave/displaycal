@@ -94,7 +94,7 @@ from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
 from multiprocess import cpu_count, pool_slice
-from options import debug, test, test_require_sensor_cal, verbose
+from options import debug, experimental, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveLSPatternGeneratorServer,
@@ -2822,7 +2822,7 @@ END_DATA
 						raise b2aresult
 					profile_out.write()
 
-			use_xicclu = (test and not profile_abst and
+			use_xicclu = (experimental and not profile_abst and
 						  not use_b2a and format != "madVR" and
 						  intent in ("a", "aw", "r") and
 						  input_encoding in ("n", "t", "T") and

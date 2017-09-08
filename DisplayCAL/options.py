@@ -22,10 +22,13 @@ else:
 tc_use_alternate_preview = "-ap" in sys.argv[1:] or "--alternate-preview" in \
 						   sys.argv[1:]
 
-# test some features even if they are not available
+# test some features even if they are not available normally
 test = "-t" in sys.argv[1:] or "--test" in sys.argv[1:]
 
 test_require_sensor_cal = "-s" in sys.argv[1:] or "--test_require_sensor_cal" in sys.argv[1:]
+
+# Enable experimental features
+experimental = "-x" in sys.argv[1:] or "--experimental" in sys.argv[1:]
 
 # verbosity level (default: 1)
 if "-v4" in sys.argv[1:] or "--verbose=4" in sys.argv[1:]:
