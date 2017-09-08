@@ -6713,7 +6713,7 @@ usage: spotread [-options] [logfile]
 		device_id = self.get_device_id(quirk=True, query=True)
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(self.argyll_version < [1, 6] or not whereis("libcolordcompat.so.*") or
-			 argyll_install is not True) and
+			 not getenv("ARGYLL_USE_COLORD") or argyll_install is not True) and
 			which("colormgr")):
 			if device_id:
 				result = False
