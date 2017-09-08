@@ -13367,8 +13367,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							   callafter_args=()):
 		""" Set Argyll CMS binary executables directory """
 		if (getattr(self.worker, "thread", None) and
-			self.worker.thread.isAlive()):
-			wx.Bell()
+			self.worker.thread.isAlive()) or not self.Shown or not self.Enabled:
 			return
 		if ((event and set_argyll_bin(self, silent, callafter, callafter_args)) or
 			(not event and check_argyll_bin())):
@@ -13537,6 +13536,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def check_instrument_setup(self, callafter=None, callafter_args=()):
 		# Check if we should import colorimeter corrections
 		# or do other instrument specific setup
+		if self.worker.is_working() or not self.Shown or not self.Enabled:
+			return
 		if getcfg("colorimeter_correction_matrix_file") in ("AUTO:", ""):
 			# Check for applicable corrections
 			ccmx_instruments = self.ccmx_instruments.itervalues()
