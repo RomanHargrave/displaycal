@@ -6720,8 +6720,10 @@ usage: spotread [-options] [logfile]
 			return exception
 		device_id = self.get_device_id(quirk=True, query=True)
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
-			(self.argyll_version < [1, 6] or not whereis("libcolordcompat.so.*") or
-			 not os.getenv("ARGYLL_USE_COLORD") or argyll_install is not True) and
+			(argyll_install is not True or
+			 self.argyll_version < [1, 6] or
+			 not os.getenv("ARGYLL_USE_COLORD") or
+			 not whereis("libcolordcompat.so.*")) and
 			which("colormgr")):
 			if device_id:
 				result = False

@@ -1540,6 +1540,9 @@ class ProfileLoader(object):
 			oyranos_monitor = which("oyranos-monitor")
 			xcalib = which("xcalib")
 
+		argyll_use_colord = (os.getenv("ARGYLL_USE_COLORD") and
+							 whereis("libcolordcompat.so.*"))
+
 		results = []
 		for i, display in enumerate([display.replace("[PRIMARY]", 
 													 lang.getstr("display.primary")) 
@@ -1557,11 +1560,12 @@ class ProfileLoader(object):
 									capture_output=True, skip_scripts=True, 
 									silent=False)
 			if dispwin:
-				profile_arg = worker.get_dispwin_display_profile_argument(i)
-				if os.path.isabs(profile_arg) and os.path.isfile(profile_arg):
-					mtime = os.stat(profile_arg).st_mtime
+				if not argyll_use_colord:
+					# Deal with colord ourself
+					profile_arg = worker.get_dispwin_display_profile_argument(i)
 				else:
-					mtime = 0
+					# Argyll deals with colord directly
+					profile_arg = "-L"
 				if (sys.platform == "win32" or not oyranos_monitor or
 					not display_conf_oy_compat or not xcalib or profile_arg == "-L"):
 					# Only need to run dispwin if under Windows, or if nothing else
