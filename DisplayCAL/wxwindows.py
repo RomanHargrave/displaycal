@@ -2028,15 +2028,18 @@ class BaseInteractiveDialog(wx.Dialog):
 		if not getattr(event, "IsShown", getattr(event, "GetShow", bool))():
 			return
 		app = wx.GetApp()
+		# Make sure taskbar button flashes under Windows
 		topwindow = app.GetTopWindow()
 		topwindow_shown = topwindow and topwindow.IsShown()
 		if topwindow_shown:
 			window = topwindow
 		else:
 			window = self.Parent or self
-		if ((not app.IsActive() or not topwindow_shown) and
+		if ((not app.IsActive() or (self.Parent and not topwindow_shown)) and
 			hasattr(window, "RequestUserAttention")):
 			window.RequestUserAttention()
+			if window != self:
+				self.RequestUserAttention()
 
 	def OnClose(self, event):
 		if event.GetEventObject() == self:
