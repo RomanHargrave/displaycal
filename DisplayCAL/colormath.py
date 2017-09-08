@@ -1583,8 +1583,8 @@ def xyY2XYZ(x, y, Y=1.0):
 	"""
 	if y == 0:
 		return 0, 0, 0
-	X = (x * Y) / y
-	Z = ((1 - x - y) * Y) / y
+	X = float(x * Y) / y
+	Z = float((1 - x - y) * Y) / y
 	return X, Y, Z
 
 
@@ -1994,8 +1994,8 @@ def XYZ2xyY(X, Y, Z, whitepoint=None):
 		# to 0, thus resulting in ZeroDivisionError later
 		x, y, Y = XYZ2xyY(*get_whitepoint(whitepoint))
 		return x, y, 0.0
-	x = X / (X + Y + Z)
-	y = Y / (X + Y + Z)
+	x = X / float(X + Y + Z)
+	y = Y / float(X + Y + Z)
 	return x, y, Y
 
 
