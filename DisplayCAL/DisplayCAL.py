@@ -9126,6 +9126,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				return "blocked"
 			if len(data) == 2:
 				setcfg("argyll.dir", data[1])
+				# Always write cfg directly after setting Argyll directory so
+				# subprocesses that read the configuration will use the right
+				# executables
+				writecfg()
 				wx.CallAfter(self.check_update_controls, True)
 			else:
 				wx.CallAfter(self.set_argyll_bin_handler, True)

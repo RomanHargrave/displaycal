@@ -1178,6 +1178,10 @@ def set_argyll_bin(parent=None, silent=False, callafter=None, callafter_args=())
 		dlg.Destroy()
 		if dlg_result == wx.ID_OK:
 			setcfg("argyll.dir", None)
+			# Always write cfg directly after setting Argyll directory so
+			# subprocesses that read the configuration will use the right
+			# executables
+			writecfg()
 			return True
 		if dlg_result == wx.ID_CANCEL:
 			if callafter:
@@ -1220,6 +1224,10 @@ def set_argyll_bin(parent=None, silent=False, callafter=None, callafter_args=())
 				if verbose >= 3:
 					safe_print("Setting Argyll binary directory:", path)
 				setcfg("argyll.dir", path)
+				# Always write cfg directly after setting Argyll directory so
+				# subprocesses that read the configuration will use the right
+				# executables
+				writecfg()
 				break
 			else:
 				not_found = []
@@ -10554,6 +10562,9 @@ usage: spotread [-options] [logfile]
 		self.argyll_version_string = argyll_version_string
 		if cfg:
 			setcfg("argyll.version", argyll_version_string)
+			# Always write cfg directly after setting Argyll version so
+			# subprocesses that read the configuration will use the right
+			# version
 			writecfg()
 		self.argyll_version = parse_argyll_version_string(argyll_version_string)
 
@@ -12224,6 +12235,10 @@ BEGIN_DATA
 		elif result and os.path.isdir(result[0]):
 			setcfg("argyll.dir",
 				   os.path.join(result[0], "bin"))
+			# Always write cfg directly after setting Argyll directory so
+			# subprocesses that read the configuration will use the right
+			# executables
+			writecfg()
 			from DisplayCAL import check_donation
 			snapshot = VERSION > VERSION_BASE
 			self.owner.set_argyll_bin_handler(None, True,
