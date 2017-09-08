@@ -58,7 +58,8 @@ if sys.platform == "win32":
 	from wxfixes import ThemedGenButton, set_bitmap_labels
 	from wxwindows import (BaseApp, BaseFrame, ConfirmDialog,
 						   CustomCellBoolRenderer, CustomGrid, InfoDialog,
-						   TaskBarNotification, wx, show_result_dialog)
+						   TaskBarNotification, wx, show_result_dialog,
+						   get_dialogs)
 	import ICCProfile as ICCP
 	import madvr
 
@@ -69,14 +70,6 @@ if sys.platform == "win32":
 			pass
 		else:
 			exedir = os.path.dirname(exe)
-
-
-	def get_dialogs():
-		""" If there are any dialogs open, return them """
-		return filter(lambda window: window and
-									 isinstance(window, wx.Dialog) and
-									 window.IsShown(),
-					  wx.GetTopLevelWindows())
 
 
 	class DisplayIdentificationFrame(wx.Frame):

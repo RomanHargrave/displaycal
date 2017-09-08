@@ -6262,6 +6262,14 @@ def get_widget(win, id_name_label):
 				return child
 
 
+def get_dialogs():
+	""" If there are any dialogs open, return them """
+	return filter(lambda window: window and
+								 isinstance(window, wx.Dialog) and
+								 window.IsShown(),
+				  wx.GetTopLevelWindows())
+
+
 def get_toplevel_window(id_name_label):
 	try:
 		id_name_label = int(id_name_label)

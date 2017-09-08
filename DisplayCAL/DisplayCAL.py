@@ -143,7 +143,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   FileBrowseBitmapButtonWithChoiceHistory,
 					   FileDrop, FlatShadedButton, HyperLinkCtrl, InfoDialog,
 					   LogWindow, ProgressDialog, TooltipWindow,
-					   get_gradient_panel)
+					   get_gradient_panel, get_dialogs)
 import floatspin
 import xh_fancytext
 import xh_filebrowsebutton
@@ -13366,8 +13366,9 @@ class MainFrame(ReportFrame, BaseFrame):
 	def set_argyll_bin_handler(self, event, silent=False, callafter=None,
 							   callafter_args=()):
 		""" Set Argyll CMS binary executables directory """
-		if (getattr(self.worker, "thread", None) and
-			self.worker.thread.isAlive()) or not self.Shown or not self.Enabled:
+		if ((getattr(self.worker, "thread", None) and
+			 self.worker.thread.isAlive()) or
+			not self.Shown or not self.Enabled or get_dialogs()):
 			return
 		if ((event and set_argyll_bin(self, silent, callafter, callafter_args)) or
 			(not event and check_argyll_bin())):
@@ -13387,7 +13388,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		Return True if update was needed and carried out, False otherwise.
 		
 		"""
-		if self.worker.is_working() or not self.Shown or not self.Enabled:
+		if (self.worker.is_working() or not self.Shown or not self.Enabled or
+			get_dialogs()):
 			return False
 		argyll_bin_dir = self.worker.argyll_bin_dir
 		argyll_version = list(self.worker.argyll_version)
@@ -13536,7 +13538,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def check_instrument_setup(self, callafter=None, callafter_args=()):
 		# Check if we should import colorimeter corrections
 		# or do other instrument specific setup
-		if self.worker.is_working() or not self.Shown or not self.Enabled:
+		if (self.worker.is_working() or not self.Shown or not self.Enabled or
+			get_dialogs()):
 			return
 		if getcfg("colorimeter_correction_matrix_file") in ("AUTO:", ""):
 			# Check for applicable corrections
