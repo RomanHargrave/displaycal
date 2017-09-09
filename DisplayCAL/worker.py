@@ -3908,7 +3908,7 @@ END_DATA
 												 safe_unicode(safe_str(match[0][0], enc),
 															  "UTF-8"), match[0][1]))
 						elif arg == "-c" and enumerate_ports:
-							if ((re.match("/dev(?:/[\w.]+)*$", value) or
+							if ((re.match("/dev(?:/[\w.\-]+)*$", value) or
 								 re.match("COM\d+$", value)) and 
 								getcfg("skip_legacy_serial_ports")):
 								# Skip all legacy serial ports (this means we 
