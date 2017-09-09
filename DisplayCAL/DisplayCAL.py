@@ -1412,9 +1412,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			self.logoffset = 0
 		logbuffer.seek(0)
-		self.infoframe.Log("".join([line.decode("UTF-8", "replace") 
-								    for line in logbuffer][self.logoffset:]).rstrip())
+		msg = "".join([line.decode("UTF-8", "replace") 
+					   for line in logbuffer][self.logoffset:])
 		logbuffer.truncate(0)
+		if msg:
+			self.infoframe.Log(msg)
 
 	def init_defaults(self):
 		""" Initialize GUI-specific defaults. """
