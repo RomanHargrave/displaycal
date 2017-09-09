@@ -642,7 +642,7 @@
 	"madtpg.launch.failure": "madTPG wurde nicht gefunden oder konnte nicht gestartet werden.",
 	"madvr.not_found": "Der madVR-DirectShow-Filter wurde nicht in der Registrierungsdatenbank gefunden. Bitte stellen Sie sicher, dass madVR installiert ist.",
 	"madvr.outdated": "Die benutzte Version von madVR ist veraltet. Bitte aktualisieren Sie auf die neueste Version (mindestens %i.%i.%i.%i).",
-	"madvr.wrong_levels_detected": "Die madVR Ausgabe-Wertebereich-Konfiguration ist inkorrekt. Bitte auf TV (16-235) ändern.",
+	"madvr.wrong_levels_detected": "Der gemessene Leuchtdichte-Unterschied zwischen RGB-Stufe 0 und 16 ist unterhalb 0.02 cd/m. Entweder die Eingabe-Wertebereich- und/oder Schwarzpegel-Einstellung des Anzeigegeräts, und/oder die Ausgabe-Wertebereich-Einstellung der Grafikkarte und/oder von madVR ist inkorrekt ‒ falls Ihre Grafikkarte Vollbereichs-RGB (0-255) ausgibt, ändern Sie bitte madVRs Ausgabe-Wertebereich für Ihr Anzeigegerät auf TV (16-235).",
 	"magenta": "Magenta",
 	"make_and_model": "Gerätehersteller und Modell",
 	"manufacturer": "Hersteller",

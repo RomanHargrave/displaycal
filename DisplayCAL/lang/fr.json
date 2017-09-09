@@ -642,7 +642,7 @@
 	"madtpg.launch.failure": "madTPG introuvable ou n’a pas pu être lancé.",
 	"madvr.not_found": "Le filtre madVR DirectShow est introuvable dans le registre. Assurez-vous qu’il est installé.",
 	"madvr.outdated": "La version de madVR utilisée est dépassée. Veuillez en effectuer la mise à jour vers la dernière version (au moins %i.%i.%i.%i).",
-		"*madvr.wrong_levels_detected": "The madVR output levels configuration is wrong. Please change to TV levels (16-235).",
+		"*madvr.wrong_levels_detected": "The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m². Either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics card and/or madVR is wrong — if your graphics card driver is set to output full range RGB (0-255), please change madVR's output levels for your display device to TV levels (16-235).",
 	"magenta": "Magenta",
 	"make_and_model": "Marque et modèle",
 	"manufacturer": "Fabriquant",

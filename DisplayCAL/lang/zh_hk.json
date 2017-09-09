@@ -642,7 +642,7 @@
 	"madtpg.launch.failure": "找不到 madTPG 或未能啟動。",
 	"madvr.not_found": "在注冊表中未能找到madVR DirectShow 過濾器。請確認已安裝。",
 	"madvr.outdated": "現正使用的 madVR 版本已非常陳舊。 請更新到最新版本 (最好為 %i.%i.%i.%i 或以上).",
-		"*madvr.wrong_levels_detected": "The madVR output levels configuration is wrong. Please change to TV levels (16-235).",
+		"*madvr.wrong_levels_detected": "The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m². Either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics card and/or madVR is wrong — if your graphics card driver is set to output full range RGB (0-255), please change madVR's output levels for your display device to TV levels (16-235).",
 	"magenta": "洋紅",
 	"make_and_model": "製造商和型號",
 	"manufacturer": "製造商",

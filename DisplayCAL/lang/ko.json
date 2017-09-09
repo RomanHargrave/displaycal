@@ -642,7 +642,7 @@
 	"madtpg.launch.failure": "madTPG 를 찾을 수 없거나 실행할 수 없습니다.",
 	"madvr.not_found": "madVR DirectShow 필터를 레지스트리에서 찾을 수 없습니다. 설치되어 있는지 확인해 주세요.",
 	"madvr.outdated": "madVR 버전이 오래되었습니다. 최신 버전으로 업데이트 해주세요 (최소 %i.%i.%i.%i).",
-		"*madvr.wrong_levels_detected": "The madVR output levels configuration is wrong. Please change to TV levels (16-235).",
+		"*madvr.wrong_levels_detected": "The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m². Either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics card and/or madVR is wrong — if your graphics card driver is set to output full range RGB (0-255), please change madVR's output levels for your display device to TV levels (16-235).",
 		"*magenta": "Magenta",
 	"make_and_model": "제조사 및 모델",
 	"manufacturer": "제조사",
