@@ -4355,6 +4355,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			str(stripzeros(getcfg("whitepoint.colortemp"))))
 		self.whitepoint_x_textctrl.SetValue(round(getcfg("whitepoint.x"), 4))
 		self.whitepoint_y_textctrl.SetValue(round(getcfg("whitepoint.y"), 4))
+		sel = self.whitepoint_ctrl.GetSelection()
 		if getcfg("whitepoint.colortemp", False):
 			self.whitepoint_ctrl.SetSelection(1)
 		elif getcfg("whitepoint.x", False) and getcfg("whitepoint.y", False):
@@ -4363,7 +4364,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.whitepoint_ctrl.SetSelection(0)
 		self.whitepoint_ctrl_handler(
 			CustomEvent(wx.EVT_CHOICE.evtType[0], 
-			self.whitepoint_ctrl), False)
+			self.whitepoint_ctrl),
+			sel > -1 and self.whitepoint_ctrl.GetSelection() != sel)
 		show_advanced_options = bool(getcfg("show_advanced_options"))
 		for ctrl in (self.whitepoint_colortemp_locus_label,
 					 self.whitepoint_colortemp_locus_ctrl):
@@ -4431,9 +4433,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("profile.black_point_compensation", 0)
 				self.update_bpc()
 
-	def check_3dlut_relcol_rendering_intent(self, event):
-		if (event and not isinstance(event, CustomEvent) and
-			getcfg("3dlut.tab.enable") and
+	def check_3dlut_relcol_rendering_intent(self):
+		if (getcfg("3dlut.tab.enable") and
 			getcfg("3dlut.rendering_intent") in ("a", "aa", "aw", "pa")):
 			wx.CallAfter(self.lut3d_confirm_relcol_rendering_intent)
 
@@ -5331,7 +5332,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.profile_settings_changed()
 		self.update_profile_name()
 
-	def whitepoint_ctrl_handler(self, event, cal_changed=True):
+	def whitepoint_ctrl_handler(self, event, cal_changed=None):
 		if event.GetId() == self.whitepoint_colortemp_textctrl.GetId() and (
 		   self.whitepoint_ctrl.GetSelection() != 1 or 
 		   str(int(getcfg("whitepoint.colortemp"))) == 
@@ -5393,7 +5394,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					str(stripzeros(math.ceil(k))))
 			else:
 				self.whitepoint_colortemp_textctrl.SetValue("")
-			if cal_changed:
+			if cal_changed is None:
 				if not getcfg("whitepoint.colortemp", False) and \
 				   x == getcfg("whitepoint.x") and \
 				   y == getcfg("whitepoint.y"):
@@ -5429,7 +5430,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.whitepoint_colortemp_textctrl.SetValue(
 					str(stripzeros(getcfg("whitepoint.colortemp"))))
 			v = float(self.whitepoint_colortemp_textctrl.GetValue())
-			if cal_changed:
+			if cal_changed is None:
 				if getcfg("whitepoint.colortemp") == v and not \
 				   getcfg("whitepoint.x", False) and not getcfg("whitepoint.y", False):
 					cal_changed = False
@@ -5451,8 +5452,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.whitepoint_x_label.Hide()
 			self.whitepoint_y_textctrl.Hide()
 			self.whitepoint_y_label.Hide()
-			if not getcfg("whitepoint.colortemp", False) and \
-			   not getcfg("whitepoint.x", False) and not getcfg("whitepoint.y", False):
+			if (cal_changed is None and
+				not getcfg("whitepoint.colortemp", False) and
+				not getcfg("whitepoint.x", False) and
+				not getcfg("whitepoint.y", False)):
 				cal_changed = False
 			setcfg("whitepoint.colortemp", None)
 			self.whitepoint_colortemp_textctrl.SetValue(
@@ -5461,8 +5464,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("whitepoint.y", None)
 			setcfg("3dlut.whitepoint.x", None)
 			setcfg("3dlut.whitepoint.y", None)
-			# Should change 3D LUT rendering intent to rel col?
-			self.check_3dlut_relcol_rendering_intent(event)
 		self.visual_whitepoint_editor_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.calpanel.Layout()
@@ -5485,13 +5486,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				self.whitepoint_x_textctrl.SetValue(0)
 				self.whitepoint_y_textctrl.SetValue(0)
-				# Should change 3D LUT rendering intent to rel col?
-				self.check_3dlut_relcol_rendering_intent(event)
-		if cal_changed and not self.updatingctrls:
+				setcfg("3dlut.whitepoint.x", None)
+				setcfg("3dlut.whitepoint.y", None)
+		if cal_changed is None and not self.updatingctrls:
 			self.profile_settings_changed()
 			self.update_profile_name()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
+		if (cal_changed is not False and not self.updatingctrls and
+			not getcfg("3dlut.whitepoint.x", False) and
+			not getcfg("3dlut.whitepoint.x", False)):
+			# Should change 3D LUT rendering intent to rel col?
+			wx.CallAfter(self.check_3dlut_relcol_rendering_intent)
 
 	def trc_type_ctrl_handler(self, event):
 		if debug:
@@ -13005,7 +13011,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					##return
 		if not self.updatingctrls:
 			setcfg("settings.changed", 1)
-			if self.calibration_file_ctrl.GetStringSelection()[0] != "*":
+			if not self.calibration_file_ctrl.GetStringSelection().startswith("*"):
 				sel = self.calibration_file_ctrl.GetSelection()
 				if sel > 0:
 					items = self.calibration_file_ctrl.GetItems()
