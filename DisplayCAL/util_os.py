@@ -686,7 +686,7 @@ def whereis(filename):
 			if args[0] == "ldconfig":
 				for line in stdout_lines:
 					if fnmatch.fnmatch(line, filename):
-						# libxyz.so /libc6,x86_64) => /lib64/libxyz.so.1
+						# libxyz.so (libc6,x86_64) => /lib64/libxyz.so.1
 						return line.split("=>")[-1].strip()
 			else:
 				# $ whereis libxyz.so
