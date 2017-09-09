@@ -268,19 +268,11 @@ class CustomEvent(wx.PyEvent):
 
 	def __init__(self, typeId, object, window=None):
 		wx.PyEvent.__init__(self, object.GetId(), typeId)
-		self.evtType = [typeId]
-		self.typeId = typeId
-		self.object = object
-		self.window = window
-
-	def GetEventObject(self):
-		return self.object
-
-	def GetEventType(self):
-		return self.typeId
+		self.EventObject = object
+		self.Window = window
 
 	def GetWindow(self):
-		return self.window
+		return self.Window
 
 
 _global_timer_lock = threading.Lock()
@@ -516,22 +508,14 @@ class BetterWindowDisabler(object):
 class CustomGridCellEvent(CustomEvent):
 	def __init__(self, typeId, object, row=-1, col=-1, window=None):
 		CustomEvent.__init__(self, typeId, object, window)
-		self.row = row
-		self.col = col
-
-	@property
-	def Col(self):
-		return self.col
+		self.Row = row
+		self.Col = col
 
 	def GetRow(self):
-		return self.row
+		return self.Row
 
 	def GetCol(self):
-		return self.col
-
-	@property
-	def Row(self):
-		return self.row
+		return self.Col
 
 
 class FileDrop(wx.FileDropTarget):
