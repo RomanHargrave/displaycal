@@ -1413,7 +1413,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.logoffset = 0
 		logbuffer.seek(0)
 		msg = "".join([line.decode("UTF-8", "replace") 
-					   for line in logbuffer][self.logoffset:])
+					   for line in logbuffer][self.logoffset:]).rstrip()
 		logbuffer.truncate(0)
 		if msg:
 			self.infoframe.Log(msg)
