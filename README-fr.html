@@ -50,8 +50,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.3.3 </h2>
-					<p>2017-08-08 18:40 UTC</p>
+					<h2 id="version">3.3.4 </h2>
+					<p>2017-09-09 15:53 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Télécharger</a></li>
 						<li class="requirements"><a href="#requirements" style="font-size: 11px">Exigences du système</a></li>
@@ -353,7 +353,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							</li>
 							<li>
 								<span>Fedora Rawhide</span>
-								<span><a href="https://displaycal.net/download/Fedora_Rawhide/i686/DisplayCAL.rpm">x86</a> | 
+								<span>
 								<a href="https://displaycal.net/download/Fedora_Rawhide/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
@@ -479,7 +479,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							<a href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Image disque</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.3.3.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.3.3.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.3.4.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.3.4.0/*.app</code>
 						</p>
 					</div>
 				</li>
@@ -2390,11 +2390,11 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			김환(Howard Kim) (traduction coréenne)</p>
 
 			<p>Les donateurs récents :
-<!-- 2017-07 -->
-Marko Nissinen, Karel Hurych, Antonio Marcheselli, Manuel Ustrell, Stefan Bösl, Bjorn Johansson, Troy Turner, Christopher Martinic, Julin Maloof, Henrik Kristensen, Diede Van Vree, Christopher Huynh, J. Adrian, Luca Oltenau, Stephe Koontz, Felipe De Moura Vieira, Willi Schmidt, Gerhard Kulzer, Jesus Portas Arias, James L. King Iii Dba Alijam Music, Adam Piskorski, Clark Jacobsohn, Bob Johnston, John Baarends, Geoff Sloan, Jungmin Song, Kevin Poulain, Geoffrey Smith, Phillip R Ziesemer, Keith Pimental, Barry Prager,
+<!-- 2017-08 -->
+Christoph Wurst, Michael Gleave, Manuel Diego Van Der Landen, Indramani Sharma, Aleksandar Mitov, Udo Bachmann, Brian Cairns, Christian Hodel, Michel Smolak, Ardhitama, Dominik Back, Alexandre Verstak, Nick Sarnie, Auguste Chery, Marvel Walls, www.biogon.co.uk, Stefan Weiße, Klaus Goerke, John Livy, Jason Clarke, Michael Cieslak, John Woodhouse, Steve Booke, Markus Roman, Darius Studer, David Pagès, Benjamin Chare, Gilles Ouellet, Ka Man Choi, Marc Lavine, David Dahlen, Ryan Johnson, Maximilian Pachmayr, Juan Cabello, Mark Calabretta, Kevin Poulain, Andreas Straub,
 <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
-<!-- 2017-06 -->
-Hak Shing David Lam, Michael Patterson, Ronald Wieneke, Alexander Kunz, Kaan Tasli, Richard Lim, Phil Nanzetta, Sabin Kolarov, Joakim Reuteler, Albert Sanchez, 承春 陈, Vuthjira Thangjaisathapad, Sung-Gon Yi, Benjamin Chare, George Zipfel, Vincent Horvath, John Wiesenfeld, Ken Lutes, Gilles Bangratz, Russell Ingram, Federico Vigolo, Hamzh Alnjad, Oliver Zum Felde, Paul Bearmon, Grzegorz Najder, 贤哲 林, Joseph Lovick, Axel Bechstein, Jan Martin, Piotr Przybylski, Maija Hujala, Rednine Pty Ltd
+<!-- 2017-07 -->
+Marko Nissinen, Karel Hurych, Antonio Marcheselli, Manuel Ustrell, Stefan Bösl, Bjorn Johansson, Troy Turner, Christopher Martinic, Julin Maloof, Henrik Kristensen, Diede Van Vree, Christopher Huynh, J. Adrian, Luca Oltenau, Stephe Koontz, Felipe De Moura Vieira, Willi Schmidt, Gerhard Kulzer, Jesus Portas Arias, James L. King Iii Dba Alijam Music, Adam Piskorski, Clark Jacobsohn, Bob Johnston, John Baarends, Geoff Sloan, Jungmin Song, Kevin Poulain, Geoffrey Smith, Phillip R Ziesemer, Keith Pimental, Barry Prager
 </span></p>
 
 			<p>Et tous ceux qui m’ont envoyé des retours ou signalé des bogues, suggéré des fonctionnalités ou qui, simplement, utilisent DisplayCAL.</p>
@@ -2406,10 +2406,55 @@ Hak Shing David Lam, Michael Patterson, Ronald Wieneke, Alexander Kunz, Kaan Tas
 
 		<div id="changelog">
 			<h2>Journaux des modifications</h2>
-			<!-- 2017-08-08 18:40 (UTC) 3.3.3  -->
+			<!-- 2017-09-09 15:53 (UTC) 3.3.4  -->
 			<dl>
-				<dt id="changelog-3.3.3">2017-08-08 18:40 (UTC) 3.3.3 </dt>
+				<dt id="changelog-3.3.4">2017-09-09 15:53 (UTC) 3.3.4 </dt>
 					<dd>
+						<h3>DisplayCAL 3.3.4 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>Verification charts for ISO 14861:2015 soft proofing evaluation.</li>
+							<!--li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Support for the proposed CIE 2012 2° and 10° observers (requires Argyll 1.9.4 beta or newer).</li-->
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> More even and consistent CPU utilization on multi CPU/multi core systems during high resolution device-to-PCS table generation.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Multi-threaded gamut view calculation.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use an alternate way to generate the matrix for profiles created from the small testchart for matrix profiles (may improve accuracy on very linear displays) and use an optimized tone response curve if using a single curve and the measured response is a good match to an idealized parametric or standardized tone response curve.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Uniformity report: No longer include (meaningless) correlated/closest color temperature. Use “traffic light” visual indicators in conjunction with unambiguous pass/fail messages to allow easy at-a-glance assessment of the results, and also include contrast ratio deviation to fully conform to ISO 12646:2015 and 14861:2015. You can update old reports via “Update measurement or uniformity report...” in the “Report” sub-menu of the “Tools” menu.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Use the display profile whitepoint as reference white for the measured vs. profile white delta E calculation and use the assumed target whitepoint as reference white for the measured vs. assumed white delta E calculation to make the reported delta E more meaningful.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Allow to use the display profile whitepoint as reference white when using absolute (not D50 adapted) values.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile installation (Linux): Always do fallback colord profile installation using colormgr if available unless the ARGYLL_USE_COLORD environment variable is set.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Linux): Include the profile source (colord or Argyll's UCMM) in diagnostic output and use the XrandR device ID as fallback when no EDID is available.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): Slightly improve encoding accuracy of quantizing to 8 &lt; n &lt; 16 bits.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Offer the complete range of input encodings for the eeColor 3D LUT format and do not force an identical output encoding.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Do not store calibration settings in a profile if calibration is disabled.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Revert the default profile type for the 79 patches auto-optimized testchart slider step to XYZ LUT + matrix.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Iridas cube 3D LUTs: Increase compatibility by stripping leading whitespace from text lines and adding DOMAIN_MIN/MAX keywords if missing.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Measurement report: Calculate true combined a*b* range for grayscale instead of summing separate ranges.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Measurement report: Automatically enable “Use absolute values” if using full whitepoint simulation (i.e. not relative to display profile whitepoint).</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> When cancelling profiling measurements with the testchart set to “Auto”, the testchart UI and the internal test chart setting were no longer in sync until changing the profile type or restarting the application.</li>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Synthetic ICC profile creator: Unhandled exception when trying to create DICOM (regression of a change in DisplayCAL 3.1.5, SVN revision r4020) or SMPTE 2084 profiles (regression of multiprocessing changes in DisplayCAL 3.3).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Protect against potentially clipping slightly above black values during high resolution device-to-PCS table generation (regression of a change in DisplayCAL 3.3.3, SVN revision r4705).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Protect against enumerating displays and ports in response to a DISPLAY_CHANGED event when the main window isn't shown or isn't enabled which could lead to a hang due to a race condition.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Verification using a simulation profile that defines an identity matrix in its 'chad' tag (e.g. ISOnewspaperv4) did not work correctly due to the matrix being mapped to “None” insatead of “XYZ scaling”.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Verification using a CMYK simulation profile failed with a “Profile invalid” error if previously “Use simulation profile as display profile” and “Device link profile” were enabled but no device link profile selected.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Remove separate videoLUT access support under Windows and Mac OS X (separate videoLUT access is only supported under X11).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Downloaded files were not renamed from their temporary name if the server did not return a Content-Length header (this typically only happens for text files, not binary files). Fixes not being able to import colorimeter corrections from iColor Display.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Do not reflect the black point hue in tone response curves of single curve + matrix profiles when not using black point compensation.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Measurement report: Additional stats median calculation index was off by n+1.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Display model name and manufacturer description tags were missing from profiles created using the alternate forward profiler.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Eliminate “Use absolute values” having a side-effect on the RGB patches preview.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Windows: When closing some of the standalone tools when minimized, e.g. by right-clicking the taskbar button and choosing “Close” from the menu, or by using the taskbar preview close button, the application did not close until restored from its minified state (i.e. by clicking on the taskbar button or switching to it with the task switcher).</li>
+						</ul>
+
+						<p id="changelog-3.3.3">2017-08-08 18:40 (UTC) 3.3.3 </p>
 						<h3>DisplayCAL 3.3.3 </h3>
 
 						<h4>Added in this release:</h4>
