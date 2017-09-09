@@ -201,9 +201,10 @@ class MadTPGBase(object):
 	def send(self, rgb=(0, 0, 0), bgrgb=(0, 0, 0), bits=None,
 			 use_video_levels=None, x=0, y=0, w=1, h=1):
 		cfg = self.get_pattern_config()
-		self.set_pattern_config(int(round((w + h) / 2.0 * 100)),
-								int(round(sum(bgrgb) / 3.0 * 100)), cfg[2],
-								cfg[3])
+		if cfg:
+			self.set_pattern_config(int(round((w + h) / 2.0 * 100)),
+									int(round(sum(bgrgb) / 3.0 * 100)), cfg[2],
+									cfg[3])
 		self.show_rgb(*rgb + bgrgb)
 
 
@@ -1218,7 +1219,7 @@ class MadTPG_Net_Sender(object):
 				bgb = args[5]
 			rgb = r, g, b
 			if not None in (bgr, bgg, bgb):
-				command += "Ex"
+				self.command += "Ex"
 				rgb += (bgr, bgg, bgb)
 			if None in (r, g, b):
 				raise TypeError("show_rgb() takes at least 4 arguments (%i given)" %
