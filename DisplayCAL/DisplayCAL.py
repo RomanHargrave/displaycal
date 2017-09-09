@@ -5495,7 +5495,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Skip()
 		if (cal_changed is not False and not self.updatingctrls and
 			not getcfg("3dlut.whitepoint.x", False) and
-			not getcfg("3dlut.whitepoint.x", False)):
+			not getcfg("3dlut.whitepoint.y", False)):
 			# Should change 3D LUT rendering intent to rel col?
 			wx.CallAfter(self.check_3dlut_relcol_rendering_intent)
 
