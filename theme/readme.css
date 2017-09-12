@@ -1754,6 +1754,23 @@ div.info,
 }
 
 
+/* FHPE */
+
+.fhpe {
+	/* Cannot be set on a pseudo-element in IE 8 */
+	unicode-bidi: bidi-override;
+	direction: rtl;
+}
+
+.fhpe:after {
+	content: attr(data-a) '.' attr(data-b) '@' attr(data-c);
+}
+
+.fhpe .fhpe {
+	display: none;
+}
+
+
 /* Print Styles */
 
 @media print {
