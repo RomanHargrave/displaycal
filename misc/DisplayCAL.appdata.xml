@@ -16,7 +16,7 @@
 	</screenshots>
 	<url type="homepage">${URL}</url>
 	<developer_name>${AUTHOR}</developer_name>
-	<updatecontact>florian_AT_${DOMAIN}</updatecontact>
+	<updatecontact>florian_at_${DOMAIN}</updatecontact>
 	<provides>
 		${APPDATAPROVIDES}
 		<id>dispcalGUI.desktop</id>

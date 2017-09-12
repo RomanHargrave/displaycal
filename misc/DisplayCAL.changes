@@ -6,21 +6,21 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
   * See README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
-Tue Aug 08 18:41:33 UTC 2017 - florian@displaycal.net
+Tue Aug 08 18:41:33 UTC 2017 - florian_at_displaycal.net
 
 - Update to 3.3.3.0:
   * Maintenance/bugfix release
   * See README.html#changelog-3.3.3
 
 -------------------------------------------------------------------
-Thu Jun 29 15:14:38 UTC 2017 - florian@displaycal.net
+Thu Jun 29 15:14:38 UTC 2017 - florian_at_displaycal.net
 
 - Update to 3.3.2.0:
   * Maintenance/bugfix release
   * See README.html#changelog-3.3.2
 
 -------------------------------------------------------------------
-Sun Jun 04 16:10:37 UTC 2017 - florian@displaycal.net
+Sun Jun 04 16:10:37 UTC 2017 - florian_at_displaycal.net
 
 - Update to 3.3.1.0:
   * Fix unhandled exception when using CIECAM02 with alternate
@@ -28,281 +28,281 @@ Sun Jun 04 16:10:37 UTC 2017 - florian@displaycal.net
   * See README.html#changelog-3.3.1
 
 -------------------------------------------------------------------
-Tue May 30 17:49:11 UTC 2017 - florian@displaycal.net
+Tue May 30 17:49:11 UTC 2017 - florian_at_displaycal.net
 
 - Update to 3.3.0.0:
   * High octane release: Efficiency. Accuracy. Speed. Awesome.
   * See README.html#changelog-3.3
 
 -------------------------------------------------------------------
-Sun Feb 19 16:46:26 UTC 2017 - florian@displaycal.net
+Sun Feb 19 16:46:26 UTC 2017 - florian_at_displaycal.net
 
 - Update to 3.2.4.0:
   * Maintenance/bugfix release
   * See README.html#changelog-3.2.4
 
 -------------------------------------------------------------------
-Wed Jan 04 14:12:01 UTC 2017 - florian@displaycal.net
+Wed Jan 04 14:12:01 UTC 2017 - florian_at_displaycal.net
 
 - Update to 3.2.3.0:
   * Maintenance/bugfix release
   * See README.html#changelog-3.2.3
 
 -------------------------------------------------------------------
-Tue Dec 13 22:29:24 UTC 2016 - florian@displaycal.net
+Tue Dec 13 22:29:24 UTC 2016 - florian_at_displaycal.net
 
 - Update to 3.2.2.0:
   * Maintenance/bugfix release
   * See README.html#changelog-3.2.2
 
 -------------------------------------------------------------------
-Fri Nov 25 14:05:19 UTC 2016 - florian@displaycal.net
+Fri Nov 25 14:05:19 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.2.1.0: see README.html#changelog-3.2.1
 
 -------------------------------------------------------------------
-Sat Nov 19 11:04:10 UTC 2016 - florian@displaycal.net
+Sat Nov 19 11:04:10 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.2.0.0: see README.html#changelog-3.2
 
 -------------------------------------------------------------------
-Mon Oct 24 10:29:45 UTC 2016 - florian@displaycal.net
+Mon Oct 24 10:29:45 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.7.3: see README.html#changelog-3.1.7.3
 
 -------------------------------------------------------------------
-Tue Oct 04 20:50:59 UTC 2016 - florian@displaycal.net
+Tue Oct 04 20:50:59 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.7.0: see README.html#changelog-3.1.7
 
 -------------------------------------------------------------------
-Wed Aug 24 21:06:27 UTC 2016 - florian@displaycal.net
+Wed Aug 24 21:06:27 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.6.0: see README.html#changelog-3.1.6
 
 -------------------------------------------------------------------
-Tue Aug 02 21:20:48 UTC 2016 - florian@displaycal.net
+Tue Aug 02 21:20:48 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.5.0: see README.html#changelog-3.1.5
 
 -------------------------------------------------------------------
-Sun Jul 10 21:51:48 UTC 2016 - florian@displaycal.net
+Sun Jul 10 21:51:48 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.4.0: see README.html#changelog-3.1.4
 
 -------------------------------------------------------------------
-Mon Apr 11 08:53:40 UTC 2016 - florian@displaycal.net
+Mon Apr 11 08:53:40 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.3.1: see README.html#changelog-3.1.3.1
 
 -------------------------------------------------------------------
-Sat Apr 09 10:20:55 UTC 2016 - florian@displaycal.net
+Sat Apr 09 10:20:55 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.3.0: see README.html#changelog-3.1.3
 
 -------------------------------------------------------------------
-Wed Mar  9 13:07:36 UTC 2016 - kkaempf@suse.com
+Wed Mar  9 13:07:36 UTC 2016 - kkaempf_at_suse.com
 
 - Add provides/obsoletes for the rename dispcalGUI -> DisplayCAL
   at version 3.1.0.0
 
 -------------------------------------------------------------------
-Mon Feb 29 16:43:24 UTC 2016 - florian@displaycal.net
+Mon Feb 29 16:43:24 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.1.0: see README.html#changelog-3.1.1
 
 -------------------------------------------------------------------
-Sun Jan 31 23:47:53 UTC 2016 - florian@displaycal.net
+Sun Jan 31 23:47:53 UTC 2016 - florian_at_displaycal.net
 
 - update to 3.1.0.0:
   * renamed dispcalGUI to DisplayCAL
   * see README.html#changelog-3.1
 
 -------------------------------------------------------------------
-Mon Jan 11 10:34:55 UTC 2016 - dispcalGUI@hoech.net
+Mon Jan 11 10:34:55 UTC 2016 - dispcalGUI_at_hoech.net
 
 - update to 3.0.6.3: see README.html#changelog-3.0.6.3
 
 -------------------------------------------------------------------
-Mon Dec 21 20:22:55 UTC 2015 - dispcalGUI@hoech.net
+Mon Dec 21 20:22:55 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.6.0: see README.html#changelog-3.0.6
 
 -------------------------------------------------------------------
-Thu Nov 26 22:06:42 UTC 2015 - dispcalGUI@hoech.net
+Thu Nov 26 22:06:42 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.5.0: see README.html#changelog-3.0.5
 
 -------------------------------------------------------------------
-Fri Sep 25 20:32:07 UTC 2015 - dispcalGUI@hoech.net
+Fri Sep 25 20:32:07 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.4.3: see README.html#changelog-3.0.4.3
 
 -------------------------------------------------------------------
-Mon Sep 07 13:06:27 UTC 2015 - dispcalGUI@hoech.net
+Mon Sep 07 13:06:27 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.4.2: see README.html#changelog-3.0.4.2
 
 -------------------------------------------------------------------
-Tue Sep 01 11:02:08 UTC 2015 - dispcalGUI@hoech.net
+Tue Sep 01 11:02:08 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.4.1: see README.html#changelog-3.0.4.1
 
 -------------------------------------------------------------------
-Sun Aug 09 23:23:27 UTC 2015 - dispcalGUI@hoech.net
+Sun Aug 09 23:23:27 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.4.0: see README.html#changelog-3.0.4
 
 -------------------------------------------------------------------
-Thu Jul 09 13:02:03 UTC 2015 - dispcalGUI@hoech.net
+Thu Jul 09 13:02:03 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.3.1: see README.html#changelog-3.0.3.1
 
 -------------------------------------------------------------------
-Mon Jul 06 21:01:35 UTC 2015 - dispcalGUI@hoech.net
+Mon Jul 06 21:01:35 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.3.0: see README.html#changelog-3.0.3
 
 -------------------------------------------------------------------
-Sun Jun 07 22:30:09 UTC 2015 - dispcalGUI@hoech.net
+Sun Jun 07 22:30:09 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.2.0: see README.html#changelog-3.0.2
 
 -------------------------------------------------------------------
-Sun May 31 18:43:10 UTC 2015 - dispcalGUI@hoech.net
+Sun May 31 18:43:10 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.1.0: see README.html#changelog-3.0.1
 
 -------------------------------------------------------------------
-Sat May 02 21:33:48 UTC 2015 - dispcalGUI@hoech.net
+Sat May 02 21:33:48 UTC 2015 - dispcalGUI_at_hoech.net
 
 - update to 3.0.0.0: see README.html#changelog-3.0
 
 -------------------------------------------------------------------
-Sat Nov 15 19:47:26 UTC 2014 - dispcalGUI@hoech.net
+Sat Nov 15 19:47:26 UTC 2014 - dispcalGUI_at_hoech.net
 
 - update to 2.6.0.0: see README.html#changelog-2.6
 
 -------------------------------------------------------------------
-Sat Sep 06 12:40:31 UTC 2014 - dispcalGUI@hoech.net
+Sat Sep 06 12:40:31 UTC 2014 - dispcalGUI_at_hoech.net
 
 - update to 2.5.0.0: see README.html#changelog-2.5
 
 -------------------------------------------------------------------
-Sun May 11 17:06:37 UTC 2014 - dispcalGUI@hoech.net
+Sun May 11 17:06:37 UTC 2014 - dispcalGUI_at_hoech.net
 
 - update to 2.1.0.0: see README.html#changelog-2.1
 
 -------------------------------------------------------------------
-Wed Apr 23 02:32:45 UTC 2014 - dispcalGUI@hoech.net
+Wed Apr 23 02:32:45 UTC 2014 - dispcalGUI_at_hoech.net
 
 - update to 2.0.0.0: see README.html#changelog-2.0
 
 -------------------------------------------------------------------
-Sun Feb 09 22:34:19 UTC 2014 - dispcalGUI@hoech.net
+Sun Feb 09 22:34:19 UTC 2014 - dispcalGUI_at_hoech.net
 
 - update to 1.7.5.7: see README.html#changelog-1.7.5.7
 
 -------------------------------------------------------------------
-Sun Jan 19 09:09:16 UTC 2014 - dispcalGUI@hoech.net
+Sun Jan 19 09:09:16 UTC 2014 - dispcalGUI_at_hoech.net
 
 - update to 1.7.1.6: see README.html#changelog-1.7.1.6
 
 -------------------------------------------------------------------
-Wed Oct 23 20:09:44 UTC 2013 - dispcalGUI@hoech.net
+Wed Oct 23 20:09:44 UTC 2013 - dispcalGUI_at_hoech.net
 
 - update to 1.5.3.1: see README.html#changelog-1.5.3.1
 
 -------------------------------------------------------------------
-Tue Oct 22 14:32:41 UTC 2013 - dispcalGUI@hoech.net
+Tue Oct 22 14:32:41 UTC 2013 - dispcalGUI_at_hoech.net
 
 - update to 1.5.2.5: see README.html#changelog-1.5.2.5
 
 -------------------------------------------------------------------
-Sun Mar 03 19:22:01 UTC 2013 - dispcalGUI@hoech.net
+Sun Mar 03 19:22:01 UTC 2013 - dispcalGUI_at_hoech.net
 
 - update to 1.2.7.0: see README.html#changelog-1.2.7.0
 
 -------------------------------------------------------------------
-Fri Mar 01 16:47:49 UTC 2013 - dispcalGUI@hoech.net
+Fri Mar 01 16:47:49 UTC 2013 - dispcalGUI_at_hoech.net
 
 - update to 1.2.6.6: see README.html#changelog-1.2.6.6
 
 -------------------------------------------------------------------
-Mon Jan 07 22:45:00 UTC 2013 - dispcalGUI@hoech.net
+Mon Jan 07 22:45:00 UTC 2013 - dispcalGUI_at_hoech.net
 
 - Fix typo
 
 -------------------------------------------------------------------
-Mon Jan 07 21:49:00 UTC 2013 - dispcalGUI@hoech.net
+Mon Jan 07 21:49:00 UTC 2013 - dispcalGUI_at_hoech.net
 
 - Fix missing man pages and made scripts executable
 
 -------------------------------------------------------------------
-Mon Jan 07 18:42:03 UTC 2013 - dispcalGUI@hoech.net
+Mon Jan 07 18:42:03 UTC 2013 - dispcalGUI_at_hoech.net
 
 - update to 1.1.8.3: see README.html#changelog-1.1.8.3
 
 -------------------------------------------------------------------
-Sat Jan 05 12:40:52 UTC 2013 - dispcalGUI@hoech.net
+Sat Jan 05 12:40:52 UTC 2013 - dispcalGUI_at_hoech.net
 
 - update to 1.1.7.0: see README.html#changelog-1.1.7.0
 
 -------------------------------------------------------------------
-Mon Nov 05 19:40:46 UTC 2012 - dispcalGUI@hoech.net
+Mon Nov 05 19:40:46 UTC 2012 - dispcalGUI_at_hoech.net
 
 - update to 1.1.2.9: see README.html#changelog-1.1.2.9
 
 -------------------------------------------------------------------
-Fri Oct 05 17:05:00 UTC 2012 - dispcalGUI@hoech.net
+Fri Oct 05 17:05:00 UTC 2012 - dispcalGUI_at_hoech.net
 
 - update to 1.1.2.1: see README.html#changelog-1.1.2.1
 
 -------------------------------------------------------------------
-Sat Sep 15 13:54:02 UTC 2012 - dispcalGUI@hoech.net
+Sat Sep 15 13:54:02 UTC 2012 - dispcalGUI_at_hoech.net
 
 - update to 1.1.0.0: see README.html#changelog-1.1.0.0
 
 -------------------------------------------------------------------
-Wed Aug 01 09:08:34 UTC 2012 - dispcalGUI@hoech.net
+Wed Aug 01 09:08:34 UTC 2012 - dispcalGUI_at_hoech.net
 
 - update to 1.0.9.0: see README.html#changelog-1.0.9.0
 
 -------------------------------------------------------------------
-Thu Jun 28 20:14:14 UTC 2012 - dispcalGUI@hoech.net
+Thu Jun 28 20:14:14 UTC 2012 - dispcalGUI_at_hoech.net
 
 - update to 1.0.7.7: see README.html#changelog-1.0.7.7
 
 -------------------------------------------------------------------
-Fri Jun 22 22:26:46 UTC 2012 - dispcalGUI@hoech.net
+Fri Jun 22 22:26:46 UTC 2012 - dispcalGUI_at_hoech.net
 
 - update to 1.0.7.6: see README.html#changelog-1.0.7.6
 
 -------------------------------------------------------------------
-Mon Jun 18 19:13:00 UTC 2012 - dispcalGUI@hoech.net
+Mon Jun 18 19:13:00 UTC 2012 - dispcalGUI_at_hoech.net
 
 - define RPM group per-distro as before format_spec_file
 
 -------------------------------------------------------------------
-Sat Jun  9 12:47:00 UTC 2012 - dispcalGUI@hoech.net
+Sat Jun  9 12:47:00 UTC 2012 - dispcalGUI_at_hoech.net
 
 - removed all udev stuff as it should already be handled by the
   Argyll dependency
 
 -------------------------------------------------------------------
-Thu May 10 12:28:37 UTC 2012 - coolo@suse.com
+Thu May 10 12:28:37 UTC 2012 - coolo_at_suse.com
 
 - ran format_spec_file service to give the spec file a valid
   license (it already had a copyright)
 
 -------------------------------------------------------------------
-Wed May  2 13:46:20 UTC 2012 - cfarrell@suse.com
+Wed May  2 13:46:20 UTC 2012 - cfarrell_at_suse.com
 
 - license update: GPL-3.0+
   Use SPDX syntax and always specify the version of the GPL that applies
 
 -------------------------------------------------------------------
-Thu Apr  5 17:19:55 UTC 2012 - dispcalGUI@hoech.net
+Thu Apr  5 17:19:55 UTC 2012 - dispcalGUI_at_hoech.net
 
 - added .changes file
 
