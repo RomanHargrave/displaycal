@@ -10,6 +10,7 @@
 		<meta name="viewport" content="width=device-width" />
 		<title>${APPNAME} (anciennement dispcalGUI) — Logiciel d’étalonnage et caractérisation d’écran à sources ouvertes, animé par ArgyllCMS</title>
 		<meta name="description" content="${SUMMARY}" />
+		<meta property="og:description" content="${SUMMARY}" />
 		<meta property="fb:app_id" content="210635659357680" />
 		<meta property="og:url" content="${HTTPURL}" />
 		<meta property="og:image" content="${HTTPURL}theme/icons/256x256/displaycal.png" />
@@ -2412,6 +2413,15 @@ Marko Nissinen, Karel Hurych, Antonio Marcheselli, Manuel Ustrell, Stefan Bösl,
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
 
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Linux (profile installation and profile loading): Getting the fallback XrandR display device ID could unexpectedly return no result in some cases due to incorrect parsing, leading to potential application of a stale device to profile mapping or no profile at all (regression of SVN revision r4800).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux, Mac OS X: The visual whitepoint editor was failing to update the test pattern area of a connected madTPG instance when madVR was selected as display device, due to an implementation bug related to setting the background color.</li>
+						</ul>
+
+						<p id="changelog-3.3.4">2017-09-09 15:53 (UTC) 3.3.4 </p>
+						<h3>DisplayCAL 3.3.4 </h3>
+
 						<h4>Added in this release:</h4>
 						<ul>
 							<li>Verification charts for ISO 14861:2015 soft proofing evaluation.</li>
@@ -2440,8 +2450,8 @@ Marko Nissinen, Karel Hurych, Antonio Marcheselli, Manuel Ustrell, Stefan Bösl,
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> When cancelling profiling measurements with the testchart set to “Auto”, the testchart UI and the internal test chart setting were no longer in sync until changing the profile type or restarting the application.</li>
-							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Synthetic ICC profile creator: Unhandled exception when trying to create DICOM (regression of a change in ${APPNAME} 3.1.5, SVN revision r4020) or SMPTE 2084 profiles (regression of multiprocessing changes in ${APPNAME} 3.3).</li>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Protect against potentially clipping slightly above black values during high resolution device-to-PCS table generation (regression of a change in ${APPNAME} 3.3.3, SVN revision r4705).</li>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Synthetic ICC profile creator: Unhandled exception when trying to create DICOM (regression of a change in DisplayCAL 3.1.5, SVN revision r4020) or SMPTE 2084 profiles (regression of multiprocessing changes in DisplayCAL 3.3).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Protect against potentially clipping slightly above black values during high resolution device-to-PCS table generation (regression of a change in DisplayCAL 3.3.3, SVN revision r4705).</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Protect against enumerating displays and ports in response to a DISPLAY_CHANGED event when the main window isn't shown or isn't enabled which could lead to a hang due to a race condition.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Verification using a simulation profile that defines an identity matrix in its 'chad' tag (e.g. ISOnewspaperv4) did not work correctly due to the matrix being mapped to “None” insatead of “XYZ scaling”.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Verification using a CMYK simulation profile failed with a “Profile invalid” error if previously “Use simulation profile as display profile” and “Device link profile” were enabled but no device link profile selected.</li>
