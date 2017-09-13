@@ -1477,7 +1477,7 @@ class ProfileLoader(object):
 				app.MainLoop()
 
 	def apply_profiles(self, event=None, index=None):
-		from util_os import which
+		from util_os import dlopen, which
 		from worker import Worker, get_argyll_util
 
 		if sys.platform == "win32":
@@ -1534,7 +1534,7 @@ class ProfileLoader(object):
 			xcalib = which("xcalib")
 
 		argyll_use_colord = (os.getenv("ARGYLL_USE_COLORD") and
-							 whereis("libcolordcompat.so.*"))
+							 dlopen("libcolordcompat.so"))
 
 		results = []
 		for i, display in enumerate([display.replace("[PRIMARY]", 

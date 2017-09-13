@@ -65,7 +65,7 @@ if sys.platform not in ("darwin", "win32"):
 		import xrandr
 	except ImportError:
 		xrandr = None
-	from util_os import whereis, which
+	from util_os import dlopen, which
 elif sys.platform == "win32":
 	import util_win
 	if sys.getwindowsversion() < (6, ):
@@ -2345,7 +2345,7 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				if path_only:
 					# No way to figure out the profile path from X atom, so use
 					# Argyll's UCMM if libcolordcompat.so is not present
-					if whereis("libcolordcompat.so.*"):
+					if dlopen("libcolordcompat.so"):
 						# UCMM configuration might be stale, ignore
 						return
 					profile = _ucmm_get_display_profile(display_no,

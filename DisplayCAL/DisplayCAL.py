@@ -103,7 +103,7 @@ from util_decimal import float2dec, stripzeros
 from util_io import LineCache, StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
-					 launch_file, listdir_re, waccess, whereis, which)
+					 launch_file, listdir_re, waccess, dlopen, which)
 from util_str import (ellipsis, make_filename_safe, safe_str, safe_unicode,
 					  strtr, universal_newlines, wrap)
 import util_x
@@ -341,7 +341,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 	if scale < 1:
 		scale = 1
 	if (argyll and sys.platform not in ("darwin", "win32") and
-		not whereis("libXss.so.*")):
+		not dlopen("libXss.so")):
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Insert(0, sizer, flag=wx.BOTTOM | wx.ALIGN_LEFT,
 						  border=12)

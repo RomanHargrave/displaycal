@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import fnmatch
+import ctypes
 import glob
 import locale
 import os
@@ -38,7 +38,6 @@ else:
 		reload(win32api)
 
 if sys.platform == "win32":
-	import ctypes
 	from win32file import *
 	from winioctlcon import FSCTL_GET_REPARSE_POINT
 
@@ -210,6 +209,13 @@ def quote_args(args):
 			arg = '"' + arg + '"'
 		args_out.append(arg)
 	return args_out
+
+
+def dlopen(name):
+	try:
+		return ctypes.CDLL(name)
+	except:
+		pass
 
 
 def expanduseru(path):
@@ -674,26 +680,47 @@ def which(executable, paths = None):
 	return None
 
 
-def whereis(filename):
-	for args in (["whereis", filename], ["ldconfig", "-p"]):
-		try:
-			p = sp.Popen(args, stdout=sp.PIPE)
-			stdout, stderr = p.communicate()
-		except:
-			pass
-		else:
-			stdout_lines = stdout.strip().split(os.linesep)
-			if args[0] == "ldconfig":
-				for line in stdout_lines:
-					if fnmatch.fnmatch(line, filename):
-						# libxyz.so (libc6,x86_64) => /lib64/libxyz.so.1
-						return line.split("=>")[-1].strip()
-			else:
-				# $ whereis libxyz.so
-				# libxyz.so /lib64/libxyz.so /usr/lib/libxyz.so
-				result = stdout_lines[0].split(":", 1)[-1].split()
-				if result:
-					return result[-1]
+def whereis(names, bin=True, bin_paths=None, man=True, man_paths=None, src=True,
+			src_paths=None, unusual=False, list_paths=False):
+	"""
+	Wrapper around whereis
+	
+	"""
+	args = []
+	if bin:
+		args.append("-b")
+	if bin_paths:
+		args.append("-B")
+		args.extend(bin_paths)
+	if man:
+		args.append("-m")
+	if man_paths:
+		args.append("-M")
+		args.extend(man_paths)
+	if src:
+		args.append("-s")
+	if src_paths:
+		args.append("-S")
+		args.extend(src_paths)
+	if bin_paths or man_paths or src_paths:
+		args.append("-f")
+	if unusual:
+		args.append("-u")
+	if list_paths:
+		args.append("-l")
+	if isinstance(names, basestring):
+		names = [names]
+	p = sp.Popen(["whereis"] + args + names, stdout=sp.PIPE)
+	stdout, stderr = p.communicate()
+	result = {}
+	for line in stdout.strip().splitlines():
+		# $ whereis abc xyz
+		# abc: /bin/abc
+		# xyz: /bin/xyz /usr/bin/xyz
+		match = line.split(":", 1)
+		if match:
+			result[match[0]] = match[-1].split()
+	return result
 
 
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):

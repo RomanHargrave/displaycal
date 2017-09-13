@@ -119,7 +119,7 @@ elif sys.platform == "win32":
 import colord
 from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
 					 make_win32_compatible_long_path, mkstemp_bypath,
-					 quote_args, which, whereis)
+					 quote_args, dlopen, which)
 if sys.platform not in ("darwin", "win32"):
 	from util_os import getgroups
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
@@ -6723,7 +6723,7 @@ usage: spotread [-options] [logfile]
 			(argyll_install is not True or
 			 self.argyll_version < [1, 6] or
 			 not os.getenv("ARGYLL_USE_COLORD") or
-			 not whereis("libcolordcompat.so.*")) and
+			 not dlopen("libcolordcompat.so")) and
 			which("colormgr")):
 			if device_id:
 				result = False
