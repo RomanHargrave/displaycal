@@ -201,9 +201,9 @@ def get_display_device_ids():
 	else:
 		for line in stdout.splitlines():
 			item = line.split(":", 1)
-			if len(item) > 1 and item[1].startswith("xrandr-"):
+			if len(item) > 1 and item[1].strip().startswith("xrandr-"):
 				# Found device ID
-				displays.append(item[1])
+				displays.append(item[1].strip())
 	return displays
 
 
