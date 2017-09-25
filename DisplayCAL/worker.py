@@ -12289,6 +12289,8 @@ BEGIN_DATA
 		else:
 			cmd = get_argyll_util("dispread")
 			args = ["-v"]
+			if getcfg("argyll.debug"):
+				args.append("-D8")
 			if config.get_display_name() in ("madVR", "Prisma") and colormanaged:
 				args.append("-V")
 			if cal_path:
