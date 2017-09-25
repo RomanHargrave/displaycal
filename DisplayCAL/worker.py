@@ -5799,13 +5799,13 @@ while 1:
 									  zip(xyYrgb, xyYrgb[1:] + [xyYrgb[0]])))
 				if logfile:
 					logfile.write("%s fit: %.2f (area: %.2f%%)\n" %
-								  (rgb_space[-1], 1.0 / max(extremes),
+								  (rgb_space[-1], round(1.0 / max(extremes), 2),
 								   area1 / area2 * 100))
 				pcs_candidates.append((area1 / area2,
 									   1.0 / max(extremes),
 									   rgb_space))
 				# Check if tested RGB space contains actual primaries
-				if max(extremes) <= 1.0:
+				if round(max(extremes), 2) <= 1.0:
 					break
 
 			XYZrgb = []
@@ -5862,7 +5862,7 @@ while 1:
 				# largest possible coverage)
 				pcs_candidates.sort(key=lambda row: (-row[0], row[1]))
 				for coverage, fit, rgb_space in pcs_candidates:
-					if fit >= 1:
+					if round(fit, 2) >= 1:
 						break
 				if logfile:
 					logfile.write("Using primaries: %s\n" % rgb_space[-1])
