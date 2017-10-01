@@ -11941,6 +11941,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				newval = defaults.get("profile.name", "")
 			else:
 				newval = re.sub(r"[\\/:;*?\"<>|]+", "", oldval).lstrip("-")[:self.maxprofilenamelength]
+				# Windows silently strips any combination of trailing spaces and dots
+				newval = newval.rstrip(" .")
 			self.profile_name_textctrl.ChangeValue(newval)
 			self.profile_name_textctrl.SetInsertionPoint(x - (len(oldval) - 
 															  len(newval)))
@@ -12802,6 +12804,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				profile_name = re.sub("\0+ ", " ", profile_name)
 			profile_name = re.sub("\0+", "", profile_name)
 
+		# Windows silently strips any combination of trailing spaces and dots
+		profile_name = profile_name.rstrip(" .")
+
 		# Get rid of characters considered invalid for filenames and shorten
 		# to a length of <maxprofilenamelength> chars
 		# Also strip leading dashes which might trick Argyll tools into
@@ -12828,7 +12833,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		if profile_name is None:
 			profile_name = self.profile_name_textctrl.GetValue()
 		if (re.match(r"^[^\\/:;*?\"<>|]+$", profile_name) and
-			not profile_name.startswith("-")):
+			not profile_name.startswith("-") and
+			# Windows silently strips any combination of trailing spaces and dots
+			profile_name == profile_name.rstrip(" .")):
 			return True
 		else:
 			return False
