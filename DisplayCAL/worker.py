@@ -7889,7 +7889,8 @@ usage: spotread [-options] [logfile]
 					if getcfg("profile.type") == "X":
 						if (not isinstance(profile.tags.get("vcgt"),
 									  ICCP.VideoCardGammaType) or
-							profile.tags.vcgt.is_linear()):
+							profile.tags.vcgt.is_linear() or
+							getattr(self, "single_curve", None) is False):
 							# Use matrix from 3x shaper curves profile if vcgt
 							# is linear
 							ptype = "s"
@@ -8333,16 +8334,16 @@ usage: spotread [-options] [logfile]
 		
 		# Interpolate shaper curves from grays - returned curves are adapted
 		# to D50
-		single_curve = round(dE_max, 2) <= 1.25 and round(dE_avg, 2) <= 0.5
-		if single_curve:
+		self.single_curve = round(dE_max, 2) <= 1.25 and round(dE_avg, 2) <= 0.5
+		if self.single_curve:
 			self.log("Got high quality calibration, using single device to PCS "
 					 "shaper curve for cLUT")
 
-		gray = create_shaper_curves(RGB_XYZ, bwd_matrix, single_curve,
+		gray = create_shaper_curves(RGB_XYZ, bwd_matrix, self.single_curve,
 									getcfg("profile.black_point_compensation"),
 									logfn, profile=profile,
 									options_dispcal=options_dispcal,
-									optimize=single_curve)
+									optimize=self.single_curve)
 
 		curves = [curve[:] for curve in gray]
 
