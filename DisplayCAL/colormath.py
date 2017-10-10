@@ -1475,18 +1475,12 @@ def make_monotonically_increasing(iterable, passes=0, window=None):
 		values = smooth_avg(values, passes, window)
 	sequence = zip(keys, values)
 	numvalues = len(sequence)
-	i = 0
-	while len(sequence) > i and i < len(sequence) - 2:
-		# Do not remove the last value if it identical to the second to last
-		while len(sequence) > i + 1 and sequence[i + 1][1] <= sequence[i][1]:
-			# Decreasing or identical
-			sequence.pop(i + 1)
-		i += 1
-	if len(sequence) > 1:
-		# Remove the second to last value if it is identical to the last
-		if sequence[-2][1] >= sequence[-1][1]:
-			# Decreasing or identical
-			sequence.pop(-2)
+	s_new = []
+	while sequence:
+		x, y = sequence.pop()
+		if not s_new or y < s_new[0][1]:
+			s_new.insert(0, (x, y))
+	sequence = s_new
 	# Interpolate to original size
 	x_new = [item[0] for item in sequence]
 	y = [item[1] for item in sequence]
