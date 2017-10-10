@@ -8541,7 +8541,8 @@ usage: spotread [-options] [logfile]
 								(None, "TRC")]:
 			if tagcls == omit:
 				continue
-			elif tagcls == "TRC" and profile and "A2B0" in profile.tags:
+			elif (tagcls == "TRC" and profile and "A2B0" in profile.tags and
+				  ptype == "s"):
 				# Create TRC from forward lookup through A2B
 				numentries = 256
 				maxval = numentries - 1.0
