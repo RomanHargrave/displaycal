@@ -1141,6 +1141,12 @@ def make_argyll_compatible_path(path):
 		# \\?\C:\File
 		skip = 2
 	parts = path.split(os.path.sep)
+	if sys.platform == "win32" and len(parts) > skip + 1:
+		driveletterpart = parts[skip + 1]
+		if (len(driveletterpart) == 2 and
+			driveletterpart[0].upper() in string.ascii_uppercase and
+			driveletterpart[1] == ":"):
+			skip += 1
 	for i, part in enumerate(parts):
 		if i > skip:
 			parts[i] = make_filename_safe(part)
