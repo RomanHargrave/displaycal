@@ -313,11 +313,28 @@ def make_filename_safe(unistr, encoding=fs_enc, subst="_"):
 	
 	"""
 	# Turn characters that are invalid in the filesystem encoding into ASCII
-	# equivalents
-	unistr = unistr.encode(encoding, "safe_asciize").decode(encoding)
+	# substitution character '?'
+	# NOTE that under Windows, encoding with the filesystem encoding may
+	# substitute some characters even in "strict" replacement mode depending
+	# on the Windows language setting for non-Unicode programs! (Python 2.x
+	# under Windows supports Unicode by wrapping the win32 ASCII API, so it is
+	# a non-Unicode program from that point of view. This problem presumably
+	# doesn't exist with Python 3.x which uses the win32 Unicode API)
+	unidec = unistr.encode(encoding, "replace").decode(encoding)
+	# Replace substitution character '?' with ASCII equivalent of original char
+	uniout = u""
+	for i, c in enumerate(unidec):
+		if c == u"?":
+			# Note: We prevent IndexError by using slice notation which will
+			# return an empty string if unistr should be somehow shorter than
+			# unidec. Technically, this should never happen, but who knows
+			# what hidden bugs and quirks may linger in the Python 2.x Unicode
+			# implementation...
+			c = safe_asciize(unistr[i:i + 1])
+		uniout += c
 	# Remove invalid chars
-	unistr = re.sub(r"[\\/:*?\"<>|]+", subst, unistr)
-	return unistr
+	uniout = re.sub(r"[\\/:*?\"<>|]+", subst, uniout)
+	return uniout
 
 
 def normalencode(unistr, form="NFKD", encoding="ASCII", errors="ignore"):
