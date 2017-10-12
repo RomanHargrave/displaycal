@@ -6813,12 +6813,13 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 		
 		# let the user choose a location for the result
-		defaultFile = u"Measurement Report %s — %s — %s" % (version_short,
+		defaultFile = make_argyll_compatible_path(
+			u"Measurement Report %s — %s — %s" % (version_short,
 			re.sub(r"[\\/:;*?\"<>|]+", "_",
 			self.display_ctrl.GetStringSelection().replace(" " +
 														   lang.getstr("display.primary"),
 														   "")),
-			strftime("%Y-%m-%d %H-%M.html"))
+			strftime("%Y-%m-%d %H-%M.html")))
 		if not path:
 			defaultDir = get_verified_path(None, 
 										   os.path.join(getcfg("profile.save_path"), 
