@@ -2747,7 +2747,7 @@ class ProfileLoader(object):
 							   "device %s (%s):" % (device.DeviceKey,
 													display_edid[0]), exception)
 					profile = None
-				else:
+				if profile:
 					profile = os.path.basename(profile)
 				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile,
