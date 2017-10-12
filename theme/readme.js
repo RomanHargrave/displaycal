@@ -109,13 +109,13 @@ jQuery(function ($) {
 	
 	/* toggle on link click */
 	$('a[href^="#"]:not([href^="#install-"])').click(function() {
-		if (!$($(this).attr('href')).hasClass('expanded')) $($(this).attr('href')).click();
+		if ($($(this).attr('href')).hasClass('collapsed')) $($(this).attr('href')).click();
 		return true;
 	});
 	
 	/* Install toggle on link click */
 	$('a[href^="#install-"]').click(function() {
-		if (!$($(this).attr('href')).find('h3').hasClass('expanded')) $($(this).attr('href')).find('h3').click();
+		if ($($(this).attr('href')).find('h3').hasClass('collapsed')) $($(this).attr('href')).find('h3').click();
 		return true;
 	});
 	
