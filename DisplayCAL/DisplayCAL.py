@@ -6813,13 +6813,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 		
 		# let the user choose a location for the result
-		defaultFile = make_argyll_compatible_path(
-			u"Measurement Report %s — %s — %s" % (version_short,
+		defaultFile = u"Measurement Report %s — %s — %s" % (version_short,
 			re.sub(r"[\\/:;*?\"<>|]+", "_",
 			self.display_ctrl.GetStringSelection().replace(" " +
 														   lang.getstr("display.primary"),
 														   "")),
-			strftime("%Y-%m-%d %H-%M.html")))
+			strftime("%Y-%m-%d %H-%M.html"))
 		if not path:
 			defaultDir = get_verified_path(None, 
 										   os.path.join(getcfg("profile.save_path"), 
@@ -6832,7 +6831,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.Center(wx.BOTH)
 			result = dlg.ShowModal()
 			if result == wx.ID_OK:
-				path = dlg.GetPath()
+				path = make_argyll_compatible_path(dlg.GetPath())
 				if not waccess(path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
 														 path)),
@@ -6841,6 +6840,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				return
+		else:
+			path = make_argyll_compatible_path(path)
 		save_path = os.path.splitext(path)[0] + ".html"
 		setcfg("last_filedialog_path", save_path)
 		# check if file(s) already exist
