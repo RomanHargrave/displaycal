@@ -4225,16 +4225,12 @@ class MainFrame(ReportFrame, BaseFrame):
 											"CVSpyder.dll")
 				for path in glob.glob(wildcard):
 					break
-				if path:
-					result = self.enable_spyder2(path, asroot)
-					if result and not isinstance(result, Exception):
-						return result
-			# Check install CD or location
-			result = self.enable_spyder2(None, asroot)
-			if result and not isinstance(result, Exception):
-				return result
 			if getcfg("dry_run"):
 				return
+			if path:
+				result = self.enable_spyder2(path, asroot)
+				if result and not isinstance(result, Exception):
+					return result
 			# Download from web
 			path = self.worker.download("http://%s/spyd2" % domain.lower())
 			if isinstance(path, Exception):
