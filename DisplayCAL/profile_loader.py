@@ -2167,7 +2167,8 @@ class ProfileLoader(object):
 									   "do not preserve calibration state" %
 									   display)
 						elif (madvr_reset_cal and
-							  values == vcgt_values):
+							  values == vcgt_values and
+							  values != self.linear_vcgt_values):
 							# madVR did not reset vcgt
 							self._madvr_reset_cal[key] = False
 							safe_print("madVR did not reset gamma ramps for %s, "
