@@ -960,6 +960,9 @@ class ProfileLoader(object):
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
 
+			self._pid = os.getpid()
+			self._tid = threading.currentThread().ident
+
 			class PLFrame(BaseFrame):
 
 				def __init__(self, pl):
@@ -1464,8 +1467,6 @@ class ProfileLoader(object):
 			self.frame = PLFrame(self)
 			self.frame.listen()
 
-			self._pid = os.getpid()
-			self._tid = threading.currentThread().ident
 			self._check_keep_running()
 
 			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf_wrapper,
