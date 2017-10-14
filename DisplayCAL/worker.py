@@ -10612,13 +10612,20 @@ usage: spotread [-options] [logfile]
 	
 	def argyll_support_file_exists(self, name, scope=None):
 		""" Check if named file exists in any of the known Argyll support
-		locations valid for the chosen Argyll CMS version. """
+		locations valid for the chosen Argyll CMS version.
+		
+		Scope can be 'u' (user), 'l' (local system) or None (both)
+		
+		"""
+		paths = []
 		if sys.platform != "darwin":
-			paths = [defaultpaths.appdata]
+			if not scope or scope == "u":
+				paths.append(defaultpaths.appdata)
 			if not scope or scope == "l":
 				paths += defaultpaths.commonappdata
 		else:
-			paths = [defaultpaths.library_home]
+			if not scope or scope == "u":
+				paths.append(defaultpaths.library_home)
 			if not scope or scope == "l":
 				paths.append(defaultpaths.library)
 		searchpaths = []
@@ -10627,7 +10634,9 @@ usage: spotread [-options] [logfile]
 				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)
 								   for dir_ in paths)
 			else:
-				paths2 = [defaultpaths.appdata]
+				paths2 = []
+				if not scope or scope == "u":
+					paths2.append(defaultpaths.appdata)
 				if not scope or scope == "l":
 					paths2.append(defaultpaths.library)
 				if (self.argyll_version >= [1, 9] and
@@ -10648,7 +10657,7 @@ usage: spotread [-options] [logfile]
 		""" Check if the Spyder 2 firmware file exists in any of the known
 		locations valid for the chosen Argyll CMS version.
 		
-		Scope can be 'u' (user) or 'l' (local system)
+		Scope can be 'u' (user), 'l' (local system) or None (both)
 		
 		"""
 		if self.argyll_version < [1, 2, 0]:
