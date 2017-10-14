@@ -10610,20 +10610,26 @@ usage: spotread [-options] [logfile]
 		self.set_sessionlogfile(None, basename, dirname)
 		return os.path.join(dirname, basename)
 	
-	def argyll_support_file_exists(self, name):
+	def argyll_support_file_exists(self, name, scope=None):
 		""" Check if named file exists in any of the known Argyll support
 		locations valid for the chosen Argyll CMS version. """
 		if sys.platform != "darwin":
-			paths = [defaultpaths.appdata] + defaultpaths.commonappdata
+			paths = [defaultpaths.appdata]
+			if not scope or scope == "l":
+				paths += defaultpaths.commonappdata
 		else:
-			paths = [defaultpaths.library_home, defaultpaths.library]
+			paths = [defaultpaths.library_home]
+			if not scope or scope == "l":
+				paths.append(defaultpaths.library)
 		searchpaths = []
 		if self.argyll_version >= [1, 5, 0]:
 			if sys.platform != "darwin":
 				searchpaths.extend(os.path.join(dir_, "ArgyllCMS", name)
 								   for dir_ in paths)
 			else:
-				paths2 = [defaultpaths.appdata, defaultpaths.library]
+				paths2 = [defaultpaths.appdata]
+				if not scope or scope == "l":
+					paths2.append(defaultpaths.library)
 				if (self.argyll_version >= [1, 9] and
 					self.argyll_version <= [1, 9, 1]):
 					# Argyll CMS 1.9 and 1.9.1 use *nix locations due to a
@@ -10638,9 +10644,13 @@ usage: spotread [-options] [logfile]
 				return True
 		return False
 
-	def spyder2_firmware_exists(self):
+	def spyder2_firmware_exists(self, scope=None):
 		""" Check if the Spyder 2 firmware file exists in any of the known
-		locations valid for the chosen Argyll CMS version. """
+		locations valid for the chosen Argyll CMS version.
+		
+		Scope can be 'u' (user) or 'l' (local system)
+		
+		"""
 		if self.argyll_version < [1, 2, 0]:
 			spyd2en = get_argyll_util("spyd2en")
 			if not spyd2en:
@@ -10648,7 +10658,7 @@ usage: spotread [-options] [logfile]
 			return os.path.isfile(os.path.join(os.path.dirname(spyd2en),
 											   "spyd2PLD.bin"))
 		else:
-			return self.argyll_support_file_exists("spyd2PLD.bin")
+			return self.argyll_support_file_exists("spyd2PLD.bin", scope=scope)
 
 	def spyder4_cal_exists(self):
 		""" Check if the Spyder4/5 calibration file exists in any of the known

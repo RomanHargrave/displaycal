@@ -4158,20 +4158,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			if choice == wx.ID_OK:
 				# Auto
 				path = None
-				if sys.platform in ("darwin", "win32"):
-					# Look for Spyder.lib/CVSpyder.dll ourself because spyd2en 
-					# will only try some fixed paths
-					if sys.platform == "darwin":
-						wildcard = os.path.join(os.path.sep, "Applications", 
-												"Spyder2*", "Spyder2*.app", 
-												"Contents", "MacOSClassic", 
-												"Spyder.lib")
-					else:
-						wildcard = os.path.join(getenvu("PROGRAMFILES", ""), 
-												"ColorVision", "Spyder2*", 
-												"CVSpyder.dll")
-					for path in glob.glob(wildcard):
-						break
 			else:
 				# Prompt for installer executable
 				defaultDir, defaultFile = expanduseru("~"), ""
@@ -4218,16 +4204,38 @@ class MainFrame(ReportFrame, BaseFrame):
 		if asroot and sys.platform == "win32":
 			# Wait for async process
 			sleep(1)
-			result = self.get_argyll_data_files("l", "spyd2PLD.bin")
+		if result and not isinstance(result, Exception):
+			result = self.worker.spyder2_firmware_exists(scope="l" if asroot
+															   else "u")
 		return result
 	
 	def enable_spyder2_producer(self, path, asroot):
 		if not path:
-			result = self.enable_spyder2(path, asroot)
+			if sys.platform in ("darwin", "win32"):
+				# Look for Spyder.lib/CVSpyder.dll ourself because spyd2en 
+				# will only try some fixed paths
+				if sys.platform == "darwin":
+					wildcard = os.path.join(os.path.sep, "Applications", 
+											"Spyder2*", "Spyder2*.app", 
+											"Contents", "MacOSClassic", 
+											"Spyder.lib")
+				else:
+					wildcard = os.path.join(getenvu("PROGRAMFILES", ""), 
+											"ColorVision", "Spyder2*", 
+											"CVSpyder.dll")
+				for path in glob.glob(wildcard):
+					break
+				if path:
+					result = self.enable_spyder2(path, asroot)
+					if result and not isinstance(result, Exception):
+						return result
+			# Check install CD or location
+			result = self.enable_spyder2(None, asroot)
 			if result and not isinstance(result, Exception):
 				return result
 			if getcfg("dry_run"):
 				return
+			# Download from web
 			path = self.worker.download("http://%s/spyd2" % domain.lower())
 			if isinstance(path, Exception):
 				return path
