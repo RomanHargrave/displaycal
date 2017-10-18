@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.3.4.1 </h2>
-					<p>2017-09-13 12:09 UTC</p>
+					<h2 id="version">3.3.5 </h2>
+					<p>2017-10-18 17:34 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Télécharger</a></li>
 						<li class="requirements"><a href="#requirements" style="font-size: 11px">Exigences du système</a></li>
@@ -480,7 +480,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							<a href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Image disque</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.3.4.1/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.3.4.1/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.3.5.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.3.5.0/*.app</code>
 						</p>
 					</div>
 				</li>
@@ -2391,11 +2391,11 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			김환(Howard Kim) (traduction coréenne)</p>
 
 			<p>Les donateurs récents :
-<!-- 2017-08 -->
-Christoph Wurst, Michael Gleave, Manuel Diego Van Der Landen, Indramani Sharma, Aleksandar Mitov, Udo Bachmann, Brian Cairns, Christian Hodel, Michel Smolak, Ardhitama, Dominik Back, Alexandre Verstak, Nick Sarnie, Auguste Chery, Marvel Walls, www.biogon.co.uk, Stefan Weiße, Klaus Goerke, John Livy, Jason Clarke, Michael Cieslak, John Woodhouse, Steve Booke, Markus Roman, Darius Studer, David Pagès, Benjamin Chare, Gilles Ouellet, Ka Man Choi, Marc Lavine, David Dahlen, Ryan Johnson, Maximilian Pachmayr, Juan Cabello, Mark Calabretta, Kevin Poulain, Andreas Straub,
+<!-- 2017-09 -->
+Jussi Mäkelä, Blaž Miklič, Jong Soo Park, Greetums, Travis Hale, Frederick Mwangi, Michael O'Brien, Vaclav Vancura, Dave Docimo, Thomas Williams, Lars Woodhouse, Jim Blackie, Barbara Heise, Michael King, Thomas Fackler, Venugopal Jakhotia, Javier Roche Martinez, Ralf Daubner, 大颉 杨, Sam Lee, Maixent Kionghat Owon, Keith Hills, Ivan Blazhko, Dale Gould, Mart Viires, Joon Im, Aidan Mock, Preston Brown, Edward Roslak, Leslie B Bunch, Markus Zehnder, David Clark, Ulrike Dahlhaus, James Fraser, Thorsten Geisbe, Alexey Buteskul, Daniel Menzel, Tom Cattrall, P David Vanverst, Andreas Heim, Mark Cote, Benedikt Eisenreich, Riley Brandt Photography, Robert Matsunaga, Simplified Inside,
 <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
-<!-- 2017-07 -->
-Marko Nissinen, Karel Hurych, Antonio Marcheselli, Manuel Ustrell, Stefan Bösl, Bjorn Johansson, Troy Turner, Christopher Martinic, Julin Maloof, Henrik Kristensen, Diede Van Vree, Christopher Huynh, J. Adrian, Luca Oltenau, Stephe Koontz, Felipe De Moura Vieira, Willi Schmidt, Gerhard Kulzer, Jesus Portas Arias, James L. King Iii Dba Alijam Music, Adam Piskorski, Clark Jacobsohn, Bob Johnston, John Baarends, Geoff Sloan, Jungmin Song, Kevin Poulain, Geoffrey Smith, Phillip R Ziesemer, Keith Pimental, Barry Prager
+<!-- 2017-08 -->
+Christoph Wurst, Michael Gleave, Manuel Diego Van Der Landen, Indramani Sharma, Aleksandar Mitov, Udo Bachmann, Brian Cairns, Christian Hodel, Michel Smolak, Ardhitama, Dominik Back, Alexandre Verstak, Nick Sarnie, Auguste Chery, Marvel Walls, www.biogon.co.uk, Stefan Weiße, Klaus Goerke, John Livy, Jason Clarke, Michael Cieslak, John Woodhouse, Steve Booke, Markus Roman, Darius Studer, David Pagès, Benjamin Chare, Gilles Ouellet, Ka Man Choi, Marc Lavine, David Dahlen, Ryan Johnson, Maximilian Pachmayr, Juan Cabello, Mark Calabretta, Kevin Poulain, Andreas Straub
 </span></p>
 
 			<p>Et tous ceux qui m’ont envoyé des retours ou signalé des bogues, suggéré des fonctionnalités ou qui, simplement, utilisent DisplayCAL.</p>
@@ -2407,10 +2407,30 @@ Marko Nissinen, Karel Hurych, Antonio Marcheselli, Manuel Ustrell, Stefan Bösl,
 
 		<div id="changelog">
 			<h2>Journaux des modifications</h2>
-			<!-- 2017-09-13 12:09 (UTC) 3.3.4.1  -->
+			<!-- 2017-10-18 17:34 (UTC) 3.3.5  -->
 			<dl>
-				<dt id="changelog-3.3.4.1">2017-09-13 12:09 (UTC) 3.3.4.1 </dt>
+				<dt id="changelog-3.3.5">2017-10-18 17:34 (UTC) 3.3.5 </dt>
 					<dd>
+						<h3>DisplayCAL 3.3.5 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Updated french localization (thanks to Jean-Luc Coulon).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> When generating high resolution PCS to device tables for XYZ LUT profiles, round PCS candidate “fit” so a good match is not potentially needlessly discarded in favor of a match with lower effective usage of the available lookup table grid points (may speed up the process as well).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use single curve detection based on calibration accuracy for shaper tags of XYZ LUT profiles as well.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> When enabling the Spyder2, check if the spyd2PLD.bin firmware has actually been successfully extracted (taking into account the install scope) and fall back to alternate methods when using automatic mode if the firmware cannot be extracted from the vendor software present in the local filesystem (fixes inability to enable the Spyder2 under Mac OS X if the vendor software is installed).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Windows: Make measurement report filename safe for filesystem encoding (works around encoding quirks with certain locales).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Windows: Windows silently strips any combination of trailing spaces and dots in file and folder names, so do the same for the profile name.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): WCS can return no profile without error in some situations, but the no error case wasn't accounted for, resulting in an unhandled exception in that case.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Get the process identifier before enumerating windows to prevent an unhandled exception if a madVR instance is already running before starting the profile loader.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Profile loader (Windows): Detect if the current display profile video card gamma table tag contains linear calibration when checking if madVR did reset the video card gamma table to linear to prevent the profile loader alternating between enabled and disabled state if using windowed overlay in madVR.</li>
+						</ul>
+
+						<p id="changelog-3.3.4.1">2017-09-13 12:09 (UTC) 3.3.4.1 </p>
 						<h3>DisplayCAL 3.3.4.1 </h3>
 
 						<h4>Fixed in this release:</h4>
