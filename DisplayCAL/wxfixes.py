@@ -188,7 +188,12 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.SystemSettings_GetFont = wx.SystemSettings.GetFont
 	wx.SystemSettings_GetMetric = wx.SystemSettings.GetMetric
 	wx.grid.EVT_GRID_CELL_CHANGE = wx.grid.EVT_GRID_CELL_CHANGED
-	wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.GridSelectRows
+	if hasattr( wx.grid.Grid, "GridSelectRows"):
+		# wxPython Phoenix 4.0.0a
+		wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.GridSelectRows
+	else:
+		# wxPython Phoenix 4.0.0b
+		wx.grid.Grid.wxGridSelectRows = wx.grid.Grid.SelectRows
 	wx.grid.PyGridCellEditor = wx.grid.GridCellEditor
 	wx.grid.PyGridCellRenderer = wx.grid.GridCellRenderer
 	wx.RegionFromBitmapColour = wx.Region
