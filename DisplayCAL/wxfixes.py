@@ -155,6 +155,11 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.DC.DrawRectangleRect = lambda dc, rect: dc.DrawRectangle(rect)
 	wx.DC.DrawRoundedRectangleRect = lambda dc, rect, radius: dc.DrawRoundedRectangle(rect, radius)
 	wx.DC.EndDrawing = lambda self: None
+	if not hasattr(wx.DC, "SetClippingRect"):
+		wx.DC.SetClippingRect = lambda dc, rect: dc.SetClippingRegion(rect.x,
+																	  rect.y,
+																	  rect.width,
+																	  rect.height)
 
 	wx.IconBundle.AddIconFromFile = lambda file, type=wx.BITMAP_TYPE_ANY: wx.IconBundle.AddIcon(file, type)
 
