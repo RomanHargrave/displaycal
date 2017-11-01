@@ -1841,8 +1841,13 @@ class BaseFrame(wx.Frame):
 												child.Name)
 						child.BackgroundColour = orig_child.Parent.BackgroundColour
 						child.Enabled = orig_child.Enabled
-						if orig_child.ToolTipString:
-							child.ToolTipString = orig_child.ToolTipString
+						# wxPython Classic / Phoenix
+						for tt_attr in ("ToolTipString", "ToolTip"):
+							if hasattr(orig_child, tt_attr):
+								break
+						orig_tt = getattr(orig_child, tt_attr, None)
+						if orig_tt:
+							setattr(child, tt_attr, orig_tt)
 						orig_child.ContainingSizer.Replace(orig_child, child)
 						orig_child.Destroy()
 					else:
