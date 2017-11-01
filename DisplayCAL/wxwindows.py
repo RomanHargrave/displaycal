@@ -106,8 +106,6 @@ class AboutDialog(wx.Dialog):
 		kwargs["name"] = "aboutdialog"
 		wx.Dialog.__init__(self, *args, **kwargs)
 
-		self.set_properties()
-
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 
@@ -117,10 +115,6 @@ class AboutDialog(wx.Dialog):
 
 	if "gtk3" in wx.PlatformInfo:
 		OnEraseBackground = wx_Panel.__dict__["OnEraseBackground"]
-
-	def set_properties(self):
-		icon = wx.EmptyIcon()
-		self.SetIcon(icon)
 	
 	def OnClose(self, event):
 		self.Hide()
