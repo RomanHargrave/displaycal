@@ -5266,9 +5266,12 @@ class ProgressDialog(wx.Dialog):
 				# Animation for processing
 				for pth in get_data_path("theme/shutter_anim", r"\.png$") or []:
 					im = wx.Image(pth)
-					bitmaps.append(im)
+					if im.IsOk():
+						bitmaps.append(im)
 				for pth in get_data_path("theme/jet_anim", r"\.png$") or []:
 					im = wx.Image(pth)
+					if not im.IsOk():
+						continue
 					# Blend red
 					im = im.AdjustChannels(1, .25, 0)
 					# Adjust for background
@@ -5313,7 +5316,8 @@ class ProgressDialog(wx.Dialog):
 				# Animation for generating test patches
 				for pth in get_data_path("theme/patch_anim", r"\.png$") or []:
 					im = wx.Image(pth)
-					bitmaps.append(im)
+					if im.IsOk():
+						bitmaps.append(im)
 				# Needs to be exactly 9 images
 				if bitmaps and len(bitmaps) == 9:
 					for i in xrange(3):
