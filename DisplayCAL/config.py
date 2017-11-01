@@ -471,10 +471,13 @@ def get_icon_bundle(sizes, name):
 	iconbundle = wx.IconBundle()
 	if not sizes:
 		# Assume ICO format
-		ico = wx.Icon(get_data_path("theme/icons/%s.ico" % name))
-		if ico and ico.IsOk():
-			iconbundle.AddIcon(ico)
-			return iconbundle
+		pth = get_data_path("theme/icons/%s.ico" % name)
+		if pth:
+			ico = wx.Icon(pth)
+			if ico.IsOk():
+				iconbundle.AddIcon(ico)
+				return iconbundle
+		sizes = [16]
 	for size in sizes:
 		iconbundle.AddIcon(get_bitmap_as_icon(size, name, False))
 	return iconbundle
