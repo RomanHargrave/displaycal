@@ -1847,6 +1847,8 @@ class BaseFrame(wx.Frame):
 								break
 						orig_tt = getattr(orig_child, tt_attr, None)
 						if orig_tt:
+							if isinstance(orig_tt, wx.ToolTip):
+								orig_tt = orig_tt.Tip
 							setattr(child, tt_attr, orig_tt)
 						orig_child.ContainingSizer.Replace(orig_child, child)
 						orig_child.Destroy()
