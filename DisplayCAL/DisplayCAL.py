@@ -2317,9 +2317,11 @@ class MainFrame(ReportFrame, BaseFrame):
 					# This can fail under Linux with wxPython 3.0
 					# because only normal menu items can have bitmaps
 					# there. Working fine on all other platforms.
-					menuitem.SetBitmap(
-						flagart.catalog[lcode.upper().replace("EN", 
-															  "US")].getBitmap())
+					pyimg = flagart.catalog[lcode.upper().replace("EN", "US")]
+					if pyimg.Image.IsOk():
+						bmp = pyimg.getBitmap()
+						if bmp.IsOk():
+							menuitem.SetBitmap(bmp)
 			if lang.getcode() == lcode:
 				menuitem.Check()
 				font = menuitem.Font
