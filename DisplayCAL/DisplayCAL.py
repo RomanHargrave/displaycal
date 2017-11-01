@@ -14813,7 +14813,7 @@ class StartupFrame(wx.Frame):
 		self.splash_bmp = getbitmap("theme/splash")
 		self.splash_anim = []
 		for pth in get_data_path("theme/splash_anim", r"\.png$") or []:
-			self.splash_anim.append(wx.Bitmap(pth))
+			self.splash_anim.append(getbitmap(os.path.splitext(pth)[0]))
 		self.zoom_scales = []
 		if getcfg("splash.zoom"):
 			# Zoom in instead of fade

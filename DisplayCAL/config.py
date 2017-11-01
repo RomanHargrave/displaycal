@@ -325,6 +325,9 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 					break
 			if path:
 				bitmaps[name] = wx.Bitmap(path)
+				if not bitmaps[name].IsOk():
+					path = None
+			if path:
 				if scale > 1 and i:
 					rescale = False
 					if i in (1, 2):
