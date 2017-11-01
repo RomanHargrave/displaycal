@@ -1634,7 +1634,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						 self.buttonpanelheader, flag=wx.EXPAND)
 			bgcolor = self.buttonpanel.BackgroundColour
 			self.buttonpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
-															 for v in bgcolor]))
+															 for v in bgcolor[:3]]))
 			self.buttonpanelheader.SetBackgroundColour(self.buttonpanel.BackgroundColour)
 			self.buttonpanelheader.blend = True
 		
@@ -1671,7 +1671,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						 self.tabpanelfooter, flag=wx.EXPAND)
 			bgcolor = self.tabpanel.BackgroundColour
 			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * .2125)
-															 for v in bgcolor]))
+															 for v in bgcolor[:3]]))
 			self.tabpanel.ForegroundColour = "#EEEEEE"
 			self.tabpanelheader.SetBackgroundColour(self.tabpanel.BackgroundColour)
 			self.tabpanelheader.blend = True

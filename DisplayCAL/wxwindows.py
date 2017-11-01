@@ -5958,7 +5958,7 @@ class TwoWaySplitter(FourWaySplitter):
 		:param `dc`: an instance of `wx.DC`.
 		"""
 
-		backColour = wx.Colour(*[int(v * .85) for v in self.BackgroundColour])
+		backColour = wx.Colour(*[int(v * .85) for v in self.BackgroundColour[:3]])
 		dc.SetBrush(wx.Brush(backColour, wx.SOLID))
 		dc.SetPen(wx.Pen(backColour))
 		dc.Clear()
