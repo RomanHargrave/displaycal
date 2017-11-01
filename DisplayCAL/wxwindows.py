@@ -2996,6 +2996,9 @@ class BorderGradientButton(GradientButton):
 	def SetBitmapSelected(self, bitmap):
 		self._bitmapselected = bitmap
 
+	def Update(self):
+		pass
+
 
 class CustomGrid(wx.grid.Grid):
 

@@ -1305,6 +1305,9 @@ class PlateButton(platebtn.PlateButton):
 		bevt.SetString(self.GetLabel())
 		self.GetEventHandler().ProcessEvent(bevt)
 
+	def Refresh(self, eraseBackground=True, rect=None):
+		wx.Control.Refresh(self, False, rect)
+
 	Disable = ThemedGenButton.__dict__["Disable"]
 	Enable = ThemedGenButton.__dict__["Enable"]
 	Enabled = ThemedGenButton.__dict__["Enabled"]
