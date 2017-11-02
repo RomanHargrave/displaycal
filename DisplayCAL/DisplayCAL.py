@@ -9395,6 +9395,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.panel.Thaw()
 		self.update_scrollbars()
 		self.calpanel.Layout()
+		self.calpanel.Update()
 	
 	def colorimeter_correction_matrix_ctrl_handler(self, event, path=None):
 		measurement_mode = getcfg("measurement_mode")
