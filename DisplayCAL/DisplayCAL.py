@@ -176,6 +176,7 @@ def swap_dict_keys_values(mydict):
 def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	""" Check for application update. Show an error dialog if a failure
 	occurs. """
+	global app_is_uptodate
 	if argyll:
 		if parent and hasattr(parent, "worker"):
 			argyll_version = parent.worker.argyll_version
@@ -219,6 +220,8 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 						 bitmap=geticon(32, "dialog-error"), log=False)
 			return
 		newversion_tuple = (0, 0, 0, 0)
+	if not argyll:
+		app_is_uptodate = newversion_tuple <= curversion_tuple
 	if newversion_tuple > curversion_tuple:
 		# Get changelog
 		resp = http_request(parent, domain, "GET", "/" + readme_file,
@@ -251,8 +254,7 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	elif not argyll and not snapshot and VERSION > VERSION_BASE:
 		app_update_check(parent, silent, True)
 	elif not argyll:
-		if silent:
-			safe_print(lang.getstr("update_check.uptodate", appname))
+		safe_print(lang.getstr("update_check.uptodate", appname))
 		if check_argyll_bin():
 			app_update_check(parent, silent, argyll=True)
 		elif silent:
@@ -262,7 +264,10 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 		else:
 			wx.CallAfter(parent.set_argyll_bin_handler, True)
 	elif not silent:
-		wx.CallAfter(app_uptodate, parent)
+		safe_print(lang.getstr("update_check.uptodate", "ArgyllCMS"))
+		wx.CallAfter(app_uptodate, parent,
+					 "ArgyllCMS" if not globals().get("app_is_uptodate")
+					 else appname)
 	else:
 		safe_print(lang.getstr("update_check.uptodate", "ArgyllCMS"))
 		# Check if we need to run instrument setup
@@ -281,13 +286,14 @@ def check_donation(parent, snapshot):
 		wx.CallAfter(donation_message, parent)
 
 
-def app_uptodate(parent=None):
+def app_uptodate(parent=None, appname=appname):
 	""" Show a dialog confirming application is up-to-date """
 	dlg = InfoDialog(parent, 
 					 msg=lang.getstr("update_check.uptodate",
 									 appname),
 					 ok=lang.getstr("ok"), 
-					 bitmap=geticon(32, "dialog-information"), show=False)
+					 bitmap=geticon(32, "dialog-information"), show=False,
+					 log=False)
 	update_check = wx.CheckBox(dlg, -1, 
 							   lang.getstr("update_check.onstartup"))
 	update_check.SetValue(getcfg("update_check"))
