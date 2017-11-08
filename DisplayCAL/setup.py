@@ -688,7 +688,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					lines.append(o)
 				print o.rstrip()
 			if len(lines):
-				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.3'
+				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
 				sp.call(lines[-1], shell = True)  # fix the library
 	else:
 		macros = [("UNIX", None)]
@@ -733,7 +733,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 
 	attrs = {
 		"author": author_ascii,
-		"author_email": author_email,
+		"author_email": author_email.replace("@", "_at_"),
 		"classifiers": [
 			"Development Status :: 5 - Production/Stable",
 			"Environment :: MacOS X",
