@@ -909,6 +909,7 @@
 	"settings_loaded.profile": "프로파일이 프로파일 설정만 가지고 있습니다. 다른 옵션은 변경되지 않았습니다. 캘리브레이션 곡선을 발견하지 못했습니다.",
 	"settings_loaded.profile_and_lut": "프로파일이 프로파일링 설정만 가지고 있습니다. 다른 옵션은 변경되지 않았고 캘리브레이션 곡선만 로드되었습니다.",
 	"show_advanced_options": "고급 옵션 보기",
+		"*show_notifications": "Show notifications",
 	"silkscreen": "실크스크린",
 	"simulation_profile": "프로파일 시물레이션",
 	"size": "크기",

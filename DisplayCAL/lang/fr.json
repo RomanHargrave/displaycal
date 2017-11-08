@@ -909,6 +909,7 @@
 	"settings_loaded.profile": "Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées. Aucune courbe d’étalonnage n'a été trouvée.",
 	"settings_loaded.profile_and_lut": "Le profil ne contenait que des paramètres de caractérisation. Les autres options n'ont pas été modifiées et les courbes d’étalonnage ont été chargées.",
 	"show_advanced_options": "Afficher les options avancées",
+		"*show_notifications": "Show notifications",
 	"silkscreen": "Sérigraphieuse",
 	"simulation_profile": "Profil de simulation",
 	"size": "Taille",

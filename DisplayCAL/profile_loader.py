@@ -1117,6 +1117,13 @@ class ProfileLoader(object):
 								   wx.ITEM_CHECK,
 								   "profile_loader.fix_profile_associations",
 								   None),
+								  ("show_notifications",
+								   lambda event:
+								   setcfg("profile_loader.show_notifications",
+										  int(event.IsChecked())),
+								   wx.ITEM_CHECK,
+								   "profile_loader.show_notifications",
+								   None),
 								  ("-", None, False, None, None),
 								  ("bitdepth",
 								   (("8", lambda event:
@@ -1375,6 +1382,9 @@ class ProfileLoader(object):
 					if debug > 1:
 						safe_print("[DEBUG] show_notification(text=%r, sticky=%s, show_notification=%s, flags=%r, toggle=%s)" %
 								   (text, sticky, show_notification, flags, toggle))
+					if (sticky or text) and show_notification:
+						# Do not show notification unless enabled
+						show_notification = getcfg("profile_loader.show_notifications")
 					if sticky:
 						self.balloon_text = text
 						self.flags = flags
@@ -2286,7 +2296,7 @@ class ProfileLoader(object):
 						results.insert(0, self._app_detection_msg)
 						self._app_detection_msg = None
 				self.notify(results, errors,
-							show_notification=(not first_run or errors) and
+							show_notification=bool(not first_run or errors) and
 											  self.__other_component[1] != "madHcNetQueueWindow")
 			else:
 				##if (apply_profiles != self.__apply_profiles or

@@ -909,6 +909,7 @@
 	"settings_loaded.profile": "Das Profil enthielt nur Profilierungseinstellungen. Andere Einstellungen wurden nicht verändert. Keine Kalibrierungskurven gefunden.",
 	"settings_loaded.profile_and_lut": "Das Profil enthielt nur Profilierungseinstellungen. Andere Einstellungen wurden nicht verändert und die Kalibrierungskurven geladen.",
 	"show_advanced_options": "Erweiterte Optionen zeigen",
+	"show_notifications": "Benachrichtigungen anzeigen",
 	"silkscreen": "Siebdruck",
 	"simulation_profile": "Simulationsprofil",
 	"size": "Größe",

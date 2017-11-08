@@ -1010,6 +1010,7 @@ defaults = {
 	"profile_loader.known_window_classes": ";".join(["CalClient.exe"]),
 	"profile_loader.quantize_bits": 16,
 	"profile_loader.reset_gamma_ramps": 0,
+	"profile_loader.show_notifications": 0,
 	"profile_loader.track_other_processes": 1,
 	"profile_loader.use_madhcnet": 0,
 	"profile_loader.verify_calibration": 0,

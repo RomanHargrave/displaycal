@@ -909,6 +909,7 @@
 	"settings_loaded.profile": "The profile contained just profiling settings. Other options have not been changed. No calibration curves have been found.",
 	"settings_loaded.profile_and_lut": "The profile contained just profiling settings. Other options have not been changed and calibration curves have been loaded.",
 	"show_advanced_options": "Show advanced options",
+	"show_notifications": "Show notifications",
 	"silkscreen": "Silkscreen",
 	"simulation_profile": "Simulation profile",
 	"size": "Size",

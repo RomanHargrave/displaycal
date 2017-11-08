@@ -909,6 +909,7 @@
 	"settings_loaded.profile": "描述檔只內含特性分析設定。其他選項並未修改。找不到校正曲線。",
 	"settings_loaded.profile_and_lut": "描述檔只內含特性分析設定。 其他選項並未修改及已經載入校正曲線。",
 	"show_advanced_options": "顯示進階選項",
+		"*show_notifications": "Show notifications",
 	"silkscreen": "絲印",
 	"simulation_profile": "模擬描述檔",
 	"size": "大小",
