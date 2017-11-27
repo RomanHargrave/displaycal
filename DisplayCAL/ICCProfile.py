@@ -1089,16 +1089,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			XYZsrc = HDR_XYZ[i]
 			if display_XYZ:
 				XYZdisp = display_XYZ[i]
-				XYZdisp = colormath.apply_bpc(*XYZdisp, bp_in=display_XYZ[0],
-											  bp_out=(0, 0, 0),
-											  wp_out=display_XYZ[-1])
 				### Adjust luminance from destination to source
 				##Ydisp = XYZdisp[1]
 				##if Ydisp:
 					##XYZdisp = [v / Ydisp * XYZsrc[1] for v in XYZdisp]
-				XYZsrc = colormath.apply_bpc(*XYZsrc, bp_in=HDR_XYZ[0],
-											  bp_out=(0, 0, 0),
-											  wp_out=HDR_XYZ[-1])
 			else:
 				XYZdisp = XYZsrc
 			X, Y, Z = (v * new_maxv for v in XYZsrc)
