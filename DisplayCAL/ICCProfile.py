@@ -614,6 +614,8 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 
 def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0, white_cdm2=400,
+											master_black_cdm2=0,
+											master_white_cdm2=10000,
 											maxcll=10000,
 											content_rgb_space="DCI P3",
 											rolloff=True,
@@ -680,41 +682,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 								  (0, 0, scale)))
 		otable.matrix = m2 * m3
 
-	minv = black_cdm2 / 10000.0
-	mini = colormath.specialpow(minv, 1.0 / -2084)
-	maxv = white_cdm2 / 10000.0
-	maxi = colormath.specialpow(maxv, 1.0 / -2084)
-	maxci = colormath.specialpow(maxcll / 10000.0, 1.0 / -2084)
-	if rolloff:
-		# Rolloff as defined in ITU-R BT.2390-0
-		KS = 1.5 * maxi - 0.5
-		def T(A, KS=KS):
-			return (A - KS) / (1 - KS)
-		def P(B, KS=KS, maxi=maxi, maxci=maxci):
-			E2 = ((2 * T(B, KS) ** 3 - 3 * T(B, KS) ** 2 + 1) * KS +
-				  (T(B, KS) ** 3 - 2 * T(B, KS) ** 2 + T(B, KS)) * (1 - KS) +
-				  (-2 * T(B, KS) ** 3 + 3 * T(B, KS) ** 2) * maxi)
-			if maxci < 1:
-				s = min(((B - KS) / (maxci - KS)) ** 4, 1.0)
-				E2 = E2 * (1 - s) + maxi * s
-			return E2
-		# Need to scale into maxv for black offset
-		if KS < 1:
-			E2 = P(1)
-		else:
-			E2 = 1
-		n = E2 + mini * (1 - E2) ** 4
-		maxv = colormath.specialpow(n, -2084)
-
-	def apply_bpc(v, b_in, b_out, w_out):
-		return max(((w_out - b_out) * v - w_out * (b_in - b_out)) / (w_out - b_in), 0)
-
-	def apply_rolloff(v, KS=KS, maxi=maxi, maxci=maxci, mini=mini):
-		if rolloff and 0 < KS < 1 and KS <= v <= 1:
-			v = P(v, KS, maxi, maxci)
-		if mini and 0 <= v <= 1:
-			v = v + mini * (1 - v) ** 4
-		return v
+	bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
+							  master_white_cdm2, maxcll)
+	maxv = bt2390.maxv
 	
 	# Input curve interpolation
 	# Normlly the input curves would either be linear (= 1:1 mapping to
@@ -730,7 +700,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	segment = 1.0 / (clutres - 1.0)
 	iv = 0.0
 	prevpow = 0.0
-	nextpow = colormath.specialpow(apply_rolloff(segment), gamma)
+	nextpow = colormath.specialpow(bt2390.apply(segment), gamma)
 	xp = []
 	if generate_B2A:
 		oxp = []
@@ -739,14 +709,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		if v > iv + segment:
 			iv += segment
 			prevpow = nextpow
-			nextpow = colormath.specialpow(apply_rolloff(iv + segment), gamma)
+			nextpow = colormath.specialpow(bt2390.apply(iv + segment), gamma)
 		prevs = 1.0 - (v - iv) / segment
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
-		out = colormath.specialpow(apply_bpc(vv, 0.0, minv, maxv), 1.0 / gamma)
+		out = colormath.specialpow(vv, 1.0 / gamma)
 		xp.append(out)
 		if generate_B2A:
-			oxp.append(colormath.specialpow(apply_rolloff(v), gamma) / maxv)
+			oxp.append(colormath.specialpow(bt2390.apply(v), gamma) / maxv)
 	interp = colormath.Interp(xp, range(steps), use_numpy=True)
 	if generate_B2A:
 		ointerp = colormath.Interp(oxp, range(steps), use_numpy=True)
@@ -774,6 +744,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		endperc = 5
 	else:
 		endperc = 10
+	in0 = interp(bt2390.apply(0)) / maxstep * 65535
 	for j in xrange(entries):
 		if worker and worker.thread_abort:
 			if forward_xicclu:
@@ -782,7 +753,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				backward_xicclu.exit()
 			raise Exception("aborted")
 		n = j / (entries - 1.0)
-		v = interp(apply_rolloff(n)) / maxstep * 65535
+		v = interp(bt2390.apply(n)) / maxstep * 65535
+		if n <= segment:
+			v = colormath.convert_range(v, in0, segment * 65535,
+										0, segment * 65535)
 		for i in xrange(3):
 			itable.input[i].append(v)
 		perc = math.floor(n * endperc)
@@ -852,7 +826,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space)
 					if Y:
 						I1 = colormath.specialpow(Y, 1.0 / -2084)
-						I2 = apply_rolloff(I1)
+						I2 = bt2390.apply(I1)
 						Y2 = colormath.specialpow(I2, -2084)
 						X, Y, Z = (v / Y * Y2 for v in (X, Y, Z))
 						min_I = min(I1 / I2, I2 / I1)
@@ -866,7 +840,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				elif mode == "HSV":
 					HSV = list(colormath.RGB2HSV(*RGB))
 					I1 = HSV[2]
-					HSV[2] = apply_rolloff(I1)
+					HSV[2] = bt2390.apply(I1)
 					I2 = HSV[2]
 					if I1 and I2:
 						min_I = min(I1 / I2, I2 / I1)
@@ -882,7 +856,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					if debug and R == G == B:
 						safe_print("-> ICtCp % 5.3f % 5.3f % 5.3f" %
 								   (I1, Ct1, Cp1,), end=" ")
-					I2 = apply_rolloff(I1)
+					I2 = bt2390.apply(I1)
 					if I1 and I2:
 						min_I = min(I1 / I2, I2 / I1)
 					else:
@@ -903,7 +877,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				elif mode == "RGB":
 					I1 = colormath.RGB2HSV(*RGB)[2]
 					for i, v in enumerate(RGB):
-						RGB[i] = apply_rolloff(v)
+						RGB[i] = bt2390.apply(v)
 					I2 = colormath.RGB2HSV(*RGB)[2]
 					if I1 and I2:
 						min_I = min(I1 / I2, I2 / I1)
@@ -1284,8 +1258,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 									KSCc = 1.5 * maxCc - 0.5
 									Cc1 = min(C / HCmax, 1.0)
 									if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
-										Cc2 = apply_rolloff(Cc1, KSCc,
-														    maxCc, 1.0, 0)
+										Cc2 = bt2390.apply(Cc1, KSCc,
+														   maxCc, 1.0, 0)
 										C = HCmax * Cc2
 									else:
 										if debug:
@@ -1575,21 +1549,11 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	if rolloff:
 		# Rolloff as defined in ITU-R BT.2390-0
 		KS = 1.5 * maxi - 0.5
-		def T(A, KS=KS):
-			return (A - KS) / (1 - KS)
-		def P(B, KS=KS, maxi=maxi, maxci=maxci):
-			E2 = ((2 * T(B, KS) ** 3 - 3 * T(B, KS) ** 2 + 1) * KS +
-				  (T(B, KS) ** 3 - 2 * T(B, KS) ** 2 + T(B, KS)) * (1 - KS) +
-				  (-2 * T(B, KS) ** 3 + 3 * T(B, KS) ** 2) * maxi)
-			if maxci < 1:
-				s = min(((B - KS) / (maxci - KS)) ** 4, 1.0)
-				E2 = E2 * (1 - s) + maxi * s
-			return E2
 
 	def apply_rolloff(v, KS=KS, maxi=maxi, maxci=maxci, mini=mini):
 		if rolloff:
 			if 0 < KS < 1 and KS <= v <= 1:
-				v = P(v, KS, maxi, maxci)
+				v = colormath.BT2390.P(v, KS, maxi, maxci)
 		else:
 			v = min(v, maxi)
 		if mini and 0 <= v <= 1:
@@ -3688,27 +3652,13 @@ class CurveType(ICCProfileTag, list):
 							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
 							 max(white_cdm2, white_out_cdm2))
 		values = []
-		minv = black_cdm2 / 10000.0
-		mini = colormath.specialpow(minv, 1.0 / -2084)
 		maxv = white_cdm2 / 10000.0
 		maxi = colormath.specialpow(maxv, 1.0 / -2084)
 		maxi_out = colormath.specialpow(white_out_cdm2 / 10000.0, 1.0 / -2084)
 		if rolloff:
-			# Rolloff as defined in ITU-R BT.2390-0
-			KS = 1.5 * maxi - 0.5
-			def T(A):
-				return (A - KS) / (1 - KS)
-			def P(B):
-				return ((2 * T(B) ** 3 - 3 * T(B) ** 2 + 1) * KS +
-						(T(B) ** 3 - 2 * T(B) ** 2 + T(B)) * (1 - KS) +
-						(-2 * T(B) ** 3 + 3 * T(B) ** 2) * maxi)
-			# Need to scale into maxv for black offset
-			if KS < 1:
-				E2 = P(1)
-			else:
-				E2 = 1
-			n = E2 + mini * (1 - E2) ** 4
-			scale = maxv / colormath.specialpow(n, -2084)
+			# Rolloff as defined in ITU-R BT.2390
+			bt2390 = colormath.BT2390(black_cdm2, white_cdm2)
+			scale = maxv / bt2390.maxv
 		else:
 			scale = 1
 		if not size:
@@ -3717,10 +3667,8 @@ class CurveType(ICCProfileTag, list):
 			size = 1024
 		for i in xrange(size):
 			n = i / (size - 1.0)
-			if rolloff and KS < 1 and KS <= n <= 1:
-				n = P(n)
-			if 0 <= n <= 1:
-				n = n + mini * (1 - n) ** 4
+			if rolloff:
+				n = bt2390.apply(n)
 			v = colormath.specialpow(n * (maxi / maxi_out), -2084) * scale
 			values.append(min(v / maxv, 1.0))
 		self[:] = [min(v * 65535, 65535) for v in values]

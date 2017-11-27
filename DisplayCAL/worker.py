@@ -2111,8 +2111,8 @@ class Worker(WorkerBase):
 					xb=None
 				profile = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
-					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, maxcll,
-					content_rgb_space=content_rgb_space,
+					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, 0, 10000,
+					maxcll, content_rgb_space=content_rgb_space,
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,

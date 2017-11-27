@@ -12,6 +12,7 @@ import colorsys
 import logging
 import math
 import sys
+import warnings
 
 
 def get_transfer_function_phi(alpha, gamma):
@@ -2667,6 +2668,101 @@ class BT1886(object):
 		logging.debug("bt1886 XYZ out %f %f %f" % (out[0], out[1], out[2]))
 
 		return out
+
+
+class BT2390(object):
+
+	"""
+	Roll-off for SMPTE 2084 (PQ) according to Report ITU-R BT.2390-2 HDR TV
+	
+	"""
+
+	def __init__(self, black_cdm2, white_cdm2, master_black_cdm2=0,
+				 master_white_cdm2=10000, maxcll=10000):
+		"""
+		MaxCLL can be specified for a hard non-hue-preserving(!) clip.
+		Master black and white level are used to normalize the PQ values.
+		
+		"""
+
+		# Avoid discontinuity in function if black level in floating point PQ
+		# is above 0.25
+		black_max_cdm2 = specialpow(0.25, -2084) * 10000
+		if black_cdm2 > black_max_cdm2:
+			warnings.warn("Black level %f is out of range for BT.2390 - using "
+						  "%f" % (black_cdm2, black_max_cdm2), Warning)
+			black_cdm2 = black_max_cdm2
+	
+		self.minv = black_cdm2 / 10000.0
+		self.mini = specialpow(self.minv, 1.0 / -2084)  # minLum
+		self.maxv = white_cdm2 / 10000.0
+		self.maxi = specialpow(self.maxv, 1.0 / -2084)  # maxLum
+
+		self.maxci = specialpow(maxcll / 10000.0, 1.0 / -2084)
+
+		# BT.2390-2
+		self.mminv = master_black_cdm2 / 10000.0
+		self.mmini = specialpow(self.mminv, 1.0 / -2084)
+		self.mmaxv = master_white_cdm2 / 10000.0
+		self.mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
+		self.mini = (self.mini - self.mmini) / (self.mmaxi - self.mmini)
+		self.maxi = (self.maxi - self.mmini) / (self.mmaxi - self.mmini)
+
+		self.KS = 1.5 * self.maxi - 0.5
+
+		# Need to scale into maxv for black offset
+		if self.KS < 1:
+			E2 = self.P(1, self.KS, self.maxi, self.maxci)
+		else:
+			E2 = 1
+		self.maxv = specialpow(E2 + self.mini * (1 - E2) ** 4, -2084)
+
+	@staticmethod
+	def T(A, KS):
+		return (A - KS) / (1 - KS)
+
+	@staticmethod
+	def P(B, KS, maxi, maxci):
+		E2 = ((2 * BT2390.T(B, KS) ** 3 - 3 * BT2390.T(B, KS) ** 2 + 1) * KS +
+			  (BT2390.T(B, KS) ** 3 - 2 * BT2390.T(B, KS) ** 2 +
+			  BT2390.T(B, KS)) * (1 - KS) + (-2 * BT2390.T(B, KS) ** 3 + 3 *
+			  BT2390.T(B, KS) ** 2) * maxi)
+		if maxci < 1:
+			# Clipping for slightly better target display peak luminance usage
+			# FIXME: Should switch to hue preserving clip if used, or get rid
+			# of it entirely
+			s = min(((B - KS) / (maxci - KS)) ** 4, 1.0)
+			E2 = E2 * (1 - s) + maxi * s
+		return E2
+
+	def apply(self, v, KS=None, maxi=None, maxci=None, mini=None,
+			  mmaxi=None, mmini=None, bpc=False):
+		""" Apply roll-off (PQ in, PQ out) """
+		if KS is None:
+			KS = self.KS
+		if maxi is None:
+			maxi = self.maxi
+		if maxci is None:
+			maxci = self.maxci
+		if mini is None:
+			mini = self.mini
+		if mmaxi is None:
+			mmaxi = self.mmaxi
+		if mmini is None:
+			mmini = self.mmini
+		if mmini is not None and mmaxi is not None:
+			# Normalize PQ values based on mastering display black/white levels
+			v = max((v - mmini) / (mmaxi - mmini), 0)
+		if 0 < KS < 1 and KS <= v <= 1:
+			v = self.P(v, KS, maxi, maxci)
+		if mini and 0 <= v <= 1:
+			v += mini * (1 - v) ** 4
+		if bpc:
+			v = convert_range(v, mini, maxi, 0, maxi)
+		if mmini is not None and mmaxi is not None:
+			# Invert the normalization of the PQ values
+			v = v * (mmaxi - mmini) + mmini
+		return v
 
 
 class Matrix3x3(list):

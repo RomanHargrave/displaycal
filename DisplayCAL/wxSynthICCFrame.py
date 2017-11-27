@@ -689,7 +689,7 @@ class SynthICCFrame(BaseFrame):
 					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 						rgb_space, "",
 						getcfg("synthprofile.black_luminance") * (1 - outoffset),
-						getcfg("synthprofile.luminance"),
+						getcfg("synthprofile.luminance"), 0, 10000,
 						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
 						worker=self.worker, logfile=logfiles).tags.A2B0
 					profile.write(path)
