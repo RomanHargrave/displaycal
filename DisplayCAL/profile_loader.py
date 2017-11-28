@@ -931,7 +931,6 @@ class ProfileLoader(object):
 		self._known_window_classes = set(config.defaults["profile_loader.known_window_classes"].split(";") +
 										 config.getcfg("profile_loader.known_window_classes").split(";"))
 		self._buggy_video_drivers = set(buggy_video_driver.lower() for buggy_video_driver in
-										config.defaults["profile_loader.buggy_video_drivers"].split(";") +
 										config.getcfg("profile_loader.buggy_video_drivers").split(";"))
 		self._set_exceptions()
 		self._madvr_instances = []
