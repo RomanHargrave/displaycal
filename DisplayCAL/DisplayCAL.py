@@ -3652,8 +3652,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_create_btn.Enable(is_profile() and
 									 getcfg("calibration.file", False)
 									 not in self.presets)
-		if getcfg("calibration.file", False) in self.presets[1:]:
-			self.measurement_report_btn.Disable()
 		
 		self.panel.Layout()
 		self.panel.Thaw()
