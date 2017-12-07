@@ -24,7 +24,7 @@ from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
 						  UnloggedWarning, Warn)
 from log import LogFile, safe_print
 from meta import name as appname
-from multiprocess import mp
+from multiprocess import mp, pool_slice
 from options import debug, verbose
 from util_os import getenvu, quote_args, which
 from util_str import safe_basestring, safe_str, safe_unicode
@@ -706,3 +706,55 @@ class Xicclu(WorkerBase):
 			pass
 		
 		return locals()
+
+
+class MP_Xicclu(Xicclu):
+
+	def __init__(self, profile, intent="r", direction="f", order="n",
+				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
+				 use_cam_clipping=False, logfile=None, worker=None,
+				 show_actual_if_clipped=False, input_encoding=None,
+				 output_encoding=None):
+		WorkerBase.__init__(self)
+		self.logfile = logfile
+		self.worker = worker
+		self._in = []
+		self._args = (profile.fileName, intent, direction, order,
+					  pcs, scale, cwd, startupinfo, use_icclu,
+					  use_cam_clipping, None,
+					  show_actual_if_clipped, input_encoding,
+					  output_encoding, lang.getstr("aborted"))
+		self._out = []
+		num_cpus = mp.cpu_count()
+		if isinstance(profile.tags.get("A2B0"), ICCP.LUT16Type):
+			size = profile.tags.A2B0.clut_grid_steps
+			self.num_workers = min(max(num_cpus, 1), size)
+			if num_cpus > 2:
+				self.num_workers = int(self.num_workers * 0.75)
+			self.num_batches = size // 9
+		else:
+			if num_cpus > 2:
+				self.num_workers = 2
+			else:
+				self.num_workers = num_cpus
+			self.num_batches = 1
+
+	def __call__(self, idata):
+		self._in.append(idata)
+
+	def close(self):
+		pass
+
+	def exit(self):
+		pass
+
+	def spawn(self):
+		pass
+
+	def get(self):
+
+		for slices in pool_slice(_mp_xicclu, self._in, self._args, {},
+								 self.num_workers, self.thread_abort,
+								 self.logfile, num_batches=self.num_batches):
+			self._out.extend(slices)
+		return self._out

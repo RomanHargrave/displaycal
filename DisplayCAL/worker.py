@@ -126,7 +126,8 @@ if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 	from util_os import win64_disable_file_system_redirection
 from util_str import (make_filename_safe, safe_basestring, safe_asciize,
 					  safe_str, safe_unicode, strtr, universal_newlines)
-from worker_base import (WorkerBase, Xicclu, _mp_generate_B2A_clut, _mp_xicclu,
+from worker_base import (MP_Xicclu, WorkerBase, Xicclu, _mp_generate_B2A_clut,
+						 _mp_xicclu,
 						 check_argyll_bin, get_argyll_util, get_argyll_utilname,
 						 get_argyll_version_string as
 						 base_get_argyll_version_string,
@@ -2056,7 +2057,7 @@ class Worker(WorkerBase):
 		if smpte2084:
 			lumi = profile2.tags.get("lumi", ICCP.XYZType())
 			profile1.set_smpte2084_trc([v * lumi.Y * (1 - outoffset)
-										for v in XYZbp], white_cdm2,
+										for v in XYZbp], white_cdm2, 0, maxcll,
 									   rolloff=gamma == "smpte2084.rolloffclip",
 									   blend_blackpoint=False)
 			if gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000:
@@ -2089,10 +2090,11 @@ class Worker(WorkerBase):
 												   triggers=[])), self.recent,
 									self.lastmsg])
 				if hdr_tonemapping:
-					xf = Xicclu(profile2, "r", direction="f", pcs="x",
-								worker=self)
-					xb = Xicclu(profile2, "r", direction="if", pcs="x",
-								use_cam_clipping=True, worker=self)
+					xf = MP_Xicclu(profile2, "r", direction="f", pcs="x",
+								worker=self, logfile=logfiles)
+					xb = MP_Xicclu(profile2, "r", direction="if", pcs="x",
+								   use_cam_clipping=True, worker=self,
+								   logfile=logfiles)
 					if content_rgb_space:
 						content_rgb_space = colormath.get_rgb_space(content_rgb_space)
 						for i, color in enumerate(("white", "red", "green",
@@ -2111,8 +2113,8 @@ class Worker(WorkerBase):
 					xb=None
 				profile = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
-					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, 0, 10000,
-					maxcll, content_rgb_space=content_rgb_space,
+					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, 0, maxcll,
+					content_rgb_space=content_rgb_space,
 					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,

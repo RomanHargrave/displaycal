@@ -616,10 +616,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0, white_cdm2=400,
 											master_black_cdm2=0,
 											master_white_cdm2=10000,
-											maxcll=10000,
 											content_rgb_space="DCI P3",
 											rolloff=True,
-											clutres=17, mode="ICtCp",
+											clutres=33, mode="ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
 											generate_B2A=False,
@@ -683,7 +682,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		otable.matrix = m2 * m3
 
 	bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
-							  master_white_cdm2, maxcll)
+							  master_white_cdm2)
 	maxv = bt2390.maxv
 	
 	# Input curve interpolation
@@ -744,7 +743,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		endperc = 5
 	else:
 		endperc = 10
-	in0 = interp(bt2390.apply(0)) / maxstep * 65535
+	k = None
+	in0 = interp(bt2390.apply(0)) / maxstep
 	for j in xrange(entries):
 		if worker and worker.thread_abort:
 			if forward_xicclu:
@@ -753,12 +753,19 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				backward_xicclu.exit()
 			raise Exception("aborted")
 		n = j / (entries - 1.0)
-		v = interp(bt2390.apply(n)) / maxstep * 65535
+		v = interp(bt2390.apply(n)) / maxstep
+		if n >= 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
+										  (clutres - 1.0) + 1):
+			# Linear interpolate shaper for last n cLUT steps to prevent
+			# posterization in highlights if master white luminance < 10K
+			if k is None:
+				k = j
+				ov = n
+			v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
 		if n <= segment:
-			v = colormath.convert_range(v, in0, segment * 65535,
-										0, segment * 65535)
+			v = colormath.convert_range(v, in0, segment, 0, segment)
 		for i in xrange(3):
-			itable.input[i].append(v)
+			itable.input[i].append(v * 65535)
 		perc = math.floor(n * endperc)
 		if logfile and perc > prevperc:
 			logfile.write("\r%i%%" % perc)
@@ -900,11 +907,11 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				HDR_min_I.append(min_I)
 				count += 1
 				perc = startperc + math.floor(count / clutres ** 3.0 *
-											  (20 - startperc))
+											  (100 - startperc))
 				if logfile and perc > prevperc:
 					logfile.write("\r%i%%" % perc)
 					prevperc = perc
-	startperc = perc
+	prevperc = startperc = perc = 0
 
 	new_maxv = maxv
 	##for i, (X, Y, Z) in enumerate(HDR_XYZ):
@@ -957,11 +964,12 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			backward_xicclu((X, Y, Z))
 			count += 1
 			perc = startperc + math.floor(count / clutres ** 3.0 *
-										  (85 - startperc))
-			if logfile and perc > prevperc:
+										  (100 - startperc))
+			if (logfile and perc > prevperc and
+				backward_xicclu.__class__.__name__ == "Xicclu"):
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
-	startperc = perc
+	prevperc = startperc = perc = 0
 
 	Cdiff = []
 	content_rgb_space_st2084 = list(colormath.get_rgb_space(content_rgb_space))
@@ -970,11 +978,11 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	Cdmax = {}
 	if forward_xicclu and backward_xicclu:
 		# Display RGB -> backward lookup -> display XYZ
+		backward_xicclu.close()
+		display_RGB = backward_xicclu.get()
 		if logfile:
 			logfile.write("\rDoing forward lookup...\n")
 			logfile.write("\r%i%%" % perc)
-		backward_xicclu.close()
-		display_RGB = backward_xicclu.get()
 
 		# Smooth
 		row = 0
@@ -1001,11 +1009,11 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				raise Exception("aborted")
 			forward_xicclu((R, G, B))
 			perc = startperc + math.floor((i + 1) / clutres ** 3.0 *
-										  (90 - startperc))
+										  (100 - startperc))
 			if logfile and perc > prevperc:
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
-		startperc = perc
+		prevperc = startperc = perc = 0
 
 		if Cmode == "primaries_secondaries":
 			# Compare to chroma of content primaries/secondaries to determine
@@ -1259,7 +1267,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 									Cc1 = min(C / HCmax, 1.0)
 									if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
 										Cc2 = bt2390.apply(Cc1, KSCc,
-														   maxCc, 1.0, 0)
+														   maxCc, 1.0, 0,
+														   normalize=False)
 										C = HCmax * Cc2
 									else:
 										if debug:
@@ -3623,8 +3632,9 @@ class CurveType(ICCProfileTag, list):
 											  black_jndi))) / white_dicomY
 			self.append(v * 65535)
 	
-	def set_smpte2084_trc(self, black_cdm2=0, white_cdm2=100, size=None,
-						  white_out_cdm2=None, rolloff=False):
+	def set_smpte2084_trc(self, black_cdm2=0, white_cdm2=100,
+						  master_black_cdm2=0, master_white_cdm2=None,
+						  rolloff=False, size=None):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
 		
@@ -3632,11 +3642,10 @@ class CurveType(ICCProfileTag, list):
 		and white level of the display.
 		
 		black_cdm2      Black point in absolute Y, range 0..white_cdm2
+		master_black_cdm2  (Optional) Used to normalize PQ values
+		master_white_cdm2  (Optional) Used to normalize PQ values
+		rolloff         BT.2390
 		size            Number of steps. Recommended >= 1024
-		white_out_cdm2  (Optional) Used to rescale input to output white level.
-		                E.g. 400 (in) to 10000 cd/m2 (out).
-		rolloff         (Optional) Rolloff rate. Lower value = smoother rolloff.
-		                Recommended range 0.5-1.5
 		
 		"""
 		# See https://www.smpte.org/sites/default/files/2014-05-06-EOTF-Miller-1-2-handout.pdf
@@ -3645,22 +3654,26 @@ class CurveType(ICCProfileTag, list):
 			raise ValueError("The black level of %f cd/m2 is out of range "
 							 "for SMPTE 2084. Valid range begins at 0 cd/m2." %
 							 black_cdm2)
-		if not white_out_cdm2:
-			white_out_cdm2 = white_cdm2
-		if max(white_cdm2, white_out_cdm2) > 10000:
+		if max(white_cdm2, master_white_cdm2) > 10000:
 			raise ValueError("The white level of %f cd/m2 is out of range "
 							 "for SMPTE 2084. Valid range is up to 10000 cd/m2." %
-							 max(white_cdm2, white_out_cdm2))
+							 max(white_cdm2, master_white_cdm2))
 		values = []
 		maxv = white_cdm2 / 10000.0
 		maxi = colormath.specialpow(maxv, 1.0 / -2084)
-		maxi_out = colormath.specialpow(white_out_cdm2 / 10000.0, 1.0 / -2084)
 		if rolloff:
 			# Rolloff as defined in ITU-R BT.2390
-			bt2390 = colormath.BT2390(black_cdm2, white_cdm2)
-			scale = maxv / bt2390.maxv
+			if not master_white_cdm2:
+				master_white_cdm2 = 10000
+			bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
+									  master_white_cdm2)
+			maxv = bt2390.maxv
+			maxi_out = maxi
 		else:
-			scale = 1
+			if not master_white_cdm2:
+				master_white_cdm2 = white_cdm2
+			maxi_out = colormath.specialpow(master_white_cdm2 / 10000.0,
+											1.0 / -2084)
 		if not size:
 			size = len(self)
 		if size < 2:
@@ -3669,10 +3682,10 @@ class CurveType(ICCProfileTag, list):
 			n = i / (size - 1.0)
 			if rolloff:
 				n = bt2390.apply(n)
-			v = colormath.specialpow(n * (maxi / maxi_out), -2084) * scale
+			v = colormath.specialpow(n * (maxi / maxi_out), -2084)
 			values.append(min(v / maxv, 1.0))
 		self[:] = [min(v * 65535, 65535) for v in values]
-		if black_cdm2:
+		if black_cdm2 and not rolloff:
 			self.apply_bpc(black_cdm2 / white_cdm2)
 	
 	def set_trc(self, power=2.2, size=None, vmin=0, vmax=65535):
@@ -5791,9 +5804,9 @@ class ICCProfile:
 		self.apply_black_offset([v / white_cdm2 for v in XYZbp],
 								40.0 * (white_cdm2 / 40.0))
 
-	def set_smpte2084_trc(self, XYZbp=(0, 0, 0), white_cdm2=100, size=1024,
-						  white_out_cdm2=None, rolloff=False,
-						  blend_blackpoint=True):
+	def set_smpte2084_trc(self, XYZbp=(0, 0, 0), white_cdm2=100,
+						  master_black_cdm2=0, master_white_cdm2=10000,
+						  rolloff=False, size=1024, blend_blackpoint=True):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
 		
@@ -5801,19 +5814,19 @@ class ICCProfile:
 		and white level of the display.
 		
 		XYZbp           Black point in absolute XYZ, Y range 0..white_cdm2
+		master_black_cdm2  (Optional) Used to normalize PQ values
+		master_white_cdm2  (Optional) Used to normalize PQ values
+		rolloff         BT.2390
 		size            Number of steps. Recommended >= 1024
-		white_out_cdm2  (Optional) Used to rescale input to output white level.
-		                E.g. 400 (in) to 10000 cd/m2 (out).
-		rolloff         (Optional) Rolloff rate. Lower value = smoother rolloff.
-		                Recommended range 0.5-1.5
 		
 		"""
 		self.set_trc_tags()
 		for channel in "rgb":
 			self.tags["%sTRC" % channel].set_smpte2084_trc(XYZbp[1],
-														   white_cdm2, size,
-														   white_out_cdm2,
-														   rolloff)
+														   white_cdm2,
+														   master_black_cdm2,
+														   master_white_cdm2,
+														   rolloff, size)
 		if tuple(XYZbp) != (0, 0, 0) and blend_blackpoint:
 			self.apply_black_offset([v / white_cdm2 for v in XYZbp],
 									40.0 * (white_cdm2 / 100.0))
