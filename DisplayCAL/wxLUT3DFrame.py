@@ -716,7 +716,8 @@ class LUT3DFrame(BaseFrame):
 							# is a symlink.
 							if islink(reshade_fx_path):
 								reshade_fx_path = readlink(reshade_fx_path)
-								path = os.path.join(os.path.dirname(reshade_fx_path),
+								dst_dir = os.path.dirname(reshade_fx_path)
+								path = os.path.join(dst_dir,
 													os.path.basename(path))
 								dst_paths = [path]
 							if os.path.isfile(reshade_fx_path):
@@ -735,15 +736,23 @@ class LUT3DFrame(BaseFrame):
 							else:
 								reshade_fx = "// Automatically created by %s %s%s" % (appname, version, os.linesep)
 							reshade_fx += '#include "ColorLookupTable.fx"' + os.linesep
-							clut_fx_path = os.path.join(os.path.dirname(path),
+							reshade_shaders = os.path.join(dst_dir,
+														   "reshade-shaders")
+							if os.path.isdir(reshade_shaders):
+								# ReShade >= 3.x with default shaders
+								path = os.path.join(reshade_shaders, "Textures",
+													os.path.basename(path))
+								dst_paths = [path]
+								dst_dir = os.path.join(reshade_shaders,
+													   "Shaders")
+							else:
+								# ReShade < 3.0 or no default shaders installed
+								with open(reshade_fx_path, "wb") as reshade_fx_file:
+									reshade_fx_file.write(reshade_fx)
+							clut_fx_path = os.path.join(dst_dir,
 														"ColorLookupTable.fx")
 							with open(clut_fx_path, "wb") as clut_fx_file:
 								clut_fx_file.write(clut_fx)
-							if not os.path.isdir(os.path.join(dst_dir,
-															  "reshade-shaders")):
-								# ReShade < 3.0
-								with open(reshade_fx_path, "wb") as reshade_fx_file:
-									reshade_fx_file.write(reshade_fx)
 					for src_path, dst_path in zip(src_paths, dst_paths):
 						shutil.copyfile(src_path, dst_path)
 					return
