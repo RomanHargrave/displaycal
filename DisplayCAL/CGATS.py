@@ -1699,10 +1699,10 @@ Transform {
 
 	def fix_zero_measurements(self, warn_only=False, logfile=safe_print):
 		"""
-		Fix (or warn about) zero measurements
+		Fix (or warn about) <= zero measurements
 		
 		If XYZ/Lab = 0, the sample gets removed. If only one component of
-		XYZ/Lab is 0, it gets fudged so that the component is nonzero
+		XYZ/Lab is <= 0, it gets fudged so that the component is nonzero
 		(because otherwise, Argyll's colprof will remove it, which can have bad
 		effects if it's an 'essential' sample)
 		
@@ -1717,19 +1717,18 @@ Transform {
 			device_labels = []
 			for channel in color_rep[0]:
 				device_labels.append(color_rep[0] + "_" + channel)
-			errors = []
 			remove = []
 			for key, sample in data.iteritems():
 				cie_values = [sample[label] for label in cie_labels]
 				# Check if zero
 				if filter(lambda v: v, cie_values):
-					# Not zero. Check if one component zero
-					if 0.0 in cie_values:
+					# Not all zero. Check if some component(s) equal or below zero
+					if min(cie_values) <= 0:
 						for label in cie_labels:
-							if not sample[label]:
+							if sample[label] <= 0:
 								if warn_only:
 									if logfile:
-										logfile.write("Warning: Sample ID %i (RGB %s) has %s = 0!\n" %
+										logfile.write("Warning: Sample ID %i (RGB %s) has %s <= 0!\n" %
 													  (sample.SAMPLE_ID,
 													   " ".join(str(sample.queryv1(device_labels)).split()),
 													   label))
@@ -1742,15 +1741,9 @@ Transform {
 													   " ".join(str(sample.queryv1(device_labels)).split()),
 													   label))
 					continue
-				# Zero
+				# All zero
 				device_values = [sample[label] for label in device_labels]
-				device_sum = 0
-				for value in device_values:
-					if value > 0:
-						# Error on device values > 0
-						errors.append(sample)
-					device_sum += value
-				if not device_sum:
+				if not max(device_values):
 					# Skip device black
 					continue
 				if warn_only:
