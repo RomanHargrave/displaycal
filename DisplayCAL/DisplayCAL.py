@@ -12192,7 +12192,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.worker.start(self.profile_hires_b2a_consumer,
 								  self.worker.update_profile_B2A,
 								  cargs=(profile, ),
-								  wargs=(profile, ))
+								  wargs=(profile, ),
+								  wkwargs={"clutres": getcfg("profile.b2a.hires.size")})
 
 	def profile_hires_b2a_consumer(self, result, profile):
 		self.start_timers()

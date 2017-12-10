@@ -8878,9 +8878,19 @@ usage: spotread [-options] [logfile]
 			logfiles = Files([logfiles, self.recent, self.lastmsg])
 		return logfiles
 	
-	def update_profile_B2A(self, profile, generate_perceptual_table=True):
+	def update_profile_B2A(self, profile, generate_perceptual_table=True,
+						   clutres=None):
 		# Use reverse A2B interpolation to generate B2A table
-		clutres = getcfg("profile.b2a.hires.size")
+		if not clutres:
+			if getcfg("profile.b2a.hires"):
+				# Chosen resolution
+				clutres = getcfg("profile.b2a.hires.size")
+			elif getcfg("profile.quality.b2a") in "ln":
+				# Low quality/resolution
+				clutres = 9
+			else:
+				# Medium quality/resolution
+				clutres = 17
 		logfiles = self.get_logfiles()
 		tables = [1]
 		self.log("-" * 80)
