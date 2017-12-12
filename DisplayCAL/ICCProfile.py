@@ -445,7 +445,7 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 	# fewer cLUT grid points.
 	
 	# Use higher interpolation size than actual number of curve entries
-	steps = 2 ** 15
+	steps = 2 ** 15 + 1
 	maxv = steps - 1.0
 	
 	fwd = []
@@ -548,7 +548,7 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	# fewer cLUT grid points.
 	
 	# Use higher interpolation size than actual number of curve entries
-	steps = 2 ** 15
+	steps = 2 ** 15 + 1
 	maxv = steps - 1.0
 	gamma = rgb_space[0]
 	maxi = colormath.specialpow(white_Y, 1.0 / gamma)
@@ -581,7 +581,7 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 														1.0 / gamma) * 65535)
 	
 	# Fill input curves from interpolated values
-	entries = 1024
+	entries = 2049
 	for j in xrange(entries):
 		v = j / (entries - 1.0)
 		for i in xrange(3):
@@ -693,7 +693,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	# fewer cLUT grid points.
 	
 	# Use higher interpolation size than actual number of curve entries
-	steps = 2 ** 14
+	steps = 2 ** 15 + 1
 	maxstep = steps - 1.0
 	gamma = rgb_space[0]
 	segment = 1.0 / (clutres - 1.0)
@@ -737,7 +737,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	# Generate device-to-PCS shaper curves from interpolated values
 	if logfile:
 		logfile.write("Generating device-to-PCS shaper curves...\n")
-	entries = 1024
+	entries = 2049
 	prevperc = 0
 	if generate_B2A:
 		endperc = 5
@@ -836,27 +836,13 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						I2 = bt2390.apply(I1)
 						Y2 = colormath.specialpow(I2, -2084)
 						X, Y, Z = (v / Y * Y2 for v in (X, Y, Z))
-						min_I = min(I1 / I2, I2 / I1)
 					else:
 						I1 = I2 = 0
-						min_I = 1
-					X, Y, Z = colormath.XYZsaturation(X, Y, Z,
-													  min_I,
-													  rgb_space[1])[0]
-					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space)
 				elif mode == "HSV":
 					HSV = list(colormath.RGB2HSV(*RGB))
 					I1 = HSV[2]
 					HSV[2] = bt2390.apply(I1)
 					I2 = HSV[2]
-					if I1 and I2:
-						min_I = min(I1 / I2, I2 / I1)
-					else:
-						min_I = 1
-					if debug and R == G == B:
-						safe_print("* %5.3f" % min_I, "->", end=" ")
-					HSV[1] *= min_I
-					RGB = colormath.HSV2RGB(*HSV)
 				elif mode == "ICtCp":
 					RGB = [colormath.specialpow(v, -2084) for v in RGB]
 					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space)
@@ -864,10 +850,33 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						safe_print("-> ICtCp % 5.3f % 5.3f % 5.3f" %
 								   (I1, Ct1, Cp1,), end=" ")
 					I2 = bt2390.apply(I1)
-					if I1 and I2:
-						min_I = min(I1 / I2, I2 / I1)
+				elif mode == "RGB":
+					I1 = colormath.RGB2HSV(*RGB)[2]
+					for i, v in enumerate(RGB):
+						RGB[i] = bt2390.apply(v)
+					I2 = colormath.RGB2HSV(*RGB)[2]
+				if I1 and I2:
+					if forward_xicclu and backward_xicclu:
+						# Only desaturate light colors (dark colors will be
+						# desaturated according to display max chroma)
+						dsat = 1.0
 					else:
-						min_I = 1
+						# Desaturate dark and light colors
+						dsat = I1 / I2
+					min_I = min(dsat, I2 / I1)
+				else:
+					min_I = 1
+				if mode == "XYZ":
+					X, Y, Z = colormath.XYZsaturation(X, Y, Z,
+													  min_I,
+													  rgb_space[1])[0]
+					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space)
+				elif mode == "HSV":
+					if debug and R == G == B:
+						safe_print("* %5.3f" % min_I, "->", end=" ")
+					HSV[1] *= min_I
+					RGB = colormath.HSV2RGB(*HSV)
+				elif mode == "ICtCp":
 					if debug and R == G == B:
 						safe_print("* %5.3f" % min_I, "->", end=" ")
 					Ct2, Cp2 = (min_I * v for v in (Ct1, Cp1))
@@ -881,15 +890,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					RGB = [colormath.specialpow(v, 1.0 / -2084) for v in RGB]
 					HDR_ICtCp.append((I2, Ct2, Cp2))
 					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space)
-				elif mode == "RGB":
-					I1 = colormath.RGB2HSV(*RGB)[2]
-					for i, v in enumerate(RGB):
-						RGB[i] = bt2390.apply(v)
-					I2 = colormath.RGB2HSV(*RGB)[2]
-					if I1 and I2:
-						min_I = min(I1 / I2, I2 / I1)
-					else:
-						min_I = 1
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
 				if mode != "ICtCp":
@@ -1010,7 +1010,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 			forward_xicclu((R, G, B))
 			perc = startperc + math.floor((i + 1) / clutres ** 3.0 *
 										  (100 - startperc))
-			if logfile and perc > prevperc:
+			if (logfile and perc > prevperc and
+				forward_xicclu.__class__.__name__ == "Xicclu"):
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
 		prevperc = startperc = perc = 0
@@ -1085,7 +1086,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		# Determine compression factor by comparing display to content
 		# colorspace in BT.2020
 		if logfile:
-			logfile.write("\rDetermining chroma compression factor...\n")
+			logfile.write("\rDetermining chroma compression factors...\n")
 			logfile.write("\r%i%%" % perc)
 		for i, (R, G, B) in enumerate(HDR_RGB):
 			if worker and worker.thread_abort:
@@ -1180,7 +1181,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						   tuple(v * 100 for v in XYZdisp))
 				safe_print("Display LCH %5.2f %5.2f %5.2f" % (Ld, Cd, Hd))
 			perc = startperc + math.floor(i / clutres ** 3.0 *
-										  (95 - startperc))
+										  (80 - startperc))
 			if logfile and perc > prevperc:
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
@@ -1192,7 +1193,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		Cmaxv = max(Cmax.values())
 		Cdmaxv = max(Cdmax.values())
 
-	if logfile and display_LCH:
+	if logfile and not display_LCH:
 		logfile.write("\rChroma compression factor: %6.4f\n" %
 					  general_compression_factor)
 
@@ -1258,28 +1259,30 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 						if blendmode:
 							if display_LCH:
 								Ld, Cd, Hd = display_LCH[row]
-								Cdmaxk = tuple(map(round, (Ld, Hd), (2, 2)))
-								HCmax = Cmax[Cdmaxk]
-								if C and HCmax:
-									HCdmax = Cdmax[Cdmaxk]
-									maxCc = min(HCdmax / HCmax, 1.0)
-									KSCc = 1.5 * maxCc - 0.5
-									Cc1 = min(C / HCmax, 1.0)
-									if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
-										Cc2 = bt2390.apply(Cc1, KSCc,
-														   maxCc, 1.0, 0,
-														   normalize=False)
-										C = HCmax * Cc2
-									else:
-										if debug:
-											safe_print("CLUT grid point %i %i %i: "
-													   "C %6.4f Cd %6.4f HCmax %6.4f maxCc "
-													   "%6.4f KSCc %6.4f Cc1 %6.4f" %
-													   (col_0, col_1, col_2, C, Cd,
-														HCmax, maxCc, KSCc, Cc1))
-										C = Cd
-									if blendmode == "ICtCp":
-										C *= min(Ld / L, 1.0)
+								##Cdmaxk = tuple(map(round, (Ld, Hd), (2, 2)))
+								##HCmax = Cmax[Cdmaxk]
+								##if C and HCmax:
+									##HCdmax = Cdmax[Cdmaxk]
+									##maxCc = min(HCdmax / HCmax, 1.0)
+									##KSCc = 1.5 * maxCc - 0.5
+									##Cc1 = min(C / HCmax, 1.0)
+									##if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
+										##Cc2 = bt2390.apply(Cc1, KSCc,
+														   ##maxCc, 1.0, 0,
+														   ##normalize=False)
+										##C = HCmax * Cc2
+									##else:
+										##if debug:
+											##safe_print("CLUT grid point %i %i %i: "
+													   ##"C %6.4f Cd %6.4f HCmax %6.4f maxCc "
+													   ##"%6.4f KSCc %6.4f Cc1 %6.4f" %
+													   ##(col_0, col_1, col_2, C, Cd,
+														##HCmax, maxCc, KSCc, Cc1))
+										##C = Cd
+								if C:
+									C *= min(Cd / C, 1.0)
+								if L and blendmode == "ICtCp":
+									C *= min(Ld / L, 1.0)
 							else:
 								Cc = general_compression_factor
 								Cc **= (C / Cmaxv)
@@ -1577,7 +1580,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	# fewer cLUT grid points.
 	
 	# Use higher interpolation size than actual number of curve entries
-	steps = 2 ** 14
+	steps = 2 ** 15 + 1
 	maxstep = steps - 1.0
 	
 	segment = 1.0 / (clutres - 1.0)
@@ -1621,7 +1624,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	# Generate device-to-PCS shaper curves from interpolated values
 	if logfile:
 		logfile.write("Generating device-to-PCS shaper curves...\n")
-	entries = 1024
+	entries = 2049
 	prevperc = 0
 	if generate_B2A:
 		endperc = 5

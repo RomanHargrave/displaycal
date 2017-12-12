@@ -2093,8 +2093,8 @@ class Worker(WorkerBase):
 												   triggers=[])), self.recent,
 									self.lastmsg])
 				if hdr_tonemapping:
-					xf = MP_Xicclu(profile2, "r", direction="f", pcs="x",
-								worker=self, logfile=logfiles)
+					xf = Xicclu(profile2, "r", direction="f", pcs="x",
+								worker=self)
 					xb = MP_Xicclu(profile2, "r", direction="if", pcs="x",
 								   use_cam_clipping=True, worker=self,
 								   logfile=logfiles)
@@ -2128,7 +2128,9 @@ class Worker(WorkerBase):
 				profile1.tags.DBG2 = profile.tags.DBG2
 		if not apply_trc or smpte2084:
 			# Apply only the black point blending portion of BT.1886 mapping
-			profile1.apply_black_offset(XYZbp, logfiles=self.get_logfiles(),
+			logfiles = self.get_logfiles()
+			logfiles.write("Applying black offset...\n")
+			profile1.apply_black_offset(XYZbp, logfiles=logfiles,
 										thread_abort=self.thread_abort,
 										abortmessage=lang.getstr("aborted"))
 			return

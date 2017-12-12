@@ -2702,6 +2702,8 @@ class BT2390(object):
 		self.omaxv = white_cdm2 / 10000.0
 		self.omaxi = specialpow(self.omaxv, 1.0 / -2084)  # maxLum
 
+		self.oKS = 1.5 * self.omaxi - 0.5
+
 		# BT.2390-2
 		self.mminv = master_black_cdm2 / 10000.0
 		self.mmini = specialpow(self.mminv, 1.0 / -2084)
