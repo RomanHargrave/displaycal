@@ -664,12 +664,16 @@ class SynthICCFrame(BaseFrame):
 			# SMPTE 2084
 			if rgb:
 				# Color profile
+				if rolloff:
+					maxcll = getcfg("3dlut.hdr_maxcll")
+				else:
+					maxcll = getcfg("synthprofile.luminance")
 				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
 										   (1 - outoffset)
 										   for v in black],
 										  getcfg("synthprofile.luminance"), 0,
-										  getcfg("3dlut.hdr_maxcll"),
-										  rolloff=rolloff,
+										  maxcll,
+										  rolloff=True,
 										  blend_blackpoint=False)
 				if rolloff and getcfg("synthprofile.luminance") < 10000:
 					rgb_space = profile.get_rgb_space()
@@ -691,8 +695,8 @@ class SynthICCFrame(BaseFrame):
 						rgb_space, "",
 						getcfg("synthprofile.black_luminance") * (1 - outoffset),
 						getcfg("synthprofile.luminance"), 0,
-						getcfg("3dlut.hdr_maxcll"),
-						rolloff=rolloff, mode="ICtCp" if rolloff else "RGB",
+						maxcll,
+						mode="ICtCp" if rolloff else "RGB",
 						worker=self.worker, logfile=logfiles).tags.A2B0
 					profile.write(path)
 					self.worker.generate_B2A_from_inverse_table(profile, 33,

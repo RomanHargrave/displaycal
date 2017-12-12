@@ -2058,10 +2058,12 @@ class Worker(WorkerBase):
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log("Output offset = %.2f%%" % (outoffset * 100))
 		if smpte2084:
+			if gamma != "smpte2084.rolloffclip":
+				maxcll = white_cdm2
 			lumi = profile2.tags.get("lumi", ICCP.XYZType())
 			profile1.set_smpte2084_trc([v * lumi.Y * (1 - outoffset)
 										for v in XYZbp], white_cdm2, 0, maxcll,
-									   rolloff=gamma == "smpte2084.rolloffclip",
+									   rolloff=True,
 									   blend_blackpoint=False)
 			if gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000:
 				desc = profile1.getDescription()
@@ -2118,7 +2120,6 @@ class Worker(WorkerBase):
 					rgb_space, profile1.getDescription(),
 					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, 0, maxcll,
 					content_rgb_space=content_rgb_space,
-					rolloff=gamma == "smpte2084.rolloffclip",
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
 					worker=self, logfile=logfiles)
