@@ -10889,7 +10889,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		def check_importers(event):
 			result = False
 			for name in ("i1d3", "icd", "spyd4"):
-				if getattr(dlg, name).IsChecked():
+				if hasattr(dlg, name) and getattr(dlg, name).IsChecked():
 					result = True
 					break
 			dlg.ok.Enable(result)
