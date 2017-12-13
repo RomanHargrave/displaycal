@@ -808,7 +808,15 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	clutmax = clutres - 1.0
 	step = 1.0 / clutmax
 	count = 0
-	blendmode = "ICtCp"
+	# Lpt is the preferred mode for chroma blending. Some preliminary visual
+	# comparison has shown it does overall the best job preserving hue and
+	# saturation (blue hues superior to IPT). DIN99d is the second best,
+	# but vibrant red turns slightly orange when desaturated (DIN99d has best
+	# blue saturation preservation though). ICtCp should NOT be used as it has
+	# a tendency to blow out highlights (maybe this is not due to ICtCp itself
+	# and more the way it is used here, because it works just fine for the
+	# initial roll-off saturation adjustment where it is the preferred mode).
+	blendmode = "Lpt"
 	IPT_white_XYZ = colormath.get_cat_matrix("IPT").inverted() * (1, 1, 1)
 	Cmode = ("all", "primaries_secondaries")[0]
 	RGB_in = []
@@ -1128,6 +1136,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				y -= wy
 				Ld, Cd, Hd = colormath.Lab2LCHab(*(v * 100 for v in (Y, x, y)))
 			else:
+				# DIN99d
 				XYZc_r202099 = colormath.adapt(*XYZc_r2020,
 											   whitepoint_source=rgb_space[1])
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v / maxv * 100
@@ -1235,18 +1244,26 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							if display_LCH:
 								Ld, Cd, Hd = display_LCH[row]
 								##Cdmaxk = tuple(map(round, (Ld, Hd), (2, 2)))
+								### Lookup HDR max chroma for given display 
+								### luminance and hue
 								##HCmax = Cmax[Cdmaxk]
 								##if C and HCmax:
+									### Lookup display max chroma for given display 
+									### luminance and hue
 									##HCdmax = Cdmax[Cdmaxk]
+									### Display max chroma in 0..1 range
 									##maxCc = min(HCdmax / HCmax, 1.0)
 									##KSCc = 1.5 * maxCc - 0.5
+									### HDR chroma in 0..1 range
 									##Cc1 = min(C / HCmax, 1.0)
 									##if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
+										### Roll-off chroma
 										##Cc2 = bt2390.apply(Cc1, KSCc,
 														   ##maxCc, 1.0, 0,
 														   ##normalize=False)
 										##C = HCmax * Cc2
 									##else:
+										### Use display chroma as-is (clip)
 										##if debug:
 											##safe_print("CLUT grid point %i %i %i: "
 													   ##"C %6.4f Cd %6.4f HCmax %6.4f maxCc "
@@ -1258,6 +1275,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 									C *= min(Cd / C, 1.0)
 								if L and blendmode == "ICtCp":
 									C *= min(Ld / L, 1.0)
+									L *= min(Ld / L, 1.0) ** min(Ld / L, L / Ld)
 							else:
 								Cc = general_compression_factor
 								Cc **= (C / Cmaxv)
