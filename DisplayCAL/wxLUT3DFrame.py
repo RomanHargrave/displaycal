@@ -228,6 +228,9 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_maxcll_label.Enable(v)
 		self.lut3d_hdr_maxcll_ctrl.Enable(v)
 		self.lut3d_hdr_maxcll_ctrl_label.Enable(v)
+		self.lut3d_hdr_diffuse_white_label.Enable(v)
+		self.lut3d_hdr_diffuse_white_txt.Enable(v)
+		self.lut3d_hdr_diffuse_white_txt_label.Enable(v)
 		self.lut3d_content_colorspace_label.Enable(v)
 		self.lut3d_content_colorspace_ctrl.Enable(v)
 		for color in ("white", "red", "green", "blue"):
@@ -1313,7 +1316,7 @@ class LUT3DFrame(BaseFrame):
 		# Determine white cd/m2 after roll-off
 		diffuse_tgt_cdm2 = colormath.specialpow(bt2390.apply(diffuse_PQ),
 												  -2084) * 10000
-		if diffuse_tgt_cdm2 < 80:
+		if diffuse_tgt_cdm2 < diffuse_ref_cdm2:
 			signalcolor = "#CC0000"
 		else:
 			signalcolor = "#008000"
