@@ -4550,13 +4550,13 @@ class MainFrame(ReportFrame, BaseFrame):
 						lut3dp.append("h")
 					else:
 						lut3dp.append("s")
-					if getcfg("3dlut.hdr_mincll"):
-						lut3dp.append("%.4f" % getcfg("3dlut.hdr_mincll"))
-					if (getcfg("3dlut.hdr_mincll") and
-						getcfg("3dlut.hdr_maxcll") < 10000):
+					if getcfg("3dlut.hdr_minmll"):
+						lut3dp.append("%.4f" % getcfg("3dlut.hdr_minmll"))
+					if (getcfg("3dlut.hdr_minmll") and
+						getcfg("3dlut.hdr_maxmll") < 10000):
 						lut3dp.append("-")
-					if getcfg("3dlut.hdr_maxcll") < 10000:
-						lut3dp.append("%i" % getcfg("3dlut.hdr_maxcll"))
+					if getcfg("3dlut.hdr_maxmll") < 10000:
+						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
 			else:
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC
@@ -14011,8 +14011,12 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3dlut.hdr_peak_luminance",
 											 "3DLUT_HDR_DISPLAY":
 											 "3dlut.hdr_display",
-											 "3DLUT_HDR_MAXCLL":
-											 "3dlut.hdr_maxcll",
+											 "3DLUT_HDR_MAXCLL":  # MaxCLL is no longer used, map to mastering display max light level (MaxMLL)
+											 "3dlut.hdr_maxmll",
+											 "3DLUT_HDR_MAXMLL":
+											 "3dlut.hdr_maxmll",
+											 "3DLUT_HDR_MINMLL":
+											 "3dlut.hdr_minmll",
 											 "3DLUT_GAMMA":
 											 "3dlut.trc_gamma",
 											 "3DLUT_DEGREE_OF_BLACK_OUTPUT_OFFSET":

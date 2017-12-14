@@ -640,8 +640,8 @@ cfg.optionxform = str
 
 valid_ranges = {
 	"3dlut.hdr_peak_luminance": [120.0, 10000.0],
-	"3dlut.hdr_mincll": [0.0, 0.1],
-	"3dlut.hdr_maxcll": [120.0, 10000.0],
+	"3dlut.hdr_minmll": [0.0, 0.1],
+	"3dlut.hdr_maxmll": [120.0, 10000.0],
 	"3dlut.trc_gamma": [0.000001, 10],
 	"3dlut.trc_output_offset": [0.0, 1.0],
 	"app.port": [1, 65535],
@@ -776,8 +776,8 @@ defaults = {
 	"3dlut.format": "cube",
 	"3dlut.gamap.use_b2a": 0,
 	"3dlut.hdr_display": 0,
-	"3dlut.hdr_mincll": 0.0,
-	"3dlut.hdr_maxcll": 10000.0,
+	"3dlut.hdr_minmll": 0.0,
+	"3dlut.hdr_maxmll": 10000.0,
 	"3dlut.hdr_peak_luminance": 400.0,
 	"3dlut.image.layout": "h",
 	"3dlut.image.order": "rgb",

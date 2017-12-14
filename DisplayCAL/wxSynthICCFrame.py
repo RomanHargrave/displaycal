@@ -663,18 +663,18 @@ class SynthICCFrame(BaseFrame):
 		elif trc == -2084:
 			# SMPTE 2084
 			if rolloff:
-				mincll = getcfg("3dlut.hdr_mincll")
-				maxcll = getcfg("3dlut.hdr_maxcll")
+				minmll = getcfg("3dlut.hdr_minmll")
+				maxmll = getcfg("3dlut.hdr_maxmll")
 			else:
-				mincll = 0
-				maxcll = getcfg("synthprofile.luminance")
+				minmll = 0
+				maxmll = getcfg("synthprofile.luminance")
 			if rgb:
 				# Color profile
 				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
 										   (1 - outoffset)
 										   for v in black],
 										  getcfg("synthprofile.luminance"),
-										  mincll, maxcll,
+										  minmll, maxmll,
 										  rolloff=True,
 										  blend_blackpoint=False)
 				if rolloff and getcfg("synthprofile.luminance") < 10000:
@@ -696,7 +696,7 @@ class SynthICCFrame(BaseFrame):
 					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 						rgb_space, "",
 						getcfg("synthprofile.black_luminance") * (1 - outoffset),
-						getcfg("synthprofile.luminance"), mincll, maxcll,
+						getcfg("synthprofile.luminance"), minmll, maxmll,
 						mode="ICtCp" if rolloff else "RGB",
 						worker=self.worker, logfile=logfiles).tags.A2B0
 				if black != [0, 0, 0] and outoffset and not bpc:
@@ -712,7 +712,7 @@ class SynthICCFrame(BaseFrame):
 				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
 													(1 - outoffset),
 													getcfg("synthprofile.luminance"),
-													mincll, maxcll,
+													minmll, maxmll,
 													rolloff=True)
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.tags.kTRC.apply_bpc(black[1])

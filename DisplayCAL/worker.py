@@ -2028,8 +2028,8 @@ class Worker(WorkerBase):
 
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
-								 apply_trc=True, white_cdm2=100, mincll=0,
-								 maxcll=10000, content_rgb_space="DCI P3",
+								 apply_trc=True, white_cdm2=100, minmll=0,
+								 maxmll=10000, content_rgb_space="DCI P3",
 								 hdr_tonemapping=False):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
@@ -2045,8 +2045,8 @@ class Worker(WorkerBase):
 		if smpte2084:
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
-					 (u" %i cd/m² (MinCLL %.4f cd/m², MaxCLL %i cd/m²)" %
-					  (white_cdm2, mincll, maxcll)))
+					 (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL %i cd/m²)" %
+					  (white_cdm2, minmll, maxmll)))
 		elif apply_trc:
 			self.log("Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -2060,12 +2060,12 @@ class Worker(WorkerBase):
 		self.log("Output offset = %.2f%%" % (outoffset * 100))
 		if smpte2084:
 			if gamma != "smpte2084.rolloffclip":
-				mincll = 0
-				maxcll = white_cdm2
+				minmll = 0
+				maxmll = white_cdm2
 			lumi = profile2.tags.get("lumi", ICCP.XYZType())
 			profile1.set_smpte2084_trc([v * lumi.Y * (1 - outoffset)
-										for v in XYZbp], white_cdm2, mincll,
-									   maxcll, rolloff=True,
+										for v in XYZbp], white_cdm2, minmll,
+									   maxmll, rolloff=True,
 									   blend_blackpoint=False)
 			if gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000:
 				desc = profile1.getDescription()
@@ -2081,9 +2081,9 @@ class Worker(WorkerBase):
 				rgb_space = colormath.get_rgb_space(rgb_space)
 				self.recent.write(desc + u" → " +
 								  lang.getstr("trc." + gamma) +
-								  (u" %i cd/m² (MinCLL %.4f cd/m², MaxCLL "
+								  (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL "
 								   u"%i cd/m²)\n" %
-								   (white_cdm2, mincll, maxcll)))
+								   (white_cdm2, minmll, maxmll)))
 				linebuffered_logfiles = []
 				if sys.stdout.isatty():
 					linebuffered_logfiles.append(safe_print)
@@ -2121,8 +2121,8 @@ class Worker(WorkerBase):
 					xb=None
 				profile = ICCP.create_synthetic_smpte2084_clut_profile(
 					rgb_space, profile1.getDescription(),
-					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, mincll,
-					maxcll, content_rgb_space=content_rgb_space,
+					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, minmll,
+					maxmll, content_rgb_space=content_rgb_space,
 					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
 					forward_xicclu=xf, backward_xicclu=xb,
 					worker=self, logfile=logfiles)
@@ -2771,7 +2771,7 @@ END_DATA
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
-					 use_b2a=False, white_cdm2=100, mincll=0, maxcll=10000,
+					 use_b2a=False, white_cdm2=100, minmll=0, maxmll=10000,
 					 content_rgb_space="DCI P3", hdr_display=False,
 					 XYZwp=None):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
@@ -2918,8 +2918,8 @@ END_DATA
 												  trc_output_offset, trc_gamma,
 												  trc_gamma_type,
 												  white_cdm2=white_cdm2,
-												  mincll=mincll,
-												  maxcll=maxcll,
+												  minmll=minmll,
+												  maxmll=maxmll,
 												  content_rgb_space=content_rgb_space,
 												  hdr_tonemapping=not smpte2084_use_src_gamut)
 			elif apply_black_offset:
@@ -3001,8 +3001,8 @@ END_DATA
 											  trc_output_offset, trc_gamma,
 											  trc_gamma_type,
 											  white_cdm2=white_cdm2,
-											  mincll=mincll,
-											  maxcll=maxcll,
+											  minmll=minmll,
+											  maxmll=maxmll,
 											  hdr_tonemapping=False)
 
 				profile_src.write()
@@ -9585,8 +9585,10 @@ usage: spotread [-options] [logfile]
 									 "3dlut.trc",
 									 "3DLUT_HDR_PEAK_LUMINANCE":
 									 "3dlut.hdr_peak_luminance",
-									 "3DLUT_HDR_MAXCLL":
-									 "3dlut.hdr_maxcll",
+									 "3DLUT_HDR_MAXMLL":
+									 "3dlut.hdr_maxmll",
+									 "3DLUT_HDR_MINMLL":
+									 "3dlut.hdr_minmll",
 									 "3DLUT_HDR_DISPLAY":
 									 "3dlut.hdr_display",
 									 "3DLUT_GAMMA":
