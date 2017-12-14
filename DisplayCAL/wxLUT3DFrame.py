@@ -144,10 +144,12 @@ class LUT3DFrame(BaseFrame):
 										   self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.lut3d_trc_black_output_offset_intctrl.Bind(wx.EVT_TEXT,
 											  self.lut3d_trc_black_output_offset_ctrl_handler)
-		self.lut3d_hdr_peak_luminance_ctrl.Bind(wx.EVT_TEXT,
+		self.lut3d_hdr_peak_luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 											self.lut3d_hdr_peak_luminance_handler)
 		self.lut3d_hdr_display_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_hdr_display_handler)
-		self.lut3d_hdr_maxcll_ctrl.Bind(wx.EVT_TEXT,
+		self.lut3d_hdr_mincll_ctrl.Bind(floatspin.EVT_FLOATSPIN,
+										self.lut3d_hdr_mincll_handler)
+		self.lut3d_hdr_maxcll_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 										self.lut3d_hdr_maxcll_handler)
 		self.lut3d_content_colorspace_ctrl.Bind(wx.EVT_CHOICE,
 												self.lut3d_content_colorspace_handler)
@@ -220,6 +222,9 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_peak_luminance_label.Enable(v)
 		self.lut3d_hdr_peak_luminance_ctrl.Enable(v)
 		self.lut3d_hdr_peak_luminance_ctrl_label.Enable(v)
+		self.lut3d_hdr_mincll_label.Enable(v)
+		self.lut3d_hdr_mincll_ctrl.Enable(v)
+		self.lut3d_hdr_mincll_ctrl_label.Enable(v)
 		self.lut3d_hdr_maxcll_label.Enable(v)
 		self.lut3d_hdr_maxcll_ctrl.Enable(v)
 		self.lut3d_hdr_maxcll_ctrl_label.Enable(v)
@@ -270,6 +275,10 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_hdr_peak_luminance_handler(self, event):
 		self.lut3d_set_option("3dlut.hdr_peak_luminance",
 							  self.lut3d_hdr_peak_luminance_ctrl.GetValue())
+
+	def lut3d_hdr_mincll_handler(self, event):
+		self.lut3d_set_option("3dlut.hdr_mincll",
+							  self.lut3d_hdr_mincll_ctrl.GetValue())
 
 	def lut3d_hdr_maxcll_handler(self, event):
 		self.lut3d_set_option("3dlut.hdr_maxcll",
@@ -796,6 +805,7 @@ class LUT3DFrame(BaseFrame):
 		apply_black_offset = getcfg("3dlut.apply_black_offset")
 		use_b2a = getcfg("3dlut.gamap.use_b2a")
 		white_cdm2 = getcfg("3dlut.hdr_peak_luminance")
+		mincll = getcfg("3dlut.hdr_mincll")
 		maxcll = getcfg("3dlut.hdr_maxcll")
 		content_rgb_space = [-2084, [], [], [], []]
 		for i, color in enumerate(("white", "red", "green", "blue")):
@@ -819,7 +829,7 @@ class LUT3DFrame(BaseFrame):
 									 trc_output_offset=outoffset,
 									 apply_black_offset=apply_black_offset,
 									 use_b2a=use_b2a, white_cdm2=white_cdm2,
-									 maxcll=maxcll,
+									 mincll=mincll, maxcll=maxcll,
 									 content_rgb_space=content_rgb_space,
 									 hdr_display=getcfg("3dlut.hdr_display"),
 									 XYZwp=XYZwp)
@@ -1289,6 +1299,28 @@ class LUT3DFrame(BaseFrame):
 			getcfg("3dlut.create") and v != getcfg(option)):
 			self.profile_settings_changed()
 		setcfg(option, v)
+		if option in ("3dlut.hdr_peak_luminance", "3dlut.hdr_mincll",
+					  "3dlut.hdr_maxcll"):
+			self.lut3d_hdr_update_diffuse_white()
+
+	def lut3d_hdr_update_diffuse_white(self):
+		# Update knee start info
+		bt2390 = colormath.BT2390(0, getcfg("3dlut.hdr_peak_luminance"),
+								  getcfg("3dlut.hdr_mincll"),
+								  getcfg("3dlut.hdr_maxcll"))
+		diffuse_ref_cdm2 = 94.37844
+		diffuse_PQ = colormath.specialpow(diffuse_ref_cdm2 / 10000, 1.0 / -2084)
+		# Determine white cd/m2 after roll-off
+		diffuse_tgt_cdm2 = colormath.specialpow(bt2390.apply(diffuse_PQ),
+												  -2084) * 10000
+		if diffuse_tgt_cdm2 < 80:
+			signalcolor = "#CC0000"
+		else:
+			signalcolor = "#008000"
+		self.lut3d_hdr_diffuse_white_txt.ForegroundColour = signalcolor
+		self.lut3d_hdr_diffuse_white_txt.Label = "%.2f" % diffuse_tgt_cdm2
+		self.lut3d_hdr_diffuse_white_txt_label.ForegroundColour = signalcolor
+		self.panel.Layout()
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
@@ -1353,7 +1385,9 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_black_output_offset_ctrl.SetValue(outoffset)
 		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
 		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
+		self.lut3d_hdr_mincll_ctrl.SetValue(getcfg("3dlut.hdr_mincll"))
 		self.lut3d_hdr_maxcll_ctrl.SetValue(getcfg("3dlut.hdr_maxcll"))
+		self.lut3d_hdr_update_diffuse_white()
 		# Content colorspace (currently only used for SMPTE 2084)
 		content_colors = []
 		for color in ("white", "red", "green", "blue"):
@@ -1490,9 +1524,15 @@ class LUT3DFrame(BaseFrame):
 		lastsel = self.lut3d_content_colorspace_ctrl.Count - 1
 		sizer = self.lut3d_content_colorspace_red_x.ContainingSizer
 		sizer.ShowItems(showcc and sel == lastsel)
+		self.lut3d_hdr_mincll_label.Show(show and smpte2084r)
+		self.lut3d_hdr_mincll_ctrl.Show(show and smpte2084r)
+		self.lut3d_hdr_mincll_ctrl_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl.Show(show and smpte2084r)
 		self.lut3d_hdr_maxcll_ctrl_label.Show(show and smpte2084r)
+		self.lut3d_hdr_diffuse_white_label.Show(show and smpte2084r)
+		self.lut3d_hdr_diffuse_white_txt.Show(show and smpte2084r)
+		self.lut3d_hdr_diffuse_white_txt_label.Show(show and smpte2084r)
 		show = show or smpte2084
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])

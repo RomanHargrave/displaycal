@@ -1280,41 +1280,10 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	""" Display calibrator main application window. """
 
-	lut3d_apply_cal_ctrl_handler = LUT3DFrame.__dict__["lut3d_apply_cal_ctrl_handler"]
-	lut3d_bind_event_handlers = LUT3DFrame.__dict__["lut3d_bind_event_handlers"]
-	lut3d_content_colorspace_handler = LUT3DFrame.__dict__["lut3d_content_colorspace_handler"]
-	lut3d_content_colorspace_xy_handler = LUT3DFrame.__dict__["lut3d_content_colorspace_xy_handler"]
-	lut3d_create_consumer = LUT3DFrame.__dict__["lut3d_create_consumer"]
-	lut3d_create_handler = LUT3DFrame.__dict__["lut3d_create_handler"]
-	lut3d_create_producer = LUT3DFrame.__dict__["lut3d_create_producer"]
-	lut3d_bitdepth_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_input_ctrl_handler"]
-	lut3d_bitdepth_output_ctrl_handler = LUT3DFrame.__dict__["lut3d_bitdepth_output_ctrl_handler"]
-	lut3d_encoding_input_ctrl_handler = LUT3DFrame.__dict__["lut3d_encoding_input_ctrl_handler"]
-	lut3d_encoding_output_ctrl_handler = LUT3DFrame.__dict__["lut3d_encoding_output_ctrl_handler"]
-	lut3d_enable_size_controls = LUT3DFrame.__dict__["lut3d_enable_size_controls"]
-	lut3d_format_ctrl_handler = LUT3DFrame.__dict__["lut3d_format_ctrl_handler"]
-	lut3d_gamut_mapping_mode_handler = LUT3DFrame.__dict__["lut3d_gamut_mapping_mode_handler"]
-	lut3d_hdr_peak_luminance_handler = LUT3DFrame.__dict__["lut3d_hdr_peak_luminance_handler"]
-	lut3d_hdr_display_handler = LUT3DFrame.__dict__["lut3d_hdr_display_handler"]
-	lut3d_hdr_maxcll_handler = LUT3DFrame.__dict__["lut3d_hdr_maxcll_handler"]
-	lut3d_rendering_intent_ctrl_handler = LUT3DFrame.__dict__["lut3d_rendering_intent_ctrl_handler"]
-	lut3d_setup_encoding_ctrl = LUT3DFrame.__dict__["lut3d_setup_encoding_ctrl"]
-	lut3d_setup_language = LUT3DFrame.__dict__["lut3d_setup_language"]
-	lut3d_show_bitdepth_controls = LUT3DFrame.__dict__["lut3d_show_bitdepth_controls"]
-	lut3d_show_encoding_controls = LUT3DFrame.__dict__["lut3d_show_encoding_controls"]
-	lut3d_show_hdr_display_control = LUT3DFrame.__dict__["lut3d_show_hdr_display_control"]
-	lut3d_show_trc_controls = LUT3DFrame.__dict__["lut3d_show_trc_controls"]
-	lut3d_set_option = LUT3DFrame.__dict__["lut3d_set_option"]
-	lut3d_size_ctrl_handler = LUT3DFrame.__dict__["lut3d_size_ctrl_handler"]
-	lut3d_snap_size = LUT3DFrame.__dict__["lut3d_snap_size"]
-	lut3d_trc_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_ctrl_handler"]
-	lut3d_trc_gamma_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_ctrl_handler"]
-	lut3d_trc_gamma_type_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_gamma_type_ctrl_handler"]
-	lut3d_trc_black_output_offset_ctrl_handler = LUT3DFrame.__dict__["lut3d_trc_black_output_offset_ctrl_handler"]
-	lut3d_update_encoding_controls = LUT3DFrame.__dict__["lut3d_update_encoding_controls"]
-	lut3d_update_shared_controls = LUT3DFrame.__dict__["lut3d_update_shared_controls"]
-	lut3d_update_trc_control = LUT3DFrame.__dict__["lut3d_update_trc_control"]
-	lut3d_update_trc_controls = LUT3DFrame.__dict__["lut3d_update_trc_controls"]
+	# Shared methods from 3D LUT UI
+	for lut3d_ivar_name, lut3d_ivar in LUT3DFrame.__dict__.iteritems():
+		if lut3d_ivar_name.startswith("lut3d_"):
+			locals()[lut3d_ivar_name] = lut3d_ivar
 
 	# XYZbpout will be set to the blackpoint of the selected profile. This is
 	# used to determine if 3D LUT or measurement report black output offset
@@ -4576,13 +4545,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			if getcfg("3dlut.trc").startswith("smpte2084"):
 				lut3dp = [str(getcfg("3dlut.trc_output_offset")) + ",2084"]
 				if getcfg("3dlut.hdr_peak_luminance") < 10000:
-					lut3dp.append("@" + str(getcfg("3dlut.hdr_peak_luminance")))
+					lut3dp.append("@%i" % getcfg("3dlut.hdr_peak_luminance"))
 					if getcfg("3dlut.trc") == "smpte2084.hardclip":
 						lut3dp.append("h")
 					else:
 						lut3dp.append("s")
+					if getcfg("3dlut.hdr_mincll"):
+						lut3dp.append("%.4f" % getcfg("3dlut.hdr_mincll"))
+					if (getcfg("3dlut.hdr_mincll") and
+						getcfg("3dlut.hdr_maxcll") < 10000):
+						lut3dp.append("-")
 					if getcfg("3dlut.hdr_maxcll") < 10000:
-						lut3dp.append(str(getcfg("3dlut.hdr_maxcll")))
+						lut3dp.append("%i" % getcfg("3dlut.hdr_maxcll"))
 			else:
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC

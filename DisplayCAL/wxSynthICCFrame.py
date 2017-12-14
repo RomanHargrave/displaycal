@@ -662,17 +662,19 @@ class SynthICCFrame(BaseFrame):
 												 getcfg("synthprofile.trc_gamma_type"))
 		elif trc == -2084:
 			# SMPTE 2084
+			if rolloff:
+				mincll = getcfg("3dlut.hdr_mincll")
+				maxcll = getcfg("3dlut.hdr_maxcll")
+			else:
+				mincll = 0
+				maxcll = getcfg("synthprofile.luminance")
 			if rgb:
 				# Color profile
-				if rolloff:
-					maxcll = getcfg("3dlut.hdr_maxcll")
-				else:
-					maxcll = getcfg("synthprofile.luminance")
 				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
 										   (1 - outoffset)
 										   for v in black],
-										  getcfg("synthprofile.luminance"), 0,
-										  maxcll,
+										  getcfg("synthprofile.luminance"),
+										  mincll, maxcll,
 										  rolloff=True,
 										  blend_blackpoint=False)
 				if rolloff and getcfg("synthprofile.luminance") < 10000:
@@ -694,25 +696,24 @@ class SynthICCFrame(BaseFrame):
 					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
 						rgb_space, "",
 						getcfg("synthprofile.black_luminance") * (1 - outoffset),
-						getcfg("synthprofile.luminance"), 0,
-						maxcll,
+						getcfg("synthprofile.luminance"), mincll, maxcll,
 						mode="ICtCp" if rolloff else "RGB",
 						worker=self.worker, logfile=logfiles).tags.A2B0
+				if black != [0, 0, 0] and outoffset and not bpc:
+					profile.apply_black_offset(black)
+				if rolloff and getcfg("synthprofile.luminance") < 10000:
 					profile.write(path)
 					self.worker.generate_B2A_from_inverse_table(profile, 33,
 																smooth=False,
 																rgb_space=rgb_space,
 																logfile=logfiles)
-				if black != [0, 0, 0] and not bpc:
-					profile.apply_black_offset(black)
 			else:
 				# Grayscale profile
 				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
 													(1 - outoffset),
 													getcfg("synthprofile.luminance"),
-													0,
-													getcfg("3dlut.hdr_maxcll"),
-													rolloff=rolloff)
+													mincll, maxcll,
+													rolloff=True)
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.tags.kTRC.apply_bpc(black[1])
 		elif black != [0, 0, 0]:

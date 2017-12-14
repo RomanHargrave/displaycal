@@ -1596,10 +1596,12 @@
                                       <border>8</border>
                                     </object>
                                     <object class="sizeritem">
-                                      <object class="wxSpinCtrl" name="lut3d_hdr_peak_luminance_ctrl">
+                                      <object class="FloatSpin" name="lut3d_hdr_peak_luminance_ctrl">
                                         <size>75,-1</size>
-                                        <min>120</min>
-                                        <max>10000</max>
+                                        <min_val>120</min_val>
+                                        <max_val>10000</max_val>
+                                        <increment>1</increment>
+                                        <digits>0</digits>
                                       </object>
                                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                     </object>
@@ -1616,23 +1618,76 @@
                                 <object class="sizeritem">
                                   <object class="wxFlexGridSizer">
                                     <object class="sizeritem">
-                                      <object class="wxStaticText" name="lut3d_hdr_maxcll_label">
-                                        <label>hdr_maxcll</label>
+                                      <object class="wxStaticText" name="lut3d_hdr_mincll_label">
+                                        <label>mastering_display_black_luminance</label>
                                       </object>
                                       <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                     </object>
                                     <object class="sizeritem">
                                       <object class="wxBoxSizer">
                                         <object class="sizeritem">
-                                          <object class="wxSpinCtrl" name="lut3d_hdr_maxcll_ctrl">
+                                          <object class="FloatSpin" name="lut3d_hdr_mincll_ctrl">
                                             <size>75,-1</size>
-                                            <min>1000</min>
-                                            <max>10000</max>
+                                            <min_val>0.0</min_val>
+                                            <max_val>0.1</max_val>
+                                            <increment>0.0001</increment>
+                                            <digits>4</digits>
+                                          </object>
+                                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                        </object>
+                                        <object class="sizeritem">
+                                          <object class="wxStaticText" name="lut3d_hdr_mincll_ctrl_label">
+                                            <label>cd/m²</label>
+                                          </object>
+                                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                          <border>4</border>
+                                        </object>
+                                        <orient>wxHORIZONTAL</orient>
+                                      </object>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxStaticText" name="lut3d_hdr_maxcll_label">
+                                        <label>mastering_display_peak_luminance</label>
+                                      </object>
+                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxBoxSizer">
+                                        <object class="sizeritem">
+                                          <object class="FloatSpin" name="lut3d_hdr_maxcll_ctrl">
+                                            <size>75,-1</size>
+                                            <min_val>120</min_val>
+                                            <max_val>10000</max_val>
+                                            <increment>1</increment>
+                                            <digits>0</digits>
                                           </object>
                                           <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                         </object>
                                         <object class="sizeritem">
                                           <object class="wxStaticText" name="lut3d_hdr_maxcll_ctrl_label">
+                                            <label>cd/m²</label>
+                                          </object>
+                                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                          <border>4</border>
+                                        </object>
+                                        <orient>wxHORIZONTAL</orient>
+                                      </object>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxStaticText" name="lut3d_hdr_diffuse_white_label">
+                                        <label>3dlut.hdr.rolloff.diffuse_white</label>
+                                      </object>
+                                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    </object>
+                                    <object class="sizeritem">
+                                      <object class="wxBoxSizer">
+                                        <object class="sizeritem">
+                                          <object class="wxStaticText" name="lut3d_hdr_diffuse_white_txt">
+                                          </object>
+                                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                        </object>
+                                        <object class="sizeritem">
+                                          <object class="wxStaticText" name="lut3d_hdr_diffuse_white_txt_label">
                                             <label>cd/m²</label>
                                           </object>
                                           <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>

@@ -797,9 +797,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	rgb_space_linear = list(rgb_space)
 	rgb_space_linear[0] = 1.0
 
-	# Scene RGB -> BT.2390 rolloff -> HDR XYZ -> backward lookup -> display RGB
+	# Scene RGB -> BT.2390 roll-off -> HDR XYZ -> backward lookup -> display RGB
 	if logfile:
-		logfile.write("\rApplying BT.2390 rolloff...\n")
+		logfile.write("\rApplying BT.2390 roll-off...\n")
 		logfile.write("\r%i%%" % perc)
 	itable.clut = []
 	debugtable0.clut = []
@@ -1183,7 +1183,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 	# HDR tone mapping to display XYZ
 	if logfile:
-		logfile.write("\rApplying HDR tone mapping...\n")
+		if display_XYZ:
+			logfile.write("\rApplying chroma compression and filling cLUT...\n")
+		else:
+			logfile.write("\rFilling cLUT...\n")
 		logfile.write("\r%i%%" % perc)
 	row = 0
 	oog_count = 0
@@ -1609,9 +1612,9 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 				prevperc = perc
 		startperc = perc
 
-	# Scene RGB -> BT.2390 rolloff -> HDR XYZ -> backward lookup -> display RGB
+	# Scene RGB -> BT.2390 roll-off -> HDR XYZ -> backward lookup -> display RGB
 	if logfile:
-		logfile.write("\rApplying BT.2390 rolloff...\n")
+		logfile.write("\rApplying BT.2390 roll-off...\n")
 		logfile.write("\r%i%%" % perc)
 	itable.clut = []
 	debugtable0.clut = []
@@ -1650,8 +1653,8 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 					Y3 = Y2 / Ymax
 					X, Y, Z = (v / Y * Y3 if Y else v for v in (X, Y, Z))
 					if R == G == B and logfile and debug:
-						##logfile.write("\rE %.4f -> E' %.4f -> rolloff -> %.4f -> sat %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, min_I, Y2, Y3 / Y2 * 100, Y3))
-						logfile.write("\rE %.4f -> E' %.4f -> rolloff -> %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, Y2, Y3 / Y2 * 100, Y3))
+						##logfile.write("\rE %.4f -> E' %.4f -> roll-off -> %.4f -> sat %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, min_I, Y2, Y3 / Y2 * 100, Y3))
+						logfile.write("\rE %.4f -> E' %.4f -> roll-off -> %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, Y2, Y3 / Y2 * 100, Y3))
 				# Adapt to D50
 				X, Y, Z = colormath.adapt(X, Y, Z,
 										  whitepoint_source=rgb_space[1])
