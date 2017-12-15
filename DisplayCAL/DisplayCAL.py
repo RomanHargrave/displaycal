@@ -1333,10 +1333,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		result = self.worker.create_tempdir()
 		if isinstance(result, Exception):
 			safe_print(result)
-		if sys.platform == "win32":
-			self.maxprofilenamelength = 254 - len(self.worker.tempdir or "")
-		else:
-			self.maxprofilenamelength = 255
 		self.init_frame()
 		self.init_defaults()
 		self.set_child_ctrls_as_attrs(self)
@@ -11921,13 +11917,13 @@ class MainFrame(ReportFrame, BaseFrame):
 											 event.GetEventType(), 
 											 getevttype(event)))
 		oldval = self.profile_name_textctrl.GetValue()
-		if not self.check_profile_name() or len(oldval) > self.maxprofilenamelength:
+		if not self.check_profile_name() or len(oldval) > 80:
 			wx.Bell()
 			x = self.profile_name_textctrl.GetInsertionPoint()
 			if oldval == "":
 				newval = defaults.get("profile.name", "")
 			else:
-				newval = re.sub(r"[\\/:;*?\"<>|]+", "", oldval).lstrip("-")[:self.maxprofilenamelength]
+				newval = re.sub(r"[\\/:;*?\"<>|]+", "", oldval).lstrip("-")[:80]
 				# Windows silently strips any combination of trailing spaces and dots
 				newval = newval.rstrip(" .")
 			self.profile_name_textctrl.ChangeValue(newval)
@@ -12795,11 +12791,29 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Windows silently strips any combination of trailing spaces and dots
 		profile_name = profile_name.rstrip(" .")
 
-		# Get rid of characters considered invalid for filenames and shorten
-		# to a length of <maxprofilenamelength> chars
+		# Get rid of characters considered invalid for filenames.
 		# Also strip leading dashes which might trick Argyll tools into
 		# mistaking parts of the profile name as an option parameter
-		return re.sub(r"[\\/:;*?\"<>|]+", "_", profile_name).lstrip("-")[:self.maxprofilenamelength]
+		profile_name = re.sub(r"[\\/:;*?\"<>|]+", "_", profile_name).lstrip("-")
+
+		# Windows: MAX_PATH = 260, e.g. C:\256-char-path<NUL>
+		# Subtracting NUL and the four-char extension (e.g. .icm) leaves us
+		# with 255 characters, e.g. 
+		# C:\Users\<User>\AppData\Roaming\DisplayCAL\storage\<Name>\<Name>.icm
+		# Mac OS X HFS+ has a 255-character limit.
+		profile_save_path = getcfg("profile.save_path")
+		maxpath = 255
+		# Leave headroom of 31 chars
+		maxpath -= 31
+		if maxpath < len(profile_save_path):
+			maxpath = len(profile_save_path) + 2
+		profile_path = os.path.join(profile_save_path,
+									profile_name, profile_name)
+		while len(profile_path) > maxpath:
+			profile_name = profile_name[:-1]
+			profile_path = os.path.join(profile_save_path,
+										profile_name, profile_name)
+		return profile_name
 
 	def update_profile_name(self, event=None):
 		profile_name = self.create_profile_name()
