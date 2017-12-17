@@ -2751,8 +2751,8 @@ class BT2390(object):
 			maxLum = maxi
 			b = minLum
 			# BT.2390-3 suggests E2 + b * (1 - E2) ** 4, but this clips, if
-			# minLum is high, due to a 'dip' in the function. The solution is to
-			# adjust the exponent according to minLum. For minLum < 0.25
+			# minLum > 0.25, due to a 'dip' in the function. The solution is to
+			# adjust the exponent according to minLum. For minLum <= 0.25
 			# (< 5.15 cd/m2), this will give the same result as 'pure' BT.2390-3
 			p = min(1.0 / b, 4)
 			E3 = E2 + b * (1 - E2) ** p
