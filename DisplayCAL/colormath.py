@@ -2684,23 +2684,15 @@ class BT2390(object):
 		
 		"""
 
-		# Avoid discontinuity in function if black level in floating point PQ
-		# is above 0.25
-		black_max_cdm2 = specialpow(0.25, -2084) * 10000
-		if black_cdm2 > black_max_cdm2:
-			warnings.warn("Black level %f is out of range for BT.2390 - using "
-						  "%f" % (black_cdm2, black_max_cdm2), Warning)
-			black_cdm2 = black_max_cdm2
-
 		self.black_cdm2 = black_cdm2
 		self.white_cdm2 = white_cdm2
 		self.master_black_cdm2 = master_black_cdm2
 		self.master_white_cdm2 = master_white_cdm2
 	
 		self.ominv = black_cdm2 / 10000.0
-		self.omini = specialpow(self.ominv, 1.0 / -2084)  # minLum
+		self.omini = specialpow(self.ominv, 1.0 / -2084)  # Original minLum
 		self.omaxv = white_cdm2 / 10000.0
-		self.omaxi = specialpow(self.omaxv, 1.0 / -2084)  # maxLum
+		self.omaxi = specialpow(self.omaxv, 1.0 / -2084)  # Original maxLum
 
 		self.oKS = 1.5 * self.omaxi - 0.5
 
@@ -2709,21 +2701,12 @@ class BT2390(object):
 		self.mmini = specialpow(self.mminv, 1.0 / -2084)
 		self.mmaxv = master_white_cdm2 / 10000.0
 		self.mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
-		self.mini = (self.omini - self.mmini) / (self.mmaxi - self.mmini)
+		self.mini = (self.omini - self.mmini) / (self.mmaxi - self.mmini)  # Normalized minLum
 		self.minv = specialpow(self.mini, -2084)
-		self.maxi = (self.omaxi - self.mmini) / (self.mmaxi - self.mmini)
+		self.maxi = (self.omaxi - self.mmini) / (self.mmaxi - self.mmini)  # Normalized maxLum
+		self.maxv = specialpow(self.maxi, -2084)
 
 		self.KS = 1.5 * self.maxi - 0.5
-
-		# Need to adjust maxv for black offset so it can be used for scaling
-		if self.KS < 1:
-			E2 = self.P(1, self.KS, self.maxi)
-		else:
-			E2 = 1
-		E2 += self.mini * (1 - E2) ** 4
-		# Invert the normalization of the PQ values
-		E2 = E2 * (self.mmaxi - self.mmini) + self.mmini
-		self.maxv = specialpow(E2, -2084)
 
 	@staticmethod
 	def P(B, KS, maxi, maxci=1.0):
@@ -2755,17 +2738,37 @@ class BT2390(object):
 			mmini = self.mmini
 		if normalize and mmini is not None and mmaxi is not None:
 			# Normalize PQ values based on mastering display black/white levels
-			v = min(max((v - mmini) / (mmaxi - mmini), 0), 1.0)
-		if 0 < KS < 1 and KS <= v <= 1:
-			v = self.P(v, KS, maxi, maxci)
-		if mini and 0 <= v <= 1:
-			v += mini * (1 - v) ** 4
+			E1 = min(max((v - mmini) / (mmaxi - mmini), 0), 1.0)
+		else:
+			E1 = v
+		if 0 < KS < 1 and KS <= E1 <= 1:
+			E2 = self.P(E1, KS, maxi, maxci)
+		else:
+			E2 = E1
+		if mini and 0 <= E2 <= 1:
+			# Apply black level lift
+			minLum = mini
+			maxLum = maxi
+			b = minLum
+			# BT.2390-3 suggests E2 + b * (1 - E2) ** 4, but this clips, if
+			# minLum is high, due to a 'dip' in the function. The solution is to
+			# scale the second E2 in the function by the mastering display peak
+			# PQ value (mmaxi in this case).
+			E3 = E2 + b * (1 - E2 * mmaxi) ** 4
+			# If maxLum < 1, and the input value reaches maxLum, the resulting
+			# output value will be higher than maxLum after applying the black
+			# level lift (note that this is *not* a side-effect of the above 
+			# scaling by mmaxi). Undo this by re-scaling to the nominal output
+			# range [minLum, maxLum].
+			E3 = convert_range(E3, b, maxi + b * (1 - maxi * mmaxi) ** 4, b, maxi)
+		else:
+			E3 = E2
 		if bpc:
-			v = convert_range(v, mini, maxi, 0, maxi)
+			E3 = convert_range(E3, mini, maxi, 0, maxi)
 		if normalize and mmini is not None and mmaxi is not None:
 			# Invert the normalization of the PQ values
-			v = v * (mmaxi - mmini) + mmini
-		return v
+			E3 = E3 * (mmaxi - mmini) + mmini
+		return E3
 
 
 class Matrix3x3(list):

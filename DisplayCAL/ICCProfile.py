@@ -683,7 +683,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 	bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
 							  master_white_cdm2)
-	maxv = bt2390.maxv
+	maxv = white_cdm2 / 10000.0
 	
 	# Input curve interpolation
 	# Normlly the input curves would either be linear (= 1:1 mapping to
@@ -3610,7 +3610,6 @@ class CurveType(ICCProfileTag, list):
 				master_white_cdm2 = 10000
 			bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
 									  master_white_cdm2)
-			maxv = bt2390.maxv
 			maxi_out = maxi
 		else:
 			if not master_white_cdm2:
