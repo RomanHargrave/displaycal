@@ -2752,15 +2752,16 @@ class BT2390(object):
 			b = minLum
 			# BT.2390-3 suggests E2 + b * (1 - E2) ** 4, but this clips, if
 			# minLum is high, due to a 'dip' in the function. The solution is to
-			# scale the second E2 in the function by the mastering display peak
-			# PQ value (mmaxi in this case).
-			E3 = E2 + b * (1 - E2 * mmaxi) ** 4
+			# adjust the exponent according to minLum. For minLum < 0.25
+			# (< 5.15 cd/m2), this will give the same result as 'pure' BT.2390-3
+			p = min(1.0 / b, 4)
+			E3 = E2 + b * (1 - E2) ** p
 			# If maxLum < 1, and the input value reaches maxLum, the resulting
 			# output value will be higher than maxLum after applying the black
 			# level lift (note that this is *not* a side-effect of the above 
-			# scaling by mmaxi). Undo this by re-scaling to the nominal output
+			# exponent adjustment). Undo this by re-scaling to the nominal output
 			# range [minLum, maxLum].
-			E3 = convert_range(E3, b, maxi + b * (1 - maxi * mmaxi) ** 4, b, maxi)
+			E3 = convert_range(E3, b, maxi + b * (1 - maxi) ** p, b, maxi)
 		else:
 			E3 = E2
 		if bpc:
