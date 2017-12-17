@@ -2741,7 +2741,7 @@ class BT2390(object):
 			E1 = min(max((v - mmini) / (mmaxi - mmini), 0), 1.0)
 		else:
 			E1 = v
-		if 0 < KS < 1 and KS <= E1 <= 1:
+		if KS <= E1 <= 1:
 			E2 = self.P(E1, KS, maxi, maxci)
 		else:
 			E2 = E1
