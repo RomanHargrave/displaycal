@@ -1494,7 +1494,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	lscale = 1.0 / hlg.oetf(maxi, True)
 	hlg.black_cdm2 *= maxi
 	hlg.white_cdm2 *= lscale
-	Ymax = hlg.oetf(maxi, True, 1, True, False)
+	Ymax = hlg.eotf(maxi)
 	if logfile:
 		logfile.write("Nominal peak luminance after scaling = %.2f\n" % hlg.white_cdm2)
 
@@ -1526,7 +1526,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	segment = 1.0 / (clutres - 1.0)
 	iv = 0.0
 	prevpow = 0.0
-	nextpow = hlg.oetf(apply_rolloff(segment), True, 1, True, False)
+	nextpow = hlg.eotf(apply_rolloff(segment))
 	xp = []
 	if generate_B2A:
 		oxp = []
@@ -1535,14 +1535,14 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 		if v > iv + segment:
 			iv += segment
 			prevpow = nextpow
-			nextpow = hlg.oetf(apply_rolloff(iv + segment), True, 1, True, False)
+			nextpow = hlg.eotf(apply_rolloff(iv + segment))
 		prevs = 1.0 - (v - iv) / segment
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
-		out = hlg.oetf(vv)
+		out = hlg.eotf(vv, True)
 		xp.append(out)
 		if generate_B2A:
-			oxp.append(hlg.oetf(apply_rolloff(v), True, 1, True, False) / maxv)
+			oxp.append(hlg.eotf(apply_rolloff(v)) / maxv)
 	interp = colormath.Interp(xp, range(steps), use_numpy=True)
 	if generate_B2A:
 		ointerp = colormath.Interp(oxp, range(steps), use_numpy=True)
@@ -1640,21 +1640,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 				RGB = [v * step for v in (R, G, B)]
 				RGB_in.append(RGB)
 				HDR_RGB.append(RGB)
-				X, Y, Z = hlg.eotf(*RGB)
-				if Y:
-					Y1 = Y
-					I1 = hlg.oetf(Y)
-					I2 = apply_rolloff(I1)
-					min_I = min(I1 / I2, I2 / I1)
-					##X, Y, Z = colormath.XYZsaturation(X, Y, Z,
-													  ##min_I,
-													  ##rgb_space[1])[0]
-					Y2 = hlg.oetf(I2, True, 1, True, False)
-					Y3 = Y2 / Ymax
-					X, Y, Z = (v / Y * Y3 if Y else v for v in (X, Y, Z))
-					if R == G == B and logfile and debug:
-						##logfile.write("\rE %.4f -> E' %.4f -> roll-off -> %.4f -> sat %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, min_I, Y2, Y3 / Y2 * 100, Y3))
-						logfile.write("\rE %.4f -> E' %.4f -> roll-off -> %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, Y2, Y3 / Y2 * 100, Y3))
+				X, Y, Z = hlg.RGB2XYZ(*RGB)
 				# Adapt to D50
 				X, Y, Z = colormath.adapt(X, Y, Z,
 										  whitepoint_source=rgb_space[1])

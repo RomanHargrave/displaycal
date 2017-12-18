@@ -167,85 +167,110 @@ class HLG(object):
 		self.white_cdm2 = white_cdm2
 		self.rgb_space = get_rgb_space(rgb_space)
 		self.system_gamma = system_gamma
+
+	@property
+	def gamma(self):
+		""" Adjust system gamma for nominal peak luminance """
+		return self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
 		
-	def oetf(self, v, inverse=False, normalize=1, apply_system_gamma=True,
-			 apply_black_offset=True):
+	def oetf(self, v, inverse=False):
 		"""
 		Hybrid Log Gamma (HLG) OETF
 		
-		"""
-		if normalize == 1:
-			# Normalized to 0..1 range
-			c = 1.00429347
-			d = 1.0
-			e = 3.0
-			k = 1.0 / 12
-			r = 1.0
-		elif normalize == 12:
-			# Normalized to 0..12 range
-			c = 0.55991073
-			d = 4.0
-			e = 1.0
-			k = 1.0
-			r = 0.5
-		else:
-			raise ValueError("Cannot normalize to %s" % normalize)
-		a = 0.17883277
-		b = 0.02372241 * normalize
-		if inverse:
-			# Inverse OETF, RGB -> XYZ
-			E_ = v
-			if 0 <= E_ <= 0.5:
-				E = d * E_ ** 2 / e
-			else:
-				E = math.exp((E_ - c) / a) + b
-			v = E
-			if apply_system_gamma:
-				gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
-				v = v ** gamma
-			if apply_black_offset:
-				LB = self.black_cdm2 / self.white_cdm2
-				alpha = (1.0 - LB)
-				v = alpha * v + LB
-		else:
-			# OETF, XYZ -> RGB
-			if apply_system_gamma:
-				gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
-				v = (v / normalize) ** (1 / gamma) * normalize
-			E = v
-			if 0 <= E <= k:
-				E_ = r * math.sqrt(e * E)
-			else:
-				E_ = a * math.log(E - b) + c
-			v = E_
-		return min(v, normalize)
+		Relative scene linear light to non-linear HLG signal, or inverse
 
-	def eotf(self, R, G, B):
-		"""
-		Hybrid Log Gamma (HLG) EOTF
-
-		Return luminance of displayed components (in cd/m2) or XYZ
-		(normalized to 0..1) if rgb_space is given
+		Input domain 0..1
+		Output range 0..1
 		
 		"""
-		RGB_S = tuple(self.oetf(v, True, 1, False, False) for v in (R, G, B))
-		gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
-		if self.rgb_space:
-			X, Y, Z = self.rgb_space[-1] * RGB_S
-			if Y:
-				# Apply system gamma
-				Yy = Y ** gamma
-				X, Y, Z = (v / Y * Yy for v in (X, Y, Z))
-			# Apply black offset
-			beta = self.black_cdm2 / self.white_cdm2
-			bp = [E * beta for E in get_whitepoint(self.rgb_space[1])]
-			X, Y, Z = blend_blackpoint(X, Y, Z, (0, 0, 0), bp)
-			return X, Y, Z
+		if v == 1:
+			return 1.0
+		a = 0.17883277
+		b = 1 - 4 * a
+		c = 0.5 - a * math.log(4 * a)
+		if inverse:
+			# Non-linear HLG signal to relative scene linear light
+			if 0 <= v <= 1 / 2.:
+				v = v ** 2 / 3.
+			else:
+				v = (math.exp((v - c) / a) + b) / 12.
 		else:
-			alpha = (self.white_cdm2 - self.black_cdm2)
-			# Rec. 2020 relative luminance coefficients
-			YS = 0.2627 * RGB_S[0] + 0.6780 * RGB_S[1] + 0.0593 * RGB_S[2]
-			return alpha * YS ** gamma + self.black_cdm2
+			# Relative scene linear light to non-linear HLG signal
+			if 0 <= v <= 1 / 12.:
+				v = math.sqrt(3 * v)
+			else:
+				v = a * math.log(12 * v - b) + c
+		return v
+
+	def eotf(self, RGB, inverse=False):
+		"""
+		Hybrid Log Gamma (HLG) EOTF
+		
+		Non-linear HLG signal to display light, or inverse
+		
+		Input domain 0..1
+		Output range 0..1
+		
+		"""
+		if isinstance(RGB, (float, int)):
+			R, G, B = (RGB,) * 3
+		else:
+			R, G, B = RGB
+		if inverse:
+			# Display light -> relative scene linear light -> HLG signal
+			R, G, B = (self.oetf(v) for v in self.ootf((R, G, B), True))
+		else:
+			# HLG signal -> relative scene linear light -> display light
+			R, G, B = self.ootf([self.oetf(v, True) for v in (R, G, B)])
+		return G if isinstance(RGB, (float, int)) else (R, G, B)
+		
+
+	def ootf(self, RGB, inverse=False):
+		"""
+		Hybrid Log Gamma (HLG) OOTF
+
+		Relative scene linear light to display light, or inverse
+		
+		Input domain 0..1
+		Output range 0..1
+		
+		"""
+		if isinstance(RGB, (float, int)):
+			R, G, B = (RGB,) * 3
+		else:
+			R, G, B = RGB
+		alpha = (self.white_cdm2 - self.black_cdm2) / self.white_cdm2
+		beta = self.black_cdm2 / self.white_cdm2
+		Y = 0.2627 * R + 0.6780 * G + 0.0593 * B
+		if inverse:
+			if Y and Y - beta:
+				R, G, B = (((Y - beta) / alpha) ** ((1 - self.gamma) / self.gamma) *
+						   ((v - beta) / alpha) for v in (R, G, B))
+			else:
+				R, G, B = 0, 0, 0
+		else:
+			R, G, B = (alpha * Y ** (self.gamma - 1) * E + beta for E in
+					   (R, G, B))
+		return G if isinstance(RGB, (float, int)) else (R, G, B)
+
+	def RGB2XYZ(self, R, G, B):
+		""" Non-linear HLG signal to display XYZ """
+		X, Y, Z = self.rgb_space[-1] * [self.oetf(v, True) for v in (R, G, B)]
+		Yy = self.ootf(Y)
+		if Y:
+			X, Y, Z = (v / Y * Yy for v in (X, Y, Z))
+		else:
+			X, Y, Z = (v * Yy for v in self.rgb_space[1])
+		return X, Y, Z
+
+	def XYZ2RGB(self, X, Y, Z):
+		""" Display XYZ to non-linear HLG signal """
+		Yy = self.ootf(Y, True)
+		if Y:
+			X, Y, Z = (v / Y * Yy for v in (X, Y, Z))
+		R, G, B = self.rgb_space[-1].inverted() * (X, Y, Z)
+		R, G, B = [self.oetf(v) for v in (R, G, B)]
+		return R, G, B
 
 
 rgb_spaces = {
