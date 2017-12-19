@@ -340,6 +340,9 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
 			trc = "smpte2084.rolloffclip"
 			self.lut3d_set_option("3dlut.hdr_maxmll", 10000)
+		elif self.lut3d_trc_ctrl.GetSelection() == 4:  # HLG
+			self.lut3d_set_option("3dlut.trc_output_offset", 0.0)
+			trc = "hlg"
 		else:
 			trc = "customgamma"
 		self.lut3d_set_option("3dlut.trc", trc)
@@ -786,7 +789,8 @@ class LUT3DFrame(BaseFrame):
 		output_encoding = getcfg("3dlut.encoding.output")
 		if (getcfg("3dlut.apply_trc") or
 			not hasattr(self, "lut3d_trc_apply_none_ctrl")):
-			if getcfg("3dlut.trc").startswith("smpte2084"):
+			if (getcfg("3dlut.trc").startswith("smpte2084") or  # SMPTE ST.2084 (PQ)
+				getcfg("3dlut.trc") == "hlg"):  # Hybrid Log-Gamma (HLG)
 				trc_gamma = getcfg("3dlut.trc")
 			else:
 				trc_gamma = getcfg("3dlut.trc_gamma")
@@ -810,7 +814,7 @@ class LUT3DFrame(BaseFrame):
 		white_cdm2 = getcfg("3dlut.hdr_peak_luminance")
 		minmll = getcfg("3dlut.hdr_minmll")
 		maxmll = getcfg("3dlut.hdr_maxmll")
-		content_rgb_space = [-2084, [], [], [], []]
+		content_rgb_space = [1.0, [], [], [], []]
 		for i, color in enumerate(("white", "red", "green", "blue")):
 			for coord in "xy":
 				v = getcfg("3dlut.content.colorspace.%s.%s" % (color, coord))
@@ -1197,7 +1201,7 @@ class LUT3DFrame(BaseFrame):
 		# Shared with main window
 		items = []
 		for item in ("Gamma 2.2", "trc.rec1886", "trc.smpte2084.hardclip",
-					 "trc.smpte2084.rolloffclip", "custom"):
+					 "trc.smpte2084.rolloffclip", "trc.hlg", "custom"):
 			items.append(lang.getstr(item))
 		self.lut3d_trc_ctrl.SetItems(items)
 		
@@ -1366,6 +1370,8 @@ class LUT3DFrame(BaseFrame):
 			else:
 				sel = 3
 			self.lut3d_trc_ctrl.SetSelection(sel)
+		elif getcfg("3dlut.trc") == "hlg":  # Hybrid Log-Gamma (HLG)
+			self.lut3d_trc_ctrl.SetSelection(4)
 		elif (getcfg("3dlut.trc_gamma_type") == "B" and
 			getcfg("3dlut.trc_output_offset") == 0 and
 			getcfg("3dlut.trc_gamma") == 2.4):
@@ -1377,7 +1383,7 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_trc_ctrl.SetSelection(0)  # Pure power gamma 2.2
 			setcfg("3dlut.trc", "gamma2.2")
 		else:
-			self.lut3d_trc_ctrl.SetSelection(4)  # Custom
+			self.lut3d_trc_ctrl.SetSelection(5)  # Custom
 			setcfg("3dlut.trc", "customgamma")
 
 	def lut3d_update_trc_controls(self):
@@ -1513,11 +1519,13 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_trc_apply_ctrl.Show(show)
 		self.lut3d_trc_ctrl.Show(show)
 		smpte2084 = getcfg("3dlut.trc").startswith("smpte2084")
+		hlg = getcfg("3dlut.trc") == "hlg"
+		hdr = smpte2084 or hlg
 		show = show and (getcfg("3dlut.trc") == "customgamma" or
 						 (isinstance(self, LUT3DFrame) or
 						  getcfg("show_advanced_options")))
-		self.lut3d_trc_gamma_label.Show(show and not smpte2084)
-		self.lut3d_trc_gamma_ctrl.Show(show and not smpte2084)
+		self.lut3d_trc_gamma_label.Show(show and not hdr)
+		self.lut3d_trc_gamma_ctrl.Show(show and not hdr)
 		smpte2084r = getcfg("3dlut.trc") == "smpte2084.rolloffclip"
 		# Show items in this order so we end up with the correct controls shown
 		showcc = smpte2084r and (isinstance(self, LUT3DFrame) or
@@ -1536,10 +1544,10 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_diffuse_white_label.Show(show and smpte2084r)
 		self.lut3d_hdr_diffuse_white_txt.Show(show and smpte2084r)
 		self.lut3d_hdr_diffuse_white_txt_label.Show(show and smpte2084r)
-		show = show or smpte2084
+		show = (show or smpte2084) and not hlg
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])
-		self.lut3d_trc_gamma_type_ctrl.Show(show and not smpte2084)
+		self.lut3d_trc_gamma_type_ctrl.Show(show and not hdr)
 		self.lut3d_trc_black_output_offset_label.Show(show)
 		self.lut3d_trc_black_output_offset_ctrl.Show(show)
 		self.lut3d_trc_black_output_offset_intctrl.Show(show)

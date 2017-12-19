@@ -2042,11 +2042,22 @@ class Worker(WorkerBase):
 			raise ValueError("Blackpoint is invalid: %s" % odata)
 		XYZbp = odata[0]
 		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
+		hlg = gamma == "hlg"
+		hdr = smpte2084 or hlg
+		lumi = profile2.tags.get("lumi", ICCP.XYZType())
+		if not lumi.Y:
+			lumi.Y = 100.0
 		if smpte2084:
+			# SMPTE ST.2084 (PQ)
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
 					 (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL %i cd/m²)" %
 					  (white_cdm2, minmll, maxmll)))
+		elif hlg:
+			# Hybrid Log-Gamma (HLG)
+			self.log(os.path.basename(profile1.fileName) +
+					 u" → " + lang.getstr("trc." + gamma) +
+					 (u" %i cd/m²" % lumi.Y))
 		elif apply_trc:
 			self.log("Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -2058,16 +2069,23 @@ class Worker(WorkerBase):
 		self.log("Black Lab = %.6f %.6f %.6f" %
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log("Output offset = %.2f%%" % (outoffset * 100))
-		if smpte2084:
-			if gamma != "smpte2084.rolloffclip":
-				minmll = 0
-				maxmll = white_cdm2
-			lumi = profile2.tags.get("lumi", ICCP.XYZType())
-			profile1.set_smpte2084_trc([v * lumi.Y * (1 - outoffset)
-										for v in XYZbp], white_cdm2, minmll,
-									   maxmll, rolloff=True,
-									   blend_blackpoint=False)
-			if gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000:
+		if hdr:
+			if smpte2084:
+				# SMPTE ST.2084 (PQ)
+				if gamma != "smpte2084.rolloffclip":
+					minmll = 0
+					maxmll = white_cdm2
+				black_cdm2 = XYZbp[1] * lumi.Y * (1 - outoffset)
+				profile1.set_smpte2084_trc([v / XYZbp[1] * black_cdm2
+											for v in XYZbp], white_cdm2, minmll,
+										   maxmll, rolloff=True,
+										   blend_blackpoint=False)
+			elif hlg:
+				# Hybrid Log-Gamma (HLG)
+				black_cdm2 = 0  # Black offset will be applied separate for HLG
+				white_cdm2 = lumi.Y
+				profile1.set_hlg_trc((0, 0, 0), white_cdm2, 1.2, 5)
+			if (gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000) or hlg:
 				desc = profile1.getDescription()
 				desc = re.sub(r"\s*(?:color profile|primaries with "
 							  "\S+ transfer function)$", "", desc)
@@ -2077,13 +2095,20 @@ class Worker(WorkerBase):
 								lang.getstr("profile.unsupported", 
 											(lang.getstr("unknown"), 
 											 profile1.colorSpace)))
-				rgb_space[0] = -2084
+				rgb_space[0] = 1.0  # Set gamma to 1.0 (not actually used)
 				rgb_space = colormath.get_rgb_space(rgb_space)
-				self.recent.write(desc + u" → " +
-								  lang.getstr("trc." + gamma) +
-								  (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL "
-								   u"%i cd/m²)\n" %
-								   (white_cdm2, minmll, maxmll)))
+				if smpte2084:
+					# SMPTE ST.2084 (PQ)
+					self.recent.write(desc + u" → " +
+									  lang.getstr("trc." + gamma) +
+									  (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL "
+									   u"%i cd/m²)\n" %
+									   (white_cdm2, minmll, maxmll)))
+				elif hlg:
+					# Hybrid Log-Gamma (HLG)
+					self.recent.write(desc + u" → " +
+									  lang.getstr("trc." + gamma) +
+									  (u" %i cd/m²\n" % white_cdm2))
 				linebuffered_logfiles = []
 				if sys.stdout.isatty():
 					linebuffered_logfiles.append(safe_print)
@@ -2119,18 +2144,27 @@ class Worker(WorkerBase):
 				else:
 					xf=None
 					xb=None
-				profile = ICCP.create_synthetic_smpte2084_clut_profile(
+				if smpte2084:
+					hdr_format = "PQ"
+				elif hlg:
+					hdr_format = "HLG"
+				profile = ICCP.create_synthetic_hdr_clut_profile(hdr_format,
 					rgb_space, profile1.getDescription(),
-					XYZbp[1] * lumi.Y * (1 - outoffset), white_cdm2, minmll,
-					maxmll, content_rgb_space=content_rgb_space,
-					mode="RGB" if gamma == "smpte2084.hardclip" else "ICtCp",
+					black_cdm2, white_cdm2,
+					minmll,  # Not used for HLG
+					maxmll,  # Not used for HLG
+					system_gamma=1.2,  # Not used for PQ
+					ambient_cdm2=5,  # Not used for PQ
+					maxsignal=1.0,  # Not used for PQ
+					content_rgb_space=content_rgb_space,
 					forward_xicclu=xf, backward_xicclu=xb,
 					worker=self, logfile=logfiles)
 				profile1.tags.A2B0 = profile.tags.A2B0
 				profile1.tags.DBG0 = profile.tags.DBG0
 				profile1.tags.DBG1 = profile.tags.DBG1
 				profile1.tags.DBG2 = profile.tags.DBG2
-		if not apply_trc or smpte2084:
+				profile1.tags.kTRC = profile.tags.kTRC
+		if not apply_trc or hdr:
 			# Apply only the black point blending portion of BT.1886 mapping
 			logfiles = self.get_logfiles()
 			logfiles.write("Applying black offset...\n")
@@ -2815,20 +2849,22 @@ END_DATA
 			extra_args = parse_argument_string(getcfg("extra_args.collink"))
 
 			smpte2084 = trc_gamma in ("smpte2084.hardclip",
-									 "smpte2084.rolloffclip")
+									  "smpte2084.rolloffclip")
+			hlg = trc_gamma == "hlg"
+			hdr = smpte2084 or hlg
 
 			profile_in_basename = make_argyll_compatible_path(os.path.basename(profile_in.fileName))
 
-			smpte2084_use_src_gamut = (smpte2084 and
+			hdr_use_src_gamut = (hdr and
 									   profile_in_basename == "Rec2020.icm" and
 									   intent in ("la", "lp", "p", "pa", "ms", "s") and
 									   not get_arg("-G", extra_args) and
 									   not get_arg("-g", extra_args))
 
-			if smpte2084 and not smpte2084_use_src_gamut and not use_b2a:
+			if hdr and not hdr_use_src_gamut and not use_b2a:
 				# Always use B2A instead of inverse forward table (faster and
 				# better result if B2A table has enough effective resolution)
-				# for SMPTE 2084 with colorimetric intents
+				# for HDR with colorimetric intents
 				use_b2a = True
 				# Check B2A resolution and regenerate on-the-fly if too low
 				b2a = profile_out.tags.get("B2A1", profile_out.tags.get("B2A0"))
@@ -2898,7 +2934,7 @@ END_DATA
 			collink_version_string = get_argyll_version_string("collink")
 			collink_version = parse_argyll_version_string(collink_version_string)
 			if trc_gamma:
-				if (not smpte2084 and not use_xicclu and
+				if (not hdr and not use_xicclu and
 					(collink_version >= [1, 7] or not trc_output_offset)):
 					# Make sure the profile has the expected Rec. 709 TRC
 					# for BT.1886
@@ -2908,7 +2944,7 @@ END_DATA
 						if channel + "TRC" in profile_in.tags:
 							profile_in.tags[channel + "TRC"].set_trc(-709)
 				else:
-					# For SMPTE 2084 or Argyll < 1.7 beta, alter profile TRC
+					# For HDR or Argyll < 1.7 beta, alter profile TRC
 					# Argyll CMS prior to 1.7 beta development code 2014-07-10
 					# does not support output offset, alter the source profile
 					# instead (note that accuracy is limited due to 16-bit
@@ -2921,7 +2957,7 @@ END_DATA
 												  minmll=minmll,
 												  maxmll=maxmll,
 												  content_rgb_space=content_rgb_space,
-												  hdr_tonemapping=not smpte2084_use_src_gamut)
+												  hdr_tonemapping=not hdr_use_src_gamut)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
@@ -2939,9 +2975,10 @@ END_DATA
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 
-			if smpte2084_use_src_gamut:
+			if hdr_use_src_gamut:
 				# Use source gamut to preserve more saturation.
-				# Assume source encoded within SMPTE2084
+				# Assume content colorspace (i.e. DCI P3) encoded within
+				# container colorspace (i.e. Rec. 2020)
 
 				tools = {}
 				for toolname in (#"iccgamut",
@@ -2979,7 +3016,7 @@ END_DATA
 																  cgx, cgy,
 																  cbx, cby,
 																  cwx, cwy,
-																  -2084,
+																  1.0,
 																  rgb_space_name,
 																  "")
 				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
@@ -2996,7 +3033,7 @@ END_DATA
 				XYZbp = odata[0]
 				lumi = profile_out.tags.get("lumi", ICCP.XYZType())
 
-				# Apply SMPTE 2084 TRC to source
+				# Apply HDR TRC to source
 				self.blend_profile_blackpoint(profile_src, profile_out,
 											  trc_output_offset, trc_gamma,
 											  trc_gamma_type,
@@ -3080,7 +3117,7 @@ END_DATA
 			# Now build the device link
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
 					"-r%i" % size, "-n"]
-			if smpte2084_use_src_gamut:
+			if hdr_use_src_gamut:
 				# Use source gamut
 				args.insert(3, gam_filename)
 			if profile_abst:
@@ -3100,7 +3137,7 @@ END_DATA
 					 (not trc_gamma and apply_black_offset)) and
 					collink_version >= [1, 7]):
 					args.append("-b")  # Use RGB->RGB forced black point hack
-				if (trc_gamma and not smpte2084 and
+				if (trc_gamma and not hdr and
 					trc_gamma_type in ("b", "B")):
 					if collink_version >= [1, 7]:
 						args.append("-I%s:%s:%s" % (trc_gamma_type,
@@ -3443,7 +3480,7 @@ END_DATA
 				profile_link.write(filename + profile_ext)
 				profile_link.tags.A2B0.clut_writepng(filename + ".A2B0.CLUT.png")
 
-				if smpte2084:
+				if hdr:
 					if format == "madVR":
 						# We need to update Input_Primaries, otherwise the
 						# madVR 3D LUT won't work correctly! (collink fills
@@ -3473,16 +3510,19 @@ END_DATA
 							parametersData = list(h3d.parametersData)
 							cstart, cend = input_primaries.span()
 							parametersData[cstart + 16:cend] = " ".join(components_new)
-							h3d.parametersData = "Input_Transfer_Function PQ\r\n"
-							if hdr_display:
-								h3d.parametersData += "Output_Transfer_Function PQ\r\n"
+							if smpte2084:
+								h3d.parametersData = "Input_Transfer_Function PQ\r\n"
+								if hdr_display:
+									h3d.parametersData += "Output_Transfer_Function PQ\r\n"
+							else:
+								h3d.parametersData = ""
 							h3d.parametersData += "".join(parametersData)
 							h3d.write()
 						else:
 							raise Error("madVR 3D LUT doesn't contain "
 										"Input_Primaries")
 
-					# Save SMPTE2084 profile
+					# Save HDR source profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
 					fd, profile_in.fileName = tempfile.mkstemp(in_ext,
 															   "%s-" % in_name,

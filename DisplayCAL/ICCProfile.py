@@ -642,6 +642,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											 master_black_cdm2,
 											 master_white_cdm2,
 											 1.2,  # Not used for PQ
+											 5.0,  # Not used for PQ
 											 1.0,  # Not used for PQ
 											 content_rgb_space,
 											 clutres, mode,
@@ -654,12 +655,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 
 def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 									  black_cdm2=0, white_cdm2=400,
-									  master_black_cdm2=0,
-									  master_white_cdm2=10000,
-									  system_gamma=1.2,
-									  maxsignal=1.0,
+									  master_black_cdm2=0,  # Not used for HLG
+									  master_white_cdm2=10000,  # Not used for HLG
+									  system_gamma=1.2,  # Not used for PQ
+									  ambient_cdm2=5,  # Not used for PQ
+									  maxsignal=1.0,  # Not used for PQ
 									  content_rgb_space="DCI P3",
-									  clutres=33, mode="ICtCp",
+									  clutres=33,
+									  mode="ICtCp",  # Not used for HLG
 									  forward_xicclu=None,
 									  backward_xicclu=None,
 									  generate_B2A=False,
@@ -684,7 +687,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	elif hdr_format == "HLG":
 		# Note: Unlike the PQ black level lift, we apply HLG black offset as
 		# separate final step, not as part of the HLG EOTF
-		hlg = colormath.HLG(0, white_cdm2, system_gamma, rgb_space)
+		hlg = colormath.HLG(0, white_cdm2, system_gamma, ambient_cdm2, rgb_space)
 
 		if maxsignal < 1:
 			# Adjust EOTF so that EOTF[maxsignal] gives (approx) white_cdm2
@@ -1519,6 +1522,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 def create_synthetic_hlg_clut_profile(rgb_space, description,
 											black_cdm2=0, white_cdm2=400,
 											system_gamma=1.2,
+											ambient_cdm2=5,
 											maxsignal=1.0,
 											content_rgb_space="DCI P3",
 											rolloff=True,
@@ -1546,6 +1550,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											 0,  # Not used for HLG
 											 10000,  # Not used for HLG
 											 system_gamma,
+											 ambient_cdm2,
 											 maxsignal,
 											 content_rgb_space,
 											 clutres,
@@ -3183,6 +3188,49 @@ class CurveType(ICCProfileTag, list):
 											 (white_jndi -
 											  black_jndi))) / white_dicomY
 			self.append(v * 65535)
+	
+	def set_hlg_trc(self, black_cdm2=0, white_cdm2=100, system_gamma=1.2,
+					ambient_cdm2=5, maxsignal=1.0, size=None):
+		"""
+		Set the response to the Hybrid Log-Gamma (HLG) function
+		
+		This response is special in that it depends on the actual black
+		and white level of the display, system gamma and ambient.
+		
+		XYZbp           Black point in absolute XYZ, Y range 0..white_cdm2
+		maxsignal       Set clipping point (optional)
+		size            Number of steps. Recommended >= 1024
+		
+		"""
+		if black_cdm2 < 0 or black_cdm2 >= white_cdm2:
+			raise ValueError("The black level of %f cd/m2 is out of range "
+							 "for HLG. Valid range begins at 0 cd/m2." %
+							 black_cdm2)
+		values = []
+
+		hlg = colormath.HLG(black_cdm2, white_cdm2, system_gamma, ambient_cdm2)
+
+		if maxsignal < 1:
+			# Adjust EOTF so that EOTF[maxsignal] gives (approx) white_cdm2
+			while hlg.eotf(maxsignal) * hlg.white_cdm2 < white_cdm2:
+				hlg.white_cdm2 += 1
+
+		lscale = 1.0 / hlg.oetf(1.0, True)
+		hlg.white_cdm2 *= lscale
+		if lscale < 1 and logfile:
+			logfile.write("Nominal peak luminance after scaling = %.2f\n" %
+						  hlg.white_cdm2)
+
+		maxv = hlg.eotf(maxsignal)
+		if not size:
+			size = len(self)
+		if size < 2:
+			size = 1024
+		for i in xrange(size):
+			n = i / (size - 1.0)
+			v = hlg.eotf(min(n, maxsignal))
+			values.append(min(v / maxv, 1.0))
+		self[:] = [min(v * 65535, 65535) for v in values]
 	
 	def set_smpte2084_trc(self, black_cdm2=0, white_cdm2=100,
 						  master_black_cdm2=0, master_white_cdm2=None,
@@ -5354,6 +5402,30 @@ class ICCProfile:
 													   size)
 		self.apply_black_offset([v / white_cdm2 for v in XYZbp],
 								40.0 * (white_cdm2 / 40.0))
+
+	def set_hlg_trc(self, XYZbp=(0, 0, 0), white_cdm2=100, system_gamma=1.2,
+					ambient_cdm2=5, maxsignal=1.0, size=1024,
+					blend_blackpoint=True):
+		"""
+		Set the response to the Hybrid Log-Gamma (HLG) function
+		
+		This response is special in that it depends on the actual black
+		and white level of the display, system gamma and ambient.
+		
+		XYZbp           Black point in absolute XYZ, Y range 0..white_cdm2
+		maxsignal       Set clipping point (optional)
+		size            Number of steps. Recommended >= 1024
+		
+		"""
+		self.set_trc_tags()
+		for channel in "rgb":
+			self.tags["%sTRC" % channel].set_hlg_trc(XYZbp[1], white_cdm2,
+													 system_gamma,
+													 ambient_cdm2,
+													 maxsignal, size)
+		if tuple(XYZbp) != (0, 0, 0) and blend_blackpoint:
+			self.apply_black_offset([v / white_cdm2 for v in XYZbp],
+									40.0 * (white_cdm2 / 100.0))
 
 	def set_smpte2084_trc(self, XYZbp=(0, 0, 0), white_cdm2=100,
 						  master_black_cdm2=0, master_white_cdm2=10000,

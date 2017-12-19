@@ -4553,6 +4553,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						lut3dp.append("-")
 					if getcfg("3dlut.hdr_maxmll") < 10000:
 						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
+			elif getcfg("3dlut.trc") == "hlg":
+				lut3dp = ["HLG"]
 			else:
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC

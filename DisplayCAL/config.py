@@ -690,7 +690,7 @@ valid_values = {
 	"3dlut.image.order": ["rgb", "bgr"],
 	"3dlut.rendering_intent": intents,
 	"3dlut.size": [5, 9, 16, 17, 24, 32, 33, 64, 65],
-	"3dlut.trc": ["bt1886", "customgamma", "gamma2.2", "smpte2084.hardclip", "smpte2084.rolloffclip"],
+	"3dlut.trc": ["bt1886", "customgamma", "gamma2.2", "smpte2084.hardclip", "smpte2084.rolloffclip", "hlg"],
 	"3dlut.trc_gamma_type": ["b", "B"],
 	"calibration.quality": ["v", "l", "m", "h", "u"],
 	"colorimeter_correction.observer": observers,

@@ -1014,6 +1014,7 @@
 	"trc": "色调曲线",
 		"*trc.dicom": "DICOM",
 	"trc.gamma": "伽玛",
+		"*trc.hlg": "Hybrid Log-Gamma",
 		"*trc.lstar": "L*",
 		"*trc.rec709": "Rec. 709",
 		"*trc.rec1886": "Rec. 1886",

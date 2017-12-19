@@ -1014,6 +1014,7 @@
 	"trc": "Curva tonal",
 		"*trc.dicom": "DICOM",
 	"trc.gamma": "Gamma",
+		"*trc.hlg": "Hybrid Log-Gamma",
 	"trc.lstar": "L*",
 	"trc.rec709": "Rec. 709",
 	"trc.rec1886": "Rec. 1886",

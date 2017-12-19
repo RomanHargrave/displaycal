@@ -1013,6 +1013,7 @@
 	"trashcan.windows": "recycle bin",
 	"trc": "Tone curve",
 	"trc.dicom": "DICOM",
+	"trc.hlg": "Hybrid Log-Gamma",
 	"trc.gamma": "Gamma",
 	"trc.lstar": "L*",
 	"trc.rec709": "Rec. 709",
