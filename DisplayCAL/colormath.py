@@ -162,16 +162,22 @@ class HLG(object):
 	"""
 
 	def __init__(self, black_cdm2=0.0, white_cdm2=1000.0, system_gamma=1.2,
-				 rgb_space="Rec. 2020"):
+				 ambient_cdm2=5, rgb_space="Rec. 2020"):
 		self.black_cdm2 = black_cdm2
 		self.white_cdm2 = white_cdm2
 		self.rgb_space = get_rgb_space(rgb_space)
 		self.system_gamma = system_gamma
+		self.ambient_cdm2 = ambient_cdm2
 
 	@property
 	def gamma(self):
-		""" Adjust system gamma for nominal peak luminance """
-		return self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
+		""" System gamma for nominal peak luminance and ambient """
+		# Adjust system gamma for peak luminance != 1000 cd/m2
+		gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
+		if self.ambient_cdm2 > 0:
+			# Adjust system gamma for ambient surround != 5 cd/m2 (BT.2390-3)
+			gamma -= 0.076 * math.log10(self.ambient_cdm2 / 5.0)
+		return gamma
 		
 	def oetf(self, v, inverse=False):
 		"""
