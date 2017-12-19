@@ -1198,14 +1198,8 @@ def RGB2HSV(R, G, B, scale=1.0):
 def LinearRGB2ICtCp(R, G, B, oetf=lambda FD: specialpow(FD, 1.0 / -2084)):
 	""" Rec. 2020 linear RGB to non-linear ICtCp """
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf
-	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
-								[683 / 4096., 2951 / 4096., 462 / 4096.],
-								[99 / 4096., 309 / 4096., 3688 / 4096.]])
-	LMS = rgb2lms_matrix * (R, G, B)
+	LMS = LinearRGB2LMS_matrix * (R, G, B)
 	L_, M_, S_ = (oetf(FD) for FD in LMS)
-	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
-									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
-									 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
 	I, Ct, Cp = L_M_S_2ICtCp_matrix * (L_, M_, S_)
 	return I, Ct, Cp
 
@@ -1213,15 +1207,9 @@ def LinearRGB2ICtCp(R, G, B, oetf=lambda FD: specialpow(FD, 1.0 / -2084)):
 def ICtCp2LinearRGB(I, Ct, Cp, eotf=lambda v: specialpow(v, -2084)):
 	""" Non-linear ICtCp to Rec. 2020 linear RGB """
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf	
-	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
-									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
-									 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
-	L_M_S_ = L_M_S_2ICtCp_matrix.inverted() * (I, Ct, Cp)
+	L_M_S_ = ICtCp2L_M_S__matrix * (I, Ct, Cp)
 	L, M, S = (eotf(v) for v in L_M_S_)
-	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
-								[683 / 4096., 2951 / 4096., 462 / 4096.],
-								[99 / 4096., 309 / 4096., 3688 / 4096.]])
-	R, G, B = rgb2lms_matrix.inverted() * (L, M, S)
+	R, G, B = LMS2LinearRGB_matrix * (L, M, S)
 	return R, G, B
 
 
@@ -1428,7 +1416,7 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 		rgb_space = "sRGB"
 	if isinstance(rgb_space, basestring):
 		rgb_space = rgb_spaces[rgb_space]
-	cachehash = repr(rgb_space[:5]), scale
+	cachehash = tuple(map(id, rgb_space[:5])), scale
 	cache = get_rgb_space.cache.get(cachehash, None)
 	if cache:
 		return cache
@@ -3015,6 +3003,15 @@ LMS2IPT_matrix = Matrix3x3([[ 0.4000,  0.4000,  0.2000],
 							[ 4.4550, -4.8510,  0.3960],
 							[ 0.8056,  0.3572, -1.1628]])
 IPT2LMS_matrix = LMS2IPT_matrix.inverted()
+
+LinearRGB2LMS_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
+								  [683 / 4096., 2951 / 4096., 462 / 4096.],
+								  [99 / 4096., 309 / 4096., 3688 / 4096.]])
+LMS2LinearRGB_matrix = LinearRGB2LMS_matrix.inverted()
+L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
+								 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
+								 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
+ICtCp2L_M_S__matrix = L_M_S_2ICtCp_matrix.inverted()
 
 # Tweaked LMS to IPT matrix to account for CIE 2012 2deg XYZ to LMS matrix
 # From Argyll/icc/icc.c
