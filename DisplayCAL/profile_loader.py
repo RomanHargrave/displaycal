@@ -2830,14 +2830,14 @@ class ProfileLoader(object):
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True,
 							   manual_override=2):
-		return (("--force" in sys.argv[1:] or
+		return ((not self._is_displaycal_running() or
+				 self._manual_restore == manual_override) and
+				not self._is_other_running(enumerate_windows_and_processes) and
+				("--force" in sys.argv[1:] or
 				 self._manual_restore or
 				 (config.getcfg("profile.load_on_login") and
 				  (sys.platform != "win32" or
-				   not calibration_management_isenabled()))) and
-				(not self._is_displaycal_running() or
-				 self._manual_restore == manual_override) and
-				not self._is_other_running(enumerate_windows_and_processes))
+				   not calibration_management_isenabled()))))
 
 	def _toggle_fix_profile_associations(self, event, parent=None):
 		if event:
