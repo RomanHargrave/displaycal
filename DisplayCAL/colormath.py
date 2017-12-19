@@ -202,7 +202,7 @@ class HLG(object):
 				v = a * math.log(12 * v - b) + c
 		return v
 
-	def eotf(self, RGB, inverse=False):
+	def eotf(self, RGB, inverse=False, apply_black_offset=True):
 		"""
 		Hybrid Log Gamma (HLG) EOTF
 		
@@ -218,14 +218,16 @@ class HLG(object):
 			R, G, B = RGB
 		if inverse:
 			# Display light -> relative scene linear light -> HLG signal
-			R, G, B = (self.oetf(v) for v in self.ootf((R, G, B), True))
+			R, G, B = (self.oetf(v) for v in self.ootf((R, G, B), True,
+													   apply_black_offset))
 		else:
 			# HLG signal -> relative scene linear light -> display light
-			R, G, B = self.ootf([self.oetf(v, True) for v in (R, G, B)])
+			R, G, B = self.ootf([self.oetf(v, True) for v in (R, G, B)], False,
+								apply_black_offset)
 		return G if isinstance(RGB, (float, int)) else (R, G, B)
 		
 
-	def ootf(self, RGB, inverse=False):
+	def ootf(self, RGB, inverse=False, apply_black_offset=True):
 		"""
 		Hybrid Log Gamma (HLG) OOTF
 
@@ -239,36 +241,51 @@ class HLG(object):
 			R, G, B = (RGB,) * 3
 		else:
 			R, G, B = RGB
-		alpha = (self.white_cdm2 - self.black_cdm2) / self.white_cdm2
-		beta = self.black_cdm2 / self.white_cdm2
+		if apply_black_offset:
+			black_cdm2 = float(self.black_cdm2)
+		else:
+			black_cdm2 = 0
+		alpha = (self.white_cdm2 - black_cdm2) / self.white_cdm2
+		beta = black_cdm2 / self.white_cdm2
 		Y = 0.2627 * R + 0.6780 * G + 0.0593 * B
 		if inverse:
-			if Y and Y - beta:
+			if Y > beta:
 				R, G, B = (((Y - beta) / alpha) ** ((1 - self.gamma) / self.gamma) *
 						   ((v - beta) / alpha) for v in (R, G, B))
 			else:
 				R, G, B = 0, 0, 0
 		else:
-			R, G, B = (alpha * Y ** (self.gamma - 1) * E + beta for E in
-					   (R, G, B))
+			if Y:
+				Y **= (self.gamma - 1)
+			R, G, B = (alpha * Y * E + beta for E in (R, G, B))
 		return G if isinstance(RGB, (float, int)) else (R, G, B)
 
-	def RGB2XYZ(self, R, G, B):
+	def RGB2XYZ(self, R, G, B, apply_black_offset=True):
 		""" Non-linear HLG signal to display XYZ """
 		X, Y, Z = self.rgb_space[-1] * [self.oetf(v, True) for v in (R, G, B)]
-		Yy = self.ootf(Y)
+		X, Y, Z = (max(v, 0) for v in (X, Y, Z))
+		Yy = self.ootf(Y, apply_black_offset=False)
 		if Y:
 			X, Y, Z = (v / Y * Yy for v in (X, Y, Z))
 		else:
 			X, Y, Z = (v * Yy for v in self.rgb_space[1])
+		if apply_black_offset:
+			beta = self.ootf(0)
+			bp_out = [v * beta for v in self.rgb_space[1]]
+			X, Y, Z = apply_bpc(X, Y, Z, (0, 0, 0), bp_out, self.rgb_space[1])
 		return X, Y, Z
 
-	def XYZ2RGB(self, X, Y, Z):
+	def XYZ2RGB(self, X, Y, Z, apply_black_offset=True):
 		""" Display XYZ to non-linear HLG signal """
-		Yy = self.ootf(Y, True)
+		if apply_black_offset:
+			beta = self.ootf(0)
+			bp_in = [v * beta for v in self.rgb_space[1]]
+			X, Y, Z = apply_bpc(X, Y, Z, bp_in, (0, 0, 0), self.rgb_space[1])
+		Yy = self.ootf(Y, True, apply_black_offset=False)
 		if Y:
 			X, Y, Z = (v / Y * Yy for v in (X, Y, Z))
 		R, G, B = self.rgb_space[-1].inverted() * (X, Y, Z)
+		R, G, B = (max(v, 0) for v in (R, G, B))
 		R, G, B = [self.oetf(v) for v in (R, G, B)]
 		return R, G, B
 
@@ -1172,13 +1189,14 @@ def RGB2HSV(R, G, B, scale=1.0):
 	return tuple(v * scale for v in colorsys.rgb_to_hsv(R, G, B))
 
 
-def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 ST2084"):
+def LinearRGB2ICtCp(R, G, B, oetf=lambda FD: specialpow(FD, 1.0 / -2084)):
+	""" Rec. 2020 linear RGB to non-linear ICtCp """
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf
 	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
 								[683 / 4096., 2951 / 4096., 462 / 4096.],
 								[99 / 4096., 309 / 4096., 3688 / 4096.]])
 	LMS = rgb2lms_matrix * (R, G, B)
-	L_, M_, S_ = (specialpow(FD, 1.0 / -2084) for FD in LMS)
+	L_, M_, S_ = (oetf(FD) for FD in LMS)
 	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
 									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
 									 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
@@ -1186,13 +1204,14 @@ def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020 ST2084"):
 	return I, Ct, Cp
 
 
-def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 ST2084"):
+def ICtCp2LinearRGB(I, Ct, Cp, eotf=lambda v: specialpow(v, -2084)):
+	""" Non-linear ICtCp to Rec. 2020 linear RGB """
 	# http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf	
 	L_M_S_2ICtCp_matrix = Matrix3x3([[.5, .5, 0],
 									 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
 									 [17933 / 4096., -17390 / 4096., -543 / 4096.]])
 	L_M_S_ = L_M_S_2ICtCp_matrix.inverted() * (I, Ct, Cp)
-	L, M, S = (specialpow(v, -2084) for v in L_M_S_)
+	L, M, S = (eotf(v) for v in L_M_S_)
 	rgb2lms_matrix = Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
 								[683 / 4096., 2951 / 4096., 462 / 4096.],
 								[99 / 4096., 309 / 4096., 3688 / 4096.]])
@@ -1200,15 +1219,16 @@ def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020 ST2084"):
 	return R, G, B
 
 
-def XYZ2ICtCp(X, Y, Z, rgb_space="Rec. 2020 ST2084", clamp=False):
-	R, G, B = (specialpow(v, -2084) for v in XYZ2RGB(X, Y, Z, rgb_space,
-													 clamp=clamp))
-	return RGB2ICtCp(R, G, B, rgb_space)
+def XYZ2ICtCp(X, Y, Z, rgb_space="Rec. 2020", clamp=False,
+			  oetf=lambda E: specialpow(E, 1.0 / -2084)):
+	R, G, B = XYZ2RGB(X, Y, Z, rgb_space, clamp=clamp, oetf=lambda v: v)
+	return LinearRGB2ICtCp(R, G, B, oetf)
 
 
-def ICtCp2XYZ(I, Ct, Cp, rgb_space="Rec. 2020 ST2084"):
-	R, G, B = (specialpow(v, 1.0 / -2084) for v in ICtCp2RGB(I, Ct, Cp, rgb_space))
-	return RGB2XYZ(R, G, B, rgb_space)
+def ICtCp2XYZ(I, Ct, Cp, rgb_space="Rec. 2020",
+			  eotf=lambda v: specialpow(v, -2084)):
+	R, G, B = ICtCp2LinearRGB(I, Ct, Cp, eotf)
+	return RGB2XYZ(R, G, B, rgb_space, eotf=lambda v: v)
 
 
 def RGB2Lab(R, G, B, rgb_space=None, whitepoint=None, noadapt=False,
@@ -1220,7 +1240,7 @@ def RGB2Lab(R, G, B, rgb_space=None, whitepoint=None, noadapt=False,
 	return XYZ2Lab(X, Y, Z, whitepoint=whitepoint)
 
 
-def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
+def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0, eotf=None):
 	"""
 	Convert from RGB to XYZ.
 	
@@ -1267,7 +1287,9 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0):
 			gamma = trc[i]
 		else:
 			gamma = trc
-		if isinstance(gamma, (list, tuple)):
+		if eotf:
+			RGB[i] = eotf(v)
+		elif isinstance(gamma, (list, tuple)):
 			RGB[i] = interp(v, [n / float(len(gamma) - 1) for n in
 							    xrange(len(gamma))], gamma)
 		else:
@@ -1940,7 +1962,8 @@ def XYZ2Luv(X, Y, Z, whitepoint=None):
 	return L, u, v
 
 
-def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
+def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True,
+			oetf=None):
 	"""
 	Convert from XYZ to RGB.
 	
@@ -1984,7 +2007,9 @@ def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True):
 			gamma = trc[i]
 		else:
 			gamma = trc
-		if isinstance(gamma, (list, tuple)):
+		if oetf:
+			RGB[i] = oetf(v)
+		elif isinstance(gamma, (list, tuple)):
 			RGB[i] = interp(v, gamma, [n / float(len(gamma) - 1) for n in
 									   xrange(len(gamma))])
 		else:

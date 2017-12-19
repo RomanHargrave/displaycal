@@ -637,8 +637,75 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	if not rolloff:
 		raise NotImplementedError("rolloff needs to be True")
 
-	rgb_space = list(rgb_space)
-	rgb_space[0] = -2084
+	return create_synthetic_hdr_clut_profile("PQ", rgb_space, description,
+											 black_cdm2, white_cdm2,
+											 master_black_cdm2,
+											 master_white_cdm2,
+											 1.2,  # Not used for PQ
+											 1.0,  # Not used for PQ
+											 content_rgb_space,
+											 clutres, mode,
+											 forward_xicclu,
+											 backward_xicclu,
+											 generate_B2A,
+											 worker,
+											 logfile)
+
+
+def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
+									  black_cdm2=0, white_cdm2=400,
+									  master_black_cdm2=0,
+									  master_white_cdm2=10000,
+									  system_gamma=1.2,
+									  maxsignal=1.0,
+									  content_rgb_space="DCI P3",
+									  clutres=33, mode="ICtCp",
+									  forward_xicclu=None,
+									  backward_xicclu=None,
+									  generate_B2A=False,
+									  worker=None,
+									  logfile=None):
+	"""
+	Create a synthetic HDR cLUT profile from a colorspace definition
+	
+	"""
+
+	rgb_space = colormath.get_rgb_space(rgb_space)
+	content_rgb_space = colormath.get_rgb_space(content_rgb_space)
+
+	if hdr_format == "PQ":
+		bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
+								  master_white_cdm2)
+
+		maxv = white_cdm2 / 10000.0
+		eotf = lambda v: colormath.specialpow(v, -2084)
+		oetf = eotf_inverse = lambda v: colormath.specialpow(v, 1.0 / -2084)
+		eetf = bt2390.apply
+	elif hdr_format == "HLG":
+		# Note: Unlike the PQ black level lift, we apply HLG black offset as
+		# separate final step, not as part of the HLG EOTF
+		hlg = colormath.HLG(0, white_cdm2, system_gamma, rgb_space)
+
+		if maxsignal < 1:
+			# Adjust EOTF so that EOTF[maxsignal] gives (approx) white_cdm2
+			while hlg.eotf(maxsignal) * hlg.white_cdm2 < white_cdm2:
+				hlg.white_cdm2 += 1
+
+		lscale = 1.0 / hlg.oetf(1.0, True)
+		hlg.white_cdm2 *= lscale
+		if lscale < 1 and logfile:
+			logfile.write("Nominal peak luminance after scaling = %.2f\n" %
+						  hlg.white_cdm2)
+
+		Ymax = hlg.eotf(maxsignal)
+
+		maxv = 1.0
+		eotf = hlg.eotf
+		eotf_inverse = lambda v: hlg.eotf(v, True)
+		oetf = hlg.oetf
+		eetf = lambda v: v
+	else:
+		raise NotImplementedError("Unknown HDR format %r" % hdr_format)
 
 	profile = ICCProfile()
 	
@@ -680,10 +747,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 								  (0, scale, 0),
 								  (0, 0, scale)))
 		otable.matrix = m2 * m3
-
-	bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
-							  master_white_cdm2)
-	maxv = white_cdm2 / 10000.0
 	
 	# Input curve interpolation
 	# Normlly the input curves would either be linear (= 1:1 mapping to
@@ -695,11 +758,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	# Use higher interpolation size than actual number of curve entries
 	steps = 2 ** 15 + 1
 	maxstep = steps - 1.0
-	gamma = rgb_space[0]
 	segment = 1.0 / (clutres - 1.0)
 	iv = 0.0
-	prevpow = 0.0
-	nextpow = colormath.specialpow(bt2390.apply(segment), gamma)
+	prevpow = eotf(eetf(0))
+	nextpow = eotf(eetf(segment))
 	xp = []
 	if generate_B2A:
 		oxp = []
@@ -708,17 +770,25 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		if v > iv + segment:
 			iv += segment
 			prevpow = nextpow
-			nextpow = colormath.specialpow(bt2390.apply(iv + segment), gamma)
+			nextpow = eotf(eetf(iv + segment))
 		prevs = 1.0 - (v - iv) / segment
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
-		out = colormath.specialpow(vv, 1.0 / gamma)
+		out = eotf_inverse(vv)
 		xp.append(out)
 		if generate_B2A:
-			oxp.append(colormath.specialpow(bt2390.apply(v), gamma) / maxv)
+			oxp.append(eotf(eetf(v)) / maxv)
 	interp = colormath.Interp(xp, range(steps), use_numpy=True)
 	if generate_B2A:
 		ointerp = colormath.Interp(oxp, range(steps), use_numpy=True)
+
+	# Save interpolation input values for diagnostic purposes
+	profile.tags.kTRC = CurveType()
+	interp_inverse = colormath.Interp(range(steps), xp, use_numpy=True)
+	profile.tags.kTRC[:] = [interp_inverse(colormath.convert_range(v, 0, 2048,
+																   0, maxstep)) *
+							65535
+							for v in xrange(2049)]
 	
 	# Create input and output curves
 	for i in xrange(3):
@@ -740,11 +810,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	entries = 2049
 	prevperc = 0
 	if generate_B2A:
-		endperc = 5
+		endperc = 1
 	else:
-		endperc = 10
+		endperc = 2
 	k = None
-	in0 = interp(bt2390.apply(0)) / maxstep
 	for j in xrange(entries):
 		if worker and worker.thread_abort:
 			if forward_xicclu:
@@ -753,17 +822,22 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				backward_xicclu.exit()
 			raise Exception("aborted")
 		n = j / (entries - 1.0)
-		v = interp(bt2390.apply(n)) / maxstep
-		if n >= 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
-										  (clutres - 1.0) + 1):
+		v = interp(eetf(n)) / maxstep
+		if hdr_format == "PQ":
+			threshold = 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
+												  (clutres - 1.0) + 1)
+			check = n >= threshold
+			start = n
+		elif hdr_format == "HLG":
+			check = maxsignal < 1 and n >= maxsignal
+			start = v
+		if check:
 			# Linear interpolate shaper for last n cLUT steps to prevent
-			# posterization in highlights if master white luminance < 10K
+			# clipping in shaper
 			if k is None:
 				k = j
-				ov = n
+				ov = start
 			v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
-		if n <= segment:
-			v = colormath.convert_range(v, in0, segment, 0, segment)
 		for i in xrange(3):
 			itable.input[i].append(v * 65535)
 		perc = math.floor(n * endperc)
@@ -794,12 +868,9 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				prevperc = perc
 		startperc = perc
 
-	rgb_space_linear = list(rgb_space)
-	rgb_space_linear[0] = 1.0
-
-	# Scene RGB -> BT.2390 roll-off -> HDR XYZ -> backward lookup -> display RGB
+	# Scene RGB -> HDR tone mapping -> HDR XYZ -> backward lookup -> display RGB
 	if logfile:
-		logfile.write("\rApplying BT.2390 roll-off...\n")
+		logfile.write("\rApplying HDR tone mapping...\n")
 		logfile.write("\r%i%%" % perc)
 	itable.clut = []
 	debugtable0.clut = []
@@ -837,11 +908,23 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				RGB_in.append(RGB)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
-				if mode == "XYZ":
-					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space)
+				if hdr_format == "HLG":
+					X, Y, Z = hlg.RGB2XYZ(*RGB)
+					if Y:
+						Y1 = Y
+						I1 = hlg.eotf(Y, True)
+						I2 = min(I1, maxsignal)
+						Y2 = hlg.eotf(I2)
+						Y3 = Y2 / Ymax
+						X, Y, Z = (v / Y * Y3 if Y else v for v in (X, Y, Z))
+						if R == G == B and logfile and debug:
+							logfile.write("\rE %.4f -> E' %.4f -> roll-off -> %.4f -> E %.4f -> scale (%i%%) -> %.4f\n" % (Y1, I1, I2, Y2, Y3 / Y2 * 100, Y3))
+				elif mode == "XYZ":
+					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space,
+												eotf=eotf)
 					if Y:
 						I1 = colormath.specialpow(Y, 1.0 / -2084)
-						I2 = bt2390.apply(I1)
+						I2 = eetf(I1)
 						Y2 = colormath.specialpow(I2, -2084)
 						X, Y, Z = (v / Y * Y2 for v in (X, Y, Z))
 					else:
@@ -849,21 +932,22 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				elif mode == "HSV":
 					HSV = list(colormath.RGB2HSV(*RGB))
 					I1 = HSV[2]
-					HSV[2] = bt2390.apply(I1)
+					HSV[2] = eetf(I1)
 					I2 = HSV[2]
 				elif mode == "ICtCp":
-					RGB = [colormath.specialpow(v, -2084) for v in RGB]
-					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space)
+					LinearRGB = [eotf(v) for v in RGB]
+					I1, Ct1, Cp1 = colormath.LinearRGB2ICtCp(*LinearRGB,
+															 oetf=eotf_inverse)
 					if debug and R == G == B:
 						safe_print("-> ICtCp % 5.3f % 5.3f % 5.3f" %
 								   (I1, Ct1, Cp1,), end=" ")
-					I2 = bt2390.apply(I1)
+					I2 = eetf(I1)
 				elif mode == "RGB":
 					I1 = colormath.RGB2HSV(*RGB)[2]
 					for i, v in enumerate(RGB):
-						RGB[i] = bt2390.apply(v)
+						RGB[i] = eetf(v)
 					I2 = colormath.RGB2HSV(*RGB)[2]
-				if I1 and I2:
+				if hdr_format == "PQ" and I1 and I2:
 					if forward_xicclu and backward_xicclu:
 						# Only desaturate light colors (dark colors will be
 						# desaturated according to display max chroma)
@@ -874,11 +958,14 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					min_I = min(dsat, I2 / I1)
 				else:
 					min_I = 1
-				if mode == "XYZ":
+				if hdr_format == "HLG":
+					pass
+				elif mode == "XYZ":
 					X, Y, Z = colormath.XYZsaturation(X, Y, Z,
 													  min_I,
 													  rgb_space[1])[0]
-					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space)
+					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space,
+											oetf=eotf_inverse)
 				elif mode == "HSV":
 					if debug and R == G == B:
 						safe_print("* %5.3f" % min_I, "->", end=" ")
@@ -891,29 +978,31 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 					if debug and R == G == B:
 						safe_print("% 5.3f % 5.3f % 5.3f" % (I2, Ct2, Cp2),
 								   "->", end=" ")
-					RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space)
-					##if min(RGB) < 0 or max(RGB) > 1:
-						##print 'WARNING:', RGB
-						##RGB = [max(min(v, 1), 0) for v in RGB]
-					RGB = [colormath.specialpow(v, 1.0 / -2084) for v in RGB]
-					HDR_ICtCp.append((I2, Ct2, Cp2))
-					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space)
+					LinearRGB = colormath.ICtCp2LinearRGB(I2, Ct2, Cp2, eotf=eotf)
+					##if min(LinearRGB) < 0 or max(LinearRGB) > 1:
+						##print 'WARNING:', LinearRGB
+						##LinearRGB = [max(min(v, 1), 0) for v in LinearRGB]
+					RGB = [eotf_inverse(v) for v in LinearRGB]
+					I, Ct, Cp = I2, Ct2, Cp2
+					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space,
+												  eotf=eotf)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
-				if mode != "ICtCp":
-					I, Ct, Cp = colormath.RGB2ICtCp(*(colormath.specialpow(v, -2084)
-													  for v in RGB),
-													rgb_space=rgb_space)
-					HDR_ICtCp.append((I, Ct, Cp))
+				if hdr_format != "PQ" or mode != "ICtCp":
+					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z, oetf=eotf_inverse)
+				HDR_ICtCp.append((I, Ct, Cp))
 				HDR_RGB.append(RGB)
 				if mode not in ("XYZ", "ICtCp"):
-					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space)
+					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space,
+												eotf=eotf)
 				X, Y, Z = (v / maxv for v in (X, Y, Z))
 				# Clip to XYZ encoding range of 0..65535 by going through
 				# RGB, clamping to 1, and back to XYZ. Does a pretty good job
 				# at preserving hue.
-				XR, XG, XB = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space)
-				X, Y, Z = colormath.RGB2XYZ(XR, XG, XB, rgb_space=rgb_space)
+				XR, XG, XB = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space,
+											   oetf=eotf_inverse)
+				X, Y, Z = colormath.RGB2XYZ(XR, XG, XB, rgb_space=rgb_space,
+											eotf=eotf)
 				# Adapt to D50
 				X, Y, Z = colormath.adapt(X, Y, Z,
 										  whitepoint_source=rgb_space[1])
@@ -955,8 +1044,6 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	prevperc = startperc = perc = 0
 
 	Cdiff = []
-	content_rgb_space_st2084 = list(colormath.get_rgb_space(content_rgb_space))
-	content_rgb_space_st2084[0] = -2084
 	Cmax = {}
 	Cdmax = {}
 	if forward_xicclu and backward_xicclu:
@@ -1033,9 +1120,10 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				R, G, B = RGB_in[j]
 				XYZsrc = HDR_XYZ[j]
 				XYZdisp = display_XYZ[-(6 - i)]
-				XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space)
+				XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space,
+										 eotf=eotf)
 				XYZc = colormath.adapt(*XYZc,
-										whitepoint_source=content_rgb_space_st2084[1])
+										whitepoint_source=content_rgb_space[1])
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v * 100
 													for v in XYZc))
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
@@ -1089,21 +1177,27 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 				XYZdisp = XYZsrc
 			X, Y, Z = (v * maxv for v in XYZsrc)
 			X, Y, Z = colormath.adapt(X, Y, Z,
-									  whitepoint_destination=content_rgb_space_st2084[1])
-			R, G, B = colormath.XYZ2RGB(X, Y, Z, content_rgb_space_st2084)
-			XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space_st2084)
+									  whitepoint_destination=content_rgb_space[1])
+			R, G, B = colormath.XYZ2RGB(X, Y, Z, content_rgb_space,
+										oetf=eotf_inverse)
+			XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space, eotf=eotf)
 			XYZc = colormath.adapt(*XYZc,
-									whitepoint_source=content_rgb_space_st2084[1],
+									whitepoint_source=content_rgb_space[1],
 									whitepoint_destination=rgb_space[1])
-			RGBc_r2020 = colormath.XYZ2RGB(*XYZc, rgb_space=rgb_space)
-			XYZc_r2020 = colormath.RGB2XYZ(*RGBc_r2020, rgb_space=rgb_space)
+			RGBc_r2020 = colormath.XYZ2RGB(*XYZc, rgb_space=rgb_space,
+										   oetf=eotf_inverse)
+			XYZc_r2020 = colormath.RGB2XYZ(*RGBc_r2020, rgb_space=rgb_space,
+										   eotf=eotf)
 			if blendmode == "ICtCp":
-				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZc_r2020, rgb_space=rgb_space)
+				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZc_r2020,
+												rgb_space=rgb_space,
+												oetf=eotf_inverse)
 				L, C, H = colormath.Lab2LCHab(I * 100, Cp * 100, Ct * 100)
 				XYZdispa = colormath.adapt(*XYZdisp,
 										   whitepoint_destination=rgb_space[1])
 				Id, Ctd, Cpd = colormath.XYZ2ICtCp(*(v * maxv for v in XYZdispa),
-												   rgb_space=rgb_space)
+												   rgb_space=rgb_space,
+												   oetf=eotf_inverse)
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id * 100, Cpd * 100, Ctd * 100)
 			elif blendmode == "IPT":
 				XYZc_r2020 = colormath.adapt(*XYZc_r2020,
@@ -1181,7 +1275,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		logfile.write("\rChroma compression factor: %6.4f\n" %
 					  general_compression_factor)
 
-	# HDR tone mapping to display XYZ
+	# Chroma compress to display XYZ
 	if logfile:
 		if display_XYZ:
 			logfile.write("\rApplying chroma compression and filling cLUT...\n")
@@ -1287,7 +1381,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 							I, Cp, Ct = [v / 100.0 for v in
 										 colormath.LCHab2Lab(L, C, H)]
 							XYZ = colormath.ICtCp2XYZ(I, Ct, Cp,
-													  rgb_space=rgb_space)
+													  rgb_space=rgb_space,
+													  eotf=eotf)
 							X, Y, Z = (v / maxv for v in XYZ)
 							# Adapt to D50
 							X, Y, Z = colormath.adapt(X, Y, Z,
@@ -1408,6 +1503,15 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 		forward_xicclu.exit()
 	if backward_xicclu:
 		backward_xicclu.exit()
+
+	if hdr_format == "HLG" and black_cdm2:
+		# Apply black offset
+		XYZbp = colormath.get_whitepoint(scale=black_cdm2 / float(white_cdm2))
+		if logfile:
+			logfile.write("Applying black offset...\n")
+		profile.tags.A2B0.apply_black_offset(XYZbp, logfile=logfile,
+											 thread_abort=worker and
+														  worker.thread_abort)
 	
 	return profile
 
@@ -1418,7 +1522,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											maxsignal=1.0,
 											content_rgb_space="DCI P3",
 											rolloff=True,
-											clutres=17, mode="ICtCp",
+											clutres=33, mode="ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
 											generate_B2A=False,
@@ -1437,501 +1541,20 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 	if not rolloff:
 		raise NotImplementedError("rolloff needs to be True")
 
-	rgb_space = colormath.get_rgb_space(rgb_space)
-	rgb_space_to_rgb = rgb_space[-1].inverted()
-
-	profile = ICCProfile()
-	
-	profile.tags.desc = TextDescriptionType("", "desc")
-	profile.tags.desc.ASCII = description
-	profile.tags.cprt = TextType("text\0\0\0\0Public domain\0", "cprt")
-	
-	profile.tags.wtpt = XYZType(profile=profile)
-	(profile.tags.wtpt.X,
-	 profile.tags.wtpt.Y,
-	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
-	
-	itable = profile.tags.A2B0 = LUT16Type(None, "A2B0", profile)
-	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-	# HDR RGB
-	debugtable0 = profile.tags.DBG0 = LUT16Type(None, "DBG0", profile)
-	debugtable0.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-	# Display RGB
-	debugtable1 = profile.tags.DBG1 = LUT16Type(None, "DBG1", profile)
-	debugtable1.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-	# Display XYZ
-	debugtable2 = profile.tags.DBG2 = LUT16Type(None, "DBG2", profile)
-	debugtable2.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-	
-	if generate_B2A:
-		otable = profile.tags.B2A0 = LUT16Type(None, "B2A0", profile)
-		Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
-									 whitepoint_source=rgb_space[1])
-		Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
-									 whitepoint_source=rgb_space[1])
-		Xb, Yb, Zb = colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space),
-									 whitepoint_source=rgb_space[1])
-		m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
-								  (Yr, Yg, Yb),
-								  (Zr, Zg, Zb)))
-		m2 = m1.inverted()
-		scale = 1 + (32767 / 32768.0)
-		m3 = colormath.Matrix3x3(((scale, 0, 0),
-								  (0, scale, 0),
-								  (0, 0, scale)))
-		otable.matrix = m2 * m3
-
-	minv = black_cdm2 / white_cdm2
-	mini = 0
-	maxv = 1.0
-	if maxsignal < 1:
-		maxi = maxsignal * 0.9375
-	else:
-		maxi = 1.0
-	maxci = maxsignal
-
-	hlg = colormath.HLG(black_cdm2, white_cdm2, system_gamma, rgb_space)
-	lscale = 1.0 / hlg.oetf(maxi, True)
-	hlg.black_cdm2 *= maxi
-	hlg.white_cdm2 *= lscale
-	Ymax = hlg.eotf(maxi)
-	if logfile:
-		logfile.write("Nominal peak luminance after scaling = %.2f\n" % hlg.white_cdm2)
-
-	if rolloff:
-		# Rolloff as defined in ITU-R BT.2390-0
-		KS = 1.5 * maxi - 0.5
-
-	def apply_rolloff(v, KS=KS, maxi=maxi, maxci=maxci, mini=mini):
-		if rolloff:
-			if 0 < KS < 1 and KS <= v <= 1:
-				v = colormath.BT2390.P(v, KS, maxi, maxci)
-		else:
-			v = min(v, maxi)
-		if mini and 0 <= v <= 1:
-			v = v + mini * (1 - v) ** 4
-		return v
-	
-	# Input curve interpolation
-	# Normlly the input curves would either be linear (= 1:1 mapping to
-	# cLUT) or the respective tone response curve.
-	# We use a overall linear curve that is 'bent' in <clutres> intervals
-	# to accomodate the non-linear TRC. Thus, we can get away with much
-	# fewer cLUT grid points.
-	
-	# Use higher interpolation size than actual number of curve entries
-	steps = 2 ** 15 + 1
-	maxstep = steps - 1.0
-	
-	segment = 1.0 / (clutres - 1.0)
-	iv = 0.0
-	prevpow = 0.0
-	nextpow = hlg.eotf(apply_rolloff(segment))
-	xp = []
-	if generate_B2A:
-		oxp = []
-	for j in xrange(steps):
-		v = (j / maxstep)
-		if v > iv + segment:
-			iv += segment
-			prevpow = nextpow
-			nextpow = hlg.eotf(apply_rolloff(iv + segment))
-		prevs = 1.0 - (v - iv) / segment
-		nexts = (v - iv) / segment
-		vv = (prevs * prevpow + nexts * nextpow)
-		out = hlg.eotf(vv, True)
-		xp.append(out)
-		if generate_B2A:
-			oxp.append(hlg.eotf(apply_rolloff(v)) / maxv)
-	interp = colormath.Interp(xp, range(steps), use_numpy=True)
-	if generate_B2A:
-		ointerp = colormath.Interp(oxp, range(steps), use_numpy=True)
-	
-	# Create input and output curves
-	for i in xrange(3):
-		itable.input.append([])
-		itable.output.append([0, 65535])
-		debugtable0.input.append([0, 65535])
-		debugtable0.output.append([0, 65535])
-		debugtable1.input.append([0, 65535])
-		debugtable1.output.append([0, 65535])
-		debugtable2.input.append([0, 65535])
-		debugtable2.output.append([0, 65535])
-		if generate_B2A:
-			otable.input.append([])
-			otable.output.append([0, 65535])
-	
-	# Generate device-to-PCS shaper curves from interpolated values
-	if logfile:
-		logfile.write("Generating device-to-PCS shaper curves...\n")
-	entries = 2049
-	prevperc = 0
-	if generate_B2A:
-		endperc = 5
-	else:
-		endperc = 10
-	for j in xrange(entries):
-		if worker and worker.thread_abort:
-			if forward_xicclu:
-				forward_xicclu.exit()
-			if backward_xicclu:
-				backward_xicclu.exit()
-			raise Exception("aborted")
-		n = j / (entries - 1.0)
-		v = interp(apply_rolloff(n)) / maxstep * 65535
-		for i in xrange(3):
-			itable.input[i].append(v)
-		perc = math.floor(n * endperc)
-		if logfile and perc > prevperc:
-			logfile.write("\r%i%%" % perc)
-			prevperc = perc
-	startperc = perc
-
-	## DEBUG - LINEAR INPUT TABLES
-	#itable.input = [[0, 65535]] * 3
-
-	if generate_B2A:
-		# Generate PCS-to-device shaper curves from interpolated values
-		if logfile:
-			logfile.write("\rGenerating PCS-to-device shaper curves...\n")
-			logfile.write("\r%i%%" % perc)
-		for j in xrange(4096):
-			if worker and worker.thread_abort:
-				if forward_xicclu:
-					forward_xicclu.exit()
-				if backward_xicclu:
-					backward_xicclu.exit()
-				raise Exception("aborted")
-			n = j / 4095.0
-			v = ointerp(n) / maxstep * 65535
-			for i in xrange(3):
-				otable.input[i].append(v)
-			perc = startperc + math.floor(n * 20)
-			if logfile and perc > prevperc:
-				logfile.write("\r%i%%" % perc)
-				prevperc = perc
-		startperc = perc
-
-	# Scene RGB -> BT.2390 roll-off -> HDR XYZ -> backward lookup -> display RGB
-	if logfile:
-		logfile.write("\rApplying BT.2390 roll-off...\n")
-		logfile.write("\r%i%%" % perc)
-	itable.clut = []
-	debugtable0.clut = []
-	debugtable1.clut = []
-	debugtable2.clut = []
-	clutmax = clutres - 1.0
-	step = 1.0 / clutmax
-	count = 0
-	blendmode = "DIN99d"
-	Cmode = ("all", "primaries_secondaries")[0]
-	RGB_in = []
-	HDR_RGB = []
-	HDR_XYZ = []
-	for R in xrange(clutres):
-		for G in xrange(clutres):
-			for B in xrange(clutres):
-				if worker and worker.thread_abort:
-					if forward_xicclu:
-						forward_xicclu.exit()
-					if backward_xicclu:
-						backward_xicclu.exit()
-					raise Exception("aborted")
-				RGB = [v * step for v in (R, G, B)]
-				RGB_in.append(RGB)
-				HDR_RGB.append(RGB)
-				X, Y, Z = hlg.RGB2XYZ(*RGB)
-				# Adapt to D50
-				X, Y, Z = colormath.adapt(X, Y, Z,
-										  whitepoint_source=rgb_space[1])
-				HDR_XYZ.append((X, Y, Z))
-				count += 1
-				perc = startperc + math.floor(count / clutres ** 3.0 *
-											  (20 - startperc))
-				if logfile and perc > prevperc:
-					logfile.write("\r%i%%" % perc)
-					prevperc = perc
-	startperc = perc
-
-	new_maxv = maxv
-
-	if new_maxv > maxv and logfile:
-		logfile.write("\rHad to scale peak luminance from %i to %i cd/m2 to "
-					  "avoid clipping\n" %
-					  tuple(v * 10000 for v in (maxv, maxv * maxv / new_maxv)))
-		logfile.write("\r%i%%" % perc)
-
-	if forward_xicclu and backward_xicclu and logfile:
-		logfile.write("\rDoing backward lookup...\n")
-		logfile.write("\r%i%%" % perc)
-	count = 0
-	for i, (X, Y, Z) in enumerate(HDR_XYZ):
-		if worker and worker.thread_abort:
-			if forward_xicclu:
-				forward_xicclu.exit()
-			if backward_xicclu:
-				backward_xicclu.exit()
-			raise Exception("aborted")
-		X, Y, Z = (v / new_maxv for v in (X, Y, Z))
-		HDR_XYZ[i] = X, Y, Z
-		if (forward_xicclu and backward_xicclu and 
-			Cmode != "primaries_secondaries"):
-			# HDR XYZ -> backward lookup -> display RGB
-			backward_xicclu((X, Y, Z))
-			count += 1
-			perc = startperc + math.floor(count / clutres ** 3.0 *
-										  (85 - startperc))
-			if logfile and perc > prevperc:
-				logfile.write("\r%i%%" % perc)
-				prevperc = perc
-	startperc = perc
-
-	Cdiff = []
-	content_rgb_space = colormath.get_rgb_space(content_rgb_space)
-	content_rgb_space_to_rgb = content_rgb_space[-1].inverted()
-	Cmax = {}
-	Cdmax = {}
-	if forward_xicclu and backward_xicclu:
-		# Display RGB -> backward lookup -> display XYZ
-		if logfile:
-			logfile.write("\rDoing forward lookup...\n")
-			logfile.write("\r%i%%" % perc)
-		backward_xicclu.close()
-		display_RGB = backward_xicclu.get()
-
-		# Smooth
-		row = 0
-		for col_0 in xrange(clutres):
-			for col_1 in xrange(clutres):
-				debugtable1.clut.append([])
-				for col_2 in xrange(clutres):
-					RGBdisp = display_RGB[row]
-					debugtable1.clut[-1].append([min(max(v * 65535, 0), 65535)
-												for v in RGBdisp])
-					row += 1
-		debugtable1.smooth()
-		display_RGB = []
-		for block in debugtable1.clut:
-			for row in block:
-				display_RGB.append([v / 65535.0 for v in row])
-
-		for i, (R, G, B) in enumerate(display_RGB):
-			if worker and worker.thread_abort:
-				if forward_xicclu:
-					forward_xicclu.exit()
-				if backward_xicclu:
-					backward_xicclu.exit()
-				raise Exception("aborted")
-			forward_xicclu((R, G, B))
-			perc = startperc + math.floor((i + 1) / clutres ** 3.0 *
-										  (90 - startperc))
-			if logfile and perc > prevperc:
-				logfile.write("\r%i%%" % perc)
-				prevperc = perc
-		startperc = perc
-
-		forward_xicclu.close()
-		display_XYZ = forward_xicclu.get()
-	else:
-		display_RGB = False
-		display_XYZ = False
-
-	display_LCH = []
-	if Cmode != "primaries_secondaries" and display_XYZ:
-		# Determine compression factor by comparing display to content
-		# colorspace in BT.2020
-		if logfile:
-			logfile.write("\rDetermining chroma compression factor...\n")
-			logfile.write("\r%i%%" % perc)
-		for i, (R, G, B) in enumerate(HDR_RGB):
-			if worker and worker.thread_abort:
-				if forward_xicclu:
-					forward_xicclu.exit()
-				if backward_xicclu:
-					backward_xicclu.exit()
-				raise Exception("aborted")
-			XYZsrc = HDR_XYZ[i]
-			if display_XYZ:
-				XYZdisp = display_XYZ[i]
-				### Adjust luminance from destination to source
-				##Ydisp = XYZdisp[1]
-				##if Ydisp:
-					##XYZdisp = [v / Ydisp * XYZsrc[1] for v in XYZdisp]
-			else:
-				XYZdisp = XYZsrc
-			X, Y, Z = (v * new_maxv for v in XYZsrc)
-			X, Y, Z = colormath.adapt(X, Y, Z,
-									  whitepoint_destination=content_rgb_space[1])
-			R, G, B = content_rgb_space_to_rgb * (X, Y, Z)
-			XYZc = content_rgb_space[-1] * (R, G, B)
-			XYZc = colormath.adapt(*XYZc,
-									whitepoint_source=content_rgb_space[1],
-									whitepoint_destination=rgb_space[1])
-			RGBc_r2020 = rgb_space_to_rgb * XYZc
-			XYZc_r2020 = rgb_space[-1] * RGBc_r2020
-			if blendmode == "ICtCp":
-				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZc_r2020, rgb_space=rgb_space)
-				L, C, H = colormath.Lab2LCHab(I, Ct, Cp)
-				XYZdispa = colormath.adapt(*XYZdisp,
-										   whitepoint_destination=rgb_space[1])
-				Id, Ctd, Cpd = colormath.XYZ2ICtCp(*(v * maxv for v in XYZdispa),
-												   rgb_space=rgb_space)
-				Ld, Cd, Hd = colormath.Lab2LCHab(Id, Ctd, Cpd)
-			else:
-				XYZc_r202099 = colormath.adapt(*XYZc_r2020,
-											   whitepoint_source=rgb_space[1])
-				L, C, H = colormath.XYZ2DIN99dLCH(*(v / new_maxv * 100
-													for v in XYZc_r202099))
-				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
-			Cdmaxk = tuple(map(round, (Ld, Hd)))
-			if C > Cmax.get(Cdmaxk, -1):
-				Cmax[Cdmaxk] = C
-			if C:
-				##print '%6.3f %6.3f' % (Cd, C)
-				Cdiff.append(min(Cd / C, 1.0))
-				##if Cdiff[-1] < 0.0001:
-					##raise RuntimeError("#%i RGB % 5.3f % 5.3f % 5.3f Cdiff %5.3f" % (i, R, G, B, Cdiff[-1]))
-			else:
-				Cdiff.append(1.0)
-			display_LCH.append((Ld, Cd, Hd))
-			if Cd > Cdmax.get(Cdmaxk, -1):
-				Cdmax[Cdmaxk] = Cd
-			if debug:
-				safe_print("RGB in %5.2f %5.2f %5.2f" % tuple(RGB_in[i]))
-				safe_print("RGB out %5.2f %5.2f %5.2f" % (R, G, B))
-				safe_print("Content BT2020 XYZ (DIN99d) %5.2f %5.2f %5.2f" %
-						   tuple(v / new_maxv * 100 for v in XYZc_r202099))
-				safe_print("Content BT2020 LCH (DIN99d) %5.2f %5.2f %5.2f" % (L, C, H))
-				safe_print("Display XYZ %5.2f %5.2f %5.2f" %
-						   tuple(v * 100 for v in XYZdisp))
-				safe_print("Display LCH (DIN99d) %5.2f %5.2f %5.2f" % (Ld, Cd, Hd))
-			perc = startperc + math.floor(i / clutres ** 3.0 *
-										  (95 - startperc))
-			if logfile and perc > prevperc:
-				logfile.write("\r%i%%" % perc)
-				prevperc = perc
-		startperc = perc
-
-		general_compression_factor = (sum(Cdiff) / len(Cdiff))
-
-	if display_XYZ:
-		Cmaxv = max(Cmax.values())
-		Cdmaxv = max(Cdmax.values())
-
-	if logfile and display_LCH:
-		logfile.write("\rChroma compression factor: %6.4f\n" %
-					  general_compression_factor)
-
-	# HDR tone mapping to display XYZ
-	if logfile:
-		logfile.write("\rApplying HDR tone mapping...\n")
-		logfile.write("\r%i%%" % perc)
-	row = 0
-	oog_count = 0
-	if forward_xicclu:
-		forward_xicclu.spawn()
-	if backward_xicclu:
-		backward_xicclu.spawn()
-	for col_0 in xrange(clutres):
-		for col_1 in xrange(clutres):
-			itable.clut.append([])
-			debugtable0.clut.append([])
-			if not display_RGB:
-				debugtable1.clut.append([])
-			debugtable2.clut.append([])
-			for col_2 in xrange(clutres):
-				if worker and worker.thread_abort:
-					if forward_xicclu:
-						forward_xicclu.exit()
-					if backward_xicclu:
-						backward_xicclu.exit()
-					raise Exception("aborted")
-				R, G, B = HDR_RGB[row]
-				X, Y, Z = HDR_XYZ[row]
-				if not (col_0 == col_1 == col_2) and display_XYZ:
-					# Desaturate based on compression factor
-					if display_LCH:
-						blend = 1
-					else:
-						blend = 0
-					if blend:
-						if blendmode == "DIN99d":
-							XYZ = X, Y, Z
-							L, C, H = colormath.XYZ2DIN99dLCH(*[v * 100
-																for v in XYZ])
-						if blendmode != "XYZ":
-							if display_LCH:
-								Ld, Cd, Hd = display_LCH[row]
-								Cdmaxk = tuple(map(round, (Ld, Hd)))
-								HCmax = Cmax[Cdmaxk]
-								if C and HCmax:
-									HCdmax = Cdmax[Cdmaxk]
-									maxCc = min(HCdmax / HCmax, 1.0)
-									KSCc = 1.5 * maxCc - 0.5
-									Cc1 = min(C / HCmax, 1.0)
-									if Cc1 >= KSCc <= 1 and maxCc > KSCc >= 0:
-										Cc2 = apply_rolloff(Cc1, KSCc,
-														    maxCc, 1.0, 0)
-										C = HCmax * Cc2
-									else:
-										C = Cd
-										safe_print("CLUT grid point %i %i %i: "
-												   "C %6.4f HCmax %6.4f maxCc "
-												   "%6.4f KSCc %6.4f Cc1 %6.4f" %
-												   (col_0, col_1, col_2, C,
-												    HCmax, maxCc, KSCc, Cc1))
-							else:
-								Cc = general_compression_factor
-								Cc **= (C / Cmaxv)
-								C = C * (1 - blend) + (C * Cc) * blend
-						if blendmode == "DIN99d":
-							L, a, b = colormath.DIN99dLCH2Lab(L, C, H)
-							X, Y, Z = colormath.Lab2XYZ(L, a, b)
-					else:
-						safe_print("CLUT grid point %i %i %i: blend = 0" %
-								   (col_0, col_1, col_2))
-
-				itable.clut[-1].append([min(max(v * 32768, 0), 65535)
-										for v in (X, Y, Z)])
-				debugtable0.clut[-1].append([min(max(v * 65535, 0), 65535)
-											for v in (R, G, B)])
-				if not display_RGB:
-					debugtable1.clut[-1].append([0, 0, 0])
-				if display_XYZ:
-					XYZdisp = display_XYZ[row]
-				else:
-					XYZdisp = [0, 0, 0]
-				debugtable2.clut[-1].append([min(max(v * 65535, 0), 65535)
-											for v in XYZdisp])
-				row += 1
-				perc = startperc + math.floor(row / clutres ** 3.0 *
-											  (100 - startperc))
-				if logfile and perc > prevperc:
-					logfile.write("\r%i%%" % perc)
-					prevperc = perc
-	startperc = perc
-
-	if debug:
-		safe_print("Num OOG:", oog_count)
-		
-	if generate_B2A:
-		
-		otable.clut = []
-		for R in xrange(2):
-			for G in xrange(2):
-				otable.clut.append([])
-				for B in xrange(2):
-					otable.clut[-1].append([v * 65535 for v in (R , G, B)])
-
-	if logfile:
-		logfile.write("\n")
-
-	if forward_xicclu:
-		forward_xicclu.exit()
-	if backward_xicclu:
-		backward_xicclu.exit()
-	
-	return profile
+	return create_synthetic_hdr_clut_profile("HLG", rgb_space, description,
+											 black_cdm2, white_cdm2,
+											 0,  # Not used for HLG
+											 10000,  # Not used for HLG
+											 system_gamma,
+											 maxsignal,
+											 content_rgb_space,
+											 clutres,
+											 mode,  # Not used for HLG
+											 forward_xicclu,
+											 backward_xicclu,
+											 generate_B2A,
+											 worker,
+											 logfile)
 
 
 def _colord_get_display_profile(display_no=0, path_only=False):
