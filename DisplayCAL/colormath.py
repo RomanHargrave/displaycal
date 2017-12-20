@@ -2792,7 +2792,7 @@ class BT2390(object):
 			E2 = self.P(E1, KS, maxi, maxci)
 		else:
 			E2 = E1
-		# BT.2390-3 suggests 0 <= E2 < 1, but this results in a discontinuity
+		# BT.2390-3 suggests 0 <= E2 <= 1, but this results in a discontinuity
 		# if KS < 0 (high LB > Lmin, low Lmax, high LW). To avoid this, check
 		# for E2 <= 1 instead
 		if mini and E2 <= 1:
