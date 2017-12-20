@@ -2785,7 +2785,10 @@ class BT2390(object):
 			E1 = min(max((v - mmini) / (mmaxi - mmini), 0), 1.0)
 		else:
 			E1 = v
-		if KS <= E1 <= 1:
+		# BT.2390-3 suggests P[E1] if KS <= E1 <=1, but this results in
+		# division by zero if KS = 1. The correct way is to check for
+		# KS < E1 <=1
+		if KS < E1 <= 1:
 			E2 = self.P(E1, KS, maxi, maxci)
 		else:
 			E2 = E1
