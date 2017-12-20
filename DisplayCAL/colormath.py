@@ -2798,7 +2798,12 @@ class BT2390(object):
 			# minLum > 0.25, due to a 'dip' in the function. The solution is to
 			# adjust the exponent according to minLum. For minLum <= 0.25
 			# (< 5.15 cd/m2), this will give the same result as 'pure' BT.2390-3
-			p = min(1.0 / b, 4)
+			if b >= 0:
+				# Only for positive b i.e. minLum >= LB
+				p = min(1.0 / b, 4)
+			else:
+				# For negative b i.e. minLum < LB
+				p = 4
 			E3 = E2 + b * (1 - E2) ** p
 			# If maxLum < 1, and the input value reaches maxLum, the resulting
 			# output value will be higher than maxLum after applying the black
