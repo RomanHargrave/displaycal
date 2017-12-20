@@ -2792,7 +2792,10 @@ class BT2390(object):
 			E2 = self.P(E1, KS, maxi, maxci)
 		else:
 			E2 = E1
-		if mini and 0 <= E2 <= 1:
+		# BT.2390-3 suggests 0 <= E2 < 1, but this results in a discontinuity
+		# if KS < 0 (high LB > Lmin, low Lmax, high LW). To avoid this, check
+		# for E2 <= 1 instead
+		if mini and E2 <= 1:
 			# Apply black level lift
 			minLum = mini
 			maxLum = maxi
@@ -2821,7 +2824,7 @@ class BT2390(object):
 		if normalize and mmini is not None and mmaxi is not None:
 			# Invert the normalization of the PQ values
 			E3 = E3 * (mmaxi - mmini) + mmini
-		return E3
+		return max(E3, 0)
 
 
 class Matrix3x3(list):
