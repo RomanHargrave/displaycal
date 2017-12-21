@@ -1335,7 +1335,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_diffuse_white_txt.ForegroundColour = signalcolor
 		self.lut3d_hdr_diffuse_white_txt.Label = "%.2f" % diffuse_tgt_cdm2
 		self.lut3d_hdr_diffuse_white_txt_label.ForegroundColour = signalcolor
-		self.panel.Layout()
+		self.lut3d_hdr_diffuse_white_txt.ContainingSizer.Layout()
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
