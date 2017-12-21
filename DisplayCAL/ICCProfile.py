@@ -764,7 +764,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	segment = 1.0 / (clutres - 1.0)
 	iv = 0.0
 	prevpow = eotf(eetf(0))
-	nextpow = eotf(eetf(segment))
+	# Apply a slight power to segments to optimize encoding
+	nextpow = eotf(eetf(colormath.specialpow(segment, 1.0 / 1.5, 2)))
 	xp = []
 	if generate_B2A:
 		oxp = []
@@ -773,7 +774,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		if v > iv + segment:
 			iv += segment
 			prevpow = nextpow
-			nextpow = eotf(eetf(iv + segment))
+			# Apply a slight power to segments to optimize encoding
+			nextpow = eotf(eetf(colormath.specialpow(iv + segment, 1.0 / 1.5, 2)))
 		prevs = 1.0 - (v - iv) / segment
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
@@ -810,7 +812,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	# Generate device-to-PCS shaper curves from interpolated values
 	if logfile:
 		logfile.write("Generating device-to-PCS shaper curves...\n")
-	entries = 2049
+	entries = 1025
 	prevperc = 0
 	if generate_B2A:
 		endperc = 1
@@ -830,7 +832,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			threshold = 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
 												  (clutres - 1.0) + 1)
 			check = n >= threshold
-			start = n
+			start = v
 		elif hdr_format == "HLG":
 			check = maxsignal < 1 and n >= maxsignal
 			start = v
@@ -907,7 +909,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					if backward_xicclu:
 						backward_xicclu.exit()
 					raise Exception("aborted")
-				RGB = [v * step for v in (R, G, B)]
+				# Apply a slight power to the segments to optimize encoding
+				RGB = [colormath.specialpow(v * step, 1.0 / 1.5, 2) for v in (R, G, B)]
 				RGB_in.append(RGB)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
