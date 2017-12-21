@@ -4540,7 +4540,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				cal_exclude = "e"
 			if getcfg("3dlut.trc").startswith("smpte2084"):
 				lut3dp = [str(getcfg("3dlut.trc_output_offset")) + ",2084"]
-				if getcfg("3dlut.hdr_peak_luminance") < 10000:
+				if (getcfg("3dlut.hdr_peak_luminance") < 10000 or
+					getcfg("3dlut.trc") == "smpte2084.rolloffclip" or
+					getcfg("3dlut.hdr_minmll") or
+					getcfg("3dlut.hdr_maxmll") < 10000):
 					lut3dp.append("@%i" % getcfg("3dlut.hdr_peak_luminance"))
 					if getcfg("3dlut.trc") == "smpte2084.hardclip":
 						lut3dp.append("h")
@@ -4555,6 +4558,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
 			elif getcfg("3dlut.trc") == "hlg":
 				lut3dp = ["HLG"]
+				if getcfg("3dlut.hdr_ambient_luminance") != 5:
+					lut3dp.append("@%i" % getcfg("3dlut.hdr_ambient_luminance"))
 			else:
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC
