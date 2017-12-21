@@ -2029,8 +2029,9 @@ class Worker(WorkerBase):
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
 								 apply_trc=True, white_cdm2=100, minmll=0,
-								 maxmll=10000, content_rgb_space="DCI P3",
-								 hdr_tonemapping=False):
+								 maxmll=10000, ambient_cdm2=5,
+								 content_rgb_space="DCI P3",
+								 hdr_chroma_compression=False):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -2084,8 +2085,8 @@ class Worker(WorkerBase):
 				# Hybrid Log-Gamma (HLG)
 				black_cdm2 = 0  # Black offset will be applied separate for HLG
 				white_cdm2 = lumi.Y
-				profile1.set_hlg_trc((0, 0, 0), white_cdm2, 1.2, 5)
-			if (gamma == "smpte2084.rolloffclip" and white_cdm2 < 10000) or hlg:
+				profile1.set_hlg_trc((0, 0, 0), white_cdm2, 1.2, ambient_cdm2)
+			if gamma == "smpte2084.rolloffclip" or hlg:
 				desc = profile1.getDescription()
 				desc = re.sub(r"\s*(?:color profile|primaries with "
 							  "\S+ transfer function)$", "", desc)
@@ -2122,7 +2123,7 @@ class Worker(WorkerBase):
 												   linesep_in="\n", 
 												   triggers=[])), self.recent,
 									self.lastmsg])
-				if hdr_tonemapping:
+				if hdr_chroma_compression:
 					xf = Xicclu(profile2, "r", direction="f", pcs="x",
 								worker=self)
 					xb = MP_Xicclu(profile2, "r", direction="if", pcs="x",
@@ -2154,7 +2155,7 @@ class Worker(WorkerBase):
 					minmll,  # Not used for HLG
 					maxmll,  # Not used for HLG
 					system_gamma=1.2,  # Not used for PQ
-					ambient_cdm2=5,  # Not used for PQ
+					ambient_cdm2=ambient_cdm2,  # Not used for PQ
 					maxsignal=1.0,  # Not used for PQ
 					content_rgb_space=content_rgb_space,
 					forward_xicclu=xf, backward_xicclu=xb,
@@ -2806,6 +2807,7 @@ END_DATA
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
 					 use_b2a=False, white_cdm2=100, minmll=0, maxmll=10000,
+					 ambient_cdm2=5,
 					 content_rgb_space="DCI P3", hdr_display=False,
 					 XYZwp=None):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
@@ -2956,8 +2958,9 @@ END_DATA
 												  white_cdm2=white_cdm2,
 												  minmll=minmll,
 												  maxmll=maxmll,
+												  ambient_cdm2=ambient_cdm2,
 												  content_rgb_space=content_rgb_space,
-												  hdr_tonemapping=not hdr_use_src_gamut)
+												  hdr_chroma_compression=not hdr_use_src_gamut)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
@@ -3040,7 +3043,8 @@ END_DATA
 											  white_cdm2=white_cdm2,
 											  minmll=minmll,
 											  maxmll=maxmll,
-											  hdr_tonemapping=False)
+											  ambient_cdm2=ambient_cdm2,
+											  hdr_chroma_compression=False)
 
 				profile_src.write()
 

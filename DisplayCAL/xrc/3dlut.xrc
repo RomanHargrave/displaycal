@@ -238,6 +238,34 @@
                               </object>
                             </object>
                             <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_hdr_ambient_luminance_label">
+                                <label>calibration.ambient_viewcond_adjust</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxBoxSizer">
+                                <object class="sizeritem">
+                                  <object class="FloatSpin" name="lut3d_hdr_ambient_luminance_ctrl">
+                                    <size>75,-1</size>
+                                    <min_val>0.0</min_val>
+                                    <max_val>10000</max_val>
+                                    <increment>0.01</increment>
+                                    <digits>2</digits>
+                                  </object>
+                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxStaticText" name="lut3d_hdr_ambient_luminance_ctrl_label">
+                                    <label>cd/m²</label>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>4</border>
+                                </object>
+                                <orient>wxHORIZONTAL</orient>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
                               <object class="wxStaticText" name="lut3d_content_colorspace_label">
                                 <label>3dlut.content.colorspace</label>
                               </object>

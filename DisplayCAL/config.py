@@ -779,6 +779,7 @@ defaults = {
 	"3dlut.hdr_minmll": 0.0,
 	"3dlut.hdr_maxmll": 10000.0,
 	"3dlut.hdr_peak_luminance": 400.0,
+	"3dlut.hdr_ambient_luminance": 5.0,
 	"3dlut.image.layout": "h",
 	"3dlut.image.order": "rgb",
 	"3dlut.input.profile": "",
