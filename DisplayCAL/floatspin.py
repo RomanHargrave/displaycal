@@ -1356,7 +1356,8 @@ if wx.VERSION >= (3, ):
         _spinwidth = 0
 
         def __init__(self, parent, id=wx.ID_ANY, pos=wx.DefaultPosition,
-                     size=(95,-1), style=0, value=0.0, min_val=None, max_val=None,
+                     size=(95,-1), style=wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT,
+                     value=0.0, min_val=None, max_val=None,
                      increment=1.0, digits=-1, agwStyle=FS_LEFT,
                      name="FloatSpin"):
             if "gtk3" in wx.PlatformInfo:
@@ -1367,6 +1368,15 @@ if wx.VERSION >= (3, ):
                     spin.Destroy()
                     text.Destroy()
                 size = size[0] + FloatSpin._spinwidth, size[1]
+
+            if agwStyle & FS_RIGHT:
+                style = style | wx.TE_RIGHT
+            elif agwStyle & FS_CENTRE:
+                style = style | wx.TE_CENTER
+
+            if agwStyle & FS_READONLY:
+                style = style | wx.TE_READONLY
+
             wx.SpinCtrlDouble.__init__(self, parent, id, str(value), pos, size,
                                        style, min_val or 0, max_val or 100,
                                        value, increment, name)

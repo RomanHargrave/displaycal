@@ -13,11 +13,6 @@ class FloatSpinCtrlXmlHandler(xrc.XmlResourceHandler):
 		xrc.XmlResourceHandler.__init__(self)
 		# Standard styles
 		self.AddWindowStyles()
-		# Custom styles
-		self.AddStyle('FS_LEFT', floatspin.FS_LEFT)
-		self.AddStyle('FS_RIGHT', floatspin.FS_RIGHT)
-		self.AddStyle('FS_CENTRE', floatspin.FS_CENTRE)
-		self.AddStyle('FS_READONLY', floatspin.FS_READONLY)
 		
 	def CanHandle(self,node):
 		return self.IsOfClass(node, 'FloatSpin')
@@ -36,11 +31,17 @@ class FloatSpinCtrlXmlHandler(xrc.XmlResourceHandler):
 			increment = float(self.GetText('increment'))
 		except:
 			increment = 1.0
+		is_spinctrldbl = (hasattr(wx, 'SpinCtrlDouble') and
+						  issubclass(floatspin.FloatSpin, wx.SpinCtrlDouble))
+		if is_spinctrldbl:
+			defaultstyle = wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
+		else:
+			defaultstyle = 0
 		w = floatspin.FloatSpin(parent=self.GetParentAsWindow(),
 								id=self.GetID(),
 								pos=self.GetPosition(),
 								size=self.GetSize(),
-								style=self.GetStyle(),
+								style=self.GetStyle(defaults=defaultstyle),
 								min_val=min_val,
 								max_val=max_val,
 								increment=increment,
@@ -49,7 +50,7 @@ class FloatSpinCtrlXmlHandler(xrc.XmlResourceHandler):
 		try:
 			w.SetValue(float(self.GetText('value')))
 		except:
-			w.SetValue(0.0)
+			pass
 
 		try:
 			w.SetDigits(int(self.GetText('digits')))
