@@ -2733,17 +2733,17 @@ class BT2390(object):
 		self.master_black_cdm2 = master_black_cdm2
 		self.master_white_cdm2 = master_white_cdm2
 	
-		self.ominv = black_cdm2 / 10000.0
+		self.ominv = black_cdm2 / 10000.0  # Lmin
 		self.omini = specialpow(self.ominv, 1.0 / -2084)  # Original minLum
-		self.omaxv = white_cdm2 / 10000.0
+		self.omaxv = white_cdm2 / 10000.0  # Lmax
 		self.omaxi = specialpow(self.omaxv, 1.0 / -2084)  # Original maxLum
 
 		self.oKS = 1.5 * self.omaxi - 0.5
 
 		# BT.2390-2
-		self.mminv = master_black_cdm2 / 10000.0
+		self.mminv = master_black_cdm2 / 10000.0  # LB
 		self.mmini = specialpow(self.mminv, 1.0 / -2084)
-		self.mmaxv = master_white_cdm2 / 10000.0
+		self.mmaxv = master_white_cdm2 / 10000.0  # LW
 		self.mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
 		self.mini = (self.omini - self.mmini) / (self.mmaxi - self.mmini)  # Normalized minLum
 		self.minv = specialpow(self.mini, -2084)
@@ -2816,7 +2816,10 @@ class BT2390(object):
 			# level lift (note that this is *not* a side-effect of the above 
 			# exponent adjustment). Undo this by re-scaling to the nominal output
 			# range [minLum, maxLum].
-			E3 = convert_range(E3, b, maxi + b * (1 - maxi) ** p, b, maxi)
+			if maxi < 1:
+				# Only re-scale if maxLum < 1. Note that maxLum can be > 1
+				# if Lmax > LW despite E2 <= 1
+				E3 = convert_range(E3, b, maxi + b * (1 - maxi) ** p, b, maxi)
 		else:
 			E3 = E2
 		if bpc:
