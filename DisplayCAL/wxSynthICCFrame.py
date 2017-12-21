@@ -591,11 +591,8 @@ class SynthICCFrame(BaseFrame):
 				   "profile_class": self.profile_classes.keys()[class_i],
 				   "tech": self.tech.keys()[tech_i],
 				   "ciis": self.ciis.keys()[ciis_i]}
-		if trc == -2084 and rolloff and getcfg("synthprofile.luminance") < 10000:
-			if rolloff:
-				msg = "smpte2084.rolloffclip"
-			else:
-				msg = "smpte2084.hardclip"
+		if trc == -2084 and rolloff:
+			msg = "smpte2084.rolloffclip"
 			self.worker.recent.write(lang.getstr("trc." + msg) + "\n")
 			self.worker.start(consumer,
 							  self.create_profile, wargs=(XYZ, trc, path),
@@ -677,7 +674,7 @@ class SynthICCFrame(BaseFrame):
 										  minmll, maxmll,
 										  rolloff=True,
 										  blend_blackpoint=False)
-				if rolloff and getcfg("synthprofile.luminance") < 10000:
+				if rolloff:
 					rgb_space = profile.get_rgb_space()
 					rgb_space[0] = -2084
 					rgb_space = colormath.get_rgb_space(rgb_space)
@@ -701,7 +698,7 @@ class SynthICCFrame(BaseFrame):
 						worker=self.worker, logfile=logfiles).tags.A2B0
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.apply_black_offset(black)
-				if rolloff and getcfg("synthprofile.luminance") < 10000:
+				if rolloff:
 					profile.write(path)
 					self.worker.generate_B2A_from_inverse_table(profile, 33,
 																smooth=False,
