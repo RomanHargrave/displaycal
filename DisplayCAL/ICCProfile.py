@@ -684,6 +684,9 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		eotf = lambda v: colormath.specialpow(v, -2084)
 		oetf = eotf_inverse = lambda v: colormath.specialpow(v, 1.0 / -2084)
 		eetf = bt2390.apply
+
+		# Apply a slight power to the segments to optimize encoding
+		encpow = min(max(bt2390.omaxi * (5 / 3.0), 1.0), 1.5)
 	elif hdr_format == "HLG":
 		# Note: Unlike the PQ black level lift, we apply HLG black offset as
 		# separate final step, not as part of the HLG EOTF
@@ -707,6 +710,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		eotf_inverse = lambda v: hlg.eotf(v, True)
 		oetf = hlg.oetf
 		eetf = lambda v: v
+
+		encpow = 1.0
 	else:
 		raise NotImplementedError("Unknown HDR format %r" % hdr_format)
 
@@ -765,7 +770,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	iv = 0.0
 	prevpow = eotf(eetf(0))
 	# Apply a slight power to segments to optimize encoding
-	nextpow = eotf(eetf(colormath.specialpow(segment, 1.0 / 1.5, 2)))
+	nextpow = eotf(eetf(colormath.specialpow(segment, 1.0 / encpow, 2)))
 	xp = []
 	if generate_B2A:
 		oxp = []
@@ -775,7 +780,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			iv += segment
 			prevpow = nextpow
 			# Apply a slight power to segments to optimize encoding
-			nextpow = eotf(eetf(colormath.specialpow(iv + segment, 1.0 / 1.5, 2)))
+			nextpow = eotf(eetf(colormath.specialpow(iv + segment, 1.0 / encpow, 2)))
 		prevs = 1.0 - (v - iv) / segment
 		nexts = (v - iv) / segment
 		vv = (prevs * prevpow + nexts * nextpow)
@@ -910,7 +915,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						backward_xicclu.exit()
 					raise Exception("aborted")
 				# Apply a slight power to the segments to optimize encoding
-				RGB = [colormath.specialpow(v * step, 1.0 / 1.5, 2) for v in (R, G, B)]
+				RGB = [colormath.specialpow(v * step, 1.0 / encpow, 2) for v in (R, G, B)]
 				RGB_in.append(RGB)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
