@@ -305,7 +305,7 @@ class LUT3DFrame(BaseFrame):
 		if v != getcfg("3dlut.trc_output_offset"):
 			self.lut3d_set_option("3dlut.trc_output_offset", v)
 			self.lut3d_update_trc_control()
-			self.lut3d_show_trc_controls()
+			#self.lut3d_show_trc_controls()
 
 	def lut3d_trc_gamma_ctrl_handler(self, event):
 		try:
@@ -322,7 +322,7 @@ class LUT3DFrame(BaseFrame):
 			if v != getcfg("3dlut.trc_gamma"):
 				self.lut3d_set_option("3dlut.trc_gamma", v)
 				self.lut3d_update_trc_control()
-				self.lut3d_show_trc_controls()
+				#self.lut3d_show_trc_controls()
 		event.Skip()
 
 	def lut3d_trc_ctrl_handler(self, event):

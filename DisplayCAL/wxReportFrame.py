@@ -197,7 +197,7 @@ class ReportFrame(BaseFrame):
 		if v != getcfg("measurement_report.trc_output_offset"):
 			setcfg("measurement_report.trc_output_offset", v)
 			self.mr_update_trc_control()
-			self.mr_show_trc_controls()
+			#self.mr_show_trc_controls()
 
 	def mr_trc_gamma_ctrl_handler(self, event):
 		try:

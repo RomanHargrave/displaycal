@@ -4912,7 +4912,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("calibration.black_output_offset", v)
 			self.update_profile_name()
 			self.update_trc_control()
-			self.show_trc_controls(True)
+			#self.show_trc_controls(True)
 
 	def visual_whitepoint_editor_handler(self, event):
 		if not self.setup_patterngenerator(self):
