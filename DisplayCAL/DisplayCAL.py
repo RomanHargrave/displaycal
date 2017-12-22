@@ -5560,7 +5560,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				if str(v) != self.trc_textctrl.GetValue():
 					self.trc_textctrl.SetValue(str(v))
-			if event.GetId() == self.trc_ctrl.GetId():
+			if (event.GetId() == self.trc_ctrl.GetId() and
+				self.trc_ctrl.GetSelection() == 7):
 				# Have to use CallAfter, otherwise only part of the text will
 				# be selected (wxPython bug?)
 				wx.CallAfter(self.trc_textctrl.SetFocus)

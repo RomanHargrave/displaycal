@@ -352,6 +352,10 @@ class LUT3DFrame(BaseFrame):
 			trc = "hlg"
 		else:
 			trc = "customgamma"
+			# Have to use CallAfter, otherwise only part of the text will
+			# be selected (wxPython bug?)
+			wx.CallAfter(self.lut3d_trc_gamma_ctrl.SetFocus)
+			wx.CallLater(1, self.lut3d_trc_gamma_ctrl.SelectAll)
 		self.lut3d_set_option("3dlut.trc", trc)
 		if trc != "customgamma":
 			self.lut3d_update_trc_controls()

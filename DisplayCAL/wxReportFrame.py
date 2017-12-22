@@ -231,6 +231,12 @@ class ReportFrame(BaseFrame):
 			setcfg("measurement_report.trc_gamma_type", "b")
 			setcfg("measurement_report.trc_output_offset", 1.0)
 			self.mr_update_trc_controls()
+		else:
+			# Custom
+			# Have to use CallAfter, otherwise only part of the text will
+			# be selected (wxPython bug?)
+			wx.CallAfter(self.mr_trc_gamma_ctrl.SetFocus)
+			wx.CallLater(1, self.mr_trc_gamma_ctrl.SelectAll)
 		self.mr_show_trc_controls()
 		self.Thaw()
 
