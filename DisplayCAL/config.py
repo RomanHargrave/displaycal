@@ -1316,7 +1316,7 @@ def get_display_profile(display_no=None):
 	except Exception, exception:
 		from log import _safe_print, log
 		_safe_print("ICCP.get_display_profile(%s):" % display_no, 
-					exception, fn=log)
+					safe_unicode(exception), fn=log)
 
 
 standard_profiles = []
