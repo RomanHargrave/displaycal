@@ -40,6 +40,7 @@
 		"*3dlut.format.spi3d": "Sony Imageworks (.spi3d)",
 	"3dlut.frame.title": "Crear 3D LUT",
 		"*3dlut.hdr.rolloff.diffuse_white": "Diffuse white (reference 94.38 cd/m²)",
+		"*3dlut.hdr.system_gamma": "System gamma (reference 1.2)",
 		"*3dlut.holder.assign_preset": "Assign 3D LUT to preset:",
 		"*3dlut.holder.out_of_memory": "%s is out of 3D LUT storage space (at least %i KB required). Please delete a few 3D LUTs from %s to make space for new ones. See your %s's documentation for more information.",
 		"*3dlut.input.colorspace": "Source colorspace",

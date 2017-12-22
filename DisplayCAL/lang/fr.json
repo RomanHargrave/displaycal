@@ -40,6 +40,7 @@
 	"3dlut.format.spi3d": "Sony Imageworks (.spi3d)",
 	"3dlut.frame.title": "Création une table de correspondance 3D",
 		"*3dlut.hdr.rolloff.diffuse_white": "Diffuse white (reference 94.38 cd/m²)",
+		"*3dlut.hdr.system_gamma": "System gamma (reference 1.2)",
 	"3dlut.holder.assign_preset": "Assigner la LUT 3D au préréglage :",
 	"3dlut.holder.out_of_memory": "%s se trouve hors de l’espace de stockage de la LUT 3D (il faut au moins %i Ko). Veuillez supprimer quelques LUT 3D de %s afin de libérer de la place pour de nouvelles. Voyez votre documentation de %s pour davantage d’informations.",
 	"3dlut.input.colorspace": "Espace de couleurs source",

@@ -40,6 +40,7 @@
 		"*3dlut.format.spi3d": "Sony Imageworks (.spi3d)",
 	"3dlut.frame.title": "建立 3D LUT",
 		"*3dlut.hdr.rolloff.diffuse_white": "Diffuse white (reference 94.38 cd/m²)",
+		"*3dlut.hdr.system_gamma": "System gamma (reference 1.2)",
 	"3dlut.holder.assign_preset": "指派 3D LUT 到预设方案：",
 	"3dlut.holder.out_of_memory": "%s 的 3D LUT 储存空间不足 (最少需要 %i KB )。 请删除一些3D LUT以释放空间给新的 3D LUT使用。 详情请参阅%s的说明书。",
 	"3dlut.input.colorspace": "原始色域",

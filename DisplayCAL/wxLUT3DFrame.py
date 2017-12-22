@@ -17,6 +17,7 @@ from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
 from log import safe_print
 from meta import name as appname, version
 from options import debug
+from util_decimal import stripzeros
 from util_os import islink, readlink, waccess
 from util_str import safe_unicode, strtr
 from worker import (Error, Info, UnloggedInfo, get_current_profile_path,
@@ -1317,9 +1318,11 @@ class LUT3DFrame(BaseFrame):
 		if option in ("3dlut.hdr_peak_luminance", "3dlut.hdr_minmll",
 					  "3dlut.hdr_maxmll"):
 			self.lut3d_hdr_update_diffuse_white()
+		elif option == "3dlut.hdr_ambient_luminance":
+			self.lut3d_hdr_update_system_gamma()
 
 	def lut3d_hdr_update_diffuse_white(self):
-		# Update knee start info
+		# Update knee start info for BT.2390-3 roll-off
 		bt2390 = colormath.BT2390(0, getcfg("3dlut.hdr_peak_luminance"),
 								  getcfg("3dlut.hdr_minmll"),
 								  getcfg("3dlut.hdr_maxmll"))
@@ -1336,6 +1339,11 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_diffuse_white_txt.Label = "%.2f" % diffuse_tgt_cdm2
 		self.lut3d_hdr_diffuse_white_txt_label.ForegroundColour = signalcolor
 		self.lut3d_hdr_diffuse_white_txt.ContainingSizer.Layout()
+
+	def lut3d_hdr_update_system_gamma(self):
+		# Update system gamma for HLG based on ambient luminance (BT.2390-3)
+		hlg = colormath.HLG(ambient_cdm2=getcfg("3dlut.hdr_ambient_luminance"))
+		self.lut3d_hdr_system_gamma_txt.Label = str(stripzeros("%.4f" % hlg.gamma))
 	
 	def update_controls(self):
 		""" Update controls with values from the configuration """
@@ -1406,6 +1414,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
+		self.lut3d_hdr_update_system_gamma()
 		# Content colorspace (currently only used for SMPTE 2084)
 		content_colors = []
 		for color in ("white", "red", "green", "blue"):
@@ -1556,6 +1565,8 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_ambient_luminance_label.Show(show and hlg)
 		self.lut3d_hdr_ambient_luminance_ctrl.Show(show and hlg)
 		self.lut3d_hdr_ambient_luminance_ctrl_label.Show(show and hlg)
+		self.lut3d_hdr_system_gamma_label.Show(show and hlg)
+		self.lut3d_hdr_system_gamma_txt.Show(show and hlg)
 		show = (show or smpte2084) and not hlg
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])

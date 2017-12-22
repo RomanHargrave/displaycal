@@ -248,7 +248,7 @@
                                 <object class="sizeritem">
                                   <object class="FloatSpin" name="lut3d_hdr_ambient_luminance_ctrl">
                                     <size>75,-1</size>
-                                    <min_val>0.0</min_val>
+                                    <min_val>0.01</min_val>
                                     <max_val>10000</max_val>
                                     <increment>0.01</increment>
                                     <digits>2</digits>
@@ -264,6 +264,17 @@
                                 </object>
                                 <orient>wxHORIZONTAL</orient>
                               </object>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_hdr_system_gamma_label">
+                                <label>3dlut.hdr.system_gamma</label>
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                            </object>
+                            <object class="sizeritem">
+                              <object class="wxStaticText" name="lut3d_hdr_system_gamma_txt">
+                              </object>
+                              <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="lut3d_content_colorspace_label">
