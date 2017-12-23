@@ -5564,7 +5564,7 @@ while 1:
 								get_clip=True)
 
 			# Deal with values that got clipped (below black as well as white)
-			do_low_clip = not bpc
+			do_low_clip = True
 			for i, values in enumerate(odata):
 				if values[3] is True:
 					if do_low_clip and i / maxval * 100 < Lbp:
