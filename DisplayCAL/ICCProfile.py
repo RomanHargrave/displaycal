@@ -467,7 +467,7 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 		maxi = bwd[i](white_XYZ[1])
 		segment = 1.0 / (clutres - 1.0) * maxi
 		iv = 0.0
-		prevpow = 0.0
+		prevpow = fwd[i](0.0)
 		nextpow = fwd[i](segment)
 		xp = []
 		for j in xrange(steps):

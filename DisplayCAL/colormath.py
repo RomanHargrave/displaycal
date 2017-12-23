@@ -1495,8 +1495,8 @@ get_whitepoint.cache = {}
 
 def make_monotonically_increasing(iterable, passes=0, window=None):
 	"""
-	Given an iterable or sequence, make the values monotonically increasing
-	by linear interpolation.
+	Given an iterable or sequence, make the values strictly monotonically
+	increasing (no repeated successive values) by linear interpolation.
 	
 	If iterable is a dict, keep the keys of the original.
 	
@@ -1518,9 +1518,10 @@ def make_monotonically_increasing(iterable, passes=0, window=None):
 	sequence = zip(keys, values)
 	numvalues = len(sequence)
 	s_new = []
+	y_min = sequence[0][1]
 	while sequence:
 		x, y = sequence.pop()
-		if not s_new or y < s_new[0][1]:
+		if (not s_new or y < s_new[0][1]) and (y > y_min or not sequence):
 			s_new.insert(0, (x, y))
 	sequence = s_new
 	# Interpolate to original size
