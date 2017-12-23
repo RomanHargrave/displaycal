@@ -3002,8 +3002,6 @@ END_DATA
 				content_colors = [round(v, 4) for v in (cwx, cwy, crx, cry,
 														cgx, cgy, cbx, cby)]
 				for i, rgb_space_name in enumerate(colormath.rgb_spaces.iterkeys()):
-					if rgb_space_name == "Rec. 2020 ST2084":
-						continue
 					rgb_space = colormath.get_rgb_space(rgb_space_name)
 					wx, wy = (round(v, 4) for v in
 							  colormath.XYZ2xyY(*colormath.get_whitepoint(rgb_space[1]))[:2])
@@ -8934,7 +8932,7 @@ usage: spotread [-options] [logfile]
 		return logfiles
 	
 	def update_profile_B2A(self, profile, generate_perceptual_table=True,
-						   clutres=None):
+						   clutres=None, smooth=None, rgb_space=None):
 		# Use reverse A2B interpolation to generate B2A table
 		if not clutres:
 			if getcfg("profile.b2a.hires"):
@@ -8946,6 +8944,8 @@ usage: spotread [-options] [logfile]
 			else:
 				# Medium quality/resolution
 				clutres = 17
+		if smooth is None:
+			smooth = getcfg("profile.b2a.hires.smooth")
 		logfiles = self.get_logfiles()
 		tables = [1]
 		self.log("-" * 80)
@@ -9038,8 +9038,8 @@ usage: spotread [-options] [logfile]
 																  "A2B",
 																  tableno,
 																  bpc,
-																  getcfg("profile.b2a.hires.smooth"),
-																  None,
+																  smooth,
+																  rgb_space,
 																  logfiles,
 																  filename,
 																  bpc)

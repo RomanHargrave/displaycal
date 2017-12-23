@@ -134,6 +134,15 @@ class LUT3DFrame(BaseFrame):
 		# Shared with main window
 		self.lut3d_apply_cal_cb.Bind(wx.EVT_CHECKBOX, self.lut3d_apply_cal_ctrl_handler)
 		self.lut3d_create_btn.Bind(wx.EVT_BUTTON, self.lut3d_create_handler)
+		self.lut3d_hdr_peak_luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
+											self.lut3d_hdr_peak_luminance_handler)
+		self.lut3d_hdr_display_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_hdr_display_handler)
+		self.lut3d_bind_trc_handlers()
+		self.lut3d_bind_hdr_trc_handlers()
+		self.lut3d_bind_content_colorspace_handlers()
+		self.lut3d_bind_common_handlers()
+
+	def lut3d_bind_trc_handlers(self):
 		self.lut3d_trc_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_trc_ctrl_handler)
 		self.lut3d_trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX,
 								 self.lut3d_trc_gamma_ctrl_handler)
@@ -145,15 +154,16 @@ class LUT3DFrame(BaseFrame):
 										   self.lut3d_trc_black_output_offset_ctrl_handler)
 		self.lut3d_trc_black_output_offset_intctrl.Bind(wx.EVT_TEXT,
 											  self.lut3d_trc_black_output_offset_ctrl_handler)
-		self.lut3d_hdr_peak_luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
-											self.lut3d_hdr_peak_luminance_handler)
+
+	def lut3d_bind_hdr_trc_handlers(self):
 		self.lut3d_hdr_ambient_luminance_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 												   self.lut3d_hdr_ambient_luminance_handler)
-		self.lut3d_hdr_display_ctrl.Bind(wx.EVT_CHOICE, self.lut3d_hdr_display_handler)
 		self.lut3d_hdr_minmll_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 										self.lut3d_hdr_minmll_handler)
 		self.lut3d_hdr_maxmll_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 										self.lut3d_hdr_maxmll_handler)
+
+	def lut3d_bind_content_colorspace_handlers(self):
 		self.lut3d_content_colorspace_ctrl.Bind(wx.EVT_CHOICE,
 												self.lut3d_content_colorspace_handler)
 		for color in ("white", "red", "green", "blue"):
@@ -162,6 +172,8 @@ class LUT3DFrame(BaseFrame):
 				getattr(self, "lut3d_content_colorspace_%s_%s" %
 							  (color, coord)).Bind(floatspin.EVT_FLOATSPIN,
 												   self.lut3d_content_colorspace_xy_handler)
+
+	def lut3d_bind_common_handlers(self):
 		self.encoding_input_ctrl.Bind(wx.EVT_CHOICE,
 											self.lut3d_encoding_input_ctrl_handler)
 		self.encoding_output_ctrl.Bind(wx.EVT_CHOICE,

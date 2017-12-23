@@ -3063,6 +3063,7 @@ class CurveType(ICCProfileTag, list):
 			   ("SMPTE 240M", -240, outoffset),
 			   ("SMPTE 2084", -2084, outoffset),
 			   ("DICOM", -1023, outoffset),
+			   ("HLG", -2, outoffset),
 			   ("L*", -3.0, outoffset),
 			   ("sRGB", -2.4, outoffset),
 			   ("Gamma %.2f %i%%" % (round(gamma, 2), round(outoffset * 100)),
@@ -3072,7 +3073,7 @@ class CurveType(ICCProfileTag, list):
 				tfs.append(("Gamma %.2f %i%%" % (round(gamma, 2), i),
 							gamma, i / 100.0))
 		for name, exp, outoffset in tfs:
-			if name in ("DICOM", "Rec. 1886", "SMPTE 2084"):
+			if name in ("DICOM", "Rec. 1886", "SMPTE 2084", "HLG"):
 				try:
 					if name == "DICOM":
 						trc.set_dicom_trc(black_cdm2, white_cdm2, size=len(self))
@@ -3080,6 +3081,8 @@ class CurveType(ICCProfileTag, list):
 						trc.set_bt1886_trc(black_Y, size=len(self))
 					elif name == "SMPTE 2084":
 						trc.set_smpte2084_trc(black_cdm2, white_cdm2, size=len(self))
+					elif name == "HLG":
+						trc.set_hlg_trc(black_cdm2, white_cdm2, size=len(self))
 				except ValueError:
 					continue
 			elif exp > 0 and black_Y:

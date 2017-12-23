@@ -22,6 +22,7 @@ import localization as lang
 import worker
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
 from wxfixes import TempXmlResource
+from wxLUT3DFrame import LUT3DFrame
 import floatspin
 import xh_floatspin
 import xh_bitmapctrls
@@ -31,7 +32,12 @@ from wx import xrc
 
 class SynthICCFrame(BaseFrame):
 
-	""" 3D LUT creation window """
+	""" Synthetic ICC creation window """
+
+	# Shared methods from 3D LUT UI
+	for lut3d_ivar_name, lut3d_ivar in LUT3DFrame.__dict__.iteritems():
+		if lut3d_ivar_name.startswith("lut3d_"):
+			locals()[lut3d_ivar_name] = lut3d_ivar
 	
 	def __init__(self, parent=None):
 		self.res = TempXmlResource(get_data_path(os.path.join("xrc", 
@@ -90,6 +96,7 @@ class SynthICCFrame(BaseFrame):
 		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX, self.trc_gamma_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS, self.trc_gamma_ctrl_handler)
 		self.trc_gamma_type_ctrl.Bind(wx.EVT_CHOICE, self.trc_gamma_type_ctrl_handler)
+		self.lut3d_bind_hdr_trc_handlers()
 		self.black_output_offset_ctrl.Bind(wx.EVT_SLIDER,
 										   self.black_output_offset_ctrl_handler)
 		self.black_output_offset_intctrl.Bind(wx.EVT_TEXT,
@@ -146,7 +153,8 @@ class SynthICCFrame(BaseFrame):
 			config.writecfg(module="synthprofile",
 							options=("synthprofile.", "last_icc_path",
 									 "position.synthiccframe",
-									 "size.synthiccframe"))
+									 "size.synthiccframe",
+									 "3dlut.hdr_"))
 		if event:
 			# Hide first (looks nicer)
 			self.Hide()
@@ -189,11 +197,11 @@ class SynthICCFrame(BaseFrame):
 		if (v != old and (old == 0 or v == 0)) or event is True:
 			self.Freeze()
 			i = self.trc_ctrl.GetSelection()
-			self.trc_gamma_type_ctrl.Show(i in (0, 4) and bool(v))
+			self.trc_gamma_type_ctrl.Show(i in (0, 5) and bool(v))
 			if not v:
 				self.bpc_ctrl.SetValue(False)
 			self.bpc_ctrl.Enable(bool(v))
-			black_output_offset_show = (i in (0, 4, 6, 7) and bool(v))
+			black_output_offset_show = (i in (0, 5, 7, 8) and bool(v))
 			self.black_output_offset_label.Show(black_output_offset_show)
 			self.black_output_offset_ctrl.Show(black_output_offset_show)
 			self.black_output_offset_intctrl.Show(black_output_offset_show)
@@ -487,25 +495,28 @@ class SynthICCFrame(BaseFrame):
 		if gamma == -1023:
 			# DICOM
 			self.trc_ctrl.SetSelection(1)
+		elif gamma == -2.0:
+			# HLG
+			self.trc_ctrl.SetSelection(2)
 		elif gamma == -3.0:
 			# L*
-			self.trc_ctrl.SetSelection(2)
+			self.trc_ctrl.SetSelection(3)
 		elif gamma == -709:
 			# Rec. 709
-			self.trc_ctrl.SetSelection(3)
+			self.trc_ctrl.SetSelection(4)
 		elif gamma == -1886:
 			# Rec. 1886
-			self.trc_ctrl.SetSelection(4)
+			self.trc_ctrl.SetSelection(5)
 			self.trc_ctrl_handler()
 		elif gamma == -240:
 			# SMPTE 240M
-			self.trc_ctrl.SetSelection(5)
+			self.trc_ctrl.SetSelection(6)
 		elif gamma == -2084:
 			# SMPTE 2084, roll-off clip
-			self.trc_ctrl.SetSelection(7)
+			self.trc_ctrl.SetSelection(8)
 		elif gamma == -2.4:
 			# sRGB
-			self.trc_ctrl.SetSelection(8)
+			self.trc_ctrl.SetSelection(9)
 		else:
 			# Gamma
 			self.trc_ctrl.SetSelection(0)
@@ -556,29 +567,32 @@ class SynthICCFrame(BaseFrame):
 			return
 
 		XYZ = self.get_XYZ()
-		if self.trc_ctrl.GetSelection() in (0, 4):
+		if self.trc_ctrl.GetSelection() in (0, 5):
 			# 0 = Gamma
-			# 4 = Rec. 1886 - trc set here is only used if black = 0
+			# 5 = Rec. 1886 - trc set here is only used if black = 0
 			trc = gamma
 		elif self.trc_ctrl.GetSelection() == 1:
 			# DICOM
 			trc = -1
 		elif self.trc_ctrl.GetSelection() == 2:
+			# HLG
+			trc = -2
+		elif self.trc_ctrl.GetSelection() == 3:
 			# L*
 			trc = -3.0
-		elif self.trc_ctrl.GetSelection() == 3:
+		elif self.trc_ctrl.GetSelection() == 4:
 			# Rec. 709
 			trc = -709
-		elif self.trc_ctrl.GetSelection() == 5:
+		elif self.trc_ctrl.GetSelection() == 6:
 			# SMPTE 240M
 			trc = -240
-		elif self.trc_ctrl.GetSelection() in (6, 7):
+		elif self.trc_ctrl.GetSelection() in (7, 8):
 			# SMPTE 2084
 			trc = -2084
-		elif self.trc_ctrl.GetSelection() == 8:
+		elif self.trc_ctrl.GetSelection() == 9:
 			# sRGB
 			trc = -2.4
-		rolloff = self.trc_ctrl.GetSelection() == 7
+		rolloff = self.trc_ctrl.GetSelection() == 8
 		class_i = self.profile_class_ctrl.GetSelection()
 		tech_i = self.tech_ctrl.GetSelection()
 		ciis_i = self.ciis_ctrl.GetSelection()
@@ -591,8 +605,11 @@ class SynthICCFrame(BaseFrame):
 				   "profile_class": self.profile_classes.keys()[class_i],
 				   "tech": self.tech.keys()[tech_i],
 				   "ciis": self.ciis.keys()[ciis_i]}
-		if trc == -2084 and rolloff:
-			msg = "smpte2084.rolloffclip"
+		if (trc == -2084 and rolloff) or trc == -2:
+			if trc == -2084:
+				msg = "smpte2084.rolloffclip"
+			else:
+				msg = "hlg"
 			self.worker.recent.write(lang.getstr("trc." + msg) + "\n")
 			self.worker.start(consumer,
 							  self.create_profile, wargs=(XYZ, trc, path),
@@ -631,7 +648,11 @@ class SynthICCFrame(BaseFrame):
 								  getcfg("synthprofile.luminance"))] * 3
 			profile.tags.kTRC = ICCP.CurveType(profile=profile)
 			channels = "k"
-		outoffset = getcfg("synthprofile.trc_output_offset")
+		if trc == -2:
+			# HLG
+			outoffset = 1
+		else:
+			outoffset = getcfg("synthprofile.trc_output_offset")
 		if trc == -1:
 			# DICOM
 			# Absolute luminance values!
@@ -657,8 +678,12 @@ class SynthICCFrame(BaseFrame):
 				# Grayscale profile
 				profile.tags.kTRC.set_bt1886_trc(black[1], outoffset, trc,
 												 getcfg("synthprofile.trc_gamma_type"))
-		elif trc == -2084:
-			# SMPTE 2084
+		elif trc == -2084 or trc == -2:
+			# SMPTE 2084 or HLG
+			if trc == -2084:
+				hdr_format = "PQ"
+			else:
+				hdr_format = "HLG"
 			if rolloff:
 				minmll = getcfg("3dlut.hdr_minmll")
 				maxmll = getcfg("3dlut.hdr_maxmll")
@@ -667,16 +692,24 @@ class SynthICCFrame(BaseFrame):
 				maxmll = getcfg("synthprofile.luminance")
 			if rgb:
 				# Color profile
-				profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
-										   (1 - outoffset)
-										   for v in black],
-										  getcfg("synthprofile.luminance"),
-										  minmll, maxmll,
-										  rolloff=True,
-										  blend_blackpoint=False)
-				if rolloff:
+				if trc == -2084:
+					profile.set_smpte2084_trc([v * getcfg("synthprofile.luminance") *
+											   (1 - outoffset)
+											   for v in black],
+											  getcfg("synthprofile.luminance"),
+											  minmll, maxmll,
+											  rolloff=True,
+											  blend_blackpoint=False)
+				else:
+					# HLG
+					profile.set_hlg_trc((0, 0, 0),
+										getcfg("synthprofile.luminance"),
+										1.2,
+										getcfg("3dlut.hdr_ambient_luminance"),
+										blend_blackpoint=False)
+				if rolloff or trc == -2:
 					rgb_space = profile.get_rgb_space()
-					rgb_space[0] = -2084
+					rgb_space[0] = 1.0  # Set gamma to 1.0 (not actually used)
 					rgb_space = colormath.get_rgb_space(rgb_space)
 					linebuffered_logfiles = []
 					if sys.stdout.isatty():
@@ -690,27 +723,33 @@ class SynthICCFrame(BaseFrame):
 													   triggers=[])),
 									  self.worker.recent,
 									  self.worker.lastmsg])
-					profile.tags.A2B0 = ICCP.create_synthetic_smpte2084_clut_profile(
+					profile.tags.A2B0 = ICCP.create_synthetic_hdr_clut_profile(
+						hdr_format,
 						rgb_space, "",
 						getcfg("synthprofile.black_luminance") * (1 - outoffset),
 						getcfg("synthprofile.luminance"), minmll, maxmll,
-						mode="ICtCp" if rolloff else "RGB",
+						1.2, getcfg("3dlut.hdr_ambient_luminance"),
 						worker=self.worker, logfile=logfiles).tags.A2B0
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.apply_black_offset(black)
-				if rolloff:
+				if rolloff or trc == -2:
 					profile.write(path)
-					self.worker.generate_B2A_from_inverse_table(profile, 33,
-																smooth=False,
-																rgb_space=rgb_space,
-																logfile=logfiles)
+					self.worker.update_profile_B2A(profile, not bpc, 33,
+												   smooth=False,
+												   rgb_space=rgb_space)
 			else:
 				# Grayscale profile
-				profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
-													(1 - outoffset),
-													getcfg("synthprofile.luminance"),
-													minmll, maxmll,
-													rolloff=True)
+				if trc == -2084:
+					profile.tags.kTRC.set_smpte2084_trc(getcfg("synthprofile.black_luminance") *
+														(1 - outoffset),
+														getcfg("synthprofile.luminance"),
+														minmll, maxmll,
+														rolloff=True)
+				else:
+					# HLG
+					profile.tags.kTRC.set_smpte2084_trc(0,
+														1.2,
+														getcfg("3dlut.hdr_ambient_luminance"))
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.tags.kTRC.apply_bpc(black[1])
 		elif black != [0, 0, 0]:
@@ -800,7 +839,7 @@ class SynthICCFrame(BaseFrame):
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
 		i = self.trc_ctrl.GetSelection()
-		if i == 4:
+		if i == 5:
 			# BT.1886
 			setcfg("synthprofile.trc_gamma", 2.4)
 			setcfg("synthprofile.trc_gamma_type", "G")
@@ -840,31 +879,51 @@ class SynthICCFrame(BaseFrame):
 		self.update_trc_controls()
 
 	def update_trc_control(self):
-		if self.trc_ctrl.GetSelection() in (0, 4):
+		if self.trc_ctrl.GetSelection() in (0, 5):
 			if (getcfg("synthprofile.trc_gamma_type") == "G" and
 				getcfg("synthprofile.trc_output_offset") == 0 and
 				getcfg("synthprofile.trc_gamma") == 2.4):
-				self.trc_ctrl.SetSelection(4)  # BT.1886
+				self.trc_ctrl.SetSelection(5)  # BT.1886
 			else:
 				self.trc_ctrl.SetSelection(0)  # Gamma
 
 	def update_trc_controls(self):
 		i = self.trc_ctrl.GetSelection()
 		self.panel.Freeze()
-		self.trc_gamma_label.Show(i in (0, 4))
+		self.trc_gamma_label.Show(i in (0, 5))
 		self.trc_gamma_ctrl.SetValue(str(getcfg("synthprofile.trc_gamma")))
-		self.trc_gamma_ctrl.Show(i in (0, 4))
+		self.trc_gamma_ctrl.Show(i in (0, 5))
 		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("synthprofile.trc_gamma_type")])
 		self.panel.GetSizer().Layout()
 		self.panel.Thaw()
-		if i in (0, 4, 6, 7):
+		if i in (0, 5, 7, 8):
+			# Gamma, BT.1886, SMPTE 2084 (PQ)
 			outoffset = int(getcfg("synthprofile.trc_output_offset") * 100)
 		else:
 			outoffset = 100
 		self.black_output_offset_ctrl.SetValue(outoffset)
 		self.black_output_offset_intctrl.SetValue(outoffset)
+		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
+		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
+		self.lut3d_hdr_update_diffuse_white()
+		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
+		self.lut3d_hdr_update_system_gamma()
+		self.lut3d_hdr_minmll_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_minmll_ctrl.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_minmll_ctrl_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_maxmll_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_maxmll_ctrl.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_maxmll_ctrl_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_diffuse_white_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_diffuse_white_txt.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_diffuse_white_txt_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_ambient_luminance_label.Show(i == 2)  # HLG
+		self.lut3d_hdr_ambient_luminance_ctrl.Show(i == 2)  # HLG
+		self.lut3d_hdr_ambient_luminance_ctrl_label.Show(i == 2)  # HLG
+		self.lut3d_hdr_system_gamma_label.Show(i == 2)  # HLG
+		self.lut3d_hdr_system_gamma_txt.Show(i == 2)  # HLG
 		self.black_luminance_ctrl_handler(True)
-		if i in (3, 5):
+		if i in (4, 6):
 			# Rec 709 or SMPTE 240M
 			# Match Adobe 'video' profiles
 			self.profile_class_ctrl.SetStringSelection(self.profile_classes["scnr"])
