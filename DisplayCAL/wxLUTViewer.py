@@ -1333,7 +1333,7 @@ class LUTFrame(BaseFrame):
 		event.Skip()
 	
 	def plot_mode_select_handler(self, event):
-		self.client.resetzoom()
+		#self.client.resetzoom()
 		self.DrawLUT()
 
 	def get_commands(self):
@@ -1414,6 +1414,25 @@ class LUTFrame(BaseFrame):
 				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				curves.append(lang.getstr('[rgb]TRC'))
+		if getcfg("show_advanced_options"):
+			if isinstance(self.profile.tags.get("A2B0"), ICCP.LUT16Type):
+				curves.append(lang.getstr('profile.tags.A2B0.shaper_curves.input'))
+				curves.append(lang.getstr('profile.tags.A2B0.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("A2B1"), ICCP.LUT16Type):
+				curves.append(lang.getstr('profile.tags.A2B1.shaper_curves.input'))
+				curves.append(lang.getstr('profile.tags.A2B1.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("A2B2"), ICCP.LUT16Type):
+				curves.append(lang.getstr('profile.tags.A2B2.shaper_curves.input'))
+				curves.append(lang.getstr('profile.tags.A2B2.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("B2A0"), ICCP.LUT16Type):
+				curves.append(lang.getstr('profile.tags.B2A0.shaper_curves.input'))
+				curves.append(lang.getstr('profile.tags.B2A0.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("B2A1"), ICCP.LUT16Type):
+				curves.append(lang.getstr('profile.tags.B2A1.shaper_curves.input'))
+				curves.append(lang.getstr('profile.tags.B2A1.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("B2A2"), ICCP.LUT16Type):
+				curves.append(lang.getstr('profile.tags.B2A2.shaper_curves.input'))
+				curves.append(lang.getstr('profile.tags.B2A2.shaper_curves.output'))
 		selection = self.plot_mode_select.GetSelection()
 		center = False
 		if curves and (selection < 0 or selection > len(curves) - 1):
@@ -1587,6 +1606,40 @@ class LUTFrame(BaseFrame):
 						'entryCount': len(self.rTRC),
 						'entrySize': 2
 					}
+			elif self.plot_mode_select.GetSelection() in range(2, 14):
+				if self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B0.shaper_curves.input'):
+					tables = self.profile.tags.A2B0.input
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B0.shaper_curves.output'):
+					tables = self.profile.tags.A2B0.output
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B1.shaper_curves.input'):
+					tables = self.profile.tags.A2B1.input
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B1.shaper_curves.output'):
+					tables = self.profile.tags.A2B1.output
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B2.shaper_curves.input'):
+					tables = self.profile.tags.A2B2.input
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B2.shaper_curves.output'):
+					tables = self.profile.tags.A2B2.output
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A0.shaper_curves.input'):
+					tables = self.profile.tags.B2A0.input
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A0.shaper_curves.output'):
+					tables = self.profile.tags.B2A0.output
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A1.shaper_curves.input'):
+					tables = self.profile.tags.B2A1.input
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A1.shaper_curves.output'):
+					tables = self.profile.tags.B2A1.output
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A2.shaper_curves.input'):
+					tables = self.profile.tags.B2A2.input
+				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A2.shaper_curves.output'):
+					tables = self.profile.tags.B2A2.output
+				entry_count = len(tables[0])
+				x = [v / (entry_count - 1.0) * 255 for v in range(entry_count)]
+				curves = {
+					'data': [zip(x, [v / 65535.0 * 255 for v in tables[0]]),
+							 zip(x, [v / 65535.0 * 255 for v in tables[1]]),
+							 zip(x, [v / 65535.0 * 255 for v in tables[2]])],
+					'entryCount': entry_count,
+					'entrySize': 2
+				}
 		yLabel = []
 		if self.toggle_red.GetValue():
 			yLabel.append("R")
@@ -1594,7 +1647,7 @@ class LUTFrame(BaseFrame):
 			yLabel.append("G")
 		if self.toggle_blue.GetValue():
 			yLabel.append("B")
-		if (self.plot_mode_select.GetSelection() == 0 or
+		if (self.plot_mode_select.GetSelection() in [0] + range(2, 14) or
 			(self.profile and self.profile.connectionColorSpace == "RGB")):
 			self.xLabel = "".join(yLabel)
 		else:
@@ -1608,7 +1661,7 @@ class LUTFrame(BaseFrame):
 		self.toggle_green.Enable(bool(curves))
 		self.toggle_blue.Enable(bool(curves))
 		self.show_as_L.Enable(bool(curves))
-		self.show_as_L.Show(self.plot_mode_select.GetSelection() != 0 and
+		self.show_as_L.Show(self.plot_mode_select.GetSelection() not in [0] + range(2, 14) and
 							self.profile.connectionColorSpace != "RGB")
 		self.toggle_clut.Show(self.profile.connectionColorSpace != "RGB" and
 							  self.plot_mode_select.GetSelection() == 1 and

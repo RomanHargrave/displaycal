@@ -1042,7 +1042,6 @@ class ProfileInfoFrame(LUTFrame):
 		self.plot_mode_sizer.Add(self.plot_mode_select,
 								 flag=wx.ALIGN_CENTER_VERTICAL)
 		self.plot_mode_select.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler)
-		self.plot_mode_select.SetSelection(2)
 		self.plot_mode_select.Disable()
 		
 		self.tooltip_btn = BitmapButton(p1, -1, geticon(16, "dialog-information"),
@@ -1368,10 +1367,29 @@ class ProfileInfoFrame(LUTFrame):
 				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				choice.append(lang.getstr("[rgb]TRC"))
+		if getcfg("show_advanced_options"):
+			if isinstance(self.profile.tags.get("A2B0"), ICCP.LUT16Type):
+				choice.append(lang.getstr('profile.tags.A2B0.shaper_curves.input'))
+				choice.append(lang.getstr('profile.tags.A2B0.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("A2B1"), ICCP.LUT16Type):
+				choice.append(lang.getstr('profile.tags.A2B1.shaper_curves.input'))
+				choice.append(lang.getstr('profile.tags.A2B1.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("A2B2"), ICCP.LUT16Type):
+				choice.append(lang.getstr('profile.tags.A2B2.shaper_curves.input'))
+				choice.append(lang.getstr('profile.tags.A2B2.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("B2A0"), ICCP.LUT16Type):
+				choice.append(lang.getstr('profile.tags.B2A0.shaper_curves.input'))
+				choice.append(lang.getstr('profile.tags.B2A0.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("B2A1"), ICCP.LUT16Type):
+				choice.append(lang.getstr('profile.tags.B2A1.shaper_curves.input'))
+				choice.append(lang.getstr('profile.tags.B2A1.shaper_curves.output'))
+			if isinstance(self.profile.tags.get("B2A2"), ICCP.LUT16Type):
+				choice.append(lang.getstr('profile.tags.B2A2.shaper_curves.input'))
+				choice.append(lang.getstr('profile.tags.B2A2.shaper_curves.output'))
 		choice.append(lang.getstr("gamut"))
 		self.Freeze()
 		self.plot_mode_select.SetItems(choice)
-		if plot_mode_count != self.plot_mode_select.GetCount():
+		if plot_mode < 0:
 			plot_mode = self.plot_mode_select.GetCount() - 1
 		self.plot_mode_select.SetSelection(min(plot_mode,
 											   self.plot_mode_select.GetCount() - 1))
