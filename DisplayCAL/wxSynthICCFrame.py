@@ -684,11 +684,10 @@ class SynthICCFrame(BaseFrame):
 				hdr_format = "PQ"
 			else:
 				hdr_format = "HLG"
+			minmll = getcfg("3dlut.hdr_minmll")
 			if rolloff:
-				minmll = getcfg("3dlut.hdr_minmll")
 				maxmll = getcfg("3dlut.hdr_maxmll")
 			else:
-				minmll = 0
 				maxmll = getcfg("synthprofile.luminance")
 			if rgb:
 				# Color profile
@@ -908,9 +907,9 @@ class SynthICCFrame(BaseFrame):
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
 		self.lut3d_hdr_update_system_gamma()
-		self.lut3d_hdr_minmll_label.Show(i == 8)  # SMPTE 2084 (PQ)
-		self.lut3d_hdr_minmll_ctrl.Show(i == 8)  # SMPTE 2084 (PQ)
-		self.lut3d_hdr_minmll_ctrl_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_minmll_label.Show(i in (7, 8))  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_minmll_ctrl.Show(i in (7, 8))  # SMPTE 2084 (PQ)
+		self.lut3d_hdr_minmll_ctrl_label.Show(i in (7, 8))  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_maxmll_label.Show(i == 8)  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_maxmll_ctrl.Show(i == 8)  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_maxmll_ctrl_label.Show(i == 8)  # SMPTE 2084 (PQ)

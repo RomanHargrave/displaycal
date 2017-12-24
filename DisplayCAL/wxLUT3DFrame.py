@@ -1574,9 +1574,9 @@ class LUT3DFrame(BaseFrame):
 		lastsel = self.lut3d_content_colorspace_ctrl.Count - 1
 		sizer = self.lut3d_content_colorspace_red_x.ContainingSizer
 		sizer.ShowItems(showcc and sel == lastsel)
-		self.lut3d_hdr_minmll_label.Show(show and smpte2084r)
-		self.lut3d_hdr_minmll_ctrl.Show(show and smpte2084r)
-		self.lut3d_hdr_minmll_ctrl_label.Show(show and smpte2084r)
+		self.lut3d_hdr_minmll_label.Show(show and smpte2084)
+		self.lut3d_hdr_minmll_ctrl.Show(show and smpte2084)
+		self.lut3d_hdr_minmll_ctrl_label.Show(show and smpte2084)
 		self.lut3d_hdr_maxmll_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxmll_ctrl.Show(show and smpte2084r)
 		self.lut3d_hdr_maxmll_ctrl_label.Show(show and smpte2084r)

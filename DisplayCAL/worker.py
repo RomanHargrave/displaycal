@@ -2074,7 +2074,6 @@ class Worker(WorkerBase):
 			if smpte2084:
 				# SMPTE ST.2084 (PQ)
 				if gamma != "smpte2084.rolloffclip":
-					minmll = 0
 					maxmll = white_cdm2
 				black_cdm2 = XYZbp[1] * lumi.Y * (1 - outoffset)
 				profile1.set_smpte2084_trc([v / XYZbp[1] * black_cdm2
