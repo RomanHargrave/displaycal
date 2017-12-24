@@ -101,6 +101,7 @@ from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveCMPatternGeneratorServer,
 							   WebWinHTTPPatternGeneratorServer)
 from trash import trash
+from util_decimal import stripzeros
 from util_http import encode_multipart_formdata
 from util_io import (EncodedWriter, Files, GzipFileProper, LineBufferedStream,
 					 LineCache, StringIOu as StringIO, TarFileProper)
@@ -2058,7 +2059,8 @@ class Worker(WorkerBase):
 			# Hybrid Log-Gamma (HLG)
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
-					 (u" %i cd/m²" % lumi.Y))
+					 (u" %i cd/m² (ambient %.2f cd/m²)" % 
+					  (lumi.Y, ambient_cdm2)))
 		elif apply_trc:
 			self.log("Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -2071,6 +2073,9 @@ class Worker(WorkerBase):
 				 tuple(colormath.XYZ2Lab(*[v * 100 for v in XYZbp])))
 		self.log("Output offset = %.2f%%" % (outoffset * 100))
 		if hdr:
+			odesc = profile1.getDescription()
+			desc = re.sub(r"\s*(?:color profile|primaries with "
+						  "\S+ transfer function)$", "", odesc)
 			if smpte2084:
 				# SMPTE ST.2084 (PQ)
 				if gamma != "smpte2084.rolloffclip":
@@ -2080,35 +2085,32 @@ class Worker(WorkerBase):
 											for v in XYZbp], white_cdm2, minmll,
 										   maxmll, rolloff=True,
 										   blend_blackpoint=False)
+				desc += (u" " + lang.getstr("trc." + gamma) +
+						 (u" %s-%i cd/m² (MinMLL %s cd/m², MaxMLL "
+						  u"%i cd/m²)\n" % (stripzeros("%.4f" % black_cdm2),
+											white_cdm2,
+											stripzeros("%.4f" % minmll),
+											maxmll)))
 			elif hlg:
 				# Hybrid Log-Gamma (HLG)
 				black_cdm2 = 0  # Black offset will be applied separate for HLG
 				white_cdm2 = lumi.Y
 				profile1.set_hlg_trc((0, 0, 0), white_cdm2, 1.2, ambient_cdm2)
+				desc += (u" " + lang.getstr("trc." + gamma) +
+						 (u" %s-%i cd/m² (ambient %s cd/m²)\n" %
+						  (stripzeros("%.4f" % black_cdm2), white_cdm2,
+						   stripzeros("%.2f" % ambient_cdm2))))
+			profile1.setDescription(desc)
 			if gamma == "smpte2084.rolloffclip" or hlg:
-				desc = profile1.getDescription()
-				desc = re.sub(r"\s*(?:color profile|primaries with "
-							  "\S+ transfer function)$", "", desc)
 				rgb_space = profile1.get_rgb_space()
 				if not rgb_space:
-					raise Error(desc + ": " +
+					raise Error(odesc + ": " +
 								lang.getstr("profile.unsupported", 
 											(lang.getstr("unknown"), 
 											 profile1.colorSpace)))
 				rgb_space[0] = 1.0  # Set gamma to 1.0 (not actually used)
 				rgb_space = colormath.get_rgb_space(rgb_space)
-				if smpte2084:
-					# SMPTE ST.2084 (PQ)
-					self.recent.write(desc + u" → " +
-									  lang.getstr("trc." + gamma) +
-									  (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL "
-									   u"%i cd/m²)\n" %
-									   (white_cdm2, minmll, maxmll)))
-				elif hlg:
-					# Hybrid Log-Gamma (HLG)
-					self.recent.write(desc + u" → " +
-									  lang.getstr("trc." + gamma) +
-									  (u" %i cd/m²\n" % white_cdm2))
+				self.recent.write(desc)
 				linebuffered_logfiles = []
 				if sys.stdout.isatty():
 					linebuffered_logfiles.append(safe_print)
@@ -2149,7 +2151,7 @@ class Worker(WorkerBase):
 				elif hlg:
 					hdr_format = "HLG"
 				profile = ICCP.create_synthetic_hdr_clut_profile(hdr_format,
-					rgb_space, profile1.getDescription(),
+					rgb_space, desc,
 					black_cdm2, white_cdm2,
 					minmll,  # Not used for HLG
 					maxmll,  # Not used for HLG
@@ -2798,6 +2800,101 @@ END_DATA
 		self.exec_cmd_returnvalue = None
 		self.tmpfiles = {}
 		self.buffer = []
+
+	def lut3d_get_filename(self, path=None, include_input_profile=True,
+						   include_ext=True):
+		# 3D LUT filename with crcr32 hash before extension - up to DCG 2.9.0.7
+		profile_save_path = os.path.splitext(path or
+											 getcfg("calibration.file") or
+											 defaults["calibration.file"])[0]
+		lut3d = [getcfg("3dlut.gamap.use_b2a") and "gg" or "G",
+				 "i" + getcfg("3dlut.rendering_intent"),
+				 "r%i" % getcfg("3dlut.size"),
+				 "e" + getcfg("3dlut.encoding.input"),
+				 "E" + getcfg("3dlut.encoding.output"),
+				 "I%s:%s:%s" % (getcfg("3dlut.trc_gamma_type"),
+								getcfg("3dlut.trc_output_offset"),
+								getcfg("3dlut.trc_gamma"))]
+		if getcfg("3dlut.format") == "3dl":
+			lut3d.append(str(getcfg("3dlut.bitdepth.input")))
+		if getcfg("3dlut.format") in ("3dl", "png", "ReShade"):
+			lut3d.append(str(getcfg("3dlut.bitdepth.output")))
+		if include_ext:
+			lut3d_ext = getcfg("3dlut.format")
+			if lut3d_ext == "eeColor":
+				lut3d_ext = "txt"
+			elif lut3d_ext == "madVR":
+				lut3d_ext = "3dlut"
+			elif lut3d_ext == "ReShade":
+				lut3d_ext = "png"
+			elif lut3d_ext == "icc":
+				lut3d_ext = profile_ext[1:]
+		else:
+			lut3d_ext = ""
+		if include_input_profile:
+			input_profname = os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0]
+		else:
+			input_profname = ""
+		lut3d_path = ".".join(filter(None, [profile_save_path, input_profname,
+											"%X" % (zlib.crc32("-".join(lut3d))
+													& 0xFFFFFFFF),
+											lut3d_ext]))
+		if not include_input_profile or not os.path.isfile(lut3d_path):
+			# 3D LUT filename with plain options before extension - DCG 2.9.0.8+
+			enc_in = lut3d[3][1:]
+			enc_out = lut3d[4][1:]
+			encoding = enc_in
+			if enc_in != enc_out:
+				encoding += enc_out
+			if getcfg("3dlut.output.profile.apply_cal"):
+				cal_exclude = ""
+			else:
+				cal_exclude = "e"
+			if getcfg("3dlut.trc").startswith("smpte2084"):
+				lut3dp = [str(getcfg("3dlut.trc_output_offset")) + ",2084"]
+				if (getcfg("3dlut.hdr_peak_luminance") < 10000 or
+					getcfg("3dlut.trc") == "smpte2084.rolloffclip" or
+					getcfg("3dlut.hdr_minmll") or
+					getcfg("3dlut.hdr_maxmll") < 10000):
+					lut3dp.append("@%i" % getcfg("3dlut.hdr_peak_luminance"))
+					if getcfg("3dlut.trc") == "smpte2084.hardclip":
+						lut3dp.append("h")
+					else:
+						lut3dp.append("s")
+					if getcfg("3dlut.hdr_minmll"):
+						lut3dp.append("%.4f" % getcfg("3dlut.hdr_minmll"))
+					if (getcfg("3dlut.hdr_minmll") and
+						getcfg("3dlut.hdr_maxmll") < 10000):
+						lut3dp.append("-")
+					if getcfg("3dlut.hdr_maxmll") < 10000:
+						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
+			elif getcfg("3dlut.trc") == "hlg":
+				lut3dp = ["HLG"]
+				if getcfg("3dlut.hdr_ambient_luminance") != 5:
+					lut3dp.append("@%i" % getcfg("3dlut.hdr_ambient_luminance"))
+			else:
+				lut3dp = [lut3d[5][1].replace("b", "bb") +
+						  lut3d[5][3:].replace(":", ",")]  # TRC
+			lut3dp.extend([cal_exclude,
+						   lut3d[0],  # Gamut mapping mode
+						   lut3d[1][1:],  # Rendering intent
+						   encoding,
+						   lut3d[2][1:]])  # Resolution
+			bitdepth_in = None
+			bitdepth_out = None
+			if len(lut3d) > 6:
+				bitdepth_in = lut3d[6]  # Input bitdepth
+			if len(lut3d) > 7:
+				bitdepth_out = lut3d[7]  # Output bitdepth
+			if bitdepth_in or bitdepth_out:
+				bitdepth = bitdepth_in
+				if bitdepth_out and bitdepth_in != bitdepth_out:
+					bitdepth += bitdepth_out
+				lut3dp.append(bitdepth)
+			lut3d_path = ".".join(filter(None, [profile_save_path,
+												input_profname,
+												"".join(lut3dp), lut3d_ext]))
+		return lut3d_path
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
@@ -3525,14 +3622,12 @@ END_DATA
 
 					# Save HDR source profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
-					fd, profile_in.fileName = tempfile.mkstemp(in_ext,
-															   "%s-" % in_name,
-															   dir=os.path.dirname(path))
-					profile_in.setDescription(os.path.splitext(
-						os.path.basename(profile_in.fileName))[0])
-					stream = os.fdopen(fd, "wb")
-					profile_in.write(stream)
-					stream.close()
+					profile_in.fileName = os.path.join(os.path.dirname(path),
+													   self.lut3d_get_filename(profile_in_basename,
+																			   False,
+																			   False) +
+													   in_ext)
+					profile_in.write()
 					if isinstance(profile_in.tags.get("A2B0"), ICCP.LUT16Type):
 						# Write diagnostic PNG
 						profile_in.tags.A2B0.clut_writepng(
@@ -9657,7 +9752,9 @@ usage: spotread [-options] [logfile]
 									 "3DLUT_OUTPUT_BITDEPTH":
 									 "3dlut.bitdepth.output",
 									 "3DLUT_APPLY_CAL":
-									 "3dlut.output.profile.apply_cal"}.iteritems():
+									 "3dlut.output.profile.apply_cal",
+									 "SIMULATION_PROFILE":
+									 "measurement_report.simulation_profile"}.iteritems():
 				if getcfg("3dlut.create"):
 					value = getcfg(cfgname)
 					if cfgname == "3dlut.gamap.use_b2a":
@@ -9674,6 +9771,21 @@ usage: spotread [-options] [logfile]
 						# Store relative path instead of absolute path if
 						# ref file
 						value = "ref/" + os.path.basename(value)
+					elif cfgname == "measurement_report.simulation_profile":
+						if (getcfg("3dlut.trc").startswith("smpte2084") or
+							getcfg("3dlut.trc") == "hlg"):
+							# Use 3D LUT profile
+							value = getcfg("3dlut.input.profile")
+							# Add 3D LUT HDR parameters and store only filename
+							# (file will be copied to profile dir)
+							fn, ext = os.path.splitext(os.path.basename(value))
+							lut3d_fn = self.lut3d_get_filename(fn, False, False)
+							value = lut3d_fn + ext
+						else:
+							value = None
+				else:
+					value = None
+				if value is not None:
 					ti3[0].add_keyword(keyword, safe_str(value, "UTF-7"))
 				elif keyword in ti3[0]:
 					ti3[0].remove_keyword(keyword)

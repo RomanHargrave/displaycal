@@ -657,7 +657,9 @@ class ReportFrame(BaseFrame):
 				   isinstance(self.simulation_profile.tags.get("gXYZ"),
 							  ICCP.XYZType) and
 				   isinstance(self.simulation_profile.tags.get("bXYZ"),
-							  ICCP.XYZType))
+							  ICCP.XYZType) and
+				   not isinstance(self.simulation_profile.tags.get("A2B0"),
+							  ICCP.LUT16Type))
 		##print enable5, self.XYZbpin, self.XYZbpout
 		self.mr_trc_label.Show(enable1 and enable5)
 		self.apply_none_ctrl.Show(enable1 and enable5)

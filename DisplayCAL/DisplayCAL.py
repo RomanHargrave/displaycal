@@ -4497,90 +4497,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			getcfg("3dlut.input.profile"))
 
 	def lut3d_set_path(self, path=None):
-		# 3D LUT filename with crcr32 hash before extension - up to DCG 2.9.0.7
-		profile_save_path = os.path.splitext(path or
-											 getcfg("calibration.file") or
-											 defaults["calibration.file"])[0]
-		lut3d = [getcfg("3dlut.gamap.use_b2a") and "gg" or "G",
-				 "i" + getcfg("3dlut.rendering_intent"),
-				 "r%i" % getcfg("3dlut.size"),
-				 "e" + getcfg("3dlut.encoding.input"),
-				 "E" + getcfg("3dlut.encoding.output"),
-				 "I%s:%s:%s" % (getcfg("3dlut.trc_gamma_type"),
-								getcfg("3dlut.trc_output_offset"),
-								getcfg("3dlut.trc_gamma"))]
-		if getcfg("3dlut.format") == "3dl":
-			lut3d.append(str(getcfg("3dlut.bitdepth.input")))
-		if getcfg("3dlut.format") in ("3dl", "png", "ReShade"):
-			lut3d.append(str(getcfg("3dlut.bitdepth.output")))
-		lut3d_ext = getcfg("3dlut.format")
-		if lut3d_ext == "eeColor":
-			lut3d_ext = "txt"
-		elif lut3d_ext == "madVR":
-			lut3d_ext = "3dlut"
-		elif lut3d_ext == "ReShade":
-			lut3d_ext = "png"
-		elif lut3d_ext == "icc":
-			lut3d_ext = profile_ext[1:]
-		input_profname = os.path.splitext(os.path.basename(getcfg("3dlut.input.profile")))[0]
-		self.lut3d_path = ".".join([profile_save_path, input_profname,
-									"%X" % (crc32("-".join(lut3d))
-											& 0xFFFFFFFF),
-									lut3d_ext])
-		if not os.path.isfile(self.lut3d_path):
-			# 3D LUT filename with plain options before extension - DCG 2.9.0.8+
-			enc_in = lut3d[3][1:]
-			enc_out = lut3d[4][1:]
-			encoding = enc_in
-			if enc_in != enc_out:
-				encoding += enc_out
-			if getcfg("3dlut.output.profile.apply_cal"):
-				cal_exclude = ""
-			else:
-				cal_exclude = "e"
-			if getcfg("3dlut.trc").startswith("smpte2084"):
-				lut3dp = [str(getcfg("3dlut.trc_output_offset")) + ",2084"]
-				if (getcfg("3dlut.hdr_peak_luminance") < 10000 or
-					getcfg("3dlut.trc") == "smpte2084.rolloffclip" or
-					getcfg("3dlut.hdr_minmll") or
-					getcfg("3dlut.hdr_maxmll") < 10000):
-					lut3dp.append("@%i" % getcfg("3dlut.hdr_peak_luminance"))
-					if getcfg("3dlut.trc") == "smpte2084.hardclip":
-						lut3dp.append("h")
-					else:
-						lut3dp.append("s")
-					if getcfg("3dlut.hdr_minmll"):
-						lut3dp.append("%.4f" % getcfg("3dlut.hdr_minmll"))
-					if (getcfg("3dlut.hdr_minmll") and
-						getcfg("3dlut.hdr_maxmll") < 10000):
-						lut3dp.append("-")
-					if getcfg("3dlut.hdr_maxmll") < 10000:
-						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
-			elif getcfg("3dlut.trc") == "hlg":
-				lut3dp = ["HLG"]
-				if getcfg("3dlut.hdr_ambient_luminance") != 5:
-					lut3dp.append("@%i" % getcfg("3dlut.hdr_ambient_luminance"))
-			else:
-				lut3dp = [lut3d[5][1].replace("b", "bb") +
-						  lut3d[5][3:].replace(":", ",")]  # TRC
-			lut3dp.extend([cal_exclude,
-						   lut3d[0],  # Gamut mapping mode
-						   lut3d[1][1:],  # Rendering intent
-						   encoding,
-						   lut3d[2][1:]])  # Resolution
-			bitdepth_in = None
-			bitdepth_out = None
-			if len(lut3d) > 6:
-				bitdepth_in = lut3d[6]  # Input bitdepth
-			if len(lut3d) > 7:
-				bitdepth_out = lut3d[7]  # Output bitdepth
-			if bitdepth_in or bitdepth_out:
-				bitdepth = bitdepth_in
-				if bitdepth_out and bitdepth_in != bitdepth_out:
-					bitdepth += bitdepth_out
-				lut3dp.append(bitdepth)
-			self.lut3d_path = ".".join([profile_save_path, input_profname,
-										"".join(lut3dp), lut3d_ext])
+		self.lut3d_path = self.worker.lut3d_get_filename(path)
 		devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
 		setcfg("measurement_report.devlink_profile", devlink)
 
@@ -14005,6 +13922,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					cfgend = ti3_lines.index('BEGIN_DATA_FORMAT')
 					cfgpart = CGATS.CGATS("\n".join(ti3_lines[:cfgend]))
 					lut3d_trc_set = False
+					simset = False
 					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
 											 "profile.b2a.hires.size",
 											 "HIRES_B2A_SIZE":
@@ -14062,7 +13980,9 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3DLUT_OUTPUT_BITDEPTH":
 											 "3dlut.bitdepth.output",
 											 "3DLUT_APPLY_CAL":
-											 "3dlut.output.profile.apply_cal"}.iteritems():
+											 "3dlut.output.profile.apply_cal",
+											 "SIMULATION_PROFILE":
+											 "measurement_report.simulation_profile"}.iteritems():
 						cfgvalue = cfgpart.queryv1(keyword)
 						if keyword in ("MIN_DISPLAY_UPDATE_DELAY_MS",
 									   "DISPLAY_SETTLE_TIME_MULT"):
@@ -14126,20 +14046,27 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("3dlut.tab.enable.backup", 1)
 						if cfgvalue is not None:
 							cfgvalue = safe_unicode(cfgvalue, "UTF-7")
-							if (cfgname == "3dlut.input.profile" and
+							if (cfgname.endswith("profile") and
 								(not os.path.isabs(cfgvalue) or
-								 not os.path.isfile(cfgvalue)) and
-								os.path.basename(os.path.dirname(cfgvalue)) == "ref"):
-								# Fall back to ref file if not absolute
-								# path or not found
-								cfgvalue = (get_data_path("ref/" +
-														  os.path.basename(cfgvalue)) or
-											cfgvalue)
+								 not os.path.isfile(cfgvalue))):
+								if os.path.basename(os.path.dirname(cfgvalue)) == "ref":
+									# Fall back to ref file if not absolute
+									# path or not found
+									cfgvalue = (get_data_path("ref/" +
+															  os.path.basename(cfgvalue)) or
+												cfgvalue)
+								elif not os.path.dirname(cfgvalue):
+									# Use profile dir
+									cfgvalue = os.path.join(os.path.dirname(path),
+															cfgvalue)
 							setcfg(cfgname, cfgvalue)
+							if keyword == "SIMULATION_PROFILE":
+								simset = True
 							# Sync measurement report settings
 							if cfgname == "3dlut.input.profile":
-								setcfg("measurement_report.simulation_profile",
-									   cfgvalue)
+								if not simset:
+									setcfg("measurement_report.simulation_profile",
+										   cfgvalue)
 								setcfg("measurement_report.use_simulation_profile", 1)
 								setcfg("measurement_report.use_simulation_profile_as_output", 1)
 							elif cfgname in ("3dlut.trc_gamma",
