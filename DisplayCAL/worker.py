@@ -2499,7 +2499,8 @@ class Worker(WorkerBase):
 	def detect_video_levels(self):
 		""" Detect wether we need video (16..235) or data (0..255) levels """
 		if (self.resume or not getcfg("patterngenerator.detect_video_levels") or
-			config.get_display_name() == "Untethered"):
+			config.get_display_name() == "Untethered" or
+			is_ccxx_testchart()):
 			return
 		self._detecting_video_levels = True
 		try:
