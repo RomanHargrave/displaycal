@@ -6619,7 +6619,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					 mprof.colorSpace == "RGB" and
 					 isinstance(mprof.tags.get("rXYZ"), ICCP.XYZType) and
 					 isinstance(mprof.tags.get("gXYZ"), ICCP.XYZType) and
-					 isinstance(mprof.tags.get("bXYZ"), ICCP.XYZType))
+					 isinstance(mprof.tags.get("bXYZ"), ICCP.XYZType) and
+					 not isinstance(mprof.tags.get("A2B0"), ICCP.LUT16Type))
 		apply_off = (apply_map and
 					 getcfg("measurement_report.apply_black_offset"))
 		apply_trc = (apply_map and
