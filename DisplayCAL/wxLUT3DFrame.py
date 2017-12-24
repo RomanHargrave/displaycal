@@ -246,6 +246,11 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_diffuse_white_label.Enable(v)
 		self.lut3d_hdr_diffuse_white_txt.Enable(v)
 		self.lut3d_hdr_diffuse_white_txt_label.Enable(v)
+		self.lut3d_hdr_ambient_luminance_label.Enable(v)
+		self.lut3d_hdr_ambient_luminance_ctrl.Enable(v)
+		self.lut3d_hdr_ambient_luminance_ctrl_label.Enable(v)
+		self.lut3d_hdr_system_gamma_label.Enable(v)
+		self.lut3d_hdr_system_gamma_txt.Enable(v)
 		self.lut3d_content_colorspace_label.Enable(v)
 		self.lut3d_content_colorspace_ctrl.Enable(v)
 		for color in ("white", "red", "green", "blue"):
