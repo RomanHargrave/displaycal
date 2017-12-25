@@ -3,6 +3,7 @@
 import errno
 import os
 import socket
+import urllib2
 
 import localization as lang
 from log import safe_print
@@ -51,6 +52,42 @@ def get_valid_host(hostname=None):
 				raise
 		else:
 			return hostname, addr
+
+
+class LoggingHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
+
+	""" Like urllib2.HTTPRedirectHandler, but logs redirections """
+
+	# maximum number of redirections to any single URL
+	# this is needed because of the state that cookies introduce
+	max_repeats = 4
+	# maximum total number of redirections (regardless of URL) before
+	# assuming we're in a loop
+	max_redirections = 10
+
+	def http_error_302(self, req, fp, code, msg, headers):
+		# Some servers (incorrectly) return multiple Location headers
+		# (so probably same goes for URI).  Use first header.
+		if 'location' in headers:
+			newurl = headers.getheaders('location')[0]
+		elif 'uri' in headers:
+			newurl = headers.getheaders('uri')[0]
+		else:
+			return
+
+		# Keep reference to new URL
+		LoggingHTTPRedirectHandler.newurl = newurl
+
+		if not hasattr(req, "redirect_dict"):
+			# First redirect in this chain. Log original URL
+			safe_print(req.get_full_url(), end=" ")
+		safe_print(u"\u2192", newurl)
+
+		return urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
+
+	http_error_301 = http_error_303 = http_error_307 = http_error_302
+
+	inf_msg = urllib2.HTTPRedirectHandler.inf_msg
 
 
 class ScriptingClientSocket(socket.socket):

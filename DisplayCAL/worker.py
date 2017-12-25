@@ -24,6 +24,7 @@ import threading
 import traceback
 import urllib
 import urllib2
+import urlparse
 import warnings
 import zipfile
 import zlib
@@ -96,6 +97,7 @@ from meta import VERSION, VERSION_BASE, domain, name as appname, version
 from multiprocess import cpu_count, pool_slice
 from options import debug, experimental, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
+from network import LoggingHTTPRedirectHandler
 from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveLSPatternGeneratorServer,
 							   ResolveCMPatternGeneratorServer,
@@ -12248,9 +12250,26 @@ BEGIN_DATA
 			download_path = os.path.join(download_dir, filename)
 		if not os.path.isfile(download_path) or force:
 			try:
-				response = urllib2.urlopen(uri)
+				import ssl
+			except ImportError:
+				pass
+			else:
+				cafile = ssl.get_default_verify_paths().cafile
+				if cafile:
+					safe_print("Using CA file", cafile)
+			components = urlparse.urlparse(uri)
+			safe_print(lang.getstr("connecting.to",
+								   (components.hostname,
+									components.port or
+									socket.getservbyname(components.scheme))))
+			LoggingHTTPRedirectHandler.newurl = uri
+			opener = urllib2.build_opener(LoggingHTTPRedirectHandler)
+			try:
+				response = opener.open(uri)
 			except urllib2.URLError, exception:
-				return exception
+				if getattr(LoggingHTTPRedirectHandler, "newurl", uri) != uri:
+					uri = LoggingHTTPRedirectHandler.newurl
+				return Error(uri + "\n\n" + safe_unicode(exception))
 			total_size = response.info().getheader("Content-Length")
 			if total_size is not None:
 				try:
@@ -12279,6 +12298,7 @@ BEGIN_DATA
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
+			safe_print(lang.getstr("downloading"), uri, u"\u2192", download_path)
 			self.recent.write(lang.getstr("downloading") + " " + filename + "\n")
 			min_chunk_size = 1024 * 8
 			chunk_size = min_chunk_size
@@ -12308,6 +12328,7 @@ BEGIN_DATA
 				with open(download_path + ".download", "wb") as download_file:
 					while True:
 						if self.thread_abort:
+							safe_print(lang.getstr("aborted"))
 							return False
 
 						chunk = response.read(chunk_size)
@@ -12370,15 +12391,16 @@ BEGIN_DATA
 										   (chunk_size / 1024.0, bps / fps / 1024))
 							chunk_size = int(bps / fps)
 
-				response.close()
 				if not bytes_so_far:
 					return Error(lang.getstr("download_fail_empty_response", uri))
 				if total_size is not None and bytes_so_far != total_size:
 					return Error(lang.getstr("download_fail_wrong_size",
 											 (total_size, bytes_so_far)))
 			finally:
+				response.close()
 				if total_size is None or bytes_so_far == total_size:
 					shutil.move(download_path + ".download", download_path)
+					safe_print(lang.getstr("success"))
 				elif self.thread_abort:
 					os.remove(download_path + ".download")
 		return download_path
