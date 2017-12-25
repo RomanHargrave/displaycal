@@ -13,6 +13,9 @@ try:
 							 VERSION_BASE, VERSION_STRING)
 except ImportError:
 	build = lastmod = "0000-00-00T00:00:00.0Z"
+	VERSION = None
+
+if not VERSION or "--test-update" in sys.argv[1:]:
 	VERSION = VERSION_BASE = (0, 0, 0, 0)
 	VERSION_STRING = ".".join(str(n) for n in VERSION)
 
