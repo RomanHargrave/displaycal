@@ -126,6 +126,7 @@ class MeasureFrame(InvincibleFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
 		self.Bind(wx.EVT_MOVE, self.move_handler, self)
+		self.Bind(wx.EVT_SET_FOCUS, self.focus_handler)
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.GridSizer(3, 1, 0, 0)
 		self.panel.SetSizer(self.sizer)
@@ -471,6 +472,12 @@ class MeasureFrame(InvincibleFrame):
 			if n is not None:
 				# Save Argyll display index to configuration
 				setcfg("display.number", n + 1)
+
+	def focus_handler(self, e):
+		e.Skip()
+		if e.EventObject == self:
+			# Need to give focus to the panel so controls can gain focus
+			self.panel.SetFocus()
 
 	def get_dimensions(self):
 		"""
