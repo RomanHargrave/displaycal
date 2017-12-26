@@ -8036,40 +8036,8 @@ usage: spotread [-options] [logfile]
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 			else:
-				# If profile type is X (XYZ cLUT + matrix) add the matrix tags
-				# from a forward lookup of a smaller testchart (faster
-				# computation!). If profile is a shaper+matrix profile,
-				# re-generate shaper curves from testchart with only
-				# gray+primaries (better curve smoothness and neutrality)
-				if getcfg("profile.type") in ("X", "s", "S"):
-					if getcfg("profile.type") == "X":
-						if (not isinstance(profile.tags.get("vcgt"),
-									  ICCP.VideoCardGammaType) or
-							profile.tags.vcgt.is_linear() or
-							getattr(self, "single_curve", None) is False):
-							# Use matrix from 3x shaper curves profile if vcgt
-							# is linear
-							ptype = "s"
-						else:
-							# Use matrix from single shaper curve profile if
-							# vcgt is nonlinear
-							ptype = "S"
-						if is_regular_grid or is_primaries_only:
-							omit = "XYZ"  # Don't re-create matrix
-						else:
-							omit = None
-					else:
-						ptype = getcfg("profile.type")
-						omit = "XYZ"  # Don't re-create matrix
-					result = self._create_matrix_profile(args[-1], profile,
-														 ptype, omit,
-														 getcfg("profile.black_point_compensation"))
-					if isinstance(result, ICCP.ICCProfile):
-						result = True
-						profchanged = True
 				# Do we have a B2A0 table?
 				has_B2A = "B2A0" in profile.tags
-			if not isinstance(result, Exception) and result:
 				# Hires CIECAM02 gamut mapping - perceptual and saturation
 				# tables, also colorimetric table for non-RGB profiles
 				# Use collink for smoother result.
@@ -8257,29 +8225,7 @@ usage: spotread [-options] [logfile]
 							   (getcfg("profile.b2a.hires") or
 								getcfg("profile.quality.b2a") in ("l", "n")
 								or not has_B2A))
-				if ("rTRC" in profile.tags and
-					"gTRC" in profile.tags and
-					"bTRC" in profile.tags and
-					isinstance(profile.tags.rTRC, ICCP.CurveType) and
-					isinstance(profile.tags.gTRC, ICCP.CurveType) and
-					isinstance(profile.tags.bTRC, ICCP.CurveType) and
-					((getcfg("profile.black_point_compensation") and
-					  not "A2B0" in profile.tags) or
-					 (process_A2B and (getcfg("profile.b2a.hires")
-									   or not has_B2A))) and
-					len(profile.tags.rTRC) > 1 and
-					len(profile.tags.gTRC) > 1 and
-					len(profile.tags.bTRC) > 1):
-					self.log("-" * 80)
-					for component in ("r", "g", "b"):
-						self.log("Applying black point compensation to "
-								 "%sTRC" % component)
-					profile.apply_black_offset((0, 0, 0), include_A2B=False,
-											   set_blackpoint=False)
-					bpc_applied = True
-					profchanged = True
 				if process_A2B:
-					bpc_applied = False
 					if getcfg("profile.black_point_compensation"):
 						XYZbp = (0, 0, 0)
 					elif getcfg("profile.black_point_correction") < 1:
@@ -8334,6 +8280,71 @@ usage: spotread [-options] [logfile]
 							self.log("Can't change black point "
 									 "in non-LUT16Type %s "
 									 "table" % table)
+				# If profile type is X (XYZ cLUT + matrix) add the matrix tags
+				# from a forward lookup of a smaller testchart (faster
+				# computation!). If profile is a shaper+matrix profile,
+				# re-generate shaper curves from testchart with only
+				# gray+primaries (better curve smoothness and neutrality)
+				# Make sure we do this *after* all changes on the A2B tables
+				# are done, because we may end up using A2B for lookup!
+				if getcfg("profile.type") in ("X", "s", "S"):
+					if getcfg("profile.type") == "X":
+						if (not isinstance(profile.tags.get("vcgt"),
+									  ICCP.VideoCardGammaType) or
+							profile.tags.vcgt.is_linear() or
+							getattr(self, "single_curve", None) is False):
+							# Use matrix from 3x shaper curves profile if vcgt
+							# is linear
+							ptype = "s"
+							if profchanged:
+								# We need to write the changed profile before
+								# creating TRC tags because we will be using
+								# forward lookup through A2B table!
+								try:
+									profile.write()
+								except Exception, exception:
+									return exception
+						else:
+							# Use matrix from single shaper curve profile if
+							# vcgt is nonlinear
+							ptype = "S"
+						if is_regular_grid or is_primaries_only:
+							omit = "XYZ"  # Don't re-create matrix
+						else:
+							omit = None
+					else:
+						ptype = getcfg("profile.type")
+						omit = "XYZ"  # Don't re-create matrix
+					result = self._create_matrix_profile(args[-1], profile,
+														 ptype, omit,
+														 getcfg("profile.black_point_compensation"))
+					if isinstance(result, ICCP.ICCProfile):
+						result = True
+						profchanged = True
+			if not isinstance(result, Exception) and result:
+				if ("rTRC" in profile.tags and
+					"gTRC" in profile.tags and
+					"bTRC" in profile.tags and
+					isinstance(profile.tags.rTRC, ICCP.CurveType) and
+					isinstance(profile.tags.gTRC, ICCP.CurveType) and
+					isinstance(profile.tags.bTRC, ICCP.CurveType) and
+					((getcfg("profile.black_point_compensation") and
+					  not "A2B0" in profile.tags) or
+					 (process_A2B and (getcfg("profile.b2a.hires")
+									   or not has_B2A))) and
+					len(profile.tags.rTRC) > 1 and
+					len(profile.tags.gTRC) > 1 and
+					len(profile.tags.bTRC) > 1):
+					self.log("-" * 80)
+					for component in ("r", "g", "b"):
+						self.log("Applying black point compensation to "
+								 "%sTRC" % component)
+					profile.apply_black_offset((0, 0, 0), include_A2B=False,
+											   set_blackpoint=False)
+					if getcfg("profile.black_point_compensation"):
+						bpc_applied = True
+					profchanged = True
+				if process_A2B:
 					if (getcfg("profile.b2a.hires") or
 						not has_B2A):
 						if profchanged:
