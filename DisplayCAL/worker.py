@@ -8094,6 +8094,9 @@ usage: spotread [-options] [logfile]
 					size = {-1: 33}.get(size, size)
 					collink_args = ["-v", "-q" + getcfg("profile.quality"),
 									"-G", "-r%i" % size]
+					if is_regular_grid:
+						# Do not preserve output shaper curves in devicelink
+						collink_args.append("-no")
 					for tableno, cfgname in [(0, "gamap_perceptual"),
 											 (2, "gamap_saturation")]:
 						if getcfg(cfgname):
