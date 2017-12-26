@@ -15,6 +15,7 @@ import ICCProfile as ICCP
 import config
 import localization as lang
 import worker
+from util_list import natsort_key_factory
 from wxTestchartEditor import TestchartEditor
 from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
 from wxfixes import TempXmlResource
@@ -90,8 +91,9 @@ class ReportFrame(BaseFrame):
 						if not (path.lower().endswith(".ti2") and
 								basepath + ".cie" in paths):
 							history.append(path)
+				natsort_key = natsort_key_factory()
 				history = sorted(history, key=lambda path:
-											  os.path.basename(path).lower())
+											  natsort_key(os.path.basename(path)))
 				ctrl.SetHistory(history)
 			ctrl.SetMaxFontSize(11)
 			# Drop targets
