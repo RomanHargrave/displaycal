@@ -177,7 +177,9 @@ class Tag(object):
 					html = html.replace(restag, resource)
 				else:
 					updated_restag = re.sub(r"(\s+data-fallback-%s=)([\"']).+?\2"
-											% attrname, r"\1\2%s\2" % resource,
+											% attrname,
+											create_replace_function(r"\1\2%s\2",
+																	resource),
 											restag)
 					html = html.replace(restag, updated_restag)
 		# Update title
