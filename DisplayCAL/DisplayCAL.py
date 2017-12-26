@@ -10586,7 +10586,7 @@ class MainFrame(ReportFrame, BaseFrame):
 										 ("MAX_DE00", max(deltaE_00)),
 										 ("AVG_DE00", sum(deltaE_00) /
 													  len(deltaE_00))):
-					cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
+					cgats = re.sub('(\nREFERENCE\s+"[^"]*"\n)',
 								   '\\1FIT_%s "%.6f"\n' %
 								   (label, fit_error), cgats)
 			metadata = []
@@ -10636,7 +10636,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				metadata.append(u'FIT_METHOD "ΔE*94"'.encode("UTF-8"))
 			if metadata:
-				cgats = re.sub('(\REFERENCE\s+"[^"]*"\n)',
+				cgats = re.sub('(\nREFERENCE\s+"[^"]*"\n)',
 							   '\\1%s\n' %
 							   "\n".join(metadata), cgats)
 			if event:
