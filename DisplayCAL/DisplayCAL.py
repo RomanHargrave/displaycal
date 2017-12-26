@@ -10387,7 +10387,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				# By default, CCSS files don't contain reference instrument
 				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
 							   '\nREFERENCE "%s"\\1' %
-							   reference_ti3[0].get("TARGET_INSTRUMENT"), cgats)
+							   reference_ti3[0].get("TARGET_INSTRUMENT").replace("\\", "\\\\"), cgats)
 			if not re.search('\nTECHNOLOGY\s+".+?"\n', cgats) and tech:
 				# By default, CCMX files don't contain technology string
 				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
@@ -10406,23 +10406,23 @@ class MainFrame(ReportFrame, BaseFrame):
 				# By default, CCMX/CCSS files don't contain manufacturer ID
 				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
 							   '\nMANUFACTURER_ID "%s"\\1' %
-							   safe_str(manufacturer_id, "UTF-8"), cgats)
+							   safe_str(manufacturer_id, "UTF-8").replace("\\", "\\\\"), cgats)
 			if manufacturer and not re.search('\nMANUFACTURER\s+".+?"\n', cgats):
 				# By default, CCMX/CCSS files don't contain manufacturer
 				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
 							   '\nMANUFACTURER "%s"\\1' %
-							   safe_str(manufacturer, "UTF-8"), cgats)
+							   safe_str(manufacturer, "UTF-8").replace("\\", "\\\\"), cgats)
 			if observer and not re.search('\nOBSERVER\s+".+?"\n', cgats):
 				# By default, CCMX/CCSS files don't contain observer
 				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
 							   '\nOBSERVER "%s"\\1' %
-							   safe_str(observer, "UTF-8"), cgats)
+							   safe_str(observer, "UTF-8").replace("\\", "\\\\"), cgats)
 			if (reference_observer and
 				not re.search('\nREFERENCE_OBSERVER\s+".+?"\n', cgats)):
 				# By default, CCMX/CCSS files don't contain observer
 				cgats = re.sub('(\nDISPLAY\s+"[^"]*"\n)',
 							   '\nREFERENCE_OBSERVER "%s"\\1' %
-							   safe_str(reference_observer, "UTF-8"), cgats)
+							   safe_str(reference_observer, "UTF-8").replace("\\", "\\\\"), cgats)
 			result = check_create_dir(config.get_argyll_data_dir())
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -10638,7 +10638,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if metadata:
 				cgats = re.sub('(\nREFERENCE\s+"[^"]*"\n)',
 							   '\\1%s\n' %
-							   "\n".join(metadata), cgats)
+							   "\n".join(metadata).replace("\\", "\\\\"), cgats)
 			if event:
 				if colorimeter_correction_check_overwrite(self, cgats, True):
 					self.upload_colorimeter_correction(cgats)
