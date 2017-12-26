@@ -1071,6 +1071,7 @@
 	"verify_large.ti1": "大型驗證測色板",
 	"verify_video.ti1": "驗證測色板(視訊)",
 	"verify_video_extended.ti1": "延伸驗證測色板(視訊)",
+		"*verify_video_extended_hlg_p3_2020.ti1": "Extended verification testchart (HDR video, Rec. 2020/P3, Hybrid Log-Gamma)",
 		"*verify_video_extended_smpte2084_100_p3_2020.ti1": "Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)",
 		"*verify_video_extended_smpte2084_200_p3_2020.ti1": "Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)",
 		"*verify_video_extended_smpte2084_500_p3_2020.ti1": "Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)",

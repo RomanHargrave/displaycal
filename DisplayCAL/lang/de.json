@@ -1071,6 +1071,7 @@
 	"verify_large.ti1": "Große Überprüfungs-Testform",
 	"verify_video.ti1": "Überprüfungs-Testform (Video)",
 	"verify_video_extended.ti1": "Erweiterte Überprüfungs-Testform (Video)",
+	"verify_video_extended_hlg_p3_2020.ti1": "Erweiterte Überprüfungs-Testform (HDR-Video, Rec. 2020/P3, Hybrid Log-Gamma)",
 	"verify_video_extended_smpte2084_100_p3_2020.ti1": "Erweiterte Überprüfungs-Testform (HDR-Video, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)",
 	"verify_video_extended_smpte2084_200_p3_2020.ti1": "Erweiterte Überprüfungs-Testform (HDR-Video, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)",
 	"verify_video_extended_smpte2084_500_p3_2020.ti1": "Erweiterte Überprüfungs-Testform (HDR-Video, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)",
