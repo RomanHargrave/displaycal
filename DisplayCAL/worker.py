@@ -2055,14 +2055,14 @@ class Worker(WorkerBase):
 			# SMPTE ST.2084 (PQ)
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
-					 (u" %i cd/m² (MinMLL %.4f cd/m², MaxMLL %i cd/m²)" %
-					  (white_cdm2, minmll, maxmll)))
+					 (u" %i cd/m² (mastering %s-%i cd/m²)" %
+					  (white_cdm2, stripzeros("%.4f" % minmll), maxmll)))
 		elif hlg:
 			# Hybrid Log-Gamma (HLG)
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
-					 (u" %i cd/m² (ambient %.2f cd/m²)" % 
-					  (lumi.Y, ambient_cdm2)))
+					 (u" %i cd/m² (ambient %s cd/m²)" % 
+					  (lumi.Y, stripzeros("%.2f" % ambient_cdm2))))
 		elif apply_trc:
 			self.log("Applying BT.1886-like TRC to " +
 					 os.path.basename(profile1.fileName))
@@ -2088,18 +2088,16 @@ class Worker(WorkerBase):
 										   maxmll, rolloff=True,
 										   blend_blackpoint=False)
 				desc += (u" " + lang.getstr("trc." + gamma) +
-						 (u" %s-%i cd/m² (MinMLL %s cd/m², MaxMLL "
-						  u"%i cd/m²)\n" % (stripzeros("%.4f" % black_cdm2),
-											white_cdm2,
-											stripzeros("%.4f" % minmll),
-											maxmll)))
+						 (u" %s-%i cd/m² (mastering %s-%i cd/m²)" %
+						  (stripzeros("%.4f" % black_cdm2), white_cdm2,
+						   stripzeros("%.4f" % minmll), maxmll)))
 			elif hlg:
 				# Hybrid Log-Gamma (HLG)
 				black_cdm2 = 0  # Black offset will be applied separate for HLG
 				white_cdm2 = lumi.Y
 				profile1.set_hlg_trc((0, 0, 0), white_cdm2, 1.2, ambient_cdm2)
 				desc += (u" " + lang.getstr("trc." + gamma) +
-						 (u" %s-%i cd/m² (ambient %s cd/m²)\n" %
+						 (u" %s-%i cd/m² (ambient %s cd/m²)" %
 						  (stripzeros("%.4f" % black_cdm2), white_cdm2,
 						   stripzeros("%.2f" % ambient_cdm2))))
 			profile1.setDescription(desc)
@@ -2112,7 +2110,7 @@ class Worker(WorkerBase):
 											 profile1.colorSpace)))
 				rgb_space[0] = 1.0  # Set gamma to 1.0 (not actually used)
 				rgb_space = colormath.get_rgb_space(rgb_space)
-				self.recent.write(desc)
+				self.recent.write(desc + "\n")
 				linebuffered_logfiles = []
 				if sys.stdout.isatty():
 					linebuffered_logfiles.append(safe_print)
