@@ -722,18 +722,21 @@ class SynthICCFrame(BaseFrame):
 													   triggers=[])),
 									  self.worker.recent,
 									  self.worker.lastmsg])
+					quality = getcfg("profile.quality")
+					clutres = {"m": 17, "l": 9}.get(quality, 33)
 					profile.tags.A2B0 = ICCP.create_synthetic_hdr_clut_profile(
 						hdr_format,
 						rgb_space, "",
 						getcfg("synthprofile.black_luminance") * (1 - outoffset),
 						getcfg("synthprofile.luminance"), minmll, maxmll,
 						1.2, getcfg("3dlut.hdr_ambient_luminance"),
-						worker=self.worker, logfile=logfiles).tags.A2B0
+						clutres=clutres, worker=self.worker,
+						logfile=logfiles).tags.A2B0
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.apply_black_offset(black)
 				if rolloff or trc == -2:
 					profile.write(path)
-					self.worker.update_profile_B2A(profile, not bpc, 33,
+					self.worker.update_profile_B2A(profile, not bpc,
 												   smooth=False,
 												   rgb_space=rgb_space)
 			else:
