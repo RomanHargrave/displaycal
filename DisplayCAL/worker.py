@@ -9645,7 +9645,7 @@ usage: spotread [-options] [logfile]
 		args.append(getcfg("copyright").encode("ASCII", "asciize"))
 		if getcfg("extra_args.colprof").strip():
 			args += parse_argument_string(getcfg("extra_args.colprof"))
-		options_dispcal = None
+		options_dispcal = []
 		if "-d3" in self.options_targen:
 			# only add display desc and dispcal options if creating RGB profile
 			options_dispcal = self.options_dispcal
