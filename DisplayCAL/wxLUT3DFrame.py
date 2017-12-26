@@ -1020,7 +1020,7 @@ class LUT3DFrame(BaseFrame):
 		if getattr(self, "lut3dframe", None):
 			self.lut3dframe.lut3d_update_shared_controls()
 		else:
-			if hasattr(self, "lut3d_show_input_value_clipping_warning"):
+			if isinstance(self, LUT3DFrame):
 				self.lut3d_show_input_value_clipping_warning(True)
 			if self.Parent:
 				self.Parent.lut3d_update_shared_controls()
