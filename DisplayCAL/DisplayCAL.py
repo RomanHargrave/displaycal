@@ -13923,7 +13923,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					cfgend = ti3_lines.index('BEGIN_DATA_FORMAT')
 					cfgpart = CGATS.CGATS("\n".join(ti3_lines[:cfgend]))
 					lut3d_trc_set = False
-					simset = False
+					simset = False  # Only HDR 3D LUTs will have this set
 					for keyword, cfgname in {"SMOOTH_B2A_SIZE":
 											 "profile.b2a.hires.size",
 											 "HIRES_B2A_SIZE":
@@ -14062,6 +14062,7 @@ class MainFrame(ReportFrame, BaseFrame):
 															cfgvalue)
 							setcfg(cfgname, cfgvalue)
 							if keyword == "SIMULATION_PROFILE":
+								# Only HDR 3D LUTs will have this set
 								simset = True
 							# Sync measurement report settings
 							if cfgname == "3dlut.input.profile":
@@ -14076,9 +14077,10 @@ class MainFrame(ReportFrame, BaseFrame):
 														  "measurement_report")
 								setcfg(cfgname, cfgvalue)
 							elif cfgname == "3dlut.format":
-								if cfgvalue == "madVR":
+								if cfgvalue == "madVR" and not simset:
 									setcfg("3dlut.enable", 1)
-								if cfgvalue in ("eeColor", "madVR"):
+								if (cfgvalue == "madVR" and
+									not simset) or cfgvalue == "eeColor":
 									setcfg("measurement_report.use_devlink_profile", 0)
 							elif cfgname == "3dlut.trc":
 								lut3d_trc_set = True
@@ -14122,6 +14124,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				elif config.get_display_name(None, True) == "Prisma":
 					setcfg("3dlut.enable", 1)
 					setcfg("measurement_report.use_devlink_profile", 0)
+				if getcfg("3dlut.format") == "madVR" and simset:
+					# Currently not possible to verify HDR 3D LUTs
+					# through madVR in another way
+					setcfg("3dlut.enable", 0)
+					setcfg("measurement_report.use_devlink_profile", 1)
 				self.update_controls(
 					update_profile_name=update_profile_name,
 					update_ccmx_items=update_ccmx_items)
