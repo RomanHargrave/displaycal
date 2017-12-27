@@ -5,7 +5,6 @@ import ctypes
 import glob
 import locale
 import os
-import platform
 import re
 import shutil
 import subprocess as sp
@@ -213,38 +212,52 @@ def quote_args(args):
 	return args_out
 
 
-def dlopen(name, do_find_library=True):
+def dlopen(name):
 	try:
 		return ctypes.CDLL(name)
 	except:
-		if do_find_library:
-			path = find_library(name)
-			if path:
-				return dlopen(path, False)
+		pass
 
 
-def find_library(name):
-	""" Use ldconfig cache to find installed library """
+def find_library(pattern, arch=None):
+	"""
+	Use ldconfig cache to find installed library.
+	
+	Can use fnmatch-style pattern matching.
+	
+	"""
 	try:
-		p = sp.Popen(["ldconfig", "-p"], stdout=sp.PIPE)
+		p = sp.Popen(["/sbin/ldconfig", "-p"], stdout=sp.PIPE)
 		stdout, stderr = p.communicate()
 	except:
 		return
-	bits, linkage = platform.architecture()
-	pattern = name + "*"
+	if not arch:
+		try:
+			p = sp.Popen(["file", "-L", sys.executable], stdout=sp.PIPE)
+			file_stdout, file_stderr = p.communicate()
+		except:
+			pass
+		else:
+			# /usr/bin/python2.7: ELF 64-bit LSB shared object, x86-64,
+			# version 1 (SYSV), dynamically linked, interpreter
+			# /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0,
+			# BuildID[sha1]=41a1f0d4da3afee8f22d1947cc13a9f33f59f2b8, stripped
+			parts = file_stdout.split(",")
+			if len(parts) > 1:
+				arch = parts[1].strip()
 	for line in stdout.splitlines():
 		# libxyz.so (libc6,x86_64) => /lib64/libxyz.so.1
-		parts = line.split("=>")
+		parts = line.split("=>", 1)
 		candidate = parts[0].split(None, 1)
-		if not candidate:
+		if len(parts) < 2 or len(candidate) < 2:
 			continue
-		info = candidate[-1].split(",")
-		if len(info) > 1 and bits == "64bit" and not "64" in info[1]:
+		info = candidate[1].split(",")
+		if arch and len(info) > 1 and info[1] != arch:
 			# Skip libs for wrong arch
 			continue
 		filename = candidate[0]
 		if fnmatch.fnmatch(filename, pattern):
-			path = parts[-1].strip()
+			path = parts[1].strip()
 			return path
 
 
