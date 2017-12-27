@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import fnmatch
 import ctypes
 import glob
 import locale
 import os
+import platform
 import re
 import shutil
 import subprocess as sp
@@ -211,11 +213,37 @@ def quote_args(args):
 	return args_out
 
 
-def dlopen(name):
+def dlopen(name, do_find_library=True):
 	try:
 		return ctypes.CDLL(name)
 	except:
-		pass
+		if do_find_library:
+			path = find_library(name)
+			if path:
+				return dlopen(path, False)
+
+
+def find_library(name):
+	""" Use ldconfig cache to find installed library """
+	try:
+		p = sp.Popen(["ldconfig", "-p"], stdout=sp.PIPE)
+		stdout, stderr = p.communicate()
+	except:
+		return
+	bits, linkage = platform.architecture()
+	pattern = name + "*"
+	for line in stdout.splitlines():
+		# libxyz.so (libc6,x86_64) => /lib64/libxyz.so.1
+		parts = line.split("=>")
+		candidate = parts[0].split(None, 1)
+		info = candidate[-1].split(",")
+		if len(info) > 1 and bits == "64bit" and not "64" in info[1]:
+			# Skip libs for wrong arch
+			continue
+		filename = candidate[0]
+		if fnmatch.fnmatch(filename, pattern):
+			path = parts[-1].strip()
+			return path
 
 
 def expanduseru(path):
