@@ -29,7 +29,8 @@ else:
 	warnings.warn("Module %s is being reloaded. This is NOT recommended." %
 				  __name__, RuntimeWarning)
 	warnings.warn("Implicitly reloading builtins", RuntimeWarning)
-	reload(__builtin__)
+	if sys.platform == "win32":
+		reload(__builtin__)
 	warnings.warn("Implicitly reloading os", RuntimeWarning)
 	reload(os)
 	warnings.warn("Implicitly reloading os.path", RuntimeWarning)
@@ -251,8 +252,8 @@ def find_library(pattern, arch=None):
 		candidate = parts[0].split(None, 1)
 		if len(parts) < 2 or len(candidate) < 2:
 			continue
-		info = candidate[1].split(",")
-		if arch and len(info) > 1 and info[1] != arch:
+		info = candidate[1].strip("( )").split(",")
+		if arch and len(info) > 1 and info[1].strip() != arch:
 			# Skip libs for wrong arch
 			continue
 		filename = candidate[0]
