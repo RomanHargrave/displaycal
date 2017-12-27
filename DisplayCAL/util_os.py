@@ -236,6 +236,8 @@ def find_library(name):
 		# libxyz.so (libc6,x86_64) => /lib64/libxyz.so.1
 		parts = line.split("=>")
 		candidate = parts[0].split(None, 1)
+		if not candidate:
+			continue
 		info = candidate[-1].split(",")
 		if len(info) > 1 and bits == "64bit" and not "64" in info[1]:
 			# Skip libs for wrong arch
