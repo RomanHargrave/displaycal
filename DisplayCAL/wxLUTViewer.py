@@ -7,8 +7,9 @@ import subprocess as sp
 import sys
 import tempfile
 
+import numpy
+
 from argyll_cgats import cal_to_fake_profile, vcgt_to_cal
-from colormath import interp
 from config import (fs_enc, get_argyll_display_number, get_data_path,
 					get_display_profile, get_display_rects, getcfg, geticon,
 					get_verified_path, setcfg)
@@ -1126,7 +1127,7 @@ class LUTFrame(BaseFrame):
 		if profile.connectionColorSpace == "RGB":
 			mult = 1
 		else:
-			mult = 2
+			mult = 4
 		size = 256 * mult  # Final number of coordinates
 
 		if hasattr(self, "rendering_intent_select"):
@@ -1309,8 +1310,8 @@ class LUTFrame(BaseFrame):
 			for i in xrange(size):
 				x.append(i / (size - 1.0) * 255)
 				y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
-			xi = interp(y, yp, xp)
-			yi = interp(x, xi, y)
+			xi = numpy.interp(y, yp, xp)
+			yi = numpy.interp(x, xi, y)
 			setattr(self, "tf_" + sig, CoordinateType(self.profile))
 			for Y, v in zip(yi, x):
 				if Y <= yp[0]:
