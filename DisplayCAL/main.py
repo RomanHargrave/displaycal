@@ -30,10 +30,6 @@ from config import (autostart_home, confighome, datahome, enc, exe, exe_ext,
 					exedir, exename, get_data_path, getcfg, fs_enc, initcfg,
 					isapp, isexe, logdir, pydir, pyname, pypath, resfiles,
 					runtype, appbasename)
-# Use our bundled CA file
-cafile = get_data_path("cacert.pem")
-if cafile:
-	os.environ["SSL_CERT_FILE"] = cafile.encode(fs_enc, "replace")
 from debughelpers import ResourceError, handle_error
 from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
@@ -77,6 +73,7 @@ def main(module=None):
 		# Linux
 		safe_print(' '.join(platform.dist()), platform.machine())
 	safe_print("Python " + sys.version)
+	cafile = os.getenv("SSL_CERT_FILE")
 	if cafile:
 		safe_print("CA file", cafile)
 	# Enable faulthandler

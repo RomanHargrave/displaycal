@@ -99,7 +99,6 @@ config = {"data": ["tests/*.icc"],
 					   "win32": ["win32com.client.genpy"]},
 		  "package_data": {name: ["argyll_instruments.json",
 								  "beep.wav",
-								  "cacert.pem",
 								  "camera_shutter.wav",
 								  "ColorLookupTable.fx",
 								  "lang/*.json",
@@ -515,6 +514,10 @@ def setup():
 			doc = os.path.join("share", doc)
 			if is_rpm_build:
 				doc = os.path.join(os.path.sep, "usr", doc)
+
+	# Use bundled CA file
+	if sdist or do_py2app:
+		config["package_data"][name].append("cacert.pem")
 
 	# on Mac OS X and Windows, we want data files in the package dir
 	# (package_data will be ignored when using py2exe)

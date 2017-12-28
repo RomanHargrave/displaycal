@@ -1714,3 +1714,9 @@ def writecfg(which="user", worker=None, module=None, options=()):
 
 _init_testcharts()
 runtype = runtimeconfig(pyfile)
+
+if isapp and not os.getenv("SSL_CERT_FILE"):
+	# Use our bundled CA file
+	cafile = get_data_path("cacert.pem")
+	if cafile:
+		os.environ["SSL_CERT_FILE"] = cafile.encode(fs_enc, "replace")
