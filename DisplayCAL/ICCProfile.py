@@ -469,6 +469,9 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 		iv = 0.0
 		prevpow = fwd[i](0.0)
 		nextpow = fwd[i](segment)
+		prevv = 0
+		pprevpow = 0
+		clipped = False
 		xp = []
 		for j in xrange(steps):
 			v = (j / maxv) * maxi
@@ -476,17 +479,34 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 				iv += segment
 				prevpow = nextpow
 				nextpow = fwd[i](iv + segment)
-			prevs = 1.0 - (v - iv) / segment
-			nexts = (v - iv) / segment
-			vv = (prevs * prevpow + nexts * nextpow)
+			if nextpow > prevpow:
+				prevs = 1.0 - (v - iv) / segment
+				nexts = (v - iv) / segment
+				vv = (prevs * prevpow + nexts * nextpow)
+				prevv = v
+				pprevpow = prevpow
+			else:
+				clipped = True
+				# Linearly interpolate
+				vv = colormath.convert_range(v, prevv, 1, prevpow, 1)
 			out = bwd[i](vv)
 			xp.append(out)
 		# Fill input curves from interpolated values
 		interp = colormath.Interp(xp, range(steps), use_numpy=True)
 		entries = 2049
+		threshold = bwd[i](pprevpow)
+		k = None
 		for j in xrange(entries):
-			v = j / (entries - 1.0)
-			itable.input[i].append(interp(v) / maxv * 65535)
+			n = j / (entries - 1.0)
+			v = interp(n) / maxv
+			if clipped and n + (1 / (entries - 1.0)) > threshold:
+				# Linear interpolate shaper for last n cLUT steps to prevent
+				# clipping in shaper
+				if k is None:
+					k = j
+					ov = v
+				v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
+			itable.input[i].append(v * 65535)
 	
 	# Fill cLUT
 	clut = list(clut)
@@ -687,6 +707,13 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 
 		# Apply a slight power to the segments to optimize encoding
 		encpow = min(max(bt2390.omaxi * (5 / 3.0), 1.0), 1.5)
+		def encf(v):
+			if v < bt2390.mmaxi:
+				v = colormath.convert_range(v, 0, bt2390.mmaxi, 0, 1)
+				v = colormath.specialpow(v, 1.0 / encpow, 2)
+				return colormath.convert_range(v, 0, 1, 0, bt2390.mmaxi)
+			else:
+				return v
 	elif hdr_format == "HLG":
 		# Note: Unlike the PQ black level lift, we apply HLG black offset as
 		# separate final step, not as part of the HLG EOTF
@@ -711,7 +738,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		oetf = hlg.oetf
 		eetf = lambda v: v
 
-		encpow = 1.0
+		encf = lambda v: v
 	else:
 		raise NotImplementedError("Unknown HDR format %r" % hdr_format)
 
@@ -770,7 +797,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	iv = 0.0
 	prevpow = eotf(eetf(0))
 	# Apply a slight power to segments to optimize encoding
-	nextpow = eotf(eetf(colormath.specialpow(segment, 1.0 / encpow, 2)))
+	nextpow = eotf(eetf(encf(segment)))
+	prevv = 0
+	pprevpow = 0
+	clipped = False
 	xp = []
 	if generate_B2A:
 		oxp = []
@@ -780,10 +810,17 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			iv += segment
 			prevpow = nextpow
 			# Apply a slight power to segments to optimize encoding
-			nextpow = eotf(eetf(colormath.specialpow(iv + segment, 1.0 / encpow, 2)))
-		prevs = 1.0 - (v - iv) / segment
-		nexts = (v - iv) / segment
-		vv = (prevs * prevpow + nexts * nextpow)
+			nextpow = eotf(eetf(encf(iv + segment)))
+		if nextpow > prevpow:
+			prevs = 1.0 - (v - iv) / segment
+			nexts = (v - iv) / segment
+			vv = (prevs * prevpow + nexts * nextpow)
+			prevv = v
+			pprevpow = prevpow
+		else:
+			clipped = True
+			# Linearly interpolate
+			vv = colormath.convert_range(v, prevv, 1, prevpow, 1)
 		out = eotf_inverse(vv)
 		xp.append(out)
 		if generate_B2A:
@@ -823,6 +860,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		endperc = 1
 	else:
 		endperc = 2
+	threshold = eotf_inverse(pprevpow)
 	k = None
 	for j in xrange(entries):
 		if worker and worker.thread_abort:
@@ -834,19 +872,18 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		n = j / (entries - 1.0)
 		v = interp(eetf(n)) / maxstep
 		if hdr_format == "PQ":
-			threshold = 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
-												  (clutres - 1.0) + 1)
-			check = n >= threshold
-			start = v
+			##threshold = 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
+												  ##(clutres - 1.0) + 1)
+			##check = n >= threshold
+			check = eetf(n + (1 / (entries - 1.0))) > threshold
 		elif hdr_format == "HLG":
 			check = maxsignal < 1 and n >= maxsignal
-			start = v
 		if check:
 			# Linear interpolate shaper for last n cLUT steps to prevent
 			# clipping in shaper
 			if k is None:
 				k = j
-				ov = start
+				ov = v
 			v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
 		for i in xrange(3):
 			itable.input[i].append(v * 65535)
@@ -915,7 +952,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						backward_xicclu.exit()
 					raise Exception("aborted")
 				# Apply a slight power to the segments to optimize encoding
-				RGB = [colormath.specialpow(v * step, 1.0 / encpow, 2) for v in (R, G, B)]
+				RGB = [encf(v * step) for v in (R, G, B)]
 				RGB_in.append(RGB)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
