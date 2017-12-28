@@ -2051,6 +2051,7 @@ class Worker(WorkerBase):
 		lumi = profile2.tags.get("lumi", ICCP.XYZType())
 		if not lumi.Y:
 			lumi.Y = 100.0
+		profile_black_cdm2 = XYZbp[1] * lumi.Y
 		if smpte2084:
 			# SMPTE ST.2084 (PQ)
 			self.log(os.path.basename(profile1.fileName) +
@@ -2059,6 +2060,7 @@ class Worker(WorkerBase):
 					  (white_cdm2, stripzeros("%.4f" % minmll), maxmll)))
 		elif hlg:
 			# Hybrid Log-Gamma (HLG)
+			outoffset = 1.0
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
 					 (u" %i cd/m² (ambient %s cd/m²)" % 
@@ -2082,14 +2084,14 @@ class Worker(WorkerBase):
 				# SMPTE ST.2084 (PQ)
 				if gamma != "smpte2084.rolloffclip":
 					maxmll = white_cdm2
-				black_cdm2 = XYZbp[1] * lumi.Y * (1 - outoffset)
+				black_cdm2 = profile_black_cdm2 * (1 - outoffset)
 				profile1.set_smpte2084_trc([v / XYZbp[1] * black_cdm2
 											for v in XYZbp], white_cdm2, minmll,
 										   maxmll, rolloff=True,
 										   blend_blackpoint=False)
 				desc += (u" " + lang.getstr("trc." + gamma) +
 						 (u" %s-%i cd/m² (mastering %s-%i cd/m²)" %
-						  (stripzeros("%.4f" % black_cdm2), white_cdm2,
+						  (stripzeros("%.4f" % profile_black_cdm2), white_cdm2,
 						   stripzeros("%.4f" % minmll), maxmll)))
 			elif hlg:
 				# Hybrid Log-Gamma (HLG)
@@ -2098,7 +2100,7 @@ class Worker(WorkerBase):
 				profile1.set_hlg_trc((0, 0, 0), white_cdm2, 1.2, ambient_cdm2)
 				desc += (u" " + lang.getstr("trc." + gamma) +
 						 (u" %s-%i cd/m² (ambient %s cd/m²)" %
-						  (stripzeros("%.4f" % black_cdm2), white_cdm2,
+						  (stripzeros("%.4f" % profile_black_cdm2), white_cdm2,
 						   stripzeros("%.2f" % ambient_cdm2))))
 			profile1.setDescription(desc)
 			if gamma == "smpte2084.rolloffclip" or hlg:
