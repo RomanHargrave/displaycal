@@ -8283,13 +8283,41 @@ usage: spotread [-options] [logfile]
 							self.log("Can't change black point "
 									 "in non-LUT16Type %s "
 									 "table" % table)
+					if (getcfg("profile.b2a.hires") or
+						not has_B2A):
+						if profchanged:
+							# We need to write the changed profile before
+							# enhancing B2A resolution!
+							try:
+								profile.write()
+							except Exception, exception:
+								return exception
+						result = self.update_profile_B2A(profile)
+						if not isinstance(result, Exception) and result:
+							profchanged = True
+				if profchanged and tables:
+					# Make sure we match Argyll colprof i.e. have a complete
+					# set of tables
+					if profile.colorSpace != "RGB":
+						if len(tables) == 1:
+							# We only created a colorimetric table, the
+							# others are still low quality. Assign 
+							# colorimetric table
+							profile.tags.B2A0 = profile.tags.B2A1
+						if len(tables) < 3:
+							# We only created colorimetric and/or perceptual
+							# tables, saturation table is still low quality.
+							# Assign perceptual table
+							profile.tags.B2A2 = profile.tags.B2A0
+					if not "B2A2" in profile.tags:
+						profile.tags.B2A2 = profile.tags.B2A0
 				# If profile type is X (XYZ cLUT + matrix) add the matrix tags
-				# from a forward lookup of a smaller testchart (faster
+				# from a lookup of a smaller testchart or A2B/B2A (faster
 				# computation!). If profile is a shaper+matrix profile,
 				# re-generate shaper curves from testchart with only
 				# gray+primaries (better curve smoothness and neutrality)
-				# Make sure we do this *after* all changes on the A2B tables
-				# are done, because we may end up using A2B for lookup!
+				# Make sure we do this *after* all changes on the A2B/B2A tables
+				# are done, because we may end up using them for lookup!
 				if getcfg("profile.type") in ("X", "s", "S"):
 					if getcfg("profile.type") == "X":
 						if (not isinstance(profile.tags.get("vcgt"),
@@ -8302,7 +8330,7 @@ usage: spotread [-options] [logfile]
 							if profchanged:
 								# We need to write the changed profile before
 								# creating TRC tags because we will be using
-								# forward lookup through A2B table!
+								# lookup through A2B/B2A table!
 								try:
 									profile.write()
 								except Exception, exception:
@@ -8347,35 +8375,6 @@ usage: spotread [-options] [logfile]
 					if getcfg("profile.black_point_compensation"):
 						bpc_applied = True
 					profchanged = True
-				if process_A2B:
-					if (getcfg("profile.b2a.hires") or
-						not has_B2A):
-						if profchanged:
-							# We need to write the changed profile before
-							# enhancing B2A resolution!
-							try:
-								profile.write()
-							except Exception, exception:
-								return exception
-						result = self.update_profile_B2A(profile)
-						if not isinstance(result, Exception) and result:
-							profchanged = True
-				if profchanged and tables:
-					# Make sure we match Argyll colprof i.e. have a complete
-					# set of tables
-					if profile.colorSpace != "RGB":
-						if len(tables) == 1:
-							# We only created a colorimetric table, the
-							# others are still low quality. Assign 
-							# colorimetric table
-							profile.tags.B2A0 = profile.tags.B2A1
-						if len(tables) < 3:
-							# We only created colorimetric and/or perceptual
-							# tables, saturation table is still low quality.
-							# Assign perceptual table
-							profile.tags.B2A2 = profile.tags.B2A0
-					if not "B2A2" in profile.tags:
-						profile.tags.B2A2 = profile.tags.B2A0
 			if profchanged and not isinstance(result, Exception) and result:
 				if "bkpt" in profile.tags and bpc_applied:
 					# We need to update the blackpoint tag
@@ -8719,7 +8718,13 @@ usage: spotread [-options] [logfile]
 				RGBin = []
 				for i in xrange(numentries):
 					RGBin.append((i / maxval, ) * 3)
-				XYZout = self.xicclu(profile, RGBin, "r", pcs="x")
+				if "B2A0" in profile.tags:
+					# Inverse backward
+					direction = "ib"
+				else:
+					# Forward
+					direction = "f"
+				XYZout = self.xicclu(profile, RGBin, "p", direction, pcs="x")
 				# Get RGB space from already added matrix column tags
 				rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs",
 																		  1))
@@ -8727,8 +8732,10 @@ usage: spotread [-options] [logfile]
 				self.log("-" * 80)
 				for channel in "rgb":
 					tagname = channel + tagcls
-					self.log(u"Adding %s from forward A2B lookup to %s" %
-							 (tagname, profile.getDescription()))
+					self.log(u"Adding %s from %s lookup to %s" %
+							 (tagname, {"f": "forward A2B0",
+										"ib": "inverse backward B2A0"}.get(direction),
+							  profile.getDescription()))
 					profile.tags[tagname] = ICCP.CurveType()
 				for XYZ in XYZout:
 					RGB = mtx * XYZ
