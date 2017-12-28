@@ -369,8 +369,7 @@ def center(text, width = None):
 def create_replace_function(template, values):
 	""" Create a replace function for use with e.g. re.sub """
 	def replace_function(match, template=template, values=values):
-		for i, group in enumerate(match.groups()):
-			template = template.replace("\\%i" % (i + 1), group)
+		template = match.expand(template)
 		return template % values
 	return replace_function
 
