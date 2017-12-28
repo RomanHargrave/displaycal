@@ -1239,8 +1239,8 @@ class LUTFrame(BaseFrame):
 				# Deal with values that got clipped (below black as well as white)
 				do_low_clip = True
 				for i, values in enumerate(odata):
-					if values[3] is True:
-						if do_low_clip and i / maxval * 100 < Lbp:
+					if values[3] is True or i == 0:
+						if do_low_clip and (i / maxval * 100 < Lbp or i == 0):
 							# Set to black
 							values[:] = [0.0, 0.0, 0.0]
 						elif (i == maxval and
