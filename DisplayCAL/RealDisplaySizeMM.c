@@ -1348,8 +1348,8 @@ enumerate_displays(PyObject *self, PyObject *args)
 			//value = PyInt_FromLong(dp[i]->icc_atom);
 			//PyDict_SetItemString(d, "icc_profile", value);
 
-			if (dp[i]->edid != NULL &&
-				(value = PyString_FromString(dp[i]->edid)) != NULL) {
+			if (dp[i]->edid_len > 0 && dp[i]->edid != NULL &&
+				(value = PyString_FromStringAndSize(dp[i]->edid, dp[i]->edid_len)) != NULL) {
 				PyDict_SetItemString(d, "edid", value);
 			}
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
