@@ -38,7 +38,7 @@ def GetXRandROutputXID(display_no=0):
 	if _displays is None:
 		enumerate_displays()
 	if len(_displays) > display_no:
-		return _displays[display_no].get("xrandr_output", 0)
+		return _displays[display_no].get("output", 0)
 	return 0
 
 
