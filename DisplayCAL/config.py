@@ -443,9 +443,11 @@ def get_display_number(display_no):
 	except IndexError:
 		return 0
 	else:
+		if display.endswith(" [PRIMARY]"):
+			display = " ".join(display.split(" ")[:-1])
 		for i in xrange(wx.Display.GetCount()):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
-			if display.find("@ " + geometry) > -1:
+			if display.endswith("@ " + geometry):
 				if debug:
 					from log import safe_print
 					safe_print("[D] Found display %s at index %i" % 

@@ -4103,6 +4103,10 @@ END_DATA
 						   instruments.index(current_instrument) + 1)
 			if displays != self._displays:
 				self._displays = list(displays)
+				setcfg("displays", displays)
+				if RDSMM:
+					# Sync with Argyll - needed under Linux to map EDID
+					RDSMM.enumerate_displays()
 				displays = filter(lambda display:
 									  not display in non_standard_display_args,
 								  displays)
@@ -4313,9 +4317,6 @@ END_DATA
 				# Untethered
 				lut_access.append(False)
 				self.lut_access = lut_access
-				if RDSMM:
-					# This SHOULD be in sync with Argyll...
-					RDSMM.enumerate_displays()
 		elif silent or not check_argyll_bin():
 			self.clear_argyll_info()
 
