@@ -2,10 +2,26 @@
 ${DATETIME} - ${MAINTAINER_EMAIL}
 
 - Update to ${VERSION}:
+  * Critical: Prevent bad clipping in case of non-monotonic device response
+  * HDR improvements
+  * Added simplified chinese translation
+  * Improve consistency of device to profile mapping accross external APIs
+  * See README.html#changelog-${VERSION_SHORT}
+
+-------------------------------------------------------------------
+Tue Dec  5 13:24:33 UTC 2017 - crrodriguez@opensuse.org
+
+- Replace xorg-x11-devel build requires by the needed individual
+  libraries.
+
+-------------------------------------------------------------------
+Wed Oct 18 17:36:43 UTC 2017 - florian_at_displaycal.net
+
+- Update to 3.3.5.0:
   * Maintenance/bugfixes
   * Minor enhancements
   * Updated french localization
-  * See README.html#changelog-${VERSION_SHORT}
+  * See README.html#changelog-3.3.5
 
 -------------------------------------------------------------------
 Wed Sep 13 12:10:59 UTC 2017 - florian_at_displaycal.net
