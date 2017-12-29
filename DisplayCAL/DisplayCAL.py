@@ -7618,16 +7618,21 @@ class MainFrame(ReportFrame, BaseFrame):
 				pass
 			else:
 				# Assume separate X screens
+				display_no = getcfg("display.number") - 1
+				x_hostname, x_display, x_screen = util_x.get_display()
+				x_screen = display_no
 				try:
-					x_hostname, x_display, x_screen = util_x.get_display()
-				except ValueError, exception:
+					import RealDisplaySizeMM as RDSMM
+				except ImportError, exception:
 					InfoDialog(self, msg=safe_unicode(exception), 
 							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-					self.Show(start_timers=True)
-					return
+							   bitmap=geticon(32, "dialog-warning"))
+				else:
+					display = RDSMM.get_x_display(display_no)
+					if display:
+						x_hostname, x_display, x_screen = display
 				args = "DISPLAY=%s:%s.%s %s" % (x_hostname, x_display,
-												getcfg("display.number") - 1,
+												x_screen,
 												args)
 		delayedresult.startWorker(self.measureframe_consumer,
 								  self.measureframe_subprocess, wargs=(args, ))
