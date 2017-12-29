@@ -1300,11 +1300,15 @@ enumerate_displays(PyObject *self, PyObject *args)
 
 			PyObject *d = PyDict_New();
 
-			value = PyString_FromString(dp[i]->name);
-			PyDict_SetItemString(d, "name", value);
+			if (dp[i]->name != NULL &&
+				(value = PyString_FromString(dp[i]->name)) != NULL) {
+				PyDict_SetItemString(d, "name", value);
+			}
 
-			value = PyString_FromString(dp[i]->description);
-			PyDict_SetItemString(d, "description", value);
+			if (dp[i]->description != NULL &&
+				(value = PyString_FromString(dp[i]->description)) != NULL) {
+				PyDict_SetItemString(d, "description", value);
+			}
 
 			value = Py_BuildValue("(i,i)", dp[i]->sx, dp[i]->sy);
 			PyDict_SetItemString(d, "pos", value);
@@ -1317,8 +1321,10 @@ enumerate_displays(PyObject *self, PyObject *args)
 			PyDict_SetItemString(d, "size_mm", value);
 
 #ifdef NT
-			value = PyString_FromString(dp[i]->monid);
-			PyDict_SetItemString(d, "DeviceID", value);
+			if (dp[i]->monid != NULL &&
+				(value = PyString_FromString(dp[i]->monid)) != NULL) {
+				PyDict_SetItemString(d, "DeviceID", value);
+			}
 
 			value = PyBool_FromLong(dp[i]->prim);
 			PyDict_SetItemString(d, "is_primary", value);
@@ -1342,8 +1348,10 @@ enumerate_displays(PyObject *self, PyObject *args)
 			//value = PyInt_FromLong(dp[i]->icc_atom);
 			//PyDict_SetItemString(d, "icc_profile", value);
 
-			value = PyString_FromString(dp[i]->edid);
-			PyDict_SetItemString(d, "edid", value);
+			if (dp[i]->edid != NULL &&
+				(value = PyString_FromString(dp[i]->edid)) != NULL) {
+				PyDict_SetItemString(d, "edid", value);
+			}
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
 			//value = PyInt_FromLong(dp[i]->crtc);
 			//PyDict_SetItemString(d, "xrandr_crtc", value);
