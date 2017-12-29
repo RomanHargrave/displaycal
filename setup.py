@@ -103,6 +103,8 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 	mapping.update(iterable or {})
 	for key, val in mapping.iteritems():
 		tmpl_data = tmpl_data.replace("${%s}" % key, val)
+	tmpl_data = tmpl_data.replace("%s-%s" % (mapping["YEAR"],
+											 mapping["YEAR"]), mapping["YEAR"])
 	if os.path.basename(tmpl_path).startswith("debian"):
 		longdesc = longdesc_backup
 	if os.path.isfile(out_path):
