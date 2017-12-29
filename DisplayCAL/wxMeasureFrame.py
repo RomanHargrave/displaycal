@@ -3,10 +3,11 @@
 import os
 import re
 import sys
+import warnings
 
 import config
 import localization as lang
-from config import (defaults, getcfg, geticon, get_argyll_display_number,
+from config import (defaults, enc, getcfg, geticon, get_argyll_display_number,
 					get_default_dpi, get_display_number, 
 					get_display_rects, scale_adjustment_factor, setcfg,
 					writecfg)
@@ -15,7 +16,7 @@ from log import safe_print
 from meta import name as appname
 from options import debug
 from util_list import floatlist, strlist
-from util_str import safe_unicode
+from util_str import safe_str, safe_unicode
 from wxaddons import wx
 from wxwindows import BaseApp, ConfirmDialog, InfoDialog, InvincibleFrame
 from wxfixes import GenBitmapButton as BitmapButton
@@ -23,8 +24,7 @@ try:
 	import RealDisplaySizeMM as RDSMM
 except ImportError, exception:
 	RDSMM = None
-	handle_error(u"Error - couldn't import RealDisplaySizeMM: " + 
-				 safe_unicode(exception), silent=True)
+	warnings.warn(safe_str(exception, enc), Warning)
 
 def get_default_size():
 	"""

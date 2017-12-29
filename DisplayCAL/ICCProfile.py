@@ -1641,7 +1641,7 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 		# Fall back to XrandR name
 		try:
 			import RealDisplaySizeMM as RDSMM
-		except ImportError:
+		except ImportError, exception:
 			warnings.warn(safe_str(exception, enc), Warning)
 			return
 		display = RDSMM.get_display(display_no)
@@ -1861,7 +1861,7 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 			options = ["_ICC_PROFILE"]
 			try:
 				import RealDisplaySizeMM as RDSMM
-			except ImportError:
+			except ImportError, exception:
 				warnings.warn(safe_str(exception, enc), Warning)
 				display = get_display()
 			else:

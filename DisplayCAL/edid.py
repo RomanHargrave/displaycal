@@ -7,6 +7,7 @@ import os
 import string
 import struct
 import sys
+import warnings
 if sys.platform == "win32":
 	from threading import _MainThread, currentThread
 	wmi = None
@@ -22,21 +23,23 @@ if sys.platform == "win32":
 		import _winreg
 	import pywintypes
 	import win32api
-elif sys.platform != "darwin":
-	try:
-		import RealDisplaySizeMM as RDSMM
-	except ImportError:
-		RDSMM = None
-else:
+elif sys.platform == "darwin":
 	import binascii
 	import re
 	import subprocess as sp
 
 import config
+from config import enc
 from log import log, safe_print
 from util_str import make_ascii_printable, safe_str, strtr
 if sys.platform == "win32":
 	import util_win
+elif sys.platform != "darwin":
+	try:
+		import RealDisplaySizeMM as RDSMM
+	except ImportError, exception:
+		warnings.warn(safe_str(exception, enc), Warning)
+		RDSMM = None
 
 HEADER = (0, 8)
 MANUFACTURER_ID = (8, 10)

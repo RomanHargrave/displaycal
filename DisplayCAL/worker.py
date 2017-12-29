@@ -145,8 +145,8 @@ RDSMM = None
 if sys.platform not in ("darwin", "win32"):
 	try:
 		import RealDisplaySizeMM as RDSMM
-	except ImportError:
-		pass
+	except ImportError, exception:
+		warnings.warn(safe_str(exception, enc), Warning)
 import wx.lib.delayedresult as delayedresult
 
 INST_CAL_MSGS = ["Do a reflective white calibration",
