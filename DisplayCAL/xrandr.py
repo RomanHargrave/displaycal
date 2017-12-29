@@ -66,7 +66,7 @@ class XDisplay(object):
 		self.open()
 		return self
 
-	def __exit__(self):
+	def __exit__(self, etype, value, tb):
 		self.close()
 
 	def open(self):
