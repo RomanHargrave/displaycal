@@ -69,7 +69,10 @@ BuildRequires:  gcc
 BuildRequires:  python-devel
 BuildRequires:  udev
 BuildRequires:  update-desktop-files
-BuildRequires:  xorg-x11-devel
+BuildRequires:  pkgconfig(x11)
+BuildRequires:  pkgconfig(xinerama)
+BuildRequires:  pkgconfig(xrandr)
+BuildRequires:  pkgconfig(xxf86vm)
 Requires:       argyllcms
 Requires:       python-numpy >= %{numpy_version}
 Requires:       python-pygame
