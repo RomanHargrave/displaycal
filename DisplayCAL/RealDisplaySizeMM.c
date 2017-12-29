@@ -1345,8 +1345,8 @@ enumerate_displays(PyObject *self, PyObject *args)
 			value = PyInt_FromLong(dp[i]->rscreen);
 			PyDict_SetItemString(d, "ramdac_screen", value);
 
-			//value = PyInt_FromLong(dp[i]->icc_atom);
-			//PyDict_SetItemString(d, "icc_profile", value);
+			value = PyInt_FromLong(dp[i]->icc_atom);
+			PyDict_SetItemString(d, "icc_profile_atom_id", value);
 
 			if (dp[i]->edid_len > 0 && dp[i]->edid != NULL &&
 				(value = PyString_FromStringAndSize(dp[i]->edid, dp[i]->edid_len)) != NULL) {
@@ -1354,13 +1354,13 @@ enumerate_displays(PyObject *self, PyObject *args)
 			}
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
 			//value = PyInt_FromLong(dp[i]->crtc);
-			//PyDict_SetItemString(d, "xrandr_crtc", value);
+			//PyDict_SetItemString(d, "crtc", value);
 
 			value = PyInt_FromLong(dp[i]->output);
-			PyDict_SetItemString(d, "xrandr_output", value);
+			PyDict_SetItemString(d, "output", value);
 
-			//value = PyInt_FromLong(dp[i]->icc_out_atom);
-			//PyDict_SetItemString(d, "xrandr_icc_profile", dp[i]->value);
+			value = PyInt_FromLong(dp[i]->icc_out_atom);
+			PyDict_SetItemString(d, "icc_profile_output_atom_id", dp[i]->value);
 #endif /* randr >= V 1.2 */
 #endif /* UNIX */
 

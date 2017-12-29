@@ -141,10 +141,10 @@ from wxwindows import (ConfirmDialog, HtmlInfoDialog, InfoDialog,
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
 from wxUntetheredFrame import UntetheredFrame
-xrandr = None
+RDSMM = None
 if sys.platform not in ("darwin", "win32"):
 	try:
-		import xrandr
+		import RealDisplaySizeMM as RDSMM
 	except ImportError:
 		pass
 import wx.lib.delayedresult as delayedresult
@@ -3933,6 +3933,7 @@ END_DATA
 		if (silent and check_argyll_bin()) or (not silent and 
 											   check_set_argyll_bin()):
 			displays = []
+			xrandr_names = {}
 			lut_access = []
 			if verbose >= 1:
 				safe_print(lang.getstr("enumerating_displays_and_comports"))
@@ -4034,6 +4035,10 @@ END_DATA
 											   "width (\d+), height (\d+)", 
 											   value)
 							if len(match):
+								xrandr_name = re.search(", Output (.+)",
+														match[0][0])
+								if xrandr_name:
+									xrandr_names[len(displays)] = xrandr_name.group(1)
 								display = "%s @ %s, %s, %sx%s" % match[0]
 								if " ".join(value.split()[-2:]) == \
 								   "(Primary Display)":
@@ -4154,6 +4159,11 @@ END_DATA
 						if isinstance(exception, EnvironmentError):
 							safe_print(exception)
 						edid = {}
+					if sys.platform not in ("darwin", "win32"):
+						# Fall back to XrandR name if available
+						xrandr_name = xrandr_names.get(i)
+						if xrandr_name:
+							edid = {"monitor_name": xrandr_name}
 					self.display_edid.append(edid)
 					if edid:
 						manufacturer = edid.get("manufacturer", "").split()
@@ -4308,6 +4318,9 @@ END_DATA
 				# Untethered
 				lut_access.append(False)
 				self.lut_access = lut_access
+				if RDSMM:
+					# This SHOULD be in sync with Argyll...
+					RDSMM.enumerate_displays()
 		elif silent or not check_argyll_bin():
 			self.clear_argyll_info()
 
@@ -6356,13 +6369,12 @@ while 1:
 			if not (quirk and use_serial_32 and not truncate_edid_strings and
 					not omit_manufacturer):
 				return
-			try:
-				device_ids = colord.get_display_device_ids()
-			except colord.CDError, exception:
-				warnings.warn(safe_str(exception, enc), Warning)
-				return
-			if device_ids and len(device_ids) > display_no:
-				edid = {"monitor_name": device_ids[display_no].split("-", 1)[-1]}
+			if RDSMM:
+				display = RDSMM.get_display(display_no)
+				if display:
+					xrandr_name = display.get("xrandr_name")
+					if xrandr_name:
+						edid = {"monitor_name": xrandr_name}
 		return colord.device_id_from_edid(edid, quirk=quirk,
 										  use_serial_32=use_serial_32,
 										  truncate_edid_strings=truncate_edid_strings,

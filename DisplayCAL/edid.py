@@ -24,9 +24,9 @@ if sys.platform == "win32":
 	import win32api
 elif sys.platform != "darwin":
 	try:
-		import xrandr
+		import RealDisplaySizeMM as RDSMM
 	except ImportError:
-		xrandr = None
+		RDSMM = None
 else:
 	import binascii
 	import re
@@ -189,31 +189,10 @@ def get_edid(display_no=0, display_name=None, device=None):
 						# because the order is unknown
 						return parsed_edid
 		return {}
-	elif xrandr:
-		# Check XrandR output properties
-		edid = None
-		for key in ("EDID", "EDID_DATA"):
-			try:
-				edid = xrandr.get_output_property(display_no, key, 
-													   xrandr.XA_INTEGER)
-			except ValueError:
-				pass
-			else:
-				break
-		if not edid:
-			# Check X11 atoms
-			for key in ("XFree86_DDC_EDID1_RAWDATA", 
-						"XFree86_DDC_EDID2_RAWDATA"):
-				if display_no > 0:
-					key += "_%s" % display_no
-				try:
-					edid = xrandr.get_atom(key)
-				except ValueError:
-					pass
-				else:
-					break
-		if edid:
-			edid = "".join(chr(i) for i in edid)
+	elif RDSMM:
+		display = RDSMM.get_display(display_no)
+		if display:
+			edid = display.get("edid")
 	if edid and len(edid) >= 128:
 		return parse_edid(edid)
 	return {}

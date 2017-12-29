@@ -1640,13 +1640,16 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 	else:
 		# Fall back to XrandR name
 		try:
-			device_ids = colord.get_display_device_ids()
-		except colord.CDError, exception:
+			import RealDisplaySizeMM as RDSMM
+		except ImportError:
 			warnings.warn(safe_str(exception, enc), Warning)
 			return
-		if device_ids and len(device_ids) > display_no:
-			edid = {"monitor_name": device_ids[display_no].split("-", 1)[-1]}
-			device_ids = [device_ids[display_no]]
+		display = RDSMM.get_display(display_no)
+		if display:
+			xrandr_name = display.get("xrandr_name")
+			if xrandr_name:
+				edid = {"monitor_name": xrandr_name}
+				device_ids = ["xrandr-" + xrandr_name]
 	if edid:
 		for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
 			if device_id:
@@ -1670,8 +1673,7 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 				break
 
 
-def _ucmm_get_display_profile(display_no, x_hostname, x_display, x_screen,
-							  path_only=False):
+def _ucmm_get_display_profile(display_no, name, path_only=False):
 	""" Argyll UCMM """
 	search = []
 	edid = get_edid(display_no)
@@ -1679,7 +1681,7 @@ def _ucmm_get_display_profile(display_no, x_hostname, x_display, x_screen,
 		# Look for matching EDID entry first
 		search.append(("EDID", "0x" + binascii.hexlify(edid["edid"]).upper()))
 	# Fallback to X11 name
-	search.append(("NAME", "%s:%s.%s" % (x_hostname, x_display, x_screen)))
+	search.append(("NAME", name))
 	for path in [xdg_config_home] + xdg_config_dirs:
 		color_jcnf = os.path.join(path, "color.jcnf")
 		if os.path.isfile(color_jcnf):
@@ -1784,37 +1786,8 @@ def _winreg_get_display_profiles(monkey, current_user=False):
 				  filenames)
 
 
-def _xrandr_get_display_profile(display_no=0, x_hostname="", x_display=0, 
-								x_screen=0):
-	try:
-		property = xrandr.get_output_property(display_no, "_ICC_PROFILE", 
-											  xrandr.XA_CARDINAL, x_hostname, 
-											  x_display, x_screen)
-	except ValueError, exception:
-		warnings.warn(safe_str(exception, enc), Warning)
-	else:
-		if property:
-			return ICCProfile("".join(chr(i) for i in property))
-	return None
-
-
-def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0, 
-							 x_screen=0):
-	try:
-		atom = xrandr.get_atom("_ICC_PROFILE" + ("" if display_no == 0 else 
-													 "_%s" % display_no), 
-							   xrandr.XA_CARDINAL, x_hostname, x_display, 
-							   x_screen)
-	except ValueError, exception:
-		warnings.warn(safe_str(exception, enc), Warning)
-	else:
-		if atom:
-			return ICCProfile("".join(chr(i) for i in atom))
-	return None
-
-
-def get_display_profile(display_no=0, x_hostname="", x_display=0, 
-						x_screen=0, win_get_correct_profile=False,
+def get_display_profile(display_no=0, x_hostname=None, x_display=None, 
+						x_screen=None, win_get_correct_profile=False,
 						path_only=False, devicekey=None):
 	""" Return ICC Profile for display n or None """
 	profile = None
@@ -1886,13 +1859,20 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				options = ["ColorSyncScripting"]
 		else:
 			options = ["_ICC_PROFILE"]
-			display = get_display()
-			if not x_hostname:
+			try:
+				import RealDisplaySizeMM as RDSMM
+			except ImportError:
+				warnings.warn(safe_str(exception, enc), Warning)
+				display = get_display()
+			else:
+				display = RDSMM.get_x_display(display_no)
+			if x_hostname is None:
 				x_hostname = display[0]
-			if not x_display:
+			if x_display is None:
 				x_display = display[1]
-			if not x_screen:
+			if x_screen is None:
 				x_screen = display[2]
+			x_display_name = "%s:%s.%s" % (x_hostname, x_display, x_screen)
 		for option in options:
 			if sys.platform == "darwin":
 				# applescript: one-based index
@@ -1924,30 +1904,39 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 						# UCMM configuration might be stale, ignore
 						return
 					profile = _ucmm_get_display_profile(display_no,
-														x_hostname,
-														x_display, x_screen,
+														x_display_name,
 														path_only)
 					return profile
 				# Try XrandR
-				if xrandr and option == "_ICC_PROFILE":
-					if debug:
-						safe_print("Using XrandR")
-					profile = _xrandr_get_display_profile(display_no, 
-														  x_hostname, 
-														  x_display, x_screen)
-					if profile:
-						return profile
-					if debug:
-						safe_print("Couldn't get _ICC_PROFILE XrandR output property")
-						safe_print("Using X11")
-					# Try X11
-					profile = _x11_get_display_profile(display_no, 
-													   x_hostname, 
-													   x_display, x_screen)
-					if profile:
-						return profile
-					if debug:
-						safe_print("Couldn't get _ICC_PROFILE X atom")
+				if xrandr and RDSMM and option == "_ICC_PROFILE":
+					with xrandr.XDisplay(x_display_name) as display:
+						if debug:
+							safe_print("Using XrandR")
+						for i, atom_id in enumerate([RDSMM.get_x_icc_profile_output_atom_id(display_no),
+													 RDSMM.get_x_icc_profile_atom_id(display_no)]):
+							if atom_id:
+								if i == 0:
+									meth = display.get_output_property
+									what = RDSMM.GetXRandROutputXID(display_no)
+								else:
+									meth = display.get_window_property
+									what = display.root_window(0)
+								try:
+									property = meth(what, atom_id)
+								except ValueError, exception:
+									warnings.warn(safe_str(exception, enc), Warning)
+								else:
+									if property:
+										profile = ICCProfile("".join(chr(n) for n in property))
+								if profile:
+									return profile
+								if debug:
+									if i == 0:
+										safe_print("Couldn't get _ICC_PROFILE XrandR output property")
+										safe_print("Using X11")
+									else:
+										safe_print("Couldn't get _ICC_PROFILE X atom")
+					return
 				# Read up to 8 MB of any X properties
 				if debug:
 					safe_print("Using xprop")

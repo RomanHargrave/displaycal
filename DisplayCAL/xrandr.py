@@ -21,12 +21,7 @@ except OSError:
 import os
 import sys
 
-import RealDisplaySizeMM as RDSMM
-from encoding import get_encodings
 from options import debug
-from util_x import get_display
-
-enc, fs_enc = get_encodings()
 
 XA_CARDINAL = 6
 XA_INTEGER = 19
@@ -62,111 +57,91 @@ except AttributeError, exception:
 	raise ImportError("libXrandr: %s" % exception)
 
 
-def get_atom(atom_name=None, atom_type=XA_CARDINAL, x_hostname="", 
-			 x_display_no=0, x_screen_no=0):
-	display = get_display()
-	if not x_hostname:
-		x_hostname = display[0]
-	if not x_display_no:
-		x_display_no = display[1]
-	if not x_screen_no:
-		x_screen_no = display[2]
-	display = "%s:%i.%i" % (x_hostname, x_display_no, x_screen_no)
-	x_display = libx11.XOpenDisplay(display)
-	if not x_display:
-		libx11.XCloseDisplay(x_display)
-		raise ValueError("Invalid X display %r" % display)
-	
-	x_window = libx11.XRootWindow(x_display, x_screen_no)
-	if not x_window:
-		libx11.XCloseDisplay(x_display)
-		raise ValueError("Invalid X screen %r" % x_screen_no)
-	
-	x_atom = libx11.XInternAtom(x_display, atom_name, True)
-	if not x_atom:
-		libx11.XCloseDisplay(x_display)
-		raise ValueError("Invalid atom name %r" % atom_name)
+class XDisplay(object):
 
-	ret_type, ret_format, ret_len, ret_togo, atomv = (c_ulong(), 
-													  c_int(), 
-													  c_ulong(), 
-													  c_ulong(), 
-													  pointer(c_ubyte()))
-	
-	property = None
-	if libx11.XGetWindowProperty(x_display, x_window, 
-								 x_atom, 0, 0x7ffffff, False, atom_type, 
-								 ret_type, ret_format, ret_len, ret_togo,
-								 atomv) == 0 and ret_len.value > 0:
-		if debug:
-			print "ret_type:", ret_type.value
-			print "ret_format:", ret_format.value
-			print "ret_len:", ret_len.value
-			print "ret_togo:", ret_togo.value
-		property = [atomv[i] for i in xrange(ret_len.value)]
-	
-	libx11.XCloseDisplay(x_display)
-	
-	return property
+	def __init__(self, name=None):
+		self.name = name or os.getenv("DISPLAY")
 
+	def __enter__(self):
+		self.open()
+		return self
 
-def get_display_name(display_no=0):
-	output = sp.check_output(["xrandr"]).decode(enc).splitlines()
-	return [l.split()[0] for l in output if " connected " in l][display_no]
+	def __exit__(self):
+		self.close()
 
+	def open(self):
+		self.display = libx11.XOpenDisplay(self.name)
+		if not self.display:
+			raise ValueError("Invalid X display %r" % self.name)
 
-def get_output_property(display_no=0, property_name=None, 
-						property_type=XA_CARDINAL, x_hostname="", 
-						x_display_no=0, x_screen_no=0):
-	xrandr_output_xid = RDSMM.GetXRandROutputXID(display_no)
-	if not xrandr_output_xid:
-		raise ValueError("Invalid display number %r specified or XrandR "
-						 "unsupported" % display_no)
-	
-	display = get_display()
-	if not x_hostname:
-		x_hostname = display[0]
-	if not x_display_no:
-		x_display_no = display[1]
-	if not x_screen_no:
-		x_screen_no = display[2]
-	display = "%s:%i.%i" % (x_hostname, x_display_no, x_screen_no)
-	x_display = libx11.XOpenDisplay(display)
-	if not x_display:
-		libx11.XCloseDisplay(x_display)
-		raise ValueError("Invalid X display %r" % display)
+	def close(self):
+		libx11.XCloseDisplay(self.display)
 
-	x_atom = libx11.XInternAtom(x_display, property_name, False)
-	if not x_atom:
-		libx11.XCloseDisplay(x_display)
-		raise ValueError("Invalid property name %r" % property_name)
+	def intern_atom(self, atom_name):
+		atom_id = libx11.XInternAtom(self.display, atom_name, False)
+		if not atom_id:
+			raise ValueError("Invalid atom name %r" % atom_name)
 
-	ret_type, ret_format, ret_len, ret_togo, atomv = (c_ulong(), 
-													  c_int(), 
-													  c_ulong(), 
-													  c_ulong(), 
-													  pointer(c_ubyte()))
+		return atom_id
 
-	property = None
-	if libxrandr.XRRGetOutputProperty(x_display, 
-									  xrandr_output_xid, 
-									  x_atom, 0, 0x7ffffff, False, False, 
-									  property_type, ret_type, ret_format, 
-									  ret_len, ret_togo, atomv) == 0 and \
-	   ret_len.value > 0:
-		if debug:
-			print "ret_type:", ret_type.value
-			print "ret_format:", ret_format.value
-			print "ret_len:", ret_len.value
-			print "ret_togo:", ret_togo.value
-		property = [atomv[i] for i in xrange(ret_len.value)]
-	
-	libx11.XCloseDisplay(x_display)
+	def root_window(self, screen_no=0):
+		window = libx11.XRootWindow(self.display, screen_no)
+		if not window:
+			raise ValueError("Invalid X screen %r" % screen_no)
 
-	return property
+		return window
+
+	def get_window_property(self, window, atom_id, atom_type=XA_CARDINAL):
+
+		ret_type, ret_format, ret_len, ret_togo, atomv = (c_ulong(), 
+														  c_int(), 
+														  c_ulong(), 
+														  c_ulong(), 
+														  pointer(c_ubyte()))
+		
+		property = None
+		if libx11.XGetWindowProperty(self.display, window, 
+									 atom_id, 0, 0x7ffffff, False, atom_type, 
+									 ret_type, ret_format, ret_len, ret_togo,
+									 atomv) == 0 and ret_len.value > 0:
+			if debug:
+				print "ret_type:", ret_type.value
+				print "ret_format:", ret_format.value
+				print "ret_len:", ret_len.value
+				print "ret_togo:", ret_togo.value
+			property = [atomv[i] for i in xrange(ret_len.value)]
+		
+		return property
+
+	def get_output_property(self, output, atom_id, atom_type=XA_CARDINAL):
+		if not output:
+			raise ValueError("Invalid output %r specified" % output)
+
+		ret_type, ret_format, ret_len, ret_togo, atomv = (c_ulong(), 
+														  c_int(), 
+														  c_ulong(), 
+														  c_ulong(), 
+														  pointer(c_ubyte()))
+
+		property = None
+		if (libxrandr.XRRGetOutputProperty(self.display, 
+										   output, 
+										   atom_id, 0, 0x7ffffff, False, False, 
+										   atom_type, ret_type, ret_format, 
+										   ret_len, ret_togo, atomv) == 0 and
+			ret_len.value > 0):
+			if debug:
+				print "ret_type:", ret_type.value
+				print "ret_format:", ret_format.value
+				print "ret_len:", ret_len.value
+				print "ret_togo:", ret_togo.value
+			property = [atomv[i] for i in xrange(ret_len.value)]
+
+		return property
 
 
 if __name__ == "__main__":
-	property = get_output_property(int(sys.argv[1]), sys.argv[2], 
-								   int(sys.argv[3]))
-	print "%s for display %s: %r" % (sys.argv[2], sys.argv[1], property)
+	with XDisplay() as display:
+		property = display.get_output_property(int(sys.argv[1]), sys.argv[2],
+											   int(sys.argv[3]))
+		print "%s for display %s: %r" % (sys.argv[2], sys.argv[1], property)
