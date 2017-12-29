@@ -63,7 +63,7 @@
 /* Structure to store infomation about possible displays */
 typedef struct {
 	char *name;			/* Display name */
-	char *description;	/* Description of display */
+	char *description;	/* Description of display or URL */
 	int sx,sy;			/* Displays offset in pixels */
 	int sw,sh;			/* Displays width and height in pixels*/
 #ifdef NT
@@ -74,14 +74,18 @@ typedef struct {
 	CGDirectDisplayID ddid;
 #endif /* __APPLE__ */
 #if defined(UNIX) && !defined(__APPLE__)
-	int screen;				/* Screen to select */
-	int uscreen;			/* Underlying screen */
-	int rscreen;			/* Underlying RAMDAC screen */
+	int screen;				/* X11 (possibly virtual) Screen */
+	int uscreen;			/* Underlying Xinerma/XRandr screen */
+	int rscreen;			/* Underlying RAMDAC screen (user override) */
+	Atom icc_atom;			/* ICC profile root/output atom for this display */
+	unsigned char *edid;	/* 128 or 256 bytes of monitor EDID, NULL if none */
+	int edid_len;			/* 128 or 256 */
 
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
 	/* Xrandr stuff - output is connected 1:1 to a display */
 	RRCrtc crtc;				/* Associated crtc */
 	RROutput output;			/* Associated output */
+	Atom icc_out_atom;			/* ICC profile atom for this output */
 #endif /* randr >= V 1.2 */
 #endif /* UNIX */
 } disppath;
@@ -91,10 +95,12 @@ typedef struct {
 void free_a_disppath(disppath *path);
 void free_disppaths(disppath **paths);
 
-/* ----------------------------------------------- */
-/* Dealing with locating displays */
+/* ===================================================================== */
+/* Display enumeration code */
+/* ===================================================================== */
 
-int callback_ddebug = 0;			/* Diagnostic global for get_displays() and get_a_display() */  
+int callback_ddebug = 0;	/* Diagnostic global for get_displays() and get_a_display() */  
+							/* and events */
 
 #ifdef NT
 
@@ -210,7 +216,6 @@ static unsigned short *char2wchar(char *s) {
 
 #endif /* NT */
 
-
 #if defined(UNIX) && !defined(__APPLE__)
 /* Hack to notice if the error handler has been triggered */
 /* when a function doesn't return a value. */
@@ -316,6 +321,13 @@ disppath **get_displays() {
 	/* automatically adjusts the screen brigtness with ambient level. */
 	/* We may have to find a way of disabling this during calibration and profiling. */
 	/* See the "pset -g" command. */
+
+	/*
+		We could possibly use NSScreen instead of CG here,
+		If we're using libui, then we have an NSApp, so
+		this would be possible.
+	 */
+
 	int i;
 	CGDisplayErr dstat;
 	CGDisplayCount dcount;		/* Number of display IDs */
@@ -434,7 +446,6 @@ disppath **get_displays() {
 					if (CFStringGetCString(values[j], vbuf, 50, kCFStringEncodingMacRoman))
 						v = vbuf;
 				}
-//printf("~1 got key %s and value %s\n",k,v);
 				/* We're only grabing the english description... */
 				if (k != NULL && v != NULL && strcmp(k, "en_US") == 0) {
 					strncpy(desc, v, 49);
@@ -510,11 +521,16 @@ disppath **get_displays() {
 	}
 
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2 && !defined(DISABLE_RANDR)
-	/* Use Xrandr 1.2 if it's available, and if it's not disabled */
+	/* Use Xrandr 1.2 if it's available, and if it's not disabled. */
 	if (getenv("ARGYLL_IGNORE_XRANDR1_2") == NULL
 	 && XRRQueryExtension(mydisplay, &evb, &erb) != 0
 	 && XRRQueryVersion(mydisplay, &majv, &minv)
 	 && majv == 1 && minv >= 2) {
+		static void *xrr_found = NULL;	/* .so handle */
+		static XRRScreenResources *(*_XRRGetScreenResourcesCurrent)
+				                  (Display *dpy, Window window) = NULL;
+		static RROutput (*_XRRGetOutputPrimary)(Display *dpy, Window window) = NULL;
+		int defsix;			/* Default Screen index */
 
 		if (XSetErrorHandler(null_error_handler) == 0) {
 			debugrr("get_displays failed on XSetErrorHandler\n");
@@ -523,20 +539,38 @@ disppath **get_displays() {
 			return NULL;
 		}
 
+		/* Get functions available in Xrandr V1.3 */
+		if (minv >= 3 && xrr_found == NULL) {
+			if ((xrr_found = dlopen("libXrandr.so", RTLD_LAZY)) != NULL) {
+				_XRRGetScreenResourcesCurrent = dlsym(xrr_found, "XRRGetScreenResourcesCurrent");
+				_XRRGetOutputPrimary = dlsym(xrr_found, "XRRGetOutputPrimary");
+			}
+		}
+
+		/* Hmm. Do Xrandr systems alway have only one Screen, */
+		/* just like Xinerama ? */
 		dcount = ScreenCount(mydisplay);
 
-		/* Go through all the screens */
-		for (i = 0; i < dcount; i++) {
-			static void *xrr_found = NULL;	/* .so handle */
-			static XRRScreenResources *(*_XRRGetScreenResourcesCurrent)
-					                  (Display *dpy, Window window) = NULL;
-			XRRScreenResources *scrnres;
-			int jj;		/* Screen index */
+		debugrr2((errout,"get_displays using %d XRandR Screens\n",dcount));
 
-			if (minv >= 3 && xrr_found == NULL) {
-				if ((xrr_found = dlopen("libXrandr.so", RTLD_LAZY)) != NULL)
-					_XRRGetScreenResourcesCurrent = dlsym(xrr_found, "XRRGetScreenResourcesCurrent");
-			}
+		/* Not sure what to do with this. */
+		/* Should we go through X11 screens with this first ? */
+		/* (How does Xrandr translate Screen 1..n to Xinerama ?????) */
+		defsix = DefaultScreen(mydisplay);
+
+		/* In order to be in sync with an application using Xinerama, */
+		/* we need to generate our screen indexes in the same */
+		/* order as Xinerama. */
+
+		/* Go through all the X11 screens */
+		for (i = 0; i < dcount; i++) {
+			XRRScreenResources *scrnres;
+			int has_primary = 0;
+			int pix = -1;				/* CRTC index containing primary */
+			int pop = -1;				/* Output index containing primary */
+			int jj;						/* Xinerama screen ix */
+			int xj;						/* working crtc index */
+			int xk;						/* working output index */
 
 			if (minv >= 3 && _XRRGetScreenResourcesCurrent != NULL) { 
 				scrnres = _XRRGetScreenResourcesCurrent(mydisplay, RootWindow(mydisplay,i));
@@ -550,65 +584,150 @@ disppath **get_displays() {
 				free_disppaths(disps);
 				return NULL;
 			}
+			/* We have to scan through CRTC's & outputs in the same order */
+			/* as the XRANDR XInerama implementation in the X server. */
+			/* This is a little tricky, as we need to do the primary output, */
+			/* first, while keeping the rest in order. */
 
-			/* Look at all the screens outputs */
-			for (jj = j = 0; j < scrnres->noutput; j++) {
-				XRROutputInfo *outi;
-				XRRCrtcInfo *crtci;
-	
-				if ((outi = XRRGetOutputInfo(mydisplay, scrnres, scrnres->outputs[j])) == NULL) {
-					debugrr("XRRGetOutputInfo failed\n");
-					XRRFreeScreenResources(scrnres);
-					XCloseDisplay(mydisplay);
-					free_disppaths(disps);
-					return NULL;
+			/* Locate the crtc index that contains the primary (if any) */
+			if (minv >= 3 && _XRRGetOutputPrimary != NULL) { 
+				XID primary;				/* Primary output ID */
+
+				primary = _XRRGetOutputPrimary(mydisplay, RootWindow(mydisplay,i));
+				debugrr2((errout,"XRRGetOutputPrimary returned XID %x\n",primary));
+
+				if (primary != None) {
+					for (j = 0; j < scrnres->ncrtc; j++) {
+						XRRCrtcInfo *crtci = NULL;
+		
+						if ((crtci = XRRGetCrtcInfo(mydisplay, scrnres, scrnres->crtcs[j])) == NULL)
+							continue;
+		
+						if (crtci->mode == None || crtci->noutput == 0) {
+							XRRFreeCrtcInfo(crtci);
+							continue;
+						}
+		
+						for (k = 0; k < crtci->noutput; k++) {
+							if (crtci->outputs[k] == primary) {
+								pix = j;
+								pop = k;
+							}
+						}
+						XRRFreeCrtcInfo(crtci);
+					}
+					if (pix < 0) {		/* Didn't locate primary */
+						debugrr2((errout,"Couldn't locate primary CRTC!\n"));
+					} else {
+						debugrr2((errout,"Primary is at CRTC %d Output %d\n",pix,pop));
+						has_primary = 1;
+					}
 				}
-	
-				if (outi->connection == RR_Disconnected||
-					outi->crtc == None) {
+			}
+
+			/* Look through all the Screens CRTC's */
+			for (jj = xj = j = 0; j < scrnres->ncrtc; j++, xj++) {
+				char *pp;
+				XRRCrtcInfo *crtci = NULL;
+				XRROutputInfo *outi0 = NULL;
+
+				if (has_primary) {
+					if (j == 0)
+						xj = pix;			/* Start with crtc containing primary */
+
+					else if (xj == pix)		/* We've up to primary that we've alread done */	
+						xj++;				/* Skip it */
+				}
+
+				if ((crtci = XRRGetCrtcInfo(mydisplay, scrnres, scrnres->crtcs[xj])) == NULL) {
+					debugrr2((errout,"XRRGetCrtcInfo of Screen %d CRTC %d failed\n",i,xj));
+					if (has_primary && j == 0)
+						xj = -1;			/* Start at beginning */
 					continue;
 				}
 
-				/* Check that the VideoLUT's are accessible */
-				{
-					XRRCrtcGamma *crtcgam;
-			
-					debugrr("Checking XRandR 1.2 VideoLUT access\n");
-					if ((crtcgam = XRRGetCrtcGamma(mydisplay, outi->crtc)) == NULL
-					 || crtcgam->size == 0) {
-						
+				debugrr2((errout,"XRRGetCrtcInfo of Screen %d CRTC %d has %d Outputs %s Mode\n",i,xj,crtci->noutput,crtci->mode == None ? "No" : "Valid"));
+
+				if (crtci->mode == None || crtci->noutput == 0) {
+					debugrr2((errout,"CRTC skipped as it has no mode or no outputs\n",i,xj,crtci->noutput));
+					XRRFreeCrtcInfo(crtci);
+					if (has_primary && j == 0)
+						xj = -1;			/* Start at beginning */
+					continue;
+				}
+
+				/* This CRTC will now be counted as an Xinerama screen */
+				/* For each output of Crtc */
+				for (xk = k = 0; k < crtci->noutput; k++, xk++) {
+					XRROutputInfo *outi = NULL;
+
+					if (has_primary && xj == pix) {
+						if (k == 0)
+							xk = pop;			/* Start with primary output */
+						else if (xk == pop)		/* We've up to primary that we've alread done */	
+							xk++;				/* Skip it */
+					}
+
+					if ((outi = XRRGetOutputInfo(mydisplay, scrnres, crtci->outputs[xk])) == NULL) {
+						debugrr2((errout,"XRRGetOutputInfo failed for Screen %d CRTC %d Output %d\n",i,xj,xk));
+						goto next_output;
+					}
+					if (k == 0)					/* Save this so we can label any clones */
+						outi0 = outi;
+		
+					if (outi->connection == RR_Disconnected) { 
+						debugrr2((errout,"Screen %d CRTC %d Output %d is disconnected\n",i,xj,xk));
+						goto next_output;
+					}
+
+					/* Check that the VideoLUT's are accessible */
+					{
+						XRRCrtcGamma *crtcgam = NULL;
+				
+						debugrr("Checking XRandR 1.2 VideoLUT access\n");
+						if ((crtcgam = XRRGetCrtcGamma(mydisplay, scrnres->crtcs[xj])) == NULL
+						 || crtcgam->size == 0) {
+							fprintf(stderr,"XRRGetCrtcGamma failed - falling back to older extensions\n");
+							if (crtcgam != NULL)
+								XRRFreeGamma(crtcgam);
+							if (outi != NULL && outi != outi0)
+								XRRFreeOutputInfo(outi);
+							if (outi0 != NULL)
+								XRRFreeOutputInfo(outi0);
+							XRRFreeCrtcInfo(crtci);
+							XRRFreeScreenResources(scrnres);
+							free_disppaths(disps);
+							disps = NULL;
+							goto done_xrandr;
+						}
 						if (crtcgam != NULL)
 							XRRFreeGamma(crtcgam);
-						free_disppaths(disps);
-						disps = NULL;
-						j = scrnres->noutput;
-						i = dcount;
-						continue;				/* Abort XRandR 1.2 */
 					}
-				}
 #ifdef NEVER
-				{
-					Atom *oprops;
-					int noprop;
+					{
+						Atom *oprops;
+						int noprop;
 
-					/* Get a list of the properties of the output */
-					oprops = XRRListOutputProperties(mydisplay, scrnres->outputs[j], &noprop);
+						/* Get a list of the properties of the output */
+						oprops = XRRListOutputProperties(mydisplay, crtci->outputs[xk], &noprop);
 
-					printf("num props = %d\n", noprop);
-					for (k = 0; k < noprop; k++) {
-						printf("%d: atom 0x%x, name = '%s'\n", k, oprops[k], XGetAtomName(mydisplay, oprops[k]));
+						printf("num props = %d\n", noprop);
+						for (k = 0; k < noprop; k++) {
+							printf("%d: atom 0x%x, name = '%s'\n", k, oprops[k], XGetAtomName(mydisplay, oprops[k]));
+						}
 					}
-				}
 #endif /* NEVER */
 
-				if ((crtci = XRRGetCrtcInfo(mydisplay, scrnres, outi->crtc)) != NULL) {
-					char *pp;
-
 					/* Add the output to the list */
+					debugrr2((errout,"Adding Screen %d CRTC %d Output %d\n",i,xj,xk));
 					if (disps == NULL) {
 						if ((disps = (disppath **)calloc(sizeof(disppath *), 1 + 1)) == NULL) {
 							debugrr("get_displays failed on malloc\n");
 							XRRFreeCrtcInfo(crtci);
+							if (outi != NULL && outi != outi0)
+								XRRFreeOutputInfo(outi);
+							if (outi0 != NULL)
+								XRRFreeOutputInfo(outi0);
 							XRRFreeScreenResources(scrnres);
 							XCloseDisplay(mydisplay);
 							return NULL;
@@ -618,6 +737,10 @@ disppath **get_displays() {
 						                     sizeof(disppath *) * (ndisps + 2))) == NULL) {
 							debugrr("get_displays failed on malloc\n");
 							XRRFreeCrtcInfo(crtci);
+							if (outi != NULL && outi != outi0)
+								XRRFreeOutputInfo(outi);
+							if (outi0 != NULL)
+								XRRFreeOutputInfo(outi0);
 							XRRFreeScreenResources(scrnres);
 							XCloseDisplay(mydisplay);
 							return NULL;
@@ -628,42 +751,49 @@ disppath **get_displays() {
 					if ((disps[ndisps] = calloc(sizeof(disppath),1)) == NULL) {
 						debugrr("get_displays failed on malloc\n");
 						XRRFreeCrtcInfo(crtci);
+						if (outi != NULL && outi != outi0)
+							XRRFreeOutputInfo(outi);
+						if (outi0 != NULL)
+							XRRFreeOutputInfo(outi0);
 						XRRFreeScreenResources(scrnres);
 						XCloseDisplay(mydisplay);
 						free_disppaths(disps);
 						return NULL;
 					}
 
-					disps[ndisps]->screen = i;
-					disps[ndisps]->uscreen = i;
-					disps[ndisps]->rscreen = i;
+					disps[ndisps]->screen = i;				/* X11 (virtual) Screen */
+					disps[ndisps]->uscreen = jj;			/* Xinerama/Xrandr screen */
+					disps[ndisps]->rscreen = jj;
 					disps[ndisps]->sx = crtci->x;
 					disps[ndisps]->sy = crtci->y;
 					disps[ndisps]->sw = crtci->width;
 					disps[ndisps]->sh = crtci->height;
-					disps[ndisps]->crtc = outi->crtc;				/* XID of crtc */
-					disps[ndisps]->output = scrnres->outputs[j];	/* XID of output */		
+					disps[ndisps]->crtc = scrnres->crtcs[xj];		/* XID of CRTC */
+					disps[ndisps]->output = crtci->outputs[xk];		/* XID of output */		
 
-					sprintf(desc1,"Screen %d, Output %s",ndisps+1,outi->name);
+					sprintf(desc1,"Monitor %d, Output %s",ndisps+1,outi->name);
 					sprintf(desc2,"%s at %d, %d, width %d, height %d",desc1,
 				        disps[ndisps]->sx, disps[ndisps]->sy, disps[ndisps]->sw, disps[ndisps]->sh);
 
-					/* See if it is a clone */
-					for (k = 0; k < ndisps; k++) {
-						if (disps[k]->crtc == disps[ndisps]->crtc) {
-							sprintf(desc1, "[ Clone of %d ]",k+1);
-							strcat(desc2, desc1);
-						}
+					/* If it is a clone */
+					if (k > 0 & outi0 != NULL) {
+						sprintf(desc1, "[ Clone of %s ]",outi0->name);
+						strcat(desc2, desc1);
 					}
+
 					if ((disps[ndisps]->description = strdup(desc2)) == NULL) {
 						debugrr("get_displays failed on malloc\n");
 						XRRFreeCrtcInfo(crtci);
+						if (outi != NULL && outi != outi0)
+							XRRFreeOutputInfo(outi);
+						if (outi0 != NULL)
+							XRRFreeOutputInfo(outi0);
 						XRRFreeScreenResources(scrnres);
 						XCloseDisplay(mydisplay);
 						free_disppaths(disps);
 						return NULL;
 					}
-	
+
 					/* Form the display name */
 					if ((pp = strrchr(dnbuf, ':')) != NULL) {
 						if ((pp = strchr(pp, '.')) != NULL) {
@@ -673,29 +803,107 @@ disppath **get_displays() {
 					if ((disps[ndisps]->name = strdup(dnbuf)) == NULL) {
 						debugrr("get_displays failed on malloc\n");
 						XRRFreeCrtcInfo(crtci);
+						if (outi != NULL && outi != outi0)
+							XRRFreeOutputInfo(outi);
+						if (outi0 != NULL)
+							XRRFreeOutputInfo(outi0);
 						XRRFreeScreenResources(scrnres);
 						XCloseDisplay(mydisplay);
 						free_disppaths(disps);
 						return NULL;
 					}
 					debugrr2((errout, "Display %d name = '%s'\n",ndisps,disps[ndisps]->name));
+
+					/* Create the X11 root atom of the default screen */
+					/* that may contain the associated ICC profile. */
+					if (jj == 0)
+						strcpy(desc1, "_ICC_PROFILE");
+					else
+						sprintf(desc1, "_ICC_PROFILE_%d",disps[ndisps]->uscreen);
+
+					if ((disps[ndisps]->icc_atom = XInternAtom(mydisplay, desc1, False)) == None)
+						error("Unable to intern atom '%s'",desc1);
+
+					debugrr2((errout,"Root atom '%s'\n",desc1));
+
+					/* Create the atom of the output that may contain the associated ICC profile */
+					if ((disps[ndisps]->icc_out_atom = XInternAtom(mydisplay, "_ICC_PROFILE", False)) == None)
+						error("Unable to intern atom '%s'","_ICC_PROFILE");
 		
-					jj++;			/* Next enabled index */
+					/* Grab the EDID from the output */
+					{
+						Atom edid_atom, ret_type;
+						int ret_format;
+						long ret_len = 0, ret_togo;
+						unsigned char *atomv = NULL;
+						int ii;
+						char *keys[] = {		/* Possible keys that may be used */
+							"EDID_DATA",
+							"EDID",
+							""
+						};
+
+						/* Try each key in turn */
+						for (ii = 0; keys[ii][0] != '\000'; ii++) {
+							/* Get the atom for the EDID data */
+							if ((edid_atom = XInternAtom(mydisplay, keys[ii], True)) == None) {
+								// debugrr2((errout, "Unable to intern atom '%s'\n",keys[ii]));
+								/* Try the next key */
+
+							/* Get the EDID_DATA */
+							} else {
+								if (XRRGetOutputProperty(mydisplay, crtci->outputs[xk], edid_atom,
+								            0, 0x7ffffff, False, False, XA_INTEGER, 
+   		                            &ret_type, &ret_format, &ret_len, &ret_togo, &atomv) == Success
+							            && (ret_len == 128 || ret_len == 256)) {
+									if ((disps[ndisps]->edid = malloc(sizeof(unsigned char) * ret_len)) == NULL) {
+										debugrr("get_displays failed on malloc\n");
+										XRRFreeCrtcInfo(crtci);
+										if (outi != NULL && outi != outi0)
+											XRRFreeOutputInfo(outi);
+										if (outi0 != NULL)
+											XRRFreeOutputInfo(outi0);
+										XRRFreeScreenResources(scrnres);
+										XCloseDisplay(mydisplay);
+										free_disppaths(disps);
+										return NULL;
+									}
+									memmove(disps[ndisps]->edid, atomv, ret_len);
+									disps[ndisps]->edid_len = ret_len;
+									XFree(atomv);
+									debugrr2((errout, "Got EDID for display\n"));
+									break;
+								}
+								/* Try the next key */
+							}
+						}
+						if (keys[ii][0] == '\000')
+							debugrr2((errout, "Failed to get EDID for display\n"));
+					}
 					ndisps++;		/* Now it's number of displays */
-					XRRFreeCrtcInfo(crtci);
+
+				  next_output:;
+					if (outi != NULL && outi != outi0)
+						XRRFreeOutputInfo(outi);
+					if (has_primary && xj == pix && k == 0)
+						xk = -1;			/* Go to first output */
 				}
-				XRRFreeOutputInfo(outi);
+			  next_screen:;
+				if (outi0 != NULL)
+					XRRFreeOutputInfo(outi0);
+				XRRFreeCrtcInfo(crtci);
+				jj++;			/* Next Xinerama screen index */
+				if (has_primary && j == 0)
+					xj = -1;			/* Go to first screen */
 			}
-	
 			XRRFreeScreenResources(scrnres);
 		}
+      done_xrandr:;
 		XSetErrorHandler(NULL);
-		defsix = DefaultScreen(mydisplay);
 	}
 #endif /* randr >= V 1.2 */
 
 	if (disps == NULL) {	/* Use Older style identification */
-		debugrr("get_displays checking for Xinerama\n");
 
 		if (XSetErrorHandler(null_error_handler) == 0) {
 			debugrr("get_displays failed on XSetErrorHandler\n");
@@ -703,7 +911,8 @@ disppath **get_displays() {
 			return NULL;
 		}
 
-		if (XineramaQueryExtension(mydisplay, &evb, &erb) != 0
+		if (getenv("ARGYLL_IGNORE_XINERAMA") == NULL
+		 && XineramaQueryExtension(mydisplay, &evb, &erb) != 0
 		 && XineramaIsActive(mydisplay)) {
 
 			xai = XineramaQueryScreens(mydisplay, &dcount);
@@ -713,10 +922,10 @@ disppath **get_displays() {
 				XCloseDisplay(mydisplay);
 				return NULL;
 			}
-			defsix = 0;
+			debugrr2((errout,"get_displays using %d Xinerama Screens\n",dcount));
 		} else {
 			dcount = ScreenCount(mydisplay);
-			defsix = DefaultScreen(mydisplay);
+			debugrr2((errout,"get_displays using %d X11 Screens\n",dcount));
 		}
 
 		/* Allocate our list */
@@ -743,7 +952,10 @@ disppath **get_displays() {
 			/* Form the display name */
 			if ((pp = strrchr(dnbuf, ':')) != NULL) {
 				if ((pp = strchr(pp, '.')) != NULL) {
-					sprintf(pp,".%d",i);
+					if (xai != NULL)					/* Xinerama */
+						sprintf(pp,".%d",0);
+					else
+						sprintf(pp,".%d",i);
 				}
 			}
 			if ((disps[i]->name = strdup(dnbuf)) == NULL) {
@@ -755,14 +967,15 @@ disppath **get_displays() {
 	
 			debugrr2((errout, "Display %d name = '%s'\n",i,disps[i]->name));
 			if (xai != NULL) {					/* Xinerama */
-				disps[i]->screen = 0;			/* We are asuming Xinerame creates a single virtual screen */
-				disps[i]->uscreen = i;			/* We are assuming xinerama lists screens in the same order */
+				/* xai[i].screen_number should be == i */
+				disps[i]->screen = 0;			/* Assume Xinerame creates a single virtual X11 screen */
+				disps[i]->uscreen = i;			/* Underlying Xinerma screen */
 				disps[i]->rscreen = i;
 				disps[i]->sx = xai[i].x_org;
 				disps[i]->sy = xai[i].y_org;
 				disps[i]->sw = xai[i].width;
 				disps[i]->sh = xai[i].height;
-			} else {
+			} else {							/* Plain X11 Screens */
 				disps[i]->screen = i;
 				disps[i]->uscreen = i;
 				disps[i]->rscreen = i;
@@ -770,6 +983,58 @@ disppath **get_displays() {
 				disps[i]->sy = 0;
 				disps[i]->sw = DisplayWidth(mydisplay, disps[i]->screen);
 				disps[i]->sh = DisplayHeight(mydisplay, disps[i]->screen);
+			}
+
+			/* Create the X11 root atom of the default screen */
+			/* that may contain the associated ICC profile */
+			if (disps[i]->uscreen == 0)
+				strcpy(desc1, "_ICC_PROFILE");
+			else
+				sprintf(desc1, "_ICC_PROFILE_%d",disps[i]->uscreen);
+
+			if ((disps[i]->icc_atom = XInternAtom(mydisplay, desc1, False)) == None)
+				error("Unable to intern atom '%s'",desc1);
+
+			/* See if we can locate the EDID of the monitor for this screen */
+			for (j = 0; j < 2; j++) { 
+				char edid_name[50];
+				Atom edid_atom, ret_type;
+				int ret_format = 8;
+				long ret_len, ret_togo;
+				unsigned char *atomv = NULL;
+
+				if (disps[i]->uscreen == 0) {
+					if (j == 0)
+						strcpy(edid_name,"XFree86_DDC_EDID1_RAWDATA");
+					else
+						strcpy(edid_name,"XFree86_DDC_EDID2_RAWDATA");
+				} else {
+					if (j == 0)
+						sprintf(edid_name,"XFree86_DDC_EDID1_RAWDATA_%d",disps[i]->uscreen);
+					else
+						sprintf(edid_name,"XFree86_DDC_EDID2_RAWDATA_%d",disps[i]->uscreen);
+				}
+
+				if ((edid_atom = XInternAtom(mydisplay, edid_name, True)) == None)
+					continue;
+				if (XGetWindowProperty(mydisplay, RootWindow(mydisplay, disps[i]->uscreen), edid_atom,
+				            0, 0x7ffffff, False, XA_INTEGER, 
+				            &ret_type, &ret_format, &ret_len, &ret_togo, &atomv) == Success
+				            && (ret_len == 128 || ret_len == 256)) {
+					if ((disps[i]->edid = malloc(sizeof(unsigned char) * ret_len)) == NULL) {
+						debugrr("get_displays failed on malloc\n");
+						free_disppaths(disps);
+						XCloseDisplay(mydisplay);
+						return NULL;
+					}
+					memmove(disps[i]->edid, atomv, ret_len);
+					disps[i]->edid_len = ret_len;
+					XFree(atomv);
+					debugrr2((errout, "Got EDID for display\n"));
+					break;
+				} else {
+					debugrr2((errout, "Failed to get EDID for display\n"));
+				}
 			}
 
 			if (XF86VidModeQueryExtension(mydisplay, &evb, &erb) != 0) {
@@ -780,9 +1045,9 @@ disppath **get_displays() {
 				 && monitor.model != NULL && monitor.model[0] != '\000')
 					sprintf(desc1, "%s",monitor.model);
 				else
-					sprintf(desc1,"Screen %d",i+1);
+					sprintf(desc1,"Monitor %d",i+1);
 			} else
-				sprintf(desc1,"Screen %d",i+1);
+				sprintf(desc1,"Monitor %d",i+1);
 
 			sprintf(desc2,"%s at %d, %d, width %d, height %d",desc1,
 		        disps[i]->sx, disps[i]->sy, disps[i]->sw, disps[i]->sh);
@@ -794,14 +1059,15 @@ disppath **get_displays() {
 			}
 		}
 		XSetErrorHandler(NULL);
-	}
 
-	/* Put the screen given by the display name at the top */
-	{
-		disppath *tdispp;
-		tdispp = disps[defsix];
-		disps[defsix] = disps[0];
-		disps[0] = tdispp;
+		/* Put the default Screen the top of the list */
+		if (xai == NULL) {
+			int defsix = DefaultScreen(mydisplay);
+			disppath *tdispp;
+			tdispp = disps[defsix];
+			disps[defsix] = disps[0];
+			disps[0] = tdispp;
+		}
 	}
 
 	if (xai != NULL)
@@ -816,16 +1082,6 @@ disppath **get_displays() {
 
 // END get_displays
 
-void free_a_disppath(disppath *path) {
-	if (path != NULL) {
-		if (path->name != NULL)
-			free(path->name);
-		if (path->description != NULL)
-			free(path->description);
-		free(path);
-	}
-}
-
 /* Free a whole list of display paths */
 void free_disppaths(disppath **disps) {
 	if (disps != NULL) {
@@ -838,6 +1094,10 @@ void free_disppaths(disppath **disps) {
 				free(disps[i]->name);
 			if (disps[i]->description != NULL)
 				free(disps[i]->description);
+#if defined(UNIX) && !defined(__APPLE__)
+			if (disps[i]->edid != NULL)
+				free(disps[i]->edid);
+#endif
 			free(disps[i]);
 		}
 		free(disps);
@@ -846,9 +1106,15 @@ void free_disppaths(disppath **disps) {
 
 // START get_a_display
 
+/* ----------------------------------------------- */
+/* Deal with selecting a display */
+
+/* Return the given display given its index 0..n-1 */
 disppath *get_a_display(int ix) {
 	disppath **paths, *rv = NULL;
 	int i;
+
+	debugrr2((errout, "get_a_display called with ix %d\n",ix));
 
 	if ((paths = get_displays()) == NULL)
 		return NULL;
@@ -858,8 +1124,9 @@ disppath *get_a_display(int ix) {
 			free_disppaths(paths);
 			return NULL;
 		}
-		if (i == ix)
+		if (i == ix) {
 			break;
+		}
 	}
 	if ((rv = malloc(sizeof(disppath))) == NULL) {
 		debugrr("get_a_display failed malloc\n");
@@ -880,10 +1147,38 @@ disppath *get_a_display(int ix) {
 		free_disppaths(paths);
 		return NULL;
 	}
+#if defined(UNIX) && !defined(__APPLE__)
+	if (paths[i]->edid != NULL) {
+		if ((rv->edid = malloc(sizeof(unsigned char) * paths[i]->edid_len)) == NULL) {
+			debugrr("get_displays failed on malloc\n");
+			free(rv);
+			free_disppaths(paths);
+			return NULL;
+		}
+		rv->edid_len = paths[i]->edid_len;
+		memmove(rv->edid, paths[i]->edid, rv->edid_len );
+	}
+#endif
+	debugrr2((errout, " Selected ix %d '%s' %s'\n",i,rv->name,rv->description));
+
 	free_disppaths(paths);
 	return rv;
 }
 // END get_a_display
+
+void free_a_disppath(disppath *path) {
+	if (path != NULL) {
+		if (path->name != NULL)
+			free(path->name);
+		if (path->description != NULL)
+			free(path->description);
+#if defined(UNIX) && !defined(__APPLE__)
+		if (path->edid != NULL)
+			free(path->edid);
+#endif
+		free(path);
+	}
+}
 
 // MAIN
 
@@ -891,9 +1186,8 @@ typedef struct {
 	int width_mm, height_mm;
 } size_mm;
 
-static size_mm get_real_screen_size_mm(int ix) {
+static size_mm get_real_screen_size_mm_disp(disppath *disp) {
 	size_mm size;
-	disppath *disp = NULL;
 #ifdef NT
 	HDC hdc = NULL;
 #endif
@@ -909,14 +1203,11 @@ static size_mm get_real_screen_size_mm(int ix) {
 	size.width_mm = 0;
 	size.height_mm = 0;
 
-	disp = get_a_display(ix);
-
 	if (disp == NULL) return size;
 
 #ifdef NT
 	hdc = CreateDC(disp->name, NULL, NULL, NULL);
 	if (hdc == NULL) {
-		free_a_disppath(disp);
 		return size;
 	}
 	size.width_mm = GetDeviceCaps(hdc, HORZSIZE);
@@ -931,7 +1222,6 @@ static size_mm get_real_screen_size_mm(int ix) {
 #if defined(UNIX) && !defined(__APPLE__)
 	/* Create the base display name (in case of Xinerama, XRandR) */
 	if ((bname = strdup(disp->name)) == NULL) {
-		free_a_disppath(disp);
 		return size;
 	}
 	if ((pp = strrchr(bname, ':')) != NULL) {
@@ -945,7 +1235,6 @@ static size_mm get_real_screen_size_mm(int ix) {
 	if(!mydisplay) {
 		debugr2((errout,"Unable to open display '%s'\n",bname));
 		free(bname);
-		free_a_disppath(disp);
 		return size;
 	}
 	free(bname);
@@ -959,7 +1248,19 @@ static size_mm get_real_screen_size_mm(int ix) {
 	XCloseDisplay(mydisplay);
 #endif
 
+	return size;
+}
+
+static size_mm get_real_screen_size_mm(int ix) {
+	size_mm size;
+	disppath *disp = NULL;
+
+	disp = get_a_display(ix);
+	
+	size = get_real_screen_size_mm_disp(disp);
+
 	free_a_disppath(disp);
+
 	return size;
 }
 
@@ -979,6 +1280,88 @@ static int get_xrandr_output_xid(int ix) {
 #endif
 
 	return xid;
+}
+
+static PyObject *
+enumerate_displays(PyObject *self, PyObject *args)
+{
+	PyObject *l = PyList_New(0);
+	disppath **dp;
+
+	dp = get_displays();
+
+	if (dp != NULL && dp[0] != NULL) {
+		PyObject* value;
+		size_mm size;
+		int i;
+		for (i = 0; ; i++) {
+			if (dp[i] == NULL)
+				break;
+
+			PyObject *d = PyDict_New();
+
+			value = PyString_FromString(dp[i]->name);
+			PyDict_SetItemString(d, "name", value);
+
+			value = PyString_FromString(dp[i]->description);
+			PyDict_SetItemString(d, "description", value);
+
+			value = Py_BuildValue("(i,i)", dp[i]->sx, dp[i]->sy);
+			PyDict_SetItemString(d, "pos", value);
+
+			value = Py_BuildValue("(i,i)", dp[i]->sw, dp[i]->sh);
+			PyDict_SetItemString(d, "size", value);
+			
+			size = get_real_screen_size_mm_disp(dp[i]);
+			value = Py_BuildValue("(i,i)", size.width_mm, size.height_mm);
+			PyDict_SetItemString(d, "size_mm", value);
+
+#ifdef NT
+			value = PyString_FromString(dp[i]->monid);
+			PyDict_SetItemString(d, "DeviceID", value);
+
+			value = PyBool_FromLong(dp[i]->prim);
+			PyDict_SetItemString(d, "is_primary", value);
+#endif /* NT */
+
+#ifdef __APPLE__
+			//value = PyInt_FromLong(dp[i]->ddid);
+			//PyDict_SetItemString(d, "CGDirectDisplayID", value);
+#endif /* __APPLE__ */
+
+#if defined(UNIX) && !defined(__APPLE__)
+			value = PyInt_FromLong(dp[i]->screen);
+			PyDict_SetItemString(d, "x11_screen", value);
+
+			value = PyInt_FromLong(dp[i]->uscreen);
+			PyDict_SetItemString(d, "screen", value);
+
+			value = PyInt_FromLong(dp[i]->rscreen);
+			PyDict_SetItemString(d, "ramdac_screen", value);
+
+			//value = PyInt_FromLong(dp[i]->icc_atom);
+			//PyDict_SetItemString(d, "icc_profile", value);
+
+			value = PyString_FromString(dp[i]->edid);
+			PyDict_SetItemString(d, "edid", value);
+#if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
+			//value = PyInt_FromLong(dp[i]->crtc);
+			//PyDict_SetItemString(d, "xrandr_crtc", value);
+
+			value = PyInt_FromLong(dp[i]->output);
+			PyDict_SetItemString(d, "xrandr_output", value);
+
+			//value = PyInt_FromLong(dp[i]->icc_out_atom);
+			//PyDict_SetItemString(d, "xrandr_icc_profile", dp[i]->value);
+#endif /* randr >= V 1.2 */
+#endif /* UNIX */
+
+			PyList_Append(l, d);
+		}
+	}
+	free_disppaths(dp);
+	
+    return l;
 }
 
 static PyObject *
@@ -1008,6 +1391,7 @@ GetXRandROutputXID(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef RealDisplaySizeMM_methods[] = {
+	{"enumerate_displays", enumerate_displays, METH_NOARGS, "Enumerate and return a list of displays."},
 	{"RealDisplaySizeMM", RealDisplaySizeMM, METH_VARARGS, "RealDisplaySizeMM(int displayNum)\nReturn the size (in mm) of a given display."},
 	{"GetXRandROutputXID", GetXRandROutputXID, METH_VARARGS, "GetXRandROutputXID(int displayNum)\nReturn the XRandR output X11 ID of a given display."},
 	{NULL, NULL, 0, NULL}  /* Sentinel - marks the end of this structure */
