@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import platform
+import re
 import sys
 
 from util_x import get_display as _get_x_display
