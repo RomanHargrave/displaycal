@@ -1360,7 +1360,7 @@ enumerate_displays(PyObject *self, PyObject *args)
 			PyDict_SetItemString(d, "output", value);
 
 			value = PyInt_FromLong(dp[i]->icc_out_atom);
-			PyDict_SetItemString(d, "icc_profile_output_atom_id", dp[i]->value);
+			PyDict_SetItemString(d, "icc_profile_output_atom_id", value);
 #endif /* randr >= V 1.2 */
 #endif /* UNIX */
 
