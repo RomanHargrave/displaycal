@@ -4159,11 +4159,6 @@ END_DATA
 						if isinstance(exception, EnvironmentError):
 							safe_print(exception)
 						edid = {}
-					if sys.platform not in ("darwin", "win32"):
-						# Fall back to XrandR name if available
-						xrandr_name = xrandr_names.get(i)
-						if xrandr_name:
-							edid = {"monitor_name": xrandr_name}
 					self.display_edid.append(edid)
 					if edid:
 						manufacturer = edid.get("manufacturer", "").split()
