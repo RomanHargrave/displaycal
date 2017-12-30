@@ -2036,7 +2036,9 @@ class BaseInteractiveDialog(wx.Dialog):
 			window = topwindow
 		else:
 			window = self.Parent or self
-		if ((not app.IsActive() or (self.Parent and not topwindow_shown)) and
+		# Only request user attention if toplevel window has a non-empty title
+		if ((not app.IsActive() or (self.Parent and not topwindow_shown and
+									getattr(topwindow, "Title", ""))) and
 			hasattr(window, "RequestUserAttention")):
 			window.RequestUserAttention()
 			if window != self:
