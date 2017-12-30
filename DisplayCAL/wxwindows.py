@@ -1971,7 +1971,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.sizer0.Add(self.buttonpanel, flag=wx.EXPAND)
 
 		if bitmap_margin:
-			flags = wx.RIGHT | wx.LEFT | wx.TOP
+			flags = wx.LEFT | wx.TOP
 		else:
 			flags = 0
 		if bitmap:
@@ -1991,7 +1991,7 @@ class BaseInteractiveDialog(wx.Dialog):
 					if not isinstance(self.Parent, ProgressDialog):
 						self.taskbar.set_progress_value(self.taskbar.maxv)
 
-		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT | wx.TOP, border=margin)
+		self.sizer1.Add(self.sizer3, flag=wx.ALIGN_LEFT | flags | wx.TOP, border=margin)
 		msg = msg.replace("&", "&&")
 		self.message = wx.StaticText(self, -1, msg if nowrap else
 											   util_str.wrap(msg, wrap))
