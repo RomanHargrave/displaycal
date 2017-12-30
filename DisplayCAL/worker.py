@@ -12283,9 +12283,10 @@ BEGIN_DATA
 			except ImportError:
 				pass
 			else:
-				cafile = ssl.get_default_verify_paths().cafile
-				if cafile:
-					safe_print("Using CA file", cafile)
+				if hasattr(ssl, "get_default_verify_paths"):
+					cafile = ssl.get_default_verify_paths().cafile
+					if cafile:
+						safe_print("Using CA file", cafile)
 			components = urlparse.urlparse(uri)
 			safe_print(lang.getstr("connecting.to",
 								   (components.hostname,
