@@ -1135,6 +1135,7 @@ class LUT3DFrame(BaseFrame):
 							setattr(self, "input_profile", profile)
 							if not self.set_profile("output", silent=silent):
 								self.update_linking_controls()
+								self.lut3d_trc_apply_ctrl_handler()
 						elif which == "output":
 							if (not hasattr(self, which + "_profile") or
 								getcfg("3dlut.%s.profile" % which) !=
