@@ -3,9 +3,10 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 
 - Update to ${VERSION}:
   * Critical: Prevent bad clipping in case of non-monotonic device response
+  * Fix consistency of device to profile mapping accross external APIs
+    (this fix is required to match how ArgyllCMS 2.0 enumerates displays)
   * HDR improvements
   * Added simplified chinese translation
-  * Improve consistency of device to profile mapping accross external APIs
   * See README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
