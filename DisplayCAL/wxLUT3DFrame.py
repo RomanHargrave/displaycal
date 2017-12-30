@@ -754,31 +754,6 @@ class LUT3DFrame(BaseFrame):
 											 "${WIDTH}": str(clut_size ** 2),
 											 "${HEIGHT}": str(clut_size),
 											 "${FORMAT}": "RGBA%i" % getcfg("3dlut.bitdepth.output")})
-							reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
-							# Adjust path for correct installation if ReShade.fx
-							# is a symlink.
-							if islink(reshade_fx_path):
-								reshade_fx_path = readlink(reshade_fx_path)
-								dst_dir = os.path.dirname(reshade_fx_path)
-								path = os.path.join(dst_dir,
-													os.path.basename(path))
-								dst_paths = [path]
-							if os.path.isfile(reshade_fx_path):
-								# Alter existing ReShade.fx
-								with open(reshade_fx_path, "rb") as reshade_fx_file:
-									reshade_fx = reshade_fx_file.read()
-								# Remove existing shader include
-								reshade_fx = re.sub(r'[ \t]*//\s*Automatically\s+\S+\s+by\s+%s\s+.+[ \t]*\r?\n?' %
-													appname, "", reshade_fx)
-								reshade_fx = re.sub(r'[ \t]*#include\s+"ColorLookupTable.fx"[ \t]*\r?\n?',
-												    "", reshade_fx).rstrip("\r\n")
-							else:
-								reshade_fx = ""
-							if reshade_fx:
-								reshade_fx += "%s// Automatically added by %s %s%s" % (os.linesep * 2, appname, version, os.linesep)
-							else:
-								reshade_fx = "// Automatically created by %s %s%s" % (appname, version, os.linesep)
-							reshade_fx += '#include "ColorLookupTable.fx"' + os.linesep
 							reshade_shaders = os.path.join(dst_dir,
 														   "reshade-shaders")
 							if os.path.isdir(reshade_shaders):
@@ -789,9 +764,30 @@ class LUT3DFrame(BaseFrame):
 								dst_dir = os.path.join(reshade_shaders,
 													   "Shaders")
 							else:
-								# ReShade < 3.0 or no default shaders installed
-								with open(reshade_fx_path, "wb") as reshade_fx_file:
-									reshade_fx_file.write(reshade_fx)
+								reshade_fx_path = os.path.join(dst_dir, "ReShade.fx")
+								# Adjust path for correct installation if ReShade.fx
+								# is a symlink.
+								if islink(reshade_fx_path):
+									# ReShade < 3.0
+									reshade_fx_path = readlink(reshade_fx_path)
+									dst_dir = os.path.dirname(reshade_fx_path)
+									path = os.path.join(dst_dir,
+														os.path.basename(path))
+									dst_paths = [path]
+								if os.path.isfile(reshade_fx_path):
+									# ReShade < 3.0
+									# Alter existing ReShade.fx
+									with open(reshade_fx_path, "rb") as reshade_fx_file:
+										reshade_fx = reshade_fx_file.read()
+									# Remove existing shader include
+									reshade_fx = re.sub(r'[ \t]*//\s*Automatically\s+\S+\s+by\s+%s\s+.+[ \t]*\r?\n?' %
+														appname, "", reshade_fx)
+									reshade_fx = re.sub(r'[ \t]*#include\s+"ColorLookupTable.fx"[ \t]*\r?\n?',
+														"", reshade_fx).rstrip("\r\n")
+									reshade_fx += "%s// Automatically added by %s %s%s" % (os.linesep * 2, appname, version, os.linesep)
+									reshade_fx += '#include "ColorLookupTable.fx"' + os.linesep
+									with open(reshade_fx_path, "wb") as reshade_fx_file:
+										reshade_fx_file.write(reshade_fx)
 							clut_fx_path = os.path.join(dst_dir,
 														"ColorLookupTable.fx")
 							with open(clut_fx_path, "wb") as clut_fx_file:
