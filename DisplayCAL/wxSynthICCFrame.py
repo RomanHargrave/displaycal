@@ -370,6 +370,7 @@ class SynthICCFrame(BaseFrame):
 	def luminance_ctrl_handler(self, event):
 		v = self.luminance_ctrl.GetValue()
 		setcfg("synthprofile.luminance", v)
+		self.lut3d_set_option("3dlut.hdr_peak_luminance", v)
 		self.black_luminance_ctrl_handler(event)
 	
 	def parse_XYZ(self, name, set_blackpoint=False):
@@ -907,6 +908,7 @@ class SynthICCFrame(BaseFrame):
 		self.black_output_offset_intctrl.SetValue(outoffset)
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
 		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
+		setcfg("3dlut.hdr_peak_luminance", getcfg("synthprofile.luminance"))
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
 		self.lut3d_hdr_update_system_gamma()
