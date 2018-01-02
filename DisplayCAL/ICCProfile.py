@@ -799,7 +799,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	# Apply a slight power to segments to optimize encoding
 	nextpow = eotf(eetf(encf(segment)))
 	prevv = 0
-	pprevpow = 0
+	pprevpow = [0]
 	clipped = False
 	xp = []
 	if generate_B2A:
@@ -811,12 +811,13 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			prevpow = nextpow
 			# Apply a slight power to segments to optimize encoding
 			nextpow = eotf(eetf(encf(iv + segment)))
-		if nextpow > prevpow:
+		if nextpow > prevpow or "--input-curve-clipping" in sys.argv[1:]:
 			prevs = 1.0 - (v - iv) / segment
 			nexts = (v - iv) / segment
 			vv = (prevs * prevpow + nexts * nextpow)
 			prevv = v
-			pprevpow = prevpow
+			if prevpow > pprevpow[-1]:
+				pprevpow.append(prevpow)
 		else:
 			clipped = True
 			# Linearly interpolate
@@ -860,8 +861,16 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		endperc = 1
 	else:
 		endperc = 2
-	threshold = eotf_inverse(pprevpow)
+	threshold = eotf_inverse(pprevpow[-2])
 	k = None
+	end = eotf_inverse(pprevpow[-1])
+	l = entries - 1
+	if end > threshold:
+		for j in xrange(entries):
+			n = j / (entries - 1.0)
+			if eetf(n) > end:
+				l = j - 1
+				break
 	for j in xrange(entries):
 		if worker and worker.thread_abort:
 			if forward_xicclu:
@@ -878,13 +887,15 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			check = eetf(n + (1 / (entries - 1.0))) > threshold
 		elif hdr_format == "HLG":
 			check = maxsignal < 1 and n >= maxsignal
-		if check:
+		if check and not "--input-curve-clipping" in sys.argv[1:]:
 			# Linear interpolate shaper for last n cLUT steps to prevent
 			# clipping in shaper
 			if k is None:
 				k = j
 				ov = v
-			v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
+				ev = interp(eetf(l / (entries - 1.0))) / maxstep
+			##v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
+			v = min(colormath.convert_range(j, k, l, ov, ev), n)
 		for i in xrange(3):
 			itable.input[i].append(v * 65535)
 		perc = math.floor(n * endperc)
