@@ -126,6 +126,8 @@ class MeasureFrame(InvincibleFrame):
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
 		self.Bind(wx.EVT_MOVE, self.move_handler, self)
+		self.Bind(wx.EVT_SHOW, self.show_handler)
+		self.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_SET_FOCUS, self.focus_handler)
 		self.panel = wx.Panel(self, -1)
 		self.sizer = wx.GridSizer(3, 1, 0, 0)
@@ -136,43 +138,53 @@ class MeasureFrame(InvincibleFrame):
 										 wx.ALIGN_TOP, border=10)
 
 		self.zoommaxbutton = BitmapButton(self.panel, -1, 
-										  geticon(32, "zoom-best-fit"), 
-										  style=wx.NO_BORDER)
+										  geticon(16, "zoom-best-fit"), 
+										  style=wx.NO_BORDER,
+										  name="zoommaxbutton")
+		self.zoommaxbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoommax_handler, self.zoommaxbutton)
 		self.hsizer.Add(self.zoommaxbutton, flag=wx.ALIGN_CENTER)
 		self.zoommaxbutton.SetToolTipString(lang.getstr("measureframe.zoommax"))
 
-		self.hsizer.Add((2, 1))
+		self.hsizer.Add((8, 1))
 
 		self.zoominbutton = BitmapButton(self.panel, -1, 
-										 geticon(32, "zoom-in"), 
-										 style=wx.NO_BORDER)
+										 geticon(16, "zoom-in"), 
+										 style=wx.NO_BORDER,
+										 name="zoominbutton")
+		self.zoominbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoomin_handler, self.zoominbutton)
 		self.hsizer.Add(self.zoominbutton, flag=wx.ALIGN_CENTER)
 		self.zoominbutton.SetToolTipString(lang.getstr("measureframe.zoomin"))
 
-		self.hsizer.Add((2, 1))
+		self.hsizer.Add((8, 1))
 
 		self.zoomnormalbutton = BitmapButton(self.panel, -1, 
-											 geticon(32, "zoom-original"), 
-											 style=wx.NO_BORDER)
+											 geticon(16, "zoom-original"), 
+											 style=wx.NO_BORDER,
+											 name="zoomnormalbutton")
+		self.zoomnormalbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoomnormal_handler, self.zoomnormalbutton)
 		self.hsizer.Add(self.zoomnormalbutton, flag=wx.ALIGN_CENTER)
 		self.zoomnormalbutton.SetToolTipString(lang.getstr("measureframe."
 														   "zoomnormal"))
 
-		self.hsizer.Add((2, 1))
+		self.hsizer.Add((8, 1))
 
 		self.zoomoutbutton = BitmapButton(self.panel, -1, 
-										  geticon(32, "zoom-out"), 
-										  style=wx.NO_BORDER)
+										  geticon(16, "zoom-out"), 
+										  style=wx.NO_BORDER,
+										  name="zoomoutbutton")
+		self.zoomoutbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoomout_handler, self.zoomoutbutton)
 		self.hsizer.Add(self.zoomoutbutton, flag=wx.ALIGN_CENTER)
 		self.zoomoutbutton.SetToolTipString(lang.getstr("measureframe.zoomout"))
 
 		self.centerbutton = BitmapButton(self.panel, -1, 
-										 geticon(32, "window-center"), 
-										 style=wx.NO_BORDER)
+										 geticon(16, "window-center"), 
+										 style=wx.NO_BORDER,
+										 name="centerbutton")
+		self.centerbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.center_handler, self.centerbutton)
 		self.sizer.Add(self.centerbutton, flag=wx.ALIGN_CENTER | wx.LEFT | 
 											   wx.RIGHT, border=10)
@@ -186,6 +198,8 @@ class MeasureFrame(InvincibleFrame):
 			lang.getstr("measure.darken_background"))
 		self.measure_darken_background_cb.SetValue(
 			bool(int(getcfg("measure.darken_background"))))
+		self.measure_darken_background_cb.Bind(wx.EVT_KILL_FOCUS,
+											   self.focus_lost_handler)
 		self.Bind(wx.EVT_CHECKBOX, self.measure_darken_background_ctrl_handler, 
 				  id=self.measure_darken_background_cb.GetId())
 		self.vsizer.Add(self.measure_darken_background_cb, 
@@ -193,14 +207,15 @@ class MeasureFrame(InvincibleFrame):
 							 wx.LEFT | wx.RIGHT | wx.TOP, border=10)
 
 		self.measurebutton = wx.Button(self.panel, -1, 
-			lang.getstr("measureframe.measurebutton"))
+			lang.getstr("measureframe.measurebutton"), name="measurebutton")
+		self.measurebutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.measure_handler, self.measurebutton)
 		self.vsizer.Add(self.measurebutton, flag=wx.ALIGN_BOTTOM | 
 												 wx.ALIGN_CENTER_HORIZONTAL | 
 												 wx.ALL, border=10)
 		self.measurebutton.SetMaxFontSize(11)
 		self.measurebutton.SetDefault()
-		self.measurebutton.SetFocus()
+		self.last_focused = self.measurebutton
 
 		self.display_no = wx.Display.GetFromWindow(self)
 		self.display_rects = get_display_rects()
@@ -475,9 +490,27 @@ class MeasureFrame(InvincibleFrame):
 
 	def focus_handler(self, e):
 		e.Skip()
-		if e.EventObject == self:
-			# Need to give focus to the panel so controls can gain focus
-			self.panel.SetFocus()
+		if debug:
+			safe_print("SET_FOCUS", e.EventObject.Name)
+		if e.EventObject is self and getattr(self, "last_focused",
+											 None) not in (None, self):
+			self.last_focused.SetFocus()
+			if debug:
+				safe_print(self.last_focused.Name + ".SetFocus()")
+
+	def focus_lost_handler(self, e):
+		e.Skip()
+		if debug:
+			safe_print("KILL_FOCUS", e.EventObject.Name)
+		if e.EventObject is not self:
+			self.last_focused = e.EventObject
+			if debug and self.last_focused:
+				safe_print("last_focused", self.last_focused.Name)
+
+	def show_handler(self, e):
+		e.Skip()
+		if getattr(e, "IsShown", getattr(e, "GetShow", bool))():
+			self.measurebutton.SetFocus()
 
 	def get_dimensions(self):
 		"""
