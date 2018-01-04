@@ -2857,7 +2857,7 @@ class BorderGradientButton(GradientButton):
 		self._bitmapfocus = self._bitmap
 		self._bitmaphover = self._bitmap
 		self._bitmapselected = self._bitmap
-		##set_bitmap_labels(self)
+		set_bitmap_labels(self, focus=False)
 		self._enabled = True
 
 	BitmapLabel = property(lambda self: self._bitmap,
@@ -2966,7 +2966,10 @@ class BorderGradientButton(GradientButton):
 
 		gc.SetBrush(brush)
 		if capture == self or self._mouseAction == HOVER:
-			bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+			if sys.platform == "win32":
+				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+			else:
+				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
 			if self._mouseAction != HOVER:
 				bordercolor = self.DarkColour(bordercolor, 75)
 		else:

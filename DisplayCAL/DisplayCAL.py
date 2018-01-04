@@ -2676,11 +2676,15 @@ class MainFrame(ReportFrame, BaseFrame):
 										 bitmap=geticon(16, "start"),
 										 label=btn.Label, name=btn.Name)
 			subst.SetBackgroundColour(btn.Parent.BackgroundColour)
-			subst.SetTopStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-			subst.SetTopEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))  # Not used
-			subst.SetBottomStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))  # Not used
-			subst.SetBottomEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-			subst.SetForegroundColour(wx.Colour(0, 0, 0))
+			if sys.platform == "win32":
+				subst.SetTopStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
+				subst.SetTopEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))  # Not used
+				subst.SetBottomStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))  # Not used
+				subst.SetBottomEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
+			else:
+				subst.SetTopStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+				subst.SetBottomEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+			subst.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT))
 			subst.SetPressedTopColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 			subst.SetPressedBottomColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 			setattr(self, btn_name, subst)
