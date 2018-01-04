@@ -5925,6 +5925,7 @@ while 1:
 						X, Y, Z = colormath.xyY2XYZ(*rgb_space[2 + i])
 						X, Y, Z = colormath.adapt(X, Y, Z, rgb_space[1])
 						rgb_space[2 + i] = colormath.XYZ2xyY(X, Y, Z)
+					rgb_space[1] = "D50"
 
 				extremes = []
 				skip = False
