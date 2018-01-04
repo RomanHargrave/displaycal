@@ -1584,15 +1584,14 @@ class MainFrame(ReportFrame, BaseFrame):
 		sizer = self.buttonpanel.ContainingSizer
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+
-			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
-			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
-			sizer.Insert(sizer.GetItemIndex(self.buttonpanel), separator,
-						 flag=wx.EXPAND)
-			##self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
-														   ##size=(-1, 15))
+			##separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+			##separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
+			##sizer.Insert(sizer.GetItemIndex(self.buttonpanel), separator,
+						 ##flag=wx.EXPAND)
 			self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
-														   size=(-1, 13 * scale))
+														   size=(-1, 15 * scale))
 			##bmp = getbitmap("theme/gradient", False)
+			bmp = getbitmap("theme/shadow-bordertop", False)
 			##if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
 				##bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
 				##image = bmp.ConvertToImage()
@@ -1602,12 +1601,13 @@ class MainFrame(ReportFrame, BaseFrame):
 						##databuffer[i] = chr(int(min(round(ord(byte) *
 														  ##(255.0 / 223.0)), 255)))
 				##bmp = image.ConvertToBitmap()
-				##self.buttonpanelheader.SetBitmap(bmp)
+			self.buttonpanelheader.SetBitmap(bmp)
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel),
 						 self.buttonpanelheader, flag=wx.EXPAND)
 			##bgcolor = self.buttonpanel.BackgroundColour
 			##self.buttonpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
 															 ##for v in bgcolor[:3]]))
+			self.buttonpanel.SetBackgroundColour(self.buttonpanel.BackgroundColour)
 			self.buttonpanelheader.SetBackgroundColour(self.buttonpanel.BackgroundColour)
 			self.buttonpanelheader.blend = True
 		
