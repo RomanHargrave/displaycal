@@ -37,6 +37,7 @@ from wx.lib.buttons import GenBitmapTextButton as _GenBitmapTextButton
 from wx.lib import platebtn
 from wx import xrc
 
+from colormath import convert_range
 from util_str import safe_str
 
 
@@ -711,15 +712,47 @@ def get_bitmap_disabled(bitmap):
 	return image.ConvertToBitmap()
 
 
-def get_bitmap_hover(bitmap):
+def get_bitmap_hover(bitmap, ctrl=None):
 	image = bitmap.ConvertToImage()
 	if image.HasMask() and not image.HasAlpha():
 		image.InitAlpha()
+	color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
+	if ctrl:
+		# Adjust hilight color by background color
+		bgcolor = ctrl.Parent.BackgroundColour
+		R = bgcolor[0] / 255.0
+		G = bgcolor[1] / 255.0
+		B = bgcolor[0] / 255.0
+		# Use Rec. 709 luma coefficients to determine luma
+		luma = .2126 * R + .7152 * G + .0722 * B
+		for i, v in enumerate(color):
+			color[i] = int(round(convert_range(v, 0, 255,
+											   255 - luma * 255,
+											   255)))
+	is_bw = image.IsBW()
 	databuffer = image.GetDataBuffer()
 	for i, byte in enumerate(databuffer):
-		if byte > "\0":
-			databuffer[i] = chr(int(round(min(ord(byte) * 1.15, 255))))
-	return image.ConvertToBitmap()
+		v = ord(byte)
+		if is_bw:
+			v = color[i % 3]
+		else:
+			v = int(round(min(v * 1.15, 255)))
+		databuffer[i] = chr(v)
+	if isinstance(ctrl, wx.BitmapButton):
+		# wx.BitmapButton draws the focus bitmap over the normal bitmap,
+		# leading to ugly aliased edges. Yuck. Prevent this by setting the
+		# background to the control's background color instead of transparent.
+		bmp = wx.EmptyBitmap(image.Width, image.Height)
+		dc = wx.MemoryDC()
+		dc.SelectObject(bmp)
+		dc.SetBrush(wx.Brush(bgcolor))
+		dc.SetPen(wx.Pen(bgcolor, width=0))
+		dc.DrawRectangle(0, 0, image.Width, image.Height)
+		dc.DrawBitmap(image.ConvertToBitmap(), 0, 0, True)
+		dc.SelectObject(wx.NullBitmap)
+	else:
+		bmp = image.ConvertToBitmap()
+	return bmp
 
 
 def get_bitmap_pressed(bitmap):
@@ -749,7 +782,7 @@ def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 	# Focus/Hover
 	if sys.platform != "darwin" and focus:
 		# wxMac applies hover state also to disabled buttons...
-		bmp = get_bitmap_hover(bitmap)
+		bmp = get_bitmap_hover(bitmap, btn)
 		btn.SetBitmapFocus(bmp)
 		if hasattr(btn, "SetBitmapCurrent"):
 			# Phoenix
@@ -1212,7 +1245,7 @@ class PlateButton(platebtn.PlateButton):
 		else:
 			bmp = self._bmp['disable']
 
-		xpos = 16
+		xpos = 12
 		if bmp is not None and bmp.IsOk():
 			bw, bh = bmp.GetSize()
 			ypos = (self.GetSize()[1] - bh) // 2
@@ -1268,7 +1301,7 @@ class PlateButton(platebtn.PlateButton):
 
 			self.__DrawHighlight(gc, width, height)
 			txt_x = self.__DrawBitmap(gc)
-			t_x = max((width - tw - (txt_x + 2)) // 2, txt_x + 2)
+			t_x = max((width - tw - (txt_x + 8)) // 2, txt_x + 8)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
@@ -1282,7 +1315,7 @@ class PlateButton(platebtn.PlateButton):
 		# Draw bitmap and text
 		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
 			txt_x = self.__DrawBitmap(gc)
-			t_x = max((width - tw - (txt_x + 2)) // 2, txt_x + 2)
+			t_x = max((width - tw - (txt_x + 8)) // 2, txt_x + 8)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
@@ -1317,6 +1350,174 @@ class PlateButton(platebtn.PlateButton):
 
 if not hasattr(PlateButton, "_SetState"):
 	PlateButton._SetState = PlateButton.SetState
+
+
+class TabButton(PlateButton):
+
+	def __init__(self, *args, **kwargs):
+		from config import get_default_dpi, getcfg
+		self.dpiscale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
+		PlateButton.__init__(self, *args, **kwargs)
+		self.Unbind(wx.EVT_PAINT)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+	def DoGetBestSize(self):
+		"""Calculate the best size of the button
+		
+		:return: :class:`Size`
+
+		"""
+		width = 0
+		height = 6 * self.dpiscale
+		if self.Label:
+			# NOTE: Should measure with a GraphicsContext to get right
+			#       size, but due to random segfaults on linux special
+			#       handling is done in the drawing instead...
+			lsize = self.GetFullTextExtent(self.Label)
+			width += lsize[0]
+			height += lsize[1]
+			
+		if self._bmp['enable'] is not None:
+			bsize = self._bmp['enable'].Size
+			width += (bsize[0] + 10 * self.dpiscale)
+			if height <= bsize[1]:
+				height = bsize[1] + 6 * self.dpiscale
+			else:
+				height += 3 * self.dpiscale
+		else:
+			width += 10 * self.dpiscale
+
+		if self._menu is not None or self._style & platebtn.PB_STYLE_DROPARROW:
+			width += 12 * self.dpiscale
+
+		height += 16 * self.dpiscale  # Tab hilite
+
+		best = wx.Size(width, height)
+		self.CacheBestSize(best)
+		return best
+
+	def OnPaint(self, evt):
+		self.__DrawButton()
+
+	def __DrawBitmap(self, gc):
+		"""Draw the bitmap if one has been set
+
+		:param GCDC `gc`: :class:`GCDC` to draw with
+		:return: x cordinate to draw text at
+
+		"""
+		if self.IsEnabled():
+			bmp = self._bmp['enable']
+		else:
+			bmp = self._bmp['disable']
+
+		xpos = 0
+		if bmp is not None and bmp.IsOk():
+			bw, bh = bmp.GetSize()
+			ypos = (self.GetSize()[1] - bh) // 2
+			ypos -= 8  # Tab hilite
+			gc.DrawBitmap(bmp, xpos, ypos, bmp.GetMask() != None)
+			return bw + xpos
+		else:
+			return xpos
+
+	def __DrawHighlight(self, gc, width, height):
+		"""Draw the main highlight/pressed state
+
+		:param GCDC `gc`: :class:`GCDC` to draw with
+		:param int `width`: width of highlight
+		:param int `height`: height of highlight
+
+		"""
+		if platebtn.PLATE_PRESSED in (self._state['pre'], self._state['cur']):
+			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+		else:
+			color = self._color['hlight']
+
+		if self._style & platebtn.PB_STYLE_SQUARE:
+			rad = 0
+		else:
+			rad = (height - 3) / 2
+
+		if self._style & platebtn.PB_STYLE_GRADIENT:
+			gc.SetBrush(wx.TRANSPARENT_BRUSH)
+			rgc = gc.GetGraphicsContext()
+			brush = rgc.CreateLinearGradientBrush(0, 1, 0, height,
+												  color, platebtn.AdjustAlpha(color, 55))
+			rgc.SetBrush(brush)
+		else:
+			gc.SetBrush(wx.Brush(color))
+
+		##gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, rad)
+		gc.DrawRectangle(0, height + 10 * self.dpiscale, width, 8 * self.dpiscale)
+
+	def __DrawButton(self):
+		"""Draw the button"""
+		# TODO using a buffered paintdc on windows with the nobg style
+		#      causes lots of weird drawing. So currently the use of a
+		#      buffered dc is dissabled for this style.
+		if platebtn.PB_STYLE_NOBG & self._style:
+			dc = wx.PaintDC(self)
+		else:
+			dc = wx.AutoBufferedPaintDCFactory(self)
+			dc.SetBackground(wx.Brush(self.Parent.BackgroundColour))
+			dc.Clear()
+
+		gc = wx.GCDC(dc)
+
+		# Setup
+		gc.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+		gc.SetBackgroundMode(wx.TRANSPARENT)
+
+		# Calc Object Positions
+		width, height = self.GetSize()
+		height -= 16  # Tab hilite
+		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
+		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
+		# TODO: Figure out why this is the case.
+		tw, th = self.GetTextExtent(self.Label)
+		txt_y = max((height - th) // 2, 1)
+		height += 16
+		height -= 16 * self.dpiscale  # Tab hilite
+
+		# The background needs some help to look transparent on
+		# on Gtk and Windows
+		if wx.Platform in ['__WXGTK__', '__WXMSW__']:
+			gc.SetBrush(self.GetBackgroundBrush(gc))
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			gc.DrawRectangle(0, 0, width, height)
+
+		gc.SetBrush(wx.TRANSPARENT_BRUSH)
+
+		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT and self.IsEnabled():
+			gc.SetTextForeground(self._color['htxt'])
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			self.__DrawHighlight(gc, width, height)
+
+		elif self._state['cur'] == platebtn.PLATE_PRESSED and self.IsEnabled():
+			gc.SetTextForeground(self._color['htxt'])
+
+			self.__DrawHighlight(gc, width, height)
+			txt_x = self.__DrawBitmap(gc)
+			t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
+					  txt_x + 8 * self.dpiscale)
+			gc.DrawText(self.Label, t_x, txt_y)
+			##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+
+		else:
+			if self.IsEnabled():
+				gc.SetTextForeground(self.GetForegroundColour())
+			else:
+				txt_c = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+				gc.SetTextForeground(txt_c)
+
+		# Draw bitmap and text
+		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
+			txt_x = self.__DrawBitmap(gc)
+			t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
+					  txt_x + 8 * self.dpiscale)
+			gc.DrawText(self.Label, t_x, txt_y)
+			##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
 
 class TempXmlResource(object):

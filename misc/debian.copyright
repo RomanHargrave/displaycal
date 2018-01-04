@@ -36,21 +36,13 @@ Files: ${APPNAME}/lib/agw/*
 Copyright: 2006-${YEAR}, Andrea Gavana <andrea.gavana@gmail.com>
 License: wxWindows
 
-Files: ${APPNAME}/theme/icons/16x16/3D.png ${APPNAME}/theme/icons/48x48/dialog-ok.png
+Files: ${APPNAME}/theme/icons/16x16/3D.png
 Copyright: 2007-${YEAR}, Daniel Foré <daniel@elementaryos.org>
 License: GPL-3+
 
-Files: ${APPNAME}/theme/icons/16x16/applications-system.png ${APPNAME}/theme/icons/16x16/camera-photo.png ${APPNAME}/theme/icons/16x16/dialog-information.png ${APPNAME}/theme/icons/16x16/dialog-warning.png ${APPNAME}/theme/icons/16x16/document-open.png ${APPNAME}/theme/icons/16x16/edit-delete.png ${APPNAME}/theme/icons/16x16/install.png ${APPNAME}/theme/icons/16x16/media-floppy.png ${APPNAME}/theme/icons/16x16/stock_3d-color-picker.png ${APPNAME}/theme/icons/16x16/stock_brightness.png ${APPNAME}/theme/icons/16x16/stock_contrast.png ${APPNAME}/theme/icons/16x16/stock_filters-pop-art.png ${APPNAME}/theme/icons/16x16/stock_lock.png ${APPNAME}/theme/icons/16x16/stock_lock-open.png ${APPNAME}/theme/icons/16x16/stock_refresh.png ${APPNAME}/theme/icons/16x16/web.png ${APPNAME}/theme/icons/32x32/dialog-error.png ${APPNAME}/theme/icons/32x32/dialog-information.png ${APPNAME}/theme/icons/32x32/dialog-question.png ${APPNAME}/theme/icons/32x32/dialog-warning.png ${APPNAME}/theme/icons/32x32/window-center.png ${APPNAME}/theme/icons/32x32/zoom-best-fit.png ${APPNAME}/theme/icons/32x32/zoom-in.png ${APPNAME}/theme/icons/32x32/zoom-original.png ${APPNAME}/theme/icons/32x32/zoom-out.png ${APPNAME}/theme/icons/256x256/document-open.png
-Copyright: 2008-${YEAR}, GNOME icon theme 2.18 authors
-License: GPL-2+
-
-Files: ${APPNAME}/theme/icons/16x16/camera-photo.png ${APPNAME}/theme/icons/16x16/list-add.png ${APPNAME}/theme/icons/32x32/lock.png
-Copyright: 2008-${YEAR}, GNOME icon theme 3.11.5 authors
+Files: ${APPNAME}/theme/icons/16x16/applications-system.png ${APPNAME}/theme/icons/16x16/checkmark.png ${APPNAME}/theme/icons/16x16/dialog-information.png ${APPNAME}/theme/icons/16x16/dialog-warning.png ${APPNAME}/theme/icons/16x16/document-open.png ${APPNAME}/theme/icons/16x16/document-save-as.png ${APPNAME}/theme/icons/16x16/edit-delete.png ${APPNAME}/theme/icons/16x16/image-x-generic.png ${APPNAME}/theme/icons/16x16/info.png ${APPNAME}/theme/icons/16x16/install.png ${APPNAME}/theme/icons/16x16/list-add.png ${APPNAME}/theme/icons/16x16/package-x-generic.png ${APPNAME}/theme/icons/16x16/rgbsquares.png ${APPNAME}/theme/icons/16x16/stock_3d-color-picker.png ${APPNAME}/theme/icons/16x16/stock_lock.png ${APPNAME}/theme/icons/16x16/stock_lock-open.png ${APPNAME}/theme/icons/16x16/stock_refresh.png ${APPNAME}/theme/icons/16x16/web.png ${APPNAME}/theme/icons/16x16/window-center.png ${APPNAME}/theme/icons/16x16/window-center-outline.png ${APPNAME}/theme/icons/16x16/x.png ${APPNAME}/theme/icons/16x16/zoom-original.png ${APPNAME}/theme/icons/16x16/zoom-original-outline.png ${APPNAME}/theme/icons/32x32/clock.png ${APPNAME}/theme/icons/32x32/dialog-error.png ${APPNAME}/theme/icons/32x32/dialog-information.png ${APPNAME}/theme/icons/32x32/dialog-ok.png ${APPNAME}/theme/icons/32x32/dialog-question.png ${APPNAME}/theme/icons/32x32/dialog-warning.png ${APPNAME}/theme/icons/32x32/lock.png ${APPNAME}/theme/icons/32x32/window-center.png ${APPNAME}/theme/icons/32x32/window-center-outline.png ${APPNAME}/theme/icons/32x32/zoom-best-fit.png ${APPNAME}/theme/icons/32x32/zoom-in.png ${APPNAME}/theme/icons/32x32/zoom-original.png ${APPNAME}/theme/icons/32x32/zoom-original-outline.png ${APPNAME}/theme/icons/32x32/zoom-out.png
+Copyright: 2017-${YEAR}, Sam Hewitt
 License: GPL-3+
-
-Files: ${APPNAME}/theme/icons/16x16/checkmark.png ${APPNAME}/theme/icons/16x16/x.png
-Copyright: 2007-${YEAR}, Everaldo Coelho
-License: LGPL-2.1+
 
 Files: ${APPNAME}/RealDisplaySizeMM.c
 Copyright: 1995-${YEAR}, Graeme W. Gill <Graeme@argyllcms.com>

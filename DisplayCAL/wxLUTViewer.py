@@ -708,7 +708,7 @@ class LUTFrame(BaseFrame):
 				  id=self.plot_mode_select.GetId())
 		
 		self.tooltip_btn = BitmapButton(panel, -1,
-										geticon(16, "dialog-information"),
+										geticon(16, "question-inverted"),
 										style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
 		self.tooltip_btn.Bind(wx.EVT_BUTTON, self.tooltip_handler)
@@ -716,7 +716,7 @@ class LUTFrame(BaseFrame):
 		panel.Sizer.Add(self.tooltip_btn, flag=wx.ALIGN_CENTER_VERTICAL)
 
 		self.save_plot_btn = BitmapButton(panel, -1,
-										  geticon(16, "camera-photo"),
+										  geticon(16, "image-x-generic-inverted"),
 										  style=wx.NO_BORDER)
 		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
 		panel.Sizer.Add(self.save_plot_btn, flag=wx.ALIGN_CENTER_VERTICAL)
@@ -804,7 +804,7 @@ class LUTFrame(BaseFrame):
 		self.cbox_sizer.Add((10, 0))
 
 		self.reload_vcgt_btn = BitmapButton(self.box_panel, -1,
-											geticon(16, "stock_refresh"),
+											geticon(16, "stock_refresh-inverted"),
 											style=wx.NO_BORDER)
 		self.reload_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.reload_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |
@@ -825,7 +825,7 @@ class LUTFrame(BaseFrame):
 		self.apply_bpc_btn.Disable()
 
 		self.install_vcgt_btn = BitmapButton(self.box_panel, -1,
-											 geticon(16, "install"),
+											 geticon(16, "install-inverted"),
 											 style=wx.NO_BORDER)
 		self.install_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.install_vcgt_btn,
@@ -835,7 +835,7 @@ class LUTFrame(BaseFrame):
 		self.install_vcgt_btn.Disable()
 
 		self.save_vcgt_btn = BitmapButton(self.box_panel, -1,
-										  geticon(16, "media-floppy"),
+										  geticon(16, "document-save-as-inverted"),
 										  style=wx.NO_BORDER)
 		self.save_vcgt_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.save_vcgt_btn, flag=wx.ALIGN_CENTER_VERTICAL |

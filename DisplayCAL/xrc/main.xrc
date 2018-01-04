@@ -34,7 +34,7 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="calibration_file_btn">
-                      <bitmap>../theme/icons/16x16/document-open.png</bitmap>
+                      <bitmap>../theme/icons/16x16/document-open-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
                       <tooltip>calibration.load</tooltip>
                       <style>wxNO_BORDER</style>
@@ -47,7 +47,7 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="create_session_archive_btn">
-                      <bitmap>../theme/icons/16x16/package-x-generic.png</bitmap>
+                      <bitmap>../theme/icons/16x16/package-x-generic-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
                       <tooltip>archive.create</tooltip>
                       <style>wxNO_BORDER</style>
@@ -60,7 +60,7 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="delete_calibration_btn">
-                      <bitmap>../theme/icons/16x16/edit-delete.png</bitmap>
+                      <bitmap>../theme/icons/16x16/edit-delete-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
                       <tooltip>delete</tooltip>
                       <style>wxNO_BORDER</style>
@@ -73,7 +73,7 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="install_profile_btn">
-                      <bitmap>../theme/icons/16x16/install.png</bitmap>
+                      <bitmap>../theme/icons/16x16/install-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
                       <tooltip>profile.install</tooltip>
                       <style>wxNO_BORDER</style>
@@ -86,7 +86,7 @@
                   </object>
                   <object class="sizeritem">
                     <object class="wxBitmapButton" name="profile_info_btn">
-                      <bitmap>../theme/icons/16x16/info.png</bitmap>
+                      <bitmap>../theme/icons/16x16/info-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
                       <tooltip>profile.info</tooltip>
                       <style>wxNO_BORDER</style>
@@ -129,11 +129,8 @@
                               <object class="wxBoxSizer">
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">
-                                    <object class="sizeritem">
-                                      <object class="HStretchStaticBitmap" name="display_shadow">
-                                        <bitmap>../theme/shadow.png</bitmap>
-                                      </object>
-                                      <flag>wxEXPAND</flag>
+                                    <object class="spacer">
+                                      <size>1,14</size>
                                     </object>
                                     <object class="sizeritem">
                                       <object class="wxStaticText" name="display_box_label">
@@ -194,7 +191,7 @@
                                     </object>
                                     <object class="sizeritem">
                                       <object class="wxBitmapButton" name="detect_displays_and_ports_btn">
-                                        <bitmap>../theme/refresh_lr.png</bitmap>
+                                        <bitmap>../theme/icons/16x16/stock_refresh.png</bitmap>
                                         <tooltip>detect_displays_and_ports</tooltip>
                                         <style>wxNO_BORDER</style>
                                       </object>
@@ -234,11 +231,8 @@
                               <object class="wxBoxSizer">
                                 <object class="sizeritem">
                                   <object class="wxBoxSizer">
-                                    <object class="sizeritem">
-                                      <object class="HStretchStaticBitmap" name="instrument_shadow">
-                                        <bitmap>../theme/shadow.png</bitmap>
-                                      </object>
-                                      <flag>wxEXPAND</flag>
+                                    <object class="spacer">
+                                      <size>1,14</size>
                                     </object>
                                     <object class="sizeritem">
                                       <object class="wxStaticText" name="instrument_box_label">
@@ -479,7 +473,7 @@
                                 <object class="wxFlexGridSizer">
                                   <object class="sizeritem">
                                     <object class="wxStaticBitmap">
-                                      <bitmap>../theme/icons/48x48/stopwatch.png</bitmap>
+                                      <bitmap>../theme/icons/32x32/clock.png</bitmap>
                                     </object>
                                     <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                   </object>
@@ -487,8 +481,7 @@
                                     <object class="StaticFancyText" name="display_instrument_warmup_info_text">
                                       <label>info.display_instrument.warmup</label>
                                     </object>
-                                    <flag>wxTOP|wxALIGN_LEFT|wxALIGN_TOP</flag>
-                                    <border>6</border>
+                                    <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
                                   </object>
                                   <object class="sizeritem">
                                     <object class="wxStaticBitmap">
@@ -531,11 +524,8 @@
                       <object class="wxBoxSizer">
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
-                            <object class="sizeritem">
-                              <object class="HStretchStaticBitmap" name="calibration_settings_shadow">
-                                <bitmap>../theme/shadow.png</bitmap>
-                              </object>
-                              <flag>wxEXPAND</flag>
+                            <object class="spacer">
+                              <size>1,14</size>
                             </object>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="calibration_settings_label">
@@ -693,7 +683,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="visual_whitepoint_editor_btn">
-                                    <bitmap>../theme/icons/16x16/calibration.png</bitmap>
+                                    <bitmap>../theme/icons/16x16/colorwheel.png</bitmap>
                                     <style>wxNO_BORDER</style>
                                     <tooltip>whitepoint.visual_editor</tooltip>
                                   </object>
@@ -1159,11 +1149,8 @@
                       <object class="wxBoxSizer">
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
-                            <object class="sizeritem">
-                              <object class="HStretchStaticBitmap" name="profile_settings_shadow">
-                                <bitmap>../theme/shadow.png</bitmap>
-                              </object>
-                              <flag>wxEXPAND</flag>
+                            <object class="spacer">
+                              <size>1,14</size>
                             </object>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="profile_settings_label">
@@ -1391,7 +1378,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="profile_name_info_btn">
-                                    <bitmap>../theme/icons/16x16/dialog-information.png</bitmap>
+                                    <bitmap>../theme/icons/16x16/question.png</bitmap>
                                     <style>wxNO_BORDER</style>
                                   </object>
                                   <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -1399,7 +1386,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="profile_save_path_btn">
-                                    <bitmap>../theme/icons/16x16/media-floppy.png</bitmap>
+                                    <bitmap>../theme/icons/16x16/document-open.png</bitmap>
                                     <tooltip>profile.set_save_path</tooltip>
                                     <style>wxNO_BORDER</style>
                                     <XRCED>
@@ -1496,11 +1483,8 @@
                       <object class="wxBoxSizer">
                         <object class="sizeritem">
                           <object class="wxBoxSizer">
-                            <object class="sizeritem">
-                              <object class="HStretchStaticBitmap" name="lut3d_settings_shadow">
-                                <bitmap>../theme/shadow.png</bitmap>
-                              </object>
-                              <flag>wxEXPAND</flag>
+                            <object class="spacer">
+                              <size>1,14</size>
                             </object>
                             <object class="sizeritem">
                               <object class="wxStaticText" name="lut3d_settings_label">

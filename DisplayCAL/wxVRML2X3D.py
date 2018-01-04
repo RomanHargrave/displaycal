@@ -40,7 +40,7 @@ class VRML2X3DFrame(BaseFrame):
 		panelsizer = wx.BoxSizer(wx.HORIZONTAL)
 		panel.SetSizer(panelsizer)
 		self.btn = BitmapButton(panel, wx.ID_ANY,
-								config.geticon(256, "document-open"), 
+								config.geticon(256, "3d-primitives"), 
 								style=wx.NO_BORDER)
 		self.btn.SetToolTipString(lang.getstr("file.select"))
 		self.btn.Bind(wx.EVT_BUTTON, lambda event:

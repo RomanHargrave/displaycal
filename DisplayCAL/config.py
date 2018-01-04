@@ -262,17 +262,20 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 			w = int(round(w * scale))
 			h = int(round(h * scale))
 		if parts[-1] == "empty":
-			bitmaps[name] = wx.EmptyBitmap(w, h, depth=-1)
+			bmp = wx.EmptyBitmap(w, h, depth=-1)
 			dc = wx.MemoryDC()
-			dc.SelectObject(bitmaps[name])
+			dc.SelectObject(bmp)
 			dc.SetBackground(wx.Brush("black"))
 			dc.Clear()
 			dc.SelectObject(wx.NullBitmap)
-			bitmaps[name].SetMaskColour("black")
+			bmp.SetMaskColour("black")
 		else:
 			if parts[-1].startswith(appname):
 				parts[-1] = parts[-1].lower()
 			oname = parts[-1]
+			inverted = oname.endswith("-inverted")
+			if inverted:
+				oname = parts[-1] = oname.split("-inverted")[0]
 			name2x = oname + "@2x"
 			name4x = oname + "@4x"
 			path = None
@@ -324,23 +327,24 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 				if path or scale == 1:
 					break
 			if path:
-				bitmaps[name] = wx.Bitmap(path)
-				if not bitmaps[name].IsOk():
+				bmp = wx.Bitmap(path)
+				if not bmp.IsOk():
 					path = None
 			if path:
+				img = None
 				if scale > 1 and i:
 					rescale = False
 					if i in (1, 2):
 						# HighDPI support. 4x/2x version, determine scaled size
-						w, h = [int(round(v / (2 * (3 - i)) * scale)) for v in bitmaps[name].Size]
+						w, h = [int(round(v / (2 * (3 - i)) * scale)) for v in bmp.Size]
 						rescale = True
 					elif len(size) == 2:
 						# HighDPI support. Icon
 						rescale = True
-					if rescale and (bitmaps[name].Size[0] != w or
-									bitmaps[name].Size[1] != h):
+					if rescale and (bmp.Size[0] != w or
+									bmp.Size[1] != h):
 						# HighDPI support. Rescale
-						img = bitmaps[name].ConvertToImage()
+						img = bmp.ConvertToImage()
 						if not hasattr(wx, "IMAGE_QUALITY_BILINEAR"):
 							quality = wx.IMAGE_QUALITY_NORMAL
 						elif oname == "rgbsquares":
@@ -352,20 +356,28 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 						else:
 							quality = wx.IMAGE_QUALITY_BILINEAR
 						img.Rescale(w, h, quality=quality)
-						bitmaps[name] = img.ConvertToBitmap()
-			else:
+				# Invert after resize (avoids jaggies)
+				if inverted:
+					if not img:
+						img = bmp.ConvertToImage()
+					img.Invert()
+				if img:
+					bmp = img.ConvertToBitmap()
+					if not bmp.IsOk():
+						path = None
+			if not path:
 				img = wx.EmptyImage(w, h)
 				img.SetMaskColour(0, 0, 0)
 				img.InitAlpha()
 				bmp = img.ConvertToBitmap()
-				bitmaps[name] = bmp
 				dc = wx.MemoryDC()
-				dc.SelectObject(bitmaps[name])
+				dc.SelectObject(bmp)
 				if display_missing_icon:
-					bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE,
+					art = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE,
 												   size=(w, h))
-					dc.DrawBitmap(bmp, 0, 0, True)
+					dc.DrawBitmap(art, 0, 0, True)
 				dc.SelectObject(wx.NullBitmap)
+		bitmaps[name] = bmp
 	return bitmaps[name]
 
 

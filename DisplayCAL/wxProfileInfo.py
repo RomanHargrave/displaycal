@@ -1044,7 +1044,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.plot_mode_select.Bind(wx.EVT_CHOICE, self.plot_mode_select_handler)
 		self.plot_mode_select.Disable()
 		
-		self.tooltip_btn = BitmapButton(p1, -1, geticon(16, "dialog-information"),
+		self.tooltip_btn = BitmapButton(p1, -1, geticon(16, "question-inverted"),
 										style=wx.NO_BORDER)
 		self.tooltip_btn.SetBackgroundColour(BGCOLOUR)
 		self.tooltip_btn.Bind(wx.EVT_BUTTON, self.tooltip_handler)
@@ -1053,7 +1053,7 @@ class ProfileInfoFrame(LUTFrame):
 														wx.LEFT, border=8)
 
 		self.save_plot_btn = BitmapButton(p1, -1,
-										  geticon(16, "camera-photo"),
+										  geticon(16, "image-x-generic-inverted"),
 										  style=wx.NO_BORDER)
 		self.save_plot_btn.SetBackgroundColour(BGCOLOUR)
 		self.save_plot_btn.Bind(wx.EVT_BUTTON, self.SaveFile)

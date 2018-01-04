@@ -26,6 +26,34 @@ def Blend(self, bitmap, x, y):
 wx.Bitmap.Blend = Blend
 
 
+def Invert(self):
+	""" Invert image colors """
+	databuffer = self.GetDataBuffer()
+	for i, byte in enumerate(databuffer):
+		databuffer[i] = chr(255 - ord(byte))
+
+wx.Image.Invert = Invert
+
+
+def IsBW(self):
+	"""
+	Check if image is grayscale in the most effective way possible.
+	
+	Note that this is a costly operation even though it returns as quickly as
+	possible for non-grayscale images (i.e. when it encounters the first
+	non-equal RGB triplet).
+	
+	"""
+	for i, byte in enumerate(self.GetDataBuffer()):
+			if i % 3 == 2:
+					if byte != prev_byte:
+							return False
+			prev_byte = byte
+	return True
+
+wx.Image.IsBW = IsBW
+
+
 def GetRealClientArea(self):
 	""" Return the real (non-overlapping) client area of a display """
 	# need to fix overlapping ClientArea on some Linux multi-display setups

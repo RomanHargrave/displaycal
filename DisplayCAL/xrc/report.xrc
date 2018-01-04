@@ -5,11 +5,8 @@
       <orient>wxVERTICAL</orient>
       <object class="sizeritem">
         <object class="wxBoxSizer">
-          <object class="sizeritem">
-            <object class="HStretchStaticBitmap" name="mr_settings_shadow">
-              <bitmap>../theme/shadow.png</bitmap>
-            </object>
-            <flag>wxEXPAND</flag>
+          <object class="spacer">
+            <size>1,14</size>
           </object>
           <object class="sizeritem">
             <object class="wxStaticText" name="mr_settings_label">

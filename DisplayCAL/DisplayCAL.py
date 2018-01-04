@@ -134,7 +134,7 @@ from wxTestchartEditor import TestchartEditor
 from wxVisualWhitepointEditor import VisualWhitepointEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
-from wxfixes import (ThemedGenButton, BitmapWithThemedButton, PlateButton,
+from wxfixes import (ThemedGenButton, BitmapWithThemedButton, TabButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
@@ -1537,7 +1537,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		y = 64
 		w = 80
 		h = 120
-		scale = getcfg("app.dpi") / config.get_default_dpi()
+		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 		if scale > 1:
 			y, w, h = [int(math.floor(v * scale)) for v in (y, w, h)]
 		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(w, -1))
@@ -1585,27 +1585,29 @@ class MainFrame(ReportFrame, BaseFrame):
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+
 			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
-			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel), separator,
 						 flag=wx.EXPAND)
+			##self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
+														   ##size=(-1, 15))
 			self.buttonpanelheader = BitmapBackgroundPanel(self.panel,
-														   size=(-1, 15))
-			bmp = getbitmap("theme/gradient", False)
-			if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
-				bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
-				image = bmp.ConvertToImage()
-				databuffer = image.GetDataBuffer()
-				for i, byte in enumerate(databuffer):
-					if byte > "\0":
-						databuffer[i] = chr(int(min(round(ord(byte) *
-														  (255.0 / 223.0)), 255)))
-				bmp = image.ConvertToBitmap()
-				self.buttonpanelheader.SetBitmap(bmp)
+														   size=(-1, 13 * scale))
+			##bmp = getbitmap("theme/gradient", False)
+			##if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
+				##bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
+				##image = bmp.ConvertToImage()
+				##databuffer = image.GetDataBuffer()
+				##for i, byte in enumerate(databuffer):
+					##if byte > "\0":
+						##databuffer[i] = chr(int(min(round(ord(byte) *
+														  ##(255.0 / 223.0)), 255)))
+				##bmp = image.ConvertToBitmap()
+				##self.buttonpanelheader.SetBitmap(bmp)
 			sizer.Insert(sizer.GetItemIndex(self.buttonpanel),
 						 self.buttonpanelheader, flag=wx.EXPAND)
-			bgcolor = self.buttonpanel.BackgroundColour
-			self.buttonpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
-															 for v in bgcolor[:3]]))
+			##bgcolor = self.buttonpanel.BackgroundColour
+			##self.buttonpanel.SetBackgroundColour(wx.Colour(*[int(v * .93)
+															 ##for v in bgcolor[:3]]))
 			self.buttonpanelheader.SetBackgroundColour(self.buttonpanel.BackgroundColour)
 			self.buttonpanelheader.blend = True
 		
@@ -1614,87 +1616,84 @@ class MainFrame(ReportFrame, BaseFrame):
 		sizer = self.tabpanel.ContainingSizer
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+
-			separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
-			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-			sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1, separator,
-						 flag=wx.EXPAND)
+			##separator = BitmapBackgroundPanel(self.panel, size=(-1, 1))
+			##separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+			##sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1, separator,
+						 ##flag=wx.EXPAND)
+			##self.tabpanelheader = BitmapBackgroundPanel(self.panel,
+														   ##size=(-1, 15))
 			self.tabpanelheader = BitmapBackgroundPanel(self.panel,
-														   size=(-1, 15))
-			self.tabpanelfooter = BitmapBackgroundPanel(self.panel,
-														   size=(-1, 15))
-			bmp = getbitmap("theme/gradient", False)
-			if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
-				sub = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage()
-				bmp = sub.Mirror(False).ConvertToBitmap()
-				image2 = bmp.ConvertToImage()
-				databuffer = image2.GetDataBuffer()
-				for i, byte in enumerate(databuffer):
-					if byte > "\0":
-						databuffer[i] = chr(int(min(round((ord(byte) - 153) *
-														  (255.0 / 70.0)), 255)))
-				bmp = image2.ConvertToBitmap()
-				self.tabpanelheader.SetBitmap(bmp)
-				bmp = image.Mirror(False).ConvertToBitmap()
-				self.tabpanelfooter.SetBitmap(bmp)
+														   size=(-1, 14))
+			##self.tabpanelfooter = BitmapBackgroundPanel(self.panel,
+														   ##size=(-1, 15))
+			##bmp = getbitmap("theme/gradient", False)
+			##if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
+				##sub = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage()
+				##bmp = sub.Mirror(False).ConvertToBitmap()
+				##image2 = bmp.ConvertToImage()
+				##databuffer = image2.GetDataBuffer()
+				##for i, byte in enumerate(databuffer):
+					##if byte > "\0":
+						##databuffer[i] = chr(int(min(round((ord(byte) - 153) *
+														  ##(255.0 / 70.0)), 255)))
+				##bmp = image2.ConvertToBitmap()
+				##self.tabpanelheader.SetBitmap(bmp)
+				##bmp = image.Mirror(False).ConvertToBitmap()
+				##self.tabpanelfooter.SetBitmap(bmp)
 			sizer.Insert(sizer.GetItemIndex(self.tabpanel),
 						 self.tabpanelheader, flag=wx.EXPAND)
-			sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1,
-						 self.tabpanelfooter, flag=wx.EXPAND)
+			##sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1,
+						 ##self.tabpanelfooter, flag=wx.EXPAND)
 			bgcolor = self.tabpanel.BackgroundColour
-			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * .2125)
+			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * 0.134)
 															 for v in bgcolor[:3]]))
 			self.tabpanel.ForegroundColour = "#EEEEEE"
 			self.tabpanelheader.SetBackgroundColour(self.tabpanel.BackgroundColour)
 			self.tabpanelheader.blend = True
-			self.tabpanelfooter.SetBackgroundColour(self.tabpanel.BackgroundColour)
-			self.tabpanelfooter.blend = True
+			##self.tabpanelfooter.SetBackgroundColour(self.tabpanel.BackgroundColour)
+			##self.tabpanelfooter.blend = True
 
 		# Add tab buttons
-		self.display_instrument_btn = PlateButton(self.tabpanel, -1,
+		self.display_instrument_btn = TabButton(self.tabpanel, -1,
 													label="display-instrument",
-													bmp=geticon(48, "display-instrument"),
-													style=platebtn.PB_STYLE_GRADIENT |
-														  platebtn.PB_STYLE_TOGGLE)
+													bmp=geticon(32, "display-instrument"),
+													style=platebtn.PB_STYLE_TOGGLE)
 		self.display_instrument_btn.Bind(wx.EVT_TOGGLEBUTTON,
 										 self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(1, self.display_instrument_btn,
-								   flag=wx.LEFT, border=8)
-		self.calibration_settings_btn = PlateButton(self.tabpanel, -1,
+								   flag=wx.LEFT, border=16)
+		self.calibration_settings_btn = TabButton(self.tabpanel, -1,
 													label="calibration",
-													bmp=geticon(48, "calibration"),
-													style=platebtn.PB_STYLE_GRADIENT |
-														  platebtn.PB_STYLE_TOGGLE)
+													bmp=geticon(32, "calibration"),
+													style=platebtn.PB_STYLE_TOGGLE)
 		self.calibration_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 										   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(2, self.calibration_settings_btn,
-								   flag=wx.LEFT, border=8)
-		self.profile_settings_btn = PlateButton(self.tabpanel, -1,
+								   flag=wx.LEFT, border=32)
+		self.profile_settings_btn = TabButton(self.tabpanel, -1,
 													label="profiling",
-													bmp=geticon(48, "profiling"),
-													style=platebtn.PB_STYLE_GRADIENT |
-														  platebtn.PB_STYLE_TOGGLE)
+													bmp=geticon(32, "profiling"),
+													style=platebtn.PB_STYLE_TOGGLE)
 		self.profile_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 									   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(3, self.profile_settings_btn,
-								   flag=wx.LEFT, border=8)
-		self.lut3d_settings_btn = PlateButton(self.tabpanel, -1,
+								   flag=wx.LEFT, border=32)
+		self.lut3d_settings_btn = TabButton(self.tabpanel, -1,
 													label="3dlut",
-													bmp=geticon(48, "3dlut"),
-													style=platebtn.PB_STYLE_GRADIENT |
-														  platebtn.PB_STYLE_TOGGLE)
+													bmp=geticon(32, "3dlut"),
+													style=platebtn.PB_STYLE_TOGGLE)
 		self.lut3d_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 									   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(4, self.lut3d_settings_btn,
-								   flag=wx.LEFT, border=8)
-		self.mr_settings_btn = PlateButton(self.tabpanel, -1,
+								   flag=wx.LEFT | wx.RIGHT, border=32)
+		self.mr_settings_btn = TabButton(self.tabpanel, -1,
 													label="verification",
-													bmp=geticon(48, "dialog-ok"),
-													style=platebtn.PB_STYLE_GRADIENT |
-														  platebtn.PB_STYLE_TOGGLE)
+													bmp=geticon(32, "dialog-ok"),
+													style=platebtn.PB_STYLE_TOGGLE)
 		self.mr_settings_btn.Bind(wx.EVT_TOGGLEBUTTON,
 									   self.tab_select_handler)
 		self.tabpanel.Sizer.Insert(5, self.mr_settings_btn,
-								   flag=wx.LEFT | wx.RIGHT, border=8)
+								   flag=wx.RIGHT, border=16)
 		for btn in (self.display_instrument_btn,
 					self.calibration_settings_btn,
 					self.profile_settings_btn,
@@ -2677,13 +2676,13 @@ class MainFrame(ReportFrame, BaseFrame):
 										 bitmap=geticon(16, "start"),
 										 label=btn.Label, name=btn.Name)
 			subst.SetBackgroundColour(btn.Parent.BackgroundColour)
-			subst.SetTopStartColour(wx.Colour(252, 252, 252))
-			subst.SetTopEndColour(wx.Colour(224, 224, 224))
-			subst.SetBottomStartColour(wx.Colour(224, 224, 224))
-			subst.SetBottomEndColour(wx.Colour(166, 166, 166))
+			subst.SetTopStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
+			subst.SetTopEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))  # Not used
+			subst.SetBottomStartColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))  # Not used
+			subst.SetBottomEndColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
 			subst.SetForegroundColour(wx.Colour(0, 0, 0))
-			subst.SetPressedTopColour(wx.Colour(166, 166, 166))
-			subst.SetPressedBottomColour(wx.Colour(224, 224, 224))
+			subst.SetPressedTopColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+			subst.SetPressedBottomColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 			setattr(self, btn_name, subst)
 			btn.ContainingSizer.Replace(btn, subst)
 			btn.Destroy()
@@ -14530,7 +14529,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1,
 								   u"ArgyllCMS %s © Graeme Gill" %
-								   self.worker.argyll_version_string))
+								   re.sub(r"(?:\.0)+$", ".0",
+										  self.worker.argyll_version_string)))
 		items.append(HyperLinkCtrl(
 			self.aboutdialog, -1, label="argyllcms.com", 
 			URL="http://www.argyllcms.com"))
@@ -14551,6 +14551,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			items.append(wx.StaticText(self.aboutdialog, -1, 
 									   "%s - %s" % (", ".join(langs), lauthor)))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+
+		# Suru icons
+		items.append(wx.StaticText(self.aboutdialog, -1, 
+								   u"Suru icons © Sam Hewitt"))
+		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+
 		match = re.match("([^(]+)\s*(\([^(]+\))?\s*(\[[^[]+\])?", sys.version)
 		if match:
 			pyver_long = match.groups()

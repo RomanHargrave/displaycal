@@ -2849,6 +2849,7 @@ class BorderGradientButton(GradientButton):
 				 pos=wx.DefaultPosition, size=wx.DefaultSize,
 				 style=wx.NO_BORDER, validator=wx.DefaultValidator,
 				 name="gradientbutton"):
+		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
 		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
@@ -2856,11 +2857,34 @@ class BorderGradientButton(GradientButton):
 		self._bitmapfocus = self._bitmap
 		self._bitmaphover = self._bitmap
 		self._bitmapselected = self._bitmap
-		set_bitmap_labels(self)
+		##set_bitmap_labels(self)
 		self._enabled = True
 
 	BitmapLabel = property(lambda self: self._bitmap,
 						   lambda self, bitmap: self.SetBitmap(bitmap))
+
+	def DarkColour(self, colour, percent):
+		"""
+		Return dark contrast of `colour`. The colour returned is from the scale of
+		`colour` ==> white.
+
+		:param `colour`: the input colour to be brightened;
+		:param `percent`: determines how dark the colour will be. `percent` = 100
+		 returns black, `percent` = 0 returns `colour`.
+		"""
+
+		rd = colour.Red()
+		gd = colour.Green()
+		bd = colour.Blue()
+		high = 100
+
+		# We take the percent way of the colour from colour -. black
+		i = percent
+		r = ((i*rd*100)/high)/100
+		g = ((i*gd*100)/high)/100
+		b = ((i*bd*100)/high)/100
+
+		return wx.Colour(r, g, b)
 	
 	def Disable(self):
 		self.Enable(False)
@@ -2880,12 +2904,11 @@ class BorderGradientButton(GradientButton):
 		retWidth, retHeight = dc.GetTextExtent(label)
 		
 		bmpWidth = bmpHeight = 0
-		constant = 15
+		constant = 15 * self.dpiscale
 		if self._bitmap:
-			bmpWidth, bmpHeight = self._bitmap.GetWidth()+20, self._bitmap.GetHeight()
+			bmpWidth, bmpHeight = self._bitmap.GetWidth()+20 * self.dpiscale, self._bitmap.GetHeight()
 			retWidth += bmpWidth
 			retHeight = max(bmpHeight, retHeight)
-			constant = 15
 
 		return wx.Size(retWidth+constant, retHeight+constant) 
 	
@@ -2926,28 +2949,32 @@ class BorderGradientButton(GradientButton):
 		gradientRect.SetHeight(gradientRect.GetHeight()/2 + ((capture==self and [1] or [0])[0]))
 		if capture != self:
 			if self._mouseAction == HOVER:
-				topStart, topEnd = self.LightColour(self._topStartColour, 10), self.LightColour(self._bottomEndColour, 10)
+				topStart, topEnd = self.LightColour(self._pressedTopColour, 87), self.LightColour(self._pressedBottomColour, 87)
 			else:
 				topStart, topEnd = self._topStartColour, self._bottomEndColour
 			brush = gc.CreateLinearGradientBrush(0, 1, 0, height, topStart,
 												 topEnd)
 		else:
+			topStart, topEnd = self.LightColour(self._pressedTopColour, 75), self.LightColour(self._pressedBottomColour, 75)
 			brush = gc.CreateLinearGradientBrush(0, 1, 0, height,
-												 self._pressedTopColour,
-												 self._pressedBottomColour)
+												 topStart,
+												 topEnd)
 
 		fgcolor = self.ForegroundColour
 		if not self.IsEnabled():
 			fgcolor = self.LightColour(fgcolor, 40)
 
 		gc.SetBrush(brush)
-		gc.SetPen(wx.Pen(self.LightColour(fgcolor, 20)))
+		if capture == self or self._mouseAction == HOVER:
+			bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+			if self._mouseAction != HOVER:
+				bordercolor = self.DarkColour(bordercolor, 75)
+		else:
+			bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+		gc.SetPen(wx.Pen(bordercolor))
 		gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, height / 2)
 
-		if capture != self:
-			shadowOffset = 0
-		else:
-			shadowOffset = 1
+		shadowOffset = 0
 
 		font = gc.CreateFont(self.GetFont(), fgcolor)
 		gc.SetFont(font)
@@ -4639,7 +4666,7 @@ class LogWindow(InvincibleFrame):
 		self.btnsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(self.btnsizer, flag=wx.EXPAND)
 		self.save_as_btn = GenBitmapButton(self.panel, -1, 
-										   geticon(16, "media-floppy"), 
+										   geticon(16, "document-save-as"), 
 										   style = wx.NO_BORDER)
 		self.save_as_btn.Bind(wx.EVT_BUTTON, self.OnSaveAs)
 		self.save_as_btn.SetToolTipString(lang.getstr("save_as"))
