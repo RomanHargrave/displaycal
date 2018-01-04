@@ -720,7 +720,8 @@ def get_bitmap_hover(bitmap, ctrl=None):
 		color = [44, 93, 205]  # Use Mavericks-like color scheme
 	else:
 		color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
-	if ctrl and sys.platform in ("darwin", "win32"):
+	if ctrl and (sys.platform in ("darwin", "win32") or
+				 "gtk3" in wx.PlatformInfo):
 		# Adjust hilight color by background color
 		bgcolor = ctrl.Parent.BackgroundColour
 		R = bgcolor[0] / 255.0
