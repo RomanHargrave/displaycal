@@ -716,8 +716,11 @@ def get_bitmap_hover(bitmap, ctrl=None):
 	image = bitmap.ConvertToImage()
 	if image.HasMask() and not image.HasAlpha():
 		image.InitAlpha()
-	color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
-	if ctrl and sys.platform == "win32":
+	if sys.platform == "darwin":
+		color = [44, 93, 205]  # Use Mavericks-like color scheme
+	else:
+		color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
+	if ctrl and sys.platform in ("darwin", "win32"):
 		# Adjust hilight color by background color
 		bgcolor = ctrl.Parent.BackgroundColour
 		R = bgcolor[0] / 255.0
@@ -793,7 +796,10 @@ def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 
 	# Selected
 	if pressed:
-		bmp = get_bitmap_pressed(bitmap)
+		if sys.platform == "darwin":
+			bmp = get_bitmap_hover(bitmap, btn)
+		elif not focus:
+			bmp = get_bitmap_pressed(bitmap)
 		if hasattr(btn, "SetBitmapPressed"):
 			# Phoenix
 			btn.SetBitmapPressed(bmp)
