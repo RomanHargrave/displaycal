@@ -4880,7 +4880,7 @@ class MainFrame(ReportFrame, BaseFrame):
 											   patterngenerator=patterngenerator,
 											   geometry=geometry,
 											   profile=profile)
-		if CCPG and isinstance(patterngenerator, CCPG):
+		if patterngenerator and CCPG and isinstance(patterngenerator, CCPG):
 			self.wpeditor.Bind(wx.EVT_CLOSE, self.patterngenerator_disconnect)
 		self.wpeditor.RealCenterOnScreen()
 		self.wpeditor.Show()
@@ -4933,7 +4933,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		frame.Sizer.Add(panel, 1, flag=wx.EXPAND)
 		frame.Sizer.SetSizeHints(frame)
 		frame.Sizer.Layout()
-		if CCPG and isinstance(self.worker.patterngenerator, CCPG):
+		if (self.worker.patterngenerator and CCPG and
+			isinstance(self.worker.patterngenerator, CCPG)):
 			frame.Bind(wx.EVT_CLOSE, self.patterngenerator_disconnect)
 		frame.Show()
 		self.measureframes.append(frame)
