@@ -717,7 +717,7 @@ def get_bitmap_hover(bitmap, ctrl=None):
 	if image.HasMask() and not image.HasAlpha():
 		image.InitAlpha()
 	color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
-	if ctrl:
+	if ctrl and sys.platform == "win32":
 		# Adjust hilight color by background color
 		bgcolor = ctrl.Parent.BackgroundColour
 		R = bgcolor[0] / 255.0
@@ -738,7 +738,7 @@ def get_bitmap_hover(bitmap, ctrl=None):
 		else:
 			v = int(round(min(v * 1.15, 255)))
 		databuffer[i] = chr(v)
-	if isinstance(ctrl, wx.BitmapButton):
+	if isinstance(ctrl, wx.BitmapButton) and sys.platform == "win32":
 		# wx.BitmapButton draws the focus bitmap over the normal bitmap,
 		# leading to ugly aliased edges. Yuck. Prevent this by setting the
 		# background to the control's background color instead of transparent.
