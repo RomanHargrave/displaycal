@@ -2948,7 +2948,7 @@ class BorderGradientButton(GradientButton):
 		
 		gradientRect.SetHeight(gradientRect.GetHeight()/2 + ((capture==self and [1] or [0])[0]))
 		if capture != self:
-			if self._mouseAction == HOVER:
+			if self._mouseAction == HOVER or self._hasFocus:
 				topStart, topEnd = self.LightColour(self._pressedTopColour, 87), self.LightColour(self._pressedBottomColour, 87)
 			else:
 				topStart, topEnd = self._topStartColour, self._bottomEndColour
@@ -2965,12 +2965,12 @@ class BorderGradientButton(GradientButton):
 			fgcolor = self.LightColour(fgcolor, 40)
 
 		gc.SetBrush(brush)
-		if capture == self or self._mouseAction == HOVER:
+		if capture == self or self._mouseAction == HOVER or self._hasFocus:
 			if sys.platform == "win32":
 				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
 			else:
 				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-			if self._mouseAction != HOVER:
+			if self._mouseAction != HOVER and not self._hasFocus:
 				bordercolor = self.DarkColour(bordercolor, 75)
 		else:
 			bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
@@ -3000,7 +3000,7 @@ class BorderGradientButton(GradientButton):
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
 		if self.IsEnabled():
-			if self._mouseAction == HOVER:
+			if self._mouseAction == HOVER or self._hasFocus:
 				bitmap = self._bitmaphover
 			else:
 				bitmap = self._bitmap
