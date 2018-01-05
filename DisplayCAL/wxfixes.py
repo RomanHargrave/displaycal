@@ -1345,6 +1345,8 @@ class PlateButton(platebtn.PlateButton):
 		bevt.SetString(self.GetLabel())
 		self.GetEventHandler().ProcessEvent(bevt)
 
+	_PostEvent = __PostEvent
+
 	def Update(self):
 		pass
 
@@ -1403,6 +1405,60 @@ class TabButton(PlateButton):
 		self.CacheBestSize(best)
 		return best
 
+	def OnFocus(self, evt):
+		"""Set the visual focus state if need be"""
+		if self._state['cur'] in (platebtn.PLATE_NORMAL, platebtn.PLATE_PRESSED):
+			self._SetState(platebtn.PLATE_HIGHLIGHT)
+
+	def OnKillFocus(self, evt):
+		"""Set the visual state back to normal when focus is lost
+		unless the control is currently in a pressed state.
+
+		"""
+		if self._pressed:
+			self._SetState(platebtn.PLATE_PRESSED)
+		else:
+			self._SetState(platebtn.PLATE_NORMAL)
+
+	def OnLeftDown(self, evt):
+		"""Depending on the click position will
+		show the popup menu if one has been set.
+
+		"""
+		pos = evt.GetPositionTuple()
+		size = self.GetSizeTuple()
+		if pos[0] >= size[0] - 16:
+			if self._menu is not None:
+				self.ShowMenu()
+			elif self._style & platebtn.PB_STYLE_DROPARROW:
+				event = PlateBtnDropArrowPressed()
+				event.SetEventObject(self)
+				self.EventHandler.ProcessEvent(event)
+		
+		self.SetFocus()
+
+	def OnLeftUp(self, evt):
+		"""Post a button event.
+
+		:param `evt`: :class:`MouseEvent`
+
+		"""
+		self._SetState(platebtn.PLATE_PRESSED)
+		PlateButton.OnLeftUp(self, evt)
+
+	def OnKeyUp(self, evt):
+		"""Execute a single button press action when the Return key is pressed
+		and this control has the focus.
+		
+		:param `evt`: wx.EVT_KEY_UP
+
+		"""
+		if evt.GetKeyCode() == wx.WXK_SPACE:
+			self._SetState(platebtn.PLATE_PRESSED)
+			self._PostEvent()
+		else:
+			evt.Skip()
+
 	def OnPaint(self, evt):
 		self.__DrawButton()
 
@@ -1436,10 +1492,10 @@ class TabButton(PlateButton):
 		:param int `height`: height of highlight
 
 		"""
-		if platebtn.PLATE_PRESSED in (self._state['pre'], self._state['cur']):
-			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
+			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 		else:
-			color = self._color['hlight']
+			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
 
 		if self._style & platebtn.PB_STYLE_SQUARE:
 			rad = 0
