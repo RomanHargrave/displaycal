@@ -1898,6 +1898,13 @@ class BaseFrame(wx.Frame):
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
 				child.SetDoubleBuffered(True)
+			if isinstance(child, wx.Panel) and child.AcceptsFocus():
+				# Has no children that can accept focus, so there is no reason
+				# why this should be able to receive focus, ever.
+				# Move focus to the next control.
+				child.Bind(wx.EVT_SET_FOCUS,
+						   lambda event: event.EventObject.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or
+										 event.Skip())
 
 
 class BaseInteractiveDialog(wx.Dialog):
