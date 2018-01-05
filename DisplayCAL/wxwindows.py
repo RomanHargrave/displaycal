@@ -1903,7 +1903,8 @@ class BaseFrame(wx.Frame):
 				# why this should be able to receive focus, ever.
 				# Move focus to the next control.
 				child.Bind(wx.EVT_SET_FOCUS,
-						   lambda event: event.EventObject.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or
+						   lambda event: event.EventObject.AcceptsFocus() and
+										 event.EventObject.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or
 										 event.Skip())
 
 
