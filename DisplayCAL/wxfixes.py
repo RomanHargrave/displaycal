@@ -740,7 +740,7 @@ def get_bitmap_hover(bitmap, ctrl=None):
 		if is_bw:
 			v = color[i % 3]
 		else:
-			v = int(round(min(v * 1.15, 255)))
+			v = int(round((v / 255.0) ** 0.8 * 255))
 		databuffer[i] = chr(v)
 	if isinstance(ctrl, wx.BitmapButton) and sys.platform == "win32":
 		# wx.BitmapButton draws the focus bitmap over the normal bitmap,
