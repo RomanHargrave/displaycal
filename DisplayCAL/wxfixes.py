@@ -720,28 +720,58 @@ def get_bitmap_hover(bitmap, ctrl=None):
 		color = [44, 93, 205]  # Use Mavericks-like color scheme
 	else:
 		color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
+	is_bw = image.IsBW()
 	if ctrl and (sys.platform in ("darwin", "win32") or
 				 "gtk3" in wx.PlatformInfo):
-		# Adjust hilight color by background color
 		bgcolor = ctrl.Parent.BackgroundColour
-		R = bgcolor[0] / 255.0
-		G = bgcolor[1] / 255.0
-		B = bgcolor[0] / 255.0
-		# Use Rec. 709 luma coefficients to determine luma
-		luma = .2126 * R + .7152 * G + .0722 * B
-		for i, v in enumerate(color):
-			color[i] = int(round(convert_range(v, 0, 255,
-											   255 - luma * 255,
-											   255)))
-	is_bw = image.IsBW()
-	databuffer = image.GetDataBuffer()
-	for i, byte in enumerate(databuffer):
-		v = ord(byte)
 		if is_bw:
-			v = color[i % 3]
-		else:
-			v = int(round((v / 255.0) ** 0.8 * 255))
-		databuffer[i] = chr(v)
+			# Adjust hilight color by background color
+			R = bgcolor[0] / 255.0
+			G = bgcolor[1] / 255.0
+			B = bgcolor[0] / 255.0
+			# Use Rec. 709 luma coefficients to determine luma
+			luma = .2126 * R + .7152 * G + .0722 * B
+			for i, v in enumerate(color):
+				color[i] = int(round(convert_range(v, 0, 255,
+												   255 - luma * 255,
+												   255)))
+	databuffer = image.GetDataBuffer()
+	alphabuffer = image.GetAlphaBuffer()
+	minv = 256  # Intentionally above max possible value
+	j = 0
+	RGB = {}
+	for i, byte in enumerate(databuffer):
+		RGB[i % 3] = ord(byte)
+		if i % 3 == 2:
+			RGBv = RGB.values()
+			if not is_bw:
+				RGBv_max = max(RGBv)
+				if minv == 256 and alphabuffer[j] > "\x20":
+					# If a pixel is at least 12.5% opaque, check if it's value
+					# is less than or equal the previously seen minimum pixel
+					# value as a crude means to determine if the graphic
+					# contains a black outline.
+					minv = min(RGBv_max, minv)
+			for k in xrange(3):
+				if is_bw:
+					v = color[k]
+				else:
+					v = RGB[k]
+					if minv > 0 and min(RGBv) != RGBv_max:
+						# If the minimum seen at least 12.5% opaque pixel value
+						# is above zero, assume a graphic without black outline
+						# and adjust intensity by applying a power. The hilight
+						# color isn't used.
+						v = (v / 255.0) ** 0.8 * 255
+					else:
+						# If the minimum seen at least 12.5% opaque pixel value
+						# is zero, adjust value by hilight color value, so that
+						# graphics with a black outline get the hilight color
+						# at black.
+						v = convert_range(v, 0, 255, color[k], 255)
+					v = int(round(v))
+				databuffer[i - 2 + k] = chr(v)
+			j += 1
 	if isinstance(ctrl, wx.BitmapButton) and sys.platform == "win32":
 		# wx.BitmapButton draws the focus bitmap over the normal bitmap,
 		# leading to ugly aliased edges. Yuck. Prevent this by setting the
