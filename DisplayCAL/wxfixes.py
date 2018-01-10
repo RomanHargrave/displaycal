@@ -1455,8 +1455,8 @@ class TabButton(PlateButton):
 		show the popup menu if one has been set.
 
 		"""
-		pos = evt.GetPositionTuple()
-		size = self.GetSizeTuple()
+		pos = evt.GetPosition()
+		size = self.GetSize()
 		if pos[0] >= size[0] - 16:
 			if self._menu is not None:
 				self.ShowMenu()
