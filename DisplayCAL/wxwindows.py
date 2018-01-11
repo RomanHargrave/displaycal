@@ -106,6 +106,10 @@ class AboutDialog(wx.Dialog):
 		kwargs["name"] = "aboutdialog"
 		wx.Dialog.__init__(self, *args, **kwargs)
 
+		# Set an icon so text isn't crammed to the left of the titlebar under
+		# Windows (other platforms?)
+		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
+
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 
