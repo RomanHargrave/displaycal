@@ -3413,7 +3413,7 @@ class CustomGrid(wx.grid.Grid):
 				cell_renderer._selectionbitmaps = {}
 		event.Skip()
         
-	def SetColLabelRenderer(self, renderer):
+	def SetColLabelRenderer(self, col, renderer):
 		"""
 		Register a renderer to be used for drawing the label for the
 		given column.
