@@ -2866,6 +2866,12 @@ class BorderGradientButton(GradientButton):
 		self._bitmaphover = self._bitmap
 		self._bitmapselected = self._bitmap
 		set_bitmap_labels(self, focus=False)
+		if sys.platform == "darwin":
+			# Use Sierra-like color scheme
+			sel = self._bitmap.ConvertToImage()
+			sel.Invert()
+			sel = sel.ConvertToBitmap()
+			self.SetBitmapSelected(sel)
 		self._enabled = True
 
 	BitmapLabel = property(lambda self: self._bitmap,
@@ -2918,7 +2924,7 @@ class BorderGradientButton(GradientButton):
 			retWidth += bmpWidth
 			retHeight = max(bmpHeight, retHeight)
 
-		return wx.Size(retWidth+constant, retHeight+constant) 
+		return wx.Size(retWidth+constant, retHeight+constant+1) 
 	
 	def Enable(self, enable=True):
 		self._enabled = enable
@@ -2955,35 +2961,58 @@ class BorderGradientButton(GradientButton):
 		x, y, width, height = clientRect        
 		
 		gradientRect.SetHeight(gradientRect.GetHeight()/2 + ((capture==self and [1] or [0])[0]))
-		if capture != self:
-			if self._mouseAction == HOVER or self._hasFocus:
-				topStart, topEnd = self.LightColour(self._pressedTopColour, 87), self.LightColour(self._pressedBottomColour, 87)
-			else:
-				topStart, topEnd = self._topStartColour, self._bottomEndColour
-			brush = gc.CreateLinearGradientBrush(0, 1, 0, height, topStart,
-												 topEnd)
-		else:
-			topStart, topEnd = self.LightColour(self._pressedTopColour, 75), self.LightColour(self._pressedBottomColour, 75)
-			brush = gc.CreateLinearGradientBrush(0, 1, 0, height,
-												 topStart,
-												 topEnd)
 
 		fgcolor = self.ForegroundColour
+		if capture != self:
+			if self._mouseAction == HOVER and sys.platform != "darwin":
+				topStart = self.LightColour(self._pressedTopColour, 90)
+				topEnd = self.LightColour(self._pressedBottomColour, 90)
+			else:
+				topStart, topEnd = self._topStartColour, self._bottomEndColour
+			brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1, topStart,
+												 topEnd)
+		else:
+			if sys.platform == "darwin":
+				# Use Sierra-like color scheme
+				topStart = wx.Colour(105, 178, 250)
+				topEnd = wx.Colour(20, 129, 254)
+				fgcolor = wx.WHITE
+			else:
+				topStart = self.LightColour(self._pressedTopColour, 80)
+				topEnd = self.LightColour(self._pressedBottomColour, 80)
+			brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1, topStart,
+												 topEnd)
+
 		if not self.IsEnabled():
 			fgcolor = self.LightColour(fgcolor, 40)
 
 		gc.SetBrush(brush)
+		borderwidth = 1
 		if capture == self or self._mouseAction == HOVER or self._hasFocus:
-			if sys.platform == "win32":
-				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+			if sys.platform == "darwin":
+				# Use Sierra-like color scheme
+				if capture == self:
+					bordercolor = wx.Colour(10, 96, 254)
+				else:
+					bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
 			else:
-				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-			if self._mouseAction != HOVER and not self._hasFocus:
-				bordercolor = self.DarkColour(bordercolor, 75)
+				if sys.platform == "win32":
+					bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+					if capture != self and self._mouseAction != HOVER:
+						borderwidth = 2
+				else:
+					bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+				if capture == self:
+					bordercolor = self.DarkColour(bordercolor, 71)
 		else:
 			bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-		gc.SetPen(wx.Pen(bordercolor))
-		gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, height / 2)
+		if sys.platform == "darwin":
+			# Use Sierra-like color scheme
+			shadowcolor = wx.Colour(212, 212, 212)
+			gc.SetPen(wx.Pen(shadowcolor))
+			gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, height / 2)
+		gc.SetPen(wx.Pen(bordercolor, borderwidth))
+		gc.DrawRoundedRectangle(1, 1, width - 2, height - 3, height / 2)
 
 		shadowOffset = 0
 
@@ -3008,7 +3037,9 @@ class BorderGradientButton(GradientButton):
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
 		if self.IsEnabled():
-			if self._mouseAction == HOVER or self._hasFocus:
+			if capture == self:
+				bitmap = self._bitmapselected
+			elif self._mouseAction == HOVER:
 				bitmap = self._bitmaphover
 			else:
 				bitmap = self._bitmap

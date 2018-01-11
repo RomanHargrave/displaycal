@@ -1523,7 +1523,11 @@ class TabButton(PlateButton):
 
 		"""
 		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
-			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+			if sys.platform == "darwin":
+				# Use Sierra-like color scheme
+				color = wx.Colour(6, 105, 217)
+			else:
+				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 		else:
 			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
 
