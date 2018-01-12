@@ -5963,10 +5963,11 @@ class TabButton(PlateButton):
 		:param int `height`: height of highlight
 
 		"""
-		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
+		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT and
+			not get_dialogs(True)):
 			if sys.platform == "darwin":
 				# Use Sierra-like color scheme
-				color = wx.Colour(6, 105, 217)
+				color = wx.Colour(*gamma_encode(0, 105, 217))
 			else:
 				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 		else:
@@ -6027,8 +6028,7 @@ class TabButton(PlateButton):
 
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT and
-			self.IsEnabled() and not get_dialogs(True)):
+		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT and self.IsEnabled():
 			gc.SetTextForeground(self._color['htxt'])
 			gc.SetPen(wx.TRANSPARENT_PEN)
 			self.__DrawHighlight(gc, width, height)
