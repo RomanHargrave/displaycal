@@ -216,8 +216,10 @@ def gamma_encode(R, G, B, alpha=wx.ALPHA_OPAQUE):
 		# Decode R'G'B' -> linear light using sRGB transfer function, then
 		# re-encode to gamma = 1.0 / 1.8 so that when decoded with gamma = 1.8
 		# we get the correct sRGB color
-		return [int(round(specialpow(v / 255., -2.4) ** (1.0 / 1.8) * 255))
-				for v in (R, G, B, alpha)]
+		RGBa = [int(round(specialpow(v / 255., -2.4) ** (1.0 / 1.8) * 255))
+				for v in (R, G, B)]
+		RGBa.append(alpha)
+		return RGBa
 	else:
 		return [R, G, B, alpha]
 
