@@ -44,8 +44,8 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop,
 					  BetterWindowDisabler, BetterTimer, EVT_BETTERTIMER)
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
-					 ThemedGenButton, adjust_font_size_for_gcdc,
-					 get_dc_font_size, set_bitmap_labels, wx_Panel)
+					 PlateButton, ThemedGenButton, adjust_font_size_for_gcdc,
+					 get_dc_font_size, platebtn, set_bitmap_labels, wx_Panel)
 from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -2862,6 +2862,7 @@ class BorderGradientButton(GradientButton):
 				 style=wx.NO_BORDER, validator=wx.DefaultValidator,
 				 name="gradientbutton"):
 		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
+		self.use_sierra_style = sys.platform == "darwin"
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
 		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
@@ -2870,7 +2871,7 @@ class BorderGradientButton(GradientButton):
 		self._bitmaphover = self._bitmap
 		self._bitmapselected = self._bitmap
 		set_bitmap_labels(self, focus=False)
-		if sys.platform == "darwin":
+		if self.use_sierra_style:
 			# Use Sierra-like color scheme
 			sel = self._bitmap.ConvertToImage()
 			sel.Invert()
@@ -2928,7 +2929,7 @@ class BorderGradientButton(GradientButton):
 			retWidth += bmpWidth
 			retHeight = max(bmpHeight, retHeight)
 
-		return wx.Size(retWidth+constant, retHeight+constant+1) 
+		return wx.Size(retWidth+constant, retHeight+constant) 
 	
 	def Enable(self, enable=True):
 		self._enabled = enable
@@ -2967,56 +2968,104 @@ class BorderGradientButton(GradientButton):
 		gradientRect.SetHeight(gradientRect.GetHeight()/2 + ((capture==self and [1] or [0])[0]))
 
 		fgcolor = self.ForegroundColour
-		if capture != self:
-			if self._mouseAction == HOVER and sys.platform != "darwin":
+
+		# Determine fill color based on state and platform
+		if self.use_sierra_style:
+			# Use Sierra-like color scheme
+			if capture == self or self._hasFocus:
+				# Pressed/selected or focus state
+				topStart = wx.Colour(74, 150, 253)
+				topEnd = wx.Colour(8, 103, 221)
+				fgcolor = wx.WHITE
+			else:
+				# Normal state
+				topStart = wx.WHITE
+				topEnd = wx.WHITE
+		elif capture != self:
+			# Normal, hover or focus state
+			if self._mouseAction == HOVER:
+				# Hover state
 				topStart = self.LightColour(self._pressedTopColour, 90)
 				topEnd = self.LightColour(self._pressedBottomColour, 90)
 			else:
+				# Normal or focus state
 				topStart, topEnd = self._topStartColour, self._bottomEndColour
-			brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1, topStart,
-												 topEnd)
 		else:
-			if sys.platform == "darwin":
-				# Use Sierra-like color scheme
-				topStart = wx.Colour(105, 178, 250)
-				topEnd = wx.Colour(20, 129, 254)
-				fgcolor = wx.WHITE
-			else:
-				topStart = self.LightColour(self._pressedTopColour, 80)
-				topEnd = self.LightColour(self._pressedBottomColour, 80)
-			brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1, topStart,
-												 topEnd)
+			# Pressed/selected state
+			topStart = self.LightColour(self._pressedTopColour, 80)
+			topEnd = self.LightColour(self._pressedBottomColour, 80)
 
 		if not self.IsEnabled():
 			fgcolor = self.LightColour(fgcolor, 40)
 
-		gc.SetBrush(brush)
+		# Determine border color and width based on state and platform
 		borderwidth = 1
-		if capture == self or self._mouseAction == HOVER or self._hasFocus:
-			if sys.platform == "darwin":
-				# Use Sierra-like color scheme
-				if capture == self:
-					bordercolor = wx.Colour(10, 96, 254)
-				else:
-					bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-			else:
-				if sys.platform == "win32":
-					bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-					if capture != self and self._mouseAction != HOVER:
-						borderwidth = 2
-				else:
-					bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-				if capture == self:
-					bordercolor = self.DarkColour(bordercolor, 71)
-		else:
-			bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-		if sys.platform == "darwin":
+		if self.use_sierra_style:
 			# Use Sierra-like color scheme
-			shadowcolor = wx.Colour(212, 212, 212)
+			if capture == self or self._hasFocus:
+				# Pressed/selected or focus state
+				bordercolor_top = wx.Colour(35, 125, 254)
+				bordercolor = wx.Colour(2, 63, 221)
+			else:
+				# Normal state
+				bordercolor_top = wx.Colour(200, 200, 200)
+				bordercolor = wx.Colour(172, 172, 172)
+		else:
+			# Normal, hover, focus or pressed/selected state
+			if self._mouseAction == HOVER or self._hasFocus:
+				# Hover, focus or pressed/selected state
+				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+				if (sys.platform == "win32" and capture != self and
+					self._mouseAction != HOVER):
+					# Focus state
+					borderwidth = 2
+			else:
+				# Normal state
+				bordercolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+			if capture == self:
+				# Pressed/selected state
+				bordercolor = self.DarkColour(bordercolor, 71)
+
+		brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1,
+											 topStart, topEnd)
+		gc.SetBrush(brush)
+
+		if self.use_sierra_style:
+			# Use Sierra-like color scheme
+			shadowcolor = wx.Colour(228, 228, 228)
+
+			# Draw Sierra-like shadow
 			gc.SetPen(wx.Pen(shadowcolor))
-			gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, height / 2)
-		gc.SetPen(wx.Pen(bordercolor, borderwidth))
-		gc.DrawRoundedRectangle(1, 1, width - 2, height - 3, height / 2)
+			gc.DrawRoundedRectangle(borderwidth, borderwidth,
+									width - 2 - borderwidth,
+									height - 1 - borderwidth,
+									(height - 2 - borderwidth) / 2.0)
+
+			# Draw borders
+			gc.SetPen(wx.Pen(bordercolor))
+			gc.DrawRoundedRectangle(borderwidth, borderwidth,
+									width - 2 - borderwidth,
+									height - 2 - borderwidth,
+									(height - 3 - borderwidth) / 2.0)
+			gc.SetPen(wx.Pen(bordercolor_top))
+			gc.DrawRoundedRectangle(borderwidth, borderwidth,
+									width - 2 - borderwidth,
+									height - 2 - borderwidth * 2,
+									(height - 3 - borderwidth * 2) / 2.0)
+
+			# Draw fill
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			gc.DrawRoundedRectangle(borderwidth * 2, borderwidth * 2,
+									width - 2 - borderwidth * 2,
+									height - 2 - borderwidth * 2,
+									(height - 3 - borderwidth * 2) / 2.0)
+		else:
+			# Draw border and fill
+			gc.SetPen(wx.Pen(bordercolor, borderwidth))
+			gc.DrawRoundedRectangle(borderwidth, borderwidth,
+									width - 2 - borderwidth,
+									height - 2 - borderwidth,
+									(height - 3 - borderwidth) / 2.0)
 
 		shadowOffset = 0
 
@@ -3041,9 +3090,9 @@ class BorderGradientButton(GradientButton):
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
 		if self.IsEnabled():
-			if capture == self:
+			if capture == self or self._hasFocus:
 				bitmap = self._bitmapselected
-			elif self._mouseAction == HOVER:
+			elif self._mouseAction == HOVER and not get_dialogs(True):
 				bitmap = self._bitmaphover
 			else:
 				bitmap = self._bitmap
@@ -5758,6 +5807,233 @@ class SimpleTerminal(InvincibleFrame):
 		wx.CallAfter(self.add_text, txt)
 
 
+class TabButton(PlateButton):
+
+	def __init__(self, *args, **kwargs):
+		from config import get_default_dpi, getcfg
+		self.dpiscale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
+		PlateButton.__init__(self, *args, **kwargs)
+		self.Unbind(wx.EVT_PAINT)
+		self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+	def DoGetBestSize(self):
+		"""Calculate the best size of the button
+		
+		:return: :class:`Size`
+
+		"""
+		width = 0
+		height = 6 * self.dpiscale
+		if self.Label:
+			# NOTE: Should measure with a GraphicsContext to get right
+			#       size, but due to random segfaults on linux special
+			#       handling is done in the drawing instead...
+			lsize = self.GetFullTextExtent(self.Label)
+			width += lsize[0]
+			height += lsize[1]
+			
+		if self._bmp['enable'] is not None:
+			bsize = self._bmp['enable'].Size
+			width += (bsize[0] + 10 * self.dpiscale)
+			if height <= bsize[1]:
+				height = bsize[1] + 6 * self.dpiscale
+			else:
+				height += 3 * self.dpiscale
+		else:
+			width += 10 * self.dpiscale
+
+		if self._menu is not None or self._style & platebtn.PB_STYLE_DROPARROW:
+			width += 12 * self.dpiscale
+
+		height += 16 * self.dpiscale  # Tab hilite
+
+		best = wx.Size(width, height)
+		self.CacheBestSize(best)
+		return best
+
+	def OnFocus(self, evt):
+		"""Set the visual focus state if need be"""
+		if self._state['cur'] in (platebtn.PLATE_NORMAL, platebtn.PLATE_PRESSED):
+			self._SetState(platebtn.PLATE_HIGHLIGHT)
+
+	def OnKillFocus(self, evt):
+		"""Set the visual state back to normal when focus is lost
+		unless the control is currently in a pressed state.
+
+		"""
+		if self._pressed:
+			self._SetState(platebtn.PLATE_PRESSED)
+		else:
+			self._SetState(platebtn.PLATE_NORMAL)
+
+	def OnLeftDown(self, evt):
+		"""Depending on the click position will
+		show the popup menu if one has been set.
+
+		"""
+		pos = evt.GetPosition()
+		size = self.GetSize()
+		if pos[0] >= size[0] - 16:
+			if self._menu is not None:
+				self.ShowMenu()
+			elif self._style & platebtn.PB_STYLE_DROPARROW:
+				event = PlateBtnDropArrowPressed()
+				event.SetEventObject(self)
+				self.EventHandler.ProcessEvent(event)
+		
+		self.SetFocus()
+
+	def OnLeftUp(self, evt):
+		"""Post a button event.
+
+		:param `evt`: :class:`MouseEvent`
+
+		"""
+		self._SetState(platebtn.PLATE_PRESSED)
+		PlateButton.OnLeftUp(self, evt)
+
+	def OnKeyUp(self, evt):
+		"""Execute a single button press action when the Return key is pressed
+		and this control has the focus.
+		
+		:param `evt`: wx.EVT_KEY_UP
+
+		"""
+		if evt.GetKeyCode() == wx.WXK_SPACE:
+			self._SetState(platebtn.PLATE_PRESSED)
+			self._PostEvent()
+		else:
+			evt.Skip()
+
+	def OnPaint(self, evt):
+		self.__DrawButton()
+
+	def __DrawBitmap(self, gc):
+		"""Draw the bitmap if one has been set
+
+		:param GCDC `gc`: :class:`GCDC` to draw with
+		:return: x cordinate to draw text at
+
+		"""
+		if self.IsEnabled():
+			bmp = self._bmp['enable']
+		else:
+			bmp = self._bmp['disable']
+
+		xpos = 0
+		if bmp is not None and bmp.IsOk():
+			bw, bh = bmp.GetSize()
+			ypos = (self.GetSize()[1] - bh) // 2
+			ypos -= 8  # Tab hilite
+			gc.DrawBitmap(bmp, xpos, ypos, bmp.GetMask() != None)
+			return bw + xpos
+		else:
+			return xpos
+
+	def __DrawHighlight(self, gc, width, height):
+		"""Draw the main highlight/pressed state
+
+		:param GCDC `gc`: :class:`GCDC` to draw with
+		:param int `width`: width of highlight
+		:param int `height`: height of highlight
+
+		"""
+		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT:
+			if sys.platform == "darwin":
+				# Use Sierra-like color scheme
+				color = wx.Colour(6, 105, 217)
+			else:
+				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+		else:
+			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+
+		if self._style & platebtn.PB_STYLE_SQUARE:
+			rad = 0
+		else:
+			rad = (height - 3) / 2
+
+		if self._style & platebtn.PB_STYLE_GRADIENT:
+			gc.SetBrush(wx.TRANSPARENT_BRUSH)
+			rgc = gc.GetGraphicsContext()
+			brush = rgc.CreateLinearGradientBrush(0, 1, 0, height,
+												  color, platebtn.AdjustAlpha(color, 55))
+			rgc.SetBrush(brush)
+		else:
+			gc.SetBrush(wx.Brush(color))
+
+		##gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, rad)
+		gc.DrawRectangle(0, height + 10 * self.dpiscale, width, 8 * self.dpiscale)
+
+	def __DrawButton(self):
+		"""Draw the button"""
+		# TODO using a buffered paintdc on windows with the nobg style
+		#      causes lots of weird drawing. So currently the use of a
+		#      buffered dc is dissabled for this style.
+		if platebtn.PB_STYLE_NOBG & self._style:
+			dc = wx.PaintDC(self)
+		else:
+			dc = wx.AutoBufferedPaintDCFactory(self)
+			dc.SetBackground(wx.Brush(self.Parent.BackgroundColour))
+			dc.Clear()
+
+		gc = wx.GCDC(dc)
+
+		# Setup
+		gc.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+		gc.SetBackgroundMode(wx.TRANSPARENT)
+
+		# Calc Object Positions
+		width, height = self.GetSize()
+		height -= 16  # Tab hilite
+		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
+		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
+		# TODO: Figure out why this is the case.
+		tw, th = self.GetTextExtent(self.Label)
+		txt_y = max((height - th) // 2, 1)
+		height += 16
+		height -= 16 * self.dpiscale  # Tab hilite
+
+		# The background needs some help to look transparent on
+		# on Gtk and Windows
+		if wx.Platform in ['__WXGTK__', '__WXMSW__']:
+			gc.SetBrush(self.GetBackgroundBrush(gc))
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			gc.DrawRectangle(0, 0, width, height)
+
+		gc.SetBrush(wx.TRANSPARENT_BRUSH)
+
+		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT and
+			self.IsEnabled() and not get_dialogs(True)):
+			gc.SetTextForeground(self._color['htxt'])
+			gc.SetPen(wx.TRANSPARENT_PEN)
+			self.__DrawHighlight(gc, width, height)
+
+		elif self._pressed and self.IsEnabled():
+			gc.SetTextForeground(self._color['htxt'])
+
+			self.__DrawHighlight(gc, width, height)
+			txt_x = self.__DrawBitmap(gc)
+			t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
+					  txt_x + 8 * self.dpiscale)
+			gc.DrawText(self.Label, t_x, txt_y)
+			##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+
+		else:
+			if self.IsEnabled():
+				gc.SetTextForeground(self.GetForegroundColour())
+			else:
+				txt_c = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+				gc.SetTextForeground(txt_c)
+
+		# Draw bitmap and text
+		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
+			txt_x = self.__DrawBitmap(gc)
+			t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
+					  txt_x + 8 * self.dpiscale)
+			gc.DrawText(self.Label, t_x, txt_y)
+			##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+
+
 class TaskBarNotification(wx.Frame):
 
 	"""
@@ -6348,11 +6624,12 @@ def get_widget(win, id_name_label):
 				return child
 
 
-def get_dialogs():
+def get_dialogs(modal=False):
 	""" If there are any dialogs open, return them """
 	return filter(lambda window: window and
 								 isinstance(window, wx.Dialog) and
-								 window.IsShown(),
+								 window.IsShown() and
+								 (not modal or window.IsModal()),
 				  wx.GetTopLevelWindows())
 
 

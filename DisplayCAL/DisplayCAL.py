@@ -134,7 +134,7 @@ from wxTestchartEditor import TestchartEditor
 from wxVisualWhitepointEditor import VisualWhitepointEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
-from wxfixes import (ThemedGenButton, BitmapWithThemedButton, TabButton,
+from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
@@ -142,7 +142,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileBrowseBitmapButtonWithChoiceHistory,
 					   FileDrop, FlatShadedButton, HyperLinkCtrl, InfoDialog,
-					   LogWindow, ProgressDialog, TooltipWindow,
+					   LogWindow, ProgressDialog, TabButton, TooltipWindow,
 					   get_gradient_panel, get_dialogs)
 import floatspin
 import xh_fancytext
