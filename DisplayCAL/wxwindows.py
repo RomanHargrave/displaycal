@@ -3021,7 +3021,10 @@ class BorderGradientButton(GradientButton):
 				# Normal state
 				##bordercolor_top = wx.Colour(*gamma_encode(200, 200, 200))
 				##bordercolor = wx.Colour(*gamma_encode(172, 172, 172))
-				bordercolor_top = wx.Colour(*gamma_encode(0, 0, 0, 11))
+				if sys.platform == "darwin":
+					bordercolor_top = wx.Colour(*gamma_encode(0, 0, 0, 55))
+				else:
+					bordercolor_top = wx.Colour(*gamma_encode(0, 0, 0, 11))
 				bordercolor = wx.Colour(*gamma_encode(0, 0, 0, 83))
 		else:
 			# Normal, hover, focus or pressed/selected state
@@ -3046,40 +3049,43 @@ class BorderGradientButton(GradientButton):
 		if self.use_sierra_style:
 			# Use Sierra-like color scheme
 			##shadowcolor = wx.Colour(*gamma_encode(228, 228, 228))
-			shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 19))
+			if sys.platform == "darwin":
+				shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 7))
+			else:
+				shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 19))
 
 			# Draw Sierra-like shadow
 			gc.SetPen(wx.Pen(shadowcolor))
 			gc.DrawRoundedRectangle(borderwidth, borderwidth,
 									width - 2 - borderwidth,
 									height - 1 - borderwidth,
-									(height - 2 - borderwidth) / 2.0)
+									(height - 1 - borderwidth) / 2.0)
 
 			# Draw borders
 			gc.SetPen(wx.Pen(bordercolor))
 			gc.DrawRoundedRectangle(borderwidth, borderwidth,
 									width - 2 - borderwidth,
 									height - 2 - borderwidth,
-									(height - 3 - borderwidth) / 2.0)
+									(height - 2 - borderwidth) / 2.0)
 			gc.SetPen(wx.Pen(bordercolor_top))
 			gc.DrawRoundedRectangle(borderwidth, borderwidth,
 									width - 2 - borderwidth,
 									height - 2 - borderwidth * 2,
-									(height - 3 - borderwidth * 2) / 2.0)
+									(height - 2 - borderwidth * 2) / 2.0)
 
 			# Draw fill
 			gc.SetPen(wx.TRANSPARENT_PEN)
 			gc.DrawRoundedRectangle(borderwidth * 2, borderwidth * 2,
 									width - 2 - borderwidth * 2,
 									height - 2 - borderwidth * 2,
-									(height - 3 - borderwidth * 2) / 2.0)
+									(height - 2 - borderwidth * 2) / 2.0)
 		else:
 			# Draw border and fill
 			gc.SetPen(wx.Pen(bordercolor, borderwidth))
 			gc.DrawRoundedRectangle(borderwidth, borderwidth,
 									width - 2 - borderwidth,
 									height - 2 - borderwidth,
-									(height - 3 - borderwidth) / 2.0)
+									(height - 2 - borderwidth) / 2.0)
 
 		shadowOffset = 0
 
@@ -3122,7 +3128,7 @@ class BorderGradientButton(GradientButton):
 			gc.DrawBitmap(bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
 			pos_x = pos_x + 4   # extra spacing from bitmap
 
-		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-.5+shadowOffset) 
+		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-1+shadowOffset) 
 
 	def SetBitmap(self, bitmap):
 		self._bitmap = bitmap
