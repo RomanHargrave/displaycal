@@ -5973,7 +5973,7 @@ class TabButton(PlateButton):
 		elif self._pressed:
 			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
 		else:
-			return
+			return False
 
 		if self._style & platebtn.PB_STYLE_SQUARE:
 			rad = 0
@@ -5993,6 +5993,7 @@ class TabButton(PlateButton):
 
 		##gc.DrawRoundedRectangle(1, 1, width - 2, height - 2, rad)
 		gc.DrawRectangle(0, height + 10 * self.dpiscale, width, 8 * self.dpiscale)
+		return True
 
 	def __DrawButton(self):
 		"""Draw the button"""
@@ -6034,10 +6035,12 @@ class TabButton(PlateButton):
 
 		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT or
 			self._pressed) and self.IsEnabled():
+			hl = self.__DrawHighlight(gc, width, height)
+		else:
+			hl = False
+
+		if hl:
 			txt_c = self._color['htxt']
-
-			self.__DrawHighlight(gc, width, height)
-
 		else:
 			if self.IsEnabled():
 				txt_c = self.GetForegroundColour()
