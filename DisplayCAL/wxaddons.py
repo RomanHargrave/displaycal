@@ -6,6 +6,7 @@ import sys
 import threading
 import types
 
+from colormath import specialpow
 from wxfixes import wx
 
 
@@ -199,6 +200,26 @@ def IsSizer(self):
 	return isinstance(self, wx.Sizer)
 
 wx.Window.IsSizer = IsSizer
+
+
+def gamma_encode(R, G, B, alpha=wx.ALPHA_OPAQUE):
+	"""
+	(Re-)Encode R'G'B' colors with specific platform gamma.
+	
+	R, G, B = color components in range 0..255
+	
+	Note this only has effect under wxMac which assumes a decoding gamma of 1.8
+	
+	"""
+	if sys.platform == "darwin":
+		# Adjust for wxMac assuming gamma 1.8 instead of sRGB
+		# Decode R'G'B' -> linear light using sRGB transfer function, then
+		# re-encode to gamma = 1.0 / 1.8 so that when decoded with gamma = 1.8
+		# we get the correct sRGB color
+		return [int(round(specialpow(v / 255., -2.4) ** (1.0 / 1.8) * 255))
+				for v in (R, G, B, alpha)]
+	else:
+		return [R, G, B, alpha]
 
 
 def get_platform_window_decoration_size():

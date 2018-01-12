@@ -39,7 +39,7 @@ from util_io import StringIOu as StringIO
 from util_os import get_program_file, launch_file, waccess
 from util_str import safe_str, safe_unicode, wrap
 from util_xml import dict2xml
-from wxaddons import (CustomEvent, FileDrop as _FileDrop,
+from wxaddons import (CustomEvent, FileDrop as _FileDrop, gamma_encode,
 					  get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler, BetterTimer, EVT_BETTERTIMER)
 from wexpect import split_command_line
@@ -47,7 +47,7 @@ from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 PlateButton, ThemedGenButton, adjust_font_size_for_gcdc,
 					 get_dc_font_size, platebtn, set_bitmap_labels, wx_Panel)
 from lib.agw import labelbook, pygauge
-from lib.agw.gradientbutton import GradientButton, HOVER
+from lib.agw.gradientbutton import GradientButton, CLICK, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
 									 NOWHERE, FourWaySplitter,
 									 FourWaySplitterEvent)
@@ -2875,6 +2875,8 @@ class BorderGradientButton(GradientButton):
 			# Use Sierra-like color scheme
 			sel = self._bitmap.ConvertToImage()
 			sel.Invert()
+			self.SetBitmapFocus(sel.ConvertToBitmap())
+			sel = sel.AdjustChannels(1, 1, 1, .8)
 			sel = sel.ConvertToBitmap()
 			self.SetBitmapSelected(sel)
 		self._enabled = True
@@ -2972,10 +2974,15 @@ class BorderGradientButton(GradientButton):
 		# Determine fill color based on state and platform
 		if self.use_sierra_style:
 			# Use Sierra-like color scheme
-			if capture == self or self._hasFocus:
-				# Pressed/selected or focus state
-				topStart = wx.Colour(74, 150, 253)
-				topEnd = wx.Colour(8, 103, 221)
+			if capture == self and self._mouseAction in (CLICK, HOVER):
+				# Pressed/selected state
+				topStart = wx.Colour(*gamma_encode(74, 150, 253))
+				topEnd = wx.Colour(*gamma_encode(8, 103, 221))
+				fgcolor = wx.Colour(255, 255, 255, 204)
+			elif self._hasFocus:
+				# Focus state
+				topStart = wx.Colour(*gamma_encode(105, 177, 250))
+				topEnd = wx.Colour(*gamma_encode(12, 128, 255))
 				fgcolor = wx.WHITE
 			else:
 				# Normal state
@@ -3002,14 +3009,20 @@ class BorderGradientButton(GradientButton):
 		borderwidth = 1
 		if self.use_sierra_style:
 			# Use Sierra-like color scheme
-			if capture == self or self._hasFocus:
+			if capture == self and self._mouseAction in (CLICK, HOVER):
 				# Pressed/selected or focus state
-				bordercolor_top = wx.Colour(35, 125, 254)
-				bordercolor = wx.Colour(2, 63, 221)
+				bordercolor_top = wx.Colour(*gamma_encode(35, 125, 254))
+				bordercolor = wx.Colour(*gamma_encode(2, 63, 221))
+			elif self._hasFocus:
+				# Pressed/selected or focus state
+				bordercolor_top = wx.Colour(*gamma_encode(74, 160, 249))
+				bordercolor = wx.Colour(*gamma_encode(4, 95, 255))
 			else:
 				# Normal state
-				bordercolor_top = wx.Colour(200, 200, 200)
-				bordercolor = wx.Colour(172, 172, 172)
+				##bordercolor_top = wx.Colour(*gamma_encode(200, 200, 200))
+				##bordercolor = wx.Colour(*gamma_encode(172, 172, 172))
+				bordercolor_top = wx.Colour(*gamma_encode(0, 0, 0, 11))
+				bordercolor = wx.Colour(*gamma_encode(0, 0, 0, 83))
 		else:
 			# Normal, hover, focus or pressed/selected state
 			if self._mouseAction == HOVER or self._hasFocus:
@@ -3032,7 +3045,8 @@ class BorderGradientButton(GradientButton):
 
 		if self.use_sierra_style:
 			# Use Sierra-like color scheme
-			shadowcolor = wx.Colour(228, 228, 228)
+			##shadowcolor = wx.Colour(*gamma_encode(228, 228, 228))
+			shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 19))
 
 			# Draw Sierra-like shadow
 			gc.SetPen(wx.Pen(shadowcolor))
@@ -3077,7 +3091,10 @@ class BorderGradientButton(GradientButton):
 		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
 		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
 		# TODO: Figure out why this is the case.
-		tw, th = self.GetTextExtent(label)
+		if u"phoenix" in wx.PlatformInfo:
+			tw, th = self.GetTextExtent(label)
+		else:
+			tw, th = gc.GetTextExtent(label)
 
 		if self._bitmap:
 			bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()
@@ -3090,8 +3107,10 @@ class BorderGradientButton(GradientButton):
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
 		if self.IsEnabled():
-			if capture == self or self._hasFocus:
+			if capture == self and self._mouseAction in (CLICK, HOVER):
 				bitmap = self._bitmapselected
+			elif self._hasFocus:
+				bitmap = self._bitmapfocus
 			elif self._mouseAction == HOVER and not get_dialogs(True):
 				bitmap = self._bitmaphover
 			else:
@@ -3101,7 +3120,7 @@ class BorderGradientButton(GradientButton):
 		if bitmap:
 			pos_y =  (height-bh)/2+shadowOffset
 			gc.DrawBitmap(bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
-			pos_x = pos_x + 5   # extra spacing from bitmap
+			pos_x = pos_x + 4   # extra spacing from bitmap
 
 		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-.5+shadowOffset) 
 
@@ -6569,6 +6588,7 @@ class TwoWaySplitter(FourWaySplitter):
 	
 	def SetSplitSize(self, size):
 		self._splitsize = size
+
 
 def get_gradient_panel(parent, label, x=16):
 	gradientpanel = BitmapBackgroundPanelText(parent, size=(-1, 31))
