@@ -3115,7 +3115,7 @@ class BorderGradientButton(GradientButton):
 		if self.IsEnabled():
 			if capture == self and self._mouseAction in (CLICK, HOVER):
 				bitmap = self._bitmapselected
-			elif self._hasFocus:
+			elif capture != self and self._hasFocus:
 				bitmap = self._bitmapfocus
 			elif self._mouseAction == HOVER and not get_dialogs(True):
 				bitmap = self._bitmaphover
