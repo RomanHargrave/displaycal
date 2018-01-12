@@ -2979,7 +2979,7 @@ class BorderGradientButton(GradientButton):
 				topStart = wx.Colour(*gamma_encode(74, 150, 253))
 				topEnd = wx.Colour(*gamma_encode(8, 103, 221))
 				fgcolor = wx.Colour(255, 255, 255, 204)
-			elif self._hasFocus:
+			elif capture != self and self._hasFocus:
 				# Focus state
 				topStart = wx.Colour(*gamma_encode(105, 177, 250))
 				topEnd = wx.Colour(*gamma_encode(12, 128, 255))
@@ -3010,11 +3010,11 @@ class BorderGradientButton(GradientButton):
 		if self.use_sierra_style:
 			# Use Sierra-like color scheme
 			if capture == self and self._mouseAction in (CLICK, HOVER):
-				# Pressed/selected or focus state
+				# Pressed/selected state
 				bordercolor_top = wx.Colour(*gamma_encode(35, 125, 254))
 				bordercolor = wx.Colour(*gamma_encode(2, 63, 221))
-			elif self._hasFocus:
-				# Pressed/selected or focus state
+			elif capture != self and self._hasFocus:
+				# Focus state
 				bordercolor_top = wx.Colour(*gamma_encode(74, 160, 249))
 				bordercolor = wx.Colour(*gamma_encode(4, 95, 255))
 			else:
@@ -3050,7 +3050,7 @@ class BorderGradientButton(GradientButton):
 			# Use Sierra-like color scheme
 			##shadowcolor = wx.Colour(*gamma_encode(228, 228, 228))
 			if sys.platform == "darwin":
-				shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 7))
+				shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 8))
 			else:
 				shadowcolor = wx.Colour(*gamma_encode(0, 0, 0, 19))
 
