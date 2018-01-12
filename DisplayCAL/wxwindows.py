@@ -5970,13 +5970,17 @@ class TabButton(PlateButton):
 				color = wx.Colour(*gamma_encode(0, 105, 217))
 			else:
 				color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-		else:
+		elif self._pressed:
 			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+		else:
+			return
 
 		if self._style & platebtn.PB_STYLE_SQUARE:
 			rad = 0
 		else:
 			rad = (height - 3) / 2
+
+		gc.SetPen(wx.TRANSPARENT_PEN)
 
 		if self._style & platebtn.PB_STYLE_GRADIENT:
 			gc.SetBrush(wx.TRANSPARENT_BRUSH)
@@ -6028,35 +6032,26 @@ class TabButton(PlateButton):
 
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT and self.IsEnabled():
-			gc.SetTextForeground(self._color['htxt'])
-			gc.SetPen(wx.TRANSPARENT_PEN)
-			self.__DrawHighlight(gc, width, height)
-
-		elif self._pressed and self.IsEnabled():
-			gc.SetTextForeground(self._color['htxt'])
+		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT or
+			self._pressed) and self.IsEnabled():
+			txt_c = self._color['htxt']
 
 			self.__DrawHighlight(gc, width, height)
-			txt_x = self.__DrawBitmap(gc)
-			t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
-					  txt_x + 8 * self.dpiscale)
-			gc.DrawText(self.Label, t_x, txt_y)
-			##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
 		else:
 			if self.IsEnabled():
-				gc.SetTextForeground(self.GetForegroundColour())
+				txt_c = self.GetForegroundColour()
 			else:
 				txt_c = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
-				gc.SetTextForeground(txt_c)
+
+		gc.SetTextForeground(txt_c)
 
 		# Draw bitmap and text
-		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
-			txt_x = self.__DrawBitmap(gc)
-			t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
-					  txt_x + 8 * self.dpiscale)
-			gc.DrawText(self.Label, t_x, txt_y)
-			##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
+		txt_x = self.__DrawBitmap(gc)
+		t_x = max((width - tw - (txt_x + 8 * self.dpiscale)) // 2,
+				  txt_x + 8 * self.dpiscale)
+		gc.DrawText(self.Label, t_x, txt_y)
+		##self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
 
 class TaskBarNotification(wx.Frame):
