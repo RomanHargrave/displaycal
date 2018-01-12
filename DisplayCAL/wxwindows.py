@@ -40,7 +40,7 @@ from util_os import get_program_file, launch_file, waccess
 from util_str import safe_str, safe_unicode, wrap
 from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop, gamma_encode,
-					  get_platform_window_decoration_size, wx,
+					  get_parent_frame, get_platform_window_decoration_size, wx,
 					  BetterWindowDisabler, BetterTimer, EVT_BETTERTIMER)
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
@@ -1933,6 +1933,17 @@ class BaseInteractiveDialog(wx.Dialog):
 					pos[i] += parent.GetScreenPosition()[i]
 				i += 1
 			pos = tuple(pos)
+			if title == appname:
+				appid = get_appid_from_window_hierarchy(parent)
+				base_appid = appname.lower()
+				appid2title = {base_appid + "-3dlut-maker": "3dlut.frame.title",
+							   base_appid + "-curve-viewer": "calibration.lut_viewer.title",
+							   base_appid + "-profile-info": "profile.info",
+							   base_appid + "-scripting-client": "scripting-client",
+							   base_appid + "-synthprofile": "synthicc.create",
+							   base_appid + "-testchart-editor": "testchart.edit",
+							   base_appid + "-vrml-to-x3d-converter": "vrml_to_x3d_converter"}
+				title = lang.getstr(appid2title.get(appid, "window.title"))
 		scale = getcfg("app.dpi") / get_default_dpi()
 		if scale > 1 and size == (400, -1):
 			size = size[0] * scale, size[1]
@@ -1951,7 +1962,7 @@ class BaseInteractiveDialog(wx.Dialog):
 				else:
 					self.taskbar = taskbar.Taskbar(taskbarframe)
 		self.SetPosition(pos)  # yes, this is needed
-		self.set_icons()
+		set_icons(self)
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 
@@ -2084,20 +2095,6 @@ class BaseInteractiveDialog(wx.Dialog):
 			if state is not None:
 				self.taskbar.set_progress_state(state)
 		return result
-
-	def set_icons(self):
-		parent = self.Parent
-		while parent:
-			if isinstance(parent, wx.Frame):
-				break
-			parent = parent.Parent
-		if (parent and parent.Icon and parent.Icon.IsOk() and
-			parent.Name in ("lut3dframe", "lut_viewer", "profile_info",
-							"scriptingframe", "synthiccframe", "tcgen",
-							"vrml2x3dframe")):
-			self.Icon = parent.Icon
-		else:
-			self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
 	def set_position(self):
 		if self.Parent and self.Parent.IsIconized():
@@ -5012,7 +5009,7 @@ class ProgressDialog(wx.Dialog):
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
 				self.SetDoubleBuffered(True)
-		self.set_icons()
+		set_icons(self)
 		self.Bind(wx.EVT_CLOSE, self.OnClose, self)
 		if not pos:
 			self.Bind(wx.EVT_MOVE, self.OnMove, self)
@@ -5561,8 +5558,6 @@ class ProgressDialog(wx.Dialog):
 			self.time3 = self.time
 			self.time4 = 0
 			self.remaining_time.Label = u"––:––:––"
-
-	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
 
 	def set_progress_type(self, progress_type):
 		if progress_type != self.progress_type:
@@ -6207,7 +6202,7 @@ class TooltipWindow(InvincibleFrame):
 			size = size[0] * scale, size[1]
 		InvincibleFrame.__init__(self, parent, id, title, pos, size, style)
 		self.SetPosition(pos)  # yes, this is needed
-		self.set_icons()
+		set_icons(self)
 
 		margin = 12
 		
@@ -6260,8 +6255,6 @@ class TooltipWindow(InvincibleFrame):
 			self.Center(wx.VERTICAL)
 		self.Show()
 		self.Raise()
-
-	set_icons = BaseInteractiveDialog.__dict__["set_icons"]
 
 
 class TwoWaySplitter(FourWaySplitter):
@@ -6759,6 +6752,29 @@ def format_ui_element(child, format="plain"):
 def restore_path_dialog_classes():
 	wx.DirDialog = _DirDialog
 	wx.FileDialog = _FileDialog
+
+
+def get_appid_from_window_hierarchy(toplevelwindow):
+	if isinstance(toplevelwindow, wx.Frame):
+		frame = toplevelwindow
+	else:
+		frame = get_parent_frame(toplevelwindow)
+	base_appid = appname.lower()
+	return {"lut3dframe": base_appid + "-3dlut-maker",
+		    "lut_viewer": base_appid + "-curve-viewer",
+		    "profile_info": base_appid + "-profile-info",
+		    "scriptingframe": base_appid + "-scripting-client",
+		    "synthiccframe": base_appid + "-synthprofile",
+		    "tcgen": base_appid + "-testchart-editor",
+		    "vrml2x3dframe": base_appid + "-vrml-to-x3d-converter"}.get(frame and
+																		frame.Name,
+																		base_appid)
+
+
+def set_icons(toplevelwindow):
+	""" Set icon to that of parent frame """
+	appid = get_appid_from_window_hierarchy(toplevelwindow)
+	toplevelwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appid))
 
 
 def show_result_dialog(result, parent=None, pos=None, confirm=False, wrap=70):

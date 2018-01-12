@@ -315,6 +315,15 @@ def create_granger_rainbow_bitmap(width=1920, height=1080, filename=None):
 		return bmp
 
 
+def get_parent_frame(window):
+	""" Get parent frame (if any) """
+	parent = window.Parent
+	while parent:
+		if isinstance(parent, wx.Frame):
+			return parent
+		parent = parent.Parent
+
+
 class CustomEvent(wx.PyEvent):
 
 	def __init__(self, typeId, object, window=None):
