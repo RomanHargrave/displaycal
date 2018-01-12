@@ -262,13 +262,10 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 			w = int(round(w * scale))
 			h = int(round(h * scale))
 		if parts[-1] == "empty":
-			bmp = wx.EmptyBitmap(w, h, depth=-1)
-			dc = wx.MemoryDC()
-			dc.SelectObject(bmp)
-			dc.SetBackground(wx.Brush("black"))
-			dc.Clear()
-			dc.SelectObject(wx.NullBitmap)
-			bmp.SetMaskColour("black")
+			img = wx.EmptyImage(w, h)
+			img.SetMaskColour(0, 0, 0)
+			img.InitAlpha()
+			bmp = img.ConvertToBitmap()
 		else:
 			if parts[-1].startswith(appname):
 				parts[-1] = parts[-1].lower()
