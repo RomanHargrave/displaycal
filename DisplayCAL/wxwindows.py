@@ -1916,7 +1916,8 @@ class BaseFrame(wx.Frame):
 				# Under Windows, enabling double buffering on the panel seems
 				# to work best to reduce flicker.
 				child.SetDoubleBuffered(True)
-			if isinstance(child, wx.Panel) and child.AcceptsFocus():
+			if (sys.platform != "darwin" and isinstance(child, wx.Panel) and
+				child.AcceptsFocus()):
 				# Has no children that can accept focus, so there is no reason
 				# why this should be able to receive focus, ever.
 				# Move focus to the next control.
@@ -5888,7 +5889,9 @@ class TabButton(PlateButton):
 
 	def OnFocus(self, evt):
 		"""Set the visual focus state if need be"""
-		if self._state['cur'] in (platebtn.PLATE_NORMAL, platebtn.PLATE_PRESSED):
+		if self._pressed:
+			self.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or evt.Skip()
+		elif self._state['cur'] == platebtn.PLATE_NORMAL:
 			self._SetState(platebtn.PLATE_HIGHLIGHT)
 
 	def OnKillFocus(self, evt):
@@ -5916,7 +5919,8 @@ class TabButton(PlateButton):
 				event.SetEventObject(self)
 				self.EventHandler.ProcessEvent(event)
 		
-		self.SetFocus()
+		if not self._pressed:
+			self.SetFocus()
 
 	def OnLeftUp(self, evt):
 		"""Post a button event.
@@ -5973,8 +5977,8 @@ class TabButton(PlateButton):
 		:param int `height`: height of highlight
 
 		"""
-		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT and
-			not get_dialogs(True)):
+		if ((self._state['cur'] == platebtn.PLATE_HIGHLIGHT or
+			 self.HasFocus()) and not self._pressed and not get_dialogs(True)):
 			if sys.platform == "darwin":
 				# Use Sierra-like color scheme
 				color = wx.Colour(*gamma_encode(0, 105, 217))
@@ -6044,7 +6048,7 @@ class TabButton(PlateButton):
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
 		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT or
-			self._pressed) and self.IsEnabled():
+			self._pressed or self.HasFocus()) and self.IsEnabled():
 			hl = self.__DrawHighlight(gc, width, height)
 		else:
 			hl = False
@@ -6121,7 +6125,7 @@ class TaskBarNotification(wx.Frame):
 								style=wx.NO_BORDER)
 		close.BackgroundColour = panel.BackgroundColour
 		close.Bind(wx.EVT_BUTTON, lambda event: self.fade("out"))
-		set_bitmap_labels(close)
+		set_bitmap_labels(close, focus=False)
 		panel.Sizer.Add(close, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
 						border=12)
 		border.Sizer.SetSizeHints(self)
