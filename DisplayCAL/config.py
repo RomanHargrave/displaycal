@@ -270,6 +270,12 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 			if parts[-1].startswith(appname):
 				parts[-1] = parts[-1].lower()
 			oname = parts[-1]
+			if "#" in oname:
+				# Hex format, RRGGBB or RRGGBBAA
+				oname, color = oname.split("#", 1)
+				parts[-1] = oname
+			else:
+				color = None
 			inverted = oname.endswith("-inverted")
 			if inverted:
 				oname = parts[-1] = oname.split("-inverted")[0]
@@ -342,9 +348,12 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 									bmp.Size[1] != h):
 						# HighDPI support. Rescale
 						img = bmp.ConvertToImage()
-						if not hasattr(wx, "IMAGE_QUALITY_BILINEAR"):
+						if (not hasattr(wx, "IMAGE_QUALITY_BILINEAR") or
+							oname == "list-add"):
+							# In case bilinear is not supported, and to prevent
+							# black borders after resizing for some images
 							quality = wx.IMAGE_QUALITY_NORMAL
-						elif oname == "rgbsquares":
+						elif oname in ():
 							# Hmm. Everything else looks great with bicubic,
 							# but this one gets jaggy unless we use bilinear
 							quality = wx.IMAGE_QUALITY_BILINEAR
@@ -353,11 +362,42 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 						else:
 							quality = wx.IMAGE_QUALITY_BILINEAR
 						img.Rescale(w, h, quality=quality)
+				factors = None
 				# Invert after resize (avoids jaggies)
 				if inverted:
 					if not img:
 						img = bmp.ConvertToImage()
 					img.Invert()
+					if oname in ["applications-system", "color",
+								 "document-open", "document-save-as",
+								 "edit-delete", "image-x-generic", "info",
+								 "install", "list-add", "package-x-generic",
+								 "question", "rgbsquares",
+								 "stock_3d-color-picker", "stock_lock",
+								 "stock_lock-open", "stock_refresh", "web",
+								 "window-center", "zoom-best-fit", "zoom-in",
+								 "zoom-original", "zoom-out"]:
+						# Scale 85 to 255
+						factors = (3, 3, 3)
+				if color or factors:
+					if not img:
+						img = bmp.ConvertToImage()
+					if color:
+						# Hex format, RRGGBB or RRGGBBAA
+						R = int(color[0:2], 16) / 255.0
+						G = int(color[2:4], 16) / 255.0
+						B = int(color[4:6], 16) / 255.0
+						if len(color) > 6:
+							alpha = int(color[6:8], 16) / 255.0
+						else:
+							alpha = 1.0
+					else:
+						R, G, B = factors[:3]
+						if len(factors) > 3:
+							alpha = factors[3]
+						else:
+							alpha = 1.0
+					img = img.AdjustChannels(R, G, B, alpha)
 				if img:
 					bmp = img.ConvertToBitmap()
 					if not bmp.IsOk():

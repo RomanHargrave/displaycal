@@ -683,7 +683,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="visual_whitepoint_editor_btn">
-                                    <bitmap>../theme/icons/16x16/colorwheel.png</bitmap>
+                                    <bitmap>../theme/icons/16x16/color.png</bitmap>
                                     <style>wxNO_BORDER</style>
                                     <tooltip>whitepoint.visual_editor</tooltip>
                                   </object>

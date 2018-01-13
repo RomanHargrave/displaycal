@@ -131,21 +131,35 @@ class AboutDialog(wx.Dialog):
 		self.ok = ThemedGenButton(self, -1, lang.getstr("ok"))
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.ok.GetId())
 		items.extend([self.ok, (1, 16)])
-		pointsize = 10
 		for item in items:
-			if isinstance(item, wx.Window):
-				font = item.GetFont()
-				if item.GetLabel() and font.GetPointSize() > pointsize:
-					font.SetPointSize(pointsize)
-					item.SetFont(font)
-			flag = wx.ALIGN_CENTER_HORIZONTAL
-			if isinstance(item, (wx.Panel, wx.PyPanel)):
-				flag |= wx.EXPAND
+			if (not isinstance(item, wx.Window) and
+				hasattr(item, "__iter__") and
+				filter(lambda subitem: not isinstance(subitem, (int, float)),
+					   item)):
+				sizer = wx.BoxSizer(wx.HORIZONTAL)
+				self.add_item(sizer, self.sizer)
+				for subitem in item:
+					self.add_item(subitem, sizer)
 			else:
-				flag |= wx.LEFT | wx.RIGHT
-			self.sizer.Add(item, 0, flag, 12)
+				self.add_item(item, self.sizer)
 		self.ok.SetDefault()
 		self.ok.SetFocus()
+
+	def add_item(self, item, sizer):
+		if isinstance(item, (HyperLinkCtrl, ThemedGenButton)):
+			item.BackgroundColour = self.BackgroundColour
+		if isinstance(item, wx.Window):
+			pointsize = 10
+			font = item.GetFont()
+			if item.GetLabel() and font.GetPointSize() > pointsize:
+				font.SetPointSize(pointsize)
+				item.SetFont(font)
+		flag = wx.ALIGN_CENTER_HORIZONTAL
+		if isinstance(item, (wx.Panel, wx.PyPanel)):
+			flag |= wx.EXPAND
+		elif sizer is self.sizer:
+			flag |= wx.LEFT | wx.RIGHT
+		sizer.Add(item, 0, flag, 12)
 
 
 class AnimatedBitmap(wx.PyControl):
@@ -4238,6 +4252,7 @@ class HyperLinkCtrl(wx.HyperlinkCtrl):
 				 style=wx.HL_DEFAULT_STYLE, name=wx.HyperlinkCtrlNameStr, URL=""):
 		wx.HyperlinkCtrl.__init__(self, parent, id, label, URL, pos, size,
 								  style, name)
+		self.SetToolTipString(URL)
 
 
 class BetterLinkCtrl(wx.StaticText):

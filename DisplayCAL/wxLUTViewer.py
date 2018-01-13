@@ -815,7 +815,7 @@ class LUTFrame(BaseFrame):
 		self.reload_vcgt_btn.Disable()
 		
 		self.apply_bpc_btn = BitmapButton(self.box_panel, -1,
-										  geticon(16, "black_point"),
+										  geticon(16, "color-inverted"),
 										  style=wx.NO_BORDER)
 		self.apply_bpc_btn.SetBackgroundColour(BGCOLOUR)
 		self.cbox_sizer.Add(self.apply_bpc_btn, flag=wx.ALIGN_CENTER_VERTICAL |
