@@ -15130,8 +15130,8 @@ class MeasurementFileCheckSanityDialog(ConfirmDialog):
 
 		dlg.select_all_btn = wx.Button(dlg.buttonpanel, -1,
 									   lang.getstr("deselect_all"))
-		dlg.sizer2.Insert(2, (margin, margin))
 		dlg.sizer2.Insert(2, dlg.select_all_btn)
+		dlg.sizer2.Insert(2, (margin, margin))
 		dlg.Bind(wx.EVT_BUTTON, dlg.select_all_handler,
 				 id=dlg.select_all_btn.GetId())
 
