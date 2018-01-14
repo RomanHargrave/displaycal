@@ -151,7 +151,7 @@ var
 begin
 	if CurStep=ssInstall then begin
 		if not ZeroInstall_IsInstalled() then begin
-			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), '--silent', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ExpandConstant('{tmp}\zero-install.exe'), 'maintenance deploy --background --batch --machine', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbCriticalError, MB_OK, MB_OK);
 			if not ZeroInstall_IsInstalled() then
 				Abort();
