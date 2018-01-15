@@ -40,7 +40,7 @@ Files: ${APPNAME}/theme/icons/16x16/3D.png
 Copyright: 2007-${YEAR}, Daniel Foré <daniel@elementaryos.org>
 License: GPL-3+
 
-Files: ${APPNAME}/theme/icons/16x16/applications-system.png ${APPNAME}/theme/icons/16x16/document-open.png ${APPNAME}/theme/icons/16x16/document-save-as.png ${APPNAME}/theme/icons/16x16/edit-delete.png ${APPNAME}/theme/icons/16x16/image-x-generic.png ${APPNAME}/theme/icons/16x16/info.png ${APPNAME}/theme/icons/16x16/install.png ${APPNAME}/theme/icons/16x16/list-add.png ${APPNAME}/theme/icons/16x16/package-x-generic.png ${APPNAME}/theme/icons/16x16/stock_lock.png ${APPNAME}/theme/icons/16x16/stock_lock-open.png ${APPNAME}/theme/icons/16x16/stock_refresh.png ${APPNAME}/theme/icons/16x16/web.png ${APPNAME}/theme/icons/16x16/window-center.png ${APPNAME}/theme/icons/16x16/window-center-outline.png ${APPNAME}/theme/icons/16x16/zoom-original.png ${APPNAME}/theme/icons/16x16/zoom-original-outline.png
+Files: ${APPNAME}/theme/icons/16x16/applications-system.png ${APPNAME}/theme/icons/16x16/document-open.png ${APPNAME}/theme/icons/16x16/document-save-as.png ${APPNAME}/theme/icons/16x16/edit-delete.png ${APPNAME}/theme/icons/16x16/image-x-generic.png ${APPNAME}/theme/icons/16x16/info.png ${APPNAME}/theme/icons/16x16/install.png ${APPNAME}/theme/icons/16x16/list-add.png ${APPNAME}/theme/icons/16x16/package-x-generic.png ${APPNAME}/theme/icons/16x16/stock_lock.png ${APPNAME}/theme/icons/16x16/stock_lock-open.png ${APPNAME}/theme/icons/16x16/web.png ${APPNAME}/theme/icons/16x16/window-center.png ${APPNAME}/theme/icons/16x16/window-center-outline.png ${APPNAME}/theme/icons/16x16/zoom-original.png ${APPNAME}/theme/icons/16x16/zoom-original-outline.png
 Copyright: 2016-${YEAR}, Apricity OS Team
 License: GPL-3+
 
