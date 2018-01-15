@@ -280,11 +280,7 @@ if sys.platform == "win32":
 			# On/off checkbox
 			attr = wx.grid.GridCellAttr()
 			renderer = CustomCellBoolRenderer()
-			bitmap = renderer._bitmap
-			image = bitmap.ConvertToImage().ConvertToGreyscale(1,
-															   1,
-															   1)
-			renderer._bitmap_unchecked = image.ConvertToBitmap()
+			renderer._bitmap_unchecked = config.geticon(16, "empty")
 			attr.SetRenderer(renderer)
 			grid.SetColAttr(0, attr)
 
@@ -292,11 +288,10 @@ if sys.platform == "win32":
 			attr = wx.grid.GridCellAttr()
 			renderer = CustomCellBoolRenderer()
 			renderer._bitmap = config.geticon(16, "apply-profiles-reset")
-			bitmap = config.geticon(16, appname + "-apply-profiles")
-			# Use Rec. 709 luma coefficients to convert to grayscale
-			image = bitmap.ConvertToImage().ConvertToGreyscale(.2126,
-															   .7152,
-															   .0722)
+			bitmap = renderer._bitmap
+			image = bitmap.ConvertToImage().ConvertToGreyscale(.75,
+															   .125,
+															   .125)
 			renderer._bitmap_unchecked = image.ConvertToBitmap()
 			attr.SetRenderer(renderer)
 			grid.SetColAttr(1, attr)
@@ -1032,20 +1027,27 @@ class ProfileLoader(object):
 					self.pl = pl
 					self.balloon_text = None
 					self.flags = 0
-					bitmap = config.geticon(16, appname + "-apply-profiles")
+					bitmap = config.geticon(16, "apply-profiles-tray")
 					image = bitmap.ConvertToImage()
+					# Use Rec. 709 luma coefficients to convert to grayscale
+					bitmap = image.ConvertToGreyscale(.2126,
+													  .7152,
+													  .0722).ConvertToBitmap()
+					icon = wx.IconFromBitmap(bitmap)
 					self._active_icons = []
 					self._icon_index = 0
-					self._active_icon = wx.IconFromBitmap(image.ConvertToBitmap())
-					for i in xrange(3):
-						image.RotateHue(0.25)
+					if getcfg("profile_loader.tray_icon_animation_quality") == "high":
+						numframes = 8
+					else:
+						numframes = 4
+					for i in xrange(numframes):
+						if i:
+							rad = i / float(numframes)
+							bitmap = config.geticon(16, "apply-profiles-tray-%i" % (360 * rad))
+							image = bitmap.ConvertToImage()
+							image.RotateHue(-rad)
 						self._active_icon = wx.IconFromBitmap(image.ConvertToBitmap())
 					self._idle_icon = self._active_icon
-					# Use Rec. 709 luma coefficients to convert to grayscale
-					image = bitmap.ConvertToImage().ConvertToGreyscale(.2126,
-																	   .7152,
-																	   .0722)
-					icon = wx.IconFromBitmap(image.ConvertToBitmap())
 					self._inactive_icon = icon
 					self._active_icon_reset = config.get_bitmap_as_icon(16, "apply-profiles-reset")
 					self._error_icon = config.get_bitmap_as_icon(16, "apply-profiles-error")
@@ -1213,10 +1215,11 @@ class ProfileLoader(object):
 						self._icon_index = 0
 					self.set_visual_state(enumerate_windows_and_processes, idle)
 					if self._icon_index > 0:
-						wx.CallLater(50, lambda enumerate_windows_and_processes,
-												idle: self and
-													  self.animate(enumerate_windows_and_processes,
-																   idle),
+						wx.CallLater(int(200 / len(self._active_icons)),
+									 lambda enumerate_windows_and_processes,
+											idle: self and
+												  self.animate(enumerate_windows_and_processes,
+															   idle),
 									 enumerate_windows_and_processes, idle)
 					if debug > 1:
 						safe_print("[DEBUG] /animate")
