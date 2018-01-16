@@ -1985,6 +1985,23 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 
 def _wcs_set_display_profile(devicekey, profile_name,
 							 scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]):
+	"""
+	Set the current default WCS color profile for the given device.
+	
+	If the device is a display, this will also set its video card gamma ramps
+	to linear* if the given profile is the display's current default profile
+	and Windows calibration management isn't enabled.
+	
+	Note that the profile needs to have been already installed.
+	
+	* 0..65535 will get mapped to 0..65280, which is a Windows bug
+	
+	"""
+	# We need to disassociate the profile first in case it's not the default
+	# so we can make it the default again.
+	# Note that disassociating the current default profile for a display will
+	# also set its video card gamma ramps to linear if Windows calibration
+	# management isn't enabled.
 	mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name, devicekey)
 	if not mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
 													devicekey):
@@ -1994,6 +2011,22 @@ def _wcs_set_display_profile(devicekey, profile_name,
 
 def _wcs_unset_display_profile(devicekey, profile_name,
 							   scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]):
+	"""
+	Unset the current default WCS color profile for the given device.
+	
+	If the device is a display, this will also set its video card gamma ramps
+	to linear* if the given profile is the display's current default profile
+	and Windows calibration management isn't enabled.
+	
+	Note that the profile needs to have been already installed. Also note that
+	disassociating a profile will always (regardless of whether or not the
+	profile was associated or even exists) result in Windows error code 2015
+	'The specified color profile is not associated with the specified device.'
+	This is probably a Windows bug.
+	
+	* 0..65535 will get mapped to 0..65280, which is a Windows bug
+	
+	"""
 	if not mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name,
 													   devicekey):
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
