@@ -80,6 +80,7 @@ config = {"data": ["tests/*.icc"],
 				  "theme/*.png",
 				  "theme/*.css",
 				  "theme/*.js",
+				  "theme/*.svg",
 				  "theme/icons/favicon.ico",
 				  "theme/slimbox2/*.css",
 				  "theme/slimbox2/*.js"],
@@ -121,7 +122,11 @@ config = {"data": ["tests/*.icc"],
 								  "theme/icons/10x10/*.png",
 								  "theme/icons/16x16/*.png",
 								  "theme/icons/32x32/*.png",
+								  "theme/icons/48x48/*.png",
 								  "theme/icons/72x72/*.png",
+								  "theme/icons/128x128/*.png",
+								  "theme/icons/256x256/*.png",
+								  "theme/icons/512x512/*.png",
 								  "theme/jet_anim/*.png",
 								  "theme/patch_anim/*.png",
 								  "theme/splash_anim/*.png",
@@ -528,10 +533,7 @@ def setup():
 	}
 	if sdist and sys.platform in ("darwin", "win32"):
 		package_data[name].extend(["theme/icons/22x22/*.png",
-								   "theme/icons/24x24/*.png",
-								   "theme/icons/48x48/*.png",
-								   "theme/icons/128x128/*.png",
-								   "theme/icons/256x256/*.png"])
+								   "theme/icons/24x24/*.png"])
 	if sys.platform == "win32" and not do_py2exe:
 		package_data[name].append("theme/icons/*.ico")
 	# Scripts
@@ -634,22 +636,35 @@ def setup():
 							if os.path.isfile(fname):
 								data_files.extend([(entry[0], [fname])])
 		for dname in ("10x10", "16x16", "22x22", "24x24", "32x32", "48x48",
-					  "72x72", "128x128", "256x256"):
-			# Only the 10x10, 16x16, 32x32 and 72x72 icons are used exclusively
-			# by the app, the other sizes of the app icon are used for the 
-			# desktop entry under Linux
+					  "72x72", "128x128", "256x256", "512x512"):
+			# Get all the icons needed, depending on platform
+			# Only the icon sizes 10, 16, 32, 72, 256 and 512 include icons
+			# that are used exclusively for UI elements.
+			# These should be installed in an app-specific location, e.g.
+			# under Linux $XDG_DATA_DIRS/DisplayCAL/theme/icons/
+			# The app icon sizes 16, 32, 48 and 256 (128 under Mac OS X),
+			# which are used for taskbar icons and the like, as well as the
+			# other sizes can be installed in a generic location, e.g.
+			# under Linux $XDG_DATA_DIRS/icons/hicolor/<size>/apps/
+			# Generally, icon filenames starting with the lowercase app name
+			# should be installed in the generic location.
 			icons = []
 			desktopicons = []
 			if sys.platform == "darwin":
-				largest_icon_size = "128x128"
+				largest_iconbundle_icon_size = "128x128"
 			else:
-				largest_icon_size = "256x256"
+				largest_iconbundle_icon_size = "256x256"
 			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
 												   dname, "*.png")):
 				if not os.path.basename(iconpath).startswith(name.lower()) or (
 					sys.platform in ("darwin", "win32") and 
-					dname in ("16x16", "32x32", "48x48", largest_icon_size)):
-					# We need all the sizes we use in get_icon_bundle
+					dname in ("16x16", "32x32", "48x48",
+							  largest_iconbundle_icon_size)):
+					# In addition to UI element icons, we also need all the app
+					# icons we use in get_icon_bundle under macOS/Windows,
+					# otherwise they wouldn't be included (under Linux, these
+					# are included for installation to the system-wide icon
+					# theme location instead)
 					icons.append(iconpath)
 				elif sys.platform not in ("darwin", "win32"):
 					desktopicons.append(iconpath)
