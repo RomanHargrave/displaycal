@@ -2005,7 +2005,7 @@ class ProfileLoader(object):
 								self.devices2profiles[device.DeviceKey] = (display_edid,
 																		   profile_name,
 																		   desc)
-						if debug and device:
+						if (debug or verbose > 1) and device:
 							safe_print("Monitor %r active display device name:" %
 									   moninfo["Device"], device.DeviceName)
 							safe_print("Monitor %r active display device string:" %
@@ -2016,7 +2016,7 @@ class ProfileLoader(object):
 									   moninfo["Device"], device.DeviceID)
 							safe_print("Monitor %r active display device key:" %
 									   moninfo["Device"], device.DeviceKey)
-						elif debug:
+						elif debug or verbose > 1:
 							safe_print("WARNING: Monitor %r has no active display device" %
 									   moninfo["Device"])
 					self.profile_associations[key] = (profile_key, mtime, desc)
@@ -2135,6 +2135,19 @@ class ProfileLoader(object):
 				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
 				if getcfg("profile_loader.track_other_processes"):
 					hwnds_pids_changed = self._hwnds_pids != previous_hwnds_pids
+					if ((debug or verbose > 1) and
+						hwnds_pids_changed and previous_hwnds_pids):
+						safe_print("List of running processes changed")
+						hwnds_pids_diff = previous_hwnds_pids.difference(self._hwnds_pids)
+						if hwnds_pids_diff:
+							safe_print("Gone processes:")
+							for hwnd_pid in hwnds_pids_diff:
+								safe_print(*hwnd_pid)
+						hwnds_pids_diff = self._hwnds_pids.difference(previous_hwnds_pids)
+						if hwnds_pids_diff:
+							safe_print("New processes:")
+							for hwnd_pid in hwnds_pids_diff:
+								safe_print(*hwnd_pid)
 				else:
 					hwnds_pids_changed = True
 				if idle:
@@ -2211,6 +2224,14 @@ class ProfileLoader(object):
 					# Important: Do not break here because we still want to
 					# detect changed profile associations
 					continue
+				if debug or verbose > 1:
+					if self._manual_restore:
+						safe_print("Manual restore flag:", self._manual_restore)
+					if profile_association_changed:
+						safe_print("Number of profile associations changed:",
+								   profile_associations_changed)
+					if apply_profiles:
+						safe_print("Apply profiles:", apply_profiles)
 				# Now actually reload or reset calibration
 				if (self._manual_restore or profile_association_changed or
 					(not is_buggy_video_driver and
@@ -2404,7 +2425,7 @@ class ProfileLoader(object):
 				continue
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
-			if debug:
+			if debug or verbose > 1:
 				safe_print("Found monitor %i %r flags 0x%x" %
 						   (i, moninfo["Device"], moninfo["Flags"]))
 				if device:
@@ -2430,7 +2451,7 @@ class ProfileLoader(object):
 				safe_print("Buggy video driver detected: %s." %
 						   moninfo["_adapter"].DeviceString,
 						   "Gamma ramp hack activated.")
-			if debug:
+			if debug or verbose > 1:
 				safe_print("Enumerating 1st display device for monitor %i %r" %
 						   (i, moninfo["Device"]))
 			try:
@@ -2439,7 +2460,7 @@ class ProfileLoader(object):
 				safe_print("EnumDisplayDevices(%r, 0) failed:" %
 						   moninfo["Device"], exception)
 				device0 = None
-			if debug and device0:
+			if (debug or verbose > 1) and device0:
 				safe_print("Monitor %i 1st display device name:" % i,
 						   device0.DeviceName)
 				safe_print("Monitor %i 1st display device string:" % i,
@@ -2717,22 +2738,22 @@ class ProfileLoader(object):
 						safe_print(exception)
 
 	def _set_display_profiles(self, dry_run=False):
-		if debug:
+		if debug or verbose > 1:
 			safe_print("-" * 80)
 			safe_print("Checking profile associations")
 			safe_print("-" * 80)
 		self.devices2profiles = {}
 		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
-			if debug:
+			if debug or verbose > 1:
 				safe_print("Enumerating display devices for monitor %i %r" %
 						   (i, moninfo["Device"]))
 			devices = get_display_devices(moninfo["Device"])
 			if not devices:
-				if debug:
+				if debug or verbose > 1:
 					safe_print("WARNING: Monitor %i has no display devices" % i)
 				continue
 			active_device = get_active_display_device(None, devices=devices)
-			if debug:
+			if debug or verbose > 1:
 				if active_device:
 					safe_print("Monitor %i active display device name:" % i,
 							   active_device.DeviceName)
@@ -2766,7 +2787,7 @@ class ProfileLoader(object):
 				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile,
 														   get_profile_desc(profile))
-				if debug:
+				if debug or verbose > 1:
 					safe_print("%s (%s) -> %s" % (display_edid[0],
 												  device.DeviceKey,
 												  profile))
