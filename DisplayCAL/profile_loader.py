@@ -1034,10 +1034,13 @@ class ProfileLoader(object):
 					icon = wx.IconFromBitmap(bitmap)
 					self._active_icons = []
 					self._icon_index = 0
-					if getcfg("profile_loader.tray_icon_animation_quality") == "high":
+					anim_quality = getcfg("profile_loader.tray_icon_animation_quality")
+					if anim_quality == 2:
 						numframes = 8
-					else:
+					elif anim_quality == 1:
 						numframes = 4
+					else:
+						numframes = 1
 					for i in xrange(numframes):
 						if i:
 							rad = i / float(numframes)
@@ -1330,6 +1333,7 @@ class ProfileLoader(object):
 						self.set_visual_state()
 
 				def set_bitdepth(self, event=None, bits=16):
+					safe_print("Menu command: Set quantization bitdepth", bits)
 					setcfg("profile_loader.quantize_bits", bits)
 					with self.pl.lock:
 						self.pl._quantize = 2 ** bits - 1.0
@@ -2132,7 +2136,6 @@ class ProfileLoader(object):
 					# Important: Do not break here because we still want to
 					# detect changed profile associations
 					continue
-				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
 				if getcfg("profile_loader.track_other_processes"):
 					hwnds_pids_changed = self._hwnds_pids != previous_hwnds_pids
 					if ((debug or verbose > 1) and
@@ -2149,7 +2152,7 @@ class ProfileLoader(object):
 							for hwnd_pid in hwnds_pids_diff:
 								safe_print(*hwnd_pid)
 				else:
-					hwnds_pids_changed = True
+					hwnds_pids_changed = getcfg("profile_loader.ignore_unchanged_gamma_ramps")
 				if idle:
 					idle = (not hwnds_pids_changed and
 							not self._manual_restore and
@@ -2216,6 +2219,7 @@ class ProfileLoader(object):
 					idle = False
 					if apply_profiles and not hwnds_pids_changed:
 						safe_print(lang.getstr("vcgt.mismatch", display_desc))
+				is_buggy_video_driver = self._is_buggy_video_driver(moninfo)
 				if recheck:
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
@@ -2234,7 +2238,7 @@ class ProfileLoader(object):
 						safe_print("Apply profiles:", apply_profiles)
 				# Now actually reload or reset calibration
 				if (self._manual_restore or profile_association_changed or
-					(not is_buggy_video_driver and
+					(not hwnds_pids_changed and
 					 getcfg("profile_loader.check_gamma_ramps"))):
 					if self._reset_gamma_ramps:
 						safe_print(lang.getstr("calibration.resetting"))
@@ -2265,7 +2269,7 @@ class ProfileLoader(object):
 												not isinstance(result,
 															   Exception))
 				if (self._manual_restore or profile_association_changed or
-					(not is_buggy_video_driver and
+					(not hwnds_pids_changed and
 					 getcfg("profile_loader.check_gamma_ramps"))):
 					if isinstance(result, Exception) or not result:
 						if result:
@@ -2501,7 +2505,6 @@ class ProfileLoader(object):
 			if not device.StateFlags & DISPLAY_DEVICE_ACTIVE:
 				display_parts.append(u" (%s)" % lang.getstr("deactivated"))
 			safe_print("  |-", "".join(display_parts))
-		safe_print("-" * 80)
 
 	def _enumerate_windows_callback(self, hwnd, extra):
 		cls = win32gui.GetClassName(hwnd)
@@ -2741,7 +2744,7 @@ class ProfileLoader(object):
 		if debug or verbose > 1:
 			safe_print("-" * 80)
 			safe_print("Checking profile associations")
-			safe_print("-" * 80)
+			safe_print("")
 		self.devices2profiles = {}
 		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 			if debug or verbose > 1:
@@ -3012,6 +3015,7 @@ def main():
 		safe_print("Apply profiles to configured display devices and load calibration")
 		safe_print("Version %s" % version)
 		safe_print("")
+		safe_print("Options:")
 		safe_print("  --help           Output this help text and exit")
 		safe_print("  --force          Force loading of calibration/profile (if it has been")
 		safe_print("                   disabled in %s.ini)" % appname)
@@ -3023,6 +3027,71 @@ def main():
 			safe_print("  --silent         Do not show dialog box on error")
 			safe_print("  --error-dialog   Force dialog box on error")
 		safe_print("  -V, --version    Output version information and exit")
+		if sys.platform == "win32":
+			safe_print("")
+			import textwrap
+			safe_print("Configuration options (%s):" %
+					   os.path.join(confighome, appbasename +
+												"-apply-profiles.ini"))
+			safe_print("")
+			for cfgname, cfgdefault in sorted(config.defaults.items()):
+				if (cfgname.startswith("profile_loader.") or
+					cfgname == "profile.load_on_login"):
+					# Documentation
+					key = cfgname.split(".", 1)[1]
+					if key == "load_on_login":
+						cfgdoc = "Apply calibration state on login and preserve"
+					elif key == "buggy_video_drivers":
+						cfgdoc = ("List of buggy video driver names (case "
+								  "insensitive, delimiter: ';')")
+					elif key == "check_gamma_ramps":
+						cfgdoc = ("Check if video card gamma table has "
+								  "changed and reapply calibration state if so")
+					elif key == "exceptions":
+						cfgdoc = ("List of exceptions (case "
+								  "insensitive, delimiter: ';', format: "
+								  "<enabled [0|1]>:<reset video card gamma table [0|1]:"
+								  "<executable path>)")
+					elif key == "fix_profile_associations":
+						cfgdoc = "Automatically fix profile asociations"
+					elif key == "ignore_unchanged_gamma_ramps":
+						cfgdoc = ("Ignore unchanged gamma table, i.e. reapply "
+								  "calibration state even if no change (only "
+								  "effective if profile_loader."
+								  "track_other_processes = 0)")
+					elif key == "quantize_bits":
+						cfgdoc = ("Quantize video card gamma table to <n> "
+								  "bits")
+					elif key == "reset_gamma_ramps":
+						cfgdoc = "Reset video card gamma table to linear"
+					elif key == "track_other_processes":
+						cfgdoc = ("Reapply calibration state when other "
+								  "processes launch or exit")
+					elif key == "tray_icon_animation_quality":
+						cfgdoc = "Tray icon animation quality, 0 = off"
+					else:
+						continue
+					# Name and valid values
+					valid = config.valid_values.get(cfgname)
+					if valid:
+						valid = u"[%s]" % u"|".join(u"%s" % v for v in valid)
+					else:
+						valid = config.valid_ranges.get(cfgname)
+						if valid:
+							valid = "[%s..%s]" % tuple(valid)
+						elif isinstance(cfgdefault, int):
+							# Boolean
+							valid = "[0|1]"
+						elif isinstance(cfgdefault, basestring):
+							# String
+							valid = "<string>"
+							cfgdefault = "'%s'" % cfgdefault
+						else:
+							valid = ""
+					safe_print(cfgname.ljust(45, " "), valid)
+					cfgdoc += " [Default: %s]." % cfgdefault
+					for line in textwrap.fill(cfgdoc, 75).splitlines():
+						safe_print(" " * 4 + line.rstrip())
 	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
 		safe_print("%s %s" % (os.path.basename(sys.argv[0]), version))
 	else:
