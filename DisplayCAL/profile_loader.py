@@ -945,8 +945,7 @@ class ProfileLoader(object):
 				self._manual_restore = False
 		if (sys.platform != "win32" and
 			apply_profiles and not self._skip and
-			not os.path.isfile(os.path.join(config.confighome,
-											appbasename + ".lock")) and
+			not self._is_displaycal_running() and
 			not self._is_other_running(True)):
 			self.apply_profiles_and_warn_on_error()
 		if sys.platform == "win32":
@@ -981,8 +980,7 @@ class ProfileLoader(object):
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
 						if ((len(data) == 1 and
-							 os.path.isfile(os.path.join(config.confighome,
-														 appbasename + ".lock"))) or
+							 self.pl._is_displaycal_running()) or
 							self.pl._is_other_running(False)):
 							return "forbidden"
 						elif data[-1] == "display-changed":
@@ -1076,8 +1074,7 @@ class ProfileLoader(object):
 					# Popup menu appears on right-click
 					menu = Menu()
 					
-					if (os.path.isfile(os.path.join(config.confighome,
-												   appbasename + ".lock")) or
+					if (self.pl._is_displaycal_running() or
 						self.pl._is_other_running(False)):
 						restore_auto = restore_manual = reset = None
 					else:
@@ -1916,8 +1913,8 @@ class ProfileLoader(object):
 		self._next = False
 		first_run = True
 		apply_profiles = self._should_apply_profiles()
-		displaycal_running = self._is_displaycal_running()
-		previous_hwnds_pids = set()
+		displaycal_running = False
+		previous_hwnds_pids = self._hwnds_pids
 		while self and self.monitoring:
 			result = None
 			results = []
@@ -2128,6 +2125,8 @@ class ProfileLoader(object):
 																  vcgt_ramp_hack,
 																  vcgt_values)
 					recheck = True
+				if self._skip:
+					self.setgammaramp_success[i] = True
 				if (not apply_profiles and
 					self.__other_component[1] != "madHcNetQueueWindow"):
 					# Important: Do not break here because we still want to
@@ -2337,6 +2336,7 @@ class ProfileLoader(object):
 			if result:
 				self._has_display_changed = False
 			self._manual_restore = False
+			self._skip = False
 			if locked:
 				safe_print("DisplayConfigurationMonitoringThread: Releasing lock")
 			self.lock.release()
@@ -2833,9 +2833,13 @@ class ProfileLoader(object):
 
 	def _should_apply_profiles(self, enumerate_windows_and_processes=True,
 							   manual_override=2):
-		return ((not self._is_displaycal_running() or
+		displaycal_running = self._is_displaycal_running()
+		if displaycal_running:
+			enumerate_windows_and_processes = False
+		return (not self._is_other_running(enumerate_windows_and_processes) and
+				(not displaycal_running or
 				 self._manual_restore == manual_override) and
-				not self._is_other_running(enumerate_windows_and_processes) and
+				not self._skip and
 				("--force" in sys.argv[1:] or
 				 self._manual_restore or
 				 (config.getcfg("profile.load_on_login") and
@@ -2966,11 +2970,12 @@ def get_profile_desc(profile_path, include_basename_if_different=True):
 def main():
 	unknown_option = None
 	for arg in sys.argv[1:]:
-		if (arg not in ("--help", "--force", "-V", "--version") and
-			(arg not in ("--oneshot", "--debug", "-d", "--task",
-						 "--profile-associations") or
+		if (arg not in ("--debug", "-d", "--help", "--force", "-V", "--version",
+						"--skip", "--test", "-t", "--verbose", "--verbose=1",
+						"--verbose=2", "--verbose=3", "-v") and
+			(arg not in ("--oneshot", "--task", "--profile-associations") or
 			 sys.platform != "win32") and
-			(arg not in ("--verify", "--silent", "--error-dialog", "--skip") or
+			(arg not in ("--verify", "--silent", "--error-dialog") or
 			 sys.platform == "win32")):
 			unknown_option = arg
 			break
@@ -2989,12 +2994,12 @@ def main():
 		safe_print("  --help           Output this help text and exit")
 		safe_print("  --force          Force loading of calibration/profile (if it has been")
 		safe_print("                   disabled in %s.ini)" % appname)
+		safe_print("  --skip           Skip initial loading of calibration")
 		if sys.platform == "win32":
 			safe_print("  --oneshot        Exit after loading calibration")
 		else:
 			safe_print("  --verify         Verify if calibration was loaded correctly")
 			safe_print("  --silent         Do not show dialog box on error")
-			safe_print("  --skip           Skip initial loading of calibration")
 			safe_print("  --error-dialog   Force dialog box on error")
 		safe_print("  -V, --version    Output version information and exit")
 	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
