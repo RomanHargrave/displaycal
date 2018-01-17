@@ -36,6 +36,7 @@ function $splash_anim(i, splash_frames) {
 			$('#splash_version_string, .splash_anim').hide();
 			$('#splash').addClass('folded');
 			$('#splash').css({'background-image': 'url(' + imgs.pop().src + ')',
+							  'background-size': '752px auto',
 							  'display': 'block',
 							  'width': '760px', 'height': '575px', 'top': '42px'});
 			setTimeout(function () {
@@ -187,13 +188,16 @@ jQuery(function ($) {
 				});
 			}, 500);
 		}
-		imgpaths.push('img/DisplayCAL-main_window-shadow-720.png');
+		imgpaths.push('theme/DisplayCAL-main_window-shadow.png');
 		/* Load images */
 		for (var i = 0; i < imgpaths.length; i ++) {
 			img = new Image();
 			imgs.push(img);
 			img.onload = splash_onload;
-			img.src = protocol + '//displaycal.net/' + imgpaths[i];
+			if (imgpaths[i] == 'theme/DisplayCAL-main_window-shadow.png')
+				img.src = imgpaths[i];
+			else
+				img.src = protocol + '//displaycal.net/' + imgpaths[i];
 		}
 	}
 	
