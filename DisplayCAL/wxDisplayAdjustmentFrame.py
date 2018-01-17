@@ -40,6 +40,8 @@ FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
 CRT = True
 
 def get_panel(parent, size=wx.DefaultSize):
+	scale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
+	size = tuple(int(round(v * scale)) for v in size)
 	panel = wx_Panel(parent, wx.ID_ANY, size=size)
 	if "--debug" in sys.argv[1:]:
 		from random import randint
@@ -697,9 +699,11 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.indicator_panel.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
 		self.indicator_panel.SetForegroundColour(FGCOLOUR)
 		self.btnsizer.Add(self.indicator_panel, flag=wx.EXPAND)
+		scale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
 		self.indicator_ctrl = wx.StaticBitmap(self.indicator_panel, wx.ID_ANY,
 											  getbitmap("10x10/empty"),
-											  size=(10, 10))
+											  size=(int(round(10 * scale)),
+													int(round(10 * scale))))
 		self.indicator_ctrl.SetForegroundColour(FGCOLOUR)
 		self.indicator_panel.GetSizer().Add(self.indicator_ctrl, 
 											flag=wx.ALIGN_CENTER_VERTICAL)
