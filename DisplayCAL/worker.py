@@ -7962,10 +7962,12 @@ usage: spotread [-options] [logfile]
 					profile.tags.gXYZ = sRGB.tags.rXYZ
 					profile.tags.bXYZ = sRGB.tags.gXYZ
 			elif not is_primaries_only:
+				# Use colprof to create profile
 				result = self.exec_cmd(cmd, args, low_contrast=False, 
 									   skip_scripts=skip_scripts)
-			if is_regular_grid or is_primaries_only:
-				# Use our own matrix
+			if (is_regular_grid and
+				getcfg("profile.type") == "X") or is_primaries_only:
+				# Use our own accurate matrix
 				self.log("-" * 80)
 				self.log("Creating matrix from primaries")
 				xy = []
@@ -8014,6 +8016,7 @@ usage: spotread [-options] [logfile]
 						for channel in "rgb":
 							tagname = channel + tagcls
 							profile.tags[tagname] = mtx.tags[tagname]
+			if is_regular_grid or is_primaries_only:
 				# Write profile
 				profile.write(profile_path)
 				result = True
