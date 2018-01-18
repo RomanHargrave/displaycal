@@ -330,7 +330,7 @@ class TaskScheduler(object):
 								 show=False)
 			except pywintypes.error, exception:
 				if exception.args[0] == winerror.ERROR_CANCELLED:
-					self.lastreturncode = 1
+					self.lastreturncode = winerror.ERROR_CANCELLED
 				else:
 					raise
 			else:
