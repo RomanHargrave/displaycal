@@ -48,6 +48,7 @@ if sys.platform == "win32":
 	import win32api
 	import win32con
 	import win32event
+	import pywintypes
 elif sys.platform != "darwin":
 	try:
 		import dbus
@@ -7617,6 +7618,11 @@ usage: spotread [-options] [logfile]
 															  appname + "-apply-profiles")))
 		else:
 			cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
+
+		loader_lockfile = os.path.join(config.confighome,
+									   appbasename + "-apply-profiles.lock")
+		loader_running = os.path.isfile(loader_lockfile)
+
 		not_main_thread = currentThread().__class__ is not _MainThread
 		if not_main_thread:
 			# If running in a thread, need to call pythoncom.CoInitialize
@@ -7631,7 +7637,34 @@ usage: spotread [-options] [logfile]
 			else:
 				if ts.query_task(appname + " Profile Loader Launcher"):
 					pythoncom.CoUninitialize()
+					if not loader_running:
+						# Start profile loader if not yet running
+						try:
+							result = ts.run(appname + " Profile Loader Launcher",
+											elevated=True)
+						except pywintypes.error, exception:
+							safe_print("Warning - could not launch profile "
+									   "loader task", exception)
+						else:
+							if (not result and
+								ts.lastreturncode != winerror.ERROR_CANCELLED):
+								safe_print("Warning - could not launch profile "
+										   "loader task (unknown reason)")
 					return True
+
+		if (getcfg("profile.install_scope") == "l" and
+			sys.getwindowsversion() >= (6, ) and not loader_running):
+			# System scope. Launch profile loader with admin rights, it'll
+			# create a scheduled task
+			try:
+				run_as_admin(cmd, loader_args + ["--skip"])
+			except pywintypes.error, exception:
+				if exception.args[0] != winerror.ERROR_CANCELLED:
+					safe_print("Warning - could not launch profile loader with "
+							   "elevated privileges", exception)
+			else:
+				return True
+
 		try:
 			scut = pythoncom.CoCreateInstance(win32com_shell.CLSID_ShellLink, None,
 											  pythoncom.CLSCTX_INPROC_SERVER, 
@@ -7690,9 +7723,8 @@ usage: spotread [-options] [logfile]
 			if not_main_thread:
 				# If running in a thread, need to call pythoncom.CoUninitialize
 				pythoncom.CoUninitialize()
-		if not os.path.isfile(os.path.join(config.confighome,
-										   appbasename + "-apply-profiles.lock")):
-			# Run profile loader TSR program if not yet loaded
+		if not loader_running:
+			# Start profile loader if not yet running
 			if loader_args:
 				cmdline = '%s" %s "--skip' % (cmd, sp.list2cmdline(loader_args))
 			else:
