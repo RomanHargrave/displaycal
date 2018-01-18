@@ -391,7 +391,7 @@ class UntetheredFrame(BaseFrame):
 					# ESC or Q
 					self.worker.abort_subprocess()
 				elif (not isinstance(self.FindFocus(), wx.Control) or
-					  keycode not in (wx.WXK_TAB, wx.WXK_SPACE)):
+					  keycode != wx.WXK_SPACE) and keycode != wx.WXK_TAB:
 					self.measure_btn_handler(None)
 				return
 		event.Skip()
