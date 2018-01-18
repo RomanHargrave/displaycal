@@ -58,6 +58,7 @@ CLASS_PRINTER = struct.unpack("!L", "prtr")[0]
 CLASS_SCANNER = struct.unpack("!L", "scnr")[0]
 
 # ShellExecute
+SEE_MASK_FLAG_NO_UI = 0x00000400
 SEE_MASK_NOASYNC = 0x00000100
 SEE_MASK_NOCLOSEPROCESS = 0x00000040
 
@@ -358,7 +359,7 @@ def run_as_admin(cmd, args, async=False, close_process=True, show=True):
 		show = win32con.SW_SHOWNORMAL
 	else:
 		show = win32con.SW_HIDE
-	flags = 0
+	flags = SEE_MASK_FLAG_NO_UI
 	if not async:
 		flags |= SEE_MASK_NOASYNC
 	if not close_process:
