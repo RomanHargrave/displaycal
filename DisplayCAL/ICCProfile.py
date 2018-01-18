@@ -107,6 +107,8 @@ COLORPROFILETYPE = {"ICC": 0,
 WCS_PROFILE_MANAGEMENT_SCOPE = {"SYSTEM_WIDE": 0,
 								"CURRENT_USER": 1}
 
+ERROR_PROFILE_NOT_ASSOCIATED_WITH_DEVICE = 2015
+
 debug = False
 
 enc, fs_enc = get_encodings()
@@ -2018,18 +2020,32 @@ def _wcs_unset_display_profile(devicekey, profile_name,
 	to linear* if the given profile is the display's current default profile
 	and Windows calibration management isn't enabled.
 	
-	Note that the profile needs to have been already installed. Also note that
-	disassociating a profile will always (regardless of whether or not the
-	profile was associated or even exists) result in Windows error code 2015
-	'The specified color profile is not associated with the specified device.'
-	This is probably a Windows bug.
+	Note that the profile needs to have been already installed.
 	
 	* 0..65535 will get mapped to 0..65280, which is a Windows bug
 	
 	"""
+	# Disassociating a profile will always (regardless of whether or
+	# not the profile was associated or even exists) result in Windows
+	# error code 2015 ERROR_PROFILE_NOT_ASSOCIATED_WITH_DEVICE.
+	# This is probably a Windows bug.
+	# To have a meaningful return value, we thus check wether the profile that
+	# should be removed is currently associated, and only fail if it is not,
+	# or if disassociating it fails for some reason.
+	monkey = devicekey.split("\\")[-2:]
+	current_user = scope == WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
+	profiles = _winreg_get_display_profiles(monkey, current_user)
 	if not mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name,
 													   devicekey):
-		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
+		errcode = ctypes.windll.kernel32.GetLastError()
+		if (errcode == ERROR_PROFILE_NOT_ASSOCIATED_WITH_DEVICE and
+			profile_name in profiles):
+			# Check if profile is still associated
+			profiles = _winreg_get_display_profiles(monkey, current_user)
+			if not profile_name in profiles:
+				# Successfully disassociated
+				return True
+		raise util_win.get_windows_error(errcode)
 	return True
 
 
