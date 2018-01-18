@@ -45,7 +45,8 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop, gamma_encode,
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 PlateButton, ThemedGenButton, adjust_font_size_for_gcdc,
-					 get_dc_font_size, platebtn, set_bitmap_labels, wx_Panel)
+					 get_bitmap_disabled, get_dc_font_size, platebtn,
+					 set_bitmap_labels, wx_Panel)
 from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, CLICK, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -2665,23 +2666,37 @@ class FileDrop(_FileDrop):
 
 class FlatShadedButton(GradientButton):
 
+	__bitmap = None
+	_enabled = True
+
 	def __init__(self, parent, id=wx.ID_ANY, bitmap=None, label="",
 				 pos=wx.DefaultPosition, size=wx.DefaultSize,
 				 style=wx.NO_BORDER, validator=wx.DefaultValidator,
 				 name="gradientbutton", bgcolour=None, fgcolour=None):
+		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
 		GradientButton.__init__(self, parent, id, bitmap, label, pos, size,
 								style, validator, name)
+		self._bgcolour = bgcolour  # Original bgcolour
+		self._fgcolour = fgcolour  # Original fgcolour
 		self._setcolours(bgcolour, fgcolour)
+		self._set_bitmap_labels(self.__bitmap)
 		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+
+	def _set_bitmap_labels(self, bitmap):
+		if bitmap:
+			self._bitmapdisabled = get_bitmap_disabled(bitmap)
+			img = bitmap.ConvertToImage()
+			img = img.AdjustChannels(1.1, 1.1, 1.1)
+			bitmap = img.ConvertToBitmap()
+		else:
+			self._bitmapdisabled = bitmap
+		self._bitmaphover = bitmap
+		self._bitmapselected = bitmap
+		self._bitmapfocus = bitmap
 	
 	def _setcolours(self, bgcolour=None, fgcolour=None):
-		self.SetTopStartColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetTopEndColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetBottomStartColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetBottomEndColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetForegroundColour(fgcolour or wx.Colour(0xdd, 0xdd, 0xdd))
-		self.SetPressedBottomColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
-		self.SetPressedTopColour(bgcolour or wx.Colour(0x22, 0x22, 0x22))
+		self.BackgroundColour = bgcolour or wx.Colour(0x22, 0x22, 0x22)
+		self.ForegroundColour = fgcolour or wx.Colour(0x99, 0x99, 0x99)
 	
 	def Disable(self):
 		self.Enable(False)
@@ -2717,11 +2732,11 @@ class FlatShadedButton(GradientButton):
 				else:
 					constant = 0
 				# Pin the bitmap height to 10
-				bmpWidth, bmpHeight = self._bitmap.GetWidth()+constant, 10
+				bmpWidth, bmpHeight = self._bitmap.GetWidth()+constant * self.dpiscale, 10 * self.dpiscale
 				retWidth += bmpWidth
 				retHeight = max(bmpHeight, retHeight)
 
-			self._lastBestSize = wx.Size(retWidth + 20, retHeight + 15)
+			self._lastBestSize = wx.Size(retWidth + 25 * self.dpiscale, retHeight + 15 * self.dpiscale)
 		return self._lastBestSize
 
 	def OnGainFocus(self, event):
@@ -2744,7 +2759,9 @@ class FlatShadedButton(GradientButton):
 		"""
 
 		self._hasFocus = False
-		self._mouseAction = None
+		pos = wx.GetMousePosition()
+		if not self.ClientRect.Contains(self.ScreenToClient(pos)):
+			self._mouseAction = None
 		self.Refresh()
 		event.Skip()
 
@@ -2763,85 +2780,57 @@ class FlatShadedButton(GradientButton):
 			cls = wx.BufferedPaintDC
 		dc = cls(self)
 		gc = wx.GraphicsContext.Create(dc)
-		dc.SetBackground(wx.Brush(self.GetParent().GetBackgroundColour()))        
+		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour))        
 		dc.Clear()
 		
 		clientRect = self.GetClientRect()
-		gradientRect = wx.Rect(*clientRect)
 		capture = wx.Window.GetCapture()
 
-		x, y, width, height = clientRect        
-		
-		gradientRect.SetHeight(gradientRect.GetHeight()/2 + ((capture==self and [1] or [0])[0]))
-		if capture != self:
-			if self._mouseAction == HOVER:
-				topStart, topEnd = self.LightColour(self._topStartColour, 10), self.LightColour(self._topEndColour, 10)
-			else:
-				topStart, topEnd = self._topStartColour, self._topEndColour
+		x, y, width, height = clientRect     
 
-			rc1 = wx.Rect(x, y, width, height/2)
-			path1 = self.GetPath(gc, rc1, 8)
-			br1 = gc.CreateLinearGradientBrush(x, y, x, y+height/2, topStart, topEnd)
-			gc.SetBrush(br1)
-			gc.FillPath(path1) #draw main
-
-			path4 = gc.CreatePath()
-			path4.AddRectangle(x, y+height/2-8, width, 8)
-			path4.CloseSubpath()
-			gc.SetBrush(br1)
-			gc.FillPath(path4)            
+		fgcolour = self.ForegroundColour
 		
-		else:
-			
-			rc1 = wx.Rect(x, y, width, height)
-			path1 = self.GetPath(gc, rc1, 8)
-			gc.SetPen(wx.Pen(self._pressedTopColour))
-			gc.SetBrush(wx.Brush(self._pressedTopColour))
-			gc.FillPath(path1)
-		
-		gradientRect.Offset((0, gradientRect.GetHeight()))
-
 		if capture != self:
 
-			if self._mouseAction == HOVER:
-				bottomStart, bottomEnd = self.LightColour(self._bottomStartColour, 10), self.LightColour(self._bottomEndColour, 10)
+			if self._mouseAction == HOVER or self._hasFocus:
+				fill = self.LightColour(self.BackgroundColour, 3)
+				fgcolour = self.LightColour(fgcolour, 15)
 			else:
-				bottomStart, bottomEnd = self._bottomStartColour, self._bottomEndColour
-
-			rc3 = wx.Rect(x, y+height/2, width, height/2)
-			path3 = self.GetPath(gc, rc3, 8)
-			br3 = gc.CreateLinearGradientBrush(x, y+height/2, x, y+height, bottomStart, bottomEnd)
-			gc.SetBrush(br3)
-			gc.FillPath(path3) #draw main
-
-			path4 = gc.CreatePath()
-			path4.AddRectangle(x, y+height/2, width, 8)
-			path4.CloseSubpath()
-			gc.SetBrush(br3)
-			gc.FillPath(path4)
+				fill = self.BackgroundColour
 			
 			shadowOffset = 0
 		else:
-		
-			rc2 = wx.Rect(x+1, gradientRect.height/2, gradientRect.width, gradientRect.height)
-			path2 = self.GetPath(gc, rc2, 8)
-			gc.SetPen(wx.Pen(self._pressedBottomColour))
-			gc.SetBrush(wx.Brush(self._pressedBottomColour))
-			gc.FillPath(path2)
+			fill = self.LightColour(self.BackgroundColour, 3)
+
 			shadowOffset = 1
 
-		font = gc.CreateFont(self.GetFont(), self.GetForegroundColour())
+		gc.SetPen(wx.TRANSPARENT_PEN)
+		gc.SetBrush(wx.Brush(fill))
+		gc.DrawRoundedRectangle(x, y, width, height, 8)
+
+		if self._enabled:
+			if capture != self:
+				if self._mouseAction == HOVER:
+					bitmap = self._bitmaphover
+				else:
+					bitmap = self._bitmap
+			else:
+				bitmap = self._bitmapselected
+		else:
+			bitmap = self._bitmapdisabled
+
+		font = gc.CreateFont(self.GetFont(), fgcolour)
 		gc.SetFont(font)
 		label = self.GetLabel()
-		if label and self._bitmap:
+		if label and bitmap:
 			label = " " + label
 		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
 		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
 		# TODO: Figure out why this is the case.
 		tw, th = self.GetTextExtent(label)
 
-		if self._bitmap:
-			bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()
+		if bitmap:
+			bw, bh = bitmap.GetWidth(), bitmap.GetHeight()
 			if tw:
 				tw += 5
 				if wx.VERSION < (2, 9):
@@ -2850,22 +2839,57 @@ class FlatShadedButton(GradientButton):
 			bw = bh = 0
 			
 		pos_x = (width-bw-tw)/2+shadowOffset      # adjust for bitmap and text to centre        
-		if self._bitmap:
+		if bitmap:
 			pos_y =  (height-bh)/2+shadowOffset
-			gc.DrawBitmap(self._bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
+			gc.DrawBitmap(bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
 			pos_x = pos_x + 5   # extra spacing from bitmap
 
 		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-.5+shadowOffset) 
+
+	BitmapLabel = property(lambda self: self._bitmap,
+						   lambda self, bitmap: self.SetBitmap(bitmap))
 	
 	def Enable(self, enable=True):
 		if enable:
-			self._setcolours()
+			# Restore original colors
+			self._setcolours(self._bgcolour, self._fgcolour)
 		else:
-			self._setcolours(wx.Colour(0x66, 0x66, 0x66))
+			# Dim
+			self._setcolours(wx.Colour(0x40, 0x40, 0x40),
+							 wx.Colour(0x66, 0x66, 0x66))
 		GradientButton.Enable(self, enable)
+		self._enabled = enable
+
+	@Property
+	def _bitmap():
+		def fget(self):
+			return self.__bitmap
+
+		def fset(self, bitmap):
+			if bitmap is not self.__bitmap:
+				self.__bitmap = bitmap
+				self._set_bitmap_labels(bitmap)
+
+		return locals()
 
 	def SetBitmap(self, bitmap):
 		self._bitmap = bitmap
+		self.Refresh()
+
+	def SetBitmapDisabled(self, bitmap):
+		self._bitmapdisabled = bitmap
+		self.Refresh()
+
+	def SetBitmapFocus(self, bitmap):
+		self._bitmapfocus = bitmap
+		self.Refresh()
+
+	def SetBitmapHover(self, bitmap):
+		self._bitmaphover = bitmap
+		self.Refresh()
+
+	def SetBitmapSelected(self, bitmap):
+		self._bitmapselected = bitmap
 		self.Refresh()
 
 
