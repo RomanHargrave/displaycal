@@ -232,6 +232,8 @@ class TaskScheduler(object):
 		kwargs = locals()
 		del kwargs["self"]
 		del kwargs["replace_existing"]
+		del kwargs["elevated"]
+		del kwargs["echo"]
 
 		if not replace_existing and name in self:
 			raise KeyError("The task %s already exists" % name)
