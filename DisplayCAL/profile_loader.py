@@ -53,7 +53,7 @@ if sys.platform == "win32":
 						  get_active_display_device, get_display_devices,
 						  get_file_info, get_pids, get_process_filename,
 						  get_real_display_devices_info, get_windows_error,
-						  per_user_profiles_isenabled)
+						  per_user_profiles_isenabled, run_as_admin)
 	from wxaddons import CustomGridCellEvent
 	from wxfixes import ThemedGenButton, set_bitmap_labels
 	from wxwindows import (BaseApp, BaseFrame, ConfirmDialog,
@@ -1714,13 +1714,8 @@ class ProfileLoader(object):
 			else:
 				cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
 			loader_args.append("--profile-associations")
-			SEE_MASK_NOASYNC = 0x00000100
 			try:
-				p = win32com_shell.ShellExecuteEx(fMask=SEE_MASK_NOASYNC,
-												  lpVerb="runas",
-												  lpFile=cmd,
-												  lpParameters=" ".join(quote_args(loader_args)),
-												  nShow=SW_SHOW)
+				run_as_admin(cmd, loader_args)
 			except pywintypes.error, exception:
 				if exception.args[0] != winerror.ERROR_CANCELLED:
 					show_result_dialog(exception)

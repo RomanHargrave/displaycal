@@ -113,7 +113,7 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors, osascript)
 elif sys.platform == "win32":
 	import util_win
-	from util_win import win_ver
+	from util_win import run_as_admin, win_ver
 	try:
 		import wmi
 	except Exception, exception:
@@ -5222,13 +5222,8 @@ while 1:
 					try:
 						if (asroot and sys.platform == "win32" and
 							sys.getwindowsversion() >= (6, )):
-							SEE_MASK_NOASYNC = 0x00000100
-							SEE_MASK_NOCLOSEPROCESS = 0x00000040
-							fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS
-							p = win32com_shell.ShellExecuteEx(fMask=fMask,
-															  lpVerb="runas",
-															  lpFile=cmd,
-															  lpParameters=" ".join(quote_args(args)))
+							p = run_as_admin(cmd, args, close_process=False,
+											 show=False)
 							while not self.subprocess_abort:
 								# Wait for subprocess to exit
 								self.retcode = win32event.WaitForSingleObject(p["hProcess"],
