@@ -542,7 +542,9 @@ class DisplayAdjustmentPanel(wx_Panel):
 						   "G": (wx.Colour(0, 153, 0), wx.Colour(0, 255, 0)),
 						   "B": (wx.Colour(0, 0, 153), wx.Colour(0, 0, 255)),
 						   "L": (wx.Colour(153, 153, 153), wx.Colour(255, 255, 255))}
-		self.gauges[name] = PyGauge(self, size=(200, 8))
+		scale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
+		self.gauges[name] = PyGauge(self, size=(int(round(200 * scale)),
+												int(round(8 * scale))))
 		self.gauges[name].SetBackgroundColour(BORDERCOLOUR)
 		self.gauges[name].SetBarGradient(gaugecolors[name])
 		self.gauges[name].SetBorderColour(BORDERCOLOUR)
@@ -561,9 +563,11 @@ class DisplayAdjustmentPanel(wx_Panel):
 
 	def add_marker(self, direction="top"):
 		self.sizer.Add((1, 1))
+		scale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
 		self.sizer.Add(wx.StaticBitmap(self, -1,
 									   getbitmap("theme/marker_%s" % direction),
-									   size=(200, 10)))
+									   size=(int(round(200 * scale)),
+											 int(round(10 * scale)))))
 	
 	def add_txt(self, name, spacer=None, border=8):
 		checkmark = wx.StaticBitmap(self, wx.ID_ANY,
