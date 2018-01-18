@@ -30,12 +30,6 @@ import localization as lang
 import report
 
 BGCOLOUR = wx.Colour(0x33, 0x33, 0x33)
-BLACK = wx.Colour(0, 0, 0)
-BORDERCOLOUR = wx.Colour(0x22, 0x22, 0x22)
-FGCOLOUR = wx.Colour(0x99, 0x99, 0x99)
-LIGHTGRAY = wx.Colour(0xcc, 0xcc, 0xcc)
-MEDIUMGRAY = wx.Colour(0x80, 0x80, 0x80)
-WHITE = wx.Colour(0xff, 0xff, 0xff)
 
 
 class FlatShadedNumberedButton(FlatShadedButton):
@@ -68,8 +62,8 @@ class DisplayUniformityFrame(BaseFrame):
 		
 		self.rows = rows
 		self.cols = cols
-		self.colors = (WHITE, wx.Colour(192, 192, 192),
-							  wx.Colour(128, 128, 128), wx.Colour(64, 64, 64))
+		self.colors = (wx.WHITE, wx.Colour(192, 192, 192),
+					   wx.Colour(128, 128, 128), wx.Colour(64, 64, 64))
 		self.labels = {}
 		self.panels = []
 		self.buttons = []
@@ -82,12 +76,11 @@ class DisplayUniformityFrame(BaseFrame):
 			button = FlatShadedNumberedButton(panel,
 											  label=lang.getstr("measure"),
 											  bitmap=getbitmap("theme/icons/10x10/record"),
-											  bgcolour=LIGHTGRAY,
-											  fgcolour=BLACK, index=index)
+											  index=index)
 			button.Bind(wx.EVT_BUTTON, self.measure)
 			self.buttons.append(button)
 			label = wx.StaticText(panel)
-			label.SetForegroundColour(WHITE)
+			label.SetForegroundColour(wx.WHITE)
 			self.labels[index] = label
 			sizer.Add(label, 1, wx.ALIGN_CENTER)
 			sizer.Add(button, 0, wx.ALIGN_BOTTOM | wx.ALIGN_CENTER | wx.BOTTOM |
@@ -410,7 +403,7 @@ if __name__ == "__main__":
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)
-	app.TopWindow = DisplayUniformityFrame(start_timer=False, cols=3)
+	app.TopWindow = DisplayUniformityFrame(start_timer=False, rows=3, cols=3)
 	app.TopWindow.worker = Worker()
 	app.TopWindow.Show()
 	i = 0
