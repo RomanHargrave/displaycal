@@ -387,11 +387,11 @@ class UntetheredFrame(BaseFrame):
 					event.Skip()
 				return
 			elif self.has_worker_subprocess() and keycode < 255:
-				if keycode == 27 or chr(keycode) == "Q":
+				if keycode == wx.WXK_ESCAPE or chr(keycode) == "Q":
 					# ESC or Q
 					self.worker.abort_subprocess()
 				elif (not isinstance(self.FindFocus(), wx.Control) or
-					  keycode != 32):
+					  keycode not in (wx.WXK_TAB, wx.WXK_SPACE)):
 					self.measure_btn_handler(None)
 				return
 		event.Skip()
