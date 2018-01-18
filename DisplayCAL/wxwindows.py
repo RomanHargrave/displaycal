@@ -6127,7 +6127,7 @@ class TaskBarNotification(wx.Frame):
 								style=wx.NO_BORDER)
 		close.BackgroundColour = panel.BackgroundColour
 		close.Bind(wx.EVT_BUTTON, lambda event: self.fade("out"))
-		set_bitmap_labels(close, focus=False)
+		set_bitmap_labels(close, focus=True)
 		panel.Sizer.Add(close, flag=wx.TOP | wx.RIGHT | wx.BOTTOM,
 						border=12)
 		border.Sizer.SetSizeHints(self)
@@ -6186,6 +6186,8 @@ class TaskBarNotification(wx.Frame):
 		if timeout:
 			self._fadeout_timer = wx.CallLater(timeout, lambda: self and
 																self.fade("out"))
+		if hasattr(panel, "SetFocusIgnoringChildren"):
+			panel.SetFocusIgnoringChildren()
 		self.Show()
 		self.fade()
 

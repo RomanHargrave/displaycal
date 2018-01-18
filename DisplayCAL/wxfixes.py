@@ -800,7 +800,18 @@ def get_bitmap_pressed(bitmap):
 	return image.ConvertToBitmap()
 
 
-def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
+def get_bitmap_focus(bitmap):
+	image = bitmap.ConvertToImage()
+	if image.HasMask() and not image.HasAlpha():
+		image.InitAlpha()
+	databuffer = image.GetDataBuffer()
+	for i, byte in enumerate(databuffer):
+		if byte > "\0":
+			databuffer[i] = chr(int(round((ord(byte) / 255.0) ** 0.8 * 255)))
+	return image.ConvertToBitmap()
+
+
+def set_bitmap_labels(btn, disabled=True, focus=None, pressed=True):
 	bitmap = btn.BitmapLabel
 	if not bitmap.IsOk():
 		size = btn.MinSize
@@ -814,9 +825,14 @@ def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 		btn.SetBitmapDisabled(get_bitmap_disabled(bitmap))
 
 	# Focus/Hover
-	if sys.platform != "darwin" and focus:
+	if sys.platform != "darwin" and focus is not False:
 		# wxMac applies hover state also to disabled buttons...
-		bmp = get_bitmap_hover(bitmap, btn)
+		if focus is None:
+			# Use hover bitmap
+			bmp = get_bitmap_hover(bitmap, btn)
+		else:
+			# Use focus bitmap
+			bmp = get_bitmap_focus(bitmap)
 		btn.SetBitmapFocus(bmp)
 		if hasattr(btn, "SetBitmapCurrent"):
 			# Phoenix
@@ -829,7 +845,7 @@ def set_bitmap_labels(btn, disabled=True, focus=True, pressed=True):
 	if pressed:
 		if sys.platform == "darwin":
 			bmp = get_bitmap_hover(bitmap, btn)
-		elif not focus:
+		elif focus is False:
 			bmp = get_bitmap_pressed(bitmap)
 		if hasattr(btn, "SetBitmapPressed"):
 			# Phoenix
