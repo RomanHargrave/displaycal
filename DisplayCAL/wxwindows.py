@@ -2544,7 +2544,8 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		"""Create the browse-button control"""
 		button = GenBitmapButton(self, -1, geticon(16, "document-open"), 
 								 style=wx.NO_BORDER)
-		button.BackgroundColour = self.BackgroundColour
+		if sys.platform == "win32":
+			button.BackgroundColour = self.BackgroundColour
 		button.SetToolTipString(self.toolTip)
 		button.Bind(wx.EVT_BUTTON, self.OnBrowse)
 		return button
@@ -2553,7 +2554,8 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 		"""Setup the graphic representation of the dialog"""
 		wx.Panel.__init__ (self, parent, id, pos, size, style)
 		self.SetMinSize(size) # play nice with sizers
-		self.BackgroundColour = parent.BackgroundColour
+		if sys.platform == "win32":
+			self.BackgroundColour = parent.BackgroundColour
 
 		box = wx.BoxSizer(wx.HORIZONTAL)
 
