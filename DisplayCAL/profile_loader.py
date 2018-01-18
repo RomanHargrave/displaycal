@@ -46,7 +46,7 @@ if sys.platform == "win32":
 	from util_list import natsort_key_factory
 	from util_os import (getenvu, is_superuser, islink, quote_args, readlink,
 						 which)
-	from util_str import safe_asciize, safe_unicode
+	from util_str import safe_asciize, safe_str, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
 						  enable_per_user_profiles,
@@ -774,11 +774,19 @@ if sys.platform == "win32":
 																 True)
 				else:
 					profiles = []
-				fn(arg0,  devicekey=device0key)
+				try:
+					fn(arg0,  devicekey=device0key)
+				except Exception, exception:
+					safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
+														  arg0,
+														  device0key),
+							   exception)
+					wx.CallAfter(show_result_dialog,
+								 UnloggedError(safe_str(exception)), self)
 				if device.DeviceKey != device0key:
 					try:
 						fn(arg0,  devicekey=device.DeviceKey)
-					except WindowsError, exception:
+					except Exception, exception:
 						safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
 															  arg0,
 															  device.DeviceKey),
