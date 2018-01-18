@@ -46,12 +46,14 @@ import sys
 import tempfile
 
 import pywintypes
+import winerror
 
 from log import safe_print
 from meta import name as appname
 from safe_print import enc
 from util_os import getenvu
 from util_str import safe_str, safe_unicode, universal_newlines
+from util_win import run_as_admin
 
 
 RUNLEVEL_HIGHESTAVAILABLE = "HighestAvailable"
@@ -216,7 +218,9 @@ class TaskScheduler(object):
 					priority=5,
 					triggers=None,
 					actions=None,
-					replace_existing=False):
+					replace_existing=False,
+					elevated=False,
+					echo=False):
 		"""
 		Create a new task.
 		
@@ -237,7 +241,8 @@ class TaskScheduler(object):
 		xmlfilename = os.path.join(tempdir, name + ".xml")
 		task.write_xml(xmlfilename)
 		try:
-			return self._schtasks(["/Create", "/TN", name, "/XML", xmlfilename])
+			return self._schtasks(["/Create", "/TN", name, "/XML", xmlfilename],
+								  elevated, echo)
 		finally:
 			os.remove(xmlfilename)
 			os.rmdir(tempdir)
@@ -261,7 +266,9 @@ class TaskScheduler(object):
 						  wake_to_run=False,
 						  execution_time_limit="PT72H",
 						  priority=5,
-						  replace_existing=False):
+						  replace_existing=False,
+						  elevated=False,
+						  echo=False):
 
 		kwargs = locals()
 		del kwargs["self"]
@@ -301,33 +308,49 @@ class TaskScheduler(object):
 	def itertasks(self):
 		return imap(self.get, self)
 
-	def run(self, name):
+	def run(self, name, elevated=False, echo=False):
 		""" Run existing task """
-		return self._schtasks(["/Run", "/TN", name])
+		return self._schtasks(["/Run", "/TN", name], elevated, echo)
 
 	def has_task(self, name):
 		""" Same as name in self """
 		return name in self
 
-	def query_task(self, name):
+	def query_task(self, name, echo=False):
 		"""
 		Query task.
 		
 		"""
-		return self._schtasks(["/Query", "/TN", name])
+		return self._schtasks(["/Query", "/TN", name], False, echo)
 
-	def _schtasks(self, args, echo=False):
-		args.insert(0, "schtasks.exe")
-		startupinfo = sp.STARTUPINFO()
-		startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
-		startupinfo.wShowWindow = sp.SW_HIDE
-		p = sp.Popen([safe_str(arg) for arg in args], stdin=sp.PIPE,
-					 stdout=sp.PIPE, stderr=sp.STDOUT, startupinfo=startupinfo)
-		self.stdout, stderr = p.communicate()
-		if echo:
-			safe_print(safe_unicode(self.stdout, enc))
-		self.lastreturncode = p.returncode
-		return p.returncode == 0
+	def _schtasks(self, args, elevated=False, echo=False):
+		if elevated:
+			try:
+				p = run_as_admin("schtasks.exe", args, close_process=False,
+								 show=False)
+			except pywintypes.error, exception:
+				if exception.args[0] == winerror.ERROR_CANCELLED:
+					self.lastreturncode = 1
+				else:
+					raise
+			else:
+				self.lastreturncode = int(p["hProcess"].handle == 0)
+				p["hProcess"].Close()
+			finally:
+				self.stdout = ""
+		else:
+			args.insert(0, "schtasks.exe")
+			startupinfo = sp.STARTUPINFO()
+			startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = sp.SW_HIDE
+			p = sp.Popen([safe_str(arg) for arg in args], stdin=sp.PIPE,
+						 stdout=sp.PIPE, stderr=sp.STDOUT,
+						 startupinfo=startupinfo)
+			self.stdout, stderr = p.communicate()
+			if echo:
+				safe_print(safe_unicode(self.stdout, enc))
+			self.lastreturncode = p.returncode
+		return self.lastreturncode == 0
 	
 	def tasks(self):
 		return map(self.get, self)

@@ -10,9 +10,12 @@ import win32api
 import win32con
 import win32process
 import winerror
+from win32com.shell import shell as win32com_shell
 
 from ctypes import POINTER, byref, sizeof, windll
 from ctypes.wintypes import HANDLE, DWORD, LPWSTR
+
+from util_os import quote_args
 
 if not hasattr(ctypes, "c_bool"):
 	# Python 2.5
@@ -53,6 +56,10 @@ MONITORINFOF_PRIMARY = 0x1
 CLASS_MONITOR = struct.unpack("!L", "mntr")[0]
 CLASS_PRINTER = struct.unpack("!L", "prtr")[0]
 CLASS_SCANNER = struct.unpack("!L", "scnr")[0]
+
+# ShellExecute
+SEE_MASK_NOASYNC = 0x00000100
+SEE_MASK_NOCLOSEPROCESS = 0x00000040
 
 
 def _get_icm_display_device_key(devicekey):
@@ -216,12 +223,13 @@ def get_display_device(display_no=0, use_active_display_device=False,
 		return get_first_display_device(moninfo["Device"], exception)
 
 
-def get_process_filename(pid):
+def get_process_filename(pid, handle=0):
 	if sys.getwindowsversion() >= (6, ):
 		flags = PROCESS_QUERY_LIMITED_INFORMATION
 	else:
 		flags = win32con.PROCESS_QUERY_INFORMATION |  win32con.PROCESS_VM_READ
-	handle = win32api.OpenProcess(flags, False, pid)
+	if not handle:
+		handle = win32api.OpenProcess(flags, False, pid)
 	try:
 		if sys.getwindowsversion() >= (6, ):
 			dwSize = win32con.MAX_PATH
@@ -334,6 +342,32 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 																pbool):
 				return
 			return bool(pbool.contents)
+
+
+def run_as_admin(cmd, args, async=False, close_process=True, show=True):
+	"""
+	Run command with elevated privileges.
+	
+	This is a wrapper around ShellExecuteEx.
+	
+	Returns a dictionary with hInstApp and hProcess members.
+	
+	"""
+	params = " ".join(quote_args(args))
+	if show:
+		show = win32con.SW_SHOWNORMAL
+	else:
+		show = win32con.SW_HIDE
+	flags = 0
+	if not async:
+		flags |= SEE_MASK_NOASYNC
+	if not close_process:
+		flags |= SEE_MASK_NOCLOSEPROCESS
+	return win32com_shell.ShellExecuteEx(fMask=flags,
+										 lpVerb="runas",
+										 lpFile=cmd,
+										 lpParameters=params,
+										 nShow=show)
 
 
 def win_ver():
