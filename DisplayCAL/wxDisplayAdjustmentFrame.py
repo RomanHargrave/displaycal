@@ -20,7 +20,7 @@ from lib.agw.fmresources import *
 from lib.agw.pygauge import PyGauge
 
 from config import (get_data_path, get_default_dpi, get_icon_bundle, getbitmap,
-					getcfg, setcfg)
+					getcfg, geticon, setcfg)
 from config import enc
 from log import get_file_logger
 from meta import name as appname
@@ -701,7 +701,8 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.btnsizer.Add(self.indicator_panel, flag=wx.EXPAND)
 		scale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
 		self.indicator_ctrl = wx.StaticBitmap(self.indicator_panel, wx.ID_ANY,
-											  getbitmap("10x10/empty"),
+											  geticon(10, "empty",
+													  use_mask=True),
 											  size=(int(round(10 * scale)),
 													int(round(10 * scale))))
 		self.indicator_ctrl.SetForegroundColour(FGCOLOUR)
@@ -1273,7 +1274,8 @@ class DisplayAdjustmentFrame(BaseFrame):
 					self.adjustment_btn.Enable()
 				self.is_busy = False
 				self.is_measuring = False
-				self.indicator_ctrl.SetBitmap(getbitmap("10x10/empty"))
+				self.indicator_ctrl.SetBitmap(geticon(10, "empty",
+													  use_mask=True))
 			self.calibration_btn.Enable()
 			self.lb.SetFocus()  # Make frame receive EVT_CHAR_HOOK events under Linux
 		elif "initial measurements" in txt or "check measurements" in txt:

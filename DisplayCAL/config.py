@@ -225,7 +225,7 @@ def check_3dlut_format(devicename):
 					getcfg("3dlut.bitdepth.output") == 12)
 
 
-def getbitmap(name, display_missing_icon=True, scale=True):
+def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 	"""
 	Create (if necessary) and return a named bitmap.
 	
@@ -262,8 +262,11 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 			w = int(round(w * scale))
 			h = int(round(h * scale))
 		if parts[-1] == "empty":
-			bmp = wx.EmptyBitmap(w, h)
-			bmp.SetMaskColour(wx.Colour(0, 0, 0))
+			if use_mask:
+				bmp = wx.EmptyBitmap(w, h)
+				bmp.SetMaskColour(wx.Colour(0, 0, 0))
+			else:
+				bmp = wx.EmptyBitmapRGBA(w, h, 255, 0, 255, 0)
 		else:
 			if parts[-1].startswith(appname):
 				parts[-1] = parts[-1].lower()
@@ -553,10 +556,11 @@ def get_measureframe_dimensions(dimensions_measureframe=None, percent=10):
 	return ",".join([str(min(n, 50)) for n in dimensions_measureframe])
 
 
-def geticon(size, name, scale=True):
+def geticon(size, name, scale=True, use_mask=False):
 	""" Convenience function for getbitmap('theme/icons/<size>/<name>'). """
 	return getbitmap("theme/icons/%(size)sx%(size)s/%(name)s" % 
-					 {"size": size, "name": name}, scale=scale)
+					 {"size": size, "name": name}, scale=scale,
+					 use_mask=use_mask)
 
 
 def get_data_path(relpath, rex=None):

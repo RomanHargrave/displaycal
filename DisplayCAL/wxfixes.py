@@ -106,6 +106,9 @@ if u"phoenix" in wx.PlatformInfo:
 	wx.BitmapFromIcon = BitmapFromIcon
 	wx.CursorFromImage = wx.Cursor
 	wx.EmptyBitmap = wx.Bitmap
+	wx.EmptyBitmapRGBA = (lambda width, height, red=0, green=0, blue=0, alpha=0:
+						  wx.Bitmap.FromRGBA(width, height, red, green, blue,
+											 alpha))
 	wx.EmptyIcon = wx.Icon
 	wx.IconFromBitmap = wx.Icon
 	wx.ImageFromStream = wx.Image
