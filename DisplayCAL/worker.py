@@ -49,6 +49,7 @@ if sys.platform == "win32":
 	import win32con
 	import win32event
 	import pywintypes
+	import winerror
 elif sys.platform != "darwin":
 	try:
 		import dbus
