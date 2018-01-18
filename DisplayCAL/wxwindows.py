@@ -2762,7 +2762,9 @@ class FlatShadedButton(GradientButton):
 
 		self._hasFocus = False
 		pos = wx.GetMousePosition()
-		if not self.ClientRect.Contains(self.ScreenToClient(pos)):
+		if (self.IsShownOnScreen() and
+			not self.ClientRect.Contains(self.ScreenToClient(pos))):
+			# Note: ScreenToClient will only work if top level parent is shown
 			self._mouseAction = None
 		self.Refresh()
 		event.Skip()
