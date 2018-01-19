@@ -361,9 +361,10 @@ class UntetheredFrame(BaseFrame):
 	
 	def key_handler(self, event):
 		keycode = None
-		if event.GetEventType() in (wx.EVT_CHAR.typeId,
-									wx.EVT_CHAR_HOOK.typeId,
-									wx.EVT_KEY_DOWN.typeId):
+		is_key_event = event.GetEventType() in (wx.EVT_CHAR.typeId,
+												wx.EVT_CHAR_HOOK.typeId,
+												wx.EVT_KEY_DOWN.typeId)
+		if is_key_event:
 			keycode = event.GetKeyCode()
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
 			keycode = self.id_to_keycode.get(event.GetId())
@@ -388,7 +389,7 @@ class UntetheredFrame(BaseFrame):
 				if self.index > -1:
 					self.grid.MovePageUp()
 					self.update(self.grid.GetGridCursorRow())
-			elif event.ControlDown() or event.CmdDown():
+			elif is_key_event and (event.ControlDown() or event.CmdDown()):
 				event.Skip()
 			elif self.has_worker_subprocess() and keycode < 256:
 				if keycode == wx.WXK_ESCAPE or chr(keycode) == "Q":
