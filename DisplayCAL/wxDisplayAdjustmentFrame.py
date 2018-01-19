@@ -27,8 +27,8 @@ from meta import name as appname
 from ordereddict import OrderedDict
 from util_list import intlist
 from util_str import safe_unicode, wrap
-from wxwindows import (BaseApp, BaseFrame, FlatShadedButton,
-					   numpad_keycodes, wx_Panel)
+from wxwindows import (BaseApp, BaseFrame, FlatShadedButton, numpad_keycodes,
+					   nav_keycodes, processing_keycodes, wx_Panel)
 import audio
 import config
 import localization as lang
@@ -740,11 +740,14 @@ class DisplayAdjustmentFrame(BaseFrame):
 		
 		self.keyhandler = keyhandler
 		if sys.platform == "darwin":
-			# Use an accelerator table for tab, space, 0-9, A-Z, numpad
+			# Use an accelerator table for tab, space, 0-9, A-Z, numpad,
+			# navigation keys and processing keys
 			keycodes = [wx.WXK_TAB, wx.WXK_SPACE]
 			keycodes.extend(range(ord("0"), ord("9")))
 			keycodes.extend(range(ord("A"), ord("Z")))
 			keycodes.extend(numpad_keycodes)
+			keycodes.extend(nav_keycodes)
+			keycodes.extend(processing_keycodes)
 			self.id_to_keycode = {}
 			for keycode in keycodes:
 				self.id_to_keycode[wx.NewId()] = keycode
@@ -752,6 +755,8 @@ class DisplayAdjustmentFrame(BaseFrame):
 			for id, keycode in self.id_to_keycode.iteritems():
 				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
 				accels.append((wx.ACCEL_NORMAL, keycode, id))
+				if keycode == wx.WXK_TAB:
+					accels.append((wx.ACCEL_SHIFT, keycode, id))
 			self.SetAcceleratorTable(wx.AcceleratorTable(accels))
 		else:
 			self.Bind(wx.EVT_CHAR_HOOK, self.key_handler)

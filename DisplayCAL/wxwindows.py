@@ -94,6 +94,29 @@ numpad_keycodes = [wx.WXK_NUMPAD0,
 				   wx.WXK_NUMPAD_SEPARATOR,
 				   wx.WXK_NUMPAD_SUBTRACT]
 
+nav_keycodes = [wx.WXK_DOWN,
+				wx.WXK_END,
+				wx.WXK_HOME,
+				wx.WXK_LEFT,
+				wx.WXK_PAGEDOWN,
+				wx.WXK_PAGEUP,
+				wx.WXK_RIGHT,
+				wx.WXK_TAB,
+				wx.WXK_UP,
+				wx.WXK_NUMPAD_DOWN,
+				wx.WXK_NUMPAD_END,
+				wx.WXK_NUMPAD_HOME,
+				wx.WXK_NUMPAD_LEFT,
+				wx.WXK_NUMPAD_PAGEDOWN,
+				wx.WXK_NUMPAD_PAGEUP,
+				wx.WXK_NUMPAD_RIGHT,
+				wx.WXK_NUMPAD_UP]
+
+processing_keycodes = [wx.WXK_ESCAPE, wx.WXK_RETURN, wx.WXK_INSERT,
+					   wx.WXK_DELETE, wx.WXK_BACK]
+
+modifier_keycodes = [wx.WXK_SHIFT, wx.WXK_CONTROL, wx.WXK_ALT, wx.WXK_COMMAND]
+
 
 def Property(func):
 	return property(**func())
