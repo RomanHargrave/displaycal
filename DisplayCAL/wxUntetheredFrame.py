@@ -38,7 +38,7 @@ class UntetheredFrame(BaseFrame):
 				 keyhandler=None, start_timer=True):
 		BaseFrame.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("measurement.untethered"),
-						  style=wx.DEFAULT_FRAME_STYLE,
+						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
 						  name="untetheredframe")
 		self.SetIcons(get_icon_bundle([256, 48, 32, 16], appname))
 		self.sizer = wx.FlexGridSizer(2, 1, 0, 0)
@@ -163,7 +163,7 @@ class UntetheredFrame(BaseFrame):
 		self.grid.EnableGridLines(False)
 		self.grid.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK,
 					   self.grid_left_click_handler)
-		self.grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK,
+		self.grid.Bind(wx.grid.EVT_GRID_SELECT_CELL,
 					   self.grid_left_click_handler)
 		self.sizer.Add(self.grid, 1, wx.EXPAND)
 		
@@ -171,11 +171,12 @@ class UntetheredFrame(BaseFrame):
 		self.SetMinSize(self.GetSize())
 		
 		self.keyhandler = keyhandler
-		if sys.platform in ("darwin", "win32"):
-			# Use an accelerator table for space, 0-9, A-Z, numpad
-			keycodes = [ord(" ")] + range(ord("0"),
-										  ord("9")) + range(ord("A"),
-															ord("Z")) + numpad_keycodes
+		if sys.platform == "darwin":
+			# Use an accelerator table for tab, space, 0-9, A-Z, numpad
+			keycodes = [wx.WXK_TAB, wx.WXK_SPACE]
+			keycodes.extend(range(ord("0"), ord("9")))
+			keycodes.extend(range(ord("A"), ord("Z")))
+			keycodes.extend(numpad_keycodes)
 			self.id_to_keycode = {}
 			for keycode in keycodes:
 				self.id_to_keycode[wx.NewId()] = keycode
@@ -272,6 +273,9 @@ class UntetheredFrame(BaseFrame):
 												False: "pause"}.get(enable))
 		self.measure_btn.Enable(enable or enable_measure_button)
 		self.measure_btn.SetDefault()
+		if self.measure_btn.Enabled and not isinstance(self.FindFocus(),
+													   (wx.Control, CustomGrid)):
+			self.measure_btn.SetFocus()
 	
 	def finish_btn_handler(self, event):
 		self.finish_btn.Disable()
@@ -363,38 +367,43 @@ class UntetheredFrame(BaseFrame):
 			keycode = event.GetKeyCode()
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
 			keycode = self.id_to_keycode.get(event.GetId())
-		if keycode is not None:
-			if event.GetEventType() == wx.EVT_KEY_DOWN.typeId:
-				if keycode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
-					self.back_btn_handler(None)
-				elif keycode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN):
-					self.next_btn_handler(None)
-				elif keycode in (wx.WXK_HOME, wx.WXK_NUMPAD_HOME):
-					if self.index > -1:
-						self.update(0)
-				elif keycode in (wx.WXK_END, wx.WXK_NUMPAD_END):
-					if self.index_max > -1:
-						self.update(self.index_max)
-				elif keycode in (wx.WXK_PAGEDOWN, wx.WXK_NUMPAD_PAGEDOWN):
-					if self.index > -1:
-						self.grid.MovePageDown()
-						self.update(self.grid.GetGridCursorRow())
-				elif keycode in (wx.WXK_PAGEUP, wx.WXK_NUMPAD_PAGEUP):
-					if self.index > -1:
-						self.grid.MovePageUp()
-						self.update(self.grid.GetGridCursorRow())
-				elif event.ControlDown() or event.CmdDown():
-					event.Skip()
-				return
-			elif self.has_worker_subprocess() and keycode < 255:
+		if keycode == wx.WXK_TAB:
+			self.global_navigate() or event.Skip()
+		elif keycode >= 0:
+			if keycode in (wx.WXK_UP, wx.WXK_NUMPAD_UP):
+				self.back_btn_handler(None)
+			elif keycode in (wx.WXK_DOWN, wx.WXK_NUMPAD_DOWN):
+				self.next_btn_handler(None)
+			elif keycode in (wx.WXK_HOME, wx.WXK_NUMPAD_HOME):
+				if self.index > -1:
+					self.update(0)
+			elif keycode in (wx.WXK_END, wx.WXK_NUMPAD_END):
+				if self.index_max > -1:
+					self.update(self.index_max)
+			elif keycode in (wx.WXK_PAGEDOWN, wx.WXK_NUMPAD_PAGEDOWN):
+				if self.index > -1:
+					self.grid.MovePageDown()
+					self.update(self.grid.GetGridCursorRow())
+			elif keycode in (wx.WXK_PAGEUP, wx.WXK_NUMPAD_PAGEUP):
+				if self.index > -1:
+					self.grid.MovePageUp()
+					self.update(self.grid.GetGridCursorRow())
+			elif event.ControlDown() or event.CmdDown():
+				event.Skip()
+			elif self.has_worker_subprocess() and keycode < 256:
 				if keycode == wx.WXK_ESCAPE or chr(keycode) == "Q":
 					# ESC or Q
 					self.worker.abort_subprocess()
 				elif (not isinstance(self.FindFocus(), wx.Control) or
-					  keycode != wx.WXK_SPACE) and keycode != wx.WXK_TAB:
+					  keycode != wx.WXK_SPACE):
+					# Any other key
 					self.measure_btn_handler(None)
-				return
-		event.Skip()
+				else:
+					event.Skip()
+			else:
+				event.Skip()
+		else:
+			event.Skip()
 	
 	def measure(self, event=None):
 		self.enable_btns(False, True)
@@ -635,8 +644,9 @@ class UntetheredFrame(BaseFrame):
 		if mark_current_row:
 			self.grid.SetRowLabelValue(self.index, u"\u25ba %i" % (self.index + 1))
 			self.grid.MakeCellVisible(self.index, 0)
-		self.grid.SelectRow(self.index)
-		self.grid.SetGridCursor(self.index, 0)
+		if self.index not in self.grid.GetSelectedRows():
+			self.grid.SelectRow(self.index)
+			self.grid.SetGridCursor(self.index, 0)
 		self.label_index.SetLabel("%i/%i" % (self.index + 1,
 											 len(self.cgats[0].DATA)))
 		self.label_index.GetContainingSizer().Layout()

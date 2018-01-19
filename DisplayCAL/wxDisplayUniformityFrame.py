@@ -42,6 +42,10 @@ class FlatShadedNumberedButton(FlatShadedButton):
 								  style, validator, name, bgcolour, fgcolour)
 		self.index = index
 
+	def OnGainFocus(self, event):
+		self.TopLevelParent.index = self.index
+		FlatShadedButton.OnGainFocus(self, event)
+
 
 class DisplayUniformityFrame(BaseFrame):
 
@@ -90,11 +94,12 @@ class DisplayUniformityFrame(BaseFrame):
 		self.disable_buttons()
 		
 		self.keyhandler = keyhandler
-		if sys.platform in ("darwin", "win32"):
-			# Use an accelerator table for space, 0-9, A-Z, numpad
-			keycodes = [ord(" ")] + range(ord("0"),
-										  ord("9")) + range(ord("A"),
-															ord("Z")) + numpad_keycodes
+		if sys.platform == "darwin":
+			# Use an accelerator table for tab, space, 0-9, A-Z, numpad
+			keycodes = [wx.WXK_TAB, wx.WXK_SPACE]
+			keycodes.extend(range(ord("0"), ord("9")))
+			keycodes.extend(range(ord("A"), ord("Z")))
+			keycodes.extend(numpad_keycodes)
 			self.id_to_keycode = {}
 			for keycode in keycodes:
 				self.id_to_keycode[wx.NewId()] = keycode
@@ -162,6 +167,7 @@ class DisplayUniformityFrame(BaseFrame):
 			self.disable_buttons()
 			wx.CallAfter(self.Maximize)
 		wx.Frame.Show(self, show)
+		self.panels[0].SetFocus()
 	
 	def UpdateProgress(self, value, msg=""):
 		return self.Pulse(msg)
@@ -207,15 +213,23 @@ class DisplayUniformityFrame(BaseFrame):
 			keycode = event.GetKeyCode()
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
 			keycode = self.id_to_keycode.get(event.GetId())
-		if keycode is not None:
-			if self.has_worker_subprocess():
-				if keycode == 27 or chr(keycode) == "Q":
+		if keycode == wx.WXK_TAB:
+			self.global_navigate() or event.Skip()
+		elif keycode >= 0:
+			if self.has_worker_subprocess() and keycode < 256:
+				if keycode == wx.WXK_ESCAPE or chr(keycode) == "Q":
 					# ESC or Q
 					self.worker.abort_subprocess()
-				elif self.index > -1 and not self.is_measuring:
+				elif (self.index > -1 and not self.is_measuring and
+					  (not isinstance(self.FindFocus(), wx.Control) or
+					   keycode != wx.WXK_SPACE)):
 					# Any other key
 					self.measure(CustomEvent(wx.EVT_BUTTON.typeId,
 											 self.buttons[self.index]))
+				else:
+					event.Skip()
+			else:
+				event.Skip()
 		else:
 			event.Skip()
 	
@@ -269,6 +283,7 @@ class DisplayUniformityFrame(BaseFrame):
 				self.show_cursor()
 				self.enable_buttons()
 				self.buttons[self.index].Show()
+				self.buttons[self.index].SetFocus()
 				self.buttons[self.index].SetBitmap(getbitmap("theme/icons/16x16/checkmark"))
 				self.panels[self.index].SetBackgroundColour(BGCOLOUR)
 				self.panels[self.index].Refresh()
@@ -344,7 +359,7 @@ class DisplayUniformityFrame(BaseFrame):
 	
 	def _setup(self):
 		self.logger.info("-" * 80)
-		self.index = -1
+		self.index = 0
 		self.is_measuring = False
 		self.keepGoing = True
 		self.last_error = None

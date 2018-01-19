@@ -1057,6 +1057,33 @@ class BaseFrame(wx.Frame):
 				break
 		return (win and win.IsShown() and win) or self
 
+	def global_navigate(self):
+		# We have wx.Window.Navigate, but it only works for siblings in the
+		# same parent frame. Re-implement our own version.
+		focus = self.FindFocus()
+		if focus:
+			children = self.GetAllChildren()
+			if focus in children:
+				start = i = children.index(focus)
+				while True:
+					if wx.GetKeyState(wx.WXK_SHIFT):
+						i -= 1
+					else:
+						i += 1
+					if i < 0:
+						i = len(children) - 1
+					elif i > len(children) - 1:
+						i = 0
+					if i == start:
+						return False
+					focus = children[i]
+					if (focus and isinstance(focus, (wx.Control,
+													 wx.grid.Grid)) and
+						focus.AcceptsFocus() and not focus.HasFocus()):
+						focus.SetFocus()
+						return True
+		return False
+
 	def process_data(self, data):
 		""" Override this method in derived classes """
 		return "invalid"

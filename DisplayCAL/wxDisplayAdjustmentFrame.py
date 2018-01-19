@@ -739,11 +739,12 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		
 		self.keyhandler = keyhandler
-		if sys.platform in ("darwin", "win32"):
-			# Use an accelerator table for space, 0-9, A-Z, numpad
-			keycodes = [ord(" ")] + range(ord("0"),
-										  ord("9")) + range(ord("A"),
-															ord("Z")) + numpad_keycodes
+		if sys.platform == "darwin":
+			# Use an accelerator table for tab, space, 0-9, A-Z, numpad
+			keycodes = [wx.WXK_TAB, wx.WXK_SPACE]
+			keycodes.extend(range(ord("0"), ord("9")))
+			keycodes.extend(range(ord("A"), ord("Z")))
+			keycodes.extend(numpad_keycodes)
 			self.id_to_keycode = {}
 			for keycode in keycodes:
 				self.id_to_keycode[wx.NewId()] = keycode
@@ -1032,16 +1033,18 @@ class DisplayAdjustmentFrame(BaseFrame):
 			keycode = event.GetKeyCode()
 		elif event.GetEventType() == wx.EVT_MENU.typeId:
 			keycode = self.id_to_keycode.get(event.GetId())
-		if keycode is not None:
-			#print chr(keycode)
+		if keycode == wx.WXK_TAB:
+			self.global_navigate() or event.Skip()
+		elif keycode >= 0:
 			if keycode == ord(" "):
-				if (event.GetEventType() != wx.EVT_MENU.typeId or
-					not isinstance(self.FindFocus(), FlatShadedButton) or
-					self.FindFocus() == self.adjustment_btn):
+				if (not isinstance(self.FindFocus(), FlatShadedButton) or
+					self.FindFocus() is self.adjustment_btn):
 					if self.is_measuring:
 						self.abort()
 					else:
 						self.start_interactive_adjustment()
+				else:
+					event.Skip()
 			elif keycode in [ord(str(c)) for c in range(1, 6)]:
 				key_num = chr(keycode)
 				pagenum = dict(zip(self.pagenum_2_argyll_key_num.values(),
