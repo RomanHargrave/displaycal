@@ -469,7 +469,7 @@ def launch_file(filepath):
 		kwargs["startupinfo"].wShowWindow = sp.SW_HIDE
 		kwargs["shell"] = True
 		kwargs["close_fds"] = True
-		retcode = sp.call('start "" /B "%s"' % filepath, **kwargs)
+		retcode = sp.call('start "" "%s"' % filepath, **kwargs)
 	elif which('xdg-open'):
 		retcode = sp.call(['xdg-open', filepath], **kwargs)
 	return retcode
