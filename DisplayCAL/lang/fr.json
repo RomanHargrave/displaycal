@@ -638,6 +638,7 @@
 	"license": "Licence",
 	"license_info": "Sous licence GPL",
 	"linear": "linéaire",
+		"*link.address.copy": "Copy link address",
 	"log.autoshow": "Afficher automatiquement la fenêtre du journal",
 	"luminance": "Luminance",
 	"lut_access": "Accès à la table de correspondance",

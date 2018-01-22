@@ -638,6 +638,7 @@
 	"license": "License",
 	"license_info": "Licensed under the GPL",
 	"linear": "linear",
+	"link.address.copy": "Copy link address",
 	"log.autoshow": "Show log window automatically",
 	"luminance": "Luminance",
 	"lut_access": "Video card gamma table access",

@@ -63,7 +63,7 @@ except ImportError:
 	from wx import aui
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
-from wx.lib.agw.hyperlink import HyperLinkCtrl
+from wx.lib.agw import hyperlink
 from wx.lib import fancytext
 from wx.lib.statbmp import GenStaticBitmap
 import wx.html
@@ -4325,6 +4325,25 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 					self._init = True
 		if event:
 			event.Skip()
+
+
+class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
+
+	def __init__(self, *args, **kwargs):
+		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
+		self.DoPopup(False)
+		self.Bind(hyperlink.EVT_HYPERLINK_RIGHT, self.OnPopup)
+
+	def OnPopup(self, event):
+		""" Pops up a menu with 'Copy link address' """
+		menuPopUp = wx.Menu("", wx.MENU_TEAROFF)
+		menuPopUp.Append(hyperlink.wxHYPERLINKS_POPUP_COPY,
+						 lang.getstr("link.address.copy"))
+		self.Bind(wx.EVT_MENU, self.OnPopUpCopy,
+				  id=hyperlink.wxHYPERLINKS_POPUP_COPY)
+		self.PopupMenu(menuPopUp, event.GetPosition())
+		menuPopUp.Destroy()
+		self.Unbind(wx.EVT_MENU, id=hyperlink.wxHYPERLINKS_POPUP_COPY)
 
 
 def fancytext_Renderer_getCurrentFont(self):

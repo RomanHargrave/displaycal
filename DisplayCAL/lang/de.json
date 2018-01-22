@@ -638,6 +638,7 @@
 	"license": "Lizenz",
 	"license_info": "Lizensiert unter der GPL",
 	"linear": "linear",
+	"link.address.copy": "Link-Adresse kopieren",
 	"log.autoshow": "Protokollfenster automatisch zeigen",
 	"luminance": "Helligkeit",
 	"lut_access": "Grafikkarten-Gammatabellen-Zugriff",

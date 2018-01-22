@@ -638,6 +638,7 @@
 	"license": "許可協議",
 	"license_info": "採用GPL許可協議",
 	"linear": "線性",
+		"*link.address.copy": "Copy link address",
 	"log.autoshow": "自動顯示運作記錄",
 	"luminance": "亮度",
 	"lut_access": "顯示卡伽瑪轉換表存取",

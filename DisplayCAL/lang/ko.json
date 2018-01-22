@@ -638,6 +638,7 @@
 	"license": "라이선스",
 		"*license_info": "Licensed under the GPL",
 		"*linear": "linear",
+		"*link.address.copy": "Copy link address",
 	"log.autoshow": "로그창 자동으로 보기",
 	"luminance": "밝기(휘도)",
 	"lut_access": "비디오카드 감마 테이블 접속",

@@ -638,6 +638,7 @@
 	"license": "Licencia",
 	"license_info": "Licenciado bajo la GPL",
 	"linear": "lineal",
+		"*link.address.copy": "Copy link address",
 	"log.autoshow": "Mostar ventana de log automaticamente",
 		"*luminance": "Luminance",
 	"lut_access": "Acceso a calibración",

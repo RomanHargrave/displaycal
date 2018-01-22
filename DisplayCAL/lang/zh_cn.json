@@ -638,6 +638,7 @@
 	"license": "许可协议",
 	"license_info": "采用GPL许可协议",
 	"linear": "线性",
+		"*link.address.copy": "Copy link address",
 	"log.autoshow": "自动显示运作记录",
 	"luminance": "亮度",
 	"lut_access": "显示卡伽玛转换表存取",
