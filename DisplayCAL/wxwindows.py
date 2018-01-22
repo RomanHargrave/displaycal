@@ -2193,7 +2193,15 @@ class HtmlInfoDialog(BaseInteractiveDialog):
 		else:
 			size = -1
 		htmlwnd.SetStandardFonts(size)
-		htmlwnd.SetPage(safe_unicode(html, "UTF-8"))
+		html = safe_unicode(html, "UTF-8")
+		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+		linkcolor = linkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
+		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+		vlinkcolor = vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
+		html = re.sub(r"<body[^>]*>",
+					  u'<body link="%s" alink="%s" vlink="%s">' %
+					  (linkcolor, linkcolor, vlinkcolor), html)
+		htmlwnd.SetPage(html)
 		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
 					 lambda event: launch_file(event.GetLinkInfo().Href))
 		self.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
@@ -4332,7 +4340,7 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 	def __init__(self, *args, **kwargs):
 		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
 		self.SetColours(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT),
-						wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT),
+						wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW),
 						wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.DoPopup(False)
 		self.UpdateLink()

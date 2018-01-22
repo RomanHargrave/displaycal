@@ -229,8 +229,16 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 		chglog = None
 		if resp:
 			readme = safe_unicode(resp.read(), "utf-8")
+			linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+			linkcolor = linkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
+			vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+			vlinkcolor = vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
 			if argyll:
 				chglog = readme
+				chglog = re.sub(r"<body[^>]*>",
+								u'<body link="%s" alink="%s" vlink="%s">' %
+								(linkcolor, linkcolor, vlinkcolor),
+								chglog)
 			else:
 				chglog = re.search('<div id="(?:changelog|history)">'
 								   '.+?<h2>.+?</h2>'
@@ -241,6 +249,14 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 					chglog = re.sub("<\/?d[l|d]>", "", chglog)
 					chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
 					chglog = re.sub("<h3>.+?</h3>", "", chglog)
+					chglog = u"""<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body link="%s" alink="%s" vlink="%s">
+%s
+</body>""" % (linkcolor, linkcolor, vlinkcolor, chglog)
 			if chglog:
 				chglog = re.sub(re.compile(r"<h\d>(.+?)</h\d>",
 										   flags=re.I | re.S),
