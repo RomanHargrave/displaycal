@@ -1660,9 +1660,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						 self.tabpanelheader, flag=wx.EXPAND)
 			##sizer.Insert(sizer.GetItemIndex(self.tabpanel) + 1,
 						 ##self.tabpanelfooter, flag=wx.EXPAND)
-			bgcolor = self.tabpanel.BackgroundColour
-			self.tabpanel.SetBackgroundColour(wx.Colour(*[int(v * 0.134)
-															 for v in bgcolor[:3]]))
+			self.tabpanel.BackgroundColour = "#141414"
 			self.tabpanel.ForegroundColour = "#EEEEEE"
 			self.tabpanelheader.SetBackgroundColour(self.tabpanel.BackgroundColour)
 			self.tabpanelheader.blend = True
