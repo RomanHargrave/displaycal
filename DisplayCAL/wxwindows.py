@@ -3147,7 +3147,8 @@ class BorderGradientButton(GradientButton):
 		if not self.IsEnabled():
 			fgcolor = wx.Colour(fgcolor.red, fgcolor.green, fgcolor.blue, 102)
 			bordercolor.Set(bordercolor.red, bordercolor.green,
-							bordercolor.blue, 153)
+							bordercolor.blue,
+							int(round(bordercolor.alpha * 153 / 255.0)))
 
 		brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1,
 											 topStart, topEnd)
