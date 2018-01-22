@@ -38,7 +38,7 @@ function $splash_anim(i, splash_frames) {
 			$('#splash').css({'background-image': 'url(' + imgs.pop().src + ')',
 							  'background-size': '752px auto',
 							  'display': 'block',
-							  'width': '760px', 'height': '575px', 'top': '42px'});
+							  'width': '760px', 'height': '660px', 'top': '42px'});
 			setTimeout(function () {
 				$('#splash').addClass('unfold');
 				if ($(window).height() <= $('#header').outerHeight(true) + 64 && 
