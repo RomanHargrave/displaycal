@@ -63,6 +63,7 @@ except ImportError:
 	from wx import aui
 	from wx.aui import PyAuiTabArt as AuiDefaultTabArt
 import wx.lib.filebrowsebutton as filebrowse
+from wx.lib.agw.hyperlink import HyperLinkCtrl
 from wx.lib import fancytext
 from wx.lib.statbmp import GenStaticBitmap
 import wx.html
@@ -4324,115 +4325,6 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 					self._init = True
 		if event:
 			event.Skip()
-
-
-class HyperLinkCtrl(wx.HyperlinkCtrl):
-
-	def __init__(self, parent, id=wx.ID_ANY, label="",
-				 pos=wx.DefaultPosition, size=wx.DefaultSize,
-				 style=wx.HL_DEFAULT_STYLE, name=wx.HyperlinkCtrlNameStr, URL=""):
-		wx.HyperlinkCtrl.__init__(self, parent, id, label, URL, pos, size,
-								  style, name)
-		self.SetToolTipString(URL)
-
-
-class BetterLinkCtrl(wx.StaticText):
-
-	""" HyperLinkCtrl colors can't be chnaged under Windows """
-
-	def __init__(self, parent, id=wx.ID_ANY, label="",
-				 pos=wx.DefaultPosition, size=wx.DefaultSize,
-				 style=wx.HL_DEFAULT_STYLE, name=wx.HyperlinkCtrlNameStr, URL=""):
-		wx.StaticText.__init__(self, parent, id, label, pos, size,
-							   style, name)
-		self.URL = URL
-		self.Visited = False
-
-		font = self.GetFont()
-		font.SetUnderlined(True)
-		self.SetFont(font)
-
-		self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
-
-		# Colors recommended for HTML5
-		self._normalcolor = "#0000EE"
-		self._visitedcolor = "#551A8B"
-		# Firefox uses this
-		self._hovercolor = "#EE0000"
-
-		self._hover = False
-
-		self.Bind(wx.EVT_LEFT_UP, self.OnClick)
-
-	def GetHoverColour(self):
-		return self._hovercolour
-
-	def GetNormalColour(self):
-		return self._normalcolor
-
-	def GetURL(self):
-		return self.URL
-
-	def GetVisited(self):
-		return self.Visited
-
-	def GetVisitedColour(self):
-		return self._visitedcolor
-
-	@Property
-	def HoverColour():
-		def fget(self):
-			return self._hoverlcolor
-
-		def fset(self, color):
-			self.SetHoverColour(color)
-
-		return locals()
-
-	@Property
-	def NormalColour():
-		def fget(self):
-			return self._normalcolor
-
-		def fset(self, color):
-			self.SetNormalColour(color)
-
-		return locals()
-
-	def OnClick(self, event):
-		wx.LaunchDefaultBrowser(self.URL)
-		self.Visited = True
-
-	@Property
-	def VisitedColour():
-		def fget(self):
-			return self._visitedcolor
-
-		def fset(self, color):
-			self.SetVisitedColour(color)
-
-		return locals()
-
-	def SetHoverColour(self, color):
-		self._hovercolor = color
-		if self._hover:
-			self.ForegroundColour = color
-
-	def SetNormalColour(self, color):
-		self._normalcolor = color
-		if not self.Visited and not self._hover:
-			self.ForegroundColour = color
-
-	def SetURL(self, url):
-		self.URL = url
-
-	def SetVisited(self, visited):
-		self.Visited = visited
-
-	def SetVisitedColour(self, color):
-		self._visitedcolor = color
-		if self.Visited and not self._hover:
-			self.ForegroundColour = color
 
 
 def fancytext_Renderer_getCurrentFont(self):

@@ -137,7 +137,7 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
-					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
+					   BetterStaticFancyText, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
 					   FileBrowseBitmapButtonWithChoiceHistory,
