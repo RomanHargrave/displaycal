@@ -2196,7 +2196,7 @@ class HtmlInfoDialog(BaseInteractiveDialog):
 		html = safe_unicode(html, "UTF-8")
 		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 		linkcolor = linkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
-		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
 		vlinkcolor = vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
 		html = re.sub(r"<body[^>]*>",
 					  u'<body link="%s" alink="%s" vlink="%s">' %
@@ -4340,7 +4340,7 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 	def __init__(self, *args, **kwargs):
 		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
 		self.SetColours(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT),
-						wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW),
+						wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT),
 						wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.DoPopup(False)
 		self.UpdateLink()

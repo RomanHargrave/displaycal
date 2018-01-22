@@ -231,7 +231,7 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 			readme = safe_unicode(resp.read(), "utf-8")
 			linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 			linkcolor = linkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
-			vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+			vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
 			vlinkcolor = vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
 			if argyll:
 				chglog = readme
