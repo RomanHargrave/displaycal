@@ -723,21 +723,34 @@ def get_bitmap_hover(bitmap, ctrl=None):
 		color = [44, 93, 205]  # Use Mavericks-like color scheme
 	else:
 		color = list(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)[:3])
+	R = color[0] / 255.0
+	G = color[1] / 255.0
+	B = color[2] / 255.0
+	# Assume Rec. 709 gamma 2.2 to determine rel. luminance
+	lum = .2126 * R ** 2.2 + .7152 * G ** 2.2 + .0722 * B ** 2.2
 	is_bw = image.IsBW()
 	if ctrl and (sys.platform in ("darwin", "win32") or
 				 "gtk3" in wx.PlatformInfo):
 		bgcolor = ctrl.Parent.BackgroundColour
 		if is_bw:
-			# Adjust hilight color by background color
+			# Adjust hilight color by background color if luminance difference
+			# is below threshhold
 			R = bgcolor[0] / 255.0
 			G = bgcolor[1] / 255.0
-			B = bgcolor[0] / 255.0
-			# Use Rec. 709 luma coefficients to determine luma
-			luma = .2126 * R + .7152 * G + .0722 * B
-			for i, v in enumerate(color):
-				color[i] = int(round(convert_range(v, 0, 255,
-												   255 - luma * 255,
-												   255)))
+			B = bgcolor[2] / 255.0
+			# Assume Rec. 709 gamma 2.2 to determine rel. luminance
+			bglum = .2126 * R ** 2.2 + .7152 * G ** 2.2 + .0722 * B ** 2.2
+			lumdiff = (max(lum, bglum) - min(lum, bglum)) ** (1 / 2.2)
+			if lumdiff < 1.0 / 3.0:
+				if lum > bglum:
+					newmin = bglum ** (1 / 2.2) * 255
+					newmax = 255
+				else:
+					newmin = 0
+					newmax = bglum ** (1 / 2.2) * 153  # 60%
+				for i, v in enumerate(color):
+					color[i] = int(round(convert_range(v, 0, 255, newmin,
+													   newmax)))
 	databuffer = image.GetDataBuffer()
 	alphabuffer = image.GetAlphaBuffer()
 	minv = 256  # Intentionally above max possible value
