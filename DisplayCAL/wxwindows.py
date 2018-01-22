@@ -3107,9 +3107,6 @@ class BorderGradientButton(GradientButton):
 			topStart = wx.Colour(topStart.red, topStart.green, topStart.blue, 51)
 			topEnd = wx.Colour(topEnd.red, topEnd.green, topEnd.blue, 51)
 
-		if not self.IsEnabled():
-			fgcolor = wx.Colour(fgcolor.red, fgcolor.green, fgcolor.blue, 102)
-
 		# Determine border color and width based on state and platform
 		borderwidth = 1
 		if self.use_sierra_style:
@@ -3146,6 +3143,11 @@ class BorderGradientButton(GradientButton):
 			if capture == self:
 				# Pressed/selected state
 				bordercolor = self.DarkColour(bordercolor, 71)
+
+		if not self.IsEnabled():
+			fgcolor = wx.Colour(fgcolor.red, fgcolor.green, fgcolor.blue, 102)
+			bordercolor.Set(bordercolor.red, bordercolor.green,
+							bordercolor.blue, 153)
 
 		brush = gc.CreateLinearGradientBrush(0, 1, 0, height - 1,
 											 topStart, topEnd)
