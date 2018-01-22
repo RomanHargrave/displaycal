@@ -3236,7 +3236,7 @@ class BorderGradientButton(GradientButton):
 			gc.DrawBitmap(bitmap, pos_x, pos_y, bw, bh) # draw bitmap if available
 			pos_x = pos_x + 4   # extra spacing from bitmap
 
-		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2-1+shadowOffset) 
+		gc.DrawText(label, pos_x + bw + shadowOffset, (height-th)/2.0-1+shadowOffset) 
 
 	def SetBitmap(self, bitmap):
 		self._bitmap = bitmap
