@@ -729,8 +729,7 @@ def get_bitmap_hover(bitmap, ctrl=None):
 	# Assume Rec. 709 gamma 2.2 to determine rel. luminance
 	lum = .2126 * R ** 2.2 + .7152 * G ** 2.2 + .0722 * B ** 2.2
 	is_bw = image.IsBW()
-	if ctrl and (sys.platform in ("darwin", "win32") or
-				 "gtk3" in wx.PlatformInfo):
+	if ctrl:
 		bgcolor = ctrl.Parent.BackgroundColour
 		if is_bw:
 			# Adjust hilight color by background color if luminance difference
