@@ -364,6 +364,12 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 							quality = wx.IMAGE_QUALITY_BILINEAR
 						img.Rescale(w, h, quality=quality)
 				factors = None
+				if (not inverted and len(parts) > 2 and parts[-3] == "icons" and
+					max(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)[:3]) < 102):
+					if not img:
+						img = bmp.ConvertToImage()
+					if img.IsBW():
+						inverted = True
 				# Invert after resize (avoids jaggies)
 				if inverted:
 					if not img:
