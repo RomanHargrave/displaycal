@@ -3093,18 +3093,22 @@ class BorderGradientButton(GradientButton):
 			# Normal, hover or focus state
 			if self._mouseAction == HOVER:
 				# Hover state
-				topStart = self.LightColour(self._pressedTopColour, 90)
-				topEnd = self.LightColour(self._pressedBottomColour, 90)
+				topStart = self._pressedTopColour
+				topEnd = self._pressedBottomColour
+				topStart = wx.Colour(topStart.red, topStart.green, topStart.blue, 25)
+				topEnd = wx.Colour(topEnd.red, topEnd.green, topEnd.blue, 25)
 			else:
 				# Normal or focus state
 				topStart, topEnd = self._topStartColour, self._bottomEndColour
 		else:
 			# Pressed/selected state
-			topStart = self.LightColour(self._pressedTopColour, 80)
-			topEnd = self.LightColour(self._pressedBottomColour, 80)
+			topStart = self._pressedTopColour
+			topEnd = self._pressedBottomColour
+			topStart = wx.Colour(topStart.red, topStart.green, topStart.blue, 51)
+			topEnd = wx.Colour(topEnd.red, topEnd.green, topEnd.blue, 51)
 
 		if not self.IsEnabled():
-			fgcolor = self.LightColour(fgcolor, 40)
+			fgcolor = wx.Colour(fgcolor.red, fgcolor.green, fgcolor.blue, 102)
 
 		# Determine border color and width based on state and platform
 		borderwidth = 1
