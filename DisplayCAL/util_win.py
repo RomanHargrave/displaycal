@@ -61,6 +61,7 @@ CLASS_SCANNER = struct.unpack("!L", "scnr")[0]
 SEE_MASK_FLAG_NO_UI = 0x00000400
 SEE_MASK_NOASYNC = 0x00000100
 SEE_MASK_NOCLOSEPROCESS = 0x00000040
+SEE_MASK_WAITFORINPUTIDLE = 0x02000000
 
 
 def _get_icm_display_device_key(devicekey):
@@ -345,7 +346,8 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 			return bool(pbool.contents)
 
 
-def run_as_admin(cmd, args, async=False, close_process=True, show=True):
+def run_as_admin(cmd, args, close_process=True, async=False,
+				 wait_for_idle=False, show=True):
 	"""
 	Run command with elevated privileges.
 	
@@ -354,19 +356,35 @@ def run_as_admin(cmd, args, async=False, close_process=True, show=True):
 	Returns a dictionary with hInstApp and hProcess members.
 	
 	"""
+	return shell_exec(cmd, args, "runas", close_process, async, wait_for_idle,
+					  show)
+
+
+def shell_exec(filename, args, operation="open", close_process=True,
+			   async=False, wait_for_idle=False, show=True):
+	"""
+	Run command.
+	
+	This is a wrapper around ShellExecuteEx.
+	
+	Returns a dictionary with hInstApp and hProcess members.
+	
+	"""
+	flags = SEE_MASK_FLAG_NO_UI
+	if not close_process:
+		flags |= SEE_MASK_NOCLOSEPROCESS
+	if not async:
+		flags |= SEE_MASK_NOASYNC
+	if wait_for_idle:
+		flags |= SEE_MASK_WAITFORINPUTIDLE
 	params = " ".join(quote_args(args))
 	if show:
 		show = win32con.SW_SHOWNORMAL
 	else:
 		show = win32con.SW_HIDE
-	flags = SEE_MASK_FLAG_NO_UI
-	if not async:
-		flags |= SEE_MASK_NOASYNC
-	if not close_process:
-		flags |= SEE_MASK_NOCLOSEPROCESS
 	return win32com_shell.ShellExecuteEx(fMask=flags,
-										 lpVerb="runas",
-										 lpFile=cmd,
+										 lpVerb=operation,
+										 lpFile=filename,
 										 lpParameters=params,
 										 nShow=show)
 

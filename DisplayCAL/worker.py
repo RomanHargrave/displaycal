@@ -115,7 +115,7 @@ if sys.platform == "darwin":
 						  mac_terminal_set_colors, osascript)
 elif sys.platform == "win32":
 	import util_win
-	from util_win import run_as_admin, win_ver
+	from util_win import run_as_admin, shell_exec, win_ver
 	try:
 		import wmi
 	except Exception, exception:
@@ -7620,51 +7620,51 @@ usage: spotread [-options] [logfile]
 		else:
 			cmd = os.path.join(pydir, appname + "-apply-profiles.exe")
 
-		loader_lockfile = os.path.join(config.confighome,
-									   appbasename + "-apply-profiles.lock")
-		loader_running = os.path.isfile(loader_lockfile)
-
 		not_main_thread = currentThread().__class__ is not _MainThread
 		if not_main_thread:
 			# If running in a thread, need to call pythoncom.CoInitialize
 			pythoncom.CoInitialize()
 
-			import taskscheduler
-			try:
-				ts = taskscheduler.TaskScheduler()
-			except Exception, exception:
-				safe_print("Warning - could not access task scheduler:",
-						   exception)
-			else:
-				if ts.query_task(appname + " Profile Loader Launcher"):
-					pythoncom.CoUninitialize()
-					if not loader_running:
-						# Start profile loader if not yet running
-						try:
-							result = ts.run(appname + " Profile Loader Launcher",
-											elevated=True)
-						except pywintypes.error, exception:
-							safe_print("Warning - could not launch profile "
-									   "loader task", exception)
-						else:
-							if (not result and
-								ts.lastreturncode != winerror.ERROR_CANCELLED):
-								safe_print("Warning - could not launch profile "
-										   "loader task (unknown reason)")
-					return True
+		import taskscheduler
+		try:
+			ts = taskscheduler.TaskScheduler()
+		except Exception, exception:
+			safe_print("Warning - could not access task scheduler:", exception)
+			ts = None
+			task = None
+		else:
+			task = ts.query_task(appname + " Profile Loader Launcher")
 
-		if (getcfg("profile.install_scope") == "l" and
-			sys.getwindowsversion() >= (6, ) and not loader_running):
-			# System scope. Launch profile loader with admin rights, it'll
-			# create a scheduled task
+		elevate = (getcfg("profile.install_scope") == "l" and
+				   sys.getwindowsversion() >= (6, ))
+
+		loader_lockfile = os.path.join(config.confighome,
+									   appbasename + "-apply-profiles.lock")
+		loader_running = os.path.isfile(loader_lockfile)
+
+		if not loader_running or (not task and elevate):
+			# Launch profile loader if not yet running, or restart if no task
+			# and going to elevate (launching profile loader with elevated
+			# privileges will try to create scheduled task so we can run
+			# elevated at login without UAC prompt)
+			errmsg = "Warning - could not launch profile loader"
+			if elevate:
+				errmsg += " with elevated privileges"
 			try:
-				run_as_admin(cmd, loader_args + ["--skip"])
+				shell_exec(cmd, loader_args + ["--skip"],
+						   operation="runas" if elevate else "open",
+						   wait_for_idle=True)
 			except pywintypes.error, exception:
-				if exception.args[0] != winerror.ERROR_CANCELLED:
-					safe_print("Warning - could not launch profile loader with "
-							   "elevated privileges", exception)
-			else:
-				return True
+				if exception.args[0] == winerror.ERROR_CANCELLED:
+					errmsg += " (user cancelled)"
+				else:
+					errmsg += " " + safe_str(exception)
+				safe_print(errmsg)
+
+		if task or (ts and ts.query_task(appname + " Profile Loader Launcher")):
+			if not_main_thread:
+				pythoncom.CoUninitialize()
+			return True
 
 		try:
 			scut = pythoncom.CoCreateInstance(win32com_shell.CLSID_ShellLink, None,
@@ -7724,13 +7724,6 @@ usage: spotread [-options] [logfile]
 			if not_main_thread:
 				# If running in a thread, need to call pythoncom.CoUninitialize
 				pythoncom.CoUninitialize()
-		if not loader_running:
-			# Start profile loader if not yet running
-			if loader_args:
-				cmdline = '%s" %s "--skip' % (cmd, sp.list2cmdline(loader_args))
-			else:
-				cmdline = '%s" "--skip' % cmd
-			launch_file(cmdline)
 		return result
 	
 	def _uninstall_profile_loader_win32(self):
