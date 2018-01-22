@@ -4331,7 +4331,11 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 
 	def __init__(self, *args, **kwargs):
 		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
+		self.SetColours(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT),
+						wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT),
+						wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 		self.DoPopup(False)
+		self.UpdateLink()
 		self.Bind(hyperlink.EVT_HYPERLINK_RIGHT, self.OnPopup)
 
 	def OnPopup(self, event):
