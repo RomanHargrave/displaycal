@@ -384,8 +384,9 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 								 "stock_lock-open", "stock_refresh", "web",
 								 "window-center", "zoom-best-fit", "zoom-in",
 								 "zoom-original", "zoom-out"]:
-						# Scale 85 to 255
-						factors = (3, 3, 3)
+						# Scale 85 to 255 and adjust alpha
+						alpha = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT).alpha
+						factors = (3, 3, 3, alpha / 255.0)
 				if color or factors:
 					if not img:
 						img = bmp.ConvertToImage()
