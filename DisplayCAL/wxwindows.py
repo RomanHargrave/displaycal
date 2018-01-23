@@ -2217,6 +2217,12 @@ class HtmlWindow(wx.html.HtmlWindow):
 		bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
 		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+		if max(linkcolor[:3]) == 0:
+			if sys.platform == "darwin":
+				# Use Mavericks-like color scheme
+				linkcolor = wx.Colour(44, 93, 205)
+			else:
+				linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
 		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
 		if not u"<body" in html:
 			html = "<body>%s</body>" % html
@@ -4363,9 +4369,16 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 
 	def __init__(self, *args, **kwargs):
 		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
-		self.SetColours(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT),
-						wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT),
-						wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+		if max(linkcolor[:3]) == 0:
+			if sys.platform == "darwin":
+				# Use Mavericks-like color scheme
+				linkcolor = wx.Colour(44, 93, 205)
+			else:
+				linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+		self.SetColours(linkcolor,
+						wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT),
+						linkcolor)
 		self.DoPopup(False)
 		self.UpdateLink()
 		self.Bind(hyperlink.EVT_HYPERLINK_RIGHT, self.OnPopup)
