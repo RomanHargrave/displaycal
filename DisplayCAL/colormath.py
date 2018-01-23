@@ -1071,8 +1071,8 @@ def Lab2RGB(L, a, b, rgb_space=None, scale=1.0, round_=False, clamp=True,
 	""" Convert from Lab to RGB """
 	X, Y, Z = Lab2XYZ(L, a, b, whitepoint)
 	if not noadapt:
-		X, Y, Z = adapt(X, Y, Z, whitepoint_source, rgb_space[1] if rgb_space
-													else "D65", cat)
+		rgb_space = get_rgb_space(rgb_space)
+		X, Y, Z = adapt(X, Y, Z, whitepoint_source, rgb_space[1], cat)
 	return XYZ2RGB(X, Y, Z, rgb_space, scale, round_, clamp)
 
 
@@ -1228,8 +1228,8 @@ def RGB2Lab(R, G, B, rgb_space=None, whitepoint=None, noadapt=False,
 			cat="Bradford"):
 	X, Y, Z = RGB2XYZ(R, G, B, rgb_space, scale=100)
 	if not noadapt:
-		X, Y, Z = adapt(X, Y, Z, rgb_space[1] if rgb_space else "D65",
-						whitepoint, cat)
+		rgb_space = get_rgb_space(rgb_space)
+		X, Y, Z = adapt(X, Y, Z, rgb_space[1], whitepoint, cat)
 	return XYZ2Lab(X, Y, Z, whitepoint=whitepoint)
 
 
@@ -1421,11 +1421,11 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 		return cache
 	gamma = rgb_space[0] or rgb_spaces["sRGB"][0]
 	whitepoint = get_whitepoint(rgb_space[1] or rgb_spaces["sRGB"][1], scale)
-	rx, ry, rY = rgb_space[2] or rgb_spaces["sRGB"][2]
-	gx, gy, gY = rgb_space[3] or rgb_spaces["sRGB"][3]
-	bx, by, bY = rgb_space[4] or rgb_spaces["sRGB"][4]
+	rx, ry, rY = rxyY = rgb_space[2] or rgb_spaces["sRGB"][2]
+	gx, gy, gY = gxyY = rgb_space[3] or rgb_spaces["sRGB"][3]
+	bx, by, bY = bxyY = rgb_space[4] or rgb_spaces["sRGB"][4]
 	matrix = rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint, scale)
-	rgb_space = gamma, whitepoint, (rx, ry, rY), (gx, gy, gY), (bx, by, bY), matrix
+	rgb_space = gamma, whitepoint, rxyY, gxyY, bxyY, matrix
 	get_rgb_space.cache[cachehash] = rgb_space
 	return rgb_space
 
