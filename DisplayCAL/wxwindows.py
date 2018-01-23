@@ -2216,7 +2216,7 @@ class HtmlWindow(wx.html.HtmlWindow):
 		html = safe_unicode(source, "UTF-8")
 		bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
 		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
 		if not u"<body" in html:
 			html = "<body>%s</body>" % html
