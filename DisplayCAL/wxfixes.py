@@ -568,64 +568,88 @@ def SetToolTipString(self, string):
 wx.Window.SetToolTipString = SetToolTipString
 
 
-wx.Sizer._Add = wx.Sizer.Add
+wx._Sizer = wx.Sizer
 
-def SizerAdd(self, *args, **kwargs):
-	from config import get_default_dpi, getcfg
-	scale = getcfg("app.dpi") / get_default_dpi()
-	if scale > 1:
-		if kwargs.get("border"):
-			kwargs["border"] = int(round(kwargs["border"] * scale))
-		if args and isinstance(args[0], tuple):
-			spacer = list(args[0])
-			##print spacer, '->',
-			for i, dimension in enumerate(spacer):
-				if dimension > 0:
-					spacer[i] = int(round(dimension * scale))
-			##print spacer
-			args = (tuple(spacer), ) + args[1:]
-				
-	return self._Add(*args, **kwargs)
+class Sizer(wx._Sizer):
 
-if not u"phoenix" in wx.PlatformInfo:
-	# Doesn't work with Phoenix
-	wx.Sizer.Add = SizerAdd
+	def Add(self, *args, **kwargs):
+		from config import get_default_dpi, getcfg
+		scale = getcfg("app.dpi") / get_default_dpi()
+		if isinstance(args[0], int):
+			args = list(args)
+			index = args.pop(0)
+			args = tuple(args)
+		else:
+			index = None
+		if scale > 1:
+			if kwargs.get("border"):
+				kwargs["border"] = int(round(kwargs["border"] * scale))
+			if args and isinstance(args[0], tuple):
+				spacer = list(args[0])
+				##print spacer, '->',
+				for i, dimension in enumerate(spacer):
+					if dimension > 0:
+						spacer[i] = int(round(dimension * scale))
+				##print spacer
+				args = (tuple(spacer), ) + args[1:]
+		if index is None:
+			return wx._Sizer.Add(self, *args, **kwargs)
+		else:
+			return wx._Sizer.Insert(self, index, *args, **kwargs)
 
+	Insert = Add
 
-	wx._GridSizer = wx.GridSizer
-
-	class GridSizer(wx._GridSizer):
-
-		def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
-			if vgap or hgap:
-				from config import get_default_dpi, getcfg
-				scale = getcfg("app.dpi") / get_default_dpi()
-				if scale > 1:
-					##print vgap, hgap, '->',
-					vgap, hgap = [int(round(v * scale)) for v in (vgap, hgap)]
-					##print vgap, hgap
-			super(GridSizer, self).__init__(rows, cols, vgap, hgap)
-
-	# TODO: Yet to test if this works with Phoenix
-	wx.GridSizer = GridSizer
+wx.Sizer = Sizer
 
 
-	wx._FlexGridSizer = wx.FlexGridSizer
+wx._BoxSizer = wx.BoxSizer
 
-	class FlexGridSizer(wx._FlexGridSizer):
+class BoxSizer(wx._BoxSizer):
 
-		def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
-			if vgap or hgap:
-				from config import get_default_dpi, getcfg
-				scale = getcfg("app.dpi") / get_default_dpi()
-				if scale > 1:
-					##print vgap, hgap, '->',
-					vgap, hgap = [int(round(v * scale)) for v in (vgap, hgap)]
-					##print vgap, hgap
-			super(FlexGridSizer, self).__init__(rows, cols, vgap, hgap)
+	Add = Sizer.__dict__["Add"]
+	Insert = Add
 
-	# TODO: Yet to test if this works with Phoenix
-	wx.FlexGridSizer = FlexGridSizer
+wx.BoxSizer = BoxSizer
+
+
+wx._GridSizer = wx.GridSizer
+
+class GridSizer(wx._GridSizer):
+
+	def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
+		if vgap or hgap:
+			from config import get_default_dpi, getcfg
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale > 1:
+				##print vgap, hgap, '->',
+				vgap, hgap = [int(round(v * scale)) for v in (vgap, hgap)]
+				##print vgap, hgap
+		super(GridSizer, self).__init__(rows, cols, vgap, hgap)
+
+	Add = Sizer.__dict__["Add"]
+	Insert = Add
+
+wx.GridSizer = GridSizer
+
+
+wx._FlexGridSizer = wx.FlexGridSizer
+
+class FlexGridSizer(wx._FlexGridSizer):
+
+	def __init__(self, rows=0, cols=0, vgap=0, hgap=0):
+		if vgap or hgap:
+			from config import get_default_dpi, getcfg
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale > 1:
+				##print vgap, hgap, '->',
+				vgap, hgap = [int(round(v * scale)) for v in (vgap, hgap)]
+				##print vgap, hgap
+		super(FlexGridSizer, self).__init__(rows, cols, vgap, hgap)
+
+	Add = Sizer.__dict__["Add"]
+	Insert = Add
+
+wx.FlexGridSizer = FlexGridSizer
 
 
 def GridGetSelection(self):
