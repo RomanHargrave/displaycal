@@ -2214,16 +2214,7 @@ class HtmlWindow(wx.html.HtmlWindow):
 	def SetPage(self, source):
 		""" Set displayed page with system default colors """
 		html = safe_unicode(source, "UTF-8")
-		bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
-		text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
-		if max(linkcolor[:3]) == 0:
-			if sys.platform == "darwin":
-				# Use Mavericks-like color scheme
-				linkcolor = wx.Colour(44, 93, 205)
-			else:
-				linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+		bgcolor, text, linkcolor, vlinkcolor = get_html_colors()
 		if not u"<body" in html:
 			html = "<body>%s</body>" % html
 		html = re.sub(r"<body[^>]*",
@@ -4369,16 +4360,8 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 
 	def __init__(self, *args, **kwargs):
 		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
-		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
-		if max(linkcolor[:3]) == 0:
-			if sys.platform == "darwin":
-				# Use Mavericks-like color scheme
-				linkcolor = wx.Colour(44, 93, 205)
-			else:
-				linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-		self.SetColours(linkcolor,
-						wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT),
-						linkcolor)
+		bgcolor, text, linkcolor, vlinkcolor = get_html_colors()
+		self.SetColours(linkcolor, vlinkcolor, linkcolor)
 		self.DoPopup(False)
 		self.UpdateLink()
 		self.Bind(hyperlink.EVT_HYPERLINK_RIGHT, self.OnPopup)
@@ -6673,6 +6656,29 @@ def get_gradient_panel(parent, label, x=16):
 	gradientpanel.Font = font
 	gradientpanel.SetLabel(label)
 	return gradientpanel
+
+
+def get_html_colors(allow_alpha=False):
+	"""
+	Get background, text, link and visited link colors based on system colors
+	
+	"""
+	bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+	text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+	linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+	if max(linkcolor[:3]) == 0:
+		if sys.platform == "darwin":
+			# Use Mavericks-like color scheme
+			linkcolor = wx.Colour(44, 93, 205)
+		else:
+			linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+	vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+	if not allow_alpha:
+		current_locals = locals()
+		for key, value in current_locals.iteritems():
+			if isinstance(value, wx.Colour):
+				current_locals[key] = wx.Colour(*value[:3])
+	return bgcolor, text, linkcolor, vlinkcolor
 
 
 def get_widget(win, id_name_label):
