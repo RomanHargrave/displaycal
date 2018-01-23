@@ -12,13 +12,9 @@ from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
 from jsondict import JSONDict
 from log import safe_print
-from options import debug
+from options import debug_localization as debug
 from util_os import expanduseru
 from util_str import safe_unicode
-
-
-if not debug:
-	debug = "-dl" in sys.argv[1:] or "--debug-localization" in sys.argv[1:]
 
 
 def init(set_wx_locale=False):

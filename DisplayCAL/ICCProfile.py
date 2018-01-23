@@ -48,6 +48,7 @@ import imfile
 from colormath import NumberTuple
 from defaultpaths import iccprofiles, iccprofiles_home
 from encoding import get_encodings
+from options import test_input_curve_clipping
 from ordereddict import OrderedDict
 try:
 	from log import safe_print
@@ -813,7 +814,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			prevpow = nextpow
 			# Apply a slight power to segments to optimize encoding
 			nextpow = eotf(eetf(encf(iv + segment)))
-		if nextpow > prevpow or "--input-curve-clipping" in sys.argv[1:]:
+		if nextpow > prevpow or test_input_curve_clipping:
 			prevs = 1.0 - (v - iv) / segment
 			nexts = (v - iv) / segment
 			vv = (prevs * prevpow + nexts * nextpow)
@@ -889,7 +890,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			check = eetf(n + (1 / (entries - 1.0))) > threshold
 		elif hdr_format == "HLG":
 			check = maxsignal < 1 and n >= maxsignal
-		if check and not "--input-curve-clipping" in sys.argv[1:]:
+		if check and not test_input_curve_clipping:
 			# Linear interpolate shaper for last n cLUT steps to prevent
 			# clipping in shaper
 			if k is None:

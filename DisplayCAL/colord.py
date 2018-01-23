@@ -9,8 +9,10 @@ import sys
 import warnings
 from time import sleep
 
+from options import use_gi
+
 try:
-	if not "--use-gi" in sys.argv:
+	if not use_gi:
 		raise ImportError("")
 	from gi.repository import Colord
 	from gi.repository import Gio

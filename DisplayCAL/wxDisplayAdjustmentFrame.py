@@ -24,6 +24,7 @@ from config import (get_data_path, get_default_dpi, get_icon_bundle, getbitmap,
 from config import enc
 from log import get_file_logger
 from meta import name as appname
+from options import debug
 from ordereddict import OrderedDict
 from util_list import intlist
 from util_str import safe_unicode, wrap
@@ -43,7 +44,7 @@ def get_panel(parent, size=wx.DefaultSize):
 	scale = max(getcfg("app.dpi") / get_default_dpi(), 1.0)
 	size = tuple(int(round(v * scale)) for v in size)
 	panel = wx_Panel(parent, wx.ID_ANY, size=size)
-	if "--debug" in sys.argv[1:]:
+	if debug:
 		from random import randint
 		panel.SetBackgroundColour(wx.Colour(randint(0, 255), randint(0, 255), randint(0, 255)))
 		get_panel.i += 1
