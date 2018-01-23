@@ -518,6 +518,7 @@ def donation_message(parent=None):
 	font = header.Font
 	font.PointSize += 4
 	header.SetFont(font)
+	header.MinSize = header.GetTextExtent(header.Label)
 	dlg.sizer3.Insert(0, header, flag=wx.BOTTOM | wx.EXPAND, border=14)
 	if sys.platform == "win32":
 		font = dlg.message.Font
