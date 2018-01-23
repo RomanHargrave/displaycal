@@ -140,8 +140,8 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
-					   FileBrowseBitmapButtonWithChoiceHistory,
-					   FileDrop, FlatShadedButton, HyperLinkCtrl, InfoDialog,
+					   FileBrowseBitmapButtonWithChoiceHistory, FileDrop,
+					   FlatShadedButton, HtmlWindow, HyperLinkCtrl, InfoDialog,
 					   LogWindow, ProgressDialog, TabButton, TooltipWindow,
 					   get_gradient_panel, get_dialogs)
 import floatspin
@@ -165,7 +165,6 @@ from wx import xrc
 from wx.lib import delayedresult, platebtn
 from wx.lib.art import flagart
 from wx.lib.scrolledpanel import ScrolledPanel
-import wx.html
 
 
 def swap_dict_keys_values(mydict):
@@ -229,16 +228,8 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 		chglog = None
 		if resp:
 			readme = safe_unicode(resp.read(), "utf-8")
-			linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-			linkcolor = linkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
-			vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-			vlinkcolor = vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
 			if argyll:
 				chglog = readme
-				chglog = re.sub(r"<body[^>]*>",
-								u'<body link="%s" alink="%s" vlink="%s">' %
-								(linkcolor, linkcolor, vlinkcolor),
-								chglog)
 			else:
 				chglog = re.search('<div id="(?:changelog|history)">'
 								   '.+?<h2>.+?</h2>'
@@ -254,9 +245,9 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 <head>
 	<title></title>
 </head>
-<body link="%s" alink="%s" vlink="%s">
+<body>
 %s
-</body>""" % (linkcolor, linkcolor, vlinkcolor, chglog)
+</body>""" % chglog
 			if chglog:
 				chglog = re.sub(re.compile(r"<h\d>(.+?)</h\d>",
 										   flags=re.I | re.S),
@@ -375,16 +366,9 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 		sizer.Add(warning, flag=wx.LEFT, border=8)
 		warning.Wrap((500 - 16 - 8) * scale)
 	if chglog:
-		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500 * scale, 300 * scale),
-									 style=wx.BORDER_THEME)
-		if "gtk3" in wx.PlatformInfo:
-			size = int(round(dlg.message.Font.PointSize * scale))
-		else:
-			size = -1
-		htmlwnd.SetStandardFonts(size)
+		htmlwnd = HtmlWindow(dlg, -1, size=(500 * scale, 300 * scale),
+							 style=wx.BORDER_THEME)
 		htmlwnd.SetPage(chglog)
-		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
-					 lambda event: launch_file(event.GetLinkInfo().Href))
 		dlg.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND, border=12)
 	update_check = wx.CheckBox(dlg, -1, 
 							   lang.getstr("update_check.onstartup"))

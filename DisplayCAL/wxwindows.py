@@ -2186,24 +2186,9 @@ class HtmlInfoDialog(BaseInteractiveDialog):
 		scale = getcfg("app.dpi") / config.get_default_dpi()
 		if scale < 1:
 			scale = 1
-		htmlwnd = wx.html.HtmlWindow(self, -1, size=(332 * scale, 200 * scale),
-									 style=wx.BORDER_THEME)
-		if "gtk3" in wx.PlatformInfo:
-			size = int(round(self.message.Font.PointSize * scale))
-		else:
-			size = -1
-		htmlwnd.SetStandardFonts(size)
-		html = safe_unicode(html, "UTF-8")
-		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-		linkcolor = linkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
-		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
-		vlinkcolor = vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)
-		html = re.sub(r"<body[^>]*>",
-					  u'<body link="%s" alink="%s" vlink="%s">' %
-					  (linkcolor, linkcolor, vlinkcolor), html)
+		htmlwnd = HtmlWindow(self, -1, size=(332 * scale, 200 * scale),
+							 style=wx.BORDER_THEME)
 		htmlwnd.SetPage(html)
-		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
-					 lambda event: launch_file(event.GetLinkInfo().Href))
 		self.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
 						border=12)
 		self.sizer0.SetSizeHints(self)
@@ -2211,6 +2196,38 @@ class HtmlInfoDialog(BaseInteractiveDialog):
 		if show:
 			self.ok.SetDefault()
 			self.ShowModalThenDestroy(parent)
+
+
+class HtmlWindow(wx.html.HtmlWindow):
+
+	def __init__(self, *args, **kwargs):
+		wx.html.HtmlWindow.__init__(self, *args, **kwargs)
+		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
+		if "gtk3" in wx.PlatformInfo:
+			size = int(round(wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT).PointSize * scale))
+		else:
+			size = -1
+		self.SetStandardFonts(size)
+		self.Bind(wx.html.EVT_HTML_LINK_CLICKED,
+				  lambda event: launch_file(event.GetLinkInfo().Href))
+
+	def SetPage(self, source):
+		""" Set displayed page with system default colors """
+		html = safe_unicode(source, "UTF-8")
+		bgcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+		text = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT)
+		linkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+		vlinkcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
+		if not u"<body" in html:
+			html = "<body>%s</body>" % html
+		html = re.sub(r"<body[^>]*",
+					  u'<body bgcolor="%s" text="%s" link="%s" alink="%s" vlink="%s"' %
+					  (bgcolor.GetAsString(wx.C2S_HTML_SYNTAX),
+					   text.GetAsString(wx.C2S_HTML_SYNTAX),
+					   linkcolor.GetAsString(wx.C2S_HTML_SYNTAX),
+					   linkcolor.GetAsString(wx.C2S_HTML_SYNTAX),
+					   vlinkcolor.GetAsString(wx.C2S_HTML_SYNTAX)), html)
+		wx.html.HtmlWindow.SetPage(self, html)
 
 
 class BitmapBackgroundBitmapButton(wx.BitmapButton):
