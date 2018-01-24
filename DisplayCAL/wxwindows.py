@@ -26,9 +26,9 @@ import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 					get_default_dpi, get_verified_path, pyname, setcfg,
 					confighome, appbasename, logdir, set_default_app_dpi)
-from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
-						  UnloggedWarning, Warn, getevtobjname, getevttype,
-						  handle_error)
+from debughelpers import (Error, DownloadError, Info, UnloggedError,
+						  UnloggedInfo, UnloggedWarning, Warn, getevtobjname,
+						  getevttype, handle_error)
 from log import log as log_, safe_print
 from meta import name as appname
 from network import get_valid_host
@@ -6857,10 +6857,12 @@ def show_result_dialog(result, parent=None, pos=None, confirm=False, wrap=70):
 		pos=(-1, -1)
 	if isinstance(result, Info):
 		bitmap = geticon(32, "dialog-information")
-	elif isinstance(result, Warning):
+	elif isinstance(result, (Warning, DownloadError)):
 		bitmap = geticon(32, "dialog-warning")
 	else:
 		bitmap = geticon(32, "dialog-error")
+	if isinstance(result, DownloadError):
+		confirm = lang.getstr("go_to", result.url)
 	if confirm:
 		cls = ConfirmDialog
 		ok = confirm
@@ -6873,9 +6875,11 @@ def show_result_dialog(result, parent=None, pos=None, confirm=False, wrap=70):
 										  UnloggedWarning)), nowrap=nowrap,
 										  wrap=wrap)
 	if confirm:
-		returncode = dlg.ShowModal()
+		dlg_ok = dlg.ShowModal() == wx.ID_OK
 		dlg.Destroy()
-		return returncode == wx.ID_OK
+		if dlg_ok and isinstance(result, DownloadError):
+			launch_file(result.url)
+		return dlg_ok
 
 
 def test():

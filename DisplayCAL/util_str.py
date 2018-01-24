@@ -303,7 +303,7 @@ def make_ascii_printable(text, subst=""):
 	return "".join([char if char in ascii_printable else subst for char in text])
 
 
-def make_filename_safe(unistr, encoding=fs_enc, subst="_"):
+def make_filename_safe(unistr, encoding=fs_enc, subst="_", concat=True):
 	"""
 	Make sure unicode string is safe to use as filename.
 	
@@ -333,7 +333,10 @@ def make_filename_safe(unistr, encoding=fs_enc, subst="_"):
 			c = safe_asciize(unistr[i:i + 1])
 		uniout += c
 	# Remove invalid chars
-	uniout = re.sub(r"[\\/:*?\"<>|]+", subst, uniout)
+	pattern = r"[\\/:*?\"<>|]"
+	if concat:
+		pattern += "+"
+	uniout = re.sub(pattern, subst, uniout)
 	return uniout
 
 

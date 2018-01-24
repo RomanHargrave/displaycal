@@ -133,5 +133,12 @@ class UnloggedWarning(UserWarning):
 	pass
 
 
+class DownloadError(Error):
+
+	def __init__(self, *args):
+		Error.__init__(self, *args[:-1])
+		self.url = args[1]
+
+
 class Warn(UserWarning):
 	pass

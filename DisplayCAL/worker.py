@@ -9,6 +9,7 @@ import getpass
 import glob
 import httplib
 import math
+import mimetypes
 import os
 import pipes
 import platform
@@ -87,8 +88,8 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
 					split_display_name, writecfg, appbasename)
-from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
-						  UnloggedWarning, Warn)
+from debughelpers import (Error, DownloadError, Info, UnloggedError,
+						  UnloggedInfo, UnloggedWarning, Warn)
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
 						  iccprofiles_display_home)
 from edid import WMIError, get_edid
@@ -97,7 +98,8 @@ from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
 from multiprocess import cpu_count, pool_slice
-from options import debug, experimental, test, test_require_sensor_cal, verbose
+from options import (always_fail_download, debug, experimental, test,
+					 test_badssl, test_require_sensor_cal, verbose)
 from ordereddict import OrderedDict
 from network import LoggingHTTPRedirectHandler
 from patterngenerators import (PrismaPatternGeneratorClient,
@@ -12292,6 +12294,9 @@ BEGIN_DATA
 			socket.setdefaulttimeout(default_timeout)
 
 	def _download(self, uri, force=False):
+		if test_badssl:
+			uri = "https://%s.badssl.com/" % test_badssl
+		orig_uri = uri
 		total_size = None
 		filename = os.path.basename(uri)
 		download_dir = os.path.join(expanduseru("~"), "Downloads")
@@ -12303,10 +12308,13 @@ BEGIN_DATA
 			download_dir = get_known_folder_path("Downloads")
 			download_path = os.path.join(download_dir, filename)
 		if not os.path.isfile(download_path) or force:
+			cafile = None
 			try:
 				import ssl
+				from ssl import CertificateError, SSLError
 			except ImportError:
-				pass
+				CertificateError = ValueError
+				SSLError = socket.error
 			else:
 				if hasattr(ssl, "get_default_verify_paths"):
 					cafile = ssl.get_default_verify_paths().cafile
@@ -12321,17 +12329,31 @@ BEGIN_DATA
 			opener = urllib2.build_opener(LoggingHTTPRedirectHandler)
 			try:
 				response = opener.open(uri)
-			except urllib2.URLError, exception:
+				if always_fail_download or test_badssl:
+					raise urllib2.URLError("")
+			except (urllib2.URLError, CertificateError, SSLError), exception:
+				if "CERTIFICATE_VERIFY_FAILED" in safe_str(exception):
+					ekey = "ssl.certificate_verify_failed"
+					if not cafile:
+						ekey += ".root_ca_missing"
+					safe_print(lang.getstr(ekey))
+				elif "SSLV3_ALERT_HANDSHAKE_FAILURE" in safe_str(exception):
+					safe_print(lang.getstr("ssl.handshake_failure"))
+				else:
+					safe_print(exception)
 				if getattr(LoggingHTTPRedirectHandler, "newurl", uri) != uri:
 					uri = LoggingHTTPRedirectHandler.newurl
-				return Error(uri + "\n\n" + safe_unicode(exception))
+				return DownloadError(lang.getstr("download.fail") + " " +
+									 lang.getstr("connection.fail", uri),
+									 orig_uri)
 			total_size = response.info().getheader("Content-Length")
 			if total_size is not None:
 				try:
 					total_size = int(total_size)
 				except (TypeError, ValueError):
-					return Error(lang.getstr("download_fail_wrong_size",
-											 ("<%s>" % lang.getstr("unknown"), ) * 2))
+					return DownloadError(lang.getstr("download.fail.wrong_size",
+													 ("<%s>" % lang.getstr("unknown"), ) * 2),
+										 orig_uri)
 				else:
 					if not total_size:
 						total_size = None
@@ -12342,6 +12364,13 @@ BEGIN_DATA
 				filename = re.search('filename="([^"]+)"', contentdispo)
 				if filename:
 					filename = filename.groups()[0]
+			if not filename:
+				filename = make_filename_safe(uri.rstrip("/"), concat=False)
+				content_type = response.info().getheader("Content-Type")
+				if content_type:
+					content_type = content_type.split(";", 1)[0]
+				ext = mimetypes.guess_extension(content_type or "", False)
+				filename += ext or ".html"
 			download_dir = os.path.join(expanduseru("~"), "Downloads")
 			download_path = os.path.join(download_dir, filename)
 			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
@@ -12447,14 +12476,19 @@ BEGIN_DATA
 							chunk_size = int(bps / fps)
 
 				if not bytes_so_far:
-					return Error(lang.getstr("download_fail_empty_response", uri))
+					return DownloadError(lang.getstr("download.fail.empty_response", uri),
+										 orig_uri)
 				if total_size is not None and bytes_so_far != total_size:
-					return Error(lang.getstr("download_fail_wrong_size",
-											 (total_size, bytes_so_far)))
+					return DownloadError(lang.getstr("download.fail.wrong_size",
+													 (total_size, bytes_so_far)),
+										 orig_uri)
 			finally:
 				response.close()
 				if total_size is None or bytes_so_far == total_size:
-					shutil.move(download_path + ".download", download_path)
+					try:
+						shutil.move(download_path + ".download", download_path)
+					except (shutil.Error, EnvironmentError), exception:
+						return exception
 					safe_print(lang.getstr("success"))
 				elif self.thread_abort:
 					os.remove(download_path + ".download")

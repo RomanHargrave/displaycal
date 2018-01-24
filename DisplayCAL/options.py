@@ -40,6 +40,15 @@ test_require_sensor_cal = ("-s" in sys.argv[1:] or
 # Test update functionality
 test_update = "-tu" in sys.argv[1:] or "--test-update" in sys.argv[1:]
 
+# Test SSL connection using badssl.com
+test_badssl = False
+for arg in sys.argv[1:]:
+	if arg.startswith("--test-badssl="):
+		test_badssl = arg.split("=", 1)[-1]
+
+# Always fail download
+always_fail_download = "--always-fail-download" in sys.argv[1:]
+
 # HDR input profile generation: Test input curve clipping
 test_input_curve_clipping = "--test-input-curve-clipping" in sys.argv[1:]
 
