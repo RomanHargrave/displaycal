@@ -13422,6 +13422,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.profile_type_ctrl.SetSelection(
 				self.profile_types_ba.get(getcfg("profile.type"), 
 				self.profile_types_ba.get(defaults["profile.type"], 0)))
+			self.lut3d_setup_language()
 			self.lut3d_init_input_profiles()
 			self.lut3d_update_controls()
 			if hasattr(self, "aboutdialog"):
