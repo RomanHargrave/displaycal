@@ -1,4 +1,5 @@
 var p;
+var debug = window.location.href.indexOf("?debug") > -1;
 
 // Array methods
 p=Array.prototype;
@@ -917,6 +918,8 @@ p.generate_report = function(set_delta_calc_method) {
 			actual.tolerance_DE = 5;
 		if (actual.actual_DE == null)
 			actual.actual_DE = delta.E;
+		if (actual.delta == null)
+			actual.delta = delta;
 		var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2);
 		if (actual.actual_DE <= actual.tolerance_DE) {
 			rgb[0] += Math.min(step * actual.actual_DE, 255);
@@ -967,20 +970,27 @@ p.generate_report = function(set_delta_calc_method) {
 		CCT.push('	<table cellspacing="0" id="CCT" style="' + bggridlines(rowh) + 'height: ' + rowh * (rows + 1) + 'px;">');
 		CCT.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">10000K</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
-			var target_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], absolute && use_profile_wp_as_ref && profile_wp_norm),
-				actual_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], absolute && use_profile_wp_as_ref && profile_wp_norm);
+			var target_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0),
+				actual_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0);
 			if (!absolute) {
 				target_XYZ = jsapi.math.color.adapt(target_XYZ[0], target_XYZ[1], target_XYZ[2], [96.42, 100, 82.49], profile_wp_norm, cat);
 				actual_XYZ = jsapi.math.color.adapt(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], [96.42, 100, 82.49], wp_norm, cat);
 			}
-			window.console && console.log(target_XYZ.join(', '), actual_XYZ.join(', '));
+			debug && window.console && console.log(target_XYZ.join(', '), actual_XYZ.join(', '));
 			var target_CCT = jsapi.math.color.XYZ2CorColorTemp(target_XYZ[0], target_XYZ[1], target_XYZ[2]),
-				actual_CCT = jsapi.math.color.XYZ2CorColorTemp(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]);
+				actual_CCT = jsapi.math.color.XYZ2CorColorTemp(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]),
+				target_Lab = jsapi.math.color.XYZ2Lab(target_XYZ[0], target_XYZ[1], target_XYZ[2], absolute && use_profile_wp_as_ref && profile_wp_norm),
+				actual_Lab = jsapi.math.color.XYZ2Lab(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], absolute && use_profile_wp_as_ref && profile_wp_norm),
+				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method),
+				delta_CH = Math.sqrt(Math.pow(delta.C, 2) + Math.pow(delta.H, 2));
 			var rgb = [0, 255, 0], brgb = [],
-				step = .75;
-			if (target_CCT != actual_CCT) {
-				rgb[0] += Math.min(step * Math.abs(target_CCT - actual_CCT), 255);
-				rgb[1] -= Math.min(step * Math.abs(target_CCT - actual_CCT), 255);
+				//step = .75;
+				step = 255 / (grayscale_values[i][2].tolerance_DE + grayscale_values[i][2].tolerance_DE / 2);
+			if (target_Lab != actual_Lab) {
+				//rgb[0] += Math.min(step * Math.abs(target_CCT - actual_CCT), 255);
+				//rgb[1] -= Math.min(step * Math.abs(target_CCT - actual_CCT), 255);
+				rgb[0] += Math.min(step * delta_CH, 255);
+				rgb[1] -= Math.min(step * delta_CH, 255);
 				var maxrg = Math.max(rgb[0], rgb[1]);
 				rgb[0] *= (255 / maxrg);
 				rgb[1] *= (255 / maxrg);
@@ -989,7 +999,7 @@ p.generate_report = function(set_delta_calc_method) {
 			}
 			for (var j = 0; j < 3; j ++)
 				brgb[j] = Math.round(rgb[j] * .8);
-			CCT.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: ' + (target_CCT > -1 ? target_CCT.accuracy(0) + 'K' : 'Cannot compute CCT (XYZ out of range)') + '\nMeasured: ' + (actual_CCT > -1 ? actual_CCT.accuracy(0) + 'K' : 'Cannot compute CCT (XYZ out of range)') + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + Math.min((target_CCT - end) / rstep * rowh + rowh / 2, rowh * rows) + 'px;"></div><div class="act" style="background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + '); bottom: ' + Math.min((actual_CCT - end) / rstep * rowh + rowh / 2, rowh * rows) + 'px;"></div></div></td>');
+			CCT.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: ' + (target_CCT > -1 ? target_CCT.accuracy(0) + 'K' : 'Cannot compute CCT (XYZ out of range)') + '\nMeasured: ' + (actual_CCT > -1 ? actual_CCT.accuracy(0) + 'K' : 'Cannot compute CCT (XYZ out of range)') + '\nΔC*' + delta_calc_method.substr(3) + ': ' + delta.C.accuracy(2) + '\nΔH*' + delta_calc_method.substr(3) + ': ' + delta.H.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + Math.min((target_CCT - end) / rstep * rowh + rowh / 2, rowh * rows) + 'px;"></div><div class="act" style="background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + '); bottom: ' + Math.min((actual_CCT - end) / rstep * rowh + rowh / 2, rowh * rows) + 'px;"></div></div></td>');
 		}
 		CCT.push('</tr>');
 		for (var i = start - rstep; i >= end; i -= rstep) {
@@ -1005,12 +1015,16 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html = this.report_html.concat(CCT);
 		
 		// Gamma tracking
-		var numgamma = 0;
+		var numgamma = 0, gamma_max = 3, gamma_min = 1;
 		for (var i = 0; i < grayscale_values.length; i ++) {
-			if (grayscale_values[i][1].gamma && grayscale_values[i][2].gamma) numgamma ++;
+			if (grayscale_values[i][1].gamma && grayscale_values[i][2].gamma) {
+				numgamma ++;
+				gamma_max = Math.max(gamma_max, grayscale_values[i][1].gamma, grayscale_values[i][2].gamma);
+				gamma_min = Math.min(gamma_min, grayscale_values[i][1].gamma, grayscale_values[i][2].gamma);
+			}
 		}
 		if (numgamma > 0) {
-		var gamma_tracking = [], hwidth = 100 / 31, width = (100 - hwidth) / numgamma, rows = 21, start = 30, end = 10, rstep = (start - end) / (rows - 1), rowh = 30;
+		var gamma_tracking = [], hwidth = 100 / 31, width = (100 - hwidth) / numgamma, start = Math.ceil(gamma_max * 10), end = Math.floor(gamma_min * 10), rows = start - end + 1, rstep = (start - end) / (rows - 1), rowh = 30;
 		gamma_tracking.push('	<div class="gamma_tracking graph">');
 		gamma_tracking.push('	<h3 class="toggle" onclick="toggle(this)">Gamma</h3>');
 		gamma_tracking.push('	<table cellspacing="0" id="gamma_tracking" style="' + bggridlines(rowh) + 'height: ' + rowh * (rows + 1) + 'px;">');
@@ -1018,10 +1032,13 @@ p.generate_report = function(set_delta_calc_method) {
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			if (!grayscale_values[i][1].gamma || !grayscale_values[i][2].gamma) continue;
 			var rgb = [0, 255, 0], brgb = [],
-				step = 255 / 2;
+				//step = 255 / 2;
+				step = 255 / (1.5 + 1.5 / 2);
 			if (grayscale_values[i][1].gamma != grayscale_values[i][2].gamma) {
-				rgb[0] += Math.min(step * Math.abs(grayscale_values[i][1].gamma - grayscale_values[i][2].gamma) * 12.75, 255);
-				rgb[1] -= Math.min(step * Math.abs(grayscale_values[i][1].gamma - grayscale_values[i][2].gamma) * 12.75, 255);
+				//rgb[0] += Math.min(step * Math.abs(grayscale_values[i][1].gamma - grayscale_values[i][2].gamma) * 12.75, 255);
+				//rgb[1] -= Math.min(step * Math.abs(grayscale_values[i][1].gamma - grayscale_values[i][2].gamma) * 12.75, 255);
+				rgb[0] += Math.min(step * Math.abs(grayscale_values[i][2].delta.L), 255);
+				rgb[1] -= Math.min(step * Math.abs(grayscale_values[i][2].delta.L), 255);
 				var maxrg = Math.max(rgb[0], rgb[1]);
 				rgb[0] *= (255 / maxrg);
 				rgb[1] *= (255 / maxrg);
@@ -1030,7 +1047,7 @@ p.generate_report = function(set_delta_calc_method) {
 			}
 			for (var j = 0; j < 3; j ++)
 				brgb[j] = Math.round(rgb[j] * .8);
-			gamma_tracking.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: Gamma ' + grayscale_values[i][1].gamma.toFixed(2) + '\nMeasured: Gamma ' + grayscale_values[i][2].gamma.toFixed(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + ((grayscale_values[i][1].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div><div class="act" style="background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + '); bottom: ' + ((grayscale_values[i][2].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div></div></td>');
+			gamma_tracking.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: Gamma ' + grayscale_values[i][1].gamma.toFixed(2) + '\nMeasured: Gamma ' + grayscale_values[i][2].gamma.toFixed(2) + '\nΔL*' + delta_calc_method.substr(3) + ': ' + grayscale_values[i][2].delta.L.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + ((grayscale_values[i][1].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div><div class="act" style="background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + '); bottom: ' + ((grayscale_values[i][2].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div></div></td>');
 		}
 		gamma_tracking.push('</tr>');
 		for (var i = start - rstep; i >= end; i -= rstep) {
@@ -1056,7 +1073,7 @@ p.generate_report = function(set_delta_calc_method) {
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			var target_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], target_Lab2RGB_wp_1, target_Lab2RGB_src_wp_1, 100),
 				actual_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], actual_Lab2RGB_wp_1, actual_Lab2RGB_src_wp_1, 100);
-			window.console && console.log(target_rgb.join(', '), actual_rgb.join(', '));
+			debug && window.console && console.log(target_rgb.join(', '), actual_rgb.join(', '));
 			rgb_balance.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nR: ' + (actual_rgb[0] - target_rgb[0] > 0 ? '+' : '') + (actual_rgb[0] - target_rgb[0]).accuracy(2) + '% (nominal ' + target_rgb[0].accuracy(2) + '%, measured ' + actual_rgb[0].accuracy(2) + '%)\nG: ' + (actual_rgb[1] - target_rgb[1] > 0 ? '+' : '') + (actual_rgb[1] - target_rgb[1]).accuracy(2) + '% (nominal ' + target_rgb[1].accuracy(2) + '%, measured ' + actual_rgb[1].accuracy(2) + '%)\nB: ' + (actual_rgb[2] - target_rgb[2] > 0 ? '+' : '') + (actual_rgb[2] - target_rgb[2]).accuracy(2) + '% (nominal ' + target_rgb[2].accuracy(2) + '%, measured ' + actual_rgb[2].accuracy(2) + '%)"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + rowh * rows / 2 + 'px;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[0] - target_rgb[0]) * rowh / rstep) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[1] - target_rgb[1]) * rowh / rstep) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[2] - target_rgb[2]) * rowh / rstep) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div></div></td>');
 		}
 		rgb_balance.push('</tr>');
@@ -1368,7 +1385,7 @@ function compare(set_delta_calc_method) {
 	if (fe2["FF_variables"]) try {
 		eval(fe2["FF_variables"].value);
 		window.comparison_criteria = comparison_criteria;
-		if (window.location.href.indexOf("?debug")>-1) alert("Comparsion criteria: " + (comparison_criteria.toSource ? comparison_criteria.toSource() : comparison_criteria))
+		if (debug) alert("Comparsion criteria: " + (comparison_criteria.toSource ? comparison_criteria.toSource() : comparison_criteria))
 	}
 	catch (e) {
 		alert("Error parsing variable:\n" + e + "\nUsing default values.")
