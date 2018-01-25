@@ -12339,15 +12339,13 @@ BEGIN_DATA
 					raise urllib2.URLError("")
 				newurl = getattr(LoggingHTTPRedirectHandler, "newurl", uri)
 				if (uri.startswith("https://%s/download/" % domain.lower()) or
-					(not newurl.startswith("https://%s/" % domain.lower()) and
-					 not newurl.startswith("https://www.argyllcms.com/"))):
+					not newurl.startswith("https://%s/" % domain.lower())):
 					# Get SHA-256 hashes so we can verify the downloaded file.
-					# Only do this for potentially untrusted mirrors (no sense
+					# Only do this for 3rd party hosts/mirrors (no sense
 					# doing it for files downloaded securely directly from
 					# displaycal.net when that is also the source of our hashes
 					# file, unless we are verifying an existing local app setup
-					# or portable archive, and also don't do it for files from
-					# argyllcms.com when using a secure connection)
+					# or portable archive)
 					noredir = urllib2.build_opener(NoHTTPRedirectHandler)
 					hashes = noredir.open("https://%s/sha256sums.txt" %
 										  domain.lower())
@@ -12370,6 +12368,8 @@ BEGIN_DATA
 				return DownloadError(lang.getstr("download.fail") + " " +
 									 lang.getstr("connection.fail", uri),
 									 orig_uri)
+			uri = response.geturl()
+			filename = os.path.basename(uri)
 			if hashes:
 				# Read max. 64 KB hashes
 				hashesdata = hashes.read(1024 * 64)
@@ -12383,14 +12383,14 @@ BEGIN_DATA
 						response.close()
 						return DownloadError(lang.getstr("file.hash.malformed",
 														 filename),
-											 orig_uri)
+											 uri)
 					hashesdict[name_hash[0]] = name_hash[1]
 				expectedhash_hex = hashesdict.get(filename, "").lower()
 				if not expectedhash_hex:
 					response.close()
 					return DownloadError(lang.getstr("file.hash.missing",
 													 filename),
-										 orig_uri)
+										 uri)
 				actualhash = sha256()
 			total_size = response.info().getheader("Content-Length")
 			if total_size is not None:
@@ -12403,8 +12403,6 @@ BEGIN_DATA
 				else:
 					if not total_size:
 						total_size = None
-			uri = response.geturl()
-			filename = os.path.basename(uri)
 			contentdispo = response.info().getheader("Content-Disposition")
 			if contentdispo:
 				filename = re.search('filename="([^"]+)"', contentdispo)
