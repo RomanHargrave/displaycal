@@ -7004,8 +7004,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			cat = profile.guess_cat() or cat
 		elif isinstance(profile.tags.get("arts"), ICCP.chromaticAdaptionTag):
 			cat = profile.guess_cat() or cat
-		if "lumi" in oprof.tags and isinstance(oprof.tags.lumi,
-												 ICCP.XYZType):
+		if oprof and isinstance(oprof.tags.get("lumi"), ICCP.XYZType):
 			# calculate unscaled whitepoint
 			scale = oprof.tags.lumi.Y / 100.0
 			wtpt_profile = tuple(n * scale for n in wtpt_profile_norm)
