@@ -91,7 +91,7 @@ from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
 from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
 				  version, version_short)
-from options import debug, test, verbose
+from options import debug, test, test_update, verbose
 from ordereddict import OrderedDict
 from patterngenerators import WebWinHTTPPatternGeneratorServer
 try:
@@ -177,7 +177,9 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	occurs. """
 	global app_is_uptodate
 	if argyll:
-		if parent and hasattr(parent, "worker"):
+		if test_update:
+			argyll_version = [0, 0, 0]
+		elif parent and hasattr(parent, "worker"):
 			argyll_version = parent.worker.argyll_version
 		else:
 			argyll_version = intlist(getcfg("argyll.version").split("."))
