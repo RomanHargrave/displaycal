@@ -1,10 +1,20 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 import glob
 import os
 import re
 import shutil
+from hashlib import sha256
+
+
+def sha256sum(filename, blocksize=65536):
+    filehash = sha256()
+    with open(filename, 'rb') as f:
+        for block in iter(lambda: f.read(blocksize), ''):
+            filehash.update(block)
+    return filehash.hexdigest()
 
 
 def main():
@@ -17,6 +27,13 @@ def main():
 			if not os.path.isdir(version_dir):
 				os.mkdir(version_dir)
 			shutil.move(entry, version_dir)
+	sha256sums = os.path.join('dist', 'sha256sums.txt')
+	if os.path.isfile(sha256sums):
+		# Update checksum file
+		with open(sha256sums, 'a') as f:
+			for filename in glob.glob(os.path.join(version_dir, '*')):
+				f.write((os.path.basename(filename) + ':').ljust(40) +
+						sha256sum(filename) + '\n')
 
 
 if __name__ == '__main__':

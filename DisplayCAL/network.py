@@ -90,6 +90,28 @@ class LoggingHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
 	inf_msg = urllib2.HTTPRedirectHandler.inf_msg
 
 
+class NoHTTPRedirectHandler(urllib2.HTTPRedirectHandler):
+
+	""" Like urllib2.HTTPRedirectHandler, but does not allow redirections """
+
+	def http_error_302(self, req, fp, code, msg, headers):
+		# Some servers (incorrectly) return multiple Location headers
+		# (so probably same goes for URI).  Use first header.
+		if 'location' in headers:
+			newurl = headers.getheaders('location')[0]
+		elif 'uri' in headers:
+			newurl = headers.getheaders('uri')[0]
+		else:
+			return
+
+		raise urllib2.HTTPError(newurl, code,
+								msg + " - Redirection to url '%s' is not allowed" %
+								newurl,
+								headers, fp)
+
+	http_error_301 = http_error_303 = http_error_307 = http_error_302
+
+
 class ScriptingClientSocket(socket.socket):
 
 	def __del__(self):

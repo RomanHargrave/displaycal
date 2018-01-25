@@ -30,7 +30,7 @@ import warnings
 import zipfile
 import zlib
 from UserString import UserString
-from hashlib import md5
+from hashlib import md5, sha256
 from threading import _MainThread, currentThread
 from time import sleep, strftime, time
 if sys.platform == "darwin":
@@ -101,7 +101,7 @@ from multiprocess import cpu_count, pool_slice
 from options import (always_fail_download, debug, experimental, test,
 					 test_badssl, test_require_sensor_cal, verbose)
 from ordereddict import OrderedDict
-from network import LoggingHTTPRedirectHandler
+from network import LoggingHTTPRedirectHandler, NoHTTPRedirectHandler
 from patterngenerators import (PrismaPatternGeneratorClient,
 							   ResolveLSPatternGeneratorServer,
 							   ResolveCMPatternGeneratorServer,
@@ -12293,7 +12293,7 @@ BEGIN_DATA
 		finally:
 			socket.setdefaulttimeout(default_timeout)
 
-	def _download(self, uri, force=True):
+	def _download(self, uri, force=False):
 		if test_badssl:
 			uri = "https://%s.badssl.com/" % test_badssl
 		orig_uri = uri
@@ -12307,6 +12307,12 @@ BEGIN_DATA
 			# regardless of Known Folder path, so files may already exist
 			download_dir = get_known_folder_path("Downloads")
 			download_path = os.path.join(download_dir, filename)
+		response = None
+		hashes = None
+		if uri.startswith("https://%s/download/" % domain.lower()):
+			# Always force connection to server even if local file exists for
+			# displaycal.net/downloads/* to force a hash check
+			force = True
 		if force or not os.path.isfile(download_path):
 			cafile = None
 			try:
@@ -12331,14 +12337,32 @@ BEGIN_DATA
 				response = opener.open(uri)
 				if always_fail_download or test_badssl:
 					raise urllib2.URLError("")
+				newurl = getattr(LoggingHTTPRedirectHandler, "newurl", uri)
+				if (uri.startswith("https://%s/download/" % domain.lower()) or
+					(not newurl.startswith("https://%s/" % domain.lower()) and
+					 not newurl.startswith("https://www.argyllcms.com/"))):
+					# Get SHA-256 hashes so we can verify the downloaded file.
+					# Only do this for potentially untrusted mirrors (no sense
+					# doing it for files downloaded securely directly from
+					# displaycal.net when that is also the source of our hashes
+					# file, unless we are verifying an existing local app setup
+					# or portable archive, and also don't do it for files from
+					# argyllcms.com when using a secure connection)
+					noredir = urllib2.build_opener(NoHTTPRedirectHandler)
+					hashes = noredir.open("https://%s/sha256sums.txt" %
+										  domain.lower())
 			except (urllib2.URLError, CertificateError, SSLError), exception:
+				if response:
+					response.close()
 				if "CERTIFICATE_VERIFY_FAILED" in safe_str(exception):
 					ekey = "ssl.certificate_verify_failed"
-					if not cafile:
+					if not cafile and isapp:
 						ekey += ".root_ca_missing"
 					safe_print(lang.getstr(ekey))
 				elif "SSLV3_ALERT_HANDSHAKE_FAILURE" in safe_str(exception):
 					safe_print(lang.getstr("ssl.handshake_failure"))
+				elif not "SSL:" in safe_str(exception):
+					return exception
 				else:
 					safe_print(exception)
 				if getattr(LoggingHTTPRedirectHandler, "newurl", uri) != uri:
@@ -12346,6 +12370,28 @@ BEGIN_DATA
 				return DownloadError(lang.getstr("download.fail") + " " +
 									 lang.getstr("connection.fail", uri),
 									 orig_uri)
+			if hashes:
+				# Read max. 64 KB hashes
+				hashesdata = hashes.read(1024 * 64)
+				hashes.close()
+				hashesdict = {}
+				for line in hashesdata.splitlines():
+					if not line.strip():
+						continue
+					name_hash = [value.strip() for value in line.split(":", 1)]
+					if len(name_hash) != 2 or "" in name_hash:
+						response.close()
+						return DownloadError(lang.getstr("file.hash.malformed",
+														 filename),
+											 orig_uri)
+					hashesdict[name_hash[0]] = name_hash[1]
+				expectedhash_hex = hashesdict.get(filename, "").lower()
+				if not expectedhash_hex:
+					response.close()
+					return DownloadError(lang.getstr("file.hash.missing",
+													 filename),
+										 orig_uri)
+				actualhash = sha256()
 			total_size = response.info().getheader("Content-Length")
 			if total_size is not None:
 				try:
@@ -12510,6 +12556,8 @@ BEGIN_DATA
 									if not chunk:
 										break
 									download_file.write(chunk)
+									if hashes:
+										actualhash.update(chunk)
 						except EnvironmentError, download_file_exception:
 							return download_file_exception
 						safe_print(lang.getstr("success"))
@@ -12532,6 +12580,28 @@ BEGIN_DATA
 						os.remove(download_path)
 					except EnvironmentError, exception:
 						safe_print(exception)
+		else:
+			# File already exists
+			if response:
+				response.close()
+			if hashes:
+				# Verify hash. Get hash of existing file
+				with open(download_path, "rb") as download_file:
+					while True:
+						chunk = download_file.read(1024 * 1024)
+						if not chunk:
+							break
+						actualhash.update(chunk)
+		if hashes:
+			# Verify hash. Compare to expected hash
+			actualhash_hex = actualhash.hexdigest()
+			if actualhash_hex != expectedhash_hex:
+				return Error(lang.getstr("file.hash.verification.fail",
+										 (download_path,
+										  "SHA-256=" + expectedhash_hex,
+										  "SHA-256=" + actualhash_hex)))
+			else:
+				safe_print("Verified hash SHA-256=" + actualhash_hex)
 		return download_path
 
 	def process_argyll_download(self, result, exit=False):
