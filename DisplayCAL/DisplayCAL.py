@@ -455,7 +455,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 				suffix = ".dmg"
 			worker.start(consumer, worker.download,
 						 ckwargs={"exit": dlname == appname},
-						 wargs=("http://%s/download%s/%s-%s%s" %
+						 wargs=("https://%s/download%s/%s-%s%s" %
 								(domain.lower(), folder, dlname, newversion,
 								 suffix),),
 						 progress_msg=lang.getstr("downloading"),
@@ -4205,7 +4205,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if result and not isinstance(result, Exception):
 					return result
 			# Download from web
-			path = self.worker.download("http://%s/spyd2" % domain.lower())
+			path = self.worker.download("https://%s/spyd2" % domain.lower())
 			if isinstance(path, Exception):
 				return path
 			elif not path:
@@ -11119,8 +11119,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					name += ".dmg"
 				self.worker.recent.clear()
 				self.worker.lastmsg.clear()
-				result = self.worker.download("http://%s/%s" % (domain.lower(),
-																name))
+				result = self.worker.download("https://%s/%s" % (domain.lower(),
+																 name))
 				if isinstance(result, Exception):
 					break
 				elif result:
