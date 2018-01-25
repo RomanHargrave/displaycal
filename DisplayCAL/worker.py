@@ -125,7 +125,7 @@ elif sys.platform == "win32":
 		wmi = None
 import colord
 from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
-					 make_win32_compatible_long_path, mkstemp_bypath,
+					 make_win32_compatible_long_path, mksfile, mkstemp_bypath,
 					 quote_args, dlopen, which)
 if sys.platform not in ("darwin", "win32"):
 	from util_os import getgroups
@@ -12293,7 +12293,7 @@ BEGIN_DATA
 		finally:
 			socket.setdefaulttimeout(default_timeout)
 
-	def _download(self, uri, force=False):
+	def _download(self, uri, force=True):
 		if test_badssl:
 			uri = "https://%s.badssl.com/" % test_badssl
 		orig_uri = uri
@@ -12307,7 +12307,7 @@ BEGIN_DATA
 			# regardless of Known Folder path, so files may already exist
 			download_dir = get_known_folder_path("Downloads")
 			download_path = os.path.join(download_dir, filename)
-		if not os.path.isfile(download_path) or force:
+		if force or not os.path.isfile(download_path):
 			cafile = None
 			try:
 				import ssl
@@ -12382,6 +12382,22 @@ BEGIN_DATA
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
+			# Acquire files safely so no-one but us can mess with them
+			fd = tmp_fd = tmp_download_path = None
+			try:
+				fd, download_path = mksfile(download_path)
+				tmp_fd, tmp_download_path = mksfile(download_path + ".download")
+			except EnvironmentError, mksfile_exception:
+				response.close()
+				for fd, pth in [(fd, download_path),
+								(tmp_fd, tmp_download_path)]:
+					if fd:
+						os.close(fd)
+						try:
+							os.remove(download_path)
+						except EnvironmentError, exception:
+							safe_print(exception)
+				return mksfile_exception
 			safe_print(lang.getstr("downloading"), uri, u"\u2192", download_path)
 			self.recent.write(lang.getstr("downloading") + " " + filename + "\n")
 			min_chunk_size = 1024 * 8
@@ -12408,8 +12424,10 @@ BEGIN_DATA
 			if not os.path.isdir(download_dir):
 				os.makedirs(download_dir)
 
+			download_file = None
+			download_file_exception = None
 			try:
-				with open(download_path + ".download", "wb") as download_file:
+				with os.fdopen(tmp_fd, "rb+") as tmp_download_file:
 					while True:
 						if self.thread_abort:
 							safe_print(lang.getstr("aborted"))
@@ -12424,7 +12442,7 @@ BEGIN_DATA
 
 						bytes_so_far += bytes_read
 
-						download_file.write(chunk)
+						tmp_download_file.write(chunk)
 
 						# Determine data rate
 						tdiff = time() - ts
@@ -12475,23 +12493,45 @@ BEGIN_DATA
 										   (chunk_size / 1024.0, bps / fps / 1024))
 							chunk_size = int(bps / fps)
 
-				if not bytes_so_far:
-					return DownloadError(lang.getstr("download.fail.empty_response", uri),
-										 orig_uri)
-				if total_size is not None and bytes_so_far != total_size:
-					return DownloadError(lang.getstr("download.fail.wrong_size",
-													 (total_size, bytes_so_far)),
-										 orig_uri)
+					if not bytes_so_far:
+						return DownloadError(lang.getstr("download.fail.empty_response", uri),
+											 orig_uri)
+					if total_size is not None and bytes_so_far != total_size:
+						return DownloadError(lang.getstr("download.fail.wrong_size",
+														 (total_size, bytes_so_far)),
+											 orig_uri)
+					if total_size is None or bytes_so_far == total_size:
+						# Succesful download, write to destination
+						tmp_download_file.seek(0)
+						try:
+							with os.fdopen(fd, "wb") as download_file:
+								while True:
+									chunk = tmp_download_file.read(1024 * 1024)
+									if not chunk:
+										break
+									download_file.write(chunk)
+						except EnvironmentError, download_file_exception:
+							return download_file_exception
+						safe_print(lang.getstr("success"))
 			finally:
 				response.close()
-				if total_size is None or bytes_so_far == total_size:
+				if not download_file_exception:
+					# Remove temporary download file unless there was an error
+					# writing destination
 					try:
-						shutil.move(download_path + ".download", download_path)
-					except (shutil.Error, EnvironmentError), exception:
-						return exception
-					safe_print(lang.getstr("success"))
-				elif self.thread_abort:
-					os.remove(download_path + ".download")
+						os.remove(tmp_download_path)
+					except EnvironmentError, exception:
+						safe_print(exception)
+				if self.thread_abort or download_file_exception:
+					# Remove destination file if download aborted or error
+					# writing destination
+					if not download_file:
+						# Need to close file descriptor first
+						os.close(fd)
+					try:
+						os.remove(download_path)
+					except EnvironmentError, exception:
+						safe_print(exception)
 		return download_path
 
 	def process_argyll_download(self, result, exit=False):

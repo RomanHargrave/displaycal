@@ -2,6 +2,7 @@
 
 import fnmatch
 import ctypes
+import errno
 import glob
 import locale
 import os
@@ -502,6 +503,39 @@ def mkstemp_bypath(path, dir=None, text=False):
 	if not dir:
 		dir = os.path.dirname(path)
 	return tempfile.mkstemp(ext, fname + "-", dir, text)
+
+
+def mksfile(filename):
+	"""
+	Create a file safely and return (fd, abspath)
+	
+	If filename already exists, add '(n)' as suffix before extension (will
+	try up to os.TMP_MAX or 10000 for n)
+	
+	Basically, this works in a similar way as _mkstemp_inner from the
+	standard library 'tempfile' module.
+	
+	"""
+
+	flags = tempfile._bin_openflags
+
+	fname, ext = os.path.splitext(filename)
+
+	for seq in xrange(tempfile.TMP_MAX):
+		if not seq:
+			pth = filename
+		else:
+			pth = "%s(%i)%s" % (fname, seq, ext)
+		try:
+			fd = os.open(pth, flags, 0600)
+			tempfile._set_cloexec(fd)
+			return (fd, os.path.abspath(pth))
+		except OSError, e:
+			if e.errno == errno.EEXIST:
+				continue  # Try again
+			raise
+
+	raise IOError, (errno.EEXIST, "No usable temporary file name found")
 
 
 def movefile(src, dst, overwrite=True):

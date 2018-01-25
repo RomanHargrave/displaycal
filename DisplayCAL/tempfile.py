@@ -4,3 +4,4 @@
 # Python 2.6)
 
 from tempfile26 import *
+from tempfile26 import _bin_openflags, _set_cloexec
