@@ -415,9 +415,11 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 		else:
 			consumer = worker.process_download
 			dlname = appname
+			sep = "-"
 			if argyll:
 				consumer = worker.process_argyll_download
 				dlname = "Argyll"
+				sep = "_V"
 				if sys.platform == "win32":
 					# Determine 32 or 64 bit OS
 					key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
@@ -457,9 +459,9 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 				suffix = ".dmg"
 			worker.start(consumer, worker.download,
 						 ckwargs={"exit": dlname == appname},
-						 wargs=("https://%s/download%s/%s-%s%s" %
-								(domain.lower(), folder, dlname, newversion,
-								 suffix),),
+						 wargs=("https://%s/download%s/%s%s%s%s" %
+								(domain.lower(), folder, dlname, sep,
+								 newversion, suffix),),
 						 progress_msg=lang.getstr("downloading"),
 						 fancy=False)
 		return

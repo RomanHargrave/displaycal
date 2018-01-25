@@ -12383,14 +12383,14 @@ BEGIN_DATA
 						response.close()
 						return DownloadError(lang.getstr("file.hash.malformed",
 														 filename),
-											 uri)
+											 orig_uri)
 					hashesdict[name_hash[0]] = name_hash[1]
 				expectedhash_hex = hashesdict.get(filename, "").lower()
 				if not expectedhash_hex:
 					response.close()
 					return DownloadError(lang.getstr("file.hash.missing",
 													 filename),
-										 uri)
+										 orig_uri)
 				actualhash = sha256()
 			total_size = response.info().getheader("Content-Length")
 			if total_size is not None:
