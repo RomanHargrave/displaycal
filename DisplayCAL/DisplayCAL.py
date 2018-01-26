@@ -6671,6 +6671,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				for i, channel in enumerate(("r", "g", "b")):
 					if channel + "TRC" in mprof.tags:
 						mprof.tags[channel + "TRC"].set_trc(-709)
+				# Set profile filename to None so it gets written to temp
+				# directory (this makes sure we're actually using the changed
+				# profile for lookup)
+				mprof.fileName = None
 
 		if sim_profile:
 			sim_intent = ("a"
