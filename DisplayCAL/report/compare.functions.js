@@ -1,5 +1,6 @@
 var p;
-var debug = window.location.href.indexOf("?debug") > -1;
+var debug = window.location.href.indexOf("?debug") > -1,
+	get_gammaRGB = window.location.hash.indexOf("get_gammaRGB") > -1;
 
 // Array methods
 p=Array.prototype;
@@ -969,6 +970,7 @@ p.generate_report = function(set_delta_calc_method) {
 		CCT.push('	<h3 class="toggle" onclick="toggle(this)">Correlated Color Temperature</h3>');
 		CCT.push('	<table cellspacing="0" id="CCT" style="' + bggridlines(rowh) + 'height: ' + rowh * (rows + 1) + 'px;">');
 		CCT.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">10000K</th>');
+		debug && window.console && console.log('CCT');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			var target_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0),
 				actual_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0);
@@ -976,27 +978,14 @@ p.generate_report = function(set_delta_calc_method) {
 				target_XYZ = jsapi.math.color.adapt(target_XYZ[0], target_XYZ[1], target_XYZ[2], [96.42, 100, 82.49], profile_wp_norm, cat);
 				actual_XYZ = jsapi.math.color.adapt(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], [96.42, 100, 82.49], wp_norm, cat);
 			}
-			debug && window.console && console.log(target_XYZ.join(', '), actual_XYZ.join(', '));
+			debug && window.console && console.log('Target XYZ', target_XYZ.join(', '), 'Actual XYZ', actual_XYZ.join(', '));
 			var target_CCT = jsapi.math.color.XYZ2CorColorTemp(target_XYZ[0], target_XYZ[1], target_XYZ[2]),
 				actual_CCT = jsapi.math.color.XYZ2CorColorTemp(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]),
 				target_Lab = jsapi.math.color.XYZ2Lab(target_XYZ[0], target_XYZ[1], target_XYZ[2], absolute && use_profile_wp_as_ref && profile_wp_norm),
 				actual_Lab = jsapi.math.color.XYZ2Lab(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], absolute && use_profile_wp_as_ref && profile_wp_norm),
 				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method),
 				delta_CH = Math.sqrt(Math.pow(delta.C, 2) + Math.pow(delta.H, 2));
-			var rgb = [0, 255, 0], brgb = [],
-				//step = .75;
-				step = 255 / (grayscale_values[i][2].tolerance_DE + grayscale_values[i][2].tolerance_DE / 2);
-			if (target_Lab != actual_Lab) {
-				//rgb[0] += Math.min(step * Math.abs(target_CCT - actual_CCT), 255);
-				//rgb[1] -= Math.min(step * Math.abs(target_CCT - actual_CCT), 255);
-				rgb[0] += Math.min(step * delta_CH, 255);
-				rgb[1] -= Math.min(step * delta_CH, 255);
-				var maxrg = Math.max(rgb[0], rgb[1]);
-				rgb[0] *= (255 / maxrg);
-				rgb[1] *= (255 / maxrg);
-				rgb[0] = Math.round(rgb[0]);
-				rgb[1] = Math.round(rgb[1]);
-			}
+			var rgb = jsapi.math.color.XYZ2RGB(actual_XYZ[0] / actual_XYZ[1] * 0.75, actual_XYZ[1] / actual_XYZ[1] * 0.75, actual_XYZ[2] / actual_XYZ[1] * 0.75, null, 255), brgb = [];
 			for (var j = 0; j < 3; j ++)
 				brgb[j] = Math.round(rgb[j] * .8);
 			CCT.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: ' + (target_CCT > -1 ? target_CCT.accuracy(0) + 'K' : 'Cannot compute CCT (XYZ out of range)') + '\nMeasured: ' + (actual_CCT > -1 ? actual_CCT.accuracy(0) + 'K' : 'Cannot compute CCT (XYZ out of range)') + '\nΔC*' + delta_calc_method.substr(3) + ': ' + delta.C.accuracy(2) + '\nΔH*' + delta_calc_method.substr(3) + ': ' + delta.H.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + Math.min((target_CCT - end) / rstep * rowh + rowh / 2, rowh * rows) + 'px;"></div><div class="act" style="background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + '); bottom: ' + Math.min((actual_CCT - end) / rstep * rowh + rowh / 2, rowh * rows) + 'px;"></div></div></td>');
@@ -1015,12 +1004,12 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html = this.report_html.concat(CCT);
 		
 		// Gamma tracking
-		var numgamma = 0, gamma_max = 3, gamma_min = 1;
+		var numgamma = 0, gamma_max = 3, gamma_min = 1.4;
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			if (grayscale_values[i][1].gamma && grayscale_values[i][2].gamma) {
 				numgamma ++;
-				gamma_max = Math.max(gamma_max, grayscale_values[i][1].gamma, grayscale_values[i][2].gamma);
-				gamma_min = Math.min(gamma_min, grayscale_values[i][1].gamma, grayscale_values[i][2].gamma);
+				gamma_max = Math.max(gamma_max, grayscale_values[i][1].gammaR, grayscale_values[i][2].gammaR, grayscale_values[i][1].gammaG, grayscale_values[i][2].gammaG, grayscale_values[i][1].gammaB, grayscale_values[i][2].gammaB);
+				gamma_min = Math.min(gamma_min, grayscale_values[i][1].gammaR, grayscale_values[i][2].gammaR, grayscale_values[i][1].gammaG, grayscale_values[i][2].gammaG, grayscale_values[i][1].gammaB, grayscale_values[i][2].gammaB);
 			}
 		}
 		if (numgamma > 0) {
@@ -1031,23 +1020,10 @@ p.generate_report = function(set_delta_calc_method) {
 		gamma_tracking.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">' + (start / 10).toFixed(1) + '</th>');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			if (!grayscale_values[i][1].gamma || !grayscale_values[i][2].gamma) continue;
-			var rgb = [0, 255, 0], brgb = [],
-				//step = 255 / 2;
-				step = 255 / (1.5 + 1.5 / 2);
-			if (grayscale_values[i][1].gamma != grayscale_values[i][2].gamma) {
-				//rgb[0] += Math.min(step * Math.abs(grayscale_values[i][1].gamma - grayscale_values[i][2].gamma) * 12.75, 255);
-				//rgb[1] -= Math.min(step * Math.abs(grayscale_values[i][1].gamma - grayscale_values[i][2].gamma) * 12.75, 255);
-				rgb[0] += Math.min(step * Math.abs(grayscale_values[i][2].delta.L), 255);
-				rgb[1] -= Math.min(step * Math.abs(grayscale_values[i][2].delta.L), 255);
-				var maxrg = Math.max(rgb[0], rgb[1]);
-				rgb[0] *= (255 / maxrg);
-				rgb[1] *= (255 / maxrg);
-				rgb[0] = Math.round(rgb[0]);
-				rgb[1] = Math.round(rgb[1]);
-			}
-			for (var j = 0; j < 3; j ++)
-				brgb[j] = Math.round(rgb[j] * .8);
-			gamma_tracking.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: Gamma ' + grayscale_values[i][1].gamma.toFixed(2) + '\nMeasured: Gamma ' + grayscale_values[i][2].gamma.toFixed(2) + '\nΔL*' + delta_calc_method.substr(3) + ': ' + grayscale_values[i][2].delta.L.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + ((grayscale_values[i][1].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div><div class="act" style="background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + '); bottom: ' + ((grayscale_values[i][2].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div></div></td>');
+			var target_Lab = grayscale_values[i][3],
+				actual_Lab = grayscale_values[i][4],
+				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
+			gamma_tracking.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: Gamma ' + grayscale_values[i][1].gamma.accuracy(2) + '\nMeasured: Gamma ' + grayscale_values[i][2].gamma.accuracy(2) + (get_gammaRGB ? '\nR: ' + grayscale_values[i][2].gammaR.accuracy(2) + '\nG: ' + grayscale_values[i][2].gammaG.accuracy(2) + '\nB: ' + grayscale_values[i][2].gammaB.accuracy(2) : '') + '\nΔL*' + delta_calc_method.substr(3) + ': ' + delta.L.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + ((grayscale_values[i][1].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #ccc; border-color: #999;"></div>' + (get_gammaRGB ? '<div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaR * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaG * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaB * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div>' : '') + '</div></td>');
 		}
 		gamma_tracking.push('</tr>');
 		for (var i = start - rstep; i >= end; i -= rstep) {
@@ -1065,16 +1041,33 @@ p.generate_report = function(set_delta_calc_method) {
 		} // numgamma > 0
 		
 		// RGB Balance
-		var rgb_balance = [], hwidth = 100 / 21, width = (100 - hwidth) / grayscale_values.length, rows = 13, start = 30, end = -30, rstep = (start - end) / (rows - 1), rowh = 30;
+		var rgb_balance = [], hwidth = 100 / 21, width = (100 - hwidth) / grayscale_values.length, rows = 17, start = 40, end = -40, rstep = (start - end) / (rows - 1), rowh = 30, actual_white_Y = jsapi.math.color.Lab2XYZ(grayscale_values[grayscale_values.length - 1][4][0], 0, 0)[1];
 		rgb_balance.push('	<div class="rgb_balance graph">');
 		rgb_balance.push('	<h3 class="toggle" onclick="toggle(this)">RGB Gray Balance</h3>');
 		rgb_balance.push('	<table cellspacing="0" id="rgb_balance" style="' + bggridlines(rowh) + 'height: ' + rowh * (rows + 1) + 'px;">');
 		rgb_balance.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">+' + start + '%</th>');
+		debug && window.console && console.log('RGB Gray Balance');
 		for (var i = 0; i < grayscale_values.length; i ++) {
-			var target_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], target_Lab2RGB_wp_1, target_Lab2RGB_src_wp_1, 100),
-				actual_rgb = jsapi.math.color.Lab2RGB(grayscale_values[i][4][0], grayscale_values[i][4][1], grayscale_values[i][4][2], actual_Lab2RGB_wp_1, actual_Lab2RGB_src_wp_1, 100);
-			debug && window.console && console.log(target_rgb.join(', '), actual_rgb.join(', '));
-			rgb_balance.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nR: ' + (actual_rgb[0] - target_rgb[0] > 0 ? '+' : '') + (actual_rgb[0] - target_rgb[0]).accuracy(2) + '% (nominal ' + target_rgb[0].accuracy(2) + '%, measured ' + actual_rgb[0].accuracy(2) + '%)\nG: ' + (actual_rgb[1] - target_rgb[1] > 0 ? '+' : '') + (actual_rgb[1] - target_rgb[1]).accuracy(2) + '% (nominal ' + target_rgb[1].accuracy(2) + '%, measured ' + actual_rgb[1].accuracy(2) + '%)\nB: ' + (actual_rgb[2] - target_rgb[2] > 0 ? '+' : '') + (actual_rgb[2] - target_rgb[2]).accuracy(2) + '% (nominal ' + target_rgb[2].accuracy(2) + '%, measured ' + actual_rgb[2].accuracy(2) + '%)"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + rowh * rows / 2 + 'px;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[0] - target_rgb[0]) * rowh / rstep) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[1] - target_rgb[1]) * rowh / rstep) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[2] - target_rgb[2]) * rowh / rstep) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div></div></td>');
+			var target_Lab = grayscale_values[i][3],
+				actual_Lab = grayscale_values[i][4],
+				target_XYZ = jsapi.math.color.Lab2XYZ(target_Lab[0], target_Lab[1], target_Lab[2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0),
+				actual_XYZ = jsapi.math.color.Lab2XYZ(actual_Lab[0], actual_Lab[1], actual_Lab[2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0),
+				target_rgb = [target_XYZ[0] / target_XYZ[1], target_XYZ[1] / target_XYZ[1], target_XYZ[2] / target_XYZ[1]],
+				//target_rgb = jsapi.math.color.XYZ2RGB(target_rgb[0], target_rgb[1], target_rgb[2], absolute && wp_norm_1, 1, false, false),
+				target_rgb = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, (absolute && wp_norm_1) || "D65", 1.0).multiply(target_rgb),
+				fact = 1,
+				actual_xyY = jsapi.math.color.XYZ2xyY(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]),
+				actual_rgb = [actual_xyY[0] / actual_xyY[1] * fact, fact, (1 - (actual_xyY[0] + actual_xyY[1])) / actual_xyY[1] * fact],
+				//actual_rgb = jsapi.math.color.XYZ2RGB(actual_rgb[0], actual_rgb[1], actual_rgb[2], absolute && wp_norm_1, 1, false, false),
+				actual_rgb = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, (absolute && wp_norm_1) || "D65", 1.0).multiply(actual_rgb),
+				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
+			debug && window.console && console.log('Target XYZ', target_XYZ.join(', '), 'Actual XYZ', actual_XYZ.join(', '));
+			debug && window.console && console.log('Target RGB', target_rgb.join(', '), 'Actual RGB', actual_rgb.join(', '));
+			if (isNaN(jsapi.math.min(target_rgb)) || isNaN(jsapi.math.min(actual_rgb))) {
+				rgb_balance.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nΔC*' + delta_calc_method.substr(3) + ': ' + delta.C.accuracy(2) + '\nΔH*' + delta_calc_method.substr(3) + ': ' + delta.H.accuracy(2) + '"></td>');
+				continue;
+			}
+			rgb_balance.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nR: ' + (actual_rgb[0] - target_rgb[0] > 0 ? '+' : '') + ((actual_rgb[0] - target_rgb[0]) * 100).accuracy(2) + '%\nG: ' + (actual_rgb[1] - target_rgb[1] > 0 ? '+' : '') + ((actual_rgb[1] - target_rgb[1]) * 100).accuracy(2) + '%\nB: ' + (actual_rgb[2] - target_rgb[2] > 0 ? '+' : '') + ((actual_rgb[2] - target_rgb[2]) * 100).accuracy(2) + '%\nΔC*' + delta_calc_method.substr(3) + ': ' + delta.C.accuracy(2) + '\nΔH*' + delta_calc_method.substr(3) + ': ' + delta.H.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + rowh * rows / 2 + 'px;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[0] - target_rgb[0]) * 100 * rowh / rstep) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[1] - target_rgb[1]) * 100 * rowh / rstep) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + (rowh * rows / 2 + (actual_rgb[2] - target_rgb[2]) * 100 * rowh / rstep) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div></div></td>');
 		}
 		rgb_balance.push('</tr>');
 		for (var i = start - rstep; i >= end; i -= rstep) {
@@ -1349,12 +1342,34 @@ function get_colors(target, actual, o, no_Lab, no_XYZ, gray_balance_cal_only, sk
 			}
 			target.gamma = Math.log(target_XYZ[1] / 100) / Math.log(current_rgb[0] / 100);
 			actual.gamma = Math.log(actual_XYZ[1] / 100) / Math.log(current_rgb[0] / 100);
+			if (get_gammaRGB) {
+				var profile_wp_norm_1 = [profile_wp_norm[0] / 100.0, profile_wp_norm[1] / 100.0, profile_wp_norm[2] / 100.0],
+					wp_norm_1 = [wp_norm[0] / 100.0, wp_norm[1] / 100.0, wp_norm[2] / 100.0],
+					target_RGB = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, (absolute && profile_wp_norm_1) || "D50", 1.0).multiply(target_XYZ),
+					actual_RGB = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, (absolute && wp_norm_1) || "D50", 1.0).multiply(actual_XYZ);
+				target.gammaR = Math.log(target_RGB[0] / 100) / Math.log(current_rgb[0] / 100);
+				target.gammaG = Math.log(target_RGB[1] / 100) / Math.log(current_rgb[0] / 100);
+				target.gammaB = Math.log(target_RGB[2] / 100) / Math.log(current_rgb[0] / 100);
+				actual.gammaR = Math.log(actual_RGB[0] / 100) / Math.log(current_rgb[0] / 100);
+				actual.gammaG = Math.log(actual_RGB[1] / 100) / Math.log(current_rgb[0] / 100);
+				actual.gammaB = Math.log(actual_RGB[2] / 100) / Math.log(current_rgb[0] / 100);
+			}
+			else {
+				target.gammaR = target.gamma;
+				target.gammaG = target.gamma;
+				target.gammaB = target.gamma;
+				actual.gammaR = actual.gamma;
+				actual.gammaG = actual.gamma;
+				actual.gammaB = actual.gamma;
+			}
 		}
 	}
 	return {target_Lab: target_Lab,
 			actual_Lab: actual_Lab,
 			current_rgb: current_rgb,
-			current_cmyk: current_cmyk};
+			current_cmyk: current_cmyk,
+			target_XYZ: target_XYZ,
+			actual_XYZ: actual_XYZ};
 };
 
 function get_data(which) {

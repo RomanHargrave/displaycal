@@ -93,10 +93,10 @@ jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_des
 		pybd = MA.multiply(XYZWD);
 	return MA.invert().multiply([[pybd[0]/pybs[0], 0, 0], [0, pybd[1]/pybs[1], 0], [0, 0, pybd[2]/pybs[2]]]).multiply(MA).multiply([XS, YS, ZS]);
 };
-jsapi.math.color.Lab2RGB = function (L, a, b, whitepoint, whitepoint_source, scale, round_, cat) {
+jsapi.math.color.Lab2RGB = function (L, a, b, whitepoint, whitepoint_source, scale, round_, cat, clamp) {
 	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, whitepoint || "D50");
-	XYZ = jsapi.math.color.adapt(XYZ[0], XYZ[1], XYZ[2], whitepoint_source || "D50", "D65", cat);
-	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], "D65", scale, round_)
+	if (!whitepoint_source) XYZ = jsapi.math.color.adapt(XYZ[0], XYZ[1], XYZ[2], whitepoint_source || "D50", "D65", cat);
+	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], "D65", scale, round_, clamp)
 };
 jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 	// based on http://www.easyrgb.com/math.php?MATH=M8
@@ -127,7 +127,7 @@ jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 	
 	return [X, Y, Z]
 };
-jsapi.math.color.XYZ2RGB = function (X, Y, Z, whitepoint, scale, round_) {
+jsapi.math.color.XYZ2RGB = function (X, Y, Z, whitepoint, scale, round_, clamp) {
 	if (!scale) scale = 1.0;
 	
 	var RGB = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, whitepoint || "D65", 1.0).multiply([X, Y, Z]); // sRGB
@@ -138,7 +138,9 @@ jsapi.math.color.XYZ2RGB = function (X, Y, Z, whitepoint, scale, round_) {
 		} else {
 			RGB[i] *= 12.92;
 		}
-		RGB[i] = Math.min(1.0, Math.max(0, RGB[i])) * scale;
+		if (clamp == undefined || !!clamp)
+			RGB[i] = Math.min(1.0, Math.max(0, RGB[i]));
+		RGB[i] *= scale;
 		if (round_) RGB[i] = Math.round(RGB[i]);
 	}
 	return RGB;
