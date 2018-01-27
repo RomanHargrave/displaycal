@@ -1022,8 +1022,18 @@ p.generate_report = function(set_delta_calc_method) {
 			if (!grayscale_values[i][1].gamma || !grayscale_values[i][2].gamma) continue;
 			var target_Lab = grayscale_values[i][3],
 				actual_Lab = grayscale_values[i][4],
+				target_gamma = grayscale_values[i][1].gamma,
+				actual_gamma = grayscale_values[i][2].gamma,
+				gamma = 2.2 + target_gamma - actual_gamma,
+				Eprime = (0.75 ** 2.2) ** (1 / gamma),
+				rgb = [],
+				brgb = [],
 				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method);
-			gamma_tracking.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: Gamma ' + grayscale_values[i][1].gamma.accuracy(2) + '\nMeasured: Gamma ' + grayscale_values[i][2].gamma.accuracy(2) + (get_gammaRGB ? '\nR: ' + grayscale_values[i][2].gammaR.accuracy(2) + '\nG: ' + grayscale_values[i][2].gammaG.accuracy(2) + '\nB: ' + grayscale_values[i][2].gammaB.accuracy(2) : '') + '\nΔL*' + delta_calc_method.substr(3) + ': ' + delta.L.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + ((grayscale_values[i][1].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #ccc; border-color: #999;"></div>' + (get_gammaRGB ? '<div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaR * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaG * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaB * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div>' : '') + '</div></td>');
+			for (var j = 0; j < 3; j ++) {
+				rgb.push(Math.round(Eprime * 255));
+				brgb.push(Math.round(Eprime * 204));
+			}
+			gamma_tracking.push('<td rowspan="' + rows + '" style="width: ' + width + '%;" data-title="Level: ' + (grayscale_values[i][0][0] / 255 * 100).accuracy(0) + '%\nNominal: Gamma ' + grayscale_values[i][1].gamma.accuracy(2) + '\nMeasured: Gamma ' + grayscale_values[i][2].gamma.accuracy(2) + (get_gammaRGB ? '\nR: ' + grayscale_values[i][2].gammaR.accuracy(2) + '\nG: ' + grayscale_values[i][2].gammaG.accuracy(2) + '\nB: ' + grayscale_values[i][2].gammaB.accuracy(2) : '') + '\nΔL*' + delta_calc_method.substr(3) + ': ' + delta.L.accuracy(2) + '"><div class="col" style="height: ' + rowh * rows + 'px;"><div class="ref" style="bottom: ' + ((grayscale_values[i][1].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gamma * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: rgb(' + rgb.join(', ') + '); border-color: rgb(' + brgb.join(', ') + ');"></div>' + (get_gammaRGB ? '<div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaR * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #f00; border-color: #c00;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaG * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #0f0; border-color: #0c0;"></div><div class="act" style="bottom: ' + ((grayscale_values[i][2].gammaB * 10 - end) / rstep * rowh + rowh / 2) + 'px; background-color: #00a0ff; border-color: #0080ff;"></div>' : '') + '</div></td>');
 		}
 		gamma_tracking.push('</tr>');
 		for (var i = start - rstep; i >= end; i -= rstep) {
