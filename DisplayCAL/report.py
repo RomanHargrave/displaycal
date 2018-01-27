@@ -8,7 +8,7 @@ import shutil
 import sys
 
 from config import get_data_path, initcfg
-from meta import version
+from meta import version_short
 from safe_print import safe_print
 from util_str import safe_unicode
 import jspacker
@@ -88,19 +88,19 @@ def update(report_path, pack=True):
 	
 	data = (("${PLANCKIAN}", 
 			 'id="FF_planckian"\s*(.*?)\s*disabled="disabled"', 0),
-			("${DISPLAY}", '"FF_display"\s*value="(.+?)"\s\/>', 0),
-			("${INSTRUMENT}", '"FF_instrument"\s*value="(.+?)"\s\/>', 0),
+			("${DISPLAY}", '"FF_display"\s*value="(.+?)"\s*/?>', 0),
+			("${INSTRUMENT}", '"FF_instrument"\s*value="(.+?)"\s*/?>', 0),
 			("${CORRECTION_MATRIX}", 
-			 '"FF_correction_matrix"\s*value="(.+?)"\s\/>', 0),
-			("${BLACKPOINT}", '"FF_blackpoint"\s*value="(.+?)"\s\/>', 0),
-			("${WHITEPOINT}", '"FF_whitepoint"\s*value="(.+?)"\s\/>', 0),
+			 '"FF_correction_matrix"\s*value="(.+?)"\s*/?>', 0),
+			("${BLACKPOINT}", '"FF_blackpoint"\s*value="(.+?)"\s*/?>', 0),
+			("${WHITEPOINT}", '"FF_whitepoint"\s*value="(.+?)"\s*/?>', 0),
 			("${WHITEPOINT_NORMALIZED}", 
-			 '"FF_whitepoint_normalized"\s*value="(.+?)"\s\/>', 0),
-			("${PROFILE}", '"FF_profile"\s*value="(.+?)"\s\/>', 0),
+			 '"FF_whitepoint_normalized"\s*value="(.+?)"\s*/?>', 0),
+			("${PROFILE}", '"FF_profile"\s*value="(.+?)"\s*/?>', 0),
 			("${PROFILE_WHITEPOINT}", 
-			 '"FF_profile_whitepoint"\s*value="(.+?)"\s\/>', 0),
+			 '"FF_profile_whitepoint"\s*value="(.+?)"\s*/?>', 0),
 			("${PROFILE_WHITEPOINT_NORMALIZED}", 
-			 '"FF_profile_whitepoint_normalized"\s*value="(.+?)"\s\/>', 0),
+			 '"FF_profile_whitepoint_normalized"\s*value="(.+?)"\s*/?>', 0),
 			("${SIMULATION_PROFILE}",
 			 'SIMULATION_PROFILE\s*=\s*"(.+?)"[;,]', 0),
 			("${TRC_GAMMA}",
@@ -121,11 +121,11 @@ def update(report_path, pack=True):
 			 'WHITEPOINT_SIMULATION_RELATIVE\s*=\s*(.+?)[;,]', 0),
 			("${DEVICELINK_PROFILE}",
 			 'DEVICELINK_PROFILE\s*=\s*"(.+?)"[;,]', 0),
-			("${TESTCHART}", '"FF_testchart"\s*value="(.+?)"\s\/>', 0),
-			("${ADAPTION}", '"FF_adaption"\s*value="(.+?)"\s\/>', 0),
-			("${DATETIME}", '"FF_datetime"\s*value="(.+?)"\s\/>', 0),
-			("${REF}", '"FF_data_ref"\s*value="(.+?)"\s\/>', re.DOTALL),
-			("${MEASURED}", '"FF_data_in"\s*value="(.+?)"\s\/>', re.DOTALL),
+			("${TESTCHART}", '"FF_testchart"\s*value="(.+?)"\s*/?>', 0),
+			("${ADAPTION}", '"FF_adaption"\s*value="(.+?)"\s*/?>', 0),
+			("${DATETIME}", '"FF_datetime"\s*value="(.+?)"\s*/?>', 0),
+			("${REF}", '"FF_data_ref"\s*value="(.+?)"\s*/?>', re.DOTALL),
+			("${MEASURED}", '"FF_data_in"\s*value="(.+?)"\s*/?>', re.DOTALL),
 			("${CAL_ENTRYCOUNT}", "CAL_ENTRYCOUNT\s*=\s*(.+?)[;,]$", re.M),
 			("${CAL_RGBLEVELS}", "CAL_RGBLEVELS\s*=\s*(.+?)[;,]$", re.M),
 			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?)[;,]$", re.M),
@@ -137,7 +137,7 @@ def update(report_path, pack=True):
 			("${RESULTS}", 'results\s*=\s*(.+?), locus = ', 0),
 			("${LOCUS}", "locus\s*=\s*'([^']+)'", 0))
 	
-	placeholders2data = {"${REPORT_VERSION}": version,
+	placeholders2data = {"${REPORT_VERSION}": version_short,
 						 "${CORRECTION_MATRIX}": "Unknown",
 						 "${ADAPTION}": "None",
 						 "${CAL_ENTRYCOUNT}": "null",
