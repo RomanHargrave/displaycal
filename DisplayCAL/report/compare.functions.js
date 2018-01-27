@@ -965,11 +965,11 @@ p.generate_report = function(set_delta_calc_method) {
 		});
 		
 		// CCT
-		var CCT = [], hwidth = 100 / 18, width = (100 - hwidth) / grayscale_values.length, rows = 16, start = 10000, end = 2500, rstep = (start - end) / (rows - 1), rowh = 30;
+		var CCT = [], hwidth = 100 / 18, width = (100 - hwidth) / grayscale_values.length, rows = 17, start = 10500, end = 2500, rstep = (start - end) / (rows - 1), rowh = 30;
 		CCT.push('	<div class="CCT graph">');
 		CCT.push('	<h3 class="toggle" onclick="toggle(this)">Correlated Color Temperature</h3>');
 		CCT.push('	<table cellspacing="0" id="CCT" style="' + bggridlines(rowh) + 'height: ' + rowh * (rows + 1) + 'px;">');
-		CCT.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">10000K</th>');
+		CCT.push('<tr><th style="width: ' + hwidth + '%; height: ' + rowh + 'px">' + start + 'K</th>');
 		debug && window.console && console.log('CCT');
 		for (var i = 0; i < grayscale_values.length; i ++) {
 			var target_XYZ = jsapi.math.color.Lab2XYZ(grayscale_values[i][3][0], grayscale_values[i][3][1], grayscale_values[i][3][2], absolute && use_profile_wp_as_ref && profile_wp_norm, 100.0),
