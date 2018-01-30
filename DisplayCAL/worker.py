@@ -2089,8 +2089,11 @@ class Worker(WorkerBase):
 				if gamma != "smpte2084.rolloffclip":
 					maxmll = white_cdm2
 				black_cdm2 = profile_black_cdm2 * (1 - outoffset)
-				profile1.set_smpte2084_trc([v / XYZbp[1] * black_cdm2
-											for v in XYZbp], white_cdm2, minmll,
+				if XYZbp[1]:
+					XYZbp_cdm2 = [v / XYZbp[1] * black_cdm2 for v in XYZbp]
+				else:
+					XYZbp_cdm2 = [0, 0, 0]
+				profile1.set_smpte2084_trc(XYZbp_cdm2, white_cdm2, minmll,
 										   maxmll, rolloff=True,
 										   blend_blackpoint=False)
 				desc += (u" " + lang.getstr("trc." + gamma) +
