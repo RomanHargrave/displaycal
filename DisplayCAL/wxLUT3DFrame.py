@@ -12,8 +12,8 @@ if sys.platform == "win32":
 
 from argyll_cgats import cal_to_fake_profile
 from argyll_names import video_encodings
-from config import (get_data_path, get_verified_path, getcfg, geticon, hascfg,
-					profile_ext, setcfg)
+from config import (defaults, get_data_path, get_verified_path, getcfg,
+					geticon, hascfg, profile_ext, setcfg)
 from log import safe_print
 from meta import name as appname, version
 from options import debug
@@ -1382,12 +1382,9 @@ class LUT3DFrame(BaseFrame):
 		# Shared with main window
 		self.lut3d_update_trc_controls()
 		self.lut3d_rendering_intent_ctrl.SetSelection(self.rendering_intents_ba[getcfg("3dlut.rendering_intent")])
-		format = getcfg("3dlut.format")
-		if format == "madVR" and self.worker.argyll_version < [1, 6]:
-			# MadVR only available with Argyll 1.6+, fall back to IRIDAS .cube
-			format = "cube"
-			setcfg("3dlut.format", format)
-		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba[getcfg("3dlut.format")])
+		# MadVR only available with Argyll 1.6+, fall back to default
+		self.lut3d_format_ctrl.SetSelection(self.lut3d_formats_ba.get(getcfg("3dlut.format"),
+																	  self.lut3d_formats_ba[defaults["3dlut.format"]]))
 		self.lut3d_hdr_display_ctrl.SetSelection(getcfg("3dlut.hdr_display"))
 		self.lut3d_size_ctrl.SetSelection(self.lut3d_size_ba[getcfg("3dlut.size")])
 		self.lut3d_enable_size_controls()
