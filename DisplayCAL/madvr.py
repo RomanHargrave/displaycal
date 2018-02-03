@@ -65,8 +65,8 @@ _methodnames = ("ConnectEx", "Disable3dlut", "Enable3dlut", "EnterFullscreen",
 				"ShowProgressBar", "SetProgressBarPos",
 				"SetSelected3dlut", "SetStayOnTopButton",
 				"SetUseFullscreenButton", "ShowRGB",
-				"ShowRGBEx", "Load3dlutFile", "Disconnect",
-				"Quit", "Load3dlutFromArray256")
+				"ShowRGBEx", "Load3dlutFile", "LoadHdr3dlutFile", "Disconnect",
+				"Quit", "Load3dlutFromArray256", "LoadHdr3dlutFromArray256")
 
 _autonet_methodnames = ("AddConnectionCallback", "Listen", "Announce")
 
@@ -217,6 +217,8 @@ class MadTPG(MadTPGBase):
 		self._connection_callbacks = []
 
 		# We only expose stuff we might actually use.
+		# Also, as the HDR 3D LUT install API of madVR is relatively recent
+		# (September 2017), we do not require it.
 
 		# Find madHcNet32.dll
 		clsid = "{E1A8B82A-32CE-4B0D-BE0D-AA68C772E423}"
@@ -241,7 +243,10 @@ class MadTPG(MadTPGBase):
 					prefix = "AutoNet"
 				else:
 					prefix = "madVR"
-				getattr(self.mad, prefix + "_" + methodname).restype = ctypes.c_bool
+				method = getattr(self.mad, prefix + "_" + methodname, None)
+				if not method and not methodname.startswith("LoadHdr3dlut"):
+					raise AttributeError(prefix + "_" + methodname)
+				method.restype = ctypes.c_bool
 
 			# Set expected argument types
 			self.mad.madVR_ShowRGB.argtypes = [ctypes.c_double] * 3
@@ -1173,17 +1178,19 @@ class MadTPG_Net_Sender(object):
 		self.command = command
 
 	def __call__(self, *args, **kwargs):
-		if self.command == "Load3dlutFile":
+		if self.command in ("Load3dlutFile", "LoadHdr3dlutFile"):
 			lut = H3DLUT(args[0])
 			lutdata = lut.LUTDATA
-			self.command = "Load3dlut"
-		elif self.command == "Load3dlutFromArray256":
+			self.command = self.command[:-4]  # Strip 'File' from command name
+		elif self.command in ("Load3dlutFromArray256", "LoadHdr3dlutFromArray256"):
 			lutdata = args[0]
-			self.command = "Load3dlut"
-		if self.command == "Load3dlut":
+			self.command = self.command[:-12]  # Strip 'File' from command name
+		if self.command in ("Load3dlut", "LoadHdr3dlut"):
 			params = struct.pack("<i", args[1])  # Save to settings?
 			params += struct.pack("<i", args[2])  # 3D LUT slot
 			params += lutdata
+			if self.command == "LoadHdr3dlut":
+				params += struct.pack("<i", args[3])  # HDR to SDR?
 		elif self.command == "SetDeviceGammaRamp":
 			params = ""
 			for j in xrange(3):

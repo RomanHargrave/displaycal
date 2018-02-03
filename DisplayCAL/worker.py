@@ -6742,10 +6742,16 @@ usage: spotread [-options] [logfile]
 					 "EBU3213_PAL.icm": 2,
 					 "Rec2020.icm": 3,
 					 "SMPTE431_P3.icm": 4}.get(basename, 0)
+			args = [path, True, gamut]
+			if getcfg("3dlut.trc").startswith("smpte2084"):
+				methodname = "load_hdr_3dlut_file"
+				args.append(not getcfg("3dlut.hdr_display"))
+			else:
+				methodname = "load_3dlut_file"
 			try:
 				# Connect & load 3D LUT
 				if (self.madtpg_connect() and
-					self.madtpg.load_3dlut_file(path, True, gamut)):
+					getattr(self.madtpg, methodname)(*args)):
 					raise Info(lang.getstr("3dlut.install.success"))
 				else:
 					raise Error(lang.getstr("3dlut.install.failure"))
@@ -9240,7 +9246,7 @@ usage: spotread [-options] [logfile]
 				   continue_next=continue_next, interactive_frame="adjust",
 				   pauseable=True)
 
-	def madtpg_connect(self):
+	def madtpg_init(self):
 		if not hasattr(self, "madtpg"):
 			if sys.platform == "win32" and getcfg("madtpg.native"):
 				# Using native implementation (madHcNet32.dll)
@@ -9249,6 +9255,9 @@ usage: spotread [-options] [logfile]
 				# Using madVR net-protocol pure python implementation
 				self.madtpg = madvr.MadTPG_Net()
 				self.madtpg.debug = verbose
+
+	def madtpg_connect(self):
+		self.madtpg_init()
 		self.patterngenerator = self.madtpg
 		return self.madtpg.connect(method2=madvr.CM_StartLocalInstance)
 
