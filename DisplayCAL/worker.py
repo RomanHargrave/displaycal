@@ -12312,9 +12312,12 @@ BEGIN_DATA
 			download_path = os.path.join(download_dir, filename)
 		response = None
 		hashes = None
-		if uri.startswith("https://%s/download/" % domain.lower()):
+		is_main_dl = (uri.startswith("https://%s/download/" % domain.lower()) or
+					  uri.startswith("https://%s/Argyll/" % domain.lower()))
+		if is_main_dl:
 			# Always force connection to server even if local file exists for
-			# displaycal.net/downloads/* to force a hash check
+			# displaycal.net/downloads/* and displaycal.net/Argyll/*
+			# to force a hash check
 			force = True
 		if force or not os.path.isfile(download_path):
 			cafile = None
@@ -12341,7 +12344,7 @@ BEGIN_DATA
 				if always_fail_download or test_badssl:
 					raise urllib2.URLError("")
 				newurl = getattr(LoggingHTTPRedirectHandler, "newurl", uri)
-				if (uri.startswith("https://%s/download/" % domain.lower()) or
+				if (is_main_dl or
 					not newurl.startswith("https://%s/" % domain.lower())):
 					# Get SHA-256 hashes so we can verify the downloaded file.
 					# Only do this for 3rd party hosts/mirrors (no sense
