@@ -8670,9 +8670,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			try:
 				self.worker.madtpg_init()
 			except Exception, exception:
-				madtpg = None
-			else:
-				madtpg = self.worker.madtpg
+				safe_print("Could not initialize madTPG:", exception)
+		madtpg = getattr(self.worker, "madtpg", None)
 		# Note: madVR HDR 3D LUT install API was added September 2017,
 		# we don't require it so check availability
 		install_3dlut_api = ((getcfg("3dlut.format") == "madVR" and
