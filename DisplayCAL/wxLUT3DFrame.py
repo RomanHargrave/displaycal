@@ -1432,22 +1432,16 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_update_system_gamma()
 		# Content colorspace (currently only used for SMPTE 2084)
 		content_colors = []
-		for color in ("white", "red", "green", "blue"):
+		for color in ("red", "green", "blue", "white"):
 			for coord in "xy":
 				v = getcfg("3dlut.content.colorspace.%s.%s" % (color, coord))
 				getattr(self, "lut3d_content_colorspace_%s_%s" %
 							  (color, coord)).SetValue(v)
 				content_colors.append(round(v, 4))
-		for i, rgb_space in enumerate(self.lut3d_content_colorspace_names):
-			rgb_space = colormath.get_rgb_space(rgb_space)
-			wx, wy = (round(v, 4) for v in
-					  colormath.XYZ2xyY(*colormath.get_whitepoint(rgb_space[1]))[:2])
-			colors = [wx, wy]
-			for primary in rgb_space[2:5]:
-				for j in xrange(2):
-					colors.append(round(primary[j], 4))
-			if colors == content_colors:
-				break
+		rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(content_colors,
+																	   self.lut3d_content_colorspace_names)
+		if rgb_space_name:
+			i = self.lut3d_content_colorspace_names.index(rgb_space_name)
 		else:
 			i = self.lut3d_content_colorspace_ctrl.Count - 1
 		self.lut3d_content_colorspace_ctrl.SetSelection(i)

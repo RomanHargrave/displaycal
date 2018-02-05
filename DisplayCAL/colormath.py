@@ -1409,6 +1409,24 @@ def rgb_to_xyz_matrix(rx, ry, gx, gy, bx, by, whitepoint=None, scale=1.0):
 					  (Sr * Zr, Sg * Zg, Sb * Zb)))
 
 
+def find_primaries_wp_xy_rgb_space_name(xy, rgb_space_names=None,
+												 digits=4):
+	"""
+	Given primaries and whitepoint xy as list, find matching RGB space by
+	comparing primaries and whitepoint (fuzzy match rounded to n digits) and
+	return its name (or None if no match)
+	
+	"""
+	for i, rgb_space_name in enumerate(rgb_space_names or rgb_spaces.iterkeys()):
+		if not rgb_space_names and rgb_space_name in ("ECI RGB", "ECI RGB v2",
+													  "SMPTE 240M", "sRGB"):
+			# Skip in favor of base color space (i.e. NTSC 1953, SMPTE-C and
+			# Rec. 709)
+			continue
+		if get_rgb_space_primaries_wp_xy(rgb_space_name, digits) == xy:
+			return rgb_space_name
+
+
 def get_rgb_space(rgb_space=None, scale=1.0):
 	""" Return gamma, whitepoint, primaries and RGB -> XYZ matrix """
 	if not rgb_space:
@@ -1428,6 +1446,22 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 	rgb_space = gamma, whitepoint, rxyY, gxyY, bxyY, matrix
 	get_rgb_space.cache[cachehash] = rgb_space
 	return rgb_space
+
+
+def get_rgb_space_primaries_wp_xy(rgb_space=None, digits=4):
+	"""
+	Given RGB space, get primaries and whitepoint xy, optionally rounded to n
+	digits (default 4)
+	
+	"""
+	rgb_space = get_rgb_space(rgb_space)
+	xy = []
+	for i in xrange(3):
+		xy.extend(rgb_space[2:][i][:2])
+	xy.extend(XYZ2xyY(*get_whitepoint(rgb_space[1]))[:2])
+	if digits:
+		xy = [round(v, digits) for v in xy]
+	return xy
 
 
 get_rgb_space.cache = {}

@@ -3105,20 +3105,9 @@ END_DATA
 				cgx, cgy = content_rgb_space[2:][1][:2]
 				cbx, cby = content_rgb_space[2:][2][:2]
 				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
-				content_colors = [round(v, 4) for v in (cwx, cwy, crx, cry,
-														cgx, cgy, cbx, cby)]
-				for i, rgb_space_name in enumerate(colormath.rgb_spaces.iterkeys()):
-					rgb_space = colormath.get_rgb_space(rgb_space_name)
-					wx, wy = (round(v, 4) for v in
-							  colormath.XYZ2xyY(*colormath.get_whitepoint(rgb_space[1]))[:2])
-					colors = [wx, wy]
-					for primary in rgb_space[2:5]:
-						for j in xrange(2):
-							colors.append(round(primary[j], 4))
-					if colors == content_colors:
-						break
-				else:
-					rgb_space_name = "Custom"
+				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
+				rgb_space_name = (colormath.find_primaries_wp_xy_rgb_space_name(content_colors) or
+								  "Custom")
 				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
 																  cgx, cgy,
 																  cbx, cby,
@@ -6733,21 +6722,56 @@ usage: spotread [-options] [logfile]
 												   args, asroot)
 
 	def install_3dlut(self, path, filename=None):
-		basename = os.path.basename(getcfg("3dlut.input.profile"))
 		if getcfg("3dlut.format") == "madVR" and madvr:
 			# Install (load) 3D LUT using madTPG
-			# Get mapping from source profile to madVR gamut slot
-			gamut = {"Rec709.icm": 0,
-					 "SMPTE_RP145_NTSC.icm": 1,
-					 "EBU3213_PAL.icm": 2,
-					 "Rec2020.icm": 3,
-					 "SMPTE431_P3.icm": 4}.get(basename, 0)
+			safe_print(path)
+			xy = None
+			smpte2084 = False
+			hdr_to_sdr = True
+			# Get parameters from actual 3D LUT file
+			h3dlut = madvr.H3DLUT(path)
+			parameters = h3dlut.parametersData.strip('\0').splitlines()
+			for line in parameters:
+				if line.startswith("Input_Primaries"):
+					try:
+						xy = [round(float(v), 4)
+							  for v in line.split(None, 1)[-1].split()]
+					except (IndexError, ValueError), exception:
+						safe_print("Warning: madVR 3D LUT parameters could not "
+								   "be parsed:", line)
+					else:
+						safe_print(line)
+				if (line.startswith("Input_Transfer_Function") and
+					line.split(None, 1)[-1] == "PQ"):
+					smpte2084 = True
+					safe_print(line)
+				if (line.startswith("Output_Transfer_Function") and
+					line.split(None, 1)[-1] == "PQ"):
+					hdr_to_sdr = False
+					safe_print(line)
+			rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(xy)
+			if rgb_space_name:
+				safe_print("Input primaries match", rgb_space_name)
+			gamut_slots = {"Rec. 709": 0,
+						   "SMPTE-C": 1,  # SMPTE RP 145 (NTSC)
+						   "PAL/SECAM": 2,
+						   "Rec. 2020": 3,
+						   "DCI P3": 4}
+			gamut = gamut_slots.get(rgb_space_name, 0)
 			args = [path, True, gamut]
-			if getcfg("3dlut.trc").startswith("smpte2084"):
+			if smpte2084:
 				methodname = "load_hdr_3dlut_file"
-				args.append(not getcfg("3dlut.hdr_display"))
+				args.append(hdr_to_sdr)
+				lut3d_section = "HDR"
+				if hdr_to_sdr:
+					lut3d_section += " to SDR"
 			else:
 				methodname = "load_3dlut_file"
+				lut3d_section = "calibration"
+			safe_print("Installing madVR 3D LUT for %s slot %i (%s)..." %
+					   (lut3d_section, gamut,
+					    dict(zip(gamut_slots.itervalues(),
+								 gamut_slots.iterkeys()))[gamut]))
 			try:
 				# Connect & load 3D LUT
 				if (self.madtpg_connect() and
