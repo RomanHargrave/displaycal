@@ -3085,6 +3085,13 @@ END_DATA
 			profile_in.write()
 
 			if hdr_use_src_gamut:
+				in_rgb_space = profile_in.get_rgb_space()
+				in_colors = colormath.get_rgb_space_primaries_wp_xy(in_rgb_space)
+
+				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
+				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
+
+			if hdr_use_src_gamut and content_colors != in_colors:
 				# Use source gamut to preserve more saturation.
 				# Assume content colorspace (i.e. DCI P3) encoded within
 				# container colorspace (i.e. Rec. 2020)
@@ -3100,12 +3107,10 @@ END_DATA
 												toolname))
 
 				# Get source profile
-				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
 				crx, cry = content_rgb_space[2:][0][:2]
 				cgx, cgy = content_rgb_space[2:][1][:2]
 				cbx, cby = content_rgb_space[2:][2][:2]
 				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
-				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
 				rgb_space_name = (colormath.find_primaries_wp_xy_rgb_space_name(content_colors) or
 								  "Custom")
 				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
@@ -3121,13 +3126,6 @@ END_DATA
 				stream = os.fdopen(fd, "wb")
 				profile_src.write(stream)
 				stream.close()
-
-				# Get black offset
-				odata = self.xicclu(profile_out, (0, 0, 0), pcs="x")
-				if len(odata) != 1 or len(odata[0]) != 3:
-					raise ValueError("Blackpoint is invalid: %s" % odata)
-				XYZbp = odata[0]
-				lumi = profile_out.tags.get("lumi", ICCP.XYZType())
 
 				# Apply HDR TRC to source
 				self.blend_profile_blackpoint(profile_src, profile_out,
@@ -3210,11 +3208,13 @@ END_DATA
 					raise Error("\n".join(self.errors) or
 								"%s %s" % (tools["tiffgamut"],
 										   lang.getstr("error")))
+			else:
+				gam_filename = None
 
 			# Now build the device link
 			args = ["-v", "-qh", "-g" if use_b2a else "-G", "-i%s" % intent,
 					"-r%i" % size, "-n"]
-			if hdr_use_src_gamut:
+			if gam_filename:
 				# Use source gamut
 				args.insert(3, gam_filename)
 			if profile_abst:
