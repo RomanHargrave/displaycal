@@ -12417,13 +12417,13 @@ BEGIN_DATA
 				for line in hashesdata.splitlines():
 					if not line.strip():
 						continue
-					name_hash = [value.strip() for value in line.split(":", 1)]
+					name_hash = [value.strip() for value in line.split(None, 1)]
 					if len(name_hash) != 2 or "" in name_hash:
 						response.close()
 						return DownloadError(lang.getstr("file.hash.malformed",
 														 filename),
 											 orig_uri)
-					hashesdict[name_hash[0]] = name_hash[1]
+					hashesdict[name_hash[1].lstrip("*")] = name_hash[0]
 				expectedhash_hex = hashesdict.get(filename, "").lower()
 				if not expectedhash_hex:
 					response.close()

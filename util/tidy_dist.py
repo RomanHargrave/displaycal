@@ -32,8 +32,9 @@ def main():
 		# Update checksum file
 		with open(sha256sums, 'a') as f:
 			for filename in glob.glob(os.path.join(version_dir, '*')):
-				f.write((os.path.basename(filename) + ':').ljust(44) +
-						sha256sum(filename) + '\n')
+				# Use standard sha256sum output format (binary mode)
+				f.write(sha256sum(filename) + ' *' +
+						os.path.basename(filename) + '\n')
 
 
 if __name__ == '__main__':
