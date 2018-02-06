@@ -251,6 +251,11 @@ class MadTPG(MadTPGBase):
 			# Set expected argument types
 			self.mad.madVR_ShowRGB.argtypes = [ctypes.c_double] * 3
 			self.mad.madVR_ShowRGBEx.argtypes = [ctypes.c_double] * 6
+			if hasattr(self.mad, "madVR_LoadHdr3dlutFile"):
+				self.mad.madVR_LoadHdr3dlutFile.argtypes = [ctypes.wintypes.LPWSTR,
+															ctypes.wintypes.BOOL,
+															ctypes.c_int,
+															ctypes.c_bool]
 		except AttributeError:
 			raise RuntimeError(lang.getstr("madhcnet.outdated",
 										   tuple(reversed(os.path.split(self.dllpath))) +
