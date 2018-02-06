@@ -6727,7 +6727,7 @@ usage: spotread [-options] [logfile]
 			safe_print(path)
 			xy = None
 			smpte2084 = False
-			hdr_to_sdr = True
+			hdr_to_sdr = not getcfg("3dlut.hdr_display")
 			# Get parameters from actual 3D LUT file
 			h3dlut = madvr.H3DLUT(path)
 			parameters = h3dlut.parametersData.strip('\0').splitlines()
@@ -6744,10 +6744,6 @@ usage: spotread [-options] [logfile]
 				if (line.startswith("Input_Transfer_Function") and
 					line.split(None, 1)[-1] == "PQ"):
 					smpte2084 = True
-					safe_print(line)
-				if (line.startswith("Output_Transfer_Function") and
-					line.split(None, 1)[-1] == "PQ"):
-					hdr_to_sdr = False
 					safe_print(line)
 			rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(xy)
 			if rgb_space_name:
