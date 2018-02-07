@@ -142,7 +142,7 @@
 				}
 				//]]>
 			</script>
-			<span>(Pour d’autres moyens de contribution, veuillez me <a href="?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D">contacter</a>)</span>
+			<span>(Pour d’autres moyens de contribution, veuillez me <a href="${URL}?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D" rel="nofollow">contacter</a>)</span>
 			<p><a href="#thanks">Merci à tous les contributeurs !</a></p>
 			<p>Remerciements particuliers aux personnes et organisations suivantes :</p>
 			<p><a
@@ -276,8 +276,8 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 				</p>
 
 				<p>
-					<span><a href="screenshots/${APPNAME}-screenshot-KDE4.png" class="imagelink" data-lightbox="lightbox-set" title="${APPNAME} running under Linux with KDE4"><img src="screenshots/${APPNAME}-screenshot-KDE4-thumb.png" alt="" class="opaque" /></a><br />
-					<small>KDE4</small><br /></span>
+					<span><a href="screenshots/${APPNAME}-screenshot-KDE5.png" class="imagelink" data-lightbox="lightbox-set" title="${APPNAME} tournant sous KDE5"><img src="screenshots/${APPNAME}-screenshot-KDE5-thumb.png" alt="" class="opaque" /></a><br />
+					<small>KDE5</small><br /></span>
 
 					<span><a href="screenshots/${APPNAME}-screenshot-Mac.png" class="imagelink" data-lightbox="lightbox-set" title="${APPNAME} tournant sous Mac OS X"><img src="screenshots/${APPNAME}-screenshot-Mac-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Mac OS X</small><br /></span>
@@ -2297,7 +2297,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 			<ul>
 				<li><a href="${URL}forums/forum/help-and-support/">forum d’entraide</a> ;</li>
-				<li>Me <a href="?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D">contacter</a> directement (mais gardez à l’esprit que d’autres utilisateurs pourraient aussi profiter des échanges, j’encourage donc, si possible, l’utilisation de l’une des méthodes ci-dessus)</li>
+				<li>Me <a href="${URL}?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D" rel="nofollow">contacter</a> directement (mais gardez à l’esprit que d’autres utilisateurs pourraient aussi profiter des échanges, j’encourage donc, si possible, l’utilisation de l’une des méthodes ci-dessus)</li>
 			</ul>
 		</div>
 
@@ -2342,7 +2342,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<p><strong>Veuillez remarquer que cette assistance ne peut être fournie qu’en anglais. et que les signalements de bogues devront toujours être écrits en anglais. Je vous remercie.</strong></p>
 			</div>
 
-			<p>Désirez-vous entrer en rapport avec moi ou avec d’autres utilisateurs en ce qui concerne ${APPNAME} ou des sujets en rapport ? Le <a href="${URL}forums/forum/general-discussion/">forum de discussions générales</a> est un bon emplacement où le faire. Vous pouvez aussi me <a href="?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D">contacter</a> directement.</p>
+			<p>Désirez-vous entrer en rapport avec moi ou avec d’autres utilisateurs en ce qui concerne ${APPNAME} ou des sujets en rapport ? Le <a href="${URL}forums/forum/general-discussion/">forum de discussions générales</a> est un bon emplacement où le faire. Vous pouvez aussi me <a href="${URL}?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D" rel="nofollow">contacter</a> directement.</p>
 		</div>
 
 		<div id="thanks">
@@ -2383,39 +2383,39 @@ Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Wa
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Ability to install madVR HDR SMPTE 2084 3D LUTs (when using a recent madVR version).</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Support the madVR HDR 3D LUT installation API (madVR &gt;= 0.92.13).</li>
 						</ul>
 
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> In case of a download problem (e.g. automatic updates), offer to visit the download URL manually.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Security: Check file hashes of application setup and portable archive downloads when updating ${APPNAME} or ArgyllCMS.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Security: Use HTTPS for ArgyllCMS download as well.</li>
 							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> New application icons and slightly refreshed theme.</li>
-							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Better download error handling (offer to visit the download URL manually in case of an error).</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Colorize CCT graph points by hue change.</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Colorize gamma graph points by change in gamma (very subtle).</li>
-							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Security: Check file hashes of application setup and portable archive downloads.</li>
-							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Security: Use HTTPS for automatic ArgyllCMS download as well.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Improved HiDPI support by adjusting relative dialog button spacing, margins, and interactive display adjustment window gauge sizes to match proportionally regardless of DPI.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Improved visual consistency of tab buttons (don't lose “selected” state if clicking on a button and then moving the mouse outside of it, “hover” state does no longer override “selected” state, keyboard navigation skips over selected button).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Make patch preview take into account the “Use absolute values” option again.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Colorize CCT graph points according to change in hue and chroma.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Colorize gamma graph points according to change in gamma.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Dynamically adjust gamma graph vertical axis to prevent cut-off.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Make RGB balance graph match HCFR (Rec. 709 only). Note that new and old balance graphs are only comparable to a limited extent (use “Update measurement or uniformity report” in the “Tools” menu to update existing reports).</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If using the alternate forward profiler and the profile type was XYZ LUT + swapped matrix, the swapped matrix was overwritten with an accurate one (regression introduced in SVN revision 4736).</li>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Unhandled exception and UI freeze when the 3D LUT format was set to madVR and there never was a prior version of ArgyllCMS on the system or the previous version was older than or equal to 1.6.3 during that same ${APPNAME} session, due to a missing capability check.</li>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Division by zero when trying to create a SMPTE 2084 HDR 3D LUT if the profile black level was zero (regression of a change in ${APPNAME} 3.4, SVN revision r4896).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If using the alternate forward profiler and the profile type was XYZ LUT + swapped matrix, the swapped matrix was overwritten with an accurate one (regression introduced in ${APPNAME} 3.3.4, SVN revision r4736).</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> It was not possible to run a measurement report with a simulation profile set as display profile, but no profile assigned to the actual display.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Rec. 1886 measurement report with originally non Rec. 709 tone response profile: Make sure to override the original tone response of the profile so Rec. 1886 gives the expected result.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If a measurement report HTML file was mangled by another application that removed the XML self-closing tags forward slashes, it was not possible to correctly update the report using “Update measurement or uniformity report” from the “Tools” menu.</li>
-							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Unhandled exception and UI freeze when the 3D LUT format was set to madVR and there never was a prior version of ArgyllCMS on the system or the previous version was older than or equal to 1.6.3 during that same ${APPNAME} session, due to a missing capability check.</li>
-							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> Division by zero when trying to create a SMPTE 2084 HDR 3D LUT if the profile black level was zero (regression of a change in ${APPNAME} 3.4).</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Improved HighDPI support by adjusting relative dialog button spacing, margins, and interactive display adjustment window graphics sizes to match regardless of DPI.</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Improve visual consistency of tab buttons (don't lose “selected” state, “hover” state does not override “selected” state, keyboard navigation skips over selected button).</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Measurement window: Make sure focus stays on the last focused control when the window itself gains focus again after loosing focus.</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Adjust gamma graph by min/max values to prevent cut-off.</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Make patch preview take into account “Use absolute values” option again.</li>
-							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Make RGB balance graph match HCFR (Rec. 709 only). Note that new and old balance graphs are not comparable (use “Update measurement or uniformity report” in the “Tools” menu to update existing reports).</li>
-							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> If using a pattern generator, check it is valid before binding a disconnect-on-close event when using the visual whitepoint editor. Prevents an (harmless) attribute error when using the visual whitepoint editor and the madTPG network implementation (i.e. under Mac OS X).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If using a pattern generator, check it is valid before binding a disconnect-on-close event when using the visual whitepoint editor. Prevents an attribute error when using the visual whitepoint editor and the madTPG network implementation (i.e. under Mac OS X).</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Measurement window: Make sure focus stays on the last focused control when the window itself gains focus again after loosing focus.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Synthetic ICC Profile Creator: Update HDR SMPTE 2084 diffuse white info text when changing luminance.</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> HDR SMPTE 2084 3D LUT: Interpolate the last two segments before the clipping point of the intermediate input LUT shaper curves (prevents potential slight banding in highlights).</li>
-							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Synthetic ICC Profile Creator: Update HDR SMPTE 2084 diffuse white info text when changing luminance.</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Windows: Make sure the profile loader is launched directly after installing a profile when using a portable version of ${APPNAME} (parity with installer version).</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows): Re-introduce <code>--skip</code> command line option.</li>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): When disassociating a profile from a device, work-around the WcsDisassociateColorProfileFromDevice Windows API call sometimes (in some cases always?) resulting in ERROR_PROFILE_NOT_ASSOCIATED_WITH_DEVICE, even though the profile was successfully disassociated.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Profile loader (Windows): When disassociating a profile from a device, suppress ERROR_PROFILE_NOT_ASSOCIATED_WITH_DEVICE error sometimes (in some cases always?) resulting from the WcsDisassociateColorProfileFromDevice Windows API call, even though the profile was successfully disassociated.</li>
 						</ul>
 					</dd>
 
