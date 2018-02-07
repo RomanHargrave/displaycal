@@ -1,3 +1,10 @@
+(function () {
+	var protocol = location.protocol,
+		is_mac = navigator.userAgent.indexOf('Mac') > -1 || location.search.indexOf('is_mac') > -1,
+		is_win = (navigator.userAgent.indexOf('Windows') > -1 || location.search.indexOf('is_win') > -1) && location.search.indexOf('is_linux') < 0,
+		suffix = is_mac ? '-Mac' : (is_win ? '' : '-GNOME');
+	if (protocol == 'file:') protocol = 'https:';
+
 function $maketoggle(trigger_selector, toggle_selector, return_value) {
 	if (return_value == null) return_value = true;
 	$(trigger_selector).css('cursor', 'pointer').hover(function () {
@@ -32,13 +39,14 @@ function $makeslider(container_selector, toggle_selector, class_name, effect) {
 
 function $splash_anim(i, splash_frames) {
 	if (i == splash_frames.length) {
+		var width = (is_mac ? 816 : (is_win ? 752 : 762));
 		$('#splash').fadeOut(566, function () {
 			$('#splash_version_string, .splash_anim').hide();
 			$('#splash').addClass('folded');
 			$('#splash').css({'background-image': 'url(' + imgs.pop().src + ')',
-							  'background-size': '752px auto',
+							  'background-size': width + 'px auto',
 							  'display': 'block',
-							  'width': '760px', 'height': '660px', 'top': '42px'});
+							  'width': width + 'px', 'height': '660px', 'top': '42px'});
 			setTimeout(function () {
 				$('#splash').addClass('unfold');
 				if ($(window).height() <= $('#header').outerHeight(true) + 64 && 
@@ -63,8 +71,6 @@ function $splash_anim(i, splash_frames) {
 var img, imgs = [], imgpaths = ['theme/splash.png', 'theme/splash_version.png', 'theme/splash_anim.png'];
 
 jQuery(function ($) {
-	var protocol = location.protocol;
-	if (protocol == 'file:') protocol = 'https:';
 
 	/* Infobox slider */
 	$('<div id="info-link-box"><a href="#info">i</a></div>').prependTo('#infobox');
@@ -188,13 +194,13 @@ jQuery(function ($) {
 				});
 			}, 500);
 		}
-		imgpaths.push('theme/DisplayCAL-main_window-shadow.png');
+		imgpaths.push('theme/DisplayCAL-main_window-shadow' + suffix + '.png');
 		/* Load images */
 		for (var i = 0; i < imgpaths.length; i ++) {
 			img = new Image();
 			imgs.push(img);
 			img.onload = splash_onload;
-			if (imgpaths[i] == 'theme/DisplayCAL-main_window-shadow.png')
+			if (imgpaths[i] == 'theme/DisplayCAL-main_window-shadow' + suffix + '.png')
 				img.src = imgpaths[i];
 			else
 				img.src = protocol + '//displaycal.net/' + imgpaths[i];
@@ -205,10 +211,10 @@ jQuery(function ($) {
 	var interval = setInterval(function () {
 		jQuery('#teaser img').fadeOut(750, function () {
 			var src;
-			if (jQuery('#teaser img').attr('src').indexOf('theme/DisplayCAL-adjust-reflection.png') > -1)
-				src = 'theme/DisplayCAL-main_window-reflection.png';
+			if (jQuery('#teaser img').attr('src').indexOf('theme/DisplayCAL-adjust-reflection' + suffix + '.png') > -1)
+				src = 'theme/DisplayCAL-main_window-reflection' + suffix + '.png';
 			else
-				src = 'theme/DisplayCAL-adjust-reflection.png';
+				src = 'theme/DisplayCAL-adjust-reflection' + suffix + '.png';
 			jQuery('#teaser img').attr('src', src).fadeIn(750);
 		});
 	}, 10000);
@@ -241,8 +247,6 @@ jQuery(function ($) {
 });
 
 jQuery(window).load(function () {
-	var protocol = location.protocol;
-	if (protocol == 'file:') protocol = 'https:';
 
 	/* Anchor scroll effect */
 	$.localScroll({hash: true, filter: ':not(a[href="#info"], #toc li:has(ul) > a)'});
@@ -251,8 +255,8 @@ jQuery(window).load(function () {
 	
 	/* Teaser */
 	setTimeout(function () {
-		var src = ['theme/DisplayCAL-main_window-reflection.png',
-				   'theme/DisplayCAL-adjust-reflection.png'][Math.round(Math.random())];
+		var src = ['theme/DisplayCAL-main_window-reflection' + suffix + '.png',
+				   'theme/DisplayCAL-adjust-reflection' + suffix + '.png'][Math.round(Math.random())];
 		jQuery('#teaser img').attr('src', src).fadeIn(750);
 	}, 500);
 	
@@ -304,7 +308,9 @@ jQuery(window).load(function () {
 				}
 			});
 	}
-});
+})
+
+})();
 
 // FHPE
 

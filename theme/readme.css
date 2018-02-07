@@ -494,6 +494,30 @@ sup {
 	width: 264.983px;
 	height: 278px;
 }
+#teaser img[src$="adjust-reflection.png"] {
+	left: 2px;
+	position: relative;
+	top: 3px;
+}
+#teaser img[src$="adjust-reflection-GNOME.png"] {
+	left: 2px;
+	position: relative;
+}
+#teaser img[src$="window-reflection-GNOME.png"] {
+	left: -4px;
+	position: relative;
+	top: -5px;
+}
+#teaser img[src$="adjust-reflection-Mac.png"] {
+	left: 8px;
+	position: relative;
+	top: -5px;
+}
+#teaser img[src$="window-reflection-Mac.png"] {
+	left: 4px;
+	position: relative;
+	top: -5px;
+}
 #copyright {
 	color: #999;
 	font-size: 11px;
@@ -657,7 +681,7 @@ sup {
 }
 
 #splash.down:hover {
-	top: 272px !important;
+	top: 278px !important;
 }
 
 #splash, .splash_anim {
