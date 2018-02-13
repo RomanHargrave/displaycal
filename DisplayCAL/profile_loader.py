@@ -2013,18 +2013,18 @@ class ProfileLoader(object):
 																		   profile_name,
 																		   desc)
 						if (debug or verbose > 1) and device:
-							safe_print("Monitor %r active display device name:" %
+							safe_print("Monitor %s active display device name:" %
 									   moninfo["Device"], device.DeviceName)
-							safe_print("Monitor %r active display device string:" %
+							safe_print("Monitor %s active display device string:" %
 									   moninfo["Device"], device.DeviceString)
-							safe_print("Monitor %r active display device state flags: 0x%x" %
+							safe_print("Monitor %s active display device state flags: 0x%x" %
 									   (moninfo["Device"], device.StateFlags))
-							safe_print("Monitor %r active display device ID:" %
+							safe_print("Monitor %s active display device ID:" %
 									   moninfo["Device"], device.DeviceID)
-							safe_print("Monitor %r active display device key:" %
+							safe_print("Monitor %s active display device key:" %
 									   moninfo["Device"], device.DeviceKey)
 						elif debug or verbose > 1:
-							safe_print("WARNING: Monitor %r has no active display device" %
+							safe_print("WARNING: Monitor %s has no active display device" %
 									   moninfo["Device"])
 					self.profile_associations[key] = (profile_key, mtime, desc)
 					self.profiles[key] = None
@@ -2430,10 +2430,17 @@ class ProfileLoader(object):
 				# (MS, why is this not documented?)
 				safe_print("Skipping 'WinDisc' temporary monitor %i" % i)
 				continue
+			moninfo["_adapter"] = self.adapters.get(moninfo["Device"],
+													ICCP.ADict({"DeviceString":
+																moninfo["Device"][4:]}))
+			if self._is_buggy_video_driver(moninfo):
+				safe_print("Buggy video driver detected: %s." %
+						   moninfo["_adapter"].DeviceString,
+						   "Gamma ramp hack activated.")
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
 			if debug or verbose > 1:
-				safe_print("Found monitor %i %r flags 0x%x" %
+				safe_print("Found monitor %i %s flags 0x%x" %
 						   (i, moninfo["Device"], moninfo["Flags"]))
 				if device:
 					safe_print("Monitor %i active display device name:" % i,
@@ -2449,17 +2456,10 @@ class ProfileLoader(object):
 				else:
 					safe_print("WARNING: Monitor %i has no active display device" %
 							   i)
-				safe_print("Monitor %i display name" % i, end=" ")
-			moninfo["_adapter"] = self.adapters.get(moninfo["Device"],
-													ICCP.ADict({"DeviceString":
-																moninfo["Device"][4:]}))
 			display, edid = get_display_name_edid(device, moninfo, i)
-			if self._is_buggy_video_driver(moninfo):
-				safe_print("Buggy video driver detected: %s." %
-						   moninfo["_adapter"].DeviceString,
-						   "Gamma ramp hack activated.")
 			if debug or verbose > 1:
-				safe_print("Enumerating 1st display device for monitor %i %r" %
+				safe_print("Monitor %i display name" % i, display)
+				safe_print("Enumerating 1st display device for monitor %i %s" %
 						   (i, moninfo["Device"]))
 			try:
 				device0 = win32api.EnumDisplayDevices(moninfo["Device"], 0)
@@ -2751,7 +2751,7 @@ class ProfileLoader(object):
 		self.devices2profiles = {}
 		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
 			if debug or verbose > 1:
-				safe_print("Enumerating display devices for monitor %i %r" %
+				safe_print("Enumerating display devices for monitor %i %s" %
 						   (i, moninfo["Device"]))
 			devices = get_display_devices(moninfo["Device"])
 			if not devices:
