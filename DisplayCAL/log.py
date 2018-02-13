@@ -212,7 +212,29 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 					# Running as child from multiprocessing under Windows
 					instances -= 1
 				if instances:
+					filenames = [filename]
 					filename += ".%i" % instances
+					filenames.append(filename)
+					if filenames[0].endswith("-apply-profiles"):
+						# Running the profile loader always sends a close
+						# request to an already running instance, so there
+						# will be at most two logfiles, and we want to use
+						# the one not currently in use.
+						mtimes = {}
+						for filename in filenames:
+							logfile = os.path.join(logdir, filename + ".log")
+							if not os.path.isfile(logfile):
+								continue
+							try:
+								logstat = os.stat(logfile)
+							except Exception, exception:
+								safe_print(u"Warning - os.stat('%s') failed: %s" % 
+										   tuple(safe_unicode(s) for s in (logfile,
+																		   exception)))
+							else:
+								mtimes[logstat.st_mtime] = filename
+						if mtimes:
+							filename = mtimes[sorted(mtimes.keys())[0]]
 		if is_main_process:
 			for lockfilepath in glob.glob(os.path.join(confighome,
 													   lockbasename +
