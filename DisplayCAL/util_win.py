@@ -34,9 +34,14 @@ try:
 except WindowsError:
 	psapi = None
 
+
+# DISPLAY_DEVICE structure, StateFlags member
 # http://msdn.microsoft.com/en-us/library/dd183569%28v=vs.85%29.aspx
-DISPLAY_DEVICE_ACTIVE = 0x1  # DISPLAY_DEVICE_ACTIVE specifies whether a monitor is presented as being "on" by the respective GDI view.
-							 # Windows Vista: EnumDisplayDevices will only enumerate monitors that can be presented as being "on."
+
+# wingdi.h
+
+# Flags for parent devices
+DISPLAY_DEVICE_ATTACHED_TO_DESKTOP = 0x1
 DISPLAY_DEVICE_MIRRORING_DRIVER = 0x8  # Represents a pseudo device used to mirror application drawing for remoting or other purposes. 
 									   # An invisible pseudo monitor is associated with this device. 
 									   # For example, NetMeeting uses it. Note that GetSystemMetrics (SM_MONITORS) only accounts for visible display monitors.
@@ -50,6 +55,14 @@ DISPLAY_DEVICE_DISCONNECT = 0x2000000
 DISPLAY_DEVICE_MULTI_DRIVER = 0x2
 DISPLAY_DEVICE_REMOTE = 0x4000000
 
+# Flags for child devices
+DISPLAY_DEVICE_ACTIVE = 0x1  # DISPLAY_DEVICE_ACTIVE specifies whether a monitor is presented as being "on" by the respective GDI view.
+							 # Windows Vista: EnumDisplayDevices will only enumerate monitors that can be presented as being "on."
+DISPLAY_DEVICE_ATTACHED = 0x2
+
+
+# MONITORINFO structure, dwFlags member
+# https://msdn.microsoft.com/de-de/library/windows/desktop/dd145065(v=vs.85).aspx
 MONITORINFOF_PRIMARY = 0x1
 
 # Icm.h
@@ -209,7 +222,7 @@ def get_active_display_device(devicename, devices=None):
 	for device in devices:
 		if (device.StateFlags & DISPLAY_DEVICE_ACTIVE 
 			and (len(devices) == 1 or device.StateFlags & 
-									  DISPLAY_DEVICE_MULTI_DRIVER)):
+									  DISPLAY_DEVICE_ATTACHED)):
 			return device
 
 
