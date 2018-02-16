@@ -1838,11 +1838,13 @@ class ProfileLoader(object):
 				# display added/removed) or just a resolution change
 				self._has_display_changed = True
 			if getattr(self, "profile_associations_dlg", None):
-				wx.CallLater(1000, lambda: self.profile_associations_dlg and
-										   self.profile_associations_dlg.update(True))
+				wx.CallAfter(wx.CallLater, 1000,
+							 lambda: self.profile_associations_dlg and
+									 self.profile_associations_dlg.update(True))
 			if getattr(self, "fix_profile_associations_dlg", None):
-				wx.CallLater(1000, lambda: self.fix_profile_associations_dlg and
-										   self.fix_profile_associations_dlg.update(True))
+				wx.CallAfter(wx.CallLater, 1000,
+							 lambda: self.fix_profile_associations_dlg and
+									 self.fix_profile_associations_dlg.update(True))
 			safe_print("ProcessDisplayChangedEvent: Releasing lock")
 
 	def _check_display_changed(self, first_run=False, dry_run=False):
