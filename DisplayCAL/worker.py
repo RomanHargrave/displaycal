@@ -7323,7 +7323,7 @@ usage: spotread [-options] [logfile]
 					idx = getcfg("display.number") - 1
 					try:
 						device0 = util_win.get_display_device(idx,
-															  exception=None)
+															  exception_cls=None)
 						devicea = util_win.get_display_device(idx, True)
 					except Exception, exception:
 						self.log("util_win.get_display_device(%s):" % idx,
