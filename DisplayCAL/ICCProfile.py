@@ -1801,8 +1801,8 @@ def _winreg_get_display_profiles(monkey, current_user=False):
 
 
 def get_display_profile(display_no=0, x_hostname=None, x_display=None, 
-						x_screen=None, win_get_correct_profile=False,
-						path_only=False, devicekey=None):
+						x_screen=None, path_only=False, devicekey=None,
+						use_active_display_device=True):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
@@ -1835,7 +1835,7 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 		else:
 			if devicekey:
 				device = None
-			elif win_get_correct_profile:
+			elif use_active_display_device:
 				# This would be the correct way. Unfortunately that is not
 				# what other apps (or Windows itself) do.
 				device = util_win.get_active_display_device(moninfo["Device"])
@@ -1844,7 +1844,7 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 				# GetICMProfile sucky behavior i.e. should return the same
 				# profile, but atleast reflects runtime changes to profile
 				# assignments.
-				device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+				device = util_win.get_first_display_device(moninfo["Device"])
 			if device:
 				devicekey = device.DeviceKey
 		if devicekey:
@@ -2050,8 +2050,8 @@ def _wcs_unset_display_profile(devicekey, profile_name,
 	return True
 
 
-def set_display_profile(profile_name, display_no=0,
-						use_active_display_device=False, devicekey=None):
+def set_display_profile(profile_name, display_no=0, devicekey=None,
+						use_active_display_device=True):
 	# Currently only implemented for Windows.
 	# The profile to be assigned has to be already installed!
 	if not devicekey:
@@ -2072,8 +2072,8 @@ def set_display_profile(profile_name, display_no=0,
 		return False
 
 
-def unset_display_profile(profile_name, display_no=0,
-						  use_active_display_device=False, devicekey=None):
+def unset_display_profile(profile_name, display_no=0, devicekey=None,
+						  use_active_display_device=True):
 	# Currently only implemented for Windows.
 	# The profile to be unassigned has to be already installed!
 	if not devicekey:

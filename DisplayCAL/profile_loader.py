@@ -51,9 +51,10 @@ if sys.platform == "win32":
 						  calibration_management_isenabled,
 						  enable_per_user_profiles,
 						  get_active_display_device, get_display_devices,
-						  get_file_info, get_pids, get_process_filename,
-						  get_real_display_devices_info, get_windows_error,
-						  per_user_profiles_isenabled, run_as_admin)
+						  get_file_info, get_first_display_device, get_pids,
+						  get_process_filename, get_real_display_devices_info,
+						  get_windows_error, per_user_profiles_isenabled,
+						  run_as_admin)
 	from wxaddons import CustomGridCellEvent
 	from wxfixes import ThemedGenButton, set_bitmap_labels
 	from wxwindows import (BaseApp, BaseFrame, ConfirmDialog,
@@ -654,7 +655,7 @@ if sys.platform == "win32":
 			for display, frame in self.display_identification_frames.items():
 				if not frame:
 					self.display_identification_frames.pop(display)
-			for display, edid, moninfo, device0 in self.monitors:
+			for display, edid, moninfo, device in self.monitors:
 				frame = self.display_identification_frames.get(display)
 				if frame:
 					frame.close_timer.Stop()
@@ -759,45 +760,43 @@ if sys.platform == "win32":
 
 		def _update_configuration(self, fn, arg0):
 			dindex = self.display_ctrl.GetSelection()
-			display, edid, moninfo, device0 = self.monitors[dindex]
-			device = get_active_display_device(moninfo["Device"])
+			display, edid, moninfo, device = self.monitors[dindex]
+			device0 = get_first_display_device(moninfo["Device"])
 			if device0 and device:
-				device0key = device0.DeviceKey
-				if (fn is enable_per_user_profiles and
-					not per_user_profiles_isenabled(devicekey=device0key)):
-					# We need to re-associate per-user profiles to the
-					# display, otherwise the associations will be lost
-					# after enabling per-user if a system default profile
-					# was set
-					monkey = device0key.split("\\")[-2:]
-					profiles = ICCP._winreg_get_display_profiles(monkey,
-																 True)
-				else:
-					profiles = []
-				try:
-					fn(arg0,  devicekey=device0key)
-				except Exception, exception:
-					safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
-														  arg0,
-														  device0key),
-							   exception)
-					wx.CallAfter(show_result_dialog,
-								 UnloggedError(safe_str(exception)), self)
-				if device.DeviceKey != device0key:
-					try:
-						fn(arg0,  devicekey=device.DeviceKey)
-					except Exception, exception:
-						safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
-															  arg0,
-															  device.DeviceKey),
-								   exception)
-				for profile_name in profiles:
-					ICCP.set_display_profile(profile_name,
-											 devicekey=device0key)
+				self._update_device(fn, arg0, device.DeviceKey)
+				if (getcfg("profile_loader.fix_profile_associations") and
+					device.DeviceKey != device0.DeviceKey):
+					self._update_device(fn, arg0, device0.DeviceKey)
 				self.update_profiles(True, monitor=self.monitors[dindex],
 									 next=True)
 			else:
 				wx.Bell()
+
+		def _update_device(self, fn, arg0, devicekey, show_error=True):
+			if (fn is enable_per_user_profiles and
+				not per_user_profiles_isenabled(devicekey=devicekey)):
+				# We need to re-associate per-user profiles to the
+				# display, otherwise the associations will be lost
+				# after enabling per-user if a system default profile
+				# was set
+				monkey = devicekey.split("\\")[-2:]
+				profiles = ICCP._winreg_get_display_profiles(monkey,
+															 True)
+			else:
+				profiles = []
+			try:
+				fn(arg0,  devicekey=devicekey)
+			except Exception, exception:
+				safe_print("%s(%r, devicekey=%r):" % (fn.__name__,
+													  arg0,
+													  devicekey),
+						   exception)
+				if show_error:
+					wx.CallAfter(show_result_dialog,
+								 UnloggedError(safe_str(exception)), self)
+			for profile_name in profiles:
+				ICCP.set_display_profile(profile_name,
+										 devicekey=devicekey)
 
 		def toggle_fix_profile_associations(self, event):
 			self.fix_profile_associations_cb.Value = self.pl._toggle_fix_profile_associations(event, self)
@@ -826,8 +825,7 @@ if sys.platform == "win32":
 					if event and not isinstance(event, wx.TimerEvent):
 						wx.Bell()
 					return
-			display, edid, moninfo, device0 = monitor
-			device = device0
+			display, edid, moninfo, device = monitor
 			if not device:
 				if event and not isinstance(event, wx.TimerEvent):
 					wx.Bell()
@@ -1418,9 +1416,9 @@ class ProfileLoader(object):
 						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
 						for i, (display, edid,
-								moninfo, device0) in enumerate(self.pl.monitors):
-							if device0:
-								devicekey = device0.DeviceKey
+								moninfo, device) in enumerate(self.pl.monitors):
+							if device:
+								devicekey = device.DeviceKey
 							else:
 								devicekey = None
 							key = devicekey or str(i)
@@ -1781,7 +1779,7 @@ class ProfileLoader(object):
 		if len(self.monitors) > 1:
 			return True
 		for i, (display, edid,
-				moninfo, device0) in enumerate(self.monitors):
+				moninfo, device) in enumerate(self.monitors):
 			displays = get_display_devices(moninfo["Device"])
 			if len(displays) > 1:
 				return True
@@ -1938,11 +1936,11 @@ class ProfileLoader(object):
 			self._check_display_changed(first_run)
 			# Check profile associations
 			profile_associations_changed = 0
-			for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
+			for i, (display, edid, moninfo, device) in enumerate(self.monitors):
 				display_desc = display.replace("[PRIMARY]", 
 											   lang.getstr("display.primary"))
-				if device0:
-					devicekey = device0.DeviceKey
+				if device:
+					devicekey = device.DeviceKey
 				else:
 					devicekey = None
 				key = devicekey or str(i)
@@ -2459,7 +2457,7 @@ class ProfileLoader(object):
 							   i)
 			display, edid = get_display_name_edid(device, moninfo, i)
 			if debug or verbose > 1:
-				safe_print("Monitor %i display name" % i, display)
+				safe_print("Monitor %i active display description" % i, display)
 				safe_print("Enumerating 1st display device for monitor %i %s" %
 						   (i, moninfo["Device"]))
 			try:
@@ -2479,12 +2477,15 @@ class ProfileLoader(object):
 						   device0.DeviceID)
 				safe_print("Monitor %i 1st display device key:" % i,
 						   device0.DeviceKey)
+			if device0:
+				display0, edid0 = get_display_name_edid(device0)
+				if debug or verbose > 1:
+					safe_print("Monitor %i 1st display description" % i, display0)
 			if (device0 and
 				(not device or device0.DeviceKey != device.DeviceKey) and
 				not device0.DeviceKey in self.display_devices):
 				# Key may not exist if device was added after enumerating
 				# per-adapters devices
-				display0, edid0 = get_display_name_edid(device0)
 				self.display_devices[device0.DeviceKey] = [display0, edid0,
 														   device0, device0]
 			if device:
@@ -2495,7 +2496,7 @@ class ProfileLoader(object):
 					# per-adapters devices
 					self.display_devices[device.DeviceKey] = [display, edid,
 															  device, device0]
-			self.monitors.append((display, edid, moninfo, device0))
+			self.monitors.append((display, edid, moninfo, device))
 		for display, edid, device, device0 in self.display_devices.itervalues():
 			if device.DeviceKey == device0.DeviceKey:
 				device_name = "\\".join(device.DeviceName.split("\\")[:-1])
@@ -2750,7 +2751,7 @@ class ProfileLoader(object):
 			safe_print("Checking profile associations")
 			safe_print("")
 		self.devices2profiles = {}
-		for i, (display, edid, moninfo, device0) in enumerate(self.monitors):
+		for i, (display, edid, moninfo, device) in enumerate(self.monitors):
 			if debug or verbose > 1:
 				safe_print("Enumerating display devices for monitor %i %s" %
 						   (i, moninfo["Device"]))
