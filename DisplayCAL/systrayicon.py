@@ -214,6 +214,8 @@ class SysTrayIcon(wx.EvtHandler):
 		item.Menu.ProcessEvent(event)
 
 	def OnDestroy(self, hwnd, msg, wparam, lparam):
+		if self.menu:
+			win32gui.DestroyMenu(self.menu.hmenu)
 		self.RemoveIcon()
 		if not wx.GetApp() or not wx.GetApp().IsMainLoopRunning():
 			win32gui.PostQuitMessage(0)

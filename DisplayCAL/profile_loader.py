@@ -1209,6 +1209,7 @@ class ProfileLoader(object):
 				def PopupMenu(self, menu):
 					if not self.check_user_attention():
 						SysTrayIcon.PopupMenu(self, menu)
+						win32gui.DestroyMenu(menu.hmenu)
 
 				def animate(self, enumerate_windows_and_processes=False,
 							idle=False):
