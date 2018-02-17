@@ -906,6 +906,7 @@ class ProfileLoader(object):
 		self.monitoring = True
 		self.monitors = []  # Display devices that can be represented as ON
 		self.display_devices = {}  # All display devices
+		self.child_devices_count = {}
 		self._current_display_key = -1
 		self.numwindows = 0
 		self.profile_associations = {}
@@ -1776,14 +1777,30 @@ class ProfileLoader(object):
 		return title
 
 	def _can_fix_profile_associations(self):
-		if len(self.monitors) > 1:
-			return True
-		for i, (display, edid,
-				moninfo, device) in enumerate(self.monitors):
-			displays = get_display_devices(moninfo["Device"])
-			if len(displays) > 1:
-				return True
-		return False
+		"""
+		Check whether we can 'fix' profile associations or not.
+		
+		'Fixing' means we assign the profile of the actual active child device
+		to the 1st child device so that applications using GetICMProfile get
+		the correct profile (GetICMProfile always returns the profile of the
+		1st child device irrespective if this device is active or not. This is
+		a Windows bug).
+		
+		This only works if a child device is not attached to several adapters
+		(which is something that can happen due to the inexplicable mess that
+		is the Windows display enumeration API).
+		
+		"""
+		if not self.child_devices_count:
+			for i, (display, edid,
+					moninfo, device) in enumerate(self.monitors):
+				child_devices = get_display_devices(moninfo["Device"])
+				for child_device in child_devices:
+					if not child_device in self.child_devices_count:
+						self.child_devices_count[child_device] = 0
+					self.child_devices_count[child_device] += 1
+		return (bool(self.child_devices_count) and
+				max(self.child_devices_count.values()) == 1)
 
 	def _check_keep_running(self):
 		windows = []
@@ -2413,6 +2430,7 @@ class ProfileLoader(object):
 							   get_display_devices(None)])
 		self.monitors = []
 		self.display_devices = OrderedDict()
+		self.child_devices_count = {}
 		# Enumerate per-adapter devices
 		for adapter in self.adapters:
 			for i, device in enumerate(get_display_devices(adapter)):
@@ -2720,6 +2738,8 @@ class ProfileLoader(object):
 			self._next = True
 
 	def _reset_display_profile_associations(self):
+		if not self._can_fix_profile_associations():
+			return
 		for devicekey, (display_edid,
 						profile, desc) in self.devices2profiles.iteritems():
 			if profile:
@@ -2748,6 +2768,8 @@ class ProfileLoader(object):
 						safe_print(exception)
 
 	def _set_display_profiles(self, dry_run=False):
+		if not self._can_fix_profile_associations():
+			return
 		if debug or verbose > 1:
 			safe_print("-" * 80)
 			safe_print("Checking profile associations")
