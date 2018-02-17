@@ -764,7 +764,8 @@ if sys.platform == "win32":
 			if device0 and device:
 				self._update_device(fn, arg0, device.DeviceKey)
 				if (getcfg("profile_loader.fix_profile_associations") and
-					device.DeviceKey != device0.DeviceKey):
+					device.DeviceKey != device0.DeviceKey and
+					self.pl._can_fix_profile_associations()):
 					self._update_device(fn, arg0, device0.DeviceKey)
 				self.update_profiles(True, monitor=self.monitors[dindex],
 									 next=True)
@@ -811,7 +812,7 @@ if sys.platform == "win32":
 				self.display_ctrl.SetSelection(0)
 			fix = self.pl._can_fix_profile_associations()
 			self.fix_profile_associations_cb.Enable(fix)
-			if self.pl._can_fix_profile_associations():
+			if fix:
 				self.fix_profile_associations_cb.SetValue(bool(getcfg("profile_loader.fix_profile_associations")))
 			self.update_profiles(event)
 			if event and not self.IsActive():
