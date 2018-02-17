@@ -2764,6 +2764,8 @@ class ProfileLoader(object):
 							# per-user-profiles are enabled or if running as admin
 							enable_per_user_profiles(devicekey=devicekey)
 						ICCP.set_display_profile(profile, devicekey=devicekey)
+						ICCP.unset_display_profile(current_profile,
+												   devicekey=devicekey)
 					except WindowsError, exception:
 						safe_print(exception)
 
