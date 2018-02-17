@@ -1798,9 +1798,9 @@ class ProfileLoader(object):
 					moninfo, device) in enumerate(self.monitors):
 				child_devices = get_display_devices(moninfo["Device"])
 				for child_device in child_devices:
-					if not child_device in self.child_devices_count:
-						self.child_devices_count[child_device] = 0
-					self.child_devices_count[child_device] += 1
+					if not child_device.DeviceKey in self.child_devices_count:
+						self.child_devices_count[child_device.DeviceKey] = 0
+					self.child_devices_count[child_device.DeviceKey] += 1
 		return (bool(self.child_devices_count) and
 				max(self.child_devices_count.values()) == 1)
 
