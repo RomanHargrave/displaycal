@@ -559,7 +559,6 @@ if sys.platform == "win32":
 			dlg.profiles_ctrl = list_ctrl
 			dlg.fix_profile_associations_cb = wx.CheckBox(dlg, -1,
 														  lang.getstr("profile_loader.fix_profile_associations"))
-			dlg.fix_profile_associations_cb.SetValue(bool(getcfg("profile_loader.fix_profile_associations")))
 			dlg.fix_profile_associations_cb.Bind(wx.EVT_CHECKBOX,
 												 self.toggle_fix_profile_associations)
 			dlg.sizer3.Add(dlg.fix_profile_associations_cb, flag=wx.ALIGN_LEFT)
@@ -812,6 +811,8 @@ if sys.platform == "win32":
 				self.display_ctrl.SetSelection(0)
 			fix = self.pl._can_fix_profile_associations()
 			self.fix_profile_associations_cb.Enable(fix)
+			if self.pl._can_fix_profile_associations():
+				self.fix_profile_associations_cb.SetValue(bool(getcfg("profile_loader.fix_profile_associations")))
 			self.update_profiles(event)
 			if event and not self.IsActive():
 				self.RequestUserAttention()
@@ -1201,7 +1202,7 @@ class ProfileLoader(object):
 										value = self.pl._reset_gamma_ramps
 									else:
 										value = config.getcfg(option)
-									item.Check(oxform(value))
+									item.Check(method and oxform(value))
 
 					return menu
 
