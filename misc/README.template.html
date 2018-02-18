@@ -8,7 +8,7 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta name="viewport" content="width=device-width" />
-		<title>${APPNAME} (formerly known as dispcalGUI)—Open Source Display Calibration and Characterization powered by ArgyllCMS</title>
+		<title>${APPNAME}—Open Source Display Calibration and Characterization powered by ArgyllCMS</title>
 		<meta name="description" content="${SUMMARY}" />
 		<meta property="og:description" content="${SUMMARY}" />
 		<meta property="fb:app_id" content="210635659357680" />
@@ -225,7 +225,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 		<div id="about">
 			<h2>About ${APPNAME}</h2>		
 
-			<p>${APPNAME} is a display calibration and profiling solution with a focus on <strong>accuracy</strong> and <strong>versatility</strong> (in fact, the author is of the honest opinion it may be the most accurate and versatile ICC compatible display profiling solution available anywhere). At its core it relies on <a href="https://www.argyllcms.com">ArgyllCMS</a>, an open source color management system, to take measurements, create calibrations and profiles, and for a variety of other advanced color related tasks.</p>
+			<p>${APPNAME} (formerly known as dispcalGUI) is a display calibration and profiling solution with a focus on <strong>accuracy</strong> and <strong>versatility</strong> (in fact, the author is of the honest opinion it may be the most accurate and versatile ICC compatible display profiling solution available anywhere). At its core it relies on <a href="https://www.argyllcms.com">ArgyllCMS</a>, an open source color management system, to take measurements, create calibrations and profiles, and for a variety of other advanced color related tasks.</p>
 
 			<p>Calibrate and characterize your display devices using one of <a href="#instruments">many supported measurement instruments</a>, with support for multi-display setups and a variety of available options for advanced users, such as verification and reporting functionality to evaluate ICC profiles and display devices, creating video 3D LUTs, as well as optional CIECAM02 gamut mapping to take into account varying viewing conditions. Other features include:</p>
 
@@ -752,6 +752,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 					<li>X-Rite/GretagMacbeth i1 Pro (the EFI ES-1000 version of the instrument is also reported to work)</li>
 					<li>X-Rite i1 Pro 2 (since ArgyllCMS 1.5.0)</li>
 					<li>X-Rite/GretagMacbeth Spectrolino</li>
+					<li>X-Rite i1Studio (since ArgyllCMS 2.0)</li>
 				</ul>
 
 				<div class="infobox">
@@ -776,10 +777,11 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 				<p>Unattended calibration and profiling currently supports the following spectrometers in addition to most colorimeters:</p>
 
 				<ul>
-					<li>X-Rite ColorMunki</li>
+					<li>X-Rite ColorMunki Design/Photo</li>
 					<li>X-Rite/GretagMacbeth i1 Monitor &amp; Pro</li>
 					<li>X-Rite/GretagMacbeth Spectrolino</li>
 					<li>X-Rite i1 Pro 2</li>
+					<li>X-Rite i1Studio</li>
 				</ul>
 
 				<p>Be aware you may still be forced to do a sensor calibration if the instrument requires it. Also, please look at the possible <a href="#issue-samplereadfail">caveats</a>.</p>
@@ -1161,11 +1163,11 @@ Enter the IP address in the window that opens (port should already be filled) an
 				
 				<p>White level drift compensation tries to counter luminance changes of a warming up display device. For this purpose, a white test patch is measured periodically, which increases the overall time needed for measurements.</p>
 
-				<p>Black level drift compensation tries to counter measurement deviations caused by black calibration drift of a warming up measurement device. For this purpose, a black test patch is measured periodically, which increases the overall time needed for measurements. Many colorimeters are temperature stabilised, in which case black level drift compensation should not be needed, but spectrometers like the i1 Pro or ColorMunki Design/Photo are not temperature compensated.</p>
+				<p>Black level drift compensation tries to counter measurement deviations caused by black calibration drift of a warming up measurement device. For this purpose, a black test patch is measured periodically, which increases the overall time needed for measurements. Many colorimeters are temperature stabilised, in which case black level drift compensation should not be needed, but spectrometers like the i1 Pro or ColorMunki Design/Photo/i1Studio are not temperature compensated.</p>
 
 				<h4 id="display-update-delay">Override display update delay (only available if using ArgyllCMS &gt;= 1.5.0, only visible if “Show advanced options” in the “Options” menu is enabled)</h4>
 				
-				<p>Normally a delay of 200 msec is allowed between changing a patch color in software, and that change appearing in the displayed color itself. For some instuments (i.e. i1d3, i1pro, ColorMunki, Klein K10-A) ArgyllCMS will automatically measure and set an appropriate update delay during instrument calibration. In rare situations this delay may not be sufficient (ie. some TV's with extensive image processing features turned on), and a larger delay can be set here.</p>
+				<p>Normally a delay of 200 msec is allowed between changing a patch color in software, and that change appearing in the displayed color itself. For some instuments (i.e. i1 Display Pro, ColorMunki Display, i1 Pro, ColorMunki Design/Photo/i1Studio, Klein K10-A) ArgyllCMS will automatically measure and set an appropriate update delay during instrument calibration. In rare situations this delay may not be sufficient (ie. some TV's with extensive image processing features turned on), and a larger delay can be set here.</p>
 
 				<h4 id="display-settle-time">Override display settle time multiplier (only available if using ArgyllCMS &gt;= 1.7.0, only visible if “Show advanced options” in the “Options” menu is enabled)</h4>
 				
@@ -1564,7 +1566,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 					<li><strong>Load calibration from current display device profile(s)</strong>. Selecting this (re)loads the calibration instantly, and also sets the desired calibration state (see “Preserve calibration state” below).</li>
 					<li><strong>Reset video card gamma table</strong>. Selecting this resets the video card gamma tables instantly, and also sets the desired calibration state (see “Preserve calibration state” below).</li>
 					<li><strong>Load calibration on login &amp; preserve calibration state</strong>. This periodically checks if the video card gamma tables match the desired calibration state. It may take up to three seconds until the selected calibration state is automatically re-applied.</li>
-					<li><strong>Fix profile associations automatically</strong> when only one display is active in a multi-display setup. This is a work-around for applications (and Windows itself) querying the display profile in a way that does not take into account the active display, which can lead to a wrong profile being used. A pre-requisite for this working correctly is that the profile loader has to be running <strong>before</strong> you switch from a multi-display to a single-display configuration in Windows, and the profile associations have to be correct at this point. Note that quitting the profile loader will restore profile associations to what they were (honoring any changes to profile associations during its runtime).</li>
+					<li><strong>Fix profile associations automatically</strong> when only one display is active in a multi-display setup. This is a work-around for applications (and Windows itself) querying the display profile in a way that does not take into account the active display, which can lead to a wrong profile being used. A pre-requisite for this working correctly is that the profile loader has to be running <strong>before</strong> you switch from a multi-display to a single-display configuration in Windows, and the profile associations have to be correct at this point. Note that quitting the profile loader will restore profile associations to what they were (honoring any changes to profile associations during its runtime). Also note that profile associations cannot be fixed (and the respective option will be disabled) in display configurations with three or more displays where some of them are deactivated.</li>
 					<li><strong>Show notifications</strong> when detecting a 3rd party calibration/profiling software or a user-defined exception (see below).</li>
 					<li><strong>Bitdepth</strong>. Some graphics drivers may internally quantize the video card gamma table values to a lower bitdepth than the nominal 16 bits per channel that are encoded in the video card gamma table tag of ${APPNAME}-generated profiles. If this quantization is done using integer truncating instead of rounding, this may pronounce banding. In that case, you can let the profile loader quantize to the target bitdepth by using rounding, which may produce a smoother result.</li>
 					<li><strong>Exceptions</strong>. You can override the global profile loader state on a per application basis.</li>
@@ -2285,11 +2287,11 @@ with DCGScriptingClientSocket() as client:
 				<li><a href="#issue-win-user-profile-not-used">MS Windows Vista and later: The display profile isn't used if it was installed for the current user</a></li>
 				<li><a href="#issue-win7-autoloadcalibration">MS Windows 7 or later: Calibration does not load automatically on login when not using the ${APPNAME} Profile Loader</a></li>
 				<li><a href="#issue-winxp-multidisplay">MS Windows XP, multiple displays: One profile is used by all displays connected to a graphics card</a></li>
-				<li><a href="#issue-mac-dispcalgui-0install-elcapitan">Mac OS X 10.11 “El Capitan”: If running via 0install, ${APPNAME} won't launch anymore after updating to El Capitan from a previous version of OS X</a></li>
+				<li><a href="#issue-mac-blackcrush-posterization">Mac OS X 10.08 “Mountain Lion” or newer: Black crush and posterization in applications using ColorSync (e.g. Preview)</a></li>
+				<li><a href="#issue-mac-dispcalgui-0install-elcapitan">Mac OS X 10.11 “El Capitan” or newer: If running via 0install, ${APPNAME} won't launch anymore after updating to El Capitan or newer from a previous version of OS X</a></li>
 				<li><a href="#issue-mac-dispcalgui-damaged">Mac OS X: “${APPNAME}.app is damaged and can't be opened.”</a></li>
-				<li><a href="#issue-mac-silentlaunchfail-sierra">Mac OS X 10.12 “Sierra”: Standalone tools silently fail to start</a></li>
+				<li><a href="#issue-mac-silentlaunchfail-sierra">Mac OS X 10.12 “Sierra” or newer: Standalone tools silently fail to start</a></li>
 				<li><a href="#issue-linux-lutaccess">Linux/Windows: No video card gamma table access (“Calibrate &amp; profile” button grayed despite display and instrument detected)</a></li>
-				<li><a href="#issue-linux-libmtp">Linux: Instrument not working correctly/constantly disconnecting (conflict with libmtp)</a></li>
 			</ul>
 
 			<dl>
@@ -2297,7 +2299,7 @@ with DCGScriptingClientSocket() as client:
 				<dd><strong>Solution:</strong> This happens when you created a “XYZ LUT + swapped matrix” profile and is a way to alert you that the software you're using does not support XYZ LUT profiles and falls back to the included matrix (which generally means you'd loose accuracy). If you're having this situation only in some applications, creating a “XYZ LUT + matrix” profile will remedy it (but please keep in mind that those applications not supporting XYZ LUT will still fall back to the matrix, so results can be different from applications that support XYZ LUT correctly). If all colormanaged applications you use show swapped colors, you should create a matrix profile instead. Note that you do not have to re-run any measurements: In ${APPNAME}, choose a profile type as suggested previously (you need to enable advanced options in the “Options” menu to show profile type choices on the “Profiling” tab), adjust quality and profile name if you want, then choose “Create profile from measurement data...” in the “File” menu and select the profile you had the issue with.</dd>
 
 				<dt id="issue-samplereadfail"><span>General:</span> Measurements are failing (“Sample read failed”) if using the “Allow skipping of spectrometer self-calibration” option and/or highres/adaptive mode</dt>
-				<dd><strong>Solution:</strong> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki.</dd>
+				<dd><strong>Solution:</strong> Disable either or all of the above options. The problem seems to mainly occur with the ColorMunki Design/Photo.</dd>
 
 				<dt id="issue-usb3connectivity"><span>USB 3.0</span> connectivity issues (instrument not found, access failing, or not working properly)</dt>
 				<dd>Such issues would usually manifest themselves through instruments not being found, or randomly disconnecting even if seemingly working fine for some time. From all information that is known about these issues, they seem to be related to USB 3.0, not related to software as the vendor software is also affected, and they seem to occur irrespective of operating system or device drivers.<br />
@@ -2334,6 +2336,9 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 					</ul>
 				</dd>
 
+				<dt id="issue-mac-blackcrush-posterization"><span>Mac OS X 10.08 “Mountain Lion” or newer:</span> Black crush and posterization in applications using ColorSync (e.g. Preview)</dt>
+				<dd><strong>Solution:</strong> Due to what appear to be bugs in Mac OS X, applications using ColorSync may show artifacts like black crush and posterization with certain types of display profiles (i.e. cLUT-based ones). Applications from 3rd parties which use their own color management engine (like Adobe products) are not affected. Also not affected seems Apple ColorSync Utility as well as Screenshot Utility, which could be used as a replacement for Apple Preview. Another work-around is to create a simpler single curve + matrix profile with included black point compensation, but a drawback is a potential loss of color accuracy due to the inherent limitiations of this simpler profile type (most other profiling solutions create the same type of simple profile though). The easiest way to create a simple single curve + matrix pofile in ${APPNAME} is to make sure calkibration tone curve is set to a value other than “As measured”, then setting testchart to “Auto” on the “Profiling” tab and moving the patch amount slider all the way to the left (minimum amount of patches). You should see “1xCurve+MTX” in the default profile name.</dd>
+
 				<dt id="issue-mac-dispcalgui-0install-elcapitan"><span>Mac OS X 10.11 “El Capitan”:</span> If running via 0install, ${APPNAME} won't launch anymore after updating to El Capitan from a previous version of OS X</dt>
 				<dd><strong>Solution:</strong>
 
@@ -2356,11 +2361,6 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</dt>
 				<dd><strong>Solution:</strong> Make sure you have not selected a display that doesn't support calibration (i.e. “Web @ localhost” or “Untethered”) and that you have enabled “Interactive display adjustment” or set the tone curve to a different value than “As measured”. Under Linux, please refer to the ArgyllCMS documentation, “<a href="https://www.argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows and make sure you have a recent driver for your video card installed.</dd>
-
-				<dt id="issue-linux-libmtp"><span>Linux:</span> Instrument not working correctly/constantly disconnecting (conflict with libmtp)</dt>
-				<dd><strong>Solution:</strong> There is a bug on some systems with libmtp that causes instruments to continuously switch between connected and disconnected state.
-				This seems to be a <a href="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=626010">bug in libmtp-runtime</a>.
-				You can work around it by renaming <code>/lib/udev/mtp-probe</code> or updating to libmtp 1.0.6 where the issue should be fixed.</dd>
 			</dl>
 		</div>
 
@@ -2521,6 +2521,8 @@ Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Wa
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Colorize gamma graph points according to change in gamma.</li>
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Dynamically adjust gamma graph vertical axis to prevent cut-off.</li>
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: Make RGB balance graph match HCFR (Rec. 709 only). Note that new and old balance graphs are only comparable to a limited extent (use “Update measurement or uniformity report” in the “Tools” menu to update existing reports).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Profile loader (Windows): Unset non belonging profile when resetting a profile association.</li>
+							<li>Mac OS X: Set default profile type to single curve + matrix with black point compensation due to long-standing Mac OS X bugs with any other profile type.</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
@@ -2532,7 +2534,10 @@ Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Wa
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Rec. 1886 measurement report with originally non Rec. 709 tone response profile: Make sure to override the original tone response of the profile so Rec. 1886 gives the expected result.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If a measurement report HTML file was mangled by another application that removed the XML self-closing tags forward slashes, it was not possible to correctly update the report using “Update measurement or uniformity report” from the “Tools” menu.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If using a pattern generator, check it is valid before binding a disconnect-on-close event when using the visual whitepoint editor. Prevents an attribute error when using the visual whitepoint editor and the madTPG network implementation (i.e. under Mac OS X).</li>
-							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Measurement window: Make sure focus stays on the last focused control when the window itself gains focus again after loosing focus.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Windows: Always use the active display device directly when querying or setting profiles instead of mimicking applications using the Windows GetICMProfile API (fixes getting the correct profile with display configurations consisting of three or more displays where some of them are deactivated).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Check whether or not a display device is attached to multiple adapters and disable fixing profile associations in that case.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Work-around hitching caused by Windows WcsGetDefaultColorProfile API call on some systems.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Measurement window: Make sure focus stays on the last focused control when the window itself gains focus again after losing focus.</li>
 							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Synthetic ICC Profile Creator: Update HDR SMPTE 2084 diffuse white info text when changing luminance.</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> HDR SMPTE 2084 3D LUT: Interpolate the last two segments before the clipping point of the intermediate input LUT shaper curves (prevents potential slight banding in highlights).</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Windows: Make sure the profile loader is launched directly after installing a profile when using a portable version of ${APPNAME} (parity with installer version).</li>
