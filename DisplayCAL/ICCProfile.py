@@ -1802,7 +1802,7 @@ def _winreg_get_display_profiles(monkey, current_user=False):
 
 def get_display_profile(display_no=0, x_hostname=None, x_display=None, 
 						x_screen=None, path_only=False, devicekey=None,
-						use_active_display_device=True):
+						use_active_display_device=True, use_registry=True):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
@@ -1854,15 +1854,23 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 					scope = WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
 				else:
 					scope = WCS_PROFILE_MANAGEMENT_SCOPE["SYSTEM_WIDE"]
-				return _wcs_get_display_profile(unicode(devicekey), scope,
-												path_only=path_only)
-			# Via registry - NEVER
+				if not use_registry:
+					# NOTE: WcsGetDefaultColorProfile causes the whole system
+					# to hitch if the profile of the active display device is
+					# queried. Windows bug?
+					return _wcs_get_display_profile(unicode(devicekey), scope,
+													path_only=path_only)
+			else:
+				scope = None
+			# Via registry
 			monkey = devicekey.split("\\")[-2:]  # pun totally intended
-			# current user
-			profile = _winreg_get_display_profile(monkey, True,
-												  path_only=path_only)
-			if not profile:
-				# system
+			# Current user scope
+			current_user = scope == WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
+			if current_user:
+				profile = _winreg_get_display_profile(monkey, True,
+													  path_only=path_only)
+			else:
+				# System scope
 				profile = _winreg_get_display_profile(monkey,
 													  path_only=path_only)
 	else:
