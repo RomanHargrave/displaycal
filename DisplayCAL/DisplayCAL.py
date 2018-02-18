@@ -1419,8 +1419,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.presets = natsort(presets)
 			self.presets.reverse()
 			for preset in self.presets:
-				if not preset in self.recent_cals:
-					self.recent_cals.insert(1, preset)
+				if preset in self.recent_cals:
+					self.recent_cals.remove(preset)
+				self.recent_cals.insert(1, preset)
 		
 		self.static_labels = []
 		
