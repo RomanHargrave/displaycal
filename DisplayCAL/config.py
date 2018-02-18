@@ -1011,7 +1011,9 @@ defaults = {
 	"position.synthiccframe.y": 50,
 	"position.tcgen.x": 50,
 	"position.tcgen.y": 50,
-	"profile.black_point_compensation": 0,
+	# Force black point compensation due to OS X
+	# bugs with non BPC profiles
+	"profile.black_point_compensation": 0 if sys.platform != "darwin" else 1,
 	"profile.black_point_correction": 0.0,
 	"profile.create_gamut_views": 1,
 	"profile.install_scope": "l" if (sys.platform != "win32" and 
@@ -1041,7 +1043,10 @@ defaults = {
 	"profile.b2a.hires.size": -1,
 	"profile.b2a.hires.smooth": 1,
 	"profile.save_path": storage, # directory
-	"profile.type": "X",
+	# Force profile type to single shaper + matrix
+	# due to OS X bugs with cLUT profiles and
+	# matrix profiles with individual shaper curves
+	"profile.type": "X" if sys.platform != "darwin" else "S",
 	"profile.update": 0,
 	"profile_loader.buggy_video_drivers":  ";".join(["*"]),
 	"profile_loader.check_gamma_ramps": 1,
@@ -1150,7 +1155,10 @@ defaults = {
 	"tc_vrml_use_D50": 0,
 	"tc_white_patches": 4,
 	"tc.show": 0,
-	"testchart.auto_optimize": 4,
+	# Profile type forced to matrix due to
+	# OS X bugs with cLUT profiles. Set
+	# smallest testchart.
+	"testchart.auto_optimize": 4 if sys.platform != "darwin" else 1,
 	"testchart.file": "auto",
 	"testchart.file.backup": "auto",
 	"testchart.patch_sequence": "optimize_display_response_delay",

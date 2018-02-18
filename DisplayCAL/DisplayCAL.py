@@ -13596,6 +13596,10 @@ class MainFrame(ReportFrame, BaseFrame):
 						   bitmap=geticon(32, "dialog-error"))
 				return
 
+			is_preset = path in self.presets
+			basename = os.path.basename(path)
+			is_3dlut_preset = basename.startswith("video_")
+
 			filename, ext = os.path.splitext(path)
 			if ext.lower() in (".7z", ".tar.gz", ".tgz", ".zip"):
 				self.import_session_archive(path)
@@ -13903,6 +13907,15 @@ class MainFrame(ReportFrame, BaseFrame):
 							setcfg("profile.quality.b2a", o[1] or "l")
 							continue
 						if o[0] == "a":
+							if (is_preset and not is_3dlut_preset and
+								sys.platform == "darwin"):
+								# Force profile type to single shaper + matrix
+								# due to OS X bugs with cLUT profiles and
+								# matrix profiles with individual shaper curves
+								o = "aS"
+								# Force black point compensation due to OS X
+								# bugs with non BPC profiles
+								setcfg("profile.black_point_compensation", 1)
 							setcfg("profile.type", o[1])
 							continue
 						if o[0] in ("s", "S"):
@@ -13931,7 +13944,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					setcfg("testchart.file", path)
 				if 'USE_BLACK_POINT_COMPENSATION "YES"' in ti3_lines:
 					setcfg("profile.black_point_compensation", 1)
-				elif 'USE_BLACK_POINT_COMPENSATION "NO"' in ti3_lines:
+				elif ('USE_BLACK_POINT_COMPENSATION "NO"' in ti3_lines and
+					  (sys.platform != "darwin" or is_3dlut_preset)):
+					# Only disable BPC if not OS X, or if a 3D LUT preset
 					setcfg("profile.black_point_compensation", 0)
 				if 'HIRES_B2A "YES"' in ti3_lines:
 					setcfg("profile.b2a.hires", 1)
@@ -14042,6 +14057,12 @@ class MainFrame(ReportFrame, BaseFrame):
 						elif cfgvalue is not None:
 							if keyword == "AUTO_OPTIMIZE" and cfgvalue:
 								setcfg("testchart.file", "auto")
+								if (is_preset and not is_3dlut_preset and
+									sys.platform == "darwin"):
+									# Profile type forced to matrix due to
+									# OS X bugs with cLUT profiles. Set
+									# smallest testchart.
+									cfgvalue = 1
 							elif keyword == "PATCH_SEQUENCE":
 								cfgvalue = cfgvalue.lower().replace("_rgb_",
 																	"_RGB_")
