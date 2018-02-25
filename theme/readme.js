@@ -264,11 +264,12 @@ jQuery(window).load(function () {
 	if (location.protocol != 'file:' ||
 		(location.search || '').indexOf('debug') > -1 ||
 		(document.cookie || '').indexOf('debug') > -1) {
-			var sidebar = (!window.localStorage || localStorage.getItem('sidebar') != 'hidden') && $(window).width() >= 1100;
-			$('body').append('<div class="sidebar-wrapper left' + (sidebar ? '' : ' hidden') + '"><iframe class="sidebar" marginwidth="0" marginheight="0" frameborder="0"' + (sidebar ? ' src="' + protocol + '//displaycal.net/sidebar.php"' : '') + '></iframe><span class="sidebar-toggle" title="Show / Hide">' + (sidebar ? '‹' : '›') + '</span></div>');
+			var sidebar = (!window.localStorage || localStorage.getItem('sidebar') != 'hidden') && $(window).width() >= 1100,
+				side = 'left';
+			$('body').append('<div class="sidebar-wrapper ' + side + (sidebar ? '' : ' hidden') + '"><iframe class="sidebar" marginwidth="0" marginheight="0" frameborder="0"' + (sidebar ? ' src="' + protocol + '//displaycal.net/sidebar.php"' : '') + '></iframe><span class="sidebar-toggle" title="Show / Hide">' + (sidebar ? (side == 'left' ? '‹' : '›') : (side == 'left' ? '›' : '‹')) + '</span></div>');
 			//$('body').append('<div class="sidebar-wrapper right' + (sidebar ? '' : ' hidden') + '"><iframe class="sidebar" marginwidth="0" marginheight="0" frameborder="0" src="' + protocol + '//displaycal.net/sidebar.php?product_type=display"></iframe><span class="sidebar-toggle" title="Show / Hide">' + (sidebar ? '›' : '‹') + '</span></div>');
 			$('.sidebar-toggle').click(function (e) {
-				var classes = ['left', 'right'], cls, prop, query = ['', '?product_type=display'];
+				var classes = ['left', 'right'], cls, prop, query = [side == 'left' ? '' : '?product_type=display', side == 'left' ? '?product_type=display' : ''];
 				$('.sidebar-wrapper').stop();
 				for (var i = 0; i < 2; i ++) {
 					cls = classes[i];
