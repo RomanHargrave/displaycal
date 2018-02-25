@@ -27,6 +27,7 @@ html[xmlns] h1 {
 	height: 1%;
 }
 h1 img {
+	height: 103px;
 	position: static;
 	width: 103px;
 }
@@ -55,8 +56,8 @@ img {
 	-webkit-box-reflect: below -6px -webkit-gradient(linear, 0 73%, 0 100%, from(transparent), to(rgba(255, 255, 255, .25)));
 }
 .reflect:after {
-	background: -moz-linear-gradient(top, #fff 0%, rgba(255, 255, 255, .75) 100%), -moz-element(#icon) no-repeat 0 bottom;
-	background: linear-gradient(to bottom, #fff 0%, rgba(255, 255, 255, .75) 100%), -moz-element(#icon) no-repeat 0 bottom;
+	background: -moz-linear-gradient(top, #fff 0%, rgba(255, 255, 255, .75) 100%), -moz-element(#icon) no-repeat 0 bottom/103px;
+	background: linear-gradient(to bottom, #fff 0%, rgba(255, 255, 255, .75) 100%), -moz-element(#icon) no-repeat 0 bottom/103px;
 	content: "";
 	display: block;
 	height: 25px;
