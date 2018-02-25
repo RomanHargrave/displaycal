@@ -816,7 +816,7 @@
 	"profile.load_on_login": "登入時載入描述檔",
 	"profile.load_on_login.handled_by_os": "讓作業系統處理和載入顯示器校正(低質素)",
 	"profile.name": "描述檔名稱",
-		"*profile.name.placeholders": "You may use the following placeholders in the profile name:\n\n%a	Abbreviated weekday name\n%A	Full weekday name\n%b	Abbreviated month name\n%B	Full month name\n%d	Day of the month\n%H	Hour (24-hour clock)\n%I	Hour (12-hour clock)\n%j	Day of the year\n%m	Month\n%M	Minute\n%p	AM/PM\n%S	Second\n%U	Week (Sunday as first day of the week)\n%w	Weekday (sunday is 0)\n%W	Week (Monday as first day of the week)\n%y	Year without century\n%Y	Year with century",
+		"*profile.name.placeholders": "You may use the following placeholders in the profile name:\n\n%a\tAbbreviated weekday name\n%A\tFull weekday name\n%b\tAbbreviated month name\n%B\tFull month name\n%d\tDay of the month\n%H\tHour (24-hour clock)\n%I\tHour (12-hour clock)\n%j\tDay of the year\n%m\tMonth\n%M\tMinute\n%p\tAM/PM\n%S\tSecond\n%U\tWeek (Sunday as first day of the week)\n%w\tWeekday (sunday is 0)\n%W\tWeek (Monday as first day of the week)\n%y\tYear without century\n%Y\tYear with century",
 	"profile.no_embedded_ti3": "該描述檔不包含 Argyll 兼容的測量數據。",
 	"profile.no_vcgt": "該描述檔不包含校正曲線。",
 	"profile.only_named_color": "只可使用“具名顏色”類型的描述檔。",
@@ -1138,5 +1138,5 @@
 	"yellow": "黃色",
 	"yellow_lab": "黃色 L*a*b*",
 	"yellow_xyz": "黃色 XYZ",
-	"yes": "是",
+	"yes": "是"
 }

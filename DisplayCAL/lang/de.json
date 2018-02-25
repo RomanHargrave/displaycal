@@ -816,7 +816,7 @@
 	"profile.load_on_login": "Kalibrierung beim Anmelden laden",
 	"profile.load_on_login.handled_by_os": "Kalibrierung vom Betriebssystem laden lassen (niedrige Präzision und Zuverlässigkeit)",
 	"profile.name": "Profilname",
-	"profile.name.placeholders": "Sie können folgende Platzhalter im Profilnamen verwenden:\n\n%a	Abgekürzter Wochentagsname\n%A	Voller Wochentagsname\n%b	Abgekürzter Monatsname\n%B	Voller Monatsname\n%d	Tag des Monats\n%H	Stunde (24-Stunden-Format)\n%I	Stunde (12-Stunden-Format)\n%j	Tag des Jahres\n%m	Monat\n%M	Minute\n%p	AM/PM\n%S	Sekunde\n%U	Woche (Sonntag als erster Wochentag)\n%w	Wochentag (Sonntag ist 0)\n%W	Woche (Montag als erster Wochentag)\n%y	Jahr ohne Jahrhundert\n%Y	Jahr inklusive Jahrhundert",
+	"profile.name.placeholders": "Sie können folgende Platzhalter im Profilnamen verwenden:\n\n%a\tAbgekürzter Wochentagsname\n%A\tVoller Wochentagsname\n%b\tAbgekürzter Monatsname\n%B\tVoller Monatsname\n%d\tTag des Monats\n%H\tStunde (24-Stunden-Format)\n%I\tStunde (12-Stunden-Format)\n%j\tTag des Jahres\n%m\tMonat\n%M\tMinute\n%p\tAM/PM\n%S\tSekunde\n%U\tWoche (Sonntag als erster Wochentag)\n%w\tWochentag (Sonntag ist 0)\n%W\tWoche (Montag als erster Wochentag)\n%y\tJahr ohne Jahrhundert\n%Y\tJahr inklusive Jahrhundert",
 	"profile.no_embedded_ti3": "Das Profil enthält keine Argyll-kompatiblen Messwerte.",
 	"profile.no_vcgt": "Das Profil enthält keine Kalibrierungskurven.",
 	"profile.only_named_color": "Nur Profile des Typs „Named Color“ können verwendet werden.",
@@ -1138,5 +1138,5 @@
 	"yellow": "Gelb",
 	"yellow_lab": "Gelb L*a*b*",
 	"yellow_xyz": "Gelb XYZ",
-	"yes": "Ja",
+	"yes": "Ja"
 }

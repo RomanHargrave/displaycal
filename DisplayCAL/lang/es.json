@@ -816,7 +816,7 @@
 	"profile.load_on_login": "Cargar la calibracion en la entrada",
 	"profile.load_on_login.handled_by_os": "Dejar al sistema operativo el manejo de la carga de la calibracion (baja precisión y fiabilidad)",
 	"profile.name": "Nombre del perfil",
-	"profile.name.placeholders": "Debe de utilizar los siguientes argumentos en el nombre de perfil:\n\n%a	Nombre del dia de la semana abreviado\n%A	Nombre del dia de la semana completo\n%b	Nombre del mes abreviado\n%B	Nombre del mes completo\n%d	Dia del mes\n%H	Hora (reloj 24-horas)\n%I	Hora (reloj12-horas)\n%j	Dia del año\n%m	Mes\n%M	Minuto\n%p	AM/PM\n%S	Segundos\n%U	Semana (Domingo como primer dia de la semana)\n%w	Dia de la semana (domingo es 0)\n%W	Semana (Lunes como primer dia de la semana)\n%y	Año sin el siglo\n%Y	Año con el siglo",
+	"profile.name.placeholders": "Debe de utilizar los siguientes argumentos en el nombre de perfil:\n\n%a\tNombre del dia de la semana abreviado\n%A\tNombre del dia de la semana completo\n%b\tNombre del mes abreviado\n%B\tNombre del mes completo\n%d\tDia del mes\n%H\tHora (reloj 24-horas)\n%I\tHora (reloj12-horas)\n%j\tDia del año\n%m\tMes\n%M\tMinuto\n%p\tAM/PM\n%S\tSegundos\n%U\tSemana (Domingo como primer dia de la semana)\n%w\tDia de la semana (domingo es 0)\n%W\tSemana (Lunes como primer dia de la semana)\n%y\tAño sin el siglo\n%Y\tAño con el siglo",
 	"profile.no_embedded_ti3": "El perfil no contiene datos de medicion compatibles con Argyll.",
 	"profile.no_vcgt": "El perfil no contiene curvas de calibracion.",
 		"*profile.only_named_color": "Only profiles of type “Named Color” can be used.",
@@ -1138,5 +1138,5 @@
 	"yellow": "Amarillo",
 		"*yellow_lab": "Yellow L*a*b*",
 		"*yellow_xyz": "Yellow XYZ",
-	"yes": "Si",
+	"yes": "Si"
 }

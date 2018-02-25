@@ -816,7 +816,7 @@
 	"profile.load_on_login": "Charger l’étalonnage à la connexion",
 	"profile.load_on_login.handled_by_os": "Laisser le système d’exploitation traiter le chargement de l’étalonnage (faible qualité)",
 	"profile.name": "Nom du profil",
-	"profile.name.placeholders": "Vous pouvez utiliser les paramètres de substitution suivants dans le nom du profil :\n\n%a	Nom du jour de la semaine abrégé\n%A	Nom complet du jour de la semaine\n%b	Nom du mois abrégé\n%B	Nom complet du mois\n%d	Jour du mois\n%H	Heure (sur 24 heures)\n%I	Heure (sur 12 heures)\n%j	Jour de l’année\n%m	Mois\n%M	Minute\n%p	AM/PM\n%S	Secondes\n%U	Semaine (avec dimanche comme premier jour de la semaine)\n%w	Jour de la semaine (dimanche correspondant à 0)\n%W	Semaine (avec lundi comme premier jour de la semaine)\n%y	Année sans le siècle\n%Y	Année avec le siècle",
+	"profile.name.placeholders": "Vous pouvez utiliser les paramètres de substitution suivants dans le nom du profil :\n\n%a\tNom du jour de la semaine abrégé\n%A\tNom complet du jour de la semaine\n%b\tNom du mois abrégé\n%B\tNom complet du mois\n%d\tJour du mois\n%H\tHeure (sur 24 heures)\n%I\tHeure (sur 12 heures)\n%j\tJour de l’année\n%m\tMois\n%M\tMinute\n%p\tAM/PM\n%S\tSecondes\n%U\tSemaine (avec dimanche comme premier jour de la semaine)\n%w\tJour de la semaine (dimanche correspondant à 0)\n%W\tSemaine (avec lundi comme premier jour de la semaine)\n%y\tAnnée sans le siècle\n%Y\tAnnée avec le siècle",
 	"profile.no_embedded_ti3": "Le profil ne contient pas de donnée de mesure compatible avec Argyll.",
 	"profile.no_vcgt": "Le profil ne contient pas de courbes d’une table de correspondance",
 	"profile.only_named_color": "Seuls les profils appelés « Couleur nommée » peuvent être utilisés.",
@@ -1138,5 +1138,5 @@
 	"yellow": "Jaune",
 	"yellow_lab": "Jaune L*a*b*",
 	"yellow_xyz": "Jaune XYZ",
-	"yes": "Oui",
+	"yes": "Oui"
 }

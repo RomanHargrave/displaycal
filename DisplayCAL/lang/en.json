@@ -816,7 +816,7 @@
 	"profile.load_on_login": "Load calibration on login",
 	"profile.load_on_login.handled_by_os": "Let the operating system handle calibration loading (low precision and reliability)",
 	"profile.name": "Profile name",
-	"profile.name.placeholders": "You may use the following placeholders in the profile name:\n\n%a	Abbreviated weekday name\n%A	Full weekday name\n%b	Abbreviated month name\n%B	Full month name\n%d	Day of the month\n%H	Hour (24-hour clock)\n%I	Hour (12-hour clock)\n%j	Day of the year\n%m	Month\n%M	Minute\n%p	AM/PM\n%S	Second\n%U	Week (Sunday as first day of the week)\n%w	Weekday (sunday is 0)\n%W	Week (Monday as first day of the week)\n%y	Year without century\n%Y	Year with century",
+	"profile.name.placeholders": "You may use the following placeholders in the profile name:\n\n%a\tAbbreviated weekday name\n%A\tFull weekday name\n%b\tAbbreviated month name\n%B\tFull month name\n%d\tDay of the month\n%H\tHour (24-hour clock)\n%I\tHour (12-hour clock)\n%j\tDay of the year\n%m\tMonth\n%M\tMinute\n%p\tAM/PM\n%S\tSecond\n%U\tWeek (Sunday as first day of the week)\n%w\tWeekday (sunday is 0)\n%W\tWeek (Monday as first day of the week)\n%y\tYear without century\n%Y\tYear with century",
 	"profile.no_embedded_ti3": "The profile does not contain Argyll compatible measurement data.",
 	"profile.no_vcgt": "The profile does not contain calibration curves.",
 	"profile.only_named_color": "Only profiles of type “Named Color” can be used.",
@@ -1138,5 +1138,5 @@
 	"yellow": "Yellow",
 	"yellow_lab": "Yellow L*a*b*",
 	"yellow_xyz": "Yellow XYZ",
-	"yes": "Yes",
+	"yes": "Yes"
 }
