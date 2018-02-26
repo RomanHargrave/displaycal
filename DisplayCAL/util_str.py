@@ -291,7 +291,7 @@ def escape(obj):
 	chars = u""
 	if isinstance(obj, Exception):
 		for char in obj.object[obj.start:obj.end]:
-			chars += subst.get(char, u"\\u" % hex(ord(char))[2:])
+			chars += subst.get(char, u"\\u%s" % hex(ord(char))[2:].rjust(4, '0'))
 		return chars, obj.end
 	else:
 		return obj.encode("ASCII", "escape")
