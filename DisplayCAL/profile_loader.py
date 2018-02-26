@@ -19,7 +19,6 @@ from options import debug, test, verbose
 if sys.platform == "win32":
 	import errno
 	import ctypes
-	import glob
 	import math
 	import re
 	import struct
@@ -45,7 +44,7 @@ if sys.platform == "win32":
 	from systrayicon import Menu, MenuItem, SysTrayIcon
 	from util_list import natsort_key_factory
 	from util_os import (getenvu, is_superuser, islink, quote_args, readlink,
-						 which)
+						 safe_glob, which)
 	from util_str import safe_asciize, safe_str, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  calibration_management_isenabled,
@@ -615,7 +614,7 @@ if sys.platform == "win32":
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED,
 						   lambda e: dlg.EndModal(wx.ID_OK))
 			profiles = []
-			for pth in glob.glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
+			for pth in safe_glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
 				try:
 					profile = ICCP.ICCProfile(pth)
 				except ICCP.ICCProfileInvalidError, exception:

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import with_statement
-import glob
 import os
 import re
 import shutil
@@ -18,7 +17,7 @@ from log import safe_print
 from meta import name as appname, version
 from options import debug
 from util_decimal import stripzeros
-from util_os import islink, readlink, waccess
+from util_os import islink, readlink, safe_glob, waccess
 from util_str import safe_unicode, strtr
 from worker import (Error, Info, UnloggedInfo, get_current_profile_path,
 					show_result_dialog)
@@ -596,7 +595,7 @@ class LUT3DFrame(BaseFrame):
 								break
 					else:
 						# Assume OS X
-						volumes = ["/"] + glob.glob("/Volumes/*")
+						volumes = ["/"] + safe_glob("/Volumes/*")
 						for volume in volumes:
 							lut_dir = os.path.join(volume, "Library",
 												   "Application Support",

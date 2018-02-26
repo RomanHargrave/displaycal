@@ -31,7 +31,6 @@ from fnmatch import fnmatch
 import codecs
 import ctypes.util
 import distutils.core
-import glob
 import os
 import platform
 import re
@@ -64,7 +63,7 @@ from defaultpaths import autostart, autostart_home
 from meta import (author, author_ascii, description, longdesc, domain, name, 
 				  py_maxversion, py_minversion, version, version_tuple, 
 				  wx_minversion, author_email, script2pywname)
-from util_os import relpath
+from util_os import relpath, safe_glob
 appname = name
 
 bits = platform.architecture()[0][:2]
@@ -300,14 +299,14 @@ def get_data(tgt_dir, key, pkgname=None, subkey=None, excludes=None):
 	for pth in files:
 		if not filter(lambda exclude: fnmatch(pth, exclude), excludes or []):
 			data.append((os.path.normpath(os.path.join(tgt_dir, os.path.dirname(pth))),
-						 glob.glob(os.path.join(src_dir, pth))))
+						 safe_glob(os.path.join(src_dir, pth))))
 	return data
 
 
 def get_scripts(excludes=None):
 	# It is required that each script has an accompanying .desktop file
 	scripts = []
-	desktopfiles = glob.glob(os.path.join(pydir, "..", "misc",
+	desktopfiles = safe_glob(os.path.join(pydir, "..", "misc",
 							 appname.lower() + "*.desktop"))
 	def sortbyname(a, b):
 		a, b = [os.path.splitext(v)[0] for v in (a, b)]
@@ -585,14 +584,14 @@ def setup():
 											"applications"), 
 							   [os.path.join(pydir, "..", "misc", name.lower() + 
 											 ".desktop")] +
-							   glob.glob(os.path.join(pydir, "..", "misc",
+							   safe_glob(os.path.join(pydir, "..", "misc",
 													  name.lower() + "-*.desktop"))))
 			data_files.append((autostart if os.geteuid() == 0 or prefix.startswith("/")
 							   else autostart_home, 
 							   [os.path.join(pydir, "..", "misc", 
 											 "z-%s-apply-profiles.desktop" % name.lower())]))
 			data_files.append((os.path.join(os.path.dirname(data), "man", "man1"), 
-							   glob.glob(os.path.join(pydir, "..", "man", "*.1"))))
+							   safe_glob(os.path.join(pydir, "..", "man", "*.1"))))
 			if not skip_instrument_conf_files:
 				# device configuration / permission stuff
 				if is_rpm_build:
@@ -611,7 +610,7 @@ def setup():
 				else:
 					devconf_files = []
 					if os.path.isdir("/etc/udev/rules.d"):
-						if glob.glob("/dev/bus/usb/*/*"):
+						if safe_glob("/dev/bus/usb/*/*"):
 							# USB and serial instruments using udev, where udev 
 							# already creates /dev/bus/usb/00X/00X devices
 							devconf_files.append(
@@ -654,7 +653,7 @@ def setup():
 				largest_iconbundle_icon_size = "128x128"
 			else:
 				largest_iconbundle_icon_size = "256x256"
-			for iconpath in glob.glob(os.path.join(pydir, "theme", "icons", 
+			for iconpath in safe_glob(os.path.join(pydir, "theme", "icons", 
 												   dname, "*.png")):
 				if not os.path.basename(iconpath).startswith(name.lower()) or (
 					sys.platform in ("darwin", "win32") and 
@@ -1026,17 +1025,17 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		if not paths:
 			# If the installed files have not been recorded, use some fallback 
 			# logic to find them
-			paths = glob.glob(os.path.join(cmd.install_scripts, name))
+			paths = safe_glob(os.path.join(cmd.install_scripts, name))
 			if sys.platform == "win32":
 				if setuptools:
-					paths += glob.glob(os.path.join(cmd.install_scripts, 
+					paths += safe_glob(os.path.join(cmd.install_scripts, 
 													name + ".exe"))
-					paths += glob.glob(os.path.join(cmd.install_scripts, 
+					paths += safe_glob(os.path.join(cmd.install_scripts, 
 													name + "-script.py"))
 				else:
-					paths += glob.glob(os.path.join(cmd.install_scripts, 
+					paths += safe_glob(os.path.join(cmd.install_scripts, 
 													name + ".cmd"))
-			paths += glob.glob(os.path.join(cmd.install_scripts, name + 
+			paths += safe_glob(os.path.join(cmd.install_scripts, name + 
 											"_postinstall.py"))
 			for attrname in [
 				"data", 
@@ -1050,12 +1049,12 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				if not path in paths:
 					# Using sys.version in this way is consistent with 
 					# setuptools
-					paths += glob.glob(path) + glob.glob(path + 
+					paths += safe_glob(path) + safe_glob(path + 
 						("-%(version)s-py%(pyversion)s*.egg" % {
 							"version": version, 
 							"pyversion": sys.version[:3]
 						})
-					) + glob.glob(path + 
+					) + safe_glob(path + 
 						("-%(version)s-py%(pyversion)s*.egg-info" % {
 							"version": version, 
 							"pyversion": sys.version[:3]
@@ -1096,7 +1095,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				]:
 					path = os.path.join(data, fname)
 					if not path in paths:
-						paths += glob.glob(path)
+						paths += safe_glob(path)
 			if os.path.isabs(doc) and not doc in paths:
 				for fname in [
 					"screenshots",
@@ -1107,7 +1106,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				]:
 					path = os.path.join(doc, fname)
 					if not path in paths:
-						paths += glob.glob(path)
+						paths += safe_glob(path)
 			if sys.platform == "win32":
 				from postinstall import get_special_folder_path
 				startmenu_programs_common = get_special_folder_path(
@@ -1117,7 +1116,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					if path:
 						for filename in (name, "LICENSE", "README", 
 										 "Uninstall"):
-							paths += glob.glob(os.path.join(path, name, 
+							paths += safe_glob(os.path.join(path, name, 
 															filename + ".lnk"))
 
 		for path in paths:
@@ -1284,7 +1283,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			if sys.platform == "win32":
 				path = os.path.join(cmd.install_lib, name)
 				# Using sys.version in this way is consistent with setuptools
-				for path in glob.glob(path) + glob.glob(
+				for path in safe_glob(path) + safe_glob(
 					os.path.join(path + (
 						"-%(version)s-py%(pyversion)s*.egg" % 
 						{

@@ -3,14 +3,13 @@
 from StringIO import StringIO
 from subprocess import call
 from os.path import basename, splitext
-from glob import glob
 import os
 import shutil
 import sys
 import traceback
 
 from meta import name
-from util_os import relpath, which
+from util_os import relpath, safe_glob, which
 
 recordfile_name = "INSTALLED_FILES"
 
@@ -132,8 +131,8 @@ def postinstall(prefix=None):
 										not filename.endswith(".pyc") and
 										not filename.endswith(".pyo") and
 										not filename.endswith("_postinstall.py"),
-										glob(os.path.join(sys.prefix, "Scripts",
-														  name + "*"))) +
+										safe_glob(os.path.join(sys.prefix, "Scripts",
+															   name + "*"))) +
 								 ["LICENSE.txt", "README.html", "Uninstall"])
 					installed_shortcuts = []
 					for path in (startmenu_programs_common, 

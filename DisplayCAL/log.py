@@ -4,7 +4,6 @@ from __future__ import with_statement
 from codecs import EncodedFile
 from hashlib import md5
 import atexit
-import glob
 import logging
 import logging.handlers
 import os
@@ -18,6 +17,7 @@ from multiprocess import mp
 from options import debug
 from safe_print import SafePrinter, safe_print as _safe_print
 from util_io import StringIOu as StringIO
+from util_os import safe_glob
 from util_str import safe_str, safe_unicode
 
 logging.raiseExceptions = 0
@@ -236,7 +236,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 						if mtimes:
 							filename = mtimes[sorted(mtimes.keys())[0]]
 		if is_main_process:
-			for lockfilepath in glob.glob(os.path.join(confighome,
+			for lockfilepath in safe_glob(os.path.join(confighome,
 													   lockbasename +
 													   ".mp-worker-*.lock")):
 				try:

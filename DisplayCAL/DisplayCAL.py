@@ -27,7 +27,6 @@ import sys
 import datetime
 import decimal
 Decimal = decimal.Decimal
-import glob
 import math
 import os
 import platform
@@ -102,8 +101,9 @@ from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
 from util_io import LineCache, StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
-from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
-					 launch_file, listdir_re, waccess, dlopen, which)
+from util_os import (dlopen, expanduseru, get_program_file, getenvu,
+					 is_superuser, launch_file, listdir_re, safe_glob, waccess,
+					 which)
 from util_str import (ellipsis, make_filename_safe, safe_str, safe_unicode,
 					  strtr, universal_newlines, wrap)
 import util_x
@@ -4202,7 +4202,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					wildcard = os.path.join(getenvu("PROGRAMFILES", ""), 
 											"ColorVision", "Spyder2*", 
 											"CVSpyder.dll")
-				for path in glob.glob(wildcard):
+				for path in safe_glob(wildcard):
 					break
 			if getcfg("dry_run"):
 				return
@@ -10937,7 +10937,7 @@ class MainFrame(ReportFrame, BaseFrame):
 													  capture_output=True,
 													  skip_scripts=True)
 						if result and not isinstance(result, Exception):
-							for path in glob.glob(os.path.join(os.path.sep,
+							for path in safe_glob(os.path.join(os.path.sep,
 															   "Volumes",
 															   "iColorDisplay*",
 															   "iColorDisplay*.app",
@@ -11076,48 +11076,48 @@ class MainFrame(ReportFrame, BaseFrame):
 			if importers.get("icd"):
 				# Look for iColorDisplay
 				if sys.platform == "win32":
-					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""),
 													"Quato", "iColorDisplay",
 													"DeviceCorrections.txt"))
 				elif sys.platform == "darwin":
-					paths += glob.glob(os.path.join(os.path.sep, "Applications", 
+					paths += safe_glob(os.path.join(os.path.sep, "Applications", 
 												   "iColorDisplay*.app",
 												   "DeviceCorrections.txt"))
-					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
 													"iColorDisplay*", 
 													"iColorDisplay*.app",
 													"DeviceCorrections.txt"))
 			if importers.get("i1d3") and (oeminst or i1d3ccss) and not i1d3:
 				# Look for *.edr files
 				if sys.platform == "win32":
-					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 													"X-Rite", "Devices", "i1d3", 
 													"Calibrations", "*.edr"))
 				elif sys.platform == "darwin":
-					paths += glob.glob(os.path.join(os.path.sep, "Library", 
+					paths += safe_glob(os.path.join(os.path.sep, "Library", 
 												   "Application Support", "X-Rite", 
 												   "Devices", "i1d3xrdevice", 
 												   "Contents", "Resources", 
 												   "Calibrations", "*.edr"))
-					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
 													"i1Profiler", "*.exe"))
-					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
 													"ColorMunki Display", "*.exe"))
 			if importers.get("spyd4") and (oeminst or spyd4en) and not spyd4:
 				# Look for dccmtr.dll
 				if sys.platform == "win32":
-					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 												   "Datacolor", "Spyder4*", 
 												   "dccmtr.dll"))
-					paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 												   "Datacolor", "Spyder5*", 
 												   "dccmtr.dll"))
 				elif sys.platform == "darwin":
 					# Look for setup.exe on CD-ROM
-					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
 												   "Datacolor", "Data",
 												   "setup.exe"))
-					paths += glob.glob(os.path.join(os.path.sep, "Volumes", 
+					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
 													"Datacolor_ISO", "Data",
 													"setup.exe"))
 		for path in paths:
@@ -11922,12 +11922,12 @@ class MainFrame(ReportFrame, BaseFrame):
 						os.listdir(dirname)]
 		dirfilenames.sort()
 		# Select filenames
-		filenames = (glob.glob(path_name + "*") +
-					 glob.glob(os.path.join(dirname, "*.ccmx")) +
-					 glob.glob(os.path.join(dirname, "*.ccss")) +
-					 glob.glob(os.path.join(dirname, "0_16.ti1")) +
-					 glob.glob(os.path.join(dirname, "0_16.ti3")) +
-					 glob.glob(os.path.join(dirname, "0_16.log")))
+		filenames = (safe_glob(path_name + "*") +
+					 safe_glob(os.path.join(dirname, "*.ccmx")) +
+					 safe_glob(os.path.join(dirname, "*.ccss")) +
+					 safe_glob(os.path.join(dirname, "0_16.ti1")) +
+					 safe_glob(os.path.join(dirname, "0_16.ti3")) +
+					 safe_glob(os.path.join(dirname, "0_16.log")))
 		# Remove duplicates & sort
 		filenames = sorted(set(filenames))
 		lut3d_ext = ["." + strtr(lut3d_format, {"eeColor": "txt",
@@ -12810,36 +12810,36 @@ class MainFrame(ReportFrame, BaseFrame):
 		if sys.platform != "darwin":
 			if "l" in scope:
 				for commonappdata in config.commonappdata:
-					data_files += glob.glob(os.path.join(commonappdata, "color",
+					data_files += safe_glob(os.path.join(commonappdata, "color",
 														 wildcard))
-					data_files += glob.glob(os.path.join(commonappdata, "ArgyllCMS",
+					data_files += safe_glob(os.path.join(commonappdata, "ArgyllCMS",
 														 wildcard))
 			if "u" in scope:
-				data_files += glob.glob(os.path.join(config.appdata, "color",
+				data_files += safe_glob(os.path.join(config.appdata, "color",
 													 wildcard))
 		else:
 			if "l" in scope:
-				data_files += glob.glob(os.path.join(config.library, "color",
+				data_files += safe_glob(os.path.join(config.library, "color",
 													 wildcard))
-				data_files += glob.glob(os.path.join(config.library, "ArgyllCMS",
+				data_files += safe_glob(os.path.join(config.library, "ArgyllCMS",
 													 wildcard))
 				if (self.worker.argyll_version >= [1, 9] and
 					self.worker.argyll_version <= [1, 9, 1]):
 					# Argyll CMS 1.9 and 1.9.1 use *nix locations due to a
 					# configuration problem
-					data_files += glob.glob(os.path.join("/usr/local/share",
+					data_files += safe_glob(os.path.join("/usr/local/share",
 														 "ArgyllCMS", wildcard))
 			if "u" in scope:
-				data_files += glob.glob(os.path.join(config.library_home, "color",
+				data_files += safe_glob(os.path.join(config.library_home, "color",
 													 wildcard))
 				if (self.worker.argyll_version >= [1, 9] and
 					self.worker.argyll_version <= [1, 9, 1]):
 					# Argyll CMS 1.9 and 1.9.1 use *nix locations due to a
 					# configuration problem
-					data_files += glob.glob(os.path.join(config.home, ".local", "share",
+					data_files += safe_glob(os.path.join(config.home, ".local", "share",
 														 "ArgyllCMS", wildcard))
 		if "u" in scope:
-			data_files += glob.glob(os.path.join(config.appdata, "ArgyllCMS",
+			data_files += safe_glob(os.path.join(config.appdata, "ArgyllCMS",
 												 wildcard))
 		if include_lastmod:
 			filenames = list(data_files)
@@ -13882,8 +13882,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					if trc and not black_point_correction:
 						setcfg("calibration.black_point_correction.auto", 1)
 				if not ccmx:
-					ccxx = (glob.glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
-							glob.glob(os.path.join(os.path.dirname(path), "*.ccss")))
+					ccxx = (safe_glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
+							safe_glob(os.path.join(os.path.dirname(path), "*.ccss")))
 					if ccxx and len(ccxx) == 1:
 						ccmx = ccxx[0]
 						update_ccmx_items = True

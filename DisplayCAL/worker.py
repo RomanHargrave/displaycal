@@ -6,7 +6,6 @@ from binascii import hexlify
 import atexit
 import ctypes
 import getpass
-import glob
 import httplib
 import math
 import mimetypes
@@ -124,9 +123,9 @@ elif sys.platform == "win32":
 		safe_print("Error - could not import WMI:", exception)
 		wmi = None
 import colord
-from util_os import (expanduseru, fname_ext, getenvu, is_superuser, launch_file,
-					 make_win32_compatible_long_path, mksfile, mkstemp_bypath,
-					 quote_args, dlopen, which)
+from util_os import (dlopen, expanduseru, fname_ext, getenvu, is_superuser,
+					 launch_file, make_win32_compatible_long_path, mksfile,
+					 mkstemp_bypath, quote_args, safe_glob, which)
 if sys.platform not in ("darwin", "win32"):
 	from util_os import getgroups
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
@@ -2308,7 +2307,7 @@ class Worker(WorkerBase):
 			else:
 				fn = get_data_path
 			if os.path.isdir("/etc/udev/rules.d"):
-				if glob.glob("/dev/bus/usb/*/*"):
+				if safe_glob("/dev/bus/usb/*/*"):
 					# USB and serial instruments using udev, where udev 
 					# already creates /dev/bus/usb/00X/00X devices
 					filenames.append(fn("usb/55-Argyll.rules"))

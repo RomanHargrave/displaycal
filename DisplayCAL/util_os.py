@@ -44,6 +44,9 @@ if sys.platform == "win32":
 	from win32file import *
 	from winioctlcon import FSCTL_GET_REPARSE_POINT
 
+# Cache used for safe_shell_filter() function
+_cache = {}
+_MAXCACHE = 100
 
 FILE_ATTRIBUTE_REPARSE_POINT = 1024
 SYMBOLIC_LINK = 'symbolic'
@@ -379,9 +382,9 @@ def get_program_file(name, foldername):
 	""" Get path to program file """
 	if sys.platform == "win32":
 		paths = getenvu("PATH", os.defpath).split(os.pathsep)
-		paths += glob.glob(os.path.join(getenvu("PROGRAMFILES", ""),
+		paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""),
 										foldername))
-		paths += glob.glob(os.path.join(getenvu("PROGRAMW6432", ""),
+		paths += safe_glob(os.path.join(getenvu("PROGRAMW6432", ""),
 										foldername))
 		exe_ext = ".exe"
 	else:
@@ -714,6 +717,141 @@ def relpath(path, start):
 		return os.path.sep.join(path[len(start):])
 	elif start[:len(path)] == path:
 		return os.path.sep.join([".."] * (len(start) - len(path)))
+
+
+def safe_glob(pathname):
+	"""
+	Return a list of paths matching a pathname pattern.
+
+	The pattern may contain simple shell-style wildcards a la
+	fnmatch. However, unlike fnmatch, filenames starting with a
+	dot are special cases that are not matched by '*' and '?'
+	patterns.
+
+	Like fnmatch.glob, but suppresses re.compile errors by escaping
+	uncompilable path components.
+
+	See https://bugs.python.org/issue738361
+
+	"""
+	return list(safe_iglob(pathname))
+
+
+def safe_iglob(pathname):
+	"""
+	Return an iterator which yields the paths matching a pathname pattern.
+
+	The pattern may contain simple shell-style wildcards a la
+	fnmatch. However, unlike fnmatch, filenames starting with a
+	dot are special cases that are not matched by '*' and '?'
+	patterns.
+
+	Like fnmatch.iglob, but suppresses re.compile errors by escaping
+	uncompilable path components.
+	
+	See https://bugs.python.org/issue738361
+
+	"""
+	dirname, basename = os.path.split(pathname)
+	if not glob.has_magic(pathname):
+		if basename:
+			if os.path.lexists(pathname):
+				yield pathname
+		else:
+			# Patterns ending with a slash should match only directories
+			if os.path.isdir(dirname):
+				yield pathname
+		return
+	if not dirname:
+		for name in safe_glob1(os.curdir, basename):
+			yield name
+		return
+	# `os.path.split()` returns the argument itself as a dirname if it is a
+	# drive or UNC path.  Prevent an infinite recursion if a drive or UNC path
+	# contains magic characters (i.e. r'\\?\C:').
+	if dirname != pathname and glob.has_magic(dirname):
+		dirs = safe_iglob(dirname)
+	else:
+		dirs = [dirname]
+	if glob.has_magic(basename):
+		glob_in_dir = safe_glob1
+	else:
+		glob_in_dir = glob.glob0
+	for dirname in dirs:
+		for name in glob_in_dir(dirname, basename):
+			yield os.path.join(dirname, name)
+
+
+def safe_glob1(dirname, pattern):
+	if not dirname:
+		dirname = os.curdir
+	if isinstance(pattern, unicode) and not isinstance(dirname, unicode):
+		dirname = unicode(dirname, sys.getfilesystemencoding() or
+								   sys.getdefaultencoding())
+	try:
+		names = os.listdir(dirname)
+	except os.error:
+		return []
+	if pattern[0] != '.':
+		names = filter(lambda x: x[0] != '.', names)
+	return safe_shell_filter(names, pattern)
+
+
+def safe_shell_filter(names, pat):
+	"""
+	Return the subset of the list NAMES that match PAT
+
+	Like fnmatch.filter, but suppresses re.compile errors by escaping
+	uncompilable path components.
+	
+	See https://bugs.python.org/issue738361
+	
+	"""
+	import posixpath
+	result = []
+	pat = os.path.normcase(pat)
+	try:
+		re_pat = _cache[pat]
+	except KeyError:
+		res = safe_translate(pat)
+		if len(_cache) >= _MAXCACHE:
+			_cache.clear()
+		_cache[pat] = re_pat = re.compile(res)
+	match = re_pat.match
+	if os.path is posixpath:
+		# normcase on posix is NOP. Optimize it away from the loop.
+		for name in names:
+			if match(name):
+				result.append(name)
+	else:
+		for name in names:
+			if match(os.path.normcase(name)):
+				result.append(name)
+	return result
+
+
+def safe_translate(pat):
+	"""
+	Translate a shell PATTERN to a regular expression.
+
+	Like fnmatch.translate, but suppresses re.compile errors by escaping
+	uncompilable path components.
+	
+	See https://bugs.python.org/issue738361
+	
+	"""
+	if isinstance(getattr(os.path, "altsep", None), basestring):
+		# Normalize path separators
+		pat = pat.replace(os.path.altsep, os.path.sep)
+	components = pat.split(os.path.sep)
+	for i, component in enumerate(components):
+		translated = fnmatch.translate(component)
+		try:
+			re.compile(translated)
+		except re.error:
+			translated = re.escape(component)
+		components[i] = translated
+	return re.escape(os.path.sep).join(components)
 
 
 def waccess(path, mode):
