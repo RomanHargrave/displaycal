@@ -3405,14 +3405,19 @@ class CurveType(ICCProfileTag, list):
 		if not size:
 			size = len(self) or 1024
 		if size == 1:
+			if callable(power):
+				power = colormath.get_gamma([(0.5, power(0.5))])
 			if power >= 0.0 and not vmin:
 				self[:] = [power]
 				return
 			else:
 				size = 1024
 		self[:] = []
+		if not callable(power):
+			exp = power
+			power = lambda a: colormath.specialpow(a, exp)
 		for i in xrange(0, size):
-			self.append(vmin + colormath.specialpow(float(i) / (size - 1), power) * (vmax - vmin))
+			self.append(vmin + power(float(i) / (size - 1)) * (vmax - vmin))
 	
 	def smooth_cr(self, length=64):
 		"""
@@ -5074,20 +5079,37 @@ class ICCProfile:
 							tag.X, tag.Y, tag.Z = XYZ
 						gamma = measurement_data.find("GammaOffsetGainLinearGain")
 						if gamma is None:
-							gamma = measurement_data.find("Gamma")
+							gamma = measurement_data.find("GammaOffsetGain")
 						if gamma is not None:
-							if (gamma.get("Gamma") == "2.4" and
-								gamma.get("Offset") == "0.055" and
-								gamma.get("Gain") == "%.6f" % (1 / 1.055) and
-								gamma.get("LinearGain") == "12.92" and
-								gamma.get("TransitionPoint") == "0.04045"):
-								# sRGB
-								power = -2.4
-							else:
+							params = {"Gamma": 1,
+									  "Offset": 0,
+									  "Gain": 1,
+									  "LinearGain": 1,
+									  "TransitionPoint": -1}
+							for att in params.keys():
+								try:
+									params[att] = float(gamma.get(att))
+								except (TypeError, ValueError):
+									if (att not in ("LinearGain",
+												    "TransitionPoint") or
+										gamma.tag != "GammaOffsetGain"):
+										raise ICCProfileInvalidError("Invalid WCS profile")
+							def power(a):
+								if a <= params["TransitionPoint"]:
+									v = a / params["LinearGain"]
+								else:
+									v = math.pow((a + params["Offset"]) *
+												 params["Gain"],
+												 params["Gamma"])
+								return v
+						else:
+							gamma = measurement_data.find("Gamma")
+							if gamma is not None:
 								try:
 									power = float(gamma.get("value"))
 								except (TypeError, ValueError):
 									raise ICCProfileInvalidError("Invalid WCS profile")
+						if gamma is not None:
 							self.set_trc_tags(True, power)
 				if it.root.tag == "ColorDeviceModel":
 					ms00 = WcsProfilesTagType("", "MS00", self)
@@ -5651,7 +5673,8 @@ class ICCProfile:
 			else:
 				tag = CurveType(profile=self)
 				if power:
-					tag.set_trc(power, size=1 if power >= 0 else 1024)
+					tag.set_trc(power, size=1 if not callable(power) and
+												 power >= 0 else 1024)
 			self.tags["%sTRC" % channel] = tag
 	
 	def set_localizable_desc(self, tagname, description, languagecode="en",
