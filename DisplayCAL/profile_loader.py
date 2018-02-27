@@ -614,7 +614,8 @@ if sys.platform == "win32":
 			list_ctrl.Bind(wx.EVT_LIST_ITEM_ACTIVATED,
 						   lambda e: dlg.EndModal(wx.ID_OK))
 			profiles = []
-			for pth in safe_glob(os.path.join(iccprofiles[0], "*.ic[cm]")):
+			for pth in (safe_glob(os.path.join(iccprofiles[0], "*.ic[cm]")) +
+						safe_glob(os.path.join(iccprofiles[0], "*.cdmp"))):
 				try:
 					profile = ICCP.ICCProfile(pth)
 				except ICCP.ICCProfileInvalidError, exception:
@@ -2081,7 +2082,7 @@ class ProfileLoader(object):
 								self.profiles[key].tags.get("vcgt")
 							except Exception, exception:
 								safe_print(exception)
-								continue
+								self.profiles[key] = ICCP.ICCProfile()
 						profile = self.profiles[key]
 						if isinstance(profile.tags.get("vcgt"),
 									  ICCP.VideoCardGammaType):
@@ -2289,7 +2290,9 @@ class ProfileLoader(object):
 					win32gui.DeleteDC(hdc)
 				self.setgammaramp_success[i] = (result and
 												not isinstance(result,
-															   Exception))
+															   Exception) and
+												(self._reset_gamma_ramps or
+												 bool(self.profiles.get(key))))
 				if (self._manual_restore or profile_association_changed or
 					(not hwnds_pids_changed and
 					 getcfg("profile_loader.check_gamma_ramps"))):
