@@ -679,7 +679,7 @@ if sys.platform == "win32":
 				profile = ICCP.ICCProfile(self.profiles[pindex])
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
 				show_result_dialog(Error(lang.getstr("profile.invalid") + 
-										 "\n" + profile), self)
+										 "\n" + self.profiles[pindex]), self)
 				return
 			if profile.ID == "\0" * 16:
 				id = profile.calculateID(False)
