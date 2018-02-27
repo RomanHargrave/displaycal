@@ -4432,6 +4432,8 @@ class WcsProfilesTagType(ICCProfileTag, ADict):
 		for i, modelname in enumerate(["ColorDeviceModel",
 									   "ColorAppearanceModel", "GamutMapModel"]):
 			j = i * 8
+			if len(tagData) < 16 + j:
+				break
 			offset = uInt32Number(tagData[8 + j:12 + j])
 			size = uInt32Number(tagData[12 + j:16 + j])
 			if offset and size:
@@ -4989,7 +4991,7 @@ class ICCProfile:
 			data = None
 			
 			if type(profile) in (str, unicode):
-				if profile.find("\0") < 0:
+				if profile.find("\0") < 0 and not profile.startswith("<"):
 					# filename
 					if (not os.path.isfile(profile) and
 						not os.path.sep in profile and
@@ -5018,12 +5020,90 @@ class ICCProfile:
 			
 			if not data or len(data) < 128:
 				raise ICCProfileInvalidError("Not enough data")
+
+			if data[:5] == "<?xml" or data[:10] == "<\0?\0x\0m\0l\0":
+				# Microsoft WCS profile
+				from StringIO import StringIO
+				from xml.etree import ElementTree
+				self.fileName = None
+				self._data = data
+				self.load()
+				data = self._data
+				self._data = ""
+				self.set_defaults()
+				it = ElementTree.iterparse(StringIO(data))
+				try:
+					for event, elem in it:
+						# Strip all namespaces
+						elem.tag = elem.tag.split('}', 1)[-1]
+				except ElementTree.ParseError:
+					raise ICCProfileInvalidError("Invalid WCS profile")
+				desc = it.root.find("Description")
+				if desc is not None:
+					desc = desc.find("Text")
+					if desc is not None:
+						self.setDescription(safe_unicode(desc.text, "UTF-8"))
+				author = it.root.find("Author")
+				if author is not None:
+					author = author.find("Text")
+					if author is not None:
+						self.setCopyright(safe_unicode(author.text, "UTF-8"))
+				device = it.root.find("RGBVirtualDevice")
+				if device is not None:
+					measurement_data = device.find("MeasurementData")
+					if measurement_data is not None:
+						for color in ("White", "Red", "Green", "Blue", "Black"):
+							prim = measurement_data.find(color + "Primary")
+							if prim is None:
+								continue
+							XYZ = []
+							for component in "XYZ":
+								try:
+									XYZ.append(float(prim.get(component)) / 100.0)
+								except (TypeError, ValueError):
+									raise ICCProfileInvalidError("Invalid WCS profile")
+							if color == "White":
+								tag_name = "wtpt"
+							elif color == "Black":
+								tag_name = "bkpt"
+							else:
+								XYZ = colormath.adapt(*XYZ,
+													  whitepoint_source=self.tags.wtpt.values())
+								tag_name = color[0].lower() + "XYZ"
+							tag = self.tags[tag_name] = XYZType(profile=self)
+							tag.X, tag.Y, tag.Z = XYZ
+						gamma = measurement_data.find("GammaOffsetGainLinearGain")
+						if gamma is None:
+							gamma = measurement_data.find("Gamma")
+						if gamma is not None:
+							if (gamma.get("Gamma") == "2.4" and
+								gamma.get("Offset") == "0.055" and
+								gamma.get("Gain") == "%.6f" % (1 / 1.055) and
+								gamma.get("LinearGain") == "12.92" and
+								gamma.get("TransitionPoint") == "0.04045"):
+								# sRGB
+								power = -2.4
+							else:
+								try:
+									power = float(gamma.get("value"))
+								except (TypeError, ValueError):
+									raise ICCProfileInvalidError("Invalid WCS profile")
+							self.set_trc_tags(True, power)
+				if it.root.tag == "ColorDeviceModel":
+					ms00 = WcsProfilesTagType("", "MS00", self)
+					ms00["ColorDeviceModel"] = it.root
+					vcgt = ms00.get_vcgt()
+					if vcgt:
+						self.tags["vcgt"] = vcgt
+				self.size = len(self.data)
+				return
 			
 			if data[36:40] != "acsp":
 				raise ICCProfileInvalidError("Profile signature mismatch - "
 											 "expected 'acsp', found '" + 
 											 data[36:40] + "'")
 			
+			# ICC profile
 			header = data[:128]
 			self.size = uInt32Number(header[0:4])
 			self.preferredCMM = header[4:8]
@@ -5064,6 +5144,10 @@ class ICCProfile:
 			if load:
 				self.tags
 		else:
+			self.set_defaults()
+
+	def set_defaults(self):
+		if not hasattr(self, "version"):
 			# Default to RGB display device profile
 			self.preferredCMM = ""
 			self.version = 2.4
@@ -5560,12 +5644,14 @@ class ICCProfile:
 			self.apply_black_offset([v / white_cdm2 for v in XYZbp],
 									40.0 * (white_cdm2 / 100.0))
 
-	def set_trc_tags(self, identical=False):
+	def set_trc_tags(self, identical=False, power=None):
 		for channel in "rgb":
 			if identical and channel != "r":
 				tag = self.tags.rTRC
 			else:
 				tag = CurveType(profile=self)
+				if power:
+					tag.set_trc(power, size=1 if power >= 0 else 1024)
 			self.tags["%sTRC" % channel] = tag
 	
 	def set_localizable_desc(self, tagname, description, languagecode="en",
