@@ -483,6 +483,12 @@
                                     </object>
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
                                   </object>
+                                  <object class="spacer"/>
+                                  <object class="sizeritem">
+                                    <object class="StaticFancyText" name="display_instrument_info_text_spacer">
+                                      <label>&#160;</label>
+                                    </object>
+                                  </object>
                                   <object class="sizeritem">
                                     <object class="wxStaticBitmap">
                                       <bitmap>../theme/icons/32x32/dialog-information.png</bitmap>
@@ -496,7 +502,7 @@
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
                                   </object>
                                   <cols>2</cols>
-                                  <vgap>12</vgap>
+                                  <vgap>0</vgap>
                                   <hgap>12</hgap>
                                   <growablecols>1</growablecols>
                                   <growablerows>1</growablerows>
