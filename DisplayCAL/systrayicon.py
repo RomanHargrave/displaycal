@@ -202,6 +202,8 @@ class SysTrayIcon(wx.EvtHandler):
 		return menu
 
 	def OnCommand(self, hwnd, msg, wparam, lparam):
+		if not self.menu:
+			return
 		event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
 		event.Id = win32api.LOWORD(wparam)
 		item = _get_selected_menu_item(event.Id, self.menu)
