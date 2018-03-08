@@ -4716,7 +4716,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 		except ValueError:
 			# XML parsing error, strip all tags
 			self._label = re.sub(r"<[^>]*?>", "", self._label)
-			self._label = self._label.replace("<", "")._label.replace(">", "")
+			self._label = self._label.replace("<", "").replace(">", "")
 			bmp = fancytext.RenderToBitmap(self._label, background)
 		if sys.platform == "win32":
 			self._enabledbitmap = bmp
