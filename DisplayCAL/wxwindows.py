@@ -5913,7 +5913,10 @@ class TabButton(PlateButton):
 	def OnFocus(self, evt):
 		"""Set the visual focus state if need be"""
 		if self._pressed:
-			self.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or evt.Skip()
+			# Skip focus over to next control if it came from another control
+			if isinstance(evt, wx.FocusEvent) and isinstance(evt.GetWindow(),
+															 wx.Control):
+				self.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or evt.Skip()
 		elif self._state['cur'] == platebtn.PLATE_NORMAL:
 			self._SetState(platebtn.PLATE_HIGHLIGHT)
 
