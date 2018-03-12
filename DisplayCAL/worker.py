@@ -12383,7 +12383,8 @@ BEGIN_DATA
 					noredir = urllib2.build_opener(NoHTTPRedirectHandler)
 					hashes = noredir.open("https://%s/sha256sums.txt" %
 										  domain.lower())
-			except (urllib2.URLError, CertificateError, SSLError), exception:
+			except (socket.error, urllib2.URLError, httplib.HTTPException,
+				    CertificateError, SSLError), exception:
 				if response:
 					response.close()
 				if "CERTIFICATE_VERIFY_FAILED" in safe_str(exception):

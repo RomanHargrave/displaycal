@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import with_statement
+import httplib
 import os
 import re
+import socket
 import string
 import urllib2
 
@@ -125,7 +127,8 @@ class Tag(object):
 					_safe_print("Requesting:", url)
 					try:
 						response = urllib2.urlopen(url)
-					except urllib2.URLError, exception:
+					except (socket.error, urllib2.URLError,
+							httplib.HTTPException), exception:
 						_safe_print(exception)
 					else:
 						body = response.read()
