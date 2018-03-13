@@ -1810,12 +1810,17 @@ class Worker(WorkerBase):
 	def add_measurement_features(self, args, display=True,
 								 ignore_display_name=False,
 								 allow_nondefault_observer=False,
-								 ambient=False, allow_video_levels=True):
+								 ambient=False, allow_video_levels=True,
+								 quantize=False):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
 		if display and allow_video_levels:
 			self.add_video_levels_arg(args)
+		if (display and quantize and not get_arg("-Z", args) and
+			getcfg("patterngenerator.quantize_bits")):
+			# dispread only
+			args.append("-Z%i" % getcfg("patterngenerator.quantize_bits"))
 		if not get_arg("-c", args):
 			args.append("-c%s" % getcfg("comport.number"))
 		instrument_name = self.get_instrument_name()
@@ -10236,7 +10241,8 @@ usage: spotread [-options] [logfile]
 		if getcfg("argyll.debug"):
 			args.append("-D8")
 		result = self.add_measurement_features(args,
-											   allow_nondefault_observer=is_ccxx_testchart())
+											   allow_nondefault_observer=is_ccxx_testchart(),
+											   quantize=True)
 		if isinstance(result, Exception):
 			return result, None
 		if apply_calibration is not False:
@@ -12770,7 +12776,8 @@ BEGIN_DATA
 		result = self.add_measurement_features(args,
 											   cmd == get_argyll_util("dispread"),
 											   allow_nondefault_observer=is_ccxx_testchart(),
-											   allow_video_levels=allow_video_levels)
+											   allow_video_levels=allow_video_levels,
+											   quantize=True)
 		if isinstance(result, Exception):
 			return result
 		self.options_dispread = list(args)
