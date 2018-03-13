@@ -6872,15 +6872,44 @@ class MainFrame(ReportFrame, BaseFrame):
 				safe_print(lang.getstr("success"))
 				result = self.measurement_file_check_confirm(ti3_measured)
 		
-		# cleanup
-		self.worker.wrapup(False if not isinstance(result, Exception)
-						   else result)
-		
 		if isinstance(result, Exception) or not result:
 			if isinstance(result, Exception):
 				wx.CallAfter(show_result_dialog, result,
 							 getattr(self, "reportframe", self))
+		
+			# cleanup
+			self.worker.wrapup(False if not isinstance(result, Exception)
+							   else result)
 			return
+
+		# Determine quantization
+		qbits = None
+		if config.get_display_name() != "Untethered":
+			args = []
+			if getcfg("extra_args.dispread").strip():
+				args += parse_argument_string(getcfg("extra_args.dispread"))
+			self.worker.add_measurement_features(args, True,
+												 allow_video_levels=True,
+												 quantize=True)
+			quantize_arg = get_arg("-Z", args)
+			if quantize_arg:
+				try:
+					if arg == "-Z":
+						# Next arg is quantization bit depth
+						qbits = int(args[quantize_arg[0] + 1])
+					else:
+						# Quantization bit depth is part of arg string
+						qbits = int(quantize_arg[1][2:])
+				except (IndexError, TypeError, ValueError):
+					pass
+			elif "-E" in args:
+				qbits = 8  # ArgyllCMS default for video encoding (see dispread doc)
+		if qbits:
+			safe_print("Quantizing reference device values to %i bits" % qbits)
+			ti3_ref.quantize_device_values(qbits)
+
+		# Keep around ref TI3 for diagnostic purposes
+		ti3_ref.write(os.path.splitext(ti3_path)[0] + "_ref.ti3")
 		
 		# Account for additional white patches
 		white_rgb = {'RGB_R': 100, 'RGB_G': 100, 'RGB_B': 100}
@@ -7002,6 +7031,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		for i in ti3_joined.DATA:
 			for color in labels_xyz:
 				ti3_joined.DATA[i][color] = ti3_measured.DATA[i + offset][color]
+		
+		# cleanup
+		self.worker.wrapup(False if not isinstance(result, Exception)
+						   else result)
 		
 		wtpt_profile_norm = tuple(n * 100 for n in profile.tags.wtpt.values())
 		if isinstance(profile.tags.get("chad"), ICCP.chromaticAdaptionTag):
