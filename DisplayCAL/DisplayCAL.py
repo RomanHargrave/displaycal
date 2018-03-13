@@ -11424,12 +11424,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.output_levels_auto.Show(show_levels_config)
 		self.output_levels_full_range.Show(show_levels_config)
 		self.output_levels_limited_range.Show(show_levels_config)
-		if getcfg("patterngenerator.detect_video_levels"):
-			self.output_levels_auto.SetValue(True)
-		else:
-			use_video_levels = bool(getcfg("patterngenerator.use_video_levels"))
-			self.output_levels_full_range.SetValue(not use_video_levels)
-			self.output_levels_limited_range.SetValue(use_video_levels)
+		self.update_output_levels_ctrl()
 		# Check if display is calibratable at all. Unset calibration update
 		# checkbox if this is not the case.
 		if config.is_uncalibratable_display():
@@ -11461,6 +11456,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				getcfg("testchart.file") == "auto"):
 				# Untethered does not support auto-optimization
 				self.set_testchart()
+
+	def update_output_levels_ctrl(self):
+		if getcfg("patterngenerator.detect_video_levels"):
+			self.output_levels_auto.SetValue(True)
+		else:
+			use_video_levels = bool(getcfg("patterngenerator.use_video_levels"))
+			self.output_levels_full_range.SetValue(not use_video_levels)
+			self.output_levels_limited_range.SetValue(use_video_levels)
 	
 	def display_delay_handler(self, event):
 		mapping = {self.override_min_display_update_delay_ms.GetId(): "measure.override_min_display_update_delay_ms",
@@ -13911,6 +13914,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							continue
 						if o[0] == "E":
 							setcfg("patterngenerator.use_video_levels", 1)
+							self.update_output_levels_ctrl()
 							continue
 					if trc and not black_point_correction:
 						setcfg("calibration.black_point_correction.auto", 1)
