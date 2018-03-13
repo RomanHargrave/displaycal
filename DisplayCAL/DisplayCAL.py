@@ -6894,7 +6894,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			quantize_arg = get_arg("-Z", args)
 			if quantize_arg:
 				try:
-					if arg == "-Z":
+					if quantize_arg[1] == "-Z":
 						# Next arg is quantization bit depth
 						qbits = int(args[quantize_arg[0] + 1])
 					else:
