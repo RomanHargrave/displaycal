@@ -60,7 +60,7 @@ BuildRequires:  lib64xorg-x11-devel
 BuildRequires:  libxorg-x11-devel
 %endif
 Requires:       argyllcms
-Requires:       pygame
+Requires:       libsdl2_mixer2.0_0
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
 %else
@@ -75,7 +75,7 @@ BuildRequires:  pkgconfig(xrandr)
 BuildRequires:  pkgconfig(xxf86vm)
 Requires:       argyllcms
 Requires:       python-numpy >= %{numpy_version}
-Requires:       python-pygame
+Requires:       libSDL2_mixer-2_0-0
 Requires:       python-wxGTK >= %{wx_minversion}
 %py_requires
 %else
@@ -90,7 +90,7 @@ BuildRequires:  udev
 Requires:       argyllcms
 Requires:       numpy >= %{numpy_version}
 Requires:       p7zip-plugins
-Requires:       pygame
+Requires:       SDL2_mixer
 Requires:       wxPython >= %{wx_minversion}
 %else
 # Mageia
@@ -103,7 +103,7 @@ BuildRequires:  libxxf86vm-devel
 BuildRequires:  libpython-devel
 BuildRequires:  udev
 Requires:       argyllcms
-Requires:       pygame
+Requires:       libsdl2_mixer2.0_0
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPython >= %{wx_minversion}
 %endif

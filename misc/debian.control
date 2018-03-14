@@ -8,7 +8,7 @@ XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
 Package: ${DEBPACKAGE}
 Architecture: any
-Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}, python-wxgtk3.0 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), python-pygame
+Depends: ${shlibs:Depends}, ${python:Depends}, ${misc:Depends}, python-wxgtk3.0 (>= ${WX_MINVERSION}), python-numpy (>= 1.0), libsdl2-mixer-2.0-0, libxss1
 Conflicts: dispcalgui, dispcalgui-0install, ${DEBPACKAGE}-0install
 Replaces: dispcalgui, dispcalgui-0install, ${DEBPACKAGE}-0install
 Recommends: argyll

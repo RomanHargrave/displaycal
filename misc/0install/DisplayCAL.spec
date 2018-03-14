@@ -57,7 +57,7 @@ Obsoletes:      dispcalGUI < 3.1.0.0
 Obsoletes:      dispcalGUI-0install < 3.1.0.0
 %if 0%{?mandriva_version} > 0
 Requires:       libxscrnsaver1
-Requires:       pygame
+Requires:       libsdl2_mixer2.0_0
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
@@ -67,7 +67,7 @@ BuildRequires:  update-desktop-files
 BuildRequires:  zeroinstall-injector
 Requires:       libXss1
 Requires:       python-numpy >= %{numpy_version}
-Requires:       python-pygame
+Requires:       libSDL2_mixer-2_0-0
 Requires:       python-wxGTK >= %{wx_minversion}
 Requires:       zeroinstall-injector
 %py_requires
@@ -76,7 +76,7 @@ Requires:       zeroinstall-injector
 Requires:       libXScrnSaver
 Requires:       numpy >= %{numpy_version}
 Requires:       p7zip-plugins
-Requires:       pygame
+Requires:       SDL2_mixer
 Requires:       wxPython >= %{wx_minversion}
 %if 0%{?fedora_version} < 19
 Requires:       zeroinstall-injector
