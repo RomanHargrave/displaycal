@@ -16,8 +16,8 @@ sound.Play(fade_ms=1000)
 
 """
 
-from ctypes import (CFUNCTYPE, POINTER, Structure, c_int, c_uint8, c_uint32,
-					c_void_p)
+from ctypes import (CFUNCTYPE, POINTER, Structure, c_int, c_uint8, c_uint16,
+					c_uint32, c_void_p)
 import sys
 import threading
 import time
