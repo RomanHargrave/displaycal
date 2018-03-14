@@ -342,15 +342,17 @@ class _Sound(object):
 						sdl2.sdlmixer.Mix_Playing(self._ch))
 		return self._is_playing
 
-	def play(self, fade_ms=0):
+	def play(self, fade_ms=0, stop_already_playing=True):
 		if self._snd:
 			volume = self.volume
-			self.stop()
+			if stop_already_playing:
+				self.stop()
 			if self._lib == "pyglet":
 				# Can't reuse the player, won't replay the sound under Mac OS X
 				# and Linux even when seeking to start position which allows
 				# replaying the sound under Windows.
-				self._ch.delete()
+				if stop_already_playing:
+					self._ch.delete()
 				self._ch = pyglet.media.Player()
 				self.volume = volume
 			if not self.is_playing and fade_ms and volume == 1:
