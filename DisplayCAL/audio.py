@@ -3,12 +3,10 @@
 """
 Audio wrapper module
 
-Can use pygame, pyglet, pyo or wx.
-pyglet or pygame will be used by default if available.
+Can use SDL, pyglet, pyo or wx.
+pyglet or SDL will be used by default if available.
 pyglet can only be used if version >= 1.2.2 is available.
 pyo is still buggy under Linux and has a few quirks under Windows.
-pyglet seems like the best bet in the long run as pygame development is stagnant
-since 2009.
 wx doesn't support fading, changing volume, multiple concurrent sounds, and
 only supports wav format.
 
@@ -22,7 +20,16 @@ import sys
 import threading
 import time
 
+if sys.platform == "win32":
+	try:
+		import win32api
+		import pywintypes
+	except ImportError:
+		win32api = None
+
+from config import get_data_path
 from log import safe_print
+from util_os import dlopen
 from util_str import safe_str
 
 
@@ -40,47 +47,20 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	# Note on buffer size: Too high values cause crackling during fade, too low
 	# values cause choppy playback of ogg files when using pyo (good value for
 	# pyo is >= 2048)
-	global _initialized, _lib, _lib_version, _server, pygame, pyglet, pyo, sdl2, wx
+	global _initialized, _lib, _lib_version, _server, pyglet, pyo, sdl, wx
 	if _initialized and not reinit:
 		# To re-initialize, explicitly set reinit to True
 		return
 	# Select the audio library we're going to use.
-	# User choice or pyglet > pygame > pyo > wx
+	# User choice or SDL > pyglet > pyo > wx
 	if not lib:
-		if sys.platform in ("darwin", "win32"):
-			# Mac OS X, Windows
-			libs = ("sdl2", "pyglet", "pygame", "pyo", "wx")
-		else:
-			# Linux
-			libs = ("sdl2", "pygame", "pyglet", "pyo", "wx")
+		libs = ("SDL", "pyglet", "pyo", "wx")
 		for lib in libs:
 			try:
 				return init(lib, samplerate, channels, buffersize, reinit)
 			except Exception, exception:
 				pass
 		raise exception
-	elif lib == "pygame":
-		try:
-			import pygame, pygame.mixer
-			version = []
-			for item in pygame.__version__.split("."):
-				try:
-					version.append(int(item))
-				except ValueError:
-					version.append(item)
-			if version < [1, 9, 2]:
-				raise ImportError("pygame version %s is too old" %
-								  pygame.__version__)
-			_lib = "pygame"
-		except ImportError:
-			_lib = None
-		else:
-			if _initialized:
-				pygame.mixer.quit()
-			pygame.mixer.init(frequency=samplerate, channels=channels,
-							  buffer=buffersize)
-			_server = pygame.mixer
-			_lib_version = pygame.__version__
 	elif lib == "pyglet":
 		try:
 			import pyglet
@@ -120,22 +100,50 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 									 winhost="asio").boot()
 				_server.start()
 				_lib_version = ".".join(str(v) for v in pyo.getVersion())
-	elif lib == "sdl2":
-		try:
-			import sdl2, sdl2.sdlmixer
-			_lib = "sdl2"
-		except ImportError:
-			_lib = None
-		else:
-			if _initialized:
-				sdl2.sdlmixer.Mix_Quit()
-				sdl2.SDL_Quit()
-			sdl2.SDL_Init(sdl2.SDL_INIT_AUDIO)
-			sdl2.sdlmixer.Mix_OpenAudio(samplerate,
-										sdl2.sdlmixer.MIX_DEFAULT_FORMAT,
-										channels, buffersize)
-			_server = sdl2.sdlmixer
-			_lib_version = sdl2.__version__
+	elif lib == "SDL":
+		SDL_INIT_AUDIO = 16
+		MIX_DEFAULT_FORMAT = 32784
+		for libname in ("SDL2", "SDL2_mixer", "SDL", "SDL_mixer"):
+			handle = None
+			if sys.platform == "win32":
+				libfn = libname + ".dll"
+				libfn = get_data_path(libfn) or libfn
+				if libfn and win32api:
+					# Support for unicode paths
+					try:
+						handle = win32api.LoadLibrary(libfn)
+					except pywintypes.error:
+						pass
+			else:
+				libfn = "lib" + libname
+				if libname.startswith("SDL2"):
+					# SDL 2.0
+					libfn += "-2.0.so.0"
+				else:
+					# SDL 1.2
+					libfn += "-1.2.so.0"
+			dll = dlopen(libfn, handle=handle)
+			if libname.endswith("_mixer"):
+				if not dll:
+					continue
+				if not sdl:
+					raise RuntimeError("SDL library not loaded")
+				_server = dll
+				if _initialized:
+					_server.Mix_Quit()
+					sdl.SDL_Quit()
+				sdl.SDL_Init(SDL_INIT_AUDIO)
+				_server.Mix_OpenAudio(samplerate, MIX_DEFAULT_FORMAT, channels,
+									  buffersize)
+				_lib = "SDL"
+				if libname.startswith("SDL2"):
+					_lib_version = "2.0"
+				else:
+					_lib_version = "1.2"
+				break
+			else:
+				sdl = dll
+				_server = None
 	elif lib == "wx":
 		try:
 			import wx
@@ -224,12 +232,15 @@ class _Sound(object):
 		self._filename = filename
 		self._is_playing = False
 		self._lib = _lib
+		self._lib_version = _lib_version
 		self._loop = loop
 		self._play_timestamp = 0
 		self._play_count = 0
 		self._thread = -1
 		if not _initialized:
-			init()
+			self._server = init()
+		else:
+			self._server = _server
 		if _initialized and not isinstance(_initialized, Exception):
 			if not self._lib and _lib:
 				self._lib = _lib
@@ -241,10 +252,9 @@ class _Sound(object):
 					snd = pyglet.media.load(self._filename, streaming=False)
 					self._ch = pyglet.media.Player()
 					self._snd = snd
-				elif self._lib == "pygame":
-					self._snd = pygame.mixer.Sound(safe_str(self._filename, "UTF-8"))
-				elif self._lib == "sdl2":
-					self._snd = sdl2.sdlmixer.Mix_LoadWAV(safe_str(self._filename, "UTF-8"))
+				elif self._lib == "SDL":
+					self._snd = self._server.Mix_LoadWAV_RW(sdl.SDL_RWFromFile(safe_str(self._filename, "UTF-8"),
+																			   "rb"), 1)
 				elif self._lib == "wx":
 					self._snd = wx.Sound(self._filename)
 
@@ -279,11 +289,9 @@ class _Sound(object):
 				volume = self._snd.mul
 			elif self._lib == "pyglet":
 				volume = self._ch.volume
-			elif self._lib == "pygame":
-				volume = self._snd.get_volume()
-			elif self._lib == "sdl2":
-				volume = (float(sdl2.sdlmixer.Mix_VolumeChunk(self._snd, -1)) /
-						  sdl2.sdlmixer.MIX_MAX_VOLUME)
+			elif self._lib == "SDL":
+				volume = (float(self._server.Mix_VolumeChunk(self._snd, -1)) /
+						  128)
 		return volume
 
 	def _set_volume(self, volume):
@@ -292,12 +300,9 @@ class _Sound(object):
 				self._snd.mul = volume
 			elif self._lib == "pyglet":
 				self._ch.volume = volume
-			elif self._lib == "pygame":
-				self._snd.set_volume(volume)
-			elif self._lib == "sdl2":
-				sdl2.sdlmixer.Mix_VolumeChunk(self._snd,
-											  int(round(volume *
-														sdl2.sdlmixer.MIX_MAX_VOLUME)))
+			elif self._lib == "SDL":
+				self._server.Mix_VolumeChunk(self._snd,
+											 int(round(volume * 128)))
 			return True
 		return False
 
@@ -335,11 +340,9 @@ class _Sound(object):
 			return bool(self._ch and self._ch.playing and self._ch.source and
 						(self._loop or time.time() - self._play_timestamp <
 						 self._ch.source.duration))
-		elif self._lib == "pygame":
-			return bool(self._ch and self._ch.get_busy())
-		elif self._lib == "sdl2":
+		elif self._lib == "SDL":
 			return bool(self._ch is not None and
-						sdl2.sdlmixer.Mix_Playing(self._ch))
+						self._server.Mix_Playing(self._ch))
 		return self._is_playing
 
 	def play(self, fade_ms=0, stop_already_playing=True):
@@ -370,12 +373,10 @@ class _Sound(object):
 					snd = self._snd
 				self._ch.queue(snd)
 				self._ch.play()
-			elif self._lib == "pygame":
-				self._ch = self._snd.play(-1 if self._loop else 0,
-										  fade_ms=0)
-			elif self._lib == "sdl2":
-				self._ch = sdl2.sdlmixer.Mix_PlayChannel(-1, self._snd,
-														 -1 if self._loop else 0)
+			elif self._lib == "SDL":
+				self._ch = self._server.Mix_PlayChannelTimed(-1, self._snd,
+															 -1 if self._loop else 0,
+															 -1)
 			elif self._lib == "wx" and self._snd.IsOk():
 				flags = wx.SOUND_ASYNC
 				if self._loop:
@@ -433,12 +434,10 @@ class _Sound(object):
 			else:
 				if self._lib == "pyglet":
 					self._ch.pause()
-				elif self._lib == "sdl2":
-					sdl2.sdlmixer.Mix_HaltChannel(self._ch)
+				elif self._lib == "SDL":
+					self._server.Mix_HaltChannel(self._ch)
 				else:
 					self._snd.stop()
-				if self._lib == "pygame":
-					self._ch = None
 			return True
 		else:
 			return False

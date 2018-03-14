@@ -217,9 +217,9 @@ def quote_args(args):
 	return args_out
 
 
-def dlopen(name):
+def dlopen(name, handle=None):
 	try:
-		return ctypes.CDLL(name)
+		return ctypes.CDLL(name, handle=handle)
 	except:
 		pass
 
