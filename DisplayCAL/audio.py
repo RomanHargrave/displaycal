@@ -16,6 +16,8 @@ sound.Play(fade_ms=1000)
 
 """
 
+from ctypes import (CFUNCTYPE, POINTER, Structure, c_int, c_uint8, c_uint32,
+					c_void_p)
 import sys
 import threading
 import time
@@ -128,7 +130,14 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 					continue
 				if not sdl:
 					raise RuntimeError("SDL library not loaded")
+				sdl.SDL_RWFromFile.restype = POINTER(SDL_RWops)
 				_server = dll
+				_server.Mix_LoadWAV_RW.argtypes = [POINTER(SDL_RWops), c_int]
+				_server.Mix_LoadWAV_RW.restype = POINTER(Mix_Chunk)
+				_server.Mix_PlayChannelTimed.argtypes = [c_int,
+														 POINTER(Mix_Chunk),
+														 c_int, c_int]
+				_server.Mix_VolumeChunk.argtypes = [POINTER(Mix_Chunk), c_int]
 				if _initialized:
 					_server.Mix_Quit()
 					sdl.SDL_Quit()
@@ -224,6 +233,17 @@ class DummySound(object):
 	volume = 0
 
 
+class SDL_RWops(Structure):
+    pass
+
+
+class Mix_Chunk(Structure):
+	_fields_ = [("allocated", c_int),
+				("abuf", POINTER(c_uint8)),
+				("alen", c_uint32),
+				("volume", c_uint8)]
+
+
 class _Sound(object):
 
 	""" Sound wrapper class """
@@ -253,8 +273,9 @@ class _Sound(object):
 					self._ch = pyglet.media.Player()
 					self._snd = snd
 				elif self._lib == "SDL":
-					self._snd = self._server.Mix_LoadWAV_RW(sdl.SDL_RWFromFile(safe_str(self._filename, "UTF-8"),
-																			   "rb"), 1)
+					rw = sdl.SDL_RWFromFile(safe_str(self._filename, "UTF-8"),
+											"rb")
+					self._snd = self._server.Mix_LoadWAV_RW(rw, 1)
 				elif self._lib == "wx":
 					self._snd = wx.Sound(self._filename)
 
