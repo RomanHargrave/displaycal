@@ -44,7 +44,7 @@ _snd = {}
 _sounds = {}
 
 
-def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
+def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 	""" (Re-)Initialize sound subsystem """
 	# Note on buffer size: Too high values cause crackling during fade, too low
 	# values cause choppy playback of ogg files when using pyo (good value for
@@ -104,7 +104,12 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 				_lib_version = ".".join(str(v) for v in pyo.getVersion())
 	elif lib == "SDL":
 		SDL_INIT_AUDIO = 16
-		MIX_DEFAULT_FORMAT = 32784
+		AUDIO_S16LSB = 0x8010
+		AUDIO_S16MSB = 0x9010
+		if sys.byteorder == "little":
+			MIX_DEFAULT_FORMAT = AUDIO_S16LSB
+		else:
+			MIX_DEFAULT_FORMAT = AUDIO_S16MSB
 		for libname in ("SDL2", "SDL2_mixer", "SDL", "SDL_mixer"):
 			handle = None
 			if sys.platform == "win32":
@@ -132,6 +137,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 					raise RuntimeError("SDL library not loaded")
 				sdl.SDL_RWFromFile.restype = POINTER(SDL_RWops)
 				_server = dll
+				_server.Mix_OpenAudio.argtypes = [c_int, c_uint16, c_int, c_int]
 				_server.Mix_LoadWAV_RW.argtypes = [POINTER(SDL_RWops), c_int]
 				_server.Mix_LoadWAV_RW.restype = POINTER(Mix_Chunk)
 				_server.Mix_PlayChannelTimed.argtypes = [c_int,
