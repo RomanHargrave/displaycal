@@ -354,7 +354,8 @@ class _Sound(object):
 			return self.play(fade_ms=fade_ms)
 		elif self._snd and self._lib != "wx":
 			self._thread += 1
-			threading.Thread(target=self._fade,
+			threading.Thread(target=self._fade, name="AudioFading-%d[%sms]" %
+													 (self._thread, fade_ms),
 							 args=(fade_ms, fade_in, self._thread)).start()
 			return True
 		return False

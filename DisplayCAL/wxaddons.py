@@ -459,7 +459,8 @@ class ThreadedTimer(object):
 		if milliseconds > -1:
 			self._ms = milliseconds
 		self._oneshot = oneShot
-		self._thread = threading.Thread(target=self._timer)
+		self._thread = threading.Thread(target=self._timer,
+										name="ThreadedTimer")
 		self._thread.start()
 
 	def Stop(self):

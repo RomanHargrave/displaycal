@@ -231,6 +231,8 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 		try:
 			sock.bind(("", port))
 			thread = threading.Thread(target=self._cast_receive_handler,
+									  name="PrismaPatternGeneratorClient.BroadcastHandler[%s:%s]" %
+										   (self.broadcast_ip, port),
 									  args=(sock, self.broadcast_ip, port))
 			self._threads.append(thread)
 			thread.start()

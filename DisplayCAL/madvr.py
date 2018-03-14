@@ -419,6 +419,8 @@ class MadTPG_Net(MadTPGBase):
 				sock.bind(("", port))
 				sock.listen(1)
 				thread = threading.Thread(target=self._conn_accept_handler,
+										  name="madVR.ConnectionHandler[%s]" %
+											   port,
 										  args=(sock, "", port))
 				self._threads.append(thread)
 				thread.start()
@@ -435,6 +437,8 @@ class MadTPG_Net(MadTPGBase):
 			try:
 				sock.bind(("", port))
 				thread = threading.Thread(target=self._cast_receive_handler,
+										  name="madVR.BroadcastHandler[%s:%s]" %
+											   (self.broadcast_ip, port),
 										  args=(sock, self.broadcast_ip, port))
 				self._threads.append(thread)
 				thread.start()
@@ -455,6 +459,8 @@ class MadTPG_Net(MadTPGBase):
 			try:
 				sock.bind(("", port))
 				thread = threading.Thread(target=self._cast_receive_handler,
+										  name="madVR.MulticastHandler[%s:%s]" %
+											   (self.multicast_ip, port),
 										  args=(sock, self.multicast_ip, port))
 				self._threads.append(thread)
 				thread.start()
@@ -525,6 +531,8 @@ class MadTPG_Net(MadTPGBase):
 				else:
 					self._client_sockets[addr] = conn
 					thread = threading.Thread(target=self._receive_handler,
+											  name="madVR.Receiver[%s:%s]" %
+												   addr[:2],
 											  args=(addr, conn, ))
 					self._threads.append(thread)
 					thread.start()
@@ -658,6 +666,8 @@ class MadTPG_Net(MadTPGBase):
 							else:
 								conn = self._get_client_socket(addr[0], c_port)
 								threading.Thread(target=self._connect,
+												 name="madVR.ConnectToInstance[%s:%s]" %
+													  (addr[0], c_port),
 												 args=(conn, addr[0], c_port)).start()
 					else:
 						self._casts.remove(addr)
@@ -774,6 +784,8 @@ class MadTPG_Net(MadTPGBase):
 		for port in self.server_ports:
 			conn = self._get_client_socket(ip, port)
 			threading.Thread(target=self._connect,
+							 name="madVR.ConnectToInstance[%s:%s]" %
+								  (ip, port),
 							 args=(conn, ip, port, timeout / 1000.0)).start()
 		return self._wait_for_client((ip, port), timeout / 1000.0)
 
@@ -804,6 +816,8 @@ class MadTPG_Net(MadTPGBase):
 				safe_print("MadTPG_Net: Connected to %s:%s" % (host, port))
 			sock.settimeout(0)
 			thread = threading.Thread(target=self._receive_handler,
+									  name="madVR.Receiver[%s:%s]" %
+										   (host, port),
 									  args=((host, port), sock, ))
 			self._threads.append(thread)
 			thread.start()

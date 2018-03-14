@@ -1751,8 +1751,11 @@ class ProfileManager(object):
             self.restore_display_profiles()
         display_no = get_argyll_display_number(self._display.Geometry)
         if display_no is not None:
+            geometry = self._display.Geometry.Get()
             threading.Thread(target=self._manage_display,
-                             args=(display_no, self._display.Geometry.Get())).start()
+                             name="VisualWhitepointEditor.DisplayManager[Display %d @ %d, %d, %dx%d]" %
+                                  ((display_no, ) + geometry),
+                             args=(display_no, geometry)).start()
             if not self._window.patterngenerator:
                 display_name = get_display_name(display_no, True)
                 if display_name:
@@ -1775,6 +1778,8 @@ class ProfileManager(object):
             display_no = get_argyll_display_number(geometry)
             if display_no is not None:
                 thread = threading.Thread(target=self._install_profile_locked,
+                                          name="VisualWhitepointEditor.ProfileInstallation[Display %d @ %d, %d, %dx%d]" %
+                                               ((display_no, ) + geometry),
                                           args=(display_no, profile, wrapup))
                 thread.start()
                 if wait:

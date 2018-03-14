@@ -2802,7 +2802,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					if progress_wnd:
 						progress_wnd.Destroy()
 				wx.CallAfter(self.Raise)
-				threading.Thread(target=self.set_remote_language).start()
+				threading.Thread(target=self.set_remote_language,
+								 name="Scripting.SetClientLanguage").start()
 				break
 
 	def set_remote_language(self):
@@ -7562,7 +7563,10 @@ class MainFrame(ReportFrame, BaseFrame):
 					dlg.sizer0.Layout()
 					dlg.Refresh()
 					dlg.Thaw()
-					thread = threading.Thread(target=check_host, args=(host, ))
+					thread = threading.Thread(target=check_host,
+											  name="PrismaPatternGenerator.CheckHost(%s)" %
+												   host,
+											  args=(host, ))
 					thread.start()
 				else:
 					wx.Bell()
@@ -7583,7 +7587,8 @@ class MainFrame(ReportFrame, BaseFrame):
 															   addr_client))
 				self.worker.patterngenerator.listen()
 				self.worker.patterngenerator.announce()
-			thread = threading.Thread(target=discover)
+			thread = threading.Thread(target=discover,
+									  name="PrismaPatternGenerator.ClientDiscovery")
 			dlg.ok.Bind(wx.EVT_BUTTON, check_host_handler)
 			dlg.ok.Enable(bool(host))
 			if self.worker.patterngenerator:
@@ -14697,7 +14702,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def app_update_check_handler(self, event, silent=False, argyll=False):
 		if not hasattr(self, "app_update_check") or \
 		   not self.app_update_check.isAlive():
-			self.app_update_check = threading.Thread(target=app_update_check, 
+			self.app_update_check = threading.Thread(target=app_update_check,
+													 name="ApplicationUpdateCheck", 
 													 args=(self, silent,
 														   False, argyll))
 			self.app_update_check.start()
