@@ -23,6 +23,7 @@ import threading
 import time
 
 from log import safe_print
+from util_str import safe_str
 
 
 _ch = {}
@@ -39,7 +40,7 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	# Note on buffer size: Too high values cause crackling during fade, too low
 	# values cause choppy playback of ogg files when using pyo (good value for
 	# pyo is >= 2048)
-	global _initialized, _lib, _lib_version, _server, pygame, pyglet, pyo, wx
+	global _initialized, _lib, _lib_version, _server, pygame, pyglet, pyo, sdl2, wx
 	if _initialized and not reinit:
 		# To re-initialize, explicitly set reinit to True
 		return
@@ -48,10 +49,10 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 	if not lib:
 		if sys.platform in ("darwin", "win32"):
 			# Mac OS X, Windows
-			libs = ("pyglet", "pygame", "pyo", "wx")
+			libs = ("sdl2", "pyglet", "pygame", "pyo", "wx")
 		else:
 			# Linux
-			libs = ("pygame", "pyglet", "pyo", "wx")
+			libs = ("sdl2", "pygame", "pyglet", "pyo", "wx")
 		for lib in libs:
 			try:
 				return init(lib, samplerate, channels, buffersize, reinit)
@@ -118,6 +119,22 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 									 buffersize=buffersize, duplex=0).boot()
 				_server.start()
 				_lib_version = ".".join(str(v) for v in pyo.getVersion())
+	elif lib == "sdl2":
+		try:
+			import sdl2, sdl2.sdlmixer
+			_lib = "sdl2"
+		except ImportError:
+			_lib = None
+		else:
+			if _initialized:
+				sdl2.sdlmixer.Mix_Quit()
+				sdl2.SDL_Quit()
+			sdl2.SDL_Init(sdl2.SDL_INIT_AUDIO)
+			sdl2.sdlmixer.Mix_OpenAudio(samplerate,
+										sdl2.sdlmixer.MIX_DEFAULT_FORMAT,
+										channels, buffersize)
+			_server = sdl2.sdlmixer
+			_lib_version = sdl2.__version__
 	elif lib == "wx":
 		try:
 			import wx
@@ -224,6 +241,8 @@ class _Sound(object):
 					self._snd = snd
 				elif self._lib == "pygame":
 					self._snd = pygame.mixer.Sound(self._filename)
+				elif self._lib == "sdl2":
+					self._snd = sdl2.sdlmixer.Mix_LoadWAV(safe_str(self._filename, "UTF-8"))
 				elif self._lib == "wx":
 					self._snd = wx.Sound(self._filename)
 
@@ -260,6 +279,9 @@ class _Sound(object):
 				volume = self._ch.volume
 			elif self._lib == "pygame":
 				volume = self._snd.get_volume()
+			elif self._lib == "sdl2":
+				volume = (float(sdl2.sdlmixer.Mix_VolumeChunk(self._snd, -1)) /
+						  sdl2.sdlmixer.MIX_MAX_VOLUME)
 		return volume
 
 	def _set_volume(self, volume):
@@ -270,6 +292,10 @@ class _Sound(object):
 				self._ch.volume = volume
 			elif self._lib == "pygame":
 				self._snd.set_volume(volume)
+			elif self._lib == "sdl2":
+				sdl2.sdlmixer.Mix_VolumeChunk(self._snd,
+											  int(round(volume *
+														sdl2.sdlmixer.MIX_MAX_VOLUME)))
 			return True
 		return False
 
@@ -309,6 +335,9 @@ class _Sound(object):
 						 self._ch.source.duration))
 		elif self._lib == "pygame":
 			return bool(self._ch and self._ch.get_busy())
+		elif self._lib == "sdl2":
+			return bool(self._ch is not None and
+						sdl2.sdlmixer.Mix_Playing(self._ch))
 		return self._is_playing
 
 	def play(self, fade_ms=0):
@@ -340,6 +369,9 @@ class _Sound(object):
 			elif self._lib == "pygame":
 				self._ch = self._snd.play(-1 if self._loop else 0,
 										  fade_ms=0)
+			elif self._lib == "sdl2":
+				self._ch = sdl2.sdlmixer.Mix_PlayChannel(-1, self._snd,
+														 -1 if self._loop else 0)
 			elif self._lib == "wx" and self._snd.IsOk():
 				flags = wx.SOUND_ASYNC
 				if self._loop:
@@ -397,6 +429,8 @@ class _Sound(object):
 			else:
 				if self._lib == "pyglet":
 					self._ch.pause()
+				elif self._lib == "sdl2":
+					sdl2.sdlmixer.Mix_HaltChannel(self._ch)
 				else:
 					self._snd.stop()
 				if self._lib == "pygame":
