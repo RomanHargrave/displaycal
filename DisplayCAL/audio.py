@@ -116,7 +116,8 @@ def init(lib=None, samplerate=44100, channels=2, buffersize=2048, reinit=False):
 							   buffersize=buffersize, duplex=0)
 			else:
 				_server = pyo.Server(sr=samplerate, nchnls=channels,
-									 buffersize=buffersize, duplex=0).boot()
+									 buffersize=buffersize, duplex=0,
+									 winhost="asio").boot()
 				_server.start()
 				_lib_version = ".".join(str(v) for v in pyo.getVersion())
 	elif lib == "sdl2":
@@ -234,13 +235,14 @@ class _Sound(object):
 				self._lib = _lib
 			if not self._snd and self._filename:
 				if self._lib == "pyo":
-					self._snd = pyo.SfPlayer(self._filename, loop=self._loop)
+					self._snd = pyo.SfPlayer(safe_str(self._filename),
+											 loop=self._loop)
 				elif self._lib == "pyglet":
 					snd = pyglet.media.load(self._filename, streaming=False)
 					self._ch = pyglet.media.Player()
 					self._snd = snd
 				elif self._lib == "pygame":
-					self._snd = pygame.mixer.Sound(self._filename)
+					self._snd = pygame.mixer.Sound(safe_str(self._filename, "UTF-8"))
 				elif self._lib == "sdl2":
 					self._snd = sdl2.sdlmixer.Mix_LoadWAV(safe_str(self._filename, "UTF-8"))
 				elif self._lib == "wx":
