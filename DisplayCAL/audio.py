@@ -18,6 +18,8 @@ sound.Play(fade_ms=1000)
 
 from ctypes import (CFUNCTYPE, POINTER, Structure, c_int, c_uint8, c_uint16,
 					c_uint32, c_void_p)
+import ctypes.util
+import os
 import sys
 import threading
 import time
@@ -29,10 +31,10 @@ if sys.platform == "win32":
 	except ImportError:
 		win32api = None
 
-from config import get_data_path
+from config import pydir
 from log import safe_print
-from util_os import dlopen
-from util_str import safe_str
+from util_os import dlopen, getenvu
+from util_str import safe_str, safe_unicode
 
 
 _ch = {}
@@ -110,13 +112,20 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 			MIX_DEFAULT_FORMAT = AUDIO_S16LSB
 		else:
 			MIX_DEFAULT_FORMAT = AUDIO_S16MSB
+		if sys.platform in ("darwin", "win32"):
+			pth = getenvu("PATH")
+			libpth = os.path.join(pydir, "lib")
+			if not pth.startswith(libpth + os.pathsep):
+				pth = libpth + os.pathsep + pth
+				os.environ["PATH"] = safe_str(pth)
 		for libname in ("SDL2", "SDL2_mixer", "SDL", "SDL_mixer"):
 			handle = None
+			if sys.platform in ("darwin", "win32"):
+				libfn = ctypes.util.find_library(libname)
 			if sys.platform == "win32":
-				libfn = libname + ".dll"
-				libfn = get_data_path(libfn) or libfn
 				if libfn and win32api:
 					# Support for unicode paths
+					libfn = safe_unicode(libfn)
 					try:
 						handle = win32api.LoadLibrary(libfn)
 					except pywintypes.error:
