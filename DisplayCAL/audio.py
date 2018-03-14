@@ -130,7 +130,8 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 						handle = win32api.LoadLibrary(libfn)
 					except pywintypes.error:
 						pass
-			else:
+			elif sys.platform != "darwin":
+				# Hard-code lib names for Linux
 				libfn = "lib" + libname
 				if libname.startswith("SDL2"):
 					# SDL 2.0
