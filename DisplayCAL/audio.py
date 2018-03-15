@@ -141,7 +141,7 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 					libfn += "-1.2.so.0"
 			dll = dlopen(libfn, handle=handle)
 			if dll:
-				safe_print("Found", libname, "located at", libfn)
+				safe_print("%s:" % libname, libfn)
 			if libname.endswith("_mixer"):
 				if not dll:
 					continue
