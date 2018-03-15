@@ -140,6 +140,8 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 					# SDL 1.2
 					libfn += "-1.2.so.0"
 			dll = dlopen(libfn, handle=handle)
+			if dll:
+				safe_print("Found", libname, "located at", libfn)
 			if libname.endswith("_mixer"):
 				if not dll:
 					continue
@@ -160,7 +162,6 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 				sdl.SDL_Init(SDL_INIT_AUDIO)
 				_server.Mix_OpenAudio(samplerate, MIX_DEFAULT_FORMAT, channels,
 									  buffersize)
-				safe_print("Using", libname, "located at", libfn)
 				_lib = "SDL"
 				if libname.startswith("SDL2"):
 					_lib_version = "2.0"

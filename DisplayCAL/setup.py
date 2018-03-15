@@ -854,6 +854,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				"dist_dir": dist_dir,
 				"excludes": config["excludes"]["all"] +
 							config["excludes"]["darwin"],
+				"frameworks": ["SDL2", "SDL2_mixer"],
 				"iconfile": os.path.join(pydir, "theme", "icons", 
 										 name + ".icns"),
 				"optimize": 0,
