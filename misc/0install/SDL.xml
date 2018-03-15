@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="feed.xsl"?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/SDL.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+  <publish mode="package" xmlns="${URL}" />
+  <name>SDL</name>
+  <summary xml:lang="en">Simple DirectMedia Layer</summary>
+  <description xml:lang="en">Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D. It is used by video playback software, emulators, and popular games including Valve's award winning catalog and many Humble Bundle games.
+
+SDL officially supports Windows, Mac OS X, Linux, iOS, and Android. Support for other platforms may be found in the source code.
+
+SDL is written in C, works natively with C++, and there are bindings available for several other languages, including C# and Python.
+
+SDL 2.0 is distributed under the zlib license. This license allows you to use SDL freely in any software.</description>
+  <homepage>https://www.libsdl.org/</homepage>
+  <package-implementation package="libsdl2_mixer2.0_0" distributions="RPM" />
+  <package-implementation package="libSDL2_mixer-2_0-0" distributions="RPM" />
+  <package-implementation package="SDL2_mixer" distributions="RPM" />
+  <package-implementation package="libsdl2-mixer-2.0-0" distributions="Debian" />
+  <package-implementation package="media-libs/libsdl2" distributions="Gentoo" />
+  <package-implementation package="sdl2_mixer" distributions="Arch" />
+  <group license="zlib/libpng License">
+    <group arch="MacOSX-*">
+      <environment name="DYLD_FALLBACK_FRAMEWORK_PATH" insert="." />
+      <implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+      </implementation>
+    </group>
+    <group arch="Windows-*">
+      <environment name="PATH" insert="." />
+      <implementation arch="Windows-*" version="0.0.0" released="0000-00-00" stability="stable">
+      </implementation>
+    </group>
+  </group>
+</interface>

@@ -17,7 +17,7 @@ ${DESC}</description>
 			<version not-before="${WX_MINVERSION}" />
 		</requires>
 		<requires interface="${URL}0install/numpy.xml" />
-		<requires interface="${URL}0install/pygame.xml" />
+		<requires interface="${URL}0install/SDL.xml" />
 		<requires interface="${URL}0install/pychromecast.xml" />
 		<requires interface="${URL}0install/faulthandler.xml" importance="recommended" />
 		<command name="change-display-profile-cal-whitepoint" path="util/change_display_profile_cal_whitepoint.py">
