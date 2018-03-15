@@ -112,12 +112,20 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 			MIX_DEFAULT_FORMAT = AUDIO_S16LSB
 		else:
 			MIX_DEFAULT_FORMAT = AUDIO_S16MSB
-		if sys.platform in ("darwin", "win32"):
+		if sys.platform == "win32":
 			pth = getenvu("PATH")
 			libpth = os.path.join(pydir, "lib")
 			if not pth.startswith(libpth + os.pathsep):
 				pth = libpth + os.pathsep + pth
 				os.environ["PATH"] = safe_str(pth)
+		elif sys.platform == "darwin":
+			x_framework_pth = os.getenv("X_DYLD_FALLBACK_FRAMEWORK_PATH")
+			if x_framework_pth:
+				framework_pth = os.getenv("DYLD_FALLBACK_FRAMEWORK_PATH")
+				if framework_pth:
+					x_framework_pth = os.pathsep.join([x_framework_pth,
+													   framework_pth])
+				os.environ["DYLD_FALLBACK_FRAMEWORK_PATH"] = x_framework_pth
 		for libname in ("SDL2", "SDL2_mixer", "SDL", "SDL_mixer"):
 			handle = None
 			if sys.platform in ("darwin", "win32"):
