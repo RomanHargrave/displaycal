@@ -45,7 +45,6 @@ Release:        0
 Source0:        ${HTTPURL}download/%{name}-%version.tar.gz
 Url:            ${URL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-Requires:       p7zip
 Obsoletes:      DisplayCAL-0install
 Provides:       dispcalGUI = %{version}
 Obsoletes:      dispcalGUI < 3.1.0.0
@@ -89,7 +88,6 @@ BuildRequires:  python2-devel
 BuildRequires:  udev
 Requires:       argyllcms
 Requires:       numpy >= %{numpy_version}
-Requires:       p7zip-plugins
 Requires:       SDL2_mixer
 Requires:       wxPython >= %{wx_minversion}
 %else

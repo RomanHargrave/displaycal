@@ -49,7 +49,6 @@ BuildArch:      noarch
 BuildRequires:  python
 BuildRequires:  xdg-utils
 Requires:       xdg-utils
-Requires:       p7zip
 Obsoletes:      ${PACKAGE}
 Provides:       ${PACKAGE} = %{version}
 Provides:       dispcalGUI = %{version}
@@ -75,7 +74,6 @@ Requires:       zeroinstall-injector
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
 Requires:       libXScrnSaver
 Requires:       numpy >= %{numpy_version}
-Requires:       p7zip-plugins
 Requires:       SDL2_mixer
 Requires:       wxPython >= %{wx_minversion}
 %if 0%{?fedora_version} < 19
