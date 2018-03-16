@@ -2497,15 +2497,19 @@ Nigel Smith, Marcin Koscielecki, Philip Kerschbaum, Shih-Hsiang Lin, Alberto Ale
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated traditional chinese localization (thanks to 楊添明).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Update bundled vendor PNP ID database.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Linux: Use SDL (Simple DirectMedia Layer) directly.</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Work around <a href="https://bugs.python.org/issue738361" rel="nofollow">Python issue #738361</a> (shell pattern compilation fails raising an unhandled exception if a path contains certain combinations of meta characters).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Measurement report: Deal with quantization when creating the report (fixes error when using video output levels in combination with some display profiles).</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Display a proper error message when associating an invalid profile.</li>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): In case of an invalid profile (e.g. damaged file), fall back to linear gamma ramps and change the tray icon to reflect this.</li>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Ignore potential stray WM_COMMAND messages erroneously sent by 3rd party applications.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): In case of an invalid profile (e.g. damaged file), fall back to linear gamma ramps instead of using the previously cached ramps and change the tray icon to reflect this.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Ignore potential stray WM_COMMAND messages caused by 3rd party application interference.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Bump minimum required wxPython version to 3.0 (fixes a compatibility problem under Linux if wxPython 2.8 was installed).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Refresh output levels control when loading settings.</li>
 						</ul>
 
 						<p id="changelog-3.5">2018-02-18 14:47 (UTC) 3.5 </p>

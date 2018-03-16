@@ -15,7 +15,7 @@
 		<meta property="og:url" content="http://displaycal.net/" />
 		<meta property="og:image" content="http://displaycal.net/theme/icons/256x256/displaycal.png" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
-		<link rel="stylesheet" href="https://displaycal.net/shariff/shariff.complete.css" />
+		<link rel="stylesheet" href="https://displaycal.net/shariff/shariff.complete.css?version=7.1.1&ts=2018-02-28T01:27" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 		<link rel="stylesheet" href="theme/readme.css?ts=2018-01-17T19:12" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2018-01-17T17:39" />
@@ -24,7 +24,7 @@
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
 		<script type="text/javascript" src="theme/slimbox2/slimbox2.js?ts=2015-09-01T14:54"></script>
-		<script type="text/javascript" src="theme/readme.js?ts=2017-09-12T13:25"></script>
+		<script type="text/javascript" src="theme/readme.js?ts=2018-02-19T23:04"></script>
 	</head>
 	<body>
 
@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.5 </h2>
-					<p>2018-02-18 14:47 UTC</p>
+					<h2 id="version">3.5.1 </h2>
+					<p>2018-03-16 16:04 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -87,7 +87,7 @@
 				<legend style="padding: 0 3px;">Contribute using PayPal</legend>
 				<noscript><strong>Please enable JavaScript!</strong></noscript>
 				<p>
-					<input id="credit_card" type="checkbox" onchange="document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'" style="margin-left: 0; vertical-align: text-top;" /> <label for="credit_card" style="display: inline-block; max-width: 90%; vertical-align: top;">Use a credit card without a PayPal account</label><br />
+					<input id="credit_card" type="checkbox" onchange="if (0) document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'" style="margin-left: 0; vertical-align: text-top;" /> <label for="credit_card" style="display: inline-block; max-width: 90%; vertical-align: top;">Use a credit card without a PayPal account</label><br />
 					<span style="display: inline-block; line-height: 1.4em; margin-bottom: .5em; padding-left: 1.6em;">(PayPal does not guarantee the availability of payment via credit card)</span><br />
 					<input type="hidden" name="cmd" value="_donations" />
 					<input type="hidden" name="business" value="CEZVJ89TTS6FY" />
@@ -137,7 +137,7 @@
 					}, 1500);
 				})();
 				function contribute_own_amount() {
-					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" value="' + jQuery('#contribution_amount').val() + '" />')
+					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" min="1" value="' + jQuery('#contribution_amount').val() + '" />')
 				}
 				//]]>
 			</script>
@@ -314,142 +314,132 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							<li>
 								<span>Arch Linux</span>
 								<span>
-								<a href="https://displaycal.net/download/Arch_Community/x86_64/DisplayCAL.pkg.tar.xz">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/Arch_Community/x86_64/DisplayCAL.pkg.tar.xz">x86_64</a></span>
 							</li>
 							<li>
 								<span>CentOS 6</span>
-								<span><a href="https://displaycal.net/download/CentOS_CentOS-6/i686/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/CentOS_CentOS-6/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/CentOS_CentOS-6/i686/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/CentOS_CentOS-6/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>CentOS 7</span>
 								<span>
-								<a href="https://displaycal.net/download/CentOS_CentOS-7/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/CentOS_CentOS-7/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Debian 7 (Wheezy)</span>
-								<span><a href="https://displaycal.net/download/Debian_7.0/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/Debian_7.0/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Debian_7.0/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/Debian_7.0/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Debian 8 (Jessie)</span>
-								<span><a href="https://displaycal.net/download/Debian_8.0/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/Debian_8.0/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Debian_8.0/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/Debian_8.0/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Debian 9 (Stretch)</span>
-								<span><a href="https://displaycal.net/download/Debian_9.0/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/Debian_9.0/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Debian_9.0/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/Debian_9.0/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Fedora 25</span>
-								<span><a href="https://displaycal.net/download/Fedora_25/i686/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/Fedora_25/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Fedora_25/i686/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/Fedora_25/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Fedora 26</span>
 								<span>
-								<a href="https://displaycal.net/download/Fedora_26/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/Fedora_26/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Fedora 27</span>
 								<span>
-								<a href="https://displaycal.net/download/Fedora_27/x86_64/DisplayCAL.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora Rawhide</span>
-								<span>
-								<a href="https://displaycal.net/download/Fedora_Rawhide/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/Fedora_27/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Mageia 5</span>
-								<span><a href="https://displaycal.net/download/Mageia_5/i586/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/Mageia_5/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Mageia_5/i586/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/Mageia_5/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Mageia 6</span>
-								<span><a href="https://displaycal.net/download/Mageia_6/i586/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/Mageia_6/x86_64/DisplayCAL.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Mageia Cauldron</span>
-								<span><a href="https://displaycal.net/download/Mageia_Cauldron/i586/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/Mageia_Cauldron/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Mageia_6/i586/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/Mageia_6/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Leap 42.2</span>
 								<span>
-								<a href="https://displaycal.net/download/openSUSE_Leap_42.2/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/openSUSE_Leap_42.2/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Leap 42.3</span>
 								<span>
-								<a href="https://displaycal.net/download/openSUSE_Leap_42.3/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/openSUSE_Leap_42.3/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Factory</span>
-								<span><a href="https://displaycal.net/download/openSUSE_Factory/i586/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/openSUSE_Factory/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Factory/i586/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/openSUSE_Factory/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Tumbleweed</span>
-								<span><a href="https://displaycal.net/download/openSUSE_Tumbleweed/i586/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/openSUSE_Tumbleweed/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Tumbleweed/i586/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/openSUSE_Tumbleweed/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>RedHat RHEL 6</span>
-								<span><a href="https://displaycal.net/download/RedHat_RHEL-6/i686/DisplayCAL.rpm">x86</a> | 
-								<a href="https://displaycal.net/download/RedHat_RHEL-6/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/RedHat_RHEL-6/i686/DisplayCAL.rpm">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/RedHat_RHEL-6/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>RedHat RHEL 7</span>
 								<span>
-								<a href="https://displaycal.net/download/RedHat_RHEL-7/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/RedHat_RHEL-7/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>SLE 12</span>
 								<span>
-								<a href="https://displaycal.net/download/SLE_12/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/SLE_12/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>SLE 12 SP1</span>
 								<span>
-								<a href="https://displaycal.net/download/SLE_12_SP1/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/SLE_12_SP1/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>SLE 12 SP2</span>
 								<span>
-								<a href="https://displaycal.net/download/SLE_12_SP2/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/SLE_12_SP2/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>SLE 12 SP3</span>
 								<span>
-								<a href="https://displaycal.net/download/SLE_12_SP3/x86_64/DisplayCAL.rpm">x86_64</a></span>
+								<a rel="nofollow" href="https://displaycal.net/download/SLE_12_SP3/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 14.04 (Trusty)</span>
-								<span><a href="https://displaycal.net/download/xUbuntu_14.04/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/xUbuntu_14.04/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_14.04/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_14.04/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 16.04 (Xenial)</span>
-								<span><a href="https://displaycal.net/download/xUbuntu_16.04/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/xUbuntu_16.04/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_16.04/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_16.04/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 16.10 (Yakkety)</span>
-								<span><a href="https://displaycal.net/download/xUbuntu_16.10/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/xUbuntu_16.10/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_16.10/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_16.10/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 17.04 (Zesty)</span>
-								<span><a href="https://displaycal.net/download/xUbuntu_17.04/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/xUbuntu_17.04/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.04/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.04/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 							<li>
 								<span>Ubuntu 17.10 (Artful)</span>
-								<span><a href="https://displaycal.net/download/xUbuntu_17.10/i386/DisplayCAL.deb">x86</a> | 
-								<a href="https://displaycal.net/download/xUbuntu_17.10/amd64/DisplayCAL.deb">x86_64</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.10/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.10/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
 						</ul>
 
@@ -462,32 +452,32 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 					<h3>For Mac OS X (10.6 or newer)</h3>
 					<div>
 						<p>
-							<a href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Disk image</a>
+							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Disk image</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.5.0.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.5.0.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.5.1.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.5.1.0/*.app</code>
 						</p>
-						<p>To verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.5.0.0.dmg</code></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.5.1.0.dmg</code></small></p>
 					</div>
 				</li>
 				<li>
 					<h3>For Windows (XP or newer)</h3>
 					<div>
 						<p>
-							<a href="https://displaycal.net/download/standalone/DisplayCAL-Setup.exe">Installer (recommended)</a> or <a href="https://displaycal.net/download/standalone/DisplayCAL-win32.zip">ZIP archive</a>
+							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-Setup.exe">Installer (recommended)</a> or <a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-win32.zip">ZIP archive</a>
 						</p>
-						<p>To verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.5.0.0-[Setup.exe|win32.zip]</code></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.5.1.0-[Setup.exe|win32.zip]</code></small></p>
 					</div>
 				</li>
 				<li>
 					<h3>Source code</h3>
 					<div>
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
-						<p><a href="https://displaycal.net/download/DisplayCAL.tar.gz">Source Tarball</a></p>
-						<p>To verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command:<br />
-						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.5.0.0.tar.gz</code><br />
-						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.5.0.0.tar.gz</code><br />
-						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.5.0.0.tar.gz</code></p>
+						<p><a rel="nofollow" href="https://displaycal.net/download/DisplayCAL.tar.gz">Source Tarball</a></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command:<br />
+						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.5.1.0.tar.gz</code><br />
+						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.5.1.0.tar.gz</code><br />
+						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.5.1.0.tar.gz</code></small></p>
 						<p>
 							Alternatively, if you don't mind trying out development code, <a href="https://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="https://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="https://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk displaycal</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
@@ -520,87 +510,83 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 						<ul class="packages">
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Arch_Community/any/DisplayCAL-0install.pkg.tar.xz">Arch Linux</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Arch_Community/any/DisplayCAL-0install.pkg.tar.xz">Arch Linux</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/CentOS_CentOS-6/noarch/DisplayCAL-0install.rpm">CentOS 6</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/CentOS_CentOS-6/noarch/DisplayCAL-0install.rpm">CentOS 6</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/CentOS_CentOS-7/noarch/DisplayCAL-0install.rpm">CentOS 7</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/CentOS_CentOS-7/noarch/DisplayCAL-0install.rpm">CentOS 7</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Debian_7.0/all/DisplayCAL-0install.deb">Debian 7 (Wheezy)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Debian_7.0/all/DisplayCAL-0install.deb">Debian 7 (Wheezy)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Debian_8.0/all/DisplayCAL-0install.deb">Debian 8 (Jessie)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Debian_8.0/all/DisplayCAL-0install.deb">Debian 8 (Jessie)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Debian_9.0/all/DisplayCAL-0install.deb">Debian 9 (Stretch)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Debian_9.0/all/DisplayCAL-0install.deb">Debian 9 (Stretch)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Fedora_25/noarch/DisplayCAL-0install.rpm">Fedora 25</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Fedora_25/noarch/DisplayCAL-0install.rpm">Fedora 25</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Fedora_26/noarch/DisplayCAL-0install.rpm">Fedora 26</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Fedora_26/noarch/DisplayCAL-0install.rpm">Fedora 26</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Fedora_27/noarch/DisplayCAL-0install.rpm">Fedora 27</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Fedora_27/noarch/DisplayCAL-0install.rpm">Fedora 27</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/Fedora_Rawhide/noarch/DisplayCAL-0install.rpm">Fedora Rawhide</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Leap_42.2/noarch/DisplayCAL-0install.rpm">openSUSE Leap 42.2</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/openSUSE_Leap_42.2/noarch/DisplayCAL-0install.rpm">openSUSE Leap 42.2</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Leap_42.3/noarch/DisplayCAL-0install.rpm">openSUSE Leap 42.3</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/openSUSE_Leap_42.3/noarch/DisplayCAL-0install.rpm">openSUSE Leap 42.3</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Factory/noarch/DisplayCAL-0install.rpm">openSUSE Factory</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/openSUSE_Factory/noarch/DisplayCAL-0install.rpm">openSUSE Factory</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Tumbleweed/noarch/DisplayCAL-0install.rpm">openSUSE Tumbleweed</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/openSUSE_Tumbleweed/noarch/DisplayCAL-0install.rpm">openSUSE Tumbleweed</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/RedHat_RHEL-6/noarch/DisplayCAL-0install.rpm">RedHat RHEL 6</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/RedHat_RHEL-6/noarch/DisplayCAL-0install.rpm">RedHat RHEL 6</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/RedHat_RHEL-7/noarch/DisplayCAL-0install.rpm">RedHat RHEL 7</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/RedHat_RHEL-7/noarch/DisplayCAL-0install.rpm">RedHat RHEL 7</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_14.04/all/DisplayCAL-0install.deb">Ubuntu 14.04 (Trusty)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/xUbuntu_14.04/all/DisplayCAL-0install.deb">Ubuntu 14.04 (Trusty)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_16.04/all/DisplayCAL-0install.deb">Ubuntu 16.04 (Xenial)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/xUbuntu_16.04/all/DisplayCAL-0install.deb">Ubuntu 16.04 (Xenial)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_16.10/all/DisplayCAL-0install.deb">Ubuntu 16.10 (Yakkety)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/xUbuntu_16.10/all/DisplayCAL-0install.deb">Ubuntu 16.10 (Yakkety)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.04/all/DisplayCAL-0install.deb">Ubuntu 17.04 (Zesty)</a></span>
 							</li>
 							<li>
 								<span></span>
-								<span><a href="https://displaycal.net/download/xUbuntu_17.04/all/DisplayCAL-0install.deb">Ubuntu 17.04 (Zesty)</a></span>
-							</li>
-							<li>
-								<span></span>
-								<span><a href="https://displaycal.net/download/xUbuntu_17.10/all/DisplayCAL-0install.deb">Ubuntu 17.10 (Artful)</a></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.10/all/DisplayCAL-0install.deb">Ubuntu 17.10 (Artful)</a></span>
 							</li>
 						</ul>
 						
@@ -630,15 +616,15 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 				<li>
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
-						<p>Download the <a href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL Zero Install Launcher</a> disk image and run any of the included applications.</p>
-						<p>To verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-0install.dmg</code></p>
+						<p>Download the <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL Zero Install Launcher</a> disk image and run any of the included applications.</p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-0install.dmg</code></small></p>
 					</div>
 				</li>
 				<li>
 					<h3>For Windows (XP or newer)</h3>
 					<div>
-						<p>Download and install the DisplayCAL Zero Install Setup: <a href="https://displaycal.net/download/DisplayCAL-0install-Setup.exe">Administrator install</a> | <a href="https://displaycal.net/download/DisplayCAL-0install-Setup-per-user.exe">Per-user install</a>.</p>
-						<p>To verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-0install-Setup[-per-user].exe</code></p>
+						<p>Download and install the DisplayCAL Zero Install Setup: <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install-Setup.exe">Administrator install</a> | <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install-Setup-per-user.exe">Per-user install</a>.</p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-0install-Setup[-per-user].exe</code></small></p>
 					</div>
 				</li>
 				<li>
@@ -2481,11 +2467,11 @@ The easiest way to get a complete set of logfiles is to choose “Show log” fr
 			林泽帆(Xpesir) (simplified chinese translation)</p>
 
 			<p>Recent contributors:
+<!-- 2018-02 -->
+John Gooday, Ben Richardson Llc, Taras Nebesnyy, Tim Williams, Shengyou Ou, Kenneth Reichner, Robert Neff, Thorsten Geisbe, William Dunaway Jr, Silvercleave, M Nguyen Ba, Marc Hill, David Leek, Russell Girten, Steven Jenks, Oliver Krause, Tom Poliquin, Manuel Jorge Teixeira, John Willsund, John Willsund, Jan Fischer, Cyril Hazotte, Isaac Barahona Hidalgo, Venkat Polumahanti, Amir Eslampanah, Michele Paoli, Gianluca Ferrari, Chi Leung Chiu, Elena Kolomytseva, Claudio Caja, Trevor Mason, Adrián Hernández, George Pierce, Baty Reasoner, Reichenbach Stories Gmbh, Susan Yarvin, Ismael Ferreras Riesco, Paul R. Heil-Film, Jan Leipnitz, Tim Rappon,
+<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
 <!-- 2018-01 -->
 Nigel Smith, Marcin Koscielecki, Philip Kerschbaum, Shih-Hsiang Lin, Alberto Alessandro Pozzo, John Mackey, Serge Stauffer, Juraj Hatina, Dudley Mcfadden, Tihomir Lazarov, Kari Hrafnkelsson, Michael Gerstgrasser, Sergio Pirovano, Borko Augustin, Greg Hill, Marco Signorini, Hanno Ritzerfeld, Lensvisions Studio, Ute Bauer, Ori Sagiv, Bálint Hajagos, Vesa Karhila, Сергей Кудрин, Sheila Mayo, Lensvisions Studio, Dmitry Ostroglyadov, Lippai Ádám, Aliaksandr Sirazh, Dirk Driesen, Andre Schipper, Jay Benach, Gafyn Jones, Fritz Schütte, Kevin Pinkerton, Truls Aagedal, Eakphan Intajak, Herbert Moers, Jordan Szuch, Clemens Rendl, Nirut Tamchoo, James Barres, Ronald Nowakowski, Stefano Aliffi, Miriana Marusic, Robert Howard, Alessandro Marotta, Björn Stresing, Evgenij Popov, Rodrigo Valim, Robert Smith, Jens Windmüller, 信宏 郭, Swen Heinrich, Matthieu Moy, Sebastian Hoffmann, Ruslan Nedielkov, Fred Wither, Richard Tafel, Chester Chua, Arreat.De, Duane Middlebrook, Stephan Eitel,
-<a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
-<!-- 2017-12 -->
-Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Watson, Jorge De Cecco, Francel Tsidiarison, Brett Antony Patching, Jeff Isgett, Nikolaus Waxweiler, Santiago Pediatrics, Les Hillis, Victor Allard, Tony Culpin, Murray Savidan, Alexander Kaiser, Howard Lim, Robert Conchie, Benjamin Chare, Diede Van Vree, Christopher Humphrey, Rick Pappas, Jing Zhao, Roy Batute, Moritz Baur, Steven German, Drew Anderson, Jesper Ryde, Orjan Franzen, David Brown, Matthias Döß, Виктория Усова, Michael Gerstgrasser, Petter Flink, Hyung-Song Nam, Alexander Wegel, Olivier Lenoble-Folleas, Håvard Lindholm, Gary Digiovanni, Harry Wirtz, Words & Pictures, Jürgen Bode, Kevin Applegate, Casey Carter, Sam Morrison, Jimg Photography, Tilman Hager, Frederic Eynck
 </span></p>
 
 			<p>And everyone who sent me feedback or bug reports, suggested features, or simply uses DisplayCAL.</p>
@@ -2497,10 +2483,36 @@ Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Wa
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2018-02-18 14:47 (UTC) 3.5  -->
+			<!-- 2018-03-16 16:04 (UTC) 3.5.1  -->
 			<dl>
-				<dt id="changelog-3.5">2018-02-18 14:47 (UTC) 3.5 </dt>
+				<dt id="changelog-3.5.1">2018-03-16 16:04 (UTC) 3.5.1 </dt>
 					<dd>
+						<h3>DisplayCAL 3.5.1 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Rudimentary support for WCS Color Device Model profiles (only description, author, white- &amp; blackpoint, gamma, parametric curve, and matrix tags are recognized and mapped to appropriate ICCv2 types).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated traditional chinese localization (thanks to 楊添明).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Update bundled vendor PNP ID database.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Linux: Use SDL (Simple DirectMedia Layer) directly.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Work around <a href="https://bugs.python.org/issue738361" rel="nofollow">Python issue #738361</a> (shell pattern compilation fails raising an unhandled exception if a path contains certain combinations of meta characters).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Measurement report: Deal with quantization when creating the report (fixes error when using video output levels in combination with some display profiles).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Display a proper error message when associating an invalid profile.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): In case of an invalid profile (e.g. damaged file), fall back to linear gamma ramps instead of using the previously cached ramps and change the tray icon to reflect this.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Ignore potential stray WM_COMMAND messages caused by 3rd party application interference.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Bump minimum required wxPython version to 3.0 (fixes a compatibility problem under Linux if wxPython 2.8 was installed).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Refresh output levels control when loading settings.</li>
+						</ul>
+
+						<p id="changelog-3.5">2018-02-18 14:47 (UTC) 3.5 </p>
 						<h3>DisplayCAL 3.5 </h3>
 
 						<h4>Added in this release:</h4>
@@ -3214,7 +3226,7 @@ Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Wa
 
 						<p><strong>If you upgrade using 0install under Linux:</strong> It is recommended that you download the respective <a href="https://displaycal.net/#download">DisplayCAL-0install package</a> for your distribution and install it so that the applications accessible via the menu of your desktop environment are updated properly.</p>
 
-						<p><strong>If you upgrade using 0install under Mac OS X:</strong> It is recommended that you delete existing dispcalGUI application icons, then download the <a href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL-0install.dmg</a> disk image to get updated applications.</p>
+						<p><strong>If you upgrade using 0install under Mac OS X:</strong> It is recommended that you delete existing dispcalGUI application icons, then download the <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL-0install.dmg</a> disk image to get updated applications.</p>
 
 						<h4>Added in this release:</h4>
 						<ul>
@@ -3290,7 +3302,7 @@ Davide Visca, Laurent Pointal, Dirk Ritter, Paul Mcleod, Chetan Kumar P, Mr M Wa
 
 		<script data-fhpe="ced481a"></script>
 		<script type="text/javascript" src="theme/prism.js"></script>
-		<script type="text/javascript" src="https://displaycal.net/shariff/shariff.min.js"></script>
+		<script type="text/javascript" src="https://displaycal.net/shariff/shariff.min.js?version=7.1.1"></script>
 
 	</body>
 </html>
