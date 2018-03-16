@@ -96,7 +96,7 @@ config = {"data": ["tests/*.icc"],
 		  # numpy.lib.utils imports pydoc, which imports Tkinter, but 
 		  # numpy.lib.utils is not even used by DisplayCAL, so omit all 
 		  # Tk stuff
-		  # Use SDL2 as audio backend. If using pyglet instead, we only need
+		  # Use pyglet with OpenAL as audio backend. We only need
 		  # pyglet, pyglet.app and pyglet.media
 		  "excludes": {"all": ["Tkconstants", "Tkinter", "pygame",
 							   "pyglet.canvas", "pyglet.extlibs", "pyglet.font",
@@ -368,6 +368,7 @@ def setup():
 	use_setuptools = not use_distutils or "--use-setuptools" in \
 		sys.argv[1:] or (os.path.exists("use-setuptools") and 
 						 not "--use-distutils" in sys.argv[1:])
+	use_sdl = "--use-sdl" in sys.argv[1:]
 
 	sys.path.insert(1, os.path.join(os.path.dirname(pydir), "util"))
 
@@ -572,18 +573,33 @@ def setup():
 			# Add python and pythonw
 			data_files.extend([(os.path.join(data, "lib"), [sys.executable,
 				os.path.join(os.path.dirname(sys.executable), "pythonw.exe")])])
-			# SDL DLLs for audio module
-			sdl2 = ctypes.util.find_library("SDL2")
-			sdl2_mixer = ctypes.util.find_library("SDL2_mixer")
-			if sdl2:
-				sdl2_libs = [sdl2]
-				if sdl2_mixer:
-					sdl2_libs.append(sdl2_mixer)
+			if use_sdl:
+				# SDL DLLs for audio module
+				sdl2 = ctypes.util.find_library("SDL2")
+				sdl2_mixer = ctypes.util.find_library("SDL2_mixer")
+				if sdl2:
+					sdl2_libs = [sdl2]
+					if sdl2_mixer:
+						sdl2_libs.append(sdl2_mixer)
+						data_files.append((os.path.join(data, "lib"), sdl2_libs))
+						config["excludes"]["all"].append("pyglet")
+					else:
+						print "WARNING: SDL2_mixer not found!"
 				else:
-					print "WARNING: SDL2_mixer not found!"
-				data_files.append((os.path.join(data, "lib"), sdl2_libs))
-			else:
-				print "WARNING: SDL2 not found!"
+					print "WARNING: SDL2 not found!"
+			if not "pyglet" in config["excludes"]["all"]:
+				# OpenAL DLLs for pyglet
+				openal32 = ctypes.util.find_library("OpenAL32.dll")
+				wrap_oal = ctypes.util.find_library("wrap_oal.dll")
+				if openal32:
+					oal = [openal32]
+					if wrap_oal:
+						oal.append(wrap_oal)
+					else:
+						print "WARNING: wrap_oal.dll not found!"
+					data_files.append((data, oal))
+				else:
+					print "WARNING: OpenAL32.dll not found!"
 		elif sys.platform != "darwin":
 			# Linux
 			data_files.append((os.path.join(os.path.dirname(data), "appdata"),

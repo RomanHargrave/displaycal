@@ -796,7 +796,7 @@ def setup():
 		for tmpl_name in ("7z.xml", "argyllcms.xml", name + ".xml",
 						  name + "-linux.xml", name + "-mac.xml",
 						  name + "-win32.xml", "numpy.xml", "SDL.xml",
-						  "pywin32.xml", "wmi.xml",
+						  "pyglet.xml", "pywin32.xml", "wmi.xml",
 						  "wxpython.xml", "comtypes.xml", "enum34.xml",
 						  "faulthandler.xml", "netifaces.xml", "protobuf.xml",
 						  "pychromecast.xml", "requests.xml", "six.xml",

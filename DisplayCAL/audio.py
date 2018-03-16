@@ -58,7 +58,12 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 	# Select the audio library we're going to use.
 	# User choice or SDL > pyglet > pyo > wx
 	if not lib:
-		libs = ("SDL", "pyglet", "pyo", "wx")
+		if sys.platform in ("darwin", "win32"):
+			# Mac OS X, Windows
+			libs = ("pyglet", "SDL", "pyo", "wx")
+		else:
+			# Linux
+			libs = ("SDL", "pyglet", "pyo", "wx")
 		for lib in libs:
 			try:
 				return init(lib, samplerate, channels, buffersize, reinit)
