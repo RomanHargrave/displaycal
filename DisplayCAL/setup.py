@@ -870,13 +870,14 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				"dist_dir": dist_dir,
 				"excludes": config["excludes"]["all"] +
 							config["excludes"]["darwin"],
-				"frameworks": ["SDL2", "SDL2_mixer"],
 				"iconfile": os.path.join(pydir, "theme", "icons", 
 										 name + ".icns"),
 				"optimize": 0,
 				"plist": plist_dict
 			}
 		}
+		if use_sdl:
+			attrs["options"]["py2app"]["frameworks"] = ["SDL2", "SDL2_mixer"]
 		attrs["setup_requires"] = ["py2app"]
 
 	if do_py2exe:
