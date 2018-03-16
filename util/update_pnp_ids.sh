@@ -1,1 +1,3 @@
-curl -o DisplayCAL/pnp.ids https://git.fedorahosted.org/cgit/hwdata.git/plain/pnp.ids
+curl -o 20-acpi-vendor.hwdb https://github.com/systemd/systemd/blob/master/hwdb/20-acpi-vendor.hwdb
+
+python "`dirname \"$0\"`/convert_hwdb_to_pnp_ids.py" 20-acpi-vendor.hwdb

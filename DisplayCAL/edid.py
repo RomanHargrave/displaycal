@@ -223,8 +223,14 @@ def get_manufacturer_name(manufacturer_id):
 	SAM -> Samsung Electric Company
 	NEC -> NEC Corporation
 	
-	hwdb/pnp.ids can be created from Excel data available from Microsoft:
-	http://www.microsoft.com/whdc/system/pnppwr/pnp/pnpid.mspx
+	hwdb/pnp.ids can be created from Excel data available from uefi.org:
+	http://www.uefi.org/PNP_ACPI_Registry
+	http://www.uefi.org/uefi-pnp-export
+	http://www.uefi.org/uefi-acpi-export
+
+	But it is probably a better idea to use HWDB as it contains various
+	additions from other sources:
+	https://github.com/systemd/systemd/blob/master/hwdb/20-acpi-vendor.hwdb
 	
 	"""
 	if not pnpidcache:
