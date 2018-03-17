@@ -323,7 +323,7 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 							# Try original size
 							parts[-1] = oname
 				if (sys.platform not in ("darwin", "win32") and
-					parts[-1].startswith(appname)):
+					parts[-1].startswith(appname.lower())):
 					# Search /usr/share/icons on Linux first
 					path = get_data_path(os.path.join(parts[-2], "apps", parts[-1]) + ".png")
 				if not path:
