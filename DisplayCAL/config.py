@@ -414,6 +414,8 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 					if not bmp.IsOk():
 						path = None
 			if not path:
+				from log import safe_print
+				safe_print("Warning: Missing bitmap '%s'" % name)
 				img = wx.EmptyImage(w, h)
 				img.SetMaskColour(0, 0, 0)
 				img.InitAlpha()
