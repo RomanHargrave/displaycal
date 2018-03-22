@@ -1793,7 +1793,7 @@ def writecfg(which="user", worker=None, module=None, options=()):
 _init_testcharts()
 runtype = runtimeconfig(pyfile)
 
-if isapp and not os.getenv("SSL_CERT_FILE"):
+if sys.platform in ("darwin", "win32") and not os.getenv("SSL_CERT_FILE"):
 	# Use our bundled CA file
 	# https://github.com/certifi/python-certifi/blob/master/certifi/cacert.pem
 	cafile = get_data_path("cacert.pem")

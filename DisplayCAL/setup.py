@@ -530,7 +530,7 @@ def setup():
 				doc = os.path.join(os.path.sep, "usr", doc)
 
 	# Use bundled CA file
-	if sdist or do_py2app:
+	if sdist or do_py2app or do_py2exe:
 		config["package_data"][name].append("cacert.pem")
 
 	# on Mac OS X and Windows, we want data files in the package dir
