@@ -12367,10 +12367,16 @@ BEGIN_DATA
 					if cafile:
 						safe_print("Using CA file", cafile)
 			components = urlparse.urlparse(uri)
+			# Don't use socket.getservbyname, as it apparently can fail with
+			# socket.error under Windows 10 (although why remains a mystery,
+			# we're only dealing with HTTP and HTTPS protocols...)
+			scheme2port = {"http": 80,
+						   "https": 443}
 			safe_print(lang.getstr("connecting.to",
-								   (components.hostname,
+								   ("%s://%s" % (components.scheme,
+												 components.hostname),
 									components.port or
-									socket.getservbyname(components.scheme))))
+									scheme2port.get(components.scheme, "?"))))
 			LoggingHTTPRedirectHandler.newurl = uri
 			opener = urllib2.build_opener(LoggingHTTPRedirectHandler)
 			try:
