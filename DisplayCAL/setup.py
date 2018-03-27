@@ -602,7 +602,7 @@ def setup():
 					print "WARNING: OpenAL32.dll not found!"
 		elif sys.platform != "darwin":
 			# Linux
-			data_files.append((os.path.join(os.path.dirname(data), "appdata"),
+			data_files.append((os.path.join(os.path.dirname(data), "metainfo"),
 							   [os.path.join(pydir, "..", "dist", 
 											 name + ".appdata.xml")]))
 			data_files.append((os.path.join(os.path.dirname(data), 
