@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright ${YEAR} ${AUTHOR} <${AUTHOR_EMAIL}> -->
 <component type="desktop">
-	<id>${APPNAME_LOWER}.desktop</id>
+	<id>${APPSTREAM_ID}</id>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0+</project_license>
 	<name>${APPNAME}</name>
 	<summary>${SUMMARY}</summary>
+	<launchable type="desktop-id">${APPNAME_LOWER}.desktop</launchable>
 	<description>
 		${APPDATADESC}
 	</description>
@@ -15,6 +16,8 @@
 		</screenshot>
 	</screenshots>
 	<url type="homepage">${URL}</url>
+	<url type="bugtracker">${URL}issues/</url>
+	<url type="donation">${URL}#donate</url>
 	<developer_name>${AUTHOR}</developer_name>
 	<updatecontact>${AUTHOR_EMAIL}</updatecontact>
 	<provides>

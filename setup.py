@@ -85,6 +85,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"APPNAME": name,
 		"APPNAME_HTML": name_html,
 		"APPNAME_LOWER": name.lower(),
+		"APPSTREAM_ID": ".".join(reversed([name] + domain.lower().split("."))),
 		"AUTHOR": author,
 		"AUTHOR_EMAIL": author_email.replace("@", "_at_"),
 		"MAINTAINER": author,
