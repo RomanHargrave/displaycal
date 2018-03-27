@@ -62,7 +62,7 @@ distutils.filelist.findall = findall    # Fix findall bug in distutils
 from defaultpaths import autostart, autostart_home
 from meta import (author, author_ascii, description, longdesc, domain, name, 
 				  py_maxversion, py_minversion, version, version_tuple, 
-				  wx_minversion, author_email, script2pywname)
+				  wx_minversion, author_email, script2pywname, appstream_id)
 from util_os import getenvu, relpath, safe_glob
 from util_str import safe_str
 appname = name
@@ -604,7 +604,7 @@ def setup():
 			# Linux
 			data_files.append((os.path.join(os.path.dirname(data), "metainfo"),
 							   [os.path.join(pydir, "..", "dist", 
-											 name + ".appdata.xml")]))
+											 appstream_id + ".appdata.xml")]))
 			data_files.append((os.path.join(os.path.dirname(data), 
 											"applications"), 
 							   [os.path.join(pydir, "..", "misc", name.lower() + 

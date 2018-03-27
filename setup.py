@@ -85,7 +85,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"APPNAME": name,
 		"APPNAME_HTML": name_html,
 		"APPNAME_LOWER": name.lower(),
-		"APPSTREAM_ID": ".".join(reversed([name] + domain.lower().split("."))),
+		"APPSTREAM_ID": appstream_id,
 		"AUTHOR": author,
 		"AUTHOR_EMAIL": author_email.replace("@", "_at_"),
 		"MAINTAINER": author,
@@ -339,12 +339,12 @@ def setup():
 	global domain, py_maxversion, py_minversion
 	global version, version_lin, version_mac
 	global version_src, version_tuple, version_win
-	global wx_minversion
+	global wx_minversion, appstream_id
 	from meta import (name, name_html, author, author_email, description,
 					  lastmod, longdesc, domain, py_maxversion, py_minversion,
 					  version, version_lin, version_mac, 
 					  version_src, version_tuple, version_win,
-					  wx_minversion, script2pywname)
+					  wx_minversion, script2pywname, appstream_id)
 	longdesc = fill(longdesc)
 
 	if not lastmod_time:
@@ -442,7 +442,7 @@ def setup():
 							 (round((1 - untranslated / (len(tdict) - 1.0)) * 100),
 							 code))
 		languages = "\n\t\t".join(languages)
-		tmpl_name = name + ".appdata.xml"
+		tmpl_name = appstream_id + ".appdata.xml"
 		replace_placeholders(os.path.join(pydir, "misc", tmpl_name),
 							 os.path.join(pydir, "dist", tmpl_name),
 							 lastmod_time, {"APPDATAPROVIDES": provides,

@@ -39,6 +39,7 @@ longdesc = ("Calibrate and characterize your display devices using "
 domain = "displaycal.net"
 author_email = "florian" + chr(0100) + domain
 name = "DisplayCAL"
+appstream_id = ".".join(reversed([name] + domain.lower().split(".")))
 name_html = '<span class="appname">Display<span>CAL</span></span>'
 
 py_maxversion = (2, 7)
