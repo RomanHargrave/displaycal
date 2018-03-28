@@ -21,6 +21,9 @@ SYSFS{idVendor}=="0765", SYSFS{idProduct}=="5020", PROGRAM="/bin/sh -c 'K=%k; K=
 # ColorMunki Smile
 SYSFS{idVendor}=="0765", SYSFS{idProduct}=="6003", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
 
+# ColorMunki i1 Studio
+SYSFS{idVendor}=="0765", SYSFS{idProduct}=="6008", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
+
 # DTP20
 SYSFS{idVendor}=="0765", SYSFS{idProduct}=="d020", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
 
