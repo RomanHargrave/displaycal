@@ -25,9 +25,9 @@
 		<id>dispcalGUI.desktop</id>
 ​ 	</provides>
 	<releases>
-		​<release version="${VERSION}" timestamp="${TIMESTAMP}">
+		​<release version="${VERSION}" date="${ISODATE}">
 			<description>
-				<p>See README.html#changelog-${VERSION_SHORT} for the complete list of changes in this version.</p>
+${CHANGELOG}
 			</description>
 		</release>
 	</releases>

@@ -57,6 +57,19 @@ version_tuple = VERSION # only ints allowed and must be exactly 4 values
 wx_minversion = (3, 0, 0)
 
 
+def get_latest_chglog_entry(readme):
+	""" Get changelog entry for latest version from ReadMe HTML """
+	chglog = re.search('<div id="(?:changelog|history)">'
+					   '.+?<h2>.+?</h2>'
+					   '.+?<dl>.+?</dd>', readme, re.S)
+	if chglog:
+		chglog = chglog.group()
+		chglog = re.sub(r'\s*<div id="(?:changelog|history)">\n?', "", chglog)
+		chglog = re.sub(r"\s*<\/?d[ld]>\n?", "", chglog)
+		chglog = re.sub(r"\s*<(h[23])>.+?</\1>\n?", "", chglog)
+	return chglog
+
+
 def script2pywname(script):
 	""" Convert all-lowercase script name to mixed-case pyw name """
 	a2b = {name + "-3dlut-maker": name + "-3DLUT-maker",

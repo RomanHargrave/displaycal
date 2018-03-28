@@ -45,6 +45,53 @@ def create_appdmg(zeroinstall=False):
 		sys.exit(retcode)
 
 
+def format_chglog(chglog, format="appstream"):
+	if format.lower() in ("appstream", "rpm"):
+		if format.lower() == "rpm":
+			# Remove changelog entries of prev versions
+			chglog = re.sub(r'\s*<p id="changelog-.*$(?s)', "", chglog)
+		# AppStream: Do not assume the format is HTML. Only paragraph (p),
+		# ordered list (ol) and unordered list (ul) are supported at this time.
+		# + list items (li)
+		allowed_tags = ["p", "ol", "ul", "li"]
+		chglog = re.sub(r"\s*<dt(?:\s+[^>]*)?>.+?</dt>\n?", "", chglog)
+		chglog = re.sub(r"<(h4|p)(?:\s+[^>]*)?>(.+?)</\1>",
+						r"<p>\2</p>", chglog)
+		tags = re.findall(r'<[^/][^>]+>', chglog)
+		for tag in tags:
+			tagname = tag.strip('<>').split()[0]
+			if not tagname in allowed_tags:
+				chglog = chglog.replace(tag, "")
+				chglog = chglog.replace("</" + tagname + ">", "")
+		# Nice formatting
+		chglog = re.sub(r"^\s+(?m)", r"\t" * 4, chglog)  # Multi-line
+		chglog = re.sub(r"(<li)", r"\t\1", chglog)
+		chglog = re.sub(r"\s*\n\s*\n", "\n", chglog)
+	else:
+		raise ValueError("Changelog format not supported: %r" % format)
+	if format.lower() == "rpm":
+		# Remove list tags
+		chglog = re.sub(r"\s*</?[ou]l(?:\s+[^>]*)?>\n?", r"", chglog)
+		# Remove all other tags and their contents (except list items)
+		chglog = re.sub(r"\s*<(?!/?li)[^>]*>.*?</[^>]+>\n?(?s)", r"", chglog)
+		# Remove line breaks
+		chglog = re.sub(r"\s*\n+\s*", " ", chglog)
+		# Turn each list item into 2nd level bullet point ("*"), indent
+		chglog = re.sub(r"\s*<li(?:\s+[^>]*)?>(.*?)</li>(?s)", r"  * \1\n", chglog)
+		# Wrap each line to 67 chars
+		chglog = chglog.splitlines()
+		for i, line in enumerate(chglog):
+			block = fill(line.rstrip(), 67, subsequent_indent='    ')
+			chglog[i] = block
+		chglog = "\n".join(chglog)
+		# Turn HTML entities back into chars
+		chglog = strtr(chglog, {"&amp;": "&",
+								"&gt;": "<",
+								"&lt;": ">",
+								"&quot;": '"'})
+	return chglog
+
+
 def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 	global longdesc
 	with codecs.open(tmpl_path, "r", "UTF-8") as tmpl:
@@ -344,7 +391,8 @@ def setup():
 					  lastmod, longdesc, domain, py_maxversion, py_minversion,
 					  version, version_lin, version_mac, 
 					  version_src, version_tuple, version_win,
-					  wx_minversion, script2pywname, appstream_id)
+					  wx_minversion, script2pywname, appstream_id,
+					  get_latest_chglog_entry)
 	longdesc = fill(longdesc)
 
 	if not lastmod_time:
@@ -419,9 +467,16 @@ def setup():
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
 
-	if ((appdata or 
-		 "install" in sys.argv[1:]) and 
-		not help and not dry_run):
+	create_appdata = ((appdata or 
+					   "install" in sys.argv[1:]) and 
+					  not help and not dry_run)
+
+	if create_appdata or buildservice:
+		with codecs.open(os.path.join(pydir, "README.html"), "r", "UTF-8") as readme:
+			readme = readme.read()
+		chglog = get_latest_chglog_entry(readme)
+
+	if create_appdata:
 		from setup import get_scripts
 		import localization as lang
 		scripts = get_scripts()
@@ -446,7 +501,9 @@ def setup():
 		replace_placeholders(os.path.join(pydir, "misc", tmpl_name),
 							 os.path.join(pydir, "dist", tmpl_name),
 							 lastmod_time, {"APPDATAPROVIDES": provides,
-											"LANGUAGES": languages})
+											"LANGUAGES": languages,
+											"CHANGELOG": format_chglog(chglog,
+																	   "appstream")})
 	if appdata:
 		sys.argv.remove("appdata")
 
@@ -629,7 +686,8 @@ def setup():
 								"r").read().strip(),
 				   "POSTUN": open(os.path.join(pydir, "util",
 											   "rpm_postuninstall.sh"),
-								  "r").read().strip()}
+								  "r").read().strip(),
+				   "CHANGELOG": format_chglog(chglog, "rpm")}
 		tgz = os.path.join(pydir, "dist", "%s-%s.tar.gz" % (name, version))
 		if os.path.isfile(tgz):
 			with open(tgz, "rb") as tgzfile:

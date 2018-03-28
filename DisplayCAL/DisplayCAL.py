@@ -89,7 +89,7 @@ from debughelpers import ResourceError, getevtobjname, getevttype, handle_error
 from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
 from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
-				  version, version_short)
+				  version, version_short, get_latest_chglog_entry)
 from options import debug, test, test_update, verbose
 from ordereddict import OrderedDict
 from patterngenerators import WebWinHTTPPatternGeneratorServer
@@ -233,15 +233,8 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 			if argyll:
 				chglog = readme
 			else:
-				chglog = re.search('<div id="(?:changelog|history)">'
-								   '.+?<h2>.+?</h2>'
-								   '.+?<dl>.+?</dd>', readme, re.S)
+				chglog = get_latest_chglog_entry(readme)
 				if chglog:
-					chglog = chglog.group()
-					chglog = re.sub('<div id="(?:changelog|history)">', "", chglog)
-					chglog = re.sub("<\/?d[l|d]>", "", chglog)
-					chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
-					chglog = re.sub("<h3>.+?</h3>", "", chglog)
 					chglog = u"""<!DOCTYPE html>
 <html>
 <head>
