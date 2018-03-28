@@ -1,31 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright ${YEAR} ${AUTHOR} <${AUTHOR_EMAIL}> -->
-<component type="desktop">
+<component type="desktop-application">
 	<id>${APPSTREAM_ID}</id>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0+</project_license>
 	<name>${APPNAME}</name>
 	<summary>${SUMMARY}</summary>
+	<icon type="remote" width="256" height="256">${URL}theme/icons/256x256/${APPNAME_LOWER}.png</icon>
 	<launchable type="desktop-id">${APPNAME_LOWER}.desktop</launchable>
 	<description>
 		${APPDATADESC}
 	</description>
+	<categories>
+​		<category>Graphics</category>
+	​</categories>
 	<screenshots>
 		<screenshot type="default">
 			<image width="1024" height="576">${URL}screenshots/${APPNAME}-screenshot-GNOME-1024x576.png</image>
+			<caption>${APPNAME} ${VERSION_SHORT} main window</caption>
 		</screenshot>
 	</screenshots>
 	<url type="homepage">${URL}</url>
 	<url type="bugtracker">${URL}issues/</url>
+	<url type="help">${URL}#toc</url>
 	<url type="donation">${URL}#donate</url>
 	<developer_name>${AUTHOR}</developer_name>
-	<updatecontact>${AUTHOR_EMAIL}</updatecontact>
+	<update_contact>${AUTHOR_EMAIL}</update_contact>
 	<provides>
 		${APPDATAPROVIDES}
 		<id>dispcalGUI.desktop</id>
 ​ 	</provides>
 	<releases>
-		​<release version="${VERSION}" date="${ISODATE}">
+		​<release version="${VERSION_SHORT}" date="${ISODATE}">
 			<description>
 ${CHANGELOG}
 			</description>
