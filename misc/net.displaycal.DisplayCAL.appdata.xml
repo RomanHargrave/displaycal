@@ -29,6 +29,7 @@
 	<provides>
 		${APPDATAPROVIDES}
 		<id>dispcalGUI.desktop</id>
+		<id>${APPNAME_LOWER}.desktop</id>
 ​ 	</provides>
 	<releases>
 		​<release version="${VERSION_SHORT}" date="${ISODATE}">
