@@ -471,6 +471,12 @@ def setup():
 					   "install" in sys.argv[1:]) and 
 					  not help and not dry_run)
 
+	if (("sdist" in sys.argv[1:] or 
+		 "install" in sys.argv[1:] or 
+		 "bdist_deb" in sys.argv[1:]) and 
+		not help):
+		buildservice = True
+
 	if create_appdata or buildservice:
 		with codecs.open(os.path.join(pydir, "README.html"), "r", "UTF-8") as readme:
 			readme = readme.read()
@@ -507,11 +513,6 @@ def setup():
 	if appdata:
 		sys.argv.remove("appdata")
 
-	if (("sdist" in sys.argv[1:] or 
-		 "install" in sys.argv[1:] or 
-		 "bdist_deb" in sys.argv[1:]) and 
-		not help):
-		buildservice = True
 	if buildservice and not dry_run:
 		replace_placeholders(os.path.join(pydir, "misc", "debian.copyright"),
 							 os.path.join(pydir, "dist", "copyright"),
