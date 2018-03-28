@@ -78,17 +78,17 @@ def format_chglog(chglog, format="appstream"):
 		chglog = re.sub(r"\s*\n+\s*", " ", chglog)
 		# Turn each list item into 2nd level bullet point ("*"), indent
 		chglog = re.sub(r"\s*<li(?:\s+[^>]*)?>(.*?)</li>(?s)", r"  * \1\n", chglog)
+		# Turn HTML entities back into chars
+		chglog = strtr(chglog, {"&amp;": "&",
+								"&gt;": "<",
+								"&lt;": ">",
+								"&quot;": '"'})
 		# Wrap each line to 67 chars
 		chglog = chglog.splitlines()
 		for i, line in enumerate(chglog):
 			block = fill(line.rstrip(), 67, subsequent_indent='    ')
 			chglog[i] = block
 		chglog = "\n".join(chglog)
-		# Turn HTML entities back into chars
-		chglog = strtr(chglog, {"&amp;": "&",
-								"&gt;": "<",
-								"&lt;": ">",
-								"&quot;": '"'})
 	return chglog
 
 
