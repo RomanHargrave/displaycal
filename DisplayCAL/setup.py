@@ -81,7 +81,8 @@ if sys.platform in ("darwin", "win32"):
 		os.environ["PATH"] = safe_str(pth)
 
 config = {"data": ["tests/*.icc"],
-		  "doc": ["LICENSE.txt",
+		  "doc": ["CHANGES.html",
+				  "LICENSE.txt",
 				  "README.html",
 				  "README-fr.html",
 				  "screenshots/*.png",
@@ -198,6 +199,7 @@ def create_app_symlinks(dist_dir, scripts):
 	# containing the app bundle
 	for src, tgt in [("ref", "Reference"),
 					 ("tests", "Tests"),
+					 ("CHANGES.html", "CHANGES.html"),
 					 ("README.html", "README.html"),
 					 ("README-fr.html", "README-fr.html"),
 					 ("LICENSE.txt", "LICENSE.txt")]:
@@ -1098,6 +1100,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					"theme",
 					"ti1",
 					"x3d-viewer",
+					"CHANGES.html",
 					"LICENSE.txt",
 					"README.html",
 					"README-fr.html",
@@ -1127,6 +1130,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				for fname in [
 					"screenshots",
 					"theme",
+					"CHANGES.html",
 					"LICENSE.txt",
 					"README.html",
 					"README-fr.html"
@@ -1141,7 +1145,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				startmenu_programs = get_special_folder_path("CSIDL_PROGRAMS")
 				for path in (startmenu_programs_common, startmenu_programs):
 					if path:
-						for filename in (name, "LICENSE", "README", 
+						for filename in (name, "CHANGES", "LICENSE", "README", 
 										 "Uninstall"):
 							paths += safe_glob(os.path.join(path, name, 
 															filename + ".lnk"))
@@ -1205,7 +1209,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					   "edit"]
 		manifest_in.extend(["include LICENSE.txt", "include MANIFEST", 
 							"include MANIFEST.in", "include README.html", 
-							"include README-fr.html",
+							"include README-fr.html", "include CHANGES.html",
 							"include *.pyw", "include use-distutils"])
 		manifest_in.append("include " + os.path.basename(sys.argv[0]))
 		manifest_in.append("include " + 

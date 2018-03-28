@@ -450,19 +450,20 @@ def setup():
 
 	if "readme" in sys.argv[1:]:
 		if not dry_run:
-			for suffix in ("", "-fr"):
-				replace_placeholders(os.path.join(pydir, "misc", 
-												  "README%s.template.html" %
-												  suffix),
-									 os.path.join(pydir, "README%s.html" %
-												  suffix),
-									 lastmod_time,
-									 {"STABILITY": "Beta" if stability != "stable"
-												   else ""})
-			replace_placeholders(os.path.join(pydir, "misc", 
-											  "history.template.html"),
-								 os.path.join(pydir, "history.html"),
-								 lastmod_time)
+			for tmpl_name in ["CHANGES", "README", "history"]:
+				for suffix in ("", "-fr"):
+					if suffix:
+						if tmpl_name == "README":
+							tmpl_name += suffix
+						else:
+							continue
+					replace_placeholders(os.path.join(pydir, "misc", 
+													  tmpl_name + ".template.html"),
+										 os.path.join(pydir, tmpl_name + ".html"),
+										 lastmod_time,
+										 {"STABILITY": "Beta"
+													   if stability != "stable"
+													   else ""})
 		sys.argv.remove("readme")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
@@ -478,7 +479,7 @@ def setup():
 		buildservice = True
 
 	if create_appdata or buildservice:
-		with codecs.open(os.path.join(pydir, "README.html"), "r", "UTF-8") as readme:
+		with codecs.open(os.path.join(pydir, "CHANGES.html"), "r", "UTF-8") as readme:
 			readme = readme.read()
 		chglog = get_latest_chglog_entry(readme)
 
@@ -620,6 +621,18 @@ def setup():
 										  None,  # Description
 										  None,  # Hotkey
 										  name + ".ico",  # Icon
+										  None,  # IconIndex
+										  None,  # ShowCmd
+										  name)])  # WkDir
+		msilib.add_data(db, "Shortcut", [("CHANGES",  # Shortcut
+										  "MenuDir",  # Directory
+										  "CHANGES|CHANGES",  # Name
+										  name,  # Component
+										  r"[%s]CHANGES.html" % name,  # Target
+										  None,  # Arguments
+										  None,  # Description
+										  None,  # Hotkey
+										  None,  # Icon
 										  None,  # IconIndex
 										  None,  # ShowCmd
 										  name)])  # WkDir

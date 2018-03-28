@@ -185,18 +185,18 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 			argyll_version = intlist(getcfg("argyll.version").split("."))
 		curversion_tuple = tuple(argyll_version)
 		version_file = "Argyll/VERSION"
-		readme_file = "Argyll/ChangesSummary.html"
+		chglog_file = "Argyll/ChangesSummary.html"
 	elif snapshot:
 		# Snapshot
 		curversion_tuple = VERSION
 		version_file = "SNAPSHOT_VERSION"
-		readme_file = "SNAPSHOT_README.html"
+		chglog_file = "SNAPSHOT_CHANGES.html"
 	else:
 		# Stable
 		safe_print(lang.getstr("update_check"))
 		curversion_tuple = VERSION_BASE
 		version_file = "VERSION"
-		readme_file = "README.html"
+		chglog_file = "CHANGES.html"
 	resp = http_request(parent, domain, "GET", "/" + version_file,
 						failure_msg=lang.getstr("update_check.fail"),
 						silent=silent)
@@ -225,7 +225,7 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 		app_is_uptodate = newversion_tuple <= curversion_tuple
 	if newversion_tuple > curversion_tuple:
 		# Get changelog
-		resp = http_request(parent, domain, "GET", "/" + readme_file,
+		resp = http_request(parent, domain, "GET", "/" + chglog_file,
 							silent=True)
 		chglog = None
 		if resp:
