@@ -2069,9 +2069,9 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.sizer1.Add(self.bitmap, flag=flags, border=margin)
 			if self.taskbar:
 				state = None
-				if bitmap is geticon(bitmap.Width, "dialog-error"):
+				if bitmap is geticon(32, "dialog-error"):
 					state = taskbar.TBPF_ERROR
-				elif bitmap is geticon(bitmap.Width, "dialog-warning"):
+				elif bitmap is geticon(32, "dialog-warning"):
 					state = taskbar.TBPF_PAUSED
 				if state is not None:
 					if (state == taskbar.TBPF_ERROR or
