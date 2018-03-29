@@ -38,6 +38,11 @@ ${CHANGELOG}
 			</description>
 		</release>
 	</releases>
+	<kudos>
+		<kudo>HiDpiIcon</kudo>
+		<kudo>ModernToolkit</kudo>
+		<kudo>UserDocs</kudo>
+	</kudos>
 	<languages>
 		${LANGUAGES}
 	​</languages>
