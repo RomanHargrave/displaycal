@@ -110,7 +110,7 @@ def getstr(id_str, strvars=None, lcode=None):
 								s = int(s)
 							else:
 								s = float(s)
-						except ValueError:
+						except (TypeError, ValueError):
 							s = 0
 					strvars[i] = s
 				lstr %= tuple(strvars)
