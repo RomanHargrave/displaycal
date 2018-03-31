@@ -16,6 +16,8 @@ import win32gui
 import winerror
 import wx
 
+from log import safe_print
+
 
 class Menu(wx.EvtHandler):
 
@@ -202,12 +204,15 @@ class SysTrayIcon(wx.EvtHandler):
 		return menu
 
 	def OnCommand(self, hwnd, msg, wparam, lparam):
+		safe_print("SysTrayIcon.OnCommand(hwnd=%r, msg=%r, wparam=%r, lparam=%r)" % (hwnd, msg, wparam, lparam))
 		if not self.menu:
+			safe_print("Warning: Don't have menu")
 			return
 		event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
 		event.Id = win32api.LOWORD(wparam)
 		item = _get_selected_menu_item(event.Id, self.menu)
 		if not item:
+			safe_print("Warning: Don't have menu item ID %s" % event.Id)
 			return
 		if item.Kind == wx.ITEM_RADIO:
 			event.SetInt(1)
