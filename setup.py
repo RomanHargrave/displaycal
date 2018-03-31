@@ -47,9 +47,8 @@ def create_appdmg(zeroinstall=False):
 
 def format_chglog(chglog, format="appstream"):
 	if format.lower() in ("appstream", "rpm"):
-		if format.lower() == "rpm":
-			# Remove changelog entries of prev versions
-			chglog = re.sub(r'\s*<p id="changelog-.*$(?s)', "", chglog)
+		# Remove changelog entries of prev versions
+		chglog = re.sub(r'\s*<p id="changelog-.*$(?s)', "", chglog)
 		# AppStream: Do not assume the format is HTML. Only paragraph (p),
 		# ordered list (ol) and unordered list (ul) are supported at this time.
 		# + list items (li)
