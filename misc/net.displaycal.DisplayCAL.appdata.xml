@@ -13,7 +13,7 @@
 	</description>
 	<categories>
 		<category>Graphics</category>
-	​</categories>
+	</categories>
 	<screenshots>
 		<screenshot type="default">
 			<image width="1024" height="576">${URL}screenshots/${APPNAME}-screenshot-GNOME-1024x576.png</image>
@@ -30,9 +30,9 @@
 		${APPDATAPROVIDES}
 		<id>dispcalGUI.desktop</id>
 		<id>${APPNAME_LOWER}.desktop</id>
-​ 	</provides>
+ 	</provides>
 	<releases>
-		​<release version="${VERSION_SHORT}" date="${ISODATE}">
+		<release version="${VERSION_SHORT}" date="${ISODATE}">
 			<description>
 ${CHANGELOG}
 			</description>
@@ -45,5 +45,5 @@ ${CHANGELOG}
 	</kudos>
 	<languages>
 		${LANGUAGES}
-	​</languages>
+	</languages>
 </component>
