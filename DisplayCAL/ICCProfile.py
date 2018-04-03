@@ -5998,22 +5998,26 @@ class ICCProfile:
 					info["    %s %s" % (colorant_name,
 									    "".join(colorant.keys()))] = " ".join(XYZxy)
 			elif isinstance(tag, ParametricCurveType):
-				info[name] = ""
 				params = "".join(sorted(tag.params.keys()))
+				tag_params = dict(tag.params.items())
+				for key, value in tag_params.iteritems():
+					tag_params[key] = ("%.6f" % value).rstrip(".0")
 				if params == "g":
-					info["    Parametric Function"] = "pow(X, %(g)3.2f)" % tag.params
-				elif params == "abg":
-					info["    if (X >= - %(b)6.4f / %(a)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f)" % tag.params
-					info["    if (X <  - %(b)6.4f / %(a)6.4f):" % tag.params] = "0"
+					info[name] = "Gamma %(g)s" % tag_params
+				else:
+					info[name] = ""
+				if params == "abg":
+					info["    if (X >= - %(b)s / %(a)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s)" % tag_params
+					info["    if (X <  - %(b)s / %(a)s):" % tag_params] = "0"
 				elif params == "abcg":
-					info["    if (X >= - %(b)6.4f / %(a)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f) + %(c)6.4f" % tag.params
-					info["    if (X <  - %(b)6.4f / %(a)6.4f):" % tag.params] = "%(c)6.4f" % tag.params
+					info["    if (X >= - %(b)s / %(a)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s) + %(c)s" % tag_params
+					info["    if (X <  - %(b)s / %(a)s):" % tag_params] = "%(c)s" % tag_params
 				elif params == "abcdg":
-					info["    if (X >= %(d)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f)" % tag.params
-					info["    if (X <  %(d)6.4f):" % tag.params] = "%(c)6.4f * X" % tag.params
+					info["    if (X >= %(d)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s)" % tag_params
+					info["    if (X <  %(d)s):" % tag_params] = "%(c)s * X" % tag_params
 				elif params == "abcdefg":
-					info["    if (X >= %(d)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f) + %(e)6.4f" % tag.params
-					info["    if (X <  %(d)6.4f):" % tag.params] = "%(c)6.4f * X + %(f)6.4f" % tag.params
+					info["    if (X >= %(d)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s) + %(e)s" % tag_params
+					info["    if (X <  %(d)s):" % tag_params] = "%(c)s * X + %(f)s" % tag_params
 				if params != "g":
 					tag = tag.get_trc()
 					#info["    Average gamma"] = "%3.2f" % tag.get_gamma()
@@ -6031,7 +6035,7 @@ class ICCProfile:
 					info["    Transfer function"] = value
 			elif isinstance(tag, CurveType):
 				if len(tag) == 1:
-					info[name] = "Gamma %3.2f" % tag[0]
+					info[name] = ("Gamma %3.2f" % tag[0]).rstrip(".0")
 				elif len(tag):
 					info[name] = ""
 					info["    Number of entries"] = "%i" % len(tag)
