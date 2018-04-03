@@ -6506,14 +6506,14 @@ while 1:
 				prefix = os.path.basename(profile.fileName)
 			else:
 				prefix = make_filename_safe(profile.getDescription(),
-											concat=False)
+											concat=False) + profile_ext
 			prefix += "-"
 		if (profile.version >= 4 and
 			not profile.convert_iccv4_tags_to_iccv2()):
 			safe_print("\n".join([lang.getstr("profile.iccv4.unsupported"),
 											  profile.getDescription()]))
 		elif not profile.fileName:
-			fd, profile.fileName = tempfile.mkstemp(profile_ext, prefix)
+			fd, profile.fileName = tempfile.mkstemp("", prefix)
 			stream = os.fdopen(fd, "wb")
 			profile.write(stream)
 			stream.close()
