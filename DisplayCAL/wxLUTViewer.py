@@ -1147,7 +1147,7 @@ class LUTFrame(BaseFrame):
 						len(self.bTRC))
 		has_same_trc = self.rTRC == self.gTRC == self.bTRC
 
-		if profile.version >= 4:
+		if profile.version >= 4 and not profile.convert_iccv4_tags_to_iccv2():
 			self.client.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
 													   profile.getDescription()])))
 			return
@@ -1394,12 +1394,12 @@ class LUTFrame(BaseFrame):
 			title = lang.getstr("calibration.lut_viewer.title")
 		self.SetTitle(title)
 		self.profile = profile
-		self.rTRC = self.tf_rTRC = profile.tags.get("rTRC",
-													profile.tags.get("kTRC"))
-		self.gTRC = self.tf_gTRC = profile.tags.get("gTRC",
-													profile.tags.get("kTRC"))
-		self.bTRC = self.tf_bTRC = profile.tags.get("bTRC",
-													profile.tags.get("kTRC"))
+		for channel in "rgb":
+			trc = profile.tags.get(channel + "TRC", profile.tags.get("kTRC"))
+			if isinstance(trc, ICCP.ParametricCurveType):
+				trc = trc.get_trc()
+			setattr(self, channel + "TRC", trc)
+			setattr(self, "tf_" + channel + "TRC", trc)
 		self.trc = None
 		curves = []
 		curves.append(lang.getstr('vcgt'))

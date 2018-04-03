@@ -3469,6 +3469,65 @@ class CurveType(ICCProfileTag, list):
 		return locals()
 
 
+class ParametricCurveType(ICCProfileTag):
+
+	def __init__(self, tagData=None, tagSignature=None, profile=None):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self.profile = profile
+		self.params = {}
+		if not tagData:
+			return
+		fntype = uInt16Number(tagData[8:10])
+		numparams = {0: 1,
+					 1: 3,
+					 2: 4,
+					 3: 5,
+					 4: 7}.get(fntype)
+		for i, param in enumerate("gabcdef"[:numparams]):
+			self.params[param] = s15Fixed16Number(tagData[12 + i * 4:
+														  12 + i * 4 + 4])
+
+	def apply(self, v):
+		if len(self.params) == 1:
+			return v ** self.params["g"]
+		elif len(self.params) == 3:
+			# CIE 122-1966
+			if v >= -self.params["b"] / self.params["a"]:
+				return (self.params["a"] * v +
+						self.params["b"]) ** self.params["g"]
+			else:
+				return 0
+		elif len(self.params) == 4:
+			# IEC 61966-3
+			if v >= -self.params["b"] / self.params["a"]:
+				return (self.params["a"] * v +
+						self.params["b"]) ** self.params["g"] + self.params["c"]
+			else:
+				return self.params["c"]
+		elif len(self.params) == 5:
+			# IEC 61966-2.1 (sRGB)
+			if v >= self.params["d"]:
+				return (self.params["a"] * v +
+						self.params["b"]) ** self.params["g"]
+			else:
+				return self.params["c"] * v
+		elif len(self.params) == 7:
+			if v >= self.params["d"]:
+				return (self.params["a"] * v +
+						self.params["b"]) ** self.params["g"] + self.params["e"]
+			else:
+				return self.params["c"] * v + self.params["f"]
+		else:
+			raise NotImplementedError("Invalid number of parameters: %i"
+									  % len(self.params))
+
+	def get_trc(self, size=1024):
+		curv = CurveType(profile=self.profile)
+		for i in xrange(size):
+			curv.append(self.apply(i / (size - 1.0)) * 65535)
+		return curv
+
+
 class DateTimeType(ICCProfileTag, datetime.datetime):
 	
 	def __new__(cls, tagData, tagSignature):
@@ -4955,6 +5014,7 @@ typeSignature2Type = {
 	"mft2": LUT16Type,
 	"mmod": MakeAndModelType,  # Apple private tag
 	"ncl2": NamedColor2Type,
+	"para": ParametricCurveType,
 	"sf32": s15Fixed16ArrayType,
 	"sig ": SignatureType,
 	"text": TextType,
@@ -5373,6 +5433,38 @@ class ICCProfile:
 		if self._file and not self._file.closed:
 			self._file.close()
 
+	def convert_iccv4_tags_to_iccv2(self):
+		"""
+		Convert ICCv4 parametric curve tags to ICCv2-compatible curve tags
+		
+		Also sets whitepoint to illuinant relative values, and removes
+		any chromatic adaptation tag.
+		
+		If ICC profile version is < 4 or no [rgb]TRC tags, return False.
+		Otherwise, convert and return True.
+		
+		After conversion, the profile version is 2.1
+		
+		"""
+		if self.version < 4 or not self.has_trc_tags():
+			return False
+		for channel in "rgb":
+			tag = self.tags[channel + "TRC"]
+			if isinstance(tag, ParametricCurveType):
+				# Convert to CurveType
+				self.tags[channel + "TRC"] = tag.get_trc()
+		# Set fileName to None because our profile no longer reflects the file
+		# on disk
+		self.fileName = None
+		# Set whitepoint tag to illuminant relative and remove chromatic
+		# adaptation tag afterwards(!)
+		self.tags.wtpt = self.tags.wtpt.ir
+		if "chad" in self.tags:
+			del self.tags["chad"]
+		# Set profile version to 2.1
+		self.version = 2.1
+		return True
+
 	@staticmethod
 	def from_named_rgb_space(rgb_space_name, iccv4=False, cat="Bradford"):
 		rgb_space = colormath.get_rgb_space(rgb_space_name)
@@ -5515,6 +5607,10 @@ class ICCProfile:
 				profile.tags[tagname].set_trc(gamma, 1)
 		profile.calculateID()
 		return profile
+
+	def has_trc_tags(self):
+		""" Return whether the profile has [rgb]TRC tags """
+		return not False in [channel + "TRC" in self.tags for channel in "rgb"]
 
 	def set_blackpoint(self, XYZbp):
 		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
@@ -5901,6 +5997,38 @@ class ICCProfile:
 														  colormath.XYZ2xyY(*values)[:2]))
 					info["    %s %s" % (colorant_name,
 									    "".join(colorant.keys()))] = " ".join(XYZxy)
+			elif isinstance(tag, ParametricCurveType):
+				info[name] = ""
+				params = "".join(sorted(tag.params.keys()))
+				if params == "g":
+					info["    Parametric Function"] = "pow(X, %(g)3.2f)" % tag.params
+				elif params == "abg":
+					info["    if (X >= - %(b)6.4f / %(a)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f)" % tag.params
+					info["    if (X <  - %(b)6.4f / %(a)6.4f):" % tag.params] = "0"
+				elif params == "abcg":
+					info["    if (X >= - %(b)6.4f / %(a)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f) + %(c)6.4f" % tag.params
+					info["    if (X <  - %(b)6.4f / %(a)6.4f):" % tag.params] = "%(c)6.4f" % tag.params
+				elif params == "abcdg":
+					info["    if (X >= %(d)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f)" % tag.params
+					info["    if (X <  %(d)6.4f):" % tag.params] = "%(c)6.4f * X" % tag.params
+				elif params == "abcdefg":
+					info["    if (X >= %(d)6.4f):" % tag.params] = "pow(%(a)6.4f * X + %(b)6.4f, %(g)3.2f) + %(e)6.4f" % tag.params
+					info["    if (X <  %(d)6.4f):" % tag.params] = "%(c)6.4f * X + %(f)6.4f" % tag.params
+				if params != "g":
+					tag = tag.get_trc()
+					#info["    Average gamma"] = "%3.2f" % tag.get_gamma()
+					transfer_function = tag.get_transfer_function(slice=(0, 1.0),
+																  outoffset=1.0)
+					if round(transfer_function[1], 2) == 1.0:
+						value = u"%s" % (
+							transfer_function[0][0])
+					else:
+						if transfer_function[1] >= .95:
+							value = u"≈ %s (Δ %.2f%%)" % (
+								transfer_function[0][0], 100 - transfer_function[1] * 100)
+						else:
+							value = "Unknown"
+					info["    Transfer function"] = value
 			elif isinstance(tag, CurveType):
 				if len(tag) == 1:
 					info[name] = "Gamma %3.2f" % tag[0]

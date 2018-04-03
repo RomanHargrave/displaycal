@@ -524,7 +524,8 @@ class GamutCanvas(LUTCanvas):
 												whitepoint_destination=profile.tags.wtpt.ir.values())
 					pcs_triplets.append(color)
 				pcs_triplets.sort()
-			elif profile.version >= 4:
+			elif (profile.version >= 4 and
+				  not profile.convert_iccv4_tags_to_iccv2()):
 				self.profiles[i] = None
 				self.errors.append(Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
 													profile.getDescription()])))
@@ -799,11 +800,11 @@ class GamutViewOptions(wx_Panel):
 		except Exception, exception:
 			safe_print(exception)
 		if srgb:
-			self.comparison_profiles[os.path.basename(srgb.fileName)] = srgb
+			self.comparison_profiles[srgb.getDescription()] = srgb
 		for profile in config.get_standard_profiles():
-			basename = os.path.basename(profile.fileName)
-			if basename not in self.comparison_profiles:
-				self.comparison_profiles[basename] = profile
+			desc = profile.getDescription()
+			if desc not in self.comparison_profiles:
+				self.comparison_profiles[desc] = profile
 		self.comparison_profile_select = wx.Choice(self, -1,
 												   size=(150 * scale, -1), 
 												   choices=[])
@@ -1324,12 +1325,12 @@ class ProfileInfoFrame(LUTFrame):
 				self.DrawCanvas(reset=reset)
 				return
 		self.profile = profile
-		self.rTRC = self.tf_rTRC = profile.tags.get("rTRC",
-													profile.tags.get("kTRC"))
-		self.gTRC = self.tf_gTRC = profile.tags.get("gTRC",
-													profile.tags.get("kTRC"))
-		self.bTRC = self.tf_bTRC = profile.tags.get("bTRC",
-													profile.tags.get("kTRC"))
+		for channel in "rgb":
+			trc = profile.tags.get(channel + "TRC", profile.tags.get("kTRC"))
+			if isinstance(trc, ICCP.ParametricCurveType):
+				trc = trc.get_trc()
+			setattr(self, channel + "TRC", trc)
+			setattr(self, "tf_" + channel + "TRC", trc)
 		self.trc = None
 		
 		self.gamut_view_options.direction_select.Enable("B2A0" in

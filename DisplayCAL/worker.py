@@ -6497,10 +6497,21 @@ while 1:
 		"""
 		arg = "-L"
 		try:
-			return ICCP.get_display_profile(display_no, path_only=True) or arg
+			profile = ICCP.get_display_profile(display_no)
 		except Exception, exception:
 			safe_print(exception)
-		return arg
+			return arg
+		if (profile.version >= 4 and
+			not profile.convert_iccv4_tags_to_iccv2()):
+			safe_print("\n".join([lang.getstr("profile.iccv4.unsupported"),
+											  profile.getDescription()]))
+		elif not profile.fileName:
+			fd, profile.fileName = tempfile.mkstemp(profile_ext)
+			stream = os.fdopen(fd, "wb")
+			profile.write(stream)
+			stream.close()
+			atexit.register(os.remove, (profile.fileName, ))
+		return profile.fileName or arg
 	
 	def update_display_name_manufacturer(self, ti3, display_name=None,
 										 display_manufacturer=None, 
