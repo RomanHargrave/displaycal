@@ -6009,22 +6009,23 @@ class ICCProfile:
 					if key == "g" and not "." in value:
 						value += ".0"
 					tag_params[key] = value
+				tag_params["E"] = sig[0].upper()
 				if params == "g":
 					info[name] = "Gamma %(g)s" % tag_params
 				else:
 					info[name] = ""
 				if params == "abg":
-					info["    if (X >= - %(b)s / %(a)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s)" % tag_params
-					info["    if (X <  - %(b)s / %(a)s):" % tag_params] = "0"
+					info["    if (%(E)s >= - %(b)s / %(a)s):" % tag_params] = "Y = pow(%(a)s * %(E)s + %(b)s, %(g)s)" % tag_params
+					info["    if (%(E)s <  - %(b)s / %(a)s):" % tag_params] = "Y = 0"
 				elif params == "abcg":
-					info["    if (X >= - %(b)s / %(a)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s) + %(c)s" % tag_params
-					info["    if (X <  - %(b)s / %(a)s):" % tag_params] = "%(c)s" % tag_params
+					info["    if (%(E)s >= - %(b)s / %(a)s):" % tag_params] = "Y = pow(%(a)s * %(E)s + %(b)s, %(g)s) + %(c)s" % tag_params
+					info["    if (%(E)s <  - %(b)s / %(a)s):" % tag_params] = "Y = %(c)s" % tag_params
 				elif params == "abcdg":
-					info["    if (X >= %(d)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s)" % tag_params
-					info["    if (X <  %(d)s):" % tag_params] = "%(c)s * X" % tag_params
+					info["    if (%(E)s >= %(d)s):" % tag_params] = "Y = pow(%(a)s * %(E)s + %(b)s, %(g)s)" % tag_params
+					info["    if (%(E)s <  %(d)s):" % tag_params] = "Y = %(c)s * %(E)s" % tag_params
 				elif params == "abcdefg":
-					info["    if (X >= %(d)s):" % tag_params] = "pow(%(a)s * X + %(b)s, %(g)s) + %(e)s" % tag_params
-					info["    if (X <  %(d)s):" % tag_params] = "%(c)s * X + %(f)s" % tag_params
+					info["    if (%(E)s >= %(d)s):" % tag_params] = "Y = pow(%(a)s * %(E)s + %(b)s, %(g)s) + %(e)s" % tag_params
+					info["    if (%(E)s <  %(d)s):" % tag_params] = "Y = %(c)s * %(E)s + %(f)s" % tag_params
 				if params != "g":
 					tag = tag.get_trc()
 					#info["    Average gamma"] = "%3.2f" % tag.get_gamma()
