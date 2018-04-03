@@ -6001,7 +6001,14 @@ class ICCProfile:
 				params = "".join(sorted(tag.params.keys()))
 				tag_params = dict(tag.params.items())
 				for key, value in tag_params.iteritems():
-					tag_params[key] = ("%.6f" % value).rstrip(".0")
+					if key == "g":
+						fmt = "%3.2f"
+					else:
+						fmt = "%.6f"
+					value = (fmt % value).rstrip("0").rstrip(".")
+					if key == "g" and not "." in value:
+						value += ".0"
+					tag_params[key] = value
 				if params == "g":
 					info[name] = "Gamma %(g)s" % tag_params
 				else:
@@ -6035,7 +6042,10 @@ class ICCProfile:
 					info["    Transfer function"] = value
 			elif isinstance(tag, CurveType):
 				if len(tag) == 1:
-					info[name] = ("Gamma %3.2f" % tag[0]).rstrip(".0")
+					value = ("%3.2f" % tag[0]).rstrip("0").rstrip(".")
+					if not "." in value:
+						value += ".0"
+					info[name] = "Gamma %s" % value
 				elif len(tag):
 					info[name] = ""
 					info["    Number of entries"] = "%i" % len(tag)
