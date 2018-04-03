@@ -27,7 +27,7 @@ from meta import name as appname
 from multiprocess import mp, pool_slice
 from options import debug, verbose
 from util_os import getenvu, quote_args, which
-from util_str import safe_basestring, safe_str, safe_unicode
+from util_str import make_filename_safe, safe_basestring, safe_str, safe_unicode
 import CGATS
 import colormath
 import config
@@ -462,12 +462,23 @@ class Xicclu(WorkerBase):
 			else:
 				profile = ICCP.ICCProfile(profile)
 		is_profile = isinstance(profile, ICCP.ICCProfile)
+		if is_profile:
+			if profile.fileName:
+				prefix = os.path.basename(profile.fileName)
+			else:
+				prefix = make_filename_safe(profile.getDescription(),
+											concat=False) + profile_ext
+			prefix += "-"
+			if (profile.version >= 4 and
+				not profile.convert_iccv4_tags_to_iccv2()):
+				raise Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
+												   profile.getDescription()]))
 		if not profile.fileName or not os.path.isfile(profile.fileName):
 			if not cwd:
 				cwd = self.create_tempdir()
 				if isinstance(cwd, Exception):
 					raise cwd
-			fd, profile.fileName = tempfile.mkstemp(profile_ext, dir=cwd)
+			fd, profile.fileName = tempfile.mkstemp("", prefix, dir=cwd)
 			stream = os.fdopen(fd, "wb")
 			profile.write(stream)
 			stream.close()

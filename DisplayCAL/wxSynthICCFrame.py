@@ -277,7 +277,8 @@ class SynthICCFrame(BaseFrame):
 			show_result_dialog(Error(lang.getstr("profile.invalid") + "\n" +
 									 path), self)
 		else:
-			if profile.version >= 4:
+			if (profile.version >= 4 and
+				not profile.convert_iccv4_tags_to_iccv2()):
 				show_result_dialog(Error(lang.getstr("profile.iccv4.unsupported")),
 								   self)
 				return
