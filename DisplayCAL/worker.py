@@ -6501,12 +6501,19 @@ while 1:
 		except Exception, exception:
 			safe_print(exception)
 			return arg
+		else:
+			if profile.fileName:
+				prefix = os.path.basename(profile.fileName)
+			else:
+				prefix = make_filename_safe(profile.getDescription(),
+											concat=False)
+			prefix += "-"
 		if (profile.version >= 4 and
 			not profile.convert_iccv4_tags_to_iccv2()):
 			safe_print("\n".join([lang.getstr("profile.iccv4.unsupported"),
 											  profile.getDescription()]))
 		elif not profile.fileName:
-			fd, profile.fileName = tempfile.mkstemp(profile_ext)
+			fd, profile.fileName = tempfile.mkstemp(profile_ext, prefix)
 			stream = os.fdopen(fd, "wb")
 			profile.write(stream)
 			stream.close()
