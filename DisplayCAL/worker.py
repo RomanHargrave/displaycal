@@ -6510,7 +6510,7 @@ while 1:
 			stream = os.fdopen(fd, "wb")
 			profile.write(stream)
 			stream.close()
-			atexit.register(os.remove, (profile.fileName, ))
+			atexit.register(os.remove, profile.fileName)
 		return profile.fileName or arg
 	
 	def update_display_name_manufacturer(self, ti3, display_name=None,
