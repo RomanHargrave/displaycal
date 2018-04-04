@@ -573,42 +573,49 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	# Use higher interpolation size than actual number of curve entries
 	steps = 2 ** 15 + 1
 	maxv = steps - 1.0
-	gamma = rgb_space[0]
-	maxi = colormath.specialpow(white_Y, 1.0 / gamma)
-	segment = 1.0 / (clutres - 1.0) * maxi
-	iv = 0.0
-	prevpow = 0.0
-	nextpow = colormath.specialpow(segment, gamma)
-	xp = []
-	for j in xrange(steps):
-		v = (j / maxv) * maxi
-		if v > iv + segment:
-			iv += segment
-			prevpow = nextpow
-			nextpow = colormath.specialpow(iv + segment, gamma)
-		prevs = 1.0 - (v - iv) / segment
-		nexts = (v - iv) / segment
-		vv = (prevs * prevpow + nexts * nextpow)
-		out = colormath.specialpow(vv, 1.0 / gamma)
-		xp.append(out)
-	interp = colormath.Interp(xp, range(steps), use_numpy=True)
+	gammas = rgb_space[0]
+	if not isinstance(gammas, (list, tuple)):
+		gammas = [gamma]
+	for i, gamma in enumerate(gammas):
+		maxi = colormath.specialpow(white_Y, 1.0 / gamma)
+		segment = 1.0 / (clutres - 1.0) * maxi
+		iv = 0.0
+		prevpow = 0.0
+		nextpow = colormath.specialpow(segment, gamma)
+		xp = []
+		for j in xrange(steps):
+			v = (j / maxv) * maxi
+			if v > iv + segment:
+				iv += segment
+				prevpow = nextpow
+				nextpow = colormath.specialpow(iv + segment, gamma)
+			prevs = 1.0 - (v - iv) / segment
+			nexts = (v - iv) / segment
+			vv = (prevs * prevpow + nexts * nextpow)
+			out = colormath.specialpow(vv, 1.0 / gamma)
+			xp.append(out)
+		interp = colormath.Interp(xp, range(steps), use_numpy=True)
 	
-	# Create input and output curves
-	for i in xrange(3):
+		# Create input curves
 		itable.input.append([])
-		itable.output.append([0, 65535])
 		otable.input.append([])
-		otable.output.append([0, 65535])
 		for j in xrange(4096):
 			otable.input[i].append(colormath.specialpow(j / 4095.0 * white_Y,
 														1.0 / gamma) * 65535)
 	
-	# Fill input curves from interpolated values
-	entries = 2049
-	for j in xrange(entries):
-		v = j / (entries - 1.0)
-		for i in xrange(3):
+		# Fill input curves from interpolated values
+		entries = 2049
+		for j in xrange(entries):
+			v = j / (entries - 1.0)
 			itable.input[i].append(interp(v) / maxv * 65535)
+
+	# Fill remaining input curves from first input curve and create output curves
+	for i in xrange(3):
+		if len(itable.input) < 3:
+			itable.input[i] = itable.input[0]
+			otable.input[i] = otable.input[0]
+		itable.output.append([0, 65535])
+		otable.output.append([0, 65535])
 	
 	# Create and fill cLUT
 	itable.clut = []
