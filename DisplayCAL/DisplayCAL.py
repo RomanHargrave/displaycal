@@ -8442,10 +8442,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				cancel = lang.getstr("cancel")
 			else:
 				# Check if profile is a LUT-type, and if yes, if LUT is of high
-				# enough resolution (we assume anything >= 17 to be ok)
+				# enough resolution when created by ArgyllCMS
+				# (we assume anything >= 17 to be ok)
 				if ("B2A0" in profile.tags and isinstance(profile.tags.B2A0,
 														  ICCP.LUT16Type) and
-					profile.tags.B2A0.clut_grid_steps < 17):
+					profile.tags.B2A0.clut_grid_steps < 17 and
+					profile.creator == "argl"):
 					# Nope. Not allowing to install. Offer to re-generate B2A
 					# tables.
 					dlg = ConfirmDialog(self,
