@@ -575,7 +575,7 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	maxv = steps - 1.0
 	gammas = rgb_space[0]
 	if not isinstance(gammas, (list, tuple)):
-		gammas = [gamma]
+		gammas = [gammas]
 	for i, gamma in enumerate(gammas):
 		maxi = colormath.specialpow(white_Y, 1.0 / gamma)
 		segment = 1.0 / (clutres - 1.0) * maxi
@@ -612,8 +612,8 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	# Fill remaining input curves from first input curve and create output curves
 	for i in xrange(3):
 		if len(itable.input) < 3:
-			itable.input[i] = itable.input[0]
-			otable.input[i] = otable.input[0]
+			itable.input.append(itable.input[0])
+			otable.input.append(otable.input[0])
 		itable.output.append([0, 65535])
 		otable.output.append([0, 65535])
 	
