@@ -3191,7 +3191,7 @@ class CurveType(ICCProfileTag, list):
 				trc.set_bt1886_trc(black_Y, outoffset, egamma, "b")
 			else:
 				trc.set_trc(exp, len(self), vmin, vmax)
-			if trc[0]:
+			if trc[0] and trc[-1] - trc[0]:
 				trc.apply_bpc()
 			if otrc == trc:
 				match[(name, exp, outoffset)] = 1.0
