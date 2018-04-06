@@ -8,19 +8,36 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from DisplayCAL import ICCProfile as ICCP
-from DisplayCAL.colormath import get_rgb_space
+from DisplayCAL.colormath import convert_range, get_rgb_space, get_whitepoint, specialpow
 
 
-def create_rendering_intent_test_profile(filename):
+def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
+										  generate_B2A_tables=True,
+										  swap=False):
+	desc = "Rendering Intent Test Profile"
+	if not add_fallback_matrix:
+		desc += " (cLUT only)"
+	else:
+		desc += " (cLUT + fallback matrix)"
 	srgb = get_rgb_space("sRGB")
-	clutres = 9
-	p = ICCP.create_synthetic_clut_profile(srgb,
-										   "Rendering Intent Test Profile",
-										   clutres=clutres)
-	p.tags.B2A0.clut = []
-	for tagname in ("A2B", "B2A"):
-		tag0 = p.tags[tagname + "0"]
-		for i in xrange(1, 3):
+	if swap:
+		rgb_space = list(srgb)
+		rgb_space[2:5] = rgb_space[3], rgb_space[4], rgb_space[2]
+		rgb_space = get_rgb_space(rgb_space)
+	else:
+		rgb_space = srgb
+	clutres = 9  # Minimum 9 because we require f >= 2
+	f = (clutres - 1) / 4.0
+	p = ICCP.create_synthetic_clut_profile(rgb_space, desc, clutres=clutres)
+	tagnames = ["A2B"]
+	if generate_B2A_tables:
+		p.tags.B2A0.clut = []
+		tagnames.append("B2A")
+	else:
+		del p.tags["B2A0"]
+	for i in xrange(1, 3):
+		for tagname in tagnames:
+			tag0 = p.tags[tagname + "0"]
 			tag = p.tags[tagname + "%i" % i] = ICCP.LUT16Type()
 			for component_name in ("matrix", "input", "clut", "output"):
 				component = getattr(tag0, component_name)
@@ -28,17 +45,17 @@ def create_rendering_intent_test_profile(filename):
 					component = deepcopy(component)
 				setattr(tag, component_name, component)
 	for i in xrange(3):
-		for tagname in ("A2B", "B2A"):
+		for tagname in tagnames:
 			tag = p.tags[tagname + "%i" % i]
 			if i == 0:
 				# Perceptual
-				RGB = (2, 2, 0)
+				RGB = (f, f, 0)
 			elif i == 1:
 				# Colorimetric
-				RGB = (0, 2, 2)
+				RGB = (0, f, f)
 			else:
 				# Saturation
-				RGB = (0, 2, 0)
+				RGB = (0, f, 0)
 			block = 0
 			for R in xrange(clutres):
 				for G in xrange(clutres):
@@ -48,13 +65,22 @@ def create_rendering_intent_test_profile(filename):
 						if tagname == "B2A":
 							tag.clut[block].append([v / (clutres - 1.0) * 65535
 													for v in (R, G, B)])
-						if R == G == B:
-							gray = (R, G, B)
-						else:
-							gray = None
-						if (R, G, B) in ((2, 2, 0),
-										 (0, 2, 2),
-										 (0, 2, 0)):
+						# Everything should be good as long as primaries
+						# are sensible (otherwise, when embedded in a PNG,
+						# some programs like Firefox and XnView will ignore
+						# the profile. This doesn't happen when embedded in
+						# JPEG. Go figure...)
+						if (R, G, B) in ((f, f, 0),
+										 (0, f, f),
+										 (0, f, 0),
+										 # Magenta
+										 (min(max(R, f), clutres - 2), 0, min(max(R, f), clutres - 2)),
+										 (min(max(R, f), clutres - 2), 0, min(max(R, f) + 1, clutres - 2)),
+										 (min(max(R, f) + 1, clutres - 2), 0, min(max(R, f), clutres - 2)),
+										 # Red
+										 (min(max(R, f), clutres - 2), 0, 0),
+										 (min(max(R, f), clutres - 2), 0, 1),
+										 (min(max(R, f), clutres - 2), 1, 0)):
 							if (R, G, B) != RGB:
 								triplet = [0, 0, 0]
 							else:
@@ -62,32 +88,30 @@ def create_rendering_intent_test_profile(filename):
 									# White RGB
 									triplet = [65535] * 3
 								else:
-									# White XYZ
-									triplet = [31595, 32768, 27030]
-						elif (R, G, B) in ((2, 0, 2),
-										   (clutres - 1, 0, 0)):
-							triplet = [0, 0, 0]
-						else:
-							triplet = None
-						if triplet:
+									# White XYZ D50
+									triplet = get_whitepoint("D50", 32768)
 							tag.clut[block][B] = triplet
 					block += 1
-	# Add matrix tags
-	srgb_icc = ICCP.ICCProfile.from_rgb_space(srgb, "sRGB")
-	p.tags.rTRC = srgb_icc.tags.rTRC
-	p.tags.gTRC = srgb_icc.tags.gTRC
-	p.tags.bTRC = srgb_icc.tags.bTRC
-	for i in xrange(1, len(p.tags.gTRC)):
-		p.tags.rTRC[i] = i
-		p.tags.gTRC[i] = i
-		p.tags.bTRC[i] = 65535
-	# Swap RGB -> GBR
-	p.tags.rXYZ = ICCP.XYZType()
-	p.tags.gXYZ = ICCP.XYZType()
-	p.tags.bXYZ = srgb_icc.tags.wtpt.pcs
+			tag.clut_writepng(filename[:-3] + tagname + "%i.png" % i)
+	if add_fallback_matrix:
+		srgb_icc = ICCP.ICCProfile.from_rgb_space(srgb, "sRGB")
+		p.tags.rTRC = srgb_icc.tags.rTRC
+		p.tags.gTRC = srgb_icc.tags.gTRC
+		p.tags.bTRC = srgb_icc.tags.bTRC
+		if False:  # NEVER
+			# Don't really need this...?
+			t = specialpow(1 / 3.0, -2.4)
+			for i, v in enumerate(p.tags.gTRC[1:], 1):
+				v /= 65535.0
+				p.tags.rTRC[i] = p.tags.gTRC[i] = max(convert_range(v, t, 1, 0, 1), 0) * 65535
+				p.tags.bTRC[i] = min(convert_range(v, 0, t, 0, 1), 1) * 65535
+		p.tags.rXYZ = ICCP.XYZType()  # Map red to black
+		p.tags.gXYZ = ICCP.XYZType()  # Map green to black
+		p.tags.bXYZ = srgb_icc.tags.wtpt.pcs  # Map blue to white
 	p.calculateID()
 	p.write(filename)
 
 
 if __name__ == "__main__":
-	create_rendering_intent_test_profile(sys.argv[1])
+	create_rendering_intent_test_profile(sys.argv[1],
+										 add_fallback_matrix=sys.argv[2:3])
