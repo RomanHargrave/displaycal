@@ -209,7 +209,7 @@ class SysTrayIcon(wx.EvtHandler):
 			safe_print("Warning: Don't have menu")
 			return
 		event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
-		event.Id = win32api.LOWORD(wparam)
+		event.Id = wparam
 		item = _get_selected_menu_item(event.Id, self.menu)
 		if not item:
 			safe_print("Warning: Don't have menu item ID %s" % event.Id)
