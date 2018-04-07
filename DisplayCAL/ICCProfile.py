@@ -2694,6 +2694,42 @@ class LUT16Type(ICCProfileTag):
 		if len(self.clut[0][0]) != 3:
 			raise NotImplementedError("clut_writepng: output channels != 3")
 		imfile.write(self.clut, stream_or_filename)
+
+	def clut_writecgats(self, stream_or_filename):
+		""" Write the cLUT as CGATS """
+		# TODO:
+		# Need to take into account input/output curves
+		# Currently only supports RGB, A2B direction, and XYZ color space
+		if len(self.clut[0][0]) != 3:
+			raise NotImplementedError("clut_writecgats: output channels != 3")
+		if isinstance(stream_or_filename, basestring):
+			stream = open(stream_or_filename, "wb")
+		else:
+			stream = stream_or_filename
+		with stream:
+			stream.write("""CTI3
+DEVICE_CLASS "DISPLAY"
+COLOR_REP "RGB_XYZ"
+BEGIN_DATA_FORMAT
+SAMPLE_ID RGB_R RGB_G RGB_B XYZ_X XYZ_Y XYZ_Z
+END_DATA_FORMAT
+BEGIN_DATA
+""")
+			clutres = len(self.clut[0])
+			block = 0
+			i = 1
+			for a in xrange(clutres):
+				for b in xrange(clutres):
+					for c in xrange(clutres):
+						R, G, B = [v / (clutres - 1.0) * 100
+								   for v in (a, b, c)]
+						X, Y, Z = [v / 32768.0 * 100
+								   for v in self.clut[block][c]]
+						stream.write("%i %7.3f %7.3f %7.3f %10.6f %10.6f %10.6f\n" %
+									 (i, R, G, B, X, Y, Z))
+						i += 1
+					block += 1
+			stream.write("END_DATA\n")
 	
 	@property
 	def clut_grid_steps(self):

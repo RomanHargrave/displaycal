@@ -27,7 +27,7 @@ def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
 	else:
 		rgb_space = srgb
 	clutres = 9  # Minimum 9 because we require f >= 2
-	f = (clutres - 1) / 4.0
+	f = int(round((clutres - 1) / 4.0))
 	p = ICCP.create_synthetic_clut_profile(rgb_space, desc, clutres=clutres)
 	tagnames = ["A2B"]
 	if generate_B2A_tables:
@@ -58,6 +58,9 @@ def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
 				RGB = (0, f, 0)
 			block = 0
 			for R in xrange(clutres):
+				r = min(max(R, f), clutres - 2)
+				b1 = min(max(R, f) + 1, clutres - 2)
+				b2 = min(max(R - 1, f), clutres - 2)
 				for G in xrange(clutres):
 					if tagname == "B2A":
 						tag.clut.append([])
@@ -74,13 +77,13 @@ def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
 										 (0, f, f),
 										 (0, f, 0),
 										 # Magenta
-										 (min(max(R, f), clutres - 2), 0, min(max(R, f), clutres - 2)),
-										 (min(max(R, f), clutres - 2), 0, min(max(R, f) + 1, clutres - 2)),
-										 (min(max(R, f) + 1, clutres - 2), 0, min(max(R, f), clutres - 2)),
+										 (r, 0, r),
+										 (r, 0, b1),
+										 (r, 0, b2),
 										 # Red
-										 (min(max(R, f), clutres - 2), 0, 0),
-										 (min(max(R, f), clutres - 2), 0, 1),
-										 (min(max(R, f), clutres - 2), 1, 0)):
+										 (r, 0, 0),
+										 (r, 0, 1),
+										 (r, 1, 0)):
 							if (R, G, B) != RGB:
 								triplet = [0, 0, 0]
 							else:
@@ -92,7 +95,9 @@ def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
 									triplet = get_whitepoint("D50", 32768)
 							tag.clut[block][B] = triplet
 					block += 1
-			tag.clut_writepng(filename[:-3] + tagname + "%i.png" % i)
+			tag.clut_writepng(filename[:-3] + tagname + "%i.CLUT.png" % i)
+			if tagname == "A2B":
+				tag.clut_writecgats(filename[:-3] + tagname + "%i.CLUT.ti3" % i)
 	if add_fallback_matrix:
 		srgb_icc = ICCP.ICCProfile.from_rgb_space(srgb, "sRGB")
 		p.tags.rTRC = srgb_icc.tags.rTRC
