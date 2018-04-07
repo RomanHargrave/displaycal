@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from DisplayCAL import ICCProfile as ICCP
-from DisplayCAL.colormath import convert_range, get_rgb_space, get_whitepoint, specialpow
+from DisplayCAL.colormath import RGB2XYZ, convert_range, get_rgb_space, get_whitepoint, specialpow
 
 
 def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
@@ -76,15 +76,37 @@ def create_rendering_intent_test_profile(filename, add_fallback_matrix=True,
 						if (R, G, B) in ((f, f, 0),
 										 (0, f, f),
 										 (0, f, 0),
-										 # Magenta
+										 # Magenta 64..223
 										 (r, 0, r),
 										 (r, 0, b1),
 										 (r, 0, b2),
-										 # Red
+										 # Red 64..223
 										 (r, 0, 0),
 										 (r, 0, 1),
-										 (r, 1, 0)):
-							if (R, G, B) != RGB:
+										 (r, 1, 0),
+										 # CMY 255
+										 (0, clutres - 1, clutres - 1),
+										 (clutres - 1, 0, clutres - 1),
+										 (clutres - 1, clutres - 1, 0)):
+							if (R, G, B) == (0, clutres - 1, clutres - 1):
+								# Map C -> R
+								if tagname == "B2A":
+									triplet = (65535, 0, 0)
+								else:
+									triplet = RGB2XYZ(1, 0, 0, scale=32768)
+							elif (R, G, B) == (clutres - 1, 0, clutres - 1):
+								# Map M -> G
+								if tagname == "B2A":
+									triplet = (0, 65535, 0)
+								else:
+									triplet = RGB2XYZ(0, 1, 0, scale=32768)
+							elif (R, G, B) == (clutres - 1, clutres - 1, 0):
+								# Map Y -> B
+								if tagname == "B2A":
+									triplet = (0, 0, 65535)
+								else:
+									triplet = RGB2XYZ(0, 0, 1, scale=32768)
+							elif (R, G, B) != RGB:
 								triplet = [0, 0, 0]
 							else:
 								if tagname == "B2A":
