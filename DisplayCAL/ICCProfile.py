@@ -2718,13 +2718,28 @@ BEGIN_DATA
 			clutres = len(self.clut[0])
 			block = 0
 			i = 1
+			if (self.tagSignature and
+				self.tagSignature.startswith("B2A")):
+				interp = []
+				for input in self.input:
+					interp.append(colormath.Interp(input, range(len(input)),
+												   use_numpy=True))
 			for a in xrange(clutres):
 				for b in xrange(clutres):
 					for c in xrange(clutres):
 						R, G, B = [v / (clutres - 1.0) * 100
 								   for v in (a, b, c)]
-						X, Y, Z = [v / 32768.0 * 100
-								   for v in self.clut[block][c]]
+						if (self.tagSignature and
+							self.tagSignature.startswith("B2A")):
+							linear_rgb = [interp[i](v) /
+										  (len(interp[i].xp) - 1.0) *
+										  (1 + (32767 / 32768.0)) * 100
+										  for i, v in
+										  enumerate(self.clut[block][c])]
+							X, Y, Z = self.matrix.inverted() * linear_rgb
+						else:
+							X, Y, Z = [v / 32768.0 * 100
+									   for v in self.clut[block][c]]
 						stream.write("%i %7.3f %7.3f %7.3f %10.6f %10.6f %10.6f\n" %
 									 (i, R, G, B, X, Y, Z))
 						i += 1
