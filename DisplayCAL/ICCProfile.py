@@ -5488,9 +5488,10 @@ class ICCProfile:
 		temporarily replaced with zeros.
 		
 		"""
-		data = self.data[:44] + "\0\0\0\0" + self.data[48:64] + "\0\0\0\0" + \
-			   self.data[68:84] + "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + \
-			   self.data[100:]
+		data = self.data
+		data = data[:44] + "\0\0\0\0" + data[48:64] + "\0\0\0\0" + \
+			   data[68:84] + "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0" + \
+			   data[100:]
 		ID = md5(data).digest()
 		if setID:
 			self.ID = ID
