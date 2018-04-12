@@ -5262,7 +5262,7 @@ class ICCProfile:
 			flags = uInt32Number(header[44:48])
 			self.embedded = flags & 1 != 0
 			self.independent = flags & 2 == 0
-			deviceAttributes = uInt64Number(header[56:64])
+			deviceAttributes = uInt32Number(header[56:60])
 			self.device = {
 				"manufacturer": header[48:52],
 				"model": header[52:56],
@@ -5400,7 +5400,7 @@ class ICCProfile:
 			id = ""
 		else:
 			id = self.ID[:16]
-		header.extend([uInt64Number_tohex(deviceAttributes),
+		header.extend([uInt32Number_tohex(deviceAttributes) + "\0" * 4,
 					   uInt32Number_tohex(self.intent),
 					   self.illuminant.tohex(),
 					   self.creator[:4].ljust(4, " ") if self.creator else "\0" * 4,
