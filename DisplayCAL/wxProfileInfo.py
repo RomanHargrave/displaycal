@@ -1404,8 +1404,8 @@ class ProfileInfoFrame(LUTFrame):
 		lines = []
 		for label, value in info:
 			label = label.replace("\0", "")
-			if not isinstance(value, basestring):
-				value = unicode(value)
+			if value is None:
+				value = ""
 			value = wrap(universal_newlines(value.strip()).replace("\t", "\n"),
 						 52).replace("\0", "").split("\n")
 			linecount = len(value)
