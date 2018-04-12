@@ -6130,11 +6130,31 @@ class ICCProfile:
 					name = "Generic name-value data"
 				info[name] = ""
 				for key in tag:
-					key = tag.getname(key)
-					value = tag.getvalue(key)
-					if key == "prefix":
+					record = tag.get(key)
+					value = record.get("value")
+					if value and key == "prefix":
 						value = "\n".join(value.split(","))
 					info["    %s" % key] = value
+					elements = OrderedDict()
+					for subkey in ("display_name", "display_value"):
+						entry = record.get(subkey)
+						if isinstance(entry, MultiLocalizedUnicodeType):
+							for language, countries in entry.iteritems():
+								for country, value in countries.iteritems():
+									if country.strip("\0 "):
+										country = "/" + country
+									loc = "%s%s" % (language, country)
+									if not loc in elements:
+										elements[loc] = OrderedDict()
+									elements[loc][subkey] = value
+					for loc, items in elements.iteritems():
+						if len(items) > 1:
+							value = "%s = %s" % tuple(items.values())
+						elif "display_name" in items:
+							value = "%s" % items["display_name"]
+						else:
+							value = " = %s" % items["display_value"]
+						info["        %s" % loc] = value
 			elif isinstance(tag, LUT16Type):
 				info[name] = ""
 				name = "    Matrix"
