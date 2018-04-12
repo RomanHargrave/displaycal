@@ -125,7 +125,7 @@
 	"argyll.instrument.drivers.uninstall.success": "Deinstallation der ArgyllCMS Messgeräte-Treiber abgeschlossen.",
 	"argyll.util.not_found": "ArgyllCMS „%s“ Hilfsprogramm nicht gefunden!",
 	"as_measured": "Wie gemessen",
-	"attributes": "Attribute",
+	"media_attributes": "Medien-Attribute",
 	"audio.lib": "Audio-Modul: %s",
 	"auth": "Authentifizierung",
 	"auth.failed": "Authentifizierung fehlgeschlagen.",

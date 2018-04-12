@@ -125,7 +125,7 @@
 	"argyll.instrument.drivers.uninstall.success": "Uninstallation of ArgyllCMS instrument drivers complete.",
 	"argyll.util.not_found": "ArgyllCMS “%s” executable not found!",
 	"as_measured": "As measured",
-	"attributes": "Attributes",
+	"media_attributes": "Media attributes",
 	"audio.lib": "Audio module: %s",
 	"auth": "Authentification",
 	"auth.failed": "Authentification failed.",

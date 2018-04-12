@@ -6015,7 +6015,7 @@ class ICCProfile:
 		if manufacturer is not None:
 			info["    Manufacturer"] += " %s" % manufacturer
 		info["    Model"] = hexrepr(self.device["model"])
-		info["    Attributes"] = "\n".join([{True: "Reflective"}.get(self.device["attributes"]["reflective"], "Transparency"),
+		info["    Media attributes"] = "\n".join([{True: "Reflective"}.get(self.device["attributes"]["reflective"], "Transparency"),
 											{True: "Glossy"}.get(self.device["attributes"]["glossy"], "Matte"),
 											{True: "Positive"}.get(self.device["attributes"]["positive"], "Negative"),
 											{True: "Color"}.get(self.device["attributes"]["color"], "Black & white")])

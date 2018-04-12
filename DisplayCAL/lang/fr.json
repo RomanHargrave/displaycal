@@ -125,7 +125,7 @@
 	"argyll.instrument.drivers.uninstall.success": "Désinstallation des pilotes de sondes de mesure d’ArgyllCMS terminée.",
 	"argyll.util.not_found": "Exécutable ArgyllCMS « %s » introuvable.",
 	"as_measured": "tel que mesuré",
-	"attributes": "Attributs",
+	"media_attributes": "Attributs",
 	"audio.lib": "Module audio : %s",
 	"auth": "Authentification",
 	"auth.failed": "Échec de l’authentification.",

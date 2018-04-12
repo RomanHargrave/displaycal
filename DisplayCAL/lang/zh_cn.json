@@ -125,7 +125,7 @@
 	"argyll.instrument.drivers.uninstall.success": "成功卸载 ArgyllCMS 校色仪驱动程序。",
 	"argyll.util.not_found": "未能找到 ArgyllCMS “%s” 的运行档！",
 	"as_measured": "与检测值相同",
-	"attributes": "参数",
+	"media_attributes": "参数",
 	"audio.lib": "音效模组：%s",
 	"auth": "身份认证",
 	"auth.failed": "身份认证失败。",

@@ -125,7 +125,7 @@
 	"argyll.instrument.drivers.uninstall.success": "ArgyllCMS 정치드라이버의 설치삭제가 완료되었습니다.",
 	"argyll.util.not_found": "ArgyllCMS “%s” 실행파일을 찾을 수 없습니다!",
 	"as_measured": "측정한 값으로",
-	"attributes": "속성",
+	"media_attributes": "속성",
 	"audio.lib": "오디오 모듈: %s",
 	"auth": "인증",
 	"auth.failed": "인증에 실패하였습니다.",

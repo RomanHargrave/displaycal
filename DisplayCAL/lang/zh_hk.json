@@ -125,7 +125,7 @@
 	"argyll.instrument.drivers.uninstall.success": "成功解除安裝 ArgyllCMS 測量儀器驅動程式。",
 	"argyll.util.not_found": "未能找到 ArgyllCMS “%s” 的執行檔！",
 	"as_measured": "與測量值相同",
-	"attributes": "參數",
+	"media_attributes": "參數",
 	"audio.lib": "音效模組：%s",
 	"auth": "身份認證",
 	"auth.failed": "身份認證失敗。",
