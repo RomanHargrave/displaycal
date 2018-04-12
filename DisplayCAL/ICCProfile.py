@@ -5104,6 +5104,7 @@ class ICCProfile:
 		self.ID = "\0" * 16
 		self._data = ""
 		self._file = None
+		self._tagoffsets = []  # Original tag offsets
 		self._tags = LazyLoadTagAODict(self)
 		self.fileName = None
 		self.is_loaded = False
@@ -5333,12 +5334,22 @@ class ICCProfile:
 		"""
 		# Assemble tag table and tag data
 		tagCount = len(self.tags)
-		tagTable = []
+		tagTable = OrderedDict()
 		tagTableSize = tagCount * 12
 		tagsData = []
 		tagsDataOffset = []
 		tagDataOffset = 128 + 4 + tagTableSize
+		tags = []
+		# Order of tag table and actual tag data may be different.
+		# Keep order of tags according to original offsets (if any).
+		for oOffset, tagSignature in sorted(self._tagoffsets):
+			tags.append(tagSignature)
+		# Keep tag table order
 		for tagSignature in self.tags:
+			tagTable[tagSignature] = tagSignature
+			if not tagSignature in tags:
+				tags.append(tagSignature)
+		for tagSignature in tags:
 			tag = AODict.__getitem__(self.tags, tagSignature)
 			if isinstance(tag, ICCProfileTag):
 				tagData = self.tags[tagSignature].tagData
@@ -5348,19 +5359,18 @@ class ICCProfile:
 			# Pad all data with binary zeros so it lies on 4-byte boundaries
 			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
 			tagData += "\0" * padding
-			tagTable.append(tagSignature)
 			if tagData in tagsData:
-				tagTable.append(uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)]))
+				tagTable[tagSignature] += uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)])
 			else:
-				tagTable.append(uInt32Number_tohex(tagDataOffset))
-			tagTable.append(uInt32Number_tohex(tagDataSize))
-			if not tagData in tagsData:
+				tagTable[tagSignature] += uInt32Number_tohex(tagDataOffset)
 				tagsData.append(tagData)
 				tagsDataOffset.append(tagDataOffset)
 				tagDataOffset += tagDataSize + padding
-		header = self.header(tagTableSize, len("".join(tagsData)))
+			tagTable[tagSignature] += uInt32Number_tohex(tagDataSize)
+		tagsData = "".join(tagsData)
+		header = self.header(tagTableSize, len(tagsData))
 		data = "".join([header, uInt32Number_tohex(tagCount), 
-						"".join(tagTable), "".join(tagsData)])
+						"".join(tagTable.values()), tagsData])
 		return data
 	
 	def header(self, tagTableSize, tagDataSize):
@@ -5418,6 +5428,7 @@ class ICCProfile:
 				tagCount = uInt32Number(self._data[128:132])
 				if debug: print "tagCount:", tagCount
 				tagTable = self._data[132:132 + tagCount * 12]
+				self._tagoffsets = []
 				discard_len = 0
 				tags = {}
 				while tagTable:
@@ -5427,6 +5438,7 @@ class ICCProfile:
 					tagSignature = tag[:4]
 					if debug: print "tagSignature:", tagSignature
 					tagDataOffset = uInt32Number(tag[4:8])
+					self._tagoffsets.append((tagDataOffset, tagSignature))
 					if debug: print "    tagDataOffset:", tagDataOffset
 					tagDataSize = uInt32Number(tag[8:12])
 					if debug: print "    tagDataSize:", tagDataSize
