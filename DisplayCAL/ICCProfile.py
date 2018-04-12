@@ -6389,6 +6389,38 @@ class ICCProfile:
 				else:
 					rgb_space[0].append(tags["%sTRC" % component][0])
 		return rgb_space
+
+	def optimize(self, return_bytes_saved=False, update_ID=True):
+		"""
+		Optimize the tag data so that shared tags are only recorded once.
+		
+		Return whether or not optimization was performed (not necessarily
+		indicative of a reduction in profile size).
+		If return_bytes_saved is True, return number of bytes saved instead
+		(this sets the 'size' property of the profile to the new size).
+		
+		If update_ID is True, a non-NULL profile ID will also be updated.
+		
+		Note that for profiles created by ICCProfile (and not read from disk),
+		this will always be superfluous because they are optimized by default.
+		
+		"""
+		numoffsets = len(self._tagoffsets)
+		offsets = [(-(numoffsets - i), tag_sig)
+				   for i, (offset, tag_sig) in
+				   enumerate(sorted(self._tagoffsets))]
+		if self._tagoffsets != offsets:
+			if return_bytes_saved:
+				oldsize = len(self.data)
+			# Discard original offsets
+			self._tagoffsets = offsets
+			if update_ID and self.ID != "\0" * 16:
+				self.calculateID()
+			if return_bytes_saved:
+				self.size = len(self.data)
+				return oldsize - self.size
+			return True
+		return 0 if return_bytes_saved else False
 	
 	def read(self, profile):
 		"""
