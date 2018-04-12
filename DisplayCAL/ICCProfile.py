@@ -5359,7 +5359,7 @@ class ICCProfile:
 			# Pad all data with binary zeros so it lies on 4-byte boundaries
 			padding = int(math.ceil(tagDataSize / 4.0)) * 4 - tagDataSize
 			tagData += "\0" * padding
-			if tagData in tagsData:
+			if (tagDataOffset, tagSignature) not in self._tagoffsets and tagData in tagsData:
 				tagTable[tagSignature] += uInt32Number_tohex(tagsDataOffset[tagsData.index(tagData)])
 			else:
 				tagTable[tagSignature] += uInt32Number_tohex(tagDataOffset)
