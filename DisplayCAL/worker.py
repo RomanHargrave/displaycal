@@ -8156,18 +8156,18 @@ usage: spotread [-options] [logfile]
 						if (not "A2B0" in gamap_profile.tags and
 							"rXYZ" in gamap_profile.tags and
 							"gXYZ" in gamap_profile.tags and
-							"bXYZ" in gamap_profile.tags):
-							# Simple matrix source profile. Change gamma to 1.0
-							gamap_profile.tags.rTRC = ICCP.CurveType()
-							gamap_profile.tags.rTRC.append(1.0)
-							gamap_profile.tags.gTRC = gamap_profile.tags.rTRC
-							gamap_profile.tags.bTRC = gamap_profile.tags.rTRC
-							# Write to temp file
-							fd, gamap_profile.fileName = mkstemp_bypath(gamap_profile.fileName,
-																		dir=self.tempdir)
-							stream = os.fdopen(fd, "wb")
-							gamap_profile.write(stream)
-							stream.close()
+							"bXYZ" in gamap_profile.tags and
+							"rTRC" in gamap_profile.tags and
+							"gTRC" in gamap_profile.tags and
+							"bTRC" in gamap_profile.tags):
+							# Simple matrix source profile
+							if gamap_profile.convert_iccv4_tags_to_iccv2():
+								# Write to temp file
+								fd, gamap_profile.fileName = mkstemp_bypath(gamap_profile.fileName,
+																			dir=self.tempdir)
+								stream = os.fdopen(fd, "wb")
+								gamap_profile.write(stream)
+								stream.close()
 							if profile.colorSpace == "RGB" and has_B2A:
 								# Only table 0 (colorimetric) in display profile.
 								# Assign it to table 1 as per ICC spec to prepare
@@ -8184,9 +8184,33 @@ usage: spotread [-options] [logfile]
 					size = {-1: 33}.get(size, size)
 					collink_args = ["-v", "-q" + getcfg("profile.quality"),
 									"-G", "-r%i" % size]
+					if gamap_profile:
+						for channel in "rgb":
+							trc = gamap_profile.tags[channel + "TRC"]
+							trc_len = len(trc)
+							# Do not preserve input shaper curves if nonlinear
+							if trc_len > 1 or trc[0] != 1.0:
+								if trc_len > 1:
+									# Check if nonlinear (10 bit precision)
+									values = [round(v / 65535.0 * 1023)
+											  for v in trc]
+									ivalues = [round(v / (trc_len - 1.0) * 1023)
+											   for v in xrange(trc_len)]
+									ni = values != ivalues
+								else:
+									# Single gamma != 1.0 (nonlinear)
+									ni = True
+								if ni:
+									# Do not preserve input shaper curves in
+									# devicelink
+									collink_args.append("-ni")
+									break
 					if is_regular_grid:
 						# Do not preserve output shaper curves in devicelink
 						collink_args.append("-no")
+					if self.argyll_version >= [1, 7]:
+						# Use RGB->RGB forced black point hack
+						collink_args.append("-b")
 					for tableno, cfgname in [(0, "gamap_perceptual"),
 											 (2, "gamap_saturation")]:
 						if getcfg(cfgname):
@@ -8249,6 +8273,24 @@ usage: spotread [-options] [logfile]
 								continue
 							table = "B2A%i" % tableno
 							profile.tags[table] = link_profile.tags.A2B0
+							if gamap_profile and "-ni" in collink_args:
+								# Set B2A input curves to inverse source
+								# profile TRC
+								for i, channel in enumerate("rgb"):
+									trc = gamap_profile.tags[channel + "TRC"]
+									trc_len = len(trc)
+									if trc_len > 1:
+										interp = colormath.Interp(trc, range(trc_len),
+																  use_numpy=True)
+									else:
+										trc_len = 2
+										def interp(v):
+											return (v / 65535.0) ** (1.0 / trc[0])
+									profile.tags[table].input[i] = icurve = []
+									for j in xrange(4096):
+										icurve.append(interp(j / 4095.0 *
+															 65535) /
+													  (trc_len - 1.0) * 65535)
 							# Remove temporary link profile
 							os.remove(link_profile.fileName)
 							# Update B2A matrix with source profile matrix
