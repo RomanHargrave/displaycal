@@ -22,7 +22,7 @@ from DisplayCAL.util_os import listdir_re
 
 def quote(obj):
 	if isinstance(obj, basestring):
-		return '"%s"' % obj.replace('\\', '\\\\').replace('"', '\\"').replace("\n", "\\n")
+		return '"%s"' % obj.replace('\\', '\\\\').replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t")
 	else:
 		return repr(obj)
 
