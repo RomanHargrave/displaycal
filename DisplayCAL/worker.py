@@ -8190,11 +8190,7 @@ usage: spotread [-options] [logfile]
 					self.log("Creating CIECAM02 gamut mapping using collink")
 					size = getcfg("profile.b2a.hires.size")
 					# Make sure to map 'auto' value (-1) to an actual size
-					if profile.colorSpace == "RGB":
-						auto_size = 33
-					else:
-						auto_size = 17
-					size = {-1: auto_size}.get(size, size)
+					size = {-1: 33}.get(size, size)
 					collink_args = ["-v", "-q" + getcfg("profile.quality"),
 									"-G", "-r%i" % size]
 					if is_regular_grid:
