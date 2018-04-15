@@ -5343,7 +5343,8 @@ class ICCProfile:
 		# Order of tag table and actual tag data may be different.
 		# Keep order of tags according to original offsets (if any).
 		for oOffset, tagSignature in sorted(self._tagoffsets):
-			tags.append(tagSignature)
+			if tagSignature in self.tags:
+				tags.append(tagSignature)
 		# Keep tag table order
 		for tagSignature in self.tags:
 			tagTable[tagSignature] = tagSignature
