@@ -898,10 +898,10 @@ class GamutViewOptions(wx_Panel):
 		except Exception, exception:
 			show_result_dialog(exception, self.TopLevelParent)
 		else:
-			basename = os.path.basename(profile.fileName)
-			self.comparison_profiles[basename] = profile
+			desc = profile.getDescription()
+			self.comparison_profiles[desc] = profile
 			self.comparison_profiles_sort()
-			self.comparison_profile_select.SetSelection(self.comparison_profiles.keys().index(basename))
+			self.comparison_profile_select.SetSelection(self.comparison_profiles.keys().index(desc))
 			self.comparison_profile_select_handler(None)
 
 	def comparison_profile_select_handler(self, event):
