@@ -293,8 +293,8 @@ class Image(object):
 		# Image data
 		imgdata = []
 		for i, scanline in enumerate(self.data):
-			for RGB in scanline:
-				imgdata.append("".join(self._pack(v) for v in RGB))
+			for sample in scanline:
+				imgdata.append("".join(self._pack(v) for v in sample))
 		imgdata = "".join(imgdata)
 		if len(self.data) == 1 and len(self.data[0]) == 1 and dimensions:
 			# Optimize for single color
@@ -305,11 +305,17 @@ class Image(object):
 
 		# Image file directory (IFD)
 
+		# PhotometricInterpretation
+		if len(self.data[0][0]) == 3:
+			pmi = 2  # RGB
+		else:
+			pmi = 5  # Separated (usually CMYK)
+
 		# Tag, type, length, offset or data, is data (otherwise offset)
 		ifd = [(0x100, 3, 1, w, True),  # ImageWidth
 			   (0x101, 3, 1, h, True),  # ImageLength
-			   (0x106, 3, 1, 2, True),  # PhotometricInterpretation
-			   (0x115, 3, 1, 3, True),  # SamplesPerPixel
+			   (0x106, 3, 1, pmi, True),  # PhotometricInterpretation
+			   (0x115, 3, 1, len(self.data[0][0]), True),  # SamplesPerPixel
 			   (0x117, 4, 1, len(imgdata), True)  # StripByteCounts
 			   ]
 		# BitsPerSample
