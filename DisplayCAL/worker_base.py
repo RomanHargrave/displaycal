@@ -497,11 +497,13 @@ class Xicclu(WorkerBase):
 		xicclu = safe_str(xicclu)
 		cwd = safe_str(cwd)
 		args = [xicclu, "-s%s" % scale]
+		self.show_actual_if_clipped = False
 		if utilname == "xicclu":
 			if (is_profile and
 				show_actual_if_clipped and "A2B0" in profile.tags and
 				("B2A0" in profile.tags or direction == "if")):
 				args.append("-a")
+				self.show_actual_if_clipped = True
 			if use_cam_clipping:
 				args.append("-b")
 			if get_argyll_version("xicclu") >= [1, 6]:
@@ -673,7 +675,12 @@ class Xicclu(WorkerBase):
 		for i, line in enumerate(self.output):
 			line = line.strip()
 			if line.startswith("["):
-				if self.sessionlogfile:
+				if parsed and get_clip and self.show_actual_if_clipped:
+					parts = line.strip("[]").split(",")
+					actual = [float(v) for v in parts[0].split()[1:4]]  # Actual CIE
+					actual.append(float(parts[1].split()[-1]))  # deltaE
+					parsed[-1].append(actual)
+				elif self.sessionlogfile:
 					self.sessionlogfile.write(line)
 				continue
 			elif not "->" in line:
@@ -687,7 +694,7 @@ class Xicclu(WorkerBase):
 			if clip:
 				parts.pop()
 			parsed.append([float(n) / self.output_scale for n in parts])
-			if get_clip:
+			if get_clip and not self.show_actual_if_clipped:
 				parsed[-1].append(clip)
 			j += 1
 		if self.sessionlogfile:

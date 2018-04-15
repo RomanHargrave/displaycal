@@ -7968,15 +7968,22 @@ usage: spotread [-options] [logfile]
 				# a smaller testchart (faster computation!)
 				args.insert(args.index("-aX"), "-ax")
 				args.remove("-aX")
+			check_for_ti1_match = False
 			is_regular_grid = False
 			is_primaries_only = False
 			if getcfg("profile.type") in ("X", "x", "S", "s"):
 				# Check if TI3 RGB matches one of our regular grid or
 				# primaries + gray charts
 				ti3 = CGATS.CGATS(args[-1] + ".ti3")
-				(ti3_extracted,
-				 ti3_RGB_XYZ,
-				 ti3_remaining) = extract_device_gray_primaries(ti3)
+				try:
+					(ti3_extracted,
+					 ti3_RGB_XYZ,
+					 ti3_remaining) = extract_device_gray_primaries(ti3)
+				except Error, exception:
+					self.log(exception)
+				else:
+					check_for_ti1_match = True
+			if check_for_ti1_match:
 				for ti1_name in ("ti1/d3-e4-s2-g28-m0-b0-f0",  # Primaries + gray
 								 "ti1/d3-e4-s3-g52-m3-b0-f0",  # 3^3 grid
 								 "ti1/d3-e4-s4-g52-m4-b0-f0",  # 4^3 grid
@@ -8146,6 +8153,7 @@ usage: spotread [-options] [logfile]
 					if not collink:
 						self.log(lang.getstr("argyll.util.not_found",
 											 "collink"))
+				gamap_profiles = []
 				gamap_profile = None
 				if gamap and collink:
 					try:
@@ -8168,6 +8176,7 @@ usage: spotread [-options] [logfile]
 								stream = os.fdopen(fd, "wb")
 								gamap_profile.write(stream)
 								stream.close()
+								gamap_profiles.append(gamap_profile)
 							if profile.colorSpace == "RGB" and has_B2A:
 								# Only table 0 (colorimetric) in display profile.
 								# Assign it to table 1 as per ICC spec to prepare
@@ -8181,60 +8190,77 @@ usage: spotread [-options] [logfile]
 					self.log("Creating CIECAM02 gamut mapping using collink")
 					size = getcfg("profile.b2a.hires.size")
 					# Make sure to map 'auto' value (-1) to an actual size
-					size = {-1: 33}.get(size, size)
+					if profile.colorSpace == "RGB":
+						auto_size = 33
+					else:
+						auto_size = 17
+					size = {-1: auto_size}.get(size, size)
 					collink_args = ["-v", "-q" + getcfg("profile.quality"),
 									"-G", "-r%i" % size]
-					if gamap_profile:
-						for channel in "rgb":
-							trc = gamap_profile.tags[channel + "TRC"]
-							trc_len = len(trc)
-							# Do not preserve input shaper curves if nonlinear
-							if trc_len > 1 or trc[0] != 1.0:
-								if trc_len > 1:
-									# Check if nonlinear (10 bit precision)
-									values = [round(v / 65535.0 * 1023)
-											  for v in trc]
-									ivalues = [round(v / (trc_len - 1.0) * 1023)
-											   for v in xrange(trc_len)]
-									ni = values != ivalues
-								else:
-									# Single gamma != 1.0 (nonlinear)
-									ni = True
-								if ni:
-									# Do not preserve input shaper curves in
-									# devicelink
-									collink_args.append("-ni")
-									break
 					if is_regular_grid:
 						# Do not preserve output shaper curves in devicelink
 						collink_args.append("-no")
-					if self.argyll_version >= [1, 7]:
+					if (profile.colorSpace == "RGB" and
+						self.argyll_version >= [1, 7]):
 						# Use RGB->RGB forced black point hack
 						collink_args.append("-b")
-					for tableno, cfgname in [(0, "gamap_perceptual"),
-											 (2, "gamap_saturation")]:
-						if getcfg(cfgname):
-							tables.append((tableno, getcfg(cfgname + "_intent")))
+					if gamap_profile:
+						for tableno, cfgname in [(0, "gamap_perceptual"),
+												 (2, "gamap_saturation")]:
+							if getcfg(cfgname):
+								tables.append((tableno, getcfg(cfgname + "_intent")))
 					if profile.colorSpace != "RGB":
 						# Create colorimetric table for non-RGB profile
-						tables.append((1, "r"))
+						tables.insert(0, (1, "r"))
 						# Get inking rules from colprof extra args
 						extra_args = getcfg("extra_args.colprof")
 						inking = re.findall(r"-[Kk](?:[zhxr]|p[0-9\.\s]+)|"
 											 "-[Ll][0-9\.\s]+", extra_args)
 						if inking:
 							collink_args.extend(parse_argument_string(" ".join(inking)))
+						# Get rid of lores B2A tables - they affect
+						# collink even in inverse forward lookup mode
+						# (probably because collink tries to determine inking
+						# rules by looking at B2A?)
+						for tableno in xrange(3):
+							tablename = "B2A%i" % tableno
+							if tablename in profile.tags:
+								del profile.tags[tablename]
+								profchanged = True
+						if profchanged:
+							# Need to write updated profile for xicclu/collink
+							profile.write()
+						# Determine profile blackpoint
+						if "bkpt" in profile.tags:
+							Labbp = profile.tags.bkpt.pcs.Lab
+						else:
+							# Figure out profile blackpoint by looking up
+							# neutral values from L* = 0 to L* = 50,
+							# in 0.1 increments
+							idata = []
+							for i in xrange(501):
+								idata.append((i / 10., 0, 0))
+							odata = self.xicclu(profile, idata, intent="r",
+												direction="if", pcs="l",
+												use_cam_clipping=True,
+												get_clip=True)
+							Labbp = (0, 0, 0)
+							for i, values in enumerate(odata):
+								if not values[-1]:
+									# Not clipped
+									Labbp = idata[i]
+									break
 					for tableno, intent in tables:
 						# Create device link(s)
 						gamap_args = []
 						if tableno == 1:
 							# Use PhotoPrintRGB as PCS if creating colorimetric
 							# table for non-RGB profile.
-							# PhotoPrintRGB is a synthetic linear gamma space
+							# PhotoPrintRGB is a synthetic L* TRC space
 							# with the Rec2020 red and blue adapted to D50
 							# and a green of x 0.1292 (same as blue x) y 0.8185
 							# It almost completely encompasses PhotoGamutRGB
-							pcs = get_data_path("ref/PhotoPrintRGB.icc")
+							pcs = get_data_path("ref/PhotoPrintRGB_Lstar.icc")
 							if pcs:
 								try:
 									gamap_profile = ICCP.ICCProfile(pcs)
@@ -8242,12 +8268,24 @@ usage: spotread [-options] [logfile]
 									self.log(exception)
 							else:
 								missing = lang.getstr("file.missing",
-													  "ref/PhotoPrintRGB.icc")
+													  "ref/PhotoPrintRGB_Lstar.icc")
 								if gamap_profile:
 									self.log(missing)
 								else:
 									result = Error(missing)
 									break
+							if pcs and Labbp:
+								self.log("Applying black offset L*a*b* %.2f %.2f %.2f to %s..." %
+										 (Labbp + (gamap_profile.getDescription(), )))
+								XYZbp = colormath.Lab2XYZ(*Labbp)
+								gamap_profile.apply_black_offset(XYZbp)
+								# Write to temp file because file changed
+								fd, gamap_profile.fileName = mkstemp_bypath(gamap_profile.fileName,
+																			dir=self.tempdir)
+								stream = os.fdopen(fd, "wb")
+								gamap_profile.write(stream)
+								stream.close()
+								gamap_profiles.append(gamap_profile)
 						else:
 							if getcfg("gamap_src_viewcond"):
 								gamap_args.append("-c" +
@@ -8255,6 +8293,32 @@ usage: spotread [-options] [logfile]
 							if getcfg("gamap_out_viewcond"):
 								gamap_args.append("-d" +
 												  getcfg("gamap_out_viewcond"))
+						if gamap_profile:
+							for channel in "rgb":
+								trc = gamap_profile.tags[channel + "TRC"]
+								trc_len = len(trc)
+								# Do not preserve input shaper curves if nonlinear
+								if trc_len > 1 or trc[0] != 1.0:
+									if trc_len > 1:
+										# Check if nonlinear (10 bit precision)
+										values = [round(v / 65535.0 * 1023)
+												  for v in trc]
+										ivalues = [round(v / (trc_len - 1.0) * 1023)
+												   for v in xrange(trc_len)]
+										ni = values != ivalues
+									else:
+										# Single gamma != 1.0 (nonlinear)
+										ni = True
+									if ni and not "-ni" in collink_args:
+										# Do not preserve input shaper curves in
+										# devicelink
+										collink_args.append("-ni")
+										break
+									elif not ni and "-ni" in collink_args:
+										# Preserve input shaper curves in
+										# devicelink
+										collink_args.remove("-ni")
+										break
 						link_profile = tempfile.mktemp(profile_ext,
 													   dir=self.tempdir)
 						result = self.exec_cmd(collink,
@@ -8274,23 +8338,24 @@ usage: spotread [-options] [logfile]
 							table = "B2A%i" % tableno
 							profile.tags[table] = link_profile.tags.A2B0
 							if gamap_profile and "-ni" in collink_args:
-								# Set B2A input curves to inverse source
+								# Map B2A input curves to inverse source
 								# profile TRC
 								for i, channel in enumerate("rgb"):
+									curve = profile.tags[table].input[i]
 									trc = gamap_profile.tags[channel + "TRC"]
-									trc_len = len(trc)
-									if trc_len > 1:
-										interp = colormath.Interp(trc, range(trc_len),
+									trc = colormath.interp_resize(trc,
+																  len(curve),
+																  use_numpy=True)
+									if len(trc) > 1:
+										interp = colormath.Interp(trc, curve,
 																  use_numpy=True)
 									else:
-										trc_len = 2
 										def interp(v):
-											return (v / 65535.0) ** (1.0 / trc[0])
+											return (v / 65535.0) ** (1.0 / trc[0]) * 65535
 									profile.tags[table].input[i] = icurve = []
 									for j in xrange(4096):
 										icurve.append(interp(j / 4095.0 *
-															 65535) /
-													  (trc_len - 1.0) * 65535)
+															 65535))
 							# Remove temporary link profile
 							os.remove(link_profile.fileName)
 							# Update B2A matrix with source profile matrix
@@ -8342,10 +8407,11 @@ usage: spotread [-options] [logfile]
 			self.output = output
 			self.retcode = retcode
 			if not isinstance(result, Exception) and result:
-				if (gamap_profile and
-					os.path.dirname(gamap_profile.fileName) == self.tempdir):
-					# Remove temporary source profile
-					os.remove(gamap_profile.fileName)
+				for gamap_profile in gamap_profiles:
+					if (gamap_profile and
+						os.path.dirname(gamap_profile.fileName) == self.tempdir):
+						# Remove temporary source profile
+						os.remove(gamap_profile.fileName)
 				if profchanged and tables:
 					# Make sure we match Argyll colprof i.e. have a complete
 					# set of tables
@@ -8450,7 +8516,8 @@ usage: spotread [-options] [logfile]
 				# gray+primaries (better curve smoothness and neutrality)
 				# Make sure we do this *after* all changes on the A2B/B2A tables
 				# are done, because we may end up using them for lookup!
-				if getcfg("profile.type") in ("X", "s", "S"):
+				if (getcfg("profile.type") in ("X", "s", "S") and
+					profile.colorSpace == "RGB"):
 					if getcfg("profile.type") == "X":
 						if (not isinstance(profile.tags.get("vcgt"),
 									  ICCP.VideoCardGammaType) or
@@ -9773,7 +9840,10 @@ usage: spotread [-options] [logfile]
 					not "A2B0" in gamap_profile.tags and
 					"rXYZ" in gamap_profile.tags and
 					"gXYZ" in gamap_profile.tags and
-					"bXYZ" in gamap_profile.tags):
+					"bXYZ" in gamap_profile.tags and
+					"rTRC" in gamap_profile.tags and
+					"gTRC" in gamap_profile.tags and
+					"bTRC" in gamap_profile.tags):
 					self.log("-> Delegating CIECAM02 gamut mapping to collink")
 					# Make a copy so we can store options without adding them
 					# to actual colprof arguments
@@ -9790,10 +9860,10 @@ usage: spotread [-options] [logfile]
 					gamap_args.append("-d" + getcfg("gamap_out_viewcond"))
 			b2a_q = getcfg("profile.quality.b2a")
 			if (getcfg("profile.b2a.hires") and
-				getcfg("profile.type") in ("l", "x", "X") and
+				getcfg("profile.type") in ("x", "X") and
 				not (gamap and gamap_profile)):
 				# Disable B2A creation in colprof, B2A is handled
-				# by A2B inversion code
+				# by A2B inversion code (only for XYZ LUT)
 				b2a_q = "n"
 			if b2a_q and b2a_q != getcfg("profile.quality"):
 				args.append("-b" + b2a_q)

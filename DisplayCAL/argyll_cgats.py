@@ -382,8 +382,8 @@ END_DATA""")[0]
 				for suffix in prefix:
 					key = "%s_%s" % (prefix, suffix)
 					if not key in item:
-						return Error(lang.getstr("error.testchart.missing_fields",
-												 (ti3.filename, key)))
+						raise Error(lang.getstr("error.testchart.missing_fields",
+												(ti3.filename, key)))
 		RGB = (item["RGB_R"], item["RGB_G"], item["RGB_B"])
 		XYZ = (item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"])
 		for RGB_XYZ in (RGB_XYZ_extracted, RGB_XYZ_remaining):
