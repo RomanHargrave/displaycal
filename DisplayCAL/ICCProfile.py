@@ -4775,7 +4775,7 @@ class XYZType(ICCProfileTag, XYZNumber):
 		else:
 			ref = self.profile.tags.wtpt
 		return NumberTuple(colormath.XYZ2xyY(self.X, self.Y, self.Z,
-											 (ref.X, 1.0, ref.Z)))
+											 (ref.X, ref.Y, ref.Z)))
 
 
 class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
@@ -5685,6 +5685,9 @@ class ICCProfile:
 		return not False in [channel + "TRC" in self.tags for channel in "rgb"]
 
 	def set_blackpoint(self, XYZbp):
+		if not "chad" in self.tags:
+			XYZbp = colormath.adapt(*XYZbp,
+									whitepoint_destination=self.tags.wtpt.ir.values())
 		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
 		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 
