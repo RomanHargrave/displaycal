@@ -1136,11 +1136,19 @@ class GamapFrame(BaseFrame):
 		setcfg("gamap_src_viewcond", v)
 
 	def gamap_out_viewcond_handler(self, event=None):
-		v = self.viewconds_ba[self.gamap_out_viewcond_ctrl.GetStringSelection()]
-		if v != getcfg("gamap_out_viewcond") and self.Parent and \
-		   hasattr(self.Parent, "profile_settings_changed"):
-			self.Parent.profile_settings_changed()
-		setcfg("gamap_out_viewcond", v)
+		lstr = self.gamap_out_viewcond_ctrl.GetStringSelection()
+		cur = getcfg("gamap_out_viewcond")
+		v = self.viewconds_ba[lstr]
+		if v != cur:
+			if v in self.viewconds_out_nondisplay:
+				if not show_result_dialog(Warn(lang.getstr("warning.gamap.out_viewcond.nondisplay",
+														   lstr)),
+										  self, confirm=lang.getstr("ok")):
+					self.gamap_out_viewcond_ctrl.SetStringSelection(self.viewconds_ab[cur])
+					return
+			setcfg("gamap_out_viewcond", v)
+			if self.Parent and  hasattr(self.Parent, "profile_settings_changed"):
+				self.Parent.profile_settings_changed()
 	
 	def gamap_default_intent_handler(self, event=None):
 		v = self.gamap_default_intent_ctrl.GetSelection()
@@ -1212,6 +1220,12 @@ class GamapFrame(BaseFrame):
 		
 		self.viewconds_ab[None] = lang.getstr("none")
 		self.viewconds_ba[lang.getstr("none")] = None
+		self.viewconds_out_nondisplay = ["pp", "pe", "pc", "pcd", "ob", "cx"]
+		if False:
+			# NEVER - filter dest viewing conditions
+			self.viewconds_out_ignore = self.viewconds_out_nondisplay
+		else:
+			viewconds_out_ignore = []
 		for v in viewconds:
 			if self.Parent and hasattr(self.Parent, "worker") and (
 				(v == "pc" and self.Parent.worker.argyll_version < [1, 1, 1]) or
@@ -1220,7 +1234,7 @@ class GamapFrame(BaseFrame):
 			lstr = lang.getstr("gamap.viewconds.%s" % v)
 			self.viewconds_ab[v] = lstr
 			self.viewconds_ba[lstr] = v
-			if v not in ("pp", "pe", "pc", "pcd", "ob", "cx"):
+			if v not in viewconds_out_ignore:
 				self.viewconds_out_ab[v] = lstr
 		
 		self.gamap_src_viewcond_ctrl.SetItems(
