@@ -1714,6 +1714,9 @@ Transform {
 			cie_labels = []
 			for channel in color_rep[1]:
 				cie_labels.append(color_rep[1] + "_" + channel)
+				if color_rep[1] == "LAB":
+					# Only check L* for zero values
+					break
 			device_labels = []
 			for channel in color_rep[0]:
 				device_labels.append(color_rep[0] + "_" + channel)
@@ -1728,16 +1731,18 @@ Transform {
 							if sample[label] <= 0:
 								if warn_only:
 									if logfile:
-										logfile.write("Warning: Sample ID %i (RGB %s) has %s <= 0!\n" %
+										logfile.write("Warning: Sample ID %i (%s %s) has %s <= 0!\n" %
 													  (sample.SAMPLE_ID,
+													   color_rep[0],
 													   " ".join(str(sample.queryv1(device_labels)).split()),
 													   label))
 								else:
 									# Fudge to be nonzero
 									sample[label] = 0.000001
 									if logfile:
-										logfile.write("Fudged sample ID %i (RGB %s) %s to be non-zero\n" %
+										logfile.write("Fudged sample ID %i (%s %s) %s to be non-zero\n" %
 													  (sample.SAMPLE_ID,
+													   color_rep[0],
 													   " ".join(str(sample.queryv1(device_labels)).split()),
 													   label))
 					continue
@@ -1748,16 +1753,18 @@ Transform {
 					continue
 				if warn_only:
 					if logfile:
-						logfile.write("Warning: Sample ID %i (RGB %s) has %s = 0!\n" %
+						logfile.write("Warning: Sample ID %i (%s %s) has %s = 0!\n" %
 									  (sample.SAMPLE_ID,
+									   color_rep[0],
 									   " ".join(str(sample.queryv1(device_labels)).split()),
 									   color_rep[1]))
 				else:
 					# Queue sample for removal
 					remove.insert(0, sample)
 					if logfile:
-						logfile.write("Removed sample ID %i (RGB %s) with %s = 0\n" %
+						logfile.write("Removed sample ID %i (%s %s) with %s = 0\n" %
 									  (sample.SAMPLE_ID,
+									   color_rep[0],
 									   " ".join(str(sample.queryv1(device_labels)).split()),
 									   color_rep[1]))
 			for sample in remove:
