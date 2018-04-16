@@ -8208,6 +8208,11 @@ usage: spotread [-options] [logfile]
 					if profile.colorSpace != "RGB":
 						# Create colorimetric table for non-RGB profile
 						tables.insert(0, (1, "r"))
+						if not gamap_profile:
+							# Create perceptual table with
+							# luminance matched appearance rendering
+							# (similar to rel. col. + BPC)
+							tables.append((0, "la"))
 						# Get inking rules from colprof extra args
 						extra_args = getcfg("extra_args.colprof")
 						inking = re.findall(r"-[Kk](?:[zhxr]|p[0-9\.\s]+)|"
@@ -8226,10 +8231,15 @@ usage: spotread [-options] [logfile]
 						if profchanged:
 							# Need to write updated profile for xicclu/collink
 							profile.write()
+						# Input curve clipping.
+						# Setting to True makes rel. col. + BPC produce a
+						# smoother result, but reduces accuracy of the
+						# colorimetric table
+						input_curve_clipping = False
 						# Determine profile blackpoint
 						if "bkpt" in profile.tags:
 							Labbp = profile.tags.bkpt.pcs.Lab
-						else:
+						elif input_curve_clipping:
 							# Figure out profile blackpoint by looking up
 							# neutral values from L* = 0 to L* = 50,
 							# in 0.1 increments
@@ -8270,7 +8280,7 @@ usage: spotread [-options] [logfile]
 								else:
 									result = Error(missing)
 									break
-							if pcs and Labbp:
+							if pcs and input_curve_clipping and Labbp:
 								self.log("Applying black offset L*a*b* %.2f %.2f %.2f to %s..." %
 										 (Labbp + (gamap_profile.getDescription(), )))
 								XYZbp = colormath.Lab2XYZ(*Labbp)
@@ -8282,14 +8292,16 @@ usage: spotread [-options] [logfile]
 								gamap_profile.write(stream)
 								stream.close()
 								gamap_profiles.append(gamap_profile)
-						else:
+						elif gamap:
 							if getcfg("gamap_src_viewcond"):
 								gamap_args.append("-c" +
 												  getcfg("gamap_src_viewcond"))
 							if getcfg("gamap_out_viewcond"):
 								gamap_args.append("-d" +
 												  getcfg("gamap_out_viewcond"))
-						if gamap_profile:
+						# Preserve input curves in resulting devicelink?
+						preserve_input_curves = True
+						if gamap_profile and not preserve_input_curves:
 							for channel in "rgb":
 								trc = gamap_profile.tags[channel + "TRC"]
 								trc_len = len(trc)
@@ -8333,21 +8345,20 @@ usage: spotread [-options] [logfile]
 								continue
 							table = "B2A%i" % tableno
 							profile.tags[table] = link_profile.tags.A2B0
-							if gamap_profile and "-ni" in collink_args:
+							if gamap_profile:
 								# Map B2A input curves to inverse source
 								# profile TRC
 								for i, channel in enumerate("rgb"):
 									curve = profile.tags[table].input[i]
 									trc = gamap_profile.tags[channel + "TRC"]
-									trc = colormath.interp_resize(trc,
-																  len(curve),
-																  use_numpy=True)
-									if len(trc) > 1:
-										interp = colormath.Interp(trc, curve,
-																  use_numpy=True)
-									else:
-										def interp(v):
-											return (v / 65535.0) ** (1.0 / trc[0]) * 65535
+									if len(trc) == 1:
+										trc.set_trc(trc[0], len(curve))
+									elif len(trc) != len(curve):
+										trc = colormath.interp_resize(trc,
+																	  len(curve),
+																	  use_numpy=True)
+									interp = colormath.Interp(trc, curve,
+															  use_numpy=True)
 									profile.tags[table].input[i] = icurve = []
 									for j in xrange(4096):
 										icurve.append(interp(j / 4095.0 *
