@@ -375,7 +375,7 @@ class LUTCanvas(plot.PlotCanvas):
 			line = Plot(values, legend=label + suffix, colour=color)
 			if colorspace == "CMYK" and label == "K":
 				# CMYK -> KCMY for better visibilty
-				lines.insert(0, line)
+				lines.insert(1, line)
 			else:
 				lines.append(line)
 			if identical:
