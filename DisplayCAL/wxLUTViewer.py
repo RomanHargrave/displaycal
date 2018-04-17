@@ -983,6 +983,8 @@ class LUTFrame(BaseFrame):
 		try:
 			self.lookup_tone_response_curves()
 		except Exception, exception:
+			import traceback
+			safe_print(traceback.format_exc())
 			show_result_dialog(exception, self)
 		else:
 			self.trc = None
@@ -1240,13 +1242,19 @@ class LUTFrame(BaseFrame):
 				self.bTRC = self.gTRC = self.rTRC
 			return
 		# Generate interpolated TRCs for transfer function detection
-		for sig in ("rTRC", "gTRC", "bTRC"):
+		prev = None
+		for sig in ("rTRC", "gTRC", "bTRC", "kTRC"):
 			x, xp, y, yp = [], [], [], []
 			# First, get actual values
 			for i, (Y, v) in enumerate(getattr(self, sig)):
 				##if not i or Y >= trc[sig][i - 1]:
 				xp.append(v)
 				yp.append(Y)
+			setattr(self, "tf_" + sig, CoordinateType(self.profile))
+			if not xp or not yp:
+				if prev:
+					getattr(self, "tf_" + sig)[:] = prev
+				continue
 			# Second, interpolate to given size and use the same y axis 
 			# for all channels
 			for i in xrange(size):
@@ -1254,11 +1262,11 @@ class LUTFrame(BaseFrame):
 				y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
 			xi = numpy.interp(y, yp, xp)
 			yi = numpy.interp(x, xi, y)
-			setattr(self, "tf_" + sig, CoordinateType(self.profile))
+			prev = getattr(self, "tf_" + sig)
 			for Y, v in zip(yi, x):
 				if Y <= yp[0]:
 					Y = yp[0]
-				getattr(self, "tf_" + sig).append([Y, v])
+				prev.append([Y, v])
 
 	def move_handler(self, event):
 		if not self.IsShownOnScreen():
@@ -1764,7 +1772,9 @@ class LUTFrame(BaseFrame):
 		self.listening = False
 		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 			self.worker.wrapup(False)
-		config.writecfg(module="curve-viewer", options=("display.number", ))
+		config.writecfg(module="curve-viewer", options=("display.number",
+														"position.lut_viewer",
+														"size.lut_viewer"))
 		# Hide first (looks nicer)
 		self.Hide()
 		# Need to use CallAfter to prevent hang under Windows if minimized
