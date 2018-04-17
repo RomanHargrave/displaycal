@@ -16,6 +16,7 @@ from config import (fs_enc, get_argyll_display_number, get_data_path,
 from log import safe_print
 from meta import name as appname
 from options import debug
+from ordereddict import OrderedDict
 from util_decimal import float2dec
 from util_os import waccess
 from util_str import safe_unicode
@@ -127,6 +128,31 @@ class PolyBox(plot.PolyLine):
 class LUTCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
+		self.colors = {"RGB_R": "red",
+					   "RGB_G": "green",
+					   "RGB_B": "#0080FF",
+					   "CMYK_C": "cyan",
+					   "CMYK_M": "magenta",
+					   "CMYK_Y": "yellow",
+					   "CMYK_K": "black",
+					   "nCLR_0": "cyan",
+					   "nCLR_1": "magenta",
+					   "nCLR_2": "yellow",
+					   "nCLR_3": "black",
+					   "nCLR_4": "red",
+					   "nCLR_5": "green",
+					   "nCLR_6": "blue",
+					   "nCLR_7": "#FF8000",
+					   "nCLR_8": "#80FF00",
+					   "nCLR_9": "#00FF80",
+					   "XYZ_X": "red",
+					   "XYZ_Y": "green",
+					   "XYZ_Z": "#0080FF",
+					   "Lab_L*": "#CCCCCC",
+					   "Lab_a*": "#FF0099",
+					   "Lab_a*-": "#009900",
+					   "Lab_b*+": "#FFCC00",
+					   "Lab_b*": "#0080FF"}
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.Unbind(wx.EVT_SCROLL_THUMBTRACK)
 		self.Unbind(wx.EVT_SCROLL_PAGEUP)
@@ -161,7 +187,7 @@ class LUTCanvas(plot.PlotCanvas):
 		self.resetzoom()
 
 	def DrawLUT(self, vcgt=None, title=None, xLabel=None, yLabel=None, 
-				r=True, g=True, b=True):
+				channels=None, colorspace="RGB", connection_colorspace="RGB"):
 		if not title:
 			title = ""
 		if not xLabel:
@@ -173,14 +199,18 @@ class LUTCanvas(plot.PlotCanvas):
 		Plot = plot.PolyLine
 		Plot._attributes["width"] = 1
 
-		maxv = 65535
+		maxv = 4095
 		linear_points = []
 		
-		axis_y = 255.0
-		if xLabel in ("L*", "Y"):
-			axis_x = 100.0
+		if colorspace in ("YCbr", "RGB", "GRAY", "HSV", "HLS"):
+			axis_y = 255.0
+			if connection_colorspace in ("Lab", "XYZ"):
+				axis_x = 100.0
+			else:
+				axis_x = 255.0
 		else:
-			axis_x = 255.0
+			axis_y = 100.0
+			axis_x = 100.0
 		if getattr(self, "axis_x", None) != (0, axis_x):
 			wx.CallAfter(self.center)
 		self.axis_x, self.axis_y = (0, axis_x), (0, axis_y)
@@ -192,40 +222,41 @@ class LUTCanvas(plot.PlotCanvas):
 
 		lines = [PolyBox(0, 0, axis_x, axis_y, colour=GRIDCOLOUR, width=1)]
 		
-		self.point_grid = [{}, {}, {}]
+		# Use a point grid so we can get the whole set of output values for
+		# each channel for any single given input value.
+		# The point grid keys are quantized to 12 bits to avoid floating point 
+		# inaccuracy
+		self.point_grid = {}
+		points = {}
+		if not channels:
+			channels = {}
+		for channel, channel_name in channels.iteritems():
+			if channel_name:
+				self.point_grid[channel] = {}
+				points[channel] = []
 
 		if not vcgt:
 			irange = range(0, 256)
 		elif "data" in vcgt: # table
 			data = list(vcgt['data'])
-			while len(data) < 3:
+			while len(data) < len(channels):
 				data.append(data[0])
-			r_points = []
-			g_points = []
-			b_points = []
 			if (not isinstance(vcgt, ICCP.VideoCardGammaTableType) and
 				not isinstance(data[0], ICCP.CurveType)):
 				# Coordinate list
 				irange = range(0, len(data[0]))
-				for i in xrange(len(data)):
-					if i == 0 and r:
-						for n, y in data[i]:
-							if xLabel == "L*":
+				set_linear_points = True
+				for channel in xrange(len(data)):
+					if channel in points:
+						for n, y in data[channel]:
+							if not detect_increments and set_linear_points:
+								linear_points.append([n, n])
+							if connection_colorspace == "Lab":
 								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
-							r_points.append([n, y])
-							self.point_grid[i][n] = y
-					elif i == 1 and g:
-						for n, y in data[i]:
-							if xLabel == "L*":
-								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
-							g_points.append([n, y])
-							self.point_grid[i][n] = y
-					elif i == 2 and b:
-						for n, y in data[i]:
-							if xLabel == "L*":
-								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
-							b_points.append([n, y])
-							self.point_grid[i][n] = y
+							points[channel].append([n, y])
+							idx = int(round(n / 255.0 * 4095))
+							self.point_grid[channel][idx] = y
+						set_linear_points = False
 			else:
 				irange = range(0, vcgt['entryCount'])
 				maxv = math.pow(256, vcgt['entrySize']) - 1
@@ -233,104 +264,49 @@ class LUTCanvas(plot.PlotCanvas):
 					j = i * (axis_y / (vcgt['entryCount'] - 1))
 					if not detect_increments:
 						linear_points.append([j, j])
-					if r:
-						n = float(data[0][i]) / maxv * axis_x
-						if not detect_increments or not r_points or \
+					for channel, values in points.iteritems():
+						n = float(data[channel][i]) / maxv * axis_x
+						if not detect_increments or not values or \
 						   i == vcgt['entryCount'] - 1 or n != i:
 							if detect_increments and n != i and \
-							   len(r_points) == 1 and i > 1 and \
-							   r_points[-1][0] == r_points[-1][1]:
-								r_points.append([i - 1, i - 1])
-							if xLabel == "L*":
+							   len(values) == 1 and i > 1 and \
+							   values[-1][0] == values[-1][1]:
+								values.append([i - 1, i - 1])
+							if connection_colorspace == "Lab":
 								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
-							if xLabel in ("L*", "Y"):
-								r_points.append([n, j])
-								self.point_grid[0][n] = j
+							if connection_colorspace in ("Lab", "XYZ"):
+								values.append([n, j])
+								idx = int(round(n / 255.0 * 4095))
+								self.point_grid[channel][idx] = j
 							else:
-								r_points.append([j, n])
-								self.point_grid[0][j] = n
-					if g:
-						n = float(data[1][i]) / maxv * axis_x
-						if not detect_increments or not g_points or \
-						   i == vcgt['entryCount'] - 1 or n != i:
-							if detect_increments and n != i and \
-							   len(g_points) == 1 and i > 1 and \
-							   g_points[-1][0] == g_points[-1][1]:
-								g_points.append([i - 1, i - 1])
-							if xLabel == "L*":
-								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
-							if xLabel in ("L*", "Y"):
-								g_points.append([n, j])
-								self.point_grid[1][n] = j
-							else:
-								g_points.append([j, n])
-								self.point_grid[1][j] = n
-					if b:
-						n = float(data[2][i]) / maxv * axis_x
-						if not detect_increments or not b_points or \
-						   i == vcgt['entryCount'] - 1 or n != i:
-							if detect_increments and n != i and \
-							   len(b_points) == 1 and i > 1 and \
-							   b_points[-1][0] == b_points[-1][1]:
-								b_points.append([i - 1, i - 1])
-							if xLabel == "L*":
-								n = colormath.XYZ2Lab(0, n / axis_x * 100, 0)[0] * (axis_x / 100.0)
-							if xLabel in ("L*", "Y"):
-								b_points.append([n, j])
-								self.point_grid[2][n] = j
-							else:
-								b_points.append([j, n])
-								self.point_grid[2][j] = n
+								values.append([j, n])
+								idx = int(round(j / 255.0 * 4095))
+								self.point_grid[channel][idx] = n
 		else: # formula
 			irange = range(0, 256)
 			step = 100.0 / axis_y
-			r_points = []
-			g_points = []
-			b_points = []
 			for i in irange:
 				# float2dec(v) fixes miniscule deviations in the calculated gamma
 				# n = float2dec(n, 8)
 				if not detect_increments:
 					linear_points.append([i, (i)])
-				if r:
-					vmin = float2dec(vcgt["redMin"] * axis_x)
-					v = float2dec(math.pow(step * i / 100.0, vcgt["redGamma"]))
-					vmax = float2dec(vcgt["redMax"] * axis_x)
+				for channel, color in enumerate(("red", "green", "blue")):
+					if not channel in points:
+						continue
+					vmin = float2dec(vcgt[color + "Min"] * axis_x)
+					v = float2dec(math.pow(step * i / 100.0, vcgt[color + "Gamma"]))
+					vmax = float2dec(vcgt[color + "Max"] * axis_x)
 					n = vmin + v * (vmax - vmin)
-					if xLabel == "L*":
+					if connection_colorspace == "Lab":
 						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
-					if xLabel in ("L*", "Y"):
-						r_points.append([n, i])
-						self.point_grid[0][n] = i
+					if connection_colorspace in ("Lab", "XYZ"):
+						points[channel].append([n, i])
+						idx = int(round(n / 255.0 * 4095))
+						self.point_grid[channel][idx] = i
 					else:
-						r_points.append([i, n])
-						self.point_grid[0][i] = n
-				if g:
-					vmin = float2dec(vcgt["greenMin"] * axis_x)
-					v = float2dec(math.pow(step * i / 100.0, vcgt["greenGamma"]))
-					vmax = float2dec(vcgt["greenMax"] * axis_x)
-					n = vmin + v * (vmax - vmin)
-					if xLabel == "L*":
-						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
-					if xLabel in ("L*", "Y"):
-						g_points.append([n, i])
-						self.point_grid[1][n] = i
-					else:
-						g_points.append([i, n])
-						self.point_grid[1][i] = n
-				if b:
-					vmin = float2dec(vcgt["blueMin"] * axis_x)
-					v = float2dec(math.pow(step * i / 100.0, vcgt["blueGamma"]))
-					vmax = float2dec(vcgt["blueMax"] * axis_x)
-					n = vmin + v * (vmax - vmin)
-					if xLabel == "L*":
-						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
-					if xLabel in ("L*", "Y"):
-						b_points.append([n, i])
-						self.point_grid[2][n] = i
-					else:
-						b_points.append([i, n])
-						self.point_grid[2][i] = n
+						points[channel].append([i, n])
+						idx = int(round(i / 255.0 * 4095))
+						self.point_grid[channel][idx] = n
 
 		#for n in sorted(self.point_grid[0].keys()):
 			#print n, self.point_grid[0].get(n), self.point_grid[1].get(n), self.point_grid[2].get(n)
@@ -340,90 +316,70 @@ class LUTCanvas(plot.PlotCanvas):
 		linear = [[0, 0], [irange[-1], irange[-1]]]
 		
 		if not vcgt:
-			if detect_increments:
-				r_points = g_points = b_points = linear
-			else:
-				r_points = g_points = b_points = linear_points
+			for values in points.itervalues():
+				if detect_increments:
+					values[:] = linear
+				else:
+					values[:] = linear_points
 		
 		# Note: We need to make sure each point is a float because it
 		# might be a decimal.Decimal, which can't be divided by floats!
-		self.r_unique = len(set(round(float(y) / axis_y * irange[-1])
-								for x, y in r_points))
-		self.g_unique = len(set(round(float(y) / axis_y * irange[-1])
-								for x, y in g_points))
-		self.b_unique = len(set(round(float(y) / axis_y * irange[-1])
-								for x, y in b_points))
+		self.unique = {}
+		for channel, values in points.iteritems():
+			self.unique[channel] = len(set(round(float(y) / axis_y * irange[-1])
+										   for x, y in values))
 
 		legend = []
-		colour = None
-		if r and g and b and r_points == g_points == b_points:
-			colour = 'white'
-			points = r_points
-			legend.append('R')
-			legend.append('G')
-			legend.append('B')
-		elif r and g and r_points == g_points:
-			colour = 'yellow'
-			points = r_points
-			legend.append('R')
-			legend.append('G')
-		elif r and b and r_points == b_points:
-			colour = 'magenta'
-			points = b_points
-			legend.append('R')
-			legend.append('B')
-		elif g and b and g_points == b_points:
-			colour = 'cyan'
-			points = b_points
-			legend.append('G')
-			legend.append('B')
-		else:
-			if r:
-				legend.append('R')
-			if g:
-				legend.append('G')
-			if b:
-				legend.append('B')
+		color = 'white'
+			
+		identical = (len(points) > 1 and
+					 all(values == points.values()[0] for values in points.itervalues()))
+
+		if identical:
+			channels_label = "".join(channels.values())
+			if channels_label in ("RGB", "CMYK"):
+				color = 'white'
+			elif channels_label == "RG":
+				color = 'yellow'
+			elif channels_label == "RB":
+				color = 'magenta'
+			elif channels_label == "GB":
+				color = 'cyan'
+			elif channels_label == "CM":
+				color = '#0080FF'
+			elif channels_label == "CY":
+				color = 'green'
+			elif channels_label == "MY":
+				color = 'red'
+		for channel_name in channels.values():
+			if channel_name:
+				legend.append(channel_name)
 		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
 						 linear_points]
-		if colour and points:
+		for channel, values in points.iteritems():
+			if not identical:
+				color = self.colors.get(colorspace + "_" + channels[channel],
+										"white")
 			# Note: We need to make sure each point is a float because it
 			# might be a decimal.Decimal, which can't be divided by floats!
-			points_quantized = [(i, int(round(float(v) / axis_y * maxv))) for i, v in
-								points]
-			suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-						points_quantized == (linear if detect_increments 
-											 else linear_points) else '')
-			lines.append(Plot(points, legend='='.join(legend) + suffix, 
-							  colour=colour))
-		if colour != 'white':
-			if r and colour not in ('yellow', 'magenta'):
-				# Note: We need to make sure each point is a float because it
-				# might be a decimal.Decimal, which can't be divided by floats!
-				points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
-									for i, v in r_points]
-				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-							points_quantized == (linear if detect_increments 
-												 else linear_points) else '')
-				lines.append(Plot(r_points, legend='R' + suffix, colour='red'))
-			if g and colour not in ('yellow', 'cyan'):
-				# Note: We need to make sure each point is a float because
-				# it might be a decimal.Decimal, which can't be divided by floats!
-				points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
-									for i, v in g_points]
-				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-							points_quantized == (linear if detect_increments 
-												 else linear_points) else '')
-				lines.append(Plot(g_points, legend='G' + suffix, colour='green'))
-			if b and colour not in ('cyan', 'magenta'):
-				# Note: We need to make sure each point is a float because
-				# it might be a decimal.Decimal, which can't be divided by floats!
-				points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
-									for i, v in b_points]
-				suffix = ((', ' + lang.getstr('linear').capitalize()) if 
-							points_quantized == (linear if detect_increments 
-												 else linear_points) else '')
-				lines.append(Plot(b_points, legend='B' + suffix, colour='#0080FF'))
+			points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
+								for i, v in values]
+			if identical:
+				label = '='.join(legend)
+				suffix = ((', ' + lang.getstr('linear').capitalize())
+						  if points_quantized == (linear if detect_increments 
+												  else linear_points) else '')
+			else:
+				label = channels[channel]
+				suffix = ''
+			line = Plot(values, legend=label + suffix, colour=color)
+			if colorspace == "CMYK" and label == "K":
+				# CMYK -> KCMY for better visibilty
+				lines.insert(0, line)
+			else:
+				lines.append(line)
+			if identical:
+				break
 
 		self._DrawCanvas(plot.PlotGraphics(lines, title,
 										   " ".join([xLabel,
@@ -854,30 +810,7 @@ class LUTFrame(BaseFrame):
 							border=4)
 		self.show_as_L.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
-		self.toggle_red = CustomCheckBox(self.box_panel, -1, "R")
-		self.toggle_red.SetForegroundColour(FGCOLOUR)
-		self.toggle_red.SetMaxFontSize(11)
-		self.toggle_red.SetValue(True)
-		self.cbox_sizer.Add(self.toggle_red, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.toggle_red.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
-		
-		self.cbox_sizer.Add((4, 0))
-		
-		self.toggle_green = CustomCheckBox(self.box_panel, -1, "G")
-		self.toggle_green.SetForegroundColour(FGCOLOUR)
-		self.toggle_green.SetMaxFontSize(11)
-		self.toggle_green.SetValue(True)
-		self.cbox_sizer.Add(self.toggle_green, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.toggle_green.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
-		
-		self.cbox_sizer.Add((4, 0))
-		
-		self.toggle_blue = CustomCheckBox(self.box_panel, -1, "B")
-		self.toggle_blue.SetForegroundColour(FGCOLOUR)
-		self.toggle_blue.SetMaxFontSize(11)
-		self.toggle_blue.SetValue(True)
-		self.cbox_sizer.Add(self.toggle_blue, flag=wx.ALIGN_CENTER_VERTICAL)
-		self.toggle_blue.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
+		self.add_toggles(self.box_panel, self.cbox_sizer)
 		
 		self.toggle_clut = CustomCheckBox(self.box_panel, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
@@ -1124,11 +1057,13 @@ class LUTFrame(BaseFrame):
 
 		profile = self.profile
 
+		# Final number of coordinates
 		if profile.connectionColorSpace == "RGB":
-			mult = 1
+			size = 256
+		elif profile.connectionColorSpace == "Lab":
+			size = 1001
 		else:
-			mult = 4
-		size = 256 * mult  # Final number of coordinates
+			size = 1024
 
 		if hasattr(self, "rendering_intent_select"):
 			intent = {0: "a",
@@ -1152,9 +1087,9 @@ class LUTFrame(BaseFrame):
 													   profile.getDescription()])))
 			return
 
-		if (profile.colorSpace not in ("RGB", "GRAY") or
+		if (profile.colorSpace not in ("RGB", "GRAY", "CMYK") or
 			profile.connectionColorSpace not in ("Lab", "XYZ", "RGB")):
-			if profile.colorSpace not in ("RGB", "GRAY"):
+			if profile.colorSpace not in ("RGB", "GRAY", "CMYK"):
 				unsupported_colorspace = profile.colorSpace
 			else:
 				unsupported_colorspace = profile.connectionColorSpace
@@ -1178,7 +1113,7 @@ class LUTFrame(BaseFrame):
 		# Prepare input Lab values
 		XYZ_triplets = []
 		Lab_triplets = []
-		RGB_triplets = []
+		devicevalues = []
 		for i in xrange(0, size):
 			if direction in ("b", "if"):
 				##if intent == "a":
@@ -1192,7 +1127,7 @@ class LUTFrame(BaseFrame):
 				a = b = 0
 				Lab_triplets.append([i * (100.0 / (size - 1)), a, b])
 			else:
-				RGB_triplets.append([i * (1.0 / (size - 1))] * 3)
+				devicevalues.append([i * (1.0 / (size - 1))] * len(profile.colorSpace))
 		if profile.colorSpace == "GRAY":
 			use_icclu = True
 			pcs = "x"
@@ -1211,7 +1146,7 @@ class LUTFrame(BaseFrame):
 			else:
 				idata = XYZ_triplets
 		else:
-			idata = RGB_triplets
+			idata = devicevalues
 		
 		order = {True: "n",
 				 False: "r"}.get(("B2A0" in self.profile.tags or
@@ -1231,7 +1166,7 @@ class LUTFrame(BaseFrame):
 			return
 
 		if direction in ("b", "if") or profile.connectionColorSpace == "RGB":
-			if direction == "if":
+			if direction == "if" and profile.colorSpace == "RGB":
 				Lbp = self.worker.xicclu(profile, [[0, 0, 0]], intent, "f",
 										 order, "l", use_icclu=use_icclu)[0][0]
 				maxval = size - 1.0
@@ -1253,22 +1188,27 @@ class LUTFrame(BaseFrame):
 					if len(values) > 3:
 						values.pop()
 
-			RGB_triplets = odata
+			devicevalues = odata
 		else:
 			Lab_triplets = odata
 
+		if profile.colorSpace in ("RGB", "GRAY"):
+			maxv = 255
+		else:
+			maxv = 100
 		self.rTRC = CoordinateType(self.profile)
 		self.gTRC = CoordinateType(self.profile)
 		self.bTRC = CoordinateType(self.profile)
-		for j, RGB in enumerate(RGB_triplets):
-			for i, v in enumerate(RGB):
+		self.kTRC = CoordinateType(self.profile)
+		for j, sample in enumerate(devicevalues):
+			for i, v in enumerate(sample):
 				v = min(v, 1.0)
-				if (not v and j < len(RGB_triplets) - 1 and
-					not min(RGB_triplets[j + 1][i], 1.0)):
+				if (not v and j < len(devicevalues) - 1 and
+					not min(devicevalues[j + 1][i], 1.0)):
 					continue
-				v *= 255
+				v *= maxv
 				if profile.connectionColorSpace == "RGB":
-					x = j / (size - 1.0) * 255
+					x = j / (size - 1.0) * maxv
 					if i == 0:
 						self.rTRC.append([x, v])
 					elif i == 1:
@@ -1291,6 +1231,8 @@ class LUTFrame(BaseFrame):
 						self.gTRC.append([Y, v])
 					elif i == 2:
 						self.bTRC.append([Z, v])
+					elif i == 3:
+						self.kTRC.append([Y, v])
 		if profile.connectionColorSpace == "RGB":
 			return
 		if use_trc_tags:
@@ -1308,7 +1250,7 @@ class LUTFrame(BaseFrame):
 			# Second, interpolate to given size and use the same y axis 
 			# for all channels
 			for i in xrange(size):
-				x.append(i / (size - 1.0) * 255)
+				x.append(i / (size - 1.0) * maxv)
 				y.append(colormath.Lab2XYZ(i / (size - 1.0) * 100, 0, 0)[1] * 100)
 			xi = numpy.interp(y, yp, xp)
 			yi = numpy.interp(x, xi, y)
@@ -1387,6 +1329,10 @@ class LUTFrame(BaseFrame):
 			profile._tags.desc = ICCP.TextDescriptionType("", "desc")
 			profile.size = len(profile.data)
 			profile.is_loaded = True
+		center = False
+		if (getattr(self, "profile", None) and
+			self.profile.colorSpace != profile.colorSpace):
+			center = True
 		if profile.getDescription():
 			title = u" \u2014 ".join([lang.getstr("calibration.lut_viewer.title"),
 									  profile.getDescription()])
@@ -1402,19 +1348,35 @@ class LUTFrame(BaseFrame):
 			setattr(self, "tf_" + channel + "TRC", trc)
 		self.trc = None
 		curves = []
-		curves.append(lang.getstr('vcgt'))
+		if "vcgt" in profile.tags or "MS00" in profile.tags:
+			curves.append(lang.getstr('vcgt'))
 		self.client.errors = []
 		self.toggle_clut.SetValue("B2A0" in profile.tags or
 								  "A2B0" in profile.tags)
 		if ((self.rTRC and self.gTRC and self.bTRC) or
 			(self.toggle_clut.GetValue() and
-			 profile.colorSpace in ("RGB", "GRAY"))):
+			 profile.colorSpace in ("RGB", "GRAY", "CMYK"))):
 			try:
 				self.lookup_tone_response_curves()
 			except Exception, exception:
 				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				curves.append(lang.getstr('[rgb]TRC'))
+		curves = self.add_shaper_curves(curves)
+		selection = self.plot_mode_select.GetStringSelection()
+		self.plot_mode_select.SetItems(curves)
+		self.plot_mode_select.Enable(len(curves) > 1)
+		if curves and not self.plot_mode_select.SetStringSelection(selection):
+			self.plot_mode_select.SetSelection(0)
+			center = True
+		self.cbox_sizer.Layout()
+		self.box_sizer.Layout()
+		self.DrawLUT()
+		if center:
+			wx.CallAfter(self.client.center)
+		wx.CallAfter(self.handle_errors)
+
+	def add_shaper_curves(self, curves):
 		if getcfg("show_advanced_options"):
 			if isinstance(self.profile.tags.get("A2B0"), ICCP.LUT16Type):
 				curves.append(lang.getstr('profile.tags.A2B0.shaper_curves.input'))
@@ -1434,65 +1396,64 @@ class LUTFrame(BaseFrame):
 			if isinstance(self.profile.tags.get("B2A2"), ICCP.LUT16Type):
 				curves.append(lang.getstr('profile.tags.B2A2.shaper_curves.input'))
 				curves.append(lang.getstr('profile.tags.B2A2.shaper_curves.output'))
-		selection = self.plot_mode_select.GetSelection()
-		center = False
-		if curves and (selection < 0 or selection > len(curves) - 1):
-			selection = 0
-			center = True
-		self.plot_mode_select.SetItems(curves)
-		self.plot_mode_select.Enable(len(curves) > 1)
-		self.plot_mode_select.SetSelection(selection)
-		self.cbox_sizer.Layout()
-		self.box_sizer.Layout()
-		self.DrawLUT()
-		if center:
-			wx.CallAfter(self.client.center)
-		wx.CallAfter(self.handle_errors)
+		return curves
+
+	def add_toggles(self, parent, sizer):
+		# Add toggle checkboxes for up to 16 channels
+		self.toggles = []
+		for i in xrange(16):
+			toggle = CustomCheckBox(parent, -1, "",
+									name="toggle_channel_%i" % i)
+			toggle.SetForegroundColour(FGCOLOUR)
+			toggle.SetMaxFontSize(11)
+			toggle.SetValue(True)
+			sizer.Add(toggle, flag=wx.ALIGN_CENTER_VERTICAL | wx.RIGHT,
+					  border=4 if i < 15 else 0)
+			toggle.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
+			self.toggles.append(toggle)
+			toggle.Hide()
 
 	def add_tone_values(self, legend):
 		if not self.profile:
 			return
 		colorants = legend[0]
-		if (self.plot_mode_select.GetSelection() == 0 and
+		if (self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt') and
 			'vcgt' in self.profile.tags):
 			if 'R' in colorants or 'G' in colorants or 'B' in colorants:
 				legend.append(lang.getstr("tone_values"))
 				if '=' in colorants and 0:  # NEVER
 					unique = []
-					if 'R' in colorants:
-						unique.append(self.client.r_unique)
-					if 'G' in colorants:
-						unique.append(self.client.g_unique)
-					if 'B' in colorants:
-						unique.append(self.client.b_unique)
+					if 0 in self.client.unique:  # Red
+						unique.append(self.client.unique[0])
+					if 1 in self.client.unique:  # Green
+						unique.append(self.client.unique[1])
+					if 2 in self.client.unique:  # Blue
+						unique.append(self.client.unique[2])
 					unique = min(unique)
 					legend[-1] += " %.1f%% (%i/%i)" % (unique / 
 													   (self.client.entryCount / 
 														100.0), unique, 
 													   self.client.entryCount)
 				else:
-					if 'R' in colorants:
-						legend[-1] += " %.1f%% (%i/%i)" % (self.client.r_unique / 
+					if 0 in self.client.unique:  # Red
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.unique[0] / 
 														   (self.client.entryCount / 
 															100.0), 
-														   self.client.r_unique, 
+														   self.client.unique[0], 
 														   self.client.entryCount)
-					if 'G' in colorants:
-						legend[-1] += " %.1f%% (%i/%i)" % (self.client.g_unique / 
+					if 1 in self.client.unique:  # Green
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.unique[1] / 
 														   (self.client.entryCount / 
 															100.0), 
-														   self.client.g_unique, 
+														   self.client.unique[1], 
 														   self.client.entryCount)
-					if 'B' in colorants:
-						legend[-1] += " %.1f%% (%i/%i)" % (self.client.b_unique / 
+					if 2 in self.client.unique:  # Blue
+						legend[-1] += " %.1f%% (%i/%i)" % (self.client.unique[2] / 
 														   (self.client.entryCount / 
 															100.0), 
-														   self.client.b_unique, 
+														   self.client.unique[2], 
 														   self.client.entryCount)
-				unique = []
-				unique.append(self.client.r_unique)
-				unique.append(self.client.g_unique)
-				unique.append(self.client.b_unique)
+				unique = self.client.unique.values()
 				if not 0 in unique and not "R=G=B" in colorants:
 					unique = min(unique)
 					legend[-1] += ", %s %.1f%% (%i/%i)" % (lang.getstr("grayscale"), 
@@ -1500,7 +1461,7 @@ class LUTFrame(BaseFrame):
 														   (self.client.entryCount / 
 															100.0), unique, 
 														   self.client.entryCount)
-		elif (self.plot_mode_select.GetSelection() == 1 and
+		elif (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 			  isinstance(self.tf_rTRC, (ICCP.CurveType, CoordinateType)) and
 			  len(self.tf_rTRC) > 1 and
 			  isinstance(self.tf_gTRC, (ICCP.CurveType, CoordinateType)) and
@@ -1565,8 +1526,10 @@ class LUTFrame(BaseFrame):
 		self.SetStatusText('')
 		self.Freeze()
 		curves = None
+		curves_colorspace = self.profile.colorSpace
+		connection_colorspace = "RGB"
 		if self.profile:
-			if self.plot_mode_select.GetSelection() == 0:
+			if self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'):
 				# Convert calibration information from embedded WCS profile
 				# (if present) to VideCardFormulaType if the latter is not present
 				if (isinstance(self.profile.tags.get("MS00"),
@@ -1579,13 +1542,14 @@ class LUTFrame(BaseFrame):
 					curves = self.profile.tags['vcgt']
 				else:
 					curves = None
-			elif (self.plot_mode_select.GetSelection() == 1 and
-				  isinstance(self.rTRC, (ICCP.CurveType, CoordinateType)) and
-				  isinstance(self.gTRC, (ICCP.CurveType, CoordinateType)) and
-				  isinstance(self.bTRC, (ICCP.CurveType, CoordinateType))):
-				if (len(self.rTRC) == 1 and
-					len(self.gTRC) == 1 and
-					len(self.bTRC) == 1):
+			elif self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC'):
+				if not (isinstance(self.rTRC, (ICCP.CurveType, CoordinateType)) and
+						isinstance(self.gTRC, (ICCP.CurveType, CoordinateType)) and
+						isinstance(self.bTRC, (ICCP.CurveType, CoordinateType))):
+					curves = None
+				elif (len(self.rTRC) == 1 and
+					  len(self.gTRC) == 1 and
+					  len(self.bTRC) == 1):
 					# gamma
 					curves = {
 						'redMin': 0.0,
@@ -1600,76 +1564,142 @@ class LUTFrame(BaseFrame):
 					}
 				else:
 					# curves
+					data = [self.rTRC,
+							self.gTRC,
+							self.bTRC]
+					if hasattr(self, "kTRC"):
+						data.append(self.kTRC)
 					curves = {
-						'data': [self.rTRC,
-								 self.gTRC,
-								 self.bTRC],
+						'data': data,
 						'entryCount': len(self.rTRC),
 						'entrySize': 2
 					}
-			elif self.plot_mode_select.GetSelection() in range(2, 14):
+			elif self.plot_mode_select.GetStringSelection() != lang.getstr('gamut'):
+				to_pcs = False
 				if self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B0.shaper_curves.input'):
 					tables = self.profile.tags.A2B0.input
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B0.shaper_curves.output'):
 					tables = self.profile.tags.A2B0.output
+					curves_colorspace = self.profile.connectionColorSpace
+					to_pcs = True
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B1.shaper_curves.input'):
 					tables = self.profile.tags.A2B1.input
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B1.shaper_curves.output'):
 					tables = self.profile.tags.A2B1.output
+					curves_colorspace = self.profile.connectionColorSpace
+					to_pcs = True
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B2.shaper_curves.input'):
 					tables = self.profile.tags.A2B2.input
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.A2B2.shaper_curves.output'):
 					tables = self.profile.tags.A2B2.output
+					curves_colorspace = self.profile.connectionColorSpace
+					to_pcs = True
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A0.shaper_curves.input'):
 					tables = self.profile.tags.B2A0.input
+					curves_colorspace = self.profile.connectionColorSpace
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A0.shaper_curves.output'):
 					tables = self.profile.tags.B2A0.output
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A1.shaper_curves.input'):
 					tables = self.profile.tags.B2A1.input
+					curves_colorspace = self.profile.connectionColorSpace
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A1.shaper_curves.output'):
 					tables = self.profile.tags.B2A1.output
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A2.shaper_curves.input'):
 					tables = self.profile.tags.B2A2.input
+					curves_colorspace = self.profile.connectionColorSpace
 				elif self.plot_mode_select.GetStringSelection() == lang.getstr('profile.tags.B2A2.shaper_curves.output'):
 					tables = self.profile.tags.B2A2.output
 				entry_count = len(tables[0])
-				x = [v / (entry_count - 1.0) * 255 for v in range(entry_count)]
+				if curves_colorspace != "RGB":
+					maxv = 100
+				else:
+					maxv = 255
+				lin_x = [v / (entry_count - 1.0) * maxv for v in range(entry_count)]
+				data = []
+				for i, table in enumerate(tables):
+					x = lin_x
+					if curves_colorspace == "Lab" and i == 0:
+						if to_pcs:
+							table = [v / 65280.0 * 65535.0 for v in table]
+						else:
+							x = [min(v / (entry_count - 1.0) * (100 + 25500 / 65280.0), maxv) for v in range(entry_count)]
+					data.append(zip(x, [v / 65535.0 * maxv for v in table]))
 				curves = {
-					'data': [zip(x, [v / 65535.0 * 255 for v in tables[0]]),
-							 zip(x, [v / 65535.0 * 255 for v in tables[1]]),
-							 zip(x, [v / 65535.0 * 255 for v in tables[2]])],
+					'data': data,
 					'entryCount': entry_count,
 					'entrySize': 2
 				}
 		yLabel = []
-		if self.toggle_red.GetValue():
-			yLabel.append("R")
-		if self.toggle_green.GetValue():
-			yLabel.append("G")
-		if self.toggle_blue.GetValue():
-			yLabel.append("B")
-		if (self.plot_mode_select.GetSelection() in [0] + range(2, 14) or
+		numchannels = {'XYZ': 3,
+					   'Lab': 3,
+					   'Luv': 3,
+					   'YCbr': 3,
+					   'Yxy': 3,
+					   'RGB': 3,
+					   'GRAY': 1,
+					   'HSV': 3,
+					   'HLS': 3,
+					   'CMYK': 4,
+					   'CMY': 3,
+					   '2CLR': 2,
+					   '3CLR': 3,
+					   '4CLR': 4,
+					   '5CLR': 5,
+					   '6CLR': 6,
+					   '7CLR': 7,
+					   '8CLR': 8,
+					   '9CLR': 9,
+					   'ACLR': 10,
+					   'BCLR': 11,
+					   'CCLR': 12,
+					   'DCLR': 13,
+					   'ECLR': 14,
+					   'FCLR': 15}.get(curves_colorspace, 3)
+		is_ktrc = (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
+				   curves_colorspace != "RGB" and False)
+		if is_ktrc:
+			curves_colorspace = "GRAY"
+			numchannels = 1
+		for channel, toggle in enumerate(self.toggles):
+			toggle.Show(channel < numchannels)
+			if channel < numchannels:
+				if curves_colorspace == "GRAY":
+					toggle.Label = "R=G=B"
+				elif curves_colorspace == "YCbr":
+					toggle.Label = ("Y", "Cb", "Cr")[channel]
+				elif curves_colorspace.endswith("CLR"):
+					curves_colorspace = "nCLR"
+					toggle.Label = "%i" % channel
+				elif curves_colorspace == "Lab":
+					toggle.Label = ("L*", "a*", "b*")[channel]
+				else:
+					toggle.Label = curves_colorspace[channel]
+				if toggle.GetValue():
+					yLabel.append(toggle.Label)
+			toggle.Enable(bool(curves))
+		if (self.plot_mode_select.GetStringSelection()
+			not in (lang.getstr('[rgb]TRC'), lang.getstr('gamut')) or
 			(self.profile and self.profile.connectionColorSpace == "RGB")):
 			self.xLabel = "".join(yLabel)
 		else:
 			if self.show_as_L.GetValue():
+				connection_colorspace = "Lab"
 				self.xLabel = "L*"
 			else:
+				connection_colorspace = "XYZ"
 				self.xLabel = "Y"
 		self.yLabel = "".join(yLabel)
 				
-		self.toggle_red.Enable(bool(curves))
-		self.toggle_green.Enable(bool(curves))
-		self.toggle_blue.Enable(bool(curves))
 		self.show_as_L.Enable(bool(curves))
-		self.show_as_L.Show(self.plot_mode_select.GetSelection() not in [0] + range(2, 14) and
+		self.show_as_L.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 							self.profile.connectionColorSpace != "RGB")
-		self.toggle_clut.Show(self.profile.connectionColorSpace != "RGB" and
-							  self.plot_mode_select.GetSelection() == 1 and
+		self.toggle_clut.Show(self.profile.colorSpace == "RGB" and
+							  self.profile.connectionColorSpace != "RGB" and
+							  self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 							  ("B2A0" in self.profile.tags or
 							   "A2B0" in self.profile.tags))
 		self.toggle_clut.Enable(self.profile.connectionColorSpace != "RGB" and
-								self.plot_mode_select.GetSelection() == 1 and
+								self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 								isinstance(self.profile.tags.get("rTRC"),
 										   ICCP.CurveType) and
 								isinstance(self.profile.tags.get("gTRC"),
@@ -1678,38 +1708,37 @@ class LUTFrame(BaseFrame):
 										   ICCP.CurveType))
 		self.save_plot_btn.Enable(bool(curves))
 		if hasattr(self, "reload_vcgt_btn"):
-			self.reload_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+			self.reload_vcgt_btn.Enable(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt') and
 										bool(self.profile))
-			self.reload_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
+			self.reload_vcgt_btn.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'))
 		if hasattr(self, "apply_bpc_btn"):
-			enable_bpc = (not(self.plot_mode_select.GetSelection()) and
+			enable_bpc = (self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt') and
 						  bool(self.profile) and
 						  isinstance(self.profile.tags.get("vcgt"),
 									 ICCP.VideoCardGammaType))
 			if enable_bpc:
 				values = self.profile.tags.vcgt.getNormalizedValues()
 			self.apply_bpc_btn.Enable(enable_bpc and values[0] != (0, 0, 0))
-			self.apply_bpc_btn.Show(not(self.plot_mode_select.GetSelection()))
+			self.apply_bpc_btn.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'))
 		if hasattr(self, "install_vcgt_btn"):
-			self.install_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+			self.install_vcgt_btn.Enable(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt') and
 										 bool(self.profile) and
 										 isinstance(self.profile.tags.get("vcgt"),
 													ICCP.VideoCardGammaType))
-			self.install_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
+			self.install_vcgt_btn.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'))
 		if hasattr(self, "save_vcgt_btn"):
-			self.save_vcgt_btn.Enable(not(self.plot_mode_select.GetSelection()) and
+			self.save_vcgt_btn.Enable(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt') and
 									  bool(self.profile) and
 									  isinstance(self.profile.tags.get("vcgt"),
 												 ICCP.VideoCardGammaType))
-			self.save_vcgt_btn.Show(not(self.plot_mode_select.GetSelection()))
+			self.save_vcgt_btn.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'))
 		if hasattr(self, "show_actual_lut_cb"):
-			self.show_actual_lut_cb.Show(self.plot_mode_select.GetSelection() == 0)
+			self.show_actual_lut_cb.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'))
 		if hasattr(self, "rendering_intent_select"):
-			self.rendering_intent_select.Show(self.plot_mode_select.GetSelection() == 1 and
+			self.rendering_intent_select.Show(self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 											  self.profile.connectionColorSpace != "RGB")
 		if hasattr(self, "direction_select"):
-			self.direction_select.Show(self.toggle_clut.IsShown() and
-									   self.toggle_clut.GetValue() and
+			self.direction_select.Show(self.rendering_intent_select.IsShown() and
 									   "B2A0" in self.profile.tags and
 									   "A2B0" in self.profile.tags)
 		self.show_as_L.GetContainingSizer().Layout()
@@ -1720,15 +1749,15 @@ class LUTFrame(BaseFrame):
 		if self.client.last_PointLabel != None:
 			self.client._drawPointLabel(self.client.last_PointLabel) #erase old
 			self.client.last_PointLabel = None
+		channels = OrderedDict()
+		for channel, toggle in enumerate(self.toggles):
+			channels[channel] = toggle.IsShown() and toggle.GetValue() and toggle.Label or ""
 		wx.CallAfter(self.client.DrawLUT, curves,
 					 xLabel=self.xLabel,
 					 yLabel=self.yLabel,
-					 r=self.toggle_red.GetValue() if 
-					   hasattr(self, "toggle_red") else False, 
-					 g=self.toggle_green.GetValue() if 
-					   hasattr(self, "toggle_green") else False, 
-					 b=self.toggle_blue.GetValue() if 
-					   hasattr(self, "toggle_blue") else False)
+					 channels=channels,
+					 colorspace=curves_colorspace,
+					 connection_colorspace=connection_colorspace)
 		self.Thaw()
 
 	def OnClose(self, event):
@@ -1866,66 +1895,71 @@ class LUTFrame(BaseFrame):
 			if dlst != [] and hasattr(self.client, "point_grid"):
 				curveNum, legend, pIndex, pointXY, scaledXY, distance = dlst
 				legend = legend.split(", ")
-				R, G, B = (self.client.point_grid[0].get(pointXY[0],
-							0 if self.toggle_red.GetValue() else None),
-						   self.client.point_grid[1].get(pointXY[0],
-							0 if self.toggle_green.GetValue() else None),
-						   self.client.point_grid[2].get(pointXY[0],
-							0 if self.toggle_blue.GetValue() else None))
-				if (R == G == B or ((R == G or G == B or R == B) and
-									None in (R, G ,B))):
-					rgb = ""
-				else:
-					rgb = legend[0] + " "
+				channels = {}
+				value = []
+				for channel in self.client.point_grid:
+					toggle = self.toggles[channel]
+					channels[channel] = toggle.Label or ""
+					x = int(round(pointXY[0] / 255.0 * 4095))
+					v = self.client.point_grid[channel].get(x, 0)
+					if toggle.Label in ("a*", "b*"):
+						v = -128 + v / 100.0 * (255 + 255 / 256.0)
+					value.append((toggle.Label, v))
+				identical = len(value) > 1 and all(v[1] == value[0][1] for v in value)
 				if 1:
 					joiner = u" \u2192 "
-					if (self.plot_mode_select.GetSelection() == 1 and
+					label = filter(None, channels.values())
+					if (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 						self.profile.connectionColorSpace != "RGB"):
 						if self.show_as_L.GetValue():
 							format = "L* %.4f", "%s %.2f"
 						else:
 							format = "Y %.4f", "%s %.2f"
 						axis_y = 100.0
+					elif "L*" in label and ("a*" in label or "b*" in label):
+						a = b = -128 + pointXY[0] / 100.0 * (255 + 255 / 256.0)
+						if label == ["L*", "a*", "b*"]:
+							format = "L* %%.2f a* %.2f b* %.2f" % (a, b), "%s %.2f"
+						elif label == ["L*", "a*"]:
+							format = "L* %%.2f a* %.2f" % a, "%s %.2f"
+						elif label == ["L*", "b*"]:
+							format = "L* %%.2f b* %.2f" % b, "%s %.2f"
+						axis_y = self.client.axis_y[1]
 					else:
-						label = []
-						if R is not None:
-							label.append("R")
-						if G is not None:
-							label.append("G")
-						if B is not None:
-							label.append("B")
 						format = "%s %%.2f" % "=".join(label), "%s %.2f"
-						axis_y = 255.0
-					if R == G == B or ((R == G or G == B or R == B) and
-									   None in (R, G ,B)):
-						#if R is None:
-						RGB = " ".join(["=".join(["%s" % v for v, s in
-												  filter(lambda v: v[1] is not None,
-														 (("R", R), ("G", G), ("B", B)))]),
+						axis_y = self.client.axis_y[1]
+					if identical:
+						#if value[0][1] is None:
+						RGB = " ".join(["=".join(label),
 										"%.2f" % pointXY[1]])
 						#else:
-							#RGB = "R=G=B %.2f" % R
+							#RGB = "R=G=B %.2f" % value[0][1]
 					else:
 						RGB = " ".join([format[1] % (v, s) for v, s in
 										filter(lambda v: v[1] is not None,
-											   (("R", R), ("G", G), ("B", B)))])
-					legend[0] = joiner.join([format[0] % pointXY[0], RGB])
-					if (self.plot_mode_select.GetSelection() == 1 and
+											   value)])
+					vin = pointXY[0]
+					if not "L*" in label and ("a*" in label or "b*" in label):
+						vin = -128 + pointXY[0] / 100.0 * (255 + 255 / 256.0)
+					legend[0] = joiner.join([format[0] % vin, RGB])
+					if (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 						self.profile.connectionColorSpace != "RGB"):
 						pointXY = pointXY[1], pointXY[0]
 				else:
 					joiner = u" \u2192 "
 					format = "%.2f", "%.2f"
-					axis_y = 255.0
+					axis_y = self.client.axis_y[1]
 					legend[0] += " " + joiner.join([format[i] % point
 													for i, point in
 													enumerate(pointXY)])
 				if len(legend) == 1:
+					# Calculate gamma
+					axis_x = self.client.axis_y[1]
 					gamma = []
-					for label, v in (("R", R), ("G", G), ("B", B)):
-						if v is None:
+					for label, v in value:
+						if v is None or label in ("a*", "b*"):
 							continue
-						if (self.plot_mode_select.GetSelection() == 1 and
+						if (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 							self.profile.connectionColorSpace != "RGB"):
 							x = v
 							y = pointXY[1]
@@ -1934,16 +1968,15 @@ class LUTFrame(BaseFrame):
 						else:
 							x = pointXY[0]
 							y = v
-						if x <= 0 or x >= 255 or y <= 0 or y >= axis_y:
+						if x <= 0 or x >= axis_x or y <= 0 or y >= axis_y:
 							continue
-						if R == G == B or ((R == G or G == B or R == B) and
-										   None in (R, G ,B)):
+						if identical:
 							label = "=".join(["%s" % s for s, v in
 											  filter(lambda (s, v): v is not None,
-													 (("R", R), ("G", G), ("B", B)))])
+													 value)])
 						# Note: We need to make sure each point is a float because it
 						# might be a decimal.Decimal, which can't be divided by floats!
-						gamma.append(label + " %.2f" % round(math.log(float(y) / axis_y) / math.log(x / 255.0), 2))
+						gamma.append(label + " %.2f" % round(math.log(float(y) / axis_y) / math.log(x / axis_x), 2))
 						if "=" in label:
 							break
 					if gamma:

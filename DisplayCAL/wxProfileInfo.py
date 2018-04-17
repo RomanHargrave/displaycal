@@ -1161,30 +1161,7 @@ class ProfileInfoFrame(LUTFrame):
 				   border=4)
 		self.show_as_L.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
 		
-		self.toggle_red = CustomCheckBox(self.lut_view_options, -1, "R")
-		self.toggle_red.SetForegroundColour(FGCOLOUR)
-		self.toggle_red.SetValue(True)
-		hsizer.Add(self.toggle_red,
-										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.toggle_red.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
-		
-		hsizer.Add((4, 0))
-		
-		self.toggle_green = CustomCheckBox(self.lut_view_options, -1, "G")
-		self.toggle_green.SetForegroundColour(FGCOLOUR)
-		self.toggle_green.SetValue(True)
-		hsizer.Add(self.toggle_green,
-										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.toggle_green.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
-		
-		hsizer.Add((4, 0))
-		
-		self.toggle_blue = CustomCheckBox(self.lut_view_options, -1, "B")
-		self.toggle_blue.SetForegroundColour(FGCOLOUR)
-		self.toggle_blue.SetValue(True)
-		hsizer.Add(self.toggle_blue,
-										flag=wx.ALIGN_CENTER_VERTICAL)
-		self.toggle_blue.Bind(wx.EVT_CHECKBOX, self.DrawLUT)
+		self.add_toggles(self.lut_view_options, hsizer)
 		
 		self.toggle_clut = CustomCheckBox(self.lut_view_options, -1, "LUT")
 		self.toggle_clut.SetForegroundColour(FGCOLOUR)
@@ -1299,18 +1276,13 @@ class ProfileInfoFrame(LUTFrame):
 				(self.rTRC and
 				 self.gTRC and
 				 self.bTRC) or
-				(("B2A0" in self.profile.tags or
-				  "A2B0" in self.profile.tags) and
-				 self.profile.colorSpace == "RGB")):
-				self.toggle_red.Enable()
-				self.toggle_green.Enable()
-				self.toggle_blue.Enable()
+				("B2A0" in self.profile.tags or
+				 "A2B0" in self.profile.tags)):
 				self.DrawLUT()
+				if reset:
+					wx.CallAfter(self.client.center)
 				self.handle_errors()
 			else:
-				self.toggle_red.Disable()
-				self.toggle_green.Disable()
-				self.toggle_blue.Disable()
 				self.client.DrawLUT()
 		self.splitter.GetTopLeft().sizer.Layout()
 		self.splitter.GetTopLeft().Refresh()
@@ -1324,6 +1296,9 @@ class ProfileInfoFrame(LUTFrame):
 									     "\n" + profile), self)
 				self.DrawCanvas(reset=reset)
 				return
+		if (not reset and getattr(self, "profile", None) and
+			self.profile.colorSpace != profile.colorSpace):
+			reset = True
 		self.profile = profile
 		for channel in "rgb":
 			trc = profile.tags.get(channel + "TRC", profile.tags.get("kTRC"))
@@ -1352,48 +1327,27 @@ class ProfileInfoFrame(LUTFrame):
 		self.toggle_clut.SetValue("B2A0" in profile.tags or
 								  "A2B0" in profile.tags)
 		
-		plot_mode = self.plot_mode_select.GetSelection()
-		plot_mode_count = self.plot_mode_select.GetCount()
+		plot_mode = self.plot_mode_select.GetStringSelection()
 		choice = []
 		info = profile.get_info()
 		self.client.errors = []
 		if ((self.rTRC and self.gTRC and self.bTRC) or
-			(("B2A0" in self.profile.tags or "A2B0" in self.profile.tags) and
-			 self.profile.colorSpace == "RGB")):
-			# vcgt needs to be in here for compatibility with LUTFrame
-			choice.append(lang.getstr("vcgt"))
+			"B2A0" in self.profile.tags or "A2B0" in self.profile.tags):
+			if "vcgt" in profile.tags or "MS00" in profile.tags:
+				choice.append(lang.getstr("vcgt"))
 			try:
 				self.lookup_tone_response_curves()
 			except Exception, exception:
 				wx.CallAfter(show_result_dialog, exception, self)
 			else:
 				choice.append(lang.getstr("[rgb]TRC"))
-		if getcfg("show_advanced_options"):
-			if isinstance(self.profile.tags.get("A2B0"), ICCP.LUT16Type):
-				choice.append(lang.getstr('profile.tags.A2B0.shaper_curves.input'))
-				choice.append(lang.getstr('profile.tags.A2B0.shaper_curves.output'))
-			if isinstance(self.profile.tags.get("A2B1"), ICCP.LUT16Type):
-				choice.append(lang.getstr('profile.tags.A2B1.shaper_curves.input'))
-				choice.append(lang.getstr('profile.tags.A2B1.shaper_curves.output'))
-			if isinstance(self.profile.tags.get("A2B2"), ICCP.LUT16Type):
-				choice.append(lang.getstr('profile.tags.A2B2.shaper_curves.input'))
-				choice.append(lang.getstr('profile.tags.A2B2.shaper_curves.output'))
-			if isinstance(self.profile.tags.get("B2A0"), ICCP.LUT16Type):
-				choice.append(lang.getstr('profile.tags.B2A0.shaper_curves.input'))
-				choice.append(lang.getstr('profile.tags.B2A0.shaper_curves.output'))
-			if isinstance(self.profile.tags.get("B2A1"), ICCP.LUT16Type):
-				choice.append(lang.getstr('profile.tags.B2A1.shaper_curves.input'))
-				choice.append(lang.getstr('profile.tags.B2A1.shaper_curves.output'))
-			if isinstance(self.profile.tags.get("B2A2"), ICCP.LUT16Type):
-				choice.append(lang.getstr('profile.tags.B2A2.shaper_curves.input'))
-				choice.append(lang.getstr('profile.tags.B2A2.shaper_curves.output'))
+		choice = self.add_shaper_curves(choice)
 		choice.append(lang.getstr("gamut"))
 		self.Freeze()
 		self.plot_mode_select.SetItems(choice)
-		if plot_mode < 0:
-			plot_mode = self.plot_mode_select.GetCount() - 1
-		self.plot_mode_select.SetSelection(min(plot_mode,
-											   self.plot_mode_select.GetCount() - 1))
+		if not self.plot_mode_select.SetStringSelection(plot_mode):
+			self.plot_mode_select.SetSelection(self.plot_mode_select.GetCount() - 1)
+			reset = True
 		self.select_current_page()
 		self.plot_mode_select.Enable()
 		
