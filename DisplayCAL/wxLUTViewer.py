@@ -211,7 +211,9 @@ class LUTCanvas(plot.PlotCanvas):
 		else:
 			axis_y = 100.0
 			axis_x = 100.0
-		if getattr(self, "axis_x", None) != (0, axis_x):
+		if (getattr(self, "axis_x", None) != (0, axis_x) or
+			getattr(self, "axis_y", None) != (0, axis_y)):
+			self.resetzoom()
 			wx.CallAfter(self.center)
 		self.axis_x, self.axis_y = (0, axis_x), (0, axis_y)
 		if not self.last_draw:
@@ -1536,7 +1538,7 @@ class LUTFrame(BaseFrame):
 		curves = None
 		curves_colorspace = self.profile.colorSpace
 		connection_colorspace = "RGB"
-		if self.profile:
+		if self.profile and self.plot_mode_select.Items:
 			if self.plot_mode_select.GetStringSelection() == lang.getstr('vcgt'):
 				# Convert calibration information from embedded WCS profile
 				# (if present) to VideCardFormulaType if the latter is not present
@@ -1622,16 +1624,29 @@ class LUTFrame(BaseFrame):
 					maxv = 100
 				else:
 					maxv = 255
-				lin_x = [v / (entry_count - 1.0) * maxv for v in range(entry_count)]
+				lin = [v / (entry_count - 1.0) * maxv for v in xrange(entry_count)]
 				data = []
 				for i, table in enumerate(tables):
-					x = lin_x
+					xp = lin
 					if curves_colorspace == "Lab" and i == 0:
 						if to_pcs:
 							table = [v / 65280.0 * 65535.0 for v in table]
 						else:
-							x = [min(v / (entry_count - 1.0) * (100 + 25500 / 65280.0), maxv) for v in range(entry_count)]
-					data.append(zip(x, [v / 65535.0 * maxv for v in table]))
+							xp = [min(v / (entry_count - 1.0) * (100 + 25500 / 65280.0), maxv) for v in range(entry_count)]
+					yp = [v / 65535.0 * maxv for v in table]
+					if curves_colorspace == "Lab" and i == 0:
+						# Interpolate to given size and use the same y axis 
+						# for all channels
+						xi = numpy.interp(lin, yp, xp)
+						yi = numpy.interp(lin, xi, lin)
+					else:
+						yi = yp
+					xy = []
+					for Y, v in zip(yi, lin):
+						if Y <= yp[0]:
+							Y = yp[0]
+						xy.append([v, Y])
+					data.append(xy)
 				curves = {
 					'data': data,
 					'entryCount': entry_count,
@@ -1940,8 +1955,11 @@ class LUTFrame(BaseFrame):
 						axis_y = self.client.axis_y[1]
 					if identical:
 						#if value[0][1] is None:
+						vout = pointXY[1]
+						if not "L*" in label and ("a*" in label or "b*" in label):
+							vout = -128 + vout / 100.0 * (255 + 255 / 256.0)
 						RGB = " ".join(["=".join(label),
-										"%.2f" % pointXY[1]])
+										"%.2f" % vout])
 						#else:
 							#RGB = "R=G=B %.2f" % value[0][1]
 					else:
