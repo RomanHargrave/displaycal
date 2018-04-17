@@ -100,9 +100,12 @@ class SafePrinter():
 		if fn:
 			fn(line)
 		else:
-			file_.write(line)
-			if end:
-				file_.write(end)
+			try:
+				file_.write(line)
+				if end:
+					file_.write(end)
+			except IOError:
+				pass
 
 safe_print = SafePrinter()
 
