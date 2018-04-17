@@ -1279,8 +1279,6 @@ class ProfileInfoFrame(LUTFrame):
 				("B2A0" in self.profile.tags or
 				 "A2B0" in self.profile.tags)):
 				self.DrawLUT()
-				if reset:
-					wx.CallAfter(self.client.center)
 				self.handle_errors()
 			else:
 				self.client.DrawLUT()
@@ -1607,7 +1605,9 @@ class ProfileInfoFrame(LUTFrame):
 		Drag'n'drop handler for .cal/.icc/.icm files.
 		
 		"""
-		self.LoadProfile(path, reset=False)
+		reset = (self.plot_mode_select.GetSelection() ==
+				 self.plot_mode_select.GetCount() - 1)
+		self.LoadProfile(path, reset=reset)
 
 
 	def get_platform_window_size(self, defaultwidth=None, defaultheight=None,
@@ -1681,11 +1681,7 @@ class ProfileInfoFrame(LUTFrame):
 		self.select_current_page()
 		reset = (self.plot_mode_select.GetSelection() ==
 				 self.plot_mode_select.GetCount() - 1)
-		if not reset:
-			self.client.resetzoom()
 		self.DrawCanvas(reset=reset)
-		if not reset:
-			wx.CallAfter(self.client.center)
 		self.Thaw()
 
 	def get_commands(self):
