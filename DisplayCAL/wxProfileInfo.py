@@ -1330,7 +1330,8 @@ class ProfileInfoFrame(LUTFrame):
 		info = profile.get_info()
 		self.client.errors = []
 		if ((self.rTRC and self.gTRC and self.bTRC) or
-			"B2A0" in self.profile.tags or "A2B0" in self.profile.tags):
+			(self.toggle_clut.GetValue() and
+			 profile.colorSpace in ("RGB", "GRAY", "CMYK"))):
 			if "vcgt" in profile.tags or "MS00" in profile.tags:
 				choice.append(lang.getstr("vcgt"))
 			try:
