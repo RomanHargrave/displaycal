@@ -262,6 +262,8 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 			w = int(round(w * scale))
 			h = int(round(h * scale))
 		if parts[-1] == "empty":
+			if wx.VERSION < (3, ):
+				use_mask = True
 			if use_mask and sys.platform == "win32":
 				bmp = wx.EmptyBitmap(w, h)
 				bmp.SetMaskColour(wx.Colour(0, 0, 0))

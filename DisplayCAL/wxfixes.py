@@ -41,6 +41,11 @@ from colormath import convert_range
 from util_str import safe_str
 
 
+if not hasattr(wx.Window, "HasFocus"):
+	# wxPython < 3.0
+	wx.Window.HasFocus = lambda self: self.FindFocus() is self
+
+
 if not hasattr(platebtn, "PB_STYLE_TOGGLE"):
 	platebtn.PB_STYLE_TOGGLE = 32
 
@@ -1443,6 +1448,7 @@ class PlateButton(platebtn.PlateButton):
                      lambda self, label: self.SetLabel(label))
 
 if not hasattr(PlateButton, "_SetState"):
+	# wxPython < 3.0
 	PlateButton._SetState = PlateButton.SetState
 
 

@@ -6,7 +6,7 @@ import traceback
 import config
 from config import fs_enc
 from log import logbuffer, safe_print
-from meta import name as appname
+from meta import name as appname, wx_recversion
 from options import debug
 from util_str import safe_unicode
 
@@ -61,6 +61,12 @@ def handle_error(error, parent=None, silent=False):
 	if not silent:
 		try:
 			from wxaddons import wx
+			if wx.VERSION < wx_recversion:
+				msg += ("\n\nWARNING: Your version of wxPython (%s) is outdated "
+						"and no longer supported. You should consider updating "
+						"to wxPython %s or newer." %
+						(wx.__version__, 
+						 ".".join(str(n) for n in wx_recversion)))
 			app = wx.GetApp()
 			if app is None and parent is None:
 				app = wx.App(redirect=False)

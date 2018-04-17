@@ -54,7 +54,8 @@ version_short = re.sub("(?:\.0){1,2}$", "", version)
 
 version_tuple = VERSION # only ints allowed and must be exactly 4 values
 
-wx_minversion = (3, 0, 0)
+wx_minversion = (2, 8, 11)
+wx_recversion = (3, 0, 0)
 
 
 def get_latest_chglog_entry(readme):
