@@ -11,7 +11,6 @@ import socket
 import sys
 import subprocess as sp
 import threading
-import traceback
 if sys.platform == "darwin":
 	from platform import mac_ver
 	import posix
@@ -310,7 +309,7 @@ def main(module=None):
 			error = exception
 		else:
 			error = Error(u"Fatal error: " +
-						  safe_unicode(traceback.format_exc()))
+						  safe_unicode(exception))
 		handle_error(error)
 		_exit(lockfilename, port)
 
