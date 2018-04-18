@@ -5,7 +5,9 @@
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0+</project_license>
 	<name>${APPNAME}</name>
+	<name xml:lang="en">${APPNAME}</name>
 	<summary>${SUMMARY}</summary>
+	<summary xml:lang="en">${SUMMARY}</summary>
 	<icon type="remote" width="256" height="256">${URL}theme/icons/256x256/${APPNAME_LOWER}.png</icon>
 	<launchable type="desktop-id">${APPNAME_LOWER}.desktop</launchable>
 	<description>
@@ -43,6 +45,7 @@ ${CHANGELOG}
 		<kudo>ModernToolkit</kudo>
 		<kudo>UserDocs</kudo>
 	</kudos>
+	<translation type="gettext">${APPNAME_LOWER}</translation>
 	<languages>
 		${LANGUAGES}
 	</languages>

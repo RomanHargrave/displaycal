@@ -56,12 +56,28 @@ def format_chglog(chglog, format="appstream"):
 		chglog = re.sub(r"\s*<dt(?:\s+[^>]*)?>.+?</dt>\n?", "", chglog)
 		chglog = re.sub(r"<(h4|p)(?:\s+[^>]*)?>(.+?)</\1>",
 						r"<p>\2</p>", chglog)
+		# Remove everything between <!--more-->..<!--/more-->
+		chglog = re.sub(r"<!--more-->.+?<!--/more-->(?s)", "", chglog)
+		# Remove all except allowed tags
 		tags = re.findall(r'<[^/][^>]+>', chglog)
 		for tag in tags:
 			tagname = tag.strip('<>').split()[0]
 			if not tagname in allowed_tags:
 				chglog = chglog.replace(tag, "")
 				chglog = chglog.replace("</" + tagname + ">", "")
+		# Remove text "Linux" in item before colon (":")
+		chglog = re.sub(r"(<li>[^:<]*)Linux([^:<]*):\s*", r"\1\2", chglog)
+		# Remove macOS and Windows specific items
+		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
+		# Conform to appstream-util validate-strict rules:
+		# - <li> cannot end in '.'
+		chglog = re.sub(r"([^.])\.\s*</li>", r"\1</li>", chglog)
+		# - <li> maximum is 100 chars
+		chglog = re.sub(r"(<li>)([^<]{100,})(</li>)",
+						lambda matches: "%s%s%s" % (matches.group(1),
+													matches.group(2)[:97] +
+													"...",
+													matches.group(3)), chglog)
 		# Nice formatting
 		chglog = re.sub(r"^\s+(?m)", r"\t" * 4, chglog)  # Multi-line
 		chglog = re.sub(r"(<li)", r"\t\1", chglog)
@@ -99,6 +115,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		longdesc_backup = longdesc
 		longdesc = "\n".join([" " + (line if line.strip() else ".") 
 							  for line in longdesc.splitlines()])
+	appdatadesc = "\n\t\t\t" + longdesc.replace("\n", "\n\t\t\t").replace(".\n", ".\n\t\t</p>\n\t\t<p>\n") + "\n\t\t"
 	mapping = {
 		"DATE":
 			strftime("%a %b %d %Y",  # e.g. Tue Jul 06 2010
@@ -127,7 +144,8 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 		"TIMESTAMP": str(int(lastmod_time)),
 		"SUMMARY": description,
 		"DESC": longdesc,
-		"APPDATADESC": "<p>\n\t\t\t" + longdesc.replace("\n", "\n\t\t\t").replace(".\n", ".\n\t\t</p>\n\t\t<p>\n") + "\n\t\t</p>",
+		"APPDATADESC": '<p>%s</p>\n\t\t<p xml:lang="en">%s</p>' %
+					   (appdatadesc, appdatadesc),
 		"APPNAME": name,
 		"APPNAME_HTML": name_html,
 		"APPNAME_LOWER": name.lower(),
