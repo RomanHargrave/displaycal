@@ -21,6 +21,10 @@
 			<image width="1024" height="576">${URL}screenshots/${APPNAME}-screenshot-GNOME-1024x576.png</image>
 			<caption>${APPNAME} ${VERSION_SHORT} main window</caption>
 		</screenshot>
+		<screenshot>
+			<image width="1024" height="576">${URL}screenshots/${APPNAME}-screenshot-GNOME-adjust-1024x576.png</image>
+			<caption>Interactive display adjustment</caption>
+		</screenshot>
 	</screenshots>
 	<url type="homepage">${URL}</url>
 	<url type="bugtracker">${URL}issues/</url>
