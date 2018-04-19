@@ -6514,6 +6514,8 @@ while 1:
 			safe_print(exception)
 			return arg
 		else:
+			if not profile:
+				return arg
 			if profile.fileName:
 				prefix = os.path.basename(profile.fileName)
 			else:
