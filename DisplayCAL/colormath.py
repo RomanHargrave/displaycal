@@ -1291,9 +1291,10 @@ def RGB2XYZ(R, G, B, rgb_space=None, scale=1.0, eotf=None):
 	return tuple(v * scale for v in XYZ)
 
 
-def RGB2YCbCr(R, G, B, rgb_space="NTSC 1953", bits=8):
+def RGB2YCbCr(R, G, B, rgb_space="NTSC 1953", bits=8, fullrange=False):
 	""" R'G'B' to Y'CbCr quantized to n bits """
-	return YPbPr2YCbCr(*RGB2YPbPr(R, G, B, rgb_space), bits=bits)
+	return YPbPr2YCbCr(*RGB2YPbPr(R, G, B, rgb_space), bits=bits,
+					   fullrange=fullrange)
 
 
 def RGB2YPbPr(R, G, B, rgb_space="NTSC 1953"):
@@ -1308,8 +1309,8 @@ def RGB2YPbPr_matrix(rgb_space="NTSC 1953"):
 		ndigits = 3
 	else:
 		ndigits = 4
-	KR = round(rY, ndigits)
-	KB = round(bY, ndigits)
+	KR = round((matrix * (1, 0, 0))[1], ndigits)
+	KB = round((matrix * (0, 0, 1))[1], ndigits)
 	KG = 1.0 - KR - KB
 	Pb_scale = ((1 - KB) / 0.5)
 	Pr_scale = ((1 - KR) / 0.5)
@@ -1318,26 +1319,33 @@ def RGB2YPbPr_matrix(rgb_space="NTSC 1953"):
 					  [0.5, -KG / Pr_scale, -KB / Pr_scale]])
 
 
-def YCbCr2YPbPr(Y, Cb, Cr, bits=8):
+def YCbCr2YPbPr(Y, Cb, Cr, bits=8, fullrange=False):
 	""" Y'CbCr to Y'PbPr """
 	bitlevels = 2 ** bits
-	Yblack = 16 / 256.0 * bitlevels
-	Yscale = 219 / 256.0 * bitlevels
-	Y -= Yblack
+	if not fullrange:
+		Yblack = 16
+		Ywhite = 235
+		Cmax = 240
+	else:
+		Yblack = 0
+		Ywhite = 255
+		Cmax = 255
+	Yscale = (Ywhite - Yblack) / 256.0 * bitlevels
+	Y -= Yblack / 256.0 * bitlevels
 	Y /= Yscale
 	Cneutral = 128 / 256.0 * bitlevels
-	Cscale = 224 / 256.0 * bitlevels
-	Cb -= Cneutral
-	Cb /= Cscale
-	Cr -= Cneutral
-	Cr /= Cscale
-	return Y, Cb, Cr
+	Cscale = (Cmax - Yblack) / 256.0 * bitlevels
+	Pb = Cb - Cneutral
+	Pb /= Cscale
+	Pr = Cr - Cneutral
+	Pr /= Cscale
+	return Y, Pb, Pr
 
 
-def YCbCr2RGB(Y, Cb, Cr, rgb_space="NTSC 1953", bits=8, scale=1.0, round_=False,
-			  clamp=True):
+def YCbCr2RGB(Y, Cb, Cr, rgb_space="NTSC 1953", bits=8, fullrange=False,
+			  scale=1.0, round_=0, clamp=True):
 	""" Y'CbCr to R'G'B' """
-	Y, Pb, Pr = YCbCr2YPbPr(Y, Cb, Cr, bits)
+	Y, Pb, Pr = YCbCr2YPbPr(Y, Cb, Cr, bits, fullrange)
 	return YPbPr2RGB(Y, Pb, Pr, rgb_space, scale, round_, clamp)
 
 
@@ -1354,17 +1362,26 @@ def YPbPr2RGB(Y, Pb, Pr, rgb_space="NTSC 1953", scale=1.0, round_=False,
 	return RGB
 
 
-def YPbPr2YCbCr(Y, Pb, Pr, bits=8):
-	""" Y'PbPr' to Y'CbCr quantized to n bits """
+def YPbPr2YCbCr(Y, Pb, Pr, bits=8, fullrange=False):
+	""" Y'PbPr to Y'CbCr quantized to n bits """
 	bitlevels = 2 ** bits
-	Yblack = 16 / 256.0 * bitlevels
-	Yscale = 219 / 256.0 * bitlevels
-	Y = Yblack + Yscale * Y
+	if not fullrange:
+		Yblack = 16
+		Ywhite = 235
+		Cmax = 240
+	else:
+		Yblack = 0
+		Ywhite = 255
+		Cmax = 255
+	Yscale = (Ywhite - Yblack) / 256.0 * bitlevels
+	Y = Yblack / 256.0 * bitlevels + Yscale * Y
 	Cneutral = 128 / 256.0 * bitlevels
-	Cscale = 224 / 256.0 * bitlevels
+	Cscale = (Cmax - Yblack) / 256.0 * bitlevels
 	Cb = Cneutral + Cscale * Pb
 	Cr = Cneutral + Cscale * Pr
-	Y, Cb, Cr = (int(round(v)) for v in (Y, Cb, Cr))
+	# In fullrange mode, Cb and Cr can reach 255.5, so we need to clamp to 255
+	# Follow ITU-T Rec. T.871 (JPEG)
+	Y, Cb, Cr = (min(max(int(round(v)), 0), 255) for v in (Y, Cb, Cr))
 	return Y, Cb, Cr
 
 
