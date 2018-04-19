@@ -1343,7 +1343,7 @@ def YCbCr2YPbPr(Y, Cb, Cr, bits=8, fullrange=False):
 
 
 def YCbCr2RGB(Y, Cb, Cr, rgb_space="NTSC 1953", bits=8, fullrange=False,
-			  scale=1.0, round_=0, clamp=True):
+			  scale=1.0, round_=False, clamp=True):
 	""" Y'CbCr to R'G'B' """
 	Y, Pb, Pr = YCbCr2YPbPr(Y, Cb, Cr, bits, fullrange)
 	return YPbPr2RGB(Y, Pb, Pr, rgb_space, scale, round_, clamp)
