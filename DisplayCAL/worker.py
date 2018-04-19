@@ -4119,7 +4119,12 @@ END_DATA
 					# The ordering will work as long
 					# as Argyll continues using
 					# EnumDisplayMonitors
-					monitors = util_win.get_real_display_devices_info()
+					try:
+						monitors = util_win.get_real_display_devices_info()
+					except Exception, exception:
+						if not isinstance(exception, pywintypes.error):
+							safe_print(traceback.format_exc())
+						monitors = []
 				for i, display in enumerate(displays):
 					if (display.startswith("Chromecast ") or
 						display.startswith("Prisma ")):
@@ -4160,10 +4165,15 @@ END_DATA
 						# under Mac OS X, but it doesn't hurt to always
 						# include it
 						edid = get_edid(i, display_name)
-					except (EnvironmentError, TypeError, ValueError,
-							WMIError), exception:
+					except Exception, exception:
+						suppress_errors = (SystemError, TypeError, ValueError,
+										   WMIError)
+						if sys.platform == "win32":
+							suppress_errors += (pywintypes.error, )
 						if isinstance(exception, EnvironmentError):
 							safe_print(exception)
+						elif not isinstance(exception, suppress_errors):
+							safe_print(traceback.format_exc())
 						edid = {}
 					self.display_edid.append(edid)
 					if edid:

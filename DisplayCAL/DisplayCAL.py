@@ -15025,7 +15025,8 @@ class StartupFrame(wx.Frame):
 				error = exception.originalTraceback
 			else:
 				error = traceback.format_exc()
-			raise Error(error)
+			safe_print(error)
+			show_result_dialog(UnloggedError(exception))
 		if verbose >= 1:
 			safe_print(lang.getstr("initializing_gui"))
 		app = wx.GetApp()

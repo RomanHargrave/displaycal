@@ -491,6 +491,7 @@ if sys.platform == "win32":
 			dlg.add_btn = wx.Button(dlg.buttonpanel, -1, lang.getstr("add"))
 			dlg.sizer2.Insert(0, dlg.add_btn, flag=wx.LEFT, border=32 + 12)
 			dlg.add_btn.Bind(wx.EVT_BUTTON, dlg.add_profile)
+			dlg.add_btn.Disable()
 			scale = getcfg("app.dpi") / get_default_dpi()
 			if scale < 1:
 				scale = 1
@@ -500,12 +501,14 @@ if sys.platform == "win32":
 			dlg.sizer3.Add(hsizer, 1, flag=wx.ALIGN_LEFT | wx.EXPAND | wx.TOP,
 						   border=5)
 			hsizer.Add(dlg.display_ctrl, 1, wx.ALIGN_CENTER_VERTICAL)
-			identify_btn = ThemedGenButton(dlg, -1,
+			dlg.display_ctrl.Disable()
+			dlg.identify_btn = ThemedGenButton(dlg, -1,
 										   lang.getstr("displays.identify"))
-			identify_btn.MinSize = -1, dlg.display_ctrl.Size[1] + 2
-			identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
-			hsizer.Add(identify_btn, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
+			dlg.identify_btn.MinSize = -1, dlg.display_ctrl.Size[1] + 2
+			dlg.identify_btn.Bind(wx.EVT_BUTTON, dlg.identify_displays)
+			hsizer.Add(dlg.identify_btn, flag=wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
 										  border=8)
+			dlg.identify_btn.Disable()
 			if sys.getwindowsversion() >= (6, ):
 				hsizer = wx.BoxSizer(wx.HORIZONTAL)
 				dlg.sizer3.Add(hsizer, flag=wx.ALIGN_LEFT | wx.EXPAND)
@@ -516,6 +519,7 @@ if sys.platform == "win32":
 														wx.ALIGN_LEFT |
 														wx.ALIGN_CENTER_VERTICAL,
 						   border=12)
+				self.use_my_settings_cb.Disable()
 				dlg.warn_bmp = wx.StaticBitmap(dlg, -1,
 											   geticon(16, "dialog-warning"))
 				dlg.warning = wx.StaticText(dlg, -1,
@@ -526,6 +530,8 @@ if sys.platform == "win32":
 				warnsizer.Add(dlg.warn_bmp, 0, wx.ALIGN_CENTER_VERTICAL)
 				warnsizer.Add(dlg.warning, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
 							  border=4)
+				self.warn_bmp.Hide()
+				self.warning.Hide()
 			else:
 				dlg.sizer3.Add((1, 12))
 			list_panel = wx.Panel(dlg, -1)
@@ -810,6 +816,9 @@ if sys.platform == "win32":
 										for entry in self.monitors])
 			if self.monitors:
 				self.display_ctrl.SetSelection(0)
+			self.display_ctrl.Enable(bool(self.monitors))
+			self.identify_btn.Enable(bool(self.monitors))
+			self.add_btn.Enable(bool(self.monitors))
 			fix = self.pl._can_fix_profile_associations()
 			self.fix_profile_associations_cb.Enable(fix)
 			if fix:
@@ -839,6 +848,7 @@ if sys.platform == "win32":
 			if scope_changed:
 				self.current_user = current_user
 				self.use_my_settings_cb.SetValue(current_user)
+			self.use_my_settings_cb.Enable()
 			superuser = is_superuser()
 			warn = not current_user and superuser
 			update_layout = warn is not self.warning.IsShown()
@@ -1242,8 +1252,8 @@ class ProfileLoader(object):
 					if (self.pl._should_apply_profiles(enumerate_windows_and_processes,
 													   manual_override=None) or self._animate):
 						count = len(self.pl.monitors)
-						if len(filter(lambda (i, success): success,
-									  sorted(self.pl.setgammaramp_success.items())[:count])) != count:
+						if len(filter(lambda (i, success): not success,
+									  sorted(self.pl.setgammaramp_success.items())[:count or 1])) != 0:
 							icon = self._error_icon
 						elif self.pl._reset_gamma_ramps:
 							icon = self._active_icon_reset
@@ -1869,6 +1879,7 @@ class ProfileLoader(object):
 	def _check_display_changed(self, first_run=False, dry_run=False):
 		# Check registry if display configuration changed (e.g. if a display
 		# was added/removed, and not just the resolution changed)
+		enumerated_monitors = False
 		try:
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
@@ -1880,6 +1891,7 @@ class ProfileLoader(object):
 			numsubkeys = 0
 			if not (self.monitors or dry_run):
 				self._enumerate_monitors()
+				enumerated_monitors = True
 		else:
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		has_display_changed = False
@@ -1894,7 +1906,9 @@ class ProfileLoader(object):
 						if debug:
 							safe_print(display.replace("\0", ""))
 					if not (first_run or dry_run) or not self.monitors:
-						self._enumerate_monitors()
+						if not enumerated_monitors:
+							self._enumerate_monitors()
+							enumerated_monitors = True
 						if getcfg("profile_loader.fix_profile_associations"):
 							# Work-around long-standing bug in applications
 							# querying the monitor profile not making sure
@@ -2446,7 +2460,14 @@ class ProfileLoader(object):
 				self.display_devices[device.DeviceKey] = [display, edid, device,
 														  device0]
 		# Enumerate monitors
-		for i, moninfo in enumerate(get_real_display_devices_info()):
+		try:
+			monitors = get_real_display_devices_info()
+		except Exception, exception:
+			import traceback
+			safe_print(traceback.format_exc())
+			monitors = []
+			self.setgammaramp_success[0] = False
+		for i, moninfo in enumerate(monitors):
 			if moninfo["Device"] == "WinDisc":
 				# If e.g. we physically disconnect the display device, we will
 				# get a 'WinDisc' temporary monitor we cannot do anything with
