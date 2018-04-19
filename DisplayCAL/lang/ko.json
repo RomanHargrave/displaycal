@@ -1033,6 +1033,7 @@
 	"trashcan.linux": "휴지통",
 	"trashcan.mac": "휴지통",
 	"trashcan.windows": "휴지통",
+		"*tray_icon_animation_quality": "Quality of tray icon animation",
 	"trc": "톤응답곡선",
 	"trc.dicom": "DICOM",
 	"trc.gamma": "감마",

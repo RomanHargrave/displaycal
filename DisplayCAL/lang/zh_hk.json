@@ -1033,6 +1033,7 @@
 	"trashcan.linux": "垃圾",
 	"trashcan.mac": "垃圾",
 	"trashcan.windows": "資源回收筒",
+		"*tray_icon_animation_quality": "Quality of tray icon animation",
 	"trc": "色調曲線",
 		"*trc.dicom": "DICOM",
 	"trc.gamma": "伽瑪",

@@ -1045,31 +1045,7 @@ class ProfileLoader(object):
 					self.pl = pl
 					self.balloon_text = None
 					self.flags = 0
-					bitmap = config.geticon(16, "apply-profiles-tray")
-					image = bitmap.ConvertToImage()
-					# Use Rec. 709 luma coefficients to convert to grayscale
-					bitmap = image.ConvertToGreyscale(.2126,
-													  .7152,
-													  .0722).ConvertToBitmap()
-					icon = wx.IconFromBitmap(bitmap)
-					self._active_icons = []
-					self._icon_index = 0
-					anim_quality = getcfg("profile_loader.tray_icon_animation_quality")
-					if anim_quality == 2:
-						numframes = 8
-					elif anim_quality == 1:
-						numframes = 4
-					else:
-						numframes = 1
-					for i in xrange(numframes):
-						if i:
-							rad = i / float(numframes)
-							bitmap = config.geticon(16, "apply-profiles-tray-%i" % (360 * rad))
-							image = bitmap.ConvertToImage()
-							image.RotateHue(-rad)
-						self._active_icon = wx.IconFromBitmap(image.ConvertToBitmap())
-					self._idle_icon = self._active_icon
-					self._inactive_icon = icon
+					self.set_icons()
 					self._active_icon_reset = config.get_bitmap_as_icon(16, "apply-profiles-reset")
 					self._error_icon = config.get_bitmap_as_icon(16, "apply-profiles-error")
 					self._animate = False
@@ -1145,6 +1121,19 @@ class ProfileLoader(object):
 								   wx.ITEM_CHECK,
 								   "profile_loader.show_notifications",
 								   None),
+								  ("tray_icon_animation_quality",
+								   (("turn_off",
+								     lambda event:
+									 self.set_animation_quality(event, 0)),
+									("calibration.quality.low",
+									 lambda event:
+									 self.set_animation_quality(event, 1)),
+									("calibration.quality.high",
+									 lambda event:
+									 self.set_animation_quality(event, 2))),
+								   wx.ITEM_CHECK,
+								   "profile_loader.tray_icon_animation_quality",
+								   lambda v: v),
 								  ("-", None, False, None, None),
 								  ("bitdepth",
 								   (("8", lambda event:
@@ -1158,7 +1147,12 @@ class ProfileLoader(object):
 									("16", lambda event:
 										  self.set_bitdepth(event, 16))),
 								   wx.ITEM_CHECK,
-								   "profile_loader.quantize_bits", None),
+								   "profile_loader.quantize_bits",
+								   lambda v: {8: 0,
+											  10: 1,
+											  12: 2,
+											  14: 3,
+											  16: 4}[v]),
 								  ("-", None, False, None, None),
 								  ("exceptions",
 								   self.set_exceptions,
@@ -1186,14 +1180,17 @@ class ProfileLoader(object):
 								label = lstr + u" && " + label
 							item = MenuItem(menu, -1, label,
 											   kind=kind)
+							if not oxform:
+								oxform = bool
 							if not method:
 								item.Enable(False)
 							elif isinstance(method, tuple):
 								submenu = Menu()
-								for sublabel, submethod in method:
-									subitem = MenuItem(submenu, -1, sublabel,
+								for i, (sublabel, submethod) in enumerate(method):
+									subitem = MenuItem(submenu, -1,
+													   lang.getstr(sublabel),
 													   kind=kind)
-									if str(getcfg(option)) == sublabel:
+									if oxform(getcfg(option)) == i:
 										subitem.Check(True)
 									submenu.AppendItem(subitem)
 									submenu.Bind(wx.EVT_MENU, submethod,
@@ -1208,8 +1205,6 @@ class ProfileLoader(object):
 									"--force" in sys.argv[1:]):
 									item.Check(True)
 								else:
-									if not oxform:
-										oxform = bool
 									if option == "reset_gamma_ramps":
 										value = self.pl._reset_gamma_ramps
 									else:
@@ -1336,6 +1331,11 @@ class ProfileLoader(object):
 						wx.Bell()
 						safe_print(exception)
 
+				def set_animation_quality(self, event=None, q=2):
+					safe_print("Menu command: Set tray icon animation quality", q)
+					setcfg("profile_loader.tray_icon_animation_quality", q)
+					self.set_icons()
+
 				def set_auto_restore(self, event):
 					safe_print("Menu command: Preserve calibration state",
 							   event.IsChecked())
@@ -1385,6 +1385,33 @@ class ProfileLoader(object):
 					else:
 						safe_print("Cancelled setting exceptions")
 					dlg.Destroy()
+
+				def set_icons(self):
+					bitmap = config.geticon(16, "apply-profiles-tray")
+					image = bitmap.ConvertToImage()
+					# Use Rec. 709 luma coefficients to convert to grayscale
+					bitmap = image.ConvertToGreyscale(.2126,
+													  .7152,
+													  .0722).ConvertToBitmap()
+					icon = wx.IconFromBitmap(bitmap)
+					self._active_icons = []
+					self._icon_index = 0
+					anim_quality = getcfg("profile_loader.tray_icon_animation_quality")
+					if anim_quality == 2:
+						numframes = 8
+					elif anim_quality == 1:
+						numframes = 4
+					else:
+						numframes = 1
+					for i in xrange(numframes):
+						if i:
+							rad = i / float(numframes)
+							bitmap = config.geticon(16, "apply-profiles-tray-%i" % (360 * rad))
+							image = bitmap.ConvertToImage()
+							image.RotateHue(-rad)
+						self._active_icon = wx.IconFromBitmap(image.ConvertToBitmap())
+					self._idle_icon = self._active_icon
+					self._inactive_icon = icon
 
 				def set_visual_state(self, enumerate_windows_and_processes=False,
 									 idle=False):

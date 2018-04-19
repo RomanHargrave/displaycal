@@ -1033,6 +1033,7 @@
 	"trashcan.linux": "trash",
 	"trashcan.mac": "trash",
 	"trashcan.windows": "recycle bin",
+	"tray_icon_animation_quality": "Quality of tray icon animation",
 	"trc": "Tone curve",
 	"trc.dicom": "DICOM",
 	"trc.hlg": "Hybrid Log-Gamma",
