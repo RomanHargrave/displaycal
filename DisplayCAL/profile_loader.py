@@ -841,22 +841,20 @@ if sys.platform == "win32":
 				if event and not isinstance(event, wx.TimerEvent):
 					wx.Bell()
 				return
-			monkey = device.DeviceKey.split("\\")[-2:]
-			current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
-			scope_changed = (sys.getwindowsversion() >= (6, ) and
-							 current_user != self.current_user)
-			if scope_changed:
-				self.current_user = current_user
-				self.use_my_settings_cb.SetValue(current_user)
-			self.use_my_settings_cb.Enable()
-			superuser = is_superuser()
-			warn = not current_user and superuser
-			update_layout = warn is not self.warning.IsShown()
-			if update_layout:
-				self.warn_bmp.Show(warn)
-				self.warning.Show(warn)
-				self.sizer3.Layout()
 			if sys.getwindowsversion() >= (6, ):
+				current_user = per_user_profiles_isenabled(devicekey=device.DeviceKey)
+				scope_changed = current_user != self.current_user
+				if scope_changed:
+					self.current_user = current_user
+					self.use_my_settings_cb.SetValue(current_user)
+				self.use_my_settings_cb.Enable()
+				superuser = is_superuser()
+				warn = not current_user and superuser
+				update_layout = warn is not self.warning.IsShown()
+				if update_layout:
+					self.warn_bmp.Show(warn)
+					self.warning.Show(warn)
+					self.sizer3.Layout()
 				auth_needed = not (current_user or superuser)
 				update_layout = self.add_btn.GetAuthNeeded() is not auth_needed
 				if update_layout:
@@ -866,6 +864,9 @@ if sys.platform == "win32":
 					self.set_as_default_btn.SetAuthNeeded(auth_needed)
 					self.buttonpanel.Layout()
 					self.buttonpanel.Thaw()
+			else:
+				current_user = False
+			monkey = device.DeviceKey.split("\\")[-2:]
 			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
 			profiles.reverse()
 			profiles_changed = profiles != self.profiles
