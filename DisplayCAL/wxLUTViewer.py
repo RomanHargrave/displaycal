@@ -149,10 +149,10 @@ class LUTCanvas(plot.PlotCanvas):
 					   "XYZ_Y": "green",
 					   "XYZ_Z": "#0080FF",
 					   "Lab_L*": "#CCCCCC",
-					   "Lab_a*": "#FF0099",
-					   "Lab_a*-": "#009900",
-					   "Lab_b*+": "#FFCC00",
-					   "Lab_b*": "#0080FF"}
+					   "Lab_a*": "#FF0080",
+					   "Lab_a*-": "#00CC80",
+					   "Lab_b*": "#FFEE00",
+					   "Lab_b*-": "#0080FF"}
 		plot.PlotCanvas.__init__(self, *args, **kwargs)
 		self.Unbind(wx.EVT_SCROLL_THUMBTRACK)
 		self.Unbind(wx.EVT_SCROLL_PAGEUP)
@@ -359,27 +359,49 @@ class LUTCanvas(plot.PlotCanvas):
 		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
 						 linear_points]
 		for channel, values in points.iteritems():
+			channel_label = channels[channel]
 			if not identical:
-				color = self.colors.get(colorspace + "_" + channels[channel],
+				color = self.colors.get(colorspace + "_" + channel_label,
 										"white")
 			# Note: We need to make sure each point is a float because it
 			# might be a decimal.Decimal, which can't be divided by floats!
 			points_quantized = [(i, int(round(float(v) / axis_y * maxv)))
 								for i, v in values]
+			line2 = None
 			if identical:
 				label = '='.join(legend)
 				suffix = ((', ' + lang.getstr('linear').capitalize())
 						  if points_quantized == (linear if detect_increments 
 												  else linear_points) else '')
 			else:
-				label = channels[channel]
+				label = channel_label
 				suffix = ''
+				if channel_label in ("a*", "b*") and len(values) > 1:
+					half = len(values) / 2
+					values2 = values[:half]
+					values = values[half:]
+					center_x = (values[0][0] + values2[-1][0]) / 2.0
+					center_y = (values[0][1] + values2[-1][1]) / 2.0
+					center = [center_x, center_y]
+					if values[0] != center:
+						values.insert(0, center)
+					if values2[-1] != center:
+						values2.append(center)
+					idx = int(round(center_x / 255.0 * 4095))
+					self.point_grid[channel][idx] = center_y
+					color2 = self.colors["Lab_%s-" % channel_label]
+					line2 = Plot(values2, legend=label + suffix, colour=color2)
 			line = Plot(values, legend=label + suffix, colour=color)
-			if colorspace == "CMYK" and label == "K":
-				# CMYK -> KCMY for better visibilty
+			if ((colorspace == "CMYK" and label == "K") or
+				(colorspace == "Lab" and label in ("a*", "b*"))):
+				# CMYK -> KCMY, Lab -> baL for better visibilty
 				lines.insert(1, line)
+				if line2:
+					lines.insert(1, line2)
 			else:
 				lines.append(line)
+				if line2:
+					lines.append(line2)
 			if identical:
 				break
 
