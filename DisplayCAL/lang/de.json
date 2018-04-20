@@ -1033,7 +1033,7 @@
 	"trashcan.linux": "Mülleimer",
 	"trashcan.mac": "Papierkorb",
 	"trashcan.windows": "Papierkorb",
-	"tray_icon_animation_quality": "Qualität der Infosymbol-Animation",
+	"tray_icon_animation": "Infosymbol animieren",
 	"trc": "Tonwertkurve",
 	"trc.dicom": "DICOM",
 	"trc.gamma": "Gamma",

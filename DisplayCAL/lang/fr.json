@@ -1033,7 +1033,7 @@
 	"trashcan.linux": "corbeille",
 	"trashcan.mac": "corbeille",
 	"trashcan.windows": "corbeille",
-		"*tray_icon_animation_quality": "Quality of tray icon animation",
+		"*tray_icon_animation": "Animate tray icon",
 	"trc": "Courbe de tonalité",
 	"trc.dicom": "DICOM",
 	"trc.gamma": "Gamma",

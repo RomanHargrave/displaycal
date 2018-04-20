@@ -1033,7 +1033,7 @@
 	"trashcan.linux": "papelera",
 	"trashcan.mac": "papelera",
 	"trashcan.windows": "papelera de reciclaje",
-		"*tray_icon_animation_quality": "Quality of tray icon animation",
+		"*tray_icon_animation": "Animate tray icon",
 	"trc": "Curva tonal",
 		"*trc.dicom": "DICOM",
 	"trc.gamma": "Gamma",

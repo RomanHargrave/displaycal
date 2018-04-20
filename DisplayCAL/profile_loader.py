@@ -1121,19 +1121,11 @@ class ProfileLoader(object):
 								   wx.ITEM_CHECK,
 								   "profile_loader.show_notifications",
 								   None),
-								  ("tray_icon_animation_quality",
-								   (("turn_off",
-								     lambda event:
-									 self.set_animation_quality(event, 0)),
-									("calibration.quality.low",
-									 lambda event:
-									 self.set_animation_quality(event, 1)),
-									("calibration.quality.high",
-									 lambda event:
-									 self.set_animation_quality(event, 2))),
+								  ("tray_icon_animation",
+								   self.set_animation,
 								   wx.ITEM_CHECK,
 								   "profile_loader.tray_icon_animation_quality",
-								   lambda v: v),
+								   None),
 								  ("-", None, False, None, None),
 								  ("bitdepth",
 								   (("8", lambda event:
@@ -1331,8 +1323,13 @@ class ProfileLoader(object):
 						wx.Bell()
 						safe_print(exception)
 
-				def set_animation_quality(self, event=None, q=2):
-					safe_print("Menu command: Set tray icon animation quality", q)
+				def set_animation(self, event=None):
+					q = getcfg("profile_loader.tray_icon_animation_quality")
+					if q:
+						q = 0
+					else:
+						q = 2
+					safe_print("Menu command: Set tray icon animation", q)
 					setcfg("profile_loader.tray_icon_animation_quality", q)
 					self.set_icons()
 
