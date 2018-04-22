@@ -1145,7 +1145,15 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	if forward_xicclu and backward_xicclu:
 		# Display RGB -> forward lookup -> display XYZ
 		backward_xicclu.close()
-		display_RGB = backward_xicclu.get()
+		try:
+			display_RGB = backward_xicclu.get()
+		except:
+			if forward_xicclu:
+				# Make sure resources are not held in use
+				forward_xicclu.exit()
+			raise
+		finally:
+			backward_xicclu.exit()
 		if logfile:
 			logfile.write("\rDoing forward lookup...\n")
 			logfile.write("\r%i%%" % perc)
