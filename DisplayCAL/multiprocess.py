@@ -25,7 +25,7 @@ def cpu_count():
 
 
 def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
-			   thread_abort=None, logfile=None, num_batches=1):
+			   thread_abort=None, logfile=None, num_batches=1, progress=0):
 	"""
 	Process data in slices using a pool of workers and return the results.
 	
@@ -87,9 +87,8 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 	progress_queue = Queue()
 
 	if logfile:
-		def progress_logger(num_workers):
+		def progress_logger(num_workers, progress=0):
 			eof_count = 0
-			progress = 0
 			while progress < 100 * num_workers:
 				try:
 					inc = progress_queue.get(True, 0.1)
@@ -106,7 +105,9 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 						break
 				logfile.write("\r%i%%" % (progress / num_workers))
 
-		threading.Thread(target=progress_logger, args=(num_workers * num_batches, ),
+		threading.Thread(target=progress_logger,
+						 args=(num_workers * num_batches,
+							   progress * num_workers * num_batches),
 						 name="ProcessProgressLogger").start()
 
 	pool = Pool(num_workers)
