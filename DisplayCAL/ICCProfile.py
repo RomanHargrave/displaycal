@@ -951,10 +951,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	# comparison has shown it does overall the best job preserving hue and
 	# saturation (blue hues superior to IPT). DIN99d is the second best,
 	# but vibrant red turns slightly orange when desaturated (DIN99d has best
-	# blue saturation preservation though). ICtCp should NOT be used as it has
-	# a tendency to blow out highlights (maybe this is not due to ICtCp itself
-	# and more the way it is used here, because it works just fine for the
-	# initial roll-off saturation adjustment where it is the preferred mode).
+	# blue saturation preservation though).
 	blendmode = "Lpt"
 	IPT_white_XYZ = colormath.get_cat_matrix("IPT").inverted() * (1, 1, 1)
 	Cmode = ("all", "primaries_secondaries")[0]
@@ -963,6 +960,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	HDR_RGB = []
 	HDR_XYZ = []
 	HDR_min_I = []
+	if hdr_format == "PQ":
+		endperc = 25
+	else:
+		endperc = 50
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			for B in xrange(clutres):
@@ -1017,14 +1018,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						RGB[i] = eetf(v)
 					I2 = colormath.RGB2HSV(*RGB)[2]
 				if hdr_format == "PQ" and I1 and I2:
-					if forward_xicclu and backward_xicclu:
-						# Only desaturate light colors (dark colors will be
-						# desaturated according to display max chroma)
-						dsat = 1.0
-					else:
-						# Desaturate dark and light colors
-						dsat = I1 / I2
-					min_I = min(dsat, I2 / I1)
+					min_I = min(I1 / I2, I2 / I1)
 				else:
 					min_I = 1
 				if hdr_format == "HLG":
@@ -1052,40 +1046,73 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						##print 'WARNING:', LinearRGB
 						##LinearRGB = [max(min(v, 1), 0) for v in LinearRGB]
 					RGB = [eotf_inverse(v) for v in LinearRGB]
-					I, Ct, Cp = I2, Ct2, Cp2
 					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space,
 												  eotf=eotf)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
-				if hdr_format != "PQ" or mode != "ICtCp":
-					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z, oetf=eotf_inverse)
-				HDR_ICtCp.append((I, Ct, Cp))
 				HDR_RGB.append(RGB)
 				if mode not in ("XYZ", "ICtCp"):
 					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space,
 												eotf=eotf)
 				X, Y, Z = (v / maxv for v in (X, Y, Z))
-				# Clip to XYZ encoding range of 0..65535 by going through
-				# RGB, clamping to 1, and back to XYZ. Does a pretty good job
-				# at preserving hue.
-				XR, XG, XB = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space,
-											   oetf=eotf_inverse)
-				X, Y, Z = colormath.RGB2XYZ(XR, XG, XB, rgb_space=rgb_space,
-											eotf=eotf)
-				# Adapt to D50
-				X, Y, Z = colormath.adapt(X, Y, Z,
-										  whitepoint_source=rgb_space[1])
-				if max(X, Y, Z) * 32768 > 65535:
-					# This should not happen
-					safe_print("#%i" % row, X, Y, Z)
 				HDR_XYZ.append((X, Y, Z))
 				HDR_min_I.append(min_I)
 				count += 1
 				perc = startperc + math.floor(count / clutres ** 3.0 *
-											  (100 - startperc))
+											  (endperc - startperc))
 				if logfile and perc > prevperc:
 					logfile.write("\r%i%%" % perc)
 					prevperc = perc
+
+	if hdr_format == "PQ":
+		from multiprocess import cpu_count, pool_slice
+
+		num_cpus = cpu_count()
+		num_workers = num_cpus
+		if num_cpus > 2:
+			num_workers -= 1
+
+		HDR_XYZ = sum(pool_slice(_mp_hdr_tonemap, HDR_XYZ,
+												  (rgb_space, bt2390.KS), {},
+												  num_workers,
+												  worker and worker.thread_abort,
+												  logfile, progress=25),
+												  [])
+		prevperc = startperc = perc = 75
+	else:
+		prevperc = startperc = perc = 50
+
+	for i, item in enumerate(HDR_XYZ):
+		if not item:  # Aborted
+			if worker and worker.thread_abort:
+				if forward_xicclu:
+					forward_xicclu.exit()
+				if backward_xicclu:
+					backward_xicclu.exit()
+				raise Exception("aborted")
+		(X, Y, Z) = item
+		# Clip to XYZ encoding range of 0..65535 by going through
+		# RGB, clamping to 1, and back to XYZ. Does a pretty good job
+		# at preserving hue.
+		XR, XG, XB = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space,
+									   oetf=eotf_inverse)
+		X, Y, Z = colormath.RGB2XYZ(XR, XG, XB, rgb_space=rgb_space,
+									eotf=eotf)
+		I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in (X, Y, Z)),
+										oetf=eotf_inverse)
+		HDR_ICtCp.append((I, Ct, Cp))
+		# Adapt to D50
+		X, Y, Z = colormath.adapt(X, Y, Z,
+								  whitepoint_source=rgb_space[1])
+		if max(X, Y, Z) * 32768 > 65535:
+			# This should not happen
+			safe_print("#%i XYZ > 2" % i, X, Y, Z)
+		HDR_XYZ[i] = (X, Y, Z)
+		perc = startperc + math.floor(i / clutres ** 3.0 *
+									  (100 - startperc))
+		if logfile and perc > prevperc:
+			logfile.write("\r%i%%" % perc)
+			prevperc = perc
 	prevperc = startperc = perc = 0
 
 	if forward_xicclu and backward_xicclu and logfile:
@@ -1116,7 +1143,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	Cmax = {}
 	Cdmax = {}
 	if forward_xicclu and backward_xicclu:
-		# Display RGB -> backward lookup -> display XYZ
+		# Display RGB -> forward lookup -> display XYZ
 		backward_xicclu.close()
 		display_RGB = backward_xicclu.get()
 		if logfile:
@@ -1439,9 +1466,6 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 										##C = Cd
 								if C:
 									C *= min(Cd / C, 1.0)
-								if L and blendmode == "ICtCp":
-									C *= min(Ld / L, 1.0)
-									L *= min(Ld / L, 1.0) ** min(Ld / L, L / Ld)
 							else:
 								Cc = general_compression_factor
 								Cc **= (C / Cmaxv)
@@ -2189,6 +2213,50 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 			progress_queue.put(perc - prevperc)
 			prevperc = perc
 	return blocks
+
+
+def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS):
+	"""
+	Worker for HDR tonemapping
+	
+	This should be spawned as a multiprocessing process
+	
+	"""
+	prevperc = 0
+	count = 0
+	amount = len(HDR_XYZ)
+	for i, (X, Y, Z) in enumerate(HDR_XYZ):
+		if thread_abort_event and thread_abort_event.is_set():
+			return [False]
+		I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
+		while True:
+			if not (min(X, Y, Z) < 0 or
+					X > rgb_space[1][0] or Y > 1 or Z > rgb_space[1][2]):
+				break
+			if min(X, Y, Z) < 0:
+				# Desaturate to get rid of negative XYZ
+				Ct *= (4094 / 4095.0)
+				Cp *= (4094 / 4095.0)
+			else:
+				# Reduce intensity to bring XYZ down
+				I *= (4094 / 4095.0)
+				Ct *= (4094 / 4095.0)
+				Cp *= (4094 / 4095.0)
+			X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
+		#if I >= KS:
+			## Desaturate further
+			#I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
+			#min_C = colormath.convert_range(I, KS, 1, (4094 / 4095.0), KS / I)
+			#Ct *= min_C
+			#Cp *= min_C
+			#X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
+		HDR_XYZ[i] = (X, Y, Z)
+		count += 1.0
+		perc = round(count / amount * 50)
+		if progress_queue and perc > prevperc:
+			progress_queue.put(perc - prevperc)
+			prevperc = perc
+	return HDR_XYZ
 
 
 def hexrepr(bytestring, mapping=None):
