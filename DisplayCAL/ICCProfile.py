@@ -1071,12 +1071,13 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		num_workers = num_cpus
 		if num_cpus > 2:
 			num_workers -= 1
+		num_batches = clutres // 9
 
 		HDR_XYZ = sum(pool_slice(_mp_hdr_tonemap, HDR_XYZ,
 												  (rgb_space, bt2390.KS), {},
 												  num_workers,
 												  worker and worker.thread_abort,
-												  logfile, progress=25),
+												  logfile, num_batches, perc),
 												  [])
 		prevperc = startperc = perc = 75
 	else:
@@ -1094,9 +1095,9 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		# Clip to XYZ encoding range of 0..65535 by going through
 		# RGB, clamping to 1, and back to XYZ. Does a pretty good job
 		# at preserving hue.
-		XR, XG, XB = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space,
-									   oetf=eotf_inverse)
-		X, Y, Z = colormath.RGB2XYZ(XR, XG, XB, rgb_space=rgb_space,
+		R, G, B = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space,
+									oetf=eotf_inverse)
+		X, Y, Z = colormath.RGB2XYZ(R, G, B, rgb_space=rgb_space,
 									eotf=eotf)
 		I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in (X, Y, Z)),
 										oetf=eotf_inverse)
@@ -2243,13 +2244,13 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS):
 				break
 			if min(X, Y, Z) < 0:
 				# Desaturate to get rid of negative XYZ
-				Ct *= (4094 / 4095.0)
-				Cp *= (4094 / 4095.0)
+				Ct *= 0.999
+				Cp *= 0.999
 			else:
 				# Reduce intensity to bring XYZ down
-				I *= (4094 / 4095.0)
-				Ct *= (4094 / 4095.0)
-				Cp *= (4094 / 4095.0)
+				I *= 0.9999
+				Ct *= 0.999
+				Cp *= 0.999
 			X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
 		#if I >= KS:
 			## Desaturate further
