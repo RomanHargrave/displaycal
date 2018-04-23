@@ -3095,6 +3095,11 @@ END_DATA
 				in_colors = colormath.get_rgb_space_primaries_wp_xy(in_rgb_space)
 
 				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
+				# Always force content RGB space whitepoint to D65 so
+				# default RGB to ICtCp matrix gives Ct=Cp=0 for R=G=B
+				# when tone mapping
+				content_rgb_space = list(content_rgb_space)
+				content_rgb_space[1] = colormath.get_whitepoint("D65")
 				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
 
 			if hdr_use_src_gamut and content_colors != in_colors:
