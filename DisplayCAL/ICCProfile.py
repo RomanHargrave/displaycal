@@ -2246,7 +2246,7 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS,
 	# more than between red - redorange - yellow - yellowgreen - green
 	# Hue angles (radians, RGB)
 	interp = colormath.Interp([0, 0.041666, 0.166666, 0.25, 0.333333, 0.5, 0.666666, 0.833333, 1],
-							  [1., 0., 0., 0., 0., 0., 1., 1., 1.], use_numpy=True)
+							  [1., 0., 0., 1., 1., 0., 1., 1., 1.], use_numpy=True)
 	for i, (RGB_in, X, Y, Z) in enumerate(HDR_XYZ):
 		if thread_abort_event and thread_abort_event.is_set():
 			return [False]
