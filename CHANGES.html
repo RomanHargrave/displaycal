@@ -45,10 +45,37 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2018-03-31 21:11 (UTC) 3.5.2  -->
+			<!-- 2018-04-25 13:30 (UTC) 3.5.3  -->
 			<dl>
-				<dt id="changelog-3.5.2">2018-03-31 21:11 (UTC) 3.5.2 </dt>
+				<dt id="changelog-3.5.3">2018-04-25 13:30 (UTC) 3.5.3 </dt>
 					<dd>
+						<h3>DisplayCAL 3.5.3 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Rudimentary ICCv4 profile autoconversion support (only matrix profile types).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Lookup table based test profiles for evaluating display color management.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile information: Ability to plot CMYK profile tone response curves.</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Profile loader (Windows): Tray icon animation toggle.</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> HDR SMPTE 2084 roll-off 3D LUT: Improved tone mapping.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Slightly improved accuracy of XYZ LUT profile CIECAM02 gamut mapping.</li>
+							<li>Linux: Temporarily restored compatibility with wxPython 2.8.11/12<!--more--> to support older distribution LTS releases that have not yet reached end-of-life. Note that this compatibility will not be maintained indefinitely, and will likely end by no later than April 2019. If you cannot update to a newer wxPython version on your current Linux distribution, consider upgrading your distribution to the latest release if possible<!--/more-->.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Restored ability to create profiles from non RGB device measurement files.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile information: Deal with potential NULL values in meta tags of 3rd party ICC profiles.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile information: Correctly parse non-default device media type attributes.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile information: Keep original tag order of 3rd party profiles when checking ID.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Popup menu items stopped responding when used for a long time.</li>
+						</ul>
+
+						<p id="changelog-3.5.2">2018-03-31 21:11 (UTC) 3.5.2 </p>
 						<h3>DisplayCAL 3.5.2 </h3>
 
 						<h4>Fixed in this release:</h4>

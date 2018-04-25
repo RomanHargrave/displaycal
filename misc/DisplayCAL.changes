@@ -5,6 +5,21 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Sat Mar 31 21:17:48 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.5.2:
+  * [Trivial] Prevent potential “service/proto not found” error due
+    to unreliable system APIs when attempting to automatically
+    download updates or vendor files.
+  * [Trivial] Linux: Restore missing icons in the window switcher
+    and panel under XFCE.
+  * [Trivial] Linux: Add missing i1 Studio entry to bundled
+    instrument configuration files (ArgyllCMS <= 2.0).
+  * [Trivial] Windows: Use bundled certificate authority (CA)
+    certificates to circumvent potentially outdated system
+    certificates under older versions of Windows.
+
+-------------------------------------------------------------------
 Fri Mar 16 16:10:55 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.5.1.0:
