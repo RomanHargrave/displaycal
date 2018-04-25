@@ -2042,7 +2042,8 @@ class Worker(WorkerBase):
 								 apply_trc=True, white_cdm2=100, minmll=0,
 								 maxmll=10000, ambient_cdm2=5,
 								 content_rgb_space="DCI P3",
-								 hdr_chroma_compression=False):
+								 hdr_chroma_compression=False,
+								 hdr_target_profile=None):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -2138,9 +2139,9 @@ class Worker(WorkerBase):
 												   triggers=[])), self.recent,
 									self.lastmsg])
 				if hdr_chroma_compression:
-					xf = Xicclu(profile2, "r", direction="f", pcs="x",
+					xf = Xicclu(hdr_target_profile, "r", direction="f", pcs="x",
 								worker=self)
-					xb = MP_Xicclu(profile2, "r", direction="if", pcs="x",
+					xb = MP_Xicclu(hdr_target_profile, "r", direction="if", pcs="x",
 								   use_cam_clipping=True, worker=self,
 								   logfile=logfiles)
 					if content_rgb_space:
@@ -2967,11 +2968,21 @@ END_DATA
 
 			profile_in_basename = make_argyll_compatible_path(os.path.basename(profile_in.fileName))
 
+			# XXX: collink creates dark blotch in yellow with perceptual intent
+			# when using HDR PQ tonemapping - force to colorimetric and rely on
+			# our own perceptual mapping
+			if hdr and not hlg:
+				if intent == "p":
+					intent = "r"
+				elif intent == "pa":
+					intent = "aw"
+
 			hdr_use_src_gamut = (hdr and
-									   profile_in_basename == "Rec2020.icm" and
-									   intent in ("la", "lp", "p", "pa", "ms", "s") and
-									   not get_arg("-G", extra_args) and
-									   not get_arg("-g", extra_args))
+								 profile_in_basename == "Rec2020.icm" and
+								 intent in ("la", "lp", "p", "pa", "ms", "s",
+											"aa") and
+								 not get_arg("-G", extra_args) and
+								 not get_arg("-g", extra_args))
 
 			if hdr and not hdr_use_src_gamut and not use_b2a:
 				# Always use B2A instead of inverse forward table (faster and
@@ -3044,6 +3055,46 @@ END_DATA
 												 "\n".join(self.errors)]))
 					profile_out = ICCP.ICCProfile(profile_out.fileName)
 
+			if hdr_use_src_gamut:
+				in_rgb_space = profile_in.get_rgb_space()
+				in_colors = colormath.get_rgb_space_primaries_wp_xy(in_rgb_space)
+
+				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
+				# Always force content RGB space whitepoint to D65 so
+				# default RGB to ICtCp matrix gives Ct=Cp=0 for R=G=B
+				# when tone mapping
+				content_rgb_space = list(content_rgb_space)
+				content_rgb_space[1] = colormath.get_whitepoint("D65")
+				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
+
+			if hdr_use_src_gamut and content_colors != in_colors:
+				# Use source gamut to preserve more saturation.
+				# Assume content colorspace (i.e. DCI P3) encoded within
+				# container colorspace (i.e. Rec. 2020)
+
+				# Get source profile
+				crx, cry = content_rgb_space[2:][0][:2]
+				cgx, cgy = content_rgb_space[2:][1][:2]
+				cbx, cby = content_rgb_space[2:][2][:2]
+				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
+				rgb_space_name = (colormath.find_primaries_wp_xy_rgb_space_name(content_colors) or
+								  "Custom")
+				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
+																  cgx, cgy,
+																  cbx, cby,
+																  cwx, cwy,
+																  2.2,
+																  rgb_space_name,
+																  "")
+				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
+															"%s-" % rgb_space_name,
+															dir=cwd)
+				stream = os.fdopen(fd, "wb")
+				profile_src.write(stream)
+				stream.close()
+			else:
+				profile_src = profile_out
+
 			# Deal with applying TRC
 			collink_version_string = get_argyll_version_string("collink")
 			collink_version = parse_argyll_version_string(collink_version_string)
@@ -3072,7 +3123,8 @@ END_DATA
 												  maxmll=maxmll,
 												  ambient_cdm2=ambient_cdm2,
 												  content_rgb_space=content_rgb_space,
-												  hdr_chroma_compression=not hdr_use_src_gamut)
+												  hdr_chroma_compression=not hdr_use_src_gamut or content_colors != in_colors,
+												  hdr_target_profile=profile_src)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
 				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
@@ -3090,19 +3142,8 @@ END_DATA
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 
-			if hdr_use_src_gamut:
-				in_rgb_space = profile_in.get_rgb_space()
-				in_colors = colormath.get_rgb_space_primaries_wp_xy(in_rgb_space)
-
-				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
-				# Always force content RGB space whitepoint to D65 so
-				# default RGB to ICtCp matrix gives Ct=Cp=0 for R=G=B
-				# when tone mapping
-				content_rgb_space = list(content_rgb_space)
-				content_rgb_space[1] = colormath.get_whitepoint("D65")
-				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
-
-			if hdr_use_src_gamut and content_colors != in_colors:
+			if hdr_use_src_gamut and content_colors != in_colors and False:
+				# XXX: Old code - could be removed?
 				# Use source gamut to preserve more saturation.
 				# Assume content colorspace (i.e. DCI P3) encoded within
 				# container colorspace (i.e. Rec. 2020)
@@ -3116,27 +3157,6 @@ END_DATA
 					if not tools[toolname]:
 						raise Error(lang.getstr("argyll.util.not_found",
 												toolname))
-
-				# Get source profile
-				crx, cry = content_rgb_space[2:][0][:2]
-				cgx, cgy = content_rgb_space[2:][1][:2]
-				cbx, cby = content_rgb_space[2:][2][:2]
-				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
-				rgb_space_name = (colormath.find_primaries_wp_xy_rgb_space_name(content_colors) or
-								  "Custom")
-				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
-																  cgx, cgy,
-																  cbx, cby,
-																  cwx, cwy,
-																  1.0,
-																  rgb_space_name,
-																  "")
-				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
-															"%s-" % rgb_space_name,
-															dir=cwd)
-				stream = os.fdopen(fd, "wb")
-				profile_src.write(stream)
-				stream.close()
 
 				# Apply HDR TRC to source
 				self.blend_profile_blackpoint(profile_src, profile_out,

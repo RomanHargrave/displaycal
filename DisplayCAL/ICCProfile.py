@@ -1055,7 +1055,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space,
 												eotf=eotf)
 				X, Y, Z = (v / maxv for v in (X, Y, Z))
-				HDR_XYZ.append((X, Y, Z))
+				HDR_XYZ.append((RGB_in[-1], X, Y, Z))
 				HDR_min_I.append(min_I)
 				count += 1
 				perc = startperc + math.floor(count / clutres ** 3.0 *
@@ -1073,8 +1073,14 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			num_workers -= 1
 		num_batches = clutres // 9
 
+		if forward_xicclu and backward_xicclu:
+			I_reduction_factor = 0.99985
+		else:
+			I_reduction_factor = 0.9999
+
 		HDR_XYZ = sum(pool_slice(_mp_hdr_tonemap, HDR_XYZ,
-												  (rgb_space, bt2390.KS), {},
+												  (rgb_space, bt2390.KS,
+												   I_reduction_factor), {},
 												  num_workers,
 												  worker and worker.thread_abort,
 												  logfile, num_batches, perc),
@@ -1091,7 +1097,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				if backward_xicclu:
 					backward_xicclu.exit()
 				raise Exception("aborted")
-		(X, Y, Z) = item
+		(RGB, X, Y, Z) = item
 		# Clip to XYZ encoding range of 0..65535 by going through
 		# RGB, clamping to 1, and back to XYZ. Does a pretty good job
 		# at preserving hue.
@@ -2224,7 +2230,8 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 	return blocks
 
 
-def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS):
+def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS,
+					I_reduction_factor):
 	"""
 	Worker for HDR tonemapping
 	
@@ -2234,23 +2241,54 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS):
 	prevperc = 0
 	count = 0
 	amount = len(HDR_XYZ)
-	for i, (X, Y, Z) in enumerate(HDR_XYZ):
+	XYZ2RGB_matrix = rgb_space[-1].inverted()
+	# We want to preserve hues between green - cyan - blue - magenta - red
+	# more than between red - redorange - yellow - yellowgreen - green
+	# Hue angles (radians, RGB)
+	interp = colormath.Interp([0, 0.041666, 0.166666, 0.25, 0.333333, 0.5, 0.666666, 0.833333, 1],
+							  [1., 0., 0., 0., 0., 0., 1., 1., 1.], use_numpy=True)
+	for i, (RGB_in, X, Y, Z) in enumerate(HDR_XYZ):
 		if thread_abort_event and thread_abort_event.is_set():
 			return [False]
-		I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
+		H = None
 		while True:
-			if not (min(X, Y, Z) < 0 or
+			RGB = XYZ2RGB_matrix * (X, Y, Z)
+			if all(round(v, 5) == round(RGB[0], 5) for v in RGB):
+				# Neutral
+				break
+			if not (min(X, Y, Z) < 0 or max(RGB) > 1 or
 					X > rgb_space[1][0] or Y > 1 or Z > rgb_space[1][2]):
 				break
+			if H is None:
+				# Record hue angle
+				H = colormath.RGB2HSV(*RGB)[0]
+				# This is the initial intensity, and hue + saturation
+				I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
+				I1, Ct1, Cp1 = I, Ct, Cp
 			if min(X, Y, Z) < 0:
 				# Desaturate to get rid of negative XYZ
 				Ct *= 0.999
 				Cp *= 0.999
 			else:
 				# Reduce intensity to bring XYZ down
-				I *= 0.9999
+				I *= I_reduction_factor
 				Ct *= 0.999
 				Cp *= 0.999
+			X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
+		if H is not None:
+			# Blend between original ICtCp color and tonemapped ICtCp color
+			I2, Ct2, Cp2 = I, Ct, Cp
+			f = interp(H)
+			I = I1 * (1 - f) + I2 * f
+			Ct = Ct1 * (1 - f) + Ct2 * f
+			Cp = Cp1 * (1 - f) + Cp2 * f
+			# Blend to white
+			f = colormath.convert_range(sum(RGB_in), 2, 3, 1, 0)
+			if f < 1:
+				f **= 1.0 / 2.2
+				I = I1 * (1 - f) + I * f
+				Ct *= f
+				Cp *= f
 			X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
 		#if I >= KS:
 			## Desaturate further
@@ -2259,7 +2297,7 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS):
 			#Ct *= min_C
 			#Cp *= min_C
 			#X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
-		HDR_XYZ[i] = (X, Y, Z)
+		HDR_XYZ[i] = (RGB_in, X, Y, Z)
 		count += 1.0
 		perc = round(count / amount * 50)
 		if progress_queue and perc > prevperc:
