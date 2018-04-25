@@ -410,7 +410,7 @@
 	"display_detected": "Eine Änderung in der Anzeigegerätekonfiguration wurde erkannt.",
 	"display_device_profile": "Anzeigegeräteprofil",
 	"display_lut.link": "Anzeigegerät und Grafikkarten-Gammatabellen-Zugriff getrennt oder gemeinsam ändern",
-	"display_peak_luminance": "Anzeigegeräte-Spitzen-Weißluminanz",
+	"display_peak_luminance": "Ziel-Spitzen-Weißluminanz",
 	"display_profile.not_detected": "Es wurde kein aktuelles Profil für das Anzeigegerät „%s“ erkannt.",
 	"display_short": "Anzeigegerät (Kurzname)",
 	"displayport": "DisplayPort",

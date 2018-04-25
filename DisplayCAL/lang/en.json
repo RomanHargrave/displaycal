@@ -410,7 +410,7 @@
 	"display_detected": "A change in the display device configuration has been detected.",
 	"display_device_profile": "Display device profile",
 	"display_lut.link": "Link/unlink display and video card gamma table access",
-	"display_peak_luminance": "Display peak luminance",
+	"display_peak_luminance": "Target peak luminance",
 	"display_profile.not_detected": "No current profile detected for display “%s”",
 	"display_short": "Display device (abbreviated)",
 	"displayport": "DisplayPort",

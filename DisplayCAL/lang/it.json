@@ -410,7 +410,7 @@
 	"display_detected": "Rilevato un cambiamento nella configurazione dello schermo.",
 		"*display_device_profile": "Display device profile",
 	"display_lut.link": "Collega/Scollega schermo e accesso a calibrazione",
-		"*display_peak_luminance": "Display peak luminance",
+		"*display_peak_luminance": "Target peak luminance",
 		"*display_profile.not_detected": "No current profile detected for display “%s”",
 		"*display_short": "Display device (abbreviated)",
 		"*displayport": "DisplayPort",
