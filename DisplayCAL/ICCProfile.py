@@ -528,7 +528,7 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 
 
 def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
-								  white_Y=1.0, clutres=9):
+								  white_Y=1.0, clutres=9, entries=2049):
 	"""
 	Create a synthetic cLUT profile from a colorspace definition
 	
@@ -604,7 +604,6 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 														1.0 / gamma) * 65535)
 	
 		# Fill input curves from interpolated values
-		entries = 2049
 		for j in xrange(entries):
 			v = j / (entries - 1.0)
 			itable.input[i].append(interp(v) / maxv * 65535)
