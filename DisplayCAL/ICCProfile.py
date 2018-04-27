@@ -752,6 +752,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	else:
 		raise NotImplementedError("Unknown HDR format %r" % hdr_format)
 
+	tonemap = eetf(1) != 1
+
 	profile = ICCProfile()
 	
 	profile.tags.desc = TextDescriptionType("", "desc")
@@ -894,7 +896,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			##threshold = 1.0 - segment * math.ceil((1.0 - bt2390.mmaxi) *
 												  ##(clutres - 1.0) + 1)
 			##check = n >= threshold
-			check = eetf(n + (1 / (entries - 1.0))) > threshold
+			check = tonemap and eetf(n + (1 / (entries - 1.0))) > threshold
 		elif hdr_format == "HLG":
 			check = maxsignal < 1 and n >= maxsignal
 		if check and not test_input_curve_clipping:
@@ -960,7 +962,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	HDR_RGB = []
 	HDR_XYZ = []
 	HDR_min_I = []
-	if hdr_format == "PQ":
+	if hdr_format == "PQ" and tonemap:
 		endperc = 25
 	else:
 		endperc = 50
@@ -1064,7 +1066,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					logfile.write("\r%i%%" % perc)
 					prevperc = perc
 
-	if hdr_format == "PQ":
+	if hdr_format == "PQ" and tonemap:
 		from multiprocess import cpu_count, pool_slice
 
 		num_cpus = cpu_count()
