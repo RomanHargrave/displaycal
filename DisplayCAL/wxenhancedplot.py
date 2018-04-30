@@ -1277,6 +1277,9 @@ class PlotCanvas(wx.Panel):
         dc.EndDrawing()
 
         self._adjustScrollbars()
+        if "gtk3" in wx.PlatformInfo:
+            self.Refresh()
+            self.Update()
         
     def Redraw(self, dc=None):
         """Redraw the existing plot."""
@@ -1300,6 +1303,9 @@ class PlotCanvas(wx.Panel):
         dc.SetTextForeground(self.GetForegroundColour())
         dc.SetTextBackground(self.GetBackgroundColour())
         self.last_draw = None
+        if "gtk3" in wx.PlatformInfo:
+            self.Refresh()
+            self.Update()
 
     def Zoom(self, Center, Ratio):
         """ Zoom on the plot
@@ -1541,6 +1547,9 @@ class PlotCanvas(wx.Panel):
         #this will erase if called twice
         dc.Blit(0, 0, width, height, dcs, 0, 0, self._logicalFunction)
         self._Buffer = tmp_Buffer
+        if "gtk3" in wx.PlatformInfo:
+            self.Refresh()
+            self.Update()
         
 
     def _drawLegend(self,dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt):
@@ -1618,6 +1627,9 @@ class PlotCanvas(wx.Panel):
         dc.DrawRectangle( ptx,pty, rectWidth,rectHeight)
         dc.SetLogicalFunction(wx.COPY)
         dc.EndDrawing()
+        if "gtk3" in wx.PlatformInfo:
+            self.Refresh()
+            self.Update()
 
     def _getFont(self,size):
         """Take font size, adjusts if printing and returns wx.Font"""
