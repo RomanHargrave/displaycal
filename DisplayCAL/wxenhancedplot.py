@@ -1279,7 +1279,6 @@ class PlotCanvas(wx.Panel):
         self._adjustScrollbars()
         if "gtk3" in wx.PlatformInfo:
             self.Refresh()
-            self.Update()
         
     def Redraw(self, dc=None):
         """Redraw the existing plot."""
