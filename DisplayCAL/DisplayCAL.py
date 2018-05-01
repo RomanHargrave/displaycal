@@ -7617,7 +7617,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("patterngenerator.prisma.host", host)
 		elif display_name == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
-			self.worker.madtpg_connect()
+			try:
+				self.worker.madtpg_connect()
+			except Exception, exception:
+				show_result_dialog(exception, self)
+				return
 		elif (display_name in ("Resolve", "Web @ localhost") or
 			  display_name.startswith("Chromecast ")):
 			logfile = LineCache(3)
