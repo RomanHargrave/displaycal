@@ -3083,7 +3083,7 @@ class MainFrame(ReportFrame, BaseFrame):
 											  lang.getstr("display.primary")))
 			self.displays[-1] = lang.getstr(self.displays[-1])
 		self.display_ctrl.SetItems(self.displays)
-		self.display_ctrl.Enable(len(self.worker.displays) > 1)
+		self.display_ctrl.Enable(bool(self.worker.displays))
 		display_lut_sizer = self.display_ctrl.GetContainingSizer()
 		display_sizer = self.display_lut_link_ctrl.GetContainingSizer()
 		comport_sizer = self.comport_ctrl.GetContainingSizer()
@@ -3131,7 +3131,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.comport_ctrl.SetSelection(
 				min(max(0, len(self.worker.instruments) - 1), 
 					max(0, int(getcfg("comport.number")) - 1)))
-		self.comport_ctrl.Enable(len(self.worker.instruments) > 1)
+		self.comport_ctrl.Enable(bool(self.worker.instruments))
 		self.comport_ctrl.Thaw()
 		self.comport_ctrl_handler(force=force)
 
@@ -3298,7 +3298,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("measurement_mode", measurement_mode)
 		self.measurement_mode_ctrl.Enable(
 			bool(self.worker.instruments) and 
-			len(measurement_modes[instrument_type]) > 1)
+			bool(measurement_modes[instrument_type]))
 		self.measurement_mode_ctrl.Thaw()
 	
 	def update_colorimeter_correction_matrix_ctrl(self):
@@ -9688,7 +9688,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.measurement_mode_reference.SetSelection(
 					min(modes_ba["spect"].get(mode, 1),
 						len(modes["spect"]) - 1))
-				dlg.measurement_mode_reference.Enable(len(modes["spect"]) > 1)
+				dlg.measurement_mode_reference.Enable(bool(modes["spect"]))
 				boxsizer.Layout()
 				if event:
 					check_last_ccxx_ti3(event)
@@ -9798,7 +9798,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.measurement_mode.SetStringSelection(
 					modes.get(getcfg("colorimeter_correction.measurement_mode"),
 							  modes.values()[-1]))
-				dlg.measurement_mode.Enable(len(modes) > 1)
+				dlg.measurement_mode.Enable(bool(modes))
 				show_observer_ctrl()
 				boxsizer.Layout()
 				if event:
@@ -11559,7 +11559,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				lut_no = min(0, self.display_ctrl.GetSelection())
 		self.display_lut_ctrl.SetSelection(lut_no)
 		self.display_lut_ctrl.Enable(not link and 
-									 self.display_lut_ctrl.GetCount() > 1)
+									 self.display_lut_ctrl.GetCount() > 0)
 		setcfg("display_lut.link", int(link))
 		try:
 			i = self.displays.index(self.display_lut_ctrl.Items[lut_no])
