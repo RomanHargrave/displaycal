@@ -24,6 +24,7 @@ if sys.platform == "win32":
 	import win32api
 
 import localization as lang
+from imfile import tiff_get_header
 from log import safe_print as log_safe_print
 from meta import name as appname, version
 from network import get_network_addr, get_valid_host
@@ -170,20 +171,50 @@ class H3DLUT(object):
 	def parametersSize(self):
 		return len(self.parametersData)
 
+	def _get_stream(self, stream_or_filename=None):
+		if not stream_or_filename:
+			stream_or_filename = self.fileName
+		if isinstance(stream_or_filename, basestring):
+			stream = open(stream_or_filename, "wb")
+		else:
+			stream = stream_or_filename
+		return stream
+
 	def write(self, stream_or_filename=None):
 		"""
 		Write 3D LUT to stream or filename.
 		
 		"""
-		if not stream_or_filename:
-			stream_or_filename = self.fileName
+		stream = self._get_stream(stream_or_filename)
+		stream.write(self.data)
 		if isinstance(stream_or_filename, basestring):
-			stream = open(stream_or_filename, "wb")
 			if not self.fileName:
 				self.fileName = stream_or_filename
-		else:
-			stream = stream_or_filename
-		stream.write(self.data)
+			stream.close()
+
+	def write_tiff(self, stream_or_filename=None):
+		"""
+		Write 3D LUT to TIFF file.
+		
+		"""
+		stream = self._get_stream(stream_or_filename)
+
+		# Write image data
+		# XXX Currently only 8 or 16 bit RGB data is supported
+		samples_per_pixel = 3  # RGB
+		bytes_per_sample = self.outputBitDepth / 8
+		bytes_per_pixel = samples_per_pixel * bytes_per_sample
+		w = 2 ** self.inputBitDepth[0]  # Assume equal bitdepth for R, G, B
+		h = w * w
+		stream.write(tiff_get_header(w, h, samples_per_pixel,
+									 self.outputBitDepth))
+		entries = self.lutUncompressedSize / samples_per_pixel / bytes_per_sample
+		for i in xrange(entries):
+			index = i * samples_per_pixel * bytes_per_sample
+			BGR = self.LUTDATA[index:index + bytes_per_pixel]
+			RGB = BGR[::-1]  # BGR little-endian to RGB big-endian byte order
+			stream.write(RGB)
+
 		if isinstance(stream_or_filename, basestring):
 			stream.close()
 

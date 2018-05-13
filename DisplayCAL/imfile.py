@@ -18,6 +18,75 @@ TIFF_TAG_TYPE_DWORD = 4
 TIFF_TAG_TYPE_RATIONAL = 5  # 2 DWORDs
 
 
+def tiff_get_header(w, h, samples_per_pixel, bitdepth):
+	# Very helpful: http://www.fileformat.info/format/tiff/corion.htm
+
+	header = []
+	header.append("MM\0*")  # Note: We use big-endian byte order
+
+	# Offset of image directory
+	header.append("\0\0\0\x08")
+
+	pixelcount = w * h * samples_per_pixel
+	if bitdepth == 16:
+		bytecount = pixelcount * 2
+	else:
+		bytecount = pixelcount
+
+	# Image file directory (IFD)
+
+	# PhotometricInterpretation
+	if samples_per_pixel == 3:
+		pmi = 2  # RGB
+	else:
+		pmi = 5  # Separated (usually CMYK)
+
+	# Tag, type, length, offset or data, is data (otherwise offset)
+	if w > 65535:
+		tag_type_w = TIFF_TAG_TYPE_DWORD
+	else:
+		tag_type_w = TIFF_TAG_TYPE_WORD
+	if h > 65535:
+		tag_type_h = TIFF_TAG_TYPE_DWORD
+	else:
+		tag_type_h = TIFF_TAG_TYPE_WORD
+	ifd = [(0x100, tag_type_w, 1, w, True),  # ImageWidth
+		   (0x101, tag_type_h, 1, h, True),  # ImageLength
+		   (0x106, TIFF_TAG_TYPE_WORD, 1, pmi, True),  # PhotometricInterpretation
+		   (0x115, TIFF_TAG_TYPE_WORD, 1, samples_per_pixel, True),  # SamplesPerPixel
+		   (0x117, TIFF_TAG_TYPE_DWORD, 1, bytecount, True)  # StripByteCounts
+		   ]
+	# BitsPerSample
+	ifd.append((0x102, TIFF_TAG_TYPE_WORD, 3, 10 + (len(ifd) + 2) * 12 + 4, False))
+	# StripOffsets
+	ifd.append((0x111, TIFF_TAG_TYPE_WORD, 1, 10 + (len(ifd) + 1) * 12 + 4 + 6, True))
+
+	ifd.sort()  # Must be ascending order!
+
+	header.append(struct.pack(">H", len(ifd)))  # Number of entries
+
+	for tag, tagtype, length, payload, is_data in ifd:
+		header.append(struct.pack(">H", tag))
+		header.append(struct.pack(">H", tagtype))
+		header.append(struct.pack(">I", length))
+		if is_data and tagtype == 3:
+			# A word left-aligned in a dword
+			header.append(struct.pack(">H", payload))
+			header.append("\0\0")
+		else:
+			header.append(struct.pack(">I", payload))
+
+	# PlanarConfiguration default is 1 = RGBRGBRGB...
+
+	# End of IFD
+	header.append("\0" * 4)
+
+	# BitsPerSample (6 bytes)
+	header.append(struct.pack(">H", bitdepth) * 3)
+
+	return "".join(header)
+
+
 def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None,
 		  extrainfo=None):
 	Image(data, bitdepth, extrainfo).write(stream_or_filename, format, dimensions)
@@ -291,12 +360,6 @@ class Image(object):
 	def _write_tiff(self, stream, dimensions=None):
 		# Very helpful: http://www.fileformat.info/format/tiff/corion.htm
 
-		# Header
-		stream.write("MM\0*")  # Note: We use big-endian byte order
-
-		# Offset of image directory
-		stream.write("\0\0\0\x08")
-
 		# Image data
 		if len(self.data) == 1 and len(self.data[0]) == 1 and dimensions:
 			# Optimize for single color
@@ -308,63 +371,8 @@ class Image(object):
 			imgdata = self.data
 			w, h = len(self.data[0]), len(self.data)
 
-		samples_per_pixel = len(self.data[0][0])
-		pixelcount = w * h * samples_per_pixel
-		if self.bitdepth == 16:
-			bytecount = pixelcount * 2
-		else:
-			bytecount = pixelcount
-
-		# Image file directory (IFD)
-
-		# PhotometricInterpretation
-		if len(self.data[0][0]) == 3:
-			pmi = 2  # RGB
-		else:
-			pmi = 5  # Separated (usually CMYK)
-
-		# Tag, type, length, offset or data, is data (otherwise offset)
-		if w > 65535:
-			tag_type_w = TIFF_TAG_TYPE_DWORD
-		else:
-			tag_type_w = TIFF_TAG_TYPE_WORD
-		if h > 65535:
-			tag_type_h = TIFF_TAG_TYPE_DWORD
-		else:
-			tag_type_h = TIFF_TAG_TYPE_WORD
-		ifd = [(0x100, tag_type_w, 1, w, True),  # ImageWidth
-			   (0x101, tag_type_h, 1, h, True),  # ImageLength
-			   (0x106, TIFF_TAG_TYPE_WORD, 1, pmi, True),  # PhotometricInterpretation
-			   (0x115, TIFF_TAG_TYPE_WORD, 1, samples_per_pixel, True),  # SamplesPerPixel
-			   (0x117, TIFF_TAG_TYPE_DWORD, 1, bytecount, True)  # StripByteCounts
-			   ]
-		# BitsPerSample
-		ifd.append((0x102, TIFF_TAG_TYPE_WORD, 3, 10 + (len(ifd) + 2) * 12 + 4, False))
-		# StripOffsets
-		ifd.append((0x111, TIFF_TAG_TYPE_WORD, 1, 10 + (len(ifd) + 1) * 12 + 4 + 6, True))
-
-		ifd.sort()  # Must be ascending order!
-
-		stream.write(struct.pack(">H", len(ifd)))  # Number of entries
-
-		for tag, tagtype, length, payload, is_data in ifd:
-			stream.write(struct.pack(">H", tag))
-			stream.write(struct.pack(">H", tagtype))
-			stream.write(struct.pack(">I", length))
-			if is_data and tagtype == 3:
-				# A word left-aligned in a dword
-				stream.write(struct.pack(">H", payload))
-				stream.write("\0\0")
-			else:
-				stream.write(struct.pack(">I", payload))
-
-		# PlanarConfiguration default is 1 = RGBRGBRGB...
-
-		# End of IFD
-		stream.write("\0" * 4)
-
-		# BitsPerSample (6 bytes)
-		stream.write(struct.pack(">H", self.bitdepth) * 3)
+		# Header
+		stream.write(tiff_get_header(w, h, samples_per_pixel, self.bitdepth))
 
 		# Write image data
 		for i, scanline in enumerate(imgdata):
