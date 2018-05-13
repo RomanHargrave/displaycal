@@ -11,6 +11,13 @@ from meta import name as appname, version
 from util_str import safe_str
 
 
+TIFF_TAG_TYPE_BYTE = 1
+TIFF_TAG_TYPE_ASCII = 2
+TIFF_TAG_TYPE_WORD = 3
+TIFF_TAG_TYPE_DWORD = 4
+TIFF_TAG_TYPE_RATIONAL = 5  # 2 DWORDs
+
+
 def write(data, stream_or_filename, bitdepth=16, format=None, dimensions=None,
 		  extrainfo=None):
 	Image(data, bitdepth, extrainfo).write(stream_or_filename, format, dimensions)
@@ -291,17 +298,22 @@ class Image(object):
 		stream.write("\0\0\0\x08")
 
 		# Image data
-		imgdata = []
-		for i, scanline in enumerate(self.data):
-			for sample in scanline:
-				imgdata.append("".join(self._pack(v) for v in sample))
-		imgdata = "".join(imgdata)
 		if len(self.data) == 1 and len(self.data[0]) == 1 and dimensions:
 			# Optimize for single color
-			imgdata *= dimensions[0] * dimensions[1]
 			w, h = dimensions
+			imgdata = list(self.data)
+			imgdata[0] *= w
+			imgdata *= h
 		else:
+			imgdata = self.data
 			w, h = len(self.data[0]), len(self.data)
+
+		samples_per_pixel = len(self.data[0][0])
+		pixelcount = w * h * samples_per_pixel
+		if self.bitdepth == 16:
+			bytecount = pixelcount * 2
+		else:
+			bytecount = pixelcount
 
 		# Image file directory (IFD)
 
@@ -312,16 +324,24 @@ class Image(object):
 			pmi = 5  # Separated (usually CMYK)
 
 		# Tag, type, length, offset or data, is data (otherwise offset)
-		ifd = [(0x100, 3, 1, w, True),  # ImageWidth
-			   (0x101, 3, 1, h, True),  # ImageLength
-			   (0x106, 3, 1, pmi, True),  # PhotometricInterpretation
-			   (0x115, 3, 1, len(self.data[0][0]), True),  # SamplesPerPixel
-			   (0x117, 4, 1, len(imgdata), True)  # StripByteCounts
+		if w > 65535:
+			tag_type_w = TIFF_TAG_TYPE_DWORD
+		else:
+			tag_type_w = TIFF_TAG_TYPE_WORD
+		if h > 65535:
+			tag_type_h = TIFF_TAG_TYPE_DWORD
+		else:
+			tag_type_h = TIFF_TAG_TYPE_WORD
+		ifd = [(0x100, tag_type_w, 1, w, True),  # ImageWidth
+			   (0x101, tag_type_h, 1, h, True),  # ImageLength
+			   (0x106, TIFF_TAG_TYPE_WORD, 1, pmi, True),  # PhotometricInterpretation
+			   (0x115, TIFF_TAG_TYPE_WORD, 1, samples_per_pixel, True),  # SamplesPerPixel
+			   (0x117, TIFF_TAG_TYPE_DWORD, 1, bytecount, True)  # StripByteCounts
 			   ]
 		# BitsPerSample
-		ifd.append((0x102, 3, 3, 10 + (len(ifd) + 2) * 12 + 4, False))
+		ifd.append((0x102, TIFF_TAG_TYPE_WORD, 3, 10 + (len(ifd) + 2) * 12 + 4, False))
 		# StripOffsets
-		ifd.append((0x111, 3, 1, 10 + (len(ifd) + 1) * 12 + 4 + 6, True))
+		ifd.append((0x111, TIFF_TAG_TYPE_WORD, 1, 10 + (len(ifd) + 1) * 12 + 4 + 6, True))
 
 		ifd.sort()  # Must be ascending order!
 
@@ -347,7 +367,9 @@ class Image(object):
 		stream.write(struct.pack(">H", self.bitdepth) * 3)
 
 		# Write image data
-		stream.write(imgdata)
+		for i, scanline in enumerate(imgdata):
+			for sample in scanline:
+				stream.write("".join(self._pack(v) for v in sample))
 
 	def write(self, stream_or_filename, format=None, dimensions=None):
 		if not format:
