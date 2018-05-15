@@ -171,9 +171,11 @@ class H3DLUT(object):
 	def parametersSize(self):
 		return len(self.parametersData)
 
-	def _get_stream(self, stream_or_filename=None):
+	def _get_stream(self, stream_or_filename=None, ext=None):
 		if not stream_or_filename:
 			stream_or_filename = self.fileName
+			if ext:
+				stream_or_filename = os.path.splitext(stream_or_filename)[0] + ext
 		if isinstance(stream_or_filename, basestring):
 			stream = open(stream_or_filename, "wb")
 		else:
@@ -197,7 +199,7 @@ class H3DLUT(object):
 		Write 3D LUT to TIFF file.
 		
 		"""
-		stream = self._get_stream(stream_or_filename)
+		stream = self._get_stream(stream_or_filename, ".tif")
 
 		# Write image data
 		# XXX Currently only 8 or 16 bit RGB data is supported
