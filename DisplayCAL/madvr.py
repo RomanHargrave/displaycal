@@ -23,6 +23,7 @@ if sys.platform == "win32":
 if sys.platform == "win32":
 	import win32api
 
+import ICCProfile as ICCP
 import localization as lang
 from imfile import tiff_get_header
 from log import safe_print as log_safe_print
@@ -192,6 +193,86 @@ class H3DLUT(object):
 		if isinstance(stream_or_filename, basestring):
 			if not self.fileName:
 				self.fileName = stream_or_filename
+			stream.close()
+
+	def write_devicelink(self, stream_or_filename=None):
+		"""
+		Write 3D LUT to ICC device link.
+		
+		"""
+		stream = self._get_stream(stream_or_filename, ".icc")
+
+		link = ICCP.ICCProfile()
+		link.connectionColorSpace = "RGB"
+		link.profileClass = "link"
+		link.tags.desc = ICCP.TextDescriptionType()
+		link.tags.desc.ASCII = os.path.splitext(os.path.basename(stream.name))[0]
+		link.tags.cprt = ICCP.TextType("text\0\0\0\0No copyright", "cprt")
+
+		input_grid_steps = 2 ** self.inputBitDepth[0]  # Assume equal bitdepth for R, G, B
+		if input_grid_steps > 255:
+			# madVR 3D LUTs are 256^3, but ICC LUT16Type only supports up to
+			# 255^3. As madVR 3D LUTs use video levels encoding, we simply skip
+			# the first cLUT entry in each dimension and fix the offset by
+			# scaling the input/output shaper curves. That way, only level 1 of
+			# 255 will be affected (with black at 16 and white at 235),
+			# which isn't used in actual video content.
+			clut_grid_steps = 255
+		else:
+			clut_grid_steps = input_grid_steps
+		# Filling a 255^3 list is VERY memory intensive in Python, so we 'fake'
+		# the LUT16Type cLUT and only use tag data of offsets/sizes and shaper
+		# curves while writing the raw cLUT data directly without going through
+		# decoding/re-encoding roundtrip
+		A2B0 = ICCP.LUT16Type()
+		A2B0.matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+		A2B0.input = []
+		for i in xrange(3):
+			A2B0.input.append([])
+			for j in xrange(4096):
+				A2B0.input[-1].append(min(max(j / 4095. * (256 / 255.) - (256 / 255. - 1), 0), 1) * 65535)
+		input_bytes = len(A2B0.input) * len(A2B0.input[0]) * 2
+		A2B0.clut = [[[0] * 3 for i in xrange(clut_grid_steps)]]  # Fake cLUT
+		A2B0.output = []
+		for i in xrange(3):
+			A2B0.output.append([])
+			for j in xrange(4096):
+				A2B0.output[-1].append(min(max(j / 4095. * (256 / 255.), 0), 1) * 65535)
+		output_bytes = len(A2B0.output) * len(A2B0.output[0]) * 2
+		tagData = A2B0.tagData[:52 + input_bytes]  # Exclude cLUT and output curves
+
+		# Write actual cLUT
+		# XXX Currently only 16 bit RGB data is supported
+		samples_per_pixel = 3  # RGB
+		bytes_per_sample = self.outputBitDepth / 8
+		bytes_per_pixel = samples_per_pixel * bytes_per_sample
+		io = StringIO(tagData)
+		io.seek(0, 2)  # Position cursor at end
+		i = 0
+		for R in xrange(input_grid_steps):
+			if not R:
+				i += input_grid_steps * input_grid_steps
+				continue
+			for G in xrange(input_grid_steps):
+				if not G:
+					i += input_grid_steps
+					continue
+				for B in xrange(input_grid_steps):
+					if not B:
+						i += 1
+						continue
+					index = i * samples_per_pixel * bytes_per_sample
+					BGR = self.LUTDATA[index:index + bytes_per_pixel]
+					RGB = BGR[::-1]  # BGR little-endian to RGB big-endian byte order
+					io.write(RGB)
+					i += 1
+		io.write(A2B0.tagData[-output_bytes:])  # Append output curves
+		io.seek(0)
+		link.tags.A2B0 = ICCP.ICCProfileTag(io.read(), "A2B0")
+
+		link.write(stream)
+
+		if isinstance(stream_or_filename, basestring):
 			stream.close()
 
 	def write_tiff(self, stream_or_filename=None):
