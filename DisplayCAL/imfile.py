@@ -371,6 +371,8 @@ class Image(object):
 			imgdata = self.data
 			w, h = len(self.data[0]), len(self.data)
 
+		samples_per_pixel = len(self.data[0][0])
+
 		# Header
 		stream.write(tiff_get_header(w, h, samples_per_pixel, self.bitdepth))
 
