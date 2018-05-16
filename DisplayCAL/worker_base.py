@@ -57,7 +57,7 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 	num_subchunks = 50
 	subchunksize = float(len(chunk)) / num_subchunks
 	for i in xrange(num_subchunks):
-		if thread_abort_event.is_set():
+		if thread_abort_event is not None and thread_abort_event.is_set():
 			xicclu.exit()
 			return Info(abortmessage)
 		end = int(math.ceil(subchunksize * (i + 1)))
@@ -718,7 +718,7 @@ class Xicclu(WorkerBase):
 		def fget(self):
 			if self.worker:
 				return self.worker.thread_abort
-			return False
+			return None
 		
 		def fset(self, v):
 			pass
