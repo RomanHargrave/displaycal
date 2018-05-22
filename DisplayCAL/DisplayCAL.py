@@ -10929,7 +10929,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg = wx.FileDialog(self, 
 								lang.getstr("colorimeter_correction.import.choose"),
 								wildcard=lang.getstr("filetype.any") + 
-										 "|*.cab;*.edr;*.exe;*.txt", 
+										 "|*.cab;*.edr;*.exe;*.txt;*.dll", 
 								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 			dlg.Center(wx.BOTH)
 			choice2 = dlg.ShowModal()
