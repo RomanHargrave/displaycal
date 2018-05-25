@@ -2149,7 +2149,7 @@ class BaseInteractiveDialog(wx.Dialog):
 	def ShowModal(self):
 		self.set_position()
 		result = wx.Dialog.ShowModal(self)
-		if self.taskbar:
+		if self and self.taskbar:
 			state = None
 			if (isinstance(self.Parent, ProgressDialog) and
 				self.Parent.timer.IsRunning()):
