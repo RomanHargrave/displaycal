@@ -1103,8 +1103,8 @@ def setup():
 												  "Info.plist"), lastmod_time,
 									 {"NAME": bundlename,
 									  "EXECUTABLE": script,
-									  "ID": ".".join(reversed(domain.split("."))).replace(name,
-																						  script)})
+									  "ID": ".".join(reversed(domain.split("."))) +
+											"." + script})
 				if script.startswith(name):
 					run = "0launch%s -- %s" % (re.sub("^%s" % name,
 													  " --command=run", script),
