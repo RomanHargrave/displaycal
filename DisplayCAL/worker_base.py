@@ -8,6 +8,7 @@ import os
 import pipes
 import re
 import shutil
+import struct
 import subprocess as sp
 import sys
 import tempfile
@@ -44,7 +45,8 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 			   pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
 			   use_cam_clipping=False, logfile=None,
 			   show_actual_if_clipped=False, input_encoding=None,
-			   output_encoding=None, abortmessage="Aborted"):
+			   output_encoding=None, abortmessage="Aborted", output_format=None,
+			   reverse=False):
 	if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
 		config.initcfg()
 	profile = ICCP.ICCProfile(profile_filename)
@@ -68,7 +70,7 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 			progress_queue.put(perc - prevperc)
 			prevperc = perc
 	xicclu.exit()
-	return xicclu.get()
+	return xicclu.get(output_format=output_format, reverse=reverse)
 
 
 def _mp_generate_B2A_clut(chunk, thread_abort_event, progress_queue,
@@ -664,7 +666,7 @@ class Xicclu(WorkerBase):
 							   tuple(safe_unicode(s) for s in 
 									 (self.tempdir, exception)))
 	
-	def get(self, raw=False, get_clip=False):
+	def get(self, raw=False, get_clip=False, output_format=None, reverse=False):
 		if raw:
 			if self.sessionlogfile:
 				self.sessionlogfile.write("\n".join(self.output))
@@ -693,7 +695,12 @@ class Xicclu(WorkerBase):
 			clip = parts.pop() == "(clip)"
 			if clip:
 				parts.pop()
-			parsed.append([float(n) / self.output_scale for n in parts])
+			out = [float(n) / self.output_scale for n in parts]
+			if output_format:
+				if reverse:
+					out = out[::-1]
+				out = "".join(struct.pack(output_format[0], round(v * output_format[1])) for v in out)
+			parsed.append(out)
 			if get_clip and not self.show_actual_if_clipped:
 				parsed[-1].append(clip)
 			j += 1
@@ -732,16 +739,19 @@ class MP_Xicclu(Xicclu):
 				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
 				 use_cam_clipping=False, logfile=None, worker=None,
 				 show_actual_if_clipped=False, input_encoding=None,
-				 output_encoding=None):
+				 output_encoding=None, output_format=None, reverse=False,
+				 output_stream=None):
 		WorkerBase.__init__(self)
 		self.logfile = logfile
 		self.worker = worker
+		self.output_stream = output_stream
 		self._in = []
 		self._args = (profile.fileName, intent, direction, order,
 					  pcs, scale, cwd, startupinfo, use_icclu,
 					  use_cam_clipping, None,
 					  show_actual_if_clipped, input_encoding,
-					  output_encoding, lang.getstr("aborted"))
+					  output_encoding, lang.getstr("aborted"), output_format,
+					  reverse)
 		self._out = []
 		num_cpus = mp.cpu_count()
 		if isinstance(profile.tags.get("A2B0"), ICCP.LUT16Type):
@@ -774,5 +784,9 @@ class MP_Xicclu(Xicclu):
 		for slices in pool_slice(_mp_xicclu, self._in, self._args, {},
 								 self.num_workers, self.thread_abort,
 								 self.logfile, num_batches=self.num_batches):
-			self._out.extend(slices)
+			if self.output_stream:
+				for row in slices:
+					self.output_stream.write(row)
+			else:
+				self._out.extend(slices)
 		return self._out
