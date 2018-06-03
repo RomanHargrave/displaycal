@@ -2064,6 +2064,11 @@ def _wcs_set_display_profile(devicekey, profile_name,
 	if not mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
 													devicekey):
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
+	monkey = devicekey.split("\\")[-2:]
+	current_user = scope == WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
+	profiles = _winreg_get_display_profiles(monkey, current_user)
+	if not profile_name in profiles:
+		return False
 	return True
 
 
