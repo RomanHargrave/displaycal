@@ -112,10 +112,16 @@ class H3DLUT(object):
 
 	# https://sourceforge.net/projects/thr3dlut
 
-	def __init__(self, filename):
-		self.fileName = filename
-		with open(filename, "rb") as lut:
-			data = lut.read()
+	def __init__(self, stream_or_filename=None, check_lut_size=True):
+		if not stream_or_filename:
+			return
+		if isinstance(stream_or_filename, basestring):
+			self.fileName = stream_or_filename
+			with open(stream_or_filename, "rb") as lut:
+				data = lut.read()
+		else:
+			self.fileName = None
+			data = stream_or_filename.read()
 		self.signature = data[:4]
 		self.fileVersion = struct.unpack("<l", data[4:8])[0]
 		self.programName = data[8:40].rstrip("\0")
@@ -138,7 +144,7 @@ class H3DLUT(object):
 								   parametersSize]
 		self.LUTDATA = data[self.lutFileOffset:
 							self.lutFileOffset + self.lutCompressedSize]
-		if len(self.LUTDATA) != self.lutCompressedSize:
+		if check_lut_size and len(self.LUTDATA) != self.lutCompressedSize:
 			raise ValueError("3DLUT size %i does not match expected size %i" %
 							 (len(self.LUTDATA), self.lutCompressedSize))
 		if len(data) == self.lutFileOffset + self.lutCompressedSize + 1552:
