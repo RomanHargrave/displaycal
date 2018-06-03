@@ -2053,19 +2053,28 @@ def XYZ2RGB(X, Y, Z, rgb_space=None, scale=1.0, round_=False, clamp=True,
 			gamma = trc[i]
 		else:
 			gamma = trc
+		if clamp:
+			v = min(1.0, max(0.0, v))
 		if oetf:
 			RGB[i] = oetf(v)
 		elif isinstance(gamma, (list, tuple)):
-			RGB[i] = interp(v, gamma, [n / float(len(gamma) - 1) for n in
-									   xrange(len(gamma))])
+			key = id(gamma)
+			if not key in XYZ2RGB.interp:
+				ginterp = Interp(gamma, [n / float(len(gamma) - 1) for n in
+									     xrange(len(gamma))], use_numpy=True)
+				XYZ2RGB.interp[key] = ginterp
+			else:
+				ginterp = XYZ2RGB.interp[key]
+			RGB[i] = ginterp(v)
 		else:
 			RGB[i] = specialpow(v, 1.0 / gamma)
-		if clamp:
-			RGB[i] = min(1.0, max(0.0, RGB[i]))
 		RGB[i] *= scale
 		if round_ is not False:
 			RGB[i] = round(RGB[i], round_)
 	return RGB
+
+
+XYZ2RGB.interp = {}
 
 
 def XYZ2xyY(X, Y, Z, whitepoint=None):
