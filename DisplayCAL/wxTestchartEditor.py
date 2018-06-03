@@ -3130,9 +3130,7 @@ END_DATA""")
 			self.sizer.Layout()
 			if verbose >= 1: safe_print(lang.getstr("tc.preview.create"))
 			data = self.ti1.queryv1("DATA")
-			modified = self.ti1.modified
-			data.vmaxlen = 6
-			self.ti1.modified = modified
+			vmaxlen = 6
 
 			if hasattr(self, "preview"):
 				self.preview.BeginBatch()
@@ -3172,7 +3170,7 @@ END_DATA""")
 					if label in ("RGB_R", "RGB_G", "RGB_B"):
 						grid.SetCellValue(i, j,
 										  CGATS.rpad(sample[label],
-													 data.vmaxlen + 
+													 vmaxlen + 
 													 (1 if sample[label] < 0
 													  else 0)))
 				self.tc_grid_setcolorlabel(i, data)
