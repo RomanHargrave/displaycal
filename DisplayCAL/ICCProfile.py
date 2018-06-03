@@ -2870,7 +2870,7 @@ BEGIN_DATA
 	@property
 	def clut_grid_steps(self):
 		""" Return number of grid points per dimension. """
-		return self._g
+		return self._g or len(self.clut[0])
 	
 	@Property
 	def input():
@@ -2892,12 +2892,12 @@ BEGIN_DATA
 	@property
 	def input_channels_count(self):
 		""" Return number of input channels. """
-		return self._i
+		return self._i or len(self.input)
 	
 	@property
 	def input_entries_count(self):
 		""" Return number of entries per input channel. """
-		return self._n
+		return self._n or len(self.input[0])
 	
 	def invert(self):
 		"""
@@ -2962,12 +2962,12 @@ BEGIN_DATA
 	@property
 	def output_channels_count(self):
 		""" Return number of output channels. """
-		return self._o
+		return self._o or len(self.output)
 	
 	@property
 	def output_entries_count(self):
 		""" Return number of entries per output channel. """
-		return self._m
+		return self._m or len(self.output[0])
 
 	def smooth(self, diagpng=2, pcs=None, filename=None, logfile=None):
 		""" Apply extra smoothing to the cLUT """
