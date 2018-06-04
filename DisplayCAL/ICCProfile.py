@@ -1020,6 +1020,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					I2 = colormath.RGB2HSV(*RGB)[2]
 				if hdr_format == "PQ" and I1 and I2:
 					min_I = min(I1 / I2, I2 / I1)
+					if I1 > I2:
+						min_I *= colormath.convert_range(I1, I2, 1, 1, 0)
 				else:
 					min_I = 1
 				if hdr_format == "HLG":
@@ -1072,16 +1074,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		num_workers = num_cpus
 		if num_cpus > 2:
 			num_workers -= 1
-		num_batches = clutres // 9
-
-		if forward_xicclu and backward_xicclu:
-			I_reduction_factor = 0.99985
-		else:
-			I_reduction_factor = 0.9999
+		num_batches = clutres // 6
 
 		HDR_XYZ = sum(pool_slice(_mp_hdr_tonemap, HDR_XYZ,
-												  (rgb_space, bt2390.KS,
-												   I_reduction_factor), {},
+												  (rgb_space, ), {},
 												  num_workers,
 												  worker and worker.thread_abort,
 												  logfile, num_batches, perc),
@@ -1099,22 +1095,15 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					backward_xicclu.exit()
 				raise Exception("aborted")
 		(RGB, X, Y, Z) = item
-		# Clip to XYZ encoding range of 0..65535 by going through
-		# RGB, clamping to 1, and back to XYZ. Does a pretty good job
-		# at preserving hue.
-		R, G, B = colormath.XYZ2RGB(X, Y, Z, rgb_space=rgb_space,
-									oetf=eotf_inverse)
-		X, Y, Z = colormath.RGB2XYZ(R, G, B, rgb_space=rgb_space,
-									eotf=eotf)
 		I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in (X, Y, Z)),
 										oetf=eotf_inverse)
 		HDR_ICtCp.append((I, Ct, Cp))
 		# Adapt to D50
 		X, Y, Z = colormath.adapt(X, Y, Z,
 								  whitepoint_source=rgb_space[1])
-		if max(X, Y, Z) * 32768 > 65535:
+		if max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or round(Y, 6) > 1:
 			# This should not happen
-			safe_print("#%i XYZ > 2" % i, X, Y, Z)
+			safe_print("#%i XYZ not in range [0,1]" % i, X, Y, Z)
 		HDR_XYZ[i] = (X, Y, Z)
 		perc = startperc + math.floor(i / clutres ** 3.0 *
 									  (100 - startperc))
@@ -2236,8 +2225,7 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 	return blocks
 
 
-def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS,
-					I_reduction_factor):
+def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space):
 	"""
 	Worker for HDR tonemapping
 	
@@ -2245,67 +2233,46 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, KS,
 	
 	"""
 	prevperc = 0
-	count = 0
 	amount = len(HDR_XYZ)
-	XYZ2RGB_matrix = rgb_space[-1].inverted()
-	# We want to preserve hues between green - cyan - blue - magenta - red
-	# more than between red - redorange - yellow - yellowgreen - green
-	# Hue angles (radians, RGB)
+	# We want to reduce luminance differently between hues to keep the relation
+	a = 0.9999
+	b = 0.999975
+	c = 0.999
+	d = 0.99
+	# Hue angles (radians, RGB):
+	# red, redorange, yellow, yellowgreen, green, cyan, blue, magenta, red
 	interp = colormath.Interp([0, 0.041666, 0.166666, 0.25, 0.333333, 0.5, 0.666666, 0.833333, 1],
-							  [1., 0., 0., 1., 1., 0., 1., 1., 1.], use_numpy=True)
+							  [c, c, a, d, d, b, b, b, c], use_numpy=True)
 	for i, (RGB_in, X, Y, Z) in enumerate(HDR_XYZ):
 		if thread_abort_event and thread_abort_event.is_set():
 			return [False]
 		H = None
-		while True:
-			RGB = XYZ2RGB_matrix * (X, Y, Z)
-			if all(round(v, 5) == round(RGB[0], 5) for v in RGB):
-				# Neutral
-				break
-			if not (min(X, Y, Z) < 0 or max(RGB) > 1 or
-					X > rgb_space[1][0] or Y > 1 or Z > rgb_space[1][2]):
+		is_neutral = all(v == RGB_in[0] for v in RGB_in)
+		while not is_neutral:
+			X_D50, Y_D50, Z_D50 = colormath.adapt(X, Y, Z, rgb_space[1])
+			if not (min(X_D50, Y_D50, Z_D50) < 0 or
+					X_D50 > 0.9642 or Y_D50 > 1 or Z_D50 > 0.8249):
 				break
 			if H is None:
 				# Record hue angle
-				H = colormath.RGB2HSV(*RGB)[0]
+				H = colormath.RGB2HSV(*RGB_in)[0]
 				# This is the initial intensity, and hue + saturation
 				I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
 				I1, Ct1, Cp1 = I, Ct, Cp
-			if min(X, Y, Z) < 0:
+				f = colormath.convert_range(sum(RGB_in), 1, 3, interp(H), 1)
+			if min(X_D50, Y_D50, Z_D50) < 0:
 				# Desaturate to get rid of negative XYZ
 				Ct *= 0.999
 				Cp *= 0.999
 			else:
-				# Reduce intensity to bring XYZ down
-				I *= I_reduction_factor
+				if f < 1:
+					# Reduce intensity to bring XYZ down
+					I *= f
 				Ct *= 0.999
 				Cp *= 0.999
 			X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
-		if H is not None:
-			# Blend between original ICtCp color and tonemapped ICtCp color
-			I2, Ct2, Cp2 = I, Ct, Cp
-			f = interp(H)
-			I = I1 * (1 - f) + I2 * f
-			Ct = Ct1 * (1 - f) + Ct2 * f
-			Cp = Cp1 * (1 - f) + Cp2 * f
-			# Blend to white
-			f = colormath.convert_range(sum(RGB_in), 2, 3, 1, 0)
-			if f < 1:
-				f **= 1.0 / 2.2
-				I = I1 * (1 - f) + I * f
-				Ct *= f
-				Cp *= f
-			X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
-		#if I >= KS:
-			## Desaturate further
-			#I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
-			#min_C = colormath.convert_range(I, KS, 1, (4094 / 4095.0), KS / I)
-			#Ct *= min_C
-			#Cp *= min_C
-			#X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
 		HDR_XYZ[i] = (RGB_in, X, Y, Z)
-		count += 1.0
-		perc = round(count / amount * 50)
+		perc = round((i + 1.0) / amount * 50)
 		if progress_queue and perc > prevperc:
 			progress_queue.put(perc - prevperc)
 			prevperc = perc
