@@ -402,10 +402,18 @@ def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None,
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
 	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
 	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
+	cachehash = (id(whitepoint_source), id(whitepoint_destination), id(cat))
+	if cachehash in wp_adaption_matrix.cache:
+		return wp_adaption_matrix.cache[cachehash]
 	cat = get_cat_matrix(cat)
-	return cat.inverted() * LMS_wp_adaption_matrix(whitepoint_source, 
+	wpam = cat.inverted() * LMS_wp_adaption_matrix(whitepoint_source, 
 												   whitepoint_destination, 
 												   cat) * cat
+	wp_adaption_matrix.cache[cachehash] = wpam
+	return wpam
+
+
+wp_adaption_matrix.cache = {}
 
 
 def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None, 
@@ -1452,9 +1460,8 @@ def get_rgb_space(rgb_space=None, scale=1.0):
 	if isinstance(rgb_space, basestring):
 		rgb_space = rgb_spaces[rgb_space]
 	cachehash = tuple(map(id, rgb_space[:5])), scale
-	cache = get_rgb_space.cache.get(cachehash, None)
-	if cache:
-		return cache
+	if cachehash in get_rgb_space.cache:
+		return get_rgb_space.cache[cachehash]
 	gamma = rgb_space[0] or rgb_spaces["sRGB"][0]
 	whitepoint = get_whitepoint(rgb_space[1] or rgb_spaces["sRGB"][1], scale)
 	rx, ry, rY = rxyY = rgb_space[2] or rgb_spaces["sRGB"][2]
@@ -1491,9 +1498,8 @@ def get_standard_illuminant(illuminant_name="D50",
 							scale=1.0):
 	""" Return a standard illuminant as XYZ coordinates. """
 	cachehash = illuminant_name, tuple(priority), scale
-	cache = get_standard_illuminant.cache.get(cachehash, None)
-	if cache:
-		return cache
+	if cachehash in get_standard_illuminant.cache:
+		return get_standard_illuminant.cache[cachehash]
 	illuminant = None
 	for standard_name in priority:
 		if not standard_name in standard_illuminants:
@@ -1517,9 +1523,8 @@ def get_whitepoint(whitepoint=None, scale=1.0, planckian=False):
 	if not whitepoint:
 		whitepoint = "D50"
 	cachehash = whitepoint, scale, planckian
-	cache = get_whitepoint.cache.get(cachehash, None)
-	if cache:
-		return cache
+	if cachehash in get_whitepoint.cache:
+		return get_whitepoint.cache[cachehash]
 	if isinstance(whitepoint, basestring):
 		whitepoint = get_standard_illuminant(whitepoint)
 	elif isinstance(whitepoint, (float, int)):
