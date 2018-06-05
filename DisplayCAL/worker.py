@@ -2988,17 +2988,19 @@ END_DATA
 				# Always use B2A instead of inverse forward table (faster and
 				# better result if B2A table has enough effective resolution)
 				# for HDR with colorimetric intents
-				use_b2a = True
 				# Check B2A resolution and regenerate on-the-fly if too low
 				# and created by ArgyllCMS
 				b2a = profile_out.tags.get("B2A1", profile_out.tags.get("B2A0"))
-				if not b2a or (isinstance(b2a, ICCP.LUT16Type) and
-							   b2a.clut_grid_steps < 17 and
-							   profile_out.creator == "argl"):
+				if (not b2a and "A2B0" in
+					profile_out.tags) or (isinstance(b2a, ICCP.LUT16Type) and
+										  b2a.clut_grid_steps < 17 and
+										  profile_out.creator == "argl"):
 					b2aresult = self.update_profile_B2A(profile_out)
 					if isinstance(b2aresult, Exception):
 						raise b2aresult
 					profile_out.write()
+				if "B2A1" in profile_out.tags or "B2A0" in profile_out.tags:
+					use_b2a = True
 
 			use_xicclu = (experimental and not profile_abst and
 						  not use_b2a and format != "madVR" and
