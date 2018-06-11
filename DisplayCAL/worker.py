@@ -5,6 +5,7 @@ from __future__ import with_statement
 from binascii import hexlify
 import atexit
 import ctypes
+import exceptions
 import getpass
 import httplib
 import math
@@ -5434,6 +5435,9 @@ while 1:
 				else:
 					self.log(traceback.format_exc())
 				result = UnloggedError(safe_str(exception))
+		if isinstance(result, Exception) and result in dir(exceptions):
+			# Log traceback
+			self.log(traceback.format_exc())
 		if self.progress_start_timer.IsRunning():
 			self.progress_start_timer.Stop()
 		self.finished = True
