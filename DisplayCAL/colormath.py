@@ -158,6 +158,7 @@ def DICOM(j, inverse=False):
 class HLG(object):
 	"""
 	Hybrid Log Gamma (HLG) as defined in Rec BT.2100
+	and BT.2390-4
 	
 	"""
 
@@ -172,11 +173,14 @@ class HLG(object):
 	@property
 	def gamma(self):
 		""" System gamma for nominal peak luminance and ambient """
-		# Adjust system gamma for peak luminance != 1000 cd/m2
-		gamma = self.system_gamma + 0.42 * math.log10(self.white_cdm2 / 1000.0)
+		# Adjust system gamma for peak luminance != 1000 cd/m2 (extended model
+		# described in BT.2390-4)
+		K = 1.111
+		gamma = self.system_gamma * K ** math.log(self.white_cdm2 / 1000.0, 2)
 		if self.ambient_cdm2 > 0:
-			# Adjust system gamma for ambient surround != 5 cd/m2 (BT.2390-3)
-			gamma -= 0.076 * math.log10(self.ambient_cdm2 / 5.0)
+			# Adjust system gamma for ambient surround != 5 cd/m2 (BT.2390-4)
+			u = 0.98
+			gamma *= u ** math.log(self.ambient_cdm2 / 5.0, 2)
 		return gamma
 		
 	def oetf(self, v, inverse=False):
