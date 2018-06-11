@@ -2788,9 +2788,13 @@ class BT2390(object):
 	"""
 
 	def __init__(self, black_cdm2, white_cdm2, master_black_cdm2=0,
-				 master_white_cdm2=10000):
+				 master_white_cdm2=10000, use_alternate_master_white_clip=True):
 		"""
 		Master black and white level are used to tweak the roll-off and clip.
+		
+		If use_alternate_master_white_clip is True, do not follow BT.2390 for
+		the mastering white adjustment (allows to preserve more detail in
+		rolled-off highlights)
 		
 		"""
 
@@ -2810,7 +2814,13 @@ class BT2390(object):
 		self.mminv = master_black_cdm2 / 10000.0  # LB
 		self.mmini = specialpow(self.mminv, 1.0 / -2084)
 		self.mmaxv = master_white_cdm2 / 10000.0  # LW
-		self.mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
+		mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
+		if use_alternate_master_white_clip:
+			self.maxci = mmaxi
+			self.mmaxi = 1.0
+		else:
+			self.maxci = 1.0
+			self.mmaxi = mmaxi
 		self.mini = (self.omini - self.mmini) / (self.mmaxi - self.mmini)  # Normalized minLum
 		self.minv = specialpow(self.mini, -2084)
 		self.maxi = (self.omaxi - self.mmini) / (self.mmaxi - self.mmini)  # Normalized maxLum
@@ -2829,11 +2839,11 @@ class BT2390(object):
 			E2 = E2 * (1 - s) + maxi * s
 		return E2
 
-	def apply(self, v, KS=None, maxi=None, maxci=1.0, mini=None,
+	def apply(self, v, KS=None, maxi=None, maxci=None, mini=None,
 			  mmaxi=None, mmini=None, bpc=False, normalize=True):
 		"""
 		Apply roll-off (E' in, E' out)
-		maxci if < 1.0 applies alterante clip. SHOULD NOT BE USED FOR PQ.
+		maxci if < 1.0 applies alterante clip.
 		
 		"""
 		if KS is None:
@@ -2846,6 +2856,8 @@ class BT2390(object):
 			mmaxi = self.mmaxi
 		if mmini is None:
 			mmini = self.mmini
+		if maxci is None:
+			maxci = self.maxci
 		if normalize and mmini is not None and mmaxi is not None:
 			# Normalize PQ values based on mastering display black/white levels
 			E1 = min(max((v - mmini) / (mmaxi - mmini), 0), 1.0)
