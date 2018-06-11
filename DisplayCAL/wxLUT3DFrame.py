@@ -848,6 +848,9 @@ class LUT3DFrame(BaseFrame):
 		content_rgb_space[1] = colormath.xyY2XYZ(*content_rgb_space[1])
 		content_rgb_space = colormath.get_rgb_space(content_rgb_space)
 		try:
+			# We need to make sure the link between the original profile object
+			# and the one we're eventually going to change is broken
+			profile_in = ICCP.ICCProfile(profile_in.fileName)
 			self.worker.create_3dlut(profile_in, path, profile_abst,
 									 profile_out, apply_cal=apply_cal,
 									 intent=intent, format=format, size=size,
