@@ -1453,7 +1453,6 @@ class LUT3DFrame(BaseFrame):
 			not getcfg("3dlut.gamap.use_b2a"))
 		self.gamut_mapping_b2a.SetValue(
 			bool(getcfg("3dlut.gamap.use_b2a")))
-		self.lut3d_show_trc_controls()
 		if (hasattr(self, "input_profile") and
 			"rTRC" in self.input_profile.tags and
 			"gTRC" in self.input_profile.tags and
@@ -1515,6 +1514,7 @@ class LUT3DFrame(BaseFrame):
 			self.lut3d_trc_apply_ctrl.SetValue(True)
 		else:
 			self.lut3d_trc_apply_none_ctrl.SetValue(True)
+		self.lut3d_show_trc_controls()
 	
 	def lut3d_show_bitdepth_controls(self):
 		frozen = self.IsFrozen()
