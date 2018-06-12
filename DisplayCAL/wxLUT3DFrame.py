@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import with_statement
+import exceptions
 import os
 import re
 import shutil
@@ -869,6 +870,8 @@ class LUT3DFrame(BaseFrame):
 									 hdr_display=getcfg("3dlut.hdr_display"),
 									 XYZwp=XYZwp)
 		except Exception, exception:
+			if exception.__class__.__name__ in dir(exceptions):
+				raise
 			return exception
 		return True
 	
