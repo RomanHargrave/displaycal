@@ -2,7 +2,7 @@ Standards-Version: 3.9.6.1
 Source: ${DEBPACKAGE}-0install
 Section: graphics
 Priority: extra
-Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+Maintainer: ${MAINTAINER} <obs-packaging@${DOMAIN}>
 Build-Depends: debhelper (>= 5.0.38), python
 XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 

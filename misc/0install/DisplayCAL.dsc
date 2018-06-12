@@ -4,7 +4,7 @@ Format: 1.0
 Source: ${DEBPACKAGE}-0install
 Version: ${VERSION}-1
 Binary: ${DEBPACKAGE}-0install
-Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+Maintainer: ${MAINTAINER} <obs-packaging@${DOMAIN}>
 Architecture: all
 Build-Depends: debhelper (>= 5.0.38), python
 Files: 

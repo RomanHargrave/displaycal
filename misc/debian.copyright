@@ -1,6 +1,6 @@
 Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
 Name: ${APPNAME}
-Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+Maintainer: ${MAINTAINER} <obs-packaging@${DOMAIN}>
 Source: ${URL}
 
 Copyright: 2008-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>

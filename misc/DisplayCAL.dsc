@@ -4,7 +4,7 @@ Format: 1.0
 Source: ${DEBPACKAGE}
 Version: ${VERSION}-1
 Binary: ${DEBPACKAGE}
-Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+Maintainer: ${MAINTAINER} <obs-packaging@${DOMAIN}>
 Architecture: any
 Build-Depends: debhelper (>= 5.0.38), doc-base, python-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 Files: 

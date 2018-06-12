@@ -2,7 +2,7 @@ Standards-Version: 3.9.6.1
 Source: ${DEBPACKAGE}
 Section: graphics
 Priority: extra
-Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
+Maintainer: ${MAINTAINER} <obs-packaging@${DOMAIN}>
 Build-Depends: debhelper (>= 5.0.38), doc-base, python-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
 
