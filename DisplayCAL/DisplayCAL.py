@@ -12187,19 +12187,21 @@ class MainFrame(ReportFrame, BaseFrame):
 				result = dlg.ShowModal()
 				profile_save_path = dlg.GetPath()
 				dlg.Destroy()
+				if result != wx.ID_OK:
+					return
+				filename, ext = os.path.splitext(profile_save_path)
+				if ext.lower() not in (".icc", ".icm"):
+					profile_save_path += profile_ext
+				profile.setDescription(os.path.basename(filename))
 			else:
 				result = wx.ID_OK
 				profile_save_path = profile.fileName
 			if result == wx.ID_OK:
-				filename, ext = os.path.splitext(profile_save_path)
-				if ext.lower() not in (".icc", ".icm"):
-					profile_save_path += profile_ext
 				if not waccess(profile_save_path, os.W_OK):
 					show_result_dialog(Error(lang.getstr("error.access_denied.write",
 														 profile_save_path)),
 									   self)
 					return
-				profile.setDescription(os.path.basename(filename))
 				profile.calculateID()
 				profile.write(profile_save_path)
 				if profile_save_path == get_current_profile_path():
