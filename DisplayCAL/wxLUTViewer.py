@@ -129,7 +129,7 @@ class LUTCanvas(plot.PlotCanvas):
 
 	def __init__(self, *args, **kwargs):
 		self.colors = {"RGB_R": "red",
-					   "RGB_G": "green",
+					   "RGB_G": "#00FF00",
 					   "RGB_B": "#0080FF",
 					   "CMYK_C": "cyan",
 					   "CMYK_M": "magenta",
@@ -140,13 +140,13 @@ class LUTCanvas(plot.PlotCanvas):
 					   "nCLR_2": "yellow",
 					   "nCLR_3": "black",
 					   "nCLR_4": "red",
-					   "nCLR_5": "green",
+					   "nCLR_5": "#00FF00",
 					   "nCLR_6": "blue",
 					   "nCLR_7": "#FF8000",
 					   "nCLR_8": "#80FF00",
 					   "nCLR_9": "#00FF80",
 					   "XYZ_X": "red",
-					   "XYZ_Y": "green",
+					   "XYZ_Y": "#00FF00",
 					   "XYZ_Z": "#0080FF",
 					   "Lab_L*": "#CCCCCC",
 					   "Lab_a*": "#FF0080",
@@ -350,7 +350,7 @@ class LUTCanvas(plot.PlotCanvas):
 			elif channels_label == "CM":
 				color = '#0080FF'
 			elif channels_label == "CY":
-				color = 'green'
+				color = '#00FF00'
 			elif channels_label == "MY":
 				color = 'red'
 		for channel_name in channels.values():
