@@ -303,12 +303,12 @@ class LUTCanvas(plot.PlotCanvas):
 						n = colormath.XYZ2Lab(0, float(n) / axis_x * 100, 0)[0] * (axis_x / 100.0)
 					if connection_colorspace in ("Lab", "XYZ"):
 						points[channel].append([n, i])
-						idx = int(round(n / 255.0 * 4095))
+						idx = int(round(float(n) / 255.0 * 4095))
 						self.point_grid[channel][idx] = i
 					else:
 						points[channel].append([i, n])
 						idx = int(round(i / 255.0 * 4095))
-						self.point_grid[channel][idx] = n
+						self.point_grid[channel][idx] = float(n)
 
 		#for n in sorted(self.point_grid[0].keys()):
 			#print n, self.point_grid[0].get(n), self.point_grid[1].get(n), self.point_grid[2].get(n)
