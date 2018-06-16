@@ -1941,7 +1941,7 @@ def _main(app):
 	display_no = get_argyll_display_number(app.TopWindow.get_display()[1])
 	for arg in sys.argv[1:]:
 		if os.path.isfile(arg):
-			app.TopWindow.drop_handler(safe_unicode(arg))
+			app.TopWindow.drop_handler(safe_unicode(os.path.abspath(arg)))
 			break
 	else:
 		app.TopWindow.LoadProfile(get_display_profile(display_no))

@@ -2112,7 +2112,7 @@ def _main(app):
 	app.TopWindow.update_controls()
 	for arg in sys.argv[1:]:
 		if os.path.isfile(arg):
-			app.TopWindow.drop_handler(safe_unicode(arg))
+			app.TopWindow.drop_handler(safe_unicode(os.path.abspath(arg)))
 			break
 	else:
 		app.TopWindow.load_lut(get_display_profile(display_no))
