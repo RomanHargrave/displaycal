@@ -385,7 +385,7 @@ class LUTCanvas(plot.PlotCanvas):
 					for idx, seen in enumerate(seen_values):
 						match = True
 						for i, (x, y) in enumerate(seen):
-							if abs(y - values[i][1]) > 0.05:
+							if x != values[i][0] or abs(y - values[i][1]) > 0.05:
 								match = False
 								break
 						if match:
