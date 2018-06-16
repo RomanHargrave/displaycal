@@ -339,25 +339,14 @@ class LUTCanvas(plot.PlotCanvas):
 
 		if identical:
 			channels_label = "".join(channels.values())
-			if channels_label in ("RGB", "CMYK"):
-				color = 'white'
-			elif channels_label == "RG":
-				color = 'yellow'
-			elif channels_label == "RB":
-				color = 'magenta'
-			elif channels_label == "GB":
-				color = 'cyan'
-			elif channels_label == "CM":
-				color = '#0080FF'
-			elif channels_label == "CY":
-				color = '#00FF00'
-			elif channels_label == "MY":
-				color = 'red'
+			color = self.get_color(channels_label, color)
 		for channel_name in channels.values():
 			if channel_name:
 				legend.append(channel_name)
 		linear_points = [(i, int(round(v / axis_y * maxv))) for i, v in
 						 linear_points]
+		seen_values = []
+		seen_labels = []
 		for channel, values in points.iteritems():
 			channel_label = channels[channel]
 			if not identical:
@@ -391,15 +380,34 @@ class LUTCanvas(plot.PlotCanvas):
 					self.point_grid[channel][idx] = center_y
 					color2 = self.colors["Lab_%s-" % channel_label]
 					line2 = Plot(values2, legend=label + suffix, colour=color2)
+				elif seen_values:
+					# Check if same line (+- 0.05 tolerance) has been seen
+					for idx, seen in enumerate(seen_values):
+						match = True
+						for i, (x, y) in enumerate(seen):
+							if abs(y - values[i][1]) > 0.05:
+								match = False
+								break
+						if match:
+							break
+					if match:
+						seen_label = seen_labels[idx]
+						lines[idx + 1].attributes["colour"] = self.get_color(seen_label +
+																			 channel_label)
+						continue
 			line = Plot(values, legend=label + suffix, colour=color)
 			if ((colorspace == "CMYK" and label == "K") or
 				(colorspace == "Lab" and label in ("a*", "b*"))):
 				# CMYK -> KCMY, Lab -> baL for better visibilty
 				lines.insert(1, line)
+				seen_values.insert(0, values)
+				seen_labels.insert(0, label)
 				if line2:
 					lines.insert(1, line2)
 			else:
 				lines.append(line)
+				seen_values.append(values)
+				seen_labels.append(label)
 				if line2:
 					lines.append(line2)
 			if identical:
@@ -410,6 +418,23 @@ class LUTCanvas(plot.PlotCanvas):
 													 lang.getstr("in")]), 
 										   " ".join([yLabel,
 													 lang.getstr("out")])))
+
+	def get_color(self, channels_label, default="white"):
+		if channels_label in ("RGB", "CMYK", "XYZ"):
+			return 'white'
+		elif channels_label in ("RG", "XY"):
+			return 'yellow'
+		elif channels_label in ("RB", "XZ"):
+			return 'magenta'
+		elif channels_label == ("GB", "YZ"):
+			return 'cyan'
+		elif channels_label == "CM":
+			return '#0080FF'
+		elif channels_label == "CY":
+			return '#00FF00'
+		elif channels_label == "MY":
+			return 'red'
+		return default
 
 	def DrawPointLabel(self, dc, mDataDict):
 		"""
