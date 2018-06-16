@@ -390,6 +390,8 @@ class LUTCanvas(plot.PlotCanvas):
 								break
 						if match:
 							break
+					else:
+						match = False
 					if match:
 						seen_label = seen_labels[idx]
 						lines[idx + 1].attributes["colour"] = self.get_color(seen_label +
