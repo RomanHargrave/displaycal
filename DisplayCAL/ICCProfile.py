@@ -726,6 +726,13 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				return colormath.convert_range(v, 0, 1, 0, bt2390.mmaxi)
 			else:
 				return v
+		def encf_inverse(v):
+			if v < bt2390.mmaxi:
+				v = colormath.convert_range(v, 0, bt2390.mmaxi, 0, 1)
+				v = colormath.specialpow(v, encpow, 2)
+				return colormath.convert_range(v, 0, 1, 0, bt2390.mmaxi)
+			else:
+				return v
 	elif hdr_format == "HLG":
 		# Note: Unlike the PQ black level lift, we apply HLG black offset as
 		# separate final step, not as part of the HLG EOTF
@@ -934,16 +941,13 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			v = ointerp(n) / maxstep * 65535
 			for i in xrange(3):
 				otable.input[i].append(v)
-			perc = startperc + math.floor(n * 20)
+			perc = startperc + math.floor(n)
 			if logfile and perc > prevperc:
 				logfile.write("\r%i%%" % perc)
 				prevperc = perc
 		startperc = perc
 
 	# Scene RGB -> HDR tone mapping -> HDR XYZ -> backward lookup -> display RGB
-	if logfile:
-		logfile.write("\rApplying HDR tone mapping...\n")
-		logfile.write("\r%i%%" % perc)
 	itable.clut = []
 	debugtable0.clut = []
 	debugtable1.clut = []
@@ -964,10 +968,15 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	HDR_RGB = []
 	HDR_XYZ = []
 	HDR_min_I = []
+	logmsg = "\rGenerating lookup table"
 	if hdr_format == "PQ" and tonemap:
+		logmsg += " and applying HDR tone mapping"
 		endperc = 25
 	else:
 		endperc = 50
+	if logfile:
+		logfile.write(logmsg + "...\n")
+		logfile.write("\r%i%%" % perc)
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			for B in xrange(clutres):
@@ -1161,7 +1170,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 								  whitepoint_source=rgb_space[1])
 		if max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or round(Y, 6) > 1:
 			# This should not happen
-			safe_print("#%i XYZ not in range [0,1]" % i, X, Y, Z)
+			safe_print("#%i"  % i, "RGB %.4f %.4f %.4f" % tuple(RGB),
+					   "XYZ %.4f %.4f %.4f" % (X, Y, Z), "not in range [0,1]")
 		HDR_XYZ[i] = (X, Y, Z)
 		perc = startperc + math.floor(i / clutres ** 3.0 *
 									  (100 - startperc))
@@ -1617,40 +1627,42 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				if logfile and perc > prevperc:
 					logfile.write("\r%i%%" % perc)
 					prevperc = perc
-	startperc = perc
+	prevperc = startperc = perc = 0
 
 	if debug:
 		safe_print("Num OOG:", oog_count)
 		
 	if generate_B2A:
-		##if logfile:
-			##logfile.write("\rGenerating PCS-to-device table...\n")
-			##logfile.write("\r%i%%" % perc)
+		if logfile:
+			logfile.write("\rGenerating PCS-to-device table...\n")
 		
 		otable.clut = []
-		##rgb_space_out = list(rgb_space)
-		##rgb_space_out[0] = [[v / 65535.0 for v in otable.input[0]]] * 3
-		##count = 0
-		##for R in xrange(clutres):
-			##for G in xrange(clutres):
-				##otable.clut.append([])
-				##for B in xrange(clutres):
-					##RGB = [v * step for v in (R, G, B)]
-					##R_G_B_ = [ointerp(v) / maxstep for v in RGB]
-					##X, Y, Z = m1 * R_G_B_
-					##X, Y, Z = colormath.adapt(X, Y, Z, "D50", rgb_space[1])
-					##RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space_out)
-					##otable.clut[-1].append([v * 65535 for v in RGB])
-					##count += 1
-					##perc = 35 + round(count / clutres ** 3.0 * 65)
-					##if logfile and perc > prevperc:
-						##logfile.write("\r%i%%" % perc)
-						##prevperc = perc
-		for R in xrange(2):
-			for G in xrange(2):
+		count = 0
+		for R in xrange(clutres):
+			for G in xrange(clutres):
 				otable.clut.append([])
-				for B in xrange(2):
-					otable.clut[-1].append([v * 65535 for v in (R , G, B)])
+				for B in xrange(clutres):
+					RGB = [v * step for v in (R, G, B)]
+					LinearRGB = [eotf(v) for v in RGB]
+					if hdr_format == "PQ":
+						I1, Ct1, Cp1 = colormath.LinearRGB2ICtCp(*LinearRGB,
+																 oetf=eotf_inverse)
+						I2 = eetf(I1)
+						Ct2, Cp2 = (min(I1 / I2, I2 / I1) * v for v in (Ct1, Cp1))
+						X, Y, Z = colormath.ICtCp2XYZ(I1, Ct2, Cp2)
+						RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space,
+												oetf=eotf_inverse)
+					else:
+						X, Y, Z = rgb_space[-1] * LinearRGB
+						RGB = hlg.XYZ2RGB(X, Y, Z)
+					if (max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or
+						round(Y, 6) > 1 or max(RGB) > 1 or min(RGB) < 0):
+						safe_print("#%i" % count, "RGB %.4f %.4f %.4f" %
+								   tuple(RGB), "XYZ %.4f %.4f %.4f" % (X, Y, Z),
+								   "not in range [0,1]")
+					otable.clut[-1].append([min(max(v, 0), 1) * 65535
+											for v in RGB])
+					count += 1
 
 	if logfile:
 		logfile.write("\n")
@@ -1682,7 +1694,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											clutres=33, mode="RGB_ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
-											generate_B2A=False,
+											generate_B2A=True,
 											worker=None,
 											logfile=None):
 	"""
