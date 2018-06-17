@@ -2041,8 +2041,9 @@ class Worker(WorkerBase):
 	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
 								 gamma=2.4, gamma_type="B", size=None,
 								 apply_trc=True, white_cdm2=100, minmll=0,
-								 maxmll=10000, ambient_cdm2=5,
-								 content_rgb_space="DCI P3",
+								 maxmll=10000,
+								 use_alternate_master_white_clip=True,
+								 ambient_cdm2=5, content_rgb_space="DCI P3",
 								 hdr_chroma_compression=False,
 								 hdr_target_profile=None):
 		"""
@@ -2170,6 +2171,7 @@ class Worker(WorkerBase):
 					black_cdm2, white_cdm2,
 					minmll,  # Not used for HLG
 					maxmll,  # Not used for HLG
+					use_alternate_master_white_clip,  # Not used for HLG
 					system_gamma=1.2,  # Not used for PQ
 					ambient_cdm2=ambient_cdm2,  # Not used for PQ
 					maxsignal=1.0,  # Not used for PQ
@@ -2919,7 +2921,7 @@ END_DATA
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
 					 use_b2a=False, white_cdm2=100, minmll=0, maxmll=10000,
-					 ambient_cdm2=5,
+					 use_alternate_master_white_clip=True, ambient_cdm2=5,
 					 content_rgb_space="DCI P3", hdr_display=False,
 					 XYZwp=None):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
@@ -3124,6 +3126,7 @@ END_DATA
 												  white_cdm2=white_cdm2,
 												  minmll=minmll,
 												  maxmll=maxmll,
+												  use_alternate_master_white_clip=use_alternate_master_white_clip,
 												  ambient_cdm2=ambient_cdm2,
 												  content_rgb_space=content_rgb_space,
 												  hdr_chroma_compression=not hdr_use_src_gamut or content_colors != in_colors,
@@ -3168,6 +3171,7 @@ END_DATA
 											  white_cdm2=white_cdm2,
 											  minmll=minmll,
 											  maxmll=maxmll,
+											  use_alternate_master_white_clip=use_alternate_master_white_clip,
 											  ambient_cdm2=ambient_cdm2,
 											  hdr_chroma_compression=False)
 

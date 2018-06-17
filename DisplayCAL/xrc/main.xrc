@@ -1660,6 +1660,13 @@
                                           <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                                           <border>4</border>
                                         </object>
+                                        <object class="sizeritem">
+                                          <object class="wxCheckBox" name="lut3d_hdr_maxmll_alt_clip_cb">
+                                            <label>preserve_saturation</label>
+                                          </object>
+                                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                          <border>8</border>
+                                        </object>
                                         <orient>wxHORIZONTAL</orient>
                                       </object>
                                     </object>

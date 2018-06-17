@@ -789,6 +789,7 @@
 		"*positive": "Positive",
 	"preferred_cmm": "偏向 CMM",
 	"prepress.icc": "印前作業 (D50, 130 cd/m², L*)",
+		"*preserve_saturation": "Preserve saturation",
 	"preset": "預設集",
 	"preview": "預覽",
 	"profile": "描述檔",

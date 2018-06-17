@@ -789,6 +789,7 @@
 		"*positive": "Positive",
 		"*preferred_cmm": "Preferred CMM",
 	"prepress.icc": "프리프레스 (D50, 130 cd/m², L*)",
+		"*preserve_saturation": "Preserve saturation",
 	"preset": "프리셋",
 	"preview": "미리보기",
 	"profile": "프로파일",

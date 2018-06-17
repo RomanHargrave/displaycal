@@ -789,6 +789,7 @@
 	"positive": "Positif",
 	"preferred_cmm": "CMM préféré",
 	"prepress.icc": "Pré-presse (D50, 130 cd/m², L*)",
+		"*preserve_saturation": "Preserve saturation",
 	"preset": "Pré-réglage",
 	"preview": "Aperçu",
 	"profile": "Profil",

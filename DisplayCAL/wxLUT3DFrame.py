@@ -162,6 +162,8 @@ class LUT3DFrame(BaseFrame):
 										self.lut3d_hdr_minmll_handler)
 		self.lut3d_hdr_maxmll_ctrl.Bind(floatspin.EVT_FLOATSPIN,
 										self.lut3d_hdr_maxmll_handler)
+		self.lut3d_hdr_maxmll_alt_clip_cb.Bind(wx.EVT_CHECKBOX,
+											   self.lut3d_hdr_maxmll_alt_clip_handler)
 
 	def lut3d_bind_content_colorspace_handlers(self):
 		self.lut3d_content_colorspace_ctrl.Bind(wx.EVT_CHOICE,
@@ -280,6 +282,10 @@ class LUT3DFrame(BaseFrame):
 			self.panel.Sizer.Layout()
 			self.update_layout()
 		self.panel.Thaw()
+
+	def lut3d_hdr_maxmll_alt_clip_handler(self, event):
+		self.lut3d_set_option("3dlut.hdr_maxmll_alt_clip",
+							  int(self.lut3d_hdr_maxmll_alt_clip_cb.GetValue()))
 	
 	def lut3d_apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
@@ -865,6 +871,7 @@ class LUT3DFrame(BaseFrame):
 									 apply_black_offset=apply_black_offset,
 									 use_b2a=use_b2a, white_cdm2=white_cdm2,
 									 minmll=minmll, maxmll=maxmll,
+									 use_alternate_master_white_clip=getcfg("3dlut.hdr_maxmll_alt_clip"),
 									 ambient_cdm2=ambient_cdm2,
 									 content_rgb_space=content_rgb_space,
 									 hdr_display=getcfg("3dlut.hdr_display"),
@@ -1340,6 +1347,7 @@ class LUT3DFrame(BaseFrame):
 		setcfg(option, v)
 		if option in ("3dlut.hdr_peak_luminance", "3dlut.hdr_minmll",
 					  "3dlut.hdr_maxmll"):
+			self.lut3d_show_hdr_maxmll_alt_clip_ctrl()
 			self.lut3d_hdr_update_diffuse_white()
 		elif option == "3dlut.hdr_ambient_luminance":
 			self.lut3d_hdr_update_system_gamma()
@@ -1432,6 +1440,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
 		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
+		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
 		self.lut3d_hdr_update_system_gamma()
@@ -1544,6 +1553,14 @@ class LUT3DFrame(BaseFrame):
 							   getcfg("3dlut.trc").startswith("smpte2084") and
 							   getcfg("3dlut.format") == "madVR")
 
+	def lut3d_show_hdr_maxmll_alt_clip_ctrl(self):
+		self.panel.Freeze()
+		show = self.lut3d_hdr_maxmll_ctrl.IsShown()  # BT.2390 (roll-off)
+		self.lut3d_hdr_maxmll_alt_clip_cb.Show(show and
+											   getcfg("3dlut.hdr_maxmll") < 10000)
+		self.panel.Layout()
+		self.panel.Thaw()
+
 	def lut3d_show_trc_controls(self, show=True):
 		self.panel.Freeze()
 		show = show and self.worker.argyll_version >= [1, 6]
@@ -1573,6 +1590,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_maxmll_label.Show(show and smpte2084r)
 		self.lut3d_hdr_maxmll_ctrl.Show(show and smpte2084r)
 		self.lut3d_hdr_maxmll_ctrl_label.Show(show and smpte2084r)
+		self.lut3d_show_hdr_maxmll_alt_clip_ctrl()
 		self.lut3d_hdr_diffuse_white_label.Show(show and smpte2084r)
 		self.lut3d_hdr_diffuse_white_txt.Show(show and smpte2084r)
 		self.lut3d_hdr_diffuse_white_txt_label.Show(show and smpte2084r)

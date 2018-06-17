@@ -645,6 +645,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											black_cdm2=0, white_cdm2=400,
 											master_black_cdm2=0,
 											master_white_cdm2=10000,
+											use_alternate_master_white_clip=True,
 											content_rgb_space="DCI P3",
 											rolloff=True,
 											clutres=33, mode="RGB_ICtCp",
@@ -673,6 +674,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											 black_cdm2, white_cdm2,
 											 master_black_cdm2,
 											 master_white_cdm2,
+											 use_alternate_master_white_clip,
 											 1.2,  # Not used for PQ
 											 5.0,  # Not used for PQ
 											 1.0,  # Not used for PQ
@@ -689,6 +691,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 									  black_cdm2=0, white_cdm2=400,
 									  master_black_cdm2=0,  # Not used for HLG
 									  master_white_cdm2=10000,  # Not used for HLG
+									  use_alternate_master_white_clip=True,  # Not used for HLG
 									  system_gamma=1.2,  # Not used for PQ
 									  ambient_cdm2=5,  # Not used for PQ
 									  maxsignal=1.0,  # Not used for PQ
@@ -710,7 +713,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 
 	if hdr_format == "PQ":
 		bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
-								  master_white_cdm2)
+								  master_white_cdm2,
+								  use_alternate_master_white_clip)
 
 		maxv = white_cdm2 / 10000.0
 		eotf = lambda v: colormath.specialpow(v, -2084)
@@ -1717,6 +1721,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											 black_cdm2, white_cdm2,
 											 0,  # Not used for HLG
 											 10000,  # Not used for HLG
+											 True,  # Not used for HLG
 											 system_gamma,
 											 ambient_cdm2,
 											 maxsignal,
