@@ -754,9 +754,10 @@ class SynthICCFrame(BaseFrame):
 														rolloff=True)
 				else:
 					# HLG
-					profile.tags.kTRC.set_smpte2084_trc(0,
-														1.2,
-														getcfg("3dlut.hdr_ambient_luminance"))
+					profile.tags.kTRC.set_hlg_trc(0,
+												  getcfg("synthprofile.luminance"),
+												  1.2,
+												  getcfg("3dlut.hdr_ambient_luminance"))
 				if black != [0, 0, 0] and outoffset and not bpc:
 					profile.tags.kTRC.apply_bpc(black[1])
 		elif black != [0, 0, 0]:
