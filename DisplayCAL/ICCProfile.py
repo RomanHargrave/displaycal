@@ -3566,6 +3566,7 @@ class CurveType(ICCProfileTag, list):
 	
 	def set_smpte2084_trc(self, black_cdm2=0, white_cdm2=100,
 						  master_black_cdm2=0, master_white_cdm2=None,
+						  use_alternate_master_white_clip=True,
 						  rolloff=False, size=None):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
@@ -3598,7 +3599,8 @@ class CurveType(ICCProfileTag, list):
 			if not master_white_cdm2:
 				master_white_cdm2 = 10000
 			bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
-									  master_white_cdm2)
+									  master_white_cdm2,
+									  use_alternate_master_white_clip)
 			maxi_out = maxi
 		else:
 			if not master_white_cdm2:
@@ -5980,6 +5982,7 @@ class ICCProfile:
 
 	def set_smpte2084_trc(self, XYZbp=(0, 0, 0), white_cdm2=100,
 						  master_black_cdm2=0, master_white_cdm2=10000,
+						  use_alternate_master_white_clip=True,
 						  rolloff=False, size=1024, blend_blackpoint=True):
 		"""
 		Set the response to the SMPTE 2084 perceptual quantizer (PQ) function
@@ -6000,6 +6003,7 @@ class ICCProfile:
 														   white_cdm2,
 														   master_black_cdm2,
 														   master_white_cdm2,
+														   use_alternate_master_white_clip,
 														   rolloff, size)
 		if tuple(XYZbp) != (0, 0, 0) and blend_blackpoint:
 			self.apply_black_offset([v / white_cdm2 for v in XYZbp],

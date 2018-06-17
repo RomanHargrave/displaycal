@@ -2101,7 +2101,9 @@ class Worker(WorkerBase):
 				else:
 					XYZbp_cdm2 = [0, 0, 0]
 				profile1.set_smpte2084_trc(XYZbp_cdm2, white_cdm2, minmll,
-										   maxmll, rolloff=True,
+										   maxmll,
+										   use_alternate_master_white_clip,
+										   rolloff=True,
 										   blend_blackpoint=False)
 				desc += (u" " + lang.getstr("trc." + gamma) +
 						 (u" %s-%i cd/m² (mastering %s-%i cd/m²)" %

@@ -699,6 +699,7 @@ class SynthICCFrame(BaseFrame):
 											   for v in black],
 											  getcfg("synthprofile.luminance"),
 											  minmll, maxmll,
+											  getcfg("3dlut.hdr_maxmll_alt_clip"),
 											  rolloff=True,
 											  blend_blackpoint=False)
 				else:
@@ -749,6 +750,7 @@ class SynthICCFrame(BaseFrame):
 														(1 - outoffset),
 														getcfg("synthprofile.luminance"),
 														minmll, maxmll,
+														getcfg("3dlut.hdr_maxmll_alt_clip"),
 														rolloff=True)
 				else:
 					# HLG
