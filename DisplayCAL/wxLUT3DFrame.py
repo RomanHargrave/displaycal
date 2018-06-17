@@ -286,6 +286,7 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_hdr_maxmll_alt_clip_handler(self, event):
 		self.lut3d_set_option("3dlut.hdr_maxmll_alt_clip",
 							  int(self.lut3d_hdr_maxmll_alt_clip_cb.GetValue()))
+		self.lut3d_hdr_update_diffuse_white()
 	
 	def lut3d_apply_cal_ctrl_handler(self, event):
 		setcfg("3dlut.output.profile.apply_cal",
@@ -1356,7 +1357,8 @@ class LUT3DFrame(BaseFrame):
 		# Update knee start info for BT.2390-3 roll-off
 		bt2390 = colormath.BT2390(0, getcfg("3dlut.hdr_peak_luminance"),
 								  getcfg("3dlut.hdr_minmll"),
-								  getcfg("3dlut.hdr_maxmll"))
+								  getcfg("3dlut.hdr_maxmll"),
+								  getcfg("3dlut.hdr_maxmll_alt_clip"))
 		diffuse_ref_cdm2 = 94.37844
 		diffuse_PQ = colormath.specialpow(diffuse_ref_cdm2 / 10000, 1.0 / -2084)
 		# Determine white cd/m2 after roll-off
