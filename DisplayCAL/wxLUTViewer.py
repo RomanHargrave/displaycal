@@ -335,7 +335,8 @@ class LUTCanvas(plot.PlotCanvas):
 		color = 'white'
 			
 		identical = (len(points) > 1 and
-					 all(values == points.values()[0] for values in points.itervalues()))
+					 all(x == points.values()[0][i][0] and abs(y - points.values()[0][i][1]) < 0.005
+						 for i, (x, y) in enumerate(values) for values in points.itervalues()))
 
 		if identical:
 			channels_label = "".join(channels.values())
@@ -381,11 +382,11 @@ class LUTCanvas(plot.PlotCanvas):
 					color2 = self.colors["Lab_%s-" % channel_label]
 					line2 = Plot(values2, legend=label + suffix, colour=color2)
 				elif seen_values:
-					# Check if same line (+- 0.05 tolerance) has been seen
+					# Check if same line (+- 0.005 tolerance) has been seen
 					for idx, seen in enumerate(seen_values):
 						match = True
 						for i, (x, y) in enumerate(seen):
-							if x != values[i][0] or abs(y - values[i][1]) > 0.05:
+							if x != values[i][0] or abs(y - values[i][1]) > 0.005:
 								match = False
 								break
 						if match:
@@ -428,7 +429,7 @@ class LUTCanvas(plot.PlotCanvas):
 			return 'yellow'
 		elif channels_label in ("RB", "XZ"):
 			return 'magenta'
-		elif channels_label == ("GB", "YZ"):
+		elif channels_label in ("GB", "YZ"):
 			return 'cyan'
 		elif channels_label == "CM":
 			return '#0080FF'
