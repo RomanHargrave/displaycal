@@ -285,6 +285,7 @@
 	"colorimeter_correction.create.failure": "보정치 생성에 실패했습니다.",
 	"colorimeter_correction.create.info": "컬러리미터 보정치를 생성하려면, 먼저 스펙트로미터를 사용하여 테스트 컬러를 측정해야 합니다. 분광 보정 대신 컬러리미터를 사용하여 보정치 행렬을 생성하고자 하는 경우에도 스펙트로미터를 사용한 측정이 필요합니다.\n대안으로 “찾기...”를 선택하여 기존 측정치를 사용할 수도 있습니다.",
 	"colorimeter_correction.create.success": "보정치가 성공적으로 생성되었습니다.",
+		"*colorimeter_correction.create.warning": "Make sure to measure your display device in its native gamut mode and do not artificially restrict its gamut (via emulation modes or similar means) when creating a colorimeter correction.",
 	"colorimeter_correction.file.none": "없음",
 	"colorimeter_correction.import": "다른 디스플레이 프로파일링 소프트웨어로부터 컬러리미터 보정치 가져오기...",
 	"colorimeter_correction.import.choose": "가져올 컬러리미터 보정치 파일을 선택하세요.",

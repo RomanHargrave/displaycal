@@ -285,6 +285,7 @@
 	"colorimeter_correction.create.failure": "Erstellen der Korrektur fehlgeschlagen.",
 	"colorimeter_correction.create.info": "Um eine Colorimeter-Korrektur zu erstellen, müssen Sie zuerst einige Farbfelder mit einem Spektrometer messen, und falls Sie eine Korrekturmatrix statt einer Spektralkorrektur erstellen möchten, auch mit dem zu korrigierenden Colorimeter.\nAlternativ können Sie per Auswahl von „Durchsuchen...“ auch bereits erzeugte Messwerte verwenden.",
 	"colorimeter_correction.create.success": "Korrektur erfolgreich erstellt.",
+	"colorimeter_correction.create.warning": "Stellen Sie sicher, dass Sie Ihr Anzeigegerät in seinem nativen Farbumfang messen und diesen nicht künstlich beschränken (via Emulations-Modi oder ähnlichen Möglichkeiten), wenn Sie eine Colorimeter-Korrektur erstellen.",
 	"colorimeter_correction.file.none": "Keine",
 	"colorimeter_correction.import": "Colorimeter-Korrekturen von anderer Anzeigegeräteprofilierungs-Software importieren...",
 	"colorimeter_correction.import.choose": "Bitte wählen Sie eine Datei mit Colorimeter-Korrekturen aus.",

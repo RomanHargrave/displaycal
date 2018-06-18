@@ -285,6 +285,7 @@
 	"colorimeter_correction.create.failure": "Échec de la création de la correction.",
 	"colorimeter_correction.create.info": "Pour créer une correction du colorimètre, vous devez d’abord mesurer les couleurs de test à l’aide d’un spectromètre et, dans le cas où vous voulez créer une matrice de correction plutôt qu’une correction spectrale, avec le colorimètre également.\nVous pouvez aussi utiliser des mesures existantes en choisissant « Parcourir »",
 	"colorimeter_correction.create.success": "Correction créée avec succès.",
+		"*colorimeter_correction.create.warning": "Make sure to measure your display device in its native gamut mode and do not artificially restrict its gamut (via emulation modes or similar means) when creating a colorimeter correction.",
 	"colorimeter_correction.file.none": "aucune",
 	"colorimeter_correction.import": "Importer les corrections du colorimètre depuis un autre logiciel de caractérisation d’écrans…",
 	"colorimeter_correction.import.choose": "Veuillez choisir le fichier de correction de colorimètre à importer.",

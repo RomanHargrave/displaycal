@@ -285,6 +285,7 @@
 	"colorimeter_correction.create.failure": "修正建立失败。",
 	"colorimeter_correction.create.info": "如需建立色度计修正，你必须先使用光谱仪量度必需的颜色，或假设你需要同样地用色度计建立一个修正矩阵而并光谱修正。\n另外你还可以“浏览...”来选择已有的检测值。.",
 	"colorimeter_correction.create.success": "已成功建立修正档。",
+		"*colorimeter_correction.create.warning": "Make sure to measure your display device in its native gamut mode and do not artificially restrict its gamut (via emulation modes or similar means) when creating a colorimeter correction.",
 	"colorimeter_correction.file.none": "无",
 	"colorimeter_correction.import": "由其他显示器描述文档建立软件汇入色度计修正...",
 	"colorimeter_correction.import.choose": "请选择想汇入的色度计修正。",

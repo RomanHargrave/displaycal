@@ -9456,6 +9456,15 @@ class MainFrame(ReportFrame, BaseFrame):
 								##alt=lang.getstr("browse"), 
 								bitmap=geticon(32, "dialog-information"),
 								wrap=90)
+			boxsizer = wx.BoxSizer(wx.HORIZONTAL)
+			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
+			warning_icon = wx.StaticBitmap(dlg, -1, geticon(16, "dialog-warning"))
+			boxsizer.Add(warning_icon)
+			warning_text = wx.StaticText(dlg, -1,
+										 wrap(lang.getstr("colorimeter_correction.create.warning"),
+											  86))
+			warning_text.ForegroundColour = "#F07F00"
+			boxsizer.Add(warning_text, flag=wx.LEFT, border=8)
 			# Colorimeter correction type
 			# We deliberately don't use RadioBox because there's no way to
 			# set the correct background color (this matters under MSWindows
