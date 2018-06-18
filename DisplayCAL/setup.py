@@ -937,6 +937,15 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		}) for script, desc in filter(lambda (script, desc):
 									  script2pywname(script) in console_scripts,
 									  scripts)]
+		attrs["console"].append(Target(**{
+			"script": os.path.join(basedir, "scripts", "eecolor_to_madvr"),
+			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
+												appname + "-3DLUT-maker.ico"))],
+			"other_resources": [(24, 1, manifest_xml)],
+			"copyright": u"© %s %s" % (strftime("%Y"), author),
+			"description": "Convert eeColor 65^3 to madVR 256^3 3D LUT "
+						   "(video levels in, video levels out)"
+		}))
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)
