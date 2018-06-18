@@ -5385,7 +5385,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("whitepoint.y", None)
 			setcfg("3dlut.whitepoint.x", None)
 			setcfg("3dlut.whitepoint.y", None)
-		self.visual_whitepoint_editor_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
+		# Only show visual whitepoint editor if whitepoint set to chromaticity
+		self.visual_whitepoint_editor_btn.Show(self.whitepoint_ctrl.GetSelection() == 2)
 		self.whitepoint_measure_btn.Show(self.whitepoint_ctrl.GetSelection() > 0)
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
