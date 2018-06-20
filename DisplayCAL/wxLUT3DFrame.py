@@ -287,7 +287,7 @@ class LUT3DFrame(BaseFrame):
 
 	def lut3d_hdr_maxmll_alt_clip_handler(self, event):
 		self.lut3d_set_option("3dlut.hdr_maxmll_alt_clip",
-							  int(self.lut3d_hdr_maxmll_alt_clip_cb.GetValue()))
+							  int(not self.lut3d_hdr_maxmll_alt_clip_cb.GetValue()))
 		self.lut3d_hdr_update_diffuse_white()
 	
 	def lut3d_apply_cal_ctrl_handler(self, event):
@@ -1455,7 +1455,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
 		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
-		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
+		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(not bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
 		self.lut3d_hdr_update_system_gamma()

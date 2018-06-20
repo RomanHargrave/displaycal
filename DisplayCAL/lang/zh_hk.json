@@ -78,6 +78,7 @@
 	"active_matrix_display": "動態矩陣顯示",
 	"adaptive_mode_unavailable": "自動適應模式僅適用於 CMS 1.1.0 RC3 或更新版本。",
 	"add": "加入...",
+		"*adjust_rolloff": "Adjust roll-off",
 	"advanced": "進階",
 	"allow_skip_sensor_cal": "允許跳過光譜儀自我校正",
 	"ambient.measure": "測量環境亮度",

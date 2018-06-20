@@ -913,7 +913,7 @@ class SynthICCFrame(BaseFrame):
 		self.black_output_offset_intctrl.SetValue(outoffset)
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
 		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
-		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
+		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(not bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
 		self.lut3d_hdr_sat_ctrl.SetValue(int(round(getcfg("3dlut.hdr_sat") * 100)))
 		self.lut3d_hdr_update_sat_val()
 		setcfg("3dlut.hdr_peak_luminance", getcfg("synthprofile.luminance"))

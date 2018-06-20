@@ -78,6 +78,7 @@
 	"active_matrix_display": "액티브 매트릭스 디스플레이",
 	"adaptive_mode_unavailable": "적응 모드는 ArgyllCMS 1.1.0 RC3 또는 그 이상의 버전에서만 가능합니다.",
 	"add": "추가...",
+		"*adjust_rolloff": "Adjust roll-off",
 	"advanced": "고급",
 	"allow_skip_sensor_cal": "스펙트로미터 자체 캘리브레이션 생략 허용",
 	"ambient.measure": "주변광 측정",

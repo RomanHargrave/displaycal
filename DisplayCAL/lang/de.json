@@ -78,6 +78,7 @@
 	"active_matrix_display": "Aktiv-Matrix Anzeigegerät",
 	"adaptive_mode_unavailable": "Der adaptive Modus ist erst mit ArgyllCMS 1.1.0 RC3 oder neuer verfügbar.",
 	"add": "Hinzufügen...",
+	"adjust_rolloff": "Begrenzung anpassen",
 	"advanced": "Erweitert",
 	"allow_skip_sensor_cal": "Überspringen der Spektrometer-Kalibrierung erlauben",
 	"ambient.measure": "Umgebungslicht messen",

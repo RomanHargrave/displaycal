@@ -78,6 +78,7 @@
 	"active_matrix_display": "Affichage à matrice active",
 	"adaptive_mode_unavailable": "Le mode adaptatif n'est disponible qu’avec ArgyllCMS 1.1.0 RC3 ou ultérieur.",
 	"add": "Ajouter…",
+		"*adjust_rolloff": "Adjust roll-off",
 	"advanced": "Avancé",
 	"allow_skip_sensor_cal": "Permettre de passer outre l’auto-étalonnage du spectromètre",
 	"ambient.measure": "Mesurer la lumière ambiante",
