@@ -969,6 +969,36 @@ def DIN99familyab2DIN99CH(a99, b99):
 	return C99, H99
 
 
+def HSI2RGB(H, S, I, scale=1.0):
+	H *= 360
+
+	h = H
+	if 120 < H <= 240:
+		h -= 120
+	elif 240 < H <= 360:
+		h -= 240
+
+	f = math.cos(math.radians(h)) / math.cos(math.radians(60 - h))
+	a = I + I * S * f
+	b = I + I * S * (1 - f)
+	c = I - I * S
+
+	if H <= 120:
+		R = a
+		G = b
+		B = c
+	elif H <= 240:
+		G = a
+		B = b
+		R = c
+	else:
+		B = a
+		R = b
+		G = c
+
+	return tuple(v * scale for v in (R, G, B))
+
+
 def HSL2RGB(H, S, L, scale=1.0):
     return tuple(v * scale for v in colorsys.hls_to_rgb(H, L, S))
 
