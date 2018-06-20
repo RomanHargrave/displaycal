@@ -2044,7 +2044,7 @@ class Worker(WorkerBase):
 								 maxmll=10000,
 								 use_alternate_master_white_clip=True,
 								 ambient_cdm2=5, content_rgb_space="DCI P3",
-								 hdr_chroma_compression=False,
+								 hdr_chroma_compression=False, hdr_sat=1.0,
 								 hdr_target_profile=None):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
@@ -2177,7 +2177,7 @@ class Worker(WorkerBase):
 					system_gamma=1.2,  # Not used for PQ
 					ambient_cdm2=ambient_cdm2,  # Not used for PQ
 					maxsignal=1.0,  # Not used for PQ
-					content_rgb_space=content_rgb_space,
+					content_rgb_space=content_rgb_space, sat=hdr_sat,
 					forward_xicclu=xf, backward_xicclu=xb,
 					worker=self, logfile=logfiles)
 				profile1.tags.A2B0 = profile.tags.A2B0
@@ -2923,9 +2923,9 @@ END_DATA
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
 					 use_b2a=False, white_cdm2=100, minmll=0, maxmll=10000,
-					 use_alternate_master_white_clip=True, ambient_cdm2=5,
-					 content_rgb_space="DCI P3", hdr_display=False,
-					 XYZwp=None):
+					 use_alternate_master_white_clip=True, hdr_sat=1.0,
+					 ambient_cdm2=5, content_rgb_space="DCI P3",
+					 hdr_display=False, XYZwp=None):
 		""" Create a 3D LUT from one (device link) or two (device) profiles,
 		optionally incorporating an abstract profile. """
 		# .cube: http://doc.iridas.com/index.php?title=LUT_Formats
@@ -3132,6 +3132,7 @@ END_DATA
 												  ambient_cdm2=ambient_cdm2,
 												  content_rgb_space=content_rgb_space,
 												  hdr_chroma_compression=not hdr_use_src_gamut or content_colors != in_colors,
+												  hdr_sat=hdr_sat,
 												  hdr_target_profile=profile_src)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
@@ -3175,7 +3176,8 @@ END_DATA
 											  maxmll=maxmll,
 											  use_alternate_master_white_clip=use_alternate_master_white_clip,
 											  ambient_cdm2=ambient_cdm2,
-											  hdr_chroma_compression=False)
+											  hdr_chroma_compression=False,
+											  hdr_sat=hdr_sat)
 
 				profile_src.write()
 

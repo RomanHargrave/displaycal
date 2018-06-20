@@ -155,6 +155,50 @@
                       <border>8</border>
                     </object>
                     <object class="sizeritem">
+                      <object class="wxFlexGridSizer">
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_lum_label">
+                            <label>preserve_luminance</label>
+                          </object>
+                          <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                          <border>18</border>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxSlider" name="lut3d_hdr_sat_ctrl">
+                            <size>128,-1</size>
+                            <value>50</value>
+                            <min>0</min>
+                            <max>100</max>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_sat_label">
+                            <label>preserve_saturation</label>
+                          </object>
+                          <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                        </object>
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_lum_val">
+                            <label>50%</label>
+                          </object>
+                          <flag>wxALIGN_RIGHT</flag>
+                        </object>
+                        <object class="spacer"/>
+                        <object class="sizeritem">
+                          <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_sat_val">
+                            <label>50%</label>
+                          </object>
+                        </object>
+                        <cols>3</cols>
+                        <rows>2</rows>
+                        <vgap>0</vgap>
+                        <hgap>8</hgap>
+                      </object>
+                      <flag>wxBOTTOM</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
                       <object class="wxBoxSizer">
                         <object class="sizeritem">
                           <object class="wxFlexGridSizer">
@@ -462,7 +506,7 @@
                                 <object class="sizeritem">
                                   <object class="wxStaticText" name="lut3d_content_colorspace_blue_y_label">
                                     <label>y</label>
-                                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    <flag>wxALIGN_CENTRE_VERTICAL</flag>
                                   </object>
                                 </object>
                                 <cols>5</cols>
@@ -490,7 +534,6 @@
                           <object class="wxStaticText" name="lut3d_trc_black_output_offset_label">
                             <label>calibration.black_output_offset</label>
                             <enabled>0</enabled>
-                            <hidden>1</hidden>
                           </object>
                           <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                           <border>18</border>
@@ -503,7 +546,6 @@
                                 <min>0</min>
                                 <max>100</max>
                                 <enabled>0</enabled>
-                                <hidden>1</hidden>
                                 <XRCED>
                                   <events>EVT_SLIDER</events>
                                 </XRCED>
@@ -517,7 +559,6 @@
                                 <min>0</min>
                                 <max>100</max>
                                 <enabled>0</enabled>
-                                <hidden>1</hidden>
                                 <XRCED>
                                   <events>EVT_TEXT</events>
                                 </XRCED>

@@ -850,6 +850,7 @@ defaults = {
 	"3dlut.hdr_maxmll_alt_clip": 1,
 	"3dlut.hdr_peak_luminance": 480.0,
 	"3dlut.hdr_ambient_luminance": 5.0,
+	"3dlut.hdr_sat": 1.0,
 	"3dlut.image.layout": "h",
 	"3dlut.image.order": "rgb",
 	"3dlut.input.profile": "",

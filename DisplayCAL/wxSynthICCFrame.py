@@ -734,8 +734,8 @@ class SynthICCFrame(BaseFrame):
 						getcfg("synthprofile.luminance"), minmll, maxmll,
 						getcfg("3dlut.hdr_maxmll_alt_clip"),
 						1.2, getcfg("3dlut.hdr_ambient_luminance"),
-						clutres=clutres, generate_B2A=trc == -2,
-						worker=self.worker,
+						clutres=clutres, sat=getcfg("3dlut.hdr_sat"),
+						generate_B2A=trc == -2, worker=self.worker,
 						logfile=logfiles)
 					profile.tags.A2B0 = hdr_clut_profile.tags.A2B0
 					if trc == -2:
@@ -914,6 +914,8 @@ class SynthICCFrame(BaseFrame):
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
 		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
 		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
+		self.lut3d_hdr_sat_ctrl.SetValue(int(round(getcfg("3dlut.hdr_sat") * 100)))
+		self.lut3d_hdr_update_sat_val()
 		setcfg("3dlut.hdr_peak_luminance", getcfg("synthprofile.luminance"))
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
@@ -928,6 +930,8 @@ class SynthICCFrame(BaseFrame):
 		self.lut3d_hdr_diffuse_white_label.Show(i == 8)  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_diffuse_white_txt.Show(i == 8)  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_diffuse_white_txt_label.Show(i == 8)  # SMPTE 2084 (PQ)
+		sizer = self.lut3d_hdr_sat_ctrl.ContainingSizer
+		sizer.ShowItems(i in (7, 8))  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_ambient_luminance_label.Show(i == 2)  # HLG
 		self.lut3d_hdr_ambient_luminance_ctrl.Show(i == 2)  # HLG
 		self.lut3d_hdr_ambient_luminance_ctrl_label.Show(i == 2)  # HLG

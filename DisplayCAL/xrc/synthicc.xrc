@@ -555,6 +555,48 @@
                 <object class="sizeritem">
                   <object class="wxFlexGridSizer">
                     <object class="sizeritem">
+                      <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_lum_label">
+                        <label>preserve_luminance</label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxSlider" name="lut3d_hdr_sat_ctrl">
+                        <size>128,-1</size>
+                        <value>50</value>
+                        <min>0</min>
+                        <max>100</max>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_sat_label">
+                        <label>preserve_saturation</label>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_lum_val">
+                        <label>50%</label>
+                      </object>
+                      <flag>wxALIGN_RIGHT</flag>
+                    </object>
+                    <object class="spacer"/>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="lut3d_hdr_sat_ctrl_sat_val">
+                        <label>50%</label>
+                      </object>
+                    </object>
+                    <cols>3</cols>
+                    <rows>2</rows>
+                    <vgap>0</vgap>
+                    <hgap>8</hgap>
+                  </object>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
+                  <object class="wxFlexGridSizer">
+                    <object class="sizeritem">
                       <object class="wxStaticText" name="lut3d_hdr_minmll_label">
                         <label>mastering_display_black_luminance</label>
                       </object>
