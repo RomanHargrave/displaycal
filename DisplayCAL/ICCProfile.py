@@ -648,7 +648,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											use_alternate_master_white_clip=True,
 											content_rgb_space="DCI P3",
 											rolloff=True,
-											clutres=33, mode="RGB_ICtCp",
+											clutres=33, mode="HSV_ICtCp",
+											sat=1.0,
 											forward_xicclu=None,
 											backward_xicclu=None,
 											generate_B2A=False,
@@ -659,11 +660,15 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	definition
 	
 	mode:  The gamut mapping mode when rolling off. Valid values:
-		   "RGB_ICtCp" (default, recommended)
+		   "HSV_ICtCp" (default, recommended)
 	       "ICtCp"
 	       "XYZ" (not recommended, unpleasing hue shift)
 	       "HSV" (not recommended, saturation loss)
 	       "RGB" (not recommended, saturation loss, pleasing hue shift)
+	
+	sat:   Saturation preservation factor [0.0, 1.0]
+		   0.0 = Favor luminance preservation over saturation
+		   1.0 = Favor saturation preservation over luminance
 	
 	"""
 
@@ -679,7 +684,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											 5.0,  # Not used for PQ
 											 1.0,  # Not used for PQ
 											 content_rgb_space,
-											 clutres, mode,
+											 clutres, mode, sat,
 											 forward_xicclu,
 											 backward_xicclu,
 											 generate_B2A,
@@ -697,7 +702,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 									  maxsignal=1.0,  # Not used for PQ
 									  content_rgb_space="DCI P3",
 									  clutres=33,
-									  mode="RGB_ICtCp",  # Not used for HLG
+									  mode="HSV_ICtCp",  # Not used for HLG
+									  sat=1.0,  # Not used for HLG
 									  forward_xicclu=None,
 									  backward_xicclu=None,
 									  generate_B2A=False,
@@ -1027,11 +1033,14 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						I1 = I2 = 0
 				elif mode in ("HSV", "HSV_ICtCp"):
 					HSV = list(colormath.RGB2HSV(*RGB))
-					if mode == "HSV":
-						I1 = HSV[2]
-					HSV[2] = eetf(HSV[2])
-					if mode == "HSV":
-						I2 = HSV[2]
+					V1 = HSV[2]
+					V2 = eetf(V1)
+					HSV[2] = V2
+					if V1 > V2:
+						HSV[1] *= V2 / V1
+						for i, v in enumerate(RGB):
+							RGB[i] = eetf(v)
+					HSV[1] = min(HSV[1], colormath.RGB2HSV(*RGB)[1])
 				elif mode in ("RGB", "RGB_ICtCp"):
 					if mode == "RGB":
 						I1 = max(RGB)
@@ -1060,8 +1069,6 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						# desaturation
 						dsat = I1 / I2
 					min_I = min(dsat, I2 / I1)
-					if I1 > I2:
-						min_I *= colormath.convert_range(I1, I2, 1, 1, 0)
 				else:
 					min_I = 1
 				if hdr_format == "PQ" and mode in ("HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
@@ -1071,9 +1078,6 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					if debug and R == G == B:
 						safe_print("% 5.3f % 5.3f % 5.3f" % (I2, Ct2, Cp2),
 								   "->", end=" ")
-					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space,
-												  eotf=eotf)
-					ICtCp_XYZ = X, Y, Z
 				if hdr_format == "HLG":
 					pass
 				elif mode == "XYZ":
@@ -1083,8 +1087,6 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space,
 											oetf=eotf_inverse)
 				elif mode in ("HSV", "HSV_ICtCp"):
-					if max(RGB) == 1 and RGB_sum > 2:
-						HSV[1] *= colormath.convert_range(RGB_sum, 2, 3, 1, 0)
 					RGB = colormath.HSV2RGB(*HSV)
 				elif mode == "ICtCp":
 					LinearRGB = colormath.ICtCp2LinearRGB(I2, Ct2, Cp2, eotf=eotf)
@@ -1103,12 +1105,18 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				if hdr_format == "PQ" and mode in ("HSV_ICtCp", "RGB_ICtCp"):
 					# Use hue and chroma from ICtCp
 					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
-					if I1 > I:
-						I = colormath.convert_range(I1, I, 1, I, I2)
+					L, C, H = colormath.Lab2LCHab(I * 100, Ct * 100, Cp * 100)
+					L2, C2, H2 = colormath.Lab2LCHab(I2 * 100, Ct2 * 100, Cp2 * 100)
+					C3 = colormath.convert_range(I1, I2, 1, C2, min(C2, C))
+					Ct2, Cp2 = (v / 100.0 for v in colormath.LCHab2Lab(L2, C3, H2)[1:])
 					RGB_ICtCp_XYZ = colormath.ICtCp2XYZ(I, Ct2, Cp2)
 					#RGB_ICtCp_XYZ = [v / maxv for v in RGB_ICtCp_XYZ]
 					RGB_ICtCp_XYZ = list(RGB_ICtCp_XYZ)
-					X, Y, Z = ICtCp_XYZ
+					if I1 > I2:
+						f = colormath.convert_range(I1, I2, 1, 1, 0)
+						Ct2, Cp2 = (v * f for v in (Ct2, Cp2))
+					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space,
+												  eotf=eotf)
 				else:
 					#RGB_ICtCp_XYZ = [v / maxv for v in (X, Y, Z)]
 					RGB_ICtCp_XYZ = [X, Y, Z]
@@ -1132,7 +1140,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		num_batches = clutres // 6
 
 		HDR_XYZ = sum(pool_slice(_mp_hdr_tonemap, HDR_XYZ,
-												  (rgb_space, maxv), {},
+												  (rgb_space, maxv, sat), {},
 												  num_workers,
 												  worker and worker.thread_abort,
 												  logfile, num_batches, perc),
@@ -1157,13 +1165,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			#I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in RGB_ICtCp_XYZ),
 			I, Ct, Cp = colormath.XYZ2ICtCp(*RGB_ICtCp_XYZ,
 											oetf=eotf_inverse)
-			if sum(RGB) < 3:
-				f = max(colormath.convert_range(sum(RGB), 0, 3, 1, 0), 0)
-				Ct = Ct * f + Ct3 * (1 - f)
-				Cp = Cp * f + Cp3 * (1 - f)
-				I = I * f + I3 * (1 - f)
-			else:
-				I, Ct, Cp = I3, Ct3, Cp3
+			f = colormath.convert_range(sum(RGB), 0, 3, 1, sat)
+			Ct = Ct * f + Ct3 * (1 - f)
+			Cp = Cp * f + Cp3 * (1 - f)
+			I = I * f + I3 * (1 - f)
 			X, Y, Z = (v / maxv for v in colormath.ICtCp2XYZ(I, Ct, Cp))
 		else:
 			I, Ct, Cp = I3, Ct3, Cp3
@@ -1695,7 +1700,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											maxsignal=1.0,
 											content_rgb_space="DCI P3",
 											rolloff=True,
-											clutres=33, mode="RGB_ICtCp",
+											clutres=33, mode="HSV_ICtCp",
 											forward_xicclu=None,
 											backward_xicclu=None,
 											generate_B2A=True,
@@ -2303,7 +2308,8 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 	return blocks
 
 
-def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, maxv):
+def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
+					maxv, sat):
 	"""
 	Worker for HDR tonemapping
 	
@@ -2326,6 +2332,8 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space, maxv
 			return [False]
 		is_neutral = all(v == RGB_in[0] for v in RGB_in)
 		for XYZ in (ICtCp_XYZ, RGB_ICtCp_XYZ):
+			if sat == 1 and XYZ is ICtCp_XYZ:
+				continue
 			X, Y, Z = XYZ
 			H = None
 			while not is_neutral:
