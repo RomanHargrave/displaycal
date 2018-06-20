@@ -1636,7 +1636,7 @@ def initcfg(module=None):
 		cfgnames.append(cfgbasename)
 	else:
 		cfgnames.extend("%s-%s" % (appbasename, othermod) for othermod in
-						("synthprofile", "testchart-editor"))
+						("testchart-editor", ))
 	cfgroots = [confighome]
 	if module == "apply-profiles":
 		cfgroots.append(config_sys)
