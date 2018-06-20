@@ -1179,8 +1179,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 								  whitepoint_source=rgb_space[1])
 		if max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or round(Y, 6) > 1:
 			# This should not happen
-			safe_print("#%i"  % i, "RGB %.4f %.4f %.4f" % tuple(RGB),
-					   "XYZ %.4f %.4f %.4f" % (X, Y, Z), "not in range [0,1]")
+			safe_print("#%i"  % i, "RGB %.3f %.3f %.3f" % tuple(RGB),
+					   "XYZ %.6f %.6f %.6f" % (X, Y, Z), "not in range [0,1]")
 		HDR_XYZ[i] = (X, Y, Z)
 		perc = startperc + math.floor(i / clutres ** 3.0 *
 									  (100 - startperc))
@@ -1666,8 +1666,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						RGB = hlg.XYZ2RGB(X, Y, Z)
 					if (max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or
 						round(Y, 6) > 1 or max(RGB) > 1 or min(RGB) < 0):
-						safe_print("#%i" % count, "RGB %.4f %.4f %.4f" %
-								   tuple(RGB), "XYZ %.4f %.4f %.4f" % (X, Y, Z),
+						safe_print("#%i" % count, "RGB %.3f %.3f %.3f" %
+								   tuple(RGB), "XYZ %.6f %.6f %.6f" % (X, Y, Z),
 								   "not in range [0,1]")
 					otable.clut[-1].append([min(max(v, 0), 1) * 65535
 											for v in RGB])
@@ -2326,7 +2326,7 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 	# Hue angles (radians, RGB):
 	# red, redorange, yellow, yellowgreen, green, cyan, blue, magenta, red
 	interp = colormath.Interp([0, 0.041666, 0.166666, 0.25, 0.333333, 0.5, 0.666666, 0.833333, 1],
-							  [c, c, a, a, a, b, b, b, c], use_numpy=True)
+							  [a, a, a, a, a, b, b, b, a], use_numpy=True)
 	for i, (RGB_in, ICtCp_XYZ, RGB_ICtCp_XYZ) in enumerate(HDR_XYZ):
 		if thread_abort_event and thread_abort_event.is_set():
 			return [False]
