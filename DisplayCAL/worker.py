@@ -2449,12 +2449,15 @@ class Worker(WorkerBase):
 				# On the Mac dispcal's test window
 				# hides the cursor and steals focus
 				start_new_thread(mac_app_activate, (1, wx.GetApp().AppName))
+			# IMPORTANT: When making changes to the instrument on screen
+			# detection, also apply them to appropriate part in Worker.exec_cmd
 			if (self.instrument_calibration_complete or
 				((config.is_untethered_display() or
 				  getcfg("measure.darken_background") or
 				  self.madtpg_fullscreen is False) and
 				 (not self.dispread_after_dispcal or
-				  self.cmdname == get_argyll_utilname("dispcal")) and
+				  self.cmdname == get_argyll_utilname("dispcal") or
+				  self._detecting_video_levels) and
 				  not self.instrument_on_screen)):
 				# Show a dialog asking user to place the instrument on the
 				# screen if the instrument calibration was completed,
@@ -4669,6 +4672,9 @@ BEGIN_DATA
 									self.log("Warning - couldn't restore "
 											 "madTPG fullscreen")
 					self.madtpg_fullscreen = self.madtpg.is_use_fullscreen_button_pressed()
+					# IMPORTANT: When making changes to the instrument on screen
+					# detection, also apply them to appropriate part in
+					# Worker.check_instrument_place_on_screen
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
