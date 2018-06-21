@@ -1588,7 +1588,7 @@
                                     <object class="sizeritem">
                                       <object class="FloatSpin" name="lut3d_hdr_peak_luminance_ctrl">
                                         <size>75,-1</size>
-                                        <min_val>120</min_val>
+                                        <min_val>100</min_val>
                                         <max_val>10000</max_val>
                                         <increment>1</increment>
                                         <digits>0</digits>
@@ -1689,7 +1689,7 @@
                                         <object class="sizeritem">
                                           <object class="FloatSpin" name="lut3d_hdr_maxmll_ctrl">
                                             <size>75,-1</size>
-                                            <min_val>120</min_val>
+                                            <min_val>100</min_val>
                                             <max_val>10000</max_val>
                                             <increment>1</increment>
                                             <digits>0</digits>
