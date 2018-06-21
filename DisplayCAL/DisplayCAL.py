@@ -9445,8 +9445,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		"""
 		parent = self if event else None
-		id_measure_reference = wx.NewId()
-		id_measure_colorimeter = wx.NewId()
+		id_measure_reference = wx.Window.NewControlId()
+		id_measure_colorimeter = wx.Window.NewControlId()
 		if not paths:
 			dlg = ConfirmDialog(parent,
 								title=lang.getstr("colorimeter_correction.create"),

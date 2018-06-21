@@ -1207,8 +1207,9 @@ class ProfileLoader(object):
 
 				def PopupMenu(self, menu):
 					if not self.check_user_attention():
+						if self.menu and self.menu is not menu:
+							self.menu.Destroy()
 						SysTrayIcon.PopupMenu(self, menu)
-						win32gui.DestroyMenu(menu.hmenu)
 
 				def animate(self, enumerate_windows_and_processes=False,
 							idle=False):
@@ -1798,7 +1799,10 @@ class ProfileLoader(object):
 			if result != wx.ID_OK:
 				safe_print("Cancelled ProfileLoader.exit(%s)" % event)
 				return
-		self.taskbar_icon and self.taskbar_icon.RemoveIcon()
+		if self.taskbar_icon:
+			if self.taskbar_icon.menu:
+				self.taskbar_icon.menu.Destroy()
+			self.taskbar_icon.RemoveIcon()
 		self.monitoring = False
 		if self.frame:
 			self.frame.listening = False

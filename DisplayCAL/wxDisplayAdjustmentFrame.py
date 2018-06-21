@@ -22,7 +22,7 @@ from lib.agw.pygauge import PyGauge
 from config import (get_data_path, get_default_dpi, get_icon_bundle, getbitmap,
 					getcfg, geticon, setcfg)
 from config import enc
-from log import get_file_logger
+from log import get_file_logger, safe_print
 from meta import name as appname
 from options import debug
 from ordereddict import OrderedDict
@@ -740,6 +740,7 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.add_panel((12, 12), flag=wx.EXPAND)
 		
 		self.keyhandler = keyhandler
+		self.id_to_keycode = {}
 		if sys.platform == "darwin":
 			# Use an accelerator table for tab, space, 0-9, A-Z, numpad,
 			# navigation keys and processing keys
@@ -749,9 +750,8 @@ class DisplayAdjustmentFrame(BaseFrame):
 			keycodes.extend(numpad_keycodes)
 			keycodes.extend(nav_keycodes)
 			keycodes.extend(processing_keycodes)
-			self.id_to_keycode = {}
 			for keycode in keycodes:
-				self.id_to_keycode[wx.NewId()] = keycode
+				self.id_to_keycode[wx.Window.NewControlId()] = keycode
 			accels = []
 			for id, keycode in self.id_to_keycode.iteritems():
 				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
@@ -806,6 +806,13 @@ class DisplayAdjustmentFrame(BaseFrame):
 	def OnDestroy(self, event):
 		self.stop_timer()
 		del self.timer
+		if hasattr(wx.Window, "UnreserveControlId"):
+			for id in self.id_to_keycode.iterkeys():
+				if id < 0:
+					try:
+						wx.Window.UnreserveControlId(id)
+					except wx.wxAssertionError, exception:
+						safe_print(exception)
 		
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \

@@ -400,7 +400,7 @@ class ThreadedTimer(object):
 	def __init__(self, owner=None, timerid=wx.ID_ANY):
 		self._owner = owner
 		if timerid < 0:
-			timerid = wx.NewId()
+			timerid = wx.Window.NewControlId()
 		self._id = timerid
 		self._ms = 0
 		self._oneshot = False
@@ -424,7 +424,11 @@ class ThreadedTimer(object):
 					self._keep_running = False
 
 	def Destroy(self):
-		pass
+		if hasattr(wx.Window, "UnreserveControlId") and self.Id < 0:
+			try:
+				wx.Window.UnreserveControlId(self.Id)
+			except wx.wxAssertionError, exception:
+				pass
 
 	def GetId(self):
 		return self._id
@@ -615,3 +619,42 @@ class FileDrop(wx.FileDropTarget):
 						return
 			ext, filename = self._files.pop()
 			self.drophandlers[ext](filename)
+
+
+class IdFactory(object):
+
+	""" Inspired by wxPython 4 (Phoenix) wx.IdManager """
+
+	CurrentId = 100
+	ReservedIds = set()
+
+	@classmethod
+	def NewId(cls):
+		""" Replacement for wx.NewId() """
+		start_id = cls.CurrentId
+
+		while True:
+			# Skip the part of IDs space that contains hard-coded values
+			if cls.CurrentId == wx.ID_LOWEST:
+				cls.CurrentId = wx.ID_HIGHEST + 1
+			id = cls.CurrentId
+			if id < 30095:
+				cls.CurrentId += 1
+			else:
+				cls.CurrentId = 100
+			if id not in cls.ReservedIds:
+				break
+			elif cls.CurrentId == start_id:
+				raise RuntimeError("Error: Out of IDs. Recommend shutting down application.")
+
+		cls.ReserveId(id)
+
+		return id
+
+	@classmethod
+	def ReserveId(cls, id):
+		cls.ReservedIds.add(id)
+
+	@classmethod
+	def UnreserveId(cls, id):
+		cls.ReservedIds.remove(id)

@@ -90,7 +90,6 @@ class PyGauge(wx.PyWindow):
         self._value = [0]
         self._valueSorted = [0]
         
-        self._timerId = wx.NewId()
         self._timer = None
         
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -298,7 +297,7 @@ class PyGauge(wx.PyWindow):
         :param `event`: a `wx.TimerEvent` event to be processed.
         """
         
-        if self._timerId == event.GetId():
+        if self._timer and self._timer.Id == event.GetId():
             stop_timer = True
             for i, v in enumerate(self._value):
                 self._value[i] += self._update_step[i]
@@ -347,7 +346,7 @@ class PyGauge(wx.PyWindow):
         #print self._update_
 
         if not self._timer:       
-            self._timer = wx.Timer(self, self._timerId)
+            self._timer = wx.Timer(self)
             
         self._timer.Start(100)
 

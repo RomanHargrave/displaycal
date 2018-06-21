@@ -4440,7 +4440,7 @@ class BetterPyGauge(pygauge.PyGauge):
 		self.gradientindex = 0
 		self._gradients = []
 		self._indeterminate_gradients = []
-		self._timer = BetterTimer(self, self._timerId)
+		self._timer = BetterTimer(self)
 		self.Unbind(wx.EVT_TIMER)
 		self.Bind(EVT_BETTERTIMER, self.OnTimer, self._timer)
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
@@ -5217,7 +5217,7 @@ class ProgressDialog(wx.Dialog):
 		keycodes = range(48, 58) + range(97, 123) + numpad_keycodes
 		self.id_to_keycode = {}
 		for keycode in keycodes:
-			self.id_to_keycode[wx.NewId()] = keycode
+			self.id_to_keycode[wx.Window.NewControlId()] = keycode
 		accels = []
 		for id, keycode in self.id_to_keycode.iteritems():
 			self.Bind(wx.EVT_MENU, keyhandler or self.key_handler, id=id)
@@ -5276,6 +5276,13 @@ class ProgressDialog(wx.Dialog):
 	def OnDestroy(self, event):
 		self.stop_timer()
 		del self.timer
+		if hasattr(wx.Window, "UnreserveControlId"):
+			for id in self.id_to_keycode.iterkeys():
+				if id < 0:
+					try:
+						wx.Window.UnreserveControlId(id)
+					except wx.wxAssertionError, exception:
+						safe_print(exception)
 		
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \
@@ -5753,12 +5760,6 @@ class SimpleTerminal(InvincibleFrame):
 		else:
 			# Windows: EVT_CHAR_HOOK only receives "special" keys e.g. ESC, Tab
 			self.Bind(wx.EVT_CHAR_HOOK, keyhandler or self.key_handler)
-		
-		# Use an accelerator table for space, 0-9, a-z, numpad
-		keycodes = [32] + range(48, 58) + range(97, 123) + numpad_keycodes
-		self.id_to_keycode = {}
-		for keycode in keycodes:
-			self.id_to_keycode[wx.NewId()] = keycode
 		
 		# set size
 		text_extent = self.console.GetTextExtent(" ")

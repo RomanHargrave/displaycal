@@ -46,6 +46,11 @@ if not hasattr(wx.Window, "HasFocus"):
 	wx.Window.HasFocus = lambda self: self.FindFocus() is self
 
 
+if not hasattr(wx, "wxAssertionError"):
+	# wxPython < 4.0
+	wx.wxAssertionError = wx.PyAssertionError
+
+
 if not hasattr(platebtn, "PB_STYLE_TOGGLE"):
 	platebtn.PB_STYLE_TOGGLE = 32
 

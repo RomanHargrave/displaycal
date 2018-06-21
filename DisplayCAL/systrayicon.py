@@ -14,9 +14,10 @@ import win32api
 import win32con
 import win32gui
 import winerror
-import wx
 
 from log import safe_print
+from options import debug, verbose
+from wxaddons import wx, IdFactory
 
 
 class Menu(wx.EvtHandler):
@@ -25,10 +26,8 @@ class Menu(wx.EvtHandler):
 		wx.EvtHandler.__init__(self)
 		self.hmenu = win32gui.CreatePopupMenu()
 		self.MenuItems = []
+		self.Parent = None
 		self._menuitems = {}
-
-	def _Append(self, flags, id, text):
-		win32gui.AppendMenu(self.hmenu, flags, id, text)
 
 	def Append(self, id, text, help=u"", kind=wx.ITEM_NORMAL):
 		return self.AppendItem(MenuItem(self, id, text, help, kind))
@@ -46,7 +45,7 @@ class Menu(wx.EvtHandler):
 				flags = 0
 			if not item.Enabled:
 				flags |= win32con.MF_DISABLED
-		self._Append(flags, item.Id, item.ItemLabel)
+		win32gui.AppendMenu(self.hmenu, flags, item.Id, item.ItemLabel)
 		self.MenuItems.append(item)
 		self._menuitems[item.Id] = item
 		if item.Checked:
@@ -66,42 +65,56 @@ class Menu(wx.EvtHandler):
 
 	def Check(self, id, check=True):
 		flags = win32con.MF_BYCOMMAND
-		if self._menuitems[id].Kind == wx.ITEM_RADIO:
+		item_check = self._menuitems[id]
+		if item_check.Kind == wx.ITEM_RADIO:
 			if not check:
 				return
-			id1 = id
-			id2 = id
-			index = self.MenuItems.index(self._menuitems[id])
+			item_first = item_check
+			item_last = item_check
+			index = self.MenuItems.index(item_check)
 			menuitems = self.MenuItems[:index]
 			while menuitems:
-				first_item = menuitems.pop()
-				if first_item.Kind == wx.ITEM_RADIO:
-					id1 = first_item.Id
-					first_item.Checked = False
+				item = menuitems.pop()
+				if item.Kind == wx.ITEM_RADIO:
+					item_first = item
+					item.Checked = False
 				else:
 					break
 			menuitems = self.MenuItems[index:]
 			menuitems.reverse()
 			while menuitems:
-				last_item = menuitems.pop()
-				if last_item.Kind == wx.ITEM_RADIO:
-					id2 = last_item.Id
-					last_item.Checked = False
+				item = menuitems.pop()
+				if item.Kind == wx.ITEM_RADIO:
+					item_last = item
+					item.Checked = False
 				else:
 					break
-			win32gui.CheckMenuRadioItem(self.hmenu, id1, id2, id, flags)
+			win32gui.CheckMenuRadioItem(self.hmenu, item_first.Id,
+										item_last.Id, item_check.Id, flags)
 		else:
 			if check:
 				flags |= win32con.MF_CHECKED
-			win32gui.CheckMenuItem(self.hmenu, id, flags)
-		self._menuitems[id].Checked = check
+			win32gui.CheckMenuItem(self.hmenu, item_check.Id, flags)
+		item_check.Checked = check
+
+	def Destroy(self):
+		for menuitem in self.MenuItems:
+			menuitem.Destroy()
+		if not self.Parent:
+			if debug or verbose > 1:
+				safe_print('DestroyMenu HMENU', self.hmenu)
+			win32gui.DestroyMenu(self.hmenu)
+		if debug or verbose > 1:
+			safe_print('Destroy', self.__class__.__name__, self)
+		wx.EvtHandler.Destroy(self)
 
 	def Enable(self, id, enable=True):
 		flags = win32con.MF_BYCOMMAND
 		if not enable:
 			flags |= win32con.MF_DISABLED
-		win32gui.EnableMenuItem(self.hmenu, id, flags)
-		self._menuitems[id].Enabled = enable
+		item = self._menuitems[id]
+		win32gui.EnableMenuItem(self.hmenu, item.Id, flags)
+		item.Enabled = enable
 
 
 class MenuItem(object):
@@ -109,7 +122,7 @@ class MenuItem(object):
 	def __init__(self, menu, id=-1, text=u"", help=u"", kind=wx.ITEM_NORMAL,
 				 subMenu=None):
 		if id == -1:
-			id = wx.NewId()
+			id = IdFactory.NewId()
 		self.Menu = menu
 		self.Id = id
 		self.ItemLabel = text
@@ -118,16 +131,30 @@ class MenuItem(object):
 		self.Enabled = True
 		self.Checked = False
 		self.subMenu = subMenu
+		if subMenu:
+			self.subMenu.Parent = menu
 
 	def Check(self, check=True):
 		self.Checked = check
 		if self.Id in self.Menu._menuitems:
 			self.Menu.Check(self.Id, check)
 
+	def Destroy(self):
+		if self.subMenu:
+			self.subMenu.Destroy()
+		if debug or verbose > 1:
+			safe_print('Destroy', self.__class__.__name__, self.Id,
+					   _get_kind_str(self.Kind), self.ItemLabel)
+		if self.Id in IdFactory.ReservedIds:
+			IdFactory.UnreserveId(self.Id)
+
 	def Enable(self, enable=True):
 		self.Enabled = enable
 		if self.Id in self.Menu._menuitems:
 			self.Menu.Enable(self.Id, enable)
+
+	def GetId(self):
+		return self.Id
 
 
 class SysTrayIcon(wx.EvtHandler):
@@ -208,12 +235,15 @@ class SysTrayIcon(wx.EvtHandler):
 		if not self.menu:
 			safe_print("Warning: Don't have menu")
 			return
-		event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
-		event.Id = wparam
-		item = _get_selected_menu_item(event.Id, self.menu)
+		item = _get_selected_menu_item(wparam, self.menu)
 		if not item:
-			safe_print("Warning: Don't have menu item ID %s" % event.Id)
+			safe_print("Warning: Don't have menu item ID %s" % wparam)
 			return
+		if debug or verbose > 1:
+			safe_print(item.__class__.__name__, item.Id,
+					   _get_kind_str(item.Kind), item.ItemLabel)
+		event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
+		event.Id = item.Id
 		if item.Kind == wx.ITEM_RADIO:
 			event.SetInt(1)
 		elif item.Kind == wx.ITEM_CHECK:
@@ -221,11 +251,15 @@ class SysTrayIcon(wx.EvtHandler):
 		item.Menu.ProcessEvent(event)
 
 	def OnDestroy(self, hwnd, msg, wparam, lparam):
-		if self.menu:
-			win32gui.DestroyMenu(self.menu.hmenu)
-		self.RemoveIcon()
+		self.Destroy()
 		if not wx.GetApp() or not wx.GetApp().IsMainLoopRunning():
 			win32gui.PostQuitMessage(0)
+
+	def Destroy(self):
+		if self.menu:
+			self.menu.Destroy()
+		self.RemoveIcon()
+		wx.EvtHandler.Destroy(self)
 
 	def OnRightUp(self, event):
 		self.PopupMenu(self.CreatePopupMenu())
@@ -294,6 +328,15 @@ class SysTrayIcon(wx.EvtHandler):
 		except win32gui.error:
 			return False
 		return True
+
+
+def _get_kind_str(kind):
+	return {wx.ITEM_SEPARATOR: "ITEM_SEPARATOR",
+			wx.ITEM_NORMAL: "ITEM_NORMAL",
+			wx.ITEM_CHECK: "ITEM_CHECK",
+			wx.ITEM_RADIO: "ITEM_RADIO",
+			wx.ITEM_DROPDOWN: "ITEM_DROPDOWN",
+			wx.ITEM_MAX: "ITEM_MAX"}.get(kind, str(kind))
 
 
 def _get_selected_menu_item(id, menu):

@@ -171,6 +171,7 @@ class UntetheredFrame(BaseFrame):
 		self.SetMinSize(self.GetSize())
 		
 		self.keyhandler = keyhandler
+		self.id_to_keycode = {}
 		if sys.platform == "darwin":
 			# Use an accelerator table for tab, space, 0-9, A-Z, numpad,
 			# navigation keys and processing keys
@@ -180,9 +181,8 @@ class UntetheredFrame(BaseFrame):
 			keycodes.extend(numpad_keycodes)
 			keycodes.extend(nav_keycodes)
 			keycodes.extend(processing_keycodes)
-			self.id_to_keycode = {}
 			for keycode in keycodes:
-				self.id_to_keycode[wx.NewId()] = keycode
+				self.id_to_keycode[wx.Window.NewControlId()] = keycode
 			accels = []
 			for id, keycode in self.id_to_keycode.iteritems():
 				self.Bind(wx.EVT_MENU, self.key_handler, id=id)
@@ -236,6 +236,13 @@ class UntetheredFrame(BaseFrame):
 	def OnDestroy(self, event):
 		self.stop_timer()
 		del self.timer
+		if hasattr(wx.Window, "UnreserveControlId"):
+			for id in self.id_to_keycode.iterkeys():
+				if id < 0:
+					try:
+						wx.Window.UnreserveControlId(id)
+					except wx.wxAssertionError, exception:
+						safe_print(exception)
 		
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \
