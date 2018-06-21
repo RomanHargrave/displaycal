@@ -2311,7 +2311,7 @@ class ProfileLoader(object):
 						safe_print(display_desc)
 					else:
 						safe_print(lang.getstr("calibration.loading_from_display_profile"))
-						safe_print(display_desc, "->", desc)
+						safe_print("%s:" % display_desc, desc)
 				elif verbose > 1 and getcfg("profile_loader.track_other_processes"):
 					safe_print("Preserving calibration state for display",
 							   display)
@@ -2531,7 +2531,7 @@ class ProfileLoader(object):
 							   i)
 			display, edid = get_display_name_edid(device, moninfo, i)
 			if debug or verbose > 1:
-				safe_print("Monitor %i active display description" % i, display)
+				safe_print("Monitor %i active display description:" % i, display)
 				safe_print("Enumerating 1st display device for monitor %i %s" %
 						   (i, moninfo["Device"]))
 			try:
@@ -2554,7 +2554,7 @@ class ProfileLoader(object):
 			if device0:
 				display0, edid0 = get_display_name_edid(device0)
 				if debug or verbose > 1:
-					safe_print("Monitor %i 1st display description" % i, display0)
+					safe_print("Monitor %i 1st display description:" % i, display0)
 			if (device0 and
 				(not device or device0.DeviceKey != device.DeviceKey) and
 				not device0.DeviceKey in self.display_devices):
@@ -2876,9 +2876,9 @@ class ProfileLoader(object):
 														   profile,
 														   get_profile_desc(profile))
 				if debug or verbose > 1:
-					safe_print("%s (%s) -> %s" % (display_edid[0],
-												  device.DeviceKey,
-												  profile))
+					safe_print("%s (%s): %s" % (display_edid[0],
+												device.DeviceKey,
+												profile))
 			# Set the active profile
 			device = active_device
 			if not device:
