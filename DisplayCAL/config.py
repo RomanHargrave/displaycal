@@ -706,9 +706,9 @@ cfg = ConfigParser.RawConfigParser()
 cfg.optionxform = str
 
 valid_ranges = {
-	"3dlut.hdr_peak_luminance": [120.0, 10000.0],
+	"3dlut.hdr_peak_luminance": [100.0, 10000.0],
 	"3dlut.hdr_minmll": [0.0, 0.1],
-	"3dlut.hdr_maxmll": [120.0, 10000.0],
+	"3dlut.hdr_maxmll": [100.0, 10000.0],
 	"3dlut.trc_gamma": [0.000001, 10],
 	"3dlut.hdr_sat": [0.0, 1.0],
 	"3dlut.trc_output_offset": [0.0, 1.0],
