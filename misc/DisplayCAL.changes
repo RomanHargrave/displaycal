@@ -5,6 +5,30 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Wed Apr 25 13:32:27 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.5.3:
+  * [Feature] Rudimentary ICCv4 profile autoconversion support
+    (only matrix profile types)
+  * [Enhancement] Lookup table based test profiles for evaluating
+    display color management
+  * [Enhancement] Profile information: Ability to plot CMYK profile
+    tone response curves
+  * [Enhancement] HDR SMPTE 2084 roll-off 3D LUT: Improved tone
+    mapping
+  * [Enhancement] Slightly improved accuracy of XYZ LUT profile
+    CIECAM02 gamut mapping
+  * Temporarily restored compatibility with wxPython 2.8.11/12
+  * [Minor] Restored ability to create profiles from non RGB device
+    measurement files
+  * [Minor] Profile information: Deal with potential NULL values in
+    meta tags of 3rd party ICC profiles
+  * [Trivial] Profile information: Correctly parse non-default
+    device media type attributes
+  * [Trivial] Profile information: Keep original tag order of 3rd
+    party profiles when checking ID
+
+-------------------------------------------------------------------
 Sat Mar 31 21:17:48 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.5.2:

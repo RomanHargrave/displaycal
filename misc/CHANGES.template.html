@@ -13,12 +13,9 @@
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 		<link rel="stylesheet" href="theme/readme.css?ts=2018-01-17T19:12" />
-		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2018-01-17T17:39" />
-		<link rel="stylesheet" href="theme/prism.css" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
-		<script type="text/javascript" src="theme/slimbox2/slimbox2.js?ts=2015-09-01T14:54"></script>
 		<script type="text/javascript" src="theme/readme.js?ts=2018-03-31T23:59"></script>
 	</head>
 	<body>
@@ -53,6 +50,41 @@
 
 						<h4>Added in this release:</h4>
 						<ul>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Adjustable weighting between luminance and saturation preservation for HDR SMPTE 2084 3D LUTs with roll-off tonemapping.</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Option to adjust the roll-off for HDR SMPTE 2084 3D LUTs with roll-off tonemapping when the mastering display peak luminance is below 10000 cd/m² (previous behavior with the introduction of BT.2390-2 was to always adjust, the new default behavior is don't adjust).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Improved HDR 3D LUT SMPTE 2084 roll-off tonemapping to eliminate possible over-darkening in rolled-off highlights due to luminance reduction related effects.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Removed HDR 3D LUT SMPTE 2084 roll-off tonemapping allowance for hue shifts in rolled-off highlights.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Increased HDR 3D LUT SMPTE 2084 default target peak luminance to 480 cd/m² (makes BT.2390 roll-off leave 0-100 cd/m² alone).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use extended model for HDR 3D LUT Hybrid-Log Gamma (HLG) display gamma adjustment described in BT.2390-4.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Do not create PCS-to-device tables for synthetic HDR SMPTE 2084 profiles with roll-off tonemapping as they are meant purely as source profiles.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Only enable the visual whitepoint editor button if the whitepoint target is set to chromaticity coordinates.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Keep dropdowns with only one choice enabled.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Catch any madTPG connection errors to show a nicer error dialog without a traceback.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Do not update the profile description when increasing the effective resolution of an existing profile's PCS-to-device tables.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Testchart editor: Only limit the view to six decimal digits, not the underlying data.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Confirm instrument placement when madTPG is not fullscreen.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Creating synthetic grayscale profiles with HLG tone response did not work correctly.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Set allowed filetypes for selecting files when importing 3rd party software colorimeter corrections to “any”.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Mac OS X: Updated bundled Python to 2.7.15 which includes a recent version of OpenSSL (fixes SSL connection errors due to more recent server-side encryption when using the standalone application bundles).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Mac OS X: Restored correct BundleId for application bundles.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux (GTK3 under Wayland): Explicit refresh/update needed for ClientDC (fixes graphs not updating until the window is resized).</li>
+						</ul>
+					</dd>
+
+				<dt id="changelog-3.5.3">2018-04-25 13:30 (UTC) 3.5.3 </dt>
+					<dd>
+						<h3>DisplayCAL 3.5.3 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Rudimentary ICCv4 profile autoconversion support (only matrix profile types).</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Lookup table based test profiles for evaluating display color management.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile information: Ability to plot CMYK profile tone response curves.</li>
@@ -74,8 +106,10 @@
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile information: Keep original tag order of 3rd party profiles when checking ID.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Popup menu items stopped responding when used for a long time.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.5.2">2018-03-31 21:11 (UTC) 3.5.2 </p>
+				<dt id="changelog-3.5.2">2018-03-31 21:11 (UTC) 3.5.2 </dt>
+					<dd>
 						<h3>DisplayCAL 3.5.2 </h3>
 
 						<h4>Fixed in this release:</h4>
@@ -85,8 +119,10 @@
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Linux: Add missing i1 Studio entry to bundled instrument configuration files (ArgyllCMS &gt;= 2.0).</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Windows: Use bundled certificate authority (CA) certificates to circumvent potentially outdated system certificates under older versions of Windows.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.5.1">2018-03-16 16:04 (UTC) 3.5.1 </p>
+				<dt id="changelog-3.5.1">2018-03-16 16:04 (UTC) 3.5.1 </dt>
+					<dd>
 						<h3>DisplayCAL 3.5.1 </h3>
 
 						<h4>Added in this release:</h4>
@@ -111,8 +147,10 @@
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Bump minimum required wxPython version to 3.0 (fixes a compatibility problem under Linux if wxPython 2.8 was installed).</li>
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Refresh output levels control when loading settings.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.5">2018-02-18 14:47 (UTC) 3.5 </p>
+				<dt id="changelog-3.5">2018-02-18 14:47 (UTC) 3.5 </dt>
+					<dd>
 						<h3>DisplayCAL 3.5 </h3>
 
 						<h4>Added in this release:</h4>
@@ -465,8 +503,10 @@
 							<li>When querying the online colorimeter corrections database for matching corrections, only query for corrections with a matching manufacturer ID in addition to a matching display model name (fixes corrections being offered for displays from different manufacturers, but matching model names).</li>
 							<li>Profile loader (Windows): Fix unhandled exception if no profile is assigned to a display (regression of a change to show the profile description instead of just the file name in ${APPNAME} 3.2.1).</li>
 						</ul>
+					</dd>
 				
-						<p id="changelog-3.2.2">2016-12-13 22:27 (UTC) 3.2.2 </p>
+				<dt id="changelog-3.2.2">2016-12-13 22:27 (UTC) 3.2.2 </dt>
+					<dd>
 						<h3>3.2.2 </h3>
 
 						<h4>Changed in this release:</h4>

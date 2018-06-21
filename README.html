@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.5.3 </h2>
-					<p>2018-04-25 13:30 UTC</p>
+					<h2 id="version">3.6 </h2>
+					<p>2018-06-21 22:06 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -352,6 +352,11 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 								<a rel="nofollow" href="https://displaycal.net/download/Fedora_27/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
+								<span>Fedora 28</span>
+								<span>
+								<a rel="nofollow" href="https://displaycal.net/download/Fedora_28/x86_64/DisplayCAL.rpm">x86_64</a></span>
+							</li>
+							<li>
 								<span>Mageia 5</span>
 								<span><a rel="nofollow" href="https://displaycal.net/download/Mageia_5/i586/DisplayCAL.rpm">x86</a> | 
 								<a rel="nofollow" href="https://displaycal.net/download/Mageia_5/x86_64/DisplayCAL.rpm">x86_64</a></span>
@@ -378,12 +383,12 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							</li>
 							<li>
 								<span>openSUSE Factory</span>
-								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Factory/i586/DisplayCAL.rpm">x86</a> | 
+								<span>
 								<a rel="nofollow" href="https://displaycal.net/download/openSUSE_Factory/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>openSUSE Tumbleweed</span>
-								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Tumbleweed/i586/DisplayCAL.rpm">x86</a> | 
+								<span>
 								<a rel="nofollow" href="https://displaycal.net/download/openSUSE_Tumbleweed/x86_64/DisplayCAL.rpm">x86_64</a></span>
 							</li>
 							<li>
@@ -411,6 +416,11 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.10/i386/DisplayCAL.deb">x86</a> | 
 								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.10/amd64/DisplayCAL.deb">x86_64</a></span>
 							</li>
+							<li>
+								<span>Ubuntu 18.04 (Bionic)</span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_18.04/i386/DisplayCAL.deb">x86</a> | 
+								<a rel="nofollow" href="https://displaycal.net/download/xUbuntu_18.04/amd64/DisplayCAL.deb">x86_64</a></span>
+							</li>
 						</ul>
 
 						<p>Packages made for older distributions may work on newer distributions as long as nothing substantial has changed (i.e. Python version). Also there are several distributions out there that are based on one in the above list (e.g. Linux Mint which is based on Ubuntu). This means that packages for that base distribution should also work on derivatives, you just need to know which version the derivative is based upon and pick your download accordingly.</p>
@@ -425,9 +435,9 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Disk image</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you may need to remove the “quarantine” flag from the non-main standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.5.3.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.5.3.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.6.0.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.6.0.0/*.app</code>
 						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.5.3.0.dmg</code></small></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.6.0.0.dmg</code></small></p>
 					</div>
 				</li>
 				<li>
@@ -436,7 +446,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 						<p>
 							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-Setup.exe">Installer (recommended)</a> or <a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-win32.zip">ZIP archive</a>
 						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.5.3.0-[Setup.exe|win32.zip]</code></small></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.6.0.0-[Setup.exe|win32.zip]</code></small></p>
 					</div>
 				</li>
 				<li>
@@ -445,9 +455,9 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
 						<p><a rel="nofollow" href="https://displaycal.net/download/DisplayCAL.tar.gz">Source Tarball</a></p>
 						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command:<br />
-						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.5.3.0.tar.gz</code><br />
-						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.5.3.0.tar.gz</code><br />
-						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.5.3.0.tar.gz</code></small></p>
+						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.6.0.0.tar.gz</code><br />
+						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.6.0.0.tar.gz</code><br />
+						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.6.0.0.tar.gz</code></small></p>
 						<p>
 							Alternatively, if you don't mind trying out development code, <a href="https://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="https://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="https://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk displaycal</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
@@ -512,6 +522,10 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							</li>
 							<li>
 								<span></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/Fedora_28/noarch/DisplayCAL-0install.rpm">Fedora 28</a></span>
+							</li>
+							<li>
+								<span></span>
 								<span><a rel="nofollow" href="https://displaycal.net/download/openSUSE_Leap_42.2/noarch/DisplayCAL-0install.rpm">openSUSE Leap 42.2</a></span>
 							</li>
 							<li>
@@ -550,6 +564,10 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 								<span></span>
 								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_17.10/all/DisplayCAL-0install.deb">Ubuntu 17.10 (Artful)</a></span>
 							</li>
+							<li>
+								<span></span>
+								<span><a rel="nofollow" href="https://displaycal.net/download/xUbuntu_18.04/all/DisplayCAL-0install.deb">Ubuntu 18.04 (Bionic)</a></span>
+							</li>
 						</ul>
 						
 						<p>Please note:</p>
@@ -579,6 +597,9 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
 						<p>Download the <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL Zero Install Launcher</a> disk image and run any of the included applications.</p>
+						<p>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.6.0.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.6.0.0/*.app</code>
+						</p>
 						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-0install.dmg</code></small></p>
 					</div>
 				</li>
@@ -1546,10 +1567,12 @@ Enter the IP address in the window that opens (port should already be filled) an
 						“Relative” gamma results in an actual output at 50% input which matches that of an idealized power curve.</li>
 						<li><strong>Black output offset</strong> To accomodate a non-zero black level of a real display, the tone response curve needs to be offset and scaled accordingly. A black output offset of 0% (= all input offset) scales and offsets the input values (this matches BT.1886), while an offset of 100% scales and offsets the output values (this matches the overall curve shape of a pure power curve). A split between input and output offset is also possible.</li>
 						<li><strong>Target peak luminance</strong> (only available for SMPTE 2084) This allows you to adjust the clipping point (when not using roll-off) or roll-off to the desired target peak luminance. Note that you shouldn't necessarily enter your actual display peak white luminance here: For example, if you are using a display capable of 120 cd/m2, multiply with a factor between 3 to 5, i.e. enter 360 to 600 cd/m². The rule of thumb is to use a larger factor the lower your actual display peak luminance is (a dim projector may need a factor around 10), and a smaller factor (or none for an actual HDR display with at least 540 cd/m² capability) the higher it is.</li>
-						<li><strong>HDR processing (convert HDR to SDR or pass through HDR)</strong> (only available for SMPTE 2084 when the 3D LUT format is set to madVR) Whether the 3D LUT will tell madVR to switch the display to HDR mode or not (HDR mode 3D LUTs will need to be set in the “process HDR content by an external 3D LUT” slot, HDR to SDR mode 3D LUTs in the “convert HDR content to SDR by using an external 3D LUT” slot in madVR's HDR options). Note that you need to have profiled the display in the respective mode (SDR or HDR) as well, and that DisplayCAL currently cannot switch a display into HDR mode.</li>
-						<li><strong>Mastering display black and peak luminance</strong> (only available for SMPTE 2084 roll-off when advanced options are enabled in the “Options” menu) HDR video content may not have been mastered on a display capable of showing the full range of HDR luminance levels, and so altering the roll-off and specifying clipping points may be desirable to make better use of a target display's luminance capabilities. A way to do this is to specify the mastering display black and peak luminance levels. Note that setting unsuitable values may clip visually relevant information, and therefore you should leave the mastering display black and peak luminance at their default values of 0 cd/m² and 10000 cd/m², respectively, if they cannot be reasonably assumed.</li>
+						<li><strong>Mastering display black and peak luminance</strong> (only available for SMPTE 2084 roll-off when advanced options are enabled in the “Options” menu) HDR video content may not have been mastered on a display capable of showing the full range of HDR luminance levels, and so (optionally) altering the roll-off and specifying clipping points may be desirable to make better use of a target display's luminance capabilities.<br />
+						A way to do this is to specify the mastering display black and peak luminance levels. Note that setting unsuitable values for a given video content may clip visually relevant information and introduce artifacts like banding, and therefore you should leave the mastering display black and peak luminance at their default values of 0 cd/m² and 10000 cd/m², respectively, if they cannot be reasonably assumed.<br />
+						When mastering display peak luminance is set to a value below 10000 cd/m², you can choose whether the roll-off should be adjusted (more luminance, but potentially reduced detail near the peak) or not (less luminance, but potentially more detail near the peak).</li>
 						<li><strong>Ambient luminance</strong> (only available for Hybrid Log-Gamma when advanced options are enabled in the “Options” menu) The default HLG system gamma of 1.2 (for a display with peak nominal luminance of 1000 cd/m² in a reference environment with 5 cd/m² ambient luminance) should be adjusted in non reference viewing environments. This is achieved by taking into account the ambient luminance (as per BT.2390-3).</li>
 						<li><strong>Content colorspace</strong> (only available for SMPTE 2084 roll-off when advanced options are enabled in the “Options” menu) HDR video content may not encode the full source gamut, and so compressing the actual encoded gamut (instead of the full source gamut) into the display gamut may be desirable. Note that there is usually no need to change this from the default (DCI P3), and that this setting has most impact on non-colorimetric rendering intents.</li>
+						<li><strong>HDR processing (convert HDR to SDR or pass through HDR)</strong> (only available for SMPTE 2084 when the 3D LUT format is set to madVR) Whether the 3D LUT will tell madVR to switch the display to HDR mode or not (HDR mode 3D LUTs will need to be set in the “process HDR content by an external 3D LUT” slot, HDR to SDR mode 3D LUTs in the “convert HDR content to SDR by using an external 3D LUT” slot in madVR's HDR options). Note that you need to have profiled the display in the respective mode (SDR or HDR) as well, and that DisplayCAL currently cannot switch a display into HDR mode.</li>
 					</ul>
 					</dd>
 
@@ -2430,13 +2453,13 @@ The easiest way to get a complete set of logfiles is to choose “Show log” fr
 
 			<p>Recent contributors:
 
-<!-- 2018-04-25 -->
-Huei-Horng Yo, Matthias Ellinger, David Williams, Alexander Strauß, Areeb Shabbir, Pogomix, Wolfgang Harst, Phillip R Ziesemer, Magdalena Flisak, Linshan Xie, Milan Stuchal, Dustin Scarpitti, Vadim Chumachenko, Thomas Vilbæk, Christoph Wagner, William Buell, Christoph Schwarz, Minung Seo, Alastair Mcgregor, David Duke, Jeff Perritt,
+<!-- 2018-05 -->
+Andrew Greig, William Camp, Mario González, Dimension 2 Ltd, Mikhail Reytsman, Steve Allen, Francisco Javier Garcia Dominguez, David Schram, Digital Dna Systems, Juho Kerola, Matti Koskinen, Javier Martin Sanchez, Dimitri Vermeire, Mike Malone, Petr Fajkus, Samarra Studios Llc, Greg Feeler, Robert Fraser, Krzysztof Hajdamowicz, Zachary Chu, Eliane Brönnimann, Guillermo Sanz Gimeno, Moisès Sánchez Soler, Robert Henderson, Leslie Peters, Cml-Cinematography Mailing List, Hans Ohwosoro, Harald Juhn, Jaswant Madhavan, Jose Manuel Cuevas Montero, Paul Dulac, Spyridon Mysirlis, Massimo Zannoni, Li Chang Mao,
 
 <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
 
-<!-- 2018-03 -->
-Stefan Hühne, Jean-Claude Chevrier, Thomas Nankivell, 晓东 邵, Richard Shrubb, Victor Sanchez, William Rother, Christopher Bahry, Greg Feeler, Eugen Latmann, Dieter Wagenbichler, Simone Cabasino, J Holmes, J M Robin, Silas Spence, Justin Nicholson, Stephen Wager, Lisa Lang, Roberto Cenci, Matias Puga, Viorel Dobre, Christopher Holder, Robert Neff, Gianluca Ferrari, Jan Komarek, Sol Hubner, Bruno Thomas, Viktor Boleininger, Paolo Venturi, Álvaro Tejero Maján, Cesar Cordova, Michel Quijorna Kyburz, Bo Yang Tang, Quebec Inc., Silvercleave, Greg Feeler, Christian Philippe, Mark Gray, John Kua, Nhan Nguyen, Eric Rijcken, Eric Rijcken, Shakeem Guzman, Paypal, Leon Daniels, Pictaural Productions Inc., Gilles Plurien, Appeal Design
+<!-- 2018-04 -->
+Erlend Ronnekleiv, Mug, Tonella Daniele, Athol Greenhalgh, Joshua Wijaya, Mario Adolfo Leclere Velez, Huei-Horng Yo, Matthias Ellinger, David Williams, Alexander Strauß, Areeb Shabbir, Pogomix, Wolfgang Harst, Phillip R Ziesemer, Magdalena Flisak, Linshan Xie, Milan Stuchal, Dustin Scarpitti, Vadim Chumachenko, Thomas Vilbæk, Christoph Wagner, William Buell, Christoph Schwarz, Minung Seo, Alastair Mcgregor, David Duke, Jeff Perritt
 
 </span></p>
 
