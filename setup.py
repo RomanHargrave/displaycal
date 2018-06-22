@@ -69,15 +69,16 @@ def format_chglog(chglog, format="appstream"):
 		chglog = re.sub(r"(<li>[^:<]*)Linux([^:<]*):\s*", r"\1\2", chglog)
 		# Remove macOS and Windows specific items
 		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
-		# Conform to appstream-util validate-strict rules:
-		# - <li> cannot end in '.'
-		chglog = re.sub(r"([^.])\.\s*</li>", r"\1</li>", chglog)
-		# - <li> maximum is 100 chars
-		chglog = re.sub(r"(<li>)([^<]{100,})(</li>)",
-						lambda matches: "%s%s%s" % (matches.group(1),
-													matches.group(2)[:97] +
-													"...",
-													matches.group(3)), chglog)
+		if format.lower() == "appstream":
+			# Conform to appstream-util validate-strict rules:
+			# - <li> cannot end in '.'
+			chglog = re.sub(r"([^.])\.\s*</li>", r"\1</li>", chglog)
+			# - <li> maximum is 100 chars
+			chglog = re.sub(r"(<li>)([^<]{100,})(</li>)",
+							lambda matches: "%s%s%s" % (matches.group(1),
+														matches.group(2)[:97] +
+														"...",
+														matches.group(3)), chglog)
 		# Nice formatting
 		chglog = re.sub(r"^\s+(?m)", r"\t" * 4, chglog)  # Multi-line
 		chglog = re.sub(r"(<li)", r"\t\1", chglog)
