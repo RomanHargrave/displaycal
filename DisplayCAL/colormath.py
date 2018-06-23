@@ -1255,16 +1255,30 @@ def ICtCp2LinearRGB(I, Ct, Cp, eotf=lambda v: specialpow(v, -2084)):
 	return R, G, B
 
 
-def XYZ2ICtCp(X, Y, Z, rgb_space="Rec. 2020", clamp=False,
+def RGB2ICtCp(R, G, B, rgb_space="Rec. 2020",
+			  eotf=lambda v: specialpow(v, -2084), clamp=False,
 			  oetf=lambda E: specialpow(E, 1.0 / -2084)):
-	R, G, B = XYZ2RGB(X, Y, Z, rgb_space, clamp=clamp, oetf=lambda v: v)
+	""" R'G'B' to ICtCp """
+	X, Y, Z = RGB2XYZ(R, G, B, rgb_space, eotf=eotf)
+	return XYZ2ICtCp(X, Y, Z, clamp, oetf)
+
+
+def ICtCp2RGB(I, Ct, Cp, rgb_space="Rec. 2020",
+			  eotf=lambda v: specialpow(v, -2084), clamp=False,
+			  oetf=lambda E: specialpow(E, 1.0 / -2084)):
+	""" ICtCp to R'G'B' """
+	X, Y, Z = ICtCp2XYZ(I, Ct, Cp, eotf)
+	return XYZ2RGB(X, Y, Z, rgb_space, clamp=clamp, oetf=oetf)
+
+
+def XYZ2ICtCp(X, Y, Z, clamp=False, oetf=lambda E: specialpow(E, 1.0 / -2084)):
+	R, G, B = XYZ2RGB(X, Y, Z, "Rec. 2020", clamp=clamp, oetf=lambda v: v)
 	return LinearRGB2ICtCp(R, G, B, oetf)
 
 
-def ICtCp2XYZ(I, Ct, Cp, rgb_space="Rec. 2020",
-			  eotf=lambda v: specialpow(v, -2084)):
+def ICtCp2XYZ(I, Ct, Cp, eotf=lambda v: specialpow(v, -2084)):
 	R, G, B = ICtCp2LinearRGB(I, Ct, Cp, eotf)
-	return RGB2XYZ(R, G, B, rgb_space, eotf=lambda v: v)
+	return RGB2XYZ(R, G, B, "Rec. 2020", eotf=lambda v: v)
 
 
 def RGB2Lab(R, G, B, rgb_space=None, whitepoint=None, noadapt=False,

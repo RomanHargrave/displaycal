@@ -1003,9 +1003,9 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
 				RGB_sum = sum(RGB)
 				if hdr_format == "PQ" and mode in ("HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
-					LinearRGB = [eotf(v) for v in RGB]
-					I1, Ct1, Cp1 = colormath.LinearRGB2ICtCp(*LinearRGB,
-															 oetf=eotf_inverse)
+					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space,
+													   eotf=eotf,
+													   oetf=eotf_inverse)
 					if debug and R == G == B:
 						safe_print("-> ICtCp % 5.3f % 5.3f % 5.3f" %
 								   (I1, Ct1, Cp1,), end=" ")
@@ -1089,11 +1089,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				elif mode in ("HSV", "HSV_ICtCp"):
 					RGB = colormath.HSV2RGB(*HSV)
 				elif mode == "ICtCp":
-					LinearRGB = colormath.ICtCp2LinearRGB(I2, Ct2, Cp2, eotf=eotf)
-					##if min(LinearRGB) < 0 or max(LinearRGB) > 1:
-						##print 'WARNING:', LinearRGB
-						##LinearRGB = [max(min(v, 1), 0) for v in LinearRGB]
-					RGB = [eotf_inverse(v) for v in LinearRGB]
+					RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space, eotf=eotf,
+											  oetf=eotf_inverse)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
 				HDR_RGB.append(RGB)
@@ -1115,8 +1112,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					if I1 > I2:
 						f = colormath.convert_range(I1, I2, 1, 1, 0)
 						Ct2, Cp2 = (v * f for v in (Ct2, Cp2))
-					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2, rgb_space,
-												  eotf=eotf)
+					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2)
 				else:
 					#RGB_ICtCp_XYZ = [v / maxv for v in (X, Y, Z)]
 					RGB_ICtCp_XYZ = [X, Y, Z]
@@ -1162,9 +1158,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		I3, Ct3, Cp3 = colormath.XYZ2ICtCp(X, Y, Z,
 										   oetf=eotf_inverse)
 		if hdr_format == "PQ" and mode in ("HSV_ICtCp", "RGB_ICtCp"):
-			#I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in RGB_ICtCp_XYZ),
-			I, Ct, Cp = colormath.XYZ2ICtCp(*RGB_ICtCp_XYZ,
-											oetf=eotf_inverse)
+			#I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in RGB_ICtCp_XYZ))
+			I, Ct, Cp = colormath.XYZ2ICtCp(*RGB_ICtCp_XYZ)
 			f = colormath.convert_range(sum(RGB), 0, 3, 1, sat)
 			Ct = Ct * f + Ct3 * (1 - f)
 			Cp = Cp * f + Cp3 * (1 - f)
@@ -1367,13 +1362,11 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 										   eotf=eotf)
 			if blendmode == "ICtCp":
 				I, Ct, Cp = colormath.XYZ2ICtCp(*XYZc_r2020,
-												rgb_space=rgb_space,
 												oetf=eotf_inverse)
 				L, C, H = colormath.Lab2LCHab(I * 100, Cp * 100, Ct * 100)
 				XYZdispa = colormath.adapt(*XYZdisp,
 										   whitepoint_destination=rgb_space[1])
 				Id, Ctd, Cpd = colormath.XYZ2ICtCp(*(v * maxv for v in XYZdispa),
-												   rgb_space=rgb_space,
 												   oetf=eotf_inverse)
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id * 100, Cpd * 100, Ctd * 100)
 			elif blendmode == "IPT":
@@ -1555,9 +1548,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						if blendmode == "ICtCp":
 							I, Cp, Ct = [v / 100.0 for v in
 										 colormath.LCHab2Lab(L, C, H)]
-							XYZ = colormath.ICtCp2XYZ(I, Ct, Cp,
-													  rgb_space=rgb_space,
-													  eotf=eotf)
+							XYZ = colormath.ICtCp2XYZ(I, Ct, Cp, eotf=eotf)
 							X, Y, Z = (v / maxv for v in XYZ)
 							# Adapt to D50
 							X, Y, Z = colormath.adapt(X, Y, Z,
@@ -1652,17 +1643,14 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				otable.clut.append([])
 				for B in xrange(clutres):
 					RGB = [v * step for v in (R, G, B)]
-					LinearRGB = [eotf(v) for v in RGB]
+					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space,
+												eotf=eotf)
 					if hdr_format == "PQ":
-						I1, Ct1, Cp1 = colormath.LinearRGB2ICtCp(*LinearRGB,
-																 oetf=eotf_inverse)
+						I1, Ct1, Cp1 = colormath.XYZ2ICtCp(X, Y, Z)
 						I2 = eetf(I1)
 						Ct2, Cp2 = (min(I1 / I2, I2 / I1) * v for v in (Ct1, Cp1))
-						X, Y, Z = colormath.ICtCp2XYZ(I1, Ct2, Cp2)
-						RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space,
-												oetf=eotf_inverse)
+						RGB = colormath.ICtCp2RGB(I1, Ct2, Cp2, rgb_space)
 					else:
-						X, Y, Z = rgb_space[-1] * LinearRGB
 						RGB = hlg.XYZ2RGB(X, Y, Z)
 					if (max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or
 						round(Y, 6) > 1 or max(RGB) > 1 or min(RGB) < 0):
@@ -2357,7 +2345,7 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 						I *= f
 					Ct *= 0.999
 					Cp *= 0.999
-				X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp, rgb_space)
+				X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp)
 			XYZ[:] = X, Y, Z
 		HDR_XYZ[i] = (RGB_in, ICtCp_XYZ, RGB_ICtCp_XYZ)
 		perc = round((i + 1.0) / amount * 50)
