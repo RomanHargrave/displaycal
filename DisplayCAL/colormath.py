@@ -2963,10 +2963,13 @@ class Matrix3x3(list):
 	def __init__(self, matrix=None):
 		if matrix:
 			self.update(matrix)
+		else:
+			self._reset()
 	
 	def update(self, matrix):
 		if len(matrix) != 3:
 			raise ValueError('Invalid number of rows for 3x3 matrix: %i' % len(matrix))
+		self._reset()
 		while len(self):
 			self.pop()
 		for row in matrix:
@@ -2975,6 +2978,11 @@ class Matrix3x3(list):
 			self.append([])
 			for column in row:
 				self[-1].append(column)
+
+	def _reset(self):
+		self._inverted = None
+		self._transposed = None
+		self._rounded = {}
 	
 	def __add__(self, matrix):
 		instance = self.__class__()
@@ -3045,6 +3053,8 @@ class Matrix3x3(list):
 		self.update(self.inverted())
 	
 	def inverted(self):
+		if self._inverted:
+			return self._inverted
 		determinant = self.determinant()
 		matrix = self.adjoint()
 		instance = self.__class__()
@@ -3057,24 +3067,31 @@ class Matrix3x3(list):
 							   [matrix[2][0] / determinant,
 								matrix[2][1] / determinant,
 								matrix[2][2] / determinant]])
+		self._inverted = instance
 		return instance
 	
 	def rounded(self, digits=3):
+		if digits in self._rounded:
+			return self._rounded[digits]
 		matrix = self.__class__()
 		for row in self:
 			matrix.append([])
 			for column in row:
 				matrix[-1].append(round(column, digits))
+		self._rounded[digits] = matrix
 		return matrix
 								
 	def transpose(self):
 		self.update(self.transposed())
 	
 	def transposed(self):
+		if self._transposed:
+			return self._transposed
 		instance = self.__class__()
 		instance.update([[self[0][0], self[1][0], self[2][0]],
 							   [self[0][1], self[1][1], self[2][1]],
 							   [self[0][2], self[1][2], self[2][2]]])
+		self._transposed = instance
 		return instance
 
 
