@@ -81,7 +81,7 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False):
 		# Write device link
 		link.write(filename + ".icc")
 
-	icc_device_link_to_madvr(filename + ".icc", unity=False)
+	return icc_device_link_to_madvr(filename + ".icc", unity=False)
 
 
 def icc_device_link_to_madvr(icc_device_link_filename, unity=False):
@@ -123,7 +123,7 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False):
 					   colorspace)
 		safe_print("Possible target color spaces:",
 				   "BT709, SMPTE_C, EBU_PAL, BT2020, DCI_P3")
-		sys.exit(1)
+		return False
 
 	rgb_space = colormath.get_rgb_space(key)
 
@@ -174,10 +174,12 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False):
 		safe_print("Gamut (rx ry gx gy bx by wx wy):",
 				   "%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f" %
 				   (rx, ry, gx, gy, bx, by, wx, wy))
+	return True
 
 
 if __name__ == "__main__":
 	mp.freeze_support()
+	result = False
 	if len(sys.argv[1:]) and not "--help" in sys.argv[1:]:
 		config.initcfg()
 		for arg in sys.argv[1:]:
@@ -187,7 +189,7 @@ if __name__ == "__main__":
 				fn = icc_device_link_to_madvr
 			else:
 				continue
-			fn(arg, unity="--unity" in sys.argv)
+			result = fn(arg, unity="--unity" in sys.argv)
 			safe_print("")
 	else:
 		safe_print("Convert eeColor 65^3 to madVR 256^3 3D LUT (video levels in, video levels out)")
@@ -205,4 +207,6 @@ if __name__ == "__main__":
 		safe_print("")
 		safe_print("  Convert HDR to SDR BT2020 eeColor 3D LUT")
 		safe_print("  %s eeColor.BT2020.HDR2SDR.txt"  % os.path.basename(sys.argv[0]))
-	raw_input("Press RETURN to exit")
+	if sys.stdout.isatty():
+		raw_input("Press RETURN to exit")
+	sys.exit(int(not result))
