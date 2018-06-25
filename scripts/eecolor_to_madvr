@@ -42,6 +42,14 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False):
 				values = [float(v) for v in line.split()]
 				eecolor_3dlut_data.append(values)
 
+		# Fix input values (eeColor BRG) so sorting produces correct result
+		n = 0
+		for B in xrange(65):
+			for R in xrange(65):
+				for G in xrange(65):
+					eecolor_3dlut_data[n][:3] = (v / 64.0 for v in (R, G, B))
+					n += 1
+
 		# Sort eeColor 3D LUT data
 		# (fastest increasing column from right to left: B -> G -> R)
 		eecolor_3dlut_data.sort()
