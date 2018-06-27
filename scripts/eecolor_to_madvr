@@ -37,17 +37,20 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False):
 		with open(eecolor_3dlut_filename, "rb") as eecolor_3dlut:
 			for line in eecolor_3dlut:
 				line = line.strip()
-				if line.startswith("#"):
+				if not line or line.startswith("#"):
 					continue
 				values = [float(v) for v in line.split()]
 				eecolor_3dlut_data.append(values)
 
+		clutres = int(round(len(eecolor_3dlut_data) ** (1.0 / 3.0)))
+		clutmax = clutres - 1.0
+
 		# Fix input values (eeColor BRG) so sorting produces correct result
 		n = 0
-		for B in xrange(65):
-			for R in xrange(65):
-				for G in xrange(65):
-					eecolor_3dlut_data[n][:3] = (v / 64.0 for v in (R, G, B))
+		for B in xrange(clutres):
+			for R in xrange(clutres):
+				for G in xrange(clutres):
+					eecolor_3dlut_data[n][:3] = (v / clutmax for v in (R, G, B))
 					n += 1
 
 		# Sort eeColor 3D LUT data
@@ -68,7 +71,6 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False):
 		link.tags.A2B0.clut = []
 
 		# Fill cLUT
-		clutres = 65
 		row = 0
 		for a in xrange(clutres):
 			for b in xrange(clutres):
@@ -180,7 +182,8 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False):
 if __name__ == "__main__":
 	mp.freeze_support()
 	result = False
-	if len(sys.argv[1:]) and not "--help" in sys.argv[1:]:
+	if (len(sys.argv[1:]) and not "--help" in sys.argv[1:] and
+		sys.argv[1:] != ["--unity"]):
 		config.initcfg()
 		for arg in sys.argv[1:]:
 			if arg.lower().endswith(".txt"):
@@ -189,7 +192,10 @@ if __name__ == "__main__":
 				fn = icc_device_link_to_madvr
 			else:
 				continue
-			result = fn(arg, unity="--unity" in sys.argv)
+			try:
+				result = fn(arg, unity="--unity" in sys.argv)
+			except Exception, exception:
+				safe_print(exception)
 			safe_print("")
 	else:
 		safe_print("Convert eeColor 65^3 to madVR 256^3 3D LUT (video levels in, video levels out)")
