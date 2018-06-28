@@ -1789,7 +1789,7 @@ Transform {
 							break
 		return fixed
 	
-	def quantize_device_values(self, bits=8):
+	def quantize_device_values(self, bits=8, quantizer=round):
 		""" Quantize device values to n bits """
 		q = 2 ** bits - 1.0
 		for data in self.queryv("DATA").itervalues():
@@ -1801,7 +1801,7 @@ Transform {
 			for labels in get_device_value_labels(color_rep):
 				for item in data.queryi(labels).itervalues():
 					for label in labels:
-						item[label] = round(item[label] / maxv * q) / q * maxv
+						item[label] = quantizer(item[label] / maxv * q) / q * maxv
 	
 	def scale_device_values(self, factor=100.0 / 255, color_rep=None):
 		""" Scales device values by multiplying with factor. """
