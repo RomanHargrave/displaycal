@@ -1031,22 +1031,21 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						X, Y, Z = (v / Y * Y2 for v in (X, Y, Z))
 					else:
 						I1 = I2 = 0
-				elif mode in ("HSV", "HSV_ICtCp"):
-					HSV = list(colormath.RGB2HSV(*RGB))
-					V1 = HSV[2]
-					V2 = eetf(V1)
-					HSV[2] = V2
-					if V1 > V2:
-						HSV[1] *= V2 / V1
-						for i, v in enumerate(RGB):
-							RGB[i] = eetf(v)
-					HSV[1] = min(HSV[1], colormath.RGB2HSV(*RGB)[1])
-				elif mode in ("RGB", "RGB_ICtCp"):
-					if mode == "RGB":
+				elif mode in ("HSV", "HSV_ICtCp", "ICtCp", "RGB", "RGB_ICtCp"):
+					if mode in ("HSV", "RGB"):
 						I1 = max(RGB)
+					if mode in ("HSV", "HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
+						# Record original hue angle
+						H = colormath.RGB2HSV(*RGB)[0]
 					for i, v in enumerate(RGB):
 						RGB[i] = eetf(v)
-					if mode == "RGB":
+					if mode in ("HSV", "HSV_ICtCp"):
+						HSV = list(colormath.RGB2HSV(*RGB_shifted))
+
+						# Set hue angle
+						HSV[0] = H
+						RGB = colormath.HSV2RGB(*HSV)
+					if mode in ("HSV", "RGB"):
 						I2 = max(RGB)
 				elif mode == "YRGB":
 					LinearRGB = [eotf(v) for v in RGB]
@@ -1086,11 +1085,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 													  rgb_space[1])[0]
 					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space,
 											oetf=eotf_inverse)
-				elif mode in ("HSV", "HSV_ICtCp"):
-					RGB = colormath.HSV2RGB(*HSV)
 				elif mode == "ICtCp":
-					RGB = colormath.ICtCp2RGB(I2, Ct2, Cp2, rgb_space, eotf=eotf,
-											  oetf=eotf_inverse)
+					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2)
+					RGB = colormath.XYZ2RGB(X, Y, Z, rgb_space, clamp=False,
+											oetf=eotf_inverse)
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB))
 				HDR_RGB.append(RGB)
@@ -1099,7 +1097,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				elif mode not in ("XYZ", "ICtCp"):
 					X, Y, Z = colormath.RGB2XYZ(*RGB, rgb_space=rgb_space,
 												eotf=eotf)
-				if hdr_format == "PQ" and mode in ("HSV_ICtCp", "RGB_ICtCp"):
+				if hdr_format == "PQ" and mode in ("HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
 					# Use hue and chroma from ICtCp
 					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
 					L, C, H = colormath.Lab2LCHab(I * 100, Ct * 100, Cp * 100)
@@ -1721,6 +1719,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											 content_rgb_space,
 											 clutres,
 											 mode,  # Not used for HLG
+											 1.0,  # Sat - Not used for HLG
 											 forward_xicclu,
 											 backward_xicclu,
 											 generate_B2A,
@@ -2319,8 +2318,13 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 		if thread_abort_event and thread_abort_event.is_set():
 			return [False]
 		is_neutral = all(v == RGB_in[0] for v in RGB_in)
-		for XYZ in (ICtCp_XYZ, RGB_ICtCp_XYZ):
-			if sat == 1 and XYZ is ICtCp_XYZ:
+		for j, XYZ in enumerate((ICtCp_XYZ, RGB_ICtCp_XYZ)):
+			if j == 0 and (sat == 1 or ICtCp_XYZ == RGB_ICtCp_XYZ):
+				# Set ICtCp_XYZ to the same object as RGB_ICtCp_XYZ which we
+				# are going to change in-place in the next iteration of the loop
+				# so that at the end of this loop, both will point to the same
+				# changed data
+				ICtCp_XYZ = RGB_ICtCp_XYZ
 				continue
 			X, Y, Z = XYZ
 			H = None
