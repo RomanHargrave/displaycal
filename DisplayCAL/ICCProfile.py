@@ -650,6 +650,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											rolloff=True,
 											clutres=33, mode="HSV_ICtCp",
 											sat=1.0,
+											hue=0.5,
 											forward_xicclu=None,
 											backward_xicclu=None,
 											generate_B2A=False,
@@ -666,9 +667,16 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 	       "HSV" (not recommended, saturation loss)
 	       "RGB" (not recommended, saturation loss, pleasing hue shift)
 	
+	The roll-off saturation and hue preservation can be controlled.
+	
 	sat:   Saturation preservation factor [0.0, 1.0]
 		   0.0 = Favor luminance preservation over saturation
 		   1.0 = Favor saturation preservation over luminance
+	
+	hue:   Selective hue preservation factor [0.0, 1.0]
+		   0.0 = Allow hue shift for redorange/orange/yellowgreen towards
+		         yellow to preserve more saturation and detail
+		   1.0 = Preserve hue
 	
 	"""
 
@@ -684,7 +692,7 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											 5.0,  # Not used for PQ
 											 1.0,  # Not used for PQ
 											 content_rgb_space,
-											 clutres, mode, sat,
+											 clutres, mode, sat, hue,
 											 forward_xicclu,
 											 backward_xicclu,
 											 generate_B2A,
@@ -704,6 +712,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 									  clutres=33,
 									  mode="HSV_ICtCp",  # Not used for HLG
 									  sat=1.0,  # Not used for HLG
+									  hue=0.5,  # Not used for HLG
 									  forward_xicclu=None,
 									  backward_xicclu=None,
 									  generate_B2A=False,
@@ -987,6 +996,12 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	if logfile:
 		logfile.write(logmsg + "...\n")
 		logfile.write("\r%i%%" % perc)
+	# Selective hue preservation for redorange/orange/yellowgreen
+	# (otherwise shift towards yellow to preserve more saturation and detail)
+	# Hue angles (RGB):
+	# red, yellow, green, cyan, blue, magenta, red
+	hinterp = colormath.Interp([0, 0.166666, 0.333333, 0.5, 0.666666, 0.833333, 1],
+							   [1, hue, 1, 1, 1, 1, 1], use_numpy=True)
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			for B in xrange(clutres):
@@ -1037,10 +1052,18 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					if mode in ("HSV", "HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
 						# Record original hue angle
 						H = colormath.RGB2HSV(*RGB)[0]
+
+						# Allow hue shift based on hue angle
+						hf = hinterp(H)
 					for i, v in enumerate(RGB):
 						RGB[i] = eetf(v)
+					RGB_shifted = RGB  # Potentially hue shifted RGB
 					if mode in ("HSV", "HSV_ICtCp"):
 						HSV = list(colormath.RGB2HSV(*RGB_shifted))
+
+						if mode == "HSV":
+							# Allow hue shift based on hue angle
+							H = H * hf + HSV[0] * (1 - hf)
 
 						# Set hue angle
 						HSV[0] = H
@@ -1102,8 +1125,19 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
 					L, C, H = colormath.Lab2LCHab(I * 100, Ct * 100, Cp * 100)
 					L2, C2, H2 = colormath.Lab2LCHab(I2 * 100, Ct2 * 100, Cp2 * 100)
-					C3 = colormath.convert_range(I1, I2, 1, C2, min(C2, C))
-					Ct2, Cp2 = (v / 100.0 for v in colormath.LCHab2Lab(L2, C3, H2)[1:])
+
+					# Allow hue shift based on hue angle
+					I3, Ct3, Cp3 = colormath.RGB2ICtCp(*RGB_shifted,
+													   rgb_space=rgb_space,
+													   eotf=eotf,
+													   oetf=eotf_inverse)
+					L3, C3, H3 = colormath.Lab2LCHab(I3 * 100, Ct3 * 100, Cp3 * 100)
+					L = L * hf + L3 * (1 - hf)
+					C = C * hf + C3 * (1 - hf)
+					H2 = H2 * hf + H3 * (1 - hf)
+
+					C = colormath.convert_range(I1, I2, 1, C2, min(C2, C))
+					I, Ct2, Cp2 = (v / 100.0 for v in colormath.LCHab2Lab(L, C, H2))
 					RGB_ICtCp_XYZ = colormath.ICtCp2XYZ(I, Ct2, Cp2)
 					#RGB_ICtCp_XYZ = [v / maxv for v in RGB_ICtCp_XYZ]
 					RGB_ICtCp_XYZ = list(RGB_ICtCp_XYZ)
@@ -1720,6 +1754,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											 clutres,
 											 mode,  # Not used for HLG
 											 1.0,  # Sat - Not used for HLG
+											 0.5,  # Hue - Not used for HLG
 											 forward_xicclu,
 											 backward_xicclu,
 											 generate_B2A,

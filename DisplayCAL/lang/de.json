@@ -791,6 +791,7 @@
 	"positive": "Positiv",
 	"preferred_cmm": "Bevorzugtes CMM",
 	"prepress.icc": "Druckvorstufe (D50, 130 cd/m², L*)",
+	"preserve_hue": "Farbton erhalten",
 	"preserve_luminance": "Luminanz erhalten",
 	"preserve_saturation": "Sättigung erhalten",
 	"preset": "Voreinstellung",

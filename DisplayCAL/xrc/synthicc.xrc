@@ -595,6 +595,50 @@
                 </object>
                 <object class="spacer"/>
                 <object class="sizeritem">
+                  <object class="wxBoxSizer">
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="lut3d_hdr_hue_label">
+                        <label>preserve_hue</label>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>8</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxSlider" name="lut3d_hdr_hue_ctrl">
+                        <size>128,-1</size>
+                        <min>0</min>
+                        <max>100</max>
+                        <XRCED>
+                          <events>EVT_SLIDER</events>
+                        </XRCED>
+                      </object>
+                      <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxSpinCtrl" name="lut3d_hdr_hue_intctrl">
+                        <size>65,-1</size>
+                        <min>0</min>
+                        <max>100</max>
+                        <XRCED>
+                          <events>EVT_TEXT</events>
+                        </XRCED>
+                      </object>
+                      <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                      <border>4</border>
+                    </object>
+                    <object class="sizeritem">
+                      <object class="wxStaticText" name="lut3d_hdr_hue_intctrl_label">
+                        <label>%</label>
+                        <hidden>1</hidden>
+                      </object>
+                      <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                    </object>
+                    <orient>wxHORIZONTAL</orient>
+                  </object>
+                </object>
+                <object class="spacer"/>
+                <object class="sizeritem">
                   <object class="wxFlexGridSizer">
                     <object class="sizeritem">
                       <object class="wxStaticText" name="lut3d_hdr_minmll_label">

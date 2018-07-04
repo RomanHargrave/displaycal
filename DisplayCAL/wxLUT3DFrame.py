@@ -166,6 +166,10 @@ class LUT3DFrame(BaseFrame):
 											   self.lut3d_hdr_maxmll_alt_clip_handler)
 		self.lut3d_hdr_sat_ctrl.Bind(wx.EVT_SLIDER,
 									 self.lut3d_hdr_sat_ctrl_handler)
+		self.lut3d_hdr_hue_ctrl.Bind(wx.EVT_SLIDER,
+									 self.lut3d_hdr_hue_ctrl_handler)
+		self.lut3d_hdr_hue_intctrl.Bind(wx.EVT_TEXT,
+										self.lut3d_hdr_hue_ctrl_handler)
 
 	def lut3d_bind_content_colorspace_handlers(self):
 		self.lut3d_content_colorspace_ctrl.Bind(wx.EVT_CHOICE,
@@ -324,6 +328,17 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_set_option("3dlut.hdr_sat",
 							  self.lut3d_hdr_sat_ctrl.GetValue() / 100.0)
 		self.lut3d_hdr_update_sat_val()
+
+	def lut3d_hdr_hue_ctrl_handler(self, event):
+		if event.GetId() == self.lut3d_hdr_hue_intctrl.GetId():
+			self.lut3d_hdr_hue_ctrl.SetValue(
+				self.lut3d_hdr_hue_intctrl.GetValue())
+		else:
+			self.lut3d_hdr_hue_intctrl.SetValue(
+				self.lut3d_hdr_hue_ctrl.GetValue())
+		v = self.lut3d_hdr_hue_ctrl.GetValue() / 100.0
+		if v != getcfg("3dlut.hdr_hue"):
+			self.lut3d_set_option("3dlut.hdr_hue", v)
 
 	def lut3d_trc_black_output_offset_ctrl_handler(self, event):
 		if event.GetId() == self.lut3d_trc_black_output_offset_intctrl.GetId():
@@ -881,6 +896,7 @@ class LUT3DFrame(BaseFrame):
 									 minmll=minmll, maxmll=maxmll,
 									 use_alternate_master_white_clip=getcfg("3dlut.hdr_maxmll_alt_clip"),
 									 hdr_sat=getcfg("3dlut.hdr_sat"),
+									 hdr_hue=getcfg("3dlut.hdr_hue"),
 									 ambient_cdm2=ambient_cdm2,
 									 content_rgb_space=content_rgb_space,
 									 hdr_display=getcfg("3dlut.hdr_display"),
@@ -1476,6 +1492,9 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_content_colorspace_ctrl.SetSelection(i)
 		self.lut3d_hdr_sat_ctrl.SetValue(int(round(getcfg("3dlut.hdr_sat") * 100)))
 		self.lut3d_hdr_update_sat_val()
+		hue = int(round(getcfg("3dlut.hdr_hue") * 100))
+		self.lut3d_hdr_hue_ctrl.SetValue(hue)
+		self.lut3d_hdr_hue_intctrl.SetValue(hue)
 
 	def update_linking_controls(self):
 		self.gamut_mapping_inverse_a2b.SetValue(
@@ -1618,6 +1637,8 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_system_gamma_txt.Show(show and hlg)
 		show = (show or smpte2084) and not hlg
 		sizer = self.lut3d_hdr_sat_ctrl.ContainingSizer
+		sizer.ShowItems(show and smpte2084)
+		sizer = self.lut3d_hdr_hue_ctrl.ContainingSizer
 		sizer.ShowItems(show and smpte2084)
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])

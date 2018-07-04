@@ -791,6 +791,7 @@
 		"*positive": "Positive",
 	"preferred_cmm": "偏向CMM",
 	"prepress.icc": "印前作业 (D50, 130 cd/m², L*)",
+		"*preserve_hue": "Preserve hue",
 		"*preserve_luminance": "Preserve luminance",
 		"*preserve_saturation": "Preserve saturation",
 	"preset": "预设方案",

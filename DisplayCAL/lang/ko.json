@@ -791,6 +791,7 @@
 		"*positive": "Positive",
 		"*preferred_cmm": "Preferred CMM",
 	"prepress.icc": "프리프레스 (D50, 130 cd/m², L*)",
+		"*preserve_hue": "Preserve hue",
 		"*preserve_luminance": "Preserve luminance",
 		"*preserve_saturation": "Preserve saturation",
 	"preset": "프리셋",
