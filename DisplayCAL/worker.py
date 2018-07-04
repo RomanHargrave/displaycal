@@ -10018,6 +10018,8 @@ usage: spotread [-options] [logfile]
 									 "3dlut.hdr_peak_luminance",
 									 "3DLUT_HDR_SAT":
 									 "3dlut.hdr_sat",
+									 "3DLUT_HDR_HUE":
+									 "3dlut.hdr_hue",
 									 "3DLUT_HDR_MAXMLL":
 									 "3dlut.hdr_maxmll",
 									 "3DLUT_HDR_MAXMLL_ALT_CLIP":

@@ -14060,6 +14060,8 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "3dlut.hdr_peak_luminance",
 											 "3DLUT_HDR_SAT":
 											 "3dlut.hdr_sat",
+											 "3DLUT_HDR_HUE":
+											 "3dlut.hdr_hue",
 											 "3DLUT_HDR_DISPLAY":
 											 "3dlut.hdr_display",
 											 "3DLUT_HDR_MAXCLL":  # MaxCLL is no longer used, map to mastering display max light level (MaxMLL)
