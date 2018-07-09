@@ -66,7 +66,7 @@ def format_chglog(chglog, format="appstream"):
 				chglog = chglog.replace(tag, "")
 				chglog = chglog.replace("</" + tagname + ">", "")
 		# Remove text "Linux" in item before colon (":")
-		chglog = re.sub(r"(<li>[^:<]*)Linux([^:<]*):\s*", r"\1\2", chglog)
+		chglog = re.sub(r"(<li>[^:<]*)\s+Linux([^:<]+|:\s*)", r"\1\2", chglog)
 		# Remove macOS and Windows specific items
 		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
 		if format.lower() == "appstream":
