@@ -5038,7 +5038,7 @@ class MainFrame(ReportFrame, BaseFrame):
 										"whitepoint_measure_btn")
 		set_ambient = evtobjname == "ambient_measure_btn"
 		if (set_whitepoint and not set_ambient and lux and
-			getcfg("show_advanced_options")):
+			getcfg("show_advanced_options") and getcfg("trc", False)):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
 								cancel=lang.getstr("no"), 
