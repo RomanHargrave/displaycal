@@ -5027,6 +5027,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						result)
 		Yxy = re.search("Yxy: (\d+(?:\.\d+)) (\d+(?:\.\d+)) (\d+(?:\.\d+))", 
 						result)
+		Y = re.search("Y: (\d+(?:\.\d+))", result)  # Monochrome, e.g. Spyder4/5
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
 		if not result or (not K and not XYZ and not Yxy and not lux):
 			show_result_dialog(Error(result + lang.getstr("failure")),
@@ -5061,9 +5062,14 @@ class MainFrame(ReportFrame, BaseFrame):
 									bitmap=geticon(32, "dialog-question"))
 				set_whitepoint = dlg.ShowModal() == wx.ID_OK
 				dlg.Destroy()
-		elif XYZ:
+		elif XYZ or Y:
 			# White or black luminance
-			Y = float(XYZ.group(2))
+			if XYZ:
+				Y = XYZ.group(2)
+			else:
+				# Monochrome, e.g. Spyder4/5
+				Y = Y.group(1)
+			Y = float(Y)
 			if evtobjname in ("luminance_measure_btn",
 							  "ambient_luminance_measure_btn"):
 				# Force minimum luminance of 40 cd/m2 which should be suitable for
