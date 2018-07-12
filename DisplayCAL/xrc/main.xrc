@@ -755,9 +755,18 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="luminance_measure_btn">
-                                    <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                                    <bitmap>../theme/icons/16x16/palette-white.png</bitmap>
                                     <style>wxNO_BORDER</style>
                                     <tooltip>measure</tooltip>
+                                  </object>
+                                  <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>4</border>
+                                </object>
+                                <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="ambient_luminance_measure_btn">
+                                    <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                                    <style>wxNO_BORDER</style>
+                                    <tooltip>ambient.measure</tooltip>
                                   </object>
                                   <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>4</border>
@@ -812,7 +821,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxBitmapButton" name="black_luminance_measure_btn">
-                                    <bitmap>../theme/icons/16x16/stock_3d-color-picker.png</bitmap>
+                                    <bitmap>../theme/icons/16x16/palette-black.png</bitmap>
                                     <style>wxNO_BORDER</style>
                                     <tooltip>measure</tooltip>
                                   </object>

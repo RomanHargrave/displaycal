@@ -2560,6 +2560,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  id=self.whitelevel_drift_compensation.GetId())
 		self.Bind(wx.EVT_BUTTON, self.luminance_measure_handler, 
 				  id=self.luminance_measure_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.ambient_measure_handler, 
+				  id=self.ambient_luminance_measure_btn.GetId())
 
 		# Black luminance
 		self.Bind(wx.EVT_CHOICE, self.black_luminance_ctrl_handler, 
@@ -3579,6 +3581,8 @@ class MainFrame(ReportFrame, BaseFrame):
 										not update_cal)
 		self.luminance_measure_btn.Enable(bool(self.worker.instruments) and
 										  not update_cal)
+		self.ambient_luminance_measure_btn.Enable(bool(self.worker.instruments) and
+												  not update_cal)
 		self.black_luminance_measure_btn.Enable(bool(self.worker.instruments) and
 												not update_cal)
 
@@ -5058,12 +5062,20 @@ class MainFrame(ReportFrame, BaseFrame):
 				set_whitepoint = dlg.ShowModal() == wx.ID_OK
 				dlg.Destroy()
 		elif XYZ:
-			if evtobjname == "luminance_measure_btn":
-				self.luminance_textctrl.SetValue(float(XYZ.group(2)))
+			# White or black luminance
+			Y = float(XYZ.group(2))
+			if evtobjname in ("luminance_measure_btn",
+							  "ambient_luminance_measure_btn"):
+				# Force minimum luminance of 40 cd/m2 which should be suitable for
+				# dark viewing. See (e.g.) research done by Mantiuk et al,
+				# "Display Considerations for Night and Low-Illumination Viewing"
+				# https://www.cl.cam.ac.uk/~rkm38/pdfs/mantiuk09dcnliv.pdf
+				Y = max(Y, 40)
+				self.luminance_textctrl.SetValue(Y)
 				self.luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
 														self.luminance_ctrl))
 			elif evtobjname == "black_luminance_measure_btn":
-				self.black_luminance_textctrl.SetValue(float(XYZ.group(2)))
+				self.black_luminance_textctrl.SetValue(Y)
 				self.black_luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
 															  self.black_luminance_ctrl))
 		if set_whitepoint:
@@ -5210,6 +5222,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.luminance_textctrl.Show()
 			self.luminance_textctrl_label.Show()
 			self.luminance_measure_btn.Show()
+			self.ambient_luminance_measure_btn.Show()
 			try:
 				v = self.luminance_textctrl.GetValue()
 				if v < 0.000001 or v > 100000:
@@ -5225,6 +5238,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.luminance_textctrl.Hide()
 			self.luminance_textctrl_label.Hide()
 			self.luminance_measure_btn.Hide()
+			self.ambient_luminance_measure_btn.Hide()
 		self.calpanel.Layout()
 		self.calpanel.Refresh()
 		self.calpanel.Thaw()
