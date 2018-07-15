@@ -4376,6 +4376,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					name + "_textctrl").SetValue(getcfg("calibration." + name))
 			if name == "black_luminance":
 				userconf = show_advanced_options and userconf
+			else:
+				self.ambient_luminance_measure_btn.Show(userconf)
 			getattr(self, name + "_textctrl").Show(userconf)
 			getattr(self, name + "_textctrl_label").Show(userconf)
 			getattr(self, name + "_measure_btn").Show(userconf)
