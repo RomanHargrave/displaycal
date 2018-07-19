@@ -11442,7 +11442,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("measure.min_display_update_delay_ms.backup",
 					   getcfg("measure.min_display_update_delay_ms"))
 				setcfg("measure.override_min_display_update_delay_ms", 1)
-				setcfg("measure.min_display_update_delay_ms", 600)
+				setcfg("measure.min_display_update_delay_ms", 1000)
 				update_delay_ctrls = True
 		elif getcfg("measure.min_display_update_delay_ms.backup", False) is not None:
 			setcfg("measure.override_min_display_update_delay_ms",
