@@ -3767,6 +3767,20 @@ END_DATA
 			size = 65
 		elif format == "ReShade":
 			format = "png"
+		if format == "3dl":
+			if maxval is None:
+				maxval = 1023
+			if output_bits is None:
+				output_bits = math.log(maxval + 1) / math.log(2)
+			if input_bits is None:
+				input_bits = output_bits
+			# Note: We only round up for the input values, output values
+			# are rounded to nearest integer
+			quantizer = lambda v: int(math.ceil(v * (2 ** input_bits - 1)))
+			scale = quantizer(1.0)
+		else:
+			quantizer = lambda v: v
+			scale = 1.0
 		step = 1.0 / (size - 1)
 		RGB_triplet = [0.0, 0.0, 0.0]
 		RGB_index = [0, 0, 0]
@@ -3783,14 +3797,14 @@ END_DATA
 			if format == "eeColor" and i == size - 1:
 				# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 				continue
-			RGB_triplet[columns[0]] = step * i
+			RGB_triplet[columns[0]] = quantizer(step * i)
 			RGB_index[columns[0]] = i
 			for j in xrange(0, size):
 				# Green
 				if format == "eeColor" and j == size - 1:
 					# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 					continue
-				RGB_triplet[columns[1]] = step * j
+				RGB_triplet[columns[1]] = quantizer(step * j)
 				RGB_index[columns[1]] = j
 				for k in xrange(0, size):
 					# Blue
@@ -3799,7 +3813,7 @@ END_DATA
 					if format == "eeColor" and k == size - 1:
 						# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 						continue
-					RGB_triplet[columns[2]] = step * k
+					RGB_triplet[columns[2]] = quantizer(step * k)
 					RGB_oin.append(list(RGB_triplet))
 					RGB_copy = list(RGB_triplet)
 					if format == "eeColor":
@@ -3814,7 +3828,7 @@ END_DATA
 		# Lookup RGB -> RGB values through devicelink profile using icclu
 		# (Using icclu instead of xicclu because xicclu in versions
 		# prior to Argyll CMS 1.6.0 could not deal with devicelink profiles)
-		RGB_out = self.xicclu(link_filename, RGB_in, use_icclu=True,
+		RGB_out = self.xicclu(link_filename, RGB_in, scale=scale, use_icclu=True,
 							  logfile=logfiles)
 		
 		if format == "eeColor" and output_encoding == "n":
@@ -3831,23 +3845,16 @@ END_DATA
 			valsep = " "
 			linesep = "\n"
 		if format == "3dl":
-			if maxval is None:
-				maxval = 1023
-			if output_bits is None:
-				output_bits = math.log(maxval + 1) / math.log(2)
-			if input_bits is None:
-				input_bits = output_bits
 			maxval = math.pow(2, output_bits) - 1
-			pad = len(str(maxval))
 			lut.append(["# INPUT RANGE: %i" % input_bits])
 			lut.append(["# OUTPUT RANGE: %i" % output_bits])
 			lut.append([])
 			for i in xrange(0, size):
-				lut[-1].append("%i" % int(round(i * step * (math.pow(2, input_bits) - 1))))
+				lut[-1].append("%i" % quantizer(i * step))
 			for RGB_triplet in RGB_out:
 				lut.append([])
 				for component in (0, 1, 2):
-					lut[-1].append("%i" % int(round(RGB_triplet[component] * maxval)))
+					lut[-1].append("%i" % int(round(RGB_triplet[component] / scale * maxval)))
 		elif format == "cube":
 			if maxval is None:
 				maxval = 1.0
