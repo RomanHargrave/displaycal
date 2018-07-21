@@ -24,7 +24,9 @@ if sys.platform == "win32":
 	import win32api
 
 import ICCProfile as ICCP
+import colormath
 import localization as lang
+import worker_base
 from imfile import tiff_get_header
 from log import safe_print as log_safe_print
 from meta import name as appname, version
@@ -36,6 +38,16 @@ from util_str import safe_str, safe_unicode
 CALLBACK = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.POINTER(None),
 							ctypes.c_char_p, ctypes.c_ulong, ctypes.c_ulonglong,
 							ctypes.c_char_p, ctypes.c_ulonglong, ctypes.c_bool)
+
+H3D_HEADER = ("3DLT\x01\x00\x00\x00DisplayCAL\x00\x00\x00\x00\x00\x00\x00\x00"
+			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 \x00"
+			  "\x00\x00\x00\x00\x00\x08\x00\x00\x00\x08\x00\x00\x00\x08\x00\x00"
+			  "\x00\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00"
+			  "\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+			  "\x06\x00\x00\x00\x06")
+
+H3D_PARAMETERS = ("Input_Primaries %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\r\n"
+				  "Input_Range 16 235\r\nOutput_Range 16 235\r\n\x00")
 
 
 min_version = (0, 88, 14, 0)
@@ -78,6 +90,126 @@ _lock = threading.RLock()
 def safe_print(*args):
 	with _lock:
 		log_safe_print(*args)
+
+
+def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
+							 rgb_space=None, hdr=None, logfile=sys.stdout,
+							 convert_video_rgb_to_clut65=False):
+	"""
+	Convert ICC device link profile to madVR 256^3 3D LUT using interpolation
+	
+	madvr 3D LUT will be written to:
+	<device link filename without extension> + '.3dlut'
+	
+	"""
+	t = time()
+
+	filename, ext = os.path.splitext(icc_device_link_filename)
+
+	h3d_params = H3D_PARAMETERS
+
+	if filename.endswith(".HDR") or hdr == 2:
+		name = os.path.splitext(filename)[0]
+		h3d_params = "Input_Transfer_Function PQ\r\nOutput_Transfer_Function PQ\r\n" + h3d_params
+	elif filename.endswith(".HDR2SDR") or hdr == 1:
+		name = os.path.splitext(filename)[0]
+		h3d_params = "Input_Transfer_Function PQ\r\n" + h3d_params
+	else:
+		name = filename
+
+	if not rgb_space:
+		colorspace = os.path.splitext(name)[1]
+		colorspace = colorspace[1:]
+		key = {"BT709": "Rec. 709",
+			   "SMPTE_C": "SMPTE-C",
+			   "EBU_PAL": "PAL/SECAM",
+			   "BT2020": "Rec. 2020",
+			   "DCI_P3": "DCI P3 D65"}.get(colorspace)
+		if not key:
+			if not colorspace:
+				safe_print("ERROR - no target color space suffix in filename",
+						   colorspace)
+			else:
+				safe_print("ERROR - invalid target color space suffix in filename:",
+						   colorspace)
+			safe_print("Possible target color spaces:",
+					   "BT709, SMPTE_C, EBU_PAL, BT2020, DCI_P3")
+			return False
+
+		rgb_space = colormath.get_rgb_space(key)
+
+	# Create madVR 3D LUT
+	h3d_stream = StringIO(H3D_HEADER)
+	h3dlut = H3DLUT(h3d_stream, check_lut_size=False)
+	(rx, ry, rY), (gx, gy, gY), (bx, by, bY) = rgb_space[2:5]
+	wx, wy = colormath.XYZ2xyY(*rgb_space[1])[:2]
+	h3dlut.parametersData = h3d_params % (rx, ry, gx, gy, bx, by, wx, wy)
+	h3dlut.write(filename + ".3dlut")
+	raw = open(filename + ".3dlut", "r+b")
+	raw.seek(h3dlut.lutFileOffset)
+	# Make sure no longer needed h3DLUT instance can be garbage collected
+	del h3dlut
+
+	# Lookup 256^3 values through device link and fill madVR cLUT
+	logfile.write("Generating 256^3 input values...\n")
+	clutres = 256
+	clutmax = clutres - 1.0
+	prevperc = -1
+	if not unity:
+		link = ICCP.ICCProfile(icc_device_link_filename)
+		xicclu = worker_base.MP_Xicclu(link, scale=clutmax, logfile=logfile,
+									   output_format=("<H", 65535 / clutmax),
+									   reverse=True, output_stream=raw,
+									   convert_video_rgb_to_clut65=convert_video_rgb_to_clut65)
+	for a in xrange(clutres):
+		for b in xrange(clutres):
+			for c in xrange(clutres):
+				if not unity:
+					xicclu((a, b, c))
+				else:
+					# Optimize for speed
+					B, G, R = chr(c), chr(b), chr(a)
+					raw.write(B + B + G + G + R + R)
+		perc = round(a / clutmax * 100)
+		if perc > prevperc:
+			logfile.write("\r%i%%" % perc)
+			prevperc = perc
+	if not unity:
+		logfile.write("Looking up 256^3 input values through device link and "
+					  "writing madVR 3D LUT\n")
+		xicclu.exit()
+		xicclu.get()
+
+	# Append a MadVR cal1 table to the 3dlut.
+	# This can be used to ensure that the Graphics Card VideoLuts
+	# are correctly setup to match what the 3dLut is expecting.
+	#
+	# Note that the calibration curves are full range, never TV encoded output values
+	#
+	# Format is (little endian):
+	#	4 byte magic number 'cal1'
+	#	4 byte version = 1
+	#	4 byte number per channel entries = 256
+	#	4 byte bytes per entry = 2
+	#	[3][256] 2 byte entry values. Tables are in RGB order
+
+	raw.write("cal1")
+	raw.write(struct.pack('<I', 1))
+	raw.write(struct.pack('<I', 256))
+	raw.write(struct.pack('<I', 2))
+	# Linear (unity) calibration
+	for i in xrange(3):
+		for j in xrange(256):
+			raw.write(struct.pack('<H', j * 257))
+	raw.close()
+
+	safe_print("")
+	safe_print("Finished in", time() - t, "seconds")
+	if filename.endswith(".HDR"):
+		safe_print("Gamut (rx ry gx gy bx by wx wy):",
+				   "%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f" %
+				   (rx, ry, gx, gy, bx, by, wx, wy))
+	return True
 
 
 def inet_pton(ip_string):

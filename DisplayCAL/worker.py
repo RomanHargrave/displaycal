@@ -83,6 +83,7 @@ from argyll_instruments import (get_canonical_instrument_name,
 from argyll_names import (names as argyll_names, altnames as argyll_altnames, 
 						  optional as argyll_optional, viewconds, intents,
 						  observers)
+from colormath import VidRGB_to_eeColor, eeColor_to_VidRGB
 from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exedir, exe_ext, fs_enc, getcfg, geticon, get_data_path,
 					get_total_patches, get_verified_path, isapp, isexe,
@@ -3013,8 +3014,10 @@ END_DATA
 				if "B2A1" in profile_out.tags or "B2A0" in profile_out.tags:
 					use_b2a = True
 
-			use_xicclu = (experimental and not profile_abst and
-						  not use_b2a and format != "madVR" and
+			# Using xicclu instead of collink is more accurate on and near
+			# the gray axis (in some cases, i.e. HDR and cLUT res < 65,
+			# significantly so)
+			use_xicclu = (not profile_abst and
 						  intent in ("a", "aw", "r") and
 						  input_encoding in ("n", "t", "T") and
 						  output_encoding in ("n", "t"))
@@ -3305,19 +3308,12 @@ END_DATA
 			def cLUT65_to_VidRGB(v):
 				if size not in (17, 33, 65):
 					return v
-				if v <= 236.0 / 256:
-					# Scale up to near black point
-					return v * 256.0 / 255
-				else:
-					return 1 - (1 - v) * (1 - 236.0 / 255) / (1 - 236.0 / 256)
+				return colormath.cLUT65_to_VidRGB(v)
 
 			def VidRGB_to_cLUT65(v):
 				if size not in (17, 33, 65):
 					return v
-				if v <= 236.0 / 255.0:
-					return v * 255.0 / 256
-				else:
-					return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
+				return colormath.VidRGB_to_cLUT65(v)
 
 			logfiles = self.get_logfiles()
 
@@ -3325,7 +3321,7 @@ END_DATA
 				# Create device link using xicclu
 				is_argyll_lut_format = format == "icc"
 
-				def clipVidRGB(RGB):
+				def clipVidRGB(RGB, black_hack=True):
 					"""
 					Clip a value to the RGB Video range 16..235 RGB.
 					
@@ -3360,7 +3356,11 @@ END_DATA
 
 					# See if any values negatively clip
 					for i, v in enumerate(RGB):
-						if v < 16.0 / 255.0:
+						if black_hack:
+							cond = v <= 16.0 / 255.0
+						else:
+							cond = v < 16.0 / 255.0
+						if cond:
 							RGB[i] = 16.0 / 255.0
 							full[i] = 0.0
 							clipmask |= 1 << i
@@ -3415,6 +3415,7 @@ END_DATA
 				logfiles.write("Looking up input values through source profile...\n")
 				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
 										  pcs="x", scale=255, logfile=logfiles)
+				del RGB_src_in
 				if intent == "aw":
 					XYZw = self.xicclu(profile_in, [[1, 1, 1]], intent[0],
 									   pcs="x")[0]
@@ -3424,7 +3425,8 @@ END_DATA
 						XYZscaled = []
 						for i in xrange(2001):
 							XYZscaled.append([v * (1 - (n * 2001 + i) / 20000.0) for v in XYZw])
-						RGBscaled = self.xicclu(profile_out, XYZscaled, "a", "if",
+						RGBscaled = self.xicclu(profile_out, XYZscaled, "a",
+												"b" if use_b2a else "if",
 												pcs="x", get_clip=True)
 						# Find point at which it no longer clips
 						XYZwscaled = None
@@ -3456,6 +3458,7 @@ END_DATA
 									"iterations with %i steps" % (n, i))
 					for i, XYZ in enumerate(XYZ_src_out):
 						XYZ[:] = [v / XYZw[1] * XYZwscaled[1] for v in XYZ]
+					del RGBscaled
 				# Inverse forward lookup source profile output XYZ through
 				# destination profile
 				num_cpus = cpu_count()
@@ -3468,16 +3471,22 @@ END_DATA
 					if num_cpus > 2:
 						num_workers = 2
 					num_batches = 1
-				logfiles.write("Creating 3D LUT from inverse forward lookup "
-							   "(%i workers)...\n" % num_workers)
+				if use_b2a:
+					direction = "backward"
+				else:
+					direction = "inverse forward"
+				logfiles.write("Creating 3D LUT from %s lookup "
+							   "(%i workers)...\n" % (direction, num_workers))
 				RGB_dst_out = []
 				for slices in pool_slice(_mp_xicclu, XYZ_src_out,
-										 (profile_out.fileName, intent[0], "if"),
+										 (profile_out.fileName, intent[0],
+										  "b" if use_b2a else "if"),
 										 {"pcs": "x", "use_cam_clipping": True,
 										  "abortmessage": lang.getstr("aborted")},
 										 num_workers, self.thread_abort,
 										 logfiles, num_batches=num_batches):
 					RGB_dst_out.extend(slices)
+				del XYZ_src_out
 				logfiles.write("\n")
 				logfiles.write("Filling cLUT...\n")
 				profile_link = ICCP.ICCProfile()
@@ -3507,14 +3516,19 @@ END_DATA
 								# TV levels in, no value from lookup, full
 								# range out
 								continue
-							if max([v / maxind for v in abc]) < 0.5 / maxind:
+							if input_encoding in ("t", "T"):
+								cond = min(abc) <= level_16 and min(abc) == max(abc)
+							else:
+								cond = max(abc) == 0
+							if cond:
 								# Black hack
-								self.log("Black hack - forcing level %i to 0" %
-										 (cLUT65_to_VidRGB(a / maxind) * 255))
+								self.log("Black hack - forcing output RGB %i %i %i" %
+										 tuple(cLUT65_to_VidRGB(v / maxind) * 255 for v in abc))
 								RGB = [0] * 3
 							else:
 								RGB = RGB_dst_out[len(clut)]
 							clut[abc] = RGB
+				del RGB_dst_out
 				preserve_sync = getcfg("3dlut.preserve_sync")
 				prevperc = 0
 				for a in xrange(size):
@@ -3584,6 +3598,8 @@ END_DATA
 				logfiles.write("\n")
 				profile_link.write(link_filename)
 				result = True
+				del clut
+				del A2B0
 			else:
 				# Create device link (and 3D LUT, if applicable) using collink
 				is_argyll_lut_format = (self.argyll_version >= [1, 6] and
@@ -3626,9 +3642,21 @@ END_DATA
 				profile_link.calculateID()
 				profile_link.write(filename + profile_ext)
 				profile_link.tags.A2B0.clut_writepng(filename + ".A2B0.CLUT.png")
+				del profile_link
+
+				if use_xicclu and format == "madVR":
+					# We need to up-interpolate the device link ourself
+					madvr.icc_device_link_to_madvr(link_filename,
+												   rgb_space=profile_in.get_rgb_space(),
+												   hdr=smpte2084 + hdr_display,
+												   logfile=logfiles,
+												   convert_video_rgb_to_clut65=True)
+					if debug:
+						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
+						h3d.write_devicelink(filename + ".3dlut" + profile_ext)
 
 				if hdr:
-					if format == "madVR":
+					if format == "madVR" and is_argyll_lut_format:
 						# We need to update Input_Primaries, otherwise the
 						# madVR 3D LUT won't work correctly! (collink fills
 						# Input_Primaries from a lookup through the input
@@ -3695,8 +3723,9 @@ END_DATA
 							os.path.splitext(profile_in.fileName)[0] + 
 							".DBG2.CLUT.png")
 
-			if is_argyll_lut_format:
-				# Collink has already written the 3DLUT for us
+			if is_argyll_lut_format or (use_xicclu and format == "madVR"):
+				# Collink has already written the 3DLUT for us,
+				# or we have written the madVR 3D LUT
 				if format == "cube":
 					# Strip any leading whitespace from each line (although
 					# leading/trailing spaces are allowed according to the spec).
@@ -3750,12 +3779,6 @@ END_DATA
 
 		# We have to create the 3DLUT ourselves
 		logfiles.write("Generating %s 3D LUT...\n" % format)
-
-		def VidRGB_to_eeColor(v):
-			return v * 255.0/256.0
-
-		def eeColor_to_VidRGB(v):
-			return v * 256.0/255.0
 
 		# Create input RGB values
 		RGB_oin = []

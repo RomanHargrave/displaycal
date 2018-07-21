@@ -20,6 +20,8 @@ if sys.platform == "win32":
 
 from argyll_names import (names as argyll_names, altnames as argyll_altnames,
 						  optional as argyll_optional)
+from colormath import (VidRGB_to_eeColor, VidRGB_to_cLUT65, cLUT65_to_VidRGB,
+					   eeColor_to_VidRGB)
 from config import exe_ext, fs_enc, get_data_path, getcfg, profile_ext
 from debughelpers import (Error, Info, UnloggedError, UnloggedInfo,
 						  UnloggedWarning, Warn)
@@ -46,14 +48,14 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 			   use_cam_clipping=False, logfile=None,
 			   show_actual_if_clipped=False, input_encoding=None,
 			   output_encoding=None, abortmessage="Aborted", output_format=None,
-			   reverse=False):
+			   reverse=False, convert_video_rgb_to_clut65=False):
 	if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
 		config.initcfg()
 	profile = ICCP.ICCProfile(profile_filename)
 	xicclu = Xicclu(profile, intent, direction, order, pcs, scale, cwd,
 					startupinfo, use_icclu, use_cam_clipping, logfile,
 					None, show_actual_if_clipped, input_encoding,
-					output_encoding)
+					output_encoding, convert_video_rgb_to_clut65)
 	prevperc = 0
 	start = 0
 	num_subchunks = 50
@@ -449,8 +451,10 @@ class Xicclu(WorkerBase):
 				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
 				 use_cam_clipping=False, logfile=None, worker=None,
 				 show_actual_if_clipped=False, input_encoding=None,
-				 output_encoding=None):
+				 output_encoding=None, convert_video_rgb_to_clut65=False):
 		WorkerBase.__init__(self)
+		self.scale = scale
+		self.convert_video_rgb_to_clut65 = convert_video_rgb_to_clut65
 		self.logfile = logfile
 		self.worker = worker
 		self.temp = False
@@ -572,9 +576,24 @@ class Xicclu(WorkerBase):
 		self.subprocess = sp.Popen(self.args, stdin=sp.PIPE, stdout=self.stdout,
 								   stderr=self.stderr, cwd=self.cwd,
 								   startupinfo=self.startupinfo)
+
+	def devi_devip(self, n):
+		if self.convert_video_rgb_to_clut65:
+			n /= self.scale
+			if n > 236 / 256.0:
+				n = colormath.convert_range(n, 236 / 256.0, 1, 236 / 256.0, 255 / 256.0)
+			n = VidRGB_to_cLUT65(eeColor_to_VidRGB(n))
+			n *= self.scale
+		return n
+
+	def devop_devo(self, n):
+		if self.convert_video_rgb_to_clut65:
+			n = VidRGB_to_eeColor(n / self.scale) * self.scale
+		return n
 	
 	def __call__(self, idata):
 		if not isinstance(idata, basestring):
+			devi_devip = self.devi_devip
 			idata = list(idata)  # Make a copy
 			for i, v in enumerate(idata):
 				if isinstance(v, (float, int, long)):
@@ -586,7 +605,7 @@ class Xicclu(WorkerBase):
 							raise TypeError("xicclu: Expecting list of "
 											"strings or n-tuples with "
 											"floats")
-					idata[i] = " ".join([str(n) for n in v])
+					idata[i] = " ".join([str(devi_devip(n)) for n in v])
 		else:
 			idata = idata.splitlines()
 		numrows = len(idata)
@@ -674,6 +693,7 @@ class Xicclu(WorkerBase):
 			return self.output
 		parsed = []
 		j = 0
+		devop_devo = self.devop_devo
 		for i, line in enumerate(self.output):
 			line = line.strip()
 			if line.startswith("["):
@@ -695,7 +715,7 @@ class Xicclu(WorkerBase):
 			clip = parts.pop() == "(clip)"
 			if clip:
 				parts.pop()
-			out = [float(n) / self.output_scale for n in parts]
+			out = [devop_devo(float(n)) / self.output_scale for n in parts]
 			if output_format:
 				if reverse:
 					out = out[::-1]
@@ -740,7 +760,7 @@ class MP_Xicclu(Xicclu):
 				 use_cam_clipping=False, logfile=None, worker=None,
 				 show_actual_if_clipped=False, input_encoding=None,
 				 output_encoding=None, output_format=None, reverse=False,
-				 output_stream=None):
+				 output_stream=None, convert_video_rgb_to_clut65=False):
 		WorkerBase.__init__(self)
 		self.logfile = logfile
 		self.worker = worker
@@ -751,7 +771,7 @@ class MP_Xicclu(Xicclu):
 					  use_cam_clipping, None,
 					  show_actual_if_clipped, input_encoding,
 					  output_encoding, lang.getstr("aborted"), output_format,
-					  reverse)
+					  reverse, convert_video_rgb_to_clut65)
 		self._out = []
 		num_cpus = mp.cpu_count()
 		if isinstance(profile.tags.get("A2B0"), ICCP.LUT16Type):

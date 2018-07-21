@@ -881,6 +881,31 @@ def CIEDCCT2XYZ(T, scale=1.0):
 		return xyY2XYZ(*xyY)
 
 
+# cLUT Input value tweaks to make Video encoded black land on
+# 65 res grid nodes, which should help 33 and 17 res cLUTs too
+def cLUT65_to_VidRGB(v, size=65):
+	if v <= 236.0 / 256:
+		# Scale up to near black point
+		return v * 256.0 / 255
+	else:
+		return 1 - (1 - v) * (1 - 236.0 / 255) / (1 - 236.0 / 256)
+
+
+def VidRGB_to_cLUT65(v, size=65):
+	if v <= 236.0 / 255.0:
+		return v * 255.0 / 256
+	else:
+		return 1 - (1 - v) * (1 - 236.0 / 256) / (1 - 236.0 / 255)
+
+
+def VidRGB_to_eeColor(v):
+	return v * 255.0/256.0
+
+
+def eeColor_to_VidRGB(v):
+	return v * 256.0/255.0
+
+
 def DIN992Lab(L99, a99, b99, kCH=1.0, kE=1.0):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
 	return DIN99LCH2Lab(L99, C99, H99, kCH, kE)
