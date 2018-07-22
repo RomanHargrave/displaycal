@@ -1292,13 +1292,14 @@ enumerate_displays(PyObject *self, PyObject *args)
 
 	if (dp != NULL && dp[0] != NULL) {
 		PyObject* value;
+		PyObject *d;
 		size_mm size;
 		int i;
 		for (i = 0; ; i++) {
 			if (dp[i] == NULL)
 				break;
 
-			PyObject *d = PyDict_New();
+			d = PyDict_New();
 
 			if (dp[i]->name != NULL &&
 				(value = PyString_FromString(dp[i]->name)) != NULL) {
