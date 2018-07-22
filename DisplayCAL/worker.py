@@ -3317,6 +3317,7 @@ END_DATA
 
 			logfiles = self.get_logfiles()
 
+			xts = time()
 			if use_xicclu:
 				# Create device link using xicclu
 				is_argyll_lut_format = format == "icc"
@@ -3371,6 +3372,8 @@ END_DATA
 
 				logfiles.write("Generating input values...\n")
 				clip = {}
+				seen = {}  # Seen RGB input values
+				seenkeys = {}
 				RGB_src_in = []
 				maxind = size - 1.0
 				level_16 = VidRGB_to_cLUT65(16.0 / 255) * maxind
@@ -3405,12 +3408,18 @@ END_DATA
 																   0, 1)
 										   for v in RGB]
 							RGB = [min(max(v, 0), 1) * 255 for v in RGB]
+							seenkey = tuple(int(round(v * 257)) for v in RGB)
+							seenkeys[abc] = seenkey
+							if seenkey in seen:
+								continue
+							seen[seenkey] = True
 							RGB_src_in.append(RGB)
 						perc = round(len(RGB_src_in) / float(size ** 3) * 100)
 						if perc > prevperc:
 							logfiles.write("\r%i%%" % perc)
 							prevperc = perc
 				logfiles.write("\n")
+				safe_print("Skipped", size ** 3 - len(seen), "duplicate input values")
 				# Forward lookup input RGB through source profile
 				logfiles.write("Looking up input values through source profile...\n")
 				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
@@ -3505,6 +3514,7 @@ END_DATA
 				A2B0.output = [[0, 65535]] * 3
 				A2B0.clut = []
 				clut = {}
+				n = 0
 				for a in xrange(size):
 					for b in xrange(size):
 						for c in xrange(size):
@@ -3516,17 +3526,23 @@ END_DATA
 								# TV levels in, no value from lookup, full
 								# range out
 								continue
-							if input_encoding in ("t", "T"):
-								cond = min(abc) <= level_16 and min(abc) == max(abc)
+							seenkey = seenkeys[abc]
+							if seenkey in seen and seen[seenkey] is not True:
+								RGB = seen[seenkey]
 							else:
-								cond = max(abc) == 0
-							if cond:
-								# Black hack
-								self.log("Black hack - forcing output RGB %i %i %i" %
-										 tuple(cLUT65_to_VidRGB(v / maxind) * 255 for v in abc))
-								RGB = [0] * 3
-							else:
-								RGB = RGB_dst_out[len(clut)]
+								if input_encoding in ("t", "T"):
+									cond = min(abc) <= level_16 and min(abc) == max(abc)
+								else:
+									cond = max(abc) == 0
+								if cond:
+									# Black hack
+									self.log("Black hack - forcing output RGB %i %i %i" %
+											 tuple(cLUT65_to_VidRGB(v / maxind) * 255 for v in abc))
+									RGB = [0] * 3
+								else:
+									RGB = RGB_dst_out[n]
+								seen[seenkey] = RGB
+								n += 1
 							clut[abc] = RGB
 				del RGB_dst_out
 				preserve_sync = getcfg("3dlut.preserve_sync")
@@ -3612,6 +3628,7 @@ END_DATA
 														profile_out_basename,
 														link_filename],
 									   capture_output=True, skip_scripts=True)
+			safe_print("Finished 3D LUT in", time() - xts, "seconds")
 
 			if (result and not isinstance(result, Exception) and
 				save_link_icc and
