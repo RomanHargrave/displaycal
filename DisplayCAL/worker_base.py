@@ -612,6 +612,7 @@ class Xicclu(WorkerBase):
 		chunklen = 1000
 		i = 0
 		p = self.subprocess
+		prevperc = -1
 		while True:
 			# Process in chunks to prevent broken pipe if input data is too
 			# large
@@ -630,10 +631,10 @@ class Xicclu(WorkerBase):
 			else:
 				# Error
 				break
-			if self.logfile:
-				self.logfile.write("\r%i%%" % min(round(chunklen * (i + 1) /
-												   float(numrows) * 100),
-											 100))
+			perc = round(chunklen * (i + 1) / float(numrows) * 100)
+			if perc > prevperc and self.logfile:
+				self.logfile.write("\r%i%%" % min(perc, 100))
+				prevperc = perc
 			if chunklen * (i + 1) > numrows - 1:
 				break
 			i += 1
