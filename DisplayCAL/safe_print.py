@@ -84,8 +84,12 @@ class SafePrinter():
 		fn = kwargs.get("fn", self.fn)
 		encoding = kwargs.get("encoding", self.encoding)
 		strargs = []
+		if encoding:
+			cls = basestring
+		else:
+			cls = unicode
 		for arg in args:
-			if not isinstance(arg, basestring):
+			if not isinstance(arg, cls):
 				arg = safe_unicode(arg)
 			if isinstance(arg, unicode) and encoding:
 				arg = arg.encode(encoding, "asciize")
