@@ -92,7 +92,7 @@ class OrderedDict(dict):
 		return reversed(self._keys)
 	
 	def __setitem__(self, key, value):
-		if not key in self._keys:
+		if not key in self:
 			self._keys.append(key)
 		dict.__setitem__(self, key, value)
 	
