@@ -159,7 +159,8 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 	prevperc = -1
 	if not unity:
 		link = ICCP.ICCProfile(icc_device_link_filename)
-		xicclu = worker_base.MP_Xicclu(link, scale=clutmax, logfile=logfile,
+		xicclu = worker_base.MP_Xicclu(link, scale=clutmax, use_icclu=True,
+									   logfile=logfile,
 									   output_format=("<H", 65535 / clutmax),
 									   reverse=True, output_stream=raw,
 									   convert_video_rgb_to_clut65=convert_video_rgb_to_clut65)
