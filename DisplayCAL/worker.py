@@ -3071,10 +3071,13 @@ END_DATA
 												 "\n".join(self.errors)]))
 					profile_out = ICCP.ICCProfile(profile_out.fileName)
 
-			if hdr_use_src_gamut:
-				in_rgb_space = profile_in.get_rgb_space()
+			in_rgb_space = profile_in.get_rgb_space()
+			if in_rgb_space:
 				in_colors = colormath.get_rgb_space_primaries_wp_xy(in_rgb_space)
+			else:
+				in_colors = None
 
+			if hdr_use_src_gamut:
 				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
 				# Always force content RGB space whitepoint to D65 so
 				# default RGB to ICtCp matrix gives Ct=Cp=0 for R=G=B
@@ -3663,15 +3666,56 @@ END_DATA
 
 				if use_xicclu and format == "madVR":
 					# We need to up-interpolate the device link ourself
-					madvr.icc_device_link_to_madvr(link_filename,
-												   rgb_space=profile_in.get_rgb_space(),
-												   hdr=smpte2084 + hdr_display,
-												   logfile=logfiles,
-												   convert_video_rgb_to_clut65=True)
+					# Call this in a separate process so I/O congestion
+					# doesn't interfere with UI updates and audio
+					# madvr.icc_device_link_to_madvr(link_filename,
+												   # rgb_space=profile_in.get_rgb_space(),
+												   # hdr=smpte2084 + hdr_display,
+												   # logfile=logfiles,
+												   # convert_video_rgb_to_clut65=True)
+					interp_args = []
+					if os.path.basename(exe).lower() in ("python" + exe_ext, 
+														 "pythonw" + exe_ext):
+						cmd = os.path.join(exedir, "python" + exe_ext)
+						pyw = os.path.normpath(os.path.join(pydir, "..",
+															"eecolor_to_madvr.pyw"))
+						if os.path.exists(pyw):
+							# Running from source or 0install
+							# Check if this is a 0install implementation, in which
+							# case we want to call 0launch with the appropriate
+							# command
+							if re.match("sha\d+(?:new)?",
+										os.path.basename(os.path.dirname(pydir))):
+								cmd = which("0install" + exe_ext) or "0install" + exe_ext
+								interp_args.extend(["run",
+													"--offline",
+													"--command=run-eecolor_to_madvr",
+													"http://%s/0install/%s.xml" %
+													(domain.lower(), appname)])
+							else:
+								# Running from source
+								interp_args.append(pyw)
+						else:
+							# Regular install
+							interp_args.append(get_data_path(os.path.join("scripts", 
+																		  "eecolor_to_madvr")))
+					else:
+						cmd = os.path.join(pydir, "eecolor_to_madvr.exe")
+					if in_colors:
+						interp_args.append("--colorspace=" +
+										   ",".join([str(v) for v in in_colors]))
+					interp_args.append("--hdr=%i" % (smpte2084 + hdr_display))
+					interp_args.append("--convert-video-rgb-to-clut65")
+					interp_args.append("--batch")
+					interp_args.append(link_filename)
+					result = self.exec_cmd(cmd, interp_args,
+										   capture_output=True,
+										   skip_scripts=True, use_pty=True)
 					if debug:
 						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
 						h3d.write_devicelink(filename + ".3dlut" + profile_ext)
 
+			if result and not isinstance(result, Exception):
 				if hdr:
 					if format == "madVR" and is_argyll_lut_format:
 						# We need to update Input_Primaries, otherwise the
@@ -4427,7 +4471,7 @@ END_DATA
 				 display_output=False, low_contrast=True, skip_scripts=False, 
 				 silent=False, parent=None, asroot=False, log_output=True,
 				 title=appname, shell=False, working_dir=None, dry_run=None,
-				 sessionlogfile=None):
+				 sessionlogfile=None, use_pty=False):
 		"""
 		Execute a command.
 		
@@ -4490,7 +4534,10 @@ END_DATA
 						get_argyll_utilname("targen"))
 		# Run commands through wexpect.spawn instead of subprocess.Popen if
 		# any of these conditions apply
-		use_pty = args and not "-?" in args and cmdname in measure_cmds + process_cmds
+		use_pty = args and not "-?" in args and (use_pty or
+												 cmdname in measure_cmds +
+															process_cmds)
+		process_cmds += ("eecolor_to_madvr", "python")
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and

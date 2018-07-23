@@ -93,7 +93,7 @@ def safe_print(*args):
 
 
 def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
-							 rgb_space=None, hdr=None, logfile=sys.stdout,
+							 colorspace=None, hdr=None, logfile=sys.stdout,
 							 convert_video_rgb_to_clut65=False):
 	"""
 	Convert ICC device link profile to madVR 256^3 3D LUT using interpolation
@@ -117,9 +117,11 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 	else:
 		name = filename
 
-	if not rgb_space:
+	if not colorspace:
 		colorspace = os.path.splitext(name)[1]
 		colorspace = colorspace[1:]
+
+	if not isinstance(colorspace, (list, tuple)):
 		key = {"BT709": "Rec. 709",
 			   "SMPTE_C": "SMPTE-C",
 			   "EBU_PAL": "PAL/SECAM",
@@ -127,22 +129,22 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 			   "DCI_P3": "DCI P3 D65"}.get(colorspace)
 		if not key:
 			if not colorspace:
-				safe_print("ERROR - no target color space suffix in filename",
-						   colorspace)
+				safe_print("ERROR - no target color space suffix in filename")
 			else:
-				safe_print("ERROR - invalid target color space suffix in filename:",
-						   colorspace)
+				safe_print("ERROR - invalid target color space:", colorspace)
 			safe_print("Possible target color spaces:",
 					   "BT709, SMPTE_C, EBU_PAL, BT2020, DCI_P3")
 			return False
 
 		rgb_space = colormath.get_rgb_space(key)
 
+		colorspace = colormath.get_rgb_space_primaries_wp_xy(rgb_space)
+
+	rx, ry, gx, gy, bx, by, wx, wy = colorspace
+
 	# Create madVR 3D LUT
 	h3d_stream = StringIO(H3D_HEADER)
 	h3dlut = H3DLUT(h3d_stream, check_lut_size=False)
-	(rx, ry, rY), (gx, gy, gY), (bx, by, bY) = rgb_space[2:5]
-	wx, wy = colormath.XYZ2xyY(*rgb_space[1])[:2]
 	h3dlut.parametersData = h3d_params % (rx, ry, gx, gy, bx, by, wx, wy)
 	h3dlut.write(filename + ".3dlut")
 	raw = open(filename + ".3dlut", "r+b")
@@ -175,8 +177,9 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 			logfile.write("\r%i%%" % perc)
 			prevperc = perc
 	if not unity:
+		logfile.write("\n")
 		logfile.write("Looking up 256^3 input values through device link and "
-					  "writing madVR 3D LUT\n")
+					  "writing madVR 3D LUT...\n")
 		xicclu.exit()
 		xicclu.get()
 
