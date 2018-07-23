@@ -2940,6 +2940,9 @@ END_DATA
 		#       http://download.autodesk.com/us/systemdocs/pdf/lustre_color_management_user_guide.pdf
 		# .spi3d: https://github.com/imageworks/OpenColorIO/blob/master/src/core/FileFormatSpi3D.cpp
 		# .mga: http://pogle.pandora-int.com/download/manual/lut3d_format.html
+
+		safe_print("-" * 80)
+		safe_print(lang.getstr("3dlut.create"))
 		
 		for profile in (profile_in, profile_out):
 			if (profile.profileClass not in ("mntr", "link", "scnr", "spac") or 
@@ -3056,7 +3059,7 @@ END_DATA
 					if not applycal:
 						raise Error(lang.getstr("argyll.util.not_found",
 												"applycal"))
-					safe_print(lang.getstr("apply_cal"))
+					self.log(lang.getstr("apply_cal"))
 					result = self.exec_cmd(applycal, ["-v",
 													  profile_out_cal_path,
 													  profile_out_basename,
@@ -3417,12 +3420,12 @@ END_DATA
 								continue
 							seen[seenkey] = True
 							RGB_src_in.append(RGB)
-						perc = round(len(RGB_src_in) / float(size ** 3) * 100)
+						perc = round(((a + 1) * (b + 1) * (c + 1)) / float(size ** 3) * 100)
 						if perc > prevperc:
 							logfiles.write("\r%i%%" % perc)
 							prevperc = perc
 				logfiles.write("\n")
-				safe_print("Skipped", size ** 3 - len(seen), "duplicate input values")
+				self.log("Skipped", size ** 3 - len(seen), "duplicate input values")
 				# Forward lookup input RGB through source profile
 				logfiles.write("Looking up input values through source profile...\n")
 				XYZ_src_out = self.xicclu(profile_in, RGB_src_in, intent[0],
@@ -3487,7 +3490,7 @@ END_DATA
 					direction = "backward"
 				else:
 					direction = "inverse forward"
-				logfiles.write("Creating 3D LUT from %s lookup "
+				logfiles.write("Creating device link from %s lookup "
 							   "(%i workers)...\n" % (direction, num_workers))
 				RGB_dst_out = []
 				for slices in pool_slice(_mp_xicclu, XYZ_src_out,
@@ -3616,6 +3619,8 @@ END_DATA
 							prevperc = perc
 				logfiles.write("\n")
 				profile_link.write(link_filename)
+				self.log("Finished creating device link in", time() - xts,
+						 "seconds")
 				result = True
 				del clut
 				del A2B0
@@ -3631,7 +3636,7 @@ END_DATA
 														profile_out_basename,
 														link_filename],
 									   capture_output=True, skip_scripts=True)
-			safe_print("Finished 3D LUT in", time() - xts, "seconds")
+				self.log("Finished creating 3D LUT in", time() - xts, "seconds")
 
 			if (result and not isinstance(result, Exception) and
 				save_link_icc and
