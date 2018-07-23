@@ -955,6 +955,7 @@ class ProfileLoader(object):
 		self._component_name = None
 		self._app_detection_msg = None
 		self._hwnds_pids = set()
+		self._inaccessible_reg_subkeys = set()
 		self.__other_component = None, None, 0
 		self.__apply_profiles = None
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -1909,11 +1910,11 @@ class ProfileLoader(object):
 		# Check registry if display configuration changed (e.g. if a display
 		# was added/removed, and not just the resolution changed)
 		enumerated_monitors = False
+		key_name = r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration"
 		try:
-			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
-								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
+			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, key_name)
 		except WindowsError, exception:
-			if (exception.errno != errno.ENOENT or
+			if (exception.args[0] != errno.ENOENT or
 				sys.getwindowsversion() >= (6, )):
 				safe_print("Registry access failed:", exception)
 			key = None
@@ -1925,7 +1926,16 @@ class ProfileLoader(object):
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		has_display_changed = False
 		for i in xrange(numsubkeys):
-			subkey = _winreg.OpenKey(key, _winreg.EnumKey(key, i))
+			subkey_name = _winreg.EnumKey(key, i)
+			try:
+				subkey = _winreg.OpenKey(key, subkey_name)
+			except Exception, exception:
+				if not subkey_name in self._inaccessible_reg_subkeys:
+					safe_print("Warning: Could not open registry key",
+							   r"HKLM\%s\%s:" % (key_name, subkey_name),
+							   exception)
+					self._inaccessible_reg_subkeys.add(subkey_name)
+				continue
 			display = _winreg.QueryValueEx(subkey, "SetId")[0]
 			timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
 			if timestamp > self._current_timestamp:
