@@ -157,7 +157,7 @@ class WorkerFunc(object):
 		self.exit = exit
 
 	def __call__(self, data, thread_abort_event, progress_queue, *args, **kwds):
-		from log import safe_print
+		from log import safe_log, safe_print
 		try:
 			return self.func(data, thread_abort_event, progress_queue, *args,
 							 **kwds)
@@ -168,7 +168,7 @@ class WorkerFunc(object):
 		finally:
 			progress_queue.put(EOFError())
 			if mp.current_process().name != "MainProcess":
-				safe_print("Exiting worker process",  mp.current_process().name)
+				safe_log("Exiting worker process",  mp.current_process().name)
 				if sys.platform == "win32" and self.exit:
 					# Exit handlers registered with atexit will not normally
 					# run when a multiprocessing subprocess exits. We are only
@@ -179,12 +179,12 @@ class WorkerFunc(object):
 						# Find our lockfile removal exit handler
 						if (targs and isinstance(targs[0], basestring) and
 							targs[0].endswith(".lock")):
-							safe_print("Removing lockfile", targs[0])
+							safe_log("Removing lockfile", targs[0])
 							try:
 								func(*targs, **kargs)
 							except Exception, exception:
-								safe_print("Could not remove lockfile:",
-										   exception)
+								safe_log("Could not remove lockfile:",
+										 exception)
 					# Logging is normally shutdown by atexit, as well. Do
 					# it explicitly instead.
 					logging.shutdown()
