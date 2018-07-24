@@ -894,8 +894,12 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 	if do_py2exe:
 		import wx
 		from winmanifest_util import getmanifestxml
+		if platform.architecture()[0] == "64bit":
+			arch = "amd64"
+		else:
+			arch = "x86"
 		manifest_xml = getmanifestxml(os.path.join(pydir, "..", "misc", 
-			name + (".exe.VC90.manifest" if hasattr(sys, "version_info") and 
+			name + (".exe.%s.VC90.manifest" % arch if hasattr(sys, "version_info") and 
 			sys.version_info[:2] >= (2,6) else ".exe.manifest")))
 		tmp_scripts_dir = os.path.join(basedir, "build", "temp.scripts")
 		if not os.path.isdir(tmp_scripts_dir):

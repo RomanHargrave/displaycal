@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 import os
+import platform
 import shutil
 import sys
 
@@ -9,8 +10,12 @@ import winmanifest
 name = "Microsoft.VC90.CRT"
 
 def vc90crt_find_files():
+	if platform.architecture()[0] == "64bit":
+		arch = "amd64"
+	else:
+		arch = "x86"
 	return winmanifest.Manifest(
-		processorArchitecture = "x86",
+		processorArchitecture = arch,
 		name = name,
 		publicKeyToken = "1fc8b3b9a1e18e3b",
 		version = [9, 0, 21022, 8]
