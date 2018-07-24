@@ -230,6 +230,9 @@ def create_app_symlinks(dist_dir, scripts):
 			# Don't symlink, apps won't be able to run in parallel!
 			shutil.copy(os.path.join(dist_dir, maincontents_rel, 'MacOS',
 						appname), toolscript)
+		if script == name + "-eeColor-to-madVR-converter":
+			# Do not create app bundle for eeColor to madVR converter
+			continue
 		toolcontents = os.path.join(toolapp, "Contents")
 		os.makedirs(toolcontents)
 		subdirs = ["Frameworks", "Resources"]
@@ -317,9 +320,9 @@ def get_data(tgt_dir, key, pkgname=None, subkey=None, excludes=None):
 
 def get_scripts(excludes=None):
 	# It is required that each script has an accompanying .desktop file
-	scripts = []
-	desktopfiles = safe_glob(os.path.join(pydir, "..", "misc",
-							 appname.lower() + "*.desktop"))
+	scripts_with_desc = []
+	scripts = safe_glob(os.path.join(pydir, "..", "scripts",
+									 appname.lower() + "*"))
 	def sortbyname(a, b):
 		a, b = [os.path.splitext(v)[0] for v in (a, b)]
 		if a > b:
@@ -328,17 +331,22 @@ def get_scripts(excludes=None):
 			return -1
 		else:
 			return 0
-	desktopfiles.sort(sortbyname)
-	for desktopfile in desktopfiles:
-		if desktopfile.startswith("z-"):
+	scripts.sort(sortbyname)
+	for script in scripts:
+		script = os.path.basename(script)
+		if script == appname.lower() + "-apply-profiles-launcher":
 			continue
-		cfg = ConfigParser()
-		cfg.read(desktopfile)
-		script = cfg.get("Desktop Entry", "Exec").split()[0]
+		desktopfile = os.path.join(pydir, "..", "misc", script + ".desktop")
+		if os.path.isfile(desktopfile):
+			cfg = ConfigParser()
+			cfg.read(desktopfile)
+			script = cfg.get("Desktop Entry", "Exec").split()[0]
+			desc = cfg.get("Desktop Entry", "Name").decode("UTF-8")
+		else:
+			desc = ""
 		if not filter(lambda exclude: fnmatch(script, exclude), excludes or []):
-			scripts.append((script,
-							cfg.get("Desktop Entry", "Name").decode("UTF-8")))
-	return scripts
+			scripts_with_desc.append((script, desc))
+	return scripts_with_desc
 
 
 def setup():
@@ -905,13 +913,15 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"other_resources": [(24, 1, manifest_xml)],
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": desc
-		}) for script, desc in scripts]
+		}) for script, desc in filter(lambda (script, desc):
+									  script != appname.lower() +
+									  "-eecolor-to-madvr-converter", scripts)]
 		# Add profile loader launcher
 		attrs["windows"].append(Target(**{
 			"script": os.path.join(tmp_scripts_dir,
 								   script2pywname(apply_profiles_launcher[0])),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
-												appname.lower() + "-apply-profiles" +
+												appname + "-apply-profiles" +
 												".ico"))],
 			"other_resources": [(24, 1, manifest_xml)],
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
@@ -938,7 +948,8 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 									  script2pywname(script) in console_scripts,
 									  scripts)]
 		attrs["console"].append(Target(**{
-			"script": os.path.join(basedir, "scripts", "eecolor_to_madvr"),
+			"script": os.path.join(tmp_scripts_dir,
+								   appname + "-eeColor-to-madVR-converter"),
 			"icon_resources": [(1, os.path.join(pydir, "theme", "icons", 
 												appname + "-3DLUT-maker.ico"))],
 			"other_resources": [(24, 1, manifest_xml)],

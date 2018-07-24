@@ -3683,7 +3683,7 @@ END_DATA
 														 "pythonw" + exe_ext):
 						cmd = os.path.join(exedir, "python" + exe_ext)
 						pyw = os.path.normpath(os.path.join(pydir, "..",
-															"eecolor_to_madvr.pyw"))
+															appname + "-eeColor-to-madVR-converter.pyw"))
 						if os.path.exists(pyw):
 							# Running from source or 0install
 							# Check if this is a 0install implementation, in which
@@ -3694,7 +3694,7 @@ END_DATA
 								cmd = which("0install" + exe_ext) or "0install" + exe_ext
 								interp_args.extend(["run",
 													"--offline",
-													"--command=run-eecolor_to_madvr",
+													"--command=run-eecolor-to-madvr-converter",
 													"http://%s/0install/%s.xml" %
 													(domain.lower(), appname)])
 							else:
@@ -3703,9 +3703,9 @@ END_DATA
 						else:
 							# Regular install
 							interp_args.append(get_data_path(os.path.join("scripts", 
-																		  "eecolor_to_madvr")))
+																		  appname.lower() + "-eecolor-to-madvr-converter")))
 					else:
-						cmd = os.path.join(pydir, "eecolor_to_madvr.exe")
+						cmd = os.path.join(pydir, appname + "-eeColor-to-madVR-converter" + exe_ext)
 					if in_colors:
 						interp_args.append("--colorspace=" +
 										   ",".join([str(v) for v in in_colors]))
