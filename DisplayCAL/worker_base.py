@@ -48,14 +48,14 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 			   use_cam_clipping=False, logfile=None,
 			   show_actual_if_clipped=False, input_encoding=None,
 			   output_encoding=None, abortmessage="Aborted", output_format=None,
-			   reverse=False, convert_video_rgb_to_clut65=False):
+			   reverse=False, convert_video_rgb_to_clut65=False, verbose=1):
 	if not config.cfg.items(config.ConfigParser.DEFAULTSECT):
 		config.initcfg()
 	profile = ICCP.ICCProfile(profile_filename)
 	xicclu = Xicclu(profile, intent, direction, order, pcs, scale, cwd,
 					startupinfo, use_icclu, use_cam_clipping, logfile,
 					None, show_actual_if_clipped, input_encoding,
-					output_encoding, convert_video_rgb_to_clut65)
+					output_encoding, convert_video_rgb_to_clut65, verbose)
 	prevperc = 0
 	start = 0
 	num_subchunks = 50
@@ -451,7 +451,8 @@ class Xicclu(WorkerBase):
 				 pcs=None, scale=1, cwd=None, startupinfo=None, use_icclu=False,
 				 use_cam_clipping=False, logfile=None, worker=None,
 				 show_actual_if_clipped=False, input_encoding=None,
-				 output_encoding=None, convert_video_rgb_to_clut65=False):
+				 output_encoding=None, convert_video_rgb_to_clut65=False,
+				 verbose=1):
 		WorkerBase.__init__(self)
 		self.scale = scale
 		self.convert_video_rgb_to_clut65 = convert_video_rgb_to_clut65
@@ -502,7 +503,8 @@ class Xicclu(WorkerBase):
 			startupinfo.wShowWindow = sp.SW_HIDE
 		xicclu = safe_str(xicclu)
 		cwd = safe_str(cwd)
-		args = [xicclu, "-s%s" % scale]
+		self.verbose = verbose
+		args = [xicclu, "-v%i" % verbose, "-s%s" % scale]
 		self.show_actual_if_clipped = False
 		if utilname == "xicclu":
 			if (is_profile and
@@ -578,34 +580,31 @@ class Xicclu(WorkerBase):
 								   startupinfo=self.startupinfo)
 
 	def devi_devip(self, n):
-		if self.convert_video_rgb_to_clut65:
-			n /= self.scale
-			if n > 236 / 256.0:
-				n = colormath.convert_range(n, 236 / 256.0, 1, 236 / 256.0, 255 / 256.0)
-			n = VidRGB_to_cLUT65(eeColor_to_VidRGB(n))
-			n *= self.scale
-		return n
-
-	def devop_devo(self, n):
-		if self.convert_video_rgb_to_clut65:
-			n = VidRGB_to_eeColor(n / self.scale) * self.scale
-		return n
+		if n > 236 / 256.0:
+			n = colormath.convert_range(n, 236 / 256.0, 1, 236 / 256.0, 255 / 256.0)
+		return VidRGB_to_cLUT65(eeColor_to_VidRGB(n))
 	
 	def __call__(self, idata):
 		if not isinstance(idata, basestring):
-			devi_devip = self.devi_devip
+			verbose = self.verbose
+			if self.convert_video_rgb_to_clut65:
+				devi_devip = self.devi_devip
+			else:
+				devi_devip = lambda v: v
+			scale = float(self.scale)
 			idata = list(idata)  # Make a copy
 			for i, v in enumerate(idata):
 				if isinstance(v, (float, int, long)):
 					self([idata])
 					return
 				if not isinstance(v, basestring):
-					for n in v:
-						if not isinstance(n, (float, int, long)):
-							raise TypeError("xicclu: Expecting list of "
-											"strings or n-tuples with "
-											"floats")
-					idata[i] = " ".join([str(devi_devip(n)) for n in v])
+					if verbose:
+						for n in v:
+							if not isinstance(n, (float, int, long)):
+								raise TypeError("xicclu: Expecting list of "
+												"strings or n-tuples with "
+												"floats")
+					idata[i] = " ".join(str(devi_devip(n / scale) * scale) for n in v)
 		else:
 			idata = idata.splitlines()
 		numrows = len(idata)
@@ -694,37 +693,56 @@ class Xicclu(WorkerBase):
 			return self.output
 		parsed = []
 		j = 0
-		devop_devo = self.devop_devo
+		verbose = self.verbose
+		if self.convert_video_rgb_to_clut65:
+			scale = float(self.scale)
+			devop_devo = VidRGB_to_eeColor
+		else:
+			scale = 1.0
+			devop_devo = lambda v: v
+		if output_format:
+			fmt = output_format[0]
+			maxv = output_format[1]
 		for i, line in enumerate(self.output):
-			line = line.strip()
-			if line.startswith("["):
-				if parsed and get_clip and self.show_actual_if_clipped:
-					parts = line.strip("[]").split(",")
-					actual = [float(v) for v in parts[0].split()[1:4]]  # Actual CIE
-					actual.append(float(parts[1].split()[-1]))  # deltaE
-					parsed[-1].append(actual)
+			if verbose:
+				line = line.strip()
+				if line.startswith("["):
+					if parsed and get_clip and self.show_actual_if_clipped:
+						parts = line.strip("[]").split(",")
+						actual = [float(v) for v in parts[0].split()[1:4]]  # Actual CIE
+						actual.append(float(parts[1].split()[-1]))  # deltaE
+						parsed[-1].append(actual)
+					elif self.sessionlogfile:
+						self.sessionlogfile.write(line)
+					continue
+				elif not "->" in line:
+					if self.sessionlogfile and line:
+						self.sessionlogfile.write(line)
+					continue
 				elif self.sessionlogfile:
-					self.sessionlogfile.write(line)
-				continue
-			elif not "->" in line:
-				if self.sessionlogfile and line:
-					self.sessionlogfile.write(line)
-				continue
-			elif self.sessionlogfile:
-				self.sessionlogfile.write("#%i %s" % (j, line))
-			parts = line.split("->")[-1].strip().split()
-			clip = parts.pop() == "(clip)"
-			if clip:
-				parts.pop()
-			out = [devop_devo(float(n)) / self.output_scale for n in parts]
-			if output_format:
-				if reverse:
-					out = out[::-1]
-				out = "".join(struct.pack(output_format[0], round(v * output_format[1])) for v in out)
+					self.sessionlogfile.write("#%i %s" % (j, line))
+				parts = line.split("->")[-1].strip().split()
+				clip = parts.pop() == "(clip)"
+				if clip:
+					parts.pop()
+				j += 1
+			else:
+				parts = line.split()
+			if reverse:
+				parts = reversed(parts)
+			if not output_format:
+				out = [devop_devo(float(v) / scale) / self.output_scale for v in parts]
+				if get_clip and not self.show_actual_if_clipped:
+					out.append(clip)
+			elif fmt == "<H":
+				# Optimize for speed
+				out = "".join(chr(n & 255) + chr(n >> 8) for n in
+							  (int(round(devop_devo(float(v) / scale) * maxv))
+							   for v in parts))
+			else:
+				out = "".join(struct.pack(fmt, round(devop_devo(float(v) / scale) * maxv))
+							  for v in parts)
 			parsed.append(out)
-			if get_clip and not self.show_actual_if_clipped:
-				parsed[-1].append(clip)
-			j += 1
 		if self.sessionlogfile:
 			self.sessionlogfile.close()
 		return parsed
@@ -761,7 +779,8 @@ class MP_Xicclu(Xicclu):
 				 use_cam_clipping=False, logfile=None, worker=None,
 				 show_actual_if_clipped=False, input_encoding=None,
 				 output_encoding=None, output_format=None, reverse=False,
-				 output_stream=None, convert_video_rgb_to_clut65=False):
+				 output_stream=None, convert_video_rgb_to_clut65=False,
+				 verbose=1):
 		WorkerBase.__init__(self)
 		self.logfile = logfile
 		self.worker = worker
@@ -772,7 +791,7 @@ class MP_Xicclu(Xicclu):
 					  use_cam_clipping, None,
 					  show_actual_if_clipped, input_encoding,
 					  output_encoding, lang.getstr("aborted"), output_format,
-					  reverse, convert_video_rgb_to_clut65)
+					  reverse, convert_video_rgb_to_clut65, verbose)
 		self._out = []
 		num_cpus = mp.cpu_count()
 		if isinstance(profile.tags.get("A2B0"), ICCP.LUT16Type):
