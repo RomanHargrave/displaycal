@@ -486,7 +486,12 @@ class MadTPG(MadTPGBase):
 			value, valuetype = _winreg.QueryValueEx(key, "")
 		except:
 			raise RuntimeError(lang.getstr("madvr.not_found"))
-		self.dllpath = os.path.join(os.path.split(value)[0], "madHcNet32.dll")
+		if platform.architecture()[0] == "64bit":
+			bits = 64
+		else:
+			bits = 32
+		self.dllpath = os.path.join(os.path.split(value)[0],
+									"madHcNet%i.dll" % bits)
 		if not value or not os.path.isfile(self.dllpath):
 			raise OSError(lang.getstr("not_found", self.dllpath))
 		handle = win32api.LoadLibrary(self.dllpath)
