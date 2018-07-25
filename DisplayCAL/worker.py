@@ -3695,6 +3695,7 @@ END_DATA
 								interp_args.extend(["run",
 													"--offline",
 													"--command=run-eecolor-to-madvr-converter",
+													"--",
 													"http://%s/0install/%s.xml" %
 													(domain.lower(), appname)])
 							else:
