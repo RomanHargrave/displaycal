@@ -1801,8 +1801,18 @@ _init_testcharts()
 runtype = runtimeconfig(pyfile)
 
 if sys.platform in ("darwin", "win32") and not os.getenv("SSL_CERT_FILE"):
-	# Use our bundled CA file
-	# https://github.com/certifi/python-certifi/blob/master/certifi/cacert.pem
-	cafile = get_data_path("cacert.pem")
+	try:
+		import certifi
+	except ImportError:
+		cafile = None
+	else:
+		cafile = certifi.where()
+		if cafile and not os.path.isfile(cafile):
+			cafile = None
+	if not cafile:
+		# Use our bundled CA file
+		cafile = get_data_path("cacert.pem")
+		if cafile:
+			cafile = cafile.encode(fs_enc, "replace")
 	if cafile:
-		os.environ["SSL_CERT_FILE"] = cafile.encode(fs_enc, "replace")
+		os.environ["SSL_CERT_FILE"] = cafile
