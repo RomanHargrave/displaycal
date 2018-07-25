@@ -989,7 +989,8 @@ def setup():
 				if create:
 					for cmdname, script, desc in cmds:
 						# Add entry-points to interface
-						if script == name + "-eeColor-to-madVR-converter":
+						if (script == name + "-eeColor-to-madVR-converter" or
+							script.endswith("-console")):
 							continue
 						entry_point = domtree.createElement("entry-point")
 						entry_point.setAttribute("command", cmdname)

@@ -922,7 +922,9 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"description": desc
 		}) for script, desc in filter(lambda (script, desc):
 									  script != appname.lower() +
-									  "-eecolor-to-madvr-converter", scripts)]
+									  "-eecolor-to-madvr-converter" and
+									  not script.endswith("-console"), scripts)]
+
 		# Add profile loader launcher
 		attrs["windows"].append(Target(**{
 			"script": os.path.join(tmp_scripts_dir,
@@ -934,13 +936,15 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"copyright": u"© %s %s" % (strftime("%Y"), author),
 			"description": apply_profiles_launcher[1]
 		}))
-		console_scripts = [name + "-VRML-to-X3D-converter"]
+
+		# Programs that can run with and without GUI
+		console_scripts = [name + "-VRML-to-X3D-converter"]  # No "-console" suffix!
 		for console_script in console_scripts:
 			console_script_path = os.path.join(tmp_scripts_dir,
 											   console_script + "-console")
 			if not os.path.isfile(console_script_path):
 				shutil.copy(os.path.join(basedir, "scripts",
-										 console_script.lower()),
+										 console_script.lower() + "-console"),
 							console_script_path)
 		attrs["console"] = [Target(**{
 			"script": os.path.join(tmp_scripts_dir,
@@ -954,6 +958,8 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		}) for script, desc in filter(lambda (script, desc):
 									  script2pywname(script) in console_scripts,
 									  scripts)]
+
+		# Programs without GUI
 		attrs["console"].append(Target(**{
 			"script": os.path.join(tmp_scripts_dir,
 								   appname + "-eeColor-to-madVR-converter"),
@@ -964,6 +970,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"description": "Convert eeColor 65^3 to madVR 256^3 3D LUT "
 						   "(video levels in, video levels out)"
 		}))
+
 		dist_dir = os.path.join(pydir, "..", "dist", "py2exe.%s-py%s" % 
 								(get_platform(), sys.version[:3]), name + 
 								"-" + version)

@@ -1,6 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-from DisplayCAL.main import main
+import sys
 
-main("VRML-to-X3D-converter")
+if "--help" in sys.argv[1:] or "--no-gui" in sys.argv[1:]:
+	from DisplayCAL.wxVRML2X3D import main
+
+	main()
+else:
+	from DisplayCAL.main import main
+
+	main("VRML-to-X3D-converter")
