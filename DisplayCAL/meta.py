@@ -75,7 +75,7 @@ def script2pywname(script):
 	""" Convert all-lowercase script name to mixed-case pyw name """
 	a2b = {name + "-3dlut-maker": name + "-3DLUT-maker",
 		   name + "-vrml-to-x3d-converter": name + "-VRML-to-X3D-converter",
-		   name + "-eecolor-to-advr-converter": name + "-eeColor-to-madVR-converter"}
+		   name + "-eecolor-to-madvr-converter": name + "-eeColor-to-madVR-converter"}
 	if script.lower().startswith(name.lower()):
 		pyw = name + script[len(name):]
 		return a2b.get(pyw, pyw)
