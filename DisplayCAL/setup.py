@@ -146,9 +146,7 @@ config = {"data": ["tests/*.icc"],
 								  "x3d-viewer/*.js",
 								  "xrc/*.xrc"]},
 		  "xtra_package_data": {name: {"win32": ["theme/icons/%s-uninstall.ico"
-												 % name],
-									   "darwin": ["scripts/%s-eecolor-to-madvr-converter" %
-												  name]}}}
+												 % name]}}}
 
 
 def add_lib_excludes(key, excludebits):
@@ -710,6 +708,10 @@ def setup():
 				data_files.append((os.path.join(os.path.dirname(data), "icons", 
 											 "hicolor", dname, "apps"), 
 								   desktopicons))
+	if do_py2app:
+		data_files.append((os.path.join(data, "scripts"),
+						   [os.path.join(pydir, "..", "scripts",
+										 name + "-eecolor-to-madvr-converter")]))
 
 	sources = [os.path.join(name, "RealDisplaySizeMM.c")]
 	if sys.platform == "win32":
