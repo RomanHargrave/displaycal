@@ -116,9 +116,12 @@ if __name__ == "__main__":
 	else:
 		safe_print("Convert eeColor 65^3 to madVR 256^3 3D LUT (video levels in, video levels out)")
 		safe_print("Author: Florian Hoech, licensed under the GPL version 3")
-		safe_print("Usage: %s [--unity] <name>.<target color space>.txt" % os.path.basename(sys.argv[0]))
+		safe_print("Usage: %s [--unity] [--batch] <name>.<target color space>.txt" % os.path.basename(sys.argv[0]))
 		safe_print("Possible target color spaces: BT709, SMPTE_C, EBU_PAL, BT2020, DCI_P3")
 		safe_print("Write output to <name>.<target color space>.3dlut")
+		safe_print("")
+		safe_print("  --unity      Create unity (in = out) 3D LUT")
+		safe_print("  --batch      Don't pause after processing")
 		safe_print("")
 		safe_print("Examples:")
 		safe_print("  Convert SDR BT709 eeColor 3D LUT")
