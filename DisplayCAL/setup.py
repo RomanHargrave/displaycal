@@ -146,7 +146,9 @@ config = {"data": ["tests/*.icc"],
 								  "x3d-viewer/*.js",
 								  "xrc/*.xrc"]},
 		  "xtra_package_data": {name: {"win32": ["theme/icons/%s-uninstall.ico"
-												 % name]}}}
+												 % name],
+									   "darwin": ["scripts/%s-eecolor-to-madvr-converter" %
+												  name]}}}
 
 
 def add_lib_excludes(key, excludebits):
@@ -213,7 +215,8 @@ def create_app_symlinks(dist_dir, scripts):
 	toolscripts = filter(lambda script: script != name,
 						 [script for script, desc in scripts])
 	for script, desc in scripts:
-		if script in (name, name + "-apply-profiles"):
+		if script in (name, name + "-apply-profiles",
+					  name + "-eeColor-to-madVR-converter"):
 			continue
 		toolname = desc.replace(name, "").strip()
 		toolapp = os.path.join(dist_dir, toolname + ".app")
@@ -230,9 +233,6 @@ def create_app_symlinks(dist_dir, scripts):
 			# Don't symlink, apps won't be able to run in parallel!
 			shutil.copy(os.path.join(dist_dir, maincontents_rel, 'MacOS',
 						appname), toolscript)
-		if script == name + "-eeColor-to-madVR-converter":
-			# Do not create app bundle for eeColor to madVR converter
-			continue
 		toolcontents = os.path.join(toolapp, "Contents")
 		os.makedirs(toolcontents)
 		subdirs = ["Frameworks", "Resources"]

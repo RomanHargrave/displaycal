@@ -3705,6 +3705,18 @@ END_DATA
 							# Regular install
 							interp_args.append(get_data_path(os.path.join("scripts", 
 																		  appname.lower() + "-eecolor-to-madvr-converter")))
+					elif isapp:
+						cmd = os.path.join(exedir, "python")
+						interp_args.extend(["-c",
+											"import sys;sys.path.insert(0, %r);execfile(%r)" %
+											(os.path.join(pydir.encode(fs_enc),
+														  "lib",
+														  "python%s%s" %
+														  sys.version_info[:2],
+														  "site-packages.zip"),
+											 os.path.join(pydir.encode(fs_enc),
+														  appname.lower() +
+														  "-eecolor-to-madvr-converter"))])
 					else:
 						cmd = os.path.join(pydir, appname + "-eeColor-to-madVR-converter" + exe_ext)
 					if in_colors:
