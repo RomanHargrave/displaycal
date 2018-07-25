@@ -3682,9 +3682,9 @@ END_DATA
 					if os.path.basename(exe).lower() in ("python" + exe_ext, 
 														 "pythonw" + exe_ext):
 						cmd = os.path.join(exedir, "python" + exe_ext)
-						pyw = os.path.normpath(os.path.join(pydir, "..",
-															appname + "-eeColor-to-madVR-converter.pyw"))
-						if os.path.exists(pyw):
+						py = os.path.normpath(os.path.join(pydir, "..",
+															appname + "-eeColor-to-madVR-converter.py"))
+						if os.path.exists(py):
 							# Running from source or 0install
 							# Check if this is a 0install implementation, in which
 							# case we want to call 0launch with the appropriate
@@ -3700,7 +3700,7 @@ END_DATA
 													(domain.lower(), appname)])
 							else:
 								# Running from source
-								interp_args.append(pyw)
+								interp_args.append(py)
 						else:
 							# Regular install
 							interp_args.append(get_data_path(os.path.join("scripts", 
