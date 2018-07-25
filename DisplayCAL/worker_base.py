@@ -541,6 +541,8 @@ class Xicclu(WorkerBase):
 					self.output_scale = 100.0
 				if pcs:
 					args.append("-p" + pcs)
+			else:
+				self.output_scale = scale
 		args.append(self.profile_path)
 		if debug or verbose > 1:
 			self.sessionlogfile = LogFile(profile_basename + ".xicclu",
@@ -694,11 +696,10 @@ class Xicclu(WorkerBase):
 		parsed = []
 		j = 0
 		verbose = self.verbose
+		scale = float(self.output_scale)
 		if self.convert_video_rgb_to_clut65:
-			scale = float(self.scale)
 			devop_devo = VidRGB_to_eeColor
 		else:
-			scale = 1.0
 			devop_devo = lambda v: v
 		if output_format:
 			fmt = output_format[0]
@@ -731,7 +732,7 @@ class Xicclu(WorkerBase):
 			if reverse:
 				parts = reversed(parts)
 			if not output_format:
-				out = [devop_devo(float(v) / scale) / self.output_scale for v in parts]
+				out = [devop_devo(float(v) / scale) for v in parts]
 				if get_clip and not self.show_actual_if_clipped:
 					out.append(clip)
 			elif fmt == "<H":
