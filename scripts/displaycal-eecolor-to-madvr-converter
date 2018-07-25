@@ -113,6 +113,8 @@ if __name__ == "__main__":
 							convert_video_rgb_to_clut65="--convert-video-rgb-to-clut65" in sys.argv[1:])
 			except Exception, exception:
 				safe_print(exception)
+		if result is None:
+			safe_print("No filename given.")
 	else:
 		safe_print("Convert eeColor 65^3 to madVR 256^3 3D LUT (video levels in, video levels out)")
 		safe_print("Author: Florian Hoech, licensed under the GPL version 3")

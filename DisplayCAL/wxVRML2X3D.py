@@ -134,10 +134,12 @@ def main():
 		result = None
 		view = "--view" in sys.argv[1:]
 		for arg in sys.argv[1:]:
-			if os.path.isfile(arg):
+			if not arg.startswith("--"):
 				result = vrmlfile2x3dfile(safe_unicode(arg), html=html,
 										  embed=embed, view=view, force=force,
 										  cache=cache, gui=gui)
+		if result is None:
+			safe_print("No filename given.")
 		if sys.stdout.isatty() and not "--batch" in sys.argv[1:]:
 			raw_input("Press RETURN to exit")
 		sys.exit(int(not result))
