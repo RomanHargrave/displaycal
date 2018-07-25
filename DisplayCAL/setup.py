@@ -538,9 +538,15 @@ def setup():
 			if is_rpm_build:
 				doc = os.path.join(os.path.sep, "usr", doc)
 
-	# Use bundled CA file
-	if sdist or do_py2app or do_py2exe:
-		config["package_data"][name].append("cacert.pem")
+	# Use CA file from certifi project
+	if do_py2app or do_py2exe:
+		import certifi
+		cacert = certifi.where()
+		if cacert:
+			shutil.copyfile(cacert, os.path.join(pydir, "cacert.pem"))
+			config["package_data"][name].append("cacert.pem")
+		else:
+			print "WARNING: cacert.pem from certifi project not found!"
 
 	# on Mac OS X and Windows, we want data files in the package dir
 	# (package_data will be ignored when using py2exe)
