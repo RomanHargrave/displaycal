@@ -711,7 +711,8 @@ def setup():
 	if do_py2app:
 		data_files.append((os.path.join(data, "scripts"),
 						   [os.path.join(pydir, "..", "scripts",
-										 name + "-eecolor-to-madvr-converter")]))
+										 name.lower() +
+										 "-eecolor-to-madvr-converter")]))
 
 	sources = [os.path.join(name, "RealDisplaySizeMM.c")]
 	if sys.platform == "win32":
