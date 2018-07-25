@@ -704,6 +704,9 @@ class Xicclu(WorkerBase):
 		if output_format:
 			fmt = output_format[0]
 			maxv = output_format[1]
+		# Interesting: In CPython, testing for 'if not x' is slightly quicker
+		# than testing for 'if x'. Also, struct.pack is faster if the second
+		# argument is passed as an integer.
 		for i, line in enumerate(self.output):
 			if verbose:
 				line = line.strip()
@@ -735,13 +738,8 @@ class Xicclu(WorkerBase):
 				out = [devop_devo(float(v) / scale) for v in parts]
 				if get_clip and not self.show_actual_if_clipped:
 					out.append(clip)
-			elif fmt == "<H":
-				# Optimize for speed
-				out = "".join(chr(n & 255) + chr(n >> 8) for n in
-							  (int(round(devop_devo(float(v) / scale) * maxv))
-							   for v in parts))
 			else:
-				out = "".join(struct.pack(fmt, round(devop_devo(float(v) / scale) * maxv))
+				out = "".join(struct.pack(fmt, int(round(devop_devo(float(v) / scale) * maxv)))
 							  for v in parts)
 			parsed.append(out)
 		if self.sessionlogfile:
