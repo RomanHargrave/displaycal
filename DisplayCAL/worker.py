@@ -4543,7 +4543,6 @@ END_DATA
 		use_pty = args and not "-?" in args and (use_pty or
 												 cmdname in measure_cmds +
 															process_cmds)
-		process_cmds += ("eecolor_to_madvr", "python")
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and
@@ -5249,8 +5248,7 @@ while 1:
 												   linesep_in="\n", 
 												   triggers=[])))
 				logfiles.append(stdout)
-				if (hasattr(self, "thread") and self.thread.isAlive() and 
-					cmdname in measure_cmds + process_cmds):
+				if hasattr(self, "thread") and self.thread.isAlive():
 					logfiles.extend([self.recent, self.lastmsg, self])
 				logfiles = Files(logfiles)
 				if self.use_patterngenerator:
