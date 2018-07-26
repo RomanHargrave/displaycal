@@ -4849,6 +4849,8 @@ class LogWindow(InvincibleFrame):
 		self._tspattern = re.compile(r"(?:\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2},\d{3} )")
 		self._textwrapper = textwrap.TextWrapper(77)
 		self._linecontinuation = " " * 13 + u"\u21b3 "
+		self._warning_lstr = lang.getstr("warning").lower()
+		self._error_lstr = lang.getstr("error").lower()
 
 	def Log(self, txt):
 		# TextCtrl.AppendText is an EXPENSIVE operation under OS X.
@@ -4886,19 +4888,21 @@ class LogWindow(InvincibleFrame):
 		# Only set styles for (up to) the last 1000 lines.
 		for line in lines[:-1000]:
 			start += len(line + "\n")
+		textattr = None
+		warning_lstr = self._warning_lstr
+		error_lstr = self._error_lstr
 		for i, line in enumerate(lines[-1000:]):
 			line_lower = line.lower()
-			textattr = None
-			if (lang.getstr("warning").lower() in line_lower or
-				"warning" in line_lower):
+			if warning_lstr in line_lower or "warning" in line_lower:
 				textattr = wx.TextAttr("#F07F00", font=self.log_txt.Font)
-			elif (lang.getstr("error").lower() in line_lower or
-				"error" in line_lower):
+			elif error_lstr in line_lower or "error" in line_lower:
 				textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
 			self.log_txt.SetStyle(start, start + 12, self._1stcolstyle)
 			if textattr:
 				self.log_txt.SetStyle(start + 12, start + len(line),
 									  textattr)
+				if not line.endswith(u" \u21B2"):
+					textattr = None
 			start += len(line + "\n")
 	
 	def ScrollToBottom(self):
