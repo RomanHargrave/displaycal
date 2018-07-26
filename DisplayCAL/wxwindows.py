@@ -13,6 +13,7 @@ import string
 import subprocess as sp
 import sys
 import tarfile
+import textwrap
 import threading
 import warnings
 import xml.parsers.expat
@@ -4846,6 +4847,8 @@ class LogWindow(InvincibleFrame):
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 		self._tspattern = re.compile(r"(?:\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2},\d{3} )")
+		self._textwrapper = textwrap.TextWrapper(77)
+		self._linecontinuation = " " * 13 + u"\u21b3 "
 
 	def Log(self, txt):
 		# TextCtrl.AppendText is an EXPENSIVE operation under OS X.
@@ -4858,17 +4861,26 @@ class LogWindow(InvincibleFrame):
 			if tsmatch:
 				line = line[len(tsmatch.group()):]
 				ts = tsmatch.group(1)
-			for line in wrap(line, 80).split("\n"):
-				while 1:
-					if ts:
-						logline = ts + line
+			elif line[:15] == self._linecontinuation:
+				ts = line[:13]
+				line = line[13:]
+			else:
+				s = time()
+				ms = s - int(s)
+				ts = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:]
+			if len(line) > 81:
+				wrapped = self._textwrapper.wrap(line)
+				i_last = len(wrapped) - 1
+				for i, line in enumerate(wrapped):
+					if i:
+						line = self._linecontinuation + line
 					else:
-						ms = time() - int(time())
-						logline = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:] + line[:80]
-					lines.append(logline)
-					line = line[80:]
-					if not line:
-						break
+						line = ts + line
+					if i < i_last:
+						line = line.ljust(79 + 13) + u" \u21B2"
+					lines.append(line)
+			else:
+				lines.append(ts + line)
 		self.log_txt.AppendText("\n".join(lines) + "\n")
 		# TextCtrl.SetStyle is an EXPENSIVE operation, especially under OS X.
 		# Only set styles for (up to) the last 1000 lines.
