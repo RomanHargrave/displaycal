@@ -4847,7 +4847,7 @@ class LogWindow(InvincibleFrame):
 		self.Bind(wx.EVT_SIZE, self.OnSize)
 		self.Children[0].Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 		self._tspattern = re.compile(r"(?:\d{4}-\d{2}-\d{2} )?(\d{2}:\d{2}:\d{2},\d{3} )")
-		self._textwrapper = textwrap.TextWrapper(77)
+		self._textwrapper = textwrap.TextWrapper(76)
 		self._linecontinuation = " " * 13 + u"\u21b3 "
 		self._warning_lstr = lang.getstr("warning").lower()
 		self._error_lstr = lang.getstr("error").lower()
@@ -4870,7 +4870,7 @@ class LogWindow(InvincibleFrame):
 				s = time()
 				ms = s - int(s)
 				ts = strftime("%H:%M:%S,") + ("%.3f " % ms)[2:]
-			if len(line) > 81:
+			if len(line) > 80:
 				wrapped = self._textwrapper.wrap(line)
 				i_last = len(wrapped) - 1
 				for i, line in enumerate(wrapped):
@@ -4879,7 +4879,7 @@ class LogWindow(InvincibleFrame):
 					else:
 						line = ts + line
 					if i < i_last:
-						line = line.ljust(79 + 13) + u" \u21B2"
+						line = line.ljust(78 + 13) + u" \u21B2"
 					lines.append(line)
 			else:
 				lines.append(ts + line)
