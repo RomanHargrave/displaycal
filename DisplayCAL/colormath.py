@@ -406,7 +406,9 @@ def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None,
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
 	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
 	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
-	cachehash = (id(whitepoint_source), id(whitepoint_destination), id(cat))
+	cachehash = (whitepoint_source and tuple(whitepoint_source),
+				 whitepoint_destination and tuple(whitepoint_destination),
+				 cat if isinstance(cat, basestring) else id(cat))
 	if cachehash in wp_adaption_matrix.cache:
 		return wp_adaption_matrix.cache[cachehash]
 	cat = get_cat_matrix(cat)
@@ -3227,6 +3229,36 @@ standard_illuminants = {
 						  "D65": {"X": 0.95017, "Z": 1.08813},
 						  "D75": {"X": 0.94939, "Z": 1.22558}}
 }
+
+
+def debug_caches():
+	from log import safe_print
+
+	for cache in ("XYZ2RGB.interp",
+				  "wp_adaption_matrix.cache",
+				  "get_rgb_space.cache",
+				  "get_standard_illuminant.cache",
+				  "get_whitepoint.cache"):
+		cn, ck = cache.split(".")
+		c = getattr(globals()[cn], ck)
+		count = 0
+		seen = {}
+		for k, v in c.iteritems():
+			for kk, vv in c.iteritems():
+				# Check for equality, not identity
+				if k != kk and v == vv and not kk in seen:
+					count += 1
+					seen[kk] = True
+		safe_print(cache, len(c), "entries", max(count - 1, 0), "duplicates")
+		if count > 1:
+			for k, v in c.iteritems():
+				safe_print(k, v)
+
+
+if "--debug-caches" in sys.argv[1:]:
+	import atexit
+
+	atexit.register(debug_caches)
 
 
 def test():
