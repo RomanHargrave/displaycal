@@ -213,8 +213,9 @@ def create_app_symlinks(dist_dir, scripts):
 	toolscripts = filter(lambda script: script != name,
 						 [script for script, desc in scripts])
 	for script, desc in scripts:
-		if script in (name, name + "-apply-profiles",
-					  name + "-eeColor-to-madVR-converter"):
+		if (script in (name, name + "-apply-profiles",
+					   name + "-eeColor-to-madVR-converter") or
+			script.endswith("-console")):
 			continue
 		toolname = desc.replace(name, "").strip()
 		toolapp = os.path.join(dist_dir, toolname + ".app")
