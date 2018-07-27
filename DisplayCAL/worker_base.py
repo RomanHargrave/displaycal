@@ -735,7 +735,7 @@ class Xicclu(WorkerBase):
 			if reverse:
 				parts = reversed(parts)
 			if not output_format:
-				out = [devop_devo(float(v) / scale) for v in parts]
+				out = [devop_devo(float(v) / scale) * scale for v in parts]
 				if get_clip and not self.show_actual_if_clipped:
 					out.append(clip)
 			else:
