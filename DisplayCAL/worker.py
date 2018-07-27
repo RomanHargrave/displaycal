@@ -3679,8 +3679,7 @@ END_DATA
 												   # logfile=logfiles,
 												   # convert_video_rgb_to_clut65=True)
 					interp_args = []
-					if os.path.basename(exe).lower() in ("python" + exe_ext, 
-														 "pythonw" + exe_ext):
+					if os.path.basename(exe).lower().startswith("python"):
 						cmd = os.path.join(exedir, "python" + exe_ext)
 						py = os.path.normpath(os.path.join(pydir, "..",
 															appname + "-eeColor-to-madVR-converter.py"))
