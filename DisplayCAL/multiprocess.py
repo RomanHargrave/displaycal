@@ -253,6 +253,9 @@ class FakePool(object):
 	def close(self):
 		pass
 
+	def join(self):
+		pass
+
 	def map(self, func, iterable, chunksize=None):
 		return func(iterable)
 
