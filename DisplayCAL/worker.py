@@ -3704,9 +3704,15 @@ END_DATA
 													(domain.lower(), appname)])
 							else:
 								# Running from source
+								# Need to run unbuffered so we can grab
+								# progress
+								interp_args.append("-u")
 								interp_args.append(py)
 						else:
 							# Regular install
+							# Need to run unbuffered so we can grab
+							# progress
+							interp_args.append("-u")
 							interp_args.append(get_data_path(os.path.join("scripts", 
 																		  appname.lower() + "-eecolor-to-madvr-converter")))
 					elif isapp:
