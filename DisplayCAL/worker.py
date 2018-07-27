@@ -3550,6 +3550,8 @@ END_DATA
 								seen[seenkey] = RGB
 								n += 1
 							clut[abc] = RGB
+				del seen
+				del seenkeys
 				del RGB_dst_out
 				preserve_sync = getcfg("3dlut.preserve_sync")
 				prevperc = 0
@@ -3571,6 +3573,7 @@ END_DATA
 							else:
 								# Got value from lookup
 								RGB = clut[abc]
+								del clut[abc]
 								if output_encoding == "t":
 									# TV levels out
 									# Convert 0..255 to 16..235
@@ -3582,6 +3585,7 @@ END_DATA
 									if input_encoding in ("t", "T"):
 										# TV levels in, scale/extrapolate clip
 										clipmask, scale, full, uci, cin = clip[abc]
+										del clip[abc]
 										for j, v in enumerate(RGB):
 
 											if clipmask:
@@ -3622,6 +3626,7 @@ END_DATA
 				self.log("Finished creating device link in", time() - xts,
 						 "seconds")
 				result = True
+				del clip
 				del clut
 				del A2B0
 			else:
