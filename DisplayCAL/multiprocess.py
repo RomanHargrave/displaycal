@@ -133,7 +133,8 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 			continue
 		data_out.append(result)
 
-	pool.terminate()
+	pool.close()
+	pool.join()
 
 	if manager:
 		# Need to shutdown manager so it doesn't hold files in use
