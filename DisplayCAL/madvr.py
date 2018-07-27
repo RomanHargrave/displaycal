@@ -25,6 +25,7 @@ if sys.platform == "win32":
 
 import ICCProfile as ICCP
 import colormath
+import cubeiterator as ci
 import localization as lang
 import worker_base
 from imfile import tiff_get_header
@@ -153,11 +154,22 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 	del h3dlut
 
 	# Lookup 256^3 values through device link and fill madVR cLUT
-	logfile.write("Generating 256^3 input values...\n")
 	clutres = 256
 	clutmax = clutres - 1.0
-	prevperc = -1
-	if not unity:
+	if unity:
+		logfile.write("Writing unity madVR 3D LUT...\n")
+		prevperc = -1
+		for a in xrange(clutres):
+			for b in xrange(clutres):
+				for c in xrange(clutres):
+					# Optimize for speed
+					B, G, R = chr(c), chr(b), chr(a)
+					raw.write(B + B + G + G + R + R)
+			perc = round(a / clutmax * 100)
+			if perc > prevperc:
+				logfile.write("\r%i%%" % perc)
+				prevperc = perc
+	else:
 		link = ICCP.ICCProfile(icc_device_link_filename)
 		# icclu verbose=0 gives a speed increase
 		xicclu = worker_base.MP_Xicclu(link, scale=clutmax, use_icclu=True,
@@ -166,21 +178,7 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 									   reverse=True, output_stream=raw,
 									   convert_video_rgb_to_clut65=convert_video_rgb_to_clut65,
 									   verbose=0)
-	for a in xrange(clutres):
-		for b in xrange(clutres):
-			for c in xrange(clutres):
-				if not unity:
-					xicclu((a, b, c))
-				else:
-					# Optimize for speed
-					B, G, R = chr(c), chr(b), chr(a)
-					raw.write(B + B + G + G + R + R)
-		perc = round(a / clutmax * 100)
-		if perc > prevperc:
-			logfile.write("\r%i%%" % perc)
-			prevperc = perc
-	if not unity:
-		logfile.write("\n")
+		xicclu._in = ci.Cube3DIterator(clutres)
 		logfile.write("Looking up 256^3 input values through device link and "
 					  "writing madVR 3D LUT...\n")
 		xicclu.exit()
