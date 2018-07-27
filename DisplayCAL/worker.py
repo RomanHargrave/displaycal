@@ -3680,7 +3680,12 @@ END_DATA
 												   # convert_video_rgb_to_clut65=True)
 					interp_args = []
 					if os.path.basename(exe).lower().startswith("python"):
-						cmd = os.path.join(exedir, "python" + exe_ext)
+						if os.path.basename(exe).lower().startswith("pythonw"):
+							cmd = os.path.join(exedir,
+											   "python" +
+											   os.path.basename(exe)[7:])
+						else:
+							cmd = exe
 						py = os.path.normpath(os.path.join(pydir, "..",
 															appname + "-eeColor-to-madVR-converter.py"))
 						if os.path.exists(py):
