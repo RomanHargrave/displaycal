@@ -11,15 +11,35 @@ import sys
 import threading
 
 
-def cpu_count():
+def cpu_count(limit_by_total_vmem=True):
 	"""
 	Returns the number of CPUs in the system
+	
+	If psutil is installed, the number of reported CPUs is limited according to
+	total RAM by assuming 1 GB for each CPU + 1 GB for the system, unless
+	limit_by_total_vmem is False, to allow a reasonable amount of memory for
+	each CPU.
 	
 	Return fallback value of 1 if CPU count cannot be determined.
 	
 	"""
+	max_cpus = sys.maxint
+	if limit_by_total_vmem:
+		try:
+			import psutil
+		except (ImportError, RuntimeError):
+			pass
+		else:
+			# Limit reported CPUs according to total RAM.
+			# We use total instead of available because we assume the system is
+			# smart enough to swap memory used by inactive processes to disk to
+			# free up more physical RAM for active processes.
+			try:
+				max_cpus = psutil.virtual_memory().total / (1024.0 ** 3) - 1
+			except:
+				pass
 	try:
-		return mp.cpu_count()
+		return max(min(mp.cpu_count(), max_cpus), 1)
 	except:
 		return 1
 
