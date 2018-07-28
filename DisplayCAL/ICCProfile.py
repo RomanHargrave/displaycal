@@ -2341,10 +2341,8 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 	prevperc = 0
 	amount = len(HDR_XYZ)
 	# We want to reduce luminance differently between hues to keep the relation
-	a = 0.9999
-	b = 0.999975
-	c = 0.999
-	d = 0.99
+	a = 0.999
+	b = 0.99975
 	# Hue angles (radians, RGB):
 	# red, redorange, yellow, yellowgreen, green, cyan, blue, magenta, red
 	interp = colormath.Interp([0, 0.041666, 0.166666, 0.25, 0.333333, 0.5, 0.666666, 0.833333, 1],
@@ -2376,14 +2374,14 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 					f = colormath.convert_range(sum(RGB_in), 1, 3, interp(H), 1)
 				if min(X_D50, Y_D50, Z_D50) < 0:
 					# Desaturate to get rid of negative XYZ
-					Ct *= 0.999
-					Cp *= 0.999
+					Ct *= 0.99
+					Cp *= 0.99
 				else:
 					if f < 1:
 						# Reduce intensity to bring XYZ down
 						I *= f
-					Ct *= 0.999
-					Cp *= 0.999
+					Ct *= 0.99
+					Cp *= 0.99
 				X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp)
 			XYZ[:] = X, Y, Z
 		HDR_XYZ[i] = (RGB_in, ICtCp_XYZ, RGB_ICtCp_XYZ)
