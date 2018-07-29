@@ -1523,24 +1523,24 @@ class LUT3DFrame(BaseFrame):
 					   int(tf[0][1] not in (-240, -709) and
 						   (not tf[0][0].startswith("Gamma") or tf[1] < .95) and
 						   self.XYZbpin != self.XYZbpout))
+				# Set gamma to profile gamma if single gamma
+				# profile
+				if tf[0][0].startswith("Gamma") and tf[1] >= .95:
+					if not getcfg("3dlut.trc_gamma.backup", False):
+						# Backup current gamma
+						setcfg("3dlut.trc_gamma.backup",
+							   getcfg("3dlut.trc_gamma"))
+					setcfg("3dlut.trc_gamma",
+						   round(tf[0][1], 2))
+				# Restore previous gamma if not single gamma
+				# profile
+				elif getcfg("3dlut.trc_gamma.backup", False):
+					setcfg("3dlut.trc_gamma",
+						   getcfg("3dlut.trc_gamma.backup"))
+					setcfg("3dlut.trc_gamma.backup", None)
 			self.lut3d_trc_apply_black_offset_ctrl.Enable(
 				tf[0][1] not in (-240, -709) and
 				self.XYZbpin != self.XYZbpout)
-			# Set gamma to profile gamma if single gamma
-			# profile
-			if tf[0][0].startswith("Gamma") and tf[1] >= .95:
-				if not getcfg("3dlut.trc_gamma.backup", False):
-					# Backup current gamma
-					setcfg("3dlut.trc_gamma.backup",
-						   getcfg("3dlut.trc_gamma"))
-				setcfg("3dlut.trc_gamma",
-					   round(tf[0][1], 2))
-			# Restore previous gamma if not single gamma
-			# profile
-			elif getcfg("3dlut.trc_gamma.backup", False):
-				setcfg("3dlut.trc_gamma",
-					   getcfg("3dlut.trc_gamma.backup"))
-				setcfg("3dlut.trc_gamma.backup", None)
 			self.lut3d_update_trc_controls()
 		elif (hasattr(self, "input_profile") and
 			  isinstance(self.input_profile.tags.get("A2B0"),
