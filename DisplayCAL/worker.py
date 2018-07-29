@@ -3020,7 +3020,8 @@ END_DATA
 			# Using xicclu instead of collink is more accurate on and near
 			# the gray axis (in some cases, i.e. HDR and cLUT res < 65,
 			# significantly so)
-			use_xicclu = (not profile_abst and
+			use_xicclu = ((experimental or (hdr and use_b2a)) and
+						  not profile_abst and
 						  intent in ("a", "aw", "r") and
 						  input_encoding in ("n", "t", "T") and
 						  output_encoding in ("n", "t"))
