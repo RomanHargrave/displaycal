@@ -6965,8 +6965,7 @@ usage: spotread [-options] [logfile]
 						   "SMPTE-C": 1,  # SMPTE RP 145 (NTSC)
 						   "PAL/SECAM": 2,
 						   "Rec. 2020": 3,
-						   "DCI P3": 4,
-						   "DCI P3 D65": 4}
+						   "DCI P3": 4}
 			gamut = gamut_slots.get(rgb_space_name, 0)
 			args = [path, True, gamut]
 			if smpte2084:
