@@ -4464,6 +4464,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		for profile_filename in ["ACES.icm", "ACEScg.icm", "DCDM X'Y'Z'.icm",
 								 "Rec709.icm", "Rec2020.icm", "EBU3213_PAL.icm",
 								 "SMPTE_RP145_NTSC.icm", "SMPTE431_P3.icm",
+								 "SMPTE431_P3_D65.icm",
 								 getcfg("3dlut.input.profile")]:
 			if not os.path.isabs(profile_filename):
 				profile_filename = get_data_path("ref/" + profile_filename)
