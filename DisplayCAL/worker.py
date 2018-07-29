@@ -3750,19 +3750,22 @@ END_DATA
 						h3d.write_devicelink(filename + ".3dlut" + profile_ext)
 
 			if result and not isinstance(result, Exception):
-				if hdr:
+				if hdr or XYZwp != profile_in_wtpt_XYZ:
 					if format == "madVR" and is_argyll_lut_format:
 						# We need to update Input_Primaries, otherwise the
 						# madVR 3D LUT won't work correctly! (collink fills
 						# Input_Primaries from a lookup through the input
-						# profile, which won't work correctly in our case as
-						# the input profile is a gamut mapped CLUT)
+						# profile, which won't work correctly if the input
+						# profile is cLUT-based. Also, we want to use the
+						# *original* input profile whitepoint in case it was
+						# adjusted)
 						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
 						input_primaries = re.search("Input_Primaries" +
 													"\s+(\d\.\d+)" * 8,
 													h3d.parametersData)
 						if input_primaries:
 							components = list(input_primaries.groups())
+							# Restore original input profile whitepoint
 							(profile_in.tags.wtpt.X,
 							 profile_in.tags.wtpt.Y,
 							 profile_in.tags.wtpt.Z) = profile_in_wtpt_XYZ
@@ -3776,7 +3779,7 @@ END_DATA
 							for i, component in enumerate(components_new):
 								frac = len(components[i].split(".").pop())
 								numberformat = "%%.%if" % frac
-								components_new[i] = numberformat % round(component, frac)
+								components_new[i] = numberformat % round(component, 4)
 							parametersData = list(h3d.parametersData)
 							cstart, cend = input_primaries.span()
 							parametersData[cstart + 16:cend] = " ".join(components_new)
@@ -3792,6 +3795,7 @@ END_DATA
 							raise Error("madVR 3D LUT doesn't contain "
 										"Input_Primaries")
 
+				if hdr:
 					# Save HDR source profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
 					profile_in.fileName = os.path.join(os.path.dirname(path),
