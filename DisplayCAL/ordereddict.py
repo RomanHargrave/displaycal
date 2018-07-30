@@ -274,8 +274,7 @@ class OrderedDict(dict):
 				for key in iterable.keys():
 					self[key] = iterable[key]
 			else:
-				for key, val in iterable:
-					self[key] = val
+				self[iterable[0]] = iterable[1]
 	
 	def values(self):
 		return map(self.get, self._keys)
