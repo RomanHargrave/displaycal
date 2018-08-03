@@ -6574,6 +6574,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.reportframe.Show(not self.reportframe.IsShownOnScreen())
 
 	def measurement_report_handler(self, event, path=None):
+		profile_report = wx.GetKeyState(wx.WXK_ALT)
+
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not check_set_argyll_bin():
 			return
@@ -6808,6 +6810,53 @@ class MainFrame(ReportFrame, BaseFrame):
 				if result != wx.ID_OK:
 					return
 		
+		if profile_report and oprof:
+			# Instead of doing measurements, lookup ti1 through display profile
+			void, ti3, void = self.worker.chart_lookup(ti1, oprof, pcs="x",
+													   intent="a")
+			wtpt = oprof.tags.wtpt.values()
+			if isinstance(oprof.tags.get("lumi"), ICCP.XYZType):
+				luminance = oprof.tags.lumi.Y
+			else:
+				luminance = 100
+			white_XYZ_cdm2 = [v * luminance for v in wtpt]
+			ti3.add_keyword("LUMINANCE_XYZ_CDM2", "%.6f %.6f %.6f" %
+												  tuple(white_XYZ_cdm2))
+
+			# setup temp dir
+			temp = self.worker.create_tempdir()
+			if isinstance(temp, Exception):
+				show_result_dialog(temp, getattr(self, "reportframe", self))
+				return
+			
+			# filenames
+			name, ext = os.path.splitext(os.path.basename(save_path))
+			ti3_path = os.path.join(temp, name + ".ti3")
+			profile_path = os.path.join(temp, name + ".icc")
+			
+			# write ti3 to temp dir
+			try:
+				ti3_file = open(ti3_path, "w")
+			except EnvironmentError, exception:
+				InfoDialog(getattr(self, "reportframe", self),
+						   msg=lang.getstr("error.file.create", ti3_path), 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
+				self.worker.wrapup(False)
+				return
+			ti3_file.write(str(ti3))
+			ti3_file.close()
+
+			# write profile to temp dir
+			oprof.write(profile_path)
+
+			self.measurement_report_consumer(True, ti3_path, profile,
+											 sim_profile, intent, sim_intent,
+											 devlink, ti3_ref, sim_ti3,
+											 save_path, chart, gray, apply_trc,
+											 use_sim, use_sim_as_output, oprof)
+			return
+
 		# setup for measurement
 		self.setup_measurement(self.measurement_report, ti1, oprof, profile,
 							   sim_profile, intent, sim_intent, devlink,
