@@ -3003,7 +3003,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			"trc": defaults["gamma"],
 			"whitepoint.colortemp": None,
 			"whitepoint.x": None,
-			"whitepoint.y": None
+			"whitepoint.y": None,
+			"3dlut.whitepoint.x": None,
+			"3dlut.whitepoint.y": None
 		}
 		if override:
 			override_default.update(override)
@@ -4322,6 +4324,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("whitepoint.colortemp", None)
 			setcfg("whitepoint.x", None)
 			setcfg("whitepoint.y", None)
+			setcfg("3dlut.whitepoint.x", None)
+			setcfg("3dlut.whitepoint.y", None)
 			self.whitepoint_colortemp_textctrl.Hide()
 			self.whitepoint_colortemp_label.Hide()
 			self.whitepoint_x_textctrl.Hide()
@@ -13942,6 +13946,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							setcfg("whitepoint.colortemp", None)
 							setcfg("whitepoint.x", o[0])
 							setcfg("whitepoint.y", o[1])
+							setcfg("3dlut.whitepoint.x", o[0])
+							setcfg("3dlut.whitepoint.y", o[1])
 							continue
 						if o[0] == "b":
 							setcfg("calibration.luminance", o[1:])
@@ -14020,6 +14026,21 @@ class MainFrame(ReportFrame, BaseFrame):
 							continue
 					if trc and not black_point_correction:
 						setcfg("calibration.black_point_correction.auto", 1)
+				if getcfg("whitepoint.colortemp", False):
+					# Color temperature
+					if getcfg("whitepoint.colortemp.locus") == "T":
+						# Planckian locus
+						xyY = planckianCT2xyY(getcfg("whitepoint.colortemp"))
+					else:
+						# Daylight locus
+						xyY = CIEDCCT2xyY(getcfg("whitepoint.colortemp"))
+					# Update 3D LUT whitepoint target
+					if xyY:
+						setcfg("3dlut.whitepoint.x", xyY[0])
+						setcfg("3dlut.whitepoint.y", xyY[1])
+					else:
+						setcfg("3dlut.whitepoint.x", None)
+						setcfg("3dlut.whitepoint.y", None)
 				if not ccmx:
 					ccxx = (safe_glob(os.path.join(os.path.dirname(path), "*.ccmx")) or
 							safe_glob(os.path.join(os.path.dirname(path), "*.ccss")))
@@ -14421,6 +14442,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						setcfg("whitepoint.colortemp", None)
 						setcfg("whitepoint.x", None)
 						setcfg("whitepoint.y", None)
+						setcfg("3dlut.whitepoint.x", None)
+						setcfg("3dlut.whitepoint.y", None)
 						settings.append(lang.getstr("whitepoint"))
 					elif line[0] == "TARGET_WHITE_XYZ":
 						XYZ = value.split()
@@ -14438,6 +14461,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							setcfg("whitepoint.colortemp", None)
 							setcfg("whitepoint.x", round(x, 4))
 							setcfg("whitepoint.y", round(y, 4))
+							setcfg("3dlut.whitepoint.x", round(x, 4))
+							setcfg("3dlut.whitepoint.y", round(y, 4))
 							self.worker.options_dispcal.append(
 								"-w%s,%s" % (getcfg("whitepoint.x"), 
 											 getcfg("whitepoint.y")))
