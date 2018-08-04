@@ -12177,7 +12177,9 @@ BEGIN_DATA
 														item["LAB_A"],
 														item["LAB_B"])
 						else:
-							X, Y, Z = item["XYZ_X"], item["XYZ_Y"], item["XYZ_Z"]
+							X, Y, Z = (v / 100.0 for v in (item["XYZ_X"],
+														   item["XYZ_Y"],
+														   item["XYZ_Z"]))
 						if bt1886:
 							X, Y, Z = bt1886.apply(X, Y, Z)
 						if intent == "a":
