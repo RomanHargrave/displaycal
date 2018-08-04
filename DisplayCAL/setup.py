@@ -1252,8 +1252,8 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 		manifest_in.extend(["include LICENSE.txt", "include MANIFEST", 
 							"include MANIFEST.in", "include README.html", 
 							"include README-fr.html", "include CHANGES.html",
-							"include %s-*.pyw" % name, "include %s-*.py" % name,
-							"include use-distutils"])
+							"include %s*.pyw" % name, "include %s-*.pyw" % name,
+							"include %s-*.py" % name, "include use-distutils"])
 		manifest_in.append("include " + os.path.basename(sys.argv[0]))
 		manifest_in.append("include " + 
 						   os.path.splitext(os.path.basename(sys.argv[0]))[0] + 
