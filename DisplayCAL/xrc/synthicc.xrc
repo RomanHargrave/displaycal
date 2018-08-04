@@ -459,11 +459,11 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_luminance_ctrl">
-                        <size>75, -1</size>
+                        <size>100, -1</size>
                         <min_val>0.0</min_val>
                         <max_val>10000.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.000001</increment>
+                        <digits>6</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>8</border>

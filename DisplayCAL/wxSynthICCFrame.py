@@ -169,8 +169,8 @@ class SynthICCFrame(BaseFrame):
 				wx.Bell()
 			v = white_Y * .9
 		if event:
-			min_Y = (1 / 65535.0) * 100
-			increment = (1 / 65535.0) * white_Y
+			min_Y = 0.000001 #(1 / 65535.0) * 100
+			increment = 0.000001 #(1 / 65535.0) * white_Y
 			if increment < min_Y:
 				increment = min_Y * (white_Y / 100.0)
 			min_inc = 1.0 / (10.0 ** self.black_luminance_ctrl.GetDigits())
