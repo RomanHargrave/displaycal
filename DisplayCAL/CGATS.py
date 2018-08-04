@@ -360,11 +360,14 @@ class CGATS(dict):
 					context = self.add_data(line)
 			if 0 in self and self[0].get("NORMALIZED_TO_Y_100") == "NO":
 				# Always normalize to Y = 100
+				reprstr = (self.filename or "<%s.%s instance at 0x%016x>" %
+											(self.__module__,
+											 self.__class__.__name__, id(self)))
 				if self[0].normalize_to_y_100():
-					safe_print("Normalized to Y = 100:", self.filename)
+					safe_print("Normalized to Y = 100:", reprstr)
 				else:
 					safe_print("Warning: Could not normalize to Y = 100:",
-							   self.filename)
+							   reprstr)
 			self.setmodified(False)
 
 	def __delattr__(self, name):
