@@ -1800,16 +1800,17 @@ Transform {
 		""" Scale XYZ values so that RGB 100 = Y 100 """
 		if "DATA" in self:
 			white_cie = self.get_white_cie()
-			if white_cie and white_cie.get("XYZ_Y") != 100:
-				self.add_keyword("LUMINANCE_XYZ_CDM2",
-								 "%.4f %.4f %.4f" % (white_cie["XYZ_X"],
-													 white_cie["XYZ_Y"],
-													 white_cie["XYZ_Z"]))
+			if white_cie and "XYZ_Y" in white_cie:
 				white_Y = white_cie["XYZ_Y"]
-				for sample in self.DATA.itervalues():
-					for label in "XYZ":
-						v = sample["XYZ_" + label]
-						sample["XYZ_" + label] = v / white_Y * 100
+				if white_Y != 100:
+					self.add_keyword("LUMINANCE_XYZ_CDM2",
+									 "%.4f %.4f %.4f" % (white_cie["XYZ_X"],
+														 white_cie["XYZ_Y"],
+														 white_cie["XYZ_Z"]))
+					for sample in self.DATA.itervalues():
+						for label in "XYZ":
+							v = sample["XYZ_" + label]
+							sample["XYZ_" + label] = v / white_Y * 100
 				self.add_keyword("NORMALIZED_TO_Y_100", "YES")
 				return True
 		return False
