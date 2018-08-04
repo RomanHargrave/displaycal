@@ -3290,9 +3290,7 @@ END_DATA
 					args.append("-3c")
 				args.append("-e%s" % input_encoding)
 				args.append("-E%s" % output_encoding)
-				if (((trc_gamma and trc_gamma_type in ("b", "B")) or
-					 (not trc_gamma and apply_black_offset)) and
-					collink_version >= [1, 7]):
+				if collink_version >= [1, 7]:
 					args.append("-b")  # Use RGB->RGB forced black point hack
 				if (trc_gamma and not hdr and
 					trc_gamma_type in ("b", "B")):
