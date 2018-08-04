@@ -3728,24 +3728,13 @@ END_DATA
 															appname + "-eeColor-to-madVR-converter.py"))
 						if os.path.exists(py):
 							# Running from source or 0install
-							# Check if this is a 0install implementation, in which
-							# case we want to call 0launch with the appropriate
-							# command
-							if re.match("sha\d+(?:new)?",
-										os.path.basename(os.path.dirname(pydir))):
-								cmd = which("0install" + exe_ext) or "0install" + exe_ext
-								interp_args.extend(["run",
-													"--offline",
-													"--command=run-eecolor-to-madvr-converter",
-													"--",
-													"http://%s/0install/%s.xml" %
-													(domain.lower(), appname)])
-							else:
-								# Running from source
-								# Need to run unbuffered so we can grab
-								# progress
-								interp_args.append("-u")
-								interp_args.append(py)
+							# If parent is running from 0install, the child
+							# will inherit the correct environment (PYTHONPATH)
+							# so no need to run child through 0install
+							# Need to run unbuffered so we can grab
+							# progress
+							interp_args.append("-u")
+							interp_args.append(py)
 						else:
 							# Regular install
 							# Need to run unbuffered so we can grab
