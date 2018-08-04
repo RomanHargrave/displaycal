@@ -358,6 +358,13 @@ class CGATS(dict):
 				elif values and values[0] not in ('Comment:', 'Date:') and \
 				     len(line) >= 3 and not re.search("[^ 0-9A-Za-z]", line):
 					context = self.add_data(line)
+			if 0 in self and self[0].get("NORMALIZED_TO_Y_100") == "NO":
+				# Always normalize to Y = 100
+				if self[0].normalize_to_y_100():
+					safe_print("Normalized to Y = 100:", self.filename)
+				else:
+					safe_print("Warning: Could not normalize to Y = 100:",
+							   self.filename)
 			self.setmodified(False)
 
 	def __delattr__(self, name):
@@ -1788,6 +1795,24 @@ Transform {
 							fixed += 1
 							break
 		return fixed
+
+	def normalize_to_y_100(self):
+		""" Scale XYZ values so that RGB 100 = Y 100 """
+		if "DATA" in self:
+			white_cie = self.get_white_cie()
+			if white_cie and white_cie.get("XYZ_Y") != 100:
+				self.add_keyword("LUMINANCE_XYZ_CDM2",
+								 "%.4f %.4f %.4f" % (white_cie["XYZ_X"],
+													 white_cie["XYZ_Y"],
+													 white_cie["XYZ_Z"]))
+				white_Y = white_cie["XYZ_Y"]
+				for sample in self.DATA.itervalues():
+					for label in "XYZ":
+						v = sample["XYZ_" + label]
+						sample["XYZ_" + label] = v / white_Y * 100
+				self.add_keyword("NORMALIZED_TO_Y_100", "YES")
+				return True
+		return False
 	
 	def quantize_device_values(self, bits=8, quantizer=round):
 		""" Quantize device values to n bits """
