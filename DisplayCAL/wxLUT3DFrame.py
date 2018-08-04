@@ -1192,7 +1192,17 @@ class LUT3DFrame(BaseFrame):
 														   % odata, self)
 										self.set_profile_ctrl_path(which)
 										return
-									self.XYZbpout = odata[0]
+									if odata[0][1]:
+										# Got above zero blackpoint from lookup
+										self.XYZbpout = odata[0]
+									else:
+										# Got zero blackpoint from lookup.
+										# Try chardata instead.
+										XYZbp = profile.get_chardata_bkpt()
+										if XYZbp:
+											self.XYZbpout = XYZbp
+										else:
+											self.XYZbpout = [0, 0, 0]
 							self.Freeze()
 							enable_apply_cal = (isinstance(profile.tags.get("vcgt"),
 														   ICCP.VideoCardGammaType))

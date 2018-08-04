@@ -2039,15 +2039,14 @@ class Worker(WorkerBase):
 		del _disabler
 		return result
 
-	def blend_profile_blackpoint(self, profile1, profile2, outoffset=0.0,
-								 gamma=2.4, gamma_type="B", size=None,
-								 apply_trc=True, white_cdm2=100, minmll=0,
-								 maxmll=10000,
+	def blend_profile_blackpoint(self, profile1, profile2, XYZbp=None,
+								 outoffset=0.0, gamma=2.4, gamma_type="B",
+								 size=None, apply_trc=True, white_cdm2=100,
+								 minmll=0, maxmll=10000,
 								 use_alternate_master_white_clip=True,
 								 ambient_cdm2=5, content_rgb_space="DCI P3",
 								 hdr_chroma_compression=False, hdr_sat=0.5,
-								 hdr_hue=0.5,
-								 hdr_target_profile=None):
+								 hdr_hue=0.5, hdr_target_profile=None):
 		"""
 		Apply BT.1886-like tone response to profile1 using profile2 blackpoint.
 		
@@ -2057,7 +2056,9 @@ class Worker(WorkerBase):
 		odata = self.xicclu(profile2, (0, 0, 0), pcs="x")
 		if len(odata) != 1 or len(odata[0]) != 3:
 			raise ValueError("Blackpoint is invalid: %s" % odata)
-		XYZbp = odata[0]
+		oXYZbp = odata[0]
+		if not XYZbp:
+			XYZbp = oXYZbp
 		smpte2084 = gamma in ("smpte2084.hardclip", "smpte2084.rolloffclip")
 		hlg = gamma == "hlg"
 		hdr = smpte2084 or hlg
@@ -2189,12 +2190,15 @@ class Worker(WorkerBase):
 				profile1.tags.DBG2 = profile.tags.DBG2
 				profile1.tags.kTRC = profile.tags.kTRC
 		if not apply_trc or hdr:
-			# Apply only the black point blending portion of BT.1886 mapping
-			logfiles = self.get_logfiles()
-			logfiles.write("Applying black offset...\n")
-			profile1.apply_black_offset(XYZbp, logfiles=logfiles,
-										thread_abort=self.thread_abort,
-										abortmessage=lang.getstr("aborted"))
+			if XYZbp is oXYZbp:
+				# Apply only the black point blending portion of BT.1886 mapping
+				logfiles = self.get_logfiles()
+				logfiles.write("Applying black offset (normalized 0..100) "
+							   "%.6f %.6f %.6f...\n" %
+							   tuple([v * 100 for v in XYZbp]))
+				profile1.apply_black_offset(XYZbp, logfiles=logfiles,
+											thread_abort=self.thread_abort,
+											abortmessage=lang.getstr("aborted"))
 			return
 		if gamma_type in ("b", "g"):
 			# Get technical gamma needed to achieve effective gamma
@@ -2204,6 +2208,15 @@ class Worker(WorkerBase):
 			tgamma = gamma
 		self.log("Technical gamma = %.2f" % tgamma)
 		profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
+		if XYZbp is not oXYZbp:
+			# Apply BPC
+			logfiles = self.get_logfiles()
+			logfiles.write("Applying black offset (normalized 0..100) "
+						   "%.6f %.6f %.6f...\n" %
+						   tuple([v * 100 for v in oXYZbp]))
+			profile1.apply_black_offset(oXYZbp, logfiles=logfiles,
+										thread_abort=self.thread_abort,
+										abortmessage=lang.getstr("aborted"))
 
 	def calibrate_instrument_producer(self):
 		cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
@@ -3017,15 +3030,6 @@ END_DATA
 				if "B2A1" in profile_out.tags or "B2A0" in profile_out.tags:
 					use_b2a = True
 
-			# Using xicclu instead of collink is more accurate on and near
-			# the gray axis (in some cases, i.e. HDR and cLUT res < 65,
-			# significantly so)
-			use_xicclu = ((experimental or (hdr and use_b2a)) and
-						  not profile_abst and
-						  intent in ("a", "aw", "r") and
-						  input_encoding in ("n", "t", "T") and
-						  output_encoding in ("n", "t"))
-
 			# Prepare building a device link
 			link_basename = name + profile_ext
 			link_filename = os.path.join(cwd, link_basename)
@@ -3047,6 +3051,38 @@ END_DATA
 			mmod = profile_out.tags.get("mmod")
 			
 			self.set_sessionlogfile(None, name, cwd)
+
+			collink_version_string = get_argyll_version_string("collink")
+			collink_version = parse_argyll_version_string(collink_version_string)
+			use_collink_bt1886 = trc_gamma and not hdr
+
+			# The display profile may not reflect the measured black point.
+			# Get it from the embedded TI3 instead if zero from lookup.
+			odata = self.xicclu(profile_out, (0, 0, 0), pcs="x")
+			if len(odata) != 1 or len(odata[0]) != 3:
+				raise ValueError("Blackpoint is invalid: %s" % odata)
+			XYZbp = odata[0]
+			if not XYZbp[1] and isinstance(profile_out.tags.get("targ"),
+										   ICCP.Text):
+				XYZbp = profile_out.get_chardata_bkpt()
+				if XYZbp:
+					XYZbp = [v * XYZbp[1] for v in profile_out.tags.wtpt.pcs.values()]
+					self.log("Using black Y from destination profile "
+							 "characterization data (normalized 0..100): "
+							 "%.6f" % (XYZbp[1] * 100))
+					use_collink_bt1886 = False
+			elif XYZbp[1]:
+				# Use display profile blackpoint
+				XYZbp = None
+
+			# Using xicclu instead of collink is more accurate on and near
+			# the gray axis (in some cases, i.e. HDR and cLUT res < 65,
+			# significantly so)
+			use_xicclu = ((experimental or (hdr and use_b2a)) and
+						  not profile_abst and
+						  intent in ("a", "aw", "r") and
+						  input_encoding in ("n", "t", "T") and
+						  output_encoding in ("n", "t"))
 			
 			# Apply calibration?
 			if apply_cal:
@@ -3119,10 +3155,8 @@ END_DATA
 				profile_src = profile_out
 
 			# Deal with applying TRC
-			collink_version_string = get_argyll_version_string("collink")
-			collink_version = parse_argyll_version_string(collink_version_string)
 			if trc_gamma:
-				if (not hdr and not use_xicclu and
+				if (use_collink_bt1886 and not use_xicclu and
 					(collink_version >= [1, 7] or not trc_output_offset)):
 					# Make sure the profile has the expected Rec. 709 TRC
 					# for BT.1886
@@ -3139,8 +3173,8 @@ END_DATA
 					# encoding used in ICC profile, collink 1.7 can use full
 					# floating point processing and will be more precise)
 					self.blend_profile_blackpoint(profile_in, profile_out,
-												  trc_output_offset, trc_gamma,
-												  trc_gamma_type,
+												  XYZbp, trc_output_offset,
+												  trc_gamma, trc_gamma_type,
 												  white_cdm2=white_cdm2,
 												  minmll=minmll,
 												  maxmll=maxmll,
@@ -3153,8 +3187,8 @@ END_DATA
 												  hdr_target_profile=profile_src)
 			elif apply_black_offset:
 				# Apply only the black point blending portion of BT.1886 mapping
-				self.blend_profile_blackpoint(profile_in, profile_out, 1.0,
-											  apply_trc=False)
+				self.blend_profile_blackpoint(profile_in, profile_out, XYZbp,
+											  1.0, apply_trc=False)
 
 			# Deal with whitepoint
 			profile_in_wtpt_XYZ = profile_in.tags.wtpt.ir.values()
@@ -3185,7 +3219,7 @@ END_DATA
 												toolname))
 
 				# Apply HDR TRC to source
-				self.blend_profile_blackpoint(profile_src, profile_out,
+				self.blend_profile_blackpoint(profile_src, profile_out, XYZbp,
 											  trc_output_offset, trc_gamma,
 											  trc_gamma_type,
 											  white_cdm2=white_cdm2,
@@ -3292,7 +3326,7 @@ END_DATA
 				args.append("-E%s" % output_encoding)
 				if collink_version >= [1, 7]:
 					args.append("-b")  # Use RGB->RGB forced black point hack
-				if (trc_gamma and not hdr and
+				if (use_collink_bt1886 and
 					trc_gamma_type in ("b", "B")):
 					if collink_version >= [1, 7]:
 						args.append("-I%s:%s:%s" % (trc_gamma_type,
@@ -3793,7 +3827,7 @@ END_DATA
 							raise Error("madVR 3D LUT doesn't contain "
 										"Input_Primaries")
 
-				if hdr:
+				if hdr or not use_collink_bt1886:
 					# Save HDR source profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
 					profile_in.fileName = os.path.join(os.path.dirname(path),
@@ -3807,14 +3841,17 @@ END_DATA
 						profile_in.tags.A2B0.clut_writepng(
 							os.path.splitext(profile_in.fileName)[0] + 
 							".A2B0.CLUT.png")
+					if isinstance(profile_in.tags.get("DBG0"), ICCP.LUT16Type):
 						# HDR RGB
 						profile_in.tags.DBG0.clut_writepng(
 							os.path.splitext(profile_in.fileName)[0] + 
 							".DBG0.CLUT.png")
+					if isinstance(profile_in.tags.get("DBG1"), ICCP.LUT16Type):
 						# Display RGB
 						profile_in.tags.DBG1.clut_writepng(
 							os.path.splitext(profile_in.fileName)[0] + 
 							".DBG1.CLUT.png")
+					if isinstance(profile_in.tags.get("DBG2"), ICCP.LUT16Type):
 						# Display XYZ
 						profile_in.tags.DBG2.clut_writepng(
 							os.path.splitext(profile_in.fileName)[0] + 

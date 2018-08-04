@@ -6698,7 +6698,17 @@ class MainFrame(ReportFrame, BaseFrame):
 			except Exception, exception:
 				show_result_dialog(exception, getattr(self, "reportframe", self))
 				return
-			XYZbp = odata[0]
+			if odata[0][1]:
+				# Got above zero blackpoint from lookup
+				XYZbp = odata[0]
+			else:
+				# Got zero blackpoint from lookup.
+				# Try chardata instead.
+				XYZbp = oprof.get_chardata_bkpt()
+				if XYZbp:
+					XYZbp = [v * XYZbp[1] for v in oprof.tags.wtpt.pcs.values()]
+				else:
+					XYZbp = [0, 0, 0]
 			if apply_trc:
 				# TRC BT.1886-like
 				gamma = getcfg("measurement_report.trc_gamma")
@@ -7177,6 +7187,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		black = ti3_joined.queryi1({'RGB_R': 0, 'RGB_G': 0, 'RGB_B': 0})
 		if black:
 			bkpt_measured_norm = black["XYZ_X"], black["XYZ_Y"], black["XYZ_Z"]
+			if self_check_report and not bkpt_measured_norm[1]:
+				XYZbp = oprof.get_chardata_bkpt(True)
+				if XYZbp:
+					bkpt_measured_norm = tuple(v * 100 for v in XYZbp)
 			bkpt_measured = tuple(wtpt_measured[1] / 100 * n for n in bkpt_measured_norm)
 		else:
 			bkpt_measured_norm = None

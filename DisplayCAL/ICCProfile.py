@@ -6600,6 +6600,34 @@ class ICCProfile:
 					rgb_space[0].append(tags["%sTRC" % component][0])
 		return rgb_space
 
+	def get_chardata_bkpt(self, illuminant_relative=False):
+		""" Get blackpoint from embedd characterization data ('targ' tag) """
+		if isinstance(self.tags.get("targ"), Text):
+			import CGATS
+			ti3 = CGATS.CGATS(self.tags.targ)
+			if 0 in ti3:
+				black = ti3[0].queryi({"RGB_R": 0, "RGB_G": 0, "RGB_B": 0})
+				# May be several samples for black. Average them.
+				if black:
+					XYZbp = [0, 0, 0]
+					for sample in black.itervalues():
+						for i, component in enumerate("XYZ"):
+							if "XYZ_" + component in sample:
+								XYZbp[i] += sample["XYZ_" + component] / 100.0
+					for i in xrange(3):
+						XYZbp[i] /= len(black)
+					if not illuminant_relative:
+						# Adapt to D50
+						white = ti3.get_white_cie()
+						if white:
+							XYZwp = [v / 100.0 for v in (white["XYZ_X"],
+														 white["XYZ_Y"],
+														 white["XYZ_Z"])]
+						else:
+							XYZwp = self.tags.wtpt.ir.values()
+						XYZbp = colormath.adapt(*XYZbp, whitepoint_source=XYZwp)
+					return XYZbp
+
 	def optimize(self, return_bytes_saved=False, update_ID=True):
 		"""
 		Optimize the tag data so that shared tags are only recorded once.
