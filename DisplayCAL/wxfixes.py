@@ -578,36 +578,43 @@ def SetToolTipString(self, string):
 wx.Window.SetToolTipString = SetToolTipString
 
 
+def _adjust_sizer_args_scaling_for_appdpi(*args, **kwargs):
+	from config import get_default_dpi, getcfg
+	scale = getcfg("app.dpi") / get_default_dpi()
+	if scale > 1:
+		args = list(args)
+		if kwargs.get("border"):
+			kwargs["border"] = int(round(kwargs["border"] * scale))
+		elif not "border" in kwargs:
+			if (isinstance(args[0],
+						   (tuple, wx.Size, wx.Sizer, wx.Window)) and
+				len(args) > 3 and args[3]):
+				# item, proportion, flag, border, ...
+				args[3] = int(round(args[3] * scale))
+			elif isinstance(args[0], int) and len(args) > 4 and args[4]:
+				# width, height, proportion, flag, border, ...
+				args[4] = int(round(args[4] * scale))
+		if args and isinstance(args[0], (tuple, wx.Size)):
+			spacer = list(args[0])
+			##print spacer, '->',
+			for i, dimension in enumerate(spacer):
+				if dimension > 0:
+					spacer[i] = int(round(dimension * scale))
+			##print spacer
+			args = [tuple(spacer)] + args[1:]
+	return args, kwargs
+
 wx._Sizer = wx.Sizer
 
 class Sizer(wx._Sizer):
 
 	def Add(self, *args, **kwargs):
-		from config import get_default_dpi, getcfg
-		scale = getcfg("app.dpi") / get_default_dpi()
-		if isinstance(args[0], int):
-			args = list(args)
-			index = args.pop(0)
-			args = tuple(args)
-		else:
-			index = None
-		if scale > 1:
-			if kwargs.get("border"):
-				kwargs["border"] = int(round(kwargs["border"] * scale))
-			if args and isinstance(args[0], tuple):
-				spacer = list(args[0])
-				##print spacer, '->',
-				for i, dimension in enumerate(spacer):
-					if dimension > 0:
-						spacer[i] = int(round(dimension * scale))
-				##print spacer
-				args = (tuple(spacer), ) + args[1:]
-		if index is None:
-			return wx._Sizer.Add(self, *args, **kwargs)
-		else:
-			return wx._Sizer.Insert(self, index, *args, **kwargs)
+		args, kwargs = _adjust_sizer_args_scaling_for_appdpi(*args, **kwargs)
+		return wx._Sizer.Add(self, *args, **kwargs)
 
-	Insert = Add
+	def Insert(self, index, *args, **kwargs):
+		args, kwargs = _adjust_sizer_args_scaling_for_appdpi(*args, **kwargs)
+		return wx._Sizer.Insert(self, index, *args, **kwargs)
 
 wx.Sizer = Sizer
 
@@ -617,7 +624,7 @@ wx._BoxSizer = wx.BoxSizer
 class BoxSizer(wx._BoxSizer):
 
 	Add = Sizer.__dict__["Add"]
-	Insert = Add
+	Insert = Sizer.__dict__["Insert"]
 
 wx.BoxSizer = BoxSizer
 
@@ -637,7 +644,7 @@ class GridSizer(wx._GridSizer):
 		super(GridSizer, self).__init__(rows, cols, vgap, hgap)
 
 	Add = Sizer.__dict__["Add"]
-	Insert = Add
+	Insert = Sizer.__dict__["Insert"]
 
 wx.GridSizer = GridSizer
 
@@ -657,7 +664,7 @@ class FlexGridSizer(wx._FlexGridSizer):
 		super(FlexGridSizer, self).__init__(rows, cols, vgap, hgap)
 
 	Add = Sizer.__dict__["Add"]
-	Insert = Add
+	Insert = Sizer.__dict__["Insert"]
 
 wx.FlexGridSizer = FlexGridSizer
 
