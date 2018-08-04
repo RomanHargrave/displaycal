@@ -925,6 +925,7 @@
 	"scripting-client.cmdhelptext": "Drücken Sie die Tabulator-Taste bei leerer Befehlszeile zur Anzeige der möglichen Befehle im momentanen Kontext, oder zur Autovervollständigung bei bereits eingetippten Anfangsbuchstaben. Tippen Sie „getcommands“ für eine Liste unterstützter Befehle und möglicher Parameter der verbundenen Applikation.",
 	"scripting-client.detected-hosts": "Erkannte Skript-Hosts:",
 	"select_all": "Alles auswählen",
+	"self_check_report": "Eigenkontrollreport...",
 	"set_as_default": "Als Standard setzen",
 	"setting.keep_current": "Aktuelle Einstellung beibehalten",
 	"settings.additional": "Weitere Einstellungen",

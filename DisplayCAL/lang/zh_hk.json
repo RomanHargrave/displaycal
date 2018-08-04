@@ -925,6 +925,7 @@
 	"scripting-client.cmdhelptext": "在空白的指令行上按 Tab 鍵顯示當前可使用的指令，或者自動完成已輸入的指令開首部份。輸入 “getcommands” 以顯示已連接的程式所支援指令列表及其可使用的參數。",
 	"scripting-client.detected-hosts": "檢測到腳本主機：",
 	"select_all": "選擇全部",
+		"*self_check_report": "Self check report...",
 	"set_as_default": "設定為預設",
 	"setting.keep_current": "保留當前設定",
 	"settings.additional": "額外設定",

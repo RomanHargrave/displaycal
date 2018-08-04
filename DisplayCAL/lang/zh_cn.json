@@ -925,6 +925,7 @@
 		"*scripting-client.cmdhelptext": "Press the tab key at an empty command prompt to view the possible commands in the current context, or to auto-complete already typed initial letters. Type “getcommands” for a list of supported commands and possible parameters for the connected application.",
 	"scripting-client.detected-hosts": "检测到脚本主机：",
 	"select_all": "选择全部",
+		"*self_check_report": "Self check report...",
 	"set_as_default": "设定为预设",
 	"setting.keep_current": "保留当前设定",
 	"settings.additional": "额外设定",

@@ -925,6 +925,7 @@
 	"scripting-client.cmdhelptext": "빈 명령 프롬프트에서 Tab 키를 눌러 현재 컨텍스트에서 가능한 명령을 보거나 이미 입력 한 초기 문자를 자동 완성하십시오. 연결된 응용 프로그램에 대해 지원되는 명령 및 가능한 매개 변수 목록을 보려면 “getcommands”를 입력하십시오.",
 	"scripting-client.detected-hosts": "스크립팅 호스트 발견:",
 	"select_all": "전체 선택",
+		"*self_check_report": "Self check report...",
 	"set_as_default": "기본값으로 설정",
 	"setting.keep_current": "현재 설정 유지",
 	"settings.additional": "부가 설정",

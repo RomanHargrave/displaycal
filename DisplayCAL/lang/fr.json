@@ -925,6 +925,7 @@
 	"scripting-client.cmdhelptext": "Presser la touche de tabulation lors d’une invite de commande vide afin de voir les commandes possibles dans le contexte actuel, ou faire l’auto-complétion des caractères initiaux déjà entrés. Entrez « getcommands » pour une liste des commandes prises en charge et les paramètres possibles des applications connectées.",
 	"scripting-client.detected-hosts": "Hôtes de scripting détectés :",
 	"select_all": "Tout sélectionner",
+		"*self_check_report": "Self check report...",
 	"set_as_default": "Définir comme valeur par défaut",
 	"setting.keep_current": "Conserver le réglage actuel",
 	"settings.additional": "Paramètres supplémentaires",

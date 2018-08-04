@@ -925,6 +925,7 @@
 		"*scripting-client.cmdhelptext": "Press the tab key at an empty command prompt to view the possible commands in the current context, or to auto-complete already typed initial letters. Type “getcommands” for a list of supported commands and possible parameters for the connected application.",
 		"*scripting-client.detected-hosts": "Detected scripting hosts:",
 		"*select_all": "Select all",
+		"*self_check_report": "Self check report...",
 		"*set_as_default": "Set as default",
 	"setting.keep_current": "Mantener valores actuales",
 	"settings.additional": "ajustes adicionales",

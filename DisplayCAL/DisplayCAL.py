@@ -1729,6 +1729,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_TIMER, self.update_profile_name, 
 				  self.update_profile_name_timer)
 
+		# Global key handler
+		self._key_is_down = None
+		self.check_keydown_timer = wx.Timer(self)
+		self.Bind(wx.EVT_TIMER, self.check_keydown, 
+				  self.check_keydown_timer)
+
+	def check_keydown(self, event):
+		if self._key_is_down != wx.WXK_ALT and wx.GetKeyState(wx.WXK_ALT):
+			self._key_is_down = wx.WXK_ALT
+			self.measurement_report_btn.Label = lang.getstr("self_check_report")
+			self.measurement_report_btn.Refresh()
+		elif self._key_is_down == wx.WXK_ALT and not wx.GetKeyState(wx.WXK_ALT):
+			self._key_is_down = None
+			self.measurement_report_btn.Label = lang.getstr("measurement_report")
+			self.measurement_report_btn.Refresh()
+
 	def OnMove(self, event=None):
 		# When moving, check if we are on another screen and resize if needed.
 		if self.IsShownOnScreen() and not self.IsMaximized() and not \
@@ -6578,7 +6594,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.reportframe.Show(not self.reportframe.IsShownOnScreen())
 
 	def measurement_report_handler(self, event, path=None):
-		profile_report = wx.GetKeyState(wx.WXK_ALT)
+		self_check_report = wx.GetKeyState(wx.WXK_ALT)
 
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
 		if not check_set_argyll_bin():
@@ -6814,7 +6830,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if result != wx.ID_OK:
 					return
 		
-		if profile_report and oprof:
+		if self_check_report and oprof:
 			# Instead of doing measurements, lookup ti1 through display profile
 			void, ti3, void = self.worker.chart_lookup(ti1, oprof, pcs="x",
 													   intent="a")
@@ -6854,11 +6870,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			# write profile to temp dir
 			oprof.write(profile_path)
 
+			safe_print("-" * 80)
+			safe_print(lang.getstr("self_check_report"))
 			self.measurement_report_consumer(True, ti3_path, profile,
 											 sim_profile, intent, sim_intent,
 											 devlink, ti3_ref, sim_ti3,
 											 save_path, chart, gray, apply_trc,
-											 use_sim, use_sim_as_output, oprof)
+											 use_sim, use_sim_as_output, oprof,
+											 True)
 			return
 
 		# setup for measurement
@@ -6941,7 +6960,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									intent, sim_intent, devlink, ti3_ref,
 									sim_ti3, save_path, chart, gray,
 									apply_trc, use_sim, use_sim_as_output,
-									oprof):
+									oprof, self_check_report=False):
 		
 		self.Show()
 		
@@ -7260,11 +7279,17 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			trc = "BT.1886"
 
+		if self_check_report:
+			display = oprof.getDeviceModelDescription() or "N/A"
+			instrument = "N/A"
+			ccmx = "N/A"
+		else:
+			display = self.display_ctrl.GetStringSelection().replace(" " +
+																	 lang.getstr("display.primary"),
+																	 "")
 		placeholders2data = {"${PLANCKIAN}": 'checked="checked"' if planckian 
 											 else "",
-							 "${DISPLAY}": self.display_ctrl.GetStringSelection().replace(" " +
-																						  lang.getstr("display.primary"),
-																						  ""),
+							 "${DISPLAY}": display,
 							 "${INSTRUMENT}": instrument,
 							 "${CORRECTION_MATRIX}": ccmx,
 							 "${BLACKPOINT}": "%f %f %f" % (bkpt_measured if
@@ -9394,9 +9419,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.worker.wrapup(False)
 		if not self.update_profile_name_timer.IsRunning():
 			self.update_profile_name_timer.Start(1000)
+		if not self.check_keydown_timer.IsRunning():
+			self.check_keydown_timer.Start(250)
 	
 	def stop_timers(self):
 		self.update_profile_name_timer.Stop()
+		self.check_keydown_timer.Stop()
 
 	def synthicc_create_handler(self, event):
 		""" Assign and initialize the synthetic ICC creation window """
