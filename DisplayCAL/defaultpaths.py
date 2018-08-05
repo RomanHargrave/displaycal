@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
 import os
 import sys
 
@@ -33,15 +34,45 @@ from util_os import expanduseru, expandvarsu, getenvu
 
 
 def get_known_folder_path(folderid, user=True):
+	"""
+	Get known folder path.
+	
+	Uses GetKnownFolderPath API on Windows Vista and later, and XDG user dirs
+	on Linux (if configured).
+	
+	Falls back to ~/<folderid> in all other cases.
+	
+	folderid can be "Desktop", "Downloads", "Documents", "Music", "Pictures",
+	"Public", "Templates", or "Videos".
+	
+	"""
 	folder_path = os.path.join(expanduseru("~"), folderid)
 	if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
+		# Windows Vista or newer
 		import win_knownpaths
 		try:
 			folder_path = win_knownpaths.get_path(getattr(win_knownpaths.FOLDERID, folderid),
 												  getattr(win_knownpaths.UserHandle,
 														  "current" if user else "common"))
 		except Exception, exception:
-			pass
+			from log import safe_print
+			safe_print("Warning: Could not get known folder %r" % folderid)
+	elif sys.platform not in ("darwin", "win32"):
+		# Linux
+		folderid = {"Downloads": folderid[:-1],
+					"Public": folderid + "share"}.get(folderid, folderid).upper()
+		user_dirs = os.path.join(xdg_config_home, "user-dirs.dirs")
+		if os.path.isfile(user_dirs):
+			try:
+				with open(user_dirs, "r") as f:
+					for line in f:
+						if line.startswith("XDG_%s_DIR" % folderid):
+							folder_path = expandvarsu(line.split("=")[-1].strip().strip('"'))
+							break
+			except EnvironmentError, exception:
+				from log import safe_print
+				safe_print("Warning: Could not get known folder %r:" %
+						   folderid, exception)
 	return folder_path
 
 
