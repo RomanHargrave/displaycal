@@ -3740,8 +3740,14 @@ END_DATA
 							# Need to run unbuffered so we can grab
 							# progress
 							interp_args.append("-u")
-							interp_args.append(get_data_path(os.path.join("scripts", 
-																		  appname.lower() + "-eecolor-to-madvr-converter")))
+							if sys.platform in ("win32", "darwin"):
+								interp_args.append(get_data_path(os.path.join("scripts", 
+																			  appname.lower() +
+																			  "-eecolor-to-madvr-converter")))
+							else:
+								# Linux
+								interp_args.append(which(appname.lower() +
+														 "-eecolor-to-madvr-converter"))
 					elif isapp:
 						cmd = os.path.join(exedir, "python")
 						interp_args.extend(["-c",
