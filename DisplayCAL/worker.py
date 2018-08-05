@@ -7409,7 +7409,7 @@ usage: spotread [-options] [logfile]
 
 			download_dir = os.path.join(expanduseru("~"), "Downloads")
 			installer = os.path.join(download_dir, installer_basename)
-			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
+			if (sys.getwindowsversion() >= (6, ) and
 				not os.path.isfile(installer)):
 				# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
 				# regardless of Known Folder path, so files may already exist
@@ -12705,8 +12705,7 @@ BEGIN_DATA
 		filename = os.path.basename(uri)
 		download_dir = os.path.join(expanduseru("~"), "Downloads")
 		download_path = os.path.join(download_dir, filename)
-		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-			not os.path.isfile(download_path)):
+		if not os.path.isfile(download_path):
 			# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
 			# regardless of Known Folder path, so files may already exist
 			download_dir = get_known_folder_path("Downloads")
@@ -12831,8 +12830,7 @@ BEGIN_DATA
 				filename += ext or ".html"
 			download_dir = os.path.join(expanduseru("~"), "Downloads")
 			download_path = os.path.join(download_dir, filename)
-			if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-				not os.path.isfile(download_path)):
+			if not os.path.isfile(download_path):
 				# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
 				# regardless of Known Folder path, so files may already exist
 				download_dir = get_known_folder_path("Downloads")
