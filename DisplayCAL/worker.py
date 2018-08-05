@@ -12838,6 +12838,10 @@ BEGIN_DATA
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
+
+			if not os.path.isdir(download_dir):
+				os.makedirs(download_dir)
+
 			# Acquire files safely so no-one but us can mess with them
 			fd = tmp_fd = tmp_download_path = None
 			try:
@@ -12876,9 +12880,6 @@ BEGIN_DATA
 			update_ts = time()
 			fps = 20
 			frametime = 1.0 / fps
-
-			if not os.path.isdir(download_dir):
-				os.makedirs(download_dir)
 
 			download_file = None
 			download_file_exception = None
