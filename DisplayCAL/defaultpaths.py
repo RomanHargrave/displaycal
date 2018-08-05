@@ -66,9 +66,11 @@ def get_known_folder_path(folderid, user=True):
 			safe_print("Warning: Could not get known folder %r" % folderid)
 	elif sys.platform not in ("darwin", "win32"):
 		# Linux
+		user_dir = folderid
 		folderid = {"Downloads": folderid[:-1],
 					"Public": folderid + "share"}.get(folderid, folderid).upper()
-		user_dir = XDG.default_dirs.get(folderid)
+		if folderid != "DESKTOP" or XDG.enabled:
+			user_dir = XDG.default_dirs.get(folderid)
 		if user:
 			user_dir = XDG.user_dirs.get(folderid, user_dir)
 		if user_dir:
