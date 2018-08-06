@@ -8084,7 +8084,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									 "\n" + path, 
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
-					self.update_profile_name_timer.Start(1000)
+					self.start_timers()
 					return wx.ID_CANCEL
 				else:
 					# get dispcal options if present
@@ -8150,7 +8150,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		embed_cal = dlg.embed_cal_ctrl.GetValue()
 		dlg.Destroy()
 		if result == wx.ID_CANCEL:
-			self.update_profile_name_timer.Start(1000)
+			self.start_timers()
 			return wx.ID_CANCEL
 		if not embed_cal:
 			if can_use_current_cal and reset_cal:
