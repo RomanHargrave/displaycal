@@ -57,7 +57,7 @@ def get_known_folder_path(folderid, user=True):
 	user   Return user folder instead of common (Windows) or default (Linux)
 	
 	"""
-	folder_path = os.path.join(expanduseru("~"), folderid)
+	folder_path = os.path.join(home, folderid)
 	if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 		# Windows Vista or newer
 		import win_knownpaths
@@ -78,12 +78,12 @@ def get_known_folder_path(folderid, user=True):
 		if user:
 			user_dir = XDG.UserDirs.user_dirs.get(folderid, user_dir)
 		if user_dir:
-			folder_path = os.path.join(expandvarsu("$HOME"), user_dir)
+			folder_path = os.path.join(home, user_dir)
 		if ((folderid != "DESKTOP" and (not user_dir or
 										(not os.path.isdir(folder_path) and
 										 not XDG.UserDirs.enabled))) or
 			not waccess(folder_path, os.W_OK)):
-			folder_path = expandvarsu("$HOME")
+			folder_path = home
 	return folder_path
 
 
