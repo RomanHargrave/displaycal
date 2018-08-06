@@ -3520,7 +3520,7 @@ END_DATA
 				# destination profile
 				num_cpus = cpu_count()
 				num_workers = min(max(num_cpus, 1), size)
-				if "A2B0" in profile_out.tags:
+				if "A2B0" in profile_out.tags and not use_b2a:
 					if num_cpus > 2:
 						num_workers = int(num_workers * 0.75)
 					num_batches = size // 9
