@@ -2900,6 +2900,9 @@ END_DATA
 						lut3dp.append("h")
 					else:
 						lut3dp.append("s")
+						# Alternate clip - softer
+						if getcfg("3dlut.hdr_maxmll_alt_clip"):
+							lut3dp.append("s")
 					if getcfg("3dlut.hdr_minmll"):
 						lut3dp.append("%.4f" % getcfg("3dlut.hdr_minmll"))
 					if (getcfg("3dlut.hdr_minmll") and
@@ -2907,10 +2910,16 @@ END_DATA
 						lut3dp.append("-")
 					if getcfg("3dlut.hdr_maxmll") < 10000:
 						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
+					# Hue and chroma preservation
+					if getcfg("3dlut.hdr_sat") != 0.5:
+						lut3dp.append("s%.1f" % getcfg("3dlut.hdr_sat"))
+					if getcfg("3dlut.hdr_hue") != 1.0:
+						lut3dp.append("h%.1f" % getcfg("3dlut.hdr_hue"))
 			elif getcfg("3dlut.trc") == "hlg":
 				lut3dp = ["HLG"]
 				if getcfg("3dlut.hdr_ambient_luminance") != 5:
-					lut3dp.append("@%i" % getcfg("3dlut.hdr_ambient_luminance"))
+					ambient = stripzeros(getcfg("3dlut.hdr_ambient_luminance"))
+					lut3dp.append("@%s" % ambient)
 			else:
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC
