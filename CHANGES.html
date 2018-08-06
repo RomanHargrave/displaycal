@@ -42,10 +42,46 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2018-06-21 22:06 (UTC) 3.6  -->
+			<!-- 2018-08-06 13:57 (UTC) 3.6.1  -->
 			<dl>
-				<dt id="changelog-3.6">2018-06-21 22:06 (UTC) 3.6 </dt>
+				<dt id="changelog-3.6.1">2018-08-06 13:57 (UTC) 3.6.1 </dt>
 					<dd>
+						<h3>DisplayCAL 3.6.1 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Adjustable hue preservation (values less than 100% will gradually hue shift very bright and saturated redorange/orange/yellowgreen hues to a more yellowish tone, preserving more saturation and detail) for HDR SMPTE 2084 3D LUTs with roll-off tonemapping (default 50%).</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Ability to set a calibration target luminance by measuring the ambient light level.</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Verification tab: Hold the “alt” key on your keyboard to create a profile or device link (3D LUT) self check report instead of a measurement report.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> DCI P3 D65 profile for use as 3D LUT source colorspace or measurement report simulation profile.</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Increased the default number of patches for the madVR HDR preset back to 425.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> HDR 3D LUT SMPTE 2084 tonemapping: Restored near black tone reproduction for displays with non-zero black level and output offset less than 100% to pre-v3.6 values.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Improved HDR 3D LUT SMPTE 2084 tonemapping speed.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Improved HDR 3D LUT accuracy for colorimetric rendering intents.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Increased default display update delay for Resolve preset to 1000 ms.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Quantize Autodesk/Kodak (.3dl) 3D LUT values by always rounding up (match the format specification in the Lustre user guide).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Limit the number of concurrent worker processes depending on system memory to avoid swapping.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Always normalize CGATS data to Y = 100 when processing files not created by DisplayCAL.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Get the black level for computation of 3D LUT or verification target tone curves from the embedded characterization data if a lookup through the display profile returns zero (makes e.g. Rec. 1886 work properly in that case).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Synthetic ICC profile creator: Increase number of decimal digits for black level to 6 and do not clamp to 16-bit integer values to offer more fine grained control.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Linux: Use configured XDG “well known” user directories (currently only used to determine the localized name of the “Downloads” directory).</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Moved HDR 3D LUT SMPTE 2084 tonemapping luminance/saturation/hue preservation controls to advanced options (hidden by default).</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> madVR 3D LUT generation via the main application: When using a non-standard source colorspace whitepoint (by setting a calibration whitepoint target different from the source colorspace's original whitepoint, e.g. not using DCI white for DCI P3), non-standard values for input primaries and whitepoint were written to the 3D LUT header, madVR 3D LUT slot auto-detection for installation did not work if the source colorspace was not Rec. 709, and color conversion was affected if the 3D LUT was not installed via the madVR API (i.e. by not clicking the “Install 3D LUT” button, but choosing the 3D LUT manually in madVR's settings).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Downloads within DisplayCAL failed if the download directory didn't exist (regression of changes made in DisplayCAL 3.5, SVN revision 5081).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> HDR 3D LUT SMPTE 2084 tonemapping for non-Rec. 2020 source colorspaces did not work correctly (Rec. 2020 was assumed despite different choice).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Standalone 3D LUT maker: Don't unexpectedly switch to the source profile's gamma for simple gamma + matrix source profiles (e.g. DCI P3) when creating a 3D LUT.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Catch errors in case of a corrupted Windows registry.</li>
+						</ul>
+
+						<p id="changelog-3.6">2018-06-21 22:06 (UTC) 3.6 </p>
 						<h3>DisplayCAL 3.6 </h3>
 
 						<h4>Added in this release:</h4>

@@ -5,6 +5,42 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Thu Jun 21 22:14:35 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.6:
+  * [Feature] Adjustable weighting between luminance and saturation
+    preservation for HDR SMPTE 2084 3...
+  * [Feature] Option to adjust the roll-off for HDR SMPTE 2084 3D
+    LUTs with roll-off tonemapping when...
+  * [Enhancement] Improved HDR 3D LUT SMPTE 2084 roll-off
+    tonemapping to eliminate possible over-dark...
+  * [Enhancement] Removed HDR 3D LUT SMPTE 2084 roll-off
+    tonemapping allowance for hue shifts in roll...
+  * [Enhancement] Increased HDR 3D LUT SMPTE 2084 default target
+    peak luminance to 480 cd/m² (makes B...
+  * [Enhancement] Use extended model for HDR 3D LUT Hybrid-Log
+    Gamma (HLG) display gamma adjustment d...
+  * [Enhancement] Do not create PCS-to-device tables for synthetic
+    HDR SMPTE 2084 profiles with roll-...
+  * [Enhancement] Only enable the visual whitepoint editor button
+    if the whitepoint target is set to ...
+  * [UI] Keep dropdowns with only one choice enabled
+  * [Cosmetic] Catch any madTPG connection errors to show a nicer
+    error dialog without a traceback
+  * [Trivial] Do not update the profile description when increasing
+    the effective resolution of an ex...
+  * [Trivial] Testchart editor: Only limit the view to six decimal
+    digits, not the underlying data
+  * [Minor] Confirm instrument placement when madTPG is not
+    fullscreen
+  * [Minor] Creating synthetic grayscale profiles with HLG tone
+    response did not work correctly
+  * [Trivial] Set allowed filetypes for selecting files when
+    importing 3rd party software colorimeter...
+  * [UI]  (GTK3 under Wayland)Explicit refresh/update needed for
+    ClientDC (fixes graphs not updating ...
+
+-------------------------------------------------------------------
 Wed Apr 25 13:32:27 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.5.3:
