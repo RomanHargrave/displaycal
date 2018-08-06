@@ -4782,6 +4782,8 @@ class LogWindow(InvincibleFrame):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer)
 		self.log_txt = wx.TextCtrl(self.panel, -1, "", style=logctrlstyle)
+		# Fix wrong background color under Linux when losing focus
+		self.log_txt.BackgroundColour = self.log_txt.BackgroundColour
 		# Fix wrong background color when disabled
 		self.log_txt.Enable = lambda enable=True: None
 		self.log_txt.Disable = lambda: None
