@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.6.1 </h2>
-					<p>2018-08-06 13:57 UTC</p>
+					<h2 id="version">3.6.1.1 </h2>
+					<p>2018-08-07 16:14 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -435,9 +435,9 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Disk image</a>
 						</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.6.1.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.6.1.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.6.1.1/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.6.1.1/*.app</code>
 						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.6.1.0.dmg</code></small></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.6.1.1.dmg</code></small></p>
 					</div>
 				</li>
 				<li>
@@ -446,7 +446,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 						<p>
 							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-Setup.exe">Installer (recommended)</a> or <a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-win32.zip">ZIP archive</a>
 						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.6.1.0-[Setup.exe|win32.zip]</code></small></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.6.1.1-[Setup.exe|win32.zip]</code></small></p>
 					</div>
 				</li>
 				<li>
@@ -455,9 +455,9 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
 						<p><a rel="nofollow" href="https://displaycal.net/download/DisplayCAL.tar.gz">Source Tarball</a></p>
 						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command:<br />
-						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.6.1.0.tar.gz</code><br />
-						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.6.1.0.tar.gz</code><br />
-						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.6.1.0.tar.gz</code></small></p>
+						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.6.1.1.tar.gz</code><br />
+						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.6.1.1.tar.gz</code><br />
+						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.6.1.1.tar.gz</code></small></p>
 						<p>
 							Alternatively, if you don't mind trying out development code, <a href="https://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="https://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="https://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk displaycal</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
@@ -598,7 +598,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 					<div>
 						<p>Download the <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL Zero Install Launcher</a> disk image and run any of the included applications.</p>
 						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.6.1.0/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.6.1.0/*.app</code>
+							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.6.1.1/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.6.1.1/*.app</code>
 						</p>
 						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-0install.dmg</code></small></p>
 					</div>
@@ -671,8 +671,13 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 			<div>
 				<h3>General system requirements</h3>
 				<ul>
-					<li>A recent Linux, Mac OS X (10.6 or newer for the standalone version, 10.5 or newer for the 0install version) or Windows (XP/Server 2003 or newer) operating system.</li>
-					<li>A graphics card with at least 24 bits per pixel (true color) support and the desktop set up to use this color depth.</li>
+					<li>A recent Linux, macOS (10.6 or newer for the standalone version, 10.5 or newer for the 0install version, recommended 10.7 or newer) or Windows (XP/Server 2003 or newer, recommended Windows 7 or newer) operating system.</li>
+					<li>“True color” 24 bits per pixel or higher graphics output.</li>
+				</ul>
+				<h3>Hardware requirements</h3>
+				<ul>
+					<li>Minimum: 1 GHz single core processor, 1.5 GB RAM, 500 MB free storage space.</li>
+					<li>Recommended: 2 GHz dual core processor or better, 4 GB RAM or more, 1 GB free storage space or more.</li>
 				</ul>
 			</div>
 
