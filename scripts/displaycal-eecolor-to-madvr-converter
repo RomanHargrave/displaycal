@@ -75,7 +75,7 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,
 		# Write device link
 		link.write(filename + ".icc")
 
-	return icc_device_link_to_madvr(filename + ".icc", unity=False,
+	return icc_device_link_to_madvr(filename + ".icc", unity=unity,
 									colorspace=colorspace, hdr=hdr,
 									logfile=logfile,
 									convert_video_rgb_to_clut65=convert_video_rgb_to_clut65)
@@ -101,8 +101,9 @@ if __name__ == "__main__":
 				continue
 			if not os.path.isabs(arg):
 				arg = os.path.abspath(arg)
-			if not os.path.isfile(arg):
+			if not os.path.isfile(arg) and not "--unity" in sys.argv[1:]:
 				safe_print("Error: File not found:", arg)
+				result = False
 				break
 			if result is not None:
 				# Already processed some input file(s)

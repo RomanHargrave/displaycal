@@ -208,7 +208,11 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 	raw.close()
 
 	safe_print("")
-	safe_print("Finished up-interpolating device link in", time() - t, "seconds")
+	if unity:
+		msg = "Finished writing unity madVR 3D LUT in"
+	else:
+		msg = "Finished up-interpolating device link and writing madVR 3D LUT in"
+	safe_print(msg, time() - t, "seconds")
 	if filename.endswith(".HDR"):
 		safe_print("Gamut (rx ry gx gy bx by wx wy):",
 				   "%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f" %
