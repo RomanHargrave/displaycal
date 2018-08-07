@@ -9,8 +9,6 @@ if sys.platform not in ("darwin", "win32"):
 	import locale
 	import gettext
 
-	locale.setlocale(locale.LC_ALL, "")
-
 	LOCALEDIR = os.path.join(sys.prefix, "share", "locale")
 
 elif sys.platform == "win32":
@@ -274,7 +272,10 @@ else:
 					elif key == "filename_encoding":
 						value = value.upper()
 						if value == "LOCALE":
+							current_locale = locale.getlocale()
+							locale.setlocale(locale.LC_ALL, "")
 							self.filename_encoding = locale.nl_langinfo(locale.CODESET)
+							locale.setlocale(locale.LC_ALL, current_locale)
 						else:
 							self.filename_encoding = value
 
