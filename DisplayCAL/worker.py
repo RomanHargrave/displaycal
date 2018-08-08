@@ -3025,13 +3025,13 @@ END_DATA
 								b2a.clut_grid_steps < 17 and
 								profile_out.creator == "argl")) and a2b:
 					if isinstance(a2b, ICCP.LUT16Type):
-						# Match A2B clutres if 17 or >= 45
+						# Match A2B clutres if 17
 						clutres = max(a2b.clut_grid_steps, 17)
-						if 17 < clutres < 45:
-							# Use auto (min 33)
+						if 17 < clutres:
+							# Use auto (min 33, max 45)
 							clutres = -1
 					else:
-						# Fallback to auto (min 33)
+						# Fallback to auto (min 33, max 45)
 						clutres = -1
 					b2aresult = self.update_profile_B2A(profile_out,
 														clutres=clutres)
