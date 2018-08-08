@@ -6796,7 +6796,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 		
 		# let the user choose a location for the result
-		defaultFile = u"Measurement Report %s — %s — %s" % (version_short,
+		if self_check_report:
+			report_type = "Self Check"
+		else:
+			report_type = "Measurement"
+		defaultFile = u"%s Report %s — %s — %s" % (report_type, version_short,
 			re.sub(r"[\\/:;*?\"<>|]+", "_",
 			self.display_ctrl.GetStringSelection().replace(" " +
 														   lang.getstr("display.primary"),
@@ -7299,10 +7303,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				display += " (Profile: %s)" % oprof.getDescription()
 			instrument = "N/A"
 			ccmx = "N/A"
+			report_type = "Self Check"
 		else:
 			display = self.display_ctrl.GetStringSelection().replace(" " +
 																	 lang.getstr("display.primary"),
 																	 "")
+			report_type = "Measurement"
 		placeholders2data = {"${PLANCKIAN}": 'checked="checked"' if planckian 
 											 else "",
 							 "${DISPLAY}": display,
@@ -7341,7 +7347,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							 "${CAL_ENTRYCOUNT}": str(cal_entrycount),
 							 "${CAL_RGBLEVELS}": repr(cal_rgblevels),
 							 "${GRAYSCALE}": repr(gray) if gray else 'null',
-							 "${REPORT_VERSION}": version_short}
+							 "${REPORT_VERSION}": version_short,
+							 "${REPORT_TYPE}": report_type}
 		
 		# create report
 		try:
