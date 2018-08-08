@@ -3019,11 +3019,22 @@ END_DATA
 				# Check B2A resolution and regenerate on-the-fly if too low
 				# and created by ArgyllCMS
 				b2a = profile_out.tags.get("B2A1", profile_out.tags.get("B2A0"))
-				if (not b2a and "A2B0" in
-					profile_out.tags) or (isinstance(b2a, ICCP.LUT16Type) and
-										  b2a.clut_grid_steps < 17 and
-										  profile_out.creator == "argl"):
-					b2aresult = self.update_profile_B2A(profile_out)
+				a2b =  profile_out.tags.get("A2B1",
+											profile_out.tags.get("A2B0"))
+				if (not b2a or (isinstance(b2a, ICCP.LUT16Type) and
+								b2a.clut_grid_steps < 17 and
+								profile_out.creator == "argl")) and a2b:
+					if isinstance(a2b, ICCP.LUT16Type):
+						# Match A2B clutres if 17 or >= 45
+						clutres = max(a2b.clut_grid_steps, 17)
+						if 17 < clutres < 45:
+							# Use auto (min 33)
+							clutres = -1
+					else:
+						# Fallback to auto (min 33)
+						clutres = -1
+					b2aresult = self.update_profile_B2A(profile_out,
+														clutres=clutres)
 					if isinstance(b2aresult, Exception):
 						raise b2aresult
 					profile_out.write()
