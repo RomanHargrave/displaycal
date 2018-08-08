@@ -234,7 +234,7 @@ else:
 				line = line.strip()
 				if line.startswith("#") or not "=" in line:
 					continue
-				yield tuple(s.strip() for s in line.split("="))
+				yield tuple(s.strip() for s in line.split("=", 1))
 
 		@staticmethod
 		def process_config_file(path, fn):
