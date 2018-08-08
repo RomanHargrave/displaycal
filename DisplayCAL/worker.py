@@ -2189,27 +2189,18 @@ class Worker(WorkerBase):
 				profile1.tags.DBG1 = profile.tags.DBG1
 				profile1.tags.DBG2 = profile.tags.DBG2
 				profile1.tags.kTRC = profile.tags.kTRC
-		if not apply_trc or hdr:
-			if XYZbp is oXYZbp:
-				# Apply only the black point blending portion of BT.1886 mapping
-				logfiles = self.get_logfiles()
-				logfiles.write("Applying black offset (normalized 0..100) "
-							   "%.6f %.6f %.6f...\n" %
-							   tuple([v * 100 for v in XYZbp]))
-				profile1.apply_black_offset(XYZbp, logfiles=logfiles,
-											thread_abort=self.thread_abort,
-											abortmessage=lang.getstr("aborted"))
-			return
-		if gamma_type in ("b", "g"):
-			# Get technical gamma needed to achieve effective gamma
-			self.log("Effective gamma = %.2f" % gamma)
-			tgamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
-		else:
-			tgamma = gamma
-		self.log("Technical gamma = %.2f" % tgamma)
-		profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
-		if XYZbp is not oXYZbp:
-			# Apply BPC
+		elif apply_trc:
+			# Apply BT.1886-like TRC
+			if gamma_type in ("b", "g"):
+				# Get technical gamma needed to achieve effective gamma
+				self.log("Effective gamma = %.2f" % gamma)
+				tgamma = colormath.xicc_tech_gamma(gamma, XYZbp[1], outoffset)
+			else:
+				tgamma = gamma
+			self.log("Technical gamma = %.2f" % tgamma)
+			profile1.set_bt1886_trc(XYZbp, outoffset, gamma, gamma_type, size)
+		if not apply_trc or hdr or XYZbp is not oXYZbp:
+			# Apply black offset
 			logfiles = self.get_logfiles()
 			logfiles.write("Applying black offset (normalized 0..100) "
 						   "%.6f %.6f %.6f...\n" %
