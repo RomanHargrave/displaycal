@@ -7295,6 +7295,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 		if self_check_report:
 			display = oprof.getDeviceModelDescription() or "N/A"
+			if oprof is not profile:
+				display += " (Profile: %s)" % oprof.getDescription()
 			instrument = "N/A"
 			ccmx = "N/A"
 		else:
