@@ -129,6 +129,7 @@ def update(report_path, pack=True):
 			("${CAL_ENTRYCOUNT}", "CAL_ENTRYCOUNT\s*=\s*(.+?)[;,]$", re.M),
 			("${CAL_RGBLEVELS}", "CAL_RGBLEVELS\s*=\s*(.+?)[;,]$", re.M),
 			("${GRAYSCALE}", "CRITERIA_GRAYSCALE\s*=\s*(.+?)[;,]$", re.M),
+			("${REPORT_TYPE}", '<title>(.+?) Report', 0),
 			# Uniformity report
 			("${DISPLAY}", u"\u2014 (.+?) \u2014", 0),
 			("${DATETIME}", u"\u2014 .+? \u2014 (.+?)</title>", 0),
