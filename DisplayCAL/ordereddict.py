@@ -165,7 +165,7 @@ class OrderedDict(dict):
 			iterable = self._keys
 		if not key in iterable:
 			raise KeyError(key)
-		return self._keys.index(key)
+		return iterable.index(key)
 	
 	def insert(self, i, key, value):
 		"""
