@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-class Cube3DIterator(object):
+class Cube3D(object):
 
 	def __init__(self, size=65, start=0, end=None):
 		orange = start, end
@@ -23,7 +23,6 @@ class Cube3DIterator(object):
 		self._size = size
 		self._start = start
 		self._len = end - start
-		self._next = 0
 
 	def get(self, i, default=None):
 		if i < 0:
@@ -31,6 +30,12 @@ class Cube3DIterator(object):
 		if i < 0 or i > self._len - 1:
 			return default
 		return self[i]
+
+	def index(self, (c0, c1, c2)):
+		if not (c0, c1, c2) in self:
+			raise ValueError("%r not in %r" % ((c0, c1, c2), self))
+		i = c0 * self._size ** 2 + c1 * self._size + c2
+		return int(i) - self._start
 
 	def _clamp(self, v, lower=0, upper=None, fallback=None):
 		if not upper:
@@ -43,6 +48,13 @@ class Cube3DIterator(object):
 		elif v > upper:
 			v = fallback or upper
 		return v
+
+	def __contains__(self, (c0, c1, c2)):
+		return (c0 == int(c0) and c1 == int(c1) and c2 == int(c2) and
+				max(c0, c1, c2) < self._size and
+				self._start <= c0 * self._size ** 2 +
+							   c1 * self._size +
+							   c2 < self._len + self._start)
 
 	def __getitem__(self, i):
 		oi = i
@@ -66,6 +78,19 @@ class Cube3DIterator(object):
 	def __repr__(self):
 		return (self.__class__.__name__ + "(size=%i, start=%i, end=%i)" %
 				(self._size, self._start, self._start + self._len))
+
+
+class Cube3DIterator(Cube3D):
+
+	# This iterator is actually slightly slower especially with large cubes
+	# than using iter(<Cube3D instance>)
+
+	def __init__(self, *args, **kwargs):
+		Cube3D.__init__(self, *args, **kwargs)
+		self._next = 0
+
+	def __iter__(self):
+		return self
 
 	def next(self):
 		if self._next == self._len:

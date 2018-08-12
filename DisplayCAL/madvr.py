@@ -178,7 +178,7 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 									   reverse=True, output_stream=raw,
 									   convert_video_rgb_to_clut65=convert_video_rgb_to_clut65,
 									   verbose=0)
-		xicclu._in = ci.Cube3DIterator(clutres)
+		xicclu._in = ci.Cube3D(clutres)
 		logfile.write("Looking up 256^3 input values through device link and "
 					  "writing madVR 3D LUT...\n")
 		xicclu.exit()
