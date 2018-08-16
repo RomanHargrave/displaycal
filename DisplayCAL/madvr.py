@@ -95,7 +95,8 @@ def safe_print(*args):
 
 def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 							 colorspace=None, hdr=None, logfile=sys.stdout,
-							 convert_video_rgb_to_clut65=False):
+							 convert_video_rgb_to_clut65=False,
+							 append_linear_cal=True):
 	"""
 	Convert ICC device link profile to madVR 256^3 3D LUT using interpolation
 	
@@ -184,27 +185,29 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 		xicclu.exit()
 		xicclu.get()
 
-	# Append a MadVR cal1 table to the 3dlut.
-	# This can be used to ensure that the Graphics Card VideoLuts
-	# are correctly setup to match what the 3dLut is expecting.
-	#
-	# Note that the calibration curves are full range, never TV encoded output values
-	#
-	# Format is (little endian):
-	#	4 byte magic number 'cal1'
-	#	4 byte version = 1
-	#	4 byte number per channel entries = 256
-	#	4 byte bytes per entry = 2
-	#	[3][256] 2 byte entry values. Tables are in RGB order
+	if append_linear_cal:
+		# Append a MadVR cal1 table to the 3dlut.
+		# This can be used to ensure that the Graphics Card VideoLuts
+		# are correctly setup to match what the 3dLut is expecting.
+		#
+		# Note that the calibration curves are full range, never TV encoded output values
+		#
+		# Format is (little endian):
+		#	4 byte magic number 'cal1'
+		#	4 byte version = 1
+		#	4 byte number per channel entries = 256
+		#	4 byte bytes per entry = 2
+		#	[3][256] 2 byte entry values. Tables are in RGB order
 
-	raw.write("cal1")
-	raw.write(struct.pack('<I', 1))
-	raw.write(struct.pack('<I', 256))
-	raw.write(struct.pack('<I', 2))
-	# Linear (unity) calibration
-	for i in xrange(3):
-		for j in xrange(256):
-			raw.write(struct.pack('<H', j * 257))
+		raw.write("cal1")
+		raw.write(struct.pack('<I', 1))
+		raw.write(struct.pack('<I', 256))
+		raw.write(struct.pack('<I', 2))
+		# Linear (unity) calibration
+		for i in xrange(3):
+			for j in xrange(256):
+				raw.write(struct.pack('<H', j * 257))
+
 	raw.close()
 
 	safe_print("")

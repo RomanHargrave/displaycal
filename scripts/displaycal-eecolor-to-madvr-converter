@@ -11,7 +11,7 @@ from DisplayCAL.madvr import icc_device_link_to_madvr
 
 def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,
 					 hdr=None, logfile=sys.stdout,
-					 convert_video_rgb_to_clut65=False):
+					 convert_video_rgb_to_clut65=False, append_linear_cal=True):
 	"""
 	Convert eeColor 65^3 3D LUT to madVR 256^3 3D LUT using interpolation
 	
@@ -78,7 +78,8 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,
 	return icc_device_link_to_madvr(filename + ".icc", unity=unity,
 									colorspace=colorspace, hdr=hdr,
 									logfile=logfile,
-									convert_video_rgb_to_clut65=convert_video_rgb_to_clut65)
+									convert_video_rgb_to_clut65=convert_video_rgb_to_clut65,
+									append_linear_cal=append_linear_cal)
 
 
 if __name__ == "__main__":
@@ -111,7 +112,8 @@ if __name__ == "__main__":
 			try:
 				result = fn(arg, unity="--unity" in sys.argv[1:],
 							colorspace=colorspace, hdr=hdr,
-							convert_video_rgb_to_clut65="--convert-video-rgb-to-clut65" in sys.argv[1:])
+							convert_video_rgb_to_clut65="--convert-video-rgb-to-clut65" in sys.argv[1:],
+							append_linear_cal="--append-linear-cal" in sys.argv[1:])
 			except Exception, exception:
 				safe_print(exception)
 				result = exception
@@ -124,8 +126,9 @@ if __name__ == "__main__":
 		safe_print("Possible target color spaces: BT709, SMPTE_C, EBU_PAL, BT2020, DCI_P3")
 		safe_print("Write output to <name>.<target color space>.3dlut")
 		safe_print("")
-		safe_print("  --unity      Create unity (in = out) 3D LUT")
-		safe_print("  --batch      Don't pause after processing")
+		safe_print("  --unity                  Create unity (in = out) 3D LUT")
+		safe_print("  --append-linear-cal      Append linear calibration")
+		safe_print("  --batch                  Don't pause after processing")
 		safe_print("")
 		safe_print("Examples:")
 		safe_print("  Convert SDR BT709 eeColor 3D LUT")

@@ -3778,6 +3778,7 @@ END_DATA
 										   ",".join([str(v) for v in in_colors]))
 					interp_args.append("--hdr=%i" % (smpte2084 + hdr_display))
 					interp_args.append("--convert-video-rgb-to-clut65")
+					interp_args.append("--append-linear-cal")
 					interp_args.append("--batch")
 					interp_args.append(link_filename)
 					result = self.exec_cmd(cmd, interp_args,
