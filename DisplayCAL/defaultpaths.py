@@ -352,9 +352,10 @@ else:
 		UserDirs = _UserDirs()
 
 	for name in dir(XDG):
-		if isinstance(name, (basestring, list)):
-			locals()["xdg_" + name] = getattr(XDG, name)
-	del name
+		attr = getattr(XDG, name)
+		if isinstance(attr, (basestring, list)):
+			locals()["xdg_" + name] = attr
+	del name, attr
 
 	cache = XDG.cache_home
 	library_home = appdata = XDG.data_home
