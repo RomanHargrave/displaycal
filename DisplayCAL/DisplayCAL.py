@@ -77,6 +77,8 @@ import pyi_md5pickuphelper
 import report
 if sys.platform == "win32":
 	import util_win
+elif sys.platform == "darwin":
+	import util_mac
 import wexpect
 from argyll_cgats import (cal_to_fake_profile, can_update_cal, 
 						  ti3_to_ti1, extract_cal_from_profile,
@@ -10337,6 +10339,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			description = manufacturer_display or self.worker.get_display_name(True,
 																			   True)
+		if sys.platform == "darwin":
+			# In case of internal screen, get 'nice' description
+			model_id = util_mac.get_model_id()
+			if model_id and re.match("iBook|iMac|PowerBook", model_id,
+									 flags=re.I):
+				attrs = util_mac.get_machine_attributes(model_id)
+				description += " " + attrs.get("marketingModel", model_id)
 		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
 		if target_instrument:
 			target_instrument = safe_unicode(target_instrument, "UTF-8")

@@ -115,7 +115,8 @@ from util_io import (EncodedWriter, Files, GzipFileProper, LineBufferedStream,
 from util_list import intlist, natsort
 if sys.platform == "darwin":
 	from util_mac import (mac_app_activate, mac_terminal_do_script, 
-						  mac_terminal_set_colors, osascript)
+						  mac_terminal_set_colors, osascript,
+						  get_machine_attributes, get_model_id)
 elif sys.platform == "win32":
 	import util_win
 	from util_win import run_as_admin, shell_exec, win_ver
@@ -4397,6 +4398,16 @@ END_DATA
 										   edid.get("ascii",
 													str(edid["product_id"] or
 														"")))
+						if (monitor == "Color LCD" and
+							edid["manufacturer_id"] == "APP" and
+							sys.platform == "darwin"):
+							# Get mac model if internal display
+							model_id = get_model_id()
+							if model_id:
+								# Override monitor name
+								monitor = model_id
+								# Override EDID
+								edid["monitor_name"] = monitor
 						if monitor and not monitor in "".join(desc):
 							desc = [monitor]
 					else:
