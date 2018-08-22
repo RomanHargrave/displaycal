@@ -10345,7 +10345,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			if model_id and re.match("iBook|iMac|PowerBook", model_id,
 									 flags=re.I):
 				attrs = util_mac.get_machine_attributes(model_id) or {}
-				description += " " + attrs.get("marketingModel", model_id)
+				description = description.replace(model_id,
+												  attrs.get("marketingModel",
+															model_id))
 		target_instrument = reference_ti3.queryv1("TARGET_INSTRUMENT")
 		if target_instrument:
 			target_instrument = safe_unicode(target_instrument, "UTF-8")
