@@ -137,3 +137,52 @@ def get_serial():
 	match = re.search(r'"IOPlatformSerialNumber"\s*=\s*"([^"]*)"', output)
 	if match:
 		return match.group(1)
+
+
+def get_model_id():
+	"""
+	Return this mac's model id
+	
+	"""
+	try:
+		p = sp.Popen(["sysctl", "hw.model"], stdin=sp.PIPE, stdout=sp.PIPE,
+					 stderr=sp.PIPE)
+		output, errors = p.communicate()
+	except:
+		return None
+	return  "".join(output).split(None, 1)[-1].strip()
+
+
+def get_machine_attributes(model_id=None):
+	"""
+	Given a mac model ID, return the machine attributes
+	
+	If model_code is None, this mac's model code is used.
+	
+	"""
+	if not model_id:
+		model_id = get_model_id()
+		if not model_id:
+			return None
+	pf = "/System/Library/PrivateFrameworks"
+	f = ".framework/Versions/A/Resources/English.lproj"
+	sk = "%s/ServerKit%s/XSMachineAttributes" % (pf, f)
+	si = "%s/ServerInformation%s/SIMachineAttributes" % (pf, f)
+	if os.path.isfile(si):
+		# Mac OS X 10.8 or newer
+		filename = si
+	else:
+		# Mac OS X 10.6/10.7
+		filename = sk
+	try:
+		p = sp.Popen(["defaults", "read", filename, model_id],
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+		output, errors = p.communicate()
+	except:
+		return None
+	attrs = {}
+	for line in output.splitlines():
+		match = re.search(r'(\w+)\s*=\s*"?(.*?)"?\s*;', line)
+		if match:
+			attrs[match.group(1)] = match.group(2).decode("string_escape")
+	return attrs
