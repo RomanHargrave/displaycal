@@ -10342,7 +10342,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if sys.platform == "darwin":
 			# In case of internal screen, get 'nice' description
 			model_id = util_mac.get_model_id()
-			if model_id and re.match("iBook|iMac|PowerBook", model_id,
+			if model_id and re.match("iBook|iMac|MacBook|PowerBook", model_id,
 									 flags=re.I):
 				attrs = util_mac.get_machine_attributes(model_id) or {}
 				description = description.replace(model_id,
