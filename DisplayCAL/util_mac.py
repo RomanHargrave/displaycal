@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 import subprocess as sp
 from time import sleep
 
@@ -99,3 +100,40 @@ def osascript(applescript):
 	output, errors = p.communicate()
 	retcode = p.wait()
 	return retcode, output, errors
+
+
+def get_model_code(serial=None):
+	"""
+	Given a mac serial number, return the model code
+
+	If serial is None, this mac's serial number is used.
+	
+	"""
+	if not serial:
+		serial = get_serial()
+	if serial:
+		if "serial" in serial.lower():
+			# Workaround for machines with dummy serial numbers
+			return None
+		if len(serial) in (12, 13) and serial.startswith("S"):
+			# Remove prefix from scanned codes
+			serial = serial[1:]
+		if len(serial) in (11, 12):
+			return serial[8:]
+	return None
+
+
+def get_serial():
+	"""
+	Return this mac's serial number
+	
+	"""
+	try:
+		p = sp.Popen(["ioreg", "-c", "IOPlatformExpertDevice", "-d", "2"],
+					 stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
+		output, errors = p.communicate()
+	except:
+		return None
+	match = re.search(r'"IOPlatformSerialNumber"\s*=\s*"([^"]*)"', output)
+	if match:
+		return match.group(1)
