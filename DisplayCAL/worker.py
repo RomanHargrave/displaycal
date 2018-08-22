@@ -509,6 +509,13 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		if 100 > R > 0 and min(X, Y, Z) < 100.0 / 65535:
 			# Skip non-black/non-white gray values not encodable in 16-bit
 			continue
+		if 100 > R > 0 and G_Y and (Y < G_Y[-1] * 100 or Y > 100):
+			# Skip values with negative Y increments,
+			# or Y above 100 with RGB < 100
+			if logfn:
+				logfn("Skipping RGB %.2f %.2f %.2f XYZ %.6f %.6f %.6f" %
+					  (R, G, B, X, Y, Z))
+			continue
 		R_R.append(R / 100.0)
 		G_G.append(G / 100.0)
 		B_B.append(B / 100.0)
@@ -9028,7 +9035,7 @@ usage: spotread [-options] [logfile]
 				break
 		self.log("Initial cLUT resolution %ix%ix%i" % ((iclutres,) * 3))
 		
-		profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+		profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut, self.log)
 
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
@@ -9090,7 +9097,7 @@ usage: spotread [-options] [logfile]
 						 (clutres, clutres, clutres,
 						  actual - clut_actual))
 
-			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut)
+			profile.tags.A2B0 = ICCP.create_RGB_A2B_XYZ(curves, clut, self.log)
 			clut_actual = actual
 
 		self.log("Final interpolated cLUT resolution %ix%ix%i" %

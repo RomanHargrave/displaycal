@@ -423,7 +423,7 @@ def Property(func):
 	return property(**func())
 
 
-def create_RGB_A2B_XYZ(input_curves, clut):
+def create_RGB_A2B_XYZ(input_curves, clut, logfn=safe_print):
 	"""
 	Create RGB device A2B from input curve XYZ values and cLUT
 	
@@ -466,6 +466,7 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 		itable.input.append([])
 		itable.output.append([0, 65535])
 
+	logfn("cLUT input curve segments:", clutres)
 	for i in xrange(3):
 		maxi = bwd[i](white_XYZ[1])
 		segment = 1.0 / (clutres - 1.0) * maxi
@@ -474,7 +475,7 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 		nextpow = fwd[i](segment)
 		prevv = 0
 		pprevpow = 0
-		clipped = False
+		clipped = nextpow <= prevpow
 		xp = []
 		for j in xrange(steps):
 			v = (j / maxv) * maxi
@@ -482,14 +483,17 @@ def create_RGB_A2B_XYZ(input_curves, clut):
 				iv += segment
 				prevpow = nextpow
 				nextpow = fwd[i](iv + segment)
-			if nextpow > prevpow:
+				clipped = nextpow <= prevpow
+				logfn("#%i %s" % (iv * (clutres - 1), "XYZ"[i]),
+					  "prev %.6f" % prevpow, "next %.6f" % nextpow,
+					  "clip", clipped)
+			if not clipped:
 				prevs = 1.0 - (v - iv) / segment
 				nexts = (v - iv) / segment
 				vv = (prevs * prevpow + nexts * nextpow)
 				prevv = v
 				pprevpow = prevpow
 			else:
-				clipped = True
 				# Linearly interpolate
 				vv = colormath.convert_range(v, prevv, 1, prevpow, 1)
 			out = bwd[i](vv)
