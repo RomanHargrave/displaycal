@@ -3025,15 +3025,7 @@ END_DATA
 				if (not b2a or (isinstance(b2a, ICCP.LUT16Type) and
 								b2a.clut_grid_steps < 17 and
 								profile_out.creator == "argl")) and a2b:
-					if isinstance(a2b, ICCP.LUT16Type):
-						# Match A2B clutres if 17
-						clutres = max(a2b.clut_grid_steps, 17)
-						if 17 < clutres:
-							# Use auto (min 33, max 45)
-							clutres = -1
-					else:
-						# Fallback to auto (min 33, max 45)
-						clutres = -1
+					clutres = getcfg("profile.b2a.hires.size")
 					b2aresult = self.update_profile_B2A(profile_out,
 														clutres=clutres)
 					if isinstance(b2aresult, Exception):
