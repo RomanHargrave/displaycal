@@ -169,7 +169,7 @@ def get_machine_attributes(model_id=None):
 	f = ".framework/Versions/A/Resources/English.lproj"
 	sk = "%s/ServerKit%s/XSMachineAttributes" % (pf, f)
 	si = "%s/ServerInformation%s/SIMachineAttributes" % (pf, f)
-	if os.path.isfile(si):
+	if os.path.isfile(si + ".plist"):
 		# Mac OS X 10.8 or newer
 		filename = si
 	else:
