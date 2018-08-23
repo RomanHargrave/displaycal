@@ -1824,13 +1824,19 @@ Transform {
 		for data in self.queryv("DATA").itervalues():
 			if data.parent.type == "CAL":
 				maxv = 1.0
+				digits = 8
 			else:
 				maxv = 100.0
+				# Assuming 0..100, 4 decimal digits is
+				# enough for roughly 19 bits integer
+				# device values
+				digits = 4
 			color_rep = (data.parent.queryv1("COLOR_REP") or "").split("_")[0]
 			for labels in get_device_value_labels(color_rep):
 				for item in data.queryi(labels).itervalues():
 					for label in labels:
-						item[label] = quantizer(item[label] / maxv * q) / q * maxv
+						item[label] = round(quantizer(item[label] / maxv * q) /
+											q * maxv, digits)
 	
 	def scale_device_values(self, factor=100.0 / 255, color_rep=None):
 		""" Scales device values by multiplying with factor. """
