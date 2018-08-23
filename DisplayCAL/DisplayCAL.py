@@ -6848,17 +6848,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		if self_check_report and oprof:
 			# Instead of doing measurements, lookup ti1 through display profile
-			void, ti3, void = self.worker.chart_lookup(ti1, oprof, pcs="x",
-													   intent="a",
-													   white_patches=0)
-			wtpt = oprof.tags.wtpt.values()
-			if isinstance(oprof.tags.get("lumi"), ICCP.XYZType):
-				luminance = oprof.tags.lumi.Y
-			else:
-				luminance = 100
-			white_XYZ_cdm2 = [v * luminance for v in wtpt]
-			ti3.add_keyword("LUMINANCE_XYZ_CDM2", "%.6f %.6f %.6f" %
-												  tuple(white_XYZ_cdm2))
 
 			# setup temp dir
 			temp = self.worker.create_tempdir()
@@ -6870,6 +6859,48 @@ class MainFrame(ReportFrame, BaseFrame):
 			name, ext = os.path.splitext(os.path.basename(save_path))
 			ti3_path = os.path.join(temp, name + ".ti3")
 			profile_path = os.path.join(temp, name + ".icc")
+
+			# write profile to temp dir
+			oprof.write(profile_path)
+
+			# Check if we need to apply calibration
+			vcgt = oprof.tags.get("vcgt")
+			if isinstance(vcgt, ICCP.VideoCardGammaType):
+				oprof_cal_path = os.path.join(temp, name + ".cal")
+				extract_cal_from_profile(oprof, oprof_cal_path)
+				profile_with_cal_path = os.path.join(temp, name + " + cal.icc")
+				
+				applycal = get_argyll_util("applycal")
+				if not applycal:
+					show_result_dialog(Error(lang.getstr("argyll.util.not_found",
+														 "applycal")), self)
+					return
+				safe_print(lang.getstr("apply_cal"))
+				result = self.worker.exec_cmd(applycal, ["-v",
+														 oprof_cal_path,
+														 profile_path,
+														 profile_with_cal_path],
+											  capture_output=True,
+											  skip_scripts=True)
+				if not result:
+					result = Error("\n\n".join([lang.getstr("apply_cal.error"),
+												"\n".join(self.worker.errors)]))
+				if isinstance(result, Exception) and not getcfg("dry_run"):
+					show_result_dialog(result, self)
+					return
+				oprof = ICCP.ICCProfile(profile_with_cal_path)
+
+			void, ti3, void = self.worker.chart_lookup(ti1, oprof, pcs="x",
+													   intent="a",
+													   white_patches=0)
+			wtpt = oprof.tags.wtpt.values()
+			if isinstance(oprof.tags.get("lumi"), ICCP.XYZType):
+				luminance = oprof.tags.lumi.Y
+			else:
+				luminance = 100
+			white_XYZ_cdm2 = [v * luminance for v in wtpt]
+			ti3.add_keyword("LUMINANCE_XYZ_CDM2", "%.6f %.6f %.6f" %
+												  tuple(white_XYZ_cdm2))
 			
 			# write ti3 to temp dir
 			try:
@@ -6883,9 +6914,6 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 			ti3_file.write(str(ti3))
 			ti3_file.close()
-
-			# write profile to temp dir
-			oprof.write(profile_path)
 
 			safe_print("-" * 80)
 			safe_print(lang.getstr("self_check_report"))
