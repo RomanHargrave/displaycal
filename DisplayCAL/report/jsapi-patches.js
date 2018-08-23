@@ -127,6 +127,33 @@ jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
 	
 	return [X, Y, Z]
 };
+jsapi.math.color.LinearRec2020RGB2ICtCp = function(R, G, B, oetf) {
+	// http://www.dolby.com/us/en/technologies/dolby-vision/ICtCp-white-paper.pdf
+	if (!oetf) oetf = jsapi.math.color.SMPTE2084_OETF;
+	var LMS, L_M_S_, ICtCp;
+	LMS = jsapi.math.color.LinearRec2020RGB2LMS_matrix.multiply([R, G, B]);
+	L_M_S_ = [];
+	for (var i = 0; i < 3; i ++) L_M_S_[i] = oetf(LMS[i]);
+	ICtCp = jsapi.math.color.L_M_S_2ICtCp_matrix.multiply(L_M_S_);
+	return ICtCp;
+};
+jsapi.math.color.SMPTE2084_M1 = (2610.0 / 4096) * .25;
+jsapi.math.color.SMPTE2084_M2 = (2523.0 / 4096) * 128;
+jsapi.math.color.SMPTE2084_C1 = (3424.0 / 4096);
+jsapi.math.color.SMPTE2084_C2 = (2413.0 / 4096) * 32;
+jsapi.math.color.SMPTE2084_C3 = (2392.0 / 4096) * 32;
+jsapi.math.color.SMPTE2084_EOTF = function (v) {
+	return Math.pow(Math.max(Math.pow(v, (1.0 / jsapi.math.color.SMPTE2084_M2)) - jsapi.math.color.SMPTE2084_C1, 0) /
+					(jsapi.math.color.SMPTE2084_C2 - jsapi.math.color.SMPTE2084_C3 * Math.pow(v, (1.0 / jsapi.math.color.SMPTE2084_M2))), (1.0 / jsapi.math.color.SMPTE2084_M1));
+};
+jsapi.math.color.SMPTE2084_OETF = function (v) {
+	return Math.pow((2413.0 * Math.pow(v, jsapi.math.color.SMPTE2084_M1) + 107) /
+					(2392.0 * Math.pow(v, jsapi.math.color.SMPTE2084_M1) + 128), jsapi.math.color.SMPTE2084_M2);
+};
+jsapi.math.color.XYZ2ICtCp = function (X, Y, Z, oetf) {
+	LinearRec2020RGB = jsapi.math.color.xyz_to_rgb_matrix(0.708, 0.292, 0.17, 0.797, 0.131, 0.046, "D65", 1.0).multiply([X, Y, Z]);
+	return jsapi.math.color.LinearRec2020RGB2ICtCp(LinearRec2020RGB[0], LinearRec2020RGB[1], LinearRec2020RGB[2], oetf || jsapi.math.color.SMPTE2084_OETF);
+};
 jsapi.math.color.XYZ2RGB = function (X, Y, Z, whitepoint, scale, round_, clamp) {
 	if (!scale) scale = 1.0;
 	
@@ -353,6 +380,8 @@ jsapi.math.color.standard_illuminants = {
 					 "F11": {"X": 1.00962, "Z": 0.64350}},
 	"ICC": {"D50": {"X": 0.9642, "Z": 0.8249},
 			"D65": {"X": 0.9505, "Z": 1.0890}},
+	"ISO 11664-2:2007": {"D65": {"X": jsapi.math.color.xyY2XYZ(0.3127, 0.329)[0],
+								 "Z": jsapi.math.color.xyY2XYZ(0.3127, 0.329)[2]}},
 	"Wyszecki & Stiles": {"A": {"X": 1.09828, "Z": 0.35547},
 						  "B": {"X": 0.99072, "Z": 0.85223},
 						  "C": {"X": 0.98041, "Z": 1.18103},
@@ -361,7 +390,7 @@ jsapi.math.color.standard_illuminants = {
 						  "D75": {"X": 0.94939, "Z": 1.22558}}
 };
 jsapi.math.color.get_standard_illuminant = function (illuminant_name, priority, scale) {
-	if (!priority) priority = ["ICC", "ASTM E308-01", "Wyszecki & Stiles", "None"];
+	if (!priority) priority = ["ISO 11664-2:2007", "ICC", "ASTM E308-01", "Wyszecki & Stiles", "None"];
 	if (!scale) scale = 1.0;
 	var cachehash = [illuminant_name, priority, scale].join(","),
 		cache = jsapi.math.color.get_standard_illuminant.cache[cachehash];
@@ -491,3 +520,9 @@ jsapi.math.Matrix3x3.prototype = {
 		return str + ']';
 	}
 };
+jsapi.math.color.LinearRec2020RGB2LMS_matrix = new jsapi.math.Matrix3x3([[1688 / 4096., 2146 / 4096., 262 / 4096.],
+																		 [683 / 4096., 2951 / 4096., 462 / 4096.],
+																		 [99 / 4096., 309 / 4096., 3688 / 4096.]]);
+jsapi.math.color.L_M_S_2ICtCp_matrix = new jsapi.math.Matrix3x3([[.5, .5, 0],
+																 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
+																 [17933 / 4096., -17390 / 4096., -543 / 4096.]]);

@@ -69,3 +69,4 @@ var DELTA_A_MAX = 'DELTA_A_MAX',
 	CIE00 = 'CIE00',
 	CMC11 = 'CMC11',
 	CMC21 = 'CMC21';
+	ICTCP = 'ICtCp';

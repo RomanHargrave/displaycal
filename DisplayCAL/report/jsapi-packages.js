@@ -948,13 +948,14 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 	</jsapi>
 */
 
-	jsapi.math.color.delta = function (L1, a1, b1, L2, a2, b2, method, p1, p2, p3, debug) {
+	jsapi.math.color.delta = function (L1, a1, b1, L2, a2, b2, method, p1, p2, p3, white, lumi, debug) {
 		/*
 			CIE 1994 & CMC calculation code derived from formulas on www.brucelindbloom.com
 			CIE 1994 code uses some alterations seen on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html (see notes in code below)
 			CIE 2000 calculation code derived from Excel spreadsheet available at www.ece.rochester.edu/~gsharma/ciede2000
+			Delta ICtCp based on research by Dolby
 			
-			method: either "CIE94", "CMC", "CIE2K" or "CIE76" (default if method is not set)
+			method: either "CIE94", "CMC", "CIE2K", "ICtCp" or "CIE76" (default if method is not set)
 			
 			p1, p2, p3 arguments have different meaning for each calculation method:
 			
@@ -963,6 +964,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					commonly used values are CMC(1:1) for perceptability (default if p1 and p2 are not set) and CMC(2:1) for acceptability
 				CIE 2000: p1 becomes kL (lightness) weighting factor, p2 becomes kC (chroma) weighting factor and p3 becomes kH (hue) weighting factor
 					(all three default to 1 if not set)
+			
+			white (ref. white for converson from L*a*b* to XYZ) and lumi (white luminance in cd/m2) are used only for delta ICtCp
 		*/
 		for (var i = 0; i < 6; i ++) if (typeof arguments[i] != "number" || isNaN(arguments[i])) return NaN;
 		if (typeof method == "string") method = method.toLowerCase();
@@ -1073,6 +1076,28 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					return t.join("\n");
 				};
 				
+				break;
+			case "ictcp":
+				var XYZ1 = jsapi.math.color.Lab2XYZ(L1, a1, b1, white),
+					XYZ2 = jsapi.math.color.Lab2XYZ(L2, a2, b2, white),
+					//XYZ1a = jsapi.math.color.adapt(XYZ1[0], XYZ1[1], XYZ1[2], white, "D65"),
+					//XYZ2a = jsapi.math.color.adapt(XYZ2[0], XYZ2[1], XYZ2[2], white, "D65"),
+					XYZ1a = XYZ1,
+					XYZ2a = XYZ2,
+					scale = lumi / 10000,
+					ICtCp1 = jsapi.math.color.XYZ2ICtCp(XYZ1a[0] * scale, XYZ1a[1] * scale, XYZ1a[2] * scale),
+					ICtCp2 = jsapi.math.color.XYZ2ICtCp(XYZ2a[0] * scale, XYZ2a[1] * scale, XYZ2a[2] * scale),
+					I1 = ICtCp1[0], Ct1 = ICtCp1[1], Cp1 = ICtCp1[2],
+					I2 = ICtCp2[0], Ct2 = ICtCp2[1], Cp2 = ICtCp2[2],
+					//L1 = I1, L2 = I2, a1 = Ct1, b1 = Cp1, a2 = Ct2, b2 = Cp2,
+					dL = Math.sqrt(4 * Math.pow(I2 - I1, 2)) * 240,
+					C1 = Math.sqrt(0.25 * Math.pow(Ct1, 2) + Math.pow(Cp1, 2)),
+					C2 = Math.sqrt(0.25 * Math.pow(Ct2, 2) + Math.pow(Cp2, 2)),
+					dC = C2 - C1,
+					dH = 0.25 * Math.pow(Ct2 - Ct1, 2) + Math.pow(Cp2 - Cp1, 2) - Math.pow(dC, 2),
+					dH = dH > 0 ? Math.sqrt(dH) * 240 : 0,
+					dC = dC * 240,
+					dE = Math.sqrt(4 * Math.pow(I2 - I1, 2) + 0.25 * Math.pow(Ct2 - Ct1, 2) + Math.pow(Cp2 - Cp1, 2)) * 240;  // Normalization per Pytlarz
 				break;
 			default:
 				var dL = L1 - L2,
