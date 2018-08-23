@@ -6864,8 +6864,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			oprof.write(profile_path)
 
 			# Check if we need to apply calibration
-			vcgt = oprof.tags.get("vcgt")
-			if isinstance(vcgt, ICCP.VideoCardGammaType):
+			if (devlink and "-a" in parse_argument_string(
+				devlink.tags.get("meta", {}).get("collink.args", {}).get("value",
+					"-a" if getcfg("3dlut.output.profile.apply_cal") else ""))):
 				oprof_cal_path = os.path.join(temp, name + ".cal")
 				extract_cal_from_profile(oprof, oprof_cal_path)
 				profile_with_cal_path = os.path.join(temp, name + " + cal.icc")
