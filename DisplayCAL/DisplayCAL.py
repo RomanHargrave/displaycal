@@ -7028,6 +7028,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		if qbits:
 			safe_print("Quantizing reference device values to %i bits" % qbits)
 			ti3_ref.quantize_device_values(qbits)
+			if gray:
+				qmax = 2 ** qbits - 1.0
+				gray = [[round(round(v / 100.0 * qmax) / qmax * 100.0, 4)
+						 for v in RGB] for RGB in gray]
 
 		# Keep around ref TI3 for diagnostic purposes
 		ti3_ref.write(os.path.splitext(ti3_path)[0] + "_ref.ti3")
