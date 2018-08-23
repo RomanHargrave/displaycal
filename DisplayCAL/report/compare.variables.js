@@ -1,33 +1,27 @@
+// !!!DO NOT CHANGE NEUTRAL ENTRIES!!!
 var CRITERIA_RULES_NEUTRAL = [
 		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
 		["Measured vs. assumed target whitepoint ΔE*76", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE76],
 		["Measured vs. assumed target whitepoint ΔE*94", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE94],
 		["Measured vs. assumed target whitepoint ΔE*00", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE00],
-		["Measured vs. assumed target whitepoint ΔICtCp", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, ICTCP],
 		["Measured vs. display profile whitepoint ΔE*76", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, CIE76],
 		["Measured vs. display profile whitepoint ΔE*94", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, CIE94],
 		["Measured vs. display profile whitepoint ΔE*00", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, CIE00],
-		["Measured vs. display profile whitepoint ΔICtCp", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, ICTCP],
 		["Average ΔE*76", [], DELTA_E_AVG, null, null, CIE76],
 		["Average ΔE*94", [], DELTA_E_AVG, null, null, CIE94],
 		["Average ΔE*00", [], DELTA_E_AVG, null, null, CIE00],
-		["Average ΔICtCp", [], DELTA_E_AVG, null, null, ICTCP],
 		["Maximum ΔE*76", [], DELTA_E_MAX, null, null, CIE76],
 		["Maximum ΔE*94", [], DELTA_E_MAX, null, null, CIE94],
 		["Maximum ΔE*00", [], DELTA_E_MAX, null, null, CIE00],
-		["Maximum ΔICtCp", [], DELTA_E_MAX, null, null, ICTCP],
 		["Median ΔE*76", [], DELTA_E_MED, null, null, CIE76],
 		["Median ΔE*94", [], DELTA_E_MED, null, null, CIE94],
 		["Median ΔE*00", [], DELTA_E_MED, null, null, CIE00],
-		["Median ΔICtCp", [], DELTA_E_MED, null, null, ICTCP],
 		["Median absolute deviation ΔE*76", [], DELTA_E_MAD, null, null, CIE76],
 		["Median absolute deviation ΔE*94", [], DELTA_E_MAD, null, null, CIE94],
 		["Median absolute deviation ΔE*00", [], DELTA_E_MAD, null, null, CIE00],
-		["Median absolute deviation ΔICtCp", [], DELTA_E_MAD, null, null, ICTCP],
 		["Standard deviation ΔE*76", [], DELTA_E_STDDEV, null, null, CIE76],
 		["Standard deviation ΔE*94", [], DELTA_E_STDDEV, null, null, CIE94],
 		["Standard deviation ΔE*00", [], DELTA_E_STDDEV, null, null, CIE00],
-		["Standard deviation ΔICtCp", [], DELTA_E_STDDEV, null, null, ICTCP],
 		["Calibration red tone values", ['CAL_REDLEVELS'], '', null, 95],
 		["Calibration green tone values", ['CAL_GREENLEVELS'], '', null, 95],
 		["Calibration blue tone values", ['CAL_BLUELEVELS'], '', null, 95],
@@ -71,6 +65,18 @@ CRITERIA_RULES_DEFAULT[10][4] = 3; // Maximum ΔE*94 recommended
 CRITERIA_RULES_DEFAULT[11][3] = 4; // Maximum ΔE*00 nominal
 CRITERIA_RULES_DEFAULT[11][4] = 3; // Maximum ΔE*00 recommended
 
+CRITERIA_RULES_DEFAULT = CRITERIA_RULES_DEFAULT.concat(
+	[
+		["Measured vs. assumed target whitepoint ΔICtCp", ['WHITEPOINT_MvsA'], DELTA_E_MAX, 2, 1, ICTCP],
+		["Measured vs. display profile whitepoint ΔICtCp", ['WHITEPOINT_MvsP'], DELTA_E_MAX, 2, 1, ICTCP],
+		["Average ΔICtCp", [], DELTA_E_AVG, 1.5, 1, ICTCP],
+		["Maximum ΔICtCp", [], DELTA_E_MAX, 4, 3, ICTCP],
+		["Median ΔICtCp", [], DELTA_E_MED, null, null, ICTCP],
+		["Median absolute deviation ΔICtCp", [], DELTA_E_MAD, null, null, ICTCP],
+		["Standard deviation ΔICtCp", [], DELTA_E_STDDEV, null, null, ICTCP]
+	]
+);
+
 var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.clone().concat(
 		[
 			["Gamma maximum", [], GAMMA_MAX],
@@ -92,7 +98,10 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.clone().concat(
 			["RGB gray balance (>= 1% luminance) maximum ΔC*94", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE94],
 			["RGB gray balance (>= 1% luminance) average absolute ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, CIE00],
 			["RGB gray balance (>= 1% luminance) combined Δa*00 and Δb*00 range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, CIE00],
-			["RGB gray balance (>= 1% luminance) maximum ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE00]
+			["RGB gray balance (>= 1% luminance) maximum ΔC*00", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, CIE00],
+			["RGB gray balance (>= 1% luminance) average absolute ΔC CtCp", window.CRITERIA_GRAYSCALE, DELTA_C_AVG, 1.0, 0.5, ICTCP],
+			["RGB gray balance (>= 1% luminance) combined ΔCt and ΔCp range", window.CRITERIA_GRAYSCALE, DELTA_A_B_RANGE, 2.0, 1.5, ICTCP],
+			["RGB gray balance (>= 1% luminance) maximum ΔC CtCp", window.CRITERIA_GRAYSCALE, DELTA_C_MAX, null, null, ICTCP]
 		]
 	),
 	CRITERIA_RULES_CMYK = CRITERIA_RULES_DEFAULT.clone(),
