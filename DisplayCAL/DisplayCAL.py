@@ -6849,7 +6849,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if self_check_report and oprof:
 			# Instead of doing measurements, lookup ti1 through display profile
 			void, ti3, void = self.worker.chart_lookup(ti1, oprof, pcs="x",
-													   intent="a")
+													   intent="a",
+													   white_patches=0)
 			wtpt = oprof.tags.wtpt.values()
 			if isinstance(oprof.tags.get("lumi"), ICCP.XYZType):
 				luminance = oprof.tags.lumi.Y
