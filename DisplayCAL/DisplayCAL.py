@@ -6889,7 +6889,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				if isinstance(result, Exception) and not getcfg("dry_run"):
 					show_result_dialog(result, self)
 					return
+				odesc = oprof.getDescription()
 				oprof = ICCP.ICCProfile(profile_with_cal_path)
+				# Restore original description
+				oprof.setDescription(odesc)
 
 			void, ti3, void = self.worker.chart_lookup(ti1, oprof, pcs="x",
 													   intent="a",
