@@ -922,7 +922,7 @@ p.generate_report = function(set_delta_calc_method) {
 				actual_color = jsapi.math.color.XYZ2Lu_v_(actual_color[0], actual_color[1], actual_color[2], absolute && wp_norm);
 			}
 			if (mode == "ICtCp") {
-				if (!absolute) {
+				if (!(absolute && use_profile_wp_as_ref && profile_wp_norm_1)) {
 					target_color = jsapi.math.color.adapt(target_color[0], target_color[1], target_color[2], [0.9642, 1, 0.8249], "D65", cat);
 					actual_color = jsapi.math.color.adapt(actual_color[0], actual_color[1], actual_color[2], [0.9642, 1, 0.8249], "D65", cat);
 				}
