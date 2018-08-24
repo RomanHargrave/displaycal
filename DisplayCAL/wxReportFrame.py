@@ -322,7 +322,8 @@ class ReportFrame(BaseFrame):
 					if event:
 						v = int(not self.chart_white or not "RGB" in values)
 						setcfg("measurement_report.whitepoint.simulate", v)
-						setcfg("measurement_report.whitepoint.simulate.relative", v)
+						setcfg("measurement_report.whitepoint.simulate.relative",
+							   int("LAB" in values))
 			if not values:
 				if chart:
 					show_result_dialog(lang.getstr("error.testchart.missing_fields",
@@ -852,7 +853,7 @@ class ReportFrame(BaseFrame):
 			use_sim_profile = getcfg("measurement_report.use_simulation_profile")
 		sim_profile = getattr(self, "simulation_profile", None)
 		enable = False
-		if sim_profile:
+		if use_sim_profile and sim_profile:
 			v = int(sim_profile.profileClass == "prtr")
 			setcfg("measurement_report.whitepoint.simulate", v)
 			setcfg("measurement_report.whitepoint.simulate.relative", v)
