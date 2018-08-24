@@ -276,7 +276,8 @@ p.generate_report = function(set_delta_calc_method) {
 		wp_assumed_xy_round[1] = wp_assumed_xy[1].accuracy(4);
 	}
 
-	var ICtCp_lumi_scale = wp[1] / 10000;
+	var ICtCp_lumi_target_scale = (profile_wp || wp)[1] / 10000,
+		ICtCp_lumi_scale = wp[1] / 10000;
 	
 	this.report_html = [
 		'	<div class="info"><h3 class="toggle" onclick="toggle(this)">Basic Information</h3>',
@@ -442,7 +443,7 @@ p.generate_report = function(set_delta_calc_method) {
 						target_Lab = [100, 0, 0];
 						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2], [wp_assumed[0], wp_assumed[1], wp_assumed[2]]);
 						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
-						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]);
+						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 						result[j].E.push(delta.E);
 						result[j].L.push(delta.L);
 						result[j].C.push(delta.C);
@@ -461,7 +462,7 @@ p.generate_report = function(set_delta_calc_method) {
 						target_Lab = [100, 0, 0];
 						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2], [profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]]);
 						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
-						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]);
+						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 						result[j].E.push(delta.E);
 						result[j].L.push(delta.L);
 						result[j].C.push(delta.C);
@@ -545,7 +546,7 @@ p.generate_report = function(set_delta_calc_method) {
 				}
 				else matched = true;
 				if (matched) {
-					delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]);
+					delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 					result[j].E.push(delta.E);
 					result[j].L.push(delta.L);
 					result[j].C.push(delta.C);
@@ -899,7 +900,7 @@ p.generate_report = function(set_delta_calc_method) {
 		current_cmyk = colors.current_cmyk;
 		target_rgb = jsapi.math.color.Lab2RGB(target_Lab[0], target_Lab[1], target_Lab[2], target_Lab2RGB_wp_1, target_Lab2RGB_src_wp_1, 255, true);
 		actual_rgb = jsapi.math.color.Lab2RGB(actual_Lab[0], actual_Lab[1], actual_Lab[2], actual_Lab2RGB_wp_1, actual_Lab2RGB_src_wp_1, 255, true);
-		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]);
+		delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 		if (mode == 'Lab') {
 			target_color = target_Lab;
 			actual_color = actual_Lab;
@@ -926,7 +927,7 @@ p.generate_report = function(set_delta_calc_method) {
 					target_color = jsapi.math.color.adapt(target_color[0], target_color[1], target_color[2], [0.9642, 1, 0.8249], "D65", cat);
 					actual_color = jsapi.math.color.adapt(actual_color[0], actual_color[1], actual_color[2], [0.9642, 1, 0.8249], "D65", cat);
 				}
-				target_color = jsapi.math.color.XYZ2ICtCp(target_color[0] * ICtCp_lumi_scale, target_color[1] * ICtCp_lumi_scale, target_color[2] * ICtCp_lumi_scale);
+				target_color = jsapi.math.color.XYZ2ICtCp(target_color[0] * ICtCp_lumi_target_scale, target_color[1] * ICtCp_lumi_target_scale, target_color[2] * ICtCp_lumi_target_scale);
 				actual_color = jsapi.math.color.XYZ2ICtCp(actual_color[0] * ICtCp_lumi_scale, actual_color[1] * ICtCp_lumi_scale, actual_color[2] * ICtCp_lumi_scale);
 			}
 		}
@@ -1001,7 +1002,7 @@ p.generate_report = function(set_delta_calc_method) {
 				actual_CCT = jsapi.math.color.XYZ2CorColorTemp(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2]),
 				target_Lab = jsapi.math.color.XYZ2Lab(target_XYZ[0], target_XYZ[1], target_XYZ[2], absolute && use_profile_wp_as_ref && profile_wp_norm),
 				actual_Lab = jsapi.math.color.XYZ2Lab(actual_XYZ[0], actual_XYZ[1], actual_XYZ[2], absolute && use_profile_wp_as_ref && profile_wp_norm),
-				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]),
+				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]),
 				delta_CH = Math.sqrt(Math.pow(delta.C, 2) + Math.pow(delta.H, 2));
 			var rgb = jsapi.math.color.XYZ2RGB(actual_XYZ[0] / actual_XYZ[1] * 0.75, actual_XYZ[1] / actual_XYZ[1] * 0.75, actual_XYZ[2] / actual_XYZ[1] * 0.75, null, 255), brgb = [];
 			for (var j = 0; j < 3; j ++)
@@ -1046,7 +1047,7 @@ p.generate_report = function(set_delta_calc_method) {
 				Eprime = (0.75 ** 2.2) ** (1 / gamma),
 				rgb = [],
 				brgb = [],
-				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]);
+				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 			for (var j = 0; j < 3; j ++) {
 				rgb.push(Math.round(Eprime * 255));
 				brgb.push(Math.round(Eprime * 204));
@@ -1088,7 +1089,7 @@ p.generate_report = function(set_delta_calc_method) {
 				actual_rgb = [actual_xyY[0] / actual_xyY[1] * fact, fact, (1 - (actual_xyY[0] + actual_xyY[1])) / actual_xyY[1] * fact],
 				//actual_rgb = jsapi.math.color.XYZ2RGB(actual_rgb[0], actual_rgb[1], actual_rgb[2], absolute && wp_norm_1, 1, false, false),
 				actual_rgb = jsapi.math.color.xyz_to_rgb_matrix(0.6400, 0.3300, 0.3000, 0.6000, 0.1500, 0.0600, (absolute && wp_norm_1) || "D65", 1.0).multiply(actual_rgb),
-				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, wp[1]);
+				delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], delta_calc_method, null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 			debug && window.console && console.log('Target XYZ', target_XYZ.join(', '), 'Actual XYZ', actual_XYZ.join(', '));
 			debug && window.console && console.log('Target RGB', target_rgb.join(', '), 'Actual RGB', actual_rgb.join(', '));
 			if (isNaN(jsapi.math.min(target_rgb)) || isNaN(jsapi.math.min(actual_rgb))) {

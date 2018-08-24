@@ -948,7 +948,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 	</jsapi>
 */
 
-	jsapi.math.color.delta = function (L1, a1, b1, L2, a2, b2, method, p1, p2, p3, white, lumi, debug) {
+	jsapi.math.color.delta = function (L1, a1, b1, L2, a2, b2, method, p1, p2, p3, white, l1, l2, debug) {
 		/*
 			CIE 1994 & CMC calculation code derived from formulas on www.brucelindbloom.com
 			CIE 1994 code uses some alterations seen on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html (see notes in code below)
@@ -965,7 +965,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 				CIE 2000: p1 becomes kL (lightness) weighting factor, p2 becomes kC (chroma) weighting factor and p3 becomes kH (hue) weighting factor
 					(all three default to 1 if not set)
 			
-			white (ref. white for converson from L*a*b* to XYZ) and lumi (white luminance in cd/m2) are used only for delta ICtCp
+			white (ref. white for converson from L*a*b* to XYZ) and l1/l2 (white luminance in cd/m2) are used only for delta ICtCp
 		*/
 		for (var i = 0; i < 6; i ++) if (typeof arguments[i] != "number" || isNaN(arguments[i])) return NaN;
 		if (typeof method == "string") method = method.toLowerCase();
@@ -1084,9 +1084,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					XYZ2a = white ? XYZ2 : jsapi.math.color.adapt(XYZ2[0], XYZ2[1], XYZ2[2], white, "D65"),
 					//XYZ1a = XYZ1,
 					//XYZ2a = XYZ2,
-					scale = lumi / 10000,
-					ICtCp1 = jsapi.math.color.XYZ2ICtCp(XYZ1a[0] * scale, XYZ1a[1] * scale, XYZ1a[2] * scale),
-					ICtCp2 = jsapi.math.color.XYZ2ICtCp(XYZ2a[0] * scale, XYZ2a[1] * scale, XYZ2a[2] * scale),
+					s1 = l1 / 10000,
+					s2 = l2 / 10000,
+					ICtCp1 = jsapi.math.color.XYZ2ICtCp(XYZ1a[0] * s1, XYZ1a[1] * s1, XYZ1a[2] * s1),
+					ICtCp2 = jsapi.math.color.XYZ2ICtCp(XYZ2a[0] * s2, XYZ2a[1] * s2, XYZ2a[2] * s2),
 					I1 = ICtCp1[0], Ct1 = ICtCp1[1], Cp1 = ICtCp1[2],
 					I2 = ICtCp2[0], Ct2 = ICtCp2[1], Cp2 = ICtCp2[2],
 					L1 = I1,
