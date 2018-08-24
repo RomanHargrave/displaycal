@@ -995,9 +995,11 @@ class CGATS(dict):
 								key, value = var, data[var]
 						else:
 							key, value = len(self), var
-						if self.root.normalize_fields:
-							if isinstance(value, basestring):
-								value = value.upper()
+						if (self.root.normalize_fields and
+							(self.type in ('DATA_FORMAT', 'KEYWORDS') or
+							 var == 'KEYWORD') and
+							isinstance(value, basestring)):
+							value = value.upper()
 							if value == 'SAMPLEID':
 								value = 'SAMPLE_ID'
 							elif value == 'SAMPLENAME':
