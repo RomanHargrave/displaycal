@@ -70,7 +70,7 @@ CRITERIA_RULES_DEFAULT = CRITERIA_RULES_DEFAULT.concat(
 		["Measured vs. assumed target whitepoint ΔICtCp", ['WHITEPOINT_MvsA'], DELTA_E_MAX, 2, 1, ICTCP],
 		["Measured vs. display profile whitepoint ΔICtCp", ['WHITEPOINT_MvsP'], DELTA_E_MAX, 2, 1, ICTCP],
 		["Average ΔICtCp", [], DELTA_E_AVG, 1.5, 1, ICTCP],
-		["Maximum ΔICtCp", [], DELTA_E_MAX, 4, 3, ICTCP],
+		["Maximum ΔICtCp", [], DELTA_E_MAX, 5, 3, ICTCP],
 		["Median ΔICtCp", [], DELTA_E_MED, null, null, ICTCP],
 		["Median absolute deviation ΔICtCp", [], DELTA_E_MAD, null, null, ICTCP],
 		["Standard deviation ΔICtCp", [], DELTA_E_STDDEV, null, null, ICTCP]
