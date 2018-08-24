@@ -1613,7 +1613,6 @@ function plaintext(which) {
 	else
 		var f = 'FF_data_in';
 	var win = window.open();
-	win.document.open('text/plain');
-	win.document.write(e[f].value);
+	win.document.write('<pre>' + e[f].value);
 	win.document.close();
 };
