@@ -1097,6 +1097,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					a2 = Math.sqrt(0.25 * Math.pow(Ct2, 2)) * 240,
 					b2 = Cp2 * 240,
 					dL = Math.sqrt(4 * Math.pow(I2 - I1, 2)) * 240,
+					dL = I2 < I1 ? -dL : dL,
 					C1 = Math.sqrt(0.25 * Math.pow(Ct1, 2) + Math.pow(Cp1, 2)),
 					C2 = Math.sqrt(0.25 * Math.pow(Ct2, 2) + Math.pow(Cp2, 2)),
 					dC = C2 - C1,
