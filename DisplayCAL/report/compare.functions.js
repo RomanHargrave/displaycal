@@ -1145,7 +1145,7 @@ p.generate_report = function(set_delta_calc_method) {
 				multiplier = 3;
 		}
 		this.report_html.push('	<div class="gamut graph">');
-		this.report_html.push('	<h3 class="toggle" onclick="toggle(this)">Gamut CIE ' + xy + '</h3>');
+		this.report_html.push('	<h3 class="toggle" onclick="toggle(this)">Gamut ' + xy + '</h3>');
 		this.report_html.push('	<div class="canvas" id="gamut" style="height: 900px;"><div class="inner" style="left: ' + offset[0] + '%; top: ' + offset[1] + '%;"><div class="overlay" style="left: -' + offset[0] * 9 + 'em; top: -' + offset[1] * 9 + 'em;"></div>');
 		// Sort by L*
 		gamut_values.sort(function (a, b) {
