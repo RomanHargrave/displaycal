@@ -5,6 +5,15 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Tue Aug 07 16:15:26 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.6.1.1:
+  * [Minor]: Don't call setlocale() unconditionally, and restore
+    previous locale (fixes build under non-english locales,
+    regression of XDG changes in DisplayCAL 3.6.1, SVN revision
+    5457 and up).
+
+-------------------------------------------------------------------
 Mon Aug 06 14:04:17 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.6.1:

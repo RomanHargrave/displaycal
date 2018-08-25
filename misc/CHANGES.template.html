@@ -48,13 +48,36 @@
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
 
-						<h4>Fixed in this release:</h4>
+						<h4>Added in this release:</h4>
 						<ul>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux: Don't call setlocale() unconditionally, and restore previous locale (fixes build under non-english locales, regression of XDG changes in ${APPNAME} 3.6.1, SVN revision 5457 and up).</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Measurement report: ICtCp and ΔICtCp color distance metric.</li>
 						</ul>
 
-					<p id="changelog-3.6.1">2018-08-06 13:57 (UTC) 3.6.1 </p>
-					<dd>
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Show report type in self check report.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Add actual display profile description to self check report if a simulation profile is used as display profile.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use the same method to create HDR 3D LUTs whether the display profile is cLUT or matrix based.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Verification: Do not automatically enable “Simulate whitepoint relative to display profile whitepoint” if the verification chart does not contain L*a*b* reference data.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement and self check report: Only automatically enable the use of absolute values when simulating the reference whitepoint if no simulation profile was used.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: On Apple computers with integrated displays (i.e. iMac/MacBook), use the model identifier (e.g. “MacBookPro15,2”) instead of the generic “Color LCD” as display name and add the model description (e.g. “MacBook Pro (Mid 2018)”) when creating colorimeter corrections, to ease identification.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> 3D LUT/verification with a display profile that has a black level of zero, but embedded characterization data black level above zero: Black offset also needs to be applied if not using BT.1886 for correct results.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> When generating high resolution PCS to device tables during HDR 3D LUT creation, use the configured resolution even if low quality PCS to device tables were generated when creating the profile.</li>
+						</ul>
+
+						<p id="changelog-3.6.1.1">2018-08-07 16:14 (UTC) 3.6.1.1 </p>
+						<h3>DisplayCAL 3.6.1.1 </h3>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux: Don't call setlocale() unconditionally, and restore previous locale (fixes build under non-english locales, regression of XDG changes in DisplayCAL 3.6.1, SVN revision 5457 and up).</li>
+						</ul>
+
+						<p id="changelog-3.6.1">2018-08-06 13:57 (UTC) 3.6.1 </p>
 						<h3>DisplayCAL 3.6.1 </h3>
 
 						<h4>Added in this release:</h4>
