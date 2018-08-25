@@ -76,7 +76,8 @@ def format_chglog(chglog, format="appstream"):
 			# - <li> maximum is 100 chars
 			chglog = re.sub(r"(<li>)([^<]{100,})(</li>)",
 							lambda matches: "%s%s%s" % (matches.group(1),
-														matches.group(2)[:97] +
+														# appstream-util validate counts bytes, not characters
+														matches.group(2).encode("UTF-8")[:97].rstrip().decode("UTF-8", "ignore") +
 														"...",
 														matches.group(3)), chglog)
 		# Nice formatting
