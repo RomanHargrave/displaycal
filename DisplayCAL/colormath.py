@@ -480,6 +480,8 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, power=40.0):
 		bpLab = XYZ2Lab(*[v * 100 for v in bp])
 		if bp is bp_in:
 			bL = bpLab[0]
+			if bL == 100:
+				raise ValueError("Black luminance is 100!")
 		else:
 			bL = 0
 		vv = (L - bL) / (100.0 - bL)  # 0 at bp, 1 at wp
