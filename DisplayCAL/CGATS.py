@@ -347,12 +347,14 @@ class CGATS(dict):
 						context.datetime = line
 					else:
 						match = re.match(
-							'([^"]+?)(?:\s+("[^"]+"|[^\s]+))?(?:\s*#(.*))?$', 
+							'([^"]+?)(?:\s+(".+?"|[^\s]+))?(?:\s*#(.*))?$', 
 							line)
 						if match:
 							key, value, comment = match.groups()
+							print 'key:', key, 'value:', value, 'comment:', comment
 							if value != None:
-								context = context.add_data({key: value.strip('"')})
+								# Need to unescape quotes
+								context = context.add_data({key: value.strip('"').replace('""', '"')})
 							else:
 								context = context.add_data({key: ''})
 				elif values and values[0] not in ('Comment:', 'Date:') and \
@@ -514,6 +516,9 @@ class CGATS(dict):
 								key in self['KEYWORDS'].values():
 								if self.emit_keywords:
 									result.append('KEYWORD "%s"' % key)
+							if isinstance(value, basestring):
+								# Need to escape quotes
+								value = value.replace('"', '""')
 							result.append('%s "%s"' % (key, value))
 				elif key not in ('DATA_FORMAT', 'KEYWORDS'):
 					if (value.type == 'SECTION' and result[-1:] and 
