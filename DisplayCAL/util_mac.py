@@ -185,5 +185,6 @@ def get_machine_attributes(model_id=None):
 	for line in output.splitlines():
 		match = re.search(r'(\w+)\s*=\s*"?(.*?)"?\s*;', line)
 		if match:
-			attrs[match.group(1)] = match.group(2).decode("string_escape")
+			# Need to double unescape backslashes
+			attrs[match.group(1)] = match.group(2).decode("string_escape").decode("string_escape")
 	return attrs
