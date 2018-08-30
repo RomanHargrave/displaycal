@@ -4990,7 +4990,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			show_result_dialog(Error(lang.getstr("windows.version.unsupported")))
 			return
 		safe_print("-" * 80)
-		safe_print(lang.getstr("ambient.measure"))
 		self.stop_timers()
 		evtobjname = event.GetEventObject().Name
 		if evtobjname == "visual_whitepoint_editor_measure_btn":
@@ -5001,8 +5000,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif evtobjname in ("luminance_measure_btn",
 							"black_luminance_measure_btn"):
 			interactive_frame = "luminance"
+			lstr = "measure"
 		else:
 			interactive_frame = "ambient"
+			lstr = "ambient.measure"
+		safe_print(lang.getstr(lstr))
 		self.worker.interactive = interactive_frame not in ("ambient",
 															"luminance")
 		self.worker.start(self.ambient_measure_consumer, 
