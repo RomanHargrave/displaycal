@@ -443,7 +443,7 @@ p.generate_report = function(set_delta_calc_method) {
 						target_Lab = [100, 0, 0];
 						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2], [wp_assumed[0], wp_assumed[1], wp_assumed[2]]);
 						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
-						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
+						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, [wp_assumed[0] / 100, wp_assumed[1] / 100, wp_assumed[2] / 100], (profile_wp || wp)[1], wp[1]);
 						result[j].E.push(delta.E);
 						result[j].L.push(delta.L);
 						result[j].C.push(delta.C);
@@ -462,7 +462,7 @@ p.generate_report = function(set_delta_calc_method) {
 						target_Lab = [100, 0, 0];
 						actual_Lab = jsapi.math.color.XYZ2Lab(wp_norm[0], wp_norm[1], wp_norm[2], [profile_wp_norm[0], profile_wp_norm[1], profile_wp_norm[2]]);
 						// alert(rules[j] + '\ntarget_Lab: ' + target_Lab + '\nactual_Lab: ' + actual_Lab);
-						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, absolute && use_profile_wp_as_ref && profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
+						delta = jsapi.math.color.delta(target_Lab[0], target_Lab[1], target_Lab[2], actual_Lab[0], actual_Lab[1], actual_Lab[2], rules[j][5], null, null, null, profile_wp_norm_1, (profile_wp || wp)[1], wp[1]);
 						result[j].E.push(delta.E);
 						result[j].L.push(delta.L);
 						result[j].C.push(delta.C);
