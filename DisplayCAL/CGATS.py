@@ -33,7 +33,8 @@ def rpad(value, width):
 	"""
 	strval = str(value)
 	if not isinstance(value, (int, float, long, complex)):
-		return '"%s"' % strval
+		# Need to escape single quote -> double quote
+		return '"%s"' % strval.replace('"', '""')
 	i = strval.find(".")
 	if i > -1:
 		if i < width - 1:
@@ -294,10 +295,38 @@ class CGATS(dict):
 				# strip control chars and leading/trailing whitespace
 				line = re.sub('[^\x09\x20-\x7E\x80-\xFF]', '', 
 								raw_line.strip())
-				comment_offset = line.find('#')
-				if comment_offset >= 0: # strip comment
-					line = line[:comment_offset].strip()
-				values = [value.strip('"') for value in line.split()]
+				if '#' in line or '"' in line:
+					# Deal with comments and quotes
+					quoted = False
+					values = []
+					token_start = 0
+					end = len(line) - 1
+					for i, char in enumerate(line):
+						if char == '"':
+							if quoted is False:
+								if not line[token_start:i]:
+									token_start = i
+								quoted = True
+							else:
+								quoted = False
+						if (quoted is False and char in '# \t') or i == end:
+							if i == end:
+								i += 1
+							value = line[token_start:i]
+							if value:
+								if value[0] == '"' == value[-1]:
+									# Unquote
+									value = value[1:-1]
+								# Need to unescape double quote -> single quote
+								values.append(value.replace('""', '"'))
+							if char == '#':
+								# Strip comment
+								line = line[:i].strip()
+								break
+							elif char in ' \t':
+								token_start = i + 1
+				else:
+					values = line.split()
 				if line[:6] == 'BEGIN_':
 					key = line[6:]
 					if key in context:
@@ -346,15 +375,10 @@ class CGATS(dict):
 					if values[0] == 'Date:':
 						context.datetime = line
 					else:
-						match = re.match(
-							'([^"]+?)(?:\s+(".+?"|[^\s]+))?(?:\s*#(.*))?$', 
-							line)
-						if match:
-							key, value, comment = match.groups()
-							print 'key:', key, 'value:', value, 'comment:', comment
+						if len(values) == 2 and not '"' in values[0]:
+							key, value = values
 							if value != None:
-								# Need to unescape quotes
-								context = context.add_data({key: value.strip('"').replace('""', '"')})
+								context = context.add_data({key: value.strip('"')})
 							else:
 								context = context.add_data({key: ''})
 				elif values and values[0] not in ('Comment:', 'Date:') and \
@@ -517,7 +541,7 @@ class CGATS(dict):
 								if self.emit_keywords:
 									result.append('KEYWORD "%s"' % key)
 							if isinstance(value, basestring):
-								# Need to escape quotes
+								# Need to escape single quote -> double quote
 								value = value.replace('"', '""')
 							result.append('%s "%s"' % (key, value))
 				elif key not in ('DATA_FORMAT', 'KEYWORDS'):
