@@ -572,7 +572,7 @@ class CGATS(dict):
 										for item in 
 										data.parent['DATA_FORMAT'].values()]))
 			result.append('END_DATA')
-		return '\n'.join(result)
+		return '\n'.join(result) + "\n"
 
 	def add_keyword(self, keyword, value=None):
 		""" Add a keyword to the list of keyword values. """

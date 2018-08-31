@@ -711,7 +711,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None,
 			return False
 	try:
 		cgatsfile = open(path, 'wb')
-		cgatsfile.write(cgats)
+		cgatsfile.write(cgats.rstrip("\n") + "\n")
 		cgatsfile.close()
 	except EnvironmentError, exception:
 		show_result_dialog(exception, parent)
