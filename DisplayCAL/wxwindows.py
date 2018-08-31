@@ -3659,12 +3659,7 @@ class CustomGrid(wx.grid.Grid):
 	def SetDefaultCellBackgroundColour(self, color):
 		# Set alpha to 0 so we can detect the default color
 		if not isinstance(color, wx.Colour):
-			color_str = color
-			color = wx.Colour()
-			if hasattr(wx.Colour, "SetFromString"):
-				color.SetFromString(color_str)
-			else:
-				color.SetFromName(color_str)
+			color = wx.Colour(color)
 		color.Set(color.Red(), color.Green(), color.Blue(), 0)
 		wx.grid.Grid.SetDefaultCellBackgroundColour(self, color)
 
