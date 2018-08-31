@@ -382,7 +382,7 @@ class CGATS(dict):
 							else:
 								context = context.add_data({key: ''})
 				elif values and values[0] not in ('Comment:', 'Date:') and \
-				     len(line) >= 3 and not re.search("[^ 0-9A-Za-z]", line):
+				     len(line) >= 3 and not re.search("[^ 0-9A-Za-z/.]", line):
 					context = self.add_data(line)
 			if 0 in self and self[0].get("NORMALIZED_TO_Y_100") == "NO":
 				# Always normalize to Y = 100
