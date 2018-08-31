@@ -236,6 +236,7 @@ class CGATS(dict):
 	fileName = property(lambda self: self.filename,
 						lambda self, filename: setattr(self, "filename", filename))
 	key = None
+	_lvl = 0
 	_modified = False
 	mtime = None
 	parent = None
@@ -476,7 +477,7 @@ class CGATS(dict):
 		return desc
 
 	def __setattr__(self, name, value):
-		if name == '_keys':
+		if name in ('_keys', '_lvl'):
 			object.__setattr__(self, name, value)
 		elif name == 'modified':
 			self.setmodified(value)
@@ -502,6 +503,8 @@ class CGATS(dict):
 	
 	def __str__(self):
 		result = []
+		lvl = self.root._lvl
+		self.root._lvl += 1
 		data = None
 		if self.type == 'SAMPLE':
 			result.append(' '.join(rpad(self[item], 
@@ -572,7 +575,11 @@ class CGATS(dict):
 										for item in 
 										data.parent['DATA_FORMAT'].values()]))
 			result.append('END_DATA')
+		if (self.parent and self.parent.type or
+			self.type) == 'ROOT' and result and result[-1] != '' and lvl == 0:
+			# Add empty line at end if not yet present
 			result.append('')
+		self.root._lvl -= 1
 		return '\n'.join(result)
 
 	def add_keyword(self, keyword, value=None):
