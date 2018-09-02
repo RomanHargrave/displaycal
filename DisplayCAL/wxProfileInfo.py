@@ -999,6 +999,46 @@ class GamutViewOptions(wx_Panel):
 		self.Thaw()
 
 
+class PIFrame_2WaySplitter(TwoWaySplitter):
+
+	def OnLeftDClick(self, event):
+		if not self.IsEnabled():
+			return
+		
+		pt = event.GetPosition()
+
+		if self.GetMode(pt):
+			
+			barSize = self._GetSashSize()
+
+			winborder, titlebar = get_platform_window_decoration_size()
+
+			win0w = self.GetTopLeft().Size[0]
+
+			self.Freeze()
+			TwoWaySplitter.OnLeftDClick(self, event)
+			if self._expanded < 0:
+				self.Parent.SetMinSize((defaults["size.profile_info.split.w"] + winborder * 2,
+										self.Parent.GetMinSize()[1]))
+				if (not self.Parent.IsMaximized() and
+					self.Parent.GetSize()[0] < self.GetSplitSize()[0]):
+					self.Parent.SetSize((self.GetSplitSize()[0],
+										 self.Parent.GetSize()[1]))
+			else:
+				self.Parent.SetMinSize((defaults["size.profile_info.w"] + winborder * 2,
+										self.Parent.GetMinSize()[1]))
+				w = max(self.GetExpandedSize()[0],
+						self._splitx + barSize + winborder * 2)
+				if (not self.Parent.IsMaximized() and
+					self.Parent.GetSize()[0] > w):
+					self.Parent.SetSize((w,
+										 self.Parent.GetSize()[1]))
+			if self.GetTopLeft().Size[0] != win0w:
+				self.Parent.redraw()
+			self.Parent.resize_grid()
+			self.Thaw()
+
+
 class ProfileInfoFrame(LUTFrame):
 
 	def __init__(self, *args, **kwargs):
@@ -1020,7 +1060,9 @@ class ProfileInfoFrame(LUTFrame):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		
-		self.splitter = TwoWaySplitter(self, -1, agwStyle = wx.SP_LIVE_UPDATE | wx.SP_NOSASH)
+		self.splitter = PIFrame_2WaySplitter(self, -1,
+											 agwStyle=wx.SP_LIVE_UPDATE |
+													  wx.SP_NOSASH)
 		self.sizer.Add(self.splitter, 1, flag=wx.EXPAND)
 		
 		p1 = wx_Panel(self.splitter, name="canvaspanel")
@@ -1560,8 +1602,6 @@ class ProfileInfoFrame(LUTFrame):
 		wx.CallAfter(self.resize_grid)
 	
 	def OnSize(self, event=None):
-		if self.IsShownOnScreen() and self.IsMaximized():
-			self.splitter.AdjustLayout()
 		self.splitter.Refresh()
 		wx.CallAfter(self.redraw)
 		wx.CallAfter(self.resize_grid)

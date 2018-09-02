@@ -6480,14 +6480,9 @@ class TwoWaySplitter(FourWaySplitter):
 
 		if self.GetMode(pt):
 			
-			width, height = self.GetSize()
 			barSize = self._GetSashSize()
-			border = self._GetBorderSize()
-			
-			totw = width - barSize - 2*border
 			
 			winborder, titlebar = get_platform_window_decoration_size()
-			winwidth, winheight = self.Parent.GetSize()
 			
 			self.Freeze()
 			self.SetExpanded(-1 if self._expanded > -1 else 0)
@@ -6503,24 +6498,6 @@ class TwoWaySplitter(FourWaySplitter):
 											   float(self.GetSplitSize()[0] - 
 													 barSize - winborder * 2) *
 											   10000))
-				self.Parent.SetMinSize((defaults["size.profile_info.split.w"] + winborder * 2,
-										self.Parent.GetMinSize()[1]))
-				if (not self.Parent.IsMaximized() and
-					self.Parent.GetSize()[0] < self.GetSplitSize()[0]):
-					self.Parent.SetSize((self.GetSplitSize()[0],
-										 self.Parent.GetSize()[1]))
-			else:
-				self.Parent.SetMinSize((defaults["size.profile_info.w"] + winborder * 2,
-										self.Parent.GetMinSize()[1]))
-				w = max(self.GetExpandedSize()[0],
-						self._splitx + barSize + winborder * 2)
-				if (not self.Parent.IsMaximized() and
-					self.Parent.GetSize()[0] > w):
-					self.Parent.SetSize((w,
-										 self.Parent.GetSize()[1]))
-			#wx.CallLater(25, self.Parent.redraw)
-			self.Parent.idle = False
-			self.Parent.resize_grid()
 			self.Thaw()
 
 	# Button being released
