@@ -1224,7 +1224,8 @@ class LUT3DFrame(BaseFrame):
 							self.lut3d_rendering_intent_ctrl.Show()
 						self.panel.GetSizer().Layout()
 						self.update_layout()
-						self.Thaw()
+						if which != "abstract":
+							self.Thaw()
 					setattr(self, "%s_profile" % which, profile)
 					if which == "output" and not self.output_profile_ctrl.IsShown():
 						return
