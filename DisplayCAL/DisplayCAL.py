@@ -4544,7 +4544,29 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_set_path(self, path=None):
 		self.lut3d_path = self.worker.lut3d_get_filename(path)
 		devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
-		setcfg("measurement_report.devlink_profile", devlink)
+		mr_option_changed = False
+		if devlink != getcfg("measurement_report.devlink_profile"):
+			setcfg("measurement_report.devlink_profile", devlink)
+			mr_option_changed = True
+		# Simulation profile for 3D LUT
+		if (getcfg("3dlut.tab.enable") and
+			(getcfg("3dlut.trc").startswith("smpte2084") or
+			 getcfg("3dlut.trc") == "hlg" or
+			 getcfg("3dlut.whitepoint.x", False))):
+			# Use 3D LUT input profile
+			cfgvalue = getcfg("3dlut.input.profile")
+			# Add 3D LUT parameters and use only filename
+			# (file will be in profile dir)
+			cfgfn, cfgext = os.path.splitext(os.path.basename(cfgvalue))
+			lut3d_fn = self.worker.lut3d_get_filename(cfgfn, False, False)
+			cfgvalue = os.path.join(os.path.dirname(self.lut3d_path),
+									lut3d_fn + cfgext)
+			if (cfgvalue != getcfg("measurement_report.simulation_profile") and
+				os.path.isfile(cfgvalue)):
+				setcfg("measurement_report.simulation_profile", cfgvalue)
+				mr_option_changed = True
+		if mr_option_changed:
+			self.mr_update_controls()
 
 	def lut3d_show_controls(self):
 		show = True#bool(getcfg("3dlut.create"))

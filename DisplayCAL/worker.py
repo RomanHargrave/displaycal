@@ -3204,6 +3204,12 @@ END_DATA
 			# Deal with whitepoint
 			profile_in_wtpt_XYZ = profile_in.tags.wtpt.ir.values()
 			if XYZwp:
+				# Quantize to ICC s15Fixed16Number encoding
+				XYZwp = tuple(ICCP.s15Fixed16Number(ICCP.s15Fixed16Number_tohex(v))
+							  for v in XYZwp)
+			else:
+				XYZwp = profile_in_wtpt_XYZ
+			if XYZwp != profile_in_wtpt_XYZ:
 				self.log("Using whitepoint chromaticity %.4f %.4f for input" %
 						 tuple(colormath.XYZ2xyY(*XYZwp)[:2]))
 				(profile_in.tags.wtpt.X,
@@ -3804,11 +3810,16 @@ END_DATA
 													h3d.parametersData)
 						if input_primaries:
 							components = list(input_primaries.groups())
-							# Restore original input profile whitepoint
-							(profile_in.tags.wtpt.X,
-							 profile_in.tags.wtpt.Y,
-							 profile_in.tags.wtpt.Z) = profile_in_wtpt_XYZ
+							if XYZwp != profile_in_wtpt_XYZ:
+								# Restore original input profile whitepoint
+								(profile_in.tags.wtpt.X,
+								 profile_in.tags.wtpt.Y,
+								 profile_in.tags.wtpt.Z) = profile_in_wtpt_XYZ
 							rgb_space = profile_in.get_rgb_space()
+							if XYZwp != profile_in_wtpt_XYZ:
+								(profile_in.tags.wtpt.X,
+								 profile_in.tags.wtpt.Y,
+								 profile_in.tags.wtpt.Z) = XYZwp
 							components_new = []
 							for i in xrange(3):
 								for j in xrange(2):
@@ -3834,8 +3845,13 @@ END_DATA
 							raise Error("madVR 3D LUT doesn't contain "
 										"Input_Primaries")
 
-				if hdr or not use_collink_bt1886:
-					# Save HDR source profile
+				if hdr or not use_collink_bt1886 or XYZwp:
+					if not hdr and XYZwp != profile_in_wtpt_XYZ:
+						# Update profile description
+						profile_in.setDescription(profile_in.getDescription() +
+												  " %.4fx %.4fy" %
+												  colormath.XYZ2xyY(*XYZwp)[:2])
+					# Save source profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
 					profile_in.fileName = os.path.join(os.path.dirname(path),
 													   self.lut3d_get_filename(profile_in_basename,
