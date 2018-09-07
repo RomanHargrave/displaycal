@@ -912,44 +912,43 @@ def eeColor_to_VidRGB(v):
 
 def DIN992Lab(L99, a99, b99, kCH=1.0, kE=1.0):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
-	return DIN99LCH2Lab(L99, C99, H99, kCH, kE)
+	return DIN99familyLCH2Lab(L99, C99, H99, 0, 105.51, .0158, 16, .7,
+							  1 / (0.045 * kCH * kE), 0.045, kE, 0)
 
 
 def DIN99b2Lab(L99, a99, b99):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
-	return DIN99bcdLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
+	return DIN99familyLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
 
 
 def DIN99bLCH2Lab(L99, C99, H99):
-	return DIN99bcdLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
+	return DIN99familyLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
 
 
 def DIN99c2Lab(L99, a99, b99, whitepoint=None):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
-	return DIN99bcdLCH2Lab(L99, C99, H99, .1, 317.651, .0037, 0, .94, 23, .066,
-						   whitepoint)
+	return DIN99familyLCH2Lab(L99, C99, H99, .1, 317.651, .0037, 0, .94, 23, .066,
+							  whitepoint)
 
 
 def DIN99d2Lab(L99, a99, b99, whitepoint=None):
 	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
-	return DIN99bcdLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
-						   .06, whitepoint)
+	return DIN99familyLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
+							  .06, whitepoint)
 
 
 def DIN99dLCH2Lab(L99, C99, H99, whitepoint=None):
-	return DIN99bcdLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
+	return DIN99familyLCH2Lab(L99, C99, H99, .12, 325.221, .0036, 50, 1.14, 22.5,
 						   .06, whitepoint)
 
 
-def DIN99LCH2Lab(L99, C99, H99, kCH=1.0, kE=1.0):
-	G = (math.exp(.045 * C99 * kCH * kE) - 1) / .045
-	return DIN99familyLHCG2Lab(L99, H99, C99, G, kE, 105.51, .0158, 16, .7)
-
-
-def DIN99bcdLCH2Lab(L99, C99, H99, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
+def DIN99familyLCH2Lab(L99, C99, H99, x, l1, l2, deg, f1, c1, c2,
+					   whitepoint=None, kE=1.0, hdeg=None):
 	G = (math.exp(C99 / c1) - 1) / c2
-	H99 -= deg
-	L, a, b = DIN99familyLHCG2Lab(L99, H99, C99, G, 1.0, l1, l2, deg, f1)
+	if hdeg is None:
+		hdeg = deg
+	H99 -= hdeg
+	L, a, b = DIN99familyLHCG2Lab(L99, H99, C99, G, kE, l1, l2, deg, f1)
 	if x:
 		whitepoint99d = XYZ2DIN99cdXYZ(*get_whitepoint(whitepoint, 100), x=x)
 		X, Y, Z = Lab2XYZ(L, a, b, whitepoint99d, scale=100)
@@ -1091,20 +1090,20 @@ def Lab2DIN99d(L, a, b, kE=1.0, whitepoint=None):
 
 
 def Lab2DIN99LCH(L, a, b, kCH=1.0, kE=1.0):
-	L99, G, h99ef, rad = Lab2DIN99familyLGhrad(L, a, b, kE, 105.51, .0158, 16, .7)
-	C99 = math.log(1 + .045 * G) / (.045 * kCH * kE)
-	H99 = h99ef * 180 / math.pi
-	return L99, C99, H99
+	return Lab2DIN99familyLCH(L, a, b, 105.51, .0158, 16, .7,
+							  1 / (0.045 * kCH * kE), 0.045, kE, 0)
 
 
 def Lab2DIN99bLCH(L, a, b, kE=1.0):
-	return Lab2DIN99bcdLCH(L, a, b, 303.67, .0039, 26, .83, 23, .075)
+	return Lab2DIN99familyLCH(L, a, b, 303.67, .0039, 26, .83, 23, .075)
 
 
-def Lab2DIN99bcdLCH(L, a, b, l1, l2, deg, f1, c1, c2):
-	L99, G, h99ef, rad = Lab2DIN99familyLGhrad(L, a, b, 1.0, l1, l2, deg, f1)
+def Lab2DIN99familyLCH(L, a, b, l1, l2, deg, f1, c1, c2, kE=1.0, hdeg=None):
+	L99, G, h99ef, rad = Lab2DIN99familyLGhrad(L, a, b, kE, l1, l2, deg, f1)
 	C99 = c1 * math.log(1 + c2 * G)
-	H99 = h99ef * 180 / math.pi + deg
+	if hdeg is None:
+		hdeg = deg
+	H99 = h99ef * 180 / math.pi + hdeg
 	return L99, C99, H99
 
 
@@ -1886,7 +1885,7 @@ def XYZ2DIN99cdLCH(X, Y, Z, x, l1, l2, deg, f1, c1, c2, whitepoint=None):
 	X, Y, Z = XYZ2DIN99cdXYZ(X, Y, Z, x)
 	whitepoint99d = XYZ2DIN99cdXYZ(*get_whitepoint(whitepoint, 100), x=x)
 	L, a, b = XYZ2Lab(X, Y, Z, whitepoint99d)
-	return Lab2DIN99bcdLCH(L, a, b, l1, l2, deg, f1, c1, c2)
+	return Lab2DIN99familyLCH(L, a, b, l1, l2, deg, f1, c1, c2)
 
 
 def XYZ2DIN99cdXYZ(X, Y, Z, x):
