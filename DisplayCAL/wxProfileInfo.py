@@ -273,12 +273,8 @@ class GamutCanvas(LUTCanvas):
 			min_y = -50.0
 			step = 25
 		elif self.colorspace in ("DIN99b", "DIN99c", "DIN99d"):
-			if self.colorspace == "DIN99c":
-				label_x = "a99c"
-				label_y = "b99c"
-			else:
-				label_x = "a99d"
-				label_y = "b99d"
+			label_x = "a" + self.colorspace[3:]
+			label_y = "b" + self.colorspace[3:]
 			max_x = 65.0
 			max_y = 65.0
 			min_x = -65.0
