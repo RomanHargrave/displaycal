@@ -921,6 +921,12 @@ def DIN99b2Lab(L99, a99, b99):
 	return DIN99familyLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
 
 
+def DIN99o2Lab(L99, a99, b99, kCH=1.0, kE=1.0):
+	C99, H99 = DIN99familyab2DIN99CH(a99, b99)
+	return DIN99familyLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83,
+							  1 / (0.0435 * kCH * kE), .075, kE)
+
+
 def DIN99bLCH2Lab(L99, C99, H99):
 	return DIN99familyLCH2Lab(L99, C99, H99, 0, 303.67, .0039, 26, .83, 23, .075)
 
@@ -1079,6 +1085,12 @@ def Lab2DIN99b(L, a, b, kE=1.0):
 	return L99, a99, b99
 
 
+def Lab2DIN99o(L, a, b, kCH=1.0, kE=1.0):
+	L99, C99, H99 = Lab2DIN99oLCH(L, a, b, kCH, kE)
+	a99, b99 = DIN99familyCH2DIN99ab(C99, H99)
+	return L99, a99, b99
+
+
 def Lab2DIN99c(L, a, b, kE=1.0, whitepoint=None):
 	X, Y, Z = Lab2XYZ(L, a, b, whitepoint, scale=100)
 	return XYZ2DIN99c(X, Y, Z, whitepoint)
@@ -1096,6 +1108,11 @@ def Lab2DIN99LCH(L, a, b, kCH=1.0, kE=1.0):
 
 def Lab2DIN99bLCH(L, a, b, kE=1.0):
 	return Lab2DIN99familyLCH(L, a, b, 303.67, .0039, 26, .83, 23, .075)
+
+
+def Lab2DIN99oLCH(L, a, b, kCH=1.0, kE=1.0):
+	return Lab2DIN99familyLCH(L, a, b, 303.67, .0039, 26, .83,
+							  1 / (0.0435 * kCH * kE), .075, kE)
 
 
 def Lab2DIN99familyLCH(L, a, b, l1, l2, deg, f1, c1, c2, kE=1.0, hdeg=None):
@@ -1864,9 +1881,19 @@ def XYZ2DIN99b(X, Y, Z, whitepoint=None):
 	return Lab2DIN99b(L, a, b)
 
 
+def XYZ2DIN99o(X, Y, Z, whitepoint=None):
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return Lab2DIN99o(L, a, b)
+
+
 def XYZ2DIN99bLCH(X, Y, Z, whitepoint=None):
 	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
 	return Lab2DIN99bLCH(L, a, b)
+
+
+def XYZ2DIN99oLCH(X, Y, Z, whitepoint=None):
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint)
+	return Lab2DIN99oLCH(L, a, b)
 
 
 def XYZ2DIN99c(X, Y, Z, whitepoint=None):
