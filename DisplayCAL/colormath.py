@@ -941,7 +941,7 @@ def DIN99dLCH2Lab(L99, C99, H99, whitepoint=None):
 						   .06, whitepoint)
 
 
-def DIN99LCH2Lab(L99, C99, H99, kCH, kE=1.0):
+def DIN99LCH2Lab(L99, C99, H99, kCH=1.0, kE=1.0):
 	G = (math.exp(.045 * C99 * kCH * kE) - 1) / .045
 	return DIN99familyLHCG2Lab(L99, H99, C99, G, kE, 105.51, .0158, 16, .7)
 
@@ -1092,7 +1092,7 @@ def Lab2DIN99d(L, a, b, kE=1.0, whitepoint=None):
 
 def Lab2DIN99LCH(L, a, b, kCH=1.0, kE=1.0):
 	L99, G, h99ef, rad = Lab2DIN99familyLGhrad(L, a, b, kE, 105.51, .0158, 16, .7)
-	C99 = math.log(1 + .045 * G) / .045 * kCH * kE
+	C99 = math.log(1 + .045 * G) / (.045 * kCH * kE)
 	H99 = h99ef * 180 / math.pi
 	return L99, C99, H99
 
