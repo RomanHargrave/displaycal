@@ -5014,6 +5014,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		safe_print("-" * 80)
 		self.stop_timers()
 		evtobjname = event.GetEventObject().Name
+		lstr = "measure"
 		if evtobjname == "visual_whitepoint_editor_measure_btn":
 			interactive_frame = event.GetEventObject().TopLevelParent
 			while not isinstance(interactive_frame, VisualWhitepointEditor):
@@ -5022,7 +5023,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif evtobjname in ("luminance_measure_btn",
 							"black_luminance_measure_btn"):
 			interactive_frame = "luminance"
-			lstr = "measure"
 		else:
 			interactive_frame = "ambient"
 			lstr = "ambient.measure"
