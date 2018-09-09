@@ -6644,7 +6644,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		paths = []
 		use_sim = getcfg("measurement_report.use_simulation_profile")
 		use_sim_as_output = getcfg("measurement_report.use_simulation_profile_as_output")
-		use_devlink = getcfg("measurement_report.use_devlink_profile")
+		use_devlink = (getcfg("measurement_report.use_devlink_profile")
+					   # Use device link also if doing self check report
+					   # when 3D LUT for verification is enabled, because it
+					   # is the only way to apply the 3D LUT
+					   or (use_sim and use_sim_as_output and
+						   getcfg("3dlut.enable") and self_check_report))
 		##if not use_sim or not use_sim_as_output:
 			##paths.append(getcfg("measurement_report.output_profile"))
 		if use_sim:
