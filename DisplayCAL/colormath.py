@@ -406,8 +406,12 @@ def wp_adaption_matrix(whitepoint_source=None, whitepoint_destination=None,
 	# based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
 	# cat = adaption matrix or predefined choice ('CAT02', 'Bradford', 
 	# 'Von Kries', 'XYZ Scaling', see cat_matrices), defaults to 'Bradford'
-	cachehash = (whitepoint_source and tuple(whitepoint_source),
-				 whitepoint_destination and tuple(whitepoint_destination),
+	cachehash = (tuple(whitepoint_source) if isinstance(whitepoint_source,
+														(list, tuple))
+				 else whitepoint_source,
+				 tuple(whitepoint_destination) if isinstance(whitepoint_destination,
+															 (list, tuple))
+				 else whitepoint_destination,
 				 cat if isinstance(cat, basestring) else id(cat))
 	if cachehash in wp_adaption_matrix.cache:
 		return wp_adaption_matrix.cache[cachehash]
