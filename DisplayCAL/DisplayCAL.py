@@ -9533,7 +9533,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		for btn, tab in btn2tab.iteritems():
 			if event.GetId() == btn.Id:
 				if tab is self.mr_settings_panel and not tab.IsShown():
-					if not hasattr(self, "XYZbpin"):
+					if not getattr(self, "_mr_controls_inited", False):
+						self._mr_controls_inited = True
 						self.mr_init_controls()
 					else:
 						self.mr_update_controls()
