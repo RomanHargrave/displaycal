@@ -3205,8 +3205,8 @@ END_DATA
 			profile_in_wtpt_XYZ = profile_in.tags.wtpt.ir.values()
 			if XYZwp:
 				# Quantize to ICC s15Fixed16Number encoding
-				XYZwp = tuple(ICCP.s15Fixed16Number(ICCP.s15Fixed16Number_tohex(v))
-							  for v in XYZwp)
+				XYZwp = [ICCP.s15Fixed16Number(ICCP.s15Fixed16Number_tohex(v))
+						 for v in XYZwp]
 			else:
 				XYZwp = profile_in_wtpt_XYZ
 			if XYZwp != profile_in_wtpt_XYZ:
