@@ -3849,8 +3849,9 @@ END_DATA
 					if not hdr and XYZwp != profile_in_wtpt_XYZ:
 						# Update profile description
 						profile_in.setDescription(profile_in.getDescription() +
-												  " %.4fx %.4fy" %
-												  colormath.XYZ2xyY(*XYZwp)[:2])
+												  " %sx %sy" %
+												  tuple(stripzeros("%.4f" % v) for v in
+														colormath.XYZ2xyY(*XYZwp)[:2]))
 					# Save source profile
 					in_name, in_ext = os.path.splitext(profile_in_basename)
 					profile_in.fileName = os.path.join(os.path.dirname(path),
