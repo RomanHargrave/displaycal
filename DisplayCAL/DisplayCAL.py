@@ -4541,7 +4541,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_input_profile_ctrl.SetToolTipString(
 			getcfg("3dlut.input.profile"))
 
-	def lut3d_set_path(self, path=None):
+	def lut3d_set_path(self, path=None, set_mr_sim_profile=True):
 		self.lut3d_path = self.worker.lut3d_get_filename(path)
 		devlink = os.path.splitext(self.lut3d_path)[0] + profile_ext
 		mr_option_changed = False
@@ -4549,7 +4549,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("measurement_report.devlink_profile", devlink)
 			mr_option_changed = True
 		# Simulation profile for 3D LUT
-		if (getcfg("3dlut.tab.enable") and
+		if (set_mr_sim_profile and
+			getcfg("3dlut.tab.enable") and
 			(getcfg("3dlut.trc").startswith("smpte2084") or
 			 getcfg("3dlut.trc") == "hlg" or
 			 getcfg("3dlut.whitepoint.x", False))):
@@ -8108,7 +8109,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def start_profile_worker(self, success_msg, resume=False):
 		name = getcfg("profile.name.expanded")
 		path = os.path.join(getcfg("profile.save_path"), name, name + profile_ext)
-		self.lut3d_set_path(path)
+		self.lut3d_set_path(path, set_mr_sim_profile=False)
 		continue_next = (getcfg("3dlut.create") and
 						 not os.path.isfile(self.lut3d_path))
 		self.worker.interactive = False
