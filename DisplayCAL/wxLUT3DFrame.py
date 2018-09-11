@@ -1285,7 +1285,7 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_trc_gamma_type_ctrl.SetItems([lang.getstr("trc.type.relative"),
 											  lang.getstr("trc.type.absolute")])
 
-		self.lut3d_content_colorspace_names = ["Rec. 2020", "DCI P3", "Rec. 709"]
+		self.lut3d_content_colorspace_names = ["Rec. 2020", "DCI P3 D65", "Rec. 709"]
 		self.lut3d_content_colorspace_ctrl.SetItems(self.lut3d_content_colorspace_names +
 													[lang.getstr("custom")])
 
