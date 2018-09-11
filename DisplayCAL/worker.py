@@ -2909,11 +2909,12 @@ END_DATA
 						lut3dp.append("-")
 					if getcfg("3dlut.hdr_maxmll") < 10000:
 						lut3dp.append("%i" % getcfg("3dlut.hdr_maxmll"))
-					# Hue and chroma preservation
-					if getcfg("3dlut.hdr_sat") != 0.5:
-						lut3dp.append("s%.1f" % getcfg("3dlut.hdr_sat"))
-					if getcfg("3dlut.hdr_hue") != 1.0:
-						lut3dp.append("h%.1f" % getcfg("3dlut.hdr_hue"))
+					if getcfg("3dlut.trc") == "smpte2084.rolloffclip":
+						# Hue and chroma preservation
+						if getcfg("3dlut.hdr_sat") != 0.5:
+							lut3dp.append("s%.1f" % getcfg("3dlut.hdr_sat"))
+						if getcfg("3dlut.hdr_hue") != 1.0:
+							lut3dp.append("h%.1f" % getcfg("3dlut.hdr_hue"))
 			elif getcfg("3dlut.trc") == "hlg":
 				lut3dp = ["HLG"]
 				if getcfg("3dlut.hdr_ambient_luminance") != 5:

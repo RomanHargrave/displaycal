@@ -1647,9 +1647,9 @@ class LUT3DFrame(BaseFrame):
 		self.lut3d_hdr_system_gamma_label.Show(show and hlg)
 		self.lut3d_hdr_system_gamma_txt.Show(show and hlg)
 		sizer = self.lut3d_hdr_sat_ctrl.ContainingSizer
-		sizer.ShowItems(show and smpte2084)
+		sizer.ShowItems(show and smpte2084r)
 		sizer = self.lut3d_hdr_hue_ctrl.ContainingSizer
-		sizer.ShowItems(show and smpte2084)
+		sizer.ShowItems(show and smpte2084r)
 		show = (show or smpte2084) and not hlg
 		show = show and ((hasattr(self, "lut3d_create_cb") and
 						  getcfg("3dlut.create")) or self.XYZbpout > [0, 0, 0])
