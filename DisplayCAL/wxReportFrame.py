@@ -863,7 +863,7 @@ class ReportFrame(BaseFrame):
 				isinstance(sim_profile.tags.rTRC, ICCP.CurveType)):
 				tf = sim_profile.tags.rTRC.get_transfer_function(outoffset=1.0)
 				if update_trc or self.XYZbpin == self.XYZbpout:
-					# Use only BT.1886 black output offset
+					# Use only BT.1886 black output offset or not
 					setcfg("measurement_report.apply_black_offset",
 						   int(tf[0][1] not in (-240, -709) and
 							   (not tf[0][0].startswith("Gamma") or tf[1] < .95) and
@@ -888,6 +888,10 @@ class ReportFrame(BaseFrame):
 				self.mr_update_trc_controls()
 				enable = (tf[0][1] not in (-240, -709) and
 						  self.XYZbpin != self.XYZbpout)
+			elif update_trc:
+				enable = self.XYZbpin != self.XYZbpout
+				setcfg("measurement_report.apply_black_offset", int(enable))
+				setcfg("measurement_report.apply_trc", 0)
 		self.apply_black_offset_ctrl.Enable(use_sim_profile and enable)
 		self.mr_update_main_controls()
 
