@@ -3691,7 +3691,9 @@ END_DATA
 														profile_out_basename,
 														link_filename],
 									   capture_output=True, skip_scripts=True)
-				self.log("Finished creating 3D LUT in", time() - xts, "seconds")
+				if result and not isinstance(result, Exception):
+					self.log("Finished creating 3D LUT in", time() - xts,
+							 "seconds")
 
 			if (result and not isinstance(result, Exception) and
 				save_link_icc and
