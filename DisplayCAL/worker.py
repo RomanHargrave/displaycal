@@ -2076,6 +2076,8 @@ class Worker(WorkerBase):
 		profile_black_cdm2 = XYZbp[1] * lumi.Y
 		if smpte2084:
 			# SMPTE ST.2084 (PQ)
+			if gamma != "smpte2084.rolloffclip":
+				maxmll = white_cdm2
 			self.log(os.path.basename(profile1.fileName) +
 					 u" → " + lang.getstr("trc." + gamma) +
 					 (u" %i cd/m² (mastering %s-%i cd/m²)" %
@@ -2104,8 +2106,6 @@ class Worker(WorkerBase):
 						  "\S+ transfer function)$", "", odesc)
 			if smpte2084:
 				# SMPTE ST.2084 (PQ)
-				if gamma != "smpte2084.rolloffclip":
-					maxmll = white_cdm2
 				black_cdm2 = profile_black_cdm2 * (1 - outoffset)
 				if XYZbp[1]:
 					XYZbp_cdm2 = [v / XYZbp[1] * black_cdm2 for v in XYZbp]
