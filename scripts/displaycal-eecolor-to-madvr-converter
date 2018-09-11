@@ -1,12 +1,19 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import multiprocessing as mp, os, struct, sys, time
+import multiprocessing as mp, os, signal, struct, sys, time
 from StringIO import StringIO
 
 from DisplayCAL import ICCProfile as ICCP, config, colormath, madvr, worker_base
 from DisplayCAL.log import safe_print
 from DisplayCAL.madvr import icc_device_link_to_madvr
+
+
+def sigbreak_handler(sig, frame):
+	sys._sigbreak = True
+
+# SIGBREAK is Windows only. Use SIGINT as fallback
+signal.signal(getattr(signal, "SIGBREAK", signal.SIGINT), sigbreak_handler)
 
 
 def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,

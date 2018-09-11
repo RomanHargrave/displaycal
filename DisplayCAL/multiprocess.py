@@ -2,6 +2,7 @@
 
 from Queue import Empty
 import atexit
+import errno
 import logging
 import math
 import multiprocessing as mp
@@ -187,8 +188,11 @@ class WorkerFunc(object):
 			return self.func(data, thread_abort_event, progress_queue, *args,
 							 **kwds)
 		except Exception, exception:
-			import traceback
-			safe_print(traceback.format_exc())
+			if (not getattr(sys, "_sigbreak", False) or
+				not isinstance(exception, IOError) or
+				exception.args[0] != errno.EPIPE):
+				import traceback
+				safe_print(traceback.format_exc())
 			return exception
 		finally:
 			progress_queue.put(EOFError())

@@ -172,13 +172,15 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 				prevperc = perc
 	else:
 		link = ICCP.ICCProfile(icc_device_link_filename)
+		# Need a worker for abort event handling
+		worker = worker_base.WorkerBase()
 		# icclu verbose=0 gives a speed increase
 		xicclu = worker_base.MP_Xicclu(link, scale=clutmax, use_icclu=True,
 									   logfile=logfile,
 									   output_format=("<H", 65535),
 									   reverse=True, output_stream=raw,
 									   convert_video_rgb_to_clut65=convert_video_rgb_to_clut65,
-									   verbose=0)
+									   verbose=0, worker=worker)
 		xicclu._in = ci.Cube3D(clutres)
 		logfile.write("Looking up 256^3 input values through device link and "
 					  "writing madVR 3D LUT...\n")

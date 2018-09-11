@@ -61,8 +61,12 @@ def _mp_xicclu(chunk, thread_abort_event, progress_queue, profile_filename,
 	num_subchunks = 50
 	subchunksize = float(len(chunk)) / num_subchunks
 	for i in xrange(num_subchunks):
+		if (thread_abort_event is not None and getattr(sys, "_sigbreak", False) and
+			not thread_abort_event.is_set()):
+			thread_abort_event.set()
+			safe_print("Got SIGBREAK, aborting thread...")
 		if thread_abort_event is not None and thread_abort_event.is_set():
-			xicclu.exit()
+			xicclu.exit(raise_exception=False)
 			return Info(abortmessage)
 		end = int(math.ceil(subchunksize * (i + 1)))
 		xicclu(chunk[start:end])
@@ -615,6 +619,9 @@ class Xicclu(WorkerBase):
 		while True:
 			# Process in chunks to prevent broken pipe if input data is too
 			# large
+			if getattr(sys, "_sigbreak", False) and not self.subprocess_abort:
+				self.subprocess_abort = True
+				safe_print("Got SIGBREAK, aborting subprocess...")
 			if self.subprocess_abort or self.thread_abort:
 				if p.poll() is None:
 					p.stdin.write("\n")
@@ -646,7 +653,7 @@ class Xicclu(WorkerBase):
 		if tb:
 			return False
 	
-	def close(self):
+	def close(self, raise_exception=True):
 		if self.closed:
 			return
 		p = self.subprocess
@@ -668,12 +675,12 @@ class Xicclu(WorkerBase):
 		if self.logfile:
 			self.logfile.write("\n")
 		self.closed = True
-		if p.returncode:
+		if p.returncode and raise_exception:
 			# Error
 			raise IOError("\n".join(self.errors))
 
-	def exit(self):
-		self.close()
+	def exit(self, raise_exception=True):
+		self.close(raise_exception)
 		if self.temp and os.path.isfile(self.profile_path):
 			os.remove(self.profile_path)
 			if self.tempdir and not os.listdir(self.tempdir):

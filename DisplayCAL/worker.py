@@ -11093,6 +11093,20 @@ usage: spotread [-options] [logfile]
 						self.log(traceback.format_exc(), fn=logfn)
 						self.log("%s: Exception in quit_terminate_command: %s" %
 								 (appname, exception),  fn=logfn)
+				elif hasattr(subprocess, "sendintr"):
+					self.log("%s: Sending CTRL+C to subprocess..." % appname,
+							 fn=logfn)
+					try:
+						subprocess.sendintr()
+					except Exception, exception:
+						self.log(traceback.format_exc(), fn=logfn)
+						self.log("%s: Exception in quit_terminate_command: %s" %
+								 (appname, exception),  fn=logfn)
+					ts = time()
+					while self.isalive(subprocess):
+						if time() > ts + 20:
+							break
+						sleep(.25)
 				if self.isalive(subprocess):
 					self.log("%s: Trying to terminate subprocess..." % appname,
 							 fn=logfn)
