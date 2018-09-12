@@ -312,7 +312,8 @@ observers = {
 manufacturers = {"ADBE": "Adobe Systems Incorporated",
 				 "APPL": "Apple Computer, Inc.",
 				 "agfa": "Agfa Graphics N.V.",
-				 "argl": "ArgyllCMS",
+				 "argl": "ArgyllCMS",  # Not registered
+				 "DCAL": "DisplayCAL",  # Not registered
 				 "bICC": "basICColor GmbH",
 				 "DL&C": "Digital Light & Color",
 				 "EPSO": "Seiko Epson Corporation",
@@ -5497,13 +5498,19 @@ class ICCProfile:
 	def set_defaults(self):
 		if not hasattr(self, "version"):
 			# Default to RGB display device profile
-			self.preferredCMM = ""
+			self.preferredCMM = "argl"
 			self.version = 2.4
 			self.profileClass = "mntr"
 			self.colorSpace = "RGB"
 			self.connectionColorSpace = "XYZ"
 			self.dateTime = datetime.datetime.now()
-			self.platform = ""
+			if sys.platform == "win32":
+				platform_id = "MSFT"  # Microsoft
+			elif sys.platform == "darwin":
+				platform_id = "APPL"  # Apple
+			else:
+				platform_id = "*nix"
+			self.platform = platform_id
 			self.embedded = False
 			self.independent = True
 			self.device = {
@@ -5518,7 +5525,7 @@ class ICCProfile:
 			}
 			self.intent = 0
 			self.illuminant = XYZNumber("\0\0\xf6\xd6\0\x01\0\0\0\0\xd3-")  # D50
-			self.creator = ""
+			self.creator = "DCAL"  # DisplayCAL
 	
 	def __len__(self):
 		"""
