@@ -188,14 +188,9 @@ keycodes = {wx.WXK_NUMPAD0: ord("0"),
 			wx.WXK_NUMPAD_SUBTRACT: ord("-")}
 
 
-technology_strings_170 = JSONDict()
-technology_strings_170["u"] = "Unknown"
-technology_strings_170.path = "technology_strings-1.7.0.json"
-
-# Argyll 1.7.1 fixes the technology type and display type selector
-# "uniqueification" bug and thus uses different technology selectors
+# XXX: Do not use directly - use Worker.get_technology_strings() instead
 technology_strings_171 = JSONDict()
-technology_strings_171["u"] = "Unknown"
+technology_strings_171[u"u"] = "Unknown"
 technology_strings_171.path = "technology_strings-1.7.1.json"
 
 workers = []
@@ -6923,10 +6918,7 @@ usage: spotread [-options] [logfile]
  -D [level]           Print debug diagnostics to stderr
  logfile              Optional file to save reading results as text""".splitlines())
 				measurement_modes_follow = False
-				if self.argyll_version >= [1, 7, 1]:
-					technology_strings = technology_strings_171
-				else:
-					technology_strings = technology_strings_170
+				technology_strings = self.get_technology_strings()
 				for line in self.output:
 					line = line.strip()
 					if line.startswith("-y "):
@@ -6963,6 +6955,33 @@ usage: spotread [-options] [logfile]
 		if n >= 0 and n < len(self.instruments):
 			return self.instruments[n]
 		return ""
+
+	def get_technology_strings(self):
+		""" Return technology strings mapping (from ccxxmake -??) """
+		if self.argyll_version < [1, 7]:
+			return technology_strings_171
+		result = self.exec_cmd(get_argyll_util("ccxxmake"), ["-??"],
+							   capture_output=True, skip_scripts=True,
+							   silent=True, log_output=False)
+		if isinstance(result, Exception):
+			safe_print(result)
+			return technology_strings_171
+		technology_strings = {}
+		in_tech = False
+		for line in self.output:
+			parts = line.strip().split(None, 1)
+			if parts:
+				arg = parts.pop(0)
+				if arg == "-t":
+					parts = parts[0].split(None, 1)
+					if len(parts) == 2:
+						arg = parts.pop(0)
+						in_tech = True
+				elif arg.startswith("-"):
+					in_tech = False
+				if in_tech and parts:
+					technology_strings[arg] = parts[0]
+		return technology_strings
 	
 	def has_lut_access(self):
 		display_no = min(len(self.lut_access), getcfg("display.number")) - 1
