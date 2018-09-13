@@ -9400,6 +9400,7 @@ usage: spotread [-options] [logfile]
 			elif not "meta" in profile.tags:
 				# Make sure meta tag exists
 				profile.tags.meta = ICCP.DictType()
+		if tags is True or (tags and "meta" in tags):
 			profile.tags.meta.update({"CMF_product": appname,
 									  "CMF_binary": appname,
 									  "CMF_version": version})
@@ -9412,6 +9413,8 @@ usage: spotread [-options] [logfile]
 					   "h": "high"}.get(quality)
 			if quality:
 				profile.tags.meta["Quality"] = quality
+			spec_prefixes = "CMF_"
+		if tags is True:
 			# Set OPENICC_automatic_generated to "0"
 			profile.tags.meta["OPENICC_automatic_generated"] = "0"
 			# Set GCM DATA_source to "calib"
@@ -9437,6 +9440,7 @@ usage: spotread [-options] [logfile]
 			if device_id:
 				profile.tags.meta["MAPPING_device_id"] = device_id
 				spec_prefixes += ",MAPPING_"
+		if tags is True or (tags and "meta" in tags):
 			prefixes = (profile.tags.meta.getvalue("prefix", "", None) or spec_prefixes).split(",")
 			for prefix in spec_prefixes.split(","):
 				if not prefix in prefixes:
