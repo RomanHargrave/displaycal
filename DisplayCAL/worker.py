@@ -1747,7 +1747,6 @@ class Worker(WorkerBase):
 		prestrip = re.compile(r"\D+\s+\d+\s+\d+:\d+:\d+\s+\w+\[\d+\]\s+<Warning>:[\S\s]*")
 		discard = [r"[\*\.]+|Current (?:RGB|XYZ)(?: +.*)?"]
 		self.lastmsg_discard = re.compile("|".join(discard))
-		self.measurement_modes = {}
 		self._init_sounds(dummy=True)
 		self.options_colprof = []
 		self.options_dispcal = []
@@ -2797,6 +2796,7 @@ END_DATA
 		self.displays = []
 		self.instruments = []
 		self.lut_access = []
+		self.measurement_modes = {}
 
 	def clear_cmd_output(self):
 		"""
