@@ -8929,7 +8929,8 @@ usage: spotread [-options] [logfile]
 		return result
 
 	def create_RGB_XYZ_cLUT_fwd_profile(self, ti3, description, copyright,
-										manufacturer, model, logfn=None):
+										manufacturer, model, logfn=None,
+										clutres=33):
 		""" Create a RGB to XYZ forward profile """
 		# Extract grays and remaining colors
 		(ti3_extracted, RGB_XYZ,
@@ -9033,7 +9034,7 @@ usage: spotread [-options] [logfile]
 		# Build initial cLUT
 		# Try to fill a 5x5x5 or 3x3x3 cLUT
 		clut_actual = 0
-		for iclutres in (17, 9, 5, 4, 3):
+		for iclutres in (17, 9, 5, 4, 3, 2):
 			clut = []
 			step = 100 / (iclutres - 1.0)
 			for a in xrange(iclutres):
@@ -9052,7 +9053,7 @@ usage: spotread [-options] [logfile]
 								XYZ = get_XYZ_from_curves(a, iclutres - 1)
 								# Range 0..1
 								clut[-1].append(XYZ)
-							elif iclutres > 3:
+							elif iclutres > 2:
 								# Try next smaller cLUT res
 								break
 							else:
@@ -9078,7 +9079,7 @@ usage: spotread [-options] [logfile]
 
 		# Interpolate to higher cLUT resolution
 		quality = getcfg("profile.quality")
-		clutres = {"m": 17, "l": 9}.get(quality, 33)
+		clutres = {"m": 17, "l": 9}.get(quality, clutres)
 		# XXX: Need to implement proper 3D interpolation
 
 		if clutres > iclutres:
