@@ -4412,7 +4412,7 @@ END_DATA
 										   edid.get("ascii",
 													str(edid["product_id"] or
 														"")))
-						if (monitor == "Color LCD" and
+						if (monitor in ("Color LCD", "iMac") and
 							edid["manufacturer_id"] == "APP" and
 							sys.platform == "darwin"):
 							# Get mac model if internal display
