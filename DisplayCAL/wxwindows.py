@@ -582,6 +582,57 @@ class AuiBetterTabArt(AuiDefaultTabArt):
 		self._tab_disabled_text_colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT)
 
 
+class AutocompleteComboBox(wx.ComboBox):
+
+	def __init__(self, *args, **kwargs):
+		wx.ComboBox.__init__(self, *args, **kwargs)
+		self.Bind(wx.EVT_TEXT, self.OnText)
+		self.Bind(wx.EVT_CHAR, self.OnChar)
+		self.Bind(wx.EVT_COMBOBOX, self.OnComboBox) 
+		self._ignore_text_evt = False
+		self._popup_shown = None
+		if hasattr(wx, "EVT_COMBOBOX_DROPDOWN"):
+			self.Bind(wx.EVT_COMBOBOX_DROPDOWN, self.OnComboBoxDropDown)
+		if hasattr(wx, "EVT_COMBOBOX_CLOSEUP"):
+			self.Bind(wx.EVT_COMBOBOX_CLOSEUP, self.OnComboBoxCloseUp)
+
+	def OnComboBox(self, event):
+		self._ignore_text_evt = True
+		event.Skip()
+
+	def OnComboBoxDropDown(self, event):
+		self._popup_shown = True
+		event.Skip()
+
+	def OnComboBoxCloseUp(self, event):
+		self._popup_shown = False
+		event.Skip()
+		
+	def OnChar(self, event):
+		if event.GetKeyCode() == 8 or event.ControlDown():  # Backspace or modifier
+			self._ignore_text_evt = True
+		event.Skip()
+
+	def OnText(self, event):
+		if self._ignore_text_evt:
+			self._ignore_text_evt = False
+			return
+		current_text = event.GetString().lower()
+		found = False
+		for i, choice in enumerate(self.Items):
+			if choice.lower().startswith(current_text):
+				self._ignore_text_evt = True
+				if self._popup_shown is not None:
+					self.SetSelection(i)
+				self.SetValue(choice)
+				self.SetInsertionPoint(len(current_text))
+				self.SetMark(len(current_text), len(choice))
+				found = True
+				break
+		if not found:
+			event.Skip()
+
+
 class BaseApp(wx.App):
 
 	""" Application base class implementing common functionality. """

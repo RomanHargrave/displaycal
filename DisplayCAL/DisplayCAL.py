@@ -144,7 +144,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   FileBrowseBitmapButtonWithChoiceHistory, FileDrop,
 					   FlatShadedButton, HtmlWindow, HyperLinkCtrl, InfoDialog,
 					   LogWindow, ProgressDialog, TabButton, TooltipWindow,
-					   get_gradient_panel, get_dialogs)
+					   get_gradient_panel, get_dialogs, AutocompleteComboBox)
 import floatspin
 import xh_fancytext
 import xh_filebrowsebutton
@@ -10463,12 +10463,16 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 				if sys.platform not in ("darwin", "win32"):
 					boxsizer.Add((1, 8))
-				dlg.manufacturer_txt_ctrl = wx.TextCtrl(dlg, -1, 
-														manufacturer or "", 
-														size=(400, -1))
+				if not pnpidcache:
+					# Populate pnpidcache
+					get_manufacturer_name("???")
+				dlg.manufacturer_txt_ctrl = AutocompleteComboBox(dlg, -1, 
+													  choices=pnpidcache.values(), 
+													  size=(400, -1),
+													  style=wx.CB_SORT)
 				if (not manufacturer and
 					display == self.worker.get_display_name(False, True, False)):
-					dlg.manufacturer_txt_ctrl.Value = self.worker.get_display_edid().get("manufacturer", "")
+					dlg.manufacturer_txt_ctrl.SetStringSelection(self.worker.get_display_edid().get("manufacturer", ""))
 				boxsizer.Add(dlg.manufacturer_txt_ctrl, 1, 
 							 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			# Display technology
@@ -10505,7 +10509,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.display_tech_ctrl.GetStringSelection()):
 				tech = loctech[dlg.display_tech_ctrl.GetStringSelection()]
 			if not manufacturer or config.is_virtual_display(display):
-				manufacturer = dlg.manufacturer_txt_ctrl.GetValue()
+				manufacturer = dlg.manufacturer_txt_ctrl.GetStringSelection()
 			dlg.Destroy()
 		else:
 			result = wx.ID_OK
