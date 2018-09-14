@@ -10441,7 +10441,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												   size=(400, -1))
 			boxsizer.Add(dlg.description_txt_ctrl, 1, 
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			if not display or config.is_virtual_display(display):
+			if not display:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display")),
 											 wx.VERTICAL)
