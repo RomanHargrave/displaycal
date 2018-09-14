@@ -114,7 +114,7 @@ AMI	American Megatrends Inc
 AML	Anderson Multimedia Communications (HK) Limited
 AMN	Amimon LTD.
 AMO	Amino Technologies PLC and Amino Communications Limited
-AMP	AMP Inc
+AMP	Ampere Computing
 AMR	AmTRAN Technology Co., Ltd.
 AMS	ARMSTEL, Inc.
 AMT	AMT International Industry
@@ -655,6 +655,7 @@ EGO	Ergo Electronics
 EHJ	Epson Research
 EHN	Enhansoft
 EIC	Eicon Technology Corporation
+EIN	Elegant Invention
 EIZ	Eizo
 EKA	MagTek Inc.
 EKC	Eastman Kodak Company
@@ -964,6 +965,7 @@ HWA	Harris Canada Inc
 HWC	DBA Hans Wedemeyer
 HWD	Highwater Designs Ltd
 HWP	Hewlett Packard Enterprise
+HWV	Huawei Technologies Co., Inc.
 HXM	Hexium Ltd.
 HYC	Hypercope Gmbh Aachen
 HYD	Hydis Technologies.Co.,LTD
@@ -1029,6 +1031,7 @@ IMB	ART s.r.l.
 IMC	IMC Networks
 IMD	ImasDe Canarias S.A.
 IME	Imagraph
+IMF	Immersive Audio Technologies France
 IMG	IMAGENICS Co., Ltd.
 IMI	International Microsystems Inc
 IMM	Immersion Corporation
@@ -1118,6 +1121,7 @@ JAZ	Carrera Computer Inc
 JCE	Jace Tech Inc
 JDI	Japan Display Inc.
 JDL	Japan Digital Laboratory Co.,Ltd.
+JEM	Japan E.M.Solutions Co., Ltd.
 JEN	N-Vision
 JET	JET POWER TECHNOLOGY CO., LTD.
 JFX	Jones Futurex Inc
@@ -1263,6 +1267,7 @@ LSD	Intersil Corporation
 LSI	Loughborough Sound Images
 LSJ	LSI Japan Company Ltd
 LSL	Logical Solutions
+LSP	Lightspace Technologies
 LSY	LSI Systems Inc
 LTC	Labtec Inc
 LTI	Jongshine Tech Inc
@@ -1748,6 +1753,7 @@ PXC	Phoenix Contact
 PXE	PIXELA CORPORATION
 PXL	The Moving Pixel Company
 PXM	Proxim Inc
+PXN	PixelNext Inc
 QCC	QuakeCom Company Ltd
 QCH	Metronics Inc
 QCI	Quanta Computer Inc
@@ -1756,6 +1762,7 @@ QCL	Quadrant Components Inc
 QCO	Qualcomm Inc
 QCP	Qualcomm Inc
 QDI	Quantum Data Incorporated
+QDL	QD Laser, Inc.
 QDM	Quadram
 QDS	Quanta Display Inc.
 QEM	Red Hat, Inc.
@@ -1977,6 +1984,7 @@ SNO	SINOSUN TECHNOLOGY CO., LTD
 SNP	Siemens Nixdorf Info Systems
 SNS	Cirtech (UK) Ltd
 SNT	SuperNet Inc
+SNV	SONOVE GmbH
 SNW	Snell & Wilcox
 SNX	Sonix Comm. Ltd
 SNY	Sony
@@ -2062,6 +2070,7 @@ SWT	Software Technologies Group,Inc.
 SXB	Syntax-Brillian
 SXD	Silex technology, Inc.
 SXG	SELEX GALILEO
+SXI	Silex Inside
 SXL	SolutionInside
 SXT	SHARP TAKAYA ELECTRONIC INDUSTRY CO.,LTD.
 SYC	Sysmic
@@ -2209,6 +2218,7 @@ TSL	Tottori SANYO Electric Co., Ltd.
 TSP	U.S. Navy
 TST	Transtream Inc
 TSV	TRANSVIDEO
+TSW	VRSHOW Technology Limited
 TSY	TouchSystems
 TTA	Topson Technology Co., Ltd.
 TTB	National Semiconductor Japan Ltd
@@ -2336,6 +2346,7 @@ VRC	Virtual Resources Corporation
 VRG	VRgineers, Inc.
 VRM	VRmagic Holding AG
 VRS	VRstudios, Inc.
+VRT	Varjo Technologies
 VSC	ViewSonic Corporation
 VSD	3M
 VSI	VideoServer
