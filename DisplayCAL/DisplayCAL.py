@@ -584,33 +584,32 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 		# CGATS is byte string based, make sure to encode Unicode back to UTF-8
 		# for parsing
 		cgats[i] = safe_str(item.get("cgats", ""), "UTF-8")
-		ccxx = CGATS.CGATS(cgats[i])
+		try:
+			ccxx = CGATS.CGATS(cgats[i])
+		except CGATS.CGATSError, exception:
+			safe_print(exception)
+			cgats[i] = ""
+			ccxx = CGATS.CGATS()
 		ccxx = ccxx.get(0, ccxx)
 		index = dlg_list_ctrl.InsertStringItem(i, "")
-		ccxx_type = ccxx.type.strip()
+		ccxx_type = item.get("type", "").upper()
 		dlg_list_ctrl.SetStringItem(index, 0,
-									types.get(ccxx_type,
-											  safe_unicode(ccxx_type, "UTF-8")))
+									types.get(ccxx_type, ccxx_type))
 		dlg_list_ctrl.SetStringItem(index, 1,
-									get_canonical_instrument_name(safe_unicode(ccxx.queryv1("DESCRIPTOR") or
-																			   lang.getstr("unknown"),
-																			   "UTF-8")))
-		dlg_list_ctrl.SetStringItem(index, 2,
-									safe_unicode(ccxx.queryv1("MANUFACTURER") or
-												 lang.getstr("unknown"), "UTF-8"))
-		dlg_list_ctrl.SetStringItem(index, 3,
-									safe_unicode(ccxx.queryv1("DISPLAY") or
-												 lang.getstr("unknown"), "UTF-8"))
+									get_canonical_instrument_name(item.get("description") or
+																  lang.getstr("unknown")))
+		dlg_list_ctrl.SetStringItem(index, 2, item.get("manufacturer") or
+											  lang.getstr("unknown"))
+		dlg_list_ctrl.SetStringItem(index, 3, item.get("display") or
+											  lang.getstr("unknown"))
 		dlg_list_ctrl.SetStringItem(index, 4,
-									get_canonical_instrument_name(safe_unicode(ccxx.queryv1("INSTRUMENT") or
-																			   lang.getstr("unknown")
-																			   if ccxx_type == "CCMX"
-																			   else "i1 DisplayPro, ColorMunki Display, Spyder4/5",
-																			   "UTF-8")))
+									get_canonical_instrument_name(item.get("instrument") or
+																  lang.getstr("unknown")
+																  if ccxx_type == "CCMX"
+																  else u"i1 DisplayPro, ColorMunki Display, Spyder4/5"))
 		dlg_list_ctrl.SetStringItem(index, 5,
-									get_canonical_instrument_name(safe_unicode(ccxx.queryv1("REFERENCE") or
-																			   lang.getstr("unknown"),
-																			   "UTF-8")))
+									get_canonical_instrument_name(item.get("reference") or
+																  lang.getstr("unknown")))
 		spectral = {}
 		for key in ("bands", "start_nm", "end_nm"):
 			try:
@@ -629,7 +628,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 		else:
 			spectral_res = lang.getstr("unknown")
 		dlg_list_ctrl.SetStringItem(index, 6, spectral_res)
-		created = ccxx.queryv1("CREATED")
+		created = item.get("created")
 		if created:
 			try:
 				created = strptime(created)
@@ -664,24 +663,21 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 																		else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 8,
 									safe_unicode(ccxx.queryv1("FIT_METHOD") or
-												 lang.getstr("unknown"
-															 if ccxx_type == "CCMX"
-															 else "not_applicable"),
-												 "UTF-8"))
+												 lang.getstr("unknown"), "UTF-8")
+									if ccxx_type == "CCMX"
+									else lang.getstr("not_applicable"))
 		dlg_list_ctrl.SetStringItem(index, 9,
 									safe_unicode(ccxx.queryv1("FIT_AVG_DE00") or
-												 lang.getstr("unknown"
-															 if ccxx_type == "CCMX"
-															 else "not_applicable")))
+												 lang.getstr("unknown"), "UTF-8")
+									if ccxx_type == "CCMX"
+									else lang.getstr("not_applicable"))
 		dlg_list_ctrl.SetStringItem(index, 10,
 									safe_unicode(ccxx.queryv1("FIT_MAX_DE00") or
-												 lang.getstr("unknown"
-															 if ccxx_type == "CCMX"
-															 else "not_applicable")))
-		dlg_list_ctrl.SetStringItem(index, 11,
-									safe_unicode(created or
-												 lang.getstr("unknown"),
-												 "UTF-8"))
+												 lang.getstr("unknown"), "UTF-8")
+									if ccxx_type == "CCMX"
+									else lang.getstr("not_applicable"))
+		dlg_list_ctrl.SetStringItem(index, 11, created or
+											   lang.getstr("unknown"))
 	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
 			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
