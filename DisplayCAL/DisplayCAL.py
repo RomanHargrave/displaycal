@@ -529,9 +529,11 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	""" Let user choose a colorimeter correction and confirm overwrite """
 	if resp is not False:
 		data = resp.read()
-		if data.strip().startswith("CC"):
-			cgats = CGATS.CGATS(data)
-		else:
+		try:
+			json = demjson.decode(data)
+			if not json:
+				raise demjson.JSONDecodeError()
+		except (UnicodeDecodeError, demjson.JSONDecodeError), exception:
 			InfoDialog(parent, 
 						 msg=lang.getstr("colorimeter_correction.web_check.failure"),
 						 ok=lang.getstr("ok"), 
@@ -557,51 +559,77 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl.InsertColumn(3, lang.getstr("display"))
 	dlg_list_ctrl.InsertColumn(4, lang.getstr("instrument"))
 	dlg_list_ctrl.InsertColumn(5, lang.getstr("reference"))
-	dlg_list_ctrl.InsertColumn(6, lang.getstr("observer"))
-	dlg_list_ctrl.InsertColumn(7, lang.getstr("method"))
-	dlg_list_ctrl.InsertColumn(8, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
-	dlg_list_ctrl.InsertColumn(9, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
-	dlg_list_ctrl.InsertColumn(10, lang.getstr("created"))
+	dlg_list_ctrl.InsertColumn(6, lang.getstr("spectral_resolution"))
+	dlg_list_ctrl.InsertColumn(7, lang.getstr("observer"))
+	dlg_list_ctrl.InsertColumn(8, lang.getstr("method"))
+	dlg_list_ctrl.InsertColumn(9, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
+	dlg_list_ctrl.InsertColumn(10, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
+	dlg_list_ctrl.InsertColumn(11, lang.getstr("created"))
 	dlg_list_ctrl.SetColumnWidth(0, 50)
 	dlg_list_ctrl.SetColumnWidth(1, 350)
 	dlg_list_ctrl.SetColumnWidth(2, 150)
 	dlg_list_ctrl.SetColumnWidth(3, 100)
 	dlg_list_ctrl.SetColumnWidth(4, 75)
 	dlg_list_ctrl.SetColumnWidth(5, 75)
-	dlg_list_ctrl.SetColumnWidth(6, 75)
+	dlg_list_ctrl.SetColumnWidth(6, 125)
 	dlg_list_ctrl.SetColumnWidth(7, 75)
-	dlg_list_ctrl.SetColumnWidth(8, 100)
+	dlg_list_ctrl.SetColumnWidth(8, 75)
 	dlg_list_ctrl.SetColumnWidth(9, 100)
-	dlg_list_ctrl.SetColumnWidth(10, 150)
+	dlg_list_ctrl.SetColumnWidth(10, 100)
+	dlg_list_ctrl.SetColumnWidth(11, 150)
 	types = {"CCSS": lang.getstr("spectral").replace(":", ""),
 			 "CCMX": lang.getstr("matrix").replace(":", "")}
-	for i in cgats:
+	cgats = {}
+	for i, item in enumerate(json):
+		# CGATS is byte string based, make sure to encode Unicode back to UTF-8
+		# for parsing
+		cgats[i] = safe_str(item.get("cgats", ""), "UTF-8")
+		ccxx = CGATS.CGATS(cgats[i])
+		ccxx = ccxx.get(0, ccxx)
 		index = dlg_list_ctrl.InsertStringItem(i, "")
-		ccxx_type = cgats[i].type.strip()
+		ccxx_type = ccxx.type.strip()
 		dlg_list_ctrl.SetStringItem(index, 0,
 									types.get(ccxx_type,
 											  safe_unicode(ccxx_type, "UTF-8")))
 		dlg_list_ctrl.SetStringItem(index, 1,
-									get_canonical_instrument_name(safe_unicode(cgats[i].queryv1("DESCRIPTOR") or
+									get_canonical_instrument_name(safe_unicode(ccxx.queryv1("DESCRIPTOR") or
 																			   lang.getstr("unknown"),
 																			   "UTF-8")))
 		dlg_list_ctrl.SetStringItem(index, 2,
-									safe_unicode(cgats[i].queryv1("MANUFACTURER") or
+									safe_unicode(ccxx.queryv1("MANUFACTURER") or
 												 lang.getstr("unknown"), "UTF-8"))
 		dlg_list_ctrl.SetStringItem(index, 3,
-									safe_unicode(cgats[i].queryv1("DISPLAY") or
+									safe_unicode(ccxx.queryv1("DISPLAY") or
 												 lang.getstr("unknown"), "UTF-8"))
 		dlg_list_ctrl.SetStringItem(index, 4,
-									get_canonical_instrument_name(safe_unicode(cgats[i].queryv1("INSTRUMENT") or
+									get_canonical_instrument_name(safe_unicode(ccxx.queryv1("INSTRUMENT") or
 																			   lang.getstr("unknown")
 																			   if ccxx_type == "CCMX"
 																			   else "i1 DisplayPro, ColorMunki Display, Spyder4/5",
 																			   "UTF-8")))
 		dlg_list_ctrl.SetStringItem(index, 5,
-									get_canonical_instrument_name(safe_unicode(cgats[i].queryv1("REFERENCE") or
+									get_canonical_instrument_name(safe_unicode(ccxx.queryv1("REFERENCE") or
 																			   lang.getstr("unknown"),
 																			   "UTF-8")))
-		created = cgats[i].queryv1("CREATED")
+		spectral = {}
+		for key in ("bands", "start_nm", "end_nm"):
+			try:
+				v = float(item.get("spectral_" + key, 0))
+			except (TypeError, ValueError):
+				pass
+			else:
+				if v:
+					spectral[key] = v
+		if spectral:
+			spectral_res = u'%.1fnm, %i-%inm' % ((spectral["end_nm"] -
+												  spectral["start_nm"]) /
+												 spectral["bands"],
+												 spectral["start_nm"],
+												 spectral["end_nm"])
+		else:
+			spectral_res = lang.getstr("unknown")
+		dlg_list_ctrl.SetStringItem(index, 6, spectral_res)
+		created = ccxx.queryv1("CREATED")
 		if created:
 			try:
 				created = strptime(created)
@@ -630,27 +658,27 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						pass
 			if isinstance(created, struct_time):
 				created = strftime("%Y-%m-%d %H:%M:%S", created)
-		dlg_list_ctrl.SetStringItem(index, 6,
-									parent.observers_ab.get(cgats[i].queryv1("REFERENCE_OBSERVER"),
+		dlg_list_ctrl.SetStringItem(index, 7,
+									parent.observers_ab.get(ccxx.queryv1("REFERENCE_OBSERVER"),
 															lang.getstr("unknown" if ccxx_type == "CCMX"
 																		else "not_applicable")))
-		dlg_list_ctrl.SetStringItem(index, 7,
-									safe_unicode(cgats[i].queryv1("FIT_METHOD") or
+		dlg_list_ctrl.SetStringItem(index, 8,
+									safe_unicode(ccxx.queryv1("FIT_METHOD") or
 												 lang.getstr("unknown"
 															 if ccxx_type == "CCMX"
 															 else "not_applicable"),
 												 "UTF-8"))
-		dlg_list_ctrl.SetStringItem(index, 8,
-									safe_unicode(cgats[i].queryv1("FIT_AVG_DE00") or
-												 lang.getstr("unknown"
-															 if ccxx_type == "CCMX"
-															 else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 9,
-									safe_unicode(cgats[i].queryv1("FIT_MAX_DE00") or
+									safe_unicode(ccxx.queryv1("FIT_AVG_DE00") or
 												 lang.getstr("unknown"
 															 if ccxx_type == "CCMX"
 															 else "not_applicable")))
 		dlg_list_ctrl.SetStringItem(index, 10,
+									safe_unicode(ccxx.queryv1("FIT_MAX_DE00") or
+												 lang.getstr("unknown"
+															 if ccxx_type == "CCMX"
+															 else "not_applicable")))
+		dlg_list_ctrl.SetStringItem(index, 11,
 									safe_unicode(created or
 												 lang.getstr("unknown"),
 												 "UTF-8"))
@@ -685,7 +713,6 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 		return False
 	# Important: Do not use parsed CGATS, order of keywords may be 
 	# different than raw data so MD5 will be different
-	cgats = re.sub("\n(CCMX|CCSS)( *\n)", "\n<>\n\\1\\2", data).split("\n<>\n")
 	colorimeter_correction_check_overwrite(parent, cgats[index])
 
 
@@ -9619,7 +9646,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  'type': filetype,
 				  'manufacturer_id': self.worker.get_display_edid().get("manufacturer_id", ""),
 				  'display': self.worker.get_display_name(False, True) or "Unknown",
-				  'instrument': self.worker.get_instrument_name() or "Unknown"}
+				  'instrument': self.worker.get_instrument_name() or "Unknown",
+				  "json": 1}
 		self.worker.interactive = False
 		self.worker.start(colorimeter_correction_web_check_choose, 
 						  http_request, 

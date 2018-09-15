@@ -946,6 +946,7 @@
 	"skip_legacy_serial_ports": "Skip legacy serial ports",
 	"softproof.icc": "Softproof (5800K, 160 cd/m², L*)",
 	"spectral": "Spectral",
+	"spectral_resolution": "Spectral resolution",
 	"ssl.certificate_verify_failed": "The remote certificate could not be verified.",
 	"ssl.certificate_verify_failed.root_ca_missing": "The remote certificate could not be verified because no suitable root certificates were found on the local system.",
 	"ssl.handshake_failure": "Handshake failure. A secure connection could not be established.",

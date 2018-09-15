@@ -946,6 +946,7 @@
 	"skip_legacy_serial_ports": "Veraltete serielle Anschlüsse auslassen",
 	"softproof.icc": "Softproof (5800K, 160 cd/m², L*)",
 	"spectral": "Spektral",
+	"spectral_resolution": "Spektrale Auflösung",
 	"ssl.certificate_verify_failed": "Das Server-Zertifikat konnte nicht verifiziert werden.",
 	"ssl.certificate_verify_failed.root_ca_missing": "Das Server-Zertifikat konnte nicht verifiziert werden, weil keine geeigneten Stammzertifikate auf dem lokalen System gefunden wurden.",
 	"ssl.handshake_failure": "Eine sichere Verbindung konnte nicht hergestellt werden, da die Aushandlung fehlschlug.",
