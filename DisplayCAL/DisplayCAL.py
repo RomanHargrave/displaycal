@@ -10566,7 +10566,9 @@ class MainFrame(ReportFrame, BaseFrame):
 									 capture_output=True, skip_scripts=True,
 									 silent=False, working_dir=cwd)
 				if not isinstance(result, Exception) and result:
+					ref_ti3_fn_orig = reference_ti3.filename
 					reference_ti3 = CGATS.CGATS(os.path.join(cwd, "reference.ti3"))
+					reference_ti3.filename = ref_ti3_fn_orig
 					# spec2cie doesn't update "LUMINANCE_XYZ_CDM2", and doesn't
 					# normalize measurement data to Y=100
 					XYZ_CDM2 = reference_ti3.queryv1("LUMINANCE_XYZ_CDM2")
