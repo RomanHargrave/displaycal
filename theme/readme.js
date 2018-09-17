@@ -235,11 +235,11 @@ jQuery(function ($) {
 			$('#totop').slideDown();
 			totop_isshown = true;
 		}
-		if (!faded && $(window).scrollTop() > $('#requirements').offset().top) {
+		if (!faded && $(window).scrollTop() > ($('#requirements').offset() || $('#changelog dt.collapsed').offset()).top) {
 			$('.sidebar-wrapper').addClass('faded');
 			faded = true;
 		}
-		else if (faded && $(window).scrollTop() < $('#requirements').offset().top) {
+		else if (faded && $(window).scrollTop() < ($('#requirements').offset() || $('#changelog dt.collapsed').offset()).top) {
 			$('.sidebar-wrapper').removeClass('faded');
 			faded = false;
 		}
