@@ -6716,6 +6716,8 @@ class MainFrame(ReportFrame, BaseFrame):
 																		 True))),
 							   getattr(self, "reportframe", self))
 			return
+		if not self.check_profile_b2a_hires(profile):
+			return
 		colormanaged = (use_sim and use_sim_as_output and not sim_profile and
 						config.get_display_name(None, True) in ("madVR",
 																"Prisma") and
@@ -8674,21 +8676,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					ok = lang.getstr("3dlut.create")
 				cancel = lang.getstr("cancel")
 			else:
-				# Check if profile is a LUT-type, and if yes, if LUT is of high
-				# enough resolution when created by ArgyllCMS
-				# (we assume anything >= 17 to be ok)
-				if ("B2A0" in profile.tags and isinstance(profile.tags.B2A0,
-														  ICCP.LUT16Type) and
-					profile.tags.B2A0.clut_grid_steps < 17 and
-					profile.creator == "argl"):
-					# Nope. Not allowing to install. Offer to re-generate B2A
-					# tables.
-					dlg = ConfirmDialog(self,
-										msg=lang.getstr("profile.b2a.lowres.warning"), 
-								bitmap=geticon(32, "dialog-warning"))
-					choice = dlg.ShowModal()
-					if choice == wx.ID_OK:
-						self.profile_hires_b2a_handler(None, profile)
+				if not self.check_profile_b2a_hires(profile):
 					return
 				installable = True
 				title = lang.getstr("profile.install")
@@ -12378,6 +12366,31 @@ class MainFrame(ReportFrame, BaseFrame):
 					 "%tpa	" + lang.getstr("testchart.info")])
 		return lang.getstr("profile.name.placeholders") + "\n" + \
 			   "\n".join(info)
+
+	def check_profile_b2a_hires(self, profile):
+		"""
+		Check if profile is a LUT-type, and if yes, if LUT is of high
+		enough resolution when created by ArgyllCMS
+		(we assume anything >= 17 to be ok) and give choice to generate
+		hires tables if not
+		
+		Return True if hires B2A or no B2A, False otherwise
+		
+		"""
+		if ("B2A0" in profile.tags and isinstance(profile.tags.B2A0,
+												  ICCP.LUT16Type) and
+			profile.tags.B2A0.clut_grid_steps < 17 and
+			profile.creator == "argl"):
+			# Nope. Not allowing to install. Offer to re-generate B2A
+			# tables.
+			dlg = ConfirmDialog(self,
+								msg=lang.getstr("profile.b2a.lowres.warning"), 
+						bitmap=geticon(32, "dialog-warning"))
+			choice = dlg.ShowModal()
+			if choice == wx.ID_OK:
+				self.profile_hires_b2a_handler(None, profile)
+			return False
+		return True
 	
 	def profile_hires_b2a_handler(self, event, profile=None):
 		if not profile:
