@@ -9212,7 +9212,10 @@ usage: spotread [-options] [logfile]
 				else:
 					# Forward
 					direction = "f"
-				XYZout = self.xicclu(profile, RGBin, "p", direction, pcs="x")
+				try:
+					XYZout = self.xicclu(profile, RGBin, "p", direction, pcs="x")
+				except Info, exception:
+					return exception
 				# Get RGB space from already added matrix column tags
 				rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs",
 																		  1))
