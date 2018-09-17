@@ -1817,7 +1817,19 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.header_btm.SetBitmap(self.header_btm_bmp)
 		elif self.header_btm.GetBitmap() is not self.header_btm_min_bmp:
 			self.header_btm.SetBitmap(self.header_btm_min_bmp)
+		wx.CallAfter(self.chart_ctrl_adjustsize)
 		event.Skip()
+
+	def chart_ctrl_adjustsize(self, w=None):
+		if w is None:
+			w = (self.calpanel.Size[0] - 16 * 2 -
+				 self.testchart_or_reference_label.Size[0] - 12 - 8 -
+				 self.fields_ctrl.Size[0] - 8 -
+				 self.chart_btn.Size[0] - 8 -
+			 self.chart_patches_amount.Size[0] - 1)
+		self.chart_ctrl.SetMaxSize((w, -1))
+		self.calpanel.Layout()
+		self.update_scrollbars()
 
 	def cal_drop_handler(self, path):
 		"""
@@ -9555,6 +9567,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						self.mr_init_controls()
 					else:
 						self.mr_update_controls()
+					self.chart_ctrl_adjustsize()
 				elif tab is self.lut3d_settings_panel and not tab.IsShown():
 					self.set_profile("output")
 					self.lut3d_show_trc_controls()

@@ -23,7 +23,7 @@
       <object class="sizeritem">
         <object class="wxFlexGridSizer">
           <object class="sizeritem">
-            <object class="wxStaticText">
+            <object class="wxStaticText" name="testchart_or_reference_label">
               <label>testchart_or_reference</label>
             </object>
             <flag>wxALIGN_CENTRE_VERTICAL</flag>
