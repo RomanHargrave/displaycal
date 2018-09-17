@@ -5782,6 +5782,44 @@ class ICCProfile:
 				self.set_localizable_desc(tagname, unistr)
 		return True
 
+	def convert_iccv2_tags_to_iccv4(self):
+		"""
+		Convert ICCv2 text description tags to ICCv4 multi-localized unicode
+		
+		Also sets whitepoint to D50, and stores illuminant-relative to D50
+		matrix as chromatic adaptation tag.
+		
+		If ICC profile version is >= 4, return False.
+		Otherwise, convert and return True.
+		
+		After conversion, the profile version is 4.3
+		
+		"""
+		if self.version >= 4:
+			return False
+		# Set fileName to None because our profile no longer reflects the file
+		# on disk
+		self.fileName = None
+		wtpt = self.tags.wtpt.ir.values()
+		# Set whitepoint tag to D50
+		self.tags.wtpt = self.tags.wtpt.pcs
+		# Set chromatic adaptation matrix
+		self.tags["chad"] = chromaticAdaptionTag()
+		wpam = colormath.wp_adaption_matrix(wtpt, cat=self.tags.get("arts",
+																	"Bradford"))
+		self.tags["chad"].update(wpam)
+		# Get all textDescriptionType tags
+		text = {}
+		for tagname, tag in self.tags.iteritems():
+			if tagname == "cprt" or isinstance(tag, TextDescriptionType):
+				text[tagname] = unicode(tag)
+		# Set profile version to 4.3
+		self.version = 4.3
+		# Convert to multiLocalizedUnicodeType (after setting version to 4.x)
+		for tagname, unistr in text.iteritems():
+			self.set_localizable_text(tagname, unistr)
+		return True
+
 	@staticmethod
 	def from_named_rgb_space(rgb_space_name, iccv4=False, cat="Bradford"):
 		rgb_space = colormath.get_rgb_space(rgb_space_name)
