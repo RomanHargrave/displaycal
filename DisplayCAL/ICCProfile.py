@@ -6146,7 +6146,7 @@ class ICCProfile:
 			if asciidesc != description:
 				self.tags[tagname].Unicode = description
 		else:
-			self.set_localizable_text(self, tagname, description, languagecode,
+			self.set_localizable_text(tagname, description, languagecode,
 									  countrycode)
 
 	def set_localizable_text(self, tagname, text, languagecode="en",
