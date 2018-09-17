@@ -505,7 +505,6 @@
                                   <vgap>0</vgap>
                                   <hgap>12</hgap>
                                   <growablecols>1</growablecols>
-                                  <growablerows>1</growablerows>
                                 </object>
                                 <option>1</option>
                                 <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
