@@ -5726,19 +5726,35 @@ class ICCProfile:
 		Also sets whitepoint to illuinant relative values, and removes
 		any chromatic adaptation tag.
 		
-		If ICC profile version is < 4 or no [rgb]TRC tags, return False.
-		Otherwise, convert and return True.
+		If ICC profile version is < 4 or no [rgb]TRC tags or LUT16Type tags,
+		return False.
+		Otherwise, convert curve tags and return True.
 		
-		After conversion, the profile version is 2.1
+		After conversion, the profile version is 2.1 if no LUT tags, else 2.4
 		
 		"""
-		if self.version < 4 or not self.has_trc_tags():
+		if self.version < 4:
 			return False
-		for channel in "rgb":
-			tag = self.tags[channel + "TRC"]
-			if isinstance(tag, ParametricCurveType):
-				# Convert to CurveType
-				self.tags[channel + "TRC"] = tag.get_trc()
+		# Fail if any LUT tag is not LUT16Type as we currently
+		# have not implemented conversion (which may not even
+		# be possible, depending on LUT contents)
+		has_lut_tags = False
+		for direction in ("A2B", "B2A"):
+			for tableno in xrange(3):
+				tag = self.tags.get("%s%i" % (direction, tableno))
+				if tag:
+					if isinstance(tag, LUT16Type):
+						has_lut_tags = True
+					else:
+						return False
+		if self.has_trc_tags():
+			for channel in "rgb":
+				tag = self.tags[channel + "TRC"]
+				if isinstance(tag, ParametricCurveType):
+					# Convert to CurveType
+					self.tags[channel + "TRC"] = tag.get_trc()
+		elif not has_lut_tags:
+			return False
 		# Set fileName to None because our profile no longer reflects the file
 		# on disk
 		self.fileName = None
@@ -5747,8 +5763,23 @@ class ICCProfile:
 		self.tags.wtpt = self.tags.wtpt.ir
 		if "chad" in self.tags:
 			del self.tags["chad"]
-		# Set profile version to 2.1
-		self.version = 2.1
+		# Get all multiLocalizedUnicodeType tags
+		mluc = {}
+		for tagname, tag in self.tags.iteritems():
+			if isinstance(tag, MultiLocalizedUnicodeType):
+				mluc[tagname] = unicode(tag)
+		if has_lut_tags:
+			# Set profile version to 2.4
+			self.version = 2.4
+		else:
+			# Set profile version to 2.1
+			self.version = 2.1
+		# Convert to textDescriptionType/textType (after setting version to 2.x)
+		for tagname, unistr in mluc.iteritems():
+			if tagname == "cprt":
+				self.setCopyright(unistr)
+			else:
+				self.set_localizable_desc(tagname, unistr)
 		return True
 
 	@staticmethod
