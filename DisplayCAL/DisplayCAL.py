@@ -2057,7 +2057,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									  lang.getstr("profile.type.lut_matrix.xyz"))
 			self.profile_types_ab[profile_types_index] = "X"  # XYZ LUT + accurate matrix
 			profile_types_index += 1
-		if self.worker.argyll_version[0:3] > [1, 1, 0] or (
+		if (self.worker.argyll_version[0:3] > [1, 1, 0] and
+			self.worker.argyll_version[0:3] < [2, 0, 2]) or (
 		   self.worker.argyll_version[0:3] == [1, 1, 0] 
 		   and not "Beta" in self.worker.argyll_version_string
 		   and not "RC1" in self.worker.argyll_version_string
@@ -2068,7 +2069,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									  lang.getstr("profile.type.lut_rg_swapped_matrix.xyz"))
 			self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT + dummy matrix (R <-> G swapped)
 			profile_types_index += 1
-		elif sys.platform != "win32":
+		else:
 			self.profile_types.insert(profile_types_index, 
 									  lang.getstr("profile.type.lut.xyz"))
 			self.profile_types_ab[profile_types_index] = "x"  # XYZ LUT
@@ -13731,9 +13732,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.setup_observer_ctrl()
 			self.update_observer_ctrl()
 			self.update_profile_type_ctrl_items()
-			self.profile_type_ctrl.SetSelection(
-				self.profile_types_ba.get(getcfg("profile.type"), 
-				self.profile_types_ba.get(defaults["profile.type"], 0)))
+			self.update_profile_type_ctrl()
 			self.lut3d_setup_language()
 			self.lut3d_init_input_profiles()
 			self.lut3d_update_controls()
