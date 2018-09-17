@@ -5803,11 +5803,13 @@ class ICCProfile:
 		wtpt = self.tags.wtpt.ir.values()
 		# Set whitepoint tag to D50
 		self.tags.wtpt = self.tags.wtpt.pcs
-		# Set chromatic adaptation matrix
-		self.tags["chad"] = chromaticAdaptionTag()
-		wpam = colormath.wp_adaption_matrix(wtpt, cat=self.tags.get("arts",
-																	"Bradford"))
-		self.tags["chad"].update(wpam)
+		if not "chad" in self.tags:
+			# Set chromatic adaptation matrix
+			self.tags["chad"] = chromaticAdaptionTag()
+			wpam = colormath.wp_adaption_matrix(wtpt,
+												cat=self.tags.get("arts",
+																  "Bradford"))
+			self.tags["chad"].update(wpam)
 		# Get all textDescriptionType tags
 		text = {}
 		for tagname, tag in self.tags.iteritems():
