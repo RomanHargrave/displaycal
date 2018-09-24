@@ -1881,7 +1881,8 @@ class Worker(WorkerBase):
 							 not defaults["patterngenerator.prisma.argyll"])
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
-				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args))):
+				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args)) and
+				not "-dvirtual" in args):
 				if ((config.get_display_name() == "Resolve" or
 				     non_argyll_prisma) and
 					not ignore_display_name):
@@ -2796,7 +2797,15 @@ END_DATA
 		self.displays = []
 		self.instruments = []
 		self.lut_access = []
+		self.reset_argyll_enum()
+
+	def reset_argyll_enum(self):
+		"""
+		Reset auto-detected (during display/instrument enumeration) properties
+		
+		"""
 		self.measurement_modes = {}
+		self.argyll_has_virtual_display = False
 
 	def clear_cmd_output(self):
 		"""
@@ -4209,6 +4218,7 @@ END_DATA
 				self.output.append(u"    100 = '\xd4\xc7\xf3 Test A'")
 				self.output.append(u"    101 = '\xd4\xc7\xf3 Test B'")
 			argyll_version_string = None
+			self.reset_argyll_enum()
 			for line in self.output:
 				if isinstance(line, unicode):
 					n += 1
@@ -4259,6 +4269,10 @@ END_DATA
 							defaults["calibration.black_point_hack"] = 1
 						elif arg == "-dprisma[:host]":
 							defaults["patterngenerator.prisma.argyll"] = 1
+						elif arg == "-dvirtual":
+							# Custom modified Argyll V2.0.2
+							self.argyll_has_virtual_display = True
+							safe_print("Argyll has virtual display support")
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
 						if arg == "-d":
@@ -4706,7 +4720,8 @@ END_DATA
 												 madvr.min_version))
 					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
 							 (madvr_version + (self.madtpg.uri, )))
-					if isinstance(self.madtpg, madvr.MadTPG_Net):
+					if (isinstance(self.madtpg, madvr.MadTPG_Net) or
+						self.argyll_has_virtual_display):
 						# Need to handle calibration clearing/loading/saving
 						# for madVR net-protocol pure python implementation
 						cal = None
@@ -4827,7 +4842,8 @@ BEGIN_DATA
 						not self.madtpg.set_device_gamma_ramp(ramp)):
 						self.madtpg_disconnect(False)
 						return Error("madVR_SetDeviceGammaRamp failed")
-					if (isinstance(self.madtpg, madvr.MadTPG_Net) and
+					if ((isinstance(self.madtpg, madvr.MadTPG_Net) or
+						 self.argyll_has_virtual_display) and
 						cmdname == get_argyll_utilname("dispwin")):
 						# For madVR net-protocol pure python implementation
 						# we are now done
@@ -4942,9 +4958,14 @@ BEGIN_DATA
 													  2: "APL linear"}.get(patternconfig[2],
 																		   patternconfig[2]))
 					self.log("Border width: %i pixels" % patternconfig[3])
-					if isinstance(self.madtpg, madvr.MadTPG_Net):
+					if (isinstance(self.madtpg, madvr.MadTPG_Net) or
+						self.argyll_has_virtual_display):
+						dindex = args.index("-dmadvr")
 						args.remove("-dmadvr")
-						args.insert(0, "-P1,1,0.01")
+						if self.argyll_has_virtual_display:
+							args.insert(dindex, "-dvirtual")
+						else:
+							args.insert(0, "-P1,1,0.01")
 					else:
 						# Only if using native madTPG implementation!
 						if not get_arg("-P", args):
@@ -4962,11 +4983,14 @@ BEGIN_DATA
 				else:
 					return Error(lang.getstr("madtpg.launch.failure"))
 			except Exception, exception:
-				if isinstance(getattr(self, "madtpg", None), madvr.MadTPG_Net):
+				if (isinstance(getattr(self, "madtpg", None), madvr.MadTPG_Net) or
+					(getattr(self, "madtpg", None) and
+					 self.argyll_has_virtual_display)):
 					self.madtpg_disconnect()
 				return exception
 		# Use mad* net protocol pure python implementation
-		use_madnet = use_madvr and isinstance(self.madtpg, madvr.MadTPG_Net)
+		use_madnet = use_madvr and (isinstance(self.madtpg, madvr.MadTPG_Net) or
+									self.argyll_has_virtual_display)
 		# Use mad* net protocol pure python implementation as pattern generator
 		self.use_madnet_tpg = use_madnet and cmdname != get_argyll_utilname("dispwin")
 		if self.use_patterngenerator or self.use_madnet_tpg:
@@ -6645,7 +6669,10 @@ while 1:
 		if (display_name == "Resolve" or
 			(display_name == "Prisma" and
 			 not defaults["patterngenerator.prisma.argyll"])):
-			return "1"
+			if self.argyll_has_virtual_display:
+				return "virtual"
+			else:
+				return "1"
 		if display_name == "Prisma":
 			host = getcfg("patterngenerator.prisma.host")
 			try:
