@@ -735,6 +735,11 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		bt2390 = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
 								  master_white_cdm2,
 								  use_alternate_master_white_clip)
+		# Preserve detail in saturated colors if mastering display peak < 10K cd/m2
+		preserve_saturated_detail = master_white_cdm2 < 10000
+		if preserve_saturated_detail:
+			bt2390s = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
+									   10000)
 
 		maxv = white_cdm2 / 10000.0
 		eotf = lambda v: colormath.specialpow(v, -2084)
@@ -1022,6 +1027,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				if debug and R == G == B:
 					safe_print("RGB %5.3f %5.3f %5.3f" % tuple(RGB), end=" ")
 				RGB_sum = sum(RGB)
+				if hdr_format == "PQ" and mode in ("HSV", "HSV_ICtCp", "ICtCp",
+												   "RGB_ICtCp"):
+					# Record original hue angle, saturation and value
+					H, S, V = colormath.RGB2HSV(*RGB)
 				if hdr_format == "PQ" and mode in ("HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
 					I1, Ct1, Cp1 = colormath.RGB2ICtCp(*RGB, rgb_space=rgb_space,
 													   eotf=eotf,
@@ -1030,6 +1039,10 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 						safe_print("-> ICtCp % 5.3f % 5.3f % 5.3f" %
 								   (I1, Ct1, Cp1,), end=" ")
 					I2 = eetf(I1)
+					if preserve_saturated_detail and S:
+						sf = S
+						I2 *= (1 - sf)
+						I2 += bt2390s.apply(I1) * sf
 				if hdr_format == "HLG":
 					X, Y, Z = hlg.RGB2XYZ(*RGB)
 					if Y:
@@ -1055,13 +1068,14 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					if mode in ("HSV", "RGB"):
 						I1 = max(RGB)
 					if mode in ("HSV", "HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
-						# Record original hue angle
-						H = colormath.RGB2HSV(*RGB)[0]
-
 						# Allow hue shift based on hue angle
 						hf = hinterp(H)
 					for i, v in enumerate(RGB):
 						RGB[i] = eetf(v)
+						if preserve_saturated_detail and S:
+							sf = S
+							RGB[i] *= (1 - sf)
+							RGB[i] += bt2390s.apply(v) * sf
 					RGB_shifted = RGB  # Potentially hue shifted RGB
 					if mode in ("HSV", "HSV_ICtCp"):
 						HSV = list(colormath.RGB2HSV(*RGB_shifted))
