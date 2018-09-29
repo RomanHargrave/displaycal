@@ -2345,13 +2345,12 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 	"""
 	prevperc = 0
 	amount = len(HDR_XYZ)
-	# We want to reduce luminance differently between hues to keep the relation
-	a = 0.999
-	b = 0.99975
-	# Hue angles (radians, RGB):
-	# red, redorange, yellow, yellowgreen, green, cyan, blue, magenta, red
-	interp = colormath.Interp([0, 0.041666, 0.166666, 0.25, 0.333333, 0.5, 0.666666, 0.833333, 1],
-							  [a, a, a, a, a, b, b, b, a], use_numpy=True)
+	dI = 0
+	dI_max = 0
+	dC = 0
+	dC_max = 0
+	I_reduced_count = 0
+	its_hi = 0  # Highest number pf iterations seen per color
 	for i, (RGB_in, ICtCp_XYZ, RGB_ICtCp_XYZ) in enumerate(HDR_XYZ):
 		if thread_abort_event and thread_abort_event.is_set():
 			return [False]
@@ -2366,34 +2365,64 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 				continue
 			X, Y, Z = XYZ
 			H = None
-			while not is_neutral:
-				X_D50, Y_D50, Z_D50 = colormath.adapt(*(v / maxv for v in (X, Y, Z)), whitepoint_source=rgb_space[1])
-				if not (min(X_D50, Y_D50, Z_D50) < 0 or
-						X_D50 > 0.9642 or Y_D50 > 1 or Z_D50 > 0.8249):
+			its = 10000  # Remaining iterations (limit)
+			while not is_neutral and its:
+				X_D50, Y_D50, Z_D50 = colormath.adapt(*(v / maxv for v in (X, Y, Z)),
+													  whitepoint_source=rgb_space[1])
+				negative_clip = min(X_D50, Y_D50, Z_D50) < 0
+				positive_clip = round(X_D50, 4) > 0.9642 or Y_D50 > 1 or round(Z_D50, 4) > 0.8249
+				if not (negative_clip or positive_clip):
 					break
 				if H is None:
 					# Record hue angle
 					H = colormath.RGB2HSV(*RGB_in)[0]
 					# This is the initial intensity, and hue + saturation
 					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
-					f = colormath.convert_range(sum(RGB_in), 1, 3, interp(H), 1)
-				if min(X_D50, Y_D50, Z_D50) < 0:
-					# Desaturate to get rid of negative XYZ
-					Ct *= 0.99
-					Cp *= 0.99
-				else:
-					if f < 1:
-						# Reduce intensity to bring XYZ down
-						I *= f
-					Ct *= 0.99
-					Cp *= 0.99
+					Io, Cto, Cpo = I, Ct, Cp
+					Co = colormath.Lab2LCHab(I, Ct, Cp)[1]
+				# Desaturate
+				Ct *= 0.99
+				Cp *= 0.99
+				# Update XYZ
 				X, Y, Z = colormath.ICtCp2XYZ(I, Ct, Cp)
+				if Y > XYZ[1]:
+					# Desaturating CtCp increases Y!
+					# As we desaturate different amounts per color,
+					# restore initial Y if lower than adjusted Y
+					# to keep luminance relation
+					X, Y, Z = (v / Y * XYZ[1] for v in (X, Y, Z))
+					I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z)
+				its -= 1
+			if H is not None and round(Io - I, 4):
+				# Intensity was reduced by >= 0.0001, gather statistics
+				C = colormath.Lab2LCHab(I, Ct, Cp)[1]
+				dI += Io - I
+				dI_max = max(dI_max, Io - I)
+				dC += Co - C
+				dC_max = max(dC_max, Co - C)
+				I_reduced_count += 1
+			if not its:
+				# Max iterations exceeded, print diagnostics
+				# XXX: This should not happen (testing OK)
+				oX_D50, oY_D50, oZ_D50 = colormath.adapt(*(v / maxv for v in XYZ),
+														 whitepoint_source=rgb_space[1])
+				X_D50, Y_D50, Z_D50 = colormath.adapt(*(v / maxv for v in (X, Y, Z)),
+													  whitepoint_source=rgb_space[1])
+				safe_print("Reached iteration limit, XYZ %.4f %.4f %.4f -> %.4f %.4f %.4f" %
+						   (oX_D50, oY_D50, oZ_D50, X_D50, Y_D50, Z_D50))
+			its_hi = max(its_hi, 10000 - its)
 			XYZ[:] = X, Y, Z
 		HDR_XYZ[i] = (RGB_in, ICtCp_XYZ, RGB_ICtCp_XYZ)
 		perc = round((i + 1.0) / amount * 50)
 		if progress_queue and perc > prevperc:
 			progress_queue.put(perc - prevperc)
 			prevperc = perc
+	if I_reduced_count:
+		# Intensity was reduced, print informational statistics
+		safe_print("Max iterations %i dI avg %.4f max %.4f dC avg %.4f max %.4f" %
+				   (its_hi, dI / I_reduced_count, dI_max, dC / I_reduced_count, dC_max))
+	elif its_hi:
+		safe_print("Max iterations", its_hi)
 	return HDR_XYZ
 
 
