@@ -533,7 +533,8 @@ def create_RGB_A2B_XYZ(input_curves, clut, logfn=safe_print):
 
 
 def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
-								  white_Y=1.0, clutres=9, entries=2049):
+								  white_Y=1.0, clutres=9, entries=2049,
+								  cat="Bradford"):
 	"""
 	Create a synthetic cLUT profile from a colorspace definition
 	
@@ -548,17 +549,20 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	(profile.tags.wtpt.X,
 	 profile.tags.wtpt.Y,
 	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
+
+	profile.tags.arts = chromaticAdaptionTag()
+	profile.tags.arts.update(colormath.get_cat_matrix(cat))
 	
 	itable = profile.tags.A2B0 = LUT16Type(None, "A2B0", profile)
 	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
 	
 	otable = profile.tags.B2A0 = LUT16Type(None, "B2A0", profile)
 	Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
-								 whitepoint_source=rgb_space[1])
+								 whitepoint_source=rgb_space[1], cat=cat)
 	Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
-								 whitepoint_source=rgb_space[1])
+								 whitepoint_source=rgb_space[1], cat=cat)
 	Xb, Yb, Zb = colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space),
-								 whitepoint_source=rgb_space[1])
+								 whitepoint_source=rgb_space[1], cat=cat)
 	m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
 							  (Yr, Yg, Yb),
 							  (Zr, Zg, Zb))).inverted()
@@ -631,7 +635,8 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 				X, Y, Z = colormath.adapt(*colormath.RGB2XYZ(*[v * step * maxi
 															   for v in (R, G, B)],
 															 rgb_space=rgb_space),
-										  whitepoint_source=rgb_space[1])
+										  whitepoint_source=rgb_space[1],
+										  cat=cat)
 				X, Y, Z = colormath.blend_blackpoint(X, Y, Z, None, XYZbp)
 				itable.clut[-1].append([max(v / white_Y * 32768, 0)
 										for v in (X, Y, Z)])
@@ -660,7 +665,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											backward_xicclu=None,
 											generate_B2A=False,
 											worker=None,
-											logfile=None):
+											logfile=None,
+											cat="Bradford"):
 	"""
 	Create a synthetic cLUT profile with the SMPTE 2084 TRC from a colorspace
 	definition
@@ -702,7 +708,8 @@ def create_synthetic_smpte2084_clut_profile(rgb_space, description,
 											 backward_xicclu,
 											 generate_B2A,
 											 worker,
-											 logfile)
+											 logfile,
+											 cat)
 
 
 def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
@@ -722,7 +729,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 									  backward_xicclu=None,
 									  generate_B2A=False,
 									  worker=None,
-									  logfile=None):
+									  logfile=None,
+									  cat="Bradford"):
 	"""
 	Create a synthetic HDR cLUT profile from a colorspace definition
 	
@@ -802,6 +810,9 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	(profile.tags.wtpt.X,
 	 profile.tags.wtpt.Y,
 	 profile.tags.wtpt.Z) = colormath.get_whitepoint(rgb_space[1])
+
+	profile.tags.arts = chromaticAdaptionTag()
+	profile.tags.arts.update(colormath.get_cat_matrix(cat))
 	
 	itable = profile.tags.A2B0 = LUT16Type(None, "A2B0", profile)
 	itable.matrix = colormath.Matrix3x3([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
@@ -818,11 +829,11 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	if generate_B2A:
 		otable = profile.tags.B2A0 = LUT16Type(None, "B2A0", profile)
 		Xr, Yr, Zr = colormath.adapt(*colormath.RGB2XYZ(1, 0, 0, rgb_space=rgb_space),
-									 whitepoint_source=rgb_space[1])
+									 whitepoint_source=rgb_space[1], cat=cat)
 		Xg, Yg, Zg = colormath.adapt(*colormath.RGB2XYZ(0, 1, 0, rgb_space=rgb_space),
-									 whitepoint_source=rgb_space[1])
+									 whitepoint_source=rgb_space[1], cat=cat)
 		Xb, Yb, Zb = colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, rgb_space=rgb_space),
-									 whitepoint_source=rgb_space[1])
+									 whitepoint_source=rgb_space[1], cat=cat)
 		m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
 								  (Yr, Yg, Yb),
 								  (Zr, Zg, Zb)))
@@ -1187,8 +1198,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		num_batches = clutres // 6
 
 		HDR_XYZ = sum(pool_slice(_mp_hdr_tonemap, HDR_XYZ,
-												  (rgb_space, maxv, sat), {},
-												  num_workers,
+												  (rgb_space, maxv, sat, cat),
+												  {}, num_workers,
 												  worker and worker.thread_abort,
 												  logfile, num_batches, perc),
 												  [])
@@ -1222,7 +1233,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 		HDR_ICtCp.append((I, Ct, Cp))
 		# Adapt to D50
 		X, Y, Z = colormath.adapt(X, Y, Z,
-								  whitepoint_source=rgb_space[1])
+								  whitepoint_source=rgb_space[1], cat=cat)
 		if max(X, Y, Z) * 32768 > 65535 or min(X, Y, Z) < 0 or round(Y, 6) > 1:
 			# This should not happen
 			safe_print("#%i"  % i, "RGB %.3f %.3f %.3f" % tuple(RGB),
@@ -1347,7 +1358,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space,
 										 eotf=eotf)
 				XYZc = colormath.adapt(*XYZc,
-										whitepoint_source=content_rgb_space[1])
+										whitepoint_source=content_rgb_space[1],
+										cat=cat)
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v * 100
 													for v in XYZc))
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
@@ -1400,13 +1412,15 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				XYZdisp = XYZsrc
 			X, Y, Z = (v * maxv for v in XYZsrc)
 			X, Y, Z = colormath.adapt(X, Y, Z,
-									  whitepoint_destination=content_rgb_space[1])
+									  whitepoint_destination=content_rgb_space[1],
+									  cat=cat)
 			R, G, B = colormath.XYZ2RGB(X, Y, Z, content_rgb_space,
 										oetf=eotf_inverse)
 			XYZc = colormath.RGB2XYZ(R, G, B, content_rgb_space, eotf=eotf)
 			XYZc = colormath.adapt(*XYZc,
 									whitepoint_source=content_rgb_space[1],
-									whitepoint_destination=rgb_space[1])
+									whitepoint_destination=rgb_space[1],
+									cat=cat)
 			RGBc_r2020 = colormath.XYZ2RGB(*XYZc, rgb_space=rgb_space,
 										   oetf=eotf_inverse)
 			XYZc_r2020 = colormath.RGB2XYZ(*RGBc_r2020, rgb_space=rgb_space,
@@ -1416,23 +1430,27 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 												oetf=eotf_inverse)
 				L, C, H = colormath.Lab2LCHab(I * 100, Cp * 100, Ct * 100)
 				XYZdispa = colormath.adapt(*XYZdisp,
-										   whitepoint_destination=rgb_space[1])
+										   whitepoint_destination=rgb_space[1],
+										   cat=cat)
 				Id, Ctd, Cpd = colormath.XYZ2ICtCp(*(v * maxv for v in XYZdispa),
 												   oetf=eotf_inverse)
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id * 100, Cpd * 100, Ctd * 100)
 			elif blendmode == "IPT":
 				XYZc_r2020 = colormath.adapt(*XYZc_r2020,
 											 whitepoint_source=rgb_space[1],
-											 whitepoint_destination=IPT_white_XYZ)
+											 whitepoint_destination=IPT_white_XYZ,
+											 cat=cat)
 				I, CP, CT = colormath.XYZ2IPT(*XYZc_r2020)
 				L, C, H = colormath.Lab2LCHab(I * 100, CP * 100, CT * 100)
 				XYZdispa = colormath.adapt(*XYZdisp,
-										   whitepoint_destination=IPT_white_XYZ)
+										   whitepoint_destination=IPT_white_XYZ,
+										   cat=cat)
 				Id, Pd, Td = colormath.XYZ2IPT(*XYZdispa)
 				Ld, Cd, Hd = colormath.Lab2LCHab(Id * 100, Pd * 100, Td * 100)
 			elif blendmode == "Lpt":
 				XYZc_r2020 = colormath.adapt(*XYZc_r2020,
-											 whitepoint_source=rgb_space[1])
+											 whitepoint_source=rgb_space[1],
+											 cat=cat)
 				L, p, t = colormath.XYZ2Lpt(*(v / maxv * 100
 											  for v in XYZc_r2020))
 				L, C, H = colormath.Lab2LCHab(L, p, t)
@@ -1440,7 +1458,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 				Ld, Cd, Hd = colormath.Lab2LCHab(Ld, pd, td)
 			elif blendmode == "XYZ":
 				XYZc_r2020 = colormath.adapt(*XYZc_r2020,
-											 whitepoint_source=rgb_space[1])
+											 whitepoint_source=rgb_space[1],
+											 cat=cat)
 				wx, wy = colormath.XYZ2xyY(*colormath.get_whitepoint())[:2]
 				x, y, Y = colormath.XYZ2xyY(*XYZc_r2020)
 				x -= wx
@@ -1453,7 +1472,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 			else:
 				# DIN99d
 				XYZc_r202099 = colormath.adapt(*XYZc_r2020,
-											   whitepoint_source=rgb_space[1])
+											   whitepoint_source=rgb_space[1],
+											   cat=cat)
 				L, C, H = colormath.XYZ2DIN99dLCH(*(v / maxv * 100
 													for v in XYZc_r202099))
 				Ld, Cd, Hd = colormath.XYZ2DIN99dLCH(*(v * 100 for v in XYZdisp))
@@ -1551,7 +1571,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 																for v in XYZ])
 						elif blendmode == "IPT":
 							XYZ = colormath.adapt(X, Y, Z,
-												  whitepoint_destination=IPT_white_XYZ)
+												  whitepoint_destination=IPT_white_XYZ,
+												  cat=cat)
 							I, CP, CT = colormath.XYZ2IPT(*XYZ)
 							L, C, H = colormath.Lab2LCHab(I * 100, CP * 100, CT * 100)
 						elif blendmode == "Lpt":
@@ -1603,7 +1624,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 							X, Y, Z = (v / maxv for v in XYZ)
 							# Adapt to D50
 							X, Y, Z = colormath.adapt(X, Y, Z,
-													  whitepoint_source=rgb_space[1])
+													  whitepoint_source=rgb_space[1],
+													  cat=cat)
 						elif blendmode == "DIN99d":
 							L, a, b = colormath.DIN99dLCH2Lab(L, C, H)
 							X, Y, Z = colormath.Lab2XYZ(L, a, b)
@@ -1613,7 +1635,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 							X, Y, Z = colormath.IPT2XYZ(I, CP, CT)
 							# Adapt to D50
 							X, Y, Z = colormath.adapt(X, Y, Z,
-													  whitepoint_source=IPT_white_XYZ)
+													  whitepoint_source=IPT_white_XYZ,
+													  cat=cat)
 						elif blendmode == "Lpt":
 							L, p, t = colormath.LCHab2Lab(L, C, H)
 							X, Y, Z = colormath.Lpt2XYZ(L, p, t)
@@ -1744,7 +1767,8 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											backward_xicclu=None,
 											generate_B2A=True,
 											worker=None,
-											logfile=None):
+											logfile=None,
+											cat="Bradford"):
 	"""
 	Create a synthetic cLUT profile with the HLG TRC from a colorspace
 	definition
@@ -1778,7 +1802,8 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											 backward_xicclu,
 											 generate_B2A,
 											 worker,
-											 logfile)
+											 logfile,
+											 cat)
 
 
 def _colord_get_display_profile(display_no=0, path_only=False):
@@ -2350,7 +2375,7 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 
 
 def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
-					maxv, sat):
+					maxv, sat, cat="Bradford"):
 	"""
 	Worker for HDR tonemapping
 	
@@ -2382,7 +2407,8 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 			its = 10000  # Remaining iterations (limit)
 			while not is_neutral and its:
 				X_D50, Y_D50, Z_D50 = colormath.adapt(*(v / maxv for v in (X, Y, Z)),
-													  whitepoint_source=rgb_space[1])
+													  whitepoint_source=rgb_space[1],
+													  cat=cat)
 				negative_clip = min(X_D50, Y_D50, Z_D50) < 0
 				positive_clip = round(X_D50, 4) > 0.9642 or Y_D50 > 1 or round(Z_D50, 4) > 0.8249
 				if not (negative_clip or positive_clip):
@@ -2419,9 +2445,11 @@ def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
 				# Max iterations exceeded, print diagnostics
 				# XXX: This should not happen (testing OK)
 				oX_D50, oY_D50, oZ_D50 = colormath.adapt(*(v / maxv for v in XYZ),
-														 whitepoint_source=rgb_space[1])
+														 whitepoint_source=rgb_space[1],
+														 cat=cat)
 				X_D50, Y_D50, Z_D50 = colormath.adapt(*(v / maxv for v in (X, Y, Z)),
-													  whitepoint_source=rgb_space[1])
+													  whitepoint_source=rgb_space[1],
+													  cat=cat)
 				safe_print("Reached iteration limit, XYZ %.4f %.4f %.4f -> %.4f %.4f %.4f" %
 						   (oX_D50, oY_D50, oZ_D50, X_D50, Y_D50, Z_D50))
 			its_hi = max(its_hi, 10000 - its)
@@ -4938,11 +4966,12 @@ class XYZType(ICCProfileTag, XYZNumber):
 	
 	def adapt(self, whitepoint_source=None, whitepoint_destination=None,
 			  cat=None):
-		if self.profile and isinstance(self.profile.tags.get("arts"),
-									   chromaticAdaptionTag):
-			cat = self.profile.tags.arts
-		else:
-			cat = "Bradford"
+		if cat is None:
+			if self.profile and isinstance(self.profile.tags.get("arts"),
+										   chromaticAdaptionTag):
+				cat = self.profile.tags.arts
+			else:
+				cat = "Bradford"
 		XYZ = self.__class__(profile=self.profile)
 		XYZ.X, XYZ.Y, XYZ.Z = colormath.adapt(self.X, self.Y, self.Z,
 											  whitepoint_source,
@@ -5878,7 +5907,7 @@ class ICCProfile:
 		wx, wy = colormath.XYZ2xyY(*rgb_space[1])[:2]
 		return ICCProfile.from_chromaticities(rx, ry, gx, gy,  bx, by, wx, wy,
 											  rgb_space[0], description,
-											  "No copyright")
+											  "No copyright", cat=cat)
 		
 	
 	@staticmethod
@@ -6005,6 +6034,8 @@ class ICCProfile:
 				profile.tags[tagname].extend(gamma)
 			else:
 				profile.tags[tagname].set_trc(gamma, 1)
+		profile.tags.arts = chromaticAdaptionTag()
+		profile.tags.arts.update(colormath.get_cat_matrix(cat))
 		profile.calculateID()
 		return profile
 
@@ -6014,8 +6045,10 @@ class ICCProfile:
 
 	def set_blackpoint(self, XYZbp):
 		if not "chad" in self.tags:
+			cat = self.guess_cat() or "Bradford"
 			XYZbp = colormath.adapt(*XYZbp,
-									whitepoint_destination=self.tags.wtpt.ir.values())
+									whitepoint_destination=self.tags.wtpt.ir.values(),
+									cat=cat)
 		self.tags.bkpt = XYZType(tagSignature="bkpt", profile=self)
 		self.tags.bkpt.X, self.tags.bkpt.Y, self.tags.bkpt.Z = XYZbp
 
@@ -6256,7 +6289,7 @@ class ICCProfile:
 		Get or guess chromatic adaptation transform.
 		
 		If 'matrix' is True, and 'arts' tag is present, return actual matrix
-		instead of name.
+		instead of name if no match to known matrices.
 		
 		"""
 		illuminant = self.illuminant.values()
@@ -6265,9 +6298,7 @@ class ICCProfile:
 									   self.tags.chad.inverted() * illuminant, 
 									   illuminant)
 		elif isinstance(self.tags.get("arts"), chromaticAdaptionTag):
-			if matrix:
-				return self.tags.arts
-			return self.tags.arts.get_cat()
+			return self.tags.arts.get_cat() or (matrix and self.tags.arts)
 	
 	def isSame(self, profile, force_calculation=False):
 		"""
@@ -6750,7 +6781,9 @@ class ICCProfile:
 														 white["XYZ_Z"])]
 						else:
 							XYZwp = self.tags.wtpt.ir.values()
-						XYZbp = colormath.adapt(*XYZbp, whitepoint_source=XYZwp)
+						cat = self.guess_cat() or "Bradford"
+						XYZbp = colormath.adapt(*XYZbp, whitepoint_source=XYZwp,
+												cat=cat)
 					return XYZbp
 
 	def optimize(self, return_bytes_saved=False, update_ID=True):

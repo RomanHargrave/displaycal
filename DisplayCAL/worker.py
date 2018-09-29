@@ -2174,6 +2174,8 @@ class Worker(WorkerBase):
 					hdr_format = "PQ"
 				elif hlg:
 					hdr_format = "HLG"
+				cat = profile1.guess_cat() or "Bradford"
+				self.log("Using chromatic adaptation transform matrix:", cat)
 				profile = ICCP.create_synthetic_hdr_clut_profile(hdr_format,
 					rgb_space, desc,
 					black_cdm2, white_cdm2,
@@ -2186,7 +2188,7 @@ class Worker(WorkerBase):
 					content_rgb_space=content_rgb_space, sat=hdr_sat,
 					hue=hdr_hue,
 					forward_xicclu=xf, backward_xicclu=xb,
-					worker=self, logfile=logfiles)
+					worker=self, logfile=logfiles, cat=cat)
 				profile1.tags.A2B0 = profile.tags.A2B0
 				profile1.tags.DBG0 = profile.tags.DBG0
 				profile1.tags.DBG1 = profile.tags.DBG1
@@ -3154,13 +3156,17 @@ END_DATA
 				cwx, cwy = colormath.XYZ2xyY(*content_rgb_space[1])[:2]
 				rgb_space_name = (colormath.find_primaries_wp_xy_rgb_space_name(content_colors) or
 								  "Custom")
+				cat = profile_in.guess_cat() or "Bradford"
+				self.log("Using chromatic adaptation transform matrix from "
+						 "input profile for content colorspace:", cat)
 				profile_src = ICCP.ICCProfile.from_chromaticities(crx, cry,
 																  cgx, cgy,
 																  cbx, cby,
 																  cwx, cwy,
 																  2.2,
 																  rgb_space_name,
-																  "")
+																  "",
+																  cat=cat)
 				fd, profile_src.fileName = tempfile.mkstemp(profile_ext,
 															"%s-" % rgb_space_name,
 															dir=cwd)
@@ -5799,6 +5805,9 @@ while 1:
 			logfile.write(msg)
 			logfile.write("\n")
 
+		cat = profile.guess_cat() or "Bradford"
+		self.log("Using chromatic adaptation transform matrix:", cat)
+
 		# Note that intent 0 will be colorimetric if no other tables are
 		# present
 		intent = {0: "p",
@@ -6059,7 +6068,7 @@ while 1:
 				# Rec. 2020 blue and actual blue primary
 				bx, by, bY = colormath.XYZ2xyY(
 					*colormath.adapt(*colormath.RGB2XYZ(0, 0, 1, "Rec. 2020"),
-									 whitepoint_source="D65"))
+									 whitepoint_source="D65", cat=cat))
 				bx2, by2, bY2 = xyYrgb[2]
 				bu, bv = colormath.xyY2Lu_v_(bx, by, bY)[1:]
 				bu2, bv2 = colormath.xyY2Lu_v_(bx2, by2, bY2)[1:]
@@ -6191,14 +6200,16 @@ while 1:
 			XYZsrgb = []
 			for channel, components in rgb:
 				XYZsrgb.append(colormath.adapt(*colormath.RGB2XYZ(*components),
-											   whitepoint_source="D65"))
+											   whitepoint_source="D65",
+											   cat=cat))
 			XYZrgb_sequence = [XYZrgb, XYZsrgb]
 			for rgb_space in rgb_spaces:
 				if rgb_space[1] not in ("D50", colormath.get_whitepoint("D50")):
 					# Adapt to D50
 					for i in xrange(3):
 						X, Y, Z = colormath.xyY2XYZ(*rgb_space[2 + i])
-						X, Y, Z = colormath.adapt(X, Y, Z, rgb_space[1])
+						X, Y, Z = colormath.adapt(X, Y, Z, rgb_space[1],
+												  cat=cat)
 						rgb_space[2 + i] = colormath.XYZ2xyY(X, Y, Z)
 					rgb_space[1] = "D50"
 
@@ -8371,6 +8382,10 @@ usage: spotread [-options] [logfile]
 					else:
 						RGB_XYZ = ti3_remaining
 					xy.append(colormath.XYZ2xyY(*(v / 100 for v in RGB_XYZ[(R, G, B)]))[:2])
+				cat = "Bradford"
+				if is_regular_grid:
+					cat = profile.guess_cat() or cat
+				self.log("Using chromatic adaptation transform matrix:", cat)
 				mtx = ICCP.ICCProfile.from_chromaticities(xy[0][0], xy[0][1],
 														  xy[1][0], xy[1][1],
 														  xy[2][0], xy[2][1],
@@ -8379,7 +8394,8 @@ usage: spotread [-options] [logfile]
 														  os.path.basename(args[-1]),
 														  getcfg("copyright"),
 														  display_manufacturer,
-														  display_name)
+														  display_name,
+														  cat=cat)
 				if is_primaries_only:
 					# Use matrix profile
 					profile = mtx
@@ -8957,7 +8973,7 @@ usage: spotread [-options] [logfile]
 
 	def create_RGB_XYZ_cLUT_fwd_profile(self, ti3, description, copyright,
 										manufacturer, model, logfn=None,
-										clutres=33):
+										clutres=33, cat="Bradford"):
 		""" Create a RGB to XYZ forward profile """
 		# Extract grays and remaining colors
 		(ti3_extracted, RGB_XYZ,
@@ -8978,7 +8994,8 @@ usage: spotread [-options] [logfile]
 		RGB_XYZ.sort()
 		for X, Y, Z in RGB_XYZ.itervalues():
 			if Y >= 1:
-				X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(100, 100, 100)])
+				X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(100, 100, 100)],
+										  cat=cat)
 				L, a, b = colormath.XYZ2Lab(X, Y, Z)
 				dE = colormath.delta(L, 0, 0, L, a, b, "00")["E"]
 				dEs.append(dE)
@@ -9011,6 +9028,8 @@ usage: spotread [-options] [logfile]
 		(profile.tags.bkpt.X,
 		 profile.tags.bkpt.Y,
 		 profile.tags.bkpt.Z) = black_XYZ
+		profile.tags.arts = chromaticAdaptionTag()
+		profile.tags.arts.update(colormath.get_cat_matrix(cat))
 		
 		# Check if we have calibration, if so, add vcgt
 		if vcgt:
@@ -9027,14 +9046,15 @@ usage: spotread [-options] [logfile]
 									getcfg("profile.black_point_compensation"),
 									logfn, profile=profile,
 									options_dispcal=options_dispcal,
-									optimize=self.single_curve)
+									optimize=self.single_curve, cat=cat)
 
 		curves = [curve[:] for curve in gray]
 
 		# Add black back in
 		XYZbp = [v / 100.0 for v in
 				 colormath.adapt(*RGB_XYZ[(0, 0, 0)],
-								 whitepoint_source=RGB_XYZ[(100, 100, 100)])]
+								 whitepoint_source=RGB_XYZ[(100, 100, 100)],
+								 cat=cat)]
 		for i in xrange(len(gray[0])):
 			(gray[0][i],
 			 gray[1][i],
@@ -9093,7 +9113,8 @@ usage: spotread [-options] [logfile]
 							##X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
 																 ##black_XYZ)
 							# Range 0..1
-							clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+							clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ,
+															cat=cat))
 					if c < iclutres - 1:
 						break
 				if b < iclutres - 1:
@@ -9156,7 +9177,8 @@ usage: spotread [-options] [logfile]
 							##X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
 																 ##black_XYZ)
 						# Range 0..1
-						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ))
+						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ,
+														cat=cat))
 			if actual > clut_actual:
 				# Did we get any additional actual measured cLUT points?
 				self.log("cLUT resolution %ix%ix%i: Got %i "
@@ -9173,13 +9195,14 @@ usage: spotread [-options] [logfile]
 		profile.tags.A2B0.profile = profile
 
 		### Add black back in
-		##black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ)
+		##black_XYZ_D50 = colormath.adapt(*black_XYZ, whitepoint_source=white_XYZ,
+		##								cat=cat)
 		##profile.tags.A2B0.apply_black_offset(black_XYZ_D50)
 		
 		return profile
 
 	def _create_matrix_profile(self, outname, profile=None, ptype="s",
-							   omit=None, bpc=False):
+							   omit=None, bpc=False, cat="Bradford"):
 		"""
 		Create matrix profile from lookup through ti3
 		
@@ -9196,12 +9219,15 @@ usage: spotread [-options] [logfile]
 		Returns an ICCProfile with fileName set to <outname>.ic[cm].
 		
 		"""
+		if profile:
+			cat = profile.guess_cat() or cat
 		if omit == "XYZ":
 			tags = "shaper"
 		else:
 			tags = "shaper+matrix"
 		self.log("-" * 80)
 		self.log(u"Creating %s tags in separate step" % tags)
+		self.log("Using chromatic adaptation transform matrix:", cat)
 		fakeread = get_argyll_util("fakeread")
 		if not fakeread:
 			return Error(lang.getstr("argyll.util.not_found", "fakeread"))
@@ -9281,7 +9307,8 @@ usage: spotread [-options] [logfile]
 												  ptype == "S", bpc, self.log,
 												  profile=profile,
 												  options_dispcal=options_dispcal,
-												  optimize=ptype == "S")
+												  optimize=ptype == "S",
+												  cat=cat)
 
 					for i, channel in enumerate("rgb"):
 						tagname = channel + tagcls
@@ -9296,7 +9323,8 @@ usage: spotread [-options] [logfile]
 							if R == G == B == 0:
 								XYZbp = [v / 100 for v in (X, Y, Z)]
 								XYZbp = colormath.adapt(*XYZbp,
-														whitepoint_source=RGB_XYZ[(100, 100, 100)])
+														whitepoint_source=RGB_XYZ[(100, 100, 100)],
+														cat=cat)
 						if XYZbp:
 							# Add black back in
 							profile.apply_black_offset(XYZbp, include_A2B=False)
