@@ -3179,8 +3179,6 @@ class NumberTuple(tuple):
 # Bradford, von Kries (= HPE normalized to D65) from http://brucelindbloom.com/Eqn_ChromAdapt.html
 # CAT02 from http://en.wikipedia.org/wiki/CIECAM02#CAT02
 # HPE normalized to illuminant E, CAT97s from http://en.wikipedia.org/wiki/LMS_color_space#CAT97s
-# CMCCAT97 from 'Performance Of Five Chromatic Adaptation Transforms Using 
-# Large Number Of Color Patches', http://hrcak.srce.hr/file/95370
 # CMCCAT2000, Sharp from 'Computational colour science using MATLAB'
 # ISBN 0470845627, http://books.google.com/books?isbn=0470845627
 # Cross-verification of the matrix numbers has been done using various sources,
@@ -3199,9 +3197,6 @@ cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
 				"CAT97s": Matrix3x3([[ 0.8562,  0.3372, -0.1934],
 									 [-0.8360,  1.8327,  0.0033],
 									 [ 0.0357, -0.0469,  1.0112]]),
-				"CMCCAT97": Matrix3x3([[ 0.8951, -0.7502,  0.0389],
-									   [ 0.2664,  1.7135,  0.0685],
-									   [-0.1614,  0.0367,  1.0296]]),
 				"CMCCAT2000": Matrix3x3([[ 0.7982,  0.3389, -0.1371],
 										 [-0.5918,  1.5512,  0.0406],
 										 [ 0.0008,  0.0239,  0.9753]]),
