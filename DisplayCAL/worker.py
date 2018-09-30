@@ -488,7 +488,7 @@ def check_ti3(ti3, print_debuginfo=True):
 
 def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 						 logfn=None, slope_limit=False, profile=None,
-						 options_dispcal=None, optimize=False):
+						 options_dispcal=None, optimize=False, cat="Bradford"):
 	""" Create input (device to PCS) shaper curves """
 	RGB_XYZ.sort()
 	R_R = []
@@ -500,7 +500,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 	XYZbp = None
 	XYZwp = None
 	for (R, G, B), (X, Y, Z) in RGB_XYZ.iteritems():
-		X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(100, 100, 100)])
+		X, Y, Z = colormath.adapt(X, Y, Z, RGB_XYZ[(100, 100, 100)], cat=cat)
 		if 100 > R > 0 and min(X, Y, Z) < 100.0 / 65535:
 			# Skip non-black/non-white gray values not encodable in 16-bit
 			continue
