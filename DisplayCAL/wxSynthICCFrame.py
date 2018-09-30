@@ -20,7 +20,7 @@ import colormath
 import config
 import localization as lang
 import worker
-from wxwindows import BaseApp, BaseFrame, FileDrop, InfoDialog, wx
+from wxwindows import BaseApp, BaseFrame, ConfirmDialog, FileDrop, InfoDialog, wx
 from wxfixes import TempXmlResource
 from wxLUT3DFrame import LUT3DFrame
 import floatspin
@@ -70,6 +70,8 @@ class SynthICCFrame(BaseFrame):
 		presets = [""] + sorted(colormath.rgb_spaces.keys())
 		self.preset_ctrl.SetItems(presets)
 
+		self.set_default_cat()
+
 		self.worker = worker.Worker(self)
 
 		# Drop targets
@@ -92,6 +94,8 @@ class SynthICCFrame(BaseFrame):
 						  getattr(self, "%s_%s" % (color, component)))
 		self.black_point_cb.Bind(wx.EVT_CHECKBOX,
 								 self.black_point_enable_handler)
+		self.chromatic_adaptation_btn.Bind(wx.EVT_BUTTON,
+										   self.chromatic_adaptation_btn_handler)
 		self.trc_ctrl.Bind(wx.EVT_CHOICE, self.trc_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_COMBOBOX, self.trc_gamma_ctrl_handler)
 		self.trc_gamma_ctrl.Bind(wx.EVT_KILL_FOCUS, self.trc_gamma_ctrl_handler)
@@ -112,7 +116,6 @@ class SynthICCFrame(BaseFrame):
 		self.save_as_btn.Bind(wx.EVT_BUTTON, self.save_as_btn_handler)
 
 		self.save_as_btn.SetDefault()
-		self.save_as_btn.Disable()
 		
 		self.setup_language()
 		
@@ -260,6 +263,69 @@ class SynthICCFrame(BaseFrame):
 	
 	def blue_xy_ctrl_handler(self, event):
 		self.parse_xy("blue")
+
+	def chromatic_adaptation_btn_handler(self, event):
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
+		dlg = ConfirmDialog(self, title=lang.getstr("chromatic_adaptation"),
+							msg=lang.getstr("whitepoint.xy"),
+							ok=lang.getstr("apply"),
+							cancel=lang.getstr("cancel"))
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
+					   border=8)
+		x_ctrl = floatspin.FloatSpin(dlg, -1, size=(75 * scale, -1),
+									 min_val=0.0001, max_val=1,
+									 value=self.white_x.GetValue())
+		sizer.Add(x_ctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+				  border=4)
+		sizer.Add(wx.StaticText(dlg, -1, u"x"), 0,
+								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+								border=12)
+		y_ctrl = floatspin.FloatSpin(dlg, -1, size=(75 * scale, -1),
+									 min_val=0.0001, max_val=1,
+									 value=self.white_y.GetValue())
+		sizer.Add(y_ctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+				  border=4)
+		sizer.Add(wx.StaticText(dlg, -1, u"y"), 0,
+								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+								border=12)
+		dlg.sizer3.Add(wx.StaticText(dlg, -1,
+									 lang.getstr("chromatic_adaptation_transform")),
+					   0, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+		if getcfg("show_advanced_options"):
+			cat_choices = colormath.cat_matrices.keys()
+		else:
+			cat_choices = ["Bradford"]
+		cat_choices_ab = OrderedDict(get_mapping(((k, k) for k in
+												  colormath.cat_matrices),
+												 cat_choices))
+		cat_choices_ba = OrderedDict((v, k) for k, v in cat_choices_ab.iteritems())
+		cat_ctrl = wx.Choice(dlg, -1, choices=cat_choices_ab.values())
+		cat_ctrl.SetStringSelection(cat_choices_ab[self.cat])
+		dlg.sizer3.Add(cat_ctrl, 0, flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+		dlg.sizer0.SetSizeHints(dlg)
+		dlg.sizer0.Layout()
+		result = dlg.ShowModal()
+		x = x_ctrl.GetValue()
+		y = y_ctrl.GetValue()
+		cat = cat_choices_ba[cat_ctrl.GetStringSelection()]
+		dlg.Destroy()
+		if result != wx.ID_OK:
+			return
+		wp_src = [getattr(self, "white_" + component).GetValue()
+				  for component in "XYZ"]
+		wp_tgt = colormath.xyY2XYZ(x, y)
+		self.cat = cat
+		for color in ("red", "green", "blue", "white", "black"):
+			ctrls = [getattr(self, "%s_%s" % (color, component))
+					 for component in "XYZ"]
+			X, Y, Z = (ctrl.GetValue() for ctrl in ctrls)
+			XYZa = colormath.adapt(X, Y, Z, wp_src, wp_tgt, cat)
+			for i, ctrl in enumerate(ctrls):
+				ctrl.SetValue(XYZa[i])
+			self.parse_XYZ(color)
 	
 	def colorspace_ctrl_handler(self, event):
 		show = bool(self.colorspace_rgb_ctrl.Value)
@@ -267,7 +333,7 @@ class SynthICCFrame(BaseFrame):
 			getattr(self, "label_%s" % color).Show(show)
 			for component in "XYZxy":
 				getattr(self, "%s_%s" % (color, component)).Show(show)
-		self.enable_save_as_btn()
+		self.enable_btns()
 		self.update_layout()
 	
 	def drop_handler(self, path):
@@ -338,8 +404,10 @@ class SynthICCFrame(BaseFrame):
 				self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["g"])
 				self.panel.Thaw()
 	
-	def enable_save_as_btn(self):
-		self.save_as_btn.Enable(bool(self.get_XYZ()))
+	def enable_btns(self):
+		enable = bool(self.get_XYZ())
+		self.save_as_btn.Enable(enable)
+		self.chromatic_adaptation_btn.Enable(enable)
 	
 	def get_XYZ(self):
 		""" Get XYZ in 0..1 range """
@@ -394,7 +462,7 @@ class SynthICCFrame(BaseFrame):
 				getattr(self, "%s_%s" % (name, component)).SetValue(xyY[i])
 				if name == "white" and set_blackpoint:
 					getattr(self, "black_%s" % (component)).SetValue(xyY[i])
-		self.enable_save_as_btn()
+		self.enable_btns()
 	
 	def parse_xy(self, name=None, set_blackpoint=False):
 		if not set_blackpoint:
@@ -447,11 +515,12 @@ class SynthICCFrame(BaseFrame):
 			for i, component in enumerate("XYZ"):
 				getattr(self, "%s_%s" %
 						(color, component)).SetValue(XYZ[color[0]][i] * 100)
-		self.enable_save_as_btn()
+		self.enable_btns()
 	
 	def preset_ctrl_handler(self, event):
 		preset_name = self.preset_ctrl.GetStringSelection()
 		if preset_name:
+			self.set_default_cat()
 			gamma, white, red, green, blue = colormath.rgb_spaces[preset_name]
 			white = colormath.get_whitepoint(white)
 			self._updating_ctrls = True
@@ -493,6 +562,9 @@ class SynthICCFrame(BaseFrame):
 			return "ok"
 		return "invalid"
 
+	def set_default_cat(self):
+		self.cat = "Bradford"
+
 	def set_trc(self, gamma):
 		if gamma == -1023:
 			# DICOM
@@ -526,7 +598,7 @@ class SynthICCFrame(BaseFrame):
 		self.update_trc_controls()
 	
 	def profile_name_ctrl_handler(self, event):
-		self.enable_save_as_btn()
+		self.enable_btns()
 	
 	def red_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("red")
@@ -631,7 +703,8 @@ class SynthICCFrame(BaseFrame):
 											   (XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
 											   1.0,
 											   "",
-											   getcfg("copyright"))
+											   getcfg("copyright"),
+											   cat=self.cat)
 			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
 			profile.tags.rTRC = ICCP.CurveType(profile=profile)
 			profile.tags.gTRC = ICCP.CurveType(profile=profile)
@@ -737,7 +810,8 @@ class SynthICCFrame(BaseFrame):
 						clutres=clutres, sat=getcfg("3dlut.hdr_sat"),
 						hue=getcfg("3dlut.hdr_hue"),
 						generate_B2A=trc == -2, worker=self.worker,
-						logfile=logfiles)
+						logfile=logfiles,
+						cat=self.cat)
 					profile.tags.A2B0 = hdr_clut_profile.tags.A2B0
 					if trc == -2:
 						# HLG

@@ -423,6 +423,21 @@
                 <object class="spacer">
                   <size>0, 0</size>
                 </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="sizeritem">
+                  <object class="wxButton" name="chromatic_adaptation_btn">
+                    <label>chromatic_adaptation</label>
+                    <enabled>0</enabled>
+                  </object>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
+                <object class="spacer">
+                  <size>0, 0</size>
+                </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="label_luminance">
                     <label>calibration.luminance</label>
@@ -898,6 +913,7 @@
                 <object class="sizeritem">
                   <object class="wxButton" name="save_as_btn">
                     <label>save_as</label>
+                    <enabled>0</enabled>
                   </object>
                 </object>
               </object>
