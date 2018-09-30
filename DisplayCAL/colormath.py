@@ -3042,6 +3042,7 @@ class Matrix3x3(list):
 		self._inverted = None
 		self._transposed = None
 		self._rounded = {}
+		self._applied = {}
 	
 	def __add__(self, matrix):
 		instance = self.__class__()
@@ -3085,6 +3086,18 @@ class Matrix3x3(list):
 	
 	def adjoint(self):
 		return self.cofactors().transposed()
+
+	def applied(self, fn):
+		""" Apply function to every element, return new matrix """
+		if fn in self._applied:
+			return self._applied[fn]
+		matrix = self.__class__()
+		for row in self:
+			matrix.append([])
+			for column in row:
+				matrix[-1].append(fn(column))
+		self._applied[fn] = matrix
+		return matrix
 	
 	def cofactors(self):
 		instance = self.__class__()

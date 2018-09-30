@@ -5093,8 +5093,10 @@ class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 	
 	def get_cat(self):
 		""" Compare to known CAT matrices and return matching name (if any) """
+		q = lambda v: s15Fixed16Number(s15Fixed16Number_tohex(v))
 		for cat_name, cat_matrix in colormath.cat_matrices.iteritems():
-			if colormath.is_similar_matrix(self, cat_matrix, 4):
+			if colormath.is_similar_matrix(self.applied(q),
+										   cat_matrix.applied(q), 4):
 				return cat_name
 
 
