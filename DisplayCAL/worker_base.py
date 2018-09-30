@@ -231,13 +231,6 @@ argyll_utils = {}
 def get_argyll_util(name, paths=None):
 	""" Find a single Argyll utility. Return the full path. """
 	cfg_argyll_dir = getcfg("argyll.dir")
-	if paths:
-		cache_key = os.pathsep.join(paths)
-	else:
-		cache_key = cfg_argyll_dir
-	exe = argyll_utils.get(cache_key, {}).get(name, None)
-	if exe:
-		return exe
 	if not paths:
 		paths = getenvu("PATH", os.defpath).split(os.pathsep)
 		argyll_dir = (cfg_argyll_dir or "").rstrip(os.path.sep)
@@ -245,6 +238,10 @@ def get_argyll_util(name, paths=None):
 			if argyll_dir in paths:
 				paths.remove(argyll_dir)
 			paths = [argyll_dir] + paths
+	cache_key = os.pathsep.join(paths)
+	exe = argyll_utils.get(cache_key, {}).get(name, None)
+	if exe:
+		return exe
 	elif verbose >= 4:
 		safe_print("Info: Searching for", name, "in", os.pathsep.join(paths))
 	for path in paths:
