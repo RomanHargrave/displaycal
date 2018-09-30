@@ -2081,7 +2081,6 @@ class BaseInteractiveDialog(wx.Dialog):
 				else:
 					self.taskbar = taskbar.Taskbar(taskbarframe)
 		self.SetPosition(pos)  # yes, this is needed
-		set_icons(self)
 		
 		self.Bind(wx.EVT_SHOW, self.OnShow, self)
 
