@@ -239,6 +239,7 @@
 	"can_be_used_independently": "可獨立使用",
 	"cancel": "取消",
 		"*cat02": "CAT02 (from CIECAM02)",
+		"*cat02bs": "CAT02 (from CIECAM02, Brill & Süsstrunk modification)",
 		"*cat97s": "CAT97s (from CIECAM97s)",
 	"cathode_ray_tube_display": "陰極射線管顯示器",
 	"ccmx.use_four_color_matrix_method": "最小化 xy 色度差異",

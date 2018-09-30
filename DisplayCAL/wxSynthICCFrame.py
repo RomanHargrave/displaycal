@@ -298,7 +298,7 @@ class SynthICCFrame(BaseFrame):
 			# Only offer those that seem suitable in an ICC workflow
 			# (i.e. blue primary not too far from default Bradford to
 			# prevent 'blue turns purple' problems)
-			cat_choices = ['Bradford', 'CAT02']
+			cat_choices = ['Bradford', 'CAT02BS']
 		else:
 			cat_choices = ["Bradford"]
 		cat_choices_ab = OrderedDict(get_mapping(((k, k) for k in

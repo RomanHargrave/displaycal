@@ -239,6 +239,7 @@
 	"cancel": "Cancel",
 	"bradford": "Bradford (ICC recommendation)",
 	"cat02": "CAT02 (from CIECAM02)",
+	"cat02bs": "CAT02 (from CIECAM02, Brill & Süsstrunk modification)",
 	"cat97s": "CAT97s (from CIECAM97s)",
 	"cie2012_2": "CIE 2012 2°",
 	"cmccat97": "CMCCAT97",
