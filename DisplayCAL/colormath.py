@@ -2226,9 +2226,8 @@ def xy_CCT_delta(x, y, daylight=True, method=2000):
 			if 1667 <= cct <= 25000:
 				locus = planckianCT2XYZ(cct, 100.0)
 		if locus:
-			L1, a1, b1 = xyY2Lab(x, y, 100.0)
-			L2, a2, b2 = XYZ2Lab(*locus)
-			d = delta(L1, a1, b1, L2, a2, b2, method)
+			L2, a2, b2 = xyY2Lab(x, y, 100.0, locus)
+			d = delta(L2, 0, 0, L2, a2, b2, method)
 	return cct, d
 
 
