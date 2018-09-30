@@ -9028,7 +9028,7 @@ usage: spotread [-options] [logfile]
 		(profile.tags.bkpt.X,
 		 profile.tags.bkpt.Y,
 		 profile.tags.bkpt.Z) = black_XYZ
-		profile.tags.arts = chromaticAdaptionTag()
+		profile.tags.arts = ICCP.chromaticAdaptionTag()
 		profile.tags.arts.update(colormath.get_cat_matrix(cat))
 		
 		# Check if we have calibration, if so, add vcgt
