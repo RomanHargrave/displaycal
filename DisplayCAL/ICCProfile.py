@@ -6680,7 +6680,7 @@ class ICCProfile:
 					info[name] = ""
 					if self.profileClass == "mntr" and sig == "wtpt":
 						info["    Is illuminant"] = "Yes"
-					if self.profileClass == "mntr" or "chad" in self.tags:
+					if self.profileClass != "prtr":
 						label = "Illuminant-relative"
 					else:
 						label = "PCS-relative"
