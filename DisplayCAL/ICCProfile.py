@@ -5072,6 +5072,8 @@ class chromaticAdaptionTag(colormath.Matrix3x3, s15Fixed16ArrayType):
 					matrix[-1].append(s15Fixed16Number(data[0:4]))
 					data = data[4:]
 				self.update(matrix)
+		else:
+			self._reset()
 	
 	@Property
 	def tagData():
