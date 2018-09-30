@@ -295,7 +295,10 @@ class SynthICCFrame(BaseFrame):
 									 lang.getstr("chromatic_adaptation_transform")),
 					   0, flag=wx.TOP | wx.ALIGN_LEFT, border=12)
 		if getcfg("show_advanced_options"):
-			cat_choices = colormath.cat_matrices.keys()
+			# Only offer those that seem suitable in an ICC workflow
+			# (i.e. blue primary not too far from default Bradford to
+			# prevent 'blue turns purple' problems)
+			cat_choices = ['Bradford', 'CAT02']
 		else:
 			cat_choices = ["Bradford"]
 		cat_choices_ab = OrderedDict(get_mapping(((k, k) for k in
