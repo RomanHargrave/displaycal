@@ -3190,7 +3190,7 @@ cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
 										 [-0.5918,  1.5512,  0.0406],
 										 [ 0.0008,  0.0239,  0.9753]]),
 				# Hunt-Pointer-Estevez, equal-energy illuminant 
-				"HPE normalized to illuminant E": Matrix3x3([[ 0.38971, 0.68898, -0.07868],
+				"HPE E": Matrix3x3([[ 0.38971, 0.68898, -0.07868],
 								  [-0.22981, 1.18340,  0.04641],
 								  [ 0.00000, 0.00000,  1.00000]]),
 				# Süsstrunk et al.15 optimized spectrally sharpened matrix
@@ -3201,7 +3201,7 @@ cat_matrices = {"Bradford": Matrix3x3([[ 0.89510,  0.26640, -0.16140],
 				# Hunt-Pointer-Estevez normalized to D65
 				# (maybe I should call it that instead of 'Von Kries'
 				# to avoid ambiguity?)
-				"HPE normalized to illuminant D65": Matrix3x3([[ 0.40024,  0.70760, -0.08081],
+				"HPE D65": Matrix3x3([[ 0.40024,  0.70760, -0.08081],
 										[-0.22630,  1.16532,  0.04570],
 										[ 0.00000,  0.00000,  0.91822]]),
 				"XYZ scaling": Matrix3x3([[1, 0, 0],
