@@ -2535,7 +2535,7 @@ class Worker(WorkerBase):
 		if (self.resume or not getcfg("patterngenerator.detect_video_levels") or
 			config.get_display_name() == "Untethered" or
 			is_ccxx_testchart()):
-			return
+			return True
 		self._detecting_video_levels = True
 		try:
 			return self._detect_video_levels()
