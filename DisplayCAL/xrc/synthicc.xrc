@@ -98,33 +98,33 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_X">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_Y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>0.0</min_val>
                         <max_val>100.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_Z">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
@@ -164,33 +164,33 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_X">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_Y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_Z">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
@@ -230,33 +230,33 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_X">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_Y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_Z">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
@@ -296,33 +296,33 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_X">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_Y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_Z">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
-                        <increment>0.01</increment>
-                        <digits>2</digits>
+                        <increment>0.0001</increment>
+                        <digits>4</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
@@ -362,7 +362,7 @@
                   <object class="wxBoxSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_X">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
                         <increment>0.0001</increment>
@@ -373,7 +373,7 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_Y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>0</min_val>
                         <max_val>100.0</max_val>
                         <increment>0.0015259021896696422</increment>
@@ -384,7 +384,7 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_Z">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-99</min_val>
                         <max_val>999.0</max_val>
                         <increment>0.0001</increment>
