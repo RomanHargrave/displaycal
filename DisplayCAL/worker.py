@@ -9810,7 +9810,7 @@ usage: spotread [-options] [logfile]
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
 		result = self.detect_video_levels()
-		if isinstance(result, Exception):
+		if isinstance(result, Exception) or not result:
 			return result
 		precond_ti1 = None
 		precond_ti3 = None
@@ -11895,7 +11895,7 @@ usage: spotread [-options] [logfile]
 	def calibrate(self, remove=False):
 		""" Calibrate the screen and process the generated file(s). """
 		result = self.detect_video_levels()
-		if isinstance(result, Exception):
+		if isinstance(result, Exception) or not result:
 			return result
 		capture_output = not sys.stdout.isatty()
 		cmd, args = self.prepare_dispcal()
@@ -13272,7 +13272,7 @@ BEGIN_DATA
 		""" Measure a TI1 testchart file """
 		if allow_video_levels:
 			result = self.detect_video_levels()
-			if isinstance(result, Exception):
+			if isinstance(result, Exception) or not result:
 				return result
 		if config.get_display_name() == "Untethered":
 			cmd, args = get_argyll_util("spotread"), ["-v", "-e"]
