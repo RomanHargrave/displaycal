@@ -2619,6 +2619,7 @@ END_DATA
 		else:
 			return Error(lang.getstr("error.testchart.missing_fields",
 									 (ti3_path, ", ".join(black_0.keys()))))
+		return True
 	
 	def do_instrument_calibration(self, failed=False):
 		""" Ask user to initiate sensor calibration and execute.
