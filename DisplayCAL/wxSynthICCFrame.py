@@ -723,10 +723,7 @@ class SynthICCFrame(BaseFrame):
 			profile = ICCP.ICCProfile()
 			profile.colorSpace = "GRAY"
 			profile.setCopyright(getcfg("copyright"))
-			profile.tags.wtpt = ICCP.XYZType()
-			(profile.tags.wtpt.X,
-			 profile.tags.wtpt.Y,
-			 profile.tags.wtpt.Z) = (XYZ["wX"], XYZ["wY"], XYZ["wZ"])
+			profile.set_wtpt((XYZ["wX"], XYZ["wY"], XYZ["wZ"]), self.cat)
 			black = [XYZ["wY"] * (getcfg("synthprofile.black_luminance") /
 								  getcfg("synthprofile.luminance"))] * 3
 			profile.tags.kTRC = ICCP.CurveType(profile=profile)

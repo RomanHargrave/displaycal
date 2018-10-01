@@ -6007,22 +6007,7 @@ class ICCProfile:
 					("\x00" * 2) + model_id[1] + model_id[0] +
 					("\x00" * 4) + ("\x00" * 20))
 			profile.tags.mmod = ICCProfileTag(mmod, "mmod")
-		profile.tags.wtpt = XYZType(profile=profile)
-		D50 = colormath.get_whitepoint("D50")
-		if (iccv4 or
-			not colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
-											colormath.get_cat_matrix("Bradford"))):
-			# Set wtpt to D50 and store actual white -> D50 transform in chad
-			# if creating ICCv4 profile or CAT is not default Bradford
-			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
-			 profile.tags.wtpt.Z) = D50
-			profile.tags.chad = chromaticAdaptionTag()
-			matrix = colormath.wp_adaption_matrix(wXYZ, D50, cat)
-			profile.tags.chad.update(matrix)
-		else:
-			# Store actual white in wtpt
-			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
-			 profile.tags.wtpt.Z) = wXYZ
+		profile.set_wtpt(wXYZ, cat)
 		profile.tags.chrm = ChromaticityType()
 		profile.tags.chrm.type = 0
 		for color in "rgb":
@@ -6034,17 +6019,38 @@ class ICCProfile:
 			tagname = color + "XYZ"
 			profile.tags[tagname] = XYZType(profile=profile)
 			(profile.tags[tagname].X, profile.tags[tagname].Y,
-			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, D50, cat)
+			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, "D50", cat)
 			tagname = color + "TRC"
 			profile.tags[tagname] = CurveType(profile=profile)
 			if isinstance(gamma, (list, tuple)):
 				profile.tags[tagname].extend(gamma)
 			else:
 				profile.tags[tagname].set_trc(gamma, 1)
-		profile.tags.arts = chromaticAdaptionTag()
-		profile.tags.arts.update(colormath.get_cat_matrix(cat))
 		profile.calculateID()
 		return profile
+
+	def set_wtpt(self, wXYZ, cat="Bradford"):
+		"""
+		Set whitepoint, 'chad' tag (if ICCv4 profile or CAT is not Bradford)
+		and ArgyllCMS 'arts' tag
+		
+		"""
+		self.tags.wtpt = XYZType(profile=self)
+		if (self.version >= 4 or
+			not colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
+											colormath.get_cat_matrix("Bradford"))):
+			# Set wtpt to D50 and store actual white -> D50 transform in chad
+			# if creating ICCv4 profile or CAT is not default Bradford
+			D50 = colormath.get_whitepoint("D50")
+			(self.tags.wtpt.X, self.tags.wtpt.Y, self.tags.wtpt.Z) = D50
+			self.tags.chad = chromaticAdaptionTag()
+			matrix = colormath.wp_adaption_matrix(wXYZ, D50, cat)
+			self.tags.chad.update(matrix)
+		else:
+			# Store actual white in wtpt
+			(self.tags.wtpt.X, self.tags.wtpt.Y, self.tags.wtpt.Z) = wXYZ
+		self.tags.arts = chromaticAdaptionTag()
+		self.tags.arts.update(colormath.get_cat_matrix(cat))
 
 	def has_trc_tags(self):
 		""" Return whether the profile has [rgb]TRC tags """
