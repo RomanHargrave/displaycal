@@ -243,8 +243,7 @@ class SynthICCFrame(BaseFrame):
 					for i in xrange(3):
 						getattr(self, "black_%s" % "XYZ"[i]).SetValue(0)
 					break
-		for i, v in enumerate(colormath.XYZ2xyY(*XYZ)[:2]):
-			getattr(self, "black_%s" % "xy"[i]).SetValue(v)
+		self.parse_XYZ("black")
 
 	def black_xy_ctrl_handler(self, event):
 		# Black Y scaled to 0..1 range
@@ -328,7 +327,7 @@ class SynthICCFrame(BaseFrame):
 			XYZa = colormath.adapt(X, Y, Z, wp_src, wp_tgt, cat)
 			for i, ctrl in enumerate(ctrls):
 				ctrl.SetValue(XYZa[i])
-			self.parse_XYZ(color)
+			self.parse_XYZ(color, False)
 	
 	def colorspace_ctrl_handler(self, event):
 		show = bool(self.colorspace_rgb_ctrl.Value)
@@ -445,8 +444,8 @@ class SynthICCFrame(BaseFrame):
 		self.lut3d_set_option("3dlut.hdr_peak_luminance", v)
 		self.black_luminance_ctrl_handler(event)
 	
-	def parse_XYZ(self, name, set_blackpoint=False):
-		if not set_blackpoint:
+	def parse_XYZ(self, name, set_blackpoint=None):
+		if set_blackpoint is None:
 			set_blackpoint = not self.black_point_cb.Value
 		if not self._updating_ctrls:
 			self.preset_ctrl.SetSelection(0)
@@ -460,7 +459,13 @@ class SynthICCFrame(BaseFrame):
 			if name == "white" and set_blackpoint:
 				getattr(self, "black_%s" % (component)).SetValue(v * black_Y)
 		if "X" in XYZ and "Y" in XYZ and "Z" in XYZ:
-			xyY = colormath.XYZ2xyY(XYZ["X"], XYZ["Y"], XYZ["Z"])
+			if XYZ["X"] + XYZ["Y"] + XYZ["Z"] == 0:
+				# Set black chromaticity to white chromaticity if XYZ is 0
+				xyY = []
+				for i, component in enumerate("xy"):
+					xyY.append(getattr(self, "white_%s" % component).GetValue())
+			else:
+				xyY = colormath.XYZ2xyY(XYZ["X"], XYZ["Y"], XYZ["Z"])
 			for i, component in enumerate("xy"):
 				getattr(self, "%s_%s" % (name, component)).SetValue(xyY[i])
 				if name == "white" and set_blackpoint:
