@@ -156,6 +156,8 @@
 		"*bradford": "Bradford (ICC recommendation)",
 	"brightness": "밝기",
 	"browse": "찾기...",
+		"*bs": "Bianco & Schettini",
+		"*bs_pc": "Bianco & Schettini with positivity constraint",
 	"bug_report": "버그 신고...",
 	"button.calibrate": "캘리브레이션만 진행",
 	"button.calibrate_and_profile": "캘리브레이션 & 프로파일링",

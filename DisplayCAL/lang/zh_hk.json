@@ -156,6 +156,8 @@
 		"*bradford": "Bradford (ICC recommendation)",
 	"brightness": "亮度",
 	"browse": "瀏覽...",
+		"*bs": "Bianco & Schettini",
+		"*bs_pc": "Bianco & Schettini with positivity constraint",
 	"bug_report": "報告錯誤...",
 	"button.calibrate": "只進行校正",
 	"button.calibrate_and_profile": "校正及特性分析",

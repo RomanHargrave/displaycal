@@ -238,6 +238,8 @@
 	"can_be_used_independently": "Can be used independently",
 	"cancel": "Cancel",
 	"bradford": "Bradford (ICC recommendation)",
+	"bs": "Bianco & Schettini",
+	"bs_pc": "Bianco & Schettini with positivity constraint",
 	"cat02": "CAT02 (from CIECAM02)",
 	"cat02bs": "CAT02 (from CIECAM02, Brill & Süsstrunk modification)",
 	"cat97s": "CAT97s (from CIECAM97s)",
