@@ -330,6 +330,7 @@ class SynthICCFrame(BaseFrame):
 			self.parse_XYZ(color, False)
 	
 	def colorspace_ctrl_handler(self, event):
+		self.Freeze()
 		show = bool(self.colorspace_rgb_ctrl.Value)
 		for color in ("red", "green", "blue"):
 			getattr(self, "label_%s" % color).Show(show)
@@ -337,6 +338,7 @@ class SynthICCFrame(BaseFrame):
 				getattr(self, "%s_%s" % (color, component)).Show(show)
 		self.enable_btns()
 		self.update_layout()
+		self.Thaw()
 	
 	def drop_handler(self, path):
 		try:
