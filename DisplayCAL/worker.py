@@ -4718,14 +4718,6 @@ END_DATA
 			try:
 				if self.madtpg_connect():
 					# Connected
-					# Check madVR version
-					madvr_version = self.madtpg.get_version()
-					if not madvr_version or madvr_version < madvr.min_version:
-						self.madtpg_disconnect(False)
-						return Error(lang.getstr("madvr.outdated",
-												 madvr.min_version))
-					self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
-							 (madvr_version + (self.madtpg.uri, )))
 					if (isinstance(self.madtpg, madvr.MadTPG_Net) or
 						self.argyll_has_virtual_display):
 						# Need to handle calibration clearing/loading/saving
@@ -4950,6 +4942,9 @@ BEGIN_DATA
 							else:
 								self.log("Warning - could not restore madTPG "
 								 "'Disable OSD' button state")
+						else:
+							self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
+							self.madtpg.show_rgb(.5, .5, .5)
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
 					if (not patternconfig or
@@ -5615,7 +5610,11 @@ while 1:
 							self.patterngenerator.disconnect_client()
 					except Exception, exception:
 						self.log(exception)
-			if hasattr(self, "madtpg"):
+			if hasattr(self, "madtpg") and (not self.use_madnet_tpg or
+											(self.cmdname == "dispcal" and
+											 not self.dispread_after_dispcal) or
+											not self._detecting_video_levels or
+											self.retcode):
 				self.madtpg_disconnect()
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
@@ -9763,7 +9762,18 @@ usage: spotread [-options] [logfile]
 	def madtpg_connect(self):
 		self.madtpg_init()
 		self.patterngenerator = self.madtpg
-		return self.madtpg.connect(method2=madvr.CM_StartLocalInstance)
+		if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
+			# Check madVR version
+			madvr_version = self.madtpg.get_version()
+			if not madvr_version or madvr_version < madvr.min_version:
+				self.madtpg_disconnect(False)
+				raise Error(lang.getstr("madvr.outdated",
+										 madvr.min_version))
+			self.log("Connected to madVR version %i.%i.%i.%i (%s)" %
+					 (madvr_version + (self.madtpg.uri, )))
+			self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
+			return True
+		return False
 
 	def madtpg_disconnect(self, restore_settings=True):
 		""" Restore madVR settings and disconnect """
@@ -9794,7 +9804,8 @@ usage: spotread [-options] [logfile]
 				else:
 					self.log("Warning - could not re-connect to madTPG to restore"
 							 "'Fullscreen'/'Disable OSD' button states")
-		self.madtpg.disconnect()
+		if self.madtpg.disconnect():
+			self.log("Successfully disconnected from madTPG")
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
@@ -10132,11 +10143,15 @@ usage: spotread [-options] [logfile]
 			self.paused = True
 			self.log("%s: Pausing..." % appname)
 			self.safe_send("\x1b")
+			if self.use_madnet_tpg:
+				self.madtpg.set_osd_text(u"\u23f8")  # "Pause" symbol
 		elif (not getattr(self.progress_wnd, "paused", False) and
 			  getattr(self, "paused", False)):
 			self.paused = False
 			self.log("%s: Continuing..." % appname)
 			self.safe_send(" ")
+			if self.use_madnet_tpg:
+				self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
 
 	def prepare_colprof(self, profile_name=None, display_name=None,
 						display_manufacturer=None, tags=None):
@@ -13546,6 +13561,17 @@ BEGIN_DATA
 								self.patterngenerator and
 								hasattr(self.patterngenerator, "conn"))
 		if use_patterngenerator or self.use_madnet_tpg:
+			progress = re.search("(?:Patch (\\d+) of|Number of patches =) (\\d+)",
+								 txt, re.I)
+			if self.use_madnet_tpg and progress:
+				# Set madTPG progress bar
+				try:
+					start = int(progress.group(1) or 0)
+					end = int(progress.group(2))
+				except ValueError:
+					pass
+				else:
+					self.madtpg.set_progress_bar_pos(start, end)
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
@@ -13577,15 +13603,5 @@ BEGIN_DATA
 			if use_patterngenerator or self.use_madnet_tpg:
 				self.log("%s: Patch update count: %i" %
 						 (appname, self.patch_count))
-			if self.use_madnet_tpg and re.match("Patch \\d+ of \\d+", txt, re.I):
-				# Set madTPG progress bar
-				components = txt.split()
-				try:
-					start = int(components[1])
-					end = int(components[3])
-				except ValueError:
-					pass
-				else:
-					self.madtpg.set_progress_bar_pos(start, end)
 		# Parse
 		wx.CallAfter(self.parse, txt)
