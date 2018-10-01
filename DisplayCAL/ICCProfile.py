@@ -6009,8 +6009,11 @@ class ICCProfile:
 			profile.tags.mmod = ICCProfileTag(mmod, "mmod")
 		profile.tags.wtpt = XYZType(profile=profile)
 		D50 = colormath.get_whitepoint("D50")
-		if iccv4:
+		if (iccv4 or
+			not colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
+											colormath.get_cat_matrix("Bradford"))):
 			# Set wtpt to D50 and store actual white -> D50 transform in chad
+			# if creating ICCv4 profile or CAT is not default Bradford
 			(profile.tags.wtpt.X, profile.tags.wtpt.Y,
 			 profile.tags.wtpt.Z) = D50
 			profile.tags.chad = chromaticAdaptionTag()
