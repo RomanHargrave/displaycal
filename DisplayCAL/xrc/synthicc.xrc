@@ -57,19 +57,19 @@
                     <orient>wxHORIZONTAL</orient>
                     <object class="sizeritem">
                       <object class="wxStaticText" name="label_X">
-                        <size>85, -1</size>
+                        <size>95, -1</size>
                         <label>X</label>
                       </object>
                     </object>
                     <object class="sizeritem">
                       <object class="wxStaticText" name="label_Y">
-                        <size>85, -1</size>
+                        <size>95, -1</size>
                         <label>Y</label>
                       </object>
                     </object>
                     <object class="sizeritem">
                       <object class="wxStaticText" name="label_Z">
-                        <size>85, -1</size>
+                        <size>95, -1</size>
                         <label>Z</label>
                       </object>
                     </object>
