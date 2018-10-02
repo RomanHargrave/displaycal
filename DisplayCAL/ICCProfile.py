@@ -745,7 +745,9 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 								  master_white_cdm2,
 								  use_alternate_master_white_clip)
 		# Preserve detail in saturated colors if mastering display peak < 10K cd/m2
-		preserve_saturated_detail = master_white_cdm2 < 10000
+		# XXX: Effect is detrimental to contrast at low target peak, and looks
+		# artificial for BT.2390-4. Don't use for now.
+		preserve_saturated_detail = False  # master_white_cdm2 < 10000
 		if preserve_saturated_detail:
 			bt2390s = colormath.BT2390(black_cdm2, white_cdm2, master_black_cdm2,
 									   10000)
