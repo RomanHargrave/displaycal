@@ -767,6 +767,12 @@ def is_similar_matrix(matrix1, matrix2, digits=3):
 	return matrix1.rounded(digits) == matrix2.rounded(digits)
 
 
+def is_equal(values1, values2, quantizer=lambda v: round(v, 4)):
+	""" Compare two sets of values and check if they are the same
+	after applying quantization """
+	return [quantizer(v) for v in values1] == [quantizer(v) for v in values2]
+
+
 def four_color_matrix(XrR, YrR, ZrR, XrG, YrG, ZrG, XrB, YrB, ZrB, XrW, YrW, ZrW,
 					  XmR, YmR, ZmR, XmG, YmG, ZmG, XmB, YmB, ZmB, XmW, YmW, ZmW,
 					  Y_correction=True):

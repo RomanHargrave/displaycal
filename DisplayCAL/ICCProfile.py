@@ -540,6 +540,7 @@ def create_synthetic_clut_profile(rgb_space, description, XYZbp=None,
 	
 	"""
 	profile = ICCProfile()
+	profile.version = 2.2  # Match ArgyllCMS
 	
 	profile.tags.desc = TextDescriptionType("", "desc")
 	profile.tags.desc.ASCII = description
@@ -801,6 +802,7 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	tonemap = eetf(1) != 1
 
 	profile = ICCProfile()
+	profile.version = 2.2  # Match ArgyllCMS
 	
 	profile.tags.desc = TextDescriptionType("", "desc")
 	profile.tags.desc.ASCII = description
@@ -2512,6 +2514,11 @@ def s15Fixed16Number(binaryString):
 
 def s15Fixed16Number_tohex(num):
 	return struct.pack(">i", int(round(num * 65536)))
+
+
+def s15f16_is_equal(a, b, quantizer=lambda v:
+									s15Fixed16Number(s15Fixed16Number_tohex(v))):
+	return colormath.is_equal(a, b, quantizer)
 
 
 def u16Fixed16Number(binaryString):
@@ -5795,12 +5802,13 @@ class ICCProfile:
 		if self._file and not self._file.closed:
 			self._file.close()
 
-	def convert_iccv4_tags_to_iccv2(self):
+	def convert_iccv4_tags_to_iccv2(self, version=2.4, undo_wtpt_chad=False):
 		"""
 		Convert ICCv4 parametric curve tags to ICCv2-compatible curve tags
 		
-		Also sets whitepoint to illuinant relative values, and removes
-		any chromatic adaptation tag.
+		If desired version after conversion is < 2.4 and undo_wtpt_chad is True,
+		also set whitepoint to illuinant relative values, and remove any
+		chromatic adaptation tag.
 		
 		If ICC profile version is < 4 or no [rgb]TRC tags or LUT16Type tags,
 		return False.
@@ -5834,22 +5842,19 @@ class ICCProfile:
 		# Set fileName to None because our profile no longer reflects the file
 		# on disk
 		self.fileName = None
-		# Set whitepoint tag to illuminant relative and remove chromatic
-		# adaptation tag afterwards(!)
-		self.tags.wtpt = self.tags.wtpt.ir
-		if "chad" in self.tags:
-			del self.tags["chad"]
+		if version < 2.4 and undo_wtpt_chad:
+			# Set whitepoint tag to illuminant relative and remove chromatic
+			# adaptation tag afterwards(!)
+			self.tags.wtpt = self.tags.wtpt.ir
+			if "chad" in self.tags:
+				del self.tags["chad"]
 		# Get all multiLocalizedUnicodeType tags
 		mluc = {}
 		for tagname, tag in self.tags.iteritems():
 			if isinstance(tag, MultiLocalizedUnicodeType):
 				mluc[tagname] = unicode(tag)
-		if has_lut_tags:
-			# Set profile version to 2.4
-			self.version = 2.4
-		else:
-			# Set profile version to 2.1
-			self.version = 2.1
+		# Set profile version
+		self.version = version
 		# Convert to textDescriptionType/textType (after setting version to 2.x)
 		for tagname, unistr in mluc.iteritems():
 			if tagname == "cprt":
@@ -5991,8 +5996,13 @@ class ICCProfile:
 		
 		"""
 		profile = ICCProfile()
+		D50 = colormath.get_whitepoint("D50")
 		if iccv4:
-			profile.version = 4.2
+			profile.version = 4.3
+		elif (not s15f16_is_equal(wXYZ, D50) and
+			  colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
+										  colormath.get_cat_matrix("Bradford"))):
+			profile.version = 2.2  # Match ArgyllCMS
 		profile.setDescription(description)
 		profile.setCopyright(copyright)
 		if manufacturer:
@@ -6019,7 +6029,7 @@ class ICCProfile:
 			tagname = color + "XYZ"
 			profile.tags[tagname] = XYZType(profile=profile)
 			(profile.tags[tagname].X, profile.tags[tagname].Y,
-			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, "D50", cat)
+			 profile.tags[tagname].Z) = colormath.adapt(X, Y, Z, wXYZ, D50, cat)
 			tagname = color + "TRC"
 			profile.tags[tagname] = CurveType(profile=profile)
 			if isinstance(gamma, (list, tuple)):
@@ -6031,21 +6041,24 @@ class ICCProfile:
 
 	def set_wtpt(self, wXYZ, cat="Bradford"):
 		"""
-		Set whitepoint, 'chad' tag (if ICCv4 profile or CAT is not Bradford)
-		and ArgyllCMS 'arts' tag
+		Set whitepoint, 'chad' tag (if >= v2.4 profile or CAT is not Bradford
+		and wtpt is not D50)
+		Add ArgyllCMS 'arts' tag
 		
 		"""
 		self.tags.wtpt = XYZType(profile=self)
-		if (self.version >= 4 or
+		if (self.version >= 2.4 or
 			not colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
 											colormath.get_cat_matrix("Bradford"))):
 			# Set wtpt to D50 and store actual white -> D50 transform in chad
 			# if creating ICCv4 profile or CAT is not default Bradford
 			D50 = colormath.get_whitepoint("D50")
 			(self.tags.wtpt.X, self.tags.wtpt.Y, self.tags.wtpt.Z) = D50
-			self.tags.chad = chromaticAdaptionTag()
-			matrix = colormath.wp_adaption_matrix(wXYZ, D50, cat)
-			self.tags.chad.update(matrix)
+			if not s15f16_is_equal(wXYZ, D50):
+				# Only create chad if actual white is not D50
+				self.tags.chad = chromaticAdaptionTag()
+				matrix = colormath.wp_adaption_matrix(wXYZ, D50, cat)
+				self.tags.chad.update(matrix)
 		else:
 			# Store actual white in wtpt
 			(self.tags.wtpt.X, self.tags.wtpt.Y, self.tags.wtpt.Z) = wXYZ

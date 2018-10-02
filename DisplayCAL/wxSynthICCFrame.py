@@ -723,6 +723,11 @@ class SynthICCFrame(BaseFrame):
 		else:
 			# Grayscale profile
 			profile = ICCP.ICCProfile()
+			if (not ICCP.s15f16_is_equal((XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
+										 colormath.get_whitepoint("D50")) and
+				colormath.is_similar_matrix(colormath.get_cat_matrix(self.cat),
+										    colormath.get_cat_matrix("Bradford"))):
+				profile.version = 2.2  # Match ArgyllCMS
 			profile.colorSpace = "GRAY"
 			profile.setCopyright(getcfg("copyright"))
 			profile.set_wtpt((XYZ["wX"], XYZ["wY"], XYZ["wZ"]), self.cat)

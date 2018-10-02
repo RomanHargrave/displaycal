@@ -9009,6 +9009,7 @@ usage: spotread [-options] [logfile]
 		
 		# Create profile
 		profile = ICCP.ICCProfile()
+		profile.version = 2.2  # Match ArgyllCMS
 		profile.setDescription(description)
 		profile.setCopyright(copyright)
 		if manufacturer:
