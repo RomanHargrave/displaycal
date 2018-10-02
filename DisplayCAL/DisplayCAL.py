@@ -4095,12 +4095,15 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def update_drift_compensation_ctrls(self):
 		self.panel.Freeze()
+		not_untethered = config.get_display_name(None, True) != "Untethered"
 		self.blacklevel_drift_compensation.GetContainingSizer().Show(
 			self.blacklevel_drift_compensation,
-			self.worker.argyll_version >= [1, 3, 0])
+			self.worker.argyll_version >= [1, 3, 0] and
+			not_untethered)
 		self.whitelevel_drift_compensation.GetContainingSizer().Show(
 			self.whitelevel_drift_compensation,
-			self.worker.argyll_version >= [1, 3, 0])
+			self.worker.argyll_version >= [1, 3, 0] and
+			not_untethered)
 		self.calpanel.Layout()
 		self.panel.Thaw()
 
@@ -9492,15 +9495,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.panel.Freeze()
 		self.menuitem_show_advanced_options.Check(show_advanced_options)
 		self.menuitem_advanced_options.Enable(show_advanced_options)
-		self.override_display_settle_time_mult.Show(
-			show_advanced_options and
-			getcfg("argyll.version") >= "1.7")
-		self.display_settle_time_mult.Show(
-			show_advanced_options and
-			getcfg("argyll.version") >= "1.7")
-		for ctrl in (self.override_min_display_update_delay_ms,
-					 self.min_display_update_delay_ms,
-					 self.min_display_update_delay_ms_label,
+		for ctrl in (# Calibration options
 					 self.black_luminance_label,
 					 self.black_luminance_ctrl,
 					 # Profiling options
@@ -9513,6 +9508,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.testchart_patch_sequence_ctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_options)
+		self.show_display_delay_ctrls()
 		self.show_ffp_ctrls()
 		self.show_output_levels_ctrls()
 		self.whitepoint_colortemp_locus_label.Show(show_advanced_options and
@@ -9534,6 +9530,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		if event:
 			self.set_size(True)
 		self.update_scrollbars()
+
+	def show_display_delay_ctrls(self):
+		show_advanced_options = bool(getcfg("show_advanced_options"))
+		not_untethered = config.get_display_name(None, True) != "Untethered"
+		for ctrl in (self.override_min_display_update_delay_ms,
+					 self.min_display_update_delay_ms,
+					 self.min_display_update_delay_ms_label):
+			ctrl.GetContainingSizer().Show(ctrl,
+										   show_advanced_options and
+										   not_untethered)
+		self.override_display_settle_time_mult.Show(
+			show_advanced_options and
+			getcfg("argyll.version") >= "1.7" and not_untethered)
+		self.display_settle_time_mult.Show(
+			show_advanced_options and
+			getcfg("argyll.version") >= "1.7" and not_untethered)
 
 	def show_ffp_ctrls(self):
 		# Full field pattern insertion
@@ -9559,7 +9571,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			ctrl.GetContainingSizer().Show(ctrl, ffp_show)
 
 	def show_output_levels_ctrls(self):
-		show_levels_config = (config.get_display_name() != "madVR" and
+		show_levels_config = (config.get_display_name(None, True)
+							  not in ("madVR", "Untethered") and
 							  bool(getcfg("show_advanced_options")))
 		for ctrl in (self.output_levels_label,
 					 self.output_levels_auto,
@@ -11748,6 +11761,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					"override_min_display_update_delay_ms").SetValue(override)
 			self.update_display_delay_ctrl("min_display_update_delay_ms",
 										   override)
+		self.update_drift_compensation_ctrls()
+		self.show_display_delay_ctrls()
 		self.show_ffp_ctrls()
 		self.show_output_levels_ctrls()
 		self.update_output_levels_ctrl()
