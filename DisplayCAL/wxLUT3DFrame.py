@@ -309,6 +309,11 @@ class LUT3DFrame(BaseFrame):
 							  self.lut3d_hdr_display_ctrl.GetSelection())
 
 	def lut3d_hdr_peak_luminance_handler(self, event):
+		target_peak = self.lut3d_hdr_peak_luminance_ctrl.GetValue()
+		maxmll = self.lut3d_hdr_maxmll_ctrl.GetValue()
+		if maxmll < target_peak:
+			setcfg("3dlut.hdr_maxmll", target_peak)
+		self.lut3d_hdr_maxmll_ctrl.SetRange(target_peak, 10000)
 		self.lut3d_set_option("3dlut.hdr_peak_luminance",
 							  self.lut3d_hdr_peak_luminance_ctrl.GetValue())
 
@@ -1479,9 +1484,17 @@ class LUT3DFrame(BaseFrame):
 		outoffset = int(getcfg("3dlut.trc_output_offset") * 100)
 		self.lut3d_trc_black_output_offset_ctrl.SetValue(outoffset)
 		self.lut3d_trc_black_output_offset_intctrl.SetValue(outoffset)
-		self.lut3d_hdr_peak_luminance_ctrl.SetValue(getcfg("3dlut.hdr_peak_luminance"))
+		target_peak = getcfg("3dlut.hdr_peak_luminance")
+		maxmll = getcfg("3dlut.hdr_maxmll")
+		# Don't allow maxmll < target peak. Technically this restriction does
+		# not exist, but practically maxmll < target peak doesn't make sense.
+		if maxmll < target_peak:
+			maxmll = target_peak
+			setcfg("3dlut.hdr_maxmll", maxmll)
+		self.lut3d_hdr_maxmll_ctrl.SetRange(target_peak, 10000)
+		self.lut3d_hdr_peak_luminance_ctrl.SetValue(target_peak)
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
-		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
+		self.lut3d_hdr_maxmll_ctrl.SetValue(maxmll)
 		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(not bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
 		self.lut3d_hdr_update_diffuse_white()
 		self.lut3d_hdr_ambient_luminance_ctrl.SetValue(getcfg("3dlut.hdr_ambient_luminance"))
