@@ -11809,6 +11809,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_display_delay_ctrl(self, name, enable):
 		spinctrl = getattr(self, name)
 		spinctrl.Enable(enable)
+		if name == "min_display_update_delay_ms":
+			self.min_display_update_delay_ms_label.Enable(enable)
 		spinvalue = getcfg("measure.%s" % name)
 		if not enable:
 			# Restore previous environment variable value
