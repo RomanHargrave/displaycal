@@ -3569,6 +3569,11 @@ END_DATA
 				profile_link = ICCP.ICCProfile()
 				profile_link.profileClass = "link"
 				profile_link.connectionColorSpace = "RGB"
+				profile_link.setDescription(name)
+				profile_link.setCopyright(getcfg("copyright"))
+				profile_link.tags.pseq = ICCP.ProfileSequenceDescType(profile=profile_link)
+				profile_link.tags.pseq.add(profile_in)
+				profile_link.tags.pseq.add(profile_out)
 				profile_link.tags.A2B0 = A2B0 = ICCP.LUT16Type(None, "A2B0",
 															   profile_link)
 				A2B0.matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0],

@@ -366,6 +366,7 @@ tags = {"A2B0": "Device to PCS: Intent 0",
 		"meas": "Measurement type",
 		"mmod": "Make and model",
 		"ncl2": "Named colors",
+		"pseq": "Profile sequence description",
 		"rTRC": "Red tone response curve",
 		"rXYZ": "Red matrix column",
 		"targ": "Characterization target",
@@ -2678,7 +2679,7 @@ class LazyLoadTagAODict(AODict):
 					args += (self.profile.connectionColorSpace, )
 					if typeSignature == "ncl2":
 						args += (self.profile.colorSpace, )
-				elif typeSignature in ("XYZ ", "mft2", "curv", "MS10"):
+				elif typeSignature in ("XYZ ", "mft2", "curv", "MS10", "pseq"):
 					args += (self.profile, )
 				tag = typeSignature2Type[typeSignature](*args)
 			else:
@@ -4243,6 +4244,102 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 		return locals()
 
 
+class ProfileSequenceDescType(ICCProfileTag, list):
+
+	def __init__(self, tagData=None, tagSignature=None, profile=None):
+		ICCProfileTag.__init__(self, tagData, tagSignature)
+		self.profile = profile
+		if tagData:
+			count = uInt32Number(tagData[8:12])
+			desc_data = tagData[12:]
+			while count:
+				# NOTE: Like in the profile header, the attributes are a 64 bit
+				# value, but the least significant 32 bits (big-endian) are
+				# reserved for the ICC.
+				attributes = uInt32Number(desc_data[8:12])
+				desc = {"manufacturer": desc_data[0:4],
+						"model": desc_data[4:8],
+						"attributes": {
+							"reflective":   attributes & 1 == 0,
+							"glossy":       attributes & 2 == 0,
+							"positive":     attributes & 4 == 0,
+							"color":        attributes & 8 == 0},
+						"tech": desc_data[16:20]}
+				desc_data = desc_data[20:]
+				for desc_type in ("dmnd", "dmdd"):
+					tag_type = desc_data[0:4]
+					if tag_type == "desc":
+						cls = TextDescriptionType
+					elif tag_type == "mluc":
+						cls = MultiLocalizedUnicodeType
+					else:
+						safe_print("Error (non-critical): could not fully "
+								   "decode 'pseq' - unknown %r tag type %r" %
+								   (desc_type, tag_type))
+						count = 1  # Skip remaining
+						break
+					desc[desc_type] = cls(desc_data)
+					desc_data = desc_data[len(desc[desc_type].tagData):]
+				self.append(desc)
+				count -= 1
+
+	def add(self, profile):
+		""" Add description structure of profile """
+		desc = {}
+		desc.update(profile.device)
+		desc["tech"] = profile.tags.get("tech", "").ljust(4, "\0")[:4]
+		for desc_type in ("dmnd", "dmdd"):
+			if self.profile.version >= 4:
+				cls = MultiLocalizedUnicodeType
+			else:
+				cls = TextDescriptionType
+			if self.profile.version < 4 and profile.version < 4:
+				# Both profiles not v4
+				tag = profile.tags.get(desc_type, cls())
+			else:
+				tag = cls()
+				description = safe_unicode(profile.tags.get(desc_type, ""))
+				if self.profile.version < 4:
+					# Other profile is v4
+					tag.ASCII = description.encode("ASCII", "asciize")
+					if tag.ASCII != description:
+						tag.Unicode = description
+				else:
+					# Other profile is v2
+					tag.add_localized_string("en", "US", description)
+			desc[desc_type] = tag
+		self.append(desc)
+	
+	@Property
+	def tagData():
+		doc = """
+		Return raw tag data.
+		"""
+	
+		def fget(self):
+			tagData = ["pseq", "\0" * 4, uInt32Number_tohex(len(self))]
+			for desc in self:
+				tagData.append(desc.get("manufacturer", "").ljust(4, '\0')[:4])
+				tagData.append(desc.get("model", "").ljust(4, '\0')[:4])
+				attributes = 0
+				for name, bit in {"reflective": 1,
+								  "glossy": 2,
+								  "positive": 4,
+								  "color": 8}.iteritems():
+					if not desc.get("attributes", {}).get(name):
+						attributes |= bit
+				tagData.append(uInt32Number_tohex(attributes) + "\0" * 4)
+				tagData.append(desc.get("tech", "").ljust(4, '\0')[:4])
+				for desc_type in ("dmnd", "dmdd"):
+					tagData.append(desc.get(desc_type, "").tagData)
+			return "".join(tagData)
+		
+		def fset(self, tagData):
+			pass
+		
+		return locals()
+
+
 class s15Fixed16ArrayType(ICCProfileTag, list):
 
 	def __init__(self, tagData=None, tagSignature=None):
@@ -5366,6 +5463,7 @@ typeSignature2Type = {
 	"mmod": MakeAndModelType,  # Apple private tag
 	"ncl2": NamedColor2Type,
 	"para": ParametricCurveType,
+	"pseq": ProfileSequenceDescType,
 	"sf32": s15Fixed16ArrayType,
 	"sig ": SignatureType,
 	"text": TextType,
@@ -6377,6 +6475,32 @@ class ICCProfile:
 				safe_print(label)
 			else:
 				safe_print(label + ":", value)
+
+	@staticmethod
+	def add_device_info(info, device, level=1):
+		""" Add a device structure (see profile header) to info dict """
+		indent = " " * 4 * level
+		info[indent + "Manufacturer"] = "0x%s" % binascii.hexlify(device.get("manufacturer", "")).upper()
+		if (len(device.get("manufacturer", "")) == 4 and
+			device["manufacturer"][0:2] == "\0\0" and
+			device["manufacturer"][2:4] != "\0\0"):
+			mnft_id = device["manufacturer"][3] + device["manufacturer"][2]
+			mnft_id = edid.parse_manufacturer_id(mnft_id)
+			manufacturer = edid.get_manufacturer_name(mnft_id)
+		else:
+			manufacturer = safe_unicode(re.sub("[^\x20-\x7e]", "", device.get("manufacturer", ""))).encode("ASCII", "replace")
+			if manufacturer != device.get("manufacturer"):
+				manufacturer = None
+			else:
+				manufacturer = "'%s'" % manufacturer
+		if manufacturer is not None:
+			info[indent + "Manufacturer"] += " %s" % manufacturer
+		info[indent + "Model"] = hexrepr(device.get("model", ""))
+		attributes = device.get("attributes", {})
+		info[indent + "Media attributes"] = ", ".join([{True: "Reflective"}.get(attributes.get("reflective"), "Transparency"),
+											{True: "Glossy"}.get(attributes.get("glossy"), "Matte"),
+											{True: "Positive"}.get(attributes.get("positive"), "Negative"),
+											{True: "Color"}.get(attributes.get("color"), "Black & white")])
 	
 	def get_info(self):
 		info = DictList()
@@ -6394,25 +6518,7 @@ class ICCProfile:
 		info["Can be used independently"] = {True: "Yes"}.get(self.independent,
 															  "No")
 		info["Device"] = ""
-		info["    Manufacturer"] = "0x%s" % binascii.hexlify(self.device["manufacturer"]).upper()
-		if (self.device["manufacturer"][0:2] == "\0\0" and
-			self.device["manufacturer"][2:4] != "\0\0"):
-			mnft_id = self.device["manufacturer"][3] + self.device["manufacturer"][2]
-			mnft_id = edid.parse_manufacturer_id(mnft_id)
-			manufacturer = edid.get_manufacturer_name(mnft_id)
-		else:
-			manufacturer = safe_unicode(re.sub("[^\x20-\x7e]", "", self.device["manufacturer"])).encode("ASCII", "replace")
-			if manufacturer != self.device["manufacturer"]:
-				manufacturer = None
-			else:
-				manufacturer = "'%s'" % manufacturer
-		if manufacturer is not None:
-			info["    Manufacturer"] += " %s" % manufacturer
-		info["    Model"] = hexrepr(self.device["model"])
-		info["    Media attributes"] = ", ".join([{True: "Reflective"}.get(self.device["attributes"]["reflective"], "Transparency"),
-											{True: "Glossy"}.get(self.device["attributes"]["glossy"], "Matte"),
-											{True: "Positive"}.get(self.device["attributes"]["positive"], "Negative"),
-											{True: "Color"}.get(self.device["attributes"]["color"], "Black & white")])
+		ICCProfile.add_device_info(info, self.device)
 		info["Default rendering intent"] = {0: "Perceptual",
 											1: "Media-relative colorimetric",
 											2: "Saturation",
@@ -6582,7 +6688,7 @@ class ICCProfile:
 				info[name] = ""
 				info["    Manufacturer"] = "0x%s %s" % (
 					binascii.hexlify(tag.manufacturer).upper(),
-					edid.get_manufacturer_name(edid.parse_manufacturer_id(tag.manufacturer)) or "")
+					edid.get_manufacturer_name(edid.parse_manufacturer_id(tag.manufacturer.ljust(2, "\0")[:2])) or "")
 				info["    Model"] = "0x%s" % binascii.hexlify(tag.model).upper()
 			elif isinstance(tag, MeasurementType):
 				info[name] = ""
@@ -6622,6 +6728,15 @@ class ICCProfile:
 						info[key] += " (%s %s)" % (self.colorSpace,
 												   " ".join(devout))
 					i += 1
+			elif isinstance(tag, ProfileSequenceDescType):
+				info[name] = ""
+				for i, desc in enumerate(tag):
+					info[" " * 4 + "%i" % (i + 1)] = ""
+					ICCProfile.add_device_info(info, desc, 2)
+					for desc_type in ("dmnd", "dmdd"):
+						description = safe_unicode(desc[desc_type])
+						if description:
+							info[" " * 8 + tags[desc_type]] = description
 			elif isinstance(tag, Text):
 				if sig == "cprt":
 					info[name] = unicode(tag)
