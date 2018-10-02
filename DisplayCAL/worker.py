@@ -5614,7 +5614,8 @@ while 1:
 			if hasattr(self, "madtpg") and (not self.use_madnet_tpg or
 											(self.cmdname == "dispcal" and
 											 not self.dispread_after_dispcal) or
-											not self._detecting_video_levels or
+											(self.cmdname == "dispread" and
+											 not self._detecting_video_levels) or
 											self.retcode):
 				self.madtpg_disconnect()
 		if debug and not silent:
