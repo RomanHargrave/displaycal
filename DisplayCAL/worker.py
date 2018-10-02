@@ -13573,7 +13573,7 @@ BEGIN_DATA
 			if rgb:
 				if getcfg("patterngenerator.ffp_insertion"):
 					# Frame insertion
-					frq = getcfg("patterngenerator.ffp_insertion.frequency")
+					frq = getcfg("patterngenerator.ffp_insertion.interval")
 					if time() - getattr(self, "_ffp_insertion_ts", 0) > frq:
 						dur = getcfg("patterngenerator.ffp_insertion.duration")
 						lvl = getcfg("patterngenerator.ffp_insertion.level")

@@ -2569,10 +2569,10 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("patterngenerator.ffp_insertion",
 									   event.GetInt()) or
 								self.update_ffp_insertion_ctrl())
-		self.ffp_insertion_frequency.Bind(wx.EVT_SPINCTRL,
-										  lambda event:
-										  setcfg("patterngenerator.ffp_insertion.frequency",
-												 event.GetInt()))
+		self.ffp_insertion_interval.Bind(wx.EVT_SPINCTRL,
+										 lambda event:
+										 setcfg("patterngenerator.ffp_insertion.interval",
+												event.GetInt()))
 		self.ffp_insertion_duration.Bind(wx.EVT_SPINCTRL,
 										 lambda event:
 										 setcfg("patterngenerator.ffp_insertion.duration",
@@ -3825,7 +3825,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.update_display_delay_ctrl(name, value)
 
 		self.update_ffp_insertion_ctrl()
-		self.ffp_insertion_frequency.SetValue(getcfg("patterngenerator.ffp_insertion.frequency"))
+		self.ffp_insertion_interval.SetValue(getcfg("patterngenerator.ffp_insertion.interval"))
 		self.ffp_insertion_duration.SetValue(getcfg("patterngenerator.ffp_insertion.duration"))
 		self.ffp_insertion_level.SetValue(int(getcfg("patterngenerator.ffp_insertion.level") * 100))
 
@@ -4165,9 +4165,9 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_ffp_insertion_ctrl(self):
 		ffp_insertion = bool(getcfg("patterngenerator.ffp_insertion"))
 		self.ffp_insertion.SetValue(ffp_insertion)
-		for ctrl in (self.ffp_insertion_frequency_label,
-					 self.ffp_insertion_frequency,
-					 self.ffp_insertion_frequency_s_label,
+		for ctrl in (self.ffp_insertion_interval_label,
+					 self.ffp_insertion_interval,
+					 self.ffp_insertion_interval_s_label,
 					 self.ffp_insertion_duration_label,
 					 self.ffp_insertion_duration,
 					 self.ffp_insertion_duration_s_label,
@@ -9547,9 +9547,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					  (sys.platform != "win32" or not getcfg("madtpg.native") or
 					   self.worker.argyll_has_virtual_display))))
 		for ctrl in (self.ffp_insertion,
-					 self.ffp_insertion_frequency_label,
-					 self.ffp_insertion_frequency,
-					 self.ffp_insertion_frequency_s_label,
+					 self.ffp_insertion_interval_label,
+					 self.ffp_insertion_interval,
+					 self.ffp_insertion_interval_s_label,
 					 self.ffp_insertion_duration_label,
 					 self.ffp_insertion_duration,
 					 self.ffp_insertion_duration_s_label,

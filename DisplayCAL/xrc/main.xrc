@@ -376,13 +376,13 @@
                               <border>16</border>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxStaticText" name="ffp_insertion_frequency_label">
-                                <label>frequency</label>
+                              <object class="wxStaticText" name="ffp_insertion_interval_label">
+                                <label>interval</label>
                               </object>
                               <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxSpinCtrl" name="ffp_insertion_frequency">
+                              <object class="wxSpinCtrl" name="ffp_insertion_interval">
                                 <size>75,-1</size>
                                 <min>1</min>
                                 <max>3600</max>
@@ -391,7 +391,7 @@
                               <border>8</border>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxStaticText" name="ffp_insertion_frequency_s_label">
+                              <object class="wxStaticText" name="ffp_insertion_interval_s_label">
                                 <label>s</label>
                               </object>
                               <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
