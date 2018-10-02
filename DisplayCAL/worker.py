@@ -10009,6 +10009,8 @@ usage: spotread [-options] [logfile]
 		self.check_retry_measurement(txt)
 		self.check_is_single_measurement(txt)
 		self.check_spotread_result(txt)
+
+	def audio_visual_feedback(self, txt):
 		if self.cmdname in (get_argyll_utilname("dispcal"),
 							get_argyll_utilname("dispread"),
 							get_argyll_utilname("spotread")):
@@ -10045,7 +10047,7 @@ usage: spotread [-options] [logfile]
 			if hasattr(self.patterngenerator, "conn"):
 				# Try to use existing connection
 				try:
-					self.patterngenerator_send((.5, ) * 3, True)
+					self.patterngenerator_send((.5, ) * 3, raise_exceptions=True)
 				except (socket.error, httplib.HTTPException), exception:
 					self.log(exception)
 					self.patterngenerator.disconnect_client()
@@ -10093,13 +10095,15 @@ usage: spotread [-options] [logfile]
 	def patterngenerators(self):
 		return self._patterngenerators
 
-	def patterngenerator_send(self, rgb, raise_exceptions=False):
+	def patterngenerator_send(self, rgb, bgrgb=None, raise_exceptions=False):
 		""" Send RGB color to pattern generator """
 		if getattr(self, "abort_requested", False):
 			return
 		x, y, w, h, size = get_pattern_geometry()
 		size = min(sum((w, h)) / 2.0, 1.0)
-		if getcfg("measure.darken_background") or size == 1.0:
+		if bgrgb is not None:
+			pass
+		elif getcfg("measure.darken_background") or size == 1.0:
 			bgrgb = (0, 0, 0)
 		else:
 			# Constant APL
@@ -13547,6 +13551,7 @@ BEGIN_DATA
 			self.buffer = self.buffer[1:]
 
 	def _write(self, txt):
+		wx.CallAfter(self.audio_visual_feedback, txt)
 		if re.search("press 1|space when done|patch 1 of ", txt, re.I):
 			# There are some intial measurements which we can't check for
 			# unless -D (debug) is used for Argyll tools
@@ -13562,20 +13567,38 @@ BEGIN_DATA
 								self.patterngenerator and
 								hasattr(self.patterngenerator, "conn"))
 		if use_patterngenerator or self.use_madnet_tpg:
-			progress = re.search("(?:Patch (\\d+) of|Number of patches =) (\\d+)",
-								 txt, re.I)
-			if self.use_madnet_tpg and progress:
-				# Set madTPG progress bar
-				try:
-					start = int(progress.group(1) or 0)
-					end = int(progress.group(2))
-				except ValueError:
-					pass
-				else:
-					self.madtpg.set_progress_bar_pos(start, end)
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
+				if getcfg("patterngenerator.ffp_insertion"):
+					# Frame insertion
+					frq = getcfg("patterngenerator.ffp_insertion.frequency")
+					if time() - getattr(self, "_ffp_insertion_ts", 0) > frq:
+						dur = getcfg("patterngenerator.ffp_insertion.duration")
+						lvl = getcfg("patterngenerator.ffp_insertion.level")
+						self.log("%s: Frame insertion duration %is, level = %i%%" %
+								 (appname, dur, lvl * 100))
+						ts = time()
+						if self.use_madnet_tpg:
+							patternconfig = self.madtpg.get_pattern_config()
+							self.madtpg.set_pattern_config(patternconfig[0],
+														   int(lvl * 100), 0, 0)
+							self.madtpg.show_rgb(lvl, lvl, lvl)
+							self.madtpg.set_pattern_config(100, 0, 0, 0)
+						else:
+							self.patterngenerator_send((lvl, lvl, lvl),
+													   (lvl, lvl, lvl))
+						while time() - ts < dur and not (self.subprocess_abort or
+														 self.thread_abort):
+							sleep(.05)
+						if self.use_madnet_tpg:
+							self.madtpg.set_pattern_config(*patternconfig)
+						update_ffp_insertion_ts = True
+					else:
+						update_ffp_insertion_ts = False
+					if (not hasattr(self, "_ffp_insertion_ts") or
+						update_ffp_insertion_ts):
+						self._ffp_insertion_ts = time()
 				rgb = [float(v) for v in rgb.groups()[0].strip().split()]
 				if self.use_madnet_tpg:
 					if self.madtpg.show_rgb(*rgb):
@@ -13604,5 +13627,17 @@ BEGIN_DATA
 			if use_patterngenerator or self.use_madnet_tpg:
 				self.log("%s: Patch update count: %i" %
 						 (appname, self.patch_count))
+		if self.use_madnet_tpg:
+			progress = re.search("(?:Patch (\\d+) of|Number of patches =) (\\d+)",
+								 txt, re.I)
+			if progress:
+				# Set madTPG progress bar
+				try:
+					start = int(progress.group(1) or 0)
+					end = int(progress.group(2))
+				except ValueError:
+					pass
+				else:
+					self.madtpg.set_progress_bar_pos(start, end)
 		# Parse
 		wx.CallAfter(self.parse, txt)

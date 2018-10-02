@@ -2563,6 +2563,25 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(floatspin.EVT_FLOATSPIN, self.display_delay_handler, 
 				   id=self.display_settle_time_mult.GetId())
 
+		# frame insertion
+		self.ffp_insertion.Bind(wx.EVT_CHECKBOX,
+								lambda event:
+								setcfg("patterngenerator.ffp_insertion",
+									   event.GetInt()) or
+								self.update_ffp_insertion_ctrl())
+		self.ffp_insertion_frequency.Bind(wx.EVT_SPINCTRL,
+										  lambda event:
+										  setcfg("patterngenerator.ffp_insertion.frequency",
+												 event.GetInt()))
+		self.ffp_insertion_duration.Bind(wx.EVT_SPINCTRL,
+										 lambda event:
+										 setcfg("patterngenerator.ffp_insertion.duration",
+												event.GetInt()))
+		self.ffp_insertion_level.Bind(wx.EVT_SPINCTRL,
+									  lambda event:
+									  setcfg("patterngenerator.ffp_insertion.level",
+											 event.GetPosition() / 100.0))
+
 		# Output levels
 		self.output_levels_auto.Bind(wx.EVT_RADIOBUTTON,
 									 self.output_levels_handler)
@@ -3805,6 +3824,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			getattr(self, "override_%s" % name).SetValue(value)
 			self.update_display_delay_ctrl(name, value)
 
+		self.update_ffp_insertion_ctrl()
+		self.ffp_insertion_frequency.SetValue(getcfg("patterngenerator.ffp_insertion.frequency"))
+		self.ffp_insertion_duration.SetValue(getcfg("patterngenerator.ffp_insertion.duration"))
+		self.ffp_insertion_level.SetValue(int(getcfg("patterngenerator.ffp_insertion.level") * 100))
+
 		self.update_adjustment_controls()
 		self.whitepoint_colortemp_textctrl.Enable(not update_cal)
 		self.whitepoint_colortemp_locus_ctrl.Enable(not update_cal)
@@ -4137,6 +4161,20 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_estimated_measurement_time("cal")
 		self.update_estimated_measurement_time("testchart")
 		self.update_estimated_measurement_time("chart")
+
+	def update_ffp_insertion_ctrl(self):
+		ffp_insertion = bool(getcfg("patterngenerator.ffp_insertion"))
+		self.ffp_insertion.SetValue(ffp_insertion)
+		for ctrl in (self.ffp_insertion_frequency_label,
+					 self.ffp_insertion_frequency,
+					 self.ffp_insertion_frequency_s_label,
+					 self.ffp_insertion_duration_label,
+					 self.ffp_insertion_duration,
+					 self.ffp_insertion_duration_s_label,
+					 self.ffp_insertion_level_label,
+					 self.ffp_insertion_level,
+					 self.ffp_insertion_level_percentage_label):
+			ctrl.Enable(ffp_insertion)
 	
 	def blacklevel_drift_compensation_handler(self, event):
 		setcfg("drift_compensation.blacklevel", 
@@ -9463,10 +9501,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		for ctrl in (self.override_min_display_update_delay_ms,
 					 self.min_display_update_delay_ms,
 					 self.min_display_update_delay_ms_label,
-					 self.output_levels_label,
-					 self.output_levels_auto,
-					 self.output_levels_full_range,
-					 self.output_levels_limited_range,
 					 self.black_luminance_label,
 					 self.black_luminance_ctrl,
 					 # Profiling options
@@ -9479,6 +9513,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					 self.testchart_patch_sequence_ctrl):
 			ctrl.GetContainingSizer().Show(ctrl,
 										   show_advanced_options)
+		self.show_ffp_ctrls()
+		self.show_output_levels_ctrls()
 		self.whitepoint_colortemp_locus_label.Show(show_advanced_options and
 			self.whitepoint_ctrl.GetSelection() != 2)
 		self.whitepoint_colortemp_locus_ctrl.Show(show_advanced_options and
@@ -9498,6 +9534,38 @@ class MainFrame(ReportFrame, BaseFrame):
 		if event:
 			self.set_size(True)
 		self.update_scrollbars()
+
+	def show_ffp_ctrls(self):
+		# Full field pattern insertion
+		show_advanced_options = bool(getcfg("show_advanced_options"))
+		display_name = config.get_display_name(None, True)
+		ffp_show = (show_advanced_options and 
+					((display_name == "Prisma" and
+					  not defaults["patterngenerator.prisma.argyll"]) or
+					 display_name == "Resolve" or
+					 (display_name == "madVR" and
+					  (sys.platform != "win32" or not getcfg("madtpg.native") or
+					   self.worker.argyll_has_virtual_display))))
+		for ctrl in (self.ffp_insertion,
+					 self.ffp_insertion_frequency_label,
+					 self.ffp_insertion_frequency,
+					 self.ffp_insertion_frequency_s_label,
+					 self.ffp_insertion_duration_label,
+					 self.ffp_insertion_duration,
+					 self.ffp_insertion_duration_s_label,
+					 self.ffp_insertion_level_label,
+					 self.ffp_insertion_level,
+					 self.ffp_insertion_level_percentage_label):
+			ctrl.GetContainingSizer().Show(ctrl, ffp_show)
+
+	def show_output_levels_ctrls(self):
+		show_levels_config = (config.get_display_name() != "madVR" and
+							  bool(getcfg("show_advanced_options")))
+		for ctrl in (self.output_levels_label,
+					 self.output_levels_auto,
+					 self.output_levels_full_range,
+					 self.output_levels_limited_range):
+			ctrl.Show(show_levels_config)
 
 	def show_observer_ctrl(self):
 		self.panel.Freeze()
@@ -11680,12 +11748,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					"override_min_display_update_delay_ms").SetValue(override)
 			self.update_display_delay_ctrl("min_display_update_delay_ms",
 										   override)
-		show_levels_config = (config.get_display_name() != "madVR" and
-							  getcfg("show_advanced_options"))
-		self.output_levels_label.Show(show_levels_config)
-		self.output_levels_auto.Show(show_levels_config)
-		self.output_levels_full_range.Show(show_levels_config)
-		self.output_levels_limited_range.Show(show_levels_config)
+		self.show_ffp_ctrls()
+		self.show_output_levels_ctrls()
 		self.update_output_levels_ctrl()
 		# Check if display is calibratable at all. Unset calibration update
 		# checkbox if this is not the case.
