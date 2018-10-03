@@ -454,9 +454,10 @@ jsapi.math.Matrix3x3.prototype = {
 				 this[2][1]*this[1][2]*this[0][0]));
 	},
 	invert: function () {
+		if (this._inverted) return this._inverted;
 		var determinant = this.determinant(),
 			matrix = this.adjoint();
-		return new jsapi.math.Matrix3x3([[matrix[0][0] / determinant,
+		return this._inverted = new jsapi.math.Matrix3x3([[matrix[0][0] / determinant,
 										   matrix[0][1] / determinant,
 										   matrix[0][2] / determinant],
 										  [matrix[1][0] / determinant,
