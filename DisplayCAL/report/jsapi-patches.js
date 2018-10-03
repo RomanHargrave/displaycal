@@ -59,34 +59,12 @@ jsapi.math.variance = function () {
 jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_destination, MA) {
 	// chromatic adaption
 	// based on formula http://brucelindbloom.com/Eqn_ChromAdapt.html
-	// MA = adaption matrix or predefined choice ('CAT02', 'Bradford', 'HPE D65', 'XYZ scaling'),
+	// MA = adaption matrix or predefined choice (e.g. 'CAT02', 'Bradford', 'HPE D65', 'XYZ scaling'),
 	// defaults to 'Bradford'
 	if (!MA) MA = 'Bradford';
-	if (typeof MA == 'string') {
-		switch (MA) {
-			case 'XYZ scaling':
-				MA = [[1, 0, 0],
-					  [0, 1, 0],
-					  [0, 0, 1]];
-				break;
-			case 'HPE D65':
-				MA = [[ 0.40024,  0.70760, -0.08081],
-					  [-0.22630,  1.16532,  0.04570],
-					  [ 0.00000,  0.00000,  0.91822]];
-				break;
-			case 'CAT02':
-				MA = [[ 0.7328,  0.4296, -0.1624],
-					  [-0.7036,  1.6975,  0.0061],
-					  [ 0.0030,  0.0136,  0.9834]];
-				break;
-			case 'Bradford':
-			default:
-				MA = [[ 0.8951,  0.2664, -0.1614],
-					  [-0.7502,  1.7135,  0.0367],
-					  [ 0.0389, -0.0685,  1.0296]];
-		}
-	};
-	if (MA.constructor != jsapi.math.Matrix3x3) MA = new jsapi.math.Matrix3x3(MA);
+	if (typeof MA == 'string')
+		MA = jsapi.math.color.cat_matrices[MA] || jsapi.math.color.cat_matrices['Bradford'];
+	else if (MA.constructor != jsapi.math.Matrix3x3) MA = new jsapi.math.Matrix3x3(MA);
 	var XYZWS = jsapi.math.color.get_whitepoint(whitepoint_source),
 		pybs = MA.multiply(XYZWS),
 		XYZWD = jsapi.math.color.get_whitepoint(whitepoint_destination),
@@ -526,3 +504,78 @@ jsapi.math.color.LinearRec2020RGB2LMS_matrix = new jsapi.math.Matrix3x3([[1688 /
 jsapi.math.color.L_M_S_2ICtCp_matrix = new jsapi.math.Matrix3x3([[.5, .5, 0],
 																 [6610 / 4096., -13613 / 4096., 7003 / 4096.],
 																 [17933 / 4096., -17390 / 4096., -543 / 4096.]]);
+jsapi.math.color.cat_matrices = {
+			'Bradford': new jsapi.math.Matrix3x3(
+					 [[ 0.8951,  0.2664, -0.1614],
+					  [-0.7502,  1.7135,  0.0367],
+					  [ 0.0389, -0.0685,  1.0296]]
+				),
+			'CAT02': new jsapi.math.Matrix3x3(
+					 [[ 0.7328,  0.4296, -0.1624],
+					  [-0.7036,  1.6975,  0.0061],
+					  [ 0.0030,  0.0136,  0.9834]]
+				),
+			// Brill & Süsstrunk modification also found in ArgyllCMS
+			'CAT02BS': new jsapi.math.Matrix3x3(
+					 [[ 0.7328,  0.4296, -0.1624],
+					  [-0.7036,  1.6975,  0.0061],
+					  [ 0.0000,  0.0000,  1.0000]]
+				),
+			'CAT97s': new jsapi.math.Matrix3x3(
+					 [[ 0.8562,  0.3372, -0.1934],
+					  [-0.8360,  1.8327,  0.0033],
+					  [ 0.0357, -0.0469,  1.0112]]
+				),
+			'CMCCAT2000': new jsapi.math.Matrix3x3(
+					 [[ 0.7982,  0.3389, -0.1371],
+					  [-0.5918,  1.5512,  0.0406],
+					  [ 0.0008,  0.0239,  0.9753]]
+				),
+			// Hunt-Pointer-Estevez, equal-energy illuminant 
+			'HPE E': new jsapi.math.Matrix3x3(
+					 [[ 0.38971, 0.68898, -0.07868],
+					  [-0.22981, 1.18340,  0.04641],
+					  [ 0.00000, 0.00000,  1.00000]]
+				),
+			// Süsstrunk et al.15 optimized spectrally sharpened matrix
+			'Sharp': new jsapi.math.Matrix3x3(
+					 [[ 1.2694, -0.0988, -0.1706],
+					  [-0.8364,  1.8006,  0.0357],
+					  [ 0.0297, -0.0315,  1.0018]]
+				),
+			// 'Von Kries' as found on Bruce Lindbloom's site: 
+			// Hunt-Pointer-Estevez normalized to D65
+			'HPE D65': new jsapi.math.Matrix3x3(
+					 [[ 0.40024,  0.70760, -0.08081],
+					  [-0.22630,  1.16532,  0.04570],
+					  [ 0.00000,  0.00000,  0.91822]]
+				),
+			'XYZ scaling': new jsapi.math.Matrix3x3(
+					 [[1, 0, 0],
+					  [0, 1, 0],
+					  [0, 0, 1]]
+				),
+			'IPT': new jsapi.math.Matrix3x3(
+					 [[ 0.4002, 0.7075, -0.0807],
+					  [-0.2280, 1.1500,  0.0612],
+					  [ 0.0000, 0.0000,  0.9184]]
+				),
+			// Inverse CIE 2012 2deg LMS to XYZ matrix from Argyll/icc/icc.c
+			'CIE2012_2': new jsapi.math.Matrix3x3(
+					 [[ 0.2052445519046028,  0.8334486497310412, -0.0386932016356441],
+					  [-0.4972221301804286,  1.4034846060306130,  0.0937375241498157],
+					  [ 0.0000000000000000,  0.0000000000000000,  1.0000000000000000]]
+				),
+			// Bianco and Schettini (2010)
+			'BS': new jsapi.math.Matrix3x3(
+					 [[ 0.8752,  0.2787, -0.1539],
+					  [-0.8904,  1.8709,  0.0195],
+					  [-0.0061,  0.0162,  0.9899]]
+				),
+			// Bianco and Schettini (2010) with positivity constraint
+			'BS-PC': new jsapi.math.Matrix3x3(
+					 [[ 0.6489,  0.3915, -0.0404],
+					  [-0.3775,  1.3055,  0.0720],
+					  [-0.0271,  0.0888,  0.9383]]
+				)
+};
