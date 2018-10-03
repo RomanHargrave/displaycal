@@ -714,7 +714,8 @@ class SynthICCFrame(BaseFrame):
 											   1.0,
 											   "",
 											   getcfg("copyright"),
-											   cat=self.cat)
+											   cat=self.cat,
+											   profile_class=profile_class)
 			black = colormath.adapt(XYZ["kX"], XYZ["kY"], XYZ["kZ"], white)
 			profile.tags.rTRC = ICCP.CurveType(profile=profile)
 			profile.tags.gTRC = ICCP.CurveType(profile=profile)
@@ -723,10 +724,13 @@ class SynthICCFrame(BaseFrame):
 		else:
 			# Grayscale profile
 			profile = ICCP.ICCProfile()
+			# Profile class
+			profile.profileClass = profile_class
 			if (not ICCP.s15f16_is_equal((XYZ["wX"], XYZ["wY"], XYZ["wZ"]),
 										 colormath.get_whitepoint("D50")) and
-				colormath.is_similar_matrix(colormath.get_cat_matrix(self.cat),
-										    colormath.get_cat_matrix("Bradford"))):
+				(profile.profileClass not in ("mntr", "prtr") or
+				 colormath.is_similar_matrix(colormath.get_cat_matrix(self.cat),
+										     colormath.get_cat_matrix("Bradford")))):
 				profile.version = 2.2  # Match ArgyllCMS
 			profile.colorSpace = "GRAY"
 			profile.setCopyright(getcfg("copyright"))
@@ -878,8 +882,6 @@ class SynthICCFrame(BaseFrame):
 			(profile.tags[tagname].X,
 			 profile.tags[tagname].Y,
 			 profile.tags[tagname].Z) = X, Y, Z
-		# Profile class
-		profile.profileClass = profile_class
 		# Technology type
 		if tech:
 			profile.tags.tech = ICCP.SignatureType("sig \0\0\0\0" +

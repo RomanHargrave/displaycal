@@ -6005,19 +6005,23 @@ class ICCProfile:
 		return True
 
 	@staticmethod
-	def from_named_rgb_space(rgb_space_name, iccv4=False, cat="Bradford"):
+	def from_named_rgb_space(rgb_space_name, iccv4=False, cat="Bradford",
+							 profile_class="mntr"):
 		rgb_space = colormath.get_rgb_space(rgb_space_name)
-		return ICCProfile.from_rgb_space(rgb_space, rgb_space_name, iccv4, cat)
+		return ICCProfile.from_rgb_space(rgb_space, rgb_space_name, iccv4, cat,
+										 profile_class)
 
 	@staticmethod
-	def from_rgb_space(rgb_space, description, iccv4=False, cat="Bradford"):
+	def from_rgb_space(rgb_space, description, iccv4=False, cat="Bradford",
+					   profile_class="mntr"):
 		rx, ry = rgb_space[2:][0][:2]
 		gx, gy = rgb_space[2:][1][:2]
 		bx, by = rgb_space[2:][2][:2]
 		wx, wy = colormath.XYZ2xyY(*rgb_space[1])[:2]
 		return ICCProfile.from_chromaticities(rx, ry, gx, gy,  bx, by, wx, wy,
 											  rgb_space[0], description,
-											  "No copyright", cat=cat)
+											  "No copyright", cat=cat,
+											  profile_class=profile_class)
 		
 	
 	@staticmethod
@@ -6067,7 +6071,7 @@ class ICCProfile:
 	def from_chromaticities(rx, ry, gx, gy, bx, by, wx, wy, gamma, description,
 							copyright, manufacturer=None, model_name=None,
 							manufacturer_id="\0\0", model_id="\0\0",
-							iccv4=False, cat="Bradford"):
+							iccv4=False, cat="Bradford", profile_class="mntr"):
 		""" Create an ICC Profile from chromaticities and return it
 		
 		"""
@@ -6086,23 +6090,26 @@ class ICCProfile:
 		profile = ICCProfile.from_XYZ(XYZ["r"], XYZ["g"], XYZ["b"], wXYZ,
 									  gamma, description, copyright,
 									  manufacturer, model_name, manufacturer_id,
-									  model_id, iccv4, cat)
+									  model_id, iccv4, cat, profile_class)
 		return profile
 	
 	@staticmethod
 	def from_XYZ(rXYZ, gXYZ, bXYZ, wXYZ, gamma, description, copyright,
 				 manufacturer=None, model_name=None, manufacturer_id="\0\0",
-				 model_id="\0\0", iccv4=False, cat="Bradford"):
+				 model_id="\0\0", iccv4=False, cat="Bradford",
+				 profile_class="mntr"):
 		""" Create an ICC Profile from XYZ values and return it
 		
 		"""
 		profile = ICCProfile()
+		profile.profileClass = profile_class
 		D50 = colormath.get_whitepoint("D50")
 		if iccv4:
 			profile.version = 4.3
 		elif (not s15f16_is_equal(wXYZ, D50) and
-			  colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
-										  colormath.get_cat_matrix("Bradford"))):
+			  (profile.profileClass not in ("mntr", "prtr") or
+			   colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
+										   colormath.get_cat_matrix("Bradford")))):
 			profile.version = 2.2  # Match ArgyllCMS
 		profile.setDescription(description)
 		profile.setCopyright(copyright)
@@ -6148,9 +6155,12 @@ class ICCProfile:
 		
 		"""
 		self.tags.wtpt = XYZType(profile=self)
-		if (self.version >= 2.4 or
-			not colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
-											colormath.get_cat_matrix("Bradford"))):
+		# Compatibility: ArgyllCMS will only read 'chad' if display or
+		# output profile
+		if (self.profileClass in ("mntr", "prtr") and
+			(self.version >= 2.4 or
+			 not colormath.is_similar_matrix(colormath.get_cat_matrix(cat),
+											colormath.get_cat_matrix("Bradford")))):
 			# Set wtpt to D50 and store actual white -> D50 transform in chad
 			# if creating ICCv4 profile or CAT is not default Bradford
 			D50 = colormath.get_whitepoint("D50")
