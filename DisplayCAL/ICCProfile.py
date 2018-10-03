@@ -1022,12 +1022,17 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 	if logfile:
 		logfile.write(logmsg + "...\n")
 		logfile.write("\r%i%%" % perc)
-	# Selective hue preservation for redorange/orange/yellowgreen
+	# Selective hue preservation for redorange/orange
 	# (otherwise shift towards yellow to preserve more saturation and detail)
 	# Hue angles (RGB):
-	# red, yellow, green, cyan, blue, magenta, red
-	hinterp = colormath.Interp([0, 0.166666, 0.333333, 0.5, 0.666666, 0.833333, 1],
-							   [1, hue, 1, 1, 1, 1, 1], use_numpy=True)
+	# red, yellow, yellow, green, red
+	hinterp = colormath.Interp([0, 0.166666, 0.166666, 1],
+							   [1, hue, 1, 1], use_numpy=True)
+	# Saturation adjustment for yellow/green/cyan
+	# Hue angles (RGB):
+	# red, orange, yellow, green, cyan, cyan/blue, red
+	sinterp = colormath.Interp([0, 0.083333, 0.166666, 0.333333, 0.5, 0.583333, 1],
+							   [1, 1, 0.5, 0.5, 0.5, 1, 1], use_numpy=True)
 	for R in xrange(clutres):
 		for G in xrange(clutres):
 			for B in xrange(clutres):
@@ -1086,6 +1091,9 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					if mode in ("HSV", "HSV_ICtCp", "ICtCp", "RGB_ICtCp"):
 						# Allow hue shift based on hue angle
 						hf = hinterp(H)
+
+						# Saturation adjustment
+						cf = sinterp(H)
 					for i, v in enumerate(RGB):
 						RGB[i] = eetf(v)
 						if preserve_saturated_detail and S:
@@ -1171,7 +1179,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					C = C * hf + C3 * (1 - hf)
 					H2 = H2 * hf + H3 * (1 - hf)
 
-					C = colormath.convert_range(I1, I2, 1, C2, min(C2, C))
+					# Saturation adjustment
+					C = colormath.convert_range(I1, I2, 1, C2, min(C2, C) * cf)
 					I, Ct2, Cp2 = (v / 100.0 for v in colormath.LCHab2Lab(L, C, H2))
 					Ct, Cp = Ct2, Cp2
 					if I1 > I2:
