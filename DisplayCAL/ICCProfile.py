@@ -1173,13 +1173,17 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 
 					C = colormath.convert_range(I1, I2, 1, C2, min(C2, C))
 					I, Ct2, Cp2 = (v / 100.0 for v in colormath.LCHab2Lab(L, C, H2))
-					RGB_ICtCp_XYZ = colormath.ICtCp2XYZ(I, Ct2, Cp2)
-					#RGB_ICtCp_XYZ = [v / maxv for v in RGB_ICtCp_XYZ]
-					RGB_ICtCp_XYZ = list(RGB_ICtCp_XYZ)
+					Ct, Cp = Ct2, Cp2
 					if I1 > I2:
 						f = colormath.convert_range(I1, I2, 1, 1, 0)
 						Ct2, Cp2 = (v * f for v in (Ct2, Cp2))
+					if mode in ("HSV_ICtCp", "RGB_ICtCp"):
+						f = colormath.convert_range(sum(RGB_in[-1]), 0, 3, 1, sat)
+						Ct2 = Ct * f + Ct2 * (1 - f)
+						Cp2 = Cp * f + Cp2 * (1 - f)
+						I2 = I * f + I2 * (1 - f)
 					X, Y, Z = colormath.ICtCp2XYZ(I2, Ct2, Cp2)
+					RGB_ICtCp_XYZ = list((X, Y, Z))
 				else:
 					#RGB_ICtCp_XYZ = [v / maxv for v in (X, Y, Z)]
 					RGB_ICtCp_XYZ = [X, Y, Z]
@@ -1221,20 +1225,8 @@ def create_synthetic_hdr_clut_profile(hdr_format, rgb_space, description,
 					backward_xicclu.exit()
 				raise Exception("aborted")
 		(RGB, (X, Y, Z), RGB_ICtCp_XYZ) = item
-		#I3, Ct3, Cp3 = colormath.XYZ2ICtCp(*(v * maxv for v in (X, Y, Z)),
-		I3, Ct3, Cp3 = colormath.XYZ2ICtCp(X, Y, Z,
-										   oetf=eotf_inverse)
-		if hdr_format == "PQ" and mode in ("HSV_ICtCp", "RGB_ICtCp"):
-			#I, Ct, Cp = colormath.XYZ2ICtCp(*(v * maxv for v in RGB_ICtCp_XYZ))
-			I, Ct, Cp = colormath.XYZ2ICtCp(*RGB_ICtCp_XYZ)
-			f = colormath.convert_range(sum(RGB), 0, 3, 1, sat)
-			Ct = Ct * f + Ct3 * (1 - f)
-			Cp = Cp * f + Cp3 * (1 - f)
-			I = I * f + I3 * (1 - f)
-			X, Y, Z = (v / maxv for v in colormath.ICtCp2XYZ(I, Ct, Cp))
-		else:
-			I, Ct, Cp = I3, Ct3, Cp3
-			X, Y, Z = (v / maxv for v in (X, Y, Z))
+		I, Ct, Cp = colormath.XYZ2ICtCp(X, Y, Z, oetf=eotf_inverse)
+		X, Y, Z = (v / maxv for v in (X, Y, Z))
 		HDR_ICtCp.append((I, Ct, Cp))
 		# Adapt to D50
 		X, Y, Z = colormath.adapt(X, Y, Z,
