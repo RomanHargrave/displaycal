@@ -4877,7 +4877,9 @@ BEGIN_DATA
 								(self.dispread_after_dispcal and
 								 cmdname == get_argyll_utilname("dispread") and
 								 self._detecting_video_levels)):
-								if not ("-m" in args or "-u" in args) and fullscreen:
+								if (getcfg("calibration.interactive_display_adjustment") and
+									not getcfg("calibration.update") and
+									fullscreen):
 									# Disable fullscreen
 									if self.madtpg.set_use_fullscreen_button(False):
 										self.log("Temporarily leaving madTPG "
