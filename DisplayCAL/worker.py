@@ -4987,8 +4987,6 @@ BEGIN_DATA
 							# Only do this for Argyll >= 1.7 to prevent messing
 							# with pattern area when Argyll 1.6.x is used
 							args.insert(0, "-F")
-						# Disconnect
-						self.madtpg_disconnect(False)
 					self.log("")
 				else:
 					return Error(lang.getstr("madtpg.launch.failure"))
@@ -5490,6 +5488,10 @@ while 1:
 									sleep(.05)
 							if (self.send_buffer and
 								self.subprocess.isalive()):
+								if (self.send_buffer == "7" and use_madvr and
+									cmdname == get_argyll_utilname("dispcal")):
+									# Restore madTPG OSD and fullscreen
+									self.madtpg_restore_settings(False)
 								self.log("%s: Sending buffer: %r" %
 										 (appname, self.send_buffer))
 								self._safe_send(self.send_buffer)
@@ -5619,8 +5621,7 @@ while 1:
 							self.patterngenerator.disconnect_client()
 					except Exception, exception:
 						self.log(exception)
-			if hasattr(self, "madtpg") and (not self.use_madnet_tpg or
-											(self.cmdname == "dispcal" and
+			if hasattr(self, "madtpg") and ((self.cmdname == "dispcal" and
 											 not self.dispread_after_dispcal) or
 											(self.cmdname == "dispread" and
 											 not self._detecting_video_levels) or
@@ -13593,10 +13594,6 @@ BEGIN_DATA
 								self.patterngenerator and
 								hasattr(self.patterngenerator, "conn"))
 		if use_patterngenerator or self.use_madnet_tpg:
-			if self.use_madnet_tpg and re.search("Commencing display "
-												 "calibration", txt, re.I):
-				# Restore madTPG OSD and fullscreen
-				self.madtpg_restore_settings(False)
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
