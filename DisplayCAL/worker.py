@@ -9810,6 +9810,12 @@ usage: spotread [-options] [logfile]
 					else:
 						self.log(appname + ": Warning - couldn't restore madTPG "
 								 "'use fullscreen' button state")
+					if not reconnect:
+						if self.madtpg.is_fse_mode_enabled():
+							# Allow three seconds for automatic switch to FSE
+							sleep(3)
+						# Allow three seconds for fullscreen to settle
+						sleep(3)
 				if restore_osd:
 					# Restore disable OSD
 					if self.madtpg.set_disable_osd_button(True):

@@ -51,7 +51,7 @@ H3D_PARAMETERS = ("Input_Primaries %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\r\n"
 				  "Input_Range 16 235\r\nOutput_Range 16 235\r\n\x00")
 
 
-min_version = (0, 88, 14, 0)
+min_version = (0, 88, 20, 0)
 
 
 # Search for madTPG on the local PC, connect to the first found instance
@@ -71,7 +71,7 @@ CM_Fail = 5
 _methodnames = ("ConnectEx", "Disable3dlut", "Enable3dlut", "EnterFullscreen",
 				"GetBlackAndWhiteLevel", "GetDeviceGammaRamp",
 				"GetSelected3dlut", "GetVersion",
-				"IsDisableOsdButtonPressed", "IsFullscreen",
+				"IsDisableOsdButtonPressed", "IsFseModeEnabled", "IsFullscreen",
 				"IsStayOnTopButtonPressed",
 				"IsUseFullscreenButtonPressed", "LeaveFullscreen",
 				"SetDisableOsdButton",
