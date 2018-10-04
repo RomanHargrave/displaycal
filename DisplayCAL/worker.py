@@ -4873,7 +4873,10 @@ BEGIN_DATA
 								non_virtual_displays.append(display_no)
 						if len(non_virtual_displays) == 1:
 							# We only have one "real" display connected
-							if cmdname == get_argyll_utilname("dispcal"):
+							if (cmdname == get_argyll_utilname("dispcal") or
+								(self.dispread_after_dispcal and
+								 cmdname == get_argyll_utilname("dispread") and
+								 self._detecting_video_levels)):
 								if not ("-m" in args or "-u" in args) and fullscreen:
 									# Disable fullscreen
 									if self.madtpg.set_use_fullscreen_button(False):
