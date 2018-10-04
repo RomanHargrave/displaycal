@@ -9786,34 +9786,44 @@ usage: spotread [-options] [logfile]
 	def madtpg_disconnect(self, restore_settings=True):
 		""" Restore madVR settings and disconnect """
 		if restore_settings:
-			restore_fullscreen = getattr(self, "madtpg_previous_fullscreen", None)
-			restore_osd = getattr(self, "madtpg_osd", None) is False
-			if restore_fullscreen or restore_osd:
-				check = self.madtpg.get_version()
-				if not check:
-					check = self.madtpg_connect()
-				if check:
-					if restore_fullscreen:
-						# Restore fullscreen
-						if self.madtpg.set_use_fullscreen_button(True):
-							self.log("Restored madTPG 'Fullscreen' button state")
-							self.madtpg_previous_fullscreen = None
-						else:
-							self.log("Warning - could not restore madTPG "
-									 "'Fullscreen' button state")
-					if restore_osd:
-						# Restore disable OSD
-						if self.madtpg.set_disable_osd_button(True):
-							self.log("Restored madTPG 'Disable OSD' button state")
-							self.madtpg_osd = None
-						else:
-							self.log("Warning - could not restore madTPG 'Disable "
-									 "OSD' button state")
-				else:
-					self.log("Warning - could not re-connect to madTPG to restore"
-							 "'Fullscreen'/'Disable OSD' button states")
+			self.madtpg_restore_settings()
 		if self.madtpg.disconnect():
 			self.log("Successfully disconnected from madTPG")
+
+	def madtpg_restore_settings(self, reconnect=True):
+		restore_fullscreen = getattr(self, "madtpg_previous_fullscreen", None)
+		restore_osd = getattr(self, "madtpg_osd", None) is False
+		if restore_fullscreen or restore_osd:
+			check = not reconnect or self.madtpg.get_version()
+			if not check and reconnect:
+				check = self.madtpg_connect()
+			if check:
+				if restore_fullscreen:
+					# Restore fullscreen
+					if self.madtpg.set_use_fullscreen_button(True):
+						self.log(appname + ": Restored madTPG 'use fullscreen' "
+								 "button state")
+						self.madtpg_previous_fullscreen = None
+					else:
+						self.log(appname + ": Warning - couldn't restore madTPG "
+								 "'use fullscreen' button state")
+				if restore_osd:
+					# Restore disable OSD
+					if self.madtpg.set_disable_osd_button(True):
+						self.log(appname + ": Restored madTPG 'disable OSD' "
+								 "button state")
+						self.madtpg_osd = None
+					else:
+						self.log(appname + ": Warning - couldn't restore madTPG "
+								 "'disable OSD' button state")
+			else:
+				buttons = []
+				if restore_fullscreen:
+					buttons.append("'use fullscreen'")
+				if restore_osd:
+					buttons.append("'disable OSD'")
+				self.log(appname + ": Warning - couldn't re-connect to madTPG "
+						 "to restore %s button states" % "/".join(buttons))
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
@@ -13574,6 +13584,10 @@ BEGIN_DATA
 								self.patterngenerator and
 								hasattr(self.patterngenerator, "conn"))
 		if use_patterngenerator or self.use_madnet_tpg:
+			if self.use_madnet_tpg and re.search("Commencing display "
+												 "calibration", txt, re.I):
+				# Restore madTPG OSD and fullscreen
+				self.madtpg_restore_settings(False)
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
