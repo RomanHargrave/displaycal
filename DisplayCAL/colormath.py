@@ -2928,7 +2928,7 @@ class BT2390(object):
 		self.mmini = specialpow(self.mminv, 1.0 / -2084)
 		self.mmaxv = master_white_cdm2 / 10000.0  # LW
 		mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
-		if use_alternate_master_white_clip:
+		if use_alternate_master_white_clip and white_cdm2 < master_white_cdm2:
 			self.maxci = mmaxi
 			self.mmaxi = 1.0
 		else:
@@ -2941,14 +2941,26 @@ class BT2390(object):
 
 		self.KS = 1.5 * self.maxi - 0.5
 
-	@staticmethod
-	def P(B, KS, maxi, maxci=1.0):
+		# Crossover point for alternate master white clip (1000 cd/m2)
+		self.maxci_c = specialpow(0.1, 1.0 / -2084)
+
+	def P(self, B, KS, maxi, maxci=1.0):
 		T = (B - KS) / (1 - KS)
-		E2 = ((2 * T ** 3 - 3 * T ** 2 + 1) * KS + (T ** 3 - 2 * T ** 2 + T) *
-			  (1 - KS) + (-2 * T ** 3 + 3 * T ** 2) * maxi)
-		if maxci < 1:
-			# Clipping for slightly better target display peak luminance usage
-			s = min(((B - KS) / (maxci - KS)) ** 4, 1.0)
+		if maxci >= self.maxci_c:
+			E2 = ((2 * T ** 3 - 3 * T ** 2 + 1) * KS + (T ** 3 - 2 * T ** 2 + T) *
+				  (1 - KS) + (-2 * T ** 3 + 3 * T ** 2) * maxi)
+		if maxci < self.maxci_c:
+			# Clipping for better target display peak luminance usage
+			##smoothstep = lambda x: x * x * (3 - 2 * x)
+			##E2 = convert_range(smoothstep(min(convert_range(B, KS, maxci,
+			##												0.5, 1), 1)),
+			##				   smoothstep(0.5), 1, KS, maxi)
+			E2 = min(convert_range(B, KS, maxci, KS, maxi), maxi)
+			s = min(((B - KS) / (maxci - KS)), 1)
+			E2 = B * (1 - s) + E2 * s
+		elif maxci < 1:
+			p = convert_range(maxci, self.maxci_c, 1, 3, 4)
+			s = min(((B - KS) / (maxci - KS)) ** p, 1)
 			E2 = E2 * (1 - s) + maxi * s
 		return E2
 
