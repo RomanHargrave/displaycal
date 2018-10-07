@@ -2929,7 +2929,7 @@ class BT2390(object):
 		self.mmaxv = master_white_cdm2 / 10000.0  # LW
 		mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
 		if use_alternate_master_white_clip:
-			self.maxci = mmaxi
+			self.maxci = (mmaxi - self.mmini) / (1 - self.mmini)
 			self.mmaxi = 1.0
 		else:
 			self.maxci = 1.0
