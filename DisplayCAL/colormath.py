@@ -2941,26 +2941,26 @@ class BT2390(object):
 
 		self.KS = 1.5 * self.maxi - 0.5
 
-		# Crossover point for alternate master white clip (1000 cd/m2)
-		self.maxci_c = specialpow(0.1, 1.0 / -2084)
+		if self.maxci < 1:
+			E2 = self.P(self.maxci, self.KS, self.maxi)
+			diff = self.maxci - E2
+			s = (E2 - self.KS) / (self.maxi - self.KS)
+			c = 0
+			while True:
+				if self.maxci - diff * s >= self.maxi:
+					break
+				s -= 0.0001
+				c += 1
+			self.s = s
 
 	def P(self, B, KS, maxi, maxci=1.0):
 		T = (B - KS) / (1 - KS)
-		if maxci >= self.maxci_c:
-			E2 = ((2 * T ** 3 - 3 * T ** 2 + 1) * KS + (T ** 3 - 2 * T ** 2 + T) *
-				  (1 - KS) + (-2 * T ** 3 + 3 * T ** 2) * maxi)
-		if maxci < self.maxci_c:
-			# Clipping for better target display peak luminance usage
-			##smoothstep = lambda x: x * x * (3 - 2 * x)
-			##E2 = convert_range(smoothstep(min(convert_range(B, KS, maxci,
-			##												0.5, 1), 1)),
-			##				   smoothstep(0.5), 1, KS, maxi)
-			E2 = min(convert_range(B, KS, maxci, KS, maxi), maxi)
-			s = min(((B - KS) / (maxci - KS)), 1)
-			E2 = B * (1 - s) + E2 * s
-		elif maxci < 1:
-			p = convert_range(maxci, self.maxci_c, 1, 3, 4)
-			s = min(((B - KS) / (maxci - KS)) ** p, 1)
+		E2 = ((2 * T ** 3 - 3 * T ** 2 + 1) * KS + (T ** 3 - 2 * T ** 2 + T) *
+			  (1 - KS) + (-2 * T ** 3 + 3 * T ** 2) * maxi)
+		if maxci < 1:
+			# (Old) Clipping for better target display peak luminance usage
+			# XXX: Only kept for backwards compatibility
+			s = min(((B - KS) / (maxci - KS)) ** 4, 1)
 			E2 = E2 * (1 - s) + maxi * s
 		return E2
 
@@ -2992,7 +2992,12 @@ class BT2390(object):
 		# division by zero if KS = 1. The correct way is to check for
 		# KS < E1 <=1
 		if KS < E1 <= 1:
-			E2 = self.P(E1, KS, maxi, maxci)
+			E2 = self.P(E1, KS, maxi)
+			if maxci < 1:
+				# (New) Clipping for better target display peak luminance usage
+				s = self.s
+				diff = E1 - E2
+				E2 = min(E1 - diff * s, maxi)
 		else:
 			E2 = E1
 		# BT.2390-3 suggests 0 <= E2 <= 1, but this results in a discontinuity
