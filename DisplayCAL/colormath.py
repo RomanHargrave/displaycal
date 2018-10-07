@@ -2928,7 +2928,7 @@ class BT2390(object):
 		self.mmini = specialpow(self.mminv, 1.0 / -2084)
 		self.mmaxv = master_white_cdm2 / 10000.0  # LW
 		mmaxi = specialpow(self.mmaxv, 1.0 / -2084)
-		if use_alternate_master_white_clip and white_cdm2 < master_white_cdm2:
+		if use_alternate_master_white_clip:
 			self.maxci = mmaxi
 			self.mmaxi = 1.0
 		else:
@@ -2941,7 +2941,7 @@ class BT2390(object):
 
 		self.KS = 1.5 * self.maxi - 0.5
 
-		if self.maxci < 1:
+		if self.maxi <= self.maxci < 1:
 			E2 = self.P(self.maxci, self.KS, self.maxi)
 			diff = self.maxci - E2
 			s = (E2 - self.KS) / (self.maxi - self.KS)
@@ -2993,11 +2993,13 @@ class BT2390(object):
 		# KS < E1 <=1
 		if KS < E1 <= 1:
 			E2 = self.P(E1, KS, maxi)
-			if maxci < 1:
+			if maxi <= maxci < 1:
 				# (New) Clipping for better target display peak luminance usage
 				s = self.s
 				diff = E1 - E2
 				E2 = min(E1 - diff * s, maxi)
+			elif maxci < 1:
+				E2 = min(E1, maxci)
 		else:
 			E2 = E1
 		# BT.2390-3 suggests 0 <= E2 <= 1, but this results in a discontinuity
