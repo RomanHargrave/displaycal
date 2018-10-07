@@ -1883,11 +1883,13 @@ class BaseFrame(wx.Frame):
 					child.textControl.SetSelection(selection)
 
 	def setup_menu_language(self, menu):
-		if not hasattr(menu, "_Items"):
+		if not hasattr(self, "_menuitems"):
+			self._menuitems = {}
+		if not menu in self._menuitems:
 			# Backup un-translated labels
-			menu._Items = [(item, item.Label) for item in 
-						   menu.GetMenuItems()]
-		for item, label in menu._Items:
+			self._menuitems[menu] = [(item, item.Label) for item in 
+									 menu.GetMenuItems()]
+		for item, label in self._menuitems[menu]:
 			if item.Label:
 				label = GTKMenuItemGetFixedLabel(label)
 				if item.Accel:
