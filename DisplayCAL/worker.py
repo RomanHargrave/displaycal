@@ -4937,7 +4937,7 @@ BEGIN_DATA
 							ts = time()
 							if i % 2 == 0:
 								# Flash test area red
-								self.madtpg.show_rgb(.8, 0, 0)
+								self.madtpg.show_rgb(.25, .10, .10)
 							else:
 								self.madtpg.show_rgb(.15, .15, .15)
 							delay = time() - ts
