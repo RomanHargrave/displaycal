@@ -2649,6 +2649,7 @@ END_DATA
 				# Emissive dark calibration
 				msg = lang.getstr("instrument.calibrate")
 		if self.use_madvr:
+			fullscreen = self.madtpg.is_fullscreen()
 			self.madtpg_show_osd(msg, self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd, msg=msg +
 							"\n\n" + self.get_instrument_name(), 
@@ -2667,7 +2668,7 @@ END_DATA
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 		if self.use_madvr:
-			self.madtpg_restore_settings(False)
+			self.madtpg_restore_settings(False, fullscreen)
 
 	def abort_all(self, confirm=False):
 		aborted = False
@@ -2749,6 +2750,7 @@ END_DATA
 			return
 		self.progress_wnd.Pulse(" " * 4)
 		if self.use_madvr:
+			fullscreen = self.madtpg.is_fullscreen()
 			self.madtpg_show_osd(lang.getstr("instrument.place_on_screen"),
 								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
@@ -2771,7 +2773,7 @@ END_DATA
 			self.pauseable_now = True
 		self.instrument_on_screen = True
 		if self.use_madvr:
-			self.madtpg_restore_settings(False)
+			self.madtpg_restore_settings(False, fullscreen)
 	
 	def instrument_reposition_sensor(self):
 		if getattr(self, "subprocess_abort", False) or \
@@ -2780,6 +2782,7 @@ END_DATA
 			return
 		self.progress_wnd.Pulse(" " * 4)
 		if self.use_madvr:
+			fullscreen = self.madtpg.is_fullscreen()
 			self.madtpg_show_osd(lang.getstr("instrument.reposition_sensor"),
 								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
@@ -2797,7 +2800,7 @@ END_DATA
 			return False
 		self.safe_send(" ")
 		if self.use_madvr:
-			self.madtpg_restore_settings(False)
+			self.madtpg_restore_settings(False, fullscreen)
 	
 	def clear_argyll_info(self):
 		"""
@@ -9815,9 +9818,13 @@ usage: spotread [-options] [logfile]
 		if self.madtpg.disconnect():
 			self.log("Successfully disconnected from madTPG")
 
-	def madtpg_restore_settings(self, reconnect=True):
-		restore_fullscreen = getattr(self, "madtpg_previous_fullscreen", None)
-		restore_osd = getattr(self, "madtpg_osd", None) is False
+	def madtpg_restore_settings(self, reconnect=True, restore_fullscreen=None,
+								restore_osd=None):
+		if restore_fullscreen is None:
+			restore_fullscreen = getattr(self, "madtpg_previous_fullscreen",
+										 None)
+		if restore_osd is None:
+			restore_osd = getattr(self, "madtpg_osd", None) is False
 		if restore_fullscreen or restore_osd:
 			check = not reconnect or self.madtpg.get_version()
 			if not check and reconnect:
