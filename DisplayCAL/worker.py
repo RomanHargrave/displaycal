@@ -2648,6 +2648,8 @@ END_DATA
 			else:
 				# Emissive dark calibration
 				msg = lang.getstr("instrument.calibrate")
+		if self.use_madvr:
+			self.madtpg_show_osd(msg, self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd, msg=msg +
 							"\n\n" + self.get_instrument_name(), 
 							ok=lang.getstr("ok"), 
@@ -2664,6 +2666,8 @@ END_DATA
 		self.progress_wnd.Pulse(lang.getstr("please_wait"))
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
+		if self.use_madvr:
+			self.madtpg_restore_settings(False)
 
 	def abort_all(self, confirm=False):
 		aborted = False
@@ -2744,6 +2748,9 @@ END_DATA
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
+		if self.use_madvr:
+			self.madtpg_show_osd(lang.getstr("instrument.place_on_screen"),
+								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.place_on_screen") +
 							"\n\n" + self.get_instrument_name(), 
@@ -2763,6 +2770,8 @@ END_DATA
 			self.safe_send(" ")
 			self.pauseable_now = True
 		self.instrument_on_screen = True
+		if self.use_madvr:
+			self.madtpg_restore_settings(False)
 	
 	def instrument_reposition_sensor(self):
 		if getattr(self, "subprocess_abort", False) or \
@@ -2770,6 +2779,9 @@ END_DATA
 			# If we are aborting, ignore request
 			return
 		self.progress_wnd.Pulse(" " * 4)
+		if self.use_madvr:
+			self.madtpg_show_osd(lang.getstr("instrument.reposition_sensor"),
+								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.reposition_sensor"), 
 							ok=lang.getstr("ok"), 
@@ -2784,6 +2796,8 @@ END_DATA
 			self.abort_subprocess()
 			return False
 		self.safe_send(" ")
+		if self.use_madvr:
+			self.madtpg_restore_settings(False)
 	
 	def clear_argyll_info(self):
 		"""
@@ -2837,6 +2851,7 @@ END_DATA
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
 		self.madtpg_fullscreen = None
+		self.use_madvr = False
 		self.use_madnet_tpg = False
 		self.use_patterngenerator = False
 		self.patch_sequence = False
@@ -4719,6 +4734,7 @@ END_DATA
 								 get_argyll_utilname("dispread"),
 								 get_argyll_utilname("dispwin")) and
 					 get_arg("-dmadvr", args) and madvr)
+		self.use_madvr = use_madvr
 		if use_madvr:
 			# Try to connect to running madTPG or launch a new instance
 			try:
@@ -4866,12 +4882,7 @@ BEGIN_DATA
 						# concealed by temporarily disabling fullscreen if
 						# needed. This is only a problem in single display
 						# configurations.
-						# Check if we have more than one "real" display.
-						non_virtual_displays = []
-						for display_no in xrange(len(self.displays)):
-							if not config.is_virtual_display(display_no):
-								non_virtual_displays.append(display_no)
-						if len(non_virtual_displays) == 1:
+						if self.single_real_display():
 							# We only have one "real" display connected
 							if (cmdname == get_argyll_utilname("dispcal") or
 								(self.dispread_after_dispcal and
@@ -7005,6 +7016,14 @@ usage: spotread [-options] [logfile]
 		if n >= 0 and n < len(self.instruments):
 			return self.instruments[n]
 		return ""
+
+	def get_real_displays(self):
+		""" Get real (nonvirtual) displays """
+		real_displays = []
+		for display_no in xrange(len(self.displays)):
+			if not config.is_virtual_display(display_no):
+				real_displays.append(display_no)
+		return real_displays
 
 	def get_technology_strings(self):
 		""" Return technology strings mapping (from ccxxmake -??) """
@@ -9836,6 +9855,20 @@ usage: spotread [-options] [logfile]
 					buttons.append("'disable OSD'")
 				self.log(appname + ": Warning - couldn't re-connect to madTPG "
 						 "to restore %s button states" % "/".join(buttons))
+
+	def madtpg_show_osd(self, msg=None, leave_fullscreen=False):
+		"""
+		Show madTPG OSD, optionally with message and leaving fullscreen
+		
+		"""
+		if self.madtpg.is_fullscreen() and leave_fullscreen:
+			self.madtpg_previous_fullscreen = True
+			self.madtpg.set_use_fullscreen_button(False)
+		self.madtpg_osd = not self.madtpg.is_disable_osd_button_pressed()
+		if not self.madtpg_osd:
+			self.madtpg.set_disable_osd_button(False)
+		if msg:
+			self.madtpg.set_osd_text(msg)
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
@@ -11439,6 +11472,9 @@ usage: spotread [-options] [logfile]
 		basename = make_argyll_compatible_path(basename)
 		self.set_sessionlogfile(None, basename, dirname)
 		return os.path.join(dirname, basename)
+
+	def single_real_display(self):
+		return len(self.get_real_displays()) == 1
 	
 	def argyll_support_file_exists(self, name, scope=None):
 		""" Check if named file exists in any of the known Argyll support
