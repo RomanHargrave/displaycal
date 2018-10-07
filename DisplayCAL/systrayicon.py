@@ -7,6 +7,7 @@ This one won't stop showing updates to the icon like wx.TaskBarIcon
 
 """
 
+import ctypes
 import os
 import sys
 
@@ -45,7 +46,9 @@ class Menu(wx.EvtHandler):
 				flags = 0
 			if not item.Enabled:
 				flags |= win32con.MF_DISABLED
-		win32gui.AppendMenu(self.hmenu, flags, item.Id, item.ItemLabel)
+		# Use ctypes instead of win32gui.AppendMenu for unicode support
+		ctypes.windll.User32.AppendMenuW(self.hmenu, flags, item.Id,
+										 unicode(item.ItemLabel))
 		self.MenuItems.append(item)
 		self._menuitems[item.Id] = item
 		if item.Checked:
