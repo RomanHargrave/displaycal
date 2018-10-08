@@ -1067,7 +1067,7 @@
 	"trc.lstar": "L*",
 	"trc.rec709": "Rec. 709",
 	"trc.rec1886": "Rec. 1886",
-	"trc.should_use_viewcond_adjust": "Si vous utilisez les courbes SMPTE 240M, Rec. 709 ou sRGB, vous devriez recourir à un ajustement des niveaux de votre lumière ambiante afin d’obtenir des résultats corrects. Pour cela, cochez la case à côté de « Niveau de luminosité ambiante » et entrez une valeur en Lux. Vous pouvez éventuellement mesurer aussi la luminosité ambiante au cours de l’étalonnage, si votre sonde de mesure le permet.",
+	"trc.should_use_viewcond_adjust": "Si vous utilisez les courbes SMPTE 240M ou Rec. 709, vous devriez recourir à un ajustement des niveaux de votre lumière ambiante afin d’obtenir des résultats corrects. Pour cela, cochez la case à côté de « Niveau de luminosité ambiante » et entrez une valeur en Lux. Vous pouvez éventuellement mesurer aussi la luminosité ambiante au cours de l’étalonnage, si votre sonde de mesure le permet.",
 	"trc.smpte240m": "SMPTE 240M",
 	"trc.smpte2084": "SMPTE 2084",
 	"trc.smpte2084.hardclip": "SMPTE 2084 (écrêtage dur « hard clip »)",

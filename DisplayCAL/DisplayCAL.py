@@ -5674,7 +5674,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_main_controls()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
-		if (trc in ("240", "709", "s") and not
+		if (trc in ("240", "709") and not
 		    (bool(int(getcfg("calibration.ambient_viewcond_adjust"))) and 
 			 getcfg("calibration.ambient_viewcond_adjust.lux")) and
 			getcfg("trc.should_use_viewcond_adjust.show_msg") and
