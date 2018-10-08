@@ -2944,14 +2944,7 @@ class BT2390(object):
 		if self.maxi <= self.maxci < 1:
 			E2 = self.P(self.maxci, self.KS, self.maxi)
 			diff = self.maxci - E2
-			s = (E2 - self.KS) / (self.maxi - self.KS)
-			c = 0
-			while True:
-				if self.maxci - diff * s >= self.maxi:
-					break
-				s -= 0.0001
-				c += 1
-			self.s = s
+			self.s = (self.maxci - self.maxi) / diff
 
 	def P(self, B, KS, maxi, maxci=1.0):
 		T = (B - KS) / (1 - KS)
