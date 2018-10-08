@@ -381,6 +381,14 @@ class SynthICCFrame(BaseFrame):
 				setcfg("synthprofile.luminance", luminance)
 				self.luminance_ctrl.SetValue(luminance)
 				for i, color in enumerate(("white", "black")):
+					if (color == "black" and not colors[i][1] and
+						isinstance(profile.tags.get("targ"), ICCP.Text)):
+						# The profile may not reflect the actual black point.
+						# Get it from the embedded TI3 instead if zero from lookup.
+						XYZbp = profile.get_chardata_bkpt(True)
+						if XYZbp:
+							# Use wtpt chromaticity
+							colors[i] = [v * XYZbp[1] for v in colors[0]]
 					for j, component in enumerate("XYZ"):
 						getattr(self, "%s_%s" %
 								(color, component)).SetValue(colors[i][j] /
