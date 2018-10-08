@@ -2856,6 +2856,7 @@ END_DATA
 			self.interactive):
 			self.logger.info("-" * 80)
 		self.sessionlogfile = None
+		self.madtpg_bw_lvl = None
 		self.madtpg_fullscreen = None
 		self.use_madvr = False
 		self.use_madnet_tpg = False
@@ -4977,6 +4978,13 @@ BEGIN_DATA
 						else:
 							self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
 							self.madtpg.show_rgb(.5, .5, .5)
+					# Get black and white level
+					self.madtpg_bw_lvl = self.madtpg.get_black_and_white_level()
+					if not self.madtpg_bw_lvl:
+						self.log("madVR_GetBlackAndWhiteLevel failed")
+					else:
+						self.log("Output levels: %s-%s" %
+								 self.madtpg_bw_lvl)
 					# Get pattern config
 					patternconfig = self.madtpg.get_pattern_config()
 					if (not patternconfig or
@@ -9993,6 +10001,24 @@ usage: spotread [-options] [logfile]
 				options = {"OBSERVER": get_cfg_option_from_args("observer", "-Q",
 																args[:-1])}
 				ti3 = add_keywords_to_cgats(ti3, options)
+				if 1 in ti3:
+					# Add video level encoding flag if needed
+					black_white = False
+					if "-E" in args2:
+						black_white = (16, 235)
+					elif config.get_display_name() == "madVR":
+						# Get output encoding from madVR
+						# Note: 'tags' will only be True if creating profile
+						# directly after measurements, and only in that case will
+						# we want to query madVR
+						black_white = self.madtpg_bw_lvl
+					if black_white == (16, 235):
+						ti3[1].add_keyword("TV_OUTPUT_ENCODING", "YES")
+					elif black_white == (0, 255):
+						ti3[1].add_keyword("TV_OUTPUT_ENCODING", "NO")
+					elif black_white and black_white != (0, 255):
+						ti3[1].add_keyword("OUTPUT_ENCODING",
+										   " ".join(str(v) for v in black_white))
 				ti3.write()
 				# Restore original TI1
 				ti1_orig = args[-1] + ".original.ti1"
@@ -10482,24 +10508,6 @@ usage: spotread [-options] [logfile]
 					elif keyword in ti3[0]:
 						ti3[0].remove_keyword(keyword)
 			ti3[0].fix_zero_measurements(logfile=self.get_logfiles(False))
-			if 1 in ti3:
-				# Add video level encoding flag if needed
-				black_white = False
-				if "-E" in options_dispcal:
-					black_white = (16, 235)
-				elif (config.get_display_name() == "madVR" and
-					  tags is True and self.madtpg_connect()):
-					# Get output encoding from madVR
-					# Note: 'tags' will only be True if creating profile
-					# directly after measurements, and only in that case will
-					# we want to query madVR
-					black_white = self.madtpg.get_black_and_white_level()
-					self.madtpg_disconnect(False)
-				if black_white == (16, 235):
-					ti3[1].add_keyword("TV_OUTPUT_ENCODING", "YES")
-				elif black_white and black_white != (0, 255):
-					ti3[1].add_keyword("OUTPUT_ENCODING",
-									   " ".join(str(v) for v in black_white))
 			ti3.write()
 		return cmd, args
 
