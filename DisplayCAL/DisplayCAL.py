@@ -1824,11 +1824,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		if "gtk3" in wx.PlatformInfo:
 			return
 		if w is None:
+			cw = self.testchart_or_reference_label.ContainingSizer.ColWidths
 			w = (self.calpanel.Size[0] - 16 * 2 -
-				 self.testchart_or_reference_label.Size[0] - 12 - 8 -
+				 cw[0] - 12 - 8 -
 				 self.fields_ctrl.Size[0] - 8 -
 				 self.chart_btn.Size[0] - 8 -
-				 self.chart_patches_amount.Size[0])
+				 self.chart_patches_amount.Size[0] -
+				 wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X))
 		self.chart_ctrl.SetMaxSize((w, -1))
 		self.calpanel.Layout()
 		self.update_scrollbars()
