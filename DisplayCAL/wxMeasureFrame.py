@@ -482,6 +482,8 @@ class MeasureFrame(InvincibleFrame):
 		display_no, geometry, client_area = self.get_display()
 		if display_no != self.display_no:
 			self.display_no = display_no
+			if config.is_virtual_display():
+				return
 			# Translate from wx display index to Argyll display index
 			n = get_argyll_display_number(geometry)
 			if n is not None:
