@@ -4738,13 +4738,17 @@ END_DATA
 								 get_argyll_utilname("dispwin")) and
 					 get_arg("-dmadvr", args) and madvr)
 		self.use_madvr = use_madvr
+		madvr_use_virtual_display = (use_madvr and
+									 self.argyll_has_virtual_display and
+									 (sys.platform != "win32" or
+									  getcfg("patterngenerator.ffp_insertion")))
 		if use_madvr:
 			# Try to connect to running madTPG or launch a new instance
 			try:
 				if self.madtpg_connect():
 					# Connected
 					if (isinstance(self.madtpg, madvr.MadTPG_Net) or
-						self.argyll_has_virtual_display):
+						madvr_use_virtual_display):
 						# Need to handle calibration clearing/loading/saving
 						# for madVR net-protocol pure python implementation
 						cal = None
@@ -4866,7 +4870,7 @@ BEGIN_DATA
 						self.madtpg_disconnect(False)
 						return Error("madVR_SetDeviceGammaRamp failed")
 					if ((isinstance(self.madtpg, madvr.MadTPG_Net) or
-						 self.argyll_has_virtual_display) and
+						 madvr_use_virtual_display) and
 						cmdname == get_argyll_utilname("dispwin")):
 						# For madVR net-protocol pure python implementation
 						# we are now done
@@ -4985,10 +4989,10 @@ BEGIN_DATA
 																		   patternconfig[2]))
 					self.log("Border width: %i pixels" % patternconfig[3])
 					if (isinstance(self.madtpg, madvr.MadTPG_Net) or
-						self.argyll_has_virtual_display):
+						madvr_use_virtual_display):
 						dindex = args.index("-dmadvr")
 						args.remove("-dmadvr")
-						if self.argyll_has_virtual_display:
+						if madvr_use_virtual_display:
 							args.insert(dindex, "-dvirtual")
 						else:
 							args.insert(0, "-P1,1,0.01")
@@ -5009,12 +5013,12 @@ BEGIN_DATA
 			except Exception, exception:
 				if (isinstance(getattr(self, "madtpg", None), madvr.MadTPG_Net) or
 					(getattr(self, "madtpg", None) and
-					 self.argyll_has_virtual_display)):
+					 madvr_use_virtual_display)):
 					self.madtpg_disconnect()
 				return exception
 		# Use mad* net protocol pure python implementation
 		use_madnet = use_madvr and (isinstance(self.madtpg, madvr.MadTPG_Net) or
-									self.argyll_has_virtual_display)
+									madvr_use_virtual_display)
 		# Use mad* net protocol pure python implementation as pattern generator
 		self.use_madnet_tpg = use_madnet and cmdname != get_argyll_utilname("dispwin")
 		if self.use_patterngenerator or self.use_madnet_tpg:
