@@ -4878,7 +4878,10 @@ BEGIN_DATA
 						cmdname == get_argyll_utilname("dispwin")):
 						# For madVR net-protocol pure python implementation
 						# we are now done
-						self.madtpg_disconnect(False)
+						if not "-s" in args:
+							# Only disconnect if we didn't save calibration (as
+							# part of a follow-up measurement)
+							self.madtpg_disconnect(False)
 						return True
 					if not "-V" in args and not use_3dlut_override:
 						endis = "disable"
