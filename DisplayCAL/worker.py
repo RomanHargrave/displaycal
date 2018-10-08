@@ -6707,9 +6707,10 @@ while 1:
 			return "madvr"
 		if display_name == "Untethered":
 			return "0"
-		if (display_name == "Resolve" or
-			(display_name == "Prisma" and
-			 not defaults["patterngenerator.prisma.argyll"])):
+		if display_name == "Resolve":
+			return "1"
+		if (display_name == "Prisma" and
+			not defaults["patterngenerator.prisma.argyll"]):
 			if self.argyll_has_virtual_display:
 				return "virtual"
 			else:
