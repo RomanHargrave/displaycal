@@ -2650,7 +2650,8 @@ END_DATA
 				msg = lang.getstr("instrument.calibrate")
 		if self.use_madvr:
 			fullscreen = self.madtpg.is_fullscreen()
-			self.madtpg_show_osd(msg, self.single_real_display())
+			self.madtpg_show_osd(msg, sys.platform == "win32" and
+									  self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd, msg=msg +
 							"\n\n" + self.get_instrument_name(), 
 							ok=lang.getstr("ok"), 
@@ -2752,6 +2753,7 @@ END_DATA
 		if self.use_madvr:
 			fullscreen = self.madtpg.is_fullscreen()
 			self.madtpg_show_osd(lang.getstr("instrument.place_on_screen"),
+								 sys.platform == "win32" and
 								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.place_on_screen") +
@@ -2784,6 +2786,7 @@ END_DATA
 		if self.use_madvr:
 			fullscreen = self.madtpg.is_fullscreen()
 			self.madtpg_show_osd(lang.getstr("instrument.reposition_sensor"),
+								 sys.platform == "win32" and
 								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.reposition_sensor"), 
