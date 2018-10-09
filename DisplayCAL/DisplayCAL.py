@@ -7892,7 +7892,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif display_name == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
 			try:
-				self.worker.madtpg_connect()
+				if not self.worker.madtpg_connect():
+					raise Error(lang.getstr("madtpg.launch.failure"))
 			except Exception, exception:
 				show_result_dialog(exception, self)
 				return
