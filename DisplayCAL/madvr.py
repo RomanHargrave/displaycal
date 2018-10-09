@@ -863,7 +863,10 @@ class MadTPG_Net(MadTPGBase):
 							if record is None:
 								# Need more data
 								break
-							self._process(record, conn)
+							try:
+								self._process(record, conn)
+							except socket.error, exception:
+								safe_print("MadTPG_Net:", exception)
 		with _lock:
 			self._remove_client(addr, send_bye=addr in self._client_sockets and
 											   send_bye)
@@ -1176,9 +1179,14 @@ class MadTPG_Net(MadTPGBase):
 
 	def get_version(self):
 		""" Return madVR version """
-		return (self._client_socket and
-				self.clients.get(self._client_socket.getpeername(),
-								 {}).get("mvrVersion") or False)
+		try:
+			return (self._client_socket and
+					self.clients.get(self._client_socket.getpeername(),
+									 {}).get("mvrVersion") or False)
+		except socket.error, exception:
+			if self.debug:
+				safe_print("MadTPG_Net:", exception)
+			return False
 
 	def _assemble_hello_params(self):
 		""" Assemble 'hello' packet parameters """
@@ -1211,7 +1219,11 @@ class MadTPG_Net(MadTPGBase):
 		""" Wait until expected reply or timeout. Return reply params or False. """
 		if not isinstance(params, (list, tuple)):
 			params = (params, )
-		addr = conn.getpeername()
+		try:
+			addr = conn.getpeername()
+		except socket.error, exception:
+			safe_print("MadTPG_Net:", exception)
+			return False
 		start = end = time()
 		while end - start < timeout:
 			for reply in self._incoming.get(addr, []):
@@ -1452,9 +1464,12 @@ class MadTPG_Net(MadTPGBase):
 
 	@property
 	def uri(self):
-		return "%s:%s" % (self._client_socket and
-						  self._client_socket.getpeername()[:2] or
-						  ("0.0.0.0", 0))
+		try:
+			addr = self._client_socket and self._client_socket.getpeername()[:2]
+		except socket.error, exception:
+			safe_print("MadTPG_Net:", exception)
+			addr = None
+		return "%s:%s" % (addr or ("0.0.0.0", 0))
 
 
 class MadTPG_Net_Sender(object):
