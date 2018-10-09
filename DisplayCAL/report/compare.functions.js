@@ -207,10 +207,10 @@ p.generate_report = function(set_delta_calc_method) {
 		devend = criteria.fields_match.length > 3 ? 6 : 2, // end offset for device values in fields_match (CMYK if length > 3, else RGB)
 		missing_data,
 		delta_calc_method = f['F_out'].elements['FF_delta_calc_method'].value,
-		delta_E_desc = delta_calc_method == 'ICtCp' ? 'ICtCp' : delta_calc_method.replace(/CIE/, 'E*'),
-		delta_L_desc = delta_calc_method == 'ICtCp' ? 'I' : delta_calc_method.replace(/CIE/, 'L*'),
-		delta_C_desc = delta_calc_method == 'ICtCp' ? 'C CtCp' : delta_calc_method.replace(/CIE/, 'C*'),
-		delta_H_desc = delta_calc_method == 'ICtCp' ? 'H CtCp' : delta_calc_method.replace(/CIE/, 'H*'),
+		delta_E_desc = delta_calc_method == 'ICtCp' ? 'IC<sub>T</sub>C<sub>P</sub>' : delta_calc_method.replace(/CIE(.+)/, 'E<sub>$1</sub>'),
+		delta_L_desc = delta_calc_method == 'ICtCp' ? 'I' : delta_calc_method.replace(/CIE(.+)/, 'L<sub>$1</sub>'),
+		delta_C_desc = delta_calc_method == 'ICtCp' ? 'C<sub>C<sub>T</sub>C<sub>P</sub></sub>' : delta_calc_method.replace(/CIE(.+)/, 'C<sub>$1</sub>'),
+		delta_H_desc = delta_calc_method == 'ICtCp' ? 'H<sub>C<sub>T</sub>C<sub>P</sub></sub>' : delta_calc_method.replace(/CIE(.+)/, 'H<sub>$1</sub>'),
 		patch_number_html,
 		verbosestats = f['F_out'].elements['FF_verbosestats'].checked,
 		warn_deviation = criteria.warn_deviation,
@@ -873,7 +873,7 @@ p.generate_report = function(set_delta_calc_method) {
 	this.report_html.push('		<tr>');
 	var device_labels = fields_match.slice(devstart, devend + 1),
 		device_channels = device_labels.join('').replace(/(?:CMYK|RGB)_/g, '');
-	this.report_html.push('			<th>#</th><th colspan="' + device_labels.length + '">Device Values</th><th colspan="' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '4' : '3') + '">Nominal Values</th><th colspan="2">&#160;</th><th colspan="' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '4' : '3') + '">Measured Values</th><th colspan="4">Δ</th><th>&#160;</th>');
+	this.report_html.push('			<th>#</th><th colspan="' + device_labels.length + '">Device Values</th><th colspan="' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '4' : '3') + '">Nominal Values</th><th colspan="2">&#160;</th><th colspan="' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '4' : '3') + '">Measured Values</th><th colspan="4">Color distance</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
 	this.report_html.push('		<tr>');
 	if (mode == 'Lab')
@@ -886,7 +886,7 @@ p.generate_report = function(set_delta_calc_method) {
 		labels = "L*,u',v'";
 	else if (mode == "ICtCp")
 		labels = "I,Ct,Cp";
-	this.report_html.push('			<th>&#160;</th><th>' + device_labels.join('</th><th>').replace(/\w+_/g, '') + '</th><th>' + labels.split(',').join('</th><th>') + '</th>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<th>γ</th>' : '') + '<th>&#160;</th><th>&#160;</th><th>' + labels.split(',').join('</th><th>') + '</th>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<th>γ</th>' : '') + '<th>Δ' + delta_L_desc + '</th>' + /* '<th>Δa</th><th>Δb</th>' + */ '<th>Δ' + delta_C_desc + '</th><th>Δ' + delta_E_desc + '</th><th>Δ' + delta_E_desc + '</th><th>&#160;</th>');
+	this.report_html.push('			<th>&#160;</th><th>' + device_labels.join('</th><th>').replace(/\w+_/g, '') + '</th><th>' + labels.split(',').join('</th><th>') + '</th>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<th>γ</th>' : '') + '<th>&#160;</th><th>&#160;</th><th>' + labels.split(',').join('</th><th>') + '</th>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<th>γ</th>' : '') + '<th>Δ' + delta_L_desc + '</th>' + /* '<th>Δa</th><th>Δb</th>' + */ '<th>Δ' + delta_C_desc + '</th><th>Δ' + delta_H_desc + '</th><th>Δ' + delta_E_desc + '</th><th>&#160;</th>');
 	this.report_html.push('		</tr>');
 	var grayscale_values = [], gamut_values = [];
 	for (var i=0, n=0; i<this.data.length; i++) {
