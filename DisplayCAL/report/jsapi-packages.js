@@ -990,7 +990,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					KL = textiles ? 2 : 1,
 					KC = 1,
 					KH = 1,
-					dE = Math.sqrt(Math.pow(dL / (KL * SL), 2) + Math.pow(dC / (KC * SC), 2) + Math.pow(dH / (KH * SH), 2));
+					dl = dL / (KL * SL),
+					dc = dC / (KC * SC),
+					dh = dH / (KH * SH),
+					dE = Math.sqrt(Math.pow(dl, 2) + Math.pow(dc, 2) + Math.pow(dh, 2));
 				break;
 			case "cmc(2:1)":
 			case "cmc21":
@@ -1012,7 +1015,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					H1 = jsapi.math.deg(Math.atan2(b1, a1)) + (b1 >= 0 ? 0 : 360),
 					T = 164 <= H1 && H1 <= 345 ? 0.56 + Math.abs(0.2 * Math.cos(jsapi.math.rad(H1 + 168))) : 0.36 + Math.abs(0.4 * Math.cos(jsapi.math.rad(H1 + 35))),
 					SH = SC * (F * T + 1 - F),
-					dE = Math.sqrt(Math.pow(dL / (l * SL), 2) + Math.pow(dC / (c * SC), 2) + Math.pow(dH / SH, 2));
+					dl = dL / (l * SL),
+					dc = dC / (c * SC),
+					dh = dH / SH,
+					dE = Math.sqrt(Math.pow(dl, 2) + Math.pow(dc, 2) + Math.pow(dh, 2));
 				break;
 			case "00":
 			case "2k":
@@ -1062,6 +1068,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					AJ = dL_ / S_L / k_L,	// dL' / k_L / S_L
 					AK = dC_ / S_C / k_C,	// dC' / k_C / S_C
 					AL = dH_ / S_H / k_H,	// dH' / k_H / S_H
+					dl = AJ,
+					dc = AK,
+					dh = AL,
 					dE = Math.sqrt(Math.pow(AJ, 2) + Math.pow(AK, 2) + Math.pow(AL, 2) + R_T * AK * AL);
 				
 				if (debug) {
@@ -1104,6 +1113,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					dH = 0.25 * Math.pow(Ct2 - Ct1, 2) + Math.pow(Cp2 - Cp1, 2) - Math.pow(dC, 2),
 					dH = dH > 0 ? Math.sqrt(dH) * 240 : 0,
 					dC = dC * 240,
+					dl = dL,
+					dc = dC,
+					dh = dH,
 					dE = Math.sqrt(4 * Math.pow(I2 - I1, 2) + 0.25 * Math.pow(Ct2 - Ct1, 2) + Math.pow(Cp2 - Cp1, 2)) * 240;  // Normalization per Pytlarz
 				break;
 			default:
@@ -1113,6 +1125,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					dC = C1 - C2,
 					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
 					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
+					dl = dL,
+					dc = dC,
+					dh = dH,
 					dE = Math.sqrt(Math.pow(dL, 2) + Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2));
 					if (isNaN(dH)) {
 						if (window.location.href.indexOf("?debug")>-1) alert('a1: ' + a1 + '\na2: ' + a2 + '\nMath.pow(a1 - a2, 2): ' + Math.pow(a1 - a2, 2) + '\nb1: ' + b1 + '\nb2: ' + b2 + '\nMath.pow(b1 - b2, 2): ' + Math.pow(b1 - b2, 2) + '\ndC: ' + dC + '\nMath.pow(dC, 2): ' + Math.pow(dC, 2) + '\nMath.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2): ' + (Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2)));
@@ -1125,6 +1140,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			C: dC,
 			H: dH,
 			a: a1 - a2,
-			b: b1 - b2
+			b: b1 - b2,
+			l: dl,
+			c: dc,
+			h: dh
 		};
 	};
