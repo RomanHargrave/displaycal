@@ -990,8 +990,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					KL = textiles ? 2 : 1,
 					KC = 1,
 					KH = 1,
-					dl = dL / (KL * SL),
-					dc = dC / (KC * SC),
+					dl = -dL / (KL * SL),
+					dc = -dC / (KC * SC),
 					dh = dH / (KH * SH),
 					dE = Math.sqrt(Math.pow(dl, 2) + Math.pow(dc, 2) + Math.pow(dh, 2));
 				break;
@@ -1015,8 +1015,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					H1 = jsapi.math.deg(Math.atan2(b1, a1)) + (b1 >= 0 ? 0 : 360),
 					T = 164 <= H1 && H1 <= 345 ? 0.56 + Math.abs(0.2 * Math.cos(jsapi.math.rad(H1 + 168))) : 0.36 + Math.abs(0.4 * Math.cos(jsapi.math.rad(H1 + 35))),
 					SH = SC * (F * T + 1 - F),
-					dl = dL / (l * SL),
-					dc = dC / (c * SC),
+					dl = -dL / (l * SL),
+					dc = -dC / (c * SC),
 					dh = dH / SH,
 					dE = Math.sqrt(Math.pow(dl, 2) + Math.pow(dc, 2) + Math.pow(dh, 2));
 				break;
@@ -1070,7 +1070,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					AL = dH_ / S_H / k_H,	// dH' / k_H / S_H
 					dl = AJ,
 					dc = AK,
-					dh = AL,
+					dh = Math.abs(AL),
 					dE = Math.sqrt(Math.pow(AJ, 2) + Math.pow(AK, 2) + Math.pow(AL, 2) + R_T * AK * AL);
 				
 				if (debug) {
@@ -1125,8 +1125,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					dC = C1 - C2,
 					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
 					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
-					dl = dL,
-					dc = dC,
+					dl = -dL,
+					dc = -dC,
 					dh = dH,
 					dE = Math.sqrt(Math.pow(dL, 2) + Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2));
 					if (isNaN(dH)) {

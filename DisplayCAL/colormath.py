@@ -680,7 +680,7 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
 			KL = 2.0 if textiles else 1.0
 			KC = 1.0
 			KH = 1.0
-			dl, dc, dh = dL / (KL * SL), dC / (KC * SC), dH / (KH * SH)
+			dl, dc, dh = -dL / (KL * SL), -dC / (KC * SC), dH / (KH * SH)
 			dE = math.sqrt(math.pow(dl, 2) + math.pow(dc, 2) + math.pow(dh, 2))
 		elif method in ("cmc(2:1)", "cmc21", "cmc(1:1)", "cmc11", "cmc"):
 			if method in ("cmc(2:1)", "cmc21"):
@@ -699,7 +699,7 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
 			H1 = math.degrees(math.atan2(b1, a1)) + (0 if b1 >= 0 else 360.0)
 			T = 0.56 + abs(0.2 * math.cos(math.radians(H1 + 168.0))) if 164 <= H1 and H1 <= 345 else 0.36 + abs(0.4 * math.cos(math.radians(H1 + 35)))
 			SH = SC * (F * T + 1 - F)
-			dl, dc, dh = dL / (l * SL), dC / (c * SC), dH / SH
+			dl, dc, dh = -dL / (l * SL), -dC / (c * SC), dH / SH
 			dE = math.sqrt(math.pow(dl, 2) + math.pow(dc, 2) + math.pow(dh, 2))
 		elif method in ("00", "2k", "2000", "cie00", "cie2k", "cie2000"):
 			pow25_7 = math.pow(25, 7)
@@ -744,7 +744,7 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
 			AJ = dL_ / S_L / k_L  # dL' / k_L / S_L
 			AK = dC_ / S_C / k_C  # dC' / k_C / S_C
 			AL = dH_ / S_H / k_H  # dH' / k_H / S_H
-			dl, dc, dh = AJ, AK, AL
+			dl, dc, dh = AJ, AK, abs(AL)
 			dE = math.sqrt(math.pow(AJ, 2) + math.pow(AK, 2) + math.pow(AL, 2) + R_T * AK * AL)
 		else:
 			# dE 1976
@@ -754,7 +754,7 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
 			dC = C1 - C2
 			dH2 = math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2) - math.pow(dC, 2)
 			dH = math.sqrt(dH2) if dH2 > 0 else 0
-			dl, dc, dh = dL, dC, dH
+			dl, dc, dh = -dL, -dC, dH
 			dE = math.sqrt(math.pow(dL, 2) + math.pow(a1 - a2, 2) + math.pow(b1 - b2, 2))
 		
 		return {"E": dE,
