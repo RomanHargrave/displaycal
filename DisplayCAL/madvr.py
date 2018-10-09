@@ -847,6 +847,7 @@ class MadTPG_Net(MadTPGBase):
 						if self.debug:
 							safe_print("MadTPG_Net: Client %s:%i stopped sending" %
 									   addr[:2])
+						send_bye = False
 						break
 					blob += incoming
 					if self.debug:
@@ -1146,7 +1147,7 @@ class MadTPG_Net(MadTPGBase):
 							if self.debug:
 								safe_print("MadTPG_Net: Preventing duplicate connection %s:%i" %
 										   addr[:2])
-							self._remove_client(addr)
+							self._remove_client(addr, False)
 							return
 				self._dispatch_event("on_client_added", (addr, client))
 			else:
