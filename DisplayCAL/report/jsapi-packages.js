@@ -975,10 +975,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			case "cie94":
 			case "cie1994":
 				var textiles = p1,
-					dL = L1 - L2,
+					dL = L2 - L1,
 					C1 = Math.sqrt(Math.pow(a1, 2) + Math.pow(b1, 2)),
 					C2 = Math.sqrt(Math.pow(a2, 2) + Math.pow(b2, 2)),
-					dC = C1 - C2,
+					dC = C2 - C1,
 					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
 					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
 					SL = 1,
@@ -990,10 +990,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					KL = textiles ? 2 : 1,
 					KC = 1,
 					KH = 1,
-					dl = -dL / (KL * SL),
-					dc = -dC / (KC * SC),
-					dh = dH / (KH * SH),
-					dE = Math.sqrt(Math.pow(dl, 2) + Math.pow(dc, 2) + Math.pow(dh, 2));
+					dLw = dL / (KL * SL),
+					dCw = dC / (KC * SC),
+					dHw = dH / (KH * SH),
+					dE = Math.sqrt(Math.pow(dLw, 2) + Math.pow(dCw, 2) + Math.pow(dHw, 2));
 				break;
 			case "cmc(2:1)":
 			case "cmc21":
@@ -1003,10 +1003,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			case "cmc":
 				var l = typeof p1 == "number" ? p1 : 1,
 					c = typeof p2 == "number" ? p2 : 1;
-					dL = L1 - L2,
+					dL = L2 - L1,
 					C1 = Math.sqrt(Math.pow(a1, 2) + Math.pow(b1, 2)),
 					C2 = Math.sqrt(Math.pow(a2, 2) + Math.pow(b2, 2)),
-					dC = C1 - C2,
+					dC = C2 - C1,
 					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
 					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
 					SL = L1 < 16 ? 0.511 : (0.040975 * L1) / (1 + 0.01765 * L1),
@@ -1015,10 +1015,10 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					H1 = jsapi.math.deg(Math.atan2(b1, a1)) + (b1 >= 0 ? 0 : 360),
 					T = 164 <= H1 && H1 <= 345 ? 0.56 + Math.abs(0.2 * Math.cos(jsapi.math.rad(H1 + 168))) : 0.36 + Math.abs(0.4 * Math.cos(jsapi.math.rad(H1 + 35))),
 					SH = SC * (F * T + 1 - F),
-					dl = -dL / (l * SL),
-					dc = -dC / (c * SC),
-					dh = dH / SH,
-					dE = Math.sqrt(Math.pow(dl, 2) + Math.pow(dc, 2) + Math.pow(dh, 2));
+					dLw = dL / (l * SL),
+					dCw = dC / (c * SC),
+					dHw = dH / SH,
+					dE = Math.sqrt(Math.pow(dLw, 2) + Math.pow(dCw, 2) + Math.pow(dHw, 2));
 				break;
 			case "00":
 			case "2k":
@@ -1068,9 +1068,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					AJ = dL_ / S_L / k_L,	// dL' / k_L / S_L
 					AK = dC_ / S_C / k_C,	// dC' / k_C / S_C
 					AL = dH_ / S_H / k_H,	// dH' / k_H / S_H
-					dl = AJ,
-					dc = AK,
-					dh = Math.abs(AL),
+					dLw = AJ,
+					dCw = AK,
+					dHw = AL,
 					dE = Math.sqrt(Math.pow(AJ, 2) + Math.pow(AK, 2) + Math.pow(AL, 2) + R_T * AK * AL);
 				
 				if (debug) {
@@ -1105,29 +1105,28 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 					b1 = Cp1 * 240,
 					a2 = Math.sqrt(0.25 * Math.pow(Ct2, 2)) * 240,
 					b2 = Cp2 * 240,
-					dL = Math.sqrt(4 * Math.pow(I2 - I1, 2)) * 240,
-					dL = I2 < I1 ? -dL : dL,
+					dL = (I2 - I1) * 480,
 					C1 = Math.sqrt(0.25 * Math.pow(Ct1, 2) + Math.pow(Cp1, 2)),
 					C2 = Math.sqrt(0.25 * Math.pow(Ct2, 2) + Math.pow(Cp2, 2)),
 					dC = C2 - C1,
 					dH = 0.25 * Math.pow(Ct2 - Ct1, 2) + Math.pow(Cp2 - Cp1, 2) - Math.pow(dC, 2),
 					dH = dH > 0 ? Math.sqrt(dH) * 240 : 0,
 					dC = dC * 240,
-					dl = dL,
-					dc = dC,
-					dh = dH,
+					dLw = dL,
+					dCw = dC,
+					dHw = dH,
 					dE = Math.sqrt(4 * Math.pow(I2 - I1, 2) + 0.25 * Math.pow(Ct2 - Ct1, 2) + Math.pow(Cp2 - Cp1, 2)) * 240;  // Normalization per Pytlarz
 				break;
 			default:
-				var dL = L1 - L2,
+				var dL = L2 - L1,
 					C1 = Math.sqrt(Math.pow(a1, 2) + Math.pow(b1, 2)),
 					C2 = Math.sqrt(Math.pow(a2, 2) + Math.pow(b2, 2)),
-					dC = C1 - C2,
+					dC = C2 - C1,
 					dH2 = Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2),
 					dH = dH2 > 0 ? Math.sqrt(dH2) : 0,
-					dl = -dL,
-					dc = -dC,
-					dh = dH,
+					dLw = dL,
+					dCw = dC,
+					dHw = dH,
 					dE = Math.sqrt(Math.pow(dL, 2) + Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2));
 					if (isNaN(dH)) {
 						if (window.location.href.indexOf("?debug")>-1) alert('a1: ' + a1 + '\na2: ' + a2 + '\nMath.pow(a1 - a2, 2): ' + Math.pow(a1 - a2, 2) + '\nb1: ' + b1 + '\nb2: ' + b2 + '\nMath.pow(b1 - b2, 2): ' + Math.pow(b1 - b2, 2) + '\ndC: ' + dC + '\nMath.pow(dC, 2): ' + Math.pow(dC, 2) + '\nMath.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2): ' + (Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2) - Math.pow(dC, 2)));
@@ -1141,8 +1140,9 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			H: dH,
 			a: a1 - a2,
 			b: b1 - b2,
-			l: dl,
-			c: dc,
-			h: dh
+			// Weighted
+			Lw: dLw,
+			Cw: dCw,
+			Hw: dHw
 		};
 	};
