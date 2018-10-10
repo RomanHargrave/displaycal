@@ -13,10 +13,10 @@
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 		<link rel="stylesheet" href="theme/readme.css?ts=2018-01-17T19:12" />
-		<script type="text/javascript" src="theme/jquery.js"></script>
-		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
-		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
-		<script type="text/javascript" src="theme/readme.js?ts=2018-03-31T23:59"></script>
+		<script type="text/javascript" src="theme/jquery.js?ts=2018-09-17T15:00"></script>
+		<script type="text/javascript" src="theme/jquery.scrollTo.js?ts=2018-09-17T15:00"></script>
+		<script type="text/javascript" src="theme/jquery.localscroll.js?ts=2018-09-17T15:00"></script>
+		<script type="text/javascript" src="theme/readme.js?ts=2018-09-17T15:30"></script>
 	</head>
 	<body>
 
@@ -42,8 +42,72 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2018-08-25 14:03 (UTC) 3.6.2  -->
+			<!-- 2018-10-10 22:04 (UTC) 3.7  -->
 			<dl>
+				<dt id="changelog-3.7">2018-10-10 22:04 (UTC) 3.7 </dt>
+					<dd>
+						<h3>DisplayCAL 3.7 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Full field pattern insertion option for selected pattern generators (madTPG*, Prisma and Resolve).<br />
+							<small class="footnote">*madTPG on Windows requires using a <a href="https://hub.displaycal.net/forums/topic/argyllcms-development-snapshots/">modified version of ArgyllCMS</a>.</small></li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Chromatic adaptation control for the synthetic ICC profile creator.</li>
+							<li>Resolve HDR 3D LUT preset (SMPTE 2084 hard clip, no tonemapping).</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Show a column with the spectral resolution and range of the reference measurements when listing colorimeter corrections from the online database (if available).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Improved support for (3rd party) profiles with chromatic adaptation transforms other than Bradford, e.g. for use as 3D LUT source profiles.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Early abort when cancelling video level detection measurements.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Early abort if connecting to madTPG fails.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Updated simplified chinese translation (thanks to Mars).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> If using madTPG and continuing from interactive adjustment to iterative grayscale calibration, wait three seconds after switching to fullscreen and exclusive fullscreen respectively, to give the display time to complete the switch, before commencing measurements.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Show messages from instrument related popup dialogs during measurements on the madTPG on-screen display as well.</li>
+							<li>Hue preservation less than 100% for HDR SMPTE 2084 3D LUTs with roll-off tonemapping now only affects red-orange/orange/amber hues (i.e. match madVR's “color tweaks for fire &amp; explosions”).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Verification: Before attempting to create a measurement report, automatically check the PCS to device table resolution for LUT profiles if necessary and warn about low resolution tables.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> 3D LUT verification: When using a different whitepoint target for a 3D LUT, use the altered source profile as simulation profile for verification.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> 3D LUT verification: When creating a self check report, automatically use the device link profile.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Show weighted ΔL, ΔC and ΔH for ΔE*94 and ΔE*00.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Signed values for ΔL*76, ΔL*94, ΔC*76 and ΔC*94 are now always relative to the nominal values (match ΔE*00 and ΔICtCp).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Measured vs display profile whitepoint is now a purely informational statistic, no longer a pass criteria.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> When creating a colorimeter correction, allow selecting a display manufacturer via autocomplete if not set.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> <span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Minor UI spacing adjustments.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> For HDR 3D LUTs with SMPTE 2084 (hard clip) tone curve, set the mastering display peak luminance in the simulation profile description to the target peak.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: For iMacs, use the model identifier as display description.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Interpolation between clipping and roll-off for HDR 3D LUTs with SMPTE 2084 tone curve was not as smooth as intended with mastering display peak luminance below 10000 cd/m² or just above target peak.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> HDR 3D LUTs with SMPTE 2084 (hard clip) tone curve did reproduce slightly too low luminance in a limited region below the chosen target peak.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Verification controls were not being initialized if loading settings before switching to the verification tab.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Also update verification tone curve controls if a matrix profile with non-identical shaper curves is selected as simulation profile.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Make eeColor to madVR converter exit cleanly when receiving SIGBREAK.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Correctly escape/unescape quotes in CGATS.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Reset enumerated measurement modes when changing Argyll version.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Do not automatically disable interactive display adjustment after visual whitepoint editor measurement.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> When using madTPG, restore fullscreen and OSD button states when continuing on to calibration after interactive adjustment.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> madTPG did not automatically enter fullscreen if enabled when skipping interactive display adjustment and detecting video levels.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Only show the place instrument on screen countdown in madTPG if we don't temporarily leave fullscreen for interactive adjustment during calibration anyway.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Always force HDR 3D LUT SMPTE 2084 mastering display peak luminance to be greater than or equal to target peak luminance.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Do not show HDR 3D LUT tone mapping hue/saturation controls for SMPTE 2084 (hard clip).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Measurement report: Measured vs assumed/profile whitepoint delta ICtCp should always be referenced to assumed/profile whitepoint.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Measurement report: Using absolute values without display profile whitepoint as reference in ICtCp mode referenced the values to D50 instead of the natural ICtCp whitepoint of D65.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Measurement report: RGB color comparison swatches when using absolute values and display profile whitepoint as reference were not referenced to chosen whitepoint.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile information: Whitepoint delta E to locus should always be referenced to locus, not D50.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Profile information: Use correct axis labels for DIN99b 2D gamut plot.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Standalone 3D LUT maker: Unmatched Thaw() call when setting abstract profile.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux: Prevent potential subprocess memory leak.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux, macOS: When connecting to madTPG, don't send 'bye' commands when closing duplicate connections so madTPG doesn't close the main connection prematurely.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Linux with wxPython Phoenix, Windows: Menu item labels in submenus weren't updated until restarting the application after switching to a different language.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows): Use Unicode APIs for creating the popup menu items, so that they are displayed correctly regardless of Windows codepage (makes non-western languages display correctly on western versions of Windows).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Windows: Restore compatibility of measurement report with MSIE 11.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> macOS: When creating a colorimeter correction for a MacBook, correctly unescape backslashes in the automatically filled description.</li>
+						</ul>
+					</dd>
+
 				<dt id="changelog-3.6.2">2018-08-25 14:03 (UTC) 3.6.2 </dt>
 					<dd>
 						<h3>DisplayCAL 3.6.2 </h3>
@@ -68,21 +132,25 @@
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> 3D LUT/verification with a display profile that has a black level of zero, but embedded characterization data black level above zero: Black offset also needs to be applied if not using BT.1886 for correct results.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> When generating high resolution PCS to device tables during HDR 3D LUT creation, use the configured resolution even if low quality PCS to device tables were generated when creating the profile.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.6.1.1">2018-08-07 16:14 (UTC) 3.6.1.1 </p>
+				<dt id="changelog-3.6.1.1">2018-08-07 16:14 (UTC) 3.6.1.1 </dt>
+					<dd>
 						<h3>DisplayCAL 3.6.1.1 </h3>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux: Don't call setlocale() unconditionally, and restore previous locale (fixes build under non-english locales, regression of XDG changes in DisplayCAL 3.6.1, SVN revision 5457 and up).</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.6.1">2018-08-06 13:57 (UTC) 3.6.1 </p>
+				<dt id="changelog-3.6.1">2018-08-06 13:57 (UTC) 3.6.1 </dt>
+					<dd>
 						<h3>DisplayCAL 3.6.1 </h3>
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Adjustable hue preservation (values less than 100% will gradually hue shift very bright and saturated redorange/orange/yellowgreen hues to a more yellowish tone, preserving more saturation and detail) for HDR SMPTE 2084 3D LUTs with roll-off tonemapping (default 50%).</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Adjustable hue preservation (values less than 100% will gradually hue shift very bright and saturated red-orange/orange/yellow-green hues to a more yellowish tone, preserving more saturation and detail) for HDR SMPTE 2084 3D LUTs with roll-off tonemapping (default 50%).</li>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Ability to set a calibration target luminance by measuring the ambient light level.</li>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Verification tab: Hold the “alt” key on your keyboard to create a profile or device link (3D LUT) self check report instead of a measurement report.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> DCI P3 D65 profile for use as 3D LUT source colorspace or measurement report simulation profile.</li>
@@ -112,8 +180,10 @@
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Standalone 3D LUT maker: Don't unexpectedly switch to the source profile's gamma for simple gamma + matrix source profiles (e.g. DCI P3) when creating a 3D LUT.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Catch errors in case of a corrupted Windows registry.</li>
 						</ul>
+					</dd>
 
-						<p id="changelog-3.6">2018-06-21 22:06 (UTC) 3.6 </p>
+				<dt id="changelog-3.6">2018-06-21 22:06 (UTC) 3.6 </dt>
+					<dd>
 						<h3>DisplayCAL 3.6 </h3>
 
 						<h4>Added in this release:</h4>
@@ -968,6 +1038,14 @@
 			<p><a href="history.html">View changelog entries for older versions</a></p>
 		</div>
 
+		</div>
+		
+		<hr />
+		
+		<p id="copyright">DisplayCAL © 2008-2018 Florian Höch | <a href="https://displaycal.net/imprint/">Imprint</a> | <a href="https://displaycal.net/privacy/">Privacy</a> | <a href="https://displaycal.net/tos/">Terms of Service</a></p>
+
+		<div id="footer-container">
+			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>
 		</div>
 
 	</body>

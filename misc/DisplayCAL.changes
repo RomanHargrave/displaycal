@@ -5,6 +5,33 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Sat Aug 25 14:22:11 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.6.2:
+  * [Feature] Measurement report: ICtCp and ΔICtCp color distance
+    metric.
+  * [Enhancement] Show report type in self check report.
+  * [Enhancement] Add actual display profile description to self
+    check report if a simulation profile is used as display
+    profile.
+  * [Enhancement] Use the same method to create HDR 3D LUTs whether
+    the display profile is cLUT or matrix based.
+  * [Enhancement] Verification: Do not automatically enable
+    “Simulate whitepoint relative to display profile whitepoint” if
+    the verification chart does not contain L*a*b* reference data.
+  * [Enhancement] Measurement and self check report: Only
+    automatically enable the use of absolute values when simulating
+    the reference whitepoint if no simulation profile was used.
+  * [Minor] 3D LUT/verification with a display profile that has a
+    black level of zero, but embedded characterization data black
+    level above zero: Black offset also needs to be applied if not
+    using BT.1886 for correct results.
+  * [Minor] When generating high resolution PCS to device tables
+    during HDR 3D LUT creation, use the configured resolution even
+    if low quality PCS to device tables were generated when
+    creating the profile.
+
+-------------------------------------------------------------------
 Tue Aug 07 16:15:26 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.6.1.1:
