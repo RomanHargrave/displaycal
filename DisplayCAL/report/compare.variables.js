@@ -38,14 +38,14 @@ CRITERIA_RULES_DEFAULT[1][4] = 1; // Measured vs. assumed whitepoint ΔE*94 reco
 CRITERIA_RULES_DEFAULT[2][3] = 2; // Measured vs. assumed whitepoint ΔE*00 nominal
 CRITERIA_RULES_DEFAULT[2][4] = 1; // Measured vs. assumed whitepoint ΔE*00 recommended
 
-//CRITERIA_RULES_DEFAULT[3][3] = 3; // Measured vs. profile whitepoint ΔE*76 nominal
-CRITERIA_RULES_DEFAULT[3][4] = 1.5; // Measured vs. profile whitepoint ΔE*76 recommended
+//CRITERIA_RULES_DEFAULT[3][3] = 2; // Measured vs. profile whitepoint ΔE*76 nominal
+CRITERIA_RULES_DEFAULT[3][4] = 1; // Measured vs. profile whitepoint ΔE*76 recommended
 
-//CRITERIA_RULES_DEFAULT[4][3] = 3; // Measured vs. profile whitepoint ΔE*94 nominal
-CRITERIA_RULES_DEFAULT[4][4] = 1.5; // Measured vs. profile whitepoint ΔE*94 recommended
+//CRITERIA_RULES_DEFAULT[4][3] = 2; // Measured vs. profile whitepoint ΔE*94 nominal
+CRITERIA_RULES_DEFAULT[4][4] = 1; // Measured vs. profile whitepoint ΔE*94 recommended
 
-//CRITERIA_RULES_DEFAULT[5][3] = 3; // Measured vs. profile whitepoint ΔE*00 nominal
-CRITERIA_RULES_DEFAULT[5][4] = 1.5; // Measured vs. profile whitepoint ΔE*00 recommended
+//CRITERIA_RULES_DEFAULT[5][3] = 2; // Measured vs. profile whitepoint ΔE*00 nominal
+CRITERIA_RULES_DEFAULT[5][4] = 1; // Measured vs. profile whitepoint ΔE*00 recommended
 
 CRITERIA_RULES_DEFAULT[6][3] = 3; // Average ΔE*76 nominal
 CRITERIA_RULES_DEFAULT[6][4] = 1.5; // Average ΔE*76 recommended
@@ -369,21 +369,21 @@ comparison_criteria['RGB_HUE_CHROMA_ONLY'] = {
 			["Measured vs. display profile whitepoint weighted ΔH*94", ['WHITEPOINT_MvsP'], DELTA_H_MAX, null, 1, CIE94],
 			["Measured vs. display profile whitepoint weighted ΔH'00", ['WHITEPOINT_MvsP'], DELTA_H_MAX, null, 1, CIE00],
 			["Measured vs. display profile whitepoint ΔH CtCp", ['WHITEPOINT_MvsP'], DELTA_H_MAX, null, 1, ICTCP],
-			["Average ΔC*76", [], DELTA_C_AVG, 1.5, 1, CIE76],
+			["Average ΔC*76", [], DELTA_C_AVG, 3, 1.5, CIE76],
 			["Average weighted ΔC*94", [], DELTA_C_AVG, 1.5, 1, CIE94],
 			["Average weighted ΔC'00", [], DELTA_C_AVG, 1.5, 1, CIE00],
 			["Average ΔC CtCp", [], DELTA_C_AVG, 1.5, 1, ICTCP],
-			["Average ΔH*76", [], DELTA_H_AVG, 1.5, 1, CIE76],
+			["Average ΔH*76", [], DELTA_H_AVG, 3, 1.5, CIE76],
 			["Average weighted ΔH*94", [], DELTA_H_AVG, 1.5, 1, CIE94],
 			["Average weighted ΔH'00", [], DELTA_H_AVG, 1.5, 1, CIE00],
 			["Average ΔH CtCp", [], DELTA_H_AVG, 1.5, 1, ICTCP],
-			["Maximum ΔC*76", [], DELTA_C_MAX, 5, 3, CIE76],
-			["Maximum weighted ΔC*94", [], DELTA_C_MAX, 5, 3, CIE94],
-			["Maximum weighted ΔC'00", [], DELTA_C_MAX, 5, 3, CIE00],
+			["Maximum ΔC*76", [], DELTA_C_MAX, 6, 4, CIE76],
+			["Maximum weighted ΔC*94", [], DELTA_C_MAX, 4, 3, CIE94],
+			["Maximum weighted ΔC'00", [], DELTA_C_MAX, 4, 3, CIE00],
 			["Maximum ΔC CtCp", [], DELTA_C_MAX, 5, 3, ICTCP],
-			["Maximum ΔH*76", [], DELTA_H_MAX, 5, 3, CIE76],
-			["Maximum weighted ΔH*94", [], DELTA_H_MAX, 5, 3, CIE94],
-			["Maximum weighted ΔH'00", [], DELTA_H_MAX, 5, 3, CIE00],
+			["Maximum ΔH*76", [], DELTA_H_MAX, 6, 4, CIE76],
+			["Maximum weighted ΔH*94", [], DELTA_H_MAX, 4, 3, CIE94],
+			["Maximum weighted ΔH'00", [], DELTA_H_MAX, 4, 3, CIE00],
 			["Maximum ΔH CtCp", [], DELTA_H_MAX, 5, 3, ICTCP],
 			["Median ΔC*76", [], DELTA_C_MED, null, null, CIE76],
 			["Median weighted ΔC*94", [], DELTA_C_MED, null, null, CIE94],
