@@ -1615,7 +1615,7 @@ function splitext(path) {
 };
 
 function strip_tags(str) {
-	return str.replace(/<[^<]+>/g, '');
+	return str.replace(/<[^<]+>/g, '').replace(/CTCP/g, ' CtCp');
 };
 
 function plaintext(which) {
