@@ -1087,10 +1087,18 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 				
 				break;
 			case "ictcp":
+				// Incoming L*a*b* values can match these criteria:
+				// - Relative to D50 (explicit). White a* b* != 0.
+				//   No chromatic adaptation necessary, converting to XYZ yields
+				//   original illuminant relative values. 'D50' white must be given.
+				// - Relative to given whitepoint XYZ. White a* b* == 0.
+				//   Chromatic adaptation necessary.
+				// - Relative to D50 (implicit). White a* b* == 0.
+				//   Chromatic adaptation necessary, set white to 'null'.
 				var XYZ1 = jsapi.math.color.Lab2XYZ(L1, a1, b1, white),
 					XYZ2 = jsapi.math.color.Lab2XYZ(L2, a2, b2, white),
-					XYZ1a = white ? XYZ1 : jsapi.math.color.adapt(XYZ1[0], XYZ1[1], XYZ1[2], white, "D65"),
-					XYZ2a = white ? XYZ2 : jsapi.math.color.adapt(XYZ2[0], XYZ2[1], XYZ2[2], white, "D65"),
+					XYZ1a = white == 'D50' ? XYZ1 : jsapi.math.color.adapt(XYZ1[0], XYZ1[1], XYZ1[2], white, "D65"),
+					XYZ2a = white == 'D50' ? XYZ2 : jsapi.math.color.adapt(XYZ2[0], XYZ2[1], XYZ2[2], white, "D65"),
 					//XYZ1a = XYZ1,
 					//XYZ2a = XYZ2,
 					s1 = l1 / 10000,
