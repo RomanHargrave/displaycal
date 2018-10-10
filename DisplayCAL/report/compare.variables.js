@@ -351,8 +351,7 @@ comparison_criteria['RGB_HUE_CHROMA_ONLY'] = {
 		failrecommendedtext: null,
 		delta_calc_method: CIE00, // delta calculation method for overview
 		lock_delta_calc_method: false,
-		warn_deviation: 999999,
-			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
+		warn_deviation: null,
 		rules: [
 			["Measured vs. assumed target whitepoint ΔC*76", ['WHITEPOINT_MvsA'], DELTA_C_MAX, 2, 1, CIE76],
 			["Measured vs. assumed target whitepoint weighted ΔC*94", ['WHITEPOINT_MvsA'], DELTA_C_MAX, 2, 1, CIE94],

@@ -935,25 +935,28 @@ p.generate_report = function(set_delta_calc_method) {
 			}
 		}
 		this.report_html.push('		<tr' + (i == this.data.length - 1 ? ' class="last-row"' : '') + '>');
-		var bar_html = [],
-			rgb = [0, 255, 0];
+		var bar_html = [], rgb;
 		if (actual.tolerance_DE == null)
-			actual.tolerance_DE = 5;
+			actual.tolerance_DE = warn_deviation;
 		if (actual.actual_DE == null)
 			actual.actual_DE = delta.E;
 		if (actual.delta == null)
 			actual.delta = delta;
-		var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2);
-		if (actual.actual_DE <= actual.tolerance_DE) {
-			rgb[0] += Math.min(step * actual.actual_DE, 255);
-			rgb[1] -= Math.min(step * actual.actual_DE, 255);
-			var maxrg = Math.max(rgb[0], rgb[1]);
-			rgb[0] *= (255 / maxrg);
-			rgb[1] *= (255 / maxrg);
-			rgb[0] = Math.round(rgb[0]);
-			rgb[1] = Math.round(rgb[1]);
+		if (warn_deviation != null) {
+			rgb = [0, 255, 0];
+			var step = 255 / (actual.tolerance_DE + actual.tolerance_DE / 2);
+			if (actual.actual_DE <= actual.tolerance_DE) {
+				rgb[0] += Math.min(step * actual.actual_DE, 255);
+				rgb[1] -= Math.min(step * actual.actual_DE, 255);
+				var maxrg = Math.max(rgb[0], rgb[1]);
+				rgb[0] *= (255 / maxrg);
+				rgb[1] *= (255 / maxrg);
+				rgb[0] = Math.round(rgb[0]);
+				rgb[1] = Math.round(rgb[1]);
+			}
+			else rgb = [255, 0, 0];
 		}
-		else rgb = [255, 0, 0];
+		else rgb = [204, 204, 204];
 		bar_html.push(actual.actual_DE.accuracy(2) > 0 ? '<span style="display: block; width: ' + Math.round(10 * actual.actual_DE.accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em 0 .125em 0; overflow: hidden;">&#160;</span>' : '&#160;');
 		if (criteria.fields_match.join(',').indexOf('CMYK') > -1) 
 			var device = current_cmyk;
@@ -969,7 +972,7 @@ p.generate_report = function(set_delta_calc_method) {
 			grayscale_values.push([current_rgb, target, actual, target_Lab, actual_Lab, target_rgb, actual_rgb]);
 		}
 		gamut_values.push([n, device_channels, device, target_color, actual_Lab, actual_color, target_rgb, actual_rgb, delta_calc_method, delta.E]);
-		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_color[0].accuracy(accuracy) + '</td><td>' + target_color[1].accuracy(accuracy) + '</td><td>' + target_color[2].accuracy(accuracy) + '</td>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<td>' + (target.gamma ? target.gamma.accuracy(2) : '&#160;') + '</td>' : '') + '<td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_color[0].accuracy(accuracy) + '</td><td>' + actual_color[1].accuracy(accuracy) + '</td><td>' + actual_color[2].accuracy(accuracy) + '</td>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<td>' + (actual.gamma ? actual.gamma.accuracy(2) : '&#160;') + '</td>' : '') + '<td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.Lw.accuracy(2) + '</td>' + /* '<td class="' + (actual.actual_Da != null ? (actual.actual_Da.accuracy(2) < actual.tolerance_Da ? 'ok' : (actual.actual_Da.accuracy(2) == actual.tolerance_Da ? 'warn' : 'ko')) : 'info') + '">' + delta.a.accuracy(2) + '</td><td class="' + (actual.actual_Db != null ? (actual.actual_Db.accuracy(2) < actual.tolerance_Db ? 'ok' : (actual.actual_Db.accuracy(2) == actual.tolerance_Db ? 'warn' : 'ko')) : 'info') + '">' + delta.b.accuracy(2) + '</td>' + */ '<td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.Cw.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.Hw.accuracy(2) + '</td><td class="' + (actual.actual_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td class="bar">' + bar_html.join('') + '</td>');
+		this.report_html.push('			<td>' + n.fill(String(number_of_sets).length) + '</td><td>' + device.join('</td><td>') + '</td><td>' + target_color[0].accuracy(accuracy) + '</td><td>' + target_color[1].accuracy(accuracy) + '</td><td>' + target_color[2].accuracy(accuracy) + '</td>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<td>' + (target.gamma ? target.gamma.accuracy(2) : '&#160;') + '</td>' : '') + '<td class="patch" style="background-color: rgb(' + target_rgb[0] + ', ' + target_rgb[1] + ', ' + target_rgb[2] + ');"><div class="patch">&#160;</div></td><td class="patch" style="background-color: rgb(' + actual_rgb[0] + ', ' + actual_rgb[1] + ', ' + actual_rgb[2] + ');"><div class="patch">&#160;</div></td><td>' + actual_color[0].accuracy(accuracy) + '</td><td>' + actual_color[1].accuracy(accuracy) + '</td><td>' + actual_color[2].accuracy(accuracy) + '</td>' + (criteria.fields_match.join(',').indexOf('CMYK') < 0 ? '<td>' + (actual.gamma ? actual.gamma.accuracy(2) : '&#160;') + '</td>' : '') + '<td class="' + (actual.actual_DL != null ? (actual.actual_DL.accuracy(2) < actual.tolerance_DL ? 'ok' : (actual.actual_DL.accuracy(2) == actual.tolerance_DL ? 'warn' : 'ko')) : 'info') + '">' + delta.Lw.accuracy(2) + '</td>' + /* '<td class="' + (actual.actual_Da != null ? (actual.actual_Da.accuracy(2) < actual.tolerance_Da ? 'ok' : (actual.actual_Da.accuracy(2) == actual.tolerance_Da ? 'warn' : 'ko')) : 'info') + '">' + delta.a.accuracy(2) + '</td><td class="' + (actual.actual_Db != null ? (actual.actual_Db.accuracy(2) < actual.tolerance_Db ? 'ok' : (actual.actual_Db.accuracy(2) == actual.tolerance_Db ? 'warn' : 'ko')) : 'info') + '">' + delta.b.accuracy(2) + '</td>' + */ '<td class="' + (actual.actual_DC != null ? (actual.actual_DC.accuracy(2) < actual.tolerance_DC ? 'ok' : (actual.actual_DC.accuracy(2) == actual.tolerance_DC ? 'warn' : 'ko')) : 'info') + '">' + delta.Cw.accuracy(2) + '</td><td class="' + (actual.actual_DH != null ? (actual.actual_DH.accuracy(2) < actual.tolerance_DH ? 'ok' : (actual.actual_DH.accuracy(2) == actual.tolerance_DH ? 'warn' : 'ko')) : 'info') + '">' + delta.Hw.accuracy(2) + '</td><td class="' + (actual.actual_DE != null && actual.tolerance_DE != null ? (actual.actual_DE.accuracy(2) < actual.tolerance_DE ? 'ok' : (actual.actual_DE.accuracy(2) == actual.tolerance_DE ? 'warn' : 'ko')) : (!warn_deviation || delta.E < warn_deviation ? 'info' : 'warn')) + '">' + delta.E.accuracy(2) + '</td><td class="bar">' + bar_html.join('') + '</td>');
 		this.report_html.push('		</tr>');
 	};
 	this.report_html.push('	</table>');
