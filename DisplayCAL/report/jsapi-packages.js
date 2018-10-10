@@ -948,7 +948,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 	</jsapi>
 */
 
-	jsapi.math.color.delta = function (L1, a1, b1, L2, a2, b2, method, p1, p2, p3, white, l1, l2, debug) {
+	jsapi.math.color.delta = function (L1, a1, b1, L2, a2, b2, method, p1, p2, p3, white, l1, l2, cat, debug) {
 		/*
 			CIE 1994 & CMC calculation code derived from formulas on www.brucelindbloom.com
 			CIE 1994 code uses some alterations seen on www.farbmetrik-gall.de/cielab/korrcielab/cie94.html (see notes in code below)
@@ -1097,8 +1097,8 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 				//   Chromatic adaptation necessary, set white to 'null'.
 				var XYZ1 = jsapi.math.color.Lab2XYZ(L1, a1, b1, white),
 					XYZ2 = jsapi.math.color.Lab2XYZ(L2, a2, b2, white),
-					XYZ1a = white == 'D50' ? XYZ1 : jsapi.math.color.adapt(XYZ1[0], XYZ1[1], XYZ1[2], white, "D65"),
-					XYZ2a = white == 'D50' ? XYZ2 : jsapi.math.color.adapt(XYZ2[0], XYZ2[1], XYZ2[2], white, "D65"),
+					XYZ1a = white == 'D50' ? XYZ1 : jsapi.math.color.adapt(XYZ1[0], XYZ1[1], XYZ1[2], white, "D65", cat),
+					XYZ2a = white == 'D50' ? XYZ2 : jsapi.math.color.adapt(XYZ2[0], XYZ2[1], XYZ2[2], white, "D65", cat),
 					//XYZ1a = XYZ1,
 					//XYZ2a = XYZ2,
 					s1 = l1 / 10000,
