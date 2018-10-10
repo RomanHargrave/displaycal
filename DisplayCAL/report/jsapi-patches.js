@@ -72,8 +72,8 @@ jsapi.math.color.adapt = function (XS, YS, ZS, whitepoint_source, whitepoint_des
 	return MA.invert().multiply([[pybd[0]/pybs[0], 0, 0], [0, pybd[1]/pybs[1], 0], [0, 0, pybd[2]/pybs[2]]]).multiply(MA).multiply([XS, YS, ZS]);
 };
 jsapi.math.color.Lab2RGB = function (L, a, b, whitepoint, whitepoint_source, scale, round_, cat, clamp) {
-	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, whitepoint || "D50");
-	if (!whitepoint_source) XYZ = jsapi.math.color.adapt(XYZ[0], XYZ[1], XYZ[2], whitepoint_source || "D50", "D65", cat);
+	var XYZ = jsapi.math.color.Lab2XYZ(L, a, b, whitepoint);
+	if (whitepoint != 'D50') XYZ = jsapi.math.color.adapt(XYZ[0], XYZ[1], XYZ[2], whitepoint, "D65", cat);
 	return jsapi.math.color.XYZ2RGB(XYZ[0], XYZ[1], XYZ[2], "D65", scale, round_, clamp)
 };
 jsapi.math.color.Lab2XYZ = function(L, a, b, whitepoint, scale) {
