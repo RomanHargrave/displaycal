@@ -25,7 +25,14 @@ var CRITERIA_RULES_NEUTRAL = [
 		["Calibration red tone values", ['CAL_REDLEVELS'], '', null, 95],
 		["Calibration green tone values", ['CAL_GREENLEVELS'], '', null, 95],
 		["Calibration blue tone values", ['CAL_BLUELEVELS'], '', null, 95],
-		["Calibration grayscale tone values", ['CAL_GRAYLEVELS'], '', null, 95]
+		["Calibration grayscale tone values", ['CAL_GRAYLEVELS'], '', null, 95],
+		["Measured vs. assumed target whitepoint ΔICtCp", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, ICTCP],
+		["Measured vs. display profile whitepoint ΔICtCp", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, null, ICTCP],
+		["Average ΔICtCp", [], DELTA_E_AVG, null, null, ICTCP],
+		["Maximum ΔICtCp", [], DELTA_E_MAX, null, null, ICTCP],
+		["Median ΔICtCp", [], DELTA_E_MED, null, null, ICTCP],
+		["Median absolute deviation ΔICtCp", [], DELTA_E_MAD, null, null, ICTCP],
+		["Standard deviation ΔICtCp", [], DELTA_E_STDDEV, null, null, ICTCP]
 	],
 	CRITERIA_RULES_DEFAULT = CRITERIA_RULES_NEUTRAL.clone();
 
@@ -65,17 +72,17 @@ CRITERIA_RULES_DEFAULT[10][4] = 3; // Maximum ΔE*94 recommended
 CRITERIA_RULES_DEFAULT[11][3] = 4; // Maximum ΔE*00 nominal
 CRITERIA_RULES_DEFAULT[11][4] = 3; // Maximum ΔE*00 recommended
 
-CRITERIA_RULES_DEFAULT = CRITERIA_RULES_DEFAULT.concat(
-	[
-		["Measured vs. assumed target whitepoint ΔICtCp", ['WHITEPOINT_MvsA'], DELTA_E_MAX, 2, 1, ICTCP],
-		["Measured vs. display profile whitepoint ΔICtCp", ['WHITEPOINT_MvsP'], DELTA_E_MAX, null, 1, ICTCP],
-		["Average ΔICtCp", [], DELTA_E_AVG, 1.5, 1, ICTCP],
-		["Maximum ΔICtCp", [], DELTA_E_MAX, 5, 3, ICTCP],
-		["Median ΔICtCp", [], DELTA_E_MED, null, null, ICTCP],
-		["Median absolute deviation ΔICtCp", [], DELTA_E_MAD, null, null, ICTCP],
-		["Standard deviation ΔICtCp", [], DELTA_E_STDDEV, null, null, ICTCP]
-	]
-);
+CRITERIA_RULES_DEFAULT[25][3] = 2; // Measured vs. assumed whitepoint ΔICtCp nominal
+CRITERIA_RULES_DEFAULT[25][4] = 1; // Measured vs. assumed whitepoint ΔICtCp recommended
+
+CRITERIA_RULES_DEFAULT[26][4] = 1; // Measured vs. profile whitepoint ΔICtCp recommended
+
+CRITERIA_RULES_DEFAULT[27][3] = 1.5; // Average ΔICtCp nominal
+CRITERIA_RULES_DEFAULT[27][4] = 1; // Average ΔICtCp recommended
+
+CRITERIA_RULES_DEFAULT[28][3] = 5; // Maximum ΔICtCp nominal
+CRITERIA_RULES_DEFAULT[28][4] = 3; // Maximum ΔICtCp recommended
+
 
 var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.clone().concat(
 		[
