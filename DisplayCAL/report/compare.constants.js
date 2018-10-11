@@ -9,6 +9,9 @@ var DELTA_A_MAX = 'DELTA_A_MAX',
 	
 	DELTA_A_B_RANGE = 'DELTA_A_B_RANGE',
 	
+	DELTA_CH_MAX = 'DELTA_CH_MAX',  // Delta Ch, not delta C and H!
+	DELTA_CH_AVG = 'DELTA_CH_AVG',  // Delta Ch, not delta C and H!
+
 	DELTA_B_MAX = 'DELTA_B_MAX',
 	DELTA_B_AVG = 'DELTA_B_AVG',
 	DELTA_B_MED = 'DELTA_B_MED', // Median

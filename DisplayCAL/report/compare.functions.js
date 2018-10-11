@@ -390,6 +390,7 @@ p.generate_report = function(set_delta_calc_method) {
 			H: [],
 			a: [],
 			b: [],
+			Ch: [],
 			g: [],
 			matches: [],
 			sum: null
@@ -453,6 +454,7 @@ p.generate_report = function(set_delta_calc_method) {
 						result[j].H.push(delta.Hw);
 						result[j].a.push(delta.a);
 						result[j].b.push(delta.b);
+						result[j].Ch.push(delta.Ch);
 					}
 					else {
 						rules[j][3] = null;
@@ -472,6 +474,7 @@ p.generate_report = function(set_delta_calc_method) {
 						result[j].H.push(delta.Hw);
 						result[j].a.push(delta.a);
 						result[j].b.push(delta.b);
+						result[j].Ch.push(delta.Ch);
 					}
 					else {
 						rules[j][3] = null;
@@ -556,6 +559,7 @@ p.generate_report = function(set_delta_calc_method) {
 					result[j].H.push(delta.Hw);
 					result[j].a.push(delta.a);
 					result[j].b.push(delta.b);
+					result[j].Ch.push(delta.Ch);
 					if (actual.gamma) result[j].g.push(actual.gamma);
 					if ((rules[j][1].length || rules[j][2].indexOf('_MAX') > -1 || rules[j][2].indexOf('_MIN') > -1) && (rules[j][2].indexOf('GAMMA') < 0 || actual.gamma)) result[j].matches.push([i, i, n])
 				}
@@ -591,6 +595,13 @@ p.generate_report = function(set_delta_calc_method) {
 			case DELTA_A_B_RANGE:
 				var ab = result[j].a.concat(result[j].b);
 				result[j].sum = jsapi.math.max(ab) - jsapi.math.min(ab);
+				break;
+				
+			case DELTA_CH_MAX:
+				result[j].sum = jsapi.math.max(result[j].Ch);
+				break;
+			case DELTA_CH_AVG:
+				result[j].sum = jsapi.math.avg(result[j].Ch);
 				break;
 				
 			case DELTA_B_MAX:

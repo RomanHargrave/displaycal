@@ -1148,6 +1148,7 @@ props.push((/\s/.test(i) ? "'" : "") + i + (/\s/.test(i) ? "'" : "") + ":" + (ty
 			H: dH,
 			a: a1 - a2,
 			b: b1 - b2,
+			Ch: Math.sqrt(Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2)),
 			// Weighted
 			Lw: dLw,
 			Cw: dCw,

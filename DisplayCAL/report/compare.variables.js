@@ -182,32 +182,38 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.clone().concat(
 			["CMY grey maximum ΔE*00", IDEALLIANCE_2009_CMY_GRAY, DELTA_E_MAX, 2, 1, CIE00]
 		])
 	},
-	CRITERIA_ISO12647_7 = {
+	ISO12647_7_CMY_GRAY = [
+		[100, 85, 85, 0],
+		[80, 65, 65, 0],
+		[60, 45, 45, 0],
+		[40, 27, 27, 0],
+		[20, 12, 12, 0],
+		[10, 6, 6, 0]
+	],
+	CRITERIA_ISO12647_7 = {  // ISO 12647-7:2016 switched to DE00 and delta Ch
 		fields_match: ['CMYK_C', 'CMYK_M', 'CMYK_Y', 'CMYK_K'],
 		fields_compare: ['LAB_L', 'LAB_A', 'LAB_B'],
 		passtext: "Nominal tolerance passed",
 		failtext: "Nominal tolerance exceeded",
 		passrecommendedtext: "Recommended tolerance passed",
 		failrecommendedtext: null,
-		delta_calc_method: CIE76, // delta calculation method for overview
+		delta_calc_method: CIE00, // delta calculation method for overview
 		lock_delta_calc_method: true,
 		warn_deviation: 5,
 			// values with greater Delta E will be marked in the overview (informational, not a pass criteria)
-		rules: CRITERIA_RULES_CMYK.clone().concat([
+		rules: CRITERIA_RULES_NEUTRAL.concat([
 			// description, [[C, M, Y, K],...], DELTA_[E|L|C|H]_[MAX|AVG], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
-			["Paper white ΔE*76", [[0, 0, 0, 0]], DELTA_E_MAX, 3, 1, CIE76],
-			/* ["Average ΔE*", [], DELTA_E_AVG, 3, 2, CIE76],
-			["Maximum ΔE*", [], DELTA_E_MAX, 6, 5, CIE76], */
-			["CMYK solids maximum ΔE*76", CMYK_SOLIDS, DELTA_E_MAX, 5, 3, CIE76],
-			["CMYK solids maximum ΔH*76", CMYK_SOLIDS, DELTA_H_MAX, 2.5, 1.5, CIE76],
-			["CMY grey average absolute ΔH*76", [
-				[100, 85, 85, 0],
-				[80, 65, 65, 0],
-				[60, 45, 45, 0],
-				[40, 27, 27, 0],
-				[20, 12, 12, 0],
-				[10, 6, 6, 0]
-			], DELTA_H_AVG, 1.5, 0.5, CIE76]
+			["Paper white ΔE*00", [[0, 0, 0, 0]], DELTA_E_MAX, 3, 1, CIE00],
+			/* ["Average ΔE*", [], DELTA_E_AVG, 2.5, 1, CIE00],
+			["Maximum ΔE*", [], DELTA_E_MAX, 5, 3, CIE00], */
+			["CMYK solids maximum ΔE*00", CMYK_SOLIDS, DELTA_E_MAX, 3, 2, CIE00],
+			["CMY grey average ΔCh", ISO12647_7_CMY_GRAY, DELTA_CH_AVG, 2, 1.5, CIE00],
+			["CMY grey maximum ΔCh", ISO12647_7_CMY_GRAY, DELTA_CH_MAX, 3.5, 2.5, CIE00],
+			["CMK maximum ΔH*00", [
+				[100, 0, 0, 0],
+				[0, 100, 0, 0],
+				[0, 0, 0, 100]
+			], DELTA_H_MAX, 2.5, 2.0, CIE00]
 		])
 	},
 	CRITERIA_FOGRA_MEDIAWEDGE_3 = CRITERIA_ISO12647_7.clone(),
@@ -331,8 +337,10 @@ for (var i = 0; i < CRITERIA_RULES_CMYK.length; i ++) {
 CRITERIA_ISO14861_OUTER_GAMUT.rules[11][3] = 2.5; // Maximum ΔE*00 nominal
 	
 CRITERIA_FOGRA_MEDIAWEDGE_3.id = 'FOGRA_MW3';
-CRITERIA_FOGRA_MEDIAWEDGE_3.name = "Fogra Media Wedge V3";
+CRITERIA_FOGRA_MEDIAWEDGE_3.name = "Fogra Media Wedge V3 (ISO 12647-7:2016)";
 CRITERIA_FOGRA_MEDIAWEDGE_3.strip_name = "Ugra/Fogra Media Wedge CMYK V3.0";
+CRITERIA_FOGRA_MEDIAWEDGE_3.rules[8][3] = 2.5; // Average ΔE*00 nominal
+CRITERIA_FOGRA_MEDIAWEDGE_3.rules[11][3] = 5; // Maximum ΔE*00 nominal
 
 CRITERIA_IDEALLIANCE_2009.rules[8][3] = 2; // Average ΔE*00 nominal
 CRITERIA_IDEALLIANCE_2009.rules[11][3] = 6; // Maximum ΔE*00 nominal
