@@ -776,6 +776,9 @@ p.generate_report = function(set_delta_calc_method) {
 					case DELTA_B_MAX:
 						if (result[j].b[k] == result[j].sum) matched = true;
 						break;
+					case DELTA_CH_MAX:
+						if (result[j].Ch[k] == result[j].sum) matched = true;
+						break;
 					case DELTA_C_MAX:
 						if (result[j].C[k] == result[j].sum) matched = true;
 						break;
