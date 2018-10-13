@@ -609,7 +609,11 @@ class ReportFrame(BaseFrame):
 		self.set_profile("devlink", silent=True)
 		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
 		self.set_profile("output", silent=True)
-		self.mr_set_testchart(getcfg("measurement_report.chart"))
+		chart = getcfg("measurement_report.chart")
+		if not chart or not os.path.isfile(chart):
+			chart = config.defaults["measurement_report.chart"]
+			setcfg("measurement_report.chart", chart)
+		self.mr_set_testchart(chart)
 		self.use_simulation_profile_ctrl_handler(None, update_trc=False)
 		self.panel.Thaw()
 
