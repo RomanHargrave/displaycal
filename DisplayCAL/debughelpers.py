@@ -146,5 +146,9 @@ class DownloadError(Error):
 		self.url = args[1]
 
 
+class UntracedError(Error):
+	pass
+
+
 class Warn(UserWarning):
 	pass

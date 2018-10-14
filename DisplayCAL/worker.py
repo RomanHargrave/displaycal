@@ -90,7 +90,7 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
 					split_display_name, writecfg, appbasename)
 from debughelpers import (Error, DownloadError, Info, UnloggedError,
-						  UnloggedInfo, UnloggedWarning, Warn)
+						  UnloggedInfo, UnloggedWarning, UntracedError, Warn)
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
 						  iccprofiles_display_home)
 from edid import WMIError, get_edid
@@ -508,8 +508,9 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 			# Skip values with negative Y increments,
 			# or Y above 100 with RGB < 100
 			if logfn:
-				logfn("Skipping RGB %.2f %.2f %.2f XYZ %.6f %.6f %.6f" %
-					  (R, G, B, X, Y, Z))
+				logfn("Warning: Skipping RGB %.2f %.2f %.2f XYZ %.6f %.6f %.6f" %
+					  (R, G, B, X, Y, Z),
+					  "because Y is not monotonically increasing")
 			continue
 		R_R.append(R / 100.0)
 		G_G.append(G / 100.0)
@@ -523,6 +524,13 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 			XYZwp = [v / 100.0 for v in (X, Y, Z)]
 
 	numvalues = len(R_R)
+
+	if numvalues <= 2 or XYZbp[1] >= XYZwp[1]:
+		# Botched measurements
+		raise UntracedError(lang.getstr("error.luminance.not_monotonically_increasing"))
+
+	if XYZwp[1] <= 0 or math.isnan(XYZwp[1]):
+		raise UntracedError(lang.getstr("error.luminance.invalid"))
 
 	# Scale black to zero
 	for i in xrange(numvalues):
@@ -2595,7 +2603,7 @@ END_DATA
 			Y_cdm2 = float(luminance_XYZ_cdm2.split()[1])
 		except (IndexError, ValueError):
 			return Error(lang.getstr("error.testchart.invalid", ti3_path))
-		if not Y_cdm2 or math.isnan(Y_cdm2):
+		if Y_cdm2 <= 0 or math.isnan(Y_cdm2):
 			return Error(lang.getstr("error.luminance.invalid"))
 		black_0 = ti3[0].DATA[1]
 		black_16 = ti3[0].DATA[2]
@@ -5719,6 +5727,8 @@ while 1:
 				exception.args[0] == "aborted"):
 				# Special case - aborted
 				result = False
+			elif isinstance(exception, UntracedError):
+				result = exception
 			else:
 				if hasattr(exception, "originalTraceback"):
 					self.log(exception.originalTraceback)
