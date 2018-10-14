@@ -8957,18 +8957,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
-				if getcfg("dry_run"):
-					return
-			InfoDialog(self, msg=failure_msg, 
-					   ok=lang.getstr("ok"), 
-					   bitmap=geticon(32, "dialog-error"))
+			else:
+				InfoDialog(self, msg=failure_msg, 
+						   ok=lang.getstr("ok"), 
+						   bitmap=geticon(32, "dialog-error"))
 			if sys.platform == "darwin":
 				# For some reason, the call to enable_menus() in Show()
 				# sometimes isn't enough under Mac OS X (e.g. after calibrate &
 				# profile)
 				self.enable_menus()
 			self.start_timers(True)
-			setcfg("calibration.file.previous", None)
+			if not getcfg("dry_run"):
+				setcfg("calibration.file.previous", None)
 	
 	def profile_finish_close_handler(self, event):
 		if event.GetEventObject() == self.modaldlg:
