@@ -4301,6 +4301,11 @@ END_DATA
 					if len(line) and line[0][0] == "-":
 						arg = line[0]
 						value = line[-1].split(None, 1)[0]
+						if arg == "-d" and value != "n":
+							# Argyll 2.0.2 started listing -d madvr and -d dummy
+							# instead of -dmadvr and -ddummy
+							# Use the non-space-delimited as the canonical form
+							arg += value
 						if arg == "-A":
 							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
@@ -4312,13 +4317,10 @@ END_DATA
 							defaults["calibration.black_point_hack"] = 1
 						elif arg == "-dprisma[:host]":
 							defaults["patterngenerator.prisma.argyll"] = 1
-						elif arg == "-dvirtual" or (arg == "-d" and
-													value == "dummy"):
+						elif arg in ("-dvirtual", "-ddummy"):
 							# Custom modified Argyll V2.0.2 (-dvirtual)
 							# or Argyll >= 2.0.2 (-d dummy)
-							if arg == "-dvirtual":
-								value = arg[2:]
-							self.argyll_virtual_display = value
+							self.argyll_virtual_display = arg[2:]
 							safe_print("Argyll has virtual display support")
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
