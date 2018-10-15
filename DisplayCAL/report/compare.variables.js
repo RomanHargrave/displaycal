@@ -1,6 +1,6 @@
 // !!!DO NOT CHANGE NEUTRAL ENTRIES!!!
 var CRITERIA_RULES_NEUTRAL = [
-		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21]
+		// description, [[R, G, B],...], DELTA_[E|L|C|H]_[MAX|MED|MAD|AVG|STDDEV], max, recommended, [CIE[76|94|00]|CMC11|CMC21], always display [true|false]
 		["Measured vs. assumed target whitepoint ΔE*76", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE76],
 		["Measured vs. assumed target whitepoint ΔE*94", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE94],
 		["Measured vs. assumed target whitepoint ΔE*00", ['WHITEPOINT_MvsA'], DELTA_E_MAX, null, null, CIE00],
@@ -214,13 +214,13 @@ var CRITERIA_RULES_RGB = CRITERIA_RULES_DEFAULT.clone().concat(
 			/* ["Average ΔE*", [], DELTA_E_AVG, 2.5, 1, CIE00],
 			["Maximum ΔE*", [], DELTA_E_MAX, 5, 3, CIE00], */
 			["CMYK solids maximum ΔE*00", CMYK_SOLIDS, DELTA_E_MAX, 3, 2, CIE00],
-			["CMY grey average ΔCh", ISO12647_7_CMY_GRAY, DELTA_CH_AVG, 2, 1.5, CIE00],
-			["CMY grey maximum ΔCh", ISO12647_7_CMY_GRAY, DELTA_CH_MAX, 3.5, 2.5, CIE00],
-			["CMK maximum ΔH*00", [
+			["CMY maximum ΔH*ab", [
 				[100, 0, 0, 0],
 				[0, 100, 0, 0],
-				[0, 0, 0, 100]
-			], DELTA_H_MAX, 2.5, 2.0, CIE00]
+				[0, 0, 100, 0]
+			], DELTA_H_MAX, 2.5, 2.0, CIE76, true],
+			["CMY grey average ΔCh", ISO12647_7_CMY_GRAY, DELTA_CH_AVG, 2, 1.5, CIE00],
+			["CMY grey maximum ΔCh", ISO12647_7_CMY_GRAY, DELTA_CH_MAX, 3.5, 2.5, CIE00]
 		])
 	},
 	CRITERIA_FOGRA_MEDIAWEDGE_3 = CRITERIA_ISO12647_7.clone(),

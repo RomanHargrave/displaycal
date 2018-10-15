@@ -484,14 +484,14 @@ p.generate_report = function(set_delta_calc_method) {
 					break;
 			}
 		};
-		this.report_html.push('		<tr' + (!(rules[j][3] || rules[j][4]) || (!rules[j][5] || rules[j][5].substr(3) != delta_calc_method.substr(3)) ? ' class="statonly' + (verbosestats ? '' : ' verbose') + '"' : '' ) + '>');
+		this.report_html.push('		<tr' + (!(rules[j][3] || rules[j][4]) || !rules[j][5] || (!rules[j][6] && rules[j][5].substr(3) != delta_calc_method.substr(3)) ? ' class="statonly' + (verbosestats ? '' : ' verbose') + '"' : '' ) + '>');
 		this.report_html.push('			<td class="first-column">' + rules[j][0] + '</td><td>' + (rules[j][3] ? (rules[j][2] ? '&lt;= ' + rules[j][3] : '&gt;= ' + rules[j][3] + '%') : '&#160;') + '</td><td class="statonly">' + (rules[j][4] ? (rules[j][2] ? '&lt;= ' + rules[j][4] : '&gt;= ' + rules[j][4] + '%'): '&#160;') + '</td><td class="sample_id">');
 		patch_number_html = [];
 		actual_rgb_html = [];
 		target_rgb_html = [];
 		var haspatchid = false;
 		if (rules[j][2].indexOf("_MAX") < 0 && rules[j][2].indexOf("_MIN") < 0) {
-			for (var k=0; k<rules[j][1].length; k++) if (rules[j][1].length > 1 && seen.indexOf(rules[j][1].join(',')) < 0 && rules[j][5].substr(3) == delta_calc_method.substr(3)) {
+			for (var k=0; k<rules[j][1].length; k++) if (rules[j][1].length > 1 && seen.indexOf(rules[j][1].join(',')) < 0 && (rules[j][6] || rules[j][5].substr(3) == delta_calc_method.substr(3))) {
 				patch_number_html.push('<div class="sample_id">&#160;</div>');
 				haspatchid = true;
 				if (rules[j][1][k].length == 4) // Assume CMYK
@@ -536,7 +536,7 @@ p.generate_report = function(set_delta_calc_method) {
 					for (var k=0; k<rules[j][1].length; k++) {
 						if ((rules[j][1][k].length == 3 && current_rgb.join(',') == rules[j][1][k].join(',')) || (rules[j][1][k].length == 4 && current_cmyk.join(',') == rules[j][1][k].join(','))) {
 							// if (silent || !confirm('rules[j]: ' + rules[j] + '\nrules[j][1][k]: ' + rules[j][1][k] + '\nthis.data[' + i + ']: ' + this.data[i] + '\ncurrent_rgb: ' + current_rgb + '\ncurrent_cmyk: ' + current_cmyk)) silent = true;
-							if (rules[j][2].indexOf("_MAX") < 0 && rules[j][2].indexOf("_MIN") < 0 && seen.indexOf(rules[j][1].join(',')) < 0 && rules[j][5].substr(3) == delta_calc_method.substr(3)) {
+							if (rules[j][2].indexOf("_MAX") < 0 && rules[j][2].indexOf("_MIN") < 0 && seen.indexOf(rules[j][1].join(',')) < 0 && (rules[j][6] || rules[j][5].substr(3) == delta_calc_method.substr(3))) {
 								if (rules[j][1].length) {
 									patch_number_html[k] = ('<div class="sample_id">' + n.fill(String(number_of_sets).length) + '</div>');
 									haspatchid = true;
@@ -819,7 +819,7 @@ p.generate_report = function(set_delta_calc_method) {
 		this.report_html.push('			<td class="patch">' + actual_rgb_html.join('') + '</td>');
 		var bar_html = [];
 		if (result[j].sum != null && rules[j][2] && rules[j][2].indexOf("GAMMA") < 0) {
-			if (!rules[j][3] || (rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3))) rgb = [204, 204, 204];
+			if (!rules[j][3] || (!rules[j][6] && rules[j][5] && rules[j][5].substr(3) != delta_calc_method.substr(3))) rgb = [204, 204, 204];
 			else {
 				var rgb = [0, 255, 0],
 					step = 255 / (rules[j][3] + rules[j][3] / 2);
@@ -838,15 +838,15 @@ p.generate_report = function(set_delta_calc_method) {
 				bar_html.push(Math.abs(result[j].sum).accuracy(2) > 0 ? '<span style="display: block; width: ' + Math.round(10 * Math.abs(result[j].sum).accuracy(2)) + 'px; background-color: rgb(' + rgb.join(', ') + '); border: 1px solid silver; border-top: none; border-bottom: none; padding: .125em 0 .125em 0; overflow: hidden;">&#160;</span>' : '&#160;');
 			};
 		};
-		this.report_html.push('			<td><span class="' + (result[j].sum != null && rules[j][3] && (!rules[j][5] || rules[j][5].substr(3) == delta_calc_method.substr(3)) ? ((rules[j][2] ? Math.abs(result[j].sum).accuracy(2) < rules[j][3] : Math.abs(result[j].sum).accuracy(2) > rules[j][3]) ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'statonly') + '">' + (result[j].sum != null ? result[j].htmlsum || result[j].sum.accuracy(2) : '&#160;') + '</span></td><td class="bar">' + (bar_html.join('') || '&#160;') + '</td><td class="' + (result[j].sum != null && (!rules[j][3] || (rules[j][2] ? Math.abs(result[j].sum) <= rules[j][3] : Math.abs(result[j].sum) >= rules[j][3])) ? (((rules[j][2] ? Math.abs(result[j].sum).accuracy(2) < rules[j][3] : Math.abs(result[j].sum).accuracy(2) > rules[j][3]) ? 'ok">OK <span class="checkmark">✔</span>' : (result[j].sum != null && rules[j][3] ? 'warn">OK \u26a0' : 'statonly">')) + '<span class="' + (rules[j][4] && (rules[j][2] ? Math.abs(result[j].sum) <= rules[j][4] : Math.abs(result[j].sum) >= rules[j][4]) ? 'checkmark' : 'hidden') + (rules[j][3] && rules[j][4] ? '">✔' : '">&#160;')) : 'ko">' + (result[j].sum != null ? 'NOT OK' : '') + ' <span class="checkmark">\u2716') + '</span></td>');
+		this.report_html.push('			<td><span class="' + (result[j].sum != null && rules[j][3] && (rules[j][6] || !rules[j][5] || rules[j][5].substr(3) == delta_calc_method.substr(3)) ? ((rules[j][2] ? Math.abs(result[j].sum).accuracy(2) < rules[j][3] : Math.abs(result[j].sum).accuracy(2) > rules[j][3]) ? 'ok' : (Math.abs(result[j].sum).accuracy(2) == rules[j][3] ? 'warn' : 'ko')) : 'statonly') + '">' + (result[j].sum != null ? result[j].htmlsum || result[j].sum.accuracy(2) : '&#160;') + '</span></td><td class="bar">' + (bar_html.join('') || '&#160;') + '</td><td class="' + (result[j].sum != null && (!rules[j][3] || (rules[j][2] ? Math.abs(result[j].sum) <= rules[j][3] : Math.abs(result[j].sum) >= rules[j][3])) ? (((rules[j][2] ? Math.abs(result[j].sum).accuracy(2) < rules[j][3] : Math.abs(result[j].sum).accuracy(2) > rules[j][3]) ? 'ok">OK <span class="checkmark">✔</span>' : (result[j].sum != null && rules[j][3] ? 'warn">OK \u26a0' : 'statonly">')) + '<span class="' + (rules[j][4] && (rules[j][2] ? Math.abs(result[j].sum) <= rules[j][4] : Math.abs(result[j].sum) >= rules[j][4]) ? 'checkmark' : 'hidden') + (rules[j][3] && rules[j][4] ? '">✔' : '">&#160;')) : 'ko">' + (result[j].sum != null ? 'NOT OK' : '') + ' <span class="checkmark">\u2716') + '</span></td>');
 		this.report_html.push('		</tr>');
-		if (rules[j][1] && rules[j][1].length > 1 && rules[j][5].substr(3) == delta_calc_method.substr(3)) seen.push(rules[j][1].join(','));
+		if (rules[j][1] && rules[j][1].length > 1 && (rules[j][6] || rules[j][5].substr(3) == delta_calc_method.substr(3))) seen.push(rules[j][1].join(','));
 	};
 	this.report_html.push('	</table>');
 	
 	var pass, overachieve;
 	for (var j=0; j<result.length; j++) {
-		if (!rules[j][5] || rules[j][5].substr(3) == delta_calc_method.substr(3)) {
+		if (rules[j][6] || !rules[j][5] || rules[j][5].substr(3) == delta_calc_method.substr(3)) {
 			if (!rules[j][3]) continue;
 			if (missing_data || isNaN(result[j].sum) || (rules[j][2] ? Math.abs(result[j].sum) > rules[j][3] : Math.abs(result[j].sum) < rules[j][3])) pass = false;
 			if (!rules[j][4]) continue;
