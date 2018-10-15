@@ -319,11 +319,6 @@ class ReportFrame(BaseFrame):
 					self.chart_patches_amount.GetContainingSizer().Layout()
 					self.chart_patches_amount.Thaw()
 					self.chart_white = cgats.get_white_cie()
-					if event:
-						v = int(not self.chart_white or not "RGB" in values)
-						setcfg("measurement_report.whitepoint.simulate", v)
-						setcfg("measurement_report.whitepoint.simulate.relative",
-							   int("LAB" in values))
 			if not values:
 				if chart:
 					show_result_dialog(lang.getstr("error.testchart.missing_fields",
@@ -347,6 +342,17 @@ class ReportFrame(BaseFrame):
 		self.fields_ctrl.Enable(self.fields_ctrl.GetCount() > 1)
 		self.fields_ctrl_handler(event)
 
+	def set_simulate_whitepoint(self, set_whitepoint_simulate_relative=False):
+		sim_profile = self.get_simulation_profile()
+		is_prtr_profile = sim_profile and sim_profile.profileClass == "prtr"
+		if set_whitepoint_simulate_relative:
+			setcfg("measurement_report.whitepoint.simulate",
+					int(not getattr(self, "chart_white", None) or
+						not "RGB" in self.fields_ctrl.Items or
+						is_prtr_profile))
+		setcfg("measurement_report.whitepoint.simulate.relative",
+			   int("LAB" in self.fields_ctrl.Items or is_prtr_profile))
+
 	def chart_drop_handler(self, path):
 		if not self.worker.is_working():
 			self.chart_ctrl.SetPath(path)
@@ -369,7 +375,7 @@ class ReportFrame(BaseFrame):
 		setcfg("measurement_report.chart.fields",
 			   self.fields_ctrl.GetStringSelection())
 		if event:
-			self.mr_update_main_controls()
+			self.mr_update_main_controls(event)
 	
 	def output_profile_ctrl_handler(self, event):
 		self.set_profile("output")
@@ -641,7 +647,7 @@ class ReportFrame(BaseFrame):
 		self.chart_ctrl.SetPath(path)
 		self.chart_ctrl_handler(None)
 	
-	def mr_update_main_controls(self):
+	def mr_update_main_controls(self, event=None):
 		##print "MR update main ctrls",
 		self.panel.Freeze()
 		chart_has_white = bool(getattr(self, "chart_white", None))
@@ -699,6 +705,8 @@ class ReportFrame(BaseFrame):
 				self.XYZbpout > self.XYZbpin)
 		self.input_value_clipping_bmp.Show(show)
 		self.input_value_clipping_label.Show(show)
+		if event:
+			self.set_simulate_whitepoint(True)
 		self.simulate_whitepoint_cb.Enable((enable1 and not enable2) or
 										   (color in ("LAB", "XYZ") and
 											chart_has_white))
@@ -847,20 +855,20 @@ class ReportFrame(BaseFrame):
 		setcfg("measurement_report.use_devlink_profile",
 			   int(self.devlink_profile_cb.GetValue()))
 		self.mr_update_main_controls()
+
+	def get_simulation_profile(self):
+		""" Return simulation profile if enabled """
+		use_sim_profile = getcfg("measurement_report.use_simulation_profile")
+		return use_sim_profile and getattr(self, "simulation_profile", None)
 	
 	def use_simulation_profile_ctrl_handler(self, event, update_trc=True):
 		if event:
-			use_sim_profile = self.simulation_profile_cb.GetValue()
 			setcfg("measurement_report.use_simulation_profile",
-				   int(use_sim_profile))
-		else:
-			use_sim_profile = getcfg("measurement_report.use_simulation_profile")
-		sim_profile = getattr(self, "simulation_profile", None)
+				   int(self.simulation_profile_cb.GetValue()))
+		sim_profile = self.get_simulation_profile()
 		enable = False
-		if use_sim_profile and sim_profile:
-			v = int(sim_profile.profileClass == "prtr")
-			setcfg("measurement_report.whitepoint.simulate", v)
-			setcfg("measurement_report.whitepoint.simulate.relative", v)
+		if sim_profile:
+			self.set_simulate_whitepoint()
 			if ("rTRC" in sim_profile.tags and "gTRC" in sim_profile.tags and
 				"bTRC" in sim_profile.tags and sim_profile.tags.rTRC ==
 				sim_profile.tags.gTRC == sim_profile.tags.bTRC and
@@ -896,7 +904,7 @@ class ReportFrame(BaseFrame):
 				enable = self.XYZbpin != self.XYZbpout
 				setcfg("measurement_report.apply_black_offset", int(enable))
 				setcfg("measurement_report.apply_trc", 0)
-		self.apply_black_offset_ctrl.Enable(use_sim_profile and enable)
+		self.apply_black_offset_ctrl.Enable(bool(sim_profile) and enable)
 		self.mr_update_main_controls()
 
 	def use_simulation_profile_as_output_handler(self, event):
