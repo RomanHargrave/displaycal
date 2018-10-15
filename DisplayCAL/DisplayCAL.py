@@ -9560,7 +9560,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					 display_name == "Resolve" or
 					 (display_name == "madVR" and
 					  (sys.platform != "win32" or not getcfg("madtpg.native") or
-					   self.worker.argyll_has_virtual_display))))
+					   bool(self.worker.argyll_virtual_display)))))
 		for ctrl in (self.ffp_insertion,
 					 self.ffp_insertion_interval_label,
 					 self.ffp_insertion_interval,

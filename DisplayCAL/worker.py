@@ -1890,7 +1890,7 @@ class Worker(WorkerBase):
 		if display and not (get_arg("-dweb", args) or get_arg("-dmadvr", args)):
 			if ((self.argyll_version <= [1, 0, 4] and not get_arg("-p", args)) or 
 				(self.argyll_version > [1, 0, 4] and not get_arg("-P", args)) and
-				not "-dvirtual" in args):
+				not "-d%s" % self.argyll_virtual_display in args):
 				if ((config.get_display_name() == "Resolve" or
 				     non_argyll_prisma) and
 					not ignore_display_name):
@@ -2836,7 +2836,7 @@ END_DATA
 		
 		"""
 		self.measurement_modes = {}
-		self.argyll_has_virtual_display = False
+		self.argyll_virtual_display = None
 
 	def clear_cmd_output(self):
 		"""
@@ -4300,6 +4300,7 @@ END_DATA
 					line = line.split(None, 1)
 					if len(line) and line[0][0] == "-":
 						arg = line[0]
+						value = line[-1].split(None, 1)[0]
 						if arg == "-A":
 							# Rate of blending from neutral to black point.
 							defaults["calibration.black_point_rate.enabled"] = 1
@@ -4311,9 +4312,13 @@ END_DATA
 							defaults["calibration.black_point_hack"] = 1
 						elif arg == "-dprisma[:host]":
 							defaults["patterngenerator.prisma.argyll"] = 1
-						elif arg == "-dvirtual":
-							# Custom modified Argyll V2.0.2
-							self.argyll_has_virtual_display = True
+						elif arg == "-dvirtual" or (arg == "-d" and
+													value == "dummy"):
+							# Custom modified Argyll V2.0.2 (-dvirtual)
+							# or Argyll >= 2.0.2 (-d dummy)
+							if arg == "-dvirtual":
+								value = arg[2:]
+							self.argyll_virtual_display = value
 							safe_print("Argyll has virtual display support")
 					elif len(line) > 1 and line[1][0] == "=":
 						value = line[1].strip(" ='")
@@ -4751,7 +4756,7 @@ END_DATA
 					 get_arg("-dmadvr", args) and madvr)
 		self.use_madvr = use_madvr
 		madvr_use_virtual_display = (use_madvr and
-									 self.argyll_has_virtual_display and
+									 self.argyll_virtual_display and
 									 (sys.platform != "win32" or
 									  getcfg("patterngenerator.ffp_insertion")))
 		if use_madvr:
@@ -5015,7 +5020,8 @@ BEGIN_DATA
 						dindex = args.index("-dmadvr")
 						args.remove("-dmadvr")
 						if madvr_use_virtual_display:
-							args.insert(dindex, "-dvirtual")
+							args.insert(dindex, "-d%s" %
+												self.argyll_virtual_display)
 						else:
 							args.insert(0, "-P1,1,0.01")
 					else:
@@ -6735,8 +6741,8 @@ while 1:
 			return "1"
 		if (display_name == "Prisma" and
 			not defaults["patterngenerator.prisma.argyll"]):
-			if self.argyll_has_virtual_display:
-				return "virtual"
+			if self.argyll_virtual_display:
+				return self.argyll_virtual_display
 			else:
 				return "1"
 		if display_name == "Prisma":
