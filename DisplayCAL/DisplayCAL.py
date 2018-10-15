@@ -10553,7 +10553,8 @@ class MainFrame(ReportFrame, BaseFrame):
 												   size=(400, -1))
 			boxsizer.Add(dlg.description_txt_ctrl, 1, 
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			if not display:
+			use_display_txt_ctrl = not display or config.is_virtual_display(display)
+			if use_display_txt_ctrl:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display")),
 											 wx.VERTICAL)
@@ -10615,7 +10616,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			result = dlg.ShowModal()
 			description = safe_str(dlg.description_txt_ctrl.GetValue().strip(),
 								   "UTF-8")
-			if not display or config.is_virtual_display(display):
+			if use_display_txt_ctrl:
 				display = dlg.display_txt_ctrl.GetValue()
 			if (dlg.display_tech_ctrl.IsEnabled() and
 				dlg.display_tech_ctrl.GetStringSelection()):
