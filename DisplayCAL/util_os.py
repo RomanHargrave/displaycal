@@ -8,10 +8,13 @@ import locale
 import os
 import re
 import shutil
+import struct
 import subprocess as sp
 import sys
 import tempfile
 import time
+
+from ordereddict import OrderedDict
 
 if sys.platform not in ("darwin", "win32"):
 	# Linux
@@ -49,9 +52,8 @@ _cache = {}
 _MAXCACHE = 100
 
 FILE_ATTRIBUTE_REPARSE_POINT = 1024
-SYMBOLIC_LINK = 'symbolic'
-MOUNTPOINT = 'mountpoint'
-GENERIC = 'generic'
+IO_REPARSE_TAG_MOUNT_POINT = 0xA0000003  # Junction
+IO_REPARSE_TAG_SYMLINK = 0xA000000C
 
 from encoding import get_encodings
 
@@ -565,7 +567,7 @@ def putenvu(name, value):
 		os.environ[name] = value.encode(fs_enc)
 
 
-def parse_reparse_buffer(original, reparse_type=SYMBOLIC_LINK):
+def parse_reparse_buffer(buf):
 	""" Implementing the below in Python:
 
 	typedef struct _REPARSE_DATA_BUFFER {
@@ -595,73 +597,38 @@ def parse_reparse_buffer(original, reparse_type=SYMBOLIC_LINK):
 	} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 
 	"""
-	# Size of our data types
-	SZULONG = 4 # sizeof(ULONG)
-	SZUSHORT = 2 # sizeof(USHORT)
+	# See https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/ntifs/ns-ntifs-_reparse_data_buffer
 
-	# Our structure.
-	# Probably a better way to iterate a dictionary in a particular order,
-	# but I was in a hurry, unfortunately, so I used pkeys.
-	buffer = {
-		'tag' : SZULONG,
-		'data_length' : SZUSHORT,
-		'reserved' : SZUSHORT,
-		SYMBOLIC_LINK : {
-			'substitute_name_offset' : SZUSHORT,
-			'substitute_name_length' : SZUSHORT,
-			'print_name_offset' : SZUSHORT,
-			'print_name_length' : SZUSHORT,
-			'flags' : SZULONG,
-			'buffer' : u'',
-			'pkeys' : [
-				'substitute_name_offset',
-				'substitute_name_length',
-				'print_name_offset',
-				'print_name_length',
-				'flags',
-			]
-		},
-		MOUNTPOINT : {
-			'substitute_name_offset' : SZUSHORT,
-			'substitute_name_length' : SZUSHORT,
-			'print_name_offset' : SZUSHORT,
-			'print_name_length' : SZUSHORT,
-			'buffer' : u'',
-			'pkeys' : [
-				'substitute_name_offset',
-				'substitute_name_length',
-				'print_name_offset',
-				'print_name_length',
-			]
-		},
-		GENERIC : {
-			'pkeys' : [],
-			'buffer': ''
-		}
-	}
+	data = {'tag': struct.unpack('<I', buf[:4])[0],
+			'data_length': struct.unpack('<H', buf[4:6])[0],
+			'reserved': struct.unpack('<H', buf[6:8])[0]}
 
-	# Header stuff
-	buffer['tag'] = original[:SZULONG]
-	buffer['data_length'] = original[SZULONG:SZUSHORT]
-	buffer['reserved'] = original[SZULONG+SZUSHORT:SZUSHORT]
-	original = original[8:]
+	if data['tag'] in (IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK):
+		reparse_buffer = OrderedDict([('substitute_name_offset', 0),
+									  ('substitute_name_length', 0),
+									  ('print_name_offset', 0),
+									  ('print_name_length', 0)])
+		if data['tag'] == IO_REPARSE_TAG_SYMLINK:
+			reparse_buffer['flags'] = 0
+	else:
+		reparse_buffer = {}
 
 	# Parsing
-	k = reparse_type
-	for c in buffer[k]['pkeys']:
-		if type(buffer[k][c]) == int:
-			sz = buffer[k][c]
-			bytes = original[:sz]
-			buffer[k][c] = 0
-			for b in bytes:
-				n = ord(b)
-				if n:
-					buffer[k][c] += n
-			original = original[sz:]
+	buf = buf[8:]
+	for k in reparse_buffer.iterkeys():
+		if k == 'flags':
+			fmt, sz = '<I', 4
+		else:
+			fmt, sz = '<H', 2
+		reparse_buffer[k] = struct.unpack(fmt, buf[:sz])[0]
+		buf = buf[sz:]
 
-	# Using the offset and length's grabbed, we'll set the buffer.
-	buffer[k]['buffer'] = original
-	return buffer
+	# Using the offset and lengths grabbed, we'll set the buffer.
+	reparse_buffer['buffer'] = buf
+	
+	data.update(reparse_buffer)
+
+	return data
 
 
 def readlink(path):
@@ -692,20 +659,20 @@ def readlink(path):
 						  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, 0)
 
 	# MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384 = (16 * 1024)
-	buffer = DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, None, 16 * 1024)
+	buf = DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, None, 16 * 1024)
 	# Above will return an ugly string (byte array), so we'll need to parse it.
 
 	# But first, we'll close the handle to our file so we're not locking it anymore.
 	CloseHandle(handle)
 
 	# Minimum possible length (assuming that the length is bigger than 0)
-	if len(buffer) < 9:
+	if len(buf) < 9:
 		return type(path)()
 	# Parse and return our result.
-	result = parse_reparse_buffer(buffer)
-	offset = result[SYMBOLIC_LINK]['substitute_name_offset']
-	ending = offset + result[SYMBOLIC_LINK]['substitute_name_length']
-	rpath = result[SYMBOLIC_LINK]['buffer'][offset:ending].decode('UTF-16-LE')
+	result = parse_reparse_buffer(buf)
+	offset = result['substitute_name_offset']
+	ending = offset + result['substitute_name_length']
+	rpath = result['buffer'][offset:ending].decode('UTF-16-LE')
 	if len(rpath) > 4 and rpath[0:4] == '\\??\\':
 		rpath = rpath[4:]
 	return rpath
