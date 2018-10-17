@@ -684,8 +684,12 @@ def readlink(path):
 		createfilefn = CreateFileW
 	else:
 		createfilefn = CreateFile
+	# FILE_FLAG_OPEN_REPARSE_POINT alone is not enough if 'path'
+	# is a symbolic link to a directory or a NTFS junction.
+	# We need to set FILE_FLAG_BACKUP_SEMANTICS as well.
+	# See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-createfilea
 	handle = createfilefn(path, GENERIC_READ, 0, None, OPEN_EXISTING,
-						  FILE_FLAG_OPEN_REPARSE_POINT, 0)
+						  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, 0)
 
 	# MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384 = (16 * 1024)
 	buffer = DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, None, 16 * 1024)
