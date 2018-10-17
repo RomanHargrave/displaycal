@@ -14,8 +14,6 @@ import sys
 import tempfile
 import time
 
-from ordereddict import OrderedDict
-
 if sys.platform not in ("darwin", "win32"):
 	# Linux
 	import grp
@@ -605,23 +603,21 @@ def parse_reparse_buffer(buf):
 	buf = buf[8:]
 
 	if data['tag'] in (IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK):
-		reparse_buffer = OrderedDict([('substitute_name_offset', 0),
-									  ('substitute_name_length', 0),
-									  ('print_name_offset', 0),
-									  ('print_name_length', 0)])
+		keys = ['substitute_name_offset',
+				'substitute_name_length',
+				'print_name_offset',
+				'print_name_length']
 		if data['tag'] == IO_REPARSE_TAG_SYMLINK:
-			reparse_buffer['flags'] = 0
+			keys.append('flags')
 
 		# Parsing
-		for k in reparse_buffer.iterkeys():
+		for k in keys:
 			if k == 'flags':
 				fmt, sz = '<I', 4
 			else:
 				fmt, sz = '<H', 2
-			reparse_buffer[k] = struct.unpack(fmt, buf[:sz])[0]
+			data[k] = struct.unpack(fmt, buf[:sz])[0]
 			buf = buf[sz:]
-
-		data.update(reparse_buffer)
 
 	# Using the offset and lengths grabbed, we'll set the buffer.
 	data['buffer'] = buf
@@ -668,9 +664,12 @@ def readlink(path):
 		return type(path)()
 	# Parse and return our result.
 	result = parse_reparse_buffer(buf)
-	offset = result['substitute_name_offset']
-	ending = offset + result['substitute_name_length']
-	rpath = result['buffer'][offset:ending].decode('UTF-16-LE')
+	if result['tag'] in (IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK):
+		offset = result['substitute_name_offset']
+		ending = offset + result['substitute_name_length']
+		rpath = result['buffer'][offset:ending].decode('UTF-16-LE')
+	else:
+		rpath = result['buffer']
 	if len(rpath) > 4 and rpath[0:4] == '\\??\\':
 		rpath = rpath[4:]
 	return rpath
