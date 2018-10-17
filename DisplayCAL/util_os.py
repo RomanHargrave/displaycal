@@ -602,6 +602,7 @@ def parse_reparse_buffer(buf):
 	data = {'tag': struct.unpack('<I', buf[:4])[0],
 			'data_length': struct.unpack('<H', buf[4:6])[0],
 			'reserved': struct.unpack('<H', buf[6:8])[0]}
+	buf = buf[8:]
 
 	if data['tag'] in (IO_REPARSE_TAG_MOUNT_POINT, IO_REPARSE_TAG_SYMLINK):
 		reparse_buffer = OrderedDict([('substitute_name_offset', 0),
@@ -610,23 +611,20 @@ def parse_reparse_buffer(buf):
 									  ('print_name_length', 0)])
 		if data['tag'] == IO_REPARSE_TAG_SYMLINK:
 			reparse_buffer['flags'] = 0
-	else:
-		reparse_buffer = {}
 
-	# Parsing
-	buf = buf[8:]
-	for k in reparse_buffer.iterkeys():
-		if k == 'flags':
-			fmt, sz = '<I', 4
-		else:
-			fmt, sz = '<H', 2
-		reparse_buffer[k] = struct.unpack(fmt, buf[:sz])[0]
-		buf = buf[sz:]
+		# Parsing
+		for k in reparse_buffer.iterkeys():
+			if k == 'flags':
+				fmt, sz = '<I', 4
+			else:
+				fmt, sz = '<H', 2
+			reparse_buffer[k] = struct.unpack(fmt, buf[:sz])[0]
+			buf = buf[sz:]
+
+		data.update(reparse_buffer)
 
 	# Using the offset and lengths grabbed, we'll set the buffer.
-	reparse_buffer['buffer'] = buf
-	
-	data.update(reparse_buffer)
+	data['buffer'] = buf
 
 	return data
 
