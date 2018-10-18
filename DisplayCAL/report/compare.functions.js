@@ -354,7 +354,7 @@ p.generate_report = function(set_delta_calc_method) {
 		'			<td>' + (WHITEPOINT_SIMULATION ? 'Yes' + (WHITEPOINT_SIMULATION_RELATIVE ? ', relative to display profile whitepoint' : '') : (!DEVICELINK_PROFILE && SIMULATION_PROFILE ? 'No' : 'N/A')) + '</td>',
 		'		</tr>',
 		'		<tr>',
-		'			<th>Chromatic adaption:</th>',
+		'			<th>Chromatic adaptation:</th>',
 		'			<td>' + e['FF_adaption'].value + '</td>',
 		'		</tr>',
 		'		<tr>',
