@@ -2677,6 +2677,8 @@ END_DATA
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
 		if self.use_madvr:
+			if sys.platform == "win32":
+				self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
 			self.madtpg_restore_settings(False, fullscreen)
 
 	def abort_all(self, confirm=False):
@@ -2783,6 +2785,8 @@ END_DATA
 			self.pauseable_now = True
 		self.instrument_on_screen = True
 		if self.use_madvr:
+			if sys.platform == "win32":
+				self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
 			self.madtpg_restore_settings(False, fullscreen)
 	
 	def instrument_reposition_sensor(self):
@@ -2811,6 +2815,8 @@ END_DATA
 			return False
 		self.safe_send(" ")
 		if self.use_madvr:
+			if sys.platform == "win32":
+				self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
 			self.madtpg_restore_settings(False, fullscreen)
 	
 	def clear_argyll_info(self):
@@ -4993,9 +4999,8 @@ BEGIN_DATA
 							else:
 								self.log("Warning - could not restore madTPG "
 								 "'Disable OSD' button state")
-						else:
-							self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
-							self.madtpg.show_rgb(.5, .5, .5)
+						self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
+						self.madtpg.show_rgb(.5, .5, .5)
 					# Get black and white level
 					self.madtpg_bw_lvl = self.madtpg.get_black_and_white_level()
 					if not self.madtpg_bw_lvl:
@@ -9913,6 +9918,8 @@ usage: spotread [-options] [logfile]
 			self.madtpg.set_disable_osd_button(False)
 		if msg:
 			self.madtpg.set_osd_text(msg)
+			if self.cmdname == "dispcal":
+				self.madtpg.show_progress_bar(6)
 	
 	def measure(self, apply_calibration=True):
 		""" Measure the configured testchart """
