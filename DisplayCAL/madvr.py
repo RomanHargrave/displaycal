@@ -1347,18 +1347,18 @@ class MadTPG_Net(MadTPGBase):
 					params[param] = tuple(values)
 		elif command == "reply":
 			commandno = record["commandNo"]
-			repliedcomamnd = self._commands.get(commandno)
-			if repliedcomamnd:
+			repliedcommand = self._commands.get(commandno)
+			if repliedcommand:
 				self._commands.pop(commandno)
 				# XXX: madHcNetXX.dll exports madVR_GetBlackAndWhiteLevel,
 				# but the equivalent madVR network protocol command is
 				# GetBlackWhiteLevel (without the "And")!
-				if repliedcomamnd == "GetBlackWhiteLevel":
+				if repliedcommand == "GetBlackWhiteLevel":
 					if len(params) == 8:
 						params = struct.unpack("<ii", params)
 					else:
 						params = False
-				elif repliedcomamnd == "GetDeviceGammaRamp":
+				elif repliedcommand == "GetDeviceGammaRamp":
 					# Convert to ushort_Array_256_Array_3
 					ramp = ((ctypes.c_ushort * 256) * 3)()
 					if len(params) == 1536:
@@ -1369,12 +1369,12 @@ class MadTPG_Net(MadTPGBase):
 						params = ramp
 					else:
 						params = False
-				elif repliedcomamnd == "GetPatternConfig":
+				elif repliedcommand == "GetPatternConfig":
 					if len(params) == 16:
 						params = struct.unpack("<iiii", params)
 					else:
 						params = False
-				elif repliedcomamnd in ("GetSelected3dlut", ):
+				elif repliedcommand in ("GetSelected3dlut", ):
 					if len(params) == 4:
 						params = struct.unpack("<i", params[0:4])[0]
 					else:
