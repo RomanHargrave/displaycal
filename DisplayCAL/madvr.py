@@ -1178,6 +1178,12 @@ class MadTPG_Net(MadTPGBase):
 			self._remove_client(addr)
 		self._incoming[addr].append((commandno, command, params, component))
 
+	def get_black_and_white_level(self):
+		# XXX: madHcNetXX.dll exports madVR_GetBlackAndWhiteLevel,
+		# but the equivalent madVR network protocol command is
+		# GetBlackWhiteLevel (without the "And")!
+		return MadTPG_Net_Sender(self, self._client_socket, "GetBlackWhiteLevel")()
+
 	def get_version(self):
 		""" Return madVR version """
 		try:
@@ -1344,7 +1350,10 @@ class MadTPG_Net(MadTPGBase):
 			repliedcomamnd = self._commands.get(commandno)
 			if repliedcomamnd:
 				self._commands.pop(commandno)
-				if repliedcomamnd == "GetBlackAndWhiteLevel":
+				# XXX: madHcNetXX.dll exports madVR_GetBlackAndWhiteLevel,
+				# but the equivalent madVR network protocol command is
+				# GetBlackWhiteLevel (without the "And")!
+				if repliedcomamnd == "GetBlackWhiteLevel":
 					if len(params) == 8:
 						params = struct.unpack("<ii", params)
 					else:
