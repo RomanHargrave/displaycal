@@ -1032,6 +1032,23 @@ def get_arg(argmatch, args, whole=False):
 			return i, arg
 
 
+def get_default_headers():
+	""" Get default headers for HTTP request """
+	if sys.platform == "darwin":
+		# Python's platform.platform output is useless under Mac OS X
+		# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
+		oscpu = "Mac OS X %s; %s" % (mac_ver()[0], mac_ver()[-1])
+	elif sys.platform == "win32":
+		machine = platform.machine()
+		oscpu = "%s; %s" % (safe_str(" ".join(filter(lambda v: v, win_ver())),
+									 "ASCII", "asciize"),
+							{"AMD64": "x86_64"}.get(machine, machine))
+	else:
+		# Linux
+		oscpu = "%s; %s" % (' '.join(platform.dist()), platform.machine())
+	return {"User-Agent": "%s/%s (%s)" % (appname, version, oscpu)}
+
+
 def http_request(parent=None, domain=None, request_type="GET", path="", 
 				 params=None, files=None, headers=None, charset="UTF-8", failure_msg="",
 				 silent=False):
@@ -1046,18 +1063,7 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 			params[key] = safe_str(params[key], charset)
 		params = urllib.urlencode(params)
 	if headers is None:
-		if sys.platform == "darwin":
-			# Python's platform.platform output is useless under Mac OS X
-			# (e.g. 'Darwin-15.0.0-x86_64-i386-64bit' for Mac OS X 10.11 El Capitan)
-			oscpu = "Mac OS X %s; %s" % (mac_ver()[0], mac_ver()[-1])
-		elif sys.platform == "win32":
-			machine = platform.machine()
-			oscpu = "%s; %s" % (" ".join(filter(lambda v: v, win_ver())),
-								{"AMD64": "x86_64"}.get(machine, machine))
-		else:
-			# Linux
-			oscpu = "%s; %s" % (' '.join(platform.dist()), platform.machine())
-		headers = {"User-Agent": "%s/%s (%s)" % (appname, version, oscpu)}
+		headers = get_default_headers()
 		if request_type == "GET":
 			path += '?' + params
 			params = None
@@ -13019,6 +13025,7 @@ BEGIN_DATA
 									scheme2port.get(components.scheme, "?"))))
 			LoggingHTTPRedirectHandler.newurl = uri
 			opener = urllib2.build_opener(LoggingHTTPRedirectHandler)
+			opener.addheaders = get_default_headers().items()
 			try:
 				response = opener.open(uri)
 				if always_fail_download or test_badssl:
