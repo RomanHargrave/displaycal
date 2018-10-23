@@ -2,6 +2,7 @@
 
 import ctypes
 import _winreg
+import platform
 import struct
 import sys
 
@@ -408,17 +409,27 @@ def win_ver():
 	# Use the registry to get product name, e.g. 'Windows 7 Ultimate'.
 	# Not recommended, but we don't care.
 	pname = "Windows"
+	release = ""
+	build = ""
 	key = None
+	sam = _winreg.KEY_READ
+	if platform.machine() == "AMD64":
+		sam |= _winreg.KEY_WOW64_64KEY
 	try:
 		key = _winreg.OpenKeyEx(_winreg.HKEY_LOCAL_MACHINE,
-								r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+								r"SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+								0, sam)
 		pname = _winreg.QueryValueEx(key, "ProductName")[0]
+		build = "Build %s" % _winreg.QueryValueEx(key, "CurrentBuildNumber")[0]
+		# Since Windows 10
+		release = "Version %s" % _winreg.QueryValueEx(key, "ReleaseId")[0]
+		build += ".%s" % _winreg.QueryValueEx(key, "UBR")[0]
 	except Exception, e:
 		pass
 	finally:
 		if key:
 			_winreg.CloseKey(key)
-	return pname, csd
+	return pname, csd, release, build
 
 
 if __name__ == "__main__":
