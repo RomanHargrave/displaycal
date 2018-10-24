@@ -15243,7 +15243,8 @@ class StartupFrame(wx.Frame):
 				# set its shape, so delay the call to SetWindowShape until
 				# this event.
 				self.Bind(wx.EVT_WINDOW_CREATE, self.SetWindowShape)
-			else:
+			elif (sys.platform != "darwin" or
+				  intlist(mac_ver()[0].split(".")) < [10, 14]):
 				# On wxMSW and wxMac the window has already been created.
 				self.SetWindowShape()
 
