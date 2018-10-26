@@ -36,6 +36,15 @@ def Invert(self):
 wx.Image.Invert = Invert
 
 
+def GammaCorrect(self, from_gamma=-2.4, to_gamma=1.8):
+	""" Gamma correct """
+	buffer = self.GetDataBuffer()
+	for i, byte in enumerate(buffer):
+		buffer[i] = chr(int(round(specialpow(ord(byte) / 255., from_gamma) ** (1.0 / to_gamma) * 255)))
+
+wx.Image.GammaCorrect = GammaCorrect
+
+
 def IsBW(self):
 	"""
 	Check if image is grayscale in the most effective way possible.
