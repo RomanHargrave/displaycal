@@ -6020,7 +6020,8 @@ class ICCProfile:
 		wx, wy = colormath.XYZ2xyY(*rgb_space[1])[:2]
 		return ICCProfile.from_chromaticities(rx, ry, gx, gy,  bx, by, wx, wy,
 											  rgb_space[0], description,
-											  "No copyright", cat=cat,
+											  "No copyright", iccv4=iccv4,
+											  cat=cat,
 											  profile_class=profile_class)
 		
 	
