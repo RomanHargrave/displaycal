@@ -15315,6 +15315,39 @@ class StartupFrame(wx.Frame):
 									silent=True) and os.path.isfile(bmp_path):
 				bmp = wx.Bitmap(bmp_path)
 				if bmp.IsOk():
+					tifficc = which("tifficc")
+					if tifficc:
+						# Convert from sRGB to wx gamma 1.8
+						tif_path = os.path.join(self.worker.tempdir,
+												"screencap.tif")
+						if bmp.SaveFile(tif_path, wx.BITMAP_TYPE_TIF):
+							rec709_gamma18 = list(colormath.get_rgb_space("Rec. 709"))
+							rec709_gamma18[0] = 1.8
+							rec709_gamma18_icc = ICCP.ICCProfile.from_rgb_space(
+								rec709_gamma18, "Rec. 709 gamma 1.8", True)
+							profile_path = os.path.join(self.worker.tempdir,
+														"Rec709_gamma18.icc")
+							rec709_gamma18_icc.write(profile_path)
+							tif_out_path = tif_path[:-4] + "_out.tif"
+							if (self.worker.exec_cmd(tifficc,
+													 ["-o%s" % profile_path,
+													  "-t0",
+													  tif_path,
+													  tif_out_path],
+													 capture_output=True,
+													 skip_scripts=True,
+													 silent=True) and
+								os.path.isfile(tif_out_path)):
+								tif = wx.Bitmap(tif_out_path,
+												wx.BITMAP_TYPE_TIF)
+								if tif.IsOk():
+									bmp = tif
+								else:
+									safe_print("Info: TIF could not be loaded into wx.Bitmap")
+							else:
+								safe_print("Info: TIF could not be color converted")
+						else:
+							safe_print("Info: wx.Bitmap could not be saved as TIF")
 					if (not is_mavericks and
 						bmp.Size[0] >= self.splash_x + self.splash_bmp.Size[0] and
 						bmp.Size[1] >= self.splash_y + self.splash_bmp.Size[1]):
