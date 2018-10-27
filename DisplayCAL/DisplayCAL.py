@@ -10553,7 +10553,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												   size=(400, -1))
 			boxsizer.Add(dlg.description_txt_ctrl, 1, 
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			use_display_txt_ctrl = not display or config.is_virtual_display(display)
+			use_display_txt_ctrl = not display
 			if use_display_txt_ctrl:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display")),
@@ -10561,15 +10561,16 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 				if sys.platform not in ("darwin", "win32"):
 					boxsizer.Add((1, 8))
+				if not config.is_virtual_display():
+					display = self.worker.get_display_name(False, True, False)
 				dlg.display_txt_ctrl = wx.TextCtrl(dlg, -1, 
-												   display or
-												   self.worker.get_display_name(False,
-																				True,
-																				False), 
+												   display, 
 												   size=(400, -1))
 				boxsizer.Add(dlg.display_txt_ctrl, 1, 
 							 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
-			if not manufacturer or config.is_virtual_display(display):
+			use_manufacturer_txt_ctrl = (not manufacturer and
+										 not config.is_virtual_display(display))
+			if use_manufacturer_txt_ctrl:
 				boxsizer = wx.StaticBoxSizer(wx.StaticBox(dlg, -1,
 														  lang.getstr("display.manufacturer")),
 											 wx.VERTICAL)
@@ -10621,7 +10622,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if (dlg.display_tech_ctrl.IsEnabled() and
 				dlg.display_tech_ctrl.GetStringSelection()):
 				tech = loctech[dlg.display_tech_ctrl.GetStringSelection()]
-			if not manufacturer or config.is_virtual_display(display):
+			if use_manufacturer_txt_ctrl:
 				manufacturer = dlg.manufacturer_txt_ctrl.GetStringSelection()
 			dlg.Destroy()
 		else:
