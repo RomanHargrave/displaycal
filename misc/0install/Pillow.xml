@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="feed.xsl"?>
+<interface xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://zero-install.sourceforge.net/2004/injector/interface http://0install.de/schema/injector/interface/interface.xsd http://0install.de/schema/desktop-integration/capabilities http://0install.de/schema/desktop-integration/capabilities/capabilities.xsd" uri="${URL}0install/Pillow.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+  <publish mode="package" xmlns="${URL}" />
+  <name>Pillow</name>
+  <summary xml:lang="en">Pillow, the friendly PIL fork</summary>
+  <description xml:lang="en">Pillow is the friendly PIL fork by Alex Clark and Contributors. PIL is the Python Imaging Library by Fredrik Lundh and Contributors.
+
+The fork author’s goal is to foster and support active development of PIL through:
+
+- Continuous integration testing via Travis CI and AppVeyor
+- Publicized development activity on GitHub
+- Regular releases to the Python Package Index</description>
+  <homepage>https://python-pillow.org/</homepage>
+  <group license="PIL Software License">
+    <group arch="MacOSX-*">
+      <environment name="PYTHONPATH" insert="." />
+      <environment name="DYLD_FALLBACK_FRAMEWORK_PATH" insert="." />
+      <environment name="X_DYLD_FALLBACK_FRAMEWORK_PATH" insert="." />
+      <implementation arch="MacOSX-*" version="0.0.0" released="0000-00-00" stability="stable">
+      </implementation>
+    </group>
+  </group>
+</interface>

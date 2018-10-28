@@ -19,6 +19,7 @@ ${DESC}</description>
 		<requires interface="${URL}0install/numpy.xml" />
 		<requires interface="${URL}0install/pyglet.xml" />
 		<requires interface="${URL}0install/pychromecast.xml" />
+		<requires interface="${URL}0install/Pillow.xml" />
 		<requires interface="${URL}0install/faulthandler.xml" importance="recommended" />
 		<command name="change-display-profile-cal-whitepoint" path="util/change_display_profile_cal_whitepoint.py">
 			<runner interface="${URL}0install/python.xml" version="2.6..!3.0" />
