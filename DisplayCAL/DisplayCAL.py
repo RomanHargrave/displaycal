@@ -15314,19 +15314,55 @@ class StartupFrame(wx.Frame):
 									extra_args + ["-x", "screencap.png"],
 									capture_output=True, skip_scripts=True,
 									silent=True) and os.path.isfile(bmp_path):
-				bmp = wx.Bitmap(bmp_path)
-				if bmp.IsOk():
-					img = bmp.ConvertToImage()
+				img = None
+				cctiff = get_argyll_util("cctiff")
+				if cctiff:
+					# We want to color convert the screenshot using Argyll's
+					# cctiff comand line tool to wx Rec. 709 gamma 1.8 to
+					# get rid of visible color differences.
+					try:
+						from PIL import Image
+					except ImportError, exception:
+						safe_print("Info: Couldn't import PIL:", exception)
+					else:
+						# Open screenshot as PIL image
+						try:
+							pim = Image.open(bmp_path)
+						except Exception, exception:
+							safe_print("Info: Couldn't open image:", exception)
+						else:
+							# Convert PIL image to wx.Image for eventual
+							# resizing prior to color conversion
+							# XXX: Doesn't seem to work correctly, converted
+							# image consists of vertical stripes - probably an
+							# issue with order of RGB data?
+							##width, height = pim.size
+							##img = wx.ImageFromBuffer(width, height,
+													 ##pim.tobytes())
+							img = wx.Image(bmp_path)
+						if img and "icc_profile" in pim.info:
+							# Get embedded ICC profile from image and write to
+							# tmp dir
+							inprofile_path = os.path.join(self.worker.tempdir,
+														  "screencap.icc")
+							with open(inprofile_path, "wb") as inprofile:
+								inprofile.write(pim.info["icc_profile"])
+							# We are done with PIL image now
+				if not img:
+					# Argyll cctiff not found, or couldn't import PIL, or
+					# couldn't open image
+					img = wx.Image(bmp_path)
+					cctiff = None
+				if img.IsOk():
 					if (not is_mavericks and
-						bmp.Size[0] >= self.splash_x + self.splash_bmp.Size[0] and
-						bmp.Size[1] >= self.splash_y + self.splash_bmp.Size[1]):
+						img.Width >= self.splash_x + self.splash_bmp.Size[0] and
+						img.Height >= self.splash_y + self.splash_bmp.Size[1]):
 						# Pre 10.9 we have to get the splashscreen region
 						# from the full screenshot bitmap
-						bmp = bmp.GetSubBitmap(splashdimensions)
-					img = bmp.ConvertToImage()
-					if (is_mavericks and
-						bmp.Size[0] == self.splash_bmp.Size[0] * 2 and
-						bmp.Size[1] == self.splash_bmp.Size[1] * 2):
+						img = img.GetSubImage(splashdimensions)
+					elif (is_mavericks and
+						  img.Width == self.splash_bmp.Size[0] * 2 and
+						  img.Height == self.splash_bmp.Size[1] * 2):
 						# Retina, screencapture is double our bitmap size
 						if wx.VERSION > (3, ):
 							quality = wx.IMAGE_QUALITY_BILINEAR
@@ -15334,7 +15370,44 @@ class StartupFrame(wx.Frame):
 							quality = wx.IMAGE_QUALITY_HIGH
 						img.Rescale(self.splash_bmp.Size[0],
 									self.splash_bmp.Size[1], quality)
-					img.GammaCorrect()
+					tif = None
+					if cctiff:
+						# Convert from display profile to wx Rec. 709 gamma 1.8
+						tif_path = os.path.join(self.worker.tempdir,
+												"screencap.tif")
+						if img.SaveFile(tif_path, wx.BITMAP_TYPE_TIF):
+							# Argyll cctiff can only handle TIFF
+							rec709_gamma18 = list(colormath.get_rgb_space("Rec. 709"))
+							rec709_gamma18[0] = 1.8
+							rec709_gamma18_icc = ICCP.ICCProfile.from_rgb_space(
+								rec709_gamma18, "Rec. 709 gamma 1.8")
+							profile_path = os.path.join(self.worker.tempdir,
+														"Rec709_gamma18.icc")
+							rec709_gamma18_icc.write(profile_path)
+							tif_out_path = tif_path[:-4] + "_out.tif"
+							if (self.worker.exec_cmd(cctiff,
+													 ["-ip",
+													  "%s" % inprofile_path,
+													  "-ip",
+													  "%s" % profile_path,
+													  tif_path,
+													  tif_out_path],
+													 capture_output=True,
+													 skip_scripts=True,
+													 silent=True) and
+								os.path.isfile(tif_out_path)):
+								tif = wx.Image(tif_out_path,
+												wx.BITMAP_TYPE_TIF)
+								if tif.IsOk():
+									img = tif
+								else:
+									safe_print("Info: TIF could not be loaded into wx.Image")
+							else:
+								safe_print("Info: TIF could not be color converted")
+						else:
+							safe_print("Info: wx.Image could not be saved as TIF")
+					if not tif or img is not tif:
+						img.GammaCorrect()
 					bmp = img.ConvertToBitmap()
 					self._buffereddc.DrawBitmap(bmp, 0, 0)
 				self.worker.wrapup(False)
