@@ -42,10 +42,33 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2018-10-10 22:04 (UTC) 3.7  -->
+			<!-- 2018-11-01 22:30 (UTC) 3.7.1  -->
 			<dl>
-				<dt id="changelog-3.7">2018-10-10 22:04 (UTC) 3.7 </dt>
+				<dt id="changelog-3.7.1">2018-11-01 22:30 (UTC) 3.7.1 </dt>
 					<dd>
+						<h3>DisplayCAL 3.7.1 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Updated Fogra Media Wedge V3 evaluation criteria to ISO 12647-7:2016 version of the standard (use ΔE*00 and ΔCh for CMY gray).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Measurement report: Moved ΔICtCp to general evaluation criteria so it can be shown in the additional statistics for all available criteria.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Updated simplified chinese translation (thanks to Mars).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Full field pattern insertion: Support the latest ArgyllCMS 2.0.2 Beta development code.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Consistency: When changing the verification chart, set the simulate whitepoint relative to display profile whitepoint option according to the simulation profile (just as when changing the simuation profile itself) and don't reset the simulate whitepoint option when changing the simulation profile.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Automatically fall back to the default verification chart if the selected one no longer exists (due to the chart file having been moved or deleted).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Detect highly non-monotonic luminance responses when creating shaper curves (intended to let creating a profile from highly non-monotonic measurements fail just as before, but with a nicer, more descriptive error message instead of the raw exception from the underlying fitting function).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> When creating a profile fails and results in an error dialog, do not show the superfluous additional “profiling not finished” message.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Restored the ability to create colorimeter corrections for virtual displays, which was accidentally removed in DisplayCAL 3.7.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> madVR (Linux, macOS): Querying the madVR configured black &amp; white level didn't work via the madVR network protocol.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> madVR (Linux, macOS, Windows when using pattern insertion): Prevent lingering madTPG OSD messages.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> macOS: Incorrect rendering of splash screen under macOS 10.14 Mojave.</li>
+						</ul>
+
+						<p id="changelog-3.7">2018-10-10 22:04 (UTC) 3.7 </p>
 						<h3>DisplayCAL 3.7 </h3>
 
 						<h4>Added in this release:</h4>

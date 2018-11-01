@@ -5,6 +5,113 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Wed Oct 10 22:11:06 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.7:
+  * [Feature] Full field pattern insertion option for selected
+    pattern generators (madTPG*, Prisma and Resolve). *madTPG on
+    Windows requires using a modified version of ArgyllCMS.
+  * [Feature] Chromatic adaptation control for the synthetic ICC
+    profile creator.
+  * Resolve HDR 3D LUT preset (SMPTE 2084 hard clip, no
+    tonemapping).
+  * [Enhancement] Show a column with the spectral resolution and
+    range of the reference measurements when listing colorimeter
+    corrections from the online database (if available).
+  * [Enhancement] Improved support for (3rd party) profiles with
+    chromatic adaptation transforms other than Bradford, e.g. for
+    use as 3D LUT source profiles.
+  * [Enhancement] Early abort when cancelling video level detection
+    measurements.
+  * [Enhancement] Early abort if connecting to madTPG fails.
+  * [Enhancement] Updated simplified chinese translation (thanks to
+    Mars).
+  * [Enhancement] If using madTPG and continuing from interactive
+    adjustment to iterative grayscale calibration, wait three
+    seconds after switching to fullscreen and exclusive fullscreen
+    respectively, to give the display time to complete the switch,
+    before commencing measurements.
+  * [Enhancement] Show messages from instrument related popup
+    dialogs during measurements on the madTPG on-screen display as
+    well.
+  * Hue preservation less than 100% for HDR SMPTE 2084 3D LUTs with
+    roll-off tonemapping now only affects red-orange/orange/amber
+    hues (i.e. match madVR's “color tweaks for fire & explosions”).
+  * [Enhancement] Verification: Before attempting to create a
+    measurement report, automatically check the PCS to device table
+    resolution for LUT profiles if necessary and warn about low
+    resolution tables.
+  * [Enhancement] 3D LUT verification: When using a different
+    whitepoint target for a 3D LUT, use the altered source profile
+    as simulation profile for verification.
+  * [Enhancement] 3D LUT verification: When creating a self check
+    report, automatically use the device link profile.
+  * [Enhancement] Measurement report: Show weighted ΔL, ΔC and ΔH
+    for ΔE*94 and ΔE*00.
+  * [Enhancement] Measurement report: Signed values for ΔL*76,
+    ΔL*94, ΔC*76 and ΔC*94 are now always relative to the nominal
+    values (match ΔE*00 and ΔICtCp).
+  * [Enhancement] Measurement report: Measured vs display profile
+    whitepoint is now a purely informational statistic, no longer a
+    pass criteria.
+  * [UI] When creating a colorimeter correction, allow selecting a
+    display manufacturer via autocomplete if not set.
+  * [UI] [Cosmetic] Minor UI spacing adjustments.
+  * [Cosmetic] For HDR 3D LUTs with SMPTE 2084 (hard clip) tone
+    curve, set the mastering display peak luminance in the
+    simulation profile description to the target peak.
+  * [Minor] Interpolation between clipping and roll-off for HDR 3D
+    LUTs with SMPTE 2084 tone curve was not as smooth as intended
+    with mastering display peak luminance below 10000 cd/m² or just
+    above target peak.
+  * [Minor] HDR 3D LUTs with SMPTE 2084 (hard clip) tone curve did
+    reproduce slightly too low luminance in a limited region below
+    the chosen target peak.
+  * [Minor] Verification controls were not being initialized if
+    loading settings before switching to the verification tab.
+  * [Trivial] Also update verification tone curve controls if a
+    matrix profile with non-identical shaper curves is selected as
+    simulation profile.
+  * [Trivial] Make eeColor to madVR converter exit cleanly when
+    receiving SIGBREAK.
+  * [Trivial] Correctly escape/unescape quotes in CGATS.
+  * [Trivial] Reset enumerated measurement modes when changing
+    Argyll version.
+  * [Trivial] Do not automatically disable interactive display
+    adjustment after visual whitepoint editor measurement.
+  * [Trivial] When using madTPG, restore fullscreen and OSD button
+    states when continuing on to calibration after interactive
+    adjustment.
+  * [Trivial] madTPG did not automatically enter fullscreen if
+    enabled when skipping interactive display adjustment and
+    detecting video levels.
+  * [Trivial] Only show the place instrument on screen countdown in
+    madTPG if we don't temporarily leave fullscreen for interactive
+    adjustment during calibration anyway.
+  * [Trivial] Always force HDR 3D LUT SMPTE 2084 mastering display
+    peak luminance to be greater than or equal to target peak
+    luminance.
+  * [Cosmetic] Do not show HDR 3D LUT tone mapping hue/saturation
+    controls for SMPTE 2084 (hard clip).
+  * [Minor] Measurement report: Measured vs assumed/profile
+    whitepoint delta ICtCp should always be referenced to
+    assumed/profile whitepoint.
+  * [Minor] Measurement report: Using absolute values without
+    display profile whitepoint as reference in ICtCp mode
+    referenced the values to D50 instead of the natural ICtCp
+    whitepoint of D65.
+  * [Cosmetic] Measurement report: RGB color comparison swatches
+    when using absolute values and display profile whitepoint as
+    reference were not referenced to chosen whitepoint.
+  * [Trivial] Profile information: Whitepoint delta E to locus
+    should always be referenced to locus, not D50.
+  * [Cosmetic] Profile information: Use correct axis labels for
+    DIN99b 2D gamut plot.
+  * [Minor] Standalone 3D LUT maker: Unmatched Thaw() call when
+    setting abstract profile.
+  * [Minor]: Prevent potential subprocess memory leak.
+
+-------------------------------------------------------------------
 Sat Aug 25 14:22:11 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.6.2:
