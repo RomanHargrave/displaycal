@@ -1331,6 +1331,30 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			return
 		
 		if do_py2app:
+			# Fix Pillow (PIL) dylibs not being included
+			pil_dylibs = os.path.join(dist_dir, name + ".app", "Contents",
+									  "Resources", "lib", "python%s.%s" %
+														  sys.version_info[:2],
+									  "lib-dynload", "PIL", ".dylibs")
+			if not os.path.isdir(pil_dylibs):
+				import PIL
+				pil_installed_dylibs = os.path.join(os.path.dirname(PIL.__file__),
+													".dylibs")
+				print "Copying", pil_installed_dylibs, "->", pil_dylibs
+				shutil.copytree(pil_installed_dylibs,
+								pil_dylibs)
+				for entry in os.listdir(pil_dylibs):
+					print os.path.join(pil_dylibs, entry)
+				# Remove wrongly included frameworks
+				frameworks_dir = os.path.join(dist_dir, name + ".app",
+											  "Frameworks")
+				for entry in os.listdir(frameworks_dir):
+					if entry in ("libjpeg.9.dylib",
+								 "libtiff.5.dylib"):
+						dylib = os.path.join(frameworks_dir, entry)
+						print "Removing", dylib
+						os.remove(dylib)
+
 			create_app_symlinks(dist_dir, scripts)
 		
 		if do_py2exe:
