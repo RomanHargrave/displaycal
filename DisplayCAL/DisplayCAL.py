@@ -15348,6 +15348,8 @@ class StartupFrame(wx.Frame):
 							with open(inprofile_path, "wb") as inprofile:
 								inprofile.write(pim.info["icc_profile"])
 							# We are done with PIL image now
+						else:
+							cctiff = None
 				if not img:
 					# Argyll cctiff not found, or couldn't import PIL, or
 					# couldn't open image
