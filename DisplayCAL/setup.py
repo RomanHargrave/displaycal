@@ -1347,7 +1347,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 					print os.path.join(pil_dylibs, entry)
 				# Remove wrongly included frameworks
 				frameworks_dir = os.path.join(dist_dir, name + ".app",
-											  "Frameworks")
+											  "Contents", "Frameworks")
 				for entry in os.listdir(frameworks_dir):
 					if entry in ("libjpeg.9.dylib",
 								 "libtiff.5.dylib"):
