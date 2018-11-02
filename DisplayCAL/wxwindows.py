@@ -4279,7 +4279,7 @@ class CustomColLabelRenderer(object):
 			else:
 				if mavericks:
 					# Use Mavericks-like color scheme
-					color = wx.Colour(255, 255, 255)
+					color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_LISTBOX)
 				else:
 					color = grid.GetLabelBackgroundColour()
 				if col % 2 == 0 and grid.alternate_col_label_background_color:
@@ -4290,7 +4290,7 @@ class CustomColLabelRenderer(object):
 			dc.SetBrush(wx.Brush(color))
 			dc.SetPen(wx.TRANSPARENT_PEN)
 			dc.DrawRectangleRect(rect)
-			pen = wx.Pen(grid.GetGridLineColour())
+			pen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
 			dc.SetPen(pen)
 			if getattr(grid, "draw_horizontal_grid_lines", True) or (mavericks and
 																	 not self.bgcolor):
@@ -4301,7 +4301,9 @@ class CustomColLabelRenderer(object):
 							rect[0] + rect[2] - 1, rect[3])
 		if getattr(grid, "draw_col_labels", True) and col > -1:
 			dc.SetFont(grid.GetLabelFont())
-			if mavericks and not self.bgcolor:
+			if mavericks and not self.bgcolor and (color.Red() == 255 and
+												   color.Green() == 255 and
+												   color.Blue() == 255):
 				# Use Mavericks-like color scheme
 				color = wx.Colour(80, 100, 120)
 			else:
