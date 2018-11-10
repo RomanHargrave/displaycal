@@ -4313,7 +4313,7 @@ END_DATA
 					if len(line) and line[0][0] == "-":
 						arg = line[0]
 						value = line[-1].split(None, 1)[0]
-						if arg == "-d" and value != "n":
+						if arg == "-d" and not value.startswith("n"):
 							# Argyll 2.0.2 started listing -d madvr and -d dummy
 							# instead of -dmadvr and -ddummy
 							# Use the non-space-delimited as the canonical form
