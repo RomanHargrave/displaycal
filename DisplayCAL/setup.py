@@ -63,6 +63,7 @@ from defaultpaths import autostart, autostart_home
 from meta import (author, author_ascii, description, longdesc, domain, name, 
 				  py_maxversion, py_minversion, version, version_tuple, 
 				  wx_minversion, author_email, script2pywname, appstream_id)
+from util_list import intlist
 from util_os import getenvu, relpath, safe_glob
 from util_str import safe_str
 appname = name
@@ -105,7 +106,7 @@ config = {"data": ["tests/*.icc"],
 							   "pyglet.input", "pyglet.text",
 							   "pyglet.window", "pyo", "setuptools", "tcl",
 							   "test"],
-					   "darwin": [],
+					   "darwin": ["gdbm"],
 					   "win32": ["win32com.client.genpy"]},
 		  "package_data": {name: ["argyll_instruments.json",
 								  "beep.wav",
@@ -728,31 +729,36 @@ def setup():
 	elif sys.platform == "darwin":
 		macros = [("__APPLE__", None), ("UNIX", None)]
 		libraries = None
-		link_args = ["-framework Carbon", "-framework CoreFoundation", 
-						   "-framework Python", "-framework IOKit"]
-		if not help and ("build" in sys.argv[1:] or 
-						 "build_ext" in sys.argv[1:] or 
-						 (("install" in sys.argv[1:] or 
-						   "install_lib" in sys.argv[1:]) and 
-						  not "--skip-build" in sys.argv[1:])):
-			p = sp.Popen([sys.executable, '-c', '''import os
+		# XXX: Not sure which macOS version exactly removed the need
+		# to specify -framework
+		if intlist(platform.mac_ver()[0].split(".")) >= [10, 7]:
+			link_args = None
+		else:
+			link_args = ["-framework Carbon", "-framework CoreFoundation", 
+							   "-framework Python", "-framework IOKit"]
+			if not help and ("build" in sys.argv[1:] or 
+							 "build_ext" in sys.argv[1:] or 
+							 (("install" in sys.argv[1:] or 
+							   "install_lib" in sys.argv[1:]) and 
+							  not "--skip-build" in sys.argv[1:])):
+				p = sp.Popen([sys.executable, '-c', '''import os
 from distutils.core import setup, Extension
 
 setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r, 
 							 define_macros=%r, extra_link_args=%r)])''' % 
-						  (name, bits, sources, macros, link_args)] + sys.argv[1:], 
-						 stdout = sp.PIPE, stderr = sp.STDOUT)
-			lines = []
-			while True:
-				o = p.stdout.readline()
-				if o == '' and p.poll() != None:
-					break
-				if o[0:4] == 'gcc ':
-					lines.append(o)
-				print o.rstrip()
-			if len(lines):
-				os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
-				sp.call(lines[-1], shell = True)  # fix the library
+							  (name, bits, sources, macros, link_args)] + sys.argv[1:], 
+							 stdout = sp.PIPE, stderr = sp.STDOUT)
+				lines = []
+				while True:
+					o = p.stdout.readline()
+					if o == '' and p.poll() != None:
+						break
+					if o[0:4] == 'gcc ':
+						lines.append(o)
+					print o.rstrip()
+				if len(lines):
+					os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.5'
+					sp.call(lines[-1], shell = True)  # fix the library
 	else:
 		macros = [("UNIX", None)]
 		libraries = ["X11", "Xinerama", "Xrandr", "Xxf86vm"]
@@ -1331,11 +1337,13 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			return
 		
 		if do_py2app:
+			frameworks_dir = os.path.join(dist_dir, name + ".app",
+										  "Contents", "Frameworks")
+			lib_dynload_dir = os.path.join(dist_dir, name + ".app", "Contents",
+										   "Resources", "lib", "python%s.%s" %
+										   sys.version_info[:2], "lib-dynload")
 			# Fix Pillow (PIL) dylibs not being included
-			pil_dylibs = os.path.join(dist_dir, name + ".app", "Contents",
-									  "Resources", "lib", "python%s.%s" %
-														  sys.version_info[:2],
-									  "lib-dynload", "PIL", ".dylibs")
+			pil_dylibs = os.path.join(lib_dynload_dir, "PIL", ".dylibs")
 			if not os.path.isdir(pil_dylibs):
 				import PIL
 				pil_installed_dylibs = os.path.join(os.path.dirname(PIL.__file__),
@@ -1346,14 +1354,23 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				for entry in os.listdir(pil_dylibs):
 					print os.path.join(pil_dylibs, entry)
 				# Remove wrongly included frameworks
-				frameworks_dir = os.path.join(dist_dir, name + ".app",
-											  "Contents", "Frameworks")
+				dylibs_entries = os.listdir(pil_installed_dylibs)
 				for entry in os.listdir(frameworks_dir):
-					if entry in ("libjpeg.9.dylib",
-								 "libtiff.5.dylib"):
+					if entry in dylibs_entries:
 						dylib = os.path.join(frameworks_dir, entry)
 						print "Removing", dylib
 						os.remove(dylib)
+			import wx
+			if wx.VERSION >= (4, ):
+				# Fix wxPython 4 dylibs being included in wrong location
+				wx_dylibs = os.path.join(lib_dynload_dir, "wx")
+				for entry in os.listdir(frameworks_dir):
+					if entry.startswith("libwx":
+						dylib = os.path.join(frameworks_dir, entry)
+						lib_dylib = os.path.join(wx_dylibs, entry)
+						print "Moving", dylib, "->", lib_dylib
+						shutil.move(dylib, lib_dylib)
+			
 
 			create_app_symlinks(dist_dir, scripts)
 		
