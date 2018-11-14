@@ -24,6 +24,7 @@ import sys
 
 # Standard modules
 
+from StringIO import StringIO
 import datetime
 import decimal
 Decimal = decimal.Decimal
@@ -101,7 +102,7 @@ except ImportError:
 	CCPG = None.__class__
 from trash import trash, TrashAborted, TrashcanUnavailableError
 from util_decimal import float2dec, stripzeros
-from util_io import LineCache, StringIOu as StringIO, TarFileProper
+from util_io import LineCache, StringIOu, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (dlopen, expanduseru, get_program_file, getenvu,
 					 is_superuser, launch_file, listdir_re, safe_glob, waccess,
@@ -12118,8 +12119,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					show_result_dialog(Error(lang.getstr("profile.no_embedded_ti3") + 
 											 "\n" + path), self)
 					return
-				ti3 = StringIO(profile.tags.get("CIED", "") or 
-							   profile.tags.get("targ", ""))
+				ti3 = StringIOu(profile.tags.get("CIED", "") or 
+								profile.tags.get("targ", ""))
 			else:
 				profile = None
 				try:
@@ -12615,8 +12616,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				ti3 = StringIO(profile.tags.get("CIED", "") or 
-							   profile.tags.get("targ", ""))
+				ti3 = StringIOu(profile.tags.get("CIED", "") or 
+								profile.tags.get("targ", ""))
 				# Preserve custom tags
 				for tagname in ("mmod", "meta"):
 					if tagname in profile.tags:
@@ -13433,8 +13434,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							   bitmap=geticon(32, "dialog-error"))
 					return
 				ti3_lines = [line.strip() for 
-							 line in StringIO(profile.tags.get("CIED", "") or 
-											  profile.tags.get("targ", ""))]
+							 line in StringIOu(profile.tags.get("CIED", "") or 
+											   profile.tags.get("targ", ""))]
 				if not "CTI3" in ti3_lines:
 					InfoDialog(self, 
 							   msg=lang.getstr("profile.no_embedded_ti3") + 
@@ -14031,8 +14032,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							   ok=lang.getstr("ok"), 
 							   bitmap=geticon(32, "dialog-error"))
 					return
-				cal = StringIO(profile.tags.get("CIED", "") or 
-							   profile.tags.get("targ", ""))
+				cal = StringIOu(profile.tags.get("CIED", "") or 
+								profile.tags.get("targ", ""))
 			else:
 				try:
 					cal = open(path, "rU")
@@ -15315,46 +15316,57 @@ class StartupFrame(wx.Frame):
 									capture_output=True, skip_scripts=True,
 									silent=True) and os.path.isfile(bmp_path):
 				img = None
-				cctiff = get_argyll_util("cctiff")
-				if cctiff:
-					# We want to color convert the screenshot using Argyll's
-					# cctiff comand line tool to wx Rec. 709 gamma 1.8 to
-					# get rid of visible color differences.
+				# We want to color convert the screenshot to wx Rec. 709
+				# gamma 1.8 to get rid of visible color differences.
+				try:
+					import PIL, PIL.Image, PIL.ImageCms
+				except ImportError, exception:
+					PIL = None
+					safe_print("Info: Couldn't import PIL:", exception)
+				else:
+					rec709_gamma18 = list(colormath.get_rgb_space("Rec. 709"))
+					rec709_gamma18[0] = 1.8
+					rec709_gamma18_profile = ICCP.ICCProfile.from_rgb_space(
+						rec709_gamma18, "Rec. 709 gamma 1.8")
+					rec709_gamma18_io = StringIO(rec709_gamma18_profile.data)
 					try:
-						from PIL import Image
-					except ImportError, exception:
-						safe_print("Info: Couldn't import PIL:", exception)
+						rec709_gamma18_cms = PIL.ImageCms.getOpenProfile(rec709_gamma18_io)
+					except Exception, exception:
+						rec709_gamma18_cms = None
+						safe_print("Info:", exception)
+				tif_path = os.path.join(self.worker.tempdir,
+										"screencap.tif")
+				if PIL and rec709_gamma18_cms:
+					# Open screenshot as PIL image
+					try:
+						pim = PIL.Image.open(bmp_path)
+					except Exception, exception:
+						safe_print("Info: Couldn't open image:", exception)
 					else:
-						# Open screenshot as PIL image
-						try:
-							pim = Image.open(bmp_path)
-						except Exception, exception:
-							safe_print("Info: Couldn't open image:", exception)
-						else:
-							# Convert PIL image to wx.Image for eventual
-							# resizing prior to color conversion
-							# XXX: Doesn't seem to work correctly, converted
-							# image consists of vertical stripes - probably an
-							# issue with order of RGB data?
-							##width, height = pim.size
-							##img = wx.ImageFromBuffer(width, height,
-													 ##pim.tobytes())
-							img = wx.Image(bmp_path)
-						if img and "icc_profile" in pim.info:
-							# Get embedded ICC profile from image and write to
-							# tmp dir
-							inprofile_path = os.path.join(self.worker.tempdir,
-														  "screencap.icc")
-							with open(inprofile_path, "wb") as inprofile:
-								inprofile.write(pim.info["icc_profile"])
+						if "icc_profile" in pim.info:
+							# Get embedded ICC profile from image
+							inprofile_io = StringIO(pim.info["icc_profile"])
+							# Convert from display profile to wx Rec. 709 gamma 1.8
+							try:
+								inprofile_cms = PIL.ImageCms.getOpenProfile(inprofile_io)
+								PIL.ImageCms.profileToProfile(pim, inprofile_cms,
+															  rec709_gamma18_cms,
+															  inPlace=True)
+								# Convert PIL image to wx.Image
+								# XXX: Doesn't seem to work correctly, converted
+								# image consists of vertical stripes - probably an
+								# issue with order of RGB data?
+								##width, height = pim.size
+								##img = wx.ImageFromBuffer(width, height,
+														 ##pim.tobytes())
+								pim.save(tif_path)
+							except Exception, exception:
+								safe_print("Info:", exception)
+							else:
+								bmp_path = tif_path
 							# We are done with PIL image now
-						else:
-							cctiff = None
 				if not img:
-					# Argyll cctiff not found, or couldn't import PIL, or
-					# couldn't open image
 					img = wx.Image(bmp_path)
-					cctiff = None
 				if img.IsOk():
 					if (not is_mavericks and
 						img.Width >= self.splash_x + self.splash_bmp.Size[0] and
@@ -15372,43 +15384,8 @@ class StartupFrame(wx.Frame):
 							quality = wx.IMAGE_QUALITY_HIGH
 						img.Rescale(self.splash_bmp.Size[0],
 									self.splash_bmp.Size[1], quality)
-					tif = None
-					if cctiff:
-						# Convert from display profile to wx Rec. 709 gamma 1.8
-						tif_path = os.path.join(self.worker.tempdir,
-												"screencap.tif")
-						if img.SaveFile(tif_path, wx.BITMAP_TYPE_TIF):
-							# Argyll cctiff can only handle TIFF
-							rec709_gamma18 = list(colormath.get_rgb_space("Rec. 709"))
-							rec709_gamma18[0] = 1.8
-							rec709_gamma18_icc = ICCP.ICCProfile.from_rgb_space(
-								rec709_gamma18, "Rec. 709 gamma 1.8")
-							profile_path = os.path.join(self.worker.tempdir,
-														"Rec709_gamma18.icc")
-							rec709_gamma18_icc.write(profile_path)
-							tif_out_path = tif_path[:-4] + "_out.tif"
-							if (self.worker.exec_cmd(cctiff,
-													 ["-ip",
-													  "%s" % inprofile_path,
-													  "-ip",
-													  "%s" % profile_path,
-													  tif_path,
-													  tif_out_path],
-													 capture_output=True,
-													 skip_scripts=True,
-													 silent=True) and
-								os.path.isfile(tif_out_path)):
-								tif = wx.Image(tif_out_path,
-												wx.BITMAP_TYPE_TIF)
-								if tif.IsOk():
-									img = tif
-								else:
-									safe_print("Info: TIF could not be loaded into wx.Image")
-							else:
-								safe_print("Info: TIF could not be color converted")
-						else:
-							safe_print("Info: wx.Image could not be saved as TIF")
-					if not tif or img is not tif:
+					if bmp_path != tif_path:
+						# Fallback
 						img.GammaCorrect()
 					bmp = img.ConvertToBitmap()
 					self._buffereddc.DrawBitmap(bmp, 0, 0)
