@@ -5,6 +5,41 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Thu Nov 01 22:32:47 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.7.1:
+  * [Enhancement] Measurement report: Updated Fogra Media Wedge V3
+    evaluation criteria to ISO 12647-7:2016 version of the standard
+    (use ΔE*00 and ΔCh for CMY gray).
+  * [Enhancement] Measurement report: Moved ΔICtCp to general
+    evaluation criteria so it can be shown in the additional
+    statistics for all available criteria.
+  * [Enhancement] Updated simplified chinese translation (thanks to
+    Mars).
+  * [Enhancement] Full field pattern insertion: Support the latest
+    ArgyllCMS 2.0.2 Beta development code.
+  * [Enhancement] [UI] Consistency: When changing the verification
+    chart, set the simulate whitepoint relative to display profile
+    whitepoint option according to the simulation profile (just as
+    when changing the simuation profile itself) and don't reset the
+    simulate whitepoint option when changing the simulation
+    profile.
+  * [Cosmetic] Automatically fall back to the default verification
+    chart if the selected one no longer exists (due to the chart
+    file having been moved or deleted).
+  * [Cosmetic] Detect highly non-monotonic luminance responses when
+    creating shaper curves (intended to let creating a profile from
+    highly non-monotonic measurements fail just as before, but with
+    a nicer, more descriptive error message instead of the raw
+    exception from the underlying fitting function).
+  * [Cosmetic] When creating a profile fails and results in an
+    error dialog, do not show the superfluous additional “profiling
+    not finished” message.
+  * [Minor] Restored the ability to create colorimeter corrections
+    for virtual displays, which was accidentally removed in
+    DisplayCAL 3.7.
+
+-------------------------------------------------------------------
 Wed Oct 10 22:11:06 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.7:
