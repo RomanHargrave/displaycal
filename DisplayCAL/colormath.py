@@ -769,6 +769,22 @@ def delta(L1, a1, b1, L2, a2, b2, method="1976", p1=None, p2=None, p3=None,
 				"Hw": dHw}
 
 
+def XYZ2Lab_delta(X1, Y1, Z1, X2, Y2, Z2, method="76", whitepoint1="D50",
+				  whitepoint2="D50", whitepoint_reference="D50", cat="Bradford"):
+	whitepoint1 = get_whitepoint(whitepoint1)
+	whitepoint2 = get_whitepoint(whitepoint2)
+	whitepoint_reference = get_whitepoint(whitepoint_reference)
+	if whitepoint1 != whitepoint_reference:
+		X1, Y1, Z1 = adapt(X1, Y1, Z1, whitepoint1, whitepoint_reference, cat)
+	if whitepoint2 != whitepoint_reference:
+		X2, Y2, Z2 = adapt(X2, Y2, Z2, whitepoint2, whitepoint_reference, cat)
+	L1, a1, b1 = XYZ2Lab(X1, Y1, Z1, whitepoint_reference)
+	L2, a2, b2 = XYZ2Lab(X2, Y2, Z2, whitepoint_reference)
+	logging.debug("L*a*b*[1] %.4f %.4f %.4f L*a*b*[2] %.4f %.4f %.4f" %
+				  (L1, a1, b1, L2, a2, b2))
+	return delta(L1, a1, b1, L2, a2, b2, method)
+
+
 def is_similar_matrix(matrix1, matrix2, digits=3):
 	""" Compare two matrices and check if they are the same
 	up to n digits after the decimal point """
