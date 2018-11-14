@@ -1365,7 +1365,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 				# Fix wxPython 4 dylibs being included in wrong location
 				wx_dylibs = os.path.join(lib_dynload_dir, "wx")
 				for entry in os.listdir(frameworks_dir):
-					if entry.startswith("libwx":
+					if entry.startswith("libwx"):
 						dylib = os.path.join(frameworks_dir, entry)
 						lib_dylib = os.path.join(wx_dylibs, entry)
 						print "Moving", dylib, "->", lib_dylib
