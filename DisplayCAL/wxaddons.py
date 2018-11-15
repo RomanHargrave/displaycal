@@ -7,7 +7,11 @@ import threading
 import types
 
 from colormath import specialpow
-from wxfixes import wx
+from wxfixes import wx, GenButton, PlateButton
+
+import wx.grid
+from lib.agw.gradientbutton import GradientButton
+import floatspin
 
 
 def AdjustMinMax(self, minvalue=0.0, maxvalue=1.0):
@@ -547,9 +551,28 @@ class BetterWindowDisabler(object):
 				if (w and w not in skip and "Inspection" not in "%s" % w and
 					w not in BetterWindowDisabler.windows):
 					self._windows.append(w)
+					# Selectively add children to our list of handled
+					# windows. This prevents a segfault with wxPython 4
+					# under macOS where GetAllChildren includes sub-controls
+					# of controls, like scrollbars etc.
 					for child in w.GetAllChildren(skip + toplevel):
-						if (child and not isinstance(child, (wx.Panel,
-															 wx.PyPanel)) and
+						if (child and isinstance(child, (wx.BitmapButton,
+														 wx.Button,
+														 wx.CheckBox,
+														 wx.Choice,
+														 wx.ComboBox,
+														 wx.ListBox,
+														 wx.ListCtrl,
+														 wx.RadioButton,
+														 wx.SpinCtrl,
+														 wx.Slider,
+														 wx.StaticText,
+														 wx.TextCtrl,
+														 wx.grid.Grid,
+														 floatspin.FloatSpin,
+														 GenButton,
+														 GradientButton,
+														 PlateButton)) and
 							child not in BetterWindowDisabler.windows):
 							# Don't disable panels, this can have weird side
 							# effects for contained controls
