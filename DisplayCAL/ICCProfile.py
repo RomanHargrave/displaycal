@@ -4182,6 +4182,9 @@ class MultiLocalizedUnicodeType(ICCProfileTag, AODict): # ICC v4
 			for countryCode in ("UK", "US"):
 				if countryCode in self["en"]:
 					return self["en"][countryCode]
+			if self["en"]:
+				return self["en"].values()[0]
+			return u""
 		elif len(self):
 			return self.values()[0].values()[0]
 		else:
