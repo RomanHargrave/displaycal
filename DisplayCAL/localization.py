@@ -80,7 +80,7 @@ def getcode():
 	return lcode
 
 
-def getstr(id_str, strvars=None, lcode=None):
+def getstr(id_str, strvars=None, lcode=None, default=None):
 	""" Get a translated string from the dictionary """
 	if not lcode:
 		lcode = getcode()
@@ -119,7 +119,7 @@ def getstr(id_str, strvars=None, lcode=None):
 		if (debug and id_str and not isinstance(id_str, unicode) and
 			not " " in id_str):
 			usage[id_str] = 0
-		return id_str
+		return default or id_str
 
 
 def gettext(text):

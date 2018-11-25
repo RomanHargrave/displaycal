@@ -3207,7 +3207,11 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_comports(self, force=False):
 		""" Update the comport selector control. """
 		self.comport_ctrl.Freeze()
-		self.comport_ctrl.SetItems(self.worker.instruments)
+		self.comport_ctrl.SetItems([lang.getstr("instrument.%s" %
+												instrument.lower().replace(" ", "_").replace(",", ""),
+												default=instrument)
+									for instrument in
+									self.worker.instruments])
 		if self.worker.instruments:
 			self.comport_ctrl.SetSelection(
 				min(max(0, len(self.worker.instruments) - 1), 
