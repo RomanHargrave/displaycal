@@ -10585,10 +10585,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				if not pnpidcache:
 					# Populate pnpidcache
 					get_manufacturer_name("???")
+				# CB_SORT isn't supported by wxOSX/Cocoa!
+				# Why isn't this mentioned in the wxPython docs?
 				dlg.manufacturer_txt_ctrl = AutocompleteComboBox(dlg, -1, 
-													  choices=pnpidcache.values(), 
-													  size=(400, -1),
-													  style=wx.CB_SORT)
+													  choices=natsort(pnpidcache.values()), 
+													  size=(400, -1))
 				if (not manufacturer and
 					display == self.worker.get_display_name(False, True, False)):
 					dlg.manufacturer_txt_ctrl.SetStringSelection(self.worker.get_display_edid().get("manufacturer", ""))
