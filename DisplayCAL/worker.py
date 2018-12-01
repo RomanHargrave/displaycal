@@ -13040,6 +13040,7 @@ BEGIN_DATA
 					# file, unless we are verifying an existing local app setup
 					# or portable archive)
 					noredir = urllib2.build_opener(NoHTTPRedirectHandler)
+					noredir.addheaders = get_default_headers().items()
 					hashes = noredir.open("https://%s/sha256sums.txt" %
 										  domain.lower())
 			except (socket.error, urllib2.URLError, httplib.HTTPException,
