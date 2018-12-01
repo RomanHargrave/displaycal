@@ -29,6 +29,10 @@ class Menu(wx.EvtHandler):
 		self.MenuItems = []
 		self.Parent = None
 		self._menuitems = {}
+		# With wxPython 4, calling <EvtHandler>.Destroy() no longer makes the
+		# instance evaluate to False in boolean comparisons, so we emulate that
+		# functionality
+		self._destroyed = False
 
 	def Append(self, id, text, help=u"", kind=wx.ITEM_NORMAL):
 		return self.AppendItem(MenuItem(self, id, text, help, kind))
@@ -109,7 +113,11 @@ class Menu(wx.EvtHandler):
 			win32gui.DestroyMenu(self.hmenu)
 		if debug or verbose > 1:
 			safe_print('Destroy', self.__class__.__name__, self)
+		self._destroyed = True
 		wx.EvtHandler.Destroy(self)
+
+	def __nonzero__(self):
+		return not self._destroyed
 
 	def Enable(self, id, enable=True):
 		flags = win32con.MF_BYCOMMAND
@@ -190,6 +198,10 @@ class SysTrayIcon(wx.EvtHandler):
 		self.in_popup = False
 		self.menu = None
 		self.Bind(wx.EVT_TASKBAR_RIGHT_UP, self.OnRightUp)
+		# With wxPython 4, calling <EvtHandler>.Destroy() no longer makes the
+		# instance evaluate to False in boolean comparisons, so we emulate that
+		# functionality
+		self._destroyed = False
 
 	def CreatePopupMenu(self):
 		""" Override this method in derived classes """
@@ -262,7 +274,11 @@ class SysTrayIcon(wx.EvtHandler):
 		if self.menu:
 			self.menu.Destroy()
 		self.RemoveIcon()
+		self._destroyed = True
 		wx.EvtHandler.Destroy(self)
+
+	def __nonzero__(self):
+		return not self._destroyed
 
 	def OnRightUp(self, event):
 		self.PopupMenu(self.CreatePopupMenu())
