@@ -5,6 +5,13 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Wed Nov 14 20:24:58 UTC 2018 - obs-packaging@displaycal.net
+
+- Update to 3.7.1.2:
+  * [Regression]: Display enumeration didn't work correctly due to
+    3.7.1 full field pattern insertion change for ArgyllCMS 2.0.2b.
+
+-------------------------------------------------------------------
 Thu Nov 01 22:32:47 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.7.1:

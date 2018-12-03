@@ -48,6 +48,21 @@
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
 
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Show ColorMunki spectrometer as “ColorMunki Design/Photo, i1Studio” in instrument dropdown for better differentiation from “ColorMunki Display” and “ColorMunki Smile” colorimeters.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span>: UnicodeError when trying to access 3rd-party ICC v4 profiles MultiLocalizedUnicodeType tags with non-US/UK country code(s) for english language.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Profile loader (Windows): Work-around an incompatibility with Wacom tablets (tray icon right-click popup menu didn't work).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> macOS: Creating a colorimeter correction didn't work if the display manufacturer couldn't be determined automatically (regression of autocomplete change in DisplayCAL 3.7 due to undocumented wxPython incompatibility).</li>
+						</ul>
+
+						<p id="changelog-3.7.1.2">2018-11-14 20:19 (UTC) 3.7.1.2 </p>
+						<h3>DisplayCAL 3.7.1.2 </h3>
+
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label critical"><span>[</span>Regression<span>]</span></span> Linux: Display enumeration didn't work correctly due to 3.7.1 full field pattern insertion change for ArgyllCMS 2.0.2b.</li>
