@@ -3151,7 +3151,7 @@ BEGIN_DATA
 
 		sig = self.tagSignature or id(self)
 
-		if diagpng and filename:
+		if diagpng and filename and len(self.output) == 3:
 			# Generate diagnostic images
 			fname, ext = os.path.splitext(filename)
 			if diagpng == 2:
@@ -3227,7 +3227,7 @@ BEGIN_DATA
 				self.clut[i * clutres + j] = [[v for v in RGB]
 											   for RGB in row]
 
-		if diagpng and filename:
+		if diagpng and filename and len(self.output) == 3:
 			self.clut_writepng(fname + ".%s.post.CLUT.extrasmooth.png" %
 							   sig)
 	
