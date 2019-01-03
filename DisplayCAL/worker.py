@@ -8644,6 +8644,7 @@ usage: spotread [-options] [logfile]
 						input_curve_clipping = False
 						# Determine profile blackpoint
 						if "bkpt" in profile.tags:
+							# XXX: Not used?
 							Labbp = profile.tags.bkpt.pcs.Lab
 						elif input_curve_clipping:
 							# Figure out profile blackpoint by looking up
@@ -8662,6 +8663,7 @@ usage: spotread [-options] [logfile]
 									# Not clipped
 									Labbp = idata[i]
 									break
+					ogamap_profile = gamap_profile
 					for tableno, intent in tables:
 						# Create device link(s)
 						gamap_args = []
@@ -8699,6 +8701,7 @@ usage: spotread [-options] [logfile]
 								stream.close()
 								gamap_profiles.append(gamap_profile)
 						elif gamap:
+							gamap_profile = ogamap_profile
 							if getcfg("gamap_src_viewcond"):
 								gamap_args.append("-c" +
 												  getcfg("gamap_src_viewcond"))
