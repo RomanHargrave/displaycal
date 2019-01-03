@@ -9849,7 +9849,8 @@ usage: spotread [-options] [logfile]
 	def madtpg_connect(self):
 		self.madtpg_init()
 		self.patterngenerator = self.madtpg
-		if self.madtpg.connect(method2=madvr.CM_StartLocalInstance):
+		if self.madtpg.connect(method3=madvr.CM_StartLocalInstance,
+							   timeout3=3000):
 			# Check madVR version
 			madvr_version = self.madtpg.get_version()
 			if not madvr_version or madvr_version < madvr.min_version:
