@@ -131,6 +131,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 								 gmtime(lastmod_time or 
 										os.stat(tmpl_path).st_mtime)) + "+0000",
 		"DOMAIN": domain.lower(),
+		"REVERSEDOMAIN": ".".join(reversed(domain.split("."))),
 		"ISODATE": 
 			strftime("%Y-%m-%d", 
 					 gmtime(lastmod_time or 
@@ -231,6 +232,7 @@ def setup():
 	appdata = "appdata" in sys.argv[1:]
 	arch = None
 	bdist_appdmg = "bdist_appdmg" in sys.argv[1:]
+	bdist_pkg = "bdist_pkg" in sys.argv[1:]
 	bdist_deb = "bdist_deb" in sys.argv[1:]
 	bdist_pyi = "bdist_pyi" in sys.argv[1:]
 	buildservice = "buildservice" in sys.argv[1:]
@@ -703,6 +705,9 @@ def setup():
 	if bdist_appdmg:
 		sys.argv.remove("bdist_appdmg")
 
+	if bdist_pkg:
+		sys.argv.remove("bdist_pkg")
+
 	if (not zeroinstall and not buildservice and
 		not appdata and not bdist_appdmg) or sys.argv[1:]:
 		print sys.argv[1:]
@@ -1169,6 +1174,23 @@ def setup():
 	
 	if bdist_appdmg:
 		create_appdmg(zeroinstall)
+
+	if bdist_pkg:
+		version_dir = os.path.join(pydir, "dist", version)
+		replace_placeholders(os.path.join(pydir, "misc", name + ".pkgproj"),
+							 os.path.join(version_dir, name + "-" + version + ".pkgproj"),
+							 lastmod_time, {"PYDIR": pydir})
+		shutil.move(os.path.join(version_dir, "py2app.%s-py%s" %
+											  (get_platform(), sys.version[:3]),
+								 name + "-" + version),
+					version_dir)
+		os.rename(os.path.join(version_dir, name + "-" + version),
+				  os.path.join(version_dir, name))
+		if sp.call(["/usr/local/bin/packagesbuild", "-v",
+				   os.path.join(version_dir, name + "-" + version + ".pkgproj")]) == 0:
+			# Success
+			os.rename(os.path.join(version_dir, name + ".pkg"),
+				  os.path.join(version_dir, name + "-" + version + ".pkg"))
 
 
 if __name__ == "__main__":
