@@ -709,7 +709,7 @@ def setup():
 		sys.argv.remove("bdist_pkg")
 
 	if (not zeroinstall and not buildservice and
-		not appdata and not bdist_appdmg) or sys.argv[1:]:
+		not appdata and not bdist_appdmg and not bdist_pkg) or sys.argv[1:]:
 		print sys.argv[1:]
 		from setup import setup
 		setup()
@@ -1180,7 +1180,7 @@ def setup():
 		replace_placeholders(os.path.join(pydir, "misc", name + ".pkgproj"),
 							 os.path.join(version_dir, name + "-" + version + ".pkgproj"),
 							 lastmod_time, {"PYDIR": pydir})
-		shutil.move(os.path.join(version_dir, "py2app.%s-py%s" %
+		shutil.move(os.path.join(pydir, "dist", "py2app.%s-py%s" %
 											  (get_platform(), sys.version[:3]),
 								 name + "-" + version),
 					version_dir)
