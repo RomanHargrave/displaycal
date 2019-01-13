@@ -36,7 +36,7 @@ def cpu_count(limit_by_total_vmem=True):
 			# smart enough to swap memory used by inactive processes to disk to
 			# free up more physical RAM for active processes.
 			try:
-				max_cpus = psutil.virtual_memory().total / (1024.0 ** 3) - 1
+				max_cpus = int(psutil.virtual_memory().total / (1024 ** 3) - 1)
 			except:
 				pass
 	try:
@@ -65,7 +65,7 @@ def pool_slice(func, data_in, args=(), kwds={}, num_workers=None,
 
 	if num_workers is None:
 		num_workers = cpu_count()
-	num_workers = max(min(num_workers, len(data_in)), 1)
+	num_workers = max(min(int(num_workers), len(data_in)), 1)
 	max_workers = getcfg("multiprocessing.max_cpus")
 	if max_workers:
 		num_workers = min(num_workers, max_workers)
