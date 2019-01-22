@@ -3979,7 +3979,8 @@ END_DATA
 				result2 = self.wrapup(not isinstance(result, UnloggedInfo) and
 									  result, dst_path=path,
 									  ext_filter=[".3dlut", ".cube",
-												  ".log", ".png", ".txt"])
+												  ".log", ".png", ".txt",
+												  ".wrl"])
 				if not result:
 					result = UnloggedError(lang.getstr("aborted"))
 				if isinstance(result2, Exception):
@@ -5380,7 +5381,9 @@ while 1:
 						os.environ["ARGYLL_%s" % name] = value
 			elif cmdname in (get_argyll_utilname("iccgamut"),
 							 get_argyll_utilname("tiffgamut"),
-							 get_argyll_utilname("viewgam")):
+							 get_argyll_utilname("viewgam"),
+							 get_argyll_utilname("colprof"),
+							 get_argyll_utilname("collink")):
 				os.environ["ARGYLL_3D_DISP_FORMAT"] = "VRML"
 			if sys.platform not in ("darwin", "win32"):
 				os.environ["ENABLE_COLORHUG"] = "1"
