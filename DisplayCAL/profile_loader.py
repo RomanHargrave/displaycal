@@ -866,6 +866,7 @@ if sys.platform == "win32":
 					self.buttonpanel.Thaw()
 			else:
 				current_user = False
+				scope_changed = False
 			monkey = device.DeviceKey.split("\\")[-2:]
 			profiles = ICCP._winreg_get_display_profiles(monkey, current_user)
 			profiles.reverse()
