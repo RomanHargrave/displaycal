@@ -382,10 +382,10 @@
                               <flag>wxALIGN_CENTRE_VERTICAL</flag>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxSpinCtrl" name="ffp_insertion_interval">
+                              <object class="FloatSpin" name="ffp_insertion_interval">
                                 <size>75,-1</size>
-                                <min>1</min>
-                                <max>3600</max>
+                                <increment>0.1</increment>
+                                <digits>1</digits>
                               </object>
                               <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                               <border>8</border>
@@ -405,10 +405,10 @@
                               <border>16</border>
                             </object>
                             <object class="sizeritem">
-                              <object class="wxSpinCtrl" name="ffp_insertion_duration">
+                              <object class="FloatSpin" name="ffp_insertion_duration">
                                 <size>55,-1</size>
-                                <min>1</min>
-                                <max>60</max>
+                                <increment>0.1</increment>
+                                <digits>1</digits>
                               </object>
                               <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                               <border>8</border>
