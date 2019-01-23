@@ -13744,7 +13744,7 @@ BEGIN_DATA
 					# Sleep 500 ms to allow patch update and settle time after
 					# frame insertion
 					ts = time()
-					while time() - ts < 0.5 and not (self.subprocess_abort or
+					while time() - ts < 0.8 and not (self.subprocess_abort or
 													 self.thread_abort):
 						sleep(.05)
 				# Create .ok file which will be picked up by .wait script
