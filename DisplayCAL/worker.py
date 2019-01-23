@@ -13745,11 +13745,17 @@ BEGIN_DATA
 				else:
 					self.patterngenerator_send(rgb)
 				if getcfg("patterngenerator.ffp_insertion") and update_ffp_insertion_ts:
-					# Sleep 500 ms to allow patch update and settle time after
-					# frame insertion
+					# Delay to allow patch update and settle time after
+					# frame insertion. If display update delay is bigger,
+					# do not use extra delay. Otherwise, subtract display
+					# update delay from fixed delay.
+					if getcfg("measure.override_min_display_update_delay_ms"):
+						dur = getcfg("measure.min_display_update_delay_ms") / 1000.
+					else:
+						dur = 0
 					ts = time()
-					while time() - ts < 0.8 and not (self.subprocess_abort or
-													 self.thread_abort):
+					while time() - ts < max(0.8 - dur, 0) and not (self.subprocess_abort or
+																   self.thread_abort):
 						sleep(.05)
 				# Create .ok file which will be picked up by .wait script
 				okfilename = os.path.join(self.tempdir, ".ok")
