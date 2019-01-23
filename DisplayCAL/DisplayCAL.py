@@ -14172,12 +14172,16 @@ class MainFrame(ReportFrame, BaseFrame):
 							 "measure.override_display_settle_time_mult",
 							 "measure.display_settle_time_mult",
 							 "observer",
+							 "patterngenerator.ffp_insertion",
 							 "trc", 
 							 "whitepoint"), 
 					exclude=("calibration.black_point_correction_choice.show", 
 							 "calibration.update", 
 							 "calibration.use_video_lut",
 							 "measure.darken_background.show_warning", 
+							 "patterngenerator.ffp_insertion.interval",
+							 "patterngenerator.ffp_insertion.duration",
+							 "patterngenerator.ffp_insertion.level",
 							 "trc.should_use_viewcond_adjust.show_msg"),
 					override={"trc": ""} if not trc else None)
 				# Parse options
@@ -14421,6 +14425,12 @@ class MainFrame(ReportFrame, BaseFrame):
 											 "measure.min_display_update_delay_ms",
 											 "DISPLAY_SETTLE_TIME_MULT":
 											 "measure.display_settle_time_mult",
+											 "FFP_INSERTION_INTERVAL":
+											 "patterngenerator.ffp_insertion.interval",
+											 "FFP_INSERTION_DURATION":
+											 "patterngenerator.ffp_insertion.duration",
+											 "FFP_INSERTION_LEVEL":
+											 "patterngenerator.ffp_insertion.level",
 											 "AUTO_OPTIMIZE":
 											 "testchart.auto_optimize",
 											 "PATCH_SEQUENCE":
@@ -14534,6 +14544,10 @@ class MainFrame(ReportFrame, BaseFrame):
 									cfgvalue = 0
 								else:
 									cfgvalue = 1
+							elif keyword in ("FFP_INSERTION_INTERVAL",
+											 "FFP_INSERTION_DURATION",
+											 "FFP_INSERTION_LEVEL"):
+								setcfg("patterngenerator.ffp_insertion", 1)
 							if keyword.startswith("3DLUT"):
 								setcfg("3dlut.create", 1)
 								setcfg("3dlut.tab.enable", 1)

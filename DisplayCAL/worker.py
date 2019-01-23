@@ -10459,6 +10459,12 @@ usage: spotread [-options] [logfile]
 			if getcfg("measure.override_display_settle_time_mult"):
 				ti3[0].add_keyword("DISPLAY_SETTLE_TIME_MULT",
 								   getcfg("measure.display_settle_time_mult"))
+			# FFP
+			if getcfg("patterngenerator.ffp_insertion"):
+				for keyword in ("INTERVAL", "DURATION", "LEVEL"):
+					ti3[0].add_keyword("FFP_INSERTION_%s" % keyword,
+									   getcfg("patterngenerator.ffp_insertion.%s" %
+											  keyword.lower()))
 			# Remove AUTO_OPTIMIZE
 			if ti3[0].queryv1("AUTO_OPTIMIZE"):
 				ti3[0].remove_keyword("AUTO_OPTIMIZE")
