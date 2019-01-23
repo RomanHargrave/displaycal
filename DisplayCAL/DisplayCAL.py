@@ -2571,19 +2571,22 @@ class MainFrame(ReportFrame, BaseFrame):
 								lambda event:
 								setcfg("patterngenerator.ffp_insertion",
 									   event.GetInt()) or
-								self.update_ffp_insertion_ctrl())
+								self.update_ffp_insertion_ctrl() or
+								self.update_estimated_measurement_times())
 		min_val, max_val = config.valid_ranges["patterngenerator.ffp_insertion.interval"]
 		self.ffp_insertion_interval.SetRange(min_val, max_val)
 		self.ffp_insertion_interval.Bind(floatspin.EVT_FLOATSPIN,
 										 lambda event:
 										 setcfg("patterngenerator.ffp_insertion.interval",
-												event.GetValue()))
+												event.GetValue()) or
+										 self.update_estimated_measurement_times())
 		min_val, max_val = config.valid_ranges["patterngenerator.ffp_insertion.duration"]
 		self.ffp_insertion_duration.SetRange(min_val, max_val)
 		self.ffp_insertion_duration.Bind(floatspin.EVT_FLOATSPIN,
 										 lambda event:
 										 setcfg("patterngenerator.ffp_insertion.duration",
-												event.GetValue()))
+												event.GetValue()) or
+										 self.update_estimated_measurement_times())
 		self.ffp_insertion_level.Bind(wx.EVT_SPINCTRL,
 									  lambda event:
 									  setcfg("patterngenerator.ffp_insertion.level",

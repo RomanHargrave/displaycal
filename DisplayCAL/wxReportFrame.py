@@ -825,6 +825,16 @@ class ReportFrame(BaseFrame):
 				# reduced by roughly 1 / 1.75 through optimization.
 				seconds -= 0.65 / 1.75 * patches
 				seconds += 0.65 * patches
+			if (getcfg("patterngenerator.ffp_insertion") and
+				hasattr(self, "ffp_insertion") and self.ffp_insertion.IsShown()):
+				interval = getcfg("patterngenerator.ffp_insertion.interval")
+				duration = getcfg("patterngenerator.ffp_insertion.duration")
+				if getcfg("measure.override_min_display_update_delay_ms"):
+					dur = getcfg("measure.min_display_update_delay_ms") / 1000.
+				else:
+					dur = 0
+				ffp_delay = max(0.8 - dur, 0)
+				seconds += seconds / max(interval, avg_delay) * (duration + ffp_delay)
 			timestamp = gmtime(seconds)
 			hours = int(strftime("%H", timestamp))
 			minutes = int(strftime("%M", timestamp))
