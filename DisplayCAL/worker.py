@@ -5453,7 +5453,8 @@ while 1:
 						# Wait for connection - blocking
 						self.patterngenerator.wait()
 						if hasattr(self.patterngenerator, "conn"):
-							self.patterngenerator_send((.5, ) * 3)
+							self.patterngenerator_send((.5, ) * 3,
+													   increase_sent_count=False)
 						else:
 							# User aborted before connection was established
 							return False
@@ -10191,7 +10192,8 @@ usage: spotread [-options] [logfile]
 			if hasattr(self.patterngenerator, "conn"):
 				# Try to use existing connection
 				try:
-					self.patterngenerator_send((.5, ) * 3, raise_exceptions=True)
+					self.patterngenerator_send((.5, ) * 3, raise_exceptions=True,
+											   increase_sent_count=False)
 				except (socket.error, httplib.HTTPException), exception:
 					self.log(exception)
 					self.patterngenerator.disconnect_client()
@@ -10239,7 +10241,8 @@ usage: spotread [-options] [logfile]
 	def patterngenerators(self):
 		return self._patterngenerators
 
-	def patterngenerator_send(self, rgb, bgrgb=None, raise_exceptions=False):
+	def patterngenerator_send(self, rgb, bgrgb=None, raise_exceptions=False,
+							  increase_sent_count=True):
 		""" Send RGB color to pattern generator """
 		if getattr(self, "abort_requested", False):
 			return
@@ -10268,7 +10271,8 @@ usage: spotread [-options] [logfile]
 			else:
 				self.exec_cmd_returnvalue = exception
 				self.abort_subprocess()
-		else:
+			return
+		if increase_sent_count:
 			self.patterngenerator_sent_count += 1
 			self.log("%s: Patterngenerator sent count: %i" %
 					 (appname, self.patterngenerator_sent_count))
