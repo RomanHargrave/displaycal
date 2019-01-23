@@ -13701,7 +13701,8 @@ BEGIN_DATA
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
-				if getcfg("patterngenerator.ffp_insertion"):
+				update_ffp_insertion_ts = False
+				if getcfg("patterngenerator.ffp_insertion") and self.patterngenerator_sent_count > 1:
 					# Frame insertion
 					frq = getcfg("patterngenerator.ffp_insertion.interval")
 					if time() - getattr(self, "_ffp_insertion_ts", 0) > frq:
@@ -13712,8 +13713,6 @@ BEGIN_DATA
 						ts = time()
 						if self.use_madnet_tpg:
 							patternconfig = self.madtpg.get_pattern_config()
-							self.madtpg.set_pattern_config(patternconfig[0],
-														   int(lvl * 100), 0, 0)
 							self.madtpg.show_rgb(lvl, lvl, lvl)
 							self.madtpg.set_pattern_config(100, 0, 0, 0)
 						else:
@@ -13725,8 +13724,6 @@ BEGIN_DATA
 						if self.use_madnet_tpg:
 							self.madtpg.set_pattern_config(*patternconfig)
 						update_ffp_insertion_ts = True
-					else:
-						update_ffp_insertion_ts = False
 					if (not hasattr(self, "_ffp_insertion_ts") or
 						update_ffp_insertion_ts):
 						self._ffp_insertion_ts = time()
@@ -13741,6 +13738,13 @@ BEGIN_DATA
 						self.abort_subprocess()
 				else:
 					self.patterngenerator_send(rgb)
+				if getcfg("patterngenerator.ffp_insertion") and update_ffp_insertion_ts:
+					# Sleep 500 ms to allow patch update and settle time after
+					# frame insertion
+					ts = time()
+					while time() - ts < 0.5 and not (self.subprocess_abort or
+													 self.thread_abort):
+						sleep(.05)
 				# Create .ok file which will be picked up by .wait script
 				okfilename = os.path.join(self.tempdir, ".ok")
 				open(okfilename, "w").close()
