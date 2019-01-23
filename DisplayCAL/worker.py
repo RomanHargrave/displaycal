@@ -13713,6 +13713,8 @@ BEGIN_DATA
 						ts = time()
 						if self.use_madnet_tpg:
 							patternconfig = self.madtpg.get_pattern_config()
+							self.madtpg.set_pattern_config(patternconfig[0],
+														   int(lvl * 100), 0, 0)
 							self.madtpg.show_rgb(lvl, lvl, lvl)
 							self.madtpg.set_pattern_config(100, 0, 0, 0)
 						else:
