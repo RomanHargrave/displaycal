@@ -5673,24 +5673,27 @@ while 1:
 				self.errors = errors
 				self.output = output
 				self.retcode = retcode
+			finished = ((self.cmdname == "dispcal" and
+						 not self.dispread_after_dispcal) or
+						(self.cmdname == "dispread" and
+						 not self._detecting_video_levels) or
+						self.retcode)
 			if self.patterngenerator:
 				if hasattr(self.patterngenerator, "conn"):
 					try:
 						if config.get_display_name() == "Resolve":
-							# Send fullscreen black to prevent plasma burn-in
-							try:
-								self.patterngenerator.send((0, ) * 3, x=0, y=0, w=1, h=1)
-							except socket.error:
-								pass
+							# Send fullscreen black to prevent burn-in
+							if finished:
+								try:
+									self.patterngenerator.send((0, ) * 3, x=0,
+															   y=0, w=1, h=1)
+								except socket.error:
+									pass
 						else:
 							self.patterngenerator.disconnect_client()
 					except Exception, exception:
 						self.log(exception)
-			if hasattr(self, "madtpg") and ((self.cmdname == "dispcal" and
-											 not self.dispread_after_dispcal) or
-											(self.cmdname == "dispread" and
-											 not self._detecting_video_levels) or
-											self.retcode):
+			if hasattr(self, "madtpg") and finished:
 				self.madtpg_disconnect()
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
