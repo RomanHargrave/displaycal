@@ -59,6 +59,7 @@ Requires:       libxscrnsaver1
 Requires:       libsdl2_mixer2.0_0
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPythonGTK >= %{wx_minversion}
+Requires:       python-psutil
 Requires:       zeroinstall-injector
 %else
 %if 0%{?suse_version} > 0
@@ -68,6 +69,7 @@ Requires:       libXss1
 Requires:       python-numpy >= %{numpy_version}
 Requires:       libSDL2_mixer-2_0-0
 Requires:       python-wxGTK >= %{wx_minversion}
+Requires:       python2-psutil
 Requires:       zeroinstall-injector
 %py_requires
 %else
@@ -76,6 +78,7 @@ Requires:       libXScrnSaver
 Requires:       numpy >= %{numpy_version}
 Requires:       SDL2_mixer
 Requires:       wxPython >= %{wx_minversion}
+Requires:       python2-psutil
 %if 0%{?fedora_version} < 19
 Requires:       zeroinstall-injector
 %else
