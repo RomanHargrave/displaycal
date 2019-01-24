@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.7.1.3 </h2>
-					<p>2018-12-03 00:48 UTC</p>
+					<h2 id="version">3.7.1.4 </h2>
+					<p>2019-01-24 14:44 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -225,7 +225,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 		<div id="about">
 			<h2>About DisplayCAL</h2>		
 
-			<p>DisplayCAL (formerly known as dispcalGUI) is a display calibration and profiling solution with a focus on <strong>accuracy</strong> and <strong>versatility</strong> (in fact, the author is of the honest opinion it may be the most accurate and versatile ICC compatible display profiling solution available anywhere). At its core it relies on <a href="https://www.argyllcms.com">ArgyllCMS</a>, an open source color management system, to take measurements, create calibrations and profiles, and for a variety of other advanced color related tasks.</p>
+			<p>DisplayCAL (formerly known as dispcalGUI) is a display calibration and profiling solution with a focus on <strong>accuracy</strong> and <strong>versatility</strong> (in fact, the author is of the honest opinion it may be the most accurate and versatile ICC compatible display profiling solution available anywhere). At its core it relies on <a href="https://www.argyllcms.com">ArgyllCMS</a>, an advanced open source color management system, to take measurements, create calibrations and profiles, and for a variety of other advanced color related tasks.</p>
 
 			<p>Calibrate and characterize your display devices using one of <a href="#instruments">many supported measurement instruments</a>, with support for multi-display setups and a variety of available options for advanced users, such as verification and reporting functionality to evaluate ICC profiles and display devices, creating video 3D LUTs, as well as optional CIECAM02 gamut mapping to take into account varying viewing conditions. Other features include:</p>
 
@@ -299,7 +299,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 
-			<p>DisplayCAL is written in <a href="https://python.org/">Python</a> and uses the 3rd-party packages <a href="http://numpy.scipy.org/">NumPy</a>, <a href="https://pypi.python.org/pypi/demjson">demjson</a> (<abbr title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[6]</a></sup></abbr> library), <a href="https://wxpython.org/">wxPython</a> (<abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit), as well as <a href="https://pypi.python.org/pypi/pywin32">Python extensions for Windows</a> and the <a href="https://pypi.python.org/pypi/WMI">Python WMI module</a> to provide Windows-specific functionality. Other minor dependencies include <a href="https://pypi.python.org/pypi/PyChromecast/">PyChromecast</a>, <a href="https://pypi.python.org/pypi/comtypes/">comtypes</a> and <a href="https://pypi.python.org/pypi/pyglet/">pyglet</a>. It makes extensive use of and depends on functionality provided by <a href="https://www.argyllcms.com/">ArgyllCMS</a>. The build system to create standalone executables additionally uses <a href="https://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="https://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="https://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
+			<p>DisplayCAL is written in <a href="https://python.org/">Python</a> and uses the 3rd-party packages <a href="http://numpy.scipy.org/">NumPy</a>, <a href="https://pypi.python.org/pypi/demjson">demjson</a> (<abbr title="JavaScript Object Notation">JSON<sup><a href="#definition_JSON">[6]</a></sup></abbr> library), <a href="https://wxpython.org/">wxPython</a> (<abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit), as well as <a href="https://pypi.python.org/pypi/pywin32">Python extensions for Windows</a> and the <a href="https://pypi.python.org/pypi/WMI">Python WMI module</a> to provide Windows-specific functionality. Other minor dependencies include <a href="https://pypi.python.org/pypi/psutil/">psutil</a>, <a href="https://pypi.python.org/pypi/PyChromecast/">PyChromecast</a>, <a href="https://pypi.python.org/pypi/comtypes/">comtypes</a> and <a href="https://pypi.python.org/pypi/pyglet/">pyglet</a>. It makes extensive use of and depends on functionality provided by <a href="https://www.argyllcms.com/">ArgyllCMS</a>. The build system to create standalone executables additionally uses <a href="https://pypi.python.org/pypi/setuptools">setuptools</a> and <a href="https://pypi.python.org/pypi/py2app">py2app</a> on Mac OS X or <a href="https://pypi.python.org/pypi/py2exe">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
 		</div>
 
 		<div id="download">
@@ -437,21 +437,18 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 					<h3>For Mac OS X (10.6 or newer)</h3>
 					<div>
 						<p>
-							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL.dmg">Disk image</a>
+							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL.pkg">Installer Package</a>
 						</p>
-						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the standalone application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.7.1.3/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.7.1.3/*.app</code>
-						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.7.1.3.dmg</code></small></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.7.1.4.pkg</code></small></p>
 					</div>
 				</li>
 				<li>
-					<h3>For Windows (XP or newer)</h3>
+					<h3>For Windows</h3>
 					<div>
 						<p>
 							<a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-Setup.exe">Installer (recommended)</a> or <a rel="nofollow" href="https://displaycal.net/download/standalone/DisplayCAL-win32.zip">ZIP archive</a>
 						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.7.1.3-[Setup.exe|win32.zip]</code></small></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.7.1.4-[Setup.exe|win32.zip]</code></small></p>
 					</div>
 				</li>
 				<li>
@@ -460,9 +457,9 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
 						<p><a rel="nofollow" href="https://displaycal.net/download/DisplayCAL.tar.gz">Source Tarball</a></p>
 						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command:<br />
-						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.7.1.3.tar.gz</code><br />
-						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.7.1.3.tar.gz</code><br />
-						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.7.1.3.tar.gz</code></small></p>
+						Linux: <code>sha256sum /home/<var>Your Username</var>/Downloads/DisplayCAL-3.7.1.4.tar.gz</code><br />
+						macOS: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-3.7.1.4.tar.gz</code><br />
+						Windows (PowerShell command prompt): <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-3.7.1.4.tar.gz</code></small></p>
 						<p>
 							Alternatively, if you don't mind trying out development code, <a href="https://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="https://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="https://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk displaycal</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
@@ -605,15 +602,12 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 				<li>
 					<h3>For Mac OS X (10.5 or newer)</h3>
 					<div>
-						<p>Download the <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL Zero Install Launcher</a> disk image and run any of the included applications.</p>
-						<p>
-							Note that due to Mac OS X App Translocation (since 10.12 Sierra), you need to remove the “quarantine” flag from the application bundles after you have copied them to your computer before you can successfully run them. E.g. if you copied them to /Applications/DisplayCAL-3.7.1.3/, open Terminal and run the following command: <code>xattr -dr com.apple.quarantine /Applications/DisplayCAL-3.7.1.3/*.app</code>
-						</p>
-						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-0install.dmg</code></small></p>
+						<p><a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install.pkg">Installer Package</a></p>
+						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a>. To obtain the checksum of the downloaded file, run the following command in Terminal: <code>shasum -a 256 /Users/<var>Your Username</var>/Downloads/DisplayCAL-0install.pkg</code></small></p>
 					</div>
 				</li>
 				<li>
-					<h3>For Windows (XP or newer)</h3>
+					<h3>For Windows</h3>
 					<div>
 						<p>Download and install the DisplayCAL Zero Install Setup: <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install-Setup.exe">Administrator install</a> | <a rel="nofollow" href="https://displaycal.net/download/DisplayCAL-0install-Setup-per-user.exe">Per-user install</a>.</p>
 						<p><small>If you want to verify the integrity of the downloaded file, compare its SHA-256 checksum to that of the respective entry in the <a href="https://displaycal.net/sha256sums.txt">SHA-256 checksum list</a> (case does not matter). To obtain the checksum of the downloaded file, run the following command in a Windows PowerShell command prompt: <code>get-filehash -a sha256 C:\Users\<var>Your Username</var>\Downloads\DisplayCAL-0install-Setup[-per-user].exe</code></small></p>
@@ -680,7 +674,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 			<div>
 				<h3>General system requirements</h3>
 				<ul>
-					<li>A recent Linux, macOS (10.6 or newer for the standalone version, 10.5 or newer for the 0install version, recommended 10.7 or newer) or Windows (XP/Server 2003 or newer, recommended Windows 7 or newer) operating system.</li>
+					<li>A recent Linux, macOS (10.6 or newer for the standalone version, 10.5 or newer for the 0install version, recommended 10.7 or newer) or Windows (recommended Windows 7 or newer) operating system.</li>
 					<li>“True color” 24 bits per pixel or higher graphics output.</li>
 				</ul>
 				<h3>Hardware requirements</h3>
@@ -891,7 +885,7 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 				<h3>Mac OS X</h3>
 
 				<div>
-					<p>Mount the disk image and option-drag its icon to your “Applications” folder. Afterwards open the “DisplayCAL” folder in your “Applications” folder and drag DisplayCAL's icon to the dock if you want easy access.</p>
+					<p>Use the Installer Package to install DisplayCAL to your “Applications” folder. Afterwards open the “DisplayCAL” folder in your “Applications” folder and drag DisplayCAL's icon to the dock if you want easy access.</p>
 				
 					<p class="info">If you want to use the HCFR colorimeter under Mac OS X, follow the instructions under “<a href="https://www.argyllcms.com/doc/Installing_OSX.html">installing ArgyllCMS on Mac OS X</a>” in the ArgyllCMS documentation.</p>
 				</div>
@@ -934,6 +928,8 @@ href="https://loadtesting.co/">Load Testing</a> Wiki</p>
 								<dd>Create/update <a href="https://people.freedesktop.org/~hughsient/appdata/">AppData</a> file.</dd>
 							<dt><code>bdist_appdmg</code> (Mac OS X only)</dt>
 								<dd>Creates a DMG of previously created (by the py2app or bdist_standalone commands) application bundles, or if used together with the <code>0install</code> command.</dd>
+							<dt><code>bdist_pkg</code> (Mac OS X only)</dt>
+								<dd>Creates an Installer Package (.pkg) of previously created (by the py2app or bdist_standalone commands) application bundles.</dd>
 							<dt><code>bdist_deb</code> (Linux/Debian-based)</dt>
 								<dd>Create an installable Debian (.deb) package, much like the standard distutils command bdist_rpm for RPM packages. Prerequisites:
 								You first need to install alien and rpmdb, create a dummy RPM database via <code>sudo rpmdb --initdb</code>, then edit (or create from scratch) the setup.cfg (you can have a look at misc/setup.ubuntu9.cfg for a working example). Under Ubuntu, running utils/dist_ubuntu.sh will automatically use the correct setup.cfg. If you are using Ubuntu 11.04 or any other debian-based distribution which has Python 2.7 as default, you need to edit /usr/lib/python2.7/distutils/command/bdist_rpm.py, and change the line <code>install_cmd = ('%s install <span style="color: #c00">-O1</span> --root=$RPM_BUILD_ROOT '</code> to <code>install_cmd = ('%s install --root=$RPM_BUILD_ROOT '</code> by removing the <code><span style="color: #c00">-O1</span></code> flag. Also, you need to change /usr/lib/rpm/brp-compress to do nothing (e.g. change the file contents to <code>exit 0</code>, but don't forget to create a backup copy first) otherwise you will get errors when building.</dd>
@@ -1525,7 +1521,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 
 				<p>After the adjustments, you can run a check on all the settings by choosing the last option from the left-hand menu to verify the achieved values. If adjusting one setting adversely affected another, you can then simply repeat the respective option as necessary until the target parameters are met.</p>
 
-				<p>Finally, select “Continue on to calibration/profiling” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window and then select “Profile only” from the main window.<br />
+				<p>Finally, select “Continue on to calibration/profiling” to start the non-interactive part. You may want to get a coffee or two as the process can take a fair amount of time, especially if you selected a high quality level. If you only wanted help to adjust the display and don't want/need calibration curves to be created, you can also choose to exit by closing the interactive display adjustment window, set calibration tone curve to “As measured” and then select “Profile only” from the main window.<br />
 				If you originally selected “Calibrate &amp; profile” and fulfil the requirements for <a href="#requirements-unattended">unattended calibration &amp; profiling</a>, the characterization measurements for the profiling process should start automatically after calibration is finished. Otherwise, you may be forced to take the instrument off the screen to do a sensor self-calibration before starting the profiling measurements.</p>
 				
 				<h5 id="optimizecharts">Optimizing testcharts for improved profiling accuracy and efficiency</h5>
@@ -1540,7 +1536,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 					chosen. Then place a check in the checkbox. Make sure adaptation is set to a high level (e.g. 100%)</li>
 					<li>If desired, adjust the number of patches and make sure the iterative patches amount is not zero.</li>
 					<li>Create the chart and save it. Click “yes” when asked to select the newly generated chart.</li>
-					<li>Start the profiling measurements (e.g. click “calibrate &amp; profile” or “profile only”).</li>
+					<li>Start the profiling measurements (e.g. click “calibrate &amp; profile”).</li>
 				</ul>
 
 				<h4>Profile installation</h4>
@@ -2338,7 +2334,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dd><strong>Solution:</strong>
 
 					<ol>
-						<li>Run the “0install Launcher” application from the DisplayCAL-0install.dmg disk image.</li>
+						<li>Run the “0install Launcher” application.</li>
 						<li>Click “Refresh”, then “Run”. An updated library will be downloaded, and DisplayCAL should launch.</li>
 						<li>From now on, you can start DisplayCAL normally as usual.</li>
 					</ol>
@@ -2354,7 +2350,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 				<dt id="issue-mac-dispcalgui-damaged"><span>Mac OS X:</span> DisplayCAL.app is damaged and can't be opened.</dt>
 				<dd><strong>Solution:</strong> Go to the “Security &amp; Privacy” settings in System Preferences and set “Allow applications downloaded from” (under the “General” tab) to the “Anywhere” setting. After you have successfully launched DisplayCAL, you can change the setting back to a more secure option and DisplayCAL will continue to run properly.</dd>			
 
-				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access (“Calibrate only” and “Calibrate &amp; profile” buttons grayed, “Profile only” button available)</dt>
+				<dt id="issue-linux-lutaccess"><span>Linux/Windows:</span> No video card gamma table access</dt>
 				<dd><strong>Solution:</strong> Make sure you have not selected a display that doesn't support calibration (i.e. “Web @ localhost” or “Untethered”) and that you have enabled “Interactive display adjustment” or set the tone curve to a different value than “As measured”. Under Linux, please refer to the ArgyllCMS documentation, “<a href="https://www.argyllcms.com/doc/Installing_Linux.html">Installing the software on Linux with X11</a>” and “Note on X11 multi-monitor setups” / “Fixing access to Video LUTs” therein. Under Windows, please also see the solution posted under “<a href="#issue-win-user-profile-not-used">The display profile isn't used if it was installed for the current user</a>” if you are using Windows and make sure you have a recent driver for your video card installed.</dd>
 			</dl>
 		</div>
@@ -2477,13 +2473,13 @@ The easiest way to get a complete set of logfiles is to choose “Show log” fr
 
 			<p>Recent contributors:
 
-<!-- 2018-11 -->
-Ronald Taylor, Carl Perry, Matthieu Abily, Dustyn Altimus, Ulrich Kreidenweis, Gerald Davis, Cliff Nieuwenhuis, Royal Kiehl, Martin Soeun, Thomas Dunzendorfer Filmproduktion, Kentech Solutions, Ralf Rapude, Gerold Schmidt, Damjan Petrena, Louis Prud'Homme, Peter Guyton, Allan Ledger, Benjamin Garcia Garcia, Andrea Gozzo, Andreas Luthe, Esa Jussila, Dax Mackenzie Roggio, Michel Joly De Lotbiniere, Charles Adams, Jan Donker, Frank Domrös, Jonathan Aucomte, Weon Min Ko, Wolfgang Suhrmann, Daniel Pinkston, Pizca Design, Young Kyong Son, Chris Short, Boris Melinand, Patrac Stephane, Verkauf, David Skok, Michael Linder,
+<!-- 2018-12 -->
+Stamm Christoph, Brett Nixon, Ern Reeders, Nigel Reed, Simon Raffeiner, Masanori Tottori, Benno Eberle, Martin Neuß, Alexandru Popescu, Thomas Pasch, 傳宗 林, Hearts In Spirit, Llc, David Goldberg, Jin Won, Daniel Frost, Vincent Horvath, Arndt-M. Kürsten, Harri Jarvinen, Marcus Lucke, Robert Harding, Randy Wright, James Ringland, Chenghan Pan, Klein Media, Llc, Credito Bergamasco Banco Popolare, Kieren Hinch, Rafael Quiles, Marc Elo, Wyatt Meffert, Victor Wong, Georg Goetz, Beniamino Finocchiaro, Oliver Hoefele, Sagar Alodiya, Greg Rombach, Roberto Sellitto, Fabio Bonamigo, John Ruetti, Rolando Menendez, Horst Wandres, William Ruggles, Blues County, Ryan Shwayder, Geoffrey Whitbourn, Patrick Fong, Tracy Valleau, Jazmine Gonzalez, Matej Lesjak, Jack Cook, François Berne, Greg Feeler, Steve Shapiro,
 
 <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">more...</a><span id="more_donors" style="display: none">
 
-<!-- 2018-10 -->
-Julian Panke, Игорь Сергеев, Umali Media, Bill Connelly, Pawel Zembaty, Tr Stephenson, Marcus Jüttner, Alexandre Seunes, Karsten Schneeberger, Thomas Keeler, C J Bryson, Jari Kuukkanen, Vlad Kostianovskii, Rene Wagner, Simon Judge, Ben Morris, Richard Drdul, Janice Myers, Peter Böhm, Mr Dpa Rees, Arnaud Helluin, Sebastian Niciu, Greg Feeler, Aleksej Klee, Converge Forward, Inc., Jeff Briant, Chris Marsham Photography, Christoph Müller, Marcel Thomas, Michael Landry, Raviteja Malireddy, David Skok, Aleksandr Ivkin, Charbel El Hachem, Lensvisions Studio, Julz Buckton, Jean De Bondt, Joshua Schwartz
+<!-- 2018-11 -->
+Ronald Taylor, Carl Perry, Matthieu Abily, Dustyn Altimus, Ulrich Kreidenweis, Gerald Davis, Cliff Nieuwenhuis, Royal Kiehl, Martin Soeun, Thomas Dunzendorfer Filmproduktion, Kentech Solutions, Ralf Rapude, Gerold Schmidt, Damjan Petrena, Louis Prud'Homme, Peter Guyton, Allan Ledger, Benjamin Garcia Garcia, Andrea Gozzo, Andreas Luthe, Esa Jussila, Dax Mackenzie Roggio, Michel Joly De Lotbiniere, Charles Adams, Jan Donker, Frank Domrös, Jonathan Aucomte, Weon Min Ko, Wolfgang Suhrmann, Daniel Pinkston, Pizca Design, Young Kyong Son, Chris Short, Boris Melinand, Patrac Stephane, Verkauf, David Skok, Michael Linder,
 
 </span></p>
 
@@ -2528,7 +2524,7 @@ Julian Panke, Игорь Сергеев, Umali Media, Bill Connelly, Pawel Zemba
 		
 		<hr />
 		
-		<p id="copyright">DisplayCAL © 2008-2018 Florian Höch | <a href="https://displaycal.net/imprint/">Imprint</a> | <a href="https://displaycal.net/privacy/">Privacy</a> | <a href="https://displaycal.net/tos/">Terms of Service</a></p>
+		<p id="copyright">DisplayCAL © 2008-2019 Florian Höch | <a href="https://displaycal.net/imprint/">Imprint</a> | <a href="https://displaycal.net/privacy/">Privacy</a> | <a href="https://displaycal.net/tos/">Terms of Service</a></p>
 
 		<div id="footer-container">
 			<div id="footer"><a href="#toc" id="totop">↑ Top</a></div>
