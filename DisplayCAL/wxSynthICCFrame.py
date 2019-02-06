@@ -1033,9 +1033,9 @@ class SynthICCFrame(BaseFrame):
 		self.lut3d_hdr_diffuse_white_txt.Show(i == 8)  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_diffuse_white_txt_label.Show(i == 8)  # SMPTE 2084 (PQ)
 		sizer = self.lut3d_hdr_sat_ctrl.ContainingSizer
-		sizer.ShowItems(i in (7, 8))  # SMPTE 2084 (PQ)
+		sizer.ShowItems(i == 8)  # SMPTE 2084 (PQ)
 		sizer = self.lut3d_hdr_hue_ctrl.ContainingSizer
-		sizer.ShowItems(i in (7, 8))  # SMPTE 2084 (PQ)
+		sizer.ShowItems(i == 8)  # SMPTE 2084 (PQ)
 		self.lut3d_hdr_ambient_luminance_label.Show(i == 2)  # HLG
 		self.lut3d_hdr_ambient_luminance_ctrl.Show(i == 2)  # HLG
 		self.lut3d_hdr_ambient_luminance_ctrl_label.Show(i == 2)  # HLG
