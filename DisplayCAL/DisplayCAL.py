@@ -7919,11 +7919,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				else:
 					action = wx.ID_OK
 				finally:
-					if cancel_event.is_set():
-						if (hasattr(self.worker, "madtpg") and
-							hasattr(self.worker.madtpg, "shutdown")):
-							self.worker.madtpg.shutdown()
-					else:
+					if not cancel_event.is_set():
 						wx.CallAfter(closedlg, self, action)
 						if action == wx.ID_CANCEL:
 							wx.CallAfter(show_result_dialog, exception, parent)
@@ -7944,6 +7940,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.Destroy()
 				if result == wx.ID_CANCEL:
 					cancel_event.set()
+					if (hasattr(self.worker, "madtpg") and
+						hasattr(self.worker.madtpg, "shutdown")):
+						self.worker.madtpg.shutdown()
 					return
 		elif (display_name in ("Resolve", "Web @ localhost") or
 			  display_name.startswith("Chromecast ")):
