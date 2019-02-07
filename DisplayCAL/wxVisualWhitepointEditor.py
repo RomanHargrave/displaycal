@@ -2186,7 +2186,8 @@ class VisualWhitepointEditor(wx.Frame):
 
 
     def show_handler(self, event):
-        if (getattr(event, "IsShown", getattr(event, "GetShow", bool))() and 
+        if (not self.patterngenerator and
+            getattr(event, "IsShown", getattr(event, "GetShow", bool))() and 
             sys.platform == "darwin" and
             intlist(mac_ver()[0].split(".")) >= [10, 10]):
             # Under Yosemite and up, if users use the default titlebar zoom
