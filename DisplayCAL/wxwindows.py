@@ -32,10 +32,9 @@ from debughelpers import (Error, DownloadError, Info, UnloggedError,
 						  getevttype, handle_error)
 from log import log as log_, safe_print
 from meta import name as appname
-from network import get_valid_host
 from options import debug
 from ordereddict import OrderedDict
-from network import ScriptingClientSocket
+from network import ScriptingClientSocket, get_network_addr
 from util_io import StringIOu as StringIO
 from util_os import get_program_file, launch_file, waccess
 from util_str import safe_str, safe_unicode, wrap
@@ -848,7 +847,7 @@ class BaseFrame(wx.Frame):
 			addr, port = sys._appsocket.getsockname()
 			if addr == "0.0.0.0":
 				try:
-					addr = get_valid_host()[1]
+					addr = get_network_addr()
 				except socket.error:
 					pass
 			safe_print(lang.getstr("app.listening", (addr, port)))

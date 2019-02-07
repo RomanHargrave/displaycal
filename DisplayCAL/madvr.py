@@ -647,12 +647,8 @@ class MadTPG_Net(MadTPGBase):
 		self._commandno = 0
 		self._commands = {}
 		self._host = get_network_addr()
-		try:
-			hostname = get_valid_host()[0]
-		except socket.error:
-			hostname = self._host
 		self._incoming = {}
-		self._ips = [i[4][0] for i in socket.getaddrinfo(hostname, None)]
+		self._ips = [i[4][0] for i in socket.getaddrinfo(self._host, None)]
 		self._pid = 0
 		self._reset()
 		self._server_sockets = {}
