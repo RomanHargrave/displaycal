@@ -7766,6 +7766,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.observer_ctrl.SetItems(self.observers_ab.values())
 
 	def setup_patterngenerator(self, parent=None, title=appname, upload=False):
+		if not parent:
+			parent = self
 		retval = True
 		display_name = config.get_display_name(None, True)
 		if display_name == "Prisma":
@@ -7903,19 +7905,44 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("patterngenerator.prisma.host", host)
 		elif display_name == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
-			try:
-				if not self.worker.madtpg_connect():
-					raise Error(lang.getstr("madtpg.launch.failure"))
-			except Exception, exception:
-				show_result_dialog(exception, self)
-				return
+			def closedlg(self, action=wx.ID_CANCEL):
+				win = self.get_top_window()
+				if isinstance(win, ConfirmDialog):
+					win.EndModal(action)
+			def connect(self):
+				try:
+					if not self.worker.madtpg_connect():
+						raise Error(lang.getstr("madtpg.launch.failure"))
+				except Exception, exception:
+					wx.CallAfter(show_result_dialog, exception, parent)
+					action = wx.ID_OK
+				else:
+					action = wx.ID_CANCEL
+				finally:
+					wx.CallAfter(closedlg, self, action)
+			thread = threading.Thread(target=connect,
+									  name="madTPG_Connect",
+									  args=(self, ))
+			thread.start()
+			sleep(.2)
+			if thread.isAlive():
+				dlg = ConfirmDialog(parent, title=title,
+									msg=lang.getstr("please_wait"),
+									ok=lang.getstr("cancel"),
+									bitmap=geticon(32, "dialog-information"))
+				dlg.ok.Disable()
+				dlg.OnCloseIntercept = lambda event: wx.Bell()
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result == wx.ID_OK:
+					return
 		elif (display_name in ("Resolve", "Web @ localhost") or
 			  display_name.startswith("Chromecast ")):
 			logfile = LineCache(3)
 			try:
 				self.worker.setup_patterngenerator(logfile)
 			except Exception, exception:
-				show_result_dialog(exception, self)
+				show_result_dialog(exception, parent)
 				return
 			if not hasattr(self.worker.patterngenerator, "conn"):
 				# Wait for connection
@@ -7933,7 +7960,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								 args=(self, )).start()
 				while not logfile.read():
 					sleep(.1)
-				if show_result_dialog(Info(logfile.read()), self,
+				if show_result_dialog(Info(logfile.read()), parent,
 									  confirm=lang.getstr("cancel")):
 					self.worker.patterngenerator.listening = False
 					return
