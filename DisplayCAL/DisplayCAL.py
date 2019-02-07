@@ -7905,7 +7905,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("patterngenerator.prisma.host", host)
 		elif display_name == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
-			def closedlg(self, action=wx.ID_CANCEL):
+			def closedlg(self, action=wx.ID_OK):
 				win = self.get_top_window()
 				if isinstance(win, ConfirmDialog):
 					win.EndModal(action)
@@ -7915,9 +7915,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						raise Error(lang.getstr("madtpg.launch.failure"))
 				except Exception, exception:
 					wx.CallAfter(show_result_dialog, exception, parent)
-					action = wx.ID_OK
-				else:
 					action = wx.ID_CANCEL
+				else:
+					action = wx.ID_OK
 				finally:
 					wx.CallAfter(closedlg, self, action)
 			thread = threading.Thread(target=connect,
@@ -7928,13 +7928,17 @@ class MainFrame(ReportFrame, BaseFrame):
 			if thread.isAlive():
 				dlg = ConfirmDialog(parent, title=title,
 									msg=lang.getstr("please_wait"),
-									ok=lang.getstr("cancel"),
+									cancel=lang.getstr("cancel"),
 									bitmap=geticon(32, "dialog-information"))
-				dlg.ok.Disable()
-				dlg.OnCloseIntercept = lambda event: wx.Bell()
+				dlg.ok.Hide()
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
 				result = dlg.ShowModal()
 				dlg.Destroy()
-				if result == wx.ID_OK:
+				if result == wx.ID_CANCEL:
+					if (hasattr(self.worker, "madtpg") and
+						hasattr(self.worker.madtpg, "shutdown")):
+						self.worker.madtpg.shutdown()
 					return
 		elif (display_name in ("Resolve", "Web @ localhost") or
 			  display_name.startswith("Chromecast ")):
@@ -7949,7 +7953,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				def closedlg(self):
 					win = self.get_top_window()
 					if isinstance(win, ConfirmDialog):
-						win.EndModal(wx.ID_CANCEL)
+						win.EndModal(wx.ID_OK)
 				def waitforcon(self):
 					self.worker.patterngenerator.wait()
 					if hasattr(self.worker.patterngenerator, "conn"):
@@ -7960,8 +7964,16 @@ class MainFrame(ReportFrame, BaseFrame):
 								 args=(self, )).start()
 				while not logfile.read():
 					sleep(.1)
-				if show_result_dialog(Info(logfile.read()), parent,
-									  confirm=lang.getstr("cancel")):
+				dlg = ConfirmDialog(parent, title=title,
+									msg=logfile.read(),
+									cancel=lang.getstr("cancel"),
+									bitmap=geticon(32, "dialog-information"))
+				dlg.ok.Hide()
+				dlg.sizer0.SetSizeHints(dlg)
+				dlg.sizer0.Layout()
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result == wx.ID_CANCEL:
 					self.worker.patterngenerator.listening = False
 					return
 		return retval
