@@ -7909,17 +7909,24 @@ class MainFrame(ReportFrame, BaseFrame):
 				win = self.get_top_window()
 				if isinstance(win, ConfirmDialog):
 					win.EndModal(action)
+			cancel_event = threading.Event()
 			def connect(self):
 				try:
 					if not self.worker.madtpg_connect():
 						raise Error(lang.getstr("madtpg.launch.failure"))
 				except Exception, exception:
-					wx.CallAfter(show_result_dialog, exception, parent)
 					action = wx.ID_CANCEL
 				else:
 					action = wx.ID_OK
 				finally:
-					wx.CallAfter(closedlg, self, action)
+					if cancel_event.is_set():
+						if (hasattr(self.worker, "madtpg") and
+							hasattr(self.worker.madtpg, "shutdown")):
+							self.worker.madtpg.shutdown()
+					else:
+						wx.CallAfter(closedlg, self, action)
+						if action == wx.ID_CANCEL:
+							wx.CallAfter(show_result_dialog, exception, parent)
 			thread = threading.Thread(target=connect,
 									  name="madTPG_Connect",
 									  args=(self, ))
@@ -7936,9 +7943,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				result = dlg.ShowModal()
 				dlg.Destroy()
 				if result == wx.ID_CANCEL:
-					if (hasattr(self.worker, "madtpg") and
-						hasattr(self.worker.madtpg, "shutdown")):
-						self.worker.madtpg.shutdown()
+					cancel_event.set()
 					return
 		elif (display_name in ("Resolve", "Web @ localhost") or
 			  display_name.startswith("Chromecast ")):
