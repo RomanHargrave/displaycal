@@ -34,6 +34,8 @@
 %endif
 %endif
 
+%define __python /usr/bin/python2
+
 %global debug_package %{nil}
 
 Summary:        ${SUMMARY}
@@ -81,7 +83,6 @@ Requires:       python2-psutil
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
-%define __python /usr/bin/python2
 BuildRequires:  gcc
 BuildRequires:  libX11-devel
 BuildRequires:  libXinerama-devel
