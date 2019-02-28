@@ -8379,18 +8379,55 @@ usage: spotread [-options] [logfile]
 			check_for_ti1_match = False
 			is_regular_grid = False
 			is_primaries_only = False
-			if getcfg("profile.type") in ("X", "x", "S", "s"):
-				# Check if TI3 RGB matches one of our regular grid or
-				# primaries + gray charts
-				ti3 = CGATS.CGATS(args[-1] + ".ti3")
-				try:
-					(ti3_extracted,
-					 ti3_RGB_XYZ,
-					 ti3_remaining) = extract_device_gray_primaries(ti3)
-				except Error, exception:
-					self.log(exception)
-				else:
+			ti3 = CGATS.CGATS(args[-1] + ".ti3")
+			try:
+				(ti3_extracted,
+				 ti3_RGB_XYZ,
+				 ti3_remaining) = extract_device_gray_primaries(ti3)
+			except Error, exception:
+				self.log(exception)
+			else:
+				if getcfg("profile.type") in ("X", "x", "S", "s"):
+					# Check if TI3 RGB matches one of our regular grid or
+					# primaries + gray charts
 					check_for_ti1_match = True
+				if (getcfg("profile.type") in ("X", "x", "l") and
+					ti3_RGB_XYZ[(0, 0, 0)] != (0, 0, 0)):
+					# Note: Setting black chroma to zero fixes smoothness
+					# issues on devices with not very neutral black.
+					bpcorr = getcfg("profile.black_point_correction")
+					if getcfg("profile.black_point_compensation"):
+						XYZbp = (0, 0, 0)
+					elif bpcorr < 1:
+						# Correct black point a* b* and make neutral hues near
+						# black blend over to the new blackpoint. The correction
+						# factor determines the amount of the measured black hue
+						# that should be retained.
+						# It makes the profile slightly less accurate near
+						# black, but the effect is negligible and the visual
+						# benefit is of greater importance (allows for
+						# calibration blackpoint hue correction to have desired
+						# effect, and makes relcol with BPC visually match
+						# perceptual in Photoshop).
+						XYZwp = ti3_RGB_XYZ[(100, 100, 100)]
+						Labbp = colormath.XYZ2Lab(*ti3_RGB_XYZ[(0, 0, 0)],
+												  whitepoint=XYZwp)
+						Labbp = (Labbp[0], Labbp[1] * bpcorr, Labbp[2] * bpcorr)
+						XYZbp = colormath.Lab2XYZ(*Labbp,
+												  whitepoint=[v / XYZwp[1]
+															  for v in XYZwp])
+					else:
+						XYZbp = None
+					if XYZbp:
+						ti3.write(args[-1] + ".ti3.backup")
+						if getcfg("profile.black_point_compensation"):
+							logmsg = "Applying black point compensation"
+						else:
+							logmsg = ("Applying %i%% black point "
+									  "correction" % (bpcorr * 100))
+						self.log("%s to TI3" % logmsg)
+						ti3[0].apply_bpc(XYZbp)
+						ti3.write()
 			if check_for_ti1_match:
 				for ti1_name in ("ti1/d3-e4-s2-g28-m0-b0-f0",  # Primaries + gray
 								 "ti1/d3-e4-s3-g52-m3-b0-f0",  # 3^3 grid
@@ -8850,60 +8887,6 @@ usage: spotread [-options] [logfile]
 								getcfg("profile.quality.b2a") in ("l", "n")
 								or not has_B2A))
 				if process_A2B:
-					if getcfg("profile.black_point_compensation"):
-						XYZbp = (0, 0, 0)
-					elif getcfg("profile.black_point_correction") < 1:
-						# Correct black point a* b* and make neutral hues near
-						# black blend over to the new blackpoint. The correction
-						# factor determines the amount of the measured black hue
-						# that should be retained.
-						# It makes the profile slightly less accurate near
-						# black, but the effect is negligible and the visual
-						# benefit is of greater importance (allows for
-						# calibration blackpoint hue correction to have desired
-						# effect, and makes relcol with BPC visually match
-						# perceptual in Photoshop).
-						try:
-							odata = self.xicclu(profile, (0, 0, 0), pcs="l")
-							if len(odata) != 1 or len(odata[0]) != 3:
-								raise ValueError("Blackpoint is invalid: %s" %
-												 odata)
-						except Exception, exception:
-							self.log(exception)
-							XYZbp = None
-						else:
-							bpcorr = getcfg("profile.black_point_correction")
-							Labbp = (odata[0][0], odata[0][1] * bpcorr,
-									 odata[0][2] * bpcorr)
-							XYZbp = colormath.Lab2XYZ(*Labbp)
-					else:
-						XYZbp = None
-					if XYZbp:
-						if "A2B1" in profile.tags:
-							table = "A2B1"
-						else:
-							table = "A2B0"
-						if isinstance(profile.tags[table], ICCP.LUT16Type):
-							if getcfg("profile.black_point_compensation"):
-								logmsg = "Applying black point compensation to"
-							else:
-								logmsg = ("Applying %i%% black point "
-										  "correction to" % (bpcorr * 100))
-							self.log("%s %s table" % (logmsg, table))
-							try:
-								profile.tags[table].apply_black_offset(XYZbp,
-														self.get_logfiles(),
-														self.thread_abort,
-														lang.getstr("aborted"))
-							except Exception, exception:
-								result = exception
-							else:
-								bpc_applied = True
-								profchanged = True
-						else:
-							self.log("Can't change black point "
-									 "in non-LUT16Type %s "
-									 "table" % table)
 					if (getcfg("profile.b2a.hires") or
 						not has_B2A):
 						if profchanged:
@@ -9017,12 +9000,10 @@ usage: spotread [-options] [logfile]
 					profile.write()
 				except Exception, exception:
 					return exception
-				if (bpc_applied or not has_B2A or
-					getcfg("profile.type") in ("s", "S", "g", "G")):
-					# We need to re-do profile self check
-					self.exec_cmd(get_argyll_util("profcheck"),
-								  [args[-1] + ".ti3", args[-1] + profile_ext],
-								  capture_output=True, skip_scripts=True)
+			# Always explicitly do profile self check
+			self.exec_cmd(get_argyll_util("profcheck"),
+						  [args[-1] + ".ti3", args[-1] + profile_ext],
+						  capture_output=True, skip_scripts=True)
 		# Get profile max and avg err to be later added to metadata
 		# Argyll outputs the following:
 		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
