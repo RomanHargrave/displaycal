@@ -6195,7 +6195,8 @@ class ICCProfile:
 
 	def apply_black_offset(self, XYZbp, power=40.0, include_A2B=True,
 						   set_blackpoint=True, logfiles=None,
-						   thread_abort=None, abortmessage="Aborted"):
+						   thread_abort=None, abortmessage="Aborted",
+						   include_trc=True):
 		# Apply only the black point blending portion of BT.1886 mapping
 		if include_A2B:
 			tables = []
@@ -6207,7 +6208,7 @@ class ICCProfile:
 					tables.append(a2b)
 		if set_blackpoint:
 			self.set_blackpoint(XYZbp)
-		if not self.tags.get("rTRC"):
+		if not self.tags.get("rTRC") or not include_trc:
 			return
 		rXYZ = self.tags.rXYZ.values()
 		gXYZ = self.tags.gXYZ.values()
