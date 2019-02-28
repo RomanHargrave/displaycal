@@ -1,10 +1,9 @@
-Standards-Version: 3.9.6.1
+Standards-Version: 4.3.0
 Source: ${DEBPACKAGE}
 Section: graphics
 Priority: extra
 Maintainer: ${MAINTAINER} <obs-packaging@${DOMAIN}>
-Build-Depends: debhelper (>= 5.0.38), doc-base, python-dev, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
-XS-Python-Version: >= ${PY_MINVERSION}, << 3.0
+Build-Depends: debhelper, dh-python, doc-base, python2.7-dev, python, libxinerama-dev, libxrandr-dev, libxxf86vm-dev
 
 Package: ${DEBPACKAGE}
 Architecture: any

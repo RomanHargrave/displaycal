@@ -1,115 +1,20 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+%:
+	dh $@ --with python2 -Spybuild
 
-export DH_PYCENTRAL=include-links dh_pycentral
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/displaycal
 
-CFLAGS = -g
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-CFLAGS += -O0
-else
-CFLAGS += -O2
-endif
+	rm -rf debian/displaycal/etc/udev/
 
-# The DESTDIR Has To Be Exactly  /usr/src/packages/BUILD/debian/<nameOfPackage>
-export DEB_BUILD_ROOT=/usr/src/packages/BUILD/debian/${DEBPACKAGE}
-export install_prefix=/usr
-export install_exec_prefix=/usr
-export install_datadir=/usr/share
-export python_version=$(python2 -c "import sys;print sys.version[:3]")
-export install_lib=$(python${python_version} -c "from distutils.sysconfig import get_python_lib;print get_python_lib(True)")
+override_dh_missing:
+	dh_missing --fail-missing
 
-build: build-arch build-indep
-build-arch: build-stamp
-build-indep: build-stamp
-build-stamp:
-	dh_testdir
+override_dh_clean:
+	dh_clean MANIFEST.in INSTALLED_FILES
 
-	# Make files executable
-	chmod +x scripts/*
-	chmod +x misc/Argyll
-	# Convert line endings in LICENSE.txt
-	python${python_version} -c "f = open('LICENSE.txt', 'rb');d = f.read().replace('\r\n', '\n').replace('\r', '\n');f.close();f = open('LICENSE.txt', 'wb');f.write(d);f.close()"
-	# Add here commands to compile the package.
-	python${python_version} setup.py build --use-distutils
-	# --- end custom part for compiling
+	-rm -rf dist
 
-	touch build-stamp
-
-clean:
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp
-
-	# Add here commands to clean up after the build process.
-	make clean || true
-	# --- end custom part for cleaning up
-
-	dh_clean
-
-install: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-
-	# Add here commands to install the package
-	python${python_version} setup.py install --no-compile --use-distutils \
-		--root=${DEB_BUILD_ROOT} \
-		--prefix=${install_prefix} \
-		--exec-prefix=}${install_exec_prefix} \
-		--install-data=${install_datadir} \
-		--install-lib=${install_lib} \
-		--skip-instrument-configuration-files \
-		--skip-postinstall
-	# udev/hotplug
-	mkdir -p "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb"
-	# USB and serial instruments using udev, where udev already creates /dev/bus/usb/00X/00X devices
-	cp -f "misc/55-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/55-Argyll.rules"
-	# USB using udev, where there are NOT /dev/bus/usb/00X/00X devices
-	cp -f  "misc/45-Argyll.rules" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/45-Argyll.rules"
-	# USB using hotplug and Serial using udev (older versions of Linux)
-	cp -f "misc/Argyll" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/Argyll"
-	cp -f "misc/Argyll.usermap" "${DEB_BUILD_ROOT}/usr/share/DisplayCAL/usb/Argyll.usermap"
-	# --- end custom part for installing
-
-# Build architecture-independent files here.
-binary-indep: build install
-	# We have nothing to do by default.
-
-# Build architecture-dependent files here.
-binary-arch: build install
-	dh_testdir
-	dh_testroot
-#	dh_installdebconf
-	dh_installdocs
-#	dh_installexamples
-	dh_installmenu
-#	dh_installlogrotate
-#	dh_installemacsen
-#	dh_installpam
-#	dh_installmime
-#	dh_installinit
-#	dh_installcron
-#	dh_installman
-	dh_installinfo
-#	dh_undocumented
-	dh_installchangelogs
-	which dh_pycentral > /dev/null 2>&1 && dh_pycentral || dh_python2 --no-guessing-versions
-	dh_link
-	dh_strip
-	dh_compress
-	dh_fixperms
-#	dh_makeshlibs
-	dh_installdeb
-#	dh_perl
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install
+override_dh_compress:
+	dh_compress -XREADME.html
