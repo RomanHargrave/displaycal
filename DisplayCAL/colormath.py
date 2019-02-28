@@ -1988,11 +1988,11 @@ def IPT2XYZ(I, P, T):
 	return LMS2XYZ_matrix * LMS
 
 
-def XYZ2Lab(X, Y, Z, whitepoint=None):
+def XYZ2Lab(X, Y, Z, whitepoint=None, scale=100):
 	"""
 	Convert from XYZ to Lab.
 	
-	The input Y value needs to be in the nominal range [0.0, 100.0] and 
+	The input Y value needs to be in the nominal range [0.0, scale] and 
 	other input values scaled accordingly.
 	The output L value is in the nominal range [0.0, 100.0].
 	
@@ -2002,7 +2002,7 @@ def XYZ2Lab(X, Y, Z, whitepoint=None):
 	Based on formula from http://brucelindbloom.com/Eqn_XYZ_to_Lab.html
 	
 	"""
-	Xr, Yr, Zr = get_whitepoint(whitepoint, 100)
+	Xr, Yr, Zr = get_whitepoint(whitepoint, scale)
 
 	xr = X / Xr
 	yr = Y / Yr
