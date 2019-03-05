@@ -9369,7 +9369,8 @@ usage: spotread [-options] [logfile]
 				ti3.sort_by_RGB()
 				self.log(ti3.DATA)
 				if tagcls == "TRC" and profile:
-					rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs"))
+					rgb_space = colormath.get_rgb_space(profile.get_rgb_space("pcs",
+																			  1))
 					fwd_mtx = rgb_space[-1]
 					bwd_mtx = fwd_mtx.inverted()
 
