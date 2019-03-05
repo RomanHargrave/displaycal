@@ -453,6 +453,11 @@ class SynthICCFrame(BaseFrame):
 	def luminance_ctrl_handler(self, event):
 		v = self.luminance_ctrl.GetValue()
 		setcfg("synthprofile.luminance", v)
+		target_peak = v
+		maxmll = self.lut3d_hdr_maxmll_ctrl.GetValue()
+		if maxmll < target_peak:
+			setcfg("3dlut.hdr_maxmll", target_peak)
+		self.lut3d_hdr_maxmll_ctrl.SetRange(target_peak, 10000)
 		self.lut3d_set_option("3dlut.hdr_peak_luminance", v)
 		self.black_luminance_ctrl_handler(event)
 	
@@ -1010,8 +1015,17 @@ class SynthICCFrame(BaseFrame):
 			outoffset = 100
 		self.black_output_offset_ctrl.SetValue(outoffset)
 		self.black_output_offset_intctrl.SetValue(outoffset)
+		target_peak = getcfg("synthprofile.luminance")
+		maxmll = getcfg("3dlut.hdr_maxmll")
+		# Don't allow maxmll < target peak. Technically this restriction does
+		# not exist, but practically maxmll < target peak doesn't make sense.
+		if maxmll < target_peak:
+			maxmll = target_peak
+			setcfg("3dlut.hdr_maxmll", maxmll)
+		self.lut3d_hdr_maxmll_ctrl.SetRange(target_peak, 10000)
+		self.luminance_ctrl.SetValue(target_peak)
 		self.lut3d_hdr_minmll_ctrl.SetValue(getcfg("3dlut.hdr_minmll"))
-		self.lut3d_hdr_maxmll_ctrl.SetValue(getcfg("3dlut.hdr_maxmll"))
+		self.lut3d_hdr_maxmll_ctrl.SetValue(maxmll)
 		self.lut3d_hdr_maxmll_alt_clip_cb.SetValue(not bool(getcfg("3dlut.hdr_maxmll_alt_clip")))
 		self.lut3d_hdr_sat_ctrl.SetValue(int(round(getcfg("3dlut.hdr_sat") * 100)))
 		self.lut3d_hdr_update_sat_val()
