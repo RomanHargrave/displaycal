@@ -8915,6 +8915,10 @@ usage: spotread [-options] [logfile]
 							profile.tags.B2A2 = profile.tags.B2A0
 					if not "B2A2" in profile.tags:
 						profile.tags.B2A2 = profile.tags.B2A0
+				apply_bpc = ((getcfg("profile.black_point_compensation") and
+							  not "A2B0" in profile.tags) or
+							 (process_A2B and (getcfg("profile.b2a.hires")
+											   or not has_B2A)))
 				# If profile type is X (XYZ cLUT + matrix) add the matrix tags
 				# from a lookup of a smaller testchart or A2B/B2A (faster
 				# computation!). If profile is a shaper+matrix profile,
@@ -8953,7 +8957,7 @@ usage: spotread [-options] [logfile]
 						omit = "XYZ"  # Don't re-create matrix
 					result = self._create_matrix_profile(args[-1], profile,
 														 ptype, omit,
-														 getcfg("profile.black_point_compensation"))
+														 apply_bpc)
 					if isinstance(result, ICCP.ICCProfile):
 						result = True
 						profchanged = True
@@ -8964,10 +8968,7 @@ usage: spotread [-options] [logfile]
 					isinstance(profile.tags.rTRC, ICCP.CurveType) and
 					isinstance(profile.tags.gTRC, ICCP.CurveType) and
 					isinstance(profile.tags.bTRC, ICCP.CurveType) and
-					((getcfg("profile.black_point_compensation") and
-					  not "A2B0" in profile.tags) or
-					 (process_A2B and (getcfg("profile.b2a.hires")
-									   or not has_B2A))) and
+					apply_bpc and
 					len(profile.tags.rTRC) > 1 and
 					len(profile.tags.gTRC) > 1 and
 					len(profile.tags.bTRC) > 1):
