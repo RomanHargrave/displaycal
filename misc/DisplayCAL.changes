@@ -5,6 +5,20 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Thu Jan 24 14:52:35 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.7.1.4:
+  * [Enhancement] Changed full field pattern insertion interval and
+    duration granularity to 0.1 seconds.
+  * [Enhancement] Store and read full field pattern insertion
+    parameters from profile.
+  * [Minor] Full field pattern insertion should not run during
+    display update delay measurements and requires an extra delay
+    after being shown.
+  * [cosmetic] [UI] Include full field pattern insertion in
+    estimated measurement time calculation.
+
+-------------------------------------------------------------------
 Mon Dec 03 00:59:11 UTC 2018 - obs-packaging@displaycal.net
 
 - Update to 3.7.1.3:

@@ -48,6 +48,9 @@
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
 
+						<p><strong>Phasing out 0install support.</strong> While the 0install version of ${APPNAME}, which was originally introduced as a replacement for the long-defunct Autopackage system under Linux, has had its uses, the low distribution (around 6%) of 0install versus the standalone version does no longer warrant the additional time and work needed to maintain this separate deployment path. 0install support will thus be phased out with this version, which is only available as “standalone” installation. Windows and macOS users will be updated automatically to the standalone version. Linux users should switch to a standalone package at their earliest convenience.<br />
+						There will be a transition period of a few months during which old 0install versions will continue to run, but after which the respective online infrastructure will be decommissioned.</p>
+
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Russian and ukrainian localization (thanks to Alex Sikorsky).</li>
@@ -58,6 +61,7 @@
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Apply black point correction/compensation to measurement data directly instead of device-to-PCS table (improves smoothness of profiles for displays with not very neutral black).</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Optimize single gamma curve without offset to single gamma value.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Network: Get rid of <code>gethostbyname</code> usage because it can have a long delay.</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated traditional chinese localization (thanks to 楊添明).</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
