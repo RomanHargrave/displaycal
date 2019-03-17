@@ -21,7 +21,8 @@ if not exist dist\DisplayCAL-%version%.tar.gz if not exist dist\%version%\Displa
 )
 
 REM Create openSUSE build service control files and update 0install feeds
-python setup.py buildservice 0install --stability=stable
+REM python setup.py buildservice 0install --stability=stable
+python setup.py buildservice --stability=stable
 
 REM Standalone executable
 if not exist dist\py2exe.win32-py%python_version%\DisplayCAL-%version% (

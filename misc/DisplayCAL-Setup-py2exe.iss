@@ -28,8 +28,8 @@ VersionInfoTextVersion=%(VersionInfoTextVersion)s
 WizardImageFile=..\misc\media\install.bmp
 WizardSmallImageFile=..\misc\media\icon-install.bmp
 AppVersion=%(AppVersion)s
-UninstallDisplayName={cm:UninstallProgram,%(AppName)s}
-UninstallDisplayIcon={app}\theme\icons\%(AppName)s-uninstall.ico
+UninstallDisplayName=%(AppName)s
+UninstallDisplayIcon={app}\%(AppName)s.exe
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
 MinVersion=0,5.1.2600
@@ -95,6 +95,8 @@ Type: files; Name: "{app}\theme\icons\16x16\dispcalGUI*.png"
 Type: files; Name: "{app}\theme\icons\32x32\dispcalGUI*.png"
 Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
 Type: files; Name: "{commonstartup}\%(AppName)s Profile Loader.lnk"
+Type: filesandordirs; Name: "{userprograms}\{groupname}"
+Type: filesandordirs; Name: "{commonprograms}\{groupname}"
 
 [UninstallRun]
 Filename: taskkill.exe; parameters: /im %(AppName)s-apply-profiles.exe; Flags: RunHidden RunAsCurrentUser;
