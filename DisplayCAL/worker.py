@@ -6972,8 +6972,11 @@ while 1:
 									   silent=True, log_output=False)
 				if isinstance(result, Exception):
 					safe_print(result)
+				# Need to get and remember output of spotread because calling
+				# self.get_technology_strings() will overwrite self.output
+				output = self.output
 				if test:
-					self.output.extend("""Measure spot values, Version 1.7.0_beta
+					output.extend("""Measure spot values, Version 1.7.0_beta
 Author: Graeme W. Gill, licensed under the GPL Version 2 or later
 Diagnostic: Usage requested
 usage: spotread [-options] [logfile]
@@ -7038,7 +7041,7 @@ usage: spotread [-options] [logfile]
  logfile              Optional file to save reading results as text""".splitlines())
 				measurement_modes_follow = False
 				technology_strings = self.get_technology_strings()
-				for line in self.output:
+				for line in output:
 					line = line.strip()
 					if line.startswith("-y "):
 						line = line.lstrip("-y ")
@@ -7057,7 +7060,7 @@ usage: spotread [-options] [logfile]
 						desc = desc.strip()
 						if measurement_mode_instrument_id == instrument_id:
 							# Found a mode for our instrument
-							if (re.sub(r"\s*\(.*?\)$", "", desc) in
+							if (re.sub(r"\s*\(.*?\)?$", "", desc) in
 								technology_strings.values() + [""] and
 								skip_ccxx_modes):
 								# This mode is supplied via CCMX/CCSS, skip
