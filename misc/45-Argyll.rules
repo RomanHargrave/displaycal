@@ -1,6 +1,7 @@
 # udev rule to change permissions so that the USB instruments can be accessed by Argyll
 # where the udev is old and doesn't understand the more modern syntax in 55-Argyll.rules.
 # Copy to /etc/udev/rules.d/45-Argyll.rules
+# NOTE that hex values must be lower case!
 	
 # Colorimtre HCFR
 SYSFS{idVendor}=="04db", SYSFS{idProduct}=="005b", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
@@ -47,6 +48,9 @@ SYSFS{idVendor}=="085c", SYSFS{idProduct}=="0400", PROGRAM="/bin/sh -c 'K=%k; K=
 
 # Spyder 5
 SYSFS{idVendor}=="085c", SYSFS{idProduct}=="0500", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
+
+# Spyder X
+SYSFS{idVendor}=="085c", SYSFS{idProduct}=="0a00", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"
 
 # i1Pro
 SYSFS{idVendor}=="0971", SYSFS{idProduct}=="2000", PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", NAME="%c", MODE="660", GROUP="colord"

@@ -4,6 +4,7 @@
 # or           /usr/lib/udev/rules.d/55-Argyll.rules
 # and remove   /usr/lib/udev/rules.d/69-cd-sensors.rules
 # as appropriate for your system
+# NOTE that hex values must be lower case!
 
 #--------------------------------------------------------------------------
 # Copyright 2012 Graeme W. Gill.
@@ -103,6 +104,9 @@ ATTRS{idVendor}=="085c", ATTRS{idProduct}=="0400", ENV{COLORD_SENSOR_KIND}="spyd
 
 # Spyder 5
 ATTRS{idVendor}=="085c", ATTRS{idProduct}=="0500", ENV{COLORD_SENSOR_KIND}="spyder5" ENV{COLORD_SENSOR_CAPS}="lcd crt ambient"
+
+# Spyder X
+ATTRS{idVendor}=="085c", ATTRS{idProduct}=="0a00", ENV{COLORD_SENSOR_KIND}="spyderX" ENV{COLORD_SENSOR_CAPS}="lcd crt ambient"
 
 # JETI & KLEIN serial port (not used)
 #KERNEL=="ttyUSB[0-9]*", TAG+="udev-acl", TAG+="uaccess"
