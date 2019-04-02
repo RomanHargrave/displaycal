@@ -334,9 +334,16 @@ class LUTCanvas(plot.PlotCanvas):
 		legend = []
 		color = 'white'
 			
-		identical = (len(points) > 1 and
-					 all(x == points.values()[0][i][0] and abs(y - points.values()[0][i][1]) < 0.005
-						 for i, (x, y) in enumerate(values) for values in points.itervalues()))
+		if len(points) > 1:
+			values0 = points.values()[0]
+			# identical = all(values == values0
+							# for values in points.itervalues())
+			identical = (all(all(x == values0[i][0] and
+								 abs(y - values0[i][1]) < 0.005
+								 for i, (x, y) in enumerate(values))
+							 for values in points.itervalues()))
+		else:
+			identical = False
 
 		if identical:
 			channels_label = "".join(channels.values())
