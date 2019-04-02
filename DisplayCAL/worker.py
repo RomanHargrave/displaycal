@@ -7587,13 +7587,14 @@ usage: spotread [-options] [logfile]
 			result = None
 
 			# Get Argyll version
-			resp = http_request(None, domain, "GET", "/Argyll/VERSION",
-								failure_msg=lang.getstr("update_check.fail"),
-								silent=True)
-			if resp:
-				argyll_version_string = resp.read().strip()
-			else:
-				argyll_version_string = self.argyll_version_string
+			argyll_version_string = self.argyll_version_string
+			if argyll_version_string == "0.0.0":
+				# Download version info
+				resp = http_request(None, domain, "GET", "/Argyll/VERSION",
+									failure_msg=lang.getstr("update_check.fail"),
+									silent=True)
+				if resp:
+					argyll_version_string = resp.read().strip()
 
 			installer_basename = ("Argyll_V%s_USB_driver_installer.exe" %
 								  argyll_version_string)
