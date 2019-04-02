@@ -78,8 +78,8 @@ BuildRequires:  pkgconfig(xxf86vm)
 Requires:       argyllcms
 Requires:       python-numpy >= %{numpy_version}
 Requires:       libSDL2_mixer-2_0-0
-Requires:       python-wxGTK >= %{wx_minversion}
-Requires:       python2-psutil
+Requires:       python-wxWidgets >= %{wx_minversion}
+Requires:       python-psutil
 %py_requires
 %else
 %if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
