@@ -1415,7 +1415,8 @@ class LUTFrame(BaseFrame):
 			setattr(self, "tf_" + channel + "TRC", trc)
 		self.trc = None
 		curves = []
-		if "vcgt" in profile.tags or "MS00" in profile.tags:
+		if ("vcgt" in profile.tags or "MS00" in profile.tags or
+			self.__class__ is LUTFrame):
 			curves.append(lang.getstr('vcgt'))
 		self.client.errors = []
 		self.toggle_clut.SetValue("B2A0" in profile.tags or
