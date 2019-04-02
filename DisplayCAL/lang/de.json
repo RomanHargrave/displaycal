@@ -716,6 +716,8 @@
 	"measurement_mode.lcd.oled": "LCD (OLED)",
 	"measurement_mode.lcd.white_led": "LCD (Weisse LED)",
 	"measurement_mode.lcd.wide_gamut.ccfl": "Erweiterter Farbumfang LCD (CCFL)",
+	"measurement_mode.lcd.wide_gamut.gb_led": "Erweiterter Farbumfang LCD (GB LED)",
+	"measurement_mode.lcd.wide_gamut.led": "Erweiterter Farbumfang LCD (PFS Phosphor, RGB LED)",
 	"measurement_mode.lcd.wide_gamut.rgb_led": "Erweiterter Farbumfang LCD (RGB LED)",
 	"measurement_mode.raw": "Raw",
 	"measurement_mode.refresh": "Refresh (generisch)",

@@ -716,6 +716,8 @@
 		"*measurement_mode.lcd.oled": "LCD (OLED)",
 	"measurement_mode.lcd.white_led": "LCD (LED Blanco)",
 	"measurement_mode.lcd.wide_gamut.ccfl": "LCD Gama Amplia(CCFL)",
+	"measurement_mode.lcd.wide_gamut.gb_led": "LCD Gama Amplia (GB LED)",
+	"measurement_mode.lcd.wide_gamut.led": "LCD Gama Amplia (PFS Fósforo, RGB LED)",
 	"measurement_mode.lcd.wide_gamut.rgb_led": "LCD Gama Amplia (RGB LED)",
 	"measurement_mode.raw": "Raw",
 	"measurement_mode.refresh": "Refresco (generico)",

@@ -716,6 +716,8 @@
 	"measurement_mode.lcd.oled": "液晶 (OLED)",
 	"measurement_mode.lcd.white_led": "液晶 (W-LED)",
 	"measurement_mode.lcd.wide_gamut.ccfl": "广色域液晶 (CCFL)",
+	"measurement_mode.lcd.wide_gamut.gb_led": "广色域液晶 (GB-LED)",
+	"measurement_mode.lcd.wide_gamut.led": "广色域液晶 (PFS-Phosphor, RGB-LED)",
 	"measurement_mode.lcd.wide_gamut.rgb_led": "广色域液晶 (RGB-LED)",
 	"measurement_mode.raw": "Raw 格式",
 	"measurement_mode.refresh": "刷新 (常规)",

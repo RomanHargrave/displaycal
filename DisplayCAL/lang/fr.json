@@ -716,6 +716,8 @@
 	"measurement_mode.lcd.oled": "LCD (OLED)",
 	"measurement_mode.lcd.white_led": "LCD (LED blanc)",
 	"measurement_mode.lcd.wide_gamut.ccfl": "LCD à gamut étendu (CCFL)",
+	"measurement_mode.lcd.wide_gamut.gb_led": "LCD à gamut étendu (GB LED)",
+	"measurement_mode.lcd.wide_gamut.led": "LCD à gamut étendu (PFS Phosphore, RVB LED)",
 	"measurement_mode.lcd.wide_gamut.rgb_led": "LCD à gamut étendu (LED RVB)",
 	"measurement_mode.raw": "Brut",
 	"measurement_mode.refresh": "à rafraîchissement (générique)",

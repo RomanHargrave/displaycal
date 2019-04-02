@@ -3277,6 +3277,17 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				measurement_modes_ab[instrument_type].extend(["3", "4", "5",
 															  "6", "7"])
+		elif instrument_name == "SpyderX":
+			# Argyll 2.0.2b 2019-03-25
+			# l SpyderX: General [Default,CB1]
+			# e SpyderX: Standard LED
+			# b SpyderX: Wide Gamut LED
+			# i SpyderX: GB LED
+			measurement_modes[instrument_type] = [lang.getstr("measurement_mode.generic"),
+												  lang.getstr("measurement_mode.lcd.white_led"),
+												  lang.getstr("measurement_mode.lcd.wide_gamut.led"),
+												  lang.getstr("measurement_mode.lcd.wide_gamut.gb_led")]
+			measurement_modes_ab[instrument_type] = ["l", "e", "b", "i"]
 		elif instrument_name in ("ColorHug", "ColorHug2"):
 			# Argyll CMS 1.3.6, spectro/colorhug.c, colorhug_disptypesel
 			# Note: projector mode (-yp) is not the same as ColorMunki
