@@ -7660,13 +7660,13 @@ usage: spotread [-options] [logfile]
 				wmi_connection = wmi.WMI()
 				query = "Select * From Win32_USBControllerDevice"
 				for item in wmi_connection.query(query):
+					try:
+						device_id = item.Dependent.DeviceID
+					except wmi.x_wmi, exception:
+						self.log(exception)
+						continue
 					for usb_id, instrument_names in usb_ids.iteritems():
 						hardware_id = ur"USB\VID_%04X&PID_%04X" % usb_id
-						try:
-							device_id = item.Dependent.DeviceID
-						except wmi.x_wmi, exception:
-							self.log(exception)
-							continue
 						if device_id.startswith(hardware_id):
 							# Found supported instrument
 							try:
