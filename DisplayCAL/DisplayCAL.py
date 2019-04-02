@@ -3259,6 +3259,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			measurement_modes = dict({instrument_type: [lang.getstr("measurement_mode.refresh")]})
 			measurement_modes_ab = dict({instrument_type: ["c"]})
+		instrument_features = self.worker.get_instrument_features(instrument_name)
 		if (instrument_name in ("Spyder4", "Spyder5") and
 			self.worker.spyder4_cal_exists()):
 			# Spyder4 Argyll CMS >= 1.3.6
@@ -3302,15 +3303,16 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Argyll CMS 1.5.x introduces new measurement mode
 			measurement_modes[instrument_type].extend([lang.getstr("measurement_mode.raw")])
 			measurement_modes_ab[instrument_type].append("R")
-		elif instrument_name == "K-10":
+		elif instrument_name == "K-10" or not instrument_features:
+			# K-10 and 'unknown' instruments
 			measurement_modes[instrument_type] = []
 			measurement_modes_ab[instrument_type] = []
 			for mode, desc in self.worker.get_instrument_measurement_modes().iteritems():
 				measurement_modes[instrument_type].append(lang.getstr(desc))
 				measurement_modes_ab[instrument_type].append(mode)
+		if instrument_name == "K-10":
 			if not measurement_mode in measurement_modes_ab[instrument_type]:
 				measurement_mode = "F"
-		instrument_features = self.worker.get_instrument_features(instrument_name)
 		if instrument_features.get("projector_mode") and \
 		   self.worker.argyll_version >= [1, 1, 0]:
 			# Projector mode introduced in Argyll 1.1.0 Beta
