@@ -68,6 +68,7 @@ AGM	Advan Int'l Corporation
 AGO	AlgolTek, Inc.
 AGT	Agilent Technologies
 AHC	Advantech Co., Ltd.
+AHQ	Astro HQ LLC
 AHS	Beijing AnHeng SecoTech Information Technology Co., Ltd.
 AIC	Arnos Insturments & Computer Systems
 AIE	Altmann Industrieelektronik
@@ -120,6 +121,7 @@ AMS	ARMSTEL, Inc.
 AMT	AMT International Industry
 AMW	AMW
 AMX	AMX LLC
+AMZ	Amazon Corporation
 ANA	Anakron
 ANC	Ancot
 AND	Adtran Inc
@@ -375,6 +377,7 @@ CHS	Agentur Chairos
 CHT	Chunghwa Picture Tubes,LTD.
 CHY	Cherry GmbH
 CIC	Comm. Intelligence Corporation
+CIE	Convergent Engineering, Inc.
 CII	Cromack Industries Inc
 CIL	Citicom Infotech Private Limited
 CIN	Citron GmbH
@@ -397,6 +400,7 @@ CLX	CardLogix
 CMC	CMC Ltd
 CMD	Colorado MicroDisplay, Inc.
 CMG	Chenming Mold Ind. Corp.
+CMH	COMHEAR, INC.
 CMI	C-Media Electronics
 CMM	Comtime GmbH
 CMN	Chimei Innolux Corporation
@@ -559,9 +563,10 @@ DLT	Digitelec Informatique Park Cadera
 DMB	Digicom Systems Inc
 DMC	Dune Microsystems Corporation
 DMM	Dimond Multimedia Systems Inc
+DMN	Dimension Engineering LLC
 DMO	Data Modul AG
 DMP	D&M Holdings Inc, Professional Business Company
-DMS	DOME imaging systems
+DMS	DMIST RESEARCH LTD
 DMT	Distributed Management Task Force, Inc. (DMTF)
 DMV	NDS Ltd
 DNA	DNA Enterprises, Inc.
@@ -818,6 +823,7 @@ GAC	GreenArrays, Inc.
 GAG	Gage Applied Sciences Inc
 GAL	Galil Motion Control
 GAU	Gaudi Co., Ltd.
+GBT	GIGA-BYTE TECHNOLOGY CO., LTD.
 GCC	GCC Technologies Inc
 GCI	Gateway Comm. Inc
 GCS	Grey Cell Systems Ltd
@@ -868,11 +874,11 @@ GRV	Advanced Gravis
 GRY	Robert Gray Company
 GSB	NIPPONDENCHI CO,.LTD
 GSC	General Standards Corporation
-GSM	Goldstar Company Ltd
+GSM	LG Electronics
 GSN	Grandstream Networks, Inc.
 GST	Graphic SystemTechnology
 GSY	Grossenbacher Systeme AG
-GTC	Graphtec Corporation
+GTC	G2touch Co., LTD
 GTI	Goldtouch
 GTK	G-Tech Corporation
 GTM	Garnet System Company Ltd
@@ -967,6 +973,7 @@ HWD	Highwater Designs Ltd
 HWP	Hewlett Packard Enterprise
 HWV	Huawei Technologies Co., Inc.
 HXM	Hexium Ltd.
+HXT	Guizhou Huaxintong Semiconductor Technology Co., Ltd
 HYC	Hypercope Gmbh Aachen
 HYD	Hydis Technologies.Co.,LTD
 HYL	Shanghai Chai Ming Huang Info&Tech Co, Ltd
@@ -1176,6 +1183,7 @@ KOB	Kobil Systems GmbH
 KOD	Eastman Kodak Company
 KOE	KOLTER ELECTRONIC
 KOL	Kollmorgen Motion Technologies Group
+KOM	Kontron GmbH
 KOU	KOUZIRO Co.,Ltd.
 KOW	KOWA Company,LTD.
 KPC	King Phoenix Company
@@ -1310,6 +1318,7 @@ MCE	Metz-Werke GmbH & Co KG
 MCG	Motorola Computer Group
 MCH	Microchip Technology Inc
 MCI	Micronics Computers
+MCJ	Medicaroid Corporation
 MCL	Motorola Communications Israel
 MCM	Metricom Inc
 MCN	Micron Electronics Inc
@@ -1770,6 +1779,7 @@ QFF	Padix Co., Inc.
 QFI	Quickflex, Inc
 QLC	Q-Logic
 QQQ	Chuomusen Co., Ltd.
+QSC	QSC, LLC
 QSI	Quantum Solutions, Inc.
 QTD	Quantum 3D Inc
 QTH	Questech Ltd
@@ -1858,6 +1868,7 @@ RVI	Realvision Inc
 RVL	Reveal Computer Prod
 RWC	Red Wing Corporation
 RXT	Tectona SoftSolutions (P) Ltd.,
+RZR	Razer Taiwan Co. Ltd.
 RZS	Rozsnyó, s.r.o.
 SAA	Sanritz Automation Co.,Ltd.
 SAE	Saab Aerotech
@@ -1982,7 +1993,7 @@ SNK	S&K Electronics
 SNN	SUNNY ELEKTRONIK
 SNO	SINOSUN TECHNOLOGY CO., LTD
 SNP	Siemens Nixdorf Info Systems
-SNS	Cirtech (UK) Ltd
+SNS	Sensel, Inc.
 SNT	SuperNet Inc
 SNV	SONOVE GmbH
 SNW	Snell & Wilcox
@@ -2298,6 +2309,7 @@ VAD	Vaddio, LLC
 VAI	VAIO Corporation
 VAL	Valence Computing Corporation
 VAR	Varian Australia Pty Ltd
+VAT	VADATECH INC
 VBR	VBrick Systems Inc.
 VBT	Valley Board Ltda
 VCC	Virtual Computer Corporation
@@ -2349,6 +2361,7 @@ VRS	VRstudios, Inc.
 VRT	Varjo Technologies
 VSC	ViewSonic Corporation
 VSD	3M
+VSH	Vishay Intertechnology, Inc.
 VSI	VideoServer
 VSN	Ingram Macrotron
 VSP	Vision Systems GmbH
@@ -2392,7 +2405,7 @@ WMO	Westermo Teleindustri AB
 WMT	Winmate Communication Inc
 WNI	WillNet Inc.
 WNV	Winnov L.P.
-WNX	Wincor Nixdorf International GmbH
+WNX	Diebold Nixdorf Systems GmbH
 WPA	Matsushita Communication Industrial Co., Ltd.
 WPI	Wearnes Peripherals International (Pte) Ltd
 WRC	WiNRADiO Communications
@@ -2409,6 +2422,7 @@ WVV	WolfVision GmbH
 WWP	Wipotec Wiege- und Positioniersysteme GmbH
 WWV	World Wide Video, Inc.
 WXT	Woxter Technology Co. Ltd
+WYR	WyreStorm Technologies LLC
 WYS	Wyse Technology
 WYT	Wooyoung Image & Information Co.,Ltd.
 XAC	XAC Automation Corp
@@ -2444,7 +2458,7 @@ YMH	Yamaha Corporation
 YOW	American Biometric Company
 ZAN	Zandar Technologies plc
 ZAX	Zefiro Acoustics
-ZAZ	Zazzle Technologies
+ZAZ	ZeeVee, Inc.
 ZBR	Zebra Technologies International, LLC
 ZBX	Zebax Technologies
 ZCM	Zenith
