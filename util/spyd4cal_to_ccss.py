@@ -47,18 +47,18 @@ def readcals(filename):
 				   2: 'Wide Gamut LCD (CCFL)',
 				   3: 'LCD (White LED)',
 				   4: 'Wide Gamut LCD (RGB LED)',
-				   5: 'LCD (CCFL Type 2)'}[i]
+				   5: 'LCD (CCFL Type 2)'}.get(i, 'Unknown')
 		tech = {0: 'Identity',
 				1: 'LCD CCFL TFT',
 				2: 'LCD CCFL Wide Gamut TFT',
 				3: 'LCD White LED TFT',
 				4: 'LCD RGB LED TFT',
-				5: 'LCD CCFL TFT'}[i]
+				5: 'LCD CCFL TFT'}.get(i, 'UNKNOWN')
 		cal = Spyd4Cal(buf[41 * 8 * i:41 * 8 * (i + 1)], display, tech)
 		if sum(cal.spec) != len(cal.spec):
 			cals.append(cal)
 		else:
-			print 'Skipping identity cal'
+			print 'Skipping identity cal', i
 	return cals
 
 
