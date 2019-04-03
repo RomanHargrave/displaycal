@@ -782,11 +782,8 @@ class ReportFrame(BaseFrame):
 			# Get time per patch (tpp)
 			tpp = [v for v in integration_time]
 			if (("plasma" in tech or "crt" in tech or "projector" in tech or
-				 "dlp" in tech) and self.worker.get_instrument_name() in
-				("ColorMunki", "DTP92", "DTP94", "i1 Display", "i1 Display 1",
-				 "i1 Display 2", "i1 DisplayPro, ColorMunki Display",
-				 "i1 Monitor", "i1 Pro", "i1 Pro 2", "K-10", "specbos",
-				 "Spyder2", "Spyder3", "Spyder4", "Spyder5")):
+				 "dlp" in tech) and
+				 self.worker.get_instrument_features().get("refresh")):
 				# Not all instruments can measure refresh rate! Add .25 secs
 				# for those who do if refresh mode is used.
 				tpp = [v + .25 for v in tpp]

@@ -8316,8 +8316,7 @@ usage: spotread [-options] [logfile]
 		""" Return whether instrument supports CCSS files or not """
 		if not instrument_name:
 			instrument_name = self.get_instrument_name()
-		return ("i1 DisplayPro, ColorMunki Display" in instrument_name or
-				"Spyder4" in instrument_name or "Spyder5" in instrument_name)
+		return self.get_instrument_features(instrument_name).get("spectral_cal")
 	
 	def create_ccxx(self, args=None, working_dir=None):
 		""" Create CCMX or CCSS """

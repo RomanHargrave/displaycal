@@ -16,11 +16,12 @@
 	   projector_mode: Does the instrument support a special projector mode?
 	  
 	   sensor_cal: Does the instrument need to calibrate its sensor by putting 
-	   it on a reference tile or black surface?
-	   A value of false for sensor_cal means the instrument can be left
-	   on the display
-	   A value of true for sensor_cal means the instrument must be
-	   removed from the display for sensor calibration if it cannot be skipped
+	               it on a reference tile or black surface?
+	               A value of false for sensor_cal means the instrument can be
+	               left on the display
+	               A value of true for sensor_cal means the instrument must be
+	               removed from the display for sensor calibration if it cannot
+	               be skipped
 	  
 	   skip_sensor_cal: Can the sensor calibration be skipped?
 	
@@ -29,8 +30,13 @@
 	                     0.23 cd/m2 black and 130 cd/m2 white level, rounded to
 	                     multiple of .1 seconds.
 	                     Instruments which I don't own have been estimated.
+	
+	   refresh: Can the instrument do refresh rate measurements?
+	
+	   spectral_cal: Does the instrument support spectral sample (CCSS)
+	                 calibration?
 	  
-	   A value of null for any of the keys means unknown/not tested
+	   A missing key, or a value of null, means unknown/not tested
 	   
 	   Instruments can have an id (short string) that is different than the
 	   long instrument name. In case no id is given, the instrument name is
@@ -49,7 +55,8 @@
 		"highres_mode": false,
 		"projector_mode": false,
 		"sensor_cal": null,
-		"skip_sensor_cal": null
+		"skip_sensor_cal": null,
+		"refresh": true
 	},
 	"DTP94": {
 		"usb_ids": [
@@ -68,7 +75,8 @@
 				// when using -N option to skip automatic sensor calibration
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				// failed with 'Unsupported function'")
-		"integration_time": [4.0, 1.1]  // Estimated
+		"integration_time": [4.0, 1.1],  // Estimated
+		"refresh": true
 	},
 	"Spectrolino": {
 		"spectral": true,
@@ -117,7 +125,8 @@
 		"projector_mode": false,
 		"sensor_cal": false,
 		"skip_sensor_cal": false,
-		"integration_time": [4.0, 1.0]  // Using i1D2 values
+		"integration_time": [4.0, 1.0],  // Using i1D2 values
+		"refresh": true
 	},
 	"i1 Display 1": {  // Argyll 1.3.6 and newer
 		"usb_ids": [
@@ -134,7 +143,8 @@
 		"projector_mode": false,
 		"sensor_cal": true,
 		"skip_sensor_cal": false,
-		"integration_time": [4.0, 1.0]  // Using i1D2 values
+		"integration_time": [4.0, 1.0],  // Using i1D2 values
+		"refresh": true
 	},
 	"i1 Display 2": {  // Argyll 1.3.6 and newer
 		"usb_ids": [
@@ -154,7 +164,8 @@
 				// when using -N option to skip automatic sensor calibration
 				// (dispread -D9 output: "Setting no-sensor_calibrate failed 
 				// failed with 'Unsupported function'")
-		"integration_time": [4.0, 1.0]  // Measured
+		"integration_time": [4.0, 1.0],  // Measured
+		"refresh": true
 	},
 	"i1 DisplayPro, ColorMunki Display": {
 		"usb_ids": [
@@ -172,7 +183,9 @@
 		"sensor_cal": false,
 		"skip_sensor_cal": false,
 		"measurement_mode_map": {"c": "r", "l": "n"},
-		"integration_time": [2.6, 0.2]  // Measured
+		"integration_time": [2.6, 0.2],  // Measured
+		"refresh": true,
+		"spectral_cal": true
 	},
 	"i1 Monitor": {  // like i1Pro
 		"usb_ids": [
@@ -188,7 +201,8 @@
 		"projector_mode": false,
 		"sensor_cal": true,
 		"skip_sensor_cal": true,
-		"integration_time": [9.2, 3.9]  // Using i1 Pro values
+		"integration_time": [9.2, 3.9],  // Using i1 Pro values
+		"refresh": true
 	},
 	"i1 Pro": {
 		"usb_ids": [
@@ -204,7 +218,8 @@
 		"projector_mode": false,
 		"sensor_cal": true,
 		"skip_sensor_cal": true,
-		"integration_time": [9.2, 3.9]  // Measured (i1 Pro Rev. A)
+		"integration_time": [9.2, 3.9],  // Measured (i1 Pro Rev. A)
+		"refresh": true
 	},
 	"i1 Pro 2": {
 		"usb_ids": [
@@ -220,7 +235,8 @@
 		"projector_mode": false,
 		"sensor_cal": true,
 		"skip_sensor_cal": true,
-		"integration_time": [9.2, 3.9]  // Using i1 Pro values
+		"integration_time": [9.2, 3.9],  // Using i1 Pro values
+		"refresh": true
 	},
 	"ColorHug": {
 		"usb_ids": [
@@ -241,7 +257,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [1.8, 0.8]  // Measured (ColorHug #660)
+		"integration_time": [1.8, 0.8],  // Measured (ColorHug #660)
+		"refresh": true
 	},
 	"ColorHug2": {
 		"usb_ids": [
@@ -257,7 +274,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [2.0, 0.6]  // Measured (ColorHug2 prototype #2)
+		"integration_time": [2.0, 0.6],  // Measured (ColorHug2 prototype #2)
+		"refresh": true
 	},
 	"ColorMunki": {
 		"usb_ids": [
@@ -273,7 +291,8 @@
 		"projector_mode": true,
 		"sensor_cal": true,
 		"skip_sensor_cal": true,
-		"integration_time": [9.2, 3.9]  // Using i1 Pro values
+		"integration_time": [9.2, 3.9],  // Using i1 Pro values
+		"refresh": true
 	},
 	"Colorimtre HCFR": {
 		"usb_ids": [
@@ -336,7 +355,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [1.1, 0.1]  // Using i1D3 values halved
+		"integration_time": [1.1, 0.1],  // Using i1D3 values halved
+		"refresh": true
 	},
 	"Spyder1": {
 		"usb_ids": [
@@ -368,7 +388,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [10.5, 2.3]  // Using Spyder3 values
+		"integration_time": [10.5, 2.3],  // Using Spyder3 values
+		"refresh": true
 	},
 	"Spyder3": {
 		"usb_ids": [
@@ -385,7 +406,8 @@
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
 		"measurement_mode_map": {"c": "r", "l": "n"},
-		"integration_time": [10.5, 2.3]  // Estimated
+		"integration_time": [10.5, 2.3],  // Estimated
+		"refresh": true
 	},
 	"Spyder4": {
 		"usb_ids": [
@@ -402,7 +424,9 @@
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
 		"measurement_mode_map": {"c": "r", "l": "n"},
-		"integration_time": [10.5, 2.3]  // Using Spyder3 values
+		"integration_time": [10.5, 2.3],  // Using Spyder3 values
+		"refresh": true,
+		"spectral_cal": true
 	},
 	"Spyder5": {
 		"usb_ids": [
@@ -419,7 +443,9 @@
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
 		"measurement_mode_map": {"c": "r", "l": "n"},
-		"integration_time": [10.5, 2.3]  // Using Spyder3 values
+		"integration_time": [10.5, 2.3],  // Using Spyder3 values
+		"refresh": true,
+		"spectral_cal": true
 	},
 	"SpyderX": {
 		"usb_ids": [
@@ -435,7 +461,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [1.82, 0.7]  // 70% of ColorMunki Display
+		"integration_time": [1.82, 0.7],  // 70% of ColorMunki Display
+		"refresh": null  // To be tested
 	},
 	"Huey": {
 		"usb_ids": [
@@ -471,7 +498,8 @@
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
 		"measurement_mode_map": {"c": "r", "l": "n"},
-		"integration_time": [3.3, 0.8]  // Estimated, VERY rough
+		"integration_time": [3.3, 0.8],  // Estimated, VERY rough
+		"refresh": true
 	},
 	"specbos 1201": {
 		"spectral": true,
@@ -480,7 +508,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [10.3, 2.8]  // Estimated, VERY rough
+		"integration_time": [10.3, 2.8],  // Estimated, VERY rough
+		"refresh": true
 	},
 	"spectraval": {
 		"spectral": true,
@@ -489,7 +518,8 @@
 		"projector_mode": false,
 		"sensor_cal": null,
 		"skip_sensor_cal": null,
-		"integration_time": [3.3, 0.8]  // Estimated, VERY rough
+		"integration_time": [3.3, 0.8],  // Estimated, VERY rough
+		"refresh": true
 	},
 	"Dummy Meter / Hires & Projector": {
 		// dummy instrument, just for testing
