@@ -45,6 +45,14 @@ def langmerge(infilename1, infilename2, outfilename):
 		#elif dictin1[key] == value and not key.startswith("*") and not key.startswith("!") and value.strip():
 			#same.append(key.encode("UTF-8"))
 			#safe_print("Same: '%s' '%s'" % (key, value))
+		else:
+			format_chars = "dixXfFeEgGcs%"
+			profile_name_placeholder_chars = "aAbBHIjmMpSUwWyY"
+			for c in format_chars + profile_name_placeholder_chars:
+				a = dictin1[key].count("%" + c)
+				b = value.count("%" + c)
+				if a != b:
+					safe_print(key, "ERROR: Format character count for %%%s is wrong:" % c, a, "(expected %i)" % b)
 	
 	merged = ordereddict.OrderedDict()
 	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*) and are indented with two tabs instead of one. Please remove the asterisk when translated."
