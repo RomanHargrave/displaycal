@@ -8108,7 +8108,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				 "Colorimtre HCFR":
 				 {"R": lang.getstr("measurement_mode.raw")},
 				 "K-10":
-				 {"F": lang.getstr("measurement_mode.factory")}}.get(
+				 {"F": lang.getstr("measurement_mode.factory")},
+				 "SpyderX":
+				 {"l": lang.getstr("measurement_mode.lcd")}}.get(
 					 instrument_name, {"c": lang.getstr("measurement_mode.refresh"),
 									   "l": lang.getstr("measurement_mode.lcd")})
 		if swap:
