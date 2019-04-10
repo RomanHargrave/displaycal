@@ -5918,8 +5918,6 @@ class ICCProfile:
 		return False.
 		Otherwise, convert curve tags and return True.
 		
-		After conversion, the profile version is 2.1 if no LUT tags, else 2.4
-		
 		"""
 		if self.version < 4:
 			return False
