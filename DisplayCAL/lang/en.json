@@ -639,7 +639,7 @@
 	"install_local_system": "Install system-wide",
 	"install_user": "Install for current user only",
 	"instrument": "Instrument",
-	"instrument.calibrate": "Place the instrument on a dark, matte surface or onto its calibration plate and press OK to calibrate the instrument.",
+	"instrument.calibrate": "Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to calibrate the instrument.",
 	"instrument.calibrate.colormunki": "Set the ColorMunki sensor to calibration position and press OK to calibrate the instrument.",
 	"instrument.calibrate.reflective": "Place the instrument onto its reflective white reference serial no. %s and press OK to calibrate the instrument.",
 	"instrument.calibrating": "Calibrating instrument...",

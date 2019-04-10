@@ -459,10 +459,10 @@
 		"adaptive_mode": false,
 		"highres_mode": false,
 		"projector_mode": false,
-		"sensor_cal": null,
-		"skip_sensor_cal": null,
+		"sensor_cal": true,
+		"skip_sensor_cal": true,  // Not yet, but likely supported in future
 		"integration_time": [1.82, 0.7],  // 70% of ColorMunki Display
-		"refresh": null  // To be tested
+		"refresh": false
 	},
 	"Huey": {
 		"usb_ids": [
