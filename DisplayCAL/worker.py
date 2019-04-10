@@ -1990,7 +1990,13 @@ class Worker(WorkerBase):
 				args[-1] += "w"
 		# TTBD/FIXME: Skipping of sensor calibration can't be done in
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
-		if (getcfg("allow_skip_sensor_cal") and
+		# (is this still the case though?)
+		# Note we implicitly skip sensor calibration if already done during
+		# output levels detection, but only for colorimeters
+		if ((getcfg("allow_skip_sensor_cal") or
+			 (not instrument_features.get("spectral") and
+			  not self.get_skip_video_levels_detection() and
+			  not self._detecting_video_levels)) and
 			instrument_features.get("skip_sensor_cal") and
 			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args, True) and
 			not self.spotread_just_do_instrument_calibration):
@@ -2544,11 +2550,15 @@ class Worker(WorkerBase):
 			# Single spotread reading, we are done
 			wx.CallLater(1000, self.quit_terminate_cmd)
 
+	def get_skip_video_levels_detection(self):
+		""" Should we skip video levels detection? """
+		return (self.resume or not getcfg("patterngenerator.detect_video_levels") or
+				config.get_display_name() == "Untethered" or
+				is_ccxx_testchart())
+
 	def detect_video_levels(self):
 		""" Detect wether we need video (16..235) or data (0..255) levels """
-		if (self.resume or not getcfg("patterngenerator.detect_video_levels") or
-			config.get_display_name() == "Untethered" or
-			is_ccxx_testchart()):
+		if self.get_skip_video_levels_detection():
 			return True
 		self._detecting_video_levels = True
 		try:
