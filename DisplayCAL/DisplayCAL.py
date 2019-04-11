@@ -13323,15 +13323,25 @@ class MainFrame(ReportFrame, BaseFrame):
 		if "u" in scope:
 			data_files += safe_glob(os.path.join(config.appdata, "ArgyllCMS",
 												 wildcard))
-		if include_lastmod:
-			filenames = list(data_files)
-			data_files = []
-			for filename in filenames:
+		filenames = list(data_files)
+		data_files = []
+		mapping = OrderedDict()
+		for filename in filenames:
+			basename = os.path.basename(filename)
+			if (not basename in mapping or
+				os.path.basename(os.path.dirname(filename)) == "ArgyllCMS"):
+				# Prefer files with same basename in 'ArgyllCMS' folder over
+				# 'color' folder
+				mapping[basename] = filename
+		for filename in mapping.itervalues():
+			if include_lastmod:
 				try:
 					lastmod = os.stat(filename).st_mtime
 				except EnvironmentError:
 					lastmod = -1
 				data_files.append((filename, lastmod))
+			else:
+				data_files.append(filename)
 		return data_files
 	
 	def get_instrument_type(self):
