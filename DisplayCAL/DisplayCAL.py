@@ -3536,9 +3536,34 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.ccmx_item_paths[i] = item_path["path"]
 		if ccxx_path:
 			index = self.ccmx_item_paths.index(ccxx_path) + 2
+		add_cfg_ccxx = False
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
+			# Add currently configured CCXX to list? Check if same file in list
+			add_cfg_ccxx = True
+			for i, path in enumerate(self.ccmx_item_paths):
+				if os.path.basename(path) == os.path.basename(ccmx[1]):
+					try:
+						ccxx = CGATS.CGATS(path)
+						ccxx[0].DATA.vmaxlen = 5  # Allow margin of error
+						cfg_ccxx = CGATS.CGATS(ccmx[1])
+						cfg_ccxx[0].DATA.vmaxlen = 5  # Allow margin of error
+					except Exception, exception:
+						safe_print(exception)
+					else:
+						if str(cfg_ccxx) == str(ccxx):
+							# Same, use existing entry
+							safe_print(ccmx[1], "matches", path,
+									   "- using the latter")
+							add_cfg_ccxx = False
+							ccmx[1] = path
+							index = i + 2
+						else:
+							safe_print(ccmx[1], "does not match", path,
+									   "- using the former")
+					break
+		if add_cfg_ccxx:
 			self.ccmx_cached_paths.insert(0, ccmx[1])
 			desc = self.ccmx_cached_descriptors.get(ccmx[1])
 			if not desc and os.path.isfile(ccmx[1]):
