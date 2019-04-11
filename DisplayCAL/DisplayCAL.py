@@ -8157,6 +8157,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Automatically set LCD measurement mode if not already
 			# LCD or refresh measurement mode
 			measurement_mode = "l"
+		elif (self.worker.get_instrument_name() == "SpyderX"
+			  and getcfg("measurement_mode") != "l"):
+			# Automatically set LCD/generic measurement mode if not already
+			# LCD/generic measurement mode
+			measurement_mode = "l"
 		if not getcfg("measurement_mode.backup", False):
 			setcfg("measurement_mode.backup", getcfg("measurement_mode"))
 		if measurement_mode:
