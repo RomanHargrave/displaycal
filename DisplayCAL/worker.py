@@ -1966,10 +1966,17 @@ class Worker(WorkerBase):
 					if not os.path.isfile(ccmxcopy):
 						if 0 in cgats and cgats[0].type.strip() == "CCMX":
 							# Add display base ID if missing
-							self.check_add_display_type_base_id(cgats)
+							cbid_added = self.check_add_display_type_base_id(cgats)
+						else:
+							cbid_added = False
 						try:
 							# Copy ccmx to profile dir
-							cgats.write(ccmxcopy) 
+							if cbid_added:
+								# Write updated CCMX
+								cgats.write(ccmxcopy)
+							else:
+								# Copy original
+								shutil.copyfile(ccmx, ccmxcopy)
 						except Exception, exception:
 							return Error(lang.getstr("error.copy_failed", 
 													 (ccmx, ccmxcopy)) + 
@@ -2392,6 +2399,7 @@ class Worker(WorkerBase):
 								  "g": 3}.get(getcfg(cfgname), 1))
 			safe_print("Added DISPLAY_TYPE_BASE_ID %r" %
 					   cgats[0].DISPLAY_TYPE_BASE_ID)
+			return True
 	
 	def check_display_conf_oy_compat(self, display_no):
 		""" Check the screen configuration for oyranos-monitor compatibility 
