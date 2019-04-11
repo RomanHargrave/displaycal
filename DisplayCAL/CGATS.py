@@ -24,44 +24,27 @@ def get_device_value_labels(color_rep=None):
 
 def rpad(value, width):
 	"""
-	Right-pad a value to a given width.
-	
-	value is converted to a string first.
-	
-	If value wasn't a number originally, return the quoted string.
+	If value isn't a number, return a quoted string representation.
+	If value is greater or equal than 1e+16, return string in scientific
+	notation.
+	Otherwise, return string in decimal notation right-padded to given width
+	(using trailing zeros).
 	
 	"""
 	strval = str(value)
 	if not isinstance(value, (int, float, long, complex)):
-		# Need to escape single quote -> double quote
+		# Return quoted string representation
+		# Also need to escape single quote -> double quote
 		return '"%s"' % strval.replace('"', '""')
-	i = strval.find(".")
-	if i > -1:
-		if i < width - 1:
-			strval = str(round(value, width - i - 1)).ljust(width, '0')
-		else:
-			strval = str(int(round(value)))
-	return strval
-
-
-def rcut(value, width):
-	"""
-	Cut off any chars beyond width on the right-hand side.
-	
-	value is converted to a string first.
-	
-	If value wasn't a number originally, return the quoted string.
-	
-	"""
-	strval = str(value)
-	if not isinstance(value, (int, float, long, complex)):
-		return '"%s"' % strval
-	i = strval.find(".")
-	if i > -1:
-		if i < width - 1:
-			strval = str(round(value, width - i - 1))
-		else:
-			strval = str(int(round(value)))
+	if value < 1e+16:
+		i = strval.find(".")
+		if i > -1:
+			if i < width - 1:
+				# Avoid scientific notation by formatting to decimal
+				fmt = "%%%i.%if" % (width, width - i - 1)
+				strval = fmt % value
+			else:
+				strval = str(int(round(value)))
 	return strval
 
 
@@ -959,7 +942,10 @@ class CGATS(dict):
 									if len(parts) == 2 and len(parts[-1]) > 4:
 										value = round(value, 4)
 										strval = str(abs(value))
-								lencheck = len(strval.split("e")[0])
+								parts = strval.split("e")
+								lencheck = len(parts[0])
+								if len(parts) > 1:
+									lencheck += abs(int(parts[1]))
 								if lencheck > self.vmaxlen:
 									self.vmaxlen = lencheck
 						elif self.root.normalize_fields and \
