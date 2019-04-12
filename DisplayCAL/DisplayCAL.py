@@ -10012,7 +10012,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		graphics = plot.PlotGraphics(lines, desc, u"nm")
 		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
 		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
-		canvas.Draw(graphics, canvas.axis_x, canvas.axis_y)
+		# CallAfter is needed under GTK as usual
+		wx.CallAfter(canvas.Draw, graphics, canvas.axis_x, canvas.axis_y)
 
 		def key_handler(event):
 			""" Keyboard zoom """
