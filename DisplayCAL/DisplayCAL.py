@@ -664,9 +664,11 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 									parent.observers_ab.get(ccxx.queryv1("REFERENCE_OBSERVER"),
 															lang.getstr("unknown" if ccxx_type == "CCMX"
 																		else "not_applicable")))
+		fit_method = ccxx.queryv1("FIT_METHOD")
+		if fit_method and fit_method != "xy":
+			fit_method = lang.getstr("perceptual")
 		dlg_list_ctrl.SetStringItem(index, 8,
-									safe_unicode(ccxx.queryv1("FIT_METHOD") or
-												 lang.getstr("unknown"), "UTF-8")
+									fit_method or lang.getstr("unknown")
 									if ccxx_type == "CCMX"
 									else lang.getstr("not_applicable"))
 		dlg_list_ctrl.SetStringItem(index, 9,
