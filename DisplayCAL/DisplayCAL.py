@@ -122,8 +122,9 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					check_argyll_bin, http_request)
 from wxLUT3DFrame import LUT3DFrame
 try:
-	from wxLUTViewer import LUTFrame
+	from wxLUTViewer import LUTCanvas, LUTFrame
 except ImportError:
+	LUTCanvas = None
 	LUTFrame = None
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
@@ -147,6 +148,7 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   LogWindow, ProgressDialog, TabButton, TooltipWindow,
 					   get_gradient_panel, get_dialogs, AutocompleteComboBox)
 import floatspin
+import wxenhancedplot as plot
 import xh_fancytext
 import xh_filebrowsebutton
 import xh_floatspin
@@ -2608,6 +2610,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_ctrl_handler, 
 				  id=self.colorimeter_correction_matrix_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_plot_handler,
+				  id=self.colorimeter_correction_plot_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_web_handler, 
 				  id=self.colorimeter_correction_web_btn.GetId())
 		self.colorimeter_correction_create_btn.Bind(wx.EVT_BUTTON,
@@ -9841,6 +9845,185 @@ class MainFrame(ReportFrame, BaseFrame):
 		if measurement_mode != getcfg("measurement_mode"):
 			# Check if black point correction should be turned on
 			self.measurement_mode_ctrl_handler()
+
+	def colorimeter_correction_plot_handler(self, event):
+		""" Plot spectra or matrix """
+		if not LUTCanvas:
+			return
+
+		ccxx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+		if len(ccxx) < 2 or not os.path.isfile(ccxx[1]):
+			wx.Bell()
+			return
+
+		ccxx = ccxx[1]
+		try:
+			cgats = CGATS.CGATS(ccxx)
+		except Exception, exception:
+			show_result_dialog(exception, self)
+			return
+
+		if 0 in cgats and cgats[0].type == "CCSS":
+			# Convert to TI3 so we can get XYZ from spectra for coloring
+
+			temp = self.worker.create_tempdir()
+			if isinstance(temp, Exception):
+				show_result_dialog(temp, self)
+				return
+
+			basename = os.path.basename(os.path.splitext(cgats.filename)[0])
+			temp_path = os.path.join(temp, basename + ".ti3")
+
+			cgats[0].type = "CTI3"
+			cgats[0].DEVICE_CLASS = "DISPLAY"
+			cgats.write(temp_path)
+
+			temp_out_path = os.path.join(temp, basename + ".CIE.ti3")
+
+			result = self.worker.exec_cmd(get_argyll_util("spec2cie"),
+										  [temp_path,
+										   temp_out_path],
+										  capture_output=True)
+			if isinstance(result, Exception) or not result:
+				show_result_dialog(result or "".join(self.worker.output), self)
+				self.worker.wrapup(False)
+				return
+	
+			try:
+				cgats = CGATS.CGATS(temp_out_path)
+			except Exception, exception:
+				show_result_dialog(exception, self)
+				return
+			finally:
+				self.worker.wrapup(False)
+
+		desc = self.colorimeter_correction_matrix_ctrl.GetStringSelection()
+
+		BGCOLOUR = "#101010"
+		FGCOLOUR = "#999999"
+		GRIDCOLOUR = "#202020"
+
+		if sys.platform == "darwin":
+			FONTSIZE_LARGE = 11
+			FONTSIZE_SMALL = 10
+		else:
+			FONTSIZE_LARGE = 9
+			FONTSIZE_SMALL = 8
+
+		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
+
+		plotwindow = wx.Frame(self, -1, os.path.basename(ccxx),
+							  size=(500 * scale, 500 * scale))
+		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
+							appname))
+		plotwindow.canvas = canvas = LUTCanvas(plotwindow)
+		canvas.SetBackgroundColour(BGCOLOUR)
+		canvas.SetEnableCenterLines(False)
+		canvas.SetEnableDiagonals(False)
+		canvas.SetEnableGrid(True)
+		canvas.SetEnablePointLabel(False)
+		canvas.SetEnableTitle(True)
+		canvas.SetForegroundColour(FGCOLOUR)
+		canvas.SetGridColour(GRIDCOLOUR)
+		canvas.canvas.BackgroundColour = BGCOLOUR
+		canvas.proportional = False
+		canvas.spec_x = 10
+		canvas.spec_y = 10
+		canvas.SetXSpec(canvas.spec_x)
+		canvas.SetYSpec(canvas.spec_y)
+
+		x_min = cgats.queryv1("SPECTRAL_START_NM")
+		x_max = cgats.queryv1("SPECTRAL_END_NM")
+		bands = cgats.queryv1("SPECTRAL_BANDS")
+		step = (x_max - x_min) / bands
+		y_min = 0
+		y_max = 1
+
+		if bands < 40:
+			Plot = plot.PolySpline
+		else:
+			Plot = plot.PolyLine
+		Plot._attributes["width"] = 1
+
+		data_format = cgats.queryv1("DATA_FORMAT")
+		data = cgats.queryv1("DATA")
+
+		XYZ_max = 0
+		samples = []
+		for i, sample in data.iteritems():
+			# Get nm and spectral power
+			values = []
+			x = x_min
+			for k in data_format.itervalues():
+				if k.startswith("SPEC_"):
+					x += step
+					y = sample[k]
+					y_min = min(y, y_min)
+					y_max = max(y, y_max)
+					values.append((x, y))
+			# Get XYZ for colorization
+			XYZ = []
+			for component in "XYZ":
+				label = "XYZ_" + component
+				if label in sample:
+					v = sample[label]
+					XYZ_max = max(XYZ_max, v)
+					XYZ.append(v)
+			samples.append((XYZ, values))
+
+		gfx = []
+		for XYZ, values in samples:
+			if len(XYZ) == 3:
+				# Got XYZ
+				XYZ = [v / XYZ_max for v in XYZ]
+				RGB = tuple(int(v) for v in colormath.XYZ2RGB(*XYZ, scale=255,
+															  round_=True))
+			else:
+				RGB = (153, 153, 153)
+			gfx.append((RGB, values))
+
+		lines = []
+		for RGB, values in gfx:
+			if min(RGB) > 100:
+				# Assume neutral, use different pen style?
+				style = wx.SOLID
+			else:
+				style = wx.SOLID
+			line = Plot(values, legend="Test", colour=wx.Colour(*RGB),
+						style=style)
+			lines.append(line)
+
+		graphics = plot.PlotGraphics(lines, desc, u"nm")
+		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
+		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
+		canvas.Draw(graphics, canvas.axis_x, canvas.axis_y)
+
+		def key_handler(event):
+			""" Keyboard zoom """
+			key = event.GetKeyCode()
+			if key in (43, wx.WXK_NUMPAD_ADD):
+				# + key zoom in
+				canvas.zoom(-1)
+			elif key in (45, wx.WXK_NUMPAD_SUBTRACT):
+				# - key zoom out
+				canvas.zoom(1)
+			else:
+				event.Skip()
+
+		def OnWheel(event):
+			""" Mousewheel zoom """
+			if event.WheelRotation < 0:
+				direction = 1.0
+			else:
+				direction = -1.0
+			canvas.zoom(direction)
+
+		plotwindow.Bind(wx.EVT_KEY_DOWN, key_handler)
+		for child in plotwindow.GetAllChildren():
+			child.Bind(wx.EVT_KEY_DOWN, key_handler)
+			child.Bind(wx.EVT_MOUSEWHEEL, OnWheel)
+
+		plotwindow.Show()
 	
 	def colorimeter_correction_web_handler(self, event):
 		""" Check the web for cccmx or ccss files """

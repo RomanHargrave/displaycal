@@ -502,6 +502,18 @@
                                   <border>8</border>
                                 </object>
                                 <object class="sizeritem">
+                                  <object class="wxBitmapButton" name="colorimeter_correction_plot_btn">
+                                    <bitmap>../theme/icons/16x16/spectral_curves.png</bitmap>
+                                    <tooltip>colorimeter_correction.plot</tooltip>
+                                    <style>wxNO_BORDER</style>
+                                    <XRCED>
+                                      <events>EVT_BUTTON</events>
+                                    </XRCED>
+                                  </object>
+                                  <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                                  <border>8</border>
+                                </object>
+                                <object class="sizeritem">
                                   <object class="wxBitmapButton" name="colorimeter_correction_matrix_btn">
                                     <bitmap>../theme/icons/16x16/document-open.png</bitmap>
                                     <tooltip>colorimeter_correction_matrix_file.choose</tooltip>
