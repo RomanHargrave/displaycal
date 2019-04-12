@@ -626,7 +626,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 		if spectral:
 			spectral_res = u'%.1fnm, %i-%inm' % ((spectral["end_nm"] -
 												  spectral["start_nm"]) /
-												 spectral["bands"],
+												 (spectral["bands"] - 1),
 												 spectral["start_nm"],
 												 spectral["end_nm"])
 		else:
