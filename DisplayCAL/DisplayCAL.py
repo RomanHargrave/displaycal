@@ -3494,15 +3494,20 @@ class MainFrame(ReportFrame, BaseFrame):
 				 "ccmx": lang.getstr("matrix").replace(":", "")}
 		add_basename_to_desc_on_mismatch = False
 		for i, path in enumerate(self.ccmx_cached_paths):
+			filename, ext = os.path.splitext(path)
+			lstr = ext[1:] + "." + os.path.basename(filename)
+			desc = lang.getstr(lstr)
 			if self.ccmx_cached_descriptors.get(path):
-				desc = self.ccmx_cached_descriptors[path]
+				if desc == lstr:
+					desc = self.ccmx_cached_descriptors[path]
 			elif os.path.isfile(path):
 				try:
 					cgats = CGATS.CGATS(path)
 				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % path, exception)
 					continue
-				desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
+				if desc == lstr:
+					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
 				# If the description is not the same as the 'sane'
 				# filename, add the filename after the description
 				# (max 31 chars)
