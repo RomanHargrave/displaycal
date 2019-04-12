@@ -3467,6 +3467,23 @@ class MainFrame(ReportFrame, BaseFrame):
 		if force or not getattr(self, "ccmx_cached_paths", None):
 			ccmx_paths = self.get_argyll_data_files("lu", "*.ccmx")
 			ccss_paths = self.get_argyll_data_files("lu", "*.ccss")
+			# Filter out files with known identical spectra
+			mapping = {"Dell_U2413_25Jul12.ccss": "GBrLED_25Jul12.ccss",  # HCFR
+					   "Panasonic VVX17P051J00.ccss": "PanasonicVVX17P051J00.ccss"}
+			imapping = {}
+			for path in ccss_paths:
+				basename = os.path.basename(path)
+				if basename in mapping:
+					imapping[mapping[basename]] = path
+			if imapping:
+				discard_paths = []
+				for path in ccss_paths:
+					basename = os.path.basename(path)
+					if basename in imapping:
+						safe_print("Ignoring", path, "in favor of", imapping[basename])
+						discard_paths.append(path)
+				if discard_paths:
+					ccss_paths = filter(lambda path: path not in discard_paths, ccss_paths)
 			ccmx_paths.sort(key=os.path.basename)
 			ccss_paths.sort(key=os.path.basename)
 			self.ccmx_cached_paths = ccmx_paths + ccss_paths
