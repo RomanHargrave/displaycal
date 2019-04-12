@@ -9863,7 +9863,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			show_result_dialog(exception, self)
 			return
 
-		if 0 in cgats and cgats[0].type == "CCSS":
+		if not 0 in cgats:
+			wx.Bell()
+			return
+
+		is_ccss = cgats[0].type == "CCSS"
+
+		if is_ccss:
 			# Convert to TI3 so we can get XYZ from spectra for coloring
 
 			temp = self.worker.create_tempdir()
@@ -9910,10 +9916,168 @@ class MainFrame(ReportFrame, BaseFrame):
 			FONTSIZE_LARGE = 9
 			FONTSIZE_SMALL = 8
 
+		data_format = cgats.queryv1("DATA_FORMAT")
+		data = cgats.queryv1("DATA")
+
+		XYZ_max = 0
+		samples = []
+
+		if is_ccss:
+			x_min = cgats.queryv1("SPECTRAL_START_NM")
+			x_max = cgats.queryv1("SPECTRAL_END_NM")
+			bands = cgats.queryv1("SPECTRAL_BANDS")
+			lores = bands <= 40
+			if lores:
+				# Interpolate if lores
+				# 1nm intervals
+				steps = int(x_max - x_min) + 1
+				safe_print("Up-interpolating", bands, "spectral bands to", steps)
+				step = (x_max - x_min) / (steps - 1.)
+			else:
+				step = (x_max - x_min) / (bands - 1.)
+			y_min = 0
+			y_max = 1
+
+			Y_max = 0
+			for i, sample in data.iteritems():
+				# Get nm and spectral power
+				values = []
+				x = x_min
+				for k in data_format.itervalues():
+					if k.startswith("SPEC_"):
+						y = sample[k]
+						y_min = min(y, y_min)
+						y_max = max(y, y_max)
+						if lores:
+							values.append(y)
+						else:
+							values.append((x, y))
+							x += step
+				if lores:
+					# Interpolate if lores. Use Catmull-Rom instead of
+					# PolySpline as we want curves to go through points exactly
+					numvalues = len(values)
+					interp = ICCP.CRInterpolation(values)
+					values = []
+					for i in xrange(steps):
+						values.append((x, interp(i / (steps - 1.) * (numvalues - 1.))))
+						x += step
+				# Get XYZ for colorization
+				XYZ = []
+				for component in "XYZ":
+					label = "XYZ_" + component
+					if label in sample:
+						v = sample[label]
+						XYZ_max = max(XYZ_max, v)
+						if label == "XYZ_Y":
+							Y_max = max(Y_max, v)
+						XYZ.append(v)
+				samples.append((XYZ, values, {}))
+
+			Plot = plot.PolyLine
+			Plot._attributes["width"] = 1
+		else:
+			# CCMX
+
+			x_min = 0
+			x_max = 100
+
+			y_min = 0
+			y_max = 95
+
+			mtx = colormath.Matrix3x3([[sample[k]
+										for k in data_format.itervalues()]
+									   for sample in data.itervalues()])
+			imtx = mtx.inverted()
+
+			# Get XYZ that colorimeter would measure without matrix (sRGB ref,
+			# so not accurate, but useful for visual representation which is all
+			# we care about here)
+			pos2rgb = [((25.5, 29), (0, 0, 1)), ((49.5, 70), (0, 1, 0)),
+					   ((73.5, 29), (1, 0, 0)),
+					   ((25.5, 56.5), (0, 1, 1)), ((49.5, 15.75), (1, 0, 1)),
+					   ((73.5, 56.5), (1, 1, 0)), ((49.5, 43), (1, 1, 1))]
+			Y_max = (imtx * colormath.get_whitepoint("D65"))[1]
+			for i, ((x, y), (R, G, B)) in enumerate(pos2rgb):
+				XYZ = colormath.RGB2XYZ(R, G, B)
+				X, Y, Z = imtx * XYZ
+				XYZ_max = max(XYZ_max, X, Y, Z)
+				samples.append(((X, Y, Z), [(x, y)], {"size": 22.5}))
+				samples.append((XYZ, [(x, y)], {"size" : 11.25}))
+
+			Plot = plot.PolyMarker
+
+		gfx = []
+		for XYZ, values, attrs in samples:
+			if len(XYZ) == 3:
+				# Got XYZ
+				if attrs.get("size") > 11.25:
+					# Colorimeter XYZ
+					if Y_max > 1:
+						# Colorimeter brighter than ref
+						XYZ = [v / Y_max for v in XYZ]
+					else:
+						# Colorimeter dimmer than ref
+						XYZ = [v * Y_max for v in XYZ]
+				else:
+					# Ref XYZ
+					if Y_max > 1:
+						# Colorimeter brighter than ref
+						XYZ = [v / Y_max for v in XYZ]
+				RGB = tuple(int(v) for v in colormath.XYZ2RGB(*XYZ, scale=255,
+															  round_=True))
+			else:
+				RGB = (153, 153, 153)
+			gfx.append((RGB, values, attrs))
+
+		lines = []
+		for RGB, values, attrs in gfx:
+			line = Plot(values, colour=wx.Colour(*RGB), **attrs)
+			lines.append(line)
+
+		height = 500
+
+		if not is_ccss:
+			x_label = "\n"
+			x_label += "\n".join([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
+			x_label += "\n"
+			height += 13 * 4
+			fit_method = cgats.queryv1("FIT_METHOD")
+			if fit_method:
+				fit_method = safe_unicode(fit_method, "UTF-8")
+			if fit_method == "xy":
+				fit_method = lang.getstr("ccmx.use_four_color_matrix_method")
+			elif fit_method:
+				fit_method = lang.getstr("perceptual")
+			fit_de00_avg = cgats.queryv1("FIT_AVG_DE00")
+			if not isinstance(fit_de00_avg, float):
+				fit_de00_avg = None
+			fit_de00_max = cgats.queryv1("FIT_MAX_DE00")
+			if not isinstance(fit_de00_max, float):
+				fit_de00_max = None
+			if fit_method or fit_de00_avg or fit_de00_max:
+				x_label += "\n"
+				height += 13
+			if fit_method:
+				x_label += (u"%s: %s" % (lang.getstr("method"),
+										 fit_method)).center(29) + "\n"
+				height += 13
+			if fit_de00_avg:
+				x_label += (u"ΔE*00 %s: %.4f" % (lang.getstr("profile.self_check.avg"),
+												 fit_de00_avg)).center(29) + "\n"
+				height += 13
+			if fit_de00_max:
+				x_label += (u"ΔE*00 %s: %.4f" % (lang.getstr("profile.self_check.max"),
+												 fit_de00_max)).center(29) + "\n"
+				height += 13
+			x_label += "\n"
+		else:
+			x_label = u"nm"
+
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 
-		plotwindow = wx.Frame(self, -1, os.path.basename(ccxx),
-							  size=(500 * scale, 500 * scale))
+		plotwindow = wx.Frame(self, -1, u"%s <%s>" % (desc, os.path.basename(ccxx)),
+							  size=(500 * scale, height * scale))
 		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 							appname))
 		plotwindow.canvas = canvas = LUTCanvas(plotwindow)
@@ -9922,123 +10086,70 @@ class MainFrame(ReportFrame, BaseFrame):
 		canvas.SetEnableDiagonals(False)
 		canvas.SetEnableGrid(True)
 		canvas.SetEnablePointLabel(False)
-		canvas.SetEnableTitle(True)
+		canvas.SetEnableTitle(False)
 		canvas.SetForegroundColour(FGCOLOUR)
 		canvas.SetGridColour(GRIDCOLOUR)
 		canvas.canvas.BackgroundColour = BGCOLOUR
 		canvas.proportional = False
 		canvas.spec_x = 10
 		canvas.spec_y = 10
-		canvas.SetXSpec(canvas.spec_x)
-		canvas.SetYSpec(canvas.spec_y)
-
-		x_min = cgats.queryv1("SPECTRAL_START_NM")
-		x_max = cgats.queryv1("SPECTRAL_END_NM")
-		bands = cgats.queryv1("SPECTRAL_BANDS")
-		lores = bands <= 40
-		if lores:
-			# Interpolate if lores
-			# 1nm intervals
-			steps = int(x_max - x_min) + 1
-			safe_print("Up-interpolating", bands, "spectral bands to", steps)
-			step = (x_max - x_min) / (steps - 1.)
+		if is_ccss:
+			canvas.SetXSpec(canvas.spec_x)
+			canvas.SetYSpec(canvas.spec_y)
 		else:
-			step = (x_max - x_min) / (bands - 1.)
-		y_min = 0
-		y_max = 1
-
-		Plot = plot.PolyLine
-		Plot._attributes["width"] = 1
-
-		data_format = cgats.queryv1("DATA_FORMAT")
-		data = cgats.queryv1("DATA")
-
-		XYZ_max = 0
-		samples = []
-		for i, sample in data.iteritems():
-			# Get nm and spectral power
-			values = []
-			x = x_min
-			for k in data_format.itervalues():
-				if k.startswith("SPEC_"):
-					y = sample[k]
-					y_min = min(y, y_min)
-					y_max = max(y, y_max)
-					if lores:
-						values.append(y)
-					else:
-						values.append((x, y))
-						x += step
-			if lores:
-				# Interpolate if lores
-				numvalues = len(values)
-				interp = ICCP.CRInterpolation(values)
-				values = []
-				for i in xrange(steps):
-					values.append((x, interp(i / (steps - 1.) * (numvalues - 1.))))
-					x += step
-			# Get XYZ for colorization
-			XYZ = []
-			for component in "XYZ":
-				label = "XYZ_" + component
-				if label in sample:
-					v = sample[label]
-					XYZ_max = max(XYZ_max, v)
-					XYZ.append(v)
-			samples.append((XYZ, values))
-
-		gfx = []
-		for XYZ, values in samples:
-			if len(XYZ) == 3:
-				# Got XYZ
-				XYZ = [v / XYZ_max for v in XYZ]
-				RGB = tuple(int(v) for v in colormath.XYZ2RGB(*XYZ, scale=255,
-															  round_=True))
+			canvas.SetEnableDrag(False)
+			if u"phoenix" in wx.PlatformInfo:
+				kwarg = "faceName"
 			else:
-				RGB = (153, 153, 153)
-			gfx.append((RGB, values))
-
-		lines = []
-		for RGB, values in gfx:
-			if min(RGB) > 100:
-				# Assume neutral, use different pen style?
-				style = wx.SOLID
+				kwarg = "face"
+			if sys.platform == "win32":
+				font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+														  wx.FONTWEIGHT_NORMAL,
+														  **{kwarg: "Consolas"})
+			elif sys.platform == "darwin":
+				font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+														   wx.FONTWEIGHT_NORMAL,
+														   **{kwarg: "Monaco"})
 			else:
-				style = wx.SOLID
-			line = Plot(values, legend="Test", colour=wx.Colour(*RGB),
-						style=style)
-			lines.append(line)
+				font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
+														   wx.FONTWEIGHT_NORMAL)
+			canvas.SetFont(font)
+			canvas.SetFontSizeAxis(FONTSIZE_LARGE)
+			canvas.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
+			canvas.SetXSpec('none')
+			canvas.SetYSpec('none')
 
-		graphics = plot.PlotGraphics(lines, desc, u"nm")
+		graphics = plot.PlotGraphics(lines, desc, x_label)
 		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
 		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
 		# CallAfter is needed under GTK as usual
 		wx.CallAfter(canvas.Draw, graphics, canvas.axis_x, canvas.axis_y)
 
-		def key_handler(event):
-			""" Keyboard zoom """
-			key = event.GetKeyCode()
-			if key in (43, wx.WXK_NUMPAD_ADD):
-				# + key zoom in
-				canvas.zoom(-1)
-			elif key in (45, wx.WXK_NUMPAD_SUBTRACT):
-				# - key zoom out
-				canvas.zoom(1)
-			else:
-				event.Skip()
+		if is_ccss:
+			def key_handler(event):
+				""" Keyboard zoom """
+				key = event.GetKeyCode()
+				if key in (43, wx.WXK_NUMPAD_ADD):
+					# + key zoom in
+					canvas.zoom(-1)
+				elif key in (45, wx.WXK_NUMPAD_SUBTRACT):
+					# - key zoom out
+					canvas.zoom(1)
+				else:
+					event.Skip()
 
-		def OnWheel(event):
-			""" Mousewheel zoom """
-			if event.WheelRotation < 0:
-				direction = 1.0
-			else:
-				direction = -1.0
-			canvas.zoom(direction)
+			def OnWheel(event):
+				""" Mousewheel zoom """
+				if event.WheelRotation < 0:
+					direction = 1.0
+				else:
+					direction = -1.0
+				canvas.zoom(direction)
 
-		plotwindow.Bind(wx.EVT_KEY_DOWN, key_handler)
-		for child in plotwindow.GetAllChildren():
-			child.Bind(wx.EVT_KEY_DOWN, key_handler)
-			child.Bind(wx.EVT_MOUSEWHEEL, OnWheel)
+			plotwindow.Bind(wx.EVT_KEY_DOWN, key_handler)
+			for child in plotwindow.GetAllChildren():
+				child.Bind(wx.EVT_KEY_DOWN, key_handler)
+				child.Bind(wx.EVT_MOUSEWHEEL, OnWheel)
 
 		plotwindow.Show()
 	
