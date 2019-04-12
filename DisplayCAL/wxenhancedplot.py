@@ -1635,12 +1635,18 @@ class PlotCanvas(wx.Panel):
         s = size*self.printerScale*self._fontScale
         of = self.GetFont()
         # Linux speed up to get font from cache rather than X font server
-        key = (int(s), of.GetFamily (), of.GetStyle (), of.GetWeight ())
+        key = (int(s), of.GetFamily (), of.GetStyle (), of.GetWeight (),
+               of.GetFaceName())
         font = self._fontCache.get (key, None)
         if font:
             return font                 # yeah! cache hit
         else:
-            font =  wx.Font(int(s), of.GetFamily(), of.GetStyle(), of.GetWeight())
+            if u"phoenix" in wx.PlatformInfo:
+                kwarg = "faceName"
+            else:
+                kwarg = "face"
+            font =  wx.Font(int(s), of.GetFamily(), of.GetStyle(), of.GetWeight(),
+                            **{kwarg: of.GetFaceName()})
             self._fontCache[key] = font
             return font
 
