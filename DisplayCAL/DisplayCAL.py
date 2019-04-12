@@ -9935,7 +9935,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		x_min = cgats.queryv1("SPECTRAL_START_NM")
 		x_max = cgats.queryv1("SPECTRAL_END_NM")
 		bands = cgats.queryv1("SPECTRAL_BANDS")
-		step = (x_max - x_min) / bands
+		step = (x_max - x_min) / (bands - 1.0)
 		y_min = 0
 		y_max = 1
 
@@ -9956,11 +9956,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			x = x_min
 			for k in data_format.itervalues():
 				if k.startswith("SPEC_"):
-					x += step
 					y = sample[k]
 					y_min = min(y, y_min)
 					y_max = max(y, y_max)
 					values.append((x, y))
+					x += step
 			# Get XYZ for colorization
 			XYZ = []
 			for component in "XYZ":
