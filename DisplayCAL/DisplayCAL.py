@@ -9935,14 +9935,19 @@ class MainFrame(ReportFrame, BaseFrame):
 		x_min = cgats.queryv1("SPECTRAL_START_NM")
 		x_max = cgats.queryv1("SPECTRAL_END_NM")
 		bands = cgats.queryv1("SPECTRAL_BANDS")
-		step = (x_max - x_min) / (bands - 1.0)
+		lores = bands <= 40
+		if lores:
+			# Interpolate if lores
+			# 1nm intervals
+			steps = int(x_max - x_min) + 1
+			safe_print("Up-interpolating", bands, "spectral bands to", steps)
+			step = (x_max - x_min) / (steps - 1.)
+		else:
+			step = (x_max - x_min) / (bands - 1.)
 		y_min = 0
 		y_max = 1
 
-		if bands < 40:
-			Plot = plot.PolySpline
-		else:
-			Plot = plot.PolyLine
+		Plot = plot.PolyLine
 		Plot._attributes["width"] = 1
 
 		data_format = cgats.queryv1("DATA_FORMAT")
@@ -9959,7 +9964,18 @@ class MainFrame(ReportFrame, BaseFrame):
 					y = sample[k]
 					y_min = min(y, y_min)
 					y_max = max(y, y_max)
-					values.append((x, y))
+					if lores:
+						values.append(y)
+					else:
+						values.append((x, y))
+						x += step
+			if lores:
+				# Interpolate if lores
+				numvalues = len(values)
+				interp = ICCP.CRInterpolation(values)
+				values = []
+				for i in xrange(steps):
+					values.append((x, interp(i / (steps - 1.) * (numvalues - 1.))))
 					x += step
 			# Get XYZ for colorization
 			XYZ = []
