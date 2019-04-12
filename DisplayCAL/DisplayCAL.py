@@ -601,8 +601,9 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 		dlg_list_ctrl.SetStringItem(index, 1,
 									get_canonical_instrument_name(item.get("description") or
 																  lang.getstr("unknown")))
-		dlg_list_ctrl.SetStringItem(index, 2, item.get("manufacturer") or
-											  lang.getstr("unknown"))
+		dlg_list_ctrl.SetStringItem(index, 2,
+									colord.quirk_manufacturer(item.get("manufacturer") or
+															  lang.getstr("unknown")))
 		dlg_list_ctrl.SetStringItem(index, 3, item.get("display") or
 											  lang.getstr("unknown"))
 		dlg_list_ctrl.SetStringItem(index, 4,
