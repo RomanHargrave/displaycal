@@ -9977,9 +9977,6 @@ class MainFrame(ReportFrame, BaseFrame):
 						XYZ.append(v)
 				samples.append((XYZ, values, {}))
 
-			if y_max > 10:
-				y_max = math.ceil(y_max / 10.) * 10
-
 			Plot = plot.PolyLine
 			Plot._attributes["width"] = 1
 		else:
@@ -10158,7 +10155,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			canvas.SetXSpec('none')
 			canvas.SetYSpec('none')
 
-		graphics = plot.PlotGraphics(lines, u"" if is_ccss
+		graphics = plot.PlotGraphics(lines, u" " if is_ccss
 											else lang.getstr("preview"))
 		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
 		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
