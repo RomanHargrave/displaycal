@@ -9997,9 +9997,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			# we care about here)
 			if cube_size == 2:
 				scale = 2.5
-				x_center = 50
+				if sys.platform == "darwin":
+					x_center = 52
+				else:
+					x_center = 50
 				y_center = 32
-				x_offset = x_center * scale - x_center
+				x_offset = x_center * scale - 49.5
 				y_offset = y_center * scale - y_center
 				x_max = 100 * scale
 				y_max = 80 * scale
