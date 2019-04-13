@@ -10132,6 +10132,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		label = wx.StaticText(panel, -1, x_label.replace("&", "&&"),
 							  style=wx.ALIGN_CENTRE_HORIZONTAL)
 		label.SetForegroundColour(FGCOLOUR)
+		label.SetMaxFontSize(11)
 		panel.Sizer.Add(label, flag=wx.EXPAND | wx.ALL & ~wx.TOP,
 						border=12 * scale)
 		canvas.SetBackgroundColour(BGCOLOUR)
