@@ -9949,7 +9949,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				for k in data_format.itervalues():
 					if k.startswith("SPEC_"):
 						y = sample[k]
-						y_min = min(y, y_min)
+						#y_min = min(y, y_min)
 						y_max = max(y, y_max)
 						if lores:
 							values.append(y)
@@ -9977,16 +9977,18 @@ class MainFrame(ReportFrame, BaseFrame):
 						XYZ.append(v)
 				samples.append((XYZ, values, {}))
 
+			if y_max > 10:
+				y_max = math.ceil(y_max / 10.) * 10
+
 			Plot = plot.PolyLine
 			Plot._attributes["width"] = 1
 		else:
 			# CCMX
+			cube_size = 2
 
 			x_min = 0
-			x_max = 100
 
 			y_min = 0
-			y_max = 95
 
 			mtx = colormath.Matrix3x3([[sample[k]
 										for k in data_format.itervalues()]
@@ -9996,17 +9998,42 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Get XYZ that colorimeter would measure without matrix (sRGB ref,
 			# so not accurate, but useful for visual representation which is all
 			# we care about here)
-			pos2rgb = [((25.5, 29), (0, 0, 1)), ((49.5, 70), (0, 1, 0)),
-					   ((73.5, 29), (1, 0, 0)),
-					   ((25.5, 56.5), (0, 1, 1)), ((49.5, 15.75), (1, 0, 1)),
-					   ((73.5, 56.5), (1, 1, 0)), ((49.5, 43), (1, 1, 1))]
+			if cube_size == 2:
+				scale = 2.5
+				x_center = 49.5
+				y_center = 32
+				x_offset = x_center * scale - x_center
+				y_offset = y_center * scale - y_center
+				x_max = 100 * scale
+				y_max = 80 * scale
+				pos2rgb = [((x_offset + 25.5, y_offset + 29), (0, 0, 1)), ((x_offset + 49.5, y_offset + 70), (0, 1, 0)),
+						   ((x_offset + 73.5, y_offset + 29), (1, 0, 0)),
+						   ((x_offset + 25.5, y_offset + 56.5), (0, 1, 1)), ((x_offset + 49.5, y_offset + 15.75), (1, 0, 1)),
+						   ((x_offset + 73.5, y_offset + 56.5), (1, 1, 0)), ((x_offset + 49.5, y_offset + 43), (1, 1, 1))]
+				attrs_c = {'size': 8}
+				attrs_r = {'size': 4}
+			else:
+				x_max = 100
+				y_max = 100
+				y = -5
+				pos2rgb = []
+				for R in xrange(cube_size):
+					for G in xrange(cube_size):
+						x = -5
+						y += 10
+						for B in xrange(cube_size):
+							x += 10
+							pos2rgb.append(((x, y),
+											(v / (cube_size - 1.0) for v in (R, G, B))))
+				attrs_c = {'marker': 'square', 'size': 10}
+				attrs_r = {'marker': 'square', 'size': 5}
 			Y_max = (imtx * colormath.get_whitepoint("D65"))[1]
 			for i, ((x, y), (R, G, B)) in enumerate(pos2rgb):
 				XYZ = colormath.RGB2XYZ(R, G, B)
 				X, Y, Z = imtx * XYZ
 				XYZ_max = max(XYZ_max, X, Y, Z)
-				samples.append(((X, Y, Z), [(x, y)], {"size": 22.5}))
-				samples.append((XYZ, [(x, y)], {"size" : 11.25}))
+				samples.append(((X, Y, Z), [(x, y)], attrs_c))
+				samples.append((XYZ, [(x, y)], attrs_r))
 
 			Plot = plot.PolyMarker
 
@@ -10038,16 +10065,23 @@ class MainFrame(ReportFrame, BaseFrame):
 			line = Plot(values, colour=wx.Colour(*RGB), **attrs)
 			lines.append(line)
 
-		height = 500
+
+		ref = cgats.queryv1("REFERENCE")
+		if ref:
+			ref = get_canonical_instrument_name(safe_unicode(ref, "UTF-8"))
 
 		if not is_ccss:
-			x_label = "\n"
-			x_label += "\n".join([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
-			x_label += "\n"
-			height += 13 * 4
+			height = 430
+			x_label = [lang.getstr("matrix")]
+			x_label.extend([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
+			if ref:
+				ref_observer = cgats.queryv1("REFERENCE_OBSERVER")
+				if ref_observer:
+					ref += u", " + self.observers_ab.get(ref_observer,
+														 ref_observer)
+				x_label.append(u"")
+				x_label.append(ref)
 			fit_method = cgats.queryv1("FIT_METHOD")
-			if fit_method:
-				fit_method = safe_unicode(fit_method, "UTF-8")
 			if fit_method == "xy":
 				fit_method = lang.getstr("ccmx.use_four_color_matrix_method")
 			elif fit_method:
@@ -10058,42 +10092,61 @@ class MainFrame(ReportFrame, BaseFrame):
 			fit_de00_max = cgats.queryv1("FIT_MAX_DE00")
 			if not isinstance(fit_de00_max, float):
 				fit_de00_max = None
-			if fit_method or fit_de00_avg or fit_de00_max:
-				x_label += "\n"
-				height += 13
 			if fit_method:
-				x_label += (u"%s: %s" % (lang.getstr("method"),
-										 fit_method)).center(29) + "\n"
-				height += 13
+				x_label.append(fit_method)
+			fit_de00 = []
 			if fit_de00_avg:
-				x_label += (u"ΔE*00 %s: %.4f" % (lang.getstr("profile.self_check.avg"),
-												 fit_de00_avg)).center(29) + "\n"
-				height += 13
+				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.avg"),
+													fit_de00_avg))
 			if fit_de00_max:
-				x_label += (u"ΔE*00 %s: %.4f" % (lang.getstr("profile.self_check.max"),
-												 fit_de00_max)).center(29) + "\n"
-				height += 13
-			x_label += "\n"
+				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.max"),
+													fit_de00_max))
+			if fit_de00:
+				x_label.append(u", ".join(fit_de00))
+			height += 16 * len(x_label)
+			x_label = "\n".join(x_label)
 		else:
-			x_label = u"nm"
+			height = 526
+			x_label = u""
+			if ref:
+				x_label += ref + u", "
+			x_label += u"%s %.1fnm, %i-%inm" % (lang.getstr("spectral_resolution"),
+												(x_max - x_min) / (bands - 1.0),
+												x_min, x_max)
 
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 
+		style = wx.DEFAULT_FRAME_STYLE
+		if not is_ccss:
+			style &= ~wx.MAXIMIZE_BOX
+			style &= ~wx.RESIZE_BORDER
+
 		plotwindow = wx.Frame(self, -1, u"%s <%s>" % (desc, os.path.basename(ccxx)),
-							  size=(500 * scale, height * scale))
+							  size=(500 * scale, height * scale), style=style)
 		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 							appname))
+		plotwindow.Sizer = wx.BoxSizer(wx.VERTICAL)
 		plotwindow.canvas = canvas = LUTCanvas(plotwindow)
+		plotwindow.Sizer.Add(canvas, 1, flag=wx.EXPAND)
+		panel = wx.Panel(plotwindow)
+		panel.SetBackgroundColour(BGCOLOUR)
+		plotwindow.Sizer.Add(panel, flag=wx.EXPAND)
+		panel.Sizer = wx.BoxSizer(wx.VERTICAL)
+		label = wx.StaticText(panel, -1, x_label.replace("&", "&&"),
+							  style=wx.ALIGN_CENTRE_HORIZONTAL)
+		label.SetForegroundColour(FGCOLOUR)
+		panel.Sizer.Add(label, flag=wx.EXPAND | wx.ALL & ~wx.TOP,
+						border=12 * scale)
 		canvas.SetBackgroundColour(BGCOLOUR)
 		canvas.SetEnableCenterLines(False)
 		canvas.SetEnableDiagonals(False)
 		canvas.SetEnableGrid(True)
 		canvas.SetEnablePointLabel(False)
-		canvas.SetEnableTitle(False)
+		canvas.SetEnableTitle(True)
 		canvas.SetForegroundColour(FGCOLOUR)
 		canvas.SetGridColour(GRIDCOLOUR)
 		canvas.canvas.BackgroundColour = BGCOLOUR
-		canvas.proportional = False
+		canvas.proportional = not is_ccss
 		canvas.spec_x = 10
 		canvas.spec_y = 10
 		if is_ccss:
@@ -10101,28 +10154,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			canvas.SetYSpec(canvas.spec_y)
 		else:
 			canvas.SetEnableDrag(False)
-			if u"phoenix" in wx.PlatformInfo:
-				kwarg = "faceName"
-			else:
-				kwarg = "face"
-			if sys.platform == "win32":
-				font = wx.Font(9, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
-														  wx.FONTWEIGHT_NORMAL,
-														  **{kwarg: "Consolas"})
-			elif sys.platform == "darwin":
-				font = wx.Font(11, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
-														   wx.FONTWEIGHT_NORMAL,
-														   **{kwarg: "Monaco"})
-			else:
-				font = wx.Font(10, wx.FONTFAMILY_TELETYPE, wx.FONTSTYLE_NORMAL, 
-														   wx.FONTWEIGHT_NORMAL)
-			canvas.SetFont(font)
-			canvas.SetFontSizeAxis(FONTSIZE_LARGE)
 			canvas.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
 			canvas.SetXSpec('none')
 			canvas.SetYSpec('none')
 
-		graphics = plot.PlotGraphics(lines, desc, x_label)
+		graphics = plot.PlotGraphics(lines, u"" if is_ccss
+											else lang.getstr("preview"))
 		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
 		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
 		# CallAfter is needed under GTK as usual
