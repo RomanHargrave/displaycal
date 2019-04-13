@@ -9997,7 +9997,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# we care about here)
 			if cube_size == 2:
 				scale = 2.5
-				if sys.platform == "darwin":
+				if sys.platform != "win32":
 					x_center = 52
 				else:
 					x_center = 50
@@ -10127,6 +10127,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							appname))
 		plotwindow.Sizer = wx.BoxSizer(wx.VERTICAL)
 		plotwindow.canvas = canvas = LUTCanvas(plotwindow)
+		canvas.canvas.Unbind(wx.EVT_LEFT_DCLICK)
 		plotwindow.Sizer.Add(canvas, 1, flag=wx.EXPAND)
 		panel = wx.Panel(plotwindow)
 		panel.SetBackgroundColour(BGCOLOUR)
@@ -10136,7 +10137,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							  style=wx.ALIGN_CENTRE_HORIZONTAL)
 		label.SetForegroundColour(FGCOLOUR)
 		label.SetMaxFontSize(11)
-		panel.Sizer.Add(label, flag=wx.EXPAND | wx.ALL & ~wx.TOP,
+		panel.Sizer.Add(label, flag=wx.ALIGN_CENTER | wx.ALL & ~wx.TOP,
 						border=12 * scale)
 		canvas.SetBackgroundColour(BGCOLOUR)
 		canvas.SetEnableCenterLines(False)
