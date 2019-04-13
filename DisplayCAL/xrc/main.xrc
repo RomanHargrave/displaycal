@@ -33,6 +33,19 @@
                     <border>16</border>
                   </object>
                   <object class="sizeritem">
+                    <object class="wxBitmapButton" name="profile_info_btn">
+                      <bitmap>../theme/icons/16x16/info-inverted.png</bitmap>
+                      <bg>#0e59a9</bg>
+                      <tooltip>profile.info</tooltip>
+                      <style>wxNO_BORDER</style>
+                      <XRCED>
+                        <events>EVT_BUTTON</events>
+                      </XRCED>
+                    </object>
+                    <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <border>8</border>
+                  </object>
+                  <object class="sizeritem">
                     <object class="wxBitmapButton" name="calibration_file_btn">
                       <bitmap>../theme/icons/16x16/document-open-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
@@ -42,7 +55,7 @@
                         <events>EVT_BUTTON</events>
                       </XRCED>
                     </object>
-                    <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
+                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                     <border>8</border>
                   </object>
                   <object class="sizeritem">
@@ -76,19 +89,6 @@
                       <bitmap>../theme/icons/16x16/install-inverted.png</bitmap>
                       <bg>#0e59a9</bg>
                       <tooltip>profile.install</tooltip>
-                      <style>wxNO_BORDER</style>
-                      <XRCED>
-                        <events>EVT_BUTTON</events>
-                      </XRCED>
-                    </object>
-                    <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
-                    <border>8</border>
-                  </object>
-                  <object class="sizeritem">
-                    <object class="wxBitmapButton" name="profile_info_btn">
-                      <bitmap>../theme/icons/16x16/info-inverted.png</bitmap>
-                      <bg>#0e59a9</bg>
-                      <tooltip>profile.info</tooltip>
                       <style>wxNO_BORDER</style>
                       <XRCED>
                         <events>EVT_BUTTON</events>
@@ -502,9 +502,9 @@
                                   <border>8</border>
                                 </object>
                                 <object class="sizeritem">
-                                  <object class="wxBitmapButton" name="colorimeter_correction_plot_btn">
-                                    <bitmap>../theme/icons/16x16/spectral_curves.png</bitmap>
-                                    <tooltip>colorimeter_correction.plot</tooltip>
+                                  <object class="wxBitmapButton" name="colorimeter_correction_info_btn">
+                                    <bitmap>../theme/icons/16x16/info.png</bitmap>
+                                    <tooltip>colorimeter_correction.info</tooltip>
                                     <style>wxNO_BORDER</style>
                                     <XRCED>
                                       <events>EVT_BUTTON</events>

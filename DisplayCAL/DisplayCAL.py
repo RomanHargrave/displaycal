@@ -2613,8 +2613,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				  id=self.colorimeter_correction_matrix_ctrl.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_matrix_ctrl_handler, 
 				  id=self.colorimeter_correction_matrix_btn.GetId())
-		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_plot_handler,
-				  id=self.colorimeter_correction_plot_btn.GetId())
+		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_info_handler,
+				  id=self.colorimeter_correction_info_btn.GetId())
 		self.Bind(wx.EVT_BUTTON, self.colorimeter_correction_web_handler, 
 				  id=self.colorimeter_correction_web_btn.GetId())
 		self.colorimeter_correction_create_btn.Bind(wx.EVT_BUTTON,
@@ -3711,6 +3711,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			tooltip = ""
 		self.update_main_controls()
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
+		self.colorimeter_correction_info_btn.Enable(len(ccmx) > 1)
 		self.update_estimated_measurement_times()
 		if not observer in self.observers_ab:
 			self.observer_ctrl.Enable()
@@ -9849,7 +9850,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Check if black point correction should be turned on
 			self.measurement_mode_ctrl_handler()
 
-	def colorimeter_correction_plot_handler(self, event):
+	def colorimeter_correction_info_handler(self, event):
 		""" Plot spectra or matrix """
 		if not LUTCanvas:
 			return
@@ -10110,9 +10111,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			x_label = u""
 			if ref:
 				x_label += ref + u", "
-			x_label += u"%s %.1fnm, %i-%inm" % (lang.getstr("spectral_resolution"),
-												(x_max - x_min) / (bands - 1.0),
-												x_min, x_max)
+			x_label += u"%.1fnm, %i-%inm" % ((x_max - x_min) / (bands - 1.0),
+											 x_min, x_max)
 
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 
@@ -10121,7 +10121,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			style &= ~wx.MAXIMIZE_BOX
 			style &= ~wx.RESIZE_BORDER
 
-		plotwindow = wx.Frame(self, -1, u"%s <%s>" % (desc, os.path.basename(ccxx)),
+		plotwindow = wx.Frame(self, -1, desc,
 							  size=(500 * scale, height * scale), style=style)
 		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 							appname))
@@ -10151,6 +10151,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		canvas.spec_x = 10
 		canvas.spec_y = 10
 		if is_ccss:
+			canvas.HandCursor = wx.StockCursor(wx.CURSOR_SIZING)
+			canvas.SetCursor(canvas.HandCursor)
 			canvas.SetXSpec(canvas.spec_x)
 			canvas.SetYSpec(canvas.spec_y)
 		else:
@@ -15650,6 +15652,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			measureframe = self.measureframes.pop()
 			if measureframe:
 				measureframe.Close()
+		for window in wx.GetTopLevelWindows():
+			if window and window is not self and window.IsShown():
+				safe_print("Closing", window,
+						   u"'%s'" % getattr(window, "Title", window.Name))
+				window.Close()
 		self.Hide()
 		self.enable_menus(False)
 
