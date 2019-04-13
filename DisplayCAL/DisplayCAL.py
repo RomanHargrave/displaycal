@@ -10127,7 +10127,6 @@ class MainFrame(ReportFrame, BaseFrame):
 							appname))
 		plotwindow.Sizer = wx.BoxSizer(wx.VERTICAL)
 		plotwindow.canvas = canvas = LUTCanvas(plotwindow)
-		canvas.canvas.Unbind(wx.EVT_LEFT_DCLICK)
 		plotwindow.Sizer.Add(canvas, 1, flag=wx.EXPAND)
 		panel = wx.Panel(plotwindow)
 		panel.SetBackgroundColour(BGCOLOUR)
@@ -10155,6 +10154,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			canvas.SetXSpec(canvas.spec_x)
 			canvas.SetYSpec(canvas.spec_y)
 		else:
+			canvas.canvas.Unbind(wx.EVT_LEFT_DCLICK)
 			canvas.SetEnableDrag(False)
 			canvas.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
 			canvas.SetXSpec('none')
