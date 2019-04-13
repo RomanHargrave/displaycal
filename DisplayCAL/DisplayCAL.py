@@ -9997,16 +9997,16 @@ class MainFrame(ReportFrame, BaseFrame):
 			# we care about here)
 			if cube_size == 2:
 				scale = 2.5
-				x_center = 49.5
+				x_center = 50
 				y_center = 32
 				x_offset = x_center * scale - x_center
 				y_offset = y_center * scale - y_center
 				x_max = 100 * scale
 				y_max = 80 * scale
-				pos2rgb = [((x_offset + 25.5, y_offset + 29), (0, 0, 1)), ((x_offset + 49.5, y_offset + 70), (0, 1, 0)),
+				pos2rgb = [((x_offset + 25.5, y_offset + 29), (0, 0, 1)), ((x_center * scale, y_offset + 70), (0, 1, 0)),
 						   ((x_offset + 73.5, y_offset + 29), (1, 0, 0)),
-						   ((x_offset + 25.5, y_offset + 56.5), (0, 1, 1)), ((x_offset + 49.5, y_offset + 15.75), (1, 0, 1)),
-						   ((x_offset + 73.5, y_offset + 56.5), (1, 1, 0)), ((x_offset + 49.5, y_offset + 43), (1, 1, 1))]
+						   ((x_offset + 25.5, y_offset + 56.5), (0, 1, 1)), ((x_center * scale, y_offset + 15.75), (1, 0, 1)),
+						   ((x_offset + 73.5, y_offset + 56.5), (1, 1, 0)), ((x_center * scale, y_offset + 43), (1, 1, 1))]
 				attrs_c = {'size': 8}
 				attrs_r = {'size': 4}
 			else:
@@ -10156,8 +10156,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			canvas.SetXSpec('none')
 			canvas.SetYSpec('none')
 
-		graphics = plot.PlotGraphics(lines, u" " if is_ccss
-											else lang.getstr("preview"))
+		graphics = plot.PlotGraphics(lines, u" ")
 		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
 		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
 		# CallAfter is needed under GTK as usual
