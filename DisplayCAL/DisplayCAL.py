@@ -3475,7 +3475,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			ccmx_paths = self.get_argyll_data_files("lu", "*.ccmx")
 			ccss_paths = self.get_argyll_data_files("lu", "*.ccss")
 			# Filter out files with known identical spectra
+			# Key is the preferred CCSS, value is the one to be ignored
+			# If key is same as value, remove from paths completely
 			mapping = {"Dell_U2413_25Jul12.ccss": "GBrLED_25Jul12.ccss",  # HCFR
+					   "necpa242w_full.ccss": "necpa242w_full.ccss",  # HCFR
+					   # necpa242w_full.ccss is bad - not done with native
+					   # primaries
 					   "Panasonic VVX17P051J00.ccss": "PanasonicVVX17P051J00.ccss"}
 			imapping = {}
 			for path in ccss_paths:
@@ -3487,7 +3492,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				for path in ccss_paths:
 					basename = os.path.basename(path)
 					if basename in imapping:
-						safe_print("Ignoring", path, "in favor of", imapping[basename])
+						if basename in mapping:
+							safe_print("Ignoring", path)
+						else:
+							safe_print("Ignoring", path, "in favor of",
+									   imapping[basename])
 						discard_paths.append(path)
 				if discard_paths:
 					ccss_paths = filter(lambda path: path not in discard_paths, ccss_paths)

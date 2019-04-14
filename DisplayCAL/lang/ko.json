@@ -264,7 +264,6 @@
 		"*ccss.WGCCFLFamily_07Feb11": "LCD CCFL Wide Gamut family (NEC PA241/PA271)",
 		"*ccss.WLEDFamily_07Feb11": "LCD White LED family (AC, LG, Samsung)",
 		"*ccss.WRGB_OLED_LG": "LED WOLED (LG OLED)",
-		"*ccss.necpa242w_full": "LCD GB-R Phosphor IPS (NEC PA242W (specbos))",
 	"ccxx.ti1": "컬러리미터 보정을 위한 테스트차트",
 	"centered": "중심",
 	"channel_1_c_xy": "채널 1 (C) xy",
