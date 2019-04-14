@@ -11077,10 +11077,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			loctech = {}
 			techloc = {}
 			for technology_string in technology_strings.values():
-				key = technology_string.lower().replace(" ", "_")
-				loc = lang.getstr(key)
-				if loc == key:
-					loc = technology_string
+				loc = lang.getstr("display.tech." + technology_string,
+								  default=technology_string)
 				loctech[loc] = technology_string
 				techloc[technology_string] = loc
 			dlg.display_tech_ctrl = wx.Choice(dlg, -1,

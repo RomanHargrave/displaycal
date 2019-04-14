@@ -453,6 +453,8 @@ class CGATS(dict):
 					else:
 						display = self.queryv1("DISPLAY")
 					if display:
+						import localization as lang
+						tech = lang.getstr("display.tech." + tech, default=tech)
 						tech += " (%s)" % display
 				desc = tech
 		if not desc and self.filename:
