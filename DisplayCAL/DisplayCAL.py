@@ -11522,7 +11522,8 @@ class MainFrame(ReportFrame, BaseFrame):
 							   '\\1%s\n' %
 							   "\n".join(metadata).replace("\\", "\\\\"), cgats)
 			if event:
-				if colorimeter_correction_check_overwrite(self, cgats, True):
+				if colorimeter_correction_check_overwrite(self, cgats,
+														  bool(colorimeter_ti3)):
 					self.upload_colorimeter_correction(cgats)
 			else:
 				path = get_cgats_path(cgats)
