@@ -10131,7 +10131,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			style &= ~wx.MAXIMIZE_BOX
 			style &= ~wx.RESIZE_BORDER
 
-		plotwindow = wx.Frame(self, -1, desc,
+		plotwindow = wx.Frame(None, -1, desc,
 							  size=(500 * scale, height * scale), style=style)
 		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 							appname))
