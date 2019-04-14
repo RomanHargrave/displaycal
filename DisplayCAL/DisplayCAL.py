@@ -7483,7 +7483,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		ccmx = "None"
 		reference_observer = None
-		if self.worker.instrument_can_use_ccxx():
+		if not self_check_report and self.worker.instrument_can_use_ccxx():
 			ccmx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
 			if len(ccmx) > 1 and ccmx[1]:
 				ccmxpath = ccmx[1]
@@ -7493,15 +7493,16 @@ class MainFrame(ReportFrame, BaseFrame):
 				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % ccmxpath, exception)
 				else:
+					filename, ext = os.path.splitext(ccmx)
 					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
+					desc = lang.getstr(ext[1:] + "." + filename, default=desc)
 					# If the description is not the same as the 'sane'
 					# filename, add the filename after the description
 					# (max 31 chars)
 					# See also colorimeter_correction_check_overwite, the
 					# way the filename is processed must be the same
 					if (re.sub(r"[\\/:;*?\"<>|]+", "_",
-							   make_argyll_compatible_path(desc)) !=
-						os.path.splitext(ccmx)[0]):
+							   make_argyll_compatible_path(desc)) != filename):
 						ccmx = "%s &amp;lt;%s&amp;gt;" % (desc, ellipsis(ccmx,
 																		 31,
 																		 "m"))
