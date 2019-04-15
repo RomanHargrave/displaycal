@@ -11753,10 +11753,11 @@ class MainFrame(ReportFrame, BaseFrame):
 								lang.getstr("colorimeter_correction.import.choose"),
 								wildcard=lang.getstr("filetype.any") + 
 										 "|*", 
-								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+								style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST |
+									  wx.FD_MULTIPLE)
 			dlg.Center(wx.BOTH)
 			choice2 = dlg.ShowModal()
-			paths = [dlg.GetPath()]
+			paths = dlg.GetPaths()
 			dlg.Destroy()
 			if choice2 != wx.ID_OK:
 				return
