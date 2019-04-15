@@ -11707,13 +11707,10 @@ class MainFrame(ReportFrame, BaseFrame):
 						break
 				setattr(dlg, name, wx.CheckBox(dlg, -1, desc))
 				for instrument in instruments:
-					if instruments == ("i1 DisplayPro, ColorMunki Display",
-									   "Spyder4", "Spyder5"):
-						check = "" in self.ccmx_instruments.itervalues()
-					elif instruments == ("Spyder4", "Spyder5"):
+					if name == "spyd4":
 						check = self.worker.spyder4_cal_exists()
 					else:
-						check = instrument in self.ccmx_instruments.itervalues()
+						check = False
 					if instrument in self.worker.instruments and not check:
 						getattr(dlg, name).SetValue(True)
 						break
@@ -11796,11 +11793,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			safe_print("   spyd4en:", spyd4en)
 			safe_print("   icd:", icd)
 			safe_print("   oeminst:", oeminst)
-			safe_print("   path:", path)
+			safe_print("   path(s):", path)
 			safe_print("   asroot:", asroot)
-		if path and os.path.exists(path):
+		kind = None
+		if isinstance(path, list):
+			kind = "xrite"
+		elif path and os.path.exists(path):
 			filename, ext = os.path.splitext(path)
-			kind = None
+			kind = "unknown"
 			if ext.lower() == ".txt":
 				kind = "icd"
 				result = True
@@ -11866,6 +11866,7 @@ class MainFrame(ReportFrame, BaseFrame):
 									  os.path.basename(path).lower() == "spyd4"):
 						# Assume Spyder4/5
 						kind = "spyder4"
+		if kind:
 			if kind == "icd":
 				if (not getcfg("dry_run") and result and
 					not isinstance(result, Exception)):
@@ -11903,7 +11904,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				# Import .edr
 				if asroot and sys.platform == "win32":
 					ccss = self.get_argyll_data_files("l", "*.ccss", True)
-				result = i1d3 = self.worker.import_edr([path], asroot=asroot)
+				if isinstance(path, list):
+					args = path
+				else:
+					args = [path]
+				result = i1d3 = self.worker.import_edr(args, asroot=asroot)
 				if asroot and sys.platform == "win32":
 					result = i1d3 = self.get_argyll_data_files("l", "*.ccss",
 															   True) != ccss
@@ -11940,7 +11945,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			safe_print("   spyd4en:", spyd4en)
 			safe_print("   icd:", icd)
 			safe_print("   oeminst:", oeminst)
-			safe_print("   path:", path)
+			safe_print("   path(s):", path)
 			safe_print("   asroot:", asroot)
 		return result, i1d3, spyd4, icd
 	
@@ -11953,50 +11958,64 @@ class MainFrame(ReportFrame, BaseFrame):
 			if importers.get("icd"):
 				# Look for iColorDisplay
 				if sys.platform == "win32":
-					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""),
-													"Quato", "iColorDisplay",
-													"DeviceCorrections.txt"))
+					icdfn = safe_glob(os.path.join(getenvu("PROGRAMFILES", ""),
+												   "Quato", "iColorDisplay",
+												   "DeviceCorrections.txt"))
 				elif sys.platform == "darwin":
-					paths += safe_glob(os.path.join(os.path.sep, "Applications", 
+					icdfn = safe_glob(os.path.join(os.path.sep, "Applications", 
 												   "iColorDisplay*.app",
 												   "DeviceCorrections.txt"))
-					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
-													"iColorDisplay*", 
-													"iColorDisplay*.app",
-													"DeviceCorrections.txt"))
+					if not icdfn:
+						icdfn = safe_glob(os.path.join(os.path.sep, "Volumes", 
+													   "iColorDisplay*", 
+													   "iColorDisplay*.app",
+													   "DeviceCorrections.txt"))
+				paths.extend(icdfn)
 			if importers.get("i1d3") and (oeminst or i1d3ccss) and not i1d3:
 				# Look for *.edr files
 				if sys.platform == "win32":
-					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+					i1d3fn = safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 													"X-Rite", "Devices", "i1d3", 
 													"Calibrations", "*.edr"))
 				elif sys.platform == "darwin":
-					paths += safe_glob(os.path.join(os.path.sep, "Library", 
+					i1d3fn = safe_glob(os.path.join(os.path.sep, "Library", 
 												   "Application Support", "X-Rite", 
 												   "Devices", "i1d3xrdevice", 
 												   "Contents", "Resources", 
 												   "Calibrations", "*.edr"))
-					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
-													"i1Profiler", "*.exe"))
-					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
-													"ColorMunki Display", "*.exe"))
+					if not i1d3fn:
+						i1d3fn = safe_glob(os.path.join(os.path.sep, "Volumes", 
+														"i1Profiler",
+														"*Setup.exe"))
+					if not i1d3fn:
+						i1d3fn = safe_glob(os.path.join(os.path.sep, "Volumes", 
+														"ColorMunki Display",
+														"*Setup.exe"))
+				if len(i1d3fn) > 1:
+					# Multiple EDR files
+					paths.append(i1d3fn)
+				else:
+					paths.extend(i1d3fn)
 			if importers.get("spyd4") and (oeminst or spyd4en) and not spyd4:
 				# Look for dccmtr.dll
 				if sys.platform == "win32":
-					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
-												   "Datacolor", "Spyder4*", 
-												   "dccmtr.dll"))
-					paths += safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+					spydfn = safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
 												   "Datacolor", "Spyder5*", 
 												   "dccmtr.dll"))
+					if not spydfn:
+						spydfn = safe_glob(os.path.join(getenvu("PROGRAMFILES", ""), 
+														"Datacolor", "Spyder4*", 
+														"dccmtr.dll"))
 				elif sys.platform == "darwin":
 					# Look for setup.exe on CD-ROM
-					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
+					spydfn = safe_glob(os.path.join(os.path.sep, "Volumes", 
 												   "Datacolor", "Data",
-												   "setup.exe"))
-					paths += safe_glob(os.path.join(os.path.sep, "Volumes", 
-													"Datacolor_ISO", "Data",
-													"setup.exe"))
+												   "Setup.exe"))
+					if not spydfn:
+						spydfn = safe_glob(os.path.join(os.path.sep, "Volumes", 
+														"Datacolor_ISO", "Data",
+														"Setup.exe"))
+				paths.extend(spydfn)
 		for path in paths:
 			(result,
 			 i1d3,
@@ -12007,14 +12026,17 @@ class MainFrame(ReportFrame, BaseFrame):
 		paths = []
 		for name, importer in importers.iteritems():
 			imported = locals().get(name, False)
-			if not imported and auto:
+			if (not imported or name == "i1d3") and auto:
 				# Automatic download
 				if name == "icd" and sys.platform == "darwin":
 					name += ".dmg"
 				self.worker.recent.clear()
 				self.worker.lastmsg.clear()
+				# We always (re-)download the i1D3 package because it may contain
+				# additional corrections not present in i1Profiler
 				result = self.worker.download("https://%s/%s" % (domain.lower(),
-																 name))
+																 name),
+											  force=name == "i1d3")
 				if isinstance(result, Exception):
 					break
 				elif result:
