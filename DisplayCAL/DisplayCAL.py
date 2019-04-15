@@ -10007,22 +10007,22 @@ class MainFrame(ReportFrame, BaseFrame):
 			# so not accurate, but useful for visual representation which is all
 			# we care about here)
 			if cube_size == 2:
-				scale = 2.5
-				if sys.platform != "win32":
-					x_center = 52
-				else:
-					x_center = 50
-				y_center = 32
-				x_offset = x_center * scale - 49.5
-				y_offset = y_center * scale - y_center
+				scale = 1
 				x_max = 100 * scale
-				y_max = 80 * scale
-				pos2rgb = [((x_offset + 25.5, y_offset + 29), (0, 0, 1)), ((x_center * scale, y_offset + 70), (0, 1, 0)),
-						   ((x_offset + 73.5, y_offset + 29), (1, 0, 0)),
-						   ((x_offset + 25.5, y_offset + 56.5), (0, 1, 1)), ((x_center * scale, y_offset + 15.75), (1, 0, 1)),
-						   ((x_offset + 73.5, y_offset + 56.5), (1, 1, 0)), ((x_center * scale, y_offset + 43), (1, 1, 1))]
-				attrs_c = {'size': 8}
-				attrs_r = {'size': 4}
+				y_max = x_max * (74.6 / 67.4)
+				if sys.platform != "win32":
+					x_center = x_max / 2.
+				else:
+					x_center = x_max / 2. - 2.5
+				y_center = y_max / 2.
+				x_center *= scale
+				y_center *= scale
+				pos2rgb = [((x_center - 23.7, y_center - 13.7), (0, 0, 1)), ((x_center, y_center + 27.3), (0, 1, 0)),
+						   ((x_center + 23.7, y_center - 13.7), (1, 0, 0)),
+						   ((x_center - 23.7, y_center + 13.7), (0, 1, 1)), ((x_center, y_center - 27.3), (1, 0, 1)),
+						   ((x_center + 23.7, y_center + 13.7), (1, 1, 0)), ((x_center, y_center), (1, 1, 1))]
+				attrs_c = {'size': 10}
+				attrs_r = {'size': 5}
 			else:
 				x_max = 100
 				y_max = 100
@@ -10082,6 +10082,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			ref = get_canonical_instrument_name(safe_unicode(ref, "UTF-8"))
 
 		if not is_ccss:
+			width = 500
 			height = 430
 			x_label = [lang.getstr("matrix")]
 			x_label.extend([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
@@ -10113,10 +10114,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.max"),
 													fit_de00_max))
 			if fit_de00:
-				x_label.append(u", ".join(fit_de00))
+				x_label.append(u"\n".join(fit_de00))
 			height += 16 * len(x_label)
 			x_label = "\n".join(x_label)
 		else:
+			width = 500
 			height = 526
 			x_label = u""
 			if ref:
@@ -10127,27 +10129,31 @@ class MainFrame(ReportFrame, BaseFrame):
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 
 		style = wx.DEFAULT_FRAME_STYLE
-		if not is_ccss:
-			style &= ~wx.MAXIMIZE_BOX
-			style &= ~wx.RESIZE_BORDER
 
 		plotwindow = wx.Frame(None, -1, desc,
-							  size=(500 * scale, height * scale), style=style)
+							  size=(width * scale, height * scale), style=style)
 		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 							appname))
-		plotwindow.Sizer = wx.BoxSizer(wx.VERTICAL)
-		plotwindow.canvas = canvas = LUTCanvas(plotwindow)
-		plotwindow.Sizer.Add(canvas, 1, flag=wx.EXPAND)
-		panel = wx.Panel(plotwindow)
-		panel.SetBackgroundColour(BGCOLOUR)
-		plotwindow.Sizer.Add(panel, flag=wx.EXPAND)
-		panel.Sizer = wx.BoxSizer(wx.VERTICAL)
-		label = wx.StaticText(panel, -1, x_label.replace("&", "&&"),
+		plotwindow.SetBackgroundColour(BGCOLOUR)
+		plotwindow.Sizer = wx.GridSizer(1, 1, 0, 0)
+		bg = wx.Panel(plotwindow)
+		bg.SetBackgroundColour(BGCOLOUR)
+		bg.Sizer = wx.BoxSizer(wx.VERTICAL)
+		canvas = LUTCanvas(bg)
+		if is_ccss:
+			plotwindow.Sizer.Add(bg, 1, flag=wx.EXPAND)
+			bg.Sizer.Add(canvas, 1, flag=wx.EXPAND)
+		else:
+			plotwindow.Sizer.Add(bg, flag=wx.ALIGN_CENTER)
+			canvas_w = 240 * scale
+			canvas.MinSize = (canvas_w, canvas_w * (74.6 / 67.4))
+			bg.Sizer.Add(canvas, flag=wx.ALIGN_CENTER)
+		label = wx.StaticText(bg, -1, x_label.replace("&", "&&"),
 							  style=wx.ALIGN_CENTRE_HORIZONTAL)
 		label.SetForegroundColour(FGCOLOUR)
 		label.SetMaxFontSize(11)
-		panel.Sizer.Add(label, flag=wx.ALIGN_CENTER | wx.ALL & ~wx.TOP,
-						border=12 * scale)
+		bg.Sizer.Add(label, flag=wx.ALIGN_CENTER | wx.ALL & ~wx.TOP,
+						border=16 * scale)
 		canvas.SetBackgroundColour(BGCOLOUR)
 		canvas.SetEnableCenterLines(False)
 		canvas.SetEnableDiagonals(False)
@@ -10204,6 +10210,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				child.Bind(wx.EVT_KEY_DOWN, key_handler)
 				child.Bind(wx.EVT_MOUSEWHEEL, OnWheel)
 
+		if not is_ccss:
+			bg.Sizer.Add((0, 16))
+			plotwindow.Sizer.SetSizeHints(plotwindow)
+			plotwindow.Sizer.Layout()
 		plotwindow.Show()
 	
 	def colorimeter_correction_web_handler(self, event):
