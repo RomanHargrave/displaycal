@@ -12994,12 +12994,12 @@ BEGIN_DATA
 			safe_print(ti1)
 		return ti1, ti3v
 
-	def download(self, uri):
+	def download(self, uri, force=False):
 		# Set timeout to a sane value
 		default_timeout = socket.getdefaulttimeout()
 		socket.setdefaulttimeout(20)  # 20 seconds
 		try:
-			return self._download(uri)
+			return self._download(uri, force=force)
 		finally:
 			socket.setdefaulttimeout(default_timeout)
 
