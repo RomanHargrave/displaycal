@@ -11093,7 +11093,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.sizer3.Add(boxsizer, 1, flag=wx.TOP | wx.EXPAND, border=12)
 			if sys.platform not in ("darwin", "win32"):
 				boxsizer.Add((1, 8))
-			loctech = {}
+			loctech = OrderedDict()
 			techloc = {}
 			for technology_string in technology_strings.values():
 				loc = lang.getstr("display.tech." + technology_string,
@@ -11101,7 +11101,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				loctech[loc] = technology_string
 				techloc[technology_string] = loc
 			dlg.display_tech_ctrl = wx.Choice(dlg, -1,
-											  choices=sorted(loctech.keys()))
+											  choices=loctech.keys())
 			dlg.display_tech_ctrl.SetStringSelection(techloc[tech])
 			boxsizer.Add(dlg.display_tech_ctrl,
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)

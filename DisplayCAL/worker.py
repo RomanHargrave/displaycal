@@ -7109,14 +7109,16 @@ usage: spotread [-options] [logfile]
 	def get_technology_strings(self):
 		""" Return technology strings mapping (from ccxxmake -??) """
 		if self.argyll_version < [1, 7]:
-			return technology_strings_171
+			return OrderedDict((k, v) for v, k in
+							   sorted((v, k) for k, v in
+									  technology_strings_171.iteritems()))
 		result = self.exec_cmd(get_argyll_util("ccxxmake"), ["-??"],
 							   capture_output=True, skip_scripts=True,
 							   silent=True, log_output=False)
 		if isinstance(result, Exception):
 			safe_print(result)
-			return technology_strings_171
-		technology_strings = {}
+			return OrderedDict()
+		technology_strings = OrderedDict()
 		in_tech = False
 		for line in self.output:
 			parts = line.strip().split(None, 1)
