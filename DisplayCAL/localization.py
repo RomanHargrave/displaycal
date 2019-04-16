@@ -6,11 +6,10 @@ import os
 import re
 import sys
 
-import demjson
-
 from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
 from jsondict import JSONDict
+from lazydict import LazyDict_YAML_Lite
 from log import safe_print
 from options import debug_localization as debug
 from util_os import expanduseru
@@ -37,9 +36,9 @@ def init(set_wx_locale=False):
 			else:
 				for filename in langfiles:
 					name, ext = os.path.splitext(filename)
-					if ext.lower() == ".json" and name.lower() not in ldict:
+					if ext.lower() == ".yaml" and name.lower() not in ldict:
 						path = os.path.join(langdir, filename)
-						ldict[name.lower()] = JSONDict(path)
+						ldict[name.lower()] = LazyDict_YAML_Lite(path)
 	if len(ldict) == 0:
 		handle_error(UserWarning("Warning: No language files found. The "
 								 "following places have been searched:\n%s" %

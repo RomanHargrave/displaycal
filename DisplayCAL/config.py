@@ -146,7 +146,7 @@ storage = os.path.join(datahome, "storage")
 resfiles = [
 	# Only essentials
 	"argyll_instruments.json",
-	"lang/en.json",
+	"lang/en.yaml",
 	"beep.wav",
 	"camera_shutter.wav",
 	"linear.cal",

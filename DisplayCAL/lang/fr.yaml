@@ -1,0 +1,2558 @@
+"*": |-
+  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated.
+"!author": |-
+  Loïc Guégant, François Leclerc, Jean-Luc Coulon
+"!language": |-
+  Français
+"!language_name": |-
+  FRENCH
+"3dlut": |-
+  LUT 3D
+"3dlut.1dlut.videolut.nonlinear": |-
+  L’étalonnage des tables de gamma de la table de correspondance (« LUT ») 1D de la carte vidéo du périphérique d’affichage n’est pas linéaire, mais la table de correspondance 3D contient l’étalonnage appliqué de la table de correspondance 1D. Assurez-vous de réinitialiser manuellement les tables de gamma de la carte vidéo à une valeur linéaire avant d’utiliser la table de correspondance 3D, ou créez une table de correspondance 3D sans avoir d’étalonnage appliqué (pour ce faire, activez « Afficher les options avancées » dans le menu « Options » et désactivez « Appliquer l’étalonnage (vcgt) » ainsi que « Créer une table de correspondance 3D après la caractérisation » dans les paramètres de table de correspondance 3D, créez ensuite une nouvelle table de correspondance 3D).
+"3dlut.bitdepth.input": |-
+  Profondeur des couleurs d’entrée de la table de correspondance 3D
+"3dlut.bitdepth.output": |-
+  Profondeur des couleurs de sortie de la table de correspondance 3D
+"3dlut.confirm_relcol_rendering_intent": |-
+  Voulez-vous que la LUT 3D utilise aussi le point blanc mesuré (l’intention de rendu de la LUT 3D sera défini à colorimétrie relative) ?
+"3dlut.content.colorspace": |-
+  Espace de couleur du contenu
+"3dlut.create": |-
+  Créer une table de correspondance 3D…
+"3dlut.create_after_profiling": |-
+  Créer la table de correspondance 3D après la caractérisation
+"3dlut.enable": |-
+  Activer la LUT 3D
+"3dlut.encoding.input": |-
+  Encodage d’entrée
+"3dlut.encoding.output": |-
+  Encodage de sortie
+"3dlut.encoding.output.warning.madvr": |-
+  Attention : cet encodage de sortie n'est pas recommandé et provoquera un écrêtage si madVR n'est pas configuré en sortie « TV levels (16-235) » dans l’onglet « Périphériques » → « %s » → « Propriétés ». À utiliser à vos propres risques !
+"3dlut.encoding.type_2": |-
+  TV Rec. 2020 YCbCr UHD
+"3dlut.encoding.type_5": |-
+  TV Rec. 709 1250/50Hz YCbCr HD
+"3dlut.encoding.type_6": |-
+  TV Rec. 601 YCbCr SD
+"3dlut.encoding.type_7": |-
+  TV Rec. 709 1125/60Hz YCbCr HD
+"3dlut.encoding.type_C": |-
+  TV Rec. 2020 à Luminance constante YCbCr UHD
+"3dlut.encoding.type_T": |-
+  TV RVB 16-235 (clip WTW)
+"3dlut.encoding.type_X": |-
+  TV xvYCC Rec. 709 YCbCr HD
+"3dlut.encoding.type_n": |-
+  plage RVB complète 0-255
+"3dlut.encoding.type_t": |-
+  TV RVB 16-235
+"3dlut.encoding.type_x": |-
+  TV xvYCC Rec. 601 YCbCr (primaires Rec. 709) SD
+"3dlut.format": |-
+  Format de fichier de table de correspondance 3D
+"3dlut.format.3dl": |-
+  Autodesk / Kodak (.3dl)
+"3dlut.format.ReShade": |-
+  ReShade (.png, .fx)
+"3dlut.format.cube": |-
+  IRIDAS (.cube)
+"3dlut.format.eeColor": |-
+  eeColor Processor (.txt)
+"3dlut.format.icc": |-
+  Profil de lien de périphérique (.icc/.icm)
+"3dlut.format.madVR": |-
+  madVR (.3dlut)
+"3dlut.format.madVR.hdr": |-
+  Traiter un contenu HDR
+"3dlut.format.madVR.hdr.confirm": |-
+  Notez que vous devez avoir caractérisé l’écran en mode HDR. Si l’écran ne prend pas en charge la HDR de manière native, clicquer « Abandonner ».
+"3dlut.format.madVR.hdr_to_sdr": |-
+  Convertir le contenu HDR en SDR
+"3dlut.format.mga": |-
+  Pandora (.mga)
+"3dlut.format.png": |-
+  PNG (.png)
+"3dlut.format.spi3d": |-
+  Sony Imageworks (.spi3d)
+"3dlut.frame.title": |-
+  Création une table de correspondance 3D
+"*3dlut.hdr.rolloff.diffuse_white": |-
+  Diffuse white (reference 94.38 cd/m²)
+"*3dlut.hdr.system_gamma": |-
+  System gamma (reference 1.2)
+"3dlut.holder.assign_preset": |-
+  Assigner la LUT 3D au préréglage :
+"3dlut.holder.out_of_memory": |-
+  %s se trouve hors de l’espace de stockage de la LUT 3D (il faut au moins %i Ko). Veuillez supprimer quelques LUT 3D de %s afin de libérer de la place pour de nouvelles. Voyez votre documentation de %s pour davantage d’informations.
+"3dlut.input.colorspace": |-
+  Espace de couleurs source
+"3dlut.input.profile": |-
+  Profil source
+"3dlut.install": |-
+  Installer la LUT 3D
+"3dlut.install.failure": |-
+  Échec de l’installation de la table de correspondance 3D (erreur inconnue).
+"3dlut.install.success": |-
+  Table de correspondance 3D installée avec succès !
+"3dlut.install.unsupported": |-
+  L’installation automatique de la table de correspondance 3D n'est pas prise en charge pour le format de table de correspondance 3D indiqué.
+"3dlut.save_as": |-
+  Enregistrer la table de correspondance 3D sous…
+"3dlut.settings": |-
+  Paramètres de la table de correspondance 3D
+"3dlut.size": |-
+  Taille de la table de correspondance 3D
+"3dlut.tab.enable": |-
+  Activer l’onglet de table de correspondance 3D
+"3dlut.use_abstract_profile": |-
+  Profil abstrait (« Look »)
+"CMP_Digital_Target-3.cie": |-
+  CMP Digital Target 3
+"CMP_Digital_Target-4.cie": |-
+  CMP Digital Target 4
+"CMYK_IDEAlliance_ControlStrip_2009.ti1": |-
+  IDEAlliance Control Strip 2009
+"CMYK_IDEAlliance_ISO_12647-7_Control_Wedge_2013.ti1": |-
+  Bande de contrôle 2013 CMYK IDEAlliance ISO 12647-7
+"CMYK_ISO_12647-7_outer_gamut.ti1": |-
+  Gamut externe CMYK ISO 12647-7
+"ColorChecker.cie": |-
+  ColorChecker
+"ColorCheckerDC.cie": |-
+  ColorChecker DC
+"ColorCheckerPassport.cie": |-
+  ColorChecker Passport
+"ColorCheckerSG.cie": |-
+  ColorChecker SG
+"FograStrip2.ti1": |-
+  Fogra Media Wedge CMYK V2.0
+"FograStrip3.ti1": |-
+  Fogra Media Wedge CMYK V3.0
+"ISO_12646-2008_color_accuracy_and_gray_balance.ti1": |-
+  ISO 12646:2008 précision des couleurs et équilibre du gris
+"ISO_14861_color_accuracy_RGB318.ti1": |-
+  Précision de la couleur et équilibre du gris ISO 14861:2015
+"QPcard_201.cie": |-
+  QPcard 201
+"QPcard_202.cie": |-
+  QPcard 202
+"SpyderChecker24.cie": |-
+  SpyderCHECKR24 (D65)
+"SpyderChecker.cie": |-
+  SpyderCHECKR (D65)
+"Untethered": |-
+  Non connecté
+"[rgb]TRC": |-
+  Courbes de réponse de tonalité
+"aborted": |-
+  … interrompu.
+"aborting": |-
+  Interruption, veuillez patienter (cela peut prendre quelques secondes)…
+"abstract_profile": |-
+  Profil abstrait
+"active_matrix_display": |-
+  Affichage à matrice active
+"adaptive_mode_unavailable": |-
+  Le mode adaptatif n'est disponible qu’avec ArgyllCMS 1.1.0 RC3 ou ultérieur.
+"add": |-
+  Ajouter…
+"*adjust_rolloff": |-
+  Adjust roll-off
+"advanced": |-
+  Avancé
+"allow_skip_sensor_cal": |-
+  Permettre de passer outre l’auto-étalonnage du spectromètre
+"ambient.measure": |-
+  Mesurer la lumière ambiante
+"ambient.measure.color.unsupported": |-
+  %s : la couleur de la lumière ambiante ne peut pas être déterminée avec la sonde de mesure choisie car son capteur semble être monochromatique (seul un niveau de lumière a pu être mesuré).
+"ambient.measure.light_level.missing": |-
+  Impossible d’obtenir une lecture du niveau de lumière
+"ambient.set": |-
+  Voulez-vous également régler le niveau de lumière ambiante à la valeur mesurée ?
+"app.client.connect": |-
+  Client de scripting %s:%s connecté
+"app.client.disconnect": |-
+  Client de scripting %s:%s déconnecté
+"app.client.ignored": |-
+  Tentative de connexion refusée du client de scripting %s:%s: %s
+"app.client.network.disallowed": |-
+  Tentative de connexion refusée du client de scripting %s:%s : les clients réseau ne sont pas autorisés.
+"app.confirm_restore_defaults": |-
+  Voulez-vous réellement annuler vos modifications et restaurer les valeurs par défaut ?
+"app.detected": |-
+  %s a été détecté.
+"app.detected.calibration_loading_disabled": |-
+  %s détecté. Chargemnt des courbes d’étalonnage désactivé.
+"app.detection_lost": |-
+  %s n’est plus détecté.
+"app.detection_lost.calibration_loading_enabled": |-
+  %s n’est plus détecté. Chargement des courbes d’étalonnage activé.
+"app.incoming_message": |-
+  Demande de scripting reçue de %s:%s : %s
+"app.incoming_message.invalid": |-
+  Demande de scripting invalide !
+"app.listening": |-
+  Configuration de l’hôte de scripting à %s:%s
+"app.otherinstance": |-
+  %s fonctionne déjà.
+"app.otherinstance.notified": |-
+  Une instance déjà en cours de fonctionnement a été signalée.
+"apply": |-
+  Appliquer
+"apply_black_output_offset": |-
+  Appliquer le décalage du noir en sortie (100%)
+"apply_cal": |-
+  Appliquer l’étalonnage (vcgt)
+"apply_cal.error": |-
+  L’étalonnage n'a pas pu être appliqué.
+"archive.create": |-
+  Créer une archive compressée…
+"archive.import": |-
+  Importer l’archive…
+"archive.include_3dluts": |-
+  Voulez-vous inclure les fichiers de table de correspondance 3D dans l’archive (non recommandé, produit une taille de fichier d’archive plus importante) ?
+"argyll.debug.warning1": |-
+  Veuillez n’utiliser cette option que si vous avez vraiment besoin d’informations de débogage (par ex. pour le dépannage d’une fonctionnalité d’ArgyllCMS) ! Ceci n’est en principe utile qu’aux développeurs du logiciel pour aider au diagnostic et à la résolution de problèmes. Êtes-vous sûr de vouloir activer la sortie de débogage ?
+"argyll.debug.warning2": |-
+  N'oubliez pas de désactiver la sortie de débogage pour le fonctionnement normal du logiciel.
+"argyll.dir": |-
+  Répertoire des exécutables d’ArgyllCMS :
+"argyll.dir.invalid": |-
+  Exécutables d’ArgyllCMS introuvables.
+  Veuillez sélectionner le répertoire contenant les fichiers exécutables (peut-être préfixé  « argyll- » ou suffixé « -argyll ») : %s
+"argyll.error.detail": |-
+  Message d’erreur détaillé d’ArgyllCMS :
+"argyll.instrument.configuration_files.install": |-
+  Installer les fichiers de configuration de sondes de mesure d’ArgyllCMS…
+"argyll.instrument.configuration_files.install.success": |-
+  Installation des fichiers de configuration de sondes de mesure d’ArgyllCMS terminée.
+"argyll.instrument.configuration_files.uninstall": |-
+  Désinstaller les fichiers de configuration de sondes de mesure d’ArgyllCMS…
+"argyll.instrument.configuration_files.uninstall.success": |-
+  Désinstallation des fichiers de configuration de sonde de mesure d’ArgyllCMS terminée.
+"argyll.instrument.driver.missing": |-
+  Le pilote d’ArgyllCMS pour votre sonde de mesure ne semble pas être installé ou n’est pas correctement installé. Veuillez vérifier que votre sonde de mesure apparaît dans le gestionnaire de périphériques de Windows sous « Argyll LibUSB-1.0A devices » et (ré-)installez le pilote, si nécessaire. Veuillez consulter la documentation pour les instructions d’installation.
+"argyll.instrument.drivers.install": |-
+  Installer les pilotes de sondes de mesure d’ArgyllCMS…
+"argyll.instrument.drivers.install.confirm": |-
+  Vous n’avez à installer les pilotes spécifiques d’ArgyllCMS que si vous avez une sonde de mesure autre que  ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval ou K-10.
+  
+  Note : si vous avez déjà un pilote du constructeur installé pour votre sonde de mesure, vous devrez utiliser le gestionnaire de périphériques de Windows pour passer manuellement au pilote d’ArgyllCMS après qu’il a été installé. Pour ce faire, faites un clic-droit sur la sonde de mesure et sélectionnez « Mettre le pilote à jour… », choisissez ensuite « Rechercher un pilote logiciel sur mon ordinateur », « Laissez-moi choisir depuis une liste de pilotes de périphérique sur mon ordinateur » et enfin, sélectionnez dans la liste le pilote d’Argyll correspondant à votre sonde de mesure.
+  
+  Voulez-vous poursuivre ?
+"argyll.instrument.drivers.install.failure": |-
+  Échec de l’installation des pilote d’ArgyllCMS pour la sonde de mesure.
+"argyll.instrument.drivers.install.restart": |-
+  Vous devez désactiver la vérification de signature du pilote pour installer les pilotes de sondes de mesure d’ArgyllCMS. Pour cela, le système doit être redémarré. Sélectionnez « Résoudre le problème » sur la page qui apparaîtra, ensuite « Options avancées », « Paramètres de démarrage» et enfin « Redémarrer ». Lors du démarrage, sélectionnez « Désactiver la vérification de la signature du pilote ». Après le redémarrage, choisissez de nouveau « Installer les pilotes des sondes de mesure d’ArgyllCMS… » depuis le menu afin installer les pilotes.
+"argyll.instrument.drivers.uninstall": |-
+  Désinstaller les pilotes de sondes de mesure d’ArgyllCMS…
+"argyll.instrument.drivers.uninstall.confirm": |-
+  Note : la désinstallation n’affecte pas les pilotes de sondes de mesure actuellement en cours d’utilisation mais supprime simplement le pilote de la liste de pilotes de Windows. Si vous désirez revenir à un pilote de constructeur installé pour votre sonde de mesure, vous devrez utiliser le gestionnaire de périphériques de Windows pour basculer manuellement vers le pilote du constructeur. Pour ce faire, faites un clic-droit sur la sonde de mesure et sélectionnez « Mettre à jour le pilote… », choisissez ensuite « Recherchez un pilote sur mon ordinateur », « Laissez-moi sélectionner les pilotes de périphérique depuis une liste sur mon ordinateur » et enfin, sélectionnez le pilote du constructeur pour votre sonde depuis la liste.
+  
+  Voulez-vous poursuivre ?
+"argyll.instrument.drivers.uninstall.failure": |-
+  Échec de la désinstallation des pilote de sondes de mesure d’ArgyllCMS.
+"argyll.instrument.drivers.uninstall.success": |-
+  Désinstallation des pilotes de sondes de mesure d’ArgyllCMS terminée.
+"argyll.util.not_found": |-
+  Exécutable ArgyllCMS « %s » introuvable.
+"as_measured": |-
+  tel que mesuré
+"audio.lib": |-
+  Module audio : %s
+"auth": |-
+  Authentification
+"auth.failed": |-
+  Échec de l’authentification.
+"auto": |-
+  automatique
+"auto_optimized": |-
+  optimisée automatiquement
+"autostart_remove_old": |-
+  Suppression de l’ancienne entrée de démarrage automatique
+"backing_xyz": |-
+  Valeurs XYZ du support
+"backlight": |-
+  Rétroéclairage
+"bitdepth": |-
+  Profondeur des couleurs
+"black": |-
+  Noir
+"black_lab": |-
+  Noir L*a*b*
+"black_point": |-
+  Point noir
+"black_point_compensation": |-
+  Compensation du point noir
+"black_point_compensation.3dlut.warning": |-
+  Durant la création de la table de correspondance 3D, la compensation du point noir doit être désactivée car elle affecte la fonction d’ajustement de la courbe de tonalité. Voulez-vous désactiver la compensation du point noir ?
+"black_point_compensation.info": |-
+  La compensation du point noir empêche efficacement la réduction du noir, mais réduit la précision de la conversion des couleurs.
+"black_white": |-
+  Noir et blanc
+"black_xyz": |-
+  Noir XYZ
+"blacklevel": |-
+  Niveau de noir
+"blue": |-
+  Bleu
+"blue_gamma": |-
+  Gamma du bleu
+"blue_lab": |-
+  Bleu L*a*b*
+"blue_matrix_column": |-
+  Colonne de la matrice de bleu
+"blue_maximum": |-
+  Maximum du bleu
+"blue_minimum": |-
+  Minimum du bleu
+"blue_tone_response_curve": |-
+  Courbe de réponse de tonalité du bleu
+"blue_xyz": |-
+  Bleu XYZ
+"*bradford": |-
+  Bradford (ICC recommendation)
+"brightness": |-
+  Luminosité
+"browse": |-
+  Parcourir…
+"*bs": |-
+  Bianco & Schettini
+"*bs_pc": |-
+  Bianco & Schettini with positivity constraint
+"bug_report": |-
+  Signaler un bogue…
+"button.calibrate": |-
+  Étalonner uniquement
+"button.calibrate_and_profile": |-
+  Étalonner et caractériser
+"button.profile": |-
+  Caractériser uniquement
+"cal_extraction_failed": |-
+  Échec de l’extraction des données d’étalonnage à partir du profil.
+"calculated_checksum": |-
+  Somme de contrôle calculée
+"calibrate_instrument": |-
+  Étalonnage du spectromètre
+"calibration": |-
+  Étalonnage
+"calibration.ambient_viewcond_adjust": |-
+  Niveau de luminosité ambiante
+"calibration.ambient_viewcond_adjust.info": |-
+  Pour réaliser un ajustement des conditions de visualisation lors du calcul des courbes d’étalonnage, cochez la case et entrez le niveau de luminosité ambiante actuel. Éventuellement, vous pouvez aussi mesurer la luminosité ambiante si votre sonde de mesure le permet.
+"calibration.black_luminance": |-
+  Niveau de noir
+"calibration.black_output_offset": |-
+  Décalage du noir en sortie
+"calibration.black_point_correction": |-
+  Correction du point noir
+"calibration.black_point_correction_choice": |-
+  Vous pouvez désactiver la correction du point noir pour optimiser le niveau de noir et le taux de contraste (recommandé pour la plupart des écrans cathodiques). Veuillez indiquer votre choix pour la correction du point noir.
+"calibration.black_point_rate": |-
+  Taux
+"calibration.check_all": |-
+  Vérifier les paramètres
+"calibration.complete": |-
+  Étalonnage terminé.
+"calibration.create_fast_matrix_shaper": |-
+  Créer un profil à matrice
+"calibration.create_fast_matrix_shaper_choice": |-
+  Voulez-vous créer profil à matrice/shaper rapide à partir des mesures d’étalonnage ou simplement effectuer l’étalonnage ?
+"calibration.do_not_use_video_lut": |-
+  Ne pas utiliser la table de gamma de la carte vidéo pour appliquer l’étalonnage
+"calibration.do_not_use_video_lut.warning": |-
+  Voulez-vous vraiment changer le paramètre recommandé ?
+"calibration.embed": |-
+  Incorporer les courbes d’étalonnage dans le profil
+"calibration.file": |-
+  Paramètres
+"calibration.file.invalid": |-
+  Le fichier de paramètres sélectionné est invalide.
+"calibration.file.none": |-
+  <Aucun>
+"calibration.incomplete": |-
+  L’étalonnage n’a pas été achevé.
+"calibration.interactive_display_adjustment": |-
+  Réglage interactif de l’écran
+"calibration.interactive_display_adjustment.black_level.crt": |-
+  Sélectionnez « Commencer la mesure » et ajustez la luminosité et/ou les contrôles de décalage RVB de votre écran pour obtenir le niveau désiré.
+"calibration.interactive_display_adjustment.black_point.crt": |-
+  Sélectionnez « Commencer la mesure » et ajustez les contrôles de décalage RVB de votre écran pour obtenir le point noir désiré.
+"calibration.interactive_display_adjustment.check_all": |-
+  Sélectionnez « Commencer la mesure » pour vérifier l’ensemble des paramètres.
+"calibration.interactive_display_adjustment.generic_hint.plural": |-
+  Une bonne correspondance est obtenue si toutes les barres peuvent être amenées à la position indiquée au centre.
+"calibration.interactive_display_adjustment.generic_hint.singular": |-
+  Une bonne correspondance est obtenue si la barre peut être amenée à la position indiquée au centre.
+"calibration.interactive_display_adjustment.start": |-
+  Commencer la mesure
+"calibration.interactive_display_adjustment.stop": |-
+  Arrêter la mesure
+"calibration.interactive_display_adjustment.white_level.crt": |-
+  Sélectionnez « Commencer la mesure » et ajustez le contraste et/ou les contrôles de gain RVB de votre écran pour obtenir le niveau désiré.
+"calibration.interactive_display_adjustment.white_level.lcd": |-
+  Sélectionnez « Commencer la mesure » et ajustez le contrôle de rétro-éclairage/luminosité de votre écran pour obtenir le niveau désiré.
+"calibration.interactive_display_adjustment.white_point": |-
+  Sélectionnez « Commencer la mesure » et ajustez les contrôles de température de couleur et/ou de gain RVB de vote écran pour obtenir le point blanc désiré.
+"calibration.load": |-
+  Charger les paramètes…
+"calibration.load.handled_by_os": |-
+  Le chargement de l’étalonnage est effectué par le système d’exploitation.
+"calibration.load_error": |-
+  Les courbes d’étalonnage n'ont pas pu être chargées.
+"calibration.load_from_cal": |-
+  Charger les courbes d’étalonnage à partir d’un fichier d’étalonnage…
+"calibration.load_from_cal_or_profile": |-
+  Charger les courbes d’étalonnage à partir d’un fichier d’étalonnage ou d’un profil…
+"calibration.load_from_display_profile": |-
+  Charger les courbes d’étalonnage à partir du profil actuel du périphérique d’affichage…
+"calibration.load_from_display_profiles": |-
+  Charger les courbes d’étalonnage depuis le ou les profiles de l’écran actuel
+"calibration.load_from_profile": |-
+  Charger les courbes d’étalonnage à partir du profil…
+"calibration.load_success": |-
+  Les courbes d’étalonnage ont été chargées avec succès.
+"calibration.loading": |-
+  Chargement des courbes d’étalonnage à partir du fichier…
+"calibration.loading_from_display_profile": |-
+  Chargement des courbes d’étalonnage du profil actuel du périphérique d’affichage…
+"calibration.luminance": |-
+  Niveau de blanc
+"calibration.lut_viewer.title": |-
+  Courbes
+"calibration.preserve": |-
+  Preserver l’état de l’étalonnage
+"calibration.preview": |-
+  Aperçu de l’étalonnage
+"calibration.quality": |-
+  Qualité de l’étalonnage
+"calibration.quality.high": |-
+  Haute
+"calibration.quality.low": |-
+  Basse
+"calibration.quality.medium": |-
+  Moyenne
+"calibration.quality.ultra": |-
+  Ultra
+"calibration.quality.verylow": |-
+  Très basse
+"calibration.reset": |-
+  Réinitialiser la table de gamma de la carte vidéo
+"calibration.reset_error": |-
+  La table de gamma de la carte graphique n’a pas pu être réinitialisée.
+"calibration.reset_success": |-
+  La table de gamma de la carte graphique a été réinitialisée avec succès.
+"calibration.resetting": |-
+  Réinitialisation linéaire de la table de gamma de la carte graphique…
+"calibration.settings": |-
+  Paramètres d’étalonnage
+"calibration.show_actual_lut": |-
+  Afficher les courbes d’étalonnage de la carte vidéo
+"calibration.show_lut": |-
+  Afficher les courbes
+"calibration.skip": |-
+  Poursuivre par la caractérisation
+"calibration.speed": |-
+  Vitesse d’étalonnage
+"calibration.speed.high": |-
+  Haute
+"calibration.speed.low": |-
+  Basse
+"calibration.speed.medium": |-
+  Moyenne
+"calibration.speed.veryhigh": |-
+  Très haute
+"calibration.speed.verylow": |-
+  Très basse
+"calibration.start": |-
+  Poursuivre par l’étalonnage
+"calibration.turn_on_black_point_correction": |-
+  Activer
+"calibration.update": |-
+  Mettre à jour l’étalonnage
+"calibration.update_profile_choice": |-
+  Voulez-vous également mettre à jour les courbes d’étalonnage dans le profil existant ou juste faire l’étalonnage ?
+"calibration.use_linear_instead": |-
+  Utiliser plutôt un étalonnage linéaire
+"calibration.verify": |-
+  Vérifier l’étalonnage
+"calibration_profiling.complete": |-
+  Étalonnage et caractérisation terminés.
+"calibrationloader.description": |-
+  Définit le profil ICC et charge les courbes d’étalonnage pour tous les périphériques d’affichage
+"can_be_used_independently": |-
+  Ne peut pas être utilisé indépendamment
+"cancel": |-
+  Annuler
+"*cat02": |-
+  CAT02 (from CIECAM02)
+"*cat02bs": |-
+  CAT02 (from CIECAM02, Brill & Süsstrunk modification)
+"*cat97s": |-
+  CAT97s (from CIECAM97s)
+"cathode_ray_tube_display": |-
+  Écran à tube à rayons cathodiques
+"ccmx.use_four_color_matrix_method": |-
+  Minimiser la différence chromatique xy plutôt que delta E
+"*ccss.CCFLFamily_07Feb11": |-
+  LCD CCFL family (AC, EIZO, HP)
+"*ccss.FSI_XM55U_23Jan19": |-
+  WOLED family (FSI XM55U/XM65U, LG OLED)
+"*ccss.GBrLED_25Jul12": |-
+  LCD GB-r-LED IPS (Dell U2413)
+"*ccss.HP_DC3": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor?)
+"*ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor Z24x G2)
+"*ccss.HP_ZBOOK": |-
+  LCD PFS Phosphor WLED IPS (HP ZBook)
+"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
+  LCD GB-r-LED IPS (NEC PA242W)
+"*ccss.OLEDFamily_20Jul12": |-
+  RGB OLED (Sony PVM-2541)
+"*ccss.OLEDFamily_28Aug18": |-
+  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"*ccss.PFS_Phosphor_Family_31Jan17": |-
+  LCD PFS Phosphor WLED family
+"*ccss.Panasonic VVX17P051J00": |-
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+"*ccss.PlasmaFamily_20Jul12": |-
+  Plasma
+"*ccss.ProjectorFamily_07Feb11": |-
+  Projector family (Marantz, HP, Panasonic)
+"*ccss.RGBLEDFamily_07Feb11": |-
+  LCD RGB LED family (HP, SOYO)
+"*ccss.RG_Phosphor_Family_13Dec11": |-
+  LCD RG Phosphor family
+"*ccss.RG_Phosphor_Family_25Jul12": |-
+  LCD GB-r-LED/RG Phosphor family
+"*ccss.WGCCFLFamily_07Feb11": |-
+  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
+"*ccss.WLEDFamily_07Feb11": |-
+  LCD White LED family (AC, LG, Samsung)
+"*ccss.WRGB_OLED_LG": |-
+  WOLED (LG OLED)
+"ccxx.ti1": |-
+  mire de test pour la correction du colorimètre
+"centered": |-
+  Centré
+"channel_1_c_xy": |-
+  Canal 1 (C) xy
+"channel_1_gamma_at_50_input": |-
+  Gamma du canal 1 à 50% de l’entrée
+"channel_1_is_linear": |-
+  Le canal 1 est linéaire
+"channel_1_maximum": |-
+  Maximum du canal 1
+"channel_1_minimum": |-
+  Minimum du canal 1
+"channel_1_r_xy": |-
+  Canal 1 (R) xy
+"channel_1_unique_values": |-
+  Valeurs uniques du canal 1
+"channel_2_g_xy": |-
+  Canal 2 (G) xy
+"channel_2_gamma_at_50_input": |-
+  Gamma du canal 2 à 50% de l’entrée
+"channel_2_is_linear": |-
+  Le canal 2 est linéaire
+"channel_2_m_xy": |-
+  Canal 2 (M) xy
+"channel_2_maximum": |-
+  Maximum du canal 2
+"channel_2_minimum": |-
+  Minimum du canal 2
+"channel_2_unique_values": |-
+  Valeurs uniques du canal 2
+"channel_3_b_xy": |-
+  Canal 3 (B) xy
+"channel_3_gamma_at_50_input": |-
+  Gamma du canal 3 à 50% de l’entrée
+"channel_3_is_linear": |-
+  Le canal 3 est linéaire
+"channel_3_maximum": |-
+  Maximum du canal 3
+"channel_3_minimum": |-
+  Minimum du canal 3
+"channel_3_unique_values": |-
+  Valeurs uniques du canal 3
+"channel_3_y_xy": |-
+  Canal 3 (Y) xy
+"channel_4_k_xy": |-
+  Canal 4 (K) xy
+"channels": |-
+  Nombre de canaux
+"characterization_device_values": |-
+  Valeurs de caractérisation du périphérique
+"characterization_measurement_values": |-
+  Valeurs des mesures de caractérisation
+"characterization_target": |-
+  Cible de caractérisation
+"checking_lut_access": |-
+  Contrôle de l’accès à la table de gamma de la carte vidéo pour l’écran %s…
+"checksum": |-
+  Somme de contrôle
+"checksum_ok": |-
+  Somme de contrôle correcte
+"*chromatic_adaptation": |-
+  Chromatic adaptation...
+"chromatic_adaptation_matrix": |-
+  Matrice d’adaptation chromatique
+"chromatic_adaptation_transform": |-
+  Transformée d’adaptation chromatique
+"chromaticity_illuminant_relative": |-
+  Chromaticité (par rapport à l’illuminant)
+"chromecast_limitations_warning": |-
+  Veuillez noter que la précision du Chromecast n’est pas aussi bonne que celle d’un écran directement raccordé ou qu’un madTPG, car le Chromecast utilise une conversion de RVB vers YCbCr et un rééchantillonage.
+"*cie2012_2": |-
+  CIE 2012 2°
+"clear": |-
+  Effacer
+"close": |-
+  Fermer
+"*cmccat97": |-
+  CMCCAT97
+"*cmccat2000": |-
+  CMCCAT2000
+"color": |-
+  Couleur
+"color_look_up_table": |-
+  Table de correspondance des couleurs
+"color_model": |-
+  Modèle de couleurs
+"color_space_conversion_profile": |-
+  Profil de conversion d’espace colorimétrique
+"colorant_order": |-
+  Ordre des colorants
+"colorants_pcs_relative": |-
+  Colorants (par rapport à PCS)
+"colorimeter_correction.create": |-
+  Créer une correction du colorimètre…
+"colorimeter_correction.create.details": |-
+  Veuillez vérifier les champs ci-dessous et les modifier si nécessaire. La description peut également contenir des détails importants (par ex. des réglages spécifiques à l’écran, un observateur CIE non-standard ou ce genre de chose).
+"colorimeter_correction.create.failure": |-
+  Échec de la création de la correction.
+"colorimeter_correction.create.info": |-
+  Pour créer une correction du colorimètre, vous devez d’abord mesurer les couleurs de test à l’aide d’un spectromètre et, dans le cas où vous voulez créer une matrice de correction plutôt qu’une correction spectrale, avec le colorimètre également.
+  Vous pouvez aussi utiliser des mesures existantes en choisissant « Parcourir »
+"colorimeter_correction.create.success": |-
+  Correction créée avec succès.
+"*colorimeter_correction.create.warning": |-
+  Make sure to measure your display device in its native gamut and do not artificially restrict it (via emulation modes or similar means) when creating a colorimeter correction.
+"colorimeter_correction.file.none": |-
+  aucune
+"colorimeter_correction.import": |-
+  Importer les corrections du colorimètre depuis un autre logiciel de caractérisation d’écrans…
+"colorimeter_correction.import.choose": |-
+  Veuillez choisir le fichier de correction de colorimètre à importer.
+"colorimeter_correction.import.failure": |-
+  Aucune correction de colorimètre n'a pu être importée.
+"colorimeter_correction.import.partial_warning": |-
+  Toutes les corrections de colorimètres ne peuvent pas être importées depuis %s. %i de %i entrées doivent être sautées.
+"colorimeter_correction.import.success": |-
+  Les corrections du colorimètre ont été importées depuis les logiciels suivants :
+  
+  %s
+"colorimeter_correction.info": |-
+  Informations de correction du colorimètre
+"colorimeter_correction.instrument_mismatch": |-
+  La correction de colorimètre sélectionnée ne convient pas à la sonde de mesure sélectionnée.
+"colorimeter_correction.upload": |-
+  Charger la correction du colorimètre…
+"colorimeter_correction.upload.confirm": |-
+  Voulez-vous charger la correction du colorimètre vers la base de données en ligne (recommandé) ? Tout fichier chargé sera considéré comme placé dans le domaine public, de sorte à pouvoir être utilisé librement.
+"colorimeter_correction.upload.deny": |-
+  Cette correction de colorimètre ne peut être chargée.
+"colorimeter_correction.upload.exists": |-
+  La correction du colorimètre existe déjà dans la base de données.
+"colorimeter_correction.upload.failure": |-
+  La correction n'a pu être entrée dans la base de données en ligne.
+"colorimeter_correction.upload.success": |-
+  La correction a été chargée dans la base de données en ligne.
+"colorimeter_correction.web_check": |-
+  Chercher en ligne une correction de colorimètre…
+"colorimeter_correction.web_check.choose": |-
+  Les corrections de colorimètre suivantes pour l’écran et la sonde de mesure sélectionnés ont été trouvées :
+"colorimeter_correction.web_check.failure": |-
+  Aucune correction de colorimètre pour l’écran et la sonde de mesure sélectionnés n'a été trouvée.
+"colorimeter_correction.web_check.info": |-
+  Veuillez noter que toutes les corrections de colorimètre sont des contributions de divers utilisateurs, et qu’il est de votre responsabilité de juger de leur utilité dans votre situation particulière. Elles peuvent ou pas améliorer la précision absolue de votre colorimètre associé à votre écran.
+"colorimeter_correction_matrix_file": |-
+  Matrice de correction
+"colorimeter_correction_matrix_file.choose": |-
+  Choisir une matrice de correction...
+"colorimetric_intent_image_state": |-
+  État de l’image colorimétrique
+"colors_pcs_relative": |-
+  Couleurs (par rapport à PCS)
+"colorspace": |-
+  Espace de couleurs
+"colorspace.show_outline": |-
+  Afficher le contour
+"commandline": |-
+  Ligne de commandes :
+"commands": |-
+  Commandes
+"comparison_profile": |-
+  Profil de comparaison
+"comport_detected": |-
+  Une modification de la configuration de la sonde de mesure ou du port a été détectée.
+"compression.gzip": |-
+  Compression GZIP
+"computer.name": |-
+  Nom de l’ordinateur
+"connected.to.at": |-
+  Connectée à %s à %s:%s
+"connecting.to": |-
+  Connexion à %s:%s…
+"connection.broken": |-
+  Perte de connexion
+"connection.established": |-
+  Connexion établie
+"connection.fail": |-
+  Erreur de connexion (%s)
+"connection.fail.http": |-
+  Erreur HTTP %s
+"connection.waiting": |-
+  Attente de connexion à
+"continue": |-
+  Continuer
+"contrast": |-
+  Contraste
+"contribute": |-
+  Contribuer
+"converting": |-
+  Conversion
+"copyright": |-
+  Droit d’auteur
+"corrected": |-
+  corrigé
+"create_profile": |-
+  Créer un profil à partir des données des mesures…
+"create_profile_from_edid": |-
+  Créer un profil à partir des données d’identification étendues de l’écran…
+"created": |-
+  Créé le
+"creator": |-
+  Créateur
+"current": |-
+  Actuel
+"custom": |-
+  personnalisé
+"cyan": |-
+  Cyan
+"d3-e4-s2-g28-m0-b0-f0.ti1": |-
+  Petite mire de test pour les profils à matrice
+"d3-e4-s3-g52-m3-b0-f0.ti1": |-
+  Mire de test par défaut
+"d3-e4-s4-g52-m4-b0-f0.ti1": |-
+  Petite mire de test pour les profils à LUT
+"d3-e4-s5-g52-m5-b0-f0.ti1": |-
+  Mire de test étendue pour les profils à LUT
+"d3-e4-s9-g52-m9-b0-f0.ti1": |-
+  Grande mire de test pour les profils à LUT
+"d3-e4-s17-g52-m17-b0-f0.ti1": |-
+  Très grande mire de test pour les profils à LUT
+"deactivated": |-
+  désactivé
+"default": |-
+  Valeur par défaut
+"default.icc": |-
+  Défaut (Gamma 2.2)
+"default_crt": |-
+  Défaut CRT
+"default_rendering_intent": |-
+  Intention de rendu par défaut
+"delete": |-
+  Supprimer
+"delta_e_2000_to_blackbody_locus": |-
+  ΔE 2000 du locus du corps noir
+"delta_e_2000_to_daylight_locus": |-
+  ΔE 2000 du locus de la lumière du jour
+"delta_e_to_locus": |-
+  ΔE*00 vers locus %s
+"description": |-
+  Description
+"description_ascii": |-
+  Description (ASCII)
+"description_macintosh": |-
+  Description (Macintosh)
+"description_unicode": |-
+  Description (Unicode)
+"deselect_all": |-
+  Tout désélectionner
+"detect_displays_and_ports": |-
+  Détecter les périphériques d’affichage et les sondes de mesures
+"device": |-
+  Périphérique
+"device.name.placeholder": |-
+  <Nom du périphérique>
+"device_color_components": |-
+  Composantes de couleurs du périphérique
+"device_manager.launch": |-
+  Lancer le gestionnaire de périphérique
+"device_manufacturer_name": |-
+  Nom du constructeur du périphérique
+"device_manufacturer_name_ascii": |-
+  Nom du constructeur du périphérique (ASCII)
+"device_manufacturer_name_macintosh": |-
+  Nom du constructeur du périphérique (Macintosh)
+"device_manufacturer_name_unicode": |-
+  Nom du constructeur du périphérique (Unicode)
+"device_model_name": |-
+  Nom de modèle du périphérique
+"device_model_name_ascii": |-
+  Device model name (ASCII)
+"device_model_name_macintosh": |-
+  Nom de modèle du périphérique (Macintosh)
+"device_model_name_unicode": |-
+  Nom de modèle du périphérique (Unicode)
+"device_to_pcs_intent_0": |-
+  Périphérique vers PCS : Intention 0
+"device_to_pcs_intent_1": |-
+  Périphérique vers PCS : Intention 1
+"device_to_pcs_intent_2": |-
+  Périphérique vers PCS : Intention 3
+"devicelink_profile": |-
+  Profil de lien de périphérique
+"dialog.argyll.notfound.choice": |-
+  ArgyllCMS, le moteur de couleurs est nécessaire pour faire tourner DisplayCAL, il ne semble pas être installé sur cet ordinateur. Voulez-vous le télécharger automatiquement ou le rechercher vous-même ?
+"dialog.cal_info": |-
+  Le fichier d’étalonnage « %s » sera utilisé. Voulez-vous continuer ?
+"dialog.confirm_cancel": |-
+  Voulez-vous vraiment annuler ?
+"dialog.confirm_delete": |-
+  Voulez-vous vraiment supprimer le(s) fichier(s) sélectionné(s) ?
+"dialog.confirm_overwrite": |-
+  Le fichier « %s » existe déjà. Voulez-vous l’écraser ?
+"dialog.confirm_uninstall": |-
+  Voulez-vous vraiment désinstaller les fichiers sélectionés ?
+"dialog.current_cal_warning": |-
+  Le profil contiendra les courbes d’étalonnage actuelles. Voulez-vous continuer ?
+"dialog.do_not_show_again": |-
+  Ne plus afficher ce message
+"dialog.enter_password": |-
+  Veuillez entrer votre mot de passe.
+"dialog.install_profile": |-
+  Voulez-vous installer le profil « %s » et en faire le profil par défaut pour l’écran « %s » ?
+"dialog.linear_cal_info": |-
+  Les courbes d’étalonnage linéaires seront utilisées. Voulez-vous continuer ?
+"dialog.load_cal": |-
+  Charger les paramètres
+"dialog.select_argyll_version": |-
+  La version %s d’ArgyllCMS a été trouvée. La version actuellement sélectionnée est %s. Voulez-vous utiliser la version plus récente ?
+"dialog.set_argyll_bin": |-
+  Veuillez indiquer le répertoire dans lequel se trouvent les exécutables d’ArgyllCMS.
+"dialog.set_profile_save_path": |-
+  Créer le répertoire du profil « %s » ici :
+"dialog.set_testchart": |-
+  Sélectionner un fichier de mire de test
+"dialog.ti3_no_cal_info": |-
+  Les données de mesure ne contiennent pas de courbe d’étalonnage. Voulez-vous réellement continuer ?
+"digital_camera": |-
+  Appareil photo numérique
+"digital_cinema_projector": |-
+  Projecteur de cinéma numérique
+"digital_motion_picture_camera": |-
+  Caméra numérique
+"direction.backward": |-
+  PCS → B2A → périphérique
+"direction.backward.inverted": |-
+  PCS ← B2A ← périphérique
+"direction.forward": |-
+  Périphérique → A2B → PCS
+"direction.forward.inverted": |-
+  Périphérique ← A2B ← PCS
+"directory": |-
+  Répertoire
+"disconnected.from": |-
+  Déconnecté de %s:%s
+"display": |-
+  Périphérique d’affichage
+"display-instrument": |-
+  Écrans et sondes de mesure
+"display.connection.type": |-
+  Connexion
+"display.manufacturer": |-
+  Fabricant du périphérique d’affichage
+"display.output": |-
+  Sortie n°
+"display.primary": |-
+  (Primaire)
+"display.properties": |-
+  Propriétés du périphérique d’affichage
+"display.reset.info": |-
+  Veuillez réinitialiser le périphérique d’affichage aux paramètres d’usine, ajustez ensuite sa luminosité à un niveau confortable.
+"display.settings": |-
+  Paramètres du périphérique d’affichage
+"display.tech": |-
+  Technologie de l’écran
+"*display.tech.CRT": |-
+  CRT
+"*display.tech.DLP Projector": |-
+  DLP Projector
+"*display.tech.DLP Projector RGB Filter Wheel": |-
+  DLP Projector RGB Filter Wheel
+"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  DLP Projector RGBCMY Filter Wheel
+"*display.tech.DPL Projector RGBW Filter Wheel": |-
+  DLP Projector RGBW Filter Wheel
+"*display.tech.LCD": |-
+  LCD
+"*display.tech.LCD CCFL": |-
+  LCD CCFL
+"*display.tech.LCD CCFL IPS": |-
+  LCD CCFL IPS
+"*display.tech.LCD CCFL TFT": |-
+  LCD CCFL TFT
+"*display.tech.LCD CCFL VPA": |-
+  LCD CCFL PVA
+"*display.tech.LCD CCFL Wide Gamut": |-
+  LCD CCFL Wide Gamut
+"*display.tech.LCD CCFL Wide Gamut IPS": |-
+  LCD CCFL Wide Gamut IPS
+"*display.tech.LCD CCFL Wide Gamut TFT": |-
+  LCD CCFL Wide Gamut TFT
+"*display.tech.LCD CCFL Wide Gamut VPA": |-
+  LCD CCFL Wide Gamut PVA
+"*display.tech.LCD GB-R Phosphor": |-
+  LCD GB-r-LED
+"*display.tech.LCD GB-R Phosphor IPS": |-
+  LCD GB-r-LED IPS
+"*display.tech.LCD GB-R Phosphor TFT": |-
+  LCD GB-r-LED TFT
+"*display.tech.LCD GB-R Phosphor VPA": |-
+  LCD GB-r-LED PVA
+"*display.tech.LCD PFS Phosphor": |-
+  LCD PFS Phosphor WLED
+"*display.tech.LCD PFS Phosphor IPS": |-
+  LCD PFS Phosphor WLED IPS
+"*display.tech.LCD PFS Phosphor TFT": |-
+  LCD PFS Phosphor WLED TFT
+"*display.tech.LCD PFS Phosphor VPA": |-
+  LCD PFS Phosphor WLED PVA
+"*display.tech.LCD RG Phosphor": |-
+  LCD RG Phosphor
+"*display.tech.LCD RG Phosphor IPS": |-
+  LCD RG Phosphor IPS
+"*display.tech.LCD RG Phosphor TFT": |-
+  LCD RG Phosphor TFT
+"*display.tech.LCD RG Phosphor VPA": |-
+  LCD RG Phosphor PVA
+"*display.tech.LCD RGB LED": |-
+  LCD RGB LED
+"*display.tech.LCD RGB LED IPS": |-
+  LCD RGB LED IPS
+"*display.tech.LCD RGB LED TFT": |-
+  LCD RGB LED TFT
+"*display.tech.LCD RGB LED VPA": |-
+  LCD RGB LED PVA
+"*display.tech.LCD White LED": |-
+  LCD White LED
+"*display.tech.LCD White LED IPS": |-
+  LCD White LED IPS
+"*display.tech.LCD White LED TFT": |-
+  LCD White LED TFT
+"*display.tech.LCD White LED VPA": |-
+  LCD White LED PVA
+"*display.tech.LED AMOLED": |-
+  AMOLED
+"*display.tech.LED OLED": |-
+  OLED
+"*display.tech.LED WOLED": |-
+  WOLED
+"*display.tech.Plasma": |-
+  Plasma
+"*display.tech.Unknown": |-
+  Unknown
+"display_detected": |-
+  Une modification de la configuration du périphérique d’affichage a été détectée.
+"display_device_profile": |-
+  Profil du périphérique d’affichage
+"display_lut.link": |-
+  Lier/délier l’accès à l’écran et à la table de correspondance
+"display_peak_luminance": |-
+  Afficher la luminance crête
+"display_profile.not_detected": |-
+  Aucun profil actuel détecté pour l’écran « %s »
+"display_short": |-
+  Périphérique d’affichage (abrégé)
+"displayport": |-
+  DisplayPort
+"displays.identify": |-
+  Identifier les périphériques d’affichage
+"dlp_screen": |-
+  Écran DLP
+"donation_header": |-
+  Votre soutien est apprécié !
+"donation_message": |-
+  Si vous désirez supporter le développement, apporter une assistance technique et faire se poursuivre la disponibilité de DisplayCAL et d’ArgyllCMS, pensez à une contribution financière. Comme DisplayCAL ne serai d’aucune utilité sans ArgyllCMS, toutes les donations reçues pour DisplayCAL seront partagées entre les deux projets.
+  Pour une faible utilisation non commerciale, une donation unique semble appropriée. Si vous utilisez DisplayCAL de manière professionnelles, une contribution annuelle ou mensuelle ferait une grande différence en permettant aux deux projets de continuer d’exister.
+  
+  Merci à tous les contributeurs !
+"download": |-
+  Téléchargement
+"*download.fail": |-
+  Download failed:
+"download.fail.empty_response": |-
+  Échec de téléchargement : %s a retourné un document vide.
+"download.fail.wrong_size": |-
+  Échec de téléchargement : le fichier n’a pas la taille attendue de %s octets (%s octets ont été reçu).
+"download_install": |-
+  Télécharger et installer
+"downloading": |-
+  Téléchargement
+"drift_compensation.blacklevel": |-
+  Compensation de la dérive du niveau de noir
+"drift_compensation.blacklevel.info": |-
+  La compensation de la dérive du niveau de noir tente de prendre en compte les déviations de mesure causées par la dérive de l’étalonnage du noir d’un périphérique de mesure lors de son échauffement. À cette fin, un échantillon de test noir est mesuré périodiquement, ce qui augmente la durée totale nécessaire aux mesures. De nombreux colorimètres ont une compensation intégrée de la température, auquel cas la compensation de la dérive du niveau de noir n'est pas nécessaire, mais la plupart des spectromètres ne sont pas compensés en température.
+"drift_compensation.whitelevel": |-
+  Compensation de la dérive du niveau de blanc
+"drift_compensation.whitelevel.info": |-
+  La compensation de la dérive du niveau de blanc tente de prendre en compte les déviations de mesure causées par les changements de luminosité d’un périphérique d’affichage lors de son échauffement. À cette fin, un échantillon de test blanc est mesuré périodiquement, ce qui augmente la durée totale nécessaire aux mesures.
+"dry_run": |-
+  Fonctionnement à blanc
+"dry_run.end": |-
+  Fonctionnement à blanc terminé.
+"dry_run.info": |-
+  Fonctionnement à blanc. Consultez le journal pour voir la ligne de commande.
+"*duration": |-
+  Duration
+"dvi": |-
+  DVI
+"dye_sublimation_printer": |-
+  Imprimante à sublimation de colorants
+"edid.crc32": |-
+  Somme de contrôle EDID CRC32
+"edid.serial": |-
+  N° de série EDID
+"elapsed_time": |-
+  Temps écoulé
+"electrophotographic_printer": |-
+  Imprimante électrophotographique
+"electrostatic_printer": |-
+  Imprimante électrostatique
+"enable_argyll_debug": |-
+  Activer la sortie de diagnostic d’ArgyllCMS
+"enable_spyder2": |-
+  Activer le colorimètre Spyder 2…
+"enable_spyder2_failure": |-
+  Spyder 2 n'a pas pu être activé.
+"enable_spyder2_success": |-
+  Spyder 2 a été activé avec succès.
+"entries": |-
+  Entrées
+"enumerate_ports.auto": |-
+  Détecter automatiquement les sondes de mesure
+"enumerating_displays_and_comports": |-
+  Inventaire des périphériques d’affichage et des ports de communication…
+"environment": |-
+  Environnement
+"error": |-
+  Erreur
+"error.access_denied.write": |-
+  Vous n'avez pas l’accès en écriture à %s
+"error.already_exists": |-
+  Le nom « %s » ne peut pas être utilisé, car un autre objet du même nom existe déjà. Veuillez choisir un autre nom ou un autre répertoire.
+"error.autostart_creation": |-
+  La création d’une entrée de démarrage automatique pour que %s charge les courbes d’étalonnage à la connexion a échoué.
+"error.autostart_remove_old": |-
+  L’ancienne entrée d’autodémarrage qui charge les courbes d’étalonnage à la connexion n'a pu être supprimée : %s
+"error.autostart_system": |-
+  L’entrée d’autodémarrage système pour charger les courbes d’étalonnage à la connexion n'a pas pu être créée car le répertoire d’autodémarrage système n'a pas pu être déterminé.
+"error.autostart_user": |-
+  L’entrée d’autodémarrage spécifique à l’utilisateur/trice pour charger les courbes d’étalonnage à la connexion n'a pas pu être créée car le répertoire d’autodémarrage spécifique à l’utilisateur/trice n'a pas pu être déterminé.
+"error.cal_extraction": |-
+  L’étalonnage n'a pas pu être extrait de « %s ».
+"error.calibration.file_missing": |-
+  Le fichier d’étalonnage « %s » est manquant.
+"error.calibration.file_not_created": |-
+  Aucun fichier d’étalonnage n'a été créé.
+"error.copy_failed": |-
+  Le fichier « %s » n'a pas pu être copié vers « %s ».
+"error.deletion": |-
+  Une erreur s'est produite pendant le déplacement des fichiers vers la %s. Certains fichiers peuvent ne pas avoir été supprimés.
+"error.dir_creation": |-
+  Le répertoire « %s » n'a pas pu être créé. Il y a peut-être des restrictions d’accès. Veuillez autoriser l’accès en écriture ou sélectionner un répertoire différent.
+"error.dir_notdir": |-
+  Le répertoire « %s » n'a pas pu être créé, car un autre objet du même nom existe déjà. Veuillez sélectionner un autre répertoire.
+"error.file.create": |-
+  Le fichier « %s » n'a pu être créé.
+"error.file.open": |-
+  Le fichier « %s » n'a pas pu être ouvert.
+"error.file_type_unsupported": |-
+  Type de fichier non supporté.
+"error.generic": |-
+  Une erreur interne est survenue.
+  
+  Code erreur : %s
+  Message d’erreur : %s
+"error.luminance.invalid": |-
+  Le pic de luminance mesuré n’est pas valable. Assurez-vous que le capteur de votre instrument n’est pas bloqué, et enlevé le bouchon de protection (s’il est présent).
+"*error.luminance.not_monotonically_increasing": |-
+  The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
+"error.measurement.file_invalid": |-
+  Le fichier de mesure « %s » est invalide.
+"error.measurement.file_missing": |-
+  Le fichier de mesure « %s » est manquant.
+"error.measurement.file_not_created": |-
+  Aucun fichier de mesure n'a été créé.
+"error.measurement.missing_spectral": |-
+  Le fichier de mesure ne contient pas de valeurs spectrales.
+"error.measurement.one_colorimeter": |-
+  Une mesure de colorimètre exactement est nécessaire.
+"error.measurement.one_reference": |-
+  Une mesure de référence du spectromètre exactement est nécessaire.
+"error.no_files_extracted_from_archive": |-
+  Aucun fichier n’a été extrait de « %s ».
+"error.not_a_session_archive": |-
+  L’archive « %s » ne semble pas être une archive de session.
+"error.profile.file_missing": |-
+  Le profil « %s » est manquant.
+"error.profile.file_not_created": |-
+  Aucun profil n'a été créé.
+"error.source_dest_same": |-
+  Les fichiers source et cible sont les mêmes.
+"error.testchart.creation_failed": |-
+  Le fichier de mire de test « %s » n'a pas pu être créé. Peut-être y a-t-il des restrictions d’accès, ou bien le fichier source n'existe pas.
+"error.testchart.invalid": |-
+  Le fichier de mire de test « %s » est invalide.
+"error.testchart.missing": |-
+  Le fichier de mire de test « %s » est manquant.
+"error.testchart.missing_fields": |-
+  Le fichier de mire de test « %s » ne contient pas les champs requis : %s
+"error.testchart.read": |-
+  Le fichier de mire de test « %s » n'a pas pu être lu.
+"error.tmp_creation": |-
+  Il n'a pas été possible de créer un répertoire de travail temporaire.
+"error.trashcan_unavailable": |-
+  La %s n'est pas disponible. Aucun fichier n'a été supprimé.
+"errors.none_found": |-
+  Aucune erreur trouvée.
+"estimated_measurement_time": |-
+  Temps de mesure approximatif: %s heure(s) %s minutes
+"exceptions": |-
+  Exceptions…
+"executable": |-
+  Exécutable
+"export": |-
+  Exporter…
+"extra_args": |-
+  Définir des paramètres de ligne de commandes supplémentaires
+"factory_default": |-
+  Valeurs d’usine
+"failure": |-
+  … échec !
+"*ffp_insertion": |-
+  Full field pattern insertion
+"*file.hash.malformed": |-
+  The integrity of %s cannot be verified because the checksum file is malformed.
+"*file.hash.missing": |-
+  The integrity of %s cannot be verified because it doesn't have an entry in the checksum file.
+"*file.hash.verification.fail": |-
+  Checksum verification failed for %s:
+  
+  Expected %s
+  Actual %s
+"file.invalid": |-
+  Fichier invalide.
+"file.missing": |-
+  Le fichier « %s » n'existe pas.
+"file.notfile": |-
+  « %s » n'est pas un fichier.
+"file.select": |-
+  Sélectionnez un fichier
+"filename": |-
+  Nom du fichier
+"filename.upload": |-
+  Nom de fichier pour le téléversement
+"filetype.7z": |-
+  Fichiers 7-Zip
+"filetype.any": |-
+  Tout type de fichier
+"filetype.cal": |-
+  Fichiers d’étalonnage (*.cal)
+"filetype.cal_icc": |-
+  Fichiers d’étalonnage et de profils (*.cal;*.icc;*.icm)
+"filetype.ccmx": |-
+  Matrices de correction (*.ccmx;*.ccss)
+"filetype.html": |-
+  Fichiers HTML (*.html;*.htm)
+"filetype.icc": |-
+  Fichiers de profils (*.icc;*.icm)
+"filetype.icc_mpp": |-
+  Fichiers de profils (*.icc;*.icm;*.mpp)
+"filetype.icc_ti1_ti3": |-
+  Fichiers de mires de test (*.icc;*.icm;*.ti1;*.ti3)
+"filetype.icc_ti3": |-
+  Fichiers de mesures (*.icc;*.icm;*.ti3)
+"filetype.log": |-
+  Fichiers journaux (*.log)
+"filetype.png": |-
+  Portable Network Graphics (*.png)
+"filetype.tgz": |-
+  Archive TAR compressée
+"filetype.ti1": |-
+  Fichiers de mires de test (*.ti1)
+"filetype.ti1_ti3_txt": |-
+  Fichiers de mires de test (*.ti1), fichiers de mesures (*.ti3;*.txt)
+"filetype.ti3": |-
+  Fichiers de mesures (*.icc;*.icm;*.ti3)
+"filetype.tif": |-
+  Tagged Image File (*.tif)
+"filetype.txt": |-
+  Corrections_du_peripherique.txt
+"filetype.vrml": |-
+  Fichiers VRML (*.wrl)
+"filetype.x3d": |-
+  Fichiers X3D (*.x3d)
+"filetype.zip": |-
+  Fichiers ZIP
+"film_scanner": |-
+  Scanner film
+"film_writer": |-
+  Flasheuse de film
+"finish": |-
+  Finir
+"flare": |-
+  Diffusion (flare)
+"flexography": |-
+  Flexographie
+"focal_plane_colorimetry_estimates": |-
+  Estimation de la colorimétrie dans le plan focal
+"forced": |-
+  forcé
+"format.select": |-
+  Veuillez sélectionner le format désiré.
+"fullscreen.message": |-
+  Mode plein écran activé.
+  Presser Échap pour quitter le mode plein écran.
+"fullscreen.osx.warning": |-
+  Si vous entrez dans le mode plein écran en utilisant le bouton de zoom de la barre de titre, veuillez presser Ctrl + Tab pour revenir au mode normal après que la fenêtre s’est fermée. En remplacement, vous pouvez obtenir le mode plein écran par un double-clic sur la barre de titre ou en maintenant la touche OPTION tout en cliquant le bouton de zoom.
+"gamap.default_intent": |-
+  Intention de rendu par défaut
+"gamap.intents.a": |-
+  colorimétrie absolue
+"gamap.intents.aa": |-
+  apparence absolue
+"gamap.intents.aw": |-
+  colorimétrie absolue avec adaptation du point blanc
+"gamap.intents.la": |-
+  apparence avec correspondance de luminance
+"gamap.intents.lp": |-
+  perceptuelle préservant la luminance
+"gamap.intents.ms": |-
+  préserver la saturation
+"gamap.intents.p": |-
+  perceptuelle
+"gamap.intents.pa": |-
+  apparence perceptuelle
+"gamap.intents.r": |-
+  colorimétrie relative
+"gamap.intents.s": |-
+  saturation
+"gamap.out_viewcond": |-
+  Conditions de visualisation cibles
+"gamap.perceptual": |-
+  Transposition du gamut pour l’intention perceptuelle
+"gamap.profile": |-
+  Profil source
+"gamap.saturation": |-
+  Transposition du gamut pour l’intention de saturation
+"gamap.src_viewcond": |-
+  Conditions de visualisation sources
+"gamap.viewconds.cx": |-
+  transparents sur une table lumineuse
+"gamap.viewconds.jd": |-
+  projecteur en environnement obscur
+"gamap.viewconds.jm": |-
+  projecteur en environnement tamisé
+"gamap.viewconds.mb": |-
+  moniteur en environnement de travail lumineux
+"gamap.viewconds.md": |-
+  moniteur en environnement de travail sombre
+"gamap.viewconds.mt": |-
+  moniteur en environnement de travail typique
+"gamap.viewconds.ob": |-
+  scène originale - extérieur lumineux
+"gamap.viewconds.pc": |-
+  environnement critique de comparaison des imprimés (ISO-3664 P1)
+"gamap.viewconds.pcd": |-
+  CD photo - scène originale en extérieur
+"gamap.viewconds.pe": |-
+  environnement de contrôle des imprimés (CIE 116-1995)
+"gamap.viewconds.pp": |-
+  environnement pratique d’évaluation des imprimés (ISO-3664 P2)
+"gamap.viewconds.tv": |-
+  studio de télévision ou de cinéma
+"gamapframe.title": |-
+  Options avancées de transposition du gamut
+"gamut": |-
+  Gamut
+"gamut.coverage": |-
+  Étendue du gamut
+"gamut.view.create": |-
+  Génération des vues du gamut…
+"gamut.volume": |-
+  Volume du gamut
+"gamut_mapping.ciecam02": |-
+  Transposition du gamut CIECAM02
+"gamut_mapping.mode": |-
+  Mode de transposition du gamut
+"gamut_mapping.mode.b2a": |-
+  PCS-vers-périphérique
+"gamut_mapping.mode.inverse_a2b": |-
+  Inverse, périphérique-vers-PCS
+"gamut_plot.tooltip": |-
+  Cliquez-glissez la souris à l’intérieur du graphique pour déplacer la zone affichée, ou zoomez avec la molette de la souris et les touches +/-. Double-cliquez pour réinitialiser la zone affichée.
+"generic_name_value_data": |-
+  Nom-valeur générique des données
+"geometry": |-
+  Géométrie
+"glossy": |-
+  Brillant
+"*go_to": |-
+  Go to %s
+"go_to_website": |-
+  Aller au site Internet
+"gravure": |-
+  Gravure
+"gray_tone_response_curve": |-
+  Courbe de réponse de tonalité du gris
+"grayscale": |-
+  échelle de gris
+"green": |-
+  Vert
+"green_gamma": |-
+  Gamma du vert
+"green_lab": |-
+  Vert L*a*b*
+"green_matrix_column": |-
+  Colonne de la matrice de vert
+"green_maximum": |-
+  Maximum du vert
+"green_minimum": |-
+  Minimum du vert
+"green_tone_response_curve": |-
+  Courbe de réponse de tonalité du vert
+"green_xyz": |-
+  Vert XYZ
+"grid_steps": |-
+  Pas de mire
+"hdmi": |-
+  HDMI
+"hdr_maxcll": |-
+  Contenu maximum du niveau de lumière
+"*hdr_mincll": |-
+  Minimum content light level
+"header": |-
+  Étalonnage et caractérisation d’affichage produits par ArgyllCMS
+"help_support": |-
+  Aide et assistance…
+"host.invalid.lookup_failed": |-
+  Hôte invalide (échec de la recherche de l’adresse)
+"*hpe_d65": |-
+  Hunt-Pointer-Estevez (HPE), illuminant D65
+"*hpe_e": |-
+  Hunt-Pointer-Estevez (HPE), illuminant E
+"hue": |-
+  Teinte
+"icc_absolute_colorimetric": |-
+  Colorimétrie absolue ICC
+"icc_version": |-
+  Version d’ICC
+"if_available": |-
+  si disponible
+"illuminant": |-
+  Illuminant
+"illuminant_relative_cct": |-
+  CCT par rapport à l’illuminant
+"illuminant_relative_lab": |-
+  L*a*b* par rapport à l’illuminant
+"illuminant_relative_xyz": |-
+  XYZ par rapport à l’illuminant
+"illuminant_xyz": |-
+  WYZ de l’illuminant XYZ
+"illumination": |-
+  Illumination
+"in": |-
+  entrée
+"info.3dlut_settings": |-
+  Une <font weight='bold'>LUT 3D</font> (LUT = « Look Up Table » ; table de correspondance) ou un profil lié de périphérique ICC peut être utilisé par une application prenant en charge les LUT 3D ou les liens de périphérique (« device link ») ICC pour une <font weight='bold'>correction de la couleur d’affichage</font> complète.
+  
+  <font weight='bold'>Le choix de l’espace colorimétrique source adapté et de la courbe de réponse des tonalités</font>
+  pour les LUT 3D et et les profils ICC de lien de périphérique, l’espace colorimétrique source et la courbe de réponse des tonalités doivent être définies et devenir une part fixe de la transformation de la couleur dans son ensemble (contrairement au profils ICC d’appareils qui sont liés dynamiquement au vol). Comme exemple, le matériaux vidéo HD est habituellement masterisé conformément à la norme Rec. 709 avec soit un gamma de puissance pure de l’ordre de 2.2-2.4 (relative à un décalage du noir de sortie de 100%) ou la courbe de réponse des tonalités Rec. 1886 (absolue avec un décalage du noir de sortie de 0%). Un moyen terme entre quelque chose de similaire à Rec. 1886-like et une pure fonction puissance est aussi possible en définissant le décalage de sortie du noir à une valeur comprise entre 0% et 100%.
+  
+  <font weight='bold'>Gamma « absolu » comparativement à « relatif »</font>
+  Pour tenir compte d’un niveau de noir non nul sur un système d’affichage réel, la courbe de réponse des tonalités doit être décalée en rapport.
+  Le gamma « Absolu » donne un sortie réelle à une entrée de 50% qui ne correspond pas à celle d’une courbe de puissance idéale (à moins que le niveau de noir ne soit nul).
+  Un gamma « relatif » donnera une sortie réelle à une entrée de 50% qui correspond à une courbe de puissance idéale.
+"info.calibration_settings": |-
+  L’<font weight='bold'>étalonnage</font> est effectué en <font weight='bold'>ajustant l’écran de manière interactive</font> afin d’obtenir le point blanc et/ou la luminance choisis mais il sert aussi à la création de <font weight='bold'>courbes d’étalonnage LUT 1D</font> (LUT = « Look Up Table » ; table de correspondance) de manière à obtenir la courbe de tonalité choisie et à assurer un bon équilibre du gris. Notez que si lors de l’étalonnage vous ne voulez qu’ajuster le périphérique d’affichage sans passer par la génération des courbes LUT 1D, vous devez paramétrer la courbe de tonalité sur « tel que mesuré ». L’étalonnage par LUT 1D ne peut <font weight='bold'>pas</font> être utilisé pour une correction complète des couleurs. Pour cela, vous devez créer un <font weight='bold'>profil ICC</font> ou une <font weight='bold'>LUT 3D</font> et les utiliser avec des applications qui les prennent en charge. L’étalonnage par LUT 1D est cependant un complément à la caractérisation et à l’étalonnage LUT 3D.
+"info.display_instrument": |-
+  Si votre périphérique d’affichage est de type <font weight='bold'>OLED</font>, <font weight='bold'>Plasma</font> ou d’une autre technologie émettant une lumière de sortie variable en fonction de l’image, activez la <font weight='bold'>compensation de la dérive du point blanc</font>.
+  
+  Si votre sonde de mesure est un <font weight='bold'>spectromètre</font> et que vous l’utilisez en mode contact sur un périphérique d’affichage avec un niveau de noir stable, vous devriez activer la <font weight='bold'>compensation de la dérive du niveau de noir</font>.
+  
+  Si votre sonde de mesure est un <font weight='bold'>colorimètre</font>, vous devriez utiliser – si elle est disponible – une <font weight='bold'>matrice de correction</font> correspondant à votre périphérique d’affichage ou à son type de technologie. Veuillez noter que certaines sondes (ColorHug, ColorHug2, K-10, Spyder4/5/X) peuvent intégrer une correction en dur pour certains de leurs modes de mesure.
+"info.display_instrument.warmup": |-
+  Vous devriez laisser votre périphérique d’affichage <font weight='bold'>chauffer</font> au moins <font weight='bold'>30 minutes</font> avant de commencer les mesures. Si vous utilisez votre sonde de mesure en mode contact, il est préférable de la placer sur votre périphérique d’affichage pendant ce temps également.
+"info.mr_settings": |-
+  Vous pouvez <font weight='bold'>vérifier la précision de correction</font> d’un profil ICC ou d’une LUT 2D via un rapport de mesure qui contient les statistiques avancées sur les erreurs de couleurs à partir de mesures d’échantillons.
+  
+  Quand vous vérifiez une LUT 3D, assurez-vous d’utilisez les mêmes paramètres que ceux spécifiés lors de sa création.
+  
+  <font weight='bold'>Tip:</font> To create a self check report instead of a measurement report, hold the ALT key on your keyboard.
+"info.profile_settings": |-
+  La <font weight='bold'>caractérisation</font> comme son nom l’indique, est la procédure de <font weight='bold'>caractérisation</font> du périphérique d’affichage et l’enregistrement de sa réponse dans un <font weight='bold'>profil ICC</font>. Le profil ICC du périphérique d’affichage peut être utilisé par des applications qui prennent en charge la gestion de la couleur ICC pour une <font weight='bold'>correction complète des couleurs du périphérique d’affichage</font>. Il peut être utilisé pour créer une <font weight='bold'>LUT 3D</font> (LUT = « Look Up Table » ; table de correspondance) qui a la même fonction pour les applications prenant en charge ce format.
+"infoframe.default_text": |-
+  
+"infoframe.title": |-
+  Journal
+"infoframe.toggle": |-
+  Afficher la fenêtre du journal
+"initial": |-
+  Initial
+"initializing_gui": |-
+  Initialisation de l’interface graphique utilisateur/trice…
+"ink_jet_printer": |-
+  Imprimante à jet d’encre
+"input_device_profile": |-
+  Profil du périphérique d’entrée
+"input_table": |-
+  Table d’entrée
+"install_display_profile": |-
+  Installer le profil du périphérique d’affichage…
+"install_local_system": |-
+  Installer pour l’ensemble du système
+"install_user": |-
+  N’installer que pour l’utilisateur actuel
+"instrument": |-
+  Sonde de mesure
+"instrument.calibrate": |-
+  Placez la sonde de mesure sur une surface sombre, mate ou sur son support d’étalonnage et appuyez sur « Valider » pour étalonner la sonde de mesure.
+"instrument.calibrate.colormunki": |-
+  Réglez le capteur ColorMunki sur la position étalonnage et appuyez sur « Valider » pour étalonner la sonde de mesure.
+"instrument.calibrate.reflective": |-
+  Placez la sonde de mesure sur son numéro de série %s blanc réflectif de référence et pressez « Valider » pour étalonner la sonde de mesure.
+"instrument.calibrating": |-
+  Étalonnage de la sonde de mesure…
+"*instrument.colormunki": |-
+  ColorMunki Design/Photo, i1Studio
+"instrument.connect": |-
+  Veuillez connecter votre sonde de mesure maintenant.
+"instrument.initializing": |-
+  Connexion à la sonde de mesure…
+"instrument.measure_ambient": |-
+  Si votre sonde de mesure requiert une coiffe spéciale pour mesurer la lumière ambiante, veuillez la mettre en place. Pour mesurer la lumière ambiante, dirigez la sonde de mesure vers le haut, à côté de l’écran, ou si vous voulez mesurer une cabine de visionnage, placez une carte grise sans métamérisme à l’intérieur de la cabine et pointez-y la sonde de mesure. Des instructions complémentaires sur la façon de mesurer la lumière ambiante peuvent être disponibles dans la documentation de votre sonde de mesure. Appuyez sur « Valider » pour commencer la mesure.
+"instrument.place_on_screen": |-
+  1. Cliquez sur « Valider ». Après 1 à 3 secondes, la fenêtre de mesure va apparaître.
+  2. Placez la sonde de mesure sur la fenêtre de mesure.
+  3. Appuyez sur Échap, Q ou Ctrl+C pour abandonner, ou sur toute autre touche pour commencer la mesure.
+"instrument.place_on_screen.madvr": |-
+  (%i) Veuillez placer votre %s sur la zone de test
+"instrument.reposition_sensor": |-
+  La mesure a échoué car le capteur de la sonde de mesure est dans la mauvaise position. Veuillez corriger la position du capteur, puis cliquer sur « Valider » pour continuer.
+"internal": |-
+  Interne
+"*interval": |-
+  Interval
+"invert_selection": |-
+  Inverser la sélection
+"*ipt": |-
+  IPT
+"is_embedded": |-
+  Est intégré
+"is_illuminant": |-
+  Est l’illuminant
+"is_linear": |-
+  Est linéaire
+"laptop.icc": |-
+  Ordinateur portable (Gamma 2.2)
+"*level": |-
+  Level
+"libXss.so": |-
+  Extension d’économiseur d’écran X11
+"library.not_found.warning": |-
+  Bibliothèque « %s » (%s) introuvable. Veuillez vous assurer qu’elle est installée avant de poursuivre.
+"license": |-
+  Licence
+"license_info": |-
+  Sous licence GPL
+"linear": |-
+  linéaire
+"*link.address.copy": |-
+  Copy link address
+"log.autoshow": |-
+  Afficher automatiquement la fenêtre du journal
+"luminance": |-
+  Luminance
+"lut_access": |-
+  Accès à la table de correspondance
+"madhcnet.outdated": |-
+  La version installée de %s trouvée sur %s est dépassée. Veuillez mettre à jour la dernière version madVR (au moins %i.%i.%i.%i).
+"madtpg.launch.failure": |-
+  madTPG introuvable ou n’a pas pu être lancé.
+"madvr.not_found": |-
+  Le filtre madVR DirectShow est introuvable dans le registre. Assurez-vous qu’il est installé.
+"madvr.outdated": |-
+  La version de madVR utilisée est dépassée. Veuillez en effectuer la mise à jour vers la dernière version (au moins %i.%i.%i.%i).
+"*madvr.wrong_levels_detected": |-
+  The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m². Either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics card and/or madVR is wrong — if your graphics card driver is set to output full range RGB (0-255), please change madVR's output levels for your display device to TV levels (16-235).
+"magenta": |-
+  Magenta
+"make_and_model": |-
+  Marque et modèle
+"manufacturer": |-
+  Fabriquant
+"*mastering_display_black_luminance": |-
+  Mastering display black level
+"*mastering_display_peak_luminance": |-
+  Mastering display peak luminance
+"matrix": |-
+  Matrice
+"matte": |-
+  Mat
+"max": |-
+  Max
+"maximal": |-
+  Maximal
+"measure": |-
+  Mesurer
+"measure.darken_background": |-
+  Arrière-plan noir
+"measure.darken_background.warning": |-
+  Attention : si « arrière-plan noir » est choisi, il couvrira tout l’écran et vous ne pourrez pas voir la fenêtre d’ajustement du périphérique d’affichage ! Si vous avez un réglage multi-écrans, déplacez la fenêtre d’ajustement du périphérique d’affichage vers un autre écran avant de commencer la mesure, ou utilisez le clavier (pour interrompre la mesure, pressez Q. Si la mesure est déjà en cours, attendez un instant puis pressez Q à nouveau).
+"measure.override_display_settle_time_mult": |-
+  Modifier le multiplicateur du temps d’établissement
+"measure.override_min_display_update_delay_ms": |-
+  Modifier le temps de mise à jour minimum par défaut de l’affichage
+"measure.testchart": |-
+  Mesurer la mire de test
+"measureframe.center": |-
+  Centrer
+"measureframe.info": |-
+  Déplacez la fenêtre de mesure à l’endroit désiré de l’écran et redimensionnez-la si besoin. Pratiquement toute la surface de la fenêtre sera utilisée pour afficher les échantillons à mesurer, le cercle n'est là que pour vous servir de guide pour placer votre périphérique de mesure.
+  Placez le périphérique de mesure sur la fenêtre et cliquez sur « Commencer la mesure ». Pour annuler et revenir à la fenêtre principale, fermez la fenêtre de mesure.
+"measureframe.measurebutton": |-
+  Commencer la mesure
+"measureframe.title": |-
+  Zone de mesure
+"measureframe.zoomin": |-
+  Agrandir
+"measureframe.zoommax": |-
+  Maximiser / restaurer
+"measureframe.zoomnormal": |-
+  Taille normale
+"measureframe.zoomout": |-
+  Réduire
+"measurement.play_sound": |-
+  Effets sonores au cours des mesures
+"measurement.untethered": |-
+  Mesure autonome
+"measurement_file.check_sanity": |-
+  Vérifier le fichier de mesure…
+"measurement_file.check_sanity.auto": |-
+  Vérifier automatiquement les mesures
+"measurement_file.check_sanity.auto.warning": |-
+  Veuillez noter que la vérification automatique des mesures est une fonctionnalité expérimentale. À utiliser à vos propres risques.
+"measurement_file.choose": |-
+  Veuillez choisir un fichier de mesure
+"measurement_file.choose.colorimeter": |-
+  Veuillez choisir un fichier de mesure du colorimètre
+"measurement_file.choose.reference": |-
+  Veuillez choisir un fichier de mesure du spectromètre
+"measurement_mode": |-
+  Mode
+"measurement_mode.adaptive": |-
+  Adaptatif
+"measurement_mode.dlp": |-
+  DLP
+"measurement_mode.factory": |-
+  Étalonnage d’usine
+"measurement_mode.generic": |-
+  Générique
+"measurement_mode.highres": |-
+  Haute résolution
+"measurement_mode.lcd": |-
+  LCD (générique)
+"measurement_mode.lcd.ccfl": |-
+  LCD (CCFL)
+"measurement_mode.lcd.ccfl.2": |-
+  LCD (CCFL type 2)
+"measurement_mode.lcd.oled": |-
+  LCD (OLED)
+"measurement_mode.lcd.white_led": |-
+  LCD (LED blanc)
+"measurement_mode.lcd.wide_gamut.ccfl": |-
+  LCD à gamut étendu (CCFL)
+"measurement_mode.lcd.wide_gamut.gb_led": |-
+  LCD à gamut étendu (GB LED)
+"measurement_mode.lcd.wide_gamut.led": |-
+  LCD à gamut étendu (PFS Phosphore, RVB LED)
+"measurement_mode.lcd.wide_gamut.rgb_led": |-
+  LCD à gamut étendu (LED RVB)
+"measurement_mode.raw": |-
+  Brut
+"measurement_mode.refresh": |-
+  à rafraîchissement (générique)
+"measurement_report": |-
+  Rapport de mesure…
+"measurement_report.update": |-
+  Mettre à jour le rapport de mesure…
+"measurement_report_choose_chart": |-
+  Veuillez choisir la mire de test à mesurer.
+"measurement_report_choose_chart_or_reference": |-
+  Veuillez choisir une mire de test ou une référence.
+"measurement_report_choose_profile": |-
+  Veuillez choisir le profil à valider.
+"measurement_type": |-
+  Type de mesure
+"measurements.complete": |-
+  Mesures effectuées ! Voulez-vous ouvrir le répertoire contenant les fichiers de mesure ?
+"*measurements.invalid": |-
+  The measurements are invalid.
+"measuring.characterization": |-
+  Mesure des échantillons de couleurs pour la caractérisation…
+"media_attributes": |-
+  Attributs
+"media_black_point": |-
+  Point noir du média
+"media_relative_colorimetric": |-
+  Colorimétrie relative du média
+"media_white_point": |-
+  Point blanc du média
+"menu.about": |-
+  À propos…
+"menu.file": |-
+  Fichier
+"menu.help": |-
+  ?
+"menu.language": |-
+  Langue
+"menu.options": |-
+  Options
+"menu.tools": |-
+  Outils
+"menuitem.quit": |-
+  Quitter
+"menuitem.set_argyll_bin": |-
+  Localiser les exécutables d’ArgyllCMS…
+"metadata": |-
+  Métadonnées
+"method": |-
+  Méthode
+"min": |-
+  Min
+"minimal": |-
+  Minimal
+"model": |-
+  Modèle
+"motion_picture_film_scanner": |-
+  Numériseur de film de cinéma
+"mswin.open_display_settings": |-
+  Ouvrir les préférences d’affichage de Windows…
+"named_color_profile": |-
+  Profil colorimétrique nommé
+"named_colors": |-
+  Couleurs nommées
+"native": |-
+  Natif
+"negative": |-
+  Négatif
+"no": |-
+  Non
+"no_settings": |-
+  Le fichier ne contient pas de paramètre.
+"none": |-
+  Aucun
+"not_applicable": |-
+  Non applicable
+"not_connected": |-
+  Non connecté
+"not_found": |-
+  “%s” introuvable.
+"not_now": |-
+  Pas maintenant
+"number_of_entries": |-
+  Nombre d’entrées
+"number_of_entries_per_channel": |-
+  Nombre d’entrées par canal
+"observer": |-
+  Observateur
+"observer.1931_2": |-
+  CIE 1931 2°
+"observer.1955_2": |-
+  Stiles & Birch 1955 2°
+"observer.1964_10": |-
+  CIE 1964 10°
+"observer.1964_10c": |-
+  CIE 1964 10° / 1931 2° hybride
+"observer.1978_2": |-
+  Judd & Voss 1978 2°
+"observer.2012_2": |-
+  CIE 2012 2°
+"observer.2012_10": |-
+  CIE 2012 10°
+"observer.shaw": |-
+  Shaw & Fairchild 1997 2°
+"oem.import.auto": |-
+  Si votre colorimètre est livré avec un CD de logiciel pour, veuillez l’insérer maintenant (annulez l’installation du logiciel si elle est demandée).
+  
+  Si vous n’avez pas de CD et que les fichiers nécessaires ne peuvent pas être trouvés d’une autre manière, ils seront téléchargés depuis le Web.
+"oem.import.auto.download_selection": |-
+  Une présélection a été faite en se basant sur les sondes de mesure détectées. Veuillez sélectionner les fichiers à télécharger.
+"oem.import.auto_windows": |-
+  Si le logiciel du fabricant de votre colorimètre est installé, les fichiers nécessaires seront trouvé automatiquement dans la plupart des cas.
+"office_web.icc": |-
+  Bureautique et Internet (D65, Gamma 2.2)
+"offset": |-
+  Décalage
+"offset_lithography": |-
+  Lithographie offset
+"ok": |-
+  Valider
+"or": |-
+  ou
+"osd": |-
+  OSD
+"other": |-
+  Autre
+"out": |-
+  sortie
+"out_of_gamut_tag": |-
+  Indicateur de dépassement de gamut
+"output.profile": |-
+  Profil cible
+"output_device_profile": |-
+  Profil du périphérique de sortie
+"output_levels": |-
+  Niveaux de sortie
+"output_offset": |-
+  Décalage de sortie
+"output_table": |-
+  Table de sortie
+"overwrite": |-
+  Écraser
+"panel.surface": |-
+  Surface du panneau
+"panel.type": |-
+  Type de panneau
+"passive_matrix_display": |-
+  Affichage à matrice passive
+"patch.layout.select": |-
+  Veuillez sélectionner une disposition pour les échantillons :
+"patches": |-
+  Échantillons
+"patterngenerator.prisma.specify_host": |-
+  Veuillez indiquer le nom d’hôte de votre Prisma Video Processor, par ex. prisma-0123 (Windows) ou prisma-0123.local (Linux/Mac OS X). Vous pourrez trouver le nom d’hôte sur une étiquette sous le Prisma, à moins qu’il n’ait été modifié par l’intermédiaire de l’interface web d’administration de Prisma. Vous pouvez aussi entrer l’adresse IP (si elle est connue), par ex. 192.168.1.234
+"patterngenerator.sync_lost": |-
+  Perte de synchronisation avec le générateur de motifs.
+"pause": |-
+  Pause
+"pcs_illuminant_xyz": |-
+  XYZ de l’illuminant du PCS
+"pcs_relative_cct": |-
+  CCT par rapport au PCS
+"pcs_relative_lab": |-
+  L*a*b* par rapport au PCS
+"pcs_relative_xyz": |-
+  XYZ par rapport au PCS
+"pcs_to_device_intent_0": |-
+  PCS vers périphérique : Intention 0
+"pcs_to_device_intent_1": |-
+  PCS vers périphérique : Intention 1
+"pcs_to_device_intent_2": |-
+  PCS vers périphérique : Intention 2
+"perceptual": |-
+  Perceptuelle
+"photo.icc": |-
+  Photographie (D50, Gamma 2.2)
+"photo_imagesetter": |-
+  Flasheuse photo
+"photographic_paper_printer": |-
+  Imprimante sur papier photo
+"platform": |-
+  Plateforme
+"please_wait": |-
+  Veuillez patienter…
+"port.invalid": |-
+  Port %s non valable
+"positive": |-
+  Positif
+"preferred_cmm": |-
+  CMM préféré
+"prepress.icc": |-
+  Pré-presse (D50, 130 cd/m², L*)
+"*preserve_hue": |-
+  Preserve hue
+"*preserve_luminance": |-
+  Preserve luminance
+"*preserve_saturation": |-
+  Preserve saturation
+"preset": |-
+  Pré-réglage
+"preview": |-
+  Aperçu
+"profile": |-
+  Profil
+"profile.advanced_gamap": |-
+  Avancé…
+"profile.b2a.hires": |-
+  Améliorer la résolution effective de la table colorimétrique PCS-vers-périphérique
+"profile.b2a.lowres.warning": |-
+  Il semble qu’il manque au profil les tables PCS-vers-périphérique de haute qualité, qui sont essentielle pour un fonctionnement correct. Faut-il générer les tables de haute qualité maintenant ? Ceci prendra quelques minutes.
+"profile.b2a.smooth": |-
+  Lissage
+"profile.choose": |-
+  Veuillez choisir un profil.
+"profile.confirm_regeneration": |-
+  Voulez-vous régénérer le profil ?
+"profile.current": |-
+  Profil actuel
+"profile.do_not_install": |-
+  Ne pas installer le profil
+"profile.iccv4.unsupported": |-
+  Les profils ICC version 4 ICC ne sont pas pris en charge.
+"profile.import.success": |-
+  Le profil a été importé. Vous devez l’assigner vous-même et l’activer depuis les paramètre « Couleur » du système.
+"profile.info": |-
+  Informations du profil
+"profile.info.show": |-
+  Afficher les informations du profil
+"profile.install": |-
+  Installer le profil
+"profile.install.error": |-
+  Le profil n'a pas pu être installé/activé.
+"profile.install.success": |-
+  Le profil a été installé et activé.
+"profile.install.warning": |-
+  Le profil a été installé mais il peut y avoir des problèmes.
+"profile.install_local_system": |-
+  Installer le profil sur l’ensemble du système
+"profile.install_network": |-
+  Installer le profil sur l’ensemble du réseau
+"profile.install_user": |-
+  Installer le profil pour l’utilisateur actuel uniquement
+"profile.invalid": |-
+  Profil invalide.
+"profile.load_error": |-
+  Le profil d’affichage n'a pu être chargé.
+"profile.load_on_login": |-
+  Charger l’étalonnage à la connexion
+"profile.load_on_login.handled_by_os": |-
+  Laisser le système d’exploitation traiter le chargement de l’étalonnage (faible qualité)
+"profile.name": |-
+  Nom du profil
+"profile.name.placeholders": |-
+  Vous pouvez utiliser les paramètres de substitution suivants dans le nom du profil :
+  
+  %a	Nom du jour de la semaine abrégé
+  %A	Nom complet du jour de la semaine
+  %b	Nom du mois abrégé
+  %B	Nom complet du mois
+  %d	Jour du mois
+  %H	Heure (sur 24 heures)
+  %I	Heure (sur 12 heures)
+  %j	Jour de l’année
+  %m	Mois
+  %M	Minute
+  %p	AM/PM
+  %S	Secondes
+  %U	Semaine (avec dimanche comme premier jour de la semaine)
+  %w	Jour de la semaine (dimanche correspondant à 0)
+  %W	Semaine (avec lundi comme premier jour de la semaine)
+  %y	Année sans le siècle
+  %Y	Année avec le siècle
+"profile.no_embedded_ti3": |-
+  Le profil ne contient pas de donnée de mesure compatible avec Argyll.
+"profile.no_vcgt": |-
+  Le profil ne contient pas de courbes d’une table de correspondance
+"profile.only_named_color": |-
+  Seuls les profils appelés « Couleur nommée » peuvent être utilisés.
+"profile.quality": |-
+  Qualité du profil
+"profile.quality.b2a.low": |-
+  Table PCS vers périphérique de basse qualité
+"profile.quality.b2a.low.info": |-
+  Choisissez cette option si le profil doit être utilisé avec un mappage de gamut A2B inverse pour créer une liaison entre périphériques ou une table de correspondance 3D
+"profile.required_tags_missing": |-
+  Le profil manque des balises : %s
+"profile.self_check": |-
+  Auto-contrôle du profil ΔE*76
+"profile.self_check.avg": |-
+  moyenne
+"profile.self_check.max": |-
+  maximum
+"profile.self_check.rms": |-
+  RMS
+"profile.set_save_path": |-
+  Choisir le chemin d’enregistrement…
+"profile.settings": |-
+  Paramètres de caractérisation
+"profile.share": |-
+  Téléverser un profil…
+"profile.share.avg_dE_too_high": |-
+  Le profil produit un delta E trop élevé (actuel = %s, seuil = %s).
+"profile.share.b2a_resolution_too_low": |-
+  La résolution des tables du profil PCS vers périphérique est trop faible.
+"profile.share.enter_info": |-
+  Vous pouvez partager votre profil avec les autres utilisateurs via le service OpenSUSE « ICC Profile Taxi ».
+  
+  Veuillez fournir une description significative et entrer les propriétés du périphérique d’affichage ci-dessous. Consultez les réglages du périphérique d’affichage depuis l’OSD de votre périphérique d’affichage et n'entrez que les réglages applicables à votre périphérique d’affichage qui ont changé par rapport aux valeurs par défaut.
+  Exemple : pour la plupart des périphériques d’affichage, il s'agit du nom de la présélection choisie, luminosité, contraste, température des couleurs et/ou niveaux RVB du point blanc, ainsi que le gamma. Sur les portables et notebooks, généralement uniquement la luminosité. Si vous avez modifié des réglages supplémentaires au cours de l’étalonnage de votre périphérique d’affichage, entrez-les également si possible.
+"profile.share.meta_missing": |-
+  Le profil ne contient pas la méta-information nécessaire.
+"profile.share.success": |-
+  Profil chargé.
+"*profile.tags.A2B0.shaper_curves.input": |-
+  A2B0 input shaper curves
+"*profile.tags.A2B0.shaper_curves.output": |-
+  A2B0 output shaper curves
+"*profile.tags.A2B1.shaper_curves.input": |-
+  A2B1 input shaper curves
+"*profile.tags.A2B1.shaper_curves.output": |-
+  A2B1 output shaper curves
+"*profile.tags.A2B2.shaper_curves.input": |-
+  A2B2 input shaper curves
+"*profile.tags.A2B2.shaper_curves.output": |-
+  A2B2 output shaper curves
+"*profile.tags.B2A0.shaper_curves.input": |-
+  B2A0 input shaper curves
+"*profile.tags.B2A0.shaper_curves.output": |-
+  B2A0 output shaper curves
+"*profile.tags.B2A1.shaper_curves.input": |-
+  B2A1 input shaper curves
+"*profile.tags.B2A1.shaper_curves.output": |-
+  B2A1 output shaper curves
+"*profile.tags.B2A2.shaper_curves.input": |-
+  B2A2 input shaper curves
+"*profile.tags.B2A2.shaper_curves.output": |-
+  B2A2 output shaper curves
+"profile.testchart_recommendation": |-
+  Pour une qualité de profil élevée, une mire de test contenant plus d’échantillons est recommandée, mais celle-ci prendra plus de temps à mesurer. Voulez-vous utiliser la mire de test recommandée ?
+"profile.type": |-
+  Type de profil
+"profile.type.gamma_matrix": |-
+  gamma + matrice
+"profile.type.lut.lab": |-
+  LUT L*a*b*
+"profile.type.lut.xyz": |-
+  LUT XYZ
+"profile.type.lut_matrix.xyz": |-
+  LUT XYZ + matrice
+"profile.type.lut_rg_swapped_matrix.xyz": |-
+  LUT XYZ + matrice inversée
+"profile.type.shaper_matrix": |-
+  courbes + matrice
+"profile.type.single_gamma_matrix": |-
+  gamma unique + matrice
+"profile.type.single_shaper_matrix": |-
+  courbe unique + matrice
+"profile.unsupported": |-
+  Type de profil (%s) ou espace de couleurs (%s) non pris en charge.
+"profile.update": |-
+  Mettre à jour le profil
+"profile_associations": |-
+  Associations du profil…
+"profile_associations.changing_system_defaults.warning": |-
+  Vous êtes en train de modifier les valeurs par défaut du système
+"profile_associations.use_my_settings": |-
+  Utiliser mes paramètres pour ce périphérique d’affichage
+"profile_class": |-
+  Classe de profil
+"profile_connection_space_pcs": |-
+  Espace de connexion du profil (PCS)
+"profile_loader": |-
+  Chargeur de profil
+"profile_loader.disable": |-
+  Désactiver le chargeur de profil
+"profile_loader.exceptions.known_app.error": |-
+  Le chargeur de profil se désactive lui-même automatiquement lorsque %s est en cours d’exécution. Vous ne pouvez pas outrepasser ce comportement.
+"profile_loader.exit_warning": |-
+  Voulez-vous vraiment quitter le chargeur de profil ? L’étalonnage ne sera plus automatiquement rechargé si vous modifiez la configuration de l’écran !
+"profile_loader.fix_profile_associations": |-
+  Corriger autimatiquement les associations du profil
+"profile_loader.fix_profile_associations_warning": |-
+  Tant que le chargeur de profil est en fonctionnment, il peut s’occuper des associations du profil alors que vous modifiez la configuration de l’écran.
+  
+  Avant de poursuivre, veuillez vous assurer que les associations de profil ci-dessus sont correctes. Si elles ne le sont pas, suivez ces étapes :
+  
+  1. Ouvrir la configuration d’affichage de Windows.
+  2. Activez tous les écrans connectés (bureau étendu).
+  3. Ouvrir la configuration de gestion de la couleur de Windows depuis le panneau de configuration de Windows.
+  4. Assurez-vous que le profil correct a été alloué à chaque écran. Fermez ensuite les paramètres de gestion de la couleur.
+  5. Dans la configuration d’affichage de Windows, retournez à la configuration d’affichage précédente et fermez la configuration d’affichage.
+  6. Vous pouvez maintenant activer « Corriger automatiquement les associations de profil.
+"profile_loader.info": |-
+  L’état de l’étalonnage a été (ré)appliqué %i fois jusqu’à présent.
+  Faites un clic-droit sur l’icône pour obtenir le menu.
+"profiling": |-
+  Caractérisation
+"profiling.complete": |-
+  Caractérisation achevée.
+"profiling.incomplete": |-
+  La caractérisation n'a pas été achevée.
+"projection_television": |-
+  Projection de télévision
+"projector": |-
+  Projecteur
+"projector_mode_unavailable": |-
+  Le mode Projecteur n'est disponible qu’avec ArgyllCMS 1.1.0 Bêta ou ultérieur.
+"quality.ultra.warning": |-
+  La qualité Ultra ne devrait pratiquement jamais être utilisée, excepté pour prouver qu’elle ne devrait pratiquement jamais être utilisée (durée de traitement longue). Préférez plutôt une qualité moyenne ou élevée.
+"readme": |-
+  Lisez-moi
+"ready": |-
+  Prêt.
+"red": |-
+  Rouge
+"red_gamma": |-
+  Gamma du rouge
+"red_lab": |-
+  Rouge L*a*b*
+"red_matrix_column": |-
+  Colonne rouge de la matrice
+"red_maximum": |-
+  Rouge maximum
+"red_minimum": |-
+  Rouge minimum
+"red_tone_response_curve": |-
+  Courbe de réponse de tonalité du rouge
+"red_xyz": |-
+  Rouge XYZ
+"reference": |-
+  Référence
+"reflection_hardcopy_original_colorimetry": |-
+  Colorimétrie d’origine d’une copie réflective
+"reflection_print_output_colorimetry": |-
+  Colorimétrie de sortie d’un tirage réflectif
+"reflective": |-
+  Réflectif
+"reflective_scanner": |-
+  Scanner réflectif
+"remaining_time": |-
+  Temps restant (ca.)
+"remove": |-
+  Supprimer
+"rendering_intent": |-
+  Intention de rendu
+"report": |-
+  Rapport
+"report.calibrated": |-
+  Établir un rapport sur le périphérique d’affichage étalonné
+"report.uncalibrated": |-
+  Établir un rapport sur le périphérique d’affichage non étalonné
+"report.uniformity": |-
+  Mesurer l’uniformité du périphérique d’affichage…
+"reset": |-
+  Réinitialiser
+"resources.notfound.error": |-
+  Erreur fatale - un fichier requis n'a pas été trouvé :
+"resources.notfound.warning": |-
+  Attention - des fichiers requis n'ont pas été trouvés :
+"response.invalid": |-
+  Réponse non valable de %s: %s
+"response.invalid.missing_key": |-
+  Réponse non valable de %s : clé manquante « %s » : %s
+"response.invalid.value": |-
+  Réponse non valable de  %s : la valeur de la clé « %s » ne correspond pas à la valeur attendue « %s » : %s
+"restore_defaults": |-
+  Restaurer les valeurs par défaut
+"rgb.trc": |-
+  Fonction de transfert RVB
+"rgb.trc.averaged": |-
+  Fonction de transfert RVB moyen
+"sRGB.icc": |-
+  sRGB
+"saturation": |-
+  Saturation
+"save": |-
+  Enregistrer
+"save_as": |-
+  Enregistrer sous…
+"scene_appearance_estimates": |-
+  Estimation de l’apparence de la scène
+"scene_colorimetry_estimates": |-
+  Estimation de la colorimétrie de la scène
+"scripting-client": |-
+  Client de scripting de DisplayCAL
+"scripting-client.cmdhelptext": |-
+  Presser la touche de tabulation lors d’une invite de commande vide afin de voir les commandes possibles dans le contexte actuel, ou faire l’auto-complétion des caractères initiaux déjà entrés. Entrez « getcommands » pour une liste des commandes prises en charge et les paramètres possibles des applications connectées.
+"scripting-client.detected-hosts": |-
+  Hôtes de scripting détectés :
+"select_all": |-
+  Tout sélectionner
+"*self_check_report": |-
+  Self check report...
+"set_as_default": |-
+  Définir comme valeur par défaut
+"setting.keep_current": |-
+  Conserver le réglage actuel
+"settings.additional": |-
+  Paramètres supplémentaires
+"settings.basic": |-
+  Paramètres de base
+"settings.new": |-
+  <Actuels>
+"settings_loaded": |-
+  Les courbes d’étalonnage et les paramètres d’étalonnage suivants ont été chargés : %s. Les autres options d’étalonnage ont été restaurées à leurs valeurs par défaut et les options de caractérisation n'ont pas été modifiées.
+"settings_loaded.cal": |-
+  Le profil ne contenait que des paramètres d’étalonnage. Les autres options n'ont pas été modifiées. Aucune courbe d’étalonnage n'a été trouvée.
+"settings_loaded.cal_and_lut": |-
+  Le profil ne contenait que des paramètres d’étalonnage. Les autres options n'ont pas été modifiées et les courbes d’étalonnage ont été chargées.
+"settings_loaded.cal_and_profile": |-
+  Les paramètres ont été chargés. Aucune courbe d’étalonnage n'a été trouvée.
+"settings_loaded.profile": |-
+  Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées. Aucune courbe d’étalonnage n'a été trouvée.
+"settings_loaded.profile_and_lut": |-
+  Le profil ne contenait que des paramètres de caractérisation. Les autres options n'ont pas été modifiées et les courbes d’étalonnage ont été chargées.
+"*sharp": |-
+  Sharp
+"show_advanced_options": |-
+  Afficher les options avancées
+"*show_notifications": |-
+  Show notifications
+"silkscreen": |-
+  Sérigraphieuse
+"simulation_profile": |-
+  Profil de simulation
+"size": |-
+  Taille
+"skip_legacy_serial_ports": |-
+  Passer les anciens ports série
+"softproof.icc": |-
+  Épreuvage à l’écran (5800K, 160 cd/m², L*)
+"spectral": |-
+  Spectral
+"*spectral_resolution": |-
+  Spectral resolution
+"*ssl.certificate_verify_failed": |-
+  The remote certificate could not be verified.
+"*ssl.certificate_verify_failed.root_ca_missing": |-
+  The remote certificate could not be verified because no suitable root certificates were found on the local system.
+"*ssl.handshake_failure": |-
+  Handshake failure. A secure connection could not be established.
+"startup": |-
+  Démarrage…
+"startup_sound.enable": |-
+  Activer le son de démarrage
+"success": |-
+  … opération terminée.
+"surround_xyz": |-
+  Surround XYZ
+"synthicc.create": |-
+  Créer un profil ICC synthétique…
+"target": |-
+  Cible
+"tc.3d": |-
+  Créer un fichier de diagnostic 3D
+"tc.I": |-
+  mire cubique centrée de l’espace perceptuel
+"tc.Q": |-
+  distribution quasi-aléatoire du remplissage de l’espace perceptuel
+"tc.R": |-
+  distribution aléatoire dans l’espace perceptuel
+"tc.adaption": |-
+  Adaptation
+"tc.algo": |-
+  Distribution
+"tc.angle": |-
+  Angle
+"tc.black": |-
+  Échantillons noirs
+"tc.dark_emphasis": |-
+  Accentuation des zones sombres
+"tc.fullspread": |-
+  Échantillons itératifs
+"tc.gray": |-
+  Échantillons neutres
+"tc.i": |-
+  mire cubique centrée de l’espace du périphérique
+"tc.limit.sphere": |-
+  Limiter les échantillons à la sphère
+"tc.limit.sphere_radius": |-
+  Rayon
+"tc.multidim": |-
+  Multidimensionnel
+"tc.multidim.patches": |-
+  étapes = %s échantillons (%s neutres)
+"tc.neutral_axis_emphasis": |-
+  Accentuation de l’axe neutre
+"tc.ofp": |-
+  échantillonnage optimisé du point le plus éloigné
+"tc.patch": |-
+  Échantillon
+"tc.patches.selected": |-
+  sélectionné(s)
+"tc.patches.total": |-
+  Nombre total d’échantillons
+"tc.precond": |-
+  Préconditionnement du profil
+"tc.precond.notset": |-
+  Veuillez sélectionner un profil de préconditionnement.
+"tc.preview.create": |-
+  Création de l’aperçu en cours, veuillez patienter…
+"tc.q": |-
+  distribution quasi-aléatoire du remplissage de l’espace du périphérique
+"tc.r": |-
+  distribution aléatoire dans l’espace du périphérique
+"tc.single": |-
+  Échantillons de canal unique
+"tc.single.perchannel": |-
+  par canal
+"tc.t": |-
+  échantillonnage incrémental du point éloigné
+"tc.vrml.black_offset": |-
+  Décalage du noir RVB (L*)
+"tc.vrml.use_D50": |-
+  Blanc RVB neutre
+"tc.white": |-
+  Échantillons blancs
+"technology": |-
+  Technologie
+"tempdir_should_still_contain_files": |-
+  Les fichiers créés devraient être encore dans le répertoire temporaire “%s”.
+"testchart.add_saturation_sweeps": |-
+  Ajouter des courbes de saturation
+"testchart.add_ti3_patches": |-
+  Ajouter des échantillons de référence…
+"testchart.auto_optimize.untethered.unsupported": |-
+  L’affichage virtuel non connecté ne prend pas en charge l’optimisation automatique des mires de test.
+"testchart.change_patch_order": |-
+  Changer l’ordre des échantillons
+"testchart.confirm_select": |-
+  Fichier enregistré. Voulez-vous sélectionner cette mire de test ?
+"testchart.create": |-
+  Créer une mire de test
+"testchart.discard": |-
+  Supprimer
+"testchart.dont_select": |-
+  Ne pas sélectionner
+"testchart.edit": |-
+  Éditer la mire de test…
+"testchart.export.repeat_patch": |-
+  Répéter chaque échantillon :
+"testchart.file": |-
+  Mire de test
+"testchart.info": |-
+  Nombre d’échantillons de la mire de test sélectionnée
+"testchart.interleave": |-
+  Entrelacer
+"testchart.maximize_RGB_difference": |-
+  Maximiser la différence RBV
+"testchart.maximize_lightness_difference": |-
+  Maximiser la différence de luminosité
+"testchart.maximize_rec709_luma_difference": |-
+  Maximiser la différence de luma
+"testchart.optimize_display_response_delay": |-
+  Minimiser le temps de réponse de l’affichage
+"testchart.patch_sequence": |-
+  Séquence des échantillons
+"testchart.patches_amount": |-
+  Nombre d’échantillons
+"testchart.read": |-
+  Lecture de la mire de test…
+"testchart.save_or_discard": |-
+  La mire de test n'a pas été enregistrée.
+"testchart.select": |-
+  Sélectionner
+"testchart.separate_fixed_points": |-
+  Veuillez choisir les échantillons à ajouter dans une étape séparée.
+"testchart.set": |-
+  Choisir une mire de test
+"testchart.shift_interleave": |-
+  Décaler et entrelacer
+"testchart.sort_RGB_blue_to_top": |-
+  Placer le bleu RVB vers le haut
+"testchart.sort_RGB_cyan_to_top": |-
+  Placer le cyan RVB vers le haut
+"testchart.sort_RGB_gray_to_top": |-
+  Placer le gris RVB vers le haut
+"testchart.sort_RGB_green_to_top": |-
+  Placer le vert RVB vers le haut
+"testchart.sort_RGB_magenta_to_top": |-
+  Placer le magenta RVB vers le haut
+"testchart.sort_RGB_red_to_top": |-
+  Placer le rouge RVB vers le haut
+"testchart.sort_RGB_white_to_top": |-
+  Placer le blanc RVB vers le haut
+"testchart.sort_RGB_yellow_to_top": |-
+  Placer le jaune RVB vers le haut
+"testchart.sort_by_BGR": |-
+  Trier en fonction de BVR
+"testchart.sort_by_HSI": |-
+  Trier en fonction de TSI
+"testchart.sort_by_HSL": |-
+  Trier en fonction de TSL
+"testchart.sort_by_HSV": |-
+  Trier en fonction de TSV
+"testchart.sort_by_L": |-
+  Trier en fonction de L*
+"testchart.sort_by_RGB": |-
+  Trier en fonction de RVB
+"testchart.sort_by_RGB_sum": |-
+  Trier en fonction de la somme de RVB
+"testchart.sort_by_rec709_luma": |-
+  Trier en fonction de la luma
+"testchart.vary_RGB_difference": |-
+  Varier la différence RVB
+"testchart_or_reference": |-
+  Mire de test ou référence
+"thermal_wax_printer": |-
+  Imprimante à cire thermique
+"tone_values": |-
+  Valeurs de teinte
+"transfer_function": |-
+  Fonction de transfert
+"translations": |-
+  Traductions
+"transparency": |-
+  Transparence
+"trashcan.linux": |-
+  corbeille
+"trashcan.mac": |-
+  corbeille
+"trashcan.windows": |-
+  corbeille
+"*tray_icon_animation": |-
+  Animate tray icon
+"trc": |-
+  Courbe de tonalité
+"trc.dicom": |-
+  DICOM
+"trc.gamma": |-
+  Gamma
+"*trc.hlg": |-
+  Hybrid Log-Gamma
+"trc.lstar": |-
+  L*
+"trc.rec709": |-
+  Rec. 709
+"trc.rec1886": |-
+  Rec. 1886
+"trc.should_use_viewcond_adjust": |-
+  Si vous utilisez les courbes SMPTE 240M ou Rec. 709, vous devriez recourir à un ajustement des niveaux de votre lumière ambiante afin d’obtenir des résultats corrects. Pour cela, cochez la case à côté de « Niveau de luminosité ambiante » et entrez une valeur en Lux. Vous pouvez éventuellement mesurer aussi la luminosité ambiante au cours de l’étalonnage, si votre sonde de mesure le permet.
+"trc.smpte240m": |-
+  SMPTE 240M
+"trc.smpte2084": |-
+  SMPTE 2084
+"trc.smpte2084.hardclip": |-
+  SMPTE 2084 (écrêtage dur « hard clip »)
+"trc.smpte2084.rolloffclip": |-
+  SMPTE 2084 (écrêtage progressif « roll-off clip »)
+"trc.srgb": |-
+  sRGB
+"trc.type.absolute": |-
+  absolu
+"trc.type.relative": |-
+  relatif
+"turn_off": |-
+  Désactiver
+"type": |-
+  Type
+"udev_hotplug.unavailable": |-
+  Ni udev ni hotplug n’ont été détectés.
+"unassigned": |-
+  Non assigné
+"uninstall": |-
+  Désinstaller
+"uninstall_display_profile": |-
+  Désinstallation du profil du périphérique d’affichage…
+"unknown": |-
+  inconnu
+"unmodified": |-
+  Inchangé
+"unnamed": |-
+  Sans nom
+"unspecified": |-
+  Non précisé
+"update_check": |-
+  Vérifier si l’application est à jour…
+"update_check.fail": |-
+  Échec de la vérification de la mise à jour de l’application :
+"update_check.fail.version": |-
+  La version du fichier distant du serveur %s n'a pu être analysée.
+"update_check.new_version": |-
+  Une mise à jour est disponible : %s
+"update_check.onstartup": |-
+  Vérifier la mise à jour de l’application au démarrage
+"update_check.uptodate": |-
+  %s est à jour.
+"update_now": |-
+  Mettre à jour maintenant
+"upload": |-
+  Chargement
+"use_fancy_progress": |-
+  Utiliser un dialogue d’avancement fantaisie
+"use_separate_lut_access": |-
+  Utiliser un accès séparé à la table de gamma de la carte vidéo
+"use_simulation_profile_as_output": |-
+  Utiliser un profil de simulation comme profil cible
+"vcgt": |-
+  Courbes d’étalonnage
+"vcgt.mismatch": |-
+  Les tables de gamma de carte vidéo de l’écran %s ne correspondent pas à l’état désité.
+"vcgt.unknown_format": |-
+  Format de tables de gamma de carte vidéo inconnu dans le profil « %s ».
+"verification": |-
+  Vérification
+"verification.settings": |-
+  Paramètres de vérification
+"verify.ti1": |-
+  mire de test de vérification du profil
+"verify_extended.ti1": |-
+  mire de test étendue de vérification
+"verify_grayscale.ti1": |-
+  mire de test de vérification d’équilibre du gris
+"verify_large.ti1": |-
+  mire de test de vérification Large
+"verify_video.ti1": |-
+  mire de test de vérification (vidéo)
+"verify_video_extended.ti1": |-
+  mire de test étendue de vérification (vidéo)
+"*verify_video_extended_hlg_p3_2020.ti1": |-
+  Extended verification testchart (HDR video, Rec. 2020/P3, Hybrid Log-Gamma)
+"*verify_video_extended_smpte2084_100_p3_2020.ti1": |-
+  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)
+"*verify_video_extended_smpte2084_200_p3_2020.ti1": |-
+  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)
+"*verify_video_extended_smpte2084_500_p3_2020.ti1": |-
+  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)
+"*verify_video_extended_smpte2084_1000_p3_2020.ti1": |-
+  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 1000 cd/m²)
+"verify_video_large.ti1": |-
+  mire de test de vérification LARGE (vidéo)
+"verify_video_xl.ti1": |-
+  mire de test de vérification Extra Large (vidéo)
+"verify_video_xxl.ti1": |-
+  mire de test de vérification XXL (vidéo)
+"verify_video_xxxl.ti1": |-
+  mire de test de vérification XXXL (vidéo)
+"verify_xl.ti1": |-
+  mire de test de vérification Extra Large
+"verify_xxl.ti1": |-
+  mire de test de vérification XXL
+"verify_xxxl.ti1": |-
+  mire de test de vérification XXXL
+"vga": |-
+  VGA
+"video.icc": |-
+  Vidéo (D65, Rec. 1886)
+"video_Prisma.icc": |-
+  LUT vidéo 3D pour Prisma (D65, Rec. 709 / Rec. 1886)
+"video_ReShade.icc": |-
+  LUT vidéo 3D pour ReShade (D65, Rec. 709 / Rec. 1886)
+"video_camera": |-
+  Caméra vidéo
+"video_card_gamma_table": |-
+  Table de gamma de la carte vidéo
+"video_eeColor.icc": |-
+  LUT vidéo 3D pour eeColor (D65, Rec. 709 / Rec. 1886)
+"video_madVR.icc": |-
+  LUT vidéo 3D pour madVR (D65, Rec. 709 / Rec. 1886)
+"video_madVR_ST2084.icc": |-
+  LUT 3D de vidéo HDR pour madVR (D65, Rec. 2020 / SMPTE 2084 / BT.2390)
+"video_monitor": |-
+  Moniteur vidéo
+"video_resolve.icc": |-
+  LUT vidéo 3D pour Resolve (D65, Rec. 709 / Rec. 1886)
+"video_resolve_ST2084_clip.icc": |-
+  LUT 3D de vidéo HDR pour Resolve (D65, Rec. 2020 / SMPTE 2084)
+"view.3d": |-
+  Vue 3D
+"viewing_conditions": |-
+  Conditions de visualisation
+"viewing_conditions_description": |-
+  Description des conditions de visualisation
+"vrml_to_x3d_converter": |-
+  Convertisseur de VRML vers X3D
+"warning": |-
+  Attention
+"warning.already_exists": |-
+  Le fichier « %s » existe déjà à l’emplacement choisi et sera écrasé. Voulez-vous continuer ?
+"warning.autostart_system": |-
+  Le répertoire d’autodémarrage système n'a pu être déterminé.
+"warning.autostart_user": |-
+  Le répertoire d’autodémarrage spécifique à l’utilisateur/trice n'a pu être déterminé.
+"warning.discard_changes": |-
+  Voulez-vous réellement annuler les modifications des paramètres actuels ?
+"*warning.gamap.out_viewcond.nondisplay": |-
+  Destination viewing condition “%s” is not a display viewing condition. Do you still want to use it?
+"warning.input_value_clipping": |-
+  Attention : les valeurs d’entrée en dessous du point noir de la cible seront tronquées !
+"warning.suspicious_delta_e": |-
+  Attention : des mesures suspectes ont été trouvées. Veuillez noter que ce contrôle suppose un périphérique d’affichage de type sRGB. Si votre périphérique d’affichage diffère de ce pré-supposé (p. ex. s'il a un très grand gamut ou une réponse de ton trop éloignée de sRGB), alors les erreurs trouvées ne sont probablement pas significatives.
+  
+  Un ou l’ensemble de ces critères ont été vérifiés :
+  
+  • Échantillons consécutifs avec différents nombres RVB, mais ΔE*00 étrangement bas entre les des mesures.
+  • Gris RVB avec nombres RVB croissants par rapport à l’échantillon précédent, mais luminosité décroissante (L*).
+  • Gris RVB avec nombres RVB décroissants par rapport à l’échantillon précédent, mais luminosité croissante (L*).
+  • ΔE*00 et ΔL*00 ou ΔH*00 ou ΔC*00 inhabituellement élevés des mesures par rapport à l’équivalent sRGB des nombres RVB.
+  
+  Ceci pourrait signifier des erreurs de mesure. Les valeurs considérées comme problématiques (ce qui ne l’est pas forcément !) sont surlignées en rouge. Contrôlez soigneusement les mesures et marquez celles que vous désirez conserver. Vous pouvez également éditer les valeurs RVB et XYZ.
+"warning.suspicious_delta_e.info": |-
+  Explication des colonnes Δ :
+  
+  ΔE*00 XYZ A/B : ΔE*00 des valeurs mesurées par rapport aux valeurs mesurées de l’échantillon précédent. Si cette valeur est manquante, ce n’était pas un pris en compte lors de la vérification. Si elle est présente, alors elle est supposée être trop basse.
+  
+  0.5 ΔE*00 RVB A/B : ΔE*00 de l’équivalent sRGB des nombres RVB par rapport à l’équivalent sRGB des nombres RVB de l’échantillon précédent (avec un facteur de 0,5). Si cette valeur est présente, elle représente la valeur (minimale) de comparaison pendant la vérification pour ΔE*00 XYZ A/B considéré comme étant trop bas. Elle sert d’orientation très grossière.
+  
+  ΔE*00 RVB-XYZ : ΔE*00 des valeurs mesurées par rapport à l’équivalent sRGB des nombres RVB.
+  ΔL*00 RVB-XYZ : ΔL*00 des valeurs mesurées par rapport à l’équivalent sRGB des nombres RVB.
+  ΔC*00 RVB-XYZ : ΔC*00 des valeurs mesurées par rapport à l’équivalent sRGB des nombres RVB.
+  ΔH*00 RVB-XYZ : ΔH*00 des valeurs mesurées par rapport à l’équivalent sRGB des nombres RVB.
+"warning.system_file": |-
+  Attention, « %s » est un système de fichiers. Voulez-vous vraiment poursuivre ?
+"webserver.waiting": |-
+  Serveur web en attente sur
+"welcome": |-
+  Bienvenue !
+"welcome_back": |-
+  Bienvenue à nouveau !
+"white": |-
+  Blanc
+"whitepoint": |-
+  Point blanc
+"whitepoint.colortemp": |-
+  température
+"whitepoint.colortemp.locus.blackbody": |-
+  corps noir
+"whitepoint.colortemp.locus.curve": |-
+  Courbe de température des couleurs
+"whitepoint.colortemp.locus.daylight": |-
+  lumière du jour
+"whitepoint.set": |-
+  Voulez-vous également régler le point blanc à la valeur mesurée ?
+"whitepoint.simulate": |-
+  Simuler le point blanc
+"whitepoint.simulate.relative": |-
+  Par rapport au point blanc du profil cible
+"whitepoint.visual_editor": |-
+  Éditeur visuel de point blanc
+"whitepoint.visual_editor.display_changed.warning": |-
+  Attention : la configuration de l’affichage a chagé et l’éditeur visuel de point blanc peut ne plus être capable de restaurer les profils d’affichage. Veuillez vérifier soigneusement les associations du profil d’affichage après avoir fermé l’éditeur et redémarré DisplayCAL.
+"whitepoint.xy": |-
+  coordonnées de chromaticité
+"window.title": |-
+  DisplayCAL
+"windows.version.unsupported": |-
+  Cette version de Windows n'est pas supportée.
+"windows_only": |-
+  Windows uniquement
+"working_dir": |-
+  Répertoire de travail :
+"*xyz_scaling": |-
+  XYZ scaling (“wrong von Kries”)
+"yellow": |-
+  Jaune
+"yellow_lab": |-
+  Jaune L*a*b*
+"yellow_xyz": |-
+  Jaune XYZ
+"yes": |-
+  Oui

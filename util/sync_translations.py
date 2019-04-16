@@ -12,8 +12,7 @@ import ppdir
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, root)
 
-from DisplayCAL import demjson
-from DisplayCAL import jsondict
+from DisplayCAL import lazydict
 from DisplayCAL import ordereddict
 from DisplayCAL.safe_print import safe_print
 from DisplayCAL.util_list import natsort
@@ -29,9 +28,9 @@ def quote(obj):
 
 def langmerge(infilename1, infilename2, outfilename):
 	safe_print("Syncing", infilename1, "to", infilename2)
-	dictin1 = jsondict.JSONDict(infilename1)
+	dictin1 = lazydict.LazyDict_YAML_Lite(infilename1)
 	dictin1.load()
-	dictin2 = jsondict.JSONDict(infilename2)
+	dictin2 = lazydict.LazyDict_YAML_Lite(infilename2)
 	dictin2.load()
 	
 	added = []
@@ -55,45 +54,44 @@ def langmerge(infilename1, infilename2, outfilename):
 					safe_print(key, "ERROR: Format character count for %%%s is wrong:" % c, a, "(expected %i)" % b)
 	
 	merged = ordereddict.OrderedDict()
-	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*) and are indented with two tabs instead of one. Please remove the asterisk when translated."
+	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated."
 	
 	for key in natsort(dictin2.keys(), False):
-		#merged[key] = dictin1[key]
-		merged[key.encode("UTF-8")] = dictin1[key].encode("UTF-8")
+		merged[key] = dictin1[key]
 	
 	for key in natsort(dictin1.keys(), False):
 		if key not in dictin2 and not key.startswith("*"):
 			if not "ORPHANED KEY-VALUE PAIRS" in merged:
 				merged["ORPHANED KEY-VALUE PAIRS"] = "Note to translators: Key-value pairs below this point are no longer used. You may consider removing them."
-			merged[key.encode("UTF-8")] = dictin1[key].encode("UTF-8")
+			merged[key] = dictin1[key]
 			safe_print("Orphan: '%s' '%s'" % (key, dictin1[key]))
 	
-	#json_out = demjson.encode(merged, compactly=False)
-	#outfile = codecs.open(outfilename, "w", "UTF-8")
-	#outfile.write(json_out)
 	outstream = StringIO.StringIO()
-	ppdir.ppdir(merged, stream=outstream, repr=quote)
+	for key, value in merged.iteritems():
+		outstream.write('"%s": |-\n' % key.encode("UTF-8"))
+		for line in value.split("\n"):
+			# Do not use splitlines, returns empty list for empty string
+			outstream.write("  %s\n" % line.encode("UTF-8"))
 	outstream.seek(0)
 	formatted = outstream.read()
 	for key in added:
-		formatted = formatted.replace('    "%s":' % key, '\t\t"*%s":' % key)
+		formatted = formatted.replace('"%s":' % key, '"*%s":' % key)
 	for key in same:
-		formatted = formatted.replace('    "%s":' % key, '\t\t"*%s":' % key)
+		formatted = formatted.replace('"%s":' % key, '"*%s":' % key)
 	safe_print("writing", outfilename)
-	outfile = open(outfilename, "wb")
-	outfile.write(formatted.replace('    "', '\t"').replace(',\n}', '\n}'))
-	outfile.close()
+	with open(outfilename, "wb") as outfile:
+		outfile.write(formatted)
 
 
 if __name__ == "__main__":
 	if "-h" in sys.argv[1:] or "--help" in sys.argv[1:]:
 		safe_print("Usage: %s" % os.path.basename(sys.argv[0]))
-		safe_print("Synchronizes translations to en.json")
+		safe_print("Synchronizes translations to en.yaml")
 	else:
 		for langfile in listdir_re(os.path.join(root, "DisplayCAL", "lang"),
-								   r"^\w+\.json$"):
-			if langfile != "en.json":
+								   r"^\w+\.yaml$"):
+			if langfile != "en.yaml":
 				langmerge(os.path.join("lang", langfile),
-						  os.path.join("lang", "en.json"),
+						  os.path.join("lang", "en.yaml"),
 						  os.path.join(root, "DisplayCAL", "lang", langfile))
 				safe_print("")

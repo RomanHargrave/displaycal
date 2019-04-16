@@ -1,0 +1,2583 @@
+"*": |-
+  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated.
+"!author": |-
+  楊添明
+"!language": |-
+  繁體中文(香港)
+"!language_name": |-
+  CHINESE_TRADITIONAL
+"3dlut": |-
+  3D 查找表
+"3dlut.1dlut.videolut.nonlinear": |-
+  顯示裝置的顯示卡伽瑪表 1D 查找表校正並非線性, 但 3D 查找表含有已套用的 1D 查找表校正。 請確保在使用 3D 查找表之前已將顯示卡伽瑪表重置為線性，又或者建立一個未有套用校正的 3D 查找表(如用後者的方法，在 “選項” 選單中啟用 “顯示進階選項” 及在 3D 查找表設定中停用 “套用校正 (vcgt)” 以及 “測量後建立 3D 查找表”，然後建立新的 3D 查找表)。
+"3dlut.bitdepth.input": |-
+  3D 查找表輸入色彩深度
+"3dlut.bitdepth.output": |-
+  3D 查找表輸出色彩深度
+"3dlut.confirm_relcol_rendering_intent": |-
+  你是否想 3D 查找表使用測量到的白點(3D 查找表的渲染目的將設定為相對色度)？
+"3dlut.content.colorspace": |-
+  內容色域
+"3dlut.create": |-
+  建立 3D 查找表...
+"3dlut.create_after_profiling": |-
+  分析後建立 3D 查找表
+"3dlut.enable": |-
+  啟用 3D 查找表
+"3dlut.encoding.input": |-
+  輸入編碼
+"3dlut.encoding.output": |-
+  輸出編碼
+"3dlut.encoding.output.warning.madvr": |-
+  警告：不建議這種輸出編碼，如未在 madVR 的 “裝置” → “%s” → “內容” 內設定輸出為 “電視色階 (16-235)” 會引致畫面失真 (clipping)。 使用時請自行承擔風險！
+"*3dlut.encoding.type_2": |-
+  TV Rec. 2020 YCbCr UHD
+"*3dlut.encoding.type_5": |-
+  TV Rec. 709 1250/50Hz YCbCr HD
+"*3dlut.encoding.type_6": |-
+  TV Rec. 601 YCbCr SD
+"*3dlut.encoding.type_7": |-
+  TV Rec. 709 1125/60Hz YCbCr HD
+"*3dlut.encoding.type_C": |-
+  TV Rec. 2020 Constant Luminance YCbCr UHD
+"*3dlut.encoding.type_T": |-
+  TV RGB 16-235 (clip WTW)
+"*3dlut.encoding.type_X": |-
+  TV xvYCC Rec. 709 YCbCr HD
+"3dlut.encoding.type_n": |-
+  全範圍 RGB 0-255
+"*3dlut.encoding.type_t": |-
+  TV RGB 16-235
+"*3dlut.encoding.type_x": |-
+  TV xvYCC Rec. 601 YCbCr (Rec. 709 Primaries) SD
+"3dlut.format": |-
+  3D 查找表檔案格式
+"*3dlut.format.3dl": |-
+  Autodesk / Kodak (.3dl)
+"*3dlut.format.ReShade": |-
+  ReShade (.png, .fx)
+"*3dlut.format.cube": |-
+  IRIDAS (.cube)
+"3dlut.format.eeColor": |-
+  eeColor 處理器 (.txt)
+"3dlut.format.icc": |-
+  裝置連結描述檔 (.icc/.icm)
+"*3dlut.format.madVR": |-
+  madVR (.3dlut)
+"3dlut.format.madVR.hdr": |-
+  處理 HDR 內容
+"3dlut.format.madVR.hdr.confirm": |-
+  請注意你已經在高動態範圍模式下分析過顯示器。如果顯示器並不原生支援高動態範圍，請按下 “取消”。
+"3dlut.format.madVR.hdr_to_sdr": |-
+  將高動態範圍內容換成標準動態範圍
+"*3dlut.format.mga": |-
+  Pandora (.mga)
+"*3dlut.format.png": |-
+  PNG (.png)
+"*3dlut.format.spi3d": |-
+  Sony Imageworks (.spi3d)
+"3dlut.frame.title": |-
+  建立 3D 查找表
+"3dlut.hdr.rolloff.diffuse_white": |-
+  柔化白色 (參考 94.38 cd/m²)
+"3dlut.hdr.system_gamma": |-
+  系統伽瑪 (參考 1.2)
+"3dlut.holder.assign_preset": |-
+  指派 3D 查找表到預設集：
+"3dlut.holder.out_of_memory": |-
+  %s 的 3D 查找表儲存空間不足 (最少需要 %i KB)。 請刪除一些 %s 3D 查找表以釋放空間給新的 3D 查找表使用。 詳情請參閱 %s 的說明書。
+"3dlut.input.colorspace": |-
+  原始色域
+"3dlut.input.profile": |-
+  原始描述檔
+"3dlut.install": |-
+  安裝 3D 查找表
+"3dlut.install.failure": |-
+  3D 查找表 安裝失敗 (不明的錯誤)。
+"3dlut.install.success": |-
+  3D 查找表 安裝成功！
+"3dlut.install.unsupported": |-
+  3D 查找表安裝程序不支援所選取的 3D 查找表格式。
+"3dlut.save_as": |-
+  儲存 3D 查找表為...
+"3dlut.settings": |-
+  3D 查找表設定
+"3dlut.size": |-
+  3D 查找表大小
+"3dlut.tab.enable": |-
+  啟用 3D 查找表分頁
+"3dlut.use_abstract_profile": |-
+  抽象 (“Look”) 描述檔
+"*CMP_Digital_Target-3.cie": |-
+  CMP Digital Target 3
+"*CMP_Digital_Target-4.cie": |-
+  CMP Digital Target 4
+"*CMYK_IDEAlliance_ControlStrip_2009.ti1": |-
+  CMYK IDEAlliance Control Strip 2009
+"*CMYK_IDEAlliance_ISO_12647-7_Control_Wedge_2013.ti1": |-
+  CMYK IDEAlliance ISO 12647-7 Control Wedge 2013
+"CMYK_ISO_12647-7_outer_gamut.ti1": |-
+  CMYK ISO 12647-7 外圍色域
+"*ColorChecker.cie": |-
+  ColorChecker
+"*ColorCheckerDC.cie": |-
+  ColorChecker DC
+"*ColorCheckerPassport.cie": |-
+  ColorChecker Passport
+"*ColorCheckerSG.cie": |-
+  ColorChecker SG
+"*FograStrip2.ti1": |-
+  Fogra Media Wedge CMYK V2.0
+"*FograStrip3.ti1": |-
+  Fogra Media Wedge CMYK V3.0
+"ISO_12646-2008_color_accuracy_and_gray_balance.ti1": |-
+  ISO 12646:2008 色彩準確度及灰平衡
+"ISO_14861_color_accuracy_RGB318.ti1": |-
+  ISO 14861:2015 色彩準確度及灰平衡
+"*QPcard_201.cie": |-
+  QPcard 201
+"*QPcard_202.cie": |-
+  QPcard 202
+"*SpyderChecker24.cie": |-
+  SpyderCHECKR24 (D65)
+"*SpyderChecker.cie": |-
+  SpyderCHECKR (D65)
+"Untethered": |-
+  非連接式
+"[rgb]TRC": |-
+  色調響應曲線
+"aborted": |-
+  ...已中止.
+"aborting": |-
+  正在中止，請等候 (可能需要一段時間)...
+"abstract_profile": |-
+  抽象描述檔
+"active_matrix_display": |-
+  動態矩陣顯示
+"adaptive_mode_unavailable": |-
+  自動適應模式僅適用於 CMS 1.1.0 RC3 或更新版本。
+"add": |-
+  加入...
+"adjust_rolloff": |-
+  調校 roll-off
+"advanced": |-
+  進階
+"allow_skip_sensor_cal": |-
+  允許跳過光譜儀自我校正
+"ambient.measure": |-
+  測量環境亮度
+"ambient.measure.color.unsupported": |-
+  %s：無法用此裝置測環境光的色溫，因為這個裝置的環境亮度應器看似只能感應到單色(只有光強度讀數)。
+"ambient.measure.light_level.missing": |-
+  無法測量到亮度讀數。
+"ambient.set": |-
+  你是否還想將環境光強度設定為量度到的數值？
+"app.client.connect": |-
+  腳本客端 %s:%s 已連線
+"app.client.disconnect": |-
+  腳本客端 %s:%s 已中斷連線
+"app.client.ignored": |-
+  已拒絕腳本客端 %s:%s: %s 的嘗試連接
+"app.client.network.disallowed": |-
+  已拒絕腳本客端 %s:%s: 的嘗試連接 不容許的網絡客端
+"app.confirm_restore_defaults": |-
+  你真的想要放棄變更並還原為預設設定值嗎？
+"app.detected": |-
+  偵測到 %s。
+"app.detected.calibration_loading_disabled": |-
+  偵測到 %s。已停用校正載入。
+"app.detection_lost": |-
+  已無法偵測到 %s。
+"app.detection_lost.calibration_loading_enabled": |-
+  已無法偵測到 %s。已啟用校正載入。
+"app.incoming_message": |-
+  已收到來自 %s:%s: %s 的腳本請求
+"app.incoming_message.invalid": |-
+  無效的腳本請求！
+"app.listening": |-
+  正在設定主機於 %s：%s
+"app.otherinstance": |-
+  %s 已正在執行。
+"app.otherinstance.notified": |-
+  已提示正在運行的運作階段。
+"apply": |-
+  套用
+"apply_black_output_offset": |-
+  套用黑位偏移 (100%)
+"apply_cal": |-
+  套用校正 (vcgt)
+"apply_cal.error": |-
+  無法套用校正。
+"archive.create": |-
+  建立壓縮檔...
+"archive.import": |-
+  匯入壓縮檔...
+"archive.include_3dluts": |-
+  你是否想將 3D 查找表檔案包含在壓縮檔之中(不建議，因為會令壓縮檔變得很大)?
+"argyll.debug.warning1": |-
+  請於真正需要除錯資訊時才使用本選項 (例如用來故障排除 ArgyllCMS 的功能)！ 一般只在軟件開發者用於診斷或解決問題時使用。你是否真的需要啟用除錯輸出？
+"argyll.debug.warning2": |-
+  請務必記得在正常使用本軟件時停用除錯輸出。
+"argyll.dir": |-
+  ArgyllCMS 執行檔位置:
+"argyll.dir.invalid": |-
+  無法找到 ArgyllCMS 執行檔案!
+  請選擇放置執行檔案的資料夾路徑 (可能前綴或後綴為 “argyll-” / “-argyll”): %s
+"argyll.error.detail": |-
+  詳細 ArgyllCMS 錯誤訊息:
+"argyll.instrument.configuration_files.install": |-
+  安裝 ArgyllCMS 測量儀器描述檔案...
+"argyll.instrument.configuration_files.install.success": |-
+  已成功安裝 ArgyllCMS 測量儀器描述檔案。
+"argyll.instrument.configuration_files.uninstall": |-
+  解除安裝 ArgyllCMS 測量儀器描述檔...
+"argyll.instrument.configuration_files.uninstall.success": |-
+  已成功解除安裝 ArgyllCMS 測量儀器描述檔。
+"argyll.instrument.driver.missing": |-
+  測量儀器的 ArgyllCMS 驅動程式可能尚未安裝或未有正確地安裝。請檢查你的測量裝置在 Windows 的裝置管理員中是否已出現於 “Argyll LibUSB-1.0A devices” 之下及在需要時請(重新)安裝驅動程式。 請參閱說明文章中的安裝步驟。
+"argyll.instrument.drivers.install": |-
+  安裝 ArgyllCMS 測量儀器驅動程式...
+"argyll.instrument.drivers.install.confirm": |-
+  你只需要在使用並非 ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval 或 K-10 的測量儀器時，才需要安裝 ArgyllCMS 特定的驅動程式。
+  
+  注意: 如果你已經安裝廠商提供驅動程式，在安裝完成後，你需要在 Windows 的裝置管理員中自行切換成 ArgyllCMS 驅動程式。要這樣做的話，右按你的測量儀器然後選擇 “更新驅動程式...”，然後選擇 “瀏覽電腦上的驅動程式軟體”，之後選擇 “讓我從電腦上的裝置驅動程式清單中挑選”，最後在清單中選擇 Argyll 驅動程式。
+  
+  你還想繼續嗎？
+"argyll.instrument.drivers.install.failure": |-
+  ArgyllCMS 測量儀器驅動程式安裝失敗。
+"argyll.instrument.drivers.install.restart": |-
+  你需要停用驅動程式數位簽章以安裝 ArgyllCMS 儀器驅動程式。 要這樣做的話，就需要重新啟動系統。按一下畫面上出現的 “疑難排解”，選擇 “進階選項”，“啟動選項” 最後“重新啟動”。 在啟動時，選擇 “停用驅動程式數位簽章”。在重新啟動後，在選單中再次選擇 “安裝ArgyllCMS測量儀器驅動程式...” 以安裝驅動程式。如果你見不到 “疑難排解” 選項，請參考DisplayCAL說明文章中 “Windows環境下的儀器驅動程式安裝方法” 部份 以另一種方法停用驅動程式數位簽章。
+"argyll.instrument.drivers.uninstall": |-
+  解除安裝 ArgyllCMS 測量儀器驅動程式...
+"argyll.instrument.drivers.uninstall.confirm": |-
+  注意：解除安裝並不會影響正在使用中儀器的驅動程式，只是將驅動程式從 Windows 驅動程式庫中移除。如你想切換回已安裝的廠商提供驅動程式，你便需要使用 Windows 裝置管理員來手動切換到廠商驅動程式。若要這樣做的話，右按選取你的儀器然後選擇 “更新驅動程式...”，然後選擇 “瀏覽電腦上的驅動程式軟體”，之後選擇 “讓我從電腦上的裝置驅動程式清單中挑選”，最後在清單中選擇 Argyll 驅動程式。
+  
+  你還想繼續嗎？
+"argyll.instrument.drivers.uninstall.failure": |-
+  ArgyllCMS 測量儀器驅動程式解除安裝失敗。
+"argyll.instrument.drivers.uninstall.success": |-
+  成功解除安裝 ArgyllCMS 測量儀器驅動程式。
+"argyll.util.not_found": |-
+  未能找到 ArgyllCMS “%s” 的執行檔！
+"as_measured": |-
+  與測量值相同
+"audio.lib": |-
+  音效模組：%s
+"auth": |-
+  身份認證
+"auth.failed": |-
+  身份認證失敗。
+"auto": |-
+  自動
+"auto_optimized": |-
+  自動優化
+"autostart_remove_old": |-
+  移除舊的自動啟動項
+"backing_xyz": |-
+  背光 XYZ
+"backlight": |-
+  背光
+"bitdepth": |-
+  色彩深度
+"black": |-
+  黑
+"black_lab": |-
+  黑色 L*a*b*
+"black_point": |-
+  黑位
+"black_point_compensation": |-
+  黑位補償
+"black_point_compensation.3dlut.warning": |-
+  當建立 3D 查找表時，應該先關閉分析設定中的黑位補償功能，因為會影響色調曲線調整的功能。你是否想關閉黑位補償？
+"black_point_compensation.info": |-
+  黑位補償有效防止黑位被壓縮，但會降低色彩轉換的準確度。
+"black_white": |-
+  黑白
+"black_xyz": |-
+  黑 XYZ
+"blacklevel": |-
+  黑色亮度
+"blue": |-
+  藍
+"blue_gamma": |-
+  藍色伽瑪
+"blue_lab": |-
+  藍色 L*a*b*
+"blue_matrix_column": |-
+  藍色矩陣列
+"blue_maximum": |-
+  藍色最高
+"blue_minimum": |-
+  藍色最低
+"blue_tone_response_curve": |-
+  藍色色調響應曲線
+"blue_xyz": |-
+  藍色 XYZ
+"*bradford": |-
+  Bradford (ICC recommendation)
+"brightness": |-
+  亮度
+"browse": |-
+  瀏覽...
+"*bs": |-
+  Bianco & Schettini
+"*bs_pc": |-
+  Bianco & Schettini with positivity constraint
+"bug_report": |-
+  報告錯誤...
+"button.calibrate": |-
+  只進行校正
+"button.calibrate_and_profile": |-
+  校正及分析
+"button.profile": |-
+  只進行分析
+"cal_extraction_failed": |-
+  未能從描述檔中得出校正數據。
+"calculated_checksum": |-
+  已計算的校驗碼
+"calibrate_instrument": |-
+  光譜儀自我校正
+"calibration": |-
+  校正
+"calibration.ambient_viewcond_adjust": |-
+  環境光亮度調整
+"calibration.ambient_viewcond_adjust.info": |-
+  要在計算校正曲線時調整觀看條件，請剔選相關選項並輸入環境亮度。如你的測量儀器支援的話，你亦可以選擇測量環境亮度。
+"calibration.black_luminance": |-
+  黑色亮度
+"calibration.black_output_offset": |-
+  黑色輸出偏移
+"calibration.black_point_correction": |-
+  黑位修正
+"calibration.black_point_correction_choice": |-
+  你應該停用黑點修正，以最優佳化黑色階和對比度 (建議適用於大部份液晶顯示器)，或者你可以啟用它而令黑色的色相與白點相同 (建議適用於大部份陰極射線管顯示器)。 請選擇你所偏好的黑點修正設定。
+"calibration.black_point_rate": |-
+  幅度
+"calibration.check_all": |-
+  檢查設定
+"calibration.complete": |-
+  已完成校正!
+"calibration.create_fast_matrix_shaper": |-
+  建立矩陣描述檔
+"*calibration.create_fast_matrix_shaper_choice": |-
+  Do you want to create a fast matrix shaper profile from calibration measurements or just calibrate?
+"calibration.do_not_use_video_lut": |-
+  不要使用顯卡伽瑪表來套用校正
+"calibration.do_not_use_video_lut.warning": |-
+  你是否真的要變更建議的設定？
+"calibration.embed": |-
+  將校正曲線嵌入到描述檔
+"calibration.file": |-
+  設定集
+"calibration.file.invalid": |-
+  你所選的為無效的描述檔。
+"calibration.file.none": |-
+  <無>
+"calibration.incomplete": |-
+  校正尚未完成。
+"calibration.interactive_display_adjustment": |-
+  互動顯示器調整
+"calibration.interactive_display_adjustment.black_level.crt": |-
+  按一下 “開始測量” 然後調校顯示器的亮度設定及/或 RGB 調節控制以符合期望的水平。
+"calibration.interactive_display_adjustment.black_point.crt": |-
+  按一下 “開始測量” 然後調校顯示器的 RGB 調節控制以符合期望的黑位水平。
+"calibration.interactive_display_adjustment.check_all": |-
+  按一下 “開始測量” 以檢查整體的設定值。
+"calibration.interactive_display_adjustment.generic_hint.plural": |-
+  當所有指示條都最接近中間所標示的位置時，代表已到達最理想的水平。
+"calibration.interactive_display_adjustment.generic_hint.singular": |-
+  當指示條最接近中間所標示的位置時，代表已到達最理想的水平。
+"calibration.interactive_display_adjustment.start": |-
+  開始測量
+"calibration.interactive_display_adjustment.stop": |-
+  停止測量
+"calibration.interactive_display_adjustment.white_level.crt": |-
+  按一下 “開始測量” 然後調校顯示器的對比度設定及/或 RGB調節控制以符合期望的水平。
+"calibration.interactive_display_adjustment.white_level.lcd": |-
+  按一下 “開始測量” 然後調校顯示器的背光燈/亮度控制以符合期望的水平。
+"calibration.interactive_display_adjustment.white_point": |-
+  按一下 “開始測量” 然後調校顯示器的色溫及/或 RGB 調節控制以符合期望的白位水平。
+"calibration.load": |-
+  載入設定...
+"calibration.load.handled_by_os": |-
+  由作業系統載入校正。
+"calibration.load_error": |-
+  未能載入校正曲線。
+"calibration.load_from_cal": |-
+  由校正檔案載入校正曲線...
+"calibration.load_from_cal_or_profile": |-
+  由校正檔案或描述檔載入校正曲線...
+"calibration.load_from_display_profile": |-
+  由目前顯示裝置描述檔載入校正曲線
+"calibration.load_from_display_profiles": |-
+  由當前的顯示裝置描述檔載入校正
+"calibration.load_from_profile": |-
+  由描述檔載入校正曲線...
+"calibration.load_success": |-
+  已成功載入校正曲線。
+"calibration.loading": |-
+  正由檔案載入校正曲線...
+"calibration.loading_from_display_profile": |-
+  正在載入目前顯示裝置描述檔的校正曲線...
+"calibration.luminance": |-
+  白色亮度
+"calibration.lut_viewer.title": |-
+  曲線
+"calibration.preserve": |-
+  保留校正狀態
+"calibration.preview": |-
+  預覽校正
+"calibration.quality": |-
+  質素
+"calibration.quality.high": |-
+  高
+"calibration.quality.low": |-
+  低
+"calibration.quality.medium": |-
+  中等
+"calibration.quality.ultra": |-
+  極致
+"calibration.quality.verylow": |-
+  非常低
+"calibration.reset": |-
+  重置顯示卡的伽瑪表
+"calibration.reset_error": |-
+  無法重置顯示卡伽瑪表。
+"calibration.reset_success": |-
+  成功重置顯示卡伽瑪表。
+"calibration.resetting": |-
+  正在重置顯示卡伽瑪表為線性...
+"calibration.settings": |-
+  校正設定
+"calibration.show_actual_lut": |-
+  查看顯示卡的校正曲線
+"calibration.show_lut": |-
+  顯示曲線
+"calibration.skip": |-
+  繼續分析特性
+"calibration.speed": |-
+  校正速度
+"calibration.speed.high": |-
+  快
+"calibration.speed.low": |-
+  慢
+"calibration.speed.medium": |-
+  中等
+"calibration.speed.veryhigh": |-
+  非常快
+"calibration.speed.verylow": |-
+  非常慢
+"calibration.start": |-
+  繼續校正
+"calibration.turn_on_black_point_correction": |-
+  開啟
+"calibration.update": |-
+  更新校正
+"calibration.update_profile_choice": |-
+  你是否想更新描述檔內現有的校正曲線，還是純粹只進行校正？
+"calibration.use_linear_instead": |-
+  改用線性校正
+"calibration.verify": |-
+  驗證校正結果
+"calibration_profiling.complete": |-
+  已完成校正和分析！
+"calibrationloader.description": |-
+  為所有已設定的顯示裝置設定ICC描述檔及載入校正曲線
+"can_be_used_independently": |-
+  可獨立使用
+"cancel": |-
+  取消
+"*cat02": |-
+  CAT02 (from CIECAM02)
+"*cat02bs": |-
+  CAT02 (from CIECAM02, Brill & Süsstrunk modification)
+"*cat97s": |-
+  CAT97s (from CIECAM97s)
+"cathode_ray_tube_display": |-
+  陰極射線管顯示器
+"ccmx.use_four_color_matrix_method": |-
+  最小化 xy 色度差異
+"*ccss.CCFLFamily_07Feb11": |-
+  LCD CCFL family (AC, EIZO, HP)
+"*ccss.FSI_XM55U_23Jan19": |-
+  WOLED family (FSI XM55U/XM65U, LG OLED)
+"*ccss.GBrLED_25Jul12": |-
+  LCD GB-r-LED IPS (Dell U2413)
+"*ccss.HP_DC3": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor?)
+"*ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor Z24x G2)
+"*ccss.HP_ZBOOK": |-
+  LCD PFS Phosphor WLED IPS (HP ZBook)
+"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
+  LCD GB-r-LED IPS (NEC PA242W)
+"*ccss.OLEDFamily_20Jul12": |-
+  RGB OLED (Sony PVM-2541)
+"*ccss.OLEDFamily_28Aug18": |-
+  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"*ccss.PFS_Phosphor_Family_31Jan17": |-
+  LCD PFS Phosphor WLED family
+"*ccss.Panasonic VVX17P051J00": |-
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+"*ccss.PlasmaFamily_20Jul12": |-
+  Plasma
+"*ccss.ProjectorFamily_07Feb11": |-
+  Projector family (Marantz, HP, Panasonic)
+"*ccss.RGBLEDFamily_07Feb11": |-
+  LCD RGB LED family (HP, SOYO)
+"*ccss.RG_Phosphor_Family_13Dec11": |-
+  LCD RG Phosphor family
+"*ccss.RG_Phosphor_Family_25Jul12": |-
+  LCD GB-r-LED/RG Phosphor family
+"*ccss.WGCCFLFamily_07Feb11": |-
+  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
+"*ccss.WLEDFamily_07Feb11": |-
+  LCD White LED family (AC, LG, Samsung)
+"*ccss.WRGB_OLED_LG": |-
+  WOLED (LG OLED)
+"ccxx.ti1": |-
+  用於色度計修正的測色板
+"centered": |-
+  置中
+"channel_1_c_xy": |-
+  頻道 1(C) xy
+"channel_1_gamma_at_50_input": |-
+  頻道 1 伽瑪於 50% 輸入時
+"channel_1_is_linear": |-
+  頻道 1 為線性
+"channel_1_maximum": |-
+  頻道 1 最高
+"channel_1_minimum": |-
+  頻道 1 最低
+"channel_1_r_xy": |-
+  頻道 1(R) xy
+"channel_1_unique_values": |-
+  頻道 1 唯一數值
+"channel_2_g_xy": |-
+  頻道 2(G) xy
+"channel_2_gamma_at_50_input": |-
+  頻道 2 伽瑪於 50% 輸入時
+"channel_2_is_linear": |-
+  頻道 2 為線性
+"channel_2_m_xy": |-
+  頻道 2 (M) xy
+"channel_2_maximum": |-
+  頻道 2 最高
+"channel_2_minimum": |-
+  頻道 2 最低
+"channel_2_unique_values": |-
+  頻道 2 唯一數值
+"channel_3_b_xy": |-
+  頻道 3 (B) xy
+"channel_3_gamma_at_50_input": |-
+  頻道 3 伽瑪於 50% 輸入時
+"channel_3_is_linear": |-
+  頻道 3 為線性
+"channel_3_maximum": |-
+  頻道 3 最高
+"channel_3_minimum": |-
+  頻道 3 最低
+"channel_3_unique_values": |-
+  頻道 3 唯一數值
+"channel_3_y_xy": |-
+  頻道 3 (Y) xy
+"channel_4_k_xy": |-
+  頻道 4 (K) xy
+"channels": |-
+  頻道數目
+"characterization_device_values": |-
+  特性化裝置數值
+"characterization_measurement_values": |-
+  特性化量度數值
+"characterization_target": |-
+  特性化目標
+"checking_lut_access": |-
+  正在撿查顯示器 %s 能否存取顯示卡伽瑪表...
+"checksum": |-
+  校驗碼
+"checksum_ok": |-
+  校驗碼正確
+"*chromatic_adaptation": |-
+  Chromatic adaptation...
+"chromatic_adaptation_matrix": |-
+  色彩匹配矩陣
+"chromatic_adaptation_transform": |-
+  色彩匹配轉換
+"chromaticity_illuminant_relative": |-
+  色度 (相對於光源)
+"chromecast_limitations_warning": |-
+  請注意 Chromecast 的準確度不及直接連接的顯示器或 madTPG，原因是 Chromecast 採用 RGB 至 YCbCr 轉換和放大。
+"*cie2012_2": |-
+  CIE 2012 2°
+"clear": |-
+  清除
+"close": |-
+  關閉
+"*cmccat97": |-
+  CMCCAT97
+"*cmccat2000": |-
+  CMCCAT2000
+"color": |-
+  彩色
+"color_look_up_table": |-
+  色彩查找表
+"color_model": |-
+  色彩模式
+"color_space_conversion_profile": |-
+  色彩空間轉換描述檔
+"colorant_order": |-
+  著色次序
+"colorants_pcs_relative": |-
+  著色 (PCS - 相對)
+"colorimeter_correction.create": |-
+  建立色度計修正...
+"colorimeter_correction.create.details": |-
+  請檢查以下的版面及在有需要的情況下修改當中的設定。描述資訊中應包含重要的細節﹙例如特定的顯示器設定值，非預設 CIE 色度觀察者之類﹚。
+"colorimeter_correction.create.failure": |-
+  修正建立失敗。
+"colorimeter_correction.create.info": |-
+  如需建立色度計修正，你必須先使用光譜儀量度必需的顏色，或假設你需要同樣地用色度計建立一個修正矩陣而並光譜修正。
+  另外你還可以按下 “瀏覽...” 來選擇已有的測量值。.
+"colorimeter_correction.create.success": |-
+  已成功建立修正檔。
+"*colorimeter_correction.create.warning": |-
+  Make sure to measure your display device in its native gamut and do not artificially restrict it (via emulation modes or similar means) when creating a colorimeter correction.
+"colorimeter_correction.file.none": |-
+  無
+"colorimeter_correction.import": |-
+  由其他顯示器描述檔建立軟件匯入色度計修正...
+"colorimeter_correction.import.choose": |-
+  請選擇想匯入的色度計修正。
+"colorimeter_correction.import.failure": |-
+  沒有可匯入的色度計修正。
+"colorimeter_correction.import.partial_warning": |-
+  並非所有色度計修正可以從 %s 匯入。 %i 個，共 %i 個項目需要跳過。
+"colorimeter_correction.import.success": |-
+  已成功由以下軟件匯入色度計修正：
+  
+  %s
+"*colorimeter_correction.info": |-
+  Colorimeter correction information
+"colorimeter_correction.instrument_mismatch": |-
+  所選的色度計修正並不適用於所選的儀器。
+"colorimeter_correction.upload": |-
+  上載色度計修正...
+"colorimeter_correction.upload.confirm": |-
+  你是否想上載色度計修正到網上數據庫 (建議)？任何上載的檔案會假定被放置在公共領域，令其可以被自由地使用。
+"colorimeter_correction.upload.deny": |-
+  該色度計修正可能不被上載。
+"colorimeter_correction.upload.exists": |-
+  色度計修正已存在於數據庫。
+"colorimeter_correction.upload.failure": |-
+  色度計修正未能輸入到數據庫。
+"colorimeter_correction.upload.success": |-
+  色度計修正已成功上載到網上數據庫。
+"colorimeter_correction.web_check": |-
+  撿查網上的色度計修正...
+"colorimeter_correction.web_check.choose": |-
+  已找到以下用於所選顯示器及儀器的色度計修正：
+"colorimeter_correction.web_check.failure": |-
+  找不到用於所選顯示器及儀器的色度計修正。
+"*colorimeter_correction.web_check.info": |-
+  Please note that all colorimeter corrections have been contributed by various users, and their usefulness to your particular situation is up to you to evaluate. They may or may not improve the absolute accuracy of your colorimeter with your display.
+"colorimeter_correction_matrix_file": |-
+  修正
+"colorimeter_correction_matrix_file.choose": |-
+  選擇色度計修正...
+"colorimetric_intent_image_state": |-
+  影像色度狀態
+"colors_pcs_relative": |-
+  色彩 (PCS - 相對)
+"colorspace": |-
+  色域
+"colorspace.show_outline": |-
+  顯示摘要
+"commandline": |-
+  指令行：
+"commands": |-
+  指令
+"comparison_profile": |-
+  對比的描述檔
+"comport_detected": |-
+  偵測到儀器/連接埠設定變更。
+"compression.gzip": |-
+  GZIP壓縮
+"computer.name": |-
+  電腦名稱
+"connected.to.at": |-
+  連線到 %s 在 %s:%s
+"connecting.to": |-
+  連線到 %s:%s...
+"connection.broken": |-
+  連線中斷
+"connection.established": |-
+  連線成功
+"connection.fail": |-
+  連線錯誤 (%s)
+"connection.fail.http": |-
+  HTTP 錯誤%s
+"connection.waiting": |-
+  正在等待連線於
+"continue": |-
+  繼續
+"contrast": |-
+  對比
+"contribute": |-
+  參與
+"converting": |-
+  轉換中
+"copyright": |-
+  版權
+"corrected": |-
+  已連接
+"create_profile": |-
+  使用特性描述數據來建立描述檔...
+"create_profile_from_edid": |-
+  使用延伸示器辨別數據來建立描述檔...
+"created": |-
+  建立於
+"creator": |-
+  建立
+"current": |-
+  目前
+"custom": |-
+  自訂
+"cyan": |-
+  青色
+"d3-e4-s2-g28-m0-b0-f0.ti1": |-
+  用於矩陣描述檔的小型測色板
+"d3-e4-s3-g52-m3-b0-f0.ti1": |-
+  用於矩陣描述檔的擴展測色板
+"d3-e4-s4-g52-m4-b0-f0.ti1": |-
+  用於查找表描述檔的小型測色板
+"d3-e4-s5-g52-m5-b0-f0.ti1": |-
+  用於查找表描述檔的擴展測色板
+"d3-e4-s9-g52-m9-b0-f0.ti1": |-
+  用於查找表描述檔的大型測色板
+"d3-e4-s17-g52-m17-b0-f0.ti1": |-
+  用於查找表描述檔的非常大型測色板
+"deactivated": |-
+  已關閉
+"default": |-
+  預設
+"default.icc": |-
+  預設 (伽瑪 2.2)
+"default_crt": |-
+  預設 CRT
+"default_rendering_intent": |-
+  預設渲染目的
+"delete": |-
+  刪除
+"delta_e_2000_to_blackbody_locus": |-
+  ΔE 2000 到黑體場合
+"delta_e_2000_to_daylight_locus": |-
+  ΔE 2000 到日光場合
+"delta_e_to_locus": |-
+  ΔE*00 到 %s 場合
+"description": |-
+  描述
+"description_ascii": |-
+  描述 (ASCII)
+"description_macintosh": |-
+  描述 (Macintosh)
+"description_unicode": |-
+  描述 (統一碼)
+"deselect_all": |-
+  全部不選取
+"detect_displays_and_ports": |-
+  偵測顯示裝置和測量儀器
+"device": |-
+  裝置
+"device.name.placeholder": |-
+  <裝置名稱>
+"device_color_components": |-
+  裝置色彩部件
+"device_manager.launch": |-
+  開啟裝置管理員
+"device_manufacturer_name": |-
+  裝置製造商名稱
+"device_manufacturer_name_ascii": |-
+  裝置製造商名稱 (ASCII)
+"device_manufacturer_name_macintosh": |-
+  裝置製造商名稱 (Macintosh)
+"device_manufacturer_name_unicode": |-
+  裝置製造商名稱 (統一碼)
+"device_model_name": |-
+  裝置型號名稱
+"device_model_name_ascii": |-
+  裝置型號名稱 (ASCII)
+"device_model_name_macintosh": |-
+  裝置型號名稱 (Macintosh)
+"device_model_name_unicode": |-
+  裝置型號名稱 (統一碼)
+"device_to_pcs_intent_0": |-
+  裝置到 PCS：目的 0
+"device_to_pcs_intent_1": |-
+  裝置到 PCS：目的 1
+"device_to_pcs_intent_2": |-
+  裝置到 PCS：目的 2
+"devicelink_profile": |-
+  DeviceLink 描述檔
+"dialog.argyll.notfound.choice": |-
+  ArgyllCMS 是 DisplayCAL 正常運行所需要的彩色管理引擎，但似乎並沒有安裝在這部電腦。你是否需要自動下載或自行瀏覽以選取其位置？
+"dialog.cal_info": |-
+  將會使用校正檔案 “%s”。 你是否想繼續？
+"dialog.confirm_cancel": |-
+  你是否真的想取消?
+"dialog.confirm_delete": |-
+  你是否真的想刪除所選的檔案?
+"dialog.confirm_overwrite": |-
+  檔案 “%s” 已存在。 你是否想覆寫它?
+"dialog.confirm_uninstall": |-
+  你是否真的想刪除所選的檔案?
+"dialog.current_cal_warning": |-
+  將會使用當前的校正曲線。 你是否想繼續？
+"dialog.do_not_show_again": |-
+  不要再顯示這個訊息
+"dialog.enter_password": |-
+  請輸入你的密碼。
+"dialog.install_profile": |-
+  你是否要安裝描述檔 “%s” 並成為顯示器 “%s” 的預設描述檔?
+"dialog.linear_cal_info": |-
+  將會使用線性校正曲線。你是否想繼續?
+"dialog.load_cal": |-
+  載入設定
+"dialog.select_argyll_version": |-
+  已找到 %s 版本的 ArgyllCMS。目前所選擇的版本為 %s。你是否想使用較新版本?
+"dialog.set_argyll_bin": |-
+  請選取 ArgyllCMS 執行檔所在的目錄。
+"dialog.set_profile_save_path": |-
+  在此建立描述檔 “%s” 的目錄：
+"dialog.set_testchart": |-
+  選擇測色板檔案檔案
+"dialog.ti3_no_cal_info": |-
+  測量數據不包含校正曲線。你真的要繼續嗎？
+"digital_camera": |-
+  數碼相機
+"digital_cinema_projector": |-
+  數碼影院投影機
+"digital_motion_picture_camera": |-
+  數碼攝錄機
+"direction.backward": |-
+  PCS → B2A → 裝置
+"direction.backward.inverted": |-
+  PCS ← B2A ← 裝置
+"direction.forward": |-
+  裝置 → A2B → PCS
+"direction.forward.inverted": |-
+  裝置 ← A2B ← PCS
+"directory": |-
+  路徑
+"disconnected.from": |-
+  已從 %s:%s 中斷連接
+"display": |-
+  顯示器
+"display-instrument": |-
+  顯示裝置及測量儀器
+"display.connection.type": |-
+  連接方式
+"display.manufacturer": |-
+  顯示裝置製造商
+"display.output": |-
+  輸出#
+"display.primary": |-
+  (主要)
+"display.properties": |-
+  顯示裝置內容
+"display.reset.info": |-
+  請重置顯示裝置到原廠預設設定，然後將亮度校到你感覺舒服的程度。
+"display.settings": |-
+  顯示裝置設定
+"display.tech": |-
+  顯示技術
+"*display.tech.CRT": |-
+  CRT
+"*display.tech.DLP Projector": |-
+  DLP Projector
+"*display.tech.DLP Projector RGB Filter Wheel": |-
+  DLP Projector RGB Filter Wheel
+"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  DLP Projector RGBCMY Filter Wheel
+"*display.tech.DPL Projector RGBW Filter Wheel": |-
+  DLP Projector RGBW Filter Wheel
+"*display.tech.LCD": |-
+  LCD
+"*display.tech.LCD CCFL": |-
+  LCD CCFL
+"*display.tech.LCD CCFL IPS": |-
+  LCD CCFL IPS
+"*display.tech.LCD CCFL TFT": |-
+  LCD CCFL TFT
+"*display.tech.LCD CCFL VPA": |-
+  LCD CCFL PVA
+"*display.tech.LCD CCFL Wide Gamut": |-
+  LCD CCFL Wide Gamut
+"*display.tech.LCD CCFL Wide Gamut IPS": |-
+  LCD CCFL Wide Gamut IPS
+"*display.tech.LCD CCFL Wide Gamut TFT": |-
+  LCD CCFL Wide Gamut TFT
+"*display.tech.LCD CCFL Wide Gamut VPA": |-
+  LCD CCFL Wide Gamut PVA
+"*display.tech.LCD GB-R Phosphor": |-
+  LCD GB-r-LED
+"*display.tech.LCD GB-R Phosphor IPS": |-
+  LCD GB-r-LED IPS
+"*display.tech.LCD GB-R Phosphor TFT": |-
+  LCD GB-r-LED TFT
+"*display.tech.LCD GB-R Phosphor VPA": |-
+  LCD GB-r-LED PVA
+"*display.tech.LCD PFS Phosphor": |-
+  LCD PFS Phosphor WLED
+"*display.tech.LCD PFS Phosphor IPS": |-
+  LCD PFS Phosphor WLED IPS
+"*display.tech.LCD PFS Phosphor TFT": |-
+  LCD PFS Phosphor WLED TFT
+"*display.tech.LCD PFS Phosphor VPA": |-
+  LCD PFS Phosphor WLED PVA
+"*display.tech.LCD RG Phosphor": |-
+  LCD RG Phosphor
+"*display.tech.LCD RG Phosphor IPS": |-
+  LCD RG Phosphor IPS
+"*display.tech.LCD RG Phosphor TFT": |-
+  LCD RG Phosphor TFT
+"*display.tech.LCD RG Phosphor VPA": |-
+  LCD RG Phosphor PVA
+"*display.tech.LCD RGB LED": |-
+  LCD RGB LED
+"*display.tech.LCD RGB LED IPS": |-
+  LCD RGB LED IPS
+"*display.tech.LCD RGB LED TFT": |-
+  LCD RGB LED TFT
+"*display.tech.LCD RGB LED VPA": |-
+  LCD RGB LED PVA
+"*display.tech.LCD White LED": |-
+  LCD White LED
+"*display.tech.LCD White LED IPS": |-
+  LCD White LED IPS
+"*display.tech.LCD White LED TFT": |-
+  LCD White LED TFT
+"*display.tech.LCD White LED VPA": |-
+  LCD White LED PVA
+"*display.tech.LED AMOLED": |-
+  AMOLED
+"*display.tech.LED OLED": |-
+  OLED
+"*display.tech.LED WOLED": |-
+  WOLED
+"*display.tech.Plasma": |-
+  Plasma
+"*display.tech.Unknown": |-
+  Unknown
+"display_detected": |-
+  偵測到顯示裝置的設定有所修改。
+"display_device_profile": |-
+  顯示裝置描述檔
+"display_lut.link": |-
+  連結/解除連結顯示器及顯示卡伽瑪表存取
+"display_peak_luminance": |-
+  顯示器最高光亮度
+"display_profile.not_detected": |-
+  沒有偵測到當前用於顯示器 “%s” 的描述檔。
+"display_short": |-
+  顯示裝置 (簡稱)
+"*displayport": |-
+  DisplayPort
+"displays.identify": |-
+  辨別顯示裝置
+"dlp_screen": |-
+  DLP 螢幕
+"donation_header": |-
+  歡迎你的支援！
+"donation_message": |-
+  如果你想支持 DisplayCAL 和 ArgyllCMS 的開發、技術支援及
+  可持續性，請考慮財政上進行資助。因 DisplayCAL 必需依靠
+  ArgyllCMS 才可以正常運作的關系，所有捐助將平衡分配給
+  兩個軟件發展項目。
+  
+  對於一般個人的非商業性的使用，宜作出一次性的資助。
+  如您將 DisplayCAL 用於專業用途，每年或每月的定期資助，
+  對於這兩個軟件開發項目的可持續性有很大的幫助。
+  
+  多謝各位的資助！
+"download": |-
+  下載中
+"download.fail": |-
+  下載失敗:
+"download.fail.empty_response": |-
+  下載失敗：%s 的回應為內容空白的檔案。
+"download.fail.wrong_size": |-
+  下載失敗: 檔案大小並非為預期的 %s 位元組 (已收到 %s 位元組).
+"download_install": |-
+  下載及安裝
+"downloading": |-
+  下載中
+"drift_compensation.blacklevel": |-
+  黑色亮度漂移補償
+"drift_compensation.blacklevel.info": |-
+  黑色亮度漂移補償會試圖降低在測量裝置正在預熱時出現的校正黑色校正偏漂移現像而引致的測量值出現偏差所帶來影響。 由於此功能會反復地測量黑色色塊，會整體增加測量所需的時間。很多色度計都有內置溫度補償功能，因此很多時候都不需要使用黑色亮度漂移補償，但大部份光譜儀卻沒有溫度補償的設計。
+"drift_compensation.whitelevel": |-
+  白色亮度漂移補償
+"drift_compensation.whitelevel.info": |-
+  白色亮度漂移補償會試圖降低在顯示裝置正在預熱時所出現的亮度變化而引致測量值出現偏差所帶來的影響。由於此功能會反復地測量白色色塊，會整體增加測量所需的時間。
+"dry_run": |-
+  空轉運行
+"dry_run.end": |-
+  空轉運行完結.
+"dry_run.info": |-
+  空轉運行。檢視運作記錄以查看指令行。
+"duration": |-
+  時間長度
+"*dvi": |-
+  DVI
+"dye_sublimation_printer": |-
+  熱昇華打印機
+"edid.crc32": |-
+  EDID CRC32 校驗碼
+"edid.serial": |-
+  EDID 序號
+"elapsed_time": |-
+  已經過時間
+"electrophotographic_printer": |-
+  激光印刷機
+"electrostatic_printer": |-
+  靜電印刷機
+"enable_argyll_debug": |-
+  啟用 ArgyllCMS 除錯輸出
+"enable_spyder2": |-
+  啟用 Spyder 2 色度計...
+"enable_spyder2_failure": |-
+  Spyder 2 未能啟用。如未安裝 Spyder 2 軟件請先安裝，然後再嘗試執行本操作。
+"enable_spyder2_success": |-
+  Spyder 2 已成功啟用
+"entries": |-
+  項目
+"enumerate_ports.auto": |-
+  自動偵測測量儀器
+"enumerating_displays_and_comports": |-
+  正在偵測顯示裝置及通信埠...
+"environment": |-
+  環境
+"error": |-
+  錯誤
+"error.access_denied.write": |-
+  你並沒有寫入到 %s 的權限
+"error.already_exists": |-
+  不能使用 “%s” 為名稱，因為已存在另一個名稱相同的物件。請選擇其他名稱或另一個路徑。
+"error.autostart_creation": |-
+  在建立登入時載入校正曲線的自動啟動項目時失敗： %s
+"error.autostart_remove_old": |-
+  無法移除用於在登入時載入校正曲線的舊有的自動啟動項目： %s
+"error.autostart_system": |-
+  無法建立用於在登入時載入校正曲線的全系統性自動啟動項目，因無法判斷全系統性自動啟動的目錄。
+"error.autostart_user": |-
+  無法建立用於在登入時載入校正曲線的個別使用者自動啟動項目，因無法判斷個別使用者自動啟動的目錄。
+"error.cal_extraction": |-
+  無法從 “%s” 中讀取校正。
+"error.calibration.file_missing": |-
+  校正檔案 “%s” 已遺失。
+"error.calibration.file_not_created": |-
+  未有建立任何校正檔案。
+"error.copy_failed": |-
+  檔案 “%s” 未能復制到 “%s”。
+"error.deletion": |-
+  移動檔案到 %s 時發生錯誤。某些檔案可能尚未移除。
+"error.dir_creation": |-
+  無法建立檔案目錄 “%s”。可能有存取限制。請允許寫入或選取另一個目錄。
+"error.dir_notdir": |-
+  無法建立檔案目錄 “%s”，因為存在另一個相同名稱的物件。請選擇另一個路徑。
+"error.file.create": |-
+  檔案 “%s” 未能建立。
+"error.file.open": |-
+  檔案 “%s” 無法開啟。
+"error.file_type_unsupported": |-
+  未支援的檔案類型。
+"error.generic": |-
+  發生一個內部錯誤。
+  
+  錯誤碼：%s
+  錯誤訊息：%s
+"error.luminance.invalid": |-
+  測量到的最高亮度為無效的。請確保儀器上的感應器沒有被阻擋，並移除任何保護蓋 (如有)。
+"*error.luminance.not_monotonically_increasing": |-
+  The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
+"error.measurement.file_invalid": |-
+  測量檔案 “%s” 為無效的。
+"error.measurement.file_missing": |-
+  測量檔案 “%s” 已遺失。
+"error.measurement.file_not_created": |-
+  沒有測量檔案被建立。
+"error.measurement.missing_spectral": |-
+  測量檔案並不包含光譜數值。
+"error.measurement.one_colorimeter": |-
+  只需要一個色度計的測量。
+"error.measurement.one_reference": |-
+  只需要一個參考的測量。
+"error.no_files_extracted_from_archive": |-
+  未有檔案由 “%s” 被解壓出來。
+"error.not_a_session_archive": |-
+  壓縮檔 “%s” 似乎並不是階段性壓縮檔。
+"error.profile.file_missing": |-
+  描述檔 “%s” 已遺失。
+"error.profile.file_not_created": |-
+  未有建立任何描述檔。
+"error.source_dest_same": |-
+  來源和目標檔案是相同的。
+"error.testchart.creation_failed": |-
+  測色板檔案 “%s” 未能建立。可能有存取限制，或來源檔案並不存在。
+"error.testchart.invalid": |-
+  測色板檔案 “%s” 為無效的。
+"error.testchart.missing": |-
+  測色板檔案 “%s” 已遺失。
+"error.testchart.missing_fields": |-
+  測色板檔案 “%s” 並不包含必要的區塊：%s
+"error.testchart.read": |-
+  測色板檔案 “%s” 無法讀取。
+"error.tmp_creation": |-
+  無法建立臨時工作目錄。
+"error.trashcan_unavailable": |-
+  %s 並不可用。 並未移除任何文件。
+"errors.none_found": |-
+  沒有發現任何錯誤。
+"estimated_measurement_time": |-
+  預算測量時間約 %s 小時 %s 分鐘
+"exceptions": |-
+  例外...
+"executable": |-
+  執行檔
+"export": |-
+  匯出...
+"extra_args": |-
+  設定額外的指令行參數...
+"factory_default": |-
+  原廠設定
+"failure": |-
+  ...失敗!
+"*ffp_insertion": |-
+  Full field pattern insertion
+"*file.hash.malformed": |-
+  The integrity of %s cannot be verified because the checksum file is malformed.
+"*file.hash.missing": |-
+  The integrity of %s cannot be verified because it doesn't have an entry in the checksum file.
+"*file.hash.verification.fail": |-
+  Checksum verification failed for %s:
+  
+  Expected %s
+  Actual %s
+"file.invalid": |-
+  無的效的檔案。
+"file.missing": |-
+  檔案 “%s” 並不存在
+"file.notfile": |-
+  “%s” 並不是一個檔案。
+"file.select": |-
+  選擇檔案
+"filename": |-
+  檔案名稱
+"filename.upload": |-
+  上載檔案名稱
+"filetype.7z": |-
+  7-Zip 檔案
+"filetype.any": |-
+  所有檔案類型
+"filetype.cal": |-
+  校正檔案 (*.cal)
+"filetype.cal_icc": |-
+  校正及描述檔案 (*.cal;*.icc;*.icm)
+"*filetype.ccmx": |-
+  Correction matrices/Calibration spectral samples (*.ccmx;*.ccss)
+"filetype.html": |-
+  HTML 檔案(*.html;*.htm)
+"filetype.icc": |-
+  色彩描述檔案 (*.icc;*.icm)
+"filetype.icc_mpp": |-
+  描述檔案 (*.icc;*.icm;*.mpp)
+"filetype.icc_ti1_ti3": |-
+  測色板檔案 (*.icc;*.icm;*.ti1;*.ti3)
+"filetype.icc_ti3": |-
+  測量檔案 (*.icc;*.icm;*.ti3)
+"filetype.log": |-
+  運作記錄檔案 (*.log)
+"filetype.png": |-
+  可攜式網絡圖形 (*.png)
+"filetype.tgz": |-
+  已壓縮 TAR 歸檔文件
+"filetype.ti1": |-
+  測色板檔案 (*.ti1)
+"filetype.ti1_ti3_txt": |-
+  測色板檔案 (*.ti1), 測量檔案 (*.ti3;*.txt)
+"filetype.ti3": |-
+  測量檔案 (*.ti3)
+"filetype.tif": |-
+  標籤圖檔格式 (*.tif)
+"*filetype.txt": |-
+  DeviceCorrections.txt
+"filetype.vrml": |-
+  VRML 檔案 (*.wrl)
+"filetype.x3d": |-
+  X3D 檔案 (*.x3d)
+"filetype.zip": |-
+  ZIP 檔案
+"film_scanner": |-
+  菲林掃描器
+"film_writer": |-
+  菲林寫入器
+"finish": |-
+  完成
+"*flare": |-
+  Flare
+"flexography": |-
+  柔印
+"*focal_plane_colorimetry_estimates": |-
+  Focal plane colorimetry estimates
+"forced": |-
+  強制
+"format.select": |-
+  請選擇你喜歡的格式。
+"fullscreen.message": |-
+  已進入全屏幕模式。
+  按 ESC 離開全屏幕模式。
+"*fullscreen.osx.warning": |-
+  If you enter fullscreen mode using the zoom button in the window title bar, please press CMD + TAB to switch back to normal mode after the window has been closed. Alternatively, you can go fullscreen by double-clicking the title bar or holding the OPTION key while clicking the zoom button.
+"gamap.default_intent": |-
+  預設渲染目的
+"gamap.intents.a": |-
+  絕對色彩濃度
+"gamap.intents.aa": |-
+  絕對觀感
+"gamap.intents.aw": |-
+  絕對色彩濃度並按比例修正白點
+"gamap.intents.la": |-
+  乎合觀感的亮度
+"gamap.intents.lp": |-
+  保留觀感感知的亮度
+"gamap.intents.ms": |-
+  保留飽和度
+"gamap.intents.p": |-
+  感知
+"gamap.intents.pa": |-
+  感知觀感
+"gamap.intents.r": |-
+  絕對色彩濃度
+"gamap.intents.s": |-
+  飽和度
+"gamap.out_viewcond": |-
+  目標觀看條件
+"gamap.perceptual": |-
+  用於感知目的的色域對應方式
+"gamap.profile": |-
+  原始描述檔
+"gamap.saturation": |-
+  用於飽和度目的的色域對應方式
+"gamap.src_viewcond": |-
+  原始觀看條件
+"*gamap.viewconds.cx": |-
+  Cut sheet transparencies on a viewing box
+"gamap.viewconds.jd": |-
+  投影機於黑暗的環境
+"gamap.viewconds.jm": |-
+  投影機於陰暗的環境
+"gamap.viewconds.mb": |-
+  顯示器於明亮的工作環境
+"gamap.viewconds.md": |-
+  顯示器於較暗的工作環境
+"gamap.viewconds.mt": |-
+  顯示器於一般的工作環境
+"gamap.viewconds.ob": |-
+  原始場景 - 明亮的戶外
+"gamap.viewconds.pc": |-
+  嚴謹印刷評價環境 (ISO-3664 P1)
+"gamap.viewconds.pcd": |-
+  相片 CD - 戶外原始場景
+"gamap.viewconds.pe": |-
+  印刷評價環境 (CIE 116-1995)
+"gamap.viewconds.pp": |-
+  實用反光印刷 (ISO-3664 P2)
+"gamap.viewconds.tv": |-
+  電視/電影工作室
+"gamapframe.title": |-
+  進階色域映射選項
+"gamut": |-
+  色域
+"gamut.coverage": |-
+  色域覆蓋
+"gamut.view.create": |-
+  產生色域圖...
+"gamut.volume": |-
+  色域容積
+"gamut_mapping.ciecam02": |-
+  CIECAM02 色域映射
+"gamut_mapping.mode": |-
+  色域映射模式
+"gamut_mapping.mode.b2a": |-
+  PCS-至-裝置
+"gamut_mapping.mode.inverse_a2b": |-
+  反向 裝置-至-PCS
+"*gamut_plot.tooltip": |-
+  Click and drag the mouse inside the plot to move the viewport, or zoom with the mouse wheel and +/- keys. Double-click resets the viewport.
+"generic_name_value_data": |-
+  一般名稱值數據
+"geometry": |-
+  幾何
+"glossy": |-
+  光面
+"go_to": |-
+  去到 %s
+"go_to_website": |-
+  瀏覽網站
+"*gravure": |-
+  Gravure
+"gray_tone_response_curve": |-
+  灰色調響應曲線
+"grayscale": |-
+  灰階
+"green": |-
+  綠
+"green_gamma": |-
+  綠色伽瑪
+"green_lab": |-
+  綠色 L*a*b*
+"green_matrix_column": |-
+  綠色矩陣列
+"green_maximum": |-
+  綠色最高
+"green_minimum": |-
+  綠色最低
+"green_tone_response_curve": |-
+  綠色色調響應曲線
+"green_xyz": |-
+  綠色 XYZ
+"grid_steps": |-
+  方格階級
+"*hdmi": |-
+  HDMI
+"hdr_maxcll": |-
+  內容最高光亮度
+"hdr_mincll": |-
+  內容最低光亮度
+"header": |-
+  採用 ArgyllCMS 技術的顯示器校正及特性化工具
+"help_support": |-
+  幫助與支援...
+"host.invalid.lookup_failed": |-
+  無效的主機 (地址查詢失敗)
+"*hpe_d65": |-
+  Hunt-Pointer-Estevez (HPE), illuminant D65
+"*hpe_e": |-
+  Hunt-Pointer-Estevez (HPE), illuminant E
+"hue": |-
+  色相
+"icc_absolute_colorimetric": |-
+  ICC 絕對色度
+"icc_version": |-
+  ICC 版本
+"if_available": |-
+  如有
+"illuminant": |-
+  光源
+"illuminant_relative_cct": |-
+  相對光源 CCT
+"illuminant_relative_lab": |-
+  相對光源 L*a*b*
+"illuminant_relative_xyz": |-
+  相對光源 XYZ
+"illuminant_xyz": |-
+  光源 XYZ
+"illumination": |-
+  照明方式
+"*in": |-
+  In
+"*info.3dlut_settings": |-
+  A <font weight='bold'>3D LUT</font> (LUT = Look Up Table) or ICC device link profile can be used by 3D LUT or ICC device link capable applications for full <font weight='bold'>display color correction</font>.
+  
+  <font weight='bold'>Creating several (additional) 3D LUTs from an existing profile</font>
+  With the desired profile selected under “Settings”, uncheck the “Create 3D LUT after profiling” checkbox.
+  
+  <font weight='bold'>Choosing the right source colorspace and tone response curve</font>
+  For 3D LUTs and ICC device link profiles, the source colorspace and tone response curve need to be set in advance and become a fixed part of the overall color transformation (unlike ICC device profiles which are linked dynamically on-the-fly). As an example, HD video material is usually mastered according to the Rec. 709 standard with either a pure power gamma of around 2.2-2.4 (relative with black output offset of 100%) or Rec. 1886 tone response curve (absolute with black output offset 0%). A split between Rec. 1886-like and pure power is also possible by setting black output offset to a value between 0% and 100%.
+  
+  <font weight='bold'>“Absolute” vs. “relative” gamma</font>
+  To accomodate a non-zero black level of a real display, the tone response curve needs to be offset and scaled accordingly.
+  “Absolute” gamma results in an actual output at 50% input which doesn't match that of an idealized power curve (unless the black level is zero).
+  “Relative” gamma results in an actual output at 50% input which matches that of an idealized power curve.
+  
+  <font weight='bold'>Rendering intent</font>
+  If you have calibrated to a different whitepoint than the one mandated by the source colorspace, and want to use that for the 3D LUT instead, select “Relative colorimetric”. Otherwise, select “Absolute colorimetric with white point scaling” (white point scaling will prevent clipping in absolute colorimetric mode that could happen if the source colorspace whitepoint is outside of the display gamut). You also have the option to use a non-colorimetric rendering intent that may compress or expand the source colorspace to fit within the display gamut (not recommended when colorimetric accuracy is required).
+"info.calibration_settings": |-
+  <font weight='bold'>校正</font>是以<font weight='bold'>互動地調校顯示器</font>的方法以達到所選擇的白點及/或亮度，以及選擇性地建立<font weight='bold'>1D 查找表校正曲線</font> (LUT = 查找表)
+  以符合所選的色彩反應曲線及確保灰階的平衡。 注意校正時你只要調校顯示器及跳過 1D 查找表曲線的建立，你需要設定
+  色調響應曲線為 “與測量值相同”。 1D 查找表校正並<font weight='bold'>不可以</font> 用於全顯示器色彩校正，你需要建立 <font weight='bold'>ICC 裝置描述檔</font>或 <font weight='bold'>3D 查找表</font>
+  以及在支援的軟件上使用它們以達到目的。 雖然 1D 查找表校正會完整了建立特性描述和 3D 查找表校正。
+"info.display_instrument": |-
+  如你的顯示器為 <font weight='bold'>OLED</font>、<font weight='bold'>等離子</font>螢幕或擁有因應畫面內容而改變亮度的技術，請啟用<font weight='bold'>白色亮度漂移補償</font>.
+  
+  如你的測量儀器為<font weight='bold'>光譜儀</font>並於接觸模式下用於黑階穩定的顯示器， 您可能需要啟用<font weight='bold'>測量儀器黑位偏移補償</font>。
+  
+  如你的測量儀器為<font weight='bold'>色度計</font>，你應該使用適用於你的顯示器或顯示器技術類型的<font weight='bold'>修正</font>。 請留意有些測量儀器 (ColorHug,
+  ColorHug2, K-10, Spyder4/5/X) 它們的測量模式可能已經內置相關的修正。
+"info.display_instrument.warmup": |-
+  你應該在測量前先讓你的顯示器<font weight='bold'>預熱</font>最少<font weight='bold'>30分鐘</font>。 如果你使用測量儀器的接觸模式，最好在預熱期間將測量儀器放
+  在顯示器上。
+"info.mr_settings": |-
+  你可以透過內含關於已測量色塊其色彩錯誤之詳盡統計數據的測量報告，以<font weight='bold'>驗證</font> ICC 描述檔或 3D 查找表的<font weight='bold'>準確度</font> 。
+  
+  當驗證 3D 查找表時，請確保使用與建立 3D 查找表時的相同設定值。
+  
+  <font weight='bold'>提示:</font> 如要建立自我檢查執告而不是測量報告的話，可在你的鍵盤上按著 ALT 鍵。
+"info.profile_settings": |-
+  <font weight='bold'>分析</font>是為顯示螢幕<font weight='bold'>特徵化</font>的程序，過程中會將它的色彩響應記錄在<font weight='bold'> ICC 裝置描述檔</font>中。 支援 ICC 色彩管理的應用
+  程式可以用 ICC 裝置描述檔來進行完整的<font weight='bold'>顯示螢幕色彩修正</font>, 及/或用它來建立<font weight='bold'> 3D 查找表</font> (簡稱 LUT ，英文全寫為
+  Look Up Table)，在支援 3D 查找表的應用程式下其作用與前者完全相同。
+  
+  所測量的色塊的數目會影響所得的分析檔可提供的精確度。如要得出合理品質的 3x3 矩陣及基於曲線的分析檔，如
+  顯示螢幕有良好加色混合特性和線性的話，數十個色塊就已經足夠。某些專業顯示螢幕可符合上述條件。如果需要
+  盡可能高的精確度，建議使用由幾千個色塊所建立的基於查找表的分析檔。<font weight='bold'>“自動優化”</font> 測色板設定會自動因應顯示
+  螢幕的非線性和實際反應而作出調節，從而得到最佳的品質。在這裡，你可以透過適節滑動條來在所得分析檔的
+  精確度與測量以及運算時間上選取一個平衡。
+"*infoframe.default_text": |-
+  
+"infoframe.title": |-
+  運作記錄
+"infoframe.toggle": |-
+  顯示運作記錄視窗
+"initial": |-
+  初步
+"initializing_gui": |-
+  正在初始化圖形界面...
+"ink_jet_printer": |-
+  噴墨打印機
+"input_device_profile": |-
+  輸入置描述檔
+"input_table": |-
+  輸入表
+"install_display_profile": |-
+  安裝顯示裝置描述檔...
+"install_local_system": |-
+  安裝給整個系統
+"install_user": |-
+  只安裝給目前的使用者
+"instrument": |-
+  測量儀器
+"instrument.calibrate": |-
+  將測量儀器放置在深色、磨沙的表面，又或者放在其附帶的校正板上，然後按確定以校正測量儀器。
+"instrument.calibrate.colormunki": |-
+  設定 ColorMunki 感度器到校正位置然後按 OK 以校正測量儀器。
+"instrument.calibrate.reflective": |-
+  將儀器放置在它的序號 %s 反光白色參考表面上然後按 OK 以校正儀器。
+"instrument.calibrating": |-
+  正在校正測量儀器...
+"*instrument.colormunki": |-
+  ColorMunki Design/Photo, i1Studio
+"instrument.connect": |-
+  請現在連接你的測量儀器。
+"instrument.initializing": |-
+  正在設定測量儀器，請等候...
+"instrument.measure_ambient": |-
+  假如你的儀器必須裝上特製的蓋以測量環境光的話，請將其裝上。要測量環境光，請將儀器向上擺放，並且置於顯示器旁。 又或者如果你要測量對色燈箱，將無色偏灰卡放置在燈箱中然後將儀器指向它。 進一步關於如何量度環境光的方法可能在儀器的說明文件中可以找到。按 OK 進行量度。
+"instrument.place_on_screen": |-
+  請將測量儀器放置在測量視窗上並按確認繼續。
+"instrument.place_on_screen.madvr": |-
+  (%i) 請將你的 %s 放置在測量區域上
+"instrument.reposition_sensor": |-
+  因測量儀器的感應器放置在不正確的位置而令測量失敗。請修正感應器放置的位置，然後按確認繼續。
+"internal": |-
+  內置
+"interval": |-
+  間距
+"invert_selection": |-
+  反向選擇
+"*ipt": |-
+  IPT
+"is_embedded": |-
+  內嵌的
+"is_illuminant": |-
+  發光的
+"is_linear": |-
+  線性的
+"laptop.icc": |-
+  手提電腦 (伽瑪2.2)
+"level": |-
+  階級
+"libXss.so": |-
+  X11 屏幕保護程序擴展
+"library.not_found.warning": |-
+  未能找到程式庫 “%s” (%s)。請在繼續之前確認已經安裝。
+"license": |-
+  許可協議
+"license_info": |-
+  採用 GPL 許可協議
+"linear": |-
+  線性
+"link.address.copy": |-
+  複制連結
+"log.autoshow": |-
+  自動顯示運作記錄
+"luminance": |-
+  亮度
+"lut_access": |-
+  顯示卡伽瑪轉換表存取
+"madhcnet.outdated": |-
+  版本 %s 於 %s 上找到已安裝的版本已非常陳舊。 請將 madVR 更新成最新版本 (最好為 %i.%i.%i.%i 或以上)。
+"madtpg.launch.failure": |-
+  找不到 madTPG 或未能啟動。
+"madvr.not_found": |-
+  在注冊表中未能找到 madVR DirectShow 過濾器。請確認已安裝。
+"madvr.outdated": |-
+  現正使用的 madVR 版本已非常陳舊。 請更新到最新版本 (最好為 %i.%i.%i.%i 或以上)。
+"*madvr.wrong_levels_detected": |-
+  The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m². Either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics card and/or madVR is wrong — if your graphics card driver is set to output full range RGB (0-255), please change madVR's output levels for your display device to TV levels (16-235).
+"magenta": |-
+  洋紅
+"make_and_model": |-
+  製造商和型號
+"manufacturer": |-
+  製造商
+"*mastering_display_black_luminance": |-
+  Mastering display black level
+"*mastering_display_peak_luminance": |-
+  Mastering display peak luminance
+"matrix": |-
+  矩陣
+"matte": |-
+  磨砂
+"max": |-
+  最大
+"maximal": |-
+  最大化
+"measure": |-
+  測量
+"measure.darken_background": |-
+  黑色背景
+"measure.darken_background.warning": |-
+  注意：如已選取 “黑色背景”，它會覆蓋整個畫面以及你將不能見到顯示器調校視窗！
+  如果你是使用多螢幕，在開始測量前請將顯示器調校視窗移到另一個螢幕中，或使用
+  鍵盤(要中止測量，按 Q 鍵。如測量已正在執行中，等候一會，然後再按多一次 Q 鍵。)。
+"measure.override_display_settle_time_mult": |-
+  強制設定等候顯示穩定時間倍率
+"measure.override_min_display_update_delay_ms": |-
+  強制設定最低顯示更新延遲
+"measure.testchart": |-
+  測量測色板
+"measureframe.center": |-
+  中央
+"measureframe.info": |-
+  請將測量視窗移到屏幕上你所想的位置，以及在有需要時改變其大小。大概整個視窗範圍都會用來顯示測試的色板，視窗上的圓圈是用來輔助你正確放置測量儀器的導引標示。
+  請將測量儀器放置在該視窗上然後按 “開始測量”。你可以關閉測量視窗以取消並返回主視窗。
+"measureframe.measurebutton": |-
+  開始測量
+"measureframe.title": |-
+  測量範圍
+"measureframe.zoomin": |-
+  放大
+"measureframe.zoommax": |-
+  最大化/還原
+"measureframe.zoomnormal": |-
+  正常大小
+"measureframe.zoomout": |-
+  縮小
+"measurement.play_sound": |-
+  在連續測量時作出聲音反饋
+"measurement.untethered": |-
+  非連接式測量
+"measurement_file.check_sanity": |-
+  檢查測量檔案...
+"measurement_file.check_sanity.auto": |-
+  自動檢查測量檔案
+"measurement_file.check_sanity.auto.warning": |-
+  請注意，自動檢查測量檔案為實驗情質的功能。使用時後果自負。
+"measurement_file.choose": |-
+  請選取測量檔案
+"measurement_file.choose.colorimeter": |-
+  請選擇色度計測量檔案
+"measurement_file.choose.reference": |-
+  請選擇參考測量檔案
+"measurement_mode": |-
+  模式
+"measurement_mode.adaptive": |-
+  適應
+"measurement_mode.dlp": |-
+  DLP
+"measurement_mode.factory": |-
+  原廠校正
+"measurement_mode.generic": |-
+  一般
+"measurement_mode.highres": |-
+  高解像度
+"measurement_mode.lcd": |-
+  LCD (一般)
+"measurement_mode.lcd.ccfl": |-
+  LCD (冷色光管)
+"measurement_mode.lcd.ccfl.2": |-
+  LCD (冷色光管類型 2)
+"measurement_mode.lcd.oled": |-
+  LCD (OLED)
+"measurement_mode.lcd.white_led": |-
+  LCD (白光 LED)
+"measurement_mode.lcd.wide_gamut.ccfl": |-
+  廣色域 LCD (冷色光管)
+"measurement_mode.lcd.wide_gamut.gb_led": |-
+  廣色域 LCD (GB LED)
+"measurement_mode.lcd.wide_gamut.led": |-
+  廣色域 LCD (PFS Phosphor, RGB LED)
+"measurement_mode.lcd.wide_gamut.rgb_led": |-
+  廣色域 LCD (RGB LED)
+"measurement_mode.raw": |-
+  原始
+"measurement_mode.refresh": |-
+  更新 (一般)
+"measurement_report": |-
+  測量報告...
+"measurement_report.update": |-
+  更新測量報告...
+"measurement_report_choose_chart": |-
+  請選擇測色板來測量。
+"measurement_report_choose_chart_or_reference": |-
+  請選擇測色板或參考。
+"measurement_report_choose_profile": |-
+  請選擇想驗證的描述檔
+"measurement_type": |-
+  測量類型
+"measurements.complete": |-
+  已完成測量！你是否想開啟放置測量檔案的資料夾？
+"measurements.invalid": |-
+  所得的測量值是無效的。
+"measuring.characterization": |-
+  正在測量用於特徵化的色板...
+"media_attributes": |-
+  參數
+"media_black_point": |-
+  媒體黑位
+"media_relative_colorimetric": |-
+  媒體相對色度
+"media_white_point": |-
+  媒體白點
+"menu.about": |-
+  關於...
+"menu.file": |-
+  檔案
+"menu.help": |-
+  ?
+"menu.language": |-
+  語言
+"menu.options": |-
+  選項
+"menu.tools": |-
+  工具
+"menuitem.quit": |-
+  離開
+"menuitem.set_argyll_bin": |-
+  設定 ArgyllCMS 執行檔位置...
+"metadata": |-
+  數據描述資訊
+"method": |-
+  方法
+"min": |-
+  最小
+"minimal": |-
+  縮小
+"model": |-
+  型號
+"motion_picture_film_scanner": |-
+  影片菲林掃描器
+"mswin.open_display_settings": |-
+  開啟 Windows 顯示器設定...
+"named_color_profile": |-
+  具名稱的色彩描述檔
+"named_colors": |-
+  具名稱的色彩
+"native": |-
+  原生
+"negative": |-
+  不是
+"no": |-
+  否
+"no_settings": |-
+  檔案沒有內含設定。
+"none": |-
+  沒有
+"not_applicable": |-
+  無法提供
+"not_connected": |-
+  尚未連接
+"not_found": |-
+  無法找到 “%s”。
+"not_now": |-
+  並非現在
+"number_of_entries": |-
+  項目數量
+"number_of_entries_per_channel": |-
+  每個頻道的項目數量
+"observer": |-
+  觀察者
+"*observer.1931_2": |-
+  CIE 1931 2°
+"*observer.1955_2": |-
+  Stiles & Birch 1955 2°
+"*observer.1964_10": |-
+  CIE 1964 10°
+"observer.1964_10c": |-
+  混合式 CIE 1964 10° / 1931 2°
+"*observer.1978_2": |-
+  Judd & Voss 1978 2°
+"*observer.2012_2": |-
+  CIE 2012 2°
+"*observer.2012_10": |-
+  CIE 2012 10°
+"*observer.shaw": |-
+  Shaw & Fairchild 1997 2°
+"oem.import.auto": |-
+  如你的色度計附帶適用於 Windows 的光碟，請現在將它插入(中止任何可能出現的自動安裝程式)。
+  
+  如你沒有光碟且無法在其他地方找到必須的檔案，它們將會從互聯絡下載到你的電腦。
+"oem.import.auto.download_selection": |-
+  已經基於偵測到的儀器預先選取了一些選項。請選取要下載的那些檔案。
+"oem.import.auto_windows": |-
+  如果已安裝好你的色度計的原廠軟件，大部份情況下都會自動找到所需的檔案。
+"office_web.icc": |-
+  辦公室及互聯網 (D65，伽瑪 2.2)
+"offset": |-
+  偏移
+"offset_lithography": |-
+  柯式印刷
+"ok": |-
+  確認
+"or": |-
+  或
+"*osd": |-
+  OSD
+"other": |-
+  其他
+"*out": |-
+  Out
+"out_of_gamut_tag": |-
+  色域以外標籤
+"output.profile": |-
+  目標描述檔
+"output_device_profile": |-
+  輸出裝置描述檔
+"output_levels": |-
+  輸出動態範圍
+"output_offset": |-
+  輸出偏移
+"output_table": |-
+  輸出表
+"overwrite": |-
+  覆寫
+"panel.surface": |-
+  螢幕表面
+"panel.type": |-
+  螢幕類型
+"passive_matrix_display": |-
+  被動矩陣式顯示器
+"patch.layout.select": |-
+  請選擇色塊布局：
+"patches": |-
+  色塊
+"*patterngenerator.prisma.specify_host": |-
+  Please specify the hostname of your Prisma Video Processor, e.g. prisma-0123 (Windows) or prisma-0123.local (Linux/Mac OS X). You can find the hostname on a label at the underside of the Prisma, unless it was changed via the Prisma's administrative web interface. Alternatively, enter the IP address (if known), e.g. 192.168.1.234
+"patterngenerator.sync_lost": |-
+  與圖形產生器失去同步.
+"pause": |-
+  暫停
+"pcs_illuminant_xyz": |-
+  PCS 光源 XYZ
+"pcs_relative_cct": |-
+  PCS-相對 CCT
+"pcs_relative_lab": |-
+  PCS-相對 L*a*b*
+"pcs_relative_xyz": |-
+  PCS-相對 XYZ
+"pcs_to_device_intent_0": |-
+  PCS 到裝置：目的 0
+"pcs_to_device_intent_1": |-
+  PCS 到裝置：目的 1
+"pcs_to_device_intent_2": |-
+  PCS 到裝置：目的 2
+"perceptual": |-
+  感知
+"photo.icc": |-
+  相片 (D50，伽瑪2.2)
+"photo_imagesetter": |-
+  相片圖文影排機
+"photographic_paper_printer": |-
+  相紙印刷機
+"platform": |-
+  平台
+"please_wait": |-
+  請等候...
+"port.invalid": |-
+  無效連接埠：%s
+"positive": |-
+  正片
+"preferred_cmm": |-
+  偏好 CMM
+"prepress.icc": |-
+  印前作業 (D50, 130 cd/m², L*)
+"preserve_hue": |-
+  保持色調
+"preserve_luminance": |-
+  保持亮度
+"preserve_saturation": |-
+  保持飽和度
+"preset": |-
+  預設集
+"preview": |-
+  預覽
+"profile": |-
+  描述檔
+"profile.advanced_gamap": |-
+  進階...
+"profile.b2a.hires": |-
+  增強色度 PCS-至-裝置轉換表的有效精確度
+"profile.b2a.lowres.warning": |-
+  這個描述檔似乎缺少高品質的 PCS-到-裝置轉換表，這對於正常運作非常重要。你是否想現在產生高質素的換算表？這可能需要數分鐘。
+"profile.b2a.smooth": |-
+  平滑化
+"profile.choose": |-
+  請選擇描述檔。
+"profile.confirm_regeneration": |-
+  你是否想重新產生描述檔?
+"profile.current": |-
+  目前的描述檔
+"profile.do_not_install": |-
+  不要安裝描述檔
+"profile.iccv4.unsupported": |-
+  不支援版本 4 的 ICC 描述檔。
+"profile.import.success": |-
+  描述檔已經匯入。你需要自行指定並在 “彩色” 系統設定下將其啟用。
+"profile.info": |-
+  描述檔資訊
+"profile.info.show": |-
+  顯示描述檔資訊
+"profile.install": |-
+  安裝描述檔
+"profile.install.error": |-
+  描述檔未能安裝/啟用。
+"profile.install.success": |-
+  描述檔已成功安裝及啟用。
+"profile.install.warning": |-
+  已完成安裝描述檔，但可能出現了問題。
+"profile.install_local_system": |-
+  安裝描述檔為系統預設
+"profile.install_network": |-
+  於整個網絡安裝設定
+"profile.install_user": |-
+  只於目前使用者安裝描述檔
+"profile.invalid": |-
+  無效的描述檔。
+"profile.load_error": |-
+  未能載入顯示器描述檔。
+"profile.load_on_login": |-
+  登入時載入描述檔
+"profile.load_on_login.handled_by_os": |-
+  讓作業系統處理和載入顯示器校正(低質素)
+"profile.name": |-
+  描述檔名稱
+"*profile.name.placeholders": |-
+  You may use the following placeholders in the profile name:
+  
+  %a	Abbreviated weekday name
+  %A	Full weekday name
+  %b	Abbreviated month name
+  %B	Full month name
+  %d	Day of the month
+  %H	Hour (24-hour clock)
+  %I	Hour (12-hour clock)
+  %j	Day of the year
+  %m	Month
+  %M	Minute
+  %p	AM/PM
+  %S	Second
+  %U	Week (Sunday as first day of the week)
+  %w	Weekday (sunday is 0)
+  %W	Week (Monday as first day of the week)
+  %y	Year without century
+  %Y	Year with century
+"profile.no_embedded_ti3": |-
+  該描述檔不包含 Argyll 兼容的測量數據。
+"profile.no_vcgt": |-
+  該描述檔不包含校正曲線。
+"profile.only_named_color": |-
+  只可使用 “具名顏色” 類型的描述檔。
+"profile.quality": |-
+  描述檔品質
+"profile.quality.b2a.low": |-
+  低質素 PCS-到-裝置 轉換表
+"profile.quality.b2a.low.info": |-
+  如描述檔將只會用與反向裝置至 PCS 色域映射，便選取這個選項以建立裝置連結或 3D 查找表
+"profile.required_tags_missing": |-
+  描述檔缺少必要的的標記：%s
+"profile.self_check": |-
+  描述檔自我檢查 ΔE*76
+"profile.self_check.avg": |-
+  平均
+"profile.self_check.max": |-
+  最大
+"*profile.self_check.rms": |-
+  RMS
+"profile.set_save_path": |-
+  選擇儲存位置...
+"profile.settings": |-
+  分析設定
+"profile.share": |-
+  上載描述檔...
+"profile.share.avg_dE_too_high": |-
+  這個描述檔所得的 delta E 數值過高 (實際 = %s，門檻 = %s)。
+"*profile.share.b2a_resolution_too_low": |-
+  The resolution of the profile's PCS to device tables is too low.
+"*profile.share.enter_info": |-
+  You may share your profile with other users via the OpenSUSE “ICC Profile Taxi” service.
+  
+  Please provide a meaningful description and enter display device properties below. Read display device settings from your display device's OSD and only enter settings applicable to your display device which have changed from defaults.
+  Example: For most display devices, these are the name of the chosen preset, brightness, contrast, color temperature and/or whitepoint RGB gains, as well as gamma. On laptops and notebooks, usually only the brightness. If you have changed additional settings while calibrating your display device, enter them too if possible.
+"profile.share.meta_missing": |-
+  該描述檔不包含必需的數據描述資訊。
+"profile.share.success": |-
+  描述檔已成功上載。
+"*profile.tags.A2B0.shaper_curves.input": |-
+  A2B0 input shaper curves
+"*profile.tags.A2B0.shaper_curves.output": |-
+  A2B0 output shaper curves
+"*profile.tags.A2B1.shaper_curves.input": |-
+  A2B1 input shaper curves
+"*profile.tags.A2B1.shaper_curves.output": |-
+  A2B1 output shaper curves
+"*profile.tags.A2B2.shaper_curves.input": |-
+  A2B2 input shaper curves
+"*profile.tags.A2B2.shaper_curves.output": |-
+  A2B2 output shaper curves
+"*profile.tags.B2A0.shaper_curves.input": |-
+  B2A0 input shaper curves
+"*profile.tags.B2A0.shaper_curves.output": |-
+  B2A0 output shaper curves
+"*profile.tags.B2A1.shaper_curves.input": |-
+  B2A1 input shaper curves
+"*profile.tags.B2A1.shaper_curves.output": |-
+  B2A1 output shaper curves
+"*profile.tags.B2A2.shaper_curves.input": |-
+  B2A2 input shaper curves
+"*profile.tags.B2A2.shaper_curves.output": |-
+  B2A2 output shaper curves
+"profile.testchart_recommendation": |-
+  如果想得到較高品質的描述檔，就建議使用較多樣本數量的測色板，但需要較長的時間來進行測量。 你是否想使用建議的測色板？
+"profile.type": |-
+  描述檔類型
+"profile.type.gamma_matrix": |-
+  伽瑪 + 矩陣
+"profile.type.lut.lab": |-
+  L*a*b* 查找表
+"profile.type.lut.xyz": |-
+  XYZ 查找表
+"profile.type.lut_matrix.xyz": |-
+  XYZ 查找表 + 矩陣
+"profile.type.lut_rg_swapped_matrix.xyz": |-
+  XYZ 查找表 + 互換的矩陣
+"profile.type.shaper_matrix": |-
+  曲線 + 矩陣
+"profile.type.single_gamma_matrix": |-
+  單一伽瑪 + 矩陣
+"profile.type.single_shaper_matrix": |-
+  單一曲線 + 矩陣
+"profile.unsupported": |-
+  未支援的描述檔類型 (%s) 及 / 或色域 (%s).
+"profile.update": |-
+  更新定檔
+"profile_associations": |-
+  描述檔關聯...
+"profile_associations.changing_system_defaults.warning": |-
+  你現在正在變更系統預設值。
+"profile_associations.use_my_settings": |-
+  在這個顯示器使用我的設定值。
+"profile_class": |-
+  描述檔等級
+"profile_connection_space_pcs": |-
+  描述檔連接空間 (PCS)
+"profile_loader": |-
+  描述檔載入工具
+"profile_loader.disable": |-
+  停用描述檔載入工具
+"profile_loader.exceptions.known_app.error": |-
+  描述檔載入工具會在 %s 執行時自動停用。你不能強行阻止這種行為。
+"profile_loader.exit_warning": |-
+  你是否真的要關閉描述檔載入工具？校正將不會於變更顯示器設定時重新載入！
+"profile_loader.fix_profile_associations": |-
+  自動修正描述檔關聯
+"profile_loader.fix_profile_associations_warning": |-
+  只要描述檔載入工具正在運作，它就會於變更顯示設定時處理好描述檔關聯。
+  
+  在你繼續之前，你要確保以上的描述檔關聯為正確的。如果不是，請跟從以下步驟：
+  
+  1. 開啟 Windows 顯示器設定。
+  2. 啟用所有已連接的顯示器 (延伸桌面)。
+  3. 於 Windows 控制台中開啟 Windows 彩色管理設定。
+  4. 確認每個顯示裝置已指定正確的描述檔。然後關閉色彩管理設定。
+  5. 在 Windows 顯示設定，回復到之前的顯示器設定。
+  6. 現在你可以啟用 “自動修正搭述檔關聯”。
+"profile_loader.info": |-
+  校正狀態已在今日 (重新) 套用了 %i 次。
+  右按圖示以開啟選單。
+"profiling": |-
+  分析
+"profiling.complete": |-
+  完成分析！
+"profiling.incomplete": |-
+  分析尚未完成。
+"projection_television": |-
+  投影式電視
+"projector": |-
+  投影機
+"projector_mode_unavailable": |-
+  只有 ArgyllCMS 1.1.0 Beta 或更新版本才可以使用投影模式。
+"quality.ultra.warning": |-
+  超高品質應該幾乎不應使用，除非想證明它幾乎不應使用 (非常長的處理時間！)。或許選擇高品質或中等品質會比較好。
+"readme": |-
+  幫助
+"ready": |-
+  準備就緒。
+"red": |-
+  紅
+"red_gamma": |-
+  紅色伽瑪
+"red_lab": |-
+  紅色 L*a*b*
+"red_matrix_column": |-
+  紅色矩陣列
+"red_maximum": |-
+  紅色最大
+"red_minimum": |-
+  紅色最小
+"red_tone_response_curve": |-
+  紅色色調響應曲線
+"red_xyz": |-
+  紅色 XYZ
+"reference": |-
+  參考
+"*reflection_hardcopy_original_colorimetry": |-
+  Reflection hardcopy original colorimetry
+"*reflection_print_output_colorimetry": |-
+  Reflection print output colorimetry
+"reflective": |-
+  反光
+"reflective_scanner": |-
+  反射式掃描器
+"remaining_time": |-
+  剩餘時間 (ca.)
+"remove": |-
+  移除
+"rendering_intent": |-
+  渲染目的
+"report": |-
+  報告
+"report.calibrated": |-
+  已校正顯示裝置報告
+"report.uncalibrated": |-
+  未校正顯示裝置報告
+"report.uniformity": |-
+  測量顯示裝置均勻度...
+"reset": |-
+  重設
+"resources.notfound.error": |-
+  嚴重錯誤： 無法找到一個必需的檔案：
+"resources.notfound.warning": |-
+  警告: 無法找到某些必需的檔案：
+"response.invalid": |-
+  來自 %s: %s 的無效回應
+"response.invalid.missing_key": |-
+  來自 %s 的無效回應：缺少機碼 “%s”：%s
+"response.invalid.value": |-
+  來自 %s 的無效回應： 機碼的數值 “%s” 並不符合預期的數值 “%s”：%s
+"restore_defaults": |-
+  還原到預設值
+"rgb.trc": |-
+  RGB 傳遞函數
+"rgb.trc.averaged": |-
+  平均 RGB 傳遞函數
+"sRGB.icc": |-
+  sRGB
+"saturation": |-
+  飽和度
+"save": |-
+  儲存
+"save_as": |-
+  儲存到...
+"*scene_appearance_estimates": |-
+  Scene appearance estimates
+"*scene_colorimetry_estimates": |-
+  Scene colorimetry estimates
+"scripting-client": |-
+  DisplayCAL 腳本客端
+"scripting-client.cmdhelptext": |-
+  在空白的指令行上按 Tab 鍵顯示當前可使用的指令，或者自動完成已輸入的指令開首部份。輸入 “getcommands” 以顯示已連接的程式所支援指令列表及其可使用的參數。
+"scripting-client.detected-hosts": |-
+  檢測到腳本主機：
+"select_all": |-
+  選擇全部
+"self_check_report": |-
+  自我檢查報告...
+"set_as_default": |-
+  設定為預設
+"setting.keep_current": |-
+  保留當前設定
+"settings.additional": |-
+  額外設定
+"settings.basic": |-
+  基本設定
+"settings.new": |-
+  <目前>
+"settings_loaded": |-
+  已經載入校正曲線及以下的校正設定：%s。其他的校正選項已經還原到預設及分析設定並未修改。
+"settings_loaded.cal": |-
+  描述檔只內含校正設定。其他選項並未修改。並沒有校正曲線被載入。
+"settings_loaded.cal_and_lut": |-
+  描述檔只內含校正設定。其他選項並未修改及已經載入校正曲線。
+"settings_loaded.cal_and_profile": |-
+  已經載入設定值。找不到校正曲線。
+"settings_loaded.profile": |-
+  描述檔只內含分析設定。其他選項並未修改。找不到校正曲線。
+"settings_loaded.profile_and_lut": |-
+  描述檔只內含分析設定。 其他選項並未修改及已經載入校正曲線。
+"*sharp": |-
+  Sharp
+"show_advanced_options": |-
+  顯示進階選項
+"show_notifications": |-
+  顯示訊息提醒
+"silkscreen": |-
+  絲印
+"simulation_profile": |-
+  模擬描述檔
+"size": |-
+  大小
+"skip_legacy_serial_ports": |-
+  跳過舊式串列埠
+"softproof.icc": |-
+  螢幕校樣 (5800K, 160 cd/m², L*)
+"spectral": |-
+  光譜
+"spectral_resolution": |-
+  光譜解像度
+"ssl.certificate_verify_failed": |-
+  無法驗證遠端的證書。
+"ssl.certificate_verify_failed.root_ca_missing": |-
+  無法驗證遠端的證書，因無法在本機找到合適的根證書
+"ssl.handshake_failure": |-
+  握手失敗。無法建立安全連線。
+"startup": |-
+  啟動中...
+"startup_sound.enable": |-
+  啟用啟動音效
+"success": |-
+  ...成功.
+"surround_xyz": |-
+  包圍 XYZ
+"synthicc.create": |-
+  建立合成的 ICC 描述檔...
+"target": |-
+  目標
+"tc.3d": |-
+  建立診斷用的 3D 檔案
+"tc.I": |-
+  感知空間主體置於立方網格中央
+"tc.Q": |-
+  以準隨機填滿感知空間
+"tc.R": |-
+  隨機感知空間
+"tc.adaption": |-
+  適應
+"tc.algo": |-
+  分布
+"tc.angle": |-
+  角度
+"tc.black": |-
+  黑色塊
+"tc.dark_emphasis": |-
+  加強深色區域
+"tc.fullspread": |-
+  反复的色塊
+"tc.gray": |-
+  中性色塊
+"tc.i": |-
+  裝置空間主體置於立方網格中央
+"tc.limit.sphere": |-
+  限制樣本為球體
+"tc.limit.sphere_radius": |-
+  半徑
+"tc.multidim": |-
+  多維
+"tc.multidim.patches": |-
+  色階 = %s 色塊 (%s 中性)
+"tc.neutral_axis_emphasis": |-
+  強調中性主軸
+"tc.ofp": |-
+  優化最遠位置取樣
+"tc.patch": |-
+  色塊
+"tc.patches.selected": |-
+  已選取
+"tc.patches.total": |-
+  色調色塊
+"tc.precond": |-
+  預先處理描述檔
+"tc.precond.notset": |-
+  請選擇預先處理描述檔
+"tc.preview.create": |-
+  正在建立預覽，請等候...
+"*tc.q": |-
+  Device space filling quasi-random
+"*tc.r": |-
+  Device space random
+"tc.single": |-
+  單一頻道色塊
+"tc.single.perchannel": |-
+  每條頻道
+"*tc.t": |-
+  Incremental far point sampling
+"tc.vrml.black_offset": |-
+  RGB 黑色亮度偏移 (L*)
+"tc.vrml.use_D50": |-
+  中性 RGB 白色
+"tc.white": |-
+  白色塊
+"technology": |-
+  技術
+"tempdir_should_still_contain_files": |-
+  已建立的檔案應該還在暫存路徑 “%s” 中 。
+"testchart.add_saturation_sweeps": |-
+  加入飽和度掃描
+"testchart.add_ti3_patches": |-
+  加入參考色塊...
+"testchart.auto_optimize.untethered.unsupported": |-
+  非連接式的虛擬顯示裝置並不支援測色板自動優化。
+"testchart.change_patch_order": |-
+  改變色塊次序
+"testchart.confirm_select": |-
+  檔案已儲存。 你是否想選擇這個測色板？
+"testchart.create": |-
+  建立測色板
+"testchart.discard": |-
+  捨棄
+"testchart.dont_select": |-
+  不要選擇
+"testchart.edit": |-
+  編輯測色板...
+"testchart.export.repeat_patch": |-
+  重復每個色塊:
+"testchart.file": |-
+  測色板
+"testchart.info": |-
+  已選擇測色板中的色塊數目
+"testchart.interleave": |-
+  交錯
+"testchart.maximize_RGB_difference": |-
+  最大化 RGB 差距
+"testchart.maximize_lightness_difference": |-
+  最大化 lightness 差距
+"testchart.maximize_rec709_luma_difference": |-
+  最大化 luma 差距
+"testchart.optimize_display_response_delay": |-
+  最少化顯示器反應延遲
+"testchart.patch_sequence": |-
+  色塊排序
+"testchart.patches_amount": |-
+  色塊數目
+"testchart.read": |-
+  正在讀取測色板...
+"testchart.save_or_discard": |-
+  尚未儲存測色板。
+"testchart.select": |-
+  選擇
+"testchart.separate_fixed_points": |-
+  請選擇在個別色階中加入的色塊。
+"testchart.set": |-
+  選擇測色板檔案...
+"testchart.shift_interleave": |-
+  切換及交錯
+"testchart.sort_RGB_blue_to_top": |-
+  將 RGB 藍色排列到最頂
+"testchart.sort_RGB_cyan_to_top": |-
+  將 RGB 青色排列到最頂
+"testchart.sort_RGB_gray_to_top": |-
+  將 RGB 灰色排列到最頂
+"testchart.sort_RGB_green_to_top": |-
+  將 RGB 綠色排列到最頂
+"testchart.sort_RGB_magenta_to_top": |-
+  將 RGB 洋紅色排列到最頂
+"testchart.sort_RGB_red_to_top": |-
+  將 RGB 紅色排列到最頂
+"testchart.sort_RGB_white_to_top": |-
+  將 RGB 白色排列到最頂
+"testchart.sort_RGB_yellow_to_top": |-
+  將 RGB 黃色排列到最頂
+"testchart.sort_by_BGR": |-
+  以 BGR 排序
+"testchart.sort_by_HSI": |-
+  以 HSI 排序
+"testchart.sort_by_HSL": |-
+  以 HSL 排序
+"testchart.sort_by_HSV": |-
+  以 HSV 排序
+"testchart.sort_by_L": |-
+  以 L* 排序
+"testchart.sort_by_RGB": |-
+  以 RGB 排序
+"testchart.sort_by_RGB_sum": |-
+  以 RGB 總和排序
+"testchart.sort_by_rec709_luma": |-
+  以 luma 排序
+"testchart.vary_RGB_difference": |-
+  不規則的 RGB 差異
+"testchart_or_reference": |-
+  測色板或參考
+"thermal_wax_printer": |-
+  熱蠟打印機
+"tone_values": |-
+  色調值
+"transfer_function": |-
+  轉換函數
+"translations": |-
+  翻譯
+"transparency": |-
+  半透明
+"trashcan.linux": |-
+  垃圾
+"trashcan.mac": |-
+  垃圾
+"trashcan.windows": |-
+  資源回收筒
+"tray_icon_animation": |-
+  動畫化通知區域圖示
+"trc": |-
+  色調曲線
+"*trc.dicom": |-
+  DICOM
+"trc.gamma": |-
+  伽瑪
+"*trc.hlg": |-
+  Hybrid Log-Gamma
+"*trc.lstar": |-
+  L*
+"*trc.rec709": |-
+  Rec. 709
+"*trc.rec1886": |-
+  Rec. 1886
+"*trc.should_use_viewcond_adjust": |-
+  When using the SMPTE 240M or Rec. 709 curves, you should use an adjustment for your ambient light levels as well to get correct results. To do that, tick the checkbox near “Ambient light level” and enter a value in Lux. You can also optionally measure ambient light while calibrating, if supported by your instrument.
+"*trc.smpte240m": |-
+  SMPTE 240M
+"*trc.smpte2084": |-
+  SMPTE 2084
+"*trc.smpte2084.hardclip": |-
+  SMPTE 2084 (hard clip)
+"*trc.smpte2084.rolloffclip": |-
+  SMPTE 2084 (roll-off)
+"*trc.srgb": |-
+  sRGB
+"trc.type.absolute": |-
+  絕對
+"trc.type.relative": |-
+  相對
+"turn_off": |-
+  關閉
+"type": |-
+  類型
+"udev_hotplug.unavailable": |-
+  無論是 udev 或熱插拔裝置都偵測不到。
+"unassigned": |-
+  未指定
+"uninstall": |-
+  移除
+"uninstall_display_profile": |-
+  移除顯示裝置描述檔...
+"unknown": |-
+  未知
+"unmodified": |-
+  未修改
+"unnamed": |-
+  未命名
+"unspecified": |-
+  未指定
+"update_check": |-
+  檢查程式更新...
+"update_check.fail": |-
+  檢查程式更新失敗:
+"update_check.fail.version": |-
+  無法解讀來自伺服器 %s 的版本資訊。
+"update_check.new_version": |-
+  找到可用的更新：%s
+"update_check.onstartup": |-
+  啟動時檢查程式更新
+"update_check.uptodate": |-
+  %s 為最新版本。
+"update_now": |-
+  現在更新
+"upload": |-
+  上載
+"use_fancy_progress": |-
+  啟用花巧的進度框
+"use_separate_lut_access": |-
+  個別地存取顯示卡的伽瑪表
+"use_simulation_profile_as_output": |-
+  將模擬描述檔當成目標描述檔使用
+"vcgt": |-
+  校正曲線
+"vcgt.mismatch": |-
+  用於顯示器 %s 的顯示卡伽瑪表並不符合期望的狀態。
+"vcgt.unknown_format": |-
+  描述檔 “%s” 內的顯示卡伽瑪表為未知的格式。
+"verification": |-
+  驗證
+"verification.settings": |-
+  驗證設定
+"verify.ti1": |-
+  驗證測色板
+"verify_extended.ti1": |-
+  延伸驗證測色板
+"verify_grayscale.ti1": |-
+  灰平衡驗證測色板
+"verify_large.ti1": |-
+  大型驗證測色板
+"verify_video.ti1": |-
+  驗證測色板(視訊)
+"verify_video_extended.ti1": |-
+  延伸驗證測色板(視訊)
+"verify_video_extended_hlg_p3_2020.ti1": |-
+  延伸驗證測色板 (高動態範圍視訊, Rec. 2020/P3, Hybrid Log-Gamma)
+"verify_video_extended_smpte2084_100_p3_2020.ti1": |-
+  延伸驗證測色板 (高動態範圍視訊, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)
+"verify_video_extended_smpte2084_200_p3_2020.ti1": |-
+  延伸驗證測色板 (高動態範圍視訊, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)
+"verify_video_extended_smpte2084_500_p3_2020.ti1": |-
+  延伸驗證測色板 (高動態範圍視訊, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)
+"verify_video_extended_smpte2084_1000_p3_2020.ti1": |-
+  延伸驗證測色板 (高動態範圍視訊, Rec. 2020/P3, SMPTE 2084, 1000 cd/m²)
+"verify_video_large.ti1": |-
+  大型驗證測色板(視訊)
+"verify_video_xl.ti1": |-
+  特大驗證測色板(視訊)
+"verify_video_xxl.ti1": |-
+  XXL 驗證測色板(視訊)
+"verify_video_xxxl.ti1": |-
+  XXXL 驗證測色板(視訊)
+"verify_xl.ti1": |-
+  特大驗證測色板
+"verify_xxl.ti1": |-
+  XXL 驗證測色板
+"verify_xxxl.ti1": |-
+  XXXL 驗證測色板
+"*vga": |-
+  VGA
+"video.icc": |-
+  視訊 (D65, Rec. 1886)
+"video_Prisma.icc": |-
+  用於 Prisma 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
+"video_ReShade.icc": |-
+  用於 ReShade 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
+"video_camera": |-
+  攝錄機
+"video_card_gamma_table": |-
+  顯示卡伽瑪表
+"video_eeColor.icc": |-
+  用於 eeColor 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
+"video_madVR.icc": |-
+  用於 madVR 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
+"*video_madVR_ST2084.icc": |-
+  Video 3D LUT for madVR HDR (D65, Rec. 2020 / SMPTE 2084 / BT.2390)
+"video_monitor": |-
+  視訊顯示器
+"video_resolve.icc": |-
+  用於 Reslove 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
+"*video_resolve_ST2084_clip.icc": |-
+  Video 3D LUT for Resolve HDR (D65, Rec. 2020 / SMPTE 2084)
+"view.3d": |-
+  以 3D 檢視
+"viewing_conditions": |-
+  觀看環境
+"viewing_conditions_description": |-
+  觀看環境描述
+"vrml_to_x3d_converter": |-
+  VRML 到 X3D 轉換器
+"warning": |-
+  警告
+"warning.already_exists": |-
+  檔案 “%s” 已存在於你所選擇的位置並將會被覆寫。你是否要繼續？
+"warning.autostart_system": |-
+  無法判斷全系統性的自動啟動路徑。
+"warning.autostart_user": |-
+  無法判斷個別使用者的自動啟動路徑。
+"warning.discard_changes": |-
+  你是否真的要捨棄目前的設定值？
+"warning.gamap.out_viewcond.nondisplay": |-
+  目的觀看環境 “%s” 並不是顯示螢幕的觀看環境。你決定還要用這個嗎？
+"*warning.input_value_clipping": |-
+  Warning: Values below the display profile blackpoint will be clipped!
+"*warning.suspicious_delta_e": |-
+  Warning: Suspicious measurements have been found. Please note this check assumes an sRGB-like display device. If your display device differs from this assumption (e.g. if it has a very wide gamut or a tone response too far from sRGB), then errors found are probably not meaningful.
+  
+  One or all of the following criteria matched:
+  
+  • Consecutive patches with different RGB numbers, but suspiciously low ΔE*00 of the measurements against each other.
+  • RGB gray with increasing RGB numbers towards the previous patch, but declining lightness (L*).
+  • RGB gray with decreasing RGB numbers towards the previous patch, but rising lightness (L*).
+  • Unusually high ΔE*00 and ΔL*00 or ΔH*00 or ΔC*00 of measurements to the sRGB equivalent of the RGB numbers.
+  
+  This could hint at measurement errors. Values that are considered problematic (which does not have to be true!) are highlighted in red. Check the measurements carefully and mark the ones you want to accept. You can also edit the RGB and XYZ values.
+"*warning.suspicious_delta_e.info": |-
+  Explanation of the Δ columns:
+  
+  ΔE*00 XYZ A/B: ΔE*00 of measured values towards measured values of the previous patch. If this value is missing, it wasn't a factor while checking. If it is present, then it is assumed to be too low.
+  
+  0.5 ΔE*00 RGB A/B: ΔE*00 of the sRGB equivalent of the RGB numbers towards the sRGB equivalent of the RGB numbers of the previous patch (with a factor of 0.5). If this value is present, it represents the comparison (minimal) value during checking for assumed too low ΔE*00 XYZ A/B. It serves as a very rough orientation.
+  
+  ΔE*00 RGB-XYZ: ΔE*00 of measured values towards the sRGB equivalent of the RGB numbers.
+  ΔL*00 RGB-XYZ: ΔL*00 of measured values towards the sRGB equivalent of the RGB numbers.
+  ΔC*00 RGB-XYZ: ΔC*00 of measured values towards the sRGB equivalent of the RGB numbers.
+  ΔH*00 RGB-XYZ: ΔH*00 of measured values towards the sRGB equivalent of the RGB numbers.
+"warning.system_file": |-
+  警告：“%s” 為系統檔案。 你是否真的要繼續？
+"webserver.waiting": |-
+  網絡服務器正在等待於
+"welcome": |-
+  歡迎！
+"welcome_back": |-
+  歡迎回來！
+"white": |-
+  白
+"whitepoint": |-
+  白點
+"whitepoint.colortemp": |-
+  色溫
+"whitepoint.colortemp.locus.blackbody": |-
+  黑暗
+"whitepoint.colortemp.locus.curve": |-
+  色溫曲線
+"whitepoint.colortemp.locus.daylight": |-
+  日光
+"whitepoint.set": |-
+  你是否想將白點設定為測量到的數值？
+"whitepoint.simulate": |-
+  模擬白點
+"whitepoint.simulate.relative": |-
+  相對於目標定檔的白點
+"whitepoint.visual_editor": |-
+  視覺白點編輯工具
+"whitepoint.visual_editor.display_changed.warning": |-
+  注意: 題示器的設定值已經變更而且圖像化的白點編輯器將不能正確還原顯示器設定檔。 請在關閉編輯器之後小心檢查顯示器設定檔的關聯然後重新執行 DisplayCAL。
+"whitepoint.xy": |-
+  色度坐標
+"*window.title": |-
+  DisplayCAL
+"windows.version.unsupported": |-
+  不支援這個版本的 Windows。
+"windows_only": |-
+  只可在 Windows 執行
+"working_dir": |-
+  工作資料夾：
+"*xyz_scaling": |-
+  XYZ scaling (“wrong von Kries”)
+"yellow": |-
+  黃色
+"yellow_lab": |-
+  黃色 L*a*b*
+"yellow_xyz": |-
+  黃色 XYZ
+"yes": |-
+  是

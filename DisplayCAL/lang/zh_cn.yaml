@@ -1,0 +1,2580 @@
+"*": |-
+  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated.
+"!author": |-
+  Mars
+"!language": |-
+  简体中文(中国)
+"!language_name": |-
+  chinese_simplified
+"*3dlut": |-
+  3D LUT
+"3dlut.1dlut.videolut.nonlinear": |-
+  显示设备的视频卡伽玛表 1D LUT 校准为非线性，但 3D LUT 包含已应用的 1D LUT 校准。请确认在使用 3D LUT 之前已将视频卡伽玛表手动重置为线性，或创建未应用校准的 3D LUT（执行后者，在“选项”菜单中启用“显示高级选项”并在 3D LUT 设置中禁用“应用校准 (vcgt)”以及“配置后创建 3D LUT”，然后创建新的 3D LUT）。
+"3dlut.bitdepth.input": |-
+  3D LUT 输入色深
+"3dlut.bitdepth.output": |-
+  3D LUT 输出色深
+"3dlut.confirm_relcol_rendering_intent": |-
+  要 3D LUT 使用测量的白点吗（ 3D LUT 渲染意图将被设置为相对色度）？
+"3dlut.content.colorspace": |-
+  内容色彩空间
+"3dlut.create": |-
+  创建 3D LUT...
+"3dlut.create_after_profiling": |-
+  配置后创建 3D LUT
+"3dlut.enable": |-
+  启用 3D LUT
+"3dlut.encoding.input": |-
+  输入编码
+"3dlut.encoding.output": |-
+  输出编码
+"3dlut.encoding.output.warning.madvr": |-
+  警告: 不建议使用此输出编码并且如果 madVR 没有在 “设备” → “%s” → “属性”设置为“电视电平（16-235)”输出则会导致剪切。使用风险自负！
+"3dlut.encoding.type_2": |-
+  电视 Rec. 2020 YCbCr UHD
+"3dlut.encoding.type_5": |-
+  电视 Rec. 709 1250/50Hz YCbCr HD
+"3dlut.encoding.type_6": |-
+  电视 Rec. 601 YCbCr SD
+"3dlut.encoding.type_7": |-
+  电视 Rec. 709 1125/60Hz YCbCr HD
+"3dlut.encoding.type_C": |-
+  电视 Rec. 2020 恒定光亮度 YCbCr UHD
+"3dlut.encoding.type_T": |-
+  电视 RGB 16-235 (剪切 WTW)
+"3dlut.encoding.type_X": |-
+  电视 xvYCC Rec. 709 YCbCr HD
+"3dlut.encoding.type_n": |-
+  全范围 RGB 0-255
+"3dlut.encoding.type_t": |-
+  电视 RGB 16-235
+"3dlut.encoding.type_x": |-
+  电视 xvYCC Rec. 601 YCbCr (Rec. 709 初选) SD
+"3dlut.format": |-
+  3D LUT 文件格式
+"*3dlut.format.3dl": |-
+  Autodesk / Kodak (.3dl)
+"*3dlut.format.ReShade": |-
+  ReShade (.png, .fx)
+"*3dlut.format.cube": |-
+  IRIDAS (.cube)
+"*3dlut.format.eeColor": |-
+  eeColor Processor (.txt)
+"3dlut.format.icc": |-
+  设备链接配置文件 (.icc/.icm)
+"*3dlut.format.madVR": |-
+  madVR (.3dlut)
+"3dlut.format.madVR.hdr": |-
+  处理 HDR 内容
+"3dlut.format.madVR.hdr.confirm": |-
+  注意需要显示器具备 HDR 模式。如果显示器本身不支持原生 HDR，请单击“取消”。
+"3dlut.format.madVR.hdr_to_sdr": |-
+  HDR 内容转换为 SDR
+"*3dlut.format.mga": |-
+  Pandora (.mga)
+"*3dlut.format.png": |-
+  PNG (.png)
+"*3dlut.format.spi3d": |-
+  Sony Imageworks (.spi3d)
+"3dlut.frame.title": |-
+  创建 3D LUT
+"3dlut.hdr.rolloff.diffuse_white": |-
+  漫射白色 (参考 94.38 cd/m²)
+"3dlut.hdr.system_gamma": |-
+  系统伽马值 (参考 1.2)
+"3dlut.holder.assign_preset": |-
+  指定 3D LUT 至预设
+"3dlut.holder.out_of_memory": |-
+  %s 超出 3D LUT 储存空间（最少需要 %i KB）。请从 %s 删除一些 3D LUT 以释放空间给新文件使用。参阅 %s 的文档了解更多信息。
+"3dlut.input.colorspace": |-
+  源色彩空间
+"3dlut.input.profile": |-
+  源配置文件
+"3dlut.install": |-
+  安装 3D LUT
+"3dlut.install.failure": |-
+  3D LUT 安装失败（未知错误）。
+"3dlut.install.success": |-
+  3D LUT 安装成功！
+"3dlut.install.unsupported": |-
+  3D LUT 安装不支持所选的 3D LUT 格式。
+"3dlut.save_as": |-
+  保存 3D LUT 为...
+"3dlut.settings": |-
+  3D LUT 设置
+"3dlut.size": |-
+  3D LUT 大小
+"3dlut.tab.enable": |-
+  启用 3D LUT 标签
+"3dlut.use_abstract_profile": |-
+  抽象 (“外观”) 配置文件
+"CMP_Digital_Target-3.cie": |-
+  CMP 数字目标 3
+"CMP_Digital_Target-4.cie": |-
+  CMP 数字目标 4
+"CMYK_IDEAlliance_ControlStrip_2009.ti1": |-
+  CMYK IDEAlliance 控制条 2009
+"CMYK_IDEAlliance_ISO_12647-7_Control_Wedge_2013.ti1": |-
+  CMYK IDEAlliance ISO 12647-7 控制楔形 2013
+"CMYK_ISO_12647-7_outer_gamut.ti1": |-
+  CMYK ISO 12647-7 外部色域
+"*ColorChecker.cie": |-
+  ColorChecker
+"*ColorCheckerDC.cie": |-
+  ColorChecker DC
+"*ColorCheckerPassport.cie": |-
+  ColorChecker Passport
+"*ColorCheckerSG.cie": |-
+  ColorChecker SG
+"FograStrip2.ti1": |-
+  Fogra 媒体楔形 CMYK V2.0
+"FograStrip3.ti1": |-
+  Fogra 媒体楔形 CMYK V3.0
+"ISO_12646-2008_color_accuracy_and_gray_balance.ti1": |-
+  ISO 12646:2008 色准度和灰平衡
+"ISO_14861_color_accuracy_RGB318.ti1": |-
+  ISO 14861:2015 色准度和灰平衡
+"*QPcard_201.cie": |-
+  QPcard 201
+"*QPcard_202.cie": |-
+  QPcard 202
+"*SpyderChecker24.cie": |-
+  SpyderCHECKR24 (D65)
+"*SpyderChecker.cie": |-
+  SpyderCHECKR (D65)
+"Untethered": |-
+  不受限制
+"[rgb]TRC": |-
+  色调响应曲线
+"aborted": |-
+  ...已中止。
+"aborting": |-
+  正在中止，请稍候（可能需要几秒钟）...
+"abstract_profile": |-
+  抽象配置文件
+"active_matrix_display": |-
+  动态矩阵显示器
+"adaptive_mode_unavailable": |-
+  自适应模式仅适用于 ArgyllCMS 1.1.0 RC3 或新版本。
+"add": |-
+  添加...
+"adjust_rolloff": |-
+  调整滚降
+"advanced": |-
+  高级
+"allow_skip_sensor_cal": |-
+  允许跳过光谱仪自校准
+"ambient.measure": |-
+  测量环境
+"ambient.measure.color.unsupported": |-
+  %s: 使用此校色仪不能确定环境光线的色彩，因为它的环境传感器似乎是单色（仅有光照度读数）。
+"ambient.measure.light_level.missing": |-
+  不能获取光照度读数。
+"ambient.set": |-
+  要将环境光照度设定为测量值吗？
+"app.client.connect": |-
+  脚本客户端 %s:%s 已连接
+"app.client.disconnect": |-
+  脚本客户端 %s:%s 已断开
+"app.client.ignored": |-
+  已拒绝脚本客户端连接 %s:%s: %s
+"app.client.network.disallowed": |-
+  已拒绝连接脚本客户端 %s:%s: 网络客户端未被允许。
+"app.confirm_restore_defaults": |-
+  真要放弃更改并恢复默认值吗？
+"app.detected": |-
+  已检测 %s.
+"app.detected.calibration_loading_disabled": |-
+  已检测 %s. 校准加载已禁用。
+"app.detection_lost": |-
+  不再检测 %s.
+"app.detection_lost.calibration_loading_enabled": |-
+  不再检测 %s. 校准加载已启用。
+"app.incoming_message": |-
+  从 %s:%s: %s 收到脚本请求
+"app.incoming_message.invalid": |-
+  脚本请求无效！
+"app.listening": |-
+  配置脚本主机为 %s:%s
+"app.otherinstance": |-
+  %s 已运行。
+"app.otherinstance.notified": |-
+  通知已运行实例。
+"apply": |-
+  应用
+"apply_black_output_offset": |-
+  应用黑色输出偏移 (100％)
+"apply_cal": |-
+  应用校准 (vcgt)
+"apply_cal.error": |-
+  校准不能应用。
+"archive.create": |-
+  创建压缩存档...
+"archive.import": |-
+  导入存档...
+"archive.include_3dluts": |-
+  要在存档中包含3D LUT文件吗（不建议，会导致更大的存档文件）？
+"argyll.debug.warning1": |-
+  如果确实需要调试信息（例如用于排除 ArgyllCMS 功能故障）再使用此选项！通常仅对软件开发人员解决问题有帮助。要启用调试输出吗？
+"argyll.debug.warning2": |-
+  请记住禁用调试输出以正常运行软件。
+"argyll.dir": |-
+  ArgyllCMS 可执行目录：
+"argyll.dir.invalid": |-
+  ArgyllCMS 可执行文件未找到！
+  请选择包含可执行文件的目录 (可能前缀或后缀为 “argyll-” / “-argyll”): %s
+"argyll.error.detail": |-
+  详细的 ArgyllCMS 错误信息：
+"argyll.instrument.configuration_files.install": |-
+  安装 ArgyllCMS 校色仪配置文件...
+"argyll.instrument.configuration_files.install.success": |-
+  安装 ArgyllCMS 校色仪配置文件完成。
+"argyll.instrument.configuration_files.uninstall": |-
+  卸载 ArgyllCMS 校色仪配置文件...
+"argyll.instrument.configuration_files.uninstall.success": |-
+  卸载 ArgyllCMS 校色仪配置文件完成。
+"argyll.instrument.driver.missing": |-
+  测量设备的 ArgyllCMS 驱动程序似乎未安装或安装不正确。请检查测量设备是否在 Windows 设备管理器中显示 „Argyll LibUSB-1.0A devices“ 并在必要时(重新)安装驱动程序。请阅读文档获取安装说明。
+"argyll.instrument.drivers.install": |-
+  安装 ArgyllCMS 校色仪驱动程序...
+"argyll.instrument.drivers.install.confirm": |-
+  如果校色仪不是 ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval 或 K-10，才需要安装 ArgyllCMS 特定的驱动程序。
+  
+  要继续吗？
+"argyll.instrument.drivers.install.failure": |-
+  安装 ArgyllCMS 校色仪驱动程序失败。
+"argyll.instrument.drivers.install.restart": |-
+  可以禁用驱动程序签名执行安装 ArgyllCMS 校色仪驱动程序，因此需要重启系统。在将出现的页面选择“故障排除”，然后选择“高级选项”的“启动设置”，最后选择“重新启动”。在启动时选择“禁用驱动程序签名执行”。重启后，在菜单中选择“安装 ArgyllCMS 校色仪驱动程序…”再次安装驱动程序。如果没有看到“故障诊断”选项，请参阅 DisplayCAL 文档部分“ Windows 的校色仪驱动程序安装”获得禁用驱动程序签名执行的替代方法。
+"argyll.instrument.drivers.uninstall": |-
+  卸载 ArgyllCMS 校色仪驱动程序...
+"argyll.instrument.drivers.uninstall.confirm": |-
+  注意: 卸载并不影响正在使用的校色仪驱动程序，只是将驱动程序从 Windows 驱动程序库中移除。如果要将校色仪切换回已安装的供应商提供的驱动程序，需要在 Windows 设备管理器中手动切换至供应商驱动程序。右键单击校色仪然后选择 “更新驱动程序软件...”，选择 “浏览计算机以查找驱动软件”，然后选择 “从计算机的设备驱动程序列表中选取”，最后在列表中选择校色仪的供应商驱动程序。
+  
+  要继续吗？
+"argyll.instrument.drivers.uninstall.failure": |-
+  卸载 ArgyllCMS 校色仪驱动程序失败。
+"argyll.instrument.drivers.uninstall.success": |-
+  卸载 ArgyllCMS 校色仪驱动程序完成。
+"argyll.util.not_found": |-
+  ArgyllCMS “%s” 可执行文件未找到！
+"as_measured": |-
+  已测量
+"audio.lib": |-
+  声音模块: %s
+"auth": |-
+  认证
+"auth.failed": |-
+  认证失败。
+"auto": |-
+  自动
+"auto_optimized": |-
+  自动优化
+"autostart_remove_old": |-
+  移除旧自启动项
+"backing_xyz": |-
+  支持 XYZ
+"backlight": |-
+  背光
+"bitdepth": |-
+  色深
+"black": |-
+  黑色
+"black_lab": |-
+  黑色 L*a*b*
+"black_point": |-
+  黑点
+"black_point_compensation": |-
+  黑点补偿
+"black_point_compensation.3dlut.warning": |-
+  当创建 3D LUT 时，黑点补偿配置设置应关闭，因为它会影响色调曲线调整功能。要关闭黑点补偿吗？
+"black_point_compensation.info": |-
+  黑点补偿有效防止黑色被挤压，但会降低色彩转换精度。
+"black_white": |-
+  黑色 & 白色
+"black_xyz": |-
+  黑色 XYZ
+"blacklevel": |-
+  黑电平
+"blue": |-
+  蓝色
+"blue_gamma": |-
+  蓝色伽玛值
+"blue_lab": |-
+  蓝色 L*a*b*
+"blue_matrix_column": |-
+  蓝色矩阵列
+"blue_maximum": |-
+  蓝色最大化
+"blue_minimum": |-
+  蓝色最小化
+"blue_tone_response_curve": |-
+  蓝色调响应曲线
+"blue_xyz": |-
+  蓝色 XYZ
+"bradford": |-
+  Bradford (ICC 建议)
+"brightness": |-
+  亮度
+"browse": |-
+  浏览...
+"*bs": |-
+  Bianco & Schettini
+"bs_pc": |-
+  Bianco & Schettini 带正向约束
+"bug_report": |-
+  报告错误...
+"button.calibrate": |-
+  仅校准
+"button.calibrate_and_profile": |-
+  校准 & 配置文件
+"button.profile": |-
+  仅配置文件
+"cal_extraction_failed": |-
+  不能从配置文件中提取校准数据。
+"calculated_checksum": |-
+  已计算校验和
+"calibrate_instrument": |-
+  光谱仪自校准
+"calibration": |-
+  校准
+"calibration.ambient_viewcond_adjust": |-
+  环境光照度调整
+"calibration.ambient_viewcond_adjust.info": |-
+  要在计算校正曲线时调整查看条件，勾选复选框并输入环境光照度。如果校色仪支持，还可以选择测量环境光线。
+"calibration.black_luminance": |-
+  黑电平
+"calibration.black_output_offset": |-
+  黑色输出偏移
+"calibration.black_point_correction": |-
+  黑点校正
+"calibration.black_point_correction_choice": |-
+  关闭黑点校正以优化黑电平和对比度（适用于大多数液晶显示器），或者打开选项使黑色与白点有相同的色调（适用于大多数阴极射线管显示器）。请选择黑点校正偏好。
+"calibration.black_point_rate": |-
+  比率
+"calibration.check_all": |-
+  检查设置
+"calibration.complete": |-
+  校准完成！
+"calibration.create_fast_matrix_shaper": |-
+  创建矩阵配置文件
+"calibration.create_fast_matrix_shaper_choice": |-
+  要从校准测量中创建快速矩阵整形器配置文件还是仅校准?
+"calibration.do_not_use_video_lut": |-
+  不使用视频卡伽玛表至应用校准
+"calibration.do_not_use_video_lut.warning": |-
+  真要改变建议设置吗？
+"calibration.embed": |-
+  在配置文件中嵌入校准曲线
+"calibration.file": |-
+  设置
+"calibration.file.invalid": |-
+  所选设置文件无效。
+"calibration.file.none": |-
+  <无>
+"calibration.incomplete": |-
+  校准未完成。
+"calibration.interactive_display_adjustment": |-
+  交互式显示调整
+"calibration.interactive_display_adjustment.black_level.crt": |-
+  选择“开始测量”并调整显示器的亮度或 RGB 偏移控制以匹配所需电平。
+"calibration.interactive_display_adjustment.black_point.crt": |-
+  选择“开始测量”并调整显示器的 RGB 偏移控制以匹配所需黑点。
+"calibration.interactive_display_adjustment.check_all": |-
+  选择“开始测量”检查整体设置。
+"calibration.interactive_display_adjustment.generic_hint.plural": |-
+  好的匹配是所有指示条都位于中间标示位置。
+"calibration.interactive_display_adjustment.generic_hint.singular": |-
+  好的匹配是指示条位于中间标示位置。
+"calibration.interactive_display_adjustment.start": |-
+  开始测量
+"calibration.interactive_display_adjustment.stop": |-
+  停止测量
+"calibration.interactive_display_adjustment.white_level.crt": |-
+  选择“开始测量”并调整显示器的对比度或 RGB 增益控制以匹配所需电平。
+"calibration.interactive_display_adjustment.white_level.lcd": |-
+  选择“开始测量”并调整显示器的背光/亮度控制以匹配所需电平。
+"calibration.interactive_display_adjustment.white_point": |-
+  选择”开始测量“并调整显示器色温或 RGB 增益控制以匹配所需白点。
+"calibration.load": |-
+  加载设置...
+"calibration.load.handled_by_os": |-
+  校准加载由操作系统处理。
+"calibration.load_error": |-
+  校准曲线不能加载。
+"calibration.load_from_cal": |-
+  从校准文件加载校准曲线...
+"calibration.load_from_cal_or_profile": |-
+  从校准或配置文件加载校准曲线...
+"calibration.load_from_display_profile": |-
+  从当前显示设备配置文件加载校准曲线
+"calibration.load_from_display_profiles": |-
+  从当前显示设备配置文件加载校准
+"calibration.load_from_profile": |-
+  从配置文件加载校准曲线...
+"calibration.load_success": |-
+  校准曲线成功加载。
+"calibration.loading": |-
+  从文件中加载校准曲线...
+"calibration.loading_from_display_profile": |-
+  加载当前显示设备配置文件校准曲线...
+"calibration.luminance": |-
+  白电平
+"calibration.lut_viewer.title": |-
+  曲线
+"calibration.preserve": |-
+  保持校准状态
+"calibration.preview": |-
+  预览校准
+"calibration.quality": |-
+  校准质量
+"calibration.quality.high": |-
+  高
+"calibration.quality.low": |-
+  低
+"calibration.quality.medium": |-
+  中
+"calibration.quality.ultra": |-
+  极致
+"calibration.quality.verylow": |-
+  超低
+"calibration.reset": |-
+  重置视频卡伽马表
+"calibration.reset_error": |-
+  视频卡伽马表不能重置。
+"calibration.reset_success": |-
+  视频卡伽马表成功重置。
+"calibration.resetting": |-
+  重置视频卡伽玛表为线性...
+"calibration.settings": |-
+  校准设置
+"calibration.show_actual_lut": |-
+  从视频卡显示校准曲线
+"calibration.show_lut": |-
+  显示曲线
+"calibration.skip": |-
+  继续配置
+"calibration.speed": |-
+  校准速度
+"calibration.speed.high": |-
+  高
+"calibration.speed.low": |-
+  低
+"calibration.speed.medium": |-
+  中
+"calibration.speed.veryhigh": |-
+  超高
+"calibration.speed.verylow": |-
+  超低
+"calibration.start": |-
+  继续校准
+"calibration.turn_on_black_point_correction": |-
+  开启
+"calibration.update": |-
+  更新校准
+"calibration.update_profile_choice": |-
+  要更新现有配置文件中的校准曲线还是仅校准？
+"calibration.use_linear_instead": |-
+  使用线性校准代替
+"calibration.verify": |-
+  验证校准
+"calibration_profiling.complete": |-
+  校准和配置完成！
+"calibrationloader.description": |-
+  设置 ICC 配置文件并加载所有已配置显示设备的校准曲线
+"can_be_used_independently": |-
+  可独立使用
+"cancel": |-
+  取消
+"cat02": |-
+  CAT02 (由 CIECAM02)
+"cat02bs": |-
+  CAT02 (由 CIECAM02, Brill & Süsstrunk 修正)
+"cat97s": |-
+  CAT97s (由 CIECAM97s)
+"cathode_ray_tube_display": |-
+  阴极射线管显示器
+"ccmx.use_four_color_matrix_method": |-
+  最小化 xy 色度差异
+"*ccss.CCFLFamily_07Feb11": |-
+  LCD CCFL family (AC, EIZO, HP)
+"*ccss.FSI_XM55U_23Jan19": |-
+  WOLED family (FSI XM55U/XM65U, LG OLED)
+"*ccss.GBrLED_25Jul12": |-
+  LCD GB-r-LED IPS (Dell U2413)
+"*ccss.HP_DC3": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor?)
+"*ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor Z24x G2)
+"*ccss.HP_ZBOOK": |-
+  LCD PFS Phosphor WLED IPS (HP ZBook)
+"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
+  LCD GB-r-LED IPS (NEC PA242W)
+"*ccss.OLEDFamily_20Jul12": |-
+  RGB OLED (Sony PVM-2541)
+"*ccss.OLEDFamily_28Aug18": |-
+  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"*ccss.PFS_Phosphor_Family_31Jan17": |-
+  LCD PFS Phosphor WLED family
+"*ccss.Panasonic VVX17P051J00": |-
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+"*ccss.PlasmaFamily_20Jul12": |-
+  Plasma
+"*ccss.ProjectorFamily_07Feb11": |-
+  Projector family (Marantz, HP, Panasonic)
+"*ccss.RGBLEDFamily_07Feb11": |-
+  LCD RGB LED family (HP, SOYO)
+"*ccss.RG_Phosphor_Family_13Dec11": |-
+  LCD RG Phosphor family
+"*ccss.RG_Phosphor_Family_25Jul12": |-
+  LCD GB-r-LED/RG Phosphor family
+"*ccss.WGCCFLFamily_07Feb11": |-
+  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
+"*ccss.WLEDFamily_07Feb11": |-
+  LCD White LED family (AC, LG, Samsung)
+"*ccss.WRGB_OLED_LG": |-
+  WOLED (LG OLED)
+"ccxx.ti1": |-
+  色度仪校正测试图表
+"centered": |-
+  居中
+"channel_1_c_xy": |-
+  通道 1 (C) xy
+"channel_1_gamma_at_50_input": |-
+  通道 1 伽玛值于 50％ 输入
+"channel_1_is_linear": |-
+  通道 1 为线性
+"channel_1_maximum": |-
+  通道 1 最大化
+"channel_1_minimum": |-
+  通道 1 最小化
+"channel_1_r_xy": |-
+  通道 1 (R) xy
+"channel_1_unique_values": |-
+  通道 1 唯一值
+"channel_2_g_xy": |-
+  通道 2 (G) xy
+"channel_2_gamma_at_50_input": |-
+  通道 2 伽玛值于 50％ 输入
+"channel_2_is_linear": |-
+  通道 2 为线性
+"channel_2_m_xy": |-
+  通道 2 (M) xy
+"channel_2_maximum": |-
+  通道 2 最大化
+"channel_2_minimum": |-
+  通道 2 最小化
+"channel_2_unique_values": |-
+  通道 2 唯一值
+"channel_3_b_xy": |-
+  通道 3 (B) xy
+"channel_3_gamma_at_50_input": |-
+  通道 3 伽玛值于 50％ 输入
+"channel_3_is_linear": |-
+  通道 3 为线性
+"channel_3_maximum": |-
+  通道 3 最大化
+"channel_3_minimum": |-
+  通道 3 最小化
+"channel_3_unique_values": |-
+  通道 3 唯一值
+"channel_3_y_xy": |-
+  通道 3 (Y) xy
+"channel_4_k_xy": |-
+  通道 4 (K) xy
+"channels": |-
+  通道
+"characterization_device_values": |-
+  特性描述设备值
+"characterization_measurement_values": |-
+  特性描述测量值
+"characterization_target": |-
+  特性描述目标
+"checking_lut_access": |-
+  检查显示器 %s 的视频卡伽玛表访问...
+"checksum": |-
+  校验和
+"checksum_ok": |-
+  校验和确定
+"chromatic_adaptation": |-
+  色彩适应...
+"chromatic_adaptation_matrix": |-
+  色彩适应矩阵
+"chromatic_adaptation_transform": |-
+  色彩适应变换
+"chromaticity_illuminant_relative": |-
+  色度 (光源-相对)
+"chromecast_limitations_warning": |-
+  请注意由于 Chromecast 使用 RGB 至 YCbCr 转换和粗化， Chromecast 的精度不如直接连接显示器或 madTPG。
+"*cie2012_2": |-
+  CIE 2012 2°
+"clear": |-
+  清除
+"close": |-
+  关闭
+"*cmccat97": |-
+  CMCCAT97
+"*cmccat2000": |-
+  CMCCAT2000
+"color": |-
+  色彩
+"color_look_up_table": |-
+  色彩查找表
+"color_model": |-
+  色彩模型
+"color_space_conversion_profile": |-
+  色彩空间转换配置文件
+"colorant_order": |-
+  着色剂顺序
+"colorants_pcs_relative": |-
+  着色剂 (PCS-相对)
+"colorimeter_correction.create": |-
+  创建色度仪校正文件...
+"colorimeter_correction.create.details": |-
+  请检查以下字段并在必要时进行更改。说明还应包含重要细节（例如特定显示器设置，非默认 CIE 观察者等）。
+"colorimeter_correction.create.failure": |-
+  校正文件创建失败。
+"colorimeter_correction.create.info": |-
+  要创建色度仪校正文件，首先需要使用光谱仪测量所需的测试颜色，如果要创建校正矩阵而不是光谱校正，还要使用色度仪。
+  另外可以选择“浏览...”来使用现有的测量值。
+"colorimeter_correction.create.success": |-
+  校正文件成功创建。
+"colorimeter_correction.create.warning": |-
+  在创建色度仪校正文件时确认测量的显示设备在其原生色域中并且不要人为地限制它（通过仿真模式或类似方法）。
+"colorimeter_correction.file.none": |-
+  无
+"colorimeter_correction.import": |-
+  从其它校色软件导入色度仪校正文件...
+"colorimeter_correction.import.choose": |-
+  请选择要导入的色度仪校正文件。
+"colorimeter_correction.import.failure": |-
+  没有色度仪校正文件可导入。
+"colorimeter_correction.import.partial_warning": |-
+  并非所有的色度仪校正文件能被导入，从 %s. %i 的 %i 条目必须被跳过。
+"colorimeter_correction.import.success": |-
+  色度仪校正文件或测量模式成功从以下软件导入:
+  
+  %s
+"*colorimeter_correction.info": |-
+  Colorimeter correction information
+"colorimeter_correction.instrument_mismatch": |-
+  所选色度仪校正文件不适用于所选校色仪。
+"colorimeter_correction.upload": |-
+  上传色度仪校正文件...
+"colorimeter_correction.upload.confirm": |-
+  要将色度仪校正文件上传至在线数据库吗（建议）？所有上传的文件都将被假定为已放置在公共领域中，以方便自由使用。
+"colorimeter_correction.upload.deny": |-
+  此色度仪校正文件不能上传。
+"colorimeter_correction.upload.exists": |-
+  色度仪校正文件已存在于数据库中。
+"colorimeter_correction.upload.failure": |-
+  色度仪校正文件未能纳入在线数据库。
+"colorimeter_correction.upload.success": |-
+  色度仪校正文件成功上传在线数据库。
+"colorimeter_correction.web_check": |-
+  检查在线色度仪校正文件...
+"colorimeter_correction.web_check.choose": |-
+  所选显示器和校色仪的下列色度仪校正文件已找到：
+"colorimeter_correction.web_check.failure": |-
+  所选显示器和校色仪的色度仪校正文件未找到。
+"colorimeter_correction.web_check.info": |-
+  请注意全部色度仪校正文件由各类用户提供，对特定情况的可用性由您来评估。它们或许能提高色度仪和显示器的绝对精度。
+"colorimeter_correction_matrix_file": |-
+  校正
+"colorimeter_correction_matrix_file.choose": |-
+  选择色度仪校正文件...
+"colorimetric_intent_image_state": |-
+  色度图像状态
+"colors_pcs_relative": |-
+  色彩 (PCS-相对)
+"colorspace": |-
+  色彩空间
+"colorspace.show_outline": |-
+  显示摘要
+"commandline": |-
+  命令行：
+"commands": |-
+  命令
+"comparison_profile": |-
+  对比配置文件
+"comport_detected": |-
+  检测到校色仪/端口配置发生变化。
+"compression.gzip": |-
+  GZIP 压缩
+"computer.name": |-
+  电脑名称
+"connected.to.at": |-
+  已连接至 %s 于 %s:%s
+"connecting.to": |-
+  连接至 %s:%s...
+"connection.broken": |-
+  连接中断
+"connection.established": |-
+  连接建立
+"connection.fail": |-
+  连接错误 (%s)
+"connection.fail.http": |-
+  HTTP 错误 %s
+"connection.waiting": |-
+  等待连接于
+"continue": |-
+  继续
+"contrast": |-
+  对比度
+"contribute": |-
+  捐赠
+"converting": |-
+  转换中
+"copyright": |-
+  版权
+"corrected": |-
+  校正
+"create_profile": |-
+  从测量数据创建配置文件...
+"create_profile_from_edid": |-
+  从扩展显示器标识数据创建配置文件...
+"created": |-
+  创建于
+"creator": |-
+  创建者
+"current": |-
+  当前
+"custom": |-
+  自定义
+"cyan": |-
+  青色
+"d3-e4-s2-g28-m0-b0-f0.ti1": |-
+  用于矩阵配置文件的小型测试图表
+"d3-e4-s3-g52-m3-b0-f0.ti1": |-
+  默认测试图表
+"d3-e4-s4-g52-m4-b0-f0.ti1": |-
+  用于 LUT 配置文件的小型测试图表
+"d3-e4-s5-g52-m5-b0-f0.ti1": |-
+  用于 LUT 配置文件的扩展测试图表
+"d3-e4-s9-g52-m9-b0-f0.ti1": |-
+  用于 LUT 配置文件的大型测试图表
+"d3-e4-s17-g52-m17-b0-f0.ti1": |-
+  用于 LUT 配置文件的超大型测试图表
+"deactivated": |-
+  已停用
+"default": |-
+  默认
+"default.icc": |-
+  默认 (伽玛值 2.2)
+"default_crt": |-
+  默认 阴极射线管
+"default_rendering_intent": |-
+  默认渲染意图
+"delete": |-
+  删除
+"delta_e_2000_to_blackbody_locus": |-
+  ΔE 2000 至黑体轨迹
+"delta_e_2000_to_daylight_locus": |-
+  ΔE 2000 至日光轨迹
+"delta_e_to_locus": |-
+  ΔE*00 至 %s 轨迹
+"description": |-
+  描述
+"description_ascii": |-
+  描述 (ASCII)
+"description_macintosh": |-
+  描述 (Macintosh)
+"description_unicode": |-
+  描述 (Unicode)
+"deselect_all": |-
+  取消全选
+"detect_displays_and_ports": |-
+  检测显示设备和校色仪
+"device": |-
+  设备
+"device.name.placeholder": |-
+  <设备名称>
+"device_color_components": |-
+  设备色彩组件
+"device_manager.launch": |-
+  启动设备管理器
+"device_manufacturer_name": |-
+  设备制造商名称
+"device_manufacturer_name_ascii": |-
+  设备制造商名称 (ASCII)
+"device_manufacturer_name_macintosh": |-
+  设备制造商名称 (Macintosh)
+"device_manufacturer_name_unicode": |-
+  设备制造商名称 (Unicode)
+"device_model_name": |-
+  设备型号名称
+"device_model_name_ascii": |-
+  设备型号名称 (ASCII)
+"device_model_name_macintosh": |-
+  设备型号名称 (Macintosh)
+"device_model_name_unicode": |-
+  设备型号名称 (Unicode)
+"device_to_pcs_intent_0": |-
+  设备-至-PCS: 意图 0
+"device_to_pcs_intent_1": |-
+  设备-至-PCS: 意图 1
+"device_to_pcs_intent_2": |-
+  设备-至-PCS: 意图 2
+"devicelink_profile": |-
+  设备链接配置文件
+"dialog.argyll.notfound.choice": |-
+  运行 DisplayCAL 所需的色彩引擎 ArgyllCMS 似乎未安装在此电脑上。要自动下载还是手动安装？
+"dialog.cal_info": |-
+  校准文件 “%s”将被使用。 要继续吗？
+"dialog.confirm_cancel": |-
+  真要取消吗？
+"dialog.confirm_delete": |-
+  真要删除所选文件？
+"dialog.confirm_overwrite": |-
+  文件“%s”已经存在。 要覆写它吗？
+"dialog.confirm_uninstall": |-
+  真要卸载所选文件？
+"dialog.current_cal_warning": |-
+  当前的校准曲线将被使用。要继续吗？
+"dialog.do_not_show_again": |-
+  不再显示此信息
+"dialog.enter_password": |-
+  请输入密码。
+"dialog.install_profile": |-
+  要安装配置文件“%s” 并让它成为显示器“%s”的默认值吗？
+"dialog.linear_cal_info": |-
+  线性校准曲线将被使用。要继续吗？
+"dialog.load_cal": |-
+  加载设置
+"dialog.select_argyll_version": |-
+  ArgyllCMS 版本 %s 已找到。当前选择的版本为 %s. 要使用较新版本吗？
+"dialog.set_argyll_bin": |-
+  请定位 ArgyllCMS 可执行文件目录。
+"dialog.set_profile_save_path": |-
+  创建配置文件目录 “%s” 于：
+"dialog.set_testchart": |-
+  选择测试图表
+"dialog.ti3_no_cal_info": |-
+  测量数据不包含校正曲线。真要继续吗？
+"digital_camera": |-
+  数字相机
+"digital_cinema_projector": |-
+  数字电影投影仪
+"digital_motion_picture_camera": |-
+  数字电影摄影机
+"direction.backward": |-
+  PCS → B2A → 设备
+"direction.backward.inverted": |-
+  PCS ← B2A ← 设备
+"direction.forward": |-
+  设备 → A2B → PCS
+"direction.forward.inverted": |-
+  设备 ← A2B ← PCS
+"directory": |-
+  目录
+"disconnected.from": |-
+  已从 %s:%s 断开
+"display": |-
+  显示器
+"display-instrument": |-
+  显示器 & 校色仪
+"display.connection.type": |-
+  连接
+"display.manufacturer": |-
+  显示设备制造商
+"display.output": |-
+  输出 #
+"display.primary": |-
+  (主要)
+"display.properties": |-
+  显示设备属性
+"display.reset.info": |-
+  请重置显示器为出厂默认值，然后将亮度调整至舒适水平。
+"display.settings": |-
+  显示设备设置
+"display.tech": |-
+  显示技术
+"*display.tech.CRT": |-
+  CRT
+"*display.tech.DLP Projector": |-
+  DLP Projector
+"*display.tech.DLP Projector RGB Filter Wheel": |-
+  DLP Projector RGB Filter Wheel
+"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  DLP Projector RGBCMY Filter Wheel
+"*display.tech.DPL Projector RGBW Filter Wheel": |-
+  DLP Projector RGBW Filter Wheel
+"*display.tech.LCD": |-
+  LCD
+"*display.tech.LCD CCFL": |-
+  LCD CCFL
+"*display.tech.LCD CCFL IPS": |-
+  LCD CCFL IPS
+"*display.tech.LCD CCFL TFT": |-
+  LCD CCFL TFT
+"*display.tech.LCD CCFL VPA": |-
+  LCD CCFL PVA
+"*display.tech.LCD CCFL Wide Gamut": |-
+  LCD CCFL Wide Gamut
+"*display.tech.LCD CCFL Wide Gamut IPS": |-
+  LCD CCFL Wide Gamut IPS
+"*display.tech.LCD CCFL Wide Gamut TFT": |-
+  LCD CCFL Wide Gamut TFT
+"*display.tech.LCD CCFL Wide Gamut VPA": |-
+  LCD CCFL Wide Gamut PVA
+"*display.tech.LCD GB-R Phosphor": |-
+  LCD GB-r-LED
+"*display.tech.LCD GB-R Phosphor IPS": |-
+  LCD GB-r-LED IPS
+"*display.tech.LCD GB-R Phosphor TFT": |-
+  LCD GB-r-LED TFT
+"*display.tech.LCD GB-R Phosphor VPA": |-
+  LCD GB-r-LED PVA
+"*display.tech.LCD PFS Phosphor": |-
+  LCD PFS Phosphor WLED
+"*display.tech.LCD PFS Phosphor IPS": |-
+  LCD PFS Phosphor WLED IPS
+"*display.tech.LCD PFS Phosphor TFT": |-
+  LCD PFS Phosphor WLED TFT
+"*display.tech.LCD PFS Phosphor VPA": |-
+  LCD PFS Phosphor WLED PVA
+"*display.tech.LCD RG Phosphor": |-
+  LCD RG Phosphor
+"*display.tech.LCD RG Phosphor IPS": |-
+  LCD RG Phosphor IPS
+"*display.tech.LCD RG Phosphor TFT": |-
+  LCD RG Phosphor TFT
+"*display.tech.LCD RG Phosphor VPA": |-
+  LCD RG Phosphor PVA
+"*display.tech.LCD RGB LED": |-
+  LCD RGB LED
+"*display.tech.LCD RGB LED IPS": |-
+  LCD RGB LED IPS
+"*display.tech.LCD RGB LED TFT": |-
+  LCD RGB LED TFT
+"*display.tech.LCD RGB LED VPA": |-
+  LCD RGB LED PVA
+"*display.tech.LCD White LED": |-
+  LCD White LED
+"*display.tech.LCD White LED IPS": |-
+  LCD White LED IPS
+"*display.tech.LCD White LED TFT": |-
+  LCD White LED TFT
+"*display.tech.LCD White LED VPA": |-
+  LCD White LED PVA
+"*display.tech.LED AMOLED": |-
+  AMOLED
+"*display.tech.LED OLED": |-
+  OLED
+"*display.tech.LED WOLED": |-
+  WOLED
+"*display.tech.Plasma": |-
+  Plasma
+"*display.tech.Unknown": |-
+  Unknown
+"display_detected": |-
+  检测到显示设备配置发生变化。
+"display_device_profile": |-
+  显示设备配置文件
+"display_lut.link": |-
+  链接/未链接显示器和视频卡伽玛表访问
+"display_peak_luminance": |-
+  目标峰值光亮度
+"display_profile.not_detected": |-
+  未检测到显示器 “%s” 当前的配置文件
+"display_short": |-
+  显示设备 (缩写)
+"displayport": |-
+  DisplayPort 接口
+"displays.identify": |-
+  识别显示设备
+"dlp_screen": |-
+  DLP 屏幕
+"donation_header": |-
+  欢迎支持！
+"donation_message": |-
+  如果您想支持 DisplayCAL 和 ArgyllCMS 的开发、技术帮助和可持续性，请考虑捐赠。
+  没有 ArgyllCMS 的基础构建， DisplayCAL 就不会有用，所以 DisplayCAL 收到的捐赠将在两个项目之间分配。
+  对于一般个人的非商业用途，一次性捐赠可能合适。
+  如果您正在商业化地使用 DisplayCAL ，每年或每个月的捐赠将确保两个项目的可持续性。
+  
+  感谢所有贡献者！
+"download": |-
+  下载
+"download.fail": |-
+  下载失败：
+"download.fail.empty_response": |-
+  下载失败: %s 返回一个空文档。
+"download.fail.wrong_size": |-
+  下载失败: 文件没有预期大小的 %s 字节（收到 %s 字节）。
+"download_install": |-
+  下载 & 安装
+"downloading": |-
+  下载中
+"drift_compensation.blacklevel": |-
+  黑电平漂移补偿
+"drift_compensation.blacklevel.info": |-
+  黑电平漂移补偿试图抵消由预热显示设备黑色校准漂移引起的测量误差。因此会定期测量黑色测试色块，这增加了测量所需的总时间。很多色度仪内置温度补偿，在这种情况下不需要黑电平漂移补偿，但大多数光谱仪没有温度补偿。
+"drift_compensation.whitelevel": |-
+  白电平漂移补偿
+"drift_compensation.whitelevel.info": |-
+  白电平漂移补偿试图抵消由预热显示设备光亮度变化引起的测量误差。因此会定期测量白色测试色块，这增加了测量所需的总时间。
+"dry_run": |-
+  空运行模式
+"dry_run.end": |-
+  空运行模式结束。
+"dry_run.info": |-
+  空运行模式。检查日志以查看命令行。
+"duration": |-
+  持续时间
+"dvi": |-
+  DVI 接口
+"dye_sublimation_printer": |-
+  热升华打印机
+"edid.crc32": |-
+  EDID CRC32 校验和
+"edid.serial": |-
+  EDID 序列号
+"elapsed_time": |-
+  已用时间
+"electrophotographic_printer": |-
+  电子成相打印机
+"electrostatic_printer": |-
+  静电打印机
+"enable_argyll_debug": |-
+  启用 ArgyllCMS 调试输出
+"enable_spyder2": |-
+  启用 Spyder 2 色度仪...
+"enable_spyder2_failure": |-
+  Spyder 2 未能启用。如果尚未安装 Spyder 2 软件，请手动安装然后再次运行此命令。
+"enable_spyder2_success": |-
+  Spyder 2 成功启用
+"entries": |-
+  条目
+"enumerate_ports.auto": |-
+  自动检测校色仪
+"enumerating_displays_and_comports": |-
+  枚举显示设备和通信端口...
+"environment": |-
+  环境
+"error": |-
+  错误
+"error.access_denied.write": |-
+  没有写入权限至 %s
+"error.already_exists": |-
+  名称 “%s” 不能使用，因为已存在同名的另一个对象。请选择其他名称或其它目录。
+"error.autostart_creation": |-
+  创建自启动条目为 %s 在登录时加载校准曲线失败。
+"error.autostart_remove_old": |-
+  不能移除登录时加载校准曲线的旧自启动条目: %s
+"error.autostart_system": |-
+  不能创建在登录时加载校准曲线的系统范围自启动条目，因为不能确定系统范围自启动目录。
+"error.autostart_user": |-
+  不能创建用于登录时加载校准曲线的用户特定自启动条目，因为不能确定用户特定自启动目录。
+"error.cal_extraction": |-
+  校准不能从 “%s” 提取。
+"error.calibration.file_missing": |-
+  校准文件 “%s” 丢失。
+"error.calibration.file_not_created": |-
+  校准文件未创建。
+"error.copy_failed": |-
+  文件 “%s” 不能复制到 “%s”。
+"error.deletion": |-
+  将文件移动至 %s 发生错误。某些文件可能尚未删除。
+"error.dir_creation": |-
+  目录 “%s” 不能创建。可能存在访问限制。请允许写入权限或选择其它目录。
+"error.dir_notdir": |-
+  目录 “%s” 不能创建，因为已经存在另一个同名对象。请选择其它目录。
+"error.file.create": |-
+  文件 “%s” 不能创建。
+"error.file.open": |-
+  文件 “%s” 不能打开。
+"error.file_type_unsupported": |-
+  不支持的文件类型。
+"error.generic": |-
+  发生内部错误。
+  
+  错误代码: %s
+  错误信息: %s
+"error.luminance.invalid": |-
+  测量的峰值光亮度无效。确认校色仪传感器未被遮挡，并取下保护盖（如果有）。
+"error.luminance.not_monotonically_increasing": |-
+  测量的光亮度响应为极高的非-单调性 (设备或校色仪故障)。不能生成色调响应曲线。
+"error.measurement.file_invalid": |-
+  测量文件 „%s“ 无效。
+"error.measurement.file_missing": |-
+  测量文件 “%s” 丢失。
+"error.measurement.file_not_created": |-
+  测量文件未创建。
+"error.measurement.missing_spectral": |-
+  测量文件不包含光谱值。
+"error.measurement.one_colorimeter": |-
+  必需使用色度仪测量。
+"error.measurement.one_reference": |-
+  必需使用参考测量。
+"error.no_files_extracted_from_archive": |-
+  没有文件从 “%s”提取。
+"error.not_a_session_archive": |-
+  存档 “%s” 似乎不是会话存档。
+"error.profile.file_missing": |-
+  配置文件 “%s” 丢失。
+"error.profile.file_not_created": |-
+  配置文件未创建。
+"error.source_dest_same": |-
+  源和目标配置文件相同。
+"error.testchart.creation_failed": |-
+  测试图表文件 “%s” 不能创建。可能存在访问限制，或源文件不存在。
+"error.testchart.invalid": |-
+  测试图表文件 “%s” 无效。
+"error.testchart.missing": |-
+  测试图表文件 “%s” 丢失。
+"error.testchart.missing_fields": |-
+  测试图表文件 „%s“ 未包含必填字段: %s
+"error.testchart.read": |-
+  测试图表文件 “%s” 不能读取。
+"error.tmp_creation": |-
+  不能创建临时工作目录。
+"error.trashcan_unavailable": |-
+  该 %s 不可用。没有文件被移除。
+"errors.none_found": |-
+  未找到错误。
+"estimated_measurement_time": |-
+  测量时间预计 %s 小时 %s 分钟
+"exceptions": |-
+  例外...
+"executable": |-
+  可执行
+"export": |-
+  输出...
+"extra_args": |-
+  设置附加命令行参数...
+"factory_default": |-
+  出厂默认值
+"failure": |-
+  ...已失败！
+"ffp_insertion": |-
+  全域模式插入
+"file.hash.malformed": |-
+  该 %s 的完整性不能被验证，因为校验和文件格式错误。
+"file.hash.missing": |-
+  该 %s 的完整性不能验证，因为校验和文件中无条目。
+"file.hash.verification.fail": |-
+  校验和验证失败为 %s:
+  
+  预期 %s
+  实际 %s
+"file.invalid": |-
+  文件无效。
+"file.missing": |-
+  文件 “%s” 不存在。
+"file.notfile": |-
+  “%s” 不是文件。
+"file.select": |-
+  选择文件
+"filename": |-
+  文件名
+"filename.upload": |-
+  上传文件名称
+"filetype.7z": |-
+  7-Zip 文件
+"filetype.any": |-
+  任何文件类型
+"filetype.cal": |-
+  校准文件 (*.cal)
+"filetype.cal_icc": |-
+  校准和配置文件 (*.cal;*.icc;*.icm)
+"filetype.ccmx": |-
+  校正矩阵/校准光谱样本 (*.ccmx;*.ccss)
+"filetype.html": |-
+  HTML 文件 (*.html;*.htm)
+"filetype.icc": |-
+  配置文件 (*.icc;*.icm)
+"filetype.icc_mpp": |-
+  配置文件 (*.icc;*.icm;*.mpp)
+"filetype.icc_ti1_ti3": |-
+  测试图表文件 (*.icc;*.icm;*.ti1;*.ti3)
+"filetype.icc_ti3": |-
+  测量文件 (*.icc;*.icm;*.ti3)
+"filetype.log": |-
+  日志文件 (*.log)
+"filetype.png": |-
+  便携式网络图形 (*.png)
+"filetype.tgz": |-
+  压缩 TAR 档案
+"filetype.ti1": |-
+  测试图表文件 (*.ti1)
+"filetype.ti1_ti3_txt": |-
+  测试图表文件 (*.ti1), 测量文件 (*.ti3;*.txt)
+"filetype.ti3": |-
+  测量文件 (*.ti3)
+"filetype.tif": |-
+  标记图像文件 (*.tif)
+"filetype.txt": |-
+  设备校准.txt
+"filetype.vrml": |-
+  VRML 文件 (*.wrl)
+"filetype.x3d": |-
+  X3D 文件 (*.x3d)
+"filetype.zip": |-
+  ZIP 文件
+"film_scanner": |-
+  胶片扫描仪
+"film_writer": |-
+  胶片写入仪
+"finish": |-
+  完成
+"flare": |-
+  闪光
+"flexography": |-
+  柔性版印刷
+"focal_plane_colorimetry_estimates": |-
+  焦平面比色法估算
+"forced": |-
+  强制
+"format.select": |-
+  选择所需格式。
+"fullscreen.message": |-
+  全屏模式已激活。
+  按 ESC 退出全屏。
+"fullscreen.osx.warning": |-
+  如果使用窗口标题栏中的缩放按钮进入全屏模式，请在窗口关闭后按 CMD+TAB 切换回正常模式。或者在双击标题栏或按住选项键同时点击缩放按钮进行全屏显示。
+"gamap.default_intent": |-
+  默认渲染意图
+"gamap.intents.a": |-
+  绝对色度
+"gamap.intents.aa": |-
+  绝对外观
+"gamap.intents.aw": |-
+  绝对色度与白点缩放
+"gamap.intents.la": |-
+  光亮度匹配外观
+"gamap.intents.lp": |-
+  光亮度保持感知外观
+"gamap.intents.ms": |-
+  保持饱和度
+"gamap.intents.p": |-
+  感知
+"gamap.intents.pa": |-
+  感知外观
+"gamap.intents.r": |-
+  相对色度
+"gamap.intents.s": |-
+  饱和度
+"gamap.out_viewcond": |-
+  目的地条件
+"gamap.perceptual": |-
+  色域映射为感知意图
+"gamap.profile": |-
+  源配置文件
+"gamap.saturation": |-
+  色域映射为饱和度意图
+"gamap.src_viewcond": |-
+  源观看条件
+"gamap.viewconds.cx": |-
+  在观察箱剪切透明片段
+"gamap.viewconds.jd": |-
+  黑暗环境中的投影仪
+"gamap.viewconds.jm": |-
+  昏暗环境中的投影仪
+"gamap.viewconds.mb": |-
+  明亮工作环境中的监视器
+"gamap.viewconds.md": |-
+  黑暗工作环境中的监视器
+"gamap.viewconds.mt": |-
+  典型工作环境中的监视器
+"gamap.viewconds.ob": |-
+  原始场景 - 明亮户外
+"gamap.viewconds.pc": |-
+  关键打印评估环境 (ISO-3664 P1)
+"gamap.viewconds.pcd": |-
+  照片光盘 - 户外原始场景
+"gamap.viewconds.pe": |-
+  印刷评估环境 (CIE 116-1995)
+"gamap.viewconds.pp": |-
+  实用反射打印 (ISO-3664 P2)
+"gamap.viewconds.tv": |-
+  电视/电影工作室
+"gamapframe.title": |-
+  高级色域映射选项
+"gamut": |-
+  色域
+"gamut.coverage": |-
+  色域覆盖
+"gamut.view.create": |-
+  生成色域视图...
+"gamut.volume": |-
+  色域容积
+"gamut_mapping.ciecam02": |-
+  CIECAM02 色域映射
+"gamut_mapping.mode": |-
+  色域映射模式
+"gamut_mapping.mode.b2a": |-
+  PCS-至-设备
+"gamut_mapping.mode.inverse_a2b": |-
+  反向设备-至-PCS
+"gamut_plot.tooltip": |-
+  点击和拖动鼠标移动视点，或使用鼠标滚轮和 +/- 键缩放。双击重置视点。
+"generic_name_value_data": |-
+  常规名称-值数据
+"geometry": |-
+  几何
+"glossy": |-
+  光泽
+"go_to": |-
+  转到 %s
+"go_to_website": |-
+  访问网站
+"gravure": |-
+  凹印
+"gray_tone_response_curve": |-
+  灰度色调响应曲线
+"grayscale": |-
+  灰阶
+"green": |-
+  绿色
+"green_gamma": |-
+  绿色伽玛值
+"green_lab": |-
+  绿色 L*a*b*
+"green_matrix_column": |-
+  绿色矩阵列
+"green_maximum": |-
+  绿色最大化
+"green_minimum": |-
+  绿色最小化
+"green_tone_response_curve": |-
+  绿色调响应曲线
+"green_xyz": |-
+  绿色 XYZ
+"grid_steps": |-
+  网格步骤
+"hdmi": |-
+  HDMI 接口
+"hdr_maxcll": |-
+  内容光线电平最大化
+"hdr_mincll": |-
+  内容光线电平最小化
+"header": |-
+  由 ArgyllCMS 提供显示校准和特性描述技术
+"help_support": |-
+  帮助和支持...
+"host.invalid.lookup_failed": |-
+  无效主机 (地址查找失败)
+"hpe_d65": |-
+  Hunt-Pointer-Estevez (HPE), 发光体 D65
+"hpe_e": |-
+  Hunt-Pointer-Estevez (HPE), 发光体 E
+"hue": |-
+  色调
+"icc_absolute_colorimetric": |-
+  ICC-绝对色度
+"icc_version": |-
+  ICC 版本
+"if_available": |-
+  如果可用
+"illuminant": |-
+  光源
+"illuminant_relative_cct": |-
+  光源-相对 CCT
+"illuminant_relative_lab": |-
+  光源-相对 L*a*b*
+"illuminant_relative_xyz": |-
+  光源-相对 XYZ
+"illuminant_xyz": |-
+  光源 XYZ
+"illumination": |-
+  照明
+"in": |-
+  输入
+"info.3dlut_settings": |-
+  <font weight='bold'>3D LUT</font> (LUT = 查找表) 或ICC设备链接配置文件由支持 3D LUT 或ICC设备链接功能的应用程序用于完整的<font weight='bold'>显示色彩校正</font>。
+  
+  <font weight='bold'>从现有配置文件中创建多个（附加的）3D LUTs </font>
+  在“设置”中选择所需的配置文件，取消选中“配置后创建 3D LUT”复选框。
+  
+  <font weight='bold'>选择正确的源色彩空间和色调响应曲线</font>
+  对于 3D LUTs 和ICC设备链接配置文件，需要预先设置源色彩空间和色调响应曲线并成为整个色彩转换的固定部分
+  (不像即时动态链接的ICC设备配置文件) 。
+  例如，HD视频素材通常依据Rec. 709标准，具有大约 2.2 至 2.4 的纯功率伽玛值（相对黑色输出偏移为100％）。
+  或Rec. 1886色调响应曲线（绝对黑色输出偏移为0％）。
+  在Rec. 1886-类和纯功率之间的划分可以设置黑色输出偏移0％至100％之间的值实现。
+  
+  <font weight='bold'>“绝对” vs. “相对” 伽玛值</font>
+  为适应实际显示的非零黑电平, 需要相应地偏移和缩放色调响应曲线。
+  “绝对”伽玛值在50％输入下得到的实际输出与理想的功率曲线不匹配（除非黑电平为零）。
+  “相对”伽玛值在50％输入下得到的实际输出与理想的功率曲线相匹配。
+  
+  <font weight='bold'>渲染意图</font>
+  如果从源色彩空间校准至不同的白点用于 3D LUT 替换，选择“相对色度”。
+  否则选择“绝对色度与白点缩放”（如果源色彩空间白点在显示色域之外，白点缩放将防止在绝对色度模式下可能发生的的剪切）。
+  还可以选择使用非色度渲染意图，该意图可能压缩或扩展源色彩空间以适应显示色域（不建议用于色度精确性需求）。
+"info.calibration_settings": |-
+  <font weight='bold'>校准</font>是由<font weight='bold'>交互式显示调整</font>完成所选白点或光亮度并可选地创建<font weight='bold'> 1D LUT 校正曲线 </font> (LUT = 查找表)
+  以满足选择的色调响应曲线并确保灰度平衡。
+  注意如果在校准过程中只想调整显示器并跳过生成 1D LUT 曲线，需要将色调曲线设置为“已测量”。
+  1D LUT 校准<font weight='bold'>不</font>适用于完整的显示色彩校正，需要创建<font weight='bold'>ICC设备配置文件</font> 或 <font weight='bold'>3D LUT </font>并将其用于支持的应用程序。
+  1D LUT 校准补充配置描述和 3D LUT 校准。
+"info.display_instrument": |-
+  如果显示器是<font weight='bold'>OLED</font>，<font weight='bold'>等离子</font>或依赖画面内容可变光输出的其它技术，启用<font weight='bold'>白电平漂移补偿</font>。
+  如果校色仪是<font weight='bold'>光谱仪</font>并在显示器稳定的黑电平使用接触模式，可能需要启用<font weight='bold'>黑电平漂移补偿</font>。
+  如果校色仪是<font weight='bold'>色度仪</font>，更正<font weight='bold'>测量模式</font>为适合此显示器的技术类型。
+  要注意的是某些校色仪【ColorHug, ColorHug2, K-10, Spyder4/5/X】的一些测量模式可能已内置校正。
+"info.display_instrument.warmup": |-
+  应让显示器至少<font weight='bold'>预热30分钟</font>再开始测量。如果校色仪使用接触模式，在预热期间将其放置在显示屏上是个好主意。
+"info.mr_settings": |-
+  通过测量报告<font weight='bold'>验证</font>ICC配置文件或 3D LUT 的<font weight='bold'>色准精度</font>，报告包含测量相关色块数色彩错误的详细统计数据。
+  
+  当验证 3D LUT 时，请确认使用创建 3D LUT 时的相同设置。
+  
+  <font weight='bold'>提示: </font>要创建自检报告代替测量报告，按住键盘的 ALT 键。
+"info.profile_settings": |-
+  <font weight='bold'>配置</font>是将显示器作<font weight='bold'>特性描述</font>并记录其响应于<font weight='bold'>ICC设备配置文件</font>的构建流程。
+  ICC设备配置文件能被支持ICC色彩管理的应用程序用于完整的<font weight='bold'>显示色彩校正</font>，
+  它能用于创建 <font weight='bold'>3D LUT</font> (LUT = 查找表) 对支持 3D LUTs 的应用程序具有相同用途。
+  被测量色块的数量影响配置文件可实现的色准精度结果。对于合理质量的 3x3 矩阵和基于曲线的配置文件，
+  如果显示器具有良好的强化色彩混合特征和线性，通常几十个色块数就够用。某些专业显示器属于该类别。
+  如果需要尽可能高的色准精度，建议使用大约几百至数千个色块数基于 LUT 的配置文件。
+  <font weight='bold'>“自动优化”</font> 测试图表设置自动配合显示器的非线性和实际响应，并应用于最佳的质量结果。
+  因此可以调整滑块，在配置文件的测量精度和运算耗时之间选择折衷方案。
+"*infoframe.default_text": |-
+  
+"infoframe.title": |-
+  日志
+"infoframe.toggle": |-
+  显示日志窗口
+"initial": |-
+  初始
+"initializing_gui": |-
+  图形用户界面初始化...
+"ink_jet_printer": |-
+  喷墨打印机
+"input_device_profile": |-
+  输入设备配置文件
+"input_table": |-
+  输入表
+"install_display_profile": |-
+  安装显示设备配置文件...
+"install_local_system": |-
+  在系统范围安装
+"install_user": |-
+  仅当前用户安装
+"instrument": |-
+  校色仪
+"instrument.calibrate": |-
+  将校色仪放在黑暗的无光泽表面或校准板上并按“确定”校准校色仪。
+"instrument.calibrate.colormunki": |-
+  将 ColorMunki 传感器置于校准位置并按“确定”校准校色仪。
+"instrument.calibrate.reflective": |-
+  将仪器放在其反射白色参考序列号 no. %s 并按“确定”校准校色仪。
+"instrument.calibrating": |-
+  正在校准校色仪...
+"instrument.colormunki": |-
+  ColorMunki Design/Photo, i1Studio
+"instrument.connect": |-
+  请连接校色仪开始测量。
+"instrument.initializing": |-
+  正在设置校色仪，请稍候...
+"instrument.measure_ambient": |-
+  如果校色仪需要特殊的盖子来测量测环境，请装上它。要测量环境光线，将校色仪向上放置在显示器旁边。如果要测量观察箱，将无同色异谱灰卡放置在箱内并将校色仪指向它。有关如何测量环境的更多说明可在校色仪文档中找到。按“确定”开始测量。
+"instrument.place_on_screen": |-
+  放置校色仪在测试窗口上并单击“确定”继续。
+"instrument.place_on_screen.madvr": |-
+  (%i) 请放置 %s 在测试区域
+"instrument.reposition_sensor": |-
+  因校色仪传感器位置错误导致测量失败。请校正传感器位置，然后单击“确定”继续。
+"internal": |-
+  内置
+"interval": |-
+  间隔
+"invert_selection": |-
+  反向选择
+"ipt": |-
+  IPT 格式
+"is_embedded": |-
+  嵌入
+"is_illuminant": |-
+  光源
+"is_linear": |-
+  线性
+"laptop.icc": |-
+  笔记本电脑 (伽玛值  2.2)
+"level": |-
+  电平
+"libXss.so": |-
+  X11 屏幕保护程序扩展
+"library.not_found.warning": |-
+  程序库 “%s” (%s) 未找到。在继续前请确认已安装。
+"license": |-
+  许可协议
+"license_info": |-
+  采用 GPL 许可协议
+"linear": |-
+  线性
+"link.address.copy": |-
+  复制链接地址
+"log.autoshow": |-
+  自动显示日志窗口
+"luminance": |-
+  光亮度
+"lut_access": |-
+  视频卡伽玛表访问
+"madhcnet.outdated": |-
+  已安装版本 %s 发现 %s 已过时。请更新至最新的 madVR 版本（至少 %i.%i.%i.%i）。
+"madtpg.launch.failure": |-
+  madTPG 未找到或不能启动。
+"madvr.not_found": |-
+  madVR DirectShow 滤镜在注册表中未找到。请确认它已安装。
+"madvr.outdated": |-
+  正在使用的 madVR 版本已过时。 请更新至最新版本（至少 %i.%i.%i.%i）。
+"madvr.wrong_levels_detected": |-
+  RGB 电平 0 和 16 之间的测量光亮度差异低于 0.02 cd/m²。显示设备的输入- 或黑电平设置不正确，图形卡的输出电平配置或 madVR 错误 — 如果图形卡驱动程序设置为输出全范围 RGB (0-255)，请将显示设备的 madVR 输出电平更改为 电视标准 (16-235)。
+"magenta": |-
+  品红色
+"make_and_model": |-
+  制造和型号
+"manufacturer": |-
+  制造商
+"mastering_display_black_luminance": |-
+  控制显示黑电平
+"mastering_display_peak_luminance": |-
+  控制显示峰值光亮度
+"matrix": |-
+  矩阵
+"matte": |-
+  哑光
+"max": |-
+  最大
+"maximal": |-
+  最大化
+"measure": |-
+  测量
+"measure.darken_background": |-
+  黑色背景
+"measure.darken_background.warning": |-
+  敬告: 如果 „黑色背景“被选取，它将遮盖整个屏幕并将不能看到显示调整窗口！如果有多屏设置，在开始测量之前移动显示调整窗口到另一个屏幕，或使用键盘（要中止测量按 Q 键。如果测量已经运行，请稍候然后再按 Q 键）。
+"measure.override_display_settle_time_mult": |-
+  改写显示建立时间倍数
+"measure.override_min_display_update_delay_ms": |-
+  改写显示更新最低延迟
+"measure.testchart": |-
+  测量测试图表
+"measureframe.center": |-
+  中心
+"measureframe.info": |-
+  移动测量窗口到所需的屏幕位置并根据需要调整大小。大约整个窗口区域将用于显示测量色块数，圆圈作为帮助放置测量设备的向导。
+  将测量设备放在窗口上，然后单击“开始测量”。要取消并返回主窗口，关闭测量窗口。
+"measureframe.measurebutton": |-
+  开始测量
+"measureframe.title": |-
+  测量区域
+"measureframe.zoomin": |-
+  放大
+"measureframe.zoommax": |-
+  最大化/还原
+"measureframe.zoomnormal": |-
+  正常
+"measureframe.zoomout": |-
+  缩小
+"measurement.play_sound": |-
+  在连续测量时作出声音反馈
+"measurement.untethered": |-
+  不受限制的测量
+"measurement_file.check_sanity": |-
+  检查测量文件...
+"measurement_file.check_sanity.auto": |-
+  自动检查测量文件
+"measurement_file.check_sanity.auto.warning": |-
+  请注意测量的自动检查是一项实验性功能。使用风险自负！
+"measurement_file.choose": |-
+  请选择测量文件
+"measurement_file.choose.colorimeter": |-
+  请选择色度仪测量文件
+"measurement_file.choose.reference": |-
+  请选择参考测量文件
+"measurement_mode": |-
+  模式
+"measurement_mode.adaptive": |-
+  自适应
+"measurement_mode.dlp": |-
+  数字光处理
+"measurement_mode.factory": |-
+  工厂校准
+"measurement_mode.generic": |-
+  常规
+"measurement_mode.highres": |-
+  高解析度
+"measurement_mode.lcd": |-
+  液晶 (常规)
+"measurement_mode.lcd.ccfl": |-
+  液晶 (CCFL)
+"measurement_mode.lcd.ccfl.2": |-
+  液晶 (CCFL 类型 2)
+"measurement_mode.lcd.oled": |-
+  液晶 (OLED)
+"measurement_mode.lcd.white_led": |-
+  液晶 (W-LED)
+"measurement_mode.lcd.wide_gamut.ccfl": |-
+  广色域液晶 (CCFL)
+"measurement_mode.lcd.wide_gamut.gb_led": |-
+  广色域液晶 (GB-LED)
+"measurement_mode.lcd.wide_gamut.led": |-
+  广色域液晶 (PFS-Phosphor, RGB-LED)
+"measurement_mode.lcd.wide_gamut.rgb_led": |-
+  广色域液晶 (RGB-LED)
+"measurement_mode.raw": |-
+  Raw 格式
+"measurement_mode.refresh": |-
+  刷新 (常规)
+"measurement_report": |-
+  测量报告...
+"measurement_report.update": |-
+  更新测量或均匀度报告...
+"measurement_report_choose_chart": |-
+  请选择要测量的测试图表。
+"measurement_report_choose_chart_or_reference": |-
+  请选择测试图表或参考。
+"measurement_report_choose_profile": |-
+  请选择要验证的配置文件。
+"measurement_type": |-
+  测量类型
+"measurements.complete": |-
+  测量完成！要打开包含测量文件的文件夹吗？
+"measurements.invalid": |-
+  测量无效。
+"measuring.characterization": |-
+  为特性描述测量色彩样本...
+"media_attributes": |-
+  媒体属性
+"media_black_point": |-
+  媒体黑点
+"media_relative_colorimetric": |-
+  媒体-相对色度
+"media_white_point": |-
+  媒体白点
+"menu.about": |-
+  关于...
+"menu.file": |-
+  文件
+"menu.help": |-
+  ？
+"menu.language": |-
+  语言
+"menu.options": |-
+  选项
+"menu.tools": |-
+  工具
+"menuitem.quit": |-
+  退出
+"menuitem.set_argyll_bin": |-
+  定位 ArgyllCMS 可执行文件...
+"metadata": |-
+  元数据
+"method": |-
+  方法
+"min": |-
+  最小
+"minimal": |-
+  最小化
+"model": |-
+  型号
+"motion_picture_film_scanner": |-
+  电影胶片扫描仪
+"mswin.open_display_settings": |-
+  打开 Windows 显示设置...
+"named_color_profile": |-
+  命名色彩配置文件
+"named_colors": |-
+  命名色彩
+"native": |-
+  原生
+"negative": |-
+  否定
+"no": |-
+  否
+"no_settings": |-
+  文件不包含设置。
+"none": |-
+  无
+"not_applicable": |-
+  不适用
+"not_connected": |-
+  未连接
+"not_found": |-
+  “%s” 未找到。
+"not_now": |-
+  并非现在
+"number_of_entries": |-
+  条目数
+"number_of_entries_per_channel": |-
+  单通道条目数
+"observer": |-
+  观察者
+"*observer.1931_2": |-
+  CIE 1931 2°
+"*observer.1955_2": |-
+  Stiles & Birch 1955 2°
+"*observer.1964_10": |-
+  CIE 1964 10°
+"observer.1964_10c": |-
+  CIE 1964 10° / 1931 2° 混合
+"*observer.1978_2": |-
+  Judd & Voss 1978 2°
+"*observer.2012_2": |-
+  CIE 2012 2°
+"*observer.2012_10": |-
+  CIE 2012 10°
+"*observer.shaw": |-
+  Shaw & Fairchild 1997 2°
+"oem.import.auto": |-
+  
+  如果色度仪附带 Windows 光盘软件，请立即插入（中止任何可能的软件自动安装）。
+  
+  如果没有光盘且所需文件未找到，文件将从网络下载。
+"oem.import.auto.download_selection": |-
+  
+  预选基于已检测的校色仪，请选择文件下载。
+"oem.import.auto_windows": |-
+  如果已安装色度仪的供应商软件，所需文件通常能被自动找到。
+"office_web.icc": |-
+  办公与互联网 (D65, 伽玛值 2.2)
+"offset": |-
+  偏移
+"offset_lithography": |-
+  胶印平版印刷
+"ok": |-
+  确定
+"or": |-
+  或
+"osd": |-
+  显示器菜单调节
+"other": |-
+  其它
+"out": |-
+  输出
+"out_of_gamut_tag": |-
+  超出色域标签
+"output.profile": |-
+  目的地配置文件
+"output_device_profile": |-
+  输出设备配置文件
+"output_levels": |-
+  输出电平
+"output_offset": |-
+  输出偏移
+"output_table": |-
+  输出表
+"overwrite": |-
+  覆写
+"panel.surface": |-
+  面板表面
+"panel.type": |-
+  面板类型
+"passive_matrix_display": |-
+  被动矩阵显示器
+"patch.layout.select": |-
+  请选择色块布局
+"patches": |-
+  色块数
+"patterngenerator.prisma.specify_host": |-
+  请指定 Prisma 视频处理器的主机名，例如 prisma-0123（Windows）或 prisma-0123.local（Linux / Mac OS X）。在 Prisma 的底面标签上可以找到主机名，通过 Prisma 的管理网络界面进行更改除外。或输入IP地址（如果知道），例如192.168.1.234
+"patterngenerator.sync_lost": |-
+  与模式生成器失去同步。
+"pause": |-
+  暂停
+"pcs_illuminant_xyz": |-
+  PCS 光源 XYZ
+"pcs_relative_cct": |-
+  PCS-相对 CCT
+"pcs_relative_lab": |-
+  PCS-相对 L*a*b*
+"pcs_relative_xyz": |-
+  PCS-相对 XYZ
+"pcs_to_device_intent_0": |-
+  PCS-至-设备: 目的 0
+"pcs_to_device_intent_1": |-
+  PCS-至-设备: 目的 1
+"pcs_to_device_intent_2": |-
+  PCS-至-设备: 目的 2
+"perceptual": |-
+  感知
+"photo.icc": |-
+  照片 (D50, 伽玛值 2.2)
+"photo_imagesetter": |-
+  照片放映机
+"photographic_paper_printer": |-
+  相纸打印机
+"platform": |-
+  平台
+"please_wait": |-
+  请稍候...
+"port.invalid": |-
+  无效端口 %s
+"positive": |-
+  积极
+"preferred_cmm": |-
+  首选 CMM
+"prepress.icc": |-
+  印前 (D50, 130 cd/m², L*)
+"preserve_hue": |-
+  保持色调
+"preserve_luminance": |-
+  保持光亮度
+"preserve_saturation": |-
+  保持饱和度
+"preset": |-
+  预设
+"preview": |-
+  预览
+"profile": |-
+  配置文件
+"profile.advanced_gamap": |-
+  高级...
+"profile.b2a.hires": |-
+  增强色度有效分辨率 PCS-至-设备表
+"profile.b2a.lowres.warning": |-
+  配置文件似乎缺少高质量的 PCS-至-设备表，这对于正常运行至关重要。要现在生成高质量的转换表吗？这将需要几分钟。
+"profile.b2a.smooth": |-
+  平滑
+"profile.choose": |-
+  请选择配置文件。
+"profile.confirm_regeneration": |-
+  要重新生成配置文件吗？
+"profile.current": |-
+  当前配置文件
+"profile.do_not_install": |-
+  取消安装
+"profile.iccv4.unsupported": |-
+  不支持版本 4 的ICC配置文件。
+"profile.import.success": |-
+  配置文件已导入。可能需要在系统设置的“颜色管理”中手动分配和激活它。
+"profile.info": |-
+  配置文件信息
+"profile.info.show": |-
+  显示配置文件信息
+"profile.install": |-
+  安装配置文件
+"profile.install.error": |-
+  配置文件未安装/激活。
+"profile.install.success": |-
+  配置文件已安装和激活。
+"profile.install.warning": |-
+  配置文件已安装，但可能有问题。
+"profile.install_local_system": |-
+  安装配置文件为系统默认值
+"profile.install_network": |-
+  安装配置文件于网络范围
+"profile.install_user": |-
+  仅为当前用户安装配置文件
+"profile.invalid": |-
+  无效配置文件。
+"profile.load_error": |-
+  显示配置文件未加载。
+"profile.load_on_login": |-
+  登录时加载校准
+"profile.load_on_login.handled_by_os": |-
+  让操作系统处理校准加载（低精度与可靠性）
+"profile.name": |-
+  配置文件名称
+"profile.name.placeholders": |-
+  在配置文件名称中使用以下占位符:
+  
+  %a	缩写工作日
+  %A	完整工作日
+  %b	缩写月份
+  %B	完整月份
+  %d	月份日期
+  %H	小时 (24小时制)
+  %I	小时 (12小时制)
+  %j	年份日期
+  %m	月
+  %M	分
+  %S	秒
+  %p	上午/下午
+  %U	星期 (星期日为一周第一天)
+  %W	星期 (星期一为一周第一天)
+  %w	星期日 (星期日为0)
+  %y	年份无世纪
+  %Y	年份与世纪
+"profile.no_embedded_ti3": |-
+  配置文件不包含与 Argyll 兼容的测量数据。
+"profile.no_vcgt": |-
+  配置文件不包含校准曲线。
+"profile.only_named_color": |-
+  只能使用“命名色彩”类型的配置文件。
+"profile.quality": |-
+  配置文件质量
+"profile.quality.b2a.low": |-
+  低质量 PCS-至-设备表
+"profile.quality.b2a.low.info": |-
+  如果配置文件仅用于 反向设备-至-PCS 的色域映射以创建设备链接或 3D LUT 选择此选项
+"profile.required_tags_missing": |-
+  配置文件缺少必需的标签: %s
+"profile.self_check": |-
+  配置文件自检 ΔE*76
+"profile.self_check.avg": |-
+  平均
+"profile.self_check.max": |-
+  最大
+"profile.self_check.rms": |-
+  均方根
+"profile.set_save_path": |-
+  选择保存路径...
+"profile.settings": |-
+  配置设置
+"profile.share": |-
+  上传配置文件...
+"profile.share.avg_dE_too_high": |-
+  配置文件产生过高的 ΔE (实际= %s，阈值= %s)。
+"profile.share.b2a_resolution_too_low": |-
+  配置文件 PCS-至-设备表的分辨率太低。
+"profile.share.enter_info": |-
+  通过 OpenSUSE “ICC Profile Taxi” 服务与其他用户共享配置文件。
+  
+  请提供有意义的说明并输入下面的显示设备属性。从显示设备的菜单调节读取设置并且仅输入从默认值更改的适用于显示设备的设置。
+  示例: 对于大多数显示设备，这些是所选预设的名称，亮度，对比度，色温或白点 RGB 增益以及伽玛值。在笔记本电脑和笔记本电脑上通常只有亮度。如果在校准显示设备时更改了附加设置，也尽可能输入它们。
+"profile.share.meta_missing": |-
+  配置文件不包含必要的元信息。
+"profile.share.success": |-
+  配置文件上传成功。
+"profile.tags.A2B0.shaper_curves.input": |-
+  A2B0 输入整形曲线
+"profile.tags.A2B0.shaper_curves.output": |-
+  A2B0 输出整形曲线
+"profile.tags.A2B1.shaper_curves.input": |-
+  A2B1 输入整形曲线
+"profile.tags.A2B1.shaper_curves.output": |-
+  A2B1 输出整形曲线
+"profile.tags.A2B2.shaper_curves.input": |-
+  A2B2 输入整形曲线
+"profile.tags.A2B2.shaper_curves.output": |-
+  A2B2 输出整形曲线
+"profile.tags.B2A0.shaper_curves.input": |-
+  B2A0 输入整形曲线
+"profile.tags.B2A0.shaper_curves.output": |-
+  B2A0 输出整形曲线
+"profile.tags.B2A1.shaper_curves.input": |-
+  B2A1 输入整形曲线
+"profile.tags.B2A1.shaper_curves.output": |-
+  B2A1 输出整形曲线
+"profile.tags.B2A2.shaper_curves.input": |-
+  B2A2 输入整形曲线
+"profile.tags.B2A2.shaper_curves.output": |-
+  B2A2 输出整形曲线
+"profile.testchart_recommendation": |-
+  对于高质量的配置文件，建议使用包含更多样本的测试图表，但需要更多时间进行测量。是否使用建议的测试图表？
+"profile.type": |-
+  配置文件类型
+"profile.type.gamma_matrix": |-
+  伽玛+矩阵
+"*profile.type.lut.lab": |-
+  L*a*b* LUT
+"*profile.type.lut.xyz": |-
+  XYZ LUT
+"profile.type.lut_matrix.xyz": |-
+  XYZ LUT+矩阵
+"profile.type.lut_rg_swapped_matrix.xyz": |-
+  XYZ LUT+互换矩阵
+"profile.type.shaper_matrix": |-
+  曲线+矩阵
+"profile.type.single_gamma_matrix": |-
+  单伽玛+矩阵
+"profile.type.single_shaper_matrix": |-
+  单曲线+矩阵
+"profile.unsupported": |-
+  不支持的配置文件类型 (%s) 或色彩空间 (%s)。
+"profile.update": |-
+  更新配置文件
+"profile_associations": |-
+  配置文件关联...
+"profile_associations.changing_system_defaults.warning": |-
+  当前更改为系统默认值
+"profile_associations.use_my_settings": |-
+  使用我对此设备的设置
+"profile_class": |-
+  配置文件分类
+"profile_connection_space_pcs": |-
+  配置文件关连空间 (PCS)
+"profile_loader": |-
+  配置文件加载器
+"profile_loader.disable": |-
+  禁用配置文件加载器
+"profile_loader.exceptions.known_app.error": |-
+  当 %s 运行时配置文件加载器会自动禁用自身。 不能撤消此状态。
+"profile_loader.exit_warning": |-
+  真要退出配置文件加载器吗？如果更改显示器配置，校准将不再被自动重新加载！
+"profile_loader.fix_profile_associations": |-
+  自动修复配置文件关联
+"profile_loader.fix_profile_associations_warning": |-
+  配置文件加载器只要运行，就能在更改显示器配置时处理配置文件关联。
+  
+  继续之前请确认配置文件关联正确。如果未关联，遵循下列步骤：
+  
+  1. 打开 Windows 显示设置。
+  2. 激活所有连接的显示器 (扩展桌面)。
+  3. 打开配置文件关联。
+  4. 确认每个显示设备都有正确的配置文件。然后关闭配置文件关联。
+  5. 在 Windows 显示设置中，还原至之前的显示配置并关闭显示设置。
+  6. 现在启用“自动修复配置文件关联”。
+"profile_loader.info": |-
+  校准状态目前已(重新)应用 %i 次。
+  右键单击图标打开菜单。
+"profiling": |-
+  配置
+"profiling.complete": |-
+  配置完成！
+"profiling.incomplete": |-
+  配置未完成。
+"projection_television": |-
+  投影电视
+"projector": |-
+  投影仪
+"projector_mode_unavailable": |-
+  投影仪模式仅适用于 ArgyllCMS 1.1.0 测试版或更新版本。
+"quality.ultra.warning": |-
+  超高质量几乎不会被使用，除了证明它几乎不应该被使用之外（处理时间长！）可以选择高或中等质量代替。
+"readme": |-
+  自述
+"ready": |-
+  准备就绪。
+"red": |-
+  红色
+"red_gamma": |-
+  红色伽玛值
+"red_lab": |-
+  红色 L*a*b*
+"red_matrix_column": |-
+  红色矩阵列
+"red_maximum": |-
+  红色最大化
+"red_minimum": |-
+  红色最小化
+"red_tone_response_curve": |-
+  红色调响应曲线
+"red_xyz": |-
+  红色 XYZ
+"reference": |-
+  参考
+"reflection_hardcopy_original_colorimetry": |-
+  反射硬拷贝原始比色法
+"reflection_print_output_colorimetry": |-
+  反射打印输出比色法
+"reflective": |-
+  反光
+"reflective_scanner": |-
+  反射式扫描仪
+"remaining_time": |-
+  剩余时间 (ca.)
+"remove": |-
+  移除
+"rendering_intent": |-
+  渲染意图
+"report": |-
+  报告
+"report.calibrated": |-
+  已校准显示设备报告
+"report.uncalibrated": |-
+  未校准显示设备报告
+"report.uniformity": |-
+  测量显示设备均匀度...
+"reset": |-
+  重置
+"resources.notfound.error": |-
+  致命错误: 所需文件未找到：
+"resources.notfound.warning": |-
+  警告: 所需文件未找到：
+"response.invalid": |-
+  无效响应自 %s: %s
+"response.invalid.missing_key": |-
+  无效响应由 %s: 缺少密钥 “%s”: %s
+"response.invalid.value": |-
+  无效响应自 %s: 密钥值 “%s” 不匹配预期值 “%s”: %s
+"restore_defaults": |-
+  恢复默认值
+"rgb.trc": |-
+  RGB 传递函数
+"rgb.trc.averaged": |-
+  平均 RGB 传递函数
+"*sRGB.icc": |-
+  sRGB
+"saturation": |-
+  饱和度
+"save": |-
+  保存
+"save_as": |-
+  另存为...
+"scene_appearance_estimates": |-
+  场景外观估算
+"scene_colorimetry_estimates": |-
+  场景比色法估算
+"scripting-client": |-
+  DisplayCAL 脚本客户端
+"scripting-client.cmdhelptext": |-
+  在空命令提示符下按 Tab 键查看当前上下文中可能的命令，或自动完成已输入的初始字母。对于连接的应用程序，键入“getcommands”以获取支持的命令和可能的参数。
+"scripting-client.detected-hosts": |-
+  已检测脚本主机：
+"select_all": |-
+  全选
+"self_check_report": |-
+  自检报告...
+"set_as_default": |-
+  设为默认值
+"setting.keep_current": |-
+  保持当前设置
+"settings.additional": |-
+  附加设置
+"settings.basic": |-
+  基本设置
+"settings.new": |-
+  <当前>
+"settings_loaded": |-
+  校准曲线和以下校准设置已加载: %s. 其它校准选项已恢复为默认值并且未对配置文件选项进行更改。
+"settings_loaded.cal": |-
+  配置文件仅包含校准设置。其它选项尚未更改。未找到校准曲线。
+"settings_loaded.cal_and_lut": |-
+  配置文件仅包含校准设置。其它选项尚未更改并且已加载校准曲线。
+"settings_loaded.cal_and_profile": |-
+  设置已加载。未找到校准曲线。
+"settings_loaded.profile": |-
+  配置文件仅包含配置设置。其它选项尚未更改。未找到校准曲线。
+"settings_loaded.profile_and_lut": |-
+  配置文件仅包含配置文件设置。其它选项尚未更改并且已加载校准曲线。
+"sharp": |-
+  锐利
+"show_advanced_options": |-
+  显示高级选项
+"show_notifications": |-
+  显示通知
+"silkscreen": |-
+  丝网印刷
+"simulation_profile": |-
+  模拟配置文件
+"size": |-
+  大小
+"skip_legacy_serial_ports": |-
+  跳过传统串行端口
+"softproof.icc": |-
+  软打样 (5800K, 160 cd/m², L*)
+"spectral": |-
+  光谱
+"spectral_resolution": |-
+  光谱分辨率
+"ssl.certificate_verify_failed": |-
+  远程证书不能被验证。
+"ssl.certificate_verify_failed.root_ca_missing": |-
+  远程证书不能被验证，因为在本地系统找不到合适的根证书。
+"ssl.handshake_failure": |-
+  握手失败。不能建立安全连接。
+"startup": |-
+  正在启动...
+"startup_sound.enable": |-
+  启动声音
+"success": |-
+  ...确定。
+"surround_xyz": |-
+  环绕 XYZ
+"synthicc.create": |-
+  创建合成 ICC 配置文件...
+"target": |-
+  目标
+"tc.3d": |-
+  创建诊断 3D 文件
+"tc.I": |-
+  感知空间体位于立方网格中心
+"tc.Q": |-
+  感知空间填充准-随机
+"tc.R": |-
+  感知空间随机
+"tc.adaption": |-
+  适应
+"tc.algo": |-
+  分布
+"tc.angle": |-
+  角度
+"tc.black": |-
+  黑色块数
+"tc.dark_emphasis": |-
+  强调暗区
+"tc.fullspread": |-
+  迭代色块数
+"tc.gray": |-
+  中性色块数
+"tc.i": |-
+  设备空间体位于立方网格中心
+"tc.limit.sphere": |-
+  限制样本为球体
+"tc.limit.sphere_radius": |-
+  半径
+"tc.multidim": |-
+  多维度
+"tc.multidim.patches": |-
+  级别 = %s 色块数 (%s 中性)
+"tc.neutral_axis_emphasis": |-
+  强调中性主轴
+"tc.ofp": |-
+  已优化最远点采样
+"tc.patch": |-
+  色块
+"tc.patches.selected": |-
+  已选中
+"tc.patches.total": |-
+  色块总数
+"tc.precond": |-
+  预处理配置文件
+"tc.precond.notset": |-
+  请选择预处理配置文件。
+"tc.preview.create": |-
+  正在创建预览，请稍候...
+"tc.q": |-
+  设备空间填充准-随机
+"tc.r": |-
+  设备空间随机
+"tc.single": |-
+  单通道色块数
+"tc.single.perchannel": |-
+  单通道
+"tc.t": |-
+  增量远点采样
+"tc.vrml.black_offset": |-
+  RGB 黑色偏移 (L*)
+"tc.vrml.use_D50": |-
+  中性 RGB 白色
+"tc.white": |-
+  白色块
+"technology": |-
+  技术
+"tempdir_should_still_contain_files": |-
+  创建的文件仍在临时目录 “%s”。
+"testchart.add_saturation_sweeps": |-
+  添加饱和度扫描
+"testchart.add_ti3_patches": |-
+  添加参考色块数...
+"testchart.auto_optimize.untethered.unsupported": |-
+  不受限制的虚拟显示器不支持测试图表自动优化。
+"testchart.change_patch_order": |-
+  更改色块顺序
+"testchart.confirm_select": |-
+  文件已保存。要选择此测试图表吗？
+"testchart.create": |-
+  创建测试图表
+"testchart.discard": |-
+  放弃
+"testchart.dont_select": |-
+  不选择
+"testchart.edit": |-
+  编辑测试图表...
+"testchart.export.repeat_patch": |-
+  重复每个色块：
+"testchart.file": |-
+  测试图表
+"testchart.info": |-
+  所选测试图表色块数
+"testchart.interleave": |-
+  交错
+"testchart.maximize_RGB_difference": |-
+  最大化RGB差异
+"testchart.maximize_lightness_difference": |-
+  最大化明亮度差异
+"testchart.maximize_rec709_luma_difference": |-
+  最大化辉度差异
+"testchart.optimize_display_response_delay": |-
+  最小化显示响应延迟
+"testchart.patch_sequence": |-
+  色块序列
+"testchart.patches_amount": |-
+  色块数量
+"testchart.read": |-
+  正在读取测试图表...
+"testchart.save_or_discard": |-
+  测试图表尚未保存。
+"testchart.select": |-
+  选择
+"testchart.separate_fixed_points": |-
+  请选择在单独步骤添加的色块数。
+"testchart.set": |-
+  选择测试图表...
+"testchart.shift_interleave": |-
+  转移 & 交错
+"testchart.sort_RGB_blue_to_top": |-
+  将 RGB 蓝色排列至最顶
+"testchart.sort_RGB_cyan_to_top": |-
+  将 RGB 青色排列至最顶
+"testchart.sort_RGB_gray_to_top": |-
+  将 RGB 灰色排列至最顶
+"testchart.sort_RGB_green_to_top": |-
+  将 RGB 绿色排列至最顶
+"testchart.sort_RGB_magenta_to_top": |-
+  将 RGB 品红色排列至最顶
+"testchart.sort_RGB_red_to_top": |-
+  将 RGB 红色排列至最顶
+"testchart.sort_RGB_white_to_top": |-
+  将 RGB 白色排列至最顶
+"testchart.sort_RGB_yellow_to_top": |-
+  将 RGB 黄色排列至最顶
+"testchart.sort_by_BGR": |-
+  按 BGR 排序
+"testchart.sort_by_HSI": |-
+  按 HSI 排序
+"testchart.sort_by_HSL": |-
+  按 HSL 排序
+"testchart.sort_by_HSV": |-
+  按 HSV 排序
+"testchart.sort_by_L": |-
+  按 L* 排序
+"testchart.sort_by_RGB": |-
+  按 RGB 排序
+"testchart.sort_by_RGB_sum": |-
+  按 RGB 总和排序
+"testchart.sort_by_rec709_luma": |-
+  按辉度排序
+"testchart.vary_RGB_difference": |-
+  可变RGB差异
+"testchart_or_reference": |-
+  测试图表或参考
+"thermal_wax_printer": |-
+  热蜡打印机
+"tone_values": |-
+  色调值
+"transfer_function": |-
+  转换功能
+"translations": |-
+  翻译
+"transparency": |-
+  透明度
+"trashcan.linux": |-
+  垃圾
+"trashcan.mac": |-
+  垃圾
+"trashcan.windows": |-
+  回收站
+"tray_icon_animation": |-
+  动画任务栏图标
+"trc": |-
+  色调曲线
+"trc.dicom": |-
+  DICOM 标准
+"trc.gamma": |-
+  伽玛值
+"trc.hlg": |-
+  混合对数伽玛值
+"*trc.lstar": |-
+  L*
+"*trc.rec709": |-
+  Rec. 709
+"*trc.rec1886": |-
+  Rec. 1886
+"trc.should_use_viewcond_adjust": |-
+  当使用 SMPTE 240M 或 Rec. 709 曲线，应调整环境光照度以获得正确结果。勾选“环境光照度”旁的复选框并在 Lux 中输入数值。如果校色仪支持，还可以选择在校准时测量环境光线。
+"*trc.smpte240m": |-
+  SMPTE 240M
+"*trc.smpte2084": |-
+  SMPTE 2084
+"trc.smpte2084.hardclip": |-
+  SMPTE 2084 (硬削波)
+"trc.smpte2084.rolloffclip": |-
+  SMPTE 2084 (滚降)
+"*trc.srgb": |-
+  sRGB
+"trc.type.absolute": |-
+  绝对
+"trc.type.relative": |-
+  相对
+"turn_off": |-
+  关闭
+"type": |-
+  类型
+"udev_hotplug.unavailable": |-
+  节点和热插拔设备都未检测到。
+"unassigned": |-
+  未分配
+"uninstall": |-
+  卸载
+"uninstall_display_profile": |-
+  卸载显示设备配置文件...
+"unknown": |-
+  未知
+"unmodified": |-
+  未修改
+"unnamed": |-
+  未命名
+"unspecified": |-
+  未指定
+"update_check": |-
+  检查更新...
+"update_check.fail": |-
+  检查更新失败：
+"update_check.fail.version": |-
+  服务器 %s 的远程版本文件不能被解析。
+"update_check.new_version": |-
+  可用更新: %s
+"update_check.onstartup": |-
+  启动时检查更新
+"update_check.uptodate": |-
+  %s 已是最新版本。
+"update_now": |-
+  立即更新
+"upload": |-
+  上传
+"use_fancy_progress": |-
+  使用华丽进度对话框
+"use_separate_lut_access": |-
+  使用单独的视频卡伽玛表访问
+"use_simulation_profile_as_output": |-
+  使用模拟配置文件作为显示配置文件
+"vcgt": |-
+  校准曲线
+"vcgt.mismatch": |-
+  显示器 %s 的视频卡伽马表与所需状态不匹配。
+"vcgt.unknown_format": |-
+  配置文件 “%s” 中的未知视频卡伽玛表格式。
+"verification": |-
+  验证
+"verification.settings": |-
+  验证设置
+"verify.ti1": |-
+  验证测试图表
+"verify_extended.ti1": |-
+  扩展验证测试图表
+"verify_grayscale.ti1": |-
+  灰平衡验证测试图表
+"verify_large.ti1": |-
+  大型验证测试图表
+"verify_video.ti1": |-
+  验证测试图表 (视频)
+"verify_video_extended.ti1": |-
+  扩展验证测试图表 (视频)
+"verify_video_extended_hlg_p3_2020.ti1": |-
+  扩展验证测试图表 (HDR 视频, Rec. 2020/P3, 混合对数伽马值)
+"verify_video_extended_smpte2084_100_p3_2020.ti1": |-
+  扩展验证测试图表 (HDR 视频, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)
+"verify_video_extended_smpte2084_200_p3_2020.ti1": |-
+  扩展验证测试图表 (HDR 视频, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)
+"verify_video_extended_smpte2084_500_p3_2020.ti1": |-
+  扩展验证测试图表 (HDR 视频, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)
+"verify_video_extended_smpte2084_1000_p3_2020.ti1": |-
+  扩展验证测试图表 (HDR 视频, Rec. 2020/P3, SMPTE 2084, 1000 cd/m²)
+"verify_video_large.ti1": |-
+  大型验证测试图表 (视频)
+"verify_video_xl.ti1": |-
+  超大型验证测试图 (视频)
+"verify_video_xxl.ti1": |-
+  XXL 验证测试图表 (视频)
+"verify_video_xxxl.ti1": |-
+  XXXL 验证测试图表 (视频)
+"verify_xl.ti1": |-
+  超大型验证测试图表
+"verify_xxl.ti1": |-
+  XXL 验证测试图表
+"verify_xxxl.ti1": |-
+  XXXL 验证测试图表
+"vga": |-
+  VGA 接口
+"video.icc": |-
+  视频 (D65, Rec. 1886)
+"video_Prisma.icc": |-
+  用于 Prisma 的视频 3D LUT (D65, Rec. 709 / Rec. 1886)
+"video_ReShade.icc": |-
+  用于 ReShade 的视频 3D LUT (D65, Rec. 709 / Rec. 1886)
+"video_camera": |-
+  视频摄影机
+"video_card_gamma_table": |-
+  视频卡伽玛表
+"video_eeColor.icc": |-
+  用于 eeColor 的视频 3D LUT (D65, Rec. 709 / Rec. 1886)
+"video_madVR.icc": |-
+  用于 madVR 的视频 3D LUT (D65, Rec. 709 / Rec. 1886)
+"video_madVR_ST2084.icc": |-
+  用于 madVR HDR 的视频 3D LUT (D65, Rec. 2020 / SMPTE 2084 / BT.2390)
+"video_monitor": |-
+  视频监视器
+"video_resolve.icc": |-
+  用于 Resolve 的视频 3D LUT (D65, Rec. 709 / Rec. 1886)
+"video_resolve_ST2084_clip.icc": |-
+  用于 Resolve HDR 的视频 3D LUT (D65, Rec. 2020 / SMPTE 2084)
+"view.3d": |-
+  3D 视图
+"viewing_conditions": |-
+  查看条件
+"viewing_conditions_description": |-
+  查看条件说明
+"vrml_to_x3d_converter": |-
+  VRML 至 X3D 转换器
+"warning": |-
+  警告
+"warning.already_exists": |-
+  文件 “%s” 已经存在于所选位置并将被覆写。要继续吗？
+"warning.autostart_system": |-
+  系统范围自启动目录不能确定。
+"warning.autostart_user": |-
+  特定用户自启动目录不能确定。
+"warning.discard_changes": |-
+  真要放弃对当前设置的更改吗？
+"warning.gamap.out_viewcond.nondisplay": |-
+  目的地查看条件 “%s” 不是显示查看条件。仍要使用吗？
+"warning.input_value_clipping": |-
+  警告: 显示配置文件的以下黑点值将被剪切！
+"warning.suspicious_delta_e": |-
+  警告: 发现可疑测量值。请注意此检查假定为类似 sRGB 的显示设备。如果显示设备与此假设不同（例如，如果它有超广的色域或色调响应远离 sRGB ），那么发现的错误可能毫无意义。
+  
+  以下一个或所有条件匹配：
+  
+  • 具有不同 RGB 编号的连续色块，但测量值之间的 ΔE*00 可疑。
+  • RGB灰度与增加的 RGB 编号之前的色块，但明亮度下降 (L*)。
+  • RGB 灰度与减少的 RGB 编号之前的色块，但明亮度上升 (L*)。
+  • 测量 sRGB 相当于 RGB 编号的 ΔE*00 和 ΔL*00 或 ΔH*00 或 ΔC*00 异常高。
+  
+  这可能暗示测量误差。数值被认为有问题（不一定属实！）并以红色突出显示。
+  仔细检查测量数值并标记要认可的测量数值。可以编辑 RGB 和 XYZ 数值。
+"warning.suspicious_delta_e.info": |-
+  Δ 列说明：
+  
+  ΔE*00 XYZ A/B: ΔE*00 的测量值对于之前的色块测量值。如果缺少该值，则不是检查时的因素。如果该值存在，则假定值太低。
+  
+  0.5 ΔE*00 RGB A/B: ΔE*00 的 sRGB 相当于 RGB 编号对于 sRGB 相当于 RGB 编号之前的色块（系数为0.5）。如果该值存在，则表示在检查假定 ΔE*00 XYZ A/B 过低时的比较值（最小化）。它用于非常粗略的方向。
+  
+  ΔE*00 RGB-XYZ: ΔE*00 的测量值对于 sRGB 相当于 RGB 编号。
+  ΔL*00 RGB-XYZ: ΔL*00 对于 sRGB 相当于 RGB 编号。 nΔC*00 RGB-XYZ: ΔC*00 对于 sRGB 相当于 RGB 编号。
+  ΔH*00 RGB-XYZ: ΔH*00 的测量值对于 sRGB 相当于 RGB 编号。
+"warning.system_file": |-
+  警告: “%s” 是系统文件。真要继续吗？
+"webserver.waiting": |-
+  网络服务器等待于
+"welcome": |-
+  欢迎！
+"welcome_back": |-
+  欢迎回来！
+"white": |-
+  白色
+"whitepoint": |-
+  白点
+"whitepoint.colortemp": |-
+  色温
+"whitepoint.colortemp.locus.blackbody": |-
+  黑体
+"whitepoint.colortemp.locus.curve": |-
+  色温曲线
+"whitepoint.colortemp.locus.daylight": |-
+  日光
+"whitepoint.set": |-
+  要将白点设置为测量值吗？
+"whitepoint.simulate": |-
+  模拟白点
+"whitepoint.simulate.relative": |-
+  相对于显示配置文件白点
+"whitepoint.visual_editor": |-
+  可视白点编辑器
+"whitepoint.visual_editor.display_changed.warning": |-
+  敬告: 显示器配置已更改并且可视白点编辑器或许不再能正确恢复显示配置文件。请关闭编辑器并重启 DisplayCAL 后仔细检查显示配置文件关联。
+"whitepoint.xy": |-
+  色度坐标
+"*window.title": |-
+  DisplayCAL
+"windows.version.unsupported": |-
+  不支持此版本的 Windows
+"windows_only": |-
+  仅 Windows
+"working_dir": |-
+  工作目录：
+"xyz_scaling": |-
+  XYZ 缩放 (“wrong von Kries”)
+"yellow": |-
+  黄色
+"yellow_lab": |-
+  黄色 L*a*b*
+"yellow_xyz": |-
+  黄色 XYZ
+"yes": |-
+  是

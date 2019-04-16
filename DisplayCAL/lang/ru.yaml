@@ -1,0 +1,2559 @@
+"*": |-
+  Примечание для переводчиков: Клавиши, которые еще не переведены, обозначены ведущей звездочкой (*). Удалите звездочку при переводе. Версия перевода - 1.02b
+"!author": |-
+  Alex Sikorsky
+"!language": |-
+  Русский
+"!language_name": |-
+  RUSSIAN
+"3dlut": |-
+  3D LUT
+"3dlut.1dlut.videolut.nonlinear": |-
+  Таблицы гамма-компенсации 1D LUT устройства видеоадаптера нелинейны, но 3D LUT содержит калибровки, которые применены в 1D LUT. Поэтому убедитесь, что таблицы компенсации гамма видеоадаптера сброшены к линейным, прежде чем использовать 3D LUT или создайте 3D LUT без примененного калибровки (для последнего, включите “Показать дополнительные параметры” в меню “Параметры” и выключите “Применить калибровку(vcgt)”, а также “Создать 3D LUT после профилирования” в настройках 3D LUT, а затем создайте новый 3D LUT).
+"3dlut.bitdepth.input": |-
+  Битовая глубина 3D LUT на Входе
+"3dlut.bitdepth.output": |-
+  Битовая глубина 3D LUT на Выходе
+"3dlut.confirm_relcol_rendering_intent": |-
+  Вы хотите, чтобы 3D LUT использовал измеренную точку белого (будет установлен относительный колориметрический метод 3D LUT-рендеринга)?
+"3dlut.content.colorspace": |-
+  Цветовое пространство контента
+"3dlut.create": |-
+  Включить 3D LUT
+"3dlut.create_after_profiling": |-
+  Создать 3D LUT после профилирования
+"3dlut.enable": |-
+  Включить 3D LUT
+"3dlut.encoding.input": |-
+  Входное кодирование
+"3dlut.encoding.output": |-
+  Выходное кодирование
+"3dlut.encoding.output.warning.madvr": |-
+  Предупреждение: это кодирование исходных данных не рекомендуется и приведет к отсечению, если программа madVR не настроен для вывода “уровней телевизора (16-235)” в разделе “Устройства”→“%s”→“Свойства”. Используйте на свой страх и риск!
+"3dlut.encoding.type_2": |-
+  TV Rec. 2020 YCbCr UHD
+"3dlut.encoding.type_5": |-
+  TV Rec. 709 1250/50Hz YCbCr HD
+"3dlut.encoding.type_6": |-
+  TV Rec. 601 YCbCr SD
+"3dlut.encoding.type_7": |-
+  TV Rec. 709 1125/60Hz YCbCr HD
+"3dlut.encoding.type_C": |-
+  TV Rec. 2020 Constant-на Светлоту YCbCr UHD
+"3dlut.encoding.type_T": |-
+  TV RGB 16-235 (clip WTW)
+"3dlut.encoding.type_X": |-
+  TV xvYCC Rec. 709 YCbCr HD
+"3dlut.encoding.type_n": |-
+  Полный диапазон RGB 0-255
+"3dlut.encoding.type_t": |-
+  TV RGB 16-235
+"3dlut.encoding.type_x": |-
+  TV xvYCC Rec. 601 YCbCr (Rec. 709 Primareis) SD
+"3dlut.format": |-
+  3D LUT формат файла
+"3dlut.format.3dl": |-
+  Autodesk / Kodak (.3dl)
+"3dlut.format.ReShade": |-
+  ReShade (.png, .fx)
+"3dlut.format.cube": |-
+  IRIDAS (.cube)
+"3dlut.format.eeColor": |-
+  eeColor Processor (.txt)
+"3dlut.format.icc": |-
+  Device link profile/Профиль связи с устройством (.icc/.icm)
+"3dlut.format.madVR": |-
+  madVR (.3dlut)
+"3dlut.format.madVR.hdr": |-
+  Обрабатывать HDR содержимое
+"3dlut.format.madVR.hdr.confirm": |-
+  Обратите внимание, что вы должны иметь профилированный дисплей в режиме HDR. Если дисплей не поддерживает HDR, нажмите “Отмена”.
+"3dlut.format.madVR.hdr_to_sdr": |-
+  Конвертирование содержимого HDR на SDR
+"3dlut.format.mga": |-
+  Pandora (.mga)
+"3dlut.format.png": |-
+  PNG (.png)
+"3dlut.format.spi3d": |-
+  Sony рабочий процесс изображения (.spi3d)
+"3dlut.frame.title": |-
+  Создать 3D LUT
+"3dlut.hdr.rolloff.diffuse_white": |-
+  Опорный белый (ссылка 94.38 cd/m²)
+"3dlut.hdr.system_gamma": |-
+  Гамма системы (ссылка 1.2)
+"3dlut.holder.assign_preset": |-
+  назначьте 3D LUT для настройки:
+"3dlut.holder.out_of_memory": |-
+  %s недостаточно памяти для сохранения 3D LUT (требуется не менее %i KB). Удалите несколько 3D LUT из  %s, чтобы освободить место для новых. Для получения дополнительной информации %s смотрите документацию.
+"3dlut.input.colorspace": |-
+  Цветовое пространство источника
+"3dlut.input.profile": |-
+  Профиль источника
+"3dlut.install": |-
+  Установите 3D LUT
+"3dlut.install.failure": |-
+  Ошибка установки 3D LUT (неизвестная ошибка).
+"3dlut.install.success": |-
+  Установка 3D LUT успешна!
+"3dlut.install.unsupported": |-
+  Установка 3D LUT не поддерживается для выбранного формата 3D LUT.
+"3dlut.save_as": |-
+  Сохраните 3D LUT как ...
+"3dlut.settings": |-
+  Параметры 3D LUT
+"3dlut.size": |-
+  Размер 3D LUT
+"3dlut.tab.enable": |-
+  Включить вкладку 3D LUT
+"3dlut.use_abstract_profile": |-
+  Абстрактный (“Смотри”) профиль
+"CMP_Digital_Target-3.cie": |-
+  Цифровая мишень CMP 3
+"CMP_Digital_Target-4.cie": |-
+  Цифровая мишень CMP 4
+"CMYK_IDEAlliance_ControlStrip_2009.ti1": |-
+  CMYK IDEAlliance контрольный клин 2009
+"CMYK_IDEAlliance_ISO_12647-7_Control_Wedge_2013.ti1": |-
+  CMYK IDEAlliance ISO 12647-7 контрольный клин 2013
+"CMYK_ISO_12647-7_outer_gamut.ti1": |-
+  CMYK ISO 12647-7 внешний цветовой охват
+"ColorChecker.cie": |-
+  Поверочная мишень – ColorChecker24
+"ColorCheckerDC.cie": |-
+  ColorChecker DC
+"ColorCheckerPassport.cie": |-
+  ColorChecker Passport
+"ColorCheckerSG.cie": |-
+  ColorChecker SG
+"FograStrip2.ti1": |-
+  Контрольный клин - Fogra Media Wedge CMYK V2.0
+"FograStrip3.ti1": |-
+  Контрольный клин - Fogra Media Wedge CMYK V3.0
+"ISO_12646-2008_color_accuracy_and_gray_balance.ti1": |-
+  ISO 12646:2008 точность цвета и баланс серого
+"ISO_14861_color_accuracy_RGB318.ti1": |-
+  ISO 14861:2015 точность цвета и баланс серого
+"QPcard_201.cie": |-
+  QPcard 201
+"QPcard_202.cie": |-
+  QPcard 202
+"SpyderChecker24.cie": |-
+  SpyderCHECKR24 (D65)
+"SpyderChecker.cie": |-
+  SpyderCHECKR (D65)
+"Untethered": |-
+  Несвязанный
+"[rgb]TRC": |-
+  (TRC) Кривые тонального отклика
+"aborted": |-
+  ...прервано.
+"aborting": |-
+  Прервано, подождите (это может занять несколько секунд)...
+"abstract_profile": |-
+  Abstract profile
+"active_matrix_display": |-
+  Дисплей активной матрицы
+"adaptive_mode_unavailable": |-
+  Адаптивный режим доступный только для ArgyllCMS 1.1.0 RC3 или более новой.
+"add": |-
+  Добавить ...
+"adjust_rolloff": |-
+  Отрегулируйте спад
+"advanced": |-
+  Дополнительно
+"allow_skip_sensor_cal": |-
+  Разрешить пропуск самокалибровки спектрофотометра
+"ambient.measure": |-
+  Измерьте окружающее освещение
+"ambient.measure.color.unsupported": |-
+  %s: Цвет окружающего освещения не может быть определен с помощью этого прибора, так как датчик окружающей среды кажется монохроматическим (получено только чтение уровня освещённости).
+"ambient.measure.light_level.missing": |-
+  Не получено чтение уровня освещения.
+"ambient.set": |-
+  Вы также хотите установить уровень освещенности к измеренному значению?
+"app.client.connect": |-
+  Клиент сценариев %s:%s подключен
+"app.client.disconnect": |-
+  Клиент сценариев %s:%s отключен
+"app.client.ignored": |-
+  Отказ от попытки подключения клиента сценариев %s:%s: %s
+"app.client.network.disallowed": |-
+  Отказ от попытки подключения клиента сценариев %s:%s: Клиенты сети не разрешены.
+"app.confirm_restore_defaults": |-
+  Вы действительно хотите отбросить изменения и восстановить значения по умолчанию?
+"app.detected": |-
+  Выявлено %s.
+"app.detected.calibration_loading_disabled": |-
+  Выявлено %s. Загрузка калибровки выключена.
+"app.detection_lost": |-
+  Больше не обнаруживается %s.
+"app.detection_lost.calibration_loading_enabled": |-
+  Больше не обнаруживается %s. Загрузка калибровки включена.
+"app.incoming_message": |-
+  Получен запрос скрипта от %s:%s: %s
+"app.incoming_message.invalid": |-
+  Недействителен запрос на сценарии!
+"app.listening": |-
+  Настройка хоста сценариев на %s:%s
+"app.otherinstance": |-
+  %s уже работает.
+"app.otherinstance.notified": |-
+  Выполненный экземпляр уже получил извещение.
+"apply": |-
+  Использовать
+"apply_black_output_offset": |-
+  Использовать смещение чёрного на Выходе(100%)
+"apply_cal": |-
+  Использовать калибровку (vcgt)
+"apply_cal.error": |-
+  Невозможно использовать калибровку.
+"archive.create": |-
+  Создать сжатый архив...
+"archive.import": |-
+  Импорт архива...
+"archive.include_3dluts": |-
+  Хотите включить файлы 3D LUT в архив (не рекомендуется, это приведёт к увеличению размера фалов архива)?
+"argyll.debug.warning1": |-
+  Используйте этот параметр, только если вам действительно нужна отладочная информация (например, для устранения неисправности ArgyllCMS)! Как правило, это полезно для разработчиков программного обеспечения, которые помогают в диагностике и решении проблем. Вы уверены, что хотите включить вывод отладочных данных?
+"argyll.debug.warning2": |-
+  Не забывайте выключать вывод отладки для нормальной работы программного обеспечения.
+"argyll.dir": |-
+  Исполнительній каталог ArgyllCMS:
+"argyll.dir.invalid": |-
+  ArgyllCMS исполняемых файлов не найдено!
+  Пожалуйста, выберите каталог который содержит исполняемые файлы (возможно укажите, префикс или суффикс “argyll-” / “-argyll”): %s
+"argyll.error.detail": |-
+  Подробное сообщение об ошибке ArgyllCMS:
+"argyll.instrument.configuration_files.install": |-
+  Установите файлы конфигурации прибора ArgyllCMS...
+"argyll.instrument.configuration_files.install.success": |-
+  Установка файлов конфигурации прибора ArgyllCMS завершена.
+"argyll.instrument.configuration_files.uninstall": |-
+  Удалите файлы конфигурации инструментов ArgyllCMS...
+"argyll.instrument.configuration_files.uninstall.success": |-
+  Удаление файлов конфигурации прибора ArgyllCMS завершено.
+"argyll.instrument.driver.missing": |-
+  Драйвер ArgyllCMS для устройства измерения не устанавливается или устанавливается неправильно. Пожалуйста проверьте, отображается ли устройство измерения в Диспетчере устройств Windows в разделе „Argyll LibUSB-1.0A devices“, и проведите (повторно) установки драйвера, если это необходимо. Пожалуйста, ознакомьтесь с документацией с инструкциями по установке.
+"argyll.instrument.drivers.install": |-
+  Установите драйвера устройств ArgyllCMS...
+"argyll.instrument.drivers.install.confirm": |-
+  Вам нужно установить только специфические драйверы ArgyllCMS, если у вас инструмент измерения, который не является ColorMunki Display, i1 Display Pro, Huey, ColorHug, specbos, spectraval или K-10.
+  
+  Вы хотите продолжить?
+"argyll.instrument.drivers.install.failure": |-
+  Не удалось установить драйвера устройств ArgyllCMS.
+"argyll.instrument.drivers.install.restart": |-
+  Для установки драйверов устройств ArgyllCMS, нужно выключить принудительное подписание драйвера. Для этого нужно перезапустить систему. Выберите “Исправление неполадок” на странице, которая появится, потом “Дополнительные параметры”, “Параметры автозапуска” и наконец “Перезагрузка”. При запуске выберите “Отключить применения подписи драйвера”. После перезагрузки выберите в меню “Установить драйверы устройств ArgyllCMS...” снова установите драйверы. Если вы не видите опцию “Исправление ошибок”, обратитесь к разделу документации DisplayCAL “Установка драйверов под Windows” для альтернативного метода принудительного отключения подписи драйвера.
+"argyll.instrument.drivers.uninstall": |-
+  Удалите драйверы устройств ArgyllCMS...
+"argyll.instrument.drivers.uninstall.confirm": |-
+  Примечание. Деинсталляция не влияет на драйверы инструментов, которые сейчас используются, но просто удаляет драйвер со склада драйверов Windows. Если вы хотите вернуться к установленному поставщика драйвера для своего инструмента, вам придется с помощью диспетчера устройств Windows вручную перейти к драйверу поставщика. чтобы сделать это, щелкните правой кнопкой мыши на инструменте и выберите “ обновить драйвер программного обеспечения...”, потом выберите “ Обзор компьютера для программного обеспечения драйвера”, “ Позвольте мне выбрать из списка драйверов устройств на моем компьютере ” и, наконец, выбрать поставщика из перечня драйверов для вашего инструмента.
+  
+  Хотите ли вы продолжить?
+"argyll.instrument.drivers.uninstall.failure": |-
+  Ошибка удаления драйверов устройств ArgyllCMS.
+"argyll.instrument.drivers.uninstall.success": |-
+  Удаление драйверов устройств ArgyllCMS завершено.
+"argyll.util.not_found": |-
+  Не найдено исполняемый файл ArgyllCMS “%s”!
+"as_measured": |-
+  Как измерен
+"audio.lib": |-
+  Аудио модуль: %s
+"auth": |-
+  Идентификация
+"auth.failed": |-
+  Ошибка аутентификации.
+"auto": |-
+  Авто
+"auto_optimized": |-
+  Авто-оптимизация
+"autostart_remove_old": |-
+  Удаление старой записи автозапуска
+"backing_xyz": |-
+  Поддержка XYZ
+"backlight": |-
+  Подсветка
+"bitdepth": |-
+  Битовая глубина
+"black": |-
+  Чёрный
+"black_lab": |-
+  Чёрный L*a*b*
+"black_point": |-
+  Точка чёрного
+"black_point_compensation": |-
+  Компенсация чёрной точки
+"black_point_compensation.3dlut.warning": |-
+  При создании 3D LUT настройки профилей черной точки компенсации следует выключить, поскольку это влияет на функцию регулирования тональной кривой. Вы хотите выключить компенсацию черной точки?
+"black_point_compensation.info": |-
+  Компенсация чёрной точки эффективно предотвращает раздавливание чёрного, но снижает точность преобразования цвета.
+"black_white": |-
+  Чёрный&белый
+"black_xyz": |-
+  Чёрный XYZ
+"blacklevel": |-
+  Уровень чёрного
+"blue": |-
+  Синий
+"blue_gamma": |-
+  Гамма синего
+"blue_lab": |-
+  Синий L*a*b*
+"blue_matrix_column": |-
+  Колонка синей матрицы
+"blue_maximum": |-
+  Синий максимум
+"blue_minimum": |-
+  Синий минимум
+"blue_tone_response_curve": |-
+  Кривая тонального отклика Синего - TRC Blue
+"blue_xyz": |-
+  Синий XYZ
+"bradford": |-
+  Bradford (ICC recommendation)
+"brightness": |-
+  Яркость
+"browse": |-
+  Обзор...
+"bs": |-
+  Bianco & Schettini
+"bs_pc": |-
+  Bianco & Schettini с ограничением позитивности
+"bug_report": |-
+  Сообщить об ошибке...
+"button.calibrate": |-
+  Только калибровка
+"button.calibrate_and_profile": |-
+  Калибровка и характеризация
+"button.profile": |-
+  Только характеризация
+"cal_extraction_failed": |-
+  Не удалось извлечь данные калибровки из профиля
+"calculated_checksum": |-
+  Вычисленная контрольная сумма
+"calibrate_instrument": |-
+  Самокалибровка спектрофотометра
+"calibration": |-
+  Калибровка
+"calibration.ambient_viewcond_adjust": |-
+  Регулировка уровня периферического освещения
+"calibration.ambient_viewcond_adjust.info": |-
+  Чтобы выполнить корректировки состояния просмотра при вычислении калибровочных кривых, установите флажок и введите уровень освещенности. Вы также можете дополнительно измерить освещенность, если она поддерживается вашим инструментом.
+"calibration.black_luminance": |-
+  уровень чёрного
+"calibration.black_output_offset": |-
+  Сдвиг(offset) чёрного на Выходе
+"calibration.black_point_correction": |-
+  Корректировка чёрной точки
+"calibration.black_point_correction_choice": |-
+  Вы можете отключить коррекцию черных точек, чтобы оптимизировать уровень черного и контрастного соотношения (рекомендуется для большинства LCD-мониторов), или вы можете включить его, чтобы сделать черным тот же оттенок, как и точку белого (рекомендуется для большинства мониторов CRT). Выберите настройки коррекции черной точки.
+"calibration.black_point_rate": |-
+  Оценить
+"calibration.check_all": |-
+  Проверить настройку
+"calibration.complete": |-
+  Калибровка завершена!
+"calibration.create_fast_matrix_shaper": |-
+  Создать матричный профиль
+"calibration.create_fast_matrix_shaper_choice": |-
+  Вы хотите сформировать быстрый матричный профиль с калибровочных измерений или просто откалибровать?
+"calibration.do_not_use_video_lut": |-
+  Не используйте таблицу гамма-коррекции видеокарты для применения калибровки
+"calibration.do_not_use_video_lut.warning": |-
+  Вы действительно хотите изменить рекомендованные настройки?
+"calibration.embed": |-
+  Встраивание калибровочных кривых в профиль
+"calibration.file": |-
+  Настройка
+"calibration.file.invalid": |-
+  Файл выбранных настроек недействителен.
+"calibration.file.none": |-
+  <Отсутствует>
+"calibration.incomplete": |-
+  Калибровка не завершена.
+"calibration.interactive_display_adjustment": |-
+  Интерактивная настройка дисплея
+"calibration.interactive_display_adjustment.black_level.crt": |-
+  Выберите “Начать измерение” и настройте яркость и/или регулировку смещения RGB дисплея в соответствии с нужным уровнем.
+"calibration.interactive_display_adjustment.black_point.crt": |-
+  Выберите “Начать измерение” и настройте элементы управления смещения RGB дисплея в соответствии с желаемой черной точкой.
+"calibration.interactive_display_adjustment.check_all": |-
+  Выберите “Начать измерение”, чтобы проверить общие настройки.
+"calibration.interactive_display_adjustment.generic_hint.plural": |-
+  Хорошее соответствие достигается, если все колонки могут быть приведены к обозначенной позиции в центре.
+"calibration.interactive_display_adjustment.generic_hint.singular": |-
+  Хорошее соответствие достигается, если отметки измерений могут быть приведены к обозначенной позиции в центре.
+"calibration.interactive_display_adjustment.start": |-
+  Начать измерение
+"calibration.interactive_display_adjustment.stop": |-
+  Остановить измерение
+"calibration.interactive_display_adjustment.white_level.crt": |-
+  Выберите “Начать измерение” и настройте контрастность дисплея и/или регулировки усиления RGB, чтобы соответствовать желаемому уровню.
+"calibration.interactive_display_adjustment.white_level.lcd": |-
+  Выберите “Начать измерение” и настройте управление подсветкой / яркостью дисплея в соответствии с нужным уровнем.
+"calibration.interactive_display_adjustment.white_point": |-
+  Выберите “Начать измерение” и настроить цветовую температуру дисплея и/или управления усилением RGB, чтобы соответствовать желаемой точке белого.
+"calibration.load": |-
+  Настройка загрузки ...
+"calibration.load.handled_by_os": |-
+  Загруженные данные калибровки обрабатываются операционной системой.
+"calibration.load_error": |-
+  Невозможно загрузить кривые калибровки.
+"calibration.load_from_cal": |-
+  Загрузите калибровочные кривые из файла калибровки ...
+"calibration.load_from_cal_or_profile": |-
+  Загрузите компенсирующие кривые калибровки из файла калибровки или профиля ...
+"calibration.load_from_display_profile": |-
+  Загрузите компенсирующие кривые калибровки с текущего профиля устройства отображения
+"calibration.load_from_display_profiles": |-
+  Скачать калибровку с текущего профиля устройства отображения (s)
+"calibration.load_from_profile": |-
+  Загрузка компенсирующих кривых калибровки из профиля...
+"calibration.load_success": |-
+  Калибровочные кривые успешно загружены.
+"calibration.loading": |-
+  Загрузка калибровочных кривых из файла ...
+"calibration.loading_from_display_profile": |-
+  Загрузка калибровочных кривых текущего профиля устройства отображения...
+"calibration.luminance": |-
+  Уровень белого
+"calibration.lut_viewer.title": |-
+  Кривые
+"calibration.preserve": |-
+  Сохранить состояние калибровки
+"calibration.preview": |-
+  Предварительный просмотр калибровки
+"calibration.quality": |-
+  Качество калибровки
+"calibration.quality.high": |-
+  Высокое
+"calibration.quality.low": |-
+  Низкое
+"calibration.quality.medium": |-
+  Среднее
+"calibration.quality.ultra": |-
+  Ультра уровень
+"calibration.quality.verylow": |-
+  Очень низкий
+"calibration.reset": |-
+  Сбросить гамма-таблицы видеокарты
+"calibration.reset_error": |-
+  Не удалось сбросить таблицу коррекции видеокарты.
+"calibration.reset_success": |-
+  Таблица гаммы видеокарты успешно сброшена.
+"calibration.resetting": |-
+  Сброс гамма-таблицы видеокарты к линейной...
+"calibration.settings": |-
+  Параметры калибровки
+"calibration.show_actual_lut": |-
+  Показывать кривые калибровки от видеокарты
+"calibration.show_lut": |-
+  Показывать кривые
+"calibration.skip": |-
+  Продолжайте до характеризации
+"calibration.speed": |-
+  Скорость калибровки
+"calibration.speed.high": |-
+  Высокая
+"calibration.speed.low": |-
+  Низкая
+"calibration.speed.medium": |-
+  Средняя
+"calibration.speed.veryhigh": |-
+  Очень высокая
+"calibration.speed.verylow": |-
+  Очень низкая
+"calibration.start": |-
+  Продолжайте калибровку
+"calibration.turn_on_black_point_correction": |-
+  Включить
+"calibration.update": |-
+  Обновить калибровку
+"calibration.update_profile_choice": |-
+  Также нужно обновить кривые калибровки в существующем профиле или просто откалибровать?
+"calibration.use_linear_instead": |-
+  Вместо этого используйте линейную калибровку
+"calibration.verify": |-
+  Проверьте калибровку
+"calibration_profiling.complete": |-
+  Калибровка и характеризация завершены!
+"calibrationloader.description": |-
+  Устанавливает профили ICC и загружает кривые калибровки для всех настроенных устройств отображения
+"can_be_used_independently": |-
+  Может использоваться самостоятельно
+"cancel": |-
+  Отменить
+"cat02": |-
+  CAT02 (от CIECAM02)
+"cat02bs": |-
+  CAT02 (от CIECAM02, Brill & Süsstrunk модификация)
+"cat97s": |-
+  CAT97s (от CIECAM97s)
+"cathode_ray_tube_display": |-
+  Дисплей с электронно-лучевой трубкой
+"ccmx.use_four_color_matrix_method": |-
+  Минимизировать разницу цветности xy
+"*ccss.CCFLFamily_07Feb11": |-
+  LCD CCFL family (AC, EIZO, HP)
+"*ccss.FSI_XM55U_23Jan19": |-
+  WOLED family (FSI XM55U/XM65U, LG OLED)
+"*ccss.GBrLED_25Jul12": |-
+  LCD GB-r-LED IPS (Dell U2413)
+"*ccss.HP_DC3": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor?)
+"*ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD PFS Phosphor WLED IPS (HP DreamColor Z24x G2)
+"*ccss.HP_ZBOOK": |-
+  LCD PFS Phosphor WLED IPS (HP ZBook)
+"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
+  LCD GB-r-LED IPS (NEC PA242W)
+"*ccss.OLEDFamily_20Jul12": |-
+  RGB OLED (Sony PVM-2541)
+"*ccss.OLEDFamily_28Aug18": |-
+  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"*ccss.PFS_Phosphor_Family_31Jan17": |-
+  LCD PFS Phosphor WLED family
+"*ccss.Panasonic VVX17P051J00": |-
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+"*ccss.PlasmaFamily_20Jul12": |-
+  Plasma
+"*ccss.ProjectorFamily_07Feb11": |-
+  Projector family (Marantz, HP, Panasonic)
+"*ccss.RGBLEDFamily_07Feb11": |-
+  LCD RGB LED family (HP, SOYO)
+"*ccss.RG_Phosphor_Family_13Dec11": |-
+  LCD RG Phosphor family
+"*ccss.RG_Phosphor_Family_25Jul12": |-
+  LCD GB-r-LED/RG Phosphor family
+"*ccss.WGCCFLFamily_07Feb11": |-
+  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
+"*ccss.WLEDFamily_07Feb11": |-
+  LCD White LED family (AC, LG, Samsung)
+"*ccss.WRGB_OLED_LG": |-
+  WOLED (LG OLED)
+"ccxx.ti1": |-
+  Тестовая таблица для колориметрической коррекции
+"centered": |-
+  Собраный
+"channel_1_c_xy": |-
+  Канал 1 (C) xy
+"channel_1_gamma_at_50_input": |-
+  Канал 1 гамма 50% от Входщей
+"channel_1_is_linear": |-
+  Канал 1 есть линейным
+"channel_1_maximum": |-
+  Максимум 1 канала
+"channel_1_minimum": |-
+  Минимум 1 канала
+"channel_1_r_xy": |-
+  Канал 1 (R) xy
+"channel_1_unique_values": |-
+  Уникальное значение канала 1
+"channel_2_g_xy": |-
+  Канал 2 (G) xy
+"channel_2_gamma_at_50_input": |-
+  Канал 2 гамма 50% от Входящей
+"channel_2_is_linear": |-
+  Канал 2 есть линейным
+"channel_2_m_xy": |-
+  Канал 2 (M) xy
+"channel_2_maximum": |-
+  Максимум 2 канала
+"channel_2_minimum": |-
+  Минимум 2 канала
+"channel_2_unique_values": |-
+  Уникальные значения канала 2
+"channel_3_b_xy": |-
+  Канал 3 (B) xy
+"channel_3_gamma_at_50_input": |-
+  Канал 3 гамма 50% от Входящей
+"channel_3_is_linear": |-
+  Канал 3 есть линейным
+"channel_3_maximum": |-
+  Максимум 3 канала
+"channel_3_minimum": |-
+  Минимум 3 канала
+"channel_3_unique_values": |-
+  Уникальные значения канала 3
+"channel_3_y_xy": |-
+  Канал 3 (Y) xy
+"channel_4_k_xy": |-
+  Канал 4 (K) xy
+"channels": |-
+  Каналы
+"characterization_device_values": |-
+  Характеризация значений устройств
+"characterization_measurement_values": |-
+  Характеризация значений измерений
+"characterization_target": |-
+  Характеризация мишени
+"checking_lut_access": |-
+  Проверка доступа к таблице видеокарты для отображения %s ...
+"checksum": |-
+  Контрольная сумма
+"checksum_ok": |-
+  Контрольная сумма OK
+"chromatic_adaptation": |-
+  Хроматическая адаптация ...
+"chromatic_adaptation_matrix": |-
+  Матрица хроматической адаптации
+"chromatic_adaptation_transform": |-
+  Преобразование хроматической адаптации
+"chromaticity_illuminant_relative": |-
+  Хроматичность (относительно освещённости)
+"chromecast_limitations_warning": |-
+  Заметьте, что точность устройства Chromecast не столь хороша, как непосредственно подключенный дисплей или madTPG, поскольку Chromecast использует конверсию RGB и YCbCr и повышает масштаб.
+"cie2012_2": |-
+  CIE 2012 2°
+"clear": |-
+  Очистить
+"close": |-
+  Закрыть
+"cmccat97": |-
+  CMCCAT97
+"cmccat2000": |-
+  CMCCAT2000
+"color": |-
+  Цвет
+"color_look_up_table": |-
+  CLUT - таблица проверки цветов
+"color_model": |-
+  Колірна модель
+"color_space_conversion_profile": |-
+  Цветовое пространство профиля конверсии
+"colorant_order": |-
+  Порядок колоранта
+"colorants_pcs_relative": |-
+  Колоранты (PCS-относительные)
+"colorimeter_correction.create": |-
+  Создайте коррекцию колориметра ...
+"colorimeter_correction.create.details": |-
+  Пожалуйста, проверьте поля ниже и измените их, когда это необходимо. Описание также должно содержать важные детали (например. Конкретные настройки дисплея, наблюдатель CIE по умолчанию или т.п.).
+"colorimeter_correction.create.failure": |-
+  Не удалось создать коррекцию.
+"colorimeter_correction.create.info": |-
+  Чтобы создать коррекцию колориметра, сначала необходимо измерить необходимые тестовые цвета с помощью спектрофотометра, а в случае, если вы хотите создать коррекционную матрицу вместо спектральной коррекции, а также с колориметром.
+  Также можно использовать существующие измерения, выбирая “Обзор...”.
+"colorimeter_correction.create.success": |-
+  Исправление успешно создано.
+"colorimeter_correction.create.warning": |-
+  Убедитесь, что измеряете устройство отражение в его родной гамме и не искусственно ограничивайте его (с помощью режимов эмуляции или подобных средств) при создании коррекции колориметра.
+"colorimeter_correction.file.none": |-
+  Нет
+"colorimeter_correction.import": |-
+  Импорт коррекции колориметра с другого программного обеспечения для профилирования дисплея ...
+"colorimeter_correction.import.choose": |-
+  Выберите файл коррекции колориметра, который нужно импортировать.
+"colorimeter_correction.import.failure": |-
+  Никакие коррекции колориметра нельзя импортировать.
+"colorimeter_correction.import.partial_warning": |-
+  Не все коррекции колориметра могут быть импортированы из %s. %i в %i записей нужно было пропустить.
+"colorimeter_correction.import.success": |-
+  Колориметрические коррекции и/или режима измерения успешно импортированы из следующих программ:
+  
+  %s
+"colorimeter_correction.info": |-
+  Информация о коррекции колориметра
+"colorimeter_correction.instrument_mismatch": |-
+  Выбранная коррекция колориметра не подходит для выбранного инструмента.
+"colorimeter_correction.upload": |-
+  Загрузка коррекции колориметра...
+"colorimeter_correction.upload.confirm": |-
+  Вы хотите загрузить коррекцию колориметра в онлайн-базу данных (рекомендуется)? Предполагается, что любые загруженные файлы будут размещены в открытом доступе, чтобы их можно было свободно использовать.
+"colorimeter_correction.upload.deny": |-
+  Эта коррекция колориметра может не загружаться.
+"colorimeter_correction.upload.exists": |-
+  Поправка коррекции колориметра уже существует в базе данных.
+"colorimeter_correction.upload.failure": |-
+  Поправку не удалось ввести в онлайн-базу данных.
+"colorimeter_correction.upload.success": |-
+  Исправление успешно загружены в базу данных онлайн.
+"colorimeter_correction.web_check": |-
+  Проверьте онлайн для коррекции колориметра...
+"colorimeter_correction.web_check.choose": |-
+  Найдено следующие поправки колориметра для выбранного дисплея и инструмента:
+"colorimeter_correction.web_check.failure": |-
+  Не найдено никаких поправок колориметра для выбранного дисплея и инструмента.
+"colorimeter_correction.web_check.info": |-
+  Обратите внимание, что все коррекции колориметра предоставлены различными пользователями, и их полезность для конкретной ситуации зависит от вас. Они могут или не могут повысить абсолютную точность вашего колориметра с помощью дисплея.
+"colorimeter_correction_matrix_file": |-
+  Коррекция
+"colorimeter_correction_matrix_file.choose": |-
+  Выберите коррекцию колориметра...
+"colorimetric_intent_image_state": |-
+  Колориметрическое состояние изображения
+"colors_pcs_relative": |-
+  Цвета (PCS-относительные)
+"colorspace": |-
+  Цветовое пространство
+"colorspace.show_outline": |-
+  Показать контур
+"commandline": |-
+  Командная строка:
+"commands": |-
+  Команды
+"comparison_profile": |-
+  Профиль сравнения
+"comport_detected": |-
+  Выявлены изменения в конфигурации прибора/порта.
+"compression.gzip": |-
+  GZIP сжатие
+"computer.name": |-
+  Имя пользователя
+"connected.to.at": |-
+  Связанный с %s в %s:%s
+"connecting.to": |-
+  Подключение к %s:%s...
+"connection.broken": |-
+  Соединение успешно
+"connection.established": |-
+  Соединение установлено
+"connection.fail": |-
+  Ошибка соединения (%s)
+"connection.fail.http": |-
+  HTTP ошибка %s
+"connection.waiting": |-
+  Ожидания соединения с
+"continue": |-
+  Продолжить
+"contrast": |-
+  Контраст
+"contribute": |-
+  Вклад
+"converting": |-
+  Преобразование
+"copyright": |-
+  Авторское право
+"corrected": |-
+  Исправлено
+"create_profile": |-
+  Создать профиль с данных измерений...
+"create_profile_from_edid": |-
+  Создание профиля из расширенных идентификационных данных дисплея...
+"created": |-
+  Создано
+"creator": |-
+  Создатель
+"current": |-
+  Текущий
+"custom": |-
+  Пользовательский
+"cyan": |-
+  Циан
+"d3-e4-s2-g28-m0-b0-f0.ti1": |-
+  Небольшая тестовая таблица для матричных профилей
+"d3-e4-s3-g52-m3-b0-f0.ti1": |-
+  Стандартный тест
+"d3-e4-s4-g52-m4-b0-f0.ti1": |-
+  Небольшая тестовая таблица для профилей LUT
+"d3-e4-s5-g52-m5-b0-f0.ti1": |-
+  Расширенная тестовая таблица для профилей LUT
+"d3-e4-s9-g52-m9-b0-f0.ti1": |-
+  Большая тестовая таблица для профилей LUT
+"d3-e4-s17-g52-m17-b0-f0.ti1": |-
+  Очень большая таблица тестовых образцов для профилей LUT
+"deactivated": |-
+  Выключено
+"default": |-
+  По умолчанию
+"default.icc": |-
+  По умолчанию (Гамма 2.2)
+"default_crt": |-
+  По умолчанию CRT
+"default_rendering_intent": |-
+  Стандартный метод визуализации
+"delete": |-
+  Удалить
+"delta_e_2000_to_blackbody_locus": |-
+  ΔE 2000 до локуса черного тела
+"delta_e_2000_to_daylight_locus": |-
+  ΔE 2000 до локуса дневного света
+"delta_e_to_locus": |-
+  ΔE*00 до %s локуса
+"description": |-
+  Описание
+"description_ascii": |-
+  Описание (ASCII)
+"description_macintosh": |-
+  Описание (Macintosh)
+"description_unicode": |-
+  Описание (Unicode)
+"deselect_all": |-
+  Отменить всё выбранное
+"detect_displays_and_ports": |-
+  Обнаруженные устройства отображения и инструменты
+"device": |-
+  Устройство
+"device.name.placeholder": |-
+  <Название устройства>
+"device_color_components": |-
+  Цветовые компоненты устройства
+"device_manager.launch": |-
+  Запустите диспетчер устройств
+"device_manufacturer_name": |-
+  Название производителя устройства
+"device_manufacturer_name_ascii": |-
+  Название производителя устройства (ASCII)
+"device_manufacturer_name_macintosh": |-
+  Название производителя устройства (Macintosh)
+"device_manufacturer_name_unicode": |-
+  Название производителя устройства (Unicode)
+"device_model_name": |-
+  Название модели устройства
+"device_model_name_ascii": |-
+  Название модели устройства (ASCII)
+"device_model_name_macintosh": |-
+  Название модели устройства (Macintosh)
+"device_model_name_unicode": |-
+  Название модели устройства (Unicode)
+"device_to_pcs_intent_0": |-
+  Из устройства на PCS: Намерение 0
+"device_to_pcs_intent_1": |-
+  Из устройства на PCS: Намерение 1
+"device_to_pcs_intent_2": |-
+  Из устройства на PCS: Намерение 2
+"devicelink_profile": |-
+  (DLP) Профиль связи с устройством
+"dialog.argyll.notfound.choice": |-
+  Менеджер управления цветом, ArgyllCMS, который необходим для запуска DisplayCAL, кажется, не установлен на компьютере. Вы хотите автоматически загрузить его или установить вручную?
+"dialog.cal_info": |-
+  Будет использовано “%s” файла калибровки. Хотите продолжить?
+"dialog.confirm_cancel": |-
+  Вы действительно хотите отменить?
+"dialog.confirm_delete": |-
+  Вы действительно хотите удалить выбранные файл (ы)?
+"dialog.confirm_overwrite": |-
+  Файл “%s” уже существует. Перезаписать его?
+"dialog.confirm_uninstall": |-
+  Вы действительно хотите удалить выбранные файл (ы)?
+"dialog.current_cal_warning": |-
+  Будут использованы текущие калибровочные кривые. Хотите продолжить?
+"dialog.do_not_show_again": |-
+  Не показывать это сообщение снова
+"dialog.enter_password": |-
+  Введите пароль.
+"dialog.install_profile": |-
+  Вы хотите установить профиль “%s” и сделать его текущим профилем для отображения “%s”?
+"dialog.linear_cal_info": |-
+  Будут использованы линейные калибровочные кривые. Хотите продолжить?
+"dialog.load_cal": |-
+  Настройка загрузки
+"dialog.select_argyll_version": |-
+  Найдена версия %s ArgyllCMS. Сейчас выбрана версия %s. Вы хотите использовать новую версию?
+"dialog.set_argyll_bin": |-
+  Найдите каталог, в котором находятся исполняемые файлы ArgyllCMS.
+"dialog.set_profile_save_path": |-
+  Создайте каталог профиля “%s”:
+"dialog.set_testchart": |-
+  Выберите файл тестовой таблицы
+"dialog.ti3_no_cal_info": |-
+  Данные измерений не содержат калибровочных кривых. Вы действительно хотите продолжить?
+"digital_camera": |-
+  Цифровая камера
+"digital_cinema_projector": |-
+  Цифровой кинопроектор
+"digital_motion_picture_camera": |-
+  Цифровая видеокамера
+"direction.backward": |-
+  PCS → B2A → устройство
+"direction.backward.inverted": |-
+  PCS ← B2A ← устройство
+"direction.forward": |-
+  Устройство → A2B → PCS
+"direction.forward.inverted": |-
+  Устройство ← A2B ← PCS
+"directory": |-
+  Директория
+"disconnected.from": |-
+  Disconnected from %s:%s
+"display": |-
+  Дисплей
+"display-instrument": |-
+  Дисплей и инструмент
+"display.connection.type": |-
+  Соединение
+"display.manufacturer": |-
+  Отображение производителя устройства
+"display.output": |-
+  Исходящие данные на #
+"display.primary": |-
+  (Базовые цвета)
+"display.properties": |-
+  Отображение свойств устройства
+"display.reset.info": |-
+  Пожалуйста, верните настройки дисплея к заводским, а затем настройте его яркость до комфортного уровня.
+"display.settings": |-
+  Отображение настроек устройства
+"display.tech": |-
+  Формирование изображения
+"*display.tech.CRT": |-
+  CRT
+"*display.tech.DLP Projector": |-
+  DLP Projector
+"*display.tech.DLP Projector RGB Filter Wheel": |-
+  DLP Projector RGB Filter Wheel
+"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  DLP Projector RGBCMY Filter Wheel
+"*display.tech.DPL Projector RGBW Filter Wheel": |-
+  DLP Projector RGBW Filter Wheel
+"*display.tech.LCD": |-
+  LCD
+"*display.tech.LCD CCFL": |-
+  LCD CCFL
+"*display.tech.LCD CCFL IPS": |-
+  LCD CCFL IPS
+"*display.tech.LCD CCFL TFT": |-
+  LCD CCFL TFT
+"*display.tech.LCD CCFL VPA": |-
+  LCD CCFL PVA
+"*display.tech.LCD CCFL Wide Gamut": |-
+  LCD CCFL Wide Gamut
+"*display.tech.LCD CCFL Wide Gamut IPS": |-
+  LCD CCFL Wide Gamut IPS
+"*display.tech.LCD CCFL Wide Gamut TFT": |-
+  LCD CCFL Wide Gamut TFT
+"*display.tech.LCD CCFL Wide Gamut VPA": |-
+  LCD CCFL Wide Gamut PVA
+"*display.tech.LCD GB-R Phosphor": |-
+  LCD GB-r-LED
+"*display.tech.LCD GB-R Phosphor IPS": |-
+  LCD GB-r-LED IPS
+"*display.tech.LCD GB-R Phosphor TFT": |-
+  LCD GB-r-LED TFT
+"*display.tech.LCD GB-R Phosphor VPA": |-
+  LCD GB-r-LED PVA
+"*display.tech.LCD PFS Phosphor": |-
+  LCD PFS Phosphor WLED
+"*display.tech.LCD PFS Phosphor IPS": |-
+  LCD PFS Phosphor WLED IPS
+"*display.tech.LCD PFS Phosphor TFT": |-
+  LCD PFS Phosphor WLED TFT
+"*display.tech.LCD PFS Phosphor VPA": |-
+  LCD PFS Phosphor WLED PVA
+"*display.tech.LCD RG Phosphor": |-
+  LCD RG Phosphor
+"*display.tech.LCD RG Phosphor IPS": |-
+  LCD RG Phosphor IPS
+"*display.tech.LCD RG Phosphor TFT": |-
+  LCD RG Phosphor TFT
+"*display.tech.LCD RG Phosphor VPA": |-
+  LCD RG Phosphor PVA
+"*display.tech.LCD RGB LED": |-
+  LCD RGB LED
+"*display.tech.LCD RGB LED IPS": |-
+  LCD RGB LED IPS
+"*display.tech.LCD RGB LED TFT": |-
+  LCD RGB LED TFT
+"*display.tech.LCD RGB LED VPA": |-
+  LCD RGB LED PVA
+"*display.tech.LCD White LED": |-
+  LCD White LED
+"*display.tech.LCD White LED IPS": |-
+  LCD White LED IPS
+"*display.tech.LCD White LED TFT": |-
+  LCD White LED TFT
+"*display.tech.LCD White LED VPA": |-
+  LCD White LED PVA
+"*display.tech.LED AMOLED": |-
+  AMOLED
+"*display.tech.LED OLED": |-
+  OLED
+"*display.tech.LED WOLED": |-
+  WOLED
+"*display.tech.Plasma": |-
+  Plasma
+"*display.tech.Unknown": |-
+  Unknown
+"display_detected": |-
+  Выявлено изменение конфигурации устройства отображения.
+"display_device_profile": |-
+  Отображение профиля устройства
+"display_lut.link": |-
+  Связать/отменить отображение на дисплее и доступ к гамма-таблице видеокарты
+"display_peak_luminance": |-
+  Целевая максимальная яркость
+"display_profile.not_detected": |-
+  Текущий профиль не выявлен для отображения “%s”
+"display_short": |-
+  Устройство отображения (сокращенно)
+"displayport": |-
+  DisplayPort
+"displays.identify": |-
+  Определение устройств отображения
+"dlp_screen": |-
+  DLP Screen
+"donation_header": |-
+  Вашу поддержку ценят!
+"donation_message": |-
+  Если вы хотите поддержать развитие, техническую поддержку и постоянную доступность DisplayCAL и ArgyllCMS, пожалуйста, рассмотрите возможность финансовой помощи проекту. Поскольку DisplayCAL будет бесполезной без ArgyllCMS, все взносы, полученные для DisplayCAL, будут разделены между двумя проектами.
+  Для легкого личного некоммерческого использования может быть целесообразным одноразовый взнос. Если вы используете DisplayCAL профессионально, ежегодный или ежемесячный взнос будет иметь большое значение для обеспечения того, чтобы оба проекта оставались доступными.
+  
+  Спасибо всем участникам!
+"download": |-
+  Загрузить
+"download.fail": |-
+  Ошибка загрузки:
+"download.fail.empty_response": |-
+  Ошибка загрузки: %s возвращён пустой документ.
+"download.fail.wrong_size": |-
+  Ошибка загрузки: Файл не имеет ожидаемого размера %s bytes (отримано %s bytes).
+"download_install": |-
+  Загрузите и установите
+"downloading": |-
+  Загрузка
+"drift_compensation.blacklevel": |-
+  Компенсация дрейфа чёрной точки
+"drift_compensation.blacklevel.info": |-
+  Компенсация дрейфа уровня черного пытается противопоставить отклонения измерений, вызванные дрейфом минимального откалиброванного значения измерительного прибора, при его разогреве. Для этого периодически измеряют черный тест-патч, увеличивая общее время, необходимое для измерений. Многие колориметры имеют встроенную температурную компенсацию, в этом случае компенсация дрейфа уровня черного цвета не нужна, но большинство спектрофотометров не компенсируются по температуре.
+"drift_compensation.whitelevel": |-
+  Компенсация дрейфа уровня белого
+"drift_compensation.whitelevel.info": |-
+  Компенсация дрейфа уровня белого пытается противопоставить отклонениям измерений, вызванных изменениями яркости устройства отображения благодаря нагреванию или плохой стабилизации дисплея по напряжению. Для этого периодически измеряют белый тест-патч, что увеличивает общее время, необходимое для измерений.
+"dry_run": |-
+  Сухой пробег.
+"dry_run.end": |-
+  Сухой пробег завершился.
+"dry_run.info": |-
+  Сухой пробег. Проверьте журнал, чтобы увидеть командную строку.
+"duration": |-
+  Длительность
+"dvi": |-
+  DVI
+"dye_sublimation_printer": |-
+  Сублимационный принтер
+"edid.crc32": |-
+  EDID CRC32 контрольная сумма
+"edid.serial": |-
+  EDID serial
+"elapsed_time": |-
+  Затраченное время
+"electrophotographic_printer": |-
+  Электрофотографический принтер
+"electrostatic_printer": |-
+  Электростатический принтер
+"enable_argyll_debug": |-
+  Включить ArgyllCMS налаживание Оutput
+"enable_spyder2": |-
+  Включить Spyder 2 колориметр...
+"enable_spyder2_failure": |-
+  Spyder 2 не удалось включить. Пожалуйста, установите программное обеспечение Spyder 2 вручную, если оно еще не было установлено, а затем запустите эту команду еще раз.
+"enable_spyder2_success": |-
+  прибор Spyder 2 успешно включен.
+"entries": |-
+  Записи
+"enumerate_ports.auto": |-
+  Автоматически определяет приборы
+"enumerating_displays_and_comports": |-
+  Автоматически определяет приборы...
+"environment": |-
+  Окружающая среда
+"error": |-
+  Ошибка
+"error.access_denied.write": |-
+  Вы не имеете доступа к записи %s
+"error.already_exists": |-
+  Нельзя использовать название “%s”, поскольку уже существует другой объект с таким именем. Выберите другое название или иной каталог.
+"error.autostart_creation": |-
+  Создание записи автозапуска для %s для загрузки калибровочных кривых при входе не удалось.
+"error.autostart_remove_old": |-
+  Старая запись автозапуска, которая загружает калибровочные кривые при входе в систему, не может быть удалена: %s
+"error.autostart_system": |-
+  Не удалось создать общесистемную запись автозапуска для загрузки калибровочных кривых при входе в систему, поскольку не удалось определить общесистемный каталог автозапуска.
+"error.autostart_user": |-
+  Не удалось создать запись автозапуска для конкретного пользователя для загрузки калибровочных кривых при входе в систему, поскольку не удалось определить каталог автозапуска для конкретного пользователя.
+"error.cal_extraction": |-
+  Калибровку нельзя извлечь из “%s”.
+"error.calibration.file_missing": |-
+  Файл калибровки “%s” отсутствует.
+"error.calibration.file_not_created": |-
+  Файл калибровки не создан.
+"error.copy_failed": |-
+  Файл “%s” не может быть скопирован в “%s”.
+"error.deletion": |-
+  Произошла ошибка при перемещении файлов в %s. Некоторые файлы, возможно, не были удалены.
+"error.dir_creation": |-
+  Не удалось создать каталог “%s”. Возможно, есть ограничения доступа. Пожалуйста, разрешите доступ для записи или выбрать другой каталог.
+"error.dir_notdir": |-
+  Не удалось создать каталог “%s”, поскольку уже существует другой объект с таким названием. Выберите другой каталог.
+"error.file.create": |-
+  Не удалось создать файл “%s”.
+"error.file.open": |-
+  Не удалось открыть файл “%s”.
+"error.file_type_unsupported": |-
+  Неподдерживаемый формат файла.
+"error.generic": |-
+  Произошла внутренняя ошибка.
+  
+  Код ошибки: %s
+  Сообщение об ошибке: %s
+"error.luminance.invalid": |-
+  Измеренная максимальная яркость была недействительной. Убедитесь, что датчик прибора не закрыт, и удалите защитный колпачок (если он есть).
+"error.luminance.not_monotonically_increasing": |-
+  Измеренная реакция яркости очень неравномерная (неисправность устройства или прибора). Невозможно создать кривые тональных откликов.
+"error.measurement.file_invalid": |-
+  Файл измерения „%s“ недействителен.
+"error.measurement.file_missing": |-
+  Файл измерения “%s” отсутствует.
+"error.measurement.file_not_created": |-
+  Файл измерений не создан.
+"error.measurement.missing_spectral": |-
+  Файл измерений не содержит спектральных значений.
+"error.measurement.one_colorimeter": |-
+  Нужно одно точное колориметрическое измерение.
+"error.measurement.one_reference": |-
+  Нужно одно точное колориметрическое измерение.
+"error.no_files_extracted_from_archive": |-
+  Файлы не были извлечены из “%s”.
+"error.not_a_session_archive": |-
+  Архив “%s” не является архивом сессии измерений.
+"error.profile.file_missing": |-
+  Профиль “%s” отсутствует.
+"error.profile.file_not_created": |-
+  Не создан профиль.
+"error.source_dest_same": |-
+  Профиль источника и назначения одинаковые.
+"error.testchart.creation_failed": |-
+  Не удалось создать файл тестирования “%s”. Возможно, существуют ограничения доступа, или выходной файл не существует.
+"error.testchart.invalid": |-
+  Файл тестирования “%s” недействительный.
+"error.testchart.missing": |-
+  Файл тестирования “%s” отсутствует.
+"error.testchart.missing_fields": |-
+  Файл тестовой таблицы „%s“ не имеет обязательных полей: %s
+"error.testchart.read": |-
+  Файл тестовой таблицы “%s” не удалось профитать.
+"error.tmp_creation": |-
+  Не удалось создать временный рабочий каталог.
+"error.trashcan_unavailable": |-
+  %s недоступен. Файлы не удалены.
+"errors.none_found": |-
+  Не найдено ни одной ошибки.
+"estimated_measurement_time": |-
+  Ориентировочное время измерения примерно %s часа(ов) %s минут
+"exceptions": |-
+  Исключения...
+"executable": |-
+  Выполнена
+"export": |-
+  Экспорт...
+"extra_args": |-
+  Установите дополнительные аргументы командной строки...
+"factory_default": |-
+  Заводские настройки по умолчанию
+"failure": |-
+  ...не удалось!
+"ffp_insertion": |-
+  Вставка полного шаблона поля
+"file.hash.malformed": |-
+  Невозможно проверить целостность %s, поскольку файл контрольной суммы неправильно сформирован.
+"file.hash.missing": |-
+  Целостность %s невозмождно проверить, поскольку она не содержит записи в файле контрольной суммы.
+"file.hash.verification.fail": |-
+  Ошибка проверки контрольной суммы %s:
+  
+  Ожидается %s
+  Фактически %s
+"file.invalid": |-
+  Недействительный файл.
+"file.missing": |-
+  Файл “%s” не существует.
+"file.notfile": |-
+  “%s” не есть файлом.
+"file.select": |-
+  Выберите файл.
+"filename": |-
+  Название файла
+"filename.upload": |-
+  Загрузите имя файла
+"filetype.7z": |-
+  7-Zip файлы
+"filetype.any": |-
+  Любой тип файла
+"filetype.cal": |-
+  Файлы калибровки (*.cal)
+"filetype.cal_icc": |-
+  Файлы калибровки и профилирования (*.cal;*.icc;*.icm)
+"filetype.ccmx": |-
+  Корректирующие матрицы / Калибровка спектральных образцов (*.ccmx;*.ccss)
+"filetype.html": |-
+  HTML файлы (*.html;*.htm)
+"filetype.icc": |-
+  Файлы профилей (*.icc;*.icm)
+"filetype.icc_mpp": |-
+  Файлы профилей(*.icc;*.icm;*.mpp)
+"filetype.icc_ti1_ti3": |-
+  (Testchart)/Файлы тестовых таблиц (*.icc;*.icm;*.ti1;*.ti3)
+"filetype.icc_ti3": |-
+  Файлы измерений (*.icc;*.icm;*.ti3)
+"filetype.log": |-
+  Файлы журнала (*.log)
+"filetype.png": |-
+  Portable Network Graphics (*.png)
+"filetype.tgz": |-
+  Сжатые TAR архивы
+"filetype.ti1": |-
+  (Testchart)/Файлы тестовых таблиц (*.ti1)
+"filetype.ti1_ti3_txt": |-
+  Testchart файлы(*.ti1), файлы измерений (*.ti3;*.txt)
+"filetype.ti3": |-
+  Файлы измерений (*.ti3)
+"filetype.tif": |-
+  Tagged Image File (*.tif)
+"filetype.txt": |-
+  (Исправления устройств)DeviceCorrections.txt
+"filetype.vrml": |-
+  VRML файлы (*.wrl)
+"filetype.x3d": |-
+  X3D файлы (*.x3d)
+"filetype.zip": |-
+  ZIP файлы
+"film_scanner": |-
+  Сканер плёнки
+"film_writer": |-
+  Устройство для записи киноплёнок
+"finish": |-
+  Завершить
+"flare": |-
+  вспышка
+"flexography": |-
+  Флексография
+"focal_plane_colorimetry_estimates": |-
+  Оценки колориметрии фокальной плоскости
+"forced": |-
+  вынуждены
+"format.select": |-
+  Выберите желаемый формат.
+"fullscreen.message": |-
+  Полноэкранный режим активирован.
+  Нажмите ESC, чтобы выйти из полноэкранного режима.
+"fullscreen.osx.warning": |-
+  Если вы входите в полноэкранный режим с помощью кнопки масштабирования в строке заголовка окна, нажмите CMD + TAB, чтобы вернуться к обычному режиму после закрытия окна. Кроме того, вы можете перейти в полноэкранный режим, дважды щелкнув строку заголовка или удерживая клавишу OPTION, нажав кнопку масштабирования.
+"gamap.default_intent": |-
+  Стандартный метод визуализации
+"gamap.intents.a": |-
+  Абсолютный колориметрический
+"gamap.intents.aa": |-
+  Абсолютный вид
+"gamap.intents.aw": |-
+  Абсолютный колориметрический с нормированием белой точки
+"gamap.intents.la": |-
+  Яркость соответствует внешнему виду
+"gamap.intents.lp": |-
+  Яркость сохраняет перцептивний вид
+"gamap.intents.ms": |-
+  Сохранение насыщенности
+"gamap.intents.p": |-
+  Перцептивний
+"gamap.intents.pa": |-
+  Ввосприимчив вид
+"gamap.intents.r": |-
+  Относительный колориметрический
+"gamap.intents.s": |-
+  Насыщеность
+"gamap.out_viewcond": |-
+  Назначенные условия просмотра
+"gamap.perceptual": |-
+  Цветовой охват отображения для намерения восприятия
+"gamap.profile": |-
+  Источник профиля
+"gamap.saturation": |-
+  Цветовой охват отображения для целей насыщения
+"gamap.src_viewcond": |-
+  Условия просмотру источника
+"gamap.viewconds.cx": |-
+  Разрежьте прозрачные пленки на окне просмотра
+"gamap.viewconds.jd": |-
+  Проектор в темном окружении
+"gamap.viewconds.jm": |-
+  Проектор в непрозрачной среде
+"gamap.viewconds.mb": |-
+  Монитор в рабочем светлом окружении, > 64 lux
+"gamap.viewconds.md": |-
+  Монитор в затемненной рабочей среде, < 32 lux
+"gamap.viewconds.mt": |-
+  Монитор в обычной рабочей среде, 32-64 lux
+"gamap.viewconds.ob": |-
+  Оригинальная сцена - яркость на открытом воздухе
+"gamap.viewconds.pc": |-
+  Критическая среда оценки печати (ISO-3664 P1)
+"gamap.viewconds.pcd": |-
+  Photo CD - оригинальная сцена на открытом воздухе
+"gamap.viewconds.pe": |-
+  Среда оценки печати (CIE 116-1995)
+"gamap.viewconds.pp": |-
+  Практическая печать на отражение (ISO-3664 P2)
+"gamap.viewconds.tv": |-
+  Телевидение / кинопроизводство
+"gamapframe.title": |-
+  Дополнительные параметры отображения гамута
+"gamut": |-
+  Цветовой диапазон (Gamut)
+"gamut.coverage": |-
+  Покрытие цветового диапазона
+"gamut.view.create": |-
+  Генерация видимого диапазона цветов...
+"gamut.volume": |-
+  Объем цветного диапазона
+"gamut_mapping.ciecam02": |-
+  CIECAM02 отображение гамута
+"gamut_mapping.mode": |-
+  Метод отображения гамута
+"gamut_mapping.mode.b2a": |-
+  из PCS на устройство
+"gamut_mapping.mode.inverse_a2b": |-
+  Из внешнего устройства на PCS
+"gamut_plot.tooltip": |-
+  Нажмите и перетащите мышью внутри окна просмотра, чтобы переместить окно просмотра или масштабировать с помощью колеса мыши и клавиш +/-. Двойной щелчок сбрасывает окно просмотра.
+"generic_name_value_data": |-
+  Генерировать имя для значений данных
+"geometry": |-
+  Геометрия
+"glossy": |-
+  Глянцевый
+"go_to": |-
+  двигаться к %s
+"go_to_website": |-
+  Перейти на веб-сайт
+"gravure": |-
+  Гравюра
+"gray_tone_response_curve": |-
+  Кривая тонального отклика Серого
+"grayscale": |-
+  Ахроматические оттенки (серые)
+"green": |-
+  Зелёный
+"green_gamma": |-
+  Зелёная гамма
+"green_lab": |-
+  Зелёный L*a*b*
+"green_matrix_column": |-
+  Колонка матрицы зелёного
+"green_maximum": |-
+  Зелёный максимум
+"green_minimum": |-
+  Зелёный минимум
+"green_tone_response_curve": |-
+  Кривая тонального отклика Зелёного
+"green_xyz": |-
+  Зелёный XYZ
+"grid_steps": |-
+  Шаги градации
+"hdmi": |-
+  HDMI
+"hdr_maxcll": |-
+  Максимальный уровень освещённости
+"hdr_mincll": |-
+  Минимальный уровень освещённости
+"header": |-
+  Отображение калибровки и характеризации под управлением ArgyllCMS
+"help_support": |-
+  Помощь и поддержка...
+"host.invalid.lookup_failed": |-
+  Недействительный хост (не удалось найти соединение)
+"hpe_d65": |-
+  Матрица Ханта-Поинтера-Эстевезе(HPE),из CIE XYZ в LMS для Hunt и RLAB, осветитель D65
+"hpe_e": |-
+  Матрица Ханта-Поинтера-Эстевезе (HPE), для осветителя E
+"hue": |-
+  Оттенок
+"icc_absolute_colorimetric": |-
+  ICC-абсолютный колорометрический
+"icc_version": |-
+  версия ICC
+"if_available": |-
+  если таковые имеются
+"illuminant": |-
+  Осветитель
+"illuminant_relative_cct": |-
+  Относительный осветитель CCT
+"illuminant_relative_lab": |-
+  относительный осветитель L*a*b*
+"illuminant_relative_xyz": |-
+  относительный осветитель XYZ
+"illuminant_xyz": |-
+  Осветитель XYZ
+"illumination": |-
+  Освещение
+"in": |-
+  В
+"info.3dlut_settings": |-
+  Профиль <font weight='bold'> 3D LUT</font> (LUT = таблица поиска) или ICC-профиль привязки устройства может использоваться приложениями, поддерживающими подключение 3D LUT или ICC, для полного <font weight='bold'>отображения корекции цвета</font>.
+  
+  <font weight='bold'>Создание нескольких (дополнительных) 3D LUT из существующего профиля</font> При желательном профиле, выбранном в “Настройках”, снимите флажок “Создать 3D LUT после профилирования”.
+  
+  <font weight='bold'>Выбор правильного исходного цветового пространства и кривой тонового отклика</font>
+  Для 3D LUT и ICC-профилей связи устройств (ICC device link profiles) необходимо заранее установить исходное цветовое пространство и кривую тонального отклика, чтобы они стали неотъемлемой частью общего преобразования цвета (в отличие от ICC-профилей устройств, которые динамически подключаются на лету). Например, HD видео материал обычно отображается в соответствии с Rec.709 или с чистой гаммой мощности дисплея около 2,2-2,4 (относительной, со смещением чёрного на Выходе на 100%) или Rec.1886 кривая тонального отклика EOFT (абсолютная, с точкой чёрного, смещённой на 0%). Распределение между Rec.1886-подобной и чистой мощностью на выходе также возможно, благодаря установке смещения чёрного на значения между 0% и 100%.
+  
+  <font weight='bold'>“Абсолютная” и “относительная” гамма</font>
+  Чтобы адаптироваться к ненулевому уровню черного реального дисплея, кривую тональной характеристики в тенях необходимо сместить и соответствующим образом масштабировать.
+  “Абсолютная” гамма приводит к фактическому Выходу на 50% Входных значений, которые при этом не отвечают идеализированной мощности (если уровень чёрного не равен нулю).
+  “Относительная” гамма приводит к фактическому Выходу 50% Входных значений, которые отвечают идеализированной кривой мощности.
+  
+  <font weight='bold'>Назначение рендеринга или метод визуализации</font>
+  Если вы откалибровали на точку белого, отличную от той, которая которая указана в исходном цветовом пространстве, и хотите использовать её для 3D LUT, выберите “Относительный колориметрический”. В противном случае выберите “Абсолютный колориметрический с масштабированием точки белого” (масштабирование белой точки предотвратит отсечение в абсолютном колориметрическом режиме, которое может произойти, если белая точка исходного цветового пространства находится за пределами гаммы дисплея). У вас также есть возможность использовать не колориметрическую визуализацию, которая может сжимать или расширять исходное цветовое пространство, чтобы оно соответствовало гамме дисплея (не рекомендуется, когда требуется колориметрическая точность).
+"info.calibration_settings": |-
+  <font weight='bold'> Калибровка </font> осуществляется с помощью <font weight='bold'> интерактивной настройки дисплея </font>, чтобы соответствовать выбранной точке белого и/или яркости, а также дополнительно создавать <font weight='bold'>1D LUT калибровочные кривые</font> (LUT = таблица поиска), чтобы соответствовать выбранной кривой тонального сигнала и обеспечить баланс серого. Обратите внимание, что если во время калибровки нужно настроить только дисплей и пропустить генерацию кривых 1D LUT, то нужно настроить кривую тонального сигнала на “Как в измерении”. Калибровка 1D LUT <font weight='bold'> не </font> может использоваться для полной коррекции цвета дисплея, нужно создать <font weight='bold'> ICC профиль устройства </font> или <font weight='bold'> 3D LUT </font> и используйте их с приложениями, которые поддерживают их для этой цели.
+"info.display_instrument": |-
+  Если на вашем дисплее есть <font weight='bold'> OLED </font>, <font weight='bold'> Plasma </font> или иная технология с переменным выходом света в зависимости от содержания изображения, включите <font weight='bold'>компенсация дрейфа уровня белого</font>.
+  
+  Если ваш прибор является <font weight='bold'>спектрометром</font>, и вы используете его в режиме контакта на дисплее со стабильным уровнем черного, вы можете захотеть включить <font weight='bold'> компенсацию инструмента с плавающим уровнем чёрного цвета</font>.
+  
+  Если ваш инструмент <font weight='bold'> колориметр </font>, вы должны использовать <font weight='bold'> режим измерения </font> и/или <font weight='bold'> коррекция </font>, которая подходит для вашего типа дисплея или технологии отображения. Заметьте, что некоторые инструменты (ColorHug, ColorHug2, K-10, Spyder4 / 5 / X) могут иметь коррекцию, встроенную в некоторые из них режимов измерения.
+"info.display_instrument.warmup": |-
+  Вы должны позволить вашему дисплею <font weight='bold'> прогреться </font> минимально <font weight='bold'> 30 минут </font> перед началом измерений. Если вы используете свой инструмент в контактном режиме, хорошей идеей будет оставить его на дисплее и в течение этого времени.
+"info.mr_settings": |-
+  Вы можете <font weight='bold'> проверить точность </font> профиля ICC или 3D LUT через отчёт об измерении, содержащий подробную статистику об ошибках цветов измеряемых патчей.
+  
+  Во время проверки 3D LUT убедитесь, что вы используете те же настройки, что и 3D LUT.
+  
+  <font weight='bold'> Рекомендация: </font> Чтобы создать отчёт о проверке вместо отчёта об измерениях, удерживайте клавишу ALT на клавиатуре.
+"info.profile_settings": |-
+  <font weight='bold'> Профилирование </font> - это процесс <font weight='bold'>, характеризующий </font> отображение и запись его откликов в <font weight='bold'> профиль устройства ICC </font>. Профиль устройства ICC может использоваться программами, которые поддерживают управление цветом ICC для полного <font weight='bold'> отображения цветовой корекции </font>, и/или она может быть использована для создания <font weight='bold'> 3D LUT </font> (LUT = Таблица поиска), которая служит той же цели для программ, которые поддерживают 3D LUT.
+  
+  Количество измеренных патчей влияет на достижимую точность полученного профиля. Для разумного качества 3х3 матрицы и кривые на основе профиля, несколько десятков патчей может быть достаточно, если дисплей имеет хорошие свойства аддитивного смешивания цветов и линейность. Некоторые профессиональные дисплеи относятся к этой категории. Если желательна максимальная точность, рекомендуется использовать профиль на основе LUT с количеством, от нескольких сотен, до нескольких тысяч патчей. Параметр <font weight='bold'> “Автоматическая оптимизация” </font> автоматически учитывает нелинейность и реальную реакцию дисплея, и должен использоваться для получения наилучших результатов. Благодаря этому можно настроить ползунок для выбора компромисса между точностью и результативностью измерений, а также временем затраченным на измерения и вычисления.
+"infoframe.default_text": |-
+  
+"infoframe.title": |-
+  Журнал
+"infoframe.toggle": |-
+  Показать окно журнала
+"initial": |-
+  Начальные
+"initializing_gui": |-
+  Инициализация GUI...
+"ink_jet_printer": |-
+  Струйный принтер
+"input_device_profile": |-
+  Профиль Входящего устройства
+"input_table": |-
+  Таблица Входящих данных
+"install_display_profile": |-
+  Установите профиль устройства отображения...
+"install_local_system": |-
+  Установите для всей системы
+"install_user": |-
+  Установите только для текущего пользователя
+"instrument": |-
+  Инструмент
+"instrument.calibrate": |-
+  Положите прибор на темную, матовую поверхность или на его калибровочную пластину и нажмите OK, чтобы откалибровать прибор.
+"instrument.calibrate.colormunki": |-
+  Установите датчик ColorMunki в позицию калибровки и нажмите OK для калибровки прибора.
+"instrument.calibrate.reflective": |-
+  Установите прибор на его целевую измерительную светоотражающую мишень серийный номер %s и нажмите OK, чтобы откалибровать инструмент.
+"instrument.calibrating": |-
+  Калибровка инструмента...
+"instrument.colormunki": |-
+  ColorMunki Design/Photo, i1Studio
+"instrument.connect": |-
+  Подключите измерительный прибор сейчас.
+"instrument.initializing": |-
+  Настройте инструмент, подождите...
+"instrument.measure_ambient": |-
+  Если для инструмента требуется специальная крышка для измерения окружающей среды, добавьте ее. Чтобы измерить окружающее освещение, поместите прибор вверх, рядом с дисплеем. Или, если вы хотите измерить кабину для просмотра, вставьте серую карту без метамерией в кабину и направьте на нее инструмент для измерений. Дополнительные инструкции по измерению окружающей среды могут быть доступны в документации вашего устройства. Нажмите OK, чтобы начать измерения.
+"instrument.place_on_screen": |-
+  Поместите инструмент в окно тестирования и нажмите кнопку OK, чтобы продолжить.
+"instrument.place_on_screen.madvr": |-
+  (%i)Поместите %s в тестовой области
+"instrument.reposition_sensor": |-
+  Измерения не удалось, поскольку датчик прибора находится в неправильном положении. Исправьте позицию датчика, а затем нажмите кнопку OK, чтобы продолжить.
+"internal": |-
+  Внутренний
+"interval": |-
+  Интервал
+"invert_selection": |-
+  Инвертированный выбор
+"ipt": |-
+  IPT
+"is_embedded": |-
+  Встроенный
+"is_illuminant": |-
+  Освещается
+"is_linear": |-
+  Линейный
+"laptop.icc": |-
+  Ноутбук (Gamma 2.2)
+"level": |-
+  Уровень
+"libXss.so": |-
+  X11 расширение заставки
+"library.not_found.warning": |-
+  Библиотека “%s” (%s) не найдена. Убедитесь, что она установлена, прежде чем продолжить.
+"license": |-
+  Лицензия
+"license_info": |-
+  Лицензия под GPL
+"linear": |-
+  линейный
+"link.address.copy": |-
+  Копировать адрес ссылки
+"log.autoshow": |-
+  Показывать окно журнала автоматически
+"luminance": |-
+  Яркость
+"lut_access": |-
+  Доступ к таблицам гамма-коррекции видеокарты
+"madhcnet.outdated": |-
+  Установленая версия %s определена %s устаревшей. Обновите до последней версии madVR (по крайней мере %i.%i.%i.%i).
+"madtpg.launch.failure": |-
+  madTPG не найден или не может быть запущен.
+"madvr.not_found": |-
+  madVR DirectShow фильтр не был найден в реестре. Убедитесь, что он установлен.
+"madvr.outdated": |-
+  Использованая версия madVR устарела. Обновите его до последней версии (по крайней мере %i.%i.%i.%i).
+"madvr.wrong_levels_detected": |-
+  Измеренная разница яркости между уровнями RGB 0 и 16 ниже 0.02 cd/m². Настройка входного и/или черного уровня устройства отображения неправильное и/или конфигурация выходных уровней видеокарты и/или настроек madVR фильтра неверна - если драйвер видеокарты установлен на выходной полный спектр RGB (0-255), пожалуйста, измените уровни вывода madVR для устройства дисплея до уровня телевизора (16-235).
+"magenta": |-
+  Пурпурный
+"make_and_model": |-
+  Марка и модель
+"manufacturer": |-
+  Производитель
+"mastering_display_black_luminance": |-
+  Освоение уровня черного дисплея
+"mastering_display_peak_luminance": |-
+  Освоение показа пиковой яркости дисплея
+"matrix": |-
+  Матрица
+"matte": |-
+  Матовый
+"max": |-
+  Макс
+"maximal": |-
+  Максимум
+"measure": |-
+  Измерение
+"measure.darken_background": |-
+  Чёрный фон
+"measure.darken_background.warning": |-
+  Внимание: Если выбрано „чёрный фон”, он охватывает весь экран, и вы не сможете увидеть окно настройки дисплея! Если у вас есть Мультиэкранные настройки, переместите окно настройки дисплея на другой экран перед началом измерения или воспользуйтесь клавиатурой (чтобы прервать измерения, нажмите Q. Если измерения уже запущен, подождите, а затем снова нажмите Q).
+"measure.override_display_settle_time_mult": |-
+  Переопределить дисплей, установить множитель времени
+"measure.override_min_display_update_delay_ms": |-
+  Переопределить минимальную задержку обновления отображения
+"measure.testchart": |-
+  Измерьте тестовую-карту
+"measureframe.center": |-
+  Центр
+"measureframe.info": |-
+  Переместите окно измерения в нужное положение экрана и, если необходимо, измените его размер. Приблизительно вся область окна будет использоваться для отображения измерительных участков, круг - это просто руководство, которое поможет вам разместить ваше измерительное устройство.
+  Установите измерительное устройство в окне и нажмите „Начать измерения “. Для отмены и возврата в главное окно закройте окно измерений.
+"measureframe.measurebutton": |-
+  Начать измерения
+"measureframe.title": |-
+  Площадь измерений
+"measureframe.zoomin": |-
+  Увеличить
+"measureframe.zoommax": |-
+  Увеличить/Обновить
+"measureframe.zoomnormal": |-
+  Обычный размер
+"measureframe.zoomout": |-
+  Уменьшить
+"measurement.play_sound": |-
+  Акустическая обратная связь на непрерывных измерениях
+"measurement.untethered": |-
+  Необратимые измерения
+"measurement_file.check_sanity": |-
+  Проверьте файл измерений...
+"measurement_file.check_sanity.auto": |-
+  Проверять файлы измерений автоматически
+"measurement_file.check_sanity.auto.warning": |-
+  Заметьте, что автоматическая проверка измерений является экспериментальной функцией. Используйте на свой страх и риск.
+"measurement_file.choose": |-
+  Выберите файл измерений
+"measurement_file.choose.colorimeter": |-
+  Выберите файл измерений колориметра
+"measurement_file.choose.reference": |-
+  Пожалуста, выберите файл сравнения
+"measurement_mode": |-
+  Режим
+"measurement_mode.adaptive": |-
+  Адаптивная
+"measurement_mode.dlp": |-
+  DLP
+"measurement_mode.factory": |-
+  Заводская калибровка
+"measurement_mode.generic": |-
+  Общий
+"measurement_mode.highres": |-
+  HiRes
+"measurement_mode.lcd": |-
+  LCD (общий)
+"measurement_mode.lcd.ccfl": |-
+  LCD (CCFL)
+"measurement_mode.lcd.ccfl.2": |-
+  LCD (CCFL Тип 2)
+"measurement_mode.lcd.oled": |-
+  LCD (OLED)
+"measurement_mode.lcd.white_led": |-
+  LCD (Белый LED)
+"measurement_mode.lcd.wide_gamut.ccfl": |-
+  Расширенный диапазон LCD (CCFL)
+"measurement_mode.lcd.wide_gamut.gb_led": |-
+  расширенный диапазон LCD (GB LED)
+"measurement_mode.lcd.wide_gamut.led": |-
+  расширенный диапазон LCD (PFS Phosphor, RGB LED)
+"measurement_mode.lcd.wide_gamut.rgb_led": |-
+  расширенный диапазон LCD (RGB LED)
+"measurement_mode.raw": |-
+  Raw
+"measurement_mode.refresh": |-
+  Обновить (общий)
+"measurement_report": |-
+  Отчёт про измерение...
+"measurement_report.update": |-
+  Обновить измерения и отчетность по однообразию...
+"measurement_report_choose_chart": |-
+  Выберите тест-таблицу для измерений.
+"measurement_report_choose_chart_or_reference": |-
+  Выберите тест-таблицу или ссылку.
+"measurement_report_choose_profile": |-
+  Выберите профиль для подтверждения.
+"measurement_type": |-
+  Тип измерения
+"measurements.complete": |-
+  Измерение завершено! Вы хотите открыть папку с файлами измерений?
+"measurements.invalid": |-
+  Измерения недействительны.
+"measuring.characterization": |-
+  Измерение образцов цветов для характеризации...
+"media_attributes": |-
+  Атрибуты media
+"media_black_point": |-
+  Чорная точка media
+"media_relative_colorimetric": |-
+  Media – относительный колориметрический
+"media_white_point": |-
+  Точка белого media
+"menu.about": |-
+  О текущей версии...
+"menu.file": |-
+  Файл
+"menu.help": |-
+  ?
+"menu.language": |-
+  Язык
+"menu.options": |-
+  Опции
+"menu.tools": |-
+  Инструменты
+"menuitem.quit": |-
+  Выйти
+"menuitem.set_argyll_bin": |-
+  Найдите исполнительные файлы ArgyllCMS...
+"metadata": |-
+  Метаданные
+"method": |-
+  Метод
+"min": |-
+  Мин
+"minimal": |-
+  Минимальный
+"model": |-
+  Модель
+"motion_picture_film_scanner": |-
+  Сканер киноплёнки
+"mswin.open_display_settings": |-
+  Откройте параметры отображения Windows...
+"named_color_profile": |-
+  Профиль именованных цветов
+"named_colors": |-
+  Именованные цвета
+"native": |-
+  Собственный
+"negative": |-
+  Негатив
+"no": |-
+  Нет
+"no_settings": |-
+  Файл не имеет настроек.
+"none": |-
+  Нет
+"not_applicable": |-
+  Не используется
+"not_connected": |-
+  Не подключен
+"not_found": |-
+  “%s” не найдено.
+"not_now": |-
+  Не сейчас
+"number_of_entries": |-
+  Количество записей
+"number_of_entries_per_channel": |-
+  Количество записей на канал
+"observer": |-
+  Наблюдатель
+"observer.1931_2": |-
+  CIE 1931 2°
+"observer.1955_2": |-
+  Stiles & Birch 1955 2°
+"observer.1964_10": |-
+  CIE 1964 10°
+"observer.1964_10c": |-
+  CIE 1964 10° / 1931 2° гибрид
+"observer.1978_2": |-
+  Judd & Voss 1978 2°
+"observer.2012_2": |-
+  CIE 2012 2°
+"observer.2012_10": |-
+  CIE 2012 10°
+"observer.shaw": |-
+  Shaw & Fairchild 1997 2°
+"oem.import.auto": |-
+  Если ваш колориметр пприобретён вместе с компакт-диском с программным обеспечением для Windows, вставьте его сейчас (отмена любой возможной автоматической установки программного обеспечения).
+  
+  Если у вас нет компакт-диска и нужных файлов в системе не обнаружено, то они будут загружены из Интернета.
+"oem.import.auto.download_selection": |-
+  Предварительный отбор был сделан на основе выявленных приборов. Выберите файл (файлы) для загрузки.
+"oem.import.auto_windows": |-
+  Если установлено программное обеспечение поставщика для вашего колориметра, в большинстве случаев нужные файлы можно найти автоматически.
+"office_web.icc": |-
+  Office & Web (D65, Gamma 2.2)
+"offset": |-
+  Офсетная печать
+"offset_lithography": |-
+  Литографская печать
+"ok": |-
+  Да
+"or": |-
+  или
+"osd": |-
+  OSD
+"other": |-
+  Иное
+"out": |-
+  Выход
+"out_of_gamut_tag": |-
+  Out of gamut tag
+"output.profile": |-
+  Профиль назначения
+"output_device_profile": |-
+  Профиль устройства вывода
+"output_levels": |-
+  Выходные уровни
+"output_offset": |-
+  Выходной сдвиг
+"output_table": |-
+  Выходная таблица
+"overwrite": |-
+  Перезаписать
+"panel.surface": |-
+  Поверхность панели дисплея
+"panel.type": |-
+  Тип панели
+"passive_matrix_display": |-
+  Пасивный матричный дисплей
+"patch.layout.select": |-
+  Выберите патчи исправления:
+"patches": |-
+  Патчи
+"patterngenerator.prisma.specify_host": |-
+  Пожалуйста, укажите имя хоста вашего процессора Prisma Video, например prisma-0123 (Windows) или prisma-0123.local (Linux / Mac OS X). Вы можете найти имя хоста на этикетке в нижней части Prisma, если он не был изменен через административный веб-интерфейс Prisma. Альтернативно, введите IP-адрес (если известно), напр. 192.168.1.234
+"patterngenerator.sync_lost": |-
+  Потеряно синхронизацию с генератором шаблонов.
+"pause": |-
+  Пауза
+"pcs_illuminant_xyz": |-
+  PCS осветитель XYZ
+"pcs_relative_cct": |-
+  PCS-относительный CCT
+"pcs_relative_lab": |-
+  PCS-относительный L*a*b*
+"pcs_relative_xyz": |-
+  PCS-относительный XYZ
+"pcs_to_device_intent_0": |-
+  из PCS на устройство: намерение 0
+"pcs_to_device_intent_1": |-
+  из PCS на устройство: намерение 1
+"pcs_to_device_intent_2": |-
+  из PCS на устройство: намерение 2
+"perceptual": |-
+  Перцептивный
+"photo.icc": |-
+  Фотография (D50, Gamma 2.2)
+"photo_imagesetter": |-
+  Фотокопирование плёнки (Imagesetter)
+"photographic_paper_printer": |-
+  Принтер для фотобумаги
+"platform": |-
+  Платформа
+"please_wait": |-
+  подождите...
+"port.invalid": |-
+  недействительный порт: %s
+"positive": |-
+  Позитив
+"preferred_cmm": |-
+  Желательно CMM
+"prepress.icc": |-
+  Допечатная подготовка (D50, 130 cd/m², L*)
+"preserve_hue": |-
+  Сохранить оттенок
+"preserve_luminance": |-
+  Сохранить яркость
+"preserve_saturation": |-
+  Сохранить насыщенность
+"preset": |-
+  Предустановка
+"preview": |-
+  Preview
+"profile": |-
+  Профиль
+"profile.advanced_gamap": |-
+  Дополнительно (разширенно)...
+"profile.b2a.hires": |-
+  Повышение эффективного разрешения колориметрических таблицы с PCS-на устройство (BtoA)
+"profile.b2a.lowres.warning": |-
+  В профиле, кажется, отсутствуют высококачественные таблицы (BtoA) с PCS-на-устройство, которые необходимы для надлежащей работы. Создать высококачественные таблицы сейчас? Это займет несколько минут.
+"profile.b2a.smooth": |-
+  Сглаживание
+"profile.choose": |-
+  Пожалуйста выберите профиль.
+"profile.confirm_regeneration": |-
+  Вы хотите восстановить профиль?
+"profile.current": |-
+  Текущий профиль
+"profile.do_not_install": |-
+  Не установлен профиль
+"profile.iccv4.unsupported": |-
+  Профиль Ver.4 ICC не поддерживается.
+"profile.import.success": |-
+  Профиль импортирован. Возможно, вам понадобится вручную назначить и активировать его в настройках “цветоотображения” системы- “Color system settings”.
+"profile.info": |-
+  Информация о профиле
+"profile.info.show": |-
+  Показать информацию о профиле
+"profile.install": |-
+  Установить профиль
+"profile.install.error": |-
+  Не удалось установить/активировать профиль.
+"profile.install.success": |-
+  Профиль был установлен и активирован.
+"profile.install.warning": |-
+  Профиль был установлен, но могут возникнуть проблемы.
+"profile.install_local_system": |-
+  Установить профиль как системный по умолчанию
+"profile.install_network": |-
+  Установите профиль как общесетевой
+"profile.install_user": |-
+  Установить профиль только для текущего пользователя
+"profile.invalid": |-
+  Недействительный профиль.
+"profile.load_error": |-
+  Не удалось загрузить профиль отображения.
+"profile.load_on_login": |-
+  Загрузить настройки калибровки при загрузке системы
+"profile.load_on_login.handled_by_os": |-
+  Пусть операционная система обрабатывает загрузки калибровки (низкая точность и надежность)
+"profile.name": |-
+  Имя профиля
+"profile.name.placeholders": |-
+  В названии профиля можно использовать следующие обозначения для автозаполнения:
+  
+  %a	 Сокращенное имя дня недели
+  %A	 Полное название дня недели
+  %b	 Сокращенное имя месяца
+  %B	 Полное название месяца
+  %d	 День месяца
+  %H	 Время (24-часовое измерение)
+  %I	 Время (12-часовое измерение)
+  %j	 День года
+  %m	 Місяц
+  %M	 Минут
+  %p	 AM/PM
+  %S	 Секунд
+  %U	 Неделя (воскресенье как первый день недели)
+  %w	 День недели (воскресенье - 0)
+  %W	 Неделя (понедельник как первый день недели)
+  %y	 Год без века
+  %Y	 год с веком
+"profile.no_embedded_ti3": |-
+  Профиль не содержит данных измерений, совместимых с Argyll.
+"profile.no_vcgt": |-
+  Профиль не содержит калибровочных кривых VCGT.
+"profile.only_named_color": |-
+  Можно использовать только профили типа “Именованных цветов”.
+"profile.quality": |-
+  Качество профиля
+"profile.quality.b2a.low": |-
+  Низкое качество таблиц (BtoA) из PCS-на-устройство
+"profile.quality.b2a.low.info": |-
+  Выберите этот параметр, если профиль будет использоваться только с инверсным отображением цветового объема, как (AtoB) - с устройства к-PCS, чтобы создать ссылку на устройство или 3D LUT
+"profile.required_tags_missing": |-
+  В профиле отсутствуют необходимые теги: %s
+"profile.self_check": |-
+  Проверка профиля ΔE*76
+"profile.self_check.avg": |-
+  усреднение
+"profile.self_check.max": |-
+  максимум
+"profile.self_check.rms": |-
+  RMS
+"profile.set_save_path": |-
+  Выберите путь сохранения...
+"profile.settings": |-
+  Настройка профилирования
+"profile.share": |-
+  Загрузить профиль...
+"profile.share.avg_dE_too_high": |-
+  Профиль выдаёт слишком высокий уровень delta E (фактический = %s, желаемый порог = %s).
+"profile.share.b2a_resolution_too_low": |-
+  Разрешающая способность таблиц профиля (BtoA), из PCS-на-устройство, слишком низкая.
+"profile.share.enter_info": |-
+  Вы можете поделиться своим профилем с другими пользователями через службу OpenSUSE “ICC Profile Taxi”. OpenSUSE “ICC Profile Taxi” обслуживание.
+  
+  Добавить содержательное описание и введите свойства дисплея. Ознакомьтесь с настройками устройства отображения из экранного меню устройства и введите только настройки, которые применяются к устройству отображения, который изменился по умолчанию.
+  Пример: Для большинства устройств отображения - это название выбранной предустановки, яркости, контрастности, цветовой температуры и/или коэффициентов RGB, а также гаммы. На портативных компьютерах и ноутбуках обычно только яркость. Если вы изменили дополнительные параметры во время калибровки устройства отображения, введите их, если это возможно.
+"profile.share.meta_missing": |-
+  Профиль не содержит необходимой мета-информации.
+"profile.share.success": |-
+  Профиль успешно загружен.
+"profile.tags.A2B0.shaper_curves.input": |-
+  Входящие профили кривых A2B0
+"profile.tags.A2B0.shaper_curves.output": |-
+  Исходящие профили кривых A2B0
+"profile.tags.A2B1.shaper_curves.input": |-
+  Входящие профили кривых A2B1
+"profile.tags.A2B1.shaper_curves.output": |-
+  Исходящие профили кривых A2B1
+"profile.tags.A2B2.shaper_curves.input": |-
+  Входящие профили кривых A2B2
+"profile.tags.A2B2.shaper_curves.output": |-
+  Исходящие профили кривых A2B2
+"profile.tags.B2A0.shaper_curves.input": |-
+  Входящие профили кривых B2A0
+"profile.tags.B2A0.shaper_curves.output": |-
+  Исходящие профили кривых B2A0
+"profile.tags.B2A1.shaper_curves.input": |-
+  Входящие профили кривых B2A1
+"profile.tags.B2A1.shaper_curves.output": |-
+  Исходящие профили кривых B2A1
+"profile.tags.B2A2.shaper_curves.input": |-
+  Входящие профили кривых B2A2
+"profile.tags.B2A2.shaper_curves.output": |-
+  Исходящие профили кривых B2A2
+"profile.testchart_recommendation": |-
+  Для получения более качественного профиля рекомендуется использовать тест-таблицу с большим количеством образцов, но для измерения требуется больше времени. Вы хотите использовать рекомендованную тест-таблицу?
+"profile.type": |-
+  Тип профиля
+"profile.type.gamma_matrix": |-
+  Гамма + матрица
+"profile.type.lut.lab": |-
+  L*a*b* LUT
+"profile.type.lut.xyz": |-
+  XYZ LUT
+"profile.type.lut_matrix.xyz": |-
+  XYZ LUT + матрица
+"profile.type.lut_rg_swapped_matrix.xyz": |-
+  XYZ LUT + замененная матрица
+"profile.type.shaper_matrix": |-
+  Кривые + матрица
+"profile.type.single_gamma_matrix": |-
+  Одиночная (единая) гамма + матрица
+"profile.type.single_shaper_matrix": |-
+  Одиночная (единая) кривая + матрица
+"profile.unsupported": |-
+  Неподдерживаемый тип профиля (%s) и/или цветовое пространство (%s).
+"profile.update": |-
+  Обновить профиль
+"profile_associations": |-
+  Ассоциации профиля...
+"profile_associations.changing_system_defaults.warning": |-
+  Сейчас меняются типичные значения системы
+"profile_associations.use_my_settings": |-
+  Использовать мои настройки для этого устройства отображения
+"profile_class": |-
+  Класс профиля
+"profile_connection_space_pcs": |-
+  Пространство подключения профиля (PCS)
+"profile_loader": |-
+  Загрузчик профиля
+"profile_loader.disable": |-
+  Виключить загрузку профиля
+"profile_loader.exceptions.known_app.error": |-
+  Загрузчик профиля автоматически выключается, когда %s работает. Вы не можете изменить это поведение.
+"profile_loader.exit_warning": |-
+  Вы действительно хотите выйти из загрузчика профиля? Если изменить конфигурацию дисплея, калибровка больше не будет автоматически перезагружаться!
+"profile_loader.fix_profile_associations": |-
+  Автоматически исправлять ассоциации профилей
+"profile_loader.fix_profile_associations_warning": |-
+  Пока запускается загрузчик профиля, он может позаботиться об ассоциации профилей при изменении конфигурации дисплея.
+  
+  Прежде чем продолжить, убедитесь, что приведенные выше ассоциации профилей являются правильными. Если это не так, выполните следующие действия:
+  
+  1. Откройте параметры отображения Windows.
+  2. Активировать все подключенные дисплеи (расширенный рабочий стол).
+  3. Открыть ассоциации профиля.
+  4. Убедитесь, что на каждом устройства отображения указано правильный профиль. Затем закройте профильные ассоциации.
+  5. В настройках отображения Windows вернитесь к предыдущей конфигурации дисплея и закройте настройки дисплея.
+  6. Теперь можно включить “Автоматически исправлять ассоциации профилей”.
+"profile_loader.info": |-
+  Состояние калибровки было (повторно) применено %i время (и) до настоящего времени.
+  Щелкните правой кнопкой мыши значок меню.
+"profiling": |-
+  Профилирование
+"profiling.complete": |-
+  Профилирование завершено!
+"profiling.incomplete": |-
+  Профилирование не завершено.
+"projection_television": |-
+  Проекционное телевидение
+"projector": |-
+  Проектор
+"projector_mode_unavailable": |-
+  Режим проектора доступен только для бета-версии ArgyllCMS 1.1.0 или более поздней.
+"quality.ultra.warning": |-
+  Ультра качество почти никогда нельзя использовать, кроме как доказать, что оно почти никогда не будет использоваться (длительное время обработки!) Для сравнения. Можно выбрать вместо высокого или среднего качества.
+"readme": |-
+  Прочитайте это
+"ready": |-
+  Готово.
+"red": |-
+  Красный
+"red_gamma": |-
+  Красная гамма
+"red_lab": |-
+  Кпрасный L*a*b*
+"red_matrix_column": |-
+  Колонка красной матрицы
+"red_maximum": |-
+  Красный максимум
+"red_minimum": |-
+  Красный минимум
+"red_tone_response_curve": |-
+  Красная кривая тонального отклика (TRC)
+"red_xyz": |-
+  Красный XYZ
+"reference": |-
+  Reference (Целевая ссылка)
+"reflection_hardcopy_original_colorimetry": |-
+  Отображение копии оригинальной колориметрии
+"reflection_print_output_colorimetry": |-
+  Отображение печатной исходящей колориметрии
+"reflective": |-
+  Светоотражающий
+"reflective_scanner": |-
+  Сканер на отражение
+"remaining_time": |-
+  Остаток времени (расч.)
+"remove": |-
+  Удалить
+"rendering_intent": |-
+  Намерение/метод визуализации
+"report": |-
+  Отчёт
+"report.calibrated": |-
+  Отчет о калиброванном устройстве отображения
+"report.uncalibrated": |-
+  Сообщить о некалиброванных устройствах отображения
+"report.uniformity": |-
+  Измеряйте однородность устройства отображения...
+"reset": |-
+  Сбросить
+"resources.notfound.error": |-
+  Фатальная ошибка: нужный файл не найден:
+"resources.notfound.warning": |-
+  Внимание: некоторые необходимые файлы не найдены:
+"response.invalid": |-
+  Неправильный ответ от пользователя %s: %s
+"response.invalid.missing_key": |-
+  Неправильный ответ от %s: Отсутствует ключ “%s”: %s
+"response.invalid.value": |-
+  Неправильный ответ от %s: Значение ключа“%s” не соответствует ожидаемому значению “%s”: %s
+"restore_defaults": |-
+  Восстановить значение по умолчанию
+"rgb.trc": |-
+  передаточная функция RGB
+"rgb.trc.averaged": |-
+  усреднённая передаточная функция RGB
+"sRGB.icc": |-
+  sRGB
+"saturation": |-
+  Насыщенность
+"save": |-
+  Сохранить
+"save_as": |-
+  Сохранить как...
+"scene_appearance_estimates": |-
+  Оценки внешнего вида сцены
+"scene_colorimetry_estimates": |-
+  Оценка колориметрии сцены
+"scripting-client": |-
+  Клиент сценариев DisplayCAL
+"scripting-client.cmdhelptext": |-
+  Нажмите клавишу Tab в пустом командной строке, чтобы пересмотреть возможные команды в текущем контексте, или автоматически заполнить уже введеные начальные буквы. Введите “getcommands” для списка поддерживаемых команд и возможных параметров для подключенного приложения.
+"scripting-client.detected-hosts": |-
+  Выявлено хосты скриптов:
+"select_all": |-
+  Выбрать все
+"self_check_report": |-
+  Отчет самопроверки...
+"set_as_default": |-
+  Установить по умолчанию
+"setting.keep_current": |-
+  Получите текущие настройки
+"settings.additional": |-
+  Дополнительные настройки
+"settings.basic": |-
+  Базовые настройки
+"settings.new": |-
+  <Текущий>
+"settings_loaded": |-
+  Были загружены кривые калибровки и следующие параметры калибровки: %s . Другие параметры калибровки были восстановлены, а параметры профилирования не были изменены.
+"settings_loaded.cal": |-
+  Профиль содержал только настройки калибровки. Другие параметры не были изменены. Не найдено калибровочных кривых.
+"settings_loaded.cal_and_lut": |-
+  Профиль содержал только настройки калибровки. Другие параметры не были изменены, загружены калибровочные кривые.
+"settings_loaded.cal_and_profile": |-
+  Настройка загружены. Не найдено калибровочных кривых.
+"settings_loaded.profile": |-
+  Профиль содержал только настройки профилирования. Другие параметры не были изменены. Не найдено калибровочных кривых.
+"settings_loaded.profile_and_lut": |-
+  Профиль содержал только настройки профилирования. Другие параметры не были изменены и загружены калибровочные кривые.
+"sharp": |-
+  Чёткость/резкость
+"show_advanced_options": |-
+  Показать расширенные параметры
+"show_notifications": |-
+  Показывать оповещения
+"silkscreen": |-
+  Шелкотрафарет
+"simulation_profile": |-
+  Моделирование профиля
+"size": |-
+  Размер
+"skip_legacy_serial_ports": |-
+  Пропустить наследование последовательных портов
+"softproof.icc": |-
+  Мягкая цветопроба (5800K, 160 cd/m², L*)
+"spectral": |-
+  Спектральная(і)
+"spectral_resolution": |-
+  Спектральное разрешение
+"ssl.certificate_verify_failed": |-
+  Не удалось подтвердить - отсутствует сертификат.
+"ssl.certificate_verify_failed.root_ca_missing": |-
+  Отсутствует сертификат нельзя проверить, поскольку в локальной системе не найдено соответствующих корневых сертификатов.
+"ssl.handshake_failure": |-
+  Отказ отклика. Не удалось установить защищенное соединение.
+"startup": |-
+  Запуск...
+"startup_sound.enable": |-
+  Включить звук Запуска
+"success": |-
+  ...ok.
+"surround_xyz": |-
+  Окружение XYZ
+"synthicc.create": |-
+  Создать синтетический профиль ICC...
+"target": |-
+  Цель
+"tc.3d": |-
+  Создать диагностический 3D-файл
+"tc.I": |-
+  Тело перцептивного цветового пространства с центрированной кубической сеткой
+"tc.Q": |-
+  Перцептивное пространство с квази-случайным заполнением
+"tc.R": |-
+  Случайное перцептивное пространство
+"tc.adaption": |-
+  Адаптация
+"tc.algo": |-
+  Distribution
+"tc.angle": |-
+  Угол
+"tc.black": |-
+  Ченые патчи
+"tc.dark_emphasis": |-
+  Акцент темного участка
+"tc.fullspread": |-
+  Итеративные патчи
+"tc.gray": |-
+  Нейтральные патчи
+"tc.i": |-
+  Пространство тела устройства с центрированной кубической сеткой
+"tc.limit.sphere": |-
+  Ограничить образцы до сферы
+"tc.limit.sphere_radius": |-
+  Радиус
+"tc.multidim": |-
+  Многомерный
+"tc.multidim.patches": |-
+  шаги = %s патчи (%s нейтральные)
+"tc.neutral_axis_emphasis": |-
+  Направление нейтральной оси
+"tc.ofp": |-
+  Оптимизированная наиболее удаленная точка выборки
+"tc.patch": |-
+  Патч
+"tc.patches.selected": |-
+  Выбрано
+"tc.patches.total": |-
+  Всего патчев
+"tc.precond": |-
+  Предыдущий профиль
+"tc.precond.notset": |-
+  Выберите профиль предварительной подготовки.
+"tc.preview.create": |-
+  Создается предварительный просмотр, подождите...
+"tc.q": |-
+  Заполнение профиля устройства квази-случайное
+"tc.r": |-
+  Пространство устройства случайное
+"tc.single": |-
+  Одноканальные патчи
+"tc.single.perchannel": |-
+  на канал
+"tc.t": |-
+  Инкрементная выборка отдаленных точек
+"tc.vrml.black_offset": |-
+  RGB сдвиг чёрного (L*)
+"tc.vrml.use_D50": |-
+  Нейтральный белый RGB
+"tc.white": |-
+  Белых патчей
+"technology": |-
+  Технология
+"tempdir_should_still_contain_files": |-
+  Созданные файлы все еще должны находиться во временном каталоге “%s”.
+"testchart.add_saturation_sweeps": |-
+  Добавьте насыщенность
+"testchart.add_ti3_patches": |-
+  Добавьте ссылки для исправления...
+"testchart.auto_optimize.untethered.unsupported": |-
+  Неизвестный виртуальный дисплей не поддерживает автоматическую оптимизацию тестирования.
+"testchart.change_patch_order": |-
+  Изменение порядка исправления
+"testchart.confirm_select": |-
+  Файл сохранен. Вы хотите выбрать эту тестовую-таблицу?
+"testchart.create": |-
+  Создать тестовую-таблицу
+"testchart.discard": |-
+  Отбросить
+"testchart.dont_select": |-
+  Не выбирано
+"testchart.edit": |-
+  Редактировать тестовую-таблицу...
+"testchart.export.repeat_patch": |-
+  Повторите каждый патч:
+"testchart.file": |-
+  Тестовая-таблица
+"testchart.info": |-
+  Количество патчей в выбранном тесте
+"testchart.interleave": |-
+  Перетасовка
+"testchart.maximize_RGB_difference": |-
+  Максимизируйте разницу RGB
+"testchart.maximize_lightness_difference": |-
+  Максимизируйте разницу в светлых тонах
+"testchart.maximize_rec709_luma_difference": |-
+  Максимизируйте разницу по яркости
+"testchart.optimize_display_response_delay": |-
+  Минимизировать задержку отклика на дисплей
+"testchart.patch_sequence": |-
+  Последовательность патчей
+"testchart.patches_amount": |-
+  Количество патчей
+"testchart.read": |-
+  Чтение тестовой таблицы...
+"testchart.save_or_discard": |-
+  Тестовая таблица несохранена.
+"testchart.select": |-
+  Выберите
+"testchart.separate_fixed_points": |-
+  Выберите патчи, которые нужно добавить на отдельном этапе.
+"testchart.set": |-
+  Выберите файл тестовой таблицы...
+"testchart.shift_interleave": |-
+  Shift (сдвиг) & interleave
+"testchart.sort_RGB_blue_to_top": |-
+  Сначала сортировать синий цвет RGB
+"testchart.sort_RGB_cyan_to_top": |-
+  Сначала сортировать голубой цвет RGB
+"testchart.sort_RGB_gray_to_top": |-
+  Сначала сортировать ахроматические цвета RGB
+"testchart.sort_RGB_green_to_top": |-
+  Сначала сортировать зеленый цвет RGB
+"testchart.sort_RGB_magenta_to_top": |-
+  Сначала сортировать пурпурный цвет RGB
+"testchart.sort_RGB_red_to_top": |-
+  Сначала сортировать красный цвет RGB
+"testchart.sort_RGB_white_to_top": |-
+  В начало сортировать белый цвет RGB
+"testchart.sort_RGB_yellow_to_top": |-
+  Сначала сортировать желтый цвет RGB
+"testchart.sort_by_BGR": |-
+  Сортировать по BGR
+"testchart.sort_by_HSI": |-
+  Сортировать по HSI
+"testchart.sort_by_HSL": |-
+  Сортировать по HSL
+"testchart.sort_by_HSV": |-
+  Сортировать по HSV
+"testchart.sort_by_L": |-
+  Сортировать по L*
+"testchart.sort_by_RGB": |-
+  Сортировать по RGB
+"testchart.sort_by_RGB_sum": |-
+  Сортировать по сумме RGB
+"testchart.sort_by_rec709_luma": |-
+  Сортировать по яркости
+"testchart.vary_RGB_difference": |-
+  Отрицательная разница RGB
+"testchart_or_reference": |-
+  Тестовая таблица или ссылка
+"thermal_wax_printer": |-
+  Термальний восковий принтер
+"tone_values": |-
+  Значение тонов
+"transfer_function": |-
+  Функция передачи
+"translations": |-
+  Переводы
+"transparency": |-
+  Прозрачность
+"trashcan.linux": |-
+  trash (очистка)
+"trashcan.mac": |-
+  trash (очистка)
+"trashcan.windows": |-
+  корзина
+"tray_icon_animation": |-
+  Анимация пиктограммы в трее
+"trc": |-
+  Кривая тональности
+"trc.dicom": |-
+  DICOM
+"trc.gamma": |-
+  Gamma
+"trc.hlg": |-
+  Hybrid Log-Gamma
+"trc.lstar": |-
+  L*
+"trc.rec709": |-
+  Rec. 709
+"trc.rec1886": |-
+  Rec. 1886
+"trc.should_use_viewcond_adjust": |-
+  При использовании кривых SMPTE 240M или Rec.709, Вы можете использовать корректировки для уровней освещения, чтобы получить правильные результаты. Для этого установите флажок “Уровень освещения окружающей среды” и введите значение в поле Lux. Вы также можете дополнительно измерить окружающий свет во время калибровки, если это поддерживается вашим устройством.
+"trc.smpte240m": |-
+  SMPTE 240M
+"trc.smpte2084": |-
+  SMPTE 2084
+"trc.smpte2084.hardclip": |-
+  SMPTE 2084 (жесткий клип)
+"trc.smpte2084.rolloffclip": |-
+  SMPTE 2084 (сворачивание клипа)
+"trc.srgb": |-
+  sRGB
+"trc.type.absolute": |-
+  Абсолютный
+"trc.type.relative": |-
+  Относительный
+"turn_off": |-
+  Выключенный
+"type": |-
+  Тип
+"udev_hotplug.unavailable": |-
+  Ни то, ни другое не обнаружено.
+"unassigned": |-
+  Неназначенный
+"uninstall": |-
+  Удалить
+"uninstall_display_profile": |-
+  Удаление профиля устройства отображения...
+"unknown": |-
+  Неизвестно
+"unmodified": |-
+  Не изменено
+"unnamed": |-
+  Без названия
+"unspecified": |-
+  Не указано
+"update_check": |-
+  Проверьте наличие обновления программы...
+"update_check.fail": |-
+  Ошибка проверки обновления программы:
+"update_check.fail.version": |-
+  Не удалось проанализировать удаленный файл с сервером %s.
+"update_check.new_version": |-
+  Доступно обновление: %s
+"update_check.onstartup": |-
+  Проверьте наличие обновления при запуске
+"update_check.uptodate": |-
+  %s является актуальной.
+"update_now": |-
+  Обновить сейчас
+"upload": |-
+  Загрузить
+"use_fancy_progress": |-
+  Используйте диалоговое окно прогресса
+"use_separate_lut_access": |-
+  Используйте отдельный доступ к таблицам гамма-видеокарты
+"use_simulation_profile_as_output": |-
+  Используйте профиль моделирования как профиль отображения
+"vcgt": |-
+  Калибровочные кривые
+"vcgt.mismatch": |-
+  Таблицы (VCGT) гаммы видео карт(ы) для отображения %s не соответствуют желаемому состоянию.
+"vcgt.unknown_format": |-
+  Неизвестный формат таблиц гамма видео-карты в профиле “%s”.
+"verification": |-
+  Проверка
+"verification.settings": |-
+  Настройки проверки
+"verify.ti1": |-
+  Проверочная тестовая таблица
+"verify_extended.ti1": |-
+  Расширенный тест проверки
+"verify_grayscale.ti1": |-
+  Таблица проверки баланса серого
+"verify_large.ti1": |-
+  Большой проверочный тест
+"verify_video.ti1": |-
+  Тест-таблица проверки (video)
+"verify_video_extended.ti1": |-
+  Расширенная тест-таблица проверки (video)
+"verify_video_extended_hlg_p3_2020.ti1": |-
+  Расширенная тест-таблица проверки (HDR video, Rec. 2020/P3, Hybrid Log-Gamma)
+"verify_video_extended_smpte2084_100_p3_2020.ti1": |-
+  Расширенная тест-таблица проверки (HDR video, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)
+"verify_video_extended_smpte2084_200_p3_2020.ti1": |-
+  Расширенная тест-таблица проверки (HDR video, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)
+"verify_video_extended_smpte2084_500_p3_2020.ti1": |-
+  Расширенная тест-таблица проверки (HDR video, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)
+"verify_video_extended_smpte2084_1000_p3_2020.ti1": |-
+  Расширенная тест-таблица проверки (HDR video, Rec. 2020/P3, SMPTE 2084, 1000 cd/m²)
+"verify_video_large.ti1": |-
+  Большой проверочный тест (video)
+"verify_video_xl.ti1": |-
+  Дополнительный большой тест проверки (video)
+"verify_video_xxl.ti1": |-
+  Большая (XXL) проверочная тест-таблица для перфекционистов (video)
+"verify_video_xxxl.ti1": |-
+  Излишне большая (XXXL) проверочная тест-таблица для неугомонных перфекционистов (video)
+"verify_xl.ti1": |-
+  Дополнительный большой тест проверки
+"verify_xxl.ti1": |-
+  Большая XXL дополнительная тест-таблица проверки для перфекционистов
+"verify_xxxl.ti1": |-
+  Слишком большая XXXL дополнительная тест-таблица проверки для неугомонных перфекционистов
+"vga": |-
+  VGA
+"video.icc": |-
+  Видео (D65, Rec. 1886)
+"video_Prisma.icc": |-
+  Видео 3D LUT для Prisma (D65, Rec. 709 / Rec. 1886)
+"video_ReShade.icc": |-
+  Видео 3D LUT для ReShade (D65, Rec. 709 / Rec. 1886)
+"video_camera": |-
+  Видеокамера
+"video_card_gamma_table": |-
+  (VCGT) Таблица гаммы видео-карты
+"video_eeColor.icc": |-
+  Видео 3D LUT для eeColor (D65, Rec. 709 / Rec. 1886)
+"video_madVR.icc": |-
+  Видео 3D LUT для madVR (D65, Rec. 709 / Rec. 1886)
+"video_madVR_ST2084.icc": |-
+  Видео 3D LUT для madVR HDR (D65, Rec. 2020 / SMPTE 2084 / BT.2390)
+"video_monitor": |-
+  Видеомонитор
+"video_resolve.icc": |-
+  Видео 3D LUT для Resolve (D65, Rec. 709 / Rec. 1886)
+"video_resolve_ST2084_clip.icc": |-
+  Видео 3D LUT для Resolve HDR (D65, Rec. 2020 / SMPTE 2084)
+"view.3d": |-
+  3D-просмотр
+"viewing_conditions": |-
+  Условия просмотра
+"viewing_conditions_description": |-
+  Описание условий просмотра
+"vrml_to_x3d_converter": |-
+  Конвертер из VRML в X3D
+"warning": |-
+  Внимание
+"warning.already_exists": |-
+  Файл “%s” уже существует в выбранном месте и будет перезаписан. Хотите продолжить?
+"warning.autostart_system": |-
+  Каталог автостарта системы нельзя определить.
+"warning.autostart_user": |-
+  Не удалось определить каталог автозапуска пользователя.
+"warning.discard_changes": |-
+  Вы действительно хотите отбросить изменения до текущих настроек?
+"warning.gamap.out_viewcond.nondisplay": |-
+  Условия просмотра назначения “%s” не является условием просмотра на дисплее.
+"warning.input_value_clipping": |-
+  Предупреждение: Значение ниже черной точки профиля отображения будут обрезаны!
+"warning.suspicious_delta_e": |-
+  Предупреждение: найдены подозрительные измерения. Обратите внимание, что эта проверка предусматривает sRGB-подобное устройство отображения. Если устройство для отображения отличается от этого предположения (например, если он имеет очень широкий цветной диапазон или тональная ответ слишком далек от sRGB), обнаруженые ошибки, вероятно, не имеют смысла.
+  
+  Один или все следующие критерии совпадают:
+  • последовательные патчи с различными номерами RGB, но подозрительно низкие ΔE*00 измерений друг против друга.
+  • RGB серый с уменьшением RGB номеров по сравнению с предыдущим патчем, но растущая светлота (L*)
+  • Необычно высокий ΔE*00 и ΔL*00 или ΔH*00 или ΔC*00 измерений в sRGB эквивалентен числам RGB.
+  
+  Это может намекать на ошибки измерения. Значения, считаются проблемными (не обязательно должны быть верными!), Выделяются красным цветом. Тщательно проверяйте измерения и обозначьте те, которые вы хотите принять. Можно также редактировать значения RGB и XYZ.
+"warning.suspicious_delta_e.info": |-
+  Помощь Δ столбцов:
+  
+  ΔE*00 XYZ A/B: ΔE*00 измеренные значения по измеренным значениям предыдущего патча. Если это значение отсутствует, это не было фактором при проверке. Если он присутствует, то он считается слишком низким.
+  
+  0.5 ΔE*00 RGB A/B: ΔE*00 sRGB-эквивалента чисел RGB по отношению к sRGB эквивалентну номеров RGB предыдущего патча (с коэффициентом 0,5). Если это значение присутствует, то оно представляет собой сравнительное (минимальное) значение при проверке на допущенные слишком низкие ΔE*00 XYZ A/B. Оно служит очень грубой ориентацией.
+  
+  ΔE * 00 RGB-XYZ: ΔE*00 измеренных значений к sRGB эквивалента чисел RGB.
+  ΔL*00 RGB-XYZ: ΔL * 00 измеренных значений к sRGB эквивалента чисел RGB.
+  ΔC*00 RGB-XYZ: ΔC*00 измеренных значений к sRGB эквивалента чисел RGB.
+  ΔH*00 RGB-XYZ: ΔH*00 измеренных значений к sRGB эквивалента чисел RGB.
+"warning.system_file": |-
+  Предупреждение: “%s” – это системный файл. Вы действительно желаете продолжить?
+"webserver.waiting": |-
+  Веб-сервер ожидает на
+"welcome": |-
+  Добро пожаловать!
+"welcome_back": |-
+  С возвращением!
+"white": |-
+  Белый
+"whitepoint": |-
+  Точка белого
+"whitepoint.colortemp": |-
+  Цветовая темипература
+"whitepoint.colortemp.locus.blackbody": |-
+  Чёрное тело
+"whitepoint.colortemp.locus.curve": |-
+  Кривая цветовой температуры
+"whitepoint.colortemp.locus.daylight": |-
+  Дневной свет
+"whitepoint.set": |-
+  Вы также хотите установить белую точку для измеренного значения?
+"whitepoint.simulate": |-
+  Имитация точки белого
+"whitepoint.simulate.relative": |-
+  Отображается относительно белой точка профиля
+"whitepoint.visual_editor": |-
+  Визуальный редактор белой точки
+"whitepoint.visual_editor.display_changed.warning": |-
+  Внимание: Конфигурация дисплея изменилась, и визуальный редактор белых точек больше не может правильно восстанавливать профили отображения. Внимательно проверьте ассоциации профилей отображения после закрытия редактора и перезапустить DisplayCAL.
+"whitepoint.xy": |-
+  Хроматические координаты
+"window.title": |-
+  DisplayCAL
+"windows.version.unsupported": |-
+  эта версия Windows не поддерживается.
+"windows_only": |-
+  Только Windows
+"working_dir": |-
+  Рабочий каталог:
+"xyz_scaling": |-
+  XYZ масштабирование (“wrong von Kries”)
+"yellow": |-
+  Жёлтый
+"yellow_lab": |-
+  Жёлтый L*a*b*
+"yellow_xyz": |-
+  Жёлтый XYZ
+"yes": |-
+  Да
