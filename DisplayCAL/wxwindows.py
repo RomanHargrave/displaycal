@@ -6330,7 +6330,7 @@ class TooltipWindow(InvincibleFrame):
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer0)
 		self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer0.Add(self.sizer1, flag = wx.ALIGN_CENTER | wx.ALL, 
+		self.sizer0.Add(self.sizer1, flag = wx.LEFT | wx.ALL, 
 		   border = margin)
 
 		if bitmap:

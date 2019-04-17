@@ -12467,6 +12467,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			link1 = PlateButton(w.panel, -1,
 								lang.getstr("info.display_tech.linklabel.displayspecifications.com"),
 								geticon(16, "web"))
+			link1.SetMaxFontSize(11)
 			link1.SetBitmapHover(geticon(16, "web-inverted"))
 			link1.Bind(wx.EVT_BUTTON,
 					   lambda e: webbrowser_open("https://www.displayspecifications.com/"))
@@ -12479,6 +12480,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			link2 = PlateButton(w.panel, -1,
 								lang.getstr("info.display_tech.linklabel.everymac.com"),
 								geticon(16, "web"))
+			link2.SetMaxFontSize(11)
 			link2.SetBitmapHover(geticon(16, "web-inverted"))
 			link2.Bind(wx.EVT_BUTTON,
 					   lambda e: webbrowser_open("https://everymac.com/"))
