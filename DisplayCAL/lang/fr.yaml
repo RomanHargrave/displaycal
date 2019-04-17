@@ -1401,9 +1401,9 @@
 "info.display_instrument.warmup": |-
   Vous devriez laisser votre périphérique d’affichage <font weight='bold'>chauffer</font> au moins <font weight='bold'>30 minutes</font> avant de commencer les mesures. Si vous utilisez votre sonde de mesure en mode contact, il est préférable de la placer sur votre périphérique d’affichage pendant ce temps également.
 "*info.display_tech": |-
-  <font weight='bold'>LCD White LED</font> (WLED with typical sRGB coverage around 90%-99%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, office monitors and Apple iMac/MacBook from 2009 to mid 2015.
+  <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and typical sRGB coverage around 90% to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors as well as Apple iMac/MacBook from 2009 to mid 2015.
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97%-99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97% to 99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
   
   <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
   
@@ -1413,7 +1413,11 @@
   
   <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
   
-  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently produced displays.
+  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently developed displays.
+"*info.display_tech.linklabel.displayspecifications.com": |-
+  Find your display device and corresponding technology at displayspecifications.com
+"*info.display_tech.linklabel.everymac.com": |-
+  Find your iMac/MacBook/iPad and corresponding display technology at everymac.com
 "*info.display_tech.show": |-
   Show information about common display technologies
 "info.mr_settings": |-

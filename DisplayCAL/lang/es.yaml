@@ -1398,7 +1398,7 @@
 "*info.display_instrument": |-
   <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
   
-  Make sure light does not shine directly on your display.
+  Make sure light does not shine directly onto the screen of your display.
   
   If your display is an <font weight='bold'>OLED</font> or <font weight='bold'>Plasma</font> TV, or other type with variable light output depending on picture content, enable <font weight='bold'>white level drift compensation</font>.
   
@@ -1408,9 +1408,9 @@
 "*info.display_instrument.warmup": |-
   You should let the display <font weight='bold'>warm up</font> for at least <font weight='bold'>30 minutes</font> before commencing measurements. If you use your instrument in contact mode, it is a good idea to leave it on the display during that time as well.
 "*info.display_tech": |-
-  <font weight='bold'>LCD White LED</font> (WLED with typical sRGB coverage around 90%-99%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, office monitors and Apple iMac/MacBook from 2009 to mid 2015.
+  <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and typical sRGB coverage around 90% to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors as well as Apple iMac/MacBook from 2009 to mid 2015.
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97%-99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97% to 99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
   
   <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
   
@@ -1420,7 +1420,11 @@
   
   <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
   
-  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently produced displays.
+  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently developed displays.
+"*info.display_tech.linklabel.displayspecifications.com": |-
+  Find your display device and corresponding technology at displayspecifications.com
+"*info.display_tech.linklabel.everymac.com": |-
+  Find your iMac/MacBook/iPad and corresponding display technology at everymac.com
 "*info.display_tech.show": |-
   Show information about common display technologies
 "*info.mr_settings": |-

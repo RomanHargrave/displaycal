@@ -1409,9 +1409,9 @@
 "info.display_instrument.warmup": |-
   Sie sollten das Anzeigegerät mindestens <font weight='bold'>30 Minuten aufwärmen</font> lassen, bevor Sie mit Messungen beginnen. Falls Sie das Messgerät im Kontaktmodus verwenden, so ist es eine gute Idee, es während dieser Zeit am Anzeigegerät zu belassen.
 "info.display_tech": |-
-  <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und typischer sRGB-Farbraumabdeckung von etwa 90%-100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
+  <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und typischer sRGB-Farbraumabdeckung von etwa 90% bis 100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
   
-  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang mit Adobe-RGB- und P3-Farbraumabdeckung von etwa 97%-99%. Gängige Anzeigeräte in dieser Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer), professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, sowie viele HDR-fähige Desktop-Monitore.
+  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang mit Adobe-RGB- und P3-Farbraumabdeckung von etwa 97% bis 99%. Gängige Anzeigeräte in dieser Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer), professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, sowie viele HDR-fähige Desktop-Monitore.
   
   <font weight='bold'>LCD GB-r-LED</font> (auch bekannt als GB-LED) hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von etwa 99%. Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Dell U2413, EIZO CG247/CG277 und NEC PA242W/PA272W.
   
@@ -1422,6 +1422,10 @@
   <font weight='bold'>WOLED</font> hat einen erweiterten Farbumfang mit hoher P3-Farbraumabdeckung, und wird unter anderem in LG OLED TV-Geräten verwendet.
   
   <font weight='bold'>LCD CCFL</font> und <font weight='bold'>LCD CCFL mit erweitertem Farbraum</font> sind ältere Technologien, die nicht mehr in heute entwickelten Anzeigegeräten verwendet werden.
+"info.display_tech.linklabel.displayspecifications.com": |-
+  Finde Anzeigegerät und zugehörige Technologie auf displayspecifications.com
+"info.display_tech.linklabel.everymac.com": |-
+  Finde iMac/MacBook/iPad und zugehörige Technologie auf everymac.com
 "info.display_tech.show": |-
   Zeige Informationen über gängige Anzeigegerätetechnologien
 "info.mr_settings": |-
