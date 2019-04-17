@@ -184,10 +184,18 @@ class LazyDict_YAML_Lite(LazyDict):
 				with codecs.open(path, "rU", self.encoding, self.errors) as f:
 					value = []
 					for line in f.readlines():
-						if line and not line.startswith("  "):
+						if line.startswith("#"):
+							# Ignore comments
+							pass
+						elif line and not line.startswith("  "):
 							if value:
 								self[key] = "\n".join(value)
-							key = line.rstrip(' ->|\r\n').replace(":", "").strip("'"'"')
+							tokens = line.rstrip(' ->|\r\n').split(":")
+							key = tokens[0].strip("'"'"')
+							token = tokens[1].strip()
+							if token:
+								# Inline value
+								self[key] = token
 							value = []
 						else:
 							value.append(line.strip())

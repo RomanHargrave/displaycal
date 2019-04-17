@@ -44,7 +44,7 @@ def langmerge(infilename1, infilename2, outfilename):
 		#elif dictin1[key] == value and not key.startswith("*") and not key.startswith("!") and value.strip():
 			#same.append(key.encode("UTF-8"))
 			#safe_print("Same: '%s' '%s'" % (key, value))
-		else:
+		elif key != "*":
 			format_chars = "dixXfFeEgGcs%"
 			profile_name_placeholder_chars = "aAbBHIjmMpSUwWyY"
 			for c in format_chars + profile_name_placeholder_chars:
@@ -54,7 +54,7 @@ def langmerge(infilename1, infilename2, outfilename):
 					safe_print(key, "ERROR: Format character count for %%%s is wrong:" % c, a, "(expected %i)" % b)
 	
 	merged = ordereddict.OrderedDict()
-	merged["*"] = "Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated."
+	merged["*"] = dictin1["*"] = dictin2["*"]
 	
 	for key in natsort(dictin2.keys(), False):
 		merged[key] = dictin1[key]
@@ -78,6 +78,10 @@ def langmerge(infilename1, infilename2, outfilename):
 		formatted = formatted.replace('"%s":' % key, '"*%s":' % key)
 	for key in same:
 		formatted = formatted.replace('"%s":' % key, '"*%s":' % key)
+	with open(dictin1.path, "rb") as infile:
+		if infile.read() == formatted:
+			safe_print("no change")
+			return
 	safe_print("writing", outfilename)
 	with open(outfilename, "wb") as outfile:
 		outfile.write(formatted)

@@ -1,5 +1,5 @@
 "*": |-
-  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated.
+  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated. Please keep placeholders (percent sign followed by format string, e.g. %s, %i, %f etc.) intact.
 "!author": |-
   김환(Howard Kim)
 "!language": |-
@@ -524,9 +524,9 @@
 "*ccss.RGBLEDFamily_07Feb11": |-
   LCD RGB LED family (HP, SOYO)
 "*ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG Phosphor family
+  LCD RG Phosphor LED family
 "*ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG Phosphor family
+  LCD GB-r-LED/RG Phosphor LED family
 "*ccss.WGCCFLFamily_07Feb11": |-
   LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
 "*ccss.WLEDFamily_07Feb11": |-
@@ -933,13 +933,13 @@
 "*display.tech.LCD PFS Phosphor VPA": |-
   LCD PFS Phosphor WLED PVA
 "*display.tech.LCD RG Phosphor": |-
-  LCD RG Phosphor
+  LCD RG Phosphor LED
 "*display.tech.LCD RG Phosphor IPS": |-
-  LCD RG Phosphor IPS
+  LCD RG Phosphor LED IPS
 "*display.tech.LCD RG Phosphor TFT": |-
-  LCD RG Phosphor TFT
+  LCD RG Phosphor LED TFT
 "*display.tech.LCD RG Phosphor VPA": |-
-  LCD RG Phosphor PVA
+  LCD RG Phosphor LED PVA
 "*display.tech.LCD RGB LED": |-
   LCD RGB LED
 "*display.tech.LCD RGB LED IPS": |-
@@ -1405,21 +1405,21 @@
 "info.display_instrument.warmup": |-
   측정 전 디스플레이는 최소 <font weight='bold'>30 분</font> 이상 <font weight='bold'>예열</font>되어야 합니다. 장치를 접촉 모드로 사용하는 경우, 해당 시간동안 디스플레이 위에 장치를 놔두는 것도 좋습니다.
 "*info.display_tech": |-
-  <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and typical sRGB coverage around 90% to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors as well as Apple iMac/MacBook from 2009 to mid 2015.
+  <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and sRGB coverage up to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors from 2010 and newer as well as Apple iMac/MacBook from 2009 to mid 2015.
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97% to 99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97% to 99% (according to the manufacturer). Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
   
-  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99% (according to the manufacturer). Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
   
-  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with Adobe RGB coverage exceeding 100%. Displays of this type are currently no longer produced. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with Adobe RGB coverage exceeding 100% (according to the manufacturer). Displays of this type are currently no longer produced. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
   
   <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with full Adobe RGB and near-full P3 coverage, used in some high-end video mastering monitors and some high-end laptops as well as high quality smartphones.
   
   <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
   
-  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently developed displays.
+  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies commonly used in displays from 2009 and earlier.
 "*info.display_tech.linklabel.displayspecifications.com": |-
-  Find your display device and corresponding technology at displayspecifications.com
+  Find your monitor/TV and corresponding technology at displayspecifications.com
 "*info.display_tech.linklabel.everymac.com": |-
   Find your iMac/MacBook/iPad and corresponding display technology at everymac.com
 "*info.display_tech.show": |-

@@ -1,5 +1,5 @@
 "*": |-
-  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated.
+  Note to translators: Keys which are not yet translated are marked with a leading asterisk (*). Please remove the asterisk when translated. Please keep placeholders (percent sign followed by format string, e.g. %s, %i, %f etc.) intact.
 "!author": |-
   Florian Höch
 "!language": |-
@@ -524,9 +524,9 @@
 "ccss.RGBLEDFamily_07Feb11": |-
   LCD RGB-LED-Familie (HP, SOYO)
 "ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG-Phosphor-Familie
+  LCD RG-Phosphor-LED-Familie
 "ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG-Phosphor-Familie
+  LCD GB-r-LED/RG-Phosphor-LED-Familie
 "ccss.WGCCFLFamily_07Feb11": |-
   LCD CCFL-mit-erweitertem-Farbumfang-Familie (NEC PA241W/PA271W)
 "ccss.WLEDFamily_07Feb11": |-
@@ -933,13 +933,13 @@
 "display.tech.LCD PFS Phosphor VPA": |-
   LCD PFS-Phosphor-WLED PVA
 "display.tech.LCD RG Phosphor": |-
-  LCD RG-Phosphor
+  LCD RG-Phosphor-LED
 "display.tech.LCD RG Phosphor IPS": |-
-  LCD RG-Phosphor IPS
+  LCD RG-Phosphor-LED IPS
 "display.tech.LCD RG Phosphor TFT": |-
-  LCD RG-Phosphor TFT
+  LCD RG-Phosphor-LED TFT
 "display.tech.LCD RG Phosphor VPA": |-
-  LCD RG-Phosphor PVA
+  LCD RG-Phosphor-LED PVA
 "display.tech.LCD RGB LED": |-
   LCD RGB-LED
 "display.tech.LCD RGB LED IPS": |-
@@ -1401,7 +1401,7 @@
   
   Stellen Sie sicher, dass kein Licht direkt auf den Bildschirm Ihres Anzeigegeräts fällt.
   
-  Falls das Anzeigegerät ein <font weight='bold'>OLED</font>- oder <font weight='bold'>Plasma</font>-TV ist, oder andere Technologie mit variabler Helligkeitsregelung abhängig vom Bildinhalt verwendet, aktivieren Sie <font weight='bold'>Weißluminanz-Drift-Kompensierung</font>.
+  Falls das Anzeigegerät ein <font weight='bold'>OLED</font>- oder <font weight='bold'>Plasma</font>-TV ist, oder eine andere Technologie mit variabler Helligkeitsregelung abhängig vom Bildinhalt verwendet, aktivieren Sie <font weight='bold'>Weißluminanz-Drift-Kompensierung</font>.
   
   Falls das Messgerät ein <font weight='bold'>Spektrometer</font> ist und Sie es im Kontaktmodus auf einem Anzeigegerät mit stabilem Schwarzwert verwenden, so können Sie auch <font weight='bold'>Schwarzabgleich-Drift-Kompensierung</font> aktivieren.
   
@@ -1409,21 +1409,21 @@
 "info.display_instrument.warmup": |-
   Sie sollten das Anzeigegerät mindestens <font weight='bold'>30 Minuten aufwärmen</font> lassen, bevor Sie mit Messungen beginnen. Falls Sie das Messgerät im Kontaktmodus verwenden, so ist es eine gute Idee, es während dieser Zeit am Anzeigegerät zu belassen.
 "info.display_tech": |-
-  <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und typischer sRGB-Farbraumabdeckung von etwa 90% bis 100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
+  <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und sRGB-Farbraumabdeckung von bis zu 100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore ab 2010 sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
   
-  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang mit Adobe-RGB- und P3-Farbraumabdeckung von etwa 97% bis 99%. Gängige Anzeigeräte in dieser Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer), professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, sowie viele HDR-fähige Desktop-Monitore.
+  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang mit Adobe-RGB- und P3-Farbraumabdeckung von etwa 97% bis 99% (Herstellerangabe). Gängige Anzeigeräte in dieser Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer), professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, sowie viele HDR-fähige Desktop-Monitore.
   
-  <font weight='bold'>LCD GB-r-LED</font> (auch bekannt als GB-LED) hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von etwa 99%. Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Dell U2413, EIZO CG247/CG277 und NEC PA242W/PA272W.
+  <font weight='bold'>LCD GB-r-LED</font> (auch bekannt als GB-LED) hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von etwa 99% (Herstellerangabe). Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Dell U2413, EIZO CG247/CG277 und NEC PA242W/PA272W.
   
-  <font weight='bold'>LCD RGB LED</font> hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von 100% und mehr. Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Samsung XL20/XL24/XL30 und HP DreamColor LP2480zx.
+  <font weight='bold'>LCD RGB LED</font> hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von 100% und mehr (Herstellerangabe). Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Samsung XL20/XL24/XL30 und HP DreamColor LP2480zx.
   
   <font weight='bold'>RGB OLED/AMOLED</font> hat einen erweiterten Farbumfang mit voller Adobe-RGB- und nahezu voller P3-Farbraumabdeckung, und wird in manchen High-End Video-Mastering-Monitoren, manchen High-End Laptops sowie qualitativ hochwertigen Smartphones verwendet.
   
   <font weight='bold'>WOLED</font> hat einen erweiterten Farbumfang mit hoher P3-Farbraumabdeckung, und wird unter anderem in LG OLED TV-Geräten verwendet.
   
-  <font weight='bold'>LCD CCFL</font> und <font weight='bold'>LCD CCFL mit erweitertem Farbraum</font> sind ältere Technologien, die nicht mehr in heute entwickelten Anzeigegeräten verwendet werden.
+  <font weight='bold'>LCD CCFL</font> und <font weight='bold'>LCD CCFL mit erweitertem Farbraum</font> sind ältere Technologien, die üblicherweise in Anzeigegeräten von 2009 und früher verwendet wurden.
 "info.display_tech.linklabel.displayspecifications.com": |-
-  Finde Anzeigegerät und zugehörige Technologie auf displayspecifications.com
+  Finde Monitor/TV und zugehörige Technologie auf displayspecifications.com
 "info.display_tech.linklabel.everymac.com": |-
   Finde iMac/MacBook/iPad und zugehörige Technologie auf everymac.com
 "info.display_tech.show": |-
