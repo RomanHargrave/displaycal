@@ -190,7 +190,7 @@ class LazyDict_YAML_Lite(LazyDict):
 						elif line and not line.startswith("  "):
 							if value:
 								self[key] = "\n".join(value)
-							tokens = line.rstrip(' ->|\r\n').split(":")
+							tokens = line.rstrip(' ->|\r\n').split(":", 1)
 							key = tokens[0].strip("'"'"')
 							token = tokens[1].strip()
 							if token:
