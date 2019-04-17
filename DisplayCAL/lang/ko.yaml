@@ -516,7 +516,7 @@
 "*ccss.PFS_Phosphor_Family_31Jan17": |-
   LCD PFS Phosphor WLED family
 "*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00 in Lenovo P70)
 "*ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "*ccss.ProjectorFamily_07Feb11": |-
@@ -1404,6 +1404,22 @@
   만약 측정장치가 <font weight='bold'>컬러리미터</font>인 경우, 사용하는 디스플레이에 적합한 <font weight='bold'>보정</font> 을 사용해야 합니다. 몇몇 측정장치들은 (ColorHug, ColorHug2, K-10, Spyder4/5/X) 보정 기능이 각 장치의 측정모드에 내장되어 있습니다.
 "info.display_instrument.warmup": |-
   측정 전 디스플레이는 최소 <font weight='bold'>30 분</font> 이상 <font weight='bold'>예열</font>되어야 합니다. 장치를 접촉 모드로 사용하는 경우, 해당 시간동안 디스플레이 위에 장치를 놔두는 것도 좋습니다.
+"*info.display_tech": |-
+  <font weight='bold'>LCD White LED</font> (WLED with typical sRGB coverage around 90%-99%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, office monitors and Apple iMac/MacBook from 2009 to mid 2015.
+  
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97%-99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  
+  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  
+  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with Adobe RGB coverage exceeding 100%. Displays of this type are currently no longer produced. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  
+  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with full Adobe RGB and near-full P3 coverage, used in some high-end video mastering monitors and some high-end laptops as well as high quality smartphones.
+  
+  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  
+  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently produced displays.
+"*info.display_tech.show": |-
+  Show information about common display technologies
 "info.mr_settings": |-
   측정된 패치의 컬러 에러에 대한 상세한 분석을 포함한 측정 보고서를 통해 ICC 프로파일 또는 3D LUT 의 <font weight='bold'>정확도를 검증</font> 할 수 있습니다.
   

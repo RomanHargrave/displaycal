@@ -518,7 +518,7 @@
 "*ccss.PFS_Phosphor_Family_31Jan17": |-
   LCD PFS Phosphor WLED family
 "*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00 in Lenovo P70)
 "*ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "*ccss.ProjectorFamily_07Feb11": |-
@@ -1417,6 +1417,22 @@
 "info.display_instrument.warmup": |-
   你應該在測量前先讓你的顯示器<font weight='bold'>預熱</font>最少<font weight='bold'>30分鐘</font>。 如果你使用測量儀器的接觸模式，最好在預熱期間將測量儀器放
   在顯示器上。
+"*info.display_tech": |-
+  <font weight='bold'>LCD White LED</font> (WLED with typical sRGB coverage around 90%-99%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, office monitors and Apple iMac/MacBook from 2009 to mid 2015.
+  
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97%-99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  
+  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  
+  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with Adobe RGB coverage exceeding 100%. Displays of this type are currently no longer produced. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  
+  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with full Adobe RGB and near-full P3 coverage, used in some high-end video mastering monitors and some high-end laptops as well as high quality smartphones.
+  
+  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  
+  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently produced displays.
+"*info.display_tech.show": |-
+  Show information about common display technologies
 "info.mr_settings": |-
   你可以透過內含關於已測量色塊其色彩錯誤之詳盡統計數據的測量報告，以<font weight='bold'>驗證</font> ICC 描述檔或 3D 查找表的<font weight='bold'>準確度</font> 。
   

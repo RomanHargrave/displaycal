@@ -47,6 +47,12 @@ from hashlib import md5
 from time import gmtime, localtime, sleep, strftime, strptime, struct_time
 from zlib import crc32
 
+# Import the useful webbrowser module for platform-independent results
+import webbrowser
+
+# Set no delay time to open the web page
+webbrowser.PROCESS_CREATION_DELAY = 0
+
 # 3rd party modules
 
 import demjson
@@ -138,7 +144,8 @@ from wxVisualWhitepointEditor import VisualWhitepointEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
-					 set_bitmap_labels, TempXmlResource, wx_Panel)
+					 set_bitmap_labels, TempXmlResource, wx_Panel,
+					 PlateButton)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
@@ -891,6 +898,15 @@ def install_scope_handler(event=None, dlg=None):
 	dlg.buttonpanel.Layout()
 
 
+def webbrowser_open(url, new=False):
+	try:
+		webbrowser.open(url, new=new)
+		return True
+	except Exception, exception:
+		show_result_dialog(exception)
+		return False
+
+
 class Dummy(object):
 	""" Useful if we need an object to attach arbitrary attributes."""
 	pass
@@ -1622,6 +1638,18 @@ class MainFrame(ReportFrame, BaseFrame):
 						   "mr_settings_info_panel"]:
 			panel = self.FindWindowByName(panel_name)
 			panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+			setattr(self, panel_name, panel)
+
+		# Show display type help
+		btn = PlateButton(self.display_instrument_info_panel, -1,
+						  "info.display_tech.show",
+						  geticon(16, "info"))
+		btn.SetBitmapHover(geticon(16, "info-inverted"))
+		self.display_instrument_info_panel.Sizer.Add((0, 9 * scale))
+		self.display_instrument_info_panel.Sizer.Add(btn, flag=wx.LEFT,
+													 border=(16 + 32 + 7) * scale)
+		self.display_instrument_info_panel.Sizer.Add((0, 12 * scale))
+		self.display_tech_info_show_btn = btn
 		
 		# Button panel
 		self.buttonpanel = self.FindWindowByName("buttonpanel")
@@ -2620,6 +2648,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.colorimeter_correction_create_btn.Bind(wx.EVT_BUTTON,
 			self.create_colorimeter_correction_handler)
 
+		# Display tech info
+		self.Bind(wx.EVT_BUTTON, self.display_tech_info_show_handler,
+				  id=self.display_tech_info_show_btn.Id)
+
 		# Calibration settings
 		# ====================
 
@@ -2898,6 +2930,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				if hasattr(self, "profile_name_tooltip_window"):
 					self.profile_name_tooltip_window.Destroy()
 					del self.profile_name_tooltip_window
+				if hasattr(self, "display_tech_info_tooltip_window"):
+					self.display_tech_info_tooltip_window.Destroy()
+					del self.display_tech_info_tooltip_window
 				for progress_wnd in self.worker.progress_wnds:
 					if progress_wnd:
 						progress_wnd.Destroy()
@@ -6188,7 +6223,7 @@ class MainFrame(ReportFrame, BaseFrame):
 												   URL="https://icc.opensuse.org/")
 		dlg.sizer2.Insert(0, hyperlink, flag=wx.ALIGN_LEFT |
 											 wx.ALIGN_CENTER_VERTICAL | wx.LEFT,
-						  border=int(round((32 + 12) * scale)))
+						  border=int(round(32 + 12)))
 		dlg.description_txt_ctrl.SetFocus()
 		dlg.sizer0.SetSizeHints(dlg)
 		dlg.sizer0.Layout()
@@ -12415,6 +12450,44 @@ class MainFrame(ReportFrame, BaseFrame):
 		except (IndexError, ValueError):
 			i = min(0, self.display_ctrl.GetSelection())
 		setcfg("display_lut.number", i + 1)
+	
+	def display_tech_info_show_handler(self, event):
+		if not hasattr(self, "display_tech_info_tooltip_window"):
+			self.display_tech_info_tooltip_window = TooltipWindow(
+				self, msg=lang.getstr("info.display_tech"), cols=1, 
+				title=lang.getstr("display.tech"), 
+				bitmap=geticon(32, "dialog-information"), wrap=90,
+				use_header=False, show=False)
+			w = self.display_tech_info_tooltip_window
+			w.sizer0.Add((0, 2))
+			# link1 = HyperLinkCtrl(w.panel, -1,
+								  # label=lang.getstr("info.display_tech.linklabel.displayspecifications.com"), 
+								  # URL="https://www.displayspecifications.com/")
+			#link1.BackgroundColour = w.panel.BackgroundColour
+			link1 = PlateButton(w.panel, -1,
+								lang.getstr("info.display_tech.linklabel.displayspecifications.com"),
+								geticon(16, "web"))
+			link1.SetBitmapHover(geticon(16, "web-inverted"))
+			link1.Bind(wx.EVT_BUTTON,
+					   lambda e: webbrowser_open("https://www.displayspecifications.com/"))
+			w.sizer0.Add(link1, flag=wx.LEFT, border=12 + 32 + 7)
+			w.sizer0.Add((0, 9))
+			# link2 = HyperLinkCtrl(w.panel, -1,
+								  # label=lang.getstr("info.display_tech.linklabel.everymac.com"), 
+								  # URL="https://everymac.com/")
+			#link2.BackgroundColour = w.panel.BackgroundColour
+			link2 = PlateButton(w.panel, -1,
+								lang.getstr("info.display_tech.linklabel.everymac.com"),
+								geticon(16, "web"))
+			link2.SetBitmapHover(geticon(16, "web-inverted"))
+			link2.Bind(wx.EVT_BUTTON,
+					   lambda e: webbrowser_open("https://everymac.com/"))
+			w.sizer0.Add(link2, flag=wx.LEFT, border=12 + 32 + 7)
+			w.sizer0.Add((0, 12))
+			w.sizer0.SetSizeHints(w)
+			w.sizer0.Layout()
+		self.display_tech_info_tooltip_window.Show()
+		self.display_tech_info_tooltip_window.Raise()
 
 	def measurement_mode_ctrl_handler(self, event=None):
 		if debug:

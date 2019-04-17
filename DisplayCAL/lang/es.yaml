@@ -516,7 +516,7 @@
 "*ccss.PFS_Phosphor_Family_31Jan17": |-
   LCD PFS Phosphor WLED family
 "*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00)
+  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00 in Lenovo P70)
 "*ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "*ccss.ProjectorFamily_07Feb11": |-
@@ -1396,13 +1396,33 @@
 "*info.calibration_settings": |-
   <font weight='bold'>Calibration</font> is done by <font weight='bold'>interactively adjusting the display</font> to meet the chosen whitepoint and/or luminance as well as optionally creating <font weight='bold'>1D LUT calibration curves</font> (LUT = Look Up Table) to meet the chosen tone response curve and ensure gray balance. Note that if during calibration you only want to adjust the display and skip the generation of 1D LUT curves, you need to set the tone response curve to “As measured”. 1D LUT calibration can <font weight='bold'>not</font> be used for full display color correction, you need to create a <font weight='bold'>ICC device profile</font> or <font weight='bold'>3D LUT</font> and use them with applications that support them for that purpose. 1D LUT calibration complements profiling and 3D LUT calibration though.
 "*info.display_instrument": |-
-  If your display is a <font weight='bold'>OLED</font>, <font weight='bold'>Plasma</font> or other technology with variable light output depending on picture content, enable <font weight='bold'>white level drift compensation</font>.
+  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  
+  Make sure light does not shine directly on your display.
+  
+  If your display is an <font weight='bold'>OLED</font> or <font weight='bold'>Plasma</font> TV, or other type with variable light output depending on picture content, enable <font weight='bold'>white level drift compensation</font>.
   
   If your instrument is a <font weight='bold'>spectrometer</font> and you use it in contact mode on a display with stable black level, you may want to enable <font weight='bold'>instrument black level drift compensation</font>.
   
-  If your instrument is a <font weight='bold'>colorimeter</font>, you should use a <font weight='bold'>measurement mode</font> and/or <font weight='bold'>correction</font> suitable for your display or display technology type. Note that some instruments (ColorHug, ColorHug2, K-10, Spyder4/5/X) may have a correction built into some of their measurement modes.
+  If your instrument is a <font weight='bold'>colorimeter</font>, you should use a <font weight='bold'>measurement mode</font> or <font weight='bold'>correction</font> suitable for your display or display technology type. Note that some instruments (e.g. K-10, Spyder4/5/X) may offer a selection of measurement modes already tuned for specific display types.
 "*info.display_instrument.warmup": |-
   You should let the display <font weight='bold'>warm up</font> for at least <font weight='bold'>30 minutes</font> before commencing measurements. If you use your instrument in contact mode, it is a good idea to leave it on the display during that time as well.
+"*info.display_tech": |-
+  <font weight='bold'>LCD White LED</font> (WLED with typical sRGB coverage around 90%-99%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, office monitors and Apple iMac/MacBook from 2009 to mid 2015.
+  
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97%-99%. Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  
+  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  
+  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with Adobe RGB coverage exceeding 100%. Displays of this type are currently no longer produced. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  
+  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with full Adobe RGB and near-full P3 coverage, used in some high-end video mastering monitors and some high-end laptops as well as high quality smartphones.
+  
+  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  
+  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies no longer used in currently produced displays.
+"*info.display_tech.show": |-
+  Show information about common display technologies
 "*info.mr_settings": |-
   You can <font weight='bold'>verify the accuracy</font> of an ICC profile or 3D LUT via a measurement report that contains detailed statistics about the color errors of the measured patches.
   

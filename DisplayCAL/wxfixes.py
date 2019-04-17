@@ -1296,6 +1296,7 @@ class PlateButton(platebtn.PlateButton):
 
 	def __init__(self, *args, **kwargs):
 		platebtn.PlateButton.__init__(self, *args, **kwargs)
+		self._bmp["hilite"] = None
 		self.Unbind(wx.EVT_LEAVE_WINDOW)
 		self.Bind(wx.EVT_LEAVE_WINDOW,
 				  lambda evt: wx.CallLater(80, self.__LeaveWindow))
@@ -1307,7 +1308,7 @@ class PlateButton(platebtn.PlateButton):
 
 		"""
 		# A liitle more padding left + right
-		width = 24
+		width = 6
 		height = 6
 		if self.Label:
 			# NOTE: Should measure with a GraphicsContext to get right
@@ -1342,6 +1343,15 @@ class PlateButton(platebtn.PlateButton):
 		"""
 		return self._bmp["enable"]
 
+
+	def SetBitmapHover(self, bmp):
+		"""Set the bitmap displayed in the button
+
+		:param `bmp`: :class:`wx.Bitmap`
+
+		"""
+		self._bmp['hilite'] = bmp
+
 	def __DrawBitmap(self, gc):
 		"""Draw the bitmap if one has been set
 
@@ -1350,11 +1360,15 @@ class PlateButton(platebtn.PlateButton):
 
 		"""
 		if self.IsEnabled():
-			bmp = self._bmp['enable']
+			if self._state['cur'] in (platebtn.PLATE_HIGHLIGHT,
+									  platebtn.PLATE_PRESSED):
+				bmp = self._bmp['hilite']
+			else:
+				bmp = self._bmp['enable']
 		else:
 			bmp = self._bmp['disable']
 
-		xpos = 12
+		xpos = 4
 		if bmp is not None and bmp.IsOk():
 			bw, bh = bmp.GetSize()
 			ypos = (self.GetSize()[1] - bh) // 2
@@ -1387,7 +1401,7 @@ class PlateButton(platebtn.PlateButton):
 		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
 		# TODO: Figure out why this is the case.
 		tw, th = self.GetTextExtent(self.Label)
-		txt_y = max((height - th) // 2, 1)
+		txt_y = max((height - th) // 2 - 1, 1)
 
 		# The background needs some help to look transparent on
 		# on Gtk and Windows
@@ -1410,7 +1424,7 @@ class PlateButton(platebtn.PlateButton):
 
 			self.__DrawHighlight(gc, width, height)
 			txt_x = self.__DrawBitmap(gc)
-			t_x = max((width - tw - (txt_x + 8)) // 2, txt_x + 8)
+			t_x = max((width - tw - (txt_x + 4)) // 2, txt_x + 4)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
@@ -1424,7 +1438,7 @@ class PlateButton(platebtn.PlateButton):
 		# Draw bitmap and text
 		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
 			txt_x = self.__DrawBitmap(gc)
-			t_x = max((width - tw - (txt_x + 8)) // 2, txt_x + 8)
+			t_x = max((width - tw - (txt_x + 4)) // 2, txt_x + 4)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
@@ -1526,8 +1540,9 @@ class TempXmlResource(object):
 		return getattr(self.res, name)
 
 
-class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):
-	"""A themed generic bitmapped button with text label"""
+class GenBitmapTextButton(GenButton, _GenBitmapTextButton):
+	"""A generic bitmapped button with text label"""
+
 	def __init__(self, parent, id=-1, bitmap=wx.NullBitmap, label='',
 				 pos=wx.DefaultPosition, size=wx.DefaultSize, style=0,
 				 validator=wx.DefaultValidator, name="genbutton"):
@@ -1570,6 +1585,10 @@ class ThemedGenBitmapTextButton(ThemedGenButton, _GenBitmapTextButton):
 
 		dc.DrawText(label, pos_x + dx+bw, (height-th)/2+dy)      # draw the text
 
+
+class ThemedGenBitmapTextButton(ThemedGenButton, GenBitmapTextButton):
+	"""A themed generic bitmapped button with text label"""
+	pass
 
 class BitmapWithThemedButton(wx.BoxSizer):
 

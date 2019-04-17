@@ -1862,6 +1862,10 @@ class BaseFrame(wx.Frame):
 							child.maxlen = 70
 						else:
 							child.maxlen = 119
+						if child.Name == "display_instrument_warmup_info_text":
+							# Fix spacing - exactly one blank line between
+							# warmup info and instrument/disptech info text
+							translated += '\n&#160;'
 					child.Label = translated
 				if child.ToolTip:
 					if not child in self._tooltipstrings:
@@ -6310,7 +6314,8 @@ class TooltipWindow(InvincibleFrame):
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", cols=1,
 				 bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW, wrap=70):
+				 style=(wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW) &
+					   ~wx.RESIZE_BORDER, wrap=70, use_header=True, show=True):
 		scale = getcfg("app.dpi") / get_default_dpi()
 		if scale > 1 and size == (400, -1):
 			size = size[0] * scale, size[1]
@@ -6321,6 +6326,7 @@ class TooltipWindow(InvincibleFrame):
 		margin = 12
 		
 		self.panel = wx.Panel(self, -1)
+		self.panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer0)
 		self.sizer1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -6334,9 +6340,11 @@ class TooltipWindow(InvincibleFrame):
 		self.sizer2 = wx.BoxSizer(wx.VERTICAL)
 		self.sizer1.Add(self.sizer2)
 
-		msg = util_str.wrap(msg, wrap).splitlines()
+		if not "<" in msg and wrap:
+			msg = util_str.wrap(msg, wrap)
+		msg = msg.splitlines()
 		for i, line in enumerate(msg):
-			if not line:
+			if not line and use_header:
 				# Use as header
 				header = wx.StaticText(self.panel, -1, "\n".join(msg[:i + 1]))
 				self.sizer2.Add(header, flag=wx.LEFT, border=margin)
@@ -6350,13 +6358,21 @@ class TooltipWindow(InvincibleFrame):
 			msgs.append(msg[:rowspercol])
 			msg = msg[rowspercol:]
 		for msg in msgs:
-			col = wx.StaticText(self.panel, -1, "")
+			label = "\n".join(msg)
+			if u"<" in label:
+				cls = BetterStaticFancyText
+			else:
+				cls = wx.StaticText
+			col = cls(self.panel, -1, "")
+			if u"<" in label and wrap:
+				col.maxlen = wrap
 			col.SetMaxFontSize()
 			maxlinewidth = 0
 			for line in msg:
 				maxlinewidth = max(col.GetTextExtent(line)[0], maxlinewidth)
-			col.Label = "\n".join(msg)
-			col.MinSize = maxlinewidth + margin * 2, -1
+			col.Label = label
+			if not u"<" in label:
+				col.MinSize = maxlinewidth + margin * 2, -1
 			self.sizer3.Add(col, flag=wx.LEFT, border=margin)
 
 		self.sizer0.SetSizeHints(self)
@@ -6367,8 +6383,9 @@ class TooltipWindow(InvincibleFrame):
 			self.Center(wx.HORIZONTAL)
 		elif pos[1] == -1:
 			self.Center(wx.VERTICAL)
-		self.Show()
-		self.Raise()
+		if show:
+			self.Show()
+			self.Raise()
 
 
 class TwoWaySplitter(FourWaySplitter):

@@ -572,19 +572,14 @@
                                     <object class="wxStaticBitmap">
                                       <bitmap>../theme/icons/32x32/clock.png</bitmap>
                                     </object>
-                                    <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                                    <flag>wxALIGN_TOP|wxBOTTOM</flag>
+                                  <border>8</border>
                                   </object>
                                   <object class="sizeritem">
                                     <object class="StaticFancyText" name="display_instrument_warmup_info_text">
                                       <label>info.display_instrument.warmup</label>
                                     </object>
                                     <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
-                                  </object>
-                                  <object class="spacer"/>
-                                  <object class="sizeritem">
-                                    <object class="StaticFancyText" name="display_instrument_info_text_spacer">
-                                      <label>&#160;</label>
-                                    </object>
                                   </object>
                                   <object class="sizeritem">
                                     <object class="wxStaticBitmap">
@@ -603,8 +598,7 @@
                                   <hgap>12</hgap>
                                   <growablecols>1</growablecols>
                                 </object>
-                                <option>1</option>
-                                <flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+                                <flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
                                 <border>16</border>
                               </object>
                               <orient>wxVERTICAL</orient>
