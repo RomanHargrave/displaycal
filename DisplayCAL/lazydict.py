@@ -421,11 +421,11 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			elif not quote and line_lwstrip != "\n" and not line.startswith(" "):
 				if key and value:
 					self._collect(key, value, style)
-				tokens = line.split(": ", 1)
+				tokens = line.split(":", 1)
 				key = unquote(tokens[0].strip())
 				if len(tokens) > 1:
-					token = tokens[1].lstrip(" ")
-					style = token.rstrip(" \n")
+					token = tokens[1].lstrip(" ").rstrip(" \n")
+					style = token
 					if style.startswith("\t"):
 						raise ValueError("Found character '\\t' that cannot "
 										 "start any token (%r line %i)" %
@@ -438,7 +438,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				else:
 					raise ValueError("Unsupported format (%r line %i)" %
 									 (getattr(fileobj, "name", line), i))
-				if style in block_styles:
+				if style in block_styles or not style:
 					# Block or folded
 					if self.debug:
 						print 'IN BLOCK', repr(key), style
@@ -505,7 +505,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					out += c
 		else:
 			out = chars
-		out = out.lstrip()
+		out = out.lstrip(" ")
 		if self.debug:
 			print "OUT", repr(out)
 		if not style:
@@ -596,6 +596,9 @@ def test():
 	# c('TEST: >+\n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
 	# c('TEST: >-\n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
 	c('TEST : |\n  "\n  ABC\n\n  DEFG\n  \n    \n\n\n\n  "')
+	c('TEST: |-\n  \n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
+	c('TEST: |\n  \n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
+	c('TEST:\n  \n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
 
 	print "=" * 80
 	print "Performance test"
