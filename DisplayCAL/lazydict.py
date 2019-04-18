@@ -18,26 +18,19 @@ def unquote(string, raise_exception=True):
 	Raises ValueError on missing end quote if there is a start quote.
 	
 	"""
-	if len(string) > 1 and string[0] in ("'", '"'):
+	if len(string) > 1 and string[0] in "'"'"':
 		if string[-1] == string[0]:
 
 			# NOTE: Order of unescapes is important to match YAML!
-			string = strtr(string[1:-1], [# ("\r\n", "\n"),
-										  # ("\r", "\n"),
-										  # ("\n\n", "\\n"),
-										  # ("\n", " "),
-										  ("\\r", "\r"),
-										  ("\\n", "\n"),
-										  ("\\t", "\t"),
-										  ('\\"', '"')])
-										  
+			string = unescape(string[1:-1])
+
 		elif raise_exception:
 			raise ValueError("Missing end quote while scanning quoted scalar")
 	return string
 
 
 def escape(string):
-	"""
+	r"""
 	Backslash-escape \r, \n, \t, and " in string
 	
 	"""
@@ -45,6 +38,21 @@ def escape(string):
 						  ("\n", "\\n"),
 						  ("\t", "\\t"),
 						  ('"', '\\"')])
+
+
+def unescape(string):
+	r"""
+	Unescape \\r, \\n, \\t, and \\" in string
+	
+	"""
+	return strtr(string, [# ("\r\n", "\n"),
+						  # ("\r", "\n"),
+						  # ("\n\n", "\\n"),
+						  # ("\n", " "),
+						  ("\\r", "\r"),
+						  ("\\n", "\n"),
+						  ("\\t", "\t"),
+						  ('\\"', '"')])
 
 
 class LazyDict(dict):
@@ -169,7 +177,7 @@ class LazyDict(dict):
 		self.load()
 		return dict.keys(self)
 
-	def load(self, path=None, encoding=None, errors=None):
+	def load(self, path=None, encoding=None, errors=None, raise_exceptions=False):
 		if not self._isloaded and (path or self.path):
 			self._isloaded = True
 			if not path:
@@ -190,6 +198,8 @@ class LazyDict(dict):
 				with codecs.open(path, "rU", self.encoding, self.errors) as f:
 					self.parse(f)
 			except (UnicodeDecodeError, ValueError), exception:
+				if raise_exceptions:
+					raise
 				handle_error(UserWarning(
 					u"Warning - file '%s': %s" % 
 					tuple(safe_unicode(s) for s in 
@@ -197,6 +207,8 @@ class LazyDict(dict):
 								 isinstance(exception, ValueError)
 								 else exception))))
 			except Exception, exception:
+				if raise_exceptions:
+					raise
 				handle_error(UserWarning(u"Warning - file '%s': %s" % 
 										 tuple(safe_unicode(s) for s in
 											   (path, exception))))
@@ -231,8 +243,19 @@ class LazyDict_YAML_UltraLite(LazyDict):
 	"""
 	'YAML Ultra Lite' lazy dictionary
 
-	YAML Lite only supports block and inline style notation.
-	Parsing is around a factor of 24 faster than PyYAML,
+	YAML Ultra Lite is a restricted subset of YAML. It only supports the
+	following notations:
+	
+	Key: Value 1
+	"Key 2": "Value 2"
+	"Key 3": |-
+	  Value 3 Line 1
+	  Value 3 Line 2
+	
+	All values are treated as strings.
+	
+	Syntax checking is limited for speed.
+	Parsing is around a factor of 20 to 30 faster than PyYAML,
 	around 8 times faster than JSONDict (based on demjson),
 	and about 2 times faster than YAML_Lite.
 	
@@ -251,28 +274,61 @@ class LazyDict_YAML_UltraLite(LazyDict):
 		value = []
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
-		for line in fileobj.readlines():
+		for i, line in enumerate(fileobj.readlines()):
 			if line.startswith("#"):
 				# Ignore comments
 				pass
 			elif line != "\n" and not line.startswith("  "):
 				if value:
 					self[key] = "\n".join(value)
-				tokens = line.rstrip(' -|').split(":", 1)
-				key = tokens[0].strip()
-				if len(key) > 1 and key[0] == '"' == key[-1]:
-					key = key[1:-1]
-				token = tokens[1].strip()
+				#tokens = line.rstrip(' -|\n').split(":", 1)
+				tokens = line.split(":", 1)
+				if len(tokens) == 1:
+					raise ValueError("Unsupported format (%r line %i)" %
+									 (getattr(fileobj, "name", line), i))
+				token = tokens[1].strip(" \n")
+				if token.startswith("|-"):
+					token = token[2:].lstrip()
+				elif token.startswith("|") or token.startswith(">"):
+					raise ValueError("Style not supported "
+									 "(%r line %i)" % (getattr(fileobj, "name",
+															   line), i))
+				# key = tokens[0].strip("'"'"')
+				key = self._unquote(tokens[0].strip(), False, False, fileobj, i)
 				if token:
 					# Inline value
-					if len(token) > 1 and token[0] == '"' == token[-1]:
-						token = token[1:-1]
-					self[key] = token
-				value = []
+					# value = [token.strip("'"'"')]
+					value = [self._unquote(token, True, True, fileobj, i)]
+				else:
+					value = []
 			else:
 				value.append(line[2:].rstrip("\n"))
 		if value:
 			self[key] = "\n".join(value)
+
+	def _unquote(self, token, unescape=True, check=True, fileobj=None, lineno=-1):
+		if len(token) > 1:
+			c = token[0]
+			if c in "'"'"' and c == token[-1]:
+				token = token[1:-1]
+				if check and token.count(c) != token.count("\\" + c):
+					raise ValueError("Unescaped quotes found in token "
+									 "(%r line %i)" % (getattr(fileobj, "name",
+															   token),
+													   lineno))
+			elif check and (token.count('"') != token.count('\\"')):
+				raise ValueError("Unbalanced quotes found in token "
+								 "(%r line %i)" % (getattr(fileobj, "name",
+														   token),
+												   lineno))
+			if check and "\\'" in token:
+				raise ValueError("Found unknown escape character \"'\" "
+								 "(%r line %i)" % (getattr(fileobj, "name",
+														   token),
+												   lineno))
+			if unescape:
+				token = token.replace('\\"', '"')
+		return token
 
 
 class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
@@ -280,8 +336,24 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 	"""
 	'YAML Lite' lazy dictionary
 
-	YAML Lite only supports block and inline style notation.
-	Parsing is around a factor of 12 faster than PyYAML,
+	YAML Lite is a restricted subset of YAML. It only supports the
+	following notations:
+	
+	Key: Value 1
+	"Key 2": "Value 2"
+	"Key 3": |-
+	  Value 3 Line 1
+	  Value 3 Line 2
+	"Key 4": |
+	  Value 4 Line 1
+	  Value 4 Line 2
+	"Key 5": Folded value 5
+	  Folded value 5, continued
+	
+	All values are treated as strings.
+	
+	Syntax checking is limited for speed.
+	Parsing is around a factor of 12 to 16 faster than PyYAML,
 	and around 4 times faster than JSONDict (based on demjson).
 	
 	"""
@@ -298,7 +370,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 		key = None
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
-		for line in fileobj.readlines():
+		for i, line in enumerate(fileobj.readlines()):
 			line_lwstrip = line.lstrip(" ")
 			if quote:
 				line_rstrip = line.rstrip()
@@ -313,7 +385,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				if self.debug:
 					print "+ APPEND STRIPPED", repr(line.strip())
 				value.append(line.strip())
-				self._collect(key, value, ">q")
+				self._collect(key, value, ">i")
 				style = None
 				value = []
 				quote = None
@@ -321,7 +393,9 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			elif (style not in block_styles and line.startswith(" ") and
 				  line_lwstrip and line_lwstrip[0] in ("'", '"')):
 				if quote:
-					raise ValueError("Wrong end quote while scanning quoted scalar")
+					raise ValueError("Wrong end quote while scanning quoted "
+									 "scalar (%r line %i)" %
+									 (getattr(fileobj, "name", line), i))
 				else:
 					if self.debug:
 						print "START QUOTE"
@@ -331,7 +405,11 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					value.append(line_lwstrip)
 			elif line.startswith("  ") and (style in block_styles or
 											line_lwstrip != "\n"):
-				if style == ">q":
+				if style == ">i":
+					if not quote and "\t" in line:
+						raise ValueError("Found character '\\t' that cannot "
+										 "start any token (%r line %i)" %
+										 (getattr(fileobj, "name", line), i))
 					line = line.strip() + "\n"
 					if self.debug:
 						print "APPEND STRIPPED + \\n", repr(line)
@@ -343,15 +421,23 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			elif not quote and line_lwstrip != "\n" and not line.startswith(" "):
 				if key and value:
 					self._collect(key, value, style)
-				tokens = line.split(":", 1)
+				tokens = line.split(": ", 1)
 				key = unquote(tokens[0].strip())
 				if len(tokens) > 1:
 					token = tokens[1].lstrip(" ")
-					style = token.rstrip()
+					style = token.rstrip(" \n")
+					if style.startswith("\t"):
+						raise ValueError("Found character '\\t' that cannot "
+										 "start any token (%r line %i)" %
+										 (getattr(fileobj, "name", line), i))
+					if style.startswith(">"):
+						raise NotImplementedError("Folded style is not "
+												  "supported (%r line %i)" %
+												  (getattr(fileobj, "name",
+														   line), i))
 				else:
-					raise ValueError("Malformed")
-				if style.startswith(">"):
-					raise NotImplementedError("Folded style is not supported")
+					raise ValueError("Unsupported format (%r line %i)" %
+									 (getattr(fileobj, "name", line), i))
 				if style in block_styles:
 					# Block or folded
 					if self.debug:
@@ -370,7 +456,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 							print "START QUOTE"
 						quote = token_rstrip[0]
 					else:
-						style = ">q"
+						style = ">i"
 					token_rstrip += "\n"
 					if self.debug:
 						print "SET", repr(token_rstrip)
@@ -386,7 +472,8 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 						print "APPEND", repr(line)
 				value.append(line)
 		if quote:
-			raise ValueError("EOF while scanning quoted scalar")
+			raise ValueError("EOF while scanning quoted scalar (%r line %i)" %
+							 (getattr(fileobj, "name", line), i))
 		if key and value:
 			if self.debug:
 				print "FINAL COLLECT"
@@ -396,7 +483,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 		if self.debug:
 			print 'COLLECT', key, value, style
 		chars = "".join(value)
-		if style != ">q":
+		if style != ">i":
 			chars = chars.rstrip(" ")
 		if not style or style.startswith(">"):
 			if self.debug:
@@ -413,7 +500,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					if state == 1:
 						out += " "
 						state = 0
-					if style == ">q":
+					if style == ">i":
 						state = 0
 					out += c
 		else:
@@ -431,7 +518,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 			pass
 		else:
 			out = out.rstrip("\n")
-			if style == ">q":
+			if style == ">i":
 				out = unquote(out)
 			elif style.endswith("-"):
 				# Chomp trailing newlines
@@ -457,12 +544,20 @@ def test():
 	import yaml
 
 	def y(doc):
-		return yaml.safe_load(StringIO(doc))
+		try:
+			return yaml.safe_load(StringIO(doc))
+		except Exception, e:
+			print "%s:" % e.__class__.__name__, e
+			return e
 
 
 	def l(doc):
 		l = LazyDict_YAML_Lite(debug=True)
-		l.parse(StringIO(doc))
+		try:
+			l.parse(StringIO(doc))
+		except Exception, e:
+			print "%s:" % e.__class__.__name__, e
+			return e
 		return l
 
 
@@ -473,8 +568,9 @@ def test():
 		print 'LazyDict_YAML_Lite', a
 		b = y(doc)
 		print 'yaml.YAML         ', b
-		print 'Identical?', a == b
-		assert a == b
+		identical = isinstance(a, dict) and isinstance(b, dict) and a == b
+		print 'Identical?', identical
+		assert identical
 
 
 	print "Testing YAML Lite to YAML conformance"
@@ -518,7 +614,7 @@ def test():
 	jt = time() - ts
 
 	io = StringIO('''"test1": Value 1
-"test2": |
+"test2": |-
   Value 2 Line 1
   Value 2 Line 2
   
@@ -549,9 +645,9 @@ def test():
 	yt = time() - ts
 
 	print "LazyDict_JSON:", jt
-	print "LazyDict_YAML_UltraLite:", yult, "vs JSON:", round(jt / yult, 1), "vs YAML_Lite:", round(ylt / yult, 1), "vs PyYAML:", round(yt / yult, 1)
-	print "LazyDict_YAML_Lite:", ylt, "vs JSON:", round(jt / ylt, 1), "vs PyYAML:", round(yt / ylt, 1)
-	print "yaml.safe_load:", yt
+	print "LazyDict_YAML_UltraLite: %.3fs," % yult, "vs JSON: %.1fx speed," % round(jt / yult, 1), "vs YAML_Lite: %.1fx speed," % round(ylt / yult, 1), "vs PyYAML: %.1fx speed," % round(yt / yult, 1)
+	print "LazyDict_YAML_Lite: %.3fs," % ylt, "vs JSON: %.1fx speed," % round(jt / ylt, 1), "vs PyYAML: %.1fx speed," % round(yt / ylt, 1)
+	print "yaml.safe_load: %.3fs," % yt
 
 
 if __name__ == "__main__":
