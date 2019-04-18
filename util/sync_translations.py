@@ -19,6 +19,9 @@ from DisplayCAL.util_list import natsort
 from DisplayCAL.util_os import listdir_re
 
 
+USE_INLINE = False
+
+
 def quote(obj):
 	if isinstance(obj, basestring):
 		return '"%s"' % obj.replace('\\', '\\\\').replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t")
@@ -60,7 +63,7 @@ def langmerge(infilename1, infilename2, outfilename):
 		merged[key] = dictin1[key]
 	
 	for key in natsort(dictin1.keys(), False):
-		if key not in dictin2 and not key.startswith("*"):
+		if key not in dictin2 and not key.startswith("*") and dictin1[key]:
 			if not "ORPHANED KEY-VALUE PAIRS" in merged:
 				merged["ORPHANED KEY-VALUE PAIRS"] = "Note to translators: Key-value pairs below this point are no longer used. You may consider removing them."
 			merged[key] = dictin1[key]
@@ -68,10 +71,15 @@ def langmerge(infilename1, infilename2, outfilename):
 	
 	outstream = StringIO.StringIO()
 	for key, value in merged.iteritems():
-		outstream.write('"%s": |-\n' % key.encode("UTF-8"))
-		for line in value.split("\n"):
-			# Do not use splitlines, returns empty list for empty string
-			outstream.write("  %s\n" % line.encode("UTF-8"))
+		if not USE_INLINE or "\n" in value:
+			outstream.write('"%s": |-\n' % key.encode("UTF-8"))
+			for line in value.split("\n"):
+				# Do not use splitlines, returns empty list for empty string
+				outstream.write("  %s\n" % line.encode("UTF-8"))
+		else:
+			# Inline
+			outstream.write('"%s": "%s"\n' % (key.encode("UTF-8"),
+											  lazydict.escape(value).encode("UTF-8")))
 	outstream.seek(0)
 	formatted = outstream.read()
 	for key in added:
@@ -94,7 +102,7 @@ if __name__ == "__main__":
 	else:
 		for langfile in listdir_re(os.path.join(root, "DisplayCAL", "lang"),
 								   r"^\w+\.yaml$"):
-			if langfile != "en.yaml":
+			if langfile != "template.yaml":
 				langmerge(os.path.join("lang", langfile),
 						  os.path.join("lang", "en.yaml"),
 						  os.path.join(root, "DisplayCAL", "lang", langfile))
