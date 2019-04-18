@@ -506,7 +506,7 @@
 "*ccss.HP_DC3": |-
   LCD PFS Phosphor WLED IPS (HP DreamColor?)
 "*ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS Phosphor WLED IPS (HP DreamColor Z24x G2)
+  LCD PFS Phosphor WLED IPS, Adobe RGB gamut (HP DreamColor Z24x G2)
 "*ccss.HP_ZBOOK": |-
   LCD PFS Phosphor WLED IPS (HP ZBook)
 "*ccss.NEC_64_690E_PA242W_2013-02-28": |-
@@ -516,9 +516,9 @@
 "*ccss.OLEDFamily_28Aug18": |-
   RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
 "*ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS Phosphor WLED family
+  LCD PFS Phosphor WLED family, P3 gamut
 "*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED family (Panasonic VVX17P051J00 in Lenovo P70)
+  LCD PFS Phosphor WLED family, P3 gamut (Panasonic VVX17P051J00 in Lenovo P70)
 "*ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "*ccss.ProjectorFamily_07Feb11": |-
@@ -1403,11 +1403,11 @@
 "*info.display_tech": |-
   <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and sRGB coverage up to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors from 2010 and newer as well as Apple iMac/MacBook from 2009 to mid 2015.
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with Adobe RGB and P3 coverage around 97% to 99% (according to the manufacturer). Common displays in this category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer), professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, as well as many HDR-capable desktop monitors.
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with two common variants: P3 or Adobe RGB coverage around 95% to 99% respectively. Common displays in the P3 gamut category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer) as well as many HDR-capable desktop monitors. The AdobeRGB gamut category includes professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
   
-  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99% (according to the manufacturer). Displays of this type are currently no longer produced. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99%. Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
   
-  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with Adobe RGB coverage exceeding 100% (according to the manufacturer). Displays of this type are currently no longer produced. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with full Adobe RGB coverage. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
   
   <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with full Adobe RGB and near-full P3 coverage, used in some high-end video mastering monitors and some high-end laptops as well as high quality smartphones.
   

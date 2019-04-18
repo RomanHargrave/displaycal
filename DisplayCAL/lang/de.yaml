@@ -504,7 +504,7 @@
 "ccss.HP_DC3": |-
   LCD PFS-Phosphor-WLED IPS (HP DreamColor?)
 "ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS-Phosphor-WLED IPS (HP DreamColor Z24x G2)
+  LCD PFS-Phosphor-WLED IPS, Adobe-RGB-Farbumfang (HP DreamColor Z24x G2)
 "ccss.HP_ZBOOK": |-
   LCD PFS-Phosphor-WLED IPS (HP ZBook)
 "ccss.NEC_64_690E_PA242W_2013-02-28": |-
@@ -514,9 +514,9 @@
 "ccss.OLEDFamily_28Aug18": |-
   RGB-OLED-Familie (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
 "ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS-Phosphor-WLED-Familie
+  LCD PFS-Phosphor-WLED-Familie, P3-Farbumfang
 "ccss.Panasonic VVX17P051J00": |-
-  LCD PFS-Phosphor-WLED-Familie (Panasonic VVX17P051J00 in Lenovo P70)
+  LCD PFS-Phosphor-WLED-Familie, P3-Farbumfang (Panasonic VVX17P051J00 in Lenovo P70)
 "ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "ccss.ProjectorFamily_07Feb11": |-
@@ -1411,11 +1411,11 @@
 "info.display_tech": |-
   <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und sRGB-Farbraumabdeckung von bis zu 100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore ab 2010 sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
   
-  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang mit Adobe-RGB- und P3-Farbraumabdeckung von etwa 97% bis 99% (Herstellerangabe). Gängige Anzeigeräte in dieser Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer), professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q, sowie viele HDR-fähige Desktop-Monitore.
+  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang mit zwei üblichen Varianten: P3- oder Adobe-RGB-Farbraumabdeckung von etwa 95% respektive 99%. Gängige Anzeigeräte in der P3-Farbumfang-Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer) sowie viele HDR-fähige Desktop-Monitore. Die Adobe-RGB-Farbumfang-Kategorie umfasst professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
   
-  <font weight='bold'>LCD GB-r-LED</font> (auch bekannt als GB-LED) hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von etwa 99% (Herstellerangabe). Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Dell U2413, EIZO CG247/CG277 und NEC PA242W/PA272W.
+  <font weight='bold'>LCD GB-r-LED</font> (auch bekannt als GB-LED) hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von etwa 99%. Gängige Anzeigeräte in dieser Kategorie beinhalten Dell U2413, EIZO CG247/CG277 und NEC PA242W/PA272W.
   
-  <font weight='bold'>LCD RGB LED</font> hat einen erweiterten Farbumfang mit Adobe-RGB-Farbraumabdeckung von 100% und mehr (Herstellerangabe). Geräte dieses Typs werden zur Zeit nicht mehr produziert. Gängige Anzeigeräte in dieser Kategorie beinhalten Samsung XL20/XL24/XL30 und HP DreamColor LP2480zx.
+  <font weight='bold'>LCD RGB-LED</font> hat einen erweiterten Farbumfang mit vollständiger Adobe-RGB-Farbraumabdeckung. Gängige Anzeigeräte in dieser Kategorie beinhalten Samsung XL20/XL24/XL30 und HP DreamColor LP2480zx.
   
   <font weight='bold'>RGB OLED/AMOLED</font> hat einen erweiterten Farbumfang mit voller Adobe-RGB- und nahezu voller P3-Farbraumabdeckung, und wird in manchen High-End Video-Mastering-Monitoren, manchen High-End Laptops sowie qualitativ hochwertigen Smartphones verwendet.
   
