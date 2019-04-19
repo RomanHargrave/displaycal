@@ -11142,6 +11142,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.display_tech_ctrl.SetStringSelection(techloc[tech])
 			boxsizer.Add(dlg.display_tech_ctrl,
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
+			btn = PlateButton(dlg, -1, lang.getstr("info.display_tech.show"),
+							  geticon(16, "info"))
+			btn.SetBitmapHover(geticon(16, "info-inverted"))
+			btn.Bind(wx.EVT_BUTTON, self.display_tech_info_show_handler)
+			boxsizer.Add(btn, flag=wx.ALL | wx.ALIGN_LEFT, border=4)
 			dlg.description_txt_ctrl.SetFocus()
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
@@ -12456,7 +12461,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def display_tech_info_show_handler(self, event):
 		if not hasattr(self, "display_tech_info_tooltip_window"):
 			self.display_tech_info_tooltip_window = TooltipWindow(
-				self, msg=lang.getstr("info.display_tech"), cols=1, 
+				None, msg=lang.getstr("info.display_tech"), cols=1, 
 				title=lang.getstr("display.tech"), 
 				bitmap=geticon(32, "dialog-information"), wrap=90,
 				use_header=False, show=False)
