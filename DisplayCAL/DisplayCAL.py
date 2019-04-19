@@ -12461,7 +12461,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def display_tech_info_show_handler(self, event):
 		if not hasattr(self, "display_tech_info_tooltip_window"):
 			self.display_tech_info_tooltip_window = TooltipWindow(
-				None, msg=lang.getstr("info.display_tech"), cols=1, 
+				self, msg=lang.getstr("info.display_tech"), cols=1, 
 				title=lang.getstr("display.tech"), 
 				bitmap=geticon(32, "dialog-information"), wrap=90,
 				use_header=False, show=False)
