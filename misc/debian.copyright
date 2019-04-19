@@ -6,29 +6,37 @@ Source: ${URL}
 Copyright: 2008-${YEAR}, Florian Höch <${AUTHOR_EMAIL}>
 License: GPL-3+
 
-Files: ${APPNAME}/lang/es.json
+Files: ${APPNAME}/lang/es.yaml
 Copyright: 2008-${YEAR}, Roberto Quintero <betoven@ya.com>
 License: GPL-3+
 
-Files: ${APPNAME}/lang/fr.json
+Files: ${APPNAME}/lang/fr.yaml
 Copyright: 2008-${YEAR}, Loïc Guégant <loic.guegant@free.fr>
            2015-${YEAR}, François Leclerc
            2016-${YEAR}, Jean-Luc Coulon
 License: GPL-3+
 
-Files: ${APPNAME}/lang/it.json
+Files: ${APPNAME}/lang/it.yaml
 Copyright: 2008-${YEAR}, Tommaso Schiavinotto <mynos_main@yahoo.it>
 License: GPL-3+
 
-Files: ${APPNAME}/lang/ko.json
+Files: ${APPNAME}/lang/ko.yaml
 Copyright: 2017-${YEAR}, 김환(Howard Kim)
 License: GPL-3+
 
-Files: ${APPNAME}/lang/zh_cn.json
+Files: ${APPNAME}/lang/ru.yaml
+Copyright: 2019-${YEAR}, Alex Sikorsky
+License: GPL-3+
+
+Files: ${APPNAME}/lang/ukr.yaml
+Copyright: 2019-${YEAR}, Alex Sikorsky
+License: GPL-3+
+
+Files: ${APPNAME}/lang/zh_cn.yaml
 Copyright: 2017-${YEAR}, 林泽帆(Xpesir)
 License: GPL-3+
 
-Files: ${APPNAME}/lang/zh_hk.json
+Files: ${APPNAME}/lang/zh_hk.yaml
 Copyright: 2016-${YEAR}, 楊添明
 License: GPL-3+
 
@@ -60,10 +68,6 @@ License: GPL-3+
 Files: ${APPNAME}/cacert.pem
 Copyright: Kenneth Reitz me@kennethreitz.com
 License: MPL-2
-
-Files: ${APPNAME}/demjson.py
-Copyright: 2006-${YEAR}, Deron E. Meranda <deron.meranda@gmail.com>
-License: LGPL-3+
 
 Files: ${APPNAME}/embeddedimage.py
 Copyright: 2006-${YEAR}, Anthony Tuininga
