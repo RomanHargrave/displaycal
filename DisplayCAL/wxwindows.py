@@ -19,7 +19,7 @@ import warnings
 import xml.parsers.expat
 import zipfile
 
-import demjson
+import demjson_compat as demjson
 
 import ICCProfile as ICCP
 import audio

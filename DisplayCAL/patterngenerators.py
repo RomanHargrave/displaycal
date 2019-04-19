@@ -7,14 +7,13 @@ from socket import (AF_INET, SHUT_RDWR, SO_BROADCAST, SO_REUSEADDR, SOCK_DGRAM,
 from time import sleep
 import errno
 import httplib
+import json
 import select
 import struct
 import sys
 import threading
 import urllib
 import urlparse
-
-import demjson
 
 import localization as lang
 from log import safe_print
@@ -355,7 +354,7 @@ class PrismaPatternGeneratorClient(GenHTTPPatternGeneratorClient):
 	def _validate(self, resp, url, validate):
 		raw = resp.read()
 		if isinstance(validate, dict):
-			data = demjson.decode(raw)
+			data = json.loads(raw)
 			components = urlparse.urlparse(url)
 			api = components.path[1:]
 			query = urlparse.parse_qs(components.query)

@@ -31,10 +31,68 @@ import localization as lang
 
 if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
 	from config import get_data_path
-	import demjson
 
-	quirk_cache = {'suffixes': [],
-				   'vendor_names': {}}
+	# From colord/lib/colord/cd_quirk.c, cd_quirk_vendor_name
+	quirk_cache = {
+		"suffixes": [
+			"Co.", "Co", "Inc.", "Inc", "Ltd.", "Ltd",
+			"Corporation", "Incorporated", "Limited",
+			"GmbH", "corp."
+		],
+		"vendor_names": {
+			"Acer, inc.": "Acer",
+			"Acer Technologies": "Acer",
+			"AOC Intl": "AOC",
+			"Apple Computer Inc": "Apple",
+			"Arnos Insturments & Computer Systems": "Arnos",
+			"ASUSTeK Computer Inc.": "ASUSTeK",
+			"ASUSTeK Computer INC": "ASUSTeK",
+			"ASUSTeK COMPUTER INC.": "ASUSTeK",
+			"BTC Korea Co., Ltd": "BTC",
+			"CASIO COMPUTER CO.,LTD": "Casio",
+			"CLEVO": "Clevo",
+			"Delta Electronics": "Delta",
+			"Eizo Nanao Corporation": "Eizo",
+			"Envision Peripherals,": "Envision",
+			"FUJITSU": "Fujitsu",
+			"Fujitsu Siemens Computers GmbH": "Fujitsu Siemens",
+			"Funai Electric Co., Ltd.": "Funai",
+			"Gigabyte Technology Co., Ltd.": "Gigabyte",
+			"Goldstar Company Ltd": "LG",
+			"LG Electronics": "LG",
+			"GOOGLE": "Google",
+			"Hewlett-Packard": "Hewlett Packard",
+			"Hitachi America Ltd": "Hitachi",
+			"HP": "Hewlett Packard",
+			"HWP": "Hewlett Packard",
+			"IBM France": "IBM",
+			"Lenovo Group Limited": "Lenovo",
+			"LENOVO": "Lenovo",
+			"Iiyama North America": "Iiyama",
+			"MARANTZ JAPAN, INC.": "Marantz",
+			"Mitsubishi Electric Corporation": "Mitsubishi",
+			"Nexgen Mediatech Inc.,": "Nexgen Mediatech",
+			"NIKON": "Nikon",
+			"Panasonic Industry Company": "Panasonic",
+			"Philips Consumer Electronics Company": "Philips",
+			"RGB Systems, Inc. dba Extron Electronics": "Extron",
+			"SAM": "Samsung",
+			"Samsung Electric Company": "Samsung",
+			"Samsung Electronics America": "Samsung",
+			"samsung": "Samsung",
+			"SAMSUNG": "Samsung",
+			"Sanyo Electric Co.,Ltd.": "Sanyo",
+			"Sonix Technology Co.": "Sonix",
+			"System manufacturer": "Unknown",
+			"To Be Filled By O.E.M.": "Unknown",
+			"Toshiba America Info Systems Inc": "Toshiba",
+			"Toshiba Matsushita Display Technology Co.,": "Toshiba",
+			"TOSHIBA": "Toshiba",
+			"Unknown vendor": "Unknown",
+			"Westinghouse Digital Electronics": "Westinghouse Digital",
+			"Zalman Tech Co., Ltd.": "Zalman"
+		}
+	}
 
 
 prefix = "/org/freedesktop/ColorManager/"
@@ -347,14 +405,6 @@ def install_profile(device_id, profile, profile_installname=None,
 def quirk_manufacturer(manufacturer):
 	if Colord and hasattr(Colord, 'quirk_vendor_name'):
 		return Colord.quirk_vendor_name(manufacturer)
-
-	if not quirk_cache['suffixes'] or not quirk_cache['vendor_names']:
-		quirk_filename = get_data_path('quirk.json')
-		if quirk_filename:
-			with open(quirk_filename) as quirk_file:
-				quirk = demjson.decode(quirk_file.read())
-				quirk_cache['suffixes'] = quirk['suffixes']
-				quirk_cache['vendor_names'] = quirk['vendor_names']
 
 	# Correct some company names
 	for old, new in quirk_cache['vendor_names'].iteritems():

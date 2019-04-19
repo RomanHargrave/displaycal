@@ -8,7 +8,6 @@ import sys
 
 from config import data_dirs, defaults, getcfg, storage
 from debughelpers import handle_error
-from jsondict import JSONDict
 from lazydict import LazyDict_YAML_UltraLite
 from log import safe_print
 from options import debug_localization as debug
@@ -140,6 +139,7 @@ catalog = {}
 if debug:
 	import atexit
 	from config import confighome
+	from jsondict import JSONDict
 
 	usage = JSONDict()
 	usage_path = os.path.join(confighome, "localization_usage.json")

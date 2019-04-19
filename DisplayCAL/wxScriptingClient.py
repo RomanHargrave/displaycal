@@ -17,7 +17,6 @@ from wxaddons import wx
 from wxfixes import GenBitmapButton
 from wxwindows import BaseApp, SimpleTerminal, numpad_keycodes
 import config
-import demjson
 import localization as lang
 
 import wx.lib.delayedresult as delayedresult

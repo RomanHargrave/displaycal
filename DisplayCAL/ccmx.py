@@ -2,11 +2,10 @@
 
 from __future__ import with_statement  # Python 2.5
 import codecs
+import json
 import os
 import sys
 import time
-
-import demjson
 
 
 CCMX_TEMPLATE = '''CCMX   
@@ -74,7 +73,7 @@ def convert_devicecorrections_to_ccmx(path, target_dir):
 		lines[i] = ':'.join(parts)
 	devcorrections_data = '{%s}' % ''.join(lines).replace(',}', '}')
 	# Parse JSON
-	devcorrections = demjson.decode(devcorrections_data)
+	devcorrections = json.loads(devcorrections_data)
 	# Convert to ccmx
 	imported = 0
 	skipped = 0

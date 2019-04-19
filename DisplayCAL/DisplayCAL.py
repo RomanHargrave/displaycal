@@ -28,6 +28,7 @@ from StringIO import StringIO
 import datetime
 import decimal
 Decimal = decimal.Decimal
+import json as json_module
 import math
 import os
 import platform
@@ -52,10 +53,6 @@ import webbrowser
 
 # Set no delay time to open the web page
 webbrowser.PROCESS_CREATION_DELAY = 0
-
-# 3rd party modules
-
-import demjson
 
 # Config
 import config
@@ -538,12 +535,11 @@ def donation_message(parent=None):
 def colorimeter_correction_web_check_choose(resp, parent=None):
 	""" Let user choose a colorimeter correction and confirm overwrite """
 	if resp is not False:
-		data = resp.read()
 		try:
-			json = demjson.decode(data)
+			json = json_module.load(resp)
 			if not json:
-				raise demjson.JSONDecodeError()
-		except (UnicodeDecodeError, demjson.JSONDecodeError), exception:
+				raise ValueError()
+		except (UnicodeDecodeError, ValueError), exception:
 			InfoDialog(parent, 
 						 msg=lang.getstr("colorimeter_correction.web_check.failure"),
 						 ok=lang.getstr("ok"), 
@@ -11925,10 +11921,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						imported, skipped = ccmx.convert_devicecorrections_to_ccmx(path, ccmx_dir)
 						if imported == 0:
 							raise Info()
-					except (UnicodeDecodeError,
-							demjson.JSONDecodeError), exception:
-						if isinstance(exception, demjson.JSONDecodeError):
-							exception = exception.pretty_description()
+					except (UnicodeDecodeError, ValueError), exception:
 						result = Error(lang.getstr("file.invalid") + "\n" +
 									   safe_unicode(exception))
 					except Info:

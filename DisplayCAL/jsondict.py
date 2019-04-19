@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import demjson
+import demjson_compat
 
 from lazydict import LazyDict
 
@@ -13,7 +13,7 @@ class LazyDict_JSON(LazyDict):
 	"""
 	
 	def parse(self, fileobj):
-		dict.update(self, demjson.decode(fileobj.read()))
+		dict.update(self, demjson_compat.decode(fileobj.read()))
 
 
 JSONDict = LazyDict_JSON

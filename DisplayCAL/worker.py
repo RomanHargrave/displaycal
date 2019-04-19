@@ -94,7 +94,6 @@ from debughelpers import (Error, DownloadError, Info, UnloggedError,
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
 						  iccprofiles_display_home)
 from edid import WMIError, get_edid
-from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
@@ -187,11 +186,6 @@ keycodes = {wx.WXK_NUMPAD0: ord("0"),
 			wx.WXK_NUMPAD_MULTIPLY: ord("*"),
 			wx.WXK_NUMPAD_SUBTRACT: ord("-")}
 
-
-# XXX: Do not use directly - use Worker.get_technology_strings() instead
-technology_strings_171 = JSONDict()
-technology_strings_171[u"u"] = "Unknown"
-technology_strings_171.path = "technology_strings-1.7.1.json"
 
 workers = []
 
@@ -7109,9 +7103,42 @@ usage: spotread [-options] [logfile]
 	def get_technology_strings(self):
 		""" Return technology strings mapping (from ccxxmake -??) """
 		if self.argyll_version < [1, 7]:
-			return OrderedDict((k, v) for v, k in
-							   sorted((v, k) for k, v in
-									  technology_strings_171.iteritems()))
+			# Argyll ccxxmake before V1.7 didn't have the ability to list
+			# dtechs with -??
+			# Argyll V1.7 had different keys (we still want to use those for
+			# V1.7) with some duplicates
+			# Use Argyll V1.7.1 mapping (which has no duplicate keys) for
+			# Argyll before V1.7
+			return OrderedDict([(u"c", u"CRT"),
+								(u"m", u"Plasma"),
+								(u"l", u"LCD"),
+								(u"1", u"LCD CCFL"),
+								(u"2", u"LCD CCFL IPS"),
+								(u"3", u"LCD CCFL VPA"),
+								(u"4", u"LCD CCFL TFT"),
+								(u"L", u"LCD CCFL Wide Gamut"),
+								(u"5", u"LCD CCFL Wide Gamut IPS"),
+								(u"6", u"LCD CCFL Wide Gamut VPA"),
+								(u"7", u"LCD CCFL Wide Gamut TFT"),
+								(u"e", u"LCD White LED"),
+								(u"8", u"LCD White LED IPS"),
+								(u"9", u"LCD White LED VPA"),
+								(u"d", u"LCD White LED TFT"),
+								(u"b", u"LCD RGB LED"),
+								(u"f", u"LCD RGB LED IPS"),
+								(u"g", u"LCD RGB LED VPA"),
+								(u"i", u"LCD RGB LED TFT"),
+								(u"h", u"LCD RG Phosphor"),
+								(u"j", u"LCD RG Phosphor IPS"),
+								(u"k", u"LCD RG Phosphor VPA"),
+								(u"n", u"LCD RG Phosphor TFT"),
+								(u"o", u"LED OLED"),
+								(u"a", u"LED AMOLED"),
+								(u"p", u"DLP Projector"),
+								(u"q", u"DLP Projector RGB Filter Wheel"),
+								(u"r", u"DPL Projector RGBW Filter Wheel"),
+								(u"s", u"DLP Projector RGBCMY Filter Wheel"),
+								(u"u", u"Unknown")])
 		result = self.exec_cmd(get_argyll_util("ccxxmake"), ["-??"],
 							   capture_output=True, skip_scripts=True,
 							   silent=True, log_output=False)
