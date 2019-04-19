@@ -3458,6 +3458,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						getcfg("measurement_mode") != "auto")
 		self.colorimeter_correction_matrix_ctrl.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_ctrl, show_control)
+		self.colorimeter_correction_info_btn.GetContainingSizer().Show(
+			self.colorimeter_correction_info_btn, show_control)
 		self.colorimeter_correction_matrix_label.GetContainingSizer().Show(
 			self.colorimeter_correction_matrix_label, show_control)
 		self.colorimeter_correction_matrix_btn.GetContainingSizer().Show(
