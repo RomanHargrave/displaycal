@@ -4280,6 +4280,16 @@ class MainFrame(ReportFrame, BaseFrame):
 			patches += 9
 			# Initial amount of cal patches is always isteps * 4
 			patches += isteps * 4
+
+			# Adjust by dark integration time (scale factor)
+			integration_time = self.worker.get_instrument_features().get("integration_time")
+			if integration_time:
+				# Check for fixed integration time
+				if sum(integration_time) / float(len(integration_time)) == integration_time[0]:
+					# This helps estimation for instruments with fixed
+					# integration time (e.g. SpyderX)
+					patches *= float(integration_time[0]) / 2.45
+					patches = int(round(patches))
 		elif which == "chart":
 			patches = int(self.chart_patches_amount.Label)
 		ReportFrame.update_estimated_measurement_time(self, which, patches)

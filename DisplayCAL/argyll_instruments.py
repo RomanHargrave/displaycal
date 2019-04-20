@@ -467,8 +467,8 @@ instruments = {
 		"highres_mode": False,
 		"projector_mode": False,
 		"sensor_cal": True,
-		"skip_sensor_cal": True,  # Not yet, but likely supported in future
-		"integration_time": [1.82, 0.7],  # 70% of ColorMunki Display
+		"skip_sensor_cal": True,  # Not yet officially, but likely supported in future
+		"integration_time": [1.6, 1.6],
 		"refresh": False
 	},
 	"Huey": {
