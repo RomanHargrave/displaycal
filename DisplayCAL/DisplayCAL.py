@@ -10842,9 +10842,9 @@ class MainFrame(ReportFrame, BaseFrame):
 													  {}).get("value",
 															  "Unknown")
 						cgats.add_keyword("TARGET_INSTRUMENT", instrument)
-						spectral = "YES" if instruments.get(get_canonical_instrument_name(cgats.TARGET_INSTRUMENT),
-															{}).get("spectral", False) else "NO"
-						cgats.add_keyword("INSTRUMENT_TYPE_SPECTRAL", spectral)
+						spec_type = "YES" if instruments.get(get_canonical_instrument_name(cgats.TARGET_INSTRUMENT),
+															 {}).get("spectral", False) else "NO"
+						cgats.add_keyword("INSTRUMENT_TYPE_SPECTRAL", spec_type)
 						cgats.ARGYLL_COLPROF_ARGS = CGATS.CGATS()
 						cgats.ARGYLL_COLPROF_ARGS.key = "ARGYLL_COLPROF_ARGS"
 						cgats.ARGYLL_COLPROF_ARGS.parent = cgats
