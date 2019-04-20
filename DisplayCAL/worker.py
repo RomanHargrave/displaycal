@@ -1996,7 +1996,8 @@ class Worker(WorkerBase):
 		# output levels detection, but only for colorimeters
 		if ((getcfg("allow_skip_sensor_cal") or
 			 (not instrument_features.get("spectral") and
-			  not self.get_skip_video_levels_detection() and
+			  (not self.get_skip_video_levels_detection() or
+			   (self.dispread_after_dispcal and self.resume)) and
 			  not self._detecting_video_levels)) and
 			instrument_features.get("skip_sensor_cal") and
 			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args, True) and
