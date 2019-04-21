@@ -5,8 +5,10 @@ import os
 import sys
 
 from ICCProfile import ICCProfile
+from argyll_cgats import extract_device_gray_primaries
 from config import (enc, get_data_path, get_verified_path, getcfg, hascfg,
 					profile_ext, setcfg)
+from debughelpers import Error
 from log import log, safe_print
 from meta import name as appname
 from options import debug
@@ -15,6 +17,7 @@ from util_io import Files
 from util_os import waccess
 from util_str import safe_str
 from worker import Error, FilteredStream, LineBufferedStream, show_result_dialog
+import CGATS
 import ICCProfile as ICCP
 import colormath
 import config
@@ -77,7 +80,8 @@ class SynthICCFrame(BaseFrame):
 		# Drop targets
 		self.droptarget = FileDrop(self)
 		self.droptarget.drophandlers = {".icc": self.drop_handler,
-										".icm": self.drop_handler}
+										".icm": self.drop_handler,
+										".ti3": self.drop_handler}
 		self.panel.SetDropTarget(self.droptarget)
 
 		# Bind event handlers
@@ -343,6 +347,15 @@ class SynthICCFrame(BaseFrame):
 		self.Thaw()
 	
 	def drop_handler(self, path):
+		""" File dropped """
+		fn, ext = os.path.splitext(path)
+		if ext.lower() == ".ti3":
+			self.ti3_drop_handler(path)
+		else:
+			self.icc_drop_handler(path)
+
+	def icc_drop_handler(self, path):
+		""" ICC profile dropped """
 		try:
 			profile = ICCP.ICCProfile(path)
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
@@ -369,54 +382,100 @@ class SynthICCFrame(BaseFrame):
 			except Exception, exception:
 				show_result_dialog(exception, self)
 			else:
-				self.panel.Freeze()
-				for ctrl, value in [(self.colorspace_rgb_ctrl,
-									 profile.colorSpace == "RGB"),
-									(self.colorspace_gray_ctrl,
-									 profile.colorSpace == "GRAY")]:
-					ctrl.SetValue(value)
-				self.colorspace_ctrl_handler(None)
 				if "lumi" in profile.tags:
 					luminance = profile.tags.lumi.Y
 				else:
 					luminance = 100
-				setcfg("synthprofile.luminance", luminance)
-				self.luminance_ctrl.SetValue(luminance)
-				for i, color in enumerate(("white", "black")):
-					if (color == "black" and not colors[i][1] and
-						isinstance(profile.tags.get("targ"), ICCP.Text)):
-						# The profile may not reflect the actual black point.
-						# Get it from the embedded TI3 instead if zero from lookup.
-						XYZbp = profile.get_chardata_bkpt(True)
-						if XYZbp:
-							# Use wtpt chromaticity
-							colors[i] = [v * XYZbp[1] for v in colors[0]]
-					for j, component in enumerate("XYZ"):
-						getattr(self, "%s_%s" %
-								(color, component)).SetValue(colors[i][j] /
-															 colors[0][1] * 100)
-					self.parse_XYZ(color)
-				for i, color in enumerate(("red", "green", "blue")):
-					xyY = colormath.XYZ2xyY(*colors[2 + i])
-					for j, component in enumerate("xy"):
-						getattr(self, "%s_%s" %
-								(color, component)).SetValue(xyY[j])
-				self.parse_xy(None)
-				self.black_XYZ_ctrl_handler(None)
-				trc = ICCP.CurveType(profile=profile)
-				for XYZ in colors[5:]:
-					trc.append(XYZ[1] / colors[0][1] * 65535)
-				transfer_function = trc.get_transfer_function(outoffset=1.0)
-				if transfer_function and transfer_function[1] >= .95:
-					# Use detected transfer function
-					gamma = transfer_function[0][1]
+				if (not colors[1][1] and
+					isinstance(profile.tags.get("targ"), ICCP.Text)):
+					# The profile may not reflect the actual black point.
+					# Get it from the embedded TI3 instead if zero from lookup.
+					XYZbp = profile.get_chardata_bkpt(True)
+					if XYZbp:
+						# Use wtpt chromaticity
+						colors[1] = [v * XYZbp[1] for v in colors[0]]
+				self.set_colors(colors, luminance, profile.colorSpace)
+
+	def set_colors(self, colors, luminance, colorspace):
+		""" Set controls according to args """
+		self.panel.Freeze()
+		for ctrl, value in [(self.colorspace_rgb_ctrl,
+							 colorspace == "RGB"),
+							(self.colorspace_gray_ctrl,
+							 colorspace == "GRAY")]:
+			ctrl.SetValue(value)
+		self.colorspace_ctrl_handler(None)
+		setcfg("synthprofile.luminance", luminance)
+		self.luminance_ctrl.SetValue(luminance)
+		for i, color in enumerate(("white", "black")):
+			for j, component in enumerate("XYZ"):
+				getattr(self, "%s_%s" %
+						(color, component)).SetValue(colors[i][j] /
+													 colors[0][1] * 100)
+			self.parse_XYZ(color)
+		for i, color in enumerate(("red", "green", "blue")):
+			xyY = colormath.XYZ2xyY(*colors[2 + i])
+			for j, component in enumerate("xy"):
+				getattr(self, "%s_%s" %
+						(color, component)).SetValue(xyY[j])
+		self.parse_xy(None)
+		self.black_XYZ_ctrl_handler(None)
+		if len(colors[5:]) > 2:
+			trc = ICCP.CurveType()
+			for XYZ in colors[5:]:
+				trc.append(XYZ[1] / colors[0][1] * 65535)
+			transfer_function = trc.get_transfer_function(outoffset=1.0)
+			if transfer_function and transfer_function[1] >= .95:
+				# Use detected transfer function
+				gamma = transfer_function[0][1]
+			else:
+				# Use 50% gamma value
+				gamma = math.log(colors[132][1]) / math.log(128.0 / 255)
+			self.set_trc(round(gamma, 2))
+			setcfg("synthprofile.trc_gamma_type", "g")
+			self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["g"])
+		self.panel.Thaw()
+
+	def ti3_drop_handler(self, path):
+		""" TI3 file dropped """
+		try:
+			ti3 = CGATS.CGATS(path)
+		except (IOError, CGATS.CGATSInvalidError), exception:
+			show_result_dialog(Error(lang.getstr("error.measurement.file_invalid",
+												 path)), self)
+		else:
+			ti3[0].normalize_to_y_100()
+			rgb = [(100, 100, 100), (0, 0, 0), (100, 0, 0), (0, 100, 0), (0, 0, 100)]
+			colors = []
+			for R, G, B in rgb:
+				result = ti3.queryi1({"RGB_R": R, "RGB_G": G, "RGB_B": B})
+				if result:
+					color = []
+					for component in "XYZ":
+						label = "XYZ_" + component
+						if label in result:
+							color.append(result[label])
+				if not result or len(color) < 3:
+					color = (0, 0, 0)
+				colors.append(color)
+			try:
+				(ti3_extracted,
+				 RGB_XYZ_extracted,
+				 RGB_XYZ_remaining) = extract_device_gray_primaries(ti3)
+			except Error, exception:
+				show_result_dialog(exception, self)
+			else:
+				RGB_XYZ_extracted.sort()
+				colors.extend(RGB_XYZ_extracted.values())
+				luminance = ti3.queryv1("LUMINANCE_XYZ_CDM2")
+				if luminance:
+					try:
+						luminance = float(luminance.split()[1])
+					except (TypeError, ValueError):
+						luminance = 100
 				else:
-					# Use 50% gamma value
-					gamma = math.log(colors[132][1]) / math.log(128.0 / 255)
-				self.set_trc(round(gamma, 2))
-				setcfg("synthprofile.trc_gamma_type", "g")
-				self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba["g"])
-				self.panel.Thaw()
+					luminance = 100
+				self.set_colors(colors, luminance, "RGB")
 	
 	def enable_btns(self):
 		enable = bool(self.get_XYZ())
