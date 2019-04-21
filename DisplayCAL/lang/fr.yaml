@@ -928,7 +928,7 @@
   LCD PVA à VB-r-LED
 "display.tech.LCD PFS Phosphor": |-
   LCD à phosphore PFS WLED
-"*display.tech.LCD PFS Phosphor IPS": |-
+"display.tech.LCD PFS Phosphor IPS": |-
   LCD IPS à phosphore PFS WLED
 "display.tech.LCD PFS Phosphor TFT": |-
   LCD TFT à phosphore PFS WLED
