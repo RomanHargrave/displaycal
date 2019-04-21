@@ -1641,10 +1641,10 @@ class MainFrame(ReportFrame, BaseFrame):
 						  "info.display_tech.show",
 						  geticon(16, "info"))
 		btn.SetBitmapHover(geticon(16, "info-inverted"))
-		self.display_instrument_info_panel.Sizer.Add((0, 9 * scale))
+		self.display_instrument_info_panel.Sizer.Add((0, 14 * scale))
 		self.display_instrument_info_panel.Sizer.Add(btn, flag=wx.LEFT,
 													 border=(16 + 32 + 7) * scale)
-		self.display_instrument_info_panel.Sizer.Add((0, 12 * scale))
+		self.display_instrument_info_panel.Sizer.Add((0, 13 * scale))
 		self.display_tech_info_show_btn = btn
 		
 		# Button panel

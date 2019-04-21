@@ -579,7 +579,7 @@
                                     <object class="StaticFancyText" name="display_instrument_warmup_info_text">
                                       <label>info.display_instrument.warmup</label>
                                     </object>
-                                    <flag>wxALIGN_LEFT|wxALIGN_TOP</flag>
+                                    <flag>wxALIGN_LEFT|wxALIGN_BOTTOM</flag>
                                   </object>
                                   <object class="sizeritem">
                                     <object class="wxStaticBitmap">
