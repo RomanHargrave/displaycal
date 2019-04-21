@@ -163,7 +163,7 @@
 "advanced": |-
   進階
 "allow_skip_sensor_cal": |-
-  允許跳過光譜儀自我校正
+  允許跳過測量儀器自我校正
 "ambient.measure": |-
   測量環境亮度
 "ambient.measure.color.unsupported": |-
@@ -336,7 +336,7 @@
 "calculated_checksum": |-
   已計算的校驗碼
 "calibrate_instrument": |-
-  光譜儀自我校正
+  測量儀器自我校正
 "calibration": |-
   校正
 "calibration.ambient_viewcond_adjust": |-

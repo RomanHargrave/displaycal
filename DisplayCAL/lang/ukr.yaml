@@ -163,7 +163,7 @@
 "advanced": |-
   Додатково
 "allow_skip_sensor_cal": |-
-  Дозволити пропуск самокалібрування спектрофотометра
+  Дозволити пропуск самокалібрування інструмент
 "ambient.measure": |-
   Виміряйте навколишнє освітлення
 "ambient.measure.color.unsupported": |-
@@ -334,7 +334,7 @@
 "calculated_checksum": |-
   Обчислена контрольна сума
 "calibrate_instrument": |-
-  Самокалібрування спектрометра
+  Самокалібрування інструмент
 "calibration": |-
   Калібрування
 "calibration.ambient_viewcond_adjust": |-

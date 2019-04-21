@@ -163,7 +163,7 @@
 "advanced": |-
   Avancé
 "allow_skip_sensor_cal": |-
-  Permettre de passer outre l’auto-étalonnage du spectromètre
+  Permettre de passer outre l’auto-étalonnage du sonde de mesure
 "ambient.measure": |-
   Mesurer la lumière ambiante
 "ambient.measure.color.unsupported": |-
@@ -336,7 +336,7 @@
 "calculated_checksum": |-
   Somme de contrôle calculée
 "calibrate_instrument": |-
-  Étalonnage du spectromètre
+  Étalonnage du sonde de mesure
 "calibration": |-
   Étalonnage
 "calibration.ambient_viewcond_adjust": |-

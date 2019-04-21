@@ -163,7 +163,7 @@
 "advanced": |-
   고급
 "allow_skip_sensor_cal": |-
-  스펙트로미터 자체 캘리브레이션 생략 허용
+  장치 자체 캘리브레이션 생략 허용
 "ambient.measure": |-
   주변광 측정
 "ambient.measure.color.unsupported": |-
@@ -334,7 +334,7 @@
 "calculated_checksum": |-
   계산된 체크섬
 "calibrate_instrument": |-
-  스펙트로미터 자체 캘리브레이션
+  장치 자체 캘리브레이션
 "calibration": |-
   캘리브레이션
 "calibration.ambient_viewcond_adjust": |-

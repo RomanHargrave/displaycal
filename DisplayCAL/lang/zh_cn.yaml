@@ -163,7 +163,7 @@
 "advanced": |-
   高级
 "allow_skip_sensor_cal": |-
-  允许跳过光谱仪自校准
+  允许跳过校色仪自校准
 "ambient.measure": |-
   测量环境
 "ambient.measure.color.unsupported": |-
@@ -334,7 +334,7 @@
 "calculated_checksum": |-
   已计算校验和
 "calibrate_instrument": |-
-  光谱仪自校准
+  校色仪自校准
 "calibration": |-
   校准
 "calibration.ambient_viewcond_adjust": |-

@@ -163,7 +163,7 @@
 "advanced": |-
   Erweitert
 "allow_skip_sensor_cal": |-
-  Überspringen der Spektrometer-Kalibrierung erlauben
+  Überspringen der Messgeräte-Kalibrierung erlauben
 "ambient.measure": |-
   Umgebungslicht messen
 "ambient.measure.color.unsupported": |-
@@ -334,7 +334,7 @@
 "calculated_checksum": |-
   Errechnete Prüfsumme
 "calibrate_instrument": |-
-  Spektrometer-Kalibrierung durchführen
+  Messgeräte-Kalibrierung durchführen
 "calibration": |-
   Kalibrierung
 "calibration.ambient_viewcond_adjust": |-

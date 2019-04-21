@@ -163,7 +163,7 @@
 "advanced": |-
   Advanced
 "allow_skip_sensor_cal": |-
-  Allow skipping of spectrometer self-calibration
+  Allow skipping of instrument self-calibration
 "ambient.measure": |-
   Measure ambient
 "ambient.measure.color.unsupported": |-
@@ -334,7 +334,7 @@
 "calculated_checksum": |-
   Calculated checksum
 "calibrate_instrument": |-
-  Spectrometer self-calibration
+  Instrument self-calibration
 "calibration": |-
   Calibration
 "calibration.ambient_viewcond_adjust": |-
