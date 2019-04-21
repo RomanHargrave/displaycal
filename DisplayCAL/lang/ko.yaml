@@ -1397,6 +1397,10 @@
 "info.calibration_settings": |-
   <font weight='bold'>캘리브레이션</font> 은 지정한 화이트포인트와 흰색 레벨을 맞추기 위해 <font weight='bold'>인터랙티브 디스플레이 조정</font> 기능을 사용합니다. 또한 지정한 톤응답곡선과 그레이 밸런스를 확보하기 위해 <font weight='bold'>1D LUT 캘리브레이션 곡선</font> (LUT = Look Up Table, 참조테이블) 을 생성할 수 있습니다. 디스플레이의 조정만을 원하고 1D LUT 곡선의 생성을 생략하고 싶으면 톤응답곡선을 “측정한 값으로” 선택하세요. 1D LUT 캘리브레이션만으로는 디스플레이 전체의 컬러를 조정하는 것이 <font weight='bold'>불가능</font> 합니다. 전체 컬러의 조정을 원한다면 <font weight='bold'>ICC 장치 프로파일</font> 이나 <font weight='bold'>3D LUT</font> 을 생성하고 이를 지원하는 애플리케이션을 사용해야만 합니다. 1D LUT 캘리브레이션은 프로파일링과 3D LUT 캘리브레이션의 보조적 수단입니다.
 "info.display_instrument": |-
+  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  
+  Make sure light does not shine directly onto the screen of your display.
+  
   만약 디스플레이가 <font weight='bold'>OLED</font>, <font weight='bold'>플라즈마(PDP)</font> 또는 이미지 콘텐츠에 따라 가변적으로 빛을 출력하는(자발광형) 기술을 사용하는 경우, <font weight='bold'>백색 수준 변동 보상</font>을 활성화하세요.
   
   만약 측정장치가 <font weight='bold'>스펙트로미터</font> 이고 접촉모드로 디스플레이의 안정적인 흑색 수준을 측정하려는 경우, <font weight='bold'>흑색 수준 변동 보상</font> 을 사용할 수 있습니다.

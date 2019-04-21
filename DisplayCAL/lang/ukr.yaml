@@ -1396,6 +1396,10 @@
 "info.calibration_settings": |-
   <font weight='bold'> Калібрування </font> здійснюється за допомогою <font weight='bold'> інтерактивного налаштування дисплея </font>, щоб відповідати вибраній точці білого та / або яскравості, а також додатково створювати <font weight='bold'> 1D LUT калібрувальні криві </font> (LUT = таблиця пошуку), щоб відповідати обраній кривій тонального сигналу і забезпечити баланс сірого. Зверніть увагу, що якщо під час калібрування потрібно налаштувати тільки дисплей і пропустити генерацію кривих 1D LUT, то потрібно налаштувати криву тонального сигналу на “Як в вимірюванні”. Калібрування 1D LUT <font weight='bold'> не </font> може використовуватись для повної корекції кольору дисплея, потрібно створити <font weight='bold'> профіль пристрою ICC </font> або <font weight='bold'> 3D LUT </font> і використовуйте їх з додатками, які підтримують їх для цієї мети.
 "info.display_instrument": |-
+  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  
+  Make sure light does not shine directly onto the screen of your display.
+  
   Якщо на вашому дисплеї є <font weight='bold'> OLED </font>, <font weight='bold'> Plasma </font> або інша технологія з змінним виходом світла залежно від вмісту зображення, увімкніть <font weight='bold'> компенсація дрейфу рівня білого </font>.
   
   Якщо ваш прилад є <font weight='bold'> спектрометром </font>, і ви використовуєте його в режимі контакту на дисплеї зі стабільним рівнем чорного, ви можете захотіти включити <font weight='bold'> компенсацію інструмента з плаваючим рівнем чорного кольору </font>.

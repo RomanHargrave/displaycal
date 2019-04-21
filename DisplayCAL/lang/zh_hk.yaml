@@ -1408,6 +1408,10 @@
   色調響應曲線為 “與測量值相同”。 1D 查找表校正並<font weight='bold'>不可以</font> 用於全顯示器色彩校正，你需要建立 <font weight='bold'>ICC 裝置描述檔</font>或 <font weight='bold'>3D 查找表</font>
   以及在支援的軟件上使用它們以達到目的。 雖然 1D 查找表校正會完整了建立特性描述和 3D 查找表校正。
 "info.display_instrument": |-
+  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  
+  Make sure light does not shine directly onto the screen of your display.
+  
   如你的顯示器為 <font weight='bold'>OLED</font>、<font weight='bold'>等離子</font>螢幕或擁有因應畫面內容而改變亮度的技術，請啟用<font weight='bold'>白色亮度漂移補償</font>.
   
   如你的測量儀器為<font weight='bold'>光譜儀</font>並於接觸模式下用於黑階穩定的顯示器， 您可能需要啟用<font weight='bold'>測量儀器黑位偏移補償</font>。

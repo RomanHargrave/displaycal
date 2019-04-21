@@ -1409,6 +1409,10 @@
   1D LUT 校准<font weight='bold'>不</font>适用于完整的显示色彩校正，需要创建<font weight='bold'>ICC设备配置文件</font> 或 <font weight='bold'>3D LUT </font>并将其用于支持的应用程序。
   1D LUT 校准补充配置描述和 3D LUT 校准。
 "info.display_instrument": |-
+  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  
+  Make sure light does not shine directly onto the screen of your display.
+  
   如果显示器是<font weight='bold'>OLED</font>，<font weight='bold'>等离子</font>或依赖画面内容可变光输出的其它技术，启用<font weight='bold'>白电平漂移补偿</font>。
   如果校色仪是<font weight='bold'>光谱仪</font>并在显示器稳定的黑电平使用接触模式，可能需要启用<font weight='bold'>黑电平漂移补偿</font>。
   如果校色仪是<font weight='bold'>色度仪</font>，更正<font weight='bold'>测量模式</font>为适合此显示器的技术类型。

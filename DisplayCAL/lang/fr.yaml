@@ -1393,6 +1393,10 @@
 "info.calibration_settings": |-
   L’<font weight='bold'>étalonnage</font> est effectué en <font weight='bold'>ajustant l’écran de manière interactive</font> afin d’obtenir le point blanc et/ou la luminance choisis mais il sert aussi à la création de <font weight='bold'>courbes d’étalonnage LUT 1D</font> (LUT = « Look Up Table » ; table de correspondance) de manière à obtenir la courbe de tonalité choisie et à assurer un bon équilibre du gris. Notez que si lors de l’étalonnage vous ne voulez qu’ajuster le périphérique d’affichage sans passer par la génération des courbes LUT 1D, vous devez paramétrer la courbe de tonalité sur « tel que mesuré ». L’étalonnage par LUT 1D ne peut <font weight='bold'>pas</font> être utilisé pour une correction complète des couleurs. Pour cela, vous devez créer un <font weight='bold'>profil ICC</font> ou une <font weight='bold'>LUT 3D</font> et les utiliser avec des applications qui les prennent en charge. L’étalonnage par LUT 1D est cependant un complément à la caractérisation et à l’étalonnage LUT 3D.
 "info.display_instrument": |-
+  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  
+  Make sure light does not shine directly onto the screen of your display.
+  
   Si votre périphérique d’affichage est de type <font weight='bold'>OLED</font>, <font weight='bold'>Plasma</font> ou d’une autre technologie émettant une lumière de sortie variable en fonction de l’image, activez la <font weight='bold'>compensation de la dérive du point blanc</font>.
   
   Si votre sonde de mesure est un <font weight='bold'>spectromètre</font> et que vous l’utilisez en mode contact sur un périphérique d’affichage avec un niveau de noir stable, vous devriez activer la <font weight='bold'>compensation de la dérive du niveau de noir</font>.
