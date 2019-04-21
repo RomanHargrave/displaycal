@@ -577,8 +577,11 @@ if sys.platform == "win32":
 			dlg.update_profiles_timer.Start(1000)
 
 		def OnClose(self, event):
-			self.update_profiles_timer.Stop()
 			InfoDialog.OnClose(self, event)
+
+		def EndModal(self, retCode):
+			self.update_profiles_timer.Stop()
+			wx.Dialog.EndModal(self, retCode)
 
 		def add_profile(self, event):
 			if self.add_btn.GetAuthNeeded():
