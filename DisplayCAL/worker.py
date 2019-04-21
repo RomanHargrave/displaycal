@@ -1803,6 +1803,7 @@ class Worker(WorkerBase):
 		self.set_argyll_version_from_string(getcfg("argyll.version"), False)
 		self.clear_cmd_output()
 		self._detecting_video_levels = False
+		self._detected_output_levels = False
 		self._patterngenerators = {}
 		self._progress_dlgs = {}
 		self._progress_wnd = None
@@ -1996,7 +1997,7 @@ class Worker(WorkerBase):
 		# output levels detection, but only for colorimeters
 		if ((getcfg("allow_skip_sensor_cal") or
 			 (not instrument_features.get("spectral") and
-			  (not self.get_skip_video_levels_detection() or
+			  (self._detected_output_levels or
 			   (self.dispread_after_dispcal and self.resume)) and
 			  not self._detecting_video_levels)) and
 			instrument_features.get("skip_sensor_cal") and
@@ -2557,7 +2558,8 @@ class Worker(WorkerBase):
 
 	def get_skip_video_levels_detection(self):
 		""" Should we skip video levels detection? """
-		return (self.resume or not getcfg("patterngenerator.detect_video_levels") or
+		return (self._detected_output_levels or
+				not getcfg("patterngenerator.detect_video_levels") or
 				config.get_display_name() == "Untethered" or
 				is_ccxx_testchart())
 
@@ -2645,6 +2647,7 @@ END_DATA
 				self.log("Detected limited range output levels")
 			else:
 				self.log("Assuming full range output levels")
+			self._detected_output_levels = True
 		else:
 			return Error(lang.getstr("error.testchart.missing_fields",
 									 (ti3_path, ", ".join(black_0.keys()))))
@@ -11846,6 +11849,7 @@ usage: spotread [-options] [logfile]
 			self.thread_abort = False
 			self.interactive = False
 		self.resume = False
+		self._detected_output_levels = False
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
