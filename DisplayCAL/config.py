@@ -922,9 +922,9 @@ defaults = {
 	# Note: worker.Worker.enumerate_displays_and_ports() overwrites copyright
 	"copyright": "No copyright. Created with %s %s and ArgyllCMS" % (appname, 
 																	 version),
-	"dimensions.measureframe": "0.5,0.5,1.5",
-	"dimensions.measureframe.unzoomed": "0.5,0.5,1.5",
-	"dimensions.measureframe.whitepoint.visual_editor": "0.5,0.5,1.5",
+	"dimensions.measureframe": "0.5,0.5,1.0",
+	"dimensions.measureframe.unzoomed": "0.5,0.5,1.0",
+	"dimensions.measureframe.whitepoint.visual_editor": "0.5,0.5,1.0",
 	"display.number": 1,
 	"display_lut.link": 1,
 	"display_lut.number": 1,
