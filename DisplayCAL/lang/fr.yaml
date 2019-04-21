@@ -59,7 +59,7 @@
 "3dlut.format.cube": |-
   IRIDAS (.cube)
 "3dlut.format.eeColor": |-
-  eeColor Processor (.txt)
+  Processeur eeColor (.txt)
 "3dlut.format.icc": |-
   Profil de lien de périphérique (.icc/.icm)
 "3dlut.format.madVR": |-
@@ -67,7 +67,7 @@
 "3dlut.format.madVR.hdr": |-
   Traiter un contenu HDR
 "3dlut.format.madVR.hdr.confirm": |-
-  Notez que vous devez avoir caractérisé l’écran en mode HDR. Si l’écran ne prend pas en charge la HDR de manière native, clicquer « Abandonner ».
+  Notez que vous devez avoir caractérisé l’écran en mode HDR. Si l’écran ne prend pas en charge la HDR de manière native, cliquer « Abandonner ».
 "3dlut.format.madVR.hdr_to_sdr": |-
   Convertir le contenu HDR en SDR
 "3dlut.format.mga": |-
@@ -78,10 +78,10 @@
   Sony Imageworks (.spi3d)
 "3dlut.frame.title": |-
   Création une table de correspondance 3D
-"*3dlut.hdr.rolloff.diffuse_white": |-
-  Diffuse white (reference 94.38 cd/m²)
-"*3dlut.hdr.system_gamma": |-
-  System gamma (reference 1.2)
+"3dlut.hdr.rolloff.diffuse_white": |-
+  Blanc diffus (référence 94.38 cd/m²)
+"3dlut.hdr.system_gamma": |-
+  Gamma du système (référence 1.2)
 "3dlut.holder.assign_preset": |-
   Assigner la LUT 3D au préréglage :
 "3dlut.holder.out_of_memory": |-
@@ -158,8 +158,8 @@
   Le mode adaptatif n'est disponible qu’avec ArgyllCMS 1.1.0 RC3 ou ultérieur.
 "add": |-
   Ajouter…
-"*adjust_rolloff": |-
-  Adjust roll-off
+"adjust_rolloff": |-
+  Ajuster la transition
 "advanced": |-
   Avancé
 "allow_skip_sensor_cal": |-
@@ -185,7 +185,7 @@
 "app.detected": |-
   %s a été détecté.
 "app.detected.calibration_loading_disabled": |-
-  %s détecté. Chargemnt des courbes d’étalonnage désactivé.
+  %s détecté. Chargement des courbes d’étalonnage désactivé.
 "app.detection_lost": |-
   %s n’est plus détecté.
 "app.detection_lost.calibration_loading_enabled": |-
@@ -313,16 +313,16 @@
   Courbe de réponse de tonalité du bleu
 "blue_xyz": |-
   Bleu XYZ
-"*bradford": |-
-  Bradford (ICC recommendation)
+"bradford": |-
+  Bradford (Recommandation ICC)
 "brightness": |-
   Luminosité
 "browse": |-
   Parcourir…
-"*bs": |-
+"bs": |-
   Bianco & Schettini
-"*bs_pc": |-
-  Bianco & Schettini with positivity constraint
+"bs_pc": |-
+  Bianco & Schettini avec contrainte de positivité
 "bug_report": |-
   Signaler un bogue…
 "button.calibrate": |-
@@ -398,7 +398,7 @@
 "calibration.interactive_display_adjustment.white_point": |-
   Sélectionnez « Commencer la mesure » et ajustez les contrôles de température de couleur et/ou de gain RVB de vote écran pour obtenir le point blanc désiré.
 "calibration.load": |-
-  Charger les paramètes…
+  Charger les paramètres…
 "calibration.load.handled_by_os": |-
   Le chargement de l’étalonnage est effectué par le système d’exploitation.
 "calibration.load_error": |-
@@ -424,7 +424,7 @@
 "calibration.lut_viewer.title": |-
   Courbes
 "calibration.preserve": |-
-  Preserver l’état de l’étalonnage
+  Préserver l’état de l’étalonnage
 "calibration.preview": |-
   Aperçu de l’étalonnage
 "calibration.quality": |-
@@ -484,56 +484,56 @@
 "calibrationloader.description": |-
   Définit le profil ICC et charge les courbes d’étalonnage pour tous les périphériques d’affichage
 "can_be_used_independently": |-
-  Ne peut pas être utilisé indépendamment
+  Peut être utilisé indépendamment
 "cancel": |-
   Annuler
-"*cat02": |-
-  CAT02 (from CIECAM02)
-"*cat02bs": |-
-  CAT02 (from CIECAM02, Brill & Süsstrunk modification)
-"*cat97s": |-
-  CAT97s (from CIECAM97s)
+"cat02": |-
+  CAT02 (de CIECAM02)
+"cat02bs": |-
+  CAT02 (à partir de CIECAM02, modification de Brill & Süsstrunk)
+"cat97s": |-
+  CAT97s (de CIECAM97s)
 "cathode_ray_tube_display": |-
   Écran à tube à rayons cathodiques
 "ccmx.use_four_color_matrix_method": |-
   Minimiser la différence chromatique xy plutôt que delta E
-"*ccss.CCFLFamily_07Feb11": |-
-  LCD CCFL family (AC, EIZO, HP)
-"*ccss.FSI_XM55U_23Jan19": |-
-  WOLED family (FSI XM55U/XM65U, LG OLED)
-"*ccss.GBrLED_25Jul12": |-
-  LCD GB-r-LED IPS (Dell U2413)
-"*ccss.HP_DC3": |-
-  LCD PFS Phosphor WLED IPS (HP DreamColor?)
-"*ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS Phosphor WLED IPS, Adobe RGB gamut (HP DreamColor Z24x G2)
-"*ccss.HP_ZBOOK": |-
-  LCD PFS Phosphor WLED IPS (HP ZBook)
-"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
-  LCD GB-r-LED IPS (NEC PA242W)
-"*ccss.OLEDFamily_20Jul12": |-
-  RGB OLED (Sony PVM-2541)
-"*ccss.OLEDFamily_28Aug18": |-
-  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
-"*ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS Phosphor WLED family, P3 gamut
-"*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED family, P3 gamut (Panasonic VVX17P051J00 in Lenovo P70)
-"*ccss.PlasmaFamily_20Jul12": |-
+"ccss.CCFLFamily_07Feb11": |-
+  Famille de LCD CCFL (AC, EIZO, HP)
+"ccss.FSI_XM55U_23Jan19": |-
+  Famille WOLED (FSI XM55U/XM65U, OLED LG)
+"ccss.GBrLED_25Jul12": |-
+  LCD IPS à VB-r-LED (Dell U2413)
+"ccss.HP_DC3": |-
+  LCD IPS à phosphore PFS WLED (HP DreamColor?)
+"ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD IPS à phosphore PFS WLED, gamut Adobe RGB (HP DreamColor Z24x G2)
+"ccss.HP_ZBOOK": |-
+  LCD IPS à phosphore PFS WLED (HP ZBook)
+"ccss.NEC_64_690E_PA242W_2013-02-28": |-
+  LCD IPS à VB-r-LED (NEC PA242W)
+"ccss.OLEDFamily_20Jul12": |-
+  OLED RVB (Sony PVM-2541)
+"ccss.OLEDFamily_28Aug18": |-
+  Famille de OLED RVB (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"ccss.PFS_Phosphor_Family_31Jan17": |-
+  Famille de LCD phosphore PFS WLED, gamut P3
+"ccss.Panasonic VVX17P051J00": |-
+  Famille de LCD phosphore PFS WLED, gamut P3 (Panasonic VVX17P051J00 sur Lenovo P70)
+"ccss.PlasmaFamily_20Jul12": |-
   Plasma
-"*ccss.ProjectorFamily_07Feb11": |-
-  Projector family (Marantz, HP, Panasonic)
-"*ccss.RGBLEDFamily_07Feb11": |-
-  LCD RGB LED family (HP, SOYO)
-"*ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG Phosphor LED family
-"*ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG Phosphor LED family
-"*ccss.WGCCFLFamily_07Feb11": |-
-  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
-"*ccss.WLEDFamily_07Feb11": |-
-  LCD White LED family (AC, LG, Samsung)
-"*ccss.WRGB_OLED_LG": |-
+"ccss.ProjectorFamily_07Feb11": |-
+  Famille de projecteurs (Marantz, HP, Panasonic)
+"ccss.RGBLEDFamily_07Feb11": |-
+  Famille de LCD à LED RVB (HP, SOYO)
+"ccss.RG_Phosphor_Family_13Dec11": |-
+  Famille de LCD à phosphore RV LED
+"ccss.RG_Phosphor_Family_25Jul12": |-
+  Famille de LCD à VB-r-LED/phosphore RV LED
+"ccss.WGCCFLFamily_07Feb11": |-
+  Famille de LCD CCFL à gamut étendu (NEC PA241W/PA271W)
+"ccss.WLEDFamily_07Feb11": |-
+  Famille de LCD à LED blanches (AC, LG, Samsung)
+"ccss.WRGB_OLED_LG": |-
   WOLED (LG OLED)
 "ccxx.ti1": |-
   mire de test pour la correction du colorimètre
@@ -597,8 +597,8 @@
   Somme de contrôle
 "checksum_ok": |-
   Somme de contrôle correcte
-"*chromatic_adaptation": |-
-  Chromatic adaptation...
+"chromatic_adaptation": |-
+  Adaptation chromatique…
 "chromatic_adaptation_matrix": |-
   Matrice d’adaptation chromatique
 "chromatic_adaptation_transform": |-
@@ -607,15 +607,15 @@
   Chromaticité (par rapport à l’illuminant)
 "chromecast_limitations_warning": |-
   Veuillez noter que la précision du Chromecast n’est pas aussi bonne que celle d’un écran directement raccordé ou qu’un madTPG, car le Chromecast utilise une conversion de RVB vers YCbCr et un rééchantillonage.
-"*cie2012_2": |-
+"cie2012_2": |-
   CIE 2012 2°
 "clear": |-
   Effacer
 "close": |-
   Fermer
-"*cmccat97": |-
+"cmccat97": |-
   CMCCAT97
-"*cmccat2000": |-
+"cmccat2000": |-
   CMCCAT2000
 "color": |-
   Couleur
@@ -640,8 +640,8 @@
   Vous pouvez aussi utiliser des mesures existantes en choisissant « Parcourir »
 "colorimeter_correction.create.success": |-
   Correction créée avec succès.
-"*colorimeter_correction.create.warning": |-
-  Make sure to measure your display device in its native gamut and do not artificially restrict it (via emulation modes or similar means) when creating a colorimeter correction.
+"colorimeter_correction.create.warning": |-
+  Assurez-vous de mesurer votre périphérique d’affichage dans son gamut natif et de ne pas le restreindre artificiellement (via des modes d’émulation ou des moyens similaires) lors de la création d’une correction du colorimètre.
 "colorimeter_correction.file.none": |-
   aucune
 "colorimeter_correction.import": |-
@@ -683,7 +683,7 @@
 "colorimeter_correction_matrix_file": |-
   Matrice de correction
 "colorimeter_correction_matrix_file.choose": |-
-  Choisir une matrice de correction...
+  Choisir une matrice de correction
 "colorimetric_intent_image_state": |-
   État de l’image colorimétrique
 "colors_pcs_relative": |-
@@ -805,7 +805,7 @@
 "device_model_name": |-
   Nom de modèle du périphérique
 "device_model_name_ascii": |-
-  Device model name (ASCII)
+  Nom de modèle de périphérique (ASCII)
 "device_model_name_macintosh": |-
   Nom de modèle du périphérique (Macintosh)
 "device_model_name_unicode": |-
@@ -829,7 +829,7 @@
 "dialog.confirm_overwrite": |-
   Le fichier « %s » existe déjà. Voulez-vous l’écraser ?
 "dialog.confirm_uninstall": |-
-  Voulez-vous vraiment désinstaller les fichiers sélectionés ?
+  Voulez-vous vraiment désinstaller les fichiers sélectionnés ?
 "dialog.current_cal_warning": |-
   Le profil contiendra les courbes d’étalonnage actuelles. Voulez-vous continuer ?
 "dialog.do_not_show_again": |-
@@ -890,84 +890,84 @@
   Paramètres du périphérique d’affichage
 "display.tech": |-
   Technologie de l’écran
-"*display.tech.CRT": |-
+"display.tech.CRT": |-
   CRT
-"*display.tech.DLP Projector": |-
-  DLP Projector
-"*display.tech.DLP Projector RGB Filter Wheel": |-
-  DLP Projector RGB Filter Wheel
-"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
-  DLP Projector RGBCMY Filter Wheel
-"*display.tech.DPL Projector RGBW Filter Wheel": |-
-  DLP Projector RGBW Filter Wheel
-"*display.tech.LCD": |-
+"display.tech.DLP Projector": |-
+  Projecteur DLP
+"display.tech.DLP Projector RGB Filter Wheel": |-
+  Projecteur DLP avec filtre à roue RGB
+"display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  Projecteur DLP avec filtre à roue RGBCMY
+"display.tech.DPL Projector RGBW Filter Wheel": |-
+  Projecteur DLP avec filtre à roue RGBW
+"display.tech.LCD": |-
   LCD
-"*display.tech.LCD CCFL": |-
+"display.tech.LCD CCFL": |-
   LCD CCFL
-"*display.tech.LCD CCFL IPS": |-
-  LCD CCFL IPS
-"*display.tech.LCD CCFL TFT": |-
-  LCD CCFL TFT
-"*display.tech.LCD CCFL VPA": |-
-  LCD CCFL PVA
-"*display.tech.LCD CCFL Wide Gamut": |-
+"display.tech.LCD CCFL IPS": |-
+  LCD IPS CCFL
+"display.tech.LCD CCFL TFT": |-
+  LCD TFT CCFL
+"display.tech.LCD CCFL VPA": |-
+  LCD PVA CCFL
+"display.tech.LCD CCFL Wide Gamut": |-
   LCD CCFL Wide Gamut
-"*display.tech.LCD CCFL Wide Gamut IPS": |-
+"display.tech.LCD CCFL Wide Gamut IPS": |-
   LCD CCFL Wide Gamut IPS
-"*display.tech.LCD CCFL Wide Gamut TFT": |-
+"display.tech.LCD CCFL Wide Gamut TFT": |-
   LCD CCFL Wide Gamut TFT
-"*display.tech.LCD CCFL Wide Gamut VPA": |-
+"display.tech.LCD CCFL Wide Gamut VPA": |-
   LCD CCFL Wide Gamut PVA
-"*display.tech.LCD GB-R Phosphor": |-
-  LCD GB-r-LED
-"*display.tech.LCD GB-R Phosphor IPS": |-
-  LCD GB-r-LED IPS
-"*display.tech.LCD GB-R Phosphor TFT": |-
-  LCD GB-r-LED TFT
-"*display.tech.LCD GB-R Phosphor VPA": |-
-  LCD GB-r-LED PVA
-"*display.tech.LCD PFS Phosphor": |-
-  LCD PFS Phosphor WLED
+"display.tech.LCD GB-R Phosphor": |-
+  LCD à VB-r-LED
+"display.tech.LCD GB-R Phosphor IPS": |-
+  LCD IPS à VB-r-LED
+"display.tech.LCD GB-R Phosphor TFT": |-
+  LCD TFT à VB-r-LED
+"display.tech.LCD GB-R Phosphor VPA": |-
+  LCD PVA à VB-r-LED
+"display.tech.LCD PFS Phosphor": |-
+  LCD à phosphore PFS WLED
 "*display.tech.LCD PFS Phosphor IPS": |-
-  LCD PFS Phosphor WLED IPS
-"*display.tech.LCD PFS Phosphor TFT": |-
-  LCD PFS Phosphor WLED TFT
-"*display.tech.LCD PFS Phosphor VPA": |-
-  LCD PFS Phosphor WLED PVA
-"*display.tech.LCD RG Phosphor": |-
-  LCD RG Phosphor LED
-"*display.tech.LCD RG Phosphor IPS": |-
-  LCD RG Phosphor LED IPS
-"*display.tech.LCD RG Phosphor TFT": |-
-  LCD RG Phosphor LED TFT
-"*display.tech.LCD RG Phosphor VPA": |-
-  LCD RG Phosphor LED PVA
-"*display.tech.LCD RGB LED": |-
-  LCD RGB LED
-"*display.tech.LCD RGB LED IPS": |-
-  LCD RGB LED IPS
-"*display.tech.LCD RGB LED TFT": |-
-  LCD RGB LED TFT
-"*display.tech.LCD RGB LED VPA": |-
-  LCD RGB LED PVA
-"*display.tech.LCD White LED": |-
-  LCD White LED
-"*display.tech.LCD White LED IPS": |-
-  LCD White LED IPS
-"*display.tech.LCD White LED TFT": |-
-  LCD White LED TFT
-"*display.tech.LCD White LED VPA": |-
-  LCD White LED PVA
-"*display.tech.LED AMOLED": |-
+  LCD IPS à phosphore PFS WLED
+"display.tech.LCD PFS Phosphor TFT": |-
+  LCD TFT à phosphore PFS WLED
+"display.tech.LCD PFS Phosphor VPA": |-
+  LCD PVA à phosphore PFS WLED
+"display.tech.LCD RG Phosphor": |-
+  LCD RV Phosphore LED
+"display.tech.LCD RG Phosphor IPS": |-
+  LCD RV Phosphore LED IPS
+"display.tech.LCD RG Phosphor TFT": |-
+  LCD RV Phosphore LED TFT
+"display.tech.LCD RG Phosphor VPA": |-
+  LCD RV Phosphore LED PVA
+"display.tech.LCD RGB LED": |-
+  LCD à LED RVB
+"display.tech.LCD RGB LED IPS": |-
+  LCD IPS à LED RVB
+"display.tech.LCD RGB LED TFT": |-
+  LCD TFT à LED RVB
+"display.tech.LCD RGB LED VPA": |-
+  LCD PVA à LED RVB
+"display.tech.LCD White LED": |-
+  LCD à LED blanches
+"display.tech.LCD White LED IPS": |-
+  LCD IPS à LED blanches
+"display.tech.LCD White LED TFT": |-
+  LCD TFT à LED blanches
+"display.tech.LCD White LED VPA": |-
+  LCD PVA à LED blanches
+"display.tech.LED AMOLED": |-
   AMOLED
-"*display.tech.LED OLED": |-
+"display.tech.LED OLED": |-
   OLED
-"*display.tech.LED WOLED": |-
+"display.tech.LED WOLED": |-
   WOLED
-"*display.tech.Plasma": |-
+"display.tech.Plasma": |-
   Plasma
-"*display.tech.Unknown": |-
-  Unknown
+"display.tech.Unknown": |-
+  Inconnu
 "display_detected": |-
   Une modification de la configuration du périphérique d’affichage a été détectée.
 "display_device_profile": |-
@@ -995,12 +995,12 @@
   Merci à tous les contributeurs !
 "download": |-
   Téléchargement
-"*download.fail": |-
-  Download failed:
+"download.fail": |-
+  Échec du téléchargement :
 "download.fail.empty_response": |-
-  Échec de téléchargement : %s a retourné un document vide.
+  Échec du téléchargement %s a retourné un document vide.
 "download.fail.wrong_size": |-
-  Échec de téléchargement : le fichier n’a pas la taille attendue de %s octets (%s octets ont été reçu).
+  Échec du téléchargement : le fichier n’a pas la dimension attendue de %s octets (%s octets reçus).
 "download_install": |-
   Télécharger et installer
 "downloading": |-
@@ -1019,8 +1019,8 @@
   Fonctionnement à blanc terminé.
 "dry_run.info": |-
   Fonctionnement à blanc. Consultez le journal pour voir la ligne de commande.
-"*duration": |-
-  Duration
+"duration": |-
+  Durée
 "dvi": |-
   DVI
 "dye_sublimation_printer": |-
@@ -1092,8 +1092,8 @@
   Message d’erreur : %s
 "error.luminance.invalid": |-
   Le pic de luminance mesuré n’est pas valable. Assurez-vous que le capteur de votre instrument n’est pas bloqué, et enlevé le bouchon de protection (s’il est présent).
-"*error.luminance.not_monotonically_increasing": |-
-  The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
+"error.luminance.not_monotonically_increasing": |-
+  La réponse mesurée de la luminance est fortement non-monotone (erreur de périphérique ou d’instrument de mesure). Impossible de générer les courbes de réponse tonale.
 "error.measurement.file_invalid": |-
   Le fichier de mesure « %s » est invalide.
 "error.measurement.file_missing": |-
@@ -1146,17 +1146,17 @@
   Valeurs d’usine
 "failure": |-
   … échec !
-"*ffp_insertion": |-
-  Full field pattern insertion
-"*file.hash.malformed": |-
-  The integrity of %s cannot be verified because the checksum file is malformed.
-"*file.hash.missing": |-
-  The integrity of %s cannot be verified because it doesn't have an entry in the checksum file.
-"*file.hash.verification.fail": |-
-  Checksum verification failed for %s:
+"ffp_insertion": |-
+  Insertion de motif de champ complet
+"file.hash.malformed": |-
+  L’intégrité de %s ne peut pas être vérifiée parce que le fichier de somme de contrôle est mal formé.
+"file.hash.missing": |-
+  L’intégrité de %s ne peut pas être vérifiée parce qu’il n’a pas d’entrée dans le fichier de somme de contrôle.
+"file.hash.verification.fail": |-
+  Échec de vérification de la somme de contrôle pour %s:
   
-  Expected %s
-  Actual %s
+  Attendu %s
+  Réel %s
 "file.invalid": |-
   Fichier invalide.
 "file.missing": |-
@@ -1314,8 +1314,8 @@
   Géométrie
 "glossy": |-
   Brillant
-"*go_to": |-
-  Go to %s
+"go_to": |-
+  Aller à %s
 "go_to_website": |-
   Aller au site Internet
 "gravure": |-
@@ -1346,17 +1346,17 @@
   HDMI
 "hdr_maxcll": |-
   Contenu maximum du niveau de lumière
-"*hdr_mincll": |-
-  Minimum content light level
+"hdr_mincll": |-
+  Contenu minimum du niveau de lumière
 "header": |-
   Étalonnage et caractérisation d’affichage produits par ArgyllCMS
 "help_support": |-
   Aide et assistance…
 "host.invalid.lookup_failed": |-
   Hôte invalide (échec de la recherche de l’adresse)
-"*hpe_d65": |-
+"hpe_d65": |-
   Hunt-Pointer-Estevez (HPE), illuminant D65
-"*hpe_e": |-
+"hpe_e": |-
   Hunt-Pointer-Estevez (HPE), illuminant E
 "hue": |-
   Teinte
@@ -1423,7 +1423,7 @@
 "info.mr_settings": |-
   Vous pouvez <font weight='bold'>vérifier la précision de correction</font> d’un profil ICC ou d’une LUT 2D via un rapport de mesure qui contient les statistiques avancées sur les erreurs de couleurs à partir de mesures d’échantillons.
   
-  Quand vous vérifiez une LUT 3D, assurez-vous d’utilisez les mêmes paramètres que ceux spécifiés lors de sa création.
+  Quand vous vérifiez une LUT 3D, assurez-vous d’utiliser les mêmes paramètres que ceux spécifiés lors de sa création.
   
   <font weight='bold'>Tip:</font> To create a self check report instead of a measurement report, hold the ALT key on your keyboard.
 "info.profile_settings": |-
@@ -1460,7 +1460,7 @@
   Placez la sonde de mesure sur son numéro de série %s blanc réflectif de référence et pressez « Valider » pour étalonner la sonde de mesure.
 "instrument.calibrating": |-
   Étalonnage de la sonde de mesure…
-"*instrument.colormunki": |-
+"instrument.colormunki": |-
   ColorMunki Design/Photo, i1Studio
 "instrument.connect": |-
   Veuillez connecter votre sonde de mesure maintenant.
@@ -1478,11 +1478,11 @@
   La mesure a échoué car le capteur de la sonde de mesure est dans la mauvaise position. Veuillez corriger la position du capteur, puis cliquer sur « Valider » pour continuer.
 "internal": |-
   Interne
-"*interval": |-
-  Interval
+"interval": |-
+  Intervalle
 "invert_selection": |-
   Inverser la sélection
-"*ipt": |-
+"ipt": |-
   IPT
 "is_embedded": |-
   Est intégré
@@ -1492,8 +1492,8 @@
   Est linéaire
 "laptop.icc": |-
   Ordinateur portable (Gamma 2.2)
-"*level": |-
-  Level
+"level": |-
+  Niveau
 "libXss.so": |-
   Extension d’économiseur d’écran X11
 "library.not_found.warning": |-
@@ -1504,8 +1504,8 @@
   Sous licence GPL
 "linear": |-
   linéaire
-"*link.address.copy": |-
-  Copy link address
+"link.address.copy": |-
+  Copier l’adresse du lien
 "log.autoshow": |-
   Afficher automatiquement la fenêtre du journal
 "luminance": |-
@@ -1528,10 +1528,10 @@
   Marque et modèle
 "manufacturer": |-
   Fabriquant
-"*mastering_display_black_luminance": |-
-  Mastering display black level
-"*mastering_display_peak_luminance": |-
-  Mastering display peak luminance
+"mastering_display_black_luminance": |-
+  Maîtriser le niveau de noir de l’écran
+"mastering_display_peak_luminance": |-
+  Maîtriser la luminance maximum de l’écran
 "matrix": |-
   Matrice
 "matte": |-
@@ -1600,21 +1600,21 @@
 "measurement_mode.lcd": |-
   LCD (générique)
 "measurement_mode.lcd.ccfl": |-
-  LCD (CCFL)
+  LCD CCFL
 "measurement_mode.lcd.ccfl.2": |-
-  LCD (CCFL type 2)
+  LCD CCFL type 2
 "measurement_mode.lcd.oled": |-
-  LCD (OLED)
+  OLED
 "measurement_mode.lcd.white_led": |-
-  LCD (LED blanc)
+  LCD à LED blanches
 "measurement_mode.lcd.wide_gamut.ccfl": |-
-  LCD à gamut étendu (CCFL)
+  LCD CCFL à gamut étendu
 "measurement_mode.lcd.wide_gamut.gb_led": |-
-  LCD à gamut étendu (GB LED)
+  LCD à VB-r-LED
 "measurement_mode.lcd.wide_gamut.led": |-
-  LCD à gamut étendu (PFS Phosphore, RVB LED)
+  LCD à phosphore PFS WLED, LED RVB
 "measurement_mode.lcd.wide_gamut.rgb_led": |-
-  LCD à gamut étendu (LED RVB)
+  LCD à LED RVB
 "measurement_mode.raw": |-
   Brut
 "measurement_mode.refresh": |-
@@ -1633,12 +1633,12 @@
   Type de mesure
 "measurements.complete": |-
   Mesures effectuées ! Voulez-vous ouvrir le répertoire contenant les fichiers de mesure ?
-"*measurements.invalid": |-
-  The measurements are invalid.
+"measurements.invalid": |-
+  Les mesures ne sont pas valables.
 "measuring.characterization": |-
   Mesure des échantillons de couleurs pour la caractérisation…
 "media_attributes": |-
-  Attributs
+  Attribut de média
 "media_black_point": |-
   Point noir du média
 "media_relative_colorimetric": |-
@@ -1807,12 +1807,12 @@
   CMM préféré
 "prepress.icc": |-
   Pré-presse (D50, 130 cd/m², L*)
-"*preserve_hue": |-
-  Preserve hue
-"*preserve_luminance": |-
-  Preserve luminance
-"*preserve_saturation": |-
-  Preserve saturation
+"preserve_hue": |-
+  Préserver le teinte
+"preserve_luminance": |-
+  Préserver la luminance
+"preserve_saturation": |-
+  Préserver la saturation
 "preset": |-
   Pré-réglage
 "preview": |-
@@ -1928,30 +1928,30 @@
   Le profil ne contient pas la méta-information nécessaire.
 "profile.share.success": |-
   Profil chargé.
-"*profile.tags.A2B0.shaper_curves.input": |-
-  A2B0 input shaper curves
-"*profile.tags.A2B0.shaper_curves.output": |-
-  A2B0 output shaper curves
-"*profile.tags.A2B1.shaper_curves.input": |-
-  A2B1 input shaper curves
-"*profile.tags.A2B1.shaper_curves.output": |-
-  A2B1 output shaper curves
-"*profile.tags.A2B2.shaper_curves.input": |-
-  A2B2 input shaper curves
-"*profile.tags.A2B2.shaper_curves.output": |-
-  A2B2 output shaper curves
-"*profile.tags.B2A0.shaper_curves.input": |-
-  B2A0 input shaper curves
-"*profile.tags.B2A0.shaper_curves.output": |-
-  B2A0 output shaper curves
-"*profile.tags.B2A1.shaper_curves.input": |-
-  B2A1 input shaper curves
-"*profile.tags.B2A1.shaper_curves.output": |-
-  B2A1 output shaper curves
-"*profile.tags.B2A2.shaper_curves.input": |-
-  B2A2 input shaper curves
-"*profile.tags.B2A2.shaper_curves.output": |-
-  B2A2 output shaper curves
+"profile.tags.A2B0.shaper_curves.input": |-
+  Courbes d’entrée A2B0
+"profile.tags.A2B0.shaper_curves.output": |-
+  Courbes de sortie A2B0
+"profile.tags.A2B1.shaper_curves.input": |-
+  Courbes d’entrée A2B1
+"profile.tags.A2B1.shaper_curves.output": |-
+  Courbes de sortie A2B1
+"profile.tags.A2B2.shaper_curves.input": |-
+  Courbes d’entrée A2B2
+"profile.tags.A2B2.shaper_curves.output": |-
+  Courbes de sortie A2B2
+"profile.tags.B2A0.shaper_curves.input": |-
+  Courbes d’entrée B2A0
+"profile.tags.B2A0.shaper_curves.output": |-
+  Courbes de sortie B2A0
+"profile.tags.B2A1.shaper_curves.input": |-
+  Courbes d’entrée B2A1
+"profile.tags.B2A1.shaper_curves.output": |-
+  Courbes de sortie B2A1
+"profile.tags.B2A2.shaper_curves.input": |-
+  Courbes d’entrée B2A2
+"profile.tags.B2A2.shaper_curves.output": |-
+  Courbes de sortie B2A2
 "profile.testchart_recommendation": |-
   Pour une qualité de profil élevée, une mire de test contenant plus d’échantillons est recommandée, mais celle-ci prendra plus de temps à mesurer. Voulez-vous utiliser la mire de test recommandée ?
 "profile.type": |-
@@ -1995,9 +1995,9 @@
 "profile_loader.exit_warning": |-
   Voulez-vous vraiment quitter le chargeur de profil ? L’étalonnage ne sera plus automatiquement rechargé si vous modifiez la configuration de l’écran !
 "profile_loader.fix_profile_associations": |-
-  Corriger autimatiquement les associations du profil
+  Corriger automatiquement les associations du profil
 "profile_loader.fix_profile_associations_warning": |-
-  Tant que le chargeur de profil est en fonctionnment, il peut s’occuper des associations du profil alors que vous modifiez la configuration de l’écran.
+  Tant que le chargeur de profil est en fonctionnement, il peut s’occuper des associations du profil alors que vous modifiez la configuration de l’écran.
   
   Avant de poursuivre, veuillez vous assurer que les associations de profil ci-dessus sont correctes. Si elles ne le sont pas, suivez ces étapes :
   
@@ -2106,8 +2106,8 @@
   Hôtes de scripting détectés :
 "select_all": |-
   Tout sélectionner
-"*self_check_report": |-
-  Self check report...
+"self_check_report": |-
+  Rapport d’auto-test…
 "set_as_default": |-
   Définir comme valeur par défaut
 "setting.keep_current": |-
@@ -2130,12 +2130,12 @@
   Le profil ne contenait que des réglages de caractérisation. Les autres options n'ont pas été modifiées. Aucune courbe d’étalonnage n'a été trouvée.
 "settings_loaded.profile_and_lut": |-
   Le profil ne contenait que des paramètres de caractérisation. Les autres options n'ont pas été modifiées et les courbes d’étalonnage ont été chargées.
-"*sharp": |-
-  Sharp
+"sharp": |-
+  Netteté
 "show_advanced_options": |-
   Afficher les options avancées
-"*show_notifications": |-
-  Show notifications
+"show_notifications": |-
+  Afficher les notifications
 "silkscreen": |-
   Sérigraphieuse
 "simulation_profile": |-
@@ -2148,14 +2148,14 @@
   Épreuvage à l’écran (5800K, 160 cd/m², L*)
 "spectral": |-
   Spectral
-"*spectral_resolution": |-
-  Spectral resolution
-"*ssl.certificate_verify_failed": |-
-  The remote certificate could not be verified.
-"*ssl.certificate_verify_failed.root_ca_missing": |-
-  The remote certificate could not be verified because no suitable root certificates were found on the local system.
-"*ssl.handshake_failure": |-
-  Handshake failure. A secure connection could not be established.
+"spectral_resolution": |-
+  Résolution spectrale
+"ssl.certificate_verify_failed": |-
+  Le certificat distant n’a pas pu être vérifié.
+"ssl.certificate_verify_failed.root_ca_missing": |-
+  Le certificat distant n’a pas pu être vérifié parce qu’aucun certificat racine convenable n’a été trouvé sur le système.
+"ssl.handshake_failure": |-
+  Échec de la l’établissement de la connexion. On n’a pas pu établir de connexion sûre.
 "startup": |-
   Démarrage…
 "startup_sound.enable": |-
@@ -2211,9 +2211,9 @@
 "tc.patches.total": |-
   Nombre total d’échantillons
 "tc.precond": |-
-  Préconditionnement du profil
+  Pré-conditionnement du profil
 "tc.precond.notset": |-
-  Veuillez sélectionner un profil de préconditionnement.
+  Veuillez sélectionner un profil de pré conditionnement.
 "tc.preview.create": |-
   Création de l’aperçu en cours, veuillez patienter…
 "tc.q": |-
@@ -2338,16 +2338,16 @@
   corbeille
 "trashcan.windows": |-
   corbeille
-"*tray_icon_animation": |-
-  Animate tray icon
+"tray_icon_animation": |-
+  Icône de barre de tâches animée
 "trc": |-
   Courbe de tonalité
 "trc.dicom": |-
   DICOM
 "trc.gamma": |-
   Gamma
-"*trc.hlg": |-
-  Hybrid Log-Gamma
+"trc.hlg": |-
+  Log-Gamma hybride
 "trc.lstar": |-
   L*
 "trc.rec709": |-
@@ -2415,7 +2415,7 @@
 "vcgt": |-
   Courbes d’étalonnage
 "vcgt.mismatch": |-
-  Les tables de gamma de carte vidéo de l’écran %s ne correspondent pas à l’état désité.
+  Les tables de gamma de carte vidéo de l’écran %s ne correspondent pas à l’état désiré.
 "vcgt.unknown_format": |-
   Format de tables de gamma de carte vidéo inconnu dans le profil « %s ».
 "verification": |-
@@ -2434,16 +2434,16 @@
   mire de test de vérification (vidéo)
 "verify_video_extended.ti1": |-
   mire de test étendue de vérification (vidéo)
-"*verify_video_extended_hlg_p3_2020.ti1": |-
-  Extended verification testchart (HDR video, Rec. 2020/P3, Hybrid Log-Gamma)
-"*verify_video_extended_smpte2084_100_p3_2020.ti1": |-
-  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)
-"*verify_video_extended_smpte2084_200_p3_2020.ti1": |-
-  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)
-"*verify_video_extended_smpte2084_500_p3_2020.ti1": |-
-  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)
-"*verify_video_extended_smpte2084_1000_p3_2020.ti1": |-
-  Extended verification testchart (HDR video, Rec. 2020/P3, SMPTE 2084, 1000 cd/m²)
+"verify_video_extended_hlg_p3_2020.ti1": |-
+  Mire de test de vérification étendue (vidéo HDR, Rec. 2020/P3, Log-Gamma hybride)
+"verify_video_extended_smpte2084_100_p3_2020.ti1": |-
+  Mire de test de vérification étendue (vidéo HDR, Rec. 2020/P3, SMPTE 2084, 100 cd/m²)
+"verify_video_extended_smpte2084_200_p3_2020.ti1": |-
+  Mire de test de vérification étendue (vidéo HDR, Rec. 2020/P3, SMPTE 2084, 200 cd/m²)
+"verify_video_extended_smpte2084_500_p3_2020.ti1": |-
+  Mire de test de vérification étendue (vidéo HDR, Rec. 2020/P3, SMPTE 2084, 500 cd/m²)
+"verify_video_extended_smpte2084_1000_p3_2020.ti1": |-
+  Mire de test de vérification étendue (vidéo HDR, Rec. 2020/P3, SMPTE 2084, 1000 cd/m²)
 "verify_video_large.ti1": |-
   mire de test de vérification LARGE (vidéo)
 "verify_video_xl.ti1": |-
@@ -2481,7 +2481,7 @@
 "video_resolve.icc": |-
   LUT vidéo 3D pour Resolve (D65, Rec. 709 / Rec. 1886)
 "video_resolve_ST2084_clip.icc": |-
-  LUT 3D de vidéo HDR pour Resolve (D65, Rec. 2020 / SMPTE 2084)
+  LUT Vidéo 3D pour Resolve HDR (D65, Rec. 2020 / SMPTE 2084)
 "view.3d": |-
   Vue 3D
 "viewing_conditions": |-
@@ -2500,8 +2500,8 @@
   Le répertoire d’autodémarrage spécifique à l’utilisateur/trice n'a pu être déterminé.
 "warning.discard_changes": |-
   Voulez-vous réellement annuler les modifications des paramètres actuels ?
-"*warning.gamap.out_viewcond.nondisplay": |-
-  Destination viewing condition “%s” is not a display viewing condition. Do you still want to use it?
+"warning.gamap.out_viewcond.nondisplay": |-
+  La condition de visualisation de la destination « %s » n’est pas une condition de visualisation d’affichage. Voulez-vous quand même l’utiliser ?
 "warning.input_value_clipping": |-
   Attention : les valeurs d’entrée en dessous du point noir de la cible seront tronquées !
 "warning.suspicious_delta_e": |-
@@ -2555,7 +2555,7 @@
 "whitepoint.visual_editor": |-
   Éditeur visuel de point blanc
 "whitepoint.visual_editor.display_changed.warning": |-
-  Attention : la configuration de l’affichage a chagé et l’éditeur visuel de point blanc peut ne plus être capable de restaurer les profils d’affichage. Veuillez vérifier soigneusement les associations du profil d’affichage après avoir fermé l’éditeur et redémarré DisplayCAL.
+  Attention : la configuration de l’affichage a changé et l’éditeur visuel de point blanc peut ne plus être capable de restaurer les profils d’affichage. Veuillez vérifier soigneusement les associations du profil d’affichage après avoir fermé l’éditeur et redémarré DisplayCAL.
 "whitepoint.xy": |-
   coordonnées de chromaticité
 "window.title": |-
@@ -2566,8 +2566,8 @@
   Windows uniquement
 "working_dir": |-
   Répertoire de travail :
-"*xyz_scaling": |-
-  XYZ scaling (“wrong von Kries”)
+"xyz_scaling": |-
+  Redimensionnement XYZ (« faux von Kries »)
 "yellow": |-
   Jaune
 "yellow_lab": |-
