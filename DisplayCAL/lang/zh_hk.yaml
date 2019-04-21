@@ -526,9 +526,9 @@
 "*ccss.RGBLEDFamily_07Feb11": |-
   LCD RGB LED family (HP, SOYO)
 "*ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG Phosphor LED family
+  LCD RG Phosphor LED family (AUO B156HW01 V.4 in Lenovo W520/W530)
 "*ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG Phosphor LED family
+  LCD GB-r-LED/RG Phosphor LED family (AUO B156HW01 V.4, Dell U2413)
 "*ccss.WGCCFLFamily_07Feb11": |-
   LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
 "*ccss.WLEDFamily_07Feb11": |-
