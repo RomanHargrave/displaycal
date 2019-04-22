@@ -11658,6 +11658,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					args = [path]
 				result = i1d3 = self.worker.import_edr(args, asroot=asroot)
 				if asroot and sys.platform == "win32":
+					# Hacky but the only way to know if we were successful
 					result = i1d3 = self.get_argyll_data_files("l", "*.ccss",
 															   True) != ccss
 			elif kind == "spyder4":
@@ -11788,6 +11789,18 @@ class MainFrame(ReportFrame, BaseFrame):
 				if isinstance(result, Exception):
 					break
 				elif result:
+					if os.path.basename(result).lower() == "i1d3.zip":
+						# Extract contained CCSS files
+						download_dir = os.path.dirname(result)
+						try:
+							with zipfile.ZipFile(result) as z:
+								z.extractall(download_dir)
+						except Exception, exception:
+							result = exception
+							break
+						else:
+							result = safe_glob(os.path.join(download_dir,
+															"i1d3", "*.ccss"))
 					paths.append(result)
 				else:
 					# Cancelled
