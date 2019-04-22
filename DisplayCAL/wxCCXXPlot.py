@@ -428,7 +428,7 @@ class CCXXPlot(wx.Frame):
 								 colormath.cie1931_2_xy[-1]],
 								colour=wx.Colour(102, 102, 102, 153),
 								width=1.75))
-		# Add points
+		# Add comparison gamuts
 		for rgb_space, pen_style in [("Rec. 2020", wx.SOLID),
 									 ("Adobe RGB (1998)", wx.SHORT_DASH),
 									 ("DCI P3", wx.DOT_DASH),
@@ -438,10 +438,11 @@ class CCXXPlot(wx.Frame):
 				values.append(colormath.RGB2xyY(R, G, B, rgb_space)[:2])
 			values.append(values[0])
 			gfx.append(plot.PolyLine(values,
-									colour=wx.Colour(102, 102, 102, 153),
+									colour=wx.Colour(102, 102, 102, 255),
 									legend=rgb_space.replace(" (1998)", ""),
-									width=3,
+									width=2,
 									style=pen_style))
+		# Add points
 		for i, (XYZ, values, attrs) in enumerate(self.samples):
 			xy = colormath.XYZ2xyY(*XYZ)[:2]
 			gfx.append(plot.PolyMarker([colormath.XYZ2xyY(*XYZ)[:2]],
