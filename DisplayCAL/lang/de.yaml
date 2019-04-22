@@ -498,7 +498,7 @@
 "ccss.CCFLFamily_07Feb11": |-
   LCD CCFL-Familie (AC, EIZO, HP)
 "ccss.FSI_XM55U_23Jan19": |-
-  WOLED-Familie (FSI XM55U/XM65U, LG OLED)
+  WOLED-Familie, SDR-Rec.-709-Farbumfang-Modus (FSI XM55U/XM65U, LG OLED)
 "ccss.GBrLED_25Jul12": |-
   LCD GB-r-LED IPS (Dell U2413)
 "ccss.HP_DC3": |-
@@ -507,6 +507,8 @@
   LCD PFS-Phosphor-WLED IPS, Adobe-RGB-/P3-Farbumfang (HP DreamColor Z24x G2)
 "ccss.HP_ZBOOK": |-
   LCD PFS-Phosphor-WLED IPS, Adobe-RGB-Farbumfang (HP ZBook)
+"ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
+  WOLED (LG OLED Serie 6)
 "ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
 "ccss.OLEDFamily_20Jul12": |-
@@ -532,7 +534,7 @@
 "ccss.WLEDFamily_07Feb11": |-
   LCD Weiße-LED-Familie (AC, LG, Samsung)
 "ccss.WRGB_OLED_LG": |-
-  WOLED (LG OLED B7)
+  WOLED, SDR-Rec.-709-Farbumfang-Modus (LG OLED B7)
 "ccxx.ti1": |-
   Testform für Colorimeter-Korrektur
 "centered": |-
