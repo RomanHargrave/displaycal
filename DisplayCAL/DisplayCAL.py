@@ -10083,10 +10083,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				attrs_r = {'marker': 'square', 'size': 5}
 			Y_max = (imtx * colormath.get_whitepoint("D65"))[1]
 			for i, ((x, y), (R, G, B)) in enumerate(pos2rgb):
-				XYZ = colormath.RGB2XYZ(R, G, B)
+				XYZ = list(colormath.RGB2XYZ(R, G, B))
 				X, Y, Z = imtx * XYZ
 				XYZ_max = max(XYZ_max, X, Y, Z)
-				samples.append(((X, Y, Z), [(x, y)], attrs_c))
+				samples.append(([X, Y, Z], [(x, y)], attrs_c))
 				samples.append((XYZ, [(x, y)], attrs_r))
 
 			Plot = plot.PolyMarker
@@ -10099,26 +10099,20 @@ class MainFrame(ReportFrame, BaseFrame):
 					# Colorimeter XYZ
 					if Y_max > 1:
 						# Colorimeter brighter than ref
-						XYZ = [v / Y_max for v in XYZ]
+						XYZ[:] = [v / Y_max for v in XYZ]
 					else:
 						# Colorimeter dimmer than ref
-						XYZ = [v * Y_max for v in XYZ]
+						XYZ[:] = [v * Y_max for v in XYZ]
 				else:
 					# Ref XYZ
 					if Y_max > 1:
 						# Colorimeter brighter than ref
-						XYZ = [v / Y_max for v in XYZ]
+						XYZ[:] = [v / Y_max for v in XYZ]
 				RGB = tuple(int(v) for v in colormath.XYZ2RGB(*XYZ, scale=255,
 															  round_=True))
 			else:
 				RGB = (153, 153, 153)
-			gfx.append((RGB, values, attrs))
-
-		lines = []
-		for RGB, values, attrs in gfx:
-			line = Plot(values, colour=wx.Colour(*RGB), **attrs)
-			lines.append(line)
-
+			gfx.append(Plot(values, colour=wx.Colour(*RGB), **attrs))
 
 		ref = cgats.queryv1("REFERENCE")
 		if ref:
@@ -10184,6 +10178,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		bg.Sizer = wx.BoxSizer(wx.VERTICAL)
 		canvas = LUTCanvas(bg)
 		if is_ccss:
+			btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+			bg.Sizer.Add(btnsizer, flag=wx.EXPAND |
+										wx.TOP | wx.RIGHT | wx.LEFT, border=16)
+			toggle_btn = FlatShadedButton(bg, -1,
+										  label=lang.getstr("spectral"))
+			btnsizer.Add(toggle_btn, 1)
 			plotwindow.Sizer.Add(bg, 1, flag=wx.EXPAND)
 			bg.Sizer.Add(canvas, 1, flag=wx.EXPAND)
 		else:
@@ -10206,7 +10206,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		canvas.SetForegroundColour(FGCOLOUR)
 		canvas.SetGridColour(GRIDCOLOUR)
 		canvas.canvas.BackgroundColour = BGCOLOUR
-		canvas.proportional = not is_ccss
 		canvas.spec_x = 10
 		canvas.spec_y = 10
 		if is_ccss:
@@ -10221,11 +10220,57 @@ class MainFrame(ReportFrame, BaseFrame):
 			canvas.SetXSpec('none')
 			canvas.SetYSpec('none')
 
-		graphics = plot.PlotGraphics(lines, u" ")
-		canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
-		canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
+		def draw(objects, title="", xlabel="", ylabel=""):
+			graphics = plot.PlotGraphics(objects, title, xlabel, ylabel)
+			canvas.Draw(graphics, canvas.axis_x, canvas.axis_y)
+			if is_ccss:
+				canvas.OnMouseDoubleClick(None)
+
+		def draw_ccxx():
+			""" Spectra or matrix 'flower' plot """
+			canvas.SetEnableLegend(False)
+			canvas.proportional = not is_ccss
+			canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
+			canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
+			draw(gfx, u" ")
+
+		def draw_cie():
+			""" CIE 1931 2° xy plot """
+			canvas.SetEnableLegend(True)
+			canvas.proportional = True
+			xy = []
+			xy.append(plot.PolySpline(colormath.cie1931_2_xy,
+									  colour=wx.Colour(102, 102, 102, 153),
+									  width=1.75))
+			xy.append(plot.PolyLine([colormath.cie1931_2_xy[0],
+									 colormath.cie1931_2_xy[-1]],
+									colour=wx.Colour(102, 102, 102, 153),
+									width=1.75))
+			for rgb_space, pen_style in [("Rec. 2020", wx.SOLID),
+										 ("Adobe RGB (1998)", wx.SHORT_DASH),
+										 ("DCI P3", wx.DOT_DASH),
+										 ("Rec. 709", wx.DOT)]:
+				values = []
+				for R, G, B in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
+					values.append(colormath.RGB2xyY(R, G, B, rgb_space)[:2])
+				values.append(values[0])
+				xy.append(plot.PolyLine(values,
+										colour=wx.Colour(102, 102, 102, 153),
+										legend=rgb_space,
+										width=3,
+										style=pen_style))
+			for i, (XYZ, values, attrs) in enumerate(samples):
+				xy.append(plot.PolyMarker([colormath.XYZ2xyY(*XYZ)[:2]],
+										  colour=wx.Colour(*gfx[i].attributes["colour"]),
+										  size=2,
+										  width=1.75,
+										  marker="plus"))
+			canvas.axis_x = 0, 1
+			canvas.axis_y = 0, 1
+			draw(xy, u" ", "x", "y")
+
 		# CallAfter is needed under GTK as usual
-		wx.CallAfter(canvas.Draw, graphics, canvas.axis_x, canvas.axis_y)
+		wx.CallAfter(draw_ccxx)
 
 		if is_ccss:
 			def key_handler(event):
@@ -10252,6 +10297,23 @@ class MainFrame(ReportFrame, BaseFrame):
 			for child in plotwindow.GetAllChildren():
 				child.Bind(wx.EVT_KEY_DOWN, key_handler)
 				child.Bind(wx.EVT_MOUSEWHEEL, OnWheel)
+
+			def toggle_draw(event):
+				if canvas.GetEnableLegend():
+					draw_ccxx()
+					toggle_btn.SetLabel(lang.getstr("spectral"))
+				else:
+					draw_cie()
+					toggle_btn.SetLabel(lang.getstr("whitepoint.xy"))
+
+			toggle_btn.Bind(wx.EVT_BUTTON, toggle_draw)
+
+			def OnSize(event):
+				if canvas.last_draw:
+					wx.CallAfter(canvas._DrawCanvas, canvas.last_draw[0])
+				event.Skip()
+
+			plotwindow.Bind(wx.EVT_SIZE, OnSize)
 
 		if not is_ccss:
 			bg.Sizer.Add((0, 16))
