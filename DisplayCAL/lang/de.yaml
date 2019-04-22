@@ -502,11 +502,11 @@
 "ccss.GBrLED_25Jul12": |-
   LCD GB-r-LED IPS (Dell U2413)
 "ccss.HP_DC3": |-
-  LCD PFS-Phosphor-WLED IPS (HP DreamColor?)
+  LCD PFS-Phosphor-WLED IPS, Adobe-RGB-/P3-Farbumfang (HP DreamColor)
 "ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS-Phosphor-WLED IPS, Adobe-RGB-Farbumfang (HP DreamColor Z24x G2)
+  LCD PFS-Phosphor-WLED IPS, Adobe-RGB-/P3-Farbumfang (HP DreamColor Z24x G2)
 "ccss.HP_ZBOOK": |-
-  LCD PFS-Phosphor-WLED IPS (HP ZBook)
+  LCD PFS-Phosphor-WLED IPS, Adobe-RGB-Farbumfang (HP ZBook)
 "ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
 "ccss.OLEDFamily_20Jul12": |-
@@ -514,9 +514,9 @@
 "ccss.OLEDFamily_28Aug18": |-
   RGB-OLED-Familie (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
 "ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS-Phosphor-WLED-Familie, P3-Farbumfang
+  LCD PFS-Phosphor-WLED-Familie
 "ccss.Panasonic VVX17P051J00": |-
-  LCD PFS-Phosphor-WLED-Familie, P3-Farbumfang (Panasonic VVX17P051J00 in Lenovo P70)
+  LCD PFS-Phosphor-WLED IPS, P3-Farbumfang (Panasonic VVX17P051J00 in Lenovo P70)
 "ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "ccss.ProjectorFamily_07Feb11": |-
