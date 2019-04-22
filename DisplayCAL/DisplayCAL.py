@@ -125,15 +125,21 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					check_argyll_bin, http_request)
 from wxLUT3DFrame import LUT3DFrame
 try:
-	from wxLUTViewer import LUTCanvas, LUTFrame
+	from wxLUTViewer import LUTFrame
 except ImportError:
-	LUTCanvas = None
 	LUTFrame = None
 if sys.platform in ("darwin", "win32") or isexe:
 	from wxMeasureFrame import MeasureFrame
+try:
+	from wxCCXXPlot import CCXXPlot
+except ImportError:
+	CCXXPlot = None
 from wxDisplayUniformityFrame import DisplayUniformityFrame
 from wxMeasureFrame import get_default_size
-from wxProfileInfo import ProfileInfoFrame
+try:
+	from wxProfileInfo import ProfileInfoFrame
+except ImportError:
+	ProfileInfoFrame = None
 from wxReportFrame import ReportFrame
 from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
@@ -553,6 +559,13 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						ok=lang.getstr("ok"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), nowrap=True)
+	dlg.info = wx.Button(dlg.buttonpanel, -1,
+						 lang.getstr("colorimeter_correction.info"))
+	dlg.info.Disable()
+	dlg.sizer2.Insert(0, dlg.info,
+					  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+					  border=12)
+	dlg.sizer2.Insert(0, (32 + 12, 1))
 	scale = getcfg("app.dpi") / config.get_default_dpi()
 	if scale < 1:
 		scale = 1
@@ -687,9 +700,16 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 									else lang.getstr("not_applicable"))
 		dlg_list_ctrl.SetStringItem(index, 11, created or
 											   lang.getstr("unknown"))
-	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: dlg.ok.Enable(),
+	def show_ccxx_info(event):
+		index = dlg_list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
+											  wx.LIST_STATE_SELECTED)
+		parent.colorimeter_correction_info_handler(event, cgats[index])
+	dlg.info.Bind(wx.EVT_BUTTON, show_ccxx_info)
+	dlg.Bind(wx.EVT_LIST_ITEM_SELECTED, lambda event: (dlg.ok.Enable(),
+													   dlg.info.Enable()),
 			 dlg_list_ctrl)
-	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: dlg.ok.Disable(),
+	dlg.Bind(wx.EVT_LIST_ITEM_DESELECTED, lambda event: (dlg.ok.Disable(),
+													     dlg.info.Disable()),
 			 dlg_list_ctrl)
 	dlg.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda event: dlg.EndModal(wx.ID_OK),
 			 dlg_list_ctrl)
@@ -1773,6 +1793,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		self.profile_info = {}
 		self.measureframes = []
+		self.ccxx_plot_windows = {}
 	
 	def init_timers(self):
 		"""
@@ -9325,6 +9346,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Skip()
 	
 	def profile_info_handler(self, event=None, profile=None):
+		if not ProfileInfoFrame:
+			wx.Bell()
+			return
+
 		if profile:
 			pass
 		elif (event and
@@ -9903,17 +9928,20 @@ class MainFrame(ReportFrame, BaseFrame):
 			# Check if black point correction should be turned on
 			self.measurement_mode_ctrl_handler()
 
-	def colorimeter_correction_info_handler(self, event):
+	def colorimeter_correction_info_handler(self, event, ccxx=None):
 		""" Plot spectra or matrix """
-		if not LUTCanvas:
-			return
-
-		ccxx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
-		if len(ccxx) < 2 or not os.path.isfile(ccxx[1]):
+		if not CCXXPlot:
 			wx.Bell()
 			return
 
-		ccxx = ccxx[1]
+		if not ccxx:
+			ccxx = getcfg("colorimeter_correction_matrix_file").split(":", 1)
+			if len(ccxx) < 2 or not os.path.isfile(ccxx[1]):
+				wx.Bell()
+				return
+
+			ccxx = ccxx[1]
+
 		try:
 			cgats = CGATS.CGATS(ccxx)
 		except Exception, exception:
@@ -9924,402 +9952,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			wx.Bell()
 			return
 
-		is_ccss = cgats[0].type == "CCSS"
+		key = md5(str(cgats)).digest()
+		plotwindow = self.ccxx_plot_windows.get(key)
+		if not plotwindow:
+			plotwindow = CCXXPlot(self, cgats, self.worker)
+			self.ccxx_plot_windows[key] = plotwindow
 
-		if is_ccss:
-			# Convert to TI3 so we can get XYZ from spectra for coloring
-
-			temp = self.worker.create_tempdir()
-			if isinstance(temp, Exception):
-				show_result_dialog(temp, self)
-				return
-
-			basename = os.path.basename(os.path.splitext(cgats.filename)[0])
-			temp_path = os.path.join(temp, basename + ".ti3")
-
-			cgats[0].type = "CTI3"
-			cgats[0].DEVICE_CLASS = "DISPLAY"
-			cgats.write(temp_path)
-
-			temp_out_path = os.path.join(temp, basename + ".CIE.ti3")
-
-			result = self.worker.exec_cmd(get_argyll_util("spec2cie"),
-										  [temp_path,
-										   temp_out_path],
-										  capture_output=True)
-			if isinstance(result, Exception) or not result:
-				show_result_dialog(result or "".join(self.worker.output), self)
-				self.worker.wrapup(False)
-				return
-	
-			try:
-				cgats = CGATS.CGATS(temp_out_path)
-			except Exception, exception:
-				show_result_dialog(exception, self)
-				return
-			finally:
-				self.worker.wrapup(False)
-
-		desc = self.colorimeter_correction_matrix_ctrl.GetStringSelection()
-
-		BGCOLOUR = "#101010"
-		FGCOLOUR = "#999999"
-		GRIDCOLOUR = "#202020"
-
-		if sys.platform == "darwin":
-			FONTSIZE_LARGE = 11
-			FONTSIZE_SMALL = 10
-		else:
-			FONTSIZE_LARGE = 9
-			FONTSIZE_SMALL = 8
-
-		data_format = cgats.queryv1("DATA_FORMAT")
-		data = cgats.queryv1("DATA")
-
-		XYZ_max = 0
-		samples = []
-
-		if is_ccss:
-			x_min = cgats.queryv1("SPECTRAL_START_NM")
-			x_max = cgats.queryv1("SPECTRAL_END_NM")
-			bands = cgats.queryv1("SPECTRAL_BANDS")
-			lores = bands <= 40
-			if lores:
-				# Interpolate if lores
-				# 1nm intervals
-				steps = int(x_max - x_min) + 1
-				safe_print("Up-interpolating", bands, "spectral bands to", steps)
-				step = (x_max - x_min) / (steps - 1.)
-			else:
-				step = (x_max - x_min) / (bands - 1.)
-			y_min = 0
-			y_max = 1
-
-			Y_max = 0
-			for i, sample in data.iteritems():
-				# Get nm and spectral power
-				values = []
-				x = x_min
-				for k in data_format.itervalues():
-					if k.startswith("SPEC_"):
-						y = sample[k]
-						#y_min = min(y, y_min)
-						y_max = max(y, y_max)
-						if lores:
-							values.append(y)
-						else:
-							values.append((x, y))
-							x += step
-				if lores:
-					# Interpolate if lores. Use Catmull-Rom instead of
-					# PolySpline as we want curves to go through points exactly
-					numvalues = len(values)
-					interp = ICCP.CRInterpolation(values)
-					values = []
-					for i in xrange(steps):
-						values.append((x, interp(i / (steps - 1.) * (numvalues - 1.))))
-						x += step
-				# Get XYZ for colorization
-				XYZ = []
-				for component in "XYZ":
-					label = "XYZ_" + component
-					if label in sample:
-						v = sample[label]
-						XYZ_max = max(XYZ_max, v)
-						if label == "XYZ_Y":
-							Y_max = max(Y_max, v)
-						XYZ.append(v)
-				samples.append((XYZ, values, {}))
-
-			Plot = plot.PolyLine
-			Plot._attributes["width"] = 1
-		else:
-			# CCMX
-			cube_size = 2
-
-			x_min = 0
-
-			y_min = 0
-
-			mtx = colormath.Matrix3x3([[sample[k]
-										for k in data_format.itervalues()]
-									   for sample in data.itervalues()])
-			imtx = mtx.inverted()
-
-			# Get XYZ that colorimeter would measure without matrix (sRGB ref,
-			# so not accurate, but useful for visual representation which is all
-			# we care about here)
-			if cube_size == 2:
-				scale = 1
-				x_max = 100 * scale
-				y_max = x_max * (74.6 / 67.4)
-				if sys.platform != "win32":
-					x_center = x_max / 2.
-				else:
-					x_center = x_max / 2. - 2.5
-				y_center = y_max / 2.
-				x_center *= scale
-				y_center *= scale
-				pos2rgb = [((x_center - 23.7, y_center - 13.7), (0, 0, 1)), ((x_center, y_center + 27.3), (0, 1, 0)),
-						   ((x_center + 23.7, y_center - 13.7), (1, 0, 0)),
-						   ((x_center - 23.7, y_center + 13.7), (0, 1, 1)), ((x_center, y_center - 27.3), (1, 0, 1)),
-						   ((x_center + 23.7, y_center + 13.7), (1, 1, 0)), ((x_center, y_center), (1, 1, 1))]
-				attrs_c = {'size': 10}
-				attrs_r = {'size': 5}
-			else:
-				x_max = 100
-				y_max = 100
-				y = -5
-				pos2rgb = []
-				for R in xrange(cube_size):
-					for G in xrange(cube_size):
-						x = -5
-						y += 10
-						for B in xrange(cube_size):
-							x += 10
-							pos2rgb.append(((x, y),
-											(v / (cube_size - 1.0) for v in (R, G, B))))
-				attrs_c = {'marker': 'square', 'size': 10}
-				attrs_r = {'marker': 'square', 'size': 5}
-			Y_max = (imtx * colormath.get_whitepoint("D65"))[1]
-			for i, ((x, y), (R, G, B)) in enumerate(pos2rgb):
-				XYZ = list(colormath.RGB2XYZ(R, G, B))
-				X, Y, Z = imtx * XYZ
-				XYZ_max = max(XYZ_max, X, Y, Z)
-				samples.append(([X, Y, Z], [(x, y)], attrs_c))
-				samples.append((XYZ, [(x, y)], attrs_r))
-
-			Plot = plot.PolyMarker
-
-		gfx = []
-		for XYZ, values, attrs in samples:
-			if len(XYZ) == 3:
-				# Got XYZ
-				if attrs.get("size") > 11.25:
-					# Colorimeter XYZ
-					if Y_max > 1:
-						# Colorimeter brighter than ref
-						XYZ[:] = [v / Y_max for v in XYZ]
-					else:
-						# Colorimeter dimmer than ref
-						XYZ[:] = [v * Y_max for v in XYZ]
-				else:
-					# Ref XYZ
-					if Y_max > 1:
-						# Colorimeter brighter than ref
-						XYZ[:] = [v / Y_max for v in XYZ]
-				RGB = tuple(int(v) for v in colormath.XYZ2RGB(*XYZ, scale=255,
-															  round_=True))
-			else:
-				RGB = (153, 153, 153)
-			gfx.append(Plot(values, colour=wx.Colour(*RGB), **attrs))
-
-		ref = cgats.queryv1("REFERENCE")
-		if ref:
-			ref = get_canonical_instrument_name(safe_unicode(ref, "UTF-8"))
-
-		if not is_ccss:
-			width = 500
-			height = 430
-			x_label = [lang.getstr("matrix")]
-			x_label.extend([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
-			if ref:
-				ref_observer = cgats.queryv1("REFERENCE_OBSERVER")
-				if ref_observer:
-					ref += u", " + self.observers_ab.get(ref_observer,
-														 ref_observer)
-				x_label.append(u"")
-				x_label.append(ref)
-			fit_method = cgats.queryv1("FIT_METHOD")
-			if fit_method == "xy":
-				fit_method = lang.getstr("ccmx.use_four_color_matrix_method")
-			elif fit_method:
-				fit_method = lang.getstr("perceptual")
-			fit_de00_avg = cgats.queryv1("FIT_AVG_DE00")
-			if not isinstance(fit_de00_avg, float):
-				fit_de00_avg = None
-			fit_de00_max = cgats.queryv1("FIT_MAX_DE00")
-			if not isinstance(fit_de00_max, float):
-				fit_de00_max = None
-			if fit_method:
-				x_label.append(fit_method)
-			fit_de00 = []
-			if fit_de00_avg:
-				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.avg"),
-													fit_de00_avg))
-			if fit_de00_max:
-				fit_de00.append(u"ΔE*00 %s %.4f" % (lang.getstr("profile.self_check.max"),
-													fit_de00_max))
-			if fit_de00:
-				x_label.append(u"\n".join(fit_de00))
-			height += 16 * len(x_label)
-			x_label = "\n".join(x_label)
-		else:
-			width = 500
-			height = 526
-			x_label = u""
-			if ref:
-				x_label += ref + u", "
-			x_label += u"%.1fnm, %i-%inm" % ((x_max - x_min) / (bands - 1.0),
-											 x_min, x_max)
-
-		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
-
-		style = wx.DEFAULT_FRAME_STYLE
-
-		plotwindow = wx.Frame(None, -1, desc,
-							  size=(width * scale, height * scale), style=style)
-		plotwindow.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
-							appname))
-		plotwindow.SetBackgroundColour(BGCOLOUR)
-		plotwindow.Sizer = wx.GridSizer(1, 1, 0, 0)
-		bg = wx.Panel(plotwindow)
-		bg.SetBackgroundColour(BGCOLOUR)
-		bg.Sizer = wx.BoxSizer(wx.VERTICAL)
-		canvas = LUTCanvas(bg)
-		if is_ccss:
-			btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-			bg.Sizer.Add(btnsizer, flag=wx.EXPAND |
-										wx.TOP | wx.RIGHT | wx.LEFT, border=16)
-			toggle_btn = FlatShadedButton(bg, -1,
-										  label=lang.getstr("spectral"))
-			btnsizer.Add(toggle_btn, 1)
-			plotwindow.Sizer.Add(bg, 1, flag=wx.EXPAND)
-			bg.Sizer.Add(canvas, 1, flag=wx.EXPAND)
-		else:
-			plotwindow.Sizer.Add(bg, flag=wx.ALIGN_CENTER)
-			canvas_w = 240 * scale
-			canvas.MinSize = (canvas_w, canvas_w * (74.6 / 67.4))
-			bg.Sizer.Add(canvas, flag=wx.ALIGN_CENTER)
-		label = wx.StaticText(bg, -1, x_label.replace("&", "&&"),
-							  style=wx.ALIGN_CENTRE_HORIZONTAL)
-		label.SetForegroundColour(FGCOLOUR)
-		label.SetMaxFontSize(11)
-		bg.Sizer.Add(label, flag=wx.ALIGN_CENTER | wx.ALL & ~wx.TOP,
-						border=16 * scale)
-		canvas.SetBackgroundColour(BGCOLOUR)
-		canvas.SetEnableCenterLines(False)
-		canvas.SetEnableDiagonals(False)
-		canvas.SetEnableGrid(True)
-		canvas.SetEnablePointLabel(False)
-		canvas.SetEnableTitle(True)
-		canvas.SetForegroundColour(FGCOLOUR)
-		canvas.SetGridColour(GRIDCOLOUR)
-		canvas.canvas.BackgroundColour = BGCOLOUR
-		canvas.spec_x = 10
-		canvas.spec_y = 10
-		if is_ccss:
-			canvas.HandCursor = wx.StockCursor(wx.CURSOR_SIZING)
-			canvas.SetCursor(canvas.HandCursor)
-			canvas.SetXSpec(canvas.spec_x)
-			canvas.SetYSpec(canvas.spec_y)
-		else:
-			canvas.canvas.Unbind(wx.EVT_LEFT_DCLICK)
-			canvas.SetEnableDrag(False)
-			canvas.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
-			canvas.SetXSpec('none')
-			canvas.SetYSpec('none')
-
-		def draw(objects, title="", xlabel="", ylabel=""):
-			graphics = plot.PlotGraphics(objects, title, xlabel, ylabel)
-			canvas.Draw(graphics, canvas.axis_x, canvas.axis_y)
-			if is_ccss:
-				canvas.OnMouseDoubleClick(None)
-
-		def draw_ccxx():
-			""" Spectra or matrix 'flower' plot """
-			canvas.SetEnableLegend(False)
-			canvas.proportional = not is_ccss
-			canvas.axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
-			canvas.axis_y = (math.floor(y_min), math.ceil(y_max))
-			draw(gfx, u" ")
-
-		def draw_cie():
-			""" CIE 1931 2° xy plot """
-			canvas.SetEnableLegend(True)
-			canvas.proportional = True
-			xy = []
-			xy.append(plot.PolySpline(colormath.cie1931_2_xy,
-									  colour=wx.Colour(102, 102, 102, 153),
-									  width=1.75))
-			xy.append(plot.PolyLine([colormath.cie1931_2_xy[0],
-									 colormath.cie1931_2_xy[-1]],
-									colour=wx.Colour(102, 102, 102, 153),
-									width=1.75))
-			for rgb_space, pen_style in [("Rec. 2020", wx.SOLID),
-										 ("Adobe RGB (1998)", wx.SHORT_DASH),
-										 ("DCI P3", wx.DOT_DASH),
-										 ("Rec. 709", wx.DOT)]:
-				values = []
-				for R, G, B in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
-					values.append(colormath.RGB2xyY(R, G, B, rgb_space)[:2])
-				values.append(values[0])
-				xy.append(plot.PolyLine(values,
-										colour=wx.Colour(102, 102, 102, 153),
-										legend=rgb_space,
-										width=3,
-										style=pen_style))
-			for i, (XYZ, values, attrs) in enumerate(samples):
-				xy.append(plot.PolyMarker([colormath.XYZ2xyY(*XYZ)[:2]],
-										  colour=wx.Colour(*gfx[i].attributes["colour"]),
-										  size=2,
-										  width=1.75,
-										  marker="plus"))
-			canvas.axis_x = 0, 1
-			canvas.axis_y = 0, 1
-			draw(xy, u" ", "x", "y")
-
-		# CallAfter is needed under GTK as usual
-		wx.CallAfter(draw_ccxx)
-
-		if is_ccss:
-			def key_handler(event):
-				""" Keyboard zoom """
-				key = event.GetKeyCode()
-				if key in (43, wx.WXK_NUMPAD_ADD):
-					# + key zoom in
-					canvas.zoom(-1)
-				elif key in (45, wx.WXK_NUMPAD_SUBTRACT):
-					# - key zoom out
-					canvas.zoom(1)
-				else:
-					event.Skip()
-
-			def OnWheel(event):
-				""" Mousewheel zoom """
-				if event.WheelRotation < 0:
-					direction = 1.0
-				else:
-					direction = -1.0
-				canvas.zoom(direction)
-
-			plotwindow.Bind(wx.EVT_KEY_DOWN, key_handler)
-			for child in plotwindow.GetAllChildren():
-				child.Bind(wx.EVT_KEY_DOWN, key_handler)
-				child.Bind(wx.EVT_MOUSEWHEEL, OnWheel)
-
-			def toggle_draw(event):
-				if canvas.GetEnableLegend():
-					draw_ccxx()
-					toggle_btn.SetLabel(lang.getstr("spectral"))
-				else:
-					draw_cie()
-					toggle_btn.SetLabel(lang.getstr("whitepoint.xy"))
-
-			toggle_btn.Bind(wx.EVT_BUTTON, toggle_draw)
-
-			def OnSize(event):
-				if canvas.last_draw:
-					wx.CallAfter(canvas._DrawCanvas, canvas.last_draw[0])
-				event.Skip()
-
-			plotwindow.Bind(wx.EVT_SIZE, OnSize)
-
-		if not is_ccss:
-			bg.Sizer.Add((0, 16))
-			plotwindow.Sizer.SetSizeHints(plotwindow)
-			plotwindow.Sizer.Layout()
 		plotwindow.Show()
+		plotwindow.Raise()
 	
 	def colorimeter_correction_web_handler(self, event):
 		""" Check the web for cccmx or ccss files """
