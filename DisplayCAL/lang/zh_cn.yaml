@@ -1424,15 +1424,15 @@
 "*info.display_tech": |-
   <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and sRGB coverage up to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors from 2010 and newer as well as Apple iMac/MacBook from 2009 to mid 2015.
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut with two common variants: P3 or Adobe RGB coverage around 90-98% and 99% respectively (according to manufacturer data). Common displays in the P3 gamut category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer) as well as some HDR-capable desktop monitors. The Adobe RGB gamut category includes professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut in two common variants with P3 or Adobe RGB coverage around 90-99% (according to manufacturer data). Common displays in the P3 gamut category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer) as well as some HDR-capable desktop monitors. The Adobe RGB gamut category includes professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  
+  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  
+  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with near-full Adobe RGB and/or P3 coverage, used in some professional monitors and laptops as well as high quality smartphones.
   
   <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99% (according to manufacturer data). Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
   
-  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with full Adobe RGB coverage. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
-  
-  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with full Adobe RGB and near-full P3 coverage, used in some high-end video mastering monitors and some high-end laptops as well as high quality smartphones.
-  
-  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with near-full Adobe RGB coverage. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
   
   <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies commonly used in displays from 2009 and earlier.
 "*info.display_tech.linklabel.displayspecifications.com": |-
