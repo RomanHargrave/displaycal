@@ -7652,14 +7652,8 @@ usage: spotread [-options] [logfile]
 			installer_basename = ("Argyll_V%s_USB_driver_installer.exe" %
 								  argyll_version_string)
 
-			download_dir = os.path.join(expanduseru("~"), "Downloads")
+			download_dir = os.path.join(config.datahome, "dl")
 			installer = os.path.join(download_dir, installer_basename)
-			if (sys.getwindowsversion() >= (6, ) and
-				not os.path.isfile(installer)):
-				# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
-				# regardless of Known Folder path, so files may already exist
-				download_dir = get_known_folder_path("Downloads")
-				installer = os.path.join(download_dir, installer_basename)
 
 			if not os.path.isfile(installer):
 				installer_zip = self.download("https://%s/Argyll/%s.zip" %
@@ -13028,28 +13022,24 @@ BEGIN_DATA
 			safe_print(ti1)
 		return ti1, ti3v
 
-	def download(self, uri, force=False):
+	def download(self, uri, force=False, download_dir=None):
 		# Set timeout to a sane value
 		default_timeout = socket.getdefaulttimeout()
 		socket.setdefaulttimeout(20)  # 20 seconds
 		try:
-			return self._download(uri, force=force)
+			return self._download(uri, force=force, download_dir=download_dir)
 		finally:
 			socket.setdefaulttimeout(default_timeout)
 
-	def _download(self, uri, force=False):
+	def _download(self, uri, force=False, download_dir=None):
 		if test_badssl:
 			uri = "https://%s.badssl.com/" % test_badssl
 		orig_uri = uri
 		total_size = None
 		filename = os.path.basename(uri)
-		download_dir = os.path.join(expanduseru("~"), "Downloads")
+		if not download_dir:
+			download_dir = os.path.join(config.datahome, "dl")
 		download_path = os.path.join(download_dir, filename)
-		if not os.path.isfile(download_path):
-			# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
-			# regardless of Known Folder path, so files may already exist
-			download_dir = get_known_folder_path("Downloads")
-			download_path = os.path.join(download_dir, filename)
 		response = None
 		hashes = None
 		is_main_dl = (uri.startswith("https://%s/download/" % domain.lower()) or
@@ -13170,13 +13160,7 @@ BEGIN_DATA
 					content_type = content_type.split(";", 1)[0]
 				ext = mimetypes.guess_extension(content_type or "", False)
 				filename += ext or ".html"
-			download_dir = os.path.join(expanduseru("~"), "Downloads")
 			download_path = os.path.join(download_dir, filename)
-			if not os.path.isfile(download_path):
-				# DisplayCAL versions prior to 3.1.6 were using ~/Downloads
-				# regardless of Known Folder path, so files may already exist
-				download_dir = get_known_folder_path("Downloads")
-				download_path = os.path.join(download_dir, filename)
 		if (not os.path.isfile(download_path) or
 			(total_size is not None and
 			 os.stat(download_path).st_size != total_size)):
