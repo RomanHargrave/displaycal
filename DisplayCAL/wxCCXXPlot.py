@@ -417,14 +417,18 @@ class CCXXPlot(wx.Frame):
 		""" CIE 1931 2° xy plot """
 		self.canvas.SetEnableLegend(True)
 		self.canvas.proportional = True
-		xy = []
-		xy.append(plot.PolySpline(colormath.cie1931_2_xy,
+		gfx = []
+		# Add a few points at the extremes to define a bounding box
+		gfx.append(plot.PolyLine([(0, 0), (1, 1)], colour=wx.Colour(0, 0, 0, 0)))
+		# Add CIE 1931 outline
+		gfx.append(plot.PolySpline(colormath.cie1931_2_xy,
 								  colour=wx.Colour(102, 102, 102, 153),
 								  width=1.75))
-		xy.append(plot.PolyLine([colormath.cie1931_2_xy[0],
+		gfx.append(plot.PolyLine([colormath.cie1931_2_xy[0],
 								 colormath.cie1931_2_xy[-1]],
 								colour=wx.Colour(102, 102, 102, 153),
 								width=1.75))
+		# Add points
 		for rgb_space, pen_style in [("Rec. 2020", wx.SOLID),
 									 ("Adobe RGB (1998)", wx.SHORT_DASH),
 									 ("DCI P3", wx.DOT_DASH),
@@ -433,20 +437,22 @@ class CCXXPlot(wx.Frame):
 			for R, G, B in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
 				values.append(colormath.RGB2xyY(R, G, B, rgb_space)[:2])
 			values.append(values[0])
-			xy.append(plot.PolyLine(values,
+			gfx.append(plot.PolyLine(values,
 									colour=wx.Colour(102, 102, 102, 153),
 									legend=rgb_space.replace(" (1998)", ""),
 									width=3,
 									style=pen_style))
 		for i, (XYZ, values, attrs) in enumerate(self.samples):
-			xy.append(plot.PolyMarker([colormath.XYZ2xyY(*XYZ)[:2]],
+			xy = colormath.XYZ2xyY(*XYZ)[:2]
+			gfx.append(plot.PolyMarker([colormath.XYZ2xyY(*XYZ)[:2]],
 									  colour=wx.Colour(*self.gfx[i].attributes["colour"]),
 									  size=2,
 									  width=1.75,
-									  marker="plus"))
+									  marker="plus",
+									  legend=u"%.4f\u2009x\u2002%.4f\u2009y" % xy))
 		self.canvas.axis_x = 0, 1
 		self.canvas.axis_y = 0, 1
-		self.draw(xy, u" ", "x", "y")
+		self.draw(gfx, u" ", "x", "y")
 
 	def toggle_draw(self, event):
 		""" Toggle between spectral and CIE plot """
