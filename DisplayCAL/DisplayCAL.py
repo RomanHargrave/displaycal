@@ -11791,16 +11791,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				elif result:
 					if os.path.basename(result).lower() == "i1d3.zip":
 						# Extract contained CCSS files
-						download_dir = os.path.dirname(result)
-						try:
-							with zipfile.ZipFile(result) as z:
-								z.extractall(download_dir)
-						except Exception, exception:
-							result = exception
+						result = self.worker.extract_archive(result)
+						if isinstance(result, Exception):
 							break
-						else:
-							result = safe_glob(os.path.join(download_dir,
-															"i1d3", "*.ccss"))
+						result = filter(lambda path: not os.path.isdir(path),
+										result)
 					paths.append(result)
 				else:
 					# Cancelled
