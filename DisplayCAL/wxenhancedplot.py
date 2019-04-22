@@ -281,7 +281,7 @@ class PolyLine(PolyPoints):
     def getSymExtent(self, printerScale):
         """Width and Height of Marker"""
         h= self.attributes['width'] * printerScale * self._pointSize[0]
-        w= 5 * h
+        w= 7 * h
         return (w,h)
 
 class PolySpline(PolyLine):
@@ -391,7 +391,7 @@ class PolyMarker(PolyPoints):
 
     def getSymExtent(self, printerScale):
         """Width and Height of Marker"""
-        s= 5*self.attributes['size'] * printerScale * self._pointSize[0]
+        s= 7*self.attributes['size'] * printerScale * self._pointSize[0]
         return (s,s)
 
     def _drawmarkers(self, dc, coords, marker,size=1):
@@ -1224,7 +1224,14 @@ class PlotCanvas(wx.Panel):
         legendBoxWH, legendSymExt, legendTextExt = self._legendWH(dc, graphics)
 
         # room around graph area
-        rhsW= max(xTextExtent[0], legendBoxWH[0])+5*self._pointSize[0] # use larger of number width or legend width
+        legend_inside = True
+        if legend_inside:
+            # Legend inside graph
+            xboxwh = 0
+        else:
+            # Legend outside graph
+            xboxwh = max(xTextExtent[0], legendBoxWH[0])
+        rhsW= xboxwh+5*self._pointSize[0] # use larger of number width or legend width
         lhsW= yTextExtent[0]+ yLabelWH[1] + 3*self._pointSize[0]
         bottomH= max(xTextExtent[1], yTextExtent[1]/2.)+ xLabelWH[1] + 2*self._pointSize[1]
         topH= yTextExtent[1]/2. + titleWH[1]
@@ -1248,16 +1255,20 @@ class PlotCanvas(wx.Panel):
         if graphics.getYLabel():  # bug fix for Linux
             dc.DrawRotatedText(graphics.getYLabel(),yLabelPos[0],yLabelPos[1],90)
 
-        # drawing legend makers and text
-        if self._legendEnabled:
-            self._drawLegend(dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt)
-
         # allow for scaling and shifting plotted points
         scale = (self.plotbox_size-textSize_scale) / (p2-p1)* _Numeric.array((1,-1))
         shift = -p1*scale + self.plotbox_origin + textSize_shift * _Numeric.array((1,-1))
         self._pointScale= scale / self._pointSize  # make available for mouse events
         self._pointShift= shift / self._pointSize       
         self._drawAxes(dc, p1, p2, scale, shift, xticks, yticks)
+
+        # drawing legend makers and text
+        if self._legendEnabled:
+            if legend_inside:
+                #rhsW -= xTextExtent[0]
+                rhsW += xTextExtent[0] + legendBoxWH[0]
+                topH = 0
+            self._drawLegend(dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt)
         
         graphics.scaleAndShift(scale, shift)
         graphics.setPrinterScale(self.printerScale)  # thicken up lines and markers if printing
@@ -1560,6 +1571,9 @@ class PlotCanvas(wx.Panel):
         dc.SetFont(self._getFont(self._fontSizeLegend))
         for i in range(len(graphics)):
             o = graphics[i]
+            legend = o.getLegend()
+            if not legend:
+                continue
             s= i*lineHeight
             if isinstance(o,PolyMarker):
                 # draw marker with legend
@@ -1574,7 +1588,7 @@ class PlotCanvas(wx.Panel):
                 raise TypeError, "object is neither PolyMarker or PolyLine instance"
             # draw legend txt
             pnt= (trhc[0]+legendLHS+legendSymExt[0]+5*self._pointSize[0], trhc[1]+s+lineHeight/2.-legendTextExt[1]/2)
-            dc.DrawText(o.getLegend(),pnt[0],pnt[1])
+            dc.DrawText(legend,pnt[0],pnt[1])
         dc.SetFont(self._getFont(self._fontSizeAxis)) # reset
 
     def _titleLablesWH(self, dc, graphics):
