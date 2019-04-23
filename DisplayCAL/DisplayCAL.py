@@ -148,7 +148,7 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel,
-					 PlateButton)
+					 PlateButton, get_bitmap_disabled)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
@@ -559,13 +559,16 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						ok=lang.getstr("ok"), 
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), nowrap=True)
-	dlg.info = wx.Button(dlg.buttonpanel, -1,
-						 lang.getstr("colorimeter_correction.info"))
+	dlg.info = PlateButton(dlg.buttonpanel, -1,
+						   lang.getstr("colorimeter_correction.info"),
+						   geticon(16, "info"))
+	dlg.info.SetBitmapHover(geticon(16, "info-inverted"))
+	dlg.info.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
 	dlg.info.Disable()
 	dlg.sizer2.Insert(0, dlg.info,
 					  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 					  border=12)
-	dlg.sizer2.Insert(0, (32 + 12, 1))
+	dlg.sizer2.Insert(0, (32 + 7, 1))
 	scale = getcfg("app.dpi") / config.get_default_dpi()
 	if scale < 1:
 		scale = 1
@@ -11310,15 +11313,18 @@ class MainFrame(ReportFrame, BaseFrame):
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
-		dlg.info = wx.Button(dlg.buttonpanel, -1,
-							 lang.getstr("colorimeter_correction.info"))
+		dlg.info = PlateButton(dlg.buttonpanel, -1,
+							   lang.getstr("colorimeter_correction.info"),
+							   geticon(16, "info"))
+		dlg.info.SetBitmapHover(geticon(16, "info-inverted"))
+		dlg.info.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
 		def show_ccxx_info(event):
 			self.colorimeter_correction_info_handler(event, cgats)
 		dlg.info.Bind(wx.EVT_BUTTON, show_ccxx_info)
 		dlg.sizer2.Insert(0, dlg.info,
 						  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 						  border=12)
-		dlg.sizer2.Insert(0, (32 + 12, 1))
+		dlg.sizer2.Insert(0, (32 + 7, 1))
 		result = dlg.ShowWindowModalBlocking()
 		dlg.Destroy()
 		if result == wx.ID_OK:
