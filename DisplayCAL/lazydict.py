@@ -7,7 +7,7 @@ import os
 
 from config import get_data_path
 from debughelpers import handle_error
-from util_str import safe_unicode, strtr
+from util_str import safe_unicode
 
 
 def unquote(string, raise_exception=True):
@@ -32,28 +32,18 @@ def unquote(string, raise_exception=True):
 
 def escape(string):
 	r"""
-	Backslash-escape \r, \n, \t, and " in string
+	Backslash-escape special chars in string
 	
 	"""
-	return strtr(string, [("\r", "\\r"),
-						  ("\n", "\\n"),
-						  ("\t", "\\t"),
-						  ('"', '\\"')])
+	return string.encode("string_escape")
 
 
 def unescape(string):
 	r"""
-	Unescape \\r, \\n, \\t, and \\" in string
+	Unescape escaped chars in string
 	
 	"""
-	return strtr(string, [# ("\r\n", "\n"),
-						  # ("\r", "\n"),
-						  # ("\n\n", "\\n"),
-						  # ("\n", " "),
-						  ("\\r", "\r"),
-						  ("\\n", "\n"),
-						  ("\\t", "\t"),
-						  ('\\"', '"')])
+	return string.decode("string_escape")
 
 
 class LazyDict(dict):
@@ -283,6 +273,7 @@ class LazyDict_YAML_UltraLite(LazyDict):
 		Parse fileobj and update dict
 		
 		"""
+		block = False
 		value = []
 		key = None
 		# Readlines is actually MUCH faster than iterating over the
@@ -303,7 +294,7 @@ class LazyDict_YAML_UltraLite(LazyDict):
 				key = self._unquote(tokens[0].strip(), False, False, fileobj, i)
 				token = tokens[1].strip(" \n")
 				if token.startswith("|-"):
-					style = "|-"
+					block = True
 					token = token[2:].lstrip(" ")
 					if token:
 						if token.startswith("#"):
@@ -323,7 +314,7 @@ class LazyDict_YAML_UltraLite(LazyDict):
 									 (getattr(fileobj, "name", line), i))
 				if token:
 					# Inline value
-					style = None
+					block = False
 					if token.startswith("#"):
 						value = []
 						continue
@@ -339,14 +330,14 @@ class LazyDict_YAML_UltraLite(LazyDict):
 				else:
 					value = []
 			else:
-				if not style:
+				if not block:
 					raise ValueError("Unsupported format (%r line %i)" %
 									 (getattr(fileobj, "name", line), i))
 				value.append(line[2:])
 		if key:
 			self[key] = "".join(value).rstrip("\n")
 
-	def _unquote(self, token, unescape=True, check=False, fileobj=None, lineno=-1):
+	def _unquote(self, token, do_unescape=True, check=False, fileobj=None, lineno=-1):
 		if len(token) > 1:
 			c = token[0]
 			if c in "'"'"' and c == token[-1]:
@@ -356,8 +347,8 @@ class LazyDict_YAML_UltraLite(LazyDict):
 									 "(%r line %i)" % (getattr(fileobj, "name",
 															   token),
 													   lineno))
-				if unescape:
-					token = token.replace('\\"', '"')
+				if do_unescape:
+					token = unescape(token)
 			elif check and (token.count('"') != token.count('\\"')):
 				raise ValueError("Unbalanced quotes found in token "
 								 "(%r line %i)" % (getattr(fileobj, "name",
