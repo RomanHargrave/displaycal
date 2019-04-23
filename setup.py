@@ -561,8 +561,10 @@ def setup():
 			sys.argv.remove("--onefile")
 
 	if inno and sys.platform == "win32":
-		for tmpl_type in ("pyi" if bdist_pyi else bdist_cmd, "0install",
-						  "0install-per-user"):
+		tmpl_types = ["pyi" if bdist_pyi else bdist_cmd]
+		if zeroinstall:
+			tmp_types.extend(["0install", "0install-per-user"])
+		for tmpl_type in tmpl_types:
 			inno_template_path = os.path.join(pydir, "misc", "%s-Setup-%s.iss" % 
 											  (name, tmpl_type))
 			inno_template = open(inno_template_path, "r")
