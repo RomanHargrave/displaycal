@@ -511,6 +511,8 @@
   LCD PFS Phosphor WLED IPS, Adobe RGB gamut (HP ZBook)
 "*ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
   WOLED (LG OLED 6-Series)
+"*ccss.MacBookProRetina2016": |-
+  LCD PFS Phosphor WLED IPS, P3 gamut (MacBook Pro Retina 2016)
 "*ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
 "*ccss.OLEDFamily_20Jul12": |-
