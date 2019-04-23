@@ -730,7 +730,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg.sizer0.SetSizeHints(dlg)
 	dlg.sizer0.Layout()
 	dlg.Center()
-	result = dlg.ShowModal()
+	result = dlg.ShowWindowModalBlocking()
 	index = dlg_list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
 										  wx.LIST_STATE_SELECTED)
 	dlg.Destroy()
@@ -9154,10 +9154,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
 			dlg.OnCloseIntercept = self.profile_finish_close_handler
-			if sys.platform != "win32":
-				# Make sure we stay under our dialog
-				self.Bind(wx.EVT_ACTIVATE, self.modaldlg_raise_handler)
-			dlg.Show()
+			dlg.ShowWindowModal()
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -9597,10 +9594,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		else:
 			response = "invalid"
 		return response
-	
-	def modaldlg_raise_handler(self, event):
-		""" Prevent modal dialog from being lowered (keep on top) """
-		self.modaldlg.Raise()
 
 	def observer_ctrl_handler(self, event):
 		observer = self.observers_ba.get(self.observer_ctrl.GetStringSelection())
@@ -11326,7 +11319,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 						  border=12)
 		dlg.sizer2.Insert(0, (32 + 12, 1))
-		result = dlg.ShowModal()
+		result = dlg.ShowWindowModalBlocking()
 		dlg.Destroy()
 		if result == wx.ID_OK:
 			ccxx = CGATS.CGATS(cgats)

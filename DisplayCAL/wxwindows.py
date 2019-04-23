@@ -2205,6 +2205,11 @@ class BaseInteractiveDialog(wx.Dialog):
 	def ShowModal(self):
 		self.set_position()
 		result = wx.Dialog.ShowModal(self)
+		if self:
+			self.update_taskbar()
+		return result
+
+	def update_taskbar(self):
 		if self and self.taskbar:
 			state = None
 			if (isinstance(self.Parent, ProgressDialog) and
@@ -2217,7 +2222,36 @@ class BaseInteractiveDialog(wx.Dialog):
 				state = taskbar.TBPF_NOPROGRESS
 			if state is not None:
 				self.taskbar.set_progress_state(state)
-		return result
+
+	def ShowWindowModal(self):
+		self.set_position()
+		wx.Dialog.ShowWindowModal(self)
+
+	def ShowWindowModalBlocking(self):
+		"""
+		Blocking ShoWindowModal implementation.
+		
+		Normally, ShowWindowModal is only implemented under macOS and doesn't
+		block. This version blocks, while still allowing interaction with
+		windows other than the parent (i.e. like ShowModal under platforms
+		other than macOS).
+		
+		"""
+		if sys.platform == "darwin":
+			result = {"dlg": None, "retcode": wx.ID_CANCEL}
+			def OnCloseWindowModalDialog(event):
+				result["dlg"] = event.GetDialog()
+				result["retcode"] = event.GetReturnCode()
+			self.Bind(wx.EVT_WINDOW_MODAL_DIALOG_CLOSED,
+					  OnCloseWindowModalDialog)
+			self.ShowWindowModal()
+			while self and result["dlg"] is not self:
+				wx.Yield()
+				sleep(1.0 / 60)
+			return result["retcode"]
+		else:
+			# Other platforms: Just use ShowModal
+			return self.ShowModal()
 
 	def set_position(self):
 		if self.Parent and self.Parent.IsIconized():
