@@ -510,14 +510,16 @@ def strtr(txt, replacements):
 	"""
 	String multi-replace, a bit like PHP's strtr.
 	
-	replacements can be a dict or a list.
-	If it is a list, all items are replaced with the empty string ("").
+	replacements can be a dict, a list or a string.
+	If list or string, all matches are replaced with the empty string ("").
 	
 	"""
 	if hasattr(replacements, "iteritems"):
 		replacements = replacements.iteritems()
 	elif isinstance(replacements, basestring):
-		replacements = zip(replacements, [""] * len(replacements))
+		for srch in replacements:
+			txt = txt.replace(srch, "")
+		return txt
 	for srch, sub in replacements:
 		txt = txt.replace(srch, sub)
 	return txt
