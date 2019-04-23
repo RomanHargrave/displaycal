@@ -11317,6 +11317,15 @@ class MainFrame(ReportFrame, BaseFrame):
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
+		dlg.info = wx.Button(dlg.buttonpanel, -1,
+							 lang.getstr("colorimeter_correction.info"))
+		def show_ccxx_info(event):
+			self.colorimeter_correction_info_handler(event, cgats)
+		dlg.info.Bind(wx.EVT_BUTTON, show_ccxx_info)
+		dlg.sizer2.Insert(0, dlg.info,
+						  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+						  border=12)
+		dlg.sizer2.Insert(0, (32 + 12, 1))
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_OK:
