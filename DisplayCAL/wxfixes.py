@@ -1306,6 +1306,13 @@ class PlateButton(platebtn.PlateButton):
 	def __init__(self, *args, **kwargs):
 		platebtn.PlateButton.__init__(self, *args, **kwargs)
 		self._bmp["hilite"] = None
+		if sys.platform == "darwin":
+			# Use Sierra-like color scheme
+			from wxaddons import gamma_encode
+			color = wx.Colour(*gamma_encode(0, 105, 217))
+		else:
+			color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+		self._color['hlight'] = color
 		self.Unbind(wx.EVT_LEAVE_WINDOW)
 		self.Bind(wx.EVT_LEAVE_WINDOW,
 				  lambda evt: wx.CallLater(80, self.__LeaveWindow))

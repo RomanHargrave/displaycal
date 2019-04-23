@@ -9148,10 +9148,6 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			dlg._disabler = BetterWindowDisabler([dlg,
-												  getattr(self, "lut_viewer",
-														  None)] +
-												 self.profile_info.values())
 			dlg.profile = profile
 			dlg.profile_path = profile_path
 			dlg.skip_scripts = skip_scripts
@@ -9320,7 +9316,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE)
 		self.Raise()
-		del self.modaldlg._disabler
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute
