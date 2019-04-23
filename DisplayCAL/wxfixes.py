@@ -911,6 +911,15 @@ def set_bitmap_labels(btn, disabled=True, focus=None, pressed=True):
 			btn.SetBitmapSelected(bmp)
 
 
+def get_dialogs(modal=False):
+	""" If there are any dialogs open, return them """
+	return filter(lambda window: window and
+								 isinstance(window, wx.Dialog) and
+								 window.IsShown() and
+								 (not modal or window.IsModal()),
+				  wx.GetTopLevelWindows())
+
+
 # wx.DirDialog and wx.FileDialog are normally not returned by
 # wx.GetTopLevelWindows, do some trickery to work around
 
@@ -1352,7 +1361,7 @@ class PlateButton(platebtn.PlateButton):
 		"""
 		self._bmp['hilite'] = bmp
 
-	def __DrawBitmap(self, gc):
+	def __DrawBitmap(self, gc, interactable):
 		"""Draw the bitmap if one has been set
 
 		:param GCDC `gc`: :class:`GCDC` to draw with
@@ -1361,7 +1370,7 @@ class PlateButton(platebtn.PlateButton):
 		"""
 		if self.IsEnabled():
 			if self._state['cur'] in (platebtn.PLATE_HIGHLIGHT,
-									  platebtn.PLATE_PRESSED):
+									  platebtn.PLATE_PRESSED) and interactable:
 				bmp = self._bmp['hilite']
 			else:
 				bmp = self._bmp['enable']
@@ -1413,11 +1422,13 @@ class PlateButton(platebtn.PlateButton):
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
 		# Our IsEnabled() override only deals with explit enabled/disabled
-		# state, while wx.Control.IsEnabled() deals with interaction state
+		# state, while we also need to deal with interaction state
 		# (button enabled and interactable, eg. no modal dialog shown that
 		# would prevent interaction)
+		dialogs = get_dialogs()
+		interactable = not dialogs or self.TopLevelParent in dialogs
 		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT and
-			wx.Control.IsEnabled(self)):
+			self.IsEnabled() and interactable):
 			gc.SetTextForeground(self._color['htxt'])
 			gc.SetPen(wx.TRANSPARENT_PEN)
 			self.__DrawHighlight(gc, width, height)
@@ -1428,7 +1439,7 @@ class PlateButton(platebtn.PlateButton):
 			gc.SetPen(pen)
 
 			self.__DrawHighlight(gc, width, height)
-			txt_x = self.__DrawBitmap(gc)
+			txt_x = self.__DrawBitmap(gc, interactable)
 			t_x = max((width - tw - (txt_x + 4)) // 2, txt_x + 4)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
@@ -1442,7 +1453,7 @@ class PlateButton(platebtn.PlateButton):
 
 		# Draw bitmap and text
 		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
-			txt_x = self.__DrawBitmap(gc)
+			txt_x = self.__DrawBitmap(gc, interactable)
 			t_x = max((width - tw - (txt_x + 4)) // 2, txt_x + 4)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)

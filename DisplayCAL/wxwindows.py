@@ -46,7 +46,7 @@ from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 PlateButton, ThemedGenButton, adjust_font_size_for_gcdc,
 					 get_bitmap_disabled, get_dc_font_size, platebtn,
-					 set_bitmap_labels, wx_Panel)
+					 set_bitmap_labels, wx_Panel, get_dialogs)
 from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, CLICK, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -6804,15 +6804,6 @@ def get_widget(win, id_name_label):
 				(child.Id == id_name_label or child.Name == id_name_label or
 				 child.Label == id_name_label)):
 				return child
-
-
-def get_dialogs(modal=False):
-	""" If there are any dialogs open, return them """
-	return filter(lambda window: window and
-								 isinstance(window, wx.Dialog) and
-								 window.IsShown() and
-								 (not modal or window.IsModal()),
-				  wx.GetTopLevelWindows())
 
 
 def get_toplevel_window(id_name_label):
