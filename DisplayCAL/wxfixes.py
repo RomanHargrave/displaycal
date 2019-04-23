@@ -1412,7 +1412,12 @@ class PlateButton(platebtn.PlateButton):
 
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
-		if self._state['cur'] == platebtn.PLATE_HIGHLIGHT and self.IsEnabled():
+		# Our IsEnabled() override only deals with explit enabled/disabled
+		# state, while wx.Control.IsEnabled() deals with interaction state
+		# (button enabled and interactable, eg. no modal dialog shown that
+		# would prevent interaction)
+		if (self._state['cur'] == platebtn.PLATE_HIGHLIGHT and
+			wx.Control.IsEnabled(self)):
 			gc.SetTextForeground(self._color['htxt'])
 			gc.SetPen(wx.TRANSPARENT_PEN)
 			self.__DrawHighlight(gc, width, height)
