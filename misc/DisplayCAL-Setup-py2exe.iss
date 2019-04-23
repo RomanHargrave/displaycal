@@ -54,6 +54,7 @@ Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\*; De
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\%(AppName)s.exe; DestDir: {app}; Flags: replacesameversion; 
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\README.html; DestDir: {app}; Flags: isreadme; 
 Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\README-fr.html; DestDir: {app}; Flags: isreadme; Languages: french
+Source: ..\..\ccss\*.ccss; DestDir: {commonappdata}\ArgyllCMS; Flags: replacesameversion; 
 
 [Icons]
 Name: {group}\%(AppName)s; Filename: {app}\%(AppName)s.exe; IconFilename: {app}\%(AppName)s.exe
@@ -80,9 +81,6 @@ Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader La
 Filename: {app}\%(AppName)s-apply-profiles.exe; Flags: nowait RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal; 
 MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
 
-[Dirs]
-Name: {commonappdata}\%(AppName)s; Permissions: users-modify;
-
 [InstallDelete]
 Type: files; Name: "{commonstartup}\dispcalGUI Profile Loader.lnk"
 Type: files; Name: "{group}\*dispcalGUI*"
@@ -101,3 +99,35 @@ Type: filesandordirs; Name: "{commonprograms}\{groupname}"
 [UninstallRun]
 Filename: taskkill.exe; parameters: /im %(AppName)s-apply-profiles.exe; Flags: RunHidden RunAsCurrentUser;
 Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
+
+[Code]
+function Get_RunEntryShellExec_Message(Value: string): string;
+begin
+	Result := FmtMessage(SetupMessage(msgRunEntryShellExec), [Value]);
+end;
+
+function Get_UninstallString(AppId: string): string;
+var
+	UninstallString: string;
+begin
+	if not RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + AppId + '_is1', 'UninstallString', UninstallString) and
+		not RegQueryStringValue(HKLM, 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\' + AppId + '_is1', 'UninstallString', UninstallString) and
+			not RegQueryStringValue(HKCU, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + AppId + '_is1', 'UninstallString', UninstallString) then
+				RegQueryStringValue(HKCU, 'SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\' + AppId + '_is1', 'UninstallString', UninstallString);
+	Result := RemoveQuotes(UninstallString);
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+	ErrorCode: integer;
+	UninstallString: string;
+begin
+	if CurStep=ssInstall then begin
+		UninstallString := Get_UninstallString(ExpandConstant('{#emit SetupSetting("AppId")}'));
+		if UninstallString <> '' then begin
+			if not Exec(UninstallString, '/SILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then begin
+				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
+			end;
+		end;
+	end;
+end;
