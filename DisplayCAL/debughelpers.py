@@ -41,7 +41,7 @@ def getevttype(event):
 		return wxEventTypes[typeId]
 
 
-def handle_error(error, parent=None, silent=False):
+def handle_error(error, parent=None, silent=False, tb=True):
 	""" Log an error string and show an error dialog. """
 	if isinstance(error, tuple):
 		# We got a tuple. Assume (etype, value, tb)
@@ -49,7 +49,7 @@ def handle_error(error, parent=None, silent=False):
 		error = error[1]
 	else:
 		tbstr = traceback.format_exc()
-	if (tbstr.strip() != "None" and isinstance(error, Exception) and
+	if (tb and tbstr.strip() != "None" and isinstance(error, Exception) and
 		(debug or not isinstance(error, EnvironmentError) or
 		 not getattr(error, "filename", None))):
 		# Print a traceback if in debug mode, for non environment errors, and

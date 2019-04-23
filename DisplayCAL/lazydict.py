@@ -7,7 +7,7 @@ import os
 
 from config import get_data_path
 from debughelpers import handle_error
-from util_str import safe_unicode
+from util_str import safe_str, safe_unicode
 
 
 def unquote(string, raise_exception=True):
@@ -182,27 +182,22 @@ class LazyDict(dict):
 				if errors:
 					self.errors = errors
 			else:
-				handle_error(UserWarning(u"Warning - file '%s' not found" % 
-										 safe_unicode(path)))
+				handle_error(UserWarning(u"Warning - file not found:\n\n%s" % 
+										 safe_unicode(path)), tb=False)
 				return
 			try:
 				with codecs.open(path, "rU", self.encoding, self.errors) as f:
 					self.parse(f)
-			except (UnicodeDecodeError, ValueError), exception:
+			except EnvironmentError, exception:
 				if raise_exceptions:
 					raise
-				handle_error(UserWarning(
-					u"Warning - file '%s': %s" % 
-					tuple(safe_unicode(s) for s in 
-						  (path, safe_unicode(exception).capitalize() if 
-								 isinstance(exception, ValueError)
-								 else exception))))
+				handle_error(exception)
 			except Exception, exception:
 				if raise_exceptions:
 					raise
-				handle_error(UserWarning(u"Warning - file '%s': %s" % 
+				handle_error(UserWarning(u"Error parsing file:\n\n%s\n\n%s" %
 										 tuple(safe_unicode(s) for s in
-											   (path, exception))))
+											   (path, exception))), tb=False)
 
 	def parse(self, iterable):
 		# Override this in subclass
@@ -278,7 +273,7 @@ class LazyDict_YAML_UltraLite(LazyDict):
 		key = None
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
-		for i, line in enumerate(fileobj.readlines()):
+		for i, line in enumerate(fileobj.readlines(), 1):
 			if line.lstrip(" ").startswith("#"):
 				# Ignore comments
 				pass
@@ -289,7 +284,8 @@ class LazyDict_YAML_UltraLite(LazyDict):
 				tokens = line.split(":", 1)
 				if len(tokens) == 1:
 					raise ValueError("Unsupported format (%r line %i)" %
-									 (getattr(fileobj, "name", line), i))
+									 (safe_str(getattr(fileobj, "name", line)),
+									  i))
 				# key = tokens[0].strip("'"'"')
 				key = self._unquote(tokens[0].strip(), False, False, fileobj, i)
 				token = tokens[1].strip(" \n")
@@ -301,17 +297,19 @@ class LazyDict_YAML_UltraLite(LazyDict):
 							value = []
 							continue
 						raise ValueError("Expected a comment or a line break "
-										 "(%r line %i)" % (getattr(fileobj,
-																   "name",
-																   line), i))
+										 "(%r line %i)" %
+										 (safe_str(getattr(fileobj, "name",
+														   line)), i))
 				elif token.startswith("|") or token.startswith(">"):
 					raise ValueError("Style not supported "
-									 "(%r line %i)" % (getattr(fileobj, "name",
-															   line), i))
+									 "(%r line %i)" %
+									 (safe_str(getattr(fileobj, "name", line)),
+									  i))
 				elif token.startswith("\t"):
 					raise ValueError("Found character '\\t' that cannot "
 									 "start any token (%r line %i)" %
-									 (getattr(fileobj, "name", line), i))
+									 (safe_str(getattr(fileobj, "name", line)),
+									  i))
 				if token:
 					# Inline value
 					block = False
@@ -332,7 +330,8 @@ class LazyDict_YAML_UltraLite(LazyDict):
 			else:
 				if not block:
 					raise ValueError("Unsupported format (%r line %i)" %
-									 (getattr(fileobj, "name", line), i))
+									 (safe_str(getattr(fileobj, "name", line)),
+									  i))
 				value.append(line[2:])
 		if key:
 			self[key] = "".join(value).rstrip("\n")
@@ -344,21 +343,21 @@ class LazyDict_YAML_UltraLite(LazyDict):
 				token = token[1:-1]
 				if check and token.count(c) != token.count("\\" + c):
 					raise ValueError("Unescaped quotes found in token "
-									 "(%r line %i)" % (getattr(fileobj, "name",
-															   token),
-													   lineno))
+									 "(%r line %i)" %
+									 (safe_str(getattr(fileobj, "name", token)),
+									  lineno))
 				if do_unescape:
 					token = unescape(token)
 			elif check and (token.count('"') != token.count('\\"')):
 				raise ValueError("Unbalanced quotes found in token "
-								 "(%r line %i)" % (getattr(fileobj, "name",
-														   token),
-												   lineno))
+								 "(%r line %i)" %
+								 (safe_str(getattr(fileobj, "name", token)),
+								  lineno))
 			if check and "\\'" in token:
 				raise ValueError("Found unknown escape character \"'\" "
-								 "(%r line %i)" % (getattr(fileobj, "name",
-														   token),
-												   lineno))
+								 "(%r line %i)" %
+								 (safe_str(getattr(fileobj, "name", token)),
+								  lineno))
 		return token
 
 
@@ -401,7 +400,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 		key = None
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
-		for i, line in enumerate(fileobj.readlines()):
+		for i, line in enumerate(fileobj.readlines(), 1):
 			line_lwstrip = line.lstrip(" ")
 			if quote:
 				line_rstrip = line.rstrip()
@@ -426,7 +425,8 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				if quote:
 					raise ValueError("Wrong end quote while scanning quoted "
 									 "scalar (%r line %i)" %
-									 (getattr(fileobj, "name", line), i))
+									 (safe_str(getattr(fileobj, "name", line)),
+									  i))
 				else:
 					if self.debug:
 						print "START QUOTE"
@@ -440,7 +440,8 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					if not quote and "\t" in line:
 						raise ValueError("Found character '\\t' that cannot "
 										 "start any token (%r line %i)" %
-										 (getattr(fileobj, "name", line), i))
+										 (safe_str(getattr(fileobj, "name",
+														   line)), i))
 					line = line.strip() + "\n"
 					if self.debug:
 						print "APPEND STRIPPED + \\n", repr(line)
@@ -468,12 +469,14 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					if token.startswith("\t"):
 						raise ValueError("Found character '\\t' that cannot "
 										 "start any token (%r line %i)" %
-										 (getattr(fileobj, "name", line), i))
+										 (safe_str(getattr(fileobj, "name",
+														   line)), i))
 					if style.startswith(">"):
 						raise NotImplementedError("Folded style is not "
 												  "supported (%r line %i)" %
-												  (getattr(fileobj, "name",
-														   line), i))
+												  (safe_str(getattr(fileobj,
+																	"name",
+																	line)), i))
 					if token.startswith("#"):
 						# Block or folded
 						if self.debug:
@@ -482,12 +485,13 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 						continue
 					if style and token:
 						raise ValueError("Expected a comment or a line break "
-										 "(%r line %i)" % (getattr(fileobj,
-																   "name",
-																   line), i))
+										 "(%r line %i)" %
+										 (safe_str(getattr(fileobj, "name",
+														   line)), i))
 				else:
 					raise ValueError("Unsupported format (%r line %i)" %
-									 (getattr(fileobj, "name", line), i))
+									 (safe_str(getattr(fileobj, "name", line)),
+									  i))
 				if style or not token:
 					# Block or folded
 					if self.debug:
@@ -530,7 +534,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				value.append(line)
 		if quote:
 			raise ValueError("EOF while scanning quoted scalar (%r line %i)" %
-							 (getattr(fileobj, "name", line), i))
+							 (safe_str(getattr(fileobj, "name", line)), i))
 		if key:
 			if self.debug:
 				print "FINAL COLLECT"
