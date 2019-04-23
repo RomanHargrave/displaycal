@@ -2,6 +2,7 @@
 
 from __future__ import with_statement
 import codecs
+import json
 import os
 
 from config import get_data_path
@@ -238,6 +239,17 @@ class LazyDict(dict):
 		return dict.values(self)
 
 
+class LazyDict_JSON(LazyDict):
+
+	"""
+	JSON lazy dictionary
+	
+	"""
+	
+	def parse(self, fileobj):
+		dict.update(self, json.load(fileobj))
+
+
 class LazyDict_YAML_UltraLite(LazyDict):
 
 	"""
@@ -272,41 +284,69 @@ class LazyDict_YAML_UltraLite(LazyDict):
 		
 		"""
 		value = []
+		key = None
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
 		for i, line in enumerate(fileobj.readlines()):
-			if line.startswith("#"):
+			if line.lstrip(" ").startswith("#"):
 				# Ignore comments
 				pass
 			elif line != "\n" and not line.startswith("  "):
 				if value:
-					self[key] = "\n".join(value)
+					self[key] = "".join(value).rstrip("\n")
 				#tokens = line.rstrip(' -|\n').split(":", 1)
 				tokens = line.split(":", 1)
 				if len(tokens) == 1:
 					raise ValueError("Unsupported format (%r line %i)" %
 									 (getattr(fileobj, "name", line), i))
+				# key = tokens[0].strip("'"'"')
+				key = self._unquote(tokens[0].strip(), False, False, fileobj, i)
 				token = tokens[1].strip(" \n")
 				if token.startswith("|-"):
-					token = token[2:].lstrip()
+					style = "|-"
+					token = token[2:].lstrip(" ")
+					if token:
+						if token.startswith("#"):
+							value = []
+							continue
+						raise ValueError("Expected a comment or a line break "
+										 "(%r line %i)" % (getattr(fileobj,
+																   "name",
+																   line), i))
 				elif token.startswith("|") or token.startswith(">"):
 					raise ValueError("Style not supported "
 									 "(%r line %i)" % (getattr(fileobj, "name",
 															   line), i))
-				# key = tokens[0].strip("'"'"')
-				key = self._unquote(tokens[0].strip(), False, False, fileobj, i)
+				elif token.startswith("\t"):
+					raise ValueError("Found character '\\t' that cannot "
+									 "start any token (%r line %i)" %
+									 (getattr(fileobj, "name", line), i))
 				if token:
 					# Inline value
+					style = None
+					if token.startswith("#"):
+						value = []
+						continue
+					comment_offset = token.find("#")
+					if (comment_offset > -1 and
+						token[comment_offset - 1:comment_offset] == " "):
+						token = token[:comment_offset].rstrip(" \n")
+						if not token:
+							value = []
+							continue
 					# value = [token.strip("'"'"')]
 					value = [self._unquote(token, True, True, fileobj, i)]
 				else:
 					value = []
 			else:
-				value.append(line[2:].rstrip("\n"))
-		if value:
-			self[key] = "\n".join(value)
+				if not style:
+					raise ValueError("Unsupported format (%r line %i)" %
+									 (getattr(fileobj, "name", line), i))
+				value.append(line[2:])
+		if key:
+			self[key] = "".join(value).rstrip("\n")
 
-	def _unquote(self, token, unescape=True, check=True, fileobj=None, lineno=-1):
+	def _unquote(self, token, unescape=True, check=False, fileobj=None, lineno=-1):
 		if len(token) > 1:
 			c = token[0]
 			if c in "'"'"' and c == token[-1]:
@@ -316,6 +356,8 @@ class LazyDict_YAML_UltraLite(LazyDict):
 									 "(%r line %i)" % (getattr(fileobj, "name",
 															   token),
 													   lineno))
+				if unescape:
+					token = token.replace('\\"', '"')
 			elif check and (token.count('"') != token.count('\\"')):
 				raise ValueError("Unbalanced quotes found in token "
 								 "(%r line %i)" % (getattr(fileobj, "name",
@@ -326,8 +368,6 @@ class LazyDict_YAML_UltraLite(LazyDict):
 								 "(%r line %i)" % (getattr(fileobj, "name",
 														   token),
 												   lineno))
-			if unescape:
-				token = token.replace('\\"', '"')
 		return token
 
 
@@ -376,7 +416,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				line_rstrip = line.rstrip()
 			if self.debug:
 				print 'LINE', repr(line)
-			if line.startswith("#"):
+			if not quote and style not in block_styles and line_lwstrip.startswith("#"):
 				# Ignore comments
 				pass
 			elif quote and line_rstrip and line_rstrip[-1] == quote:
@@ -425,8 +465,16 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 				key = unquote(tokens[0].strip())
 				if len(tokens) > 1:
 					token = tokens[1].lstrip(" ").rstrip(" \n")
-					style = token
-					if style.startswith("\t"):
+					if token.startswith("|") or token.startswith(">"):
+						if token[1:2] in "+-":
+							style = token[:2]
+							token = token[2:].lstrip(" ")
+						else:
+							style = token[:1]
+							token = token[1:].lstrip(" ")
+					else:
+						style = ""
+					if token.startswith("\t"):
 						raise ValueError("Found character '\\t' that cannot "
 										 "start any token (%r line %i)" %
 										 (getattr(fileobj, "name", line), i))
@@ -435,10 +483,21 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 												  "supported (%r line %i)" %
 												  (getattr(fileobj, "name",
 														   line), i))
+					if token.startswith("#"):
+						# Block or folded
+						if self.debug:
+							print 'IN BLOCK', repr(key), style
+						value = []
+						continue
+					if style and token:
+						raise ValueError("Expected a comment or a line break "
+										 "(%r line %i)" % (getattr(fileobj,
+																   "name",
+																   line), i))
 				else:
 					raise ValueError("Unsupported format (%r line %i)" %
 									 (getattr(fileobj, "name", line), i))
-				if style in block_styles or not style:
+				if style or not token:
 					# Block or folded
 					if self.debug:
 						print 'IN BLOCK', repr(key), style
@@ -448,6 +507,9 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 					if self.debug:
 						print 'IN PLAIN', repr(key), repr(token)
 					style = None
+					if token.startswith("#"):
+						value = []
+						continue
 					token_rstrip = token.rstrip()
 					if (token_rstrip and token_rstrip[0] in ("'", '"') and
 						(len(token_rstrip) < 2 or
@@ -457,6 +519,10 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 						quote = token_rstrip[0]
 					else:
 						style = ">i"
+						comment_offset = token_rstrip.find("#")
+						if (comment_offset > -1 and
+							token_rstrip[comment_offset - 1:comment_offset] == " "):
+							token_rstrip = token_rstrip[:comment_offset].rstrip()
 					token_rstrip += "\n"
 					if self.debug:
 						print "SET", repr(token_rstrip)
@@ -474,7 +540,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 		if quote:
 			raise ValueError("EOF while scanning quoted scalar (%r line %i)" %
 							 (getattr(fileobj, "name", line), i))
-		if key and value:
+		if key:
 			if self.debug:
 				print "FINAL COLLECT"
 			self._collect(key, value, style)
@@ -538,10 +604,11 @@ def test():
 	from StringIO import StringIO
 	from time import time
 
-	from jsondict import LazyDict_JSON
+	from jsondict import JSONDict
 
 	# PyYAML
 	import yaml
+	from yaml import CSafeLoader
 
 	def y(doc):
 		try:
@@ -561,7 +628,7 @@ def test():
 		return l
 
 
-	def c(doc):
+	def c(doc, do_assert=True):
 		print "-" * 80
 		print repr(doc)
 		a = l(doc)
@@ -570,7 +637,8 @@ def test():
 		print 'yaml.YAML         ', b
 		identical = isinstance(a, dict) and isinstance(b, dict) and a == b
 		print 'Identical?', identical
-		assert identical
+		if do_assert:
+			assert identical
 
 
 	print "Testing YAML Lite to YAML conformance"
@@ -599,6 +667,10 @@ def test():
 	c('TEST: |-\n  \n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
 	c('TEST: |\n  \n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
 	c('TEST:\n  \n  ABC\n\n  DEFG\n  \n    \n\n\n\n ')
+	c('TEST: |- # Comment\n  Value')
+	c('TEST: |- # Comment\n  Value # Not A Comment\n  # Not A Comment')
+
+	c('TEST: # Comment', do_assert=False)
 
 	print "=" * 80
 	print "Performance test"
@@ -609,12 +681,19 @@ def test():
 "test4": "Value 4"}
 ''')
 
-	d = LazyDict_JSON()
+	d = JSONDict()
 	ts = time()
 	for i in xrange(10000):
 		d.parse(io)
 		io.seek(0)
 	jt = time() - ts
+
+	d = LazyDict_JSON()
+	ts = time()
+	for i in xrange(10000):
+		d.parse(io)
+		io.seek(0)
+	ljt = time() - ts
 
 	io = StringIO('''"test1": Value 1
 "test2": |-
@@ -647,10 +726,18 @@ def test():
 		io.seek(0)
 	yt = time() - ts
 
-	print "LazyDict_JSON:", jt
-	print "LazyDict_YAML_UltraLite: %.3fs," % yult, "vs JSON: %.1fx speed," % round(jt / yult, 1), "vs YAML_Lite: %.1fx speed," % round(ylt / yult, 1), "vs PyYAML: %.1fx speed," % round(yt / yult, 1)
-	print "LazyDict_YAML_Lite: %.3fs," % ylt, "vs JSON: %.1fx speed," % round(jt / ylt, 1), "vs PyYAML: %.1fx speed," % round(yt / ylt, 1)
-	print "yaml.safe_load: %.3fs," % yt
+	ts = time()
+	for i in xrange(10000):
+		yaml.load(io, Loader=CSafeLoader)
+		io.seek(0)
+	yct = time() - ts
+
+	print "JSONDict(demjson): %.3fs" % jt
+	print "LazyDict_JSON: %.3fs" % ljt
+	print "LazyDict_YAML_UltraLite: %.3fs," % yult, "vs JSONDict: %.1fx speed," % round(jt / yult, 1), "vs YAML_Lite: %.1fx speed," % round(ylt / yult, 1), "vs PyYAML: %.1fx speed," % round(yt / yult, 1)
+	print "LazyDict_YAML_Lite: %.3fs," % ylt, "vs JSONDict: %.1fx speed," % round(jt / ylt, 1), "vs PyYAML: %.1fx speed," % round(yt / ylt, 1)
+	print "yaml.safe_load: %.3fs" % yt
+	print "yaml.load(CSafeLoader): %.3fs" % yct
 
 
 if __name__ == "__main__":
