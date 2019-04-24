@@ -564,7 +564,6 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						   geticon(16, "info"))
 	dlg.info.SetBitmapHover(geticon(16, "info-inverted"))
 	dlg.info.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
-	dlg.info.Disable()
 	dlg.sizer2.Insert(0, dlg.info,
 					  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 					  border=12)
@@ -726,6 +725,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	if len(cgats) > 1:
 		# We got several matches
 		dlg.ok.Disable()
+		dlg.info.Disable()
 	else:
 		item = dlg_list_ctrl.GetItem(0)
 		dlg_list_ctrl.SetItemState(item.GetId(), wx.LIST_STATE_SELECTED, 
