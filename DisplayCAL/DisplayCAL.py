@@ -760,7 +760,7 @@ def colorimeter_correction_check_overwrite(parent=None, cgats=None,
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-warning"))
-		result = dlg.ShowModal()
+		result = dlg.ShowWindowModalBlocking()
 		dlg.Destroy()
 		if result != wx.ID_OK:
 			return False
@@ -10390,7 +10390,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			check_last_ccxx_ti3(dlg.measurement_mode_reference)
 			check_last_ccxx_ti3(dlg.measurement_mode)
 			correction_type_handler(None)
-			result = dlg.ShowModal()
+			result = dlg.ShowWindowModalBlocking()
 			if result != wx.ID_CANCEL:
 				observer = self.observers_ba.get(dlg.observer_reference_ctrl.GetStringSelection())
 				setcfg("colorimeter_correction.observer.reference", observer)
@@ -10850,7 +10850,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.Center()
-			result = dlg.ShowModal()
+			result = dlg.ShowWindowModalBlocking()
 			description = safe_str(dlg.description_txt_ctrl.GetValue().strip(),
 								   "UTF-8")
 			if use_display_txt_ctrl:
@@ -11214,7 +11214,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 				if event:
-					result = dlg.ShowModal()
+					result = dlg.ShowWindowModalBlocking()
 				else:
 					result = wx.ID_OK
 				dlg.Destroy()
