@@ -290,6 +290,11 @@ instruments = {
 				"vid": 0x0971,
 				"pid": 0x2007,
 				"hid": False
+			},
+			{  # ColorMunki i1Studio
+				"vid": 0x0765,
+				"pid": 0x6008,
+				"hid": False
 			}
 		],
 		"spectral": True,

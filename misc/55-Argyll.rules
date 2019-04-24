@@ -56,7 +56,7 @@ ATTRS{idVendor}=="0765", ATTRS{idProduct}=="5020", ENV{COLORD_SENSOR_KIND}="i1-d
 ATTRS{idVendor}=="0765", ATTRS{idProduct}=="6003", ENV{COLORD_SENSOR_KIND}="color-munki-smile", ENV{COLORD_SENSOR_CAPS}="lcd-ccfl lcd-white-led"
 
 # ColorMunki i1 Studio
-ATTRS{idVendor}=="0768", ATTRS{idProduct}=="6008", ENV{COLORD_SENSOR_KIND}="color-munki-photo" ENV{COLORD_SENSOR_CAPS}="lcd crt projector printer spot ambient"
+ATTRS{idVendor}=="0765", ATTRS{idProduct}=="6008", ENV{COLORD_SENSOR_KIND}="color-munki-photo" ENV{COLORD_SENSOR_CAPS}="lcd crt projector printer spot ambient"
 
 # DTP20
 ATTRS{idVendor}=="0765", ATTRS{idProduct}=="d020", ENV{COLORD_SENSOR_KIND}="dtp20" ENV{COLORD_SENSOR_CAPS}="printer spot"
