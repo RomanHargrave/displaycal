@@ -2405,15 +2405,22 @@ class MainFrame(ReportFrame, BaseFrame):
 		llist = [(lang.ldict[lcode].get("!language", ""), lcode) for lcode in 
 				 lang.ldict]
 		llist.sort()
+		# Map language code to ISO 3166-1 alpha-2 country code
+		lmap = {"en": "us",
+				"ko": "kr",
+				"ukr": "ua",
+				"zh_hk": "cn",
+				"zh_cn": "cn"}
 		for lstr, lcode in llist:
 			menuitem = languages.Append(-1, "&" + lstr, kind=wx.ITEM_RADIO)
-			if (lcode.upper().replace("EN", "US") in flagart.catalog):
+			lcode2 = lmap.get(lcode, lcode).upper()
+			if (lcode2 in flagart.catalog):
 				if (sys.platform in ("darwin", "win32") or
 					menuitem.GetKind() == wx.ITEM_NORMAL):
 					# This can fail under Linux with wxPython 3.0
 					# because only normal menu items can have bitmaps
 					# there. Working fine on all other platforms.
-					pyimg = flagart.catalog[lcode.upper().replace("EN", "US")]
+					pyimg = flagart.catalog[lcode2]
 					if pyimg.Image.IsOk():
 						bmp = pyimg.getBitmap()
 						if bmp.IsOk():
