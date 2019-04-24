@@ -534,10 +534,11 @@ class BetterWindowDisabler(object):
 	
 	windows = set()
 
-	def __init__(self, skip=None, toplevelparent=None):
+	def __init__(self, skip=None, toplevelparent=None, include_menus=False):
 		self._windows = []
 		self.skip = skip
 		self.toplevelparent = toplevelparent
+		self.include_menus = include_menus
 		self.disable()
 
 	def __del__(self):
@@ -586,6 +587,12 @@ class BetterWindowDisabler(object):
 							# Don't disable panels, this can have weird side
 							# effects for contained controls
 							self._windows.append(child)
+					if self.include_menus:
+						menubar = w.GetMenuBar()
+						if menubar:
+							for menu, label in menubar.GetMenus():
+								for item in menu.GetMenuItems():
+									self._windows.append(item)
 			def Enable(w, enable=True):
 				w._BetterWindowDisabler_enabled = enable
 			def Disable(w):
@@ -593,9 +600,10 @@ class BetterWindowDisabler(object):
 			for w in reversed(self._windows):
 				BetterWindowDisabler.windows.add(w)
 				enabled = w.IsEnabled()
-				w.Disable()
-				w._BetterWindowDisabler_Disable = w.Disable
-				w.Disable = types.MethodType(Disable, w, type(w))
+				w.Enable(False)
+				if hasattr(w, "Disable"):
+					w._BetterWindowDisabler_Disable = w.Disable
+					w.Disable = types.MethodType(Disable, w, type(w))
 				w._BetterWindowDisabler_Enable = w.Enable
 				w.Enable = types.MethodType(Enable, w, type(w))
 				w.Enable(enabled)
