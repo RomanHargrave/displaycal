@@ -7,7 +7,7 @@ import threading
 import types
 
 from colormath import specialpow
-from wxfixes import wx, GenButton, PlateButton
+from wxfixes import wx, GenButton, PlateButton, get_dialogs
 
 import wx.grid
 from lib.agw.gradientbutton import GradientButton
@@ -642,6 +642,13 @@ class FileDrop(wx.FileDropTarget):
 		self.unsupported_handler = None
 
 	def OnDropFiles(self, x, y, filenames):
+		dialogs = get_dialogs()
+		interactable = (not hasattr(self, "parent") or
+						(self.parent.Enabled and
+						 (not dialogs or self.parent in dialogs)))
+		if not interactable:
+			wx.Bell()
+			return
 		self._files = []
 		self._filenames = filenames
 

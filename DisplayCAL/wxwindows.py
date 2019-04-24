@@ -2198,12 +2198,12 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.EndModal(id)
 
 	def EndModal(self, id):
+		# Re-enable other windows
+		if hasattr(self, "_disabler"):
+			del self._disabler
 		if self.IsModal():
 			return wx.Dialog.EndModal(self, id)
 		else:
-			# Re-enable other windows
-			if hasattr(self, "_disabler"):
-				del self._disabler
 			# Process wx.WindowModalDialogEvent
 			event = wx.WindowModalDialogEvent(wx.wxEVT_WINDOW_MODAL_DIALOG_CLOSED,
 											  self.Id)
@@ -2238,11 +2238,11 @@ class BaseInteractiveDialog(wx.Dialog):
 
 	def ShowWindowModal(self):
 		self.set_position()
+		self._disabler = BetterWindowDisabler(self, self.Parent)
 		if hasattr(wx.Dialog, "ShowWindowModal") and sys.platform == "darwin":
 			# wx 2.9+
 			wx.Dialog.ShowWindowModal(self)
 		else:
-			self._disabler = BetterWindowDisabler(self, self.Parent)
 			self.Show()
 
 	def ShowWindowModalBlocking(self):

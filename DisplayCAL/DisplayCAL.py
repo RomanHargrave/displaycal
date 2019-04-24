@@ -14092,6 +14092,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if ((getattr(self.worker, "thread", None) and
 			 self.worker.thread.isAlive()) or
 			not self.Shown or not self.Enabled or get_dialogs()):
+			wx.Bell()
 			return
 		if ((event and set_argyll_bin(self, silent, callafter, callafter_args)) or
 			(not event and check_argyll_bin())):
