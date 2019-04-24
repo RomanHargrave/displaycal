@@ -562,7 +562,8 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg.info = PlateButton(dlg.buttonpanel, -1,
 						   lang.getstr("colorimeter_correction.info"),
 						   geticon(16, "info"))
-	dlg.info.SetBitmapHover(geticon(16, "info-inverted"))
+	hovercolor = dlg.info._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
+	dlg.info.SetBitmapHover(geticon(16, "info" + hovercolor))
 	dlg.info.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
 	dlg.sizer2.Insert(0, dlg.info,
 					  flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
@@ -1663,7 +1664,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		btn = PlateButton(self.display_instrument_info_panel, -1,
 						  "info.display_tech.show",
 						  geticon(16, "info"))
-		btn.SetBitmapHover(geticon(16, "info-inverted"))
+		hovercolor = btn._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
+		btn.SetBitmapHover(geticon(16, "info" + hovercolor))
+		btn.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
 		self.display_instrument_info_panel.Sizer.Add((0, 14 * scale))
 		self.display_instrument_info_panel.Sizer.Add(btn, flag=wx.LEFT,
 													 border=(16 + 32 + 7) * scale)
@@ -10838,7 +10841,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			btn = PlateButton(dlg, -1, lang.getstr("info.display_tech.show"),
 							  geticon(16, "info"))
-			btn.SetBitmapHover(geticon(16, "info-inverted"))
+			hovercolor = btn._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
+			btn.SetBitmapHover(geticon(16, "info" + hovercolor))
+			btn.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
 			btn.Bind(wx.EVT_BUTTON, self.display_tech_info_show_handler)
 			boxsizer.Add(btn, flag=wx.ALL | wx.ALIGN_LEFT, border=4)
 			dlg.description_txt_ctrl.SetFocus()
@@ -11306,7 +11311,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		dlg.info = PlateButton(dlg.buttonpanel, -1,
 							   lang.getstr("colorimeter_correction.info"),
 							   geticon(16, "info"))
-		dlg.info.SetBitmapHover(geticon(16, "info-inverted"))
+		hovercolor = dlg.info._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
+		dlg.info.SetBitmapHover(geticon(16, "info" + hovercolor))
 		dlg.info.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "info")))
 		def show_ccxx_info(event):
 			self.colorimeter_correction_info_handler(event, cgats)
@@ -12186,7 +12192,9 @@ class MainFrame(ReportFrame, BaseFrame):
 								lang.getstr("info.display_tech.linklabel.displayspecifications.com"),
 								geticon(16, "web"))
 			link1.SetMaxFontSize(11)
-			link1.SetBitmapHover(geticon(16, "web-inverted"))
+			hovercolor = link1._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
+			link1.SetBitmapHover(geticon(16, "web" + hovercolor))
+			link1.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "web")))
 			link1.Bind(wx.EVT_BUTTON,
 					   lambda e: webbrowser_open("https://www.displayspecifications.com/"))
 			w.sizer0.Add(link1, flag=wx.LEFT, border=12 + 32 + 7)
@@ -12199,7 +12207,9 @@ class MainFrame(ReportFrame, BaseFrame):
 								lang.getstr("info.display_tech.linklabel.everymac.com"),
 								geticon(16, "web"))
 			link2.SetMaxFontSize(11)
-			link2.SetBitmapHover(geticon(16, "web-inverted"))
+			hovercolor = link2._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
+			link2.SetBitmapHover(geticon(16, "web" + hovercolor))
+			link2.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "web")))
 			link2.Bind(wx.EVT_BUTTON,
 					   lambda e: webbrowser_open("https://everymac.com/"))
 			w.sizer0.Add(link2, flag=wx.LEFT, border=12 + 32 + 7)

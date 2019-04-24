@@ -6369,7 +6369,8 @@ class TooltipWindow(InvincibleFrame):
 	
 	def __init__(self, parent=None, id=-1, title=appname, msg="", cols=1,
 				 bitmap=None, pos=(-1, -1), size=(400, -1), 
-				 style=(wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW) &
+				 style=(wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW |
+					    wx.FRAME_FLOAT_ON_PARENT) &
 					   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX), wrap=70,
 				 use_header=True, show=True):
 		scale = getcfg("app.dpi") / get_default_dpi()
