@@ -523,15 +523,21 @@ class ThreadedCallLater(ThreadedTimer):
 
 class BetterWindowDisabler(object):
 	
-	""" Also disables child windows instead of only top level windows. This is
+	"""
+	Also disables child windows instead of only top level windows. This is
 	actually needed under Mac OS X where disabling a top level window will
-	not prevent interaction with its children. """
+	not prevent interaction with its children.
+	
+	If toplevelparent is given, disable only this window and its child windows.
+	
+	"""
 	
 	windows = set()
 
-	def __init__(self, skip=None):
+	def __init__(self, skip=None, toplevelparent=None):
 		self._windows = []
 		self.skip = skip
+		self.toplevelparent = toplevelparent
 		self.disable()
 
 	def __del__(self):
@@ -546,7 +552,10 @@ class BetterWindowDisabler(object):
 			if skip:
 				if not isinstance(skip, (list, tuple)):
 					skip = [skip]
-			toplevel = list(wx.GetTopLevelWindows())
+			if self.toplevelparent:
+				toplevel = [self.toplevelparent]
+			else:
+				toplevel = list(wx.GetTopLevelWindows())
 			for w in toplevel:
 				if (w and w not in skip and "Inspection" not in "%s" % w and
 					w not in BetterWindowDisabler.windows):

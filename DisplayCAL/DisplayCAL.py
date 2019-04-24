@@ -9152,8 +9152,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.profile_path = profile_path
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
-			dlg.OnCloseIntercept = self.profile_finish_close_handler
-			dlg.ShowWindowModal()
+			self.profile_finish_close_handler(dlg.ShowWindowModalBlocking())
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -9170,11 +9169,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not getcfg("dry_run"):
 				setcfg("calibration.file.previous", None)
 	
-	def profile_finish_close_handler(self, event):
-		if event.GetEventObject() == self.modaldlg:
-			result = wx.ID_CANCEL
-		else:
-			result = event.GetId()
+	def profile_finish_close_handler(self, result):
 		lut3d = config.is_virtual_display() or self.install_3dlut
 		# madVR has an API for installing 3D LUTs
 		# Prisma has a HTTP REST interface for uploading and

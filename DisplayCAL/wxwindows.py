@@ -2192,10 +2192,21 @@ class BaseInteractiveDialog(wx.Dialog):
 
 	def OnClose(self, event):
 		if event.GetEventObject() == self:
-			id = wx.ID_OK
+			id = wx.ID_CANCEL
 		else:
 			id = event.GetId()
-		self.EndModal(id)
+		if self.IsModal():
+			self.EndModal(id)
+		else:
+			event.Skip()
+			# Re-enable other windows
+			if hasattr(self, "_disabler"):
+				del self._disabler
+			# Process wx.WindowModalDialogEvent
+			event = wx.WindowModalDialogEvent(wx.wxEVT_WINDOW_MODAL_DIALOG_CLOSED,
+											  self.Id)
+			event.SetInt(id)
+			self.ProcessEvent(event)
 
 	def Show(self, show=True):
 		if show:
@@ -2225,7 +2236,12 @@ class BaseInteractiveDialog(wx.Dialog):
 
 	def ShowWindowModal(self):
 		self.set_position()
-		wx.Dialog.ShowWindowModal(self)
+		if hasattr(wx.Dialog, "ShowWindowModal") and sys.platform == "darwin":
+			# wx 2.9+
+			wx.Dialog.ShowWindowModal(self)
+		else:
+			self._disabler = BetterWindowDisabler(self, self.Parent)
+			self.Show()
 
 	def ShowWindowModalBlocking(self):
 		"""
@@ -2237,21 +2253,16 @@ class BaseInteractiveDialog(wx.Dialog):
 		other than macOS).
 		
 		"""
-		if sys.platform == "darwin":
-			result = {"dlg": None, "retcode": wx.ID_CANCEL}
-			def OnCloseWindowModalDialog(event):
-				result["dlg"] = event.GetDialog()
-				result["retcode"] = event.GetReturnCode()
-			self.Bind(wx.EVT_WINDOW_MODAL_DIALOG_CLOSED,
-					  OnCloseWindowModalDialog)
-			self.ShowWindowModal()
-			while self and result["dlg"] is not self:
-				wx.Yield()
-				sleep(1.0 / 60)
-			return result["retcode"]
-		else:
-			# Other platforms: Just use ShowModal
-			return self.ShowModal()
+		result = {"dlg": None, "retcode": wx.ID_CANCEL}
+		def OnCloseWindowModalDialog(event):
+			result["dlg"] = event.GetDialog()
+			result["retcode"] = event.GetReturnCode()
+		self.Bind(wx.EVT_WINDOW_MODAL_DIALOG_CLOSED, OnCloseWindowModalDialog)
+		self.ShowWindowModal()
+		while self and result["dlg"] is not self:
+			wx.Yield()
+			sleep(1.0 / 60)
+		return result["retcode"]
 
 	def set_position(self):
 		if self.Parent and self.Parent.IsIconized():
@@ -2263,6 +2274,26 @@ class BaseInteractiveDialog(wx.Dialog):
 		elif self.pos[1] == -1:
 			self.Center(wx.VERTICAL)
 
+
+if not hasattr(wx, "WindowModalDialogEvent") or sys.platform != "darwin":
+	# Fake it or overwrite it, as we can't use GetDialog/GetReturnCode otherwise
+
+	wx.wxEVT_WINDOW_MODAL_DIALOG_CLOSED = wx.NewEventType()
+	wx.EVT_WINDOW_MODAL_DIALOG_CLOSED = wx.PyEventBinder(wx.wxEVT_WINDOW_MODAL_DIALOG_CLOSED, 1)
+
+	class WindowModalDialogEvent(wx.PyCommandEvent):
+
+		def __init__(self, commandType=wx.wxEVT_NULL, id=0):
+			wx.PyCommandEvent.__init__(self, commandType, id)
+
+		def GetDialog(self):
+			return wx.FindWindowById(self.Id)
+
+		def GetReturnCode(self):
+			return self.GetInt()
+
+	wx.WindowModalDialogEvent = WindowModalDialogEvent
+	
 
 class HtmlInfoDialog(BaseInteractiveDialog):
 
@@ -2574,19 +2605,6 @@ class ConfirmDialog(BaseInteractiveDialog):
 		self.buttonpanel.Layout()
 		self.sizer0.SetSizeHints(self)
 		self.sizer0.Layout()
-
-	def OnClose(self, event):
-		if hasattr(self, "OnCloseIntercept"):
-			try:
-				self.OnCloseIntercept(event)
-			except Exception, exception:
-				handle_error(exception, self)
-			return
-		if event.GetEventObject() == self:
-			id = wx.ID_CANCEL
-		else:
-			id = event.GetId()
-		self.EndModal(id)
 
 
 class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHistory):
