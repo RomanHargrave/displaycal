@@ -2195,10 +2195,12 @@ class BaseInteractiveDialog(wx.Dialog):
 			id = wx.ID_CANCEL
 		else:
 			id = event.GetId()
+		self.EndModal(id)
+
+	def EndModal(self, id):
 		if self.IsModal():
-			self.EndModal(id)
+			return wx.Dialog.EndModal(self, id)
 		else:
-			event.Skip()
 			# Re-enable other windows
 			if hasattr(self, "_disabler"):
 				del self._disabler
@@ -2257,6 +2259,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		def OnCloseWindowModalDialog(event):
 			result["dlg"] = event.GetDialog()
 			result["retcode"] = event.GetReturnCode()
+		self.Unbind(wx.EVT_WINDOW_MODAL_DIALOG_CLOSED)
 		self.Bind(wx.EVT_WINDOW_MODAL_DIALOG_CLOSED, OnCloseWindowModalDialog)
 		self.ShowWindowModal()
 		while self and result["dlg"] is not self:
