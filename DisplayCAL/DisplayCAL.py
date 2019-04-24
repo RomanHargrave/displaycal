@@ -12207,6 +12207,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			hovercolor = link1._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
 			link1.SetBitmapHover(geticon(16, "web" + hovercolor))
 			link1.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "web")))
+			if sys.platform == "darwin":
+				# Prevent initial highlited state
+				link1.Unbind(wx.EVT_SET_FOCUS)
 			link1.Bind(wx.EVT_BUTTON,
 					   lambda e: webbrowser_open("https://www.displayspecifications.com/"))
 			w.sizer0.Add(link1, flag=wx.LEFT, border=12 + 32 + 7)
@@ -12222,6 +12225,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			hovercolor = link2._color['htxt'].GetAsString(wx.C2S_HTML_SYNTAX)
 			link2.SetBitmapHover(geticon(16, "web" + hovercolor))
 			link2.SetBitmapDisabled(get_bitmap_disabled(geticon(16, "web")))
+			if sys.platform == "darwin":
+				# Prevent initial highlited state
+				link2.Unbind(wx.EVT_SET_FOCUS)
 			link2.Bind(wx.EVT_BUTTON,
 					   lambda e: webbrowser_open("https://everymac.com/"))
 			w.sizer0.Add(link2, flag=wx.LEFT, border=12 + 32 + 7)
