@@ -145,7 +145,7 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxVisualWhitepointEditor import VisualWhitepointEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
-					  CustomGridCellEvent)
+					  CustomGridCellEvent, IdFactory)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel,
 					 PlateButton, get_bitmap_disabled)
@@ -9982,8 +9982,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		
 		"""
 		parent = self if event else None
-		id_measure_reference = wx.Window.NewControlId()
-		id_measure_colorimeter = wx.Window.NewControlId()
+		if wx.VERSION >= (3, ):
+			id_measure_reference = wx.Window.NewControlId()
+			id_measure_colorimeter = wx.Window.NewControlId()
+		else:
+			id_measure_reference = IdFactory.NewId()
+			id_measure_colorimeter = IdFactory.NewId()
 		if not paths:
 			dlg = ConfirmDialog(parent,
 								title=lang.getstr("colorimeter_correction.create"),
