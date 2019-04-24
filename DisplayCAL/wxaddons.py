@@ -648,7 +648,7 @@ class FileDrop(wx.FileDropTarget):
 						 (not dialogs or self.parent in dialogs)))
 		if not interactable:
 			wx.Bell()
-			return
+			return False
 		self._files = []
 		self._filenames = filenames
 
