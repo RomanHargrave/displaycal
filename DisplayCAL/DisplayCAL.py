@@ -3780,7 +3780,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			tooltip = ""
 		self.update_main_controls()
 		self.colorimeter_correction_matrix_ctrl.SetToolTipString(tooltip)
-		self.colorimeter_correction_info_btn.Enable(len(ccmx) > 1)
+		self.colorimeter_correction_info_btn.Enable(len(ccmx) > 1 and
+													bool(ccmx[1]))
 		self.update_estimated_measurement_times()
 		if not observer in self.observers_ab:
 			self.observer_ctrl.Enable()
