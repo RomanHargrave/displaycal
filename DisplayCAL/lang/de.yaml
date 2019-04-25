@@ -1524,12 +1524,12 @@
   Helligkeit
 "lut_access": |-
   Grafikkarten-Gammatabellen-Zugriff
-"*macos.bugs.cal.warning": |-
+"macos.bugs.cal.warning": |-
   Anwendungen, die das Apple-Farbverwaltungs-Modul verwenden, wie macOS Vorschau und QuickLook, unterstützen Kalibrierungs-Schwarztonkorrektur nicht.
   Anwendungen, die ihre eigene Farbverwaltung einsetzen, sind davon nicht betroffen (wie Adobe Creative Suite mit Adobe ACE, oder Open Source Grafikanwendungen, die littleCMS verwenden, wie GIMP oder Krita, oder Anwendungen, die 3D LUTs für Farbverwaltung einsetzen).
   
   Möchten Sie Kalibrierungs-Schwarztonkorrektur ausschalten?
-"*macos.bugs.profile.warning": |-
+"macos.bugs.profile.warning": |-
   Anwendungen, die das Apple-Farbverwaltungs-Modul verwenden, wie macOS Vorschau und QuickLook, unterstützen nur „Einzelne Kurve + Matrix“-Profile mit Tiefenkompensierung.
   Anwendungen, die ihre eigene Farbverwaltung einsetzen, sind davon nicht betroffen (wie Adobe Creative Suite mit Adobe ACE, oder Open Source Grafikanwendungen, die littleCMS verwenden, wie GIMP oder Krita, oder Anwendungen, die 3D LUTs für Farbverwaltung einsetzen).
   
@@ -1655,8 +1655,8 @@
   Messungsart
 "measurements.complete": |-
   Messung abgeschlossen! Möchten Sie den Ordner mit den Messwertdateien öffnen?
-"*measurements.invalid": |-
-  The measurements are invalid.
+"measurements.invalid": |-
+  Die Messwerte sind ungültig.
 "measuring.characterization": |-
   Messe Farbfelder für Charakterisierung...
 "media_attributes": |-
