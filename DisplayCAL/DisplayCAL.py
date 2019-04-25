@@ -5335,12 +5335,15 @@ class MainFrame(ReportFrame, BaseFrame):
 			show_result_dialog(Error(result + lang.getstr("failure")),
 							   self)
 			return
+		if K:
+			K = float(K.groups()[0])
 		safe_print(lang.getstr("success"))
 		set_whitepoint = evtobjname in ("visual_whitepoint_editor_measure_btn",
 										"whitepoint_measure_btn")
 		set_ambient = evtobjname == "ambient_measure_btn"
 		if (set_whitepoint and not set_ambient and lux and
-			getcfg("show_advanced_options") and getcfg("trc", False)):
+			getcfg("show_advanced_options") and getcfg("trc", False) in ("709",
+																		 "240")):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
 								cancel=lang.getstr("no"), 
@@ -5357,7 +5360,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				show_result_dialog(Error(lang.getstr("ambient.measure.light_level.missing")),
 								   self)
-			if not set_whitepoint and (K or Yxy):
+			if not set_whitepoint and 4000 <= K <= 25000:
 				dlg = ConfirmDialog(self, msg=lang.getstr("whitepoint.set"), 
 									ok=lang.getstr("yes"), 
 									cancel=lang.getstr("no"), 
@@ -5405,13 +5408,11 @@ class MainFrame(ReportFrame, BaseFrame):
 													 self.comport_ctrl.GetStringSelection())),
 								   self)
 				return
-			if K:
-				if not Yxy:
-					self.whitepoint_ctrl.SetSelection(1)
-				self.whitepoint_colortemp_textctrl.SetValue(K.groups()[0])
-			if Yxy:
-				if not K:
-					self.whitepoint_ctrl.SetSelection(2)
+			if K and self.whitepoint_ctrl.GetSelection() in (0, 1):
+				self.whitepoint_ctrl.SetSelection(1)
+				self.whitepoint_colortemp_textctrl.SetValue(str(K))
+			elif Yxy:
+				self.whitepoint_ctrl.SetSelection(2)
 				Y, x, y = Yxy.groups()
 				self.whitepoint_x_textctrl.SetValue(round(float(x), 4))
 				self.whitepoint_y_textctrl.SetValue(round(float(y), 4))
