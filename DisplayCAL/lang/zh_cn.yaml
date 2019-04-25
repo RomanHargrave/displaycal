@@ -1540,6 +1540,16 @@
   光亮度
 "lut_access": |-
   视频卡伽玛表访问
+"*macos.bugs.cal.warning": |-
+  Applications using the Apple CMM (color management module), like macOS Preview and QuickLook, do not support calibration black point hue correction.
+  Applications that use their own color management are not affected (like Adobe Creative Suite using Adobe ACE, or open source graphics applications using littleCMS like GIMP or Krita, or applications employing 3D LUTs for color management).
+  
+  Do you want to disable calibration black point hue correction?
+"*macos.bugs.profile.warning": |-
+  Applications using the Apple CMM (color management module), like macOS Preview and QuickLook, do not support display profile types other than single curve + matrix with black point compensation.
+  Applications that use their own color management are not affected (like Adobe Creative Suite using Adobe ACE, or open source graphics applications using littleCMS like GIMP or Krita, or applications employing 3D LUTs for color management).
+  
+  Do you want to set the profile type to single curve + matrix and enable black point compensation?
 "madhcnet.outdated": |-
   已安装版本 %s 发现 %s 已过时。请更新至最新的 madVR 版本（至少 %i.%i.%i.%i）。
 "madtpg.launch.failure": |-

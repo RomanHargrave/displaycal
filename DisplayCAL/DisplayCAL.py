@@ -4214,6 +4214,52 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.black_point_correction_auto_handler()
 		if freeze:
 			self.panel.Thaw()
+
+	def check_show_macos_bugs_warning(self, cal=True, profile=True):
+		""" Warn about specific macOS bugs """
+		if (sys.platform != "darwin" or
+			intlist(mac_ver()[0].split(".")) < [10, 8]):
+			# We assume these macOS bugs exist since 10.8 "Mountain Lion"
+			return
+		result = None
+		if cal:
+			# Warn about calibration bugs
+			if (getcfg("calibration.black_point_correction.auto") or
+				getcfg("calibration.black_point_correction")):
+				dlg = ConfirmDialog(self,
+									msg=lang.getstr("macos.bugs.cal.warning"),
+									ok=lang.getstr("yes"),
+									alt=lang.getstr("no"),
+									bitmap=geticon(32, "dialog-warning"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result == wx.ID_OK:
+					setcfg("calibration.black_point_correction.auto", 0)
+					setcfg("calibration.black_point_correction", 0)
+					self.black_point_correction_ctrl.SetValue(0)
+					self.black_point_correction_intctrl.SetValue(0)
+					self.black_point_correction_auto_handler()
+					self.update_black_point_rate_ctrl()
+				elif result == wx.ID_CANCEL:
+					return False
+		if profile:
+			# Warn about profile bugs
+			if (getcfg("profile.type") != "S" or
+				not getcfg("profile.black_point_compensation")):
+				dlg = ConfirmDialog(self,
+									msg=lang.getstr("macos.bugs.profile.warning"),
+									ok=lang.getstr("yes"),
+									alt=lang.getstr("no"),
+									bitmap=geticon(32, "dialog-warning"))
+				result = dlg.ShowModal()
+				dlg.Destroy()
+				if result == wx.ID_OK:
+					setcfg("profile.type", "S")
+					setcfg("profile.black_point_compensation", 1)
+					self.update_profile_type_ctrl()
+					self.update_bpc()
+				elif result == wx.ID_CANCEL:
+					return False
 	
 	def update_black_output_offset_ctrl(self):
 		self.black_output_offset_ctrl.SetValue(
@@ -7808,6 +7854,8 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
+		if self.check_show_macos_bugs_warning(profile=False) is False:
+			return
 		if (not isinstance(event, CustomEvent) and
 			not getcfg("profile.update") and (not getcfg("calibration.update") or 
 											  is_profile()) and getcfg("trc")):
@@ -8342,6 +8390,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def calibrate_and_profile_btn_handler(self, event):
 		""" Setup calibration and characterization measurements """
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
+		if self.check_show_macos_bugs_warning() is False:
+			return
 		if check_set_argyll_bin() and self.check_overwrite(".cal") and \
 		   self.check_overwrite(".ti3") and self.check_overwrite(profile_ext):
 			self.setup_measurement(self.calibrate_and_profile)
@@ -8690,6 +8740,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def profile_btn_handler(self, event):
 		""" Setup characterization measurements """
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
+		if self.check_show_macos_bugs_warning(cal=False) is False:
+			return
 		if check_set_argyll_bin() and self.check_overwrite(".ti3") and \
 		   self.check_overwrite(profile_ext):
 			apply_calibration = self.current_cal_choice(silent=isinstance(event, CustomEvent))
@@ -12920,6 +12972,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def create_profile_handler(self, event, path=None, skip_ti3_check=False):
 		""" Create profile from existing measurements """
 		if not check_set_argyll_bin():
+			return
+		if self.check_show_macos_bugs_warning(cal=False) is False:
 			return
 		if path is None:
 			selectedpaths = []
