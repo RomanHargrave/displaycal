@@ -375,7 +375,6 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 				if inverted or color:
 					if not img:
 						img = bmp.ConvertToImage()
-					#img.Invert()
 					alpha = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT).alpha
 					if oname in ["applications-system", "color",
 								 "document-open", "document-save-as",
@@ -389,11 +388,11 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 						# Scale 85 to 255 and adjust alpha
 						factors = (3, 3, 3, alpha / 255.0)
 					else:
-						# Only adjust alpha
-						factors = (1, 1, 1, alpha / 255.0)
-				if color or factors:
-					if not img:
-						img = bmp.ConvertToImage()
+						if inverted:
+							img.Invert()
+						if alpha != 255:
+							# Only adjust alpha
+							factors = (1, 1, 1, alpha / 255.0)
 					if factors:
 						R, G, B = factors[:3]
 						if len(factors) > 3:
