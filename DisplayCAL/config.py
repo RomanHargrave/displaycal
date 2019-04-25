@@ -718,11 +718,10 @@ valid_ranges = {
 	"trc": [0.000001, 10],
 	# Argyll dispcal uses 20% of ambient (in lux,
 	# fixed steradiant of 3.1415) as adapting
-	# luminance, but our ambient value is in cd/m2
-	# and we assume it already *is* the adapting
-	# luminance. To correct for this, scale so 
-	# that dispcal gets the correct value.
-	"calibration.ambient_viewcond_adjust.cdm2": [0, sys.maxint / 5.0 / 3.1415],
+	# luminance, but we assume it already *is*
+	# the adapting luminance. To correct for this,
+	# scale so that dispcal gets the correct value.
+	"calibration.ambient_viewcond_adjust.lux": [0.0, sys.maxint / 5.0],
 	"calibration.black_luminance": [0.000001, 10],
 	"calibration.black_output_offset": [0, 1],
 	"calibration.black_point_correction": [0, 1],
@@ -888,7 +887,7 @@ defaults = {
 	"drift_compensation.blacklevel": 0,
 	"drift_compensation.whitelevel": 0,
 	"calibration.ambient_viewcond_adjust": 0,
-	"calibration.ambient_viewcond_adjust.cdm2": 10.0,
+	"calibration.ambient_viewcond_adjust.lux": 32.0,
 	"calibration.autoload": 0,
 	"calibration.black_luminance": 0.000001,
 	"calibration.black_luminance.backup": 0.000001,
@@ -1687,7 +1686,7 @@ def initcfg(module=None):
 	finally:
 		if not module and not getcfg("calibration.ambient_viewcond_adjust"):
 			# Reset to default
-			setcfg("calibration.ambient_viewcond_adjust.cdm2", None)
+			setcfg("calibration.ambient_viewcond_adjust.lux", None)
 
 
 dpiset = False

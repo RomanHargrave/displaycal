@@ -10711,12 +10711,11 @@ usage: spotread [-options] [logfile]
 				if bool(int(getcfg("calibration.ambient_viewcond_adjust"))):
 					# Argyll dispcal uses 20% of ambient (in lux,
 					# fixed steradiant of 3.1415) as adapting
-					# luminance, but our ambient value is in cd/m2
-					# and we assume it already *is* the adapting
-					# luminance. To correct for this, scale so 
-					# that dispcal gets the correct value.
-					ambient = getcfg("calibration.ambient_viewcond_adjust.cdm2")
-					args.append("-a%s" % (ambient * 5 * 3.1415))
+					# luminance, but we assume it already *is*
+					# the adapting luminance. To correct for this,
+					# scale so that dispcal gets the correct value.
+					ambient = getcfg("calibration.ambient_viewcond_adjust.lux")
+					args.append("-a%s" % (ambient * 5))
 				if not getcfg("calibration.black_point_correction.auto"):
 					args.append("-k%s" % getcfg("calibration.black_point_correction"))
 				if defaults["calibration.black_point_rate.enabled"] and \

@@ -2363,7 +2363,7 @@
 "trc.rec1886": |-
   Rec. 1886
 "trc.should_use_viewcond_adjust": |-
-  Si vous utilisez les courbes SMPTE 240M ou Rec. 709, vous devriez recourir à un ajustement des niveaux de votre lumière ambiante afin d’obtenir des résultats corrects. Pour cela, cochez la case à côté de « Niveau de luminosité ambiante » et entrez une valeur en cd/m². Vous pouvez éventuellement mesurer aussi la luminosité ambiante au cours de l’étalonnage, si votre sonde de mesure le permet.
+  Si vous utilisez les courbes SMPTE 240M ou Rec. 709, vous devriez recourir à un ajustement des niveaux de votre lumière ambiante afin d’obtenir des résultats corrects. Pour cela, cochez la case à côté de « Niveau de luminosité ambiante » et entrez une valeur en Lux. Vous pouvez éventuellement mesurer aussi la luminosité ambiante au cours de l’étalonnage, si votre sonde de mesure le permet.
 "trc.smpte240m": |-
   SMPTE 240M
 "trc.smpte2084": |-

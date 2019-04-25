@@ -2737,7 +2737,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.Bind(wx.EVT_CHOICE, self.trc_type_ctrl_handler, 
 				  id=self.trc_type_ctrl.GetId())
 
-		# Viewing condition adjustment for ambient in cd/m2
+		# Viewing condition adjustment for ambient in Lux
 		self.Bind(wx.EVT_CHECKBOX, self.ambient_viewcond_adjust_ctrl_handler, 
 				  id=self.ambient_viewcond_adjust_cb.GetId())
 		self.ambient_viewcond_adjust_textctrl.Bind(
@@ -4061,7 +4061,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.ambient_viewcond_adjust_cb.SetValue(
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
 		self.ambient_viewcond_adjust_textctrl.SetValue(
-			getcfg("calibration.ambient_viewcond_adjust.cdm2"))
+			getcfg("calibration.ambient_viewcond_adjust.lux"))
 		self.ambient_viewcond_adjust_textctrl.Enable(
 			not update_cal and 
 			bool(int(getcfg("calibration.ambient_viewcond_adjust"))))
@@ -5331,22 +5331,15 @@ class MainFrame(ReportFrame, BaseFrame):
 						result)
 		Y = re.search("Y: (\d+(?:\.\d+))", result)  # Monochrome, e.g. Spyder4/5
 		lux = re.search("Ambient = (\d+(?:\.\d+)) Lux", result, re.I)
-		if not result or (not K and not XYZ and not Yxy and not Y):
+		if not result or (not K and not XYZ and not Yxy and not lux):
 			show_result_dialog(Error(result + lang.getstr("failure")),
 							   self)
 			return
-		# White or black luminance
-		if XYZ:
-			Y = XYZ.group(2)
-		else:
-			# Monochrome, e.g. Spyder4/5
-			Y = Y.group(1)
-		Y = float(Y)
 		safe_print(lang.getstr("success"))
 		set_whitepoint = evtobjname in ("visual_whitepoint_editor_measure_btn",
 										"whitepoint_measure_btn")
 		set_ambient = evtobjname == "ambient_measure_btn"
-		if (set_whitepoint and not set_ambient and Y and
+		if (set_whitepoint and not set_ambient and lux and
 			getcfg("show_advanced_options") and getcfg("trc", False)):
 			dlg = ConfirmDialog(self, msg=lang.getstr("ambient.set"), 
 								ok=lang.getstr("yes"), 
@@ -5355,8 +5348,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			set_ambient = dlg.ShowModal() == wx.ID_OK
 			dlg.Destroy()
 		if set_ambient:
-			if Y:
-				self.ambient_viewcond_adjust_textctrl.SetValue(Y)
+			if lux:
+				self.ambient_viewcond_adjust_textctrl.SetValue(float(lux.groups()[0]))
 				self.ambient_viewcond_adjust_cb.SetValue(True)
 				self.ambient_viewcond_adjust_ctrl_handler(
 						CustomEvent(wx.EVT_CHECKBOX.evtType[0], 
@@ -5372,6 +5365,13 @@ class MainFrame(ReportFrame, BaseFrame):
 				set_whitepoint = dlg.ShowModal() == wx.ID_OK
 				dlg.Destroy()
 		elif XYZ or Y:
+			# White or black luminance
+			if XYZ:
+				Y = XYZ.group(2)
+			else:
+				# Monochrome, e.g. Spyder4/5
+				Y = Y.group(1)
+			Y = float(Y)
 			if evtobjname in ("luminance_measure_btn",
 							  "ambient_luminance_measure_btn"):
 				# Force minimum luminance of 40 cd/m2 which should be suitable for
@@ -5421,7 +5421,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def ambient_viewcond_adjust_ctrl_handler(self, event):
 		if event.GetId() == self.ambient_viewcond_adjust_textctrl.GetId() and \
 		   (not self.ambient_viewcond_adjust_cb.GetValue() or 
-			getcfg("calibration.ambient_viewcond_adjust.cdm2") == 
+			getcfg("calibration.ambient_viewcond_adjust.lux") == 
 			self.ambient_viewcond_adjust_textctrl.GetValue()):
 			event.Skip()
 			return
@@ -5443,7 +5443,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if v < 0.000001 or v > sys.maxint:
 					wx.Bell()
 					self.ambient_viewcond_adjust_textctrl.SetValue(
-						getcfg("calibration.ambient_viewcond_adjust.cdm2"))
+						getcfg("calibration.ambient_viewcond_adjust.lux"))
 			if event.GetId() == self.ambient_viewcond_adjust_cb.GetId():
 				self.ambient_viewcond_adjust_textctrl.SetFocus()
 		else:
@@ -5451,10 +5451,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		v1 = int(self.ambient_viewcond_adjust_cb.GetValue())
 		v2 = self.ambient_viewcond_adjust_textctrl.GetValue()
 		if v1 != getcfg("calibration.ambient_viewcond_adjust") or \
-		   v2 != getcfg("calibration.ambient_viewcond_adjust.cdm2", False):
+		   v2 != getcfg("calibration.ambient_viewcond_adjust.lux", False):
 			self.cal_changed()
 		setcfg("calibration.ambient_viewcond_adjust", v1)
-		setcfg("calibration.ambient_viewcond_adjust.cdm2", v2)
+		setcfg("calibration.ambient_viewcond_adjust.lux", v2)
 		self.update_profile_name()
 		if event.GetEventType() == wx.EVT_KILL_FOCUS.evtType[0]:
 			event.Skip()
@@ -5848,7 +5848,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Skip()
 		if (trc in ("240", "709") and not
 		    (bool(int(getcfg("calibration.ambient_viewcond_adjust"))) and 
-			 getcfg("calibration.ambient_viewcond_adjust.cdm2")) and
+			 getcfg("calibration.ambient_viewcond_adjust.lux")) and
 			getcfg("trc.should_use_viewcond_adjust.show_msg")):
 			dlg = ConfirmDialog(self, 
 							 msg=lang.getstr("trc.should_use_viewcond_adjust"), 
@@ -14600,12 +14600,11 @@ class MainFrame(ReportFrame, BaseFrame):
 								setcfg("calibration.ambient_viewcond_adjust", 1)
 								# Argyll dispcal uses 20% of ambient (in lux,
 								# fixed steradiant of 3.1415) as adapting
-								# luminance, but our ambient value is in cd/m2
-								# and we assume it already *is* the adapting
-								# luminance. To correct for this, scale so 
-								# that dispcal gets the correct value.
-								setcfg("calibration.ambient_viewcond_adjust.cdm2",
-									   ambient / 5.0 / 3.1415)
+								# luminance, but we assume it already *is*
+								# the adapting luminance. To correct for this,
+								# scale so that dispcal gets the correct value.
+								setcfg("calibration.ambient_viewcond_adjust.lux",
+									   ambient / 5.0)
 							continue
 						if o[0] == "k":
 							if stripzeros(o[1:]) >= 0:
