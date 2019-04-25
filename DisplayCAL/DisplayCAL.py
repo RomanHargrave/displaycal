@@ -11797,7 +11797,10 @@ class MainFrame(ReportFrame, BaseFrame):
 													   "iColorDisplay*", 
 													   "iColorDisplay*.app",
 													   "DeviceCorrections.txt"))
-				paths.extend(icdfn)
+				else:
+					icdfn = None
+				if icdfn:
+					paths.extend(icdfn)
 			if importers.get("i1d3") and (oeminst or i1d3ccss) and not i1d3:
 				# Look for *.edr files
 				if sys.platform == "win32":
@@ -11818,6 +11821,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						i1d3fn = safe_glob(os.path.join(os.path.sep, "Volumes", 
 														"ColorMunki Display",
 														"*Setup.exe"))
+				else:
+					i1d3fn = []
 				if len(i1d3fn) > 1:
 					# Multiple EDR files
 					paths.append(i1d3fn)
@@ -11842,7 +11847,10 @@ class MainFrame(ReportFrame, BaseFrame):
 						spydfn = safe_glob(os.path.join(os.path.sep, "Volumes", 
 														"Datacolor_ISO", "Data",
 														"Setup.exe"))
-				paths.extend(spydfn)
+				else:
+					spydfn = None
+				if spydfn:
+					paths.extend(spydfn)
 		for path in paths:
 			(result,
 			 i1d3,
