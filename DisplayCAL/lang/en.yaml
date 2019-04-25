@@ -502,25 +502,27 @@
 "ccss.GBrLED_25Jul12": |-
   LCD GB-r-LED IPS (Dell U2413)
 "ccss.HP_DC3": |-
-  LCD PFS Phosphor WLED IPS, Adobe RGB/P3 gamut (HP DreamColor)
+  LCD PFS Phosphor WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
 "ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS Phosphor WLED IPS, Adobe RGB/P3 gamut (HP DreamColor Z24x G2)
+  LCD PFS Phosphor WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
 "ccss.HP_ZBOOK": |-
-  LCD PFS Phosphor WLED IPS, Adobe RGB gamut (HP ZBook)
+  LCD PFS Phosphor WLED IPS, 100% Adobe RGB (HP ZBook)
 "ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
   WOLED (LG OLED 6-Series)
 "ccss.MacBookProRetina2016": |-
-  LCD PFS Phosphor WLED IPS, P3 gamut (MacBook Pro Retina 2016)
+  LCD PFS Phosphor WLED IPS, 99% P3 (MacBook Pro Retina 2016)
 "ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
 "ccss.OLEDFamily_20Jul12": |-
   RGB OLED (Sony PVM-2541)
 "ccss.OLEDFamily_28Aug18": |-
   RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
+  LCD PFS Phosphor WLED, 98% Adobe RGB
 "ccss.PFS_Phosphor_Family_31Jan17": |-
   LCD PFS Phosphor WLED family
 "ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED IPS, P3 gamut (Panasonic VVX17P051J00 in Lenovo P70)
+  LCD PFS Phosphor WLED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
 "ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "ccss.ProjectorFamily_07Feb11": |-
