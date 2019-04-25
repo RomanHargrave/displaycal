@@ -467,8 +467,6 @@
   가장 느리게
 "calibration.start": |-
   캘리브레이션 계속진행
-"calibration.turn_on_black_point_correction": |-
-  켜기
 "calibration.update": |-
   캘리브레이션 업데이트
 "calibration.update_profile_choice": |-
@@ -2369,7 +2367,7 @@
 "trc.rec1886": |-
   Rec. 1886
 "trc.should_use_viewcond_adjust": |-
-  SMPTE 240M을 사용할 때 또는 Rec. 709 곡선의 경우 주변광 레벨에 대한 조정을 사용하여 정확한 결과를 얻어야 합니다. 이를 수행하려면 “주변광 수준” 근처의 체크 박스를 선택하고 Lux에 값을 입력하십시오. 또한 측정장비가 지원하는 경우 캘리브레이션 중에 주변광을 선택적으로 측정할 수 있습니다.
+  SMPTE 240M을 사용할 때 또는 Rec. 709 곡선의 경우 주변광 레벨에 대한 조정을 사용하여 정확한 결과를 얻어야 합니다. 이를 수행하려면 “주변광 수준” 근처의 체크 박스를 선택하고 cd/m²에 값을 입력하십시오. 또한 측정장비가 지원하는 경우 캘리브레이션 중에 주변광을 선택적으로 측정할 수 있습니다.
 "trc.smpte240m": |-
   SMPTE 240M
 "trc.smpte2084": |-
@@ -2386,6 +2384,8 @@
   상대적
 "turn_off": |-
   끄기
+"turn_on": |-
+  켜기
 "type": |-
   유형
 "udev_hotplug.unavailable": |-

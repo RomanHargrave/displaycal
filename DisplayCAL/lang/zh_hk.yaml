@@ -469,8 +469,6 @@
   非常慢
 "calibration.start": |-
   繼續校正
-"calibration.turn_on_black_point_correction": |-
-  開啟
 "calibration.update": |-
   更新校正
 "calibration.update_profile_choice": |-
@@ -2390,7 +2388,7 @@
 "*trc.rec1886": |-
   Rec. 1886
 "*trc.should_use_viewcond_adjust": |-
-  When using the SMPTE 240M or Rec. 709 curves, you should use an adjustment for your ambient light levels as well to get correct results. To do that, tick the checkbox near “Ambient light level” and enter a value in Lux. You can also optionally measure ambient light while calibrating, if supported by your instrument.
+  When using the SMPTE 240M or Rec. 709 curves, you should use an adjustment for your ambient light levels as well to get correct results. To do that, tick the checkbox near “Ambient light level” and enter a value in cd/m². You can also optionally measure ambient light while calibrating, if supported by your instrument.
 "*trc.smpte240m": |-
   SMPTE 240M
 "*trc.smpte2084": |-
@@ -2407,6 +2405,8 @@
   相對
 "turn_off": |-
   關閉
+"turn_on": |-
+  開啟
 "type": |-
   類型
 "udev_hotplug.unavailable": |-

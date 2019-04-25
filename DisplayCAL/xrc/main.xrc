@@ -1041,7 +1041,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="wxStaticText" name="ambient_viewcond_adjust_textctrl_label">
-                                    <label>Lux</label>
+                                    <label>cd/m²</label>
                                   </object>
                                   <flag>wxLEFT|wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
                                   <border>4</border>
