@@ -5,6 +5,34 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Sun Mar 17 18:50:50 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.7.2:
+  * [UI] Russian and ukrainian localization (thanks to Alex
+    Sikorsky).
+  * [Enhancement] Apply black point correction/compensation to
+    measurement data directly instead of device-to-PCS table
+    (improves smoothness of profiles for displays with not very
+    neutral black).
+  * [Enhancement] Optimize single gamma curve without offset to
+    single gamma value.
+  * [Enhancement] Network: Get rid of gethostbyname usage because
+    it can have a long delay.
+  * [UI] Updated traditional chinese localization (thanks to 楊添明).
+  * [Minor] Fallback TRC tags were created using a wrong backward
+    matrix when using ArgyllCMS 2.0.2b or newer.
+  * [Trivial] When connecting to a pattern generator, closing the
+    connection dialog should be equivalent to cancelling.
+  * [Cosmetic] [UI] Show a dialog while the UI is blocked when
+    connecting to madTPG.
+  * [Cosmetic] [UI] Do not show the visual whitepoint editor
+    fullscreen warning if using a pattern generator.
+  * [Cosmetic] [UI] Synthetic ICC creator: Set chromatic adaptation
+    up/down arrow increment to 0.0001.
+  * [Cosmetic] [UI] Synthetic ICC creator: Hide (unused) hue &
+    saturation controls for SMPTE 2084 hard clip.
+
+-------------------------------------------------------------------
 Thu Jan 24 14:52:35 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.7.1.4:

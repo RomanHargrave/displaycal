@@ -42,14 +42,50 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2019-03-17 18:36 (UTC) 3.7.2  -->
+			<!-- 2019-04-26 01:17 (UTC) 3.8  -->
 			<dl>
+				<dt id="changelog-3.8">2019-04-26 01:17 (UTC) 3.8 </dt>
+					<dd>
+						<h3>DisplayCAL 3.8 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> <strong>SpyderX support</strong> (requires ArgyllCMS 2.1.0 or newer, use ArgyllCMS 2.1.0_mod to be able to skip instrument self-calibration).</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> <strong>Colorimeter correction information with graph.</strong></li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Synthetic ICC profile creator: Drag &amp; drop support for TI3 measurement files.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Rudimentary support for hypothetical future instruments and their measurement modes (any new instrument support added to ArgyllCMS in the future should be fully usable in DisplayCAL right away without needing an update for instrument-specific measurement modes).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Prefer colorimeter corrections from “ArgyllCMS” folder and ignore duplicate (spectral) colorimeter corrections from “color” folder (e.g. installed by HCFR under Windows).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Display technology information to aid in the choice of a suitable measurement mode or correction.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Default to high-resolution spectrum mode (if available) for spectrometers that support it.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Include some additional spectral sample colorimeter corrections when importing for i1 Display Pro and ColorMunki Display (e.g. MacBook Pro 2016 Retina with PFS Phosphor WLED “P3” display, <a href="https://colorimetercorrections.displaycal.net/hash/a2d2e72e1effab53d7054cee1dfb4bd6/LG%20OLED%206-Series%20%28i1%20Pro%202%2C%20ColorMunki%20Photo%29.ccss">LG OLED 6-series WOLED</a> based on samples from LG C6 and E6 OLED TVs, sourced and combined from community colorimeter corrections database contributions).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Automatically warn about incompatibilities of Apple software with calibration black point hue correction and profile types other than single curve + matrix with black point compensation.</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated simplified chinese localization (thanks to Mars).</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated french localization (thanks to Jean-Luc Coulon).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Implicitly try to skip repeat instrument self-calibration for colorimeters that want it if already done at least once per measurement run.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Converted translation file format from JSON to YAML for better readability.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use a localized description for known quality spectral sample colorimeter corrections.</li>
+							<li>Use an <a href="#appdownload">application-specific download directory</a> for updates and supporting files.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Not all programmed measurement modes were enumerated for the K10-A colorimeter (regression of a change in DisplayCAL 3.7, SVN revision r5557).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> ColorHug/ColorHug2 “auto” measurement mode was not working anymore.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Curve viewer: Re-introduced being able to view the current contents of the video card gamma table if no display profile is set or the profile used does not contain calibration.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Curve viewer, profile information: Curve graphing identical channel detection was not working properly in some cases (only affected synthetic curves).</li>
+						</ul>
+
+						<p><strong>Phasing out 0install support.</strong> While the 0install version of DisplayCAL, which was originally introduced as a replacement for the long-defunct Autopackage system under Linux, has had its uses, the low distribution (around 6%) of 0install versus the standalone version does no longer warrant the additional time and work needed to maintain this separate deployment path. 0install support is thus being phased out starting with DisplayCAL 3.7.2 and following releases, which are only available as “standalone” installations. Windows and macOS users will be updated automatically to the standalone version. Linux users should switch to a standalone package at their earliest convenience.<br />
+						There will be a transition period of a few months during which old 0install-based DisplayCAL versions will continue to run, but after which the respective online infrastructure will be decommissioned.</p>
+					</dd>
+
 				<dt id="changelog-3.7.2">2019-03-17 18:36 (UTC) 3.7.2 </dt>
 					<dd>
 						<h3>DisplayCAL 3.7.2 </h3>
-
-						<p><strong>Phasing out 0install support.</strong> While the 0install version of DisplayCAL, which was originally introduced as a replacement for the long-defunct Autopackage system under Linux, has had its uses, the low distribution (around 6%) of 0install versus the standalone version does no longer warrant the additional time and work needed to maintain this separate deployment path. 0install support will thus be phased out with this version, which is only available as “standalone” installation. Windows and macOS users will be updated automatically to the standalone version. Linux users should switch to a standalone package at their earliest convenience.<br />
-						There will be a transition period of a few months during which old 0install versions will continue to run, but after which the respective online infrastructure will be decommissioned.</p>
 
 						<h4>Added in this release:</h4>
 						<ul>

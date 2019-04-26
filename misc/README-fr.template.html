@@ -294,7 +294,7 @@
 			
 			<p>Ce programme est distribué dans l’espoir qu’il sera utile, mais SANS AUCUNE GARANTIE ; sans même la garantie implicite d’une QUELCONQUE VALEUR MARCHANDE ou de l’ADÉQUATION À UN BESOIN PARTICULIER. Voir la <a href="LICENSE.txt">Licence Publique Générale GNU</a> pour davantage d’informations.</p>
 			
-			<p>${APPNAME} est écrit en <a href="https://python.org/">Python</a> et utilise les paquets tiers <a href="http://numpy.scipy.org/">NumPy</a>, <a href="https://pypi.python.org/pypi/demjson">demjson</a> (bibliothèque <abbr title="JavaScript Object Notation (Notation objet javascript)">JSON<sup><a href="#definition_JSON">[6]</a></sup></abbr>) <a href="https://wxpython.org/">wxPython</a> (kit de développement d’interface graphique <abbr title="Interface utilisateur graphique">(GUI)<sup><a href="#definition_GUI">[4]</a></sup></abbr>), <a href="https://pypi.python.org/pypi/pywin32">pywin32</a>, <a href="https://pypi.python.org/pypi/WMI">WMI</a>, <a href="https://pypi.python.org/pypi/psutil/">psutil</a>, <a href="https://pypi.python.org/pypi/PyChromecast/">PyChromecast</a>, <a href="https://pypi.python.org/pypi/comtypes/">comtypes</a> et <a href="https://pypi.python.org/pypi/pyglet/">pyglet</a>. Il fait aussi une utilisation intensive de certains des utilitaires d’<a href="https://www.argyllcms.com/">ArgyllCMS</a>. Le système de construction permettant d’obtenir des exécutables autonomes utilise en outre <a href="https://pypi.python.org/pypi/setuptools">setuptools</a> et <a href="https://pypi.python.org/pypi/py2app">py2app</a> sous Mac OS X ou <a href="https://pypi.python.org/pypi/py2exe">py2exe</a> sous Windows. Tous ces logiciels sont © par leurs auteurs respectifs.<p>
+			<p>${APPNAME} est écrit en <a href="https://python.org/">Python</a> et utilise les paquets tiers <a href="http://numpy.scipy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (kit de développement d’interface graphique <abbr title="Interface utilisateur graphique">(GUI)<sup><a href="#definition_GUI">[4]</a></sup></abbr>), <a href="https://pypi.python.org/pypi/pywin32">pywin32</a>, <a href="https://pypi.python.org/pypi/WMI">WMI</a>, <a href="https://pypi.python.org/pypi/psutil/">psutil</a>, <a href="https://pypi.python.org/pypi/PyChromecast/">PyChromecast</a>, <a href="https://pypi.python.org/pypi/comtypes/">comtypes</a> et <a href="https://pypi.python.org/pypi/pyglet/">pyglet</a>. Il fait aussi une utilisation intensive de certains des utilitaires d’<a href="https://www.argyllcms.com/">ArgyllCMS</a>. Le système de construction permettant d’obtenir des exécutables autonomes utilise en outre <a href="https://pypi.python.org/pypi/setuptools">setuptools</a> et <a href="https://pypi.python.org/pypi/py2app">py2app</a> sous Mac OS X ou <a href="https://pypi.python.org/pypi/py2exe">py2exe</a> sous Windows. Tous ces logiciels sont © par leurs auteurs respectifs.<p>
 		</div>
 
 		<div id="download">
@@ -327,24 +327,14 @@
 								<a rel="nofollow" href="${URL}download/Debian_9.0/amd64/${APPNAME}.deb">x86_64</a></span>
 							</li>
 							<li>
-								<span>Fedora 25</span>
-								<span><a rel="nofollow" href="${URL}download/Fedora_25/i686/${APPNAME}.rpm">x86</a> | 
-								<a rel="nofollow" href="${URL}download/Fedora_25/x86_64/${APPNAME}.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora 26</span>
-								<span>
-								<a rel="nofollow" href="${URL}download/Fedora_26/x86_64/${APPNAME}.rpm">x86_64</a></span>
-							</li>
-							<li>
-								<span>Fedora 27</span>
-								<span>
-								<a rel="nofollow" href="${URL}download/Fedora_27/x86_64/${APPNAME}.rpm">x86_64</a></span>
-							</li>
-							<li>
 								<span>Fedora 28</span>
 								<span>
 								<a rel="nofollow" href="${URL}download/Fedora_28/x86_64/${APPNAME}.rpm">x86_64</a></span>
+							</li>
+							<li>
+								<span>Fedora 29</span>
+								<span>
+								<a rel="nofollow" href="${URL}download/Fedora_29/x86_64/${APPNAME}.rpm">x86_64</a></span>
 							</li>
 							<li>
 								<span>Mageia 5</span>
@@ -412,8 +402,12 @@
 							</li>
 							<li>
 								<span>Ubuntu 18.10 (Cosmic)</span>
-								<span><a rel="nofollow" href="${URL}download/xUbuntu_18.10/i386/${APPNAME}.deb">x86</a> | 
 								<a rel="nofollow" href="${URL}download/xUbuntu_18.10/amd64/${APPNAME}.deb">x86_64</a></span>
+							</li>
+							<li>
+								<span>Ubuntu 19.04 (Disco)</span>
+								<span>
+								<a rel="nofollow" href="${URL}download/xUbuntu_19.04/amd64/${APPNAME}.deb">x86_64</a></span>
 							</li>
 						</ul>
 
@@ -932,6 +926,13 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 				<p>Ceci peut améliorer la précision des colorimètres pour un type particulier d’écran, veuillez aussi consulter la <a href="#colorimeter-corrections">note concernant les colorimètres, les écrans et ${APPNAME}</a>. Vous pouvez importer des matrices génériques provenant d’un autre logiciel de caractérisation d’écran ou rechercher dans la <a href="https://colorimetercorrections.${DOMAIN}/">base de données en ligne des corrections de colorimètre</a> une correspondance avec votre combinaison d’écran et de sonde de mesure (cliquez le petit globe près de la fenêtre déroulante de correction). On trouve aussi une <a href="https://www.argyllcms.com/doc/ccmxs.html">liste participative de matrices de correction</a> sur le site Web d’ArgyllCMS.</p>
 
 				<p>Veuillez noter que cette option n’est disponible qu’avec ArgyllCMS &gt;= 1.3.0 et un colorimètre.</p>
+
+				<h4>Colorimeter correction information</h4>
+
+				<p>For correction matrices, a visual simulation of the effect of the correction will be shown (“flower”). Note that this is not meant to be color accurate, but give you a rough idea about the impact on the measurements of your colorimeter. The six outer circles of primary and secondary colors (clockwise: green, yellow, red, magenta, blue, cyan) and center white circle all have an outer part as well as a smaller inner area. The outer part of each circle represents what the colorimeter would “see” (i.e. measure) without the correction, the inner part of each circle represents the corrected result.<br />
+				Below this visual representation you will find the matrix values, as well as optional further information, like the reference instrument or source used, the method used to create the correction (“perceptual” or “minimize xy chromaticity difference”), as well as the average and maximum fit error (the lower the fit error, the better the corrected instrument should match the reference instrument).</p>
+
+				<p>For spectral samples, the respective spectra will be shown along with information about the reference spectrometer used, as well as the resolution and range in nm (nanometer). You can toggle between the spectral graph and a CIE 1931 chromaticity diagram using the button at the top, which allows you to see the corresponding xy locations of the spectra in comparison to several common RGB colorspaces (Rec. 709, DCI P3, Adobe RGB and Rec. 2020).</p>
 			</div>
 
 			<div id="settings_calibration">
@@ -1436,7 +1437,7 @@ Entrez l’adresse IP dans la fenêtre qui s’ouvre (le numéro de port devrait
 				
 				<p>Dans les deux cas, vous devriez au moins vérifier que les tolérances nominales ne sont pas dépassées. Pour avoir un peu de « marge de sécurité supplémentaire », voyez plutôt les valeurs recommandées.</p>
 
-				<p>Remarquez que les deux tests sont en « boucle fermée » et ne vous donneront pas la vérité « absolue » en termes de « qualité de la couleur » ou de « précision de la couleur » car ils ne peuvent pas vous indiquer si votre sonde est défectueuse ou si les mesures sont erronées (un profil créé avec des mesures répétitivement fausses donnera une vérification correcte avec d’autres mesures erronées provenant de la même sonde si elles ne fluctuent pas trop) ou si elles ne correspondent pas bien à votre écran (ce qui est particulièrement vrai pour les <a href="#colorimeter-corrections"> colorimètres avec les écrans à gamut large</a>, car de telles combinaisons demandent une <a href="https://www.argyllcms.com/doc/ccmxs.html" title="List of contributed colorimeter correction files on the ArgyllCMS website">correction</a> matérielle ou logicielle afin d’obtenir des résultats précis – ce problème n’existe pas avec les spectromètres, qui n’ont pas besoin de correction pour les gamuts larges. Mais on a récemment découvert qu’ils avaient des problèmes pour mesurer correctement la luminosité de certains rétroéclairages à LED d’écrans utilisant des LED blanches), ou si les couleurs de votre écran correspondent à un objet réel situé à proximité (comme un tirage photographique). Il est parfaitement possible d’obtenir de bons résultats de vérification mais avec des performances visuelles réelles déficientes. Il est toujours sage de combiner de telles mesures avec un test de l’apparence visuelle d’une référence « reconnue comme étant bonne », comme un tirage ou une épreuve (bien qu’on ne doive pas oublier que celles-ci ont aussi des tolérances, et l’éclairement joue aussi un rôle important lorsqu’on évalue des résultats visuels). Gardez cela en mémoire lorsque vous admirez les résultats de la vérification (ou que vous vous arrachez les cheveux) :)</p>
+				<p>Remarquez que les deux tests sont en « boucle fermée » et ne vous donneront pas la vérité « absolue » en termes de « qualité de la couleur » ou de « précision de la couleur » car ils ne peuvent pas vous indiquer si votre sonde est défectueuse ou si les mesures sont erronées (un profil créé avec des mesures répétitivement fausses donnera une vérification correcte avec d’autres mesures erronées provenant de la même sonde si elles ne fluctuent pas trop) ou si elles ne correspondent pas bien à votre écran (ce qui est particulièrement vrai pour les <a href="#colorimeter-corrections"> colorimètres avec les écrans à gamut large</a>, car de telles combinaisons demandent une <a href="https://www.argyllcms.com/doc/ccmxs.html" title="List of contributed colorimeter correction files on the ArgyllCMS website">correction</a> matérielle ou logicielle afin d’obtenir des résultats précis), ou si les couleurs de votre écran correspondent à un objet réel situé à proximité (comme un tirage photographique). Il est parfaitement possible d’obtenir de bons résultats de vérification mais avec des performances visuelles réelles déficientes. Il est toujours sage de combiner de telles mesures avec un test de l’apparence visuelle d’une référence « reconnue comme étant bonne », comme un tirage ou une épreuve (bien qu’on ne doive pas oublier que celles-ci ont aussi des tolérances, et l’éclairement joue aussi un rôle important lorsqu’on évalue des résultats visuels). Gardez cela en mémoire lorsque vous admirez les résultats de la vérification (ou que vous vous arrachez les cheveux) :)</p>
 
 				<h4>Comment les profils sont-ils évalués au regard des valeurs mesurées ?</h4>
 
@@ -1972,6 +1973,18 @@ with DCGScriptingClientSocket() as client:
 				<li>Windows XP :
 					<samp>C:\Documents and Settings\<var>Votre_Nom_Utilisateur</var>\Application Data\${APPNAME}\incomplete</samp></li>
 			</ul>
+			
+			<h3 id="appdownload">Downloads</h3>
+			<ul>
+				<li>Linux:
+					<samp>/home/<var>Your Username</var>/.local/share/${APPNAME}/dl</samp></li>
+				<li>Mac OS X:
+					<samp>/Users/<var>Your Username</var>/Library/Application Support/${APPNAME}/dl</samp></li>
+				<li>Windows Vista and newer:
+					<samp>C:\Users\<var>Your Username</var>\AppData\Roaming\${APPNAME}\dl</samp></li>
+				<li>Windows XP:
+					<samp>C:\Documents and Settings\<var>Your Username</var>\Application Data\${APPNAME}\dl</samp></li>
+			</ul>
 		</div>
 
 		<div id="issues">
@@ -2129,13 +2142,13 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 			<p>Les donateurs récents :
 
-<!-- 2019-02 -->
-Kitta Soulinthavong, John Carpenter, Alan Olander, Paul Bishop, Bett@Home, Michael Umland, Michael Lorenzo, Curtis Bullock, Florentin Cioban, Arnoud Kwant, Jens Walter, Ludovit Kanta, Uwe Wegemann, M. Ashraf Khan, Jacques Monier, David Brown, Jim Purcell, Martin Čučiak, Terence C. Hance, Andreas Frowein, William Mellen, Dipl.-Ing. Martin D. Adamiker, Siegfried Streit, Waldemar Avots, Zsolt Ivacs, Michael Simms, David L Jones, Michael Allred, Mark Jennings, Robert Mayr, Jesper Persson, Nicholas Drabble, Mates Mihail-Simion, Jani Lahtinen, Maciej Zięba, Paul Robinson, Robert Kenedi, Cauville Mathieu, Вячеслав Кузев, Rami Maunula, Greg Feeler, 大远 邹, Michaël Poncin,
+<!-- 2919-03 -->
+Laurent Privat, Niels Volkmann, Skypie Studio, Robert Hencke, Vaclav Sedy, Piotr Bula, Stuart Bonell, Dushyant Patel, John Hanson Photography, James Spadoni, Kaiming Wei, Paulo Valdez, Rémi Dugrain, Techit Ung-Arunyawee, Kirby Smith, Raphael Dutertre, Koen Van Der Zalm, Peter Raus, Robert Schuster, Eduard Oertle, Milan Ckonjevic, Clifford Colgate, Jason Crouse, Sean O'Brien, Edward Wilson, Stefan Esser, Michael Sansom, Kane Morgan, Jason Jennings, Ruibo Li, Achim Schillings, Shankar Narayanan, Rory Matthews, Jon Straggas, Matthew Sippert, Bob Osola, Werner Söser, Martin Wolf, Emanuele Affabile, Marcus Jüttner, Online Retailers, 扬 吴, David Youso, Bett@Home, Markus Richter, Jesús Manuel Díez Gómez, Emanuele Affabile, Guy Forssman, Mori Kenichi,
 
 <a href="#more_donors" onclick="document.getElementById('more_donors').style.display = 'inline'; this.style.display = 'none'; return false" style="cursor: pointer">autres…</a><span id="more_donors" style="display: none">
 
-<!-- 2019-01 -->
-Francois Demers, Eric Clayton, Eduard Ebel, Raimond Laptik, Richard Down, Bella Kelner, Michael Shimwell, Roger Evelyn, Jean Picard, Laurence Beilenson, Wesam Graoui, United Photo, Inc., Stephen Layton, Kaustuv Roy, Murray Savidan, James Wynhoff, Lukas Strohmeier, Marcin Stawiecki, Andrew Michael, Hans Ohwosoro, Shu Jen Chang, Ryan Trenkamp, Christopher Lindberg, Ivan Sijak, Björn Linzer, Fabrice Gellet, Jason Fomenko, Elio Di Claudio, Eric Beaulieu, Marc Queffelec, David Campillo, Scott Oslund, Robin Richardson, Tom Hayward, Omar Siam, Christian Ahnen, Anthony Kurbanali, Carl Cabanas, Craig Frial, Virginia Sanderson, Québec Photo, Jon Austenaa, John Mccann, E Bjarne Blume, Michael Costa Photography, James Riggs, Ivan Tanasković, Rainer Holland, Tony Kellaway, Monica Iversen
+<!-- 2019-02 -->
+Kitta Soulinthavong, John Carpenter, Alan Olander, Paul Bishop, Bett@Home, Michael Umland, Michael Lorenzo, Curtis Bullock, Florentin Cioban, Arnoud Kwant, Jens Walter, Ludovit Kanta, Uwe Wegemann, M. Ashraf Khan, Jacques Monier, David Brown, Jim Purcell, Martin Čučiak, Terence C. Hance, Andreas Frowein, William Mellen, Dipl.-Ing. Martin D. Adamiker, Siegfried Streit, Waldemar Avots, Zsolt Ivacs, Michael Simms, David L Jones, Michael Allred, Mark Jennings, Robert Mayr, Jesper Persson, Nicholas Drabble, Mates Mihail-Simion, Jani Lahtinen, Maciej Zięba, Paul Robinson, Robert Kenedi, Cauville Mathieu, Вячеслав Кузев, Rami Maunula, Greg Feeler, 大远 邹, Michaël Poncin
 	
 </span></p>
 
