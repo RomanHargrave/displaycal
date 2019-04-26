@@ -85,7 +85,7 @@
 "3dlut.holder.assign_preset": |-
   指定 3D LUT 至预设
 "3dlut.holder.out_of_memory": |-
-  %s 超出 3D LUT 储存空间（最少需要 %i KB）。请从 %s 删除一些 3D LUT 以释放空间给新文件使用。参阅 %s 的文档了解更多信息。
+  %s 超出 3D LUT 储存空间（最少需要 %i KB）。请从 %s 删除一些 3D LUT 以释放空间给新文件使用。参阅 %s's 文档了解更多信息。
 "3dlut.input.colorspace": |-
   源色彩空间
 "3dlut.input.profile": |-
@@ -493,50 +493,50 @@
   阴极射线管显示器
 "ccmx.use_four_color_matrix_method": |-
   最小化 xy 色度差异
-"*ccss.CCFLFamily_07Feb11": |-
-  LCD CCFL family (AC, EIZO, HP)
-"*ccss.FSI_XM55U_23Jan19": |-
-  WOLED family, SDR Rec. 709 gamut mode (FSI XM55U/XM65U, LG OLED)
-"*ccss.GBrLED_25Jul12": |-
-  LCD GB-r-LED IPS (Dell U2413)
-"*ccss.HP_DC3": |-
-  LCD PFS Phosphor WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
-"*ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS Phosphor WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
-"*ccss.HP_ZBOOK": |-
-  LCD PFS Phosphor WLED IPS, 100% Adobe RGB (HP ZBook)
-"*ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
-  WOLED (LG OLED 6-Series)
-"*ccss.MacBookProRetina2016": |-
-  LCD PFS Phosphor WLED IPS, 99% P3 (MacBook Pro Retina 2016)
-"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
-  LCD GB-r-LED IPS (NEC PA242W)
-"*ccss.OLEDFamily_20Jul12": |-
-  RGB OLED (Sony PVM-2541)
-"*ccss.OLEDFamily_28Aug18": |-
-  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
-"*ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
-  LCD PFS Phosphor WLED, 98% Adobe RGB
-"*ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS Phosphor WLED family
-"*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
-"*ccss.PlasmaFamily_20Jul12": |-
-  Plasma
-"*ccss.ProjectorFamily_07Feb11": |-
-  Projector family (Marantz, HP, Panasonic)
-"*ccss.RGBLEDFamily_07Feb11": |-
-  LCD RGB LED family (HP, SOYO)
-"*ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG Phosphor LED family (AUO B156HW01 V.4 in Lenovo W520/W530)
-"*ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG Phosphor LED family (AUO B156HW01 V.4, Dell U2413)
-"*ccss.WGCCFLFamily_07Feb11": |-
-  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
-"*ccss.WLEDFamily_07Feb11": |-
-  LCD White LED family (AC, LG, Samsung)
-"*ccss.WRGB_OLED_LG": |-
-  WOLED, SDR Rec. 709 gamut mode (LG OLED B7)
+"ccss.CCFLFamily_07Feb11": |-
+  液晶 CCFL背光 系列 (AC, EIZO, HP)
+"ccss.FSI_XM55U_23Jan19": |-
+  WOLED面板 系列, SDR Rec. 709色域模式 (FSI XM55U/XM65U, LG OLED)
+"ccss.GBrLED_25Jul12": |-
+  液晶 GB-r-LED背光 IPS面板 (Dell U2413)
+"ccss.HP_DC3": |-
+  液晶 PFS-磷光体 W-LED背光 IPS面板, 94% Adobe RGB/90% DCI-P3色域 (HP DreamColor)
+"ccss.HP_DreamColor_Z24x_NewPanel": |-
+  液晶 PFS-磷光体 W-LED背光 IPS面板, 98% Adobe RGB/96% DCI-P3色域 (HP DreamColor Z24x G2)
+"ccss.HP_ZBOOK": |-
+  液晶 PFS-磷光体 W-LED背光 IPS面板, 100% Adobe RGB色域 (HP ZBook)
+"ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
+  WOLED面板 (LG OLED 6-系列)
+"ccss.MacBookProRetina2016": |-
+  液晶 PFS-磷光体 W-LED背光 IPS面板, 99% DCI-P3色域 (MacBook Pro Retina 2016)
+"ccss.NEC_64_690E_PA242W_2013-02-28": |-
+  液晶 GB-r-LED背光 IPS面板 (NEC PA242W)
+"ccss.OLEDFamily_20Jul12": |-
+  RGB OLED面板 (Sony PVM-2541)
+"ccss.OLEDFamily_28Aug18": |-
+  RGB OLED面板 系列 (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
+  液晶 PFS-磷光体 W-LED背光, 98% Adobe RGB色域
+"ccss.PFS_Phosphor_Family_31Jan17": |-
+  液晶 PFS-磷光体 W-LED背光 系列
+"ccss.Panasonic VVX17P051J00": |-
+  液晶 PFS-磷光体 W-LED背光 IPS面板, 94% DCI-P3色域 (Panasonic VVX17P051J00 in Lenovo P70)
+"ccss.PlasmaFamily_20Jul12": |-
+  等离子
+"ccss.ProjectorFamily_07Feb11": |-
+  投影机 系列 (Marantz, HP, Panasonic)
+"ccss.RGBLEDFamily_07Feb11": |-
+  液晶 RGB-LED背光 系列 (HP, SOYO)
+"ccss.RG_Phosphor_Family_13Dec11": |-
+  液晶 RG-磷光体 LED背光 系列 (AUO B156HW01 V.4 in Lenovo W520/W530)
+"ccss.RG_Phosphor_Family_25Jul12": |-
+  液晶 GB-r-LED/RG-磷光体 LED背光 系列 (AUO B156HW01 V.4, Dell U2413)
+"ccss.WGCCFLFamily_07Feb11": |-
+  液晶 CCFL背光 广色域 系列 (NEC PA241W/PA271W)
+"ccss.WLEDFamily_07Feb11": |-
+  液晶 W-LED背光 系列 (AC, LG, Samsung)
+"ccss.WRGB_OLED_LG": |-
+  WOLED面板, SDR Rec. 709色域模式 (LG OLED B7)
 "ccxx.ti1": |-
   色度仪校正测试图表
 "centered": |-
@@ -638,7 +638,7 @@
 "colorimeter_correction.create.failure": |-
   校正文件创建失败。
 "colorimeter_correction.create.info": |-
-  要创建色度仪校正文件，首先需要使用光谱仪测量所需的测试颜色，如果要创建校正矩阵而不是光谱校正，还要使用色度仪。
+  要创建色度仪校正文件，首先需要使用光谱仪测量所需的测试色彩，如果要创建校正矩阵而不是光谱校正，还要使用色度仪。
   另外可以选择“浏览...”来使用现有的测量值。
 "colorimeter_correction.create.success": |-
   校正文件成功创建。
@@ -658,10 +658,10 @@
   色度仪校正文件或测量模式成功从以下软件导入:
   
   %s
-"*colorimeter_correction.info": |-
-  Colorimeter correction information
+"colorimeter_correction.info": |-
+  色度仪校正信息
 "colorimeter_correction.instrument_mismatch": |-
-  所选色度仪校正文件不适用于所选校色仪。
+  选择的色度仪校正文件不适用于所选校色仪。
 "colorimeter_correction.upload": |-
   上传色度仪校正文件...
 "colorimeter_correction.upload.confirm": |-
@@ -683,7 +683,7 @@
 "colorimeter_correction.web_check.info": |-
   请注意全部色度仪校正文件由各类用户提供，对特定情况的可用性由您来评估。它们或许能提高色度仪和显示器的绝对精度。
 "colorimeter_correction_matrix_file": |-
-  校正
+  校正文件
 "colorimeter_correction_matrix_file.choose": |-
   选择色度仪校正文件...
 "colorimetric_intent_image_state": |-
@@ -731,7 +731,7 @@
 "copyright": |-
   版权
 "corrected": |-
-  校正
+  已校正
 "create_profile": |-
   从测量数据创建配置文件...
 "create_profile_from_edid": |-
@@ -823,13 +823,13 @@
 "dialog.argyll.notfound.choice": |-
   运行 DisplayCAL 所需的色彩引擎 ArgyllCMS 似乎未安装在此电脑上。要自动下载还是手动安装？
 "dialog.cal_info": |-
-  校准文件 “%s”将被使用。 要继续吗？
+  校准文件 “%s” 将被使用。 要继续吗？
 "dialog.confirm_cancel": |-
   真要取消吗？
 "dialog.confirm_delete": |-
   真要删除所选文件？
 "dialog.confirm_overwrite": |-
-  文件“%s”已经存在。 要覆写它吗？
+  文件 “%s” 已经存在。 要覆写它吗？
 "dialog.confirm_uninstall": |-
   真要卸载所选文件？
 "dialog.current_cal_warning": |-
@@ -839,7 +839,7 @@
 "dialog.enter_password": |-
   请输入密码。
 "dialog.install_profile": |-
-  要安装配置文件“%s” 并让它成为显示器“%s”的默认值吗？
+  要安装配置文件 “%s” 并让它成为显示器 “%s” 的默认值吗？
 "dialog.linear_cal_info": |-
   线性校准曲线将被使用。要继续吗？
 "dialog.load_cal": |-
@@ -892,84 +892,84 @@
   显示设备设置
 "display.tech": |-
   显示技术
-"*display.tech.CRT": |-
-  CRT
-"*display.tech.DLP Projector": |-
-  DLP Projector
-"*display.tech.DLP Projector RGB Filter Wheel": |-
-  DLP Projector RGB Filter Wheel
-"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
-  DLP Projector RGBCMY Filter Wheel
-"*display.tech.DPL Projector RGBW Filter Wheel": |-
-  DLP Projector RGBW Filter Wheel
-"*display.tech.LCD": |-
-  LCD
-"*display.tech.LCD CCFL": |-
-  LCD CCFL
-"*display.tech.LCD CCFL IPS": |-
-  LCD CCFL IPS
-"*display.tech.LCD CCFL TFT": |-
-  LCD CCFL TFT
-"*display.tech.LCD CCFL VPA": |-
-  LCD CCFL PVA
-"*display.tech.LCD CCFL Wide Gamut": |-
-  LCD CCFL Wide Gamut
-"*display.tech.LCD CCFL Wide Gamut IPS": |-
-  LCD CCFL Wide Gamut IPS
-"*display.tech.LCD CCFL Wide Gamut TFT": |-
-  LCD CCFL Wide Gamut TFT
-"*display.tech.LCD CCFL Wide Gamut VPA": |-
-  LCD CCFL Wide Gamut PVA
-"*display.tech.LCD GB-R Phosphor": |-
-  LCD GB-r-LED
-"*display.tech.LCD GB-R Phosphor IPS": |-
-  LCD GB-r-LED IPS
-"*display.tech.LCD GB-R Phosphor TFT": |-
-  LCD GB-r-LED TFT
-"*display.tech.LCD GB-R Phosphor VPA": |-
-  LCD GB-r-LED PVA
-"*display.tech.LCD PFS Phosphor": |-
-  LCD PFS Phosphor WLED
-"*display.tech.LCD PFS Phosphor IPS": |-
-  LCD PFS Phosphor WLED IPS
-"*display.tech.LCD PFS Phosphor TFT": |-
-  LCD PFS Phosphor WLED TFT
-"*display.tech.LCD PFS Phosphor VPA": |-
-  LCD PFS Phosphor WLED PVA
-"*display.tech.LCD RG Phosphor": |-
-  LCD RG Phosphor LED
-"*display.tech.LCD RG Phosphor IPS": |-
-  LCD RG Phosphor LED IPS
-"*display.tech.LCD RG Phosphor TFT": |-
-  LCD RG Phosphor LED TFT
-"*display.tech.LCD RG Phosphor VPA": |-
-  LCD RG Phosphor LED PVA
-"*display.tech.LCD RGB LED": |-
-  LCD RGB LED
-"*display.tech.LCD RGB LED IPS": |-
-  LCD RGB LED IPS
-"*display.tech.LCD RGB LED TFT": |-
-  LCD RGB LED TFT
-"*display.tech.LCD RGB LED VPA": |-
-  LCD RGB LED PVA
-"*display.tech.LCD White LED": |-
-  LCD White LED
-"*display.tech.LCD White LED IPS": |-
-  LCD White LED IPS
-"*display.tech.LCD White LED TFT": |-
-  LCD White LED TFT
-"*display.tech.LCD White LED VPA": |-
-  LCD White LED PVA
-"*display.tech.LED AMOLED": |-
-  AMOLED
-"*display.tech.LED OLED": |-
-  OLED
-"*display.tech.LED WOLED": |-
-  WOLED
-"*display.tech.Plasma": |-
-  Plasma
-"*display.tech.Unknown": |-
-  Unknown
+"display.tech.CRT": |-
+  阴极射线管
+"display.tech.DLP Projector": |-
+  数字光处理投影机
+"display.tech.DLP Projector RGB Filter Wheel": |-
+  数字光处理投影机 RGB 滤镜
+"display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  数字光处理投影机 RGBCMY 滤镜
+"display.tech.DPL Projector RGBW Filter Wheel": |-
+  数字光处理投影机 RGBW 滤镜
+"display.tech.LCD": |-
+  液晶
+"display.tech.LCD CCFL": |-
+  液晶 CCFL背光
+"display.tech.LCD CCFL IPS": |-
+  液晶 CCFL背光 IPS面板
+"display.tech.LCD CCFL TFT": |-
+  液晶 CCFL背光 TFT面板
+"display.tech.LCD CCFL VPA": |-
+  液晶 CCFL背光 PVA面板
+"display.tech.LCD CCFL Wide Gamut": |-
+  液晶 CCFL背光 广色域
+"display.tech.LCD CCFL Wide Gamut IPS": |-
+  液晶 CCFL背光 广色域 IPS面板
+"display.tech.LCD CCFL Wide Gamut TFT": |-
+  液晶 CCFL背光 广色域 TFT面板
+"display.tech.LCD CCFL Wide Gamut VPA": |-
+  液晶 CCFL背光 广色域 PVA面板
+"display.tech.LCD GB-R Phosphor": |-
+  液晶 GB-r-LED背光
+"display.tech.LCD GB-R Phosphor IPS": |-
+  液晶 GB-r-LED背光 IPS面板
+"display.tech.LCD GB-R Phosphor TFT": |-
+  液晶 GB-r-LED背光 TFT面板
+"display.tech.LCD GB-R Phosphor VPA": |-
+  液晶 GB-r-LED背光 PVA面板
+"display.tech.LCD PFS Phosphor": |-
+  液晶 PFS-磷光体 W-LED背光
+"display.tech.LCD PFS Phosphor IPS": |-
+  液晶 PFS-磷光体 W-LED背光 IPS面板
+"display.tech.LCD PFS Phosphor TFT": |-
+  液晶 PFS-磷光体 W-LED背光 TFT面板
+"display.tech.LCD PFS Phosphor VPA": |-
+  液晶 PFS-磷光体 W-LED背光 PVA面板
+"display.tech.LCD RG Phosphor": |-
+  液晶 RG-磷光体 LED背光
+"display.tech.LCD RG Phosphor IPS": |-
+  液晶 RG-磷光体 LED背光 IPS面板
+"display.tech.LCD RG Phosphor TFT": |-
+  液晶 RG-磷光体 LED背光 TFT面板
+"display.tech.LCD RG Phosphor VPA": |-
+  液晶 RG-磷光体 LED背光 PVA面板
+"display.tech.LCD RGB LED": |-
+  液晶 RGB-LED背光
+"display.tech.LCD RGB LED IPS": |-
+  液晶 RGB-LED背光 IPS面板
+"display.tech.LCD RGB LED TFT": |-
+  液晶 RGB-LED背光 TFT面板
+"display.tech.LCD RGB LED VPA": |-
+  液晶 RGB-LED背光 PVA面板
+"display.tech.LCD White LED": |-
+  液晶 W-LED背光
+"display.tech.LCD White LED IPS": |-
+  液晶 W-LED背光 IPS面板
+"display.tech.LCD White LED TFT": |-
+  液晶 W-LED背光 TFT面板
+"display.tech.LCD White LED VPA": |-
+  液晶 W-LED背光 PVA面板
+"display.tech.LED AMOLED": |-
+  AMOLED面板
+"display.tech.LED OLED": |-
+  OLED面板
+"display.tech.LED WOLED": |-
+  WOLED面板
+"display.tech.Plasma": |-
+  等离子
+"display.tech.Unknown": |-
+  未知
 "display_detected": |-
   检测到显示设备配置发生变化。
 "display_device_profile": |-
@@ -987,14 +987,14 @@
 "displays.identify": |-
   识别显示设备
 "dlp_screen": |-
-  DLP 屏幕
+  数字光处理屏幕
 "donation_header": |-
   欢迎支持！
 "donation_message": |-
   如果您想支持 DisplayCAL 和 ArgyllCMS 的开发、技术帮助和可持续性，请考虑捐赠。
   没有 ArgyllCMS 的基础构建， DisplayCAL 就不会有用，所以 DisplayCAL 收到的捐赠将在两个项目之间分配。
-  对于一般个人的非商业用途，一次性捐赠可能合适。
-  如果您正在商业化地使用 DisplayCAL ，每年或每个月的捐赠将确保两个项目的可持续性。
+  对于个人轻度的非商业用途，一次性捐赠可能合适。
+  如果您正在专业地使用 DisplayCAL ，每年或每个月的捐赠将确保两个项目的可持续性。
   
   感谢所有贡献者！
 "download": |-
@@ -1369,7 +1369,7 @@
 "icc_version": |-
   ICC 版本
 "if_available": |-
-  如果可用
+  如果适用
 "illuminant": |-
   光源
 "illuminant_relative_cct": |-
@@ -1399,8 +1399,8 @@
   
   <font weight='bold'>“绝对” vs. “相对” 伽玛值</font>
   为适应实际显示的非零黑电平, 需要相应地偏移和缩放色调响应曲线。
-  “绝对”伽玛值在50％输入下得到的实际输出与理想的功率曲线不匹配（除非黑电平为零）。
-  “相对”伽玛值在50％输入下得到的实际输出与理想的功率曲线相匹配。
+  “绝对”伽玛值在50％输入生成的实际输出与理想的功率曲线不匹配（除非黑电平为零）。
+  “相对”伽玛值在50％输入生成的实际输出与理想的功率曲线相匹配。
   
   <font weight='bold'>渲染意图</font>
   如果从源色彩空间校准至不同的白点用于 3D LUT 替换，选择“相对色度”。
@@ -1413,36 +1413,36 @@
   1D LUT 校准<font weight='bold'>不</font>适用于完整的显示色彩校正，需要创建<font weight='bold'>ICC设备配置文件</font> 或 <font weight='bold'>3D LUT </font>并将其用于支持的应用程序。
   1D LUT 校准补充配置描述和 3D LUT 校准。
 "info.display_instrument": |-
-  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  <font weight='bold'>禁用显示器所有的动态画面设置</font> (如果适用)。 包括动态对比度，调光，自动亮度和类似功能。
   
-  Make sure light does not shine directly onto the screen of your display.
+  确保光线不会直射到显示器的屏幕上。
   
   如果显示器是<font weight='bold'>OLED</font>，<font weight='bold'>等离子</font>或依赖画面内容可变光输出的其它技术，启用<font weight='bold'>白电平漂移补偿</font>。
   如果校色仪是<font weight='bold'>光谱仪</font>并在显示器稳定的黑电平使用接触模式，可能需要启用<font weight='bold'>黑电平漂移补偿</font>。
-  如果校色仪是<font weight='bold'>色度仪</font>，更正<font weight='bold'>测量模式</font>为适合此显示器的技术类型。
+  如果校色仪是<font weight='bold'>色度仪</font>，更正<font weight='bold'>测量模式</font>或<font weight='bold'>校正文件</font>为适合此显示器的技术类型。
   要注意的是某些校色仪【ColorHug, ColorHug2, K-10, Spyder4/5/X】的一些测量模式可能已内置校正。
 "info.display_instrument.warmup": |-
   应让显示器至少<font weight='bold'>预热30分钟</font>再开始测量。如果校色仪使用接触模式，在预热期间将其放置在显示屏上是个好主意。
-"*info.display_tech": |-
-  <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and sRGB coverage up to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors from 2010 and newer as well as Apple iMac/MacBook from 2009 to mid 2015.
+"info.display_tech": |-
+  <font weight='bold'>液晶 W-LED背光</font> (W-LED背光与常规色域和 sRGB 色域覆盖可达100%) 是最常见的液晶背光技术。 该类别的显示器包括2010年及新版的大多数笔记本电脑、全方位/办公和非HDR游戏显示器以及从2009年至2015年中期的 Apple iMac/MacBook。
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut in two common variants with P3 or Adobe RGB coverage around 90-99% (according to manufacturer data). Common displays in the P3 gamut category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer) as well as some HDR-capable desktop monitors. The Adobe RGB gamut category includes professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  <font weight='bold'>液晶 PFS-磷光体 W-LED背光</font> 具有两种常见变体的广色域与 DCI-P3 或 Adobe RGB 色域覆盖约为90-99％（根据制造商数据）。DCI-P3 色域类别常见的显示器包括 Apple iMac 4K/5K Retina（2015年末及新版），MacBook Pro Retina (2016年末及新版)，以及某些支持HDR的桌面显示器。Adobe RGB 色域类别的专业显示器包括 EIZO CG2730，HP DreamColor Z24x G2 或 NEC PA271Q。
   
-  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  <font weight='bold'>WOLED面板</font> 具有广色域与高 DCI-P3 色域覆盖，常用于LG OLED电视。
   
-  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with near-full Adobe RGB and/or P3 coverage, used in some professional monitors and laptops as well as high quality smartphones.
+  <font weight='bold'>RGB OLED/AMOLED面板</font> 具有广色域与几乎完整的 Adobe RGB 或 DCI-P3 色域覆盖，用于某些专业显示器和笔记本电脑以及高品质智能手机。
   
-  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99% (according to manufacturer data). Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  <font weight='bold'>液晶 GB-r-LED背光</font> （也称为GB-LED）具有广色域与 Adobe RGB 色域覆盖约为99％（根据制造商数据）。该类别常见的显示器包括 Dell U2413, EIZO CG247/CG277 和 NEC PA242W/PA272W。
   
-  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with near-full Adobe RGB coverage. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  <font weight='bold'>液晶 RGB-LED背光</font> 具有广色域与几乎完整的 Adobe RGB 色域覆盖。该类别常见的显示器包括 Samsung XL20/XL24/XL30 和 HP DreamColor LP2480zx。
   
-  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies commonly used in displays from 2009 and earlier.
-"*info.display_tech.linklabel.displayspecifications.com": |-
-  Find your monitor/TV and corresponding technology at displayspecifications.com
-"*info.display_tech.linklabel.everymac.com": |-
-  Find your iMac/MacBook/iPad and corresponding display technology at everymac.com
-"*info.display_tech.show": |-
-  Show information about common display technologies
+  <font weight='bold'>液晶 CCFL背光</font> 和 <font weight='bold'>液晶 CCFL背光 广色域</font> 是较旧的背光技术，常用于2009年及早期的显示设备。
+"info.display_tech.linklabel.displayspecifications.com": |-
+  在displayspecifications.com查找您的显示器/电视和相关显示技术
+"info.display_tech.linklabel.everymac.com": |-
+  在everymac.com查找您的iMac/MacBook/iPad和相关显示技术
+"info.display_tech.show": |-
+  常规显示技术的相关信息
 "info.mr_settings": |-
   通过测量报告<font weight='bold'>验证</font>ICC配置文件或 3D LUT 的<font weight='bold'>色准精度</font>，报告包含测量相关色块数色彩错误的详细统计数据。
   
@@ -1458,7 +1458,7 @@
   如果需要尽可能高的色准精度，建议使用大约几百至数千个色块数基于 LUT 的配置文件。
   <font weight='bold'>“自动优化”</font> 测试图表设置自动配合显示器的非线性和实际响应，并应用于最佳的质量结果。
   因此可以调整滑块，在配置文件的测量精度和运算耗时之间选择折衷方案。
-"*infoframe.default_text": |-
+"infoframe.default_text": |-
   
 "infoframe.title": |-
   日志
@@ -1483,11 +1483,11 @@
 "instrument": |-
   校色仪
 "instrument.calibrate": |-
-  将校色仪放在黑暗的无光泽表面或校准板上并按“确定”校准校色仪。
+  将不透光的盖子放在校色仪上（如果适用），或放在黑暗的无光泽表面上，或校准参考上（如果适用），并按“确定”校准校色仪。
 "instrument.calibrate.colormunki": |-
-  将 ColorMunki 传感器置于校准位置并按“确定”校准校色仪。
+  将 ColorMunki 传感器放在校准位置并按“确定”校准校色仪。
 "instrument.calibrate.reflective": |-
-  将仪器放在其反射白色参考序列号 no. %s 并按“确定”校准校色仪。
+  将校色仪放在其反射白色参考序列号 no. %s 上并按“确定”校准校色仪。
 "instrument.calibrating": |-
   正在校准校色仪...
 "instrument.colormunki": |-
@@ -1499,9 +1499,9 @@
 "instrument.measure_ambient": |-
   如果校色仪需要特殊的盖子来测量测环境，请装上它。要测量环境光线，将校色仪向上放置在显示器旁边。如果要测量观察箱，将无同色异谱灰卡放置在箱内并将校色仪指向它。有关如何测量环境的更多说明可在校色仪文档中找到。按“确定”开始测量。
 "instrument.place_on_screen": |-
-  放置校色仪在测试窗口上并单击“确定”继续。
+  将校色仪放在测试窗口上并单击“确定”继续。
 "instrument.place_on_screen.madvr": |-
-  (%i) 请放置 %s 在测试区域
+  (%i) 请放置 %s 在测试区域上
 "instrument.reposition_sensor": |-
   因校色仪传感器位置错误导致测量失败。请校正传感器位置，然后单击“确定”继续。
 "internal": |-
@@ -1624,7 +1624,7 @@
 "measurement_file.choose.reference": |-
   请选择参考测量文件
 "measurement_mode": |-
-  模式
+  测量模式
 "measurement_mode.adaptive": |-
   自适应
 "measurement_mode.dlp": |-
@@ -1638,21 +1638,21 @@
 "measurement_mode.lcd": |-
   液晶 (常规)
 "measurement_mode.lcd.ccfl": |-
-  液晶 (CCFL)
+  液晶 CCFL背光
 "measurement_mode.lcd.ccfl.2": |-
-  液晶 (CCFL 类型 2)
+  液晶 CCFL背光 类型 2
 "measurement_mode.lcd.oled": |-
-  液晶 (OLED)
+  OLED面板
 "measurement_mode.lcd.white_led": |-
-  液晶 (W-LED)
+  液晶 W-LED背光
 "measurement_mode.lcd.wide_gamut.ccfl": |-
-  广色域液晶 (CCFL)
+  液晶 CCFL背光 广色域
 "measurement_mode.lcd.wide_gamut.gb_led": |-
-  广色域液晶 (GB-LED)
+  液晶 GB-r-LED背光
 "measurement_mode.lcd.wide_gamut.led": |-
-  广色域液晶 (PFS-Phosphor, RGB-LED)
+  液晶 PFS-磷光体 W-LED或 RGB-LED背光
 "measurement_mode.lcd.wide_gamut.rgb_led": |-
-  广色域液晶 (RGB-LED)
+  液晶 RGB-LED背光
 "measurement_mode.raw": |-
   Raw 格式
 "measurement_mode.refresh": |-
@@ -1758,12 +1758,10 @@
 "*observer.shaw": |-
   Shaw & Fairchild 1997 2°
 "oem.import.auto": |-
-  
   如果色度仪附带 Windows 光盘软件，请立即插入（中止任何可能的软件自动安装）。
   
   如果没有光盘且所需文件未找到，文件将从网络下载。
 "oem.import.auto.download_selection": |-
-  
   预选基于已检测的校色仪，请选择文件下载。
 "oem.import.auto_windows": |-
   如果已安装色度仪的供应商软件，所需文件通常能被自动找到。
@@ -1842,7 +1840,7 @@
 "port.invalid": |-
   无效端口 %s
 "positive": |-
-  积极
+  肯定
 "preferred_cmm": |-
   首选 CMM
 "prepress.icc": |-
@@ -1900,7 +1898,7 @@
 "profile.invalid": |-
   无效配置文件。
 "profile.load_error": |-
-  显示配置文件未加载。
+  显示配置文件不能加载。
 "profile.load_on_login": |-
   登录时加载校准
 "profile.load_on_login.handled_by_os": |-
@@ -1922,8 +1920,8 @@
   %M	分
   %S	秒
   %p	上午/下午
-  %U	星期 (星期日为一周第一天)
-  %W	星期 (星期一为一周第一天)
+  %U	星期 (星期日为每周第一天)
+  %W	星期 (星期一为每周第一天)
   %w	星期日 (星期日为0)
   %y	年份无世纪
   %Y	年份与世纪
@@ -2055,7 +2053,7 @@
 "profiling.complete": |-
   配置完成！
 "profiling.incomplete": |-
-  配置未完成。
+  配置尚未完成。
 "projection_television": |-
   投影电视
 "projector": |-
@@ -2545,29 +2543,30 @@
 "warning.gamap.out_viewcond.nondisplay": |-
   目的地查看条件 “%s” 不是显示查看条件。仍要使用吗？
 "warning.input_value_clipping": |-
-  警告: 显示配置文件的以下黑点值将被剪切！
+  警告: 显示配置文件黑点以下值将被剪切！
 "warning.suspicious_delta_e": |-
-  警告: 发现可疑测量值。请注意此检查假定为类似 sRGB 的显示设备。如果显示设备与此假设不同（例如，如果它有超广的色域或色调响应远离 sRGB ），那么发现的错误可能毫无意义。
+  警告: 发现可疑测量值。请注意此检查假定为类似 sRGB 色域的显示设备。如果显示设备与此假设不同（例如，如果它有超广的色域或色调响应远离 sRGB ），那么发现的错误可能毫无意义。
   
   以下一个或所有条件匹配：
   
-  • 具有不同 RGB 编号的连续色块，但测量值之间的 ΔE*00 可疑。
-  • RGB灰度与增加的 RGB 编号之前的色块，但明亮度下降 (L*)。
-  • RGB 灰度与减少的 RGB 编号之前的色块，但明亮度上升 (L*)。
-  • 测量 sRGB 相当于 RGB 编号的 ΔE*00 和 ΔL*00 或 ΔH*00 或 ΔC*00 异常高。
+  • 连续色块与不同的 RGB 编号，但测量值之间的低 ΔE*00 可疑。
+  • RGB灰度与增加的 RGB 编号对应之前的色块，但明亮度下降 (L*)。
+  • RGB 灰度与减少的 RGB 编号对应之前的色块，但明亮度上升 (L*)。
+  • 对于 RGB 编号的 sRGB 等值测量的 ΔE*00 和 ΔL*00 或 ΔH*00 或 ΔC*00 异常高。
   
   这可能暗示测量误差。数值被认为有问题（不一定属实！）并以红色突出显示。
   仔细检查测量数值并标记要认可的测量数值。可以编辑 RGB 和 XYZ 数值。
 "warning.suspicious_delta_e.info": |-
   Δ 列说明：
   
-  ΔE*00 XYZ A/B: ΔE*00 的测量值对于之前的色块测量值。如果缺少该值，则不是检查时的因素。如果该值存在，则假定值太低。
+  ΔE*00 XYZ A/B: 测量值 ΔE*00 对应之前色块的测量值。如果缺少该值，则不是检查时的因素。如果该值存在，则假定值太低。
   
-  0.5 ΔE*00 RGB A/B: ΔE*00 的 sRGB 相当于 RGB 编号对于 sRGB 相当于 RGB 编号之前的色块（系数为0.5）。如果该值存在，则表示在检查假定 ΔE*00 XYZ A/B 过低时的比较值（最小化）。它用于非常粗略的方向。
+  0.5 ΔE*00 RGB A/B: RGB 编号 sRGB 等值的 ΔE*00 对应 之前色块 RGB 编号的 sRGB 等值（系数为0.5）。如果该值存在，则表示在检查假定 ΔE*00 XYZ A/B 过低时的比较（最小）值。它用于非常粗略的方向。
   
-  ΔE*00 RGB-XYZ: ΔE*00 的测量值对于 sRGB 相当于 RGB 编号。
-  ΔL*00 RGB-XYZ: ΔL*00 对于 sRGB 相当于 RGB 编号。 nΔC*00 RGB-XYZ: ΔC*00 对于 sRGB 相当于 RGB 编号。
-  ΔH*00 RGB-XYZ: ΔH*00 的测量值对于 sRGB 相当于 RGB 编号。
+  ΔE*00 RGB-XYZ: 测量值 ΔE*00 对应 RGB 编号的 sRGB 等值。
+  ΔL*00 RGB-XYZ: 测量值 ΔL*00 对应 RGB 编号的 sRGB 等值。
+  ΔC*00 RGB-XYZ: 测量值 ΔC*00 对应 RGB 编号的 sRGB 等值。
+  ΔH*00 RGB-XYZ: 测量值 ΔH*00 对应 RGB 编号的 sRGB 等值。
 "warning.system_file": |-
   警告: “%s” 是系统文件。真要继续吗？
 "webserver.waiting": |-
