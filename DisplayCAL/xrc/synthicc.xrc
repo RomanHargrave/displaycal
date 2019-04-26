@@ -474,7 +474,7 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_luminance_ctrl">
-                        <size>100, -1</size>
+                        <size>105, -1</size>
                         <min_val>0.0</min_val>
                         <max_val>10000.0</max_val>
                         <increment>0.000001</increment>

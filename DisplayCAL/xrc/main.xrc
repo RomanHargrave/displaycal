@@ -329,7 +329,7 @@
                                 <orient>wxHORIZONTAL</orient>
                                 <object class="sizeritem">
                                   <object class="wxSpinCtrl" name="min_display_update_delay_ms">
-                                    <size>85,-1</size>
+                                    <size>105,-1</size>
                                   </object>
                                 </object>
                                 <object class="sizeritem">
@@ -352,7 +352,7 @@
                             </object>
                             <object class="sizeritem">
                               <object class="FloatSpin" name="display_settle_time_mult">
-                                <size>85,-1</size>
+                                <size>105,-1</size>
                                 <digits>6</digits>
                               </object>
                               <flag>wxRIGHT|wxALIGN_CENTRE_VERTICAL</flag>
@@ -1027,7 +1027,7 @@
                                 </object>
                                 <object class="sizeritem">
                                   <object class="FloatSpin" name="ambient_viewcond_adjust_textctrl">
-                                    <size>75,-1</size>
+                                    <size>95,-1</size>
                                     <min_val>0.0</min_val>
                                     <max_val>16777216</max_val>
                                     <increment>0.1</increment>
