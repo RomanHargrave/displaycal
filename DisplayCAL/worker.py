@@ -1193,7 +1193,8 @@ def set_argyll_bin(parent=None, silent=False, callafter=None, callafter_args=())
 		 (argyll_version[:4] == argyll_version_cfg[:4] or
 		  not argyll_version_string.startswith(argyll_version_string_cfg))) or
 		(argyll_version < argyll_version_cfg and
-		 argyll_version_string_cfg.startswith(argyll_version_string))):
+		 argyll_version_string_cfg.startswith(argyll_version_string) and
+		 "beta" in argyll_version_string_cfg.lower())):
 		argyll_dir = os.path.dirname(get_argyll_util("dispwin", paths) or "")
 		dlg = ConfirmDialog(parent,
 							msg=lang.getstr("dialog.select_argyll_version",
