@@ -2988,9 +2988,12 @@ END_DATA
 				if getcfg("3dlut.hdr_ambient_luminance") != 5:
 					ambient = stripzeros(getcfg("3dlut.hdr_ambient_luminance"))
 					lut3dp.append("@%s" % ambient)
-			else:
+			elif getcfg("3dlut.apply_trc"):
 				lut3dp = [lut3d[5][1].replace("b", "bb") +
 						  lut3d[5][3:].replace(":", ",")]  # TRC
+			else:
+				# Use src profile TRC unmodified
+				lut3dp = []
 			lut3dp.extend([cal_exclude,
 						   lut3d[0],  # Gamut mapping mode
 						   lut3d[1][1:],  # Rendering intent
