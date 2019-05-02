@@ -529,9 +529,11 @@ class PlotGraphics:
     
     def getLegendNames(self):
         """Returns list of legend names"""
-        lst = [None]*len(self)
-        for i in range(len(self)):
-            lst[i]= self.objects[i].getLegend()
+        lst = []
+        for obj in self.objects:
+            legend = obj.getLegend()
+            if legend:
+                lst.append(legend)
         return lst
             
     def __len__(self):
@@ -1227,11 +1229,11 @@ class PlotCanvas(wx.Panel):
         legend_inside = True
         if legend_inside:
             # Legend inside graph
-            xboxwh = 0
+            x_offset = xTextExtent[0]
         else:
             # Legend outside graph
-            xboxwh = max(xTextExtent[0], legendBoxWH[0])
-        rhsW= xboxwh+5*self._pointSize[0] # use larger of number width or legend width
+            x_offset = max(xTextExtent[0], legendBoxWH[0])
+        rhsW= x_offset+5*self._pointSize[0] # use larger of number width or legend width
         lhsW= yTextExtent[0]+ yLabelWH[1] + 3*self._pointSize[0]
         bottomH= max(xTextExtent[1], yTextExtent[1]/2.)+ xLabelWH[1] + 2*self._pointSize[1]
         topH= yTextExtent[1]/2. + titleWH[1]
@@ -1265,9 +1267,7 @@ class PlotCanvas(wx.Panel):
         # drawing legend makers and text
         if self._legendEnabled:
             if legend_inside:
-                #rhsW -= xTextExtent[0]
-                rhsW += xTextExtent[0] + legendBoxWH[0]
-                topH = 0
+                rhsW += legendBoxWH[0]
             self._drawLegend(dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt)
         
         graphics.scaleAndShift(scale, shift)
@@ -1566,15 +1566,20 @@ class PlotCanvas(wx.Panel):
         """Draws legend symbols and text"""
         # top right hand corner of graph box is ref corner
         trhc= self.plotbox_origin+ (self.plotbox_size-[rhsW,topH])*[1,-1]
-        legendLHS= .091* legendBoxWH[0]  # border space between legend sym and graph box
+        legend_inside = True
+        if legend_inside:
+            legendLHS = 0
+        else:
+            legendLHS= .091* legendBoxWH[0]  # border space between legend sym and graph box
         lineHeight= max(legendSymExt[1], legendTextExt[1]) * 1.1 #1.1 used as space between lines
         dc.SetFont(self._getFont(self._fontSizeLegend))
-        for i in range(len(graphics)):
-            o = graphics[i]
+        n = 0
+        for o in graphics:
             legend = o.getLegend()
             if not legend:
                 continue
-            s= i*lineHeight
+            s= n*lineHeight
+            n += 1
             if isinstance(o,PolyMarker):
                 # draw marker with legend
                 pnt= (trhc[0]+legendLHS+legendSymExt[0]/2., trhc[1]+s+lineHeight/2.)
@@ -1589,6 +1594,9 @@ class PlotCanvas(wx.Panel):
             # draw legend txt
             pnt= (trhc[0]+legendLHS+legendSymExt[0]+5*self._pointSize[0], trhc[1]+s+lineHeight/2.-legendTextExt[1]/2)
             dc.DrawText(legend,pnt[0],pnt[1])
+        # dc.SetPen(wx.Pen(wx.WHITE, 1))
+        # dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        # dc.DrawRectangle(trhc[0], trhc[1], legendBoxWH[0], legendBoxWH[1])
         dc.SetFont(self._getFont(self._fontSizeAxis)) # reset
 
     def _titleLablesWH(self, dc, graphics):
@@ -1608,16 +1616,16 @@ class PlotCanvas(wx.Panel):
     
     def _legendWH(self, dc, graphics):
         """Returns the size in screen units for legend box"""
+        txtExt = (0, 0)
         if self._legendEnabled != True:
-            legendBoxWH= symExt= txtExt= (0,0)
+            legendBoxWH= symExt= txtExt
         else:
             # find max symbol size
             symExt= graphics.getSymExtent(self.printerScale)
             # find max legend text extent
             dc.SetFont(self._getFont(self._fontSizeLegend))
             txtList= graphics.getLegendNames()
-            txtExt= dc.GetTextExtent(txtList[0])
-            for txt in graphics.getLegendNames()[1:]:
+            for txt in txtList:
                 txtExt= _Numeric.maximum(txtExt,dc.GetTextExtent(txt))
             maxW= symExt[0]+txtExt[0]    
             maxH= max(symExt[1],txtExt[1])
