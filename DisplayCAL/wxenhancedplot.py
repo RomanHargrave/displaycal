@@ -1696,11 +1696,10 @@ class PlotCanvas(wx.Panel):
 
         self._drawAxes(dc, p1, p2, scale, shift, xticks, yticks)
 
-        # drawing legend makers and text
-        if self._legendEnabled:
-            if legend_inside:
-                rhsW += legendBoxWH[0]
-            self._drawLegend(dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt)
+        # draw legend makers and text (if outside)
+        if self._legendEnabled and not legend_inside:
+            self._drawLegend(dc, graphics, rhsW, topH, legendBoxWH,
+                             legendSymExt, legendTextExt)
         
         graphics.scaleAndShift(scale, shift)
         graphics.setPrinterScale(self.printerScale)  # thicken up lines and markers if printing
@@ -1714,6 +1713,13 @@ class PlotCanvas(wx.Panel):
         # Draw the lines and markers
         #start = _time.clock()
         graphics.draw(dc)
+
+        # draw legend makers and text (if inside) so that it overlaps graphics
+        if self._legendEnabled and legend_inside:
+            rhsW += legendBoxWH[0]
+            self._drawLegend(dc, graphics, rhsW, topH, legendBoxWH,
+                             legendSymExt, legendTextExt)
+
         # print "entire graphics drawing took: %f second"%(_time.clock() - start)
         # remove the clipping region
         dc.DestroyClippingRegion()
@@ -1997,7 +2003,21 @@ class PlotCanvas(wx.Panel):
     def _drawLegend(self,dc,graphics,rhsW,topH,legendBoxWH, legendSymExt, legendTextExt):
         """Draws legend symbols and text"""
         # top right hand corner of graph box is ref corner
-        trhc= self.plotbox_origin+ (self.plotbox_size-[rhsW,topH])*[1,-1]
+        trhc= self.plotbox_origin+ (self.plotbox_size -
+                                    [rhsW + self._pointSize[0],
+                                     topH + self._pointSize[1]])*[1,-1]
+        # Draw a 20% transparent box behind legend so that if legend is inside
+        # graph it looks nicer on overlap
+        dc.SetPen(wx.TRANSPARENT_PEN)
+        c = wx.Colour()
+        c.Set(self.BackgroundColour.red,
+              self.BackgroundColour.green,
+              self.BackgroundColour.blue,
+              204)
+        dc.SetBrush(wx.Brush(c))
+        spacing = .0455 * legendBoxWH[0]
+        dc.DrawRectangle(trhc[0] - spacing, trhc[1], legendBoxWH[0] + spacing,
+                         legendBoxWH[1] + self._pointSize[1] * 2)
         legend_inside = True
         if legend_inside:
             legendLHS = 0
@@ -2026,9 +2046,6 @@ class PlotCanvas(wx.Panel):
             # draw legend txt
             pnt= (trhc[0]+legendLHS+legendSymExt[0]+5*self._pointSize[0], trhc[1]+s+lineHeight/2.-legendTextExt[1]/2)
             dc.DrawText(legend,pnt[0],pnt[1])
-        # dc.SetPen(wx.Pen(wx.WHITE, 1))
-        # dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        # dc.DrawRectangle(trhc[0], trhc[1], legendBoxWH[0], legendBoxWH[1])
         dc.SetFont(self._getFont(self._fontSizeAxis)) # reset
 
     def _titleLablesWH(self, dc, graphics):
