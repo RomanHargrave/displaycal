@@ -169,7 +169,7 @@ class CCXXPlot(wx.Frame):
 				for k in data_format.itervalues():
 					if k.startswith("SPEC_"):
 						y = sample[k]
-						#y_min = min(y, y_min)
+						y_min = min(y, y_min)
 						y_max = max(y, y_max)
 						if lores:
 							values.append(y)
@@ -266,13 +266,15 @@ class CCXXPlot(wx.Frame):
 				y_min = 0.0
 				y_max = 10.0
 
+			y_zero = 0
+
 			self.ccxx_axis_x = (math.floor(x_min / 50.) * 50,
 								math.ceil(x_max / 50.) * 50)
 			self.spec_x = (self.ccxx_axis_x[1] - self.ccxx_axis_x[0]) / 50.
-			graph_range = nicenum(y_max - y_min, False)
+			graph_range = nicenum(y_max - y_zero, False)
 			d = nicenum(graph_range / (NTICK - 1.0), True)
 			self.spec_y = math.ceil(y_max / d)
-			self.ccxx_axis_y = (math.floor(y_min / d) * d,
+			self.ccxx_axis_y = (math.floor(y_zero / d) * d,
 								self.spec_y * d)
 		else:
 			self.ccxx_axis_x = (math.floor(x_min / 20.) * 20,
@@ -306,7 +308,7 @@ class CCXXPlot(wx.Frame):
 			self.gfx.append(plot.PolyLine([(self.ccxx_axis_x[0],
 											self.ccxx_axis_y[0]),
 										   (self.ccxx_axis_x[1],
-										    self.ccxx_axis_y[1])],
+										    self.ccxx_axis_y[1] - y_min)],
 							colour=wx.Colour(0, 0, 0, 0)))
 
 		ref = cgats.queryv1("REFERENCE")
