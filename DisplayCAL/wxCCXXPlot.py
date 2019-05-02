@@ -399,6 +399,9 @@ class CCXXPlot(wx.Frame):
 		canvas.SetEnableCenterLines(False)
 		canvas.SetEnableDiagonals(False)
 		canvas.SetEnableGrid(True)
+		canvas.enableTicks = (True, True)
+		canvas.tickPen = wx.Pen(wx.Colour(GRIDCOLOUR),
+								canvas._pointSize[0])
 		canvas.SetEnablePointLabel(False)
 		canvas.SetEnableTitle(True)
 		canvas.SetForegroundColour(FGCOLOUR)
@@ -482,7 +485,8 @@ class CCXXPlot(wx.Frame):
 		self.canvas.proportional = True
 		gfx = []
 		# Add a few points at the extremes to define a bounding box
-		gfx.append(plot.PolyLine([(0, 0), (1, 1)], colour=wx.Colour(0, 0, 0, 0)))
+		gfx.append(plot.PolyLine([(0, -0.025), (1, 1)],
+								 colour=wx.Colour(0, 0, 0, 0)))
 		# Add CIE 1931 outline
 		gfx.append(plot.PolySpline(colormath.cie1931_2_xy,
 								  colour=wx.Colour(102, 102, 102, 153),

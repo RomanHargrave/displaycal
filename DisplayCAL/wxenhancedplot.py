@@ -108,6 +108,7 @@ Zooming controls with mouse (when enabled):
     Right mouse click - zoom out centred on click location.
 """
 
+import functools
 import  string as _string
 import  time as _time
 import  sys
@@ -134,6 +135,7 @@ else:
     _Numeric.Float = _Numeric.float
     _Numeric.Float64 = _Numeric.float64
     _Numeric.Int32 = _Numeric.int32
+np = _Numeric
 
 
 from wxfixes import get_dc_font_scale
@@ -145,6 +147,291 @@ def convert_to_list_of_tuples(iterable):
         points.append(tuple(p))
     return points
 
+
+#----------------------------------------------------------------------
+# From wxPython Phoenix wx/lib/plot/utils.py with __nonzer__ fix
+# and Python 2.6 compatibility
+
+class DisplaySide(object):
+    """
+    Generic class for describing which sides of a box are displayed.
+
+    Used for fine-tuning the axis, ticks, and values of a graph.
+
+    This class somewhat mimics a collections.namedtuple factory function in
+    that it is an iterable and can have indiviual elements accessible by name.
+    It differs from a namedtuple in a few ways:
+
+    - it's mutable
+    - it's not a factory function but a full-fledged class
+    - it contains type checking, only allowing boolean values
+    - it contains name checking, only allowing valid_names as attributes
+
+    :param bottom: Display the bottom side
+    :type bottom: bool
+    :param left: Display the left side
+    :type left: bool
+    :param top: Display the top side
+    :type top: bool
+    :param right: Display the right side
+    :type right: bool
+    """
+    # TODO: Do I want to replace with __slots__?
+    #       Not much memory gain because this class is only called a small
+    #       number of times, but it would remove the need for part of
+    #       __setattr__...
+    valid_names = ("bottom", "left", "right", "top")
+
+    def __init__(self, bottom, left, top, right):
+        if not all([isinstance(x, bool) for x in [bottom, left, top, right]]):
+            raise TypeError("All args must be bools")
+        self.bottom = bottom
+        self.left = left
+        self.top = top
+        self.right = right
+
+    def __str__(self):
+        s = "{}(bottom={}, left={}, top={}, right={})"
+        s = s.format(self.__class__.__name__,
+                     self.bottom,
+                     self.left,
+                     self.top,
+                     self.right,
+                     )
+        return s
+
+    def __repr__(self):
+        # for now, just return the str representation
+        return self.__str__()
+
+    def __setattr__(self, name, value):
+        """
+        Override __setattr__ to implement some type checking and prevent
+        other attributes from being created.
+        """
+        if name not in self.valid_names:
+            err_str = "attribute must be one of {}"
+            raise NameError(err_str.format(self.valid_names))
+        if not isinstance(value, bool):
+            raise TypeError("'{}' must be a boolean".format(name))
+        self.__dict__[name] = value
+
+    def __len__(self):
+        return 4
+
+    def __hash__(self):
+        return hash(tuple(self))
+
+    def __getitem__(self, key):
+        return (self.bottom, self.left, self.top, self.right)[key]
+
+    def __setitem__(self, key, value):
+        if key == 0:
+            self.bottom = value
+        elif key == 1:
+            self.left = value
+        elif key == 2:
+            self.top = value
+        elif key == 3:
+            self.right = value
+        else:
+            raise IndexError("list index out of range")
+
+    def __iter__(self):
+        return iter([self.bottom, self.left, self.top, self.right])
+
+    def __nonzero__(self):
+        return bool(filter(None, self))
+
+
+# TODO: replace with wx.DCPenChanger/wx.DCBrushChanger, etc.
+#       Alternatively, replace those with this function...
+class TempStyle(object):
+    """
+    Decorator / Context Manager to revert pen or brush changes.
+
+    Will revert pen, brush, or both to their previous values after a method
+    call or block finish.
+
+    :param which: The item to save and revert after execution. Can be
+                  one of ``{'both', 'pen', 'brush'}``.
+    :type which: str
+    :param dc: The DC to get brush/pen info from.
+    :type dc: :class:`wx.DC`
+
+    ::
+
+        # Using as a method decorator:
+        @TempStyle()                        # same as @TempStyle('both')
+        def func(self, dc, a, b, c):        # dc must be 1st arg (beside self)
+            # edit pen and brush here
+
+        # Or as a context manager:
+        with TempStyle('both', dc):
+            # do stuff
+
+    .. Note::
+
+       As of 2016-06-15, this can only be used as a decorator for **class
+       methods**, not standard functions. There is a plan to try and remove
+       this restriction, but I don't know when that will happen...
+
+    .. epigraph::
+
+       *Combination Decorator and Context Manager! Also makes Julienne fries!
+       Will not break! Will not... It broke!*
+
+       -- The Genie
+    """
+    _valid_types = set(['both', 'pen', 'brush'])
+    _err_str = (
+        "No DC provided and unable to determine DC from context for function "
+        "`{func_name}`. When `{cls_name}` is used as a decorator, the "
+        "decorated function must have a wx.DC as a keyword arg 'dc=' or "
+        "as the first arg."
+    )
+
+    def __init__(self, which='both', dc=None):
+        if which not in self._valid_types:
+            raise ValueError(
+                "`which` must be one of {}".format(self._valid_types)
+            )
+        self.which = which
+        self.dc = dc
+        self.prevPen = None
+        self.prevBrush = None
+
+    def __call__(self, func):
+
+        @functools.wraps(func)
+        def wrapper(instance, dc, *args, **kwargs):
+            # fake the 'with' block. This solves:
+            # 1.  plots only being shown on 2nd menu selection in demo
+            # 2.  self.dc compalaining about not having a super called when
+            #     trying to get or set the pen/brush values in __enter__ and
+            #     __exit__:
+            #         RuntimeError: super-class __init__() of type
+            #         BufferedDC was never called
+            self._save_items(dc)
+            func(instance, dc, *args, **kwargs)
+            self._revert_items(dc)
+
+            #import copy                    # copy solves issue #1 above, but
+            #self.dc = copy.copy(dc)        # possibly causes issue #2.
+
+            #with self:
+            #    print('in with')
+            #    func(instance, dc, *args, **kwargs)
+
+        return wrapper
+
+    def __enter__(self):
+        self._save_items(self.dc)
+        return self
+
+    def __exit__(self, *exc):
+        self._revert_items(self.dc)
+        return False    # True means exceptions *are* suppressed.
+
+    def _save_items(self, dc):
+        if self.which == 'both':
+            self._save_pen(dc)
+            self._save_brush(dc)
+        elif self.which == 'pen':
+            self._save_pen(dc)
+        elif self.which == 'brush':
+            self._save_brush(dc)
+        else:
+            err_str = ("How did you even get here?? This class forces "
+                       "correct values for `which` at instancing..."
+                       )
+            raise ValueError(err_str)
+
+    def _revert_items(self, dc):
+        if self.which == 'both':
+            self._revert_pen(dc)
+            self._revert_brush(dc)
+        elif self.which == 'pen':
+            self._revert_pen(dc)
+        elif self.which == 'brush':
+            self._revert_brush(dc)
+        else:
+            err_str = ("How did you even get here?? This class forces "
+                       "correct values for `which` at instancing...")
+            raise ValueError(err_str)
+
+    def _save_pen(self, dc):
+        self.prevPen = dc.GetPen()
+
+    def _save_brush(self, dc):
+        self.prevBrush = dc.GetBrush()
+
+    def _revert_pen(self, dc):
+        dc.SetPen(self.prevPen)
+
+    def _revert_brush(self, dc):
+        dc.SetBrush(self.prevBrush)
+
+
+def scale_and_shift_point(x, y, scale=1, shift=0):
+    """
+    Creates a scaled and shifted 2x1 numpy array of [x, y] values.
+
+    The shift value must be in the scaled units.
+
+    :param float `x`:        The x value of the unscaled, unshifted point
+    :param float `y`:        The y valye of the unscaled, unshifted point
+    :param np.array `scale`: The scale factor to use ``[x_sacle, y_scale]``
+    :param np.array `shift`: The offset to apply ``[x_shift, y_shift]``.
+                             Must be in scaled units
+
+    :returns: a numpy array of 2 elements
+    :rtype: np.array
+
+    .. note::
+
+       :math:`new = (scale * old) + shift`
+    """
+    point = scale * np.array([x, y]) + shift
+    return point
+
+
+def set_displayside(value):
+    """
+    Wrapper around :class:`~wx.lib.plot._DisplaySide` that allows for "overloaded" calls.
+
+    If ``value`` is a boolean: all 4 sides are set to ``value``
+
+    If ``value`` is a 2-tuple: the bottom and left sides are set to ``value``
+    and the other sides are set to False.
+
+    If ``value`` is a 4-tuple, then each item is set individually: ``(bottom,
+    left, top, right)``
+
+    :param value: Which sides to display.
+    :type value:   bool, 2-tuple of bool, or 4-tuple of bool
+    :raises: `TypeError` if setting an invalid value.
+    :raises: `ValueError` if the tuple has incorrect length.
+    :rtype: :class:`~wx.lib.plot._DisplaySide`
+    """
+    err_txt = ("value must be a bool or a 2- or 4-tuple of bool")
+
+    # TODO: for 2-tuple, do not change other sides? rather than set to False.
+    if isinstance(value, bool):
+        # turns on or off all axes
+        _value = (value, value, value, value)
+    elif isinstance(value, tuple):
+        if len(value) == 2:
+            _value = (value[0], value[1], False, False)
+        elif len(value) == 4:
+            _value = value
+        else:
+            raise ValueError(err_txt)
+    else:
+        raise TypeError(err_txt)
+    return DisplaySide(*_value)
+
+#----------------------------------------------------------------------
 #
 # Plotting classes...
 #
@@ -642,6 +929,7 @@ class PlotCanvas(wx.Panel):
         self._titleEnabled= True
         self._centerLinesEnabled = False
         self._diagonalsEnabled = False
+        self._ticksEnabled = DisplaySide(False, False, False, False)
         
         # Fonts
         self._fontCache = {}
@@ -672,6 +960,11 @@ class PlotCanvas(wx.Panel):
 
         self._gridColour = wx.NamedColour('black')
 
+        # Default Pens
+        self._tickPen = wx.Pen(wx.BLACK,
+                               self._pointSize[0])
+        self._tickLength = tuple(-x * 2 for x in self._pointSize)
+
     def SetCursor(self, cursor):
         self.canvas.SetCursor(cursor)
         
@@ -684,6 +977,48 @@ class PlotCanvas(wx.Panel):
         else:
             self._gridColour = wx.NamedColour(colour)
 
+    @property
+    def tickPen(self):
+        """
+        The :class:`wx.Pen` used to draw the tick marks on the plot.
+
+        :getter: Returns the :class:`wx.Pen` used for drawing the tick marks.
+        :setter: Sets the :class:`wx.Pen` use for drawging the tick marks.
+        :type:   :class:`wx.Pen`
+        :raise:  `TypeError` when setting a value that is not a
+                 :class:`wx.Pen`.
+        """
+        return self._tickPen
+
+    @tickPen.setter
+    def tickPen(self, pen):
+        if not isinstance(pen, wx.Pen):
+            raise TypeError("pen must be an instance of wx.Pen")
+        self._tickPen = pen
+
+    @property
+    def tickLength(self):
+        """
+        The length of the tick marks on an axis.
+
+        :getter: Returns the length of the tick marks.
+        :setter: Sets the length of the tick marks.
+        :type:   tuple of (xlength, ylength): int or float
+        :raise:  `TypeError` when setting a value that is not an int or float.
+        """
+        return self._tickLength
+
+    @tickLength.setter
+    def tickLength(self, length):
+        if not isinstance(length, (tuple, list)):
+            raise TypeError("`length` must be a 2-tuple of ints or floats")
+        self._tickLength = length
+
+    @property
+    def tickLengthScale(self):
+        """ Scale tick length for hires antialiased mode and printing """
+        return (3 * self.printerScale * self._tickLength[0] * self._pointSize[0],
+                3 * self.printerScale * self._tickLength[1] * self._pointSize[1])
         
     # SaveFile
     def SaveFile(self, fileName= ''):
@@ -978,6 +1313,32 @@ class PlotCanvas(wx.Panel):
         """True if pointLabel enabled."""
         return self._pointLabelEnabled
 
+    @property
+    def enableTicks(self):
+        """
+        The current enableTicks value.
+
+        :getter: Returns the value of enableTicks.
+        :setter: Sets the value of enableTicks.
+        :type:   bool, 2-tuple of bool, or 4-tuple of bool
+        :raises: `TypeError` if setting an invalid value.
+        :raises: `ValueError` if the tuple has incorrect length.
+
+        If bool, enable or disable all ticks
+
+        If 2-tuple, enable or disable the bottom or left ticks:
+        ``(bottom, left)``
+
+        If 4-tuple, enable or disable each tick side individually:
+        ``(bottom, left, top, right)``
+        """
+        return self._ticksEnabled
+
+    @enableTicks.setter
+    def enableTicks(self, value):
+        self._ticksEnabled = set_displayside(value)
+        self.Redraw()
+
     def SetPointLabelFunc(self, func):
         """Sets the function with custom code for pointLabel drawing
             ******** more info needed ***************
@@ -1063,6 +1424,78 @@ class PlotCanvas(wx.Panel):
     def GetYSpec(self):
         """Returns current YSpec for axis"""
         return self._ySpec
+
+    @property
+    def xSpec(self):
+        """
+        Defines the X axis type.
+
+        Default is 'auto'.
+
+        :getter: Returns the value of xSpec.
+        :setter: Sets the value of xSpec.
+        :type:   str, int, or length-2 sequence of floats
+        :raises: `TypeError` if setting an invalid value.
+
+        Valid strings:
+        + 'none' - shows no axis or tick mark values
+        + 'min' - shows min bounding box values
+        + 'auto' - rounds axis range to sensible values
+
+        Other valid values:
+        + <number> - like 'min', but with <number> tick marks
+        + list or tuple: a list of (min, max) values. Must be length 2.
+
+        .. seealso::
+           :attr:`~wx.lib.plot.plotcanvas.PlotCanvas.ySpec`
+        """
+        return self._xSpec
+
+    @xSpec.setter
+    def xSpec(self, value):
+        ok_values = ('none', 'min', 'auto')
+        if value not in ok_values and not isinstance(value, (int, float)):
+            if not isinstance(value, (list, tuple)) and len(value != 2):
+                err_str = ("xSpec must be 'none', 'min', 'auto', "
+                           "a number, or sequence of numbers (length 2)")
+                raise TypeError(err_str)
+        self._xSpec = value
+
+    @property
+    def ySpec(self):
+        """
+        Defines the Y axis type.
+
+        Default is 'auto'.
+
+        :getter: Returns the value of xSpec.
+        :setter: Sets the value of xSpec.
+        :type:   str, int, or length-2 sequence of floats
+        :raises: `TypeError` if setting an invalid value.
+
+        Valid strings:
+        + 'none' - shows no axis or tick mark values
+        + 'min' - shows min bounding box values
+        + 'auto' - rounds axis range to sensible values
+
+        Other valid values:
+        + <number> - like 'min', but with <number> tick marks
+        + list or tuple: a list of (min, max) values. Must be length 2.
+
+        .. seealso::
+           :attr:`~wx.lib.plot.plotcanvas.PlotCanvas.xSpec`
+        """
+        return self._ySpec
+
+    @ySpec.setter
+    def ySpec(self, value):
+        ok_values = ('none', 'min', 'auto')
+        if value not in ok_values and not isinstance(value, (int, float)):
+            if not isinstance(value, (list, tuple)) and len(value != 2):
+                err_str = ("ySpec must be 'none', 'min', 'auto', "
+                           "a number, or sequence of numbers (length 2)")
+                raise TypeError(err_str)
+        self._ySpec = value
     
     def GetXMaxRange(self):
         xAxis = self._getXMaxRange()
@@ -1234,7 +1667,7 @@ class PlotCanvas(wx.Panel):
             # Legend outside graph
             x_offset = max(xTextExtent[0], legendBoxWH[0])
         rhsW= x_offset+5*self._pointSize[0] # use larger of number width or legend width
-        lhsW= yTextExtent[0]+ yLabelWH[1] + 3*self._pointSize[0]
+        lhsW= yTextExtent[0]+ yLabelWH[1] + 5*self._pointSize[0]
         bottomH= max(xTextExtent[1], yTextExtent[1]/2.)+ xLabelWH[1] + 2*self._pointSize[1]
         topH= yTextExtent[1]/2. + titleWH[1]
         textSize_scale= _Numeric.array([rhsW+lhsW,bottomH+topH]) # make plot area smaller by text size
@@ -1248,20 +1681,19 @@ class PlotCanvas(wx.Panel):
             dc.DrawText(graphics.getTitle(),titlePos[0],titlePos[1])
 
         # draw label text
-        dc.SetFont(self._getFont(self._fontSizeAxis))
-        xLabelPos= (self.plotbox_origin[0]+ lhsW + (self.plotbox_size[0]-lhsW-rhsW)/2.- xLabelWH[0]/2.,
-                 self.plotbox_origin[1]- xLabelWH[1])
-        dc.DrawText(graphics.getXLabel(),xLabelPos[0],xLabelPos[1])
-        yLabelPos= (self.plotbox_origin[0] - 3*self._pointSize[0],
-                 self.plotbox_origin[1]- bottomH- (self.plotbox_size[1]-bottomH-topH)/2.+ yLabelWH[0]/2.)
-        if graphics.getYLabel():  # bug fix for Linux
-            dc.DrawRotatedText(graphics.getYLabel(),yLabelPos[0],yLabelPos[1],90)
+        self._drawAxesLabels(dc, graphics, lhsW, rhsW,
+                             bottomH, topH, xLabelWH, yLabelWH)
 
         # allow for scaling and shifting plotted points
         scale = (self.plotbox_size-textSize_scale) / (p2-p1)* _Numeric.array((1,-1))
         shift = -p1*scale + self.plotbox_origin + textSize_shift * _Numeric.array((1,-1))
         self._pointScale= scale / self._pointSize  # make available for mouse events
         self._pointShift= shift / self._pointSize       
+
+        # Draw ticks
+        if self._ticksEnabled:
+            self._drawTicks(dc, p1, p2, scale, shift, xticks, yticks)
+
         self._drawAxes(dc, p1, p2, scale, shift, xticks, yticks)
 
         # drawing legend makers and text
@@ -1739,35 +2171,116 @@ class PlotCanvas(wx.Panel):
             yTickLength= 3 * self.printerScale * self._pointSize[1]  # lengthens lines for printing
             xTickLength= 3 * self.printerScale * self._pointSize[0]
 
-        if self._xSpec is not 'none':
+        if self._ticksEnabled:
+            # get the tick lengths so that labels don't overlap
+            xoffset = self.tickLengthScale[0]
+            yoffset = self.tickLengthScale[1]
+            # only care about negative (out of plot area) tick lengths.
+            xoffset = xoffset if xoffset < 0 else 0
+            yoffset = yoffset if yoffset < 0 else 0
+        else:
+            xoffset = yoffset = 0
+
+        if self._xSpec != 'none':
             lower, upper = p1[0],p2[0]
             text = 1
             for y, d in [(p1[1], -xTickLength), (p2[1], xTickLength)]:   # miny, maxy and tick lengths
                 for x, label in xticks:
+                    w = dc.GetTextExtent(label)[0]
                     pt = scale*_Numeric.array([x, y])+shift
                     dc.DrawLine(pt[0],pt[1],pt[0],pt[1] + d) # draws tick mark d units
                     if text:
-                        dc.DrawText(label,pt[0],pt[1]+2*self._pointSize[1])
+                        dc.DrawText(label, pt[0] - w / 2.0,
+                                    pt[1] + 2 * self._pointSize[1] - xoffset)
                 a1 = scale*_Numeric.array([lower, y])+shift
                 a2 = scale*_Numeric.array([upper, y])+shift
                 dc.DrawLine(a1[0],a1[1],a2[0],a2[1])  # draws upper and lower axis line
                 text = 0  # axis values not drawn on top side
 
-        if self._ySpec is not 'none':
+        if self._ySpec != 'none':
             lower, upper = p1[1],p2[1]
             text = 1
             h = dc.GetCharHeight()
             for x, d in [(p1[0], -yTickLength), (p2[0], yTickLength)]:
                 for y, label in yticks:
+                    w = dc.GetTextExtent(label)[0]
                     pt = scale*_Numeric.array([x, y])+shift
                     dc.DrawLine(pt[0],pt[1],pt[0]-d,pt[1])
                     if text:
-                        dc.DrawText(label,pt[0]-dc.GetTextExtent(label)[0]-3*self._pointSize[0],
-                                    pt[1]-0.75*h)
+                        dc.DrawText(label,
+                                    pt[0] - w - 3 * self._pointSize[0] + yoffset,
+                                    pt[1] - 0.5 * h)
                 a1 = scale*_Numeric.array([x, lower])+shift
                 a2 = scale*_Numeric.array([x, upper])+shift
                 dc.DrawLine(a1[0],a1[1],a2[0],a2[1])
                 text = 0    # axis values not drawn on right side
+
+    @TempStyle('pen')
+    def _drawTicks(self, dc, p1, p2, scale, shift, xticks, yticks):
+        """Draw the tick marks
+
+        :param :class:`wx.DC` `dc`: The :class:`wx.DC` to draw on.
+        :type `dc`: :class:`wx.DC`
+        :param p1: The lower-left hand corner of the plot in plot coords. So,
+                   if the plot ranges from x=-10 to 10 and y=-5 to 5, then
+                   p1 = (-10, -5)
+        :type p1: :class:`np.array`, length 2
+        :param p2: The upper-right hand corner of the plot in plot coords. So,
+                   if the plot ranges from x=-10 to 10 and y=-5 to 5, then
+                   p2 = (10, 5)
+        :type p2: :class:`np.array`, length 2
+        :param scale: The [X, Y] scaling factor to convert plot coords to
+                      DC coords
+        :type scale: :class:`np.array`, length 2
+        :param shift: The [X, Y] shift values to convert plot coords to
+                      DC coords. Must be in plot units, not DC units.
+        :type shift: :class:`np.array`, length 2
+        :param xticks: The X tick definition
+        :type xticks: list of length-2 lists
+        :param yticks: The Y tick definition
+        :type yticks: list of length-2 lists
+        """
+        # TODO: add option for ticks to extend outside of graph
+        #       - done via negative ticklength values?
+        #           + works but the axes values cut off the ticks.
+        # increases thickness for printing only
+        pen = self.tickPen
+        penWidth = self.printerScale * pen.GetWidth()
+        pen.SetWidth(penWidth)
+        dc.SetPen(pen)
+
+        # lengthen lines for printing
+        xTickLength = self.tickLengthScale[0]
+        yTickLength = self.tickLengthScale[1]
+
+        ticks = self.enableTicks
+        if self.xSpec != 'none':        # I don't like this :-/
+            if ticks.bottom:
+                lines = []
+                for x, label in xticks:
+                    pt = scale_and_shift_point(x, p1[1], scale, shift)
+                    lines.append((pt[0], pt[1], pt[0], pt[1] - xTickLength))
+                dc.DrawLineList(lines)
+            if ticks.top:
+                lines = []
+                for x, label in xticks:
+                    pt = scale_and_shift_point(x, p2[1], scale, shift)
+                    lines.append((pt[0], pt[1], pt[0], pt[1] + xTickLength))
+                dc.DrawLineList(lines)
+
+        if self.ySpec != 'none':
+            if ticks.left:
+                lines = []
+                for y, label in yticks:
+                    pt = scale_and_shift_point(p1[0], y, scale, shift)
+                    lines.append((pt[0], pt[1], pt[0] + yTickLength, pt[1]))
+                dc.DrawLineList(lines)
+            if ticks.right:
+                lines = []
+                for y, label in yticks:
+                    pt = scale_and_shift_point(p2[0], y, scale, shift)
+                    lines.append((pt[0], pt[1], pt[0] - yTickLength, pt[1]))
+                dc.DrawLineList(lines)
 
     def _drawExtras(self, dc, p1, p2, scale, shift):
         b1, b2 = self.last_draw[0].boundingBox()
@@ -1790,6 +2303,38 @@ class PlotCanvas(wx.Panel):
                 dc.DrawLine(x1, y1, x2, y2)
             if self._diagonalsEnabled in ('Bottomright-Topleft', True):
                 dc.DrawLine(x1, y2, x2, y1)
+
+    def _drawAxesLabels(self, dc, graphics, lhsW, rhsW, bottomH, topH,
+                        xLabelWH, yLabelWH):
+        """
+        Draws the axes labels
+        """
+        if self._ticksEnabled:
+            # get the tick lengths so that labels don't overlap
+            xTickLength = self.tickLengthScale[0]
+            yTickLength = self.tickLengthScale[1]
+            # only care about negative (out of plot area) tick lengths.
+            xTickLength = xTickLength if xTickLength < 0 else 0
+            yTickLength = yTickLength if yTickLength < 0 else 0
+        else:
+            xTickLength = yTickLength = 0
+
+        # TODO: axes values get big when this is turned off
+        dc.SetFont(self._getFont(self._fontSizeAxis))
+        xLabelPos = (
+            self.plotbox_origin[0] + lhsW
+            + (self.plotbox_size[0] - lhsW - rhsW) / 2. - xLabelWH[0] / 2.,
+            self.plotbox_origin[1] - xLabelWH[1] - yTickLength
+        )
+        dc.DrawText(graphics.xLabel, xLabelPos[0], xLabelPos[1])
+        yLabelPos = (
+            self.plotbox_origin[0] - 1 * self._pointSize[0] + xTickLength,
+            self.plotbox_origin[1] - bottomH
+            - (self.plotbox_size[1] - bottomH - topH) / 2. + yLabelWH[0] / 2.
+        )
+        if graphics.yLabel:  # bug fix for Linux
+            dc.DrawRotatedText(
+                graphics.yLabel, yLabelPos[0], yLabelPos[1], 90)
 
     def _xticks(self, *args):
         if self._logscale[0]:
