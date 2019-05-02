@@ -32,6 +32,42 @@ else:
 	FONTSIZE_LARGE = 9
 	FONTSIZE_SMALL = 8
 
+NTICK = 10
+
+
+# Graph labeling functions
+# See Argyll plot/plot.c
+
+
+def expt(a, n):
+	return math.pow(a, n)
+
+
+def nicenum(x, do_round):
+	if x < 0.0:
+		x = -x
+	ex = math.floor(math.log10(x))
+	f = x / expt(10.0, ex)
+	if do_round:
+		if f < 1.5:
+			nf = 1.0
+		elif f < 3.0:
+			nf = 2.0
+		elif f < 7.0:
+			nf = 5.0
+		else:
+			nf = 10.0
+	else:
+		if f < 1.0:
+			nf = 1.0
+		elif f < 2.0:
+			nf = 2.0
+		elif f < 5.0:
+			nf = 5.0
+		else:
+			nf = 10.0
+	return nf * expt(10.0, ex)
+
 
 class CCXXPlot(wx.Frame):
 
@@ -221,8 +257,27 @@ class CCXXPlot(wx.Frame):
 
 			Plot = plot.PolyMarker
 
-		self.ccxx_axis_x = (math.floor(x_min / 20.) * 20, math.ceil(x_max / 20.) * 20)
-		self.ccxx_axis_y = (math.floor(y_min), math.ceil(y_max))
+		if self.is_ccss:
+			# Protect against division by zero when range is zero
+			if not x_max - x_min:
+				x_min = 350.0
+				x_max = 750.0
+			if not y_max - y_min:
+				y_min = 0.0
+				y_max = 10.0
+
+			self.ccxx_axis_x = (math.floor(x_min / 50.) * 50,
+								math.ceil(x_max / 50.) * 50)
+			self.spec_x = (self.ccxx_axis_x[1] - self.ccxx_axis_x[0]) / 50.
+			graph_range = nicenum(y_max - y_min, False)
+			d = nicenum(graph_range / (NTICK - 1.0), True)
+			self.spec_y = math.ceil(y_max / d)
+			self.ccxx_axis_y = (math.floor(y_min / d) * d,
+								self.spec_y * d)
+		else:
+			self.ccxx_axis_x = (math.floor(x_min / 20.) * 20,
+								math.ceil(x_max / 20.) * 20)
+			self.ccxx_axis_y = (math.floor(y_min), math.ceil(y_max))
 
 		self.gfx = []
 		for XYZ, values, attrs in self.samples:
@@ -246,6 +301,13 @@ class CCXXPlot(wx.Frame):
 			else:
 				RGB = (153, 153, 153)
 			self.gfx.append(Plot(values, colour=wx.Colour(*RGB), **attrs))
+		if self.is_ccss:
+			# Add a few points at the extremes to define a bounding box
+			self.gfx.append(plot.PolyLine([(self.ccxx_axis_x[0],
+											self.ccxx_axis_y[0]),
+										   (self.ccxx_axis_x[1],
+										    self.ccxx_axis_y[1])],
+							colour=wx.Colour(0, 0, 0, 0)))
 
 		ref = cgats.queryv1("REFERENCE")
 		if ref:
@@ -342,13 +404,9 @@ class CCXXPlot(wx.Frame):
 		canvas.SetForegroundColour(FGCOLOUR)
 		canvas.SetGridColour(GRIDCOLOUR)
 		canvas.canvas.BackgroundColour = BGCOLOUR
-		canvas.spec_x = 10
-		canvas.spec_y = 10
 		if self.is_ccss:
 			canvas.HandCursor = wx.StockCursor(wx.CURSOR_SIZING)
 			canvas.SetCursor(canvas.HandCursor)
-			canvas.SetXSpec(canvas.spec_x)
-			canvas.SetYSpec(canvas.spec_y)
 		else:
 			canvas.canvas.Unbind(wx.EVT_LEFT_DCLICK)
 			canvas.SetEnableDrag(False)
@@ -411,6 +469,11 @@ class CCXXPlot(wx.Frame):
 		self.canvas.proportional = not self.is_ccss
 		self.canvas.axis_x = self.ccxx_axis_x
 		self.canvas.axis_y = self.ccxx_axis_y
+		if self.is_ccss:
+			self.canvas.spec_x = self.spec_x
+			self.canvas.spec_y = self.spec_y
+			self.canvas.SetXSpec(self.spec_x)
+			self.canvas.SetYSpec(self.spec_y)
 		self.draw(self.gfx, u" ")
 
 	def draw_cie(self):
@@ -453,6 +516,10 @@ class CCXXPlot(wx.Frame):
 									  legend=u"%.4f\u2009x\u2002%.4f\u2009y" % xy))
 		self.canvas.axis_x = 0, 1
 		self.canvas.axis_y = 0, 1
+		self.canvas.spec_x = 10
+		self.canvas.spec_y = 10
+		self.canvas.SetXSpec(10)
+		self.canvas.SetYSpec(10)
 		self.draw(gfx, u" ", "x", "y")
 
 	def toggle_draw(self, event):
