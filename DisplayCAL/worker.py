@@ -979,8 +979,7 @@ def get_pattern_geometry():
 	x = (display_size[0] - w * display_size[0]) * x / display_size[0]
 	y = (display_size[1] - h * display_size[1]) * y / display_size[1]
 	x, y, w, h = [max(v, 0) for v in (x, y, w, h)]
-	size = min((w * display_size[0] * h * display_size[1]) /
-			   float(display_size[0] * display_size[1]), 1.0)
+	size = w * h
 	return x, y, w, h, size
 
 
@@ -10287,19 +10286,15 @@ usage: spotread [-options] [logfile]
 		if getattr(self, "abort_requested", False):
 			return
 		x, y, w, h, size = get_pattern_geometry()
-		size = min(sum((w, h)) / 2.0, 1.0)
 		if bgrgb is not None:
 			pass
 		elif getcfg("measure.darken_background") or size == 1.0:
 			bgrgb = (0, 0, 0)
 		else:
 			# Constant APL
-			rgbl = sum([v * size for v in rgb])
-			bgrgb = [(1.0 - v * size) * (1.0 - size) for v in rgb]
-			bgrgbl = sum(bgrgb)
 			desired_apl = getcfg("patterngenerator.apl")
-			apl = desired_apl * 3
-			bgrgb = [max(apl - max(rgbl - apl, 0.0), 0.0) / bgrgbl * v for v in bgrgb]
+			bgrgb = [min(max(desired_apl - v * size, 0) / (1.0 - size), 1)
+					 for v in rgb]
 		self.log("%s: Sending RGB %.3f %.3f %.3f, background RGB %.3f %.3f %.3f, "
 				 "x %.4f, y %.4f, w %.4f, h %.4f" %
 				 ((appname, ) + tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
