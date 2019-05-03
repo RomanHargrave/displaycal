@@ -5322,13 +5322,7 @@ class ProgressDialog(wx.Dialog):
 		self.pause_continue.Show(pauseable)
 
 		if fancy:
-			if getcfg("measurement.play_sound"):
-				bitmap = geticon(16, "sound_volume_full")
-			else:
-				bitmap = geticon(16, "sound_off")
-			im = bitmap.ConvertToImage()
-			im.AdjustMinMax(maxvalue=1.5)
-			bitmap = im.ConvertToBitmap()
+			bitmap = self.get_sound_on_off_btn_bitmap()
 			self.sound_on_off_btn = FlatShadedButton(self.buttonpanel,
 													 bitmap=bitmap,
 													 fgcolour="#FFFFFF")
@@ -5471,6 +5465,8 @@ class ProgressDialog(wx.Dialog):
 	
 	def Resume(self):
 		self.keepGoing = True
+		if hasattr(self, "sound_on_off_btn"):
+			self.set_sound_on_off_btn_bitmap()
 		if hasattr(self, "cancel"):
 			self.cancel.Enable()
 		if self.paused:
@@ -5705,17 +5701,25 @@ class ProgressDialog(wx.Dialog):
 		setcfg("measurement.play_sound",
 			   int(not(bool(getcfg("measurement.play_sound")))))
 		if getcfg("measurement.play_sound"):
-			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
 			if (self.progress_type in (0, 2) and self.keepGoing and
 				self._fpprogress < self.gauge.GetRange()):
 				self.sound.safe_play()
 		else:
-			bitmap = getbitmap("theme/icons/16x16/sound_off")
 			if self.sound.is_playing:
 				self.sound.safe_stop()
+		self.set_sound_on_off_btn_bitmap()
+
+	def get_sound_on_off_btn_bitmap(self):
+		if getcfg("measurement.play_sound"):
+			bitmap = geticon(16, "sound_volume_full")
+		else:
+			bitmap = geticon(16, "sound_off")
 		im = bitmap.ConvertToImage()
 		im.AdjustMinMax(maxvalue=1.5)
-		bitmap = im.ConvertToBitmap()
+		return im.ConvertToBitmap()
+
+	def set_sound_on_off_btn_bitmap(self):
+		bitmap = self.get_sound_on_off_btn_bitmap()
 		self.sound_on_off_btn._bitmap = bitmap
 
 	def reset(self):

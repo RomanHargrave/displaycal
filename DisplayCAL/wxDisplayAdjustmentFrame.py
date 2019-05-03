@@ -719,10 +719,7 @@ class DisplayAdjustmentFrame(BaseFrame):
 		self.create_start_interactive_adjustment_button()
 		self.adjustment_btn.SetDefault()
 		self.btnsizer.Add(get_panel(self, (6, 12)), flag=wx.EXPAND)
-		if getcfg("measurement.play_sound"):
-			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
-		else:
-			bitmap = getbitmap("theme/icons/16x16/sound_off")
+		bitmap = self.get_sound_on_off_btn_bitmap()
 		self.sound_on_off_btn = self.create_gradient_button(bitmap, "",
 														    name="sound_on_off_btn")
 		self.sound_on_off_btn.SetToolTipString(lang.getstr("measurement.play_sound"))
@@ -856,6 +853,7 @@ class DisplayAdjustmentFrame(BaseFrame):
 	
 	def Resume(self):
 		self.keepGoing = True
+		self.set_sound_on_off_btn_bitmap()
 	
 	def UpdateProgress(self, value, msg=""):
 		return self.Pulse(msg)
@@ -1084,10 +1082,17 @@ class DisplayAdjustmentFrame(BaseFrame):
 		#self.measurement_play_sound_ctrl.SetValue(not self.measurement_play_sound_ctrl.GetValue())
 		setcfg("measurement.play_sound",
 			   int(not(bool(getcfg("measurement.play_sound")))))
+		self.set_sound_on_off_btn_bitmap()
+
+	def get_sound_on_off_btn_bitmap(self):
 		if getcfg("measurement.play_sound"):
-			bitmap = getbitmap("theme/icons/16x16/sound_volume_full")
+			bitmap = geticon(16, "sound_volume_full")
 		else:
-			bitmap = getbitmap("theme/icons/16x16/sound_off")
+			bitmap = geticon(16, "sound_off")
+		return bitmap
+
+	def set_sound_on_off_btn_bitmap(self):
+		bitmap = self.get_sound_on_off_btn_bitmap()
 		self.sound_on_off_btn._bitmap = bitmap
 
 	def parse_txt(self, txt):

@@ -109,10 +109,7 @@ class UntetheredFrame(BaseFrame):
 		# Needs to be stereo!
 		self.measurement_sound = audio.Sound(get_data_path("beep.wav"))
 		self.commit_sound = audio.Sound(get_data_path("camera_shutter.wav"))
-		if getcfg("measurement.play_sound"):
-			bitmap = geticon(16, "sound_volume_full")
-		else:
-			bitmap = geticon(16, "sound_off")
+		bitmap = self.get_sound_on_off_btn_bitmap()
 		self.sound_on_off_btn = FlatShadedButton(self.panel, bitmap=bitmap,
 												 fgcolour=FGCOLOUR)
 		self.sound_on_off_btn.SetToolTipString(lang.getstr("measurement.play_sound"))
@@ -266,6 +263,7 @@ class UntetheredFrame(BaseFrame):
 	
 	def Resume(self):
 		self.keepGoing = True
+		self.set_sound_on_off_btn_bitmap()
 	
 	def UpdateProgress(self, value, msg=""):
 		return self.Pulse(msg)
@@ -438,10 +436,17 @@ class UntetheredFrame(BaseFrame):
 	def measurement_play_sound_handler(self, event):
 		setcfg("measurement.play_sound",
 			   int(not(bool(getcfg("measurement.play_sound")))))
+		self.set_sound_on_off_btn_bitmap()
+
+	def get_sound_on_off_btn_bitmap(self):
 		if getcfg("measurement.play_sound"):
 			bitmap = geticon(16, "sound_volume_full")
 		else:
 			bitmap = geticon(16, "sound_off")
+		return bitmap
+
+	def set_sound_on_off_btn_bitmap(self):
+		bitmap = self.get_sound_on_off_btn_bitmap()
 		self.sound_on_off_btn._bitmap = bitmap
 	
 	def next_btn_handler(self, event):
