@@ -461,7 +461,7 @@ class CCXXPlot(wx.Frame):
 		else:
 			event.Skip()
 
-	def draw(self, objects, title="", xlabel="", ylabel=""):
+	def draw(self, objects, title="", xlabel=u" ", ylabel=u" "):
 		""" Draw objects to plot """
 		graphics = plot.PlotGraphics(objects, title, xlabel, ylabel)
 		self.canvas.Draw(graphics, self.canvas.axis_x, self.canvas.axis_y)
