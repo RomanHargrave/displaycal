@@ -3590,7 +3590,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					safe_print("%s:" % path, exception)
 					continue
 				if desc == lstr:
-					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
+					desc = cgats.get_descriptor()
 				# If the description is not the same as the 'sane'
 				# filename, add the filename after the description
 				# (max 31 chars)
@@ -3677,7 +3677,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				except (IOError, CGATS.CGATSError), exception:
 					safe_print("%s:" % ccmx[1], exception)
 				else:
-					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
+					desc = cgats.get_descriptor()
 					# If the description is not the same as the 'sane'
 					# filename, add the filename after the description
 					# (max 31 chars)
@@ -7637,7 +7637,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					safe_print("%s:" % ccmxpath, exception)
 				else:
 					filename, ext = os.path.splitext(ccmx)
-					desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
+					desc = cgats.get_descriptor()
 					desc = lang.getstr(ext[1:] + "." + filename, default=desc)
 					# If the description is not the same as the 'sane'
 					# filename, add the filename after the description

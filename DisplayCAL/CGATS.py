@@ -13,6 +13,7 @@ import colormath
 from log import safe_print
 from options import debug, verbose
 from util_io import GzipFileProper, StringIOu as StringIO
+from util_str import safe_unicode
 
 
 def get_device_value_labels(color_rep=None):
@@ -433,8 +434,14 @@ class CGATS(dict):
 				colorants.append(self.queryi1(query))
 			return colorants
 
-	def get_descriptor(self):
-		""" Return descriptor """
+	def get_descriptor(self, localized=True):
+		"""
+		Return CGATS description as unicode, based on metadata
+		
+		If 'localized' is True (default), include localized technology
+		description for CCSS files.
+		
+		"""
 		desc = self.queryv1("DESCRIPTOR")
 		is_ccss = self.get(0, self).type == "CCSS"
 		if not desc or desc == "Not specified" or is_ccss:
@@ -452,13 +459,23 @@ class CGATS(dict):
 						display = desc
 					else:
 						display = self.queryv1("DISPLAY")
-					if display:
+					if localized:
 						import localization as lang
-						tech = lang.getstr("display.tech." + tech, default=tech)
+						tech = safe_unicode(tech, "UTF-8")
+						tech = lang.getstr(u"display.tech." + tech, default=tech)
+						if display:
+							# Localized tech will be unicode always, need to
+							# make sure display is as well
+							display = safe_unicode(display, "UTF-8")
+					if display:
 						tech += " (%s)" % display
 				desc = tech
 		if not desc and self.filename:
-			desc = os.path.splitext(os.path.basename(self.filename))[0]
+			# Filesystem encoding can be different than UTF-8 (depending on
+			# platform), by default safe_unicode will use FS enc
+			desc = safe_unicode(os.path.splitext(os.path.basename(self.filename))[0])
+		else:
+			desc = safe_unicode(desc or "", "UTF-8")
 		return desc
 
 	def __setattr__(self, name, value):

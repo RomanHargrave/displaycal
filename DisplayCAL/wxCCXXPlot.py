@@ -85,7 +85,7 @@ class CCXXPlot(wx.Frame):
 
 		self.is_ccss = cgats[0].type == "CCSS"
 
-		desc = safe_unicode(cgats.get_descriptor(), "UTF-8")
+		desc = cgats.get_descriptor()
 
 		if cgats.filename:
 			fn, ext = os.path.splitext(os.path.basename(cgats.filename))
