@@ -1437,6 +1437,7 @@ class LUTFrame(BaseFrame):
 		if curves and not self.plot_mode_select.SetStringSelection(selection):
 			self.plot_mode_select.SetSelection(0)
 			center = True
+		self.plot_mode_select.ContainingSizer.Layout()
 		self.cbox_sizer.Layout()
 		self.box_sizer.Layout()
 		self.DrawLUT()
