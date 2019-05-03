@@ -500,15 +500,15 @@
 "ccss.GBrLED_25Jul12": |-
   LCD GB-r-LED IPS (Dell U2413)
 "ccss.HP_DC3": |-
-  LCD PFS-Phosphor-WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
+  LCD PFS-Leuchtstoff-WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
 "ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS-Phosphor-WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
+  LCD PFS-Leuchtstoff-WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
 "ccss.HP_ZBOOK": |-
-  LCD PFS-Phosphor-WLED IPS, 100% Adobe RGB (HP ZBook)
+  LCD PFS-Leuchtstoff-WLED IPS, 100% Adobe RGB (HP ZBook)
 "ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
   WOLED (LG OLED Serie 6)
 "ccss.MacBookProRetina2016": |-
-  LCD PFS-Phosphor-WLED IPS, 99% P3 (MacBook Pro Retina 2016)
+  LCD PFS-Leuchtstoff-WLED IPS, 99% P3 (MacBook Pro Retina 2016)
 "ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
 "ccss.OLEDFamily_20Jul12": |-
@@ -516,11 +516,11 @@
 "ccss.OLEDFamily_28Aug18": |-
   RGB-OLED-Familie (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
 "ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
-  LCD PFS-Phosphor-WLED, 98% Adobe RGB
+  LCD PFS-Leuchtstoff-WLED, 98% Adobe RGB
 "ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS-Phosphor-WLED-Familie
+  LCD PFS-Leuchtstoff-WLED-Familie
 "ccss.Panasonic VVX17P051J00": |-
-  LCD PFS-Phosphor-WLED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
+  LCD PFS-Leuchtstoff-WLED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
 "ccss.PlasmaFamily_20Jul12": |-
   Plasma
 "ccss.ProjectorFamily_07Feb11": |-
@@ -528,9 +528,9 @@
 "ccss.RGBLEDFamily_07Feb11": |-
   LCD RGB-LED-Familie (HP, SOYO)
 "ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG-Phosphor-LED-Familie (AUO B156HW01 V.4 in Lenovo W520/W530)
+  LCD RG-Leuchtstoff-LED-Familie (AUO B156HW01 V.4 in Lenovo W520/W530)
 "ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG-Phosphor-LED-Familie (AUO B156HW01 V.4, Dell U2413)
+  LCD GB-r-LED/RG-Leuchtstoff-LED-Familie (AUO B156HW01 V.4, Dell U2413)
 "ccss.WGCCFLFamily_07Feb11": |-
   LCD CCFL-mit-erweitertem-Farbumfang-Familie (NEC PA241W/PA271W)
 "ccss.WLEDFamily_07Feb11": |-
@@ -929,21 +929,21 @@
 "display.tech.LCD GB-R Phosphor VPA": |-
   LCD GB-r-LED PVA
 "display.tech.LCD PFS Phosphor": |-
-  LCD PFS-Phosphor-WLED
+  LCD PFS-Leuchtstoff-WLED
 "display.tech.LCD PFS Phosphor IPS": |-
-  LCD PFS-Phosphor-WLED IPS
+  LCD PFS-Leuchtstoff-WLED IPS
 "display.tech.LCD PFS Phosphor TFT": |-
-  LCD PFS-Phosphor-WLED TFT
+  LCD PFS-Leuchtstoff-WLED TFT
 "display.tech.LCD PFS Phosphor VPA": |-
-  LCD PFS-Phosphor-WLED PVA
+  LCD PFS-Leuchtstoff-WLED PVA
 "display.tech.LCD RG Phosphor": |-
-  LCD RG-Phosphor-LED
+  LCD RG-Leuchtstoff-LED
 "display.tech.LCD RG Phosphor IPS": |-
-  LCD RG-Phosphor-LED IPS
+  LCD RG-Leuchtstoff-LED IPS
 "display.tech.LCD RG Phosphor TFT": |-
-  LCD RG-Phosphor-LED TFT
+  LCD RG-Leuchtstoff-LED TFT
 "display.tech.LCD RG Phosphor VPA": |-
-  LCD RG-Phosphor-LED PVA
+  LCD RG-Leuchtstoff-LED PVA
 "display.tech.LCD RGB LED": |-
   LCD RGB-LED
 "display.tech.LCD RGB LED IPS": |-
@@ -1415,7 +1415,7 @@
 "info.display_tech": |-
   <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und sRGB-Farbraumabdeckung von bis zu 100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore ab 2010 sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
   
-  <font weight='bold'>LCD PFS-Phosphor-WLED</font> hat einen erweiterten Farbumfang in zwei üblichen Varianten mit P3- oder Adobe-RGB-Farbraumabdeckung von etwa 90-99% (Herstellerangaben). Gängige Anzeigeräte in der P3-Farbumfang-Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer) sowie einige HDR-fähige Desktop-Monitore. Die Adobe-RGB-Farbumfang-Kategorie umfasst professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  <font weight='bold'>LCD PFS-Leuchtstoff-WLED</font> hat einen erweiterten Farbumfang in zwei üblichen Varianten mit P3- oder Adobe-RGB-Farbraumabdeckung von etwa 90-99% (Herstellerangaben). Gängige Anzeigeräte in der P3-Farbumfang-Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer) sowie einige HDR-fähige Desktop-Monitore. Die Adobe-RGB-Farbumfang-Kategorie umfasst professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
   
   <font weight='bold'>WOLED</font> hat einen erweiterten Farbumfang mit hoher P3-Farbraumabdeckung, und wird unter anderem in LG OLED TV-Geräten verwendet.
   
@@ -1634,7 +1634,7 @@
 "measurement_mode.lcd.wide_gamut.gb_led": |-
   LCD GB-r-LED
 "measurement_mode.lcd.wide_gamut.led": |-
-  LCD PFS-Phosphor-WLED/RGB-LED
+  LCD PFS-Leuchtstoff-WLED/RGB-LED
 "measurement_mode.lcd.wide_gamut.rgb_led": |-
   LCD RGB-LED
 "measurement_mode.raw": |-
