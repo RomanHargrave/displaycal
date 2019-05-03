@@ -402,7 +402,7 @@ class CCXXPlot(wx.Frame):
 		canvas.SetEnableDiagonals(False)
 		canvas.SetEnableGrid(True)
 		canvas.enableTicks = (True, True)
-		canvas.tickPen = wx.Pen(wx.Colour(GRIDCOLOUR),
+		canvas.tickPen = wx.Pen(GRIDCOLOUR,
 								canvas._pointSize[0])
 		canvas.SetEnablePointLabel(False)
 		canvas.SetEnableTitle(True)
