@@ -10291,10 +10291,16 @@ usage: spotread [-options] [logfile]
 		elif getcfg("measure.darken_background") or size == 1.0:
 			bgrgb = (0, 0, 0)
 		else:
-			# Constant APL
+			# Constant APL (matches madTPG 'gamma light')
 			desired_apl = getcfg("patterngenerator.apl")
 			bgrgb = [min(max(desired_apl - v * size, 0) / (1.0 - size), 1)
 					 for v in rgb]
+			bgrgb_apl = sum(bgrgb) / 3.0 * (1 - size)
+			rgb_apl = sum(rgb) / 3.0 * size
+			needed_bgrgb_apl = max(desired_apl - rgb_apl, 0)
+			if bgrgb_apl > needed_bgrgb_apl:
+				f = needed_bgrgb_apl / bgrgb_apl
+				bgrgb = [v * f for v in bgrgb]
 		self.log("%s: Sending RGB %.3f %.3f %.3f, background RGB %.3f %.3f %.3f, "
 				 "x %.4f, y %.4f, w %.4f, h %.4f" %
 				 ((appname, ) + tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
