@@ -15677,15 +15677,17 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Veto()
 
 
-class StartupFrame(wx.Frame):
+# Use a wx.Dialog so we can use ShowModal() which seems to be the only way to
+# center the splash screen under Wayland
+class StartupFrame(wx.Dialog):
 
 	def __init__(self):
 		title = "%s %s" % (appname, version_short)
 		if VERSION > VERSION_BASE:
 			title += " Beta"
-		wx.Frame.__init__(self, None, title="%s: %s" % (title,
-														lang.getstr("startup")),
-						  style=wx.FRAME_SHAPED | wx.NO_BORDER)
+		wx.Dialog.__init__(self, None, title="%s: %s" % (title,
+														 lang.getstr("startup")),
+						   style=wx.FRAME_SHAPED | wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		if wx.VERSION >= (2, 8, 12, 1):
 			# Setup shape. Required to get rid of window shadow under Ubuntu.
@@ -15863,11 +15865,11 @@ class StartupFrame(wx.Frame):
 			self.startup_sound.volume = .8
 			self.startup_sound.safe_play()
 
-		self.Show()
-
 		# We need to use CallLater instead of CallAfter otherwise dialogs
 		# will not show while the main frame is not yet initialized
 		wx.CallLater(1, self.startup)
+
+		self.ShowModal()
 
 	def startup(self):
 		if sys.platform not in ("darwin", "win32"):
@@ -15957,9 +15959,9 @@ class StartupFrame(wx.Frame):
 		# Hide instead.
 		win = app.frame.get_top_window()
 		if isinstance(win, wx.Dialog):
-			self.Hide()
+			self.EndModal(wx.ID_CANCEL)
 		else:
-			self.Close()
+			self.Destroy()
 
 	def OnEraseBackground(self, event):
 		pass
