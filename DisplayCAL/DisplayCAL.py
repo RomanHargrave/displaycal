@@ -15677,9 +15677,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Veto()
 
 
-if os.getenv("XDG_SESSION_TYPE") == "wayland":
+if sys.platform == "darwin" or os.getenv("XDG_SESSION_TYPE") == "wayland":
 	# Use a wx.Dialog so we can use ShowModal() which seems to be the only way to
-	# center the splash screen under Wayland
+	# center the splash screen under Wayland.
+	# Under macOS, it fixes the splash screen not animating when running
+	# frozen (from a app bundle created using py2app).
 	start_cls = wx.Dialog
 else:
 	start_cls = wx.Frame
