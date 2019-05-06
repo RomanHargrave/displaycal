@@ -15755,7 +15755,8 @@ class StartupFrame(start_cls):
 		self._buffereddc = wx.MemoryDC(self._bufferbitmap)
 		self.worker = Worker()
 		# Grab a bitmap of the screen area we're going to draw on
-		if sys.platform != "darwin":
+		if (sys.platform != "darwin" and
+			os.getenv("XDG_SESSION_TYPE") != "wayland"):
 			dc = wx.ScreenDC()
 			# Grabbing from ScreenDC is not supported under Mac OS X
 			self._buffereddc.Blit(0, 0, self.splash_bmp.Size[0],
@@ -15766,18 +15767,28 @@ class StartupFrame(start_cls):
 			splashdimensions = (self.splash_x, self.splash_y,
 							    self.splash_bmp.Size[0],
 							    self.splash_bmp.Size[1])
-			is_mavericks = intlist(mac_ver()[0].split(".")) >= [10, 9]
-			if is_mavericks:
-				# Under 10.9 we can specify screen region as arguments
-				extra_args = ["-R%i,%i,%i,%i" % splashdimensions]
+			extra_args = []
+			if sys.platform == "darwin":
+				is_mavericks = intlist(mac_ver()[0].split(".")) >= [10, 9]
+				if is_mavericks:
+					# Under 10.9 we can specify screen region as arguments
+					extra_args = ["-R%i,%i,%i,%i" % splashdimensions]
+				extra_args.append("-x")
+				screencap = which("screencapture")
 			else:
-				extra_args = []
+				is_mavericks = False
+				extra_args.append("-f")
+				screencap = which("gnome-screenshot")
 			bmp_path = os.path.join(self.worker.tempdir, "screencap.png")
-			if self.worker.exec_cmd(which("screencapture"),
-									extra_args + ["-x", "screencap.png"],
+			if self.worker.exec_cmd(screencap,
+									extra_args + ["screencap.png"],
 									capture_output=True, skip_scripts=True,
 									silent=True) and os.path.isfile(bmp_path):
-				img = None
+				result = True
+			else:
+				result = False
+			img = None
+			if result and sys.platform == "darwin":
 				# We want to color convert the screenshot to wx Rec. 709
 				# gamma 1.8 to get rid of visible color differences.
 				try:
@@ -15827,12 +15838,14 @@ class StartupFrame(start_cls):
 							else:
 								bmp_path = tif_path
 							# We are done with PIL image now
+			if result:
 				if not img:
 					img = wx.Image(bmp_path)
 				if img.IsOk():
 					if (not is_mavericks and
 						img.Width >= self.splash_x + self.splash_bmp.Size[0] and
 						img.Height >= self.splash_y + self.splash_bmp.Size[1]):
+						# Linux with Wayland or macOS
 						# Pre 10.9 we have to get the splashscreen region
 						# from the full screenshot bitmap
 						img = img.GetSubImage(splashdimensions)
@@ -15846,7 +15859,7 @@ class StartupFrame(start_cls):
 							quality = wx.IMAGE_QUALITY_HIGH
 						img.Rescale(self.splash_bmp.Size[0],
 									self.splash_bmp.Size[1], quality)
-					if bmp_path != tif_path:
+					if sys.platform == "darwin" and bmp_path != tif_path:
 						# Fallback
 						img.GammaCorrect()
 					bmp = img.ConvertToBitmap()
