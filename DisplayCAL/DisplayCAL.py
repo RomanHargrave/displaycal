@@ -15677,15 +15677,21 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Veto()
 
 
-# Use a wx.Dialog so we can use ShowModal() which seems to be the only way to
-# center the splash screen under Wayland
-class StartupFrame(wx.Dialog):
+if os.getenv("XDG_SESSION_TYPE") == "wayland":
+	# Use a wx.Dialog so we can use ShowModal() which seems to be the only way to
+	# center the splash screen under Wayland
+	start_cls = wx.Dialog
+else:
+	start_cls = wx.Frame
+
+
+class StartupFrame(start_cls):
 
 	def __init__(self):
 		title = "%s %s" % (appname, version_short)
 		if VERSION > VERSION_BASE:
 			title += " Beta"
-		wx.Dialog.__init__(self, None, title="%s: %s" % (title,
+		start_cls.__init__(self, None, title="%s: %s" % (title,
 														 lang.getstr("startup")),
 						   style=wx.FRAME_SHAPED | wx.NO_BORDER)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
@@ -15869,7 +15875,10 @@ class StartupFrame(wx.Dialog):
 		# will not show while the main frame is not yet initialized
 		wx.CallLater(1, self.startup)
 
-		self.ShowModal()
+		if isinstance(self, wx.Dialog):
+			self.ShowModal()
+		else:
+			self.Show()
 
 	def startup(self):
 		if sys.platform not in ("darwin", "win32"):
@@ -15959,7 +15968,10 @@ class StartupFrame(wx.Dialog):
 		# Hide instead.
 		win = app.frame.get_top_window()
 		if isinstance(win, wx.Dialog):
-			self.EndModal(wx.ID_CANCEL)
+			if isinstance(self, wx.Dialog):
+				self.EndModal(wx.ID_CANCEL)
+			else:
+				self.Hide()
 		else:
 			self.Destroy()
 
