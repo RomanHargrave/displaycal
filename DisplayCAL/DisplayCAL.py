@@ -15777,8 +15777,16 @@ class StartupFrame(start_cls):
 				screencap = which("screencapture")
 			else:
 				is_mavericks = False
-				extra_args.append("-f")
-				screencap = which("gnome-screenshot")
+				if os.getenv("XDG_CURRENT_DESKTOP") == "KDE":
+					# Technically, XDG_CURRENT_DESKTOP can be a colon-separated
+					# list of items, but we're only really interested if set
+					# to KDE specifically
+					extra_args.extend(["--fullscreen", "--background",
+									   "--nonotify", "--output"])
+					screencap = which("spectacle")
+				else:
+					extra_args.append("-f")
+					screencap = which("gnome-screenshot")
 			bmp_path = os.path.join(self.worker.tempdir, "screencap.png")
 			if self.worker.exec_cmd(screencap,
 									extra_args + ["screencap.png"],
