@@ -10103,8 +10103,7 @@ class MainFrame(ReportFrame, BaseFrame):
 														  " (i1 DisplayPro, "
 														  "ColorMunki "
 														  "Display, Spyder4/5)")
-			boxsizer.Add(dlg.correction_type_spectral, flag=wx.ALL | wx.EXPAND,
-						 border=4)
+			boxsizer.Add(dlg.correction_type_spectral, flag=wx.ALL, border=4)
 			{"matrix": dlg.correction_type_matrix,
 			 "spectral": dlg.correction_type_spectral}.get(
 				getcfg("colorimeter_correction.type"), "matrix").SetValue(True)
