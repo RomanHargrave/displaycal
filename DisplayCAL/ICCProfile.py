@@ -5857,14 +5857,20 @@ class ICCProfile:
 							if debug: print "    tagData end:", end
 							tagData = self._data[start:end]
 							if len(tagData) < tagDataSize:
-								raise ICCProfileInvalidError("Tag data for tag %r (offet %i, size %i) is truncated" % (tagSignature,
-																													   tagDataOffset,
-																													   tagDataSize))
+								safe_print("Warning: Tag data for tag %r "
+										   "is truncated (offet %i, expected "
+										   "size %i, actual size %i)" %
+										   (tagSignature, tagDataOffset,
+											tagDataSize, len(tagData)))
+								tagDataSize = len(tagData)
 							typeSignature = tagData[:4]
 							if len(typeSignature) < 4:
-								raise ICCProfileInvalidError("Tag type signature for tag %r (offet %i, size %i) is truncated" % (tagSignature,
-																																 tagDataOffset,
-																																 tagDataSize))
+								safe_print("Warning: Tag type signature for "
+										   "tag %r is truncated (offet %i, "
+										   "size %i)" % (tagSignature,
+														 tagDataOffset,
+														 tagDataSize))
+								typeSignature = typeSignature.ljust(4, " ")
 							if debug: print "    typeSignature:", typeSignature
 							tags[(tagDataOffset, tagDataSize)] = (typeSignature,
 																  tagDataOffset,
