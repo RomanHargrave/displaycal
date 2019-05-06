@@ -319,8 +319,6 @@ class CCXXPlot(wx.Frame):
 			observers_ab = {}
 			for observer in config.valid_values["observer"]:
 				observers_ab[observer] = lang.getstr("observer." + observer)
-			width = 500
-			height = 430
 			x_label = [lang.getstr("matrix")]
 			x_label.extend([u"%9.6f %9.6f %9.6f" % tuple(row) for row in mtx])
 			if ref:
@@ -352,11 +350,8 @@ class CCXXPlot(wx.Frame):
 													fit_de00_max))
 			if fit_de00:
 				x_label.append(u"\n".join(fit_de00))
-			height += 16 * len(x_label)
 			x_label = "\n".join(x_label)
 		else:
-			width = 500
-			height = 526
 			x_label = u""
 			if ref:
 				x_label += ref + u", "
@@ -367,8 +362,7 @@ class CCXXPlot(wx.Frame):
 
 		style = wx.DEFAULT_FRAME_STYLE
 
-		wx.Frame.__init__(self, None, -1, title,
-						  size=(width * scale, height * scale), style=style)
+		wx.Frame.__init__(self, None, -1, title, style=style)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 					  appname))
 		self.SetBackgroundColour(BGCOLOUR)
@@ -378,6 +372,7 @@ class CCXXPlot(wx.Frame):
 		bg.Sizer = wx.BoxSizer(wx.VERTICAL)
 		self.canvas = canvas = LUTCanvas(bg)
 		if self.is_ccss:
+			bg.MinSize = (513 * scale, 557 * scale)
 			btnsizer = wx.BoxSizer(wx.HORIZONTAL)
 			bg.Sizer.Add(btnsizer, flag=wx.EXPAND |
 										wx.TOP | wx.RIGHT | wx.LEFT, border=16)
@@ -433,8 +428,8 @@ class CCXXPlot(wx.Frame):
 			self.Bind(wx.EVT_SIZE, self.OnSize)
 		else:
 			bg.Sizer.Add((0, 16))
-			self.Sizer.SetSizeHints(self)
-			self.Sizer.Layout()
+		self.Sizer.SetSizeHints(self)
+		self.Sizer.Layout()
 
 	def OnSize(self, event):
 		if self.canvas.last_draw:
