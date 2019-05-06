@@ -516,6 +516,40 @@ if not hasattr(wx.Sizer, "GetItemIndex"):
 	wx.Sizer.GetItemIndex = GetItemIndex
 
 
+if os.getenv("XDG_SESSION_TYPE") == "wayland":
+	# Fix erroneous extra spacing around window contents under Wayland
+
+	is_first_toplevel_window = True
+
+	def fix_wayland_window_size(window):
+		global is_first_toplevel_window
+		if (is_first_toplevel_window or
+			window.__class__.__name__ == "MainFrame"):
+			# Not needed for first toplevel window or main app window
+			is_first_toplevel_window = False
+		else:
+			maxsize = window.MaxSize
+			window.MaxSize = window.Size
+			wx.CallAfter(set_maxsize, window, maxsize)
+
+	def set_maxsize(window, maxsize):
+		window.MaxSize = maxsize
+
+	def TopLevelWindow_Show(self, show=True):
+		fix_wayland_window_size(self)
+		return _TopLevelWindow_Show(self, show)
+
+	_TopLevelWindow_Show = wx.TopLevelWindow.Show
+	wx.TopLevelWindow.Show = TopLevelWindow_Show
+
+	def Dialog_ShowModal(self):
+		fix_wayland_window_size(self)
+		return _Dialog_ShowModal(self)
+
+	_Dialog_ShowModal = wx.Dialog.ShowModal
+	wx.Dialog.ShowModal = Dialog_ShowModal
+
+
 if sys.platform == "darwin":
 	# wxMac seems to loose foreground color of StaticText
 	# when enabled again

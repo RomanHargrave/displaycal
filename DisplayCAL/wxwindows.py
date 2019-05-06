@@ -698,6 +698,20 @@ class BaseApp(wx.App):
 		self._lock = threading.Lock()
 		self.Bind(wx.EVT_QUERY_END_SESSION, self.query_end_session)
 		self.Bind(wx.EVT_END_SESSION, self.end_session)
+		if os.getenv("XDG_SESSION_TYPE") == "wayland":
+			# Fix erroneous extra spacing around window contents under
+			# Wayland. First frame will get size right, but not min size,
+			# so create a 'dummy' frame, call Show() which is needed so
+			# we can fix subsequently created windows, then instantly get
+			# rid of it. Ugly.
+			dummy = wx.Frame(None)
+			# May not be needed, but we don't want to risk actually
+			# showing our dummy frame
+			dummy.SetTransparent(0)
+			# Need to call Show() to 'fix' subsequently created windows
+			dummy.Show()
+			# Now we can get rid of it
+			dummy.Close()
 		return True
 
 	def MacOpenFiles(self, paths):
