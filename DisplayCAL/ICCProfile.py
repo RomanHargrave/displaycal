@@ -18,6 +18,7 @@ import zlib
 from itertools import izip, imap
 from time import localtime, mktime, strftime
 from UserString import UserString
+from weakref import WeakValueDictionary
 if sys.platform == "win32":
 	import _winreg
 else:
@@ -5482,7 +5483,10 @@ class ICCProfileInvalidError(IOError):
 	pass
 
 
-class ICCProfile:
+_iccprofilecache = WeakValueDictionary()
+
+
+class ICCProfile(object):
 
 	"""
 	Returns a new ICCProfile object. 
@@ -5495,7 +5499,42 @@ class ICCProfile:
 	
 	"""
 
-	def __init__(self, profile=None, load=True):
+	def __new__(cls, profile=None, load=True):
+
+		if isinstance(profile, basestring):
+			if profile.find("\0") < 0 and not profile.startswith("<"):
+				# Filename
+				if (not os.path.isfile(profile) and
+					not os.path.sep in profile and
+					(not isinstance(os.path.altsep, basestring) or
+					 not os.path.altsep in profile)):
+					for path in iccprofiles_home + filter(lambda x: 
+						x not in iccprofiles_home, iccprofiles):
+						if os.path.isdir(path):
+							for path, dirs, files in os.walk(path):
+								path = os.path.join(path, profile)
+								if os.path.isfile(path):
+									profile = path
+									break
+							if os.path.isfile(path):
+								break
+				stat = os.stat(profile)
+				key = (stat.st_ino, stat.st_mtime, stat.st_size)
+			else:
+				# Binary string
+				key = md5(profile).hexdigest()
+
+			if key in _iccprofilecache:
+				return _iccprofilecache[key]
+
+			if not isinstance(key, str):
+				# Filename
+				profile = open(profile, "rb")
+
+		self = super(ICCProfile, cls).__new__(cls)
+
+		_iccprofilecache[key] = self
+
 		self.ID = "\0" * 16
 		self._data = ""
 		self._file = None
@@ -5506,31 +5545,13 @@ class ICCProfile:
 		self.size = 0
 		
 		if profile is not None:
-		
-			data = None
 			
-			if type(profile) in (str, unicode):
-				if profile.find("\0") < 0 and not profile.startswith("<"):
-					# filename
-					if (not os.path.isfile(profile) and
-						not os.path.sep in profile and
-						(not isinstance(os.path.altsep, basestring) or
-						 not os.path.altsep in profile)):
-						for path in iccprofiles_home + filter(lambda x: 
-							x not in iccprofiles_home, iccprofiles):
-							if os.path.isdir(path):
-								for path, dirs, files in os.walk(path):
-									path = os.path.join(path, profile)
-									if os.path.isfile(path):
-										profile = path
-										break
-								if os.path.isfile(path):
-									break
-					profile = open(profile, "rb")
-				else: # binary string
-					data = profile
-					self.is_loaded = True
-			if not data: # file object
+			if isinstance(profile, str):
+				# Binary string
+				data = profile
+				self.is_loaded = True
+			else:
+				# File object
 				self._file = profile
 				self.fileName = self._file.name
 				self._file.seek(0)
@@ -5681,6 +5702,8 @@ class ICCProfile:
 				self.tags
 		else:
 			self.set_defaults()
+
+		return self
 
 	def set_defaults(self):
 		if not hasattr(self, "version"):
