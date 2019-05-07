@@ -966,6 +966,9 @@ def get_pattern_geometry():
 	""" Return pattern geometry for pattern generator """
 	x, y, size = [float(v) for v in
 				  getcfg("dimensions.measureframe").split(",")]
+	if os.getenv("XDG_SESSION_TYPE") == "wayland":
+		# No way to get coordinates under Wayland, default to center
+		x = y = 0.5
 	size = size * defaults["size.measureframe"]
 	match = re.search("@ -?\d+, -?\d+, (\d+)x(\d+)", getcfg("displays",
 															raw=True))
@@ -6781,7 +6784,11 @@ while 1:
 		if display_name == "Untethered":
 			return "0"
 		if display_name == "Resolve":
-			return "1"
+			if (self.argyll_virtual_display and
+				os.getenv("XDG_SESSION_TYPE") == "wayland"):
+				return self.argyll_virtual_display
+			else:
+				return "1"
 		if (display_name == "Prisma" and
 			not defaults["patterngenerator.prisma.argyll"]):
 			if self.argyll_virtual_display:
