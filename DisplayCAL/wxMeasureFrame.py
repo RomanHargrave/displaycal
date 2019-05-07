@@ -108,7 +108,13 @@ def get_default_size():
 	return round(100.0 * max(px_per_mm))
 
 
-class MeasureFrame(InvincibleFrame):
+if  os.getenv("XDG_SESSION_TYPE") == "wayland":
+	windowcls = wx.Dialog
+else:
+	windowcls = InvincibleFrame
+
+
+class MeasureFrame(windowcls):
 
 	"""
 	A rectangular window to set the measure area size for dispcal/dispread.
@@ -118,10 +124,9 @@ class MeasureFrame(InvincibleFrame):
 	exitcode = 1
 
 	def __init__(self, parent=None, id=-1):
-		InvincibleFrame.__init__(self, parent, id, 
+		windowcls.__init__(self, parent, id, 
 								 lang.getstr("measureframe.title"), 
-								 style=wx.DEFAULT_FRAME_STYLE & 
-									   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX),
+								 style=wx.DEFAULT_DIALOG_STYLE,
 								 name="measureframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
@@ -180,15 +185,19 @@ class MeasureFrame(InvincibleFrame):
 		self.hsizer.Add(self.zoomoutbutton, flag=wx.ALIGN_CENTER)
 		self.zoomoutbutton.SetToolTipString(lang.getstr("measureframe.zoomout"))
 
-		self.centerbutton = BitmapButton(self.panel, -1, 
-										 geticon(16, "window-center"), 
-										 style=wx.NO_BORDER,
-										 name="centerbutton")
-		self.centerbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
-		self.Bind(wx.EVT_BUTTON, self.center_handler, self.centerbutton)
-		self.sizer.Add(self.centerbutton, flag=wx.ALIGN_CENTER | wx.LEFT | 
-											   wx.RIGHT, border=10)
-		self.centerbutton.SetToolTipString(lang.getstr("measureframe.center"))
+		if os.getenv("XDG_SESSION_TYPE") != "wayland":
+			# No manual centering under Wayland...
+			self.centerbutton = BitmapButton(self.panel, -1, 
+											 geticon(16, "window-center"), 
+											 style=wx.NO_BORDER,
+											 name="centerbutton")
+			self.centerbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
+			self.Bind(wx.EVT_BUTTON, self.center_handler, self.centerbutton)
+			self.sizer.Add(self.centerbutton, flag=wx.ALIGN_CENTER | wx.LEFT | 
+												   wx.RIGHT, border=10)
+			self.centerbutton.SetToolTipString(lang.getstr("measureframe.center"))
+		else:
+			self.sizer.Add((10, 10))
 
 		self.vsizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.vsizer, flag=wx.ALIGN_BOTTOM | 
@@ -261,6 +270,7 @@ class MeasureFrame(InvincibleFrame):
 
 	def Show(self, show=True):
 		if show:
+			self.show_controls()
 			self.measure_darken_background_cb.SetValue(
 				bool(int(getcfg("measure.darken_background"))))
 			if self.Parent and hasattr(self.Parent, "display_ctrl"):
@@ -280,7 +290,16 @@ class MeasureFrame(InvincibleFrame):
 			setcfg("dimensions.measureframe", self.get_dimensions())
 			if self.Parent and hasattr(self.Parent, "get_set_display"):
 				self.Parent.get_set_display()
-		wx.Frame.Show(self, show)
+		if isinstance(self, wx.Dialog):
+			if show:
+				self.ShowModal()
+			else:
+				if self.IsModal():
+					self.EndModal(wx.ID_OK)
+				else:
+					wx.Dialog.Hide(self)
+		else:
+			wx.Frame.Show(self, show)
 
 	def Hide(self):
 		self.Show(False)
@@ -513,6 +532,22 @@ class MeasureFrame(InvincibleFrame):
 		e.Skip()
 		if getattr(e, "IsShown", getattr(e, "GetShow", bool))():
 			self.measurebutton.SetFocus()
+
+	def show_controls(self, show=True):
+		self.panel.Freeze()
+		for ctrl in self.panel.Children:
+			ctrl.Show(show)
+		if show:
+			self.panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+			self.panel.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
+		else:
+			self.panel.SetCursor(wx.StockCursor(wx.CURSOR_BLANK))
+		self.panel.Layout()
+		self.panel.Thaw()
+
+	def show_rgb(self, rgb):
+		self.panel.BackgroundColour = wx.Colour(*(int(round(v * 255)) for v in rgb))
+		self.panel.Refresh()
 
 	def get_dimensions(self):
 		"""

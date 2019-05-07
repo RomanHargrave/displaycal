@@ -128,8 +128,7 @@ try:
 	from wxLUTViewer import LUTFrame
 except ImportError:
 	LUTFrame = None
-if sys.platform in ("darwin", "win32") or isexe:
-	from wxMeasureFrame import MeasureFrame
+from wxMeasureFrame import MeasureFrame
 try:
 	from wxCCXXPlot import CCXXPlot
 except ImportError:
@@ -1416,7 +1415,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.init_defaults()
 		self.set_child_ctrls_as_attrs(self)
 		self.init_infoframe()
-		if sys.platform in ("darwin", "win32") or isexe:
+		if (sys.platform in ("darwin", "win32") or isexe or 
+			self.worker._use_patternwindow):
+			# Preliminary Wayland support. This still needs a lot
+			# of work as Argyll doesn't support Wayland natively yet,
+			# so we use virtual display to drive our own patch window.:
 			self.init_measureframe()
 		self.init_menus()
 		self.init_controls()
@@ -7965,7 +7968,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			 not display_name.startswith("Prisma ")) or
 			getcfg("dry_run")):
 			self.call_pending_function()
-		elif sys.platform in ("darwin", "win32") or isexe:
+		elif (sys.platform in ("darwin", "win32") or isexe or
+			  self.worker._use_patternwindow):
+			# Preliminary Wayland support. This still needs a lot
+			# of work as Argyll doesn't support Wayland natively yet,
+			# so we use virtual display to drive our own patch window.
 			self.measureframe.Show()
 		else:
 			wx.CallAfter(self.start_measureframe_subprocess)
@@ -8378,8 +8385,15 @@ class MainFrame(ReportFrame, BaseFrame):
 	def call_pending_function(self):
 		# Needed for proper display updates under GNOME
 		writecfg()
-		if sys.platform in ("darwin", "win32") or isexe:
-			self.measureframe.Hide()
+		if (sys.platform in ("darwin", "win32") or isexe or
+			self.worker._use_patternwindow):
+			if self.worker._use_patternwindow:
+				# Preliminary Wayland support. This still needs a lot
+				# of work as Argyll doesn't support Wayland natively yet,
+				# so we use virtual display to drive our own patch window.
+				self.measureframe.show_controls(False)
+			else:
+				self.measureframe.Hide()
 		if debug:
 			safe_print("[D] Calling pending function with args:", 
 					   self.pending_function_args)
@@ -15607,6 +15621,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.enable_menus(False)
 
 	def Show(self, show=True, start_timers=True):
+		if (show and getattr(self, "measureframe", None) and
+			self.measureframe.IsShown()):
+			self.measureframe.Hide()
 		if not self.IsShownOnScreen():
 			if hasattr(self, "tcframe"):
 				self.tcframe.Show(getcfg("tc.show"))

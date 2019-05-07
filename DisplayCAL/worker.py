@@ -4744,7 +4744,8 @@ END_DATA
 									 cmdname != get_argyll_utilname("spotread") and
 									 (config.get_display_name() == "Resolve" or
 									  (config.get_display_name() == "Prisma" and
-									   not defaults["patterngenerator.prisma.argyll"])))
+									   not defaults["patterngenerator.prisma.argyll"]) or
+									  self._use_patternwindow))
 		use_3dlut_override = (((self.use_patterngenerator and
 								config.get_display_name(None, True) == "Prisma") or
 							   (config.get_display_name(None, True) == "madVR" and
@@ -5470,7 +5471,8 @@ while 1:
 				if self.use_patterngenerator:
 					pgname = config.get_display_name()
 					self.setup_patterngenerator(logfiles)
-					if not hasattr(self.patterngenerator, "conn"):
+					if (not hasattr(self.patterngenerator, "conn") and
+						hasattr(self.patterngenerator, "wait")):
 						# Wait for connection - blocking
 						self.patterngenerator.wait()
 						if hasattr(self.patterngenerator, "conn"):
@@ -6797,6 +6799,11 @@ while 1:
 			return "cc:%s" % display_name.split(":")[0].split(None, 1)[1].strip()
 		if display_name.startswith("Prisma "):
 			return "prisma:%s" % display_name.split("@")[-1].strip()
+		if self._use_patternwindow:
+			# Preliminary Wayland support. This still needs a lot
+			# of work as Argyll doesn't support Wayland natively,
+			# so we use virtual display to drive our own patch window.
+			return self.argyll_virtual_display
 		display_no = min(len(self.displays), getcfg("display.number")) - 1
 		display = str(display_no + 1)
 		if ((sys.platform not in ("darwin", "win32") or test) and
@@ -10253,7 +10260,7 @@ usage: spotread [-options] [logfile]
 			self.patterngenerator = ChromeCastPatternGenerator(
 				name=self.get_display_name(),
 				logfile=logfile)
-		else:
+		elif pgname == "Resolve":
 			# Resolve
 			if getcfg("patterngenerator.resolve") == "LS":
 				patterngenerator = ResolveLSPatternGeneratorServer
@@ -10304,15 +10311,21 @@ usage: spotread [-options] [logfile]
 		self.log("%s: Sending RGB %.3f %.3f %.3f, background RGB %.3f %.3f %.3f, "
 				 "x %.4f, y %.4f, w %.4f, h %.4f" %
 				 ((appname, ) + tuple(rgb) + tuple(bgrgb) + (x, y, w, h)))
-		try:
-			self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
-		except Exception, exception:
-			if raise_exceptions:
-				raise
-			else:
-				self.exec_cmd_returnvalue = exception
-				self.abort_subprocess()
-			return
+		if self._use_patternwindow:
+			# Preliminary Wayland support. This still needs a lot
+			# of work as Argyll doesn't support Wayland natively yet,
+			# so we use virtual display to drive our own patch window.
+			wx.CallAfter(self.owner.measureframe.show_rgb, rgb)
+		else:
+			try:
+				self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)
+			except Exception, exception:
+				if raise_exceptions:
+					raise
+				else:
+					self.exec_cmd_returnvalue = exception
+					self.abort_subprocess()
+				return
 		if increase_sent_count:
 			self.patterngenerator_sent_count += 1
 			self.log("%s: Patterngenerator sent count: %i" %
@@ -13744,7 +13757,8 @@ BEGIN_DATA
 		use_patterngenerator = (self.use_patterngenerator and
 								self.patterngenerator and
 								hasattr(self.patterngenerator, "conn"))
-		if use_patterngenerator or self.use_madnet_tpg:
+		if (use_patterngenerator or self.use_madnet_tpg or
+			self._use_patternwindow):
 			rgb = re.search(r"Current RGB(?:\s+\d+){3}((?:\s+\d+(?:\.\d+)){3})",
 							txt)
 			if rgb:
@@ -13831,3 +13845,12 @@ BEGIN_DATA
 					self.madtpg.set_progress_bar_pos(start, end)
 		# Parse
 		wx.CallAfter(self.parse, txt)
+
+	@property
+	def _use_patternwindow(self):
+		# Preliminary Wayland support. This still needs a lot
+		# of work as Argyll doesn't support Wayland natively yet,
+		# so we use virtual display to drive our own patch window.
+		return (not config.is_virtual_display() and
+				os.getenv("XDG_SESSION_TYPE") == "wayland" and
+			    self.argyll_virtual_display)
