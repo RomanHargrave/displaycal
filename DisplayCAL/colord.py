@@ -312,6 +312,28 @@ def install_profile(device_id, profile, profile_installname=None,
 		colormgr = which("colormgr")
 		if not colormgr:
 			raise CDError("colormgr helper program not found")
+		
+		if logfn:
+			logfn("-" * 80)
+			logfn(lang.getstr("commandline"))
+
+		from worker import printcmdline
+
+		cmd = safe_str(colormgr)
+
+		# Import profile
+		# (Ignore returncode as profile may already exist in colord)
+		args = [cmd, "import-profile", profile.fileName]
+		printcmdline(args[0], args[1:], fn=logfn)
+		if logfn:
+			logfn("")
+		try:
+			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
+			stdout, stderr = p.communicate()
+		except Exception, exception:
+			raise CDError(safe_str(exception))
+		if logfn and stdout.strip():
+			logfn(stdout.strip())
 
 		profile = None
 
@@ -362,10 +384,6 @@ def install_profile(device_id, profile, profile_installname=None,
 		if logfn:
 			logfn("-" * 80)
 			logfn(lang.getstr("commandline"))
-
-		from worker import printcmdline
-
-		cmd = safe_str(colormgr)
 
 		# Add profile to device
 		# (Ignore returncode as profile may already have been added)
