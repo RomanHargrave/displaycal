@@ -366,7 +366,13 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 						img.Rescale(w, h, quality=quality)
 				factors = None
 				if (not inverted and len(parts) > 2 and parts[-3] == "icons" and
+					(ow, oh) != (10, 10) and oname not in ("black_luminance",
+														   "check_all",
+														   "contrast",
+														   "luminance") and
 					max(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)[:3]) < 102):
+					# Automatically invert B&W image if background is dark
+					# (exceptions do apply)
 					if not img:
 						img = bmp.ConvertToImage()
 					if img.IsBW():
