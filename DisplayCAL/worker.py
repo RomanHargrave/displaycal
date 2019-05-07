@@ -4743,6 +4743,29 @@ END_DATA
 												 cmdname in measure_cmds +
 															process_cmds)
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
+		if (self.measure_cmd and self._use_patternwindow and
+			not dry_run):
+			# Preliminary Wayland support. This still needs a lot
+			# of work as Argyll doesn't support Wayland natively yet,
+			# so we use virtual display to drive our own patch window.
+			# We need to make sure videoLUT is linear. Only way to
+			# achieve this currently under Wayland is by using colord
+			# to install a linear cal profile.
+			self.log(appname + ": Temporarily installing sRGB profile...")
+			self.display_profile = config.get_display_profile()
+			srgb = get_data_path("ref/sRGB.icm")
+			if not srgb:
+				return Error(lang.getstr("not_found", "ref/sRGB.icm"))
+			try:
+				srgb = ICCP.ICCProfile(srgb)
+			except Exception, exception:
+				return exception
+			cdinstall = self._attempt_install_profile_colord(srgb)
+			if not cdinstall:
+				return Error(lang.getstr("calibration.reset_error"))
+			elif isinstance(cdinstall, Exception):
+				return UnloggedError(safe_str(cdinstall))
+			self.log(appname + ": Successfully assigned sRGB profile")
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and
 									 (config.get_display_name() == "Resolve" or
@@ -5721,6 +5744,18 @@ while 1:
 						self.log(exception)
 			if hasattr(self, "madtpg") and finished:
 				self.madtpg_disconnect()
+			if (self.measure_cmd and self._use_patternwindow and
+				self.display_profile):
+				# Preliminary Wayland support. This still needs a lot
+				# of work as Argyll doesn't support Wayland natively yet,
+				# so we use virtual display to drive our own patch window.
+				# We need to restore the display profile.
+				self.log(appname + ": Re-assigning display profile...")
+				cdinstall = self._attempt_install_profile_colord(self.display_profile)
+				if cdinstall is True:
+					self.log(appname + ": Successfully re-assigned display profile")
+				elif not cdinstall:
+					self.log(lang.getstr("calibration.load_error"))
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
 		if self.retcode != 0:
@@ -6754,6 +6789,11 @@ while 1:
 								getcfg("display.number") - 1))
 		edid = self.display_edid[display_no]
 		if not edid:
+			if os.getenv("XDG_SESSION_TYPE") == "wayland":
+				# Preliminary Wayland support. This still needs a lot of work.
+				device_ids = colord.get_display_device_ids()
+				if device_ids and display_no < len(device_ids):
+					return device_ids[display_no]
 			# Fall back to XrandR name
 			if not (quirk and use_serial_32 and not truncate_edid_strings and
 					not omit_manufacturer):
@@ -7426,44 +7466,8 @@ usage: spotread [-options] [logfile]
 			 not dlopen("libcolordcompat.so")) and
 			which("colormgr")):
 			if device_id:
-				result = False
-				# Try a range of possible device IDs
-				device_ids = [device_id,
-							  self.get_device_id(quirk=True,
-												 truncate_edid_strings=True),
-							  self.get_device_id(quirk=True,
-												 use_serial_32=False),
-							  self.get_device_id(quirk=True,
-												 use_serial_32=False,
-												 truncate_edid_strings=True),
-							  self.get_device_id(quirk=False),
-							  self.get_device_id(quirk=False,
-												 truncate_edid_strings=True),
-							  self.get_device_id(quirk=False,
-												 use_serial_32=False),
-							  self.get_device_id(quirk=False,
-												 use_serial_32=False,
-												 truncate_edid_strings=True),
-							  # Try with manufacturer omitted
-							  self.get_device_id(omit_manufacturer=True),
-							  self.get_device_id(truncate_edid_strings=True,
-												 omit_manufacturer=True),
-							  self.get_device_id(use_serial_32=False,
-												 omit_manufacturer=True),
-							  self.get_device_id(use_serial_32=False,
-												 truncate_edid_strings=True,
-												 omit_manufacturer=True)]
-				for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
-					if device_id:
-						# NOTE: This can block
-						result = self._install_profile_colord(profile,
+				result = self._attempt_install_profile_colord(profile,
 															  device_id)
-						if isinstance(result, colord.CDObjectQueryError):
-							# Device ID was not found, try next one
-							continue
-						else:
-							# Either returned ok or there was another error
-							break
 				colord_install = result
 			if not device_id or result is not True:
 				gcm_import = bool(which("gcm-import"))
@@ -7947,6 +7951,50 @@ usage: spotread [-options] [logfile]
 			self.log(exception)
 			return exception
 		return True
+
+	def _attempt_install_profile_colord(self, profile, device_id=None):
+		if not device_id:
+			device_id = self.get_device_id(quirk=True, query=True)
+		if device_id:
+			result = False
+			# Try a range of possible device IDs
+			device_ids = [device_id,
+						  self.get_device_id(quirk=True,
+											 truncate_edid_strings=True),
+						  self.get_device_id(quirk=True,
+											 use_serial_32=False),
+						  self.get_device_id(quirk=True,
+											 use_serial_32=False,
+											 truncate_edid_strings=True),
+						  self.get_device_id(quirk=False),
+						  self.get_device_id(quirk=False,
+											 truncate_edid_strings=True),
+						  self.get_device_id(quirk=False,
+											 use_serial_32=False),
+						  self.get_device_id(quirk=False,
+											 use_serial_32=False,
+											 truncate_edid_strings=True),
+						  # Try with manufacturer omitted
+						  self.get_device_id(omit_manufacturer=True),
+						  self.get_device_id(truncate_edid_strings=True,
+											 omit_manufacturer=True),
+						  self.get_device_id(use_serial_32=False,
+											 omit_manufacturer=True),
+						  self.get_device_id(use_serial_32=False,
+											 truncate_edid_strings=True,
+											 omit_manufacturer=True)]
+			for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
+				if device_id:
+					# NOTE: This can block
+					result = self._install_profile_colord(profile,
+														  device_id)
+					if isinstance(result, colord.CDObjectQueryError):
+						# Device ID was not found, try next one
+						continue
+					else:
+						# Either returned ok or there was another error
+						break
+			return result
 	
 	def _install_profile_gcm(self, profile):
 		""" Install profile using gcm-import """
@@ -12210,8 +12258,11 @@ usage: spotread [-options] [logfile]
 	def calibration_loading_generally_supported(self):
 		# Loading/clearing calibration seems to have undesirable side-effects
 		# on Mac OS X 10.6 and newer
-		return (sys.platform != "darwin" or
-				intlist(mac_ver()[0].split(".")) < [10, 6])
+		# Wayland does not support videoLUT access (only by installing a
+		# profile via colord)
+		return ((sys.platform != "darwin" or
+				 intlist(mac_ver()[0].split(".")) < [10, 6]) and
+				os.getenv("XDG_SESSION_TYPE") != "wayland")
 	
 	@property
 	def calibration_loading_supported(self):

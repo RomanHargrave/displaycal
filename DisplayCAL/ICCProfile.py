@@ -1843,6 +1843,12 @@ def _colord_get_display_profile(display_no=0, path_only=False, use_cache=True):
 					  colord.device_id_from_edid(edid, use_serial_32=False,
 												 truncate_edid_strings=True,
 												 omit_manufacturer=True)]
+	elif os.getenv("XDG_SESSION_TYPE") == "wayland":
+		# Preliminary Wayland support. This still needs a lot of work.
+		device_ids = colord.get_display_device_ids()
+		if device_ids and display_no < len(device_ids):
+			edid = {"monitor_name": device_ids[display_no].split("xrandr-", 1).pop()}
+			device_ids = [device_ids[display_no]]
 	else:
 		# Fall back to XrandR name
 		try:
@@ -2083,13 +2089,14 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 				display = get_display()
 			else:
 				display = RDSMM.get_x_display(display_no)
-			if x_hostname is None:
-				x_hostname = display[0]
-			if x_display is None:
-				x_display = display[1]
-			if x_screen is None:
-				x_screen = display[2]
-			x_display_name = "%s:%s.%s" % (x_hostname, x_display, x_screen)
+			if display:
+				if x_hostname is None:
+					x_hostname = display[0]
+				if x_display is None:
+					x_display = display[1]
+				if x_screen is None:
+					x_screen = display[2]
+				x_display_name = "%s:%s.%s" % (x_hostname, x_display, x_screen)
 		for option in options:
 			if sys.platform == "darwin":
 				# applescript: one-based index
@@ -2125,7 +2132,8 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 														path_only)
 					return profile
 				# Try XrandR
-				if xrandr and RDSMM and option == "_ICC_PROFILE":
+				if (xrandr and RDSMM and option == "_ICC_PROFILE" and
+					not None in (x_hostname, x_display, x_screen)):
 					with xrandr.XDisplay(x_display_name) as display:
 						if debug:
 							safe_print("Using XrandR")
