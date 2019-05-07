@@ -586,18 +586,21 @@ class DisplayAdjustmentPanel(wx_Panel):
 				   len(current): current,
 				   len(target): target}
 		longest = strings[max(strings.keys())]
-		label = longest + u" x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00"
+		label = longest + u" x 0.0000 y 0.0000 VDT 0000K 0.0 \u0394E*00\nX"
 		checkmark.GetContainingSizer().Hide(checkmark)
-		self.sizer.Add(txtsizer, flag=wx.TOP | wx.BOTTOM | wx.ALIGN_CENTER_VERTICAL, border=border)
-		self.txt[name] = wx.StaticText(self, wx.ID_ANY, label)
+		self.sizer.Add(txtsizer, flag=wx.TOP | wx.BOTTOM |
+									  wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
+					   border=border)
+		self.txt[name] = wx.StaticText(self, wx.ID_ANY, label,
+									   style=wx.ST_NO_AUTORESIZE)
 		self.txt[name].SetForegroundColour(BGCOLOUR)
 		self.txt[name].SetMaxFontSize(10)
 		self.txt[name].checkmark = checkmark
 		self.txt[name].spacer = spacer
-		txtsizer.Add(self.txt[name])
+		txtsizer.Add(self.txt[name], 1)
 		self.txt[name].Fit()
 		self.txt[name].SetMinSize((self.txt[name].GetSize()[0],
-								   self.txt[name].GetSize()[1] * 2))
+								   self.txt[name].GetSize()[1]))
 	
 	def update_desc(self):
 		if self.ctrltype in ("luminance", "black_level"):
@@ -612,11 +615,18 @@ class DisplayAdjustmentPanel(wx_Panel):
 							   lang.getstr("calibration.interactive_display_adjustment.generic_hint.singular"))
 			self.desc.Wrap(250)
 
-class DisplayAdjustmentFrame(BaseFrame):
+
+if os.getenv("XDG_SESSION_TYPE") == "wayland":
+	windowcls = wx.Dialog
+else:
+	windowcls = BaseFrame
+
+
+class DisplayAdjustmentFrame(windowcls):
 
 	def __init__(self, parent=None, handler=None,
 				 keyhandler=None, start_timer=True):
-		BaseFrame.__init__(self, parent, wx.ID_ANY,
+		windowcls.__init__(self, parent, wx.ID_ANY,
 						  lang.getstr("calibration.interactive_display_adjustment"),
 						  style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL,
 						  name="displayadjustmentframe")
