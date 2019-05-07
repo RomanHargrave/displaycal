@@ -12272,10 +12272,17 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def display_tech_info_show_handler(self, event):
 		if not hasattr(self, "display_tech_info_tooltip_window"):
+			id_str = "info.display_tech"
+			lcode = lang.getcode()
+			if (lcode in ("ko", "zh_cn", "zh_hk") and
+				lang.ldict.get(lcode, {}).get(id_str)):
+				wrap = 66
+			else:
+				wrap = 112
 			self.display_tech_info_tooltip_window = TooltipWindow(
-				self, msg=lang.getstr("info.display_tech"), cols=1, 
+				self, msg=lang.getstr(id_str), cols=1, 
 				title=lang.getstr("display.tech"), 
-				bitmap=geticon(32, "dialog-information"), wrap=90,
+				bitmap=geticon(32, "dialog-information"), wrap=wrap,
 				use_header=False, show=False)
 			w = self.display_tech_info_tooltip_window
 			w.sizer0.Add((0, 2))
