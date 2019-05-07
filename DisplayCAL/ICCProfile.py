@@ -1813,7 +1813,7 @@ def create_synthetic_hlg_clut_profile(rgb_space, description,
 											 cat)
 
 
-def _colord_get_display_profile(display_no=0, path_only=False):
+def _colord_get_display_profile(display_no=0, path_only=False, use_cache=True):
 	edid = get_edid(display_no)
 	if edid:
 		# Try a range of possible device IDs
@@ -1875,11 +1875,12 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 									   "(%s):" % (display_no, device_id),
 									   profile_path)
 							return profile_path
-						return ICCProfile(profile_path)
+						return ICCProfile(profile_path, use_cache=use_cache)
 				break
 
 
-def _ucmm_get_display_profile(display_no, name, path_only=False):
+def _ucmm_get_display_profile(display_no, name, path_only=False,
+							  use_cache=True):
 	""" Argyll UCMM """
 	search = []
 	edid = get_edid(display_no)
@@ -1908,14 +1909,15 @@ def _ucmm_get_display_profile(display_no, name, path_only=False):
 											   (display_no, key, value),
 											   profile_path)
 									return profile_path
-								return ICCProfile(profile_path)
+								return ICCProfile(profile_path,
+												  use_cache=use_cache)
 
 
 def _wcs_get_display_profile(devicekey,
 							 scope=WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
 							 profile_type=COLORPROFILETYPE["ICC"],
 							 profile_subtype=COLORPROFILESUBTYPE["NONE"],
-							 profile_id=0, path_only=False):
+							 profile_id=0, path_only=False, use_cache=True):
 	buf = ctypes.create_unicode_buffer(256)
 	if not mscms.WcsGetDefaultColorProfile(scope, devicekey,
 										   profile_type,
@@ -1927,10 +1929,11 @@ def _wcs_get_display_profile(devicekey,
 	if buf.value:
 		if path_only:
 			return os.path.join(iccprofiles[0], buf.value)
-		return ICCProfile(buf.value)
+		return ICCProfile(buf.value, use_cache=use_cache)
 
 
-def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
+def _winreg_get_display_profile(monkey, current_user=False, path_only=False,
+								use_cache=True):
 	filename = None
 	filenames = _winreg_get_display_profiles(monkey, current_user)
 	if filenames:
@@ -1943,7 +1946,7 @@ def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 	if filename:
 		if path_only:
 			return os.path.join(iccprofiles[0], filename)
-		return ICCProfile(filename)
+		return ICCProfile(filename, use_cache=use_cache)
 	return None
 
 
@@ -2021,7 +2024,7 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 					if path_only:
 						profile = buf.value
 					else:
-						profile = ICCProfile(buf.value)
+						profile = ICCProfile(buf.value, use_cache=True)
 			finally:
 				win32gui.DeleteDC(dc)
 		else:
@@ -2100,7 +2103,7 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 					if path_only:
 						profile = filename
 					else:
-						profile = ICCProfile(filename)
+						profile = ICCProfile(filename, use_cache=True)
 				elif errors.strip():
 					raise IOError(errors.strip())
 			else:
@@ -2141,7 +2144,8 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 									warnings.warn(safe_str(exception, enc), Warning)
 								else:
 									if property:
-										profile = ICCProfile("".join(chr(n) for n in property))
+										profile = ICCProfile("".join(chr(n) for n in property),
+															 use_cache=True)
 								if profile:
 									return profile
 								if debug:
@@ -2173,12 +2177,12 @@ def get_display_profile(display_no=0, x_hostname=None, x_display=None,
 						if path_only:
 							profile = filename
 						else:
-							profile = ICCProfile(filename)
+							profile = ICCProfile(filename, use_cache=True)
 					else:
 						raw = [item.strip() for item in stdout.split("=")]
 						if raw[0] == atom and len(raw) == 2:
 							bin = "".join([chr(int(part)) for part in raw[1].split(", ")])
-							profile = ICCProfile(bin)
+							profile = ICCProfile(bin, use_cache=True)
 				elif stderr and tgt_proc.wait() != 0:
 					raise IOError(stderr)
 			if profile:
@@ -5499,7 +5503,11 @@ class ICCProfile(object):
 	
 	"""
 
-	def __new__(cls, profile=None, load=True):
+	_recent = []
+
+	def __new__(cls, profile=None, load=True, use_cache=False):
+
+		key = None
 
 		if isinstance(profile, basestring):
 			if profile.find("\0") < 0 and not profile.startswith("<"):
@@ -5516,25 +5524,38 @@ class ICCProfile(object):
 								if os.path.isfile(path):
 									profile = path
 									break
-							if os.path.isfile(path):
+							if profile == path:
 								break
-				stat = os.stat(profile)
-				key = (stat.st_ino, stat.st_mtime, stat.st_size)
+				if use_cache:
+					stat = os.stat(profile)
+					key = (stat.st_ino, stat.st_mtime, stat.st_size)
+				else:
+					key = ()
 			else:
 				# Binary string
-				key = md5(profile).hexdigest()
+				if use_cache:
+					key = md5(profile).hexdigest()
 
-			if key in _iccprofilecache:
-				return _iccprofilecache[key]
+			if use_cache:
+				chk = _iccprofilecache.get(key)
+				if chk:
+					return chk
 
-			if not isinstance(key, str):
+			if isinstance(key, tuple):
 				# Filename
 				profile = open(profile, "rb")
 
 		self = super(ICCProfile, cls).__new__(cls)
 
-		_iccprofilecache[key] = self
+		if use_cache and key:
+			_iccprofilecache[key] = self
 
+			# Make sure most recent three are not garbage collected
+			if len(ICCProfile._recent) == 3:
+				ICCProfile._recent.pop(0)
+			ICCProfile._recent.append(self)
+
+		self._key = key
 		self.ID = "\0" * 16
 		self._data = ""
 		self._file = None
@@ -5653,7 +5674,7 @@ class ICCProfile(object):
 					if vcgt:
 						self.tags["vcgt"] = vcgt
 				self.size = len(self.data)
-				return
+				return self
 			
 			if data[36:40] != "acsp":
 				raise ICCProfileInvalidError("Profile signature mismatch - "
@@ -5925,6 +5946,9 @@ class ICCProfile(object):
 			   data[100:]
 		ID = md5(data).digest()
 		if setID:
+			if ID != self.ID:
+				# No longer reflects original profile
+				self._delfromcache()
 			self.ID = ID
 		return ID
 	
@@ -5971,8 +5995,9 @@ class ICCProfile(object):
 		elif not has_lut_tags:
 			return False
 		# Set fileName to None because our profile no longer reflects the file
-		# on disk
+		# on disk and remove from cache
 		self.fileName = None
+		self._delfromcache()
 		if version < 2.4 and undo_wtpt_chad:
 			# Set whitepoint tag to illuminant relative and remove chromatic
 			# adaptation tag afterwards(!)
@@ -6010,8 +6035,9 @@ class ICCProfile(object):
 		if self.version >= 4:
 			return False
 		# Set fileName to None because our profile no longer reflects the file
-		# on disk
+		# on disk and remove from cache
 		self.fileName = None
+		self._delfromcache()
 		wtpt = self.tags.wtpt.ir.values()
 		# Set whitepoint tag to D50
 		self.tags.wtpt = self.tags.wtpt.pcs
@@ -6998,6 +7024,9 @@ class ICCProfile(object):
 			self._tagoffsets = offsets
 			if update_ID and self.ID != "\0" * 16:
 				self.calculateID()
+			else:
+				# No longer reflects original profile
+				self._delfromcache()
 			if return_bytes_saved:
 				self.size = len(self.data)
 				return oldsize - self.size
@@ -7101,3 +7130,20 @@ class ICCProfile(object):
 		stream.write(self.data)
 		if isinstance(stream_or_filename, basestring):
 			stream.close()
+
+	def __getattribute__(self, name):
+		if (name == "write" or
+			name.startswith("set") or
+			name.startswith("apply")):
+			# No longer reflects original profile
+			self._delfromcache()
+		return object.__getattribute__(self, name)
+
+	def _delfromcache(self):
+		# Make doubly sure to remove ourself from the cache
+		if self._key and self._key in _iccprofilecache:
+			try:
+				del _iccprofilecache[self._key]
+			except KeyError:
+				# GC was faster
+				pass

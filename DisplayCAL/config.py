@@ -1393,7 +1393,7 @@ def get_current_profile(include_display_profile=False):
 	if path:
 		import ICCProfile as ICCP
 		try:
-			profile = ICCP.ICCProfile(path)
+			profile = ICCP.ICCProfile(path, use_cache=True)
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			return
 		return profile
@@ -1461,7 +1461,7 @@ def get_standard_profiles(paths_only=False):
 						other_icc.append(os.path.join(dirpath, basename))
 		for path in ref_icc + other_icc:
 			try:
-				profile = ICCP.ICCProfile(path, load=False)
+				profile = ICCP.ICCProfile(path, load=False, use_cache=True)
 			except EnvironmentError:
 				pass
 			except Exception, exception:
@@ -1576,7 +1576,7 @@ def is_profile(filename=None, include_display_profile=False):
 		if os.path.exists(filename):
 			import ICCProfile as ICCP
 			try:
-				profile = ICCP.ICCProfile(filename)
+				profile = ICCP.ICCProfile(filename, use_cache=True)
 			except (IOError, ICCP.ICCProfileInvalidError):
 				pass
 			else:
