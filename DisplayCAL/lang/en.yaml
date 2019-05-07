@@ -531,6 +531,8 @@
   LCD RG Phosphor LED family (AUO B156HW01 V.4 in Lenovo W520/W530)
 "ccss.RG_Phosphor_Family_25Jul12": |-
   LCD GB-r-LED/RG Phosphor LED family (AUO B156HW01 V.4, Dell U2413)
+"ccss.Samsung Q9 75_ (i1 Pro)": |-
+  LCD Quantum Dot LED (Samsung QLED Q9)
 "ccss.WGCCFLFamily_07Feb11": |-
   LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
 "ccss.WLEDFamily_07Feb11": |-
@@ -1416,6 +1418,8 @@
   <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and sRGB coverage up to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors from 2010 and newer as well as Apple iMac/MacBook from 2009 to mid 2015.
   
   <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut in two common variants with P3 or Adobe RGB coverage around 90-99% (according to manufacturer data). Common displays in the P3 gamut category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer) as well as some HDR-capable desktop monitors. The Adobe RGB gamut category includes professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  
+  <font weight='bold'>LCD Quantum Dot LED</font> has a wide color gamut with near-full P3 coverage, commonly used in Samsung QLED TVs.
   
   <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
   

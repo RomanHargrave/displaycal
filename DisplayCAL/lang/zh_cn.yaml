@@ -531,6 +531,8 @@
   液晶 RG-磷光体 LED背光 系列 (AUO B156HW01 V.4 in Lenovo W520/W530)
 "ccss.RG_Phosphor_Family_25Jul12": |-
   液晶 GB-r-LED/RG-磷光体 LED背光 系列 (AUO B156HW01 V.4, Dell U2413)
+"*ccss.Samsung Q9 75_ (i1 Pro)": |-
+  LCD Quantum Dot LED (Samsung QLED Q9)
 "ccss.WGCCFLFamily_07Feb11": |-
   液晶 CCFL背光 广色域 系列 (NEC PA241W/PA271W)
 "ccss.WLEDFamily_07Feb11": |-
@@ -1427,6 +1429,8 @@
   <font weight='bold'>液晶 W-LED背光</font> (W-LED背光与常规色域和 sRGB 色域覆盖可达100%) 是最常见的液晶背光技术。 该类别的显示器包括2010年及新版的大多数笔记本电脑、全方位/办公和非HDR游戏显示器以及从2009年至2015年中期的 Apple iMac/MacBook。
   
   <font weight='bold'>液晶 PFS-磷光体 W-LED背光</font> 具有两种常见变体的广色域与 DCI-P3 或 Adobe RGB 色域覆盖约为90-99％（根据制造商数据）。DCI-P3 色域类别常见的显示器包括 Apple iMac 4K/5K Retina（2015年末及新版），MacBook Pro Retina (2016年末及新版)，以及某些支持HDR的桌面显示器。Adobe RGB 色域类别的专业显示器包括 EIZO CG2730，HP DreamColor Z24x G2 或 NEC PA271Q。
+  
+  <font weight='bold'>LCD Quantum Dot LED</font> has a wide color gamut with near-full P3 coverage, commonly used in Samsung QLED TVs.
   
   <font weight='bold'>WOLED面板</font> 具有广色域与高 DCI-P3 色域覆盖，常用于LG OLED电视。
   

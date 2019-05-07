@@ -531,6 +531,8 @@
   LCD RG-Leuchtstoff-LED-Familie (AUO B156HW01 V.4 in Lenovo W520/W530)
 "ccss.RG_Phosphor_Family_25Jul12": |-
   LCD GB-r-LED/RG-Leuchtstoff-LED-Familie (AUO B156HW01 V.4, Dell U2413)
+"ccss.Samsung Q9 75_ (i1 Pro)": |-
+  LCD LED mit Quantenpunkten (Samsung QLED Q9)
 "ccss.WGCCFLFamily_07Feb11": |-
   LCD CCFL-mit-erweitertem-Farbumfang-Familie (NEC PA241W/PA271W)
 "ccss.WLEDFamily_07Feb11": |-
@@ -1416,6 +1418,8 @@
   <font weight='bold'>LCD Weiße LED</font> (WLED mit normalem Farbumfang und sRGB-Farbraumabdeckung von bis zu 100%) ist die am meisten verbreitete LCD-Hintergrundbeleuchtung. Anzeigegeräte in dieser Kategorie beinhalten die meisten Laptops, Notebooks, Allround-/Büro- und nicht-HDR-fähige Gaming-Monitore ab 2010 sowie Apple iMac/MacBook von 2009 bis Mitte 2015.
   
   <font weight='bold'>LCD PFS-Leuchtstoff-WLED</font> hat einen erweiterten Farbumfang in zwei üblichen Varianten mit P3- oder Adobe-RGB-Farbraumabdeckung von etwa 90-99% (Herstellerangaben). Gängige Anzeigeräte in der P3-Farbumfang-Kategorie beinhalten Apple iMac 4K/5K Retina (Ende 2015 und neuer), MacBook Pro Retina (Ende 2016 und neuer) sowie einige HDR-fähige Desktop-Monitore. Die Adobe-RGB-Farbumfang-Kategorie umfasst professionelle Monitore wie EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  
+  <font weight='bold'>LCD LED mit Quantenpunkten</font> hat einen erweiterten Farbumfang mit nahezu vollständiger P3-Farbraumabdeckung, und wird vor allem in Samsung QLED TV-Geräten verwendet.
   
   <font weight='bold'>WOLED</font> hat einen erweiterten Farbumfang mit hoher P3-Farbraumabdeckung, und wird unter anderem in LG OLED TV-Geräten verwendet.
   
