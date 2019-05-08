@@ -276,33 +276,30 @@ def get_object_path(search, object_type):
 	return result
 
 
-def install_profile(device_id, profile, profile_installname=None,
-					timeout=20, logfn=None):
+def install_profile(device_id, profile, timeout=20, logfn=None):
 	"""
 	Install profile for device
 	
-	profile_installname   filename of the installed profile (full path).
-						  The profile is copied to this location.
-						  If profile_installname is None, it defaults to
-						  ~/.local/share/icc/<profile basename>
 	timeout				  Time to allow for colord to pick up new profiles
 						  (recommended not below 2 secs)
 	
 	"""
 
+	profile_installname = os.path.join(xdg_data_home, 'icc',
+									   os.path.basename(profile.fileName))
+
 	if profile.ID == "\0" * 16:
 		profile.calculateID()
+		profile.fileName = None
 	profile_id = "icc-" + hexlify(profile.ID)
 
 	# Write profile to destination
-	if not profile_installname:
-		profile_installname = os.path.join(xdg_data_home, 'icc',
-										   os.path.basename(profile.fileName))
 	profile_installdir = os.path.dirname(profile_installname)
 	if not os.path.isdir(profile_installdir):
 		os.makedirs(profile_installdir)
-	profile.fileName = profile_installname
-	profile.write()
+	if os.path.isfile(profile_installname) or not profile.fileName:
+		profile.fileName = profile_installname
+		profile.write()
 
 	if Colord:
 		client = client_connect()
