@@ -10350,8 +10350,10 @@ usage: spotread [-options] [logfile]
 		x, y, w, h, size = get_pattern_geometry()
 		if bgrgb is not None:
 			pass
-		elif getcfg("measure.darken_background") or size == 1.0:
+		elif getcfg("measure.darken_background"):
 			bgrgb = (0, 0, 0)
+		elif size == 1.0:
+			bgrgb = list(rgb)
 		else:
 			# Constant APL (matches madTPG 'gamma light')
 			desired_apl = getcfg("patterngenerator.apl")
