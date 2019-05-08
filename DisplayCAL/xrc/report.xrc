@@ -79,7 +79,8 @@
           <object class="spacer"/>
           <object class="sizeritem">
             <object class="wxStaticText" name="chart_meas_time"/>
-            <flag>wxALIGN_CENTRE_VERTICAL</flag>
+            <flag>wxBOTTOM</flag>
+            <border>3</border>
           </object>
           <object class="spacer"/>
           <object class="sizeritem">
