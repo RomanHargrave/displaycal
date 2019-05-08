@@ -288,6 +288,12 @@ def install_profile(device_id, profile, timeout=20, logfn=None):
 	profile_installname = os.path.join(xdg_data_home, 'icc',
 									   os.path.basename(profile.fileName))
 
+	if (profile.fileName != profile_installname and
+		os.path.isfile(profile_installname)):
+		if logfn:
+			logfn(u"Removing existing", profile_installname)
+		os.remove(profile_installname)
+
 	if profile.ID == "\0" * 16:
 		profile.calculateID()
 		profile.fileName = None
@@ -297,7 +303,9 @@ def install_profile(device_id, profile, timeout=20, logfn=None):
 	profile_installdir = os.path.dirname(profile_installname)
 	if not os.path.isdir(profile_installdir):
 		os.makedirs(profile_installdir)
-	if os.path.isfile(profile_installname) or not profile.fileName:
+	if not profile.fileName:
+		if logfn:
+			logfn(u"Writing", profile_installname)
 		profile.fileName = profile_installname
 		profile.write()
 
