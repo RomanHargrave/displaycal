@@ -2071,9 +2071,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.simulation_profile_cb.Show()
 		devlink_show = self.devlink_profile_cb.IsShown()
 		self.devlink_profile_cb.Show()
-		size = (min(self.GetDisplay().ClientArea[2], 
-					max(self.GetMinSize()[0],
-					    max(self.display_instrument_panel.Sizer.MinSize[0],
+		size = (min(max(self.GetDisplay().ClientArea[2] - borders_lr, 0), 
+					max(max(self.display_instrument_panel.Sizer.MinSize[0],
 							self.calibration_settings_panel.Sizer.MinSize[0],
 							self.profile_settings_panel.Sizer.MinSize[0],
 							self.lut3d_settings_panel.Sizer.MinSize[0],
@@ -2085,11 +2084,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.mr_settings_panel.Thaw()
 		self.SetMaxSize((-1, -1))
 		if not self.IsMaximized() and not self.IsIconized():
-			self.SetClientSize(((size[0] if fit_width
-								 else max(size[0], self.Size[0])) - borders_lr,
-								size[1]))
-		self.SetMinSize((size[0], self.GetSize()[1] - 
-								  self.calpanel.GetSize()[1] + header_min_h))
+			self.ClientSize = (size[0] if fit_width
+									   else max(size[0], self.ClientSize[0]),
+							   size[1])
+		self.MinSize = (self.ClientSize[0] + borders_lr,
+						self.GetSize()[1] - self.calpanel.GetSize()[1] +
+						header_min_h)
 		if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			self.MaxSize = self.Size
 			wx.CallAfter(set_maxsize, self, (-1, self.MaxSize[1]))
