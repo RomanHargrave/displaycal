@@ -301,10 +301,8 @@ def install_profile(device_id, profile, profile_installname=None,
 	profile_installdir = os.path.dirname(profile_installname)
 	if not os.path.isdir(profile_installdir):
 		os.makedirs(profile_installdir)
-	profile.write(profile_installname)
-	
-	if isinstance(profile_installname, unicode):
-		profile_installname = profile_installname.encode('UTF-8')
+	profile.fileName = profile_installname
+	profile.write()
 
 	if Colord:
 		client = client_connect()
@@ -323,7 +321,7 @@ def install_profile(device_id, profile, profile_installname=None,
 
 		# Import profile
 		# (Ignore returncode as profile may already exist in colord)
-		args = [cmd, "import-profile", profile.fileName]
+		args = [cmd, "import-profile", safe_str(profile.fileName)]
 		printcmdline(args[0], args[1:], fn=logfn)
 		if logfn:
 			logfn("")
