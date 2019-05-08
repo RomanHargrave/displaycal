@@ -89,6 +89,16 @@ class ReportFrame(BaseFrame):
 					paths = get_data_path("ref", wildcard) or []
 					for path in paths:
 						basepath, ext = os.path.splitext(path)
+						if os.getenv("XDG_SESSION_TYPE") == "wayland":
+							# When the number of items in a dropdown popup menu
+							# exceeds the available display client area height,
+							# the popup menu gets shown at weird positions or
+							# not at all under Wayland. Work-around this wx bug
+							# by truncating the choices. Yuck. Also see:
+							# FileBrowseBitmapButtonWithChoiceHistory.SetHistory
+							if (ext.lower() != ".ti1" or
+								os.path.basename(path) == "ccxx.ti1"):
+								continue
 						if not (path.lower().endswith(".ti2") and
 								basepath + ".cie" in paths):
 							history.append(path)

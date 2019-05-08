@@ -2704,6 +2704,34 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			control = self.textControl
 		if self.history == value:
 			return
+		value = list(value)
+
+		if os.getenv("XDG_SESSION_TYPE") == "wayland":
+			# When the number of items in a dropdown popup menu exceeds
+			# the available display client area height, the popup menu
+			# gets shown at weird positions or not at all under Wayland.
+			# Work-around this wx bug by truncating the choices. Yuck.
+
+			# Text height multiplier of 1.6 matches default popup menu item
+			# height under GNOME
+			line_height = math.ceil(control.GetTextExtent(u"69Gg")[1] * 1.6)
+
+			# Find smallest display client area height
+			max_height = sys.maxint
+			for i in xrange(wx.Display.GetCount()):
+				max_height = min(wx.Display(i).ClientArea[3], max_height)
+
+			# Check if combined height of items exceeds available client area.
+			# Account for possible current value which is not in list and
+			# for GNOME top bar (assume item height for the latter).
+			if line_height * len(value) + 2 > max_height:
+				max_entries = int(max_height / line_height) - 2
+				print max_height, line_height, len(value), max_entries
+				safe_print("Discarding entries to work around wxGTK Wayland "
+						   "dropdown popup menu bug:",
+						   ", ".join(value[max_entries:]))
+				value = value[:max_entries]
+
 		index = control.GetSelection()
 		if self.history and index > -1:
 			tempValue = self.history[index]
@@ -2711,7 +2739,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			tempValue = ""
 		self.history = []
 		control.Clear()
-		for path in list(value) + [tempValue]:
+		for path in value + [tempValue]:
 			if path:
 				self.history.append(path)
 				control.Append(self.GetName(path))
