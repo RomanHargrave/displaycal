@@ -147,7 +147,7 @@ from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
 					  CustomGridCellEvent, IdFactory)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel,
-					 PlateButton, get_bitmap_disabled)
+					 PlateButton, get_bitmap_disabled, set_maxsize)
 from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
@@ -1427,6 +1427,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.setup_language()
 		self.update_displays(update_ccmx_items=False)
 		self.update_comports()
+		self.mr_init_controls()
 		self.update_controls(update_ccmx_items=False)
 		self.set_size(True, True)
 		self.calpanel.SetScrollRate(2, 2)
@@ -1877,23 +1878,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.header_btm.SetBitmap(self.header_btm_bmp)
 		elif self.header_btm.GetBitmap() is not self.header_btm_min_bmp:
 			self.header_btm.SetBitmap(self.header_btm_min_bmp)
-		wx.CallAfter(self.chart_ctrl_adjustsize)
 		event.Skip()
-
-	def chart_ctrl_adjustsize(self, w=None):
-		if "gtk3" in wx.PlatformInfo:
-			return
-		if w is None:
-			cw = self.testchart_or_reference_label.ContainingSizer.ColWidths
-			w = (self.calpanel.Size[0] - 16 * 2 -
-				 cw[0] - 12 - 8 -
-				 self.fields_ctrl.Size[0] - 8 -
-				 self.chart_btn.Size[0] - 8 -
-				 self.chart_patches_amount.Size[0] -
-				 wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X))
-		self.chart_ctrl.SetMaxSize((w, -1))
-		self.calpanel.Layout()
-		self.update_scrollbars()
 
 	def cal_drop_handler(self, path):
 		"""
@@ -2050,8 +2035,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.mr_setup_language()
 
 	def set_size(self, set_height=False, fit_width=False):
-		if not self.IsFrozen():
-			self.Freeze()
 		self.SetMinSize((0, 0))
 		if set_height:
 			if sys.platform not in ("darwin", "win32"):
@@ -2083,6 +2066,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		if scale > 1:
 			margin = int(round(margin * scale))
 			header_min_h = int(round(header_min_h * scale))
+		self.mr_settings_panel.Freeze()
+		sim_show = self.simulation_profile_cb.IsShown()
+		self.simulation_profile_cb.Show()
+		devlink_show = self.devlink_profile_cb.IsShown()
+		self.devlink_profile_cb.Show()
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
 					    max(self.display_instrument_panel.Sizer.MinSize[0],
@@ -2092,6 +2080,9 @@ class MainFrame(ReportFrame, BaseFrame):
 							self.mr_settings_panel.Sizer.MinSize[0]) + margin,
 					    self.tabpanel.GetSizer().GetMinSize()[0])), 
 				height)
+		self.simulation_profile_cb.Show(sim_show)
+		self.devlink_profile_cb.Show(devlink_show)
+		self.mr_settings_panel.Thaw()
 		self.SetMaxSize((-1, -1))
 		if not self.IsMaximized() and not self.IsIconized():
 			self.SetClientSize(((size[0] if fit_width
@@ -2099,8 +2090,9 @@ class MainFrame(ReportFrame, BaseFrame):
 								size[1]))
 		self.SetMinSize((size[0], self.GetSize()[1] - 
 								  self.calpanel.GetSize()[1] + header_min_h))
-		if self.IsFrozen():
-			self.Thaw()
+		if os.getenv("XDG_SESSION_TYPE") == "wayland":
+			self.MaxSize = self.Size
+			wx.CallAfter(set_maxsize, self, (-1, self.MaxSize[1]))
 		if self.IsShown():
 			self.calpanel.Layout()
 
@@ -4131,10 +4123,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
 
+		self.mr_set_filebrowse_paths()
+
 		if (self.lut3d_settings_panel.IsShown() or
 			self.mr_settings_panel.IsShown()):
 			if self.mr_settings_panel.IsShown():
-				self.mr_update_controls()
+				self.mr_update_controls(False)
 			else:
 				self.set_profile("output")
 
@@ -9929,12 +9923,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		for btn, tab in btn2tab.iteritems():
 			if event.GetId() == btn.Id:
 				if tab is self.mr_settings_panel and not tab.IsShown():
-					if not getattr(self, "_mr_controls_inited", False):
-						self._mr_controls_inited = True
-						self.mr_init_controls()
-					else:
-						self.mr_update_controls()
-					self.chart_ctrl_adjustsize()
+					self.mr_update_controls()
 				elif tab is self.lut3d_settings_panel and not tab.IsShown():
 					self.set_profile("output")
 					self.lut3d_show_trc_controls()

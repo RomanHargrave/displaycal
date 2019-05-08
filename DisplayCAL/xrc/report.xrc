@@ -41,7 +41,14 @@
                 <flag>wxALIGN_CENTRE_VERTICAL</flag>
               </object>
               <object class="sizeritem">
-                <object class="wxChoice" name="fields_ctrl"/>
+                <object class="wxChoice" name="fields_ctrl">
+                  <content>
+                    <item>CMYK</item>
+                    <item>LAB</item>
+                    <item>RGB</item>
+                    <item>XYZ</item>
+                  </content>
+                </object>
                 <flag>wxLEFT|wxALIGN_CENTRE_VERTICAL</flag>
                 <border>8</border>
               </object>

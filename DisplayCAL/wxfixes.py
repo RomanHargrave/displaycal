@@ -516,6 +516,10 @@ if not hasattr(wx.Sizer, "GetItemIndex"):
 	wx.Sizer.GetItemIndex = GetItemIndex
 
 
+def set_maxsize(window, maxsize):
+	window.MaxSize = maxsize
+
+
 if os.getenv("XDG_SESSION_TYPE") == "wayland":
 	# Fix erroneous extra spacing around window contents under Wayland
 
@@ -531,9 +535,6 @@ if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			maxsize = window.MaxSize
 			window.MaxSize = window.Size
 			wx.CallAfter(set_maxsize, window, maxsize)
-
-	def set_maxsize(window, maxsize):
-		window.MaxSize = maxsize
 
 	def TopLevelWindow_Show(self, show=True):
 		fix_wayland_window_size(self)

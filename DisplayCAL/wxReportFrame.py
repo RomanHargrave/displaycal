@@ -62,6 +62,7 @@ class ReportFrame(BaseFrame):
 		BaseFrame.setup_language(self)
 		self.mr_setup_language()
 		self.mr_init_controls()
+		self.mr_update_controls()
 		self.mr_init_frame()
 
 	def mr_init_controls(self):
@@ -144,8 +145,6 @@ class ReportFrame(BaseFrame):
 									 self.use_devlink_profile_ctrl_handler)
 		self.output_profile_current_btn.Bind(wx.EVT_BUTTON,
 											 self.output_profile_current_ctrl_handler)
-		
-		self.mr_update_controls()
 
 	def mr_init_frame(self):
 		self.measurement_report_btn.SetDefault()
@@ -604,22 +603,26 @@ class ReportFrame(BaseFrame):
 		if not self.worker.is_working():
 			self.simulation_profile_ctrl.SetPath(path)
 			self.set_profile("simulation")
-	
-	def mr_update_controls(self):
-		""" Update controls with values from the configuration """
-		self.panel.Freeze()
-		self.simulation_profile_ctrl.SetPath(getcfg("measurement_report.simulation_profile"))
-		self.set_profile("simulation", silent=True)
-		self.mr_update_trc_controls()
-		self.devlink_profile_ctrl.SetPath(getcfg("measurement_report.devlink_profile"))
-		self.set_profile("devlink", silent=True)
-		self.output_profile_ctrl.SetPath(getcfg("measurement_report.output_profile"))
-		self.set_profile("output", silent=True)
+
+	def mr_set_filebrowse_paths(self):
+		for which in ("simulation", "devlink", "output"):
+			self.set_profile_ctrl_path(which)
 		chart = getcfg("measurement_report.chart")
 		if not chart or not os.path.isfile(chart):
 			chart = config.defaults["measurement_report.chart"]
 			setcfg("measurement_report.chart", chart)
-		self.mr_set_testchart(chart)
+		self.mr_set_testchart(chart, load=False)
+	
+	def mr_update_controls(self, set_filebrowse_paths=True):
+		""" Update controls with values from the configuration """
+		self.panel.Freeze()
+		if set_filebrowse_paths:
+			self.mr_set_filebrowse_paths()
+		self.set_profile("simulation", silent=True)
+		self.mr_update_trc_controls()
+		self.set_profile("devlink", silent=True)
+		self.set_profile("output", silent=True)
+		self.chart_ctrl_handler(None)
 		self.use_simulation_profile_ctrl_handler(None, update_trc=False)
 		self.panel.Thaw()
 
@@ -643,9 +646,10 @@ class ReportFrame(BaseFrame):
 		self.mr_black_output_offset_ctrl.SetValue(outoffset)
 		self.mr_black_output_offset_intctrl.SetValue(outoffset)
 	
-	def mr_set_testchart(self, path):
+	def mr_set_testchart(self, path, load=True):
 		self.chart_ctrl.SetPath(path)
-		self.chart_ctrl_handler(None)
+		if load:
+			self.chart_ctrl_handler(None)
 	
 	def mr_update_main_controls(self, event=None):
 		##print "MR update main ctrls",
