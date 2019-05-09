@@ -321,14 +321,14 @@ def install_profile(device_id, profile,
 		profile.fileName = profile_installname
 		profile.write()
 
-	profile = None
+	cdprofile = None
 
 	if Colord:
 		client = client_connect()
 	else:
 		# Query colord for profile
 		try:
-			profile = get_object_path(profile_id, "profile")
+			cdprofile = get_object_path(profile_id, "profile")
 		except CDObjectQueryError, exception:
 			# Profile not found
 			pass
@@ -341,7 +341,7 @@ def install_profile(device_id, profile,
 
 		cmd = safe_str(colormgr)
 
-		if not profile:
+		if not cdprofile:
 			# Import profile
 
 			if logfn:
@@ -378,23 +378,24 @@ def install_profile(device_id, profile,
 				raise CDTimeout("Trying to import profile %s failed after "
 								"%i tries." % (profile.fileName, n))
 
-	if not profile:
+	if not cdprofile:
 		# Query colord for newly added profile
 		for i in xrange(int(timeout / 1.0)):
 			try:
 				if Colord:
-					profile = client.find_profile_sync(profile_id, cancellable)
+					cdprofile = client.find_profile_sync(profile_id,
+														 cancellable)
 				else:
-					profile = get_object_path(profile_id, "profile")
+					cdprofile = get_object_path(profile_id, "profile")
 			except CDObjectQueryError, exception:
 				# Profile not found
 				pass
-			if profile:
+			if cdprofile:
 				break
 			# Give colord time to pick up the profile
 			sleep(1)
 
-		if not profile:
+		if not cdprofile:
 			raise CDTimeout("Querying for profile %r returned no result for %s "
 							"secs" % (profile_id, timeout))
 
@@ -403,7 +404,7 @@ def install_profile(device_id, profile,
 
 	if Colord:
 		# Connect to profile
-		if not profile.connect_sync(cancellable):
+		if not cdprofile.connect_sync(cancellable):
 			raise CDError("Could not connect to profile")
 
 		# Connect to existing device
@@ -411,13 +412,14 @@ def install_profile(device_id, profile,
 
 		# Add profile to device
 		try:
-			device.add_profile_sync(Colord.DeviceRelation.HARD, profile, cancellable)
+			device.add_profile_sync(Colord.DeviceRelation.HARD, cdprofile,
+									cancellable)
 		except Exception, exception:
 			# Profile may already have been added
 			warnings.warn(safe_str(exception), Warning)
 
 		# Make profile default for device
-		if not device.make_profile_default_sync(profile, cancellable):
+		if not device.make_profile_default_sync(cdprofile, cancellable):
 			raise CDError(errmsg)
 	else:
 		# Find device object path
@@ -429,7 +431,7 @@ def install_profile(device_id, profile,
 
 		# Add profile to device
 		# (Ignore returncode as profile may already have been added)
-		args = [cmd, "device-add-profile", device, profile]
+		args = [cmd, "device-add-profile", device, cdprofile]
 		printcmdline(args[0], args[1:], fn=logfn)
 		if logfn:
 			logfn("")
@@ -446,7 +448,7 @@ def install_profile(device_id, profile,
 			logfn(lang.getstr("commandline"))
 
 		# Make profile default for device
-		args = [cmd, "device-make-profile-default", device, profile]
+		args = [cmd, "device-make-profile-default", device, cdprofile]
 		printcmdline(args[0], args[1:], fn=logfn)
 		if logfn:
 			logfn("")
