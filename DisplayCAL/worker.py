@@ -1345,7 +1345,8 @@ class FilteredStream():
 				" or Q to ",
 				"place on the white calibration reference",
 				"read failed due to the sensor being in the wrong position",
-				"Ambient filter should be removed"] + INST_CAL_MSGS
+				"Ambient filter should be removed",
+				"The instrument can be removed from the screen"] + INST_CAL_MSGS
 	
 	substitutions = {r"\^\[": "",  # ESC key on Linux/OSX
 					 "patch ": "Patch ",
