@@ -5,6 +5,7 @@ from __future__ import with_statement
 from binascii import hexlify
 import atexit
 import ctypes
+import datetime
 import exceptions
 import getpass
 import httplib
@@ -124,6 +125,9 @@ elif sys.platform == "win32":
 	except Exception, exception:
 		safe_print("Error - could not import WMI:", exception)
 		wmi = None
+else:
+	# Linux
+	from defaultpaths import xdg_data_home
 import colord
 from util_os import (dlopen, expanduseru, fname_ext, getenvu, is_superuser,
 					 launch_file, make_win32_compatible_long_path, mksfile,
@@ -4756,7 +4760,9 @@ END_DATA
 			# to install a linear cal profile.
 			self.log(appname + ": Temporarily installing sRGB profile...")
 			self.display_profile = config.get_display_profile()
-			srgb = ICCP.ICCProfile.from_named_rgb_space("sRGB")
+			self.srgb = srgb = ICCP.ICCProfile.from_named_rgb_space("sRGB")
+			# Date should not change so the ID stays the same.
+			srgb.dateTime = datetime.datetime(2003, 01, 23, 0, 0, 0)
 			srgb.tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
 			srgb.tags.vcgt.update({
 				"channels": 3,
@@ -5765,6 +5771,12 @@ while 1:
 					self.log(appname + ": Successfully re-assigned display profile")
 				elif not cdinstall:
 					self.log(lang.getstr("calibration.load_error"))
+				# Remove temp sRGB profile
+				try:
+					os.remove(os.path.join(xdg_data_home, 'icc',
+										   os.path.basename(self.srgb.fileName)))
+				except Exception, exception:
+					self.log(exception)
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
 		if self.retcode != 0:

@@ -367,15 +367,15 @@ def install_profile(device_id, profile,
 					raise CDError(safe_str(exception))
 				if logfn and stdout.strip():
 					logfn(stdout.strip())
-				if p.returncode == 0:
+				if p.returncode == 0 or os.path.isfile(profile_installname):
 					if logfn:
 						logfn("...ok")
 					break
 				elif logfn:
 					logfn("...failed!")
 
-			if p.returncode != 0:
-				raise CDTimeout("Trying to import profile %s failed after "
+			if p.returncode != 0 and not os.path.isfile(profile_installname):
+				raise CDTimeout("Trying to import profile '%s' failed after "
 								"%i tries." % (profile.fileName, n))
 
 	if not cdprofile:
