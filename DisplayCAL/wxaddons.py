@@ -60,11 +60,11 @@ def IsBW(self):
 	"""
 	triplet = set()
 	for i, byte in enumerate(self.GetDataBuffer()):
-			triplet.add(byte)
-			if i % 3 == 2:
-				if len(triplet) != 1:
-					return False
-				triplet = set()
+		triplet.add(byte)
+		if i % 3 == 2:
+			if len(triplet) != 1:
+				return False
+			triplet = set()
 	return True
 
 wx.Image.IsBW = IsBW
