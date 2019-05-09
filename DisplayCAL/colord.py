@@ -323,35 +323,47 @@ def install_profile(device_id, profile,
 		colormgr = which("colormgr")
 		if not colormgr:
 			raise CDError("colormgr helper program not found")
-		
-		if logfn:
-			logfn("-" * 80)
-			logfn(lang.getstr("commandline"))
 
 		from worker import printcmdline
 
 		cmd = safe_str(colormgr)
 
-		# Import profile
-		# (Ignore returncode as profile may already exist in colord)
-		args = [cmd, "import-profile", safe_str(profile.fileName)]
-		printcmdline(args[0], args[1:], fn=logfn)
-		if logfn:
-			logfn("")
+		if not os.path.isfile(profile_installname):
+			# Import profile
 
-		ts = time.time()
+			if logfn:
+				logfn("-" * 80)
+				logfn(lang.getstr("commandline"))
 
-		try:
-			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
-			stdout, stderr = p.communicate()
-		except Exception, exception:
-			raise CDError(safe_str(exception))
-		if logfn and stdout.strip():
-			logfn(stdout.strip())
+			args = [cmd, "import-profile", safe_str(profile.fileName)]
+			printcmdline(args[0], args[1:], fn=logfn)
+			if logfn:
+				logfn("")
 
-		if time.time() - ts > timeout:
-			raise CDTimeout("Querying for profile %r returned no result for %s secs" %
-							(profile_id, timeout))
+			ts = time.time()
+
+			maxtries = 3
+
+			for n in xrange(1, maxtries + 1):
+				if logfn:
+					logfn("Trying to import profile, attempt %i..." % n)
+				try:
+					p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
+					stdout, stderr = p.communicate()
+				except Exception, exception:
+					raise CDError(safe_str(exception))
+				if logfn and stdout.strip():
+					logfn(stdout.strip())
+				if p.returncode == 0:
+					if logfn:
+						logfn("...ok")
+					break
+				elif logfn:
+					logfn("...failed!")
+
+			if p.returncode != 0:
+				raise CDTimeout("Trying to import profile %s failed after "
+								"%i tries." % (profile.fileName, n))
 
 		profile = None
 
