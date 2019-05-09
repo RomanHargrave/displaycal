@@ -11264,18 +11264,7 @@ usage: spotread [-options] [logfile]
 			# We no longer need keyboard interaction, switch over to
 			# progress dialog
 			wx.CallAfter(self.swap_progress_wnds)
-		if hasattr(self.progress_wnd, "progress_type"):
-			if (self.pauseable or
-				getattr(self, "interactive_frame", "") in ("ambient",
-														   "luminance")):
-				# If pauseable, we assume it's a measurement
-				progress_type = 1  # Measuring
-			elif self.cmdname == get_argyll_utilname("targen"):
-				progress_type = 2  # Generating test patches
-			else:
-				progress_type = 0  # Processing
-			if self.progress_wnd.progress_type != progress_type:
-				self.progress_wnd.set_progress_type(progress_type)
+		self.set_progress_type()
 		if getattr(self.progress_wnd, "original_msg", None) and \
 		   msg != self.progress_wnd.original_msg:
 			# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
@@ -11348,7 +11337,6 @@ usage: spotread [-options] [logfile]
 			self.terminal.Hide()
 		if self.finished is True:
 			return
-		pauseable = getattr(self, "pauseable", False)
 		fancy = fancy and getcfg("use_fancy_progress")
 		if (resume and self._progress_wnd and
 			self._progress_wnd in self._progress_dlgs.values()):
@@ -11371,7 +11359,7 @@ usage: spotread [-options] [logfile]
 				self.progress_wnd.reset()
 			self.progress_wnd.Pulse(progress_msg)
 			if hasattr(self.progress_wnd, "pause_continue"):
-				self.progress_wnd.pause_continue.Show(pauseable)
+				self.progress_wnd.pause_continue.Show(self.pauseable)
 				self.progress_wnd.Layout()
 			self.progress_wnd.Resume()
 			if not self.progress_wnd.IsShownOnScreen():
@@ -11392,23 +11380,34 @@ usage: spotread [-options] [logfile]
 											   parent=parent, 
 											   handler=self.progress_handler,
 											   keyhandler=self.terminal_key_handler,
-											   pauseable=pauseable,
+											   pauseable=self.pauseable,
 											   style=style, start_timer=False,
 											   fancy=fancy)
 			self.progress_wnd = self._progress_dlgs[key]
-		if hasattr(self.progress_wnd, "progress_type"):
-			if (pauseable or
-				getattr(self, "interactive_frame", "") in ("ambient",
-														   "luminance")):
-				# If pauseable, we assume it's a measurement
-				self.progress_wnd.progress_type = 1  # Measuring
-			elif self.cmdname == get_argyll_utilname("targen"):
-				self.progress_wnd.progress_type = 2  # Generating test patches
-			else:
-				self.progress_wnd.progress_type = 0  # Processing
+		self.set_progress_type()
 		if not self.progress_wnd.timer.IsRunning():
 			self.progress_wnd.start_timer()
 		self.progress_wnd.original_msg = progress_msg
+
+	def set_progress_type(self):
+		""" Set progress type for fancy progress dialog """
+		if hasattr(self.progress_wnd, "progress_type"):
+			if (self.pauseable or
+				getattr(self, "interactive_frame", "") in ("ambient",
+														   "luminance")):
+				# If pauseable, we assume it's a measurement
+				progress_type = 1  # Measuring
+			elif self.cmdname == get_argyll_utilname("targen"):
+				progress_type = 2  # Generating test patches
+			else:
+				progress_type = 0  # Processing
+			if self.progress_wnd.progress_type != progress_type:
+				if self.progress_wnd.timer.IsRunning():
+					# Fade-out current progress type, fade-in new one
+					self.progress_wnd.set_progress_type(progress_type)
+				else:
+					# Not yet running, just set initial progress type
+					self.progress_wnd.progress_type = progress_type
 	
 	def quit_terminate_cmd(self):
 		""" Forcefully abort the current subprocess.

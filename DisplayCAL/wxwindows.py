@@ -5827,6 +5827,8 @@ class ProgressDialog(wx.Dialog):
 			self.taskbar.set_progress_state(taskbar.TBPF_INDETERMINATE)
 	
 	def stop_timer(self, immediate=True):
+		if not self.timer.IsRunning():
+			return
 		self.timer.Stop()
 		if isinstance(self.gauge, BetterPyGauge) and immediate:
 			self.gauge.Stop()
