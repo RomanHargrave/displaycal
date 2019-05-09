@@ -6,6 +6,7 @@ import os
 import re
 import subprocess as sp
 import sys
+import time
 import warnings
 from time import sleep
 
@@ -28,6 +29,11 @@ if sys.platform not in ("darwin", "win32"):
 from util_os import which
 from util_str import safe_str, safe_unicode
 import localization as lang
+
+
+# See colord/cd-client.c
+CD_CLIENT_IMPORT_DAEMON_TIMEOUT = 5000  # ms
+
 
 if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
 	from config import get_data_path
@@ -276,7 +282,9 @@ def get_object_path(search, object_type):
 	return result
 
 
-def install_profile(device_id, profile, timeout=20, logfn=None):
+def install_profile(device_id, profile,
+					timeout=CD_CLIENT_IMPORT_DAEMON_TIMEOUT / 1000.0,
+					logfn=None):
 	"""
 	Install profile for device
 	
@@ -291,8 +299,8 @@ def install_profile(device_id, profile, timeout=20, logfn=None):
 	if (profile.fileName != profile_installname and
 		os.path.isfile(profile_installname)):
 		if logfn:
-			logfn(u"Removing existing", profile_installname)
-		os.remove(profile_installname)
+			logfn(u"About to overwrite existing", profile_installname)
+		profile.fileName = None
 
 	if profile.ID == "\0" * 16:
 		profile.calculateID()
@@ -330,6 +338,9 @@ def install_profile(device_id, profile, timeout=20, logfn=None):
 		printcmdline(args[0], args[1:], fn=logfn)
 		if logfn:
 			logfn("")
+
+		ts = time.time()
+
 		try:
 			p = sp.Popen(args, stdout=sp.PIPE, stderr=sp.STDOUT)
 			stdout, stderr = p.communicate()
@@ -337,6 +348,10 @@ def install_profile(device_id, profile, timeout=20, logfn=None):
 			raise CDError(safe_str(exception))
 		if logfn and stdout.strip():
 			logfn(stdout.strip())
+
+		if time.time() - ts > timeout:
+			raise CDTimeout("Querying for profile %r returned no result for %s secs" %
+							(profile_id, timeout))
 
 		profile = None
 
