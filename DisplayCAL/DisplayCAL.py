@@ -6839,11 +6839,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		if self.measure_auto(self.verify_calibration):
 			return
 		safe_print("-" * 80)
-		progress_msg = lang.getstr("calibration.verify")
-		safe_print(progress_msg)
+		self.report_title = lang.getstr("calibration.verify")
+		safe_print(self.report_title)
 		self.worker.interactive = False
 		self.worker.start(self.result_consumer, self.worker.verify_calibration, 
-						  progress_msg=progress_msg, pauseable=True,
+						  progress_msg=self.report_title, pauseable=True,
 						  resume=bool(getattr(self, "measure_auto_after",
 											  None)))
 	
@@ -7826,14 +7826,14 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 			safe_print("-" * 80)
 			if report_calibrated:
-				progress_msg = lang.getstr("report.calibrated")
+				self.report_title = lang.getstr("report.calibrated")
 			else:
-				progress_msg = lang.getstr("report.uncalibrated")
-			safe_print(progress_msg)
+				self.report_title = lang.getstr("report.uncalibrated")
+			safe_print(self.report_title)
 			self.worker.interactive = False
 			self.worker.start(self.result_consumer, self.worker.report, 
 							  wkwargs={"report_calibrated": report_calibrated},
-							  progress_msg=progress_msg, pauseable=True,
+							  progress_msg=self.report_title, pauseable=True,
 							  resume=bool(getattr(self,
 												  "measure_auto_after",
 												  None)))
@@ -7853,12 +7853,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			stream.seek(0)
 			wx.CallAfter(self.show_additional_infoframe,
 						 "".join(filter(lambda line: line.strip(),
-										stream.readlines())).strip())
+										stream.readlines())).strip(),
+						 self.report_title)
 		self.worker.wrapup(False)
 		self.Show()
 	
-	def show_additional_infoframe(self, txt):
-		infoframe = LogWindow(self)
+	def show_additional_infoframe(self, txt, title=None):
+		infoframe = LogWindow(self, title=title)
 		infoframe.Unbind(wx.EVT_CLOSE)
 		infoframe.Unbind(wx.EVT_MOVE)
 		infoframe.Unbind(wx.EVT_SIZE)
