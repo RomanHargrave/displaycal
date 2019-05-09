@@ -122,7 +122,7 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path,
 					parse_argument_string, set_argyll_bin, show_result_dialog,
-					check_argyll_bin, http_request)
+					check_argyll_bin, http_request, FilteredStream)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -7839,15 +7839,31 @@ class MainFrame(ReportFrame, BaseFrame):
 												  None)))
 	
 	def result_consumer(self, result):
-		""" Generic result consumer. Shows the info window on success
-		if enabled in the configuration or an info/warn/error dialog if
-		result was an exception. """
+		""" Generic result consumer. Shows an info window on success
+		or an info/warn/error dialog if result was an exception. """
 		if isinstance(result, Exception) and result:
 			wx.CallAfter(show_result_dialog, result, self)
 		else:
-			wx.CallAfter(self.infoframe_toggle_handler, show=True)
+			stream = FilteredStream(StringIO(),
+									discard=self.worker.recent.discard,
+									triggers=FilteredStream.triggers,
+									prestrip=self.worker.recent.prestrip)
+			for line in self.worker.output:
+				stream.write(line)
+			stream.seek(0)
+			wx.CallAfter(self.show_additional_infoframe,
+						 "".join(filter(lambda line: line.strip(),
+										stream.readlines())).strip())
 		self.worker.wrapup(False)
 		self.Show()
+	
+	def show_additional_infoframe(self, txt):
+		infoframe = LogWindow(self)
+		infoframe.Unbind(wx.EVT_CLOSE)
+		infoframe.Unbind(wx.EVT_MOVE)
+		infoframe.Unbind(wx.EVT_SIZE)
+		infoframe.Log(txt)
+		wx.CallAfter(infoframe.Show)
 
 	def calibrate_btn_handler(self, event):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
