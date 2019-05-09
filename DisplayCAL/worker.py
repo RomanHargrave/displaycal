@@ -4756,13 +4756,19 @@ END_DATA
 			# to install a linear cal profile.
 			self.log(appname + ": Temporarily installing sRGB profile...")
 			self.display_profile = config.get_display_profile()
-			srgb = get_data_path("ref/sRGB.icm")
-			if not srgb:
-				return Error(lang.getstr("not_found", "ref/sRGB.icm"))
-			try:
-				srgb = ICCP.ICCProfile(srgb)
-			except Exception, exception:
-				return exception
+			srgb = ICCP.ICCProfile.from_named_rgb_space("sRGB")
+			srgb.tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
+			srgb.tags.vcgt.update({
+				"channels": 3,
+				"entryCount": 256,
+				"entrySize": 1,
+				"data": [range(0, 256), range(0, 256), range(0, 256)]
+			})
+			srgb.setDescription(appname + " Linear Calibration sRGB Profile")
+			srgb.calculateID()
+			srgb.write(os.path.join(self.tempdir,
+									appname +
+									" Linear Calibration sRGB Profile.icc"))
 			cdinstall = self._attempt_install_profile_colord(srgb)
 			if not cdinstall:
 				return Error(lang.getstr("calibration.reset_error"))
