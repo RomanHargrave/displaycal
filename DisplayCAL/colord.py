@@ -296,8 +296,9 @@ def install_profile(device_id, profile,
 	profile_installname = os.path.join(xdg_data_home, 'icc',
 									   os.path.basename(profile.fileName))
 
+	profile_exists = os.path.isfile(profile_installname)
 	if (profile.fileName != profile_installname and
-		os.path.isfile(profile_installname)):
+		profile_exists):
 		if logfn:
 			logfn(u"About to overwrite existing", profile_installname)
 		profile.fileName = None
@@ -311,15 +312,27 @@ def install_profile(device_id, profile,
 	profile_installdir = os.path.dirname(profile_installname)
 	if not os.path.isdir(profile_installdir):
 		os.makedirs(profile_installdir)
-	if not profile.fileName:
+	# colormgr seems to have a bug where the first attempt at importing a
+	# specific profile can time out. This seems to be work-aroundable by
+	# writing the profile ourself first, and then importing.
+	if not profile.fileName or not profile_exists:
 		if logfn:
 			logfn(u"Writing", profile_installname)
 		profile.fileName = profile_installname
 		profile.write()
 
+	profile = None
+
 	if Colord:
 		client = client_connect()
 	else:
+		# Query colord for profile
+		try:
+			profile = get_object_path(profile_id, "profile")
+		except CDObjectQueryError, exception:
+			# Profile not found
+			pass
+
 		colormgr = which("colormgr")
 		if not colormgr:
 			raise CDError("colormgr helper program not found")
@@ -328,7 +341,7 @@ def install_profile(device_id, profile,
 
 		cmd = safe_str(colormgr)
 
-		if not os.path.isfile(profile_installname):
+		if not profile:
 			# Import profile
 
 			if logfn:
@@ -365,26 +378,25 @@ def install_profile(device_id, profile,
 				raise CDTimeout("Trying to import profile %s failed after "
 								"%i tries." % (profile.fileName, n))
 
-		profile = None
-
-	# Query colord for newly added profile
-	for i in xrange(int(timeout / 1.0)):
-		try:
-			if Colord:
-				profile = client.find_profile_sync(profile_id, cancellable)
-			else:
-				profile = get_object_path(profile_id, "profile")
-		except CDObjectQueryError, exception:
-			# Profile not found
-			pass
-		if profile:
-			break
-		# Give colord time to pick up the profile
-		sleep(1)
-
 	if not profile:
-		raise CDTimeout("Querying for profile %r returned no result for %s secs" %
-						(profile_id, timeout))
+		# Query colord for newly added profile
+		for i in xrange(int(timeout / 1.0)):
+			try:
+				if Colord:
+					profile = client.find_profile_sync(profile_id, cancellable)
+				else:
+					profile = get_object_path(profile_id, "profile")
+			except CDObjectQueryError, exception:
+				# Profile not found
+				pass
+			if profile:
+				break
+			# Give colord time to pick up the profile
+			sleep(1)
+
+		if not profile:
+			raise CDTimeout("Querying for profile %r returned no result for %s "
+							"secs" % (profile_id, timeout))
 
 	errmsg = "Could not make profile %s default for device %s" % (profile_id,
 																  device_id)
