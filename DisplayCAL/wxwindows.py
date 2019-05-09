@@ -5045,7 +5045,14 @@ class LogWindow(InvincibleFrame):
 		error_lstr = self._error_lstr
 		for i, line in enumerate(lines[-1000:]):
 			line_lower = line.lower()
-			if warning_lstr in line_lower or "warning" in line_lower:
+			if ("brightness error" in line_lower or
+				"white point error" in line_lower or
+				"maximum neutral error" in line_lower or
+				"average neutral error" in line_lower or
+				"profile check complete" in line_lower):
+				# These are not actual errors
+				pass
+			elif warning_lstr in line_lower or "warning" in line_lower:
 				textattr = wx.TextAttr("#F07F00", font=self.log_txt.Font)
 			elif error_lstr in line_lower or "error" in line_lower:
 				textattr = wx.TextAttr("#FF3300", font=self.log_txt.Font)
