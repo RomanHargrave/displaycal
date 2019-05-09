@@ -4744,8 +4744,10 @@ END_DATA
 												 cmdname in measure_cmds +
 															process_cmds)
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
+		report_current_cal = (cmdname == get_argyll_utilname("dispcal") and
+							  ("-r" in args or "-z" in args))
 		if (self.measure_cmd and self._use_patternwindow and
-			not dry_run):
+			not dry_run and not report_current_cal):
 			# Preliminary Wayland support. This still needs a lot
 			# of work as Argyll doesn't support Wayland natively yet,
 			# so we use virtual display to drive our own patch window.
@@ -5746,7 +5748,7 @@ while 1:
 			if hasattr(self, "madtpg") and finished:
 				self.madtpg_disconnect()
 			if (self.measure_cmd and self._use_patternwindow and
-				self.display_profile):
+				self.display_profile and not report_current_cal):
 				# Preliminary Wayland support. This still needs a lot
 				# of work as Argyll doesn't support Wayland natively yet,
 				# so we use virtual display to drive our own patch window.
