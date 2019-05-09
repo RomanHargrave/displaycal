@@ -1579,6 +1579,8 @@
   Carta de pruebas de ajustes
 "measureframe.center": |-
   Centro
+"*measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   Mover la ventana de medicion a la posición de pantalla deseada y redimensionarla si es necesario. Aproximadamente todo el area de la ventana se utilizara para mostrar los parches de medicion, el circulo es como una guia para ayudarle a situar su instrumento de medicion.
   Situe el instrumento de medicion en la pantalla y pulse en „Comenzar medicion“. Para cancelar y volver a la pantalla principal, cierre la ventana de medicion.

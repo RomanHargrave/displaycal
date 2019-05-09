@@ -1601,6 +1601,8 @@
   測量測色板
 "measureframe.center": |-
   中央
+"*measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   請將測量視窗移到屏幕上你所想的位置，以及在有需要時改變其大小。大概整個視窗範圍都會用來顯示測試的色板，視窗上的圓圈是用來輔助你正確放置測量儀器的導引標示。
   請將測量儀器放置在該視窗上然後按 “開始測量”。你可以關閉測量視窗以取消並返回主視窗。

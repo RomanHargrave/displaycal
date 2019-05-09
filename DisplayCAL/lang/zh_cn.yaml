@@ -1596,6 +1596,8 @@
   测量测试图表
 "measureframe.center": |-
   中心
+"*measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   移动测量窗口到所需的屏幕位置并根据需要调整大小。大约整个窗口区域将用于显示测量色块数，圆圈作为帮助放置测量设备的向导。
   将测量设备放在窗口上，然后单击“开始测量”。要取消并返回主窗口，关闭测量窗口。

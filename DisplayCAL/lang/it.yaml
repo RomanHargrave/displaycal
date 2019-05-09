@@ -1580,6 +1580,8 @@
   Measure testchart
 "measureframe.center": |-
   Centrare
+"*measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   Spostare la finestra di misurazione nella posizione dello schermo desiderata e ridimensionarla se necessario. Tutta l'area sarà usata approssimativamente per mostrare i campioni, il cerchio è solo una guida per l'aiuto al posizionamento dello strumento di misurazione.
   Posizionare lo strumento di misurazione sulla finestra e premere su „Avvio misurazione“. Per annullare e ritornare alla finestra principale chiudere la finestra di misurazione.

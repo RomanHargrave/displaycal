@@ -1576,6 +1576,8 @@
   Mesurer la mire de test
 "measureframe.center": |-
   Centrer
+"*measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   Déplacez la fenêtre de mesure à l’endroit désiré de l’écran et redimensionnez-la si besoin. Pratiquement toute la surface de la fenêtre sera utilisée pour afficher les échantillons à mesurer, le cercle n'est là que pour vous servir de guide pour placer votre périphérique de mesure.
   Placez le périphérique de mesure sur la fenêtre et cliquez sur « Commencer la mesure ». Pour annuler et revenir à la fenêtre principale, fermez la fenêtre de mesure.

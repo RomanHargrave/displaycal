@@ -1580,6 +1580,8 @@
   Testform messen
 "measureframe.center": |-
   Zentrieren
+"measureframe.center.manual": |-
+  Bitte platzieren Sie dieses Fenster in der Mitte des Bildschirms
 "measureframe.info": |-
   Platzieren Sie das Messfenster an der gewünschten Stelle und passen Sie gegebenenfalls die Größe an. In etwa die gesamte Fensterfläche wird zur Anzeige der Messfelder genutzt, der Kreis dient nur als Positionierhilfe für ihr Messgerät.
   Platzieren Sie das Messgerät auf dem Messfenster und klicken Sie dann auf „Messung starten“. Um abzubrechen und zum Hauptfenster zurückzukehren, schließen Sie das Messfenster.

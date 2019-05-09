@@ -1580,6 +1580,8 @@
   Measure testchart
 "measureframe.center": |-
   Center
+"measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   Move the measurement window to the desired screen position and resize if needed. Approximately the whole window area will be used to display measurement patches, the circle is just there as a guide to help you place your measurement device.
   Place the measurement device on the window and click on „Start measurement“. To cancel and return to the main window, close the measurement window.

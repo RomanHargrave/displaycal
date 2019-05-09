@@ -204,6 +204,13 @@ class MeasureFrame(InvincibleFrame):
 			self.sizer.Add(self.centerbutton, flag=wx.ALIGN_CENTER | wx.LEFT | 
 												   wx.RIGHT, border=10)
 			self.centerbutton.SetToolTipString(lang.getstr("measureframe.center"))
+		else:
+			self.centermsg = wx.StaticText(self.panel, -1,
+										   lang.getstr("measureframe.center.manual"),
+										   style=wx.ALIGN_CENTER_HORIZONTAL)
+			self.centermsg.Wrap(self.hsizer.MinSize[0] - 20)
+			self.sizer.Add(self.centermsg, flag=wx.ALIGN_CENTER | wx.LEFT | 
+												wx.RIGHT, border=10)
 
 		self.vsizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.vsizer, flag=wx.ALIGN_BOTTOM | 

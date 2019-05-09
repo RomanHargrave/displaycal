@@ -1580,6 +1580,8 @@
   테스트차트 측정
 "measureframe.center": |-
   Center
+"*measureframe.center.manual": |-
+  Please place this window in the center of the screen
 "measureframe.info": |-
   측정창을 원하는 곳에 위치하고 필요한 경우 크기를 조절합니다. 전체 윈도우는 디스플레이 측정 패치의 표시에 사용됩니다. 원 모양은 측정장치를 위치할 대략의 가이드입니다.
   측정장치를 올려놓은 후 „측정 시작“ 을 클릭합니다. 취소하고 메인 화면으로 돌아오려면 측정창을 닫습니다.
