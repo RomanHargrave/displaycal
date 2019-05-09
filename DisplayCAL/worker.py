@@ -11888,7 +11888,10 @@ usage: spotread [-options] [logfile]
 													 progress_msg, parent,
 													 resume, fancy)
 		if not hasattr(self, "_disabler"):
-			self._disabler = BetterWindowDisabler(self.progress_wnds)
+			skip = self.progress_wnds
+			if self.owner and hasattr(self.owner, "measureframe"):
+				skip.append(self.owner.measureframe)
+			self._disabler = BetterWindowDisabler(skip)
 		# Can't use startWorker because we may need access to self.thread from
 		# within thread, and startWorker does not return before the actual
 		# thread starts running
@@ -13881,9 +13884,11 @@ BEGIN_DATA
 				# Check if patch count is higher than patterngenerator sent count
 				if (self.patch_count > self.patterngenerator_sent_count and
 					self.exec_cmd_returnvalue is None):
-					# This should never happen
-					self.exec_cmd_returnvalue = Error(lang.getstr("patterngenerator.sync_lost"))
-					self.abort_subprocess()
+					# XXX: This can happen when pausing/unpausing?
+					# Need to investigate
+					self.log("Warning - did we loose sync with the pattern generator?")
+					##self.exec_cmd_returnvalue = Error(lang.getstr("patterngenerator.sync_lost"))
+					##self.abort_subprocess()
 		if update and not (self.subprocess_abort or self.thread_abort or
 						   "the instrument can be removed from the screen"
 						   in txt.lower()):

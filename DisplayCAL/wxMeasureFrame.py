@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import math
 import os
 import re
 import sys
@@ -18,7 +19,8 @@ from options import debug
 from util_list import floatlist, strlist
 from util_str import safe_str, safe_unicode
 from wxaddons import wx
-from wxwindows import BaseApp, ConfirmDialog, InfoDialog, InvincibleFrame
+from wxwindows import (BaseApp, BitmapBackgroundPanel, ConfirmDialog, InfoDialog,
+					   InvincibleFrame)
 from wxfixes import GenBitmapButton as BitmapButton
 try:
 	import RealDisplaySizeMM as RDSMM
@@ -108,13 +110,7 @@ def get_default_size():
 	return round(100.0 * max(px_per_mm))
 
 
-if  os.getenv("XDG_SESSION_TYPE") == "wayland":
-	windowcls = wx.Dialog
-else:
-	windowcls = InvincibleFrame
-
-
-class MeasureFrame(windowcls):
+class MeasureFrame(InvincibleFrame):
 
 	"""
 	A rectangular window to set the measure area size for dispcal/dispread.
@@ -124,9 +120,10 @@ class MeasureFrame(windowcls):
 	exitcode = 1
 
 	def __init__(self, parent=None, id=-1):
-		windowcls.__init__(self, parent, id, 
+		InvincibleFrame.__init__(self, parent, id, 
 								 lang.getstr("measureframe.title"), 
-								 style=wx.DEFAULT_DIALOG_STYLE,
+								 style=wx.DEFAULT_FRAME_STYLE & 
+									   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX),
 								 name="measureframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
@@ -134,13 +131,20 @@ class MeasureFrame(windowcls):
 		self.Bind(wx.EVT_SHOW, self.show_handler)
 		self.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_SET_FOCUS, self.focus_handler)
-		self.panel = wx.Panel(self, -1)
-		self.sizer = wx.GridSizer(3, 1, 0, 0)
+		self.panel = BitmapBackgroundPanel(self)
+		self.panel.scalebitmap = (False, False)
+
+		if os.getenv("XDG_SESSION_TYPE") == "wayland":
+			self.sizer = wx.FlexGridSizer(3, 1, 0, 0)
+			self.sizer.AddGrowableCol(0)
+			self.sizer.AddGrowableRow(1)
+		else:
+			self.sizer = wx.GridSizer(3, 1, 0, 0)
 		self.panel.SetSizer(self.sizer)
 
 		self.hsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(self.hsizer, flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL | 
-										 wx.ALIGN_TOP, border=10)
+		self.sizer.Add(self.hsizer, flag=wx.ALIGN_CENTER_HORIZONTAL | 
+										 wx.ALIGN_TOP)
 
 		self.zoommaxbutton = BitmapButton(self.panel, -1, 
 										  geticon(16, "zoom-best-fit"), 
@@ -148,10 +152,11 @@ class MeasureFrame(windowcls):
 										  name="zoommaxbutton")
 		self.zoommaxbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoommax_handler, self.zoommaxbutton)
-		self.hsizer.Add(self.zoommaxbutton, flag=wx.ALIGN_CENTER)
+		self.hsizer.Add(self.zoommaxbutton, flag=wx.ALIGN_CENTER | wx.LEFT |
+												 wx.TOP | wx.BOTTOM, border=10)
 		self.zoommaxbutton.SetToolTipString(lang.getstr("measureframe.zoommax"))
 
-		self.hsizer.Add((8, 1))
+		self.hsizer.Add((8, 0))
 
 		self.zoominbutton = BitmapButton(self.panel, -1, 
 										 geticon(16, "zoom-in"), 
@@ -159,10 +164,11 @@ class MeasureFrame(windowcls):
 										 name="zoominbutton")
 		self.zoominbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoomin_handler, self.zoominbutton)
-		self.hsizer.Add(self.zoominbutton, flag=wx.ALIGN_CENTER)
+		self.hsizer.Add(self.zoominbutton, flag=wx.ALIGN_CENTER | wx.TOP |
+												wx.BOTTOM, border=10)
 		self.zoominbutton.SetToolTipString(lang.getstr("measureframe.zoomin"))
 
-		self.hsizer.Add((8, 1))
+		self.hsizer.Add((8, 0))
 
 		self.zoomnormalbutton = BitmapButton(self.panel, -1, 
 											 geticon(16, "zoom-original"), 
@@ -170,11 +176,12 @@ class MeasureFrame(windowcls):
 											 name="zoomnormalbutton")
 		self.zoomnormalbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoomnormal_handler, self.zoomnormalbutton)
-		self.hsizer.Add(self.zoomnormalbutton, flag=wx.ALIGN_CENTER)
+		self.hsizer.Add(self.zoomnormalbutton, flag=wx.ALIGN_CENTER | wx.TOP |
+												wx.BOTTOM, border=10)
 		self.zoomnormalbutton.SetToolTipString(lang.getstr("measureframe."
 														   "zoomnormal"))
 
-		self.hsizer.Add((8, 1))
+		self.hsizer.Add((8, 0))
 
 		self.zoomoutbutton = BitmapButton(self.panel, -1, 
 										  geticon(16, "zoom-out"), 
@@ -182,7 +189,8 @@ class MeasureFrame(windowcls):
 										  name="zoomoutbutton")
 		self.zoomoutbutton.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_BUTTON, self.zoomout_handler, self.zoomoutbutton)
-		self.hsizer.Add(self.zoomoutbutton, flag=wx.ALIGN_CENTER)
+		self.hsizer.Add(self.zoomoutbutton, flag=wx.ALIGN_CENTER | wx.RIGHT |
+												 wx.TOP | wx.BOTTOM, border=10)
 		self.zoomoutbutton.SetToolTipString(lang.getstr("measureframe.zoomout"))
 
 		if os.getenv("XDG_SESSION_TYPE") != "wayland":
@@ -196,8 +204,6 @@ class MeasureFrame(windowcls):
 			self.sizer.Add(self.centerbutton, flag=wx.ALIGN_CENTER | wx.LEFT | 
 												   wx.RIGHT, border=10)
 			self.centerbutton.SetToolTipString(lang.getstr("measureframe.center"))
-		else:
-			self.sizer.Add((10, 10))
 
 		self.vsizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.vsizer, flag=wx.ALIGN_BOTTOM | 
@@ -433,14 +439,18 @@ class MeasureFrame(windowcls):
 
 	def close_handler(self, event):
 		if debug: safe_print("[D] measureframe_close_handler")
-		self.Hide()
 		if self.Parent:
+			if self.Parent.worker.is_working():
+				self.Parent.worker.abort_subprocess(confirm=True)
+				return
+			self.Hide()
 			self.Parent.Show()
 			if getattr(self.Parent, "restore_measurement_mode"):
 				self.Parent.restore_measurement_mode()
 			if getattr(self.Parent, "restore_testchart"):
 				self.Parent.restore_testchart()
 		else:
+			self.Hide()
 			writecfg()
 			self.Destroy()
 			if MeasureFrame.exitcode != 255:
@@ -538,7 +548,7 @@ class MeasureFrame(windowcls):
 		for ctrl in self.panel.Children:
 			ctrl.Show(show)
 		if show:
-			self.panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+			self.panel.SetBitmap(None)
 			self.panel.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
 		else:
 			self.panel.SetCursor(wx.StockCursor(wx.CURSOR_BLANK))
@@ -546,7 +556,38 @@ class MeasureFrame(windowcls):
 		self.panel.Thaw()
 
 	def show_rgb(self, rgb):
-		self.panel.BackgroundColour = wx.Colour(*(int(round(v * 255)) for v in rgb))
+		rgb = tuple(v * 255 for v in rgb)
+		floor = tuple(int(math.floor(v)) for v in rgb)
+		ceil = tuple(int(math.ceil(v)) for v in rgb)
+		if floor != ceil:
+			# Dither using simple ordered pattern
+			safe_print("Dither 8 bit %.6f %.6f %.6f -> %i %i %i | %i %i %i" %
+					   (rgb + floor + ceil))
+			img = wx.EmptyImage(*self.ClientSize, clear=False)
+			buf = img.GetDataBuffer()
+			buflen = len(buf)
+			# Intervals in pixels per each R, G and B
+			intervals = tuple((buflen / (buflen * (rgb[i] - floor[i]))
+							  if rgb[i] - floor[i] else 0) for i in xrange(3))
+			safe_print("Intervals %.6f %.6f %.6f" % intervals)
+			floorbytes = tuple(chr(v) for v in floor)
+			ceilbytes = tuple(chr(v) for v in ceil)
+			n = 0
+			for i, byte in enumerate(buf):
+				m = intervals[i % 3]
+				if m and n % m < 1:
+					color = ceilbytes
+				else:
+					color = floorbytes
+				buf[i] = color[i % 3]
+				if i % 3 == 2:
+					n += 1
+			bmp = img.ConvertToBitmap()
+		else:
+			# Exact
+			safe_print("Exact 8 bit %.6f %.6f %.6f" % rgb)
+			bmp = wx.EmptyBitmapRGBA(*tuple(self.ClientSize) + floor, alpha=255)
+		self.panel.SetBitmap(bmp)
 		self.panel.Refresh()
 
 	def get_dimensions(self):
@@ -613,12 +654,31 @@ class MeasureFrame(windowcls):
 		return measureframe_dimensions
 
 
+def test():
+	import time
+	for rgb in [(0.079291, 1 / 51., 1 / 51.),
+				(0.079291, 0.089572, 0.094845),
+				(0.032927, 0.028376, 0.027248),
+				(0.037647, 0.037095, 0.036181),
+				(51.2 / 255, 153.7 / 255, 127.4 / 255)]:
+		wx.CallAfter(wx.GetApp().TopWindow.show_rgb, rgb)
+		time.sleep(0.05)
+		raw_input("Press RETURN to continue\n")
+		if not wx.GetApp().TopWindow:
+			break
+
+
 def main():
 	config.initcfg()
 	lang.init()
 	app = BaseApp(0)
 	app.TopWindow = MeasureFrame()
 	app.TopWindow.Show()
+	if "--test-dither" in sys.argv[1:]:
+		import threading
+		t = threading.Thread(target=test)
+		app.TopWindow.show_controls(False)
+		t.start()
 	app.MainLoop()
 
 if __name__ == "__main__":

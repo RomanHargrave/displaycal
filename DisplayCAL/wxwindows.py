@@ -2440,6 +2440,7 @@ class BitmapBackgroundPanel(wx.PyPanel):
 
 	def OnSize(self,event):
 		self.Refresh()
+		event.Skip()
 	
 	def _draw(self, dc):
 		bgcolor = self.BackgroundColour
