@@ -279,8 +279,8 @@ class SynthICCFrame(BaseFrame):
 		dlg.sizer3.Add(sizer, 0, flag=wx.TOP | wx.ALIGN_LEFT,
 					   border=8)
 		x_ctrl = floatspin.FloatSpin(dlg, -1, size=(75 * scale, -1),
-									 min_val=0.0001, max_val=1,
-									 increment=0.0001,
+									 min_val=0.00001, max_val=1,
+									 increment=0.00001,
 									 value=self.white_x.GetValue())
 		sizer.Add(x_ctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 				  border=4)
@@ -288,8 +288,8 @@ class SynthICCFrame(BaseFrame):
 								flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 								border=12)
 		y_ctrl = floatspin.FloatSpin(dlg, -1, size=(75 * scale, -1),
-									 min_val=0.0001, max_val=1,
-									 increment=0.0001,
+									 min_val=0.00001, max_val=1,
+									 increment=0.00001,
 									 value=self.white_y.GetValue())
 		sizer.Add(y_ctrl, 0, flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
 				  border=4)

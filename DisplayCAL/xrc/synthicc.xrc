@@ -53,8 +53,7 @@
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
-                    <orient>wxHORIZONTAL</orient>
+                  <object class="wxGridSizer">
                     <object class="sizeritem">
                       <object class="wxStaticText" name="label_X">
                         <size>95, -1</size>
@@ -75,17 +74,18 @@
                     </object>
                     <object class="sizeritem">
                       <object class="wxStaticText" name="label_x">
-                        <size>85, -1</size>
+                        <size>95, -1</size>
                         <label>x</label>
                       </object>
                     </object>
                     <object class="sizeritem">
                       <object class="wxStaticText" name="label_y">
-                        <size>75, -1</size>
+                        <size>95, -1</size>
                         <label>y</label>
                       </object>
                     </object>
                   </object>
+                  <flag>wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="label_white">
@@ -95,7 +95,7 @@
                   <border>10</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
+                  <object class="wxGridSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_X">
                         <size>85, -1</size>
@@ -131,27 +131,26 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_x">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="white_y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                     </object>
-                    <orient>wxHORIZONTAL</orient>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxALIGN_CENTRE_VERTICAL|wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="label_red">
@@ -161,7 +160,7 @@
                   <border>10</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
+                  <object class="wxGridSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_X">
                         <size>85, -1</size>
@@ -197,27 +196,26 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_x">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="red_y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                     </object>
-                    <orient>wxHORIZONTAL</orient>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxALIGN_CENTRE_VERTICAL|wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="label_green">
@@ -227,7 +225,7 @@
                   <border>10</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
+                  <object class="wxGridSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_X">
                         <size>85, -1</size>
@@ -263,27 +261,26 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_x">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="green_y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                     </object>
-                    <orient>wxHORIZONTAL</orient>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxALIGN_CENTRE_VERTICAL|wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxStaticText" name="label_blue">
@@ -293,7 +290,7 @@
                   <border>10</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
+                  <object class="wxGridSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_X">
                         <size>85, -1</size>
@@ -329,27 +326,26 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_x">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="blue_y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                     </object>
-                    <orient>wxHORIZONTAL</orient>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxALIGN_CENTRE_VERTICAL|wxEXPAND</flag>
                 </object>
                 <object class="sizeritem">
                   <object class="wxCheckBox" name="black_point_cb">
@@ -359,7 +355,7 @@
                   <border>10</border>
                 </object>
                 <object class="sizeritem">
-                  <object class="wxBoxSizer">
+                  <object class="wxGridSizer">
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_X">
                         <size>85, -1</size>
@@ -395,27 +391,26 @@
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_x">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                       <flag>wxRIGHT</flag>
                       <border>10</border>
                     </object>
                     <object class="sizeritem">
                       <object class="FloatSpin" name="black_y">
-                        <size>75, -1</size>
+                        <size>85, -1</size>
                         <min_val>-1.0</min_val>
                         <max_val>1.0</max_val>
-                        <increment>0.0001</increment>
-                        <digits>4</digits>
+                        <increment>0.00001</increment>
+                        <digits>5</digits>
                       </object>
                     </object>
-                    <orient>wxHORIZONTAL</orient>
                   </object>
-                  <flag>wxALIGN_CENTRE_VERTICAL</flag>
+                  <flag>wxALIGN_CENTRE_VERTICAL|wxEXPAND</flag>
                 </object>
                 <object class="spacer">
                   <size>0, 0</size>
