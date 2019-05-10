@@ -70,16 +70,20 @@ def format_chglog(chglog, format="appstream"):
 		# Remove macOS and Windows specific items
 		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
 		if format.lower() == "appstream":
-			# Conform to appstream-util validate-strict rules:
+			# Conform to appstream-util validate-strict rules
+			def truncate(matches):
+				return "%s%s%s" % (matches.group(1),
+								   # appstream-util validate counts bytes, not characters
+								   matches.group(2).encode("UTF-8")[:597].rstrip().decode("UTF-8", "ignore") +
+								   "...",
+								   matches.group(3))
+			# - <p> maximum is 600 chars
+			chglog = re.sub(r"(<p>)([^<]{600,})(</p>)", truncate, chglog)
 			# - <li> cannot end in '.'
 			chglog = re.sub(r"([^.])\.\s*</li>", r"\1</li>", chglog)
 			# - <li> maximum is 100 chars
-			chglog = re.sub(r"(<li>)([^<]{100,})(<(?:ol|ul|/li)>)",
-							lambda matches: "%s%s%s" % (matches.group(1),
-														# appstream-util validate counts bytes, not characters
-														matches.group(2).encode("UTF-8")[:97].rstrip().decode("UTF-8", "ignore") +
-														"...",
-														matches.group(3)), chglog)
+			chglog = re.sub(r"(<li>)([^<]{100,})(<(?:ol|ul|/li)>)", truncate,
+							chglog)
 		# Nice formatting
 		chglog = re.sub(r"^\s+(?m)", r"\t" * 4, chglog)  # Multi-line
 		chglog = re.sub(r"(<li)", r"\t\1", chglog)
@@ -111,25 +115,36 @@ def format_chglog(chglog, format="appstream"):
 		chglog = "\n".join(chglog)
 	else:
 		# Nice formatting
+		from xml.sax.saxutils import escape
 		chglog = u""
+		nump = 0
+		maxp = 3
 		for lvl1 in tree:
 			if lvl1.tag in ("p", "ol", "ul"):
-				chglog += u"\t\t\t\t<%s>\n" % lvl1.tag
 				text = lvl1.text.strip()
+				if lvl1.tag == "p" :
+					if nump == maxp:
+						continue
+					nump += 1
+				chglog += u"\t\t\t\t<%s>\n" % lvl1.tag
 				if text:
-					chglog += u"\t\t\t\t\t%s\n" % text
+					chglog += u"\t\t\t\t\t%s\n" % escape(text)
 				for lvl2 in lvl1:
 					if lvl2.tag == "li":
-						chglog += u"\t\t\t\t\t<li>\n\t\t\t\t\t\t%s\n" % lvl2.text.strip()
+						chglog += u"\t\t\t\t\t<li>\n\t\t\t\t\t\t%s\n" % escape(lvl2.text.strip())
 						for lvl3 in lvl2:
 							if lvl3.tag in ("p", "ol", "ul"):
-								chglog += u"\t\t\t\t\t\t<%s>\n" % lvl3.tag
 								text = lvl3.text.strip()
+								if lvl3.tag == "p":
+									if nump == maxp:
+										continue
+									nump += 1
+								chglog += u"\t\t\t\t\t\t<%s>\n" % lvl3.tag
 								if text:
-									chglog += u"\t\t\t\t\t\t\t%s\n" % text
+									chglog += u"\t\t\t\t\t\t\t%s\n" % escape(text)
 								for lvl4 in lvl3:
 									if lvl4.tag == "li":
-										chglog += u"\t\t\t\t\t\t\t<li>%s</li>\n" % lvl4.text.strip()
+										chglog += u"\t\t\t\t\t\t\t<li>%s</li>\n" % escape(lvl4.text.strip())
 								chglog += u"\t\t\t\t\t\t</%s>\n" % lvl3.tag
 						chglog += u"\t\t\t\t\t</li>\n"
 				chglog += u"\t\t\t\t</%s>\n" % lvl1.tag
