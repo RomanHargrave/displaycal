@@ -6481,11 +6481,16 @@ class TooltipWindow(InvincibleFrame):
 				col.maxlen = wrap
 			col.SetMaxFontSize()
 			maxlinewidth = 0
+			tabcount = 0
 			for line in msg:
 				maxlinewidth = max(col.GetTextExtent(line)[0], maxlinewidth)
+				tabcount = max(tabcount, line.count("\t"))
+			# GetTextExtent doesn't always figure out correct width for
+			# tab char, extra spacing needed
+			tabwidth = tabcount * col.GetTextExtent("\t")[0]
 			col.Label = label
 			if not u"<" in label:
-				col.MinSize = maxlinewidth + margin * 2, -1
+				col.MinSize = maxlinewidth + tabwidth + margin * 2, -1
 			self.sizer3.Add(col, flag=wx.LEFT, border=margin)
 
 		self.sizer0.SetSizeHints(self)
