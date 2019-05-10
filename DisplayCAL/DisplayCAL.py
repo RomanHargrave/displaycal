@@ -10442,10 +10442,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				boxsizer.Layout()
 				if event:
 					check_last_ccxx_ti3(event)
-				dlg.MaxSize = (-1, -1)  # Wayaland fix
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
-				dlg.MaxSize = dlg.Size  # Wayaland fix
 				dlg.Refresh()
 				dlg.Thaw()
 			instrument = getcfg("colorimeter_correction.instrument")
@@ -10473,10 +10471,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					dlg.four_color_matrix.SetValue(False)
 				show_observer_ctrl()
 				set_ok_btn_state()
-				dlg.MaxSize = (-1, -1)  # Wayaland fix
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
-				dlg.MaxSize = dlg.Size  # Wayaland fix
 				dlg.Refresh()
 				dlg.Thaw()
 			dlg.correction_type_matrix.Bind(wx.EVT_RADIOBUTTON,

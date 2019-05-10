@@ -543,12 +543,29 @@ if os.getenv("XDG_SESSION_TYPE") == "wayland":
 	_TopLevelWindow_Show = wx.TopLevelWindow.Show
 	wx.TopLevelWindow.Show = TopLevelWindow_Show
 
-	def Dialog_ShowModal(self):
-		fix_wayland_window_size(self)
-		return _Dialog_ShowModal(self)
+	# ~ def Dialog_ShowModal(self):
+		# ~ fix_wayland_window_size(self)
+		# ~ return _Dialog_ShowModal(self)
 
-	_Dialog_ShowModal = wx.Dialog.ShowModal
-	wx.Dialog.ShowModal = Dialog_ShowModal
+	# ~ _Dialog_ShowModal = wx.Dialog.ShowModal
+	# ~ wx.Dialog.ShowModal = Dialog_ShowModal
+
+	def Sizer_SetSizeHints(self, window):
+		if isinstance(window, wx.Dialog):
+			window.MaxSize = (-1, -1)
+		_Sizer_SetSizeHints(self, window)
+
+	_Sizer_SetSizeHints = wx.Sizer.SetSizeHints
+	wx.Sizer.SetSizeHints = Sizer_SetSizeHints
+
+	def Sizer_Layout(self):
+		_Sizer_Layout(self)
+		window = self.GetContainingWindow()
+		if isinstance(window, wx.Dialog):
+			window.MaxSize = window.Size
+
+	_Sizer_Layout = wx.Sizer.Layout
+	wx.Sizer.Layout = Sizer_Layout
 
 
 if sys.platform == "darwin":
