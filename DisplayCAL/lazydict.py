@@ -274,6 +274,7 @@ class LazyDict_YAML_UltraLite(LazyDict):
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
 		for i, line in enumerate(fileobj.readlines(), 1):
+			line = line.replace("\r\n", "\n")
 			if line.lstrip(" ").startswith("#"):
 				# Ignore comments
 				pass
@@ -401,6 +402,7 @@ class LazyDict_YAML_Lite(LazyDict_YAML_UltraLite):
 		# Readlines is actually MUCH faster than iterating over the
 		# file object
 		for i, line in enumerate(fileobj.readlines(), 1):
+			line = line.replace("\r\n", "\n")
 			line_lwstrip = line.lstrip(" ")
 			if quote:
 				line_rstrip = line.rstrip()
