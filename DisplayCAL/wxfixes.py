@@ -1368,6 +1368,9 @@ class PlateButton(platebtn.PlateButton):
 		self.Unbind(wx.EVT_LEAVE_WINDOW)
 		self.Bind(wx.EVT_LEAVE_WINDOW,
 				  lambda evt: wx.CallLater(80, self.__LeaveWindow))
+		if ("gtk2" in wx.PlatformInfo and
+			not isinstance(self.TopLevelParent, wx.Dialog)):
+			self.BackgroundColour = self.Parent.BackgroundColour
 
 	def DoGetBestSize(self):
 		"""Calculate the best size of the button
