@@ -11550,6 +11550,9 @@ usage: spotread [-options] [logfile]
 	
 	def report(self, report_calibrated=True):
 		""" Report on calibrated or uncalibrated display device response """
+		result = self.detect_video_levels()
+		if isinstance(result, Exception) or not result:
+			return result
 		cmd, args = self.prepare_dispcal(calibrate=False)
 		if isinstance(cmd, Exception):
 			return cmd
@@ -13538,6 +13541,9 @@ BEGIN_DATA
 
 	def verify_calibration(self):
 		""" Verify the current calibration """
+		result = self.detect_video_levels()
+		if isinstance(result, Exception) or not result:
+			return result
 		cmd, args = self.prepare_dispcal(calibrate=False, verify=True)
 		if not isinstance(cmd, Exception):
 			result = self.exec_cmd(cmd, args, capture_output=True, 
