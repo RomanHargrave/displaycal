@@ -62,6 +62,8 @@ class LUT3DFrame(BaseFrame):
 			self.res.LoadFrame(self, parent, "lut3dframe")
 		self.init()
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
+		if sys.platform == "win32":
+			self.Bind(wx.EVT_SIZE, self.OnSize)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-3DLUT-maker"))
@@ -69,9 +71,14 @@ class LUT3DFrame(BaseFrame):
 		self.set_child_ctrls_as_attrs(self)
 
 		self.panel = self.FindWindowByName("panel")
+		self.panel.SetScrollRate(2, 2)
 
 		if setup:
 			self.setup()
+
+	def OnSize(self, event):
+		event.Skip()
+		self.Refresh()  # Prevents distorted drawing under Windows
 
 	def setup(self):
 		self.worker = worker.Worker(self)
