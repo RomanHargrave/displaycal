@@ -66,7 +66,7 @@ def format_chglog(chglog, format="appstream"):
 				chglog = chglog.replace(tag, "")
 				chglog = chglog.replace("</" + tagname + ">", "")
 		# Remove text "Linux" in item before colon (":")
-		chglog = re.sub(r"(<li>[^:<]*)\s+Linux([^:<]+|:\s*)", r"\1\2", chglog)
+		chglog = re.sub(r"(<li>[^:<]*)\s+Linux([^:<]*):", r"\1\2", chglog)
 		# Remove macOS and Windows specific items
 		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
 		if format.lower() == "appstream":
@@ -74,7 +74,7 @@ def format_chglog(chglog, format="appstream"):
 			# - <li> cannot end in '.'
 			chglog = re.sub(r"([^.])\.\s*</li>", r"\1</li>", chglog)
 			# - <li> maximum is 100 chars
-			chglog = re.sub(r"(<li>)([^<]{100,})(</li>)",
+			chglog = re.sub(r"(<li>)([^<]{100,})(<(?:ol|ul|/li)>)",
 							lambda matches: "%s%s%s" % (matches.group(1),
 														# appstream-util validate counts bytes, not characters
 														matches.group(2).encode("UTF-8")[:97].rstrip().decode("UTF-8", "ignore") +
@@ -84,28 +84,56 @@ def format_chglog(chglog, format="appstream"):
 		chglog = re.sub(r"^\s+(?m)", r"\t" * 4, chglog)  # Multi-line
 		chglog = re.sub(r"(<li)", r"\t\1", chglog)
 		chglog = re.sub(r"\s*\n\s*\n", "\n", chglog)
+		# Remove line breaks
+		chglog = re.sub(r"\s*\n+\s*", " ", chglog)
+		# Parse into ETree
+		from xml.etree import ElementTree as ET
+		tree = ET.fromstring("<root>%s</root>" % chglog.encode('UTF-8'))
 	else:
 		raise ValueError("Changelog format not supported: %r" % format)
 	if format.lower() == "rpm":
-		# Remove list tags
-		chglog = re.sub(r"\s*</?[ou]l(?:\s+[^>]*)?>\n?", r"", chglog)
-		# Remove all other tags and their contents (except list items)
-		chglog = re.sub(r"\s*<(?!/?li)[^>]*>.*?</[^>]+>\n?(?s)", r"", chglog)
-		# Remove line breaks
-		chglog = re.sub(r"\s*\n+\s*", " ", chglog)
-		# Turn each list item into 2nd level bullet point ("*"), indent
-		chglog = re.sub(r"\s*<li(?:\s+[^>]*)?>(.*?)</li>(?s)", r"  * \1\n", chglog)
-		# Turn HTML entities back into chars
-		chglog = strtr(chglog, {"&amp;": "&",
-								"&gt;": "<",
-								"&lt;": ">",
-								"&quot;": '"'})
+		chglog = u""
+		for lvl1 in tree:
+			if lvl1.tag in ("ol", "ul"):
+				for lvl2 in lvl1:
+					if lvl2.tag == "li":
+						chglog += u"  * %s\n" % lvl2.text.strip()
+						for lvl3 in lvl2:
+							if lvl3.tag in ("ol", "ul"):
+								for lvl4 in lvl3:
+									if lvl4.tag == "li":
+										chglog += u"    %s\n" % lvl4.text.strip()
 		# Wrap each line to 67 chars
 		chglog = chglog.splitlines()
 		for i, line in enumerate(chglog):
 			block = fill(line.rstrip(), 67, subsequent_indent='    ')
 			chglog[i] = block
 		chglog = "\n".join(chglog)
+	else:
+		# Nice formatting
+		chglog = u""
+		for lvl1 in tree:
+			if lvl1.tag in ("p", "ol", "ul"):
+				chglog += u"\t\t\t\t<%s>\n" % lvl1.tag
+				text = lvl1.text.strip()
+				if text:
+					chglog += u"\t\t\t\t\t%s\n" % text
+				for lvl2 in lvl1:
+					if lvl2.tag == "li":
+						chglog += u"\t\t\t\t\t<li>\n\t\t\t\t\t\t%s\n" % lvl2.text.strip()
+						for lvl3 in lvl2:
+							if lvl3.tag in ("p", "ol", "ul"):
+								chglog += u"\t\t\t\t\t\t<%s>\n" % lvl3.tag
+								text = lvl3.text.strip()
+								if text:
+									chglog += u"\t\t\t\t\t\t\t%s\n" % text
+								for lvl4 in lvl3:
+									if lvl4.tag == "li":
+										chglog += u"\t\t\t\t\t\t\t<li>%s</li>\n" % lvl4.text.strip()
+								chglog += u"\t\t\t\t\t\t</%s>\n" % lvl3.tag
+						chglog += u"\t\t\t\t\t</li>\n"
+				chglog += u"\t\t\t\t</%s>\n" % lvl1.tag
+		chglog = chglog.rstrip()
 	return chglog
 
 
