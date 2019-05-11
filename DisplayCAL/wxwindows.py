@@ -1957,19 +1957,16 @@ class BaseFrame(wx.Frame):
 								  filebrowse.FileBrowseButton,
 								  floatspin.FloatSpin)):
 				if (isinstance(child, wx.Choice) and
-					((wx.VERSION < (2, 9) and
-					  sys.platform not in ("darwin", "win32")) or
-					 "gtk3" in wx.PlatformInfo) and
+					sys.platform not in ("darwin", "win32") and
 					child.MinSize[1] == -1):
-					# wx.Choice with wxPython < 2.9 under Gnome 3 Adwaita theme
-					# has varying height. We can't easily check for Gnome 3 or
-					# Adwaita, so simply always set wx.Choice height to
-					# wx.ComboBox height with wxPython < 2.9 under Linux
-					if not hasattr(BaseFrame, "_comboboxheight"):
-						combobox = wx.ComboBox(self, -1)
-						BaseFrame._comboboxheight = combobox.Size[1]
-						combobox.Destroy()
-					child.MinSize = child.MinSize[0], BaseFrame._comboboxheight
+					# wx.Choice can have varying height based on GTK theme if
+					# no initial items. Simply always set min height to that
+					# of a wx.Choice with items.
+					if not hasattr(BaseFrame, "_choiceheight"):
+						choice = wx.Choice(self, choices=[u"|"])
+						BaseFrame._choiceheight = choice.Size[1]
+						choice.Destroy()
+					child.MinSize = child.MinSize[0], BaseFrame._choiceheight
 				elif isinstance(child, wx.BitmapButton):
 					if "gtk3" in wx.PlatformInfo:
 						# GTK3 doesn't respect NO_BORDER in hovered state when
