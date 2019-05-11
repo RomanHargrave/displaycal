@@ -1710,19 +1710,84 @@ def set_default_app_dpi():
 		else:
 			# Linux
 			from util_os import which
-			txt_scale = 1
-			if which("gsettings"):
+			factor = None
+			txt_scale = None
+			# XDG_CURRENT_DESKTOP delimiter is colon (':')
+			desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
+			if desktop and desktop[0] == "KDE":
+				# Two env-vars exist: QT_SCALE_FACTOR and
+				# QT_SCREEN_SCALE_FACTORS.
+				# According to documentation[1], the latter is
+				# 'mainly useful for debugging' - that's not how it is
+				# used by KDE though. Changing display scaling via KDE
+				# settings GUI only sets QT_SCREEN_SCALE_FACTORS.
+				# We are thus currently ignoring QT_SCALE_FACTOR.
+				# [1] https://doc.qt.io/qt-5/highdpi.html
+				# QT_SCREEN_SCALE_FACTORS delimiter is semicolon (';')
+				# Format: Mapping of XrandR display names to scale factor
+				# e.g. 'VGA-1=1.5;VGA-2=2.0;'
+				# or just list of scale factors
+				# e.g. '1.5;2.0;'
+				screen_scale_factors = os.getenv("QT_SCREEN_SCALE_FACTORS", "").split(";")
+				if screen_scale_factors:
+					match = False
+					app = wx.GetApp()
+					if app:
+						import RealDisplaySizeMM as RDSMM
+						if not RDSMM._displays:
+							RDSMM.enumerate_displays()
+						# Create temp frame (main frame does not yet exist)
+						tmp = wx.Frame(None)
+						# Move to main window location (and thus screen)
+						x, y = (getcfg("position.x", False),
+								getcfg("position.y", False))
+						if not None in (x, y):
+							tmp.SetSaneGeometry(x, y)
+						# Get wx display
+						wx_display = tmp.GetDisplay()
+						# No longer need our temp frame
+						tmp.Destroy()
+						# Search for matching display based on geometry
+						pos = wx_display.Geometry[:2]
+						size = wx_display.Geometry[2:]
+						for item in screen_scale_factors:
+							if not item:
+								break
+							if "=" in item:
+								name, factor = item.split("=", 1)
+							else:
+								name, factor = None, item
+							for display in RDSMM._displays:
+								if (display.get("pos") != pos or
+									display.get("size") != size):
+									# No match
+									continue
+								if (name and
+									display.get("xrandr_name") != name):
+									# No match
+									continue
+								# Match found
+								match = True
+								break
+							if match:
+								break
+					if not match:
+						# Use first one
+						factor = screen_scale_factors[0].split("=")[-1]
+			if factor is None and which("gsettings"):
 				import subprocess as sp
 				p = sp.Popen(["gsettings", "get", "org.gnome.desktop.interface",
 							  "text-scaling-factor"], stdin=sp.PIPE,
 							 stdout=sp.PIPE, stderr=sp.PIPE)
-				stdout, stderr = p.communicate()
-				if stdout:
-					try:
-						txt_scale = float(stdout)
-					except ValueError:
-						pass
-			dpi = int(round(get_default_dpi() * txt_scale))
+				factor, stderr = p.communicate()
+			if factor is not None:
+				try:
+					txt_scale = float(factor)
+				except ValueError:
+					pass
+			dpi = get_default_dpi()
+			if txt_scale is not None:
+				dpi = int(round(dpi * txt_scale))
 		defaults["app.dpi"] = dpi
 	dpiset = True
 
