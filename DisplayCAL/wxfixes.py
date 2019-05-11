@@ -1468,10 +1468,11 @@ class PlateButton(platebtn.PlateButton):
 
 		# Calc Object Positions
 		width, height = self.GetSize()
-		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
-		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
-		# TODO: Figure out why this is the case.
-		tw, th = self.GetTextExtent(self.Label)
+		# Note: Using self.GetTextExtent instead of gc.GetTextExtent seems
+		# to fix sporadic segfaults with wxPython Phoenix up to 4.0.0a2
+		# under Windows (fixed in 4.0.0a3), but self.GetTextExtent is NOT
+		# an equivalent replacement for gc.GetTextExtent.
+		tw, th = gc.GetTextExtent(self.Label)
 		txt_y = max((height - th) // 2 - 1, 1)
 
 		# The background needs some help to look transparent on

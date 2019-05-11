@@ -415,11 +415,11 @@ class GradientButton(wx.PyControl):
         font = gc.CreateFont(self.GetFont(), self.GetForegroundColour())
         gc.SetFont(font)
         label = self.GetLabel()
-		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
-		# seems to fix sporadic segfaults with wxPython Phoenix under Windows
-		# if the button is a child of a ProgressDialog.
-		# TODO: Figure out why this is the case.
-        tw, th = self.GetTextExtent(label)
+		# Note: Using self.GetTextExtent instead of gc.GetTextExtent seems
+		# to fix sporadic segfaults with wxPython Phoenix up to 4.0.0a2
+		# under Windows (fixed in 4.0.0a3), but self.GetTextExtent is NOT
+		# an equivalent replacement for gc.GetTextExtent.
+        tw, th = gc.GetTextExtent(label)
 
         if self._bitmap:
             bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()

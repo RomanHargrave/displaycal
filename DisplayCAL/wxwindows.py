@@ -3055,10 +3055,11 @@ class FlatShadedButton(GradientButton):
 		label = self.GetLabel()
 		if label and bitmap:
 			label = " " + label
-		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
-		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
-		# TODO: Figure out why this is the case.
-		tw, th = self.GetTextExtent(label)
+		# Note: Using self.GetTextExtent instead of gc.GetTextExtent seems
+		# to fix sporadic segfaults with wxPython Phoenix up to 4.0.0a2
+		# under Windows (fixed in 4.0.0a3), but self.GetTextExtent is NOT
+		# an equivalent replacement for gc.GetTextExtent.
+		tw, th = gc.GetTextExtent(label)
 
 		if bitmap:
 			bw, bh = bitmap.GetWidth(), bitmap.GetHeight()
@@ -3370,13 +3371,11 @@ class BorderGradientButton(GradientButton):
 		label = self.GetLabel()
 		if label and self._bitmap:
 			label = " " + label
-		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
-		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
-		# TODO: Figure out why this is the case.
-		if u"phoenix" in wx.PlatformInfo:
-			tw, th = self.GetTextExtent(label)
-		else:
-			tw, th = gc.GetTextExtent(label)
+		# Note: Using self.GetTextExtent instead of gc.GetTextExtent seems
+		# to fix sporadic segfaults with wxPython Phoenix up to 4.0.0a2
+		# under Windows (fixed in 4.0.0a3), but self.GetTextExtent is NOT
+		# an equivalent replacement for gc.GetTextExtent.
+		tw, th = gc.GetTextExtent(label)
 
 		if self._bitmap:
 			bw, bh = self._bitmap.GetWidth(), self._bitmap.GetHeight()
@@ -6238,10 +6237,11 @@ class TabButton(PlateButton):
 		# Calc Object Positions
 		width, height = self.GetSize()
 		height -= 16  # Tab hilite
-		# XXX: Using self.GetTextextent instead of gc.GetTextExtent
-		# seems to fix sporadic segfaults with wxPython Phoenix under Windows.
-		# TODO: Figure out why this is the case.
-		tw, th = self.GetTextExtent(self.Label)
+		# Note: Using self.GetTextExtent instead of gc.GetTextExtent seems
+		# to fix sporadic segfaults with wxPython Phoenix up to 4.0.0a2
+		# under Windows (fixed in 4.0.0a3), but self.GetTextExtent is NOT
+		# an equivalent replacement for gc.GetTextExtent.
+		tw, th = gc.GetTextExtent(self.Label)
 		txt_y = max((height - th) // 2, 1)
 		height += 16
 		height -= 16 * self.dpiscale  # Tab hilite
