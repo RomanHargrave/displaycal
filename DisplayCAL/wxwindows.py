@@ -2724,7 +2724,6 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 			# for GNOME top bar (assume item height for the latter).
 			if line_height * len(value) + 2 > max_height:
 				max_entries = int(max_height / line_height) - 2
-				print max_height, line_height, len(value), max_entries
 				safe_print("Discarding entries to work around wxGTK Wayland "
 						   "dropdown popup menu bug:",
 						   ", ".join(value[max_entries:]))
