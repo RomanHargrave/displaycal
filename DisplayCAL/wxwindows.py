@@ -6462,7 +6462,7 @@ class TooltipWindow(InvincibleFrame):
 				 style=(wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW |
 					    wx.FRAME_FLOAT_ON_PARENT) &
 					   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX), wrap=70,
-				 use_header=True, show=True):
+				 use_header=True, show=True, scrolled=False):
 		scale = getcfg("app.dpi") / get_default_dpi()
 		if scale > 1 and size == (400, -1):
 			size = size[0] * scale, size[1]
@@ -6472,7 +6472,11 @@ class TooltipWindow(InvincibleFrame):
 
 		margin = 12
 		
-		self.panel = wx.Panel(self, -1)
+		if scrolled:
+			self.panel = wx.ScrolledWindow(self)
+			self.panel.SetScrollRate(2, 2)
+		else:
+			self.panel = wx.Panel(self)
 		self.panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		self.sizer0 = wx.BoxSizer(wx.VERTICAL)
 		self.panel.SetSizer(self.sizer0)

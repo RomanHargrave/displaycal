@@ -12289,7 +12289,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				self, msg=lang.getstr(id_str), cols=1, 
 				title=lang.getstr("display.tech"), 
 				bitmap=geticon(32, "dialog-information"), wrap=wrap,
-				use_header=False, show=False)
+				use_header=False, show=False, scrolled=True)
 			w = self.display_tech_info_tooltip_window
 			w.sizer0.Add((0, 2))
 			# link1 = HyperLinkCtrl(w.panel, -1,
