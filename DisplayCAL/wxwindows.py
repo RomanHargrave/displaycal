@@ -4502,26 +4502,21 @@ class HStretchStaticBitmap(wx.StaticBitmap):
 			event.Skip()
 
 
-class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
+class HyperLinkCtrl(wx.StaticText):
 
-	def __init__(self, *args, **kwargs):
-		hyperlink.HyperLinkCtrl.__init__(self, *args, **kwargs)
+	def __init__(self, parent, id=-1, label='', pos=wx.Point(-1, -1),
+				 size=wx.Size(-1, -1), style=wx.HL_DEFAULT_STYLE,
+				 name='staticText', URL=''):
+		wx.StaticText.__init__(self, parent, id, label, pos, size, style, name)
 		bgcolor, text, linkcolor, vlinkcolor = get_html_colors()
-		self.SetColours(linkcolor, vlinkcolor, linkcolor)
-		self.DoPopup(False)
-		self.UpdateLink()
-		self.Bind(hyperlink.EVT_HYPERLINK_RIGHT, self.OnPopup)
-
-	def OnPopup(self, event):
-		""" Pops up a menu with 'Copy link address' """
-		menuPopUp = wx.Menu("", wx.MENU_TEAROFF)
-		menuPopUp.Append(hyperlink.wxHYPERLINKS_POPUP_COPY,
-						 lang.getstr("link.address.copy"))
-		self.Bind(wx.EVT_MENU, self.OnPopUpCopy,
-				  id=hyperlink.wxHYPERLINKS_POPUP_COPY)
-		self.PopupMenu(menuPopUp, event.GetPosition())
-		menuPopUp.Destroy()
-		self.Unbind(wx.EVT_MENU, id=hyperlink.wxHYPERLINKS_POPUP_COPY)
+		self.ForegroundColour = linkcolor
+		font = self.Font
+		font.SetUnderlined(True)
+		self.Font = font
+		self.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+		self.SetToolTipString(URL)
+		self._url = URL
+		self.Bind(wx.EVT_LEFT_UP, lambda e: launch_file(self._url))
 
 
 def fancytext_Renderer_getCurrentFont(self):
