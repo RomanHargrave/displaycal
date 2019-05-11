@@ -1371,6 +1371,8 @@ class PlateButton(platebtn.PlateButton):
 		if ("gtk2" in wx.PlatformInfo and
 			not isinstance(self.TopLevelParent, wx.Dialog)):
 			self.BackgroundColour = self.Parent.BackgroundColour
+		from config import get_default_dpi, getcfg
+		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
 
 	def DoGetBestSize(self):
 		"""Calculate the best size of the button
@@ -1439,7 +1441,7 @@ class PlateButton(platebtn.PlateButton):
 		else:
 			bmp = self._bmp['disable']
 
-		xpos = 4
+		xpos = 4 * self.dpiscale
 		if bmp is not None and bmp.IsOk():
 			bw, bh = bmp.GetSize()
 			ypos = (self.GetSize()[1] - bh) // 2
@@ -1484,6 +1486,8 @@ class PlateButton(platebtn.PlateButton):
 
 		gc.SetBrush(wx.TRANSPARENT_BRUSH)
 
+		space = 4 * self.dpiscale
+
 		# Our IsEnabled() override only deals with explit enabled/disabled
 		# state, while we also need to deal with interaction state
 		# (button enabled and interactable, eg. no modal dialog shown that
@@ -1503,7 +1507,7 @@ class PlateButton(platebtn.PlateButton):
 
 			self.__DrawHighlight(gc, width, height)
 			txt_x = self.__DrawBitmap(gc, interactable)
-			t_x = max((width - tw - (txt_x + 4)) // 2, txt_x + 4)
+			t_x = max((width - tw - (txt_x + space)) // 2, txt_x + space)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
@@ -1517,7 +1521,7 @@ class PlateButton(platebtn.PlateButton):
 		# Draw bitmap and text
 		if self._state['cur'] != platebtn.PLATE_PRESSED or not self.IsEnabled():
 			txt_x = self.__DrawBitmap(gc, interactable)
-			t_x = max((width - tw - (txt_x + 4)) // 2, txt_x + 4)
+			t_x = max((width - tw - (txt_x + space)) // 2, txt_x + space)
 			gc.DrawText(self.Label, t_x, txt_y)
 			self.__DrawDropArrow(gc, width - 10, (height // 2) - 2)
 
