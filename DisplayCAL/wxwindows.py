@@ -4731,53 +4731,7 @@ class BetterPyGauge(pygauge.PyGauge):
 			self._update_step.append((float(value[i]) - v)/(time/50))
 
 
-class BetterStaticFancyText(GenStaticBitmap):
-
-	"""
-	Based on wx.lib.fancytext functionality.
-	
-	Renders crisp on 'Retina' displays under OS X and in high DPI mode
-	under Linux/Windows.
-	
-	"""
-
-	_enabled = True
-	_textlabel = ""
-	maxlen = 119
-
-	def __init__(self, window, id, text, *args, **kargs):
-		args = list(args)
-		kargs.setdefault('name', 'staticFancyText')
-		# Ignore background, always use parent background
-		if 'background' in kargs:
-			kargs.pop('background')
-		elif args:
-			args.pop(0)
-		
-		bmp = wx.EmptyBitmap(1, 1)
-		GenStaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
-		self.Label = text
-
-	def Disable(self):
-		self.Enable(False)
-
-	def Enable(self, enable=True):
-		self._enabled = enable
-		if sys.platform != "win32":
-			return
-		if enable:
-			bmp = self._enabledbitmap
-		else:
-			bmp = self._enabledbitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
-		self.SetBitmap(bmp)
-
-	def IsEnabled(self):
-		return self._enabled
-
-	Enabled = property(IsEnabled, Enable)
-
-	def GetFont(self):
-		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+class BetterStaticFancyTextBase(object):
 
 	def GetLabel(self):
 		return self._textlabel
@@ -4791,25 +4745,6 @@ class BetterStaticFancyText(GenStaticBitmap):
 			self.SetLabel(label)
 		
 		return locals()
-    
-	def OnPaint(self, event):
-		if sys.platform != "win32":
-			# AutoBufferedPaintDCFactory is the magic needed for crisp text
-			# rendering in HiDPI mode under OS X and Linux
-			cls = wx.AutoBufferedPaintDCFactory
-		else:
-			cls = wx.BufferedPaintDC
-		dc = cls(self)
-		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour, wx.SOLID))
-		dc.SetBackgroundMode(wx.TRANSPARENT)
-		dc.Clear()
-		if sys.platform != "win32":
-			fancytext.RenderToDC(self._label, dc, 0, 0)
-		elif self._bitmap:
-			dc.DrawBitmap(self._bitmap, 0, 0, True)
-
-	def SetFont(self, font):
-		fancytext.Renderer._font = font
 
 	def SetLabel(self, label):
 		self._textlabel = label
@@ -4857,6 +4792,76 @@ class BetterStaticFancyText(GenStaticBitmap):
 					llen = 0
 			wrapped += c
 		self._label = wrapped
+
+class BetterStaticFancyText(BetterStaticFancyTextBase, GenStaticBitmap):
+
+	"""
+	Based on wx.lib.fancytext functionality.
+	
+	Renders crisp on 'Retina' displays under OS X and in high DPI mode
+	under Linux/Windows.
+	
+	"""
+
+	_enabled = True
+	_textlabel = ""
+	maxlen = 119
+
+	def __init__(self, window, id, text, *args, **kargs):
+		args = list(args)
+		kargs.setdefault('name', 'staticFancyText')
+		# Ignore background, always use parent background
+		if 'background' in kargs:
+			kargs.pop('background')
+		elif args:
+			args.pop(0)
+		
+		bmp = wx.EmptyBitmap(1, 1)
+		GenStaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
+		self.Label = text
+
+	def Disable(self):
+		self.Enable(False)
+
+	def Enable(self, enable=True):
+		self._enabled = enable
+		if sys.platform != "win32":
+			return
+		if enable:
+			bmp = self._enabledbitmap
+		else:
+			bmp = self._enabledbitmap.ConvertToImage().AdjustChannels(1, 1, 1, .5).ConvertToBitmap()
+		self.SetBitmap(bmp)
+
+	def IsEnabled(self):
+		return self._enabled
+
+	Enabled = property(IsEnabled, Enable)
+
+	def GetFont(self):
+		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
+    
+	def OnPaint(self, event):
+		if sys.platform != "win32":
+			# AutoBufferedPaintDCFactory is the magic needed for crisp text
+			# rendering in HiDPI mode under OS X and Linux
+			cls = wx.AutoBufferedPaintDCFactory
+		else:
+			cls = wx.BufferedPaintDC
+		dc = cls(self)
+		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour, wx.SOLID))
+		dc.SetBackgroundMode(wx.TRANSPARENT)
+		dc.Clear()
+		if sys.platform != "win32":
+			fancytext.RenderToDC(self._label, dc, 0, 0)
+		elif self._bitmap:
+			dc.DrawBitmap(self._bitmap, 0, 0, True)
+
+	def SetFont(self, font):
+		fancytext.Renderer._font = font
+
+	def SetLabel(self, label):
+		BetterStaticFancyTextBase.SetLabel(self, label)
 		background = wx.Brush(self.Parent.BackgroundColour, wx.SOLID)
 		try:
 			bmp = fancytext.RenderToBitmap(self._label, background)
@@ -4871,6 +4876,38 @@ class BetterStaticFancyText(GenStaticBitmap):
 		else:
 			self.Size = self.MinSize = bmp.Size
 			self.Refresh()
+
+
+# Better under GTK (no text cutoff)
+class BetterStaticFancyText_SetLabelMarkup(BetterStaticFancyTextBase,
+										   wx.Panel):
+
+	def __init__(self, parent, id, text, *args, **kwargs):
+		wx.Panel.__init__(self, parent, id, *args, **kwargs)
+		self.maxlen = 119
+		self._st = wx.StaticText(self, -1, u"")
+		self.Label = text
+
+	def SetLabel(self, label):
+		BetterStaticFancyTextBase.SetLabel(self, label)
+		if hasattr(self._st, "SetLabelMarkup"):
+			from HTMLParser import HTMLParser
+			label = self._label.replace("<font", "<span")
+			label = label.replace("</font>", "</span>")
+			parser = HTMLParser()
+			label = parser.unescape(label)
+			self._st.SetLabelMarkup(label)
+		else:
+			# Strip all tags
+			self._label = re.sub(r"<[^>]*?>", "", self._label)
+			self._label = label.replace("<", "").replace(">", "")
+			self._st.SetLabel(self._label)
+		self.Layout()
+
+
+if (wx.Platform == "__WXGTK__" and
+	hasattr(wx.StaticText, "SetLabelMarkup")):
+	BetterStaticFancyText = BetterStaticFancyText_SetLabelMarkup
 
 
 class InfoDialog(BaseInteractiveDialog):
