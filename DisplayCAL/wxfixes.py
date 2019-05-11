@@ -1356,6 +1356,8 @@ class PlateButton(platebtn.PlateButton):
 	_reallyenabled = True
 
 	def __init__(self, *args, **kwargs):
+		from config import get_default_dpi, getcfg
+		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
 		platebtn.PlateButton.__init__(self, *args, **kwargs)
 		self._bmp["hilite"] = None
 		if sys.platform == "darwin":
@@ -1371,8 +1373,6 @@ class PlateButton(platebtn.PlateButton):
 		if ("gtk2" in wx.PlatformInfo and
 			not isinstance(self.TopLevelParent, wx.Dialog)):
 			self.BackgroundColour = self.Parent.BackgroundColour
-		from config import get_default_dpi, getcfg
-		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
 
 	def DoGetBestSize(self):
 		"""Calculate the best size of the button
@@ -1380,9 +1380,9 @@ class PlateButton(platebtn.PlateButton):
 		:return: :class:`Size`
 
 		"""
-		# A liitle more padding left + right
-		width = 6
-		height = 6
+		# A little more padding left + right
+		width = 6 * self.dpiscale
+		height = 6 * self.dpiscale
 		if self.Label:
 			# NOTE: Should measure with a GraphicsContext to get right
 			#       size, but due to random segfaults on linux special
@@ -1393,16 +1393,16 @@ class PlateButton(platebtn.PlateButton):
 			
 		if self._bmp['enable'] is not None:
 			bsize = self._bmp['enable'].Size
-			width += (bsize[0] + 10)
+			width += (bsize[0] + 10 * self.dpiscale)
 			if height <= bsize[1]:
-				height = bsize[1] + 6
+				height = bsize[1] + 6 * self.dpiscale
 			else:
-				height += 3
+				height += 3 * self.dpiscale
 		else:
-			width += 10
+			width += 10 * self.dpiscale
 
 		if self._menu is not None or self._style & platebtn.PB_STYLE_DROPARROW:
-			width += 12
+			width += 12 * self.dpiscale
 
 		best = wx.Size(width, height)
 		self.CacheBestSize(best)
