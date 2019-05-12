@@ -12348,7 +12348,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					   lambda e: webbrowser_open("https://everymac.com/"))
 			w.sizer0.Add(link2, flag=wx.LEFT, border=12 + 32 + 7)
 			w.sizer0.Add((0, 12))
-			w.sizer0.SetSizeHints(w)
+			w.sizer0.SetSizeHints(w.panel)
+			w.Size = w.MinSize = w.MinSize[0] + 15, w.MinSize[1]
 			w.sizer0.Layout()
 		self.display_tech_info_tooltip_window.Show()
 		self.display_tech_info_tooltip_window.Raise()

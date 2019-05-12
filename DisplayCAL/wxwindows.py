@@ -6487,7 +6487,7 @@ class TooltipWindow(InvincibleFrame):
 		margin = 12
 		
 		if scrolled:
-			self.panel = wx.ScrolledWindow(self)
+			self.panel = wx.ScrolledWindow(self, style=wx.VSCROLL)
 			self.panel.SetScrollRate(2, 2)
 		else:
 			self.panel = wx.Panel(self)
