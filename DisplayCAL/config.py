@@ -1729,7 +1729,10 @@ def set_default_app_dpi():
 				# or just list of scale factors
 				# e.g. '1.5;2.0;'
 				screen_scale_factors = os.getenv("QT_SCREEN_SCALE_FACTORS", "").split(";")
-				if screen_scale_factors:
+				# XXX - not actually neded? Scales just fine without us doing
+				# any scaling ourself
+				NEVER = True
+				if not NEVER and screen_scale_factors:
 					match = False
 					app = wx.GetApp()
 					if app:
