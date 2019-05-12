@@ -15480,7 +15480,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					  wx.StaticText(self.aboutdialog, -1, u" %s © %s" %
 														  (version_title,
 														   author))])
-		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append([HyperLinkCtrl(self.aboutdialog, -1, label="ArgyllCMS", 
 									URL="https://www.argyllcms.com/"),
 					  wx.StaticText(self.aboutdialog, -1,
