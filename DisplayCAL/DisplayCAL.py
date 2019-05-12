@@ -574,30 +574,30 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 	dlg_list_ctrl = wx.ListCtrl(dlg, -1, size=(640 * scale, 150 * scale), style=wx.LC_REPORT | 
 																wx.LC_SINGLE_SEL,
 								name="colorimeter_corrections")
-	dlg_list_ctrl.InsertColumn(0, lang.getstr("type"))
-	dlg_list_ctrl.InsertColumn(1, lang.getstr("description"))
-	dlg_list_ctrl.InsertColumn(2, lang.getstr("display.manufacturer"))
-	dlg_list_ctrl.InsertColumn(3, lang.getstr("display"))
-	dlg_list_ctrl.InsertColumn(4, lang.getstr("instrument"))
-	dlg_list_ctrl.InsertColumn(5, lang.getstr("reference"))
-	dlg_list_ctrl.InsertColumn(6, lang.getstr("spectral_resolution"))
-	dlg_list_ctrl.InsertColumn(7, lang.getstr("observer"))
-	dlg_list_ctrl.InsertColumn(8, lang.getstr("method"))
-	dlg_list_ctrl.InsertColumn(9, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
-	dlg_list_ctrl.InsertColumn(10, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
-	dlg_list_ctrl.InsertColumn(11, lang.getstr("created"))
-	dlg_list_ctrl.SetColumnWidth(0, 50)
-	dlg_list_ctrl.SetColumnWidth(1, 350)
-	dlg_list_ctrl.SetColumnWidth(2, 150)
-	dlg_list_ctrl.SetColumnWidth(3, 100)
-	dlg_list_ctrl.SetColumnWidth(4, 75)
-	dlg_list_ctrl.SetColumnWidth(5, 75)
-	dlg_list_ctrl.SetColumnWidth(6, 125)
-	dlg_list_ctrl.SetColumnWidth(7, 75)
-	dlg_list_ctrl.SetColumnWidth(8, 75)
-	dlg_list_ctrl.SetColumnWidth(9, 100)
-	dlg_list_ctrl.SetColumnWidth(10, 100)
-	dlg_list_ctrl.SetColumnWidth(11, 150)
+	col = IncrementingInt()
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("type"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("description"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("display"))
+	# dlg_list_ctrl.InsertColumn(col, lang.getstr("instrument"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("reference"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("spectral_resolution"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("observer"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("method"))
+	dlg_list_ctrl.InsertColumn(col, u"ΔE*00 " + lang.getstr("profile.self_check.avg"))
+	dlg_list_ctrl.InsertColumn(col, u"ΔE*00 " + lang.getstr("profile.self_check.max"))
+	dlg_list_ctrl.InsertColumn(col, lang.getstr("created"))
+	col.i = 0
+	dlg_list_ctrl.SetColumnWidth(col, 75 * scale)  # Type
+	dlg_list_ctrl.SetColumnWidth(col, 415 * scale)  # Desc
+	dlg_list_ctrl.SetColumnWidth(col, 150 * scale)  # Display manufactuer & model
+	# dlg_list_ctrl.SetColumnWidth(col, 225 * scale)  # Instrument
+	dlg_list_ctrl.SetColumnWidth(col, 90 * scale)  # Ref. instrument
+	dlg_list_ctrl.SetColumnWidth(col, 150 * scale)  # Spectral res
+	dlg_list_ctrl.SetColumnWidth(col, 135 * scale)  # Observer
+	dlg_list_ctrl.SetColumnWidth(col, 135 * scale)  # CCMX fit method
+	dlg_list_ctrl.SetColumnWidth(col, 135 * scale)  # CCMX self check avg
+	dlg_list_ctrl.SetColumnWidth(col, 135 * scale)  # CCMX self check max
+	dlg_list_ctrl.SetColumnWidth(col, 150 * scale)  # Date
 	types = {"CCSS": lang.getstr("spectral").replace(":", ""),
 			 "CCMX": lang.getstr("matrix").replace(":", "")}
 	cgats = {}
@@ -614,22 +614,26 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 		ccxx = ccxx.get(0, ccxx)
 		index = dlg_list_ctrl.InsertStringItem(i, "")
 		ccxx_type = item.get("type", "").upper()
-		dlg_list_ctrl.SetStringItem(index, 0,
+		col.i = 0
+		dlg_list_ctrl.SetStringItem(index, col,
 									types.get(ccxx_type, ccxx_type))
-		dlg_list_ctrl.SetStringItem(index, 1,
+		dlg_list_ctrl.SetStringItem(index, col,
 									get_canonical_instrument_name(item.get("description") or
 																  lang.getstr("unknown")))
-		dlg_list_ctrl.SetStringItem(index, 2,
-									colord.quirk_manufacturer(item.get("manufacturer") or
-															  lang.getstr("unknown")))
-		dlg_list_ctrl.SetStringItem(index, 3, item.get("display") or
-											  lang.getstr("unknown"))
-		dlg_list_ctrl.SetStringItem(index, 4,
-									get_canonical_instrument_name(item.get("instrument") or
-																  lang.getstr("unknown")
-																  if ccxx_type == "CCMX"
-																  else u"i1 DisplayPro, ColorMunki Display, Spyder4/5"))
-		dlg_list_ctrl.SetStringItem(index, 5,
+		manufacturer = colord.quirk_manufacturer(item.get("manufacturer") or
+												 lang.getstr("unknown"))
+		display = item.get("display") or lang.getstr("unknown")
+		if config.is_virtual_display(display):
+			display = manufacturer
+		if not display.lower().startswith(manufacturer.lower()):
+			display = "%s %s" % (manufacturer, display)
+		dlg_list_ctrl.SetStringItem(index, col, display)
+		# dlg_list_ctrl.SetStringItem(index, col,
+									# get_canonical_instrument_name(item.get("instrument") or
+																  # lang.getstr("unknown")
+																  # if ccxx_type == "CCMX"
+																  # else u"i1 DisplayPro, ColorMunki Display, Spyder4/5"))
+		dlg_list_ctrl.SetStringItem(index, col,
 									get_canonical_instrument_name(item.get("reference") or
 																  lang.getstr("unknown")))
 		spectral = {}
@@ -649,7 +653,7 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 												 spectral["end_nm"])
 		else:
 			spectral_res = lang.getstr("unknown")
-		dlg_list_ctrl.SetStringItem(index, 6, spectral_res)
+		dlg_list_ctrl.SetStringItem(index, col, spectral_res)
 		created = item.get("created")
 		if created:
 			try:
@@ -679,28 +683,28 @@ def colorimeter_correction_web_check_choose(resp, parent=None):
 						pass
 			if isinstance(created, struct_time):
 				created = strftime("%Y-%m-%d %H:%M:%S", created)
-		dlg_list_ctrl.SetStringItem(index, 7,
+		dlg_list_ctrl.SetStringItem(index, col,
 									parent.observers_ab.get(ccxx.queryv1("REFERENCE_OBSERVER"),
 															lang.getstr("unknown" if ccxx_type == "CCMX"
 																		else "not_applicable")))
 		fit_method = ccxx.queryv1("FIT_METHOD")
 		if fit_method and fit_method != "xy":
 			fit_method = lang.getstr("perceptual")
-		dlg_list_ctrl.SetStringItem(index, 8,
+		dlg_list_ctrl.SetStringItem(index, col,
 									fit_method or lang.getstr("unknown")
 									if ccxx_type == "CCMX"
 									else lang.getstr("not_applicable"))
-		dlg_list_ctrl.SetStringItem(index, 9,
+		dlg_list_ctrl.SetStringItem(index, col,
 									safe_unicode(ccxx.queryv1("FIT_AVG_DE00") or
 												 lang.getstr("unknown"), "UTF-8")
 									if ccxx_type == "CCMX"
 									else lang.getstr("not_applicable"))
-		dlg_list_ctrl.SetStringItem(index, 10,
+		dlg_list_ctrl.SetStringItem(index, col,
 									safe_unicode(ccxx.queryv1("FIT_MAX_DE00") or
 												 lang.getstr("unknown"), "UTF-8")
 									if ccxx_type == "CCMX"
 									else lang.getstr("not_applicable"))
-		dlg_list_ctrl.SetStringItem(index, 11, created or
+		dlg_list_ctrl.SetStringItem(index, col, created or
 											   lang.getstr("unknown"))
 	def show_ccxx_info(event):
 		index = dlg_list_ctrl.GetNextItem(-1, wx.LIST_NEXT_ALL, 
@@ -929,6 +933,22 @@ def webbrowser_open(url, new=False):
 class Dummy(object):
 	""" Useful if we need an object to attach arbitrary attributes."""
 	pass
+
+
+class IncrementingInt(object):
+
+	""" A integer that increments by `step` each time it is used """
+
+	def __init__(self, start=0, stop=None, step=1):
+		self.i = start
+		self.stop = stop
+		self.step = step
+
+	def __int__(self):
+		i = self.i
+		if self.stop is None or self.i < self.stop:
+			self.i += self.step
+		return i
 
 
 class ExtraArgsFrame(BaseFrame):
