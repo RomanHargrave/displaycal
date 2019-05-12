@@ -2,6 +2,8 @@
 
 from __future__ import with_statement
 from datetime import datetime
+from HTMLParser import HTMLParser
+htmlparser = HTMLParser()
 from time import gmtime, sleep, strftime, time
 import errno
 import math
@@ -4728,12 +4730,12 @@ class BetterPyGauge(pygauge.PyGauge):
 class BetterStaticFancyTextBase(object):
 
 	def GetLabel(self):
-		return self._textlabel
+		return self._rawlabel
 
 	@Property
 	def Label():
 		def fget(self):
-			return self._textlabel
+			return self._rawlabel
 		
 		def fset(self, label):
 			self.SetLabel(label)
@@ -4741,7 +4743,7 @@ class BetterStaticFancyTextBase(object):
 		return locals()
 
 	def SetLabel(self, label):
-		self._textlabel = label
+		self._rawlabel = label
 		# Wrap ignoring tags, only break in whitespace
 		wrapped = ""
 		llen = 0
@@ -4798,7 +4800,7 @@ class BetterStaticFancyText(BetterStaticFancyTextBase, GenStaticBitmap):
 	"""
 
 	_enabled = True
-	_textlabel = ""
+	_rawlabel = ""
 	maxlen = 119
 
 	def __init__(self, window, id, text, *args, **kargs):
@@ -4884,18 +4886,30 @@ class BetterStaticFancyText_SetLabelMarkup(BetterStaticFancyTextBase,
 
 	def SetLabel(self, label):
 		BetterStaticFancyTextBase.SetLabel(self, label)
+		# Strip all tags and decode entities for text version
+		txtlabel = re.sub(r"<[^>]*?>", "", self._label)
+		txtlabel = txtlabel.replace("<", "").replace(">", "")
+		txtlabel = htmlparser.unescape(txtlabel)
 		if hasattr(self._st, "SetLabelMarkup"):
-			from HTMLParser import HTMLParser
-			label = self._label.replace("<font", "<span")
-			label = label.replace("</font>", "</span>")
-			parser = HTMLParser()
-			label = parser.unescape(label)
-			self._st.SetLabelMarkup(label)
+			# Use markup version
+			markup = label.replace("<font", "<span")
+			markup = markup.replace("</font>", "</span>")
+			# Decode entities
+			markup = htmlparser.unescape(markup)
+			self._st.SetLabelMarkup(markup)
 		else:
-			# Strip all tags
-			self._label = re.sub(r"<[^>]*?>", "", self._label)
-			self._label = label.replace("<", "").replace(">", "")
-			self._st.SetLabel(self._label)
+			# Use text version
+			self._st.Label = txtlabel
+		# Use text version to figure out min size based on line length
+		minw = 0
+		minh = 0
+		for line in txtlabel.splitlines():
+			te = self.GetTextExtent(line)
+			minw = max(te[0], minw)
+			minh += te[1]
+		self._st.MaxSize = (-1, -1)
+		self._st.Size = self._st.MinSize = minw, minh
+		self._st.MaxSize = minw, -1
 		self.Layout()
 
 
