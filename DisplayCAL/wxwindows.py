@@ -155,7 +155,13 @@ class AboutDialog(wx.Dialog):
 		self.sizer.Layout()
 
 	def add_items(self, items):
-		self.ok = ThemedGenButton(self, -1, lang.getstr("ok"))
+		if sys.platform == "win32":
+			# wx.Button doesn't take into account actual parent background
+			# color under Windows
+			btncls = ThemedGenButton
+		else:
+			btncls = wx.Button
+		self.ok = btncls(self, -1, lang.getstr("close"))
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.ok.GetId())
 		items.extend([self.ok, (1, 16)])
 		for item in items:
