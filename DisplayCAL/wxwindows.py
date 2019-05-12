@@ -137,8 +137,10 @@ class AboutDialog(wx.Dialog):
 		# Windows (other platforms?)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
+		self.panel = wx.ScrolledWindow(self, style=wx.VSCROLL)
+
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self.sizer)
+		self.panel.SetSizer(self.sizer)
 
 		if "gtk3" in wx.PlatformInfo:
 			# Fix background color not working for panels under GTK3
@@ -152,6 +154,7 @@ class AboutDialog(wx.Dialog):
 
 	def Layout(self):
 		self.sizer.SetSizeHints(self)
+		self.panel.SetScrollRate(2, 2)
 		self.sizer.Layout()
 
 	def add_items(self, items):
@@ -161,7 +164,7 @@ class AboutDialog(wx.Dialog):
 			btncls = ThemedGenButton
 		else:
 			btncls = wx.Button
-		self.ok = btncls(self, -1, lang.getstr("close"))
+		self.ok = btncls(self.panel, -1, lang.getstr("close"))
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.ok.GetId())
 		items.extend([self.ok, (1, 16)])
 		for item in items:

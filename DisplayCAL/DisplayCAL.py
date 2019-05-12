@@ -15468,18 +15468,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.aboutdialog.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		items = []
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
-		items.append(wx_Panel(self.aboutdialog, -1,
+		items.append(wx_Panel(self.aboutdialog.panel, -1,
 							  size=(-1, int(round(6 * scale)))))
 		items[-1].BackgroundColour = "#66CC00"
-		items.append(get_header(self.aboutdialog, getbitmap("theme/header", False),
+		items.append(get_header(self.aboutdialog.panel, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
 								size=(320, 120), repeat_sub_bitmap_h=(220, 0, 2, 184)))
 		bmp = getbitmap("theme/gradient", False)
 		if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
-			separator = BitmapBackgroundPanel(self.aboutdialog, size=(-1, 1))
+			separator = BitmapBackgroundPanel(self.aboutdialog.panel, size=(-1, 1))
 			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
 			items.append(separator)
-			shadow = BitmapBackgroundPanel(self.aboutdialog, size=(-1, 15))
+			shadow = BitmapBackgroundPanel(self.aboutdialog.panel, size=(-1, 15))
 			bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
 			image = bmp.ConvertToImage()
 			databuffer = image.GetDataBuffer()
@@ -15496,19 +15496,19 @@ class MainFrame(ReportFrame, BaseFrame):
 		version_title = version_short
 		if VERSION > VERSION_BASE:
 			version_title += " Beta"
-		items.append([HyperLinkCtrl(self.aboutdialog, -1, label=appname, 
+		items.append([HyperLinkCtrl(self.aboutdialog.panel, -1, label=appname, 
 									URL="https://%s/" % domain),
-					  wx.StaticText(self.aboutdialog, -1, u" %s © %s" %
+					  wx.StaticText(self.aboutdialog.panel, -1, u" %s © %s" %
 														  (version_title,
 														   author))])
-		items.append([HyperLinkCtrl(self.aboutdialog, -1, label="ArgyllCMS", 
+		items.append([HyperLinkCtrl(self.aboutdialog.panel, -1, label="ArgyllCMS", 
 									URL="https://www.argyllcms.com/"),
-					  wx.StaticText(self.aboutdialog, -1,
+					  wx.StaticText(self.aboutdialog.panel, -1,
 									u" %s © Graeme Gill" %
 									re.sub(r"(?:\.0)+$", ".0",
 										   self.worker.argyll_version_string))])
-		items.append(wx.StaticText(self.aboutdialog, -1, ""))
-		items.append(wx.StaticText(self.aboutdialog, -1, 
+		items.append(wx.StaticText(self.aboutdialog.panel, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog.panel, -1, 
 								   u"%s:" % lang.getstr("translations")))
 		lauthors = {}
 		for lcode in lang.ldict:
@@ -15521,44 +15521,44 @@ class MainFrame(ReportFrame, BaseFrame):
 		lauthors = [(lauthors[lauthor], lauthor) for lauthor in lauthors]
 		lauthors.sort()
 		for langs, lauthor in lauthors:
-			items.append(wx.StaticText(self.aboutdialog, -1, 
+			items.append(wx.StaticText(self.aboutdialog.panel, -1, 
 									   "%s - %s" % (", ".join(langs), lauthor)))
-		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog.panel, -1, ""))
 
 		# Apricity OS icons
-		items.append([HyperLinkCtrl(self.aboutdialog, -1, label="Apricity Icons", 
+		items.append([HyperLinkCtrl(self.aboutdialog.panel, -1, label="Apricity Icons", 
 									URL="https://github.com/Apricity-OS/apricity-icons"),
-					  wx.StaticText(self.aboutdialog, -1, u" © Apricity OS Team")])
+					  wx.StaticText(self.aboutdialog.panel, -1, u" © Apricity OS Team")])
 
 		# Suru icons
-		items.append([HyperLinkCtrl(self.aboutdialog, -1, label="Suru Icons", 
+		items.append([HyperLinkCtrl(self.aboutdialog.panel, -1, label="Suru Icons", 
 									URL="https://github.com/snwh/suru-icon-theme"),
-					  wx.StaticText(self.aboutdialog, -1, u" © Sam Hewitt")])
+					  wx.StaticText(self.aboutdialog.panel, -1, u" © Sam Hewitt")])
 
 		# Gnome icons
-		items.append([wx.StaticText(self.aboutdialog, -1, u"Some icons © "),
-					  HyperLinkCtrl(self.aboutdialog, -1, label="GNOME Project", 
+		items.append([wx.StaticText(self.aboutdialog.panel, -1, u"Some icons © "),
+					  HyperLinkCtrl(self.aboutdialog.panel, -1, label="GNOME Project", 
 									URL="https://www.gnome.org/")])
 
-		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog.panel, -1, ""))
 
 		match = re.match("([^(]+)\s*(\([^(]+\))?\s*(\[[^[]+\])?", sys.version)
 		if match:
 			pyver_long = match.groups()
 		else:
 			pyver_long = [sys.version]
-		items.append([HyperLinkCtrl(self.aboutdialog, -1, label="Python", 
+		items.append([HyperLinkCtrl(self.aboutdialog.panel, -1, label="Python", 
 									URL="https://www.python.org/"),
-					  wx.StaticText(self.aboutdialog, -1, 
+					  wx.StaticText(self.aboutdialog.panel, -1, 
 								    " " + pyver_long[0].strip())])
-		items.append([HyperLinkCtrl(self.aboutdialog, -1, label="wxPython", 
+		items.append([HyperLinkCtrl(self.aboutdialog.panel, -1, label="wxPython", 
 									URL="https://www.wxpython.org/"),
-					  wx.StaticText(self.aboutdialog, -1, " " + wx.version())])
-		items.append(wx.StaticText(self.aboutdialog, -1,
+					  wx.StaticText(self.aboutdialog.panel, -1, " " + wx.version())])
+		items.append(wx.StaticText(self.aboutdialog.panel, -1,
 								   lang.getstr("audio.lib",
 											   "%s %s" % (audio._lib, 
 														  audio._lib_version))))
-		items.append(wx.StaticText(self.aboutdialog, -1, ""))
+		items.append(wx.StaticText(self.aboutdialog.panel, -1, ""))
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.Layout()
 		self.aboutdialog.Center()
