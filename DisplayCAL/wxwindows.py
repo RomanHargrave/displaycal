@@ -4904,7 +4904,7 @@ class BetterStaticFancyText_SetLabelMarkup(BetterStaticFancyTextBase,
 		minw = 0
 		minh = 0
 		for line in txtlabel.splitlines():
-			te = self.GetTextExtent(line)
+			te = self.GetTextExtent("X" + line)
 			minw = max(te[0], minw)
 			minh += te[1]
 		self._st.MaxSize = (-1, -1)
