@@ -1456,8 +1456,8 @@
   
   <font weight='bold'>提示:</font> 如要建立自我檢查執告而不是測量報告的話，可在你的鍵盤上按著 ALT 鍵。
 "info.profile_settings": |-
-  <font weight='bold'>分析</font>是為顯示螢幕<font weight='bold'>特徵化</font>的程序，過程中會將它的色彩響應記錄在<font weight='bold'> ICC 裝置描述檔</font>中。 支援 ICC 色彩管理的應用
-  程式可以用 ICC 裝置描述檔來進行完整的<font weight='bold'>顯示螢幕色彩修正</font>, 及/或用它來建立<font weight='bold'> 3D 查找表</font> (簡稱 LUT ，英文全寫為
+  <font weight='bold'>分析</font>是為顯示螢幕<font weight='bold'>特徵化</font>的程序，過程中會將它的色彩響應記錄在 <font weight='bold'>ICC 裝置描述檔</font>中。 支援 ICC 色彩管理的應用
+  程式可以用 ICC 裝置描述檔來進行完整的<font weight='bold'>顯示螢幕色彩修正</font>, 及/或用它來建立 <font weight='bold'>3D 查找表</font> (簡稱 LUT ，英文全寫為
   Look Up Table)，在支援 3D 查找表的應用程式下其作用與前者完全相同。
   
   所測量的色塊的數目會影響所得的分析檔可提供的精確度。如要得出合理品質的 3x3 矩陣及基於曲線的分析檔，如

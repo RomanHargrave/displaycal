@@ -1389,7 +1389,7 @@
 "info.3dlut_settings": |-
   <font weight='bold'>3D LUT</font> (LUT = 查找表) 或ICC设备链接配置文件由支持 3D LUT 或ICC设备链接功能的应用程序用于完整的<font weight='bold'>显示色彩校正</font>。
   
-  <font weight='bold'>从现有配置文件中创建多个（附加的）3D LUTs </font>
+  <font weight='bold'>从现有配置文件中创建多个（附加的）3D LUTs</font>
   在“设置”中选择所需的配置文件，取消选中“配置后创建 3D LUT”复选框。
   
   <font weight='bold'>选择正确的源色彩空间和色调响应曲线</font>
@@ -1409,10 +1409,10 @@
   否则选择“绝对色度与白点缩放”（如果源色彩空间白点在显示色域之外，白点缩放将防止在绝对色度模式下可能发生的的剪切）。
   还可以选择使用非色度渲染意图，该意图可能压缩或扩展源色彩空间以适应显示色域（不建议用于色度精确性需求）。
 "info.calibration_settings": |-
-  <font weight='bold'>校准</font>是由<font weight='bold'>交互式显示调整</font>完成所选白点或光亮度并可选地创建<font weight='bold'> 1D LUT 校正曲线 </font> (LUT = 查找表)
+  <font weight='bold'>校准</font>是由<font weight='bold'>交互式显示调整</font>完成所选白点或光亮度并可选地创建 <font weight='bold'>1D LUT 校正曲线</font> (LUT = 查找表)
   以满足选择的色调响应曲线并确保灰度平衡。
   注意如果在校准过程中只想调整显示器并跳过生成 1D LUT 曲线，需要将色调曲线设置为“已测量”。
-  1D LUT 校准<font weight='bold'>不</font>适用于完整的显示色彩校正，需要创建<font weight='bold'>ICC设备配置文件</font> 或 <font weight='bold'>3D LUT </font>并将其用于支持的应用程序。
+  1D LUT 校准<font weight='bold'>不</font>适用于完整的显示色彩校正，需要创建<font weight='bold'>ICC设备配置文件</font> 或 <font weight='bold'>3D LUT</font> 并将其用于支持的应用程序。
   1D LUT 校准补充配置描述和 3D LUT 校准。
 "info.display_instrument": |-
   <font weight='bold'>禁用显示器所有的动态画面设置</font> (如果适用)。 包括动态对比度，调光，自动亮度和类似功能。
@@ -1452,7 +1452,7 @@
   
   当验证 3D LUT 时，请确认使用创建 3D LUT 时的相同设置。
   
-  <font weight='bold'>提示: </font>要创建自检报告代替测量报告，按住键盘的 ALT 键。
+  <font weight='bold'>提示:</font> 要创建自检报告代替测量报告，按住键盘的 ALT 键。
 "info.profile_settings": |-
   <font weight='bold'>配置</font>是将显示器作<font weight='bold'>特性描述</font>并记录其响应于<font weight='bold'>ICC设备配置文件</font>的构建流程。
   ICC设备配置文件能被支持ICC色彩管理的应用程序用于完整的<font weight='bold'>显示色彩校正</font>，
