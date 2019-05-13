@@ -183,7 +183,7 @@ class AboutDialog(wx.Dialog):
 
 	def add_item(self, item, sizer):
 		if isinstance(item, (HyperLinkCtrl, ThemedGenButton)):
-			item.BackgroundColour = self.BackgroundColour
+			item.BackgroundColour = self.panel.BackgroundColour
 		if isinstance(item, wx.Window):
 			pointsize = 10
 			font = item.GetFont()

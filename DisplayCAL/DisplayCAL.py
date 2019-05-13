@@ -15470,7 +15470,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.aboutdialog = AboutDialog(self, -1, 
 									   lang.getstr("menu.about"), 
 									   size=(100, 100))
-		self.aboutdialog.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+		self.aboutdialog.panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 		items = []
 		scale = max(getcfg("app.dpi") / config.get_default_dpi(), 1)
 		items.append(wx_Panel(self.aboutdialog.panel, -1,
@@ -15493,7 +15493,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					databuffer[i] = chr(int(min(round(ord(byte) *
 													  (255.0 / 223.0)), 255)))
 			bmp = image.ConvertToBitmap()
-			shadow.BackgroundColour = self.aboutdialog.BackgroundColour
+			shadow.BackgroundColour = self.aboutdialog.panel.BackgroundColour
 			shadow.SetBitmap(bmp)
 			shadow.blend = True
 			items.append(shadow)
