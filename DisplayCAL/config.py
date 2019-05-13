@@ -1702,10 +1702,10 @@ def set_default_app_dpi():
 	global dpiset
 	if not dpiset and not getcfg("app.dpi", False):
 		# HighDPI support
+		from wxaddons import wx
 		dpiset = True
 		if sys.platform in ("darwin", "win32"):
 			# Determine screen DPI
-			from wxaddons import wx
 			dpi = wx.ScreenDC().GetPPI()[0]
 		else:
 			# Linux
@@ -1713,7 +1713,9 @@ def set_default_app_dpi():
 			txt_scale = None
 			# XDG_CURRENT_DESKTOP delimiter is colon (':')
 			desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
-			if desktop and desktop[0] == "KDE":
+			if "gtk2" in wx.PlatformInfo:
+				txt_scale = get_hidpi_scaling_factor()
+			elif desktop and desktop[0] == "KDE":
 				pass
 				# Nothing to do
 			elif which("gsettings"):
