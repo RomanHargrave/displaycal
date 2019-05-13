@@ -213,6 +213,10 @@ class AnimatedBitmap(wx.PyControl):
 		-1 means last frame.
 		
 		"""
+		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
+		if self.dpiscale > 1:
+			size = tuple(int(round(v * self.dpiscale)) if v != -1 else v
+						 for v in size)
 		wx.PyControl.__init__(self, parent, id, pos, size, style)
 		self._minsize = size
 		self.SetBitmaps(bitmaps or [], range, loop)
@@ -237,6 +241,8 @@ class AnimatedBitmap(wx.PyControl):
 		if self._bitmaps:
 			if self.frame > len(self._bitmaps) - 1:
 				self.frame = len(self._bitmaps) - 1
+			if self.dpiscale > 1:
+				dc.SetUserScale(self.dpiscale, self.dpiscale)
 			dc.DrawBitmap(self._bitmaps[self.frame], 0, 0, True)
 
 	def OnTimer(self, event):
@@ -4581,13 +4587,14 @@ fancytext.RenderToRenderer = fancytext_RenderToRenderer
 
 class BetterPyGauge(pygauge.PyGauge):
 
-	def __init__(self, *args, **kwargs):
-		if "pd" in kwargs:
-			self.pd = kwargs["pd"]
-			del kwargs["pd"]
-		else:
-			self.pd = None
-		pygauge.PyGauge.__init__(self, *args, **kwargs)
+	def __init__(self, parent, id=wx.ID_ANY, range=100, pos=wx.DefaultPosition,
+                 size=(-1,30), style=0, pd=None):
+		self.pd = pd
+		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
+		if self.dpiscale > 1:
+			size = tuple(int(round(v * self.dpiscale)) if v != -1 else v
+						 for v in size)
+		pygauge.PyGauge.__init__(self, parent, id, range, pos, size, style)
 		self._indeterminate = False
 		self.gradientindex = 0
 		self._gradients = []
@@ -4621,12 +4628,14 @@ class BetterPyGauge(pygauge.PyGauge):
 		else:
 			gc.SetPen(wx.Pen(self.BackgroundColour))
 		gc.SetBrush(wx.Brush(self.BackgroundColour))
-		gc.DrawRoundedRectangle(rect.X, rect.Y, rect.Width - 1,
-								rect.Height - 1, (rect.Height - 1) / 2)
+		gc.DrawRoundedRectangle(rect.X, rect.Y, rect.Width - 1 * self.dpiscale,
+								rect.Height - 1 * self.dpiscale,
+								(rect.Height - 1 * self.dpiscale) / 2)
 
 		pad = self.GetBorderPadding()
 		if self._border_colour:
 			pad += 1
+		pad *= self.dpiscale
 		if pad:
 			rect.Deflate(pad, pad)
 
