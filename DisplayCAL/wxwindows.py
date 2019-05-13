@@ -4904,27 +4904,44 @@ class BetterStaticFancyText_SetLabelMarkup(BetterStaticFancyTextBase,
 
 	def SetLabel(self, label):
 		BetterStaticFancyTextBase.SetLabel(self, label)
-		# Strip all tags and decode entities for text version
-		txtlabel = re.sub(r"<[^>]*?>", "", self._label)
-		txtlabel = txtlabel.replace("<", "").replace(">", "")
-		txtlabel = htmlparser.unescape(txtlabel)
-		if hasattr(self._st, "SetLabelMarkup"):
-			# Use markup version
-			markup = label.replace("<font", "<span")
-			markup = markup.replace("</font>", "</span>")
-			# Decode entities
-			markup = htmlparser.unescape(markup)
-			self._st.SetLabelMarkup(markup)
-		else:
-			# Use text version
-			self._st.Label = txtlabel
-		# Use text version to figure out min size based on line length
+		markup = label.replace("<font", "<span")
+		markup = markup.replace("</font>", "</span>")
+		# Decode entities
+		markup = htmlparser.unescape(markup)
+		self._st.SetLabelMarkup(markup)
+		# Figure out min size
 		minw = 0
 		minh = 0
-		for line in txtlabel.splitlines():
-			te = self.GetTextExtent("X" + line)
-			minw = max(te[0], minw)
-			minh += te[1]
+		normal_font = self.Font
+		bold_font = self.Font
+		bold_font.Weight = wx.FONTWEIGHT_BOLD
+		xh = self.GetTextExtent("X")[1]
+		for i, line in enumerate(self._label.splitlines()):
+			if line:
+				# Account for bold text which is approximately 14% wider
+				parts = re.findall("(<font weight='bold'>([^<]+)</font>|[^<]+)",
+								   line)
+				w, h = 0, 0
+				for markup, bold in parts:
+					if bold:
+						text = bold
+						font = bold_font
+					else:
+						text = markup
+						font = normal_font
+					# Strip all remaining tags
+					text = re.sub(r"<[^>]*?>", "", text)
+					text = text.replace("<", "").replace(">", "")
+					# Decode entities
+					text = htmlparser.unescape(text)
+					te = self.GetFullTextExtent(text, font)[:2]
+					w += te[0]
+					h = max(te[1], h)
+				minw = max(w, minw)
+			else:
+				# Deal with empty lines having text extent of (0, 0)
+				h = xh
+			minh += h
 		self._st.MaxSize = (-1, -1)
 		self._st.Size = self._st.MinSize = minw, minh
 		self._st.MaxSize = minw, -1
