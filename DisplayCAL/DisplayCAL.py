@@ -15829,13 +15829,13 @@ class StartupFrame(start_cls):
 			else:
 				# Wayland
 				is_mavericks = False
-				if os.getenv("XDG_CURRENT_DESKTOP") == "KDE":
-					# Technically, XDG_CURRENT_DESKTOP can be a colon-separated
-					# list of items, but we're only really interested if set
-					# to KDE specifically
+				if os.getenv("XDG_CURRENT_DESKTOP", "").split(":")[0] == "KDE":
 					extra_args.extend(["--fullscreen", "--background",
 									   "--nonotify", "--output"])
-					screencap = which("spectacle")
+					# XXX: Even though the documentation suggests otherwise,
+					# spectacle's --background mode still prompts for user
+					# interaction to actually take the screenshot...
+					screencap = None  # which("spectacle")
 				else:
 					extra_args.append("-f")
 					screencap = which("gnome-screenshot")
