@@ -6558,6 +6558,8 @@ class TooltipWindow(InvincibleFrame):
 			else:
 				cls = wx.StaticText
 			col = cls(self.panel, -1, "")
+			if isinstance(col, wx.Panel):
+				col.BackgroundColour = self.panel.BackgroundColour
 			if u"<" in label and wrap:
 				col.maxlen = wrap
 			col.SetMaxFontSize()
