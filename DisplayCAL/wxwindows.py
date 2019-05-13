@@ -4534,6 +4534,7 @@ class HyperLinkCtrl(wx.StaticText):
 		self.SetToolTipString(URL)
 		self._url = URL
 		self.Bind(wx.EVT_LEFT_UP, lambda e: launch_file(self._url))
+		self.Size = self.MinSize = self.GetTextExtent(self.Label)
 
 
 def fancytext_Renderer_getCurrentFont(self):
