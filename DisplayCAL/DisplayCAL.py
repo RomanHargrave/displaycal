@@ -1682,6 +1682,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						   "mr_settings_info_panel"]:
 			panel = self.FindWindowByName(panel_name)
 			panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+			for child in panel.Children:
+				if isinstance(child, wx.Panel):
+					child.BackgroundColour = panel.BackgroundColour
 			setattr(self, panel_name, panel)
 
 		# Show display type help
