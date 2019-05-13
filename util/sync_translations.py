@@ -4,6 +4,7 @@
 import StringIO
 import codecs
 import os
+import re
 import sys
 import textwrap
 
@@ -48,6 +49,7 @@ def langmerge(infilename1, infilename2, outfilename):
 			#same.append(key.encode("UTF-8"))
 			#safe_print("Same: '%s' '%s'" % (key, value))
 		elif key != "*":
+			# Check format chars
 			format_chars = "dixXfFeEgGcs%"
 			profile_name_placeholder_chars = "aAbBHIjmMpSUwWyY"
 			for c in format_chars + profile_name_placeholder_chars:
@@ -55,6 +57,50 @@ def langmerge(infilename1, infilename2, outfilename):
 				b = value.count("%" + c)
 				if a != b:
 					safe_print(key, "ERROR: Format character count for %%%s is wrong:" % c, a, "(expected %i)" % b)
+			if key.startswith("info."):
+				# Check tag formatting and correct Google translator messing
+				# with tags
+				original = dictin1[key]
+				# Clean up whitespace
+				# E.g. ' <font> ' -> ' <font>'
+				wscleaned = re.sub(r'(^|\s+)(<[^/> ]+[^>]*>)\s+', r'\1\2', original)
+				# E.g. 'x<font> ' -> 'x <font>'
+				wscleaned = re.sub(r'([^>])(<[^/> ]+[^>]*>)(\s+)', r'\1\3\2', wscleaned)
+				# E.g. ': </font>' -> ':</font> '
+				wscleaned = re.sub(r'([:\-])(\s+)(</[^>]*>)\s*', r'\1\3\2', wscleaned)
+				# E.g. ', </font>' -> '</font>, '
+				wscleaned = re.sub(r'([,;.])(\s+)(</[^>]*>)\s*', r'\3\1\2', wscleaned)
+				# E.g. ' </font> ' -> '</font> '
+				wscleaned = re.sub(r'\s+(</[^>]*>\s+)', r'\1', wscleaned)
+				# E.g. ' </font>x' -> '</font> x'
+				wscleaned = re.sub(r'(\s+)(</[^>]*>)([^<,;.:\- \n])', r'\2\1\3', wscleaned)
+				if original != wscleaned:
+					safe_print(key, "INFO: Corrected whitespace.")
+				# Find all tags
+				tags = re.findall(r'<(\s*[^/> ]+)([^>]*)>([^<]*)(<\s*/\s*\1>)', wscleaned)
+				replaced = wscleaned
+				cleaned = wscleaned
+				tagcleaned = wscleaned
+				for tagname, attrs, contents, end in tags:
+					tag = "<%s%s>%s%s" % (tagname, attrs, contents, end)
+					replaced = replaced.replace(tag, contents)
+					# <font weight='bold'></font> is the only supported tag
+					cleaned = cleaned.replace(tag,
+											  "<font weight='bold'>%s</font>" %
+											  contents.strip())
+					if contents != contents.strip():
+						safe_print(key, "INFO: Removed surrounding whitespace from tag contents %s" % tag)
+					tagcleaned = cleaned.replace(tag,
+												 "<font weight='bold'>%s</font>" %
+												 contents)
+				stripped = re.sub(r"<[^>]*>", "", replaced)
+				stripped = stripped.replace("<", "").replace(">", "")
+				if replaced != stripped:
+					safe_print(key, "ERROR: Invalid markup")
+				if wscleaned != tagcleaned:
+					safe_print(key, "INFO: Corrected tag formatting.")
+				if original != cleaned:
+					dictin1[key] = cleaned
 	
 	merged = ordereddict.OrderedDict()
 	merged["*"] = dictin1["*"] = dictin2["*"]
