@@ -334,7 +334,7 @@
 "calculated_checksum": |-
   Обчислена контрольна сума
 "calibrate_instrument": |-
-  Самокалібрування інструмент
+  Самокалібрування інструмента
 "calibration": |-
   Калібрування
 "calibration.ambient_viewcond_adjust": |-
@@ -348,7 +348,7 @@
 "calibration.black_point_correction": |-
   Коригування чорної точки
 "calibration.black_point_correction_choice": |-
-  Ви можете вимкнути корекцію чорних точок, щоб оптимізувати рівень чорного і контрастного співвідношення (рекомендовано для більшості LCD-моніторів), або ви можете включити його, щоб зробити чорним той самий відтінок, як і точку білого (рекомендується для більшості моніторів CRT). Виберіть налаштування корекції чорної точки.
+  Ви можете вимкнути корекцію чорної точки, щоб оптимізувати рівень чорного і контрастного співвідношення (рекомендовано для більшості LCD-моніторів), або ви можете включити її, щоб зробити чорний того ж самого відтінку, що і точку білого (рекомендується для більшості моніторів CRT). Виберіть налаштування корекції чорної точки.
 "calibration.black_point_rate": |-
   Оцінити
 "calibration.check_all": |-
@@ -493,52 +493,52 @@
   Дисплей з електронно-променевою трубкою
 "ccmx.use_four_color_matrix_method": |-
   Мінімізувати різницю кольоровості xy
-"*ccss.CCFLFamily_07Feb11": |-
-  LCD CCFL family (AC, EIZO, HP)
-"*ccss.FSI_XM55U_23Jan19": |-
-  WOLED family, SDR Rec. 709 gamut mode (FSI XM55U/XM65U, LG OLED)
-"*ccss.GBrLED_25Jul12": |-
+"ccss.CCFLFamily_07Feb11": |-
+  LCD CCFL сімейство (AC, EIZO, HP)
+"ccss.FSI_XM55U_23Jan19": |-
+  WOLED сімейство, з режимом гами SDR Rec. 709 (FSI XM55U/XM65U, LG OLED)
+"ccss.GBrLED_25Jul12": |-
   LCD GB-r-LED IPS (Dell U2413)
-"*ccss.HP_DC3": |-
-  LCD PFS Phosphor WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
-"*ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS Phosphor WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
-"*ccss.HP_ZBOOK": |-
-  LCD PFS Phosphor WLED IPS, 100% Adobe RGB (HP ZBook)
-"*ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
-  WOLED (LG OLED 6-Series)
-"*ccss.MacBookProRetina2016": |-
-  LCD PFS Phosphor WLED IPS, 99% P3 (MacBook Pro Retina 2016)
-"*ccss.NEC_64_690E_PA242W_2013-02-28": |-
+"ccss.HP_DC3": |-
+  LCD PFS фосфор WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
+"ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD PFS фосфор WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
+"ccss.HP_ZBOOK": |-
+  LCD PFS фосфор WLED IPS, 100% Adobe RGB (HP ZBook)
+"ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
+  WOLED (LG OLED 6-серія)
+"ccss.MacBookProRetina2016": |-
+  LCD PFS фосфор WLED IPS, 99% P3 (MacBook Pro Retina 2016)
+"ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
-"*ccss.OLEDFamily_20Jul12": |-
+"ccss.OLEDFamily_20Jul12": |-
   RGB OLED (Sony PVM-2541)
-"*ccss.OLEDFamily_28Aug18": |-
-  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
-"*ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
-  LCD PFS Phosphor WLED, 98% Adobe RGB
-"*ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS Phosphor WLED family
-"*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
-"*ccss.PlasmaFamily_20Jul12": |-
+"ccss.OLEDFamily_28Aug18": |-
+  RGB OLED сімейство (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
+  LCD PFS фосфор WLED, 98% Adobe RGB
+"ccss.PFS_Phosphor_Family_31Jan17": |-
+  LCD PFS фосфор WLED сімейства
+"ccss.Panasonic VVX17P051J00": |-
+  LCD PFS Phosphor WLED IPS, 94% P3 (Panasonic VVX17P051J00 в Lenovo P70)
+"ccss.PlasmaFamily_20Jul12": |-
   Plasma
-"*ccss.ProjectorFamily_07Feb11": |-
-  Projector family (Marantz, HP, Panasonic)
-"*ccss.RGBLEDFamily_07Feb11": |-
-  LCD RGB LED family (HP, SOYO)
-"*ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG Phosphor LED family (AUO B156HW01 V.4 in Lenovo W520/W530)
-"*ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG Phosphor LED family (AUO B156HW01 V.4, Dell U2413)
+"ccss.ProjectorFamily_07Feb11": |-
+  Сімейство проекторів (Marantz, HP, Panasonic)
+"ccss.RGBLEDFamily_07Feb11": |-
+  LCD RGB LED сімейство (HP, SOYO)
+"ccss.RG_Phosphor_Family_13Dec11": |-
+  LCD RG фосфор LED сімейства (AUO B156HW01 V.4 in Lenovo W520/W530)
+"ccss.RG_Phosphor_Family_25Jul12": |-
+  LCD GB-r-LED/RG фосфор LED сімейства (AUO B156HW01 V.4, Dell U2413)
 "*ccss.Samsung Q9 75_ (i1 Pro)": |-
   LCD Quantum Dot LED (Samsung QLED Q9)
-"*ccss.WGCCFLFamily_07Feb11": |-
-  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
-"*ccss.WLEDFamily_07Feb11": |-
-  LCD White LED family (AC, LG, Samsung)
-"*ccss.WRGB_OLED_LG": |-
-  WOLED, SDR Rec. 709 gamut mode (LG OLED B7)
+"ccss.WGCCFLFamily_07Feb11": |-
+  LCD CCFL Wide Gamut  сімейство поширеного колірного простору (NEC PA241W/PA271W)
+"ccss.WLEDFamily_07Feb11": |-
+  LCD White LED сімейство (AC, LG, Samsung)
+"ccss.WRGB_OLED_LG": |-
+  WOLED, SDR Rec. 709 режим гами (LG OLED B7)
 "ccxx.ti1": |-
   Тестова таблиця для колориметричної корекції
 "centered": |-
@@ -894,84 +894,84 @@
   Відображення налаштувань пристрою
 "display.tech": |-
   Технологія відображення
-"*display.tech.CRT": |-
+"display.tech.CRT": |-
   CRT
-"*display.tech.DLP Projector": |-
-  DLP Projector
-"*display.tech.DLP Projector RGB Filter Wheel": |-
-  DLP Projector RGB Filter Wheel
-"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
-  DLP Projector RGBCMY Filter Wheel
-"*display.tech.DPL Projector RGBW Filter Wheel": |-
-  DLP Projector RGBW Filter Wheel
-"*display.tech.LCD": |-
+"display.tech.DLP Projector": |-
+  DLP проектор
+"display.tech.DLP Projector RGB Filter Wheel": |-
+  DLP проектор RGB Filter Wheel
+"display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  DLP проектор з RGBCMY набором фільтрів
+"display.tech.DPL Projector RGBW Filter Wheel": |-
+  DLP проектор з RGBW набором фільтрів
+"display.tech.LCD": |-
   LCD
-"*display.tech.LCD CCFL": |-
+"display.tech.LCD CCFL": |-
   LCD CCFL
-"*display.tech.LCD CCFL IPS": |-
+"display.tech.LCD CCFL IPS": |-
   LCD CCFL IPS
-"*display.tech.LCD CCFL TFT": |-
+"display.tech.LCD CCFL TFT": |-
   LCD CCFL TFT
-"*display.tech.LCD CCFL VPA": |-
+"display.tech.LCD CCFL VPA": |-
   LCD CCFL PVA
-"*display.tech.LCD CCFL Wide Gamut": |-
-  LCD CCFL Wide Gamut
-"*display.tech.LCD CCFL Wide Gamut IPS": |-
+"display.tech.LCD CCFL Wide Gamut": |-
+  LCD CCFL Wide Gamut (Поширеного колірного простіру)
+"display.tech.LCD CCFL Wide Gamut IPS": |-
   LCD CCFL Wide Gamut IPS
-"*display.tech.LCD CCFL Wide Gamut TFT": |-
+"display.tech.LCD CCFL Wide Gamut TFT": |-
   LCD CCFL Wide Gamut TFT
-"*display.tech.LCD CCFL Wide Gamut VPA": |-
+"display.tech.LCD CCFL Wide Gamut VPA": |-
   LCD CCFL Wide Gamut PVA
-"*display.tech.LCD GB-R Phosphor": |-
+"display.tech.LCD GB-R Phosphor": |-
   LCD GB-r-LED
-"*display.tech.LCD GB-R Phosphor IPS": |-
+"display.tech.LCD GB-R Phosphor IPS": |-
   LCD GB-r-LED IPS
-"*display.tech.LCD GB-R Phosphor TFT": |-
+"display.tech.LCD GB-R Phosphor TFT": |-
   LCD GB-r-LED TFT
-"*display.tech.LCD GB-R Phosphor VPA": |-
+"display.tech.LCD GB-R Phosphor VPA": |-
   LCD GB-r-LED PVA
-"*display.tech.LCD PFS Phosphor": |-
-  LCD PFS Phosphor WLED
-"*display.tech.LCD PFS Phosphor IPS": |-
-  LCD PFS Phosphor WLED IPS
-"*display.tech.LCD PFS Phosphor TFT": |-
-  LCD PFS Phosphor WLED TFT
-"*display.tech.LCD PFS Phosphor VPA": |-
-  LCD PFS Phosphor WLED PVA
-"*display.tech.LCD RG Phosphor": |-
-  LCD RG Phosphor LED
-"*display.tech.LCD RG Phosphor IPS": |-
-  LCD RG Phosphor LED IPS
-"*display.tech.LCD RG Phosphor TFT": |-
-  LCD RG Phosphor LED TFT
-"*display.tech.LCD RG Phosphor VPA": |-
-  LCD RG Phosphor LED PVA
-"*display.tech.LCD RGB LED": |-
+"display.tech.LCD PFS Phosphor": |-
+  LCD PFS фосфор WLED
+"display.tech.LCD PFS Phosphor IPS": |-
+  LCD PFS фосфор WLED IPS
+"display.tech.LCD PFS Phosphor TFT": |-
+  LCD PFS фосфор WLED TFT
+"display.tech.LCD PFS Phosphor VPA": |-
+  LCD PFS фосфор WLED PVA
+"display.tech.LCD RG Phosphor": |-
+  LCD RG фосфор LED
+"display.tech.LCD RG Phosphor IPS": |-
+  LCD RG фосфор LED IPS
+"display.tech.LCD RG Phosphor TFT": |-
+  LCD RG фосфор LED TFT
+"display.tech.LCD RG Phosphor VPA": |-
+  LCD RG фосфор LED PVA
+"display.tech.LCD RGB LED": |-
   LCD RGB LED
-"*display.tech.LCD RGB LED IPS": |-
+"display.tech.LCD RGB LED IPS": |-
   LCD RGB LED IPS
-"*display.tech.LCD RGB LED TFT": |-
+"display.tech.LCD RGB LED TFT": |-
   LCD RGB LED TFT
-"*display.tech.LCD RGB LED VPA": |-
+"display.tech.LCD RGB LED VPA": |-
   LCD RGB LED PVA
-"*display.tech.LCD White LED": |-
+"display.tech.LCD White LED": |-
   LCD White LED
-"*display.tech.LCD White LED IPS": |-
+"display.tech.LCD White LED IPS": |-
   LCD White LED IPS
-"*display.tech.LCD White LED TFT": |-
+"display.tech.LCD White LED TFT": |-
   LCD White LED TFT
-"*display.tech.LCD White LED VPA": |-
+"display.tech.LCD White LED VPA": |-
   LCD White LED PVA
-"*display.tech.LED AMOLED": |-
+"display.tech.LED AMOLED": |-
   AMOLED
-"*display.tech.LED OLED": |-
+"display.tech.LED OLED": |-
   OLED
-"*display.tech.LED WOLED": |-
+"display.tech.LED WOLED": |-
   WOLED
-"*display.tech.Plasma": |-
+"display.tech.Plasma": |-
   Plasma
-"*display.tech.Unknown": |-
-  Unknown
+"display.tech.Unknown": |-
+  Невідомий тип
 "display_detected": |-
   Виявлено зміну конфігурації пристрою відображення.
 "display_device_profile": |-
@@ -1385,14 +1385,14 @@
 "in": |-
   В
 "info.3dlut_settings": |-
-  <font weight='bold'> 3D LUT</font> (LUT = таблиця пошуку) або профіль посилання ICC пристрою може бути використаний програмами 3D LUT або ICC пристрою, здатними до повної <font weight='bold'> корекції кольору </font>.
+  <font weight='bold'>3D LUT</font> (LUT = таблиця пошуку) або профіль посилання ICC пристрою може бути використаний програмами 3D LUT або ICC пристрою, здатними до повної <font weight='bold'>корекції кольору</font>.
   
   <font weight='bold'>Створення декількох (додаткових) 3D LUT з існуючого профілю</font> При бажаному профілі, вибраному в розділі “Настройки”, зніміть прапорець “Створити 3D LUT після профілювання”.
   
   <font weight='bold'>Вибір правильного колірного простору та кривої тональних відповідей</font>
   Для 3D LUT і ICC-профілів пристроїв, початкове колірне простір і крива тональних відповідей повинні бути заздалегідь встановлені і стати фіксованою частиною загального перетворення кольору (на відміну від профілів ICC-пристроїв, які динамічно пов'язані в процесі). Як приклад, HD відеоматеріал зазвичай освоєний відповідно до стандарту Rec. 709 або з чистою гаммою потужності близько 2,2-2,4 (відносною, з чорним зміщенням виходу 100%) або Rec. 1886 крива тонального сигналу (абсолютна, з чорним зміщенням виходу 0%). Розподіл між Rec. 1886-подібною і абсолютною потужністю також можливий завдяки встановленню зміщення чорного виходу на значення між 0% і 100%.
   
-  <font weight='bold'>“Абсолютна” проти “відносної” гамми </font>
+  <font weight='bold'>“Абсолютна” проти “відносної” гамми</font>
   Щоб встановити ненульовий рівень чорного реального дисплея, крива тонального сигналу повинна бути зміщена і відповідно масштабована.
   “Абсолютна” гама призводить до фактичного виходу на 50% вхідних значень, які не відповідають ідеалізованій кривій потужності (якщо рівень чорного не дорівнює нулю).
   “Відносна” гама призводить до фактичного виходу на 50% вхідних значень, які відповідають ідеалізованої кривої потужності.
@@ -1400,51 +1400,51 @@
   <font weight='bold'>Намір візуалізації</font>
   Якщо ви відкалібрували на іншу білу точку, ніж та, яка призначена для вихідного колірного простору, і хочете використовувати її для 3D LUT, виберіть “Відносний кольорометричний”. В іншому випадку виберіть “Абсолютний колориметричний з масштабуванням білої точки” (масштабування білої точки запобігає відсіченню в абсолютному колориметричному режимі, який може статися, якщо біла точка вихідного кольору знаходиться за межами досяжного охвату дисплея). Ви також маєте можливість використовувати неколориметричний метод візуалізації, який може стискати або розширювати колірний простір джерела так, щоб він містився в межах діапазону відображення (не рекомендується, коли потрібна колориметрична точність).
 "info.calibration_settings": |-
-  <font weight='bold'> Калібрування </font> здійснюється за допомогою <font weight='bold'> інтерактивного налаштування дисплея </font>, щоб відповідати вибраній точці білого та / або яскравості, а також додатково створювати <font weight='bold'> 1D LUT калібрувальні криві </font> (LUT = таблиця пошуку), щоб відповідати обраній кривій тонального сигналу і забезпечити баланс сірого. Зверніть увагу, що якщо під час калібрування потрібно налаштувати тільки дисплей і пропустити генерацію кривих 1D LUT, то потрібно налаштувати криву тонального сигналу на “Як в вимірюванні”. Калібрування 1D LUT <font weight='bold'> не </font> може використовуватись для повної корекції кольору дисплея, потрібно створити <font weight='bold'> профіль пристрою ICC </font> або <font weight='bold'> 3D LUT </font> і використовуйте їх з додатками, які підтримують їх для цієї мети.
+  <font weight='bold'>Калібрування</font> здійснюється за допомогою <font weight='bold'>інтерактивного налаштування дисплея</font>, щоб відповідати вибраній точці білого та / або яскравості, а також додатково створювати <font weight='bold'>1D LUT калібрувальні криві</font> (LUT = таблиця пошуку), щоб відповідати обраній кривій тонального сигналу і забезпечити баланс сірого. Зверніть увагу, що якщо під час калібрування потрібно налаштувати тільки дисплей і пропустити генерацію кривих 1D LUT, то потрібно налаштувати криву тонального сигналу на “Як в вимірюванні”. Калібрування 1D LUT <font weight='bold'>не</font> може використовуватись для повної корекції кольору дисплея, потрібно створити <font weight='bold'>профіль пристрою ICC</font> або <font weight='bold'>3D LUT</font> і використовуйте їх з додатками, які підтримують їх для цієї мети.
 "info.display_instrument": |-
-  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  <font weight='bold'>Вимкнути будь-які та всі динамічні налаштування зображення вашого дисплея</font>, якщо це можливо. Це може включати такі функції, як динамічна контрастність, затемнення, автоматична яскравість і подібні функції.
   
-  Make sure light does not shine directly onto the screen of your display.
+  Переконайтеся, що світло не блимає безпосередньо на екрані дисплея.
   
-  Якщо на вашому дисплеї є <font weight='bold'> OLED </font>, <font weight='bold'> Plasma </font> або інша технологія з змінним виходом світла залежно від вмісту зображення, увімкніть <font weight='bold'> компенсація дрейфу рівня білого </font>.
+  Якщо на вашому дисплеї є <font weight='bold'>OLED</font>, <font weight='bold'>Plasma</font> або інша технологія з змінним виходом світла залежно від вмісту зображення, увімкніть <font weight='bold'>компенсація дрейфу рівня білого</font>.
   
-  Якщо ваш прилад є <font weight='bold'> спектрометром </font>, і ви використовуєте його в режимі контакту на дисплеї зі стабільним рівнем чорного, ви можете захотіти включити <font weight='bold'> компенсацію інструмента з плаваючим рівнем чорного кольору </font>.
+  Якщо ваш прилад є <font weight='bold'>спектрометром</font>, і ви використовуєте його в режимі контакту на дисплеї зі стабільним рівнем чорного, ви можете захотіти включити <font weight='bold'>компенсацію інструмента з плаваючим рівнем чорного кольору</font>.
   
-  Якщо ваш інструмент <font weight='bold'> колориметр </font>, ви повинні використовувати <font weight='bold'> режим вимірювання </font> та/або <font weight='bold'> корекція </font>, що підходить для вашого типу дисплея або технології відображення. Зауважте, що деякі інструменти (ColorHug, ColorHug2, K-10, Spyder4 / 5 / X) можуть мати корекцію, вбудовану в деякі з їх режимів вимірювання.
+  Якщо ваш інструмент <font weight='bold'>колориметр</font>, ви повинні використовувати <font weight='bold'>режим вимірювання</font> та/або <font weight='bold'>корекція</font>, що підходить для вашого типу дисплея або технології відображення. Зауважте, що деякі інструменти (ColorHug, ColorHug2, K-10, Spyder4 / 5 / X) можуть мати корекцію, вбудовану в деякі з їх режимів вимірювання.
 "info.display_instrument.warmup": |-
-  Ви повинні дозволити дісплею <font weight='bold'> розігрітись </font> принаймні <font weight='bold'> 30 хвилин </font> перед початком вимірювань. Якщо ви використовуєте прилад у режимі контакту, добре залишити його на дисплеї протягом цього часу.
-"*info.display_tech": |-
-  <font weight='bold'>LCD White LED</font> (WLED with normal color gamut and sRGB coverage up to 100%) is the most common LCD backlight technology. Displays in this category include most laptops, notebooks, allround/office and non-HDR gaming monitors from 2010 and newer as well as Apple iMac/MacBook from 2009 to mid 2015.
+  Ви повинні дозволити дісплею <font weight='bold'>розігрітись</font> принаймні <font weight='bold'>30 хвилин</font> перед початком вимірювань. Якщо ви використовуєте прилад у режимі контакту, добре залишити його на дисплеї протягом цього часу.
+"info.display_tech": |-
+  <font weight='bold'>LCD білий світлодіод</font> (WLED з нормальною колірною гамою та покриттям sRGB до 100%) є найпоширенішою технологією підсвічування РК-дисплею. Дисплеї в цій категорії включають більшість ноутбуків, ноутбуків, офісних і не-HDR ігрових моніторів з 2010 року і нових, а також Apple iMac / MacBook з 2009 по середину 2015 року.
   
-  <font weight='bold'>LCD PFS Phosphor WLED</font> has a wide color gamut in two common variants with P3 or Adobe RGB coverage around 90-99% (according to manufacturer data). Common displays in the P3 gamut category include Apple iMac 4K/5K Retina (late 2015 and newer), MacBook Pro Retina (late 2016 and newer) as well as some HDR-capable desktop monitors. The Adobe RGB gamut category includes professional displays like EIZO CG2730, HP DreamColor Z24x G2 or NEC PA271Q.
+  <font weight='bold'>LCD PFS Phosphor WLED</font> має широку кольорову гаму у двох поширених варіантах з покриттям P3 або Adobe RGB близько 90-99% (за даними виробника). Загальні дисплеї у категорії P3 включають Apple iMac 4K / 5K Retina (кінець 2015 та новіше), MacBook Pro Retina (кінець 2016 та новіша), а також деякі HDR-сумісні настільні монітори. Категорія палітри Adobe RGB включає професійні дисплеї, такі як EIZO CG2730, HP DreamColor Z24x G2 або NEC PA271Q.
   
   <font weight='bold'>LCD Quantum Dot LED</font> has a wide color gamut with near-full P3 coverage, commonly used in Samsung QLED TVs.
   
-  <font weight='bold'>WOLED</font> has a wide color gamut with high P3 coverage, commonly used in LG OLED TVs.
+  <font weight='bold'>WOLED</font> має широку кольорову гаму з високим покриттям P3, широко використовуваним у телевізорах LG OLED.
   
-  <font weight='bold'>RGB OLED/AMOLED</font> has a wide color gamut with near-full Adobe RGB and/or P3 coverage, used in some professional monitors and laptops as well as high quality smartphones.
+  <font weight='bold'>RGB OLED / AMOLED</font> має широку колірну гаму з майже повною кількістю покриттів Adobe RGB та / або P3, які використовуються в деяких професійних моніторах і ноутбуках, а також високоякісних смартфонах.
   
-  <font weight='bold'>LCD GB-r-LED</font> (also known as GB-LED) has a wide color gamut with Adobe RGB coverage around 99% (according to manufacturer data). Common displays in this category include Dell U2413, EIZO CG247/CG277 and NEC PA242W/PA272W.
+  <font weight='bold'>РК-дисплей GB-r-LED</font> (також відомий як GB-LED) має широку колірну гамму з покриттям Adobe RGB близько 99% (за даними виробника). Загальні дисплеї в цій категорії включають Dell U2413, EIZO CG247 / CG277 і NEC PA242W / PA272W.
   
-  <font weight='bold'>LCD RGB LED</font> has a wide color gamut with near-full Adobe RGB coverage. Common displays in this category include Samsung XL20/XL24/XL30 and HP DreamColor LP2480zx.
+  <font weight='bold'>LCD RGB LED</font> має широку гаму кольорів із майже повним покриттям Adobe RGB. Загальні дисплеї в цій категорії включають Samsung XL20 / XL24 / XL30 і HP DreamColor LP2480zx.
   
-  <font weight='bold'>LCD CCFL</font> and <font weight='bold'>LCD CCFL Wide Gamut</font> are older backlight technologies commonly used in displays from 2009 and earlier.
-"*info.display_tech.linklabel.displayspecifications.com": |-
-  Find your monitor/TV and corresponding technology at displayspecifications.com
-"*info.display_tech.linklabel.everymac.com": |-
-  Find your iMac/MacBook/iPad and corresponding display technology at everymac.com
-"*info.display_tech.show": |-
-  Show information about common display technologies
+  <font weight='bold'>LCD CCFL</font> і <font weight='bold'>LCD CCFL Wide Gamut</font> - це старіші технології підсвічування, які зазвичай використовуються в дисплеях з 2009 року і раніше.
+"info.display_tech.linklabel.displayspecifications.com": |-
+  Знайдіть свій монітор або телевізор та відповідну технологію на веб-сайті displayspecifications.com
+"info.display_tech.linklabel.everymac.com": |-
+  Знайдіть iMac / MacBook / iPad та відповідну технологію відображення на сайті everymac.com
+"info.display_tech.show": |-
+  Показати інформацію про загальні технології відображення
 "info.mr_settings": |-
-  Ви можете <font weight='bold'> перевірити точність </font> профілю ICC або 3D LUT через звіт про вимірювання, який містить детальну статистику про помилки кольорів вимірюваних патчів.
+  Ви можете <font weight='bold'>перевірити точність</font> профілю ICC або 3D LUT через звіт про вимірювання, який містить детальну статистику про помилки кольорів вимірюваних патчів.
   
   Під час перевірки 3D LUT переконайтеся, що ви використовуєте ті ж налаштування, що й 3D LUT.
   
-  <font weight='bold'> Порада: </font> Щоб створити звіт про перевірку замість звіту про вимірювання, утримуйте клавішу ALT на клавіатурі.
+  <font weight='bold'>Порада:</font> Щоб створити звіт про перевірку замість звіту про вимірювання, утримуйте клавішу ALT на клавіатурі.
 "info.profile_settings": |-
-  <font weight='bold'> Профілювання </font> - це процес <font weight='bold'>, що характеризує </font> відображення і запис його відповіді в <font weight='bold'> профіль пристрою ICC </font>. Профіль пристрою ICC може використовуватися програмами, які підтримують керування кольором ICC для повної <font weight='bold'> відображення колірної корекції </font>, та/або вона може бути використана для створення <font weight='bold'> 3D LUT </font> (LUT = Таблиця пошуку), яка служить тій самій меті для програм, які підтримують 3D LUT. .
+  <font weight='bold'>Профілювання</font> - це процес <font weight='bold'>, що характеризує</font> відображення і запис його відповіді в <font weight='bold'>профіль пристрою ICC</font>. Профіль пристрою ICC може використовуватися програмами, які підтримують керування кольором ICC для повної <font weight='bold'>відображення колірної корекції</font>, та/або вона може бути використана для створення <font weight='bold'>3D LUT</font> (LUT = Таблиця пошуку), яка служить тій самій меті для програм, які підтримують 3D LUT. .
   
-  Кількість виміряних патчів впливає на досяжну точність отриманого профілю. Для розумної якості 3х3 матриці і криві на основі профілю, кілька десятків патчів може бути достатньо, якщо дисплей має хороші властивості аддитивного змішування кольорів і лінійність. Деякі професійні дисплеї належать до цієї категорії. Якщо бажана максимальна точність, рекомендується використовувати профіль на основі LUT з кількох сотень до декількох тисяч патчів. Параметр <font weight='bold'> “Автоматичне оптимізація” </font> автоматично враховує нелінійність і реальну реакцію дисплея, і має використовуватися для отримання найкращих результатів. Завдяки цьому можна налаштувати повзунок для вибору компромісу між точністю та результативныстю вимірювання, а також між часом на вимірювання та обчислення.
+  Кількість виміряних патчів впливає на досяжну точність отриманого профілю. Для розумної якості 3х3 матриці і криві на основі профілю, кілька десятків патчів може бути достатньо, якщо дисплей має хороші властивості аддитивного змішування кольорів і лінійність. Деякі професійні дисплеї належать до цієї категорії. Якщо бажана максимальна точність, рекомендується використовувати профіль на основі LUT з кількох сотень до декількох тисяч патчів. Параметр <font weight='bold'>“Автоматичне оптимізація”</font> автоматично враховує нелінійність і реальну реакцію дисплея, і має використовуватися для отримання найкращих результатів. Завдяки цьому можна налаштувати повзунок для вибору компромісу між точністю та результативныстю вимірювання, а також між часом на вимірювання та обчислення.
 "infoframe.default_text": |-
   
 "infoframe.title": |-
@@ -1527,16 +1527,16 @@
   Яскравість
 "lut_access": |-
   Доступ до таблиць гамма-корекції відеокарти
-"*macos.bugs.cal.warning": |-
-  Applications using the Apple CMM (color management module), like macOS Preview and QuickLook, do not support calibration black point hue correction.
-  Applications that use their own color management are not affected (like Adobe Creative Suite using Adobe ACE, or open source graphics applications using littleCMS like GIMP or Krita, or applications employing 3D LUTs for color management).
+"macos.bugs.cal.warning": |-
+  Програми, що використовують Apple CMM (модуль керування кольором), як MacOS Preview і QuickLook, не підтримують корекцію відтінку чорного кольору.
+  Програми, які використовують власне керування кольором, не зачіпаються (наприклад, Adobe Creative Suite за допомогою Adobe ACE або графічні програми з відкритим вихідним кодом, що використовують програми littleCMS, такі як GIMP або Krita, або програми, що використовують 3D LUT для керування кольором).
   
-  Do you want to disable calibration black point hue correction?
-"*macos.bugs.profile.warning": |-
-  Applications using the Apple CMM (color management module), like macOS Preview and QuickLook, do not support display profile types other than single curve + matrix with black point compensation.
-  Applications that use their own color management are not affected (like Adobe Creative Suite using Adobe ACE, or open source graphics applications using littleCMS like GIMP or Krita, or applications employing 3D LUTs for color management).
+  Ви хочете вимкнути корекцію відтінку чорної точки калібрування?
+"macos.bugs.profile.warning": |-
+  Програми, що використовують Apple CMM (модуль керування кольором), як MacOS Preview і QuickLook, не підтримують типи профілів, окрім однієї кривої + матриця з компенсацією чорної точки.
+  Програми, які використовують власне керування кольором, не зачіпаються (наприклад, Adobe Creative Suite за допомогою Adobe ACE або графічні програми з відкритим вихідним кодом, що використовують програми littleCMS, такі як GIMP або Krita, або програми, що використовують 3D LUT для керування кольором).
   
-  Do you want to set the profile type to single curve + matrix and enable black point compensation?
+  Ви хочете встановити тип профілю на одну криву + матрицю і включити компенсацію чорної точки?
 "madhcnet.outdated": |-
   Встановлена версія %s знайдена %s засторілою. Оновіть до останньої версії madVR (принаймні %i.%i.%i.%i).
 "madtpg.launch.failure": |-
