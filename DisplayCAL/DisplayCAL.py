@@ -15914,7 +15914,7 @@ class StartupFrame(start_cls):
 						# Retina, screencapture is double our bitmap size
 						img.Rescale(self.splash_bmp.Size[0],
 									self.splash_bmp.Size[1], quality)
-					elif (is_wayland and
+					elif (is_wayland and factor and
 						  img.Width // factor == self.GetDisplay().Geometry[2] and
 						  img.Height // factor == self.GetDisplay().Geometry[3]):
 						# Wayland + HiDPI, screencapture is double size
