@@ -1703,87 +1703,25 @@ def set_default_app_dpi():
 	if not dpiset and not getcfg("app.dpi", False):
 		# HighDPI support
 		dpiset = True
-		from wxaddons import wx
 		if sys.platform in ("darwin", "win32"):
 			# Determine screen DPI
+			from wxaddons import wx
 			dpi = wx.ScreenDC().GetPPI()[0]
 		else:
 			# Linux
 			from util_os import which
-			factor = None
 			txt_scale = None
 			# XDG_CURRENT_DESKTOP delimiter is colon (':')
 			desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
 			if desktop and desktop[0] == "KDE":
-				# Two env-vars exist: QT_SCALE_FACTOR and
-				# QT_SCREEN_SCALE_FACTORS.
-				# According to documentation[1], the latter is
-				# 'mainly useful for debugging' - that's not how it is
-				# used by KDE though. Changing display scaling via KDE
-				# settings GUI only sets QT_SCREEN_SCALE_FACTORS.
-				# We are thus currently ignoring QT_SCALE_FACTOR.
-				# [1] https://doc.qt.io/qt-5/highdpi.html
-				# QT_SCREEN_SCALE_FACTORS delimiter is semicolon (';')
-				# Format: Mapping of XrandR display names to scale factor
-				# e.g. 'VGA-1=1.5;VGA-2=2.0;'
-				# or just list of scale factors
-				# e.g. '1.5;2.0;'
-				screen_scale_factors = os.getenv("QT_SCREEN_SCALE_FACTORS", "").split(";")
-				# XXX - not actually neded? Scales just fine without us doing
-				# any scaling ourself
-				NEVER = True
-				if not NEVER and screen_scale_factors:
-					match = False
-					app = wx.GetApp()
-					if app:
-						import RealDisplaySizeMM as RDSMM
-						if not RDSMM._displays:
-							RDSMM.enumerate_displays()
-						# Create temp frame (main frame does not yet exist)
-						tmp = wx.Frame(None)
-						# Move to main window location (and thus screen)
-						x, y = (getcfg("position.x", False),
-								getcfg("position.y", False))
-						if not None in (x, y):
-							tmp.SetSaneGeometry(x, y)
-						# Get wx display
-						wx_display = tmp.GetDisplay()
-						# No longer need our temp frame
-						tmp.Destroy()
-						# Search for matching display based on geometry
-						pos = wx_display.Geometry[:2]
-						size = wx_display.Geometry[2:]
-						for item in screen_scale_factors:
-							if not item:
-								break
-							if "=" in item:
-								name, factor = item.split("=", 1)
-							else:
-								name, factor = None, item
-							for display in RDSMM._displays:
-								if (display.get("pos") != pos or
-									display.get("size") != size):
-									# No match
-									continue
-								if (name and
-									display.get("xrandr_name") != name):
-									# No match
-									continue
-								# Match found
-								match = True
-								break
-							if match:
-								break
-					if not match:
-						# Use first one
-						factor = screen_scale_factors[0].split("=")[-1]
-			if factor is None and which("gsettings"):
+				pass
+				# Nothing to do
+			elif which("gsettings"):
 				import subprocess as sp
 				p = sp.Popen(["gsettings", "get", "org.gnome.desktop.interface",
 							  "text-scaling-factor"], stdin=sp.PIPE,
 							 stdout=sp.PIPE, stderr=sp.PIPE)
 				factor, stderr = p.communicate()
-			if factor is not None:
 				try:
 					txt_scale = float(factor)
 				except ValueError:
@@ -1793,6 +1731,101 @@ def set_default_app_dpi():
 				dpi = int(round(dpi * txt_scale))
 		defaults["app.dpi"] = dpi
 	dpiset = True
+
+
+def get_hidpi_scaling_factor():
+	if sys.platform in ("darwin", "win32"):
+		return 1.0  # Handled via app DPI
+	else:
+		# Linux
+		from util_os import which
+		factor = None
+		# XDG_CURRENT_DESKTOP delimiter is colon (':')
+		desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
+		if desktop and desktop[0] == "KDE":
+			# Two env-vars exist: QT_SCALE_FACTOR and
+			# QT_SCREEN_SCALE_FACTORS.
+			# According to documentation[1], the latter is
+			# 'mainly useful for debugging' - that's not how it is
+			# used by KDE though. Changing display scaling via KDE
+			# settings GUI only sets QT_SCREEN_SCALE_FACTORS.
+			# We are thus currently ignoring QT_SCALE_FACTOR.
+			# [1] https://doc.qt.io/qt-5/highdpi.html
+			# QT_SCREEN_SCALE_FACTORS delimiter is semicolon (';')
+			# Format: Mapping of XrandR display names to scale factor
+			# e.g. 'VGA-1=1.5;VGA-2=2.0;'
+			# or just list of scale factors
+			# e.g. '1.5;2.0;'
+			screen_scale_factors = os.getenv("QT_SCREEN_SCALE_FACTORS", "").split(";")
+			if screen_scale_factors:
+				from wxaddons import wx
+				match = False
+				app = wx.GetApp()
+				if app:
+					import RealDisplaySizeMM as RDSMM
+					if not RDSMM._displays:
+						RDSMM.enumerate_displays()
+					top = app.TopWindow
+					if top:
+						tmp = False
+					else:
+						# Create temp frame if no topwindow
+						top = wx.Frame(None)
+						# Move to main window location (and thus screen)
+						x, y = (getcfg("position.x", False),
+								getcfg("position.y", False))
+						if not None in (x, y):
+							top.SetSaneGeometry(x, y)
+						tmp = True
+					# Get wx display
+					wx_display = top.GetDisplay()
+					if tmp:
+						# No longer need our temp frame
+						top.Destroy()
+					# Search for matching display based on geometry
+					pos = wx_display.Geometry[:2]
+					size = wx_display.Geometry[2:]
+					for item in screen_scale_factors:
+						if not item:
+							break
+						if "=" in item:
+							name, factor = item.split("=", 1)
+						else:
+							name, factor = None, item
+						for display in RDSMM._displays:
+							if (display.get("pos") != pos or
+								display.get("size") != size):
+								# No match
+								continue
+							if (name and
+								display.get("xrandr_name") != name):
+								# No match
+								continue
+							# Match found
+							match = True
+							break
+						if match:
+							break
+				if not match:
+					# Use first one
+					factor = screen_scale_factors[0].split("=")[-1]
+		elif which("gsettings"):
+			# GNOME
+			import subprocess as sp
+			p = sp.Popen(["gsettings", "get", "org.gnome.desktop.interface",
+						  "scaling-factor"], stdin=sp.PIPE,
+						 stdout=sp.PIPE, stderr=sp.PIPE)
+			# Format: 'unint32 1'
+			stdout, stderr = p.communicate()
+			split = stdout.split()
+			if split:
+				factor = split[-1]
+		if factor:
+			try:
+				factor = float(factor)
+			except ValueError:
+				factor = 1.0
+		return factor
 
 
 def setcfg(name, value):

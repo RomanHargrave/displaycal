@@ -15805,16 +15805,16 @@ class StartupFrame(start_cls):
 											self.splash_bmp.Size[1])
 		self._buffereddc = wx.MemoryDC(self._bufferbitmap)
 		self.worker = Worker()
+		is_wayland = os.getenv("XDG_SESSION_TYPE") == "wayland"
 		# Grab a bitmap of the screen area we're going to draw on
-		if (sys.platform != "darwin" and
-			os.getenv("XDG_SESSION_TYPE") != "wayland"):
+		if sys.platform != "darwin" and not is_wayland:
 			dc = wx.ScreenDC()
-			# Grabbing from ScreenDC is not supported under Mac OS X
+			# Grab from ScreenDC if not Mac OS X or Wayland
 			self._buffereddc.Blit(0, 0, self.splash_bmp.Size[0],
 								  self.splash_bmp.Size[1], dc, self.splash_x,
 								  self.splash_y)
 		elif not isinstance(self.worker.create_tempdir(), Exception):
-			# Use screencapture utility under Mac OS X
+			# Use screencapture utility under Mac OS X and Wayland
 			splashdimensions = (self.splash_x, self.splash_y,
 							    self.splash_bmp.Size[0],
 							    self.splash_bmp.Size[1])
@@ -15827,6 +15827,7 @@ class StartupFrame(start_cls):
 				extra_args.append("-x")
 				screencap = which("screencapture")
 			else:
+				# Wayland
 				is_mavericks = False
 				if os.getenv("XDG_CURRENT_DESKTOP") == "KDE":
 					# Technically, XDG_CURRENT_DESKTOP can be a colon-separated
@@ -15838,6 +15839,8 @@ class StartupFrame(start_cls):
 				else:
 					extra_args.append("-f")
 					screencap = which("gnome-screenshot")
+				# Determine HiDPI scaling factor
+				factor = config.get_hidpi_scaling_factor()
 			bmp_path = os.path.join(self.worker.tempdir, "screencap.png")
 			if self.worker.exec_cmd(screencap,
 									extra_args + ["screencap.png"],
@@ -15901,23 +15904,28 @@ class StartupFrame(start_cls):
 				if not img:
 					img = wx.Image(bmp_path)
 				if img.IsOk():
+					if wx.VERSION > (3, ):
+						quality = wx.IMAGE_QUALITY_BILINEAR
+					else:
+						quality = wx.IMAGE_QUALITY_HIGH
+					if (is_mavericks and
+						img.Width == self.splash_bmp.Size[0] * 2 and
+						img.Height == self.splash_bmp.Size[1] * 2):
+						# Retina, screencapture is double our bitmap size
+						img.Rescale(self.splash_bmp.Size[0],
+									self.splash_bmp.Size[1], quality)
+					elif (is_wayland and
+						  img.Width // factor == self.GetDisplay().Geometry[2] and
+						  img.Height // factor == self.GetDisplay().Geometry[3]):
+						# Wayland + HiDPI, screencapture is double size
+						img.Rescale(img.Width // factor,
+									img.Height // factor, quality)
 					if (not is_mavericks and
 						img.Width >= self.splash_x + self.splash_bmp.Size[0] and
 						img.Height >= self.splash_y + self.splash_bmp.Size[1]):
-						# Linux with Wayland or macOS
-						# Pre 10.9 we have to get the splashscreen region
-						# from the full screenshot bitmap
+						# macOS pre 10.9 or Wayland we have to get the
+						# splashscreen region from the full screenshot bitmap
 						img = img.GetSubImage(splashdimensions)
-					elif (is_mavericks and
-						  img.Width == self.splash_bmp.Size[0] * 2 and
-						  img.Height == self.splash_bmp.Size[1] * 2):
-						# Retina, screencapture is double our bitmap size
-						if wx.VERSION > (3, ):
-							quality = wx.IMAGE_QUALITY_BILINEAR
-						else:
-							quality = wx.IMAGE_QUALITY_HIGH
-						img.Rescale(self.splash_bmp.Size[0],
-									self.splash_bmp.Size[1], quality)
 					if sys.platform == "darwin" and bmp_path != tif_path:
 						# Fallback
 						img.GammaCorrect()
