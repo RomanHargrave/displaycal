@@ -4765,34 +4765,36 @@ END_DATA
 			# achieve this currently under Wayland is by using colord.
 
 			# Inhibit session to prevent screensaver/powersaving etc.
-			cookie = None
-			if dbus_session:
-				try:
-					sm_proxy = dbus_session.get_object("org.gnome.SessionManager",
-													   "/org/gnome/SessionManager")
-					sm_iface = dbus.Interface(sm_proxy,
-											  dbus_interface="org.gnome.SessionManager")
-					cookie = sm_iface.Inhibit(appname,
-											  # Toplevel X window ID - not
-											  # used under Wayland?
-											  0,
-											  # Reason for inhibit
-											  "Display device measurements",
-											  # Flags
-											  # Inhibit logging out
-											  1 |
-											  # Inhibit user switching
-											  2 |
-											  # Inhibit suspending
-											  4 |
-											  # Inhibit idle
-											  8)
-				except (ValueError, dbus.exceptions.DBusException), exception:
-					self.log(exception)
-			else:
-				self.log(appname + ": Warning - no D-Bus session bus - "
-						 "cannot inhibit session, screensaver/powersaving may "
-						 "still be active!")
+			if not getattr(self, "gnome_sm_cookie", None):
+				if dbus_session:
+					try:
+						sm_proxy = dbus_session.get_object("org.gnome.SessionManager",
+														   "/org/gnome/SessionManager")
+						sm_iface = dbus.Interface(sm_proxy,
+												  dbus_interface="org.gnome.SessionManager")
+						cookie = sm_iface.Inhibit(appname,
+												  # Toplevel X window ID - not
+												  # used under Wayland?
+												  0,
+												  # Reason for inhibit
+												  "Display device measurements",
+												  # Flags
+												  # Inhibit logging out
+												  1 |
+												  # Inhibit user switching
+												  2 |
+												  # Inhibit suspending
+												  4 |
+												  # Inhibit idle
+												  8)
+					except (ValueError, dbus.exceptions.DBusException), exception:
+						self.log(exception)
+					else:
+						self.gnome_sm_cookie = cookie
+				else:
+					self.log(appname + ": Warning - no D-Bus session bus - "
+							 "cannot inhibit session, screensaver/powersaving may "
+							 "still be active!")
 
 			# Inhibit display device to reset videoLUT to linear and profile
 			# to none
@@ -5846,13 +5848,6 @@ while 1:
 						os.remove(os.path.join(xdg_data_home, 'icc',
 											   os.path.basename(self.srgb.fileName)))
 					except Exception, exception:
-						self.log(exception)
-
-				if cookie:
-					# Uninhibit session
-					try:
-						sm_iface.Uninhibit(cookie)
-					except dbus.exceptions.DBusException, exception:
 						self.log(exception)
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
@@ -12027,6 +12022,19 @@ usage: spotread [-options] [logfile]
 			self.interactive = False
 		self.resume = False
 		self._detected_output_levels = False
+
+		# Uninhibit session if needed
+		cookie = getattr(self, "gnome_sm_cookie", None)
+		if cookie:
+			# Uninhibit session. Note that if (e.g.) screensaver timeout has
+			# occured during the time the session was inhibited, that will now
+			# kick in immediately after uninhibiting
+			try:
+				sm_iface.Uninhibit(cookie)
+			except dbus.exceptions.DBusException, exception:
+				self.log(exception)
+			else:
+				self.gnome_sm_cookie = None
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
