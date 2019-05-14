@@ -1397,7 +1397,8 @@ class PlateButton(platebtn.PlateButton):
 			if height <= bsize[1]:
 				height = bsize[1] + 6 * self.dpiscale
 			else:
-				height += 3 * self.dpiscale
+				# No DPI scaling needed here
+				height += 3
 		else:
 			width += 10 * self.dpiscale
 
