@@ -1435,12 +1435,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.init_defaults()
 		self.set_child_ctrls_as_attrs(self)
 		self.init_infoframe()
-		if (sys.platform in ("darwin", "win32") or isexe or 
-			self.worker._use_patternwindow):
-			# Preliminary Wayland support. This still needs a lot
-			# of work as Argyll doesn't support Wayland natively yet,
-			# so we use virtual display to drive our own patch window.:
-			self.init_measureframe()
+		self.init_measureframe()
 		self.init_menus()
 		self.init_controls()
 		self.show_advanced_options_handler()
@@ -9529,7 +9524,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			if isinstance(getattr(self, "_measureframe_subprocess", None),
 						  sp.Popen):
 				self._measureframe_subprocess.terminate()
-			elif hasattr(self, "measureframe"):
+			elif self.measureframe.IsShown():
 				self.measureframe.close_handler(None)
 			else:
 				return "busy"
@@ -15659,8 +15654,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.enable_menus(False)
 
 	def Show(self, show=True, start_timers=True):
-		if (show and getattr(self, "measureframe", None) and
-			self.measureframe.IsShown()):
+		if show and self.measureframe.IsShown():
 			self.measureframe.Hide()
 		if not self.IsShownOnScreen():
 			if hasattr(self, "tcframe"):
