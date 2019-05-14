@@ -12048,6 +12048,7 @@ usage: spotread [-options] [logfile]
 				self.log(exception)
 			else:
 				self.gnome_sm_cookie = None
+				self.log(appname + ": Uninhibited session")
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
