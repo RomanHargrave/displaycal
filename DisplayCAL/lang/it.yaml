@@ -103,7 +103,7 @@
 "*3dlut.settings": |-
   3D LUT settings
 "*3dlut.size": |-
-  3D LUT size
+  3D LUT resolution
 "*3dlut.tab.enable": |-
   Enable 3D LUT tab
 "*3dlut.use_abstract_profile": |-
