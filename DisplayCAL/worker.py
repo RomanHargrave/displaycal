@@ -4754,6 +4754,8 @@ END_DATA
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		report_current_cal = (cmdname == get_argyll_utilname("dispcal") and
 							  ("-r" in args or "-z" in args))
+		profiling_inhibit = False
+		display_profile = None
 		if (self.measure_cmd and self._use_patternwindow and
 			not dry_run and not report_current_cal):
 			# Preliminary Wayland support. This still needs a lot
@@ -4763,23 +4765,28 @@ END_DATA
 			# achieve this currently under Wayland is by using colord
 			# to install a linear cal profile.
 			device_id = self.get_device_id()
-			profiling_inhibit = False
-			if dbus_system and device_id:
+			object_path = None
+			if device_id:
+				try:
+					object_path = colord.get_object_path(device_id, "device")
+				except colord.CDError, exception:
+					self.log(exception)
+			if dbus_system and object_path:
 				# Use DBus interface to call ProfilingInhibit()
 				try:
 					proxy = dbus_system.get_object("org.freedesktop.ColorManager",
-												   device_id)
+												   object_path)
 					iface = dbus.Interface(proxy,
 										   dbus_interface="org.freedesktop.ColorManager.Device")
 					iface.ProfilingInhibit()
-				except dbus.exceptions.DBusException, dbus_exception:
-					self.log(dbus_exception)
+				except (ValueError, dbus.exceptions.DBusException), exception:
+					self.log(exception)
 				else:
 					profiling_inhibit = True
 			if not profiling_inhibit:
 				# Fallback - install linear cal sRGB profile
 				self.log(appname + ": Temporarily installing sRGB profile...")
-				self.display_profile = config.get_display_profile()
+				display_profile = config.get_display_profile()
 				self.srgb = srgb = ICCP.ICCProfile.from_named_rgb_space("sRGB")
 				# Date should not change so the ID stays the same.
 				srgb.dateTime = datetime.datetime(2003, 01, 23, 0, 0, 0)
@@ -5780,7 +5787,8 @@ while 1:
 			if hasattr(self, "madtpg") and finished:
 				self.madtpg_disconnect()
 			if (self.measure_cmd and self._use_patternwindow and
-				self.display_profile and not report_current_cal):
+				(profiling_inhibit or display_profile) and
+				not report_current_cal):
 				# Preliminary Wayland support. This still needs a lot
 				# of work as Argyll doesn't support Wayland natively yet,
 				# so we use virtual display to drive our own patch window.
@@ -5795,7 +5803,7 @@ while 1:
 				if not profiling_inhibit:
 					# Fallback - restore display profile
 					self.log(appname + ": Re-assigning display profile...")
-					cdinstall = self._attempt_install_profile_colord(self.display_profile)
+					cdinstall = self._attempt_install_profile_colord(display_profile)
 					if cdinstall is True:
 						self.log(appname + ": Successfully re-assigned display profile")
 					elif not cdinstall:
