@@ -4754,16 +4754,8 @@ END_DATA
 		self.measure_cmd = not "-?" in args and cmdname in measure_cmds
 		report_current_cal = (cmdname == get_argyll_utilname("dispcal") and
 							  ("-r" in args or "-z" in args))
-		profiling_inhibit = False
-		display_profile = None
-		if (self.measure_cmd and self._use_patternwindow and
-			not dry_run and not report_current_cal):
-			# Preliminary Wayland support. This still needs a lot
-			# of work as Argyll doesn't support Wayland natively yet,
-			# so we use virtual display to drive our own patch window.
-			# We need to make sure videoLUT is linear. Only way to
-			# achieve this currently under Wayland is by using colord.
-
+		if (self.measure_cmd and not dry_run and
+			sys.platform not in ("darwin", "win32")):
 			# Inhibit session to prevent screensaver/powersaving etc.
 			if not getattr(self, "gnome_sm_cookie", None):
 				if dbus_session:
@@ -4790,11 +4782,22 @@ END_DATA
 					except (ValueError, dbus.exceptions.DBusException), exception:
 						self.log(exception)
 					else:
+						self.gnome_sm_iface = sm_iface
 						self.gnome_sm_cookie = cookie
+						self.log(appname + ": Inhibited session")
 				else:
 					self.log(appname + ": Warning - no D-Bus session bus - "
 							 "cannot inhibit session, screensaver/powersaving may "
 							 "still be active!")
+		profiling_inhibit = False
+		display_profile = None
+		if (self.measure_cmd and self._use_patternwindow and
+			not dry_run and not report_current_cal):
+			# Preliminary Wayland support. This still needs a lot
+			# of work as Argyll doesn't support Wayland natively yet,
+			# so we use virtual display to drive our own patch window.
+			# We need to make sure videoLUT is linear. Only way to
+			# achieve this currently under Wayland is by using colord.
 
 			# Inhibit display device to reset videoLUT to linear and profile
 			# to none
@@ -4805,6 +4808,9 @@ END_DATA
 					object_path = colord.get_object_path(device_id, "device")
 				except colord.CDError, exception:
 					self.log(exception)
+			else:
+				self.log(appname + ": Warning - couldn't get display device ID - "
+						 "cannot inhibit display device!")
 			if dbus_system and object_path:
 				# Use DBus interface to call ProfilingInhibit()
 				try:
@@ -4817,6 +4823,11 @@ END_DATA
 					self.log(exception)
 				else:
 					profiling_inhibit = True
+					self.log(appname + ": Inhibited display device",
+							 object_path)
+			elif object_path:
+				self.log(appname + ": Warning - no D-Bus system bus - "
+						 "cannot inhibit display device!")
 			if not profiling_inhibit:
 				# Fallback - install linear cal sRGB profile
 				self.log(appname + ": Temporarily installing sRGB profile...")
@@ -5835,6 +5846,8 @@ while 1:
 					except dbus.exceptions.DBusException, dbus_exception:
 						self.log(dbus_exception)
 						profiling_inhibit = False
+					else:
+						self.log(appname + ": Uninhibited display device")
 				if not profiling_inhibit:
 					# Fallback - restore display profile
 					self.log(appname + ": Re-assigning display profile...")
@@ -12030,7 +12043,7 @@ usage: spotread [-options] [logfile]
 			# occured during the time the session was inhibited, that will now
 			# kick in immediately after uninhibiting
 			try:
-				sm_iface.Uninhibit(cookie)
+				self.gnome_sm_iface.Uninhibit(cookie)
 			except dbus.exceptions.DBusException, exception:
 				self.log(exception)
 			else:
