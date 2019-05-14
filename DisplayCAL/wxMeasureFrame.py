@@ -216,17 +216,18 @@ class MeasureFrame(InvincibleFrame):
 		self.sizer.Add(self.vsizer, flag=wx.ALIGN_BOTTOM | 
 										 wx.ALIGN_CENTER_HORIZONTAL)
 
-		self.measure_darken_background_cb = wx.CheckBox(self.panel, -1, 
-			lang.getstr("measure.darken_background"))
-		self.measure_darken_background_cb.SetValue(
-			bool(int(getcfg("measure.darken_background"))))
-		self.measure_darken_background_cb.Bind(wx.EVT_KILL_FOCUS,
-											   self.focus_lost_handler)
-		self.Bind(wx.EVT_CHECKBOX, self.measure_darken_background_ctrl_handler, 
-				  id=self.measure_darken_background_cb.GetId())
-		self.vsizer.Add(self.measure_darken_background_cb, 
-						flag=wx.ALIGN_BOTTOM | wx.ALIGN_CENTER_HORIZONTAL | 
-							 wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+		if os.getenv("XDG_SESSION_TYPE") != "wayland":
+			self.measure_darken_background_cb = wx.CheckBox(self.panel, -1, 
+				lang.getstr("measure.darken_background"))
+			self.measure_darken_background_cb.SetValue(
+				bool(int(getcfg("measure.darken_background"))))
+			self.measure_darken_background_cb.Bind(wx.EVT_KILL_FOCUS,
+												   self.focus_lost_handler)
+			self.Bind(wx.EVT_CHECKBOX, self.measure_darken_background_ctrl_handler, 
+					  id=self.measure_darken_background_cb.GetId())
+			self.vsizer.Add(self.measure_darken_background_cb, 
+							flag=wx.ALIGN_BOTTOM | wx.ALIGN_CENTER_HORIZONTAL | 
+								 wx.LEFT | wx.RIGHT | wx.TOP, border=10)
 
 		self.measurebutton = wx.Button(self.panel, -1, 
 			lang.getstr("measureframe.measurebutton"), name="measurebutton")
@@ -284,8 +285,9 @@ class MeasureFrame(InvincibleFrame):
 	def Show(self, show=True):
 		if show:
 			self.show_controls()
-			self.measure_darken_background_cb.SetValue(
-				bool(int(getcfg("measure.darken_background"))))
+			if hasattr(self, "measure_darken_background_cb"):
+				self.measure_darken_background_cb.SetValue(
+					bool(int(getcfg("measure.darken_background"))))
 			if self.Parent and hasattr(self.Parent, "display_ctrl"):
 				display_no = self.Parent.display_ctrl.GetSelection()
 			else:
