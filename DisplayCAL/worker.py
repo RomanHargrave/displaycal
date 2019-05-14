@@ -4762,8 +4762,40 @@ END_DATA
 			# of work as Argyll doesn't support Wayland natively yet,
 			# so we use virtual display to drive our own patch window.
 			# We need to make sure videoLUT is linear. Only way to
-			# achieve this currently under Wayland is by using colord
-			# to install a linear cal profile.
+			# achieve this currently under Wayland is by using colord.
+
+			# Inhibit session to prevent screensaver/powersaving etc.
+			cookie = None
+			if dbus_session:
+				try:
+					sm_proxy = dbus_session.get_object("org.gnome.SessionManager",
+													   "/org/gnome/SessionManager")
+					sm_iface = dbus.Interface(sm_proxy,
+											  dbus_interface="org.gnome.SessionManager")
+					cookie = sm_iface.Inhibit(appname,
+											  # Toplevel X window ID - not
+											  # used under Wayland?
+											  0,
+											  # Reason for inhibit
+											  "Display device measurements",
+											  # Flags
+											  # Inhibit logging out
+											  1 |
+											  # Inhibit user switching
+											  2 |
+											  # Inhibit suspending
+											  4 |
+											  # Inhibit idle
+											  8)
+				except (ValueError, dbus.exceptions.DBusException), exception:
+					self.log(exception)
+			else:
+				self.log(appname + ": Warning - no D-Bus session bus - "
+						 "cannot inhibit session, screensaver/powersaving may "
+						 "still be active!")
+
+			# Inhibit display device to reset videoLUT to linear and profile
+			# to none
 			device_id = self.get_device_id()
 			object_path = None
 			if device_id:
@@ -5792,6 +5824,7 @@ while 1:
 				# Preliminary Wayland support. This still needs a lot
 				# of work as Argyll doesn't support Wayland natively yet,
 				# so we use virtual display to drive our own patch window.
+
 				# We need to restore the display profile.
 				if profiling_inhibit:
 					# Use DBus interface to call ProfilingInhibit()
@@ -5813,6 +5846,13 @@ while 1:
 						os.remove(os.path.join(xdg_data_home, 'icc',
 											   os.path.basename(self.srgb.fileName)))
 					except Exception, exception:
+						self.log(exception)
+
+				if cookie:
+					# Uninhibit session
+					try:
+						sm_iface.Uninhibit(cookie)
+					except dbus.exceptions.DBusException, exception:
 						self.log(exception)
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
