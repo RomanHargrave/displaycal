@@ -228,6 +228,8 @@ class MeasureFrame(InvincibleFrame):
 			self.vsizer.Add(self.measure_darken_background_cb, 
 							flag=wx.ALIGN_BOTTOM | wx.ALIGN_CENTER_HORIZONTAL | 
 								 wx.LEFT | wx.RIGHT | wx.TOP, border=10)
+		else:
+			self.vsizer.Add((10, 10))
 
 		self.measurebutton = wx.Button(self.panel, -1, 
 			lang.getstr("measureframe.measurebutton"), name="measurebutton")
