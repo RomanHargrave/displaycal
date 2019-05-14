@@ -362,7 +362,6 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 	if scale < 1:
 		scale = 1
 	if (argyll and sys.platform not in ("darwin", "win32") and
-		os.getenv("XDG_SESSION_TYPE", "x11") == "x11" and
 		not dlopen("libXss.so") and not dlopen("libXss.so.1")):
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		dlg.sizer3.Insert(0, sizer, flag=wx.BOTTOM | wx.ALIGN_LEFT,
