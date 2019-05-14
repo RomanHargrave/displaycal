@@ -63,6 +63,10 @@ elif sys.platform != "darwin":
 			dbus_session = dbus.SessionBus()
 		except dbus.exceptions.DBusException:
 			dbus_session = None
+		try:
+			dbus_system = dbus.SystemBus()
+		except dbus.exceptions.DBusException:
+			dbus_system = None
 
 # custom
 import CGATS
@@ -4758,29 +4762,45 @@ END_DATA
 			# We need to make sure videoLUT is linear. Only way to
 			# achieve this currently under Wayland is by using colord
 			# to install a linear cal profile.
-			self.log(appname + ": Temporarily installing sRGB profile...")
-			self.display_profile = config.get_display_profile()
-			self.srgb = srgb = ICCP.ICCProfile.from_named_rgb_space("sRGB")
-			# Date should not change so the ID stays the same.
-			srgb.dateTime = datetime.datetime(2003, 01, 23, 0, 0, 0)
-			srgb.tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
-			srgb.tags.vcgt.update({
-				"channels": 3,
-				"entryCount": 256,
-				"entrySize": 1,
-				"data": [range(0, 256), range(0, 256), range(0, 256)]
-			})
-			srgb.setDescription(appname + " Linear Calibration sRGB Profile")
-			srgb.calculateID()
-			srgb.write(os.path.join(self.tempdir,
-									appname +
-									" Linear Calibration sRGB Profile.icc"))
-			cdinstall = self._attempt_install_profile_colord(srgb)
-			if not cdinstall:
-				return Error(lang.getstr("calibration.reset_error"))
-			elif isinstance(cdinstall, Exception):
-				return UnloggedError(safe_str(cdinstall))
-			self.log(appname + ": Successfully assigned sRGB profile")
+			device_id = self.get_device_id()
+			profiling_inhibit = False
+			if dbus_system and device_id:
+				# Use DBus interface to call ProfilingInhibit()
+				try:
+					proxy = dbus_system.get_object("org.freedesktop.ColorManager",
+												   device_id)
+					iface = dbus.Interface(proxy,
+										   dbus_interface="org.freedesktop.ColorManager.Device")
+					iface.ProfilingInhibit()
+				except dbus.exceptions.DBusException, dbus_exception:
+					self.log(dbus_exception)
+				else:
+					profiling_inhibit = True
+			if not profiling_inhibit:
+				# Fallback - install linear cal sRGB profile
+				self.log(appname + ": Temporarily installing sRGB profile...")
+				self.display_profile = config.get_display_profile()
+				self.srgb = srgb = ICCP.ICCProfile.from_named_rgb_space("sRGB")
+				# Date should not change so the ID stays the same.
+				srgb.dateTime = datetime.datetime(2003, 01, 23, 0, 0, 0)
+				srgb.tags.vcgt = ICCP.VideoCardGammaTableType("", "vcgt")
+				srgb.tags.vcgt.update({
+					"channels": 3,
+					"entryCount": 256,
+					"entrySize": 1,
+					"data": [range(0, 256), range(0, 256), range(0, 256)]
+				})
+				srgb.setDescription(appname + " Linear Calibration sRGB Profile")
+				srgb.calculateID()
+				srgb.write(os.path.join(self.tempdir,
+										appname +
+										" Linear Calibration sRGB Profile.icc"))
+				cdinstall = self._attempt_install_profile_colord(srgb)
+				if not cdinstall:
+					return Error(lang.getstr("calibration.reset_error"))
+				elif isinstance(cdinstall, Exception):
+					return UnloggedError(safe_str(cdinstall))
+				self.log(appname + ": Successfully assigned sRGB profile")
 		self.use_patterngenerator = (self.measure_cmd and
 									 cmdname != get_argyll_utilname("spotread") and
 									 (config.get_display_name() == "Resolve" or
@@ -5765,18 +5785,27 @@ while 1:
 				# of work as Argyll doesn't support Wayland natively yet,
 				# so we use virtual display to drive our own patch window.
 				# We need to restore the display profile.
-				self.log(appname + ": Re-assigning display profile...")
-				cdinstall = self._attempt_install_profile_colord(self.display_profile)
-				if cdinstall is True:
-					self.log(appname + ": Successfully re-assigned display profile")
-				elif not cdinstall:
-					self.log(lang.getstr("calibration.load_error"))
-				# Remove temp sRGB profile
-				try:
-					os.remove(os.path.join(xdg_data_home, 'icc',
-										   os.path.basename(self.srgb.fileName)))
-				except Exception, exception:
-					self.log(exception)
+				if profiling_inhibit:
+					# Use DBus interface to call ProfilingInhibit()
+					try:
+						iface.ProfilingUninhibit()
+					except dbus.exceptions.DBusException, dbus_exception:
+						self.log(dbus_exception)
+						profiling_inhibit = False
+				if not profiling_inhibit:
+					# Fallback - restore display profile
+					self.log(appname + ": Re-assigning display profile...")
+					cdinstall = self._attempt_install_profile_colord(self.display_profile)
+					if cdinstall is True:
+						self.log(appname + ": Successfully re-assigned display profile")
+					elif not cdinstall:
+						self.log(lang.getstr("calibration.load_error"))
+					# Remove temp sRGB profile
+					try:
+						os.remove(os.path.join(xdg_data_home, 'icc',
+											   os.path.basename(self.srgb.fileName)))
+					except Exception, exception:
+						self.log(exception)
 		if debug and not silent:
 			self.log("*** Returncode:", self.retcode)
 		if self.retcode != 0:
