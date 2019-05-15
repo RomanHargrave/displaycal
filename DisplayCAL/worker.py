@@ -4757,38 +4757,82 @@ END_DATA
 		if (self.measure_cmd and not dry_run and
 			sys.platform not in ("darwin", "win32")):
 			# Inhibit session to prevent screensaver/powersaving etc.
-			if not getattr(self, "gnome_sm_cookie", None):
-				if dbus_session:
-					try:
-						sm_proxy = dbus_session.get_object("org.gnome.SessionManager",
-														   "/org/gnome/SessionManager")
-						sm_iface = dbus.Interface(sm_proxy,
-												  dbus_interface="org.gnome.SessionManager")
-						cookie = sm_iface.Inhibit(appname,
-												  # Toplevel X window ID - not
-												  # used under Wayland?
-												  0,
-												  # Reason for inhibit
-												  "Display device measurements",
-												  # Flags
-												  # Inhibit logging out
-												  1 |
-												  # Inhibit user switching
-												  2 |
-												  # Inhibit suspending
-												  4 |
-												  # Inhibit idle
-												  8)
-					except (ValueError, dbus.exceptions.DBusException), exception:
-						self.log(exception)
+			# Useful commands to figure out list of DBus interfaces:
+			# dbus-send [--session|--system] \
+			#   --dest=org.freedesktop.DBus  \
+			#   --type=method_call           \
+			#   --print-reply                \
+			#   /org/freedesktop/DBus        \
+			#   org.freedesktop.DBus.ListNames
+			if dbus_session:
+				desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
+				inhibit_reason = "Display device measurements"
+				gnome_sm = "org.gnome.SessionManager"
+				gnome_sm_xid = 0
+				# GNOME SessionManager.Inhibit flags:
+				# 1 Inhibit logging out
+				# 2 Inhibit user switching
+				# 4 Inhibit suspending
+				# 8 Inhibit idle
+				gnome_sm_flags = 1 | 2 | 4 | 8
+				precedence = [gnome_sm]
+				ifaces = OrderedDict([(gnome_sm, {"args": (gnome_sm_xid,
+														   inhibit_reason,
+														   gnome_sm_flags),
+												  "uninhibit": "Uninhibit"}),
+									  ("org.freedesktop.ScreenSaver",
+									   {"precedence": precedence}),
+									  ("org.freedesktop.PowerManagement.Inhibit",
+									   {"precedence": precedence})])
+				self.dbus_ifaces = ifaces
+				for bus_name, iface_dict in ifaces.iteritems():
+					if bus_name.startswith("org.freedesktop."):
+						skip = False
+						for precedence in iface_dict.get("precedence", []):
+							if ifaces[precedence].get("cookie"):
+								# Already took care of inhibit
+								skip = True
+								break
+						if skip:
+							continue
 					else:
-						self.gnome_sm_iface = sm_iface
-						self.gnome_sm_cookie = cookie
-						self.log(appname + ": Inhibited session")
-				else:
-					self.log(appname + ": Warning - no D-Bus session bus - "
-							 "cannot inhibit session, screensaver/powersaving may "
-							 "still be active!")
+						iface_domain = bus_name.split(".")[1]
+						if not iface_domain.upper() in desktop:
+							# Not current desktop environment
+							continue
+					object_path = "/" + bus_name.replace(".", "/")
+					other_path = iface_dict.get("path")
+					if other_path:
+						if other_path.startswith("/"):
+							object_path = other_path
+						else:
+							object_path += "/" + other_path
+					if not iface_dict.get("cookie"):
+						try:
+							iface = iface_dict.get("iface")
+							if not iface:
+								proxy = dbus_session.get_object(bus_name,
+																object_path)
+								iface = dbus.Interface(proxy,
+													   dbus_interface=bus_name)
+							cookie = iface.Inhibit(appname,
+												   *iface_dict.get("args",
+																   (inhibit_reason,)))
+						except (TypeError, ValueError,
+								dbus.exceptions.DBusException), exception:
+							dbus_exc_name = getattr(exception, "get_dbus_name",
+													lambda: None)()
+							if dbus_exc_name == "org.freedesktop.DBus.Error.ServiceUnknown":
+								exception = "%s: %s" % (exception, dbus_exc_name)
+							self.log(exception)
+						else:
+							iface_dict["iface"] = iface
+							iface_dict["cookie"] = cookie
+							self.log(appname + ": Inhibited " + bus_name)
+			else:
+				self.log(appname + ": Warning - no D-Bus session bus - "
+						 "cannot inhibit session, screensaver/powersaving may "
+						 "still be active!")
 		profiling_inhibit = False
 		display_profile = None
 		if (self.measure_cmd and self._use_patternwindow and
@@ -4819,7 +4863,8 @@ END_DATA
 					iface = dbus.Interface(proxy,
 										   dbus_interface="org.freedesktop.ColorManager.Device")
 					iface.ProfilingInhibit()
-				except (ValueError, dbus.exceptions.DBusException), exception:
+				except (TypeError, ValueError,
+						dbus.exceptions.DBusException), exception:
 					self.log(exception)
 				else:
 					profiling_inhibit = True
@@ -12037,18 +12082,22 @@ usage: spotread [-options] [logfile]
 		self._detected_output_levels = False
 
 		# Uninhibit session if needed
-		cookie = getattr(self, "gnome_sm_cookie", None)
-		if cookie:
-			# Uninhibit session. Note that if (e.g.) screensaver timeout has
-			# occured during the time the session was inhibited, that will now
-			# kick in immediately after uninhibiting
-			try:
-				self.gnome_sm_iface.Uninhibit(cookie)
-			except dbus.exceptions.DBusException, exception:
-				self.log(exception)
-			else:
-				self.gnome_sm_cookie = None
-				self.log(appname + ": Uninhibited session")
+		if hasattr(self, "dbus_ifaces"):
+			for bus_name, iface_dict in self.dbus_ifaces.iteritems():
+				cookie = iface_dict.get("cookie")
+				if cookie:
+					# Uninhibit. Note that if (e.g.) screensaver timeout has
+					# occured during the time the session was inhibited, that
+					# may now kick in immediately after uninhibiting
+					uninhibit = iface_dict.get("uninhibit", "UnInhibit")
+					try:
+						getattr(iface_dict["iface"], uninhibit)(cookie)
+					except (TypeError, ValueError,
+							dbus.exceptions.DBusException), exception:
+						self.log(exception)
+					else:
+						iface_dict["cookie"] = None
+						self.log(appname + ": Uninhibited " + bus_name)
 	
 	def swap_progress_wnds(self):
 		""" Swap the current interactive window with a progress dialog """
