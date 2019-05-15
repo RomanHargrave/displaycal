@@ -137,10 +137,11 @@ class AboutDialog(wx.Dialog):
 		# Windows (other platforms?)
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
+		self.Sizer = wx.BoxSizer(wx.VERTICAL)
 		self.panel = wx.ScrolledWindow(self, style=wx.VSCROLL)
+		self.Sizer.Add(self.panel, 1, flag=wx.EXPAND)
 
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.panel.SetSizer(self.sizer)
+		self.panel.Sizer = wx.BoxSizer(wx.VERTICAL)
 
 		if "gtk3" in wx.PlatformInfo:
 			# Fix background color not working for panels under GTK3
@@ -153,31 +154,36 @@ class AboutDialog(wx.Dialog):
 		self.Hide()
 
 	def Layout(self):
-		self.sizer.SetSizeHints(self)
+		self.Sizer.SetSizeHints(self)
 		self.panel.SetScrollRate(2, 2)
-		self.sizer.Layout()
+		self.Sizer.Layout()
+		if wx.Platform == "__WXGTK__":
+			for child in self.panel.Children:
+				# Fix height of children
+				child.MinSize = child.MinSize[0], child.Size[1]
 
 	def add_items(self, items):
-		if sys.platform == "win32":
-			# wx.Button doesn't take into account actual parent background
-			# color under Windows
-			btncls = ThemedGenButton
-		else:
-			btncls = wx.Button
-		self.ok = btncls(self.panel, -1, lang.getstr("close"))
+		self.line = wx.Panel(self, size=(-1,1))
+		self.line.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT))
+		self.Sizer.Add(self.line, flag=wx.EXPAND)
+		self.btnpanel = wx.Panel(self)
+		self.btnpanel.Sizer = wx.GridSizer(1, 1, 0, 0)
+		self.Sizer.Add(self.btnpanel, flag=wx.EXPAND)
+		self.ok = wx.Button(self.btnpanel, -1, lang.getstr("close"))
+		self.btnpanel.Sizer.Add(self.ok, flag=wx.ALL | wx.ALIGN_CENTER,
+								border=12)
 		self.Bind(wx.EVT_BUTTON, self.OnClose, id=self.ok.GetId())
-		items.extend([self.ok, (1, 16)])
 		for item in items:
 			if (not isinstance(item, wx.Window) and
 				hasattr(item, "__iter__") and
 				filter(lambda subitem: not isinstance(subitem, (int, float)),
 					   item)):
 				sizer = wx.BoxSizer(wx.HORIZONTAL)
-				self.add_item(sizer, self.sizer)
+				self.add_item(sizer, self.panel.Sizer)
 				for subitem in item:
 					self.add_item(subitem, sizer)
 			else:
-				self.add_item(item, self.sizer)
+				self.add_item(item, self.panel.Sizer)
 		self.ok.SetDefault()
 		self.ok.SetFocus()
 
@@ -193,7 +199,7 @@ class AboutDialog(wx.Dialog):
 		flag = wx.ALIGN_CENTER_HORIZONTAL
 		if isinstance(item, (wx.Panel, wx.PyPanel)):
 			flag |= wx.EXPAND
-		elif sizer is self.sizer:
+		elif sizer is self.panel.Sizer:
 			flag |= wx.LEFT | wx.RIGHT
 		sizer.Add(item, 0, flag, 12)
 
