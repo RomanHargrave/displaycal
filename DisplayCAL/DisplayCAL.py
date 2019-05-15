@@ -1692,7 +1692,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.display_instrument_info_panel.Sizer.Add((0, 14 * scale))
 		self.display_instrument_info_panel.Sizer.Add(btn, flag=wx.LEFT,
 													 border=(16 + 32 + 7) * scale)
-		self.display_instrument_info_panel.Sizer.Add((0, 13 * scale))
+		self.display_instrument_info_panel.Sizer.Add((0, 12 * scale))
 		self.display_tech_info_show_btn = btn
 		
 		# Button panel
@@ -15474,25 +15474,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		items.append(get_header(self.aboutdialog.panel, getbitmap("theme/header", False),
 								label=wrap(lang.getstr("header"), 32),
 								size=(320, 120), repeat_sub_bitmap_h=(220, 0, 2, 184)))
-		bmp = getbitmap("theme/gradient", False)
-		if bmp.Size[0] >= 8 and bmp.Size[1] >= 96:
-			separator = BitmapBackgroundPanel(self.aboutdialog.panel, size=(-1, 1))
-			separator.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-			items.append(separator)
-			shadow = BitmapBackgroundPanel(self.aboutdialog.panel, size=(-1, 15))
-			bmp = bmp.GetSubBitmap((0, 1, 8, 15)).ConvertToImage().Mirror(False).ConvertToBitmap()
-			image = bmp.ConvertToImage()
-			databuffer = image.GetDataBuffer()
-			for i, byte in enumerate(databuffer):
-				if byte > "\0":
-					databuffer[i] = chr(int(min(round(ord(byte) *
-													  (255.0 / 223.0)), 255)))
-			bmp = image.ConvertToBitmap()
-			shadow.BackgroundColour = self.aboutdialog.panel.BackgroundColour
-			shadow.SetBitmap(bmp)
-			shadow.blend = True
-			items.append(shadow)
-		items.append((1, 8))
+		separator = wx.Panel(self.aboutdialog.panel, size=(-1, 1))
+		separator.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+		items.append(separator)
+		items.append((1, 12))
 		version_title = version_short
 		if VERSION > VERSION_BASE:
 			version_title += " Beta"
@@ -15558,7 +15543,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								   lang.getstr("audio.lib",
 											   "%s %s" % (audio._lib, 
 														  audio._lib_version))))
-		items.append(wx.StaticText(self.aboutdialog.panel, -1, ""))
+		items.append((1, 12))
 		self.aboutdialog.add_items(items)
 		self.aboutdialog.Layout()
 		self.aboutdialog.Center()
