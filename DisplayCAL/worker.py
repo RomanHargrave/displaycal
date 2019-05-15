@@ -55,10 +55,12 @@ if sys.platform == "win32":
 elif sys.platform != "darwin":
 	try:
 		import dbus
+		from dbus.mainloop import glib
 	except ImportError:
 		dbus = None
 		dbus_session = None
 	else:
+		glib.threads_init()
 		try:
 			dbus_session = dbus.SessionBus()
 		except dbus.exceptions.DBusException:
