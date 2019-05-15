@@ -4823,7 +4823,7 @@ END_DATA
 							dbus_exc_name = getattr(exception, "get_dbus_name",
 													lambda: None)()
 							if dbus_exc_name == "org.freedesktop.DBus.Error.ServiceUnknown":
-								exception = "%s: %s" % (exception, dbus_exc_name)
+								exception = "%s: %s" % (exception, bus_name)
 							self.log(exception)
 						else:
 							iface_dict["iface"] = iface
