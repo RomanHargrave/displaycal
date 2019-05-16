@@ -23,8 +23,13 @@ except ImportError:
 else:
 	cancellable = Gio.Cancellable.new();
 
+from util_dbus import DBusObject, DBusObjectError, BUSTYPE_SYSTEM
+
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
+
+	Colord = DBusObject(BUSTYPE_SYSTEM, "org.freedesktop.ColorManager", 
+										"/org/freedesktop/ColorManager")
 
 from util_os import which
 from util_str import safe_str, safe_unicode
@@ -142,19 +147,16 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 		device_id = device_ids.get(edid["hash"])
 		if device_id:
 			return device_id
-		elif sys.platform not in ("darwin", "win32") and (query and
-														  which("colormgr")):
+		elif sys.platform not in ("darwin", "win32") and query:
 			try:
-				device = find("device-by-property", ["OutputEdidMd5",
-													 edid["hash"]])
+				device = Device(find("device-by-property", ["OutputEdidMd5",
+															edid["hash"]]))
+				device_id = device.properties["DeviceId"]
 			except CDError, exception:
 				warnings.warn(safe_str(exception), Warning)
 			else:
-				device_id = re.search(r":\s*(xrandr-[^\r\n]+)", device)
-				if device_id:
-					device_id = device_id.groups()[0]
-					device_ids[edid["hash"]] = device_id
-					return device_id
+				device_ids[edid["hash"]] = device_id
+				return device_id
 	parts = ["xrandr"]
 	edid_keys = ["monitor_name", "serial_ascii"]
 	if not omit_manufacturer:
@@ -180,103 +182,61 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 
 
 def find(what, search):
-	colormgr = which("colormgr")
-	if not colormgr:
-		raise CDError("colormgr helper program not found")
+	""" Find device or profile and return object path """
 	if not isinstance(search, list):
 		search = [search]
-	args = ["find-%s" % what] + search
+	method_name = "_".join(part for part in what.split("-"))
 	try:
-		p = sp.Popen([safe_str(colormgr)] + args, stdout=sp.PIPE,
-					 stderr=sp.STDOUT)
-		stdout, stderr = p.communicate()
+		return getattr(Colord, "find_" + method_name)(*search)
 	except Exception, exception:
+		if isinstance(exception, DBusObjectError):
+			if exception.get_dbus_name() == "org.freedesktop.ColorManager.NotFound":
+				raise CDObjectNotFoundError(safe_str(exception))
+			else:
+				raise CDObjectQueryError(safe_str(exception))
 		raise CDError(safe_str(exception))
-	else:
-		errmsg = "Could not find %s for %s" % (what, search)
-		if p.returncode != 0:
-			raise CDObjectQueryError(stdout.strip() or errmsg)
-		result = stdout.strip()
-		if not result:
-			raise CDObjectNotFoundError(errmsg)
-	return result
 
 
 def get_default_profile(device_id):
 	"""
-	Get default profile filename for device
+	Get default profile for device
 	
 	"""
-	if not Colord:
-		colormgr = which("colormgr")
-		if not colormgr:
-			raise CDError("colormgr helper program not found")
-
-		# Find device object path
-		device = get_object_path(device_id, "device")
-		
-		# Get default profile
-		try:
-			p = sp.Popen([safe_str(colormgr), "device-get-default-profile",
-						  device],
-						 stdout=sp.PIPE, stderr=sp.STDOUT)
-			stdout, stderr = p.communicate()
-		except Exception, exception:
-			raise CDError(safe_str(exception))
-		else:
-			errmsg = "Couldn't get default profile for device %s" % device_id
-			if p.returncode != 0:
-				raise CDError(stdout.strip() or errmsg)
-			match = re.search(":\s*([^\r\n]+\.ic[cm])", stdout, re.I)
-			if match:
-				return safe_unicode(match.groups()[0])
-			else:
-				raise CDError(errmsg)
-		
-	client = client_connect()
-
-	# Connect to existing device
-	device = device_connect(client, device_id)
+	# Find device object path
+	device = Device(get_object_path(device_id, "device"))
 	
 	# Get default profile
-	profile = device.get_default_profile()
-	if not profile:
-		# No assigned profile
-		return
-
-	# Connect to profile
-	if not profile.connect_sync(cancellable):
-		raise CDError("Couldn't get default profile for device ID %r" % device_id)
-	filename = profile.get_filename()
-	if not isinstance(filename, unicode):
-		filename = filename.decode('UTF-8')
-	return filename
-
-
-def get_display_device_ids():
-	displays = []
-	colormgr = which("colormgr")
-	if not colormgr:
-		raise CDError("colormgr helper program not found")
 	try:
-		p = sp.Popen([safe_str(colormgr), "get-devices-by-kind", "display"],
-					 stdout=sp.PIPE, stderr=sp.STDOUT)
-		stdout, stderr = p.communicate()
+		properties = device.properties
 	except Exception, exception:
 		raise CDError(safe_str(exception))
 	else:
-		for line in stdout.splitlines():
-			item = line.split(":", 1)
-			if len(item) > 1 and item[1].strip().startswith("xrandr-"):
-				# Found device ID
-				displays.append(item[1].strip())
-	return displays
+		if properties["ProfilingInhibitors"]:
+			return None
+		profiles = properties["Profiles"]
+		if profiles:
+			return profiles[0]
+		else:
+			raise CDError("Couldn't get default profile for device ID %r" %
+						  device_id)
+
+
+def get_devices_by_kind(kind):
+	return [Device(unicode(object_path, "UTF-8"))
+			for object_path in Colord.get_devices_by_kind(kind)]
+
+
+def get_display_devices():
+	return get_devices_by_kind("display")
+
+
+def get_display_device_ids():
+	return [display.properties["DeviceId"] for display in get_display_devices()]
 
 
 def get_object_path(search, object_type):
-	result = find(object_type, search)
-	if result:
-		result = result.splitlines()[0].split(":", 1)[-1].strip()
+	""" Get object path for profile or device ID """
+	result = find(object_type + "-by-id", search)
 	if not result:
 		raise CDObjectNotFoundError("Could not find object path for %s" % search)
 	return result
@@ -323,7 +283,7 @@ def install_profile(device_id, profile,
 
 	cdprofile = None
 
-	if Colord:
+	if Colord and not isinstance(Colord, DBusObject):
 		client = client_connect()
 	else:
 		# Query colord for profile
@@ -382,7 +342,7 @@ def install_profile(device_id, profile,
 		# Query colord for newly added profile
 		for i in xrange(int(timeout / 1.0)):
 			try:
-				if Colord:
+				if Colord and not isinstance(Colord, DBusObject):
 					cdprofile = client.find_profile_sync(profile_id,
 														 cancellable)
 				else:
@@ -402,7 +362,7 @@ def install_profile(device_id, profile,
 	errmsg = "Could not make profile %s default for device %s" % (profile_id,
 																  device_id)
 
-	if Colord:
+	if Colord and not isinstance(Colord, DBusObject):
 		# Connect to profile
 		if not cdprofile.connect_sync(cancellable):
 			raise CDError("Could not connect to profile")
@@ -482,6 +442,44 @@ def quirk_manufacturer(manufacturer):
 	manufacturer = manufacturer.rstrip()
 
 	return manufacturer
+
+
+class Object(DBusObject):
+
+	def __init__(self, object_path, object_type):
+		try:
+			DBusObject.__init__(self, BUSTYPE_SYSTEM,
+								"org.freedesktop.ColorManager", object_path,
+								object_type)
+		except DBusObjectError, exception:
+			raise CDError(safe_str(exception))
+		self._object_type = object_type
+
+	_properties = DBusObject.properties
+
+	@property
+	def properties(self):
+		try:
+			properties = {}
+			for key, value in self._properties.iteritems():
+				if key == "Profiles":
+					value = [Profile(object_path) for object_path in value]
+				properties[key] = value
+			return properties
+		except DBusObjectError, exception:
+			raise CDError(safe_str(exception))
+
+
+class Device(Object):
+
+	def __init__(self, object_path):
+		Object.__init__(self, object_path, "Device")
+
+
+class Profile(Object):
+
+	def __init__(self, object_path):
+		Object.__init__(self, object_path, "Profile")
 
 
 class CDError(Exception):

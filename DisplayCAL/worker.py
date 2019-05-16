@@ -52,23 +52,6 @@ if sys.platform == "win32":
 	import win32event
 	import pywintypes
 	import winerror
-elif sys.platform != "darwin":
-	try:
-		import dbus
-		from dbus.mainloop import glib
-	except ImportError:
-		dbus = None
-		dbus_session = None
-	else:
-		glib.threads_init()
-		try:
-			dbus_session = dbus.SessionBus()
-		except dbus.exceptions.DBusException:
-			dbus_session = None
-		try:
-			dbus_system = dbus.SystemBus()
-		except dbus.exceptions.DBusException:
-			dbus_system = None
 
 # custom
 import CGATS
@@ -134,6 +117,13 @@ elif sys.platform == "win32":
 else:
 	# Linux
 	from defaultpaths import xdg_data_home
+	try:
+		from util_dbus import (DBusObject, DBusObjectError, BUSTYPE_SESSION,
+							   dbus, dbus_session, dbus_system)
+	except ImportError:
+		dbus = None
+		dbus_session = None
+		dbus_system = None
 import colord
 from util_os import (dlopen, expanduseru, fname_ext, getenvu, is_superuser,
 					 launch_file, make_win32_compatible_long_path, mksfile,
@@ -4781,7 +4771,7 @@ END_DATA
 				ifaces = OrderedDict([(gnome_sm, {"args": (gnome_sm_xid,
 														   inhibit_reason,
 														   gnome_sm_flags),
-												  "uninhibit": "Uninhibit"}),
+												  "uninhibit": "uninhibit"}),
 									  ("org.freedesktop.ScreenSaver",
 									   {"precedence": precedence}),
 									  ("org.freedesktop.PowerManagement.Inhibit",
@@ -4813,19 +4803,12 @@ END_DATA
 						try:
 							iface = iface_dict.get("iface")
 							if not iface:
-								proxy = dbus_session.get_object(bus_name,
-																object_path)
-								iface = dbus.Interface(proxy,
-													   dbus_interface=bus_name)
-							cookie = iface.Inhibit(appname,
+								iface = DBusObject(BUSTYPE_SESSION, bus_name,
+												   object_path)
+							cookie = iface.inhibit(appname,
 												   *iface_dict.get("args",
 																   (inhibit_reason,)))
-						except (TypeError, ValueError,
-								dbus.exceptions.DBusException), exception:
-							dbus_exc_name = getattr(exception, "get_dbus_name",
-													lambda: None)()
-							if dbus_exc_name == "org.freedesktop.DBus.Error.ServiceUnknown":
-								exception = "%s: %s" % (exception, bus_name)
+						except DBusObjectError, exception:
 							self.log(exception)
 						else:
 							iface_dict["iface"] = iface
@@ -4860,13 +4843,9 @@ END_DATA
 			if dbus_system and object_path:
 				# Use DBus interface to call ProfilingInhibit()
 				try:
-					proxy = dbus_system.get_object("org.freedesktop.ColorManager",
-												   object_path)
-					iface = dbus.Interface(proxy,
-										   dbus_interface="org.freedesktop.ColorManager.Device")
-					iface.ProfilingInhibit()
-				except (TypeError, ValueError,
-						dbus.exceptions.DBusException), exception:
+					cd_device = colord.Device(object_path)
+					cd_device.profiling_inhibit()
+				except (colord.CDError, DBusObjectError), exception:
 					self.log(exception)
 				else:
 					profiling_inhibit = True
@@ -5889,9 +5868,9 @@ while 1:
 				if profiling_inhibit:
 					# Use DBus interface to call ProfilingInhibit()
 					try:
-						iface.ProfilingUninhibit()
-					except dbus.exceptions.DBusException, dbus_exception:
-						self.log(dbus_exception)
+						cd_device.profiling_uninhibit()
+					except Exception, cd_exception:
+						self.log(cd_exception)
 						profiling_inhibit = False
 					else:
 						self.log(appname + ": Uninhibited display device")
@@ -9827,12 +9806,12 @@ usage: spotread [-options] [logfile]
 			# Add screen brightness if applicable
 			if sys.platform not in ("darwin", "win32") and dbus_session:
 				try:
-					proxy = dbus_session.get_object("org.gnome.SettingsDaemon",
-													"/org/gnome/SettingsDaemon/Power")
-					iface = dbus.Interface(proxy,
-										   dbus_interface="org.gnome.SettingsDaemon.Power.Screen")
-					brightness = iface.GetPercentage()
-				except dbus.exceptions.DBusException:
+					iface = DBusObject(BUSTYPE_SESSION,
+									   "org.gnome.SettingsDaemon.Power",
+									   "/org/gnome/SettingsDaemon/Power",
+									   "Screen")
+					brightness = iface.get_percentage()
+				except DBusObjectError:
 					pass
 				else:
 					profile.tags.meta["SCREEN_brightness"] = str(brightness)
@@ -12091,11 +12070,10 @@ usage: spotread [-options] [logfile]
 					# Uninhibit. Note that if (e.g.) screensaver timeout has
 					# occured during the time the session was inhibited, that
 					# may now kick in immediately after uninhibiting
-					uninhibit = iface_dict.get("uninhibit", "UnInhibit")
+					uninhibit = iface_dict.get("uninhibit", "un_inhibit")
 					try:
 						getattr(iface_dict["iface"], uninhibit)(cookie)
-					except (TypeError, ValueError,
-							dbus.exceptions.DBusException), exception:
+					except DBusObjectError, exception:
 						self.log(exception)
 					else:
 						iface_dict["cookie"] = None

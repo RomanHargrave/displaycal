@@ -1866,7 +1866,8 @@ def _colord_get_display_profile(display_no=0, path_only=False, use_cache=True):
 		for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
 			if device_id:
 				try:
-					profile_path = colord.get_default_profile(device_id)
+					profile = colord.get_default_profile(device_id)
+					profile_path = profile.properties.get("Filename")
 				except colord.CDObjectQueryError:
 					# Device ID was not found, try next one
 					continue

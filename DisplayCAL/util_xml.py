@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+try:
+	from xml.etree import ElementTree as ET
+except ImportError:
+	pass
+
+from ordereddict import OrderedDict
+
 
 def dict2xml(d, elementname="element", pretty=True, allow_attributes=True,
 			 level=0):
@@ -44,3 +51,38 @@ def dict2xml(d, elementname="element", pretty=True, allow_attributes=True,
 
 def escape(xml):
 	return xml.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+class ETreeDict(OrderedDict):
+
+	def __init__(self, parent_element):
+		OrderedDict.__init__(self, parent_element.items())
+		for element in parent_element:
+			if not element.tag in self:
+				self[element.tag] = []
+			self[element.tag].append(ETreeDict(element))
+			text = element.text
+			if text:
+				text = text.strip()
+				if text:
+					self[element.tag].append(text)
+
+	def __repr__(self):
+		"""
+		od.__repr__() <==> repr(od)
+		"""
+		l = []
+		for k, v in self.iteritems():
+			l.append("%r: %r" % (k, v))
+		return "{%s}" % ", ".join(l)
+
+	def json(self):
+		# Being lazy
+		return repr(self).replace("'", '"')
+
+
+class XMLDict(ETreeDict):
+
+	def __init__(self, xml):
+		parent_element = ET.fromstring(xml)
+		ETreeDict.__init__(self, parent_element)
