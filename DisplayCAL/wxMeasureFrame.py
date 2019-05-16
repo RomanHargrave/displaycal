@@ -127,7 +127,8 @@ class MeasureFrame(InvincibleFrame):
 								 name="measureframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
-		self.Bind(wx.EVT_MOVE, self.move_handler, self)
+		if os.getenv("XDG_SESSION_TYPE") != "wayland":
+			self.Bind(wx.EVT_MOVE, self.move_handler, self)
 		self.Bind(wx.EVT_SHOW, self.show_handler)
 		self.Bind(wx.EVT_KILL_FOCUS, self.focus_lost_handler)
 		self.Bind(wx.EVT_SET_FOCUS, self.focus_handler)
