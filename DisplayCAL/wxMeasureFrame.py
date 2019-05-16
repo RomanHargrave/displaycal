@@ -216,7 +216,8 @@ class MeasureFrame(InvincibleFrame):
 		self.sizer.Add(self.vsizer, flag=wx.ALIGN_BOTTOM | 
 										 wx.ALIGN_CENTER_HORIZONTAL)
 
-		if os.getenv("XDG_SESSION_TYPE") != "wayland":
+		if (os.getenv("XDG_SESSION_TYPE") != "wayland" or
+			config.is_virtual_display()):
 			self.measure_darken_background_cb = wx.CheckBox(self.panel, -1, 
 				lang.getstr("measure.darken_background"))
 			self.measure_darken_background_cb.SetValue(
