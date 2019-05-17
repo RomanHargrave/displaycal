@@ -136,7 +136,7 @@ def device_connect(client, device_id):
 	return device
 
 
-def device_id_from_edid(edid, quirk=True, use_serial_32=True,
+def device_id_from_edid(edid, quirk=False, use_serial_32=True,
 						truncate_edid_strings=False,
 						omit_manufacturer=False, query=False):
 	""" Assemble device key from EDID """
