@@ -40,7 +40,8 @@ import localization as lang
 CD_CLIENT_IMPORT_DAEMON_TIMEOUT = 5000  # ms
 
 
-if not Colord or not hasattr(Colord, 'quirk_vendor_name'):
+if (not Colord or isinstance(Colord, DBusObject) or
+	not hasattr(Colord, 'quirk_vendor_name')):
 	from config import get_data_path
 
 	# From colord/lib/colord/cd_quirk.c, cd_quirk_vendor_name
@@ -425,7 +426,8 @@ def install_profile(device_id, profile,
 
 
 def quirk_manufacturer(manufacturer):
-	if Colord and hasattr(Colord, 'quirk_vendor_name'):
+	if (Colord and not isinstance(Colord, DBusObject) and
+		hasattr(Colord, 'quirk_vendor_name')):
 		return Colord.quirk_vendor_name(manufacturer)
 
 	# Correct some company names
