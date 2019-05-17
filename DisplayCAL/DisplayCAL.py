@@ -15822,7 +15822,7 @@ class StartupFrame(start_cls):
 					extra_args.append("-f")
 					screencap = which("gnome-screenshot")
 				# Determine HiDPI scaling factor
-				factor = config.get_hidpi_scaling_factor()
+				geometry = self.GetDisplay().Geometry
 			bmp_path = os.path.join(self.worker.tempdir, "screencap.png")
 			if self.worker.exec_cmd(screencap,
 									extra_args + ["screencap.png"],
@@ -15891,17 +15891,25 @@ class StartupFrame(start_cls):
 					else:
 						quality = wx.IMAGE_QUALITY_HIGH
 					if (is_mavericks and
-						img.Width == self.splash_bmp.Size[0] * 2 and
-						img.Height == self.splash_bmp.Size[1] * 2):
-						# Retina, screencapture is double our bitmap size
-						img.Rescale(self.splash_bmp.Size[0],
-									self.splash_bmp.Size[1], quality)
-					elif (is_wayland and factor and
-						  img.Width // factor == self.GetDisplay().Geometry[2] and
-						  img.Height // factor == self.GetDisplay().Geometry[3]):
-						# Wayland + HiDPI, screencapture is double size
-						img.Rescale(img.Width // factor,
-									img.Height // factor, quality)
+						(img.Width != self.splash_bmp.Size[0] > 0 or
+						 img.Height != self.splash_bmp.Size[1] > 0)):
+						# Retina
+						img.Rescale(int(round(img.Width *
+											  (self.splash_bmp.Size[0] /
+											   float(img.Width)))),
+									int(round(img.Height *
+											  (self.splash_bmp.Size[1] /
+											   float(img.Height)))), quality)
+					elif (is_wayland and
+						  (img.Width != geometry[2] > 0 or
+						   img.Height != geometry[3] > 0)):
+						# Wayland + HiDPI
+						img.Rescale(int(round(img.Width *
+											  (geometry[2] /
+											   float(img.Width)))),
+									int(round(img.Height *
+											  (geometry[3] /
+											   float(img.Height)))), quality)
 					if (not is_mavericks and
 						img.Width >= self.splash_x + self.splash_bmp.Size[0] and
 						img.Height >= self.splash_y + self.splash_bmp.Size[1]):
