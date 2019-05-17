@@ -53,19 +53,7 @@ def escape(xml):
 	return xml.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
-class ETreeDict(OrderedDict):
-
-	def __init__(self, parent_element):
-		OrderedDict.__init__(self, parent_element.items())
-		for element in parent_element:
-			if not element.tag in self:
-				self[element.tag] = []
-			self[element.tag].append(ETreeDict(element))
-			text = element.text
-			if text:
-				text = text.strip()
-				if text:
-					self[element.tag].append(text)
+class OrderedDictSimpleRepr(OrderedDict):
 
 	def __repr__(self):
 		"""
@@ -76,13 +64,47 @@ class ETreeDict(OrderedDict):
 			l.append("%r: %r" % (k, v))
 		return "{%s}" % ", ".join(l)
 
+
+class ETreeDict(OrderedDictSimpleRepr):
+
+	# Roughly follow "Converting Between XML and JSON"
+	# https://www.xml.com/pub/a/2006/05/31/converting-between-xml-and-json.html
+
+	def __init__(self, etree):
+		OrderedDictSimpleRepr.__init__(self)
+		children = len(etree)
+		if etree.attrib or etree.text or children:
+			self[etree.tag] = OrderedDictSimpleRepr(('@' + k, v)
+													for k, v in
+													etree.attrib.iteritems())
+			if etree.text:
+				text = etree.text.strip()
+				if etree.attrib or children:
+					if text:
+						self[etree.tag]['#text'] = text
+				else:
+					self[etree.tag] = text
+			if children:
+				d = self[etree.tag]
+				for child in etree:
+					for k, v in ETreeDict(child).iteritems():
+						if k in d:
+							if not isinstance(d[k], list):
+								d[k] = [d[k]]
+							d[k].append(v)
+						else:
+							d[k] = v
+		else:
+			self[etree.tag] = None
+
+	@property
 	def json(self):
-		# Being lazy
-		return repr(self).replace("'", '"')
+		import json
+		return json.dumps(self)
 
 
 class XMLDict(ETreeDict):
 
 	def __init__(self, xml):
-		parent_element = ET.fromstring(xml)
-		ETreeDict.__init__(self, parent_element)
+		etree = ET.fromstring(xml)
+		ETreeDict.__init__(self, etree)
