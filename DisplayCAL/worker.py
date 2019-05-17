@@ -6921,11 +6921,6 @@ while 1:
 								getcfg("display.number") - 1))
 		edid = self.display_edid[display_no]
 		if not edid:
-			if os.getenv("XDG_SESSION_TYPE") == "wayland":
-				# Preliminary Wayland support. This still needs a lot of work.
-				device_ids = colord.get_display_device_ids()
-				if device_ids and display_no < len(device_ids):
-					return device_ids[display_no]
 			# Fall back to XrandR name
 			if not (quirk and use_serial_32 and not truncate_edid_strings and
 					not omit_manufacturer):
@@ -6936,6 +6931,12 @@ while 1:
 					xrandr_name = display.get("xrandr_name")
 					if xrandr_name:
 						edid = {"monitor_name": xrandr_name}
+					elif os.getenv("XDG_SESSION_TYPE") == "wayland":
+						# Preliminary Wayland support under non-GNOME desktops.
+						# This still needs a lot of work.
+						device_ids = colord.get_display_device_ids()
+						if device_ids and display_no < len(device_ids):
+							return device_ids[display_no]
 		return colord.device_id_from_edid(edid, quirk=quirk,
 										  use_serial_32=use_serial_32,
 										  truncate_edid_strings=truncate_edid_strings,

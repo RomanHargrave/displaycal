@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import os
 import platform
 import re
 import sys
 
+from util_dbus import DBusObject, DBusObjectError, BUSTYPE_SESSION
 from util_x import get_display as _get_x_display
 
 if sys.platform == "darwin":
@@ -59,9 +61,16 @@ def enumerate_displays():
 							   desc)
 			if len(match):
 				if sys.platform not in ("darwin", "win32"):
-					xrandr_name = re.search(", Output (.+)", match[0][0])
-					if xrandr_name:
-						display["xrandr_name"] = xrandr_name.group(1)
+					if (os.getenv("XDG_SESSION_TYPE") == "wayland" and
+						"pos" in display and "size" in display):
+						x, y, w, h = display["pos"] + display["size"]
+						wayland_display = get_wayland_display(x, y, w, h)
+						if wayland_display:
+							display.update(wayland_display)
+					else:
+						xrandr_name = re.search(", Output (.+)", match[0][0])
+						if xrandr_name:
+							display["xrandr_name"] = xrandr_name.group(1)
 				desc = "%s @ %s, %s, %sx%s" % match[0]
 				display["description"] = desc
 	return _displays
@@ -89,6 +98,45 @@ def get_display(display_no=0):
 				if argyll_display.endswith("@ " + geometry):
 					return display
 
+
+def get_wayland_display(x, y, w, h):
+	# Given x, y, width and height of display geometry, find matching
+	# Wayland display.
+	# Currently only support for GNOME3/Mutter
+	try:
+		iface = DBusObject(BUSTYPE_SESSION,
+						   'org.gnome.Mutter.DisplayConfig',
+						   '/org/gnome/Mutter/DisplayConfig')
+		res = iface.get_resources()
+	except DBusObjectError:
+		pass
+	else:
+		# See
+		# https://github.com/GNOME/mutter/blob/master/src/org.gnome.Mutter.DisplayConfig.xml
+		try:
+			crtcs = res[1]
+			# Look for matching CRTC
+			for crtc in crtcs:
+				if crtc[2:6] == (x, y, w, h):
+					# Found our CRTC
+					crtc_id = crtc[0]
+					break
+			# Look for matching output
+			outputs = res[2]
+			found = False
+			for output in outputs:
+				if output[2] == crtc_id:
+					# Found our output
+					found = True
+					break
+			if found:
+				properties = output[7]
+				return {"xrandr_name": output[4],
+						"edid": "".join(chr(v) for v in properties.get("edid", ())),
+						"size_mm": (properties.get("width-mm", 0),
+									properties.get("height-mm", 0))}
+		except (IndexError, KeyError):
+			pass
 
 def get_x_display(display_no=0):
 	display = get_display(display_no)
