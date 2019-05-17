@@ -38,8 +38,8 @@
   TV Rec. 601 YCbCr SD
 "*3dlut.encoding.type_7": |-
   TV Rec. 709 1125/60Hz YCbCr HD
-"*3dlut.encoding.type_C": |-
-  TV Rec. 2020 Constant Luminance YCbCr UHD
+"3dlut.encoding.type_C": |-
+  TV Rec. 2020 恆定亮度 YCbCr UHD
 "*3dlut.encoding.type_T": |-
   TV RGB 16-235 (clip WTW)
 "*3dlut.encoding.type_X": |-
@@ -48,8 +48,8 @@
   全範圍 RGB 0-255
 "*3dlut.encoding.type_t": |-
   TV RGB 16-235
-"*3dlut.encoding.type_x": |-
-  TV xvYCC Rec. 601 YCbCr (Rec. 709 Primaries) SD
+"3dlut.encoding.type_x": |-
+  TV xvYCC Rec. 601 YCbCr (Rec. 709 原色) SD
 "3dlut.format": |-
   3D 查找表檔案格式
 "*3dlut.format.3dl": |-
@@ -131,9 +131,9 @@
 "*FograStrip3.ti1": |-
   Fogra Media Wedge CMYK V3.0
 "ISO_12646-2008_color_accuracy_and_gray_balance.ti1": |-
-  ISO 12646:2008 色彩準確度及灰平衡
+  ISO 12646:2008 色彩精確度及灰平衡
 "ISO_14861_color_accuracy_RGB318.ti1": |-
-  ISO 14861:2015 色彩準確度及灰平衡
+  ISO 14861:2015 色彩精確度及灰平衡
 "*QPcard_201.cie": |-
   QPcard 201
 "*QPcard_202.cie": |-
@@ -159,7 +159,7 @@
 "add": |-
   加入...
 "adjust_rolloff": |-
-  調校 roll-off
+  調校衰減
 "advanced": |-
   進階
 "allow_skip_sensor_cal": |-
@@ -290,7 +290,7 @@
 "black_point_compensation.3dlut.warning": |-
   當建立 3D 查找表時，應該先關閉分析設定中的黑位補償功能，因為會影響色調曲線調整的功能。你是否想關閉黑位補償？
 "black_point_compensation.info": |-
-  黑位補償有效防止黑位被壓縮，但會降低色彩轉換的準確度。
+  黑位補償有效防止黑位被壓縮，但會降低色彩轉換的精確度。
 "black_white": |-
   黑白
 "black_xyz": |-
@@ -313,8 +313,8 @@
   藍色色調響應曲線
 "blue_xyz": |-
   藍色 XYZ
-"*bradford": |-
-  Bradford (ICC recommendation)
+"bradford": |-
+  Bradford (ICC 建議)
 "brightness": |-
   亮度
 "browse": |-
@@ -359,8 +359,8 @@
   已完成校正!
 "calibration.create_fast_matrix_shaper": |-
   建立矩陣描述檔
-"*calibration.create_fast_matrix_shaper_choice": |-
-  Do you want to create a fast matrix shaper profile from calibration measurements or just calibrate?
+"calibration.create_fast_matrix_shaper_choice": |-
+  你是否想使用校正的測量數據來建立快速矩陣成形器設定檔，還是只進行校正？
 "calibration.do_not_use_video_lut": |-
   不要使用顯卡伽瑪表來套用校正
 "calibration.do_not_use_video_lut.warning": |-
@@ -480,7 +480,7 @@
 "calibration_profiling.complete": |-
   已完成校正和分析！
 "calibrationloader.description": |-
-  為所有已設定的顯示裝置設定ICC描述檔及載入校正曲線
+  為所有已設定的顯示裝置設定 ICC 描述檔及載入校正曲線
 "can_be_used_independently": |-
   可獨立使用
 "cancel": |-
@@ -495,52 +495,52 @@
   陰極射線管顯示器
 "ccmx.use_four_color_matrix_method": |-
   最小化 xy 色度差異
-"*ccss.CCFLFamily_07Feb11": |-
-  LCD CCFL family (AC, EIZO, HP)
-"*ccss.FSI_XM55U_23Jan19": |-
-  WOLED family, SDR Rec. 709 gamut mode (FSI XM55U/XM65U, LG OLED)
+"ccss.CCFLFamily_07Feb11": |-
+  LCD 冷色光管系列 (AC, EIZO, HP)
+"ccss.FSI_XM55U_23Jan19": |-
+  WOLED 系列, SDR Rec. 709 色域模式 (FSI XM55U/XM65U, LG OLED)
 "*ccss.GBrLED_25Jul12": |-
   LCD GB-r-LED IPS (Dell U2413)
-"*ccss.HP_DC3": |-
-  LCD PFS Phosphor WLED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
-"*ccss.HP_DreamColor_Z24x_NewPanel": |-
-  LCD PFS Phosphor WLED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
-"*ccss.HP_ZBOOK": |-
-  LCD PFS Phosphor WLED IPS, 100% Adobe RGB (HP ZBook)
-"*ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
-  WOLED (LG OLED 6-Series)
-"*ccss.MacBookProRetina2016": |-
-  LCD PFS Phosphor WLED IPS, 99% P3 (MacBook Pro Retina 2016)
+"ccss.HP_DC3": |-
+  LCD PFS 磷光體白光 LED IPS, 94% Adobe RGB/90% P3 (HP DreamColor)
+"ccss.HP_DreamColor_Z24x_NewPanel": |-
+  LCD PFS 磷光體白光 LED IPS, 98% Adobe RGB/96% P3 (HP DreamColor Z24x G2)
+"ccss.HP_ZBOOK": |-
+  LCD PFS 磷光體白光 LED IPS, 100% Adobe RGB (HP ZBook)
+"ccss.LG OLED 6-Series (i1 Pro 2, ColorMunki Photo)": |-
+  WOLED (LG OLED 6-系列)
+"ccss.MacBookProRetina2016": |-
+  LCD PFS 磷光體 LED IPS, 99% P3 (MacBook Pro Retina 2016)
 "*ccss.NEC_64_690E_PA242W_2013-02-28": |-
   LCD GB-r-LED IPS (NEC PA242W)
 "*ccss.OLEDFamily_20Jul12": |-
   RGB OLED (Sony PVM-2541)
-"*ccss.OLEDFamily_28Aug18": |-
-  RGB OLED family (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
-"*ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
-  LCD PFS Phosphor WLED, 98% Adobe RGB
-"*ccss.PFS_Phosphor_Family_31Jan17": |-
-  LCD PFS Phosphor WLED family
-"*ccss.Panasonic VVX17P051J00": |-
-  LCD PFS Phosphor WLED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
-"*ccss.PlasmaFamily_20Jul12": |-
-  Plasma
-"*ccss.ProjectorFamily_07Feb11": |-
-  Projector family (Marantz, HP, Panasonic)
-"*ccss.RGBLEDFamily_07Feb11": |-
-  LCD RGB LED family (HP, SOYO)
-"*ccss.RG_Phosphor_Family_13Dec11": |-
-  LCD RG Phosphor LED family (AUO B156HW01 V.4 in Lenovo W520/W530)
-"*ccss.RG_Phosphor_Family_25Jul12": |-
-  LCD GB-r-LED/RG Phosphor LED family (AUO B156HW01 V.4, Dell U2413)
-"*ccss.Samsung Q9 75_ (i1 Pro)": |-
-  LCD Quantum Dot LED (Samsung QLED Q9)
-"*ccss.WGCCFLFamily_07Feb11": |-
-  LCD CCFL Wide Gamut family (NEC PA241W/PA271W)
-"*ccss.WLEDFamily_07Feb11": |-
-  LCD White LED family (AC, LG, Samsung)
-"*ccss.WRGB_OLED_LG": |-
-  WOLED, SDR Rec. 709 gamut mode (LG OLED B7)
+"ccss.OLEDFamily_28Aug18": |-
+  RGB OLED 系列 (Sony PVM-2541, Samsung Galaxy S7, Lenovo LEN4140)
+"ccss.PFS_Phosphor_Adobe_RGB_31Jan17": |-
+  LCD PFS 磷光體白光 LED, 98% Adobe RGB
+"ccss.PFS_Phosphor_Family_31Jan17": |-
+  LCD PFS 磷光體白光 LED 系列
+"ccss.Panasonic VVX17P051J00": |-
+  LCD PFS 磷光體白光 LED IPS, 94% P3 (Panasonic VVX17P051J00 in Lenovo P70)
+"ccss.PlasmaFamily_20Jul12": |-
+  等離子
+"ccss.ProjectorFamily_07Feb11": |-
+  投影機系列 (Marantz, HP, Panasonic)
+"ccss.RGBLEDFamily_07Feb11": |-
+  LCD 三原色 LED 系列 (HP, SOYO)
+"ccss.RG_Phosphor_Family_13Dec11": |-
+  LCD RG 磷光體 LED 系列 (AUO B156HW01 V.4 in Lenovo W520/W530)
+"ccss.RG_Phosphor_Family_25Jul12": |-
+  LCD GB-r-LED/RG 磷光體 LED 系列 (AUO B156HW01 V.4, Dell U2413)
+"ccss.Samsung Q9 75_ (i1 Pro)": |-
+  LCD 量子像點 LED (Samsung QLED Q9)
+"ccss.WGCCFLFamily_07Feb11": |-
+  LCD 冷色光管廣色域系列 (NEC PA241W/PA271W)
+"ccss.WLEDFamily_07Feb11": |-
+  LCD 白光 LED 系列 (AC, LG, Samsung)
+"ccss.WRGB_OLED_LG": |-
+  WOLED, SDR Rec. 709 色域模式 (LG OLED B7)
 "ccxx.ti1": |-
   用於色度計修正的測色板
 "centered": |-
@@ -612,7 +612,7 @@
 "chromaticity_illuminant_relative": |-
   色度 (相對於光源)
 "chromecast_limitations_warning": |-
-  請注意 Chromecast 的準確度不及直接連接的顯示器或 madTPG，原因是 Chromecast 採用 RGB 至 YCbCr 轉換和放大。
+  請注意 Chromecast 的精確度不及直接連接的顯示器或 madTPG，原因是 Chromecast 採用 RGB 至 YCbCr 轉換和放大。
 "*cie2012_2": |-
   CIE 2012 2°
 "clear": |-
@@ -721,7 +721,7 @@
 "connection.fail": |-
   連線錯誤 (%s)
 "connection.fail.http": |-
-  HTTP 錯誤%s
+  HTTP 錯誤 %s
 "connection.waiting": |-
   正在等待連線於
 "continue": |-
@@ -895,35 +895,35 @@
 "display.settings": |-
   顯示裝置設定
 "display.tech": |-
-  顯示技術
-"*display.tech.CRT": |-
-  CRT
-"*display.tech.DLP Projector": |-
-  DLP Projector
-"*display.tech.DLP Projector RGB Filter Wheel": |-
-  DLP Projector RGB Filter Wheel
-"*display.tech.DLP Projector RGBCMY Filter Wheel": |-
-  DLP Projector RGBCMY Filter Wheel
-"*display.tech.DPL Projector RGBW Filter Wheel": |-
-  DLP Projector RGBW Filter Wheel
-"*display.tech.LCD": |-
+  顯示器技術
+"display.tech.CRT": |-
+  陰極射線管
+"display.tech.DLP Projector": |-
+  DLP 投影機
+"display.tech.DLP Projector RGB Filter Wheel": |-
+  DLP 投影機 RGB 濾色輪
+"display.tech.DLP Projector RGBCMY Filter Wheel": |-
+  DLP 投影機 RGBCMY 濾色輪
+"display.tech.DPL Projector RGBW Filter Wheel": |-
+  DLP 投影機 RGBW 濾色輪
+"display.tech.LCD": |-
   LCD
-"*display.tech.LCD CCFL": |-
-  LCD CCFL
-"*display.tech.LCD CCFL IPS": |-
-  LCD CCFL IPS
-"*display.tech.LCD CCFL TFT": |-
-  LCD CCFL TFT
-"*display.tech.LCD CCFL VPA": |-
-  LCD CCFL PVA
-"*display.tech.LCD CCFL Wide Gamut": |-
-  LCD CCFL Wide Gamut
-"*display.tech.LCD CCFL Wide Gamut IPS": |-
-  LCD CCFL Wide Gamut IPS
-"*display.tech.LCD CCFL Wide Gamut TFT": |-
-  LCD CCFL Wide Gamut TFT
-"*display.tech.LCD CCFL Wide Gamut VPA": |-
-  LCD CCFL Wide Gamut PVA
+"display.tech.LCD CCFL": |-
+  LCD 冷色光管
+"display.tech.LCD CCFL IPS": |-
+  LCD 冷色光管 IPS
+"display.tech.LCD CCFL TFT": |-
+  LCD 冷色光管 TFT
+"display.tech.LCD CCFL VPA": |-
+  LCD 冷色光管 PVA
+"display.tech.LCD CCFL Wide Gamut": |-
+  廣色域 LCD 冷色光管
+"display.tech.LCD CCFL Wide Gamut IPS": |-
+  廣色域 LCD 冷色光管 IPS
+"display.tech.LCD CCFL Wide Gamut TFT": |-
+  廣色域 LCD 冷色光管 TFT
+"display.tech.LCD CCFL Wide Gamut VPA": |-
+  廣色域 LCD 冷色光管 PVA
 "*display.tech.LCD GB-R Phosphor": |-
   LCD GB-r-LED
 "*display.tech.LCD GB-R Phosphor IPS": |-
@@ -932,22 +932,22 @@
   LCD GB-r-LED TFT
 "*display.tech.LCD GB-R Phosphor VPA": |-
   LCD GB-r-LED PVA
-"*display.tech.LCD PFS Phosphor": |-
-  LCD PFS Phosphor WLED
-"*display.tech.LCD PFS Phosphor IPS": |-
-  LCD PFS Phosphor WLED IPS
-"*display.tech.LCD PFS Phosphor TFT": |-
-  LCD PFS Phosphor WLED TFT
-"*display.tech.LCD PFS Phosphor VPA": |-
-  LCD PFS Phosphor WLED PVA
-"*display.tech.LCD RG Phosphor": |-
-  LCD RG Phosphor LED
-"*display.tech.LCD RG Phosphor IPS": |-
-  LCD RG Phosphor LED IPS
-"*display.tech.LCD RG Phosphor TFT": |-
-  LCD RG Phosphor LED TFT
-"*display.tech.LCD RG Phosphor VPA": |-
-  LCD RG Phosphor LED PVA
+"display.tech.LCD PFS Phosphor": |-
+  LCD PFS 磷光體白光 LED
+"display.tech.LCD PFS Phosphor IPS": |-
+  LCD PFS 磷光體白光 LED IPS
+"display.tech.LCD PFS Phosphor TFT": |-
+  LCD PFS 磷光體白光 LED TFT
+"display.tech.LCD PFS Phosphor VPA": |-
+  LCD PFS 磷光體白光 LED PVA
+"display.tech.LCD RG Phosphor": |-
+  LCD RG 磷光體 LED
+"display.tech.LCD RG Phosphor IPS": |-
+  LCD RG 磷光體 LED IPS
+"display.tech.LCD RG Phosphor TFT": |-
+  LCD RG 磷光體 LED TFT
+"display.tech.LCD RG Phosphor VPA": |-
+  LCD RG 磷光體 LED PVA
 "*display.tech.LCD RGB LED": |-
   LCD RGB LED
 "*display.tech.LCD RGB LED IPS": |-
@@ -956,24 +956,24 @@
   LCD RGB LED TFT
 "*display.tech.LCD RGB LED VPA": |-
   LCD RGB LED PVA
-"*display.tech.LCD White LED": |-
-  LCD White LED
-"*display.tech.LCD White LED IPS": |-
-  LCD White LED IPS
-"*display.tech.LCD White LED TFT": |-
-  LCD White LED TFT
-"*display.tech.LCD White LED VPA": |-
-  LCD White LED PVA
+"display.tech.LCD White LED": |-
+  LCD 白光 LED
+"display.tech.LCD White LED IPS": |-
+  LCD 白光 LED IPS
+"display.tech.LCD White LED TFT": |-
+  LCD 白光 LED TFT
+"display.tech.LCD White LED VPA": |-
+  LCD 白光 LED PVA
 "*display.tech.LED AMOLED": |-
   AMOLED
 "*display.tech.LED OLED": |-
   OLED
-"*display.tech.LED WOLED": |-
-  WOLED
-"*display.tech.Plasma": |-
-  Plasma
-"*display.tech.Unknown": |-
-  Unknown
+"display.tech.LED WOLED": |-
+  白光 OLED
+"display.tech.Plasma": |-
+  等離子
+"display.tech.Unknown": |-
+  未知
 "display_detected": |-
   偵測到顯示裝置的設定有所修改。
 "display_device_profile": |-
@@ -1164,11 +1164,11 @@
   The integrity of %s cannot be verified because the checksum file is malformed.
 "*file.hash.missing": |-
   The integrity of %s cannot be verified because it doesn't have an entry in the checksum file.
-"*file.hash.verification.fail": |-
-  Checksum verification failed for %s:
+"file.hash.verification.fail": |-
+  %s 的校驗碼驗證失敗:
   
-  Expected %s
-  Actual %s
+  預期是 %s
+  實際是 %s
 "file.invalid": |-
   無的效的檔案。
 "file.missing": |-
@@ -1409,14 +1409,14 @@
   <font weight='bold'>Rendering intent</font>
   If you have calibrated to a different whitepoint than the one mandated by the source colorspace, and want to use that for the 3D LUT instead, select “Relative colorimetric”. Otherwise, select “Absolute colorimetric with white point scaling” (white point scaling will prevent clipping in absolute colorimetric mode that could happen if the source colorspace whitepoint is outside of the display gamut). You also have the option to use a non-colorimetric rendering intent that may compress or expand the source colorspace to fit within the display gamut (not recommended when colorimetric accuracy is required).
 "info.calibration_settings": |-
-  <font weight='bold'>校正</font>是以<font weight='bold'>互動地調校顯示器</font>的方法以達到所選擇的白點及/或亮度，以及選擇性地建立<font weight='bold'>1D 查找表校正曲線</font> (LUT = 查找表)
-  以符合所選的色彩反應曲線及確保灰階的平衡。 注意校正時你只要調校顯示器及跳過 1D 查找表曲線的建立，你需要設定
-  色調響應曲線為 “與測量值相同”。 1D 查找表校正並<font weight='bold'>不可以</font> 用於全顯示器色彩校正，你需要建立 <font weight='bold'>ICC 裝置描述檔</font>或 <font weight='bold'>3D 查找表</font>
-  以及在支援的軟件上使用它們以達到目的。 雖然 1D 查找表校正會完整了建立特性描述和 3D 查找表校正。
+  <font weight='bold'>校正</font>是以<font weight='bold'>互動地調校顯示器</font>的方法以達到所選擇的白點及/或亮度並可選擇性地建立<font weight='bold'>1D 查找表校正曲線</font> (LUT = 查找表)
+  以符合所選的色彩反應曲線及確保灰階的平衡。 注意校正時你只要調校顯示器及跳過建立 1D 查找表曲線，你需要設定
+  色調響應曲線為 “與測量值相同”。 1D 查找表校正並<font weight='bold'>不可以</font> 用於全顯示器色彩校正，你需要建立 <font weight='bold'>ICC 裝置描述檔</font>或
+  <font weight='bold'>3D 查找表</font>以及在支援的軟件上使用它們以達到目的。 雖然 1D 查找表校正會完整地建立特性描述和 3D 查找表校正。
 "info.display_instrument": |-
-  <font weight='bold'>Disable any and all dynamic picture settings of your display</font> if applicable. This can include functions such as dynamic contrast, dimming, automatic brightness and similar features.
+  如有的話請<font weight='bold'>停用顯示器的任何動態圖像設定</font>。 這些功能包括動態對比或亮度，自動亮度控制或類似的功能。
   
-  Make sure light does not shine directly onto the screen of your display.
+  請確保沒有光源直接照射顯示器的螢幕。
   
   如你的顯示器為 <font weight='bold'>OLED</font>、<font weight='bold'>等離子</font>螢幕或擁有因應畫面內容而改變亮度的技術，請啟用<font weight='bold'>白色亮度漂移補償</font>.
   
@@ -1447,10 +1447,10 @@
   Find your monitor/TV and corresponding technology at displayspecifications.com
 "*info.display_tech.linklabel.everymac.com": |-
   Find your iMac/MacBook/iPad and corresponding display technology at everymac.com
-"*info.display_tech.show": |-
-  Show information about common display technologies
+"info.display_tech.show": |-
+  顯示關於常見題示器技術的資訊
 "info.mr_settings": |-
-  你可以透過內含關於已測量色塊其色彩錯誤之詳盡統計數據的測量報告，以<font weight='bold'>驗證</font> ICC 描述檔或 3D 查找表的<font weight='bold'>準確度</font> 。
+  你可以透過內含關於已測量色塊其色彩錯誤之詳盡統計數據的測量報告，以<font weight='bold'>驗證</font> ICC 描述檔或 3D 查找表的<font weight='bold'>精確度</font> 。
   
   當驗證 3D 查找表時，請確保使用與建立 3D 查找表時的相同設定值。
   
@@ -1601,8 +1601,8 @@
   測量測色板
 "measureframe.center": |-
   中央
-"*measureframe.center.manual": |-
-  Please place this window in the center of the screen
+"measureframe.center.manual": |-
+  請將此視窗置於螢幕中央
 "measureframe.info": |-
   請將測量視窗移到屏幕上你所想的位置，以及在有需要時改變其大小。大概整個視窗範圍都會用來顯示測試的色板，視窗上的圓圈是用來輔助你正確放置測量儀器的導引標示。
   請將測量儀器放置在該視窗上然後按 “開始測量”。你可以關閉測量視窗以取消並返回主視窗。
@@ -1661,9 +1661,9 @@
 "measurement_mode.lcd.wide_gamut.gb_led": |-
   廣色域 LCD (GB LED)
 "measurement_mode.lcd.wide_gamut.led": |-
-  廣色域 LCD (PFS Phosphor, RGB LED)
+  廣色域 LCD (PFS 磷光體, 三原色 LED)
 "measurement_mode.lcd.wide_gamut.rgb_led": |-
-  廣色域 LCD (RGB LED)
+  廣色域 LCD (三原色 LED)
 "measurement_mode.raw": |-
   原始
 "measurement_mode.refresh": |-
@@ -1916,26 +1916,26 @@
   讓作業系統處理和載入顯示器校正(低質素)
 "profile.name": |-
   描述檔名稱
-"*profile.name.placeholders": |-
-  You may use the following placeholders in the profile name:
+"profile.name.placeholders": |-
+  你可以在設定檔名稱使用以下的佔位符號：
   
-  %a	Abbreviated weekday name
-  %A	Full weekday name
-  %b	Abbreviated month name
-  %B	Full month name
-  %d	Day of the month
-  %H	Hour (24-hour clock)
-  %I	Hour (12-hour clock)
-  %j	Day of the year
-  %m	Month
-  %M	Minute
+  %a	星期簡稱
+  %A	星期全名
+  %b	月份簡稱
+  %B	月份全名
+  %d	月份日子
+  %H	小時 (24小時制)
+  %I	小時 (12小時制)
+  %j	全年日子
+  %m	月份
+  %M	分鐘
   %p	AM/PM
-  %S	Second
-  %U	Week (Sunday as first day of the week)
-  %w	Weekday (sunday is 0)
-  %W	Week (Monday as first day of the week)
-  %y	Year without century
-  %Y	Year with century
+  %S	秒數
+  %U	週數 (星期日為每週首日)
+  %w	週數 (星期日為 0)
+  %W	週數 (星期一為每週首日)
+  %y	年份不包含年代
+  %Y	年份包含年代
 "profile.no_embedded_ti3": |-
   該描述檔不包含 Argyll 兼容的測量數據。
 "profile.no_vcgt": |-
@@ -2095,10 +2095,10 @@
   紅色 XYZ
 "reference": |-
   參考
-"*reflection_hardcopy_original_colorimetry": |-
-  Reflection hardcopy original colorimetry
-"*reflection_print_output_colorimetry": |-
-  Reflection print output colorimetry
+"reflection_hardcopy_original_colorimetry": |-
+  反光硬本原始色度
+"reflection_print_output_colorimetry": |-
+  反光印刷品輸出色度
 "reflective": |-
   反光
 "reflective_scanner": |-
@@ -2525,14 +2525,14 @@
   用於 eeColor 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
 "video_madVR.icc": |-
   用於 madVR 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
-"*video_madVR_ST2084.icc": |-
-  Video 3D LUT for madVR HDR (D65, Rec. 2020 / SMPTE 2084 / BT.2390)
+"video_madVR_ST2084.icc": |-
+  用於 madVR HDR 的視訊 3D 查找表 (D65, Rec. 2020 / SMPTE 2084 / BT.2390)
 "video_monitor": |-
   視訊顯示器
 "video_resolve.icc": |-
   用於 Reslove 的視訊 3D 查找表 (D65, Rec. 709 / Rec. 1886)
-"*video_resolve_ST2084_clip.icc": |-
-  Video 3D LUT for Resolve HDR (D65, Rec. 2020 / SMPTE 2084)
+"video_resolve_ST2084_clip.icc": |-
+  用於 Resolve HDR 的視訊 3D 查找表 (D65, Rec. 2020 / SMPTE 2084)
 "view.3d": |-
   以 3D 檢視
 "viewing_conditions": |-
@@ -2553,8 +2553,8 @@
   你是否真的要捨棄目前的設定值？
 "warning.gamap.out_viewcond.nondisplay": |-
   目的觀看環境 “%s” 並不是顯示螢幕的觀看環境。你決定還要用這個嗎？
-"*warning.input_value_clipping": |-
-  Warning: Values below the display profile blackpoint will be clipped!
+"warning.input_value_clipping": |-
+  警告：低於顯示設定檔黑點的數值會成為全黑！
 "*warning.suspicious_delta_e": |-
   Warning: Suspicious measurements have been found. Please note this check assumes an sRGB-like display device. If your display device differs from this assumption (e.g. if it has a very wide gamut or a tone response too far from sRGB), then errors found are probably not meaningful.
   
@@ -2614,7 +2614,7 @@
 "windows.version.unsupported": |-
   不支援這個版本的 Windows。
 "windows_only": |-
-  只可在 Windows 執行
+  只適用於 Windows
 "working_dir": |-
   工作資料夾：
 "*xyz_scaling": |-
