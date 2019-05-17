@@ -152,12 +152,13 @@ def device_id_from_edid(edid, quirk=False, use_serial_32=True,
 			try:
 				device = Device(find("device-by-property", ["OutputEdidMd5",
 															edid["hash"]]))
-				device_id = device.properties["DeviceId"]
+				device_id = device.properties.get("DeviceId")
 			except CDError, exception:
 				warnings.warn(safe_str(exception), Warning)
 			else:
-				device_ids[edid["hash"]] = device_id
-				return device_id
+				if device_id:
+					device_ids[edid["hash"]] = device_id
+					return device_id
 	parts = ["xrandr"]
 	edid_keys = ["monitor_name", "serial_ascii"]
 	if not omit_manufacturer:
@@ -212,9 +213,9 @@ def get_default_profile(device_id):
 	except Exception, exception:
 		raise CDError(safe_str(exception))
 	else:
-		if properties["ProfilingInhibitors"]:
+		if properties.get("ProfilingInhibitors"):
 			return None
-		profiles = properties["Profiles"]
+		profiles = properties.get("Profiles")
 		if profiles:
 			return profiles[0]
 		else:
@@ -232,7 +233,8 @@ def get_display_devices():
 
 
 def get_display_device_ids():
-	return [display.properties["DeviceId"] for display in get_display_devices()]
+	return filter(None, (display.properties.get("DeviceId")
+						 for display in get_display_devices()))
 
 
 def get_object_path(search, object_type):
