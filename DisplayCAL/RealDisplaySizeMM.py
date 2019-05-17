@@ -114,21 +114,22 @@ def get_wayland_display(x, y, w, h):
 		# See
 		# https://github.com/GNOME/mutter/blob/master/src/org.gnome.Mutter.DisplayConfig.xml
 		try:
+			found = False
 			crtcs = res[1]
 			# Look for matching CRTC
 			for crtc in crtcs:
 				if crtc[2:6] == (x, y, w, h):
 					# Found our CRTC
 					crtc_id = crtc[0]
-					break
-			# Look for matching output
-			outputs = res[2]
-			found = False
-			for output in outputs:
-				if output[2] == crtc_id:
-					# Found our output
-					found = True
-					break
+					# Look for matching output
+					outputs = res[2]
+					for output in outputs:
+						if output[2] == crtc_id:
+							# Found our output
+							found = True
+							break
+					if found:
+						break
 			if found:
 				properties = output[7]
 				return {"xrandr_name": output[4],
