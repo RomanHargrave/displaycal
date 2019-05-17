@@ -5,7 +5,7 @@ import platform
 import re
 import sys
 
-from util_dbus import DBusObject, DBusObjectError, BUSTYPE_SESSION
+from util_dbus import DBusObject, DBusException, BUSTYPE_SESSION
 from util_x import get_display as _get_x_display
 
 if sys.platform == "darwin":
@@ -108,7 +108,7 @@ def get_wayland_display(x, y, w, h):
 						   'org.gnome.Mutter.DisplayConfig',
 						   '/org/gnome/Mutter/DisplayConfig')
 		res = iface.get_resources()
-	except DBusObjectError:
+	except DBusException:
 		pass
 	else:
 		# See

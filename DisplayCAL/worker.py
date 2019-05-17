@@ -118,7 +118,7 @@ else:
 	# Linux
 	from defaultpaths import xdg_data_home
 	try:
-		from util_dbus import (DBusObject, DBusObjectError, BUSTYPE_SESSION,
+		from util_dbus import (DBusObject, DBusException, BUSTYPE_SESSION,
 							   dbus, dbus_session, dbus_system)
 	except ImportError:
 		dbus = None
@@ -4767,16 +4767,17 @@ END_DATA
 				# 4 Inhibit suspending
 				# 8 Inhibit idle
 				gnome_sm_flags = 1 | 2 | 4 | 8
-				precedence = [gnome_sm]
-				ifaces = OrderedDict([(gnome_sm, {"args": (gnome_sm_xid,
-														   inhibit_reason,
-														   gnome_sm_flags),
-												  "uninhibit": "uninhibit"}),
-									  ("org.freedesktop.ScreenSaver",
-									   {"precedence": precedence}),
-									  ("org.freedesktop.PowerManagement.Inhibit",
-									   {"precedence": precedence})])
-				self.dbus_ifaces = ifaces
+				ifaces = getattr(self, "dbus_ifaces", None)
+				if not ifaces:
+					ifaces = OrderedDict([(gnome_sm, {"args": (gnome_sm_xid,
+															   inhibit_reason,
+															   gnome_sm_flags),
+													  "uninhibit": "uninhibit"}),
+										  ("org.freedesktop.ScreenSaver",
+										   {"precedence": [gnome_sm]}),
+										  ("org.freedesktop.PowerManagement.Inhibit",
+										   {"precedence": [gnome_sm]})])
+					self.dbus_ifaces = ifaces
 				for bus_name, iface_dict in ifaces.iteritems():
 					if bus_name.startswith("org.freedesktop."):
 						skip = False
@@ -4808,7 +4809,7 @@ END_DATA
 							cookie = iface.inhibit(appname,
 												   *iface_dict.get("args",
 																   (inhibit_reason,)))
-						except DBusObjectError, exception:
+						except DBusException, exception:
 							self.log(exception)
 						else:
 							iface_dict["iface"] = iface
@@ -4845,7 +4846,7 @@ END_DATA
 				try:
 					cd_device = colord.Device(object_path)
 					cd_device.profiling_inhibit()
-				except (colord.CDError, DBusObjectError), exception:
+				except (colord.CDError, DBusException), exception:
 					self.log(exception)
 				else:
 					profiling_inhibit = True
@@ -9812,7 +9813,7 @@ usage: spotread [-options] [logfile]
 									   "/org/gnome/SettingsDaemon/Power",
 									   "Screen")
 					brightness = iface.get_percentage()
-				except DBusObjectError:
+				except DBusException:
 					pass
 				else:
 					profile.tags.meta["SCREEN_brightness"] = str(brightness)
@@ -12074,7 +12075,7 @@ usage: spotread [-options] [logfile]
 					uninhibit = iface_dict.get("uninhibit", "un_inhibit")
 					try:
 						getattr(iface_dict["iface"], uninhibit)(cookie)
-					except DBusObjectError, exception:
+					except DBusException, exception:
 						self.log(exception)
 					else:
 						iface_dict["cookie"] = None

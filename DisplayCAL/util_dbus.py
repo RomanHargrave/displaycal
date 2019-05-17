@@ -10,11 +10,15 @@ try:
 except ImportError:
 	if sys.platform not in ("darwin", "win32"):
 		raise
+
+	DBusException = Exception
 else:
 	glib.threads_init()
 
 	dbus_session = dbus.SessionBus()
 	dbus_system = dbus.SystemBus()
+
+	DBusException = dbus.exceptions.DBusException
 
 
 from util_str import safe_str
@@ -54,7 +58,7 @@ class DBusObject(object):
 		name = "".join(part.capitalize() for part in name.split("_"))
 		try:
 			return getattr(self._iface, name)
-		except (TypeError, ValueError,
+		except (AttributeError, TypeError, ValueError,
 				dbus.exceptions.DBusException), exception:
 			raise DBusObjectError(exception, self._bus_name)
 
@@ -82,9 +86,9 @@ class DBusObject(object):
 		return XMLDict(xml)
 
 
-class DBusObjectError(Exception):
+class DBusObjectError(DBusException):
 
-	def __init__(self, exception, bus_name):
+	def __init__(self, exception, bus_name=None):
 		self._dbus_name = getattr(exception, "get_dbus_name",
 								  lambda: None)()
 		if self._dbus_name == "org.freedesktop.DBus.Error.ServiceUnknown":

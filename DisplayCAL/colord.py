@@ -23,7 +23,7 @@ except ImportError:
 else:
 	cancellable = Gio.Cancellable.new();
 
-from util_dbus import DBusObject, DBusObjectError, BUSTYPE_SYSTEM
+from util_dbus import DBusObject, DBusException, BUSTYPE_SYSTEM
 
 if sys.platform not in ("darwin", "win32"):
 	from defaultpaths import xdg_data_home
@@ -190,7 +190,7 @@ def find(what, search):
 	try:
 		return getattr(Colord, "find_" + method_name)(*search)
 	except Exception, exception:
-		if isinstance(exception, DBusObjectError):
+		if hasattr(exception, "get_dbus_name"):
 			if exception.get_dbus_name() == "org.freedesktop.ColorManager.NotFound":
 				raise CDObjectNotFoundError(safe_str(exception))
 			else:
@@ -453,7 +453,7 @@ class Object(DBusObject):
 			DBusObject.__init__(self, BUSTYPE_SYSTEM,
 								"org.freedesktop.ColorManager", object_path,
 								object_type)
-		except DBusObjectError, exception:
+		except DBusException, exception:
 			raise CDError(safe_str(exception))
 		self._object_type = object_type
 
@@ -468,7 +468,7 @@ class Object(DBusObject):
 					value = [Profile(object_path) for object_path in value]
 				properties[key] = value
 			return properties
-		except DBusObjectError, exception:
+		except DBusException, exception:
 			raise CDError(safe_str(exception))
 
 
