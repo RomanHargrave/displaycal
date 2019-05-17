@@ -4831,7 +4831,7 @@ END_DATA
 
 			# Inhibit display device to reset videoLUT to linear and profile
 			# to none
-			device_id = self.get_device_id()
+			device_id = self.get_device_id(query=True)
 			object_path = None
 			if device_id:
 				try:
@@ -6912,7 +6912,7 @@ while 1:
 		itable.smooth(diagpng, profile.connectionColorSpace, filename, logfile)
 		return True
 	
-	def get_device_id(self, quirk=True, use_serial_32=True,
+	def get_device_id(self, quirk=False, use_serial_32=True,
 					  truncate_edid_strings=False, omit_manufacturer=False,
 					  query=False):
 		""" Get org.freedesktop.ColorManager device key """
@@ -6923,7 +6923,7 @@ while 1:
 		edid = self.display_edid[display_no]
 		if not edid:
 			# Fall back to XrandR name
-			if not (quirk and use_serial_32 and not truncate_edid_strings and
+			if not (not quirk and use_serial_32 and not truncate_edid_strings and
 					not omit_manufacturer):
 				return
 			if RDSMM:
@@ -7592,7 +7592,7 @@ usage: spotread [-options] [logfile]
 			profile = ICCP.ICCProfile(profile_path)
 		except (IOError, ICCP.ICCProfileInvalidError), exception:
 			return exception
-		device_id = self.get_device_id(quirk=True, query=True)
+		device_id = self.get_device_id(quirk=False, query=True)
 		if (sys.platform not in ("darwin", "win32") and not getcfg("dry_run") and
 			(argyll_install is not True or
 			 self.argyll_version < [1, 6] or
@@ -8088,7 +8088,7 @@ usage: spotread [-options] [logfile]
 
 	def _attempt_install_profile_colord(self, profile, device_id=None):
 		if not device_id:
-			device_id = self.get_device_id(quirk=True, query=True)
+			device_id = self.get_device_id(quirk=False, query=True)
 		if device_id:
 			result = False
 			# Try a range of possible device IDs
@@ -8100,7 +8100,7 @@ usage: spotread [-options] [logfile]
 						  self.get_device_id(quirk=True,
 											 use_serial_32=False,
 											 truncate_edid_strings=True),
-						  self.get_device_id(quirk=False),
+						  self.get_device_id(quirk=True),
 						  self.get_device_id(quirk=False,
 											 truncate_edid_strings=True),
 						  self.get_device_id(quirk=False,
@@ -9819,7 +9819,7 @@ usage: spotread [-options] [logfile]
 					profile.tags.meta["SCREEN_brightness"] = str(brightness)
 					spec_prefixes += ",SCREEN_"
 			# Set device ID
-			device_id = self.get_device_id(quirk=True, query=True)
+			device_id = self.get_device_id(quirk=False, query=True)
 			if device_id:
 				profile.tags.meta["MAPPING_device_id"] = device_id
 				spec_prefixes += ",MAPPING_"

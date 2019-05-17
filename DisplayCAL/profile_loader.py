@@ -185,8 +185,9 @@ if sys.platform == "win32":
 				else:
 					if isinstance(profile.tags.get("meta"), ICCP.DictType):
 						# Check if profile mapping makes sense
-						id = device_id_from_edid(display_edid[1])
-						if profile.tags.meta.getvalue("MAPPING_device_id") != id:
+						id1 = device_id_from_edid(display_edid[1], quirk=True)
+						id2 = device_id_from_edid(display_edid[1], quirk=False)
+						if profile.tags.meta.getvalue("MAPPING_device_id") not in (id1, id2):
 							list_ctrl.SetItemTextColour(index, "#FF8000")
 			self.sizer0.SetSizeHints(self)
 			self.sizer0.Layout()

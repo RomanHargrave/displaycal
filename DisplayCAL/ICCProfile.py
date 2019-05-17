@@ -1817,7 +1817,7 @@ def _colord_get_display_profile(display_no=0, path_only=False, use_cache=True):
 	edid = get_edid(display_no)
 	if edid:
 		# Try a range of possible device IDs
-		device_ids = [colord.device_id_from_edid(edid, quirk=True, query=True),
+		device_ids = [colord.device_id_from_edid(edid, quirk=False, query=True),
 					  colord.device_id_from_edid(edid, quirk=True,
 												 truncate_edid_strings=True),
 					  colord.device_id_from_edid(edid, quirk=True,
@@ -1825,7 +1825,7 @@ def _colord_get_display_profile(display_no=0, path_only=False, use_cache=True):
 					  colord.device_id_from_edid(edid, quirk=True,
 												 use_serial_32=False,
 												 truncate_edid_strings=True),
-					  colord.device_id_from_edid(edid, quirk=False),
+					  colord.device_id_from_edid(edid, quirk=True),
 					  colord.device_id_from_edid(edid, quirk=False,
 												 truncate_edid_strings=True),
 					  colord.device_id_from_edid(edid, quirk=False,
@@ -7086,7 +7086,7 @@ class ICCProfile(object):
 							   ("EDID_white_y", edid["white_y"])))
 		manufacturer = edid.get("manufacturer")
 		if manufacturer:
-			self.tags.meta["EDID_manufacturer"] = colord.quirk_manufacturer(manufacturer)
+			self.tags.meta["EDID_manufacturer"] = manufacturer
 		if "gamma" in edid:
 			self.tags.meta["EDID_gamma"] = edid["gamma"]
 		monitor_name = edid.get("monitor_name", edid.get("ascii"))

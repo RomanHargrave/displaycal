@@ -13313,7 +13313,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				# Set license
 				profile.tags.meta["License"] = getcfg("profile.license")
 				# Set device ID
-				device_id = self.worker.get_device_id(quirk=True)
+				device_id = self.worker.get_device_id(quirk=False)
 				if device_id:
 					profile.tags.meta["MAPPING_device_id"] = device_id
 					prefixes.append("MAPPING_")
