@@ -922,27 +922,25 @@ class LUT3DFrame(BaseFrame):
 	def lut3d_format_ctrl_handler(self, event):
 		# Get selected format
 		format = self.lut3d_formats_ab[self.lut3d_format_ctrl.GetSelection()]
-		if getcfg("3dlut.format") in ("eeColor",
-									  "madVR",
-									  "ReShade") and format not in ("eeColor",
-																	"madVR",
-																	"ReShade"):
-			# If previous format was eeColor/madVR/ReShade, restore 3D LUT encoding
+		encoding_overrides = ("dcl", "eeColor", "madVR", "ReShade")
+		size_overrides = ("dcl", "eeColor", "madVR", "mga", "ReShade")
+		if (getcfg("3dlut.format") in encoding_overrides and
+			format not in encoding_overrides):
+			# If previous format forced specific encoding, restore encoding
 			setcfg("3dlut.encoding.input", getcfg("3dlut.encoding.input.backup"))
 			setcfg("3dlut.encoding.output", getcfg("3dlut.encoding.output.backup"))
-		if getcfg("3dlut.format") in ("eeColor", "madVR", "mga", "ReShade"):
+		if getcfg("3dlut.format") in size_overrides:
+			# If previous format forced specific size, restore size
 			setcfg("3dlut.size", getcfg("3dlut.size.backup"))
-		if getcfg("3dlut.format") not in ("eeColor",
-										  "madVR",
-										  "ReShade") and format in ("eeColor",
-																	"madVR",
-																	"ReShade"):
-			# If selected format is eeColor/madVR/ReShade, backup 3D LUT encoding
+		if (getcfg("3dlut.format") not in encoding_overrides and
+			format in encoding_overrides):
+			# If selected format forces specific encoding, backup current encoding
 			setcfg("3dlut.encoding.input.backup", getcfg("3dlut.encoding.input"))
 			setcfg("3dlut.encoding.output.backup", getcfg("3dlut.encoding.output"))
 		# Set selected format
 		self.lut3d_set_option("3dlut.format", format)
-		if format in ("eeColor", "madVR", "mga", "ReShade"):
+		if format in size_overrides:
+			# If selected format forces specific size, backup current size
 			setcfg("3dlut.size.backup", getcfg("3dlut.size"))
 		if format == "eeColor":
 			# -et -Et for eeColor
@@ -970,6 +968,12 @@ class LUT3DFrame(BaseFrame):
 			elif getcfg("3dlut.bitdepth.output") not in (8, 16):
 				self.lut3d_set_option("3dlut.bitdepth.output", 8)
 			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[getcfg("3dlut.bitdepth.output")])
+		elif format == "dcl":
+			self.lut3d_set_option("3dlut.encoding.input", "n")
+			self.lut3d_set_option("3dlut.encoding.output", "n")
+			self.lut3d_set_option("3dlut.size", 33)
+			self.lut3d_set_option("3dlut.bitdepth.output", 12)
+			self.lut3d_bitdepth_output_ctrl.SetSelection(self.lut3d_bitdepth_ba[12])
 		size = getcfg("3dlut.size")
 		snap_size = self.lut3d_snap_size(size)
 		if snap_size != size:
@@ -1354,11 +1358,15 @@ class LUT3DFrame(BaseFrame):
 			config.defaults["3dlut.encoding.input"] = "t"
 			config.defaults["3dlut.encoding.output"] = "t"
 		else:
-			encodings = list(video_encodings)
+			if format == "dcl":
+				encodings = ["n"]
+			else:
+				encodings = list(video_encodings)
 			config.defaults["3dlut.encoding.input"] = "n"
 			config.defaults["3dlut.encoding.output"] = "n"
 		if (self.worker.argyll_version >= [1, 7] and
-			self.worker.argyll_version != [1, 7, 0, "_beta"]):
+			self.worker.argyll_version != [1, 7, 0, "_beta"] and
+			format != "dcl"):
 			# Argyll 1.7 beta 3 (2015-04-02) added clip WTW on input TV encoding
 			encodings.insert(2, "T")
 		config.valid_values["3dlut.encoding.input"] = encodings
@@ -1703,11 +1711,11 @@ class LUT3DFrame(BaseFrame):
 		self.encoding_input_ctrl.SetSelection(self.encoding_input_ba[getcfg("3dlut.encoding.input")])
 		self.encoding_input_ctrl.Enable(self.encoding_input_ctrl.Count > 1)
 		self.encoding_output_ctrl.SetSelection(self.encoding_output_ba[getcfg("3dlut.encoding.output")])
-		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") != "madVR")
+		self.encoding_output_ctrl.Enable(getcfg("3dlut.format") not in ("dcl", "madVR"))
 	
 	def lut3d_enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(getcfg("3dlut.format")
-									not in ("eeColor", "madVR"))
+									not in ("dcl", "eeColor", "madVR"))
 		
 
 

@@ -4108,17 +4108,22 @@ END_DATA
 		if isinstance(result, Exception):
 			raise result
 
-		if format != "png":
+		valsep = " "
+		if format not in ("dcl", "png"):
 			lut = [["# Created with %s %s" % (appname, version)]]
-			valsep = " "
 			linesep = "\n"
-		if format == "3dl":
+		if format in ("3dl", "dcl"):
 			maxval = math.pow(2, output_bits) - 1
-			lut.append(["# INPUT RANGE: %i" % input_bits])
-			lut.append(["# OUTPUT RANGE: %i" % output_bits])
-			lut.append([])
-			for i in xrange(0, size):
-				lut[-1].append("%i" % quantizer(i * step))
+			if format == "3dl":
+				lut.append(["# INPUT RANGE: %i" % input_bits])
+				lut.append(["# OUTPUT RANGE: %i" % output_bits])
+				lut.append([])
+				for i in xrange(0, size):
+					lut[-1].append("%i" % quantizer(i * step))
+			else:
+				# dcl
+				lut = [["# DeviceControl-LG 3D"]]
+				linesep = "\r\n"
 			for RGB_triplet in RGB_out:
 				lut.append([])
 				for component in (0, 1, 2):

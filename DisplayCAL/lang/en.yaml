@@ -58,6 +58,8 @@
   ReShade (.png, .fx)
 "3dlut.format.cube": |-
   IRIDAS (.cube)
+"3dlut.format.dcl": |-
+  LG OLED (.dcl)
 "3dlut.format.eeColor": |-
   eeColor Processor (.txt)
 "3dlut.format.icc": |-

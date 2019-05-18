@@ -766,8 +766,8 @@ valid_values = {
 	# collink: xvYCC output encoding is not supported
 	"3dlut.encoding.output": filter(lambda v: v not in ("T", "x", "X"),
 									video_encodings),
-	"3dlut.format": ["3dl", "cube", "eeColor", "icc", "madVR", "mga", "png",
-					 "ReShade", "spi3d"],
+	"3dlut.format": ["3dl", "cube", "dcl", "eeColor", "icc", "madVR", "mga",
+					 "png", "ReShade", "spi3d"],
 	"3dlut.hdr_display": [0, 1],
 	"3dlut.image.layout": ["h", "v"],
 	"3dlut.image.order": ["rgb", "bgr"],
