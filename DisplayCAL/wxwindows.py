@@ -1942,7 +1942,13 @@ class BaseFrame(wx.Frame):
 	
 	def update_layout(self):
 		""" Update main window layout. """
-		minsize, clientsize = self.Sizer.MinSize, self.ClientSize
+		border_lr = self.Size[0] - self.ClientSize[0]
+		border_tb = self.Size[1] - self.ClientSize[1]
+		clientarea = self.GetDisplay().ClientArea
+		minsize = (min(clientarea[2] - border_lr, self.Sizer.MinSize[0]),
+				   min(clientarea[3] - border_tb, self.Sizer.MinSize[1]))
+		clientsize = (min(clientarea[2] - border_lr, self.ClientSize[0]),
+					  min(clientarea[3] - border_tb, self.ClientSize[1]))
 		if not self.IsIconized() and not self.IsMaximized():
 			if ((minsize[0] > clientsize[0] or minsize[1] > clientsize[1] or not
 				 getattr(self, "_layout", False))):
