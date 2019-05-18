@@ -141,10 +141,15 @@ def get_wayland_display(x, y, w, h):
 						break
 			if found:
 				properties = output[7]
-				return {"xrandr_name": output[4],
-						"edid": "".join(chr(v) for v in properties.get("edid", ())),
-						"size_mm": (properties.get("width-mm", 0),
-									properties.get("height-mm", 0))}
+				wayland_display = {"xrandr_name": output[4]}
+				edid = "".join(chr(v) for v in properties.get("edid", ()))
+				if edid:
+					wayland_display["edid"] = edid
+				w_mm = properties.get("width-mm")
+				h_mm = properties.get("height-mm")
+				if w_mm and h_mm:
+					wayland_display["size_mm"] = (w_mm, h_mm)
+				return wayland_display
 		except (IndexError, KeyError):
 			pass
 
