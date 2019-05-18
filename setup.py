@@ -53,6 +53,8 @@ def format_chglog(chglog, format="appstream"):
 		# ordered list (ol) and unordered list (ul) are supported at this time.
 		# + list items (li)
 		allowed_tags = ["p", "ol", "ul", "li"]
+		if format == "rpm":
+			allowed_tags.extend(["a"])
 		chglog = re.sub(r"\s*<dt(?:\s+[^>]*)?>.+?</dt>\n?", "", chglog)
 		chglog = re.sub(r"<(h4|p)(?:\s+[^>]*)?>(.+?)</\1>",
 						r"<p>\2</p>", chglog)
@@ -101,12 +103,33 @@ def format_chglog(chglog, format="appstream"):
 			if lvl1.tag in ("ol", "ul"):
 				for lvl2 in lvl1:
 					if lvl2.tag == "li":
-						chglog += u"  * %s\n" % lvl2.text.strip()
+						chglog += u"  * %s" % lvl2.text.lstrip()
+						links = []
+						nlinks = 1
 						for lvl3 in lvl2:
 							if lvl3.tag in ("ol", "ul"):
+								if not chglog.endswith("\n"):
+									chglog += "\n"
 								for lvl4 in lvl3:
 									if lvl4.tag == "li":
-										chglog += u"    %s\n" % lvl4.text.strip()
+										chglog += u"    %s" % lvl4.text.lstrip()
+										for lvl5 in lvl4:
+											if lvl5.tag == "a":
+												# Collect links
+												links.append(lvl5.attrib["href"])
+												chglog += lvl5.text.strip() + "[%i]" % nlinks + lvl5.tail
+												nlinks += 1
+										if not chglog.endswith("\n"):
+											chglog += "\n"
+							elif lvl3.tag == "a":
+								# Collect links
+								links.append(lvl4.attrib["href"])
+								chglog += lvl3.text.strip() + "[%i]" % nlinks + lvl3.tail
+								nlinks += 1
+						if not chglog.endswith("\n"):
+							chglog += "\n"
+						for n, link in enumerate(links, 1):
+							chglog += "    [%i] %s\n" % (n, link)
 		# Wrap each line to 67 chars
 		chglog = chglog.splitlines()
 		for i, line in enumerate(chglog):
