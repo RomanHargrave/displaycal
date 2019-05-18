@@ -15713,7 +15713,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			event.Veto()
 
 
-if sys.platform == "darwin" or os.getenv("XDG_SESSION_TYPE") == "wayland":
+if ((sys.platform == "darwin" and intlist(mac_ver()[0].split(".")) >= [10, 10]) or
+	os.getenv("XDG_SESSION_TYPE") == "wayland"):
 	# Use a wx.Dialog so we can use ShowModal() which seems to be the only way to
 	# center the splash screen under Wayland.
 	# Under macOS, it fixes the splash screen not animating when running
