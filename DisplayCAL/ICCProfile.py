@@ -1874,6 +1874,8 @@ def _colord_get_display_profile(display_no=0, path_only=False, use_cache=True):
 					continue
 				except colord.CDError, exception:
 					warnings.warn(safe_str(exception, enc), Warning)
+				except colord.DBusException, exception:
+					warnings.warn(safe_str(exception, enc), Warning)
 				else:
 					if profile_path:
 						if "hash" in edid:

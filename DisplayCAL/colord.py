@@ -13,6 +13,7 @@ from time import sleep
 from options import use_gi
 
 try:
+	# XXX D-Bus API is more complete currently
 	if not use_gi:
 		raise ImportError("")
 	from gi.repository import Colord
@@ -25,15 +26,19 @@ else:
 
 from util_dbus import DBusObject, DBusException, BUSTYPE_SYSTEM
 
-if sys.platform not in ("darwin", "win32"):
-	from defaultpaths import xdg_data_home
-
-	Colord = DBusObject(BUSTYPE_SYSTEM, "org.freedesktop.ColorManager", 
-										"/org/freedesktop/ColorManager")
-
 from util_os import which
 from util_str import safe_str, safe_unicode
 import localization as lang
+
+if sys.platform not in ("darwin", "win32"):
+	from defaultpaths import xdg_data_home
+
+	if not Colord:
+		try:
+			Colord = DBusObject(BUSTYPE_SYSTEM, "org.freedesktop.ColorManager", 
+												"/org/freedesktop/ColorManager")
+		except DBusException, exception:
+			warnings.warn(safe_str(exception), Warning)
 
 
 # See colord/cd-client.c
@@ -148,7 +153,8 @@ def device_id_from_edid(edid, quirk=False, use_serial_32=True,
 		device_id = device_ids.get(edid["hash"])
 		if device_id:
 			return device_id
-		elif sys.platform not in ("darwin", "win32") and query:
+		elif (sys.platform not in ("darwin", "win32") and query and
+			  isinstance(Colord, DBusObject)):
 			try:
 				device = Device(find("device-by-property", ["OutputEdidMd5",
 															edid["hash"]]))
@@ -185,6 +191,8 @@ def device_id_from_edid(edid, quirk=False, use_serial_32=True,
 
 def find(what, search):
 	""" Find device or profile and return object path """
+	if not isinstance(Colord, DBusObject):
+		raise CDError("colord API not available")
 	if not isinstance(search, list):
 		search = [search]
 	method_name = "_".join(part for part in what.split("-"))
@@ -224,6 +232,8 @@ def get_default_profile(device_id):
 
 
 def get_devices_by_kind(kind):
+	if not isinstance(Colord, DBusObject):
+		return []
 	return [Device(unicode(object_path, "UTF-8"))
 			for object_path in Colord.get_devices_by_kind(kind)]
 
