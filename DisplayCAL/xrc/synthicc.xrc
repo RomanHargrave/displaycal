@@ -4,7 +4,7 @@
     <object class="wxBoxSizer">
       <orient>wxVERTICAL</orient>
       <object class="sizeritem">
-        <object class="wxPanel" name="panel">
+        <object class="wxScrolledWindow" name="panel">
           <object class="wxBoxSizer">
             <orient>wxVERTICAL</orient>
             <object class="sizeritem">
@@ -885,18 +885,24 @@
                 </object>
                 <orient>wxVERTICAL</orient>
               </object>
-              <flag>wxTOP|wxRIGHT|wxLEFT</flag>
+              <flag>wxALL</flag>
               <border>12</border>
             </object>
-            <object class="spacer">
-              <option>1</option>
-            </object>
+          </object>
+        </object>
+        <option>1</option>
+        <flag>wxEXPAND</flag>
+      </object>
+      <object class="sizeritem">
+        <object class="wxPanel" name="separator">
+          <bg>wxSYS_COLOUR_3DLIGHT</bg>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <object class="wxPanel" name="buttonpanel">
+          <object class="wxGridSizer">
             <object class="sizeritem">
               <object class="wxBoxSizer">
-                <object class="sizeritem">
-                  <object class="wxStaticText"/>
-                  <option>1</option>
-                </object>
                 <orient>wxHORIZONTAL</orient>
                 <object class="sizeritem">
                   <object class="wxButton" name="save_btn">
@@ -912,12 +918,11 @@
                   </object>
                 </object>
               </object>
-              <flag>wxALL|wxEXPAND</flag>
+              <flag>wxALIGN_RIGHT|wxALL</flag>
               <border>12</border>
             </object>
           </object>
         </object>
-        <option>1</option>
         <flag>wxEXPAND</flag>
       </object>
     </object>

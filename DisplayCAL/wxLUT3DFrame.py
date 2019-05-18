@@ -71,7 +71,6 @@ class LUT3DFrame(BaseFrame):
 		self.set_child_ctrls_as_attrs(self)
 
 		self.panel = self.FindWindowByName("panel")
-		self.panel.SetScrollRate(2, 2)
 
 		if setup:
 			self.setup()
@@ -119,6 +118,7 @@ class LUT3DFrame(BaseFrame):
 		self.XYZbpout = [0.001, 0.001, 0.001]
 		self.update_controls()
 		self.update_layout()
+		self.panel.SetScrollRate(2, 2)
 		
 		config.defaults.update({
 			"position.lut3dframe.x": self.GetDisplay().ClientArea[0] + 40,

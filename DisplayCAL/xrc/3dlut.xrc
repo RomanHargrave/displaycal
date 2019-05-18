@@ -830,18 +830,10 @@
                   </object>
                   <flag>wxALIGN_CENTRE_VERTICAL</flag>
                 </object>
-                <object class="spacer"/>
-                <object class="sizeritem">
-                  <object class="wxButton" name="lut3d_create_btn">
-                    <label>3dlut.create</label>
-                  </object>
-                  <flag>wxALIGN_RIGHT|wxALIGN_BOTTOM</flag>
-                </object>
                 <cols>2</cols>
                 <rows>0</rows>
                 <vgap>8</vgap>
                 <growablecols>1</growablecols>
-                <growablerows>14</growablerows>
               </object>
               <option>1</option>
               <flag>wxALL|wxEXPAND</flag>
@@ -850,6 +842,25 @@
           </object>
         </object>
         <option>1</option>
+        <flag>wxEXPAND</flag>
+      </object>
+      <object class="sizeritem">
+        <object class="wxPanel" name="separator">
+          <bg>wxSYS_COLOUR_3DLIGHT</bg>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <object class="wxPanel" name="buttonpanel">
+          <object class="wxGridSizer">
+            <object class="sizeritem">
+              <object class="wxButton" name="lut3d_create_btn">
+                <label>3dlut.create</label>
+              </object>
+              <flag>wxALIGN_RIGHT|wxALL</flag>
+              <border>12</border>
+            </object>
+          </object>
+        </object>
         <flag>wxEXPAND</flag>
       </object>
     </object>

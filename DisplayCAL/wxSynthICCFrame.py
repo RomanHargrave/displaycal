@@ -59,6 +59,8 @@ class SynthICCFrame(BaseFrame):
 			self.res.LoadFrame(self, parent, "synthiccframe")
 		self.init()
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
+		if sys.platform == "win32":
+			self.Bind(wx.EVT_SIZE, self.OnSize)
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16],
 											 appname + "-synthprofile"))
@@ -125,6 +127,7 @@ class SynthICCFrame(BaseFrame):
 		
 		self.update_controls()
 		self.update_layout()
+		self.panel.SetScrollRate(2, 2)
 		
 		self.save_btn.Hide()
 		
@@ -144,6 +147,10 @@ class SynthICCFrame(BaseFrame):
 								 int(getcfg("size.synthiccframe.h")))
 		else:
 			self.Center()
+
+	def OnSize(self, event):
+		event.Skip()
+		self.Refresh()  # Prevents distorted drawing under Windows
 	
 	def OnClose(self, event=None):
 		if sys.platform == "darwin" or debug: self.focus_handler(event)
