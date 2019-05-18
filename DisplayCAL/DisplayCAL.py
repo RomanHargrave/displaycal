@@ -1445,7 +1445,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.mr_init_controls()
 		self.update_controls(update_ccmx_items=False)
 		self.set_size(True, True)
-		self.calpanel.SetScrollRate(2, 2)
+		if self.calpanel.VirtualSize[0] > self.calpanel.Size[0]:
+			scrollrate_x = 2
+		else:
+			scrollrate_x = 0
+		self.calpanel.SetScrollRate(scrollrate_x, 2)
 		x, y = getcfg("position.x", False), getcfg("position.y", False)
 		if not None in (x, y):
 			self.SetSaneGeometry(x, y)
@@ -2079,10 +2083,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			height = self.ClientSize[1]
 		borders_lr = self.Size[0] - self.ClientSize[0]
 		scale = getcfg("app.dpi") / config.get_default_dpi()
-		margin = 34
+		margin = wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
 		header_min_h = 64
 		if scale > 1:
-			margin = int(round(margin * scale))
 			header_min_h = int(round(header_min_h * scale))
 		self.mr_settings_panel.Freeze()
 		sim_show = self.simulation_profile_cb.IsShown()
