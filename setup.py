@@ -123,7 +123,7 @@ def format_chglog(chglog, format="appstream"):
 											chglog += "\n"
 							elif lvl3.tag == "a":
 								# Collect links
-								links.append(lvl4.attrib["href"])
+								links.append(lvl3.attrib["href"])
 								chglog += lvl3.text.strip() + "[%i]" % nlinks + lvl3.tail
 								nlinks += 1
 						if not chglog.endswith("\n"):
