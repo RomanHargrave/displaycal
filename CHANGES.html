@@ -42,21 +42,63 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2019-04-26 01:17 (UTC) 3.8  -->
+			<!-- 2019-05-18 15:11 (UTC) 3.8.1  -->
 			<dl>
-				<dt id="changelog-3.8">2019-04-26 01:17 (UTC) 3.8 </dt>
+				<dt id="changelog-3.8.1">2019-05-18 15:11 (UTC) 3.8.1 </dt>
 					<dd>
+						<h3>DisplayCAL 3.8.1 </h3>
+
+						<h4>Added in this release:</h4>
+						<ul>
+							<li>
+								<span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Linux: <strong>Preliminary experimental Wayland support under GNOME 3 using colord</strong> (requires ArgyllCMS 2.1 or newer as well). Caveats do apply:
+								<ul>
+									<li>Window placement and ordering is completely up to the compositor under Wayland. There is generally no way for an application to place its own windows at specific relative locations or z-orders. As a result of this, the measurement window cannot stay always on top or be automatically centered. Extra care needs to be taken that other windows are not placed on top.</li>
+									<li>Video card gamma table (videoLUT) access is handled by colord. Some functions like viewing current videoLUT contents may not be available.</li>
+									<li>The measurement window color depth is limited to 8 bits per channel per pixel (but dithering is used to achieve a higher effective color depth).</li>
+									<li>The measurement window may be subject to desktop-wide color management in upcoming versions of Wayland (although the display device is inhibited during measurements via the <a href="https://www.freedesktop.org/software/colord/gtk-doc/Device.html">org.freedesktop.ColorManager.Device</a> D-Bus API which should prevent this, and as a fallback a linear calibration sRGB profile is temporarily installed during measurements if the D-BUs API is unavailable, which should result in an identity transform, i.e. effectively no color management, as well as linear video card gamma tables).</li>
+									<li>Application support for color management under Wayland via colord <a href="https://www.freedesktop.org/software/colord/faq.html#application-support">still seems to lacking</a> (although the list may well be out-of-date).</li>
+									<li>Only tested under GNOME 3 (Fedora 30, Ubuntu 19.04). Support for other desktop environments will need to be implemented separately until Wayland gains a color management and calibration/profiling protocol.</li>
+								</ul>
+							</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> LG OLED 3D LUT format.</li>
+						</ul>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> If the currently used ArgyllCMS version is not a standard version, but also not a beta, do not offer to switch to an installed official stable version if it's otherwise the same version number.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Include Quantum Dot LED (Samsung QLED Q9F) spectral sample colorimeter correction when importing for i1 Display Pro and ColorMunki Display (sourced from community colorimeter corrections database).</li>
+							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux (Debian, Fedora, Ubuntu): Use wxPython Phoenix if installed.</li>
+							<li>Prisma, Resolve: Set pattern generator background color to pattern color if using fullscreen patterns.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> UnicodeDecodeError when a CCSS file contains unicode characters in the display device description (regression of a change in DisplayCAL 3.8 to use localized technology descriptions, SVN revision r5810).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> APL calculation for Prisma and Resolve pattern generators was off by a few percent depending on pattern area and current pattern color.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Quick reporting on calibrated or uncalibrated display did not try to detect output levels if set to “Auto”.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> More gracefully deal with faulty tags in ICC profiles (fixes ICC profile information unhandled exception for colord-created profiles with malformed <code>targ</code> tags).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Correctly update the audio button state on progress dialogs when changed on a previous window.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Various minor potential rendering glitches.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> macOS (standalone application bundle): Splash screen did not animate.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: Add work-arounds for various Wayland-related wxPython rendering quirks and bugs (e.g. spacing around windows, popup menu placement).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Linux: Try to work around sporadic colord profile installation quirks (“The profile was not added in time”).</li>
+						</ul>
+
+						<p><strong>Phasing out 0install support.</strong> While the 0install version of DisplayCAL (which was originally introduced as a replacement for the long-defunct Autopackage system under Linux) has had its uses, the low distribution (around 6%) of 0install versus the standalone version does no longer warrant the additional time and work needed to maintain this separate deployment path.<br />
+						0install support is thus being phased out starting with DisplayCAL 3.7.2 and following releases, which are only available as “standalone” installations. Windows and macOS users will be updated automatically to the standalone version. Linux users should switch to a standalone package at their earliest convenience.<br />
+						There will be a transition period of a few months during which old 0install-based DisplayCAL versions will continue to run, but afterwards the respective online infrastructure will be decommissioned.</p>
+
+						<p id="changelog-3.8">2019-04-26 01:17 (UTC) 3.8 </p>
 						<h3>DisplayCAL 3.8 </h3>
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> <strong>SpyderX support</strong> (requires ArgyllCMS 2.1.0 or newer, use ArgyllCMS 2.1.0_mod to be able to skip instrument self-calibration).</li>
+							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> <strong>SpyderX support</strong> (requires ArgyllCMS 2.1.0 or newer, use ArgyllCMS 2.1.1 or newer to be able to skip instrument self-calibration).</li>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> <strong>Colorimeter correction information with graph.</strong></li>
 							<li><span class="changelog-label feature"><span>[</span>Feature<span>]</span></span> Synthetic ICC profile creator: Drag &amp; drop support for TI3 measurement files.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Rudimentary support for hypothetical future instruments and their measurement modes (any new instrument support added to ArgyllCMS in the future should be fully usable in DisplayCAL right away without needing an update for instrument-specific measurement modes).</li>
-							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Prefer colorimeter corrections from “ArgyllCMS” folder and ignore duplicate (spectral) colorimeter corrections from “color” folder (e.g. installed by HCFR under Windows).</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Display technology information to aid in the choice of a suitable measurement mode or correction.</li>
-							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Default to high-resolution spectrum mode (if available) for spectrometers that support it.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Include some additional spectral sample colorimeter corrections when importing for i1 Display Pro and ColorMunki Display (e.g. MacBook Pro 2016 Retina with PFS Phosphor WLED “P3” display, <a href="https://colorimetercorrections.displaycal.net/hash/a2d2e72e1effab53d7054cee1dfb4bd6/LG%20OLED%206-Series%20%28i1%20Pro%202%2C%20ColorMunki%20Photo%29.ccss">LG OLED 6-series WOLED</a> based on samples from LG C6 and E6 OLED TVs, sourced and combined from community colorimeter corrections database contributions).</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Automatically warn about incompatibilities of Apple software with calibration black point hue correction and profile types other than single curve + matrix with black point compensation.</li>
 						</ul>
@@ -65,6 +107,8 @@
 						<ul>
 							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated simplified chinese localization (thanks to Mars).</li>
 							<li><span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Updated french localization (thanks to Jean-Luc Coulon).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Prefer colorimeter corrections from “ArgyllCMS” folder and ignore duplicate (spectral) colorimeter corrections from “color” folder (e.g. installed by HCFR under Windows).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Default to high-resolution spectrum mode (if available) for spectrometers that support it.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Implicitly try to skip repeat instrument self-calibration for colorimeters that want it if already done at least once per measurement run.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Converted translation file format from JSON to YAML for better readability.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use a localized description for known quality spectral sample colorimeter corrections.</li>
@@ -78,9 +122,6 @@
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Curve viewer: Re-introduced being able to view the current contents of the video card gamma table if no display profile is set or the profile used does not contain calibration.</li>
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> Curve viewer, profile information: Curve graphing identical channel detection was not working properly in some cases (only affected synthetic curves).</li>
 						</ul>
-
-						<p><strong>Phasing out 0install support.</strong> While the 0install version of DisplayCAL, which was originally introduced as a replacement for the long-defunct Autopackage system under Linux, has had its uses, the low distribution (around 6%) of 0install versus the standalone version does no longer warrant the additional time and work needed to maintain this separate deployment path. 0install support is thus being phased out starting with DisplayCAL 3.7.2 and following releases, which are only available as “standalone” installations. Windows and macOS users will be updated automatically to the standalone version. Linux users should switch to a standalone package at their earliest convenience.<br />
-						There will be a transition period of a few months during which old 0install-based DisplayCAL versions will continue to run, but after which the respective online infrastructure will be decommissioned.</p>
 					</dd>
 
 				<dt id="changelog-3.7.2">2019-03-17 18:36 (UTC) 3.7.2 </dt>

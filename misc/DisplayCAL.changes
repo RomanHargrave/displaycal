@@ -5,6 +5,58 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Fri Apr 26 01:19:15 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.8:
+  * [Feature] SpyderX support (requires ArgyllCMS 2.1.0 or newer,
+    use ArgyllCMS 2.1.0_mod to be able to skip instrument self-
+    calibration).
+  * [Feature] Colorimeter correction information with graph.
+  * [Feature] Synthetic ICC profile creator: Drag & drop support
+    for TI3 measurement files.
+  * [Enhancement] Rudimentary support for hypothetical future
+    instruments and their measurement modes (any new instrument
+    support added to ArgyllCMS in the future should be fully usable
+    in DisplayCAL right away without needing an update for
+    instrument-specific measurement modes).
+  * [Enhancement] Prefer colorimeter corrections from “ArgyllCMS”
+    folder and ignore duplicate (spectral) colorimeter corrections
+    from “color” folder (e.g. installed by HCFR under Windows).
+  * [Enhancement] Display technology information to aid in the
+    choice of a suitable measurement mode or correction.
+  * [Enhancement] Default to high-resolution spectrum mode (if
+    available) for spectrometers that support it.
+  * [Enhancement] Include some additional spectral sample
+    colorimeter corrections when importing for i1 Display Pro and
+    ColorMunki Display (e.g. MacBook Pro 2016 Retina with PFS
+    Phosphor WLED “P3” display, LG OLED 6-series WOLED based on
+    samples from LG C6 and E6 OLED TVs, sourced and combined from
+    community colorimeter corrections database contributions).
+  * [UI] Updated simplified chinese localization (thanks to Mars).
+  * [UI] Updated french localization (thanks to Jean-Luc Coulon).
+  * [Enhancement] Implicitly try to skip repeat instrument self-
+    calibration for colorimeters that want it if already done at
+    least once per measurement run.
+  * [Enhancement] Converted translation file format from JSON to
+    YAML for better readability.
+  * [Enhancement] Use a localized description for known quality
+    spectral sample colorimeter corrections.
+  * Use an application-specific download directory for updates and
+    supporting files.
+  * [Minor] Not all programmed measurement modes were enumerated
+    for the K10-A colorimeter (regression of a change in DisplayCAL
+    3.7, SVN revision r5557).
+  * [Minor] ColorHug/ColorHug2 “auto” measurement mode was not
+    working anymore.
+  * [Trivial] Curve viewer: Re-introduced being able to view the
+    current contents of the video card gamma table if no display
+    profile is set or the profile used does not contain
+    calibration.
+  * [Cosmetic] Curve viewer, profile information: Curve graphing
+    identical channel detection was not working properly in some
+    cases (only affected synthetic curves).
+
+-------------------------------------------------------------------
 Sun Mar 17 18:50:50 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.7.2:
