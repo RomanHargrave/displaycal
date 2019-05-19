@@ -5,6 +5,80 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Sat May 18 15:50:50 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.8.1:
+  * [Feature] Preliminary experimental Wayland support under GNOME
+    3 using colord (requires ArgyllCMS 2.1 or newer as well).
+    Caveats do apply:
+    Window placement and ordering is completely up to the
+    compositor under Wayland. There is generally no way for an
+    application to place its own windows at specific relative
+    locations or z-orders. As a result of this, the measurement
+    window cannot stay always on top or be automatically centered.
+    Extra care needs to be taken that other windows are not placed
+    on top.
+    Video card gamma table (videoLUT) access is handled by colord.
+    Some functions like viewing current videoLUT contents may not
+    be available.
+    The measurement window color depth is limited to 8 bits per
+    channel per pixel (but dithering is used to achieve a higher
+    effective color depth).
+    The measurement window may be subject to desktop-wide color
+    management in upcoming versions of Wayland (although the
+    display device is inhibited during measurements via the
+    org.freedesktop.ColorManager.Device[1] D-Bus API which should
+    prevent this, and as a fallback a linear calibration sRGB
+    profile is temporarily installed during measurements if the
+    D-BUs API is unavailable, which should result in an identity
+    transform, i.e. effectively no color management, as well as
+    linear video card gamma tables).
+    Application support for color management under Wayland via
+    colord still seems to lacking[2] (although the list may well be
+    out-of-date).
+    Only tested under GNOME 3 (Fedora 30, Ubuntu 19.04). Support
+    for other desktop environments will need to be implemented
+    separately until Wayland gains a color management and
+    calibration/profiling protocol.
+    [1] https://www.freedesktop.org/software/colord/gtk-
+    doc/Device.html
+    [2] https://www.freedesktop.org/software/colord/faq.html
+    #application-support
+  * [Feature] LG OLED 3D LUT format.
+  * [Enhancement] If the currently used ArgyllCMS version is not a
+    standard version, but also not a beta, do not offer to switch
+    to an installed official stable version if it's otherwise the
+    same version number.
+  * [Enhancement] Include Quantum Dot LED (Samsung QLED Q9F)
+    spectral sample colorimeter correction when importing for i1
+    Display Pro and ColorMunki Display (sourced from community
+    colorimeter corrections database).
+  * [UI] (Debian, Fedora, Ubuntu) Use wxPython Phoenix if
+    installed.
+  * Prisma, Resolve: Set pattern generator background color to
+    pattern color if using fullscreen patterns.
+  * [Moderate] UnicodeDecodeError when a CCSS file contains unicode
+    characters in the display device description (regression of a
+    change in DisplayCAL 3.8 to use localized technology
+    descriptions, SVN revision r5810).
+  * [Minor] APL calculation for Prisma and Resolve pattern
+    generators was off by a few percent depending on pattern area
+    and current pattern color.
+  * [Minor] Quick reporting on calibrated or uncalibrated display
+    did not try to detect output levels if set to “Auto”.
+  * [Trivial] More gracefully deal with faulty tags in ICC profiles
+    (fixes ICC profile information unhandled exception for colord-
+    created profiles with malformed targ tags).
+  * [Trivial] [UI] Correctly update the audio button state on
+    progress dialogs when changed on a previous window.
+  * [Cosmetic] [UI] Various minor potential rendering glitches.
+  * [Cosmetic] [UI] Add work-arounds for various Wayland-related
+    wxPython rendering quirks and bugs (e.g. spacing around
+    windows, popup menu placement).
+  * [Trivial] Try to work around sporadic colord profile
+    installation quirks (“The profile was not added in time”).
+
+-------------------------------------------------------------------
 Fri Apr 26 01:19:15 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.8:
