@@ -76,6 +76,7 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(xinerama)
 BuildRequires:  pkgconfig(xrandr)
 BuildRequires:  pkgconfig(xxf86vm)
+BuildRequires:  python-xml
 Requires:       argyllcms
 Requires:       python-numpy >= %{numpy_version}
 Requires:       libSDL2_mixer-2_0-0
