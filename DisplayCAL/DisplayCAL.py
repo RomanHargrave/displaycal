@@ -12777,7 +12777,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		lut3d_ext = ["." + strtr(lut3d_format, {"eeColor": "txt",
 												"madVR": "3dlut"})
 					 for lut3d_format in
-					 filter(lambda format: format not in ("icc", "icm"),
+					 filter(lambda format: format not in ("icc", "icm", "png"),
 							config.valid_values["3dlut.format"])]
 		has_3dlut = False
 		for filename in filenames:
