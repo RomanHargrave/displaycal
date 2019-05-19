@@ -298,6 +298,22 @@
 											<key>GID</key>
 											<integer>80</integer>
 											<key>PATH</key>
+											<string>/Users/Shared/DisplayCAL/ccss/Samsung Q9 75_ (i1 Pro).ccss</string>
+											<key>PATH_TYPE</key>
+											<integer>0</integer>
+											<key>PERMISSIONS</key>
+											<integer>420</integer>
+											<key>TYPE</key>
+											<integer>3</integer>
+											<key>UID</key>
+											<integer>0</integer>
+										</dict>
+										<dict>
+											<key>CHILDREN</key>
+											<array/>
+											<key>GID</key>
+											<integer>80</integer>
+											<key>PATH</key>
 											<string>/Users/Shared/DisplayCAL/ccss/WGCCFLFamily_07Feb11.ccss</string>
 											<key>PATH_TYPE</key>
 											<integer>0</integer>
