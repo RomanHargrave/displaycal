@@ -47,8 +47,8 @@ from wxaddons import (CustomEvent, FileDrop as _FileDrop, gamma_encode,
 from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 PlateButton, ThemedGenButton, adjust_font_size_for_gcdc,
-					 get_bitmap_disabled, get_dc_font_size, platebtn,
-					 set_bitmap_labels, wx_Panel, get_dialogs)
+					 get_bitmap_disabled, get_dc_font_size, get_gcdc_font_size,
+					 platebtn, set_bitmap_labels, wx_Panel, get_dialogs)
 from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, CLICK, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -4573,6 +4573,11 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 		self.PopupMenu(menuPopUp, event.GetPosition())
 		menuPopUp.Destroy()
 		self.Unbind(wx.EVT_MENU, id=hyperlink.wxHYPERLINKS_POPUP_COPY)
+
+	def SetFont(self, font):
+		scale = (getcfg("app.dpi") / get_default_dpi()) or 1
+		font.PointSize *= scale
+		hyperlink.HyperLinkCtrl.SetFont(self, font)
 
 
 def fancytext_Renderer_getCurrentFont(self):
