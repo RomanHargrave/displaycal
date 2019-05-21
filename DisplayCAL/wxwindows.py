@@ -4574,10 +4574,11 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 		menuPopUp.Destroy()
 		self.Unbind(wx.EVT_MENU, id=hyperlink.wxHYPERLINKS_POPUP_COPY)
 
-	def SetFont(self, font):
-		scale = (getcfg("app.dpi") / get_default_dpi()) or 1
-		font.PointSize *= scale
-		hyperlink.HyperLinkCtrl.SetFont(self, font)
+	if sys.platform not in ("darwin", "win32"):
+		def SetFont(self, font):
+			scale = (getcfg("app.dpi") / get_default_dpi()) or 1
+			font.PointSize *= scale
+			hyperlink.HyperLinkCtrl.SetFont(self, font)
 
 
 def fancytext_Renderer_getCurrentFont(self):
