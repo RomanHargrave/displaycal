@@ -3233,7 +3233,11 @@ class BorderGradientButton(GradientButton):
 		if not label:
 			return wx.Size(112, 48)
 		
-		dc = wx.ClientDC(self)
+		dc = wx.MemoryDC(wx.EmptyBitmap(1, 1))
+		try:
+			dc = wx.GCDC(dc)
+		except:
+			pass
 		dc.SetFont(self.GetFont())
 		retWidth, retHeight = dc.GetTextExtent(label)
 		
