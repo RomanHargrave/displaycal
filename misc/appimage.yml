@@ -12,7 +12,7 @@ script:
   - cd ${APPNAME}-${VERSION}
   - cp ${APPNAME}/theme/icons/256x256/${APPNAME_LOWER}.png $BUILD_APPDIR
   - cp misc/${APPNAME_LOWER}.desktop $BUILD_APPDIR/${APPNAME}.desktop
-  - echo -e '#!/bin/sh\nappdir=`dirname "$0"`\n"$appdir/${APPNAME}.pyw"' > $BUILD_APPDIR/AppRun
+  - echo -e '#!/bin/sh\nappdir=`dirname "$0"`\n"$appdir/${APPNAME}$1.pyw"' > $BUILD_APPDIR/AppRun
   - chmod +x $BUILD_APPDIR/AppRun *.pyw
   - mkdir -p $BUILD_APPDIR/usb
   - cp -f misc/55-Argyll.rules $BUILD_APPDIR/usb
