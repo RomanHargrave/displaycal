@@ -73,18 +73,20 @@ def format_chglog(chglog, format="appstream"):
 		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
 		if format.lower() == "appstream":
 			# Conform to appstream-util validate-strict rules
-			def truncate(matches):
+			def truncate(matches, maxlen):
 				return "%s%s%s" % (matches.group(1),
 								   # appstream-util validate counts bytes, not characters
-								   matches.group(2).encode("UTF-8")[:597].rstrip().decode("UTF-8", "ignore") +
+								   matches.group(2).encode("UTF-8")[:maxlen - 3].rstrip().decode("UTF-8", "ignore") +
 								   "...",
 								   matches.group(3))
 			# - <p> maximum is 600 chars
-			chglog = re.sub(r"(<p>)([^<]{600,})(</p>)", truncate, chglog)
+			chglog = re.sub(r"(<p>)\s*([^<]{601,}?)\s*(</p>)",
+							lambda matches: truncate(matches, 600), chglog)
 			# - <li> cannot end in '.'
 			chglog = re.sub(r"([^.])\.\s*</li>", r"\1</li>", chglog)
 			# - <li> maximum is 100 chars
-			chglog = re.sub(r"(<li>)([^<]{100,})(<(?:ol|ul|/li)>)", truncate,
+			chglog = re.sub(r"(<li>)\s*([^<]{101,}?)\s*(<(?:ol|ul|/li)>)",
+							lambda matches: truncate(matches, 100),
 							chglog)
 		# Nice formatting
 		chglog = re.sub(r"^\s+(?m)", r"\t" * 4, chglog)  # Multi-line
