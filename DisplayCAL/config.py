@@ -1713,11 +1713,11 @@ def set_default_app_dpi():
 			txt_scale = None
 			# XDG_CURRENT_DESKTOP delimiter is colon (':')
 			desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
-			if "gtk2" in wx.PlatformInfo:
-				txt_scale = get_hidpi_scaling_factor()
-			elif desktop and desktop[0] == "KDE":
+			if desktop[0] == "KDE":
 				pass
 				# Nothing to do
+			elif desktop[0] != "GNOME":
+				txt_scale = get_hidpi_scaling_factor()
 			elif which("gsettings"):
 				import subprocess as sp
 				p = sp.Popen(["gsettings", "get", "org.gnome.desktop.interface",
