@@ -936,7 +936,7 @@ class DisplayAdjustmentFrame(windowcls):
 		self.Layout()
 		# The button sizer will be as wide as the labelbook or wider,
 		# so use it as reference
-		w = self.btnsizer.GetSize()[0] - img_w - 12
+		w = self.btnsizer.CalcMin()[0] - img_w - 12
 		for pagenum in xrange(0, self.lb.GetPageCount()):
 			page = self.lb.GetPage(pagenum)
 			page.SetSize((w, -1))
