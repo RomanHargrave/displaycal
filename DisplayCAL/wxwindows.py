@@ -3064,7 +3064,7 @@ class FlatShadedButton(GradientButton):
 
 		gc.SetPen(wx.TRANSPARENT_PEN)
 		gc.SetBrush(wx.Brush(fill))
-		gc.DrawRoundedRectangle(x, y, width, height, 8)
+		gc.DrawRoundedRectangle(x, y, width, height, 8 * self.dpiscale)
 
 		if self._enabled:
 			if capture != self:
