@@ -4574,7 +4574,7 @@ class HyperLinkCtrl(hyperlink.HyperLinkCtrl):
 		menuPopUp.Destroy()
 		self.Unbind(wx.EVT_MENU, id=hyperlink.wxHYPERLINKS_POPUP_COPY)
 
-	if sys.platform not in ("darwin", "win32"):
+	if sys.platform not in ("darwin", "win32") and "gtk3" in wx.PlatformInfo:
 		def SetFont(self, font):
 			scale = (getcfg("app.dpi") / get_default_dpi()) or 1
 			font.PointSize *= scale
