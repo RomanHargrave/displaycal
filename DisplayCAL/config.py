@@ -1729,7 +1729,7 @@ def set_default_app_dpi():
 				except ValueError:
 					pass
 			dpi = get_default_dpi()
-			if txt_scale is not None:
+			if txt_scale:
 				dpi = int(round(dpi * txt_scale))
 		defaults["app.dpi"] = dpi
 	dpiset = True
