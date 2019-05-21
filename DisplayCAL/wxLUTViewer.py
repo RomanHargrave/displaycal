@@ -2118,7 +2118,8 @@ def _main(app):
 	app.TopWindow.display_no, geometry, client_area = app.TopWindow.get_display()
 	app.TopWindow.Bind(wx.EVT_MOVE, app.TopWindow.move_handler, app.TopWindow)
 	display_no = get_argyll_display_number(geometry)
-	setcfg("display.number", display_no + 1)
+	if display_no is not None:
+		setcfg("display.number", display_no + 1)
 	app.TopWindow.update_controls()
 	for arg in sys.argv[1:]:
 		if os.path.isfile(arg):
