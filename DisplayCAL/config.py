@@ -1811,6 +1811,20 @@ def get_hidpi_scaling_factor():
 				if not match:
 					# Use first one
 					factor = screen_scale_factors[0].split("=")[-1]
+		elif os.getenv("XDG_SESSION_TYPE") != "wayland" and which("xrdb"):
+			import subprocess as sp
+			p = sp.Popen(["xrdb", "-query"], stdin=sp.PIPE,
+						 stdout=sp.PIPE, stderr=sp.PIPE)
+			# Format: 'Xft.dpi:        192'
+			stdout, stderr = p.communicate()
+			for line in stdout.splitlines():
+				if line.startswith("Xft.dpi:"):
+					split = line.split()
+					dpi = split[-1]
+					try:
+						factor = float(dpi) / get_default_dpi()
+					except ValueError:
+						factor = None
 		elif which("gsettings"):
 			# GNOME
 			import subprocess as sp
