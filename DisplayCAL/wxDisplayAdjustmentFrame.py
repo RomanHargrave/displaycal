@@ -616,7 +616,8 @@ class DisplayAdjustmentPanel(wx_Panel):
 			self.desc.Wrap(250)
 
 
-if os.getenv("XDG_SESSION_TYPE") == "wayland":
+NEVER = False
+if os.getenv("XDG_SESSION_TYPE") == "wayland" and NEVER:
 	windowcls = wx.Dialog
 else:
 	windowcls = BaseFrame
