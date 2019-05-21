@@ -2936,6 +2936,7 @@ class FlatShadedButton(GradientButton):
 		self._setcolours(bgcolour, fgcolour)
 		self._set_bitmap_labels(self.__bitmap)
 		self.SetFont(adjust_font_size_for_gcdc(self.GetFont()))
+		self._update_best_size()
 
 	def _set_bitmap_labels(self, bitmap):
 		if bitmap:
@@ -3132,23 +3133,39 @@ class FlatShadedButton(GradientButton):
 
 	def SetBitmap(self, bitmap):
 		self._bitmap = bitmap
+		self._update_best_size()
 		self.Refresh()
 
 	def SetBitmapDisabled(self, bitmap):
 		self._bitmapdisabled = bitmap
+		self._update_best_size()
 		self.Refresh()
 
 	def SetBitmapFocus(self, bitmap):
 		self._bitmapfocus = bitmap
+		self._update_best_size()
 		self.Refresh()
 
 	def SetBitmapHover(self, bitmap):
 		self._bitmaphover = bitmap
+		self._update_best_size()
 		self.Refresh()
 
 	def SetBitmapSelected(self, bitmap):
 		self._bitmapselected = bitmap
+		self._update_best_size()
 		self.Refresh()
+
+	def SetLabel(self, label):
+		wx.PyControl.SetLabel(self, label)
+		self._update_best_size()
+
+	def _update_best_size(self):
+		if hasattr(self, "_lastBestSize"):
+			del self._lastBestSize
+			self.MinSize = self.DoGetBestSize()
+
+	Label = property(wx.PyControl.GetLabel, SetLabel)
 
 
 class BorderGradientButton(GradientButton):
