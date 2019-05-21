@@ -537,7 +537,8 @@ if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			wx.CallAfter(set_maxsize, window, maxsize)
 
 	def TopLevelWindow_Show(self, show=True):
-		fix_wayland_window_size(self)
+		if show and not self.IsShown():
+			fix_wayland_window_size(self)
 		return _TopLevelWindow_Show(self, show)
 
 	_TopLevelWindow_Show = wx.TopLevelWindow.Show
