@@ -138,8 +138,8 @@ class SynthICCFrame(BaseFrame):
 		config.defaults.update({
 			"position.synthiccframe.x": self.GetDisplay().ClientArea[0] + 40,
 			"position.synthiccframe.y": self.GetDisplay().ClientArea[1] + 60,
-			"size.synthiccframe.w": self.GetMinSize()[0],
-			"size.synthiccframe.h": self.GetMinSize()[1]})
+			"size.synthiccframe.w": self.ClientSize[0],
+			"size.synthiccframe.h": self.ClientSize[1]})
 
 		if (hascfg("position.synthiccframe.x") and
 			hascfg("position.synthiccframe.y") and
@@ -163,8 +163,8 @@ class SynthICCFrame(BaseFrame):
 			x, y = self.GetScreenPosition()
 			setcfg("position.synthiccframe.x", x)
 			setcfg("position.synthiccframe.y", y)
-			setcfg("size.synthiccframe.w", self.GetSize()[0])
-			setcfg("size.synthiccframe.h", self.GetSize()[1])
+			setcfg("size.synthiccframe.w", self.ClientSize[0])
+			setcfg("size.synthiccframe.h", self.ClientSize[1])
 		if self.Parent:
 			config.writecfg()
 		else:

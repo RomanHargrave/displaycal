@@ -5253,7 +5253,7 @@ class LogWindow(InvincibleFrame):
 	def OnSize(self, event=None):
 		if self.IsShownOnScreen() and not self.IsMaximized() and not \
 		   self.IsIconized():
-			w, h = self.GetSize()
+			w, h = self.ClientSize
 			setcfg("size.info.w", w)
 			setcfg("size.info.h", h)
 		if event:

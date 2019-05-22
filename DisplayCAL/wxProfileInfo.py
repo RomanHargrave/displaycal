@@ -877,18 +877,17 @@ class PIFrame_2WaySplitter(TwoWaySplitter):
 				self.Parent.SetMinSize((defaults["size.profile_info.split.w"] + winborder * 2,
 										self.Parent.GetMinSize()[1]))
 				if (not self.Parent.IsMaximized() and
-					self.Parent.GetSize()[0] < self.GetSplitSize()[0]):
-					self.Parent.SetSize((self.GetSplitSize()[0],
-										 self.Parent.GetSize()[1]))
+					self.Parent.ClientSize[0] < self.GetSplitSize()[0]):
+					self.Parent.ClientSize = (self.GetSplitSize()[0],
+											  self.Parent.ClientSize[1])
 			else:
 				self.Parent.SetMinSize((defaults["size.profile_info.w"] + winborder * 2,
 										self.Parent.GetMinSize()[1]))
 				w = max(self.GetExpandedSize()[0],
-						self._splitx + barSize + winborder * 2)
+						self._splitx)
 				if (not self.Parent.IsMaximized() and
-					self.Parent.GetSize()[0] > w):
-					self.Parent.SetSize((w,
-										 self.Parent.GetSize()[1]))
+					self.Parent.ClientSize[0] > w):
+					self.Parent.ClientSize = (w, self.Parent.ClientSize[1])
 			if self.GetTopLeft().Size[0] != win0w:
 				self.Parent.redraw()
 			self.Parent.resize_grid()
@@ -1119,13 +1118,13 @@ class ProfileInfoFrame(LUTFrame):
 		self.SetSaneGeometry(
 			getcfg("position.profile_info.x"),
 			getcfg("position.profile_info.y"),
-			defaults["size.profile_info.split.w"] + border * 2,
-			getcfg("size.profile_info.h") + titlebar + border)
+			defaults["size.profile_info.split.w"],
+			getcfg("size.profile_info.h"))
 		self.SetMinSize((min_w + border * 2,
 						 defaults["size.profile_info.h"] + titlebar + border))
-		self.splitter.SetSplitSize((defaults["size.profile_info.split.w"] + border * 2,
-									self.GetSize()[1]))
-		self.splitter.SetExpandedSize(self.GetSize())
+		self.splitter.SetSplitSize((defaults["size.profile_info.split.w"],
+									self.ClientSize[1]))
+		self.splitter.SetExpandedSize(self.ClientSize)
 		
 		self.client.canvas.Bind(wx.EVT_MOTION, self.OnMotion)
 		self.Bind(wx.EVT_CLOSE, self.OnClose)
@@ -1449,11 +1448,9 @@ class ProfileInfoFrame(LUTFrame):
 			event.Skip()
 	
 	def OnSashPosChanging(self, event):
-		border, titlebar = get_platform_window_decoration_size()
 		self.splitter.SetExpandedSize((self.splitter._splitx +
-									   self.splitter._GetSashSize() +
-									   border * 2,
-									   self.GetSize()[1]))
+									   self.splitter._GetSashSize(),
+									   self.ClientSize[1]))
 		setcfg("size.profile_info.w", self.splitter._splitx +
 									  self.splitter._GetSashSize())
 		wx.CallAfter(self.redraw)
@@ -1486,21 +1483,19 @@ class ProfileInfoFrame(LUTFrame):
 	
 	def _setsize(self):
 		if not self.IsMaximized():
-			w, h = self.GetSize()
-			border, titlebar = get_platform_window_decoration_size()
+			w, h = self.ClientSize
 			if self.splitter._expanded < 0:
 				self.splitter.SetExpandedSize((self.splitter._splitx +
-											   self.splitter._GetSashSize() +
-											   border * 2,
-											   self.GetSize()[1]))
-				self.splitter.SetSplitSize((w, self.GetSize()[1]))
+											   self.splitter._GetSashSize(),
+											   h))
+				self.splitter.SetSplitSize((w, h))
 				setcfg("size.profile_info.w", self.splitter._splitx +
 											  self.splitter._GetSashSize())
-				setcfg("size.profile_info.split.w", w - border * 2)
+				setcfg("size.profile_info.split.w", w)
 			else:
-				self.splitter.SetExpandedSize((w, self.GetSize()[1]))
-				setcfg("size.profile_info.w", w - border * 2)
-			setcfg("size.profile_info.h", h - titlebar - border)
+				self.splitter.SetExpandedSize((w, h))
+				setcfg("size.profile_info.w", w)
+			setcfg("size.profile_info.h", h)
 	
 	def drop_handler(self, path):
 		"""
@@ -1524,15 +1519,15 @@ class ProfileInfoFrame(LUTFrame):
 			defaultheight = defaults["size.profile_info.h"]
 		border, titlebar = get_platform_window_decoration_size()
 		#return (max(max(getcfg("size.profile_info%s.w" % name),
-						#defaultwidth) + border * 2, self.GetMinSize()[0]),
+						#defaultwidth), self.GetMinSize()[0] - border * 2),
 				#max(getcfg("size.profile_info.h"),
-					#defaultheight) + titlebar + border)
+					#defaultheight))
 		if split:
 			w, h = self.splitter.GetSplitSize()
 		else:
 			w, h = self.splitter.GetExpandedSize()
-		return (max(w, defaultwidth + border * 2, self.GetMinSize()[0]),
-				max(h, defaultheight + titlebar + border))
+		return (max(w, defaultwidth, self.GetMinSize()[0] - border * 2),
+				max(h, defaultheight))
 
 	def key_handler(self, event):
 		# AltDown

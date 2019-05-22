@@ -696,8 +696,8 @@ class TestchartEditor(BaseFrame):
 		defaults.update({
 			"position.tcgen.x": self.GetDisplay().ClientArea[0] + 40,
 			"position.tcgen.y": self.GetDisplay().ClientArea[1] + 60,
-			"size.tcgen.w": self.GetMinSize()[0],
-			"size.tcgen.h": self.GetMinSize()[1]
+			"size.tcgen.w": self.ClientSize[0],
+			"size.tcgen.h": self.ClientSize[1]
 		})
 
 		if hascfg("position.tcgen.x") and hascfg("position.tcgen.y") and hascfg("size.tcgen.w") and hascfg("size.tcgen.h"):
@@ -970,7 +970,7 @@ END_DATA""")
 	def tc_size_handler(self, event = None):
 		wx.CallAfter(self.resize_grid)
 		if self.IsShownOnScreen() and not self.IsMaximized() and not self.IsIconized():
-			w, h = self.GetSize()
+			w, h = self.ClientSize
 			setcfg("size.tcgen.w", w)
 			setcfg("size.tcgen.h", h)
 		if event:

@@ -2058,13 +2058,13 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def set_size(self, set_height=False, fit_width=False):
 		self.SetMinSize((0, 0))
+		borders_tb = self.Size[1] - self.ClientSize[1]
 		if set_height:
 			if sys.platform not in ("darwin", "win32"):
 				# Linux
 				safety_margin = 40
 			else:
 				safety_margin = 20
-			borders_tb = self.Size[1] - self.ClientSize[1]
 			height = min(self.GetDisplay().ClientArea[3] - borders_tb -
 						 safety_margin,
 						 self.headerbordertop.Size[1] +
@@ -2108,9 +2108,13 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.ClientSize = (size[0] if fit_width
 									   else max(size[0], self.ClientSize[0]),
 							   size[1])
-		self.MinSize = (self.ClientSize[0] + borders_lr,
-						self.GetSize()[1] - self.calpanel.GetSize()[1] +
-						header_min_h)
+		minsize = (self.ClientSize[0],
+				   self.ClientSize[1] - self.calpanel.GetSize()[1] +
+				   header_min_h)
+		if hasattr(self, "MinClientSize"):
+			self.MinClientSize = minsize
+		else:
+			self.MinSize = (minsize + borders_lr, minsize[1] + borders_tb)
 		if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			self.MaxSize = self.Size
 			wx.CallAfter(set_maxsize, self, (-1, self.MaxSize[1]))

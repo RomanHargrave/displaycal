@@ -164,8 +164,8 @@ class ReportFrame(BaseFrame):
 		config.defaults.update({
 			"position.reportframe.x": self.GetDisplay().ClientArea[0] + 40,
 			"position.reportframe.y": self.GetDisplay().ClientArea[1] + 60,
-			"size.reportframe.w": self.GetMinSize()[0],
-			"size.reportframe.h": self.GetMinSize()[1]})
+			"size.reportframe.w": self.ClientSize[0],
+			"size.reportframe.h": self.ClientSize[1]})
 
 		if (hascfg("position.reportframe.x") and
 			hascfg("position.reportframe.y") and
@@ -184,8 +184,8 @@ class ReportFrame(BaseFrame):
 			x, y = self.GetScreenPosition()
 			setcfg("position.reportframe.x", x)
 			setcfg("position.reportframe.y", y)
-			setcfg("size.reportframe.w", self.GetSize()[0])
-			setcfg("size.reportframe.h", self.GetSize()[1])
+			setcfg("size.reportframe.w", self.ClientSize[0])
+			setcfg("size.reportframe.h", self.ClientSize[1])
 		config.writecfg()
 		if event:
 			event.Skip()

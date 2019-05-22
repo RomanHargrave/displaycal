@@ -127,8 +127,8 @@ class LUT3DFrame(BaseFrame):
 		config.defaults.update({
 			"position.lut3dframe.x": self.GetDisplay().ClientArea[0] + 40,
 			"position.lut3dframe.y": self.GetDisplay().ClientArea[1] + 60,
-			"size.lut3dframe.w": self.GetMinSize()[0],
-			"size.lut3dframe.h": self.GetMinSize()[1]})
+			"size.lut3dframe.w": self.ClientSize[0],
+			"size.lut3dframe.h": self.ClientSize[1]})
 
 		if (hascfg("position.lut3dframe.x") and
 			hascfg("position.lut3dframe.y") and
@@ -223,8 +223,8 @@ class LUT3DFrame(BaseFrame):
 			x, y = self.GetScreenPosition()
 			setcfg("position.lut3dframe.x", x)
 			setcfg("position.lut3dframe.y", y)
-			setcfg("size.lut3dframe.w", self.GetSize()[0])
-			setcfg("size.lut3dframe.h", self.GetSize()[1])
+			setcfg("size.lut3dframe.w", self.ClientSize[0])
+			setcfg("size.lut3dframe.h", self.ClientSize[1])
 		if self.Parent:
 			config.writecfg()
 		else:

@@ -894,8 +894,8 @@ class LUTFrame(BaseFrame):
 		self.SetSaneGeometry(
 			getcfg("position.lut_viewer.x"), 
 			getcfg("position.lut_viewer.y"), 
-			getcfg("size.lut_viewer.w") + border * 2, 
-			getcfg("size.lut_viewer.h") + titlebar + border)
+			getcfg("size.lut_viewer.w"), 
+			getcfg("size.lut_viewer.h"))
 		
 		self.Bind(wx.EVT_MOVE, self.OnMove)
 		self.Bind(wx.EVT_SIZE, self.OnSize)
@@ -1874,10 +1874,9 @@ class LUTFrame(BaseFrame):
 	def OnSize(self, event=None):
 		if self.IsShownOnScreen() and not \
 		   self.IsMaximized() and not self.IsIconized():
-			w, h = self.GetSize()
-			border, titlebar = get_platform_window_decoration_size()
-			setcfg("size.lut_viewer.w", w - border * 2)
-			setcfg("size.lut_viewer.h", h - titlebar - border)
+			w, h = self.ClientSize
+			setcfg("size.lut_viewer.w", w)
+			setcfg("size.lut_viewer.h", h)
 		if event:
 			event.Skip()
 			if sys.platform == "win32":

@@ -136,7 +136,7 @@ class ScriptingClientFrame(SimpleTerminal):
 	def OnSize(self, event=None):
 		if self.IsShownOnScreen() and not self.IsMaximized() and not \
 		   self.IsIconized():
-			w, h = self.GetSize()
+			w, h = self.ClientSize
 			setcfg("size.scripting.w", w)
 			setcfg("size.scripting.h", h)
 		if event:
