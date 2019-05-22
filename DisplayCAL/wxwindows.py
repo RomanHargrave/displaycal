@@ -1977,7 +1977,9 @@ class BaseFrame(wx.Frame):
 				 getattr(self, "_layout", False))):
 				if not getattr(self, "_layout", False):
 					clientsize = minsize
-				else:
+				elif os.getenv("XDG_SESSION_TYPE") != "wayland":
+					# XXX this causes brief flickering to previous height on
+					# manual resize under Wayland
 					clientsize = clientsize[0], minsize[1]
 				self.Sizer.SetMinSize((max(minsize[0], clientsize[0]),
 									   max(minsize[1], clientsize[1])))

@@ -2127,7 +2127,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.MinSize = (minsize + borders_lr, minsize[1] + borders_tb)
 		if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			self.MaxSize = self.Size
-			wx.CallAfter(set_maxsize, self, (-1, -1))
+			# XXX not using max height causes brief fluctuation of size under
+			# Wayland
+			wx.CallAfter(set_maxsize, self, (-1, self.MaxSize[1]))
 		if self.IsShown():
 			self.calpanel.Layout()
 
