@@ -897,6 +897,7 @@
         <object class="wxPanel" name="separator">
           <bg>wxSYS_COLOUR_3DLIGHT</bg>
         </object>
+        <flag>wxEXPAND</flag>
       </object>
       <object class="sizeritem">
         <object class="wxPanel" name="buttonpanel">
