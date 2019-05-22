@@ -12364,7 +12364,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			w.sizer0.Add(link2, flag=wx.LEFT, border=12 + 32 + 7)
 			w.sizer0.Add((0, 12))
 			w.sizer0.SetSizeHints(w)
-			w.Size = w.MinSize = w.MinSize[0] + 15, w.MinSize[1]
+			sw = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+			w.Size = w.MinSize = w.MinSize[0] + sw, w.MinSize[1]
 			w.sizer0.Layout()
 		# Hmm. Somehow initial scroll position isn't at (0, 0)
 		wx.CallAfter(self.display_tech_info_tooltip_window.panel.Scroll, 0, 0)
