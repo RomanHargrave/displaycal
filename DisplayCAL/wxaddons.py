@@ -151,6 +151,10 @@ def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
 	# Returns the first display's client area if the window 
 	# is completely outside the client area of all displays
 	display_client_rect = self.GetDisplay().ClientArea 
+	if sys.platform not in ("darwin", "win32"): # Linux
+		safety_margin = 40
+	else:
+		safety_margin = 20
 	if not None in (w, h):
 		# Set given size, but resize if needed to fit inside client area
 		if hasattr(self, "MinClientSize"):
@@ -160,7 +164,8 @@ def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
 		border_lr = self.Size[0] - self.ClientSize[0]
 		border_tb = self.Size[1] - self.ClientSize[1]
 		self.ClientSize = (max(min(display_client_rect[2] - border_lr, w), min_w), 
-						   max(min(display_client_rect[3] - border_tb, h), min_h))
+						   max(min(display_client_rect[3] - border_tb -
+								   safety_margin, h), min_h - safety_margin))
 	if not None in (x, y):
 		if not display_client_rect.ContainsXY(x, y) or \
 		   not display_client_rect.ContainsRect((x, y, 100, 100)):

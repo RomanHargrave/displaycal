@@ -1946,10 +1946,16 @@ class BaseFrame(wx.Frame):
 		border_tb = self.Size[1] - self.ClientSize[1]
 		clientarea = self.GetDisplay().ClientArea
 		sw = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+		if sys.platform not in ("darwin", "win32"): # Linux
+			safety_margin = 40
+		else:
+			safety_margin = 20
 		minsize = (min(clientarea[2] - border_lr, self.Sizer.MinSize[0] + sw),
-				   min(clientarea[3] - border_tb, self.Sizer.MinSize[1]))
+				   min(clientarea[3] - border_tb - safety_margin,
+					   self.Sizer.MinSize[1]))
 		clientsize = (min(clientarea[2] - border_lr, self.ClientSize[0]),
-					  min(clientarea[3] - border_tb, self.ClientSize[1]))
+					  min(clientarea[3] - border_tb - safety_margin,
+						  self.ClientSize[1]))
 		if not self.IsIconized() and not self.IsMaximized():
 			if ((minsize[0] > clientsize[0] or minsize[1] > clientsize[1] or not
 				 getattr(self, "_layout", False))):
