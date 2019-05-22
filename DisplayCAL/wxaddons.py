@@ -168,9 +168,9 @@ def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
 			min_w, min_h = self.WindowToClientSize(self.MinSize)
 		border_lr = self.Size[0] - self.ClientSize[0]
 		border_tb = self.Size[1] - self.ClientSize[1]
-		self.ClientSize = (max(min(display_client_rect[2] - border_lr, w), min_w), 
-						   max(min(display_client_rect[3] - border_tb -
-								   safety_margin, h), min_h - safety_margin))
+		self.ClientSize = (min(display_client_rect[2] - border_lr, max(w, min_w)), 
+						   min(display_client_rect[3] - border_tb -
+							   safety_margin, max(h, min_h)))
 	if not None in (x, y):
 		if (not display_client_rect.ContainsXY(x, y) or
 			not display_client_rect.ContainsRect((x, y,
