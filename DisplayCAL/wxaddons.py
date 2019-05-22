@@ -167,11 +167,23 @@ def SetSaneGeometry(self, x=None, y=None, w=None, h=None):
 						   max(min(display_client_rect[3] - border_tb -
 								   safety_margin, h), min_h - safety_margin))
 	if not None in (x, y):
-		if not display_client_rect.ContainsXY(x, y) or \
-		   not display_client_rect.ContainsRect((x, y, 100, 100)):
-			# If outside client area or near the borders,
-			# move to leftmost / topmost coordinates of client area
-			self.SetPosition(display_client_rect[0:2])
+		if (not display_client_rect.ContainsXY(x, y) or
+			not display_client_rect.ContainsRect((x, y,
+												  self.Size[0], self.Size[1]))):
+			# If outside client area, move into client area
+			xy = [x, y]
+			for i, pos in enumerate([xy,
+									 (x + self.Size[0], y + self.Size[1])]):
+				for j in xrange(2):
+					if (pos[j] > display_client_rect[j] +
+								 display_client_rect[2 + j] or
+						pos[j] < display_client_rect[j]):
+						if i:
+							xy[j] = (display_client_rect[j] +
+									 display_client_rect[2 + j] - self.Size[j])
+						else:
+							xy[j] = display_client_rect[j]
+			self.SetPosition(tuple(xy))
 
 wx.Window.SetSaneGeometry = SetSaneGeometry
 
