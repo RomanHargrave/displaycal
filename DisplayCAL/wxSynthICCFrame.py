@@ -1076,8 +1076,6 @@ class SynthICCFrame(BaseFrame):
 		self.trc_gamma_ctrl.SetValue(str(getcfg("synthprofile.trc_gamma")))
 		self.trc_gamma_ctrl.Show(i in (0, 5))
 		self.trc_gamma_type_ctrl.SetSelection(self.trc_gamma_types_ba[getcfg("synthprofile.trc_gamma_type")])
-		self.panel.GetSizer().Layout()
-		self.panel.Thaw()
 		if i in (0, 5, 7, 8):
 			# Gamma, BT.1886, SMPTE 2084 (PQ)
 			outoffset = int(getcfg("synthprofile.trc_output_offset") * 100)
@@ -1137,6 +1135,8 @@ class SynthICCFrame(BaseFrame):
 			self.profile_class_ctrl.SetStringSelection(self.profile_classes["mntr"])
 			self.tech_ctrl.SetStringSelection(self.tech[""])
 			self.ciis_ctrl.SetStringSelection(self.ciis[""])
+		self.panel.GetSizer().Layout()
+		self.panel.Thaw()
 	
 	def white_XYZ_ctrl_handler(self, event):
 		self.parse_XYZ("white")
