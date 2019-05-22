@@ -1957,12 +1957,13 @@ class BaseFrame(wx.Frame):
 			safety_margin = 20
 		w, h = 0, 0
 		for child in self.Children:
-			if child.Sizer:
-				size = child.Sizer.CalcMin()
-			else:
-				size = child.BestSize
-			w = max(size[0], w)
-			h += max(size[1], 0)
+			if child.IsShown():
+				if child.Sizer:
+					size = child.Sizer.CalcMin()
+				else:
+					size = child.BestSize
+				w = max(size[0], w)
+				h += max(size[1], 0)
 		minsize = (min(clientarea[2] - border_lr, w + sw),
 				   min(clientarea[3] - border_tb - safety_margin, h))
 		clientsize = (min(clientarea[2] - border_lr, self.ClientSize[0]),
