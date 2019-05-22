@@ -1971,7 +1971,7 @@ class BaseFrame(wx.Frame):
 					  min(clientarea[3] - border_tb - safety_margin,
 						  self.ClientSize[1]))
 		if not self.IsIconized() and not self.IsMaximized():
-			os.getenv("XDG_SESSION_TYPE") == "wayland":
+			if os.getenv("XDG_SESSION_TYPE") == "wayland":
 				self.MaxSize = (-1, -1)
 			if ((minsize[0] > clientsize[0] or minsize[1] != clientsize[1] or not
 				 getattr(self, "_layout", False))):
@@ -1986,7 +1986,7 @@ class BaseFrame(wx.Frame):
 				self._layout = True
 			else:
 				self.Layout()
-			os.getenv("XDG_SESSION_TYPE") == "wayland":
+			if os.getenv("XDG_SESSION_TYPE") == "wayland":
 				self.MaxSize = self.Size
 				wx.CallAfter(set_maxsize, self, (-1, -1))
 		self.Sizer.SetMinSize((minsize[0], minsize[1]))
