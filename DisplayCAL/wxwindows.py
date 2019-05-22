@@ -1955,29 +1955,40 @@ class BaseFrame(wx.Frame):
 				safety_margin = 40
 		else:
 			safety_margin = 20
-		minsize = (min(clientarea[2] - border_lr, self.Sizer.MinSize[0] + sw),
-				   min(clientarea[3] - border_tb - safety_margin,
-					   self.Sizer.MinSize[1]))
+		w, h = 0, 0
+		for child in self.Children:
+			if child.Sizer:
+				size = child.Sizer.CalcMin()
+			else:
+				size = child.BestSize
+			w = max(size[0], w)
+			h += max(size[1], 0)
+		minsize = (min(clientarea[2] - border_lr, w + sw),
+				   min(clientarea[3] - border_tb - safety_margin, h))
 		clientsize = (min(clientarea[2] - border_lr, self.ClientSize[0]),
 					  min(clientarea[3] - border_tb - safety_margin,
 						  self.ClientSize[1]))
 		if not self.IsIconized() and not self.IsMaximized():
-			if ((minsize[0] > clientsize[0] or minsize[1] > clientsize[1] or not
+			if ((minsize[0] > clientsize[0] or minsize[1] != clientsize[1] or not
 				 getattr(self, "_layout", False))):
+				if not getattr(self, "_layout", False):
+					clientsize = minsize
+				else:
+					clientsize = clientsize[0], minsize[1]
 				self.Sizer.SetMinSize((max(minsize[0], clientsize[0]),
 									   max(minsize[1], clientsize[1])))
 				self.GetSizer().SetSizeHints(self)
 				self.GetSizer().Layout()
-				self.Sizer.SetMinSize((minsize[0] - sw, minsize[1]))
 				self._layout = True
 			else:
 				self.Layout()
-		if hasattr(self, "ClientToWindowSize"):
-			# wxPython 2.8.12
-			self.SetMinSize(self.ClientToWindowSize(minsize))
-		else:
+		self.Sizer.SetMinSize((minsize[0], minsize[1]))
+		if hasattr(self, "MinClientSize"):
 			# wxPython >= 2.9
 			self.MinClientSize = minsize
+		else:
+			# wxPython < 2.9
+			self.SetMinSize(self.ClientToWindowSize(minsize))
 	
 	def set_child_ctrls_as_attrs(self, parent=None):
 		"""
