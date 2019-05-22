@@ -1444,7 +1444,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.update_comports()
 		self.mr_init_controls()
 		self.update_controls(update_ccmx_items=False)
-		self.set_size(True, True)
 		if self.calpanel.VirtualSize[0] > self.calpanel.Size[0]:
 			scrollrate_x = 2
 		else:
@@ -1453,7 +1452,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		x, y = getcfg("position.x", False), getcfg("position.y", False)
 		if not None in (x, y):
 			self.SetSaneGeometry(x, y)
-		else:
+		self.set_size(True, True)
+		if None in (x, y):
 			self.Center()
 		self.Bind(wx.EVT_MOVE, self.OnMove, self)
 		if verbose >= 1:
@@ -1860,8 +1860,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			setcfg("position.x", x)
 			setcfg("position.y", y)
 			display_client_rect = self.GetDisplay().ClientArea
-			if (not hasattr(self, "display_client_rect") or 
-				self.display_client_rect != display_client_rect):
+			if (getattr(self, "display_client_rect", display_client_rect) !=
+				display_client_rect):
 				# We just moved to this workspace
 				if sys.platform not in ("darwin", "win32"):
 					# Linux
@@ -1884,9 +1884,9 @@ class MainFrame(ReportFrame, BaseFrame):
 									  self.calpanel.VirtualSize[1])):
 					# Our full size fits on that workspace
 					resize = True
-				self.display_client_rect = display_client_rect
 				if resize:
 					wx.CallAfter(self.set_size, True)
+			self.display_client_rect = display_client_rect
 		if event:
 			event.Skip()
 	
@@ -2127,9 +2127,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.MinSize = (minsize + borders_lr, minsize[1] + borders_tb)
 		if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			self.MaxSize = self.Size
-			# XXX not using max height causes brief fluctuation of size under
-			# Wayland
-			wx.CallAfter(set_maxsize, self, (-1, self.MaxSize[1]))
+			wx.CallAfter(set_maxsize, self, (-1, -1))
 		if self.IsShown():
 			self.calpanel.Layout()
 

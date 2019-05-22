@@ -527,9 +527,8 @@ if os.getenv("XDG_SESSION_TYPE") == "wayland":
 
 	def fix_wayland_window_size(window):
 		global is_first_toplevel_window
-		if (is_first_toplevel_window or
-			window.__class__.__name__ == "MainFrame"):
-			# Not needed for first toplevel window or main app window
+		if is_first_toplevel_window:
+			# Not needed for first toplevel window
 			is_first_toplevel_window = False
 		else:
 			window.MaxSize = window.Size
