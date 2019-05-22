@@ -1865,7 +1865,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				# We just moved to this workspace
 				if sys.platform not in ("darwin", "win32"):
 					# Linux
-					safety_margin = 40
+					if os.getenv("XDG_SESSION_TYPE") == "wayland":
+						# Client-side decorations
+						safety_margin = 0
+					else:
+						# Assume server-side decorations
+						safety_margin = 40
 				else:
 					safety_margin = 20
 				resize = False
@@ -2062,7 +2067,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		if set_height:
 			if sys.platform not in ("darwin", "win32"):
 				# Linux
-				safety_margin = 40
+				if os.getenv("XDG_SESSION_TYPE") == "wayland":
+					# Client-side decorations
+					safety_margin = 0
+				else:
+					# Assume server-side decorations
+					safety_margin = 40
 			else:
 				safety_margin = 20
 			height = min(self.GetDisplay().ClientArea[3] - borders_tb -

@@ -1947,7 +1947,12 @@ class BaseFrame(wx.Frame):
 		clientarea = self.GetDisplay().ClientArea
 		sw = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
 		if sys.platform not in ("darwin", "win32"): # Linux
-			safety_margin = 40
+			if os.getenv("XDG_SESSION_TYPE") == "wayland":
+				# Client-side decorations
+				safety_margin = 0
+			else:
+				# Assume server-side decorations
+				safety_margin = 40
 		else:
 			safety_margin = 20
 		minsize = (min(clientarea[2] - border_lr, self.Sizer.MinSize[0] + sw),
