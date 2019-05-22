@@ -30,7 +30,7 @@ from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanelText,
 					   CustomCheckBox, CustomGrid, CustomRowLabelRenderer,
 					   ConfirmDialog, FileDrop, InfoDialog, SimpleBook,
 					   TwoWaySplitter)
-from wxfixes import GenBitmapButton as BitmapButton, wx_Panel
+from wxfixes import GenBitmapButton as BitmapButton, wx_Panel, set_maxsize
 import colormath
 import config
 import wxenhancedplot as plot
@@ -888,6 +888,9 @@ class PIFrame_2WaySplitter(TwoWaySplitter):
 				if (not self.Parent.IsMaximized() and
 					self.Parent.ClientSize[0] > w):
 					self.Parent.ClientSize = (w, self.Parent.ClientSize[1])
+			if os.getenv("XDG_SESSION_TYPE") == "wayland":
+				self.Parent.MaxSize = self.Parent.Size
+				wx.CallAfter(set_maxsize, self.Parent, (-1, -1))
 			if self.GetTopLeft().Size[0] != win0w:
 				self.Parent.redraw()
 			self.Parent.resize_grid()
