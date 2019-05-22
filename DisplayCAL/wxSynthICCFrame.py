@@ -127,7 +127,11 @@ class SynthICCFrame(BaseFrame):
 		
 		self.update_controls()
 		self.update_layout()
-		self.panel.SetScrollRate(2, 2)
+		if self.panel.VirtualSize[0] > self.panel.Size[0]:
+			scrollrate_x = 2
+		else:
+			scrollrate_x = 0
+		self.panel.SetScrollRate(scrollrate_x, 2)
 		
 		self.save_btn.Hide()
 		

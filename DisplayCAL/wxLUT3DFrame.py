@@ -118,7 +118,11 @@ class LUT3DFrame(BaseFrame):
 		self.XYZbpout = [0.001, 0.001, 0.001]
 		self.update_controls()
 		self.update_layout()
-		self.panel.SetScrollRate(2, 2)
+		if self.panel.VirtualSize[0] > self.panel.Size[0]:
+			scrollrate_x = 2
+		else:
+			scrollrate_x = 0
+		self.panel.SetScrollRate(scrollrate_x, 2)
 		
 		config.defaults.update({
 			"position.lut3dframe.x": self.GetDisplay().ClientArea[0] + 40,
