@@ -532,9 +532,8 @@ if os.getenv("XDG_SESSION_TYPE") == "wayland":
 			# Not needed for first toplevel window or main app window
 			is_first_toplevel_window = False
 		else:
-			maxsize = window.MaxSize
 			window.MaxSize = window.Size
-			wx.CallAfter(set_maxsize, window, maxsize)
+			wx.CallAfter(set_maxsize, window, (-1, -1))
 
 	def TopLevelWindow_Show(self, show=True):
 		if show and not self.IsShown():

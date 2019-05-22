@@ -48,7 +48,8 @@ from wexpect import split_command_line
 from wxfixes import (GenBitmapButton, GenButton, GTKMenuItemGetFixedLabel,
 					 PlateButton, ThemedGenButton, adjust_font_size_for_gcdc,
 					 get_bitmap_disabled, get_dc_font_size, get_gcdc_font_size,
-					 platebtn, set_bitmap_labels, wx_Panel, get_dialogs)
+					 platebtn, set_bitmap_labels, wx_Panel, get_dialogs,
+					 set_maxsize)
 from lib.agw import labelbook, pygauge
 from lib.agw.gradientbutton import GradientButton, CLICK, HOVER
 from lib.agw.fourwaysplitter import (_TOLERANCE, FLAG_CHANGED, FLAG_PRESSED,
@@ -1970,6 +1971,8 @@ class BaseFrame(wx.Frame):
 					  min(clientarea[3] - border_tb - safety_margin,
 						  self.ClientSize[1]))
 		if not self.IsIconized() and not self.IsMaximized():
+			os.getenv("XDG_SESSION_TYPE") == "wayland":
+				self.MaxSize = (-1, -1)
 			if ((minsize[0] > clientsize[0] or minsize[1] != clientsize[1] or not
 				 getattr(self, "_layout", False))):
 				if not getattr(self, "_layout", False):
@@ -1983,6 +1986,9 @@ class BaseFrame(wx.Frame):
 				self._layout = True
 			else:
 				self.Layout()
+			os.getenv("XDG_SESSION_TYPE") == "wayland":
+				self.MaxSize = self.Size
+				wx.CallAfter(set_maxsize, self, (-1, -1))
 		self.Sizer.SetMinSize((minsize[0], minsize[1]))
 		if hasattr(self, "MinClientSize"):
 			# wxPython >= 2.9
