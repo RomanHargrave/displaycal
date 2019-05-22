@@ -1957,7 +1957,7 @@ class BaseFrame(wx.Frame):
 									   max(minsize[1], clientsize[1])))
 				self.GetSizer().SetSizeHints(self)
 				self.GetSizer().Layout()
-				self.Sizer.SetMinSize(minsize)
+				self.Sizer.SetMinSize((minsize[0] - sw, minsize[1]))
 				self._layout = True
 			else:
 				self.Layout()
