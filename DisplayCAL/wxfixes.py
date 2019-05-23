@@ -1594,11 +1594,12 @@ class TempXmlResource(object):
 												(tag, )),
 								 xml)
 				# Allow system colors for bg/fg
-				# (this works by default under Windows, but not Linux)
+				# (this works by default, but prints a warning under Linux)
 				xml = re.sub(r"<(bg|fg)>(wxSYS_COLOUR_\w+)",
 							 lambda match: "<%s>%s" %
 									(match.group(1),
-									 safe_str(wx.SystemSettings.GetColour(getattr(wx, match.group(2)[2:])).GetAsString(wx.C2S_HTML_SYNTAX))),
+									 # Need to use CSS syntax for alpha
+									 safe_str(wx.SystemSettings.GetColour(getattr(wx, match.group(2)[2:])).GetAsString(wx.C2S_CSS_SYNTAX))),
 							 xml)
 				# Set relative paths to absolute
 				basedir = os.path.dirname(os.path.dirname(xmlpath))
