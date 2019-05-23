@@ -1744,7 +1744,7 @@ def get_hidpi_scaling_factor():
 		factor = None
 		# XDG_CURRENT_DESKTOP delimiter is colon (':')
 		desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
-		if desktop and desktop[0] == "KDE":
+		if desktop[0] == "KDE":
 			# Two env-vars exist: QT_SCALE_FACTOR and
 			# QT_SCREEN_SCALE_FACTORS.
 			# According to documentation[1], the latter is
@@ -1811,7 +1811,7 @@ def get_hidpi_scaling_factor():
 				if not match:
 					# Use first one
 					factor = screen_scale_factors[0].split("=")[-1]
-		elif os.getenv("XDG_SESSION_TYPE") != "wayland" and which("xrdb"):
+		elif which("xrdb"):
 			import subprocess as sp
 			p = sp.Popen(["xrdb", "-query"], stdin=sp.PIPE,
 						 stdout=sp.PIPE, stderr=sp.PIPE)
