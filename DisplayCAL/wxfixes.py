@@ -8,6 +8,11 @@ import tempfile
 
 from meta import name as appname, wx_minversion
 
+if os.getenv("GTK_CSD", "0") != "0":
+	# Work-around double window decorations, see
+	# https://hub.displaycal.net/issue/17331/
+	os.environ["GTK_CSD"] = "0"
+
 # wxversion will be removed in Phoenix
 try:
 	import wxversion

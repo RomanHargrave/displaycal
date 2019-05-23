@@ -88,11 +88,6 @@ def main(module=None):
 			safe_print(exception)
 		else:
 			safe_print("Faulthandler", getattr(faulthandler, "__version__", ""))
-	if (os.getenv("XDG_SESSION_TYPE") != "wayland" and
-		os.getenv("GTK_CSD", "0") != "0"):
-		# Work-around double window decorations, see
-		# https://hub.displaycal.net/issue/17331/
-		os.environ["GTK_CSD"] = "0"
 	from wxaddons import wx
 	if u"phoenix" in wx.PlatformInfo:
 		# py2exe helper so wx.xml gets picked up
