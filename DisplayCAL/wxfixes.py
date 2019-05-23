@@ -1572,7 +1572,7 @@ class TempXmlResource(object):
 
 	def __init__(self, xmlpath):
 		from config import get_default_dpi, getcfg
-		scale = getcfg("app.dpi") / get_default_dpi()
+		scale = max(getcfg("app.dpi") / get_default_dpi(), 1)
 		if scale > 1 or "gtk3" in wx.PlatformInfo:
 			if not TempXmlResource._temp:
 				try:
