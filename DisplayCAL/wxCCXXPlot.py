@@ -111,33 +111,32 @@ class CCXXPlot(wx.Frame):
 			temp = worker.create_tempdir()
 			if isinstance(temp, Exception):
 				show_result_dialog(temp, parent)
-				return
+			else:
+				basename = make_filename_safe(desc)
+				temp_path = os.path.join(temp, basename + ".ti3")
 
-			basename = make_filename_safe(desc)
-			temp_path = os.path.join(temp, basename + ".ti3")
+				cgats[0].type = "CTI3"
+				cgats[0].DEVICE_CLASS = "DISPLAY"
+				cgats.write(temp_path)
 
-			cgats[0].type = "CTI3"
-			cgats[0].DEVICE_CLASS = "DISPLAY"
-			cgats.write(temp_path)
+				temp_out_path = os.path.join(temp, basename + ".CIE.ti3")
 
-			temp_out_path = os.path.join(temp, basename + ".CIE.ti3")
-
-			result = worker.exec_cmd(get_argyll_util("spec2cie"),
-									 [temp_path,
-									  temp_out_path],
-									 capture_output=True)
-			if isinstance(result, Exception) or not result:
-				show_result_dialog(result or "".join(worker.output), parent)
-				worker.wrapup(False)
-				return
-	
-			try:
-				cgats = CGATS.CGATS(temp_out_path)
-			except Exception, exception:
-				show_result_dialog(exception, parent)
-				return
-			finally:
-				worker.wrapup(False)
+				result = worker.exec_cmd(get_argyll_util("spec2cie"),
+										 [temp_path,
+										  temp_out_path],
+										 capture_output=True)
+				if isinstance(result, Exception) or not result:
+					show_result_dialog(UnloggedError(result or
+													 "".join(worker.errors)),
+									   parent)
+					worker.wrapup(False)
+				else:
+					try:
+						cgats = CGATS.CGATS(temp_out_path)
+					except Exception, exception:
+						show_result_dialog(exception, parent)
+					finally:
+						worker.wrapup(False)
 
 		data_format = cgats.queryv1("DATA_FORMAT")
 		data = cgats.queryv1("DATA")
@@ -508,6 +507,8 @@ class CCXXPlot(wx.Frame):
 									style=pen_style))
 		# Add points
 		for i, (XYZ, values, attrs) in enumerate(self.samples):
+			if len(XYZ) != 3:
+				continue
 			xy = colormath.XYZ2xyY(*XYZ)[:2]
 			gfx.append(plot.PolyMarker([colormath.XYZ2xyY(*XYZ)[:2]],
 									  colour=wx.Colour(*self.gfx[i].attributes["colour"]),
