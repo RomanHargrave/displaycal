@@ -1568,7 +1568,7 @@ class TempXmlResource(object):
 	def __init__(self, xmlpath):
 		from config import get_default_dpi, getcfg
 		scale = getcfg("app.dpi") / get_default_dpi()
-		if scale > 1 or wx.Platform == "__WXGTK__":
+		if scale > 1 or "gtk3" in wx.PlatformInfo:
 			if not TempXmlResource._temp:
 				try:
 					TempXmlResource._temp = tempfile.mkdtemp(prefix=appname + u"-XRC-")
@@ -1593,14 +1593,6 @@ class TempXmlResource(object):
 													  for v in match.groups()) +
 												(tag, )),
 								 xml)
-				# Allow system colors for bg/fg
-				# (this works by default, but prints a warning under Linux)
-				xml = re.sub(r"<(bg|fg)>(wxSYS_COLOUR_\w+)",
-							 lambda match: "<%s>%s" %
-									(match.group(1),
-									 # Need to use CSS syntax for alpha
-									 safe_str(wx.SystemSettings.GetColour(getattr(wx, match.group(2)[2:])).GetAsString(wx.C2S_CSS_SYNTAX))),
-							 xml)
 				# Set relative paths to absolute
 				basedir = os.path.dirname(os.path.dirname(xmlpath))
 				basedir = basedir.replace("\\", "/")
