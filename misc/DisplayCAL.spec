@@ -85,7 +85,22 @@ Requires:       python-psutil
 Requires:       python-dbus-python
 %py_requires
 %else
-%if 0%{?fedora_version} > 0 || 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
+%if 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
+BuildRequires:  gcc
+BuildRequires:  libX11-devel
+BuildRequires:  libXinerama-devel
+BuildRequires:  libXrandr-devel
+BuildRequires:  libXxf86vm-devel
+BuildRequires:  python-devel
+BuildRequires:  udev
+Requires:       argyllcms
+Requires:       numpy >= %{numpy_version}
+Requires:       SDL2_mixer
+Requires:       wxPython >= %{wx_minversion}
+Requires:       python2-psutil
+Requires:       dbus-python
+%else
+%if 0%{?fedora_version} > 0
 BuildRequires:  gcc
 BuildRequires:  libX11-devel
 BuildRequires:  libXinerama-devel
@@ -115,6 +130,7 @@ Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPython >= %{wx_minversion}
 Requires:       python-psutil
 Requires:       python-dbus
+%endif
 %endif
 %endif
 %endif
