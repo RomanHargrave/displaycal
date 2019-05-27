@@ -1836,11 +1836,11 @@ def get_hidpi_scaling_factor():
 			split = stdout.split()
 			if split:
 				factor = split[-1]
-		if factor:
+		if factor is not None and not isinstance(factor, float):
 			try:
 				factor = float(factor)
 			except ValueError:
-				factor = 1.0
+				factor = None
 		return factor
 
 
