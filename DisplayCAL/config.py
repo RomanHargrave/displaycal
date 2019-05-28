@@ -1811,7 +1811,7 @@ def get_hidpi_scaling_factor():
 				if not match:
 					# Use first one
 					factor = screen_scale_factors[0].split("=")[-1]
-		elif which("xrdb"):
+		if not factor and which("xrdb"):
 			import subprocess as sp
 			p = sp.Popen(["xrdb", "-query"], stdin=sp.PIPE,
 						 stdout=sp.PIPE, stderr=sp.PIPE)
@@ -1825,7 +1825,7 @@ def get_hidpi_scaling_factor():
 						factor = float(dpi) / get_default_dpi()
 					except ValueError:
 						factor = None
-		elif which("gsettings"):
+		if not factor and which("gsettings"):
 			# GNOME
 			import subprocess as sp
 			p = sp.Popen(["gsettings", "get", "org.gnome.desktop.interface",
