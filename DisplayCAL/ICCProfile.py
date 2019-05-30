@@ -5540,7 +5540,11 @@ class ICCProfile(object):
 								break
 				if use_cache:
 					stat = os.stat(profile)
-					key = (stat.st_ino, stat.st_mtime, stat.st_size)
+					# NOTE under Python 2.x Windows, st_ino is always zero!
+					# Use file path as well to work around.
+					# This has been addressed with Python 3
+					key = (profile, stat.st_dev, stat.st_ino, stat.st_mtime,
+						   stat.st_size)
 				else:
 					key = ()
 			else:
