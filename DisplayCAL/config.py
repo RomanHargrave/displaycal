@@ -1244,7 +1244,7 @@ def _init_testcharts():
 		testchart_defaults[key] = testchart_defaults["l"]
 
 
-def getcfg(name, fallback=True, raw=False):
+def getcfg(name, fallback=True, raw=False, cfg=cfg):
 	"""
 	Get and return an option value from the configuration.
 	
@@ -1371,7 +1371,7 @@ def getcfg(name, fallback=True, raw=False):
 	return value
 
 
-def hascfg(name, fallback=True):
+def hascfg(name, fallback=True, cfg=cfg):
 	"""
 	Check if an option name exists in the configuration.
 	
@@ -1624,7 +1624,7 @@ def makecfgdir(which="user", worker=None):
 	return True
 
 
-def initcfg(module=None):
+def initcfg(module=None, cfg=cfg):
 	"""
 	Initialize the configuration.
 	
@@ -1641,10 +1641,10 @@ def initcfg(module=None):
 	   not os.path.exists(os.path.join(confighome, cfgbasename + ".ini")):
 		# Set a few defaults which have None as possible value and thus cannot
 		# be set in the 'defaults' collection
-		setcfg("gamap_src_viewcond", "mt")
-		setcfg("gamap_out_viewcond", "mt")
+		setcfg("gamap_src_viewcond", "mt", cfg=cfg)
+		setcfg("gamap_out_viewcond", "mt", cfg=cfg)
 		# Set default preset
-		setcfg("calibration.file", defaults["calibration.file"])
+		setcfg("calibration.file", defaults["calibration.file"], cfg=cfg)
 	# Read cfg
 	cfgnames = []
 	if module not in ("3DLUT-maker", "VRML-to-X3D-converter",
@@ -1669,7 +1669,7 @@ def initcfg(module=None):
 				# Make user config take precedence
 				break
 	if len(cfgfiles) > 1 and (module != "apply-profiles" or
-							  sys.platform != "win32"):
+							  sys.platform != "win32") and module != "synthprofile":
 		# Make most recent file take precedence
 		cfgfiles.sort(key=lambda cfgfile: os.stat(cfgfile).st_mtime)
 	try:
@@ -1691,7 +1691,7 @@ def initcfg(module=None):
 	finally:
 		if not module and not getcfg("calibration.ambient_viewcond_adjust"):
 			# Reset to default
-			setcfg("calibration.ambient_viewcond_adjust.lux", None)
+			setcfg("calibration.ambient_viewcond_adjust.lux", None, cfg=cfg)
 
 
 dpiset = False
@@ -1844,7 +1844,7 @@ def get_hidpi_scaling_factor():
 		return factor
 
 
-def setcfg(name, value):
+def setcfg(name, value, cfg=cfg):
 	""" Set an option value in the configuration. """
 	if value is None:
 		cfg.remove_option(ConfigParser.DEFAULTSECT, name)
@@ -1857,7 +1857,7 @@ def setcfg(name, value):
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
-def writecfg(which="user", worker=None, module=None, options=()):
+def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 	"""
 	Write configuration file.
 	
