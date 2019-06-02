@@ -1741,6 +1741,20 @@ def get_hidpi_scaling_factor():
 	else:
 		# Linux
 		from util_os import which
+		if which("xrdb"):
+			import subprocess as sp
+			p = sp.Popen(["xrdb", "-query"], stdin=sp.PIPE,
+						 stdout=sp.PIPE, stderr=sp.PIPE)
+			# Format: 'Xft.dpi:        192'
+			stdout, stderr = p.communicate()
+			for line in stdout.splitlines():
+				if line.startswith("Xft.dpi:"):
+					split = line.split()
+					dpi = split[-1]
+					try:
+						return float(dpi) / get_default_dpi()
+					except ValueError:
+						pass
 		factor = None
 		# XDG_CURRENT_DESKTOP delimiter is colon (':')
 		desktop = os.getenv("XDG_CURRENT_DESKTOP", "").split(":")
@@ -1811,20 +1825,6 @@ def get_hidpi_scaling_factor():
 				if not match:
 					# Use first one
 					factor = screen_scale_factors[0].split("=")[-1]
-		if not factor and which("xrdb"):
-			import subprocess as sp
-			p = sp.Popen(["xrdb", "-query"], stdin=sp.PIPE,
-						 stdout=sp.PIPE, stderr=sp.PIPE)
-			# Format: 'Xft.dpi:        192'
-			stdout, stderr = p.communicate()
-			for line in stdout.splitlines():
-				if line.startswith("Xft.dpi:"):
-					split = line.split()
-					dpi = split[-1]
-					try:
-						factor = float(dpi) / get_default_dpi()
-					except ValueError:
-						factor = None
 		if not factor and which("gsettings"):
 			# GNOME
 			import subprocess as sp
@@ -1836,7 +1836,7 @@ def get_hidpi_scaling_factor():
 			split = stdout.split()
 			if split:
 				factor = split[-1]
-		if factor is not None and not isinstance(factor, float):
+		if factor is not None:
 			try:
 				factor = float(factor)
 			except ValueError:
