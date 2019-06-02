@@ -1052,7 +1052,7 @@ class GamapFrame(BaseFrame):
 		
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 
-		self.panel = self.FindWindowByName("panel")
+		self.panel = xrc.XRCCTRL(self, "panel")
 		
 		self.set_child_ctrls_as_attrs(self)
 
@@ -1061,7 +1061,7 @@ class GamapFrame(BaseFrame):
 		font.SetWeight(wx.BOLD)
 		child.Font = font
 
-		self.gamap_profile = self.FindWindowByName("gamap_profile")
+		self.gamap_profile = xrc.XRCCTRL(self, "gamap_profile")
 		self.gamap_profile.changeCallback = self.gamap_profile_handler
 		self.gamap_profile.SetHistory(get_data_path("ref", "\.(icm|icc)$"))
 		self.gamap_profile.SetMaxFontSize(11)
@@ -1627,15 +1627,15 @@ class MainFrame(ReportFrame, BaseFrame):
 		}
 
 		# Main panel
-		self.panel = self.FindWindowByName("panel")
+		self.panel = xrc.XRCCTRL(self, "panel")
 		self.panel.SetDropTarget(self.droptarget)
 		
 		# Header
 		# Its width also determines the initial min width of the main window
 		# after SetSizeHints and Layout
-		self.headerbordertop = self.FindWindowByName("headerbordertop")
+		self.headerbordertop = xrc.XRCCTRL(self, "headerbordertop")
 		self.header = get_header(self.panel)
-		self.headerpanel = self.FindWindowByName("headerpanel")
+		self.headerpanel = xrc.XRCCTRL(self, "headerpanel")
 		self.headerpanel.ContainingSizer.Insert(1, self.header, flag=wx.EXPAND)
 		y = 64
 		w = 80
@@ -1657,11 +1657,11 @@ class MainFrame(ReportFrame, BaseFrame):
 		#self.panel.Sizer.Insert(2, separator, flag=wx.EXPAND)
 		
 		# Calibration settings panel
-		self.calpanel = self.FindWindowByName("calpanel")
-		self.display_instrument_panel = self.FindWindowByName("display_instrument_panel")
-		self.calibration_settings_panel = self.FindWindowByName("calibration_settings_panel")
-		self.profile_settings_panel = self.FindWindowByName("profile_settings_panel")
-		self.lut3d_settings_panel = self.FindWindowByName("lut3d_settings_panel")
+		self.calpanel = xrc.XRCCTRL(self, "calpanel")
+		self.display_instrument_panel = xrc.XRCCTRL(self, "display_instrument_panel")
+		self.calibration_settings_panel = xrc.XRCCTRL(self, "calibration_settings_panel")
+		self.profile_settings_panel = xrc.XRCCTRL(self, "profile_settings_panel")
+		self.lut3d_settings_panel = xrc.XRCCTRL(self, "lut3d_settings_panel")
 
 		# Verification / measurement report
 		res = TempXmlResource(get_data_path(os.path.join("xrc", "report.xrc")))
@@ -1679,7 +1679,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						   "profile_settings_info_panel",
 						   "lut3d_settings_info_panel",
 						   "mr_settings_info_panel"]:
-			panel = self.FindWindowByName(panel_name)
+			panel = xrc.XRCCTRL(self, panel_name)
 			panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
 			for child in panel.Children:
 				if isinstance(child, wx.Panel):
@@ -1700,7 +1700,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.display_tech_info_show_btn = btn
 		
 		# Button panel
-		self.buttonpanel = self.FindWindowByName("buttonpanel")
+		self.buttonpanel = xrc.XRCCTRL(self, "buttonpanel")
 		sizer = self.buttonpanel.ContainingSizer
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+
@@ -1732,7 +1732,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.buttonpanelheader.blend = True
 		
 		# Tab panel
-		self.tabpanel = self.FindWindowByName("tabpanel")
+		self.tabpanel = xrc.XRCCTRL(self, "tabpanel")
 		sizer = self.tabpanel.ContainingSizer
 		if hasattr(sizer, "GetItemIndex"):
 			# wxPython 2.8.12+

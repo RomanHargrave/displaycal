@@ -67,7 +67,7 @@ class SynthICCFrame(BaseFrame):
 		
 		self.set_child_ctrls_as_attrs(self)
 
-		self.panel = self.FindWindowByName("panel")
+		self.panel = xrc.XRCCTRL(self, "panel")
 		
 		self._updating_ctrls = False
 		

@@ -70,7 +70,7 @@ class LUT3DFrame(BaseFrame):
 		
 		self.set_child_ctrls_as_attrs(self)
 
-		self.panel = self.FindWindowByName("panel")
+		self.panel = xrc.XRCCTRL(self, "panel")
 
 		if setup:
 			self.setup()
@@ -84,7 +84,7 @@ class LUT3DFrame(BaseFrame):
 		self.worker.set_argyll_version("collink")
 
 		for which in ("input", "abstract", "output"):
-			ctrl = self.FindWindowByName("%s_profile_ctrl" % which)
+			ctrl = xrc.XRCCTRL(self, "%s_profile_ctrl" % which)
 			setattr(self, "%s_profile_ctrl" % which, ctrl)
 			ctrl.changeCallback = getattr(self, "%s_profile_ctrl_handler" % 
 												which)

@@ -68,7 +68,7 @@ class ReportFrame(BaseFrame):
 	def mr_init_controls(self):
 		for which in ("chart", "simulation_profile", "devlink_profile",
 					  "output_profile"):
-			ctrl = self.FindWindowByName("%s_ctrl" % which)
+			ctrl = xrc.XRCCTRL(self, "%s_ctrl" % which)
 			setattr(self, "%s_ctrl" % which, ctrl)
 			ctrl.changeCallback = getattr(self, "%s_ctrl_handler" % which)
 			if which not in ("devlink_profile", "output_profile"):
