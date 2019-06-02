@@ -2107,6 +2107,15 @@ class BaseFrame(wx.Frame):
 										 event.EventObject.Navigate(int(not wx.GetKeyState(wx.WXK_SHIFT))) or
 										 event.Skip())
 
+	def getcfg(self, name, fallback=True, raw=False, cfg=config.cfg):
+		return getcfg(name, fallback, raw, cfg)
+
+	def hascfg(self, name, fallback=True, cfg=config.cfg):
+		return hascfg(name, fallback, cfg)
+
+	def setcfg(self, name, value, cfg=config.cfg):
+		setcfg(name, value, cfg)
+
 
 class BaseInteractiveDialog(wx.Dialog):
 

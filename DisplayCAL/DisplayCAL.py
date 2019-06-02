@@ -1986,7 +1986,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		Create & initialize the 3D LUT creation window and its controls.
 		
 		"""
-		self.synthiccframe = SynthICCFrame(self)
+		config.initcfg("synthprofile", SynthICCFrame.cfg)
+		self.synthiccframe = SynthICCFrame()
 	
 	def infoframe_close_handler(self, event):
 		self.infoframe_toggle_handler(event)
