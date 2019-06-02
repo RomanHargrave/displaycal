@@ -178,7 +178,15 @@ class SynthICCFrame(BaseFrame):
 			# Hide first (looks nicer)
 			self.Hide()
 			# Need to use CallAfter to prevent hang under Windows if minimized
-			wx.CallAfter(self.Destroy)
+			if wx.GetApp().TopWindow is self:
+				# XXX: Weird wxPython Phoenix bug under Windows: Destroying the
+				# frame seems to affect subsequently loaded XRC resources
+				# (wrong control classes used).
+				# More investigation is needed, but it is clear this is a
+				# Phoenix or wxWidgets bug because it does not happen with
+				# wxPython classic (3.0.2).
+				# Workaround: Only destroy the frame if running standalone.
+				wx.CallAfter(self.Destroy)
 	
 	def black_luminance_ctrl_handler(self, event):
 		v = self.black_luminance_ctrl.GetValue()
