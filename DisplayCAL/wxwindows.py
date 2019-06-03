@@ -27,7 +27,7 @@ import ICCProfile as ICCP
 import audio
 import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
-					get_default_dpi, get_verified_path, pyname, setcfg,
+					get_default_dpi, get_verified_path, hascfg, pyname, setcfg,
 					confighome, appbasename, logdir, set_default_app_dpi)
 from debughelpers import (Error, DownloadError, Info, UnloggedError,
 						  UnloggedInfo, UnloggedWarning, Warn, getevtobjname,
