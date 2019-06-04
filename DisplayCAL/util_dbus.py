@@ -2,23 +2,37 @@
 
 import sys
 
-try:
-	import dbus
-	from dbus.mainloop import glib
+USE_GI = True
 
+DBusException = Exception
+
+try:
+	if USE_GI:
+		try:
+			from gi.repository import Gio, GLib
+		except ImportError:
+			USE_GI = False
+	if not USE_GI:
+		import dbus
+		from dbus.mainloop import glib
 	from util_xml import XMLDict
 except ImportError:
 	if sys.platform not in ("darwin", "win32"):
 		raise
 
-	DBusException = Exception
 else:
-	glib.threads_init()
+	if USE_GI:
+		dbus_session = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+		dbus_system = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
 
-	dbus_session = dbus.SessionBus()
-	dbus_system = dbus.SystemBus()
+		DBusException = GLib.Error
+	else:
+		glib.threads_init()
 
-	DBusException = dbus.exceptions.DBusException
+		dbus_session = dbus.SessionBus()
+		dbus_system = dbus.SystemBus()
+
+		DBusException = dbus.exceptions.DBusException
 
 
 from util_str import safe_str
@@ -26,6 +40,39 @@ from util_str import safe_str
 
 BUSTYPE_SESSION = 1
 BUSTYPE_SYSTEM = 2
+
+
+class GioDBusInterfaceMethod(object):
+
+	def __init__(self, iface, method_name):
+		self._iface = iface
+		self._method_name = method_name
+
+	def __call__(self, *args):
+		format_string = ""
+		value = []
+		for arg in args:
+			if isinstance(arg, basestring):
+				format_string += "s"
+			elif isinstance(arg, (int, long)):
+				if arg < 0:
+					format_string += "i"
+				else:
+					format_string += "u"
+			elif isinstance(arg, float):
+				format_string += "f"
+			else:
+				raise TypeError("Unsupported argument type: %s" % type(arg))
+			value.append(arg)
+		parameters = GLib.Variant("(%s)" % format_string, value)
+		retv = self._iface.call_sync(self._method_name, parameters,
+									 Gio.DBusCallFlags.NO_AUTO_START, 500, None)
+		if isinstance(retv, GLib.Variant):
+			retv = retv.unpack()
+			if len(retv) == 1 and isinstance(retv, tuple):
+				return retv[0]
+			return retv
+		raise TypeError("Unsupported return value: %r" % retv)
 
 
 class DBusObject(object):
@@ -42,24 +89,36 @@ class DBusObject(object):
 				bus = dbus_session
 			else:
 				bus = dbus_system
+			self._bus = bus
 			interface = self._bus_name
 			if self._iface_name:
 				interface += "." + self._iface_name
 			try:
-				self._proxy = bus.get_object(bus_name, object_path)
-				self._iface = dbus.Interface(self._proxy,
-											 dbus_interface=interface)
+				if USE_GI:
+					self._proxy = Gio.DBusProxy.new_sync(bus,
+														 Gio.DBusProxyFlags.NONE,
+														 None, bus_name,
+														 object_path,
+														 interface, None)
+					self._iface = self._proxy
+				else:
+					self._proxy = bus.get_object(bus_name, object_path)
+					self._iface = dbus.Interface(self._proxy,
+												 dbus_interface=interface)
 			except (TypeError, ValueError,
-					dbus.exceptions.DBusException), exception:
+					DBusException), exception:
 				raise DBusObjectError(exception, self._bus_name)
 		self._introspectable = None
 
 	def __getattr__(self, name):
 		name = "".join(part.capitalize() for part in name.split("_"))
 		try:
-			return getattr(self._iface, name)
+			if USE_GI:
+				return GioDBusInterfaceMethod(self._iface, name)
+			else:
+				return getattr(self._iface, name)
 		except (AttributeError, TypeError, ValueError,
-				dbus.exceptions.DBusException), exception:
+				DBusException), exception:
 			raise DBusObjectError(exception, self._bus_name)
 
 	@property
@@ -70,10 +129,20 @@ class DBusObject(object):
 		if self._iface_name:
 			interface += "." + self._iface_name
 		try:
-			iface = dbus.Interface(self._proxy, "org.freedesktop.DBus.Properties")
-			return iface.GetAll(interface)
+			if USE_GI:
+				iface = Gio.DBusProxy.new_sync(self._bus,
+											   Gio.DBusProxyFlags.NONE,
+											   None, self._bus_name,
+											   self._object_path,
+											   "org.freedesktop.DBus.Properties",
+											   None)
+				return GioDBusInterfaceMethod(iface, "GetAll")(interface)
+			else:
+				iface = dbus.Interface(self._proxy,
+									   "org.freedesktop.DBus.Properties")
+				return iface.GetAll(interface)
 		except (TypeError, ValueError,
-				dbus.exceptions.DBusException), exception:
+				DBusException), exception:
 			raise DBusObjectError(exception, self._bus_name)
 
 	def introspect(self):
@@ -93,7 +162,7 @@ class DBusObjectError(DBusException):
 								  lambda: None)()
 		if self._dbus_error_name == "org.freedesktop.DBus.Error.ServiceUnknown":
 			exception = "%s: %s" % (exception, bus_name)
-		Exception.__init__(self, safe_str(exception))
+		DBusException.__init__(self, safe_str(exception))
 
 	def get_dbus_name(self):
 		return self._dbus_error_name

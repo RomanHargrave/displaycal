@@ -119,9 +119,8 @@ else:
 	from defaultpaths import xdg_data_home
 	try:
 		from util_dbus import (DBusObject, DBusException, BUSTYPE_SESSION,
-							   dbus, dbus_session, dbus_system)
+							   dbus_session, dbus_system)
 	except ImportError:
-		dbus = None
 		dbus_session = None
 		dbus_system = None
 import colord
