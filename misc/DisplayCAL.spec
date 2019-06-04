@@ -82,7 +82,7 @@ Requires:       python-numpy >= %{numpy_version}
 Requires:       libSDL2_mixer-2_0-0
 Requires:       python-wxWidgets >= %{wx_minversion}
 Requires:       python-psutil
-Requires:       python-dbus-python
+Requires:       python-gobject
 %py_requires
 %else
 %if 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0
@@ -113,10 +113,10 @@ Requires:       numpy >= %{numpy_version}
 Requires:       SDL2_mixer
 Requires:       wxPython >= %{wx_minversion}
 Requires:       python2-psutil
-Requires:       python2-dbus
+Requires:       python2-gobject
 %else
 # Mageia
-%define mageia_version 5
+%define mageia_version 6
 BuildRequires:  gcc
 BuildRequires:  libx11-devel
 BuildRequires:  libxinerama-devel
@@ -129,7 +129,7 @@ Requires:       libsdl2_mixer2.0_0
 Requires:       python-numpy >= %{numpy_version}
 Requires:       wxPython >= %{wx_minversion}
 Requires:       python-psutil
-Requires:       python-dbus
+Requires:       python-gi
 %endif
 %endif
 %endif
