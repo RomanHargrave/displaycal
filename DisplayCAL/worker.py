@@ -2466,10 +2466,14 @@ class Worker(WorkerBase):
 		at Argyll CMS command output """
 		if not self.instrument_calibration_complete:
 			if "calibration complete" in txt.lower():
+				self.log("%s: Detected instrument calibration complete message" %
+						 appname)
 				self.instrument_calibration_complete = True
 			else:
 				for calmsg in INST_CAL_MSGS:
 					if calmsg in txt or "calibration failed" in txt.lower():
+						self.log("%s: Detected instrument calibration message" %
+								 appname)
 						self.do_instrument_calibration(
 							"calibration failed" in txt.lower())
 						break
@@ -2484,6 +2488,8 @@ class Worker(WorkerBase):
 			(self.instrument_calibration_complete and
 			 "place instrument on spot" in txt.lower() and
 			 self.progress_wnd is getattr(self, "terminal", None))):
+			self.log("%s: Detected instrument placement (screen/spot) message" %
+					 appname)
 			self.instrument_place_on_screen_msg = False
 			if (self.cmdname == get_argyll_utilname("dispcal") and
 				sys.platform == "darwin"):
@@ -2529,6 +2535,8 @@ class Worker(WorkerBase):
 			self.instrument_sensor_position_msg = True
 		if (self.instrument_sensor_position_msg and
 			" or q to " in txt.lower()):
+			self.log("%s: Detected read failed due to wrong sensor position" %
+					 appname)
 			self.instrument_sensor_position_msg = False
 			self.instrument_reposition_sensor()
 	
@@ -2663,6 +2671,8 @@ END_DATA
 		   getattr(self, "thread_abort", False):
 			# If we are aborting, ignore request
 			return
+		self.instrument_on_screen = False
+		self.log("%s: Prompting to calibrate instrument" % appname)
 		self.progress_wnd.Pulse(" " * 4)
 		if failed:
 			msg = lang.getstr("failure")
@@ -2696,10 +2706,14 @@ END_DATA
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		if self.finished:
+			self.log("%s: Ignoring instrument calibration prompt (worker "
+					 "thread finished)" % appname)
 			return
 		if dlg_result != wx.ID_OK:
+			self.log("%s: Canceled instrument calibration prompt" % appname)
 			self.abort_subprocess()
 			return False
+		self.log("%s: About to calibrate instrument" % appname)
 		self.progress_wnd.Pulse(lang.getstr("please_wait"))
 		if self.safe_send(" "):
 			self.progress_wnd.Pulse(lang.getstr("instrument.calibrating"))
@@ -2786,6 +2800,7 @@ END_DATA
 		   getattr(self, "thread_abort", False):
 			# If we are aborting, ignore request
 			return
+		self.log("%s: Prompting to place instrument on screen" % appname)
 		self.progress_wnd.Pulse(" " * 4)
 		if self.use_madvr:
 			fullscreen = self.madtpg.is_fullscreen()
@@ -2802,15 +2817,19 @@ END_DATA
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		if self.finished:
+			self.log("%s: Ignoring instrument placement prompt (worker thread "
+					 "finished)" % appname)
 			return
 		if dlg_result != wx.ID_OK:
+			self.log("%s: Canceled instrument placement prompt" % appname)
 			self.abort_subprocess()
 			return False
+		self.instrument_on_screen = True
+		self.log("%s: Instrument on screen" % appname)
 		if not isinstance(self.progress_wnd, (UntetheredFrame,
 											  DisplayUniformityFrame)):
 			self.safe_send(" ")
 			self.pauseable_now = True
-		self.instrument_on_screen = True
 		if self.use_madvr:
 			if sys.platform == "win32":
 				self.madtpg.set_osd_text(u"\u25b6")  # "Play" symbol
@@ -2821,6 +2840,7 @@ END_DATA
 		   getattr(self, "thread_abort", False):
 			# If we are aborting, ignore request
 			return
+		self.log("%s: Prompting to reposition instrument sensor" % appname)
 		self.progress_wnd.Pulse(" " * 4)
 		if self.use_madvr:
 			fullscreen = self.madtpg.is_fullscreen()
@@ -2836,8 +2856,12 @@ END_DATA
 		dlg_result = dlg.ShowModal()
 		dlg.Destroy()
 		if self.finished:
+			self.log("%s: Ignoring instrument sensor repositioning prompt "
+					 "(worker thread finished)" % appname)
 			return
 		if dlg_result != wx.ID_OK:
+			self.log("%s: Canceled instrument sensor repositioning prompt" %
+					 appname)
 			self.abort_subprocess()
 			return False
 		self.safe_send(" ")

@@ -7,7 +7,7 @@ Interactive display calibration UI
 """
 
 from __future__ import with_statement
-from time import strftime
+from time import sleep, strftime
 import os
 import re
 import sys
@@ -249,6 +249,7 @@ class DisplayUniformityFrame(BaseFrame):
 	def measure(self, event=None):
 		if event:
 			self.index = event.GetEventObject().index
+			safe_print("%s: Uniformity grid index %i" % (appname, self.index))
 			self.is_measuring = True
 			self.results[self.index] = []
 			self.labels[self.index].SetLabel("")
@@ -258,6 +259,9 @@ class DisplayUniformityFrame(BaseFrame):
 		self.panels[self.index].SetBackgroundColour(self.colors[len(self.results[self.index])])
 		self.panels[self.index].Refresh()
 		self.panels[self.index].Update()
+		safe_print("%s: About to measure uniformity grid index %i @%i%%" %
+				   (appname, self.index,
+					self.colors[len(self.results[self.index])].red / 2.55))
 		# Use a delay to allow for TFT lag
 		wx.CallLater(200, self.safe_send, " ")
 
@@ -285,11 +289,13 @@ class DisplayUniformityFrame(BaseFrame):
 							   txt, re.I)
 				self.results[self.index][-1]["C%sT" % locus[0]] = int(CT.groups()[0])
 		if "key to take a reading" in txt and not self.last_error:
+			safe_print("%s: Got 'key to take a reading'" % appname)
 			if not self.is_measuring:
 				self.enable_buttons()
 				return
 			if len(self.results[self.index]) < len(self.colors):
 				# Take readings at 5 different brightness levels per swatch
+				safe_print("%s: About to take next reading" % appname)
 				self.measure()
 			else:
 				self.is_measuring = False
@@ -381,7 +387,15 @@ class DisplayUniformityFrame(BaseFrame):
 	
 	def safe_send(self, bytes):
 		if self.has_worker_subprocess() and not self.worker.subprocess_abort:
-			self.worker.safe_send(bytes)
+			if not self.worker.instrument_on_screen:
+				if not getattr(self, "wait_for_instrument_on_screen", False):
+					self.wait_for_instrument_on_screen = True
+					safe_print("%s: Waiting for instrument to be placed on screen" %
+							   appname)
+				wx.CallLater(200, self.safe_send, bytes)
+			else:
+				self.wait_for_instrument_on_screen = False
+				self.worker.safe_send(bytes)
 	
 	def show_cursor(self):
 		cursor = wx.StockCursor(wx.CURSOR_ARROW)
