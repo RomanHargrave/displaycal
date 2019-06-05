@@ -49,35 +49,27 @@ class DBusObjectInterfaceMethod(object):
 		self._method_name = method_name
 
 	def __call__(self, *args, **kwargs):
-		if not USE_GI:
-			if not "timeout" in kwargs:
-				kwargs["timeout"] = 500
-			return getattr(self._iface, self._method_name)(*args, **kwargs)
-		format_string = ""
-		value = []
-		for arg in args:
-			if isinstance(arg, basestring):
-				format_string += "s"
-			elif isinstance(arg, (int, long)):
-				if arg < 0:
-					format_string += "i"
+		if USE_GI:
+			format_string = ""
+			value = []
+			for arg in args:
+				if isinstance(arg, basestring):
+					format_string += "s"
+				elif isinstance(arg, (int, long)):
+					if arg < 0:
+						format_string += "i"
+					else:
+						format_string += "u"
+				elif isinstance(arg, float):
+					format_string += "f"
 				else:
-					format_string += "u"
-			elif isinstance(arg, float):
-				format_string += "f"
-			else:
-				raise TypeError("Unsupported argument type: %s" % type(arg))
-			value.append(arg)
-		parameters = GLib.Variant("(%s)" % format_string, value)
-		retv = self._iface.call_sync(self._method_name, parameters,
-									 Gio.DBusCallFlags.NO_AUTO_START,
-									 kwargs.get("timeout", 500), None)
-		if isinstance(retv, GLib.Variant):
-			retv = retv.unpack()
-			if len(retv) == 1 and isinstance(retv, tuple):
-				return retv[0]
-			return retv
-		raise TypeError("Unsupported return value: %r" % retv)
+					raise TypeError("Unsupported argument type: %s" % type(arg))
+				value.append(arg)
+			args = ["(%s)" % format_string]
+			args.extend(value)
+		if not "timeout" in kwargs:
+			kwargs["timeout"] = 500
+		return getattr(self._iface, self._method_name)(*args, **kwargs)
 
 
 class DBusObject(object):
