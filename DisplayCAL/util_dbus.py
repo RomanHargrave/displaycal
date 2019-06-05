@@ -42,13 +42,17 @@ BUSTYPE_SESSION = 1
 BUSTYPE_SYSTEM = 2
 
 
-class GioDBusInterfaceMethod(object):
+class DBusObjectInterfaceMethod(object):
 
 	def __init__(self, iface, method_name):
 		self._iface = iface
 		self._method_name = method_name
 
 	def __call__(self, *args):
+		if not USE_GI:
+			if not "timeout" in kwargs:
+				kwargs["timeout"] = 500
+			return getattr(self._iface, self._method_name)(*args, **kwargs)
 		format_string = ""
 		value = []
 		for arg in args:
@@ -66,7 +70,8 @@ class GioDBusInterfaceMethod(object):
 			value.append(arg)
 		parameters = GLib.Variant("(%s)" % format_string, value)
 		retv = self._iface.call_sync(self._method_name, parameters,
-									 Gio.DBusCallFlags.NO_AUTO_START, 500, None)
+									 Gio.DBusCallFlags.NO_AUTO_START,
+									 kwargs.get("timeout", 500), None)
 		if isinstance(retv, GLib.Variant):
 			retv = retv.unpack()
 			if len(retv) == 1 and isinstance(retv, tuple):
@@ -113,10 +118,7 @@ class DBusObject(object):
 	def __getattr__(self, name):
 		name = "".join(part.capitalize() for part in name.split("_"))
 		try:
-			if USE_GI:
-				return GioDBusInterfaceMethod(self._iface, name)
-			else:
-				return getattr(self._iface, name)
+			return DBusObjectInterfaceMethod(self._iface, name)
 		except (AttributeError, TypeError, ValueError,
 				DBusException), exception:
 			raise DBusObjectError(exception, self._bus_name)
@@ -136,11 +138,10 @@ class DBusObject(object):
 											   self._object_path,
 											   "org.freedesktop.DBus.Properties",
 											   None)
-				return GioDBusInterfaceMethod(iface, "GetAll")(interface)
 			else:
 				iface = dbus.Interface(self._proxy,
 									   "org.freedesktop.DBus.Properties")
-				return iface.GetAll(interface)
+			return DBusObjectInterfaceMethod(iface, "GetAll")(interface)
 		except (TypeError, ValueError,
 				DBusException), exception:
 			raise DBusObjectError(exception, self._bus_name)
