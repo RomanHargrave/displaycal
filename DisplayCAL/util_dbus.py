@@ -48,7 +48,7 @@ class DBusObjectInterfaceMethod(object):
 		self._iface = iface
 		self._method_name = method_name
 
-	def __call__(self, *args):
+	def __call__(self, *args, **kwargs):
 		if not USE_GI:
 			if not "timeout" in kwargs:
 				kwargs["timeout"] = 500
