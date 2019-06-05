@@ -121,6 +121,7 @@ class GenTCPSockPatternGeneratorServer(object):
 		self.bits = bits
 		self.use_video_levels = use_video_levels
 		self.socket = socket(AF_INET, SOCK_STREAM)
+		self.socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 		self.socket.settimeout(1)
 		self.socket.bind(('', port))
 		self.socket.listen(1)

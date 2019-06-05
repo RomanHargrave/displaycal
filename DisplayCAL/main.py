@@ -207,6 +207,7 @@ def main(module=None):
 		# Create listening socket
 		appsocket = AppSocket()
 		if appsocket:
+			appsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			sys._appsocket = appsocket.socket
 			if getcfg("app.allow_network_clients"):
 				host = ""
