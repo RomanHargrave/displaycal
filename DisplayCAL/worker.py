@@ -2521,6 +2521,9 @@ class Worker(WorkerBase):
 					# interactive display adjustment would botch the first
 					# reading (black)
 					wx.CallLater(1500, self.instrument_on_screen_continue)
+		elif "place instrument on spot" in txt.lower():
+			self.log("%s: Assuming instrument on screen" % appname)
+			self.instrument_on_screen = True
 
 	def instrument_on_screen_continue(self):
 		self.log("%s: Skipping place instrument on screen message..." % appname)
