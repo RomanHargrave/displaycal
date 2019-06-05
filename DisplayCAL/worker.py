@@ -1827,7 +1827,7 @@ class Worker(WorkerBase):
 								 ignore_display_name=False,
 								 allow_nondefault_observer=False,
 								 ambient=False, allow_video_levels=True,
-								 quantize=False):
+								 quantize=False, cmd=None):
 		""" Add common options and to dispcal, dispread and spotread arguments """
 		if display and not get_arg("-d", args):
 			args.append("-d" + self.get_display())
@@ -1997,11 +1997,12 @@ class Worker(WorkerBase):
 		# emissive mode (see Argyll source spectro/ss.c, around line 40)
 		# (is this still the case though?)
 		# Note we implicitly skip sensor calibration if already done during
-		# output levels detection, but only for colorimeters
+		# output levels detection or if using spotread, but only for colorimeters
 		if ((getcfg("allow_skip_sensor_cal") or
 			 (not instrument_features.get("spectral") and
 			  (self._detected_output_levels or
-			   (self.dispread_after_dispcal and self.resume)) and
+			   (self.dispread_after_dispcal and self.resume) or
+			   cmd == get_argyll_util("spotread")) and
 			  not self._detecting_video_levels)) and
 			instrument_features.get("skip_sensor_cal") and
 			self.argyll_version >= [1, 1, 0] and not get_arg("-N", args, True) and

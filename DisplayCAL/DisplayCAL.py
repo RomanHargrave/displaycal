@@ -6024,7 +6024,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def measure_uniformity_producer(self):
 		cmd, args = get_argyll_util("spotread"), ["-v", "-e", "-T"]
 		if cmd:
-			result = self.worker.add_measurement_features(args, display=False)
+			result = self.worker.add_measurement_features(args, display=False,
+														  cmd=cmd)
 			if isinstance(result, Exception):
 				return result
 			return self.worker.exec_cmd(cmd, args, skip_scripts=True)
