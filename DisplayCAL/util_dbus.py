@@ -73,6 +73,8 @@ class DBusObject(object):
 	def __init__(self, bus_type, bus_name, object_path=None, iface_name=None):
 		self._bus_type = bus_type
 		self._bus_name = bus_name
+		if object_path is None:
+			object_path = "/" + bus_name.replace(".", "/")
 		self._object_path = object_path
 		self._iface_name = iface_name
 		self._proxy = None
