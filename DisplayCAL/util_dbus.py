@@ -6,7 +6,7 @@ USE_GI = True
 
 DBusException = Exception
 
-try:
+if sys.platform not in ("darwin", "win32"):
 	if USE_GI:
 		try:
 			from gi.repository import Gio, GLib
@@ -16,11 +16,7 @@ try:
 		import dbus
 		from dbus.mainloop import glib
 	from util_xml import XMLDict
-except ImportError:
-	if sys.platform not in ("darwin", "win32"):
-		raise
 
-else:
 	if USE_GI:
 		dbus_session = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 		dbus_system = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
