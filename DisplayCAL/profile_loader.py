@@ -24,6 +24,7 @@ if sys.platform == "win32":
 	import struct
 	import subprocess as sp
 	import traceback
+	import warnings
 	import winerror
 	import _winreg
 
@@ -1921,7 +1922,8 @@ class ProfileLoader(object):
 		except WindowsError, exception:
 			if (exception.args[0] != errno.ENOENT or
 				sys.getwindowsversion() >= (6, )):
-				safe_print("Registry access failed:", exception)
+				warnings.warn("Registry access failed: %s: %s" %
+							  (safe_str(exception), key_name), Warning)
 			key = None
 			numsubkeys = 0
 			if not (self.monitors or dry_run):
