@@ -1986,6 +1986,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		Create & initialize the 3D LUT creation window and its controls.
 		
 		"""
+		# Avoid messing with main configuration (e.g. when not running standalone)
+		# because we share HDR settings with 3D LUT HDR settings
+		SynthICCFrame.cfg = config.ConfigParser.RawConfigParser()
 		config.initcfg("synthprofile", SynthICCFrame.cfg)
 		self.synthiccframe = SynthICCFrame()
 	
@@ -6766,7 +6769,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 				# 2. Read in profile loader config. Result is unison of current
 				#    config and profile loader config.
-				initcfg("apply-profiles")
+				initcfg("apply-profiles", force_load=True)
 
 				# 3. Restore current config (but do not override profile loader
 				#    options)
@@ -9191,7 +9194,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 						# 2. Read in profile loader config. Result is unison of
 						#    current config and profile loader config.
-						initcfg("apply-profiles")
+						initcfg("apply-profiles", force_load=True)
 
 						# 3. Restore current config (but do not override profile
 						#    loader options)

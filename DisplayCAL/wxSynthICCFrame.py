@@ -37,9 +37,7 @@ class SynthICCFrame(BaseFrame):
 
 	""" Synthetic ICC creation window """
 
-	# Avoid messing with main configuration (e.g. when not running standalone)
-	# because we share HDR settings with 3D LUT HDR settings
-	cfg = config.ConfigParser.RawConfigParser()
+	cfg = config.cfg
 
 	# Shared methods from 3D LUT UI
 	for lut3d_ivar_name, lut3d_ivar in LUT3DFrame.__dict__.iteritems():
@@ -1177,7 +1175,7 @@ def get_mapping(mapping, keys):
 
 
 def main():
-	config.initcfg("synthprofile", SynthICCFrame.cfg)
+	config.initcfg("synthprofile")
 	lang.init()
 	lang.update_defaults()
 	app = BaseApp(0)

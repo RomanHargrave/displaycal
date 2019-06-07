@@ -1624,7 +1624,9 @@ def makecfgdir(which="user", worker=None):
 	return True
 
 
-def initcfg(module=None, cfg=cfg):
+cfginited = {}
+
+def initcfg(module=None, cfg=cfg, force_load=False):
 	"""
 	Initialize the configuration.
 	
@@ -1646,12 +1648,7 @@ def initcfg(module=None, cfg=cfg):
 		# Set default preset
 		setcfg("calibration.file", defaults["calibration.file"], cfg=cfg)
 	# Read cfg
-	cfgnames = []
-	if module not in ("3DLUT-maker", "VRML-to-X3D-converter",
-					  "scripting-client"):
-		# Never read base app cfg for 3D LUT maker, VRML converter and
-		# scripting client
-		cfgnames.append(appbasename)
+	cfgnames = [appbasename]
 	if module:
 		cfgnames.append(cfgbasename)
 	else:
@@ -1665,13 +1662,22 @@ def initcfg(module=None, cfg=cfg):
 		for cfgroot in cfgroots:
 			cfgfile = os.path.join(cfgroot, cfgname + ".ini")
 			if os.path.isfile(cfgfile):
-				cfgfiles.append(cfgfile)
+				try:
+					mtime = os.stat(cfgfile).st_mtime
+				except EnvironmentError, exception:
+					safe_print(u"Warning - os.stat('%s') failed: %s" % 
+							   tuple(safe_unicode(s) for s in (cfgfile,
+															   exception)))
+				if force_load or mtime != cfginited.get(cfgfile):
+					cfginited[cfgfile] = mtime
+					cfgfiles.append(cfgfile)
 				# Make user config take precedence
 				break
-	if len(cfgfiles) > 1 and (module != "apply-profiles" or
-							  sys.platform != "win32") and module != "synthprofile":
+	if not cfgfiles:
+		return
+	if not module:
 		# Make most recent file take precedence
-		cfgfiles.sort(key=lambda cfgfile: os.stat(cfgfile).st_mtime)
+		cfgfiles.sort(key=lambda cfgfile: cfginited.get(cfgfile))
 	try:
 		cfg.read(cfgfiles)
 		# This won't raise an exception if the file does not exist, only

@@ -121,7 +121,7 @@ def main(module=None):
 	multi_instance = ("curve-viewer", "profile-info", "scripting-client",
 					  "synthprofile", "testchart-editor")
 	try:
-		initcfg()
+		initcfg(module)
 		host = "127.0.0.1"
 		defaultport = getcfg("app.port")
 		# Check for currently used ports
