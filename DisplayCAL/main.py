@@ -4,6 +4,7 @@ from __future__ import with_statement
 from time import sleep
 import atexit
 import errno
+import glob
 import logging
 import os
 import platform
@@ -122,6 +123,30 @@ def main(module=None):
 	try:
 		initcfg()
 		host = "127.0.0.1"
+		defaultport = getcfg("app.port")
+		# Check for currently used ports
+		lockfilenames = glob.glob(os.path.join(confighome, "*.lock"))
+		lock2ports = {}
+		for lockfilename in lockfilenames:
+			try:
+				with open(lockfilename) as lockfile:
+					if not lockfilename in lock2ports:
+						lock2ports[lockfilename] = []
+					for ln, port in enumerate(lockfile, 1):
+						port = port.strip()
+						try:
+							port = int(port)
+						except ValueError, exception:
+							# This shouldn't happen
+							safe_print("Warning - couldn't parse port as int: %r "
+									   "(%s line %i)" % (port, lockfilename, ln))
+							port = defaultport
+						else:
+							lock2ports[lockfilename].append(port)
+			except EnvironmentError, exception:
+				# This shouldn't happen
+				safe_print("Warning - could not read lockfile %s:" %
+						   lockfilename, exception)
 		if module not in multi_instance:
 			# Check lockfile(s) and probe port(s)
 			incoming = None
@@ -134,22 +159,9 @@ def main(module=None):
 			for lockfilebasename in lockfilebasenames:
 				lockfilename = os.path.join(confighome, "%s.lock" %
 														lockfilebasename)
-				if os.path.isfile(lockfilename):
-					try:
-						with open(lockfilename) as lockfile:
-							port = lockfile.read().strip()
-					except EnvironmentError, exception:
-						# This shouldn't happen
-						safe_print("Warning - could not read lockfile %s:" %
-								   lockfilename, exception)
-						port = getcfg("app.port")
-					else:
-						try:
-							port = int(port)
-						except ValueError:
-							# This shouldn't happen
-							safe_print("Warning - invalid port number:", port)
-							port = getcfg("app.port")
+				lock_ports = lock2ports.get(lockfilename)
+				if lock_ports:
+					port = lock_ports[0]
 					appsocket = AppSocket()
 					if not appsocket:
 						break
@@ -211,7 +223,11 @@ def main(module=None):
 			sys._appsocket = appsocket.socket
 			if getcfg("app.allow_network_clients"):
 				host = ""
-			for port in (getcfg("app.port"), 0):
+			used_ports = [port for ports in lock2ports.values() for port in ports]
+			candidate_ports = [0]
+			if not defaultport in used_ports:
+				candidate_ports.insert(0, defaultport)
+			for port in candidate_ports:
 				try:
 					sys._appsocket.bind((host, port))
 				except socket.error, exception:
