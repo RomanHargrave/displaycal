@@ -150,12 +150,7 @@ def main(module=None):
 		if module not in multi_instance:
 			# Check lockfile(s) and probe port(s)
 			incoming = None
-			lockfilebasenames = []
-			if module:
-				lockfilebasenames.append(name)
-			if module not in ("3DLUT-maker", "VRML-to-X3D-converter",
-							  "apply-profiles"):
-				lockfilebasenames.append(appbasename)
+			lockfilebasenames = [name]
 			for lockfilebasename in lockfilebasenames:
 				lockfilename = os.path.join(confighome, "%s.lock" %
 														lockfilebasename)
