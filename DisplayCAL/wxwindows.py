@@ -2895,7 +2895,7 @@ class FileBrowseBitmapButtonWithChoiceHistory(filebrowse.FileBrowseButtonWithHis
 
 class PathDialog(ConfirmDialog):
 
-	def __init__(self, parent, msg, name):
+	def __init__(self, parent, msg=u"", name="pathdialog"):
 		ConfirmDialog.__init__(self, parent, msg=msg,
 							   ok=lang.getstr("browse"),
 							   cancel=lang.getstr("cancel"), name=name)
@@ -2921,8 +2921,8 @@ class DirDialog(PathDialog):
 	ShowModal(), a functionality we need for scripting. """
 
 	def __init__(self, *args, **kwargs):
-		PathDialog.__init__(self, args[0], args[1], "dirdialog")
-		self.filedialog = _DirDialog(*args, **kwargs)
+		PathDialog.__init__(self, *args[0:2], name="dirdialog")
+		self.filedialog = _DirDialog(self, *args[1:], **kwargs)
 
 
 _FileDialog = wx.FileDialog
@@ -2933,8 +2933,8 @@ class FileDialog(PathDialog):
 	ShowModal(), a functionality we need for scripting. """
 
 	def __init__(self, *args, **kwargs):
-		PathDialog.__init__(self, args[0], args[1], "filedialog")
-		self.filedialog = _FileDialog(*args, **kwargs)
+		PathDialog.__init__(self, *args[0:2], name="filedialog")
+		self.filedialog = _FileDialog(self, *args[1:], **kwargs)
 
 
 class FileDrop(_FileDrop):

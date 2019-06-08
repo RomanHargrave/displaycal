@@ -984,8 +984,8 @@ _FileDialog = wx.FileDialog
 
 class PathDialogBase(wx.Dialog):
 
-	def __init__(self, name):
-		wx.Dialog.__init__(self, None, -1, name=name)
+	def __init__(self, parent, name):
+		wx.Dialog.__init__(self, parent, -1, name=name)
 		self._ismodal = False
 		self._isshown = False
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
@@ -1018,13 +1018,13 @@ class PathDialogBase(wx.Dialog):
 class DirDialog(PathDialogBase):
 
 	def __init__(self, *args, **kwargs):
-		PathDialogBase.__init__(self, name="dirdialog")
+		PathDialogBase.__init__(self, args[0], name="dirdialog")
 		self.filedialog = _DirDialog(*args, **kwargs)
 
 class FileDialog(PathDialogBase):
 
 	def __init__(self, *args, **kwargs):
-		PathDialogBase.__init__(self, name="filedialog")
+		PathDialogBase.__init__(self, args[0], name="filedialog")
 		self.filedialog = _FileDialog(*args, **kwargs)
 
 wx.DirDialog = DirDialog
