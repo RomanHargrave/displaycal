@@ -5,6 +5,28 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Fri May 24 01:13:10 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.8.1.1:
+  * [Minor] [UI] Some custom widgets had a size of zero when
+    org.gnome.desktop.interface scaling-factor was set to 0
+    (regression of a change in DisplayCAL 3.8.1, SVN revision
+    r5979).
+  * [Minor] [UI] No scaling for some custom widgets with wxGTK2 and
+    HiDPI unless org.gnome.desktop.interface scaling-factor was set
+    to a value of 2 or higher (regression of a change in DisplayCAL
+    3.8.1, SVN revision r6005). HiDPI scaling with wxGTK2 under X11
+    is now handled entirely by the global DPI value (Xft.dpi).
+  * [Minor] [UI] Too small size for the contents of some custom
+    widgets with wxGTK2 and HiDPI.
+  * [Cosmetic] [UI] Too much padding inside some custom widgets
+    with wxGTK2 and HiDPI.
+  * [Cosmetic] [UI] Occasional glitchy window sizing under Wayland.
+  * [Cosmetic] [UI] Added workaround for double window decorations
+    when the environment variable GTK_CSD is set to a nonzero value
+    under X11 (e.g. elementary OS Juno with Phanteon desktop).
+
+-------------------------------------------------------------------
 Sat May 18 15:50:50 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.8.1:

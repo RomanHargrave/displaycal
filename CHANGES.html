@@ -42,15 +42,37 @@
 
 		<div id="changelog">
 			<h2>Changelog</h2>
-			<!-- 2019-05-24 01:13 (UTC) 3.8.1.1  -->
+			<!-- 2019-06-09 15:18 (UTC) 3.8.2  -->
 			<dl>
-				<dt id="changelog-3.8.1.1">2019-05-24 01:13 (UTC) 3.8.1.1 </dt>
+				<dt id="changelog-3.8.2">2019-06-09 15:18 (UTC) 3.8.2 </dt>
 					<dd>
+						<h3>DisplayCAL 3.8.2 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Always try to skip initial colorimeter calibration for uniformity measurements (e.g. SpyderX).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Linux: Use GObject Introspection for DBus access (if available).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Linux: Use a default timeout of 500 ms for DBus calls.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): If registry access to the display configuration fails (e.g. due to running non-elevated), log a warning only once.</li>
+							<li>Windows: Only log Windows exceptions that are actually errors.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> If invoked from the main application's “Tools” menu, the synthetic ICC profile creator HDR configuration could affect the main application's 3D LUT HDR configuration.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Successive requested instrument calibration during uniformity measurements did not wait for the calibration to complete before continuing (e.g. SpyderX).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Prevent potential blocking of socket binding if a previous instance exited unexpectedly.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Change parent inheritance for pathdialog wrappers so interacting with the parent is appropriately prevented when the wrapper dialog is shown via a scripting request.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: Always prefer the global DPI value (Xft.dpi) for HiDPI scaling with wxGTK2.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Windows: Work-around wxPython Phoenix bug: Destroying a frame loaded from XRC affects subsequently loaded XRC resources (leading to instantiated controls being of the wrong type and failing initialization due to not having the expected interfaces).</li>
+						</ul>
+
+						<p id="changelog-3.8.1.1">2019-05-24 01:13 (UTC) 3.8.1.1 </p>
 						<h3>DisplayCAL 3.8.1.1 </h3>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: Some custom widgets had a size of zero when <code>org.gnome.desktop.interface scaling-factor</code> was set to 0 (regression of a change in DisplayCAL 3.8.1, SVN revision r5979).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: Some custom widgets could have a size of zero with wxGTK2 under non-KDE desktop environments when <code>org.gnome.desktop.interface scaling-factor</code> was set to 0 (regression of a change in DisplayCAL 3.8.1, SVN revision r5979).</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: No scaling for some custom widgets with wxGTK2 and HiDPI unless <code>org.gnome.desktop.interface scaling-factor</code> was set to a value of 2 or higher (regression of a change in DisplayCAL 3.8.1, SVN revision r6005). HiDPI scaling with wxGTK2 under X11 is now handled entirely by the global DPI value (Xft.dpi).</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: Too small size for the contents of some custom widgets with wxGTK2 and HiDPI.</li>
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Linux: Too much padding inside some custom widgets with wxGTK2 and HiDPI.</li>

@@ -294,7 +294,7 @@
 			
 			<p>Ce programme est distribué dans l’espoir qu’il sera utile, mais SANS AUCUNE GARANTIE ; sans même la garantie implicite d’une QUELCONQUE VALEUR MARCHANDE ou de l’ADÉQUATION À UN BESOIN PARTICULIER. Voir la <a href="LICENSE.txt">Licence Publique Générale GNU</a> pour davantage d’informations.</p>
 			
-			<p>${APPNAME} est écrit en <a href="https://python.org/">Python</a> et utilise les paquets tiers <a href="https://www.numpy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (kit de développement d’interface graphique <abbr title="Interface utilisateur graphique">(GUI)<sup><a href="#definition_GUI">[4]</a></sup></abbr>), <a href="https://pypi.python.org/pypi/pywin32">pywin32</a>, <a href="https://pypi.python.org/pypi/comtypes/">comtypes</a>, <a href="https://pypi.python.org/pypi/WMI">WMI</a>, <a href="https://pypi.org/project/faulthandler/">faulthandler</a>, <a href="https://pypi.org/project/dbus-python/">dbus-python</a> (Linux), <a href="https://pypi.python.org/pypi/psutil/">psutil</a>, <a href="https://pypi.python.org/pypi/PyChromecast/">PyChromecast</a> et <a href="https://pypi.python.org/pypi/pyglet/">pyglet</a> (macOS/Windows) ou libSDL2 (Linux). Il fait aussi une utilisation intensive de certains des utilitaires d’<a href="https://www.argyllcms.com/">ArgyllCMS</a>. Le système de construction permettant d’obtenir des exécutables autonomes utilise en outre <a href="https://pypi.python.org/pypi/py2app">py2app</a> sous Mac OS X ou <a href="https://pypi.python.org/pypi/py2exe">py2exe</a> sous Windows. Tous ces logiciels sont © par leurs auteurs respectifs.<p>
+			<p>${APPNAME} est écrit en <a href="https://python.org/">Python</a> et utilise les paquets tiers <a href="https://www.numpy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (kit de développement d’interface graphique <abbr title="Interface utilisateur graphique">(GUI)<sup><a href="#definition_GUI">[4]</a></sup></abbr>), <a href="https://pypi.org/project/PyGObject/">PyGObject</a> ou <a href="https://pypi.org/project/dbus-python/">dbus-python</a> (Linux), <a href="https://pypi.python.org/pypi/pywin32/">pywin32</a>, <a href="https://pypi.org/project/comtypes/">comtypes</a>, <a href="https://pypi.org/project/WMI">WMI</a>, <a href="https://pypi.org/project/faulthandler/">faulthandler</a>, <a href="https://pypi.org/project/psutil/">psutil</a>, <a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> et <a href="https://pypi.org/project/pyglet/">pyglet</a> (macOS/Windows) ou libSDL2 (Linux). Il fait aussi une utilisation intensive de certains des utilitaires d’<a href="https://www.argyllcms.com/">ArgyllCMS</a>. Le système de construction permettant d’obtenir des exécutables autonomes utilise en outre <a href="https://pypi.org/project/py2app">py2app</a> sous Mac OS X ou <a href="https://pypi.org/project/py2exe">py2exe</a> sous Windows. Tous ces logiciels sont © par leurs auteurs respectifs.<p>
 		</div>
 
 		<div id="download">
@@ -593,8 +593,8 @@
 
 						<h4>Windows :</h4>
 						<ul>
-							<li><a href="https://sourceforge.net/projects/pywin32/">pywin32</a> ;</li>
-							<li><a href="https://pypi.python.org/pypi/WMI/">WMI</a>.</li>
+							<li><a href="pypi.python.org/pypi/pywin32">pywin32</a> ;</li>
+							<li><a href="https://pypi.org/project/WMI/">WMI</a>.</li>
 						</ul>
 					</div>
 				</div>
@@ -613,13 +613,13 @@
 						<h4>Mac OS X :</h4>
 						<ul>
 							<li><a href="https://developer.apple.com/xcode/">XCode</a> ;</li>
-							<li><a href="https://pypi.python.org/pypi/py2app/">py2app</a> si vous désirez construire un exécutable autonome. Sur une version de Mac OS X antérieure à 10.5, installez d’abord setuptools : <code>sudo python util/ez_setup.py setuptools</code></li>
+							<li><a href="https://pypi.org/project/py2app/">py2app</a> si vous désirez construire un exécutable autonome. Sur une version de Mac OS X antérieure à 10.5, installez d’abord setuptools : <code>sudo python util/ez_setup.py setuptools</code></li>
 						</ul>
 
 						<h4>Windows :</h4>
 						<ul>
 							<li>Un compilateur C (par ex. <a href="https://www.visualstudio.com/vs/visual-studio-express/">MS Visual C++ Express</a> ou <a href="http://www.mingw.org">MinGW</a>. Si vous utilisez la version officielle Python 2.6 ou plus récente de python.org, je recommande d’utiliser Visual C++ Express, car il fonctionne directement) ;</li>
-							<li><a href="https://pypi.python.org/pypi/py2exe/">py2exe</a> si vous désirez construire un exécutable autonome.</li>
+							<li><a href="https://pypi.org/project/py2exe/">py2exe</a> si vous désirez construire un exécutable autonome.</li>
 						</ul>
 					</div>
 				</div>
