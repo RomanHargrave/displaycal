@@ -247,6 +247,8 @@ class MeasureFrame(InvincibleFrame):
 		self.display_no = wx.Display.GetFromWindow(self)
 		self.display_rects = get_display_rects()
 
+		self.sizer.SetSizeHints(self)
+
 	def measure_darken_background_ctrl_handler(self, event):
 		if self.measure_darken_background_cb.GetValue() and \
 		   getcfg("measure.darken_background.show_warning"):
