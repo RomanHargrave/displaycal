@@ -374,10 +374,18 @@ class MeasureFrame(InvincibleFrame):
 		if max(size) >= max(display_client_size):
 			scale = 50
 		if debug: safe_print("[D]  measureframe_size:", size)
-		self.SetMaxSize((-1, -1))
-		self.SetMinSize(size)
-		self.SetSize(size)
-		self.SetMaxSize(size)
+		if (sys.platform not in ("darwin", "win32") and
+			os.getenv("XDG_SESSION_TYPE") != "wayland" and
+			hasattr(self, "MaxClientSize")):
+			self.MaxClientSize = (-1, -1)
+			self.MinClientSize = size
+			self.ClientSize = size
+			self.MaxClientSize = size
+		else:
+			self.SetMaxSize((-1, -1))
+			self.SetMinSize(size)
+			self.SetSize(size)
+			self.SetMaxSize(size)
 		display_rect = display[1]
 		if debug: safe_print("[D]  display_rect:", display_rect)
 		display_size = display_rect[2:]
