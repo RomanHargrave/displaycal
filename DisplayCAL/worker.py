@@ -518,7 +518,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 
 	numvalues = len(R_R)
 
-	if numvalues <= 2 or XYZbp[1] >= XYZwp[1]:
+	if numvalues <= 2 or XYZbp[1] >= XYZwp[1] * .9:
 		# Botched measurements
 		raise UntracedError(lang.getstr("error.luminance.not_monotonically_increasing"))
 
