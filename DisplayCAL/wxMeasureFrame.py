@@ -376,6 +376,7 @@ class MeasureFrame(InvincibleFrame):
 		if debug: safe_print("[D]  measureframe_size:", size)
 		if (sys.platform not in ("darwin", "win32") and
 			os.getenv("XDG_SESSION_TYPE") != "wayland" and
+			not os.getenv("XDG_CURRENT_DESKTOP", "").startswith("KDE") and
 			hasattr(self, "MaxClientSize")):
 			self.MaxClientSize = (-1, -1)
 			self.MinClientSize = size
