@@ -37,7 +37,7 @@ if sys.platform == "win32":
 	from colord import device_id_from_edid
 	from config import (autostart, autostart_home, exe, exedir, get_data_path,
 						get_default_dpi, get_icon_bundle, geticon, iccprofiles,
-						pydir)
+						pydir, enc)
 	from debughelpers import Error, UnloggedError, handle_error
 	from edid import get_edid
 	from meta import domain
@@ -54,7 +54,7 @@ if sys.platform == "win32":
 						  get_file_info, get_first_display_device, get_pids,
 						  get_process_filename, get_real_display_devices_info,
 						  get_windows_error, per_user_profiles_isenabled,
-						  run_as_admin)
+						  run_as_admin, win_ver)
 	from wxaddons import CustomGridCellEvent
 	from wxfixes import ThemedGenButton, set_bitmap_labels
 	from wxwindows import (BaseApp, BaseFrame, ConfirmDialog,
@@ -3197,8 +3197,7 @@ def main():
 	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
 		safe_print("%s %s" % (os.path.basename(sys.argv[0]), version))
 	else:
-		if (sys.platform == "win32" and sys.getwindowsversion() >= (6, ) and
-			not "--task" in sys.argv[1:]):
+		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
 			import taskscheduler
 			
 			taskname = appname + " Profile Loader Launcher"
@@ -3209,7 +3208,8 @@ def main():
 				safe_print("Warning - could not access task scheduler:",
 						   exception)
 			else:
-				if is_superuser() and not ts.query_task(taskname):
+				if (not "--task" in sys.argv[1:] and is_superuser() and
+					not ts.query_task(taskname)):
 					# Check if our task exists, and if it does not, create it.
 					# (requires admin privileges)
 					safe_print("Trying to create task %r..." % taskname)
@@ -3270,9 +3270,9 @@ def main():
 						safe_print("Warning - Could not create task %r:" %
 								   taskname, exception)
 						if ts.stdout:
-							safe_print(ts.stdout)
+							safe_print(safe_unicode(ts.stdout, enc))
 					else:
-						safe_print(ts.stdout)
+						safe_print(safe_unicode(ts.stdout, enc))
 						if created:
 							# Remove autostart entries, if any
 							name = appname + " Profile Loader"
@@ -3290,6 +3290,20 @@ def main():
 										os.remove(entry)
 									except EnvironmentError, exception:
 										safe_print(exception)
+				if "Windows 10" in win_ver()[0]:
+					# Disable Windows Calibration Loader.
+					# This is absolutely REQUIRED under Win10 1903 to prevent
+					# banding and not applying calibration twice
+					ms_cal_loader = r"\Microsoft\Windows\WindowsColorSystem\Calibration Loader"
+					try:
+						ts.disable(ms_cal_loader)
+					except Exception, exception:
+						safe_print("Warning - Could not disable task %r:" %
+								   ms_cal_loader, exception)
+						if ts.stdout:
+							safe_print(safe_unicode(ts.stdout, enc))
+					else:
+						safe_print(safe_unicode(ts.stdout, enc))
 
 		config.initcfg("apply-profiles")
 

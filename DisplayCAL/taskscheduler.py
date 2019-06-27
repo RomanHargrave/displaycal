@@ -284,6 +284,14 @@ class TaskScheduler(object):
 		""" Delete existing task """
 		self._ts.Delete(name)
 
+	def disable(self, name, echo=False):
+		""" Disable (deactivate) existing task """
+		self._schtasks(["/Change", "/TN", name, "/DISABLE"], echo=echo)
+
+	def enable(self, name, echo=False):
+		""" Enable (activate) existing task """
+		self._schtasks(["/Change", "/TN", name, "/ENABLE"], echo=echo)
+
 	def get(self, name, default=None):
 		""" Get existing task """
 		if name in self:
