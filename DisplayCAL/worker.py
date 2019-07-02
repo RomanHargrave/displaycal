@@ -80,7 +80,8 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
 					split_display_name, writecfg, appbasename)
 from debughelpers import (Error, DownloadError, Info, UnloggedError,
-						  UnloggedInfo, UnloggedWarning, UntracedError, Warn)
+						  UnloggedInfo, UnloggedWarning, UntracedError, Warn,
+						  handle_error)
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
 						  iccprofiles_display_home)
 from edid import WMIError, get_edid
@@ -12803,8 +12804,11 @@ BEGIN_DATA
 		except Exception, exception:
 			if raise_exceptions:
 				raise exception
-			InfoDialog(self.owner, msg=safe_unicode(exception), 
-					   ok=lang.getstr("ok"), bitmap=geticon(32, "dialog-error"))
+			if (not isinstance(exception, (TypeError, ValueError)) or
+				isinstance(exception, UnicodeError)):
+				handle_error(exception, self.owner)
+			else:
+				show_result_dialog(exception, self.owner)
 		return ti1, ti3_ref, gray
 	
 	def ti1_lookup_to_ti3(self, ti1, profile, function="f", pcs=None,
