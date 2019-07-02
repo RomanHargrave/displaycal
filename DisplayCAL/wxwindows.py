@@ -39,7 +39,7 @@ from ordereddict import OrderedDict
 from network import ScriptingClientSocket, get_network_addr
 from util_io import StringIOu as StringIO
 from util_os import get_program_file, launch_file, waccess
-from util_str import safe_str, safe_unicode, wrap
+from util_str import box, safe_str, safe_unicode, wrap
 from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop, gamma_encode,
 					  get_parent_frame, get_platform_window_decoration_size, wx,
@@ -2129,7 +2129,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		if not ok:
 			ok = lang.getstr("ok")
 		if log:
-			safe_print(msg)
+			safe_print(box(msg))
 		if parent:
 			pos = list(pos)
 			i = 0
@@ -5172,6 +5172,9 @@ class LogWindow(InvincibleFrame):
 		start = self.log_txt.GetLastPosition()
 		ts = None
 		for line in safe_unicode(txt).split("\n"):
+			if sys.platform == "win32":
+				# Formatting of boxes
+				line = line.replace(u"\u2500", u"-")
 			tsmatch = re.match(self._tspattern, line)
 			if tsmatch:
 				line = line[len(tsmatch.group()):]

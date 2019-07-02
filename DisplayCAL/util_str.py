@@ -348,6 +348,27 @@ def normalencode(unistr, form="NFKD", encoding="ASCII", errors="ignore"):
 	return unicodedata.normalize(form, unistr).encode(encoding, errors)
 
 
+def box(text, width=80, collapse=False):
+	"""
+	Create a box around text (monospaced font required for display)
+	
+	"""
+	content_width = width - 4
+	text = wrap(safe_unicode(text), content_width)
+	lines = text.splitlines()
+	if collapse:
+		content_width = 0
+		for line in lines:
+			content_width = max(len(line), content_width)
+		width = content_width + 4
+	horizontal_line = u"\u2500" * (width - 2)
+	box = [u"\u250c%s\u2510" % horizontal_line]
+	for line in lines:
+		box.append(u"\u2502 %s \u2502" % line.ljust(content_width))
+	box.append(u"\u2514%s\u2518" % horizontal_line)
+	return "\n".join(box)
+
+
 def center(text, width = None):
 	"""
 	Center (mono-spaced) text.

@@ -8,7 +8,7 @@ from config import fs_enc
 from log import logbuffer, safe_print
 from meta import name as appname, wx_recversion
 from options import debug
-from util_str import safe_unicode
+from util_str import box, safe_unicode
 
 wxEventTypes = {}
 
@@ -54,10 +54,15 @@ def handle_error(error, parent=None, silent=False, tb=True):
 		 not getattr(error, "filename", None))):
 		# Print a traceback if in debug mode, for non environment errors, and
 		# for environment errors not related to files
-		msg = "\n\n".join([safe_unicode(v) for v in (error, tbstr)])
+		errstr, tbstr = (safe_unicode(v) for v in (error, tbstr))
+		msg = "\n\n".join((errstr, tbstr))
+		if msg.startswith(errstr):
+			safe_print(box(tbstr))
+		else:
+			safe_print(box(msg))
 	else:
 		msg = safe_unicode(error)
-	safe_print(msg)
+		safe_print(box(msg))
 	if not silent:
 		try:
 			from wxaddons import wx
