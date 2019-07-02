@@ -454,6 +454,8 @@ class Xicclu(WorkerBase):
 				 show_actual_if_clipped=False, input_encoding=None,
 				 output_encoding=None, convert_video_rgb_to_clut65=False,
 				 verbose=1):
+		if not profile:
+			raise Error("Xicclu: Profile is %r" % profile)
 		WorkerBase.__init__(self)
 		self.scale = scale
 		self.convert_video_rgb_to_clut65 = convert_video_rgb_to_clut65
