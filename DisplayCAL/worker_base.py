@@ -523,7 +523,8 @@ class Xicclu(WorkerBase):
 					input_encoding = "n"
 				if not output_encoding:
 					output_encoding = "n"
-				args += ["-e" + input_encoding, "-E" + output_encoding]
+				args += ["-e" + safe_str(input_encoding),
+						 "-E" + safe_str(output_encoding)]
 		args.append("-f" + direction)
 		self.output_scale = 1.0
 		if is_profile:
