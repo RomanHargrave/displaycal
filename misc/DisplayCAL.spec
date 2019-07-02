@@ -83,6 +83,7 @@ Requires:       libSDL2_mixer-2_0-0
 Requires:       python-wxWidgets >= %{wx_minversion}
 Requires:       python-psutil
 Requires:       python-gobject
+Requires:       python-xml
 %py_requires
 %else
 %if 0%{?rhel_version} > 0 || 0%{?centos_version} > 0 || 0%{?scientificlinux_version} > 0

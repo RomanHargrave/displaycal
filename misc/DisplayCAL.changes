@@ -5,6 +5,30 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Sun Jun 09 15:21:11 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.8.2:
+  * [Enhancement] Always try to skip initial colorimeter
+    calibration for uniformity measurements (e.g. SpyderX).
+  * [Enhancement] Use GObject Introspection for DBus access (if
+    available).
+  * [Enhancement] Use a default timeout of 500 ms for DBus calls.
+  * [Minor] If invoked from the main application's “Tools” menu,
+    the synthetic ICC profile creator HDR configuration could
+    affect the main application's 3D LUT HDR configuration.
+  * [Minor] Successive requested instrument calibration during
+    uniformity measurements did not wait for the calibration to
+    complete before continuing (e.g. SpyderX).
+  * [Trivial] Prevent potential blocking of socket binding if a
+    previous instance exited unexpectedly.
+  * [Trivial] [UI] Change parent inheritance for pathdialog
+    wrappers so interacting with the parent is appropriately
+    prevented when the wrapper dialog is shown via a scripting
+    request.
+  * [Trivial] [UI] Always prefer the global DPI value (Xft.dpi) for
+    HiDPI scaling with wxGTK2.
+
+-------------------------------------------------------------------
 Fri May 24 01:13:10 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.8.1.1:
