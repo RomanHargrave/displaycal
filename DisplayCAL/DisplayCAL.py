@@ -14500,7 +14500,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 			is_preset = path in self.presets
 			basename = os.path.basename(path)
-			is_3dlut_preset = basename.startswith("video_")
+			is_3dlut_preset = is_preset and basename.startswith("video_")
 
 			filename, ext = os.path.splitext(path)
 			if ext.lower() in (".7z", ".tar.gz", ".tgz", ".zip"):
