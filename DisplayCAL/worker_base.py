@@ -472,18 +472,20 @@ class Xicclu(WorkerBase):
 			else:
 				profile = ICCP.ICCProfile(profile)
 		is_profile = isinstance(profile, ICCP.ICCProfile)
-		if is_profile:
+		if (is_profile and profile.version >= 4 and
+			not profile.convert_iccv4_tags_to_iccv2()):
+			raise Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
+											   profile.getDescription()]))
+		if not profile.fileName or not os.path.isfile(profile.fileName):
 			if profile.fileName:
 				prefix = os.path.basename(profile.fileName)
-			else:
+			elif is_profile:
 				prefix = make_filename_safe(profile.getDescription(),
 											concat=False) + profile_ext
+			else:
+				# CGATS (.cal)
+				prefix = "cal"
 			prefix += "-"
-			if (profile.version >= 4 and
-				not profile.convert_iccv4_tags_to_iccv2()):
-				raise Error("\n".join([lang.getstr("profile.iccv4.unsupported"),
-												   profile.getDescription()]))
-		if not profile.fileName or not os.path.isfile(profile.fileName):
 			if not cwd:
 				cwd = self.create_tempdir()
 				if isinstance(cwd, Exception):
