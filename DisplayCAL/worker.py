@@ -89,7 +89,7 @@ from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
 from meta import VERSION, VERSION_BASE, domain, name as appname, version
 from multiprocess import cpu_count, pool_slice
-from options import (always_fail_download, debug, experimental, test,
+from options import (always_fail_download, debug, eecolor65, experimental, test,
 					 test_badssl, test_require_sensor_cal, verbose)
 from ordereddict import OrderedDict
 from network import LoggingHTTPRedirectHandler, NoHTTPRedirectHandler
@@ -4090,14 +4090,14 @@ END_DATA
 			columns = (2, 1, 0)
 		for i in xrange(0, size):
 			# Red
-			if format == "eeColor" and i == size - 1:
+			if format == "eeColor" and not eecolor65 and i == size - 1:
 				# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 				continue
 			RGB_triplet[columns[0]] = quantizer(step * i)
 			RGB_index[columns[0]] = i
 			for j in xrange(0, size):
 				# Green
-				if format == "eeColor" and j == size - 1:
+				if format == "eeColor" and not eecolor65 and j == size - 1:
 					# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 					continue
 				RGB_triplet[columns[1]] = quantizer(step * j)
@@ -4106,7 +4106,7 @@ END_DATA
 					# Blue
 					if self.thread_abort:
 						raise Info(lang.getstr("aborted"))
-					if format == "eeColor" and k == size - 1:
+					if format == "eeColor" and not eecolor65 and k == size - 1:
 						# Last cLUT entry is fixed to 1.0 for eeColor and unchangeable
 						continue
 					RGB_triplet[columns[2]] = quantizer(step * k)

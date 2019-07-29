@@ -33,6 +33,8 @@ tc_use_alternate_preview = ("-ap" in sys.argv[1:] or
 # Test some features even if they are not available normally
 test = "-t" in sys.argv[1:] or "--test" in sys.argv[1:]
 
+eecolor65 = "--ee65" in sys.argv[1:]
+
 # Test sensor calibration
 test_require_sensor_cal = ("-s" in sys.argv[1:] or
 						   "--test_require_sensor_cal" in sys.argv[1:])
