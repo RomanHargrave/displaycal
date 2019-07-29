@@ -635,7 +635,7 @@ class TestchartEditor(BaseFrame):
 			splitter.SplitHorizontally(p1, p2, self.sizer.GetMinSize()[1])
 			hsizer = wx.BoxSizer(wx.VERTICAL)
 			gradientpanel = get_gradient_panel(p2, lang.getstr("preview"))
-			gradientpanel.MinSize = (-1, 23)
+			gradientpanel.MinSize = (-1, 23 * scale)
 			p2.sizer.Add(gradientpanel, flag=wx.EXPAND)
 			p2.sizer.Add(hsizer, 1, flag=wx.EXPAND)
 			p2.BackgroundColour = "#333333"
