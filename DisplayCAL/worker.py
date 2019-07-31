@@ -8649,7 +8649,10 @@ usage: spotread [-options] [logfile]
 		cmd, args = self.prepare_colprof(
 			os.path.basename(os.path.splitext(dst_path)[0]), display_name,
 			display_manufacturer, tags)
-		if not isinstance(cmd, Exception): 
+		if isinstance(cmd, Exception):
+			result = cmd
+		else:
+			result = True
 			profile = None
 			profile_path = args[-1] + profile_ext
 			if "-aX" in args:
@@ -8775,35 +8778,22 @@ usage: spotread [-options] [logfile]
 				# Use colprof to create profile
 				result = self.exec_cmd(cmd, args, low_contrast=False, 
 									   skip_scripts=skip_scripts)
-			if (is_regular_grid and
-				getcfg("profile.type") == "X") or is_primaries_only:
+				try:
+					profile = ICCP.ICCProfile(profile_path)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
+		if not isinstance(result, Exception) and result:
+			if getcfg("profile.type") == "X" or is_primaries_only:
 				# Use our own accurate matrix
-				self.log("-" * 80)
-				self.log("Creating matrix from primaries")
-				xy = []
-				for R, G, B in [(100, 0, 0),
-								(0, 100, 0),
-								(0, 0, 100),
-								(100, 100, 100)]:
-					if R == G == B:
-						RGB_XYZ = ti3_RGB_XYZ
-					else:
-						RGB_XYZ = ti3_remaining
-					xy.append(colormath.XYZ2xyY(*(v / 100 for v in RGB_XYZ[(R, G, B)]))[:2])
 				cat = "Bradford"
-				if is_regular_grid:
+				if not is_primaries_only:
 					cat = profile.guess_cat() or cat
-				self.log("Using chromatic adaptation transform matrix:", cat)
-				mtx = ICCP.ICCProfile.from_chromaticities(xy[0][0], xy[0][1],
-														  xy[1][0], xy[1][1],
-														  xy[2][0], xy[2][1],
-														  xy[3][0], xy[3][1],
-														  2.2,  # Will be replaced
-														  os.path.basename(args[-1]),
-														  getcfg("copyright"),
-														  display_manufacturer,
-														  display_name,
-														  cat=cat)
+				mtx = self._create_simple_matrix_profile(ti3_RGB_XYZ,
+														 ti3_remaining,
+														 os.path.basename(args[-1]),
+														 getcfg("copyright"),
+														 display_manufacturer,
+														 display_name, cat)
 				if is_primaries_only:
 					# Use matrix profile
 					profile = mtx
@@ -8834,7 +8824,6 @@ usage: spotread [-options] [logfile]
 			if is_regular_grid or is_primaries_only:
 				# Write profile
 				profile.write(profile_path)
-				result = True
 			if (os.path.isfile(args[-1] + ".ti3.backup") and
 				os.path.isfile(args[-1] + ".ti3")):
 				# Restore backed up TI3
@@ -8851,8 +8840,6 @@ usage: spotread [-options] [logfile]
 					chrm = ICCP.ChromaticityType(blob.read())
 			else:
 				chrm = None
-		else:
-			result = cmd
 		bpc_applied = False
 		profchanged = False
 		if not isinstance(result, Exception) and result:
@@ -9230,15 +9217,10 @@ usage: spotread [-options] [logfile]
 							# Use matrix from single shaper curve profile if
 							# vcgt is nonlinear
 							ptype = "S"
-						if is_regular_grid or is_primaries_only:
-							omit = "XYZ"  # Don't re-create matrix
-						else:
-							omit = None
 					else:
 						ptype = getcfg("profile.type")
-						omit = "XYZ"  # Don't re-create matrix
 					result = self._create_matrix_profile(args[-1], profile,
-														 ptype, omit,
+														 ptype, "XYZ",
 														 apply_bpc)
 					if isinstance(result, ICCP.ICCProfile):
 						result = True
@@ -9557,6 +9539,36 @@ usage: spotread [-options] [logfile]
 		##profile.tags.A2B0.apply_black_offset(black_XYZ_D50)
 		
 		return profile
+
+	def _create_simple_matrix_profile(self, ti3_RGB_XYZ, ti3_remaining, desc,
+									  copyright="No copyright",
+									  display_manufacturer=None,
+									  display_name=None,
+									  cat="Bradford"):
+		self.log("-" * 80)
+		self.log("Creating matrix from primaries")
+		xy = []
+		for R, G, B in [(100, 0, 0),
+						(0, 100, 0),
+						(0, 0, 100),
+						(100, 100, 100)]:
+			if R == G == B:
+				RGB_XYZ = ti3_RGB_XYZ
+			else:
+				RGB_XYZ = ti3_remaining
+			xy.append(colormath.XYZ2xyY(*(v / 100 for v in RGB_XYZ[(R, G, B)]))[:2])
+		self.log("Using chromatic adaptation transform matrix:", cat)
+		mtx = ICCP.ICCProfile.from_chromaticities(xy[0][0], xy[0][1],
+												  xy[1][0], xy[1][1],
+												  xy[2][0], xy[2][1],
+												  xy[3][0], xy[3][1],
+												  2.2,  # Will be replaced
+												  desc,
+												  copyright,
+												  display_manufacturer,
+												  display_name,
+												  cat=cat)
+		return mtx
 
 	def _create_matrix_profile(self, outname, profile=None, ptype="s",
 							   omit=None, bpc=False, cat="Bradford"):
@@ -10234,10 +10246,19 @@ usage: spotread [-options] [logfile]
 					precond_ti3 = CGATS.CGATS(basename + ".ti3")
 					precond_ti3.fix_zero_measurements(logfile=self.get_logfiles(False))
 					precond_ti3.write()
-					cmd, args = get_argyll_util("colprof"), ["-v", "-qh", "-as",
-															 basename]
-					result = self.exec_cmd(cmd, args)
+					# Extract grays and remaining colors
+					(ti3_extracted, ti3_RGB_XYZ,
+					 ti3_remaining) = extract_device_gray_primaries(precond_ti3,
+																	True,
+																	self.log)
+					profile = self._create_simple_matrix_profile(ti3_RGB_XYZ,
+																 ti3_remaining,
+																 os.path.basename(basename))
+					result = self._create_matrix_profile(basename, profile,
+														 omit="XYZ")
 					if not isinstance(result, Exception) and result:
+						# Write matrix profile
+						result.write(basename + profile_ext)
 						# Create optimized testchart
 						if getcfg("use_fancy_progress"):
 							# Fade out animation/sound
