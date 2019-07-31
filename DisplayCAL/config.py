@@ -1104,6 +1104,8 @@ defaults = {
 										   "spyder5elite.exe",
 										   "spyder5express.exe",
 										   "spyder5pro.exe",
+										   "spyderxelite.exe",
+										   "spyderxpro.exe",
 										   "dispcal.exe",
 										   "dispread.exe",
 										   "dispwin.exe",
