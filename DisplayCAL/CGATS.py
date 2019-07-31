@@ -1900,7 +1900,7 @@ Transform {
 		"""
 		n = 0
 		for dataset in self.query("DATA").itervalues():
-			if not dataset.has_cie():
+			if not dataset.get_cie_data_format():
 				continue
 			if not whitepoint_source:
 				whitepoint_source = dataset.get_white_cie("XYZ")
@@ -2029,7 +2029,7 @@ Transform {
 		Get the 'white' from the CIE values (if any).
 		
 		"""
-		data_format = self.has_cie()
+		data_format = self.get_cie_data_format()
 		if data_format:
 			if "RGB_R" in data_format.values():
 				white = {"RGB_R": 100, "RGB_G": 100, "RGB_B": 100}
@@ -2080,7 +2080,7 @@ Transform {
 												 white["XYZ_Z"])
 				return white
 	
-	def has_cie(self):
+	def get_cie_data_format(self):
 		"""
 		Check if DATA_FORMAT defines any CIE XYZ or LAB columns.
 		
@@ -2095,7 +2095,7 @@ Transform {
 			if len(cie.values()) in (0, 3):
 				for ch in ("X", "Y", "Z"):
 					cie[ch] = "XYZ_%s" % ch in data_format.values()
-				if len(filter(lambda v: v is not None,
+				if len(filter(lambda v: v is not False,
 							  cie.itervalues())) in (3, 6):
 					return data_format
 	
