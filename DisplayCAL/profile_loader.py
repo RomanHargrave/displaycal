@@ -962,6 +962,7 @@ class ProfileLoader(object):
 		self._app_detection_msg = None
 		self._hwnds_pids = set()
 		self._inaccessible_reg_subkeys = set()
+		self._fixed_profile_associations = set()
 		self.__other_component = None, None, 0
 		self.__apply_profiles = None
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -2813,7 +2814,7 @@ class ProfileLoader(object):
 			return
 		for devicekey, (display_edid,
 						profile, desc) in self.devices2profiles.iteritems():
-			if profile:
+			if devicekey in self._fixed_profile_associations and profile:
 				try:
 					current_profile = ICCP.get_display_profile(path_only=True,
 															   devicekey=devicekey)
@@ -2926,6 +2927,8 @@ class ProfileLoader(object):
 											 devicekey=device.DeviceKey)
 				except WindowsError, exception:
 					safe_print(exception)
+				else:
+					self._fixed_profile_associations.add(device.DeviceKey)
 
 	def _set_manual_restore(self, event, manual_restore=True):
 		if event:
