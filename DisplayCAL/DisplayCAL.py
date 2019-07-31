@@ -519,6 +519,7 @@ def donation_message(parent=None):
 		font = dlg.message.Font
 		font.PointSize += 1
 		dlg.message.SetFont(font)
+		dlg.message.MinSize = (-1, -1)
 	chkbox = wx.CheckBox(dlg.buttonpanel, -1, lang.getstr("dialog.do_not_show_again"))
 	dlg.sizer2.Insert(0, chkbox, flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL |
 									  wx.RIGHT,

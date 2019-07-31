@@ -2222,6 +2222,10 @@ class BaseInteractiveDialog(wx.Dialog):
 		msg = msg.replace("&", "&&")
 		self.message = wx.StaticText(self, -1, msg if nowrap else
 											   util_str.wrap(msg, wrap))
+		if sys.platform == "win32":
+			# Prevent text cutoff (wxWidgets bug)
+			self.message.MinSize = (self.message.Size[0] + math.ceil(1 * scale),
+									self.message.MinSize[1])
 		self.sizer3.Add(self.message)
 
 		btnwidth = 80
