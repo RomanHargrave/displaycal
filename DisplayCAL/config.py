@@ -1018,6 +1018,7 @@ defaults = {
 	"patterngenerator.quantize_bits": 0,
 	"patterngenerator.resolve": "CM",
 	"patterngenerator.resolve.port": 20002,
+	"patterngenerator.use_pattern_window": 0,
 	"patterngenerator.use_video_levels": 0,
 	"position.x": 50,
 	"position.y": 50,

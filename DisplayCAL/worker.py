@@ -4854,7 +4854,8 @@ END_DATA
 						 "still be active!")
 		profiling_inhibit = False
 		display_profile = None
-		if (self.measure_cmd and self._use_patternwindow and
+		if (sys.platform not in ("darwin", "win32") and
+			self.measure_cmd and self._use_patternwindow and
 			not dry_run and not report_current_cal):
 			# Preliminary Wayland support. This still needs a lot
 			# of work as Argyll doesn't support Wayland natively yet,
@@ -4941,7 +4942,10 @@ END_DATA
 			if working_dir is None:
 				working_dir = os.path.dirname(args[-1])
 		if working_dir is None:
-			working_dir = self.tempdir
+			if self.use_patterngenerator:
+				working_dir = self.create_tempdir()
+			else:
+				working_dir = self.tempdir
 		if working_dir and not os.path.isdir(working_dir):
 			working_dir = None
 		if working_dir and working_dir == self.tempdir:
@@ -5891,7 +5895,8 @@ while 1:
 						self.log(exception)
 			if hasattr(self, "madtpg") and finished:
 				self.madtpg_disconnect()
-			if (self.measure_cmd and self._use_patternwindow and
+			if (sys.platform not in ("darwin", "win32") and
+				self.measure_cmd and self._use_patternwindow and
 				(profiling_inhibit or display_profile) and
 				not report_current_cal):
 				# Preliminary Wayland support. This still needs a lot
@@ -14130,5 +14135,6 @@ BEGIN_DATA
 		# of work as Argyll doesn't support Wayland natively yet,
 		# so we use virtual display to drive our own patch window.
 		return (not config.is_virtual_display() and
-				os.getenv("XDG_SESSION_TYPE") == "wayland" and
+				(os.getenv("XDG_SESSION_TYPE") == "wayland"
+				 or getcfg("patterngenerator.use_pattern_window")) and
 			    self.argyll_virtual_display)
