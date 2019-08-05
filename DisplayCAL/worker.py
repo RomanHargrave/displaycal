@@ -9205,8 +9205,7 @@ usage: spotread [-options] [logfile]
 					if getcfg("profile.type") == "X":
 						if (not isinstance(profile.tags.get("vcgt"),
 									  ICCP.VideoCardGammaType) or
-							profile.tags.vcgt.is_linear() or
-							getattr(self, "single_curve", None) is False):
+							profile.tags.vcgt.is_linear()):
 							# Use matrix from 3x shaper curves profile if vcgt
 							# is linear
 							ptype = "s"
