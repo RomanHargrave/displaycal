@@ -775,6 +775,28 @@ def _create_optimized_shaper_curves(bwd_mtx, bpc, single_curve, curves,
 	return curves
 
 
+def _applycal_bug_workaround(profile):
+	# Argyll applycal can't deal with single gamma TRC tags
+	# or TRC tags with less than 256 entries
+	for channel in "rgb":
+		trc_tag = profile.tags.get(channel + "TRC")
+		if isinstance(trc_tag, ICCP.CurveType) and len(trc_tag) <= 256:
+			num_entries = len(trc_tag)
+			if num_entries <= 1:
+				# Single gamma
+				if num_entries:
+					gamma = trc_tag[0]
+				else:
+					gamma = 1.0
+				trc_tag.set_trc(gamma, 256)
+			else:
+				# Interpolate to 256 entries
+				entry_max = num_entries - 1.0
+				interp = colormath.Interp([i / entry_max for i in
+										   xrange(num_entries)], trc_tag[:])
+				trc_tag[:] = [interp(i / 255.) for i in xrange(256)]
+
+
 def get_argyll_version(name, silent=False, paths=None):
 	"""
 	Determine version of a certain Argyll utility.
@@ -3143,6 +3165,10 @@ END_DATA
 					profile_out.write()
 				if "B2A1" in profile_out.tags or "B2A0" in profile_out.tags:
 					use_b2a = True
+
+			# Argyll applycal can't deal with single gamma TRC tags
+			# or TRC tags with less than 256 entries
+			_applycal_bug_workaround(profile_out)
 
 			# Prepare building a device link
 			link_basename = name + profile_ext

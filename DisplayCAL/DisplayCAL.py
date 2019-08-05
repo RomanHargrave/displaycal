@@ -122,7 +122,8 @@ from worker import (Error, Info, UnloggedError, UnloggedInfo, UnloggedWarning,
 					get_options_from_profile, get_options_from_ti3,
 					make_argyll_compatible_path,
 					parse_argument_string, set_argyll_bin, show_result_dialog,
-					check_argyll_bin, http_request, FilteredStream)
+					check_argyll_bin, http_request, FilteredStream,
+					_applycal_bug_workaround)
 from wxLUT3DFrame import LUT3DFrame
 try:
 	from wxLUTViewer import LUTFrame
@@ -7230,6 +7231,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			name, ext = os.path.splitext(os.path.basename(save_path))
 			ti3_path = os.path.join(temp, name + ".ti3")
 			profile_path = os.path.join(temp, name + ".icc")
+
+			# Argyll applycal can't deal with single gamma TRC tags
+			# or TRC tags with less than 256 entries
+			_applycal_bug_workaround(oprof)
 
 			# write profile to temp dir
 			oprof.write(profile_path)
