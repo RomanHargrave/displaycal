@@ -167,14 +167,19 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 							 raise_on_missing_cal=True):
 	""" Extract calibration from 'targ' tag in profile or vcgt as fallback """
 
+	white = False
+
 	# Check if calibration is included in TI3
 	targ = profile.tags.get("targ", profile.tags.get("CIED"))
 	if isinstance(targ, ICCP.Text):
 		cal = extract_cal_from_ti3(targ)
-		check = cal
-		get_cgats = CGATS.CGATS
-		arg = cal
+		if cal:
+			check = cal
+			get_cgats = CGATS.CGATS
+			arg = cal
 	else:
+		cal = None
+	if not cal:
 		# Convert calibration information from embedded WCS profile
 		# (if present) to VideCardFormulaType if the latter is not present
 		if (isinstance(profile.tags.get("MS00"), ICCP.WcsProfilesTagType) and
@@ -197,6 +202,42 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 			cgats = get_cgats(arg)
 		except (IOError, CGATS.CGATSError), exception:
 			raise Error(lang.getstr("cal_extraction_failed"))
+	if (cal and isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType) and
+		not profile.tags.vcgt.is_linear()):
+		# When vcgt is nonlinear, prefer it
+		# Check for video levels encoding
+		if cgats.queryv1("TV_OUTPUT_ENCODING") == "YES":
+			black, white = (16, 235)
+		else:
+			output_enc = cgats.queryv1("OUTPUT_ENCODING")
+			if output_enc:
+				try:
+					black, white = (float(v) for v in
+									output_enc.split())
+				except (TypeError, ValueError):
+					white = False
+		cgats = vcgt_to_cal(profile)
+		if white and (black, white) != (0, 255):
+			# Need to un-scale video levels
+			data = cgats.queryv1("DATA")
+			if data:
+				for entry in data.itervalues():
+					for column in "RGB":
+						v_old = entry["RGB_" + column]
+						# For video encoding the extra bits of
+						# precision are created by bit shifting rather
+						# than scaling, so we need to scale the fp
+						# value to account for this
+						oldmin = (black / 256.0) * (65536 / 65535.)
+						oldmax = (white / 256.0) * (65536 / 65535.)
+						v_new = colormath.convert_range(v_old, oldmin, oldmax, 0, 1)
+						entry["RGB_" + column] = min(max(v_new, 0), 1)
+			# Add video levels hint to CGATS
+			if (black, white) == (16, 235):
+				cgats[0].add_keyword("TV_OUTPUT_ENCODING", "YES")
+			else:
+				cgats[0].add_keyword("OUTPUT_ENCODING",
+									 " ".join(str(v) for v in black_white))
 	if out_cal_path:
 		cgats.write(out_cal_path)
 	return cgats
