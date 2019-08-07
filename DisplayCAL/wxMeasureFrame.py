@@ -120,10 +120,13 @@ class MeasureFrame(InvincibleFrame):
 	exitcode = 1
 
 	def __init__(self, parent=None, id=-1):
+		style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
+		if (os.getenv("XDG_SESSION_TYPE") != "wayland" and
+			getcfg("patterngenerator.use_pattern_window")):
+			style |= wx.STAY_ON_TOP
 		InvincibleFrame.__init__(self, parent, id, 
 								 lang.getstr("measureframe.title"), 
-								 style=wx.DEFAULT_FRAME_STYLE & 
-									   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX),
+								 style=style,
 								 name="measureframe")
 		self.SetIcons(config.get_icon_bundle([256, 48, 32, 16], appname))
 		self.Bind(wx.EVT_CLOSE, self.close_handler, self)
