@@ -5714,6 +5714,45 @@ while 1:
 						except wexpect.ExceptionPexpect, exception:
 							self.retcode = -1
 							raise Error(safe_unicode(exception))
+						if sys.platform == "darwin" and self.measure_cmd:
+							# Caffeinate (prevent sleep/screensaver)
+							caffeinate = which("caffeinate")
+							if caffeinate:
+								wait_pid = str(self.subprocess.pid)
+								try:
+									# -d prevent idle display sleep
+									# -i prevent idle system sleep
+									# -w wait for process <pid> to exit
+									caffeinated = sp.Popen([caffeinate, "-d",
+															"-i", "-w",
+															wait_pid],
+														   stdin=sp.PIPE,
+														   stdout=sp.PIPE,
+														   stderr=sp.PIPE)
+								except Exception, exception:
+									self.log(appname + ": caffeinate could not "
+											 "be started - screensaver and "
+											 "display/system sleep may still "
+											 "occur!")
+									self.log(exception)
+								else:
+									self.log(appname + ": caffeinate started, "
+											 "preventing screensaver and "
+											 "display/system sleep - waiting "
+											 "for %s (PID %s) to exit" %
+											 (cmdname, wait_pid))
+									def caffeinate_wait():
+										caffeinated.wait()
+										self.log(appname + ": caffeinate exited "
+												 "with code %s" %
+												 caffeinated.returncode)
+									wait_thread = threading.Thread(target=caffeinate_wait)
+									wait_thread.daemon = True
+									wait_thread.start()
+							else:
+								self.log(appname + ": caffeinate not found - "
+										 "screensaver and display/system sleep "
+										 "may still occur!")
 						if debug >= 9 or (test and not "-?" in args):
 							self.subprocess.interact()
 					self.subprocess.logfile_read = logfiles
