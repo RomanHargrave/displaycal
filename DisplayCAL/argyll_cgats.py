@@ -515,7 +515,7 @@ def ti3_to_ti1(ti3_data):
 
 def vcgt_to_cal(profile):
 	""" Return a CAL (CGATS instance) from vcgt """
-	cgats = CGATS.CGATS(file_identifier="CAL    ")
+	cgats = CGATS.CGATS(file_identifier="CAL")
 	context = cgats.add_data({"DESCRIPTOR": "Argyll Device Calibration State"})
 	context.add_data({"ORIGINATOR": "vcgt"})
 	context.add_data({"CREATED": strftime("%a %b %d %H:%M:%S %Y",

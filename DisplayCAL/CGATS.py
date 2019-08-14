@@ -244,7 +244,7 @@ class CGATS(dict):
 		"""
 		
 		self.normalize_fields = normalize_fields
-		self.file_identifier = file_identifier
+		self.file_identifier = file_identifier.strip()
 		self.emit_keywords = emit_keywords
 		self.root = self
 		self._keys = []
