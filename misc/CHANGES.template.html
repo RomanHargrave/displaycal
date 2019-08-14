@@ -50,6 +50,19 @@
 
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Use <code>caffeinate</code> to prevent display sleep and screensaver.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> ${APPNAME} 3.8.4 broke video levels (16..235) output encoding/decoding for video card gamma table tags (profiles using calibration with video output levels created by 3.8.4 can be fixed by re-creating via menu “File”, “Create profile from measurement data...” and selecting the existing profile).</li>
+						</ul>
+
+						<p id="changelog-3.8.4">2019-08-10 21:17 (UTC) 3.8.4 </p>
+						<h3>DisplayCAL 3.8.4 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Do early detection of highly non-monotonic luminance responses when doing on-the-fly generation of the preconditioning profile for auto-optimized testcharts with 425 or more patches.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Always create a single shaper curve for the fallback matrix tags of cLUT profiles with nonlinear calibration.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): Only try to restore profile associations on exit if they had to be fixed on launch to begin with.</li>
@@ -60,6 +73,7 @@
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Work-around Argyll applycal bug with gamma value TRC curve tags in profiles (fixes generating HDR 3D LUTs from display profiles with such tags).</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Windows with display scaling above 100% (HiDPI): Prevent occasional text cutoff/wrapping issues on dialog messages by adding one pixel to the minimum width of the message text area (wxWidgets bug).</li>
 						</ul>
+
 
 						<p id="changelog-3.8.3">2019-07-02 21:00 (UTC) 3.8.3 </p>
 						<h3>DisplayCAL 3.8.3 </h3>
