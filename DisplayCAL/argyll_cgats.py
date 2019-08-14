@@ -14,6 +14,7 @@ from util_io import StringIOu as StringIO
 from util_str import safe_unicode
 import CGATS
 import ICCProfile as ICCP
+import colormath
 import localization as lang
 
 cals = {}
@@ -164,7 +165,8 @@ def can_update_cal(path):
 
 
 def extract_cal_from_profile(profile, out_cal_path=None,
-							 raise_on_missing_cal=True):
+							 raise_on_missing_cal=True,
+							 prefer_cal=False):
 	""" Extract calibration from 'targ' tag in profile or vcgt as fallback """
 
 	white = False
@@ -202,8 +204,8 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 			cgats = get_cgats(arg)
 		except (IOError, CGATS.CGATSError), exception:
 			raise Error(lang.getstr("cal_extraction_failed"))
-	if (cal and isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType) and
-		not profile.tags.vcgt.is_linear()):
+	if (cal and not prefer_cal and isinstance(profile.tags.get("vcgt"),
+											  ICCP.VideoCardGammaType)):
 		# When vcgt is nonlinear, prefer it
 		# Check for video levels encoding
 		if cgats.queryv1("TV_OUTPUT_ENCODING") == "YES":
@@ -218,26 +220,48 @@ def extract_cal_from_profile(profile, out_cal_path=None,
 					white = False
 		cgats = vcgt_to_cal(profile)
 		if white and (black, white) != (0, 255):
+			safe_print("Need to un-scale vcgt from video levels (%s..%s)" %
+					   (black, white))
 			# Need to un-scale video levels
 			data = cgats.queryv1("DATA")
 			if data:
+				safe_print("Un-scaling vcgt from video levels (%s..%s)" %
+						   (black, white))
+				encoding_mismatch = False
+				# For video encoding the extra bits of
+				# precision are created by bit shifting rather
+				# than scaling, so we need to scale the fp
+				# value to account for this
+				oldmin = (black / 256.0) * (65536 / 65535.)
+				oldmax = (white / 256.0) * (65536 / 65535.)
 				for entry in data.itervalues():
 					for column in "RGB":
 						v_old = entry["RGB_" + column]
-						# For video encoding the extra bits of
-						# precision are created by bit shifting rather
-						# than scaling, so we need to scale the fp
-						# value to account for this
-						oldmin = (black / 256.0) * (65536 / 65535.)
-						oldmax = (white / 256.0) * (65536 / 65535.)
+						lvl = round(v_old * (65535 / 65536.) * 256, 2)
+						if lvl < round(black, 2) or lvl > round(white, 2):
+							# Can't be right. Metadata says it's video encoded,
+							# but clearly exceeds the encoding range.
+							safe_print("Warning: Metadata claims video levels "
+									   "(%s..%s) but vcgt value %s exceeds "
+									   "encoding range. Using values as-is." %
+									   (round(black, 2), round(white, 2), lvl))
+							encoding_mismatch = True
+							break
 						v_new = colormath.convert_range(v_old, oldmin, oldmax, 0, 1)
 						entry["RGB_" + column] = min(max(v_new, 0), 1)
-			# Add video levels hint to CGATS
-			if (black, white) == (16, 235):
-				cgats[0].add_keyword("TV_OUTPUT_ENCODING", "YES")
+					if encoding_mismatch:
+						break
+				if encoding_mismatch:
+					cgats = vcgt_to_cal(profile)
+				# Add video levels hint to CGATS
+				elif (black, white) == (16, 235):
+					cgats[0].add_keyword("TV_OUTPUT_ENCODING", "YES")
+				else:
+					cgats[0].add_keyword("OUTPUT_ENCODING",
+										 " ".join(str(v) for v in (black, white)))
 			else:
-				cgats[0].add_keyword("OUTPUT_ENCODING",
-									 " ".join(str(v) for v in black_white))
+				safe_print("Warning - no un-scaling applied - no "
+						   "calibration data!")
 	if out_cal_path:
 		cgats.write(out_cal_path)
 	return cgats

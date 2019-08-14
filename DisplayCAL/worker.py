@@ -9970,7 +9970,8 @@ usage: spotread [-options] [logfile]
 		# Check if we need to video scale vcgt
 		if isinstance(profile.tags.get("vcgt"), ICCP.VideoCardGammaType):
 			try:
-				cal = extract_cal_from_profile(profile, None, False)
+				cal = extract_cal_from_profile(profile, None, False,
+											   prefer_cal=True)
 			except Exception, exception:
 				self.log(exception)
 			else:
