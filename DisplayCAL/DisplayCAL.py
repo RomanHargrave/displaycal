@@ -145,7 +145,7 @@ from wxSynthICCFrame import SynthICCFrame
 from wxTestchartEditor import TestchartEditor
 from wxVisualWhitepointEditor import VisualWhitepointEditor
 from wxaddons import (wx, BetterWindowDisabler, CustomEvent,
-					  CustomGridCellEvent, IdFactory)
+					  CustomGridCellEvent, IdFactory, PopupMenu)
 from wxfixes import (ThemedGenButton, BitmapWithThemedButton,
 					 set_bitmap_labels, TempXmlResource, wx_Panel,
 					 PlateButton, get_bitmap_disabled, set_maxsize)
@@ -2197,9 +2197,28 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def init_menus(self):
 		""" Initialize the menus and menuitem event handlers. """
-		res = TempXmlResource(get_data_path(os.path.join("xrc", 
-														 "mainmenu.xrc")))
-		self.menubar = res.LoadMenuBar("menu")
+		menu_xrc_path = get_data_path(os.path.join("xrc", "mainmenu.xrc"))
+		USE_POPUP_MENU = False
+		if USE_POPUP_MENU:
+			with open(menu_xrc_path, "rb") as xrc_file:
+				xrc_xml = xrc_file.read()
+			xrc_xml = xrc_xml.replace('<object class="wxMenuBar" name="menu">', '')
+			xrc_xml = xrc_xml.replace('</object>\n</resource>', '</resource>')
+			res = xrc.XmlResource()
+			res.LoadFromBuffer(xrc_xml)
+			self.menubar = PopupMenu(self.header)
+			for label in ("file", "options", "tools", "language", "help"):
+				menu_label = "menu." + label
+				if label == "help":
+					menu_name = "wxID_HELP"
+				else:
+					menu_name = menu_label
+				menu = res.LoadMenu(menu_name)
+				self.menubar.Append(menu, menu_label)
+			self.header.Bind(wx.EVT_RIGHT_UP, lambda e: self.menubar.popup())
+		else:
+			res = xrc.XmlResource(menu_xrc_path)
+			self.menubar = res.LoadMenuBar("menu")
 		
 		file_ = self.menubar.GetMenu(self.menubar.FindMenu("menu.file"))
 		menuitem = file_.FindItemById(file_.FindItem("calibration.load"))
@@ -2502,6 +2521,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			wx.GetApp().SetMacPreferencesMenuItemId(self.menuitem_prefs.GetId())
 			wx.GetApp().SetMacExitMenuItemId(self.menuitem_quit.GetId())
 			wx.GetApp().SetMacHelpMenuTitleName(lang.getstr("menu.help"))
+		if USE_POPUP_MENU:
+			self.menubar.bind_keys()
 	
 	def update_menus(self):
 		"""

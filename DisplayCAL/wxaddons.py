@@ -656,6 +656,113 @@ class CustomGridCellEvent(CustomEvent):
 		return self.Col
 
 
+class PopupMenu(object):
+
+	"""
+	A collection of menus that has a wx.MenuBar-like interface
+	
+	"""
+
+	def __init__(self, parent):
+		self.Parent = parent
+		self.TopLevelParent = parent.TopLevelParent
+		self._menus = []
+		self._enabledtop = {}
+
+	def Append(self, menu, title):
+		self._menus.append((menu, title))
+
+	def EnableTop(self, pos, enable=True):
+		self._enabledtop[pos] = enable
+
+	def FindItemById(self, id):
+		for menu, label in self._menus:
+			item = menu.FindItemById(id)
+			if item:
+				return item
+
+	def FindMenu(self, title):
+		for i, (menu, label) in enumerate(self._menus):
+			if title == label:
+				return i
+		return wx.NOT_FOUND
+
+	def GetMenu(self, index):
+		return self._menus[index][0]
+
+	def GetMenuCount(self):
+		return len(self._menus)
+
+	def GetMenus(self):
+		return list(self._menus)
+
+	def IsEnabledTop(self, pos):
+		return self._enabledtop.get(pos, True)
+
+	def SetMenuLabel(self, pos, label):
+		self._menus[pos] = (self._menus[pos][0], label)
+
+	def SetMenus(self, menus):
+		self._menus = []
+		for menu, label in menus:
+			self.Append((menu, label))
+
+	def bind_keys(self):
+		if sys.platform == "darwin":
+			accels = self.get_accelerator_entries()
+			self.TopLevelParent.SetAcceleratorTable(wx.AcceleratorTable(accels()))
+		else:
+			self.TopLevelParent.Bind(wx.EVT_CHAR_HOOK, self.key_handler)
+
+	def get_accelerator_entries(self):
+		accels = []
+		for menu, label in self._menus:
+			for item in menu.MenuItems:
+				accel = item.Accel
+				if accel:
+					accel = wx.AcceleratorEntry(accel.Flags, accel.KeyCode, accel.Command, item)
+					accels.append(accel)
+		return accels
+
+	def key_handler(self, event):
+		""" Handle accelerator keys """
+		keycode = event.KeyCode
+		flags = wx.ACCEL_NORMAL
+		for key in ("ALT", "CMD", "CTRL", "SHIFT"):
+			if wx.GetKeyState(getattr(wx, "WXK_" + key.replace("CTRL", "CONTROL"), -1)):
+				flags |= getattr(wx, "ACCEL_" + key.upper())
+		for menu, label in self._menus:
+			for item in menu.MenuItems:
+				accel = item.Accel
+				if accel and accel.KeyCode == keycode and accel.Flags == flags:
+					event = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED)
+					event.Id = item.Id
+					if item.Kind == wx.ITEM_RADIO:
+						event.SetInt(1)
+					elif item.Kind == wx.ITEM_CHECK:
+						event.SetInt(int(not item.Checked))
+					self.TopLevelParent.ProcessEvent(event)
+
+	def popup(self):
+		""" Popup the list of menus (with actual menus as submenus) """
+
+		top_menu = wx.Menu()
+
+		for menu, label in self._menus:
+			top_menu.AppendSubMenu(menu, label)
+
+		self.Parent.PopupMenu(top_menu)
+
+		# Delete menuitems (not submenus)
+		for item in top_menu.MenuItems:
+			top_menu.Delete(item)
+
+		# Now we can safely destroy the menu without affecting submenus
+		top_menu.Destroy()
+
+	Menus = property(GetMenus, SetMenus)
+
+
 class FileDrop(wx.FileDropTarget):
 
 	def __init__(self, drophandlers=None):

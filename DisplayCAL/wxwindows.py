@@ -1875,7 +1875,8 @@ class BaseFrame(wx.Frame):
 				self.setup_menu_language(menu)
 			if sys.platform == "darwin":
 				wx.GetApp().SetMacHelpMenuTitleName(lang.getstr("menu.help"))
-			self.SetMenuBar(menubar)
+			if isinstance(menubar, wx.MenuBar):
+				self.SetMenuBar(menubar)
 		
 		# Controls and labels
 		for child in self.GetAllChildren():
