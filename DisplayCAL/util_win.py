@@ -101,9 +101,9 @@ def calibration_management_isenabled():
 	if False:
 		# Using registry - NEVER
 		# Also, does not work!
-		key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-							  r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration")
-		return bool(_winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
+		with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+							 r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration") as key:
+			return bool(_winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
 	else:
 		# Using ctypes
 		mscms = _get_mscms_dll_handle()
@@ -131,11 +131,11 @@ def enable_calibration_management(enable=True):
 	if False:
 		# Using registry - NEVER
 		# Also, does not work!
-		key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-							  r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration",
-							  _winreg.KEY_SET_VALUE)
-		_winreg.SetValueEx(key, "CalibrationManagementEnabled", 0,
-						   _winreg.REG_DWORD, int(enable))
+		with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+							 r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\ICM\Calibration",
+							 _winreg.KEY_SET_VALUE) as key:
+			_winreg.SetValueEx(key, "CalibrationManagementEnabled", 0,
+							   _winreg.REG_DWORD, int(enable))
 	else:
 		# Using ctypes (must be called with elevated permissions)
 		mscms = _get_mscms_dll_handle()
@@ -157,13 +157,14 @@ def enable_per_user_profiles(enable=True, display_no=0, devicekey=None):
 		if device:
 			devicekey = device.DeviceKey
 	if devicekey:
-		if False:
-			# Using registry - NEVER
-			key = _get_icm_display_device_key(devicekey)
-			_winreg.SetValueEx(key, "UsePerUserProfiles", 0,
-							   _winreg.REG_DWORD, int(enable))
+		if True:
+			# Using registry
+			with _get_icm_display_device_key(devicekey) as key:
+				_winreg.SetValueEx(key, "UsePerUserProfiles", 0,
+								   _winreg.REG_DWORD, int(enable))
 		else:
-			# Using ctypes
+			# Using ctypes - this leaks registry key handles internally in 
+			# WcsSetUsePerUserProfiles since Windows 10 1903
 			mscms = _get_mscms_dll_handle()
 			if not mscms:
 				return False
@@ -345,12 +346,13 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 		if device:
 			devicekey = device.DeviceKey
 	if devicekey:
-		if False:
+		if True:
 			# Using registry - NEVER
-			key = _get_icm_display_device_key(devicekey)
-			return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
+			with _get_icm_display_device_key(devicekey) as key:
+				return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
 		else:
-			# Using ctypes
+			# Using ctypes - this leaks registry key handles internally in 
+			# WcsGetUsePerUserProfiles since Windows 10 1903
 			mscms = _get_mscms_dll_handle()
 			pbool = ctypes.pointer(ctypes.c_bool())
 			if not mscms or not mscms.WcsGetUsePerUserProfiles(unicode(devicekey),
