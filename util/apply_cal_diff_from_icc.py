@@ -27,7 +27,7 @@ BEGIN_DATA
 """
 
 
-def get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent="r", direction="if", order="n"):
+def get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent="r", direction="if", order="n", slope_limit=0):
 	maxval = num_cal_entries - 1.0
 
 	# Get profile black and white point XYZ
@@ -39,7 +39,7 @@ def get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent="r", dire
 	# Calibrated XYZ
 	idata = []
 	for i in xrange(num_cal_entries):
-		XYZ = cm.adapt(*[cm.specialpow(i / maxval, gamma)] * 3,
+		XYZ = cm.adapt(*[cm.specialpow(i / maxval, gamma, slope_limit)] * 3,
 						 whitepoint_source=(1, 1, 1),
 						 whitepoint_destination=XYZwp)
 		XYZ = cm.blend_blackpoint(*XYZ, bp_in=(0, 0, 0), bp_out=XYZbp)
@@ -84,14 +84,27 @@ def get_interp(cal, inverse=False, smooth=0):
 
 	if smooth:
 		# Smooth from zero to 1 / n
-		lower = int(num_cal_entries / float(smooth))
+		#lower = int(num_cal_entries / float(smooth))
+		for lower, row in enumerate(cal[1:], 1):
+			v = min(row) * cal_entry_max
+			print lower, "->", v
+			if lower + 1 >= v >= lower or lower >= 8:
+				# Use max index of 8 (+ 4 = 12 = ~5% signal)
+				if lower == 1:
+					# First value already above threshold, disable smoothing
+					lower = 0
+				else:
+					print "lower", lower
+				break
 		for i in xrange(3):
 			values = cm.make_monotonically_increasing([v[i] for v in cal])
-			#values[:lower] = cm.smooth_avg(values[:lower], 3, (1,) * 3)
-			values[:lower] = [j / float(lower) * values[lower] for j in xrange(lower)]
-			if lower < num_cal_entries:
-				start, end = lower - lower / 2, lower + lower / 2
-				values[start:end] = cm.smooth_avg(values[start:end], 1, (1,) * 3)
+			if lower:
+				#values[:lower] = cm.smooth_avg(values[:lower], 3, (1,) * 3)
+				values[:lower] = [j / float(lower) * values[lower] for j in xrange(lower)]
+				if lower < num_cal_entries:
+					# Smooth up to ~5% signal
+					start, end = lower - lower / 2, lower + lower / 2
+					values[start:end] = cm.smooth_avg(values[start:end], 1, (1,) * 3)
 			values[:] = cm.smooth_avg(values[:], 1, (1,) * 3)
 			for j, v in enumerate(values):
 				cal[j][i] = v
@@ -130,10 +143,16 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 
 	gamma = float(gamma)
 
-	num_cal_entries = 256
+	num_cal_entries = 4096
 	cal_entry_max = num_cal_entries - 1.0
 
-	owtpt = target_whitepoint and "." + str(target_whitepoint) or ""
+	ogamma = {-2.4: "sRGB",
+			  -3.0: "LStar",
+			  -2084: "SMPTE2084",
+			  -709: "BT709",
+			  -240: "SMPTE240M",
+			  -601: "BT601"}.get(gamma, gamma)
+	owtpt = target_whitepoint and ".%s" % target_whitepoint or ""
 
 	if target_whitepoint:
 		try:
@@ -184,11 +203,11 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 		target_whitepoint = XYZwscaled
 		del RGBscaled
 
-	cal = get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent, "if")
+	cal = get_cal(256, target_whitepoint, gamma, profile, intent, "if", slope_limit=0)
 	interp = get_interp(cal, False, 32)
 
 	filename, ext = os.path.splitext(icc_profile_filename)
-	out_filename = filename + owtpt + ".cal" + ext
+	out_filename = filename + " %s%s" % (target_whitepoint and "%s " % owtpt[1:] or "", ogamma) + ext
 
 	if target_whitepoint is False:  # NEVER
 		# Apply inverse CAL with PCS white
@@ -246,7 +265,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 											[interp_i[j](i / (num_entries - 1.0)) for i in xrange(num_entries)],
 											use_numpy=True)
 					entries[j] = []
-					num_entries = max(num_entries, num_cal_entries)
+					num_entries = max(num_entries, 256)
 					for i in xrange(num_entries):
 						entries[j].append(min(max(cinterp(i / (num_entries - 1.0)) * 65535, 0), 65535))
 
@@ -276,7 +295,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			for i, (R, G, B) in enumerate(ical):
 				icgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
 			icgats += "END_DATA\n"
-			with open(icc_profile_filename + owtpt + ".inverse.cal", "wb") as f:
+			with open(icc_profile_filename + owtpt + ".%s.inverse.cal" % ogamma, "wb") as f:
 				f.write(icgats)
 
 			result = worker.exec_cmd(get_argyll_util("applycal"),
@@ -308,7 +327,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			R, G, B = (min(max(v, 0), 1) for v in RGB)
 			cgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
 		cgats += "END_DATA\n"
-		with open(icc_profile_filename + owtpt + ".diff.cal", "wb") as f:
+		with open(icc_profile_filename + owtpt + ".%s.diff.cal" % ogamma, "wb") as f:
 			f.write(cgats)
 
 		cgats = cgats_header
@@ -323,7 +342,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			R, G, B = (min(max(v, 0), 1) for v in RGB)
 			cgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
 		cgats += "END_DATA\n"
-		with open(icc_profile_filename + owtpt + ".cal", "wb") as f:
+		with open(icc_profile_filename + owtpt + ".%s.cal" % ogamma, "wb") as f:
 			f.write(cgats)
 
 		# Add CAL as vcgt to profile
@@ -336,6 +355,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			 out_profile.tags.wtpt.Z) = target_whitepoint
 
 	# Write updated profile
+	out_profile.setDescription(out_profile.getDescription() + " %s%s" % (target_whitepoint and "%s " % owtpt[1:], ogamma))
 	out_profile.calculateID()
 	out_profile.write()
 
