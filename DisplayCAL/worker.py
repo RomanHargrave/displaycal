@@ -7019,11 +7019,11 @@ while 1:
 					  truncate_edid_strings=False, omit_manufacturer=False,
 					  query=False):
 		""" Get org.freedesktop.ColorManager device key """
-		if config.is_virtual_display():
+		if not self.display_edid or config.is_virtual_display():
 			return None
 		display_no = max(0, min(len(self.displays) - 1, 
 								getcfg("display.number") - 1))
-		edid = self.display_edid.get(display_no)
+		edid = self.display_edid[display_no]
 		if not edid:
 			# Fall back to XrandR name
 			if not (not quirk and use_serial_32 and not truncate_edid_strings and
