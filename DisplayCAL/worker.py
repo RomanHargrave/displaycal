@@ -2813,8 +2813,8 @@ END_DATA
 		if isinstance(result, Exception):
 			show_result_dialog(result, getattr(self, "progress_wnd", None))
 			result = False
+		self.subprocess_abort = False
 		if not result:
-			self.subprocess_abort = False
 			self.thread_abort = False
 			self.abort_requested = False
 			if getattr(self, "progress_wnd", None):
@@ -5204,7 +5204,7 @@ BEGIN_DATA
 								self.log("Warning - couldn't temporarily "
 										 "enable madTPG OSD")
 						for i in xrange(countdown):
-							if self.subprocess_abort or self.thread_abort:
+							if self.subprocess_abort:
 								break
 							if not self.madtpg.set_osd_text(
 								lang.getstr("instrument.place_on_screen.madvr",
@@ -5692,7 +5692,7 @@ while 1:
 							self.patterngenerator.disable_processing(size=size * 100)
 			tries = 1
 			while tries > 0:
-				if self.subprocess_abort or self.thread_abort:
+				if self.subprocess_abort:
 					break
 				if use_pty:
 					if self.argyll_version >= [1, 2] and USE_WPOPEN and \
