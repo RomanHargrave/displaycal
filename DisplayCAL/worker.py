@@ -7234,7 +7234,7 @@ while 1:
 			# Note: Do not mix'n'match display name and manufacturer from 
 			# different sources
 			edid = self.display_edid[max(0, min(len(self.displays), 
-												getcfg("display.number") - 1))]
+												getcfg("display.number")) - 1)]
 			display_name = edid.get("monitor_name",
 									edid.get("ascii",
 											 str(edid.get("product_id") or "")))
