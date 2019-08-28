@@ -3857,6 +3857,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		""" Enable/disable the calibrate and profile buttons 
 		based on available Argyll functionality. """
 		self.panel.Freeze()
+
+		is_profile_ = is_profile()
+
+		cal = getcfg("calibration.file", False)
+		self.install_profile_btn.Enable(bool(self.worker.displays) and
+										is_profile_ and
+										cal not in self.presets)
 		
 		update_cal = self.calibration_update_cb.GetValue()
 
@@ -3864,7 +3871,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			bool(self.worker.instruments) and 
 			len(self.measurement_mode_ctrl.GetItems()) > 1)
 		
-		update_profile = update_cal and is_profile()
+		update_profile = update_cal and is_profile_
 
 		self.visual_whitepoint_editor_btn.Enable(bool(self.worker.displays) and
 												 bool(self.worker.instruments) and
@@ -4010,10 +4017,6 @@ class MainFrame(ReportFrame, BaseFrame):
 											   cal not in self.presets)
 		self.delete_calibration_btn.Enable(bool(cal) and 
 										   cal not in self.presets)
-		self.install_profile_btn.Enable(bool(self.worker.displays) and
-										profile_exists and
-										profile_path == cal and
-										cal not in self.presets)
 		is_profile_ = is_profile(include_display_profile=True)
 		self.profile_info_btn.Enable(is_profile_)
 		enable_update = (bool(cal) and os.path.exists(filename + ".cal") and
