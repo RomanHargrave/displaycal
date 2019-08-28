@@ -36,6 +36,10 @@ except WindowsError:
 	psapi = None
 
 
+# Access registry directly instead of Wcs* functions that leak handles
+USE_REGISTRY = True
+
+
 # DISPLAY_DEVICE structure, StateFlags member
 # http://msdn.microsoft.com/en-us/library/dd183569%28v=vs.85%29.aspx
 
@@ -157,8 +161,7 @@ def enable_per_user_profiles(enable=True, display_no=0, devicekey=None):
 		if device:
 			devicekey = device.DeviceKey
 	if devicekey:
-		if True:
-			# Using registry
+		if USE_REGISTRY:
 			with _get_icm_display_device_key(devicekey) as key:
 				_winreg.SetValueEx(key, "UsePerUserProfiles", 0,
 								   _winreg.REG_DWORD, int(enable))
@@ -346,8 +349,7 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 		if device:
 			devicekey = device.DeviceKey
 	if devicekey:
-		if True:
-			# Using registry - NEVER
+		if USE_REGISTRY:
 			with _get_icm_display_device_key(devicekey) as key:
 				return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
 		else:

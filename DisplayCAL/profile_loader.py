@@ -48,6 +48,7 @@ if sys.platform == "win32":
 						 safe_glob, which)
 	from util_str import safe_asciize, safe_str, safe_unicode
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
+						  USE_REGISTRY,
 						  calibration_management_isenabled,
 						  enable_per_user_profiles,
 						  get_active_display_device, get_display_devices,
@@ -784,12 +785,14 @@ if sys.platform == "win32":
 				wx.Bell()
 
 		def _update_device(self, fn, arg0, devicekey, show_error=True):
-			if (fn is enable_per_user_profiles and
+			if (not USE_REGISTRY and
+				fn is enable_per_user_profiles and
 				not per_user_profiles_isenabled(devicekey=devicekey)):
 				# We need to re-associate per-user profiles to the
 				# display, otherwise the associations will be lost
 				# after enabling per-user if a system default profile
-				# was set
+				# was set (but only if we call WcsSetUsePerUserProfiles
+				# instead of setting the underlying registry value directly)
 				monkey = devicekey.split("\\")[-2:]
 				profiles = ICCP._winreg_get_display_profiles(monkey,
 															 True)
