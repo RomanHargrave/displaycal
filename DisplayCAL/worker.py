@@ -7023,7 +7023,7 @@ while 1:
 			return None
 		display_no = max(0, min(len(self.displays) - 1, 
 								getcfg("display.number") - 1))
-		edid = self.display_edid[display_no]
+		edid = self.display_edid.get(display_no)
 		if not edid:
 			# Fall back to XrandR name
 			if not (not quirk and use_serial_32 and not truncate_edid_strings and
