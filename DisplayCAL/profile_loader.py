@@ -1928,8 +1928,7 @@ class ProfileLoader(object):
 			key = None
 			numsubkeys = 0
 			if not (self.monitors or dry_run):
-				self._enumerate_monitors()
-				enumerated_monitors = True
+				self._update_monitors_profiles(first_run, True)
 		else:
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		has_display_changed = False
@@ -1953,18 +1952,10 @@ class ProfileLoader(object):
 						if debug:
 							safe_print(display.replace("\0", ""))
 					if not (first_run or dry_run) or not self.monitors:
+						self._update_monitors_profiles(first_run,
+													   not enumerated_monitors)
 						if not enumerated_monitors:
-							self._enumerate_monitors()
 							enumerated_monitors = True
-						if getcfg("profile_loader.fix_profile_associations"):
-							# Work-around long-standing bug in applications
-							# querying the monitor profile not making sure
-							# to use the active display (this affects Windows
-							# itself as well) when only one display is
-							# active in a multi-monitor setup.
-							if not first_run:
-								self._reset_display_profile_associations()
-							self._set_display_profiles()
 					has_display_changed = True
 					if not (first_run or
 							dry_run) and self._is_displaycal_running():
@@ -1981,6 +1972,19 @@ class ProfileLoader(object):
 		if not dry_run:
 			self._has_display_changed = has_display_changed
 		return has_display_changed
+
+	def _update_monitors_profiles(self, first_run=False, enumerate_monitors=True):
+		if enumerate_monitors:
+			self._enumerate_monitors()
+		if getcfg("profile_loader.fix_profile_associations"):
+			# Work-around long-standing bug in applications
+			# querying the monitor profile not making sure
+			# to use the active display (this affects Windows
+			# itself as well) when only one display is
+			# active in a multi-monitor setup.
+			if not first_run:
+				self._reset_display_profile_associations()
+			self._set_display_profiles()
 
 	def _check_display_conf_wrapper(self):
 		try:
