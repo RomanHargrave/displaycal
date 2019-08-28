@@ -2817,7 +2817,7 @@ END_DATA
 			self.subprocess_abort = False
 			self.thread_abort = False
 			self.abort_requested = False
-			if hasattr(self, "progress_wnd"):
+			if getattr(self, "progress_wnd", None):
 				self.progress_wnd.Resume()
 	
 	def instrument_place_on_screen(self):
