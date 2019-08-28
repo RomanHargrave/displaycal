@@ -11002,7 +11002,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				techloc[technology_string] = loc
 			dlg.display_tech_ctrl = wx.Choice(dlg, -1,
 											  choices=loctech.keys())
-			dlg.display_tech_ctrl.SetStringSelection(techloc[tech])
+			dlg.display_tech_ctrl.SetStringSelection(techloc.get(tech, ""))
 			boxsizer.Add(dlg.display_tech_ctrl,
 						 flag=wx.ALL | wx.ALIGN_LEFT | wx.EXPAND, border=4)
 			btn = PlateButton(dlg, -1, lang.getstr("info.display_tech.show"),
@@ -11027,8 +11027,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			if use_manufacturer_txt_ctrl:
 				manufacturer = dlg.manufacturer_txt_ctrl.GetStringSelection()
 			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
 		else:
-			result = wx.ID_OK
 			description += " AUTO"
 		args.extend(["-E", description])
 		if display:
@@ -11038,11 +11039,9 @@ class MainFrame(ReportFrame, BaseFrame):
 							  ccxxmake_version >= [1, 7]):
 			if ccxxmake_version >= [1, 7]:
 				args.extend(["-t", dict((v, k) for k, v in
-										technology_strings.iteritems())[tech]])
+										technology_strings.iteritems()).get(tech, "u")])
 			else:
 				args.extend(["-T", safe_str(tech, "UTF-8")])
-		if result != wx.ID_OK:
-			return
 		# Prepare our files
 		cwd = self.worker.create_tempdir()
 		ti3_tmp_names = []
