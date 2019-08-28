@@ -2596,7 +2596,9 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.lut_viewer.update_controls()
 		self.menuitem_lut_reset.Enable(bool(self.worker.displays) and
 									   calibration_loading_supported)
-		mr_enable = getcfg("calibration.file", False) not in self.presets[1:]
+		mr_enable = (bool(self.worker.displays) and 
+					 bool(self.worker.instruments) and
+					 getcfg("calibration.file", False) not in self.presets[1:])
 		self.menuitem_measurement_report.Enable(mr_enable)
 		self.menuitem_report_calibrated.Enable(bool(self.worker.displays) and 
 											   bool(self.worker.instruments) and
@@ -4008,7 +4010,8 @@ class MainFrame(ReportFrame, BaseFrame):
 											   cal not in self.presets)
 		self.delete_calibration_btn.Enable(bool(cal) and 
 										   cal not in self.presets)
-		self.install_profile_btn.Enable(profile_exists and
+		self.install_profile_btn.Enable(bool(self.worker.displays) and
+										profile_exists and
 										profile_path == cal and
 										cal not in self.presets)
 		is_profile_ = is_profile(include_display_profile=True)
