@@ -16036,9 +16036,9 @@ class StartupFrame(start_cls):
 			else:
 				wx.CallLater(1000 / 30.0, self.startup)
 			return
-		# Give 10 seconds for display & instrument enumeration to run.
+		# Give 20 seconds for display & instrument enumeration to run.
 		# This should be plenty and will kill the subprocess in case it hangs.
-		self.timeout = wx.CallLater(10000, self.worker.abort_subprocess)
+		self.timeout = wx.CallLater(20000, self.worker.abort_subprocess)
 		delayedresult.startWorker(self.setup_frame, 
 								  self.worker.enumerate_displays_and_ports,
 								  wkwargs={"enumerate_ports":
