@@ -35,6 +35,7 @@ if sys.platform == "win32":
 	import win32process
 
 	from colord import device_id_from_edid
+	from colormath import smooth_avg
 	from config import (autostart, autostart_home, exe, exedir, get_data_path,
 						get_default_dpi, get_icon_bundle, geticon, iccprofiles,
 						pydir, enc)
@@ -2164,11 +2165,22 @@ class ProfileLoader(object):
 							# We assume the graphics subsystem quantizes using
 							# integer truncating from the 16 bit encoded value
 							if self._quantize < 65535.0:
+								smooth = (str(getcfg("profile_loader.quantize_bits")) in
+										  getcfg("profile_loader.smooth_bits").split(";"))
+								smooth_window = (.5, 1, 1, 1, .5)
 								for points in vcgt_values:
-									for point in points:
-										point[1] = int(math.ceil(round(point[1] / 65535.0 *
-																	   self._quantize) /
-																 self._quantize * 65535))
+									quantized = [round(point[1] / 65535.0 *
+													   self._quantize)
+												 for point in points]
+									if smooth:
+										# Smooth and round to nearest again
+										quantized = [round(v) for v in
+													 smooth_avg(quantized, 1,
+																smooth_window)]
+									for k, point in enumerate(points):
+										point[1] = int(math.ceil(quantized[k] /
+																 self._quantize *
+																 65535))
 					if len(vcgt_values[0]) != 256:
 						# Hmm. Do we need to deal with this?
 						# I've never seen table-based vcgt with != 256 entries

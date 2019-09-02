@@ -1116,6 +1116,7 @@ defaults = {
 	"profile_loader.quantize_bits": 16,
 	"profile_loader.reset_gamma_ramps": 0,
 	"profile_loader.show_notifications": 0,
+	"profile_loader.smooth_bits": "8",
 	"profile_loader.track_other_processes": 1,
 	"profile_loader.tray_icon_animation_quality": 2,
 	"profile_loader.use_madhcnet": 0,
