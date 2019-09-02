@@ -405,7 +405,9 @@ def extract_fix_copy_cal(source_filename, target_filename=None):
 		return None
 
 
-def extract_device_gray_primaries(ti3, gray=True, logfn=None):
+def extract_device_gray_primaries(ti3, gray=True, logfn=None,
+								  include_neutrals=False,
+								  neutrals_ab_threshold=0.1):
 	"""
 	Extract gray or primaries into new TI3
 	
@@ -440,6 +442,10 @@ END_DATA""")[0]
 	RGB_XYZ_extracted = OrderedDict()
 	RGB_XYZ_remaining = OrderedDict()
 	dupes = {}
+	if include_neutrals:
+		white = ti3.get_white_cie("XYZ")
+		str_thresh = str(neutrals_ab_threshold)
+		round_digits = len(str_thresh[str_thresh.find(".") + 1:])
 	for i, item in ti3.DATA.iteritems():
 		if not i:
 			# Check if fields are missing
@@ -469,7 +475,13 @@ END_DATA""")[0]
 					# additional white readings we encounter are ignored
 					subset.remove(RGB)
 		if ((gray and
-			 item["RGB_R"] == item["RGB_G"] == item["RGB_B"] and
+			 (item["RGB_R"] == item["RGB_G"] == item["RGB_B"] or
+			  (include_neutrals and
+			   all(round(abs(v), round_digits) <= neutrals_ab_threshold
+				   for v in colormath.XYZ2Lab(item["XYZ_X"],
+											  item["XYZ_Y"],
+											  item["XYZ_Z"],
+											  whitepoint=white)[1:]))) and
 			 not RGB in [(100.0, 100.0, 100.0),
 						 (0.0, 0.0, 0.0)]) or
 			RGB in subset):
