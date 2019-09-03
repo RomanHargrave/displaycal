@@ -74,7 +74,14 @@ elif sys.platform == "win32":
 		# WCS only available under Vista and later
 		mscms = None
 	else:
+		from win_handles import (get_process_handles, get_handle_name,
+								 get_handle_type)
+
 		mscms = util_win._get_mscms_windll()
+
+		win_ver = util_win.win_ver()
+		win10_1903 = (win_ver[0].startswith("Windows 10") and
+					  win_ver[2] >= "Version 1903")
 
 elif sys.platform == "darwin":
 	from util_mac import osascript
@@ -1925,17 +1932,72 @@ def _wcs_get_display_profile(devicekey,
 							 profile_subtype=COLORPROFILESUBTYPE["NONE"],
 							 profile_id=0, path_only=False, use_cache=True):
 	buf = ctypes.create_unicode_buffer(256)
-	if not mscms.WcsGetDefaultColorProfile(scope, devicekey,
+	_win10_1903_take_process_handles_snapshot()
+	retv = mscms.WcsGetDefaultColorProfile(scope, devicekey,
 										   profile_type,
 										   profile_subtype,
 										   profile_id,
 										   ctypes.sizeof(buf),  # Bytes
-										   ctypes.byref(buf)):
+										   ctypes.byref(buf))
+	_win10_1903_close_leaked_regkey_handles(devicekey)
+	if not retv:
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
 	if buf.value:
 		if path_only:
 			return os.path.join(iccprofiles[0], buf.value)
 		return ICCProfile(buf.value, use_cache=use_cache)
+
+
+def _win10_1903_take_process_handles_snapshot():
+	global prev_handles
+	prev_handles = []
+	if win10_1903 and debug:
+		try:
+			for handle in get_process_handles():
+				prev_handles.append(handle.HandleValue)
+		except WindowsError, exception:
+			safe_print("Couldn't get process handles:", exception)
+
+
+def _win10_1903_close_leaked_regkey_handles(devicekey):
+	global prev_handles
+	if win10_1903:
+		# Wcs* methods leak handles under Win10 1903. Get and close them.
+		
+		# Extract substring from devicekey for matching handle name, e.g.
+		# Control\Class\{4d36e96e-e325-11ce-bfc1-08002be10318}
+		substr = "\\".join(devicekey.split("\\")[-4:-1])
+		try:
+			handles = get_process_handles()
+		except WindowsError, exception:
+			safe_print("Couldn't get process handles:", exception)
+			return
+		for handle in handles:
+			try:
+				handle_name = get_handle_name(handle)
+			except WindowsError, exception:
+				safe_print("Couldn't get name of handle 0x%x:" %
+						   handle.HandleValue, exception)
+				handle_name = None
+			if debug and not handle.HandleValue in prev_handles:
+				try:
+					handle_type = get_handle_type(handle)
+				except WindowsError, exception:
+					safe_print("Couldn't get typestring of handle 0x%x:" %
+							   handle.HandleValue, exception)
+					handle_type = None
+				safe_print("New handle", "0x%x" % handle.HandleValue,
+						   "type 0x%02x %s" % (handle.ObjectTypeIndex,
+											   handle_type), handle_name)
+			if handle_name and handle_name.endswith(substr):
+				safe_print("Windows 10", win_ver[2].split(" ", 1)[-1],
+						   "housekeeping: Closing leaked handle 0x%x" %
+						   handle.HandleValue, handle_name)
+				try:
+					win32api.RegCloseKey(handle.HandleValue)
+				except pywintypes.error, exception:
+					safe_print("Couldn't close handle 0x%x:" %
+							   handle.HandleValue, exception)
 
 
 def _winreg_get_display_profile(monkey, current_user=False, path_only=False,
@@ -2217,9 +2279,12 @@ def _wcs_set_display_profile(devicekey, profile_name,
 	# Note that disassociating the current default profile for a display will
 	# also set its video card gamma ramps to linear if Windows calibration
 	# management isn't enabled.
+	_win10_1903_take_process_handles_snapshot()
 	mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name, devicekey)
-	if not mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
-													devicekey):
+	retv = mscms.WcsAssociateColorProfileWithDevice(scope, profile_name,
+													devicekey)
+	_win10_1903_close_leaked_regkey_handles(devicekey)
+	if not retv:
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
 	monkey = devicekey.split("\\")[-2:]
 	current_user = scope == WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
@@ -2253,8 +2318,11 @@ def _wcs_unset_display_profile(devicekey, profile_name,
 	monkey = devicekey.split("\\")[-2:]
 	current_user = scope == WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"]
 	profiles = _winreg_get_display_profiles(monkey, current_user)
-	if not mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name,
-													   devicekey):
+	_win10_1903_take_process_handles_snapshot()
+	retv = mscms.WcsDisassociateColorProfileFromDevice(scope, profile_name,
+													   devicekey)
+	_win10_1903_close_leaked_regkey_handles(devicekey)
+	if not retv:
 		errcode = ctypes.windll.kernel32.GetLastError()
 		if (errcode == ERROR_PROFILE_NOT_ASSOCIATED_WITH_DEVICE and
 			profile_name in profiles):
