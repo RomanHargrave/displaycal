@@ -359,7 +359,12 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 	if devicekey:
 		if USE_REGISTRY:
 			with _get_icm_display_device_key(devicekey) as key:
-				return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
+				try:
+					return bool(_winreg.QueryValueEx(key, "UsePerUserProfiles")[0])
+				except WindowsError, exception:
+					if exception.args[0] == winerror.ERROR_FILE_NOT_FOUND:
+						return False
+					raise
 		else:
 			# Using ctypes - this leaks registry key handles internally in 
 			# WcsGetUsePerUserProfiles since Windows 10 1903
