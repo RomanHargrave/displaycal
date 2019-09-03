@@ -74,12 +74,8 @@ elif sys.platform == "win32":
 		# WCS only available under Vista and later
 		mscms = None
 	else:
-		mscms = util_win._get_mscms_dll_handle()
-	if mscms:
-		mscms.WcsGetDefaultColorProfileSize.restype = ctypes.c_bool
-		mscms.WcsGetDefaultColorProfile.restype = ctypes.c_bool
-		mscms.WcsAssociateColorProfileWithDevice.restype = ctypes.c_bool
-		mscms.WcsDisassociateColorProfileFromDevice.restype = ctypes.c_bool
+		mscms = util_win._get_mscms_windll()
+
 elif sys.platform == "darwin":
 	from util_mac import osascript
 

@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from ctypes import wintypes
 import ctypes
+import _ctypes
 import _winreg
+import os
 import platform
 import struct
 import sys
@@ -17,6 +20,7 @@ from ctypes import POINTER, byref, sizeof, windll
 from ctypes.wintypes import HANDLE, DWORD, LPWSTR
 
 from util_os import quote_args
+from win_structs import UNICODE_STRING
 
 if not hasattr(ctypes, "c_bool"):
 	# Python 2.5
@@ -90,11 +94,15 @@ def _get_icm_display_device_key(devicekey):
 	return _winreg.CreateKey(_winreg.HKEY_CURRENT_USER, subkey)
 
 
-def _get_mscms_dll_handle():
+def _get_mscms_windll():
 	try:
-		return ctypes.windll.mscms
+		if not _get_mscms_windll._windll:
+			_get_mscms_windll._windll = MSCMS()
+		return _get_mscms_windll._windll
 	except WindowsError:
 		return None
+
+_get_mscms_windll._windll = None
 
 
 def calibration_management_isenabled():
@@ -110,7 +118,7 @@ def calibration_management_isenabled():
 			return bool(_winreg.QueryValueEx(key, "CalibrationManagementEnabled")[0])
 	else:
 		# Using ctypes
-		mscms = _get_mscms_dll_handle()
+		mscms = _get_mscms_windll()
 		pbool = ctypes.pointer(ctypes.c_bool())
 		if not mscms or not mscms.WcsGetCalibrationManagementState(pbool):
 			return
@@ -142,7 +150,7 @@ def enable_calibration_management(enable=True):
 							   _winreg.REG_DWORD, int(enable))
 	else:
 		# Using ctypes (must be called with elevated permissions)
-		mscms = _get_mscms_dll_handle()
+		mscms = _get_mscms_windll()
 		if not mscms:
 			return False
 		if not mscms.WcsSetCalibrationManagementState(enable):
@@ -168,7 +176,7 @@ def enable_per_user_profiles(enable=True, display_no=0, devicekey=None):
 		else:
 			# Using ctypes - this leaks registry key handles internally in 
 			# WcsSetUsePerUserProfiles since Windows 10 1903
-			mscms = _get_mscms_dll_handle()
+			mscms = _get_mscms_windll()
 			if not mscms:
 				return False
 			if not mscms.WcsSetUsePerUserProfiles(unicode(devicekey),
@@ -355,7 +363,7 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 		else:
 			# Using ctypes - this leaks registry key handles internally in 
 			# WcsGetUsePerUserProfiles since Windows 10 1903
-			mscms = _get_mscms_dll_handle()
+			mscms = _get_mscms_windll()
 			pbool = ctypes.pointer(ctypes.c_bool())
 			if not mscms or not mscms.WcsGetUsePerUserProfiles(unicode(devicekey),
 																CLASS_MONITOR,
@@ -434,6 +442,90 @@ def win_ver():
 		if key:
 			_winreg.CloseKey(key)
 	return pname, csd, release, build
+
+
+USE_NTDLL_LDR = False
+
+
+def _free_library(handle):
+	if USE_NTDLL_LDR:
+		fn = ctypes.windll.ntdll.LdrUnloadDll
+	else:
+		fn = _ctypes.FreeLibrary
+	fn(handle)
+
+
+class UnloadableWinDLL(object):
+
+	""" WinDLL wrapper that allows unloading """
+
+	def __init__(self, dllname):
+		self.dllname = dllname
+		self._windll = None
+		self.load()
+
+	def __getattr__(self, name):
+		self.load()
+		return getattr(self._windll, name)
+
+	def __nonzero__(self):
+		self.load()
+		return bool(self._windll)
+
+	def load(self):
+		if not self._windll:
+			if USE_NTDLL_LDR:
+				mod = wintypes.byref(UNICODE_STRING(len(self.dllname) * 2, 256,
+													self.dllname))
+				handle = wintypes.HANDLE()
+				ctypes.windll.ntdll.LdrLoadDll(None, 0, mod, wintypes.byref(handle))
+				windll = ctypes.WinDLL(self.dllname, handle=handle.value)
+			else:
+				windll = ctypes.WinDLL(self.dllname)
+			self._windll = windll
+
+	def unload(self):
+		if self._windll:
+			handle = self._windll._handle
+			self._windll = None
+			_free_library(handle)
+
+
+class MSCMS(UnloadableWinDLL):
+
+	""" MSCMS wrapper (optionally) allowing unloading """
+
+	def __init__(self, bootstrap_icm32=False):
+		self._icm32_handle = None
+		UnloadableWinDLL.__init__(self, "mscms.dll")
+		if bootstrap_icm32:
+			# Need to load & unload icm32 once before unloading of mscms can
+			# work in every situation (some calls to mscms methods pull in
+			# icm32, if we haven't loaded/unloaded it before, we won't be able
+			# to unload then)
+			self._icm32_handle = ctypes.WinDLL("icm32")._handle
+			_free_library(self._icm32_handle)
+
+	def load(self):
+		mscms = self._windll
+		UnloadableWinDLL.load(self)
+		if self._windll is not mscms:
+			mscms = self._windll
+			mscms.WcsGetDefaultColorProfileSize.restype = ctypes.c_bool
+			mscms.WcsGetDefaultColorProfile.restype = ctypes.c_bool
+			mscms.WcsAssociateColorProfileWithDevice.restype = ctypes.c_bool
+			mscms.WcsDisassociateColorProfileFromDevice.restype = ctypes.c_bool
+
+	def unload(self):
+		if self._windll:
+			if self._icm32_handle:
+				# Need to free icm32 first, otherwise mscms won't unload
+				try:
+					_free_library(self._icm32_handle)
+				except WindowsError, exception:
+					if exception.args[0] != winerror.ERROR_MOD_NOT_FOUND:
+						raise
+			UnloadableWinDLL.unload(self)
 
 
 if __name__ == "__main__":
