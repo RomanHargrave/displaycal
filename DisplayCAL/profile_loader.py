@@ -75,6 +75,116 @@ if sys.platform == "win32":
 			exedir = os.path.dirname(exe)
 
 
+	def setup_profile_loader_task():
+		if sys.getwindowsversion() >= (6, ):
+			import taskscheduler
+			
+			taskname = appname + " Profile Loader Launcher"
+
+			try:
+				ts = taskscheduler.TaskScheduler()
+			except Exception, exception:
+				safe_print("Warning - could not access task scheduler:",
+						   exception)
+			else:
+				if (not "--task" in sys.argv[1:] and is_superuser() and
+					not ts.query_task(taskname)):
+					# Check if our task exists, and if it does not, create it.
+					# (requires admin privileges)
+					safe_print("Trying to create task %r..." % taskname)
+					# Note that we use a stub so the task cannot be accidentally
+					# stopped (the stub launches the actual profile loader and
+					# then immediately exits)
+					loader_args = []
+					if os.path.basename(exe).lower() in ("python.exe", 
+														 "pythonw.exe"):
+						cmd = os.path.join(exedir, "pythonw.exe")
+						pyw = os.path.normpath(os.path.join(pydir, "..",
+															appname +
+															"-apply-profiles.pyw"))
+						script = get_data_path("/".join(["scripts", 
+														 appname + "-apply-profiles-launcher"]))
+						if os.path.exists(pyw):
+							# Running from source or 0install
+							# Check if this is a 0install implementation, in which
+							# case we want to call 0launch with the appropriate
+							# command
+							if re.match("sha\d+(?:new)?",
+										os.path.basename(os.path.dirname(pydir))):
+								# No stub needed as 0install-win acts as stub
+								cmd = which("0install-win.exe") or "0install-win.exe"
+								loader_args.extend(["run", "--batch", "--no-wait",
+													"--offline",
+													"--command=run-apply-profiles",
+													"--",
+													"http://%s/0install/%s.xml" %
+													(domain.lower(), appname),
+													"--task"])
+							else:
+								# Running from source
+								loader_args.append(script)
+						else:
+							# Regular (site-packages) install
+							loader_args.append(script)
+					else:
+						# Standalone executable
+						cmd = os.path.join(pydir,
+										   appname +
+										   "-apply-profiles-launcher.exe")
+					try:
+						# Create the task
+						created = ts.create_logon_task(taskname,
+											 cmd,
+											 loader_args,
+											 u"Open Source Developer, "
+											 u"Florian Höch",
+											 "This task launches the profile "
+											 "loader with the applicable "
+											 "privileges for logged in users",
+											 multiple_instances=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
+											 replace_existing=True)
+					except Exception, exception:
+						if debug:
+							exception = traceback.format_exc()
+						safe_print("Warning - Could not create task %r:" %
+								   taskname, exception)
+						if ts.stdout:
+							safe_print(safe_unicode(ts.stdout, enc))
+					else:
+						safe_print(safe_unicode(ts.stdout, enc))
+						if created:
+							# Remove autostart entries, if any
+							name = appname + " Profile Loader"
+							entries = []
+							if autostart:
+								entries.append(os.path.join(autostart,
+															name + ".lnk"))
+							if autostart_home:
+								entries.append(os.path.join(autostart_home, 
+															name + ".lnk"))
+							for entry in entries:
+								if os.path.isfile(entry):
+									safe_print("Removing", entry)
+									try:
+										os.remove(entry)
+									except EnvironmentError, exception:
+										safe_print(exception)
+				if "Windows 10" in win_ver()[0]:
+					# Disable Windows Calibration Loader.
+					# This is absolutely REQUIRED under Win10 1903 to prevent
+					# banding and not applying calibration twice
+					ms_cal_loader = r"\Microsoft\Windows\WindowsColorSystem\Calibration Loader"
+					try:
+						ts.disable(ms_cal_loader)
+					except Exception, exception:
+						safe_print("Warning - Could not disable task %r:" %
+								   ms_cal_loader, exception)
+						if ts.stdout:
+							safe_print(safe_unicode(ts.stdout, enc))
+					else:
+						safe_print(safe_unicode(ts.stdout, enc))
+
+
 	class DisplayIdentificationFrame(wx.Frame):
 
 		def __init__(self, display, pos, size):
@@ -3223,113 +3333,8 @@ def main():
 	elif "-V" in sys.argv[1:] or "--version" in sys.argv[1:]:
 		safe_print("%s %s" % (os.path.basename(sys.argv[0]), version))
 	else:
-		if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
-			import taskscheduler
-			
-			taskname = appname + " Profile Loader Launcher"
-
-			try:
-				ts = taskscheduler.TaskScheduler()
-			except Exception, exception:
-				safe_print("Warning - could not access task scheduler:",
-						   exception)
-			else:
-				if (not "--task" in sys.argv[1:] and is_superuser() and
-					not ts.query_task(taskname)):
-					# Check if our task exists, and if it does not, create it.
-					# (requires admin privileges)
-					safe_print("Trying to create task %r..." % taskname)
-					# Note that we use a stub so the task cannot be accidentally
-					# stopped (the stub launches the actual profile loader and
-					# then immediately exits)
-					loader_args = []
-					if os.path.basename(exe).lower() in ("python.exe", 
-														 "pythonw.exe"):
-						cmd = os.path.join(exedir, "pythonw.exe")
-						pyw = os.path.normpath(os.path.join(pydir, "..",
-															appname +
-															"-apply-profiles.pyw"))
-						script = get_data_path("/".join(["scripts", 
-														 appname + "-apply-profiles-launcher"]))
-						if os.path.exists(pyw):
-							# Running from source or 0install
-							# Check if this is a 0install implementation, in which
-							# case we want to call 0launch with the appropriate
-							# command
-							if re.match("sha\d+(?:new)?",
-										os.path.basename(os.path.dirname(pydir))):
-								# No stub needed as 0install-win acts as stub
-								cmd = which("0install-win.exe") or "0install-win.exe"
-								loader_args.extend(["run", "--batch", "--no-wait",
-													"--offline",
-													"--command=run-apply-profiles",
-													"--",
-													"http://%s/0install/%s.xml" %
-													(domain.lower(), appname),
-													"--task"])
-							else:
-								# Running from source
-								loader_args.append(script)
-						else:
-							# Regular (site-packages) install
-							loader_args.append(script)
-					else:
-						# Standalone executable
-						cmd = os.path.join(pydir,
-										   appname +
-										   "-apply-profiles-launcher.exe")
-					try:
-						# Create the task
-						created = ts.create_logon_task(taskname,
-											 cmd,
-											 loader_args,
-											 u"Open Source Developer, "
-											 u"Florian Höch",
-											 "This task launches the profile "
-											 "loader with the applicable "
-											 "privileges for logged in users",
-											 multiple_instances=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
-											 replace_existing=True)
-					except Exception, exception:
-						if debug:
-							exception = traceback.format_exc()
-						safe_print("Warning - Could not create task %r:" %
-								   taskname, exception)
-						if ts.stdout:
-							safe_print(safe_unicode(ts.stdout, enc))
-					else:
-						safe_print(safe_unicode(ts.stdout, enc))
-						if created:
-							# Remove autostart entries, if any
-							name = appname + " Profile Loader"
-							entries = []
-							if autostart:
-								entries.append(os.path.join(autostart,
-															name + ".lnk"))
-							if autostart_home:
-								entries.append(os.path.join(autostart_home, 
-															name + ".lnk"))
-							for entry in entries:
-								if os.path.isfile(entry):
-									safe_print("Removing", entry)
-									try:
-										os.remove(entry)
-									except EnvironmentError, exception:
-										safe_print(exception)
-				if "Windows 10" in win_ver()[0]:
-					# Disable Windows Calibration Loader.
-					# This is absolutely REQUIRED under Win10 1903 to prevent
-					# banding and not applying calibration twice
-					ms_cal_loader = r"\Microsoft\Windows\WindowsColorSystem\Calibration Loader"
-					try:
-						ts.disable(ms_cal_loader)
-					except Exception, exception:
-						safe_print("Warning - Could not disable task %r:" %
-								   ms_cal_loader, exception)
-						if ts.stdout:
-							safe_print(safe_unicode(ts.stdout, enc))
-					else:
-						safe_print(safe_unicode(ts.stdout, enc))
+		if sys.platform == "win32":
+			setup_profile_loader_task()
 
 		config.initcfg("apply-profiles")
 
