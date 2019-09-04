@@ -1466,8 +1466,8 @@
   N’installer que pour l’utilisateur actuel
 "instrument": |-
   Sonde de mesure
-"instrument.calibrate": |-
-  Placez la sonde de mesure sur une surface sombre, mate ou sur son support d’étalonnage et appuyez sur « Valider » pour étalonner la sonde de mesure.
+"*instrument.calibrate": |-
+  Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to calibrate the instrument.
 "instrument.calibrate.colormunki": |-
   Réglez le capteur ColorMunki sur la position étalonnage et appuyez sur « Valider » pour étalonner la sonde de mesure.
 "instrument.calibrate.reflective": |-

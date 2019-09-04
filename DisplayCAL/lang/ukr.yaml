@@ -1471,8 +1471,8 @@
   Встановіть тільки для поточного користувача
 "instrument": |-
   інструмент
-"instrument.calibrate": |-
-  Покладіть прилад на темну, матову поверхню або на його калібрувальну пластину і натисніть OK, щоб відкалібрувати прилад.
+"*instrument.calibrate": |-
+  Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to calibrate the instrument.
 "instrument.calibrate.colormunki": |-
   Встановіть датчик ColorMunki у позицію калібрування і натисніть OK для калібрування приладу.
 "instrument.calibrate.reflective": |-

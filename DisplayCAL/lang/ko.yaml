@@ -1472,8 +1472,8 @@
   현재 사용자 계정에만 설치
 "instrument": |-
   장치
-"instrument.calibrate": |-
-  장치를 무광의 검정 표현 위에 올려놓거나 검정 캘리브레이션 플레이트에 올려놓은 후, OK 버튼을 눌러 장치의 자체 캘리브레이션을 진행합니다.
+"*instrument.calibrate": |-
+  Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to calibrate the instrument.
 "instrument.calibrate.colormunki": |-
   컬러멍키 센서를 캘리브레이션 포지션에 놓은 후, OK 버튼을 눌러 장치의 자체 캘리브레이션을 진행합니다.
 "instrument.calibrate.reflective": |-

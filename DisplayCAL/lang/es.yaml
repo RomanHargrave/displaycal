@@ -1471,8 +1471,8 @@
   Install for current user only
 "instrument": |-
   Instrumento/Puerto
-"instrument.calibrate": |-
-  Poner el instrumento en una superficie oscura, mate o en su placa y presionar OK para calibrar el instrumento.
+"*instrument.calibrate": |-
+  Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to calibrate the instrument.
 "instrument.calibrate.colormunki": |-
   Poner el sensor ColorMunki en posicion de calibracion y presionar OK para calibrar el instrumento.
 "*instrument.calibrate.reflective": |-
