@@ -3236,11 +3236,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						if name == "measurement_mode.backup":
 							setcfg("measurement_mode",
 								   getcfg("measurement_mode.backup"))
-						default = None
-					else:
-						default = defaults[name]
+					default = None
 					if verbose >= 3:
-						safe_print("Restoring %s to %s" % (name, default))
+						safe_print("Restoring %s to %s" % (name, defaults[name]))
 					setcfg(name, default)
 		for name in override:
 			if (len(include) == 0 or False in [name.find(item) != 0 for item in 
