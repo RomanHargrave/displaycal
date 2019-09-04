@@ -71,3 +71,7 @@ else:
 
 # Colord: Use GOBject introspection
 use_gi = "--use-gi" in sys.argv[1:]
+
+# Skip initial instrument/port detection on startup
+force_skip_initial_instrument_detection = ("--force-skip-initial-instrument-detection" in
+										   sys.argv[1:])

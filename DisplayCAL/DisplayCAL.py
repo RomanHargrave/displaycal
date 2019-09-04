@@ -96,7 +96,8 @@ from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
 from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
 				  version, version_short, get_latest_chglog_entry)
-from options import debug, test, test_update, verbose
+from options import (debug, force_skip_initial_instrument_detection, test,
+					 test_update, verbose)
 from ordereddict import OrderedDict
 from patterngenerators import WebWinHTTPPatternGeneratorServer
 try:
@@ -16039,11 +16040,22 @@ class StartupFrame(start_cls):
 		# Give 20 seconds for display & instrument enumeration to run.
 		# This should be plenty and will kill the subprocess in case it hangs.
 		self.timeout = wx.CallLater(20000, self.worker.abort_subprocess)
+		win_ver = util_win.win_ver()
+		win10_1903 = (win_ver[0].startswith("Windows 10") and
+					  win_ver[2] >= "Version 1903")
 		delayedresult.startWorker(self.setup_frame, 
 								  self.worker.enumerate_displays_and_ports,
 								  wkwargs={"enumerate_ports":
-										   getcfg("enumerate_ports.auto") or
-										   not getcfg("instruments", raw=True),
+										   not force_skip_initial_instrument_detection and
+										   (getcfg("enumerate_ports.auto") or
+											# Always detect instruments under
+											# Win10 1903 or newer when there
+											# are several instruments because
+											# ordering is not guaranteed
+											# consistent between reboots
+											(win10_1903 and
+											 len(getcfg("instruments")) > 1) or
+											not getcfg("instruments", raw=True)),
 										   "silent": True})
 
 	def setup_frame(self, result):
