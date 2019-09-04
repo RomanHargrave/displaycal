@@ -75,7 +75,7 @@ if sys.platform == "win32":
 			exedir = os.path.dirname(exe)
 
 
-	def setup_profile_loader_task():
+	def setup_profile_loader_task(exe, exedir, pydir):
 		if sys.getwindowsversion() >= (6, ):
 			import taskscheduler
 			
@@ -3334,7 +3334,7 @@ def main():
 		safe_print("%s %s" % (os.path.basename(sys.argv[0]), version))
 	else:
 		if sys.platform == "win32":
-			setup_profile_loader_task()
+			setup_profile_loader_task(exe, exedir, pydir)
 
 		config.initcfg("apply-profiles")
 
