@@ -878,6 +878,7 @@ defaults = {
 	"3dlut.rendering_intent": "aw",
 	"3dlut.use_abstract_profile": 0,
 	"3dlut.size": 65,
+	"3dlut.size.backup": 65,
 	"3dlut.tab.enable": 0,
 	"3dlut.tab.enable.backup": 0,
 	"3dlut.whitepoint.x": 0.3127,
@@ -949,16 +950,30 @@ defaults = {
 	"extra_args.dispread": "",
 	"extra_args.spotread": "",
 	"extra_args.targen": "",
+	"gamap_default_intent": "p",
+	"gamap_out_viewcond": None,
 	"gamap_profile": "",
 	"gamap_perceptual": 0,
 	"gamap_perceptual_intent": "p",
 	"gamap_saturation": 0,
 	"gamap_saturation_intent": "s",
-	"gamap_default_intent": "p",
+	"gamap_src_viewcond": None,
 	"gamma": 2.2,
 	"iccgamut.surface_detail": 10.0,
 	"instruments": "",
-	"last_launch": "99",
+	"last_3dlut_path": u"",
+	"last_archive_save_path": u"",
+	"last_cal_path": u"",
+	"last_cal_or_icc_path": u"",
+	"last_colorimeter_ti3_path": u"",
+	"last_testchart_export_path": u"",
+	"last_filedialog_path": u"",
+	"last_icc_path": u"",
+	"last_launch": "99",  # Version
+	"last_reference_ti3_path": u"",
+	"last_ti1_path": u"",
+	"last_ti3_path": u"",
+	"last_vrml_path": u"",
 	"log.autoshow": 0,
 	"log.show": 0,
 	"lang": "en",
@@ -1142,6 +1157,8 @@ defaults = {
 	"size.scripting.h": 384,
 	"size.synthiccframe.w": 512,
 	"size.synthiccframe.h": 384,
+	"size.tcgen.w": 0,
+	"size.tcgen.h": 0,
 	"skip_legacy_serial_ports": 1,
 	"skip_scripts": 1,
 	"splash.zoom": 0,
@@ -1669,6 +1686,7 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 				try:
 					mtime = os.stat(cfgfile).st_mtime
 				except EnvironmentError, exception:
+					from log import safe_print
 					safe_print(u"Warning - os.stat('%s') failed: %s" % 
 							   tuple(safe_unicode(s) for s in (cfgfile,
 															   exception)))
@@ -1879,6 +1897,12 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 		cfgbasename = "%s-%s" % (appbasename, module)
 	else:
 		cfgbasename = appbasename
+	# Remove unknown options
+	for name, val in cfg.items(ConfigParser.DEFAULTSECT):
+		if not name in defaults:
+			from log import safe_print
+			safe_print("Removing unknown option:", name)
+			setcfg(name, None)
 	if which == "user":
 		# user config - stores everything and overrides system-wide config
 		cfgfilename = os.path.join(confighome, cfgbasename + ".ini")
