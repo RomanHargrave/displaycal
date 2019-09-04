@@ -90,7 +90,7 @@ class ExecAction(object):
 class Task(object):
 
 	def __init__(self, name="", author="", description="", group_id="S-1-5-4",
-				 runlevel=RUNLEVEL_HIGHESTAVAILABLE,
+				 runlevel=RUNLEVEL_LEASTPRIVILEGE,
 				 multiple_instances=MULTIPLEINSTANCES_IGNORENEW,
 				 disallow_start_if_on_batteries=False,
 				 stop_if_going_on_batteries=False,
@@ -200,7 +200,7 @@ class TaskScheduler(object):
 
 	def create_task(self, name, author="", description="",
 					group_id="S-1-5-4",
-					runlevel=RUNLEVEL_HIGHESTAVAILABLE,
+					runlevel=RUNLEVEL_LEASTPRIVILEGE,
 					multiple_instances=MULTIPLEINSTANCES_IGNORENEW,
 					disallow_start_if_on_batteries=False,
 					stop_if_going_on_batteries=False,
@@ -252,7 +252,7 @@ class TaskScheduler(object):
 	def create_logon_task(self, name, cmd, args=None,
 						  author="", description="",
 						  group_id="S-1-5-4",
-						  runlevel=RUNLEVEL_HIGHESTAVAILABLE,
+						  runlevel=RUNLEVEL_LEASTPRIVILEGE,
 						  multiple_instances=MULTIPLEINSTANCES_IGNORENEW,
 						  disallow_start_if_on_batteries=False,
 						  stop_if_going_on_batteries=False,
