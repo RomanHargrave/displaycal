@@ -51,8 +51,8 @@ if sys.platform == "win32":
 	from util_win import (DISPLAY_DEVICE_ACTIVE, MONITORINFOF_PRIMARY,
 						  USE_REGISTRY,
 						  calibration_management_isenabled,
-						  enable_per_user_profiles,
-						  get_active_display_device, get_display_devices,
+						  enable_per_user_profiles, get_active_display_device, 
+						  get_active_display_devices, get_display_devices,
 						  get_file_info, get_first_display_device, get_pids,
 						  get_process_filename, get_real_display_devices_info,
 						  get_windows_error, per_user_profiles_isenabled,
@@ -927,6 +927,8 @@ class ProfileLoader(object):
 		self.lock = threading.Lock()
 		self._is_other_running_lock = threading.Lock()
 		self.monitoring = True
+		self._active_displays = []
+		self._display_changed_event = False
 		self.monitors = []  # Display devices that can be represented as ON
 		self.display_devices = {}  # All display devices
 		self.child_devices_count = {}
@@ -1900,13 +1902,8 @@ class ProfileLoader(object):
 			safe_print("ProcessDisplayChangedEvent: Waiting to acquire lock...")
 		with self.lock:
 			safe_print("ProcessDisplayChangedEvent: Acquired lock")
+			self._display_changed_event = True
 			self._next = True
-			self._enumerate_monitors()
-			if sys.getwindowsversion() < (6, ):
-				# Under XP, we can't use the registry to figure out if the
-				# display change was a display configuration change (e.g.
-				# display added/removed) or just a resolution change
-				self._has_display_changed = True
 			if getattr(self, "profile_associations_dlg", None):
 				wx.CallAfter(wx.CallLater, 1000,
 							 lambda: self.profile_associations_dlg and
@@ -1920,22 +1917,29 @@ class ProfileLoader(object):
 	def _check_display_changed(self, first_run=False, dry_run=False):
 		# Check registry if display configuration changed (e.g. if a display
 		# was added/removed, and not just the resolution changed)
-		enumerated_monitors = False
+		if not (first_run or self._display_changed_event):
+			# Not first run and no prior display changed event
+			return False
+		has_display_changed = False
+		ts = time.time()
 		key_name = r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration"
 		try:
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, key_name)
 		except WindowsError, exception:
+			# Windows XP or Win10 >= 1903 if not running elevated
 			if (exception.args[0] != errno.ENOENT or
 				sys.getwindowsversion() >= (6, )):
 				warnings.warn("Registry access failed: %s: %s" %
 							  (safe_str(exception), key_name), Warning)
 			key = None
 			numsubkeys = 0
-			if not (self.monitors or dry_run):
-				self._update_monitors_profiles(first_run, True)
+			# get_active_display_devices takes around 3-10ms in contrast to
+			# querying registry which takes 1-3ms
+			if (not self._active_displays or
+				self._active_displays != get_active_display_devices("DeviceKey")):
+				has_display_changed = True
 		else:
 			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
-		has_display_changed = False
 		for i in xrange(numsubkeys):
 			subkey_name = _winreg.EnumKey(key, i)
 			try:
@@ -1951,44 +1955,41 @@ class ProfileLoader(object):
 			timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
 			if timestamp > self._current_timestamp:
 				if display != self._current_display:
-					if not (first_run or dry_run):
-						safe_print(lang.getstr("display_detected"))
-						if debug:
-							safe_print(display.replace("\0", ""))
-					if not (first_run or dry_run) or not self.monitors:
-						self._update_monitors_profiles(first_run,
-													   not enumerated_monitors)
-						if not enumerated_monitors:
-							enumerated_monitors = True
 					has_display_changed = True
-					if not (first_run or
-							dry_run) and self._is_displaycal_running():
-						# Normally calibration loading is disabled while
-						# DisplayCAL is running. Override this when the
-						# display has changed
-						self._manual_restore = getcfg("profile.load_on_login") and 2
 				if not dry_run:
 					self._current_display = display
 					self._current_timestamp = timestamp
 			_winreg.CloseKey(subkey)
 		if key:
 			_winreg.CloseKey(key)
+		safe_print("Display configuration change detection took %.6f ms" %
+				   ((time.time() - ts) * 1000.0))
+		if not dry_run:
+			# Display conf or resolution change
+			self._enumerate_monitors()
+		if has_display_changed:
+			# First run or display conf change, not just resolution
+			if not (first_run or dry_run):
+				safe_print(lang.getstr("display_detected"))
+			if not dry_run:
+				if getcfg("profile_loader.fix_profile_associations"):
+					# Work-around long-standing bug in applications
+					# querying the monitor profile not making sure
+					# to use the active display (this affects Windows
+					# itself as well) when only one display is
+					# active in a multi-monitor setup.
+					if not first_run:
+						self._reset_display_profile_associations()
+					self._set_display_profiles()
+			if not (first_run or dry_run) and self._is_displaycal_running():
+				# Normally calibration loading is disabled while
+				# DisplayCAL is running. Override this when the
+				# display has changed
+				self._manual_restore = getcfg("profile.load_on_login") and 2
 		if not dry_run:
 			self._has_display_changed = has_display_changed
+			self._display_changed_event = False
 		return has_display_changed
-
-	def _update_monitors_profiles(self, first_run=False, enumerate_monitors=True):
-		if enumerate_monitors:
-			self._enumerate_monitors()
-		if getcfg("profile_loader.fix_profile_associations"):
-			# Work-around long-standing bug in applications
-			# querying the monitor profile not making sure
-			# to use the active display (this affects Windows
-			# itself as well) when only one display is
-			# active in a multi-monitor setup.
-			if not first_run:
-				self._reset_display_profile_associations()
-			self._set_display_profiles()
 
 	def _check_display_conf_wrapper(self):
 		try:
@@ -2533,6 +2534,7 @@ class ProfileLoader(object):
 			safe_print(traceback.format_exc())
 			monitors = []
 			self.setgammaramp_success[0] = False
+		self._active_displays = []
 		for i, moninfo in enumerate(monitors):
 			if moninfo["Device"] == "WinDisc":
 				# If e.g. we physically disconnect the display device, we will
@@ -2547,8 +2549,9 @@ class ProfileLoader(object):
 				safe_print("Buggy video driver detected: %s." %
 						   moninfo["_adapter"].DeviceString,
 						   "Gamma ramp hack activated.")
-			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
+			if device:
+				self._active_displays.append(device.DeviceKey)
 			if debug or verbose > 1:
 				safe_print("Found monitor %i %s flags 0x%x" %
 						   (i, moninfo["Device"], moninfo["Flags"]))
@@ -2566,6 +2569,7 @@ class ProfileLoader(object):
 				else:
 					safe_print("WARNING: Monitor %i has no active display device" %
 							   i)
+			# Get monitor descriptive string
 			display, edid = get_display_name_edid(device, moninfo, i)
 			if debug or verbose > 1:
 				safe_print("Monitor %i active display description:" % i, display)

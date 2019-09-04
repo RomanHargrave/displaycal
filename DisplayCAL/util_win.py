@@ -239,6 +239,21 @@ def get_active_display_device(devicename, devices=None):
 			return device
 
 
+def get_active_display_devices(attrname=None):
+	"""
+	Return active display devices
+	
+	"""
+	devices = []
+	for moninfo in get_real_display_devices_info():
+		device = get_active_display_device(moninfo["Device"])
+		if device:
+			if attrname:
+				device = getattr(device, attrname)
+			devices.append(device)
+	return devices
+
+
 def get_display_device(display_no=0, use_active_display_device=False,
 					   exception_cls=pywintypes.error):
 	# The ordering will work as long as Argyll continues using
