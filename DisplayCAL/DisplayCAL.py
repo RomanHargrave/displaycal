@@ -8284,6 +8284,12 @@ class MainFrame(ReportFrame, BaseFrame):
 				if result == wx.ID_CANCEL:
 					self.worker.patterngenerator.listening = False
 					return
+		elif (not config.is_uncalibratable_display() and
+			  not self.worker.has_lut_access() and
+			  not self.worker._use_patternwindow):
+			show_result_dialog(Error(lang.getstr("lut_access.unsupported")),
+							   self)
+			retval = False
 		return retval
 	
 	def start_measureframe_subprocess(self):

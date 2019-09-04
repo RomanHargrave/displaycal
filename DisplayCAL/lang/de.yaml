@@ -1530,6 +1530,8 @@
   Helligkeit
 "lut_access": |-
   Grafikkarten-Gammatabellen-Zugriff
+"lut_access.unsupported": |-
+  Ihre Grafik-Treiber oder -Hardware unterstützen keine ladbaren Gamma-Tabellen oder Kalibrierung. Eventuell müssen Sie Ihre Geräte-Treiber aktualisieren.
 "macos.bugs.cal.warning": |-
   Anwendungen, die das Apple-Farbverwaltungs-Modul verwenden, wie macOS Vorschau und QuickLook, unterstützen Kalibrierungs-Schwarztonkorrektur nicht.
   Anwendungen, die ihre eigene Farbverwaltung einsetzen, sind davon nicht betroffen (wie Adobe Creative Suite mit Adobe ACE, oder Open Source Grafikanwendungen, die littleCMS verwenden, wie GIMP oder Krita, oder Anwendungen, die 3D LUTs für Farbverwaltung einsetzen).

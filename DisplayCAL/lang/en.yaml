@@ -1530,6 +1530,8 @@
   Luminance
 "lut_access": |-
   Video card gamma table access
+"lut_access.unsupported": |-
+  Your graphics drivers or hardware do not support loadable gamma ramps or calibration. You may need to update your device drivers.
 "macos.bugs.cal.warning": |-
   Applications using the Apple CMM (color management module), like macOS Preview and QuickLook, do not support calibration black point hue correction.
   Applications that use their own color management are not affected (like Adobe Creative Suite using Adobe ACE, or open source graphics applications using littleCMS like GIMP or Krita, or applications employing 3D LUTs for color management).

@@ -1529,6 +1529,8 @@
   Яркость
 "lut_access": |-
   Доступ к таблицам гамма-коррекции видеокарты
+"*lut_access.unsupported": |-
+  Your graphics drivers or hardware do not support loadable gamma ramps or calibration. You may need to update your device drivers.
 "macos.bugs.cal.warning": |-
   Приложения, использующие Apple CMM (модуль управления цветом), такие как macOS Preview и QuickLook, не поддерживают калибровку коррекции оттенка черной точки.
   Это не влияет на приложения, использующие собственное управление цветом (например, Adobe Creative Suite, использующий Adobe ACE, графические приложения с открытым исходным кодом, использующие littleCMS, такие как GIMP или Krita, или приложения, использующие 3D LUT для управления цветом).
