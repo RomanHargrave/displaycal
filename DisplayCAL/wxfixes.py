@@ -20,7 +20,10 @@ except ImportError:
 	pass
 else:
 	if not getattr(sys, "frozen", False) and not "wx" in sys.modules:
-		wxversion.select(["4.0", "3.0", "%i.%i.%i" % wx_minversion[:3]])
+		try:
+			wxversion.select(["4.0", "3.0", "%i.%i.%i" % wx_minversion[:3]])
+		except wxversion.VersionError:
+			pass
 import wx
 if wx.VERSION < wx_minversion:
 	app = wx.GetApp() or wx.App(0)
