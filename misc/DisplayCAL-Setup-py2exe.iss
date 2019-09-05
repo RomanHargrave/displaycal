@@ -100,6 +100,7 @@ Type: filesandordirs; Name: "{commonprograms}\{groupname}"
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\usb_driver"
 Type: dirifempty; Name: "{app}"
+Type: dirifempty; Name: "{commonappdata}\ArgyllCMS"
 Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
 Type: files; Name: "{commonstartup}\%(AppName)s Profile Loader.lnk"
 Type: filesandordirs; Name: "{userprograms}\{groupname}"
