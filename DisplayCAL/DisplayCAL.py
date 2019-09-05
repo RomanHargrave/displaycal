@@ -8286,6 +8286,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					return
 		elif (not config.is_uncalibratable_display() and
 			  not self.worker.has_lut_access() and
+			  not self.worker.has_separate_lut_access() and
 			  not self.worker._use_patternwindow):
 			show_result_dialog(Error(lang.getstr("lut_access.unsupported")),
 							   self)
