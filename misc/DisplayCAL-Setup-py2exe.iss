@@ -78,7 +78,7 @@ Name: "{commonstartup}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-
 Filename: {app}\%(AppName)s.exe; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent;
 MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDisplayCAL}; Tasks: calibrationloadinghandledbydisplaycal; 
 MinVersion: 0,6.0; Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
-MinVersion: 0,6.0; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s.profile_loader import setup_profile_loader_task; setup_profile_loader_task('{app}\%(AppName)s-apply-profiles.exe', '{app}', '{app}')"""; Flags: RunHidden RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal; 
+MinVersion: 0,6.0; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s.util_str import safe_unicode; from %(AppName)s.profile_loader import setup_profile_loader_task; setup_profile_loader_task(safe_unicode(r'{app}\%(AppName)s-apply-profiles.exe'), safe_unicode(r'{app}'), safe_unicode(r'{app}'))"""; Flags: RunHidden RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal; 
 Filename: {app}\%(AppName)s-apply-profiles.exe; Flags: nowait runasoriginaluser; Tasks: calibrationloadinghandledbydisplaycal; 
 MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
 
@@ -92,6 +92,19 @@ Type: files; Name: "{app}\theme\dispcalGUI*.png"
 Type: files; Name: "{app}\theme\icons\dispcalGUI*.ico"
 Type: files; Name: "{app}\theme\icons\16x16\dispcalGUI*.png"
 Type: files; Name: "{app}\theme\icons\32x32\dispcalGUI*.png"
+Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
+Type: files; Name: "{commonstartup}\%(AppName)s Profile Loader.lnk"
+Type: filesandordirs; Name: "{userprograms}\{groupname}"
+Type: filesandordirs; Name: "{commonprograms}\{groupname}"
+
+[UninstallDelete]
+Type: files; Name: "{app}\%(AppName)s*.exe"
+Type: files; Name: "{app}\python*.dll"
+Type: files; Name: "{app}\lib\*.dll"
+Type: files; Name: "{app}\lib\*.pyd"
+Type: dirifempty; Name: "{app}\lib"
+Type: filesandordirs; Name: "{app}\usb_driver"
+Type: dirifempty; Name: "{app}"
 Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
 Type: files; Name: "{commonstartup}\%(AppName)s Profile Loader.lnk"
 Type: filesandordirs; Name: "{userprograms}\{groupname}"
