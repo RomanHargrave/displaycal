@@ -146,7 +146,9 @@ var
 begin
 	if CurUninstallStep=usUninstall then begin
 		if Exec(ExpandConstant('{sys}\taskkill.exe'), '/im %(AppName)s-apply-profiles.exe', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then begin
-			Sleep(2000);
+			if ErrorCode=0 then begin
+				Sleep(2000);
+			end;
 		end;
 	end;
 end;
