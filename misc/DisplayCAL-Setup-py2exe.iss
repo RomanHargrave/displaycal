@@ -98,11 +98,6 @@ Type: filesandordirs; Name: "{userprograms}\{groupname}"
 Type: filesandordirs; Name: "{commonprograms}\{groupname}"
 
 [UninstallDelete]
-Type: files; Name: "{app}\%(AppName)s*.exe"
-Type: files; Name: "{app}\python*.dll"
-Type: files; Name: "{app}\lib\*.dll"
-Type: files; Name: "{app}\lib\*.pyd"
-Type: dirifempty; Name: "{app}\lib"
 Type: filesandordirs; Name: "{app}\usb_driver"
 Type: dirifempty; Name: "{app}"
 Type: files; Name: "{userstartup}\%(AppName)s Profile Loader.lnk"
@@ -111,7 +106,6 @@ Type: filesandordirs; Name: "{userprograms}\{groupname}"
 Type: filesandordirs; Name: "{commonprograms}\{groupname}"
 
 [UninstallRun]
-Filename: taskkill.exe; parameters: /im %(AppName)s-apply-profiles.exe; Flags: RunHidden RunAsCurrentUser;
 Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
 
 [Code]
@@ -142,6 +136,17 @@ begin
 			if not Exec(UninstallString, '/SILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then begin
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 			end;
+		end;
+	end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+	ErrorCode: integer;
+begin
+	if CurUninstallStep=usUninstall then begin
+		if Exec(ExpandConstant('{sys}\taskkill.exe'), '/im %(AppName)s-apply-profiles.exe', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode) then begin
+			Sleep(2000);
 		end;
 	end;
 end;
