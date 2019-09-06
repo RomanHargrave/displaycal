@@ -5,6 +5,16 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Wed Aug 14 13:10:11 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.8.5:
+  * [Moderate] DisplayCAL 3.8.4 broke video levels (16..235) output
+    encoding/decoding for video card gamma table tags (profiles
+    using calibration with video output levels created by 3.8.4 can
+    be fixed by re-creating via menu “File”, “Create profile from
+    measurement data...” and selecting the existing profile).
+
+-------------------------------------------------------------------
 Sat Aug 10 21:21:54 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.8.4:

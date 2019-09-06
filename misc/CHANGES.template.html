@@ -50,12 +50,32 @@
 
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> If the graphics drivers or hardware do not support loadable gamma ramps or calibration, show a more descriptive error message.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Increase the timeout for display &amp; instrument detection during application startup from 10 to 20 seconds, to allow for slow opening of legacy serial ports.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Windows 10 1903: Always do instrument detection during application startup if more than one instrument was connected the last time the application was used, as the list of instruments is not guaranteed to be consistent between sessions under 1903.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): Apply smoothing to calibration if the quantization bitdepth is set to 8.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): No longer require running elevated to be able to detect changes in the display configuration under Windows 10 1903.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Do not attempt to access properties of non-existent objects if a subprocess is not succesfully terminated after reaching a timeout during display &amp; instrument detection at application startup (unexpected failure).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Disable the profile installation button if no displays have been detected.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Disable the measurement report menu item if no instruments have been detected.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows): Work around Windows 10 1903 handle leaks in Windows Color System APIs.</li>
+						</ul>
+
+						<p id="changelog-3.8.5">2019-08-14 13:06 (UTC) 3.8.5 </p>
+						<h3>DisplayCAL 3.8.5 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Use <code>caffeinate</code> to prevent display sleep and screensaver.</li>
 						</ul>
 
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> ${APPNAME} 3.8.4 broke video levels (16..235) output encoding/decoding for video card gamma table tags (profiles using calibration with video output levels created by 3.8.4 can be fixed by re-creating via menu “File”, “Create profile from measurement data...” and selecting the existing profile).</li>
+							<li><span class="changelog-label moderate"><span>[</span>Moderate<span>]</span></span> DisplayCAL 3.8.4 broke video levels (16..235) output encoding/decoding for video card gamma table tags (profiles using calibration with video output levels created by 3.8.4 can be fixed by re-creating via menu “File”, “Create profile from measurement data...” and selecting the existing profile).</li>
 						</ul>
 
 						<p id="changelog-3.8.4">2019-08-10 21:17 (UTC) 3.8.4 </p>
