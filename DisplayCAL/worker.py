@@ -10630,7 +10630,11 @@ usage: spotread [-options] [logfile]
 			# Preliminary Wayland support. This still needs a lot
 			# of work as Argyll doesn't support Wayland natively yet,
 			# so we use virtual display to drive our own patch window.
+			self._patterngenerator_wait = True
 			wx.CallAfter(self.owner.measureframe.show_rgb, rgb)
+			# Wait for call to return
+			while self._patterngenerator_wait and not self.subprocess_abort:
+				sleep(0.001)
 		else:
 			try:
 				self.patterngenerator.send(rgb, bgrgb, x=x, y=y, w=w, h=h)

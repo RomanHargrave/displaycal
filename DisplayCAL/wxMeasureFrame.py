@@ -4,6 +4,7 @@ import math
 import os
 import re
 import sys
+import time
 import warnings
 
 import config
@@ -600,6 +601,9 @@ class MeasureFrame(InvincibleFrame):
 			floorbytes = tuple(chr(v) for v in floor)
 			ceilbytes = tuple(chr(v) for v in ceil)
 			n = 0
+			# XXX: Generating the dithered image can take nontrivial amounts
+			# of time if the image is large
+			ts = time.time()
 			for i, byte in enumerate(buf):
 				m = intervals[i % 3]
 				if m and n % m < 1:
@@ -609,6 +613,7 @@ class MeasureFrame(InvincibleFrame):
 				buf[i] = color[i % 3]
 				if i % 3 == 2:
 					n += 1
+			safe_print("Generating dithered image took %.3fs" % (time.time() - ts))
 			bmp = img.ConvertToBitmap()
 		else:
 			# Exact
@@ -616,6 +621,8 @@ class MeasureFrame(InvincibleFrame):
 			bmp = wx.EmptyBitmapRGBA(*tuple(self.ClientSize) + floor, alpha=255)
 		self.panel.SetBitmap(bmp)
 		self.panel.Refresh()
+		if self.Parent:
+			self.Parent.worker._patterngenerator_wait = False
 
 	def get_dimensions(self):
 		"""
