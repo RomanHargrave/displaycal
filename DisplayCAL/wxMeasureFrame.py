@@ -584,7 +584,13 @@ class MeasureFrame(InvincibleFrame):
 		self.panel.Thaw()
 
 	def show_rgb(self, rgb):
-		rgb = tuple(v * 255 for v in rgb)
+		if getcfg("patterngenerator.use_video_levels"):
+			minv = 16
+			maxv = 235
+		else:
+			minv = 0
+			maxv = 255
+		rgb = tuple(minv + v * (maxv - minv) for v in rgb)
 		floor = tuple(int(math.floor(v)) for v in rgb)
 		ceil = tuple(int(math.ceil(v)) for v in rgb)
 		if floor != ceil:

@@ -2036,7 +2036,9 @@ class Worker(WorkerBase):
 	def add_video_levels_arg(self, args):
 		if (config.get_display_name() != "madVR" and
 			getcfg("patterngenerator.use_video_levels") and
-			self.argyll_version >= [1, 6]):
+			self.argyll_version >= [1, 6] and
+			not self._use_patternwindow):
+			# For virtual display, -E is invalid
 			args.append("-E")
 	
 	def authenticate(self, cmd, title=appname, parent=None):
