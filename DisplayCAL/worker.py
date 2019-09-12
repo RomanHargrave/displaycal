@@ -2034,11 +2034,11 @@ class Worker(WorkerBase):
 		return True
 
 	def add_video_levels_arg(self, args):
-		if (config.get_display_name() != "madVR" and
+		if (config.get_display_name() not in ("madVR", "Resolve", "Prisma") and
 			getcfg("patterngenerator.use_video_levels") and
 			self.argyll_version >= [1, 6] and
-			not self._use_patternwindow):
-			# For virtual display, -E is invalid
+			self.get_display() != self.argyll_virtual_display):
+			# For madVR and dummy display, -E is invalid
 			args.append("-E")
 	
 	def authenticate(self, cmd, title=appname, parent=None):
@@ -7050,7 +7050,7 @@ while 1:
 										  query=query)
 
 	def get_display(self):
-		""" Get the currently configured display number.
+		""" Get the currently configured display.
 		
 		Returned is the Argyll CMS dispcal/dispread -d argument
 		
