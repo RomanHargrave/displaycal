@@ -119,6 +119,14 @@ class LogonTrigger(_Trigger):
 	pass
 
 
+class ResumeFromSleepTrigger(_Trigger):
+
+	def __init__(self, *args, **kwargs):
+		_Trigger.__init__(self, *args, **kwargs)
+		self["subscription"] = """&lt;QueryList&gt;&lt;Query Id="0" Path="System"&gt;&lt;Select Path="System"&gt;*[System[Provider[@Name='Microsoft-Windows-Power-Troubleshooter'] and (Level=4 or Level=0) and (EventID=1)]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;"""
+		self["cls_name"] = "EventTrigger"
+
+
 class ExecAction(_Dict2XML):
 
 	def __init__(self, cmd, args=None):
