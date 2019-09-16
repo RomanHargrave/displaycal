@@ -224,6 +224,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 						for filename in filenames:
 							logfile = os.path.join(logdir, filename + ".log")
 							if not os.path.isfile(logfile):
+								mtimes[0] = filename
 								continue
 							try:
 								logstat = os.stat(logfile)
