@@ -102,9 +102,14 @@ class _Trigger(_Dict2XML):
 
 	# Subclass this
 
-	def __init__(self, enabled=True):
+	def __init__(self, interval=None, duration=None, stop_at_duration_end=False,
+				 enabled=True):
+		repetition = interval and _Dict2XML(interval=interval,
+											duration=duration,
+											stop_at_duration_end=stop_at_duration_end,
+											cls_name="Repetition") or ""
 		kwargs = locals()
-		for key in ("self",):
+		for key in ("self", "interval", "duration", "stop_at_duration_end"):
 			del kwargs[key]
 		_Dict2XML.__init__(self, kwargs.iteritems())
 
