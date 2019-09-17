@@ -108,10 +108,27 @@ class _Trigger(_Dict2XML):
 											duration=duration,
 											stop_at_duration_end=stop_at_duration_end,
 											cls_name="Repetition") or ""
-		kwargs = locals()
-		for key in ("self", "interval", "duration", "stop_at_duration_end"):
-			del kwargs[key]
-		_Dict2XML.__init__(self, kwargs.iteritems())
+		_Dict2XML.__init__(self, repetition=repetition, enabled=enabled)
+
+
+class CalendarTrigger(_Trigger):
+
+	def __init__(self, start_boundary="2019-09-17T00:00:00", days_interval=1,
+				 weeks_interval=0, days_of_week=None, months=None,
+				 days_of_month=None, **kwargs):
+		_Trigger.__init__(self, **kwargs)
+		self["start_boundary"] = start_boundary
+		self["schedule_by_day"] = days_interval and _Dict2XML(days_interval=days_interval,
+															  cls_name="ScheduleByDay") or ""
+		self["schedule_by_week"] = weeks_interval and _Dict2XML(days_of_week=_Dict2XML(items=days_of_week,
+																					   cls_name="DaysOfWeek"),
+																weeks_interval=weeks_interval,
+																cls_name="ScheduleByWeek") or ""
+		self["schedule_by_month"] = months and _Dict2XML(days_of_month=_Dict2XML(items=days_of_month,
+																				 cls_name="DaysOfMonth"),
+														 months=_Dict2XML(items=months,
+																		  cls_name="Months"),
+														 cls_name="ScheduleByMonth") or ""
 
 
 class LogonTrigger(_Trigger):
