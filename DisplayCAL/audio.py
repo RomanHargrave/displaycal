@@ -295,6 +295,7 @@ class _Sound(object):
 		if _initialized and not isinstance(_initialized, Exception):
 			if not self._lib and _lib:
 				self._lib = _lib
+				self._lib_version = _lib_version
 			if not self._snd and self._filename:
 				if self._lib == "pyo":
 					self._snd = pyo.SfPlayer(safe_str(self._filename),
@@ -410,6 +411,8 @@ class _Sound(object):
 				if stop_already_playing:
 					self._ch.delete()
 				self._ch = pyglet.media.Player()
+				if self._lib_version >= "1.4.0":
+					self._ch.loop = self._loop
 				self.volume = volume
 			if not self.is_playing and fade_ms and volume == 1:
 				self.volume = 0
@@ -417,7 +420,7 @@ class _Sound(object):
 			if self._lib == "pyo":
 				self._snd.out()
 			elif self._lib == "pyglet":
-				if self._loop:
+				if self._loop and self._lib_version < "1.4.0":
 					snd = pyglet.media.SourceGroup(self._snd.audio_format,
 												   self._snd.video_format)
 					snd.loop = True
