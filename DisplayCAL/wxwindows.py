@@ -2295,6 +2295,7 @@ class BaseInteractiveDialog(wx.Dialog):
 											  self.Id)
 			event.SetInt(id)
 			self.ProcessEvent(event)
+			self.Hide()
 
 	def Show(self, show=True):
 		if show:
