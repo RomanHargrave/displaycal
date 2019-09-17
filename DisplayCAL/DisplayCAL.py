@@ -9388,7 +9388,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if self.lut3d_path and os.path.isfile(self.lut3d_path):
 					# 3D LUT file already exists
 					if install_3dlut_api:
-						filename = self.setup_patterngenerator(self.modaldlg,
+						filename = self.setup_patterngenerator(self,
 															   lang.getstr("3dlut.install"),
 															   True)
 						if not filename:
@@ -9408,11 +9408,11 @@ class MainFrame(ReportFrame, BaseFrame):
 				if getcfg("profile.install_scope") in ("l", "n"):
 					result = self.worker.authenticate("dispwin",
 													  lang.getstr("profile.install"),
-													  self.modaldlg)
+													  self)
 					if result not in (True, None):
 						if isinstance(result, Exception):
-							show_result_dialog(result, parent=self.modaldlg)
-						self.modaldlg.Raise()
+							show_result_dialog(result, parent=self)
+						self.profile_finish_close_handler(self.modaldlg.ShowWindowModalBlocking())
 						return
 				producer = self.worker.install_profile
 				wargs = ()
@@ -9425,15 +9425,15 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.worker.interactive = False
 				self.worker.start(self.profile_finish_consumer,
 								  producer, wargs=wargs, wkwargs=wkwargs,
-								  parent=self.modaldlg,
+								  parent=self,
 								  progress_msg=progress_msg,
 								  stop_timers=False, fancy=False)
 	
 	def profile_finish_consumer(self, result=None):
 		if isinstance(result, Exception):
-			show_result_dialog(result, parent=self.modaldlg)
+			show_result_dialog(result, parent=self)
 			if not getcfg("dry_run") and not isinstance(result, (Info, Warning)):
-				self.modaldlg.Raise()
+				self.profile_finish_close_handler(self.modaldlg.ShowWindowModalBlocking())
 				return
 		elif result:
 			# Check all profile install methods
@@ -9456,7 +9456,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				msg = lang.getstr("profile.install.error")
 				icon = "dialog-error"
-			dlg = InfoDialog(self.modaldlg, msg=msg, ok=lang.getstr("ok"), 
+			dlg = InfoDialog(self, msg=msg, ok=lang.getstr("ok"), 
 							 bitmap=geticon(32, icon), show=False)
 			if not allgood and linux:
 				sizer = wx.FlexGridSizer(0, 2, 8, 8)
@@ -9484,7 +9484,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			dlg.ShowModalThenDestroy(self.modaldlg)
+			dlg.ShowModalThenDestroy(self)
 		# Unbind automatic lowering
 		self.Unbind(wx.EVT_ACTIVATE)
 		self.Raise()
