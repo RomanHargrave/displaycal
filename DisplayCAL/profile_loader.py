@@ -131,18 +131,25 @@ if sys.platform == "win32":
 						cmd = os.path.join(pydir,
 										   appname +
 										   "-apply-profiles-launcher.exe")
+					# Start at login, restart when resuming from sleep,
+					# restart daily at 04:00
+					triggers = [taskscheduler.LogonTrigger(),
+								taskscheduler.ResumeFromSleepTrigger(),
+								taskscheduler.CalendarTrigger(start_boundary=time.strftime("%Y-%m-%dT04:00:00"),
+															  days_interval=1)]
+					actions = [taskscheduler.ExecAction(cmd, loader_args)]
 					try:
 						# Create the task
-						created = ts.create_logon_task(taskname,
-											 cmd,
-											 loader_args,
+						created = ts.create_task(taskname,
 											 u"Open Source Developer, "
 											 u"Florian Höch",
 											 "This task launches the profile "
 											 "loader with the applicable "
 											 "privileges for logged in users",
-											 multiple_instances=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
-											 replace_existing=True)
+											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
+											 replace_existing=True,
+											 triggers=triggers,
+											 actions=actions)
 					except Exception, exception:
 						if debug:
 							exception = traceback.format_exc()
