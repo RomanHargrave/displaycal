@@ -71,6 +71,11 @@ def init(lib=None, samplerate=22050, channels=2, buffersize=2048, reinit=False):
 				pass
 		raise exception
 	elif lib == "pyglet":
+		if not getattr(sys, "frozen", False):
+			# Use included pyglet
+			lib_dir = os.path.join(os.path.dirname(__file__), "lib")
+			if not lib_dir in sys.path:
+				sys.path.insert(0, lib_dir)
 		try:
 			import pyglet
 			version = []
