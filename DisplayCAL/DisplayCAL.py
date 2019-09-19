@@ -9778,8 +9778,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		auto = self.output_levels_auto.GetValue()
 		setcfg("patterngenerator.detect_video_levels", int(auto))
 		use_video_levels = self.output_levels_limited_range.GetValue()
-		if not auto:
-			setcfg("patterngenerator.use_video_levels", int(use_video_levels))
+		setcfg("patterngenerator.use_video_levels", int(use_video_levels))
 		self.update_use_video_lut()
 
 	def init_lut_viewer(self, event=None, profile=None, show=None):
