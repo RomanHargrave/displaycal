@@ -4230,6 +4230,19 @@ class MainFrame(ReportFrame, BaseFrame):
 			else:
 				self.trc_ctrl.SetSelection(7)  # Custom
 
+	def update_use_video_lut(self):
+		# Check if the selected display is a pattern generator. If so,
+		# don't use videoLUT for calibration. Restore previous value
+		# when switching back to a display with videoLUT access.
+		is_patterngenerator = config.is_patterngenerator()
+		setcfg_cond(is_patterngenerator, "calibration.use_video_lut", 0)
+		if not is_patterngenerator and sys.platform == "darwin":
+			# macOS video levels encoding seems to only work right on
+			# some machines if not using videoLUT to do the scaling
+			setcfg_cond(getcfg("patterngenerator.use_video_levels"),
+						"calibration.use_video_lut", 0)
+			self.menuitem_do_not_use_video_lut.Check(not bool(getcfg("calibration.use_video_lut")))
+
 	def show_trc_controls(self, freeze=False):
 		show_advanced_options = bool(getcfg("show_advanced_options"))
 		if freeze:
@@ -9767,11 +9780,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		use_video_levels = self.output_levels_limited_range.GetValue()
 		if not auto:
 			setcfg("patterngenerator.use_video_levels", int(use_video_levels))
-		if not config.is_patterngenerator() and sys.platform == "darwin":
-			# macOS video levels encoding seems to only work right on
-			# some machines if not using videoLUT to do the scaling
-			setcfg_cond(use_video_levels, "calibration.use_video_lut", 0)
-			self.menuitem_do_not_use_video_lut.Check(not bool(getcfg("calibration.use_video_lut")))
+		self.update_use_video_lut()
 
 	def init_lut_viewer(self, event=None, profile=None, show=None):
 		if debug:
@@ -12170,10 +12179,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.lut_viewer_load_lut(profile=profile)
 			if debug:
 				safe_print("[D] display_ctrl_handler -> lut_viewer_load_lut END")
-		# Check if the selected display is a pattern generator. If so,
-		# don't use videoLUT for calibration. Restore previous value
-		# when switching back to a display with videoLUT access.
-		setcfg_cond(config.is_patterngenerator(), "calibration.use_video_lut", 0)
+		self.update_use_video_lut()
 		# Special case: Resolve. Needs a minimum display update delay of
 		# atleast 600 ms for repeatable measurements. This is a Resolve
 		# issue. There seem to be quite a few bugs that were introduced in
