@@ -78,6 +78,7 @@ Name: "{commonstartup}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-
 Filename: {app}\%(AppName)s.exe; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent;
 MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDisplayCAL}; Tasks: calibrationloadinghandledbydisplaycal; 
 MinVersion: 0,6.0; Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
+MinVersion: 0,6.0; Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher - Daily Restart"" /F"; Flags: RunHidden RunAsCurrentUser;
 MinVersion: 0,6.0; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s.util_str import safe_unicode; from %(AppName)s.profile_loader import setup_profile_loader_task; setup_profile_loader_task(safe_unicode(r'{app}\%(AppName)s-apply-profiles.exe'), safe_unicode(r'{app}'), safe_unicode(r'{app}'))"""; Flags: RunHidden RunAsCurrentUser; Tasks: calibrationloadinghandledbydisplaycal; 
 Filename: {app}\%(AppName)s-apply-profiles.exe; Flags: nowait runasoriginaluser; Tasks: calibrationloadinghandledbydisplaycal; 
 MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
@@ -107,7 +108,8 @@ Type: filesandordirs; Name: "{userprograms}\{groupname}"
 Type: filesandordirs; Name: "{commonprograms}\{groupname}"
 
 [UninstallRun]
-Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
+MinVersion: 0,6.0; Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher"" /F"; Flags: RunHidden RunAsCurrentUser;
+MinVersion: 0,6.0; Filename: schtasks.exe; parameters: "/Delete /TN ""%(AppName)s Profile Loader Launcher - Daily Restart"" /F"; Flags: RunHidden RunAsCurrentUser;
 
 [Code]
 function Get_RunEntryShellExec_Message(Value: string): string;

@@ -134,12 +134,12 @@ if sys.platform == "win32":
 					# Start at login, restart when resuming from sleep,
 					# restart daily at 04:00
 					triggers = [taskscheduler.LogonTrigger(),
-								taskscheduler.ResumeFromSleepTrigger(),
-								taskscheduler.CalendarTrigger(start_boundary=time.strftime("%Y-%m-%dT04:00:00"),
-															  days_interval=1)]
+								taskscheduler.ResumeFromSleepTrigger()]
+					daily = taskscheduler.CalendarTrigger(start_boundary=time.strftime("%Y-%m-%dT04:00:00"),
+														  days_interval=1)
 					actions = [taskscheduler.ExecAction(cmd, loader_args)]
 					try:
-						# Create the task
+						# Create the main task
 						created = ts.create_task(taskname,
 											 u"Open Source Developer, "
 											 u"Florian Höch",
@@ -149,6 +149,17 @@ if sys.platform == "win32":
 											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
 											 replace_existing=True,
 											 triggers=triggers,
+											 actions=actions)
+						# Create the supplementary task
+						created = ts.create_task(taskname + " - Daily Restart",
+											 u"Open Source Developer, "
+											 u"Florian Höch",
+											 "This task restarts the profile "
+											 "loader with the applicable "
+											 "privileges for logged in users",
+											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
+											 replace_existing=True,
+											 triggers=[daily],
 											 actions=actions)
 					except Exception, exception:
 						if debug:
