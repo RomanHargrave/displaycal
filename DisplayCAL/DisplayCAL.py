@@ -4699,8 +4699,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	def update_adjustment_controls(self):
 		update_cal = getcfg("calibration.update")
 		auto = self.get_measurement_mode() == "auto"
-		do_cal = bool(getcfg("calibration.interactive_display_adjustment",
-							 False) or getcfg("trc"))
+		do_cal = bool(getcfg("calibration.interactive_display_adjustment") or
+					  getcfg("trc"))
 		enable = (not update_cal and not auto and do_cal)
 		for option in ("whitepoint.colortemp", "whitepoint.x",
 					   "whitepoint.y", "calibration.luminance",
@@ -9961,7 +9961,7 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def show_observer_ctrl(self):
 		self.panel.Freeze()
-		show = bool((getcfg("calibration.interactive_display_adjustment", False) or
+		show = bool((getcfg("calibration.interactive_display_adjustment") or
 					 getcfg("trc")) and
 					getcfg("show_advanced_options") and
 					self.worker.instrument_can_use_nondefault_observer())
