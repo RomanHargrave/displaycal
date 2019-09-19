@@ -64,7 +64,7 @@ from config import (appbasename, autostart, autostart_home, build,
 					get_total_patches,
 					get_verified_path, hascfg, is_ccxx_testchart, is_profile,
 					initcfg, isapp, isexe, profile_ext,
-					pydir, resfiles, setcfg,
+					pydir, resfiles, setcfg, setcfg_cond,
 					writecfg)
 
 # Custom modules
@@ -4883,19 +4883,11 @@ class MainFrame(ReportFrame, BaseFrame):
 						   ICCP.CurveType)):
 				tf = lut3d_input_profile.tags.rTRC.get_transfer_function(outoffset=1.0)
 				# Set gamma to profile gamma if single gamma profile
-				if tf[0][0].startswith("Gamma"):
-					if not getcfg("3dlut.trc_gamma.backup", False):
-						# Backup current gamma
-						setcfg("3dlut.trc_gamma.backup",
-							   getcfg("3dlut.trc_gamma"))
-					setcfg("3dlut.trc_gamma",
-						   round(tf[0][1], 2))
+				# Backup current gamma
 				# Restore previous gamma if not single gamma
 				# profile
-				elif getcfg("3dlut.trc_gamma.backup", False):
-					setcfg("3dlut.trc_gamma",
-						   getcfg("3dlut.trc_gamma.backup"))
-					setcfg("3dlut.trc_gamma.backup", None)
+				setcfg_cond(tf[0][0].startswith("Gamma"), "3dlut.trc_gamma",
+							round(tf[0][1], 2), True)
 				self.lut3d_update_trc_controls()
 				self.lut3d_show_trc_controls()
 			if getattr(self, "lut3dframe", None):
@@ -9772,9 +9764,14 @@ class MainFrame(ReportFrame, BaseFrame):
 	def output_levels_handler(self, event):
 		auto = self.output_levels_auto.GetValue()
 		setcfg("patterngenerator.detect_video_levels", int(auto))
+		use_video_levels = self.output_levels_limited_range.GetValue()
 		if not auto:
-			setcfg("patterngenerator.use_video_levels",
-				   int(self.output_levels_limited_range.GetValue()))
+			setcfg("patterngenerator.use_video_levels", int(use_video_levels))
+		if not config.is_patterngenerator() and sys.platform == "darwin":
+			# macOS video levels encoding seems to only work right on
+			# some machines if not using videoLUT to do the scaling
+			setcfg_cond(use_video_levels, "calibration.use_video_lut", 0)
+			self.menuitem_do_not_use_video_lut.Check(not bool(getcfg("calibration.use_video_lut")))
 
 	def init_lut_viewer(self, event=None, profile=None, show=None):
 		if debug:
@@ -12176,47 +12173,21 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Check if the selected display is a pattern generator. If so,
 		# don't use videoLUT for calibration. Restore previous value
 		# when switching back to a display with videoLUT access.
-		if config.is_patterngenerator():
-			if getcfg("calibration.use_video_lut.backup", False) is None:
-				setcfg("calibration.use_video_lut.backup",
-					   getcfg("calibration.use_video_lut"))
-				setcfg("calibration.use_video_lut", 0)
-		elif getcfg("calibration.use_video_lut.backup", False) is not None:
-			setcfg("calibration.use_video_lut",
-				   getcfg("calibration.use_video_lut.backup"))
-			setcfg("calibration.use_video_lut.backup", None)
-		update_delay_ctrls = False
-		if config.get_display_name() == "Resolve":
-			# Special case: Resolve. Needs a minimum display update delay of
-			# atleast 600 ms for repeatable measurements. This is a Resolve
-			# issue. There seem to be quite a few bugs that were introduced in
-			# Resolve via the version 10.1.x to 11.x transition.
-			if getcfg("measure.min_display_update_delay_ms.backup", False) is None:
-				setcfg("measure.override_min_display_update_delay_ms.backup",
-					   getcfg("measure.override_min_display_update_delay_ms"))
-				setcfg("measure.min_display_update_delay_ms.backup",
-					   getcfg("measure.min_display_update_delay_ms"))
-				setcfg("measure.override_min_display_update_delay_ms", 1)
-				setcfg("measure.min_display_update_delay_ms", 1000)
-				update_delay_ctrls = True
-		elif getcfg("measure.min_display_update_delay_ms.backup", False) is not None:
-			setcfg("measure.override_min_display_update_delay_ms",
-				   getcfg("measure.override_min_display_update_delay_ms.backup"))
-			setcfg("measure.min_display_update_delay_ms",
-				   getcfg("measure.min_display_update_delay_ms.backup"))
-			setcfg("measure.override_min_display_update_delay_ms.backup", None)
-			setcfg("measure.min_display_update_delay_ms.backup", None)
-			update_delay_ctrls = True
-		if (config.is_virtual_display() or
-			config.get_display_name() == "SII REPEATER"):
-			# Enable 3D LUT tab for madVR, Resolve & eeColor
-			if getcfg("3dlut.tab.enable.backup", False) is None:
-				setcfg("3dlut.tab.enable.backup", getcfg("3dlut.tab.enable"))
-			setcfg("3dlut.tab.enable", 1)
-		elif (getcfg("3dlut.tab.enable.backup", False) is not None and
-			  not getcfg("3dlut.create")):
-			setcfg("3dlut.tab.enable", getcfg("3dlut.tab.enable.backup"))
-			setcfg("3dlut.tab.enable.backup", None)
+		setcfg_cond(config.is_patterngenerator(), "calibration.use_video_lut", 0)
+		# Special case: Resolve. Needs a minimum display update delay of
+		# atleast 600 ms for repeatable measurements. This is a Resolve
+		# issue. There seem to be quite a few bugs that were introduced in
+		# Resolve via the version 10.1.x to 11.x transition.
+		is_resolve = config.get_display_name() == "Resolve"
+		update_delay_ctrls = setcfg_cond(is_resolve,
+										 "measure.min_display_update_delay_ms",
+										 1000)
+		setcfg_cond(is_resolve,
+					"measure.override_min_display_update_delay_ms", 1)
+		# Enable 3D LUT tab for virtual displays & eeColor
+		enable_3dlut_tab = (config.is_virtual_display() or
+							config.get_display_name() == "SII REPEATER")
+		setcfg_cond(enable_3dlut_tab, "3dlut.tab.enable", 1)
 		if update_delay_ctrls:
 			override = bool(getcfg("measure.override_min_display_update_delay_ms"))
 			getattr(self,

@@ -78,7 +78,7 @@ from config import (autostart, autostart_home, script_ext, defaults, enc, exe,
 					exedir, exe_ext, fs_enc, getcfg, geticon, get_data_path,
 					get_total_patches, get_verified_path, isapp, isexe,
 					is_ccxx_testchart, logdir, profile_ext, pydir, setcfg,
-					split_display_name, writecfg, appbasename)
+					setcfg_cond, split_display_name, writecfg, appbasename)
 from debughelpers import (Error, DownloadError, Info, UnloggedError,
 						  UnloggedInfo, UnloggedWarning, UntracedError, Warn,
 						  handle_error)
@@ -2687,6 +2687,10 @@ END_DATA
 				self.log("Detected limited range output levels")
 			else:
 				self.log("Assuming full range output levels")
+			if not config.is_patterngenerator() and sys.platform == "darwin":
+				# macOS video levels encoding seems to only work right on
+				# some machines if not using videoLUT to do the scaling
+				setcfg_cond(assume_video_levels, "calibration.use_video_lut", 0)
 			self._detected_output_levels = True
 		else:
 			return Error(lang.getstr("error.testchart.missing_fields",
@@ -11274,10 +11278,14 @@ usage: spotread [-options] [logfile]
 			if (self.argyll_version >= [1, 3, 3] and
 				(not self.has_lut_access() or
 				 not getcfg("calibration.use_video_lut")) and
+				# Only use -K if we don't use -d n,m (Linux X11)
 				len(get_arg("-d", args)[1].split(",")) == 1):
-				# Only use -K if we don't use -d n,m
+				# Apply calibration to test values directly instead of via
+				# videoLUT
 				args.append("-K")
 			else:
+				# Apply calibration via videoLUT (in special case of madVR,
+				# always applied to test values directly instead)
 				args.append("-k")
 			args.append(cal)
 		if self.get_instrument_features().get("spectral"):

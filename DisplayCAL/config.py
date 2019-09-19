@@ -1885,6 +1885,33 @@ def setcfg(name, value, cfg=cfg):
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
+def setcfg_cond(condition, name, value, set_if_backup_exists=False):
+	"""
+	If <condition>, backup configuration option <name> if not yet backed up
+	and set option to <value> if backup did not previously exist or
+	set_if_backup_exists evaluates to True
+	
+	If not <condition> and backed up option <name>, restore option <name> to
+	backed up value and discard backup
+	
+	Return whether or not configuration was changed
+
+	"""
+	changed = False
+	backup = getcfg(name + ".backup", False)
+	if condition:
+		if backup is None:
+			setcfg(name + ".backup", getcfg(name))
+		if backup is None or set_if_backup_exists:
+			setcfg(name, value)
+			changed = True
+	elif backup is not None:
+		setcfg(name, getcfg(name + ".backup"))
+		setcfg(name + ".backup", None)
+		changed = True
+	return changed
+
+
 def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 	"""
 	Write configuration file.
