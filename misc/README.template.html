@@ -298,7 +298,7 @@
 			WITHOUT ANY WARRANTY; without even the implied warranty of 
 			MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the <a href="LICENSE.txt">GNU General Public License</a> for more details.</p>
 
-			<p>${APPNAME} is written in <a href="https://python.org/">Python</a> and uses the 3rd-party packages <a href="https://www.numpy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (<abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit), <a href="https://pypi.org/project/PyGObject/">PyGObject</a> or <a href="https://pypi.org/project/dbus-python/">dbus-python</a> for Linux (required for Wayland support with colord), as well as <a href="https://pypi.org/project/pywin32/">Python extensions for Windows</a>, <a href="https://pypi.org/project/comtypes/">comtypes</a> and the <a href="https://pypi.org/project/WMI/">Python WMI module</a> to provide Windows-specific functionality. Other minor dependencies include <a href="https://pypi.org/project/faulthandler/">faulthandler</a>, <a href="https://pypi.org/project/psutil/">psutil</a>, <a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> and <a href="https://pypi.org/project/pyglet/">pyglet</a> (macOS/Windows) or libSDL2 (Linux). It makes extensive use of and depends on functionality provided by <a href="https://www.argyllcms.com/">ArgyllCMS</a>. The build system to create standalone executables additionally uses <a href="https://pypi.org/project/py2app/">py2app</a> on Mac OS X or <a href="https://pypi.org/project/py2exe/">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
+			<p>${APPNAME} is written in <a href="https://python.org/">Python</a> and uses the 3rd-party packages <a href="https://www.numpy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (<abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit), <a href="https://pypi.org/project/certifi/">Certifi</a>, <a href="https://pypi.org/project/PyGObject/">PyGObject</a> or <a href="https://pypi.org/project/dbus-python/">dbus-python</a> for Linux (required for Wayland support with colord), as well as <a href="https://pypi.org/project/pywin32/">Python extensions for Windows</a>, <a href="https://pypi.org/project/comtypes/">comtypes</a> and the <a href="https://pypi.org/project/WMI/">Python WMI module</a> to provide Windows-specific functionality. Other minor dependencies include <a href="https://pypi.org/project/faulthandler/">faulthandler</a>, <a href="https://pypi.org/project/psutil/">psutil</a>, <a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> and <a href="https://pypi.org/project/pyglet/">pyglet</a> (macOS/Windows) or libSDL2 (Linux). It makes extensive use of and depends on functionality provided by <a href="https://www.argyllcms.com/">ArgyllCMS</a>. The build system to create standalone executables additionally uses <a href="https://pypi.org/project/py2app/">py2app</a> on Mac OS X or <a href="https://pypi.org/project/py2exe/">py2exe</a> on Windows. All of these software packages are © by their respective authors.</p>
 		</div>
 
 		<div id="download">
@@ -578,12 +578,28 @@
 							<li><a href="https://python.org/">Python</a> &gt;= v2.6 &lt;= v2.7.x (2.7.x is the recommended version. Mac OS X users: If you want to compile ${APPNAME}'s C extension module, it is advisable to <strong>first</strong> install XCode and <strong>then</strong> the official python.org Python)</li>
 							<li><a href="https://www.numpy.org/">NumPy</a></li>
 							<li><a href="https://wxpython.org/">wxPython</a> <abbr title="Graphical User Interface">GUI<sup><a href="#definition_GUI">[4]</a></sup></abbr> toolkit</li>
+							<li><a href="https://pypi.org/project/certifi/">Certifi</a></li>
+							<li><a href="https://pypi.org/project/psutil/">psutil</a> (optional but recommended)</li>
+							<li><a href="https://pypi.org/project/faulthandler/">faulthandler</a> (optional)</li>
+							<li><a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> (if you want to use a Chromecast device)</li>
+						</ul>
+
+						<h4>Linux:</h4>
+						<ul>
+							<li><a href="https://pypi.org/project/PyGObject/">PyGObject</a></li>
 						</ul>
 
 						<h4>Windows:</h4>
 						<ul>
 							<li><a href="https://pypi.org/project/pywin32/">pywin32</a></li>
 							<li><a href="https://pypi.org/project/WMI/">WMI</a></li>
+							<li><a href="https://pypi.org/project/comtypes/">comtypes</a></li>
+							<li><a href="https://pypi.org/project/pyglet/">pyglet</a></li>
+						</ul>
+
+						<h4>macOS:</h4>
+						<ul>
+							<li><a href="https://pypi.org/project/pyglet/">pyglet</a></li>
 						</ul>
 					</div>
 				</div>

@@ -50,6 +50,23 @@
 
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Automatically enable not using the video card gamma table to apply calibration during characterization measurements if using limited range (16..235). This should mitigate issues with older graphics chipsets and/or macOS versions that use the wrong output range internally when connected to some monitors that expect to receive limited range signals.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): A scheduled task now restarts the profile loader after resume from standby/hibernation as well as daily at 04:00 AM (whichever comes first), to mitigate the Windows GDI SetDeviceGammaRamp API leaking memory since Windows 10 1903.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Don't automatically disable interactive display adjustment when setting calibration tone curve to “As measured” (unintended behavioral change introduced in ${APPNAME} 3.8.6, SVN revision r6194).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux (GNOME on Wayland): Latency incurred by a large measurement window size was not accounted for, introducing the possibility of measurements failing due to loss of synchronization.</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux (GNOME on Wayland): Limited range (16..235) support.</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> macOS: Get rid of brief profile installation dialog flicker after installation.</li>
+						</ul>
+
+						<p id="changelog-3.8.6">2019-09-06 10:23 (UTC) 3.8.6 </p>
+						<h3>DisplayCAL 3.8.6 </h3>
+
+						<h4>Changed in this release:</h4>
+						<ul>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> If the graphics drivers or hardware do not support loadable gamma ramps or calibration, show a more descriptive error message.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Increase the timeout for display &amp; instrument detection during application startup from 10 to 20 seconds, to allow for slow opening of legacy serial ports.</li>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Windows 10 1903: Always do instrument detection during application startup if more than one instrument was connected the last time the application was used, as the list of instruments is not guaranteed to be consistent between sessions under 1903.</li>

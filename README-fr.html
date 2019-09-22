@@ -51,8 +51,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.8.6 </h2>
-					<p>2019-09-06 10:23 UTC</p>
+					<h2 id="version">3.8.7 </h2>
+					<p>2019-09-22 13:23 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Télécharger</a></li>
 						<li class="requirements"><a href="#requirements" style="font-size: 11px">Exigences du système</a></li>
@@ -294,7 +294,7 @@
 			
 			<p>Ce programme est distribué dans l’espoir qu’il sera utile, mais SANS AUCUNE GARANTIE ; sans même la garantie implicite d’une QUELCONQUE VALEUR MARCHANDE ou de l’ADÉQUATION À UN BESOIN PARTICULIER. Voir la <a href="LICENSE.txt">Licence Publique Générale GNU</a> pour davantage d’informations.</p>
 			
-			<p>DisplayCAL est écrit en <a href="https://python.org/">Python</a> et utilise les paquets tiers <a href="https://www.numpy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (kit de développement d’interface graphique <abbr title="Interface utilisateur graphique">(GUI)<sup><a href="#definition_GUI">[4]</a></sup></abbr>), <a href="https://pypi.org/project/PyGObject/">PyGObject</a> ou <a href="https://pypi.org/project/dbus-python/">dbus-python</a> (Linux), <a href="https://pypi.org/pypi/pywin32/">pywin32</a>, <a href="https://pypi.org/project/comtypes/">comtypes</a>, <a href="https://pypi.org/project/WMI/">WMI</a>, <a href="https://pypi.org/project/faulthandler/">faulthandler</a>, <a href="https://pypi.org/project/psutil/">psutil</a>, <a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> et <a href="https://pypi.org/project/pyglet/">pyglet</a> (macOS/Windows) ou libSDL2 (Linux). Il fait aussi une utilisation intensive de certains des utilitaires d’<a href="https://www.argyllcms.com/">ArgyllCMS</a>. Le système de construction permettant d’obtenir des exécutables autonomes utilise en outre <a href="https://pypi.org/project/py2app/">py2app</a> sous Mac OS X ou <a href="https://pypi.org/project/py2exe/">py2exe</a> sous Windows. Tous ces logiciels sont © par leurs auteurs respectifs.<p>
+			<p>DisplayCAL est écrit en <a href="https://python.org/">Python</a> et utilise les paquets tiers <a href="https://www.numpy.org/">NumPy</a>, <a href="https://wxpython.org/">wxPython</a> (kit de développement d’interface graphique <abbr title="Interface utilisateur graphique">(GUI)<sup><a href="#definition_GUI">[4]</a></sup></abbr>), <a href="https://pypi.org/project/certifi/">certifi</a>, <a href="https://pypi.org/project/PyGObject/">PyGObject</a> ou <a href="https://pypi.org/project/dbus-python/">dbus-python</a> (Linux), <a href="https://pypi.org/pypi/pywin32/">pywin32</a>, <a href="https://pypi.org/project/comtypes/">comtypes</a>, <a href="https://pypi.org/project/WMI/">WMI</a>, <a href="https://pypi.org/project/faulthandler/">faulthandler</a>, <a href="https://pypi.org/project/psutil/">psutil</a>, <a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> et <a href="https://pypi.org/project/pyglet/">pyglet</a> (macOS/Windows) ou libSDL2 (Linux). Il fait aussi une utilisation intensive de certains des utilitaires d’<a href="https://www.argyllcms.com/">ArgyllCMS</a>. Le système de construction permettant d’obtenir des exécutables autonomes utilise en outre <a href="https://pypi.org/project/py2app/">py2app</a> sous Mac OS X ou <a href="https://pypi.org/project/py2exe/">py2exe</a> sous Windows. Tous ces logiciels sont © par leurs auteurs respectifs.<p>
 		</div>
 
 		<div id="download">
@@ -564,12 +564,28 @@
 							<li><a href="https://python.org/">Python</a> &gt;= v2.5 &lt;= v2.7.x (la version 2.7.x est recommandée. Utilisateurs de Mac OS X : si vous désirez compiler le module C d’extension de DisplayCAL, il est conseillé d’installer <strong>d’abord</strong> XCode et <strong>ensuite</strong> la version officielle de Python de python.org) ;</li>
 							<li><a href="https://www.numpy.org/">NumPy</a> ;</li>
 							<li>Kit de développement de <abbr title="Interface Utilisateur Graphique">GUI<sup><a href="#definition_GUI">[4]</a></sup> <a href="https://wxpython.org/">wxPython</a></abbr>.</li>
+							<li><a href="https://pypi.org/project/certifi/">Certifi</a>.</li>
+							<li><a href="https://pypi.org/project/psutil/">psutil</a> (optional but recommended).</li>
+							<li><a href="https://pypi.org/project/faulthandler/">faulthandler</a> (optional).</li>
+							<li><a href="https://pypi.org/project/PyChromecast/">PyChromecast</a> (if you want to use a Chromecast device).</li>
+						</ul>
+
+						<h4>Linux:</h4>
+						<ul>
+							<li><a href="https://pypi.org/project/PyGObject/">PyGObject</a></li>
 						</ul>
 
 						<h4>Windows :</h4>
 						<ul>
 							<li><a href="https://pypi.org/project/pywin32/">pywin32</a> ;</li>
 							<li><a href="https://pypi.org/project/WMI/">WMI</a>.</li>
+							<li><a href="https://pypi.org/project/comtypes/">comtypes</a>.</li>
+							<li><a href="https://pypi.org/project/pyglet/">pyglet</a>.</li>
+						</ul>
+
+						<h4>macOS:</h4>
+						<ul>
+							<li><a href="https://pypi.org/project/pyglet/">pyglet</a>.</li>
 						</ul>
 					</div>
 				</div>
