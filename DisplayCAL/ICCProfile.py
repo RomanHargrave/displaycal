@@ -3699,12 +3699,13 @@ class CurveType(ICCProfileTag, list):
 		# See http://medical.nema.org/Dicom/2011/11_14pu.pdf
 		# Luminance levels depend on the start level of 0.05 cd/m2
 		# and end level of 4000 cd/m2
+		black_cdm2 = round(black_cdm2, 6)
 		if black_cdm2 < .05 or black_cdm2 >= white_cdm2:
-			raise ValueError("The black level of %f cd/m2 is out of range "
+			raise ValueError("The black level of %s cd/m2 is out of range "
 							 "for DICOM. Valid range begins at 0.05 cd/m2." %
 							 black_cdm2)
 		if white_cdm2 > 4000 or white_cdm2 <= black_cdm2:
-			raise ValueError("The white level of %f cd/m2 is out of range "
+			raise ValueError("The white level of %s cd/m2 is out of range "
 							 "for DICOM. Valid range is up to 4000 cd/m2." %
 							 white_cdm2)
 		black_jndi = colormath.DICOM(black_cdm2, True)
