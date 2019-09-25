@@ -6741,7 +6741,7 @@ class TwoWaySplitter(FourWaySplitter):
 			if self._expanded < len(self._windows):
 				for ii, win in enumerate(self._windows):
 					if ii == self._expanded:
-						win.SetSize(width - barSize - 2*border, height-2*border)
+						win.SetSize((width - barSize - 2*border, height-2*border))
 						win.Show()
 					else:
 						win.Hide()
