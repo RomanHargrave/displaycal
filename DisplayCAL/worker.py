@@ -298,7 +298,7 @@ def check_ti3_criteria1(RGB, XYZ, black_XYZ, white_XYZ,
 				# Sanity check: Is this color reasonably dark and achromatic?
 				# Then do BPC so we can compare better to perfect black sRGB
 				XYZ = colormath.blend_blackpoint(XYZ[0], XYZ[1], XYZ[2],
-												 black_XYZ)
+												 black_XYZ, None, white_XYZ)
 		XYZ = colormath.adapt(XYZ[0], XYZ[1], XYZ[2], white_XYZ)
 	Lab = colormath.XYZ2Lab(*XYZ)
 
@@ -9525,7 +9525,7 @@ usage: spotread [-options] [logfile]
 							X, Y, Z = (v / 100.0 for v in XYZ)
 							### Need to black scale actual measurements
 							##X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
-																 ##black_XYZ)
+																 ##black_XYZ, None, white_XYZ)
 							# Range 0..1
 							clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ,
 															cat=cat))
@@ -9589,7 +9589,7 @@ usage: spotread [-options] [logfile]
 						##if actual > prev_actual:
 							### Need to black scale actual measurements
 							##X, Y, Z = colormath.blend_blackpoint(X, Y, Z,
-																 ##black_XYZ)
+																 ##black_XYZ, None, white_XYZ)
 						# Range 0..1
 						clut[-1].append(colormath.adapt(X, Y, Z, white_XYZ,
 														cat=cat))

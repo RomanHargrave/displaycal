@@ -470,19 +470,21 @@ def avg(*args):
 	return float(sum(args)) / len(args)
 
 
-def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, power=40.0):
+def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 	"""
 	Blend to destination black as L approaches black, optionally compensating
 	for input black first
 	
 	"""
-	L, a, b = XYZ2Lab(*[v * 100 for v in (X, Y, Z)])
 
-	for bp in (bp_in, bp_out):
+	wp = get_whitepoint(wp)
+
+	for i, bp in enumerate((bp_in, bp_out)):
 		if not bp or tuple(bp) == (0, 0, 0):
 			continue
-		bpLab = XYZ2Lab(*[v * 100 for v in bp])
-		if bp is bp_in:
+		L, a, b = XYZ2Lab(X, Y, Z, whitepoint=wp)
+		bpLab = XYZ2Lab(*bp, whitepoint=wp)
+		if i == 0:
 			bL = bpLab[0]
 			if bL == 100:
 				raise ValueError("Black luminance is 100!")
@@ -495,7 +497,7 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, power=40.0):
 		elif vv > 1.0:
 			vv = 1.0
 		vv = math.pow(vv, power)
-		if bp is bp_in:
+		if i == 0:
 			vv = -vv
 			oldmin = bp_in[1]
 			newmin = 0.0
@@ -505,11 +507,19 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, power=40.0):
 		oldrange = 1.0 - oldmin
 		newrange = 1.0 - newmin
 		Y = (newrange * Y - 1.0 * (oldmin - newmin)) / oldrange
-		L = XYZ2Lab(0, Y * 100, 0)[0]
-		a += vv * bpLab[1]
-		b += vv * bpLab[2]
-
-	X, Y, Z = Lab2XYZ(L, a, b)
+		if Y < 0:
+			Y = 0
+			a = 0
+			b = 0
+		else:
+			a += vv * bpLab[1]
+			b += vv * bpLab[2]
+		if i == 1:
+			L = XYZ2Lab(0, Y, 0, whitepoint=wp)[0]
+		# For luminance adjustment, we need to use a colorspace that keeps
+		# chromaticity irrespective of luminance
+		x, y = Lab2xyY(L, a, b, whitepoint=wp)[:2]
+		X, Y, Z = xyY2XYZ(x, y, Y)
 
 	return X, Y, Z
 

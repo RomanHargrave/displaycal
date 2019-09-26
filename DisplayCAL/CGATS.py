@@ -2012,7 +2012,7 @@ Transform {
 				else:
 					values = colormath.blend_blackpoint(values[0], values[1],
 														values[2], black,
-														bp_out)
+														bp_out, white)
 				values = [v * max_v for v in values]
 				if is_Lab:
 					values = colormath.XYZ2Lab(*values)

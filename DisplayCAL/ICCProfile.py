@@ -6371,7 +6371,7 @@ class ICCProfile(object):
 			for channel in "rgb":
 				rgb.append(self.tags["%sTRC" % channel][i] / 65535.0)
 			X, Y, Z = mtx * rgb
-			XYZ = colormath.blend_blackpoint(X, Y, Z, bp_in, XYZbp, power)
+			XYZ = colormath.blend_blackpoint(X, Y, Z, bp_in, XYZbp, power=power)
 			rgb = imtx * XYZ
 			for j in xrange(3):
 				self.tags["%sTRC" % "rgb"[j]][i] = min(max(rgb[j], 0), 1) * 65535
