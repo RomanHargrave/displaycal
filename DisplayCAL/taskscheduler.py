@@ -162,6 +162,8 @@ class Task(_Dict2XML):
 				 allow_hard_terminate=True,
 				 start_when_available=False,
 				 run_only_if_network_available=False,
+				 duration=None,
+				 wait_timeout=None,
 				 stop_on_idle_end=False,
 				 restart_on_idle=False,
 				 allow_start_on_demand=True,
@@ -174,13 +176,16 @@ class Task(_Dict2XML):
 				 triggers=None,
 				 actions=None):
 		kwargs = locals()
+		idle_keys = ("duration", "wait_timeout", "stop_on_idle_end",
+					 "restart_on_idle")
+		idle_settings = OrderedDict()
+		for key in idle_keys:
+			idle_settings[key] = kwargs[key]
 		for key in ("self", "name", "author", "description", "group_id",
-					"run_level", "stop_on_idle_end", "restart_on_idle",
-					"triggers", "actions"):
+					"run_level", "triggers", "actions") + idle_keys:
 			del kwargs[key]
-		settings = _Dict2XML(kwargs.iteritems(), cls_name="Settings")
-		settings["idle_settings"] = _Dict2XML(stop_on_idle_end=stop_on_idle_end,
-											  restart_on_idle=restart_on_idle,
+		settings = _Dict2XML(kwargs, cls_name="Settings")
+		settings["idle_settings"] = _Dict2XML(idle_settings,
 											  cls_name="IdleSettings")
 		kwargs = OrderedDict()
 		kwargs["registration_info"] = _Dict2XML(author=author,
@@ -199,7 +204,7 @@ class Task(_Dict2XML):
 									  cls_name="Actions",
 									  cls_attr=' Context="Author"')
 		kwargs["cls_attr"] = ' version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"'
-		_Dict2XML.__init__(self, kwargs.iteritems())
+		_Dict2XML.__init__(self, kwargs)
 
 	def add_exec_action(self, cmd, args=None):
 		self["actions"]["items"].append(ExecAction(cmd, args))
@@ -252,6 +257,8 @@ class TaskScheduler(object):
 					allow_hard_terminate=True,
 					start_when_available=False,
 					run_only_if_network_available=False,
+					duration=None,
+					wait_timeout=None,
 					stop_on_idle_end=False,
 					restart_on_idle=False,
 					allow_start_on_demand=True,
@@ -304,6 +311,8 @@ class TaskScheduler(object):
 						  allow_hard_terminate=True,
 						  start_when_available=False,
 						  run_only_if_network_available=False,
+						  duration=None,
+						  wait_timeout=None,
 						  stop_on_idle_end=False,
 						  restart_on_idle=False,
 						  allow_start_on_demand=True,
