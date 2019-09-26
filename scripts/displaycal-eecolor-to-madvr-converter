@@ -16,18 +16,10 @@ def sigbreak_handler(sig, frame):
 signal.signal(getattr(signal, "SIGBREAK", signal.SIGINT), sigbreak_handler)
 
 
-def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,
-					 hdr=None, logfile=sys.stdout,
-					 convert_video_rgb_to_clut65=False, append_linear_cal=True):
-	"""
-	Convert eeColor 65^3 3D LUT to madVR 256^3 3D LUT using interpolation
-	
-	madvr 3D LUT will be written to:
-	<eeColor 3D LUT filename without extension> + '.3dlut'
-	
-	"""
+def eecolor_to_icc_devicelink(eecolor_3dlut_filename, unity=False):
 
 	filename, ext = os.path.splitext(eecolor_3dlut_filename)
+	icc_filename = filename + ".icc"
 
 	if not unity:
 		# Read in eeColor 3D LUT data
@@ -80,9 +72,25 @@ def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,
 					row += 1
 
 		# Write device link
-		link.write(filename + ".icc")
+		link.write(icc_filename)
 
-	return icc_device_link_to_madvr(filename + ".icc", unity=unity,
+	return icc_filename
+
+
+def eecolor_to_madvr(eecolor_3dlut_filename, unity=False, colorspace=None,
+					 hdr=None, logfile=sys.stdout,
+					 convert_video_rgb_to_clut65=False, append_linear_cal=True):
+	"""
+	Convert eeColor 65^3 3D LUT to madVR 256^3 3D LUT using interpolation
+	
+	madvr 3D LUT will be written to:
+	<eeColor 3D LUT filename without extension> + '.3dlut'
+	
+	"""
+
+	icc_filename = eecolor_to_icc_devicelink(eecolor_3dlut_filename, unity)
+
+	return icc_device_link_to_madvr(icc_filename, unity=unity,
 									colorspace=colorspace, hdr=hdr,
 									logfile=logfile,
 									convert_video_rgb_to_clut65=convert_video_rgb_to_clut65,
