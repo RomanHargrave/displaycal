@@ -479,10 +479,11 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 
 	wp = get_whitepoint(wp)
 
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint=wp)
+
 	for i, bp in enumerate((bp_in, bp_out)):
 		if not bp or tuple(bp) == (0, 0, 0):
 			continue
-		L, a, b = XYZ2Lab(X, Y, Z, whitepoint=wp)
 		bpLab = XYZ2Lab(*bp, whitepoint=wp)
 		if i == 0:
 			bL = bpLab[0]
@@ -514,12 +515,9 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 		else:
 			a += vv * bpLab[1]
 			b += vv * bpLab[2]
-		if i == 1:
-			L = XYZ2Lab(0, Y, 0, whitepoint=wp)[0]
-		# For luminance adjustment, we need to use a colorspace that keeps
-		# chromaticity irrespective of luminance
-		x, y = Lab2xyY(L, a, b, whitepoint=wp)[:2]
-		X, Y, Z = xyY2XYZ(x, y, Y)
+		L = XYZ2Lab(0, Y, 0, whitepoint=wp)[0]
+
+	X, Y, Z = Lab2XYZ(L, a, b, whitepoint=wp)
 
 	return X, Y, Z
 
