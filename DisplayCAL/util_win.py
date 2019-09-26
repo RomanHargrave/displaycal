@@ -392,7 +392,7 @@ def per_user_profiles_isenabled(display_no=0, devicekey=None):
 			return bool(pbool.contents)
 
 
-def run_as_admin(cmd, args, close_process=True, async=False,
+def run_as_admin(cmd, args, close_process=True, async_=False,
 				 wait_for_idle=False, show=True):
 	"""
 	Run command with elevated privileges.
@@ -402,12 +402,12 @@ def run_as_admin(cmd, args, close_process=True, async=False,
 	Returns a dictionary with hInstApp and hProcess members.
 	
 	"""
-	return shell_exec(cmd, args, "runas", close_process, async, wait_for_idle,
+	return shell_exec(cmd, args, "runas", close_process, async_, wait_for_idle,
 					  show)
 
 
 def shell_exec(filename, args, operation="open", close_process=True,
-			   async=False, wait_for_idle=False, show=True):
+			   async_=False, wait_for_idle=False, show=True):
 	"""
 	Run command.
 	
@@ -419,7 +419,7 @@ def shell_exec(filename, args, operation="open", close_process=True,
 	flags = SEE_MASK_FLAG_NO_UI
 	if not close_process:
 		flags |= SEE_MASK_NOCLOSEPROCESS
-	if not async:
+	if not async_:
 		flags |= SEE_MASK_NOASYNC
 	if wait_for_idle:
 		flags |= SEE_MASK_WAITFORINPUTIDLE
