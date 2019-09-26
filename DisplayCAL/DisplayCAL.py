@@ -3027,8 +3027,9 @@ class MainFrame(ReportFrame, BaseFrame):
 					if progress_wnd:
 						progress_wnd.Destroy()
 				wx.CallAfter(self.Raise)
-				threading.Thread(target=self.set_remote_language,
-								 name="Scripting.SetClientLanguage").start()
+				isinstance(getattr(sys, "_appsocket", None), socket.socket):
+					threading.Thread(target=self.set_remote_language,
+									 name="Scripting.SetClientLanguage").start()
 				break
 
 	def set_remote_language(self):
