@@ -421,7 +421,6 @@ def getbitmap(name, display_missing_icon=True, scale=True, use_mask=False):
 					if not bmp.IsOk():
 						path = None
 			if not path:
-				from log import safe_print
 				safe_print("Warning: Missing bitmap '%s'" % name)
 				img = wx.EmptyImage(w, h)
 				img.SetMaskColour(0, 0, 0)
@@ -496,7 +495,6 @@ def get_argyll_display_number(geometry):
 	for i, display in enumerate(getcfg("displays")):
 		if display.find("@ " + geometry) > -1:
 			if debug:
-				from log import safe_print
 				safe_print("[D] Found display %s at index %i" % 
 						   (geometry, i))
 			return i
@@ -518,7 +516,6 @@ def get_display_number(display_no):
 			geometry = "%i, %i, %ix%i" % tuple(wx.Display(i).Geometry)
 			if display.endswith("@ " + geometry):
 				if debug:
-					from log import safe_print
 					safe_print("[D] Found display %s at index %i" % 
 							   (geometry, i))
 				return i
@@ -622,7 +619,6 @@ def get_data_path(relpath, rex=None):
 				try:
 					filelist = listdir_re(curpath, rex)
 				except Exception, exception:
-					from log import safe_print
 					safe_print(u"Error - directory '%s' listing failed: %s" % 
 							   tuple(safe_unicode(s) for s in (curpath, exception)))
 				else:
@@ -652,10 +648,9 @@ def runtimeconfig(pyfile):
 	attribute).
 	
 	"""
-	from log import setup_logging
+	global safe_print
+	from log import setup_logging, safe_print
 	setup_logging(logdir, pyname, pyext, confighome=confighome)
-	if debug or verbose >= 1:
-		from log import safe_print
 	if debug:
 		safe_print("[D] pydir:", pydir)
 	if isapp:
@@ -1448,7 +1443,6 @@ standard_profiles = []
 def get_standard_profiles(paths_only=False):
 	if not standard_profiles:
 		import ICCProfile as ICCP
-		from log import safe_print
 		# Reference profiles (Argyll + DisplayCAL)
 		ref_icc = get_data_path("ref", "\.ic[cm]$") or []
 		# Other profiles installed on the system
@@ -1619,7 +1613,6 @@ def makecfgdir(which="user", worker=None):
 			try:
 				os.makedirs(confighome)
 			except Exception, exception:
-				from log import safe_print
 				safe_print(u"Warning - could not create configuration directory "
 						   "'%s': %s" % (confighome, safe_unicode(exception)))
 				return False
@@ -1638,7 +1631,6 @@ def makecfgdir(which="user", worker=None):
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:
-			from log import safe_print
 			safe_print(u"Warning - could not create configuration directory "
 					   "'%s': %s" % (config_sys, safe_unicode(exception)))
 			return False
@@ -1686,7 +1678,6 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 				try:
 					mtime = os.stat(cfgfile).st_mtime
 				except EnvironmentError, exception:
-					from log import safe_print
 					safe_print(u"Warning - os.stat('%s') failed: %s" % 
 							   tuple(safe_unicode(s) for s in (cfgfile,
 															   exception)))
@@ -1694,7 +1685,6 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 				if force_load or mtime != last_checked:
 					cfginited[cfgfile] = mtime
 					cfgfiles.append(cfgfile)
-					from log import safe_print
 					if force_load:
 						msg = "Force loading"
 					elif last_checked:
@@ -1714,7 +1704,6 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 		# This won't raise an exception if the file does not exist, only
 		# if it can't be parsed
 	except Exception, exception:
-		from log import safe_print
 		safe_print("Warning - could not parse configuration files:\n%s" %
 				   "\n".join(cfgfiles))
 		# Fix Python 2.7 ConfigParser option values being lists instead of
@@ -1936,7 +1925,6 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 	# Remove unknown options
 	for name, val in cfg.items(ConfigParser.DEFAULTSECT):
 		if not name in defaults:
-			from log import safe_print
 			safe_print("Removing unknown option:", name)
 			setcfg(name, None)
 	if which == "user":
@@ -1961,7 +1949,6 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 			cfgfile.write(os.linesep.join(lines) + os.linesep)
 			cfgfile.close()
 		except Exception, exception:
-			from log import safe_print
 			safe_print(u"Warning - could not write user configuration file "
 					   "'%s': %s" % (cfgfilename, safe_unicode(exception)))
 			return False
@@ -1994,7 +1981,6 @@ def writecfg(which="user", worker=None, module=None, options=(), cfg=cfg):
 				if isinstance(result, Exception):
 					raise result
 		except Exception, exception:
-			from log import safe_print
 			safe_print(u"Warning - could not write system-wide configuration file "
 					   "'%s': %s" % (cfgfilename2, safe_unicode(exception)))
 			return False
