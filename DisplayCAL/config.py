@@ -1690,9 +1690,18 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 					safe_print(u"Warning - os.stat('%s') failed: %s" % 
 							   tuple(safe_unicode(s) for s in (cfgfile,
 															   exception)))
-				if force_load or mtime != cfginited.get(cfgfile):
+				last_checked = cfginited.get(cfgfile)
+				if force_load or mtime != last_checked:
 					cfginited[cfgfile] = mtime
 					cfgfiles.append(cfgfile)
+					from log import safe_print
+					if force_load:
+						msg = "Force loading"
+					elif last_checked:
+						msg = "Reloading"
+					else:
+						msg = "Loading"
+					safe_print(msg, cfgfile)
 				# Make user config take precedence
 				break
 	if not cfgfiles:

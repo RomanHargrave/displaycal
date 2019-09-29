@@ -128,6 +128,7 @@ def main(module=None):
 		lockfilenames = glob.glob(os.path.join(confighome, "*.lock"))
 		lock2ports = {}
 		for lockfilename in lockfilenames:
+			safe_print("Lockfile", lockfilename)
 			try:
 				with open(lockfilename) as lockfile:
 					if not lockfilename in lock2ports:
@@ -142,6 +143,7 @@ def main(module=None):
 									   "(%s line %i)" % (port, lockfilename, ln))
 							port = defaultport
 						else:
+							safe_print("Existing client using port", port)
 							lock2ports[lockfilename].append(port)
 			except EnvironmentError, exception:
 				# This shouldn't happen
@@ -162,21 +164,28 @@ def main(module=None):
 						break
 					else:
 						incoming = None
+						safe_print("Connecting to %s..." % port)
 						if appsocket.connect(host, port):
+							safe_print("Connected to", port)
 							# Other instance already running?
 							# Get appname to check if expected app is actually
 							# running under that port
+							safe_print("Getting instance name")
 							if appsocket.send("getappname"):
-								incoming = appsocket.read()
-								if incoming.rstrip("\4") != pyname:
+								safe_print("Sent scripting request, awaiting response...")
+								incoming = appsocket.read().rstrip("\4")
+								safe_print("Instance name:", incoming)
+								if incoming != pyname:
 									incoming = None
 						if incoming:
 							# Send args as UTF-8
 							if module == "apply-profiles":
 								# Always try to close currently running instance
+								safe_print("Closing existing instance")
 								data = ["close"]
 							else:
 								# Send module/appname to notify running app
+								safe_print("Notifying existing instance")
 								data = [module or appname]
 								if module != "3DLUT-maker":
 									for arg in sys.argv[1:]:
@@ -184,9 +193,10 @@ def main(module=None):
 															 "UTF-8"))
 							data = sp.list2cmdline(data)
 							if appsocket.send(data):
-								incoming = appsocket.read()
+								safe_print("Sent scripting request, awaiting response...")
+								incoming = appsocket.read().rstrip("\4")
 						appsocket.close()
-						if incoming and incoming.rstrip("\4") == "ok":
+						if incoming and incoming == "ok":
 							# Successfully sent our request
 							break
 						elif incoming == "" and module == "apply-profiles":
@@ -196,13 +206,14 @@ def main(module=None):
 							# closed.
 							while os.path.isfile(lockfilename):
 								sleep(.05)
+							safe_print("Existing instance exited.")
 							incoming = None
 							break
 			if incoming is not None:
 				# Other instance running?
 				import localization as lang
 				lang.init()
-				if incoming.rstrip("\4") == "ok":
+				if incoming == "ok":
 					# Successfully sent our request
 					safe_print(lang.getstr("app.otherinstance.notified"))
 				else:
