@@ -146,7 +146,7 @@ if sys.platform == "win32":
 											 "This task launches the profile "
 											 "loader with the applicable "
 											 "privileges for logged in users",
-											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
+											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_IGNORENEW,
 											 replace_existing=True,
 											 triggers=triggers,
 											 actions=actions)
@@ -157,7 +157,7 @@ if sys.platform == "win32":
 											 "This task restarts the profile "
 											 "loader with the applicable "
 											 "privileges for logged in users",
-											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_STOPEXISTING,
+											 multiple_instances_policy=taskscheduler.MULTIPLEINSTANCES_IGNORENEW,
 											 replace_existing=True,
 											 triggers=[daily],
 											 actions=actions)

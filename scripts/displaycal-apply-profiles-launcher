@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import time
 
 if sys.platform != "win32":
 	print "This stub is only used on Windows."
@@ -29,3 +30,7 @@ if "--oneshot" in sys.argv[1:]:
 	args.append("--oneshot")
 
 sp.Popen(args, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.STDOUT)
+
+# Sleep a few seconds so task scheduler can see an instance already running and 
+# won't start another one due to multiple triggers firing at the same time
+time.sleep(9)
