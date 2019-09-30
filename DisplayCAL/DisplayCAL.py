@@ -14895,8 +14895,10 @@ class MainFrame(ReportFrame, BaseFrame):
 				if 'USE_BLACK_POINT_COMPENSATION "YES"' in ti3_lines:
 					setcfg("profile.black_point_compensation", 1)
 				elif ('USE_BLACK_POINT_COMPENSATION "NO"' in ti3_lines and
-					  (sys.platform != "darwin" or is_3dlut_preset)):
-					# Only disable BPC if not OS X, or if a 3D LUT preset
+					  (sys.platform != "darwin" or not is_preset or
+					   is_3dlut_preset)):
+					# Only disable BPC if not OS X, or if a preset,
+					# or if a 3D LUT preset
 					setcfg("profile.black_point_compensation", 0)
 				if 'HIRES_B2A "YES"' in ti3_lines:
 					setcfg("profile.b2a.hires", 1)
