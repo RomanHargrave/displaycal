@@ -19,6 +19,9 @@ if sys.platform not in ("darwin", "win32"):
 	import grp
 	import pwd
 
+if sys.platform != "win32":
+	import fcntl
+
 try:
 	reloaded
 except NameError:
@@ -44,6 +47,10 @@ else:
 if sys.platform == "win32":
 	from win32file import *
 	from winioctlcon import FSCTL_GET_REPARSE_POINT
+	import win32file
+	import win32con
+	import pywintypes
+	import winerror
 
 # Cache used for safe_shell_filter() function
 _cache = {}
@@ -905,6 +912,75 @@ def whereis(names, bin=True, bin_paths=None, man=True, man_paths=None, src=True,
 		if match:
 			result[match[0]] = match[-1].split()
 	return result
+
+
+class FileLock(object):
+
+	if sys.platform == "win32":
+		_exception_cls = pywintypes.error
+	else:
+		_exception_cls = IOError
+
+	def __init__(self, file_, exclusive=False, blocking=False):
+		self._file = file_
+		self.exclusive = exclusive
+		self.blocking = blocking
+		self.lock()
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, etype, value, traceback):
+		self.unlock()
+
+	def lock(self):
+		if sys.platform == "win32":
+			mode = 0
+			if self.exclusive:
+				mode |= win32con.LOCKFILE_EXCLUSIVE_LOCK
+			if not self.blocking:
+				mode |= win32con.LOCKFILE_FAIL_IMMEDIATELY
+			self._handle = win32file._get_osfhandle(self._file.fileno())
+			self._overlapped = pywintypes.OVERLAPPED()
+			fn = win32file.LockFileEx
+			args = (self._handle, mode, 0, -0x10000, self._overlapped)
+		else:
+			if self.exclusive:
+				op = fcntl.LOCK_EX
+			else:
+				op = fcntl.LOCK_SH
+			if not self.blocking:
+				op |= fcntl.LOCK_NB
+			fn = fcntl.flock
+			args = (self._file.fileno(), op)
+		self._call(fn, args, FileLock.LockingError)
+
+	def unlock(self):
+		if self._file.closed:
+			return
+		if sys.platform == "win32":
+			fn = win32file.UnlockFileEx
+			args = (self._handle, 0, -0x10000, self._overlapped)
+		else:
+			fn = fcntl.flock
+			args = (self._file.fileno(), fcntl.LOCK_UN)
+		self._call(fn, args, FileLock.UnlockingError)
+
+	@staticmethod
+	def _call(fn, args, exception_cls):
+		try:
+			fn(*args)
+		except FileLock._exception_cls, exception:
+			raise exception_cls(*exception.args)
+
+	class Error(Exception):
+		pass
+
+	class LockingError(Error):
+		pass
+
+	class UnlockingError(Error):
+		pass
 
 
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):

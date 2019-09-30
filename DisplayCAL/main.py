@@ -35,6 +35,7 @@ from log import log, safe_print
 from meta import VERSION, VERSION_BASE, VERSION_STRING, build, name as appname
 from multiprocess import mp
 from options import debug, verbose
+from util_os import FileLock
 from util_str import safe_str, safe_unicode
 if sys.platform == "win32":
 	from util_win import win_ver
@@ -47,14 +48,7 @@ def _excepthook(etype, value, tb):
 sys.excepthook = _excepthook
 
 
-def main(module=None):
-	mp.freeze_support()
-	if mp.current_process().name != "MainProcess":
-		return
-	if module:
-		name = "%s-%s" % (appbasename, module)
-	else:
-		name = appbasename
+def _main(module, name, applockfilename, probe_ports=True):
 	log("=" * 80)
 	if verbose >= 1:
 		version = VERSION_STRING
@@ -93,7 +87,6 @@ def main(module=None):
 	if u"phoenix" in wx.PlatformInfo:
 		# py2exe helper so wx.xml gets picked up
 		from wx import xml
-	from wxwindows import BaseApp
 	safe_print("wxPython " + wx.version())
 	safe_print("Encoding: " + enc)
 	safe_print("File system encoding: " + fs_enc)
@@ -114,27 +107,32 @@ def main(module=None):
 							   exception)
 			else:
 				safe_print("Warning - SetProcessDpiAwareness not found in shcore")
-	lockfilename = None
-	port = 0
+	lock = None
 	# Allow multiple instances only for curve viewer, profile info,
 	# scripting client, synthetic profile creator and testchart editor
 	multi_instance = ("curve-viewer", "profile-info", "scripting-client",
 					  "synthprofile", "testchart-editor")
-	try:
-		initcfg(module)
-		host = "127.0.0.1"
-		defaultport = getcfg("app.port")
+	initcfg(module)
+	host = "127.0.0.1"
+	defaultport = getcfg("app.port")
+	lock2ports = {}
+	if probe_ports:
 		# Check for currently used ports
 		lockfilenames = glob.glob(os.path.join(confighome, "*.lock"))
-		lock2ports = {}
 		for lockfilename in lockfilenames:
 			safe_print("Lockfile", lockfilename)
 			try:
-				with open(lockfilename) as lockfile:
+				if lock and lockfilename == applockfilename:
+					lockfile = lock
+				else:
+					lockfile = open(lockfilename)
+				if lockfile:
 					if not lockfilename in lock2ports:
 						lock2ports[lockfilename] = []
 					for ln, port in enumerate(lockfile, 1):
 						port = port.strip()
+						if not port:
+							continue
 						try:
 							port = int(port)
 						except ValueError, exception:
@@ -145,6 +143,8 @@ def main(module=None):
 						else:
 							safe_print("Existing client using port", port)
 							lock2ports[lockfilename].append(port)
+				if not lock or lockfilename != applockfilename:
+					lockfile.close()
 			except EnvironmentError, exception:
 				# This shouldn't happen
 				safe_print("Warning - could not read lockfile %s:" %
@@ -152,10 +152,7 @@ def main(module=None):
 		if module not in multi_instance:
 			# Check lockfile(s) and probe port(s)
 			incoming = None
-			lockfilebasenames = [name]
-			for lockfilebasename in lockfilebasenames:
-				lockfilename = os.path.join(confighome, "%s.lock" %
-														lockfilebasename)
+			for lockfilename in [applockfilename]:
 				lock_ports = lock2ports.get(lockfilename)
 				if lock_ports:
 					port = lock_ports[0]
@@ -174,9 +171,12 @@ def main(module=None):
 							if appsocket.send("getappname"):
 								safe_print("Sent scripting request, awaiting response...")
 								incoming = appsocket.read().rstrip("\4")
-								safe_print("Instance name:", incoming)
-								if incoming != pyname:
-									incoming = None
+								if incoming:
+									safe_print("Instance name:", incoming)
+									if incoming != pyname:
+										incoming = None
+								else:
+									incoming = False
 						if incoming:
 							# Send args as UTF-8
 							if module == "apply-profiles":
@@ -216,12 +216,26 @@ def main(module=None):
 				if incoming == "ok":
 					# Successfully sent our request
 					safe_print(lang.getstr("app.otherinstance.notified"))
+				elif module == "apply-profiles":
+					safe_print("Not starting another instance.")
 				else:
 					# Other instance busy?
 					handle_error(lang.getstr("app.otherinstance", name))
 				# Exit
 				return
-		lockfilename = os.path.join(confighome, "%s.lock" % name)
+	if module in multi_instance:
+		mode = "a+"
+	else:
+		if os.path.isfile(applockfilename):
+			mode = "r+"
+		else:
+			mode = "w+"
+	# Use exclusive lock during app startup
+	with AppLock(applockfilename, mode, True) as lock:
+		if not lock:
+			# If a race condition occurs, do not start another instance
+			safe_print("Not starting another instance.")
+			return
 		# Create listening socket
 		appsocket = AppSocket()
 		if appsocket:
@@ -264,14 +278,15 @@ def main(module=None):
 								   "address:", exception)
 						del sys._appsocket
 						break
-					if module in multi_instance:
-						mode = "a"
-					else:
-						mode = "w"
-					write_lockfile(lockfilename, mode, str(port))
+					sys._appsocket_port = port
+					if mode[0] != "a":
+						lock.seek(0)
+						lock.truncate()
+					lock.write(port)
 					break
 		atexit.register(lambda: safe_print("Ran application exit handlers"))
-		BaseApp.register_exitfunc(_exit, lockfilename, port)
+		from wxwindows import BaseApp
+		BaseApp.register_exitfunc(_exit, applockfilename, port)
 		# Check for required resource files
 		mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
 				   "curve-viewer": [],
@@ -326,7 +341,21 @@ def main(module=None):
 			from profile_loader import main
 		else:
 			from DisplayCAL import main
-		main()
+	# Run main after releasing lock
+	main()
+
+
+def main(module=None):
+	mp.freeze_support()
+	if mp.current_process().name != "MainProcess":
+		return
+	if module:
+		name = "%s-%s" % (appbasename, module)
+	else:
+		name = appbasename
+	applockfilename = os.path.join(confighome, "%s.lock" % name)
+	try:
+		_main(module, name, applockfilename)
 	except Exception, exception:
 		if isinstance(exception, ResourceError):
 			error = exception
@@ -334,7 +363,7 @@ def main(module=None):
 			error = Error(u"Fatal error: " +
 						  safe_unicode(exception))
 		handle_error(error)
-		_exit(lockfilename, port)
+		_exit(applockfilename, getattr(sys, "_appsocket_port", 0))
 
 
 def _exit(lockfilename, port):
@@ -380,7 +409,8 @@ def _exit(lockfilename, port):
 				appsocket.close()
 			if ports:
 				# Write updated lockfile
-				write_lockfile(lockfilename, "w", "\n".join(ports))
+				with AppLock(lockfilename, "w", False, True) as lock:
+					lock.write("\n".join(ports))
 		# If no ports of running instances, ok to remove lockfile
 		if not ports:
 			try:
@@ -411,15 +441,76 @@ def main_testchart_editor():
 	main("testchart-editor")
 
 
-def write_lockfile(lockfilename, mode, contents):
-	try:
-		# Create lockfile
-		with open(lockfilename, mode) as lockfile:
-			lockfile.write("%s\n" % contents)
-	except EnvironmentError, exception:
-		# This shouldn't happen
-		safe_print("Warning - could not write lockfile %s:" % lockfilename,
-				   exception)
+class AppLock(object):
+
+	def __init__(self, lockfilename, mode, exclusive=False, blocking=False):
+		self._lockfile = None
+		try:
+			# Create lockfile
+			self._lockfile = open(lockfilename, mode)
+		except EnvironmentError, exception:
+			# This shouldn't happen
+			safe_print("Error - could not open lockfile %s:" % lockfilename,
+					   exception)
+		self._lock = None
+		self._exclusive = exclusive
+		self._blocking = blocking
+		self.lock()
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, etype, value, traceback):
+		self.unlock()
+
+	def __getattr__(self, name):
+		return getattr(self._lockfile, name)
+
+	def __iter__(self):
+		return self._lockfile
+
+	def __nonzero__(self):
+		return bool(self._lock)
+
+	def lock(self):
+		if self._lockfile:
+			try:
+				self._lock = FileLock(self._lockfile, self._exclusive,
+									  self._blocking)
+			except FileLock.LockingError, exception:
+				pass
+			except EnvironmentError, exception:
+				# This shouldn't happen
+				safe_print("Error - could not lock lockfile %s:" %
+						   self._lockfile.name, exception)
+			else:
+				return True
+		return False
+
+	def unlock(self):
+		if self._lock:
+			try:
+				self._lock.unlock()
+			except FileLock.UnlockingError, exception:
+				# This shouldn't happen
+				safe_print("Warning - could not unlock lockfile %s:" %
+						   self._lockfile.name, exception)
+		if self._lockfile:
+			try:
+				self._lockfile.close()
+			except EnvironmentError, exception:
+				# This shouldn't happen
+				safe_print("Error - could not close lockfile %s:" %
+						   self._lockfile.name, exception)
+
+	def write(self, contents):
+		if self._lockfile:
+			try:
+				self._lockfile.write("%s\n" % contents)
+			except EnvironmentError, exception:
+				# This shouldn't happen
+				safe_print("Error - could not write to lockfile %s:" %
+						   self._lockfile.name, exception)
 
 
 class AppSocket(object):
