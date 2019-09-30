@@ -226,10 +226,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 	if module in multi_instance:
 		mode = "a+"
 	else:
-		if os.path.isfile(applockfilename):
-			mode = "r+"
-		else:
-			mode = "w+"
+		mode = "w+"
 	# Use exclusive lock during app startup
 	with AppLock(applockfilename, mode, True) as lock:
 		if not lock:
@@ -279,9 +276,6 @@ def _main(module, name, applockfilename, probe_ports=True):
 						del sys._appsocket
 						break
 					sys._appsocket_port = port
-					if mode[0] != "a":
-						lock.seek(0)
-						lock.truncate()
 					lock.write(port)
 					break
 		atexit.register(lambda: safe_print("Ran application exit handlers"))
