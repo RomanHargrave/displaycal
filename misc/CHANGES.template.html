@@ -48,6 +48,16 @@
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
 
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Profile information (Linux): When using wxPython 3.0 instead of 4.0, clicking the sash would throw an error (using wxPython 3.0 is deprecated).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> macOS: Only automatically re-enable black point compensation if restoring defaults or loading a non-3D-LUT preset.</li>
+							<li><span class="changelog-label minor"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows): Work-around two instances of the profile loader being started after powering on the system if fast startup was enabled in Windows power settings.</li>
+						</ul>
+
+						<p id="changelog-3.8.7">2019-09-22 13:23 (UTC) 3.8.7 </p>
+						<h3>DisplayCAL 3.8.7 </h3>
+
 						<h4>Changed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Automatically enable not using the video card gamma table to apply calibration during characterization measurements if using limited range (16..235). This should mitigate issues with older graphics chipsets and/or macOS versions that use the wrong output range internally when connected to some monitors that expect to receive limited range signals.</li>
@@ -56,7 +66,7 @@
 
 						<h4>Fixed in this release:</h4>
 						<ul>
-							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Don't automatically disable interactive display adjustment when setting calibration tone curve to “As measured” (unintended behavioral change introduced in ${APPNAME} 3.8.6, SVN revision r6194).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Don't automatically disable interactive display adjustment when setting calibration tone curve to “As measured” (unintended behavioral change introduced in DisplayCAL 3.8.6, SVN revision r6194).</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux (GNOME on Wayland): Latency incurred by a large measurement window size was not accounted for, introducing the possibility of measurements failing due to loss of synchronization.</li>
 							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> Linux (GNOME on Wayland): Limited range (16..235) support.</li>
 							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> macOS: Get rid of brief profile installation dialog flicker after installation.</li>
