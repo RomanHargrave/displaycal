@@ -42,7 +42,7 @@ def get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent="r", dire
 		XYZ = cm.adapt(*[cm.specialpow(i / maxval, gamma, slope_limit)] * 3,
 						 whitepoint_source=(1, 1, 1),
 						 whitepoint_destination=XYZwp)
-		XYZ = cm.blend_blackpoint(*XYZ, bp_in=(0, 0, 0), bp_out=XYZbp)
+		XYZ = cm.blend_blackpoint(*XYZ, bp_in=(0, 0, 0), bp_out=XYZbp, wp=XYZwp)
 		idata.append(XYZ)
 
 	# Lookup calibration (target) XYZ through profile (inverse forward)
