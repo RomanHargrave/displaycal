@@ -162,7 +162,10 @@ jsapi.math.color.CIEDCorColorTemp2xyY = function(T, scale) {
 		var illuminant = jsapi.math.color.get_standard_illuminant(T, null, scale);
 		return jsapi.math.color.XYZ2xyY(illuminant[0], illuminant[1], illuminant[2]);
 	}
-	var xD = 4000 <= T && T <= 7000
+	// Lower limit of 2500 is consistent with Argyll xicc/xspect.c daylight_il
+	// Actual usable lower limit lies at roughly 2244
+	// Only accurate down to about 4000
+	var xD = 2500 <= T && T <= 7000
 		? ((-4.607 * Math.pow(10, 9)) / Math.pow(T, 3))
 			+ ((2.9678 * Math.pow(10, 6)) / Math.pow(T, 2))
 			+ ((0.09911 * Math.pow(10, 3)) / T)

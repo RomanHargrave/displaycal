@@ -900,18 +900,24 @@ def CIEDCCT2xyY(T, scale=1.0):
 	if isinstance(T, basestring):
 		# Assume standard illuminant, e.g. "D50"
 		return XYZ2xyY(*get_standard_illuminant(T, scale=scale))
-	if 4000 <= T and T <= 7000:
+	if not (2500 <= T <= 25000):
+		# Lower limit of 2500 is consistent with Argyll xicc/xspect.c daylight_il
+		# Actual usable lower limit lies at roughly 2244
+		return None
+	if T < 4000:
+		# Only accurate down to about 4000
+		warnings.warn("Daylight CCT is only accurate down to about 4000 K",
+					  Warning)
+	if T <= 7000:
 		xD = (((-4.607 * math.pow(10, 9)) / math.pow(T, 3))
 			+ ((2.9678 * math.pow(10, 6)) / math.pow(T, 2))
 			+ ((0.09911 * math.pow(10, 3)) / T)
 			+ 0.244063)
-	elif 7000 < T and T <= 25000:
+	else:
 		xD = (((-2.0064 * math.pow(10, 9)) / math.pow(T, 3))
 			+ ((1.9018 * math.pow(10, 6)) / math.pow(T, 2))
 			+ ((0.24748 * math.pow(10, 3)) / T)
 			+ 0.237040)
-	else:
-		return None
 	yD = -3 * math.pow(xD, 2) + 2.87 * xD - 0.275
 	return xD, yD, scale
 
@@ -1680,7 +1686,7 @@ def get_whitepoint(whitepoint=None, scale=1.0, planckian=False):
 			whitepoint = CIEDCCT2XYZ(cct)
 			if not whitepoint:
 				raise ValueError("Daylight color temperature %i out of range "
-								 "(4000, 25000)" % cct)
+								 "(2500, 25000)" % cct)
 	if scale > 1.0 and whitepoint[1] == 100:
 		scale = 1.0
 	whitepoint = tuple(v * scale for v in whitepoint)
@@ -2264,7 +2270,7 @@ def xy_CCT_delta(x, y, daylight=True, method=2000):
 		locus = None
 		if daylight:
 			# Daylight locus
-			if 4000 <= cct <= 25000:
+			if 2500 <= cct <= 25000:
 				locus = CIEDCCT2XYZ(cct, 100.0)
 		else:
 			# Planckian locus
