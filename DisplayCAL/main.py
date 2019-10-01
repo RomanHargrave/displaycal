@@ -171,8 +171,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 							if appsocket.send("getappname"):
 								safe_print("Sent scripting request, awaiting response...")
 								incoming = appsocket.read().rstrip("\4")
+								safe_print("Got response: %r" % incoming)
 								if incoming:
-									safe_print("Instance name:", incoming)
 									if incoming != pyname:
 										incoming = None
 								else:
@@ -195,11 +195,9 @@ def _main(module, name, applockfilename, probe_ports=True):
 							if appsocket.send(data):
 								safe_print("Sent scripting request, awaiting response...")
 								incoming = appsocket.read().rstrip("\4")
+								safe_print("Got response: %r" % incoming)
 						appsocket.close()
-						if incoming and incoming == "ok":
-							# Successfully sent our request
-							break
-						elif incoming == "" and module == "apply-profiles":
+						if module == "apply-profiles" and incoming in ("", "ok"):
 							# Successfully sent our close request.
 							# Wait for lockfile to be removed, in which case
 							# we know the running instance has successfully
@@ -208,6 +206,9 @@ def _main(module, name, applockfilename, probe_ports=True):
 								sleep(.05)
 							safe_print("Existing instance exited.")
 							incoming = None
+							break
+						elif incoming == "ok":
+							# Successfully sent our request
 							break
 			if incoming is not None:
 				# Other instance running?
