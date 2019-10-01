@@ -193,19 +193,20 @@ class GamutCanvas(LUTCanvas):
 										 colour=wx.Colour(102, 102, 102, 153),
 										 width=1.75))
 		
-		# Add color temp graph from 4000 to 9000K
+		# Add color temp graph
 		if whitepoint == 1:
 			colortemps = []
-			for kelvin in xrange(4000, 25001, 100):
+			for kelvin in xrange(4000, 25001, 40):
 				colortemps.append(convert2coords(*colormath.CIEDCCT2XYZ(kelvin)))
-			polys.append(plot.PolySpline(colortemps,
+			polys.append(plot.PolyLine(colortemps,
 										 colour=wx.Colour(255, 255, 255, 204),
 										 width=1.5))
 		elif whitepoint == 2:
 			colortemps = []
-			for kelvin in xrange(1667, 25001, 100):
+			# Stepsize 38 = endpoint 24999
+			for kelvin in xrange(1667, 25001, 38):
 				colortemps.append(convert2coords(*colormath.planckianCT2XYZ(kelvin)))
-			polys.append(plot.PolySpline(colortemps,
+			polys.append(plot.PolyLine(colortemps,
 										 colour=wx.Colour(255, 255, 255, 204),
 										 width=1.5))
 
