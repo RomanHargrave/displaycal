@@ -414,13 +414,17 @@ ciis = {"scoe": "Scene colorimetry estimates",
 		"rpoc": "Reflection print output colorimetry"}
 
 			
-def PCSLab_dec_to_uInt16(L, a, b):
-	return [v * (655.35, 256, 256)[i] + (0, 32768, 32768)[i]
+def legacy_PCSLab_dec_to_uInt16(L, a, b):
+	# ICCv2 (legacy) PCS L*a*b* encoding
+	# Only used by LUT16Type and namedColor2Type in ICCv4
+	return [v * (652.80, 256, 256)[i] + (0, 32768, 32768)[i]
 			for i, v in enumerate((L, a, b))]
 
 
-def PCSLab_uInt16_to_dec(L_uInt16, a_uInt16, b_uInt16):
-	return [(v - (0, 32768, 32768)[i]) / (65535.0, 32768.0, 32768.0)[i] *
+def legacy_PCSLab_uInt16_to_dec(L_uInt16, a_uInt16, b_uInt16):
+	# ICCv2 (legacy) PCS L*a*b* encoding
+	# Only used by LUT16Type and namedColor2Type in ICCv4
+	return [(v - (0, 32768, 32768)[i]) / (65280.0, 32768.0, 32768.0)[i] *
 			(100, 128, 128)[i]
 			for i, v in enumerate((L_uInt16, a_uInt16, b_uInt16))]
 
@@ -2382,7 +2386,7 @@ def unset_display_profile(profile_name, display_no=0, devicekey=None,
 def _blend_blackpoint(pcs, row, bp_in, bp_out, wp=None, use_bpc=False,
 					  weight=False, D50="D50"):
 	if pcs == "Lab":
-		L, a, b = PCSLab_uInt16_to_dec(*row)
+		L, a, b = legacy_PCSLab_uInt16_to_dec(*row)
 		X, Y, Z = colormath.Lab2XYZ(L, a, b, D50)
 	else:
 		X, Y, Z = [v / 32768.0 for v in row]
@@ -2407,7 +2411,7 @@ def _blend_blackpoint(pcs, row, bp_in, bp_out, wp=None, use_bpc=False,
 	if pcs == "Lab":
 		L, a, b = colormath.XYZ2Lab(X, Y, Z, D50)
 		row = [min(max(0, v), 65535) for v in
-			   PCSLab_dec_to_uInt16(L, a, b)]
+			   legacy_PCSLab_dec_to_uInt16(L, a, b)]
 	else:
 		row = [min(max(0, v) * 32768.0, 65535) for v in (X, Y, Z)]
 	return row
@@ -2991,8 +2995,8 @@ class LUT16Type(ICCProfileTag):
 		else:
 			method = "apply_black_offset"
 		if pcs == "Lab":
-			bp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*bp_row))
-			wp = colormath.Lab2XYZ(*PCSLab_uInt16_to_dec(*wp_row))
+			bp = colormath.Lab2XYZ(*legacy_PCSLab_uInt16_to_dec(*bp_row))
+			wp = colormath.Lab2XYZ(*legacy_PCSLab_uInt16_to_dec(*wp_row))
 		elif not pcs or pcs == "XYZ":
 			if not pcs:
 				warnings.warn("LUT16Type.%s: PCS not specified, "
