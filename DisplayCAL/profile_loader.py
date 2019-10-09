@@ -1095,7 +1095,6 @@ class ProfileLoader(object):
 		self._component_name = None
 		self._app_detection_msg = None
 		self._hwnds_pids = set()
-		self._inaccessible_reg_subkeys = set()
 		self._fixed_profile_associations = set()
 		self.__other_component = None, None, 0
 		self.__apply_profiles = None
@@ -2053,11 +2052,12 @@ class ProfileLoader(object):
 		key_name = r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration"
 		try:
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, key_name)
+			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		except WindowsError, exception:
 			# Windows XP or Win10 >= 1903 if not running elevated
 			if (exception.args[0] != errno.ENOENT or
 				sys.getwindowsversion() >= (6, )):
-				warnings.warn("Registry access failed: %s: %s" %
+				warnings.warn(r"Registry access failed: %s: HKLM\%s" %
 							  (safe_str(exception), key_name), Warning)
 			key = None
 			numsubkeys = 0
@@ -2066,21 +2066,25 @@ class ProfileLoader(object):
 			if (not self._active_displays or
 				self._active_displays != get_active_display_devices("DeviceKey")):
 				has_display_changed = True
-		else:
-			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 		for i in xrange(numsubkeys):
-			subkey_name = _winreg.EnumKey(key, i)
 			try:
+				subkey_name = _winreg.EnumKey(key, i)
 				subkey = _winreg.OpenKey(key, subkey_name)
-			except Exception, exception:
-				if not subkey_name in self._inaccessible_reg_subkeys:
-					safe_print("Warning: Could not open registry key",
-							   r"HKLM\%s\%s:" % (key_name, subkey_name),
-							   exception)
-					self._inaccessible_reg_subkeys.add(subkey_name)
+			except WindowsError, exception:
+				warnings.warn(r"Registry access failed: %s: HKLM\%s\%s" %
+							  (safe_str(exception), key_name, subkey_name),
+							  Warning)
 				continue
-			display = _winreg.QueryValueEx(subkey, "SetId")[0]
-			timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
+			value_name = "SetId"
+			try:
+				display = _winreg.QueryValueEx(subkey, "SetId")[0]
+				value_name = "Timestamp"
+				timestamp = struct.unpack("<Q", _winreg.QueryValueEx(subkey, "Timestamp")[0].rjust(8, '0'))
+			except WindowsError, exception:
+				warnings.warn(r"Registry access failed: %s: %s (HKLM\%s\%s)" %
+							  (safe_str(exception), value_name, key_name,
+							   subkey_name), Warning)
+				continue
 			if timestamp > self._current_timestamp:
 				if display != self._current_display:
 					has_display_changed = True
