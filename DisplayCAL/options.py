@@ -69,8 +69,8 @@ elif "-v0" in sys.argv[1:] or "--verbose=0" in sys.argv[1:]:
 else:
 	verbose = 1
 
-# Colord: Use GOBject introspection
-use_gi = "--use-gi" in sys.argv[1:]
+# Use Colord GObject introspection interface (otherwise, use D-Bus)
+use_colord_gi = "--use-colord-gi" in sys.argv[1:]
 
 # Skip initial instrument/port detection on startup
 force_skip_initial_instrument_detection = ("--force-skip-initial-instrument-detection" in

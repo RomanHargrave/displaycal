@@ -10,11 +10,11 @@ import time
 import warnings
 from time import sleep
 
-from options import use_gi
+from options import use_colord_gi
 
 try:
 	# XXX D-Bus API is more complete currently
-	if not use_gi:
+	if not use_colord_gi:
 		raise ImportError("")
 	from gi.repository import Colord
 	from gi.repository import Gio
