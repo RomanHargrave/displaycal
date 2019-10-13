@@ -2129,8 +2129,8 @@ class BaseInteractiveDialog(wx.Dialog):
 				 name=wx.DialogNameStr, bitmap_margin=None):
 		if not ok:
 			ok = lang.getstr("ok")
-		if log:
-			safe_print(box(msg))
+		self._log = log
+		self._msg = msg
 		if parent:
 			pos = list(pos)
 			i = 0
@@ -2253,6 +2253,8 @@ class BaseInteractiveDialog(wx.Dialog):
 		event.Skip()
 		if not getattr(event, "IsShown", getattr(event, "GetShow", bool))():
 			return
+		if self._log:
+			safe_print(box(self._msg))
 		app = wx.GetApp()
 		# Make sure taskbar button flashes under Windows
 		topwindow = app.GetTopWindow()
