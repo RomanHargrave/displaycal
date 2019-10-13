@@ -8216,9 +8216,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		elif display_name == "madVR":
 			# Connect to madTPG (launch local instance under Windows)
 			def closedlg(self, action=wx.ID_OK):
-				win = self.get_top_window()
-				if isinstance(win, ConfirmDialog):
-					win.EndModal(action)
+				dlg = getattr(self, "setup_patterngenerator_waitdialog", None)
+				if dlg:
+					dlg.EndModal(action)
+				self.setup_patterngenerator_waitdialog = None
 			cancel_event = threading.Event()
 			def connect(self):
 				try:
@@ -8246,6 +8247,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.ok.Hide()
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
+				self.setup_patterngenerator_waitdialog = dlg
 				result = dlg.ShowModal()
 				dlg.Destroy()
 				if result == wx.ID_CANCEL:
@@ -8265,9 +8267,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not hasattr(self.worker.patterngenerator, "conn"):
 				# Wait for connection
 				def closedlg(self):
-					win = self.get_top_window()
-					if isinstance(win, ConfirmDialog):
-						win.EndModal(wx.ID_OK)
+					dlg = getattr(self, "setup_patterngenerator_waitdialog", None)
+					if dlg:
+						dlg.EndModal(wx.ID_OK)
+					self.setup_patterngenerator_waitdialog = None
 				def waitforcon(self):
 					self.worker.patterngenerator.wait()
 					if hasattr(self.worker.patterngenerator, "conn"):
@@ -8285,6 +8288,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.ok.Hide()
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
+				self.setup_patterngenerator_waitdialog = dlg
 				result = dlg.ShowModal()
 				dlg.Destroy()
 				if result == wx.ID_CANCEL:
