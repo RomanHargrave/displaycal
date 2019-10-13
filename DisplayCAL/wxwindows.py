@@ -2242,19 +2242,12 @@ class BaseInteractiveDialog(wx.Dialog):
 		self.pos = pos
 		if show:
 			self.ok.SetDefault()
-			self.ShowModalThenDestroy(parent)
+			self.ShowModalThenDestroy()
 
-	def ShowModalThenDestroy(self, parent=None):
-		if parent:
-			if getattr(parent, "modaldlg", None):
-				wx.CallLater(250, self.ShowModalThenDestroy, parent)
-				return
-			parent.modaldlg = self
-		self.ShowModal()
-		if parent:
-			parent.modaldlg = None
-			del parent.modaldlg
+	def ShowModalThenDestroy(self):
+		result = self.ShowModal()
 		self.Destroy()
+		return result
 
 	def OnShow(self, event):
 		event.Skip()
@@ -2288,7 +2281,7 @@ class BaseInteractiveDialog(wx.Dialog):
 		if hasattr(self, "_disabler"):
 			del self._disabler
 		if self.IsModal():
-			return wx.Dialog.EndModal(self, id)
+			wx.Dialog.EndModal(self, id)
 		else:
 			# Process wx.WindowModalDialogEvent
 			event = wx.WindowModalDialogEvent(wx.wxEVT_WINDOW_MODAL_DIALOG_CLOSED,
@@ -2406,7 +2399,7 @@ class HtmlInfoDialog(BaseInteractiveDialog):
 		self.sizer0.Layout()
 		if show:
 			self.ok.SetDefault()
-			self.ShowModalThenDestroy(parent)
+			self.ShowModalThenDestroy()
 
 
 class HtmlWindow(wx.html.HtmlWindow):

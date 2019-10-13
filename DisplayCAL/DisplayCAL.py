@@ -6483,7 +6483,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.sizer0.SetSizeHints(dlg)
 			dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			dlg.ShowModalThenDestroy(parent)
+			dlg.ShowModalThenDestroy()
 
 	def install_argyll_instrument_conf(self, event=None, uninstall=False):
 		if uninstall:
@@ -9494,7 +9494,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
-			dlg.ShowModalThenDestroy(self)
+			dlg.ShowModalThenDestroy()
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute
