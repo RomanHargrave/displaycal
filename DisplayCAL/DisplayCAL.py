@@ -8226,13 +8226,13 @@ class MainFrame(ReportFrame, BaseFrame):
 					if not self.worker.madtpg_connect():
 						raise Error(lang.getstr("madtpg.launch.failure"))
 				except Exception, exception:
-					action = wx.ID_CANCEL
+					action = wx.ID_CLOSE
 				else:
 					action = wx.ID_OK
 				finally:
 					if not cancel_event.is_set():
 						wx.CallAfter(closedlg, self, action)
-						if action == wx.ID_CANCEL:
+						if action != wx.ID_OK:
 							wx.CallAfter(show_result_dialog, exception, parent)
 			thread = threading.Thread(target=connect,
 									  name="madTPG_Connect",
@@ -8256,6 +8256,9 @@ class MainFrame(ReportFrame, BaseFrame):
 						hasattr(self.worker.madtpg, "shutdown")):
 						self.worker.madtpg.shutdown()
 					return
+				elif result != wx.ID_OK:
+					# Error
+					return False
 		elif (display_name in ("Resolve", "Web @ localhost") or
 			  display_name.startswith("Chromecast ")):
 			logfile = LineCache(3)
@@ -9339,7 +9342,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.profile_path = profile_path
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
-			self.profile_finish_close_handler(dlg.ShowWindowModalBlocking())
+			dlg.ok.Unbind(wx.EVT_BUTTON)
+			dlg.ok.Bind(wx.EVT_BUTTON, self.profile_finish_action_handler)
+			result = dlg.ShowWindowModalBlocking()
+			if result == wx.ID_CANCEL:
+				self.profile_finish_consumer()
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -9356,7 +9363,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not getcfg("dry_run"):
 				setcfg("calibration.file.previous", None)
 	
-	def profile_finish_close_handler(self, result):
+	def profile_finish_action_handler(self, event):
+		result = event.Id
 		lut3d = config.is_virtual_display() or self.install_3dlut
 		# madVR has an API for installing 3D LUTs
 		# Prisma has a HTTP REST interface for uploading and
@@ -9402,6 +9410,9 @@ class MainFrame(ReportFrame, BaseFrame):
 															   lang.getstr("3dlut.install"),
 															   True)
 						if not filename:
+							if filename is None:
+								# User cancelled
+								self.profile_finish_consumer()
 							return
 						producer = self.worker.install_3dlut
 						wargs = (self.lut3d_path, filename)
@@ -9422,7 +9433,6 @@ class MainFrame(ReportFrame, BaseFrame):
 					if result not in (True, None):
 						if isinstance(result, Exception):
 							show_result_dialog(result, parent=self)
-						self.profile_finish_close_handler(self.modaldlg.ShowWindowModalBlocking())
 						return
 				producer = self.worker.install_profile
 				wargs = ()
@@ -9443,7 +9453,6 @@ class MainFrame(ReportFrame, BaseFrame):
 		if isinstance(result, Exception):
 			show_result_dialog(result, parent=self)
 			if not getcfg("dry_run") and not isinstance(result, (Info, Warning)):
-				self.profile_finish_close_handler(self.modaldlg.ShowWindowModalBlocking())
 				return
 		elif result:
 			# Check all profile install methods
@@ -9495,6 +9504,8 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy()
+		if self.modaldlg.IsShown():
+			self.modaldlg.EndModal(wx.ID_CLOSE)
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute
