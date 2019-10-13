@@ -657,7 +657,7 @@ class MadTPG_Net(MadTPGBase):
 		self.broadcast_ports = (37018, 10658, 63922, 53181, 4287)
 		self.clients = OrderedDict()
 		self.debug = 0
-		self.listening = True
+		self.listening = False
 		#self.multicast_ports = (34761, )
 		self.multicast_ports = (51591, )
 		self._event_handlers = {"on_client_added": [],
@@ -1024,19 +1024,21 @@ class MadTPG_Net(MadTPGBase):
 				method3=CM_Fail, timeout3=0, method4=CM_Fail,
 				timeout4=0, parentwindow=None):
 		""" Find or select a madTPG instance on the network and connect to it """
+		listened = self.listening
 		for i in xrange(1, 5):
 			method = locals()["method%i" % i]
 			timeout = locals()["timeout%i" % i] / 1000.0
 			if method in (CM_ConnectToLanInstance, CM_ShowListDialog):
-				if not self._cast_sockets:
+				if not self._cast_sockets and not listened:
 					self.listen()
+					listened = True
 					# Give a little time for the user to acknowledge any
 					# OS firewall prompts
 					sleep(3)
 				if method == CM_ShowListDialog:
 					# TODO: Implement
 					pass
-				else:
+				elif self.listening:
 					# Re-use existing connection
 					if not self._wait_for_client(None, 0.001):
 						# Otherwise, announce ourselves
@@ -1246,7 +1248,7 @@ class MadTPG_Net(MadTPGBase):
 	def _wait_for_client(self, addr=None, timeout=1):
 		""" Wait for (first) madTPG client connection and handshake """
 		start = end = time()
-		while end - start < timeout:
+		while self.listening and end - start < timeout:
 			clients = self.clients.copy()
 			if clients:
 				if addr:
