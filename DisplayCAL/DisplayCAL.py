@@ -9491,9 +9491,6 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.sizer0.Layout()
 			dlg.ok.SetDefault()
 			dlg.ShowModalThenDestroy(self)
-		# Unbind automatic lowering
-		self.Unbind(wx.EVT_ACTIVATE)
-		self.Raise()
 		self.modaldlg.Destroy()
 		# The C part of modaldlg will not be gone instantly, so we must
 		# dereference it before we can delete the python attribute
