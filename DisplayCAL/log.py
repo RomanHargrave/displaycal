@@ -33,6 +33,7 @@ logger = None
 
 
 def showwarning(message, category, filename, lineno, file=None, line=""):
+	# Adapted from _showwarning in Python2.7/lib/logging/__init__.py
 	"""
 	Implementation of showwarnings which redirects to logging, which will first
 	check to see if the file parameter is None. If a file is specified, it will
@@ -52,11 +53,11 @@ def showwarning(message, category, filename, lineno, file=None, line=""):
 		logger = logging.getLogger("py.warnings")
 		if not logger.handlers:
 			if hasattr(sys.stderr, "isatty") and sys.stderr.isatty():
-				handler = logging.StreamHandler()
+				handler = logging.StreamHandler()  # Logs to stderr by default
 			else:
 				handler = logging.NullHandler()
 			logger.addHandler(handler)
-		logger.warning("%s", s.strip())
+		log(s.strip(), fn=logger.warning)
 
 warnings.showwarning = showwarning
 
