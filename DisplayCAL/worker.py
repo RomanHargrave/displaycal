@@ -7559,11 +7559,6 @@ usage: spotread [-options] [logfile]
 					raise Error(lang.getstr("3dlut.install.failure"))
 			except Exception, exception:
 				return exception
-			finally:
-				if hasattr(self, "madtpg"):
-					self.madtpg.quit()
-					if isinstance(self.madtpg, madvr.MadTPG_Net):
-						self.madtpg.shutdown()
 		elif config.get_display_name(None, True) == "Prisma":
 			try:
 				# Use Prisma HTTP REST interface to upload 3D LUT
