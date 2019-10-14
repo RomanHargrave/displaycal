@@ -1597,7 +1597,7 @@ def find_primaries_wp_xy_rgb_space_name(xy, rgb_space_names=None,
 			# Skip in favor of base color space (i.e. NTSC 1953, SMPTE-C and
 			# Rec. 709)
 			continue
-		if get_rgb_space_primaries_wp_xy(rgb_space_name, digits) == xy:
+		if get_rgb_space_primaries_wp_xy(rgb_space_name, digits)[:len(xy)] == xy:
 			return rgb_space_name
 
 

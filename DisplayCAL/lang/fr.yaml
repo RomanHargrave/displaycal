@@ -100,6 +100,8 @@
   Table de correspondance 3D installée avec succès !
 "3dlut.install.unsupported": |-
   L’installation automatique de la table de correspondance 3D n'est pas prise en charge pour le format de table de correspondance 3D indiqué.
+"*3dlut.madvr.colorspace.unsupported": |-
+  The source colorspace %s with the primary chromaticity xy coordinates red %.4f %.4f, green %.4f %.4f, blue %.4f %.4f is not supported by madVR for automatic installation. Please assign the 3D LUT manually in madVR.
 "3dlut.save_as": |-
   Enregistrer la table de correspondance 3D sous…
 "3dlut.settings": |-

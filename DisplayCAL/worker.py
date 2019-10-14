@@ -3947,12 +3947,11 @@ END_DATA
 						# madVR 3D LUT won't work correctly! (collink fills
 						# Input_Primaries from a lookup through the input
 						# profile, which won't work correctly if the input
-						# profile is cLUT-based. Also, we want to use the
-						# *original* input profile whitepoint in case it was
-						# adjusted)
+						# profile is cLUT-based. Also, we want to use a D65
+						# white as madVR can only deal correctly with D65
 						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
 						input_primaries = re.search("Input_Primaries" +
-													"\s+(\d\.\d+)" * 8,
+													"\s+(-?\d\.\d+)" * 8,
 													h3d.parametersData)
 						if input_primaries:
 							components = list(input_primaries.groups())
@@ -3963,6 +3962,7 @@ END_DATA
 								 profile_in.tags.wtpt.Z) = profile_in_wtpt_XYZ
 							rgb_space = profile_in.get_rgb_space()
 							if XYZwp != profile_in_wtpt_XYZ:
+								# Restore custom whitepoint
 								(profile_in.tags.wtpt.X,
 								 profile_in.tags.wtpt.Y,
 								 profile_in.tags.wtpt.Z) = XYZwp
@@ -3970,12 +3970,14 @@ END_DATA
 							for i in xrange(3):
 								for j in xrange(2):
 									components_new.append(rgb_space[2 + i][j])
-							components_new.append(profile_in.tags.wtpt.ir.xyY[0])
-							components_new.append(profile_in.tags.wtpt.ir.xyY[1])
 							for i, component in enumerate(components_new):
 								frac = len(components[i].split(".").pop())
 								numberformat = "%%.%if" % frac
 								components_new[i] = numberformat % round(component, 4)
+							# Use the same D65 xy values as written by madVR
+							# 3D LUT install API
+							components_new.append("0.31273")
+							components_new.append("0.32902")
 							parametersData = list(h3d.parametersData)
 							cstart, cend = input_primaries.span()
 							parametersData[cstart + 16:cend] = " ".join(components_new)
@@ -7532,6 +7534,9 @@ usage: spotread [-options] [logfile]
 					line.split(None, 1)[-1] == "PQ"):
 					smpte2084 = True
 					safe_print(line)
+			if xy and len(xy) >= 6:
+				# Remove white so we match based on primaries only
+				xy[6:] = []
 			rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(xy)
 			if rgb_space_name:
 				safe_print("Input primaries match", rgb_space_name)
@@ -7541,7 +7546,11 @@ usage: spotread [-options] [logfile]
 						   "Rec. 2020": 3,
 						   "DCI P3": 4,
 						   "DCI P3 D65": 4}
-			gamut = gamut_slots.get(rgb_space_name, 0)
+			gamut = gamut_slots.get(rgb_space_name)
+			if gamut is None:
+				return Error(lang.getstr("3dlut.madvr.colorspace.unsupported",
+										 [rgb_space_name or
+										  lang.getstr("unknown")] + xy[:6]))
 			args = [path, True, gamut]
 			if smpte2084:
 				methodname = "load_hdr_3dlut_file"

@@ -100,6 +100,8 @@
   3D LUT erfolgreich installiert!
 "3dlut.install.unsupported": |-
   Das gewählte 3D LUT Format unterstützt keine Installation.
+"3dlut.madvr.colorspace.unsupported": |-
+  Der Quellfarbraum %s mit den xy-Primärfarbkoordinaten Rot %.4f %.4f, Grün %.4f %.4f und Blau %.4f %.4f wird von madVR nicht zur automatischen Installation unterstützt. Bitte weisen Sie die 3D LUT manuell in madVR zu.
 "3dlut.save_as": |-
   3D LUT sichern unter...
 "3dlut.settings": |-

@@ -100,6 +100,8 @@
   3D 查找表 安裝成功！
 "3dlut.install.unsupported": |-
   3D 查找表安裝程序不支援所選取的 3D 查找表格式。
+"*3dlut.madvr.colorspace.unsupported": |-
+  The source colorspace %s with the primary chromaticity xy coordinates red %.4f %.4f, green %.4f %.4f, blue %.4f %.4f is not supported by madVR for automatic installation. Please assign the 3D LUT manually in madVR.
 "3dlut.save_as": |-
   儲存 3D 查找表為...
 "3dlut.settings": |-
