@@ -47,7 +47,7 @@ H3D_HEADER = ("3DLT\x01\x00\x00\x00DisplayCAL\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x06\x00\x00\x00\x06")
 
-H3D_PARAMETERS = ("Input_Primaries %.6f %.6f %.6f %.6f %.6f %.6f %.6f %.6f\r\n"
+H3D_PARAMETERS = ("Input_Primaries %.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f\r\n"
 				  "Input_Range 16 235\r\nOutput_Range 16 235\r\n\x00")
 
 

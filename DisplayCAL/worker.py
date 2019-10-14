@@ -3260,8 +3260,14 @@ END_DATA
 			in_rgb_space = profile_in.get_rgb_space()
 			if in_rgb_space:
 				in_colors = colormath.get_rgb_space_primaries_wp_xy(in_rgb_space)
+				if format == "madVR":
+					# Use a D65 white for the 3D LUT Input_Primaries as
+					# madVR can only deal correctly with D65
+					# Use the same D65 xy values as written by madVR
+					# 3D LUT install API (ASTM E308-01)
+					in_colors[6:] = [0.31273, 0.32902]
 			else:
-				in_colors = None
+				in_colors = []
 
 			if hdr_use_src_gamut:
 				content_rgb_space = colormath.get_rgb_space(content_rgb_space)
@@ -3272,7 +3278,7 @@ END_DATA
 				content_rgb_space[1] = colormath.get_whitepoint("D65")
 				content_colors = colormath.get_rgb_space_primaries_wp_xy(content_rgb_space)
 
-			if hdr_use_src_gamut and content_colors != in_colors:
+			if hdr_use_src_gamut and content_colors[:6] != in_colors[:6]:
 				# Use source gamut to preserve more saturation.
 				# Assume content colorspace (i.e. DCI P3) encoded within
 				# container colorspace (i.e. Rec. 2020)
@@ -3331,7 +3337,7 @@ END_DATA
 												  use_alternate_master_white_clip=use_alternate_master_white_clip,
 												  ambient_cdm2=ambient_cdm2,
 												  content_rgb_space=content_rgb_space,
-												  hdr_chroma_compression=not hdr_use_src_gamut or content_colors != in_colors,
+												  hdr_chroma_compression=not hdr_use_src_gamut or content_colors[:6] != in_colors[:6],
 												  hdr_sat=hdr_sat,
 												  hdr_hue=hdr_hue,
 												  hdr_target_profile=profile_src)
@@ -3358,7 +3364,7 @@ END_DATA
 			profile_in.fileName = os.path.join(cwd, profile_in_basename)
 			profile_in.write()
 
-			if hdr_use_src_gamut and content_colors != in_colors and False:
+			if hdr_use_src_gamut and content_colors[:6] != in_colors[:6] and False:
 				# XXX: Old code - could be removed?
 				# Use source gamut to preserve more saturation.
 				# Assume content colorspace (i.e. DCI P3) encoded within
@@ -3941,57 +3947,36 @@ END_DATA
 						h3d.write_devicelink(filename + ".3dlut" + profile_ext)
 
 			if result and not isinstance(result, Exception):
-				if hdr or XYZwp != profile_in_wtpt_XYZ:
-					if format == "madVR" and is_argyll_lut_format:
-						# We need to update Input_Primaries, otherwise the
-						# madVR 3D LUT won't work correctly! (collink fills
-						# Input_Primaries from a lookup through the input
-						# profile, which won't work correctly if the input
-						# profile is cLUT-based. Also, we want to use a D65
-						# white as madVR can only deal correctly with D65
-						h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
-						input_primaries = re.search("Input_Primaries" +
-													"\s+(-?\d\.\d+)" * 8,
-													h3d.parametersData)
-						if input_primaries:
-							components = list(input_primaries.groups())
-							if XYZwp != profile_in_wtpt_XYZ:
-								# Restore original input profile whitepoint
-								(profile_in.tags.wtpt.X,
-								 profile_in.tags.wtpt.Y,
-								 profile_in.tags.wtpt.Z) = profile_in_wtpt_XYZ
-							rgb_space = profile_in.get_rgb_space()
-							if XYZwp != profile_in_wtpt_XYZ:
-								# Restore custom whitepoint
-								(profile_in.tags.wtpt.X,
-								 profile_in.tags.wtpt.Y,
-								 profile_in.tags.wtpt.Z) = XYZwp
-							components_new = []
-							for i in xrange(3):
-								for j in xrange(2):
-									components_new.append(rgb_space[2 + i][j])
-							for i, component in enumerate(components_new):
-								frac = len(components[i].split(".").pop())
-								numberformat = "%%.%if" % frac
-								components_new[i] = numberformat % round(component, 4)
-							# Use the same D65 xy values as written by madVR
-							# 3D LUT install API
-							components_new.append("0.31273")
-							components_new.append("0.32902")
-							parametersData = list(h3d.parametersData)
-							cstart, cend = input_primaries.span()
-							parametersData[cstart + 16:cend] = " ".join(components_new)
-							if smpte2084:
-								h3d.parametersData = "Input_Transfer_Function PQ\r\n"
-								if hdr_display:
-									h3d.parametersData += "Output_Transfer_Function PQ\r\n"
-							else:
-								h3d.parametersData = ""
-							h3d.parametersData += "".join(parametersData)
-							h3d.write()
+				if format == "madVR" and is_argyll_lut_format:
+					# We need to update Input_Primaries, otherwise the
+					# madVR 3D LUT won't work correctly! (collink fills
+					# Input_Primaries from a lookup through the input
+					# profile, which won't work correctly if the input
+					# profile is cLUT-based. Also, we want to use a D65
+					# white as madVR can only deal correctly with D65
+					h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
+					input_primaries = re.search("Input_Primaries" +
+												"\s+(-?\d\.\d+)" * 8,
+												h3d.parametersData)
+					if input_primaries:
+						parametersData = list(h3d.parametersData)
+						if in_colors:
+							cstart = input_primaries.start(1)
+							cend = input_primaries.end()
+							parametersData[cstart:cend] = " ".join("%.5f" % v
+																   for v in
+																   in_colors)
+						if smpte2084:
+							h3d.parametersData = "Input_Transfer_Function PQ\r\n"
+							if hdr_display:
+								h3d.parametersData += "Output_Transfer_Function PQ\r\n"
 						else:
-							raise Error("madVR 3D LUT doesn't contain "
-										"Input_Primaries")
+							h3d.parametersData = ""
+						h3d.parametersData += "".join(parametersData)
+						h3d.write()
+					else:
+						raise Error("madVR 3D LUT doesn't contain "
+									"Input_Primaries")
 
 				if hdr or not use_collink_bt1886 or XYZwp:
 					if not hdr and XYZwp != profile_in_wtpt_XYZ:
