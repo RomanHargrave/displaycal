@@ -1476,7 +1476,11 @@ class MadTPG_Net(MadTPGBase):
 			if self.debug:
 				safe_print("MadTPG_Net: Expecting reply for command %i %r" %
 						   (commandno, command))
-			return self._expect(conn, commandno, "reply")
+			if command in ("Load3dlut", "LoadHdr3dlut"):
+				timeout = 240  # Should be enough even for 5.5 Mbps 802.11b
+			else:
+				timeout = 3
+			return self._expect(conn, commandno, "reply", timeout=timeout)
 		return True
 
 	@property
