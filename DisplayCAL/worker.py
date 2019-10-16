@@ -7522,6 +7522,10 @@ usage: spotread [-options] [logfile]
 			if xy and len(xy) >= 6:
 				# Remove white so we match based on primaries only
 				xy[6:] = []
+			else:
+				# Should never happen
+				return Error("madVR 3D LUT doesn't contain "
+							 "Input_Primaries")
 			rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(xy)
 			if rgb_space_name:
 				safe_print("Input primaries match", rgb_space_name)
