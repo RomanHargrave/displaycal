@@ -4313,6 +4313,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				result = dlg.ShowModal()
 				dlg.Destroy()
 				if result == wx.ID_OK:
+					self.black_luminance_ctrl.SetSelection(0)
+					self.black_luminance_ctrl_handler(CustomEvent(wx.EVT_CHOICE.evtType[0], 
+																  self.black_luminance_ctrl))
 					setcfg("calibration.black_point_correction.auto", 0)
 					setcfg("calibration.black_point_correction", 0)
 					self.black_point_correction_ctrl.SetValue(0)
