@@ -4303,7 +4303,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		if cal:
 			# Warn about calibration bugs
 			if (getcfg("calibration.black_point_correction.auto") or
-				getcfg("calibration.black_point_correction")):
+				getcfg("calibration.black_point_correction") or
+				getcfg("calibration.black_luminance", False)):
 				dlg = ConfirmDialog(self,
 									msg=lang.getstr("macos.bugs.cal.warning"),
 									ok=lang.getstr("yes"),
