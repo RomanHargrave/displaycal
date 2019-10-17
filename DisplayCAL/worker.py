@@ -3955,24 +3955,14 @@ END_DATA
 					# profile is cLUT-based. Also, we want to use a D65
 					# white as madVR can only deal correctly with D65
 					h3d = madvr.H3DLUT(os.path.join(cwd, name + ".3dlut"))
-					input_primaries = re.search("Input_Primaries" +
-												"\s+(-?\d\.\d+)" * 8,
-												h3d.parametersData)
+					input_primaries = h3d.parametersData.get("Input_Primaries")
 					if input_primaries:
-						parametersData = list(h3d.parametersData)
 						if in_colors:
-							cstart = input_primaries.start(1)
-							cend = input_primaries.end()
-							parametersData[cstart:cend] = " ".join("%.5f" % v
-																   for v in
-																   in_colors)
+							h3d.parametersData["Input_Primaries"] = in_colors
 						if smpte2084:
-							h3d.parametersData = "Input_Transfer_Function PQ\r\n"
+							h3d.parametersData["Input_Transfer_Function"] = "PQ"
 							if hdr_display:
-								h3d.parametersData += "Output_Transfer_Function PQ\r\n"
-						else:
-							h3d.parametersData = ""
-						h3d.parametersData += "".join(parametersData)
+								h3d.parametersData["Output_Transfer_Function"] = "PQ"
 						h3d.write()
 					else:
 						raise Error("madVR 3D LUT doesn't contain "
@@ -7499,48 +7489,24 @@ usage: spotread [-options] [logfile]
 		if getcfg("3dlut.format") == "madVR" and madvr:
 			# Install (load) 3D LUT using madTPG
 			safe_print(path)
-			xy = None
-			smpte2084 = False
 			hdr_to_sdr = not getcfg("3dlut.hdr_display")
 			# Get parameters from actual 3D LUT file
 			h3dlut = madvr.H3DLUT(path)
-			parameters = h3dlut.parametersData.strip('\0').splitlines()
-			for line in parameters:
-				if line.startswith("Input_Primaries"):
-					try:
-						xy = [round(float(v), 4)
-							  for v in line.split(None, 1)[-1].split()]
-					except (IndexError, ValueError), exception:
-						safe_print("Warning: madVR 3D LUT parameters could not "
-								   "be parsed:", line)
-					else:
-						safe_print(line)
-				if (line.startswith("Input_Transfer_Function") and
-					line.split(None, 1)[-1] == "PQ"):
-					smpte2084 = True
-					safe_print(line)
-			if xy and len(xy) >= 6:
-				# Remove white so we match based on primaries only
-				xy[6:] = []
-			else:
+			xy = h3dlut.parametersData.get("Input_Primaries", [])
+			smpte2084 = h3dlut.parametersData.get("Input_Transfer_Function") == "PQ"
+			if len(xy) < 6:
 				# Should never happen
 				return Error("madVR 3D LUT doesn't contain "
 							 "Input_Primaries")
-			rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(xy)
-			if rgb_space_name:
+			slot, rgb_space_name = h3dlut.source_colorspace
+			if slot is not None:
 				safe_print("Input primaries match", rgb_space_name)
-			gamut_slots = {"Rec. 709": 0,
-						   "SMPTE-C": 1,  # SMPTE RP 145 (NTSC)
-						   "PAL/SECAM": 2,
-						   "Rec. 2020": 3,
-						   "DCI P3": 4,
-						   "DCI P3 D65": 4}
-			gamut = gamut_slots.get(rgb_space_name)
-			if gamut is None:
+			else:
 				return Error(lang.getstr("3dlut.madvr.colorspace.unsupported",
 										 [rgb_space_name or
-										  lang.getstr("unknown")] + xy[:6]))
-			args = [path, True, gamut]
+										  lang.getstr("unknown")] +
+										 list(xy[:6])))
+			args = [path, True, slot]
 			if smpte2084:
 				methodname = "load_hdr_3dlut_file"
 				args.append(hdr_to_sdr)
@@ -7551,9 +7517,7 @@ usage: spotread [-options] [logfile]
 				methodname = "load_3dlut_file"
 				lut3d_section = "calibration"
 			safe_print("Installing madVR 3D LUT for %s slot %i (%s)..." %
-					   (lut3d_section, gamut,
-					    dict(zip(gamut_slots.itervalues(),
-								 gamut_slots.iterkeys()))[gamut]))
+					   (lut3d_section, slot, rgb_space_name))
 			try:
 				# Connect & load 3D LUT
 				if (self.madtpg_connect() and

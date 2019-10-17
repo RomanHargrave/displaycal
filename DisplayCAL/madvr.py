@@ -284,9 +284,24 @@ class H3DLUT(object):
 							 self.lutCompressionMethod)
 		self.lutCompressedSize = struct.unpack("<l", data[88:92])[0]
 		self.lutUncompressedSize = struct.unpack("<l", data[92:96])[0]
-		self.parametersData = data[self.parametersFileOffset:
-								   self.parametersFileOffset +
-								   parametersSize]
+		self.parametersData = OrderedDict()
+		for line in data[self.parametersFileOffset:
+						 self.parametersFileOffset +
+						 parametersSize].rstrip(b"\0").splitlines():
+			item = safe_unicode(line).split(None, 1)
+			if len(item) == 2:
+				key, values = item
+				values = values.split()
+				if len(values) == 1:
+					value = values[0]
+				else:
+					for i, value in enumerate(values):
+						if value.isdigit():
+							values[i] = int(value)
+						elif not value.isalpha():
+							values[i] = float(value)
+					value = tuple(values)
+				self.parametersData[key] = value
 		self.LUTDATA = data[self.lutFileOffset:
 							self.lutFileOffset + self.lutCompressedSize]
 		if check_lut_size and len(self.LUTDATA) != self.lutCompressedSize:
@@ -300,6 +315,21 @@ class H3DLUT(object):
 
 	@property
 	def data(self):
+		parametersData = []
+		for key, values in self.parametersData.iteritems():
+			if isinstance(values, basestring):
+				value = values
+			else:
+				values = list(values)
+				for i, value in enumerate(values):
+					if isinstance(value, float):
+						values[i] = "%.5f" % value
+					else:
+						values[i] = "%s" % value
+				value = " ".join(values)
+			parametersData.append(safe_str("%s %s" % (key, value)))
+		parametersData = b"\r\n".join(parametersData) + b"\0"
+		parametersSize = len(parametersData)
 		return "".join((self.signature,
 						struct.pack("<l", self.fileVersion),
 						self.programName.ljust(32, "\0"),
@@ -309,19 +339,31 @@ class H3DLUT(object):
 						struct.pack("<l", self.outputBitDepth),
 						struct.pack("<l", self.outputColorEncoding),
 						struct.pack("<l", self.parametersFileOffset),
-						struct.pack("<l", self.parametersSize),
+						struct.pack("<l", parametersSize),
 						struct.pack("<l", self.lutFileOffset),
 						struct.pack("<l", self.lutCompressionMethod),
 						struct.pack("<l", self.lutCompressedSize),
 						struct.pack("<l", self.lutUncompressedSize),
 						"\0" * (self.parametersFileOffset - 96),
-						self.parametersData,
-						"\0" * (self.lutFileOffset - self.parametersFileOffset - self.parametersSize),
+						parametersData,
+						"\0" * (self.lutFileOffset - self.parametersFileOffset - parametersSize),
 						self.LUTDATA))
 
 	@property
-	def parametersSize(self):
-		return len(self.parametersData)
+	def source_colorspace(self):
+		"""
+		Return the 3D LUT source colorspace slot and name as 2-tuple
+
+		"""
+		# Determine gamut slot only based on primaries (omit whitepoint)
+		xy = list(self.parametersData.get("Input_Primaries", [])[:6])
+		rgb_space_name = colormath.find_primaries_wp_xy_rgb_space_name(xy)
+		return {"Rec. 709": 0,
+				"SMPTE-C": 1,  # SMPTE RP 145 (NTSC)
+				"PAL/SECAM": 2,
+				"Rec. 2020": 3,
+				"DCI P3": 4,
+				"DCI P3 D65": 4}.get(rgb_space_name), rgb_space_name
 
 	def _get_stream(self, stream_or_filename=None, ext=None):
 		if not stream_or_filename:
