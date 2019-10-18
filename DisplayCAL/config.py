@@ -648,8 +648,8 @@ def runtimeconfig(pyfile):
 	attribute).
 	
 	"""
-	global safe_print
-	from log import setup_logging, safe_print
+	global safe_print, safe_log
+	from log import setup_logging, safe_print, safe_log
 	setup_logging(logdir, pyname, pyext, confighome=confighome)
 	if debug:
 		safe_print("[D] pydir:", pydir)
@@ -1691,7 +1691,7 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 						msg = "Reloading"
 					else:
 						msg = "Loading"
-					safe_print(msg, cfgfile)
+					safe_log(msg, cfgfile)
 				# Make user config take precedence
 				break
 	if not cfgfiles:
