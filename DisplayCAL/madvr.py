@@ -47,9 +47,6 @@ H3D_HEADER = ("3DLT\x01\x00\x00\x00DisplayCAL\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			  "\x06\x00\x00\x00\x06")
 
-H3D_PARAMETERS = ("Input_Primaries %.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f\r\n"
-				  "Input_Range 16 235\r\nOutput_Range 16 235\r\n\x00")
-
 
 min_version = (0, 88, 20, 0)
 
@@ -108,16 +105,21 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 
 	filename, ext = os.path.splitext(icc_device_link_filename)
 
-	h3d_params = H3D_PARAMETERS
+	h3d_params = OrderedDict()
 
 	if filename.endswith(".HDR") or hdr == 2:
 		name = os.path.splitext(filename)[0]
-		h3d_params = "Input_Transfer_Function PQ\r\nOutput_Transfer_Function PQ\r\n" + h3d_params
+		h3d_params.update([("Input_Transfer_Function", "PQ"),
+						   ("Output_Transfer_Function", "PQ")])
 	elif filename.endswith(".HDR2SDR") or hdr == 1:
 		name = os.path.splitext(filename)[0]
-		h3d_params = "Input_Transfer_Function PQ\r\n" + h3d_params
+		h3d_params["Input_Transfer_Function"] = "PQ"
 	else:
 		name = filename
+
+	h3d_params.update([("Input_Primaries", []),
+					   ("Input_Range", (16, 235)),
+					   ("Output_Range", (16, 235))])
 
 	if not colorspace:
 		colorspace = os.path.splitext(name)[1]
@@ -142,12 +144,20 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 
 		colorspace = colormath.get_rgb_space_primaries_wp_xy(rgb_space)
 
-	rx, ry, gx, gy, bx, by, wx, wy = colorspace
+	colorspace = list(colorspace)
+
+	# Use a D65 white for the 3D LUT Input_Primaries as
+	# madVR can only deal correctly with D65
+	# Use the same D65 xy values as written by madVR
+	# 3D LUT install API (ASTM E308-01)
+	colorspace[6:] = [0.31273, 0.32902]
+
+	h3d_params["Input_Primaries"] = colorspace
 
 	# Create madVR 3D LUT
 	h3d_stream = StringIO(H3D_HEADER)
 	h3dlut = H3DLUT(h3d_stream, check_lut_size=False)
-	h3dlut.parametersData = h3d_params % (rx, ry, gx, gy, bx, by, wx, wy)
+	h3dlut.parametersData = h3d_params
 	h3dlut.write(filename + ".3dlut")
 	raw = open(filename + ".3dlut", "r+b")
 	raw.seek(h3dlut.lutFileOffset)
@@ -220,8 +230,8 @@ def icc_device_link_to_madvr(icc_device_link_filename, unity=False,
 	safe_print(msg, time() - t, "seconds")
 	if filename.endswith(".HDR"):
 		safe_print("Gamut (rx ry gx gy bx by wx wy):",
-				   "%.4f %.4f %.4f %.4f %.4f %.4f %.4f %.4f" %
-				   (rx, ry, gx, gy, bx, by, wx, wy))
+				   "%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f" %
+				   tuple(colorspace))
 	return True
 
 
