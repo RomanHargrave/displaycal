@@ -14623,10 +14623,11 @@ class MainFrame(ReportFrame, BaseFrame):
 							setcfg("display.number", display_index + 1)
 							self.get_set_display()
 							display_changed = True
-						if config.get_display_name() in ("madVR", "Resolve",
-														 "SII REPEATER"):
+						if (config.is_virtual_display() or
+							config.get_display_name() == "SII REPEATER"):
 							# Don't disable 3D LUT tab when switching from
 							# madVR / Resolve / eeColor
+							setcfg("3dlut.tab.enable", 1)
 							setcfg("3dlut.tab.enable.backup", 1)
 				# Get and set the instrument
 				instrument_id = profile.tags.get("meta",
