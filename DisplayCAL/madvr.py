@@ -1491,7 +1491,7 @@ class MadTPG_Net(MadTPGBase):
 				try:
 					bytes_sent = conn.send(packet)
 				except socket.error, exception:
-					if exception.errno == errno.EAGAIN:
+					if exception.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
 						# Resource temporarily unavailable
 						sleep(0.001)
 						continue
