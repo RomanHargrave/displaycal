@@ -1883,14 +1883,15 @@ def setcfg(name, value, cfg=cfg):
 		cfg.set(ConfigParser.DEFAULTSECT, name, unicode(value).encode("UTF-8"))
 
 
-def setcfg_cond(condition, name, value, set_if_backup_exists=False):
+def setcfg_cond(condition, name, value, set_if_backup_exists=False,
+				restore=True):
 	"""
 	If <condition>, backup configuration option <name> if not yet backed up
 	and set option to <value> if backup did not previously exist or
 	set_if_backup_exists evaluates to True
 	
 	If not <condition> and backed up option <name>, restore option <name> to
-	backed up value and discard backup
+	backed up value and discard backup if <restore> evaluates to True
 	
 	Return whether or not configuration was changed
 
@@ -1903,7 +1904,7 @@ def setcfg_cond(condition, name, value, set_if_backup_exists=False):
 		if backup is None or set_if_backup_exists:
 			setcfg(name, value)
 			changed = True
-	elif backup is not None:
+	elif backup is not None and restore:
 		setcfg(name, getcfg(name + ".backup"))
 		setcfg(name + ".backup", None)
 		changed = True

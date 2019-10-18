@@ -12209,7 +12209,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		# Enable 3D LUT tab for virtual displays & eeColor
 		enable_3dlut_tab = (config.is_virtual_display() or
 							config.get_display_name() == "SII REPEATER")
-		setcfg_cond(enable_3dlut_tab, "3dlut.tab.enable", 1)
+		setcfg_cond(enable_3dlut_tab, "3dlut.tab.enable", 1, True,
+					not getcfg("3dlut.create"))
 		if update_delay_ctrls:
 			override = bool(getcfg("measure.override_min_display_update_delay_ms"))
 			getattr(self,
