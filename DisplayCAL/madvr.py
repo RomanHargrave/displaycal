@@ -1082,9 +1082,10 @@ class MadTPG_Net(MadTPGBase):
 					pass
 				elif self.listening:
 					# Re-use existing connection
-					if not self._wait_for_client(None, 0.001):
-						# Otherwise, announce ourselves
-						self.announce()
+					if self._wait_for_client(None, 0.001):
+						return True
+					# Otherwise, announce ourselves
+					self.announce()
 					if self._wait_for_client(None, timeout - 0.001):
 						return True
 			elif method == CM_ShowIpAddrDialog:
