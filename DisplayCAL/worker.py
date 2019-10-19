@@ -8709,8 +8709,7 @@ usage: spotread [-options] [logfile]
 					# Check if TI3 RGB matches one of our regular grid or
 					# primaries + gray charts
 					check_for_ti1_match = True
-				if (getcfg("profile.type") in ("X", "x", "l") and
-					ti3_RGB_XYZ[(0, 0, 0)] != (0, 0, 0)):
+				if ti3_RGB_XYZ[(0, 0, 0)] != (0, 0, 0):
 					# Note: Setting black chroma to zero fixes smoothness
 					# issues on devices with not very neutral black.
 					bpcorr = getcfg("profile.black_point_correction")
@@ -8857,16 +8856,6 @@ usage: spotread [-options] [logfile]
 			if is_regular_grid or is_primaries_only:
 				# Write profile
 				profile.write(profile_path)
-			if (os.path.isfile(args[-1] + ".ti3.backup") and
-				os.path.isfile(args[-1] + ".ti3")):
-				# Restore backed up TI3
-				os.rename(args[-1] + ".ti3", args[-1] + ".bpc.ti3")
-				os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
-				ti3_file = open(args[-1] + ".ti3", "rb")
-				ti3 = ti3_file.read()
-				ti3_file.close()
-			elif not is_regular_grid and not is_primaries_only:
-				ti3 = None
 			if os.path.isfile(args[-1] + ".chrm"):
 				# Get ChromaticityType tag
 				with open(args[-1] + ".chrm", "rb") as blob:
@@ -9297,6 +9286,16 @@ usage: spotread [-options] [logfile]
 					profile.write()
 				except Exception, exception:
 					return exception
+			if (os.path.isfile(args[-1] + ".ti3.backup") and
+				os.path.isfile(args[-1] + ".ti3")):
+				# Restore backed up TI3
+				os.rename(args[-1] + ".ti3", args[-1] + ".bpc.ti3")
+				os.rename(args[-1] + ".ti3.backup", args[-1] + ".ti3")
+				ti3_file = open(args[-1] + ".ti3", "rb")
+				ti3 = ti3_file.read()
+				ti3_file.close()
+			elif not is_regular_grid and not is_primaries_only:
+				ti3 = None
 			# Always explicitly do profile self check
 			self.exec_cmd(get_argyll_util("profcheck"),
 						  [args[-1] + ".ti3", args[-1] + profile_ext],
