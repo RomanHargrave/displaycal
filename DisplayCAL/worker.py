@@ -10714,11 +10714,19 @@ usage: spotread [-options] [logfile]
 					gamap_args.append("-d" + getcfg("gamap_out_viewcond"))
 			b2a_q = getcfg("profile.quality.b2a")
 			if (getcfg("profile.b2a.hires") and
-				getcfg("profile.type") in ("x", "X") and
+				getcfg("profile.type") in ("l", "x", "X") and
 				not (gamap and gamap_profile)):
-				# Disable B2A creation in colprof, B2A is handled
-				# by A2B inversion code (only for XYZ LUT)
-				b2a_q = "n"
+				rgb = False
+				with open(inoutfile + ".ti3", "rb") as ti3_file:
+					for line in ti3_file:
+						if line.startswith("COLOR_REP"):
+							if "RGB_XYZ" in line:
+								rgb = True
+							break
+				if rgb:
+					# Disable B2A creation in colprof, B2A is handled
+					# by A2B inversion code (only for cLUT profiles)
+					b2a_q = "n"
 			if b2a_q and b2a_q != getcfg("profile.quality"):
 				args.append("-b" + b2a_q)
 		args.append("-C")
