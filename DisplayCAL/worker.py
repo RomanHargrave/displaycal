@@ -6806,7 +6806,16 @@ while 1:
 
 		if clutres == -1:
 			# Auto
-			clutres = 33
+			if pcs == "l" and smooth:
+				# Counteract L*a*b* cLUT accuracy loss when smoothing.
+				# With a res of 45, about the same accuracy as when using
+				# colprof B2A with a res of 33 and no smoothing.
+				# This is not necessary with XYZ cLUT as the accuracy is always
+				# higher than colprof baseline due to restricting the XYZ space
+				# with a matrix.
+				clutres = 45
+			else:
+				clutres = 33
 		step = 1.0 / (clutres - 1.0)
 		do_lookup = True
 		if do_lookup:
