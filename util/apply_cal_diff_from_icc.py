@@ -5,7 +5,7 @@ import os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from DisplayCAL import ICCProfile as ICCP, argyll_cgats, config, colormath as cm
+from DisplayCAL import CGATS, ICCProfile as ICCP, argyll_cgats, config, colormath as cm
 from DisplayCAL.worker import Worker, Xicclu, get_argyll_util, _applycal_bug_workaround
 
 
@@ -154,6 +154,23 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			  -601: "BT601"}.get(gamma, gamma)
 	owtpt = target_whitepoint and ".%s" % target_whitepoint or ""
 
+	filename, ext = os.path.splitext(icc_profile_filename)
+
+	applycal = True
+	if applycal:
+		# Apply cal
+		_applycal_bug_workaround(profile)
+		profile.write(filename + ".tmp" + ext)
+		result = worker.exec_cmd(get_argyll_util("applycal"),
+					 ["-v", filename + ".cal",
+					  filename + ".tmp" + ext, filename + ".calapplied" + ext],
+					 capture_output=False)
+		if not result and not os.path.isfile(out_filename):
+			raise Exception("applycal returned a non-zero exit code")
+		elif isinstance(result, Exception):
+			raise result
+		profile = ICCP.ICCProfile(filename + ".calapplied" + ext)
+
 	if target_whitepoint:
 		try:
 			target_whitepoint = float(target_whitepoint)
@@ -204,9 +221,9 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 		del RGBscaled
 
 	cal = get_cal(256, target_whitepoint, gamma, profile, intent, "if", slope_limit=0)
+	ccal = cal
 	interp = get_interp(cal, False, 32)
 
-	filename, ext = os.path.splitext(icc_profile_filename)
 	out_filename = filename + " %s%s" % (target_whitepoint and "%s " % owtpt[1:] or "", ogamma) + ext
 
 	if target_whitepoint is False:  # NEVER
@@ -216,7 +233,10 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 		# Generate inverse calibration
 
 		# Apply inverse CAL and write output file
-		use_argyll_applycal = False
+		use_argyll_applycal = not filter(lambda tagname: tagname.startswith("A2B") or tagname.startswith("B2A"), profile.tags)
+		print "Use applycal to apply inverse cal?", use_argyll_applycal
+		if not applycal:
+			_applycal_bug_workaround(profile)
 		if not use_argyll_applycal:
 			# Use our own code
 
@@ -242,7 +262,6 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 					interp_i = get_interp(cal, True)
 					entries = profile.tags[tagname].output
 				else:
-					_applycal_bug_workaround(profile)
 					entries = profile.tags[tagname]
 					TRC.append(entries[:])
 					num_entries = len(entries)
@@ -295,11 +314,12 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			for i, (R, G, B) in enumerate(ical):
 				icgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
 			icgats += "END_DATA\n"
-			with open(icc_profile_filename + owtpt + ".%s.inverse.cal" % ogamma, "wb") as f:
+			ical_filename = icc_profile_filename + owtpt + ".%s.inverse.cal" % ogamma
+			with open(ical_filename, "wb") as f:
 				f.write(icgats)
 
 			result = worker.exec_cmd(get_argyll_util("applycal"),
-									 ["-v", icc_profile_filename + ".inverse.cal",
+									 ["-v", ical_filename,
 									  icc_profile_filename, out_filename],
 									 capture_output=False)
 			if not result and not os.path.isfile(out_filename):
@@ -312,33 +332,43 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 	if not skip_cal:
 		# Improve existing calibration with new calibration
 
-		# Get existing calibration CGATS from profile
-		existing_cgats = argyll_cgats.extract_cal_from_profile(out_profile, raise_on_missing_cal=False)
-		if not existing_cgats:
-			existing_cgats = CGATS.CGATS(config.get_data_path("linear.cal"))
+		if applycal:
+			num_cal_entries = len(ccal)
+		else:
+			# Get existing calibration CGATS from profile
+			existing_cgats = argyll_cgats.extract_cal_from_profile(out_profile, raise_on_missing_cal=False)
+			if not existing_cgats:
+				existing_cgats = CGATS.CGATS(config.get_data_path("linear.cal"))
 
-		num_cal_entries = len(existing_cgats[0].DATA)
+			num_cal_entries = len(existing_cgats[0].DATA)
+
 		cal_entry_max = num_cal_entries - 1.0
+
+		if not applycal:
+			# Create CAL diff
+			cgats = cgats_header
+			for i in xrange(num_cal_entries):
+				RGB = [cinterp(i / cal_entry_max) for cinterp in interp]
+				R, G, B = (min(max(v, 0), 1) for v in RGB)
+				cgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
+			cgats += "END_DATA\n"
+			with open(icc_profile_filename + owtpt + ".%s.diff.cal" % ogamma, "wb") as f:
+				f.write(cgats)
+
+			cgats_cal_interp = []
+			for i in xrange(3):
+				cgats_cal_interp.append(cm.Interp([v / cal_entry_max for v in xrange(num_cal_entries)], []))
+			for i, row in existing_cgats[0].DATA.iteritems():
+				for j, channel in enumerate("RGB"):
+					cgats_cal_interp[j].fp.append(row["RGB_" + channel])
 
 		# Create CAL
 		cgats = cgats_header
 		for i in xrange(num_cal_entries):
-			RGB = [cinterp(i / cal_entry_max) for cinterp in interp]
-			R, G, B = (min(max(v, 0), 1) for v in RGB)
-			cgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
-		cgats += "END_DATA\n"
-		with open(icc_profile_filename + owtpt + ".%s.diff.cal" % ogamma, "wb") as f:
-			f.write(cgats)
-
-		cgats = cgats_header
-		cgats_cal_interp = []
-		for i in xrange(3):
-			cgats_cal_interp.append(cm.Interp([v / cal_entry_max for v in xrange(num_cal_entries)], []))
-		for i, row in existing_cgats[0].DATA.iteritems():
-			for j, channel in enumerate("RGB"):
-				cgats_cal_interp[j].fp.append(row["RGB_" + channel])
-		for i in xrange(num_cal_entries):
-			RGB = [cgats_cal_interp[j](cinterp(i / cal_entry_max)) for j, cinterp in enumerate(interp)]
+			if applycal:
+				RGB = [ccal[i][j] for j in xrange(3)]
+			else:
+				RGB = [cgats_cal_interp[j](cinterp(i / cal_entry_max)) for j, cinterp in enumerate(interp)]
 			R, G, B = (min(max(v, 0), 1) for v in RGB)
 			cgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
 		cgats += "END_DATA\n"
@@ -355,7 +385,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 			 out_profile.tags.wtpt.Z) = target_whitepoint
 
 	# Write updated profile
-	out_profile.setDescription(out_profile.getDescription() + " %s%s" % (target_whitepoint and "%s " % owtpt[1:], ogamma))
+	out_profile.setDescription(out_profile.getDescription() + " %s%s" % (target_whitepoint and "%s " % owtpt[1:] or "", ogamma))
 	out_profile.calculateID()
 	out_profile.write()
 
