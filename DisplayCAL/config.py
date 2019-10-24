@@ -1078,7 +1078,7 @@ defaults = {
 	"profile.quality": "h",
 	"profile.quality.b2a": "h",
 	"profile.b2a.hires": 1,
-	"profile.b2a.hires.diagpng": 1,
+	"profile.b2a.hires.diagpng": 2,
 	"profile.b2a.hires.size": -1,
 	"profile.b2a.hires.smooth": 1,
 	"profile.save_path": storage, # directory

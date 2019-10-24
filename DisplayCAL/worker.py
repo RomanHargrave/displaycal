@@ -6983,11 +6983,6 @@ while 1:
 		# Update profile
 		profile.tags["B2A%i" % tableno] = itable
 
-		if smooth:
-			self.smooth_B2A(profile, tableno,
-							getcfg("profile.b2a.hires.diagpng"), filename,
-							logfile) 
-
 		# Set output curves
 		itable.output = [[], [], []]
 		numentries = 256
@@ -6995,6 +6990,11 @@ while 1:
 		for i in xrange(len(itable.output)):
 			for j in xrange(numentries):
 				itable.output[i].append(j / maxval * 65535)
+
+		if smooth:
+			self.smooth_B2A(profile, tableno,
+							getcfg("profile.b2a.hires.diagpng"), filename,
+							logfile) 
 		
 		return True
 

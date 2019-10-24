@@ -3239,9 +3239,9 @@ BEGIN_DATA
 		if diagpng and filename and len(self.output) == 3:
 			# Generate diagnostic images
 			fname, ext = os.path.splitext(filename)
-			if diagpng == 2:
-				self.clut_writepng(fname + ".%s.pre-smoothing.CLUT.png" %
-								   sig)
+			diag_fname = fname + ".%s.post.CLUT.png" % sig
+			if diagpng == 2 and not os.path.isfile(diag_fname):
+				self.clut_writepng(diag_fname)
 
 		if logfile:
 			logfile.write("Smoothing %s...\n" % sig)
@@ -3313,7 +3313,7 @@ BEGIN_DATA
 											   for RGB in row]
 
 		if diagpng and filename and len(self.output) == 3:
-			self.clut_writepng(fname + ".%s.post.CLUT.extrasmooth.png" %
+			self.clut_writepng(fname + ".%s.post.CLUT.smooth.png" %
 							   sig)
 	
 	@Property
