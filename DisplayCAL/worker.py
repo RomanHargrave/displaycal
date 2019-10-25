@@ -2731,7 +2731,8 @@ END_DATA
 			self.madtpg_show_osd(msg, sys.platform == "win32" and
 									  self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd, msg=msg +
-							"\n\n" + self.get_instrument_name(), 
+							"\n\n" + (self._detected_instrument
+									  or self.get_instrument_name()), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
@@ -2965,6 +2966,7 @@ END_DATA
 		self.exec_cmd_returnvalue = None
 		self.tmpfiles = {}
 		self.buffer = []
+		self._detected_instrument = None
 
 	def lut3d_get_filename(self, path=None, include_input_profile=True,
 						   include_ext=True):
@@ -14076,6 +14078,16 @@ BEGIN_DATA
 
 	def _write(self, txt):
 		wx.CallAfter(self.audio_visual_feedback, txt)
+		if getattr(self, "measure_cmd", None):
+			# i1 Pro, Spyders: Instrument Type
+			# i1D3: Product Name
+			# K10: Model
+			# specbos: Identification
+			instrument = re.search(r"(?:Instrument Type|Product Name|Model|"
+								   r"Identificaton):\s+([^\r\n]+)",
+								   txt, re.I)
+			if instrument:
+				self._detected_instrument = instrument.group(1)
 		if re.search("press 1|space when done|patch 1 of ", txt, re.I):
 			# There are some intial measurements which we can't check for
 			# unless -D (debug) is used for Argyll tools
