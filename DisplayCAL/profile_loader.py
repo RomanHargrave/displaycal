@@ -33,6 +33,7 @@ if sys.platform == "win32":
 	import win32event
 	import win32gui
 	import win32process
+	import win32ts
 
 	from colord import device_id_from_edid
 	from colormath import smooth_avg
@@ -1520,6 +1521,8 @@ class ProfileLoader(object):
 						config.setcfg("profile_loader.exceptions",
 									  ";".join(exceptions))
 						self.pl._exceptions = dlg._exceptions
+						self.pl._exception_names = set(os.path.basename(key)
+													   for key in dlg._exceptions)
 						self.pl.writecfg()
 					else:
 						safe_print("Cancelled setting exceptions")
@@ -2821,12 +2824,26 @@ class ProfileLoader(object):
 				# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes):
 				# ~ 6-9ms (1ms to get PIDs)
 				try:
-					pids = get_pids()
-				except WindowsError, exception:
+					processes = win32ts.WTSEnumerateProcesses()
+				except pywintypes.error, exception:
 					safe_print("Enumerating processes failed:", exception)
 				else:
 					skip = False
-					for pid in pids:
+					for (session_id, pid, basename, user_security_id) in processes:
+						name_lower = basename.lower()
+						if name_lower != "madhcctrl.exe":
+							# Add all processes except madVR Home Cinema Control
+							self._hwnds_pids.add((basename, pid))
+						if skip or not user_security_id:
+							# Skip detection if other component already detected
+							# or no user security ID (if no user SID, it's a
+							# system process and we cannot get process filename
+							# due to access restrictions)
+							continue
+						known_app = name_lower in self._known_apps
+						has_exception = name_lower in self._exception_names
+						if not (known_app or has_exception):
+							continue
 						try:
 							filename = get_process_filename(pid)
 						except (WindowsError, pywintypes.error), exception:
@@ -2837,13 +2854,6 @@ class ProfileLoader(object):
 								safe_print("Couldn't get filename of "
 										   "process %s:" % pid, exception)
 							continue
-						basename = os.path.basename(filename)
-						if basename.lower() != "madHcCtrl.exe".lower():
-							# Skip madVR Home Cinema Control
-							self._hwnds_pids.add((filename, pid))
-						if skip:
-							continue
-						known_app = basename.lower() in self._known_apps
 						enabled, reset, path = self._exceptions.get(filename.lower(),
 																	(0, 0, ""))
 						if known_app or enabled:
@@ -3159,6 +3169,7 @@ class ProfileLoader(object):
 
 	def _set_exceptions(self):
 		self._exceptions = {}
+		self._exception_names = set()
 		exceptions = config.getcfg("profile_loader.exceptions").strip()
 		if exceptions:
 			safe_print("Exceptions:")
@@ -3173,7 +3184,9 @@ class ProfileLoader(object):
 				except:
 					exception[i] = 0
 			enabled, reset, path = exception
-			self._exceptions[path.lower()] = (enabled, reset, path)
+			key = path.lower()
+			self._exceptions[key] = (enabled, reset, path)
+			self._exception_names.add(os.path.basename(key))
 			safe_print("Enabled=%s" % bool(enabled),
 					   "Action=%s" % (reset and "Reset" or "Disable"), path)
 
