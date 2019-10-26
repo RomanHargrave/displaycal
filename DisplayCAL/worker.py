@@ -8806,7 +8806,9 @@ usage: spotread [-options] [logfile]
 														  display_manufacturer,
 														  display_name,
 														  self.log)
-				if getcfg("profile.type") == "x":
+				if (getcfg("profile.type") == "x" and
+					(self.argyll_version < [2, 1, 0] or
+					 "-aY" in args)):
 					# Swapped matrix - need to create it ourselves
 					# Start with sRGB
 					sRGB = profile.from_named_rgb_space("sRGB")
