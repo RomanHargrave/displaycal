@@ -1355,6 +1355,8 @@ class ProfileLoader(object):
 
 				def animate(self, enumerate_windows_and_processes=False,
 							idle=False):
+					if not self.pl.monitoring:
+						return
 					if debug > 1:
 						safe_print("[DEBUG] animate(enumerate_windows_and_processes=%s, idle=%s)" %
 								   (enumerate_windows_and_processes, idle))
@@ -1557,6 +1559,8 @@ class ProfileLoader(object):
 
 				def set_visual_state(self, enumerate_windows_and_processes=False,
 									 idle=False):
+					if not self.pl.monitoring:
+						return
 					if debug > 1:
 						safe_print("[DEBUG] set_visual_state(enumerate_windows_and_processes=%s, idle=%s)" %
 								   (enumerate_windows_and_processes, idle))
@@ -1943,11 +1947,11 @@ class ProfileLoader(object):
 			if result != wx.ID_OK:
 				safe_print("Cancelled ProfileLoader.exit(%s)" % event)
 				return
+		self.monitoring = False
 		if self.taskbar_icon:
 			if self.taskbar_icon.menu:
 				self.taskbar_icon.menu.Destroy()
 			self.taskbar_icon.RemoveIcon()
-		self.monitoring = False
 		if self.frame:
 			self.frame.listening = False
 		wx.GetApp().ExitMainLoop()
