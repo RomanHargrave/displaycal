@@ -3170,6 +3170,45 @@ BEGIN_DATA
 						lut[i] = colormath.interp(i, xp, fp)
 				lut.sort()
 				channel[e] = lut.values()
+
+	def clut_row_apply_per_channel(self, fn, *args, **kwargs):
+		"""
+		Apply function to channel values of each cLUT row
+		
+		"""
+		for i, row in enumerate(self.clut):
+			channels = {}
+			for k in xrange(len(row[0])):
+				channels[k] = []
+			for j, column in enumerate(row):
+				for k, v in enumerate(column):
+					channels[k].append(v)
+			for k, values in channels.iteritems():
+				channels[k] = fn(values, *args, **kwargs)
+			for j, column in enumerate(row):
+				for k in xrange(len(channels)):
+					column[k] = channels[k][j]
+
+	def clut_shift_columns(self, order=(1, 2, 0)):
+		"""
+		Shift cLUT columns, altering slowest to fastest changing column
+		
+		"""
+		if len(self.input) != 3:
+			raise NotImplementedError("input channels != 3")
+		steps = len(self.clut[0])
+		clut = []
+		coord = [0, 0, 0]
+		for a in xrange(steps):
+			coord[order[0]] = a
+			for b in xrange(steps):
+				coord[order[1]] = b
+				clut.append([])
+				for c in xrange(steps):
+					coord[order[2]] = c
+					z, y, x = coord
+					clut[-1].append(self.clut[z * steps + y][x])
+		self.clut = clut
 	
 	@Property
 	def matrix():
