@@ -6000,6 +6000,8 @@ class ProgressDialog(wx.Dialog):
 			self.taskbar.set_progress_state(taskbar.TBPF_INDETERMINATE)
 	
 	def stop_timer(self, immediate=True):
+		if self.taskbar:
+			self.taskbar.set_progress_state(taskbar.TBPF_NOPROGRESS)
 		if not self.timer.IsRunning():
 			return
 		self.timer.Stop()
@@ -6014,8 +6016,6 @@ class ProgressDialog(wx.Dialog):
 				self.anim_fadeout()
 		if hasattr(self, "sound"):
 			self.sound_fadeout()
-		if self.taskbar:
-			self.taskbar.set_progress_state(taskbar.TBPF_NOPROGRESS)
 
 
 class FancyProgressDialog(ProgressDialog):
