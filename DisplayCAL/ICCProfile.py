@@ -3260,7 +3260,7 @@ BEGIN_DATA
 		""" Return number of entries per output channel. """
 		return self._m or len(self.output[0])
 
-	def smooth(self, diagpng=2, pcs=None, filename=None, logfile=None):
+	def smooth(self, diagpng=2, pcs=None, filename=None, logfile=None, debug=0):
 		""" Apply extra smoothing to the cLUT """
 		if not pcs:
 			if self.profile:
@@ -3312,43 +3312,56 @@ BEGIN_DATA
 					RGB = [[v] for v in grid[y][x]]
 					# Use either "plus"-shaped or box filter depending if one
 					# channel is fully saturated
-					if clutres - 1 in (i, y, x):
+					if clutres - 1 in (y, x) or 0 in (x, y):
 						# Filter with a "plus" (+) shape
 						if (pcs == "Lab" and
 							i > clutres / 2.0):
 							# Smoothing factor for L*a*b* -> RGB cLUT above 50%
 							smooth = 0.25
 						else:
-							smooth = 1.0
+							smooth = 0.5
 						for j, c in enumerate((x, y)):
-							if c > 0 and c < clutres - 1 and y < clutres - 1:
+							# Omit corners and perpendicular axis
+							if c > 0 and c < clutres - 1:
 								for n in (-1, 1):
-									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k] * smooth +
-													  RGB[k][0] * (1 - smooth))
+									yi, xi = (y, y + n)[j], (x + n, x)[j]
+									if (xi > -1 and yi > -1 and
+										xi < clutres and yi < clutres):
+										RGBn = grid[yi][xi]
+										if debug == 2:
+											if (i < clutres - 1 or
+												grid[y][x] != [16384, 16384, 16384]):
+												grid[y][x] = [32768, 32768, 32768]
+											if x == y == clutres - 2:
+												RGBn[:] = [16384, 16384, 16384]
+										for k in xrange(3):
+											RGB[k].append(RGBn[k] * smooth +
+														  RGB[k][0] * (1 - smooth))
 					else:
 						# Box filter, 3x3
-						# Center pixel weight = 1.0, surround = 0.5
+						# Center pixel weight = 1.0, surround = 2/3, corners = 1/3
+						if debug == 1:
+							grid[y][x] = [32768, 32768, 32768]
 						for j in (0, 1):
 							for n in (-1, 1):
-								yi, xi = (y, y + n)[j], (x + n, x)[j]
-								if (xi > -1 and yi > -1 and
-									xi < clutres and yi < clutres):
-									RGBn = grid[yi][xi]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k] * 0.5 +
-													  RGB[k][0] * 0.5)
-								yi, xi = y - n, (x + n, x - n)[j]
-								if (xi > -1 and yi > -1 and
-									xi < clutres and yi < clutres):
-									RGBn = grid[yi][xi]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k] * 0.5 +
-													  RGB[k][0] * 0.5)
-					grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
+								for yi, xi in [((y, y + n)[j], (x + n, x)[j]),
+											   (y - n, (x + n, x - n)[j])]:
+									if (xi > -1 and yi > -1 and
+										xi < clutres and yi < clutres):
+										RGBn = grid[yi][xi]
+										if yi != y and xi != x:
+											smooth = 1 / 3.0
+										else:
+											smooth = 2 / 3.0
+										if debug == 1 and x == y == clutres - 2:
+											RGBn[:] = (v * (1 - smooth) for v in RGBn)
+										for k in xrange(3):
+											RGB[k].append(RGBn[k] * smooth +
+														  RGB[k][0] * (1 - smooth))
+					if not debug:
+						grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
 			for j, row in enumerate(grid):
-				self.clut[i * clutres + j] = [[v for v in RGB]
+				self.clut[i * clutres + j] = [[min(v, 65535) for v in RGB]
 											   for RGB in row]
 
 		if diagpng and filename and len(self.output) == 3:
