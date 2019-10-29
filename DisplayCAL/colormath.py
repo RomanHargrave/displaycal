@@ -565,7 +565,7 @@ def interp_resize(iterable, new_size, use_numpy=False):
 	return result
 
 
-def smooth_avg(values, passes=1, window=None):
+def smooth_avg(values, passes=1, window=None, protect=None):
 	"""
 	Smooth values (moving average).
 	
@@ -581,18 +581,19 @@ def smooth_avg(values, passes=1, window=None):
 		data = []
 		for j, v in enumerate(values):
 			tmpwindow = window
-			while j > 0 and j < len(values) - 1 and len(tmpwindow) >= 3:
-				tl = (len(tmpwindow) - 1) / 2
-				# print j, tl, tmpwindow
-				if tl > 0 and j - tl >= 0 and j + tl <= len(values) - 1:
-					windowslice = values[j - tl:j + tl + 1]
-					windowsize = 0
-					for k, weight in enumerate(tmpwindow):
-						windowsize += float(weight) * windowslice[k]
-					v = windowsize / sum(tmpwindow)
-					break
-				else:
-					tmpwindow = tmpwindow[1:-1]
+			if not protect or j not in protect:
+				while j > 0 and j < len(values) - 1 and len(tmpwindow) >= 3:
+					tl = (len(tmpwindow) - 1) / 2
+					# print j, tl, tmpwindow
+					if tl > 0 and j - tl >= 0 and j + tl <= len(values) - 1:
+						windowslice = values[j - tl:j + tl + 1]
+						windowsize = 0
+						for k, weight in enumerate(tmpwindow):
+							windowsize += float(weight) * windowslice[k]
+						v = windowsize / sum(tmpwindow)
+						break
+					else:
+						tmpwindow = tmpwindow[1:-1]
 			data.append(v)
 		values = data
 	return data

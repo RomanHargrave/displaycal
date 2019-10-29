@@ -3171,22 +3171,39 @@ BEGIN_DATA
 				lut.sort()
 				channel[e] = lut.values()
 
-	def clut_row_apply_per_channel(self, fn, *args, **kwargs):
+	def clut_row_apply_per_channel(self, indexes, fn, fnargs=(), fnkwargs={},
+								   pcs=None, protect_gray_axis=True):
 		"""
 		Apply function to channel values of each cLUT row
 		
 		"""
+		clutres = len(self.clut[0])
+		block = -1
 		for i, row in enumerate(self.clut):
 			channels = {}
-			for k in xrange(len(row[0])):
+			for k in indexes:
 				channels[k] = []
+			if protect_gray_axis:
+				if i % clutres == 0:
+					block += 1
+					if pcs == "XYZ":
+						gray_col_i = block
+					else:
+						# L*a*b*
+						gray_col_i = clutres // 2
+					gray_row_i = i + gray_col_i
+				fnkwargs["protect"] = None
 			for j, column in enumerate(row):
-				for k, v in enumerate(column):
-					channels[k].append(v)
+				if protect_gray_axis and i == gray_row_i and j == gray_col_i:
+					if debug:
+						safe_print("protect gray", gray_row_i, gray_col_i, column)
+					fnkwargs["protect"] = [j]
+				for k in indexes:
+					channels[k].append(column[k])
 			for k, values in channels.iteritems():
-				channels[k] = fn(values, *args, **kwargs)
+				channels[k] = fn(values, *fnargs, **fnkwargs)
 			for j, column in enumerate(row):
-				for k in xrange(len(channels)):
+				for k in indexes:
 					column[k] = channels[k][j]
 
 	def clut_shift_columns(self, order=(1, 2, 0)):
@@ -3281,6 +3298,8 @@ BEGIN_DATA
 			diag_fname = fname + ".%s.post.CLUT.png" % sig
 			if diagpng == 2 and not os.path.isfile(diag_fname):
 				self.clut_writepng(diag_fname)
+		else:
+			diagpng = 0
 
 		if logfile:
 			logfile.write("Smoothing %s...\n" % sig)
@@ -3364,9 +3383,76 @@ BEGIN_DATA
 				self.clut[i * clutres + j] = [[min(v, 65535) for v in RGB]
 											   for RGB in row]
 
-		if diagpng and filename and len(self.output) == 3:
+		if diagpng and filename:
 			self.clut_writepng(fname + ".%s.post.CLUT.smooth.png" %
 							   sig)
+
+	def smooth2(self, diagpng=2, pcs=None, filename=None, logfile=None,
+				window=(1 / 16.0, 1, 1 / 16.0)):
+		""" Apply extra smoothing to the cLUT """
+		if not pcs:
+			if self.profile:
+				pcs = self.profile.connectionColorSpace
+			else:
+				raise TypeError("PCS not specified")
+
+		if not filename and self.profile:
+			filename = self.profile.fileName
+
+		clutres = len(self.clut[0])
+
+		sig = self.tagSignature or id(self)
+
+		if diagpng and filename and len(self.output) == 3:
+			# Generate diagnostic images
+			fname, ext = os.path.splitext(filename)
+			diag_fname = fname + ".%s.post.CLUT.png" % sig
+			if diagpng == 2 and not os.path.isfile(diag_fname):
+				self.clut_writepng(diag_fname)
+		else:
+			diagpng = 0
+
+		if logfile:
+			logfile.write("Smoothing %s...\n" % sig)
+
+		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+										(), {"window": window}, pcs)
+		if diagpng == 3 and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.pass.BGR.png" % sig)
+
+		self.clut_shift_columns((1, 2, 0))  # BGR -> RBG
+		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+										(), {"window": window}, pcs)
+		if diagpng == 3 and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.pass.RBG.png" % sig)
+
+		self.clut_shift_columns((0, 2, 1))  # RBG -> BRG
+		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+										(), {"window": window}, pcs)
+		if diagpng == 3 and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.pass.BRG.png" % sig)
+
+		self.clut_shift_columns((2, 1, 0))  # BRG -> GRB
+		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+										(), {"window": window}, pcs)
+		if diagpng == 3 and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.pass.GRB.png" % sig)
+
+		self.clut_shift_columns((0, 2, 1))  # GRB -> RGB
+		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+										(), {"window": window}, pcs)
+		if diagpng == 3 and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.pass.RGB.png" % sig)
+
+		self.clut_shift_columns((2, 0, 1))  # RGB -> GBR
+		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+										(), {"window": window}, pcs)
+		if diagpng == 3 and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.pass.GBR.png" % sig)
+
+		self.clut_shift_columns((0, 2, 1))  # GBR -> BGR
+		if diagpng and filename:
+			self.clut_writepng(fname + ".%s.post.CLUT.smooth.png" % sig)
 	
 	@Property
 	def tagData():
