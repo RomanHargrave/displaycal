@@ -3415,42 +3415,26 @@ BEGIN_DATA
 		if logfile:
 			logfile.write("Smoothing %s...\n" % sig)
 
-		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-										(), {"window": window}, pcs)
-		if diagpng == 3 and filename:
-			self.clut_writepng(fname + ".%s.post.CLUT.pass.BGR.png" % sig)
+		for i in xrange(3):
+			state = ("original", "pass", "final")[i]
+			if diagpng != 3 and i != 1:
+				continue
+			for j, (order, channels) in enumerate([(None, "BGR"),
+												   ((1, 2, 0), "RBG"),
+												   ((0, 2, 1), "BRG"),
+												   ((2, 1, 0), "GRB"),
+												   ((0, 2, 1), "RGB"),
+												   ((2, 0, 1), "GBR"),
+												   ((0, 2, 1), "BGR")]):
+				if order:
+					self.clut_shift_columns(order)
+				if i == 1 and j != 6:
+					self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
+													(), {"window": window}, pcs)
+				if diagpng == 3 and filename:
+					self.clut_writepng(fname + ".%s.post.CLUT.%s.%s.png" %
+									   (sig, channels, state))
 
-		self.clut_shift_columns((1, 2, 0))  # BGR -> RBG
-		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-										(), {"window": window}, pcs)
-		if diagpng == 3 and filename:
-			self.clut_writepng(fname + ".%s.post.CLUT.pass.RBG.png" % sig)
-
-		self.clut_shift_columns((0, 2, 1))  # RBG -> BRG
-		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-										(), {"window": window}, pcs)
-		if diagpng == 3 and filename:
-			self.clut_writepng(fname + ".%s.post.CLUT.pass.BRG.png" % sig)
-
-		self.clut_shift_columns((2, 1, 0))  # BRG -> GRB
-		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-										(), {"window": window}, pcs)
-		if diagpng == 3 and filename:
-			self.clut_writepng(fname + ".%s.post.CLUT.pass.GRB.png" % sig)
-
-		self.clut_shift_columns((0, 2, 1))  # GRB -> RGB
-		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-										(), {"window": window}, pcs)
-		if diagpng == 3 and filename:
-			self.clut_writepng(fname + ".%s.post.CLUT.pass.RGB.png" % sig)
-
-		self.clut_shift_columns((2, 0, 1))  # RGB -> GBR
-		self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-										(), {"window": window}, pcs)
-		if diagpng == 3 and filename:
-			self.clut_writepng(fname + ".%s.post.CLUT.pass.GBR.png" % sig)
-
-		self.clut_shift_columns((0, 2, 1))  # GBR -> BGR
 		if diagpng and filename:
 			self.clut_writepng(fname + ".%s.post.CLUT.smooth.png" % sig)
 	
