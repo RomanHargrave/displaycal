@@ -780,7 +780,7 @@ def _applycal_bug_workaround(profile):
 	# or TRC tags with less than 256 entries
 	for channel in "rgb":
 		trc_tag = profile.tags.get(channel + "TRC")
-		if isinstance(trc_tag, ICCP.CurveType) and len(trc_tag) <= 256:
+		if isinstance(trc_tag, ICCP.CurveType) and len(trc_tag) < 256:
 			num_entries = len(trc_tag)
 			if num_entries <= 1:
 				# Single gamma
