@@ -3427,11 +3427,17 @@ BEGIN_DATA
 												   ((2, 0, 1), "GBR"),
 												   ((0, 2, 1), "BGR")]):
 				if order:
+					if debug:
+						safe_print("Shifting order to", channels)
 					self.clut_shift_columns(order)
 				if i == 1 and j != 6:
+					if debug:
+						safe_print("Smoothing")
 					self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
 													(), {"window": window}, pcs)
-				if diagpng == 3 and filename:
+				if diagpng == 3 and filename and j != 6:
+					if debug:
+						safe_print("Writing diagnostic PNG for", state, channels)
 					self.clut_writepng(fname + ".%s.post.CLUT.%s.%s.png" %
 									   (sig, channels, state))
 
