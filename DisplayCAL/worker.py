@@ -7006,7 +7006,7 @@ while 1:
 		itable = profile.tags.get("B2A%i" % tableno)
 		if not itable:
 			return False
-		itable.smooth(diagpng, profile.connectionColorSpace, filename, logfile)
+		itable.smooth2(diagpng, profile.connectionColorSpace, filename, logfile)
 		return True
 	
 	def get_device_id(self, quirk=False, use_serial_32=True,
