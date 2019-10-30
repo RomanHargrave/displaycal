@@ -3172,7 +3172,8 @@ BEGIN_DATA
 				channel[e] = lut.values()
 
 	def clut_row_apply_per_channel(self, indexes, fn, fnargs=(), fnkwargs={},
-								   pcs=None, protect_gray_axis=True):
+								   pcs=None, protect_gray_axis=True,
+								   protect_dark=False):
 		"""
 		Apply function to channel values of each cLUT row
 		
@@ -3183,7 +3184,7 @@ BEGIN_DATA
 			channels = {}
 			for k in indexes:
 				channels[k] = []
-			if protect_gray_axis:
+			if protect_gray_axis or protect_dark:
 				if i % clutres == 0:
 					block += 1
 					if pcs == "XYZ":
@@ -3192,12 +3193,16 @@ BEGIN_DATA
 						# L*a*b*
 						gray_col_i = clutres // 2
 					gray_row_i = i + gray_col_i
-				fnkwargs["protect"] = None
+				fnkwargs["protect"] = []
 			for j, column in enumerate(row):
 				if protect_gray_axis and i == gray_row_i and j == gray_col_i:
 					if debug:
 						safe_print("protect gray", gray_row_i, gray_col_i, column)
-					fnkwargs["protect"] = [j]
+					fnkwargs["protect"].append(j)
+				elif protect_dark and sum(column) < 65535 * .03125 * 3:
+					if debug:
+						safe_print("protect dark", i, j, column)
+					fnkwargs["protect"].append(j)
 				for k in indexes:
 					channels[k].append(column[k])
 			for k, values in channels.iteritems():
