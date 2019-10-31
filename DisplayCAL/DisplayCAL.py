@@ -16042,24 +16042,24 @@ class StartupFrame(start_cls):
 		# Give 20 seconds for display & instrument enumeration to run.
 		# This should be plenty and will kill the subprocess in case it hangs.
 		self.timeout = wx.CallLater(20000, self.worker.abort_subprocess)
-		if sys.platform == "win32":
-			win_ver = util_win.win_ver()
-			win10_1903 = (win_ver[0].startswith("Windows 10") and
-						  win_ver[2] >= "Version 1903")
+		inst_count = len(getcfg("instruments"))
 		delayedresult.startWorker(self.setup_frame, 
 								  self.worker.enumerate_displays_and_ports,
 								  wkwargs={"enumerate_ports":
 										   not force_skip_initial_instrument_detection and
 										   (getcfg("enumerate_ports.auto") or
-											# Always detect instruments under
-											# Win10 1903 or newer when there
-											# are several instruments because
+											# Always detect instruments when
+											# there were several instruments
+											# the last time the app was used.
+											# This is actually required under
+											# Win10 1903 or newer because
 											# ordering is not guaranteed
-											# consistent between reboots
-											(sys.platform == "win32" and
-											 win10_1903 and
-											 len(getcfg("instruments")) > 1) or
-											not getcfg("instruments", raw=True)),
+											# consistent between reboots even
+											# if the connected instruments are
+											# the same.
+											# For consistency sake, do it under
+											# all platforms.
+											not inst_count or inst_count > 1),
 										   "silent": True})
 
 	def setup_frame(self, result):
