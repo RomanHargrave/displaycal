@@ -1065,7 +1065,7 @@ def get_default_headers():
 		# Linux
 		oscpu = "%s; %s" % (' '.join(platform.dist()), platform.machine())
 	return {"User-Agent": "%s/%s (%s)" % (appname, version, oscpu),
-			"Accept-Language": lang.getcode()}
+			"Accept-Language": "%s,*;q=0.5" % lang.getcode()}
 
 
 def http_request(parent=None, domain=None, request_type="GET", path="", 
