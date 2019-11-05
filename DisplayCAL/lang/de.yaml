@@ -111,7 +111,7 @@
 "3dlut.tab.enable": |-
   3D-LUT-Reiter aktivieren
 "3dlut.use_abstract_profile": |-
-  Abstraktes (“Look”) Profil
+  Abstraktes („Look“) Profil
 "CMP_Digital_Target-3.cie": |-
   CMP Digital Target 3
 "CMP_Digital_Target-4.cie": |-
@@ -248,7 +248,7 @@
 "argyll.instrument.drivers.install.failure": |-
   Installation der ArgyllCMS Messgeräte-Treiber fehlgeschlagen.
 "argyll.instrument.drivers.install.restart": |-
-  Zur Installation der ArgyllCMS-Messgeräte-Treiber müssen Sie das Erzwingen der Treibersignatur deaktivieren. Dazu muss ein System-Neustart durchgeführt werden. Wählen Sie auf der Seite, die daraufhin erscheint, die Option „Problembehandlung“, dann „Erweiterte Optionen“, „Starteinstellungen“ und schließlich „Neu starten“. Beim Neustart wählen Sie in den Startoptionen „Erzwingen der Treibersignatur deaktivieren“. Nach dem Neustart wählen Sie den Menüpunkt „ArgyllCMS Messgeräte-Treiber installieren...“ erneut, um die Treiber zu installlieren. Falls die Option „Problembehandlung“ nicht angezeigt wird, befolgen Sie den in der DisplayCAL-Dokumentation im Abschnitt “Messgeräte-Installation unter Windows” beschriebenen alternativen Weg, die Treibersignatur-Prüfung zu deaktivieren.
+  Zur Installation der ArgyllCMS-Messgeräte-Treiber müssen Sie das Erzwingen der Treibersignatur deaktivieren. Dazu muss ein System-Neustart durchgeführt werden. Wählen Sie auf der Seite, die daraufhin erscheint, die Option „Problembehandlung“, dann „Erweiterte Optionen“, „Starteinstellungen“ und schließlich „Neu starten“. Beim Neustart wählen Sie in den Startoptionen „Erzwingen der Treibersignatur deaktivieren“. Nach dem Neustart wählen Sie den Menüpunkt „ArgyllCMS Messgeräte-Treiber installieren...“ erneut, um die Treiber zu installlieren. Falls die Option „Problembehandlung“ nicht angezeigt wird, befolgen Sie den in der DisplayCAL-Dokumentation im Abschnitt „Messgeräte-Installation unter Windows“ beschriebenen alternativen Weg, die Treibersignatur-Prüfung zu deaktivieren.
 "argyll.instrument.drivers.uninstall": |-
   ArgyllCMS Messgeräte-Treiber deinstallieren...
 "argyll.instrument.drivers.uninstall.confirm": |-
@@ -831,13 +831,13 @@
 "dialog.argyll.notfound.choice": |-
   ArgyllCMS, das Farbmanagement-System, das benötigt wird, um DisplayCAL zu verwenden, scheint nicht auf diesem Computer installiert zu sein. Möchten Sie es automatisch herunterladen oder selbst danach suchen?
 "dialog.cal_info": |-
-  Die Kalibrierungsdatei “%s” wird verwendet. Wollen Sie fortfahren?
+  Die Kalibrierungsdatei „%s“ wird verwendet. Wollen Sie fortfahren?
 "dialog.confirm_cancel": |-
   Möchten Sie wirklich abbrechen?
 "dialog.confirm_delete": |-
   Möchten Sie die gewählte(n) Datei(en) wirklich löschen?
 "dialog.confirm_overwrite": |-
-  Die Datei “%s” existiert bereits. Möchten Sie die Datei überschreiben?
+  Die Datei „%s“ existiert bereits. Möchten Sie die Datei überschreiben?
 "dialog.confirm_uninstall": |-
   Möchten Sie die gewählte(n) Datei(en) wirklich deinstallieren?
 "dialog.current_cal_warning": |-
@@ -1076,7 +1076,7 @@
 "error.autostart_user": |-
   Der benutzerspezifische Autostart-Eintrag, um die Kalibrierungskurven bei der Anmeldung zu laden, konnte nicht angelegt werden, weil das benutzerspezifische Autostart-Verzeichnis nicht ermittelt werden konnte.
 "error.cal_extraction": |-
-  Die Kalibrierung konnte nicht aus dem Profil “%s” extrahiert werden.
+  Die Kalibrierung konnte nicht aus dem Profil „%s“ extrahiert werden.
 "error.calibration.file_missing": |-
   Die Kalibrierungsdatei „%s“ fehlt.
 "error.calibration.file_not_created": |-
@@ -2567,7 +2567,7 @@
   ΔC*00 RGB-XYZ: ΔC*00 der Messwerte zum sRGB-Äquivalent der RGB-Werte.
   ΔH*00 RGB-XYZ: ΔH*00 der Messwerte zum sRGB-Äquivalent der RGB-Werte.
 "warning.system_file": |-
-  Warnung: “%s” ist eine Systemdatei. Möchten Sie wirklich fortfahren?
+  Warnung: „%s“ ist eine Systemdatei. Möchten Sie wirklich fortfahren?
 "webserver.waiting": |-
   Webserver wartet unter
 "welcome": |-
