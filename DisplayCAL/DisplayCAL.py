@@ -3635,6 +3635,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		types = {"ccss": lang.getstr("spectral").replace(":", ""),
 				 "ccmx": lang.getstr("matrix").replace(":", "")}
 		add_basename_to_desc_on_mismatch = False
+		malformed_ccxx = []
 		for i, path in enumerate(self.ccmx_cached_paths):
 			filename, ext = os.path.splitext(path)
 			lstr = ext[1:] + "." + os.path.basename(filename)
@@ -3644,9 +3645,11 @@ class MainFrame(ReportFrame, BaseFrame):
 					desc = self.ccmx_cached_descriptors[path]
 			elif os.path.isfile(path):
 				try:
-					cgats = CGATS.CGATS(path)
+					cgats = CGATS.CGATS(path, strict=True)
 				except (IOError, CGATS.CGATSError), exception:
-					safe_print("%s:" % path, exception)
+					safe_print(exception)
+					if isinstance(exception, CGATS.CGATSInvalidError):
+						malformed_ccxx.append(path)
 					continue
 				if desc == lstr:
 					desc = cgats.get_descriptor()
@@ -3701,6 +3704,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if ccxx_path:
 			index = self.ccmx_item_paths.index(ccxx_path) + 2
 		add_cfg_ccxx = False
+		cgats = None
 		if (len(ccmx) > 1 and ccmx[1] and ccmx[1] not in self.ccmx_cached_paths
 			and (not ccmx[1].lower().endswith(".ccss") or
 				 self.worker.instrument_supports_ccss())):
@@ -3711,12 +3715,19 @@ class MainFrame(ReportFrame, BaseFrame):
 					try:
 						ccxx = CGATS.CGATS(path)
 						ccxx[0].DATA.vmaxlen = 5  # Allow margin of error
-						cfg_ccxx = CGATS.CGATS(ccmx[1])
-						cfg_ccxx[0].DATA.vmaxlen = 5  # Allow margin of error
 					except Exception, exception:
 						safe_print(exception)
+						break
+					try:
+						cgats = CGATS.CGATS(ccmx[1], strict=True)
+						vmaxlen = cgats[0].DATA.vmaxlen
+						cgats[0].DATA.vmaxlen = 5  # Allow margin of error
+					except Exception, exception:
+						show_result_dialog(exception, self)
+						add_cfg_ccxx = False
+						ccmx = [""]
 					else:
-						if str(cfg_ccxx) == str(ccxx):
+						if str(cgats) == str(ccxx):
 							# Same, use existing entry
 							safe_print(ccmx[1], "matches", path,
 									   "- using the latter")
@@ -3726,16 +3737,19 @@ class MainFrame(ReportFrame, BaseFrame):
 						else:
 							safe_print(ccmx[1], "does not match", path,
 									   "- using the former")
+						cgats[0].DATA.vmaxlen = vmaxlen
 					break
 		if add_cfg_ccxx:
-			self.ccmx_cached_paths.insert(0, ccmx[1])
 			desc = self.ccmx_cached_descriptors.get(ccmx[1])
 			if not desc and os.path.isfile(ccmx[1]):
 				try:
-					cgats = CGATS.CGATS(ccmx[1])
+					if not cgats:
+						cgats = CGATS.CGATS(ccmx[1], strict=True)
 				except (IOError, CGATS.CGATSError), exception:
-					safe_print("%s:" % ccmx[1], exception)
+					show_result_dialog(exception, self)
+					ccmx = [""]
 				else:
+					self.ccmx_cached_paths.insert(0, ccmx[1])
 					desc = cgats.get_descriptor()
 					# If the description is not the same as the 'sane'
 					# filename, add the filename after the description
@@ -3784,13 +3798,22 @@ class MainFrame(ReportFrame, BaseFrame):
 				ccmx[1] = self.ccmx_mapping.get("%s\0%s" %
 												(self.worker.get_instrument_name(),
 												 display_name), "")
+			cgats = None
+		elif not ccmx[0] and len(ccmx) < 2:
+			current_index = self.colorimeter_correction_matrix_ctrl.Selection
+			if -1 < current_index - 2 < len(self.ccmx_item_paths):
+				index = current_index
+				ccmx.append(self.ccmx_item_paths[current_index - 2])
 		if (self.worker.instrument_can_use_ccxx() and len(ccmx) > 1 and
 			ccmx[1] and ccmx[1] not in self.ccmx_item_paths):
 			# CCMX does not match the currently selected instrument,
 			# don't use
-			ccmx = [""]
+			msg = lang.getstr("colorimeter_correction.instrument_mismatch")
 			if warn_on_mismatch:
-				show_result_dialog(Warn(lang.getstr("colorimeter_correction.instrument_mismatch")), self)
+				show_result_dialog(Warn(msg), self)
+			else:
+				safe_print(msg, ccmx[1])
+			ccmx = [""]
 		elif ccmx[0] == "AUTO":
 			index = 1
 			if ccmx[1]:
@@ -3805,9 +3828,12 @@ class MainFrame(ReportFrame, BaseFrame):
 		if use_ccmx:
 			mode = None
 			try:
-				cgats = CGATS.CGATS(ccmx[1])
+				if not cgats:
+					cgats = CGATS.CGATS(ccmx[1], strict=True)
 			except (IOError, CGATS.CGATSError), exception:
-				safe_print("%s:" % ccmx[1], exception)
+				show_result_dialog(exception, self)
+				ccmx = ["", ""]
+				index = 0
 			else:
 				if getcfg("measurement_mode") != "auto":
 					tech = cgats.queryv1("TECHNOLOGY")
@@ -3852,6 +3878,46 @@ class MainFrame(ReportFrame, BaseFrame):
 		if not observer in self.observers_ab:
 			self.observer_ctrl.Enable()
 		self.show_observer_ctrl()
+		if malformed_ccxx:
+			show_result_dialog(Warn("ArgyllCMS cannot function as long as "
+									"malformed colorimeter correction files "
+									"are present. They will be automatically "
+									"moved to the trash.\n\n" +
+									"\n".join(malformed_ccxx)))
+			msg = None
+			if sys.platform == "darwin":
+				trashcan = lang.getstr("trashcan.mac")
+			elif sys.platform == "win32":
+				trashcan = lang.getstr("trashcan.windows")
+			else:
+				trashcan = lang.getstr("trashcan.linux")
+			try:
+				trash(malformed_ccxx)
+			except TrashAborted, exception:
+				if exception.args[0] == -1:
+					# Trash operation was aborted
+					pass
+			except TrashcanUnavailableError, exception:
+				msg = lang.getstr("error.trashcan_unavailable", trashcan)
+			except Exception, exception:
+				msg = (lang.getstr("error.deletion", trashcan) + "\n\n" +
+					   safe_unicode(exception))
+			else:
+				orphans = filter(lambda orphan: os.path.exists(orphan), 
+								 malformed_ccxx)
+				if orphans:
+					msg = (lang.getstr("error.deletion", trashcan) + "\n\n" + 
+						   "\n".join(orphans))
+			if msg:
+				show_result_dialog(msg)
+			else:
+				# Need to refresh displays & instruments
+				self.Bind(wx.EVT_SHOW, self.check_update_controls_once)
+
+	def check_update_controls_once(self, event):
+		if not hasattr(self, "_check_update_controls_once"):
+			self._check_update_controls_once = True
+			wx.CallAfter(self.check_update_controls, event)
 
 	def update_main_controls(self):
 		""" Enable/disable the calibrate and profile buttons 

@@ -229,7 +229,7 @@ class CGATS(dict):
 	vmaxlen = 0
 	
 	def __init__(self, cgats=None, normalize_fields=False, file_identifier="CTI3",
-				 emit_keywords=False):
+				 emit_keywords=False, strict=False):
 		"""
 		Return a CGATS instance.
 		
@@ -366,6 +366,11 @@ class CGATS(dict):
 								context = context.add_data({key: value.strip('"')})
 							else:
 								context = context.add_data({key: ''})
+						elif strict:
+							raise CGATSInvalidError('Malformed %s file: %s' %
+													(context.parent and
+													 context.type or "CGATS",
+													 self.filename or self))
 				elif values and values[0] not in ('Comment:', 'Date:') and \
 				     len(line) >= 3 and not re.search("[^ 0-9A-Za-z/.]", line):
 					context = self.add_data(line)

@@ -2306,6 +2306,7 @@ class Worker(WorkerBase):
 		if not instrument_name:
 			instrument_name = self.get_instrument_name()
 		return (self.argyll_version >= [1, 3, 0] and
+				bool(instrument_name) and
 				not self.get_instrument_features(instrument_name).get("spectral") and
 				(not check_measurement_mode or
 				 getcfg("measurement_mode") == "auto" or
