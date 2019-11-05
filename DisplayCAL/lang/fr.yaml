@@ -261,6 +261,8 @@
   Échec de la désinstallation des pilote de sondes de mesure d’ArgyllCMS.
 "argyll.instrument.drivers.uninstall.success": |-
   Désinstallation des pilotes de sondes de mesure d’ArgyllCMS terminée.
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   Exécutable ArgyllCMS « %s » introuvable.
 "as_measured": |-
@@ -1104,6 +1106,8 @@
   Le pic de luminance mesuré n’est pas valable. Assurez-vous que le capteur de votre instrument n’est pas bloqué, et enlevé le bouchon de protection (s’il est présent).
 "error.luminance.not_monotonically_increasing": |-
   La réponse mesurée de la luminance est fortement non-monotone (erreur de périphérique ou d’instrument de mesure). Impossible de générer les courbes de réponse tonale.
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   Le fichier de mesure « %s » est invalide.
 "error.measurement.file_missing": |-

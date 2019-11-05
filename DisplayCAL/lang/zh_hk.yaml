@@ -261,6 +261,8 @@
   ArgyllCMS 測量儀器驅動程式解除安裝失敗。
 "argyll.instrument.drivers.uninstall.success": |-
   成功解除安裝 ArgyllCMS 測量儀器驅動程式。
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   未能找到 ArgyllCMS “%s” 的執行檔！
 "as_measured": |-
@@ -1110,6 +1112,8 @@
   測量到的最高亮度為無效的。請確保儀器上的感應器沒有被阻擋，並移除任何保護蓋 (如有)。
 "*error.luminance.not_monotonically_increasing": |-
   The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   測量檔案 “%s” 為無效的。
 "error.measurement.file_missing": |-

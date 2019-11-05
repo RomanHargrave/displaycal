@@ -259,6 +259,8 @@
   Uninstallation of ArgyllCMS instrument drivers failed.
 "*argyll.instrument.drivers.uninstall.success": |-
   Uninstallation of ArgyllCMS instrument drivers complete.
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   El ejecutable de ArgyllCMS “%s” no se encuentra!
 "as_measured": |-
@@ -1101,6 +1103,8 @@
   The measured peak luminance was invalid. Make sure the instrument sensor is not obstructed, and remove any protective cap (if present).
 "*error.luminance.not_monotonically_increasing": |-
   The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   El archivo de medicion „%s“ no es valido.
 "error.measurement.file_missing": |-

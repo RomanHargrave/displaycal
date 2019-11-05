@@ -259,6 +259,8 @@
   卸载 ArgyllCMS 校色仪驱动程序失败。
 "argyll.instrument.drivers.uninstall.success": |-
   卸载 ArgyllCMS 校色仪驱动程序完成。
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   ArgyllCMS “%s” 可执行文件未找到！
 "as_measured": |-
@@ -1104,6 +1106,8 @@
   测量的峰值光亮度无效。确认校色仪传感器未被遮挡，并取下保护盖（如果有）。
 "error.luminance.not_monotonically_increasing": |-
   测量的光亮度响应为极高的非-单调性 (设备或校色仪故障)。不能生成色调响应曲线。
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   测量文件 „%s“ 无效。
 "error.measurement.file_missing": |-

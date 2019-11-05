@@ -259,6 +259,8 @@
   ArgyllCMS 장치드라이버의 설치삭제를 실패했습니다.
 "argyll.instrument.drivers.uninstall.success": |-
   ArgyllCMS 정치드라이버의 설치삭제가 완료되었습니다.
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   ArgyllCMS “%s” 실행파일을 찾을 수 없습니다!
 "as_measured": |-
@@ -1102,6 +1104,8 @@
   The measured peak luminance was invalid. Make sure the instrument sensor is not obstructed, and remove any protective cap (if present).
 "*error.luminance.not_monotonically_increasing": |-
   The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   측정 파일 „%s“ 이 잘못되었습니다.
 "error.measurement.file_missing": |-

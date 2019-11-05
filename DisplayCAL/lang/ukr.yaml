@@ -259,6 +259,8 @@
   Помилка видалення драйверів приладів ArgyllCMS.
 "argyll.instrument.drivers.uninstall.success": |-
   Видалення драйверів приладів ArgyllCMS завершено.
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   Не знайдено виконуваний файл ArgyllCMS “%s” !
 "as_measured": |-
@@ -1102,6 +1104,8 @@
   Виміряна пікова яскравість була недійсною. Переконайтеся, що датчик приладу не зачинений, і видаліть захисний ковпачок (якщо він є).
 "error.luminance.not_monotonically_increasing": |-
   Виміряна реакція яскравості дуже нерівномірна (несправність пристрою або приладу). Неможливо створити криві тональних відповідей.
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   Файл вимірювання „%s“ недійсний.
 "error.measurement.file_missing": |-

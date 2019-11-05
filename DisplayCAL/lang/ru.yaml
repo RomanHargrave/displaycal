@@ -259,6 +259,8 @@
   Ошибка удаления драйверов устройств ArgyllCMS.
 "argyll.instrument.drivers.uninstall.success": |-
   Удаление драйверов устройств ArgyllCMS завершено.
+"*argyll.malformed_ccxx": |-
+  ArgyllCMS cannot function as long as malformed colorimeter correction files are present. They will be automatically moved to the trash.
 "argyll.util.not_found": |-
   Не найдено исполняемый файл ArgyllCMS “%s”!
 "as_measured": |-
@@ -1102,6 +1104,8 @@
   Измеренная максимальная яркость была недействительной. Убедитесь, что датчик прибора не закрыт, и удалите защитный колпачок (если он есть).
 "error.luminance.not_monotonically_increasing": |-
   Измеренная реакция яркости очень неравномерная (неисправность устройства или прибора). Невозможно создать кривые тональных откликов.
+"*error.malformed_cgats": |-
+  The %s file „%s“ is malformed.
 "error.measurement.file_invalid": |-
   Файл измерения „%s“ недействителен.
 "error.measurement.file_missing": |-

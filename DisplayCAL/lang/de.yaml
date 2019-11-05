@@ -259,6 +259,8 @@
   Deinstallation der ArgyllCMS Messgeräte-Treiber fehlgeschlagen.
 "argyll.instrument.drivers.uninstall.success": |-
   Deinstallation der ArgyllCMS Messgeräte-Treiber abgeschlossen.
+"argyll.malformed_ccxx": |-
+  ArgyllCMS funktioniert nicht, solange fehlerhafte Colorimeter-Korrekturen installiert sind. Diese werden automatisch in den Papierkorb verschoben.
 "argyll.util.not_found": |-
   ArgyllCMS „%s“ Hilfsprogramm nicht gefunden!
 "as_measured": |-
@@ -1102,6 +1104,8 @@
   Die gemessene Spitzen-Helligkeit war ungültig. Stellen Sie sicher, dass der Messgeräte-Sensor nicht blockiert ist, und nehmen Sie eine eventuell vorhandene Schutzkappe ab.
 "error.luminance.not_monotonically_increasing": |-
   Das gemessene Luminanzverhalten ist hochgradig nicht-monoton (Anzeige- oder Messgeräte-Störung). Tonwertkurven können nicht erzeugt werden.
+"error.malformed_cgats": |-
+  Die %s-Datei „%s“ ist fehlerhaft.
 "error.measurement.file_invalid": |-
   Die Messwertedatei „%s“ ist ungültig.
 "error.measurement.file_missing": |-
