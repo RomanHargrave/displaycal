@@ -182,6 +182,14 @@ from wx.lib.art import flagart
 from wx.lib.scrolledpanel import ScrolledPanel
 
 
+def show_ccxx_error_dialog(exception, path, parent):
+	msg = safe_unicode(exception)
+	if msg.startswith("Malformed"):
+		fn, ext = os.path.splitext(path)
+		msg = lang.getstr("error.malformed_cgats", (ext[1:].upper(), path))
+	show_result_dialog(msg, parent)
+
+
 def swap_dict_keys_values(mydict):
 	""" Swap dictionary keys and values """
 	return dict([(v, k) for (k, v) in mydict.iteritems()])
@@ -3723,7 +3731,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						vmaxlen = cgats[0].DATA.vmaxlen
 						cgats[0].DATA.vmaxlen = 5  # Allow margin of error
 					except Exception, exception:
-						show_result_dialog(exception, self)
+						show_ccxx_error_dialog(exception, ccmx[1], self)
 						add_cfg_ccxx = False
 						ccmx = [""]
 					else:
@@ -3746,7 +3754,12 @@ class MainFrame(ReportFrame, BaseFrame):
 					if not cgats:
 						cgats = CGATS.CGATS(ccmx[1], strict=True)
 				except (IOError, CGATS.CGATSError), exception:
-					show_result_dialog(exception, self)
+					if (isinstance(exception, CGATS.CGATSInvalidError) and
+						ccmx[1] in
+						self.get_argyll_data_files("lu", "*" +
+												   os.path.splitext(ccmx[1])[1])):
+						malformed_ccxx.append(ccmx[1])
+					show_ccxx_error_dialog(exception, ccmx[1], self)
 					ccmx = [""]
 				else:
 					self.ccmx_cached_paths.insert(0, ccmx[1])
@@ -3831,7 +3844,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				if not cgats:
 					cgats = CGATS.CGATS(ccmx[1], strict=True)
 			except (IOError, CGATS.CGATSError), exception:
-				show_result_dialog(exception, self)
+				show_ccxx_error_dialog(exception, ccmx[1], self)
 				ccmx = ["", ""]
 				index = 0
 			else:
@@ -3879,11 +3892,10 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.observer_ctrl.Enable()
 		self.show_observer_ctrl()
 		if malformed_ccxx:
-			show_result_dialog(Warn("ArgyllCMS cannot function as long as "
-									"malformed colorimeter correction files "
-									"are present. They will be automatically "
-									"moved to the trash.\n\n" +
-									"\n".join(malformed_ccxx)))
+			show_result_dialog(Warn(lang.getstr("argyll.malformed_ccxx") +
+									"\n\n" +
+									"\n".join(malformed_ccxx)),
+									self.Shown and self or None)
 			msg = None
 			if sys.platform == "darwin":
 				trashcan = lang.getstr("trashcan.mac")
@@ -3909,8 +3921,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					msg = (lang.getstr("error.deletion", trashcan) + "\n\n" + 
 						   "\n".join(orphans))
 			if msg:
-				show_result_dialog(msg)
-			else:
+				show_result_dialog(msg, self.Shown and self or None)
+			elif not add_cfg_ccxx:
 				# Need to refresh displays & instruments
 				self.Bind(wx.EVT_SHOW, self.check_update_controls_once)
 
