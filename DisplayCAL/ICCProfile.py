@@ -3173,7 +3173,8 @@ BEGIN_DATA
 
 	def clut_row_apply_per_channel(self, indexes, fn, fnargs=(), fnkwargs={},
 								   pcs=None, protect_gray_axis=True,
-								   protect_dark=False):
+								   protect_dark=False, protect_black=True,
+								   exclude=None):
 		"""
 		Apply function to channel values of each cLUT row
 		
@@ -3184,7 +3185,7 @@ BEGIN_DATA
 			channels = {}
 			for k in indexes:
 				channels[k] = []
-			if protect_gray_axis or protect_dark:
+			if protect_gray_axis or protect_dark or protect_black or exclude:
 				if i % clutres == 0:
 					block += 1
 					if pcs == "XYZ":
@@ -3195,11 +3196,14 @@ BEGIN_DATA
 					gray_row_i = i + gray_col_i
 				fnkwargs["protect"] = []
 			for j, column in enumerate(row):
-				if protect_gray_axis and i == gray_row_i and j == gray_col_i:
+				is_exclude = exclude and (i, j) in exclude
+				if is_exclude or (protect_gray_axis and
+								  (i == gray_row_i and j == gray_col_i)):
 					if debug:
-						safe_print("protect gray", gray_row_i, gray_col_i, column)
+						safe_print("protect", "exclude" if is_exclude else "gray", i, j, column)
 					fnkwargs["protect"].append(j)
-				elif protect_dark and sum(column) < 65535 * .03125 * 3:
+				elif ((protect_dark and sum(column) < 65535 * .03125 * 3) or
+					  (protect_black and min(column) == max(column) == 0)):
 					if debug:
 						safe_print("protect dark", i, j, column)
 					fnkwargs["protect"].append(j)
@@ -3438,8 +3442,26 @@ BEGIN_DATA
 				if i == 1 and j != 6:
 					if debug:
 						safe_print("Smoothing")
+					exclude = None
+					protect_gray_axis = True
+					if pcs == "Lab":
+						if clutres // 2 != clutres / 2.0:
+							# For CIELab cLUT, gray will only
+							# fall on a cLUT point if uneven cLUT res
+							if channels in ("RBG", "RGB"):
+								exclude = [((clutres // 2 + 1) * (clutres - 1), col)
+										   for col in xrange(clutres)]
+								protect_gray_axis = False
+							elif channels in ("BRG", "GRB"):
+								exclude = [((clutres // 2) * clutres + y, clutres // 2)
+										   for y in xrange(clutres)]
+								protect_gray_axis = False
+						else:
+							protect_gray_axis = False
 					self.clut_row_apply_per_channel((0, 1, 2), colormath.smooth_avg,
-													(), {"window": window}, pcs)
+													(), {"window": window}, pcs,
+													protect_gray_axis,
+													exclude=exclude)
 				if diagpng == 3 and filename and j != 6:
 					if debug:
 						safe_print("Writing diagnostic PNG for", state, channels)
