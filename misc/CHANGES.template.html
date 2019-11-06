@@ -8,7 +8,7 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta name="viewport" content="width=device-width" />
-		<title>${APPNAME}—Open Source Display Calibration and Characterization powered by ArgyllCMS</title>
+		<title>${APPNAME}—Display Calibration and Characterization powered by ArgyllCMS</title>
 		<meta name="description" content="${SUMMARY}" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
@@ -23,7 +23,7 @@
 		<div id="header">
 			<div id="title-wrapper">
 				<div id="title">
-					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">${APPNAME_HTML}</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">ArgyllCMS</a></span></h1>
+					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">${APPNAME_HTML}</a><span><span class="dash">—</span>Display Calibration and Characterization powered by <a href="http://argyllcms.com">ArgyllCMS</a></span></h1>
 				</div>
 
 				<div id="site-navigation">
@@ -48,11 +48,40 @@
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
 
+						<h4>Changed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Detect and warn about malformed colorimeter corrections (e.g. from non-official sources). Move them to the trash automatically if they were previously (manually) installed.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Always enumerate instruments on application startup if more than one instrument was detected the last time the application was used (cross-platform consistency).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> When prompting for instrument calibration, display the just now detected instrument name instead of the previously enumerated name (the latter might be stale if you forgot to refresh after changing connected instruments).</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Use a slightly improved smoothing method when creating high resolution PCS to device tables.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Increase automatic PCS to device table resolution for L*a*b* LUT profiles to 45x45x45 if using smoothing.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Only auto-close profile/3D LUT installation dialog after a successful installation.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Don't auto-close madTPG after 3D LUT installation.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> macOS: Warn if a black luminance calibration target is set.</li>
+							<li><span class="changelog-label enhancement"><span>[</span>Enhancement<span>]</span></span> Profile loader (Windows): Use a minimally faster method to check for other running applications.</li>
+						</ul>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> madVR 3D LUT generation: Always write D65 white to 3D LUT input primaries metadata so madVR does not attempt to correct whitepoint differences on its own when using a custom whitepoint (the 3D LUT itself will map the custom whitepoint correctly).</li>
+							<li><span class="changelog-label minor"><span>[</span>Minor<span>]</span></span> madVR 3D LUT installation: Don't attempt to install 3D LUTs with unsupported input primaries metadata (i.e. not Rec. 709, SMPTE C, EBU/PAL, Rec. 2020 or DCI P3) as madVR will overwrite the metadata depending on the 3D LUT install slot. Such 3D LUTs should only be assigned manually in madVR instead.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> When loading settings, always enable the 3D LUT tab if the display is virtual (consistent with display selection behavior).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Also apply black point correction when creating a matrix profile without black point compensation (consistency).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Do not create swapped matrix fallback tags for XYZ LUT profiles when using the alternate forward profiler and the used ArgyllCMS version is &gt;= 2.1 (be consistent with ArgyllCMS).</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> madVR 3D LUT generation: Accept negative values for input primaries metadata.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> madVR 3D LUT installation (Linux, macOS): Send the 3D LUT in chunks and increase the timeout to prevent the installation failing over a slow network (e.g. WiFi).</li>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Profile loader (Windows): Prevent a stale tray icon remaining (until mouse over) in some rare cases after exiting the profile loader.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows 7): Skip incomplete display configuration registry entries.</li>
+						</ul>
+
+						<p id="changelog-3.8.7.1">2019-10-01 20:50 (UTC) 3.8.7.1 </p>
+						<h3>DisplayCAL 3.8.7.1 </h3>
+
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Profile information (Linux): When using wxPython 3.0 instead of 4.0, clicking the sash would throw an error (using wxPython 3.0 is deprecated).</li>
 							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> macOS: Only automatically re-enable black point compensation if restoring defaults or loading a non-3D-LUT preset.</li>
-							<li><span class="changelog-label minor"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows): Work-around two instances of the profile loader being started after powering on the system if fast startup was enabled in Windows power settings.</li>
+							<li><span class="changelog-label trivial"><span>[</span>Trivial<span>]</span></span> Profile loader (Windows): Work-around two instances of the profile loader being started after powering on the system if fast startup was enabled in Windows power settings.</li>
 						</ul>
 
 						<p id="changelog-3.8.7">2019-09-22 13:23 (UTC) 3.8.7 </p>
