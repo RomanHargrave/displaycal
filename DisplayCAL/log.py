@@ -112,8 +112,14 @@ class Log():
 		if fn:
 			for line in msg.split("\n"):
 				fn(line)
-		if "wx" in sys.modules and mp.current_process().name == "MainProcess":
-			from wxaddons import wx
+		# If wxPython itself calls warnings.warn on import, it is not yet fully
+		# imported at the point our showwarning() function calls log().
+		# Check for presence of our wxfixes module and if it has an attribute
+		# "wx", in which case wxPython has finished importing.
+		wxfixes = sys.modules.get("%s.wxfixes" % appname)
+		if (wxfixes and hasattr(wxfixes, "wx") and
+			mp.current_process().name == "MainProcess"):
+			wx = wxfixes.wx
 			if wx.GetApp() is not None and \
 			   hasattr(wx.GetApp(), "frame") and \
 			   hasattr(wx.GetApp().frame, "infoframe"):
