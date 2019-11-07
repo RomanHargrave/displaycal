@@ -3,7 +3,7 @@
 # Make sure __version__.py is current
 ./setup.py
 
-version=`python -c "from DisplayCAL import meta;print meta.version"`
+version=`python2 -c "from DisplayCAL import meta;print meta.version"`
 
 # Source tarball
 # COPYFILE_DISABLE=1   Prevent extended file attributes (metadata) being added

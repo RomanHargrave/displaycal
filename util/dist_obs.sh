@@ -3,8 +3,8 @@
 # Make sure __version__.py is current
 ./setup.py
 
-appname=`python -c "from DisplayCAL import meta;print meta.name"`
-version=`python -c "from DisplayCAL import meta;print meta.version"`
+appname=`python2 -c "from DisplayCAL import meta;print meta.name"`
+version=`python2 -c "from DisplayCAL import meta;print meta.version"`
 
 # OpenSUSE build service
 obs_home_repo=home:fhoech/$appname
