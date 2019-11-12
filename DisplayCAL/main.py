@@ -459,7 +459,7 @@ def _exit(lockfilename, oport):
 		except EnvironmentError, exception:
 			safe_print("Warning - could not read lockfile %s: %r" %
 					   (lockfilename, exception))
-			pids_ports = []
+			filtered_pids_ports = []
 		else:
 			opid = os.getpid()
 
@@ -486,7 +486,7 @@ def _exit(lockfilename, oport):
 						continue
 				if (pid and pid == opid and not port) or (port and port == oport):
 					# Remove ourself
-					del pids_ports[i]
+					pids_ports[i] = ""
 					continue
 				if not port:
 					continue
@@ -495,14 +495,16 @@ def _exit(lockfilename, oport):
 					break
 				if not appsocket.connect("127.0.0.1", port):
 					# Other instance probably died
-					del pids_ports[i]
+					pids_ports[i] = ""
 				appsocket.close()
-			if pids_ports:
+			# Filtered PIDs & ports (only used for checking)
+			filtered_pids_ports = filter(lambda pid_port: pid_port, pids_ports)
+			if filtered_pids_ports:
 				# Write updated lockfile
 				with AppLock(lockfilename, "w", False, True) as lock:
 					lock.write("\n".join(pids_ports))
 		# If no ports of running instances, ok to remove lockfile
-		if not pids_ports:
+		if not filtered_pids_ports:
 			try:
 				os.remove(lockfilename)
 			except EnvironmentError, exception:

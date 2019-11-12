@@ -210,8 +210,7 @@ def get_file_logger(name, level=loglevel, when="midnight", backupCount=5,
 		if os.path.isfile(lockfilepath):
 			try:
 				with open(lockfilepath, "r") as lockfile:
-					instances = len(filter(lambda s: s.strip(),
-										   lockfile.readlines()))
+					instances = len(lockfile.read().splitlines())
 			except:
 				pass
 			else:
