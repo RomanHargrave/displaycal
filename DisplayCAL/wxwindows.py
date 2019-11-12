@@ -1148,9 +1148,17 @@ class BaseFrame(wx.Frame):
 				lockfilename = os.path.join(confighome, "%s.lock" %
 														lockfilebasename)
 				if os.path.isfile(lockfilename):
+					ports = []
 					try:
 						with open(lockfilename) as lockfile:
-							ports = lockfile.read().splitlines()
+							for line in lockfile.read().splitlines():
+								if line:
+									if ":" in line:
+										pid, port = line.split(":", 1)
+									else:
+										port = line
+									if port:
+										ports.append(port)
 					except EnvironmentError, exception:
 						# This shouldn't happen
 						safe_print("Warning - could not read lockfile %s:" %

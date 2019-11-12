@@ -115,7 +115,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 	initcfg(module)
 	host = "127.0.0.1"
 	defaultport = getcfg("app.port")
-	lock2ports = {}
+	lock2pids_ports = {}
 	if probe_ports:
 		# Check for currently used ports
 		lockfilenames = glob.glob(os.path.join(confighome, "*.lock"))
@@ -127,22 +127,39 @@ def _main(module, name, applockfilename, probe_ports=True):
 				else:
 					lockfile = open(lockfilename)
 				if lockfile:
-					if not lockfilename in lock2ports:
-						lock2ports[lockfilename] = []
-					for ln, port in enumerate(lockfile, 1):
-						port = port.strip()
-						if not port:
-							continue
-						try:
-							port = int(port)
-						except ValueError, exception:
-							# This shouldn't happen
-							safe_print("Warning - couldn't parse port as int: %r "
-									   "(%s line %i)" % (port, lockfilename, ln))
-							port = defaultport
+					if not lockfilename in lock2pids_ports:
+						lock2pids_ports[lockfilename] = []
+					for ln, line in enumerate(lockfile.read().splitlines(), 1):
+						if ":" in line:
+							# DisplayCAL >= 3.8.8.2
+							pid, port = line.split(":", 1)
+							if pid:
+								try:
+									pid = int(pid)
+								except ValueError, exception:
+									# This shouldn't happen
+									safe_print("Warning - couldn't parse PID "
+											   "as int: %r (%s line %i)" %
+											   (pid, lockfilename, ln))
+									pid = None
+								else:
+									safe_print("Existing client using PID", pid)
 						else:
-							safe_print("Existing client using port", port)
-							lock2ports[lockfilename].append(port)
+							# DisplayCAL <= 3.8.8.1
+							pid = None
+							port = line
+						if port:
+							try:
+								port = int(port)
+							except ValueError, exception:
+								# This shouldn't happen
+								safe_print("Warning - couldn't parse port as int: %r "
+										   "(%s line %i)" % (port, lockfilename, ln))
+								port = None
+							else:
+								safe_print("Existing client using port", port)
+						if pid or port:
+							lock2pids_ports[lockfilename].append((pid, port))
 				if not lock or lockfilename != applockfilename:
 					lockfile.close()
 			except EnvironmentError, exception:
@@ -153,14 +170,12 @@ def _main(module, name, applockfilename, probe_ports=True):
 			# Check lockfile(s) and probe port(s)
 			incoming = None
 			for lockfilename in [applockfilename]:
-				lock_ports = lock2ports.get(lockfilename)
-				if lock_ports:
-					port = lock_ports[0]
+				incoming = None
+				pids_ports = lock2pids_ports.get(lockfilename)
+				if pids_ports:
+					pid, port = pids_ports[0]
 					appsocket = AppSocket()
-					if not appsocket:
-						break
-					else:
-						incoming = None
+					if appsocket and port:
 						safe_print("Connecting to %s..." % port)
 						if appsocket.connect(host, port):
 							safe_print("Connected to", port)
@@ -177,6 +192,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 										incoming = None
 								else:
 									incoming = False
+						else:
+							incoming = False
 						if incoming:
 							# Send args as UTF-8
 							if module == "apply-profiles":
@@ -196,20 +213,79 @@ def _main(module, name, applockfilename, probe_ports=True):
 								safe_print("Sent scripting request, awaiting response...")
 								incoming = appsocket.read().rstrip("\4")
 								safe_print("Got response: %r" % incoming)
+								if module == "apply-profiles" and incoming == "":
+									# Successfully sent our close request.
+									incoming = "ok"
 						appsocket.close()
-						if module == "apply-profiles" and incoming in ("", "ok"):
-							# Successfully sent our close request.
-							# Wait for lockfile to be removed, in which case
-							# we know the running instance has successfully
-							# closed.
-							while os.path.isfile(lockfilename):
-								sleep(.05)
-							safe_print("Existing instance exited.")
-							incoming = None
-							break
-						elif incoming == "ok":
-							# Successfully sent our request
-							break
+				else:
+					pid = None
+				if not incoming:
+					if sys.platform == "win32":
+						import pywintypes
+						import win32ts
+						try:
+							processes = win32ts.WTSEnumerateProcesses()
+						except pywintypes.error, exception:
+							safe_print("Enumerating processes failed:",
+									   exception)
+						else:
+							appname_lower = appname.lower()
+							exename_lower = exename.lower()
+							appname_lower = appname.lower()
+							if module:
+								appexe = appname_lower + "-" + module + exe_ext
+							else:
+								appexe = appname_lower + exe_ext
+							for (sid, pid2, basename, usid) in processes:
+								basename_lower = basename.lower()
+								if ((pid and pid2 == pid and
+									 basename_lower == exename_lower) or
+									(basename_lower == appexe)):
+									# Other instance running
+									incoming = False
+									if module == "apply-profiles":
+										if not os.path.isfile(lockfilename):
+											# Create dummy lockfile
+											try:
+												with open(lockfilename, "w"):
+													pass
+											except EnvironmentError, exception:
+												safe_print("Warning - could "
+														   "not create dummy "
+														   "lockfile %s: %r" %
+														   (lockfilename,
+														    exception))
+										safe_print("Closing existing instance")
+										startupinfo = sp.STARTUPINFO()
+										startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
+										startupinfo.wShowWindow = sp.SW_HIDE
+										try:
+											p = sp.Popen(["taskkill", "/PID",
+														  "%s" % pid2],
+														 stdin=sp.PIPE,
+														 stdout=sp.PIPE,
+														 stderr=sp.STDOUT,
+														 startupinfo=startupinfo)
+											stdout, stderr = p.communicate()
+										except Exception, exception:
+											safe_print(exception)
+										else:
+											safe_print(stdout)
+											if not p.returncode:
+												# Successfully sent our close
+												# request.
+												incoming = "ok"
+				if incoming == "ok":
+					# Successfully sent our request
+					if module == "apply-profiles":
+						# Wait for lockfile to be removed, in which case
+						# we know the running instance has successfully
+						# closed.
+						while os.path.isfile(lockfilename):
+							sleep(.05)
+						safe_print("Existing instance exited.")
+						incoming = None
+					break
 			if incoming is not None:
 				# Other instance running?
 				import localization as lang
@@ -241,7 +317,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 			sys._appsocket = appsocket.socket
 			if getcfg("app.allow_network_clients"):
 				host = ""
-			used_ports = [port for ports in lock2ports.values() for port in ports]
+			used_ports = [pid_port[1] for pids_ports in lock2pids_ports.values() for pid_port in pids_ports]
 			candidate_ports = [0]
 			if not defaultport in used_ports:
 				candidate_ports.insert(0, defaultport)
@@ -277,8 +353,10 @@ def _main(module, name, applockfilename, probe_ports=True):
 						del sys._appsocket
 						break
 					sys._appsocket_port = port
-					lock.write(port)
 					break
+		if not hasattr(sys, "_appsocket_port"):
+			port = ""
+		lock.write("%s:%s" % (os.getpid(), port))
 		atexit.register(lambda: safe_print("Ran application exit handlers"))
 		from wxwindows import BaseApp
 		BaseApp.register_exitfunc(_exit, applockfilename, port)
@@ -358,10 +436,10 @@ def main(module=None):
 			error = Error(u"Fatal error: " +
 						  safe_unicode(exception))
 		handle_error(error)
-		_exit(applockfilename, getattr(sys, "_appsocket_port", 0))
+		_exit(applockfilename, getattr(sys, "_appsocket_port", ""))
 
 
-def _exit(lockfilename, port):
+def _exit(lockfilename, oport):
 	for process in mp.active_children():
 		if not "Manager" in process.name:
 			safe_print("Terminating zombie process", process.name)
@@ -377,37 +455,54 @@ def _exit(lockfilename, port):
 		# Each lockfile may contain multiple ports of running instances
 		try:
 			with open(lockfilename) as lockfile:
-				ports = lockfile.read().splitlines()
+				pids_ports = lockfile.read().splitlines()
 		except EnvironmentError, exception:
 			safe_print("Warning - could not read lockfile %s: %r" %
 					   (lockfilename, exception))
-			ports = []
+			pids_ports = []
 		else:
-			# Remove ourself
-			if port and str(port) in ports:
-				ports.remove(str(port))
+			opid = os.getpid()
 
 			# Determine if instances still running. If not still running,
 			# remove from list of ports
-			for i in reversed(xrange(len(ports))):
-				try:
-					port = int(ports[i])
-				except ValueError:
-					# This shouldn't happen
+			for i in reversed(xrange(len(pids_ports))):
+				pid_port = pids_ports[i]
+				if ":" in pid_port:
+					pid, port = pid_port.split(":", 1)
+					if pid:
+						try:
+							pid = int(pid)
+						except ValueError:
+							# This shouldn't happen
+							pid = None
+				else:
+					pid = None
+					port = pid_port
+				if port:
+					try:
+						port = int(port)
+					except ValueError:
+						# This shouldn't happen
+						continue
+				if (pid and pid == opid and not port) or (port and port == oport):
+					# Remove ourself
+					del pids_ports[i]
+					continue
+				if not port:
 					continue
 				appsocket = AppSocket()
 				if not appsocket:
 					break
 				if not appsocket.connect("127.0.0.1", port):
 					# Other instance probably died
-					del ports[i]
+					del pids_ports[i]
 				appsocket.close()
-			if ports:
+			if pids_ports:
 				# Write updated lockfile
 				with AppLock(lockfilename, "w", False, True) as lock:
-					lock.write("\n".join(ports))
+					lock.write("\n".join(pids_ports))
 		# If no ports of running instances, ok to remove lockfile
-		if not ports:
+		if not pids_ports:
 			try:
 				os.remove(lockfilename)
 			except EnvironmentError, exception:
