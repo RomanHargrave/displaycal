@@ -132,7 +132,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 						lock2pids_ports[lockfilename] = []
 					for ln, line in enumerate(lockfile.read().splitlines(), 1):
 						if ":" in line:
-							# DisplayCAL >= 3.8.8.2
+							# DisplayCAL >= 3.8.8.2 with localhost blocked
 							pid, port = line.split(":", 1)
 							if pid:
 								try:
@@ -146,7 +146,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 								else:
 									safe_print("Existing client using PID", pid)
 						else:
-							# DisplayCAL <= 3.8.8.1
+							# DisplayCAL <= 3.8.8.1 or localhost ok
 							pid = None
 							port = line
 						if port:
@@ -232,16 +232,15 @@ def _main(module, name, applockfilename, probe_ports=True):
 						else:
 							appname_lower = appname.lower()
 							exename_lower = exename.lower()
-							appname_lower = appname.lower()
 							if module:
-								appexe = appname_lower + "-" + module + exe_ext
+								pyexe_lower = appname_lower + "-" + module + exe_ext
 							else:
-								appexe = appname_lower + exe_ext
+								pyexe_lower = appname_lower + exe_ext
 							for (sid, pid2, basename, usid) in processes:
 								basename_lower = basename.lower()
 								if ((pid and pid2 == pid and
 									 basename_lower == exename_lower) or
-									(basename_lower == appexe)) and pid2 != opid:
+									(basename_lower == pyexe_lower)) and pid2 != opid:
 									# Other instance running
 									incoming = False
 									if module == "apply-profiles":
@@ -256,7 +255,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 														   "lockfile %s: %r" %
 														   (lockfilename,
 														    exception))
-										safe_print("Closing existing instance")
+										safe_print("Closing existing instance"
+												   "with PID", pid2)
 										startupinfo = sp.STARTUPINFO()
 										startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
 										startupinfo.wShowWindow = sp.SW_HIDE
@@ -286,6 +286,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 							sleep(.05)
 						safe_print("Existing instance exited.")
 						incoming = None
+						if lockfilename in lock2pids_ports:
+							del lock2pids_ports[lockfilename]
 					break
 			if incoming is not None:
 				# Other instance running?
@@ -357,7 +359,10 @@ def _main(module, name, applockfilename, probe_ports=True):
 					break
 		if not hasattr(sys, "_appsocket_port"):
 			port = ""
-		lock.write("%s:%s" % (opid, port))
+		if not port:
+			lock.write("%s:%s" % (opid, port))
+		else:
+			lock.write(port)
 		atexit.register(lambda: safe_print("Ran application exit handlers"))
 		from wxwindows import BaseApp
 		BaseApp.register_exitfunc(_exit, applockfilename, port)
@@ -469,6 +474,7 @@ def _exit(lockfilename, oport):
 			for i in reversed(xrange(len(pids_ports))):
 				pid_port = pids_ports[i]
 				if ":" in pid_port:
+					# DisplayCAL >= 3.8.8.2 with localhost blocked
 					pid, port = pid_port.split(":", 1)
 					if pid:
 						try:
@@ -477,6 +483,7 @@ def _exit(lockfilename, oport):
 							# This shouldn't happen
 							pid = None
 				else:
+					# DisplayCAL <= 3.8.8.1 or localhost ok
 					pid = None
 					port = pid_port
 				if port:
