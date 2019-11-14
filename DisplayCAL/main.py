@@ -116,6 +116,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 	host = "127.0.0.1"
 	defaultport = getcfg("app.port")
 	lock2pids_ports = {}
+	opid = os.getpid()
 	if probe_ports:
 		# Check for currently used ports
 		lockfilenames = glob.glob(os.path.join(confighome, "*.lock"))
@@ -240,7 +241,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 								basename_lower = basename.lower()
 								if ((pid and pid2 == pid and
 									 basename_lower == exename_lower) or
-									(basename_lower == appexe)):
+									(basename_lower == appexe)) and pid2 != opid:
 									# Other instance running
 									incoming = False
 									if module == "apply-profiles":
@@ -356,7 +357,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 					break
 		if not hasattr(sys, "_appsocket_port"):
 			port = ""
-		lock.write("%s:%s" % (os.getpid(), port))
+		lock.write("%s:%s" % (opid, port))
 		atexit.register(lambda: safe_print("Ran application exit handlers"))
 		from wxwindows import BaseApp
 		BaseApp.register_exitfunc(_exit, applockfilename, port)
