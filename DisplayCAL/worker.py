@@ -2733,7 +2733,13 @@ END_DATA
 			self.madtpg_show_osd(msg, sys.platform == "win32" and
 									  self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd, msg=msg +
-							"\n\n" + (self._detected_instrument
+							"\n\n" + (self._detected_instrument and
+									  "%s%s" % (self._detected_instrument,
+												self._detected_instrument_serial and
+												" (%s %s)" %
+												(lang.getstr("serial_number"),
+												 self._detected_instrument_serial) or
+												"")
 									  or self.get_instrument_name()), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
@@ -2969,6 +2975,7 @@ END_DATA
 		self.tmpfiles = {}
 		self.buffer = []
 		self._detected_instrument = None
+		self._detected_instrument_serial = None
 
 	def lut3d_get_filename(self, path=None, include_input_profile=True,
 						   include_ext=True):
@@ -14092,6 +14099,10 @@ BEGIN_DATA
 								   txt, re.I)
 			if instrument:
 				self._detected_instrument = instrument.group(1)
+			serial = re.search(r"(?:Serial Number):\s+([^\r\n]+)",
+								   txt, re.I)
+			if serial:
+				self._detected_instrument_serial = serial.group(1)
 		if re.search("press 1|space when done|patch 1 of ", txt, re.I):
 			# There are some intial measurements which we can't check for
 			# unless -D (debug) is used for Argyll tools

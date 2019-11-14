@@ -1105,7 +1105,7 @@
 "error.luminance.not_monotonically_increasing": |-
   Виміряна реакція яскравості дуже нерівномірна (несправність пристрою або приладу). Неможливо створити криві тональних відповідей.
 "*error.malformed_cgats": |-
-  The %s file „%s“ is malformed.
+  The %s file “%s” is malformed.
 "error.measurement.file_invalid": |-
   Файл вимірювання „%s“ недійсний.
 "error.measurement.file_missing": |-
@@ -2145,6 +2145,8 @@
   Вибрати все
 "self_check_report": |-
   Звіт самоперевірки...
+"serial_number": |-
+  Cерійний номер
 "set_as_default": |-
   Встановити за замовчуванням
 "setting.keep_current": |-

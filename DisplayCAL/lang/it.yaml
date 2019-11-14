@@ -238,7 +238,7 @@
 "*argyll.instrument.configuration_files.uninstall.success": |-
   Uninstallation of ArgyllCMS instrument configuration files complete.
 "*argyll.instrument.driver.missing": |-
-  The ArgyllCMS driver for your measurement device seems not to be installed or installed incorrectly. Please check if your measurement device is shown in Windows' Device Manager under „Argyll LibUSB-1.0A devices“ and (re-)install the driver if necessary. Please read the documentation for installation instructions.
+  The ArgyllCMS driver for your measurement device seems not to be installed or installed incorrectly. Please check if your measurement device is shown in Windows' Device Manager under “Argyll LibUSB-1.0A devices” and (re-)install the driver if necessary. Please read the documentation for installation instructions.
 "*argyll.instrument.drivers.install": |-
   Install ArgyllCMS instrument drivers...
 "*argyll.instrument.drivers.install.confirm": |-
@@ -1105,9 +1105,9 @@
 "*error.luminance.not_monotonically_increasing": |-
   The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
 "*error.malformed_cgats": |-
-  The %s file „%s“ is malformed.
+  The %s file “%s” is malformed.
 "*error.measurement.file_invalid": |-
-  The measurement file „%s“ is invalid.
+  The measurement file “%s” is invalid.
 "error.measurement.file_missing": |-
   Manca il file delle misure “%s”.
 "error.measurement.file_not_created": |-
@@ -1135,7 +1135,7 @@
 "error.testchart.missing": |-
   Manca il file di testchart “%s”.
 "*error.testchart.missing_fields": |-
-  The testchart file „%s“ does not contain required fields: %s
+  The testchart file “%s” does not contain required fields: %s
 "error.testchart.read": |-
   Impossibile leggere il file di  testchart “%s”.
 "error.tmp_creation": |-
@@ -1581,7 +1581,7 @@
 "measure.darken_background": |-
   Sfondo nero
 "*measure.darken_background.warning": |-
-  Attention: If „black background“ is chosen, it will cover the whole screen and you will not be able to see the display adjustment window! If you have a multi-screen setup, move the display adjustment window to another screen before starting the measurement, or use the keyboard (to abort the measurement, press Q. If the measurement is already running, wait briefly, then press Q again).
+  Attention: If “black background” is chosen, it will cover the whole screen and you will not be able to see the display adjustment window! If you have a multi-screen setup, move the display adjustment window to another screen before starting the measurement, or use the keyboard (to abort the measurement, press Q. If the measurement is already running, wait briefly, then press Q again).
 "*measure.override_display_settle_time_mult": |-
   Override display settle time multiplier
 "*measure.override_min_display_update_delay_ms": |-
@@ -2146,6 +2146,8 @@
   Select all
 "*self_check_report": |-
   Self check report...
+"*serial_number": |-
+  Serial no.
 "*set_as_default": |-
   Set as default
 "setting.keep_current": |-

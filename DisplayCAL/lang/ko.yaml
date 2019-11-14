@@ -1105,7 +1105,7 @@
 "*error.luminance.not_monotonically_increasing": |-
   The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
 "*error.malformed_cgats": |-
-  The %s file „%s“ is malformed.
+  The %s file “%s” is malformed.
 "error.measurement.file_invalid": |-
   측정 파일 „%s“ 이 잘못되었습니다.
 "error.measurement.file_missing": |-
@@ -2146,6 +2146,8 @@
   전체 선택
 "*self_check_report": |-
   Self check report...
+"*serial_number": |-
+  Serial no.
 "set_as_default": |-
   기본값으로 설정
 "setting.keep_current": |-

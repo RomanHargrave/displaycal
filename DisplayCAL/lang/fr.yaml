@@ -1107,7 +1107,7 @@
 "error.luminance.not_monotonically_increasing": |-
   La réponse mesurée de la luminance est fortement non-monotone (erreur de périphérique ou d’instrument de mesure). Impossible de générer les courbes de réponse tonale.
 "*error.malformed_cgats": |-
-  The %s file „%s“ is malformed.
+  The %s file “%s” is malformed.
 "error.measurement.file_invalid": |-
   Le fichier de mesure « %s » est invalide.
 "error.measurement.file_missing": |-
@@ -2142,6 +2142,8 @@
   Tout sélectionner
 "self_check_report": |-
   Rapport d’auto-test…
+"serial_number": |-
+  Numéro de série
 "set_as_default": |-
   Définir comme valeur par défaut
 "setting.keep_current": |-

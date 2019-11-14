@@ -2146,6 +2146,8 @@
   Select all
 "self_check_report": |-
   Self check report...
+"serial_number": |-
+  Serial no.
 "set_as_default": |-
   Set as default
 "setting.keep_current": |-

@@ -1107,7 +1107,7 @@
 "error.luminance.not_monotonically_increasing": |-
   测量的光亮度响应为极高的非-单调性 (设备或校色仪故障)。不能生成色调响应曲线。
 "*error.malformed_cgats": |-
-  The %s file „%s“ is malformed.
+  The %s file “%s” is malformed.
 "error.measurement.file_invalid": |-
   测量文件 „%s“ 无效。
 "error.measurement.file_missing": |-
@@ -2162,6 +2162,8 @@
   全选
 "self_check_report": |-
   自检报告...
+"serial_number": |-
+  序列号
 "set_as_default": |-
   设为默认值
 "setting.keep_current": |-

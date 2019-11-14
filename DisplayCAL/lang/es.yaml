@@ -1104,7 +1104,7 @@
 "*error.luminance.not_monotonically_increasing": |-
   The measured luminance response is highly non-monotonic (device or instrument fault). Cannot generate tone response curves.
 "*error.malformed_cgats": |-
-  The %s file „%s“ is malformed.
+  The %s file “%s” is malformed.
 "error.measurement.file_invalid": |-
   El archivo de medicion „%s“ no es valido.
 "error.measurement.file_missing": |-
@@ -1580,7 +1580,7 @@
 "measure.darken_background": |-
   Color de fondo negro
 "*measure.darken_background.warning": |-
-  Attention: If „black background“ is chosen, it will cover the whole screen and you will not be able to see the display adjustment window! If you have a multi-screen setup, move the display adjustment window to another screen before starting the measurement, or use the keyboard (to abort the measurement, press Q. If the measurement is already running, wait briefly, then press Q again).
+  Attention: If “black background” is chosen, it will cover the whole screen and you will not be able to see the display adjustment window! If you have a multi-screen setup, move the display adjustment window to another screen before starting the measurement, or use the keyboard (to abort the measurement, press Q. If the measurement is already running, wait briefly, then press Q again).
 "*measure.override_display_settle_time_mult": |-
   Override display settle time multiplier
 "*measure.override_min_display_update_delay_ms": |-
@@ -2145,6 +2145,8 @@
   Select all
 "*self_check_report": |-
   Self check report...
+"*serial_number": |-
+  Serial no.
 "*set_as_default": |-
   Set as default
 "setting.keep_current": |-
