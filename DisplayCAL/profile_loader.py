@@ -1947,14 +1947,12 @@ class ProfileLoader(object):
 			if result != wx.ID_OK:
 				safe_print("Cancelled ProfileLoader.exit(%s)" % event)
 				return
-		self.monitoring = False
-		if self.taskbar_icon:
-			if self.taskbar_icon.menu:
-				self.taskbar_icon.menu.Destroy()
-			self.taskbar_icon.RemoveIcon()
-		if self.frame:
-			self.frame.listening = False
-		wx.GetApp().ExitMainLoop()
+		if isinstance(event, wx.CloseEvent):
+			# Other event source
+			event.Skip()
+		else:
+			# Called from menu
+			wx.GetApp().ExitMainLoop()
 
 	def get_title(self):
 		title = "%s %s %s" % (appname, lang.getstr("profile_loader").title(),
@@ -2643,6 +2641,10 @@ class ProfileLoader(object):
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
 		self.writecfg()
+		if getattr(self, "taskbar_icon", None):
+			if self.taskbar_icon.menu:
+				self.taskbar_icon.menu.Destroy()
+			self.taskbar_icon.RemoveIcon()
 		if getattr(self, "frame", None):
 			self.frame.listening = False
 

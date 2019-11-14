@@ -200,7 +200,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 							if module == "apply-profiles":
 								# Always try to close currently running instance
 								safe_print("Closing existing instance")
-								data = ["close"]
+								data = ["exit"]
 							else:
 								# Send module/appname to notify running app
 								safe_print("Notifying existing instance")
@@ -236,6 +236,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 								pyexe_lower = appname_lower + "-" + module + exe_ext
 							else:
 								pyexe_lower = appname_lower + exe_ext
+							incoming = None
 							for (sid, pid2, basename, usid) in processes:
 								basename_lower = basename.lower()
 								if ((pid and pid2 == pid and

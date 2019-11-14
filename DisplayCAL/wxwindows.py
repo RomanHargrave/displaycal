@@ -863,6 +863,23 @@ class BaseFrame(wx.Frame):
 			self.listening = False
 		event.Skip()
 
+	def close_all(self):
+		windows = list(wx.GetTopLevelWindows())
+		while windows:
+			win = windows.pop()
+			if (isinstance(win, (AboutDialog, BaseInteractiveDialog,
+								   ProgressDialog)) or
+				  win.__class__ is wx.Dialog) and win.IsShown():
+				if win.IsModal():
+					wx.CallAfter(win.EndModal, wx.ID_CANCEL)
+					safe_print("Closed modal dialog", win)
+				else:
+					wx.CallAfter(win.Close)
+					safe_print("Closed dialog", win)
+			elif isinstance(win, wx.Frame):
+				wx.CallAfter(win.Close)
+				safe_print("Closed", win)
+
 	def init(self):
 		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
 		self.Bind(wx.EVT_WINDOW_DESTROY, self.__OnDestroy)
@@ -1121,7 +1138,7 @@ class BaseFrame(wx.Frame):
 	def get_common_commands(self):
 		cmds = ["abort", "activate [window]",
 				"alt", "cancel", "ok [filename]", "close [window]",
-				"echo <string>", "getactivewindow", "getappname",
+				"echo <string>", "exit [force]", "getactivewindow", "getappname",
 				"getcellvalues [window] <grid>", "getcommands",
 				"getcfg [option]", "getdefault <option>", "getdefaults",
 				"getmenus", "getmenuitems [menu]", "getstate",
@@ -1220,8 +1237,8 @@ class BaseFrame(wx.Frame):
 		else:
 			force_setcfg = False
 		if ((state in ("blocked", "busy") or dialog) and
-			data[0] not in ("abort", "alt", "cancel", "close",
-							"getactivewindow", "getcellvalues",
+			data[0] not in ("abort", "activate", "alt", "cancel", "close",
+							"exit", "getactivewindow", "getcellvalues",
 							"getmenus", "getmenuitems",
 							"getstate", "getuielement", "getuielements",
 							"getwindows", "interact", "ok") and
@@ -1233,18 +1250,22 @@ class BaseFrame(wx.Frame):
 		win = None
 		child = None
 		response = "ok"
-		if data[0] in ("abort", "close"):
+		if data[0] in ("abort", "close", "exit"):
 			if (hasattr(self, "worker") and not self.worker.abort_all() and
 				self.worker.is_working()):
 				response = "failed"
-			elif data[0] == "close":
+			elif data[0] in ("close", "exit"):
 				if len(data) == 2:
-					win = get_toplevel_window(data[1])
+					if data[0] == "exit":
+						win = None
+					else:
+						win = get_toplevel_window(data[1])
 				else:
 					win = self.get_top_window()
 				if win:
 					state = self.get_app_state("plain")
-					if state == "blocked":
+					if state == "blocked" or (state != "idle" and
+											  data[0] == "exit"):
 						response = state
 					elif (state not in ("busy", "idle") and
 						  win is not self.get_top_window()):
@@ -1261,13 +1282,16 @@ class BaseFrame(wx.Frame):
 					else:
 						response = "failed"
 				else:
-					response = "invalid"
+					if data[0] == "exit" and len(data) == 2:
+						wx.CallAfter(self.close_all)
+					else:
+						response = "invalid"
 			else:
 				response = "invalid"
 		elif data[0] == "activate" and len(data) < 3:
 			response = "ok"
 			if len(data) < 2:
-				win = wx.GetApp().TopWindow
+				win = self.get_top_window()
 			else:
 				try:
 					id_name_label = int(data[1])
