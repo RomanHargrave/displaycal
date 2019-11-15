@@ -18,6 +18,7 @@ import re
 import socket
 import shutil
 import string
+import struct
 import subprocess as sp
 import sys
 import tempfile
@@ -83,7 +84,7 @@ from debughelpers import (Error, DownloadError, Info, UnloggedError,
 						  UnloggedInfo, UnloggedWarning, UntracedError, Warn,
 						  handle_error)
 from defaultpaths import (cache, get_known_folder_path, iccprofiles_home,
-						  iccprofiles_display_home)
+						  iccprofiles_display_home, appdata)
 from edid import WMIError, get_edid
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
@@ -2460,7 +2461,7 @@ class Worker(WorkerBase):
 			self.is_ambient_measurement = True
 			self.is_single_measurement = True
 		if (getattr(self, "is_single_measurement", False) and
-			"Place instrument on spot to be measured" in txt):
+			self.instrument_place_on_spot_msg):
 			self.is_single_measurement = False
 			self.do_single_measurement()
 			self.is_ambient_measurement = False
@@ -2505,16 +2506,84 @@ class Worker(WorkerBase):
 						self.do_instrument_calibration(
 							"calibration failed" in txt.lower())
 						break
+
+	def check_instrument_calibration_file(self):
+		# XXX: Check instrument calibration for SpyderX. For some reason,
+		# users tend to leave the instrument on screen despite being told
+		# otherwise...
+		if self._detected_instrument and "SpyderX" in self._detected_instrument:
+			spydx_cal_fn = os.path.join(appdata, "Cache", "ArgyllCMS",
+										".spydX_%s.cal" %
+										self._detected_instrument_serial)
+			if os.path.isfile(spydx_cal_fn):
+				# Argyll sensor cal file format offsets and lengths depend on
+				# the size of various C data types as seen by Argyll.
+				# We can determine the needed offset and length of the cal info
+				# (C 'int') by subtracting the length of the NULL-terminated
+				# serial string and size of time_t from the file size, then
+				# dividing by the number of C 'int's in the file.
+				# File structure for SpyderX cal:
+				# Argyll version (C 'int')
+				# Size of spydX (2x C 'int')
+				# NULL-terminated serial string (variable length)
+				# Black cal done (C 'int')
+				# Date & time (time_t)
+				# Calibration info (3x C 'int')
+				# Checksum (C 'int')
+				serial0 = self._detected_instrument_serial + "\0"
+				time_t_size = 8
+				numints = 8
+				spydx_cal_size = os.stat(spydx_cal_fn).st_size
+				spydx_cal_int_bytes = (spydx_cal_size - len(serial0) -
+									   time_t_size) // numints
+				try:
+					with open(spydx_cal_fn, "rb") as spydx_cal:
+						# Seek to cal entries offset
+						spydx_cal.seek(spydx_cal_int_bytes * 4 + len(serial0) +
+									   time_t_size)
+						# Read three entries black cal
+						spydx_bcal = spydx_cal.read(spydx_cal_int_bytes * 3)
+				except EnvironmentError, exception:
+					self.log(appname + ": Warning - could not read SpyderX "
+							 "sensor cal:", exception)
+				else:
+					if len(spydx_bcal) < spydx_cal_int_bytes * 3:
+						self.log(appname + ": Warning - SpyderX "
+								 "sensor cal has unexpected size: %s != %i" %
+								 (len(spydx_bcal), spydx_cal_int_bytes * 3))
+					else:
+						spydx_bcal = struct.unpack('<III', spydx_bcal)
+						self.log(appname + ": SpyderX sensor cal %i %i %i" %
+								 spydx_bcal)
+						if max(spydx_bcal) > 15:
+							# Black cal offsets too high - user error?
+							self.exec_cmd_returnvalue = Error(lang.getstr("error.spyderx.black_cal_offsets_too_high"))
+							self.abort_subprocess()
+							# Nuke the cal file
+							try:
+								os.remove(spydx_cal_fn)
+							except OSError, exception:
+								self.log(appname + ": Warning - Could not remove "
+										 "SpyderX sensor cal file", spydx_cal_fn)
+							return False
+		return True
 	
 	def check_instrument_place_on_screen(self, txt):
 		""" Check if instrument should be placed on screen by looking
 		at Argyll CMS command output """
+		self.instrument_place_on_spot_msg = False
 		if "place instrument on test window" in txt.lower():
 			self.instrument_place_on_screen_msg = True
+		elif "place instrument on spot" in txt.lower():
+			self.instrument_place_on_spot_msg = True
+		if (self.instrument_place_on_screen_msg or
+			self.instrument_place_on_spot_msg):
+			if not self.check_instrument_calibration_file():
+				return
 		if ((self.instrument_place_on_screen_msg and
 			 "key to continue" in txt.lower()) or
 			(self.instrument_calibration_complete and
-			 "place instrument on spot" in txt.lower() and
+			 self.instrument_place_on_spot_msg and
 			 self.progress_wnd is getattr(self, "terminal", None))):
 			self.log("%s: Detected instrument placement (screen/spot) message" %
 					 appname)
@@ -2549,7 +2618,7 @@ class Worker(WorkerBase):
 					# interactive display adjustment would botch the first
 					# reading (black)
 					wx.CallLater(1500, self.instrument_on_screen_continue)
-		elif "place instrument on spot" in txt.lower():
+		elif self.instrument_place_on_spot_msg:
 			self.log("%s: Assuming instrument on screen" % appname)
 			self.instrument_on_screen = True
 
@@ -2725,6 +2794,9 @@ END_DATA
 				# (e.g. i1 Pro hires mode)
 				msg = lang.getstr("instrument.calibrate.reflective",
 								  serial.group(1))
+			elif (self._detected_instrument and
+				  "SpyderX" in self._detected_instrument):
+				msg = lang.getstr("instrument.calibrate.spyderx")
 			else:
 				# Emissive dark calibration
 				msg = lang.getstr("instrument.calibrate")

@@ -1130,6 +1130,8 @@
   配置文件未创建。
 "error.source_dest_same": |-
   源和目标配置文件相同。
+"*error.spyderx.black_cal_offsets_too_high": |-
+  The instrument self-calibration offsets are too high. Make sure no light shines on the sensor during instrument self-calibration (put the cap on tightly).
 "error.testchart.creation_failed": |-
   测试图表文件 “%s” 不能创建。可能存在访问限制，或源文件不存在。
 "error.testchart.invalid": |-
@@ -1500,6 +1502,8 @@
   将 ColorMunki 传感器放在校准位置并按“确定”校准校色仪。
 "instrument.calibrate.reflective": |-
   将校色仪放在其反射白色参考序列号 no. %s 上并按“确定”校准校色仪。
+"instrument.calibrate.spyderx": |-
+  将不透光的盖子放在校色仪上，或放在黑暗的无光泽表面上，并按“确定”校准校色仪。
 "instrument.calibrating": |-
   正在校准校色仪...
 "instrument.colormunki": |-

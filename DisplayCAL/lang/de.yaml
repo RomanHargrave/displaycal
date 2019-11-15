@@ -1128,6 +1128,8 @@
   Es wurde keine Profildatei erstellt.
 "error.source_dest_same": |-
   Quell- und Zielprofil sind identisch.
+"error.spyderx.black_cal_offsets_too_high": |-
+  Die Messgerätesensor-Schwarzkalibrierungswerte sind zu hoch. Stellen Sie sicher, dass während der Messgeräte-Eichung kein Licht auf den Sensor fällt (befestigen Sie die Messgeräte-Kappe auf dem Sensor so, dass sie einrastet).
 "error.testchart.creation_failed": |-
   Die Testform „%s“ konnte nicht erstellt werden. Eventuell bestehen keine Zugriffsrechte, oder die Quelldatei ist nicht vorhanden.
 "error.testchart.invalid": |-
@@ -1484,6 +1486,8 @@
   Drehen Sie den ColorMunki-Sensor in die Kalibrierposition und drücken Sie dann OK, um das Messgerät zu eichen.
 "instrument.calibrate.reflective": |-
   Setzen Sie das Messgerät auf die zum Messgerät-Zubehör gehörende Weißkachel mit der Seriennummer %s und drücken Sie dann OK, um das Messgerät zu eichen.
+"instrument.calibrate.spyderx": |-
+  Setzen Sie die lichtdichte Kappe auf den Messgeräte-Sensor, oder setzen Sie das Messgerät auf einen dunklen, nichtreflektierenden Untergrund, und drücken Sie dann OK, um das Messgerät zu eichen.
 "instrument.calibrating": |-
   Messgerätekalibrierung...
 "*instrument.colormunki": |-

@@ -1128,6 +1128,8 @@
   Не создан профиль.
 "error.source_dest_same": |-
   Профиль источника и назначения одинаковые.
+"*error.spyderx.black_cal_offsets_too_high": |-
+  The instrument self-calibration offsets are too high. Make sure no light shines on the sensor during instrument self-calibration (put the cap on tightly).
 "error.testchart.creation_failed": |-
   Не удалось создать файл тестирования “%s”. Возможно, существуют ограничения доступа, или выходной файл не существует.
 "error.testchart.invalid": |-
@@ -1478,11 +1480,13 @@
 "instrument": |-
   Инструмент
 "*instrument.calibrate": |-
-  Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to calibrate the instrument.
+  Place light-tight cap on the instrument (if applicable), or place on a dark, matte surface, or onto its calibration reference (if applicable), and press OK to self-calibrate the instrument.
 "instrument.calibrate.colormunki": |-
   Установите датчик ColorMunki в позицию калибровки и нажмите OK для калибровки прибора.
 "instrument.calibrate.reflective": |-
   Установите прибор на его целевую измерительную светоотражающую мишень серийный номер %s и нажмите OK, чтобы откалибровать инструмент.
+"*instrument.calibrate.spyderx": |-
+  Place light-tight cap on the instrument, or place on a dark, matte surface, and press OK to self-calibrate the instrument.
 "instrument.calibrating": |-
   Калибровка инструмента...
 "instrument.colormunki": |-
