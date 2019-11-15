@@ -2927,7 +2927,14 @@ END_DATA
 								 self.single_real_display())
 		dlg = ConfirmDialog(self.progress_wnd,
 							msg=lang.getstr("instrument.place_on_screen") +
-							"\n\n" + self.get_instrument_name(), 
+							"\n\n" + (self._detected_instrument and
+									  "%s%s" % (self._detected_instrument,
+												self._detected_instrument_serial and
+												" (%s %s)" %
+												(lang.getstr("serial_number"),
+												 self._detected_instrument_serial) or
+												"")
+									  or self.get_instrument_name()), 
 							ok=lang.getstr("ok"), 
 							cancel=lang.getstr("cancel"), 
 							bitmap=geticon(32, "dialog-information"))
