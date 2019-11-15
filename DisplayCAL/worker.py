@@ -2513,10 +2513,10 @@ class Worker(WorkerBase):
 		# otherwise...
 		if self._detected_instrument and "SpyderX" in self._detected_instrument:
 			if sys.platform == "win32":
-				cachepath = appdata
+				cachepath = os.path.join(appdata, "Cache")
 			else:
 				cachepath = cache
-			spydx_cal_fn = os.path.join(cachepath, "Cache", "ArgyllCMS",
+			spydx_cal_fn = os.path.join(cachepath, "ArgyllCMS",
 										".spydX_%s.cal" %
 										self._detected_instrument_serial)
 			if os.path.isfile(spydx_cal_fn):
