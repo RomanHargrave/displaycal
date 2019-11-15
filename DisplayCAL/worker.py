@@ -161,8 +161,7 @@ INST_CAL_MSGS = ["Do a reflective white calibration",
 				 "Place the instrument on its reflective white reference",
 				 "Click the instrument on its reflective white reference",
 				 "Place the instrument in the dark",
-				 "Place cap on the instrument",  # i1 Pro
-				 "or place on the calibration reference", # i1 Pro
+				 "Place cap on the instrument",  # i1 Pro/SpyderX
 				 "Place ambient adapter and cap on the instrument",
 				 "Set instrument sensor to calibration position",  # ColorMunki
 				 "Place the instrument on its transmissive white source",
@@ -1368,6 +1367,7 @@ class FilteredStream():
 				"' to toggle",
 				" or Q to ",
 				"place on the white calibration reference",
+				"or place on the calibration reference",
 				"read failed due to the sensor being in the wrong position",
 				"Ambient filter should be removed",
 				"The instrument can be removed from the screen"] + INST_CAL_MSGS
