@@ -2512,7 +2512,11 @@ class Worker(WorkerBase):
 		# users tend to leave the instrument on screen despite being told
 		# otherwise...
 		if self._detected_instrument and "SpyderX" in self._detected_instrument:
-			spydx_cal_fn = os.path.join(appdata, "Cache", "ArgyllCMS",
+			if sys.platform == "win32":
+				cachepath = appdata
+			else:
+				cachepath = cache
+			spydx_cal_fn = os.path.join(cachepath, "Cache", "ArgyllCMS",
 										".spydX_%s.cal" %
 										self._detected_instrument_serial)
 			if os.path.isfile(spydx_cal_fn):
