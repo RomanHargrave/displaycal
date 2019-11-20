@@ -3170,7 +3170,7 @@ END_DATA
 
 	def create_3dlut(self, profile_in, path, profile_abst=None, profile_out=None,
 					 apply_cal=True, intent="r", format="cube",
-					 size=17, input_bits=10, output_bits=12, maxval=1.0,
+					 size=17, input_bits=10, output_bits=12, maxval=None,
 					 input_encoding="n", output_encoding="n",
 					 trc_gamma=None, trc_gamma_type="B", trc_output_offset=0.0,
 					 save_link_icc=True, apply_black_offset=True,
@@ -4102,6 +4102,8 @@ END_DATA
 				# Collink has already written the 3DLUT for us,
 				# or we have written the madVR 3D LUT
 				if format == "cube":
+					if maxval is None:
+						maxval = 1.0
 					# Strip any leading whitespace from each line (although
 					# leading/trailing spaces are allowed according to the spec).
 					# Also, Argyll does not write (optional) DOMAIN_MIN/MAX
