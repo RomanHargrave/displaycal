@@ -76,26 +76,25 @@ def get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent="r", dire
 	return odata
 
 
-def get_interp(cal, inverse=False, smooth=0):
+def get_interp(cal, inverse=False, smooth=False):
 	num_cal_entries = len(cal)
 	cal_entry_max = num_cal_entries - 1.0
 
 	linear = [(i / cal_entry_max,) * 3 for i in xrange(num_cal_entries)]
 
 	if smooth:
-		# Smooth from zero to 1 / n
-		#lower = int(num_cal_entries / float(smooth))
 		for lower, row in enumerate(cal[1:], 1):
 			v = min(row) * cal_entry_max
-			print lower, "->", v
-			if lower + 1 >= v >= lower or lower >= 8:
-				# Use max index of 8 (+ 4 = 12 = ~5% signal)
+			print lower / cal_entry_max * 255, "->", v / cal_entry_max * 255
+			if lower + 1 >= v >= lower or lower / cal_entry_max * 255 >= 4:
+				# Use max index of 4 (+ 2 = 6 = ~2% signal)
 				if lower == 1:
 					# First value already above threshold, disable smoothing
 					lower = 0
 				else:
 					print "lower", lower
 				break
+		t = num_cal_entries // 128
 		for i in xrange(3):
 			values = cm.make_monotonically_increasing([v[i] for v in cal])
 			if lower:
@@ -103,9 +102,10 @@ def get_interp(cal, inverse=False, smooth=0):
 				values[:lower] = [j / float(lower) * values[lower] for j in xrange(lower)]
 				if lower < num_cal_entries:
 					# Smooth up to ~5% signal
-					start, end = lower - lower / 2, lower + lower / 2
-					values[start:end] = cm.smooth_avg(values[start:end], 1, (1,) * 3)
-			values[:] = cm.smooth_avg(values[:], 1, (1,) * 3)
+					start, end = max(lower - t, 0), lower + t
+					print "start, end", start, end
+					values[start:end] = cm.smooth_avg(values[start:end], 1, (1,) * (t + 1))
+			#values[:] = cm.smooth_avg(values[:], 1, (1,) * 3)
 			for j, v in enumerate(values):
 				cal[j][i] = v
 
@@ -156,20 +156,32 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 
 	filename, ext = os.path.splitext(icc_profile_filename)
 
+	# Get existing calibration CGATS from profile
+	existing_cgats = argyll_cgats.extract_cal_from_profile(profile, raise_on_missing_cal=False)
+
 	applycal = True
-	if applycal:
-		# Apply cal
-		_applycal_bug_workaround(profile)
+	applycal_inverse = not filter(lambda tagname: tagname.startswith("A2B") or tagname.startswith("B2A"), profile.tags)
+	print "Use applycal to apply cal?", applycal
+	print "Use applycal to apply inverse cal?", applycal_inverse
+	print "Ensuring 256 entry TRC tags"
+	_applycal_bug_workaround(profile)
+	if (applycal or applycal_inverse) and existing_cgats:
+		print "Writing TMP profile for applycal"
 		profile.write(filename + ".tmp" + ext)
+	if applycal and existing_cgats:
+		# Apply cal
+		existing_cgats.write(filename + ".tmp.cal")
 		result = worker.exec_cmd(get_argyll_util("applycal"),
-					 ["-v", filename + ".cal",
+					 ["-v", filename + ".tmp.cal",
 					  filename + ".tmp" + ext, filename + ".calapplied" + ext],
-					 capture_output=False)
+					 capture_output=True, log_output=True)
 		if not result and not os.path.isfile(out_filename):
 			raise Exception("applycal returned a non-zero exit code")
 		elif isinstance(result, Exception):
 			raise result
-		profile = ICCP.ICCProfile(filename + ".calapplied" + ext)
+		calapplied = ICCP.ICCProfile(filename + ".calapplied" + ext)
+	else:
+		calapplied = profile
 
 	if target_whitepoint:
 		try:
@@ -220,9 +232,8 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 		target_whitepoint = XYZwscaled
 		del RGBscaled
 
-	cal = get_cal(256, target_whitepoint, gamma, profile, intent, "if", slope_limit=0)
-	ccal = cal
-	interp = get_interp(cal, False, 32)
+	if not applycal or applycal_inverse:
+		ccal = get_cal(num_cal_entries, target_whitepoint, gamma, profile, intent, "if", slope_limit=0)
 
 	out_filename = filename + " %s%s" % (target_whitepoint and "%s " % owtpt[1:] or "", ogamma) + ext
 
@@ -233,20 +244,22 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 		# Generate inverse calibration
 
 		# Apply inverse CAL and write output file
-		use_argyll_applycal = not filter(lambda tagname: tagname.startswith("A2B") or tagname.startswith("B2A"), profile.tags)
-		print "Use applycal to apply inverse cal?", use_argyll_applycal
-		if not applycal:
-			_applycal_bug_workaround(profile)
-		if not use_argyll_applycal:
+		if not applycal_inverse:
 			# Use our own code
 
 			TRC = []
+
+			seen = []
 
 			for tagname in ("A2B0", "A2B1", "A2B2", "B2A0", "B2A1", "B2A2",
 							"rTRC", "gTRC", "bTRC"):
 				if not tagname in profile.tags:
 					continue
 				print tagname
+				if profile.tags[tagname] in seen:
+					print "Already seen"
+					continue
+				seen.append(profile.tags[tagname])
 				if tagname.startswith("A2B"):
 					# Apply calibration to input curves
 					cal = get_cal(num_cal_entries, None, gamma, profile, intent, "if")
@@ -294,25 +307,23 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 				for channel in "rb":
 					profile.tags[channel + "TRC"] = profile.tags.gTRC
 
-			profile.write(out_filename)
-		else:
+		elif existing_cgats:
 			# Use Argyll applycal
-			# XXX: applycal can't deal with single gamma TRC tags
-			# or TRC tags with less than 256 entries (segfault)
-			# Also, want to derive different cals for cLUT and TRC tags.
+			# XXX: Want to derive different cals for cLUT and TRC tags.
 			# Not possible with applycal unless applying cals separately and
 			# combining the profile parts later?
 
 			# Get inverse calibration
-			interp_i = get_interp(cal, True)
+			interp_i = get_interp(ccal, True)
 			ical = []
-			for i in xrange(num_cal_entries):
-				ical.append([cinterp(i / cal_entry_max) for cinterp in interp_i])
+			# Argyll can only deal with 256 cal entries
+			for i in xrange(256):
+				ical.append([cinterp(i / 255.) for cinterp in interp_i])
 
 			# Write inverse CAL
 			icgats = cgats_header
 			for i, (R, G, B) in enumerate(ical):
-				icgats += "%.7f %.7f %.7f %.7f\n" % (i / cal_entry_max, R, G, B)
+				icgats += "%.7f %.7f %.7f %.7f\n" % (i / 255., R, G, B)
 			icgats += "END_DATA\n"
 			ical_filename = icc_profile_filename + owtpt + ".%s.inverse.cal" % ogamma
 			with open(ical_filename, "wb") as f:
@@ -320,29 +331,32 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 
 			result = worker.exec_cmd(get_argyll_util("applycal"),
 									 ["-v", ical_filename,
-									  icc_profile_filename, out_filename],
-									 capture_output=False)
+									  filename + ".tmp" + ext, out_filename],
+									 capture_output=True, log_output=True)
 			if not result and not os.path.isfile(out_filename):
 				raise Exception("applycal returned a non-zero exit code")
 			elif isinstance(result, Exception):
 				raise result
 
-	out_profile = ICCP.ICCProfile(out_filename)
+			profile = ICCP.ICCProfile(out_filename)
+
+	out_profile = profile
 
 	if not skip_cal:
 		# Improve existing calibration with new calibration
 
 		if applycal:
+			ccal = get_cal(256, target_whitepoint, gamma, calapplied, intent, "if", slope_limit=0)
 			num_cal_entries = len(ccal)
 		else:
-			# Get existing calibration CGATS from profile
-			existing_cgats = argyll_cgats.extract_cal_from_profile(out_profile, raise_on_missing_cal=False)
 			if not existing_cgats:
 				existing_cgats = CGATS.CGATS(config.get_data_path("linear.cal"))
 
 			num_cal_entries = len(existing_cgats[0].DATA)
 
 		cal_entry_max = num_cal_entries - 1.0
+
+		interp = get_interp(ccal, False, True)
 
 		if not applycal:
 			# Create CAL diff
@@ -387,7 +401,7 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 	# Write updated profile
 	out_profile.setDescription(out_profile.getDescription() + " %s%s" % (target_whitepoint and "%s " % owtpt[1:] or "", ogamma))
 	out_profile.calculateID()
-	out_profile.write()
+	out_profile.write(out_filename)
 
 
 if __name__ == "__main__":
