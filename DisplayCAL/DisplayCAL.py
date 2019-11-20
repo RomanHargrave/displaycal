@@ -9425,10 +9425,11 @@ class MainFrame(ReportFrame, BaseFrame):
 			dlg.skip_scripts = skip_scripts
 			dlg.preview = preview
 			dlg.ok.Unbind(wx.EVT_BUTTON)
-			dlg.ok.Bind(wx.EVT_BUTTON, self.profile_finish_action_handler)
+			dlg.ok.Bind(wx.EVT_BUTTON,
+						lambda event: self.profile_finish_action(event.Id))
 			result = dlg.ShowWindowModalBlocking()
 			if result == wx.ID_CANCEL:
-				self.profile_finish_consumer()
+				self.profile_finish_action(result)
 		else:
 			if isinstance(result, Exception):
 				show_result_dialog(result, self)
@@ -9445,18 +9446,18 @@ class MainFrame(ReportFrame, BaseFrame):
 			if not getcfg("dry_run"):
 				setcfg("calibration.file.previous", None)
 	
-	def profile_finish_action_handler(self, event):
-		result = event.Id
+	def profile_finish_action(self, result):
 		lut3d = config.is_virtual_display() or self.install_3dlut
-		# madVR has an API for installing 3D LUTs
-		# Prisma has a HTTP REST interface for uploading and
-		# configuring 3D LUTs
-		if getcfg("3dlut.format") == "madVR" and not hasattr(self.worker,
-															 "madtpg"):
-			try:
-				self.worker.madtpg_init()
-			except Exception, exception:
-				safe_print("Could not initialize madTPG:", exception)
+		if result == wx.ID_OK:
+			# madVR has an API for installing 3D LUTs
+			# Prisma has a HTTP REST interface for uploading and
+			# configuring 3D LUTs
+			if getcfg("3dlut.format") == "madVR" and not hasattr(self.worker,
+																 "madtpg"):
+				try:
+					self.worker.madtpg_init()
+				except Exception, exception:
+					safe_print("Could not initialize madTPG:", exception)
 		madtpg = getattr(self.worker, "madtpg", None)
 		# Note: madVR HDR 3D LUT install API was added September 2017,
 		# we don't require it so check availability
