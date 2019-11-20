@@ -86,7 +86,7 @@ def get_interp(cal, inverse=False, smooth=False):
 		for lower, row in enumerate(cal[1:], 1):
 			v = min(row) * cal_entry_max
 			print lower / cal_entry_max * 255, "->", v / cal_entry_max * 255
-			if lower + 1 >= v >= lower or lower / cal_entry_max * 255 >= 4:
+			if lower + 1 >= v >= lower or lower / cal_entry_max * 255 >= 8:
 				# Use max index of 4 (+ 2 = 6 = ~2% signal)
 				if lower == 1:
 					# First value already above threshold, disable smoothing
@@ -102,10 +102,10 @@ def get_interp(cal, inverse=False, smooth=False):
 				values[:lower] = [j / float(lower) * values[lower] for j in xrange(lower)]
 				if lower < num_cal_entries:
 					# Smooth up to ~5% signal
-					start, end = max(lower - t, 0), lower + t
+					start, end = max(lower - t * 2, 0), lower + t * 2
 					print "start, end", start, end
 					values[start:end] = cm.smooth_avg(values[start:end], 1, (1,) * (t + 1))
-			#values[:] = cm.smooth_avg(values[:], 1, (1,) * 3)
+			values[:] = cm.smooth_avg(values[:], 1, (1,) * (t + 1))
 			for j, v in enumerate(values):
 				cal[j][i] = v
 
@@ -159,7 +159,11 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 	# Get existing calibration CGATS from profile
 	existing_cgats = argyll_cgats.extract_cal_from_profile(profile, raise_on_missing_cal=False)
 
-	applycal = True
+	# Enabling this will do a linear blend below interpolation threshold, which
+	# is probably not what we want - rather, the original cal should blend into
+	# the linear portion
+	applycal = False
+
 	applycal_inverse = not filter(lambda tagname: tagname.startswith("A2B") or tagname.startswith("B2A"), profile.tags)
 	print "Use applycal to apply cal?", applycal
 	print "Use applycal to apply inverse cal?", applycal_inverse
@@ -356,9 +360,9 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 
 		cal_entry_max = num_cal_entries - 1.0
 
-		interp = get_interp(ccal, False, True)
-
 		if not applycal:
+			interp = get_interp(ccal, False, True)
+
 			# Create CAL diff
 			cgats = cgats_header
 			for i in xrange(num_cal_entries):
