@@ -8803,6 +8803,7 @@ usage: spotread [-options] [logfile]
 			is_regular_grid = False
 			is_primaries_only = False
 			ti3 = CGATS.CGATS(args[-1] + ".ti3")
+			XYZbp = None
 			try:
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
@@ -8820,6 +8821,7 @@ usage: spotread [-options] [logfile]
 					bpcorr = getcfg("profile.black_point_correction")
 					if getcfg("profile.black_point_compensation"):
 						XYZbp = (0, 0, 0)
+						Labbp = (0, 0, 0)
 					elif bpcorr < 1:
 						# Correct black point a* b* and make neutral hues near
 						# black blend over to the new blackpoint. The correction
@@ -8838,8 +8840,6 @@ usage: spotread [-options] [logfile]
 						XYZbp = colormath.Lab2XYZ(*Labbp,
 												  whitepoint=[v / XYZwp[1]
 															  for v in XYZwp])
-					else:
-						XYZbp = None
 					if XYZbp:
 						ti3.write(args[-1] + ".ti3.backup")
 						if getcfg("profile.black_point_compensation"):
@@ -9085,10 +9085,7 @@ usage: spotread [-options] [logfile]
 						# colorimetric table
 						input_curve_clipping = False
 						# Determine profile blackpoint
-						if "bkpt" in profile.tags:
-							# XXX: Not used?
-							Labbp = profile.tags.bkpt.pcs.Lab
-						elif input_curve_clipping:
+						if input_curve_clipping:
 							# Figure out profile blackpoint by looking up
 							# neutral values from L* = 0 to L* = 50,
 							# in 0.1 increments
@@ -9297,6 +9294,62 @@ usage: spotread [-options] [logfile]
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True
+							# We need to write the changed profile
+							try:
+								profile.write()
+							except Exception, exception:
+								return exception
+
+				if (profile.colorSpace == "RGB" and
+					profile.connectionColorSpace in ("XYZ", "Lab")):
+					# Apply BPC to A2B0/A2B2 to match B2A0/B2A2 black
+					A2B1 = profile.tags.get("A2B1")
+					a2b_tables = [0]
+					if profile.tags.get("B2A2"):
+						a2b_tables.append(2)
+					for tableno in a2b_tables:
+						tablename = "A2B%i" % tableno
+						table = profile.tags.get(tablename)
+						if not table:
+							continue
+						if table is A2B1:
+							# Make A2B0/A2B2 a distinct table
+							self.log("Making distinct", tablename)
+							table = ICCP.LUT16Type(None, tablename, profile)
+							table.matrix = []
+							for row in A2B1.matrix:
+								table.matrix.append(list(row))
+							table.input = []
+							table.output = []
+							for curves in ("input", "output"):
+								for channel in getattr(A2B1, curves):
+									getattr(table, curves).append(list(channel))
+							table.clut = []
+							for block in A2B1.clut:
+								table.clut.append([])
+								for row in block:
+									table.clut[-1].append(list(row))
+							profile.tags[tablename] = table
+						# Apply BPC to A2B0/A2B2
+						# Get inverse B2A0/B2A2 black
+						XYZbp_B2A = self.xicclu(profile, [[0, 0, 0]],
+												intent="prs"[tableno],
+												direction="ib", pcs="x")[0]
+						Labbp_B2A = colormath.XYZ2Lab(*XYZbp_B2A, scale=1)
+						if XYZbp:
+							# Make it same hue as relcol black
+							self.log("Inverse B2A%i" % tableno, "blackpoint: L*a*b*"
+									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
+							Labbp_B2A = (Labbp_B2A[0], Labbp[1], Labbp[2])
+							self.log("Adjusted", tablename, "blackpoint: L*a*b*"
+									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
+							XYZbp_B2A = colormath.Lab2XYZ(*Labbp_B2A)
+						self.log("Applying black point compensation to %s:" % tablename,
+								 "L*a*b* %.6f %.6f %.6f" % tuple(Labbp_B2A))
+						profile.tags[tablename].apply_black_offset(XYZbp_B2A)
+
+				# All table processing done
+
 				if profchanged and tables:
 					# Make sure we match Argyll colprof i.e. have a complete
 					# set of tables
@@ -9313,6 +9366,8 @@ usage: spotread [-options] [logfile]
 							profile.tags.B2A2 = profile.tags.B2A0
 					if not "B2A2" in profile.tags:
 						profile.tags.B2A2 = profile.tags.B2A0
+					if len(a2b_tables) == 1:
+						profile.tags.A2B2 = profile.tags.A2B0
 				apply_bpc = ((getcfg("profile.black_point_compensation") and
 							  not "A2B0" in profile.tags) or
 							 (process_A2B and (getcfg("profile.b2a.hires")
@@ -10175,13 +10230,13 @@ usage: spotread [-options] [logfile]
 				# Check if we want to apply BPC
 				bpc = tableno != 1
 				if (bpc and
-					(profile.tags["A2B%i" % tableno].clut[0][0] != [0, 0, 0] or
-					 profile.tags["A2B%i" % tableno].input[0][0] != 0 or
-					 profile.tags["A2B%i" % tableno].input[1][0] != 0 or
-					 profile.tags["A2B%i" % tableno].input[2][0] != 0 or
-					 profile.tags["A2B%i" % tableno].output[0][0] != 0 or
-					 profile.tags["A2B%i" % tableno].output[1][0] != 0 or
-					 profile.tags["A2B%i" % tableno].output[2][0] != 0)):
+					(profile.tags["A2B1"].clut[0][0] != [0, 0, 0] or
+					 profile.tags["A2B1"].input[0][0] != 0 or
+					 profile.tags["A2B1"].input[1][0] != 0 or
+					 profile.tags["A2B1"].input[2][0] != 0 or
+					 profile.tags["A2B1"].output[0][0] != 0 or
+					 profile.tags["A2B1"].output[1][0] != 0 or
+					 profile.tags["A2B1"].output[2][0] != 0)):
 					# Need to apply BPC
 					table = ICCP.LUT16Type(profile=profile)
 					# Copy existing B2A1 table matrix, cLUT and output curves
