@@ -87,8 +87,9 @@
 				<legend style="padding: 0 3px;">Contribute using PayPal</legend>
 				<noscript><strong>Please enable JavaScript!</strong></noscript>
 				<p>
-					<input id="credit_card" type="checkbox" onchange="document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'" style="margin-left: 0; vertical-align: text-top;" /> <label for="credit_card" style="display: inline-block; max-width: 90%; vertical-align: top;">Use a credit card or bank transfer without a PayPal account</label><br />
+					<input id="credit_card" type="checkbox" onchange="document.forms['donationform'].elements['cmd'].value = this.checked ? '_xclick' : '_donations'" style="margin-left: 0; vertical-align: text-top;" /> <label for="credit_card" style="display: inline-block; max-width: 90%; vertical-align: top;"><span>(Optional)</span> Use a credit card or bank transfer without a PayPal account</label><br />
 					<span style="display: inline-block; line-height: 1.4em; margin-bottom: .5em; padding-left: 1.6em;">(PayPal does not guarantee the availability of payment via credit card or bank transfer)</span><br />
+					<input id="public_thanks_opt_in" type="checkbox" onchange="document.forms['donationform'].elements['item_name'].value = this.checked ? '${APPNAME} Contribution (show name publicly)' : '${APPNAME} Contribution'" style="margin-left: 0; vertical-align: text-top;" /> <label for="public_thanks_opt_in" style="display: inline-block; max-width: 90%; vertical-align: top;"><span>(Optional)</span> Include my name in the “<a href="#thanks">Thanks and acknowledgements</a>” section</label><br />
 					<input type="hidden" name="cmd" value="_donations" />
 					<input type="hidden" name="business" value="CEZVJ89TTS6FY" />
 					<input type="hidden" name="item_name" value="${APPNAME} Contribution" />
@@ -137,14 +138,13 @@
 					}, 1500);
 				})();
 				function contribute_own_amount() {
-					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" min="1" value="' + jQuery('#contribution_amount').val() + '" />')
+					jQuery('#contribution_amount').replaceWith('<input type="number" name="amount" min="5" value="' + jQuery('#contribution_amount').val() + '" />')
 				}
 				//]]>
 			</script>
 			<span>(For other means of contributing, please <a href="${URL}?fhpe=x52nps3G0aGVoafU0cTalJmgktPI1Q%3D%3D" rel="nofollow">contact me</a>)</span>
-			<p><a href="#thanks">Thanks to all contributors!</a></p>
+			<p>Thanks to all contributors!</p>
 			<p>Special thanks to the following people and organizations:</p>
-			<p>Mates Mihail-Simion for a very generous contribution</p>
 			<p>Riley Brandt Photography—<a href="http://www.rileybrandt.com/lessons/">The Open Source Photography Course</a></p>
 			</div>
 		</div>
