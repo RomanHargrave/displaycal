@@ -8807,7 +8807,8 @@ usage: spotread [-options] [logfile]
 			try:
 				(ti3_extracted,
 				 ti3_RGB_XYZ,
-				 ti3_remaining) = extract_device_gray_primaries(ti3)
+				 ti3_remaining) = extract_device_gray_primaries(ti3,
+																logfn=self.log)
 			except Error, exception:
 				self.log(exception)
 			else:
