@@ -9366,8 +9366,6 @@ usage: spotread [-options] [logfile]
 							profile.tags.B2A2 = profile.tags.B2A0
 					if not "B2A2" in profile.tags:
 						profile.tags.B2A2 = profile.tags.B2A0
-					if len(a2b_tables) == 1:
-						profile.tags.A2B2 = profile.tags.A2B0
 				apply_bpc = ((getcfg("profile.black_point_compensation") and
 							  not "A2B0" in profile.tags) or
 							 (process_A2B and (getcfg("profile.b2a.hires")
@@ -10879,13 +10877,15 @@ usage: spotread [-options] [logfile]
 				getcfg("profile.type") in ("l", "x", "X") and
 				not (gamap and gamap_profile)):
 				rgb = False
-				with open(inoutfile + ".ti3", "rb") as ti3_file:
-					for line in ti3_file:
-						if line.startswith("COLOR_REP"):
-							if "RGB_XYZ" in line:
-								rgb = True
-							break
-				if rgb:
+				is_lab_clut_ptype = getcfg("profile.type") == "l"
+				if is_lab_clut_ptype:
+					with open(inoutfile + ".ti3", "rb") as ti3_file:
+						for line in ti3_file:
+							if line.startswith("COLOR_REP"):
+								if "RGB_XYZ" in line:
+									rgb = True
+								break
+				if rgb or not is_lab_clut_ptype:
 					# Disable B2A creation in colprof, B2A is handled
 					# by A2B inversion code (only for cLUT profiles)
 					b2a_q = "n"
