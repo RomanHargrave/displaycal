@@ -6461,10 +6461,29 @@ while 1:
 		m3 = colormath.Matrix3x3(((scale, 0, 0),
 								  (0, scale, 0),
 								  (0, 0, scale)))
-		if only_input_curves:
+
+		matrices = []
+
+		if profile.connectionColorSpace == "Lab":
+			# L*a*b* LUT
+			# Use identity matrix for Lab as mandated by ICC spec
+			itable.matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+			m2 = None
+		elif only_input_curves:
 			# Use existing matrix
 			m2 = itable.matrix * m3.inverted()
-		elif profile.connectionColorSpace == "XYZ":
+
+			# Scale for BPC
+			XYZbp_relcol = self.xicclu(profile, [[0, 0, 0]], pcs="x")[0]
+			m2i = m2.inverted()
+			XYZrgb = [m2i * (1, 0, 0),
+					  m2i * (0, 1, 0),
+					  m2i * (0, 0, 1)]
+			for i, XYZ in enumerate(XYZrgb):
+				XYZrgb[i] = colormath.apply_bpc(*XYZ, bp_in=(0, 0, 0),
+													  bp_out=XYZbp_relcol,
+													  wp_out=XYZwp)
+		else:
 			# Use a matrix that scales the profile colorspace into the XYZ
 			# encoding range, to make optimal use of the cLUT grid points
 
@@ -6475,8 +6494,6 @@ while 1:
 
 			if logfile:
 				logfile.write("Setting up matrix\n")
-
-			matrices = []
 
 			# RGB spaces used as PCS candidates.
 			# Six synthetic RGB spaces that are large enough to encompass
@@ -6784,7 +6801,8 @@ while 1:
 			for i in xrange(3):
 				logfile.write("Using %s XYZ: %.4f %.4f %.4f\n" %
 							  (("RGB"[i], ) + tuple(XYZrgb[i])))
-	
+
+		if profile.connectionColorSpace == "XYZ":
 			# Construct the final matrix
 			Xr, Yr, Zr = XYZrgb[0]
 			Xg, Yg, Zg = XYZrgb[1]
@@ -6817,13 +6835,7 @@ while 1:
 				logfile.write("Final matrix:\n")
 				for row in itable.matrix:
 					logfile.write("%r\n" % row)
-		else:
-			# L*a*b* LUT
-			# Use identity matrix for Lab as mandated by ICC spec
-			itable.matrix = colormath.Matrix3x3([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-			m2 = None
 
-		if profile.connectionColorSpace == "XYZ":
 			if logfile:
 				logfile.write("Applying matrix to input curve XYZ values...\n")
 			# Apply matrix
