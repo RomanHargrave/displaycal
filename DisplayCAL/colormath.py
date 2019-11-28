@@ -440,11 +440,15 @@ def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None,
 							  cat) * (X, Y, Z)
 
 
-def apply_bpc(X, Y, Z, bp_in, bp_out, wp_out="D50", weight=False):
+def apply_bpc(X, Y, Z, bp_in=None, bp_out=None, wp_out="D50", weight=False):
 	"""
 	Apply black point compensation
 	
 	"""
+	if not bp_in:
+		bp_in = (0, 0, 0)
+	if not bp_out:
+		bp_out = (0, 0, 0)
 	wp_out = get_whitepoint(wp_out)
 	XYZ = [X, Y, Z]
 	if weight:
@@ -470,6 +474,23 @@ def avg(*args):
 	return float(sum(args)) / len(args)
 
 
+def blend_ab(X, Y, Z, bp, wp, power=40.0, signscale=1):
+	if Y < 0:
+		return 0, 0, 0
+	L, a, b = XYZ2Lab(X, Y, Z, whitepoint=wp)
+	bpL, bpa, bpb = XYZ2Lab(*bp, whitepoint=wp)
+	vv = (L - bpL) / (100.0 - bpL)  # 0 at bp, 1 at wp
+	vv = 1.0 - vv  # 1 at bp, 0 at wp
+	if vv < 0.0:
+		vv = 0.0
+	elif vv > 1.0:
+		vv = 1.0
+	vv = math.pow(vv, power) * signscale
+	a += vv * bpa
+	b += vv * bpb
+	return Lab2XYZ(L, a, b, whitepoint=wp)
+
+
 def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 	"""
 	Blend to destination black as L approaches black, optionally compensating
@@ -479,45 +500,17 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 
 	wp = get_whitepoint(wp)
 
-	L, a, b = XYZ2Lab(X, Y, Z, whitepoint=wp)
-
 	for i, bp in enumerate((bp_in, bp_out)):
 		if not bp or tuple(bp) == (0, 0, 0):
 			continue
-		bpLab = XYZ2Lab(*bp, whitepoint=wp)
+		if bp[1] == 1:
+			raise ValueError("Black luminance is 100!")
 		if i == 0:
-			bL = bpLab[0]
-			if bL == 100:
-				raise ValueError("Black luminance is 100!")
+			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, -1)
+			X, Y, Z = apply_bpc(X, Y, Z, tuple(v * bp[1] for v in wp))
 		else:
-			bL = 0
-		vv = (L - bL) / (100.0 - bL)  # 0 at bp, 1 at wp
-		vv = 1.0 - vv
-		if vv < 0.0:
-			vv = 0.0
-		elif vv > 1.0:
-			vv = 1.0
-		vv = math.pow(vv, power)
-		if i == 0:
-			vv = -vv
-			oldmin = bp_in[1]
-			newmin = 0.0
-		else:
-			oldmin = 0.0
-			newmin = bp_out[1]
-		oldrange = 1.0 - oldmin
-		newrange = 1.0 - newmin
-		Y = (newrange * Y - 1.0 * (oldmin - newmin)) / oldrange
-		if Y < 0:
-			Y = 0
-			a = 0
-			b = 0
-		else:
-			a += vv * bpLab[1]
-			b += vv * bpLab[2]
-		L = XYZ2Lab(0, Y, 0, whitepoint=wp)[0]
-
-	X, Y, Z = Lab2XYZ(L, a, b, whitepoint=wp)
+			X, Y, Z = apply_bpc(X, Y, Z, None, tuple(v * bp[1] for v in wp))
+			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, 1)
 
 	return X, Y, Z
 
