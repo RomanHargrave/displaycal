@@ -8832,7 +8832,7 @@ usage: spotread [-options] [logfile]
 					# Note: Setting black chroma to zero fixes smoothness
 					# issues on devices with not very neutral black.
 					bpcorr = getcfg("profile.black_point_correction")
-					if getcfg("profile.black_point_compensation"):
+					if False: #getcfg("profile.black_point_compensation"):
 						XYZbp = (0, 0, 0)
 						Labbp = (0, 0, 0)
 					elif bpcorr < 1:
@@ -8855,7 +8855,7 @@ usage: spotread [-options] [logfile]
 															  for v in XYZwp])
 					if XYZbp:
 						ti3.write(args[-1] + ".ti3.backup")
-						if getcfg("profile.black_point_compensation"):
+						if False: #getcfg("profile.black_point_compensation"):
 							logmsg = "Applying black point compensation"
 						else:
 							logmsg = ("Applying %i%% black point "
@@ -9287,29 +9287,10 @@ usage: spotread [-options] [logfile]
 						profile.tags.A2B1 = profile.tags.A2B0
 					if not "A2B2" in profile.tags:
 						profile.tags.A2B2 = profile.tags.A2B0
-				# A2B processing
-				process_A2B = ("A2B0" in profile.tags and
-							   profile.colorSpace == "RGB" and
-							   profile.connectionColorSpace in ("XYZ", "Lab") and
-							   (getcfg("profile.b2a.hires") or
-								getcfg("profile.quality.b2a") in ("l", "n")
-								or not has_B2A))
-				if process_A2B:
-					if (getcfg("profile.b2a.hires") or
-						not has_B2A):
-						if profchanged:
-							# We need to write the changed profile before
-							# enhancing B2A resolution!
-							try:
-								profile.write()
-							except Exception, exception:
-								return exception
-						result = self.update_profile_B2A(profile)
-						if not isinstance(result, Exception) and result:
-							profchanged = True
 
 				if (profile.colorSpace == "RGB" and
-					profile.connectionColorSpace in ("XYZ", "Lab")):
+					profile.connectionColorSpace in ("XYZ", "Lab") and
+					"A2B0" in profile.tags):
 					# Apply BPC to A2B0/A2B2 to match B2A0/B2A2 black
 
 					if profchanged:
@@ -9319,6 +9300,9 @@ usage: spotread [-options] [logfile]
 						except Exception, exception:
 							return exception
 
+					if not "A2B1" in profile.tags:
+						self.log("Generating A2B1 by copying A2B0")
+						profile.tags.A2B1 = profile.tags.A2B0
 					A2B1 = profile.tags.get("A2B1")
 					a2b_tables = [0]
 					if profile.tags.get("B2A2"):
@@ -9368,7 +9352,26 @@ usage: spotread [-options] [logfile]
 						table = profile.tags.get(tablename)
 						if not table:
 							continue
-						if table is A2B1:
+						if tables:
+							# Get inverse B2A0/B2A2 black
+							XYZbp_B2A = self.xicclu(profile, [[0, 0, 0]],
+													intent="prs"[tableno],
+													direction="ib", pcs="x")[0]
+						else:
+							XYZbp_B2A = (0, 0, 0)
+						Labbp_B2A = colormath.XYZ2Lab(*XYZbp_B2A, scale=1)
+						if XYZbp and (0, 0, 0) not in (XYZbp, XYZbp_B2A):
+							# Make it same hue as relcol black
+							self.log("Inverse B2A%i" % tableno, "blackpoint L*a*b* "
+									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
+							Labbp_B2A = (Labbp_B2A[0], Labbp[1], Labbp[2])
+							self.log("Adjusted", tablename, "blackpoint L*a*b* "
+									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
+							XYZbp_B2A = colormath.Lab2XYZ(*Labbp_B2A)
+						if XYZbp_B2A == XYZbp:
+							continue
+						if (table is A2B1 and
+							not getcfg("profile.black_point_compensation")):
 							# Make A2B0/A2B2 a distinct table
 							self.log("Making distinct", tablename)
 							table = ICCP.LUT16Type(None, tablename, profile)
@@ -9389,24 +9392,12 @@ usage: spotread [-options] [logfile]
 						else:
 							table = profile.tags[tablename]
 						# Apply BPC to A2B0/A2B2
-						# Get inverse B2A0/B2A2 black
-						XYZbp_B2A = self.xicclu(profile, [[0, 0, 0]],
-												intent="prs"[tableno],
-												direction="ib", pcs="x")[0]
-						Labbp_B2A = colormath.XYZ2Lab(*XYZbp_B2A, scale=1)
-						if XYZbp:
-							# Make it same hue as relcol black
-							self.log("Inverse B2A%i" % tableno, "blackpoint L*a*b* "
-									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
-							Labbp_B2A = (Labbp_B2A[0], Labbp[1], Labbp[2])
-							self.log("Adjusted", tablename, "blackpoint L*a*b* "
-									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
-							XYZbp_B2A = colormath.Lab2XYZ(*Labbp_B2A)
 						self.log("Applying black point compensation to %s:" % tablename,
 								 "L*a*b* %.6f %.6f %.6f" % tuple(Labbp_B2A))
 						table.apply_black_offset(XYZbp_B2A, None,
 												 self.thread_abort,
 												 lang.getstr("aborted"))
+						profchanged = True
 						if XYZbp:
 							# Adjust for BPC
 							interp = []
@@ -9431,6 +9422,27 @@ usage: spotread [-options] [logfile]
 														{},
 														num_workers,
 														self.thread_abort), [])
+
+				# A2B processing
+				process_A2B = ("A2B0" in profile.tags and
+							   profile.colorSpace == "RGB" and
+							   profile.connectionColorSpace in ("XYZ", "Lab") and
+							   (getcfg("profile.b2a.hires") or
+								getcfg("profile.quality.b2a") in ("l", "n")
+								or not has_B2A))
+				if process_A2B:
+					if (getcfg("profile.b2a.hires") or
+						not has_B2A):
+						if profchanged:
+							# We need to write the changed profile before
+							# enhancing B2A resolution!
+							try:
+								profile.write()
+							except Exception, exception:
+								return exception
+						result = self.update_profile_B2A(profile)
+						if not isinstance(result, Exception) and result:
+							profchanged = True
 
 				# All table processing done
 
