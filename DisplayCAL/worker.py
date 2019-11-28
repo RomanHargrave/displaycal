@@ -9423,8 +9423,9 @@ usage: spotread [-options] [logfile]
 								num_workers = None
 							table.clut = sum(pool_slice(ICCP._mp_apply,
 														table.clut,
-														(colormath.matmul,
-														 (m4, m2), interp,
+														(profile.connectionColorSpace,
+														 colormath.matmul,
+														 (m4, m2), XYZwp, interp,
 														rinterp,
 														lang.getstr("aborted")),
 														{},

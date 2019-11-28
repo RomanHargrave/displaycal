@@ -1738,9 +1738,6 @@ def make_monotonically_increasing(iterable, passes=0, window=None):
 
 def matmul(XYZ, m1, m2):
 	XYZ = m1 * (m2 * XYZ)
-	if round(max(XYZ)) > 65535:
-		# This should be impossible...
-		XYZ = [min(v, 65535) for v in XYZ]
 	return XYZ
 
 

@@ -2383,13 +2383,9 @@ def unset_display_profile(profile_name, display_no=0, devicekey=None,
 		return False
 
 
-def _blend_blackpoint(row, pcs, bp_in, bp_out, wp=None, use_bpc=False,
+def _blend_blackpoint(row, bp_in, bp_out, wp=None, use_bpc=False,
 					  weight=False, D50="D50"):
-	if pcs == "Lab":
-		L, a, b = legacy_PCSLab_uInt16_to_dec(*row)
-		X, Y, Z = colormath.Lab2XYZ(L, a, b, D50)
-	else:
-		X, Y, Z = [v / 32768.0 for v in row]
+	X, Y, Z = row
 	if use_bpc:
 		X, Y, Z = colormath.apply_bpc(X, Y, Z, bp_in, bp_out, wp,
 									  weight=weight)
@@ -2408,17 +2404,11 @@ def _blend_blackpoint(row, pcs, bp_in, bp_out, wp=None, use_bpc=False,
 											 bp_out)
 		if wp:
 			X, Y, Z = colormath.adapt(X, Y, Z, D50, wp)
-	if pcs == "Lab":
-		L, a, b = colormath.XYZ2Lab(X, Y, Z, D50)
-		row = [min(max(0, v), 65535) for v in
-			   legacy_PCSLab_dec_to_uInt16(L, a, b)]
-	else:
-		row = [min(max(0, v) * 32768.0, 65535) for v in (X, Y, Z)]
-	return row
+	return X, Y, Z
 
 
-def _mp_apply(blocks, thread_abort_event, progress_queue, fn, args, interp,
-			  rinterp, abortmessage="Aborted"):
+def _mp_apply(blocks, thread_abort_event, progress_queue, pcs, fn, args, D50,
+			  interp, rinterp, abortmessage="Aborted"):
 	"""
 	Worker for applying function to cLUT
 	
@@ -2448,7 +2438,18 @@ def _mp_apply(blocks, thread_abort_event, progress_queue, fn, args, interp,
 			if interp:
 				for column, value in enumerate(row):
 					row[column] = interp[column](value)
-			row = fn(row, *args)
+			if pcs == "Lab":
+				L, a, b = legacy_PCSLab_uInt16_to_dec(*row)
+				X, Y, Z = colormath.Lab2XYZ(L, a, b, D50)
+			else:
+				X, Y, Z = [v / 32768.0 for v in row]
+			X, Y, Z = fn((X, Y, Z), *args)
+			if pcs == "Lab":
+				L, a, b = colormath.XYZ2Lab(X, Y, Z, D50)
+				row = [min(max(0, v), 65535) for v in
+					   legacy_PCSLab_dec_to_uInt16(L, a, b)]
+			else:
+				row = [min(max(0, v) * 32768.0, 65535) for v in (X, Y, Z)]
 			if rinterp:
 				for column, value in enumerate(row):
 					row[column] = rinterp[column](value)
@@ -2470,9 +2471,9 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 	This should be spawned as a multiprocessing process
 	
 	"""
-	return _mp_apply(blocks, thread_abort_event, progress_queue,
-					 _blend_blackpoint, (pcs, bp, bp_out, wp if use_bpc else None,
-										 use_bpc, weight, D50),
+	return _mp_apply(blocks, thread_abort_event, progress_queue, pcs,
+					 _blend_blackpoint, (bp, bp_out, wp if use_bpc else None,
+										 use_bpc, weight), D50,
 					interp, rinterp, abortmessage)
 
 
