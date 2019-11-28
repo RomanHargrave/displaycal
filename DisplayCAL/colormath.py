@@ -507,9 +507,9 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 			raise ValueError("Black luminance is 100!")
 		if i == 0:
 			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, -1)
-			X, Y, Z = apply_bpc(X, Y, Z, tuple(v * bp[1] for v in wp))
+			X, Y, Z = apply_bpc(X, Y, Z, tuple(v * bp[1] for v in wp), None, wp)
 		else:
-			X, Y, Z = apply_bpc(X, Y, Z, None, tuple(v * bp[1] for v in wp))
+			X, Y, Z = apply_bpc(X, Y, Z, None, tuple(v * bp[1] for v in wp), wp)
 			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, 1)
 
 	return X, Y, Z
