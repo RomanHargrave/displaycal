@@ -9307,19 +9307,62 @@ usage: spotread [-options] [logfile]
 						result = self.update_profile_B2A(profile)
 						if not isinstance(result, Exception) and result:
 							profchanged = True
-							# We need to write the changed profile
-							try:
-								profile.write()
-							except Exception, exception:
-								return exception
 
 				if (profile.colorSpace == "RGB" and
 					profile.connectionColorSpace in ("XYZ", "Lab")):
 					# Apply BPC to A2B0/A2B2 to match B2A0/B2A2 black
+
+					if profchanged:
+						# We need to write the changed profile
+						try:
+							profile.write()
+						except Exception, exception:
+							return exception
+
 					A2B1 = profile.tags.get("A2B1")
 					a2b_tables = [0]
 					if profile.tags.get("B2A2"):
 						a2b_tables.append(2)
+
+					XYZwp = colormath.get_whitepoint("D50")
+
+					XYZrgb = self.xicclu(profile,
+										 [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+										 pcs="x")
+					Xr, Yr, Zr = XYZrgb[0]
+					Xg, Yg, Zg = XYZrgb[1]
+					Xb, Yb, Zb = XYZrgb[2]
+					m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
+											  (Yr, Yg, Yb),
+											  (Zr, Zg, Zb))).inverted()
+					Sr, Sg, Sb = m1 * XYZwp
+					m2 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
+											  (Sr * Yr, Sg * Yg, Sb * Yb),
+											  (Sr * Zr, Sg * Zg, Sb * Zb))).inverted()
+
+					if XYZbp:
+						XYZtmp = list(XYZrgb)
+						for i, XYZ in enumerate(XYZtmp):
+							XYZtmp[i] = colormath.apply_bpc(*XYZ,
+															bp_in=(0, 0, 0),
+															bp_out=XYZbp)
+						Xr, Yr, Zr = XYZtmp[0]
+						Xg, Yg, Zg = XYZtmp[1]
+						Xb, Yb, Zb = XYZtmp[2]
+						m3 = colormath.Matrix3x3(((Xr, Xg, Xb),
+												  (Yr, Yg, Yb),
+												  (Zr, Zg, Zb))).inverted()
+						Sr, Sg, Sb = m3 * XYZwp
+						m4 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
+												  (Sr * Yr, Sg * Yg, Sb * Yb),
+												  (Sr * Zr, Sg * Zg, Sb * Zb)))
+
+						if debug:
+							for i in xrange(3):
+								self.log(colormath.XYZ2xyY(*XYZrgb[i]),
+										 colormath.XYZ2xyY(*XYZtmp[i]),
+										 colormath.XYZ2xyY(*m4 * (m2 * XYZrgb[i])))
+
 					for tableno in a2b_tables:
 						tablename = "A2B%i" % tableno
 						table = profile.tags.get(tablename)
@@ -9343,6 +9386,8 @@ usage: spotread [-options] [logfile]
 								for row in block:
 									table.clut[-1].append(list(row))
 							profile.tags[tablename] = table
+						else:
+							table = profile.tags[tablename]
 						# Apply BPC to A2B0/A2B2
 						# Get inverse B2A0/B2A2 black
 						XYZbp_B2A = self.xicclu(profile, [[0, 0, 0]],
@@ -9351,15 +9396,40 @@ usage: spotread [-options] [logfile]
 						Labbp_B2A = colormath.XYZ2Lab(*XYZbp_B2A, scale=1)
 						if XYZbp:
 							# Make it same hue as relcol black
-							self.log("Inverse B2A%i" % tableno, "blackpoint: L*a*b*"
+							self.log("Inverse B2A%i" % tableno, "blackpoint L*a*b* "
 									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
 							Labbp_B2A = (Labbp_B2A[0], Labbp[1], Labbp[2])
-							self.log("Adjusted", tablename, "blackpoint: L*a*b*"
+							self.log("Adjusted", tablename, "blackpoint L*a*b* "
 									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
 							XYZbp_B2A = colormath.Lab2XYZ(*Labbp_B2A)
 						self.log("Applying black point compensation to %s:" % tablename,
 								 "L*a*b* %.6f %.6f %.6f" % tuple(Labbp_B2A))
-						profile.tags[tablename].apply_black_offset(XYZbp_B2A)
+						table.apply_black_offset(XYZbp_B2A, None,
+												 self.thread_abort,
+												 lang.getstr("aborted"))
+						if XYZbp:
+							# Adjust for BPC
+							interp = []
+							rinterp = []
+							osize = len(table.output[0])
+							omaxv = osize - 1.0
+							orange = [i / omaxv * 65535 for i in xrange(osize)]
+							for i in xrange(3):
+								interp.append(colormath.Interp(orange, table.output[i]))
+								rinterp.append(colormath.Interp(table.output[i], orange))
+							if len(table.clut[0]) < 33:
+								num_workers = 1
+							else:
+								num_workers = None
+							table.clut = sum(pool_slice(ICCP._mp_apply,
+														table.clut,
+														(colormath.matmul,
+														 (m2, m4), interp,
+														rinterp,
+														lang.getstr("aborted")),
+														{},
+														num_workers,
+														self.thread_abort), [])
 
 				# All table processing done
 

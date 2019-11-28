@@ -1736,6 +1736,14 @@ def make_monotonically_increasing(iterable, passes=0, window=None):
 	return values
 
 
+def matmul(XYZ, m1, m2):
+	XYZ = m1 * (m2 * XYZ)
+	if round(max(XYZ)) > 65535:
+		# This should be impossible...
+		XYZ = [min(v, 65535) for v in XYZ]
+	return XYZ
+
+
 def planckianCT2XYZ(T, scale=1.0):
 	""" Convert from planckian temperature to XYZ.
 	

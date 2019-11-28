@@ -2383,7 +2383,7 @@ def unset_display_profile(profile_name, display_no=0, devicekey=None,
 		return False
 
 
-def _blend_blackpoint(pcs, row, bp_in, bp_out, wp=None, use_bpc=False,
+def _blend_blackpoint(row, pcs, bp_in, bp_out, wp=None, use_bpc=False,
 					  weight=False, D50="D50"):
 	if pcs == "Lab":
 		L, a, b = legacy_PCSLab_uInt16_to_dec(*row)
@@ -2417,11 +2417,10 @@ def _blend_blackpoint(pcs, row, bp_in, bp_out, wp=None, use_bpc=False,
 	return row
 
 
-def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
-					wp, nonzero_bp, use_bpc, weight, D50, interp, rinterp,
-					abortmessage="Aborted"):
+def _mp_apply(blocks, thread_abort_event, progress_queue, fn, args, interp,
+			  rinterp, abortmessage="Aborted"):
 	"""
-	Worker for applying black point compensation or offset
+	Worker for applying function to cLUT
 	
 	This should be spawned as a multiprocessing process
 	
@@ -2446,14 +2445,11 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 		if thread_abort_event and thread_abort_event.is_set():
 			return Info(abortmessage)
 		for i, row in enumerate(block):
-			if not use_bpc or nonzero_bp:
+			if interp:
 				for column, value in enumerate(row):
 					row[column] = interp[column](value)
-			row = _blend_blackpoint(pcs, row, bp,
-									bp_out,
-									wp if use_bpc else None,
-									use_bpc, weight, D50)
-			if not use_bpc or nonzero_bp:
+			row = fn(row, *args)
+			if rinterp:
 				for column, value in enumerate(row):
 					row[column] = rinterp[column](value)
 			block[i] = row
@@ -2463,6 +2459,21 @@ def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
 			progress_queue.put(perc - prevperc)
 			prevperc = perc
 	return blocks
+
+
+def _mp_apply_black(blocks, thread_abort_event, progress_queue, pcs, bp, bp_out,
+					wp, use_bpc, weight, D50, interp, rinterp,
+					abortmessage="Aborted"):
+	"""
+	Worker for applying black point compensation or offset
+	
+	This should be spawned as a multiprocessing process
+	
+	"""
+	return _mp_apply(blocks, thread_abort_event, progress_queue,
+					 _blend_blackpoint, (pcs, bp, bp_out, wp if use_bpc else None,
+										 use_bpc, weight, D50),
+					interp, rinterp, abortmessage)
 
 
 def _mp_hdr_tonemap(HDR_XYZ, thread_abort_event, progress_queue, rgb_space,
@@ -3021,7 +3032,7 @@ class LUT16Type(ICCProfileTag):
 
 			if bp != bp_out:
 				self.clut = sum(pool_slice(_mp_apply_black, self.clut,
-										   (pcs, bp, bp_out, wp, nonzero_bp,
+										   (pcs, bp, bp_out, wp,
 										    use_bpc, weight, D50, interp,
 										    rinterp, abortmessage), {},
 										   num_workers, thread_abort, logfile),
