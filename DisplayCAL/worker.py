@@ -9424,7 +9424,7 @@ usage: spotread [-options] [logfile]
 							table.clut = sum(pool_slice(ICCP._mp_apply,
 														table.clut,
 														(colormath.matmul,
-														 (m2, m4), interp,
+														 (m4, m2), interp,
 														rinterp,
 														lang.getstr("aborted")),
 														{},
