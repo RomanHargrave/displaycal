@@ -4459,6 +4459,8 @@ class MainFrame(ReportFrame, BaseFrame):
 						(getcfg("profile.b2a.hires") or
 						 getcfg("profile.quality.b2a") in ("l", "n")))) and
 					  enable_profile)
+		if not enable_bpc:
+			setcfg("profile.black_point_compensation", 0)
 		self.black_point_compensation_cb.Enable(enable_bpc)
 		self.black_point_compensation_cb.SetValue(enable_bpc and
 			bool(int(getcfg("profile.black_point_compensation"))))
