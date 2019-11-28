@@ -256,7 +256,12 @@ def _main(module, name, applockfilename, probe_ports=True):
 														   "lockfile %s: %r" %
 														   (lockfilename,
 														    exception))
-										safe_print("Closing existing instance"
+											else:
+												safe_print("Warning - had to "
+														   "create dummy "
+														   "lockfile",
+														   lockfilename)
+										safe_print("Closing existing instance "
 												   "with PID", pid2)
 										startupinfo = sp.STARTUPINFO()
 										startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
@@ -283,6 +288,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 						# Wait for lockfile to be removed, in which case
 						# we know the running instance has successfully
 						# closed.
+						safe_print("Waiting for existing instance to exit and "
+								   "delete lockfile", lockfilename)
 						while os.path.isfile(lockfilename):
 							sleep(.05)
 						safe_print("Existing instance exited.")
