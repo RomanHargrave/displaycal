@@ -8945,7 +8945,11 @@ usage: spotread [-options] [logfile]
 														 os.path.basename(args[-1]),
 														 getcfg("copyright"),
 														 display_manufacturer,
-														 display_name, cat)
+														 display_name,
+														 getcfg("profile.type") in
+														 ("X", "x") or
+														 getcfg("profile.black_point_compensation"),
+														 cat)
 				if is_primaries_only:
 					# Use matrix profile
 					profile = mtx
@@ -9830,7 +9834,7 @@ usage: spotread [-options] [logfile]
 	def _create_simple_matrix_profile(self, ti3_RGB_XYZ, ti3_remaining, desc,
 									  copyright="No copyright",
 									  display_manufacturer=None,
-									  display_name=None,
+									  display_name=None, bpc=False,
 									  cat="Bradford"):
 		self.log("-" * 80)
 		self.log("Creating matrix from primaries")
@@ -9843,7 +9847,13 @@ usage: spotread [-options] [logfile]
 				RGB_XYZ = ti3_RGB_XYZ
 			else:
 				RGB_XYZ = ti3_remaining
-			xy.append(colormath.XYZ2xyY(*(v / 100 for v in RGB_XYZ[(R, G, B)]))[:2])
+			X, Y, Z = RGB_XYZ[(R, G, B)]
+			if ti3_RGB_XYZ[(0, 0, 0)] != (0, 0, 0) and not bpc:
+				# Adjust for black offset
+				X, Y, Z = colormath.apply_bpc(X, Y, Z, ti3_RGB_XYZ[(0, 0, 0)],
+											  (0, 0, 0),
+											  ti3_RGB_XYZ[(100, 100, 100)])
+			xy.append(colormath.XYZ2xyY(*(v / 100 for v in (X, Y, Z)))[:2])
 		self.log("Using chromatic adaptation transform matrix:", cat)
 		mtx = ICCP.ICCProfile.from_chromaticities(xy[0][0], xy[0][1],
 												  xy[1][0], xy[1][1],
