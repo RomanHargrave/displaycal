@@ -1719,7 +1719,7 @@ class LUT3DFrame(BaseFrame):
 	
 	def lut3d_enable_size_controls(self):
 		self.lut3d_size_ctrl.Enable(self.getcfg("3dlut.format")
-									not in ("dcl", "eeColor", "madVR"))
+									not in ("eeColor", "madVR"))
 		
 
 
