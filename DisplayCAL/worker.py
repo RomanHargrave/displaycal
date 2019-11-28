@@ -8946,8 +8946,9 @@ usage: spotread [-options] [logfile]
 														 getcfg("copyright"),
 														 display_manufacturer,
 														 display_name,
-														 getcfg("profile.type") in
-														 ("X", "x") or
+														 (getcfg("profile.type") in
+														  ("X", "x") and
+														  getcfg("profile.b2a.hires")) or
 														 getcfg("profile.black_point_compensation"),
 														 cat)
 				if is_primaries_only:
@@ -9294,7 +9295,8 @@ usage: spotread [-options] [logfile]
 
 				if (profile.colorSpace == "RGB" and
 					profile.connectionColorSpace in ("XYZ", "Lab") and
-					"A2B0" in profile.tags):
+					"A2B0" in profile.tags and
+					(getcfg("profile.b2a.hires") or "B2A1" in profile.tags)):
 					# Apply BPC to A2B0/A2B2 to match B2A0/B2A2 black
 
 					if profchanged:
