@@ -8835,7 +8835,7 @@ usage: spotread [-options] [logfile]
 					if False: #getcfg("profile.black_point_compensation"):
 						XYZbp = (0, 0, 0)
 						Labbp = (0, 0, 0)
-					elif bpcorr < 1:
+					else:
 						# Correct black point a* b* and make neutral hues near
 						# black blend over to the new blackpoint. The correction
 						# factor determines the amount of the measured black hue
@@ -8853,7 +8853,7 @@ usage: spotread [-options] [logfile]
 						XYZbp = colormath.Lab2XYZ(*Labbp,
 												  whitepoint=[v / XYZwp[1]
 															  for v in XYZwp])
-					if XYZbp:
+					if XYZbp and bpcorr < 1:
 						ti3.write(args[-1] + ".ti3.backup")
 						if False: #getcfg("profile.black_point_compensation"):
 							logmsg = "Applying black point compensation"
