@@ -195,12 +195,13 @@ def _main(module, name, applockfilename, probe_ports=True):
 									incoming = False
 						else:
 							incoming = False
-						if incoming:
+						while incoming:
 							# Send args as UTF-8
 							if module == "apply-profiles":
 								# Always try to close currently running instance
 								safe_print("Closing existing instance")
-								data = ["exit"]
+								cmd = "exit" if incoming == pyname else "close"
+								data = [cmd]
 							else:
 								# Send module/appname to notify running app
 								safe_print("Notifying existing instance")
@@ -214,9 +215,14 @@ def _main(module, name, applockfilename, probe_ports=True):
 								safe_print("Sent scripting request, awaiting response...")
 								incoming = appsocket.read().rstrip("\4")
 								safe_print("Got response: %r" % incoming)
-								if module == "apply-profiles" and incoming == "":
-									# Successfully sent our close request.
-									incoming = "ok"
+								if module == "apply-profiles":
+									if incoming == "":
+										# Successfully sent our close request.
+										incoming = "ok"
+									elif incoming == "invalid" and cmd == "exit":
+										# < 3.8.8.1 didn't have exit command
+										continue
+							break
 						appsocket.close()
 				else:
 					pid = None
