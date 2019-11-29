@@ -2384,26 +2384,14 @@ def unset_display_profile(profile_name, display_no=0, devicekey=None,
 
 
 def _blend_blackpoint(row, bp_in, bp_out, wp=None, use_bpc=False,
-					  weight=False, D50="D50"):
+					  weight=False):
 	X, Y, Z = row
 	if use_bpc:
 		X, Y, Z = colormath.apply_bpc(X, Y, Z, bp_in, bp_out, wp,
 									  weight=weight)
 	else:
-		if wp:
-			X, Y, Z = colormath.adapt(X, Y, Z, wp, D50)
-			if bp_in:
-				bp_in = colormath.adapt(*bp_in,
-										whitepoint_source=wp,
-										whitepoint_destination=D50)
-			if bp_out:
-				bp_out = colormath.adapt(*bp_out,
-										whitepoint_source=wp,
-										whitepoint_destination=D50)
 		X, Y, Z = colormath.blend_blackpoint(X, Y, Z, bp_in,
-											 bp_out)
-		if wp:
-			X, Y, Z = colormath.adapt(X, Y, Z, D50, wp)
+											 bp_out, wp)
 	return X, Y, Z
 
 
