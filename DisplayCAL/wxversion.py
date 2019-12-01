@@ -377,7 +377,7 @@ class _wxPackageInfo(object):
         segments = self.base.split('-')
         if stripFirst:
             segments = segments[1:]
-        self.version = tuple([int(x) for x in segments[0].split('.')])
+        self.version = tuple(segments[0].split('.'))
         self.options = segments[1:]
 
 
