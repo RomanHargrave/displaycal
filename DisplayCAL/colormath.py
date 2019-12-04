@@ -440,7 +440,8 @@ def adapt(X, Y, Z, whitepoint_source=None, whitepoint_destination=None,
 							  cat) * (X, Y, Z)
 
 
-def apply_bpc(X, Y, Z, bp_in=None, bp_out=None, wp_out="D50", weight=False):
+def apply_bpc(X, Y, Z, bp_in=None, bp_out=None, wp_out="D50", weight=False,
+			  pin_chromaticity=False):
 	"""
 	Apply black point compensation
 	
@@ -450,7 +451,6 @@ def apply_bpc(X, Y, Z, bp_in=None, bp_out=None, wp_out="D50", weight=False):
 	if not bp_out:
 		bp_out = (0, 0, 0)
 	wp_out = get_whitepoint(wp_out)
-	XYZ = [X, Y, Z]
 	if weight:
 		L = XYZ2Lab(*[v * 100 for v in (X, Y, Z)])[0]
 		bp_in_Lab = XYZ2Lab(*[v * 100 for v in bp_in])
@@ -465,8 +465,18 @@ def apply_bpc(X, Y, Z, bp_in=None, bp_out=None, wp_out="D50", weight=False):
 												bp_out_Lab[0]) or 1.0)))
 		bp_in = Lab2XYZ(*[v * vv for v in bp_in_Lab])
 		bp_out = Lab2XYZ(*[v * vv for v in bp_out_Lab])
+	if pin_chromaticity:
+		XYZ = [Y]
+		x, y = XYZ2xyY(X, Y, Z, wp_out)[:2]
+		bp_in = bp_in[1:2]
+		bp_out = bp_out[1:2]
+		wp_out = wp_out[1:2]
+	else:
+		XYZ = [X, Y, Z]
 	for i, v in enumerate(XYZ):
 		XYZ[i] = ((wp_out[i] - bp_out[i]) * v - wp_out[i] * (bp_in[i] - bp_out[i])) / (wp_out[i] - bp_in[i])
+	if pin_chromaticity:
+		XYZ = xyY2XYZ(x, y, XYZ[0])
 	return XYZ
 
 
@@ -493,7 +503,8 @@ def blend_ab(X, Y, Z, bp, wp, power=40.0, signscale=1):
 	return Lab2XYZ(L, a, b, whitepoint=wp)
 
 
-def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
+def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0,
+					 pin_chromaticity=False):
 	"""
 	Blend to destination black as L approaches black, optionally compensating
 	for input black first
@@ -508,9 +519,9 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 		bp_wp = tuple(v / wp[1] * bp[1] for v in wp)
 		if i == 0:
 			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, -1)
-			X, Y, Z = apply_bpc(X, Y, Z, bp_wp, None, wp)
+			X, Y, Z = apply_bpc(X, Y, Z, bp_wp, None, wp, pin_chromaticity)
 		else:
-			X, Y, Z = apply_bpc(X, Y, Z, None, bp_wp, wp)
+			X, Y, Z = apply_bpc(X, Y, Z, None, bp_wp, wp, pin_chromaticity)
 			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, 1)
 
 	return X, Y, Z
