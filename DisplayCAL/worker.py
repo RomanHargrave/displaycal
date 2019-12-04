@@ -9369,9 +9369,9 @@ usage: spotread [-options] [logfile]
 					if XYZbp:
 						XYZtmp = list(XYZrgb)
 						for i, XYZ in enumerate(XYZtmp):
-							XYZtmp[i] = colormath.apply_bpc(*XYZ,
-															bp_in=(0, 0, 0),
-															bp_out=XYZbp)
+							XYZtmp[i] = colormath.blend_blackpoint(*XYZ,
+																   bp_in=(0, 0, 0),
+																   bp_out=XYZbp)
 						Xr, Yr, Zr = XYZtmp[0]
 						Xg, Yg, Zg = XYZtmp[1]
 						Xb, Yb, Zb = XYZtmp[2]
