@@ -2308,6 +2308,10 @@ class BaseInteractiveDialog(wx.Dialog):
 			id = wx.ID_CANCEL
 		else:
 			id = event.GetId()
+		if self._log and isinstance(self, ConfirmDialog):
+			ctrl = self.FindWindowById(id, self)
+			if ctrl:
+				safe_print("->", ctrl.Label)
 		self.EndModal(id)
 
 	def EndModal(self, id):
@@ -2690,7 +2694,7 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok=None, cancel=None, bitmap=None, pos=(-1, -1), 
-				 size=(400, -1), alt=None, log=False, 
+				 size=(400, -1), alt=None, log=True, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
 				 name=wx.DialogNameStr, bitmap_margin=None):
 		if not ok:
