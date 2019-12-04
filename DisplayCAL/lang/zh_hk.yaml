@@ -888,6 +888,12 @@
   顯示裝置及測量儀器
 "display.connection.type": |-
   連接方式
+"*display.levels_issue_detected": |-
+  The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m², indicating clipping. Likely either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics driver is wrong.
+  
+  If your display device has a setting for input levels, please set it to full range RGB (0-255). If your display device doesn't have such a setting, set your graphics driver to output limited range (16-235) instead. Select “Retry” after making either change.
+  
+  If neither your display nor graphics driver has a range setting, you can also fix the output levels using the video card gamma table by clicking “Continue”, but note that this is the least preferable solution.
 "display.manufacturer": |-
   顯示裝置製造商
 "display.output": |-
@@ -1239,6 +1245,8 @@
   菲林寫入器
 "finish": |-
   完成
+"*fix_output_levels_using_vcgt": |-
+  Fix output levels using video card gamma table
 "*flare": |-
   Flare
 "flexography": |-
@@ -2145,6 +2153,8 @@
   來自 %s 的無效回應： 機碼的數值 “%s” 並不符合預期的數值 “%s”：%s
 "restore_defaults": |-
   還原到預設值
+"*retry": |-
+  Retry
 "rgb.trc": |-
   RGB 傳遞函數
 "rgb.trc.averaged": |-

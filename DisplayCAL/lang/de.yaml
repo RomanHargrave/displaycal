@@ -886,6 +886,12 @@
   Anzeige- & Messgerät
 "display.connection.type": |-
   Anschlusstyp
+"display.levels_issue_detected": |-
+  Der gemessene Leuchtdichte-Unterschied zwischen RGB-Stufe 0 und 16 ist unterhalb 0.02 cd/m, was auf Clipping hindeutet. Wahrscheinlich ist entweder der Eingangsbereich und/oder Schwarzpegel des Anzeigegeräts, und/oder der Ausgangsbereich der Grafikkarte inkorrekt eingestellt.
+  
+  Wenn Ihr Anzeigegerät eine Einstellung für den Eingangsbereich besitzt, stellen Sie diesen bitte auf Vollbereichs-RGB (0-255). Falls Ihr Anzeigegerät keine solche Einstellung bietet, setzen Sie stattdessen den Ausgangsbereich Ihrer Grafikkarte auf begrenztes RGB (16-235). Wählen Sie „Wiederholen“, nachdem Sie die Einstellung geändert haben.
+  
+  Falls weder Ihr Anzeigegerät noch Ihre Grafikkarte eine entsprechende Einstellungmöglichkeit hat, können Sie den begrenzten Ausgangsbereich auch mit Hilfe der Grafikkarten-Gammatabelle festlegen, dies ist aber die am wenigsten empfehlenswerte Methode.
 "display.manufacturer": |-
   Anzeigegerätehersteller
 "display.output": |-
@@ -1231,6 +1237,8 @@
   Filmbelichter
 "finish": |-
   Fertigstellen
+"fix_output_levels_using_vcgt": |-
+  Ausgabebereich mit Grafikkarten-Gammatabelle festlegen
 "flare": |-
   Streulicht
 "flexography": |-
@@ -1561,7 +1569,7 @@
 "madvr.outdated": |-
   Die benutzte Version von madVR ist veraltet. Bitte aktualisieren Sie auf die neueste Version (mindestens %i.%i.%i.%i).
 "madvr.wrong_levels_detected": |-
-  Der gemessene Leuchtdichte-Unterschied zwischen RGB-Stufe 0 und 16 ist unterhalb 0.02 cd/m. Entweder die Eingabe-Wertebereich- und/oder Schwarzpegel-Einstellung des Anzeigegeräts, und/oder die Ausgabe-Wertebereich-Einstellung der Grafikkarte und/oder von madVR ist inkorrekt ‒ falls Ihre Grafikkarte Vollbereichs-RGB (0-255) ausgibt, ändern Sie bitte madVRs Ausgabe-Wertebereich für Ihr Anzeigegerät auf TV (16-235).
+  Der gemessene Leuchtdichte-Unterschied zwischen RGB-Stufe 0 und 16 ist unterhalb 0.02 cd/m. Entweder ist der Eingangsbereich- und/oder Schwarzpegel des Anzeigegeräts, und/oder der Ausgabebereich der Grafikkarte und/oder von madVR inkorrekt eingestellt ‒ falls Ihre Grafikkarte Vollbereichs-RGB (0-255) ausgibt, ändern Sie bitte madVRs Ausgabebereich für Ihr Anzeigegerät auf TV (16-235).
 "magenta": |-
   Magenta
 "make_and_model": |-
@@ -2124,6 +2132,8 @@
   Ungültige Antwort von %s: Wert von Schlüssel „%s“ entspricht nicht dem erwarteten Wert „%s“: %s
 "restore_defaults": |-
   Standardeinstellungen wiederherstellen
+"retry": |-
+  Wiederholen
 "rgb.trc": |-
   RGB Übertragungsfunktion
 "rgb.trc.averaged": |-

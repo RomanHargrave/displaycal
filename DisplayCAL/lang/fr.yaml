@@ -888,6 +888,12 @@
   Écrans et sondes de mesure
 "display.connection.type": |-
   Connexion
+"*display.levels_issue_detected": |-
+  The measured luminance difference between RGB level 0 and 16 is below 0.02 cd/m², indicating clipping. Likely either the display device's input- and/or black level setting is incorrect, and/or the output levels configuration of the graphics driver is wrong.
+  
+  If your display device has a setting for input levels, please set it to full range RGB (0-255). If your display device doesn't have such a setting, set your graphics driver to output limited range (16-235) instead. Select “Retry” after making either change.
+  
+  If neither your display nor graphics driver has a range setting, you can also fix the output levels using the video card gamma table by clicking “Continue”, but note that this is the least preferable solution.
 "display.manufacturer": |-
   Fabricant du périphérique d’affichage
 "display.output": |-
@@ -1233,6 +1239,8 @@
   Flasheuse de film
 "finish": |-
   Finir
+"*fix_output_levels_using_vcgt": |-
+  Fix output levels using video card gamma table
 "flare": |-
   Diffusion (flare)
 "flexography": |-
@@ -2120,6 +2128,8 @@
   Réponse non valable de  %s : la valeur de la clé « %s » ne correspond pas à la valeur attendue « %s » : %s
 "restore_defaults": |-
   Restaurer les valeurs par défaut
+"*retry": |-
+  Retry
 "rgb.trc": |-
   Fonction de transfert RVB
 "rgb.trc.averaged": |-

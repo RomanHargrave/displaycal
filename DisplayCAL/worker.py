@@ -2684,7 +2684,10 @@ class Worker(WorkerBase):
 			return True
 		self._detecting_video_levels = True
 		try:
-			return self._detect_video_levels()
+			while True:
+				result = self._detect_video_levels()
+				if result is not None:
+					return result
 		finally:
 			self._detecting_video_levels = False
 
@@ -2722,6 +2725,8 @@ END_DATA
 		setcfg("patterngenerator.use_video_levels", 0)
 		result = self.measure_ti1(ti1_path, get_data_path("linear.cal"),
 								  allow_video_levels=False)
+		if result is None:
+			return False
 		if isinstance(result, Exception) or not result:
 			return result
 		ti3_path = os.path.join(tempdir, "0_16.ti3")
@@ -2754,14 +2759,28 @@ END_DATA
 			# We need to take the display white luminance into account
 			threshold = 0.02 / Y_cdm2 * 100  # Threshold 0.02 cd/m2
 			assume_video_levels = black_16["XYZ_Y"] - black_0["XYZ_Y"] < threshold
-			if assume_video_levels and config.get_display_name() == "madVR":
-				# This is an error
-				return Error(lang.getstr("madvr.wrong_levels_detected"))
-			setcfg("patterngenerator.use_video_levels", int(assume_video_levels))
 			if assume_video_levels:
-				self.log("Detected limited range output levels")
+				if config.get_display_name() == "madVR":
+					# This is an error
+					return Error(lang.getstr("madvr.wrong_levels_detected"))
+				if not config.is_virtual_display():
+					# Could be a misconfiguration of display or graphics driver.
+					# Make the user aware.
+					self._detected_levels_issue_confirm_wait = True
+					wx.CallAfter(self.detected_levels_issue_confirm)
+					# Wait for call to return
+					while (self._detected_levels_issue_confirm_wait and
+						   not self.subprocess_abort):
+						sleep(0.05)
+					if self._use_detected_video_levels is False:
+						return False
+					elif self._use_detected_video_levels is None:
+						# Retry
+						return
+				self.log("Using limited range output levels")
 			else:
 				self.log("Assuming full range output levels")
+			setcfg("patterngenerator.use_video_levels", int(assume_video_levels))
 			if not config.is_patterngenerator() and sys.platform == "darwin":
 				# macOS video levels encoding seems to only work right on
 				# some machines if not using videoLUT to do the scaling
@@ -2771,6 +2790,23 @@ END_DATA
 			return Error(lang.getstr("error.testchart.missing_fields",
 									 (ti3_path, ", ".join(black_0.keys()))))
 		return True
+
+	def detected_levels_issue_confirm(self):
+		dlg = ConfirmDialog(None, msg=lang.getstr("display.levels_issue_detected"),
+							ok=lang.getstr("retry"),
+							alt=lang.getstr("fix_output_levels_using_vcgt"),
+							log=True, wrap=100)
+		result = dlg.ShowModal()
+		dlg.Destroy()
+		if result == wx.ID_OK:
+			# Retry
+			self._use_detected_video_levels = None
+		elif result == wx.ID_CANCEL:
+			self._use_detected_video_levels = False
+		else:
+			# Fix output levels using calibration
+			self._use_detected_video_levels = True
+		self._detected_levels_issue_confirm_wait = False
 	
 	def do_instrument_calibration(self, failed=False):
 		""" Ask user to initiate sensor calibration and execute.
