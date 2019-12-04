@@ -9877,6 +9877,8 @@ usage: spotread [-options] [logfile]
 		self.log("-" * 80)
 		self.log("Creating matrix from primaries")
 		xy = []
+		XYZbp = ti3_RGB_XYZ[(0, 0, 0)]
+		XYZwp = ti3_RGB_XYZ[(100, 100, 100)]
 		for R, G, B in [(100, 0, 0),
 						(0, 100, 0),
 						(0, 0, 100),
@@ -9886,11 +9888,10 @@ usage: spotread [-options] [logfile]
 			else:
 				RGB_XYZ = ti3_remaining
 			X, Y, Z = RGB_XYZ[(R, G, B)]
-			if ti3_RGB_XYZ[(0, 0, 0)] != (0, 0, 0) and not bpc:
+			if XYZbp != (0, 0, 0) and not bpc:
 				# Adjust for black offset
-				X, Y, Z = colormath.apply_bpc(X, Y, Z, ti3_RGB_XYZ[(0, 0, 0)],
-											  (0, 0, 0),
-											  ti3_RGB_XYZ[(100, 100, 100)])
+				X, Y, Z = colormath.blend_blackpoint(X, Y, Z, XYZbp, (0, 0, 0),
+													 XYZwp)
 			xy.append(colormath.XYZ2xyY(*(v / 100 for v in (X, Y, Z)))[:2])
 		self.log("Using chromatic adaptation transform matrix:", cat)
 		mtx = ICCP.ICCProfile.from_chromaticities(xy[0][0], xy[0][1],
