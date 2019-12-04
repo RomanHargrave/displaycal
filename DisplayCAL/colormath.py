@@ -479,6 +479,8 @@ def blend_ab(X, Y, Z, bp, wp, power=40.0, signscale=1):
 		return 0, 0, 0
 	L, a, b = XYZ2Lab(X, Y, Z, whitepoint=wp)
 	bpL, bpa, bpb = XYZ2Lab(*bp, whitepoint=wp)
+	if bpL == 100:
+		raise ValueError("Black L* is 100!")
 	vv = (L - bpL) / (100.0 - bpL)  # 0 at bp, 1 at wp
 	vv = 1.0 - vv  # 1 at bp, 0 at wp
 	if vv < 0.0:
@@ -503,13 +505,12 @@ def blend_blackpoint(X, Y, Z, bp_in=None, bp_out=None, wp=None, power=40.0):
 	for i, bp in enumerate((bp_in, bp_out)):
 		if not bp or tuple(bp) == (0, 0, 0):
 			continue
-		if bp[1] == 1:
-			raise ValueError("Black luminance is 100!")
+		bp_wp = tuple(v / wp[1] * bp[1] for v in wp)
 		if i == 0:
 			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, -1)
-			X, Y, Z = apply_bpc(X, Y, Z, tuple(v * bp[1] for v in wp), None, wp)
+			X, Y, Z = apply_bpc(X, Y, Z, bp_wp, None, wp)
 		else:
-			X, Y, Z = apply_bpc(X, Y, Z, None, tuple(v * bp[1] for v in wp), wp)
+			X, Y, Z = apply_bpc(X, Y, Z, None, bp_wp, wp)
 			X, Y, Z = blend_ab(X, Y, Z, bp, wp, power, 1)
 
 	return X, Y, Z
