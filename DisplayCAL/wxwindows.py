@@ -2309,7 +2309,12 @@ class BaseInteractiveDialog(wx.Dialog):
 		else:
 			id = event.GetId()
 		if self._log and isinstance(self, ConfirmDialog):
-			ctrl = self.FindWindowById(id, self)
+			if hasattr(self, "FindWindow"):
+				# wxPython 4
+				ctrl = self.FindWindow(id)
+			else:
+				# wxPython 3
+				ctrl = self.FindWindowById(id)
 			if ctrl:
 				safe_print("->", ctrl.Label)
 		self.EndModal(id)
