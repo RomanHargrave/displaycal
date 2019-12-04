@@ -11006,7 +11006,7 @@ usage: spotread [-options] [logfile]
 					"rTRC" in gamap_profile.tags and
 					"gTRC" in gamap_profile.tags and
 					"bTRC" in gamap_profile.tags):
-					self.log("-> Delegating CIECAM02 gamut mapping to collink")
+					self.log("Delegating CIECAM02 gamut mapping to collink")
 					# Make a copy so we can store options without adding them
 					# to actual colprof arguments
 					gamap_args = []
@@ -11065,7 +11065,7 @@ usage: spotread [-options] [logfile]
 		if ti3:
 			color_rep = (ti3.queryv1("COLOR_REP") or "").split("_")
 			# Prepare ChromaticityType tag
-			self.log("-> Preparing ChromaticityType tag from TI3 colorants")
+			self.log("Preparing ChromaticityType tag from TI3 colorants")
 			colorants = ti3.get_colorants()
 			if colorants and not None in colorants:
 				chrm = ICCP.ChromaticityType()
@@ -11081,7 +11081,7 @@ usage: spotread [-options] [logfile]
 					chrm.channels.append(colormath.XYZ2xyY(*XYZ)[:-1])
 				with open(inoutfile + ".chrm", "wb") as blob:
 					blob.write(chrm.tagData)
-			self.log("-> Storing settings in TI3")
+			self.log("Storing settings in TI3")
 			# Black point compensation
 			ti3[0].add_keyword("USE_BLACK_POINT_COMPENSATION",
 							   "YES" if getcfg("profile.black_point_compensation")
