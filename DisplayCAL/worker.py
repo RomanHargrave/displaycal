@@ -9554,7 +9554,10 @@ usage: spotread [-options] [logfile]
 					apply_bpc and
 					len(profile.tags.rTRC) > 1 and
 					len(profile.tags.gTRC) > 1 and
-					len(profile.tags.bTRC) > 1):
+					len(profile.tags.bTRC) > 1 and
+					(profile.tags.rTRC[0] != 0 or
+					 profile.tags.gTRC[0] != 0 or
+					 profile.tags.bTRC[0] != 0)):
 					self.log("-" * 80)
 					for component in ("r", "g", "b"):
 						self.log("Applying black point compensation to "
