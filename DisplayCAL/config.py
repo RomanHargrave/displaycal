@@ -1654,10 +1654,6 @@ def initcfg(module=None, cfg=cfg, force_load=False):
 	makecfgdir()
 	if os.path.exists(confighome) and \
 	   not os.path.exists(os.path.join(confighome, cfgbasename + ".ini")):
-		# Set a few defaults which have None as possible value and thus cannot
-		# be set in the 'defaults' collection
-		setcfg("gamap_src_viewcond", "mt", cfg=cfg)
-		setcfg("gamap_out_viewcond", "mt", cfg=cfg)
 		# Set default preset
 		setcfg("calibration.file", defaults["calibration.file"], cfg=cfg)
 	# Read cfg

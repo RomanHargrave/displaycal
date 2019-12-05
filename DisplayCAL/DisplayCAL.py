@@ -1142,12 +1142,14 @@ class GamapFrame(BaseFrame):
 
 	def drop_handler(self, path):
 		self.gamap_profile.SetPath(path)
-		self.gamap_profile_handler()
+		self.gamap_profile_handler(True)
 
 	def gamap_profile_handler(self, event=None):
 		v = self.gamap_profile.GetPath()
 		p = bool(v) and os.path.exists(v)
-		if p:
+		c = self.gamap_perceptual_cb.GetValue() or \
+			self.gamap_saturation_cb.GetValue()
+		if p and c:
 			try:
 				profile = ICCP.ICCProfile(v)
 			except (IOError, ICCP.ICCProfileInvalidError), exception:
@@ -1158,22 +1160,35 @@ class GamapFrame(BaseFrame):
 				self.gamap_profile.SetPath("")
 				v = None
 			else:
-				if event:
+				src_viewcond = getcfg("gamap_src_viewcond")
+				if (event and
+					((src_viewcond in [None] + self.viewconds_out_nondisplay
+					  and profile.profileClass in ("mntr", "spac")) or
+					 (src_viewcond not in self.viewconds_out_nondisplay
+					  and profile.profileClass not in ("mntr", "spac")))):
 					# pre-select suitable viewing condition
 					if profile.profileClass == "prtr":
-						self.gamap_src_viewcond_ctrl.SetStringSelection(
-							lang.getstr("gamap.viewconds.pp"))
+						src_viewcond = "pp"
 					else:
-						self.gamap_src_viewcond_ctrl.SetStringSelection(
-							lang.getstr("gamap.viewconds.mt"))
+						src_viewcond = "mt"
+					self.gamap_src_viewcond_ctrl.SetStringSelection(
+						lang.getstr("gamap.viewconds." + src_viewcond))
 					self.gamap_src_viewcond_handler()
+					if not self.gamap_out_viewcond_ctrl.Selection:
+						current_profile = get_current_profile(True)
+						if current_profile:
+							if current_profile.profileClass == "prtr":
+								out_viewcond = "pp"
+							else:
+								out_viewcond = "mt"
+							self.gamap_out_viewcond_ctrl.SetStringSelection(
+								lang.getstr("gamap.viewconds." + out_viewcond))
+							self.gamap_out_viewcond_handler()
 		enable_gamap = getcfg("profile.type") in ("l", "x", "X")
 		self.gamap_perceptual_cb.Enable(enable_gamap)
 		self.gamap_perceptual_intent_ctrl.Enable(self.gamap_perceptual_cb.GetValue())
 		self.gamap_saturation_cb.Enable(enable_gamap)
 		self.gamap_saturation_intent_ctrl.Enable(self.gamap_saturation_cb.GetValue())
-		c = self.gamap_perceptual_cb.GetValue() or \
-			self.gamap_saturation_cb.GetValue()
 		self.gamap_profile.Enable(c)
 		self.gamap_src_viewcond_ctrl.Enable(p and c)
 		self.gamap_out_viewcond_ctrl.Enable(p and c)
@@ -1197,7 +1212,7 @@ class GamapFrame(BaseFrame):
 		   hasattr(self.Parent, "profile_settings_changed"):
 			self.Parent.profile_settings_changed()
 		setcfg("gamap_perceptual", int(v))
-		self.gamap_profile_handler()
+		self.gamap_profile_handler(event)
 
 	def gamap_perceptual_intent_handler(self, event=None):
 		v = self.intents_ba[self.gamap_perceptual_intent_ctrl.GetStringSelection()]
@@ -1207,6 +1222,7 @@ class GamapFrame(BaseFrame):
 		setcfg("gamap_perceptual_intent", v)
 
 	def gamap_saturation_cb_handler(self, event=None):
+		perc = self.gamap_perceptual_cb.GetValue()
 		v = self.gamap_saturation_cb.GetValue()
 		if v:
 			self.gamap_perceptual_cb.SetValue(True)
@@ -1215,7 +1231,7 @@ class GamapFrame(BaseFrame):
 		   hasattr(self.Parent, "profile_settings_changed"):
 			self.Parent.profile_settings_changed()
 		setcfg("gamap_saturation", int(v))
-		self.gamap_profile_handler()
+		self.gamap_profile_handler(event and not perc)
 
 	def gamap_saturation_intent_handler(self, event=None):
 		v = self.intents_ba[self.gamap_saturation_intent_ctrl.GetStringSelection()]
@@ -1236,7 +1252,7 @@ class GamapFrame(BaseFrame):
 		cur = getcfg("gamap_out_viewcond")
 		v = self.viewconds_ba[lstr]
 		if v != cur:
-			if v in self.viewconds_out_nondisplay:
+			if event and v in self.viewconds_out_nondisplay:
 				if not show_result_dialog(Warn(lang.getstr("warning.gamap.out_viewcond.nondisplay",
 														   lstr)),
 										  self, confirm=lang.getstr("ok")):
@@ -3222,8 +3238,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			"app.dpi": None,
 			"calibration.black_luminance": None,
 			"calibration.luminance": None,
-			"gamap_src_viewcond": "mt",
-			"gamap_out_viewcond": "mt",
+			"gamap_src_viewcond": None,
+			"gamap_out_viewcond": None,
 			"testchart.file": "auto",
 			"trc": defaults["gamma"],
 			"whitepoint.colortemp": None,
