@@ -1236,7 +1236,9 @@ class LUTFrame(BaseFrame):
 				# XXX: We should not clip these when plotting, because our input
 				# values are all a = b = 0
 				do_low_clip = False
-				make_mono = False
+				make_mono = True
+				# Keep the max amount of useful information from Lbp onwards
+				mono_end = 0
 				for i, values in enumerate(odata):
 					if values[3] is True or i == 0:
 						if (do_low_clip and (i / maxval * 100 < Lbp or
@@ -1247,14 +1249,17 @@ class LUTFrame(BaseFrame):
 							  [round(v, 4) for v in values[:3]] == [1, 1, 1]):
 							# Set to white
 							values[:] = [1.0, 1.0, 1.0]
+						elif i / maxval * 100 < Lbp:
+							mono_end = i + 2
 					else:
 						# First non-clipping value disables low clipping
 						do_low_clip = False
 					if len(values) > 3:
 						values.pop()
 
-				if make_mono:
-					# Make monotonically increasing
+				if mono_end and mono_end < len(odata):
+					# Make segment from first non-zero value to Lbp
+					# monotonically increasing
 					mono = [[], [], []]
 					for i, values in enumerate(odata):
 						for j in xrange(3):
@@ -1263,7 +1268,10 @@ class LUTFrame(BaseFrame):
 						for i, v in enumerate(values):
 							if v:
 								break
-						mono[j][i - 1:] = colormath.make_monotonically_increasing(values[i - 1:])
+						if i:
+							i -= 1
+						if i + 2 < mono_end:
+							mono[j][i:mono_end] = colormath.make_monotonically_increasing(values[i:mono_end])
 					odata = []
 					for i in xrange(len(mono[0])):
 						values = []
