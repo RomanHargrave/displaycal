@@ -9366,29 +9366,6 @@ usage: spotread [-options] [logfile]
 											  (Sr * Yr, Sg * Yg, Sb * Yb),
 											  (Sr * Zr, Sg * Zg, Sb * Zb))).inverted()
 
-					if XYZbp:
-						XYZtmp = list(XYZrgb)
-						for i, XYZ in enumerate(XYZtmp):
-							XYZtmp[i] = colormath.blend_blackpoint(*XYZ,
-																   bp_in=(0, 0, 0),
-																   bp_out=XYZbp)
-						Xr, Yr, Zr = XYZtmp[0]
-						Xg, Yg, Zg = XYZtmp[1]
-						Xb, Yb, Zb = XYZtmp[2]
-						m3 = colormath.Matrix3x3(((Xr, Xg, Xb),
-												  (Yr, Yg, Yb),
-												  (Zr, Zg, Zb))).inverted()
-						Sr, Sg, Sb = m3 * XYZwp
-						m4 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
-												  (Sr * Yr, Sg * Yg, Sb * Yb),
-												  (Sr * Zr, Sg * Zg, Sb * Zb)))
-
-						if debug:
-							for i in xrange(3):
-								self.log(colormath.XYZ2xyY(*XYZrgb[i]),
-										 colormath.XYZ2xyY(*XYZtmp[i]),
-										 colormath.XYZ2xyY(*m4 * (m2 * XYZrgb[i])))
-
 					for tableno in a2b_tables:
 						tablename = "A2B%i" % tableno
 						table = profile.tags.get(tablename)
@@ -9399,6 +9376,7 @@ usage: spotread [-options] [logfile]
 							XYZbp_B2A = self.xicclu(profile, [[0, 0, 0]],
 													intent="prs"[tableno],
 													direction="ib", pcs="x")[0]
+							XYZbp_B2A = tuple(XYZbp_B2A)
 						else:
 							XYZbp_B2A = (0, 0, 0)
 						Labbp_B2A = colormath.XYZ2Lab(*XYZbp_B2A, scale=1)
@@ -9406,6 +9384,9 @@ usage: spotread [-options] [logfile]
 							# Make it same hue as relcol black
 							self.log("Inverse B2A%i" % tableno, "blackpoint L*a*b* "
 									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
+							if XYZbp_B2A != (0, 0, 0):
+								# Always...
+								continue
 							Labbp_B2A = (Labbp_B2A[0], Labbp[1], Labbp[2])
 							self.log("Adjusted", tablename, "blackpoint L*a*b* "
 									 "%.6f %.6f %.6f" % tuple(Labbp_B2A))
@@ -9442,6 +9423,31 @@ usage: spotread [-options] [logfile]
 						profchanged = True
 						if XYZbp:
 							# Adjust for BPC
+							if XYZbp_B2A != (0, 0, 0):
+								XYZbp_A2B = XYZbp_B2A
+							else:
+								XYZbp_A2B = XYZbp
+							XYZtmp = list(XYZrgb)
+							for i, XYZ in enumerate(XYZtmp):
+								XYZtmp[i] = colormath.blend_blackpoint(*XYZ,
+																	   bp_in=(0, 0, 0),
+																	   bp_out=XYZbp_A2B)
+							Xr, Yr, Zr = XYZtmp[0]
+							Xg, Yg, Zg = XYZtmp[1]
+							Xb, Yb, Zb = XYZtmp[2]
+							m3 = colormath.Matrix3x3(((Xr, Xg, Xb),
+													  (Yr, Yg, Yb),
+													  (Zr, Zg, Zb))).inverted()
+							Sr, Sg, Sb = m3 * XYZwp
+							m4 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
+													  (Sr * Yr, Sg * Yg, Sb * Yb),
+													  (Sr * Zr, Sg * Zg, Sb * Zb)))
+
+							if debug:
+								for i in xrange(3):
+									self.log(colormath.XYZ2xyY(*XYZrgb[i]),
+											 colormath.XYZ2xyY(*XYZtmp[i]),
+											 colormath.XYZ2xyY(*m4 * (m2 * XYZrgb[i])))
 							interp = []
 							rinterp = []
 							osize = len(table.output[0])
