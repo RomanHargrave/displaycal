@@ -6107,8 +6107,8 @@ while 1:
 											   os.path.basename(self.srgb.fileName)))
 					except Exception, exception:
 						self.log(exception)
-		if debug and not silent:
-			self.log("*** Returncode:", self.retcode)
+		if not silent:
+			self.log(cmdname, "exitcode:", self.retcode)
 		if self.retcode != 0:
 			if use_pty and verbose >= 1 and not silent:
 				self.log(lang.getstr("aborted"))
