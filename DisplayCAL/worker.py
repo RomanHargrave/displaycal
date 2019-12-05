@@ -6511,13 +6511,14 @@ while 1:
 
 			# Scale for BPC
 			XYZbp_relcol = self.xicclu(profile, [[0, 0, 0]], pcs="x")[0]
+			XYZbp_relcol_D50 = [v * XYZbp_relcol[1] for v in XYZwp]
 			m2i = m2.inverted()
 			XYZrgb = [m2i * (1, 0, 0),
 					  m2i * (0, 1, 0),
 					  m2i * (0, 0, 1)]
 			for i, XYZ in enumerate(XYZrgb):
 				XYZrgb[i] = colormath.apply_bpc(*XYZ, bp_in=(0, 0, 0),
-													  bp_out=XYZbp_relcol,
+													  bp_out=XYZbp_relcol_D50,
 													  wp_out=XYZwp)
 		else:
 			# Use a matrix that scales the profile colorspace into the XYZ
