@@ -1233,10 +1233,14 @@ class LUTFrame(BaseFrame):
 				maxval = size - 1.0
 
 				# Deal with values that got clipped (below black as well as white)
-				do_low_clip = True
+				# XXX: We should not clip these when plotting, because our input
+				# values are all a = b = 0
+				do_low_clip = False
+				make_mono = False
 				for i, values in enumerate(odata):
 					if values[3] is True or i == 0:
-						if do_low_clip and (i / maxval * 100 < Lbp or i == 0):
+						if (do_low_clip and (i / maxval * 100 < Lbp or
+											 i == 0)) or (make_mono and i == 0):
 							# Set to black
 							values[:] = [0.0, 0.0, 0.0]
 						elif (i == maxval and
@@ -1248,6 +1252,24 @@ class LUTFrame(BaseFrame):
 						do_low_clip = False
 					if len(values) > 3:
 						values.pop()
+
+				if make_mono:
+					# Make monotonically increasing
+					mono = [[], [], []]
+					for i, values in enumerate(odata):
+						for j in xrange(3):
+							mono[j].append(values[j])
+					for j, values in enumerate(mono):
+						for i, v in enumerate(values):
+							if v:
+								break
+						mono[j][i - 1:] = colormath.make_monotonically_increasing(values[i - 1:])
+					odata = []
+					for i in xrange(len(mono[0])):
+						values = []
+						for j in xrange(3):
+							values.append(mono[j][i])
+						odata.append(values)
 
 			devicevalues = odata
 		else:
