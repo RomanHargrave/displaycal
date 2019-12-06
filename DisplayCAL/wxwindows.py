@@ -2699,7 +2699,7 @@ class ConfirmDialog(BaseInteractiveDialog):
 
 	def __init__(self, parent=None, id=-1, title=appname, msg="", 
 				 ok=None, cancel=None, bitmap=None, pos=(-1, -1), 
-				 size=(400, -1), alt=None, log=True, 
+				 size=(400, -1), alt=None, log=False, 
 				 style=wx.DEFAULT_DIALOG_STYLE, nowrap=False, wrap=70,
 				 name=wx.DialogNameStr, bitmap_margin=None):
 		if not ok:

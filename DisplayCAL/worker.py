@@ -2795,7 +2795,7 @@ END_DATA
 		dlg = ConfirmDialog(None, msg=lang.getstr("display.levels_issue_detected"),
 							ok=lang.getstr("retry"),
 							alt=lang.getstr("fix_output_levels_using_vcgt"),
-							log=True, wrap=100)
+							wrap=100)
 		result = dlg.ShowModal()
 		dlg.Destroy()
 		if result == wx.ID_OK:
