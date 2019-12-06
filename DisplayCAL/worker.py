@@ -9495,6 +9495,7 @@ usage: spotread [-options] [logfile]
 
 				# All table processing done
 
+			if not isinstance(result, Exception) and result:
 				if profchanged and tables:
 					# Make sure we match Argyll colprof i.e. have a complete
 					# set of tables
@@ -9604,10 +9605,11 @@ usage: spotread [-options] [logfile]
 				ti3_file.close()
 			elif not is_regular_grid and not is_primaries_only:
 				ti3 = None
-			# Always explicitly do profile self check
-			self.exec_cmd(get_argyll_util("profcheck"),
-						  [args[-1] + ".ti3", args[-1] + profile_ext],
-						  capture_output=True, skip_scripts=True)
+			if not isinstance(result, Exception) and result:
+				# Always explicitly do profile self check
+				self.exec_cmd(get_argyll_util("profcheck"),
+							  [args[-1] + ".ti3", args[-1] + profile_ext],
+							  capture_output=True, skip_scripts=True)
 		# Get profile max and avg err to be later added to metadata
 		# Argyll outputs the following:
 		# Profile check complete, peak err = x.xxxxxx, avg err = x.xxxxxx, RMS = x.xxxxxx
