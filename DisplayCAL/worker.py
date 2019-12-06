@@ -6165,7 +6165,7 @@ while 1:
 				exception.args[0] == "aborted"):
 				# Special case - aborted
 				result = False
-			elif isinstance(exception, UntracedError):
+			elif isinstance(exception, (UntracedError, Info)):
 				result = exception
 			else:
 				if hasattr(exception, "originalTraceback"):
