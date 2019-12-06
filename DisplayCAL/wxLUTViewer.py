@@ -1177,15 +1177,15 @@ class LUTFrame(BaseFrame):
 		devicevalues = []
 		for i in xrange(0, size):
 			if direction in ("b", "if"):
-				##if intent == "a":
-					### Experimental - basically this makes the resulting
-					### response match relative colorimetric
-					##X, Y, Z = colormath.Lab2XYZ(i * (100.0 / (size - 1)), 0, 0)
-					##L, a, b = colormath.XYZ2Lab(*[v * 100 for v in
-												  ##colormath.adapt(X, Y, Z,
-																  ##whitepoint_destination=profile.tags.wtpt.values())])
-				##else:
-				a = b = 0
+				if intent == "a":
+					# For display profiles, identical to relcol
+					# For print profiles, makes max L* match paper white
+					X, Y, Z = colormath.Lab2XYZ(i * (100.0 / (size - 1)), 0, 0)
+					L, a, b = colormath.XYZ2Lab(*[v * 100 for v in
+												  colormath.adapt(X, Y, Z,
+																  whitepoint_destination=profile.tags.wtpt.ir.values())])
+				else:
+					a = b = 0
 				Lab_triplets.append([i * (100.0 / (size - 1)), a, b])
 			else:
 				devicevalues.append([i * (1.0 / (size - 1))] * len(profile.colorSpace))
