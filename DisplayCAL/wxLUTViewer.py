@@ -1180,13 +1180,18 @@ class LUTFrame(BaseFrame):
 				if intent == "a":
 					# For display profiles, identical to relcol
 					# For print profiles, makes max L* match paper white
-					X, Y, Z = colormath.Lab2XYZ(i * (100.0 / (size - 1)), 0, 0)
+					XYZwp_ir = profile.tags.wtpt.ir.values()
+					Labwp_ir = profile.tags.wtpt.ir.Lab
+					XYZwp_D50 = colormath.Lab2XYZ(Labwp_ir[0], 0, 0)
+					X, Y, Z = colormath.Lab2XYZ(min(i * (100.0 / (size - 1)), Labwp_ir[0]), 0, 0)
 					L, a, b = colormath.XYZ2Lab(*[v * 100 for v in
 												  colormath.adapt(X, Y, Z,
-																  whitepoint_destination=profile.tags.wtpt.ir.values())])
+																  XYZwp_D50,
+																  XYZwp_ir)])
 				else:
+					L = i * (100.0 / (size - 1))
 					a = b = 0
-				Lab_triplets.append([i * (100.0 / (size - 1)), a, b])
+				Lab_triplets.append([L, a, b])
 			else:
 				devicevalues.append([i * (1.0 / (size - 1))] * len(profile.colorSpace))
 		if profile.colorSpace == "GRAY":
@@ -2025,7 +2030,7 @@ class LUTFrame(BaseFrame):
 					if (self.plot_mode_select.GetStringSelection() == lang.getstr('[rgb]TRC') and
 						self.profile.connectionColorSpace != "RGB"):
 						if self.show_as_L.GetValue():
-							format = "L* %.4f", "%s %.2f"
+							format = "L* %.2f", "%s %.2f"
 						else:
 							format = "Y %.4f", "%s %.2f"
 						axis_y = 100.0
