@@ -5,6 +5,14 @@ ${DATETIME} - obs-packaging@${DOMAIN}
 ${CHANGELOG}
 
 -------------------------------------------------------------------
+Thu Nov 07 21:18:10 UTC 2019 - obs-packaging@displaycal.net
+
+- Update to 3.8.8.1:
+  * [Moderate] Work-around failure to launch if wxPython 3.0 /
+    wxWidgets 3.0 release number do not match (using wxPython 3.0
+    is deprecated).
+
+-------------------------------------------------------------------
 Wed Nov 06 23:13:10 UTC 2019 - obs-packaging@displaycal.net
 
 - Update to 3.8.8:
