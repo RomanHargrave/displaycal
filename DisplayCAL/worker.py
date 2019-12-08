@@ -2535,11 +2535,23 @@ class Worker(WorkerBase):
 				# Calibration info (3x C 'int')
 				# Checksum (C 'int')
 				serial0 = self._detected_instrument_serial + "\0"
-				time_t_size = 8
 				numints = 8
 				spydx_cal_size = os.stat(spydx_cal_fn).st_size
-				spydx_cal_int_bytes = (spydx_cal_size - len(serial0) -
-									   time_t_size) // numints
+				spydx_cal_int_bytes = 4  # C 'int'
+				# time_t might be 8 or 4 bytes, 0 is sentinel
+				for time_t_size in (8, 4, 0):
+					if (spydx_cal_size - len(serial0) -
+						time_t_size) == spydx_cal_int_bytes * numints:
+						break
+				if not time_t_size:
+					self.log(appname + ": Warning - could not determine SpyderX "
+							 "sensor cal file format")
+					self.exec_cmd_returnvalue = Error("Could not determine "
+													  "SpyderX sensor cal file "
+													  "format")
+					self.abort_subprocess()
+					return False
+				self.log(appname + ": SpyderX cal time_t size =", time_t_size)
 				try:
 					with open(spydx_cal_fn, "rb") as spydx_cal:
 						# Seek to cal entries offset
@@ -2550,13 +2562,28 @@ class Worker(WorkerBase):
 				except EnvironmentError, exception:
 					self.log(appname + ": Warning - could not read SpyderX "
 							 "sensor cal:", exception)
+					self.exec_cmd_returnvalue = Error("Could not read "
+													  "SpyderX sensor cal: %s" %
+													  safe_str(exception))
+					self.abort_subprocess()
+					return False
 				else:
 					if len(spydx_bcal) < spydx_cal_int_bytes * 3:
 						self.log(appname + ": Warning - SpyderX "
-								 "sensor cal has unexpected size: %s != %i" %
+								 "sensor cal has unexpected length: %s != %i" %
 								 (len(spydx_bcal), spydx_cal_int_bytes * 3))
+						self.exec_cmd_returnvalue = Error("SpyderX sensor cal "
+														  "has unexpected "
+														  "length: %s != %i" %
+														  (len(spydx_bcal),
+														   spydx_cal_int_bytes * 3))
+						self.abort_subprocess()
+						return False
 					else:
-						spydx_bcal = struct.unpack('<III', spydx_bcal)
+						fmt = {2: "<HHH",
+							   4: "<III",
+							   8: "<QQQ"}[spydx_cal_int_bytes]
+						spydx_bcal = struct.unpack(fmt, spydx_bcal)
 						self.log(appname + ": SpyderX sensor cal %i %i %i" %
 								 spydx_bcal)
 						if max(spydx_bcal) > 15:
