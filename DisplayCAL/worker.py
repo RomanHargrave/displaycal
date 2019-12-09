@@ -558,14 +558,16 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 
 	if all(len(gamma) == numvalues for gamma in gammas):
 		# Follow curvature by using gamma as hint
-		if bwd_mtx * [1, 1, 1] == [1, 1, 1]:
-			# cLUT profile
-			numentries = numvalues
-			while numentries < 513:
-				numentries = (numentries - 1) * 2 + 1
-		else:
-			# Shaper + matrix profile
-			numentries = 256
+		# This can be used to fill in 'missing' values with the right slope
+		# E.g. suppose we have measured at signal levels 0%, 25%, 50%, 75%, 100%
+		# Linearly interpolating between those (or even using polynomials)
+		# will yield unacceptable results especially near black due to not
+		# following the typical curvature of additive displays. Using this
+		# method, a sensible curvature is maintained.
+
+		numentries = numvalues
+		while numentries < 513:
+			numentries = (numentries - 1) * 2 + 1
 
 		gammas_resized = [gamma and colormath.interp_resize(gamma, numentries,
 															True)
@@ -605,13 +607,13 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 					Y2 = Y ** gammas_resized[1][i]
 					R_X[i], G_Y[i], B_Z[i] = (v / Y * Y2 for v in (X, Y, Z))
 
+		# for values in (R_X, G_Y, B_Z):
+			# values[0:numentries // 32] = colormath.smooth_avg(values[0:numentries // 32], numentries // 64)
+
 		# for i in xrange(numentries):
 			# safe_print(i, R_R[i], G_G[i], B_B[i], gammas_resized[0][i],
 					   # gammas_resized[1][i], gammas_resized[2][i], R_X[i],
 					   # G_Y[i], B_Z[i])
-	else:
-		# Hmm. Can this happen? Use old (pre 3.8.9.2) interpolation
-		numentries = 33
 
 	rinterp = colormath.Interp(R_R, R_X, use_numpy=True)
 	ginterp = colormath.Interp(G_G, G_Y, use_numpy=True)
@@ -621,6 +623,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 	for i in xrange(3):
 		curves.append([])
 
+	numentries = 33
 	maxval = numentries - 1.0
 	powinterp = {"r": colormath.Interp([], []),
 				 "g": colormath.Interp([], []),
@@ -630,7 +633,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		n /= maxval
 		# Apply slight power to input value so we sample near
 		# black more accurately
-		# n **= 1.2
+		n **= 1.2
 		Y = ginterp(n)
 		X = rinterp(n)
 		Z = binterp(n)
@@ -646,11 +649,11 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 			v = min(max(v, 0), 1)
 			if slope_limit:
 				v = max(v, n / 64.25)
-			# powinterp[channel].xp.append(n)
-			# powinterp[channel].fp.append(v)
-	# for n in xrange(numentries):
-		# for i, channel in enumerate("rgb"):
-			# v = powinterp[channel](n / maxval)
+			powinterp[channel].xp.append(n)
+			powinterp[channel].fp.append(v)
+	for n in xrange(numentries):
+		for i, channel in enumerate("rgb"):
+			v = powinterp[channel](n / maxval)
 			curves[i].append(v)
 
 	if numentries < 256:
