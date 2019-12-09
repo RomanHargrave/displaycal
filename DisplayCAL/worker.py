@@ -9106,7 +9106,10 @@ usage: spotread [-options] [logfile]
 
 					# Add blackpoint tag
 					profile.tags.bkpt = ICCP.XYZType(profile=profile)
-					black_XYZ = [v / 100.0 for v in ti3_RGB_XYZ[(0, 0, 0)]]
+					if XYZbp:
+						black_XYZ = XYZbp
+					else:
+						black_XYZ = (0, 0, 0)
 					(profile.tags.bkpt.X,
 					 profile.tags.bkpt.Y,
 					 profile.tags.bkpt.Z) = black_XYZ
