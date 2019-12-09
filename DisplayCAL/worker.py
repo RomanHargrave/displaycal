@@ -9136,6 +9136,15 @@ usage: spotread [-options] [logfile]
 					chrm = ICCP.ChromaticityType(blob.read())
 			else:
 				chrm = None
+
+			if XYZbp:
+				Ybp = XYZbp[1]
+				XYZbp = colormath.adapt(*XYZbp,
+										whitepoint_source=[v / XYZwp[1]
+														   for v in
+														   XYZwp],
+										cat=profile.guess_cat() or "Bradford")
+
 		bpc_applied = False
 		profchanged = False
 		if not isinstance(result, Exception) and result:
@@ -9463,7 +9472,7 @@ usage: spotread [-options] [logfile]
 					if profile.tags.get("B2A2"):
 						a2b_tables.append(2)
 
-					XYZwp = colormath.get_whitepoint("D50")
+					D50 = colormath.get_whitepoint("D50")
 
 					XYZrgb = self.xicclu(profile,
 										 [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
@@ -9474,7 +9483,7 @@ usage: spotread [-options] [logfile]
 					m1 = colormath.Matrix3x3(((Xr, Xg, Xb),
 											  (Yr, Yg, Yb),
 											  (Zr, Zg, Zb))).inverted()
-					Sr, Sg, Sb = m1 * XYZwp
+					Sr, Sg, Sb = m1 * D50
 					m2 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
 											  (Sr * Yr, Sg * Yg, Sb * Yb),
 											  (Sr * Zr, Sg * Zg, Sb * Zb))).inverted()
@@ -9539,7 +9548,7 @@ usage: spotread [-options] [logfile]
 							if XYZbp_B2A != (0, 0, 0):
 								XYZbp_A2B = XYZbp_B2A
 							else:
-								XYZbp_A2B = XYZbp
+								XYZbp_A2B = [v * Ybp for v in D50]
 							XYZtmp = list(XYZrgb)
 							for i, XYZ in enumerate(XYZtmp):
 								XYZtmp[i] = colormath.blend_blackpoint(*XYZ,
@@ -9551,7 +9560,7 @@ usage: spotread [-options] [logfile]
 							m3 = colormath.Matrix3x3(((Xr, Xg, Xb),
 													  (Yr, Yg, Yb),
 													  (Zr, Zg, Zb))).inverted()
-							Sr, Sg, Sb = m3 * XYZwp
+							Sr, Sg, Sb = m3 * D50
 							m4 = colormath.Matrix3x3(((Sr * Xr, Sg * Xg, Sb * Xb),
 													  (Sr * Yr, Sg * Yg, Sb * Yb),
 													  (Sr * Zr, Sg * Zg, Sb * Zb)))
@@ -9577,7 +9586,7 @@ usage: spotread [-options] [logfile]
 														table.clut,
 														(profile.connectionColorSpace,
 														 colormath.matmul,
-														 (m4, m2), XYZwp, interp,
+														 (m4, m2), D50, interp,
 														rinterp,
 														lang.getstr("aborted")),
 														{},
