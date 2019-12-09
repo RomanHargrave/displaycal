@@ -538,6 +538,78 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 			 G_Y[i],
 			 B_Z[i]) = colormath.blend_blackpoint(R_X[i], G_Y[i], B_Z[i], XYZbp)
 
+	# Interpolate TRC
+
+	use_individual_channel_gammas = False
+
+	gammas = [[], [], []]
+	for j, gamma in enumerate(gammas):
+		values = []
+		for i, v in enumerate((R_R, G_G, B_B)[j]):
+			channel = (R_X, G_Y, B_Z)[j]
+			vv = colormath.convert_range(channel[i], channel[0], XYZwp[j],
+										 channel[0], 1)
+			if use_individual_channel_gammas:
+				channel[i] = vv
+			values.append((v, vv))
+		gamma[:] = colormath.get_gamma(values, average=False)
+		gamma.insert(0, gamma[0])
+		gamma.append(gamma[-1])
+
+	if all(len(gamma) == numvalues for gamma in gammas):
+		# Follow curvature by using gamma as hint
+		if bwd_mtx * [1, 1, 1] == [1, 1, 1]:
+			# cLUT profile
+			numentries = 4096
+		else:
+			# Shaper + matrix profile
+			numentries = 256
+
+		gammas_resized = [gamma and colormath.interp_resize(gamma, numentries)
+						  for gamma in gammas]
+
+		for values in (R_R, G_G, B_B):
+			values[:] = colormath.interp_resize(values, numentries)
+
+		for i in xrange(1, numvalues - 1):
+			X, Y, Z = R_X[i], G_Y[i], B_Z[i]
+			if use_individual_channel_gammas:
+				R_X[i], G_Y[i], B_Z[i] = (v ** (1.0 / gammas[j][i])
+										  for j, v in enumerate((X, Y, Z)))
+			else:
+				if Y < 0:
+					# This should NOT happen - is this check needed?
+					if logfn:
+						logfn("Warning: Y is negative - clamping to  zero")
+					Y = 0
+				if Y:
+					Y2 = Y ** (1.0 / gammas[1][i])
+					R_X[i], G_Y[i], B_Z[i] = (v / Y * Y2 for v in (X, Y, Z))
+
+		for values in (R_X, G_Y, B_Z):
+			values[:] = colormath.interp_resize(values, numentries)
+
+		for i in xrange(1, numentries - 1):
+			X, Y, Z = R_X[i], G_Y[i], B_Z[i]
+			if use_individual_channel_gammas:
+				X, Y, Z = (colormath.convert_range(v ** gammas_resized[j][i],
+												   (R_X, G_Y, B_Z)[j][0], 1,
+												   (R_X, G_Y, B_Z)[j][0], XYZwp[j])
+						   for j, v in enumerate((X, Y, Z)))
+				R_X[i], G_Y[i], B_Z[i] = X, Y, Z
+			else:
+				if Y:
+					Y2 = Y ** gammas_resized[1][i]
+					R_X[i], G_Y[i], B_Z[i] = (v / Y * Y2 for v in (X, Y, Z))
+
+		# for i in xrange(numentries):
+			# safe_print(i, R_R[i], G_G[i], B_B[i], gammas_resized[0][i],
+					   # gammas_resized[1][i], gammas_resized[2][i], R_X[i],
+					   # G_Y[i], B_Z[i])
+	else:
+		# Hmm. Can this happen? Use old (pre 3.8.9.2) interpolation
+		numentries = 33
+
 	rinterp = colormath.Interp(R_R, R_X)
 	ginterp = colormath.Interp(G_G, G_Y)
 	binterp = colormath.Interp(B_B, B_Z)
@@ -546,8 +618,6 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 	for i in xrange(3):
 		curves.append([])
 
-	# Interpolate TRC
-	numentries = 33
 	maxval = numentries - 1.0
 	powinterp = {"r": colormath.Interp([], []),
 				 "g": colormath.Interp([], []),
@@ -557,7 +627,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		n /= maxval
 		# Apply slight power to input value so we sample near
 		# black more accurately
-		n **= 1.2
+		# n **= 1.2
 		Y = ginterp(n)
 		X = rinterp(n)
 		Z = binterp(n)
@@ -573,23 +643,24 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 			v = min(max(v, 0), 1)
 			if slope_limit:
 				v = max(v, n / 64.25)
-			powinterp[channel].xp.append(n)
-			powinterp[channel].fp.append(v)
-	for n in xrange(numentries):
-		for i, channel in enumerate("rgb"):
-			v = powinterp[channel](n / maxval)
+			# powinterp[channel].xp.append(n)
+			# powinterp[channel].fp.append(v)
+	# for n in xrange(numentries):
+		# for i, channel in enumerate("rgb"):
+			# v = powinterp[channel](n / maxval)
 			curves[i].append(v)
 
-	# Interpolate to final resolution
-	for curve in curves:
-		# Make monotonically increasing
-		curve[:] = colormath.make_monotonically_increasing(curve)
-		# Spline interpolation to larger size
-		x = (i / 255.0 * (len(curve) - 1)  for i in xrange(256))
-		spline = ICCP.CRInterpolation(curve)
-		curve[:] = (min(max(spline(v), 0), 1) for v in x)
-		# Ensure still monotonically increasing
-		curve[:] = colormath.make_monotonically_increasing(curve)
+	if numentries < 256:
+		# Interpolate to final resolution
+		for curve in curves:
+			# Make monotonically increasing
+			curve[:] = colormath.make_monotonically_increasing(curve)
+			# Spline interpolation to larger size
+			x = (i / 255.0 * (len(curve) - 1)  for i in xrange(256))
+			spline = ICCP.CRInterpolation(curve)
+			curve[:] = (min(max(spline(v), 0), 1) for v in x)
+			# Ensure still monotonically increasing
+			curve[:] = colormath.make_monotonically_increasing(curve)
 
 	if optimize:
 		curves = _create_optimized_shaper_curves(bwd_mtx, bpc, single_curve,
