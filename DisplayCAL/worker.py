@@ -9032,6 +9032,11 @@ usage: spotread [-options] [logfile]
 							   for RGB in ti1_remaining.keys())):
 						if ti1_name == "ti1/d3-e4-s2-g28-m0-b0-f0":
 							is_primaries_only = True
+							if getcfg("profile.type") not in ("S", "s"):
+								options_dispcal = get_options_from_ti3(ti3)[0]
+								setcfg("profile.type",
+									   "S" if get_arg("q", options_dispcal)
+									   else "s")
 						elif getcfg("profile.type") in ("X", "x"):
 							is_regular_grid = True
 						break
