@@ -560,16 +560,19 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		# Follow curvature by using gamma as hint
 		if bwd_mtx * [1, 1, 1] == [1, 1, 1]:
 			# cLUT profile
-			numentries = 4096
+			numentries = numvalues
+			while numentries < 513:
+				numentries = (numentries - 1) * 2 + 1
 		else:
 			# Shaper + matrix profile
 			numentries = 256
 
-		gammas_resized = [gamma and colormath.interp_resize(gamma, numentries)
+		gammas_resized = [gamma and colormath.interp_resize(gamma, numentries,
+															True)
 						  for gamma in gammas]
 
 		for values in (R_R, G_G, B_B):
-			values[:] = colormath.interp_resize(values, numentries)
+			values[:] = colormath.interp_resize(values, numentries, True)
 
 		for i in xrange(1, numvalues - 1):
 			X, Y, Z = R_X[i], G_Y[i], B_Z[i]
@@ -587,7 +590,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 					R_X[i], G_Y[i], B_Z[i] = (v / Y * Y2 for v in (X, Y, Z))
 
 		for values in (R_X, G_Y, B_Z):
-			values[:] = colormath.interp_resize(values, numentries)
+			values[:] = colormath.interp_resize(values, numentries, True)
 
 		for i in xrange(1, numentries - 1):
 			X, Y, Z = R_X[i], G_Y[i], B_Z[i]
@@ -610,9 +613,9 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		# Hmm. Can this happen? Use old (pre 3.8.9.2) interpolation
 		numentries = 33
 
-	rinterp = colormath.Interp(R_R, R_X)
-	ginterp = colormath.Interp(G_G, G_Y)
-	binterp = colormath.Interp(B_B, B_Z)
+	rinterp = colormath.Interp(R_R, R_X, use_numpy=True)
+	ginterp = colormath.Interp(G_G, G_Y, use_numpy=True)
+	binterp = colormath.Interp(B_B, B_Z, use_numpy=True)
 
 	curves = []
 	for i in xrange(3):
@@ -9838,14 +9841,14 @@ usage: spotread [-options] [logfile]
 			 gray[1][i],
 			 gray[2][i]) = colormath.apply_bpc(*(curve[i] for curve in gray),
 											   bp_in=(0, 0, 0), bp_out=XYZbp)
+
+		grayinterp = [colormath.Interp(range(len(curve)), curve, use_numpy=True)
+					  for curve in gray]
 		
 		def get_XYZ_from_curves(n, m):
 			# Curves are adapted to D50
-			XYZ1 = [curve[int(math.floor((len(curve) - 1.0) / m * n))]
-				    for curve in gray]
-			XYZ2 = [curve[int(math.ceil((len(curve) - 1.0) / m * n))]
-				    for curve in gray]
-			return [(XYZ1[i] + XYZ2[i]) / 2.0 for i in xrange(3)]
+			return [interp((len(interp.xp) - 1.0) / m * n)
+				    for interp in grayinterp]
 
 		# Quantize RGB to make lookup easier
 		# XXX Note that round(50 * 2.55) = 127, but
