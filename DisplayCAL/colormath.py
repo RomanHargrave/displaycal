@@ -581,8 +581,9 @@ def smooth_avg(values, passes=1, window=None, protect=None):
 	
 	"""
 	if not window or len(window) < 3 or len(window) % 2 != 1:
-		warnings.warn("Invalid window %r, size %i - using default (1, 1, 1)" %
-					  (window, len(window)), Warning)
+		if window:
+			warnings.warn("Invalid window %r, size %i - using default (1, 1, 1)" %
+						  (window, len(window)), Warning)
 		window = (1.0, 1.0, 1.0)
 	for x in xrange(0, passes):
 		data = []
