@@ -10172,7 +10172,9 @@ usage: spotread [-options] [logfile]
 						self.log(u"Adding %s from interpolation to %s" %
 						         (tagname, profile.getDescription()))
 						profile.tags[tagname] = trc = ICCP.CurveType(profile=profile)
-						trc[:] = [v * 65535 for v in curves[i]]
+						# Slope limit for 16-bit encoding
+						trc[:] = [max(v, j / 65535.0) * 65535 for j, v in
+								  enumerate(curves[i])]
 
 					if not bpc:
 						XYZbp = None

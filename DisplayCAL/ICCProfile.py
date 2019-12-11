@@ -523,7 +523,8 @@ def create_RGB_A2B_XYZ(input_curves, clut, logfn=safe_print):
 					k = j
 					ov = v
 				v = min(ov + (1.0 - ov) * ((j - k) / (entries - k - 1.0)), 1.0)
-			itable.input[i].append(v * 65535)
+			# Slope limit for 16-bit encoding
+			itable.input[i].append(max(v, j / 65535.0) * 65535)
 	
 	# Fill cLUT
 	clut = list(clut)
