@@ -9161,6 +9161,7 @@ usage: spotread [-options] [logfile]
 														   for v in
 														   XYZwp],
 										cat=profile.guess_cat() or "Bradford")
+				XYZbp = tuple(XYZbp)
 
 		bpc_applied = False
 		profchanged = False
