@@ -297,7 +297,10 @@ def main(icc_profile_filename, target_whitepoint=None, gamma=2.2, skip_cal=False
 											[v / 65535. for v in entries[j]],
 											use_numpy=True)
 					elif tagname.startswith("B2A"):
-						cinterp = cm.Interp([v / 65535. for v in entries[j]],
+						rinterp = cm.Interp([v / 65535. for v in entries[j]],
+											 [i / (num_entries - 1.0) for i in xrange(num_entries)],
+											 use_numpy=True)
+						cinterp = cm.Interp([rinterp(i / (num_entries - 1.0)) for i in xrange(num_entries)],
 											[interp_i[j](i / (num_entries - 1.0)) for i in xrange(num_entries)],
 											use_numpy=True)
 					entries[j] = []
