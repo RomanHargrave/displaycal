@@ -169,7 +169,6 @@ def _main(module, name, applockfilename, probe_ports=True):
 						   lockfilename, exception)
 		if module not in multi_instance:
 			# Check lockfile(s) and probe port(s)
-			incoming = None
 			for lockfilename in [applockfilename]:
 				incoming = None
 				pids_ports = lock2pids_ports.get(lockfilename)
@@ -193,8 +192,6 @@ def _main(module, name, applockfilename, probe_ports=True):
 										incoming = None
 								else:
 									incoming = False
-						else:
-							incoming = False
 						while incoming:
 							# Send args as UTF-8
 							if module == "apply-profiles":
