@@ -6485,9 +6485,7 @@ while 1:
 		# 1: As method 0, but blend a* b* to blackpoint hue
 		# 2: R=G=B -> PCS
 		# 3: As method 0, but blend a* b* to blackpoint hue in XYZ (BPC)
-		# Method 0 and 1 result in lowest invprofcheck dE2k, with method 1
-		# having a slight edge due to more accurately encoding the blackpoint
-		method = 1
+		method = 2
 		if method != 2:
 			for i in vrange:
 				L, a, b = i / maxval * 100, 0, 0
@@ -6532,13 +6530,18 @@ while 1:
 				odata.append([i / maxval] * 3)
 			idata = self.xicclu(profile, odata, intent,
 								{"A2B": "f", "B2A": "ib"}[source], pcs="x")
+			wY = idata[-1][1]
+			idata = [[v[1] / wY * n for n in XYZwp] for v in idata]
+			# Input curve maps neutral (except near black) XYZ -> RGB
+			idata = [list(colormath.blend_blackpoint(*v, bp_in=idata[0],
+													 bp_out=XYZbp, wp=XYZwp))
+					 for v in idata]
 			if not bpc:
 				numentries += 1
 				maxval += 1
 				idata.insert(0, [0, 0, 0])
 				odata.insert(0, [0, 0, 0])
-			wY = idata[-1][1]
-			oXYZ = idata = [[n / wY for n in v] for v in idata]
+			oXYZ = idata
 			D50 = colormath.get_whitepoint("D50")
 			fpL = [colormath.XYZ2Lab(*v + [D50])[0] for v in oXYZ]
 		else:
@@ -7249,13 +7252,61 @@ while 1:
 		# Update profile
 		profile.tags["B2A%i" % tableno] = itable
 
+		if method == 2:
+			if logfile:
+				logfile.write("Generating output curves...\n")
+			# Output curve maps <clutres> RGB to <numentries> RGB
+			# Lookup neutral (except near black) XYZ -> RGB
+			oRGB = self.xicclu(profile, oXYZ, intent,
+							   {"A2B": "if", "B2A": "b"}[source], pcs="x",
+							   get_clip=True)
+
+			# Deal with values that got clipped (below black as well as white)
+			do_low_clip = True
+			for i, values in enumerate(oRGB):
+				if values[3] is True or i == 0:
+					if do_low_clip:
+						# Set to black
+						self.log("Setting curve entry #%i (%.6f %.6f %.6f) to "
+								 "black because it got clipped" %
+								 ((i, ) + tuple(values[:3])))
+						values[:] = [0.0, 0.0, 0.0]
+					elif (i == maxval and
+						  [round(v, 4) for v in values[:3]] == [1, 1, 1]):
+						# Set to white
+						self.log("Setting curve entry #%i (%.6f %.6f %.6f) to "
+								 "white because it got clipped" %
+								 ((i, ) + tuple(values[:3])))
+						values[:] = [1.0, 1.0, 1.0]
+				else:
+					# First non-clipping value disables low clipping
+					do_low_clip = False
+				if len(values) > 3:
+					values.pop()
+
+			ocurves = [[], [], []]
+			for i, RGB in enumerate(oRGB):
+				for j, v in enumerate(RGB):
+					ocurves[j].append(v)
+			ointerp = []
+			for i, ocurve in enumerate(ocurves):
+				olen = len(ocurve)
+				ointerp_i = colormath.Interp([j / (olen - 1.0) for j in xrange(olen)], ocurve, use_numpy=True)
+				ocurve_i = [ointerp_i(j / (clutres - 1.0)) for j in xrange(clutres)]
+				ocurve_i = colormath.interp_resize(ocurve_i, len(ocurve), use_numpy=True)
+				ointerp_o = colormath.Interp(ocurve_i, ocurve, use_numpy=True)
+				ointerp.append(ointerp_o)
+
 		# Set output curves
 		itable.output = [[], [], []]
 		numentries = 256
 		maxval = numentries - 1.0
 		for i in xrange(len(itable.output)):
 			for j in xrange(numentries):
-				itable.output[i].append(j / maxval * 65535)
+				v = j / maxval
+				if method == 2:
+					v = ointerp[i](v)
+				itable.output[i].append(v * 65535)
 
 		if smooth:
 			self.smooth_B2A(profile, tableno,
