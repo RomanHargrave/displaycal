@@ -204,6 +204,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 								safe_print("Closing existing instance")
 								cmd = "exit" if incoming == pyname else "close"
 								data = [cmd]
+								lock.unlock()
 							else:
 								# Send module/appname to notify running app
 								safe_print("Notifying existing instance")
@@ -274,6 +275,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 										startupinfo = sp.STARTUPINFO()
 										startupinfo.dwFlags |= sp.STARTF_USESHOWWINDOW
 										startupinfo.wShowWindow = sp.SW_HIDE
+										lock.unlock()
 										try:
 											p = sp.Popen(["taskkill", "/PID",
 														  "%s" % pid2],
@@ -300,6 +302,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 								   "delete lockfile", lockfilename)
 						while os.path.isfile(lockfilename):
 							sleep(.05)
+						lock.lock()
 						safe_print("Existing instance exited.")
 						incoming = None
 						if lockfilename in lock2pids_ports:
@@ -565,14 +568,9 @@ def main_testchart_editor():
 class AppLock(object):
 
 	def __init__(self, lockfilename, mode, exclusive=False, blocking=False):
+		self._lockfilename = lockfilename
+		self._mode = mode
 		self._lockfile = None
-		try:
-			# Create lockfile
-			self._lockfile = open(lockfilename, mode)
-		except EnvironmentError, exception:
-			# This shouldn't happen
-			safe_print("Error - could not open lockfile %s:" % lockfilename,
-					   exception)
 		self._lock = None
 		self._exclusive = exclusive
 		self._blocking = blocking
@@ -594,7 +592,14 @@ class AppLock(object):
 		return bool(self._lock)
 
 	def lock(self):
-		if self._lockfile:
+		try:
+			# Create lockfile
+			self._lockfile = open(self._lockfilename, self._mode)
+		except EnvironmentError, exception:
+			# This shouldn't happen
+			safe_print("Error - could not open lockfile %s:" % self._lockfilename,
+					   exception)
+		else:
 			try:
 				self._lock = FileLock(self._lockfile, self._exclusive,
 									  self._blocking)
