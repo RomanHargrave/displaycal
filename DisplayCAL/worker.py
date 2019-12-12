@@ -9151,10 +9151,11 @@ usage: spotread [-options] [logfile]
 				# Use colprof to create profile
 				result = self.exec_cmd(cmd, args, low_contrast=False, 
 									   skip_scripts=skip_scripts)
-				try:
-					profile = ICCP.ICCProfile(profile_path)
-				except (IOError, ICCP.ICCProfileInvalidError), exception:
-					result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
+				if not isinstance(result, Exception) and result:
+					try:
+						profile = ICCP.ICCProfile(profile_path)
+					except (IOError, ICCP.ICCProfileInvalidError), exception:
+						result = Error(lang.getstr("profile.invalid") + "\n" + profile_path)
 		if not isinstance(result, Exception) and result:
 			if getcfg("profile.type") == "X" or is_primaries_only:
 				# Use our own accurate matrix
