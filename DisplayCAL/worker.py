@@ -540,7 +540,7 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 
 	# Interpolate TRC
 
-	use_individual_channel_gammas = False
+	use_individual_channel_gammas = True
 
 	gammas = [[], [], []]
 	for j, gamma in enumerate(gammas):
@@ -576,12 +576,20 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 		while numentries < 2 ** 12 + 1:
 			numentries = (numentries - 1) * 2 + 1
 
+		RGB = (R_R, G_G, B_B)
+
+		gammas_resized = [gamma and colormath.interp_fill(RGB[j], gamma,
+														  (numvalues - 1) * 2 + 1,
+														  #numentries,
+														  True)
+						  for j, gamma in enumerate(gammas)]
+
+		for gamma in gammas_resized:
+			gamma[1:-1] = colormath.smooth_avg(gamma[1:-1], 1)
+
 		gammas_resized = [gamma and colormath.interp_resize(gamma, numentries,
 															True)
-						  for gamma in gammas]
-
-		for values in (R_R, G_G, B_B):
-			values[:] = colormath.interp_resize(values, numentries, True)
+						  for gamma in gammas_resized]
 
 		for i in xrange(1, numvalues - 1):
 			X, Y, Z = R_X[i], G_Y[i], B_Z[i]
@@ -598,8 +606,8 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 					Y2 = Y ** (1.0 / gammas[1][i])
 					R_X[i], G_Y[i], B_Z[i] = (v / Y * Y2 for v in (X, Y, Z))
 
-		for values in (R_X, G_Y, B_Z):
-			values[:] = colormath.interp_resize(values, numentries, True)
+		for j, values in enumerate((R_X, G_Y, B_Z)):
+			values[:] = colormath.interp_fill(RGB[j], values, numentries, True)
 
 		for i in xrange(1, numentries - 1):
 			X, Y, Z = R_X[i], G_Y[i], B_Z[i]
@@ -614,8 +622,8 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 					Y2 = Y ** gammas_resized[1][i]
 					R_X[i], G_Y[i], B_Z[i] = (v / Y * Y2 for v in (X, Y, Z))
 
-		# for values in (R_X, G_Y, B_Z):
-			# values[0:numentries // 32] = colormath.smooth_avg(values[0:numentries // 32], numentries // 64)
+		for values in RGB:
+			values[:] = colormath.interp_fill(values, values, numentries, True)
 
 		# for i in xrange(numentries):
 			# safe_print(i, R_R[i], G_G[i], B_B[i], gammas_resized[0][i],
@@ -673,9 +681,8 @@ def create_shaper_curves(RGB_XYZ, bwd_mtx, single_curve=False, bpc=True,
 				curves[i].append(v)
 
 	for curve in curves:
-		# Ensure monotonically increasing and apply smoothing
-		# No smoothing if numentries < 256
-		curve[:] = colormath.make_monotonically_increasing(curve, numentries // 256)
+		# Ensure monotonically increasing
+		curve[:] = colormath.make_monotonically_increasing(curve)
 		if numentries < final:
 			# Interpolate to final resolution
 			# Spline interpolation to larger size

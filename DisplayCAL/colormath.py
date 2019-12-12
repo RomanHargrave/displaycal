@@ -570,6 +570,16 @@ def interp_resize(iterable, new_size, use_numpy=False):
 	return result
 
 
+def interp_fill(xp, fp, new_size, use_numpy=False):
+	""" Fill missing points by interpolation """
+	result = []
+	last = xp[-1]
+	interp = Interp(xp, fp, use_numpy=use_numpy)
+	for i in xrange(new_size):
+		result.append(interp(i / (new_size - 1.0) * last))
+	return result
+
+
 def smooth_avg(values, passes=1, window=None, protect=None):
 	"""
 	Smooth values (moving average).
