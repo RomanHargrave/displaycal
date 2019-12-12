@@ -49,6 +49,15 @@ sys.excepthook = _excepthook
 
 
 def _main(module, name, applockfilename, probe_ports=True):
+	# Allow multiple instances only for curve viewer, profile info,
+	# scripting client, synthetic profile creator and testchart editor
+	multi_instance = ("curve-viewer", "profile-info", "scripting-client",
+					  "synthprofile", "testchart-editor")
+	lock = AppLock(applockfilename, "a+", True, module in multi_instance)
+	if not lock:
+		# If a race condition occurs, do not start another instance
+		safe_print("Not starting another instance.")
+		return
 	log("=" * 80)
 	if verbose >= 1:
 		version = VERSION_STRING
@@ -107,11 +116,6 @@ def _main(module, name, applockfilename, probe_ports=True):
 							   exception)
 			else:
 				safe_print("Warning - SetProcessDpiAwareness not found in shcore")
-	lock = None
-	# Allow multiple instances only for curve viewer, profile info,
-	# scripting client, synthetic profile creator and testchart editor
-	multi_instance = ("curve-viewer", "profile-info", "scripting-client",
-					  "synthprofile", "testchart-editor")
 	initcfg(module)
 	host = "127.0.0.1"
 	defaultport = getcfg("app.port")
@@ -126,7 +130,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 				if lock and lockfilename == applockfilename:
 					lockfile = lock
 				else:
-					lockfile = open(lockfilename)
+					lockfile = AppLock(lockfilename, "r", True, True)
 				if lockfile:
 					if not lockfilename in lock2pids_ports:
 						lock2pids_ports[lockfilename] = []
@@ -162,7 +166,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 						if pid or port:
 							lock2pids_ports[lockfilename].append((pid, port))
 				if not lock or lockfilename != applockfilename:
-					lockfile.close()
+					lockfile.unlock()
 			except EnvironmentError, exception:
 				# This shouldn't happen
 				safe_print("Warning - could not read lockfile %s:" %
@@ -314,16 +318,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 					handle_error(lang.getstr("app.otherinstance", name))
 				# Exit
 				return
-	if module in multi_instance:
-		mode = "a+"
-	else:
-		mode = "w+"
 	# Use exclusive lock during app startup
-	with AppLock(applockfilename, mode, True) as lock:
-		if not lock:
-			# If a race condition occurs, do not start another instance
-			safe_print("Not starting another instance.")
-			return
+	with lock:
 		# Create listening socket
 		appsocket = AppSocket()
 		if appsocket:
@@ -370,6 +366,9 @@ def _main(module, name, applockfilename, probe_ports=True):
 					break
 		if not hasattr(sys, "_appsocket_port"):
 			port = ""
+		lock.seek(0)
+		if module not in multi_instance:
+			lock.truncate(0)
 		if not port:
 			lock.write("%s:%s" % (opid, port))
 		else:
@@ -469,10 +468,16 @@ def _exit(lockfilename, oport):
 			thread.join()
 			safe_print(thread.getName(), "exited")
 	if lockfilename and os.path.isfile(lockfilename):
+		with AppLock(lockfilename, "r+", True, True) as lock:
+			_update_lockfile(lockfilename, oport, lock)
+	safe_print("Exiting", pyname)
+
+
+def _update_lockfile(lockfilename, oport, lock):
+	if lock:
 		# Each lockfile may contain multiple ports of running instances
 		try:
-			with open(lockfilename) as lockfile:
-				pids_ports = lockfile.read().splitlines()
+			pids_ports = lock.read().splitlines()
 		except EnvironmentError, exception:
 			safe_print("Warning - could not read lockfile %s: %r" %
 					   (lockfilename, exception))
@@ -520,17 +525,21 @@ def _exit(lockfilename, oport):
 			filtered_pids_ports = filter(lambda pid_port: pid_port, pids_ports)
 			if filtered_pids_ports:
 				# Write updated lockfile
-				with AppLock(lockfilename, "w", False, True) as lock:
+				try:
+					lock.seek(0)
+					lock.truncate(0)
+				except EnvironmentError, exception:
+					safe_print("Warning - could not update lockfile %s: %r" %
+							   (lockfilename, exception))
+				else:
 					lock.write("\n".join(pids_ports))
-		# If no ports of running instances, ok to remove lockfile
-		if not filtered_pids_ports:
-			try:
-				os.remove(lockfilename)
-			except EnvironmentError, exception:
-				safe_print("Warning - could not remove lockfile %s: %r" %
-						   (lockfilename, exception))
-	safe_print("Exiting", pyname)
-
+			else:
+				lock.close()
+				try:
+					os.remove(lockfilename)
+				except EnvironmentError, exception:
+					safe_print("Warning - could not remove lockfile %s: %r" %
+							   (lockfilename, exception))
 
 def main_3dlut_maker():
 	main("3DLUT-maker")
@@ -599,19 +608,19 @@ class AppLock(object):
 		return False
 
 	def unlock(self):
-		if self._lock:
-			try:
-				self._lock.unlock()
-			except FileLock.UnlockingError, exception:
-				# This shouldn't happen
-				safe_print("Warning - could not unlock lockfile %s:" %
-						   self._lockfile.name, exception)
 		if self._lockfile:
 			try:
 				self._lockfile.close()
 			except EnvironmentError, exception:
 				# This shouldn't happen
 				safe_print("Error - could not close lockfile %s:" %
+						   self._lockfile.name, exception)
+		if self._lock:
+			try:
+				self._lock.unlock()
+			except FileLock.UnlockingError, exception:
+				# This shouldn't happen
+				safe_print("Warning - could not unlock lockfile %s:" %
 						   self._lockfile.name, exception)
 
 	def write(self, contents):
