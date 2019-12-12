@@ -129,6 +129,7 @@ def _main(module, name, applockfilename, probe_ports=True):
 			try:
 				if lock and lockfilename == applockfilename:
 					lockfile = lock
+					lock.seek(0)
 				else:
 					lockfile = AppLock(lockfilename, "r", True, True)
 				if lockfile:
