@@ -12,7 +12,7 @@
 		<meta name="description" content="${SUMMARY}" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
-		<link rel="stylesheet" href="theme/readme.css?ts=2018-01-17T19:12" />
+		<link rel="stylesheet" href="theme/readme.css?ts=2019-12-14T13:00" />
 		<script type="text/javascript" src="theme/jquery.js?ts=2018-09-17T15:00"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js?ts=2018-09-17T15:00"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js?ts=2018-09-17T15:00"></script>
@@ -47,6 +47,15 @@
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${APPNAME} ${VERSION_SHORT} ${STABILITY}</h3>
+
+						<h4>Fixed in this release:</h4>
+						<ul>
+							<li><span class="changelog-label cosmetic"><span>[</span>Cosmetic<span>]</span></span> <span class="changelog-label ui"><span>[</span>UI<span>]</span></span> Improve PCS to device gamut outline plot.</li>
+							<li><span class="changelog-label blocker"><span>[</span>Blocker<span>]</span></span> Linux, macOS: Fix failure to launch if initial install (regression of lockfile change in 3.8.9.2)</li>
+						</ul>
+
+						<p id="changelog-3.8.9.2">2019-12-12 22:33 (UTC) 3.8.9.2 </p>
+						<h3>DisplayCAL 3.8.9.2 </h3>
 
 						<h4>Fixed in this release:</h4>
 						<ul>

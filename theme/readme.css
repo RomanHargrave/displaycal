@@ -1526,6 +1526,7 @@ div.info,
 	background: #e70;
 }
 
+.changelog-label.blocker,
 .changelog-label.major {
 	background: #e50;
 }
