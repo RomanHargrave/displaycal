@@ -592,7 +592,10 @@ class AppLock(object):
 		return bool(self._lock)
 
 	def lock(self):
+		lockdir = os.path.dirname(self._lockfilename)
 		try:
+			if not os.path.isdir(lockdir):
+				os.makedirs(lockdir)
 			# Create lockfile
 			self._lockfile = open(self._lockfilename, self._mode)
 		except EnvironmentError, exception:
