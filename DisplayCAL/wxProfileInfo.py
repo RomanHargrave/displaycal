@@ -485,9 +485,21 @@ class GamutCanvas(LUTCanvas):
 						safe_print(" ".join(("%3.4f", ) * len(v)) % tuple(v))
 
 				# Lookup device -> XYZ values through profile using xicclu
+				if direction == "ib" and intent not in "ar":
+					fwd_intent = "r"
+				else:
+					fwd_intent = intent
 				try:
+					# Device -> PCS, fwd
 					odata = self.worker.xicclu(profile, device_values, intent,
-											   direction, order)
+											   "f", order)
+					if direction == "ib":
+						# PCS -> device, bwd
+						odata = self.worker.xicclu(profile, odata, intent,
+												   "b", order)
+						# Device -> PCS, fwd
+						odata = self.worker.xicclu(profile, odata, fwd_intent,
+												   "f", order)
 				except Exception, exception:
 					self.errors.append(Error(safe_unicode(exception)))
 					continue
