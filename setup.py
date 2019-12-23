@@ -67,10 +67,10 @@ def format_chglog(chglog, format="appstream"):
 			if not tagname in allowed_tags:
 				chglog = chglog.replace(tag, "")
 				chglog = chglog.replace("</" + tagname + ">", "")
-		# Remove text "Linux" in item before colon (":")
-		chglog = re.sub(r"(<li>[^:<]*)\s+Linux([^:<]*):", r"\1\2", chglog)
 		# Remove macOS and Windows specific items
-		chglog = re.sub(r"<li>[^:<]*(?:Mac ?OS ?X?|Windows)([^:<]*):.*?</li>(?is)", "", chglog)
+		chglog = re.sub(r"<li>[^,:<]*(?:Mac ?OS ?X?|Windows)([^,:<]*):.*?</li>(?is)", "", chglog)
+		# Remove text "Linux" in item before colon (":")
+		chglog = re.sub(r"(<li>[^,:<]*)\s+Linux([^,:<]*):", r"\1\2", chglog)
 		if format.lower() == "appstream":
 			# Conform to appstream-util validate-strict rules
 			def truncate(matches, maxlen):
