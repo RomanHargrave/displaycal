@@ -1555,9 +1555,9 @@ def YPbPr2YCbCr(Y, Pb, Pr, bits=8, fullrange=False):
 	Cscale = (Cmax - Yblack) / 256.0 * bitlevels
 	Cb = Cneutral + Cscale * Pb
 	Cr = Cneutral + Cscale * Pr
-	# In fullrange mode, Cb and Cr can reach 255.5, so we need to clamp to 255
+	# In fullrange mode, Cb and Cr can reach 255.5, so we need to clamp
 	# Follow ITU-T Rec. T.871 (JPEG)
-	Y, Cb, Cr = (min(max(int(round(v)), 0), 255) for v in (Y, Cb, Cr))
+	Y, Cb, Cr = (min(max(int(round(v)), 0), bitlevels - 1) for v in (Y, Cb, Cr))
 	return Y, Cb, Cr
 
 
