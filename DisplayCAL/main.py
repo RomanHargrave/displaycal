@@ -234,6 +234,12 @@ def _main(module, name, applockfilename, probe_ports=True):
 						import pywintypes
 						import win32ts
 						try:
+							osid = win32ts.ProcessIdToSessionId(opid)
+						except pywintypes.error, exception:
+							safe_print("Enumerating processes failed:",
+									   exception)
+							osid = None
+						try:
 							processes = win32ts.WTSEnumerateProcesses()
 						except pywintypes.error, exception:
 							safe_print("Enumerating processes failed:",
@@ -250,7 +256,8 @@ def _main(module, name, applockfilename, probe_ports=True):
 								basename_lower = basename.lower()
 								if ((pid and pid2 == pid and
 									 basename_lower == exename_lower) or
-									(basename_lower == pyexe_lower)) and pid2 != opid:
+									((osid is None or sid == osid) and
+									 basename_lower == pyexe_lower)) and pid2 != opid:
 									# Other instance running
 									incoming = False
 									if module == "apply-profiles":
