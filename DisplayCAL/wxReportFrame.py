@@ -444,6 +444,7 @@ class ReportFrame(BaseFrame):
 					if not silent:
 						show_result_dialog(exception, parent=self)
 			if profile:
+				profile_path = profile.fileName
 				if ((which == "simulation" and
 					 (profile.profileClass not in ("mntr", "prtr") or 
 					  profile.colorSpace not in ("CMYK", "RGB"))) or
@@ -513,7 +514,7 @@ class ReportFrame(BaseFrame):
 					setattr(self, "%s_profile" % which, profile)
 					if not silent:
 						setcfg("measurement_report.%s_profile" % which,
-							   profile and profile.fileName)
+							   profile and profile_path)
 						if which == "simulation":
 							self.use_simulation_profile_ctrl_handler(None)
 						elif hasattr(self, "XYZbpin"):

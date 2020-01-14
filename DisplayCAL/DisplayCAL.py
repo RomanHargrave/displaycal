@@ -7151,6 +7151,13 @@ class MainFrame(ReportFrame, BaseFrame):
 						   ok=lang.getstr("ok"), 
 						   bitmap=geticon(32, "dialog-error"))
 				return
+			else:
+				if (profile.version >= 4 and
+					not profile.convert_iccv4_tags_to_iccv2()):
+					msg = "\n".join([lang.getstr("profile.iccv4.unsupported"),
+									 profile.getDescription()])
+					show_result_dialog(msg, self)
+					return
 			if i in (0, 1) and use_sim:
 				if use_sim_as_output and profile.colorSpace == "RGB":
 					if i == 0 and use_devlink:

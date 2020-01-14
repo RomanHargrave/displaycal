@@ -5749,6 +5749,8 @@ class ICCProfile(object):
 		if isinstance(profile, basestring):
 			if profile.find("\0") < 0 and not profile.startswith("<"):
 				# Filename
+				if not profile:
+					raise ICCProfileInvalidError("Empty path given")
 				if (not os.path.isfile(profile) and
 					not os.path.sep in profile and
 					(not isinstance(os.path.altsep, basestring) or

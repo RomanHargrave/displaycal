@@ -9257,8 +9257,9 @@ usage: spotread [-options] [logfile]
 				gamap_profiles = []
 				gamap_profile = None
 				if gamap and collink:
+					gamap_profile_filename = getcfg("gamap_profile")
 					try:
-						gamap_profile = ICCP.ICCProfile(getcfg("gamap_profile"))
+						gamap_profile = ICCP.ICCProfile(gamap_profile_filename)
 					except (IOError, ICCProfileInvalidError), exception:
 						self.log(exception)
 					else:
@@ -9272,7 +9273,7 @@ usage: spotread [-options] [logfile]
 							# Simple matrix source profile
 							if gamap_profile.convert_iccv4_tags_to_iccv2():
 								# Write to temp file
-								fd, gamap_profile.fileName = mkstemp_bypath(gamap_profile.fileName,
+								fd, gamap_profile.fileName = mkstemp_bypath(gamap_profile_filename,
 																			dir=self.tempdir)
 								stream = os.fdopen(fd, "wb")
 								gamap_profile.write(stream)
