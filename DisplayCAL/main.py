@@ -334,7 +334,15 @@ def _main(module, name, applockfilename, probe_ports=True):
 		# Create listening socket
 		appsocket = AppSocket()
 		if appsocket:
-			appsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+			if sys.platform != "win32":
+				# https://docs.microsoft.com/de-de/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse#using-so_reuseaddr
+				# From the above link: "The SO_REUSEADDR socket option allows 
+				# a socket to forcibly bind to a port in use by another socket".
+				# Note that this is different from the behavior under Linux/BSD,
+				# where a socket can only be (re-)bound if no active listening
+				# socket is already bound to the address.
+				# Consequently, we don't use SO_REUSEADDR under Windows.
+				appsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			sys._appsocket = appsocket.socket
 			if getcfg("app.allow_network_clients"):
 				host = ""
